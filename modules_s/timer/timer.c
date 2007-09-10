@@ -59,6 +59,7 @@
 
 MODULE_VERSION
 
+#define MODULE_NAME "timer"
 
 struct timer_action {
 	char *timer_name;
@@ -106,7 +107,7 @@ static int sel_timer(str* res, select_t* s, struct sip_msg* msg) {
 	if (!msg) { /* select fixup */
 		a = find_action_by_name(timer_actions /* called after mod_init */, s->params[2].v.s.s, s->params[2].v.s.len);
 		if (!a) {
-			ERR("ERROR: timer: timer_enable_fixup: timer '%.*s' not declared\n", s->params[2].v.s.len, s->params[2].v.s.s);
+			ERR(MODULE_NAME": timer_enable_fixup: timer '%.*s' not declared\n", s->params[2].v.s.len, s->params[2].v.s.s);
 			return E_CFG;
 		}
 		s->params[2].v.p = a;
@@ -130,13 +131,12 @@ static int sel_executed(str* res, select_t* s, struct sip_msg* msg) {
 }
 
 select_row_t sel_declaration[] = {
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("timer"), sel_root, SEL_PARAM_EXPECTED},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT(MODULE_NAME), sel_root, SEL_PARAM_EXPECTED},
+	{ sel_root, SEL_PARAM_STR, STR_STATIC_INIT("timer"), sel_timer, SEL_PARAM_EXPECTED|CONSUME_NEXT_STR|FIXUP_CALL},
+	{ sel_timer, SEL_PARAM_STR, STR_STATIC_INIT("enabled"), sel_enabled, 0},
+	{ sel_root, SEL_PARAM_STR, STR_STATIC_INIT("executed"), sel_executed, 0},
 	
-        { sel_root, SEL_PARAM_STR, STR_STATIC_INIT("timer"), sel_timer, SEL_PARAM_EXPECTED|CONSUME_NEXT_STR|FIXUP_CALL},
-        { sel_timer, SEL_PARAM_STR, STR_STATIC_INIT("enabled"), sel_enabled, 0},
-        { sel_root, SEL_PARAM_STR, STR_STATIC_INIT("executed"), sel_executed, 0},
-	
-        { NULL, SEL_PARAM_STR, STR_NULL, NULL, 0}
+	{ NULL, SEL_PARAM_STR, STR_NULL, NULL, 0}
 };
 
 static unsigned int timer_msg_no = 0;
@@ -151,19 +151,19 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 	a = data;
 	if (!a->disable_itself) {
 
-		DBG("timer: handler: called at %d ticks, timer: '%s', pid:%d\n", ticks, a->timer_name, getpid());
+		DEBUG(MODULE_NAME": handler: called at %d ticks, timer: '%s', pid:%d\n", ticks, a->timer_name, getpid());
 
 		if (a->route_no >= main_rt.idx) {
-			BUG("invalid routing table number #%d of %d\n", a->route_no, main_rt.idx);
+			BUG(MODULE_NAME": invalid routing table number #%d of %d\n", a->route_no, main_rt.idx);
 			goto err2;
 		}
 		if (!main_rt.rlist[a->route_no]) {
-			WARN("WARN: timer: route not declared (hash:%d)\n", a->route_no);
+			WARN(MODULE_NAME": route not declared (hash:%d)\n", a->route_no);
 			goto err2;
 		}
 		msg=pkg_malloc(sizeof(struct sip_msg));
 		if (msg==0) {
-			ERR("ERROR: timer: handler: no mem for sip_msg\n");
+			ERR(MODULE_NAME": handler: no mem for sip_msg\n");
 			goto err2;
 		}
 		timer_msg_no++;
@@ -178,7 +178,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		msg->set_global_port=default_global_port;
 
 		if (parse_msg(msg->buf, msg->len, msg)!=0){
-			ERR("ERROR: timer: handler: parse_msg failed\n");
+			ERR(MODULE_NAME": handler: parse_msg failed\n");
 			goto err;
 		}
 		/* ... clear branches from previous message */
@@ -195,7 +195,7 @@ static ticks_t timer_handler(ticks_t ticks, struct timer_ln* tl, void* data) {
 		exec_post_req_cb(msg);
 	end:
 		reset_avps();
-		DBG("timer: handler: cleaning up\n");
+		DEBUG(MODULE_NAME": handler: cleaning up\n");
 	err:
 		free_sip_msg(msg);
 		pkg_free(msg);
@@ -222,7 +222,7 @@ static int timer_enable_fixup(void** param, int param_no) {
 		case 1:
 			a = find_action_by_name(timer_actions /* called after mod_init*/, (char*) *param, -1);
 			if (!a) {
-				ERR("ERROR: timer: timer_enable_fixup: timer '%s' not declared\n", (char*) *param);
+				ERR(MODULE_NAME": timer_enable_fixup: timer '%s' not declared\n", (char*) *param);
 				return E_CFG;
 			}
 			*param = a;
@@ -303,7 +303,7 @@ static int declare_timer(modparam_t type, char* param) {
 	timer_name = save_p;
 	p++;
 	if (find_action_by_name(pkg_timer_actions, timer_name, -1) != NULL) {
-		ERR("timer: declare_timer: timer '%s' already exists\n", timer_name);
+		ERR(MODULE_NAME": declare_timer: timer '%s' already exists\n", timer_name);
 		return E_CFG;
 	}
 
@@ -342,7 +342,7 @@ static int declare_timer(modparam_t type, char* param) {
 	
 	pa = pkg_malloc(sizeof(*pa));   /* cannot use shmmem here! */
 	if (!pa) {
-		ERR("ERROR: cannot allocate timer data\n");
+		ERR(MODULE_NAME": cannot allocate timer data\n");
 		return E_OUT_OF_MEM;
 	}
 	memset(pa, 0, sizeof(*pa));
@@ -356,21 +356,21 @@ static int declare_timer(modparam_t type, char* param) {
 
 	return 0;
 err:
-	ERR("ERROR: declare_timer: timer_name: '%s', error near '%s'", timer_name, save_p);
+	ERR(MODULE_NAME": declare_timer: timer_name: '%s', error near '%s'\n", timer_name, save_p);
 	return E_CFG;
 }
 
 static int mod_init() {
 	struct timer_action *a, **pa;
 
-	DBG("DEBUG: timer: init: initializing, pid=%d\n", getpid());
+	DEBUG(MODULE_NAME": init: initializing, pid=%d\n", getpid());
 
 	/* copy from pkg to shm memory */
 	for (pa=&timer_actions; pkg_timer_actions; pa=&(*pa)->next) {
 		a = pkg_timer_actions;
 		*pa = shm_malloc(sizeof(**pa));
 		if (!*pa) {
-			ERR("ERROR: cannot allocate timer data\n");
+			ERR(MODULE_NAME": cannot allocate timer data\n");
 			return E_OUT_OF_MEM;
 		}
 		memcpy(*pa, a, sizeof(**pa));
@@ -382,12 +382,12 @@ static int mod_init() {
 	for (a=timer_actions; a; a=a->next) {
 		a->link = timer_alloc();
 		if (!a->link) {
-			ERR("ERROR: timer: init: cannot allocate timer\n");
+			ERR(MODULE_NAME": init: cannot allocate timer\n");
 			return E_OUT_OF_MEM;
 		}
 		timer_init(a->link, timer_handler, a, a->flags);
 		if (!a->link) {
-			ERR("ERROR: timer: init: cannot initialize timer\n");
+			ERR(MODULE_NAME": init: cannot initialize timer\n");
 			return E_CFG;
 		}
 	}
@@ -411,7 +411,7 @@ static int child_init(int rank) {
 
 static void destroy_mod(void) {
 	struct timer_action* a;
-	DBG("DEBUG: timer: destroy: destroying, pid=%d\n", getpid());
+	DEBUG(MODULE_NAME": destroy: destroying, pid=%d\n", getpid());
 	while (timer_actions) {
 		a = timer_actions;
 		if (a->link) {
@@ -427,7 +427,7 @@ static void destroy_mod(void) {
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"timer_enable", timer_enable_func, 2, timer_enable_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_enable", timer_enable_func, 2, timer_enable_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -441,7 +441,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"timer",
+	MODULE_NAME,
 	cmds,        /* Exported commands */
 	0,	     /* RPC */
 	params,      /* Exported parameters */

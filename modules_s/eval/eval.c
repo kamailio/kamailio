@@ -52,6 +52,8 @@
 
 MODULE_VERSION
 
+#define MODULE_NAME "eval"
+
 enum {evtVoid=0, evtInt, evtStr};
 
 struct eval_str {
@@ -119,7 +121,7 @@ static int get_as_int(struct eval_value *value, long* val) {
 				if (*err == 0)
 					return 1;
 			}
-			LOG(L_ERR, "ERROR: cannot convert '%.*s' as int\n", value->u.s->s.len, value->u.s->s.s);
+			ERR(MODULE_NAME": cannot convert '%.*s' as int\n", value->u.s->s.len, value->u.s->s.s);
 			return -1;
 		default:
 			BUG("Bad value type %d\n", value->type);
@@ -259,7 +261,7 @@ static int parse_hf_values(str s, int* n, str** vals) {
 	while (start < end) {
 		find_next_value(&start, end, &values[*n], &lump_val);
 		if (*n >= MAX_HF_VALUES) {
-			LOG(L_ERR, "ERROR: too many values\n");
+			ERR(MODULE_NAME": too many values\n");
 			return -1;
 		}
 		(*n)++;
@@ -345,7 +347,7 @@ static int declare_register(modparam_t type, char* param) {
 			(*c == '_') ) {
 			;
 		} else {
-			LOG(L_ERR, "ERROR: illegal register name\n");
+			ERR(MODULE_NAME": illegal register name\n");
 			return E_CFG;
 		}
 	}
@@ -475,7 +477,7 @@ static int parse_location(str s, struct eval_location *p) {
 			case 'r':
 				p->u.reg = find_register(s.s+2, s.len-2);
 				if (!p->u.reg) {
-					LOG(L_ERR, "eval: register '%.*s' not found\n", s.len-2, s.s+2);
+					ERR(MODULE_NAME": register '%.*s' not found\n", s.len-2, s.s+2);
 					return E_CFG;
 				}
 				p->value_type = esovtRegister;
@@ -484,7 +486,7 @@ static int parse_location(str s, struct eval_location *p) {
 				if (!xl_print) {
 					xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
 					if (!xl_print) {
-						LOG(L_CRIT,"ERROR: eval: cannot find \"xprint\", is module xlog loaded?\n");
+						ERR(MODULE_NAME": cannot find \"xprint\", is module xlog loaded?\n");
 						return E_UNSPEC;
 					}
 				}
@@ -493,13 +495,13 @@ static int parse_location(str s, struct eval_location *p) {
 					xl_parse=(xl_parse_format_f*)find_export("xparse", NO_SCRIPT, 0);
 
 					if (!xl_parse) {
-						LOG(L_CRIT,"ERROR: eval: cannot find \"xparse\", is module xlog loaded?\n");
+						ERR(MODULE_NAME": cannot find \"xparse\", is module xlog loaded?\n");
 						return E_UNSPEC;
 					}
 				}
 
 				if(xl_parse(s.s+2, &p->u.xl) < 0) {
-					LOG(L_ERR, "ERROR: eval: wrong xl_lib format '%s'\n", s.s+2);
+					ERR(MODULE_NAME": wrong xl_lib format '%s'\n", s.s+2);
 					return E_UNSPEC;
 				}
 				p->value_type = esovtXStr;
@@ -516,7 +518,7 @@ static int parse_location(str s, struct eval_location *p) {
 					}
 				}
 				if (!f) {
-					LOG(L_ERR, "ERROR: unknown function '%.*s'\n", s.len, s.s);
+					ERR(MODULE_NAME": unknown function '%.*s'\n", s.len, s.s);
 					return E_CFG;
 				}
 				break;
@@ -539,7 +541,7 @@ static int parse_location(str s, struct eval_location *p) {
 			s.len--;
 			if (parse_avp_ident(&s, &p->u.avp) == 0) {
 				if (p->u.avp.flags & AVP_NAME_RE) {
-					LOG(L_ERR, "ERROR: avp regex not allowed\n");
+					ERR(MODULE_NAME": avp regex not allowed\n");
 					return E_CFG;
 				}
 				p->value_type = esovtAvp;
@@ -574,13 +576,13 @@ static int eval_xl(struct sip_msg *msg, xl_elog_t* xl, str* s) {
 	if (!xlbuf) {
 		xlbuf = (char*) pkg_malloc((xlbuf_size+1)*sizeof(char));
 		if (!xlbuf) {
-			LOG(L_CRIT, "ERROR: eval_xl: No memory left for format buffer\n");
+			ERR(MODULE_NAME": eval_xl: No memory left for format buffer\n");
 			return E_OUT_OF_MEM;
 		}
 	}
 	xllen = xlbuf_size;
 	if (xl_print(msg, xl, xlbuf, &xllen) < 0) {
-		LOG(L_ERR, "ERROR: eval_xl: Error while formatting result\n");
+		ERR(MODULE_NAME": eval_xl: Error while formatting result\n");
 		return E_UNSPEC;
 	}
 	s->s = xlbuf;
@@ -616,7 +618,7 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 			else {
 				v->u.s = eval_str_malloc(&s);
 				if (!v->u.s) {
-					LOG(L_ERR, "ERROR: out of memory to allocate xl string\n");
+					ERR(MODULE_NAME": out of memory to allocate xl string\n");
 					return E_OUT_OF_MEM;
 				}
 			}
@@ -638,7 +640,7 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 			else
 				avp = search_avp_by_index(so->u.avp.flags, so->u.avp.name, &val, so->u.avp.index);
 			if (!avp) {
-				LOG(L_ERR, "ERROR: avp '%.*s'[%d] not found\n", so->u.avp.name.s.len, so->u.avp.name.s.s, so->u.avp.index);
+				ERR(MODULE_NAME": avp '%.*s'[%d] not found\n", so->u.avp.name.s.len, so->u.avp.name.s.s, so->u.avp.index);
 				return -1;
 			}
 			if (avp->flags & AVP_VAL_STR) {
@@ -650,7 +652,7 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 				else {
 					v->u.s = eval_str_malloc(&val.s);
 					if (!v->u.s) {
-						LOG(L_ERR, "ERROR: out of memory to allocate avp string\n");
+						ERR(MODULE_NAME": out of memory to allocate avp string\n");
 						return E_OUT_OF_MEM;
 					}
 				}
@@ -674,7 +676,7 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 			else {
 				v->u.s = eval_str_malloc(&s);
 				if (!v->u.s) {
-					LOG(L_ERR, "ERROR: out of memory to allocate select string\n");
+					ERR(MODULE_NAME": out of memory to allocate select string\n");
 					return E_OUT_OF_MEM;
 				}
 			}
@@ -701,7 +703,7 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 					else {
 						v->u.s = eval_str_malloc(&s);
 						if (!v->u.s) {
-							LOG(L_ERR, "ERROR: out of memory to allocate uuid string\n");
+							ERR(MODULE_NAME": out of memory to allocate uuid string\n");
 							return E_OUT_OF_MEM;
 						}
 					}
@@ -733,7 +735,7 @@ static int fixup_location_12( void** param, int param_no) {
 	so = pkg_malloc(sizeof(*so));
 	if (!so) return E_OUT_OF_MEM;
 	if (parse_location(s, so) < 0) {
-		LOG(L_ERR, "ERROR: parse location error '%s'\n", s.s);
+		ERR(MODULE_NAME": parse location error '%s'\n", s.s);
 		return E_CFG;
 	}
 	*param = so;
@@ -760,14 +762,14 @@ static int fixup_stack_oper(void **param, int param_no, int oper_type) {
 	switch (p->oper_type) {
 		case esotXchg:
 			if (p->loc.value_type == esovtAvp || p->loc.value_type == esovtSelect) {
-				LOG(L_ERR, "ERROR: eval: avp non supported for xchg\n");
+				ERR(MODULE_NAME": avp non supported for xchg\n");
 				return E_CFG;
 			}
 			/* no break */
 		case esotPop:
 		case esotGet:
 			if (p->loc.value_type != esovtRegister && p->loc.value_type != esovtAvp) {
-				LOG(L_ERR, "ERROR: eval: non supported read only location\n");
+				ERR(MODULE_NAME": non supported read only location\n");
 				return E_CFG;
 			}
 			break;
@@ -879,7 +881,7 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 				struct stack_item *si;
 				si = pkg_malloc(sizeof(*si));
 				if (!si) {
-					LOG(L_ERR, "ERROR: eval: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					destroy_value(v);
 					return -1;
 				}
@@ -909,7 +911,7 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 			}
 			si = pkg_malloc(sizeof(*si));
 			if (!si) {
-				LOG(L_ERR, "ERROR: eval: out of memory\n");
+				ERR(MODULE_NAME": out of memory\n");
 				destroy_value(v);
 				return -1;
 			}
@@ -920,13 +922,13 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 			for (i=0; i<n; i++) {
 				si = pkg_malloc(sizeof(*si));
 				if (!si) {
-					LOG(L_ERR, "ERROR: eval: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					destroy_value(v);
 					return -1;
 				}
 				es = eval_str_malloc(vals+i);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					destroy_value(v);
 					return -1;
 				}
@@ -1034,7 +1036,7 @@ static int eval_remove_func(struct sip_msg *msg, char *param1, char *param2) {
 static int eval_clear_func(struct sip_msg *msg, char *param1, char *param2) {
 	int n;
 	if (get_int_fparam(&n, msg, (fparam_t*)param1)<0) {
-		ERR("eval_clear: Invalid number specified");
+		ERR(MODULE_NAME": eval_clear: Invalid number specified\n");
 		return -1;
 	}
 	if (n & 1)
@@ -1137,7 +1139,7 @@ static int eval_stack_func_fixup( void** param, int param_no) {
 		s.len = c-c2;
 
 		if (parse_location(s, &so) < 0) {
-			LOG(L_ERR, "ERROR: parse operation error near '%s'\n", c2);
+			ERR(MODULE_NAME": parse operation error near '%s'\n", c2);
 			return E_CFG;
 		}
 		*p = pkg_malloc(sizeof(**p));
@@ -1152,7 +1154,7 @@ static int eval_stack_func_fixup( void** param, int param_no) {
 					}
 				}
 				if (!d->type) {
-					LOG(L_ERR, "ERROR: unknown eval function near '%s'\n", so.u.s.s.s);
+					ERR(MODULE_NAME": unknown eval function near '%s'\n", so.u.s.s.s);
 					return E_CFG;
 				}
 				(*p)->resolved = 1;
@@ -1166,7 +1168,7 @@ static int eval_stack_func_fixup( void** param, int param_no) {
 				(*p)->resolved = 0;
 				break;
 			default:
-				LOG(L_ERR, "ERROR: location %d not allowed\n", so.value_type);
+				ERR(MODULE_NAME": location %d not allowed\n", so.value_type);
 				return E_CFG;
 		}
 		p = &(*p)->next;
@@ -1212,14 +1214,14 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				}
 			}
 			if (!d->type) {
-				LOG(L_ERR, "ERROR: unknown eval function '%.*s'\n", fn.len, fn.s);
+				ERR(MODULE_NAME": unknown eval function '%.*s'\n", fn.len, fn.s);
 				return -1;
 			}
 		}
-		DBG("eval_oper: %s, stack_idx: %d, stack_no: %d\n", d->name, stack_idx, stack_no);
+		DEBUG(MODULE_NAME": eval_oper: %s, stack_idx: %d, stack_no: %d\n", d->name, stack_idx, stack_no);
 		if ( ((stack_idx >= 0) && (stack_idx+d->arg_no > stack_no)) ||
 		     ((stack_idx <  0) && (stack_no+stack_idx < 0 || stack_no+stack_idx+d->arg_no > stack_no)) ) {
-			LOG(L_ERR, "ERROR: operation out of stack range\n");
+			ERR(MODULE_NAME": operation out of stack range\n");
 			return -1;
 		}
 		pivot = find_stack_item(stack_idx);
@@ -1254,14 +1256,14 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 						break;
 					case esftDivision:
 						if (b == 0) {
-							LOG(L_ERR, "ERROR: division by zero\n");
+							ERR(MODULE_NAME": division by zero\n");
 							return -1;
 						}
 						a = a / b;
 						break;
 					case esftModulo:
 						if (b == 0) {
-							LOG(L_ERR, "ERROR: division by zero\n");
+							ERR(MODULE_NAME": division by zero\n");
 							return -1;
 						}
 						a = a % b;
@@ -1340,7 +1342,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 					destroy_value(pivot->value);
 					pivot->value.u.s = eval_str_malloc(&s);
 					if (!pivot->value.u.s) {
-						LOG(L_ERR, "ERROR: out of memory\n");
+						ERR(MODULE_NAME": out of memory\n");
 						return -1;
 					}
 					pivot->value.type = evtStr;
@@ -1429,7 +1431,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s.s = 0;
 				es = eval_str_malloc(&s);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				memcpy(s.s, s1.s, s1.len);
@@ -1468,7 +1470,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s1.len = len;
 				es = eval_str_malloc(&s1);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				destroy_value(pivot->value);
@@ -1533,7 +1535,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s.len = s1.len - len;
 				es = eval_str_malloc(&s);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				if (start > 0)
@@ -1555,7 +1557,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 
 				es = eval_str_malloc(&s1);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				for (i=0; i<es->s.len; i++)
@@ -1575,12 +1577,12 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				if (get_as_int(&pivot->next->value, &idx) < 0) return -1;
 				if (parse_hf_values(s1, &n, &vals) < 0) return -1;
 				if (idx < 0|| idx >= n) {
-					LOG(L_ERR, "ERROR: index (%ld) of of range (%d)\n", idx, n);
+					ERR(MODULE_NAME": index (%ld) of of range (%d)\n", idx, n);
 					return -1;
 				}
 				es = eval_str_malloc(vals+idx);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				destroy_value(pivot->value);
@@ -1657,7 +1659,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s.s = 0;
 				es = eval_str_malloc(&s);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				for (i=0, pos=0; i<len; i++) {
@@ -1691,7 +1693,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s.s = 0;
 				es = eval_str_malloc(&s);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				for (si=pivot->next, i=0, pos=0; i<n && si; i++, si=si->next) {
@@ -1730,7 +1732,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s.s = 0;
 				es = eval_str_malloc(&s);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				for (i=n-1, pos=0; i>=0; i--) {
@@ -1761,7 +1763,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				s.s = 0;
 				es = eval_str_malloc(&s);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				for (i=0, pos=0; i<n; i++) {
@@ -1794,7 +1796,7 @@ static int eval_stack_func_func(struct sip_msg *msg, char *param1, char *param2)
 				}
 				es = eval_str_malloc(&huri);
 				if (!es) {
-					LOG(L_ERR, "ERROR: out of memory\n");
+					ERR(MODULE_NAME": out of memory\n");
 					return -1;
 				}
 				destroy_value(pivot->value);
@@ -1819,7 +1821,7 @@ static int eval_while_fixup(void **param, int param_no) {
 		int n;
 		n = route_get(&main_rt, (char*) *param);
 		if (n == -1) {
-			LOG(L_ERR, "ERROR: eval_while: bad route\n");
+			ERR(MODULE_NAME": eval_while: bad route\n");
 			return E_CFG;
 		}
 		pkg_free(*param);
@@ -1855,7 +1857,7 @@ static int eval_while_func(struct sip_msg *msg, char *route_no, char *param2) {
 			return -1;
 		}
 		if (!main_rt.rlist[(int) route_no]) {
-			LOG(L_WARN, "WARN: route not declared (hash:%d)\n", (int) route_no);
+			WARN(MODULE_NAME": route not declared (hash:%d)\n", (int) route_no);
 			return -1;
 		}
 		/* exec the routing script */
@@ -1888,7 +1890,7 @@ static int eval_while_stack_func(struct sip_msg *msg, char *route_no, char *para
 			return -1;
 		}
 		if (!main_rt.rlist[(int) route_no]) {
-			LOG(L_WARN, "WARN: route not declared (hash:%d)\n", (int) route_no);
+			WARN(MODULE_NAME": route not declared (hash:%d)\n", (int) route_no);
 			return -1;
 		}
 		/* exec the routing script */
@@ -1937,7 +1939,7 @@ static int sel_register(str* res, select_t* s, struct sip_msg* msg) {
 	if (msg == 0) {
 		struct register_item *p = find_register(s->params[2].v.s.s, s->params[2].v.s.len);
 		if (p == 0) {
-			LOG(L_ERR, "ERROR: eval: select: register '%.*s' not found\n", s->params[2].v.s.len, s->params[2].v.s.s);
+			ERR(MODULE_NAME": select: register '%.*s' not found\n", s->params[2].v.s.len, s->params[2].v.s.s);
 			return E_CFG;
 		}
 		s->params[2].v.p = p;
@@ -1974,7 +1976,7 @@ SELECT_F(select_any_nameaddr)
 SELECT_F(select_any_uri)
 
 select_row_t sel_declaration[] = {
-	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("eval"), sel_eval, SEL_PARAM_EXPECTED},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT(MODULE_NAME), sel_eval, SEL_PARAM_EXPECTED},
 
 	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("pop"), sel_get_and_remove, CONSUME_NEXT_INT },
 	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("get"), sel_get, CONSUME_NEXT_INT },
@@ -2019,39 +2021,39 @@ static void destroy_mod(void) {
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"eval_add", eval_stack_oper_func, 2, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_add", eval_stack_oper_func, 1, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_push", eval_stack_oper_func, 2, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_push", eval_stack_oper_func, 1, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_insert", eval_stack_oper_func, 2, eval_insert_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_insert", eval_stack_oper_func, 1, eval_insert_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_xchg", eval_stack_oper_func, 2, eval_xchg_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_xchg", eval_stack_oper_func, 1, eval_xchg_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_get", eval_stack_oper_func, 2, eval_get_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_get", eval_stack_oper_func, 1, eval_get_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_put", eval_stack_oper_func, 2, eval_put_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_put", eval_stack_oper_func, 1, eval_put_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_pop", eval_stack_oper_func, 2, eval_pop_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_pop", eval_stack_oper_func, 1, eval_pop_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_add_value", eval_stack_oper_func, 2, eval_add_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_add_value", eval_stack_oper_func, 1, eval_add_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_insert_value", eval_stack_oper_func, 2, eval_insert_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_insert_value", eval_stack_oper_func, 1, eval_insert_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_add", eval_stack_oper_func, 2, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_add", eval_stack_oper_func, 1, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_push", eval_stack_oper_func, 2, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_push", eval_stack_oper_func, 1, eval_add_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_insert", eval_stack_oper_func, 2, eval_insert_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_insert", eval_stack_oper_func, 1, eval_insert_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_xchg", eval_stack_oper_func, 2, eval_xchg_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_xchg", eval_stack_oper_func, 1, eval_xchg_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_get", eval_stack_oper_func, 2, eval_get_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_get", eval_stack_oper_func, 1, eval_get_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_put", eval_stack_oper_func, 2, eval_put_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_put", eval_stack_oper_func, 1, eval_put_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_pop", eval_stack_oper_func, 2, eval_pop_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_pop", eval_stack_oper_func, 1, eval_pop_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_add_value", eval_stack_oper_func, 2, eval_add_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_add_value", eval_stack_oper_func, 1, eval_add_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_insert_value", eval_stack_oper_func, 2, eval_insert_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_insert_value", eval_stack_oper_func, 1, eval_insert_value_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
-	{"eval_remove", eval_remove_func, 0, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_remove", eval_remove_func, 1, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_remove", eval_remove_func, 2, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_clear", eval_clear_func, 1, fixup_int_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_remove", eval_remove_func, 0, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_remove", eval_remove_func, 1, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_remove", eval_remove_func, 2, fixup_location_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_clear", eval_clear_func, 1, fixup_int_12, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
-	{"eval_oper", eval_stack_func_func, 2, eval_stack_func_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_oper", eval_stack_func_func, 1, eval_stack_func_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_oper", eval_stack_func_func, 2, eval_stack_func_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_oper", eval_stack_func_func, 1, eval_stack_func_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
-	{"eval_while", eval_while_func, 1, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_while", eval_while_func, 2, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_while_stack", eval_while_stack_func, 1, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
-	{"eval_while_stack", eval_while_stack_func, 2, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_while", eval_while_func, 1, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_while", eval_while_func, 2, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_while_stack", eval_while_stack_func, 1, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_while_stack", eval_while_stack_func, 2, eval_while_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
-	{"eval_dump", eval_dump_func, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
+	{MODULE_NAME"_dump", eval_dump_func, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE | ONSEND_ROUTE},
 
 	{0, 0, 0, 0, 0}
 };
@@ -2067,7 +2069,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {
-	"eval",
+	MODULE_NAME,
 	cmds,        /* Exported commands */
 	0,	     /* RPC */
 	params,      /* Exported parameters */
