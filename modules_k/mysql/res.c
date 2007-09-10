@@ -42,25 +42,25 @@ int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
 	MYSQL_FIELD* fields;
 
 	if ((!_h) || (!_r)) {
-		LOG(L_ERR, "get_columns: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	n = mysql_field_count(CON_CONNECTION(_h));
 	if (!n) {
-		LOG(L_ERR, "get_columns: No columns\n");
+		LM_ERR("no columns\n");
 		return -2;
 	}
 	
     RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
 	if (!RES_NAMES(_r)) {
-		LOG(L_ERR, "get_columns: No memory left\n");
+		LM_ERR("no private memory left\n");
 		return -3;
 	}
 
 	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
 	if (!RES_TYPES(_r)) {
-		LOG(L_ERR, "get_columns: No memory left\n");
+		LM_ERR("no private memory left\n");
 		pkg_free(RES_NAMES(_r));
 		return -4;
 	}
@@ -118,7 +118,7 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 	int n, i;
 
 	if ((!_h) || (!_r)) {
-		LOG(L_ERR, "convert_rows: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
@@ -130,20 +130,20 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 	}
 	RES_ROWS(_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
 	if (!RES_ROWS(_r)) {
-		LOG(L_ERR, "convert_rows: No memory left\n");
+		LM_ERR("no private memory left\n");
 		return -2;
 	}
 
 	for(i = 0; i < n; i++) {
 		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
 		if (!CON_ROW(_h)) {
-			LOG(L_ERR, "convert_rows: %s\n", mysql_error(CON_CONNECTION(_h)));
+			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
 			return -3;
 		}
 		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) {
-			LOG(L_ERR, "convert_rows: Error while converting row #%d\n", i);
+			LM_ERR("error while converting row #%d\n", i);
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
 			return -4;
@@ -159,7 +159,7 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 static inline int db_mysql_free_columns(db_res_t* _r)
 {
 	if (!_r) {
-		LOG(L_ERR, "free_columns: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
@@ -177,7 +177,7 @@ db_res_t* db_mysql_new_result(void)
 	db_res_t* r = NULL;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r) {
-		LOG(L_ERR, "new_result: No memory left\n");
+		LM_ERR("no private memory left\n");
 		return 0;
 	}
 	memset(r, 0, sizeof(db_res_t));
@@ -191,17 +191,17 @@ db_res_t* db_mysql_new_result(void)
 int db_mysql_convert_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r)) {
-		LOG(L_ERR, "convert_result: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	if (db_mysql_get_columns(_h, _r) < 0) {
-		LOG(L_ERR, "convert_result: Error while getting column names\n");
+		LM_ERR("error while getting column names\n");
 		return -2;
 	}
 
 	if (db_mysql_convert_rows(_h, _r) < 0) {
-		LOG(L_ERR, "convert_result: Error while converting rows\n");
+		LM_ERR("error while converting rows\n");
 		db_mysql_free_columns(_r);
 		return -3;
 	}
@@ -215,7 +215,7 @@ int db_mysql_convert_result(db_con_t* _h, db_res_t* _r)
 int db_mysql_free_dbresult(db_res_t* _r)
 {
 	if (!_r) {
-		LOG(L_ERR, "free_result: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 

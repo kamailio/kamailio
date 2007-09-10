@@ -55,7 +55,7 @@ static int db_mysql_submit_query(db_con_t* _h, const char* _s)
 	int i, code;
 
 	if ((!_h) || (!_s)) {
-		LOG(L_ERR, "submit_query: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -63,7 +63,7 @@ static int db_mysql_submit_query(db_con_t* _h, const char* _s)
 		t = time(0);
 		if ((t - CON_TIMESTAMP(_h)) > ping_interval) {
 			if (mysql_ping(CON_CONNECTION(_h))) {
-				DBG("submit_query: mysql_ping failed\n");
+				LM_DBG("mysql_ping failed\n");
 			}
 		}
 		CON_TIMESTAMP(_h) = t;
@@ -92,7 +92,7 @@ static int db_mysql_submit_query(db_con_t* _h, const char* _s)
 			break;
 		}
 	}
-	LOG(L_ERR, "submit_query: %s\n", mysql_error(CON_CONNECTION(_h)));
+	LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 	return -2;
 }
 
@@ -112,27 +112,27 @@ db_con_t* db_mysql_init(const char* _url)
 	res = 0;
 
 	if (!_url) {
-		LOG(L_ERR, "db_init: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct my_con*));
 	if (!res) {
-		LOG(L_ERR, "db_init: No memory left\n");
+		LM_ERR("no private memory left\n");
 		return 0;
 	}
 	memset(res, 0, sizeof(db_con_t) + sizeof(struct my_con*));
 
 	id = new_db_id(_url);
 	if (!id) {
-		LOG(L_ERR, "db_init: Cannot parse URL '%s'\n", _url);
+		LM_ERR("cannot parse URL '%s'\n", _url);
 		goto err;
 	}
 
 	     /* Find the connection in the pool */
 	con = (struct my_con*)pool_get(id);
 	if (!con) {
-		DBG("db_init: Connection '%s' not found in pool\n", _url);
+		LM_DBG("connection '%s' not found in pool\n", _url);
 		     /* Not in the pool yet */
 		con = db_mysql_new_connection(id);
 		if (!con) {
@@ -140,7 +140,7 @@ db_con_t* db_mysql_init(const char* _url)
 		}
 		pool_insert((struct pool_con*)con);
 	} else {
-		DBG("db_init: Connection '%s' found in pool\n", _url);
+		LM_DBG("connection '%s' found in pool\n", _url);
 	}
 
 	res->tail = (unsigned long)con;
@@ -162,7 +162,7 @@ void db_mysql_close(db_con_t* _h)
 	struct pool_con* con;
 
 	if (!_h) {
-		LOG(L_ERR, "db_close: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return;
 	}
 
@@ -181,13 +181,13 @@ void db_mysql_close(db_con_t* _h)
 static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 {
 	if ((!_h) || (!_r)) {
-		LOG(L_ERR, "store_result: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	*_r = db_mysql_new_result();
 	if (*_r == 0) {
-		LOG(L_ERR, "store_result: No memory left\n");
+		LM_ERR("no memory left\n");
 		return -2;
 	}
 
@@ -198,7 +198,7 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 			(*_r)->n = 0;
 			goto done;
 		} else {
-			LOG(L_ERR, "store_result: %s\n", mysql_error(CON_CONNECTION(_h)));
+			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			db_mysql_free_dbresult(*_r);
 			*_r = 0;
 			return -3;
@@ -206,7 +206,7 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 	}
 
 	if (db_mysql_convert_result(_h, *_r) < 0) {
-		LOG(L_ERR, "store_result: Error while converting result\n");
+		LM_ERR("error while converting result\n");
 		pkg_free(*_r);
 		*_r = 0;
 		/* all mem on openser API side is already freed by 
@@ -241,12 +241,12 @@ done:
 int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
 {
      if ((!_h) || (!_r)) {
-	     LOG(L_ERR, "db_free_result: Invalid parameter value\n");
+	     LM_ERR("invalid parameter value\n");
 	     return -1;
      }
 
      if (db_mysql_free_dbresult(_r) < 0) {
-	     LOG(L_ERR, "db_free_result: Unable to free result structure\n");
+	     LM_ERR("unable to free result structure\n");
 	     return -1;
      }
      mysql_free_result(CON_RESULT(_h));
@@ -273,7 +273,7 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	int off, ret;
 
 	if (!_h) {
-		LOG(L_ERR, "db_query: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -312,7 +312,7 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	
 	*(sql_buf + off) = '\0';
 	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_query: Error while submitting query\n");
+		LM_ERR("error while submitting query\n");
 		return -2;
 	}
 
@@ -322,7 +322,7 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
 	return 0;
 
  error:
-	LOG(L_ERR, "db_query: Error in snprintf\n");
+	LM_ERR("error in snprintf\n");
 	return -1;
 }
 
@@ -338,7 +338,7 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 	int i;
 
 	if (!_h || !_r || nrows<0) {
-		LOG(L_ERR, "db_fetch_result: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -353,7 +353,7 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 		/* Allocate a new result structure */
 		*_r = db_mysql_new_result();
 		if (*_r == 0) {
-			LOG(L_ERR, "db_fetch_result: No memory left\n");
+			LM_ERR("no memory left\n");
 			return -2;
 		}
 
@@ -364,16 +364,14 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 				(*_r)->n = 0;
 				return 0;
 			} else {
-				LOG(L_ERR,
-					"db_fetch_result: %s\n", mysql_error(CON_CONNECTION(_h)));
+				LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 				db_mysql_free_dbresult(*_r);
 				*_r = 0;
 				return -3;
 			}
 		}
 		if (db_mysql_get_columns(_h, *_r) < 0) {
-			LOG(L_ERR,
-				"db_fetch_result: Error while getting column names\n");
+			LM_ERR("error while getting column names\n");
 			return -4;
 		}
 
@@ -407,22 +405,20 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 
 	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
 	if (!RES_ROWS(*_r)) {
-		LOG(L_ERR, "db_fetch_result: No memory left\n");
+		LM_ERR("no memory left\n");
 		return -5;
 	}
 
 	for(i = 0; i < n; i++) {
 		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
 		if (!CON_ROW(_h)) {
-			LOG(L_ERR,
-				"db_fetch_result: %s\n", mysql_error(CON_CONNECTION(_h)));
+			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
 			RES_ROW_N(*_r) = i;
 			db_free_rows(*_r);
 			return -6;
 		}
 		if (db_mysql_convert_row(_h, *_r, &(RES_ROWS(*_r)[i])) < 0) {
-			LOG(L_ERR,
-				"db_fetch_result: Error while converting row #%d\n", i);
+			LM_ERR("error while converting row #%d\n", i);
 			RES_ROW_N(*_r) = i;
 			db_free_rows(*_r);
 			return -7;
@@ -437,12 +433,12 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 int db_mysql_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
 	if ((!_h) || (!_s)) {
-		LOG(L_ERR, "db_raw_query: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	if (db_mysql_submit_query(_h, _s) < 0) {
-		LOG(L_ERR, "db_raw_query: Error while submitting query\n");
+		LM_ERR("error while submitting query\n");
 		return -2;
 	}
 
@@ -464,7 +460,7 @@ int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	int off, ret;
 
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
-		LOG(L_ERR, "db_insert: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -488,13 +484,13 @@ int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	*(sql_buf + off) = '\0';
 
 	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-	        LOG(L_ERR, "db_insert: Error while submitting query\n");
+	        LM_ERR("error while submitting query\n");
 		return -2;
 	}
 	return 0;
 
  error:
-	LOG(L_ERR, "db_insert: Error in snprintf\n");
+	LM_ERR("error in snprintf\n");
 	return -1;
 }
 
@@ -512,7 +508,7 @@ int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _
 	int off, ret;
 
 	if (!_h) {
-		LOG(L_ERR, "db_delete: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -533,13 +529,13 @@ int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _
 
 	*(sql_buf + off) = '\0';
 	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_delete: Error while submitting query\n");
+		LM_ERR("error while submitting query\n");
 		return -2;
 	}
 	return 0;
 
  error:
-	LOG(L_ERR, "db_delete: Error in snprintf\n");
+	LM_ERR("error in snprintf\n");
 	return -1;
 }
 
@@ -561,7 +557,7 @@ int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	int off, ret;
 
 	if ((!_h) || (!_uk) || (!_uv) || (!_un)) {
-		LOG(L_ERR, "db_update: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -586,13 +582,13 @@ int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	}
 
 	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_update: Error while submitting query\n");
+		LM_ERR("error while submitting query\n");
 		return -2;
 	}
 	return 0;
 
  error:
-	LOG(L_ERR, "db_update: Error in snprintf\n");
+	LM_ERR("error in snprintf\n");
 	return -1;
 }
 
@@ -605,7 +601,7 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 	int off, ret;
 
 	if (!handle || !keys || !vals) {
-		LOG(L_ERR, "db_replace: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -629,13 +625,13 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 	*(sql_buf + off) = '\0';
 
 	if (db_mysql_submit_query(handle, sql_buf) < 0) {
-	        LOG(L_ERR, "db_replace: Error while submitting query\n");
+	        LM_ERR("error while submitting query\n");
 		return -2;
 	}
 	return 0;
 
  error:
-	LOG(L_ERR, "db_replace: Error in snprintf\n");
+	LM_ERR("error in snprintf\n");
 	return -1;
 }
 
@@ -646,7 +642,7 @@ int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 int db_last_inserted_id(db_con_t* _h)
 {
 	if (!_h) {
-		LOG(L_ERR, "db_last_inserted_id: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 	return mysql_insert_id(CON_CONNECTION(_h));
@@ -665,7 +661,7 @@ int db_last_inserted_id(db_con_t* _h)
 	int off, ret;
  
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
-		LOG(L_ERR, "db_insert_update(): Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
  
@@ -697,12 +693,12 @@ int db_last_inserted_id(db_con_t* _h)
 	*(sql_buf + off) = '\0';
  
 	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LOG(L_ERR, "db_insert: Error while submitting query\n");
+		LM_ERR("error while submitting query\n");
 		return -2;
 	}
 	return 0;
 
- error:
-		 LOG(L_ERR, "db_insert: Error in snprintf\n");
+error:
+	LM_ERR("error in snprintf\n");
  return -1;
 }

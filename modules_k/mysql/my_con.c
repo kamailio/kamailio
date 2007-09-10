@@ -38,13 +38,13 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 	struct my_con* ptr;
 
 	if (!id) {
-		LOG(L_ERR, "new_connection: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr) {
-		LOG(L_ERR, "new_connection: No memory left\n");
+		LM_ERR("no private memory left\n");
 		return 0;
 	}
 
@@ -53,14 +53,14 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 	
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
-		LOG(L_ERR, "new_connection: No enough memory\n");
+		LM_ERR("no private memory left\n");
 		goto err;
 	}
 
 	mysql_init(ptr->con);
 
 	if (id->port) {
-		DBG("new_connection: Opening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
+		LM_DBG("ppening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
 		    ZSW(id->username),
 		    ZSW(id->password),
 		    ZSW(id->host),
@@ -68,7 +68,7 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 		    ZSW(id->database)
 		    );
 	} else {
-		DBG("new_connection: Opening MySQL connection: mysql://%s:%s@%s/%s\n",
+		LM_DBG("opening MySQL connection: mysql://%s:%s@%s/%s\n",
 		    ZSW(id->username),
 		    ZSW(id->password),
 		    ZSW(id->host),
@@ -83,16 +83,16 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password,
 				id->database, id->port, 0, 0)) {
 #endif
-		LOG(L_ERR, "new_connection: %s\n", mysql_error(ptr->con));
+		LM_ERR("driver error: %s\n", mysql_error(ptr->con));
 		mysql_close(ptr->con);
 		goto err;
 	}
 	/* force reconnection */
 	ptr->con->reconnect = 1;
 
-	DBG("new_connection: Connection type is %s\n", mysql_get_host_info(ptr->con));
-	DBG("new_connection: Protocol version is %d\n", mysql_get_proto_info(ptr->con));
-	DBG("new_connection: Server version is %s\n", mysql_get_server_info(ptr->con));
+	LM_DBG("connection type is %s\n", mysql_get_host_info(ptr->con));
+	LM_DBG("protocol version is %d\n", mysql_get_proto_info(ptr->con));
+	LM_DBG("server version is %s\n", mysql_get_server_info(ptr->con));
 
 
 	ptr->timestamp = time(0);
