@@ -1,13 +1,14 @@
 timer module
 ============
 
-Author: tomas.mandys at iptel dot org
+Author: tomas.mandys at iptel dot org
 
-enable set timers in script
+Timer support directly from script. Core trigger will trigger specific route block.
 
 mod_params
 -----------
-declare_timer = (route#|route_name)   route#|route_name , interval, ("slow"/"fast") , "start"
+timer_id = alphanum
+declare_timer = timer_id "=" (route#|route_name) "," interval "," ("slow" | "fast") "," ["enable"]
 
 format:
 
@@ -15,24 +16,14 @@ format:
 commands
 --------
 
-timer_enable(timer#, 0|1)
+timer_enable(timer_id, 0|1)
 
 
 selects
 -------
 
-@timer[timer#].enabled
-
-
-m4 processor
-------------
-
-define(`declare_timer', `gen_id(`declare_timer_cnt') define(`$1', indir(`declare_timer_cnt')) modparam("`timer'", "`declare_timer'", $2)')
-
-usage:
-
-declare_timer(TIMER_1, "TIMER_ROUTE,1000");
-declare_timer(TIMER_2, "2,1000,slow,enable");
+@timer.timer.timer_id.enabled
+@timer.executed  ... name of executed timer from called route script
 
 
 Examples:
@@ -40,18 +31,23 @@ Examples:
 1) example
 
 loadmodule "modules/xlog/xlog.so"
-loadmodule "../../mods/timer/trunk/timer.so"
+loadmodule "/modules/timer/timer.so"
 
-modparam("timer", "declare_timer", "ONTIMER,1000");  #0
-modparam("timer", "declare_timer", "ONTIMER2,2000,slow,enable"); #1
+modparam("timer", "declare_timer", "tmr1=ONTIMER,1000"); 
+modparam("timer", "declare_timer", "tmr2=ONTIMER2,2000,slow,enable");
+
+route["print"] {
+	xlog("L_INFO", "fired: %@timer.executed\n");
+}
 
 route["ONTIMER"] {
 	# do something
-}
+	route("print");}
 
 
 route["ONTIMER2"] {
 	# do something
-	timer_enable(0, 0);
+	timer_enable("tmr1", 0);
+	route("print");
 }
 
