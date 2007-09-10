@@ -9,7 +9,6 @@ include ../../Makefile.defs
 
 auto_gen=
 NAME=eval.so
-LIBS=-luuid
 
 include ../../Makefile.modules
 

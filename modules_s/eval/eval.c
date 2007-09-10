@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <uuid/uuid.h>
 #include "../../route.h"
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
@@ -589,7 +588,7 @@ static int eval_xl(struct sip_msg *msg, xl_elog_t* xl, str* s) {
 	return 1;
 }
 
-static int sel_gen_uuid(str* res, select_t* s, struct sip_msg* msg);
+SELECT_F(select_sys_unique)
 
 static int eval_location(struct sip_msg *msg, struct eval_location* so, struct eval_value* v, int get_static_str) {
 	static struct eval_str ss;
@@ -693,7 +692,7 @@ static int eval_location(struct sip_msg *msg, struct eval_location* so, struct e
 				}
 				case esofUuid: {
 					str s;
-					sel_gen_uuid(&s, 0, msg);
+					select_sys_unique(&s, 0, msg);
 					if (get_static_str) {
 						ss.s = s;
 						ss.cnt = 0;
@@ -917,9 +916,7 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 			si->value.type = evtInt;
 			si->value.u.n = n;
 			insert_stack_item(si, pivot, so->oper_type == esotAddValue);
-			if (so->oper_type == esotAddValue) {
-				pivot = si;
-			}
+			pivot = si;
 			for (i=0; i<n; i++) {
 				si = pkg_malloc(sizeof(*si));
 				if (!si) {
@@ -935,10 +932,8 @@ static int eval_stack_oper_func(struct sip_msg *msg, char *param1, char *param2)
 				}
 				si->value.type = evtStr;
 				si->value.u.s = es;
-				insert_stack_item(si, pivot, so->oper_type == esotAddValue);
-				if (so->oper_type == esotAddValue) {
-					pivot = si;
-				}
+				insert_stack_item(si, pivot, 1);
+				pivot = si;
 			}
 			destroy_value(v);
 			return 1;
@@ -1088,7 +1083,7 @@ static struct eval_function_def eval_functions[] = {
 	{esftSubValue, "subval", 3},
 	{esftValueCount, "valcount", 1},
 	{esftValueConcat, "valconcat", 1},
-	{esftStrValueAt, "strvalat", 1},
+	{esftStrValueAt, "strvalat", 2},
 	{esftGetUri, "geturi", 1},
 	{esftAnd, "&&", 2},
 	{esftOr, "||", 2},
@@ -1975,16 +1970,6 @@ static int sel_get(str* res, select_t* s, struct sip_msg* msg) {
 	return 0;
 }
 
-static int sel_gen_uuid(str* res, select_t* s, struct sip_msg* msg) {
-	static char buff[36+1];
-	uuid_t u;
-	uuid_generate(u);
-	uuid_unparse(u, buff);
-	res->s = buff;
-	res->len = strlen(buff);
-	return 0;
-}
-
 SELECT_F(select_any_nameaddr)
 SELECT_F(select_any_uri)
 
@@ -2000,7 +1985,8 @@ select_row_t sel_declaration[] = {
 	{ sel_register, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ sel_register, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
 
-	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("uuid"), sel_gen_uuid, 0},
+	/* for backward compatability only, use @sys.unique */
+	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("uuid"), select_sys_unique, 0},
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };

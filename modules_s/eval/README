@@ -278,7 +278,7 @@ if (@eval.reg.ax == @eval.get[0]) {
 Note that @eval.get and @eval.reg support select_any_uri and select_any_nameaddr
 
 @eval.uuid
-Generates uuid (note that is returned at plain static buffer, @eval.uuid==@eval.uuid returns always TRUE, it's core select result manipulation bug)
+Generates uuid, obsolete use @sys.unique
 
 Operators/functions
 -------------------
