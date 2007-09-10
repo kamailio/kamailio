@@ -1283,6 +1283,10 @@ exp_elem:
 		onsend_check("snd_ip");
 		$$=mk_elem($2, SNDIP_O, 0, STRING_ST, $3);
 	}
+	| SNDIP equalop attr_id_val	{
+		onsend_check("snd_ip");
+	    $$=mk_elem($2, SNDIP_O, 0, AVP_ST, (void*)$3 ); 
+	}
 	| SNDIP equalop MYSELF  {
 		onsend_check("snd_ip");
 		$$=mk_elem($2, SNDIP_O, 0, MYSELF_ST, 0);
@@ -1309,6 +1313,10 @@ exp_elem:
 	| TOIP strop host	{
 		onsend_check("to_ip");
 		$$=mk_elem($2, TOIP_O, 0, STRING_ST, $3);
+	}
+	| TOIP equalop attr_id_val	{
+		onsend_check("to_ip");
+	    $$=mk_elem($2, TOIP_O, 0, AVP_ST, (void*)$3 ); 
 	}
 	| TOIP equalop MYSELF  {
 		onsend_check("to_ip");

@@ -703,24 +703,35 @@ error:
 inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
 {
 	int ret;
+	int_str val;
+	avp_t* avp;
+	char* right;
 
 	ret=-1;
+	if (rtype == AVP_ST) {
+		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
+		if (avp && (avp->flags & AVP_VAL_STR)) right = val.s.s;
+		else return 0; /* Always fail */
+	} else if (rtype == STRING_ST) {
+		right = r->str.s;
+	}
+
 	switch(op){
 		case EQUAL_OP:
-			if (rtype!=STRING_ST){
+			if (rtype!=STRING_ST && rtype!=AVP_ST){
 				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
-						"string expected\n", rtype);
+						"string or attr expected\n", rtype);
 				goto error;
 			}
-			ret=(strcasecmp(left, r->str.s)==0);
+			ret=(strcasecmp(left, right)==0);
 			break;
 		case DIFF_OP:
-			if (rtype!=STRING_ST){
+			if (rtype!=STRING_ST && rtype!=AVP_ST){
 				LOG(L_CRIT, "BUG: comp_string: bad type %d, "
-						"string expected\n", rtype);
+						"string or attr expected\n", rtype);
 				goto error;
 			}
-			ret=(strcasecmp(left, r->str.s)!=0);
+			ret=(strcasecmp(left, right)!=0);
 			break;
 		case MATCH_OP:
 			if (rtype!=RE_ST){
@@ -874,6 +885,7 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 					goto error_op;
 			}
 			break;
+		case AVP_ST:
 		case STRING_ST:
 		case RE_ST:
 			switch(op){
