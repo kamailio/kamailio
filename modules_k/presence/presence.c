@@ -584,8 +584,8 @@ error:
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 {
 	subs_t subs;
-	db_key_t query_cols[3], result_cols[5], update_cols[5];
-	db_val_t query_vals[3], update_vals[2];
+	db_key_t query_cols[6], result_cols[5], update_cols[5];
+	db_val_t query_vals[6], update_vals[5];
 	int n_update_cols= 0, n_result_cols= 0, n_query_cols = 0;
 	db_res_t* result= NULL;
 	db_row_t *row ;	
@@ -594,7 +594,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	str w_user, w_domain, reason;
 	int status;
 	int status_col, w_user_col, w_domain_col, reason_col;
-	int u_status_col, u_reason_col;
+	int u_status_col, u_reason_col, q_wuser_col, q_wdomain_col;
 	subs_t* subs_array= NULL,* s;
 	unsigned int hash_code;
 				
@@ -658,6 +658,16 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	if(result->n<= 0)
 		goto done;
 
+	query_cols[q_wuser_col=n_query_cols]= "w_user";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	n_query_cols++;
+
+	query_cols[q_wdomain_col=n_query_cols]= "w_domain";
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	n_query_cols++;
+
 	hash_code= core_hash(&pres_uri, &ev->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 
@@ -691,6 +701,9 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 												  reason.len)))
 		{
 			/* update in watchers_table */
+			query_vals[q_wuser_col].val.str_val= w_user; 
+			query_vals[q_wdomain_col].val.str_val= w_domain; 
+
 			update_vals[u_status_col].val.int_val= subs.status;
 			update_vals[u_reason_col].val.str_val= subs.reason;
 			if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
