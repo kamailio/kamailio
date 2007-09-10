@@ -704,7 +704,7 @@ int pv_get_dlg_lifetime(struct sip_msg *msg, pv_param_t *param,
 }
 
 
-int it_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
+int pv_get_dlg_status(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
 	int l = 0;
