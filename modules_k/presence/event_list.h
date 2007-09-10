@@ -126,6 +126,7 @@ void destroy_evlist(void);
 extern evlist_t* EvList;
 
 pres_ev_t* search_event(event_t* event);
+typedef pres_ev_t* (*search_event_t)(event_t* event);
 
 event_t* shm_copy_event(event_t* e);
 

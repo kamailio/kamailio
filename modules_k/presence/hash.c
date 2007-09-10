@@ -212,8 +212,7 @@ error:
 	return -1;
 }
 
-int delete_shtable(shtable_t htable,unsigned int hash_code, 
-		str pres_uri, str ev_stored_name, str to_tag)
+int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
 {
 	subs_t* s= NULL, *ps= NULL;
 	int found= -1;

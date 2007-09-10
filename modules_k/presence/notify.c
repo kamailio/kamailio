@@ -1540,8 +1540,7 @@ void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 		c_back_param*  cb= (c_back_param*)(*ps->param);
 
 		hash_code= core_hash(&cb->pres_uri, &cb->ev_name, shtable_size);
-		delete_shtable(subs_htable, hash_code,cb->pres_uri, cb->ev_name,
-				cb->to_tag);
+		delete_shtable(subs_htable, hash_code, cb->to_tag);
 
 		delete_db_subs(cb->pres_uri, cb->ev_name, cb->to_tag);
 

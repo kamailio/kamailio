@@ -42,6 +42,7 @@ int bind_presence(presence_api_t* api)
 	
 	api->add_event = add_event;
 	api->contains_event= contains_event;
+	api->search_event= search_event;
 	api->get_event_list= get_event_list;
 	api->update_watchers_status= update_watchers_status;
 	api->new_shtable= new_shtable;
@@ -50,6 +51,9 @@ int bind_presence(presence_api_t* api)
     api->search_shtable= search_shtable;
     api->delete_shtable= delete_shtable;
     api->update_shtable= update_shtable;
+	api->mem_copy_subs= mem_copy_subs;
+	api->update_db_subs= update_db_subs;
+	api->extract_sdialog_info= extract_sdialog_info;
 	return 0;
 }
 

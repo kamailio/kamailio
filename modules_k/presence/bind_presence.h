@@ -37,6 +37,7 @@ typedef int (*update_watchers_t)(str pres_uri, pres_ev_t* ev, str* rules_doc);
 typedef struct presence_api {
 	add_event_t add_event;
 	contains_event_t contains_event;
+	search_event_t search_event;
 	get_event_list_t get_event_list;
 	update_watchers_t update_watchers_status;
 	/* subs hash table functions */
@@ -46,6 +47,9 @@ typedef struct presence_api {
 	search_shtable_t search_shtable;
 	delete_shtable_t delete_shtable;
 	update_shtable_t update_shtable;
+	mem_copy_subs_t  mem_copy_subs;
+	update_db_subs_t update_db_subs;
+	extract_sdialog_info_t extract_sdialog_info;
 } presence_api_t;
 
 int bind_presence(presence_api_t* api);

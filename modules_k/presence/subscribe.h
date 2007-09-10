@@ -35,6 +35,7 @@
 struct pres_ev;
 
 #include "event_list.h"
+#include "hash.h"
 
 #define ACTIVE_STATUS        1
 #define PENDING_STATUS       2
@@ -80,13 +81,24 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag);
 
 void timer_db_update(unsigned int ticks,void *param);
 
-int restore_db_subs(void);
-
 int update_subs_db(subs_t* subs, int type);
 
 int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
 	int status, str* reason);
 
 typedef int (*refresh_watcher_t)(str*, str* , str* ,int , str* );
+
+int restore_db_subs(void);
+
+typedef int (*handle_expired_func_t)(subs_t* );
+void update_db_subs(char* db_table, shtable_t hash_table,int htable_size,
+		int no_lock, handle_expired_func_t handle_expired_subs);
+
+typedef void (*update_db_subs_t)(char* ,shtable_t ,int ,int ,
+		handle_expired_func_t);
+
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int* to_tag_gen);
+typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
+		int* to_tag_gen);
 
 #endif

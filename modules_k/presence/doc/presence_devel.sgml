@@ -30,8 +30,26 @@
 typedef struct presence_api {
 	add_event_t add_event;
 	contains_event_t contains_event;
+	search_event_t search_event;
 	get_event_list_t get_event_list;
+	
 	update_watchers_t update_watchers_status;
+	
+	/* subs hash table handling functions */
+	new_shtable_t new_shtable;
+	destroy_shtable_t destroy_shtable;
+	insert_shtable_t insert_shtable;
+	search_shtable_t search_shtable;
+	delete_shtable_t delete_shtable;
+	update_shtable_t update_shtable;
+	/* function to duplicate a subs structure*/
+	mem_copy_subs_t  mem_copy_subs;
+	/* function used for update in database*/
+	update_db_subs_t update_db_subs;
+	/* function to extract dialog information from a
+	SUBSCRIBE message */
+	extract_sdialog_info_t extract_sdialog_info;
+
 }presence_api_t;
 ...
 </programlisting>

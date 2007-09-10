@@ -35,8 +35,7 @@
 
 #define FULL_STATE_FLAG (1<<0)
 #define PARTIAL_STATE_FLAG (1<<1)
-//extern char p_event[10] ;
-//extern char wi_event[16] ;
+
 #define PRES_LEN 8
 #define PWINFO_LEN 14
 #define BLA_LEN 10

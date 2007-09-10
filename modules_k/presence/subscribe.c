@@ -53,7 +53,7 @@ static str pu_400_rpl  = str_init("Bad request");
 int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 {
 	static str hdr_append;
-
+	
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 128));
 	if(hdr_append.s == NULL)
 	{
@@ -312,7 +312,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			/* delete record from hash table also */
 
 			subs->local_cseq= delete_shtable(subs_htable,hash_code,
-					subs->pres_uri, subs->event->name, subs->to_tag);
+					subs->to_tag);
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
@@ -494,30 +494,22 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 
 int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 {
-	struct to_body *pto, *pfrom = NULL, TO;
-	int lexpire;
 	int  to_tag_gen = 0;
-	str rtag_value;
 	subs_t subs;
-	static char buf[50];
-	str rec_route= {0, 0};
-	int error_ret = -1;
-	int rt  = 0;
-	str* contact= NULL;
 	pres_ev_t* event= NULL;
 	event_t* parsed_event= NULL;
 	param_t* ev_param= NULL;
 	int found;
 	str reason= {0, 0};
 	struct sip_uri uri;
-	contact_body_t *b;
+	int error_ret= -1;
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter ++;
 
 	memset(&subs, 0, sizeof(subs_t));
 
-	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
+	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
 
@@ -566,207 +558,21 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		ev_param= ev_param->next;
 	}		
 	
-	/* examine the expire header field */
-	if(msg->expires && msg->expires->body.len > 0)
+	if(extract_sdialog_info(&subs, msg, &to_tag_gen)< 0)
 	{
-		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
-		{
-			LM_ERR("cannot parse Expires header\n");
-			goto error;
-		}
-		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
-		LM_DBG("'Expires' header found, value= %d\n", lexpire);
-
-	}
-	else 
-	{
-		LM_DBG("'expires' not found; default=%d\n",event->default_expires);
-		lexpire = event->default_expires;
-	}
-	if(lexpire > max_expires)
-		lexpire = max_expires;
-
-	subs.expires = lexpire;
-
-	if( msg->to==NULL || msg->to->body.s==NULL)
-	{
-		LM_ERR("cannot parse TO header\n");
+		LM_ERR("while extracting dialog information\n");
 		goto error;
 	}
-	/* examine the to header */
-	if(msg->to->parsed != NULL)
-	{
-		pto = (struct to_body*)msg->to->parsed;
-		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
-	}
-	else
-	{
-		memset( &TO , 0, sizeof(TO) );
-		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO));
-		{
-			LM_DBG("'To' header NOT parsed\n");
-			goto error;
-		}
-		pto = &TO;
-	}
-
-	if( pto->parsed_uri.user.s && pto->parsed_uri.host.s &&
-		pto->parsed_uri.user.len && pto->parsed_uri.host.len)
-	{
-		subs.to_user = pto->parsed_uri.user;
-		subs.to_domain = pto->parsed_uri.host;
-	}
-	else
-	{
-		if(parse_uri(pto->uri.s, pto->uri.len, &uri)< 0)
-		{
-			LM_ERR("while parsing uri\n");
-			goto error;
-		}
-		subs.to_user = uri.user;
-		subs.to_domain = uri.host;
-	}
-
-	/* examine the from header */
-	if (!msg->from || !msg->from->body.s)
-	{
-		LM_DBG("cannot find 'from' header!\n");
-		goto error;
-	}
-	if (msg->from->parsed == NULL)
-	{
-		LM_DBG("'From' header not parsed\n");
-		/* parsing from header */
-		if ( parse_from_header( msg )<0 ) 
-		{
-			LM_DBG("cannot parse From header\n");
-			goto error;
-		}
-	}
-	pfrom = (struct to_body*)msg->from->parsed;
-	
-	if( pfrom->parsed_uri.user.s && pfrom->parsed_uri.host.s && 
-		pfrom->parsed_uri.user.len && pfrom->parsed_uri.host.len)
-	{
-		subs.from_user = pfrom->parsed_uri.user;
-		subs.from_domain = pfrom->parsed_uri.host;
-	}
-	else
-	{
-		if(parse_uri(pfrom->uri.s, pfrom->uri.len, &uri)< 0)
-		{
-			LM_ERR("while parsing uri\n");
-			goto error;
-		}
-		subs.from_user = uri.user;
-		subs.from_domain = uri.host;
-	}
-
-
-	/*generate to_tag if the message does not have a to_tag*/
-	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
-	{  
-		LM_DBG("generating to_tag\n");
-		to_tag_gen = 1;
-		/*generate to_tag then insert it in avp*/
-		
-		rtag_value.s = buf;
-		rtag_value.len = sprintf(rtag_value.s,"%s.%d.%d.%d", to_tag_pref,
-				pid, (int)time(NULL), counter);
-		if(rtag_value.len<= 0)
-		{
-			LM_ERR("while creating to_tag\n");
-			goto error;
-		}
-	}
-	else
-	{
-		rtag_value=pto->tag_value;
-	}
-	subs.to_tag = rtag_value;
-
-	if( msg->callid==NULL || msg->callid->body.s==NULL)
-	{
-		LM_ERR("cannot parse callid header\n");
-		goto error;
-	}
-	subs.callid = msg->callid->body;
-
-	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
-	{
-		LM_ERR("cannot parse cseq header\n");
-		goto error;
-	}
-	if (str2int( &(get_cseq(msg)->number), &subs.remote_cseq)!=0 )
-	{
-		LM_ERR("cannot parse cseq number\n");
-		goto error;
-	}
-	if( msg->contact==NULL || msg->contact->body.s==NULL)
-	{
-		LM_ERR("cannot parse contact header\n");
-		goto error;
-	}
-	if( parse_contact(msg->contact) <0 )
-	{
-		LM_ERR(" cannot parse contact"
-				" header\n");
-		goto error;
-	}
-	b= (contact_body_t* )msg->contact->parsed;
-
-	if(b == NULL)
-	{
-		LM_ERR("cannot parse contact header\n");
-		goto error;
-	}
-	subs.contact = b->contacts->uri;
-
-	LM_DBG("subs.contact= %.*s - len = %d\n",subs.contact.len,
-			subs.contact.s, subs.contact.len);	
-
-	/*process record route and add it to a string*/
-	if (msg->record_route!=NULL)
-	{
-		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
-		if(rt != 0)
-		{
-			LM_ERR("processing the record route [%d]\n", rt);	
-			rec_route.s=NULL;
-			rec_route.len=0;
-		//	goto error;
-		}
-	}
-	subs.record_route = rec_route;
-			
-	subs.sockinfo_str= msg->rcv.bind_address->sock_str;
-
-	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
-	{
-		LM_ERR("no from tag value present\n");
-		goto error;
-	}
-	subs.from_tag = pfrom->tag_value;
-
-	subs.version = 0;
-	
-	if((!server_address.s) || (server_address.len== 0))
-	{
-		contact= get_local_contact(msg);
-		if(contact== NULL)
-		{
-			LM_ERR("in function get_local_contact\n");
-			goto error;
-		}
-		subs.local_contact= *contact;
-	}
-	else
-		subs.local_contact= server_address;
 
 	/* getting presentity uri from Request-URI if initial subscribe - or else from database*/
 	if(to_tag_gen)
 	{
-		subs.pres_uri= msg->first_line.u.request.uri;
+		if(uandd_to_uri(msg->parsed_uri.user, msg->parsed_uri.host,
+					&subs.pres_uri)< 0)
+		{
+			LM_ERR("while constructing uri from user and domain\n");
+			goto error;
+		}
 	}
 	else
 	{
@@ -857,7 +663,7 @@ after_status:
 		goto error;
 	}
 	
-	if( update_subscription(msg, &subs, &rtag_value, to_tag_gen) <0 )
+	if( update_subscription(msg, &subs, &subs.to_tag, to_tag_gen) <0 )
 	{	
 		LM_ERR("in update_subscription\n");
 		goto error;
@@ -869,21 +675,15 @@ after_status:
 	}
 	if(reason.s)
 		pkg_free(reason.s);
-
-	if(subs.record_route.s)
-		pkg_free(subs.record_route.s);
 	
-	if(to_tag_gen== 0)
+	if(subs.pres_uri.s)
+		pkg_free(subs.pres_uri.s);
+	
+	if((!server_address.s) || (server_address.len== 0))
 	{
-		if(subs.pres_uri.s)
-			pkg_free(subs.pres_uri.s);
+		pkg_free(subs.local_contact.s);
 	}
-	if(contact)
-	{	
-		if(contact->s)
-			pkg_free(contact->s);
-		pkg_free(contact);
-	}
+
 	return 1;
 
 bad_event:
@@ -900,20 +700,9 @@ bad_event:
 
 error:
 
-	if(subs.record_route.s)
-		pkg_free(subs.record_route.s);
-
-	if(to_tag_gen== 0)
-	{
-		if(subs.pres_uri.s)
-			pkg_free(subs.pres_uri.s);
-	}
-	if(contact)
-	{	
-		if(contact->s)
-			pkg_free(contact->s);
-		pkg_free(contact);
-	}
+	if(subs.pres_uri.s)
+		pkg_free(subs.pres_uri.s);
+	
 	if(subs.auth_rules_doc)
 	{
 		if(subs.auth_rules_doc->s)
@@ -923,9 +712,235 @@ error:
 	if(reason.s)
 		pkg_free(reason.s);
 
+	if(((!server_address.s) ||(server_address.len== 0))&& subs.local_contact.s)
+	{
+		pkg_free(subs.local_contact.s);
+	}
+	if(subs.record_route.s)
+		pkg_free(subs.record_route.s);
+
 	return error_ret;
 
 }
+
+
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int* to_tag_gen)
+{
+	static char buf[50];
+	str rec_route= {0, 0};
+	int rt  = 0;
+	str* contact= NULL;
+	contact_body_t *b;
+	struct to_body *pto, *pfrom = NULL, TO;
+	int lexpire;
+	str rtag_value;
+	struct sip_uri uri;
+
+	/* examine the expire header field */
+	if(msg->expires && msg->expires->body.len > 0)
+	{
+		if (!msg->expires->parsed && (parse_expires(msg->expires) < 0))
+		{
+			LM_ERR("cannot parse Expires header\n");
+			goto error;
+		}
+		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
+		LM_DBG("'Expires' header found, value= %d\n", lexpire);
+
+	}
+	else 
+	{
+		LM_DBG("'expires' not found; default=%d\n",subs->event->default_expires);
+		lexpire = subs->event->default_expires;
+	}
+	if(lexpire > max_expires)
+		lexpire = max_expires;
+
+	subs->expires = lexpire;
+
+	if( msg->to==NULL || msg->to->body.s==NULL)
+	{
+		LM_ERR("cannot parse TO header\n");
+		goto error;
+	}
+	/* examine the to header */
+	if(msg->to->parsed != NULL)
+	{
+		pto = (struct to_body*)msg->to->parsed;
+		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
+	}
+	else
+	{
+		memset( &TO , 0, sizeof(TO) );
+		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO));
+		{
+			LM_DBG("'To' header NOT parsed\n");
+			goto error;
+		}
+		pto = &TO;
+	}
+
+	if( pto->parsed_uri.user.s && pto->parsed_uri.host.s &&
+		pto->parsed_uri.user.len && pto->parsed_uri.host.len)
+	{
+		subs->to_user = pto->parsed_uri.user;
+		subs->to_domain = pto->parsed_uri.host;
+	}
+	else
+	{
+		if(parse_uri(pto->uri.s, pto->uri.len, &uri)< 0)
+		{
+			LM_ERR("while parsing uri\n");
+			goto error;
+		}
+		subs->to_user = uri.user;
+		subs->to_domain = uri.host;
+	}
+
+	/* examine the from header */
+	if (!msg->from || !msg->from->body.s)
+	{
+		LM_DBG("cannot find 'from' header!\n");
+		goto error;
+	}
+	if (msg->from->parsed == NULL)
+	{
+		LM_DBG("'From' header not parsed\n");
+		/* parsing from header */
+		if ( parse_from_header( msg )<0 ) 
+		{
+			LM_DBG("cannot parse From header\n");
+			goto error;
+		}
+	}
+	pfrom = (struct to_body*)msg->from->parsed;
+	
+	if( pfrom->parsed_uri.user.s && pfrom->parsed_uri.host.s && 
+		pfrom->parsed_uri.user.len && pfrom->parsed_uri.host.len)
+	{
+		subs->from_user = pfrom->parsed_uri.user;
+		subs->from_domain = pfrom->parsed_uri.host;
+	}
+	else
+	{
+		if(parse_uri(pfrom->uri.s, pfrom->uri.len, &uri)< 0)
+		{
+			LM_ERR("while parsing uri\n");
+			goto error;
+		}
+		subs->from_user = uri.user;
+		subs->from_domain = uri.host;
+	}
+
+
+	/*generate to_tag if the message does not have a to_tag*/
+	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
+	{  
+		LM_DBG("generating to_tag\n");
+		*to_tag_gen = 1;
+		/*generate to_tag then insert it in avp*/
+		
+		rtag_value.s = buf;
+		rtag_value.len = sprintf(rtag_value.s,"%s.%d.%d.%d", to_tag_pref,
+				pid, (int)time(NULL), counter);
+		if(rtag_value.len<= 0)
+		{
+			LM_ERR("while creating to_tag\n");
+			goto error;
+		}
+	}
+	else
+	{
+		*to_tag_gen = 0;
+		rtag_value=pto->tag_value;
+	}
+	subs->to_tag = rtag_value;
+
+	if( msg->callid==NULL || msg->callid->body.s==NULL)
+	{
+		LM_ERR("cannot parse callid header\n");
+		goto error;
+	}
+	subs->callid = msg->callid->body;
+
+	if( msg->cseq==NULL || msg->cseq->body.s==NULL)
+	{
+		LM_ERR("cannot parse cseq header\n");
+		goto error;
+	}
+	if (str2int( &(get_cseq(msg)->number), &subs->remote_cseq)!=0 )
+	{
+		LM_ERR("cannot parse cseq number\n");
+		goto error;
+	}
+	if( msg->contact==NULL || msg->contact->body.s==NULL)
+	{
+		LM_ERR("cannot parse contact header\n");
+		goto error;
+	}
+	if( parse_contact(msg->contact) <0 )
+	{
+		LM_ERR(" cannot parse contact"
+				" header\n");
+		goto error;
+	}
+	b= (contact_body_t* )msg->contact->parsed;
+
+	if(b == NULL)
+	{
+		LM_ERR("cannot parse contact header\n");
+		goto error;
+	}
+	subs->contact = b->contacts->uri;
+
+	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
+			subs->contact.s, subs->contact.len);	
+
+	/*process record route and add it to a string*/
+	if (msg->record_route!=NULL)
+	{
+		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
+		if(rt != 0)
+		{
+			LM_ERR("processing the record route [%d]\n", rt);	
+			rec_route.s=NULL;
+			rec_route.len=0;
+		//	goto error;
+		}
+	}
+	subs->record_route = rec_route;
+			
+	subs->sockinfo_str= msg->rcv.bind_address->sock_str;
+
+	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
+	{
+		LM_ERR("no from tag value present\n");
+		goto error;
+	}
+	subs->from_tag = pfrom->tag_value;
+
+	subs->version = 0;
+	
+	if((!server_address.s) || (server_address.len== 0))
+	{
+		contact= get_local_contact(msg);
+		if(contact== NULL)
+		{
+			LM_ERR("in function get_local_contact\n");
+			goto error;
+		}
+		subs->local_contact= *contact;
+	}
+	else
+		subs->local_contact= server_address;
+	
+	return 0;
+	
+error:
+
+	return -1;
+}
+
 
 int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 {	
@@ -1213,7 +1228,7 @@ error:
 }
 
 
-int handle_expired_subs(subs_t* s, subs_t* prev_s)
+int handle_expired_subs(subs_t* s)
 {
 	/* send Notify with state=terminated;reason=timeout */
 	
@@ -1233,7 +1248,19 @@ int handle_expired_subs(subs_t* s, subs_t* prev_s)
 }
 
 void timer_db_update(unsigned int ticks,void *param)
-{
+{	
+	int no_lock;
+
+	if(ticks== 0 && param == NULL)
+		no_lock= 1;
+	
+	update_db_subs(active_watchers_table, subs_htable, 
+			shtable_size, no_lock, handle_expired_subs);
+}
+
+void update_db_subs(char* db_table, shtable_t hash_table,
+	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
+{	
 	db_key_t query_cols[22], update_cols[7], result_cols[6];
 	db_val_t query_vals[22], update_vals[7];
 	db_op_t update_ops[1];
@@ -1245,13 +1272,10 @@ void timer_db_update(unsigned int ticks,void *param)
 		contact_col, local_contact_col, version_col,socket_info_col,reason_col;
 	int u_expires_col, u_local_cseq_col, u_remote_cseq_col, u_version_col, 
 		u_reason_col, u_status_col; 
-	int no_lock= 0, i;
+	int i;
 	subs_t* s= NULL, *prev_s= NULL;
 	int n_query_cols= 0, n_update_cols= 0;
 	int n_query_update;
-
-	if(ticks== 0 && param == NULL)
-		no_lock= 1;
 
 	query_cols[pres_uri_col= n_query_cols] ="pres_uri";
 	query_vals[pres_uri_col].type = DB_STR;
@@ -1393,33 +1417,32 @@ void timer_db_update(unsigned int ticks,void *param)
 		LM_ERR("null database connection\n");
 		return;
 	}
-	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
+	if(pa_dbf.use_table(pa_db, db_table)< 0)
 	{
 		LM_ERR("in use table\n");
 		return ;
 	}
-
-	for(i=0; i<shtable_size; i++) 
+	for(i=0; i<htable_size; i++) 
 	{
 		if(!no_lock)
-			lock_get(&subs_htable[i].lock);	
+			lock_get(&hash_table[i].lock);	
 
-		prev_s= subs_htable[i].entries;
+		prev_s= hash_table[i].entries;
 		s= prev_s->next;
 	
 		while(s)
 		{
 			printf_subs(s);
-			if(s->expires < ((int)time(NULL)- 50))	
+			if(s->expires < (int)time(NULL)- 50)	
 			{
 				LM_DBG("Found expired record\n");
 				if(!no_lock)
 				{
-					if(handle_expired_subs(s, prev_s)< 0)
+					if(handle_expired_func(s)< 0)
 					{
 						LM_ERR("in function handle_expired_record\n");
 						if(!no_lock)
-							lock_release(&subs_htable[i].lock);	
+							lock_release(&hash_table[i].lock);	
 						return ;
 					}
 				}
@@ -1458,7 +1481,7 @@ void timer_db_update(unsigned int ticks,void *param)
 					{
 						LM_ERR("updating in database\n");
 						if(!no_lock)
-							lock_release(&subs_htable[i].lock);	
+							lock_release(&hash_table[i].lock);	
 						return ;
 					}
 					break;
@@ -1492,7 +1515,7 @@ void timer_db_update(unsigned int ticks,void *param)
 					{
 						LM_ERR("unsuccessful sql insert\n");
 						if(!no_lock)
-							lock_release(&subs_htable[i].lock);
+							lock_release(&hash_table[i].lock);
 						return ;
 					}
 					break;										
@@ -1504,7 +1527,7 @@ void timer_db_update(unsigned int ticks,void *param)
 			s= s->next;
 		}
 		if(!no_lock)
-			lock_release(&subs_htable[i].lock);	
+			lock_release(&hash_table[i].lock);	
 	}
 
 	update_vals[0].val.int_val= (int)time(NULL)- 10;

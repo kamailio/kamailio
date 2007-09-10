@@ -30,7 +30,6 @@
 #ifndef PS_HASH_H
 #define PS_HASH_H
 
-#include "subscribe.h"
 #include "../../lock_ops.h"
 
 #define REMOTE_TYPE   1<<1
@@ -52,10 +51,11 @@
 #define SHM_MEM_TYPE     1<< 2
 
 /* subscribe hash entry */
+struct subscription;
 
 typedef struct subs_entry
 {
-	subs_t* entries;
+	struct subscription* entries;
 	gen_lock_t lock;
 }subs_entry_t;	
 
@@ -63,40 +63,40 @@ typedef subs_entry_t* shtable_t;
 
 shtable_t new_shtable(int hash_size);
 
-subs_t* search_shtable(shtable_t htable, str callid,str to_tag,str from_tag,
+struct subscription* search_shtable(shtable_t htable, str callid,str to_tag,str from_tag,
 		unsigned int hash_code);
 
-int insert_shtable(shtable_t htable, unsigned int hash_code, subs_t* subs);
+int insert_shtable(shtable_t htable, unsigned int hash_code, struct subscription* subs);
 
-int delete_shtable(shtable_t htable, unsigned int hash_code, str pres_uri,
-		str ev_stored_name, str to_tag);
+int delete_shtable(shtable_t htable, unsigned int hash_code, str to_tag);
 
-int update_shtable(shtable_t htable, unsigned int hash_code, subs_t* subs,
+int update_shtable(shtable_t htable, unsigned int hash_code, struct subscription* subs,
 		int type);
 
-subs_t* mem_copy_subs(subs_t* s, int mem_type);
+struct subscription* mem_copy_subs(struct subscription* s, int mem_type);
 
-void free_subs_list(subs_t* s_array, int mem_type);
+void free_subs_list(struct subscription* s_array, int mem_type);
 
 void destroy_shtable(shtable_t htable, int hash_size);
 
 /* subs htable functions type definitions */
 typedef shtable_t (*new_shtable_t)(int hash_size);
 
-typedef subs_t* (*search_shtable_t)(shtable_t htable, str callid,str to_tag,
+typedef struct subscription* (*search_shtable_t)(shtable_t htable, str callid,str to_tag,
 		str from_tag, unsigned int hash_code);
 
 typedef int (*insert_shtable_t)(shtable_t htable, unsigned int hash_code,
-		subs_t* subs);
+		struct subscription* subs);
 
 typedef int (*delete_shtable_t)(shtable_t htable, unsigned int hash_code,
-		str pres_uri, str ev_stored_name, str to_tag);
+		str to_tag);
 
 typedef int (*update_shtable_t)(shtable_t htable, unsigned int hash_code,
-		subs_t* subs, int type);
+		struct subscription* subs, int type);
 
 typedef void (*destroy_shtable_t)(shtable_t htable, int hash_size);
 
+typedef struct subscription* (*mem_copy_subs_t)(struct subscription* s, int mem_type);
 
 
 /* presentity hash table */
