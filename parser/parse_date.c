@@ -134,7 +134,8 @@ static int rfc1123totm (char *stime, struct tm *ttm ) {
 	ptime+=2;
 
 	/* " GMT" */
-	if (memcmp(ptime," GMT", strlen(" GMT"))) return -15;
+	uval = READ(ptime);
+	if ((uval | 0x20202020) != 0x746d6720) return -15;
 
 	return 0;
 }
@@ -173,7 +174,8 @@ char* parse_date(char *buffer, char *end, struct date_body *db)
 	}
 	LOG(L_ERR, "ERROR: Date EoL expected\n");
 error:
-	LOG(L_ERR,"ERROR: parse_date: parse error\n");
+	LOG(L_ERR,"ERROR: parse_date: parse error: \"%.*s\" (%d)\n",
+				i1, buffer, i1);
 	return p;
 }
 
