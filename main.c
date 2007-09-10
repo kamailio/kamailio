@@ -296,6 +296,8 @@ int log_facility = LOG_DAEMON;
 int config_check = 0;
 /* check if reply first via host==us */
 int check_via =  0;
+/* translate user=phone URIs to TEL URIs */
+int phone2tel = 1;
 /* shall use stateful synonym branches? faster but not reboot-safe */
 int syn_branch = 1;
 /* debugging level for memory stats */

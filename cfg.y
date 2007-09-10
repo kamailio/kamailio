@@ -82,7 +82,9 @@
  *              RT_POLICY, RT_TIMER1_PRIO, RT_TIMER1_POLICY, RT_TIMER2_PRIO,
  *              RT_TIMER2_POLICY (andrei)
  * 2007-06-16  added DDNS_SRV_LB, DNS_TRY_NAPTR (andrei)
- */
+ * 2007-09-10  introduced phone2tel option which allows NOT to consider
+ *             user=phone URIs as TEL URIs (jiri)
+*/
 
 %{
 
@@ -301,6 +303,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token STAT
 %token CHILDREN
 %token CHECK_VIA
+%token PHONE2TEL
 %token SYN_BRANCH
 %token MEMLOG
 %token MEMDBG
@@ -379,6 +382,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token STUN_REFRESH_INTERVAL
 %token STUN_ALLOW_STUN
 %token STUN_ALLOW_FP
+
 
 /* operators */
 %nonassoc EQUAL
@@ -642,6 +646,8 @@ assign_stm:
 	| CHILDREN EQUAL error { yyerror("number expected"); }
 	| CHECK_VIA EQUAL NUMBER { check_via=$3; }
 	| CHECK_VIA EQUAL error { yyerror("boolean value expected"); }
+	| PHONE2TEL EQUAL NUMBER { phone2tel=$3; }
+	| PHONE2TEL EQUAL error { yyerror("boolean value expected"); }
 	| SYN_BRANCH EQUAL NUMBER { syn_branch=$3; }
 	| SYN_BRANCH EQUAL error { yyerror("boolean value expected"); }
 	| MEMLOG EQUAL NUMBER { memlog=$3; }
