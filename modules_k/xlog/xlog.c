@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <ctype.h>
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -60,6 +61,17 @@ static int xdbg_fixup(void** param, int param_no);
 
 void destroy(void);
 
+int pv_parse_color_name(pv_spec_p sp, str *in);
+static int pv_get_color(struct sip_msg *msg, pv_param_t *param, 
+		pv_value_t *res);
+
+static pv_export_t mod_items[] = {
+	{ {"C", sizeof("C")-1}, 101, pv_get_color, 0,
+		pv_parse_color_name, 0, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
+
 static cmd_export_t cmds[]={
 	{"xlog",  xlog_1,  1, xdbg_fixup, REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
@@ -86,7 +98,7 @@ struct module_exports exports= {
 	params,
 	0,          /* exported statistics */
 	0  ,        /* exported MI functions */
-	0,          /* exported pseudo-variables */
+	mod_items,  /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
 	(response_function) 0,
@@ -253,3 +265,181 @@ static int xdbg_fixup(void** param, int param_no)
 
 	return 0;
 }
+
+
+int pv_parse_color_name(pv_spec_p sp, str *in)
+{
+
+	if(in==NULL || in->s==NULL || sp==NULL)
+		return -1;
+
+	if(in->len != 2)
+	{
+		LM_ERR("color name must have two chars\n");
+		return -1;
+	}
+	
+	/* foreground */
+	switch(in->s[0])
+	{
+		case 'x':
+		case 's': case 'r': case 'g':
+		case 'y': case 'b': case 'p':
+		case 'c': case 'w': case 'S':
+		case 'R': case 'G': case 'Y':
+		case 'B': case 'P': case 'C':
+		case 'W':
+		break;
+		default: 
+			goto error;
+	}
+                               
+	/* background */
+	switch(in->s[1])
+	{
+		case 'x':
+		case 's': case 'r': case 'g':
+		case 'y': case 'b': case 'p':
+		case 'c': case 'w':
+		break;   
+		default: 
+			goto error;
+	}
+	
+	sp->pvp.pvn.type = PV_NAME_INTSTR;
+	sp->pvp.pvn.u.isname.type = AVP_NAME_STR;
+	sp->pvp.pvn.u.isname.name.s = *in;
+
+	sp->getf = pv_get_color;
+
+	/* force the color PV type */
+	sp->type = PVT_COLOR;
+	return 0;
+error:
+	LM_ERR("invalid color name\n");
+	return -1;
+}
+
+#define COL_BUF 10
+
+#define append_sstring(p, end, s) \
+        do{\
+                if ((p)+(sizeof(s)-1)<=(end)){\
+                        memcpy((p), s, sizeof(s)-1); \
+                        (p)+=sizeof(s)-1; \
+                }else{ \
+                        /* overflow */ \
+                        LM_ERR("append_sstring overflow\n"); \
+                        goto error;\
+                } \
+        } while(0) 
+
+
+static int pv_get_color(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	static char color[COL_BUF];
+	char* p;
+	char* end;
+
+	p = color;
+	end = p + COL_BUF;
+        
+	/* excape sequenz */
+	append_sstring(p, end, "\033[");
+        
+	if(param->pvn.u.isname.name.s.s[0]!='_')
+	{
+		if (islower((int)param->pvn.u.isname.name.s.s[0]))
+		{
+			/* normal font */
+			append_sstring(p, end, "0;");
+		} else {
+			/* bold font */
+			append_sstring(p, end, "1;");
+			param->pvn.u.isname.name.s.s[0] += 32;
+		}
+	}
+         
+	/* foreground */
+	switch(param->pvn.u.isname.name.s.s[0])
+	{
+		case 'x':
+			append_sstring(p, end, "39;");
+		break;
+		case 's':
+			append_sstring(p, end, "30;");
+		break;
+		case 'r':
+			append_sstring(p, end, "31;");
+		break;
+		case 'g':
+			append_sstring(p, end, "32;");
+		break;
+		case 'y':
+			append_sstring(p, end, "33;");
+		break;
+		case 'b':
+			append_sstring(p, end, "34;");
+		break;
+		case 'p':
+			append_sstring(p, end, "35;");
+		break;
+		case 'c':
+			append_sstring(p, end, "36;");
+		break;
+		case 'w':
+			append_sstring(p, end, "37;");
+		break;
+		default:
+			LM_ERR("invalid foreground\n");
+			return pv_get_null(msg, param, res);
+	}
+         
+	/* background */
+	switch(param->pvn.u.isname.name.s.s[1])
+	{
+		case 'x':
+			append_sstring(p, end, "49");
+		break;
+		case 's':
+			append_sstring(p, end, "40");
+		break;
+		case 'r':
+			append_sstring(p, end, "41");
+		break;
+		case 'g':
+			append_sstring(p, end, "42");
+		break;
+		case 'y':
+			append_sstring(p, end, "43");
+		break;
+		case 'b':
+			append_sstring(p, end, "44");
+		break;
+		case 'p':
+			append_sstring(p, end, "45");
+		break;
+		case 'c':
+			append_sstring(p, end, "46");
+		break;
+		case 'w':
+			append_sstring(p, end, "47");
+		break;
+		default:
+			LM_ERR("invalid background\n");
+			return pv_get_null(msg, param, res);
+	}
+
+	/* end */
+	append_sstring(p, end, "m");
+
+	res->rs.s = color;
+	res->rs.len = p-color;
+	res->flags = PV_VAL_STR;
+	return 0;
+
+error:
+	return -1;
+}
+
