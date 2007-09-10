@@ -20,6 +20,7 @@ MAN5=openser.cfg.5
 
 
 USE_GMAKE= yes
+USE_TOOLS+= gmake
 # we override the DISTFILE NAME
 DISTNAME= ${PORTNAME}-${PORTVERSION}
 DISTFILES= ${DISTNAME}_src.tar.gz
