@@ -36,8 +36,8 @@
  * 2005-02-25  preliminary tel uri support (andrei)
  * 2005-03-03  more tel uri fixes (andrei)
  * 2006-04-20  comp uri param. support (rfc3486) if defined USE_COMP  (andrei)
- *  2007-09-10  introduced phone2uri option which allows NOT to consider
- *              user=phone URIs as TEL URIs
+ * 2007-09-10  introduced phone2tel option which allows NOT to consider
+ *             user=phone URIs as TEL URIs
  *
  */
 
@@ -1089,8 +1089,9 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	switch(uri->type){
 		case SIP_URI_T:
 			if ((uri->user_param_val.len == 5) &&
-				(strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
-				if (phone2tel) uri->type = TEL_URI_T;
+				(strncmp(uri->user_param_val.s, "phone", 5) == 0) &&
+				(phone2tel)) {
+				uri->type = TEL_URI_T;
 				/* move params from user into uri->params */
 				p=q_memchr(uri->user.s, ';', uri->user.len);
 				if (p){
@@ -1102,7 +1103,8 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 			break;
 		case SIPS_URI_T:
 			if ((uri->user_param_val.len == 5) &&
-				(strncmp(uri->user_param_val.s, "phone", 5) == 0)) {
+				(strncmp(uri->user_param_val.s, "phone", 5) == 0) &&
+				(phone2tel)) {
 				uri->type = TELS_URI_T;
 				p=q_memchr(uri->user.s, ';', uri->user.len);
 				if (p){
