@@ -212,19 +212,19 @@ struct db_id* new_db_id(const char* url)
 	struct db_id* ptr;
 
 	if (!url) {
-		LOG(L_ERR, "new_db_id: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return 0;
 	}
 
 	ptr = (struct db_id*)pkg_malloc(sizeof(struct db_id));
 	if (!ptr) {
-		LOG(L_ERR, "new_db_id: No memory left\n");
+		LM_ERR("no private memory left\n");
 		goto err;
 	}
 	memset(ptr, 0, sizeof(struct db_id));
 
 	if (parse_db_url(ptr, url) < 0) {
-		LOG(L_ERR, "new_db_id: Error while parsing database URL: %s\n", url);
+		LM_ERR("error while parsing database URL: %s\n", url);
 		goto err;
 	}
 

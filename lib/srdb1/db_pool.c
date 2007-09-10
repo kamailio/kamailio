@@ -38,7 +38,7 @@ struct pool_con* pool_get(struct db_id* id)
 	struct pool_con* ptr;
 
 	if (!id) {
-		LOG(L_ERR, "pool_get: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
@@ -87,12 +87,12 @@ int pool_remove(struct pool_con* con)
 		     /* There are still other users, just
 		      * decrease the reference count and return
 		      */
-		DBG("pool_remove: Connection still kept in the pool\n");
+		LM_DBG("connection still kept in the pool\n");
 		con->ref--;
 		return 0;
 	}
 
-	DBG("pool_remove: Removing connection from the pool\n");
+	LM_DBG("removing connection from the pool\n");
 
 	if (db_pool == con) {
 		db_pool = db_pool->next;
@@ -103,7 +103,7 @@ int pool_remove(struct pool_con* con)
 			ptr = ptr->next;
 		}
 		if (!ptr) {
-			LOG(L_ERR, "pool_remove: Weird, connection not found in the pool\n");
+			LM_ERR("weird, connection not found in the pool\n");
 			return -1;
 		} else {
 			     /* Remove the connection from the pool */

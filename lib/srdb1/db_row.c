@@ -32,7 +32,7 @@
 inline int db_free_row(db_row_t* _r)
 {
 	if (!_r) {
-		LOG(L_ERR, "ERROR:db_free_row: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
