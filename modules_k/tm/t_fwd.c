@@ -734,6 +734,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	setb0flags(bk_br_flags);
 	/* update on_branch, if modified */
 	t->on_branch = get_on_branch();
+	/* update flags, if changed in branch route */
+	t->uas.request->flags = p_msg->flags;
 
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
