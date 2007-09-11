@@ -708,6 +708,7 @@ inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
 	char* right;
 
 	ret=-1;
+	right=0;
 	if (rtype == AVP_ST) {
 		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && (avp->flags & AVP_VAL_STR)) right = val.s.s;
