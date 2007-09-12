@@ -34,9 +34,7 @@ CREATE TABLE active_watchers (
     version INT(11) NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    UNIQUE KEY tt_watchers (to_tag),
-    KEY ue_active_watchers (pres_uri, event),
-    KEY exp_active_watchers (expires)
+    UNIQUE KEY pctt_watchers (pres_uri, callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('watchers','2');

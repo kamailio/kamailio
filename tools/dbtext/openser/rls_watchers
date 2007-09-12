@@ -1,0 +1,1 @@
+id(int,auto) pres_uri(str) to_user(str) to_domain(str) from_user(str) from_domain(str) event(str) event_id(str,null) to_tag(str) from_tag(str) callid(str) local_cseq(int) remote_cseq(int) contact(str) record_route(str,null) expires(int) status(int) reason(str) version(int) socket_info(str) local_contact(str) 

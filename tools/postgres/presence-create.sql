@@ -34,11 +34,8 @@ CREATE TABLE active_watchers (
     version INTEGER NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    CONSTRAINT tt_watchers UNIQUE (to_tag)
+    CONSTRAINT pctt_watchers UNIQUE (pres_uri, callid, to_tag, from_tag)
 );
-
-CREATE INDEX ue_active_watchers ON active_watchers (pres_uri, event);
-CREATE INDEX exp_active_watchers ON active_watchers (expires);
 
 INSERT INTO version (table_name, table_version) values ('watchers','2');
 CREATE TABLE watchers (
