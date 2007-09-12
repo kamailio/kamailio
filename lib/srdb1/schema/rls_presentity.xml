@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN" 
+  "http://openser.org/pub/openser/dbschema/dtd/1.0/dbschema.dtd" [
+
+<!ENTITY % entities SYSTEM "entities.xml">
+%entities;
+
+]>
+
+<table id="rls_presentity" xmlns:db="http://docbook.org/ns/docbook">
+    <name>rls_presentity</name>
+    <version>0</version>
+    <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+    <description>
+		<db:para>Table for the RLS module.
+		</db:para>
+    </description>
+
+    <column id="id">
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
+        <type db="dbtext">int,auto</type>
+        <description>Unique ID</description>
+    </column>
+
+    <column id="rlsubs_did">
+        <name>rlsubs_did</name>
+        <type>string</type>
+        <size>512</size>
+        <description>Resource list subscribe dialog id</description>
+    </column>
+
+    <column id="resource_uri">
+        <name>resource_uri</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>List Uri</description>
+    </column>
+
+    <column>
+		<name>content_type</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>Event</description>
+    </column>
+
+    <column>
+        <name>presence_state</name>
+        <type>binary</type>
+    </column>
+
+    <column id="expires">
+        <name>expires</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Expires</description>
+    </column>
+	
+	<column id="updated">
+        <name>updated</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Update flag</description>
+    </column>
+
+    <column>
+        <name>auth_state</name>
+        <type>int</type>
+        <size>&expires_len;</size>
+        <description>Watcher authorization state</description>
+    </column>
+   
+	<column>
+        <name>reason</name>
+        <type>string</type>
+        <size>&user_len;</size>
+		<description>reason for watcher authorization state</description>
+    </column>
+
+
+    <index>
+        <name>udid_rlspres</name>
+        <colref linkend="rlsubs_did"/>
+        <colref linkend="resource_uri"/>
+        <unique/>
+	</index>
+	
+	<index>
+        <name>u_rlspres</name>
+        <colref linkend="updated"/>
+        <unique/>
+	</index>
+
+</table>

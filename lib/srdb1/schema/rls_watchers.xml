@@ -7,12 +7,13 @@
 
 ]>
 
-<table id="active_watchers" xmlns:db="http://docbook.org/ns/docbook">
-    <name>active_watchers</name>
-    <version>7</version>
+<table id="rls_watchers" xmlns:db="http://docbook.org/ns/docbook">
+    <name>rls_watchers</name>
+    <version>0</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>Table for the presence module. More information can be found at: &OPENSER_MOD_DOC;presence.html
+		<db:para>Table for RLS module used for storing resource lists subscribe
+			information.
         </db:para>
     </description>
 
@@ -82,7 +83,7 @@
         <name>to_tag</name>
         <type>string</type>
         <size>&domain_len;</size>
-        <description>TO tag</description>
+        <description>To tag</description>
     </column>
 
     <column id="from_tag">
@@ -170,9 +171,9 @@
         <size>&uri_len;</size>
         <description>Local contact</description>
     </column>
-
-    <index>
-        <name>pctt_watchers</name>
+	
+	<index>
+        <name>pctt_rlwatchers</name>
         <colref linkend="pres_uri"/>
         <colref linkend="callid"/>
         <colref linkend="to_tag"/>
