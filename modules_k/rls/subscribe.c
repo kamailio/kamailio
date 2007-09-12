@@ -1,7 +1,7 @@
 /*
  * $Id: subscribe.c 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * rls module - resource list server implementation
+ * rls module - resource list server 
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -57,7 +57,8 @@ static str pu_489_rpl     = str_init("Bad Event");
 
 #define Stale_cseq_code 401
 
-subs_t* constr_new_subs(struct sip_msg* msg, struct to_body *pto, pres_ev_t* event);
+subs_t* constr_new_subs(struct sip_msg* msg, struct to_body *pto, 
+		pres_ev_t* event);
 int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node);
 
 int update_rlsubs( subs_t* subs,unsigned int hash_code);
@@ -126,8 +127,7 @@ int get_resource_list(str* pres_uri, char** list)
 
 	if(result->n<= 0)
 	{
-		LM_DBG("No xcap document found for [uri]=%.*s\n\n",
-					pres_uri->len, pres_uri->s);
+		LM_DBG("No xcap document for [uri]=%.*s\n",pres_uri->len,pres_uri->s);
 		
 		if(rls_integrated_xcap_server)
 		{
@@ -210,20 +210,20 @@ int reply_421(struct sip_msg* msg)
 	hdr_append.len = sprintf(hdr_append.s, "Require: eventlist\r\n");
 	if(hdr_append.len < 0)
 	{
-		LOG(L_ERR, "RLS:reply_421: ERROR unsuccessful sprintf\n");
+		LM_ERR("unsuccessful sprintf\n");
 		return -1;
 	}
 	hdr_append.s[hdr_append.len]= '\0';
 
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"RLS: reply_421: ERROR unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		return -1;
 	}
 
 	if (slb.reply(msg, 421, &pu_421_rpl) == -1)
 	{
-		LOG(L_ERR, "RLS: reply_421: Error while sending reply\n");
+		LM_ERR("while sending reply\n");
 		return -1;
 	}
 	return 0;
@@ -238,13 +238,13 @@ int reply_200(struct sip_msg* msg, str* contact, int expires, str* rtag)
 	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(contact->len+ 70));
 	if(hdr_append.s == NULL)
 	{
-		LOG(L_ERR,"RLS:reply_200: ERROR no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", expires);	
 	if(hdr_append.len< 0)
 	{
-		LOG(L_ERR, "RLS:reply_200: ERROR unsuccessful sprintf\n");
+		LM_ERR("unsuccessful sprintf\n");
 		goto error;
 	}
 	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
@@ -259,7 +259,7 @@ int reply_200(struct sip_msg* msg, str* contact, int expires, str* rtag)
 	len = sprintf(hdr_append.s+ hdr_append.len, "Require: eventlist\r\n");
 	if(len < 0)
 	{
-		LOG(L_ERR, "RLS:reply_200: ERROR unsuccessful sprintf\n");
+		LM_ERR("unsuccessful sprintf\n");
 		goto error;
 	}
 	hdr_append.len+= len;
@@ -267,13 +267,13 @@ int reply_200(struct sip_msg* msg, str* contact, int expires, str* rtag)
 	
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"RLS:reply_200: ERORR unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		goto error;
 	}
 
 	if( slb.reply_dlg( msg, 200, &su_200_rpl, rtag)== -1)
 	{
-		LOG(L_ERR,"RLS:reply_200: ERORR while sending reply\n");
+		LM_ERR("while sending reply\n");
 		goto error;
 	}	
 	pkg_free(hdr_append.s);
@@ -295,13 +295,13 @@ int reply_489(struct sip_msg * msg)
 	hdr_append.len = sprintf(hdr_append.s, "Allow-Events: ");
 	if(hdr_append.len < 0)
 	{
-		LOG(L_ERR, "RLS:reply_bad_event: ERROR unsuccessful sprintf\n");
+		LM_ERR("unsuccessful sprintf\n");
 		return -1;
 	}
 
 	if(pres_get_ev_list(&ev_list)< 0)
 	{
-		LOG(L_ERR, "RLS:reply_bad_event:ERROR while getting ev_list\n");
+		LM_ERR("while getting ev_list\n");
 		return -1;
 	}	
 	memcpy(hdr_append.s+ hdr_append.len, ev_list->s, ev_list->len);
@@ -314,12 +314,12 @@ int reply_489(struct sip_msg * msg)
 		
 	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"RLS: reply_bad_event:ERROR unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		return -1;
 	}
 	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
 	{
-		LOG(L_ERR, "RLS: reply_bad_event: Error while sending reply\n");
+		LM_ERR("while sending reply\n");
 		return -1;
 	}
 	return 0;
@@ -400,13 +400,12 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",
-				pto->uri.len, pto->uri.s );	
+		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
 	}
 	else
 	{
 		memset( &TO , 0, sizeof(TO) );
-		if( !parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO));
+		if( !parse_to(msg->to->body.s,msg->to->body.s+msg->to->body.len+1,&TO));
 		{
 			LM_DBG("'To' header NOT parsed\n");
 			goto error;
@@ -414,10 +413,10 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		pto = &TO;
 	}
 
-	if(pto->tag_value.s== NULL || pto->tag_value.len==0) /* if an initial Subscribe */
+	if(pto->tag_value.s== NULL || pto->tag_value.len==0)
+		/* if an initial Subscribe */
 	{
-		/* verify if the Request URI represents a list by asking the xcap server*/	
-		/* attempt to get the list document */
+		/*verify if Request URI represents a list by asking xcap server*/	
 		if(uandd_to_uri(msg->parsed_uri.user, msg->parsed_uri.host,
 					&subs.pres_uri)< 0)
 		{
@@ -442,8 +441,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	{
 		if( msg->callid==NULL || msg->callid->body.s==NULL)
 		{
-			LM_ERR("cannot parse callid"
-					" header\n");
+			LM_ERR("cannot parse callid header\n");
 			goto error;
 		}
 		if (msg->from->parsed == NULL)
@@ -459,8 +457,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 		pfrom = (struct to_body*)msg->from->parsed;
 		if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
 		{
-			LM_ERR("no from tag value"
-					" present\n");
+			LM_ERR("no from tag value present\n");
 			goto error;
 		}
 
@@ -484,7 +481,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	hdr = msg->supported;
 	if(hdr== NULL || hdr->body.s== 0 || hdr->body.len== 0)
 	{
-		DBG("msg->supported header NULL\n");
+		LM_DBG("msg->supported header NULL\n");
 		goto found_support;
 	}
 */
@@ -515,8 +512,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 found_support:	
 	if(found== 0)	
 	{
-		LM_ERR("No 'Support: eventlist'"
-				" header found\n");
+		LM_ERR("No 'Support: eventlist' header found\n");
 		if(reply_421(msg)< 0)
 			return -1;
 		return 0;
@@ -532,7 +528,8 @@ found_support:
 
 	hash_code= core_hash(&subs.callid, &subs.to_tag, hash_size);
 
-	if(pto->tag_value.s== NULL || pto->tag_value.len==0) /* if an initial subscribe */
+	if(pto->tag_value.s== NULL || pto->tag_value.len==0) 
+		/* if an initial subscribe */
 	{
 		subs.local_cseq= 0;
 
@@ -604,7 +601,7 @@ found_support:
 		goto error;
 
 	/* call sending Notify with full state */
-	if( send_full_notify(&subs,  rl_node, subs.version, &subs.pres_uri, hash_code)< 0)
+	if(send_full_notify(&subs,rl_node,subs.version,&subs.pres_uri,hash_code)< 0)
 	{
 		LM_ERR("while sending full state Notify\n");
 		goto error;
@@ -633,8 +630,7 @@ bad_event:
 	err_ret= 0;
 
 error:
-	LM_ERR("occured in"
-			" rls_handle_subscribe\n");
+	LM_ERR("occured in rls_handle_subscribe\n");
 
 	if(contact)
 	{	
@@ -687,8 +683,7 @@ int update_rlsubs( subs_t* subs, unsigned int hash_code)
 	subs->pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
 	if(subs->pres_uri.s== NULL)
 	{
-		LM_ERR("No more memory\n");
-		goto error;
+		ERR_MEM(PKG_MEM_STR);
 	}
 	memcpy(subs->pres_uri.s, s->pres_uri.s, s->pres_uri.len);
 	subs->pres_uri.len= s->pres_uri.len;
@@ -763,8 +758,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 
 	if( uandd_to_uri(subs->from_user, subs->from_domain, &wuri)< 0)
 	{
-		LOG(L_ERR, "RLS: resource_subscriptions: ERROR while constructing uri"
-				" from user and domain\n");
+		LM_ERR("while constructing uri from user and domain\n");
 		goto error;
 	}
 	s.id= did_str;
@@ -773,7 +767,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 	s.event= get_event_flag(&subs->event->name);
 	if(s.event< 0)
 	{
-		LOG(L_ERR, "RLS: resource_subscriptions:ERROR not recognized event\n");
+		LM_ERR("not recognized event\n");
 		goto error;
 	}
 	s.expires= subs->expires;
@@ -785,8 +779,7 @@ int resource_subscriptions(subs_t* subs, xmlNodePtr rl_node)
 	
 	if(process_list_and_exec(rl_node, send_resource_subs,(void*)(&s))< 0)
 	{
-		LOG(L_ERR, "RLS: resource_subscriptions: ERROR while"
-				" processing list\n");
+		LM_ERR("while processing list\n");
 		goto error;
 	}
 

@@ -1,7 +1,7 @@
 /*
  * $Id: resource_notify.c 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * rls module - resource list server implementation
+ * rls module - resource list server
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -77,14 +77,12 @@ int parse_subs_state(str auth_state, str** reason, int* expires)
 		smc= strchr(auth_state.s, ';');
 		if(smc== NULL)
 		{
-			LOG(L_ERR, "RLS:parse_subs_state: terminated state and"
-					" no reason found");
+			LM_ERR("terminated state and no reason found");
 			return -1;
 		}
 		if(strncmp(smc+1, "reason=", 7))
 		{
-			LOG(L_ERR, "RLS:parse_subs_state: terminated state and"
-					" no reason found");
+			LM_ERR("terminated state and no reason found");
 			return -1;
 		}
 		res= (str*)pkg_malloc(sizeof(str));
@@ -108,14 +106,12 @@ int parse_subs_state(str auth_state, str** reason, int* expires)
 		smc= strchr(auth_state.s, ';');
 		if(smc== NULL)
 		{
-			LOG(L_ERR, "RLS:parse_subs_state: ERROR active or pending state and"
-					" no expires parameter found");
+			LM_ERR("active or pending state and no expires parameter found");
 			return -1;
 		}
 		if(strncmp(smc+1, "expires=", 8))
 		{
-			LOG(L_ERR, "RLS:parse_subs_state: ERROR active or pending state and"
-					" no expires parameter found");
+			LM_ERR("active or pending state and no expires parameter found");
 			return -1;
 		}
 		str_exp.s= smc+ 9;
@@ -123,8 +119,7 @@ int parse_subs_state(str auth_state, str** reason, int* expires)
 
 		if( str2int(&str_exp, (unsigned int*)expires)< 0)
 		{
-			LOG(L_ERR, "RLS:parse_subs_state: ERROR while getting int"
-					" from str\n");
+			LM_ERR("while getting int from str\n");
 			return -1;
 		}
 		return flag;
@@ -161,7 +156,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	str content_type= {0, 0};
 
 
-	DBG("RLS:rls_handle_notify ....\n");
+	LM_DBG("start\n");
 	/* extract the dialog information and check if an existing dialog*/	
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
@@ -170,7 +165,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	}
 	if((!msg->event ) ||(msg->event->body.len<=0))
 	{
-		LOG(L_ERR, "RLS:rls_handle_notify:Missing event header field value\n");
+		LM_ERR("Missing event header field value\n");
 		return -1;
 	}
 	if( msg->to==NULL || msg->to->body.s==NULL)
@@ -190,7 +185,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 		parse_to(msg->to->body.s,msg->to->body.s + msg->to->body.len + 1, &TO);
 		if(TO.uri.len <= 0) 
 		{
-			LOG(L_ERR, "RLS:rls_handle_notify: 'To' header NOT parsed\n");
+			LM_ERR(" 'To' header NOT parsed\n");
 			return -1;
 		}
 		pto = &TO;
@@ -204,7 +199,7 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	dialog.from_tag= pto->tag_value;
 	if( msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LM_ERR("annot parse callid header\n");
+		LM_ERR("cannot parse callid header\n");
 		goto error;
 	}
 	dialog.call_id = msg->callid->body;
@@ -522,7 +517,7 @@ void timer_send_notify(unsigned int ticks,void *param)
 	}
 
 	antet_len= COMPUTE_ANTET_LEN(bstr.s);
-	DBG("RLS:timer_send_notify: found %d records with updated state\n", result->n);
+	LM_DBG("found %d records with updated state\n", result->n);
 	for(i= 0; i< result->n; i++)
 	{
 		row = &result->rows[i];
@@ -793,13 +788,13 @@ void rls_presentity_clean(unsigned int ticks,void *param)
 
 	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
 	{
-		LOG(L_ERR, "RLS: rls_presentity_clean: Error in use_table\n");
+		LM_ERR("in use_table\n");
 		return ;
 	}
 
 	if(rls_dbf.delete(rls_db, query_cols, query_ops, query_vals, 1)< 0)
 	{
-		LOG(L_ERR, "RLS:rls_presentity_clean: ERROR in sql delete\n");
+		LM_ERR("in sql delete\n");
 		return ;
 	}
 

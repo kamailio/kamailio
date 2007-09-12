@@ -1,7 +1,7 @@
 /*
  * $Id: notify.c 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * rls module - resource list server implementation
+ * rls module - resource list server
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -24,6 +24,7 @@
  * History:
  * --------
  *  2007-09-11  initial version (anca)
+ *
  */
 
 #ifndef _RLS_NOTIFY_H

@@ -1,7 +1,7 @@
 /*
  * $Id: rls.c 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * rls module - resource list server implementation
+ * rls module - resource list server
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -183,12 +183,11 @@ static int mod_init(void)
 	xcap_api_t xcap_api;
 	char* sep;
 
-	DBG("RLS: initializing module ...\n");
+	LM_DBG("start\n");
 
 	if(server_address.s== NULL)
 	{
-		DBG("RLS:mod_init: server_address parameter not set in"
-				" configuration file\n");
+		LM_DBG("server_address parameter not set in configuration file\n");
 	}	
 	if(server_address.s)
 		server_address.len= strlen(server_address.s);
@@ -197,7 +196,7 @@ static int mod_init(void)
 	
 	if(xcap_root== NULL)
 	{
-		LM_ERR("ERROR xcap_root parameter not set\n");
+		LM_ERR("xcap_root parameter not set\n");
 		return -1;
 	}
 	/* extract port if any */
@@ -216,7 +215,8 @@ static int mod_init(void)
 
 		if(str2int(&port_str, &xcap_port)< 0)
 		{
-			LM_ERR("converting string to int [port]= %.*s\n", port_str.len, port_str.s);
+			LM_ERR("converting string to int [port]= %.*s\n",port_str.len,
+					port_str.s);
 			return -1;
 		}
 		if(xcap_port< 0 || xcap_port> 65535)
@@ -230,14 +230,14 @@ static int mod_init(void)
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)
 	{
-		LOG(L_ERR, "RLS:mod_init:ERROR can't load sl functions\n");
+		LM_ERR("can't load sl functions\n");
 		return -1;
 	}
 
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1)
 	{
-		LOG(L_ERR, "RLS:mod_init:ERROR can't load tm functions\n");
+		LM_ERR("can't load tm functions\n");
 		return -1;
 	}
 	bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
@@ -269,30 +269,30 @@ static int mod_init(void)
 		 || !pres_update_shtable || !pres_search_shtable || !pres_copy_subs
 		 || !pres_extract_sdialog_info)
 	{
-		LM_ERR("ERROR importing functions from presence module\n");
+		LM_ERR("importing functions from presence module\n");
 		return -1;
 	}
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("RLS:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
 			db_url.s);
 	
 	/* binding to mysql module  */
 	if (bind_dbmod(db_url.s, &rls_dbf))
 	{
-		DBG("RLS:mod_init: ERROR: Database module not found\n");
+		LM_ERR("Database module not found\n");
 		return -1;
 	}
 	
 	if (!DB_CAPABILITY(rls_dbf, DB_CAP_ALL)) {
-		LM_ERR("ERROR Database module does not implement "
-		    "all functions needed by the module\n");
+		LM_ERR("Database module does not implement all functions"
+				" needed by the module\n");
 		return -1;
 	}
 
 	rls_db = rls_dbf.init(db_url.s);
 	if (!rls_db)
 	{
-		LM_ERR("Error while connecting database\n");
+		LM_ERR("while connecting database\n");
 		return -1;
 	}
 	/* verify table version */
@@ -323,12 +323,12 @@ static int mod_init(void)
 	rls_table= pres_new_shtable(hash_size);
 	if(rls_table== NULL)
 	{
-		LM_ERR("ERROR while creating new hash table\n");
+		LM_ERR("while creating new hash table\n");
 		return -1;
 	}
 	if(rls_restore_db_subs()< 0)
 	{
-		LM_ERR("ERROR while restoring rl watchers table\n");
+		LM_ERR("while restoring rl watchers table\n");
 		return -1;
 	}
 
@@ -344,7 +344,7 @@ static int mod_init(void)
 
 	/* bind libxml wrapper functions */
 
-	if((bind_libxml= (bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
+	if((bind_libxml=(bind_libxml_t)find_export("bind_libxml_api", 1, 0))== NULL)
 	{
 		LM_ERR("can't import bind_libxml_api\n");
 		return -1;
@@ -376,7 +376,7 @@ static int mod_init(void)
 	
 	if (bind_pua(&pua) < 0)
 	{
-		LOG(L_ERR, "mod_init Can't bind pua\n");
+		LM_ERR("mod_init Can't bind pua\n");
 		return -1;
 	}
 	if(pua.send_subscribe == NULL)
@@ -429,16 +429,16 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	DBG("RLS: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
 	if (rls_dbf.init==0)
 	{
-		LOG(L_CRIT, "BUG: RLS: child_init: database not bound\n");
+		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	rls_db = rls_dbf.init(db_url.s);
 	if (!rls_db)
 	{
-		LOG(L_ERR,"RLS: child %d: Error while connecting database\n",
+		LM_ERR("child %d: Error while connecting database\n",
 				rank);
 		return -1;
 	}
@@ -446,16 +446,16 @@ static int child_init(int rank)
 	{
 		if (rls_dbf.use_table(rls_db, rlsubs_table) < 0)  
 		{
-			LOG(L_ERR, "RLS: child %d: Error in use_table rlsubs_table\n", rank);
+			LM_ERR("child %d: Error in use_table rlsubs_table\n", rank);
 			return -1;
 		}
 		if (rls_dbf.use_table(rls_db, rlpres_table) < 0)  
 		{
-			LOG(L_ERR, "RLS: child %d: Error in use_table rlpres_table\n", rank);
+			LM_ERR("child %d: Error in use_table rlpres_table\n", rank);
 			return -1;
 		}
 
-		DBG("RLS: child %d: Database connection opened successfully\n", rank);
+		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
 	pid= my_pid();
@@ -467,7 +467,7 @@ static int child_init(int rank)
  */
 void destroy(void)
 {
-	DBG("RLS: destroy module ...\n");
+	LM_DBG("start\n");
 	
 	if(rls_table)
 	{
@@ -484,8 +484,7 @@ int handle_expired_record(subs_t* s)
 	/* send Notify with state terminated*/	
 	if( rls_send_notify(s, NULL, NULL, NULL)< 0)
 	{
-		LOG(L_ERR, "RLS: handle_expired_record: ERROR in function"
-				" send_notify\n");
+		LM_ERR("in function send_notify\n");
 		return -1;
 	}
 	

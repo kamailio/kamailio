@@ -1,7 +1,7 @@
 /*
  * $Id: notify.c 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * rls module - resource list server implementation
+ * rls module - resource list server
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -47,19 +47,6 @@
 #include "rls.h"
 #include "notify.h"
 
-/*
-	rlpres table structure:
-
-	- LIST URI       (string)
-	- presentity URI (string)
-	- content_type   (string)
-	- presence state (string)
-	- auth_state     (int)
-	- reason		 (string)
-	- updated        (int)
-	- expires        (int)
-*/
-
 typedef struct res_param
 {
 	xmlNodePtr list_node;
@@ -72,11 +59,13 @@ int resource_uri_col=0, content_type_col, pres_state_col= 0,
 
 str* constr_rlmi_doc(db_res_t* result, str* rl_uri, int version,
 		xmlNodePtr rl_node, char*** cid_array);
-str* constr_multipart_body(db_res_t* result,char** cid_array, char* boundary_string);
+str* constr_multipart_body(db_res_t* result,char** cid_array,
+		char* boundary_string);
 
 dlg_t* rls_notify_dlg(subs_t* subs);
 
-int rls_send_notify(subs_t* subs, str* body, char* start_cid, char* boudary_string);
+int rls_send_notify(subs_t* subs, str* body, char* start_cid,
+		char* boudary_string);
 dlg_t* rls_notify_dlg(subs_t* subs);
 void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps);
 
@@ -136,7 +125,8 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	
 	if(result->n> 0)
 	{
-		multipart_body= constr_multipart_body(result, cid_array, boundary_string);
+		multipart_body= constr_multipart_body(result, cid_array, 
+				boundary_string);
 		if(multipart_body== NULL)
 		{
 			LM_ERR("while constructing multipart body\n");
@@ -240,9 +230,10 @@ int agg_body_sendn_update(str* rl_uri, char* boundary_string, str* rlmi_body,
 		ERR_MEM(PKG_MEM_STR);
 	}
 	len=  sprintf(body.s, "--%s\r\n", boundary_string);
-	len+= sprintf(body.s+ len , "Content-Transfer-Encoding: binary\r\n");	
+	len+= sprintf(body.s+ len , "Content-Transfer-Encoding: binary\r\n");
 	len+= sprintf(body.s+ len , "Content-ID: <%s>\r\n", cid);	
-	len+= sprintf(body.s+ len , "Content-Type: application/rlmi+xml;charset=\"UTF-8r\"\r\n");	
+	len+= sprintf(body.s+ len , 
+			"Content-Type: application/rlmi+xml;charset=\"UTF-8r\"\r\n");
 	len+= sprintf(body.s+ len, "\r\n"); /*blank line*/
 	memcpy(body.s+ len, rlmi_body->s, rlmi_body->len);
 	len+= rlmi_body->len;
@@ -389,7 +380,8 @@ error:
 	return -1;
 }
 
-str* constr_rlmi_doc(db_res_t *result, str* rl_uri, int version, xmlNodePtr rl_node, char*** rlmi_cid_array)
+str* constr_rlmi_doc(db_res_t *result, str* rl_uri, int version,
+		xmlNodePtr rl_node, char*** rlmi_cid_array)
 {
 	xmlDocPtr doc= NULL;
 	xmlNodePtr list_node= NULL;
@@ -430,7 +422,8 @@ str* constr_rlmi_doc(db_res_t *result, str* rl_uri, int version, xmlNodePtr rl_n
 	xmlNewProp(list_node, BAD_CAST "uri", BAD_CAST uri);
 	pkg_free(uri);
 
-	xmlNewProp(list_node, BAD_CAST "xmlns", BAD_CAST "urn:ietf:params:xml:ns:rlmi");
+	xmlNewProp(list_node, BAD_CAST "xmlns",
+			BAD_CAST "urn:ietf:params:xml:ns:rlmi");
 	xmlNewProp(list_node, BAD_CAST "version", BAD_CAST int2str(version, &len));
 	xmlNewProp(list_node, BAD_CAST "fullState", BAD_CAST "true");
 
@@ -586,7 +579,8 @@ str* rls_notify_extra_hdr(subs_t* subs, char* start_cid, char* boundary_string)
 
 	memcpy(str_hdr->s+str_hdr->len ,"Contact: <", 10);
 	str_hdr->len += 10;
-	memcpy(str_hdr->s+str_hdr->len, subs->local_contact.s, subs->local_contact.len);
+	memcpy(str_hdr->s+str_hdr->len,subs->local_contact.s,
+			subs->local_contact.len);
 	str_hdr->len +=  subs->local_contact.len;
 	memcpy(str_hdr->s+str_hdr->len, ">", 1);
 	str_hdr->len += 1;
@@ -608,8 +602,8 @@ str* rls_notify_extra_hdr(subs_t* subs, char* start_cid, char* boundary_string)
 	{
 		str_hdr->len+= sprintf(str_hdr->s+str_hdr->len,
 			"Content-Type: \"multipart/related;type=\"application/rlmi+xml\"");
-		str_hdr->len+= sprintf(str_hdr->s+str_hdr->len,";start= <%s>;boundary=%s\r\n"
-				,start_cid, boundary_string);
+		str_hdr->len+= sprintf(str_hdr->s+str_hdr->len,
+				";start= <%s>;boundary=%s\r\n", start_cid, boundary_string);
 	}		
 	if(str_hdr->len> RLS_HDR_LEN)
 	{
@@ -637,7 +631,8 @@ void rls_free_td(dlg_t* td)
 		pkg_free(td);
 }
 
-int rls_send_notify(subs_t* subs, str* body, char* start_cid,char* boundary_string)
+int rls_send_notify(subs_t* subs, str* body, char* start_cid,
+		char* boundary_string)
 {
 	dlg_t* td= NULL;
 	str met= {"NOTIFY", 6};
