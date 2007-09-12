@@ -24,6 +24,8 @@
  * History:
  * ========
  * 2006-11-28 Added get_number_of_users() (Jeffrey Magder - SOMA Networks)
+ * 2007-09-12 added partitioning support for fetching all ul contacts
+ *            (bogdan)
  */
 
 
@@ -78,8 +80,10 @@ int synchronize_all_udomains(void);
 /*
  * Get contacts to all registered users
  */
-typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags);
-int get_all_ucontacts(void *, int, unsigned int);
+typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
+		unsigned int part_idx, unsigned int part_max);
+int get_all_ucontacts(void *, int, unsigned int,
+		unsigned int part_idx, unsigned int part_max);
 
 
 /* Sums up the total number of users in memory, over all domains. */

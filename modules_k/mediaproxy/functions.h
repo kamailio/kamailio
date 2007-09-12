@@ -42,7 +42,8 @@ pingClients(unsigned int ticks, void *param)
         LM_ERR("out of memory\n");
         return;
     }
-    needed = userLocation.get_all_ucontacts(buf, length,userLocation.nat_flag);
+    needed = userLocation.get_all_ucontacts(buf, length,userLocation.nat_flag,
+              0, 1);
     if (needed > 0) {
         // make sure we alloc more than actually we were told is missing
         // (some clients may register while we are making these calls)
@@ -57,7 +58,7 @@ pingClients(unsigned int ticks, void *param)
         }
         // try again. we may fail again if _many_ clients register in between
         needed = userLocation.get_all_ucontacts(buf, length ,
-            userLocation.nat_flag);
+            userLocation.nat_flag, 0 , 1);
         if (needed != 0) {
             pkg_free(buf);
             return;

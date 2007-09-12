@@ -25,6 +25,8 @@
  * ========
  * 2005-07-11 get_all_ucontacts returns also the contact's flags (bogdan)
  * 2006-11-28 added get_number_of_users() (Jeffrey Magder - SOMA Networks)
+ * 2007-09-12 added partitioning support for fetching all ul contacts
+ *            (bogdan)
  */
 
 
@@ -73,7 +75,8 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 
 
 
-static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
+static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
+								unsigned int part_idx, unsigned int part_max)
 {
 	static char query_buf[512];
 	struct socket_info *sock;
@@ -96,14 +99,16 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 	for (dom = root; dom!=NULL ; dom=dom->next) {
 		/* build query */
 		i = snprintf( query_buf, sizeof(query_buf), "select %.*s, %.*s, %.*s,"
-			" %.*s from %s where %.*s > now() and %.*s & %d = %d",
+			" %.*s from %s where %.*s > now() and %.*s & %d = %d and "
+			"id %% %u = %u",
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
 			sock_col.len, sock_col.s,
 			cflags_col.len, cflags_col.s,
 			dom->d->name->s,
 			expires_col.len, expires_col.s,
-			cflags_col.len, cflags_col.s, flags, flags);
+			cflags_col.len, cflags_col.s,
+			flags, flags, part_max, part_idx);
 		if ( i>=sizeof(query_buf) ) {
 			LOG(L_ERR,"ERROR:usrloc:get_all_db_ucontacts: DB query "
 				"too long\n");
@@ -195,7 +200,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags)
 
 
 
-static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
+static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
+								unsigned int part_idx, unsigned int part_max)
 {
 	dlist_t *p;
 	urecord_t *r;
@@ -212,6 +218,9 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
 	for (p = root; p != NULL; p = p->next) {
 
 		for(i=0; i<p->d->size; i++) {
+
+			if ( (i % part_max) != part_idx )
+				continue;
 
 			lock_ulslot(p->d, i);
 			if(p->d->table[i].n<=0)
@@ -303,12 +312,13 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags)
  * |000000000000|
  * +------------+
  */
-int get_all_ucontacts(void *buf, int len, unsigned int flags)
+int get_all_ucontacts(void *buf, int len, unsigned int flags,
+								unsigned int part_idx, unsigned int part_max)
 {
 	if (db_mode==DB_ONLY)
-		return get_all_db_ucontacts( buf, len, flags);
+		return get_all_db_ucontacts( buf, len, flags, part_idx, part_max);
 	else
-		return get_all_mem_ucontacts( buf, len, flags);
+		return get_all_mem_ucontacts( buf, len, flags, part_idx, part_max);
 }
 
 
