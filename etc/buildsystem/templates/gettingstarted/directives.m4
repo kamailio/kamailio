@@ -11,9 +11,9 @@ ifdef({{GS_HELLOWORLD}},
 {{# Debug level on logging}},
 {{debug=DEBUG_LEVEL
 # memory debug log level
-#memdbg=MEM_DEBUG_LEVEL 
+memdbg=MEM_DEBUG_LEVEL 
 # memory statistics log level
-#memlog=MEM_STAT_DEBUG_LEVEL}})
+memlog=MEM_STAT_DEBUG_LEVEL}})
 ANNOTATE({{The fork directive tells the SER daemon to run in the foreground
         or the background. When you are ready to operate SER as a system
         service, you must set this directive to yes. For now we will just

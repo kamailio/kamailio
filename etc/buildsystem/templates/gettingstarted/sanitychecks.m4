@@ -69,7 +69,7 @@ ANNOTATE({{The exit statement tells SER to stop processing the SIP message
 	completely stop processing the current message.}},
 ,
 {{		exit;
-	};
+	}
 }})dnl
 ANNOTATE({{msg:len is a core SER function that returns the length in bytes
         of the current SIP message. This, like mf_process_maxfwd_header()
@@ -82,7 +82,7 @@ ANNOTATE({{msg:len is a core SER function that returns the length in bytes
 {{	if (msg:len > max_len) {
 		sl_reply("513", "Message Overflow");
 		exit;
-	};
+	}
 }})dnl
 }})dnl
 changequote(`,')dnl

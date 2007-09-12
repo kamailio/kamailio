@@ -28,11 +28,8 @@ ifdef({{GS_CALLFWD}},
 	}
 }})
 ANNOTATE({{}},
-{{	# Initial INVITEs (not reINVITEs) should go to the failure route for forwarding, voicemail, etc}}
-	# if the INVITE is not answered.
-{{	if (method=="INVITE" && @to.tag=="") {
-		t_on_failure("ROUTE_FAILURE_ROUTE");
-	}
+{{	# We want all failure responses to go through our failure route.}},
+{{	t_on_failure("ROUTE_FAILURE_ROUTE");
 }})
 }})dnl ifdef GS_CALLFWD
 ifdef({{GS_MESSAGE}},

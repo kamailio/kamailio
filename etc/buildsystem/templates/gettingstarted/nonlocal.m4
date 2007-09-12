@@ -10,8 +10,15 @@ ANNOTATE({{}},
 {{	lookup_domain("$fd", "@from.uri.host");
 }})
 ANNOTATE({{}},
-{{	# check if the callee is at a local domain (t=to, d=domain, $t will be set)}},
-{{	lookup_domain("$td", "@ruri.host");
+{{	# check if the callee is at a local domain (t=to, d=domain, $t will be set)
+	# If we have no To tag (dialog creating messages), we use request uri, but
+	# but if this is an in-dialog message (like BYE with last hop before UA here)
+	# we use the To header.}},
+{{	if(@to.tag=="") {
+		lookup_domain("$td", "@ruri.host");
+	} else {
+		lookup_domain("$td", "@to.uri.host");
+	}
 }})
 ANNOTATE({{}},
 {{	# we dont know the domain of the caller and also not
