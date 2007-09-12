@@ -192,6 +192,26 @@ modparam("nathelper", "ping_nated_only", 1)
 		</example>
 	</section>
 	<section>
+		<title><varname>natping_processes</varname> (integer)</title>
+		<para>
+		How many timer processes should be created by the module for the
+		exclusive task of sending the NAT pings.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>natping_processes</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "natping_processes", 3)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>received_avp</varname> (str)</title>
 		<para>
 		The name of the Attribute-Value-Pair (AVP) used to store the URI 

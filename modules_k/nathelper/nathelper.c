@@ -157,7 +157,8 @@
  *             (ancuta)
  * 2007-05-09 New function start_recording() allowing to start recording RTP 
  *             session in the RTP proxy (Carsten Bock - ported from SER)
-
+ * 2007-09-11 Separate timer process and support for multiple timer processes
+ *             (bogdan)
  */
 
 #include <sys/types.h>
@@ -342,6 +343,7 @@ static pid_t mypid;
 static unsigned int myseqn = 0;
 static str nortpproxy_str = str_init("a=nortpproxy:yes\r\n");
 static int sipping_flag = -1;
+static int natping_processes = 1;
 
 static char* rcv_avp_param = NULL;
 static unsigned short rcv_avp_type = 0;
@@ -403,6 +405,7 @@ static param_export_t params[] = {
 	{"sipping_from",          STR_PARAM, &sipping_from.s        },
 	{"sipping_method",        STR_PARAM, &sipping_method.s      },
 	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
+	{"natping_processes",     INT_PARAM, &natping_processes     },
 	{0, 0, 0}
 };
 
@@ -962,9 +965,13 @@ mod_init(void)
 		*natping_state = MI_DEFAULT_NATPING_STATE;
 
 		if (ping_nated_only && ul.nat_flag==0) {
-			LOG(L_ERR, "ERROR:nathelper:mod_init: Bad config - "
-				"ping_nated_only enabled, but not nat bflag set in usrloc "
-				"module\n");
+			LM_ERR("bad config - ping_nated_only enabled, but no nat bflag"
+				" set in usrloc module\n");
+			return -1;
+		}
+		if (natping_processes>=8) {
+			LM_ERR("too many natping processes (%d) max=8\n",
+				natping_processes);
 			return -1;
 		}
 
@@ -988,10 +995,12 @@ mod_init(void)
 			init_sip_ping();
 		}
 
-		if (register_timer_process(nh_timer, NULL, natping_interval, 
-		TIMER_PROC_INIT_FLAG)<0) {
-			LM_ERR("failed to register timer routine as process\n");
-			return -1;
+		for( i=0 ; i<natping_processes ; i++ ) {
+			if (register_timer_process(nh_timer, (void*)(unsigned long)i,
+			natping_interval, TIMER_PROC_INIT_FLAG)<0) {
+				LM_ERR("failed to register timer routine as process\n");
+				return -1;
+			}
 		}
 	}
 
@@ -2690,7 +2699,7 @@ force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 
 
 static void
-nh_timer(unsigned int ticks, void *param)
+nh_timer(unsigned int ticks, void *timer_idx)
 {
 	int rval;
 	void *buf, *cp;
@@ -2715,7 +2724,7 @@ nh_timer(unsigned int ticks, void *param)
 		}
 	}
 	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only?ul.nat_flag:0),
-		0, 1);
+		(unsigned int)(unsigned long)timer_idx, natping_processes);
 	if (rval > 0) {
 		if (buf != NULL)
 			pkg_free(buf);
@@ -2726,7 +2735,7 @@ nh_timer(unsigned int ticks, void *param)
 			return;
 		}
 		rval = ul.get_all_ucontacts(buf,cblen,(ping_nated_only?ul.nat_flag:0),
-			0, 1);
+			(unsigned int)(unsigned long)timer_idx, natping_processes);
 		if (rval != 0) {
 			pkg_free(buf);
 			return;
