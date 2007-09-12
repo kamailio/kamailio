@@ -71,10 +71,15 @@
 
 	<section>
 		<title>External Libraries or Applications</title>
-		<para>
-			None.
-		</para>
-	</section>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+
+		</section>
 	</section>
 	
 	<section>
@@ -195,26 +200,6 @@ modparam("presence", "clean_period", 100)
 modparam("presence", "to_tag_pref", 'a')
 ...
 	</programlisting>
-		</example>
-	</section>
-
-	<section>
-		<title><varname>lock_set_size</varname> (int)</title>
-		<para>
-		The size of the lock used for synchronizing updating information 
-		from database.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>8</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>lock_set_size</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "lock_set_size", 8)
-...
-		</programlisting>
 		</example>
 	</section>
 

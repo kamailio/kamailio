@@ -558,7 +558,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		ev_param= ev_param->next;
 	}		
 	
-	if(extract_sdialog_info(&subs, msg, &to_tag_gen)< 0)
+	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen)< 0)
 	{
 		LM_ERR("while extracting dialog information\n");
 		goto error;
@@ -724,7 +724,7 @@ error:
 }
 
 
-int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int* to_tag_gen)
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag_gen)
 {
 	static char buf[50];
 	str rec_route= {0, 0};
@@ -753,8 +753,8 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int* to_tag_gen)
 		LM_DBG("'expires' not found; default=%d\n",subs->event->default_expires);
 		lexpire = subs->event->default_expires;
 	}
-	if(lexpire > max_expires)
-		lexpire = max_expires;
+	if(lexpire > mexp)
+		lexpire = mexp;
 
 	subs->expires = lexpire;
 

@@ -97,8 +97,9 @@ void update_db_subs(char* db_table, shtable_t hash_table,int htable_size,
 typedef void (*update_db_subs_t)(char* ,shtable_t ,int ,int ,
 		handle_expired_func_t);
 
-int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int* to_tag_gen);
-typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
+int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,
 		int* to_tag_gen);
+typedef int (*extract_sdialog_info_t)(subs_t* subs, struct sip_msg* msg,
+		int max_expire, int* to_tag_gen);
 
 #endif
