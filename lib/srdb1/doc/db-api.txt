@@ -602,15 +602,15 @@ the insertion of the new data.
 
 2.10.2 Prototype
 
-   int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
+   int (*db_replace_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 2.10.3 Parameters
 
 The function takes 4 parameters:
-handle: structure representing database connection
-keys: key names
-vals: values of the keys
-n: number of key=value pairs
+_h: structure representing database connection
+_k: key names
+_v: values of the keys
+_n: number of key=value pairs
 
 2.10.4 Return Value
 
@@ -678,7 +678,6 @@ The old row will not deleted before the insertion of the new data.
 2.13.3 Parameters
 
 The function takes four parameters:
-
 _h: structure representing database connection
 _k: key names
 _v: values of the keys

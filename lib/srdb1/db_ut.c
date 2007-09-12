@@ -88,7 +88,7 @@ inline int db_int2str(int _v, char* _s, int* _l)
 
 	ret = snprintf(_s, *_l, "%-d", _v);
 	if (ret < 0 || ret >= *_l) {
-		LM_ERR("Error in sprintf\n");
+		LM_ERR("Error in snprintf\n");
 		return -1;
 	}
 	*_l = ret;
