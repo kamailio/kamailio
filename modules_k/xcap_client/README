@@ -40,7 +40,7 @@ Anca-Maria Vamanu
    List of Examples
    1-1. Set db_url parameter
    1-2. Set xcap_table parameter
-   1-3. Set xcap_table parameter
+   1-3. Set periodical_query parameter
    1-4. Set query_period parameter
    2-1. xcap_api structure
      __________________________________________________________
@@ -99,7 +99,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set db_url parameter
 ...
-modparam("presence_xml", "db_url",
+modparam("xcap_client", "db_url",
         "mysql://openser:openserrw@192.168.2.132/openser")
 ...
      __________________________________________________________
@@ -112,7 +112,7 @@ modparam("presence_xml", "db_url",
 
    Example 1-2. Set xcap_table parameter
 ...
-modparam("presence_xml", "xcap_table", "xcaps")
+modparam("xcap_client", "xcap_table", "xcaps")
 ...
      __________________________________________________________
 
@@ -128,9 +128,9 @@ modparam("presence_xml", "xcap_table", "xcaps")
 
    Default value is "1".
 
-   Example 1-3. Set xcap_table parameter
+   Example 1-3. Set periodical_query parameter
 ...
-modparam("presence_xml", "periodical_query", 0)
+modparam("xcap_client", "periodical_query", 0)
 ...
      __________________________________________________________
 
@@ -146,7 +146,7 @@ modparam("presence_xml", "periodical_query", 0)
 
    Example 1-4. Set query_period parameter
 ...
-modparam("presence_xml", "query_period", 50)
+modparam("xcap_client", "query_period", 50)
 ...
      __________________________________________________________
 
@@ -170,11 +170,12 @@ modparam("presence_xml", "query_period", 50)
      * xcap server port: the port of the xcap server
 
    MI FIFO Command Format:
-                :refreshXcapDoc:fifo_reply
-                /xcap-root/resource-lists/users/eyebeam/buddies-resource
--list.xml
-                8000
-                _empty_line_
+...
+:refreshXcapDoc:fifo_reply
+/xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml
+8000
+_empty_line_
+...
      __________________________________________________________
 
 Chapter 2. Developer's Guide

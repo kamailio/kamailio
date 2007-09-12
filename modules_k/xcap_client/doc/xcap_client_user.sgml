@@ -86,7 +86,7 @@
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence_xml", "db_url", 
+modparam("xcap_client", "db_url", 
 	"mysql://openser:openserrw@192.168.2.132/openser")
 ...
 </programlisting>
@@ -105,7 +105,7 @@ modparam("presence_xml", "db_url",
 		<title>Set <varname>xcap_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence_xml", "xcap_table", "xcaps")
+modparam("xcap_client", "xcap_table", "xcaps")
 ...
 </programlisting>
 		</example>
@@ -127,10 +127,10 @@ modparam("presence_xml", "xcap_table", "xcaps")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>xcap_table</varname> parameter</title>
+		<title>Set <varname>periodical_query</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence_xml", "periodical_query", 0)
+modparam("xcap_client", "periodical_query", 0)
 ...
 </programlisting>
 		</example>
@@ -153,7 +153,7 @@ modparam("presence_xml", "periodical_query", 0)
 		<title>Set <varname>query_period</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence_xml", "query_period", 50)
+modparam("xcap_client", "query_period", 50)
 ...
 </programlisting>
 		</example>
@@ -194,10 +194,12 @@ modparam("presence_xml", "query_period", 50)
         <para>
 		MI FIFO Command Format:
         <programlisting  format="linespecific">
-		:refreshXcapDoc:fifo_reply
-		/xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml
-		8000
-		_empty_line_
+...
+:refreshXcapDoc:fifo_reply
+/xcap-root/resource-lists/users/eyebeam/buddies-resource-list.xml
+8000
+_empty_line_
+...
 		</programlisting>
 	</section>
 
