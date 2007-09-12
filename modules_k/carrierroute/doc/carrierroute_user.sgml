@@ -4,8 +4,8 @@
     <chapterinfo>
 	<revhistory>
 	    <revision>
-		<revnumber>$Revision: 2 $</revnumber>
-		<date>$Date: 2005-06-13 18:47:24 +0200 (Mo, 13 Jun 2005) $</date>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
 	    </revision>
 	</revhistory>
     </chapterinfo>
@@ -26,7 +26,7 @@
 	</para>
 	<para>
 		This modules scales up to more than a million users, and is able to handle 
-		more than 10k routing table entries. It should be able to handle more, but 
+		more than ten thousand routing table entries. It should be able to handle more, but 
 		this is untested at the moment.
 	</para>
 	<para>

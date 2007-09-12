@@ -57,6 +57,14 @@
 		<para>
 		The default is to seed the generator from the system random source in the core.
 		</para>
+		<para>
+		If you use multiple servers in your installation, and would like to authenticate
+		on the second server against the nonce generated at the first one its necessary
+		to explicitly set the secret to the same value on all servers. 
+		However, the use of a shared (and fixed) secret as nonce is insecure, much better
+		is to stay with the default. Any clients should send the reply to the server that
+		issued the request.
+		</para>
 		<example>
 		<title>secret parameter example</title>
 		<programlisting format="linespecific">

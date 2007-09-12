@@ -91,8 +91,8 @@ static inline int hex2integer(char* _s)
 
 /*
  * Calculate nonce value
- * Nonce value consists of time in seconds since 1.1 1970 and
- * secret phrase
+ * Nonce value consists of the expires time (in seconds since 1.1 1970) 
+ * and a secret phrase
  */
 void calc_nonce(char* _nonce, int _expires, str* _secret)
 {
