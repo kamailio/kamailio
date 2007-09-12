@@ -11,7 +11,7 @@ CREATE TABLE presentity (
     UNIQUE KEY udee_presentity (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','7');
+INSERT INTO version (table_name, table_version) values ('active_watchers','8');
 CREATE TABLE active_watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,

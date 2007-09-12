@@ -11,7 +11,7 @@ CREATE TABLE presentity (
     CONSTRAINT udee_presentity UNIQUE (username, domain, event, etag)
 );
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','7');
+INSERT INTO version (table_name, table_version) values ('active_watchers','8');
 CREATE TABLE active_watchers (
     id SERIAL PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,
