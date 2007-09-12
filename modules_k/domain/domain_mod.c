@@ -158,12 +158,11 @@ static int mod_init(void)
 		/* Check table version */
 		ver = domain_db_ver(&domain_table);
 		if (ver < 0) {
-			LOG(L_ERR, "ERROR: domain:mod_init(): "
-					"error while querying table version\n");
+		        LM_ERR("Error while querying table version\n");
 			goto error;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "ERROR: domain:mod_init(): invalid table"
-					" version (use openser_mysql.sh reinstall)\n");
+		        LM_ERR("Invalid table version <%d> (should be %d)\n",
+			       ver, TABLE_VERSION);
 			goto error;
 		}
 
@@ -171,16 +170,14 @@ static int mod_init(void)
 		hash_table_1 = (struct domain_list **)shm_malloc
 			(sizeof(struct domain_list *) * DOM_HASH_SIZE);
 		if (hash_table_1 == 0) {
-			LOG(L_ERR, "ERROR: domain: mod_init(): "
-					"No memory for hash table\n");
+			LM_ERR("No memory for hash table\n");
 			goto error;
 		}
 
 		hash_table_2 = (struct domain_list **)shm_malloc
 			(sizeof(struct domain_list *) * DOM_HASH_SIZE);
 		if (hash_table_2 == 0) {
-			LOG(L_ERR, "ERROR: domain: mod_init():"
-					" No memory for hash table\n");
+			LM_ERR("No memory for hash table\n");
 			goto error;
 		}
 		for (i = 0; i < DOM_HASH_SIZE; i++) {
@@ -192,8 +189,7 @@ static int mod_init(void)
 		*hash_table = hash_table_1;
 
 		if (reload_domain_table() == -1) {
-			LOG(L_CRIT, "ERROR: domain:mod_init():"
-					" Domain table reload failed\n");
+			LM_ERR("Domain table reload failed\n");
 			goto error;
 		}
 
@@ -212,8 +208,7 @@ static int child_init(int rank)
 	/* Check if database is needed by child */
 	if ( db_mode==0 && rank>0 ) {
 		if (domain_db_init(db_url.s)<0) {
-			LOG(L_ERR, "ERROR: domain:child_init():"
-					" Unable to connect to the database\n");
+			LM_ERR("Unable to connect to the database\n");
 			return -1;
 		}
 	}
@@ -261,18 +256,17 @@ static int parameter_fixup(void **param, int param_no)
     if (*param && (param_no == 1)) {
 	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (sp == 0) {
-	    LOG(L_ERR,"domain:parameter_fixup(): no pkg memory left\n");
+	    LM_ERR("No pkg memory left for parameter\n");
 	    return -1;
 	}
 	s.s = (char*)*param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, sp) == 0) {
-	    LOG(L_ERR,"domain:parameter_fixup(): parsing of "
-		"pseudo variable %s failed!\n", (char*)*param);
+	    LM_ERR("Parsing of pseudo variable %s failed!\n", (char*)*param);
 	    pkg_free(sp);
 	    return -1;
 	}
 	if (sp->type == PVT_NULL) {
-	    LOG(L_ERR, "permissions:double_fixup(): bad pseudo variable\n");
+	    LM_ERR("Bad pseudo variable\n");
 	    pkg_free(sp);
 	    return -1;
 	}
