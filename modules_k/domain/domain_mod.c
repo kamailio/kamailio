@@ -143,7 +143,7 @@ static int mod_init(void)
 {
 	int i, ver;
 
-	DBG("domain - initializing\n");
+	LM_DBG("Initializing\n");
 	
 	db_url.len = strlen(db_url.s);
 	domain_table.len = strlen(domain_table.s);

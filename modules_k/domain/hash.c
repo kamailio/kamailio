@@ -45,14 +45,14 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 
 	np = (struct domain_list *) shm_malloc(sizeof(*np));
 	if (np == NULL) {
-		LOG(L_CRIT, "hash_install(): Cannot allocate memory for table entry\n");
+		LM_ERR("Cannot allocate memory for hash table entry\n");
 		return -1;
 	}
 
 	np->domain.len = strlen(domain);
 	np->domain.s = (char *) shm_malloc(np->domain.len);
 	if (np->domain.s == NULL) {
-		LOG(L_CRIT, "hash_install(): Cannot allocate memory for domain string\n");
+		LM_ERR("Cannot allocate memory for domain string\n");
 		return -1;
 	}
 	(void) strncpy(np->domain.s, domain, np->domain.len);

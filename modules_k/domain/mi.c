@@ -67,7 +67,7 @@ struct mi_root* mi_domain_dump(struct mi_root *cmd_tree, void *param)
 
 	if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0)
 	{
-		LOG(L_ERR,"domain:mi_domain_dump: Error while adding node\n");
+		LM_ERR("Error while adding node\n");
 		free_mi_tree(rpl_tree);
 		return 0;
 	}
