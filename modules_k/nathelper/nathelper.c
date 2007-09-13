@@ -2764,9 +2764,24 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
 		cp =  (char*)cp + sizeof(path.len) + path.len;
 
-		if (parse_uri(c.s, c.len, &curi) < 0) {
-			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't parse contact uri\n");
-			continue;
+		/* determin the destination */
+		if ( (flags&sipping_flag)!=0  && path.len) {
+			/* send to last URI in path */
+			if (get_path_dst_uri( &path, &opt) < 0) {
+				LM_ERR("failed to get dst_uri for Path\n");
+				continue;
+			}
+			/* send to the contact/received */
+			if (parse_uri(opt.s, opt.len, &curi) < 0) {
+				LM_ERR("can't parse contact dst_uri\n");
+				continue;
+			}
+		} else {
+			/* send to the contact/received */
+			if (parse_uri(c.s, c.len, &curi) < 0) {
+				LM_ERR("can't parse contact uri\n");
+				continue;
+			}
 		}
 		if (curi.proto != PROTO_UDP && curi.proto != PROTO_NONE)
 			continue;
@@ -2790,7 +2805,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 			continue;
 		}
 		if ( (flags&sipping_flag)!=0 &&
-		(opt.s=build_sipping( &c, send_sock, &opt.len))!=0 ) {
+		(opt.s=build_sipping( &c, send_sock, &path, &opt.len))!=0 ) {
 			if (udp_send(send_sock, opt.s, opt.len, &to)<0){
 				LOG(L_ERR, "ERROR:nathelper:nh_timer: sip udp_send failed\n");
 			}

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../parser/parse_rr.h"
 #include "../../str.h"
 #include "../../ut.h"
 #include "../../ip_addr.h"
@@ -124,7 +125,8 @@ error:
 
 
 /* build the buffer of a SIP ping request */
-static inline char* build_sipping(str *curi, struct socket_info* s, int *len_p)
+static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
+																int *len_p)
 {
 #define s_len(_s) (sizeof(_s)-1)
 	static char buf[MAX_SIPPING_SIZE];
@@ -133,8 +135,9 @@ static inline char* build_sipping(str *curi, struct socket_info* s, int *len_p)
 
 	if ( sipping_method.len + 1 + curi->len + s_len(" SIP/2.0"CRLF) +
 		s_len("Via: SIP/2.0/UDP ") + s->address_str.len +
-		1 + s->port_no_str.len + s_len(";branch=0"CRLF) +
-		s_len("From: ") +  sipping_from.len + s_len(";tag=") + 8 +
+		1 + s->port_no_str.len + s_len(";branch=0") +
+		(path->len ? (s_len(CRLF"Route: ") + path->len) : 0) +
+		s_len(CRLF"From: ") +  sipping_from.len + s_len(";tag=") + 8 +
 		s_len(CRLF"To: ") + curi->len +
 		s_len(CRLF"Call-ID: ") + sipping_callid.len + 1 + 8 + 1 + 8 + 1 +
 		s->address_str.len +
@@ -155,7 +158,13 @@ static inline char* build_sipping(str *curi, struct socket_info* s, int *len_p)
 	append_str( p, s->address_str);
 	*(p++) = ':';
 	append_str( p, s->port_no_str);
-	append_fix( p, ";branch=0"CRLF"From: ");
+	if (path->len) {
+		append_fix( p, ";branch=0"CRLF"Route: ");
+		append_str( p, *path);
+		append_fix( p, CRLF"From: ");
+	} else {
+		append_fix( p, ";branch=0"CRLF"From: ");
+	}
 	append_str( p, sipping_from);
 	append_fix( p, ";tag=");
 	len = 8;
