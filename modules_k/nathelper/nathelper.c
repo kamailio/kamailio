@@ -996,8 +996,8 @@ mod_init(void)
 		}
 
 		for( i=0 ; i<natping_processes ; i++ ) {
-			if (register_timer_process(nh_timer, (void*)(unsigned long)i,
-			natping_interval, TIMER_PROC_INIT_FLAG)<0) {
+			if (register_timer_process( nh_timer, (void*)(unsigned long)i, 1,
+			TIMER_PROC_INIT_FLAG)<0) {
 				LM_ERR("failed to register timer routine as process\n");
 				return -1;
 			}
@@ -2701,30 +2701,32 @@ force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 static void
 nh_timer(unsigned int ticks, void *timer_idx)
 {
+	static unsigned int iteration = 0;
 	int rval;
 	void *buf, *cp;
 	str c;
+	str opt;
 	struct sip_uri curi;
 	union sockaddr_union to;
 	struct hostent* he;
 	struct socket_info* send_sock;
 	unsigned int flags;
 	unsigned short proto;
-	str opt;
 
 	if((*natping_state) == 0)
-		return;
+		goto done;
 
 	buf = NULL;
 	if (cblen > 0) {
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
-			return;
+			goto done;
 		}
 	}
 	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only?ul.nat_flag:0),
-		(unsigned int)(unsigned long)timer_idx, natping_processes);
+		((unsigned int)(unsigned long)timer_idx)*natping_interval+iteration,
+		natping_processes*natping_interval);
 	if (rval > 0) {
 		if (buf != NULL)
 			pkg_free(buf);
@@ -2732,18 +2734,19 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
-			return;
+			goto done;
 		}
 		rval = ul.get_all_ucontacts(buf,cblen,(ping_nated_only?ul.nat_flag:0),
-			(unsigned int)(unsigned long)timer_idx, natping_processes);
+		   ((unsigned int)(unsigned long)timer_idx)*natping_interval+iteration,
+		   natping_processes*natping_interval);
 		if (rval != 0) {
 			pkg_free(buf);
-			return;
+			goto done;
 		}
 	}
 
 	if (buf == NULL)
-		return;
+		goto done;
 
 	cp = buf;
 	while (1) {
@@ -2793,6 +2796,10 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		}
 	}
 	pkg_free(buf);
+done:
+	iteration++;
+	if (iteration==natping_interval)
+		iteration = 0;
 }
 
 
