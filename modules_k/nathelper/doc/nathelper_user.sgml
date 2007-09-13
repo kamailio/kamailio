@@ -212,6 +212,25 @@ modparam("nathelper", "natping_processes", 3)
 		</example>
 	</section>
 	<section>
+		<title><varname>natping_socket</varname> (string)</title>
+		<para>
+		Spoof the natping's source-ip to this address. Works only for IPv4.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>natping_socket</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("nathelper", "natping_socket", "192.168.1.1:5006")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>received_avp</varname> (str)</title>
 		<para>
 		The name of the Attribute-Value-Pair (AVP) used to store the URI 

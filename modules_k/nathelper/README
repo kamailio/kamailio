@@ -32,16 +32,17 @@ Bogdan-Andrei Iancu
               1.5.1. natping_interval (integer)
               1.5.2. ping_nated_only (integer)
               1.5.3. natping_processes (integer)
-              1.5.4. received_avp (str)
-              1.5.5. rtpproxy_sock (string)
-              1.5.6. rtpproxy_disable_tout (integer)
-              1.5.7. rtpproxy_tout (integer)
-              1.5.8. rtpproxy_retr (integer)
-              1.5.9. force_socket (string)
-              1.5.10. sipping_bflag (integer)
-              1.5.11. sipping_from (string)
-              1.5.12. sipping_method (string)
-              1.5.13. nortpproxy_str (string)
+              1.5.4. natping_socket (string)
+              1.5.5. received_avp (str)
+              1.5.6. rtpproxy_sock (string)
+              1.5.7. rtpproxy_disable_tout (integer)
+              1.5.8. rtpproxy_tout (integer)
+              1.5.9. rtpproxy_retr (integer)
+              1.5.10. force_socket (string)
+              1.5.11. sipping_bflag (integer)
+              1.5.12. sipping_from (string)
+              1.5.13. sipping_method (string)
+              1.5.14. nortpproxy_str (string)
 
         1.6. Exported Functions
 
@@ -63,27 +64,28 @@ Bogdan-Andrei Iancu
    1-1. Set natping_interval parameter
    1-2. Set ping_nated_only parameter
    1-3. Set natping_processes parameter
-   1-4. Set received_avp parameter
-   1-5. Set rtpproxy_sock parameter
-   1-6. Set rtpproxy_disable_tout parameter
-   1-7. Set rtpproxy_tout parameter
-   1-8. Set rtpproxy_retr parameter
-   1-9. Set force_socket parameter
-   1-10. Set sipping_bflag parameter
-   1-11. Set sipping_from parameter
-   1-12. Set sipping_method parameter
-   1-13. Set nortpproxy_str parameter
-   1-14. fix_nated_contact usage
-   1-15. fix_nated_sdp usage
-   1-16. fix_nated_contact usage
-   1-17. force_rtp_proxy usage
-   1-18. unforce_rtp_proxy usage
-   1-19. add_rcv_paramer usage
-   1-20. fix_nated_register usage
-   1-21. start_recording usage
-   1-22. nh_enable_ping usage
-   1-23. nh_enable_rtpp usage
-   1-24. nh_show_rtpp usage
+   1-4. Set natping_socket parameter
+   1-5. Set received_avp parameter
+   1-6. Set rtpproxy_sock parameter
+   1-7. Set rtpproxy_disable_tout parameter
+   1-8. Set rtpproxy_tout parameter
+   1-9. Set rtpproxy_retr parameter
+   1-10. Set force_socket parameter
+   1-11. Set sipping_bflag parameter
+   1-12. Set sipping_from parameter
+   1-13. Set sipping_method parameter
+   1-14. Set nortpproxy_str parameter
+   1-15. fix_nated_contact usage
+   1-16. fix_nated_sdp usage
+   1-17. fix_nated_contact usage
+   1-18. force_rtp_proxy usage
+   1-19. unforce_rtp_proxy usage
+   1-20. add_rcv_paramer usage
+   1-21. fix_nated_register usage
+   1-22. start_recording usage
+   1-23. nh_enable_ping usage
+   1-24. nh_enable_rtpp usage
+   1-25. nh_show_rtpp usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -222,7 +224,20 @@ modparam("nathelper", "natping_processes", 3)
 ...
      _________________________________________________________
 
-1.5.4. received_avp (str)
+1.5.4. natping_socket (string)
+
+   Spoof the natping's source-ip to this address. Works only for
+   IPv4.
+
+   Default value is NULL. 
+
+   Example 1-4. Set natping_socket parameter
+...
+modparam("nathelper", "natping_socket", "192.168.1.1:5006")
+...
+     _________________________________________________________
+
+1.5.5. received_avp (str)
 
    The name of the Attribute-Value-Pair (AVP) used to store the
    URI containing the received IP, port, and protocol. The URI is
@@ -240,20 +255,20 @@ modparam("nathelper", "natping_processes", 3)
 
    Default value is "NULL" (disabled). 
 
-   Example 1-4. Set received_avp parameter
+   Example 1-5. Set received_avp parameter
 ...
 modparam("nathelper", "received_avp", "$avp(i:42)")
 ...
      _________________________________________________________
 
-1.5.5. rtpproxy_sock (string)
+1.5.6. rtpproxy_sock (string)
 
    Definition of socket(s) used to connect to (a set) RTPProxy.
    It may specify a UNIX socket or an IPv4/IPv6 UDP socket.
 
    Default value is "NONE" (disabled). 
 
-   Example 1-5. Set rtpproxy_sock parameter
+   Example 1-6. Set rtpproxy_sock parameter
 ...
 # single rtproxy
 modparam("nathelper", "rtpproxy_sock", "udp:localhost:12221")
@@ -268,7 +283,7 @@ modparam("nathelper", "rtpproxy_sock",
 ...
      _________________________________________________________
 
-1.5.6. rtpproxy_disable_tout (integer)
+1.5.7. rtpproxy_disable_tout (integer)
 
    Once RTPProxy was found unreachable and marked as disable,
    nathelper will not attempt to establish communication to
@@ -276,38 +291,38 @@ modparam("nathelper", "rtpproxy_sock",
 
    Default value is "60". 
 
-   Example 1-6. Set rtpproxy_disable_tout parameter
+   Example 1-7. Set rtpproxy_disable_tout parameter
 ...
 modparam("nathelper", "rtpproxy_disable_tout", 20)
 ...
      _________________________________________________________
 
-1.5.7. rtpproxy_tout (integer)
+1.5.8. rtpproxy_tout (integer)
 
    Timeout value in waiting for reply from RTPProxy.
 
    Default value is "1". 
 
-   Example 1-7. Set rtpproxy_tout parameter
+   Example 1-8. Set rtpproxy_tout parameter
 ...
 modparam("nathelper", "rtpproxy_tout", 2)
 ...
      _________________________________________________________
 
-1.5.8. rtpproxy_retr (integer)
+1.5.9. rtpproxy_retr (integer)
 
    How many times nathelper should retry to send and receive
    after timeout was generated.
 
    Default value is "5". 
 
-   Example 1-8. Set rtpproxy_retr parameter
+   Example 1-9. Set rtpproxy_retr parameter
 ...
 modparam("nathelper", "rtpproxy_retr", 2)
 ...
      _________________________________________________________
 
-1.5.9. force_socket (string)
+1.5.10. force_socket (string)
 
    Socket to be forced in communicating to RTPProxy. It makes
    sense only for UDP communication. If no one specified, the OS
@@ -315,13 +330,13 @@ modparam("nathelper", "rtpproxy_retr", 2)
 
    Default value is "NULL". 
 
-   Example 1-9. Set force_socket parameter
+   Example 1-10. Set force_socket parameter
 ...
 modparam("nathelper", "force_socket", "localhost:33333")
 ...
      _________________________________________________________
 
-1.5.10. sipping_bflag (integer)
+1.5.11. sipping_bflag (integer)
 
    What branch flag should be used by the module to identify
    NATed contacts for which it should perform NAT ping via a SIP
@@ -329,13 +344,13 @@ modparam("nathelper", "force_socket", "localhost:33333")
 
    Default value is -1 (disabled). 
 
-   Example 1-10. Set sipping_bflag parameter
+   Example 1-11. Set sipping_bflag parameter
 ...
 modparam("nathelper", "sipping_bflag", 7)
 ...
      _________________________________________________________
 
-1.5.11. sipping_from (string)
+1.5.12. sipping_from (string)
 
    The parameter sets the SIP URI to be used in generating the
    SIP requests for NAT ping purposes. To enable the SIP request
@@ -344,26 +359,26 @@ modparam("nathelper", "sipping_bflag", 7)
 
    Default value is "NULL". 
 
-   Example 1-11. Set sipping_from parameter
+   Example 1-12. Set sipping_from parameter
 ...
 modparam("nathelper", "sipping_from", "sip:pinger@siphub.net")
 ...
      _________________________________________________________
 
-1.5.12. sipping_method (string)
+1.5.13. sipping_method (string)
 
    The parameter sets the SIP method to be used in generating the
    SIP requests for NAT ping purposes.
 
    Default value is "OPTIONS". 
 
-   Example 1-12. Set sipping_method parameter
+   Example 1-13. Set sipping_method parameter
 ...
 modparam("nathelper", "sipping_method", "INFO")
 ...
      _________________________________________________________
 
-1.5.13. nortpproxy_str (string)
+1.5.14. nortpproxy_str (string)
 
    The parameter sets the SDP attribute used by nathelper to mark
    the packet SDP informations have already been mangled.
@@ -377,7 +392,7 @@ modparam("nathelper", "sipping_method", "INFO")
 
    Default value is "a=nortpproxy:yes\r\n". 
 
-   Example 1-13. Set nortpproxy_str parameter
+   Example 1-14. Set nortpproxy_str parameter
 ...
 modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
 ...
@@ -392,7 +407,7 @@ modparam("nathelper", "nortpproxy_str", "a=sdpmangled:yes\r\n")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-14. fix_nated_contact usage
+   Example 1-15. fix_nated_contact usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
 ...
@@ -427,7 +442,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_contact();};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-15. fix_nated_sdp usage
+   Example 1-16. fix_nated_sdp usage
 ...
 if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
 ...
@@ -441,7 +456,7 @@ if (search("User-Agent: Cisco ATA.*") {fix_nated_sdp("3");};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-16. fix_nated_contact usage
+   Example 1-17. fix_nated_contact usage
 ...
 set_rtp_proxy_set("2");
 force_rtp_proxy();
@@ -495,7 +510,7 @@ force_rtp_proxy();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-17. force_rtp_proxy usage
+   Example 1-18. force_rtp_proxy usage
 ...
 if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy();};
 if (src_ip=1.2.3.4) {force_rtp_proxy("i");};
@@ -510,7 +525,7 @@ if (search("User-Agent: Cisco ATA.*") {force_rtp_proxy("","1.2.3.4");};
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-18. unforce_rtp_proxy usage
+   Example 1-19. unforce_rtp_proxy usage
 ...
 unforce_rtp_proxy();
 ...
@@ -536,7 +551,7 @@ unforce_rtp_proxy();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. add_rcv_paramer usage
+   Example 1-20. add_rcv_paramer usage
 ...
 add_rcv_param(); # add the parameter to the Contact header
 ....
@@ -554,7 +569,7 @@ add_rcv_param("1"); # add the paramter to the Contact URI
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-20. fix_nated_register usage
+   Example 1-21. fix_nated_register usage
 ...
 fix_nated_register();
 ...
@@ -592,7 +607,7 @@ fix_nated_register();
    This function can be used from REQUEST_ROUTE and
    ONREPLY_ROUTE.
 
-   Example 1-21. start_recording usage
+   Example 1-22. start_recording usage
 ...
 start_recording();
 ...
@@ -608,7 +623,7 @@ start_recording();
    The function takes only one parameter - a number in decimal
    format.
 
-   Example 1-22. nh_enable_ping usage
+   Example 1-23. nh_enable_ping usage
 ...
 $ openserctl fifo nh_enable_ping 1
 ...
@@ -627,7 +642,7 @@ $ openserctl fifo nh_enable_ping 1
    NOTE: if a rtpproxy is defined multiple times (in the same or
    diferente sete), all its instances will be enables/disabled.
 
-   Example 1-23. nh_enable_rtpp usage
+   Example 1-24. nh_enable_rtpp usage
 ...
 $ openserctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
@@ -640,7 +655,7 @@ $ openserctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    No parameter.
 
-   Example 1-24. nh_show_rtpp usage
+   Example 1-25. nh_show_rtpp usage
 ...
 $ openserctl fifo nh_show_rtpp
 ...

@@ -165,6 +165,14 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#ifndef __USE_BSD
+#define  __USE_BSD
+#endif
+#include <netinet/ip.h>
+#ifndef __FAVOR_BSD
+#define __FAVOR_BSD
+#endif
+#include <netinet/udp.h>
 #include <arpa/inet.h>
 #include <sys/uio.h>
 #include <sys/un.h>
@@ -288,7 +296,6 @@ static struct rtpp_set * select_rtpp_set(int id_set);
 static int rtpproxy_set_store(modparam_t type, void * val);
 static int nathelper_add_rtpproxy_set( char * rtp_proxies);
 
-
 static void nh_timer(unsigned int, void *);
 static int mod_init(void);
 static int child_init(int);
@@ -349,6 +356,12 @@ static char* rcv_avp_param = NULL;
 static unsigned short rcv_avp_type = 0;
 static int_str rcv_avp_name;
 
+static char *natping_socket = 0;
+static int raw_sock = -1;
+static unsigned int raw_ip = 0;
+static unsigned short raw_port = 0;
+
+
 static char ** rtpp_strings=0;
 static int rtpp_sets=0; /*used in rtpproxy_set_store()*/
 static int rtpp_set_count = 0;
@@ -406,6 +419,7 @@ static param_export_t params[] = {
 	{"sipping_method",        STR_PARAM, &sipping_method.s      },
 	{"sipping_bflag",         INT_PARAM, &sipping_flag          },
 	{"natping_processes",     INT_PARAM, &natping_processes     },
+	{"natping_socket",        STR_PARAM, &natping_socket        },
 	{0, 0, 0}
 };
 
@@ -895,7 +909,62 @@ error:
 	if (root)
 		free_mi_tree(root);
 	return 0;
+}
 
+
+static int init_raw_socket(void)
+{
+	int on = 1;
+
+	raw_sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	if (raw_sock ==-1) {
+		LM_ERR("cannot create raw socket\n");
+		return -1;
+	}
+
+	if (setsockopt(raw_sock, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) == -1) {
+		LM_ERR("cannot set socket options\n");
+		return -1;
+	}
+
+	return raw_sock;
+}
+
+
+static int get_natping_socket(char *socket, 
+										unsigned int *ip, unsigned short *port)
+{
+	struct hostent* he;
+	str host;
+	int lport;
+	int lproto;
+
+	if (parse_phostport( socket, strlen(socket), &host.s, &host.len,
+	&lport, &lproto)!=0){
+		LM_CRIT("invalid natping_socket parameter <%s>\n",natping_socket);
+		return -1;
+	}
+
+	if (lproto!=PROTO_UDP && lproto!=PROTO_NONE) {
+		LM_CRIT("natping_socket can be only UDP <%s>\n",natping_socket);
+		return 0;
+	}
+	lproto = PROTO_UDP;
+	*port = lport?(unsigned short)lport:SIP_PORT;
+
+	he = sip_resolvehost( &host, port, (unsigned short*)(void*)&lproto, 0, 0);
+	if (he==0) {
+		LM_ERR("could not resolve hostname:\"%.*s\"\n", host.len, host.s);
+		return -1;
+	}
+	if (he->h_addrtype != AF_INET) {
+		LM_ERR("only ipv4 addresses allowed in natping_socket\n");
+		return -1;
+	}
+
+	memcpy( ip, he->h_addr_list[0], he->h_length);
+
+	return 0;
 }
 
 
@@ -935,7 +1004,15 @@ mod_init(void)
 		force_socket=grep_sock_info(&socket_str,0,0);
 	}
 
-	/* any rtpptoxy configured? */
+	/* create raw socket? */
+	if (natping_socket && natping_socket[0]) {
+		if (get_natping_socket( natping_socket, &raw_ip, &raw_port)!=0)
+			return -1;
+		if (init_raw_socket() < 0)
+			return -1;
+	}
+
+	/* any rtpproxy configured? */
 	if(rtpp_set_list)
 		default_rtpp_set = select_rtpp_set(DEFAULT_RTPP_SET_ID);
 
@@ -2698,6 +2775,66 @@ force_rtp_proxy0_f(struct sip_msg* msg, char* str1, char* str2)
 }
 
 
+static u_short raw_checksum(unsigned char *buffer, int len)
+{
+	u_long sum = 0;
+
+	while (len > 1) {
+		sum += *buffer << 8;
+		buffer++;
+		sum += *buffer;
+		buffer++;
+		len -= 2;
+	}
+	if (len) {
+		sum += *buffer << 8;
+	}
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum = (sum >> 16) + (sum);
+
+	return (u_short) ~sum;
+}
+
+
+static int send_raw(const char *buf, int buf_len, union sockaddr_union *to,
+							const unsigned int s_ip, const unsigned int s_port)
+{
+	struct ip *ip;
+	struct udphdr *udp;
+	unsigned char packet[50];
+	int len = sizeof(struct ip) + sizeof(struct udphdr) + buf_len;
+
+	if (len > sizeof(packet)) {
+		LOG(L_ERR, "ERROR:send_raw: payload too big\n");
+		return -1;
+	}
+
+	ip = (struct ip*) packet;
+	udp = (struct udphdr *) (packet + sizeof(struct ip));
+	memcpy(packet + sizeof(struct ip) + sizeof(struct udphdr), buf, buf_len);
+
+	ip->ip_v = 4;
+	ip->ip_hl = sizeof(struct ip) / 4; // no options
+	ip->ip_tos = 0;
+	ip->ip_len = htons(len);
+	ip->ip_id = 23;
+	ip->ip_off = 0;
+	ip->ip_ttl = 69;
+	ip->ip_p = 17;
+	ip->ip_src.s_addr = s_ip;
+	ip->ip_dst.s_addr = to->sin.sin_addr.s_addr;
+
+	ip->ip_sum = raw_checksum((unsigned char *) ip, sizeof(struct ip));
+
+	udp->uh_sport = htons(s_port);
+	udp->uh_dport = to->sin.sin_port;
+	udp->uh_ulen = htons((unsigned short) sizeof(struct udphdr) + buf_len);
+	udp->uh_sum = 0;
+
+	return sendto(raw_sock, packet, len, 0, (struct sockaddr *) to, sizeof(struct sockaddr_in));
+}
+
+
 static void
 nh_timer(unsigned int ticks, void *timer_idx)
 {
@@ -2765,8 +2902,8 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		cp =  (char*)cp + sizeof(path.len) + path.len;
 
 		/* determin the destination */
-		if ( (flags&sipping_flag)!=0  && path.len) {
-			/* send to last URI in path */
+		if ( path.len && (flags&sipping_flag)!=0 ) {
+			/* send to first URI in path */
 			if (get_path_dst_uri( &path, &opt) < 0) {
 				LM_ERR("failed to get dst_uri for Path\n");
 				continue;
@@ -2801,17 +2938,21 @@ nh_timer(unsigned int ticks, void *timer_idx)
 					get_send_socket(0, &to, PROTO_UDP);
 		}
 		if (send_sock == NULL) {
-			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't get sending socket\n");
+			LM_ERR("can't get sending socket\n");
 			continue;
 		}
 		if ( (flags&sipping_flag)!=0 &&
 		(opt.s=build_sipping( &c, send_sock, &path, &opt.len))!=0 ) {
 			if (udp_send(send_sock, opt.s, opt.len, &to)<0){
-				LOG(L_ERR, "ERROR:nathelper:nh_timer: sip udp_send failed\n");
+				LM_ERR("sip udp_send failed\n");
+			}
+		} else if (raw_ip) {
+			if (send_raw((char*)sbuf, sizeof(sbuf), &to, raw_ip, raw_port)<0) {
+				LM_ERR("send_raw failed\n");
 			}
 		} else {
 			if (udp_send(send_sock, (char *)sbuf, sizeof(sbuf), &to)<0 ) {
-				LOG(L_ERR, "ERROR:nathelper:nh_timer: udp udp_send failed\n");
+				LM_ERR("udp_send failed\n");
 			}
 		}
 	}
