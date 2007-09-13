@@ -336,9 +336,9 @@ static int child_init(int _rank)
 				return 0;
 			break;
 		case WRITE_BACK:
-			/* connect only from TIMER (for flush) and from MAIN (for
-			 * final flush() */
-			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN)
+			/* connect only from TIMER (for flush), from MAIN (for
+			 * final flush() and from child 1 for preload */
+			if (_rank!=PROC_TIMER && _rank!=PROC_MAIN && _rank!=1)
 				return 0;
 			break;
 	}
