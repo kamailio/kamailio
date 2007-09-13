@@ -112,30 +112,3 @@ error:
 	return -1;
 }
 
-/*
- * Path must be available. Function returns the first uri 
- * from Path without any dupication.
- */
-int get_path_dst_uri(str *_p, str *_dst)
-{
-	rr_t *route = 0;
-
-	DBG("DEBUG: get_path_dst_uri(): Path for branch: '%.*s'\n",
-		_p->len, _p->s);
-
-	if(parse_rr_body(_p->s, _p->len, &route) < 0) {
-		LOG(L_ERR, "ERROR: get_path_dst_uri(): Failed to parse "
-			"Path body\n");
-		return -1;
-	}
-	if(!route) {
-		LOG(L_ERR, "ERROR: get_path_dst_uri(): Failed to parse Path body,"
-			" no head found\n");
-		return -1;
-	}
-
-	*_dst = route->nameaddr.uri;
-	free_rr(&route);
-
-	return 0;
-}

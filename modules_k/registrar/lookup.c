@@ -33,11 +33,11 @@
 #include "../../str.h"
 #include "../../config.h"
 #include "../../action.h"
+#include "../../parser/parse_rr.h"
 #include "../usrloc/usrloc.h"
 #include "common.h"
 #include "regtime.h"
 #include "reg_mod.h"
-#include "path.h"
 #include "lookup.h"
 
 
