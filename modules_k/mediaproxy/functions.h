@@ -30,7 +30,7 @@ pingClients(unsigned int ticks, void *param)
     struct socket_info* sock;
     struct hostent* hostent;
     union sockaddr_union to;
-    unsigned int flags;
+    unsigned int foo_int;
     unsigned short proto;
     struct sip_uri uri;
     void *buf, *ptr;
@@ -74,8 +74,10 @@ pingClients(unsigned int ticks, void *param)
         ptr = contact.s + contact.len;
         memcpy( &sock, ptr, sizeof(sock));
         ptr = (char*)ptr + sizeof(sock);
-        memcpy( &flags, ptr, sizeof(flags));
-        ptr = (char*)ptr + sizeof(flags);
+        /* skip flags (int) and path (int+string) */
+        ptr = (char*)ptr + sizeof(foo_int);
+        memcpy( &foo_int, ptr, sizeof(foo_int));
+        ptr = (char*)ptr + sizeof(foo_int) + foo_int;
         if (parse_uri(contact.s, contact.len, &uri) < 0) {
             LM_ERR("can't parse contact uri\n");
             continue;

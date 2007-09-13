@@ -99,12 +99,13 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	for (dom = root; dom!=NULL ; dom=dom->next) {
 		/* build query */
 		i = snprintf( query_buf, sizeof(query_buf), "select %.*s, %.*s, %.*s,"
-			" %.*s from %s where %.*s > now() and %.*s & %d = %d and "
+			" %.*s, %.*s from %s where %.*s > now() and %.*s & %d = %d and "
 			"id %% %u = %u",
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
 			sock_col.len, sock_col.s,
 			cflags_col.len, cflags_col.s,
+			path_col.len, path_col.s,
 			dom->d->name->s,
 			expires_col.len, expires_col.s,
 			cflags_col.len, cflags_col.s,
@@ -179,6 +180,21 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			memcpy(cp, &dbflags, sizeof(dbflags));
 			cp = (char*)cp + sizeof(dbflags);
 			len -= needed;
+
+			/* path */
+			p = (char*)VAL_STRING(ROW_VALUES(row)+4);
+			if (VAL_NULL(ROW_VALUES(row)+4) || p==0 || p[0]==0){
+				p = NULL;
+				p_len = 0;
+			} else {
+				p_len = strlen(p);
+			}
+
+			/* write path */
+			memcpy(cp, &p_len, sizeof(p_len));
+			cp = (char*)cp + sizeof(p_len);
+			memcpy(cp, p, p_len);
+			cp = (char*)cp + p_len;
 		} /* row cycle */
 
 		ul_dbf.free_result(ul_dbh, res);
@@ -240,10 +256,11 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 						continue;
 					if (c->received.s) {
 						needed = (int)(sizeof(c->received.len)
-								+ c->received.len
-								+ sizeof(c->sock) + sizeof(c->cflags));
+								+ c->received.len + sizeof(c->sock)
+								+ sizeof(c->cflags) + sizeof(c->path.len)
+								+ c->path.len);
 						if (len >= needed) {
-							memcpy(cp, &c->received.len, sizeof(c->received.len));
+							memcpy(cp,&c->received.len,sizeof(c->received.len));
 							cp = (char*)cp + sizeof(c->received.len);
 							memcpy(cp, c->received.s, c->received.len);
 							cp = (char*)cp + c->received.len;
@@ -251,13 +268,18 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 							cp = (char*)cp + sizeof(c->sock);
 							memcpy(cp, &c->cflags, sizeof(c->cflags));
 							cp = (char*)cp + sizeof(c->cflags);
+							memcpy(cp, &c->path.len, sizeof(c->path.len));
+							cp = (char*)cp + sizeof(c->path.len);
+							memcpy(cp, c->path.s, c->path.len);
+							cp = (char*)cp + c->path.len;
 							len -= needed;
 						} else {
 							shortage += needed;
 						}
 					} else {
 						needed = (int)(sizeof(c->c.len) + c->c.len +
-							sizeof(c->sock) + sizeof(c->cflags));
+							sizeof(c->sock) + sizeof(c->cflags) +
+							sizeof(c->path.len) + c->path.len);
 						if (len >= needed) {
 							memcpy(cp, &c->c.len, sizeof(c->c.len));
 							cp = (char*)cp + sizeof(c->c.len);
@@ -267,6 +289,10 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 							cp = (char*)cp + sizeof(c->sock);
 							memcpy(cp, &c->cflags, sizeof(c->cflags));
 							cp = (char*)cp + sizeof(c->cflags);
+							memcpy(cp, &c->path.len, sizeof(c->path.len));
+							cp = (char*)cp + sizeof(c->path.len);
+							memcpy(cp, c->path.s, c->path.len);
+							cp = (char*)cp + c->path.len;
 							len -= needed;
 						} else {
 							shortage += needed;
@@ -304,11 +330,15 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
  *
  * Information is packed into the buffer as follows:
  *
- * +------------+----------+-----+------+------------+----------+-----+------+
- * |contact1.len|contact1.s|sock1|flags1|contact2.len|contact2.s|sock2|flags2|
- * +------------+----------+-----+------+------------+----------+-----+------+
- * |....................................|contactN.len|contactN.s|sockN|flagsN|
- * +------------+----------+-----+------+------------+----------+-----+------+
+ * +------------+----------+-----+------+-----+
+ * |contact1.len|contact1.s|sock1|flags1|path1|
+ * +------------+----------+-----+------+-----+
+ * |contact2.len|contact2.s|sock2|flags2|path1|
+ * +------------+----------+-----+------+-----+
+ * |..........................................|
+ * +------------+----------+-----+------+-----+
+ * |contactN.len|contactN.s|sockN|flagsN|pathN|
+ * +------------+----------+-----+------+-----+
  * |000000000000|
  * +------------+
  */

@@ -2706,6 +2706,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	void *buf, *cp;
 	str c;
 	str opt;
+	str path;
 	struct sip_uri curi;
 	union sockaddr_union to;
 	struct hostent* he;
@@ -2759,6 +2760,10 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		cp = (char*)cp + sizeof(send_sock);
 		memcpy( &flags, cp, sizeof(flags));
 		cp = (char*)cp + sizeof(flags);
+		memcpy( &(path.len), cp, sizeof(path.len));
+		path.s = path.len ? ((char*)cp + sizeof(path.len)) : NULL ;
+		cp =  (char*)cp + sizeof(path.len) + path.len;
+
 		if (parse_uri(c.s, c.len, &curi) < 0) {
 			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't parse contact uri\n");
 			continue;
