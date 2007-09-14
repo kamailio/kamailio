@@ -147,11 +147,12 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 	str etag;
 	unsigned int hash_code;
 
-	if(ps->param== NULL)
+	if(ps->param== NULL|| *ps->param== NULL)
 	{
 		LM_ERR("NULL callback parameter\n");
 		goto error;
 	}
+	hentity= (ua_pres_t*)(*ps->param);
 
 	msg= ps->rpl;
 	if(msg == NULL)
@@ -159,6 +160,8 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		LM_ERR("no reply message found\n ");
 		goto error;
 	}
+	
+
 	if(msg== FAKED_REPLY)
 	{
 		LM_DBG("FAKED_REPLY\n");
@@ -167,13 +170,6 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 
 	if( ps->code>= 300 )
 	{
-		if( *ps->param== NULL ) 
-		{
-			LM_DBG("NULL callback parameter\n");
-			return;
-		}
-		hentity= (ua_pres_t*)(*ps->param);
-
 		hash_code= core_hash(hentity->pres_uri, NULL,HASH_SIZE);
 		lock_get(&HashT->p_records[hash_code].lock);
 		presentity= search_htable( hentity, hash_code);
@@ -252,15 +248,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 	etag= hdr->body;
-
-	if( *ps->param== NULL ) 
-	{
-		LM_ERR("NULL callback parameter\n");
-		return;
-	}
 		
-	hentity= (ua_pres_t*)(*ps->param);
-
 	LM_DBG("completed with status %d [contact:%.*s]\n",
 			ps->code, hentity->pres_uri->len, hentity->pres_uri->s);
 

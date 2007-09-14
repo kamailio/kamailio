@@ -326,7 +326,10 @@ int get_record_id(ua_pres_t* dialog, str** rec_id)
 	}
 	memcpy(id->s, rec->id.s, rec->id.len);
 	id->len= rec->id.len;
+
 	lock_release(&HashT->p_records[hash_code].lock);
+
+	LM_DBG("rec did= %.*s\n", id->len, id->s);
 
 	*rec_id= id;
 

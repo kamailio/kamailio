@@ -508,7 +508,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	presentity->cseq= cseq;
 	presentity->desired_expires= hentity->desired_expires;
 	presentity->expires= lexpire+ (int)time(NULL);
-	presentity->id= hentity->id;
 	if(BLA_SUBSCRIBE & presentity->flag)
 	{
 		LM_DBG("BLA_SUBSCRIBE FLAG inserted\n");
