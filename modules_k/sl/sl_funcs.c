@@ -182,7 +182,7 @@ int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 		goto error;
 	}
 
-	run_sl_callbacks( msg, &buf, code, text, &to );
+	run_sl_callbacks( SLCB_REPLY_OUT, msg, &buf, code, text, &to );
 
 	/* supress multhoming support when sending a reply back -- that makes sure
 	   that replies will come from where requests came in; good for NATs

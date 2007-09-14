@@ -45,7 +45,7 @@ void destroy_slcb_lists(void)
 }
 
 
-int register_slcb( sl_cb_t f, void *param )
+int register_slcb(unsigned int types, sl_cb_t f, void *param )
 {
 	struct sl_callback *cbp;
 
@@ -56,6 +56,7 @@ int register_slcb( sl_cb_t f, void *param )
 	}
 
 	/* fill it up */
+	cbp->types = types;
 	cbp->callback = f;
 	cbp->param = param;
 	/* link it at the beginning of the list */
@@ -71,8 +72,8 @@ int register_slcb( sl_cb_t f, void *param )
 }
 
 
-void run_sl_callbacks( struct sip_msg *req, str *buffer, int code,
-									str *reason, union sockaddr_union *to )
+void run_sl_callbacks( unsigned int types, struct sip_msg *req, str *buffer,
+							int code, str *reason, union sockaddr_union *to )
 {
 	static struct sl_cb_param cb_params;
 	struct sl_callback *cbp;
@@ -83,9 +84,11 @@ void run_sl_callbacks( struct sip_msg *req, str *buffer, int code,
 	cb_params.dst = to;
 
 	for ( cbp=slcb_hl ; cbp ; cbp=cbp->next ) {
-		cb_params.param = cbp->param;
-		LM_DBG("callback id %d entered\n", cbp->id );
-			cbp->callback( req, &cb_params);
+		if (types&cbp->types) {
+			cb_params.param = cbp->param;
+			LM_DBG("callback id %d entered\n", cbp->id );
+				cbp->callback( types&cbp->types, req, &cb_params);
+		}
 	}
 }
 

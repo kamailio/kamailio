@@ -58,7 +58,7 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps);
-static void trace_sl_onreply_out(struct sip_msg* req,
+static void trace_sl_onreply_out(unsigned int types, struct sip_msg* req,
 									struct sl_cb_param *sl_param);
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
@@ -237,7 +237,7 @@ static int mod_init(void)
 		LOG(L_ERR, "siptrace:mod_init:ERROR: can't load sl api\n");
 		return -1;
 	}
-	if(register_slcb_f(trace_sl_onreply_out, NULL)!=0)
+	if(register_slcb_f(SLCB_REPLY_OUT,trace_sl_onreply_out, NULL)!=0)
 	{
 		LOG(L_ERR,
 			"siptrace:mod_init:ERROR: can't register trace_sl_onreply_out\n");
@@ -1207,7 +1207,7 @@ error:
 	return;
 }
 
-static void trace_sl_onreply_out(struct sip_msg* req,
+static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 									struct sl_cb_param *sl_param)
 {
 	db_key_t db_keys[NR_KEYS];
