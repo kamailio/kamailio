@@ -983,7 +983,7 @@ int h;
       rpc->printf(ctx, "{\n    protocol: %s", get_proto_name(e->proto));
       rpc->printf(ctx, "    ip: %s", ip_addr2a(&ip));
       rpc->printf(ctx, "    port: %d", e->port);
-      rpc->printf(ctx, "    expires in (s):", (s_ticks_t)(now-e->expire)<=0?
+      rpc->printf(ctx, "    expires in (s): %d", (s_ticks_t)(now-e->expire)<=0?
                        TICKS_TO_S(e->expire-now): -TICKS_TO_S(now-e->expire));
       rpc->printf(ctx, "    flags: %d\n}", e->flags);
     }
