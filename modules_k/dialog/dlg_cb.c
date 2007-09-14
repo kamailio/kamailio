@@ -36,7 +36,7 @@ int init_dlg_callbacks(void)
 {
 	create_cbs = (struct dlg_head_cbl*)shm_malloc(sizeof(struct dlg_head_cbl));
 	if (create_cbs==0) {
-		LOG(L_ERR,"ERROR:dialog:init_dlg_callbacks: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return -1;
 	}
 	create_cbs->first = 0;
@@ -75,20 +75,19 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param )
 
 	if ( types&DLGCB_CREATED ) {
 		if (types!=DLGCB_CREATED) {
-			LOG(L_CRIT,"BUG:dialog:register_dlgcb: DLGCB_CREATED type must be "
-				"register alone!\n");
+			LM_CRIT("DLGCB_CREATED type must be register alone!\n");
 			return -1;
 		}
 	} else {
 		if (dlg==0) {
-			LOG(L_CRIT,"BUG:dialog:register_dlgcb: non-DLGCB_CREATED type "
+			LM_CRIT("non-DLGCB_CREATED type "
 				"must be register to a dialog (dlg missing)!\n");
 			return -1;
 		}
 	}
 	cb = (struct dlg_callback*)shm_malloc(sizeof(struct dlg_callback));
 	if (cb==0) {
-		LOG(L_ERR,"ERROR:dialog:register_dlgcb: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return -1;
 	}
 
@@ -118,7 +117,7 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 		return;
 
 	for ( cb=create_cbs->first; cb; cb=cb->next)  {
-		DBG("DEBUG:dialog:run_create_callbacks: dialog=%p\n",dlg);
+		LM_DBG("dialog=%p\n",dlg);
 		cb->callback( dlg, DLGCB_CREATED, msg, &cb->param );
 	}
 	return;
@@ -134,8 +133,7 @@ void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg)
 
 	for ( cb=dlg->cbs.first; cb; cb=cb->next)  {
 		if ( (cb->types)&type ) {
-			DBG("DEBUG:dialog:run_dlg_callbacks: dialog=%p, type=%d\n",
-				dlg, type);
+			LM_DBG("dialog=%p, type=%d\n", dlg, type);
 			cb->callback( dlg, type, msg, &cb->param );
 		}
 	}

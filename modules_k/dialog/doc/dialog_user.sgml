@@ -797,17 +797,18 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 		Name: <emphasis>dlg_list</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
+		<para>
 		MI FIFO Command Format:
 		</para>
-        <programlisting  format="linespecific">
+		<programlisting  format="linespecific">
 		:dlg_list:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
 		</section>
-    </section>
 
-	
+	</section>
+
+
 	<section>
 	<title>Exported pseudo-variables</title>
 

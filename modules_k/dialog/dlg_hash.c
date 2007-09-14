@@ -62,7 +62,7 @@ int init_dlg_table(unsigned int size)
 	d_table = (struct dlg_table*)shm_malloc
 		( sizeof(struct dlg_table) + size*sizeof(struct dlg_entry));
 	if (d_table==0) {
-		LOG(L_ERR, "ERROR:dialog:init_dlg_table: no more shm mem (1)\n");
+		LM_ERR("no more shm mem (1)\n");
 		goto error0;
 	}
 
@@ -85,8 +85,8 @@ int init_dlg_table(unsigned int size)
 	}
 
 	if (d_table->locks==0) {
-		LOG(L_ERR,"ERROR:dialog:init_dlg_table: unable to allocted at least "
-			"%d locks for the hash table\n",MIN_LDG_LOCKS);
+		LM_ERR("unable to allocted at least %d locks for the hash table\n",
+			MIN_LDG_LOCKS);
 		goto error1;
 	}
 
@@ -105,9 +105,9 @@ error0:
 
 
 
-static inline void destroy_dlg(struct dlg_cell *dlg)
+inline void destroy_dlg(struct dlg_cell *dlg)
 {
-	DBG("DBUG:dialog:destroy_dlg: destroing dialog %p\n",dlg);
+	LM_DBG("destroing dialog %p\n",dlg);
 	if (dlg_db_mode)
 		remove_dialog_from_db(dlg);
 
@@ -173,7 +173,7 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 		to_uri->len;
 	dlg = (struct dlg_cell*)shm_malloc( len );
 	if (dlg==0) {
-		LOG(L_ERR,"ERROR:dialog:build_new_dlg: no more shm mem (%d)\n",len);
+		LM_ERR("no more shm mem (%d)\n",len);
 		return 0;
 	}
 
@@ -181,7 +181,7 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	dlg->state = DLG_STATE_UNCONFIRMED;
 
 	dlg->h_entry = core_hash( callid, from_tag->len?from_tag:0, d_table->size);
-	DBG("DEBUG:dialog:build_new_dlg: new dialog on hash %u\n",dlg->h_entry);
+	LM_DBG("new dialog on hash %u\n",dlg->h_entry);
 
 	p = (char*)(dlg+1);
 
@@ -201,7 +201,7 @@ struct dlg_cell* build_new_dlg( str *callid, str *from_uri, str *to_uri,
 	p += to_uri->len;
 
 	if ( p!=(((char*)dlg)+len) ) {
-		LOG(L_CRIT,"BUG:dialog:build_new_dlg: buffer overflow\n");
+		LM_CRIT("buffer overflow\n");
 		shm_free(dlg);
 		return 0;
 	}
@@ -219,7 +219,7 @@ int dlg_set_leg_info(struct dlg_cell *dlg, str* tag, str *rr, str *contact,
 	dlg->tag[leg].s = (char*)shm_malloc( tag->len + rr->len + contact->len );
 	dlg->cseq[leg].s = (char*)shm_malloc( cseq->len );
 	if ( dlg->tag[leg].s==NULL || dlg->cseq[leg].s==NULL) {
-		LOG(L_ERR,"ERROR:dialog:dlg_set_leg_info: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		if (dlg->tag[leg].s) shm_free(dlg->tag[leg].s);
 		if (dlg->cseq[leg].s) shm_free(dlg->cseq[leg].s);
 		return -1;
@@ -269,11 +269,10 @@ int dlg_update_cseq(struct dlg_cell * dlg, unsigned int leg, str *cseq)
 	memcpy( dlg->cseq[leg].s, cseq->s, cseq->len );
 	dlg->cseq[leg].len = cseq->len;
 
-	DBG("DBG:dialog:dlg_update_cseq: cseq is %.*s\n",
-		dlg->cseq[leg].len, dlg->cseq[leg].s);
+	LM_DBG("cseq is %.*s\n", dlg->cseq[leg].len, dlg->cseq[leg].s);
 	return 0;
 error:
-	LOG(L_ERR,"ERROR:dialog:dlg_update_cseq: not more shm mem\n");
+	LM_ERR("not more shm mem\n");
 	return -1;
 }
 
@@ -299,16 +298,14 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 			}
 			dlg->ref++;
 			dlg_unlock( d_table, d_entry);
-			DBG("DEBUG:dialog:lookup_dlg: dialog id=%u found on entry %u\n",
-				h_id, h_entry);
+			LM_DBG("dialog id=%u found on entry %u\n", h_id, h_entry);
 			return dlg;
 		}
 	}
 
 	dlg_unlock( d_table, d_entry);
 not_found:
-	DBG("DEBUG:dialog:lookup_dlg: no dialog id=%u found on entry %u\n",
-		h_id, h_entry);
+	LM_DBG("no dialog id=%u found on entry %u\n", h_id, h_entry);
 	return 0;
 }
 
@@ -333,8 +330,8 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 			}
 			dlg->ref++;
 			dlg_unlock( d_table, d_entry);
-			DBG("DEBUG:dialog:internal_get_dlg: dialog callid='%.*s' found\n"
-				" on entry %u, dir=%d\n",callid->len, callid->s,h_entry,*dir);
+			LM_DBG("dialog callid='%.*s' found\n on entry %u, dir=%d\n",
+				callid->len, callid->s,h_entry,*dir);
 			return dlg;
 		}
 	}
@@ -342,8 +339,7 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 	dlg_unlock( d_table, d_entry);
 
 not_found:
-	DBG("DEBUG:dialog:get_dlg: no dialog callid='%.*s' found\n",
-		callid->len, callid->s);
+	LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 	return 0;
 }
 
@@ -362,8 +358,7 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 			d_table->size), callid, ftag, ttag, dir)) == 0 &&
 			(dlg = internal_get_dlg(core_hash(callid, ttag->len
 			?ttag:0, d_table->size), callid, ttag, ftag, dir)) == 0) {
-		DBG("DEBUG:dialog:lookup_dlg: no dialog callid='%.*s' found\n",
-			callid->len, callid->s);
+		LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 		return 0;
 	}
 	return dlg;
@@ -396,7 +391,7 @@ void link_dlg(struct dlg_cell *dlg, int n)
 
 
 
-static inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
+inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
 													struct dlg_cell *dlg)
 {
 	if (dlg->next)
@@ -412,21 +407,6 @@ static inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
 
 	return;
 }
-
-
-#define ref_dlg_unsafe(_dlg,_cnt)     \
-	(_dlg)->ref += (_cnt)
-#define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
-	do { \
-		(_dlg)->ref -= (_cnt); \
-		DBG("DBUG:dialog:unref_dlg: unref dlg %p with %d -> %d\n",\
-			(_dlg),(_cnt),(_dlg)->ref);\
-		if ((_dlg)->ref<=0) { \
-			unlink_unsafe_dlg( _d_entry, _dlg);\
-			destroy_dlg(_dlg);\
-		}\
-	}while(0)
-
 
 void unref_dlg(struct dlg_cell *dlg, int cnt)
 {
@@ -467,8 +447,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					unref_dlg_unsafe(dlg,1,d_entry);
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_RPL1xx:
@@ -478,8 +457,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					dlg->state = DLG_STATE_EARLY;
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_RPL3xx:
@@ -490,8 +468,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					*unref = 1;
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_RPL2xx:
@@ -506,8 +483,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_CONFIRMED:
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_REQACK:
@@ -518,8 +494,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_CONFIRMED:
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_REQBYE:
@@ -530,8 +505,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 					*unref = 1;
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_REQPRACK:
@@ -540,8 +514,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_CONFIRMED_NA:
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		case DLG_EVENT_REQ:
@@ -550,19 +523,17 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 				case DLG_STATE_CONFIRMED:
 					break;
 				default:
-					LOG(L_CRIT,"BUG:next_state_dlg: bogus event %d in "
-						"state %d\n",event,dlg->state);
+					LM_CRIT("bogus event %d in state %d\n",event,dlg->state);
 			}
 			break;
 		default:
-			LOG(L_CRIT,"BUG:next_state_dlg: unknown event %d\n",
-				event);
+			LM_CRIT("unknown event %d\n", event);
 	}
 	*new_state = dlg->state;
 
 	dlg_unlock( d_table, d_entry);
 
-	DBG("DEBUG:dialog:next_state_dlg: dialog %p changed from state %d to "
+	LM_DBG("dialog %p changed from state %d to "
 		"state %d, due event %d\n",dlg,*old_state,*new_state,event);
 }
 
@@ -585,7 +556,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 		return 0;
 	rpl = &rpl_tree->node;
 	
-	LOG(L_DBG, "DBG:dialog:mi_print_dlgs:printing %i dialogs\n", d_table->size);
+	LM_DBG("printing %i dialogs\n", d_table->size);
 
 	for( i=0 ; i<d_table->size ; i++ ) {
 		dlg_lock( d_table, &(d_table->entries[i]) );
@@ -701,7 +672,7 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 
 error:
 	dlg_unlock( d_table, &(d_table->entries[i]) );
-	LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
+	LM_ERR("failed to add node\n");
 	free_mi_tree(rpl_tree);
 	return 0;
 

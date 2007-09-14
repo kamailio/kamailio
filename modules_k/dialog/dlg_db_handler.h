@@ -89,5 +89,6 @@ void destroy_dlg_db();
 
 int remove_dialog_from_db(struct dlg_cell * cell);
 int update_dialog_dbinfo(struct dlg_cell * cell);
+void dialog_update_db(unsigned int ticks, void * param);
 
 #endif

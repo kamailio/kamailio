@@ -121,6 +121,23 @@ extern struct dlg_table *d_table;
 #define dlg_unlock(_table, _entry) \
 		lock_set_release( (_table)->locks, (_entry)->lock_idx);
 
+inline void unlink_unsafe_dlg(struct dlg_entry *d_entry, struct dlg_cell *dlg);
+inline void destroy_dlg(struct dlg_cell *dlg);
+
+#define ref_dlg_unsafe(_dlg,_cnt)     \
+	(_dlg)->ref += (_cnt)
+#define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
+	do { \
+		(_dlg)->ref -= (_cnt); \
+		LM_DBG("unref dlg %p with %d -> %d\n",\
+			(_dlg),(_cnt),(_dlg)->ref);\
+		if ((_dlg)->ref<=0) { \
+			unlink_unsafe_dlg( _d_entry, _dlg);\
+			LM_DBG("destroying a dialog\n");\
+			destroy_dlg(_dlg);\
+		}\
+	}while(0)
+
 
 int init_dlg_table(unsigned int size);
 

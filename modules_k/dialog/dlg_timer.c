@@ -39,7 +39,7 @@ int init_dlg_timer( dlg_timer_handler hdl )
 {
 	d_timer = (struct dlg_timer*)shm_malloc(sizeof(struct dlg_timer));
 	if (d_timer==0) {
-		LOG(L_ERR,"ERROR:dialog:init_dlg_timer: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return -1;
 	}
 	memset( d_timer, 0, sizeof(struct dlg_timer) );
@@ -48,12 +48,12 @@ int init_dlg_timer( dlg_timer_handler hdl )
 
 	d_timer->lock = lock_alloc();
 	if (d_timer->lock==0) {
-		LOG(L_ERR,"ERROR:dialog:init_dlg_timer: failed to alloc lock\n");
+		LM_ERR("failed to alloc lock\n");
 		goto error0;
 	}
 
 	if (lock_init(d_timer->lock)==0) {
-		LOG(L_ERR,"ERROR:dialog:init_dlg_timer: failed to init lock\n");
+		LM_ERR("failed to init lock\n");
 		goto error1;
 	}
 
@@ -73,10 +73,10 @@ void destroy_dlg_timer(void)
 {
 	if (d_timer==0)
 		return;
-
+	
 	lock_destroy(d_timer->lock);
 	lock_dealloc(d_timer->lock);
-
+						
 	shm_free(d_timer);
 	d_timer = 0;
 }
@@ -92,8 +92,7 @@ static inline void insert_dlg_timer_unsafe(struct dlg_tl *tl)
 			break;
 	}
 
-	DBG("DEBUG:dialog:insert_tl: inserting %p for %d\n",
-			tl,tl->timeout);
+	LM_DBG("inserting %p for %d\n", tl,tl->timeout);
 	tl->prev = ptr;
 	tl->next = ptr->next;
 	tl->prev->next = tl;
@@ -181,11 +180,9 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 
 	end = &d_timer->first;
 	tl = d_timer->first.next;
-	DBG("DEBUG:dialog:insert_tl: start with %p (%d) at %d\n",
-		tl,tl->timeout,time);
+	LM_DBG("start with %p (%d) at %d\n", tl,tl->timeout,time);
 	while( tl!=end && tl->timeout <= time) {
-		DBG("DEBUG:dialog:get_expired_tl: getting %p with %d\n",
-			tl,tl->timeout);
+		LM_DBG("getting %p with %d\n", tl,tl->timeout);
 		tl->prev = 0;
 		tl=tl->next;
 	}
@@ -216,7 +213,7 @@ void dlg_timer_routine(unsigned int ticks , void * attr)
 		ctl = tl;
 		tl = tl->next;
 		ctl->next = (struct dlg_tl *)-1;
-		DBG("DEBUG:dialog:dlg_timer_routine: tl=%p next=%p\n", ctl, tl);
+		LM_DBG("tl=%p next=%p\n", ctl, tl);
 		timer_hdl( ctl );
 	}
 }

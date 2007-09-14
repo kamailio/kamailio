@@ -46,7 +46,7 @@ static inline int load_dlg_api( struct dlg_binds *dlgb )
 
 	/* import the DLG auto-loading function */
 	if ( !(load_dlg=(load_dlg_f)find_export("load_dlg", 0, 0))) {
-		LOG(L_ERR, "ERROR:dialog:load_dlg_api: can't import load_dlg\n");
+		LM_ERR("can't import load_dlg\n");
 		return -1;
 	}
 	/* let the auto-loading function load all DLG stuff */

@@ -109,7 +109,6 @@ static param_export_t mod_params[]={
 	{ "timeout_avp",           STR_PARAM, &timeout_spec             },
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
-
 	{ "db_url",                STR_PARAM, &db_url                   },
 	{ "db_mode",               INT_PARAM, &dlg_db_mode              },
 	{ "table_name",            STR_PARAM, &dialog_table_name        },
@@ -147,7 +146,7 @@ static stat_export_t mod_stats[] = {
 
 
 static mi_export_t mi_cmds[] = {
-	{ "dlg_list",  mi_print_dlgs,   MI_NO_INPUT_FLAG,  0,  0},
+	{ "dlg_list",  mi_print_dlgs,   MI_NO_INPUT_FLAG,  	0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -214,23 +213,22 @@ static int mod_init(void)
 	unsigned int n;
 	str stmp;
 
-	LOG(L_INFO,"Dialog module - initializing\n");
+	LM_INFO("Dialog module - initializing\n");
 
 	/* param checkings */
 	if (dlg_flag==-1) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: no dlg flag set!!\n");
+		LM_ERR("no dlg flag set!!\n");
 		return -1;
 	} else if (dlg_flag>MAX_FLAG) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: invalid dlg flag %d!!\n",dlg_flag);
+		LM_ERR("invalid dlg flag %d!!\n",dlg_flag);
 		return -1;
 	}
 
 	if (rr_param==0 || rr_param[0]==0) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: empty rr_param!!\n");
+		LM_ERR("empty rr_param!!\n");
 		return -1;
 	} else if (strlen(rr_param)>MAX_DLG_RR_PARAM_NAME) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: rr_param too long (max=%d)!!\n",
-			MAX_DLG_RR_PARAM_NAME);
+		LM_ERR("rr_param too long (max=%d)!!\n", MAX_DLG_RR_PARAM_NAME);
 		return -1;
 	}
 
@@ -238,22 +236,21 @@ static int mod_init(void)
 		stmp.s = timeout_spec; stmp.len = strlen(stmp.s);
 		if ( pv_parse_spec(&stmp, &timeout_avp)==0 
 				&& (timeout_avp.type!=PVT_AVP)){
-			LOG(L_ERR, "ERROR:dialog:mod_init: malformed or non AVP timeout "
+			LM_ERR("malformed or non AVP timeout "
 				"AVP definition in '%s'\n", timeout_spec);
 			return -1;
 		}
 	}
 
 	if (default_timeout<=0) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: 0 default_timeout not accepted!!\n");
+		LM_ERR("0 default_timeout not accepted!!\n");
 		return -1;
 	}
 
 	if (seq_match_mode!=SEQ_MATCH_NO_ID &&
 	seq_match_mode!=SEQ_MATCH_FALLBACK &&
 	seq_match_mode!=SEQ_MATCH_STRICT_ID ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: invalid value %d for "
-			"seq_match_mode param!!\n",seq_match_mode );
+		LM_ERR("invalid value %d for seq_match_mode param!!\n",seq_match_mode);
 		return -1;
 	}
 
@@ -263,35 +260,33 @@ static int mod_init(void)
 
 	/* load the TM API */
 	if (load_tm_api(&d_tmb)!=0) {
-		LOG(L_ERR, "ERROR:dialog:mod_init: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 
 	/* load RR API also */
 	if (load_rr_api(&d_rrb)!=0) {
-		LOG(L_ERR, "ERROR:dialog:mod_init: can't load RR API\n");
+		LM_ERR("can't load RR API\n");
 		return -1;
 	}
 
 	/* register callbacks*/
 	/* listen for all incoming requests  */
 	if ( d_tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, dlg_onreq, 0 ) <=0 ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: cannot register TMCB_REQUEST_IN "
-			"callback\n");
+		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
 		return -1;
 	}
 
 	/* listen for all routed requests  */
 	if ( d_rrb.register_rrcb( dlg_onroute, 0 ) <0 ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: cannot register RR callback\n");
+		LM_ERR("cannot register RR callback\n");
 		return -1;
 	}
 
 	if ( register_timer( dlg_timer_routine, 0, 1)<0 ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: failed to register timer \n");
+		LM_ERR("failed to register timer \n");
 		return -1;
 	}
-
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
@@ -299,13 +294,13 @@ static int mod_init(void)
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: cannot init timer list\n");
+		LM_ERR("cannot init timer list\n");
 		return -1;
 	}
 
 	/* init callbacks */
 	if (init_dlg_callbacks()!=0) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: cannot init callbacks\n");
+		LM_ERR("cannot init callbacks\n");
 		return -1;
 	}
 
@@ -314,7 +309,7 @@ static int mod_init(void)
 		if (dlg_hash_size==(1<<n))
 			break;
 		if (dlg_hash_size<(1<<n)) {
-			LOG(L_WARN,"WARNING:dialog:mod_init: hash_size is not a power "
+			LM_WARN("hash_size is not a power "
 				"of 2 as it should be -> rounding from %d to %d\n",
 				dlg_hash_size, 1<<(n-1));
 			dlg_hash_size = 1<<(n-1);
@@ -322,7 +317,7 @@ static int mod_init(void)
 	}
 
 	if ( init_dlg_table(dlg_hash_size)<0 ) {
-		LOG(L_ERR,"ERROR:dialog:mod_init: failed to create hash table\n");
+		LM_ERR("failed to create hash table\n");
 		return -1;
 	}
 
@@ -331,8 +326,7 @@ static int mod_init(void)
 		db_url = 0;
 	if ( db_url && db_url[0]!='\0' ) {
 		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED){
-			LOG(L_ERR,"ERROR:dialog:mod_init: unsupported db_mode %d\n",
-				dlg_db_mode);
+			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
 		return init_dlg_db( db_url, dlg_hash_size, db_update_period);
@@ -345,7 +339,8 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if ( (dlg_db_mode==DB_MODE_REALTIME && rank>0) ||
-	(dlg_db_mode==DB_MODE_DELAYED && rank==PROC_TIMER) ){
+	(dlg_db_mode==DB_MODE_DELAYED && (rank==PROC_MAIN || rank==PROC_TIMER ||
+	rank>0) )){
 		if ( dlg_connect_db(db_url) ) {
 			LM_ERR("failed to connect to database (rank=%d)\n",rank);
 			return -1;
@@ -356,13 +351,15 @@ static int child_init(int rank)
 }
 
 
-
-
-
 static void mod_destroy(void)
 {
-	destroy_dlg_db();
 	destroy_dlg_timer();
+	if(dlg_db_mode == DB_MODE_DELAYED) {
+		dialog_update_db(0, 0);
+		destroy_dlg_db();
+	}
+	/* no DB interaction from now on */
+	dlg_db_mode = DB_MODE_NONE;
 	destroy_dlg_table();
 	destroy_dlg_callbacks();
 	destroy_dlg_handlers();

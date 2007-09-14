@@ -138,7 +138,7 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
 	s.len = p-buf;
 
 	if (d_rrb.add_rr_param( req, &s)<0) {
-		LOG(L_ERR,"ERROR:dialog:add_dlg_rr_param: failed to add rr param\n");
+		LM_ERR("failed to add rr param\n");
 		return -1;
 	}
 
@@ -167,8 +167,7 @@ static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	if (leg==DLG_CALLER_LEG) {
 		if((!msg->cseq || parse_headers(msg,HDR_CSEQ_F,0)<0) || !msg->cseq || 
 		!msg->cseq->parsed){
-			LOG(L_ERR, "ERROR:dialog:populate_leg_info: bad sip message or "
-				"missing CSeq hdr :-/\n");
+			LM_ERR("bad sip message or missing CSeq hdr :-/\n");
 			goto error0;
 		}
 		cseq = (get_cseq(msg))->number;
@@ -179,22 +178,20 @@ static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 
 	/* extract the contact address */
 	if (!msg->contact&&(parse_headers(msg,HDR_CONTACT_F,0)<0||!msg->contact)){
-		LOG(L_ERR, "ERROR:dialog:populate_leg_info: bad sip message or "
-			"missing Contact hdr\n");
+		LM_ERR("bad sip message or missing Contact hdr\n");
 		goto error0;
 	}
 	if ( parse_contact(msg->contact)<0 ||
 	((contact_body_t *)msg->contact->parsed)->contacts==NULL ||
 	((contact_body_t *)msg->contact->parsed)->contacts->next!=NULL ) {
-		LOG(L_ERR, "ERROR:dialog:populate_leg_info: bad Contact HDR\n");
+		LM_ERR("bad Contact HDR\n");
 		goto error0;
 	}
 	contact = ((contact_body_t *)msg->contact->parsed)->contacts->uri;
 
 	/* extract the RR parts */
 	if(!msg->record_route && (parse_headers(msg,HDR_RECORDROUTE_F,0)<0)  ){
-		LOG(L_ERR, "ERROR:dialog:populate_leg_info: error parsing "
-				"record route header\n");
+		LM_ERR("failed to parse record route header\n");
 		goto error0;
 	}
 
@@ -203,8 +200,7 @@ static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	if(msg->record_route){
 		if( print_rr_body(msg->record_route, &rr_set, leg, 
 							&skip_recs) != 0 ){
-			LOG(L_ERR, "ERROR:dialog:populate_leg_info: error while printing "
-				"route records \n");
+			LM_ERR("failed to print route records \n");
 			goto error0;
 		}
 	} else {
@@ -213,20 +209,18 @@ static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 	}
 
 	if(leg==DLG_CALLER_LEG){
-		LOG(L_DBG, "DBG:dialog:populate_leg_info: skip_recs is %u\n",
-			skip_recs+1);
+		LM_DBG("skip_recs is %u\n", skip_recs+1);
 		dlg->from_rr_nb = skip_recs+1;
 	}
 
-	LOG(L_DBG, "DBG:dialog:populate_leg_info: route_set %.*s, contact %.*s, "
-		"cseq %.*s and bind_addr %.*s\n",
+	LM_DBG("route_set %.*s, contact %.*s, cseq %.*s and bind_addr %.*s\n",
 		rr_set.len, rr_set.s, contact.len, contact.s,
 		cseq.len, cseq.s, 
 		msg->rcv.bind_address->sock_str.len,
 		msg->rcv.bind_address->sock_str.s);
 
 	if (dlg_set_leg_info( dlg, tag, &rr_set, &contact, &cseq, leg)!=0) {
-		LOG(L_ERR,"ERRORdialog:populate_leg_info: dlg_set_leg_info failed\n");
+		LM_ERR("dlg_set_leg_info failed\n");
 		if (rr_set.s) pkg_free(rr_set.s);
 		goto error0;
 	}
@@ -282,27 +276,24 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 	if (new_state==DLG_STATE_CONFIRMED_NA &&
 	old_state!=DLG_STATE_CONFIRMED_NA && old_state!=DLG_STATE_CONFIRMED ) {
-		DBG("DEBUG:dialog:dlg_onreply: dialog %p confirmed\n",dlg);
+		LM_DBG("dialog %p confirmed\n",dlg);
 
 		/* get to tag*/
 		if ( !rpl->to && ((parse_headers(rpl, HDR_TO_F,0)<0) || !rpl->to) ) {
-			LOG(L_ERR, "ERROR:dialog:dlg_onreply: bad reply or "
-				"missing TO hdr :-/\n");
+			LM_ERR("bad reply or missing TO hdr :-/\n");
 			tag.s = 0;
 			tag.len = 0;
 		}
 		tag = get_to(rpl)->tag_value;
 		if (tag.s==0 || tag.len==0) {
-			LOG(L_ERR, "ERROR:dialog:dlg_onreply: missing TAG param in "
-				"TO hdr :-/\n");
+			LM_ERR("missing TAG param in TO hdr :-/\n");
 			tag.s = 0;
 			tag.len = 0;
 		}
 
 		/* save callee's tag, cseq, contact and record route*/
 		if (populate_leg_info( dlg, rpl, DLG_CALLEE_LEG, &tag) !=0) {
-			LOG(L_ERR, "ERROR:dialog:dlg_onreply: could not add further "
-				"info to the dialog\n");
+			LM_ERR("could not add further info to the dialog\n");
 		}
 
 		/* set start time */
@@ -328,8 +319,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	}
 
 	if ( old_state!=DLG_STATE_DELETED && new_state==DLG_STATE_DELETED ) {
-		DBG("DEBUG:dialog:dlg_onreply: dialog %p failed (negative reply)\n",
-			dlg);
+		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
 		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl);
 		if (unref)
@@ -367,8 +357,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	req = param->req;
 
 	if ( (!req->to && parse_headers(req, HDR_TO_F,0)<0) || !req->to ) {
-		LOG(L_ERR, "ERROR:dialog:dlg_onreq: bad request or "
-			"missing TO hdr :-/\n");
+		LM_ERR("bad request or missing TO hdr :-/\n");
 		return;
 	}
 	s = get_to(req)->tag_value;
@@ -382,13 +371,11 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		return;
 
 	if ( parse_from_header(req)) {
-		LOG(L_ERR, "ERROR:dialog:dlg_onreq: bad request or "
-			"missing FROM hdr :-/\n");
+		LM_ERR("bad request or missing FROM hdr :-/\n");
 		return;
 	}
 	if ((!req->callid && parse_headers(req,HDR_CALLID_F,0)<0) || !req->callid){
-		LOG(L_ERR, "ERROR:dialog:dlg_onreq: bad request or "
-			"missing CALLID hdr :-/\n");
+		LM_ERR("bad request or missing CALLID hdr :-/\n");
 		return;
 	}
 	s = req->callid->body;
@@ -398,15 +385,14 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		&(get_to(req)->uri) /*to uri*/,
 		&(get_from(req)->tag_value)/*from_tag*/ );
 	if (dlg==0) {
-		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to create new dialog\n");
+		LM_ERR("failed to create new dialog\n");
 		return;
 	}
 
 	/* save caller's tag, cseq, contact and record route*/
 	if (populate_leg_info(dlg, req, DLG_CALLER_LEG,
 	&(get_from(req)->tag_value)) !=0) {
-		LOG(L_ERR, "ERROR:dialog:dlg_onreq: could not add further info to "
-			"the dialog\n");
+		LM_ERR("could not add further info to the dialog\n");
 		shm_free(dlg);
 		return;
 	}
@@ -418,14 +404,14 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID &&
 	add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
-		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to add RR param\n");
+		LM_ERR("failed to add RR param\n");
 		goto error;
 	}
 
 	if ( d_tmb.register_tmcb( 0, t,
 				  TMCB_RESPONSE_OUT|TMCB_TRANS_DELETED|TMCB_RESPONSE_FWDED,
 				  dlg_onreply, (void*)dlg)<0 ) {
-		LOG(L_ERR,"ERROR:dialog:dlg_onreq: failed to register TMCB\n");
+		LM_ERR("failed to register TMCB\n");
 		goto error;
 	}
 
@@ -449,20 +435,17 @@ static inline int parse_dlg_rr_param(char *p, char *end,
 
 	for ( s=p ; p<end && *p!=DLG_SEPARATOR ; p++ );
 	if (*p!=DLG_SEPARATOR) {
-		LOG(L_ERR,"ERROR:dialog:parse_dlg_rr_param: malformed rr param "
-			"'%.*s'\n", (int)(long)(end-s), s);
+		LM_ERR("malformed rr param '%.*s'\n", (int)(long)(end-s), s);
 		return -1;
 	}
 
 	if ( (*h_entry=reverse_hex2int( s, p-s))<0 ) {
-		LOG(L_ERR,"ERROR:dialog:parse_dlg_rr_param: invalid hash entry "
-			"'%.*s'\n", (int)(long)(p-s), s);
+		LM_ERR("invalid hash entry '%.*s'\n", (int)(long)(p-s), s);
 		return -1;
 	}
 
 	if ( (*h_id=reverse_hex2int( p+1, end-(p+1)))<0 ) {
-		LOG(L_ERR,"ERROR:dialog:parse_dlg_rr_param: invalid hash id "
-			"'%.*s'\n", (int)(long)(end-(p+1)), p+1 );
+		LM_ERR("invalid hash id '%.*s'\n", (int)(long)(end-(p+1)), p+1 );
 		return -1;
 	}
 
@@ -475,13 +458,12 @@ static inline int pre_match_parse( struct sip_msg *req, str *callid,
 {
 	if (parse_headers(req,HDR_CALLID_F|HDR_TO_F,0)<0 || !req->callid ||
 	!req->to || get_to(req)->tag_value.len==0 ) {
-		LOG(L_ERR, "ERROR:dialog:pre_match_parse: bad request or "
-			"missing CALLID/TO hdr :-/\n");
+		LM_ERR("bad request or missing CALLID/TO hdr :-/\n");
 		return -1;
 	}
 
 	if (parse_from_header(req)<0 || get_from(req)->tag_value.len==0) {
-		LOG(L_ERR,"ERROR:dialog:pre_match_parse: failed to get From header\n");
+		LM_ERR("failed to get From header\n");
 		return -1;
 	}
 
@@ -501,8 +483,7 @@ static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
 {
 	if ( (!req->cseq && parse_headers(req,HDR_CSEQ_F,0)<0) || !req->cseq ||
 	!req->cseq->parsed) {
-		LOG(L_ERR, "ERROR:dialog:update_cseqs: bad sip message or "
-			"missing CSeq hdr :-/\n");
+		LM_ERR("bad sip message or missing CSeq hdr :-/\n");
 		return -1;
 	}
 
@@ -511,7 +492,7 @@ static inline int update_cseqs(struct dlg_cell *dlg, struct sip_msg *req,
 	} else if ( dir==DLG_DIR_DOWNSTREAM) {
 		return dlg_update_cseq(dlg, DLG_CALLER_LEG,&((get_cseq(req))->number));
 	} else {
-		LOG(L_CRIT,"BUG:update_cseqs: dir is not set!\n");
+		LM_CRIT("dir is not set!\n");
 		return -1;
 	}
 }
@@ -538,29 +519,25 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID ) {
 		if( d_rrb.get_route_param( req, &rr_param, &val)!=0) {
-			DBG("DEBUG:dialog:dlg_onroute: Route param '%.*s' not found\n",
-				rr_param.len,rr_param.s);
+			LM_DBG("Route param '%.*s' not found\n", rr_param.len,rr_param.s);
 			if (seq_match_mode==SEQ_MATCH_STRICT_ID )
 				return;
 		} else {
-			DBG("DEBUG:dialog:dlg_onroute: route param is '%.*s' (len=%d)\n",
-				val.len, val.s, val.len);
+			LM_DBG("route param is '%.*s' (len=%d)\n",val.len, val.s, val.len);
 
 			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
 				return;
 
 			dlg = lookup_dlg( h_entry, h_id);
 			if (dlg==0) {
-				LOG(L_WARN, "WARNING:dialog:dlg_onroute: "
-					"unable to find dialog\n");
+				LM_WARN("unable to find dialog\n");
 				return;
 			}
 
 			if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
 				return;
 			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
-				LOG(L_WARN,"WARNING:dialog:dlg_onroute: "
-					"tight matching failed\n");
+				LM_WARN("tight matching failed\n");
 				return;
 			}
 		}
@@ -573,7 +550,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		 * search -bogdan */
 		dlg = get_dlg(&callid, &ftag, &ttag, &dir);
 		if (!dlg){
-			DBG("DEBUG:dialog:dlg_onroute: Callid '%.*s' not found\n",
+			LM_DBG("Callid '%.*s' not found\n",
 				req->callid->body.len, req->callid->body.s);
 			return;
 		}
@@ -600,7 +577,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	/* run actions for the transition */
 	if (event==DLG_EVENT_REQBYE && new_state==DLG_STATE_DELETED &&
 	old_state!=DLG_STATE_DELETED) {
-		DBG("DEBUG:dialog:dlg_onroute: BYE successfully processed\n");
+		LM_DBG("BYE successfully processed\n");
 		/* remove from timer */
 		remove_dlg_timer(&dlg->tl);
 		/* dialog terminated (BYE) */
@@ -608,20 +585,18 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 		/* destroy dialog */
 		unref_dlg(dlg, unref+1);
-
+		
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		return;
 	}
 
 	if (event==DLG_EVENT_REQ && new_state==DLG_STATE_CONFIRMED) {
-		DBG("DEBUG:dialog:dlg_onroute: sequential request successfully "
-			"processed\n");
+		LM_DBG("sequential request successfully processed\n");
 		dlg->lifetime = get_dlg_timeout(req);
 		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1) {
 
 			if (update_cseqs(dlg, req, dir)!=0) {
-				LOG(L_ERR, "ERROR:dialog:dlg_onroute: error after updating"
-					" cseqs\n");
+				LM_ERR("cseqs\n");
 				goto end;
 			}
 
@@ -663,8 +638,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	next_state_dlg( dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref);
 
 	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
-		DBG("DEBUG:dialog:dlg_timeout: dlg %p timeout at %d\n",
-			dlg, tl->timeout);
+		LM_DBG("dlg %p timeout at %d\n", dlg, tl->timeout);
 
 		/* dialog timeout */
 		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0);

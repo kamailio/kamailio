@@ -93,7 +93,6 @@ static time_t clock_time;
 	}while(0);
 
 
-static void dialog_update_db(unsigned int ticks, void * param);
 static int load_dialog_info_from_db(int dlg_hash_size);
 
 
@@ -118,14 +117,12 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 
 	/* Find a database module */
 	if (bind_dbmod(db_url, &dialog_dbf) < 0){
-		LOG(L_ERR,"ERROR:dialog:init_dialog_db: Unable to bind to "
-			"a database driver\n");
+		LM_ERR("Unable to bind to a database driver\n");
 		return -1;
 	}
 
 	if (dlg_connect_db(db_url)!=0){
-		LOG(L_ERR, "ERROR:dialog:init_dialog_db: unable to connect to " 
-			"the database\n");
+		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
 
@@ -133,12 +130,10 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 	table.len = strlen(table.s);
 	ver = table_version(&dialog_dbf, dialog_db_handle, &table );
 	if (ver < 0) {
-		LOG(L_ERR, "ERROR:dialog:init_dialog_db: failed to query "
-			"table version\n");
+		LM_ERR("failed to query table version\n");
 		return -1;
 	} else if (ver != DLG_TABLE_VERSION) {
-		LOG(L_ERR, "ERROR:dialog:init_dialog_db: Invalid table version "
-			"(found %d , required %d)\n"
+		LM_ERR("Invalid table version (found %d , required %d)\n"
 			"(use openser_mysql.sh reinstall)\n",
 			ver, DLG_TABLE_VERSION );
 		return -1;
@@ -146,14 +141,12 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 
 	if( (dlg_db_mode==DB_MODE_DELAYED) && 
 	(register_timer( dialog_update_db, 0, db_update_period)<0 )) {
-		LOG(L_ERR,"ERROR:dialog:init_dialog_db: failed to register "
-			"update db\n");
+		LM_ERR("failed to register update db\n");
 		return -1;
 	}
 
 	if( (load_dialog_info_from_db(dlg_hash_size) ) !=0 ){
-		LOG(L_ERR, "ERROR:dialog:init_dialog_db: unable to load the "
-			"dialog data\n");
+		LM_ERR("unable to load the dialog data\n");
 		return -1;
 	}
 
@@ -167,9 +160,8 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 
 void destroy_dlg_db(void)
 {
-	/*save the dialogs' info*/
+	/* close the DB connection */
 	if (dialog_db_handle) {
-		dialog_update_db(0, 0);
 		dialog_dbf.close(dialog_db_handle);
 		dialog_db_handle = 0;
 	}
@@ -180,12 +172,12 @@ void destroy_dlg_db(void)
 static int use_dialog_table(void)
 {
 	if(!dialog_db_handle){
-		LOG(L_ERR, "ERROR:dialog:use_dialog_table: invalid database handle\n");
+		LM_ERR("invalid database handle\n");
 		return -1;
 	}
 
 	if (dialog_dbf.use_table(dialog_db_handle, dialog_table_name) < 0) {
-		LOG(L_ERR, "ERROR:dialog: use_dialog_table: Error in use_table\n");
+		LM_ERR("Error in use_table\n");
 		return -1;
 	}
 
@@ -211,8 +203,7 @@ static int select_entire_dialog_table(db_res_t ** res)
 	/*select the whole tabel and all the columns*/
 	if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0, 
 	DIALOG_TABLE_COL_NO, 0, res) < 0) {
-		LOG(L_ERR, "ERROR:dialog:select_entire_dialog_table: Error while "
-			"querying database\n");
+		LM_ERR("Error while querying database\n");
 		return -1;
 	}
 
@@ -236,14 +227,12 @@ struct socket_info * create_socket_info(db_val_t * vals, int n){
 	} else {
 		if (parse_phostport( p.s, p.len, &host.s, &host.len, 
 		&port, &proto)!=0) {
-			LOG(L_ERR,"ERROR:dialog:create_socket_info: bad socket <%.*s>\n", 
-				p.len, p.s);
+			LM_ERR("bad socket <%.*s>\n", p.len, p.s);
 			return 0;
 		}
 		sock = grep_sock_info( &host, (unsigned short)port, proto);
 		if (sock==0) {
-			LOG(L_WARN,"WARNING:dialog:create_socket_info:non-local socket "
-				"<%.*s>...ignoring\n", p.len, p.s);
+			LM_WARN("non-local socket <%.*s>...ignoring\n", p.len, p.s);
 			}
 	}
 
@@ -270,8 +259,7 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 
 	nr_rows = RES_ROW_N(res);
 
-	LOG(L_DBG, "DBG:dialog:load_dialog_info_from_db:the database has "
-		"information about %i dialogs\n", nr_rows);
+	LM_DBG("the database has information about %i dialogs\n", nr_rows);
 
 	rows = RES_ROWS(res);
 	
@@ -287,16 +275,14 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		GET_STR_VALUE(to_uri, values, 5);
 
 		if((dlg=build_new_dlg( &callid, &from_uri, &to_uri, &from_tag))==0){
-			LOG(L_ERR, "ERROR:dialog:load_dialog_info_from_db: failed to "
-				" build new dialog\n");
+			LM_ERR("failed to build new dialog\n");
 			goto error;
 		}
 
 		if(dlg->h_entry != VAL_INT(values)){
-			LOG(L_ERR, "ERROR: dialog:load_dialog_info_from_db: inconsistent "
-				" hash data in the dialog database: you may have restarted "
-				" openser using a different hash_size: please erase %s "
-				"database and restart\n", dialog_table_name);
+			LM_ERR("inconsistent hash data in the dialog database: "
+				"you may have restarted openser using a different hash_size:"
+				"please erase %s database and restart\n", dialog_table_name);
 			shm_free(dlg);
 			goto error;
 		}
@@ -318,8 +304,7 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 
 		/*restore the timer values */
 		insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
-		LOG(L_DBG, "DBG:dialog:load_dialog_info_from_db: current dialog "
-			"timeout is %u\n", dlg->tl.timeout);
+		LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
 
 		GET_STR_VALUE(cseq1, values, 10);
 		GET_STR_VALUE(cseq2, values, 11);
@@ -332,8 +317,7 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		&cseq1, DLG_CALLER_LEG)!=0) ||
 		(dlg_set_leg_info( dlg, &to_tag, &rroute2, &contact2,
 		&cseq2, DLG_CALLEE_LEG)!=0) ) {
-			LOG(L_ERR,"ERROR:dialog:load_dialog_info_from_db: "
-				"dlg_set_leg_info failed\n");
+			LM_ERR("dlg_set_leg_info failed\n");
 			unref_dlg(dlg,1);
 			continue;
 		}
@@ -356,16 +340,15 @@ error:
 
 
 
-/*this is only called from unref_dlg, where the cell's entry lock is acquired*/
+/*this is only called from destroy_dlg, where the cell's entry lock is acquired*/
 int remove_dialog_from_db(struct dlg_cell * cell)
 {
 	db_val_t values[2];
 	db_key_t match_keys[2] = { h_entry_column, h_id_column};
 
 	/*if the dialog hasn 't been yet inserted in the database*/
-	LOG(L_DBG, "DBG:dialog:remove_dialog_from_db: trying to remove a dialog,"
-		" update_flag is %i\n", cell->flags);
-	if (cell->flags & DLG_FLAG_NEW)
+	LM_DBG("trying to remove a dialog, update_flag is %i\n", cell->flags);
+	if (cell->flags & DLG_FLAG_NEW) 
 		return 0;
 
 	if (use_dialog_table()!=0)
@@ -378,13 +361,11 @@ int remove_dialog_from_db(struct dlg_cell * cell)
 	VAL_INT(values+1) 	= cell->h_id;
 
 	if(dialog_dbf.delete(dialog_db_handle, match_keys, 0, values, 2) < 0) {
-		LOG(L_ERR, "ERROR:dialog:remove_dialog_from_db: Error while "
-			"deleting database information\n");
+		LM_ERR("failed to delete database information\n");
 		return -1;
 	}
 
-	LOG(L_DBG, "DBG:dialog:remove_dialog_from_db:callid was %.*s\n", 
-			cell->callid.len, cell->callid.s );
+	LM_DBG("callid was %.*s\n", cell->callid.len, cell->callid.s );
 
 	return 0;
 }
@@ -439,7 +420,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		SET_STR_VALUE(values+6, cell->tag[DLG_CALLEE_LEG]);
 		SET_PROPER_NULL_FLAG(cell->tag[DLG_CALLEE_LEG], values, 6);
 
-		DBG("DBG:dialog:update_dialog_dbinfo: sock_info is %.*s\n", 
+		LM_DBG("sock_info is %.*s\n", 
 			cell->bind_addr[DLG_CALLER_LEG]->sock_str.len,
 			cell->bind_addr[DLG_CALLEE_LEG]->sock_str.s);
 
@@ -461,8 +442,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 
 		if((dialog_dbf.insert(dialog_db_handle, insert_keys, values, 
 								DIALOG_TABLE_COL_NO)) !=0){
-			LOG(L_ERR, "ERROR:dialog:update_single_dialog_dbinfo:could not "
-				"add another dialog to db\n");
+			LM_ERR("could not add another dialog to db\n");
 			goto error;
 		}
 		cell->flags &= ~(DLG_FLAG_NEW|DLG_FLAG_CHANGED);
@@ -493,8 +473,7 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 
 		if((dialog_dbf.update(dialog_db_handle, (insert_keys), 0, 
 						(values), (insert_keys+10), (values+10), 2, 4)) !=0){
-			LOG(L_ERR, "ERROR:dialog:update_single_dialog_dbinfo:could not "
-				"update database info\n");
+			LM_ERR("could not update database info\n");
 			goto error;
 		}
 		cell->flags &= ~(DLG_FLAG_CHANGED);
@@ -512,7 +491,7 @@ error:
 
 
 
-static void dialog_update_db(unsigned int ticks, void * param)
+void dialog_update_db(unsigned int ticks, void * param)
 {
 	int index, i;
 	db_val_t values[DIALOG_TABLE_COL_NO];
@@ -542,8 +521,8 @@ static void dialog_update_db(unsigned int ticks, void * param)
 
 	SET_NULL_FLAG(values, i, DIALOG_TABLE_COL_NO-4, 0);
 
-	LOG(L_DBG, "DBG:dialog:dialog_update_dbinfo:saving current_info \n");
-
+	LM_DBG("saving current_info \n");
+	
 	for(index = 0; index< d_table->size; index++){
 
 		/* lock the whole entry */
@@ -593,8 +572,7 @@ static void dialog_update_db(unsigned int ticks, void * param)
 
 				if((dialog_dbf.insert(dialog_db_handle, insert_keys, 
 				values, DIALOG_TABLE_COL_NO)) !=0){
-					LOG(L_ERR, "ERROR:dialog:dialog_update_dbinfo:could not "
-						"add another dialog to db\n");
+					LM_ERR("could not add another dialog to db\n");
 					goto error;
 				}
 
@@ -614,8 +592,7 @@ static void dialog_update_db(unsigned int ticks, void * param)
 
 				if((dialog_dbf.update(dialog_db_handle, (insert_keys), 0, 
 				(values), (insert_keys+10), (values+10), 2, 4)) !=0) {
-					LOG(L_ERR, "ERROR:dialog:dialog_update_dbinfo:could not "
-						"update database info\n");
+					LM_ERR("could not update database info\n");
 					goto error;
 				}
 
