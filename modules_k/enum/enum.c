@@ -718,7 +718,7 @@ int enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
  */
 int i_enum_query_0(struct sip_msg* _msg, char* _suffix, char* _service)
 {
-	return enum_query_2(_msg, (char *)(&i_suffix), (char *)(&service));
+	return i_enum_query_2(_msg, (char *)(&i_suffix), (char *)(&service));
 }
 
 /*
@@ -726,7 +726,7 @@ int i_enum_query_0(struct sip_msg* _msg, char* _suffix, char* _service)
  */
 int i_enum_query_1(struct sip_msg* _msg, char* _suffix, char* _service)
 {
-	return enum_query_2(_msg, _suffix, (char *)(&service));
+	return i_enum_query_2(_msg, _suffix, (char *)(&service));
 }
 
 
