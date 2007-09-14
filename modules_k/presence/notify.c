@@ -1415,12 +1415,12 @@ jump_over_body:
 	}	
 
 	result = tmb.t_request_within
-		(&met,						             
-		str_hdr,                               
-		notify_body,                           
-		td,					                  
-		p_tm_callback,				        
-		(void*)cb_param);				
+		(&met,              /* method*/
+		str_hdr,            /* extra headers*/
+		notify_body,        /* body*/
+		td,                 /* dialog structure*/
+		p_tm_callback,      /* callback function*/
+		(void*)cb_param);   /* callback parameter*/
 
 	if(result< 0)
 	{
