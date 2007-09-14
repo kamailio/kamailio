@@ -66,6 +66,7 @@ Bogdan-Andrei Iancu
         1.7. Exported MI Functions
 
               1.7.1. dlg_list
+              1.7.2. dlg_end_dlg
 
         1.8. Exported pseudo-variables
 
@@ -617,6 +618,29 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
    MI FIFO Command Format:
                 :dlg_list:_reply_fifo_file_
+                _empty_line_
+     _________________________________________________________
+
+1.7.2. dlg_end_dlg
+
+   Terminates an ongoing dialog by sending BYE in both
+   directions.
+
+   Name: dlg_end_dlg
+
+   Parameters:
+
+     * h_entry - hash entry of the dialog in the internal dialog
+       table
+     * h_id - hash id of the dialog on the hash entry
+
+   The values for the h_entry and h_id can be get via the
+   dlg_list MI command.
+
+   MI FIFO Command Format:
+                :dlg_end_dlg:_reply_fifo_file_
+                342
+                56
                 _empty_line_
      _________________________________________________________
 

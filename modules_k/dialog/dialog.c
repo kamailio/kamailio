@@ -57,6 +57,7 @@
 #include "dlg_load.h"
 #include "dlg_cb.h"
 #include "dlg_db_handler.h"
+#include "dlg_req_within.h"
 
 MODULE_VERSION
 
@@ -147,6 +148,7 @@ static stat_export_t mod_stats[] = {
 
 static mi_export_t mi_cmds[] = {
 	{ "dlg_list",  mi_print_dlgs,   MI_NO_INPUT_FLAG,  	0,  0},
+	{ "dlg_end_dlg", mi_terminate_dlg, 			0,		0,	0},
 	{ 0, 0, 0, 0, 0}
 };
 

@@ -806,6 +806,40 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 		</programlisting>
 		</section>
 
+		<section>
+			<title><varname>dlg_end_dlg</varname></title>
+			<para>
+			Terminates an ongoing dialog by sending BYE in both directions.
+			</para>
+		<para>
+		Name: <emphasis>dlg_end_dlg</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>h_entry</emphasis> - hash entry of the dialog in the
+				internal dialog table
+			</para></listitem>
+			<listitem><para>
+				<emphasis>h_id</emphasis> - hash id of the dialog on the hash
+				entry
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		The values for the h_entry and h_id can be get via the dlg_list
+		MI command.
+		</para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:dlg_end_dlg:_reply_fifo_file_
+		342
+		56
+		_empty_line_
+		</programlisting>
+		</section>
+
 	</section>
 
 
