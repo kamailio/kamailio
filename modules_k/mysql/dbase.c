@@ -129,7 +129,7 @@ db_con_t* db_mysql_init(const char* _url)
 		goto err;
 	}
 
-	     /* Find the connection in the pool */
+	/* Find the connection in the pool */
 	con = (struct my_con*)pool_get(id);
 	if (!con) {
 		LM_DBG("connection '%s' not found in pool\n", _url);
