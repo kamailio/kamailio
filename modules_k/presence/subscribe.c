@@ -288,8 +288,7 @@ int update_subs_db(subs_t* subs, int type)
 	return 0;
 }
 
-int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
-		int to_tag_gen)
+int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 {	
 	unsigned int hash_code;
 
@@ -316,7 +315,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
-				if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
+				if( send_202ok(msg, subs->expires, &subs->to_tag, &subs->local_contact) <0)
 				{
 					LM_ERR("sending 202 OK\n");
 					goto error;
@@ -335,7 +334,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 			}	
 			else /* if unsubscribe for winfo */
 			{
-				if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
+				if( send_200ok(msg, subs->expires, &subs->to_tag, &subs->local_contact) <0)
 				{
 					LM_ERR("sending 202 OK reply\n");
 					goto error;
@@ -389,7 +388,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 
 	if(subs->event->type & PUBL_TYPE)
 	{	
-		if( send_202ok(msg, subs->expires, rtag, &subs->local_contact) <0)
+		if(send_202ok(msg,subs->expires,&subs->to_tag,&subs->local_contact)<0)
 		{
 			LM_ERR("sending 202 OK reply\n");
 			goto error;
@@ -424,7 +423,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, str *rtag,
 	}
 	else 
 	{
-		if( send_200ok(msg, subs->expires, rtag, &subs->local_contact) <0)
+		if( send_200ok(msg,subs->expires,&subs->to_tag,&subs->local_contact)<0)
 		{
 			LM_ERR("sending 202 OK reply\n");
 			goto error;
@@ -663,7 +662,7 @@ after_status:
 		goto error;
 	}
 	
-	if( update_subscription(msg, &subs, &subs.to_tag, to_tag_gen) <0 )
+	if( update_subscription(msg, &subs, to_tag_gen) <0 )
 	{	
 		LM_ERR("in update_subscription\n");
 		goto error;
@@ -683,6 +682,8 @@ after_status:
 	{
 		pkg_free(subs.local_contact.s);
 	}
+	if(subs.record_route.s)
+		pkg_free(subs.record_route.s);
 
 	return 1;
 
@@ -1047,8 +1048,10 @@ found_rec:
 error:
 	if(pres_uri.s)
 		pkg_free(pres_uri.s);
+	pres_uri.s= NULL;
 	if(reason.s)
 		pkg_free(reason.s);
+	reason.s= NULL;
 	return -1;
 }
 

@@ -57,7 +57,6 @@ extern int startup_time;
 extern int reply_tag_avp_id;
 extern char *to_tag_pref;
 extern int expires_offset;
-extern int lock_set_size;
 extern struct sl_binds slb;
 extern str server_address;
 extern int max_expires;
