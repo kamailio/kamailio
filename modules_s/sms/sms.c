@@ -96,14 +96,14 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"networks",        PARAM_STRING, &networks_config },
-	{"modems",          PARAM_STRING, &modems_config   },
-	{"links",           PARAM_STRING, &links_config    },
-	{"default_net",     PARAM_STRING, &default_net_str },
-	{"max_sms_parts",   PARAM_INT, &max_sms_parts      },
-	{"domain",          PARAM_STRING, &domain_str      },
-	{"use_contact",     PARAM_INT, &use_contact        },
-	{"sms_report_type", PARAM_INT, &sms_report_type    },
+	{"networks",        STR_PARAM, &networks_config },
+	{"modems",          STR_PARAM, &modems_config   },
+	{"links",           STR_PARAM, &links_config    },
+	{"default_net",     STR_PARAM, &default_net_str },
+	{"max_sms_parts",   INT_PARAM, &max_sms_parts   },
+	{"domain",          STR_PARAM, &domain_str      },
+	{"use_contact",     INT_PARAM, &use_contact     },
+	{"sms_report_type", INT_PARAM, &sms_report_type },
 	{0,0,0}
 };
 
@@ -237,6 +237,30 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			}
 			mdm->baudrate = foo;
 			break;
+		case 's':  /* scan */
+			foo=str2s(arg+2,arg_end-arg-2,&err);
+			if (err) {
+				LOG(L_WARN,"WARNING:set_modem_arg: cannot convert [s] arg to"
+					" integer!, assume default mode s=%d (SCAN)\n",SMS_BODY_SCAN);
+				foo = SMS_BODY_SCAN;
+			}
+			switch (foo) {
+				case   SMS_BODY_SCAN: 
+				case   SMS_BODY_SCAN_NO: 
+				case   SMS_BODY_SCAN_MIX: 
+					break;
+				default:
+					LOG(L_WARN,"WARNING:set_modem_arg: unsupported value s=%d "
+						  "for [s] arg!, assume default mode s=%d (SCAN)\n",
+						  foo,SMS_BODY_SCAN);
+					foo = SMS_BODY_SCAN;
+			}
+			mdm->scan = foo;
+			break;
+		case 't':  /* to */
+			memcpy(mdm->to,arg+2,arg_end-arg-2);
+			mdm->to[arg_end-arg-2] = 0;
+			break;
 		default:
 			LOG(L_ERR,"ERROR:set_modem_arg: unknown param name [%c]\n",*arg);
 			goto error;
@@ -316,6 +340,8 @@ int parse_config_lines()
 		modems[nr_of_modems].retry = 4;
 		modems[nr_of_modems].looping_interval = 20;
 		modems[nr_of_modems].baudrate = B9600;
+		modems[nr_of_modems].scan = SMS_BODY_SCAN;
+		modems[nr_of_modems].to[0] = 0;
 		memset(modems[nr_of_modems].net_list,0XFF,
 			sizeof(modems[nr_of_modems].net_list) );
 		/*get modem parameters*/

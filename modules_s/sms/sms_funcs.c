@@ -679,13 +679,97 @@ int send_sms_as_sip( struct incame_sms *sms )
 		*(p++) = ')';
 		sip_body.len += CRLF_LEN + DATE_LEN + TIME_LEN + 3;
 	}
-	send_sip_msg_request( &sip_addr, &sip_from, &sip_body);
+	return send_sip_msg_request(&sip_addr, &sip_from, &sip_body);
 
-	return 1;
 error:
 	return -1;
 }
 
+
+
+
+int send_sms_as_sip_scan_no(struct incame_sms *sms, char *to) 
+{	
+	str  sip_from;
+	str  sip_to;
+	str  sip_body;
+	char *p;
+
+	/* charge from header */
+	sip_from.s = sms->sender;
+	sip_from.len = strlen(sms->sender);
+
+	/* charge to header */
+	sip_to.len = strlen(to);
+	sip_to.s   = to;
+
+	/* charge body */
+	sip_body.len = sms->ascii + sms->userdatalength - sms->ascii;
+	sip_body.s = sms->ascii;	
+
+	/* let's trim out all \n an \r from begining */
+	while (sip_body.len && sip_body.s && 
+	      (sip_body.s[0] == '\n' || sip_body.s[0] == '\r')) {
+	       sip_body.s++;
+	       sip_body.len--;
+	}
+
+	if (sip_body.len == 0) {
+		LOG(L_WARN,"WARNING:send_sms_as_sip_scan_no: SMS empty body "
+			"for sms [%s]\n",sms->ascii);
+		goto error;
+	}
+
+	/* patch the body with date and time */
+	if (sms->userdatalength + CRLF_LEN + 1 /*'('*/ + DATE_LEN
+	+ 1 /*','*/ + TIME_LEN + 1 /*')'*/< sizeof(sms->ascii)) {
+		p = sip_body.s + sip_body.len;
+		append_str( p, CRLF, CRLF_LEN);
+		*(p++) = '(';
+		append_str( p, sms->date, DATE_LEN);
+		*(p++) = ',';
+		append_str( p, sms->time, TIME_LEN);
+		*(p++) = ')';
+		sip_body.len += CRLF_LEN + DATE_LEN + TIME_LEN + 3;
+	}
+
+	DBG("DEBUG:send_sms_as_sip_scan_no: SMS from: [%.*s], to: [%.*s], body: [%.*s]\n",
+		sip_from.len, sip_from.s, sip_to.len, sip_to.s, sip_body.len, sip_body.s);
+
+	/* finally, let's send it as sip message */
+	return send_sip_msg_request(&sip_to, &sip_from, &sip_body);
+
+error:
+	return -1;
+}
+
+
+
+
+int _send_sms_as_sip(struct incame_sms *sms, struct modem *mdm) 
+{
+	switch(mdm->scan) 
+	{
+		case SMS_BODY_SCAN:
+			return send_sms_as_sip(sms);	
+	
+		case SMS_BODY_SCAN_MIX:
+			if(send_sms_as_sip(sms) == 1)
+				return 1;
+
+		case SMS_BODY_SCAN_NO:
+			return send_sms_as_sip_scan_no(sms, mdm->to);
+
+		default:
+			break;
+	}
+	
+	/* CASE IMPOSIBLE!!!!, scan assume default value SMS_BODY_SCAN */
+	LOG(L_ERR,"ERROR:_send_sms_as_sip: SMS bad config param scan: %d for modem: %s\n",
+		mdm->scan, mdm->name);
+
+	return -1;
+}
 
 
 
@@ -841,7 +925,7 @@ void modem_process(struct modem *mdm)
 						DATE_LEN,sms.date,TIME_LEN,sms.time,
 						sms.userdatalength,sms.ascii);
 					if (!sms.is_statusreport)
-						send_sms_as_sip(&sms);
+						_send_sms_as_sip(&sms, mdm);
 					else 
 						check_sms_report(&sms);
 				}

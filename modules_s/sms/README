@@ -9,7 +9,7 @@ Edited by
 
 Bogdan Iancu
 
-   Copyright © 2003 FhG FOKUS
+   Copyright ï¿½ 2003 FhG FOKUS
      _________________________________________________________
 
    Table of Contents
@@ -17,9 +17,10 @@ Bogdan Iancu
 
         1.1. Overview
 
-              1.1.1. Hardware Requirements
-              1.1.2. Numbering Plan
-              1.1.3. Address Mapping
+              1.1.1. New Features
+              1.1.2. Hardware Requirements
+              1.1.3. Numbering Plan
+              1.1.4. Address Mapping
 
         1.2. Dependencies
 
@@ -77,7 +78,15 @@ Chapter 1. User's Guide
    explanations regarding the error.
      _________________________________________________________
 
-1.1.1. Hardware Requirements
+1.1.1. New Features
+
+   -) July 2007 
+      The SMS module may no extract the URI from SMS body,
+      configuring the URI in the new modems parameters 's' and
+      't'.
+     _________________________________________________________
+
+1.1.2. Hardware Requirements
 
    The SMS module needs a GSM modem to be able to send/receive
    the SMS messages. Usually, this kind of modems are externals,
@@ -87,7 +96,7 @@ Chapter 1. User's Guide
    phones from NOKIA and ERICSSON).
      _________________________________________________________
 
-1.1.2. Numbering Plan
+1.1.3. Numbering Plan
 
    The gateway accepts and advertises phone numbers in
    international format, more specific like: +(international
@@ -100,7 +109,7 @@ Chapter 1. User's Guide
    in From headers (in SIP requests).
      _________________________________________________________
 
-1.1.3. Address Mapping
+1.1.4. Address Mapping
 
    To identify the destination number of the SMS, the gateway
    expects to have a mobile number in username of the SIP
@@ -111,13 +120,15 @@ Chapter 1. User's Guide
    at the beginning of the SMS body in "sip:user.host" format.
    Everything before the SIP address will be discarded, the
    useful text begins exactly after the address (for example
-   SMS="For sip:user@host hello world!!" -> SIP="hello world") In
-   order to facilitate replying, the gateway sends all the SMS
-   messages with a header containing the source SIP address in
-   the following format: "From sip:user@host (if you reply DONOT
-   remove it)<new_line>". When an SMS-reply is received having
-   this header (all of it or truncated at the end), the header
-   will be left out (it will not be in the SIP message).
+   SMS="For sip:user@host hello world!!" -> SIP="hello world"), 
+   view configuration for disable this behavior (modems parameters
+   's' y 't'). In order to facilitate replying, the gateway sends 
+   all the SMS messages with a header containing the source SIP 
+   address in the following format: "From sip:user@host (if you 
+   reply DONOT remove it)<new_line>". When an SMS-reply is received 
+   having this header (all of it or truncated at the end), the header
+   will be left out (it will not be in the SIP message). 
+
      _________________________________________________________
 
 1.2. Dependencies
@@ -162,12 +173,19 @@ modem_param      = name "=" value
      * l=looping (optional) - Time for modem to wait before
        performing a new check for incomimg/outgoing SMS/SIP_MSG.
        Default is 20.
+     * t=to (optional) - uri for sip header TO - default is NULL. 
+     * s=scan (optional) - 0: NOT SCAN uri from body sms, use URI
+			      in t=to.
+			   1: SCAN uri from body sms (normal mode,
+			      default mode, clasic mode)
+			   2: SCAN MIX (both modes), First SCAN
 
    No default value, the parameter is mandatory. 
 
    Example 1-1. Set modems parameter
 ...
-modparam("sms", "modems", "Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
+modparam("sms", "modems", "Nokia[d=/dev/ttyS1;s=0;t=sip:p-cscf@cidra.com.ar]")
+modparam("sms", "modems", "Nokia[d=/dev/ttyS1;b=9600;m=new;l=30]")
 modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
 ...
      _________________________________________________________
@@ -386,6 +404,8 @@ Chapter 3. Frequently Asked Questions
    <serusers@iptel.org> and e-mail regarding development versions
    or CVS snapshots should be send to <serdev@iptel.org>.
 
+   If you want to keep the mail private, send it to
+   <serhelp@iptel.org>.
 
    3.3. How can I report a bug?
 
