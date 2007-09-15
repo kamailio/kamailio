@@ -128,7 +128,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("enum module - initializing\n");
+	LM_DBG("Initializing\n");
 	
 	suffix.s = domain_suffix;
 	suffix.len = strlen(suffix.s);
