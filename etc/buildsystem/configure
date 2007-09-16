@@ -110,6 +110,12 @@ if [ -z "$dburl" ]; then
 fi
 
 echo " "
+echo "----------------------------------------"
+echo "   NOTE!!! Answer 'yes' or 'no' to the questions below, ENTER chooses recommended defaults"
+echo "    (i.e. includes the most common features)."
+echo "----------------------------------------"
+
+echo " "
 echo "You may choose to turn on logging as found in the SER - Getting Started guide."
 echo "This logging can be turned on and off in a live environment, and we recommend"
 echo "everybody to include the logging except in high-load environments."
