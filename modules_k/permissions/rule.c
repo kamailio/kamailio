@@ -102,7 +102,7 @@ int search_rule(rule *r, char *left, char *right)
 
 	r1 = r;
 	while (r1) {
-		if (( (!r->left) || (search_expression(r1->left, left)) )
+		if (( (!r1->left) || (search_expression(r1->left, left)) )
 		&& (!search_expression(r1->left_exceptions, left))
 		&& ( (!r1->right) || (search_expression(r1->right, right)) )
 		&& (!search_expression(r1->right_exceptions, right))) return 1;
