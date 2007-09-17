@@ -482,7 +482,7 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 		<title><varname>fr_timer_avp</varname> (string)</title>
 		<para>
 		Full specification (NAME, ID, Alias) of an AVP which contains a final
-		response timeout value. If present, ths value will overeide the 
+		response timeout value. If present, ths value will override the 
 		static fr_timer parameter.
 		</para>
 		<para>
