@@ -63,7 +63,7 @@ send_subscribe_t pua_send_subscribe;
 static mi_export_t mi_cmds[] = {
 	{ "pua_publish",     mi_pua_publish,     MI_ASYNC_RPL_FLAG,  0,  0},
 	{ "pua_subscribe",   mi_pua_subscribe,   0,				     0,  0},
-	{ 0, 0, 0, 0}
+	{ 0,				 0,					 0,					 0,  0}
 };
 
 /** module exports */
