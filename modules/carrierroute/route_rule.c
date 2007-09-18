@@ -156,6 +156,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 			destroy_route_rule(shm_rr);
 			return -1;
 		}
+		memset(shm_rr->backup, 0, sizeof(struct route_rule_p_list));
 		shm_rr->backup->hash_index = backup;
 	}
 	shm_rr->backed_up = NULL;
@@ -245,6 +246,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 		}
 		if(rt->rules){
 			shm_free(rt->rules);
+            rt->rules = NULL;
 		}
 		if ((rt->rules = shm_malloc(sizeof(struct route_rule *) * rt->rule_num)) == NULL) {
 			LM_ERR("out of shared memory\n");
@@ -285,7 +287,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 			}
 		}
 		if (rr) {
-			LM_ERR("Could not populate rules\n");
+			LM_ERR("Could not populate rules: rr: %p\n", rr);
 			return -1;
 		}
 		for(i=0; i<rt->rule_num; i++){
@@ -355,6 +357,7 @@ int add_backup_route(struct route_rule * rule, struct route_rule * backup){
 		LM_ERR("out of shared memory\n");
 		return -1;
 	}
+	memset(tmp, 0, sizeof(struct route_rule_p_list));
 	tmp->hash_index = rule->hash_index;
 	tmp->rr = rule;
 	tmp->next = backup->backed_up;
@@ -365,6 +368,7 @@ int add_backup_route(struct route_rule * rule, struct route_rule * backup){
 		LM_ERR("out of shared memory\n");
 		return -1;
 	}
+	memset(tmp, 0, sizeof(struct route_rule_p_list));
 	tmp->hash_index = backup->hash_index;
 	tmp->rr = backup;
 	rule->backup = tmp;

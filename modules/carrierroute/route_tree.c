@@ -100,6 +100,7 @@ struct route_tree_item * get_route_tree(const char * domain, struct carrier_tree
 	}
 	if (add_route_tree(rd, rt) < 0) {
 		LM_ERR("couldn't add route tree\n");
+		destroy_route_tree(rt);
 		return NULL;
 	}
 	LM_INFO("created route tree: %s, %i\n", rt->name.s, rt->id);
@@ -115,6 +116,7 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 			return 0;
 		}
 	}
+	LM_ERR("can't add route trees via command line\n");
 	return -1;
 }
 
@@ -317,6 +319,7 @@ int add_domain(const char * domain) {
 			LM_ERR("out of shared memory\n");
 			return -1;
 		}
+		memset(script_routes, 0, sizeof(struct route_map *));
 	}
 
 	tmp = *script_routes;

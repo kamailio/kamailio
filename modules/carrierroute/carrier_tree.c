@@ -369,6 +369,7 @@ int add_tree(const char * tree, int carrier_id) {
 			LM_ERR("out of shared memory\n");
 			return -1;
 		}
+		*script_trees = NULL;
 	}
 	tmp = *script_trees;
 
