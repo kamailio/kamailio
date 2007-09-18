@@ -145,7 +145,7 @@ static cmd_export_t cmds[] = {
     {"replace_attr_hf",   replace_req,          1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
     {"attr_to_reply",     append_reply,         2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
     {"attr_to_reply",     append_reply,         1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
-    {"attr_destination",  attr_destination,     1, avpid_fixup,                REQUEST_ROUTE}, 
+    {"attr_destination",  attr_destination,     1, avpid_fixup,                REQUEST_ROUTE | FAILURE_ROUTE}, 
     {"xlset_destination", xlset_destination,    1, fixup_xl_1,                 REQUEST_ROUTE},
     {"hdr_body2attrs",    attr_hdr_body2attrs,  2, attr_hdr_body2attrs_fixup,  REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
     {"hdr_body2attrs2",   attr_hdr_body2attrs2, 2, attr_hdr_body2attrs2_fixup, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
