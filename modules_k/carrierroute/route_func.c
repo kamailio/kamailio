@@ -668,7 +668,7 @@ static int carrier_rewrite_msg(int carrier, int level,
 		goto unlock_and_out;
 	}
 
-	LM_NOTICE("uri %.*s was rewritten to %.*s\n", user->len, user->s, dest.len, dest.s);
+	LM_INFO("uri %.*s was rewritten to %.*s\n", user->len, user->s, dest.len, dest.s);
 
 	act.n = 1;
 	act.type = SET_URI_T;
