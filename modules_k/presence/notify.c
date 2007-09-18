@@ -859,10 +859,8 @@ dlg_t* build_dlg_t(subs_t* subs)
 	
 	return td;
 
-error:
-		
+error:		
 	free_tm_dlg(td);
-
 	return NULL;
 }
 

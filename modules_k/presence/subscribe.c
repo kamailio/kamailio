@@ -504,7 +504,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	int error_ret= -1;
 
 	/* ??? rename to avoid collisions with other symbols */
-	counter ++;
+	counter++;
 
 	memset(&subs, 0, sizeof(subs_t));
 
@@ -1046,12 +1046,9 @@ found_rec:
 	return 0;
 
 error:
-	if(pres_uri.s)
-		pkg_free(pres_uri.s);
-	pres_uri.s= NULL;
-	if(reason.s)
-		pkg_free(reason.s);
-	reason.s= NULL;
+	if(subs->reason.s)
+		pkg_free(subs->reason.s);
+	subs->reason.s= NULL;
 	return -1;
 }
 
