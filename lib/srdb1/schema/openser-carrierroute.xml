@@ -8,7 +8,7 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>sp-route2</name>
+    <name>carrierroute</name>
     <xi:include href="carrierroute.xml"/>
     <xi:include href="route_tree.xml"/>
 </database>
