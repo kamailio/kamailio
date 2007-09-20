@@ -190,7 +190,7 @@ static inline int generate_random_secret(void)
 
 	sec_rand = (char*)pkg_malloc(RAND_SECRET_LEN);
 	if (!sec_rand) {
-		LOG(L_ERR, "ERROR:auth:generate_random_secret(): No pkg memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 
@@ -203,7 +203,7 @@ static inline int generate_random_secret(void)
 	secret.s = sec_rand;
 	secret.len = RAND_SECRET_LEN;
 
-	/*DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
+	/*LM_DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
 
 	return 0;
 }
@@ -212,11 +212,11 @@ static inline int generate_random_secret(void)
 static int mod_init(void)
 {
 	str stmp;
-	LOG(L_INFO,"AUTH module - initializing\n");
+	LM_INFO("initializing...\n");
 	
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:auth:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		return -1;
 	}
 
@@ -224,8 +224,7 @@ static int mod_init(void)
 	if (sec_param == 0) {
 		/* Generate secret using random generator */
 		if (generate_random_secret() < 0) {
-			LOG(L_ERR,"ERROR:auth:mod_init: Error while generating "
-				"random secret\n");
+			LM_ERR("failed to generate random secret\n");
 			return -3;
 		}
 	} else {
@@ -235,7 +234,7 @@ static int mod_init(void)
 	}
 
 	if ( init_rpid_avp(rpid_avp_param)<0 ) {
-		LOG(L_ERR,"ERROR:auth:mod_init: failed to process rpid AVPs\n");
+		LM_ERR("failed to process rpid AVPs\n");
 		return -4;
 	}
 
@@ -248,7 +247,7 @@ static int mod_init(void)
 		stmp.s = user_spec_param; stmp.len = strlen(stmp.s);
 		if(pv_parse_spec(&stmp, &user_spec)==NULL)
 		{
-			LOG(L_ERR,"ERROR:auth:mod_init: failed to parse username spec\n");
+			LM_ERR("failed to parse username spec\n");
 			return -5;
 		}
 		switch(user_spec.type) {
@@ -257,7 +256,7 @@ static int mod_init(void)
 			case PVT_NULL:
 			case PVT_MARKER:
 			case PVT_COLOR:
-				LOG(L_ERR,"ERROR:auth:mod_init: invalid username spec\n");
+				LM_ERR("invalid username spec\n");
 				return -6;
 			default: ;
 		}
@@ -267,7 +266,7 @@ static int mod_init(void)
 		stmp.s = passwd_spec_param; stmp.len = strlen(stmp.s);
 		if(pv_parse_spec(&stmp, &passwd_spec)==NULL)
 		{
-			LOG(L_ERR,"ERROR:auth:mod_init: failed to parse password spec\n");
+			LM_ERR("failed to parse password spec\n");
 			return -7;
 		}
 		switch(passwd_spec.type) {
@@ -276,7 +275,7 @@ static int mod_init(void)
 			case PVT_NULL:
 			case PVT_MARKER:
 			case PVT_COLOR:
-				LOG(L_ERR,"ERROR:auth:mod_init: invalid password spec\n");
+				LM_ERR("invalid password spec\n");
 				return -8;
 			default: ;
 		}
@@ -310,7 +309,7 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		if(sval.rs.len!= _username->user.len
 				|| strncasecmp(sval.rs.s, _username->user.s, sval.rs.len))
 		{
-			DBG("auth: auth_get_ha1: username mismatch [%.*s] [%.*s]\n",
+			LM_DBG("username mismatch [%.*s] [%.*s]\n",
 				_username->user.len, _username->user.s, sval.rs.len, sval.rs.s);
 			pv_value_destroy(&sval);
 			return 1;
@@ -335,7 +334,7 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		/* Only plaintext passwords are stored in database,
 		 * we have to calculate HA1 */
 		calc_HA1(HA_MD5, &_username->whole, _domain, &sval.rs, 0, 0, _ha1);
-		DBG("auth:auth_get_ha1: HA1 string calculated: %s\n", _ha1);
+		LM_DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, sval.rs.s, sval.rs.len);
 		_ha1[sval.rs.len] = '\0';
@@ -356,7 +355,7 @@ static inline int pv_authorize(struct sip_msg* msg, pv_elem_t* realm,
 
 	if (realm) {
 		if (pv_printf_s(msg, realm, &domain)!=0) {
-			LOG(L_ERR, "ERROR:auth:authorize: pv_printf_s failed\n");
+			LM_ERR("pv_printf_s failed\n");
 			return AUTH_ERROR;
 		}
 	} else {
@@ -375,7 +374,7 @@ static inline int pv_authorize(struct sip_msg* msg, pv_elem_t* realm,
 	if (res < 0) {
 		/* Error */
 		if (slb.reply(msg, 500, &auth_500_err) == -1) {
-			LOG(L_ERR, "auth:authorize: Error while sending 500 reply\n");
+			LM_ERR("failed to send 500 reply\n");
 		}
 		return ERROR;
 	}
@@ -419,8 +418,7 @@ static int challenge_fixup(void** param, int param_no)
 		} else {
 			s.len = strlen(s.s);
 			if (pv_parse_format(&s,&model)<0) {
-				LOG(L_ERR, "ERROR:auth:challenge_fixup: pv_parse_format "
-					"failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -432,8 +430,7 @@ static int challenge_fixup(void** param, int param_no)
 			pkg_free(*param);
 			*param=(void*)qop;
 		} else {
-			LOG(L_ERR, "challenge_fixup(): Bad number <%s>\n",
-			    (char*)(*param));
+			LM_ERR("bad number <%s>\n", (char*)(*param));
 			return E_UNSPEC;
 		}
 	}
@@ -470,8 +467,7 @@ static int auth_fixup(void** param, int param_no)
 		} else {
 			s.len =  strlen(s.s);
 			if (pv_parse_format(&s,&model)<0) {
-				LOG(L_ERR, "ERROR:auth:auth_fixup: pv_parse_format "
-					"failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}

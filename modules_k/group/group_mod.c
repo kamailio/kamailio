@@ -178,7 +178,7 @@ static int mod_init(void)
 {
 	int ver;
 
-	DBG("group module - initializing\n");
+	LM_DBG("group module - initializing\n");
 
 	/* Calculate lengths */
 	db_url.len = strlen(db_url.s);
@@ -197,18 +197,17 @@ static int mod_init(void)
 	}
 
 	if (group_db_init(db_url.s) < 0 ){
-		LOG(L_ERR, "ERROR:group:mod_init: unable to open database "
-				"connection\n");
+		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
 
 	/* check version for group table */
 	ver = group_db_ver( &table );
 	if (ver < 0) {
-		LOG(L_ERR, "ERROR:group:mod_init: failed to query table version\n");
+		LM_ERR("failed to query table version\n");
 		return -1;
 	} else if (ver < TABLE_VERSION) {
-		LOG(L_ERR, "ERROR:group:mod_init: Invalid table version for %s "
+		LM_ERR("invalid table version for %s "
 				"(use openser_mysql.sh reinstall)\n",table.s);
 		return -1;
 	}
@@ -217,18 +216,16 @@ static int mod_init(void)
 		/* check version for re_group table */
 		ver = group_db_ver( &re_table );
 		if (ver < 0) {
-			LOG(L_ERR, "ERROR:group:mod_init: failed to query "
-				"table version\n");
+			LM_ERR("failed to query table version\n");
 			return -1;
 		} else if (ver < RE_TABLE_VERSION) {
-			LOG(L_ERR, "ERROR:group:mod_init: Invalid table version for %s "
+			LM_ERR("invalid table version for %s "
 					"(use openser_mysql.sh reinstall)\n",re_table.s);
 			return -1;
 		}
 
 		if (load_re( &re_table )!=0 ) {
-			LOG(L_ERR, "ERROR:group:mod_init: failed to load <%s> table\n",
-					re_table.s);
+			LM_ERR("failed to load <%s> table\n", re_table.s);
 			return -1;
 		}
 	}
@@ -257,7 +254,7 @@ static group_check_p get_hf( char *str1)
 
 	gcp = (group_check_p)pkg_malloc(sizeof(group_check_t));
 	if(gcp == NULL) {
-		LOG(L_ERR, "ERROR:group:get_hf: no more memory\n");
+		LM_ERR("no pkg more memory\n");
 		return 0;
 	}
 	memset(gcp, 0, sizeof(group_check_t));
@@ -275,8 +272,7 @@ static group_check_p get_hf( char *str1)
 		if(pv_parse_spec( &s, &gcp->sp)==NULL
 			|| gcp->sp.type!=PVT_AVP)
 		{
-			LOG(L_ERR, "ERROR:group:get_hf: Unsupported User Field "
-				"identifier\n");
+			LM_ERR("unsupported User Field identifier\n");
 			pkg_free( gcp );
 			return 0;
 		}
@@ -303,7 +299,7 @@ static int hf_fixup(void** param, int param_no)
 	} else if (param_no == 2) {
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
-			LOG(L_ERR, "ERROR:group:hf_fixup: No pkg memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
 		s->s = (char*)*param;
@@ -330,12 +326,11 @@ static int get_gid_fixup(void** param, int param_no)
 		name.len = strlen(name.s);
 		gid = (struct gid_spec*)pkg_malloc(sizeof(struct gid_spec));
 		if (gid == NULL) {
-			LOG(L_ERR, "ERROR:group:get_gid_fixup: no more pkg memory\n");
+			LM_ERR("no more pkg memory\n");
 			return E_UNSPEC;
 		}
 		if ( parse_avp_spec( &name, &gid->avp_type, &gid->avp_name)!=0 ) {
-			LOG(L_ERR,"ERROR:group:get_gid_fixup: bad AVP spec <%s>\n",
-				name.s);
+			LM_ERR("bad AVP spec <%s>\n", name.s);
 			pkg_free( gid );
 			return E_UNSPEC;
 		}

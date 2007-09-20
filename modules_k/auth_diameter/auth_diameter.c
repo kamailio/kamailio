@@ -121,11 +121,11 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	DBG("auth_diameter - Initializing\n");
+	LM_DBG("auth_diameter - Initializing\n");
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:auth_diameter:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		return -1;
 	}
 	
@@ -135,23 +135,21 @@ static int mod_init(void)
 static int mod_child_init(int r)
 {	
 	/* open TCP connection */
-	DBG("auth_diameter.c: mod_child_init(): Initializing TCP connection\n");
+	LM_DBG("initializing TCP connection\n");
 
 	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
 	if(sockfd==-1) 
 	{
-		DBG("auth_diameter.c: mod_child_init(): TCP connection not"
-				" established\n");
+		LM_DBG("the TCP connection was not established\n");
 		return -1;
 	}
 
-	DBG("auth_diameter.c: mod_child_init(): TCP connection established"
-				" on socket=%d\n", sockfd);
+	LM_DBG("the TCP connection was established on socket=%d\n", sockfd);
 	
 	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
 	if(!rb)
 	{
-		DBG("auth_diameter.c: mod_child_init: no more free memory\n");
+		LM_DBG("no more free pkg memory\n");
 		return -1;
 	}
 	rb->buf = 0;
@@ -183,8 +181,7 @@ static int auth_fixup(void** param, int param_no)
 		} else {
 			s.len = strlen(s.s);
 			if (pv_parse_format(&s,&model)<0) {
-				LOG(L_ERR, "ERROR:auth_diameter:auth_fixup: pv_parse_format "
-					"failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -247,7 +244,7 @@ static int group_fixup(void** param, int param_no)
 			goto end;
 		}
 				
-		LOG(L_ERR, "group_fixup(): Unsupported Header Field identifier\n");
+		LM_ERR("unsupported Header Field identifier\n");
 		return E_UNSPEC;
 		
 		//pkg_free(ptr);
@@ -258,7 +255,7 @@ static int group_fixup(void** param, int param_no)
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) 
 		{
-			LOG(L_ERR, "group_fixup(): No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
 		ptr = *param;

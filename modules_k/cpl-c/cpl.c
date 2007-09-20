@@ -199,8 +199,7 @@ static int fixup_cpl_run_script(void** param, int param_no)
 		else if (!strcasecmp( "outgoing", *param))
 			flag = CPL_RUN_OUTGOING;
 		else {
-			LOG(L_ERR,"ERROR:fixup_cpl_run_script: script directive \"%s\""
-				" unknown!\n",(char*)*param);
+			LM_ERR("script directive \"%s\" unknown!\n",(char*)*param);
 			return E_UNSPEC;
 		}
 		pkg_free(*param);
@@ -214,8 +213,7 @@ static int fixup_cpl_run_script(void** param, int param_no)
 		} else if ( !strcasecmp("force_stateful", *param) ) {
 			flag = CPL_FORCE_STATEFUL;
 		} else {
-			LOG(L_ERR,"ERROR:fixup_cpl_run_script: flag \"%s\" (second param)"
-				" unknown!\n",(char*)*param);
+			LM_ERR("flag \"%s\" (second param) unknown!\n",(char*)*param);
 			return E_UNSPEC;
 		}
 		pkg_free(*param);
@@ -236,23 +234,21 @@ static int cpl_init(void)
 	unsigned short avp_type;
 	str stmp;
 
-	LOG(L_INFO,"CPL - initializing\n");
+	LM_INFO("initializing...\n");
 
 	/* check the module params */
 	if (DB_URL==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_URL\" "
-			"found empty\n");
+		LM_CRIT("mandatory parameter \"DB_URL\" found empty\n");
 		goto error;
 	}
 
 	if (DB_TABLE==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"DB_TABLE\" "
-			"found empty\n");
+		LM_CRIT("mandatory parameter \"DB_TABLE\" found empty\n");
 		goto error;
 	}
 
 	if (cpl_env.proxy_recurse>MAX_PROXY_RECURSE) {
-		LOG(L_CRIT,"ERROR:cpl_init: value of proxy_recurse param (%d) exceeds "
+		LM_CRIT("value of proxy_recurse param (%d) exceeds "
 			"the maximum safety value (%d)\n",
 			cpl_env.proxy_recurse,MAX_PROXY_RECURSE);
 		goto error;
@@ -263,68 +259,60 @@ static int cpl_init(void)
 		stmp.s = timer_avp; stmp.len = strlen(stmp.s);
 		if (pv_parse_spec(&stmp, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:cpl_init: malformed or non AVP %s "
-				"AVP definition\n", timer_avp);
+			LM_ERR("malformed or non AVP %s AVP definition\n", timer_avp);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &cpl_env.timer_avp,
 							&avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:cpl_init: [%s]- invalid "
-				"AVP definition\n", timer_avp);
+			LM_ERR("[%s]- invalid AVP definition\n", timer_avp);
 			return -1;
 		}
 		cpl_env.timer_avp_type = avp_type;
 	}
 
 	if (dtd_file==0) {
-		LOG(L_CRIT,"ERROR:cpl_init: mandatory parameter \"cpl_dtd_file\" "
-			"found empty\n");
+		LM_CRIT("mandatory parameter \"cpl_dtd_file\" found empty\n");
 		goto error;
 	} else {
 		/* check if the dtd file exists */
 		if (stat( dtd_file, &stat_t)==-1) {
-			LOG(L_ERR,"ERROR:cpl_init: checking file \"%s\" status failed;"
-				" stat returned %s\n",dtd_file,strerror(errno));
+			LM_ERR("checking file \"%s\" status failed; stat returned %s\n",
+					dtd_file,strerror(errno));
 			goto error;
 		}
 		if ( !S_ISREG( stat_t.st_mode ) ) {
-			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" is not a regular file!\n",
-				dtd_file);
+			LM_ERR("dir \"%s\" is not a regular file!\n", dtd_file);
 			goto error;
 		}
 		if (access( dtd_file, R_OK )==-1) {
-			LOG(L_ERR,"ERROR:cpl_init: checking file \"%s\" for permissions "
+			LM_ERR("checking file \"%s\" for permissions "
 				"failed; access returned %s\n",dtd_file,strerror(errno));
 			goto error;
 		}
 	}
 
 	if (cpl_env.log_dir==0) {
-		LOG(L_INFO,"INFO:cpl_init: log_dir param found void -> logging "
-			" disabled!\n");
+		LM_INFO("log_dir param found void -> logging disabled!\n");
 	} else {
 		if ( strlen(cpl_env.log_dir)>MAX_LOG_DIR_SIZE ) {
-			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" has a too long name :-(!\n",
-				cpl_env.log_dir);
+			LM_ERR("dir \"%s\" has a too long name :-(!\n",	cpl_env.log_dir);
 			goto error;
 		}
 		/* check if the dir exists */
 		if (stat( cpl_env.log_dir, &stat_t)==-1) {
-			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" status failed;"
+			LM_ERR("checking dir \"%s\" status failed;"
 				" stat returned %s\n",cpl_env.log_dir,strerror(errno));
 			goto error;
 		}
 		if ( !S_ISDIR( stat_t.st_mode ) ) {
-			LOG(L_ERR,"ERROR:cpl_init: dir \"%s\" is not a directory!\n",
-				cpl_env.log_dir);
+			LM_ERR("dir \"%s\" is not a directory!\n", cpl_env.log_dir);
 			goto error;
 		}
 		if (access( cpl_env.log_dir, R_OK|W_OK )==-1) {
-			LOG(L_ERR,"ERROR:cpl_init: checking dir \"%s\" for permissions "
-				"failed; access returned %s\n",
-				cpl_env.log_dir, strerror(errno));
+			LM_ERR("checking dir \"%s\" for permissions failed; access "
+					"returned %s\n", cpl_env.log_dir, strerror(errno));
 			goto error;
 		}
 	}
@@ -334,12 +322,12 @@ static int cpl_init(void)
 
 	/* load TM API */
 	if (load_tm_api(&cpl_fct.tmb)!=0) {
-		LOG(L_ERR, "ERROR:cpl-c:mod_init: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		goto error;
 	}
 	/* load SL API */
 	if (load_sl_api(&cpl_fct.slb)!=0) {
-		LOG(L_ERR, "ERROR:cpl-c:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		goto error;
 	}
 
@@ -348,46 +336,43 @@ static int cpl_init(void)
 		/* import all usrloc functions */
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 		if (!bind_usrloc) {
-			LOG(L_ERR, "ERROR:cpl_c:cpl_init: Can't bind usrloc\n");
+			LM_ERR("can't bind usrloc\n");
 			goto error;
 		}
 		if (bind_usrloc( &(cpl_fct.ulb) ) < 0) {
-			LOG(L_ERR, "ERROR:cpl_c:cpl_init: importing usrloc failed\n");
+			LM_ERR("importing usrloc failed\n");
 			goto error;
 		}
 		/* convert lookup_domain from char* to udomain_t* pointer */
 		if (cpl_fct.ulb.register_udomain( lookup_domain, &cpl_env.lu_domain)
 		< 0) {
-			LOG(L_ERR, "ERROR:cpl_c:cpl_init: Error while registering domain "
-				"<%s>\n",lookup_domain);
+			LM_ERR("failed to register domain <%s>\n",lookup_domain);
 			goto error;
 		}
 	} else {
-		LOG(L_NOTICE,"NOTICE:cpl_init: no lookup_domain given -> disable "
-			" lookup node\n");
+		LM_NOTICE("no lookup_domain given -> disable lookup node\n");
 	}
 
 	/* build a pipe for sending commands to aux process */
 	if ( pipe( cpl_env.cmd_pipe )==-1 ) {
-		LOG(L_CRIT,"ERROR:cpl_init: cannot create command pipe: %s!\n",
-			strerror(errno) );
+		LM_CRIT("cannot create command pipe: %s!\n", strerror(errno) );
 		goto error;
 	}
 	/* set the writing non blocking */
 	if ( (val=fcntl(cpl_env.cmd_pipe[1], F_GETFL, 0))<0 ) {
-		LOG(L_ERR,"ERROR:cpl_init: getting flags from pipe[1] failed: fcntl "
-			"said %s!\n",strerror(errno));
+		LM_ERR("getting flags from pipe[1] failed: fcntl said %s!\n",
+				strerror(errno));
 		goto error;
 	}
 	if ( fcntl(cpl_env.cmd_pipe[1], F_SETFL, val|O_NONBLOCK) ) {
-		LOG(L_ERR,"ERROR:cpl_init: setting flags to pipe[1] failed: fcntl "
-			"said %s!\n",strerror(errno));
+		LM_ERR("setting flags to pipe[1] failed: fcntl said %s!\n",
+				strerror(errno));
 		goto error;
 	}
 
 	/* init the CPL parser */
 	if (init_CPL_parser( dtd_file )!=1 ) {
-		LOG(L_ERR,"ERROR:cpl_init: init_CPL_parser failed!\n");
+		LM_ERR("init_CPL_parser failed!\n");
 		goto error;
 	}
 
@@ -395,7 +380,7 @@ static int cpl_init(void)
 	ptr = getenv("TZ");
 	cpl_env.orig_tz.len = 3/*"TZ="*/ + (ptr?(strlen(ptr)+1):0);
 	if ( (cpl_env.orig_tz.s=shm_malloc( cpl_env.orig_tz.len ))==0 ) {
-		LOG(L_ERR,"ERROR:cpl_init: no more shm mem. for saving TZ!\n");
+		LM_ERR("no more shm mem. for saving TZ!\n");
 		goto error;
 	}
 	memcpy(cpl_env.orig_tz.s,"TZ=",3);
@@ -470,7 +455,7 @@ static inline int build_user_AOR(str *username, str *domain, str *uh, int sip)
 
 	uh->s = (char*)shm_malloc( uh->len + 1 );
 	if (!uh->s) {
-		LOG(L_ERR,"ERROR:cpl-c:build_userhost: no more shm memory.\n");
+		LM_ERR("no more shm memory.\n");
 		return -1;
 	}
 
@@ -498,8 +483,7 @@ static inline int build_user_AOR(str *username, str *domain, str *uh, int sip)
 
 	/* sanity check */
 	if (p-uh->s!=uh->len+1) {
-		LOG(L_CRIT,"BUG:cpl-c:build_userhost: buffer overflow l=%d,w=%ld\n",
-			uh->len,(long)(p-uh->s));
+		LM_CRIT("buffer overflow l=%d,w=%ld\n", uh->len,(long)(p-uh->s));
 		return -1;
 	}
 	return 0;
@@ -525,8 +509,7 @@ static inline int get_dest_user(struct sip_msg *msg, str *username, str *domain)
 			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)<0
 			|| !uri.user.len)
 			{
-				LOG(L_ERR,"ERROR:cpl-c:get_dest_user: unable to extract user"
-					" name from RURI or To header!\n");
+				LM_ERR("unable to extract user name from RURI or To header!\n");
 				return -1;
 			}
 		}
@@ -547,15 +530,13 @@ static inline int get_orig_user(struct sip_msg *msg, str *username, str *domain)
 	/* parsing from header */
 	DBG("DEBUG:cpl-c:get_orig_user: trying to get user from From\n");
 	if ( parse_from_header( msg )==-1 ) {
-		LOG(L_ERR,"ERROR:cpl-c:get_orig_user: unable to extract URI "
-			"from FROM header\n");
+		LM_ERR("unable to extract URI from FROM header\n");
 		return -1;
 	}
 	from = (struct to_body*)msg->from->parsed;
 	/* parse the extracted uri from From */
 	if (parse_uri( from->uri.s, from->uri.len, &uri)||!uri.user.len) {
-		LOG(L_ERR,"ERROR:cpl-c:get_orig_user: unable to extract user name "
-			"from URI (From header)\n");
+		LM_ERR("unable to extract user name from URI (From header)\n");
 		return -1;
 	}
 	*username = uri.user;
@@ -680,8 +661,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 	/* content-length (if present) */
 	if ( !msg->content_length &&
 	((parse_headers(msg,HDR_CONTENTLENGTH_F,0)==-1)||!msg->content_length)) {
-		LOG(L_ERR,"ERROR:cpl-c:do_script_action: no Content-Length "
-			"hdr found!\n");
+		LM_ERR("no Content-Length hdr found!\n");
 		goto error;
 	}
 	body.len = get_content_length( msg );
@@ -695,15 +675,13 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 		case STORE_SCRIPT :
 			/* check the len -> it must not be 0 */
 			if (body.len==0) {
-				LOG(L_ERR,"ERROR:cpl-c:do_script_action: 0 content-len found "
-					"for store\n");
+				LM_ERR("0 content-len found for store\n");
 				goto error_1;
 			}
 			/* get the message's body */
 			body.s = get_body( msg );
 			if (body.s==0) {
-				LOG(L_ERR,"ERROR:cpl-c:do_script_action: cannot extract "
-					"body from msg!\n");
+				LM_ERR("cannot extract body from msg!\n");
 				goto error_1;
 			}
 			/* now compile the script and place it into database */
@@ -723,8 +701,7 @@ static inline int do_script_action(struct sip_msg *msg, int action)
 		case REMOVE_SCRIPT:
 			/* check the len -> it must be 0 */
 			if (body.len!=0) {
-				LOG(L_ERR,"ERROR:cpl-c:do_script_action: non-0 content-len "
-					"found for remove\n");
+				LM_ERR("non-0 content-len found for remove\n");
 				goto error_1;
 			}
 			/* remove the script for the user */

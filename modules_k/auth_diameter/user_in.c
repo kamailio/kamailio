@@ -82,7 +82,7 @@ static inline int get_to_uri(struct sip_msg* m, str* u)
      // check that the header field is there and is parsed
 	if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1)|| (!m->to))) 
 	{
-		LOG(L_ERR, "get_to_uri(): Can't get To header field\n");
+		LM_ERR("can't get To header field\n");
 		return -1;
 	}
 	
@@ -98,7 +98,7 @@ static inline int get_from_uri(struct sip_msg* m, str* u)
 {
      // check that the header field is there and is parsed
 	if (parse_from_header(m) < 0) {
-		LOG(L_ERR, "get_from_uri(): Error while parsing From body\n");
+		LM_ERR("failed to parse From body\n");
 		return -1;
 	}
 	
@@ -134,8 +134,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		case 1: /* Request-URI */
 			if (get_request_uri(_m, &uri) < 0) 
 			{
-				LOG(L_ERR, M_NAME":diameter_is_user_in(): Error while "
-					"extracting Request-URI\n");
+				LM_ERR("failed to extract Request-URI\n");
 				return -1;
 			}
 		break;
@@ -143,8 +142,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		case 2: /* To */
 			if (get_to_uri(_m, &uri) < 0) 
 			{
-				LOG(L_ERR, M_NAME":diameter_is_user_in(): Error while "
-					"extracting To\n");
+				LM_ERR("failed to extract To\n");
 				return -2;
 			}
 			break;
@@ -152,8 +150,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		case 3: /* From */
 			if (get_from_uri(_m, &uri) < 0) 
 			{
-				LOG(L_ERR, M_NAME":diameter_is_user_in(): Error while "
-					"extracting From\n");
+				LM_ERR("failed to extract From URI\n");
 				return -3;
 			}
 			break;
@@ -165,8 +162,8 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 				get_authorized_cred(_m->proxy_auth, &h);
 				if (!h) 
 				{
-					LOG(L_ERR, M_NAME":diameter_is_user_in(): No authorized "
-								"credentials found (error in scripts)\n");
+					LM_ERR("no authorized credentials found "
+							"(error in scripts)\n");
 					return -4;
 				}
 			}
@@ -178,8 +175,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	{
 		if (parse_uri(uri.s, uri.len, &puri) < 0) 
 		{
-			LOG(L_ERR, M_NAME":diameter_is_user_in(): Error while "
-				"parsing URI\n");
+			LM_ERR("failed to parse URI\n");
 			return -5;
 		}
 		user = puri.user;
@@ -202,7 +198,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 			user_name.s = (char*)pkg_malloc(user_name.len);
 			if (!user_name.s) 
 			{
-				LOG(L_ERR, M_NAME":diameter_is_user_in(): No memory left\n");
+				LM_ERR("no pkg memory left\n");
 				return -6;
 			}
 		
@@ -222,8 +218,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	
 	if ( (req=AAAInMessage(AA_REQUEST, AAA_APP_NASREQ))==NULL)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in():can't create new "
-			"AAA message!\n");
+		LM_ERR("can't create new AAA message!\n");
 		return -1;
 	}
 	
@@ -231,12 +226,12 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s,
 				user_name.len, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): no more free memory!\n");
+		LM_ERR("no more pkg memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): avp not added \n");
+		LM_ERR("avp not added \n");
 		goto error1;
 	}
 
@@ -244,27 +239,27 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	if( (avp=AAACreateAVP(AVP_User_Group, 0, 0, grp->s,
 				grp->len, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): no more free memory!\n");
+		LM_ERR("no more pkg memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): avp not added \n");
+		LM_ERR("avp not added \n");
 		goto error1;
 	}
 
 	/* SIP_MSGID AVP */
-	DBG("******* m_id=%d\n", _m->id);
+	LM_DBG("******* m_id=%d\n", _m->id);
 	tmp = _m->id;
 	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&tmp), 
 				sizeof(tmp), AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): no more free memory!\n");
+		LM_ERR("no more pkg memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): avp not added \n");
+		LM_ERR("avp not added \n");
 		goto error1;
 	}
 
@@ -273,12 +268,12 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_GROUP_CHECK, 
 				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR,M_NAME":diameter_is_user_in(): no more free memory!\n");
+		LM_ERR("no more pkg memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): avp not added \n");
+		LM_ERR("avp not added \n");
 		goto error1;
 	}
 	
@@ -289,13 +284,13 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
 						puri.host.len, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): no more free memory!\n");
+		LM_ERR("no more pkg memory!\n");
 		goto error;
 	}
 	
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): avp not added \n");
+		LM_ERR("avp not added \n");
 		goto error1;
 	}
 	
@@ -306,7 +301,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	/* build a AAA message buffer */
 	if(AAABuildMsgBuffer(req) != AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in():message buffer not created\n");
+		LM_ERR("message buffer not created\n");
 		goto error;
 	}
 
@@ -315,8 +310,7 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		sockfd = init_mytcp(diameter_client_host, diameter_client_port);
 		if(sockfd==AAA_NO_CONNECTION)
 		{
-			LOG(L_ERR, M_NAME":diameter_is_user_in((): failed to reconnect"
-								" to Diameter client\n");
+			LM_ERR("failed to reconnect to Diameter client\n");
 			goto error;
 		}
 	}
@@ -325,17 +319,16 @@ int diameter_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 
 	if(ret == AAA_CONN_CLOSED)
 	{
-		LOG(L_NOTICE, M_NAME":diameter_is_user_in((): connection to Diameter"
-					" client closed.It will be reopened by the next request\n");
+		LM_NOTICE("connection to Diameter client closed."
+				"It will be reopened by the next request\n");
 		close(sockfd);
 		sockfd = AAA_NO_CONNECTION;
 		goto error;
 	}
 	if(ret != AAA_USER_IN_GROUP)
 	{
-		LOG(L_ERR, M_NAME":diameter_is_user_in(): message sending to the" 
-					"DIAMETER backend authorization server failed or "
-					"user is not in group\n");
+		LM_ERR("message sending to the DIAMETER backend authorization server"
+				"failed or user is not in group\n");
 		goto error;
 	}
 	

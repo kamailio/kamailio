@@ -549,7 +549,7 @@ struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 
 	if( ds_print_mi_list(&rpl_tree->node)< 0 )
 	{
-		LOG(L_ERR,"ERROR:mi_ps: failed to add node\n");
+		LM_ERR("failed to add node\n");
 		free_mi_tree(rpl_tree);
 		return 0;
 	}

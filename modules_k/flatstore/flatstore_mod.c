@@ -115,13 +115,13 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	if (strlen(flat_delimiter) != 1) {
-		LOG(L_ERR, "flatstore:mod_init: Delimiter has to be exactly one character\n");
+		LM_ERR("delimiter has to be exactly one character\n");
 		return -1;
 	}
 
 	flat_rotate = (time_t*)shm_malloc(sizeof(time_t));
 	if (!flat_rotate) {
-		LOG(L_ERR, "flatstore: No shared memory left\n");
+		LM_ERR("no shared memory left\n");
 		return -1;
 	}
 

@@ -56,12 +56,12 @@ dbt_result_p dbt_result_new(dbt_table_p _dtp, int *_lres, int _sz)
 	_dres->colv = (dbt_column_p)pkg_malloc(_sz*sizeof(dbt_column_t));
 	if(!_dres->colv)
 	{
-		DBG("DBT:dbt_result_new: no memory!\n");
+		LM_DBG("no pkg memory!\n");
 		pkg_free(_dres);
 		return NULL;
 	}
 	memset(_dres->colv, 0, _sz*sizeof(dbt_column_t));
-	DBG("DBT:dbt_result_new: new res with %d cols\n", _sz);
+	LM_DBG("new res with %d cols\n", _sz);
 	for(i = 0; i < _sz; i++)
 	{
 		n = (_lres)?_dtp->colv[_lres[i]]->name.len:_dtp->colv[i]->name.len;
@@ -69,7 +69,7 @@ dbt_result_p dbt_result_new(dbt_table_p _dtp, int *_lres, int _sz)
 		_dres->colv[i].name.s = (char*)pkg_malloc((n+1)*sizeof(char));
 		if(!_dres->colv[i].name.s)
 		{
-			DBG("DBT:dbt_result_new: no memory\n");
+			LM_DBG("no pkg memory\n");
 			goto clean;
 		}
 		_dres->colv[i].name.len = n;
@@ -176,7 +176,7 @@ int* dbt_get_refs(dbt_table_p _dtp, db_key_t* _k, int _n)
 		}
 		if(j>=_dtp->nrcols)
 		{
-			DBG("DBT:dbt_get_refs: ERROR column <%s> not found\n", _k[i]);
+			LM_DBG("column <%s> not found\n", _k[i]);
 			pkg_free(_lref);
 			return NULL;
 		}
@@ -245,7 +245,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 		n = (_lres)?_lres[i]:i;
 		if(dbt_is_neq_type(_dres->colv[i].type, _dtp->colv[n]->type))
 		{
-			DBG("DBT:dbt_result_extract_fields: wrong types!\n");
+			LM_DBG("wrong types!\n");
 			goto clean;
 		}
 		_rp->fields[i].nul = _drp->fields[n].nul;
@@ -296,7 +296,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 	return 0;
 
 clean:
-	DBG("DBT:dbt_result_extract_fields: make clean!\n");
+	LM_DBG("make clean!\n");
 	while(i>=0)
 	{
 		if((_rp->fields[i].type == DB_STRING || _rp->fields[i].type == DB_STR)
@@ -516,7 +516,7 @@ dbt_row_p dbt_result_new_row(dbt_result_p _dres)
 
 int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 {
-	// DBG("DBT:dbt_is_neq_type: t0=%d t1=%d!\n", _t0, _t1);
+	// LM_DBG("t0=%d t1=%d!\n", _t0, _t1);
 	if(_t0 == _t1)
 		return 0;
 	switch(_t1)

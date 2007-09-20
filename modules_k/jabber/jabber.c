@@ -194,42 +194,42 @@ static int mod_init(void)
 #endif
 	int  i;
 
-	DBG("XJAB:mod_init: initializing ...\n");
+	LM_INFO("initializing ...\n");
 	if(!jdomain)
 	{
-		LOG(L_ERR, "XJAB:mod_init: ERROR jdomain is NULL\n");
+		LM_ERR("jdomain is NULL\n");
 		return -1;
 	}
 
 	/* import mysql functions */
 	if (bind_dbmod(db_url, &jabber_dbf)<0)
 	{
-		LOG(L_ERR, "XJAB:mod_init: error - database module not found\n");
+		LM_ERR("database module not found\n");
 		return -1;
 	}
 
 	if (!DB_CAPABILITY(jabber_dbf, DB_CAP_QUERY)) {
-		LOG(L_ERR, "XJAB:mod_init: Database module does not implement 'query' function\n");
+		LM_ERR("database module does not implement 'query' function\n");
 		return -1;
 	}
 
 	db_con = (db_con_t**)shm_malloc(nrw*sizeof(db_con_t*));
 	if (db_con == NULL)
 	{
-		LOG(L_ERR, "XJAB:mod_init: Error while allocating db_con's\n");
+		LM_ERR("no more shm memory\n");
 		return -1;
 	}
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR:xjab:mod_init: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 
 #ifdef HAVE_IHTTP
 	/* import the iHTTP auto-loading function */
 	if ( !(load_ih=(load_ih_f)find_export("load_ih", IH_NO_SCRIPT_F, 0))) {
-		LOG(L_ERR, "ERROR:xjab:mod_init: can't import load_ih\n");
+		LM_ERR("can't import load_ih\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */
@@ -240,7 +240,7 @@ static int mod_init(void)
 	pipes = (int**)pkg_malloc(nrw*sizeof(int*));
 	if (pipes == NULL)
 	{
-		LOG(L_ERR, "XJAB:mod_init:Error while allocating pipes\n");
+		LM_ERR("no more pkg memory (pipes)\n");
 		return -1;
 	}
 	
@@ -249,7 +249,7 @@ static int mod_init(void)
 		pipes[i] = (int*)pkg_malloc(2*sizeof(int));
 		if (!pipes[i])
 		{
-			LOG(L_ERR, "XJAB:mod_init: Error while allocating pipes\n");
+			LM_ERR("no more pkg memory (pipes)\n");
 			return -1;
 		}
 	}
@@ -259,16 +259,16 @@ static int mod_init(void)
 		db_con[i] = jabber_dbf.init(db_url);
 		if (!db_con[i])
 		{
-			LOG(L_ERR, "XJAB:mod_init: Error while connecting database\n");
+			LM_ERR("failed to connect to the database\n");
 			return -1;
 		}
 		else
 		{
 			if (jabber_dbf.use_table(db_con[i], db_table) < 0) {
-				LOG(L_ERR, "XJAB:mod_init: Error in use_table\n");
+				LM_ERR("use_table failed\n");
 				return -1;
 			}
-			DBG("XJAB:mod_init: Database connection opened successfully\n");
+			LM_DBG("database connection opened successfully\n");
 		}
 	}
 
@@ -279,27 +279,26 @@ static int mod_init(void)
 	{
 		/* create the pipe*/
 		if (pipe(pipes[i])==-1) {
-			LOG(L_ERR, "XJAB:mod_init: error - cannot create pipe!\n");
+			LM_ERR("cannot create pipe!\n");
 			return -1;
 		}
-		DBG("XJAB:mod_init: pipe[%d] = <%d>-<%d>\n", i, pipes[i][0],
-			pipes[i][1]);
+		LM_DBG("pipe[%d] = <%d>-<%d>\n", i, pipes[i][0], pipes[i][1]);
 	}
 	
 	if((jwl = xj_wlist_init(pipes,nrw,max_jobs,cache_time,sleep_time,
 				delay_time)) == NULL)
 	{
-		LOG(L_ERR, "XJAB:mod_init: error initializing workers list\n");
+		LM_ERR("failed to initialize workers list\n");
 		return -1;
 	}
 	
 	if(xj_wlist_set_aliases(jwl, jaliases, jdomain, proxy) < 0)
 	{
-		LOG(L_ERR, "XJAB:mod_init: error setting aliases and outbound proxy\n");
+		LM_ERR("failed to set aliases and outbound proxy\n");
 		return -1;
 	}
 
-	DBG("XJAB:mod_init: initialized ...\n");	
+	LM_DBG("initialized ...\n");	
 	return 0;
 }
 
@@ -310,7 +309,7 @@ static int child_init(int rank)
 {
 	int i, j, mpid, cpid;
 	
-	DBG("XJAB:child_init: initializing child <%d>\n", rank);
+	LM_DBG("initializing child <%d>\n", rank);
 	     /* Rank 0 is main process now - 1 is the first child (janakj) */
 	if(rank == 1)
 	{
@@ -323,8 +322,7 @@ static int child_init(int rank)
 #endif
 		if((mpid=fork())<0 )
 		{
-			LOG(L_ERR, "XJAB:child_init:error - cannot launch worker's"
-					" manager\n");
+			LM_ERR("cannot launch worker's manager\n");
 			return -1;
 		}
 		if(mpid == 0)
@@ -334,7 +332,7 @@ static int child_init(int rank)
 			{
 				if ( (cpid=fork())<0 )
 				{
-					LOG(L_ERR,"XJAB:child_init:error - cannot launch worker\n");
+					LM_ERR("cannot launch worker\n");
 					return -1;
 				}
 				if (cpid == 0)
@@ -344,8 +342,7 @@ static int child_init(int rank)
 					close(pipes[i][1]);
 					if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
 					{
-						LOG(L_ERR, "XJAB:child_init:error setting worker's"
-										" pid\n");
+						LM_ERR("failed to set worker's pid\n");
 						return -1;
 					}
 					xj_worker_process(jwl,jaddress,jport, priority, i, 
@@ -376,7 +373,7 @@ static int child_init(int rank)
  */
 static int xj_send_message(struct sip_msg *msg, char* foo1, char * foo2)
 {
-	DBG("XJAB: processing SIP MESSAGE\n");
+	LM_DBG("processing SIP MESSAGE\n");
 	return xjab_manage_sipmsg(msg, XJ_SEND_MESSAGE);
 }
 
@@ -385,7 +382,7 @@ static int xj_send_message(struct sip_msg *msg, char* foo1, char * foo2)
  */
 static int xj_join_jconf(struct sip_msg *msg, char* foo1, char * foo2)
 {
-	DBG("XJAB: join a Jabber conference\n");
+	LM_DBG("join a Jabber conference\n");
 	return xjab_manage_sipmsg(msg, XJ_JOIN_JCONF);
 }
 
@@ -394,7 +391,7 @@ static int xj_join_jconf(struct sip_msg *msg, char* foo1, char * foo2)
  */
 static int xj_exit_jconf(struct sip_msg *msg, char* foo1, char * foo2)
 {
-	DBG("XJAB: exit from a Jabber conference\n");
+	LM_DBG("exit from a Jabber conference\n");
 	return xjab_manage_sipmsg(msg, XJ_EXIT_JCONF);
 }
 
@@ -403,7 +400,7 @@ static int xj_exit_jconf(struct sip_msg *msg, char* foo1, char * foo2)
  */
 static int xj_go_online(struct sip_msg *msg, char* foo1, char * foo2)
 {
-	DBG("XJAB: go online in Jabber network\n");
+	LM_DBG("go online in Jabber network\n");
 	return xjab_manage_sipmsg(msg, XJ_GO_ONLINE);
 }
 
@@ -412,7 +409,7 @@ static int xj_go_online(struct sip_msg *msg, char* foo1, char * foo2)
  */
 static int xj_go_offline(struct sip_msg *msg, char* foo1, char * foo2)
 {
-	DBG("XJAB: go offline in Jabber network\n");
+	LM_DBG("go offline in Jabber network\n");
 	return xjab_manage_sipmsg(msg, XJ_GO_OFFLINE);
 }
 
@@ -437,16 +434,14 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		body.s = get_body( msg );
 		if(body.s==0) 
 		{
-			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot extract body from"
-				" msg\n");
+			LM_ERR("cannot extract body from msg\n");
 			goto error;
 		}
 		
 		/* content-length (if present) must be already parsed */
 		if(!msg->content_length)
 		{
-			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR no Content-Length"
-					" header found!\n");
+			LM_ERR("no Content-Length header found!\n");
 			goto error;
 		}
 		body.len = get_content_length(msg);
@@ -454,8 +449,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		/* parse the content-type header */
 		if((mime=parse_content_type_hdr(msg))<1)
 		{
-			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR cannot parse"
-					" Content-Type header\n");
+			LM_ERR("cannot parse Content-Type header\n");
 			goto error;
 		}
 
@@ -463,7 +457,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		if(mime!=(TYPE_TEXT<<16)+SUBTYPE_PLAIN
 			&& mime!=(TYPE_MESSAGE<<16)+SUBTYPE_CPIM)
 		{
-			LOG(L_ERR,"XJAB:xjab_manage_sipmsg: ERROR invalid content-type for"
+			LM_ERR("invalid content-type for"
 				" a message request! type found=%d\n", mime);
 			goto error;
 		}
@@ -472,21 +466,21 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 	// check for TO and FROM headers - if is not SIP MESSAGE 
 	if(parse_headers(msg,HDR_TO_F|HDR_FROM_F,0)==-1 || !msg->to || !msg->from)
 	{
-		LOG(L_ERR,"XJAB:xjab_manage_sipmsg: cannot find TO or FROM HEADERS!\n");
+		LM_ERR("cannot find TO or FROM HEADERS!\n");
 		goto error;
 	}
 	
 	/* parsing from header */
 	if ( parse_from_header( msg )<0 || msg->from->parsed==NULL) 
 	{
-		DBG("ERROR:xjab_manage_sipmsg: cannot get FROM header\n");
+		LM_DBG("cannot get FROM header\n");
 		goto error;
 	}
 	from_uri.s = ((struct to_body*)msg->from->parsed)->uri.s;
 	from_uri.len = ((struct to_body*)msg->from->parsed)->uri.len;
 	if(xj_extract_aor(&from_uri, 0))
 	{
-		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR from FROM header\n");
+		LM_DBG("cannot get AoR from FROM header\n");
 		goto error;
 	}
 
@@ -500,7 +494,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		case XJ_GO_ONLINE:
 			if((pipe = xj_wlist_get(jwl, &jkey, &p)) < 0)
 			{
-				DBG("XJAB:xjab_manage_sipmsg: cannot find pipe of the worker!\n");
+				LM_DBG("cannot find pipe of the worker!\n");
 				goto error;
 			}
 		break;
@@ -508,13 +502,13 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 		case XJ_GO_OFFLINE:
 			if((pipe = xj_wlist_check(jwl, &jkey, &p)) < 0)
 			{
-				DBG("XJAB:xjab_manage_sipmsg: no open Jabber session for"
+				LM_DBG("no open Jabber session for"
 						" <%.*s>!\n", from_uri.len, from_uri.s);
 				goto error;
 			}
 		break;
 		default:
-			DBG("XJAB:xjab_manage_sipmsg: ERROR:strange SIP msg type!\n");
+			LM_DBG("ERROR:strange SIP msg type!\n");
 			goto error;
 	}
 
@@ -534,7 +528,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			dst.len = 0;
 #ifdef XJ_EXTRA_DEBUG
 		else
-			DBG("XJAB:xjab_manage_sipmsg: using NEW URI for destination\n");
+			LM_DBG("using NEW URI for destination\n");
 #endif
 	}
 	
@@ -547,7 +541,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			dst.len = 0;
 #ifdef XJ_EXTRA_DEBUG
 		else
-			DBG("XJAB:xjab_manage_sipmsg: using R-URI for destination\n");
+			LM_DBG("using R-URI for destination\n");
 #endif
 	}
 
@@ -559,25 +553,24 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			dst.len = 0;
 #ifdef XJ_EXTRA_DEBUG
 		else
-			DBG("XJAB:xjab_manage_sipmsg: using TO-URI for destination\n");
+			LM_DBG("using TO-URI for destination\n");
 #endif
 	}
 	
 	if(dst.len == 0)
 	{
-		DBG("XJAB:xjab_manage_sipmsg: destination not found in SIP message\n");
+		LM_DBG("destination not found in SIP message\n");
 		goto error;
 	}
 	
 	/** skip 'sip:' and parameters in destination address */
 	if(xj_extract_aor(&dst, 1))
 	{
-		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR for destination\n");
+		LM_ERR("cannot get AoR for destination\n");
 		goto error;
 	}
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xjab_manage_sipmsg: DESTINATION after correction [%.*s].\n",
-				dst.len, dst.s);
+	LM_DBG("destination after correction [%.*s].\n", dst.len, dst.s);
 #endif
 	
 prepare_job:
@@ -608,7 +601,7 @@ prepare_job:
 			jsmsg->msg.s = NULL;
 		break;
 		default:
-			DBG("XJAB:xjab_manage_sipmsg: this SHOULD NOT appear\n");
+			LM_DBG("this SHOULD NOT appear\n");
 			shm_free(jsmsg);
 			goto error;
 	}
@@ -634,13 +627,12 @@ prepare_job:
 	jsmsg->type = type;
 	//jsmsg->jkey->hash = jkey.hash;
 
-	DBG("XJAB:xjab_manage_sipmsg:%d: sending <%p> to worker through <%d>\n",
-			getpid(), jsmsg, pipe);
+	LM_DBG("sending <%p> to worker through <%d>\n",	jsmsg, pipe);
 	// sending the SHM pointer of SIP message to the worker
 	fl = write(pipe, &jsmsg, sizeof(jsmsg));
 	if(fl != sizeof(jsmsg))
 	{
-		DBG("XJAB:xjab_manage_sipmsg: error when writing to worker pipe!\n");
+		LM_ERR("failed to write to worker pipe!\n");
 		if(type == XJ_SEND_MESSAGE)
 			shm_free(jsmsg->msg.s);
 		shm_free(jsmsg->to.s);
@@ -660,7 +652,7 @@ void destroy(void)
 {
 	int i;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: Unloading module ...\n");
+	LM_DBG("unloading module ...\n");
 #endif
 	if(pipes)
 	{ // close the pipes
@@ -684,7 +676,7 @@ void destroy(void)
 	}
 			
 	xj_wlist_free(jwl);
-	DBG("XJAB: Unloaded ...\n");
+	LM_DBG("unloaded ...\n");
 }
 
 /**
@@ -701,14 +693,14 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 		return;
 
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_register_watcher: from=[%.*s] to=[%.*s]\n", from->len,
+	LM_DBG("from=[%.*s] to=[%.*s]\n", from->len,
 	    from->s, to->len, to->s);
 #endif
 	from_uri.s = from->s;
 	from_uri.len = from->len;
 	if(xj_extract_aor(&from_uri, 0))
 	{
-		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR from FROM header\n");
+		LM_ERR("cannot get AoR from FROM header\n");
 		goto error;
 	}
 
@@ -717,7 +709,7 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 
 	if((pipe = xj_wlist_get(jwl, &jkey, &jp)) < 0)
 	{
-		DBG("XJAB:xj_register_watcher: cannot find pipe of the worker!\n");
+		LM_DBG("cannot find pipe of the worker!\n");
 		goto error;
 	}
 	
@@ -735,12 +727,11 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	/** skip 'sip:' and parameters in destination address */
 	if(xj_extract_aor(&to_uri, 1))
 	{
-		DBG("ERROR:xjab_manage_sipmsg: cannot get AoR for destination\n");
+		LM_ERR("cannot get AoR for destination\n");
 		goto error;
 	}
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_register_watcher: DESTINATION after correction [%.*s].\n",
-	    to_uri.len, to_uri.s);
+	LM_DBG("destination after correction [%.*s].\n", to_uri.len, to_uri.s);
 #endif
 
 	jsmsg->to.len = to_uri.len;
@@ -762,14 +753,13 @@ void xj_register_watcher(str *from, str *to, void *cbf, void *pp)
 	jsmsg->p = pp;
 
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_register_watcher:%d: sending <%p> to worker through <%d>\n",
-	    getpid(), jsmsg, pipe);
+	LM_DBG("sending <%p> to worker through <%d>\n", jsmsg, pipe);
 #endif
 	// sending the SHM pointer of SIP message to the worker
 	fl = write(pipe, &jsmsg, sizeof(jsmsg));
 	if(fl != sizeof(jsmsg))
 	{
-		DBG("XJAB:xj_register_watcher: error when writing to worker pipe!\n");
+		LM_ERR("failed to write to worker pipe!\n");
 		if(jsmsg->msg.s)
 			shm_free(jsmsg->msg.s);
 		shm_free(jsmsg->to.s);
@@ -797,7 +787,7 @@ void xj_unregister_watcher(str *from, str *to, void *cbf, void *pp)
 void xjab_check_workers(int mpid)
 {
 	int i, n, stat;
-	//DBG("XJAB:%d:xjab_check_workers: time=%d\n", mpid, get_ticks());
+	//LM_DBG("time=%d\n", get_ticks());
 	if(!jwl || jwl->len <= 0)
 		return;
 	for(i=0; i < jwl->len; i++)
@@ -809,32 +799,28 @@ void xjab_check_workers(int mpid)
 			if(n == 0 || n!=jwl->workers[i].pid)
 				continue;
 		
-			LOG(L_ERR,"XJAB:xjab_check_workers: worker[%d][pid=%d] has exited"
-				" - status=%d err=%d errno=%d\n", i, jwl->workers[i].pid, 
-				stat, n, errno);
+			LM_ERR("worker[%d][pid=%d] has exited - status=%d err=%d"
+					"errno=%d\n", i, jwl->workers[i].pid, stat, n, errno);
 			xj_wlist_clean_jobs(jwl, i, 1);
 			xj_wlist_set_pid(jwl, -1, i);
 		}
 		
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:%d:xjab_check_workers: create a new worker[%d]\n", mpid, i);
+		LM_DBG("create a new worker[%d]\n", i);
 #endif
 		if ( (stat=fork())<0 )
 		{
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xjab_check_workers: error - cannot launch new"
-				" worker[%d]\n", i);
+			LM_DBG("cannot launch new worker[%d]\n", i);
 #endif
-			LOG(L_ERR, "XJAB:xjab_check_workers: error - worker[%d] lost"
-				" forever \n", i);
+			LM_ERR("worker[%d] lost forever \n", i);
 			return;
 		}
 		if (stat == 0)
 		{
 			if(xj_wlist_set_pid(jwl, getpid(), i) < 0)
 			{
-				LOG(L_ERR, "XJAB:xjab_check_workers: error setting new"
-					" worker's pid - w[%d]\n", i);
+				LM_ERR("failed to set new worker's pid - w[%d]\n", i);
 				return;
 			}
 			xj_worker_process(jwl,jaddress,jport,priority, i,

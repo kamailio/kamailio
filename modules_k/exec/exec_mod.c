@@ -105,7 +105,7 @@ void exec_shutdown(void)
 
 static int mod_init( void )
 {
-	LOG(L_INFO, "EXEC - initializing\n");
+	LM_INFO("exec - initializing\n");
 	if (time_to_kill) initialize_kill();
 	return 0;
 }
@@ -125,7 +125,7 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	if (setvars) {
 		backup=set_env(msg);
 		if (!backup) {
-			LOG(L_ERR, "ERROR: w_exec_msg: no env created\n");
+			LM_ERR("no env created\n");
 			return -1;
 		}
 	}
@@ -138,12 +138,11 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	model = (pv_elem_t*)cmd;
 	if(pv_printf_s(msg, model, &command)<0)
 	{
-		LOG(L_ERR,
-			"exec:w_exec_dset: error - cannot print the format\n");
+		LM_ERR("cannot print the format\n");
 		return -1;
 	}
 	
-	DBG("exec:w_exec_dset: executing [%s]\n", command.s);
+	LM_DBG("executing [%s]\n", command.s);
 
 	ret=exec_str(msg, command.s, uri->s, uri->len);
 	if (setvars) {
@@ -170,7 +169,7 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 	if (setvars) {
 		backup=set_env(msg);
 		if (!backup) {
-			LOG(L_ERR, "ERROR:w_exec_msg: no env created\n");
+			LM_ERR("no env created\n");
 			return -1;
 		}
 	}
@@ -182,14 +181,13 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 		printbuf_len = EXEC_MSG_PRINTBUF_SIZE-1;
 		if(pv_printf(msg, model, exec_msg_printbuf, &printbuf_len)<0)
 		{
-			LOG(L_ERR,
-				"exec:w_exec_msg: error - cannot print the format\n");
+			LM_ERR("cannot print the format\n");
 			return -1;
 		}
 		cp = exec_msg_printbuf;
 	}
 	
-	DBG("exec:w_exec_msg: executing [%s]\n", cp);
+	LM_DBG("executing [%s]\n", cp);
 	
 	ret=exec_msg(msg, cp);
 	if (setvars) {
@@ -212,7 +210,7 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 	if (setvars) {
 		backup=set_env(msg);
 		if (!backup) {
-			LOG(L_ERR, "ERROR: w_exec_avp: no env created\n");
+			LM_ERR("no env created\n");
 			return -1;
 		}
 	}
@@ -220,12 +218,11 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 	model = (pv_elem_t*)cmd;
 	if(pv_printf_s(msg, model, &command)<0)
 	{
-		LOG(L_ERR,
-			"exec:w_exec_avp: error - cannot print the format\n");
+		LM_ERR("cannot print the format\n");
 		return -1;
 	}
 	
-	DBG("exec:w_exec_avp: executing [%s]\n", command.s);
+	LM_DBG("executing [%s]\n", command.s);
 
 	ret=exec_avp(msg, command.s, (pvname_list_p)avpl);
 	if (setvars) {
@@ -248,15 +245,13 @@ static int it_list_fixup(void** param, int param_no)
 			s.s = (char*)(*param); s.len = strlen(s.s);
 			if(pv_parse_format(&s, &model)<0)
 			{
-				LOG(L_ERR, "ERROR:exec:it_list_fixup: wrong format[%s]\n",
-					(char*)(*param));
+				LM_ERR("wrong format[%s]\n", (char*)(*param));
 				return E_UNSPEC;
 			}
 			*param = (void*)model;
 		}
 	} else {
-		LOG(L_ERR, "ERROR:exec:it_list_fixup: wrong format[%s]\n",
-					(char*)(*param));
+		LM_ERR("wrong format[%s]\n", (char*)(*param));
 		return E_UNSPEC;
 	}
 	return 0;
@@ -273,16 +268,13 @@ static int exec_avp_fixup(void** param, int param_no)
 	{
 		if(s.s==NULL)
 		{
-			LOG(L_ERR, "ERROR:exec:exec_avp_fixup: null format in P%d\n",
-					param_no);
+			LM_ERR("null format in P%d\n", param_no);
 			return E_UNSPEC;
 		}
 		s.len =  strlen(s.s);
 		if(pv_parse_format(&s, &model)<0)
 		{
-			LOG(L_ERR,
-				"ERROR:exec:exec_avp_fixup: wrong format[%s]\n",
-				s.s);
+			LM_ERR("wrong format[%s]\n", s.s);
 			return E_UNSPEC;
 		}
 			
@@ -291,17 +283,14 @@ static int exec_avp_fixup(void** param, int param_no)
 	} else if(param_no==2) {
 		if(s.s==NULL)
 		{
-			LOG(L_ERR, "ERROR:exec:exec_avp_fixup: null format in P%d\n",
-					param_no);
+			LM_ERR("null format in P%d\n", param_no);
 			return E_UNSPEC;
 		}
 		s.len =  strlen(s.s);
 		anlist = parse_pvname_list(&s, PVT_AVP);
 		if(anlist==NULL)
 		{
-			LOG(L_ERR,
-				"ERROR:exec_avp_fixup: bad format in P%d [%s]\n",
-				param_no, s.s);
+			LM_ERR("bad format in P%d [%s]\n", param_no, s.s);
 			return E_UNSPEC;
 		}
 		*param = (void*)anlist;

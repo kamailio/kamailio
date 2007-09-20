@@ -63,7 +63,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 
 	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
 	if (col == NULL) {
-		LOG(L_ERR, "get_ha1(): Error while allocating memory\n");
+		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 
@@ -91,21 +91,21 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	n = (use_domain ? 2 : 1);
 	nc = 1 + credentials_n;
 	if (auth_dbf.use_table(auth_db_handle, _table) < 0) {
-		LOG(L_ERR, "get_ha1(): Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		pkg_free(col);
 		return -1;
 	}
 
 	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
-		LOG(L_ERR, "get_ha1(): Error while querying database\n");
+		LM_ERR("failed to query database\n");
 		pkg_free(col);
 		return -1;
 	}
 	pkg_free(col);
 
 	if (RES_ROW_N(*res) == 0) {
-		DBG("get_ha1(): no result for user \'%.*s@%.*s\'\n",
-			_username->user.len, ZSW(_username->user.s),
+		LM_DBG("no result for user \'%.*s@%.*s\'\n",
+				_username->user.len, ZSW(_username->user.s),
 			(use_domain ? (_domain->len) : 0), ZSW(_domain->s));
 		return 1;
 	}
@@ -118,7 +118,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 		 * we have to calculate HA1 */
 		auth_api.calc_HA1(HA_MD5, &_username->whole, _domain, &result,
 				0, 0, _ha1);
-		DBG("HA1 string calculated: %s\n", _ha1);
+		LM_DBG("HA1 string calculated: %s\n", _ha1);
 	} else {
 		memcpy(_ha1, result.s, result.len);
 		_ha1[result.len] = '\0';
@@ -147,11 +147,11 @@ static int generate_avps(db_res_t* result)
 				continue;
 
 			if (add_avp(cred->avp_type|AVP_VAL_STR,cred->avp_name,ivalue)!=0){
-				LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
+				LM_ERR("failed to add AVP\n");
 				return -1;
 			}
 
-			DBG("generate_avps: set string AVP \"%s\"/%d = \"%.*s\"\n",
+			LM_DBG("set string AVP \"%s\"/%d = \"%.*s\"\n",
 				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
 				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
 				ivalue.s.len, ZSW(ivalue.s.s));
@@ -164,11 +164,11 @@ static int generate_avps(db_res_t* result)
 				continue;
 
 			if (add_avp(cred->avp_type|AVP_VAL_STR,cred->avp_name,ivalue)!=0){
-				LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
+				LM_ERR("failed to add AVP\n");
 				return -1;
 			}
 
-			DBG("generate_avps: set string AVP \"%s\"/%d = \"%.*s\"\n",
+			LM_DBG("set string AVP \"%s\"/%d = \"%.*s\"\n",
 				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
 				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
 				ivalue.s.len, ZSW(ivalue.s.s));
@@ -180,20 +180,19 @@ static int generate_avps(db_res_t* result)
 			ivalue.n = (int)VAL_INT(&(result->rows[0].values[i]));
 
 			if (add_avp(cred->avp_type, cred->avp_name, ivalue)!=0) {
-				LOG(L_ERR,"ERROR:auth_db:generate_avps: failed to add AVP\n");
+				LM_ERR("failed to add AVP\n");
 				return -1;
 			}
 
-			DBG("generate_avps: set int AVP \"%s\"/%d = %d\n",
+			LM_DBG("set int AVP \"%s\"/%d = %d\n",
 				(cred->avp_type&AVP_NAME_STR)?cred->avp_name.s.s:"",
 				(cred->avp_type&AVP_NAME_STR)?0:cred->avp_name.n,
 				ivalue.n);
 			break;
 		default:
-			LOG(L_ERR, "ERROR:auth_db:generate_avps: subscriber table "
-				"column `%s' has unsuported type. Only string/str or int "
-				"columns are supported by load_credentials.\n",
-				result->col.names[i]);
+			LM_ERR("subscriber table column `%s' has unsuported type. "
+				"Only string/str or int columns are supported by"
+				"load_credentials.\n", result->col.names[i]);
 			break;
 		}
 	}
@@ -218,7 +217,7 @@ static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
 
 	if (_realm) {
 		if (pv_printf_s(_m, _realm, &domain)!=0) {
-			LOG(L_ERR, "ERROR:auth_db:authorize: pv_printf_s failed\n");
+			LM_ERR("pv_printf_s failed\n");
 			return AUTH_ERROR;
 		}
 	} else {
@@ -237,7 +236,7 @@ static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
 	if (res < 0) {
 		/* Error while accessing the database */
 		if (slb.reply(_m, 500, &auth_500_err) == -1) {
-			LOG(L_ERR, "authorize(): Error while sending 500 reply\n");
+			LM_ERR("failed to send 500 reply\n");
 		}
 		return ERROR;
 	}

@@ -158,7 +158,7 @@ static int child_init(int rank)
 {
 	auth_db_handle = auth_dbf.init(db_url);
 	if (auth_db_handle == 0){
-		LOG(L_ERR, "auth_db:child_init: unable to connect to the database\n");
+		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
 
@@ -170,7 +170,7 @@ static int mod_init(void)
 {
 	bind_auth_t bind_auth;
 
-	LOG(L_INFO, "AUTH_DB module - initializing\n");
+	LM_INFO("initializing...\n");
 
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
@@ -179,33 +179,31 @@ static int mod_init(void)
 
 	/* Find a database module */
 	if (bind_dbmod(db_url, &auth_dbf) < 0){
-		LOG(L_ERR,"ERROR:auth_db:child_init: Unable to bind to "
-			"a database driver\n");
+		LM_ERR("unable to bind to a database driver\n");
 		return -1;
 	}
 
 	/* bind to auth module and import the API */
 	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
 	if (!bind_auth) {
-		LOG(L_ERR,"ERROR:auth_db:mod_init: Unable to find \"bind_auth\""
-			"function\n");
+		LM_ERR("unable to find \"bind_auth\" function\n");
 		return -2;
 	}
 
 	if (bind_auth(&auth_api) < 0) {
-		LOG(L_ERR,"ERROR:auth_db:mod_init: Unable to bind auth module\n");
+		LM_ERR("unable to bind auth module\n");
 		return -3;
 	}
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:auth_db:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		return -1;
 	}
 
 	/* process additional list of credentials */
 	if (parse_aaa_avps( credentials_list, &credentials, &credentials_n)!=0) {
-		LOG(L_ERR,"ERROR:auth_db:mod_init: failed to parse credentials\n");
+		LM_ERR("failed to parse credentials\n");
 		return -5;
 	}
 
@@ -245,8 +243,7 @@ static int auth_fixup(void** param, int param_no)
 		} else {
 			s.len = strlen(s.s);
 			if (pv_parse_format(&s,&model)<0) {
-				LOG(L_ERR, "ERROR:auth_db:auth_fixup: pv_parse_format "
-					"failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -257,19 +254,16 @@ static int auth_fixup(void** param, int param_no)
 
 		dbh = auth_dbf.init(db_url);
 		if (!dbh) {
-			LOG(L_ERR, "ERROR:auth_db:auth_fixup: Unable to open "
-				"database connection\n");
+			LM_ERR("unable to open database connection\n");
 			return -1;
 		}
 		ver = table_version(&auth_dbf, dbh, &name);
 		auth_dbf.close(dbh);
 		if (ver < 0) {
-			LOG(L_ERR, "ERROR:auth_db:auth_fixup: failed to query "
-				"table version\n");
+			LM_ERR("failed to query table version\n");
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "ERROR:auth_db:auth_fixup: Invalid table version "
-				"(use openser_mysql.sh reinstall)\n");
+			LM_ERR("invalid table version (use openser_mysql.sh reinstall)\n");
 			return -1;
 		}
 	}

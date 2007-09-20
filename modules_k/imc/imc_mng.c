@@ -51,13 +51,13 @@ int imc_htable_init(void)
 
 	if(imc_hash_size<=0)
 	{
-		LOG(L_ERR, "imc:imc_htable_init: ERROR invalid hash table size\n");
+		LM_ERR("invalid hash table size\n");
 		return -1;
 	}
 	_imc_htable = (imc_hentry_p)shm_malloc(imc_hash_size*sizeof(imc_hentry_t));
 	if(_imc_htable == NULL)
 	{
-		LOG(L_ERR, "imc:imc_htable_init: ERROR no more shm memory\n");
+		LM_ERR("no more shm memory\n");
 		return -1;
 	}
 	memset(_imc_htable, 0, imc_hash_size*sizeof(imc_hentry_t));
@@ -65,8 +65,7 @@ int imc_htable_init(void)
 	{
 		if (lock_init(&_imc_htable[i].lock)==0)
 		{
-			LOG(L_CRIT,
-				"imc:imc_htable_init: ERROR initializing lock [%d]\n", i);
+			LM_CRIT("failed to initialize lock [%d]\n", i);
 			goto error;
 		}
 	}
@@ -122,7 +121,7 @@ imc_room_p imc_add_room(str* name, str* domain, int flags)
 	if(name == NULL || name->s==NULL || name->len<=0
 			|| domain == NULL || domain->s==NULL || domain->len<=0)
 	{
-		LOG(L_ERR, "imc:imc_add_room: ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
 
@@ -131,7 +130,7 @@ imc_room_p imc_add_room(str* name, str* domain, int flags)
 	irp = (imc_room_p)shm_malloc(size);
 	if(irp==NULL)
 	{
-		LOG(L_ERR, "imc:imc_add_room:ERROR no more memory left\n");
+		LM_ERR("no more shm memory left\n");
 		return NULL;
 	}
 	memset(irp, 0, size);
@@ -177,7 +176,7 @@ int imc_release_room(imc_room_p room)
 	
 	if(room==NULL)
 	{
-		LOG(L_ERR, "imc:imc_release_room: ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 	
@@ -199,7 +198,7 @@ imc_room_p imc_get_room(str* name, str* domain)
 	if(name == NULL || name->s==NULL || name->len<=0
 			|| domain == NULL || domain->s==NULL || domain->len<=0)
 	{
-		LOG(L_ERR, "imc:imc_get_room: ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
 	
@@ -241,7 +240,7 @@ int imc_del_room(str* name, str* domain)
 	if(name == NULL || name->s==NULL || name->len<=0
 			|| domain == NULL || domain->s==NULL || domain->len<=0)
 	{
-		LOG(L_ERR, "imc:imc_del_room: ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 	
@@ -297,7 +296,7 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 	if(room==NULL || user == NULL || user->s==NULL || user->len<=0
 			|| domain == NULL || domain->s==NULL || domain->len<=0)
 	{
-		LOG(L_ERR, "imc:imc_add_member:ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
 	
@@ -306,7 +305,7 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 	imp = (imc_member_p)shm_malloc(size);
 	if(imp== NULL)
 	{
-		LOG(L_ERR, "imc:imc_add_member: ERROR while allocating memory\n");
+		LM_ERR("out of shm memory\n");
 		return NULL;
 	}
 	memset(imp, 0, size);
@@ -319,11 +318,11 @@ imc_member_p imc_add_member(imc_room_p room, str* user, str* domain, int flags)
 	memcpy(imp->uri.s+5+user->len, domain->s, domain->len);
 	imp->uri.s[imp->uri.len] = '\0';
 	
-	DBG("imc:imc_add_member: [uri]= %.*s\n", imp->uri.len, imp->uri.s);
+	LM_DBG("[uri]= %.*s\n", imp->uri.len, imp->uri.s);
 	imp->user.len = user->len;
 	imp->user.s = imp->uri.s+4;
 	
-	DBG("imc:imc_add_member: [user]= %.*s\n", imp->user.len, imp->user.s);
+	LM_DBG("[user]= %.*s\n", imp->user.len, imp->user.s);
 	imp->domain.len = domain->len;
 	imp->domain.s = imp->uri.s+5+user->len;
 
@@ -357,7 +356,7 @@ imc_member_p imc_get_member(imc_room_p room, str* user, str* domain)
 	if(room==NULL || user == NULL || user->s==NULL || user->len<=0
 			|| domain == NULL || domain->s==NULL || domain->len<=0)
 	{
-		LOG(L_ERR, "imc:imc_get_member:ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return NULL;
 	}
 	
@@ -370,7 +369,7 @@ imc_member_p imc_get_member(imc_room_p room, str* user, str* domain)
 				&& !strncasecmp(imp->user.s, user->s, user->len)
 				&& !strncasecmp(imp->domain.s, domain->s, domain->len))
 		{
-			DBG("imc:imc_get_member:found member\n");
+			LM_DBG("found member\n");
 			return imp;
 		}
 		imp = imp->next;
@@ -390,7 +389,7 @@ int imc_del_member(imc_room_p room, str* user, str* domain)
 	if(room==NULL || user == NULL || user->s==NULL || user->len<=0
 			|| domain == NULL || domain->s==NULL || domain->len<=0)
 	{
-		LOG(L_ERR, "imc:imc_del_member:ERROR Invalid parameters\n");
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 	

@@ -97,7 +97,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	
 	p=hf=pkg_malloc(*_len+1);
 	if (!hf) {
-		LOG(L_ERR, "ERROR: build_auth_hf: no memory\n");
+		LM_ERR("no pkg memory left\n");
 		*_len=0;
 		return 0;
 	}
@@ -123,7 +123,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	memcpy(p, CRLF, CRLF_LEN ); p+=CRLF_LEN;
 	*p=0; /* zero terminator, just in case */
 	
-	DBG("build_auth_hf(): '%s'\n", hf);
+	LM_DBG("'%s'\n", hf);
 	return hf;
 }
 
@@ -158,9 +158,9 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 
 	if (_realm == 0) {
 		if (get_realm(_msg, hftype, &uri) < 0) {
-			LOG(L_ERR, "challenge(): Error while extracting URI\n");
+			LM_ERR("failed to extract URI\n");
 			if (send_resp(_msg, 400, &auth_400_err, 0, 0) == -1) {
-				LOG(L_ERR, "challenge(): Error while sending response\n");
+				LM_ERR("failed to send the response\n");
 				return -1;
 			}
 			return 0;
@@ -170,7 +170,7 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 		strip_realm(&realm);
 	} else {
 		if(pv_printf_s(_msg, _realm, &realm)!=0) {
-			LOG(L_ERR, "ERROR:auth:challenge: pv_printf_s failed\n");
+			LM_ERR("pv_printf_s failed\n");
 			if (send_resp(_msg, 500, &auth_500_err, 0, 0)==-1)
 				return -1;
 			else
@@ -181,7 +181,7 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), &realm, 
 			&auth_hf_len, _qop, _challenge_msg);
 	if (!auth_hf) {
-		LOG(L_ERR, "ERROR: challenge: no mem w/cred\n");
+		LM_ERR("no mem w/cred\n");
 		return -1;
 	}
 
@@ -190,7 +190,7 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 	ret = send_resp(_msg, _code, &reason, auth_hf, auth_hf_len);
 	if (auth_hf) pkg_free(auth_hf);
 	if (ret == -1) {
-		LOG(L_ERR, "challenge(): Error while sending response\n");
+		LM_ERR("failed to send the response\n");
 		return -1;
 	}
 	
@@ -232,8 +232,7 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 		if (!h) { 
 			if (_m->REQ_METHOD!=METHOD_ACK 
 					&& _m->REQ_METHOD!=METHOD_CANCEL) {
-				LOG(L_ERR, "consume_credentials(): No authorized "
-					"credentials found (error in scripts)\n");
+				LM_ERR("no authorized credentials found (error in scripts)\n");
 			}
 			return -1;
 		}
@@ -242,7 +241,7 @@ int consume_credentials(struct sip_msg* _m, char* _s1, char* _s2)
 	len=h->len;
 
 	if (del_lump(_m, h->name.s - _m->buf, len, 0) == 0) {
-		LOG(L_ERR, "consume_credentials(): Can't remove credentials\n");
+		LM_ERR("can't remove credentials\n");
 		return -1;
 	}
 

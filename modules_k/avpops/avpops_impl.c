@@ -117,7 +117,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 		/* check for null fields into the row */
 		if (row->values[0].nul || row->values[1].nul || row->values[2].nul )
 		{
-			LOG( L_ERR, "ERROR:avpops:dbrow2avp: dbrow contains NULL fields\n");
+			LM_ERR("dbrow contains NULL fields\n");
 			return -1;
 		}
 
@@ -126,7 +126,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 			||  (row->values[1].type!=DB_STRING && row->values[1].type!=DB_STR)
 			|| row->values[2].type!=DB_INT )
 		{
-			LOG(L_ERR,"ERROR:avpops:dbrow2avp: wrong field types in dbrow\n");
+			LM_ERR("wrong field types in dbrow\n");
 			return -1;
 		}
 
@@ -135,7 +135,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 		db_flags = ((uint&AVPOPS_DB_NAME_INT)?0:AVP_NAME_STR) |
 			((uint&AVPOPS_DB_VAL_INT)?0:AVP_VAL_STR);
 	
-		DBG("db_flags=%d, flags=%d\n",db_flags,flags);
+		LM_DBG("db_flags=%d, flags=%d\n",db_flags,flags);
 		/* does the avp type match ? */
 		if(!((flags&(AVPOPS_VAL_INT|AVPOPS_VAL_STR))==0 ||
 				((flags&AVPOPS_VAL_INT)&&((db_flags&AVP_NAME_STR)==0)) ||
@@ -146,8 +146,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 		if (row->values[0].nul || (row->values[0].type!=DB_STRING &&
 		row->values[0].type!=DB_STR && row->values[0].type!=DB_INT) )
 		{
-			LOG(L_ERR,"ERROR:avpops:dbrow2avp: empty or wrong type for"
-				" 'value' using scheme\n");
+			LM_ERR("empty or wrong type for 'value' using scheme\n");
 			return -1;
 		}
 		db_flags = just_val_flags;
@@ -175,8 +174,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 			/* name is ID */
 			if (str2int( &atmp, &uint)==-1)
 			{
-				LOG(L_ERR,"ERROR:avpops:dbrow2avp: name is not ID as "
-					"flags say <%s>\n", atmp.s);
+				LM_ERR("name is not ID as flags say <%s>\n", atmp.s);
 				return -1;
 			}
 			avp_attr.n = (int)uint;
@@ -205,8 +203,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 		/* value must be saved as integer */
 		if (row->values[0].type!=DB_INT) {
 			if (vtmp.len==0 || vtmp.s==0 || str2int(&vtmp, &uint)==-1) {
-				LOG(L_ERR,"ERROR:avpops:dbrow2avp: value is not int "
-					"as flags say <%s>\n", vtmp.s);
+				LM_ERR("value is not int as flags say <%s>\n", vtmp.s);
 				return -1;
 			}
 			avp_val.n = (int)uint;
@@ -230,8 +227,7 @@ inline static str* get_source_uri(struct sip_msg* msg,int source)
 	{ /* from */
 		if (parse_from_header( msg )<0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:get_source_uri: failed "
-				"to parse from\n");
+			LM_ERR("failed to parse from\n");
 			goto error;
 		}
 		return &(get_from(msg)->uri);
@@ -239,8 +235,7 @@ inline static str* get_source_uri(struct sip_msg* msg,int source)
 	{  /* to */
 		if (parse_headers( msg, HDR_TO_F, 0)<0)
 		{
-			LOG(L_ERR,"ERROR:avpops:get_source_uri: failed "
-				"to parse to\n");
+			LM_ERR("failed to parse to\n");
 			goto error;
 		}
 		return &(get_to(msg)->uri);
@@ -249,8 +244,7 @@ inline static str* get_source_uri(struct sip_msg* msg,int source)
 			return &(msg->new_uri);
 		return &(msg->first_line.u.request.uri);
 	} else {
-		LOG(L_CRIT,"BUG:avpops:get_source_uri: unknow source <%d>\n",
-			source);
+		LM_ERR("unknow source <%d>\n", source);
 		goto error;
 	}
 error:
@@ -275,7 +269,7 @@ static int avpops_get_aname(struct sip_msg* msg, struct fis_param *ap,
 {
 	if(ap==NULL || avp_name==NULL || name_type==NULL)
 	{
-		LOG(L_ERR, "avpops:avpops_get_aname: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
@@ -298,8 +292,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 
 	s0 = s1 = s2 = NULL;
 	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
-		LOG(L_CRIT,"BUG:avpops:load_avps: invalid flag combination (%d/%d)\n",
-			sp->opd, sp->ops);
+		LM_CRIT("invalid flag combination (%d/%d)\n", sp->opd, sp->ops);
 		goto error;
 	}
 
@@ -308,15 +301,12 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		if(pv_get_spec_value(msg, &(sp->u.sval), &xvalue)!=0)
 		{
-			LOG(L_CRIT,
-				"BUG:avpops:load_avps: error getting PVAR value (%d/%d)\n",
-				sp->opd, sp->ops);
+			LM_CRIT("failed to get PVAR value (%d/%d)\n", sp->opd, sp->ops);
 			goto error;
 		}
 		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
 		{
-			LOG(L_ERR,
-				"ERROR:avpops:load_avps: no value for first param\n");
+			LM_ERR("no value for first param\n");
 			goto error;
 		}
 		uuid = xvalue.rs;
@@ -332,15 +322,14 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* parse uri */
 		if (parse_uri(uuid.s, uuid.len, &uri)<0)
 		{
-			LOG(L_ERR,"ERROR:avpops:load_avps: failed to parse uri\n");
+			LM_ERR("failed to parse uri\n");
 			goto error;
 		}
 
 		/* check uri */
 		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
 		{
-			LOG(L_ERR,"ERROR:avpops:load_avps: incomplet uri <%.*s>\n",
-				uuid.len, uuid.s);
+			LM_ERR("incomplet uri <%.*s>\n", uuid.len, uuid.s);
 			goto error;
 		}
 		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
@@ -354,22 +343,19 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
 		{
-			LOG(L_CRIT,
-				"BUG:avpops:load_avps: error getting value for P2\n");
+			LM_CRIT("failed to get value for P2\n");
 			goto error;
 		}
 		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
 		{
-			LOG(L_INFO, 
-					"INFO:avpops:load_avps: no value for p2\n");
+			LM_ERR("no value for p2\n");
 			goto error;
 		}
 		if(xvalue.flags&PV_VAL_STR)
 		{
 			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
 			{
-				LOG(L_ERR, 
-					"ERROR:avpops:load_avps: name too long [%d/%.*s...]\n",
+				LM_ERR("name too long [%d/%.*s...]\n",
 					xvalue.rs.len, 16, xvalue.rs.s);
 				goto error;
 			}
@@ -378,8 +364,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 			dbp->sa.len = xvalue.rs.len;
 			dbp->sa.s[dbp->sa.len] = '\0';
 		} else {
-			LOG(L_INFO, 
-					"INFO:avpops:load_avps: no string value for p2\n");
+			LM_INFO("no string value for p2\n");
 			goto error;
 		}
 	}
@@ -392,7 +377,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	/* res query ?  */
 	if (res==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:load_avps: db_load failed\n");
+		LM_ERR("db_load failed\n");
 		goto error;
 	}
 
@@ -421,7 +406,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 
 	db_close_query( res );
 
-	DBG("DEBUG:avpops:load_avps: loaded avps = %d\n",n);
+	LM_DBG("loaded avps = %d\n",n);
 
 	return n?1:-1;
 error:
@@ -440,9 +425,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 
 	s0 = s1 = s2 = NULL;
 	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
-		LOG(L_CRIT,
-			"BUG:avpops:dbdelete_avps: invalid flag combination (%d/%d)\n",
-			sp->opd, sp->ops);
+		LM_CRIT("invalid flag combination (%d/%d)\n", sp->opd, sp->ops);
 		goto error;
 	}
 
@@ -451,15 +434,12 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		if(pv_get_spec_value(msg, &(sp->u.sval), &xvalue)!=0)
 		{
-			LOG(L_CRIT,
-				"BUG:avpops:dbdelete_avps: error getting PVAR value (%d/%d)\n",
-				sp->opd, sp->ops);
+			LM_CRIT("failed to get PVAR value (%d/%d)\n", sp->opd, sp->ops);
 			goto error;
 		}
 		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
 		{
-			LOG(L_ERR,
-				"ERROR:avpops:dbdelete_avps: no value for first param\n");
+			LM_ERR("no value for first param\n");
 			goto error;
 		}
 		uuid = xvalue.rs;
@@ -475,15 +455,14 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* parse uri */
 		if (parse_uri(uuid.s, uuid.len, &uri)<0)
 		{
-			LOG(L_ERR,"ERROR:avpops:dbdelete_avps: failed to parse uri\n");
+			LM_ERR("failed to parse uri\n");
 			goto error;
 		}
 
 		/* check uri */
 		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
 		{
-			LOG(L_ERR,"ERROR:avpops:dbdelete_avps: incomplet uri <%.*s>\n",
-				uuid.len, uuid.s);
+			LM_ERR("incomplet uri <%.*s>\n", uuid.len, uuid.s);
 			goto error;
 		}
 		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
@@ -497,22 +476,19 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
 		{
-			LOG(L_CRIT,
-				"BUG:avpops:dbdelete_avps: error getting value for P2\n");
+			LM_CRIT("failed to get value for P2\n");
 			goto error;
 		}
 		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
 		{
-			LOG(L_INFO, 
-					"INFO:avpops:dbdelete_avps: no value for p2\n");
+			LM_INFO("no value for p2\n");
 			goto error;
 		}
 		if(xvalue.flags&PV_VAL_STR)
 		{
 			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
 			{
-				LOG(L_ERR, 
-					"ERROR:avpops:dbdelete_avps: name too long [%d/%.*s...]\n",
+				LM_ERR("name too long [%d/%.*s...]\n",
 					xvalue.rs.len, 16, xvalue.rs.s);
 				goto error;
 			}
@@ -521,8 +497,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 			dbp->sa.len = xvalue.rs.len;
 			dbp->sa.s[dbp->sa.len] = '\0';
 		} else {
-			LOG(L_INFO, 
-					"INFO:avpops:dbdelete_avps: no string value for p2\n");
+			LM_INFO("no string value for p2\n");
 			goto error;
 		}
 	}
@@ -535,7 +510,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	/* res ?  */
 	if (res<0)
 	{
-		LOG(L_ERR,"ERROR:avpops:dbdelete_avps: db_delete failed\n");
+		LM_ERR("db_delete failed\n");
 		goto error;
 	}
 
@@ -564,9 +539,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	s0 = s1 = s2 = NULL;
 	name_type = 0;
 	if (!((sp->opd&AVPOPS_VAL_PVAR)||(sp->opd&AVPOPS_VAL_STR))) {
-		LOG(L_CRIT,
-			"BUG:avpops:dbstore_avps: invalid flag combination (%d/%d)\n",
-			sp->opd, sp->ops);
+		LM_CRIT("invalid flag combination (%d/%d)\n", sp->opd, sp->ops);
 		goto error;
 	}
 
@@ -577,15 +550,12 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		if(pv_get_spec_value(msg, &(sp->u.sval), &xvalue)!=0)
 		{
-			LOG(L_CRIT,
-				"BUG:avpops:dbstore_avps: error getting PVAR value (%d/%d)\n",
-				sp->opd, sp->ops);
+			LM_CRIT("failed to get PVAR value (%d/%d)\n", sp->opd, sp->ops);
 			goto error;
 		}
 		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
 		{
-			LOG(L_ERR,
-				"ERROR:avpops:dbstore_avps: no value for first param\n");
+			LM_ERR("no value for first param\n");
 			goto error;
 		}
 		uuid = xvalue.rs;
@@ -601,15 +571,14 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		/* parse uri */
 		if (parse_uri(uuid.s, uuid.len, &uri)<0)
 		{
-			LOG(L_ERR,"ERROR:avpops:dbstore_avps: failed to parse uri\n");
+			LM_ERR("failed to parse uri\n");
 			goto error;
 		}
 
 		/* check uri */
 		if(!uri.user.s|| !uri.user.len|| !uri.host.len|| !uri.host.s)
 		{
-			LOG(L_ERR,"ERROR:avpops:dbstore_avps: incomplet uri <%.*s>\n",
-				uuid.len, uuid.s);
+			LM_ERR("incomplet uri <%.*s>\n", uuid.len, uuid.s);
 			goto error;
 		}
 		if((sp->opd&AVPOPS_FLAG_URI0)||(sp->opd&AVPOPS_FLAG_USER0))
@@ -629,14 +598,12 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
 		{
-			LOG(L_CRIT,
-				"BUG:avpops:dbstore_avps: error getting value for P2\n");
+			LM_CRIT("failed to get value for P2\n");
 			goto error;
 		}
 		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
 		{
-			LOG(L_INFO, 
-					"INFO:dbstore_avps: no value for P2\n");
+			LM_INFO("no value for P2\n");
 			goto error;
 		}
 		if(xvalue.flags&PV_TYPE_INT)
@@ -650,8 +617,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		{
 			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
 			{
-				LOG(L_ERR, 
-					"ERROR:avpops:dbstore_avps: name too long [%d/%.*s...]\n",
+				LM_ERR("name too long [%d/%.*s...]\n",
 					xvalue.rs.len, 16, xvalue.rs.s);
 				goto error;
 			}
@@ -661,8 +627,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 			dbp->sa.s[dbp->sa.len] = '\0';
 			avp_name.s = dbp->sa;
 		} else {
-			LOG(L_INFO, 
-					"INFO:avpops:dbstore_avps: no string value for p2\n");
+			LM_INFO("no string value for p2\n");
 			goto error;
 		}
 	} else if((dbp->a.opd&AVPOPS_VAL_NONE)==0) {
@@ -742,7 +707,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		}
 	}
 
-	DBG("DEBUG:avpops:dbstore_avps: %d avps were stored\n",n);
+	LM_DBG(" %d avps were stored\n",n);
 
 	return n==0?-1:1;
 error:
@@ -756,18 +721,18 @@ int ops_dbquery_avps(struct sip_msg* msg, pv_elem_t* query,
 
 	if(msg==NULL || query==NULL)
 	{
-		LOG(L_ERR,"ERROR:avpops:ops_dbquery_avps: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
 	printbuf_len = AVP_PRINTBUF_SIZE-1;
 	if(pv_printf(msg, query, printbuf, &printbuf_len)<0 || printbuf_len<=0)
 	{
-		LOG(L_ERR,"avpops:ops_dbquery_avps: error - cannot print the query\n");
+		LM_ERR("cannot print the query\n");
 		return -1;
 	}
 
-	DBG("avpops:ops_dbquery_avps: query [%s]\n", printbuf);
+	LM_DBG("query [%s]\n", printbuf);
 	
 	if(db_query_avp(msg, printbuf, dest)!=0)
 		return -1;
@@ -792,8 +757,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 		/* get avp name */
 		if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
 		{
-			LOG(L_ERR,
-				"avpops:delete_avp: error getting dst AVP name\n");
+			LM_ERR("failed to get dst AVP name\n");
 			return -1;
 		}
 		n = destroy_avps( name_type, avp_name, ap->ops&AVPOPS_FLAG_ALL );
@@ -823,7 +787,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 		}
 	}
 
-	DBG("DEBUG:avpops:delete_avps: %d avps were removed\n",n);
+	DBG(" %d avps were removed\n",n);
 
 	return n?1:-1;
 }
@@ -847,15 +811,13 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 	/* get avp src name */
 	if(avpops_get_aname(msg, src, &avp_name1, &name_type1)!=0)
 	{
-		LOG(L_ERR,
-			"avpops:copy_avp: error getting src AVP name\n");
+		LM_ERR("failed to get src AVP name\n");
 		goto error;
 	}
 	/* get avp dst name */
 	if(avpops_get_aname(msg, dst, &avp_name2, &name_type2)!=0)
 	{
-		LOG(L_ERR,
-			"avpops:copy_avp: error getting dst AVP name\n");
+		LM_ERR("failed to get dst AVP name\n");
 		goto error;
 	}
 
@@ -867,23 +829,23 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* src,
 		if((avp->flags&AVP_VAL_STR) && (dst->ops&AVPOPS_FLAG_CASTN)) {
 			if(str2int(&avp_val.s, (unsigned int*)&avp_val2.n)!=0)
 			{
-				LOG(L_ERR,"ERROR:avpops:copy_avp: cannot convert str to int\n");
+				LM_ERR("cannot convert str to int\n");
 				goto error;
 			}
 			if ( add_avp( name_type2, avp_name2, avp_val2)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp!\n");
+				LM_ERR("failed to create new avp!\n");
 				goto error;
 			}
 		} else if(!(avp->flags&AVP_VAL_STR)&&(dst->ops&AVPOPS_FLAG_CASTS)) {
 			avp_val2.s.s = int2str(avp_val.n, &avp_val2.s.len);
 			if ( add_avp( name_type2|AVP_VAL_STR, avp_name2, avp_val2)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp.\n");
+				LM_ERR("failed to create new avp.\n");
 				goto error;
 			}
 		} else {
 			if ( add_avp( name_type2|(avp->flags&AVP_VAL_STR), avp_name2,
 					avp_val)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:copy_avp: failed to create new avp\n");
+				LM_ERR("failed to create new avp\n");
 				goto error;
 			}
 		}
@@ -945,21 +907,20 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 		/* search for the avp */
 		if(avpops_get_aname(msg, src, &avp_name, &name_type)!=0)
 		{
-			LOG(L_ERR,
-				"avpops:pushto_avp: error getting src AVP name\n");
+			LM_ERR("failed to get src AVP name\n");
 			goto error;
 		}
 		avp = search_first_avp( name_type, avp_name, &avp_val, 0);
 		if (avp==0)
 		{
-			DBG("DEBUG:avpops:pushto_avp: no src avp found\n");
+			LM_DBG(" no src avp found\n");
 			goto error;
 		}
 		flags = avp->flags;
 	} else {
 		if(pv_get_spec_value(msg, &(src->u.sval), &xvalue)!=0)
 		{
-			LOG(L_ERR,"ERROR:avpops:pushto_avp: cannot get src value\n");
+			LM_ERR("cannot get src value\n");
 			goto error;
 		}
 		if(xvalue.flags&PV_TYPE_INT)
@@ -991,7 +952,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			else
 				act_type = SET_URI_T;
 			if ( flags&AVP_VAL_STR && append_0( &val, &val)!=0 ) {
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: failed to make 0 term.\n");
+				LM_ERR("failed to make 0 term.\n");
 				goto error;
 			}
 		} else if (dst->opd&AVPOPS_USE_DURI) {
@@ -1003,8 +964,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				goto error;
 			}
 		} else {
-			LOG(L_CRIT,"BUG:avpops:pushto_avp: destination unknown (%d/%d)\n",
-				dst->opd, dst->ops);
+			LM_CRIT("destination unknown (%d/%d)\n", dst->opd, dst->ops);
 			goto error;
 		}
 	
@@ -1017,8 +977,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 				 * branch */
 				if (append_branch( msg, 0, 0, 0, Q_UNSPECIFIED, 0, 0)!=1 )
 				{
-					LOG(L_ERR,"ERROR:avpops:pushto_avp: append_branch action"
-						" failed\n");
+					LM_ERR("append_branch action failed\n");
 					goto error;
 				}
 			}
@@ -1028,27 +987,24 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			act.type = act_type;
 			if (do_action(&act, msg)<0)
 			{
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: SET_XXXX_T action"
-					" failed\n");
+				LM_ERR("SET_XXXX_T action failed\n");
 				goto error;
 			}
 		} else if (dst->opd&AVPOPS_USE_DURI) {
 			if(set_dst_uri(msg, &val)!=0)
 			{
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: changing dst uri "
-					"failed\n");
+				LM_ERR("changing dst uri failed\n");
 				goto error;
 			}
 		} else if (dst->opd&AVPOPS_USE_BRANCH) {
 			if (append_branch( msg, &val, 0, 0, Q_UNSPECIFIED, 0,
 			msg->force_send_socket)!=1 )
 			{
-				LOG(L_ERR,"ERROR:avpops:pushto_avp: append_branch action"
-					" failed\n");
+				LM_ERR("append_branch action failed\n");
 				goto error;
 			}
 		} else {
-			LOG(L_ERR, "ERROR:avpops:pushto_avp: unknown destination\n");
+			LM_ERR("unknown destination\n");
 			goto error;
 		}
 
@@ -1061,7 +1017,7 @@ int ops_pushto_avp (struct sip_msg* msg, struct fis_param* dst,
 			flags = avp->flags;
 	} while (avp);/* end while */
 
-	DBG("DEBUG:avpops:pushto_avps: %d avps were processed\n",n);
+	LM_DBG("%d avps were processed\n",n);
 	return 1;
 error:
 	return -1;
@@ -1091,14 +1047,13 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 		/* search for the avp */
 		if(avpops_get_aname(msg, src, &avp_name1, &name_type1)!=0)
 		{
-			LOG(L_ERR,
-				"avpops:ops_check_avp: error getting src AVP name\n");
+			LM_ERR("failed to get src AVP name\n");
 			goto error;
 		}
 		avp1 = search_first_avp( name_type1, avp_name1, &avp_val, 0);
 		if (avp1==0)
 		{
-			DBG("DEBUG:avpops:ops_check_avp: no src avp found\n");
+			LM_DBG("no src avp found\n");
 			goto error;
 		}
 		flags = avp1->flags;
@@ -1107,7 +1062,7 @@ int ops_check_avp( struct sip_msg* msg, struct fis_param* src,
 		flags = 0;
 		if(pv_get_spec_value(msg, &(src->u.sval), &xvalue)!=0)
 		{
-			LOG(L_ERR,"ERROR:avpops:ops_check_avp: cannot get src value\n");
+			LM_ERR("cannot get src value\n");
 			goto error;
 		}
 		if(xvalue.flags&PV_TYPE_INT)
@@ -1125,8 +1080,7 @@ cycle1:
 	{
 		if(avp_val.s.len>=STR_BUF_SIZE)
 		{
-			LOG(L_ERR,
-				"avpops:ops_check_avp: error src value too long\n");
+			LM_ERR("src value too long\n");
 			goto error;
 		}
 		strncpy(str_buf, avp_val.s.s, avp_val.s.len);
@@ -1143,14 +1097,13 @@ cycle1:
 			/* search for the avp */
 			if(avpops_get_aname(msg, val, &avp_name2, &name_type2)!=0)
 			{
-				LOG(L_ERR,
-					"avpops:ops_check_avp: error getting dst AVP name\n");
+				LM_ERR("failed to get dst AVP name\n");
 				goto error;
 			}
 			avp2 = search_first_avp( name_type2, avp_name2, &check_val, 0);
 			if (avp2==0)
 			{
-				DBG("DEBUG:avpops:ops_check_avp: no dst avp found\n");
+				LM_DBG("no dst avp found\n");
 				goto error;
 			}
 			check_flags = avp2->flags;
@@ -1158,7 +1111,7 @@ cycle1:
 			avp2 = 0;
 			if(pv_get_spec_value(msg, &(val->u.sval), &xvalue)!=0)
 			{
-				LOG(L_ERR,"ERROR:avpops:ops_check_avp: cannot get dst value\n");
+				LM_ERR("cannot get dst value\n");
 				goto error;
 			}
 			if(xvalue.flags&PV_TYPE_INT)
@@ -1185,14 +1138,14 @@ cycle2:
 	/* are both values of the same type? */
 	if ((flags&AVP_VAL_STR)^(check_flags&AVP_VAL_STR))
 	{
-		LOG(L_ERR,"ERROR:avpops:check_avp: value types don't match\n");
+		LM_ERR("value types don't match\n");
 		goto next;
 	}
 
 	if (flags&AVP_VAL_STR)
 	{
 		/* string values to check */
-		DBG("DEBUG:avpops:check_avp: check <%.*s> against <%.*s> as str /%d\n",
+		LM_DBG("check <%.*s> against <%.*s> as str /%d\n",
 			avp_val.s.len,avp_val.s.s,
 			(val->ops&AVPOPS_OP_RE)?6:check_val.s.len,
 			(val->ops&AVPOPS_OP_RE)?"REGEXP":check_val.s.s,
@@ -1264,12 +1217,11 @@ cycle2:
 			}
 			avp_val.s.s[avp_val.s.len] = backup;
 		} else {
-			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
-				"(flg=%d/%d)\n",val->opd, val->ops);
+			LM_CRIT("unknown operation (flg=%d/%d)\n",val->opd, val->ops);
 		}
 	} else {
 		/* int values to check -> do check */
-		DBG("DEBUG:avpops:check_avp: check <%d> against <%d> as int /%d\n",
+		LM_DBG("check <%d> against <%d> as int /%d\n",
 				avp_val.n, check_val.n, val->ops);
 		if (val->ops&AVPOPS_OP_EQ)
 		{
@@ -1300,8 +1252,7 @@ cycle2:
 			if ( avp_val.n^check_val.n)
 				return 1;
 		} else {
-			LOG(L_CRIT,"BUG:avpops:check_avp: unknown operation "
-				"(flg=%d)\n",val->ops);
+			LM_CRIT("unknown operation (flg=%d)\n",val->ops);
 		}
 	}
 
@@ -1322,7 +1273,7 @@ next:
 		}
 	}
 
-	DBG("DEBUG:avpops:check_avp: no match\n");
+	LM_DBG("no match\n");
 	return -1; /* check failed */
 error:
 	return -1;
@@ -1342,22 +1293,21 @@ int ops_print_avp(void)
 
 	for ( ; avp ; avp=avp->next)
 	{
-		LOG(L_INFO,"INFO:avpops:print_avp: p=%p, flags=0x%04X\n",avp,
-				avp->flags);
+		LM_INFO("p=%p, flags=0x%04X\n",avp, avp->flags);
 		if (avp->flags&AVP_NAME_STR)
 		{
 			name = get_avp_name(avp);
-			LOG(L_INFO,"INFO:\t\t\tname=<%.*s>\n",name->len,name->s);
+			LM_INFO("\t\t\tname=<%.*s>\n",name->len,name->s);
 		} else {
-			LOG(L_INFO,"INFO:\t\t\tid=<%d>\n",avp->id);
+			LM_INFO("\t\t\tid=<%d>\n",avp->id);
 		}
 		get_avp_val( avp, &val);
 		if (avp->flags&AVP_VAL_STR)
 		{
-			LOG(L_INFO,"INFO:\t\t\tval_str=<%.*s / %d>\n",val.s.len,val.s.s,
+			LM_INFO("\t\t\tval_str=<%.*s / %d>\n",val.s.len,val.s.s,
 					val.s.len);
 		} else {
-			LOG(L_INFO,"INFO:\t\t\tval_int=<%d>\n",val.n);
+			LM_INFO("\t\t\tval_int=<%d>\n",val.n);
 		}
 	}
 
@@ -1375,14 +1325,14 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, pv_elem_t *format)
 
 	if(msg==NULL || dest==NULL || format==NULL)
 	{
-		LOG(L_ERR, "avpops:ops_printf: error - bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
 	printbuf_len = AVP_PRINTBUF_SIZE-1;
 	if(pv_printf(msg, format, printbuf, &printbuf_len)<0)
 	{
-		LOG(L_ERR, "avpops:ops_printf: error - cannot print the format\n");
+		LM_ERR("cannot print the format\n");
 		return -1;
 	}
 	avp_val.s.s   = printbuf;
@@ -1394,8 +1344,7 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, pv_elem_t *format)
 	/* is dynamic avp name ? */
 	if(avpops_get_aname(msg, dest, &avp_name, &name_type)!=0)
 	{
-		LOG(L_ERR,
-			"BUG:avpops:ops_printf: error getting dst AVP name\n");
+		LM_ERR("failed to get dst AVP name\n");
 		return -1;
 	}
 
@@ -1404,7 +1353,7 @@ int ops_printf(struct sip_msg* msg, struct fis_param* dest, pv_elem_t *format)
 
 	if (add_avp(flags, avp_name, avp_val)<0)
 	{
-		LOG(L_ERR, "avpops:ops_printf: error - cannot add AVP\n");
+		LM_ERR("cannot add AVP\n");
 		return -1;
 	}
 
@@ -1432,8 +1381,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 	/* get src avp name */
 	if(avpops_get_aname(msg, src[0], &avp_name1, &name_type1)!=0)
 	{
-		LOG(L_ERR,
-			"BUG:avpops:ops_subst: error getting src AVP name\n");
+		LM_ERR("failed to get src AVP name\n");
 		return -1;
 	}
 
@@ -1447,8 +1395,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		/* get dst avp name */
 		if(avpops_get_aname(msg, src[1], &avp_name2, &name_type2)!=0)
 		{
-			LOG(L_ERR,
-				"BUG:avpops:ops_subst: error getting dst AVP name\n");
+			LM_ERR("failed to get dst AVP name\n");
 			return -1;
 		}
 	} else {
@@ -1460,8 +1407,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 	{
 		if(avp_name2.s.len>=STR_BUF_SIZE)
 		{
-			LOG(L_ERR,
-				"avpops:ops_subst: error dst name too long\n");
+			LM_ERR("dst name too long\n");
 			goto error;
 		}
 		strncpy(str_buf, avp_name2.s.s, avp_name2.s.len);
@@ -1484,7 +1430,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 			/* build a new avp with new name */
 			avp_val.s = *result;
 			if(add_avp(name_type2|AVP_VAL_STR, avp_name2, avp_val)==-1 ) {
-				LOG(L_ERR,"ERROR:avpops:ops_subst: failed to create new avp\n");
+				LM_ERR("failed to create new avp\n");
 				if(result->s!=0)
 					pkg_free(result->s);
 				pkg_free(result);
@@ -1513,7 +1459,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		}
 
 	}
-	DBG("avpops:ops_subst: subst to %d avps\n", n);
+	LM_DBG("subst to %d avps\n", n);
 	return n?1:-1;
 error:
 	return -1;
@@ -1543,14 +1489,13 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 			/* search for the avp */
 	if(avpops_get_aname(msg, src, &avp_name1, &name_type1)!=0)
 	{
-		LOG(L_ERR,
-			"avpops:ops_op_avp: error getting src AVP name\n");
+		LM_ERR("failed to get src AVP name\n");
 		goto error;
 	}
 	avp1 = search_first_avp(name_type1, avp_name1, &avp_val, 0);
 	if (avp1==0)
 	{
-		DBG("DEBUG:avpops:ops_op_avp: no src avp found\n");
+		LM_DBG(" no src avp found\n");
 		goto error;
 	}
 
@@ -1561,7 +1506,7 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 		avp1 = search_first_avp(name_type1, avp_name1, &avp_val, avp1);
 	}
 	if (avp1==0 && !(val->ops&AVPOPS_OP_BNOT)) {
-		DBG("DEBUG:avpops:op_avp: no proper avp found\n");
+		LM_DBG("no proper avp found\n");
 		goto error;
 	}
 	name_type3 = name_type1;
@@ -1570,8 +1515,7 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 	{
 		if(avpops_get_aname(msg, av[1], &avp_name3, &name_type3)!=0)
 		{
-			LOG(L_ERR,
-				"avpops:ops_op_avp: error getting dst AVP name\n");
+			LM_ERR("failed to get dst AVP name\n");
 			goto error;
 		}
 	}
@@ -1579,8 +1523,7 @@ int ops_op_avp( struct sip_msg* msg, struct fis_param** av,
 	{
 		if(avp_name3.s.len>=STR_BUF_SIZE)
 		{
-			LOG(L_ERR,
-				"avpops:ops_op_avp: error dst name too long\n");
+			LM_ERR("failed to get dst name too long\n");
 			goto error;
 		}
 		strncpy(str_buf, avp_name3.s.s, avp_name3.s.len);
@@ -1600,8 +1543,7 @@ cycle1:
 			/* search for the avp */
 			if(avpops_get_aname(msg, val, &avp_name2, &name_type2)!=0)
 			{
-				LOG(L_ERR,
-					"avpops:ops_op_avp: error getting dst AVP name\n");
+				LM_ERR("failed to get dst AVP name\n");
 				goto error;
 			}
 			avp2 = search_first_avp( name_type2, avp_name2, &op_val, 0);
@@ -1613,22 +1555,21 @@ cycle1:
 			}
 			if (avp2==0)
 			{
-				DBG("DEBUG:avpops:op_avp: no dst avp found\n");
+				LM_DBG("no dst avp found\n");
 				goto error;
 			}
 		} else {
 			avp2 = 0;
 			if(pv_get_spec_value(msg, &(val->u.sval), &xvalue)!=0)
 			{
-				LOG(L_ERR,"ERROR:avpops:ops_op_avp: cannot get dst value\n");
+				LM_ERR("cannot get dst value\n");
 				goto error;
 			}
 			if(xvalue.flags&PV_TYPE_INT)
 			{
 				op_val.n = xvalue.ri;
 			} else {
-				LOG(L_ERR,
-					"ERROR:avpops:ops_op_avp: error - dst value is str\n");
+				LM_ERR("dst value is str\n");
 				goto error;
 			}
 		}
@@ -1642,7 +1583,7 @@ cycle1:
 
 cycle2:
 	/* do operation */
-	DBG("DEBUG:avpops:op_avp: use <%d> and <%d>\n",
+	LM_DBG(" use <%d> and <%d>\n",
 			avp_val.n, op_val.n);
 	if (val->ops&AVPOPS_OP_ADD)
 	{
@@ -1656,7 +1597,7 @@ cycle2:
 			result = (int)(avp_val.n/op_val.n);
 		else
 		{
-			LOG(L_ERR, "avpops:op_avp: error - division by 0\n");
+			LM_ERR("division by 0\n");
 			result = 0;
 		}
 	} else if (val->ops&AVPOPS_OP_MOD) {
@@ -1664,7 +1605,7 @@ cycle2:
 			result = avp_val.n%op_val.n;
 		else
 		{
-			LOG(L_ERR, "avpops:op_avp: error - modulo by 0\n");
+			LM_ERR("modulo by 0\n");
 			result = 0;
 		}
 	} else if (val->ops&AVPOPS_OP_BAND) {
@@ -1676,15 +1617,14 @@ cycle2:
 	} else if (val->ops&AVPOPS_OP_BNOT) {
 		result = ~op_val.n;
 	} else {
-		LOG(L_CRIT,"BUG:avpops:op_avp: unknown operation "
-			"(flg=%d)\n",val->ops);
+		LM_CRIT("unknown operation (flg=%d)\n",val->ops);
 		goto error;
 	}
 
 	/* add the new avp */
 	avp_val.n = result;
 	if(add_avp(name_type3, avp_name3, avp_val)==-1 ) {
-		LOG(L_ERR,"ERROR:avpops:op_avp: failed to create new avp\n");
+		LM_ERR("failed to create new avp\n");
 		goto error;
 	}
 
@@ -1710,7 +1650,7 @@ cycle2:
 			goto cycle1;
 		}
 	}
-	DBG("DEBUG:avpops:op_avp: done\n");
+	LM_DBG("done\n");
 	if(val->ops&AVPOPS_FLAG_DELETE && prev_avp!=0)
 	{
 		destroy_avp(prev_avp);
@@ -1734,16 +1674,14 @@ int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap)
 	/* get avp name */
 	if(avpops_get_aname(msg, ap, &avp_name, &name_type)!=0)
 	{
-		LOG(L_ERR,
-			"avpops:is_avp_set: error getting AVP name\n");
+		LM_ERR("failed to get AVP name\n");
 		return -1;
 	}
 
 	/* get avp index */
 	if(pv_get_spec_index(msg, &ap->u.sval.pvp, &index, &findex)!=0)
 	{
-		LOG(L_ERR,
-			"avpops:is_avp_set: error getting AVP index\n");
+		LM_ERR("failed to get AVP index\n");
 		return -1;
 	}
 	

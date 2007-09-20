@@ -37,13 +37,13 @@ struct flat_id* new_flat_id(char* dir, char* table)
 	struct flat_id* ptr;
 
 	if (!dir || !table) {
-		LOG(L_ERR, "new_flat_id: Invalid parameter(s)\n");
+		LM_ERR("invalid parameter(s)\n");
 		return 0;
 	}
 
 	ptr = (struct flat_id*)pkg_malloc(sizeof(struct flat_id));
 	if (!ptr) {
-		LOG(L_ERR, "new_flat_id: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return 0;
 	}
 	memset(ptr, 0, sizeof(struct flat_id));

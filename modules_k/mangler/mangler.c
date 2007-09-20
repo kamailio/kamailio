@@ -173,7 +173,7 @@ int prepare (void)
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR:FCP:prepare: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 
@@ -218,7 +218,7 @@ static int fixup_char2int (void **param, int param_no)
 		res = sscanf(*param,"%d",&offset);
 		if (res != 1)
 			{
-			LOG (L_ERR,"fixup_char2int:Invalid value %s\n",(char *)(*param));
+			LM_ERR("invalid value %s\n",(char *)(*param));
 			return -1;
 			}
 		free(*param);	
@@ -237,7 +237,7 @@ static int fixup_char2uint (void **param, int param_no)
 		res = sscanf(*param,"%u",&newContentLength);
 		if (res != 1)
 			{
-			LOG (L_ERR,"fixup_char2uint:Invalid value %s\n",(char *)*param);
+			LM_ERR("invalid value %s\n",(char *)*param);
 			return -1;
 			}
 		free(*param);	
@@ -258,7 +258,7 @@ static int fixup_char2str(void** param, int param_no)
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) 
 		{
-			LOG(L_ERR, "fixup_char2str: No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
 		
@@ -271,7 +271,7 @@ static int fixup_char2str(void** param, int param_no)
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) 
 		{
-			LOG(L_ERR, "fixup_char2str: No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
 		

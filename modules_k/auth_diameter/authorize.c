@@ -4,7 +4,7 @@
  * Digest Authentication - Diameter support
  *
  * Copyright (C) 2001-2003 FhG Fokus
- *
+ *`
  * This file is part of openser, a free SIP server.
  *
  * openser is free software; you can redistribute it and/or modify
@@ -79,8 +79,7 @@ int get_uri(struct sip_msg* m, str** uri)
 		/* REGISTER */
 		if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1)|| (!m->to))) 
 		{
-			LOG(L_ERR, M_NAME":get_uri(): To header field not found or "
-				"malformed\n");
+			LM_ERR("the To header field was not found or malformed\n");
 			
 			/* it was a REGISTER and an error appeared when parsing TO header*/
 			return -1;
@@ -91,7 +90,7 @@ int get_uri(struct sip_msg* m, str** uri)
 	{
 		if (parse_from_header(m)<0)
 		{
-			LOG(L_ERR, M_NAME":get_uri(): Error while parsing FROM header\n");
+			LM_ERR("failed to parse FROM header\n");
 
 			/* an error appeared when parsing FROM header */
 			return -1;
@@ -117,7 +116,7 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u)
 		/* REGISTER */
 		if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1) || (!m->to))) 
 		{
-			LOG(L_ERR, M_NAME":get_realm(): Error while parsing TO header\n");
+			LM_ERR("failed to parse TO header\n");
 			/* signal the error */
 			return -1;
 		}
@@ -129,7 +128,7 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u)
 	{
 		if (parse_from_header(m)<0) 
 		{
-			LOG(L_ERR, M_NAME":get_realm(): Error while parsing FROM header\n");
+			LM_ERR("failed to parse FROM header\n");
 			/* signal the error */
 			return -1;
 		}
@@ -140,7 +139,7 @@ int get_realm(struct sip_msg* m, int hftype, struct sip_uri* u)
 	/* parsing the uri */
 	if (parse_uri(uri.s, uri.len, u) < 0) 
 	{
-		LOG(L_ERR, M_NAME":get_realm(): Error while parsing URI\n");
+		LM_ERR("failed to parse URI\n");
 		return -1;
 	}
 	
@@ -177,7 +176,7 @@ int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 	if (*hook == 0) 
 		if (parse_headers(_m, hdr_flags, 0) == -1) 
 		{
-			LOG(L_ERR, M_NAME":find_credentials(): Error while parsing headers\n");
+			LM_ERR("failed to parse headers\n");
 			return -1;
 		}
 	
@@ -191,8 +190,7 @@ int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 		res = parse_credentials(ptr);
 		if (res < 0) 
 		{
-			LOG(L_ERR, M_NAME":find_credentials(): Error while parsing "
-				"credentials\n");
+			LM_ERR("failed to parse credentials\n");
 			return (res == -1) ? -2 : -3;
 		}
 		else 
@@ -213,8 +211,7 @@ int find_credentials(struct sip_msg* _m, str* _realm, int _hftype,
 			prev = ptr;
 			if (parse_headers(_m, hdr_flags, 1) == -1) 
 			{
-				LOG(L_ERR, M_NAME":find_credentials(): Error while parsing"
-					" headers\n");
+				LM_ERR("failed to parse headers\n");
 				return -4;
 			}
 			else 
@@ -247,10 +244,10 @@ auth_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 	{
 		if (get_realm(_m, _hftype, &uri) < 0) 
 		{
-			LOG(L_ERR, M_NAME":pre_auth(): Error while extracting realm\n");
+			LM_ERR("failed to extract realm\n");
 			if (send_resp(_m, 400, &dia_400_err, 0, 0) == -1) 
 			{
-				LOG(L_ERR, M_NAME":pre_auth(): Error while sending 400 reply\n");
+				LM_ERR("failed to send 400 reply\n");
 			}
 			return ERROR;
 		}
@@ -261,19 +258,18 @@ auth_result_t diam_pre_auth(struct sip_msg* _m, str* _realm, int _hftype,
 	ret = find_credentials(_m, _realm, _hftype, _h);
 	if (ret < 0) 
 	{
-		LOG(L_ERR, M_NAME":pre_auth(): Error while looking for credentials\n");
+		LM_ERR("credentials not found\n");
 		if (send_resp(_m, (ret == -2) ? 500 : 400, 
 			      (ret == -2) ? &dia_500_err : &dia_400_err, 0, 0) == -1) 
 		{
-			LOG(L_ERR, M_NAME":pre_auth(): Error while sending 400 reply\n");
+			LM_ERR("failed to send 400 reply\n");
 		}
 		return ERROR;
 	} 
 	else 
 		if (ret > 0) 
 		{
-			LOG(L_ERR, M_NAME":pre_auth(): Credentials with given realm not "
-				"found\n");
+			LM_ERR("credentials with given realm not found\n");
 			return NO_CREDENTIALS;
 		}
 	
@@ -294,8 +290,7 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 
 	if (realm) {
 		if (pv_printf_s(msg, realm, &domain)!=0) {
-			LOG(L_ERR,"ERROR:auth_diamtere:authorize: pv_printf_s "
-				"failed\n");
+			LM_ERR("pv_printf_s failed\n");
 			return AUTH_ERROR;
 		}
 	} else {
@@ -318,13 +313,13 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 
 	if (get_uri(msg, &uri) < 0) 
 	{
-		LOG(L_ERR, M_NAME":authorize(): From/To URI not found\n");
+		LM_ERR("From/To URI not found\n");
 		return AUTH_ERROR;
 	}
 	
 	if (parse_uri(uri->s, uri->len, &puri) < 0) 
 	{
-		LOG(L_ERR, M_NAME":authorize(): Error while parsing From/To URI\n");
+		LM_ERR("failed to parse From/To URI\n");
 		return AUTH_ERROR;
 	}
 //	user.s = (char *)pkg_malloc(puri.user.len);
@@ -333,7 +328,7 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 	/* parse the ruri, if not yet */
 	if(msg->parsed_uri_ok==0 && parse_sip_msg_uri(msg)<0)
 	{
-		LOG(L_ERR,M_NAME":authorize(): ERROR while parsing the Request-URI\n");
+		LM_ERR("failed to parse the Request-URI\n");
 		return AUTH_ERROR;
 	}
 	
@@ -342,15 +337,13 @@ int authorize(struct sip_msg* msg, pv_elem_t* realm, int hftype)
 	{
 		if (puri.host.len != cred->digest.realm.len) 
 		{
-			DBG(M_NAME":authorize(): Credentials realm and URI host do not "
-				"match\n");  
+			LM_DBG("credentials realm and URI host do not match\n");  
 			return AUTH_ERROR;
 		}
 	
 		if (strncasecmp(puri.host.s, cred->digest.realm.s, puri.host.len) != 0) 
 		{
-			DBG(M_NAME":authorize(): Credentials realm and URI host do not "
-				"match\n");
+			LM_DBG("credentials realm and URI host do not match\n");
 			return AUTH_ERROR;
 		}
 	}
@@ -393,7 +386,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 
 	if ( !p_method )
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -431,14 +424,14 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s, 
 							user_name.len, AVP_FREE_DATA)) == 0)
 		{
-			LOG(L_ERR,M_NAME":diameter_authorize(): no more free memory!\n");
+			LM_ERR("no more pkg memory left!\n");
 			if(user_name.len>0)
 				pkg_free(user_name.s);
 			goto error;
 		}
 		if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 		{
-			LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+			LM_ERR("avp not added \n");
 			goto error1;
 		}
 	}
@@ -450,14 +443,13 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 			if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, cred->username.whole.s,
 							cred->username.whole.len, AVP_DUPLICATE_DATA)) == 0)
 			{
-				LOG(L_ERR, M_NAME":diameter_authorize(): no more free "
-					"memory!\n");
+				LM_ERR("no more pkg memory left!\n");
 				goto error;
 			}
 
 			if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 			{
-				LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+				LM_ERR("avp not added \n");
 				goto error1;
 			}
 		}
@@ -470,8 +462,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 				user_name.s = ad_malloc(user_name.len);
 				if (!user_name.s) 
 				{
-					LOG(L_ERR, M_NAME":diameter_authorize(): no more free "
-						"memory\n");
+					LM_ERR(" no more pkg memory left\n");
 					goto error;
 				}
 				memcpy(user_name.s, cred->username.whole.s, 
@@ -489,8 +480,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 			if( (avp=AAACreateAVP(AVP_User_Name, 0, 0, user_name.s,	
 							user_name.len, AVP_FREE_DATA)) == 0)
 			{
-				LOG(L_ERR, M_NAME":diameter_authorize(): no more free "
-					"memory!\n");
+				LM_ERR(" no more pkg memory left!\n");
 				if(user_name.len>0)
 					pkg_free(user_name.s);
 				goto error;
@@ -498,24 +488,24 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 
 			if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 			{
-				LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+				LM_ERR(" avp not added \n");
 				goto error1;
 			}
 		}
 	}
 
 	/* SIP_MSGID AVP */
-	DBG("******* m_id=%d\n", m_id);
+	LM_DBG("******* m_id=%d\n", m_id);
 	tmp = m_id;
 	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&tmp), 
 				sizeof(m_id), AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+		LM_ERR(" no more pkg memory left!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+		LM_ERR(" avp not added \n");
 		goto error1;
 	}
 
@@ -525,12 +515,12 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_AUTHENTICATION, 
 				SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+		LM_ERR(" no more pkg memory left!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+		LM_ERR(" avp not added \n");
 		goto error1;
 	}
 		
@@ -538,17 +528,17 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, uri.host.s,
 						uri.host.len, AVP_DUPLICATE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+		LM_ERR(" no more pkg memory left!\n");
 		goto error;
 	}
 
 #ifdef DEBUG	
-	DBG("Destination Realm: %.*s\n", uri.host.len, uri.host.s);	
+	LM_DBG("Destination Realm: %.*s\n", uri.host.len, uri.host.s);	
 #endif
 
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+		LM_ERR(" avp not added \n");
 		goto error1;
 	}
 	
@@ -576,20 +566,20 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	memcpy(user_name.s+ruri.user.len+ruri.host.len+name_flag+port_flag, 
 					ruri.port.s, ruri.port.len);
 #ifdef DEBUG
-	DBG(M_NAME": AVP_Resource=%.*s\n", user_name.len, user_name.s);
+	LM_DBG(": AVP_Resource=%.*s\n", user_name.len, user_name.s);
 #endif
 
 	if( (avp=AAACreateAVP(AVP_Resource, 0, 0, user_name.s,
 						user_name.len, AVP_FREE_DATA)) == 0)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+		LM_ERR(" no more pkg memory left!\n");
 		if(user_name.s)
 			pkg_free(user_name.s);
 		goto error;
 	}
 	if( AAAAddAVPToMessage(req, avp, 0)!= AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+		LM_ERR(" avp not added \n");
 		goto error1;
 	}
 
@@ -599,7 +589,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		if( (avp=AAACreateAVP(AVP_Response, 0, 0, hdr->body.s,
 						hdr->body.len, AVP_DUPLICATE_DATA)) == 0)
 		{
-			LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+			LM_ERR(" no more pkg memory left!\n");
 			goto error;
 		}
 		
@@ -607,7 +597,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		if( AAAAddAVPToMessage(req, avp, position)!= AAA_ERR_SUCCESS)
 				
 		{
-			LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+			LM_ERR(" avp not added \n");
 			goto error1;
 		}
 
@@ -615,7 +605,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		if( (avp=AAACreateAVP(AVP_Method, 0, 0, p_method->s,
 						p_method->len, AVP_DUPLICATE_DATA)) == 0)
 		{
-			LOG(L_ERR, M_NAME":diameter_authorize(): no more free memory!\n");
+			LM_ERR(" no more pkg memory left!\n");
 			goto error;
 		}
 		
@@ -623,7 +613,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		if( AAAAddAVPToMessage(req, avp, position)!= AAA_ERR_SUCCESS)
 				
 		{
-			LOG(L_ERR, M_NAME":diameter_authorize(): avp not added \n");
+			LM_ERR(" avp not added \n");
 			goto error1;
 		}
 
@@ -636,7 +626,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	/* build a AAA message buffer */
 	if(AAABuildMsgBuffer(req) != AAA_ERR_SUCCESS)
 	{
-		LOG(L_ERR, M_NAME":diameter_authorize(): message buffer not created\n");
+		LM_ERR(" message buffer not created\n");
 		goto error;
 	}
 	
@@ -645,8 +635,7 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 		sockfd = init_mytcp(diameter_client_host, diameter_client_port);
 		if(sockfd==AAA_NO_CONNECTION)
 		{
-			LOG(L_ERR, M_NAME":diameter_authorize(): failed to reconnect"
-								" to Diameter client\n");
+			LM_ERR(" failed to reconnect to Diameter client\n");
 			goto error;
 		}
 	}
@@ -655,19 +644,19 @@ int diameter_authorize(struct hdr_field* hdr, str* p_method, struct sip_uri uri,
 	switch( tcp_send_recv(sockfd, req->buf.s, req->buf.len, rb, m_id) )
 	{
 		case AAA_ERROR: /* a transmission error occurred */
-			LOG(L_ERR, M_NAME":diameter_authorize(): message sending to the" 
-						" DIAMETER backend authorization server failed\n");
+			LM_ERR(" message sending to the" 
+					" DIAMETER backend authorization server failed\n");
 			goto error;
 	
 		case AAA_CONN_CLOSED:
-			LOG(L_NOTICE, M_NAME":diameter_authorize(): connection to Diameter"
+			LM_NOTICE("connection to Diameter"
 					" client closed.It will be reopened by the next request\n");
 			close(sockfd);
 			sockfd = AAA_NO_CONNECTION;
 			goto error;
 
 		case AAA_TIMEOUT:
-			LOG(L_NOTICE,M_NAME":diameter_authorize(): no response received\n");
+			LM_NOTICE("no response received\n");
 			close(sockfd);
 			sockfd = AAA_NO_CONNECTION;
 			goto error;
@@ -730,8 +719,7 @@ int srv_response(struct sip_msg* msg, rd_buf_t * rb, int hftype)
 	
 			if (ret == -1) 
 			{
-				LOG(L_ERR, M_NAME":srv_response():Error while sending challenge "
-					"to the client of SER\n");
+				LM_ERR("failed to send challenge to the client of SER\n");
 				return -1;
 			}
 			return -1;
@@ -752,7 +740,7 @@ int send_resp(struct sip_msg* m, int code, str* reason,
 	/* Add new headers if there are any */
 	if ((hdr) && (hdr_len)) {
 		if (add_lump_rpl( m, hdr, hdr_len, LUMP_RPL_HDR)==0) {
-			LOG(L_ERR,"ERROR:auth_diameter:send_resp: unable to append hdr\n");
+			LM_ERR("unable to append hdr\n");
 			return -1;
 		}
 	}

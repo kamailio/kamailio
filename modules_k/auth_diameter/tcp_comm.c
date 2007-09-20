@@ -63,14 +63,14 @@ int init_mytcp(char* host, int port)
 	
     if (sockfd < 0) 
 	{
-		LOG(L_ERR, M_NAME":init_mytcp(): error creating the socket\n");
+		LM_ERR("error creating the socket\n");
 		return -1;
 	}	
 	
     server = gethostbyname(host);
     if (server == NULL) 
 	{
-		LOG(L_ERR, M_NAME":init_mytcp(): error finding the host\n");
+		LM_ERR("error finding the host\n");
 		return -1;
     }
 
@@ -83,7 +83,7 @@ int init_mytcp(char* host, int port)
     if (connect(sockfd, (const struct sockaddr *)&serv_addr, 
 							sizeof(serv_addr)) < 0) 
 	{
-        LOG(L_ERR, M_NAME":init_mytcp(): error connecting to the "
+        LM_ERR("error connecting to the "
 						"DIAMETER client\n");
 		return -1;
 	}	
@@ -128,12 +128,11 @@ int do_read( int socket, rd_buf_t *p)
 
 	while( (n=recv( socket, ptr, wanted_len, MSG_DONTWAIT ))>0 ) 
 	{
-//		DBG("DEBUG:do_read (sock=%d)  -> n=%d (expected=%d)\n",
-//			p->sock,n,wanted_len);
+//		LM_DBG("(sock=%d)  -> n=%d (expected=%d)\n", p->sock,n,wanted_len);
 		p->buf_len += n;
 		if (n<wanted_len)
 		{
-			//DBG("only %d bytes read from %d expected\n",n,wanted_len);
+			//LM_DBG("only %d bytes read from %d expected\n",n,wanted_len);
 			wanted_len -= n;
 			ptr += n;
 		}
@@ -145,14 +144,14 @@ int do_read( int socket, rd_buf_t *p)
 				len = ntohl(p->first_4bytes)&0x00ffffff;
 				if (len<AAA_MSG_HDR_SIZE || len>MAX_AAA_MSG_SIZE)
 				{
-					LOG(L_ERR,"ERROR:do_read (sock=%d): invalid message "
+					LM_ERR(" (sock=%d): invalid message "
 						"length read %u (%x)\n", socket, len, p->first_4bytes);
 					goto error;
 				}
-				//DBG("message length = %d(%x)\n",len,len);
+				//LM_DBG("message length = %d(%x)\n",len,len);
 				if ( (p->buf=pkg_malloc(len))==0  )
 				{
-					LOG(L_ERR,"ERROR:do_read: no more free memory\n");
+					LM_ERR("no more pkg memory\n");
 					goto error;
 				}
 				*((unsigned int*)p->buf) = p->first_4bytes;
@@ -165,7 +164,7 @@ int do_read( int socket, rd_buf_t *p)
 			else
 			{
 				/* I finished reading the whole message */
-				DBG("DEBUG:do_read (sock=%d): whole message read (len=%d)!\n",
+				LM_DBG("(sock=%d): whole message read (len=%d)!\n",
 					socket, p->first_4bytes);
 				return CONN_SUCCESS;
 			}
@@ -179,7 +178,7 @@ int do_read( int socket, rd_buf_t *p)
 	}
 	if ( n==-1 && errno!=EINTR && errno!=EAGAIN )
 	{
-		LOG(L_ERR,"ERROR:do_read (sock=%d): n=%d , errno=%d (%s)\n",
+		LM_ERR(" (sock=%d): n=%d , errno=%d (%s)\n",
 			socket, n, errno, strerror(errno));
 		goto error;
 	}
@@ -206,13 +205,13 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 	{
 		if (errno==EINTR)
 			continue;
-		LOG(L_ERR, M_NAME": write returned error: %s\n", strerror(errno));
+		LM_ERR("write returned error: %s\n", strerror(errno));
 		return AAA_ERROR;
 	}
 
 	if (n!=len) 
 	{
-		LOG(L_ERR, M_NAME": write gave no error but wrote less than asked\n");
+		LM_ERR("write gave no error but wrote less than asked\n");
 		return AAA_ERROR;
 	}
 
@@ -245,10 +244,10 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		switch( do_read(sockfd, rb) )
 		{
 			case CONN_ERROR:
-				LOG(L_ERR, M_NAME": error when trying to read from socket\n");
+				LM_ERR("error when trying to read from socket\n");
 				return AAA_CONN_CLOSED;
 			case CONN_CLOSED:
-				LOG(L_ERR, M_NAME": connection closed by diameter client!\n");
+				LM_ERR("connection closed by diameter client!\n");
 				return AAA_CONN_CLOSED;
 		}
 		
@@ -256,18 +255,18 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		msg = AAATranslateMessage(rb->buf, rb->buf_len, 0);	
 		if(!msg)
 		{
-			LOG(L_ERR, M_NAME": message structure not obtained\n");	
+			LM_ERR("message structure not obtained\n");	
 			return AAA_ERROR;
 		}
 		avp = AAAFindMatchingAVP(msg, NULL, AVP_SIP_MSGID,
 								vendorID, AAA_FORWARD_SEARCH);
 		if(!avp)
 		{
-			LOG(L_ERR, M_NAME": AVP_SIP_MSGID not found\n");
+			LM_ERR("AVP_SIP_MSGID not found\n");
 			return AAA_ERROR;
 		}
 		m_id = *((unsigned int*)(avp->data.s));
-		DBG("######## m_id=%d\n", m_id);
+		LM_DBG("######## m_id=%d\n", m_id);
 		if(m_id!=waited_id)
 		{
 			number_of_tries ++;
@@ -277,7 +276,7 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		goto next;
 	}
 
-	LOG(L_ERR, M_NAME": too many old messages received\n");
+	LM_ERR("too many old messages received\n");
 	return AAA_TIMEOUT;
 next:
 	/* Finally die correct answer */
@@ -285,7 +284,7 @@ next:
 							vendorID, AAA_FORWARD_SEARCH);
 	if(!avp)
 	{
-		LOG(L_ERR, M_NAME": AVP_Service_Type not found\n");
+		LM_ERR("AVP_Service_Type not found\n");
 		return AAA_ERROR;
 	}
 	serviceType = avp->data.s[0];
@@ -306,7 +305,7 @@ next:
 							vendorID, AAA_FORWARD_SEARCH);
 			if(!avp)
 			{
-				LOG(L_ERR, M_NAME": AVP_Response not found\n");
+				LM_ERR("AVP_Response not found\n");
 				rb->ret_code = AAA_SRVERR;
 				break;
 			}
@@ -314,7 +313,7 @@ next:
 			rb->chall = (unsigned char*)pkg_malloc(avp->data.len*sizeof(char));
 			if(rb->chall == NULL)
 			{
-				LOG(L_ERR, M_NAME": no more free memory\n");
+				LM_ERR("no more pkg memory\n");
 				rb->ret_code = AAA_SRVERR;
 				break;
 			}

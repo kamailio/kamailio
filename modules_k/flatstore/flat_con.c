@@ -44,20 +44,20 @@ static char* get_name(struct flat_id* id)
 
 	buf_len=pathmax();
 	if (!id) {
-		LOG(L_ERR, "get_name: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 	total_len=id->dir.len+1 /* / */+id->table.len+1 /* _ */+
 				FILE_SUFFIX_LEN+1 /* \0 */; /* without pid*/
 	if (buf_len<total_len){
-		LOG(L_ERR, "get_name: the path is too long (%d and PATHMAX is %d)\n",
+		LM_ERR("the path is too long (%d and PATHMAX is %d)\n",
 					total_len, buf_len);
 		return 0;
 	}
 	
 	buf=pkg_malloc(buf_len);
 	if (buf==0){
-		LOG(L_ERR, "ERROR: get_name: memory allocation failure\n");
+		LM_ERR("pkg memory allocation failure\n");
 		return 0;
 	}
 
@@ -74,7 +74,7 @@ static char* get_name(struct flat_id* id)
 	
 	num = int2str(flat_pid, &num_len);
 	if (buf_len<(total_len+num_len)){
-		LOG(L_ERR, "ERROR:  get_name: the path is too long (%d and PATHMAX is"
+		LM_ERR("the path is too long (%d and PATHMAX is"
 				" %d)\n", total_len+num_len, buf_len);
 		pkg_free(buf);
 		return 0;
@@ -97,13 +97,13 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 	struct flat_con* res;
 
 	if (!id) {
-		LOG(L_ERR, "flat_new_connection: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	res = (struct flat_con*)pkg_malloc(sizeof(struct flat_con));
 	if (!res) {
-		LOG(L_ERR, "flat_new_connection: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return 0;
 	}
 
@@ -114,14 +114,14 @@ struct flat_con* flat_new_connection(struct flat_id* id)
 
 	fn = get_name(id);
 	if (fn==0){
-		LOG(L_ERR, "flat_new_connection: get_name() failed\n");
+		LM_ERR("get_name() failed\n");
 		return 0;
 	}
 
 	res->file = fopen(fn, "a");
 	pkg_free(fn); /* we don't need fn anymore */
 	if (!res->file) {
-		LOG(L_ERR, "flat_new_connection: %s\n", strerror(errno));
+		LM_ERR(" %s\n", strerror(errno));
 		pkg_free(res);
 		return 0;
 	}
@@ -152,7 +152,7 @@ int flat_reopen_connection(struct flat_con* con)
 	char* fn;
 
 	if (!con) {
-		LOG(L_ERR, "flat_reopen_connection: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -162,7 +162,7 @@ int flat_reopen_connection(struct flat_con* con)
 
 		fn = get_name(con->id);
 		if (fn == 0) {
-			LOG(L_ERR, "flat_reopen_connection: Error in get_name\n");
+			LM_ERR("failed to get_name\n");
 			return -1;
 		}
 
@@ -170,7 +170,7 @@ int flat_reopen_connection(struct flat_con* con)
 		pkg_free(fn);
 
 		if (!con->file) {
-			LOG(L_ERR, "flat_reopen_connection: Invalid parameter value\n");
+			LM_ERR("invalid parameter value\n");
 			return -1;
 		}
 	}

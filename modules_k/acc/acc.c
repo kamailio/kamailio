@@ -120,7 +120,7 @@ static inline int core2strar( struct sip_msg *req, str *c_vals)
 
 	/* from/to URI and TAG */
 	if (req->msg_flags&FL_REQ_UPSTREAM) {
-		DBG("DBUG:acc:core2strar: UPSTREAM flag set -> swap F/T\n"); \
+		LM_DBG("the flag UPSTREAM is set -> swap F/T\n"); \
 		from = acc_env.to;
 		to = req->from;
 	} else {
@@ -212,8 +212,7 @@ int acc_log_request( struct sip_msg *rq)
 
 	for ( i=0,p=log_msg ; i<m ; i++ ) {
 		if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
-			LOG(L_WARN,"WARNING:acc:acc_log_request: acc message too long,"
-				" truncating..\n");
+			LM_WARN("acc message too long, truncating..\n");
 			p = log_msg_end;
 			break;
 		}
@@ -231,8 +230,7 @@ int acc_log_request( struct sip_msg *rq)
 		do {
 			for (i=m; i<m+n; i++) {
 				if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
-					LOG(L_WARN,"WARNING:acc:acc_log_request: acc message too "
-						"long, truncating..\n");
+					LM_WARN("acc message too long, truncating..\n");
 					p = log_msg_end;
 					break;
 				}
@@ -309,14 +307,13 @@ static void acc_db_init_keys(void)
 int acc_db_init(char* db_url)
 {
 	if (bind_dbmod(db_url, &acc_dbf)<0){
-		LOG(L_ERR, "ERROR:acc:acc_db_init: bind_db failed\n");
+		LM_ERR("bind_db failed\n");
 		return -1;
 	}
 
 	/* Check database capabilities */
 	if (!DB_CAPABILITY(acc_dbf, DB_CAP_INSERT)) {
-		LOG(L_ERR, "ERROR:acc:acc_db_init: Database module does not "
-			"implement insert function\n");
+		LM_ERR("database module does not implement insert function\n");
 		return -1;
 	}
 
@@ -332,8 +329,7 @@ int acc_db_init_child(char *db_url)
 {
 	db_handle=acc_dbf.init(db_url);
 	if (db_handle==0){
-		LOG(L_ERR, "ERROR:acc:acc_db_init: unable to connect to the "
-				"database\n");
+		LM_ERR("unable to connect to the database\n");
 		return -1;
 	}
 	return 0;
@@ -369,15 +365,14 @@ int acc_db_request( struct sip_msg *rq)
 		VAL_STR(db_vals+i) = val_arr[i];
 
 	if (acc_dbf.use_table(db_handle, acc_env.text.s/*table*/) < 0) {
-		LOG(L_ERR, "ERROR:acc:acc_db_request: Error in use_table\n");
+		LM_ERR("error in use_table\n");
 		return -1;
 	}
 
 	/* multi-leg columns */
 	if ( !leg_info ) {
 		if (acc_dbf.insert(db_handle, db_keys, db_vals, m) < 0) {
-			LOG(L_ERR, "ERROR:acc:acc_db_request: "
-					"Error while inserting to database\n");
+			LM_ERR("failed to insert into database\n");
 			return -1;
 		}
 	} else {
@@ -386,8 +381,7 @@ int acc_db_request( struct sip_msg *rq)
 			for (i=m; i<m+n; i++)
 				VAL_STR(db_vals+i)=val_arr[i];
 			if (acc_dbf.insert(db_handle, db_keys, db_vals, m+n) < 0) {
-				LOG(L_ERR, "ERROR:acc:acc_db_request: "
-					"Error while inserting to database\n");
+				LM_ERR("failed to insert into database\n");
 				return -1;
 			}
 		}while ( (n=legs2strar(leg_info,rq,val_arr+m,0))!=0 );
@@ -462,13 +456,12 @@ int init_acc_rad(char *rad_cfg, int srv_type)
 
 	/* read config */
 	if ((rh = rc_read_config(rad_cfg)) == NULL) {
-		LOG(L_ERR,"ERROR:acc:init_acc_rad: error opening radius "
-			"config file: %s\n", rad_cfg );
+		LM_ERR("failed to open radius config file: %s\n", rad_cfg );
 		return -1;
 	}
 	/* read dictionary */
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary"))!=0) {
-		LOG(L_ERR,"ERROR:acc:init_acc_rad: error reading radius dictionary\n");
+		LM_ERR("failed to read radius dictionary\n");
 		return -1;
 	}
 
@@ -497,8 +490,7 @@ static inline UINT4 rad_status( struct sip_msg *req, int code )
 	do { \
 		if ( (_len)!=0 && \
 		!rc_avpair_add( rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
-			LOG(L_ERR, "ERROR:acc:acc_rad_request: failed to add %s, %d\n", \
-				rd_attrs[_attr].n,_attr); \
+			LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n,_attr); \
 			goto error; \
 		} \
 	}while(0)
@@ -553,7 +545,7 @@ int acc_rad_request( struct sip_msg *req )
 	}
 
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
-		LOG(L_ERR, "ERROR:acc:acc_rad_request: radius-ing failed\n");
+		LM_ERR("radius-ing failed\n");
 		goto error;
 	}
 	rc_avpair_free(send);
@@ -595,16 +587,14 @@ int acc_diam_init()
 
 	m = extra2int( dia_extra, diam_attrs+n);
 	if (m<0) {
-		LOG(L_ERR,"ERROR:acc:acc_diam_init: extra names for DIAMTER must be "
-			" integer AVP codes\n");
+		LM_ERR("extra names for DIAMETER must be integer AVP codes\n");
 		return -1;
 	}
 	n += m;
 
 	m = extra2int( leg_info, diam_attrs+n);
 	if (m<0) {
-		LOG(L_ERR,"ERROR:acc:acc_diam_init: leg info names for DIAMTER must "
-			"be integer AVP codes\n");
+		LM_ERR("leg info names for DIAMTER must be integer AVP codes\n");
 		return -1;
 	}
 	n += m;
@@ -648,25 +638,24 @@ int acc_diam_request( struct sip_msg *req )
 	attr_cnt--;
 
 	if ( (send=AAAInMessage(ACCOUNTING_REQUEST, AAA_APP_NASREQ))==NULL) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: failed to create new "
-			"AAA request\n");
+		LM_ERR("failed to create new AAA request\n");
 		return -1;
 	}
 
 	/* AVP_ACCOUNTIG_RECORD_TYPE */
 	if( (status = diam_status(req, acc_env.code))<0) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: status unknown\n");
+		LM_ERR("status unknown\n");
 		goto error;
 	}
 	tmp[0] = status+'0';
 	tmp[1] = 0;
 	if( (avp=AAACreateAVP(AVP_Accounting_Record_Type, 0, 0, tmp,
 	1, AVP_DUPLICATE_DATA)) == 0) {
-		LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
+		LM_ERR("failed to create AVP:no more free memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
+		LM_ERR("avp not added \n");
 		AAAFreeAVP(&avp);
 		goto error;
 	}
@@ -674,11 +663,11 @@ int acc_diam_request( struct sip_msg *req )
 	mid = req->id;
 	if( (avp=AAACreateAVP(AVP_SIP_MSGID, 0, 0, (char*)(&mid), 
 	sizeof(mid), AVP_DUPLICATE_DATA)) == 0) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: no more free memory!\n");
+		LM_ERR("failed to create AVP:no more free memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
+		LM_ERR("avp not added \n");
 		AAAFreeAVP(&avp);
 		goto error;
 	}
@@ -686,11 +675,11 @@ int acc_diam_request( struct sip_msg *req )
 	/* SIP Service AVP */
 	if( (avp=AAACreateAVP(AVP_Service_Type, 0, 0, SIP_ACCOUNTING, 
 	SERVICE_LEN, AVP_DUPLICATE_DATA)) == 0) {
-		LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
+		LM_ERR("failed to create AVP:no more free memory!\n");
 		goto error;
 	}
 	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
+		LM_ERR("avp not added \n");
 		AAAFreeAVP(&avp);
 		goto error;
 	}
@@ -702,11 +691,11 @@ int acc_diam_request( struct sip_msg *req )
 	for(i=0; i<attr_cnt; i++) {
 		if((avp=AAACreateAVP(diam_attrs[i], 0,0, val_arr[i].s, val_arr[i].len,
 		AVP_DUPLICATE_DATA)) == 0) {
-			LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
+			LM_ERR("failed to create AVP: no more free memory!\n");
 			goto error;
 		}
 		if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-			LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
+			LM_ERR("avp not added \n");
 			AAAFreeAVP(&avp);
 			goto error;
 		}
@@ -719,12 +708,11 @@ int acc_diam_request( struct sip_msg *req )
 			for (i=0; i<cnt; i++) {
 				if((avp=AAACreateAVP(diam_attrs[attr_cnt+i], 0, 0,
 				val_arr[i].s, val_arr[i].len, AVP_DUPLICATE_DATA)) == 0) {
-					LOG(L_ERR,"ERROR:acc:acc_diam_request: no more "
-						"free memory!\n");
+					LM_ERR("failed to create AVP: no more free memory!\n");
 					goto error;
 				}
 				if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-					LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
+					LM_ERR("avp not added \n");
 					AAAFreeAVP(&avp);
 					goto error;
 				}
@@ -733,39 +721,38 @@ int acc_diam_request( struct sip_msg *req )
 	}
 
 	if (get_uri(req, &uri) < 0) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: From/To URI not found\n");
+		LM_ERR("failed to get uri, From/To URI not found\n");
 		goto error;
 	}
 
 	if (parse_uri(uri->s, uri->len, &puri) < 0) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: Error parsing From/To URI\n");
+		LM_ERR("failed to parse From/To URI\n");
 		goto error;
 	}
 
 	/* Destination-Realm AVP */
 	if( (avp=AAACreateAVP(AVP_Destination_Realm, 0, 0, puri.host.s,
 	puri.host.len, AVP_DUPLICATE_DATA)) == 0) {
-		LOG(L_ERR,"ERROR:acc:acc_diam_request: no more free memory!\n");
+		LM_ERR("failed to create AVP:no more free memory!\n");
 		goto error;
 	}
 
 	if( AAAAddAVPToMessage(send, avp, 0)!= AAA_ERR_SUCCESS) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: avp not added \n");
+		LM_ERR("avp not added \n");
 		AAAFreeAVP(&avp);
 		goto error;
 	}
 
 	/* prepare the message to be sent over the network */
 	if(AAABuildMsgBuffer(send) != AAA_ERR_SUCCESS) {
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: message buffer not created\n");
+		LM_ERR("message buffer not created\n");
 		goto error;
 	}
 
 	if(sockfd==AAA_NO_CONNECTION) {
 		sockfd = init_mytcp(diameter_client_host, diameter_client_port);
 		if(sockfd==AAA_NO_CONNECTION) {
-			LOG(L_ERR, "ERROR:acc:acc_diam_request: failed to reconnect"
-								" to Diameter client\n");
+			LM_ERR("failed to reconnect to Diameter client\n");
 			goto error;
 		}
 	}
@@ -773,8 +760,8 @@ int acc_diam_request( struct sip_msg *req )
 	/* send the message to the DIAMETER client */
 	ret = tcp_send_recv(sockfd, send->buf.s, send->buf.len, rb, req->id);
 	if(ret == AAA_CONN_CLOSED) {
-		LOG(L_NOTICE, "NOTICE:acc:acc_diam_request: connection to Diameter"
-			" client closed.It will be reopened by the next request\n");
+		LM_NOTICE("connection to Diameter client closed.It will be "
+				"reopened by the next request\n");
 		close(sockfd);
 		sockfd = AAA_NO_CONNECTION;
 		goto error;
@@ -782,8 +769,8 @@ int acc_diam_request( struct sip_msg *req )
 
 	if(ret != ACC_SUCCESS) {
 		/* a transmission error occurred */
-		LOG(L_ERR, "ERROR:acc:acc_diam_request: message sending to the" 
-			" DIAMETER backend authorization server failed\n");
+		LM_ERR("message sending to the DIAMETER backend authorization "
+				"server failed\n");
 		goto error;
 	}
 

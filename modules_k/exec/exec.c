@@ -58,14 +58,13 @@ int exec_msg(struct sip_msg *msg, char *cmd )
 	ret=-1; /* pessimist: assume error */
 	pipe=popen( cmd, "w" );
 	if (pipe==NULL) {
-		LOG(L_ERR, "ERROR: exec_msg: cannot open pipe: %s\n",
-			cmd);
+		LM_ERR("cannot open pipe: %s\n", cmd);
 		ser_error=E_EXEC;
 		return -1;
 	}
 
 	if (fwrite(msg->buf, 1, msg->len, pipe)!=msg->len) {
-		LOG(L_ERR, "ERROR: exec_msg: error writing to pipe\n");
+		LM_ERR("failed to write to pipe\n");
 		ser_error=E_EXEC;
 		goto error01;
 	}
@@ -74,8 +73,7 @@ int exec_msg(struct sip_msg *msg, char *cmd )
 
 error01:
 	if (ferror(pipe)) {
-		LOG(L_ERR, "ERROR: exec_str: error in pipe: %s\n",
-			strerror(errno));
+		LM_ERR("pipe: %s\n", strerror(errno));
 		ser_error=E_EXEC;
 		ret=-1;
 	}
@@ -84,8 +82,7 @@ error01:
 		/* return false if script exited with non-zero status */
 		if (WEXITSTATUS(exit_status)!=0) ret=-1;
 	} else { /* exited erroneously */
-		LOG(L_ERR, "ERROR: exec_msg: cmd %s failed. "
-			"exit_status=%d, errno=%d: %s\n",
+		LM_ERR("cmd %s failed. exit_status=%d, errno=%d: %s\n",
 			cmd, exit_status, errno, strerror(errno) );
 		ret=-1;
 	}
@@ -116,7 +113,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	cmd_line=pkg_malloc(cmd_len);
 	if (cmd_line==0) {
 		ret=ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR: exec_str: no mem for command\n");
+		LM_ERR("no pkg mem for command\n");
 		goto error00;
 	}
 
@@ -135,8 +132,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 	
 	pipe=popen( cmd_line, "r" );
 	if (pipe==NULL) {
-		LOG(L_ERR, "ERROR: exec_str: cannot open pipe: %s\n",
-			cmd_line);
+		LM_ERR("cannot open pipe: %s\n", cmd_line);
 		ser_error=E_EXEC;
 		goto error01;
 	}
@@ -151,7 +147,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 				|| uri.s[uri.len-1]=='\n' 
 				|| uri.s[uri.len-1]=='\t'
 				|| uri.s[uri.len-1]==' ' )) {
-			DBG("exec_str: rtrim\n");
+			LM_DBG("rtrim\n");
 			uri.len--;
 		}
 		/* skip empty line */
@@ -164,21 +160,20 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 			act.elem[0].type = STRING_ST;
 			act.elem[0].u.string = uri.s;
 			if (do_action(&act, msg)<0) {
-				LOG(L_ERR,"ERROR:exec_str : SET_URI_T action failed\n");
+				LM_ERR("the action for has failed\n");
 				ser_error=E_OUT_OF_MEM;
 				goto error02;
 			}
 		} else {
 			if (append_branch(msg, &uri, 0, 0, Q_UNSPECIFIED, 0, 0)==-1) {
-				LOG(L_ERR, "ERROR: exec_str: append_branch failed;"
-					" too many or too long URIs?\n");
+				LM_ERR("append_branch failed; too many or too long URIs?\n");
 				goto error02;
 			}
 		}
 		uri_cnt++;
 	}
 	if (uri_cnt==0) {
-		LOG(L_ERR, "ERROR:exec_str: no uri from %s\n", cmd_line );
+		LM_ERR("no uri from %s\n", cmd_line );
 		goto error02;
 	}
 	/* success */
@@ -186,8 +181,7 @@ int exec_str(struct sip_msg *msg, char *cmd, char *param, int param_len) {
 
 error02:
 	if (ferror(pipe)) {
-		LOG(L_ERR, "ERROR: exec_str: error in pipe: %s\n",
-			strerror(errno));
+		LM_ERR("in pipe: %s\n", strerror(errno));
 		ser_error=E_EXEC;
 		ret=-1;
 	}
@@ -196,8 +190,7 @@ error02:
 		/* return false if script exited with non-zero status */
 		if (WEXITSTATUS(exit_status)!=0) ret=-1;
 	} else { /* exited erroneously */
-		LOG(L_ERR, "ERROR: exec_str: cmd %s failed. "
-			"exit_status=%d, errno=%d: %s\n",
+		LM_ERR("cmd %s failed. exit_status=%d, errno=%d: %s\n",
 			cmd, exit_status, errno, strerror(errno) );
 		ret=-1;
 	}
@@ -226,8 +219,7 @@ int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 	
 	pipe=popen( cmd, "r" );
 	if (pipe==NULL) {
-		LOG(L_ERR, "ERROR: exec_avp: cannot open pipe: %s\n",
-			cmd);
+		LM_ERR("cannot open pipe: %s\n", cmd);
 		ser_error=E_EXEC;
 		return ret;
 	}
@@ -257,7 +249,7 @@ int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 		} else {
 			if(pv_get_avp_name(msg, &(crt->sname.pvp), &avp_name, &avp_type)!=0)
 			{
-				LOG(L_ERR,"exec:exec_avp:error - cant get item name [%d]\n",i);
+				LM_ERR("can't get item name [%d]\n",i);
 				goto error;
 			}
 		}
@@ -267,7 +259,7 @@ int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 	
 		if(add_avp(avp_type, avp_name, avp_val)!=0)
 		{
-			LOG(L_ERR,"exec:exec_avp:error - unable to add avp\n");
+			LM_ERR("unable to add avp\n");
 			goto error;
 		}
 	
@@ -277,14 +269,13 @@ int exec_avp(struct sip_msg *msg, char *cmd, pvname_list_p avpl)
 		i++;
 	}
 	if (i==0)
-		DBG("ERROR:exec_avp: no result from %s\n", cmd);
+		LM_DBG("no result from %s\n", cmd);
 	/* success */
 	ret=1;
 
 error:
 	if (ferror(pipe)) {
-		LOG(L_ERR, "ERROR: exec_avp: error in pipe: %d/%s\n",
-			errno, strerror(errno));
+		LM_ERR("pipe: %d/%s\n",	errno, strerror(errno));
 		ser_error=E_EXEC;
 		ret=-1;
 	}
@@ -293,8 +284,7 @@ error:
 		/* return false if script exited with non-zero status */
 		if (WEXITSTATUS(exit_status)!=0) ret=-1;
 	} else { /* exited erroneously */
-		LOG(L_ERR, "ERROR: exec_avp: cmd %s failed. "
-			"exit_status=%d, errno=%d: %s\n",
+		LM_ERR("cmd %s failed. exit_status=%d, errno=%d: %s\n",
 			cmd, exit_status, errno, strerror(errno) );
 		ret=-1;
 	}

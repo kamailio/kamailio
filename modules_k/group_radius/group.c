@@ -69,8 +69,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	switch(hf_type) {
 		case 1: /* Request-URI */
 			if(parse_sip_msg_uri(_m)<0) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
-					"Request-URI\n");
+				LM_ERR("failed to get Request-URI\n");
 				return -1;
 			}
 			turi = &_m->parsed_uri;
@@ -78,16 +77,14 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 
 		case 2: /* To */
 			if((turi=parse_to_uri(_m))==NULL) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
-					"To URI\n");
+				LM_ERR("failed to get To URI\n");
 				return -1;
 			}
 			break;
 
 		case 3: /* From */
 			if((turi=parse_from_uri(_m))==NULL) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
-					"From URI\n");
+				LM_ERR("failed to get From URI\n");
 				return -1;
 			}
 			break;
@@ -97,7 +94,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 			if (!h) {
 				get_authorized_cred(_m->proxy_auth, &h);
 				if (!h) {
-					LOG(L_ERR, "radius_is_user_in(): No authorized"
+				LM_ERR("no authorized"
 							" credentials found (error in scripts)\n");
 					return -4;
 				}
@@ -119,7 +116,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		user_name.len = user.len + domain.len + 1;
 		user_name.s = (char*)pkg_malloc(user_name.len);
 		if (!user_name.s) {
-			LOG(L_ERR, "radius_is_user_in(): No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return -6;
 		}
 		
@@ -131,7 +128,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	}
 
 	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user_name.s, user_name.len, 0)) {
-		LOG(L_ERR, "radius_is_user_in(): Error adding User-Name attribute\n");
+		LM_ERR("failed to add User-Name attribute\n");
 		rc_avpair_free(send);
 		if (use_domain) pkg_free(user_name.s);
 		return -7;
@@ -140,24 +137,24 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	if (use_domain) pkg_free(user_name.s);
 
 	if (!rc_avpair_add(rh, &send, attrs[A_SIP_GROUP].v, grp->s, grp->len, 0)) {
-		LOG(L_ERR, "radius_is_user_in(): Error adding Sip-Group attribute\n");
+		LM_ERR("failed to add Sip-Group attribute\n");
 	 	return -8;  	
 	}
 
 	service = vals[V_GROUP_CHECK].v;
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-		LOG(L_ERR, "radius_is_user_in(): Error adding Service-Type attribute\n");
+		LM_ERR("failed to add Service-Type attribute\n");
 		rc_avpair_free(send);
 	 	return -9;  	
 	}
 
 	if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
-		DBG("radius_is_user_in(): Success\n");
+		LM_DBG("Success\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		DBG("radius_is_user_in(): Failure\n");
+		LM_DBG("Failure\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
 		return -11;

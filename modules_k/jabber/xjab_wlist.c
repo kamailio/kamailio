@@ -60,7 +60,7 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	if(pipes == NULL || size <= 0 || max <= 0)
 		return NULL;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_init: -----START-----\n");
+	LM_DBG("-----START-----\n");
 #endif	
 	jwl = (xj_wlist)_M_SHM_MALLOC(sizeof(t_xj_wlist));
 	if(jwl == NULL)
@@ -77,12 +77,12 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	i = 0;
 	/* alloc locks*/
 	if((jwl->sems = lock_set_alloc(size)) == NULL){
-		LOG(L_CRIT, "jabber: failed to alloc lock set\n");
+		LM_CRIT("failed to alloc lock set\n");
 		goto clean;
 	};
 	/* init the locks*/
 	if (lock_set_init(jwl->sems)==0){
-		LOG(L_CRIT, "jabber: failed to initialize the locks\n");
+		LM_CRIT("failed to initialize the locks\n");
 		goto clean;
 	};
 	jwl->workers = (xj_worker)_M_SHM_MALLOC(size*sizeof(t_xj_worker));
@@ -106,7 +106,7 @@ xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 	return jwl;
 
 clean:
-	DBG("XJAB:xj_wlist_init: error occurred -> cleaning\n");
+	LM_DBG("error occurred -> cleaning\n");
 	if(jwl->sems != NULL)
 		lock_set_dealloc(jwl->sems);
 	if(jwl->workers != NULL)
@@ -149,7 +149,7 @@ void xj_wlist_free(xj_wlist jwl)
 {
 	int i;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_free: freeing 'xj_wlist' memory ...\n");
+	LM_DBG("freeing 'xj_wlist' memory ...\n");
 #endif
 	if(jwl == NULL)
 		return;
@@ -223,7 +223,7 @@ int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 		{
 			lock_set_release(jwl->sems, i);
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_wlist_check: entry exists for <%.*s> in the"
+			LM_DBG("entry exists for <%.*s> in the"
 				" pool of <%d> [%d]\n",jkey->id->len, jkey->id->s,
 				jwl->workers[i].pid,i);
 #endif
@@ -233,7 +233,7 @@ int xj_wlist_check(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 		i++;
 	}
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_check: entry does not exist for <%.*s>\n",
+	LM_DBG("entry does not exist for <%.*s>\n",
 			jkey->id->len, jkey->id->s);
 #endif
 	return -1;
@@ -271,7 +271,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 				lock_set_release(jwl->sems, pos);
 				lock_set_release(jwl->sems, i);
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_wlist_get: entry already exists for <%.*s> in the"
+			LM_DBG("entry already exists for <%.*s> in the"
 				" pool of <%d> [%d]\n",jkey->id->len, jkey->id->s,
 				jwl->workers[i].pid,i);
 #endif
@@ -318,7 +318,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 			msid->flag = XJ_FLAG_OPEN;
 			lock_set_release(jwl->sems, pos);
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_wlist_get: new entry for <%.*s> in the pool of"
+			LM_DBG("new entry for <%.*s> in the pool of"
 				" <%d> - [%d]\n", jkey->id->len, jkey->id->s,
 				jwl->workers[pos].pid, pos);
 #endif
@@ -332,7 +332,7 @@ int xj_wlist_get(xj_wlist jwl, xj_jkey jkey, xj_jkey *p)
 error:
 	if(pos >= 0)
 		lock_set_release(jwl->sems, pos);
-	DBG("XJAB:xj_wlist_get: cannot create a new entry for <%.*s>\n",
+	LM_DBG("cannot create a new entry for <%.*s>\n",
 				jkey->id->len, jkey->id->s);
 	return -1;
 }
@@ -349,7 +349,7 @@ int xj_wlist_set_flag(xj_wlist jwl, xj_jkey jkey, int fl)
 		return -1;
 	
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_set_flag: looking for <%.*s>"
+	LM_DBG("looking for <%.*s>"
 		" having id=%d\n", jkey->id->len, jkey->id->s, jkey->hash);
 #endif
 			
@@ -368,7 +368,7 @@ int xj_wlist_set_flag(xj_wlist jwl, xj_jkey jkey, int fl)
 			p->flag = fl;
 			lock_set_release(jwl->sems, i);
 #ifdef XJ_EXTRA_DEBUG
-			DBG("XJAB:xj_wlist_set_flag: the connection for <%.*s>"
+			LM_DBG("the connection for <%.*s>"
 				" marked with flag=%d", jkey->id->len, jkey->id->s, fl);
 #endif
 			return jwl->workers[i].wpipe;
@@ -377,7 +377,7 @@ int xj_wlist_set_flag(xj_wlist jwl, xj_jkey jkey, int fl)
 		i++;
 	}
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_set_flag: entry does not exist for <%.*s>\n",
+	LM_DBG("entry does not exist for <%.*s>\n",
 			jkey->id->len, jkey->id->s);
 #endif
 	return -1;
@@ -399,13 +399,9 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 	if(!jd) // || !als || strlen(als)<2)
 		return 0;
 	
-#ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_set_aliases\n");
-#endif
-	
 	if((jwl->aliases = (xj_jalias)_M_SHM_MALLOC(sizeof(t_xj_jalias)))==NULL)
 	{
-		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory.\n");
+		LM_DBG("not enough SHMemory.\n");
 		return -1;
 	}
 	
@@ -429,7 +425,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 		}
 		if((jwl->aliases->jdm = (str*)_M_SHM_MALLOC(sizeof(str)))== NULL)
 		{
-			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!?\n");
+			LM_DBG("not enough SHMemory!?\n");
 			_M_SHM_FREE(jwl->aliases);
 			jwl->aliases = NULL;
 			return -1;		
@@ -438,14 +434,14 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 		if((jwl->aliases->jdm->s=(char*)_M_SHM_MALLOC(jwl->aliases->jdm->len))
 				== NULL)
 		{
-			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!?!\n");
+			LM_DBG("not enough SHMemory!?!\n");
 			_M_SHM_FREE(jwl->aliases->jdm);
 			_M_SHM_FREE(jwl->aliases);
 			jwl->aliases = NULL;
 		}
 		strncpy(jwl->aliases->jdm->s, jd, jwl->aliases->jdm->len);
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xj_wlist_set_aliases: jdomain=%.*s delim=%c\n",
+		LM_DBG("jdomain=%.*s delim=%c\n",
 			jwl->aliases->jdm->len, jwl->aliases->jdm->s, jwl->aliases->dlm);
 #endif
 	}
@@ -455,7 +451,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 	{
 		if((jwl->aliases->proxy = (str*)_M_SHM_MALLOC(sizeof(str)))==NULL)
 		{
-			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!!\n");
+			LM_DBG(" not enough SHMemory!!\n");
 			goto clean3;		
 		}
 		i = jwl->aliases->proxy->len = strlen(pa);
@@ -466,7 +462,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 					(char*)_M_SHM_MALLOC(jwl->aliases->proxy->len))
 				== NULL)
 		{
-			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!!!\n");
+			LM_DBG("not enough SHMemory!!!\n");
 			_M_SHM_FREE(jwl->aliases->proxy);
 			goto clean3;
 		}
@@ -478,7 +474,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 		}
 		strncpy(p0, pa, i);
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xj_wlist_set_aliases: outbound proxy=[%.*s]\n",
+		LM_DBG("outbound proxy=[%.*s]\n",
 			jwl->aliases->proxy->len, jwl->aliases->proxy->s);
 #endif
 	}
@@ -489,20 +485,20 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 	
 	if((p = strchr(als, ';')) == NULL)
 	{
-		DBG("XJAB:xj_wlist_set_aliases: bad parameter value\n");
+		LM_DBG("bad parameter value\n");
 		return -1;
 	}
 	
 	if((jwl->aliases->size = atoi(als)) <= 0)
 	{
-		DBG("XJAB:xj_wlist_set_aliases: wrong number of aliases\n");
+		LM_DBG("wrong number of aliases\n");
 		return 0;
 	}
 	
 	jwl->aliases->d = (char*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(char));
 	if(jwl->aliases->d == NULL)
 	{
-		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory..\n");
+		LM_DBG("not enough SHMemory..\n");
 		goto clean2;
 	}
 	memset(jwl->aliases->d, 0, jwl->aliases->size);
@@ -510,7 +506,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 	jwl->aliases->a = (str*)_M_SHM_MALLOC(jwl->aliases->size*sizeof(str));
 	if(jwl->aliases->a == NULL)
 	{
-		DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory..\n");
+		LM_DBG("not enough SHMemory..\n");
 		goto clean1;
 	}
 	
@@ -519,7 +515,7 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 	{
 		if((p0 = strchr(p, ';'))==NULL)
 		{
-			DBG("XJAB:xj_wlist_set_aliases: bad parameter value format\n");
+			LM_DBG("bad parameter value format\n");
 			goto clean;
 		}
 		n = p0 - p;
@@ -533,13 +529,13 @@ int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 		if((jwl->aliases->a[i].s = (char*)_M_SHM_MALLOC(jwl->aliases->a[i].len))
 				== NULL)
 		{
-			DBG("XJAB:xj_wlist_set_aliases: not enough SHMemory!\n");
+			LM_DBG("not enough SHMemory!\n");
 			goto clean;
 		}
 			
 		strncpy(jwl->aliases->a[i].s, p, jwl->aliases->a[i].len);
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xj_wlist_set_aliases: alias[%d/%d]=%.*s delim=%c\n", 
+		LM_DBG("alias[%d/%d]=%.*s delim=%c\n", 
 			i+1, jwl->aliases->size, jwl->aliases->a[i].len, 
 			jwl->aliases->a[i].s, jwl->aliases->d[i]?jwl->aliases->d[i]:'X');
 #endif
@@ -640,12 +636,12 @@ void xj_wlist_del(xj_wlist jwl, xj_jkey jkey, int _pid)
 			break;
 	if(i >= jwl->len)
 	{
-		DBG("XJAB:xj_wlist_del:%d: key <%.*s> not found in [%d]...\n",
+		LM_DBG("%d: key <%.*s> not found in [%d]...\n",
 			_pid, jkey->id->len, jkey->id->s, i);
 		return;
 	}
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_wlist_del:%d: trying to delete entry for <%.*s>...\n",
+	LM_DBG("%d: trying to delete entry for <%.*s>...\n",
 		_pid, jkey->id->len, jkey->id->s);
 #endif
 	lock_set_get(jwl->sems, i);
@@ -655,7 +651,7 @@ void xj_wlist_del(xj_wlist jwl, xj_jkey jkey, int _pid)
 	{
 		jwl->workers[i].nr--;
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB:xj_wlist_del:%d: sip id <%.*s> deleted\n", _pid,
+		LM_DBG("%d: sip id <%.*s> deleted\n", _pid,
 			jkey->id->len, jkey->id->s);
 #endif
 		xj_jkey_free_p(p);

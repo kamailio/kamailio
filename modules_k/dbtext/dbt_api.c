@@ -43,7 +43,7 @@ int dbt_free_columns(db_res_t* _r)
 	if (!_r) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_free_columns: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 #endif
 		return -1;
 	}
@@ -62,7 +62,7 @@ int dbt_free_row(db_row_t* _r)
 	if (!_r) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_free_row: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 #endif
 		return -1;
 	}
@@ -80,7 +80,7 @@ int dbt_free_rows(db_res_t* _r)
 	if (!_r) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_free_rows: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 #endif
 		return -1;
 	}
@@ -103,7 +103,7 @@ int dbt_free_result(db_res_t* _r)
 	if (!_r) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_free_result: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 #endif
 		return -1;
 	}
@@ -119,7 +119,7 @@ int dbt_use_table(db_con_t* _h, const char* _t)
 	if ((!_h) || (!_t))
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_use_table: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 #endif
 		return -1;
 	}
@@ -137,7 +137,7 @@ db_res_t* dbt_new_result(void)
 	db_res_t* r = NULL;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
 	if (!r) {
-		LOG(L_ERR, "dbt_new_result(): No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return 0;
 	}
 	RES_NAMES(r) = 0;
@@ -156,18 +156,17 @@ int dbt_convert_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r)) {
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_convert_result: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 #endif
 		return -1;
 	}
 	if (dbt_get_columns(_h, _r) < 0) {
-		LOG(L_ERR, 
-			"DBT:dbt_convert_result: Error while getting column names\n");
+		LM_ERR("failed to get column names\n");
 		return -2;
 	}
 
 	if (dbt_convert_rows(_h, _r) < 0) {
-		LOG(L_ERR, "DBT:dbt_convert_result: Error while converting rows\n");
+		LM_ERR("failed to convert rows\n");
 		dbt_free_columns(_r);
 		return -3;
 	}
@@ -183,14 +182,14 @@ int dbt_get_result(db_con_t* _h, db_res_t** _r)
 	if ((!_h) || (!_r)) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_get_result: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 #endif
 		return -1;
 	}
 
 	if (!DBT_CON_RESULT(_h))
 	{
-		LOG(L_ERR, "DBT:dbt_get_result: error getting result\n");
+		LM_ERR("failed to get result\n");
 		*_r = 0;
 		return -3;
 	}
@@ -198,13 +197,13 @@ int dbt_get_result(db_con_t* _h, db_res_t** _r)
 	*_r = dbt_new_result();
 	if (*_r == 0) 
 	{
-		LOG(L_ERR, "DBT:dbt_get_result: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -2;
 	}
 
 	if (dbt_convert_result(_h, *_r) < 0) 
 	{
-		LOG(L_ERR, "DBT:dbt_get_result: Error while converting result\n");
+		LM_ERR("failed to convert result\n");
 		pkg_free(*_r);
 		return -4;
 	}
@@ -222,7 +221,7 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 	if ((!_h) || (!_r)) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_get_columns: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 #endif
 		return -1;
 	}
@@ -230,21 +229,21 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 	n = DBT_CON_RESULT(_h)->nrcols;
 	if (!n) 
 	{
-		LOG(L_ERR, "DBT:dbt_get_columns: No columns\n");
+		LM_ERR("no columns\n");
 		return -2;
 	}
 	
 	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
 	if (!RES_NAMES(_r)) 
 	{
-		LOG(L_ERR, "DBT:dbt_get_columns: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -3;
 	}
 
 	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
 	if (!RES_TYPES(_r)) 
 	{
-		LOG(L_ERR, "DBT:dbt_get_columns: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		pkg_free(RES_NAMES(_r));
 		return -4;
 	}
@@ -283,7 +282,7 @@ int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 	if ((!_h) || (!_r)) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_convert_rows: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 #endif
 		return -1;
 	}
@@ -297,7 +296,7 @@ int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 	RES_ROWS(_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
 	if (!RES_ROWS(_r)) 
 	{
-		LOG(L_ERR, "DBT:dbt_convert_rows: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -2;
 	}
 	i = 0;
@@ -307,15 +306,14 @@ int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 		DBT_CON_ROW(_h) = _rp;
 		if (!DBT_CON_ROW(_h)) 
 		{
-			LOG(L_ERR, "DBT:dbt_convert_rows: error getting current row\n");
+			LM_ERR("failed to get current row\n");
 			RES_ROW_N(_r) = i;
 			dbt_free_rows(_r);
 			return -3;
 		}
 		if (dbt_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) 
 		{
-			LOG(L_ERR, "DBT:dbt_convert_rows: Error while converting"
-				" row #%d\n", i);
+			LM_ERR("failed to convert row #%d\n", i);
 			RES_ROW_N(_r) = i;
 			dbt_free_rows(_r);
 			return -4;
@@ -335,7 +333,7 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	if ((!_h) || (!_r) || (!_res)) 
 	{
 #ifdef DBT_EXTRA_DEBUG
-		LOG(L_ERR, "DBT:dbt_convert_row: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 #endif
 		return -1;
 	}
@@ -344,7 +342,7 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	ROW_N(_r) = RES_COL_N(_res);
 	if (!ROW_VALUES(_r)) 
 	{
-		LOG(L_ERR, "DBT:dbt_convert_row: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 

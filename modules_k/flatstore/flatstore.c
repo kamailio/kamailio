@@ -42,7 +42,7 @@ static int parse_flat_url(const char* url, const char** path)
 	int len;
 
 	if (!url || !path) {
-		LOG(L_ERR, "parse_flat_url: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -63,7 +63,7 @@ db_con_t* flat_db_init(const char* url)
 	db_con_t* res;
 
 	if (!url) {
-		LOG(L_ERR, "flat_db_init: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
@@ -73,7 +73,7 @@ db_con_t* flat_db_init(const char* url)
 	      */
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct flat_con*));
 	if (!res) {
-		LOG(L_ERR, "flat_db_init: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return 0;
 	}
 	memset(res, 0, sizeof(db_con_t) + sizeof(struct flat_con*));
@@ -96,7 +96,7 @@ int flat_use_table(db_con_t* h, const char* t)
 	struct flat_con* con;
 
 	if (!h || !t) {
-		LOG(L_ERR, "flat_use_table: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -126,7 +126,7 @@ void flat_db_close(db_con_t* h)
 	struct flat_con* con;
 
 	if (!h) {
-		LOG(L_ERR, "db_close: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return;
 	}
 
@@ -155,7 +155,7 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 
 	f = CON_FILE(h);
 	if (!f) {
-		LOG(L_CRIT, "BUG: flat_db_insert: Uninitialized connection\n");
+		LM_ERR("uninitialized connection\n");
 		return -1;
 	}
 

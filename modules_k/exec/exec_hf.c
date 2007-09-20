@@ -62,7 +62,7 @@ static int insert_hf( struct hf_wrapper **list, struct hdr_field *hf )
 
 	w=(struct hf_wrapper *)pkg_malloc(sizeof(struct hf_wrapper));
 	if (!w) {
-		LOG(L_ERR, "ERROR: insert_hf ran out of pkg mem\n");
+		LM_ERR("ran out of pkg mem\n");
 		return 0;
 	}
 	memset(w, 0, sizeof(struct hf_wrapper));
@@ -170,7 +170,7 @@ static int canonize_headername(str *orig, char **hname, int *hlen )
 	*hlen=orig->len;
 	*hname=pkg_malloc(*hlen);
 	if (!*hname) {
-		LOG(L_ERR, "ERROR: print_vars: no mem for hname\n");
+		LM_ERR("no pkg mem for hname\n");
 		return 0;
 	}
 	for (c=orig->s, i=0; i<*hlen; i++, c++) {
@@ -185,8 +185,7 @@ static int canonize_headername(str *orig, char **hname, int *hlen )
 				|| (*c==ESCAPE))
 			*((*hname)+i)=HFN_SYMBOL;
 		else {
-			LOG(L_ERR, "ERROR: print_var unexpected char "
-					"'%c' in hfname %.*s\n", 
+			LM_ERR("print_var unexpected char '%c' in hfname %.*s\n", 
 					*c, *hlen, orig->s );
 			*((*hname)+i)=HFN_SYMBOL;
 		}
@@ -204,7 +203,7 @@ static int print_av_var(struct hf_wrapper *w)
 	env_len=w->u.av.attr.len+1/*assignment*/+w->u.av.val.len+1/*ZT*/;
 	env=pkg_malloc(env_len);
 	if (!env) {
-		LOG(L_ERR, "ERROR: print_av_var: no malloc mem\n");
+		LM_ERR("no pkg mem\n");
 		return 0;
 	}
 	c=env;
@@ -239,7 +238,7 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	 * do it now by uppercasing header-field name */
 	if (!canonical) {
 		if (!canonize_headername(&w->u.hf->name, &hname, &hlen)) {
-			LOG(L_ERR, "ERROR: print_hf_var: canonize_hn error\n");
+			LM_ERR("canonize_hn error\n");
 			return 0;
 		}
 	} 
@@ -250,7 +249,7 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 	}
 	envvar=pkg_malloc(w->prefix_len+hlen+1/*assignment*/+envvar_len+1/*ZT*/);
 	if (!envvar) {
-		LOG(L_ERR, "ERROR: print_var: no envvar mem\n");
+		LM_ERR("no pkg mem\n");
 		goto error00;
 	}
 	memcpy(envvar, w->prefix, w->prefix_len); c=envvar+w->prefix_len;
@@ -264,7 +263,7 @@ static int print_hf_var(struct hf_wrapper *w, int offset)
 		c+=wi->u.hf->body.len;
 	}
 	*c=0; /* zero termination */
-	DBG("DEBUG: print_var: %s\n", envvar );
+	LM_DBG("%s\n", envvar );
 	
 	w->envvar=envvar;
 	if (!canonical) pkg_free(hname);
@@ -283,8 +282,7 @@ static int print_var(struct hf_wrapper *w, int offset)
 		case W_AV: 
 			return print_av_var(w);
 		default:
-		   	LOG(L_CRIT, "BUG: print_var: unknown type: %d\n",
-					w->var_type );
+		   	LM_CRIT("unknown type: %d\n", w->var_type );
 			return 0;
 	}
 }
@@ -309,7 +307,7 @@ static int build_hf_struct(struct sip_msg *msg, struct hf_wrapper **list)
 	/* create ordered header-field structure */
 	for (h=msg->headers; h; h=h->next) {
 		if (!insert_hf(list,h)) {
-			LOG(L_ERR, "ERROR: build_hf_struct: insert_hf failed\n");
+			LM_ERR("insert_hf failed\n");
 			goto error00;
 		}
 	}
@@ -331,7 +329,7 @@ static int create_vars(struct hf_wrapper *list, int offset)
 	var_cnt=0;
 	for(w=list;w;w=w->next_other) {
 		if (!print_var(w, offset)) {
-			LOG(L_ERR, "ERROR: build_hf_struct: create_vars failed\n");
+			LM_ERR("create_vars failed\n");
 			return 0;
 		}
 		var_cnt++;
@@ -351,7 +349,7 @@ environment_t *replace_env(struct hf_wrapper *list)
 
 	backup_env=(environment_t *)pkg_malloc(sizeof(environment_t));
 	if (!backup_env) {
-		LOG(L_ERR, "ERROR: replace_env: no mem for backup env\n");
+		LM_ERR("no pkg mem for backup env\n");
 		return 0;
 	}
 
@@ -363,7 +361,7 @@ environment_t *replace_env(struct hf_wrapper *list)
 	for(w=list;w;w=w->next_other) var_cnt++;
 	new_env=pkg_malloc((var_cnt+1)*sizeof(char *));
 	if (!new_env) {
-		LOG(L_ERR, "ERROR: replace_env: no mem\n");
+		LM_ERR("no pkg mem\n");
 		return 0;
 	}
 	/* put all var pointers into new environment */
@@ -412,7 +410,7 @@ static int append_var(char *name, char *value, int len, struct hf_wrapper **list
 
 	w=(struct hf_wrapper *)pkg_malloc(sizeof(struct hf_wrapper));
 	if (!w) {
-		LOG(L_ERR, "ERROR: append_var ran out of mem\n");
+		LM_ERR("ran out of pkg mem\n");
 		return 0;
 	}
 	memset(w, 0, sizeof(struct hf_wrapper)); 
@@ -437,66 +435,66 @@ static int append_fixed_vars(struct sip_msg *msg, struct hf_wrapper **list)
 
 	/* source ip */
 	if (!append_var(EV_SRCIP, ip_addr2a(&msg->rcv.src_ip), 0, list)) {
-		LOG(L_ERR, "ERROR: append_var SRCIP failed \n");
+		LM_ERR("append_var SRCIP failed \n");
 		return 0;
 	}
 	/* request URI */
 	uri=msg->new_uri.s && msg->new_uri.len ? 
 		&msg->new_uri : &msg->first_line.u.request.uri;
 	if (!append_var(EV_RURI, uri->s, uri->len, list )) {
-		LOG(L_ERR, "ERROR: append_var URI failed\n");
+		LM_ERR("append_var URI failed\n");
 		return 0;
 	}
 	/* userpart of request URI */
 	if (parse_uri(uri->s, uri->len, &parsed_uri)<0) {
-		LOG(L_WARN, "WARNING: append_var: URI not parsed\n");
+		LM_WARN("uri not parsed\n");
 	} else {
 		if (!append_var(EV_USER, parsed_uri.user.s, 
 					parsed_uri.user.len, list)) {
-			LOG(L_ERR, "ERROR: append_var USER failed\n");
+			LM_ERR("append_var USER failed\n");
 			goto error;
 		}
 	}
 	/* original URI */
 	if (!append_var(EV_ORURI, msg->first_line.u.request.uri.s,
 				msg->first_line.u.request.uri.len, list)) {
-		LOG(L_ERR, "ERROR: append_var O-URI failed\n");
+		LM_ERR("append_var O-URI failed\n");
 		goto error;
 	}
 	/* userpart of request URI */
 	if (parse_uri(msg->first_line.u.request.uri.s, 
 				msg->first_line.u.request.uri.len, 
 				&oparsed_uri)<0) {
-		LOG(L_WARN, "WARNING: append_var: orig URI not parsed\n");
+		LM_WARN("orig URI not parsed\n");
 	} else {
 		if (!append_var(EV_OUSER, oparsed_uri.user.s, 
 					oparsed_uri.user.len, list)) {
-			LOG(L_ERR, "ERROR: append_var OUSER failed\n");
+			LM_ERR("ppend_var OUSER failed\n");
 			goto error;
 		}
 	}
 	/* tid, transaction id == via/branch */
 	if (!char_msg_val(msg, tid)) {
-		LOG(L_WARN, "WARNING: no tid can be determined\n");
+		LM_WARN("no tid can be determined\n");
 		val=0; val_len=0;
 	} else {
 		val=tid;val_len=MD5_LEN;
 	}
 	if (!append_var(EV_TID, val,val_len, list)) {
-		LOG(L_ERR, "ERROR: append_var TID failed\n");
+		LM_ERR("append_var TID failed\n");
 		goto error;
 	}
 
 	/* did, dialogue id == To-tag */
 	if (!(msg->to && get_to(msg) ))  {
-		LOG(L_ERR, "ERROR: append_var: no to-tag\n");
+		LM_ERR("no to-tag\n");
 		val=0; val_len=0;
 	} else {
 		val=get_to(msg)->tag_value.s;
 		val_len=get_to(msg)->tag_value.len;
 	}
 	if (!append_var(EV_DID, val, val_len, list)) {
-		LOG(L_ERR, "ERROR: append_var DID failed\n");
+		LM_ERR("append_var DID failed\n");
 		goto error;
 	}
 	return 1;
@@ -511,7 +509,7 @@ environment_t *set_env(struct sip_msg *msg)
 
 	/* parse all so that we can pass all header fields to script */
 	if (parse_headers(msg, HDR_EOH_F, 0)==-1) {
-		LOG(L_ERR, "ERROR: set_env: parsing failed\n");
+		LM_ERR("parsing failed\n");
 		return 0;
 	}
 
@@ -519,22 +517,22 @@ environment_t *set_env(struct sip_msg *msg)
 	/* create a temporary structure with ordered header fields
 	 * and create environment variables out of it */
 	if (!build_hf_struct(msg, &hf_list)) {
-		LOG(L_ERR, "ERROR: set_env: build_hf_struct failed\n");
+		LM_ERR("build_hf_struct failed\n");
 		return 0;
 	}
 	if (!append_fixed_vars(msg, &hf_list)) {
-		LOG(L_ERR, "ERROR: ser_env: append_fixed_vars failed\n");
+		LM_ERR("append_fixed_vars failed\n");
 		goto error01;
 	}
 	/* create now the strings for environment variables */
 	if (!create_vars(hf_list, 0)) {
-		LOG(L_ERR, "ERROR: set_env: create_vars failed\n");
+		LM_ERR("create_vars failed\n");
 		goto error00;
 	}
 	/* install the variables in current environment */
 	backup_env=replace_env(hf_list);
 	if (!backup_env) {
-		LOG(L_ERR, "ERROR: set_env: replace_env failed\n");
+		LM_ERR("replace_env failed\n");
 		goto error00;
 	}
 	/* release the ordered HF structure -- we only need the vars now */

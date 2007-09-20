@@ -105,8 +105,7 @@ static void timer_routine(unsigned int ticks , void * attr)
 		ret->next_tl=ret->prev_tl=0;
 		if (ret->time_out>0) {
 			killr=kill(ret->pid, SIGTERM );
-			DBG("DEBUG: child process (%d) kill status: %d\n",
-				ret->pid, killr );
+			LM_DBG("child process (%d) kill status: %d\n", ret->pid, killr );
 		}
 		shm_free(ret);
 		ret=tmp_tl;
@@ -118,7 +117,7 @@ int schedule_to_kill( int pid )
 	struct timer_link *tl;
 	tl=shm_malloc( sizeof(struct timer_link) );
 	if (tl==0) {
-		LOG(L_ERR, "ERROR: schedule_to_kill: no shmem\n");
+		LM_ERR("no shmem\n");
 		return -1;
 	}
 	memset(tl, 0, sizeof(struct timer_link) );
@@ -139,7 +138,7 @@ int initialize_kill(void)
 	if (time_to_kill==0) return 1;
     if ((register_timer( timer_routine,
             0 /* param */, 1 /* period */)<0)) {
-        LOG(L_ERR, "ERROR: kill_initialize: no exec timer registered\n");
+        LM_ERR("no exec timer registered\n");
         return -1;
     }
 	kill_list.first_tl.next_tl=&kill_list.last_tl;
@@ -149,11 +148,11 @@ int initialize_kill(void)
 	kill_list.last_tl.time_out=-1;
 	kill_lock=lock_alloc();
 	if (kill_lock==0) {
-		LOG(L_ERR, "ERROR: initialize_kill: no mem for mutex\n");
+		LM_ERR("no shm mem for mutex\n");
 		return -1;
 	}
 	lock_init(kill_lock);
-	DBG("DEBUG: kill initialized\n");
+	LM_DBG("kill initialized\n");
 	return 1;
 }
 

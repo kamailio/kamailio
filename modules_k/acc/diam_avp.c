@@ -114,8 +114,7 @@ AAA_AVP*  AAACreateAVP(
 
 	/* first check the params */
 	if( data==0 || length==0) {
-		LOG(L_ERR,"ERROR:AAACreateAndAddAVPToList: NULL value received for"
-			" param data/length !!\n");
+		LM_ERR("null value received for param data/length !!\n");
 		return 0;
 	}
 
@@ -150,7 +149,7 @@ AAA_AVP*  AAACreateAVP(
 
 	return avp;
 error:
-	LOG(L_ERR,"ERROR:AAACreateAVP: no more free memory!\n");
+	LM_ERR("no more free memoryfor a new AVP!\n");
 	return 0;
 }
 
@@ -165,8 +164,8 @@ AAAReturnCode  AAAAddAVPToMessage(
 	AAA_AVP *avp_t;
 
 	if ( !msg || !avp ) {
-		LOG(L_ERR,"ERROR:AAAAddAVPToList: param msg or avp passed null"
-			" or *avpList=NULL and position!=NULL !!\n");
+		LM_ERR("param msg or avp passed null or *avpList=NULL "
+				"and position!=NULL !!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -183,8 +182,7 @@ AAAReturnCode  AAAAddAVPToMessage(
 		/* look after avp from position */
 		for(avp_t=msg->avpList.head;avp_t&&avp_t!=position;avp_t=avp_t->next);
 		if (!avp_t) {
-			LOG(L_ERR,"ERROR: AAACreateAVP: the \"position\" avp is not in"
-				"\"msg\" message!!\n");
+			LM_ERR("the \"position\" avp is not in \"msg\" message!!\n");
 			return AAA_ERR_PARAMETER;
 		}
 		/* insert after position */
@@ -224,14 +222,13 @@ AAA_AVP  *AAAFindMatchingAVP(
 
 	/* param checking */
 	if (!msg) {
-		LOG(L_ERR,"ERROR:FindMatchingAVP: param msg passed null !!\n");
+		LM_ERR("param msg passed null !!\n");
 		goto error;
 	}
 	/* search the startAVP avp */
 	for(avp_t=msg->avpList.head;avp_t&&avp_t!=startAvp;avp_t=avp_t->next);
 	if (!avp_t && startAvp) {
-		LOG(L_ERR,"ERROR: AAAFindMatchingAVP: the \"position\" avp is not in"
-			"\"avpList\" list!!\n");
+		LM_ERR("the \"position\" avp is not in \"avpList\" list!!\n");
 		goto error;
 	}
 
@@ -265,16 +262,14 @@ AAAReturnCode  AAARemoveAVPFromMessage(
 
 	/* param check */
 	if ( !msg || !avp ) {
-		LOG(L_ERR,"ERROR:AAAAddAVPToList: param AVP_LIST \"avpList\" or AVP "
-			"\"avp\" passed null !!\n");
+		LM_ERR("param AVP_LIST \"avpList\" or AVP \"avp\" passed null !!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
 	/* search the "avp" avp */
 	for(avp_t=msg->avpList.head;avp_t&&avp_t!=avp;avp_t=avp_t->next);
 	if (!avp_t) {
-		LOG(L_ERR,"ERROR: AAACreateAVP: the \"avp\" avp is not in "
-			"\"avpList\" avp list!!\n");
+		LM_ERR("the \"avp\" avp is not in \"avpList\" avp list!!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -310,7 +305,7 @@ AAAReturnCode  AAAFreeAVP(AAA_AVP **avp)
 {
 	/* some checks */
 	if (!avp || !(*avp)) {
-		LOG(L_ERR,"ERROR:AAAFreeAVP: param avp cannot be null!!\n");
+		LM_ERR("param avp cannot be null!!\n");
 		return AAA_ERR_PARAMETER;
 	}
 
@@ -366,8 +361,7 @@ char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 	int i;
 
 	if (!avp || !dest || !destLen) {
-		LOG(L_ERR,"ERROR:AAAConvertAVPToString: param AVP, DEST or DESTLEN "
-			"passed as null!!!\n");
+		LM_ERR("param AVP, DEST or DESTLEN passed as null!!!\n");
 		return 0;
 	}
 	l = snprintf(dest,destLen,"AVP(%p < %p >%p):packetType=%u;code=%u,"
@@ -414,7 +408,7 @@ char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 		//case AAA_AVP_INTEGER64_TYPE:
 		case AAA_AVP_TIME_TYPE:
 		default:
-			LOG(L_WARN,"WARNING:AAAConvertAVPToString: don't know how to print"
+			LM_WARN("don't know how to print"
 				" this data type [%d] -> tryng hexa\n",avp->type);
 		case AAA_AVP_DATA_TYPE:
 			for (i=0;i<avp->data.len&&l<destLen-1;i++)
@@ -436,7 +430,7 @@ AAA_AVP* AAACloneAVP( AAA_AVP *avp , unsigned char clone_data)
 	/* clone the avp structure */
 	n_avp = (AAA_AVP*)ad_malloc( sizeof(AAA_AVP) );
 	if (!n_avp) {
-		LOG(L_ERR,"ERROR:clone_avp: cannot get free memory!!\n");
+		LM_ERR("cannot get free memory!!\n");
 		goto error;
 	}
 	memcpy( n_avp, avp, sizeof(AAA_AVP));
@@ -446,7 +440,7 @@ AAA_AVP* AAACloneAVP( AAA_AVP *avp , unsigned char clone_data)
 		/* clone the avp data */
 		n_avp->data.s = (char*)ad_malloc( avp->data.len );
 		if (!(n_avp->data.s)) {
-			LOG(L_ERR,"ERROR:clone_avp: cannot get free memory!!\n");
+			LM_ERR("cannot get free memory!!\n");
 			ad_free( n_avp );
 			goto error;
 		}

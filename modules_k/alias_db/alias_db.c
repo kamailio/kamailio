@@ -112,7 +112,7 @@ static int child_init(int rank)
 	db_handle = adbf.init(db_url);
 	if (!db_handle)
 	{
-		LOG(L_ERR, "alias_db:init_child: Unable to connect database\n");
+		LM_ERR("unable to connect database\n");
 		return -1;
 	}
 	return 0;
@@ -125,17 +125,17 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	DBG("alias_db module - initializing\n");
+	LM_INFO("initializing...\n");
 
     /* Find a database module */
 	if (bind_dbmod(db_url, &adbf))
 	{
-		LOG(L_ERR, "alias_db:mod_init: Unable to bind database module\n");
+		LM_ERR("unable to bind database module\n");
 		return -1;
 	}
 	if (!DB_CAPABILITY( adbf, DB_CAP_QUERY))
 	{
-		LOG(L_CRIT, "alias_db:mod_init:  Database modules does not "
+		LM_CRIT("database modules does not "
 			"provide all functions needed by avpops module\n");
 		return -1;
 	}

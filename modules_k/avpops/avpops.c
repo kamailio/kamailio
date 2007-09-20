@@ -162,7 +162,7 @@ struct module_exports exports = {
 
 static int avpops_init(void)
 {
-	LOG(L_INFO,"AVPops - initializing\n");
+	LM_INFO("initializing...\n");
 
 	/* if DB_URL defined -> bind to a DB module */
 	if (DB_URL!=0)
@@ -170,8 +170,7 @@ static int avpops_init(void)
 		/* check AVP_TABLE param */
 		if (DB_TABLE==0)
 		{
-			LOG(L_CRIT,"ERROR:avpops_init: \"AVP_DB\" present but "
-				"\"AVP_TABLE\" found empty\n");
+			LM_CRIT("\"AVP_DB\" present but \"AVP_TABLE\" found empty\n");
 			goto error;
 		}
 		/* bind to the DB module */
@@ -213,8 +212,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	flags0=0;
 	if (DB_URL==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:fixup_db_avp: you have to config a db url "
-			"for using avp_db_xxx functions\n");
+		LM_ERR("you have to config a db url for using avp_db_xxx functions\n");
 		return E_UNSPEC;
 	}
 
@@ -224,7 +222,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		/* prepare the fis_param structure */
 		sp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 		if (sp==0) {
-			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!\n");
+			LM_ERR("no more pkg mem!\n");
 			return E_OUT_OF_MEM;
 		}
 		memset( sp, 0, sizeof(struct fis_param));
@@ -242,7 +240,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			} else if (!strcasecmp("uuid",p)) {
 				flags|=AVPOPS_FLAG_UUID0;
 			} else {
-				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: unknow flag "
+				LM_ERR("unknow flag "
 					"<%s>\n",p);
 				return E_UNSPEC;
 			}
@@ -253,7 +251,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			sp->opd = ((flags==0)?AVPOPS_FLAG_UUID0:flags)|AVPOPS_VAL_STR;
 			sp->u.s.s = (char*)pkg_malloc(strlen(s.s)+1);
 			if (sp->u.s.s==0) {
-				LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!!\n");
+				LM_ERR("no more pkg mem!!\n");
 				return E_OUT_OF_MEM;
 			}
 			sp->u.s.len = strlen(s.s);
@@ -264,7 +262,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 			p = pv_parse_spec(&s, &sp->u.sval);
 			if (p==0 || sp->u.sval.type==PVT_NULL || sp->u.sval.type==PVT_EMPTY)
 			{
-				LOG(L_ERR,"ERROR:avops:fixup_db_avp: bad param 1; "
+				LM_ERR("bad param 1; "
 					"expected : $pseudo-variable or int/str value\n");
 				return E_UNSPEC;
 			}
@@ -283,13 +281,13 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 		dbp = (struct db_param*)pkg_malloc(sizeof(struct db_param));
 		if (dbp==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: no more pkg mem!!!\n");
+			LM_ERR("no more pkg mem!!!\n");
 			return E_OUT_OF_MEM;
 		}
 		memset( dbp, 0, sizeof(struct db_param));
 		if ( parse_avp_db( s.s, dbp, allow_scheme)!=0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_db_avp: parse failed\n");
+			LM_ERR("parse failed\n");
 			return E_UNSPEC;
 		}
 		*param=(void*)dbp;
@@ -323,8 +321,7 @@ static int fixup_db_query_avp(void** param, int param_no)
 
 	if (DB_URL==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:fixup_db_query_avp: you have to config a"
-				" db url for using avp_db_query function\n");
+		LM_ERR("you have to config a db url for using avp_db_query function\n");
 		return E_UNSPEC;
 	}
 
@@ -333,16 +330,14 @@ static int fixup_db_query_avp(void** param, int param_no)
 	{
 		if(s.s==NULL)
 		{
-			LOG(L_ERR, "ERROR:avpops:fixup_db_query_avp: null format in P%d\n",
+			LM_ERR("null format in P%d\n",
 					param_no);
 			return E_UNSPEC;
 		}
 		s.len = strlen(s.s);
 		if(pv_parse_format(&s, &model)<0)
 		{
-			LOG(L_ERR,
-				"ERROR:avpops:fixup_db_query_avp: wrong format[%s]\n",
-				s.s);
+			LM_ERR("wrong format[%s]\n", s.s);
 			return E_UNSPEC;
 		}
 			
@@ -351,8 +346,7 @@ static int fixup_db_query_avp(void** param, int param_no)
 	} else if(param_no==2) {
 		if(s.s==NULL)
 		{
-			LOG(L_ERR, "ERROR:avpops:fixup_db_query_avp: null format in P%d\n",
-					param_no);
+			LM_ERR("null format in P%d\n", param_no);
 			return E_UNSPEC;
 		}
 				s.len = strlen(s.s);
@@ -360,9 +354,7 @@ static int fixup_db_query_avp(void** param, int param_no)
 		anlist = parse_pvname_list(&s, PVT_AVP);
 		if(anlist==NULL)
 		{
-			LOG(L_ERR,
-				"ERROR:avpops:fixup_db_query_avp: bad format in P%d [%s]\n",
-				param_no, s.s);
+			LM_ERR("bad format in P%d [%s]\n", param_no, s.s);
 			return E_UNSPEC;
 		}
 		*param = (void*)anlist;
@@ -393,14 +385,13 @@ static int fixup_delete_avp(void** param, int param_no)
 			ap = avpops_parse_pvar(s);
 			if (ap==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: unable to get"
+				LM_ERR("unable to get"
 					" pseudo-variable in param \n");
 				return E_UNSPEC;
 			}
 			if (ap->u.sval.type!=PVT_AVP)
 			{
-				LOG(L_ERR,"ERROR:avops:fixup_delete_avp: bad param; "
-					"expected : $avp(name)\n");
+				LM_ERR("bad param; expected : $avp(name)\n");
 				return E_UNSPEC;
 			}
 			ap->opd|=AVPOPS_VAL_PVAR;
@@ -408,15 +399,13 @@ static int fixup_delete_avp(void** param, int param_no)
 		} else {
 			if(strlen(s)<1)
 			{
-				LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
-					"expected : $avp(name), *, s or i value\n");
+				LM_ERR("bad param - expected : $avp(name), *, s or i value\n");
 				return E_UNSPEC;
 			}
 			ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 			if (ap==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: no more "
-					"pkg mem\n");
+				LM_ERR(" no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
 			memset(ap, 0, sizeof(struct fis_param));
@@ -432,8 +421,7 @@ static int fixup_delete_avp(void** param, int param_no)
 					ap->opd = AVPOPS_VAL_NONE;
 				break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: bad param - "
-						"expected : *, s or i AVP flag\n");
+					LM_ERR(" bad param - expected : *, s or i AVP flag\n");
 					pkg_free(ap);
 					return E_UNSPEC;
 			}
@@ -445,8 +433,7 @@ static int fixup_delete_avp(void** param, int param_no)
 				s0.len = strlen(s0.s);
 				if(str2int(&s0, &flags)!=0)
 				{
-					LOG(L_ERR,
-					"ERROR:avpops:fixup_delete_avp: error - bad avp flags\n");
+					LM_ERR("bad avp flags\n");
 					pkg_free(ap);
 					return E_UNSPEC;
 				}
@@ -465,8 +452,7 @@ static int fixup_delete_avp(void** param, int param_no)
 					ap->ops|=AVPOPS_FLAG_ALL;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_delete_avp: bad flag "
-						"<%c>\n",*p);
+					LM_ERR(" bad flag <%c>\n",*p);
 					if(ap!=NULL)
 						pkg_free(ap);
 					return E_UNSPEC;
@@ -502,16 +488,14 @@ static int fixup_copy_avp(void** param, int param_no)
 	ap = avpops_parse_pvar(s);
 	if (ap==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: unable to get"
-				" pseudo-variable in P%d\n", param_no);
+		LM_ERR("unable to get pseudo-variable in P%d\n", param_no);
 		return E_OUT_OF_MEM;
 	}
 
 	/* attr name is mandatory */
 	if (ap->u.sval.type!=PVT_AVP)
 	{
-		LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: you must specify "
-			"only AVP as parameter\n");
+		LM_ERR("you must specify only AVP as parameter\n");
 		return E_UNSPEC;
 	}
 
@@ -538,8 +522,7 @@ static int fixup_copy_avp(void** param, int param_no)
 					ap->ops|=AVPOPS_FLAG_CASTS;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_copy_avp: bad flag "
-						"<%c>\n",*p);
+					LM_ERR("bad flag <%c>\n",*p);
 					return E_UNSPEC;
 			}
 		}
@@ -562,8 +545,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 	{
 		if ( *s!='$')
 		{
-			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; expected : "
-				"$ru $du ...\n");
+			LM_ERR("bad param 1; expected : $ru $du ...\n");
 			return E_UNSPEC;
 		}
 		/* compose the param structure */
@@ -573,8 +555,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unable to get"
-					" pseudo-variable in param 1\n");
+			LM_ERR("unable to get pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
 
@@ -587,47 +568,42 @@ static int fixup_pushto_avp(void** param, int param_no)
 					(!strcasecmp("domain",p)
 							&& (ap->opd|=AVPOPS_FLAG_DOMAIN0)) ))
 				{
-					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
-						" ruri flag \"%s\"!\n",p);
+					LM_ERR("unknown ruri flag \"%s\"!\n",p);
 					return E_UNSPEC;
 				}
 			break;
 			case PVT_DSTURI:
 				if ( p!=0 )
 				{
-					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
-						" duri flag \"%s\"!\n",p);
+					LM_ERR("unknown duri flag \"%s\"!\n",p);
 					return E_UNSPEC;
 				}
 				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_DURI;
 			break;
 			case PVT_HDR:
 				/* what's the hdr destination ? request or reply? */
-				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: push to header "
-						" is obsoleted - use append_hf() or append_to_reply()"
-						" from textops module!\n");
+				LM_ERR("push to header  is obsoleted - use append_hf() "
+						"or append_to_reply() from textops module!\n");
 				return E_UNSPEC;
 			break;
 			case PVT_BRANCH:
 				if ( p!=0 )
 				{
-					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unknown "
-						" branch flag \"%s\"!\n",p);
+					LM_ERR("unknown branch flag \"%s\"!\n",p);
 					return E_UNSPEC;
 				}
 				ap->opd = AVPOPS_VAL_NONE|AVPOPS_USE_BRANCH;
 			break;
 			default:
-				LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: unsupported "
-					" destination \"%s\"; expected $ru,$du,$br\n",s);
+				LM_ERR("unsupported destination \"%s\"; "
+						"expected $ru,$du,$br\n",s);
 				return E_UNSPEC;
 		}
 	} else if (param_no==2) {
 		/* attribute name*/
 		if ( *s!='$')
 		{
-			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 1; expected : "
-				"$pseudo-variable ...\n");
+			LM_ERR("bad param 1; expected :$pseudo-variable ...\n");
 			return E_UNSPEC;
 		}
 		/* compose the param structure */
@@ -637,14 +613,12 @@ static int fixup_pushto_avp(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_pudhto_avp: unable to get"
-					" pseudo-variable in param 2\n");
+			LM_ERR("unable to get pseudo-variable in param 2\n");
 			return E_OUT_OF_MEM;
 		}
 		if (ap->u.sval.type==PVT_NULL)
 		{
-			LOG(L_ERR,"ERROR:avops:fixup_pushto_avp: bad param 2; "
-				"expected : $pseudo-variable ...\n");
+			LM_ERR("bad param 2; expected : $pseudo-variable ...\n");
 			pkg_free(ap);
 			return E_UNSPEC;
 		}
@@ -659,8 +633,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 					ap->ops|=AVPOPS_FLAG_ALL;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_pushto_avp: bad flag "
-						"<%c>\n",*p);
+					LM_ERR("bad flag <%c>\n",*p);
 					pkg_free(ap);
 					return E_UNSPEC;
 			}
@@ -685,22 +658,19 @@ static int fixup_check_avp(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: unable to get"
-					" pseudo-variable in P1\n");
+			LM_ERR(" unable to get pseudo-variable in P1\n");
 			return E_OUT_OF_MEM;
 		}
 		/* attr name is mandatory */
 		if (ap->u.sval.type==PVT_NULL)
 		{
-			LOG(L_ERR,
-				"ERROR:avpops:fixup_check_avp: NULL pseudo-variable in P1\n");
+			LM_ERR("null pseudo-variable in P1\n");
 			return E_UNSPEC;
 		}
 	} else if (param_no==2) {
 		if ( (ap=parse_check_value(s))==0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_check_avp: failed to parse "
-				"checked value \n");
+			LM_ERR(" failed to parse checked value \n");
 			return E_UNSPEC;
 		}
 		/* if REGEXP op -> compile the expresion */
@@ -708,24 +678,21 @@ static int fixup_check_avp(void** param, int param_no)
 		{
 			if ( (ap->opd&AVPOPS_VAL_STR)==0 )
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: regexp operation "
-					"requires string value\n");
+				LM_ERR(" regexp operation requires string value\n");
 				return E_UNSPEC;
 			}
 			re = pkg_malloc(sizeof(regex_t));
 			if (re==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: no more pkg mem\n");
+				LM_ERR(" no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
-			DBG("DEBUG:avpops:fixup_check_avp: compiling regexp <%.*s>\n",
-				ap->u.s.len, ap->u.s.s);
+			LM_DBG("compiling regexp <%.*s>\n", ap->u.s.len, ap->u.s.s);
 			if (regcomp(re, ap->u.s.s,
 						REG_EXTENDED|REG_ICASE|REG_NEWLINE))
 			{
 				pkg_free(re);
-				LOG(L_ERR,"ERROR:avpops:fixip_check_avp: bad re <%.*s>\n",
-					ap->u.s.len, ap->u.s.s);
+				LM_ERR("bad re <%.*s>\n", ap->u.s.len, ap->u.s.s);
 				return E_BAD_RE;
 			}
 			/* free the string and link the regexp */
@@ -735,9 +702,8 @@ static int fixup_check_avp(void** param, int param_no)
 			if ( !( ap->opd&AVPOPS_VAL_PVAR ||
 			(!(ap->opd&AVPOPS_VAL_PVAR) && ap->opd&AVPOPS_VAL_STR) ) )
 			{
-				LOG(L_ERR,"ERROR:avpops:fixup_check_avp: fast_match operation "
-					"requires string value or avp name/alias (%d/%d)\n",
-					ap->opd, ap->ops);
+				LM_ERR(" fast_match operation requires string value or "
+						"avp name/alias (%d/%d)\n",	ap->opd, ap->ops);
 				return E_UNSPEC;
 			}
 		}
@@ -759,15 +725,13 @@ static int fixup_printf(void** param, int param_no)
 		ap = avpops_parse_pvar(s.s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_printf_avp: unable to get"
-					" pseudo-variable in param\n");
+			LM_ERR("unable to get pseudo-variable in param\n");
 			return E_OUT_OF_MEM;
 		}
 
 		if (ap->u.sval.type!=PVT_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_printf: bad avp name"
-				" <%s>\n", (char*)*param);
+			LM_ERR("bad avp name <%s>\n", (char*)*param);
 			return E_UNSPEC;
 		}
 		*param=(void*)ap;
@@ -777,8 +741,7 @@ static int fixup_printf(void** param, int param_no)
 			s.len = strlen(s.s);
 			if(pv_parse_format(&s, &model)<0)
 			{
-				LOG(L_ERR, "ERROR:avpops:fixup_printf: wrong format[%s]\n",
-					(char*)(*param));
+				LM_ERR(" wrong format[%s]\n", (char*)(*param));
 				return E_UNSPEC;
 			}
 			
@@ -787,7 +750,7 @@ static int fixup_printf(void** param, int param_no)
 		}
 		else
 		{
-			LOG(L_ERR, "ERROR:avpops:fixup_printf: null format\n");
+			LM_ERR("null format\n");
 			return E_UNSPEC;
 		}
 	}
@@ -811,7 +774,7 @@ static int fixup_subst(void** param, int param_no)
 		av = (struct fis_param**)pkg_malloc(2*sizeof(struct fis_param*));
 		if(av==NULL)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_subst: no more memory\n");
+			LM_ERR("no more pkg memory\n");
 			return E_UNSPEC;			
 		}
 		memset(av, 0, 2*sizeof(struct fis_param*));
@@ -822,22 +785,19 @@ static int fixup_subst(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
-					" pseudo-variable in param 2 [%s]\n", s);
+			LM_ERR("unable to get pseudo-variable in param 2 [%s]\n", s);
 			return E_OUT_OF_MEM;
 		}
 		if (ap->u.sval.type!=PVT_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
-				" <%s>\n", (char*)*param);
+			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			pkg_free(av);
 			return E_UNSPEC;
 		}
 		/* attr name is mandatory */
 		if (ap->opd&AVPOPS_VAL_NONE)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_subst: you must specify "
-				"a name for the AVP\n");
+			LM_ERR("you must specify a name for the AVP\n");
 			return E_UNSPEC;
 		}
 		av[0] = ap;
@@ -858,23 +818,20 @@ static int fixup_subst(void** param, int param_no)
 				ap = avpops_parse_pvar(s);
 				if (ap==0)
 				{
-					LOG(L_ERR,"ERROR:avpops:fixup_subst: unable to get"
-						" pseudo-variable in param 2 [%s]\n",s);
+					LM_ERR("unable to get pseudo-variable in param 2 [%s]\n",s);
 					return E_OUT_OF_MEM;
 				}
 			
 				if (ap->u.sval.type!=PVT_AVP)
 				{
-					LOG(L_ERR,"ERROR:avpops:fixup_subst: bad attribute name"
-						" <%s>!\n", s);
+					LM_ERR("bad attribute name <%s>!\n", s);
 					pkg_free(av);
 					return E_UNSPEC;
 				}
 				/* attr name is mandatory */
 				if (ap->opd&AVPOPS_VAL_NONE)
 				{
-					LOG(L_ERR,"ERROR:avpops:fixup_subst: you must specify "
-						"a name for the AVP!\n");
+					LM_ERR("you must specify a name for the AVP!\n");
 					return E_UNSPEC;
 				}
 				av[1] = ap;
@@ -899,20 +856,18 @@ static int fixup_subst(void** param, int param_no)
 					av[0]->ops|=AVPOPS_FLAG_DELETE;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_subst: bad flag "
-						"<%c>\n",*p);
+					LM_ERR("bad flag <%c>\n",*p);
 					return E_UNSPEC;
 			}
 		}
 		*param=(void*)av;
 	} else if (param_no==2) {
-		DBG("%s:fixup_subst: fixing %s\n", exports.name, (char*)(*param));
+		LM_DBG("%s fixing %s\n", exports.name, (char*)(*param));
 		subst.s=*param;
 		subst.len=strlen(*param);
 		se=subst_parser(&subst);
 		if (se==0){
-			LOG(L_ERR, "ERROR:%s:fixup_subst: bad subst re %s\n",exports.name, 
-					(char*)*param);
+			LM_ERR("%s: bad subst re %s\n",exports.name, (char*)*param);
 			return E_BAD_RE;
 		}
 		/* don't free string -- needed for specifiers */
@@ -939,7 +894,7 @@ static int fixup_op_avp(void** param, int param_no)
 		av = (struct fis_param**)pkg_malloc(2*sizeof(struct fis_param*));
 		if(av==NULL)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: no more memory\n");
+			LM_ERR("no more pkg memory\n");
 			return E_UNSPEC;			
 		}
 		memset(av, 0, 2*sizeof(struct fis_param*));
@@ -950,14 +905,12 @@ static int fixup_op_avp(void** param, int param_no)
 		av[0] = avpops_parse_pvar(s);
 		if (av[0]==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: unable to get"
-					" pseudo-variable in param 1\n");
+			LM_ERR("unable to get pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
 		if (av[0]->u.sval.type!=PVT_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: bad attribute name"
-				" <%s>\n", (char*)*param);
+			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			pkg_free(av);
 			return E_UNSPEC;
 		}
@@ -971,14 +924,12 @@ static int fixup_op_avp(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: unable to get"
-					" pseudo-variable in param 1 (2)\n");
+			LM_ERR("unable to get pseudo-variable in param 1 (2)\n");
 			return E_OUT_OF_MEM;
 		}
 		if (ap->u.sval.type!=PVT_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: bad attribute name"
-				"/alias <%s>!\n", s);
+			LM_ERR("bad attribute name/alias <%s>!\n", s);
 			pkg_free(av);
 			return E_UNSPEC;
 		}
@@ -988,15 +939,13 @@ static int fixup_op_avp(void** param, int param_no)
 	} else if (param_no==2) {
 		if ( (ap=parse_op_value(s))==0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: failed to parse "
-				"the value \n");
+			LM_ERR("failed to parse the value \n");
 			return E_UNSPEC;
 		}
 		/* only integer values or avps */
 		if ( (ap->opd&AVPOPS_VAL_STR)!=0 && (ap->opd&AVPOPS_VAL_PVAR)==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_op_avp: operations "
-				"requires integer values\n");
+			LM_ERR("operations requires integer values\n");
 			return E_UNSPEC;
 		}
 		*param=(void*)ap;
@@ -1020,15 +969,13 @@ static int fixup_is_avp_set(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: unable to get"
-					" pseudo-variable in param\n");
+			LM_ERR("unable to get pseudo-variable in param\n");
 			return E_OUT_OF_MEM;
 		}
 		
 		if (ap->u.sval.type!=PVT_AVP)
 		{
-			LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: bad attribute name"
-					" <%s>\n", (char*)*param);
+			LM_ERR("bad attribute name <%s>\n", (char*)*param);
 			return E_UNSPEC;
 		}
 		if(p==0 || *p=='\0')
@@ -1046,8 +993,7 @@ static int fixup_is_avp_set(void** param, int param_no)
 				case 'N':
 					if(ap->ops&AVPOPS_FLAG_CASTS)
 					{
-						LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: invalid flag"
-							" combination <%c> and 's|S'\n",*p);
+						LM_ERR("invalid flag combination <%c> and 's|S'\n",*p);
 						return E_UNSPEC;
 					}
 					ap->ops|=AVPOPS_FLAG_CASTN;
@@ -1056,15 +1002,13 @@ static int fixup_is_avp_set(void** param, int param_no)
 				case 'S':
 					if(ap->ops&AVPOPS_FLAG_CASTN)
 					{
-						LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: invalid flag"
-							" combination <%c> and 'n|N'\n",*p);
+						LM_ERR("invalid flag combination <%c> and 'n|N'\n",*p);
 						return E_UNSPEC;
 					}
 					ap->ops|=AVPOPS_FLAG_CASTS;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:fixup_is_avp_set: bad flag "
-						"<%c>\n",*p);
+					LM_ERR("bad flag <%c>\n",*p);
 					return E_UNSPEC;
 			}
 		}

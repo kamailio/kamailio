@@ -51,13 +51,14 @@ struct flat_con* flat_get_connection(char* dir, char* table)
 	int pid;
 
 	if (!dir || !table) {
-		LOG(L_ERR, "flat_get_connection: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	pid = getpid();
 	if (pool && (pool_pid != pid)) {
-		LOG(L_ERR, "flat_get_connection: Inherited open database connections, this is not a good idea\n");
+		LM_ERR("inherited open database connections, "
+				"this is not a good idea\n");
 		return 0;
 	}
 
@@ -69,7 +70,7 @@ struct flat_con* flat_get_connection(char* dir, char* table)
 	ptr = pool;
 	while (ptr) {
 		if (cmp_flat_id(id, ptr->id)) {
-			DBG("flat_get_connection: Connection found in the pool\n");
+			LM_DBG("connection found in the pool\n");
 			ptr->ref++;
 			free_flat_id(id);
 			return ptr;
@@ -77,7 +78,7 @@ struct flat_con* flat_get_connection(char* dir, char* table)
 		ptr = ptr->next;
 	}
 
-	DBG("flat_get_connection: Connection not found in the pool\n");
+	LM_DBG("connection not found in the pool\n");
 	ptr = flat_new_connection(id);
 	if (!ptr) {
 		free_flat_id(id);
@@ -105,12 +106,12 @@ void flat_release_connection(struct flat_con* con)
 		     /* There are still other users, just
 		      * decrease the reference count and return
 		      */
-		DBG("flat_release_connection: Connection still kept in the pool\n");
+		LM_DBG("connection still kept in the pool\n");
 		con->ref--;
 		return;
 	}
 
-	DBG("flat_release_connection: Removing connection from the pool\n");
+	LM_DBG("removing connection from the pool\n");
 
 	if (pool == con) {
 		pool = pool->next;
@@ -121,7 +122,7 @@ void flat_release_connection(struct flat_con* con)
 			ptr = ptr->next;
 		}
 		if (!ptr) {
-			LOG(L_ERR, "flat_release_connection: Weird, connection not found in the pool\n");
+			LM_ERR("weird, connection not found in the pool\n");
 		} else {
 			     /* Remove the connection from the pool */
 			ptr->next = con->next;

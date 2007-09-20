@@ -121,8 +121,7 @@ int ldap_connect(char* _ld_name)
 				LDAP_OPT_TIMELIMIT,
 				&lds->server_search_timeout)
 			!= LDAP_OPT_SUCCESS) {
-			LOG(L_ERR,
-			"ERROR:ldap:ldap_connect: [%s]: Could not set LDAP_OPT_TIMELIMIT to [%d]\n",
+			LM_ERR("[%s]: Could not set LDAP_OPT_TIMELIMIT to [%d]\n",
 			_ld_name, lds->server_search_timeout);
 			return -1;
 		}

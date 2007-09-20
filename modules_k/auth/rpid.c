@@ -62,16 +62,14 @@ int init_rpid_avp(char *rpid_avp_param)
 		stmp.s = rpid_avp_param; stmp.len = strlen(stmp.s);
 		if (pv_parse_spec(&stmp, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:auth:init_rpid_avp: malformed or non AVP %s "
-				"AVP definition\n", rpid_avp_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n", rpid_avp_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &rpid_avp_name,
 					&rpid_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:auth:init_rpid_avp: [%s]- invalid "
-				"AVP definition\n", rpid_avp_param);
+			LM_ERR("[%s]- invalid AVP definition\n", rpid_avp_param);
 			return -1;
 		}
 	} else {
@@ -120,18 +118,18 @@ static inline int append_rpid_helper(struct sip_msg* _m, str *_s)
 	struct lump* anchor;
 	
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR, "append_rpid(): Error while parsing message\n");
+		LM_ERR("failed to parse message\n");
 		return -1;
 	}
 	
 	anchor = anchor_lump(_m, _m->unparsed - _m->buf, 0, 0);
 	if (!anchor) {
-		LOG(L_ERR, "append_rpid(): Can't get anchor\n");
+		LM_ERR("can't get anchor\n");
 		return -2;
 	}
 	
 	if (!insert_new_lump_before(anchor, _s->s, _s->len, 0)) {
-		LOG(L_ERR, "append_rpid(): Can't insert lump\n");
+		LM_ERR("can't insert lump\n");
 		return -3;
 	}
 
@@ -150,17 +148,17 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 	int_str val;
 
 	if (rpid_avp_name.n==0) {
-		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
+		LM_ERR("rpid avp not defined\n");
 		return -1;
 	}
 
 	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp_name, &val, 0))==0 ) {
-		DBG("append_rpid_hf: No rpid AVP\n");
+		LM_DBG("no rpid AVP\n");
 		return -1;
 	}
 
 	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-		DBG("append_rpid_hf: Empty or non-string rpid, nothing to append\n");
+		LM_DBG("empty or non-string rpid, nothing to append\n");
 		return -1;
 	}
 
@@ -170,7 +168,7 @@ int append_rpid_hf(struct sip_msg* _m, char* _s1, char* _s2)
 					+ rpid_suffix.len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
-		LOG(L_ERR, "append_rpid_hf(): No memory left\n");
+		LM_ERR("no memory left\n");
 		return -1;
 	}
 
@@ -210,17 +208,17 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 	int_str val;
 
 	if (rpid_avp_name.n==0) {
-		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
+		LM_ERR("rpid avp not defined\n");
 		return -1;
 	}
 
 	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp_name, &val, 0))==0 ) {
-		DBG("append_rpid_hf: No rpid AVP\n");
+		LM_DBG("no rpid AVP\n");
 		return -1;
 	}
 
 	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-		DBG("append_rpid_hf: Empty or non-string rpid, nothing to append\n");
+		LM_DBG("empty or non-string rpid, nothing to append\n");
 		return -1;
 	}
 
@@ -232,7 +230,7 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 	rpid_hf.len = RPID_HF_NAME_LEN + p->len + rpid.len + s->len + CRLF_LEN;
 	rpid_hf.s = pkg_malloc(rpid_hf.len);
 	if (!rpid_hf.s) {
-		LOG(L_ERR, "append_rpid_hf_p(): No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 
@@ -272,17 +270,17 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 	int_str val;
 
 	if (rpid_avp_name.n==0) {
-		LOG(L_ERR,"BUG_SCRIPT:auth:append_rpid_hf: rpid avp not defined\n");
+		LM_ERR("rpid avp not defined\n");
 		return -1;
 	}
 
 	if ( (avp=search_first_avp( rpid_avp_type , rpid_avp_name, &val, 0))==0 ) {
-		DBG("is_rpid_user_e164: No rpid AVP\n");
+		LM_DBG("no rpid AVP\n");
 		goto err;
 	}
 
 	if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-		DBG("append_rpid_hf: Empty or non-string rpid, nothing to append\n");
+		LM_DBG("empty or non-string rpid, nothing to append\n");
 		return -1;
 	}
 
@@ -290,7 +288,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 
 	if (find_not_quoted(&rpid, '<')) {
 		if (parse_nameaddr(&rpid, &parsed) < 0) {
-			LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID\n");
+			LM_ERR("failed to parse RPID\n");
 			goto err;
 		}
 		tmp = parsed.uri;
@@ -300,7 +298,7 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 
 	if ((tmp.len > 4) && (!strncasecmp(tmp.s, "sip:", 4))) {
 		if (parse_uri(tmp.s, tmp.len, &uri) < 0) {
-			LOG(L_ERR, "is_rpid_user_e164(): Error while parsing RPID URI\n");
+			LM_ERR("failed to parse RPID URI\n");
 			goto err;
 		}
 		user = uri.user;

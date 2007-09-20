@@ -133,12 +133,11 @@ static int fixup_gflags( void** param, int param_no)
 	param_str.len=strlen(param_str.s);
 
 	if (str2int(&param_str, &myint )<0) {
-		LOG(L_ERR, "ERROR:gflags:fixup_gflags: bad number <%s>\n",
-			(char *)(*param));
+		LM_ERR("bad number <%s>\n", (char *)(*param));
 		return E_CFG;
 	}
 	if ( myint >= 8*sizeof(*gflags) ) {
-		LOG(L_ERR, "ERROR:gflags:fixup_gflags: flag <%d> out of "
+		LM_ERR("flag <%d> out of "
 			"range [0..%lu]\n", myint, (unsigned long)8*sizeof(*gflags) );
 		return E_CFG;
 	}
@@ -188,7 +187,7 @@ static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
 	if( strno2int( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
-		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
+		LM_ERR("incorrect flag\n");
 		goto error;
 	}
 
@@ -213,7 +212,7 @@ static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
 	if( strno2int( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
-		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
+		LM_ERR("incorrect flag\n");
 		goto error;
 	}
 
@@ -239,7 +238,7 @@ static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
 	if( strno2int( &node->value, &flag) <0)
 		goto error_param;
 	if (!flag) {
-		LOG(L_ERR, "ERROR:gflags:mi_set_gflag: incorrect flag\n");
+		LM_ERR("incorrect flag\n");
 		goto error_param;
 	}
 
@@ -254,7 +253,7 @@ static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
 
 	if(node == NULL)
 	{
-		LOG(L_ERR, "gflags:mi_set_gflag:ERROR while adding node\n");
+		LM_ERR("failed to add node\n");
 		free_mi_tree(rpl_tree);
 		return 0;
 	}
@@ -294,7 +293,7 @@ static int mod_init(void)
 {
 	gflags=(unsigned int *) shm_malloc(sizeof(unsigned int));
 	if (!gflags) {
-		LOG(L_ERR, "Error: gflags/mod_init: no shmem\n");
+		LM_ERR(" no shmem\n");
 		return -1;
 	}
 	*gflags=initial;

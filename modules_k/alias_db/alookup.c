@@ -58,7 +58,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 	
 	if (do_action(&act, _m) < 0)
 	{
-		LOG(L_ERR, "alias_db:rewrite_ruri: Error in do_action\n");
+		LM_ERR("do_action failed\n");
 		return -1;
 	}
 	return 0;
@@ -103,15 +103,15 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	if(adbf.query(db_handle, db_keys, NULL, db_vals, db_cols,
 		(use_domain)?2:1 /*no keys*/, 2 /*no cols*/, NULL, &db_res)!=0)
 	{
-		LOG(L_ERR, "alias_db_lookup: error querying database\n");
+		LM_ERR("failed to query database\n");
 		goto err_server;
 	}
 
 	if (RES_ROW_N(db_res)<=0 || RES_ROWS(db_res)[0].values[0].nul != 0)
 	{
-		DBG("alias_db_lookup: no alias found for R-URI\n");
+		LM_DBG("no alias found for R-URI\n");
 		if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
-			DBG("alias_db_lookup: Error while freeing result of query\n");
+			LM_DBG("failed to freeing result of query\n");
 		return -1;
 	}
 
@@ -137,10 +137,10 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
 			user_s.len += RES_ROWS(db_res)[0].values[0].val.blob_val.len;
 		default:
-			LOG(L_ERR, "alias_db_lookup: Unknown type of DB user column\n");
+			LM_ERR("unknown type of DB user column\n");
 			if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
 			{
-				DBG("alias_db_lookup: Error while freeing result of query\n");
+				LM_DBG("failed to freeing result of query\n");
 			}
 			goto err_server;
 	}
@@ -172,10 +172,10 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 			user_s.len += RES_ROWS(db_res)[0].values[1].val.blob_val.len;
 			useruri_buf[user_s.len] = '\0';
 		default:
-			LOG(L_ERR, "alias_db_lookup: Unknown type of DB user column\n");
+			LM_ERR("unknown type of DB user column\n");
 			if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
 			{
-				DBG("alias_db_lookup: Error while freeing result of query\n");
+				LM_DBG("failed to freeing result of query\n");
 			}
 			goto err_server;
 	}
@@ -185,13 +185,13 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	 * anymore
 	 */
 	if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
-		DBG("alias_db_lookup: Error while freeing result of query\n");
+		LM_DBG("failed to freeing result of query\n");
 
 	/* set the URI */
-	DBG("alias_db_lookup: URI of alias from R-URI [%s]\n", useruri_buf);
+	LM_DBG("the URI of alias from R-URI [%s]\n", useruri_buf);
 	if(rewrite_ruri(_msg, useruri_buf)<0)
 	{
-		LOG(L_ERR, "alias_db_lookup: Cannot replace the R-URI\n");
+		LM_ERR("cannot replace the R-URI\n");
 		goto err_server;
 	}
 

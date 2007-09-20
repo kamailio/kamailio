@@ -58,7 +58,7 @@ struct mi_root* mi_lcr_dump(struct mi_root* cmd_tree, void* param)
 
 	if(mi_print_gws( &rpl_tree->node )<0)
 	{
-		LOG(L_ERR, "lcr:mi_lcr_reload: ERROR while adding node\n");
+		LM_ERR("failed to add node\n");
 		free_mi_tree(rpl_tree);
 		return 0;
 	}

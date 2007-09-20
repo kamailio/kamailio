@@ -100,7 +100,7 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	DBG("DBT:destroy ...\n");
+	LM_DBG("destroy ...\n");
 	dbt_cache_print(0);
 	dbt_cache_destroy();
 }

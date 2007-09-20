@@ -77,7 +77,7 @@ struct avp_stack {
 static int stack_push(struct avp_stack *stack, char *att, char *val) {
     int i;
     if (stack->i >= (AVPSTACKSIZE-1)) {
-	LOG(L_ERR, "stack_push: Exceeded stack size.!\n");
+	LM_ERR("exceeded stack size.!\n");
 	return(0);
     }
 
@@ -110,7 +110,7 @@ static void stack_to_avp(struct avp_stack *stack) {
 
 	for(j=0; j< stack->i; j++) {
 		/* AVP names can be integer or string based */
-		DBG("process AVP: name='%s' value='%s'\n", 
+		LM_DBG("process AVP: name='%s' value='%s'\n", 
 					stack->avp[j].att, stack->avp[j].val);
 
 		/* if the second character is a ':', ignore the prefix
@@ -129,7 +129,7 @@ static void stack_to_avp(struct avp_stack *stack) {
 				intval = 0;
 				break;
 			default:
-				LOG(L_ERR,"ERROR: dp:stack_to_avp: invalid type '%c'\n",stack->avp[j].att[0]);
+				LM_ERR("invalid type '%c'\n",stack->avp[j].att[0]);
 				continue;
 			}
 			avp_att.s.s = (char *) &(stack->avp[j].att[2]); 
@@ -138,7 +138,7 @@ static void stack_to_avp(struct avp_stack *stack) {
 		}
 		avp_att.s.len = strlen(avp_att.s.s);
 		if (!avp_att.s.len) {
-			LOG(L_ERR, "ERROR:dp:stack_to_avp: empty AVP name string!\n");
+			LM_ERR("empty AVP name string!\n");
 			continue;
 		}
 
@@ -150,15 +150,15 @@ static void stack_to_avp(struct avp_stack *stack) {
 			if (str2int(&(avp_att.s), &intval) == 0) {
 				/* integer named AVP */
 				if (!intval) {
-					LOG(L_ERR, "ERROR: dp:stack_to_avp: nameless integer AVP!\n");
+					LM_ERR("nameless integer AVP!\n");
 					continue;
 				}
 				avp_att.n = intval;
-				DBG("create integer named AVP <i:%d>\n", avp_att.n);
+				LM_DBG("create integer named AVP <i:%d>\n", avp_att.n);
 				add_avp(AVP_VAL_STR, avp_att, avp_val);
 				continue;
 			} else { 
-				LOG(L_ERR, "ERROR: dp:stack_to_avp: integer AVP is not an integer!\n");
+				LM_ERR("integer AVP is not an integer!\n");
 				continue;
 			}
 		} 
@@ -172,22 +172,24 @@ static void stack_to_avp(struct avp_stack *stack) {
 			if (str2int(&(avp_att.s), &intval) == 0) {
 				/* integer named AVP */
 				if (!intval) {
-					LOG(L_ERR, "ERROR: dp:stack_to_avp: nameless integer AVP!\n");
+					LM_ERR("nameless integer AVP!\n");
 					continue;
 				}
 				avp_att.n = intval;
-				DBG("create integer named AVP <i:%d>\n", avp_att.n);
+				LM_DBG("create integer named AVP <i:%d>\n", avp_att.n);
 				add_avp(AVP_VAL_STR, avp_att, avp_val);
 				continue;
 			} else { 
-				DBG("create string named AVP <s:%.*s>\n", avp_att.s.len, ZSW(avp_att.s.s));
+				LM_DBG("create string named AVP <s:%.*s>\n", 
+						avp_att.s.len, ZSW(avp_att.s.s));
 				add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_att, avp_val);
 				continue;
 			}
 		} 
 
 		/* intval==0, string type explicitely forced with s: */
-		DBG("create string named AVP <s:%.*s>\n", avp_att.s.len, ZSW(avp_att.s.s));
+		LM_DBG("create string named AVP <s:%.*s>\n", 
+				avp_att.s.len, ZSW(avp_att.s.s));
 		add_avp(AVP_NAME_STR | AVP_VAL_STR, avp_att, avp_val);
 	}
 }
@@ -197,7 +199,7 @@ static void stack_to_avp(struct avp_stack *stack) {
 int domainpolicy_db_bind(char* db_url)
 {
 	if (bind_dbmod(db_url, &domainpolicy_dbf )) {
-		LOG(L_CRIT, "ERROR: domainpolicy_db_bind: cannot bind to database module! "
+		LM_CRIT("cannot bind to database module! "
 		"Did you forget to load a database module ?\n");
 		return -1;
 	}
@@ -209,13 +211,12 @@ int domainpolicy_db_bind(char* db_url)
 int domainpolicy_db_init(char* db_url)
 {
 	if (domainpolicy_dbf.init==0){
-		LOG(L_CRIT, "BUG: domainpolicy_db_init: unbound database module\n");
+		LM_CRIT("unbound database module\n");
 		goto error;
 	}
 	db_handle=domainpolicy_dbf.init(db_url);
 	if (db_handle==0){
-		LOG(L_CRIT, "ERROR:domainpolicy_db_init: cannot initialize database "
-							"connection\n");
+		LM_CRIT("cannot initialize database connection\n");
 		goto error;
 	}
 	return 0;
@@ -240,12 +241,12 @@ int domainpolicy_db_ver(char* db_url, str* name)
 	db_con_t* dbh;
 
 	if (domainpolicy_dbf.init==0){
-		LOG(L_CRIT, "BUG: domainpolicy_db_ver: unbound database\n");
+		LM_CRIT("unbound database\n");
 		return -1;
 	}
 	dbh=domainpolicy_dbf.init(db_url);
 	if (dbh==0){
-		LOG(L_CRIT, "BUG:domainpolicy_db_ver: null database handler\n");
+		LM_CRIT("null database handler\n");
 		return -1;
 	}
 	ver=table_version(&domainpolicy_dbf, dbh, name);
@@ -286,23 +287,23 @@ static inline int parse_naptr_regexp(char* first, int len, str* pattern,
 						replacement->s = second + 1;
 						return 1;
 					} else {
-						LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+						LM_ERR("third ! missing from regexp\n");
 						return -1;
 					}
 				} else {
-					LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+					LM_ERR("third ! missing from regexp\n");
 					return -2;
 				}
 			} else {
-				LOG(LOG_ERR, "parse_regexp(): second ! missing from regexp\n");
+				LM_ERR("second ! missing from regexp\n");
 				return -3;
 			}
 		} else {
-			LOG(LOG_ERR, "parse_regexp(): first ! missing from regexp\n");
+			LM_ERR("first ! missing from regexp\n");
 			return -4;
 		}
 	} else {
-		LOG(LOG_ERR, "parse_regexp(): regexp missing\n");
+		LM_ERR("regexp missing\n");
 		return -5;
 	}
 }
@@ -403,11 +404,12 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
     char *type;
     int type_len;
 
-    LOG(L_INFO, "check_rule(): checking for '%.*s'.\n", rule->len, ZSW(rule->s));
+    LM_INFO("checking for '%.*s'.\n", rule->len, ZSW(rule->s));
 
     if ((service_len != 11) || (strncasecmp("d2p+sip:fed", service, 11) && 
 	    strncasecmp("d2p+sip:std", service, 11)  && strncasecmp("d2p+sip:dom", service, 11))) {
-    	LOG(L_ERR, "check_rule(): Can only cope with d2p+sip:fed, d2p+sip:std, and d2p+sip:dom for now (and not %.*s).\n", service_len, service);
+    	LM_ERR("can only cope with d2p+sip:fed, d2p+sip:std,and d2p+sip:dom "
+				"for now (and not %.*s).\n", service_len, service);
 	return(0);
     }
 
@@ -415,7 +417,7 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
     type_len = service_len - 8;
 
     if (domainpolicy_dbf.use_table(db_handle, domainpolicy_table.s) < 0) {
-	    LOG(L_ERR, "check_rule(): Error while trying to use domainpolicy table\n");
+	    LM_ERR("failed to domainpolicy table\n");
 	    return -1;
     }
 
@@ -442,50 +444,50 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
 
     if (domainpolicy_dbf.query(db_handle, keys, 0, vals, cols, 2, 4, 0, &res) < 0
 		    ) {
-	    LOG(L_ERR, "check_rule(): Error while querying database\n");
+	    LM_ERR("querying database\n");
 	    return -1;
     }
     
-    LOG(L_INFO, "check_rule(): querying database OK\n");
+    LM_INFO("querying database OK\n");
 
     if (RES_ROW_N(res) == 0) {
-	    DBG("check_rule(): Rule '%.*s' is not know.\n", 
+	    LM_DBG("rule '%.*s' is not know.\n", 
 		rule->len, ZSW(rule->s));
 	    domainpolicy_dbf.free_result(db_handle, res);
 	    return 0;
     } else {
-	    DBG("check_rule(): Rule '%.*s' is known\n", rule->len, ZSW(rule->s));
+	    LM_DBG("rule '%.*s' is known\n", rule->len, ZSW(rule->s));
 
 	    row = RES_ROWS(res);
 
 	    for(i = 0; i < RES_ROW_N(res); i++) {
-		if (ROW_N(row + i) != 4) {
-	    	    LOG(L_ERR, "check_rule(): unexpected cell count\n");
-		    return(-1);
-		}
+			if (ROW_N(row + i) != 4) {
+	    	    LM_ERR("unexpected cell count\n");
+				return(-1);
+			}
 
-		val = ROW_VALUES(row + i);
+			val = ROW_VALUES(row + i);
 
-		if ((VAL_TYPE(val) != DB_STRING) || 
-			(VAL_TYPE(val+1) != DB_STRING) ||
-			(VAL_TYPE(val+2) != DB_STRING) ||
-			(VAL_TYPE(val+3) != DB_STRING)) {
-	    	    LOG(L_ERR, "check_rule(): unexpected cell types\n");
-		    return(-1);
-		}
+			if ((VAL_TYPE(val) != DB_STRING) || 
+				(VAL_TYPE(val+1) != DB_STRING) ||
+				(VAL_TYPE(val+2) != DB_STRING) ||
+				(VAL_TYPE(val+3) != DB_STRING)) {
+					LM_ERR("unexpected cell types\n");
+			    return(-1);
+			}
 
-		if (VAL_NULL(val+2) || VAL_NULL(val+3)) {
-    			LOG(L_INFO, "check_rule(): DB returned NULL values. Fine with us.\n");
-			continue;
-		}
+			if (VAL_NULL(val+2) || VAL_NULL(val+3)) {
+				LM_INFO("db returned NULL values. Fine with us.\n");
+				continue;
+			}
 
-    		LOG(L_INFO, "check_rule(): DB returned %s / %s \n", 
-			VAL_STRING(val+2), VAL_STRING(val+3));
+			LM_INFO("DB returned %s/%s \n",VAL_STRING(val+2),VAL_STRING(val+3));
 
 
-		if (!stack_push(stack, (char *) VAL_STRING(val+2), (char *) VAL_STRING(val+3))) {
-		    return(-1);
-		}
+			if (!stack_push(stack, (char *) VAL_STRING(val+2), 
+					(char *) VAL_STRING(val+3))) {
+			    return(-1);
+			}
 	    }
 	    domainpolicy_dbf.free_result(db_handle, res);
 	    return 1;
@@ -515,19 +517,20 @@ int dp_can_connect_str(str *domain, int rec_level) {
     }
 
     if (rec_level > MAX_DDDS_RECURSIONS) {
-    	LOG(L_ERR,"dp_can_connect_str(): Too many indirect NAPTRs. Aborting at %.*s.\n", domain->len, ZSW(domain->s));
-	return(DP_DDDS_RET_DNSERROR);
+    	LM_ERR("too many indirect NAPTRs. Aborting at %.*s.\n", domain->len,
+				ZSW(domain->s));
+		return(DP_DDDS_RET_DNSERROR);
     }
 
-    LOG(L_INFO,"dp_can_connect_str(): Looking up Domain itself: %.*s\n",domain->len, ZSW(domain->s));
+    LM_INFO("looking up Domain itself: %.*s\n",domain->len, ZSW(domain->s));
     ret = check_rule(domain,"D2P+sip:dom", 11, &stack);
 
     if (ret == 1) {
-	LOG(L_INFO,"dp_can_connect_str(): Found a match on domain itself\n");
+	LM_INFO("found a match on domain itself\n");
 	stack_to_avp(&stack);
 	return(DP_DDDS_RET_POSITIVE);
     } else if (ret == 0) {
-	LOG(L_INFO,"dp_can_connect_str(): No match on domain itself.\n");
+	LM_INFO("no match on domain itself.\n");
 	stack_reset(&stack);
 	/* If we're in a recursive call, set the domain-replacement */
 	if ( rec_level > 0 ) {
@@ -538,26 +541,28 @@ int dp_can_connect_str(str *domain, int rec_level) {
 	return(DP_DDDS_RET_DNSERROR);	/* actually: DB error */
     }
 
-    LOG(L_INFO,"dp_can_connect_str(): DOING DDDS with %.*s\n",domain->len, ZSW(domain->s));
+    LM_INFO("doing DDDS with %.*s\n",domain->len, ZSW(domain->s));
     head = get_record(domain->s, T_NAPTR);
     if (head == 0) {
-    	LOG(L_NOTICE,"dp_can_connect_str(): No NAPTR record found for %.*s.\n", domain->len, ZSW(domain->s));
+    	LM_NOTICE("no NAPTR record found for %.*s.\n", 
+				domain->len, ZSW(domain->s));
     	return(DP_DDDS_RET_NOTFOUND);
     }
 
-    DBG("dp_can_connect_str(): Found the following NAPTRs: \n");
+    LM_DBG("found the following NAPTRs: \n");
     for (l = head; l; l = l->next) {
 	if (l->type != T_NAPTR) {
-	    DBG("dp_can_connect_str(): Found non-NAPTR record.\n");
+	    LM_DBG("found non-NAPTR record.\n");
 	    continue; /*should never happen*/
 	}
 	naptr = (struct naptr_rdata*)l->rdata;
 	if (naptr == 0) {
-		LOG(L_CRIT, "enum_query: BUG: null rdata\n");
+		LM_CRIT("null rdata\n");
 		continue;
 	}
-	DBG("dp_can_connect_str(): order %u, pref %u, flen %u, flags '%.*s', slen %u, "
-	    "services '%.*s', rlen %u, regexp '%.*s', repl '%s'\n", naptr->order, naptr->pref,
+	LM_DBG("order %u, pref %u, flen %u, flags '%.*s', slen %u, "
+	    "services '%.*s', rlen %u, regexp '%.*s', repl '%s'\n", 
+		naptr->order, naptr->pref,
 	    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags),
 	    naptr->services_len,
 	    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
@@ -567,7 +572,7 @@ int dp_can_connect_str(str *domain, int rec_level) {
     }
 
 
-    DBG("dp_can_connect_str(): Sorting...\n");
+    LM_DBG("sorting...\n");
     naptr_sort(&head);
 
     for (l = head; l; l = l->next) {
@@ -575,12 +580,13 @@ int dp_can_connect_str(str *domain, int rec_level) {
 	if (l->type != T_NAPTR) continue; /*should never happen*/
 	naptr = (struct naptr_rdata*)l->rdata;
 	if (naptr == 0) {
-		LOG(L_CRIT, "enum_query: BUG: null rdata\n");
+		LM_CRIT("null rdata\n");
 		continue;
 	}
 
-	DBG("dp_can_connect_str(): Considering order %u, pref %u, flen %u, flags '%.*s', slen %u, "
-	    "services '%.*s', rlen %u, regexp '%.*s', repl '%s'\n", naptr->order, naptr->pref,
+	LM_DBG("considering order %u, pref %u, flen %u, flags '%.*s', slen %u, "
+	    "services '%.*s', rlen %u, regexp '%.*s', repl '%s'\n", 
+		naptr->order, naptr->pref,
 	    naptr->flags_len, (int)(naptr->flags_len), ZSW(naptr->flags),
 	    naptr->services_len,
 	    (int)(naptr->services_len), ZSW(naptr->services), naptr->regexp_len,
@@ -597,11 +603,12 @@ int dp_can_connect_str(str *domain, int rec_level) {
 		failed = 0;
 
 		if (stack_succeeded(&stack)) {
-    		    LOG(L_INFO,"dp_can_connect_str(): we don't need to consider further orders (starting with %d).\n",last_order);
+    		LM_INFO("we don't need to consider further orders "
+						"(starting with %d).\n",last_order);
 		    break;
 		}
 	} else if (failed) {
-	    LOG(L_INFO,"dp_can_connect_str(): Order %d has already failed.\n",last_order);
+	    LM_INFO("order %d has already failed.\n",last_order);
 	    continue;
 	}
 
@@ -626,13 +633,14 @@ int dp_can_connect_str(str *domain, int rec_level) {
 	 * Non-terminal?
 	 */
 	if ((naptr->services_len == 7) && !strncasecmp("D2P+SIP", naptr->services,7) && (naptr->flags_len == 0)){
-	    LOG(L_INFO,"dp_can_connect_str(): Found non-terminal NAPTR\n");
+	    LM_INFO("found non-terminal NAPTR\n");
 
 	    /*
 	     * This needs to be the only record with this order.
 	     */
 	    if (next_naptr && (next_naptr->order == naptr->order) && IS_D2PNAPTR(next_naptr)) {
-	    	LOG(L_ERR,"dp_can_connect_str(): Non-terminal NAPTR needs to be the only one with this order %.*s.\n", domain->len, ZSW(domain->s));
+	    	LM_ERR("non-terminal NAPTR needs to be the only one "
+					"with this order %.*s.\n", domain->len, ZSW(domain->s));
 
 		return(DP_DDDS_RET_DNSERROR);
 	    }
@@ -661,7 +669,8 @@ int dp_can_connect_str(str *domain, int rec_level) {
 	 * wrong kind of terminal
 	 */
 	if ((naptr->flags_len != 1) || (tolower(naptr->flags[0]) != 'u')) {
-	    	LOG(L_ERR,"dp_can_connect_str(): Terminal NAPTR needs flag = 'u' and not '%.*s'.\n", (int)naptr->flags_len, ZSW(naptr->flags));
+	    LM_ERR("terminal NAPTR needs flag = 'u' and not '%.*s'.\n",
+					(int)naptr->flags_len, ZSW(naptr->flags));
 		/*
 		 * It's not that clear what we should do now: Ignore this records or regard it as failed.
 		 * We go with "ignore" for now.
@@ -671,7 +680,7 @@ int dp_can_connect_str(str *domain, int rec_level) {
 
 	if (parse_naptr_regexp(&(naptr->regexp[0]), naptr->regexp_len,
 			       &pattern, &replacement) < 0) {
-		LOG(L_ERR, "dp_can_connect_str(): parsing of NAPTR regexp failed\n");
+		LM_ERR("parsing of NAPTR regexp failed\n");
 		continue;
 	}
 	result.s = &(uri[0]);
@@ -684,20 +693,19 @@ int dp_can_connect_str(str *domain, int rec_level) {
 			&result) < 0) {
 		pattern.s[pattern.len] = '!';
 		replacement.s[replacement.len] = '!';
-		LOG(L_ERR, "dp_can_connect_str(): regexp replace failed\n");
+		LM_ERR("regexp replace failed\n");
 		continue;
 	}
-	LOG(L_INFO,"dp_can_connect_str(): resulted in replacement: '%.*s'\n",
-	    result.len, ZSW(result.s));
+	LM_INFO("resulted in replacement: '%.*s'\n", result.len, ZSW(result.s));
 	pattern.s[pattern.len] = '!';
 	replacement.s[replacement.len] = '!';
 
 	ret = check_rule(&result,naptr->services,naptr->services_len, &stack);
 
 	if (ret == 1) {
-	    LOG(L_INFO,"dp_can_connect_str(): positive return\n");
+	    LM_INFO("positive return\n");
 	} else if (ret == 0) {
-	    LOG(L_INFO,"dp_can_connect_str(): check_rule failed.\n");
+	    LM_INFO("check_rule failed.\n");
 	    stack_reset(&stack);
 	    /* If we're in a recursive call, set the domain-replacement */
 	    if ( rec_level > 0 ) {
@@ -711,12 +719,12 @@ int dp_can_connect_str(str *domain, int rec_level) {
     }
 
     if (stack_succeeded(&stack)) {
-        LOG(L_INFO,"dp_can_connect_str(): calling stack_to_avp.\n");
-	stack_to_avp(&stack);
-	return(DP_DDDS_RET_POSITIVE);
+        LM_INFO("calling stack_to_avp.\n");
+		stack_to_avp(&stack);
+		return(DP_DDDS_RET_POSITIVE);
     }
 
-    LOG(L_INFO,"dp_can_connect_str(): returning %d.\n", 
+    LM_INFO("returning %d.\n", 
 	    (found_anything ? DP_DDDS_RET_NEGATIVE : DP_DDDS_RET_NOTFOUND));
     return(  found_anything ? DP_DDDS_RET_NEGATIVE : DP_DDDS_RET_NOTFOUND );
 }
@@ -728,17 +736,17 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2) {
 	int ret;
 
 	if (route_type != REQUEST_ROUTE) {
-		LOG(L_ERR, "dp_can_connect(): Unsupported route type\n");
+		LM_ERR("unsupported route type\n");
 		return -1;
 	}
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-		LOG(L_ERR, "dp_can_connect(): Error while parsing R-URI\n");
+		LM_ERR("failed to parse R-URI\n");
 		return -1;
 	}
 
 	if (_msg->parsed_uri.host.len >= MAX_DOMAIN_SIZE) {
-		LOG(L_ERR, "dp_can_connect(): Error, domain buffer to small\n");
+		LM_ERR("domain buffer to small\n");
 		return -1;
 	}
 
@@ -750,10 +758,10 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2) {
 	memcpy(domain.s, _msg->parsed_uri.host.s, domain.len);
 	domainname[domain.len] = '\0';
 
-	DBG("dp_can_connect: domain is %.*s.\n", domain.len, ZSW(domain.s));
+	LM_DBG("domain is %.*s.\n", domain.len, ZSW(domain.s));
 
 	ret = dp_can_connect_str(&domain,0);
-	DBG("dp_can_connect(): returning %d.\n", ret);
+	LM_DBG("returning %d.\n", ret);
 	return(ret);
 }
 
@@ -773,7 +781,7 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	struct socket_info* si;
 
 	if (route_type != REQUEST_ROUTE) {
-		LOG(L_ERR, "dp_apply_policy: Unsupported route type\n");
+		LM_ERR("unsupported route type\n");
 		return -1;
 	}
 
@@ -785,24 +793,25 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	avp = search_first_avp(send_socket_avp_name_str, send_socket_name, &val, 0);
 	if (avp) {
 		if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-			LOG(L_ERR, "dp_apply_policy: Empty or non-string send_socket_avp, return with error ...\n");
+			LM_ERR("empty or non-string send_socket_avp, "
+					"return with error ...\n");
 			return -1;
 		}
-		DBG("dp_apply_policy: send_socket_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
+		LM_DBG("send_socket_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
 		/* parse phostport */
 		if (parse_phostport(val.s.s, val.s.len, &(host.s), &(host.len), &port, &proto)) {
-			LOG(L_ERR, "dp_apply_policy: could not parse send_socket, return with error ...\n");
+			LM_ERR("could not parse send_socket, return with error ...\n");
 			return -1;
 		}
 		si = grep_sock_info( &host, (unsigned short) port, (unsigned short) proto);
 		if (si) {
 			_msg->force_send_socket = si;
 		} else {
-			LOG(L_WARN,"WARNING:dp_apply_policy: could not find socket for"
+			LM_WARN("could not find socket for"
 					"send_socket '%.*s'\n", val.s.len, ZSW(val.s.s));
 		}
 	} else {
-		DBG("dp_apply_policy: send_socket_avp not found\n");
+		LM_DBG("send_socket_avp not found\n");
 	}
 
 	/*
@@ -812,38 +821,38 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	didsomething = 0; /* if no AVP is set, there is no need to set the DURI in the end */
 	
 	if (parse_sip_msg_uri(_msg) < 0) {
-		LOG(L_ERR, "dp_apply_policy: Error while parsing R-URI\n");
+		LM_ERR("failed to parse R-URI\n");
 		return -1;
 	}
 
 	at = (char *)&(duri[0]);
 	len = 0;
 	if ( (len + 4) >  MAX_URI_SIZE) {
-		LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add uri schema\n");
+		LM_ERR("duri buffer to small to add uri schema\n");
 		return -1;
 	}
 	memcpy(at, "sip:", 4); at = at + 4; len = len + 4;
 
 	domain = &(_msg->parsed_uri.host);
-	DBG("dp_apply_policy: domain is %.*s.\n", domain->len, ZSW(domain->s));
+	LM_DBG("domain is %.*s.\n", domain->len, ZSW(domain->s));
 
 	/* search for prefix and add it to duri buffer */
 	avp = search_first_avp(domain_prefix_avp_name_str, domain_prefix_name, &val, 0);
 	if (avp) {
 		if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-			LOG(L_ERR, "dp_apply_policy: Empty or non-string domain_prefix_avp, return with error ...\n");
+			LM_ERR("empty or non-string domain_prefix_avp, return with error ...\n");
 			return -1;
 		}
-		DBG("dp_apply_policy: domain_prefix_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
+		LM_DBG("domain_prefix_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
 		if ( (len + val.s.len +1) >  MAX_URI_SIZE) {
-			LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add domain prefix\n");
+			LM_ERR("duri buffer to small to add domain prefix\n");
 			return -1;
 		}
 		memcpy(at, val.s.s, val.s.len); at = at + val.s.len;
 		*at = '.'; at = at + 1;	/* add . as delimiter between prefix and domain */
 		didsomething = 1;
 	} else {
-		DBG("dp_apply_policy: domain_prefix_avp not found\n");
+		LM_DBG("domain_prefix_avp not found\n");
 	}
 
 
@@ -851,20 +860,22 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	avp = search_first_avp(domain_replacement_avp_name_str, domain_replacement_name, &val, 0);
 	if (avp) {
 		if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-			LOG(L_ERR, "dp_apply_policy: Empty or non-string domain_replacement_avp, return with error ...\n");
+			LM_ERR("empty or non-string domain_replacement_avp, return with"
+					"error ...\n");
 			return -1;
 		}
-		DBG("dp_apply_policy: domain_replacement_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
+		LM_DBG("domain_replacement_avp found='%.*s'\n",val.s.len, ZSW(val.s.s));
 		if ( (len + val.s.len +1) >  MAX_URI_SIZE) {
-			LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add domain replacement\n");
+			LM_ERR("duri buffer to small to add domain replacement\n");
 			return -1;
 		}
 		memcpy(at, val.s.s, val.s.len); at = at + val.s.len;
 		didsomething = 1;
 	} else {
-	    DBG("dp_apply_policy: domain_replacement_avp not found, using original domain '%.*s'\n",domain->len, domain->s);
+	    LM_DBG("domain_replacement_avp not found, using original domain '"
+				"%.*s'\n",domain->len, domain->s);
 	    if ( (len + domain->len) >  MAX_URI_SIZE) {
-		LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add domain\n");
+		LM_ERR("duri buffer to small to add domain\n");
 		return -1;
 	    }
 	    memcpy(at, domain->s, domain->len); at = at + domain->len;
@@ -874,49 +885,52 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	avp = search_first_avp(domain_suffix_avp_name_str, domain_suffix_name, &val, 0);
 	if (avp) {
 		if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-			LOG(L_ERR, "dp_apply_policy: Empty or non-string domain_suffix_avp, return with error ...\n");
+			LM_ERR("empty or non-string domain_suffix_avp,return with error .."
+					"\n");
 			return -1;
 		}
-		DBG("dp_apply_policy: domain_suffix_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
+		LM_DBG("domain_suffix_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
 		if ( (len + val.s.len + 1) >  MAX_URI_SIZE) {
-			LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add domain suffix\n");
+			LM_ERR("duri buffer to small to add domain suffix\n");
 			return -1;
 		}
 		*at = '.'; at = at + 1;	/* add . as delimiter between domain and suffix */
 		memcpy(at, val.s.s, val.s.len); at = at + val.s.len;
 		didsomething = 1;
 	} else {
-		DBG("dp_apply_policy: domain_suffix_avp not found\n");
+		LM_DBG("domain_suffix_avp not found\n");
 	}
 
 	/* search for port override and add it to duri buffer */
 	avp = search_first_avp(port_override_avp_name_str, port_override_name, &val, 0);
 	if (avp) {
 		if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-			LOG(L_ERR, "dp_apply_policy: Empty or non-string port_override_avp, return with error ...\n");
+			LM_ERR("empty or non-string port_override_avp, return with error ...\n");
 			return -1;
 		}
-		DBG("dp_apply_policy: port_override_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
+		LM_DBG("port_override_avp found = '%.*s'\n", val.s.len, ZSW(val.s.s));
 		/* We do not check if the port is valid */
 		if ( (len + val.s.len + 1) >  MAX_URI_SIZE) {
-			LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add domain suffix\n");
+			LM_ERR("duri buffer to small to add domain suffix\n");
 			return -1;
 		}
 		*at = ':'; at = at + 1;	/* add : as delimiter between domain and port */
 		memcpy(at, val.s.s, val.s.len); at = at + val.s.len;
 		didsomething = 1;
 	} else {
-		DBG("dp_apply_policy: port_override_avp not found, using original port\n");
+		LM_DBG("port_override_avp not found, using original port\n");
 		if (_msg->parsed_uri.port.len) {
-			DBG("dp_apply_policy: port found in RURI, reusing it for DURI\n");
+			LM_DBG("port found in RURI, reusing it for DURI\n");
 			if ( (len + _msg->parsed_uri.port.len + 1) >  MAX_URI_SIZE) {
-				LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to copy port\n");
+				LM_ERR("duri buffer to small to copy port\n");
 				return -1;
 			}
-			*at = ':'; at = at + 1;	/* add : as delimiter between domain and port */
-			memcpy(at, _msg->parsed_uri.port.s, _msg->parsed_uri.port.len); at = at + _msg->parsed_uri.port.len;
+			*at = ':'; at = at + 1;	
+			/* add : as delimiter between domain and port */
+			memcpy(at, _msg->parsed_uri.port.s, _msg->parsed_uri.port.len); 
+			at = at + _msg->parsed_uri.port.len;
 		} else {
-			DBG("dp_apply_policy: port not found in RURI, no need to copy it to DURI\n");
+			LM_DBG("port not found in RURI, no need to copy it to DURI\n");
 		}
 	}
 
@@ -924,13 +938,14 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 	avp = search_first_avp(transport_override_avp_name_str, transport_override_name, &val, 0);
 	if (avp) {
 		if ( !(avp->flags&AVP_VAL_STR) ||  !val.s.s || !val.s.len) {
-			LOG(L_ERR, "dp_apply_policy: Empty or non-string transport_override_avp, return with error ...\n");
+			LM_ERR("empty or non-string transport_override_avp, "
+					"return with error ...\n");
 			return -1;
 		}
-		DBG("dp_apply_policy: transport_override_avp found found = '%.*s'\n", val.s.len, ZSW(val.s.s));
+		LM_DBG("transport_override_avp found='%.*s'\n",val.s.len, ZSW(val.s.s));
 
 		if ( (len + val.s.len + 11) >  MAX_URI_SIZE) {
-			LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to add transport override\n");
+			LM_ERR("duri buffer to small to add transport override\n");
 			return -1;
 		}
 		/* add : as transport parameter to duri; NOTE: no checks if transport parameter is valid  */
@@ -938,28 +953,28 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2) {
 		memcpy(at, val.s.s, val.s.len); at = at + val.s.len;
 		didsomething = 1;
 	} else {
-		DBG("dp_apply_policy: transport_override_avp not found, using original transport\n");
+		LM_DBG("transport_override_avp not found, using original transport\n");
 		if (_msg->parsed_uri.transport.len) {
-			DBG("dp_apply_policy: transport found in RURI, reusing it for DURI\n");
+			LM_DBG("transport found in RURI, reusing it for DURI\n");
 			if ( (len + _msg->parsed_uri.transport.len + 1) >  MAX_URI_SIZE) {
-				LOG(L_ERR, "dp_apply_policy: ERROR: duri buffer to small to copy transport\n");
+				LM_ERR("duri buffer to small to copy transport\n");
 				return -1;
 			}
 			*at = ';'; at = at + 1; /* add : as delimiter between domain and port */
 			memcpy(at, _msg->parsed_uri.transport.s, _msg->parsed_uri.transport.len); at = at + _msg->parsed_uri.transport.len;
 		} else {
-			DBG("dp_apply_policy: transport not found in RURI, no need to copy it to DURI\n");
+			LM_DBG("transport not found in RURI, no need to copy it to DURI\n");
 		}
 	}
 
 	/* write new target DURI into DURI */
 	if (didsomething == 0) {
-		DBG("dp_apply_policy: no domainpolicy AVP set, no need to push new DURI\n");
+		LM_DBG("no domainpolicy AVP set, no need to push new DURI\n");
 		return 2;
 	}
 	duri_str.s = (char *)&(duri[0]);
 	duri_str.len = at - duri_str.s;
-	DBG("dp_apply_policy: new DURI is '%.*s'\n",duri_str.len, ZSW(duri_str.s));
+	LM_DBG("new DURI is '%.*s'\n",duri_str.len, ZSW(duri_str.s));
 	set_dst_uri(_msg, &duri_str);
 
 	return 1;

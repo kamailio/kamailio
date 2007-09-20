@@ -67,7 +67,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT_F,0) == -1) ||
 				(msg->contact == NULL) ))
 		{
-		LOG(L_ERR,"ERROR: encode_contact: no Contact header present\n");
+		LM_ERR("no Contact header present\n");
 		return -1;
 		}
 
@@ -90,7 +90,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 			
 			if (res != 0)
 				{
-				LOG (L_ERR,"ERROR: encode_contact: Failed encoding contact.Code %d\n", res);
+				LM_ERR("failed encoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
@@ -98,7 +98,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 			else
 				if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 				{
-					LOG (L_ERR,"ERROR: encode_contact: lumping failed in mangling port \n");
+					LM_ERR("lumping failed in mangling port \n");
 					return -2;
 				}
 			
@@ -112,7 +112,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 				res = encode_uri (uri, encoding_prefix,public_ip,separator,&newUri);
 				if (res != 0)
 					{
-					LOG(L_ERR,"ERROR: encode_contact: Failed encode_uri.Code %d\n",res);
+					LM_ERR("failed encode_uri.Code %d\n",res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
@@ -120,7 +120,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 				else
 				if (patch (msg, uri.s, uri.len, newUri.s, newUri.len)< 0)
 				{
-					LOG (L_ERR,"ERROR: encode_contact: lumping failed in mangling port \n");
+					LM_ERR("lumping failed in mangling port \n");
 					return -3;
 				}
 			} /* while */
@@ -130,7 +130,7 @@ encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip)
 	} /* end if */
 	else /* after parsing still NULL */
 		{
-			LOG(L_ERR,"ERROR: encode_contact: Unable to parse Contact header\n");
+			LM_ERR("unable to parse Contact header\n");
 			return -4;
 		}
 	return 1;
@@ -171,7 +171,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 #endif
 		if (res != 0)
 		{
-			LOG (L_ERR,"ERROR: decode_contact:Failed decoding contact.Code %d\n", res);
+			LM_ERR("failed decoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
@@ -189,7 +189,7 @@ decode_contact (struct sip_msg *msg,char *unused1,char *unused2)
 		/*
 		if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 		{
-			LOG (L_ERR,"ERROR: decode_contact:lumping failed in mangling port \n");
+			LM_ERR("lumping failed in mangling port \n");
 			return -2;
 		}
 		*/
@@ -215,7 +215,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 	if ((msg->contact == NULL)&&((parse_headers(msg,HDR_CONTACT_F,0) == -1) ||
 				(msg->contact== NULL) ))
 		{
-		LOG(L_ERR,"ERROR: decode_contact_header: no Contact header present\n");
+		LM_ERR("no Contact header present\n");
 		return -1;
 		}
 
@@ -249,7 +249,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 #endif
 		if (res != 0)
 		{
-			LOG (L_ERR,"ERROR: decode_contact_header:Failed decoding contact.Code %d\n", res);
+			LM_ERR("failed decoding contact.Code %d\n", res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
@@ -257,7 +257,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 		else
 		if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 		{
-			LOG (L_ERR,"ERROR: decode_contact:lumping failed in mangling port \n");
+			LM_ERR("lumping failed in mangling port \n");
 			return -2;
 		}
 
@@ -270,7 +270,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 			res = decode_uri (uri, separator, &newUri);
 			if (res != 0)
 				{
-				LOG (L_ERR,"ERROR: decode_contact: Failed decoding contact.Code %d\n",res);
+				LM_ERR("failed decoding contact.Code %d\n",res);
 #ifdef STRICT_CHECK
 				return res;
 #endif
@@ -278,7 +278,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 			else
 			if (patch (msg, uri.s, uri.len, newUri.s, newUri.len) < 0)
 			{
-				LOG (L_ERR,"ERROR: decode_contact:lumping failed in mangling port \n");
+				LM_ERR("lumping failed in mangling port \n");
 				return -3;
 			}
 		} // end while 
@@ -287,7 +287,7 @@ decode_contact_header (struct sip_msg *msg,char *unused1,char *unused2)
 	} // end if 
 	else // after parsing still NULL 
 		{
-			LOG(L_ERR,"ERROR: decode_contact: Unable to parse Contact header\n");
+			LM_ERR("unable to parse Contact header\n");
 			return -4;
 		}
 #ifdef DEBUG
@@ -341,7 +341,7 @@ encode2format (str uri, struct uri_format *format)
 	foo = parse_uri (start, end - start, &sipUri);
 	if (foo != 0)
 	{
-		LOG(L_ERR,"ERROR: encode2format: parse_uri failed on [%.*s].Code %d \n",uri.len,uri.s,foo);
+		LM_ERR("parse_uri failed on [%.*s].Code %d \n",uri.len,uri.s,foo);
 #ifdef DEBUG
 		fprintf (stdout, "PARSING uri with parse uri not ok %d\n", foo);
 #endif
@@ -379,7 +379,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 		return -1;	/* no contact or an invalid one */
 	if (public_ip == NULL) 
 		{
-			LOG(L_ERR,"ERROR: encode_uri: Invalid NULL value for public_ip parameter\n");
+			LM_ERR("invalid NULL value for public_ip parameter\n");
 			return -2;
 		}
 #ifdef DEBUG
@@ -389,7 +389,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 	foo = encode2format (uri, &format);
 	if (foo < 0)
 		{
-		LOG(L_ERR,"ERROR: encode_uri: Unable to encode Contact URI [%.*s].Return code %d\n",uri.len,uri.s,foo);
+		LM_ERR("unable to encode Contact URI [%.*s].Return code %d\n",uri.len,uri.s,foo);
 		return foo - 20;
 		}
 #ifdef DEBUG
@@ -416,7 +416,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 #ifdef DEBUG
 			fprintf (stdout, "Unable to alloc result [%d] end=%d\n",result->len, format.second);
 #endif
-			LOG(L_ERR,"ERROR: encode_uri:Unable to alloc memory\n");
+			LM_ERR("unable to alloc pkg memory\n");
 			return -3;
 		}
 #ifdef DEBUG
@@ -429,7 +429,7 @@ encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str 
 
 	if ((res < 0 )||(res>result->len)) 
 		{
-			LOG(L_ERR,"ERROR: encode_uri: Unable to construct new uri.\n");
+			LM_ERR("unable to construct new uri.\n");
 			if (result->s != NULL) pkg_free(result->s);
 			return -4;
 		}
@@ -463,7 +463,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 
 	if (uri.s == NULL)
 		{
-		LOG(L_ERR,"ERROR: decode2format: Invalid parameter uri.It is NULL\n");
+		LM_ERR("invalid parameter uri.It is NULL\n");
 		return -1;
 		}
 	/* sip:enc_pref*username*password*ip*port*protocol@public_ip */
@@ -471,7 +471,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 	start = q_memchr (uri.s, ':', uri.len);
 	if (start == NULL)
 	{
-		LOG(L_ERR,"ERROR: decode2format: Invalid SIP uri.Missing :\n");
+		LM_ERR("invalid SIP uri.Missing :\n");
 		return -2;
 	}			/* invalid uri */
 	start = start + 1;	/* jumping over sip: ATENTIE LA BUFFER OVERFLOW DACA E DOAR sip: */
@@ -482,7 +482,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 	end = q_memchr(start,'@',uri.len-(start-uri.s));
 	if (end == NULL) 
 		{
-		LOG(L_ERR,"ERROR: decode2format: Invalid SIP uri.Missing @\n");
+		LM_ERR("invalid SIP uri.Missing @\n");
 		return -3;/* no host address found */
 		}
 
@@ -573,26 +573,26 @@ decode_uri (str uri, char separator, str * result)
 
 	if ((uri.len <= 0) || (uri.s == NULL))
 		{
-		LOG(L_ERR,"ERROR: decode_uri: Invalid value for uri\n");
+		LM_ERR("invalid value for uri\n");
 		return -1;
 		}
 
 	foo = decode2format (uri, separator, &format);
 	if (foo < 0)
 		{
-		LOG(L_ERR,"ERROR: decode_uri: Error decoding Contact uri .Error code %d\n",foo);
+		LM_ERR("failed to decode Contact uri .Error code %d\n",foo);
 		return foo - 20;
 		}
 	/* sanity check */
 	if (format.ip.len <= 0)
 		{
-			LOG(L_ERR,"ERROR: decode_uri: Unable to decode host address \n");
+			LM_ERR("unable to decode host address \n");
 			return -2;/* should I quit or ignore ? */
 		}			
 
 	if ((format.password.len > 0) && (format.username.len <= 0))
 		{
-			LOG(L_ERR,"ERROR: decode_uri: Password decoded but no username available\n");
+			LM_ERR("password decoded but no username available\n");
 			return -3;
 		}
 		
@@ -615,7 +615,7 @@ decode_uri (str uri, char separator, str * result)
 	result->s = pkg_malloc (result->len);
 	if (result->s == NULL)
 		{
-			LOG(L_ERR,"ERROR: decode_contact: Unable to allocate memory\n");
+			LM_ERR("unable to allocate pkg memory\n");
 			return -4;
 		}
 	pos = result->s;

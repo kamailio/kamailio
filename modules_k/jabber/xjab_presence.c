@@ -36,7 +36,7 @@
 /**
  * create a presence cell
  */
-xj_pres_cell xj_pres_cell_new()
+xj_pres_cell xj_pres_cell_new(void)
 {
 	xj_pres_cell prc = NULL;
 	prc = (xj_pres_cell)pkg_malloc(sizeof(t_xj_pres_cell));
@@ -118,7 +118,7 @@ int xj_pres_cell_update(xj_pres_cell prc, pa_callback_f f, void *p)
 /**
  * init a presence list
  */
-xj_pres_list xj_pres_list_init()
+xj_pres_list xj_pres_list_init(void)
 {
 	xj_pres_list prl = NULL;
 	

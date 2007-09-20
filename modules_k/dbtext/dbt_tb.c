@@ -168,7 +168,7 @@ dbt_table_p dbt_table_new(char *_s, char *path, int _l)
 	if(stat(path, &s) == 0)
 	{
 		dtp->mt = s.st_mtime;
-		DBG("DBT:dbt_table_new: mtime is %d\n", (int)s.st_mtime);
+		LM_DBG("mtime is %d\n", (int)s.st_mtime);
 	}
 	
 done:
@@ -404,7 +404,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			break;
 			
 			default:
-				LOG(L_ERR,"ERROR:dbtext: unsupported type %d in update\n",_t);
+				LM_ERR("unsupported type %d in update\n",_t);
 				_drp->fields[_idx].nul = 1;
 				return -1;
 		}
@@ -426,7 +426,7 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 	{
 		if(!_drp->fields[i].nul &&(_dtp->colv[i]->type!=_drp->fields[i].type))
 		{
-			DBG("DBT:dbt_table_check_row: incompatible types - field %d\n",i);
+			LM_DBG("incompatible types - field %d\n",i);
 			return -1;
 		}
 		if(_dtp->colv[i]->flag & DBT_FLAG_NULL)
@@ -444,7 +444,7 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 			continue;
 		}
 
-		DBG("DBT:dbt_table_check_row: NULL value not allowed - field %d\n",i);
+		LM_DBG("null value not allowed - field %d\n",i);
 		return -1;
 	}
 	

@@ -99,7 +99,7 @@ int xj_jkey_cmp(void *x, void *y)
 	    return -1;
 	if(b == NULL || b->id == NULL || b->id->s == NULL)
 	    return 1;
-	// DBG("JABBER: k_kmp: comparing <%.*s> / <%.*s>\n", ((str *)a)->len,
+	// LM_DBG("comparing <%.*s> / <%.*s>\n", ((str *)a)->len,
 	// 		((str *)a)->s, ((str *)b)->len, ((str *)b)->s);
 	if(a->hash != b->hash)
 		return (a->hash < b->hash)?-1:1;
@@ -156,7 +156,7 @@ int xj_extract_aor(str* u, int t)
 		return -1;
 	if (parse_uri(u->s, u->len, &puri) < 0)
 	{
-		LOG(L_ERR, "XJAB:extract_aor: Error while parsing URI\n");
+		LM_ERR("failed to parse URI\n");
 		return -1;
 	}
 	

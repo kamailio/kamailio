@@ -113,7 +113,7 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 	}
 	
 	if (!msg->diversion && parse_headers(msg, HDR_DIVERSION_F, 0) == -1) {
-		LOG(L_ERR, "add_diversion_helper: Header parsing failed\n");
+		LM_ERR("header parsing failed\n");
 		return -1;
 	}
 	
@@ -128,13 +128,13 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 	if (!anchor) {
 		anchor = anchor_lump(msg, ptr - msg->buf, 0, 0);
 		if (!anchor) {
-			LOG(L_ERR, "add_diversion_helper: Can't get anchor\n");
+			LM_ERR("can't get anchor\n");
 			return -2;
 		}
 	}
 	
 	if (!insert_new_lump_before(anchor, s->s, s->len, 0)) {
-		LOG(L_ERR, "add_diversion_helper: Can't insert lump\n");
+		LM_ERR("can't insert lump\n");
 		return -3;
 	}
 
@@ -156,7 +156,7 @@ int add_diversion(struct sip_msg* msg, char* r, char* s)
 	div_hf.len = DIVERSION_PREFIX_LEN + uri->len + DIVERSION_SUFFIX_LEN + reason->len + CRLF_LEN;
 	div_hf.s = pkg_malloc(div_hf.len);
 	if (!div_hf.s) {
-		LOG(L_ERR, "add_diversion: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 

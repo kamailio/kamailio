@@ -93,7 +93,7 @@ static inline int parse_aaa_avps(char *definition,
 	while ( (e=strchr(p,';'))!=0 || (e=p+strlen(p))!=p ) {
 		/* new aaa_avp struct */
 		if ( (avp=(struct aaa_avp*)pkg_malloc(sizeof(struct aaa_avp)))==0 ) {
-			LOG(L_ERR,"ERROR:auth_aaa_avps: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			goto error;
 		}
 		memset( avp, 0, sizeof(struct aaa_avp));
@@ -110,16 +110,14 @@ static inline int parse_aaa_avps(char *definition,
 			
 			if (pv_parse_spec(&foo, &avp_spec)==0
 					|| avp_spec.type!=PVT_AVP) {
-				LOG(L_ERR, "ERROR:auth_aaa_avps: malformed or non AVP %s "
-					"AVP definition\n", foo.s);
+				LM_ERR("malformed or non AVP %s AVP definition\n", foo.s);
 				goto parse_error;;
 			}
 
 			if(pv_get_avp_name(0, &(avp_spec.pvp), &avp_name,
 						&avp->avp_type)!=0)
 			{
-				LOG(L_ERR, "ERROR:auth_aaa_avps: [%s]- invalid "
-					"AVP definition\n", foo.s);
+				LM_ERR("[%s]- invalid AVP definition\n", foo.s);
 				goto parse_error;
 			}
 			foo.s[foo.len] = t;
@@ -129,7 +127,7 @@ static inline int parse_aaa_avps(char *definition,
 				avp->avp_name.s.s =
 					(char*)pkg_malloc(avp_name.s.len+1);
 				if (avp->avp_name.s.s==0) {
-					LOG(L_ERR,"ERROR:auth_aaa_avps: no more pkg mem\n");
+					LM_ERR("no more pkg mem\n");
 					goto error;
 				}
 				avp->avp_name.s.len = avp_name.s.len;
@@ -150,7 +148,7 @@ static inline int parse_aaa_avps(char *definition,
 		/* copy the attr into the avp structure */
 		avp->attr_name.s = (char*)pkg_malloc( foo.len+1 );
 		if (avp->attr_name.s==0) {
-			LOG(L_ERR,"ERROR:auth_aaa_avps: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			goto error;
 		}
 		avp->attr_name.len = foo.len;
@@ -177,7 +175,7 @@ static inline int parse_aaa_avps(char *definition,
 
 	return 0;
 parse_error:
-	LOG(L_ERR,"ERROR:auth:aaa_avps: parse error in \"%s\" at pos %d(%s)\n",
+	LM_ERR("parse failed in \"%s\" at pos %d(%s)\n",
 		definition, (int)(long)(p-definition),p);
 error:
 	free_aaa_avp( avp );

@@ -106,12 +106,12 @@ static int mod_init(void)
 	vals[V_GROUP_CHECK].n	= "Group-Check";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LOG(L_ERR, "group_radius: Error opening configuration file \n");
+		LM_ERR("failed to open configuration file \n");
 		return -1;
 	}
     
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
-		LOG(L_ERR, "group_radius: Error opening dictionary file \n");
+		LM_ERR("failed to open dictionary file \n");
 		return -2;
 	}
 
@@ -144,7 +144,7 @@ static int hf_fixup(void** param, int param_no)
 		} else if (!strcasecmp((char*)*param, "Credentials")) {
 			*param = (void*)4;
 		} else {
-			LOG(L_ERR, "hf_fixup(): Unsupported Header Field identifier\n");
+			LM_ERR("unsupported Header Field identifier\n");
 			return E_UNSPEC;
 		}
 
@@ -152,7 +152,7 @@ static int hf_fixup(void** param, int param_no)
 	} else if (param_no == 2) {
 		s = (str*)pkg_malloc(sizeof(str));
 		if (!s) {
-			LOG(L_ERR, "hf_fixup(): No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return E_UNSPEC;
 		}
 

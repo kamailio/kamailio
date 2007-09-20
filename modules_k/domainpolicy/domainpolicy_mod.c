@@ -154,7 +154,7 @@ static int mod_init(void)
 	unsigned int par;
 	int ver;
 
-	LOG(L_INFO, "domainpolicy mod_init: initializing\n");
+	LM_INFO("initializing...\n");
 	
 	db_url.len = strlen(db_url.s);
 	domainpolicy_table.len = strlen(domainpolicy_table.s);
@@ -163,16 +163,16 @@ static int mod_init(void)
 	domainpolicy_col_att.len = strlen(domainpolicy_col_att.s);
 	domainpolicy_col_val.len = strlen(domainpolicy_col_val.s);
 
-	LOG(L_INFO, "domainpolicy mod_init: check for DB module\n");
+	LM_INFO("check for DB module\n");
 
 	/* Check if database module has been loaded */
 	if (domainpolicy_db_bind(db_url.s)<0)  {
-		LOG(L_ERR, "domainpolicy mod_init: ERROR: no database module loaded!"
+		LM_ERR("no database module loaded!"
 			" Please make sure that a DB module is loaded first\n");
 		return -1;
 	}
 
-	LOG(L_INFO, "domainpolicy mod_init: Update length of module variables\n");
+	LM_INFO("update length of module variables\n");
 	/* Update length of module variables */
 	port_override_avp.len         = strlen(port_override_avp.s);
 	transport_override_avp.len    = strlen(transport_override_avp.s);
@@ -184,21 +184,18 @@ static int mod_init(void)
 	/* Check table version */
 	ver = domainpolicy_db_ver(db_url.s, &domainpolicy_table);
 	if (ver < 0) {
-		LOG(L_ERR, "ERROR: domainpolicy:mod_init():"
-			" Error while querying table version\n");
+		LM_ERR("failed to query table version\n");
 		return -1;
 	} else if (ver < DOMAINPOLICY_TABLE_VERSION) {
-		LOG(L_ERR, "ERROR: domainpolicy:mod_init(): Invalid table version"
-			" of domainpolicy table\n");
+		LM_ERR("invalid table version of domainpolicy table\n");
 		return -1;
 	}
 
 	/* Assign AVP parameter names */
-	LOG(L_INFO, "domainpolicy mod_init: AVP\n");
+	LM_INFO("AVP\n");
 	if (str2int(&port_override_avp, &par) == 0) {
 		if (!par) {
-			LOG(L_ERR, "domainpolicy modul: ERROR: "
-				" port_override_avp not defined!\n");
+			LM_ERR("port_override_avp not defined!\n");
 			return -1;
 		}
 		port_override_name.n = par;
@@ -209,8 +206,7 @@ static int mod_init(void)
 	}
 	if (str2int(&transport_override_avp, &par) == 0) {
 		if (!par) {
-			LOG(L_ERR, "domainpolicy modul: ERROR: "
-				" transport_override_avp not defined!\n");
+			LM_ERR(" transport_override_avp not defined!\n");
 			return -1;
 		}
 		transport_override_name.n = par;
@@ -221,8 +217,7 @@ static int mod_init(void)
 	}
 	if (str2int(&domain_prefix_avp, &par) == 0) {
 		if (!par) {
-			LOG(L_ERR, "domainpolicy modul: ERROR: "
-				" domain_prefix_avp not defined!\n");
+			LM_ERR("domain_prefix_avp not defined!\n");
 			return -1;
 		}
 		domain_prefix_name.n = par;
@@ -233,8 +228,7 @@ static int mod_init(void)
 	}
 	if (str2int(&domain_suffix_avp, &par) == 0) {
 		if (!par) {
-			LOG(L_ERR, "domainpolicy modul: ERROR: "
-				" domain_suffix_avp not defined!\n");
+			LM_ERR(" domain_suffix_avp not defined!\n");
 			return -1;
 		}
 		domain_suffix_name.n = par;
@@ -245,8 +239,7 @@ static int mod_init(void)
 	}
 	if (str2int(&domain_replacement_avp, &par) == 0) {
 		if (!par) {
-			LOG(L_ERR, "domainpolicy modul: ERROR: "
-				" domain_replacement_avp not defined!\n");
+			LM_ERR(" domain_replacement_avp not defined!\n");
 			return -1;
 		}
 		domain_replacement_name.n = par;
@@ -257,8 +250,7 @@ static int mod_init(void)
 	}
 	if (str2int(&send_socket_avp, &par) == 0) {
 		if (!par) {
-			LOG(L_ERR, "domainpolicy modul: ERROR: "
-				" send_socket_avp not defined!\n");
+			LM_ERR(" send_socket_avp not defined!\n");
 			return -1;
 		}
 		send_socket_name.n = par;
@@ -274,13 +266,12 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	DBG("domainpolicy child_init: initializing\n");
+	LM_DBG("initializing\n");
 
 	/* Check if database is needed by child */
 	if (rank > 0)  {
 		if (domainpolicy_db_init(db_url.s)<0) {
-			LOG(L_ERR, "ERROR: domainpolicy:child_init():"
-					" Unable to connect to the database\n");
+			LM_ERR("unable to connect to the database\n");
 			return -1;
 		}
 	}

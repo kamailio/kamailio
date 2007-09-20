@@ -110,7 +110,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("avp_radius - Initializing\n");
+	LM_INFO("initializing...\n");
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
@@ -123,14 +123,13 @@ static int mod_init(void)
 
 	/* read config */
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LOG(L_ERR, "ERROR:avp_radius:init: Error opening radius "
-			"config file: %s\n", radius_config);
+		LM_ERR("failed to open radius config file: %s\n", radius_config);
 		return -1;
 	}
 
 	/* read dictionary */
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
-		LOG(L_ERR, "ERROR:avp_radius:init: Error reading radius dictionary\n");
+		LM_ERR("failed to read radius dictionary\n");
 		return -1;
 	}
 	
@@ -176,7 +175,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 	while( p<end && *p!=':' && *p!='#')
 		p++;
 	if (names.s==p || p==end) {
-		LOG(L_ERR,"ERROR:avp_radius:extract_avp: empty AVP name\n");
+		LM_ERR("empty AVP name\n");
 		goto error;
 	}
 	names.len = p - names.s;
@@ -189,15 +188,14 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 	values.s = ++p;
 	values.len = end-values.s;
 	if (values.len==0) {
-		LOG(L_ERR,"ERROR:avp_radius:extract_avp: empty AVP value\n");
+		LM_ERR("empty AVP value\n");
 		goto error;
 	}
 
 	if ( !((*flags)&AVP_NAME_STR) ) {
 		/* convert name to id*/
 		if (str2int(&names,&r)!=0 ) {
-			LOG(L_ERR,"ERROR:avp_radius:extract_avp: invalid AVP ID '%.*s'\n",
-				names.len,names.s);
+			LM_ERR("invalid AVP ID '%.*s'\n", names.len,names.s);
 			goto error;
 		}
 		name->n = (int)r;
@@ -208,8 +206,7 @@ static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
 	if ( !((*flags)&AVP_VAL_STR) ) {
 		/* convert value to integer */
 		if (str2int(&values,&r)!=0 ) {
-			LOG(L_ERR,"ERROR:avp_radius:extract_avp: invalid AVP numrical "
-				"value '%.*s'\n", values.len,values.s);
+			LM_ERR("invalid AVP numrical value '%.*s'\n", values.len,values.s);
 			goto error;
 		}
 		value->n = (int)r;
@@ -244,15 +241,13 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	case LOAD_CALLER:
 		     /* Use From header field */
 		if (parse_from_header(msg) < 0) {
-			LOG(L_ERR, "ERROR:avp_radius:load_avp_user: Error while "
-				"parsing From header field\n");
+			LM_ERR("failed to parse From header field\n");
 			return -1;
 		}
 
 		uri = &get_from(msg)->uri;
 		if (parse_uri(uri->s, uri->len, &puri) < 0) {
-			LOG(L_ERR, "ERROR:avp_radius:load_avp_user: Error while "
-				"parsing From URI\n");
+			LM_ERR("failed to parse From URI\n");
 			return -1;
 		}
 
@@ -264,14 +259,12 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	case LOAD_CALLEE:
 		     /* Use the Request-URI */
 		if (parse_sip_msg_uri(msg) < 0) {
-			LOG(L_ERR, "ERROR:avp_radius:load_avp_user: Error while "
-				"parsing Request-URI\n");
+			LM_ERR("failed to parse Request-URI\n");
 			return -1;
 		}
 
 		if (msg->parsed_uri.user.len == 0) {
-			LOG(L_ERR, "ERROR:avp_radius:load_avp_user: Request-URI user "
-				"is missing\n");
+			LM_ERR("missing Request-URI user");
 			return -1;
 		}
 		
@@ -284,8 +277,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		     /* Use digest credentials */
 		get_authorized_cred(msg->proxy_auth, &h);
 		if (!h) {
-			LOG(L_ERR, "ERROR:avp_radius:load_avp_user: No authoried "
-				"credentials\n");
+			LM_ERR("no authoried credentials\n");
 			return -1;
 		}
 
@@ -296,7 +288,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		break;
 
 	default:
-		LOG(L_ERR, "ERROR:avp_radius:avp_load_user: Unknown user type\n");
+		LM_ERR("unknown user type\n");
 		return -1;
 		
 	}
@@ -304,7 +296,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	user_domain.len = user->len + 1 + domain->len;
 	user_domain.s = (char*)pkg_malloc(user_domain.len);
 	if (!user_domain.s) {
-		LOG(L_ERR, "ERROR:avp_radius:avp_load_user: No pkg memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 
@@ -314,19 +306,17 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 
 	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
 			user_domain.s, user_domain.len, 0)) {
-		LOG(L_ERR, "ERROR:avp_radius:avp_load_user: Error adding "
-			"PW_USER_NAME\n");
+		LM_ERR("failed to add PW_USER_NAME\n");
 		goto error;
 	}
 
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-		LOG(L_ERR, "ERROR:avp_radius:avp_load_user: Error adding "
-			"PW_SERVICE_TYPE\n");
+		LM_ERR("failed to add PW_SERVICE_TYPE\n");
 		goto error;
 	}
 
 	if (rc_auth(rh, 0, send, &received, rad_msg) == OK_RC) {
-		DBG("DEBUG:avp_radius:avp_load_user: rc_auth Success\n");
+		LM_DBG("rc_auth Success\n");
 		rc_avpair_free(send);
 		pkg_free(user_domain.s);
 
@@ -341,8 +331,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 				buffer.len = prefix->len + name.s.len;
 				buffer.s = (char*)pkg_malloc(buffer.len);
 				if (!buffer.s) {
-					LOG(L_ERR, "ERROR:avp_radius:avp_load_user: "
-						"No pkg memory left\n");
+					LM_ERR("no pkg memory left\n");
 					return -1;
 				}
 				memcpy(buffer.s, prefix->s, prefix->len);
@@ -353,11 +342,9 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 			}
 
 			if (add_avp( flags, name, val) < 0) {
-				LOG(L_ERR, "ERROR:avp_radius:avp_load_user: Unable to create "
-					"a new AVP\n");
+				LM_ERR("unable to create a new AVP\n");
 			} else {
-				DBG("DEBUG:avp_radius:generate_avps: "
-					"AVP '%.*s'/%d='%.*s'/%d has been added\n",
+				LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
 					(flags&AVP_NAME_STR)?name.s.len:4,
 					(flags&AVP_NAME_STR)?name.s.s:"null",
 					(flags&AVP_NAME_STR)?0:name.n,
@@ -373,7 +360,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		LOG(L_ERR,"ERROR:avp_radius:avp_load_user: rc_auth failed\n");
+		LM_ER("rc_auth failed\n");
 	}
 
 error:
@@ -399,8 +386,7 @@ static int load_avp_radius(struct sip_msg* msg, char* attr, char* _dummy)
 		return load_avp_user(msg, &caller_prefix, LOAD_DIGEST);
 
 	default:
-		LOG(L_ERR, "ERROR:avp_radius:load_avp_radius: "
-			"Unknown parameter value\n");
+		LM_ERR("unknown parameter value\n");
 		return -1;
 	}
 }
@@ -418,7 +404,7 @@ static int load_avp_fixup(void** param, int param_no)
 		} else if (!strcasecmp(*param, "digest")) {
 			id = LOAD_DIGEST;
 		} else {
-			LOG(L_ERR, "ERROR:avp_radius:load_avp_fixup: Unknown parameter\n");
+			LM_ERR("unknown parameter\n");
 			return -1;
 		}
 	}

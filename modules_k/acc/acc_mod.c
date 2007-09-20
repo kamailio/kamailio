@@ -255,14 +255,14 @@ static int acc_fixup(void** param, int param_no)
 
 	p = (char*)*param;
 	if (p==0 || p[0]==0) {
-		LOG(L_ERR,"ERROR:acc:acc_fixup: first parameter is empty\n");
+		LM_ERR("first parameter is empty\n");
 		return E_SCRIPT;
 	}
 
 	if (param_no == 1) {
 		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
 		if (!accp) {
-			LOG(L_ERR, "ERROR:acc:acc_fixup: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			return E_OUT_OF_MEM;
 		}
 		memset( accp, 0, sizeof(struct acc_param));
@@ -297,7 +297,7 @@ static int acc_fixup(void** param, int param_no)
 
 static int mod_init( void )
 {
-	LOG(L_INFO,"ACC - initializing\n");
+	LM_INFO("initializing...\n");
 
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
@@ -306,20 +306,19 @@ static int mod_init( void )
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR:acc:mod_init: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 
 	/* if detect_direction is enabled, load rr also */
 	if (detect_direction && load_rr_api(&rrb)!=0) {
-		LOG(L_ERR, "ERROR:acc:mod_init: can't load RR API\n");
+		LM_ERR("can't load RR API\n");
 		return -1;
 	}
 
 	/* listen for all incoming requests  */
 	if ( tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, acc_onreq, 0 ) <=0 ) {
-		LOG(L_ERR,"ERROR:acc:mod_init: cannot register TMCB_REQUEST_IN "
-			"callback\n");
+		LM_ERR("cannot register TMCB_REQUEST_IN callback\n");
 		return -1;
 	}
 
@@ -328,7 +327,7 @@ static int mod_init( void )
 
 	/* configure multi-leg accounting */
 	if (leg_info_str && (leg_info=parse_acc_leg(leg_info_str))==0 ) {
-		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse multileg_info param\n");
+		LM_ERR("failed to parse multileg_info param\n");
 		return -1;
 	}
 
@@ -336,7 +335,7 @@ static int mod_init( void )
 
 	/* parse the extra string, if any */
 	if (log_extra_str && (log_extra=parse_acc_extra(log_extra_str))==0 ) {
-		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse log_extra param\n");
+		LM_ERR("failed to parse log_extra param\n");
 		return -1;
 	}
 
@@ -354,12 +353,11 @@ static int mod_init( void )
 	if (db_url && db_url[0]) {
 		/* parse the extra string, if any */
 		if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
-			LOG(L_ERR,"ERROR:acc:mod_init: failed to parse db_extra param\n");
+			LM_ERR("failed to parse db_extra param\n");
 			return -1;
 		}
 		if (acc_db_init(db_url)<0){
-			LOG(L_ERR, "ERROR:acc:mod_init: acc_db_init: failed..."
-				"did you load a database module?\n");
+			LM_ERR("failed...did you load a database module?\n");
 			return -1;
 		}
 		/* fix the flags */
@@ -380,7 +378,7 @@ static int mod_init( void )
 	if (radius_config && radius_config[0]) {
 		/* parse the extra string, if any */
 		if (rad_extra_str && (rad_extra=parse_acc_extra(rad_extra_str))==0 ) {
-			LOG(L_ERR,"ERROR:acc:mod_init: failed to parse rad_extra param\n");
+			LM_ERR("failed to parse rad_extra param\n");
 			return -1;
 		}
 
@@ -390,7 +388,7 @@ static int mod_init( void )
 		if (flag_idx2mask(&radius_missed_flag)<0)
 			return -1;
 		if (init_acc_rad( radius_config, service_type)!=0 ) {
-			LOG(L_ERR,"ERROR:acc:mod_init: failed to init radius\n");
+			LM_ERR("failed to init radius\n");
 			return -1;
 		}
 	} else {
@@ -411,12 +409,12 @@ static int mod_init( void )
 
 	/* parse the extra string, if any */
 	if (dia_extra_str && (dia_extra=parse_acc_extra(dia_extra_str))==0 ) {
-		LOG(L_ERR,"ERROR:acc:mod_init: failed to parse dia_extra param\n");
+		LM_ERR("failed to parse dia_extra param\n");
 		return -1;
 	}
 
 	if (acc_diam_init()!=0) {
-		LOG(L_ERR,"ERROR:acc:mod_init: failed to init diameter engine\n");
+		LM_ERR("failed to init diameter engine\n");
 		return -1;
 	}
 
@@ -435,23 +433,22 @@ static int child_init(int rank)
 	/* DIAMETER */
 #ifdef DIAM_ACC
 	/* open TCP connection */
-	DBG("DEBUG:acc:child_init:: Initializing TCP connection\n");
+	LM_DBG("initializing TCP connection\n");
 
 	sockfd = init_mytcp(diameter_client_host, diameter_client_port);
 	if(sockfd==-1) 
 	{
-		LOG(L_ERR,"ERROR:acc:child_init:: TCP connection not established\n");
+		LM_ERR("TCP connection not established\n");
 		return -1;
 	}
 
-	DBG("DEBUG:acc:child_init: TCP connection established on sockfd=%d\n",
-		sockfd);
+	LM_DBG("a TCP connection was established on sockfd=%d\n", sockfd);
 
 	/* every child with its buffer */
 	rb = (rd_buf_t*)pkg_malloc(sizeof(rd_buf_t));
 	if(!rb)
 	{
-		DBG("acc: mod_child_init: no more free memory\n");
+		LM_DBG("no more pkg memory\n");
 		return -1;
 	}
 	rb->buf = 0;

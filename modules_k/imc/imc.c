@@ -176,24 +176,24 @@ int add_from_db(void)
 
 	if(imc_dbf.use_table(imc_db, rooms_table)< 0)
 	{
-		LOG(L_ERR, "imc:mod_init:ERROR in use table\n");
+		LM_ERR("use_table failed\n");
 		return -1;
 	}
 
 	if(imc_dbf.query(imc_db,0, 0, 0, rq_result_cols,0, 3, 0,&r_res)< 0)
 	{
-		LOG(L_ERR, "imc:mod_init:ERROR while querrying table\n");
+		LM_ERR("failed to querry table\n");
 		return -1;
 	}
 	if(r_res && r_res->n<=0)
 	{
-		LOG(L_INFO, "imc:mod_init:the query returned no result\n");
+		LM_INFO("the query returned no result\n");
 		imc_dbf.free_result(imc_db, r_res);
 		r_res = NULL;
 		return 0;
 	}
 
-	DBG("imc:mod_init: found %d rooms\n", r_res->n);
+	LM_DBG("found %d rooms\n", r_res->n);
 
 	for(i =0 ; i< r_res->n ; i++)
 	{
@@ -212,14 +212,14 @@ int add_from_db(void)
 		room = imc_add_room(&name, &domain, flag);
 		if(room == NULL)
 		{
-			LOG(L_ERR, "imc:mod_init:ERROR while adding room\n ");
+			LM_ERR("failed to add room\n ");
 			goto error;		
 		}	
 	
 		/* add members */
 		if(imc_dbf.use_table(imc_db, members_table)< 0)
 		{
-			LOG(L_ERR, "imc:mod_init:ERROR in use table\n ");
+			LM_ERR("use_table failed\n ");
 			goto error;
 		}
 
@@ -228,13 +228,13 @@ int add_from_db(void)
 		if(imc_dbf.query(imc_db, mquery_cols, 0, mquery_vals, mq_result_cols, 
 					1, 3, 0, &m_res)< 0)
 		{
-			LOG(L_ERR, "imc:mod_init:ERROR while querrying table\n");
+			LM_ERR("failed to querry table\n");
 			goto error;
 		}
 
 		if(m_res && m_res->n <=0)
 		{
-			LOG(L_INFO, "imc:mod_init:the query returned no result\n");
+			LM_INFO("the query returned no result\n");
 			er_ret = 0;
 			goto error; /* each room must have at least one member*/
 		}
@@ -251,14 +251,14 @@ int add_from_db(void)
 			
 			flag = 	m_row_vals[2].val.int_val	;
 			
-			DBG("imc:mod_init: Adding memeber: [name]=%.*s [domain]=%.*s"
+			LM_DBG("adding memeber: [name]=%.*s [domain]=%.*s"
 					" in [room]= %.*s\n",name.len, name.s, domain.len,domain.s,
 					room->uri.len, room->uri.s);
 
 			member = imc_add_member(room, &name, &domain, flag);
 			if(member == NULL)
 			{
-				LOG(L_ERR, "imc:mod_init:ERROR while adding member\n ");
+				LM_ERR("failed to adding member\n ");
 				goto error;		
 			}
 			imc_release_room(room);	
@@ -274,25 +274,25 @@ int add_from_db(void)
 
 	if(imc_dbf.use_table(imc_db, members_table)< 0)
 	{
-		LOG(L_ERR, "imc:mod_init:ERROR in use table\n ");
+		LM_ERR("use table failed\n ");
 		goto error;
 	}
 
 	if(imc_dbf.delete(imc_db, 0, 0 , 0, 0) < 0)
 	{
-		LOG(L_ERR, "imc:mod_init:ERROR while deleting information from db\n");
+		LM_ERR("failed to delete information from db\n");
 		goto error;
 	}
 	
 	if(imc_dbf.use_table(imc_db, rooms_table)< 0)
 	{
-		LOG(L_ERR, "imc:mod_init:ERROR in use table\n ");
+		LM_ERR("use table failed\n ");
 		goto error;
 	}
 
 	if(imc_dbf.delete(imc_db, 0, 0 , 0, 0) < 0)
 	{
-		LOG(L_ERR, "imc:mod_init:ERROR while deleting information from db\n");
+		LM_ERR("failed to delete information from db\n");
 		goto error;
 	}
 
@@ -330,11 +330,11 @@ error:
 
 static int mod_init(void)
 {
-	DBG("imc: initializing ...\n");
+	LM_INFO("initializing ...\n");
 
 	if(imc_hash_size<=0)
 	{
-		LOG(L_ERR, "imc:mod_init: error - invalid hash size\n");
+		LM_ERR("invalid hash size\n");
 		return -1;
 	}
 
@@ -342,7 +342,7 @@ static int mod_init(void)
 
 	if(imc_htable_init()<0)
 	{
-		LOG(L_ERR, "IMC:mod_init: error- initializing hash table\n");
+		LM_ERR("initializing hash table\n");
 		return -1;
 	}
 
@@ -353,35 +353,35 @@ static int mod_init(void)
 	
 	if(	db_url.s == NULL)
 	{
-		LOG(L_ERR, "imc:mod_init: ERROR no db url found\n");
+		LM_ERR("no db url found\n");
 		return -1;
 	}
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	DBG("imc:mod_init: db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	
 	if (bind_dbmod(db_url.s, &imc_dbf))
 	{
-		DBG("imc:mod_init: ERROR: Database module not found\n");
+		LM_DBG("database module not found\n");
 		return -1;
 	}
 
 	imc_db = imc_dbf.init(db_url.s);
 	if (!imc_db)
 	{
-		LOG(L_ERR,"imc:mod_init: Error while connecting database\n");
+		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
 	/* read the informations stored in db */
 	if(add_from_db() <0)
 	{
-		LOG(L_ERR, "IMC:mod_init: error while getting information from db\n");
+		LM_ERR("failed to get information from db\n");
 		return -1;
 	}
 	
 	/* incarcare TM API */
 	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR:imc:mod_init: error - unable to load tm api\n");
+		LM_ERR("unable to load tm api\n");
 		return -1;
 	}
 
@@ -402,32 +402,29 @@ static int child_init(int rank)
 {
 	if (imc_dbf.init==0)
 	{
-		LOG(L_CRIT, "imc: child_init: database not bound\n");
+		LM_ERR("database not bound\n");
 		return -1;
 	}
 	imc_db = imc_dbf.init(db_url.s);
 	if (!imc_db)
 	{
-		LOG(L_ERR,"imc: child %d: Error while connecting database\n",
-				rank);
+		LM_ERR("child %d: Error while connecting database\n", rank);
 		return -1;
 	}
 	else
 	{
 		if (imc_dbf.use_table(imc_db, rooms_table) < 0)  
 		{
-			LOG(L_ERR, "imc: child %d: Error in use_table %s\n", rank, 
-					rooms_table);
+			LM_ERR("child %d: Error in use_table %s\n", rank, rooms_table);
 			return -1;
 		}
 		if (imc_dbf.use_table(imc_db, members_table) < 0)  
 		{
-			LOG(L_ERR, "imc: child %d: Error in use_table %s\n", rank, 
-					members_table);
+			LM_ERR("child %d: Error in use_table %s\n", rank, members_table);
 			return -1;
 		}
 
-		DBG("imc: child %d: Database connection opened successfully\n", rank);
+		LM_DBG("child %d: Database connection opened successfully\n", rank);
 	}
 
 	return 0;
@@ -444,27 +441,27 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 	body.s = get_body( msg );
 	if (body.s==0) 
 	{
-		LOG(L_ERR,"imc:imc_manager: error - cannot extract body from msg\n");
+		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
 	
 	/* lungimea corpului mesajului */
 	if (!msg->content_length) 
 	{
-		LOG(L_ERR,"imc:imc_manager: error - no Content-Length\n");
+		LM_ERR("no Content-Length\n");
 		goto error;
 	}
 	body.len = get_content_length( msg );
 
 	if(body.len <= 0)
 	{
-		DBG("imc:imc_manager: empty body!\n");
+		LM_DBG("empty body!\n");
 		goto error;
 	}
 
 	if(parse_sip_msg_uri(msg)<0)
 	{
-		LOG(L_ERR,"imc:imc_manager: error - parsing r-uri\n");
+		LM_ERR("failed to parse r-uri\n");
 		goto error;
 	}
 	
@@ -472,22 +469,22 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 	
 	if(parse_from_header(msg)<0)
 	{
-		LOG(L_ERR,"imc:imc_manager: error - parsing From header\n");
+		LM_ERR("failed to parse  From header\n");
 		goto error;
 	}
 	pfrom = (struct to_body*)msg->from->parsed;	
 	if(parse_uri(pfrom->uri.s, pfrom->uri.len, &from_uri)<0){
-		LOG(L_ERR,"imc:imc_manager: error - parsing From URI\n");
+		LM_ERR("failed to parse From URI\n");
 		goto error;
 	}
 	pfrom_uri=&from_uri;
 
 	if(body.s[0]== imc_cmd_start_char)
 	{
-		DBG("imc:imc_manager: found command\n");
+		LM_DBG("found command\n");
 		if(imc_parse_cmd(body.s, body.len, &cmd)<0)
 		{
-			LOG(L_ERR,"imc:imc_manager: error parsing imc cmd!\n");
+			LM_ERR("failed to parse imc cmd!\n");
 			goto error;
 		}
 
@@ -496,63 +493,63 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 		case IMC_CMDID_CREATE:
 			if(imc_handle_create(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'create'\n");
+				LM_ERR("failed to handle 'create'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_JOIN:
 			if(imc_handle_join(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'join'\n");
+				LM_ERR("failed to handle 'join'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_INVITE:
 			if(imc_handle_invite(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'invite'\n");
+				LM_ERR("failed to handle 'invite'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_ACCEPT:
 			if(imc_handle_accept(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'accept'\n");
+				LM_ERR("failed to handle 'accept'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_DENY:
 			if(imc_handle_deny(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'deny'\n");
+				LM_ERR("failed to handle 'deny'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_REMOVE:
 			if(imc_handle_remove(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'remove'\n");
+				LM_ERR("failed to handle 'remove'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_EXIT:
 			if(imc_handle_exit(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'exit'\n");
+				LM_ERR("failed to handle 'exit'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_LIST:
 			if(imc_handle_list(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'list'\n");
+				LM_ERR("failed to handle 'list'\n");
 				goto error;
 			}
 		break;
 		case IMC_CMDID_DESTROY:
 			if(imc_handle_destroy(msg, &cmd, pfrom_uri, pto_uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'destroy'\n");
+				LM_ERR("failed to handle 'destroy'\n");
 				goto error;
 			}
 		break;
@@ -560,7 +557,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_help(msg, &cmd, &pfrom->uri,
 			(msg->new_uri.s)?&msg->new_uri:&msg->first_line.u.request.uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'help'\n");
+				LM_ERR("failed to handle 'help'\n");
 				goto error;
 			}
 		break;
@@ -568,7 +565,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 			if(imc_handle_unknown(msg, &cmd, &pfrom->uri,
 			(msg->new_uri.s)?&msg->new_uri:&msg->first_line.u.request.uri)<0)
 			{
-				LOG(L_ERR, "imc:imc_manager: ERROR while handling 'unknown'\n");
+				LM_ERR("failed to handle 'unknown'\n");
 				goto error;
 			}
 		}
@@ -578,7 +575,7 @@ static int imc_manager(struct sip_msg* msg, char *str1, char *str2)
 
 	if(imc_handle_message(msg, &body, pfrom_uri, pto_uri)<0)
 	{
-		LOG(L_ERR, "imc:imc_manager: ERROR while handling 'message'\n");
+		LM_ERR("failed to handle 'message'\n");
 		goto error;
 	}
 
@@ -603,7 +600,7 @@ void destroy(void)
 	db_key_t rq_cols[4];
 	db_val_t rq_vals[4];
 
-	DBG("imc: destroy module ...\n");
+	LM_DBG("destroy module ...\n");
 	
 	if(imc_db==NULL)
 		goto done;
@@ -649,17 +646,16 @@ void destroy(void)
 
 			if(imc_dbf.use_table(imc_db, rooms_table)< 0)
 			{
-				LOG(L_ERR, "imc:destroy: ERROR in use_table\n");
+				LM_ERR("use_table failed\n");
 				return;
 			}
 
 			if(imc_dbf.insert(imc_db, rq_cols, rq_vals, 3)<0)
 			{
-				LOG(L_ERR, "imc:destroy: ERROR while inserting into table"
-						" imc_rooms\n");
+				LM_ERR("failed to insert into table imc_rooms\n");
 				return;
 			}
-			DBG("imc:destroy: room %d %.*s\n", i, irp->name.len, irp->name.s);
+			LM_DBG("room %d %.*s\n", i, irp->name.len, irp->name.s);
 			member = irp->members;
 			while(member)
 			{
@@ -670,14 +666,13 @@ void destroy(void)
 
 				if(imc_dbf.use_table(imc_db, members_table)< 0)
 				{
-					LOG(L_ERR, "imc:destroy: ERROR in use_table\n");
+					LM_ERR("use_table failed\n");
 					return;
 				}
 
 				if(imc_dbf.insert(imc_db, mq_cols, mq_vals, 4)<0)
 				{
-					LOG(L_ERR, "imc:destroy: ERROR while inserting into table"
-						" imc_rooms\n");
+					LM_ERR("failed to insert  into table imc_rooms\n");
 					return;
 				}
 				member = member->next;
@@ -771,13 +766,13 @@ static struct mi_root* imc_mi_list_members(struct mi_root* cmd_tree,
 	memcpy(room_name.s, node->value.s, node->value.len);
 	if(room_name.s == NULL || room_name.len == 0)
 	{
-		LOG(L_ERR, "IMC:imc_mi_list_members: error - no room name!\n");
+		LM_ERR(" no room name!\n");
 		return init_mi_tree( 404, "room name not found", 19);
 	}
 	rnbuf[room_name.len] = '\0';
 	if(*room_name.s=='\0' || *room_name.s=='.')
 	{
-		LOG(L_INFO, "IMC:imc_mi_list_members: empty room name\n");
+		LM_INFO("empty room name\n");
 		return init_mi_tree( 400, "empty param", 11);
 	}
 
@@ -788,7 +783,7 @@ static struct mi_root* imc_mi_list_members(struct mi_root* cmd_tree,
 
 	if(room==NULL)
 	{
-		LOG(L_ERR,"IMC:imc_mi_list_members: no such room!\n");
+		LM_ERR("no such room!\n");
 		return init_mi_tree( 404, "no such room", 14);
 	}
 

@@ -71,22 +71,20 @@ struct acc_extra *parse_acc_leg(char *extra_str)
 
 	legs = parse_acc_extra(extra_str);
 	if (legs==0) {
-		LOG(L_ERR,"ERROR:acc:parse_acc_leg: failed to parse extra leg\n");
+		LM_ERR("failed to parse extra leg\n");
 		return 0;
 	}
 
 	/* check the type and len */
 	for( it=legs,n=0 ; it ; it=it->next ) {
 		if (it->spec.type!=PVT_AVP) {
-			LOG(L_ERR,"ERROR:acc:parse_acc_leg: only AVP are accepted as "
-				"leg info\n");
+			LM_ERR("only AVP are accepted as leg info\n");
 			destroy_extras(legs);
 			return 0;
 		}
 		n++;
 		if (n>MAX_ACC_LEG) {
-			LOG(L_ERR,"ERROR:acc:parse_acc_leg: too many leg info; MAX=%d\n",
-				MAX_ACC_LEG);
+			LM_ERR("too many leg info; MAX=%d\n", MAX_ACC_LEG);
 			destroy_extras(legs);
 			return 0;
 		}
@@ -113,7 +111,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 	s = extra_str;
 
 	if (s==0) {
-		LOG(L_ERR,"ERROR:acc:parse_acc_extra: null string received\n");
+		LM_ERR("null string received\n");
 		goto error;
 	}
 
@@ -123,13 +121,12 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 		if (*s==0)
 			goto parse_error;
 		if (n==MAX_ACC_EXTRA) {
-			LOG(L_ERR,"ERROR:acc:parse_acc_extra: too many extras -> please "
-				"increase the internal buffer\n");
+			LM_ERR("too many extras -> please increase the internal buffer\n");
 			goto error;
 		}
 		extra = (struct acc_extra*)pkg_malloc(sizeof(struct acc_extra));
 		if (extra==0) {
-			LOG(L_ERR,"ERROR:acc:parse_acc_extra: no more pkg mem 1\n");
+			LM_ERR("no more pkg mem 1\n");
 			goto error;
 		}
 		memset( extra, 0, sizeof(struct acc_extra));
@@ -181,10 +178,10 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 
 	return head;
 parse_error:
-	LOG(L_ERR,"ERROR:acc:parse_acc_extra: parse failed in <%s> "
+	LM_ERR("parse failed in <%s> "
 		"around position %d\n",extra_str, (int)(long)(s-extra_str));
 error:
-	LOG(L_ERR,"acc:parse_acc_extra: error\n");
+	LM_ERR("error\n");
 	destroy_extras(head);
 	return 0;
 }
@@ -229,8 +226,7 @@ int extra2int( struct acc_extra *extra, int *attrs )
 
 	for( i=0 ; extra ; i++,extra=extra->next ) {
 		if (str2int( &extra->name, &ui)!=0) {
-			LOG(L_ERR,"ERROR:acc:extra2int: <%s> is not a number\n",
-				extra->name.s);
+			LM_ERR("<%s> is not a number\n", extra->name.s);
 			return -1;
 		}
 		attrs[i] = (int)ui;
@@ -252,14 +248,12 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 	while (extra) {
 		/* get the value */
 		if (pv_get_spec_value( rq, &extra->spec, &value)!=0) {
-			LOG(L_ERR,"ERROR:acc:extra2strar: failed to get '%.*s'\n",
-				extra->name.len,extra->name.s);
+			LM_ERR("failed to get '%.*s'\n", extra->name.len,extra->name.s);
 		}
 
 		/* check for overflow */
 		if (n==MAX_ACC_EXTRA) {
-			LOG(L_WARN,"WARNING:acc:extra2strar: array to short "
-				"-> ommiting extras for accounting\n");
+			LM_WARN("array to short -> ommiting extras for accounting\n");
 			goto done;
 		}
 

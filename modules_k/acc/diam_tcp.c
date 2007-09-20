@@ -53,14 +53,14 @@ int init_mytcp(char* host, int port)
 	
     if (sockfd < 0) 
 	{
-		LOG(L_ERR, M_NAME":init_mytcp(): error creating the socket\n");
+		LM_ERR("failed to create the socket\n");
 		return -1;
 	}	
 	
     server = gethostbyname(host);
     if (server == NULL) 
 	{
-		LOG(L_ERR, M_NAME":init_mytcp(): error finding the host\n");
+		LM_ERR("failed to find the host\n");
 		return -1;
     }
 
@@ -73,8 +73,7 @@ int init_mytcp(char* host, int port)
     if (connect(sockfd, (const struct sockaddr *)&serv_addr, 
 							sizeof(serv_addr)) < 0) 
 	{
-        LOG(L_ERR, M_NAME":init_mytcp(): error connecting to the "
-						"DIAMETER client\n");
+        LM_ERR("failed to connec to the DIAMETER client\n");
 		return -1;
 	}	
 
@@ -99,13 +98,13 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 	{
 		if (errno==EINTR)
 			continue;
-		LOG(L_ERR, M_NAME": write returned error: %s\n", strerror(errno));
+		LM_ERR("write returned error: %s\n", strerror(errno));
 		return AAA_ERROR;
 	}
 
 	if (n!=len) 
 	{
-		LOG(L_ERR, M_NAME": write gave no error but wrote less than asked\n");
+		LM_ERR("write gave no error but wrote less than asked\n");
 		return AAA_ERROR;
 	}
 	/* wait for the answer a limited amount of time */
@@ -122,13 +121,13 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		read_fd_set = active_fd_set;
 		if (select (sockfd+1, &read_fd_set, NULL, NULL, &tv) < 0)
 		{
-			LOG(L_ERR, M_NAME":tcp_send_msg(): select function failed\n");
+			LM_ERR("select function failed\n");
 			return AAA_ERROR;
 		}
 
 /*		if (!FD_ISSET (sockfd, &read_fd_set))
 		{
-			LOG(L_ERR, M_NAME":tcp_send_rcv(): no response received\n");
+			LM_ERR("no response received\n");
 //			return AAA_ERROR;
 		}
 */		/* Data arriving on a already-connected socket. */
@@ -136,10 +135,10 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		switch( do_read(sockfd, rb) )
 		{
 			case CONN_ERROR:
-				LOG(L_ERR, M_NAME": error when trying to read from socket\n");
+				LM_ERR("failed to read from socket\n");
 				return AAA_CONN_CLOSED;
 			case CONN_CLOSED:
-				LOG(L_ERR, M_NAME": error when trying to read from socket\n");
+				LM_ERR("failed to read from socket\n");
 				return AAA_CONN_CLOSED;
 		}
 		
@@ -147,28 +146,28 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		msg = AAATranslateMessage(rb->buf, rb->buf_len, 0);	
 		if(!msg)
 		{
-			LOG(L_ERR, M_NAME": message structure not obtained\n");	
+			LM_ERR("message structure not obtained\n");	
 			return AAA_ERROR;
 		}
 		avp = AAAFindMatchingAVP(msg, NULL, AVP_SIP_MSGID,
 								vendorID, AAA_FORWARD_SEARCH);
 		if(!avp)
 		{
-			LOG(L_ERR, M_NAME": AVP_SIP_MSGID not found\n");
+			LM_ERR("AVP_SIP_MSGID not found\n");
 			return AAA_ERROR;
 		}
 		m_id = *((unsigned int*)(avp->data.s));
-		DBG("######## m_id=%d\n", m_id);
+		LM_DBG("######## m_id=%d\n", m_id);
 		if(m_id!=waited_id)
 		{
 			number_of_tries ++;
-			LOG(L_NOTICE, M_NAME": old message received\n");
+			LM_NOTICE("old message received\n");
 			continue;
 		}
 		goto next;
 	}
 
-	LOG(L_ERR, M_NAME": too many old messages received\n");
+	LM_ERR("too many old messages received\n");
 	return AAA_TIMEOUT;
 next:
 
@@ -177,7 +176,7 @@ next:
 							vendorID, AAA_FORWARD_SEARCH);
 	if(!avp)
 	{
-		LOG(L_ERR, M_NAME": AVP_Service_Type not found\n");
+		LM_ERR("AVP_Service_Type not found\n");
 		return AAA_ERROR;
 	}
 	serviceType = avp->data.s[0];
@@ -221,12 +220,11 @@ int do_read( int socket, rd_buf_t *p)
 
 	while( (n=recv( socket, ptr, wanted_len, MSG_DONTWAIT ))>0 ) 
 	{
-//		DBG("DEBUG:do_read (sock=%d)  -> n=%d (expected=%d)\n",
-//			p->sock,n,wanted_len);
+//		LM_DBG("(sock=%d)  -> n=%d (expected=%d)\n", p->sock,n,wanted_len);
 		p->buf_len += n;
 		if (n<wanted_len)
 		{
-			//DBG("only %d bytes read from %d expected\n",n,wanted_len);
+			//LM_DBG("only %d bytes read from %d expected\n",n,wanted_len);
 			wanted_len -= n;
 			ptr += n;
 		}
@@ -238,14 +236,14 @@ int do_read( int socket, rd_buf_t *p)
 				len = ntohl(p->first_4bytes)&0x00ffffff;
 				if (len<AAA_MSG_HDR_SIZE || len>MAX_AAA_MSG_SIZE)
 				{
-					LOG(L_ERR,"ERROR:do_read (sock=%d): invalid message "
+					LM_ERR("(sock=%d): invalid message "
 						"length read %u (%x)\n", socket, len, p->first_4bytes);
 					goto error;
 				}
-				//DBG("message length = %d(%x)\n",len,len);
+				//LM_DBG("message length = %d(%x)\n",len,len);
 				if ( (p->buf=pkg_malloc(len))==0  )
 				{
-					LOG(L_ERR,"ERROR:do_read: no more free memory\n");
+					LM_ERR("no more pkg memory\n");
 					goto error;
 				}
 				*((unsigned int*)p->buf) = p->first_4bytes;
@@ -258,7 +256,7 @@ int do_read( int socket, rd_buf_t *p)
 			else
 			{
 				/* I finished reading the whole message */
-				DBG("DEBUG:do_read (sock=%d): whole message read (len=%d)!\n",
+				LM_DBG("(sock=%d): whole message read (len=%d)!\n",
 					socket, p->first_4bytes);
 				return CONN_SUCCESS;
 			}
@@ -267,12 +265,12 @@ int do_read( int socket, rd_buf_t *p)
 
 	if (n==0)
 	{
-		LOG(L_INFO,"INFO:do_read (sock=%d): FIN received\n", socket);
+		LM_INFO("(sock=%d): FIN received\n", socket);
 		return CONN_CLOSED;
 	}
 	if ( n==-1 && errno!=EINTR && errno!=EAGAIN )
 	{
-		LOG(L_ERR,"ERROR:do_read (sock=%d): n=%d , errno=%d (%s)\n",
+		LM_ERR("(on sock=%d): n=%d , errno=%d (%s)\n",
 			socket, n, errno, strerror(errno));
 		goto error;
 	}
@@ -296,7 +294,7 @@ int get_uri(struct sip_msg* m, str** uri)
 	{/* REGISTER */
 		if (!m->to && ((parse_headers(m, HDR_TO_F, 0) == -1) || !m->to )) 
 		{
-			LOG(L_ERR, M_NAME": To header field not found or malformed\n");
+			LM_ERR("the To header field was not found or malformed\n");
 			return -1;
 		}
 		*uri = &(get_to(m)->uri);
@@ -305,7 +303,7 @@ int get_uri(struct sip_msg* m, str** uri)
 	{
 		if (parse_from_header(m)<0)
 		{
-			LOG(L_ERR, M_NAME": Error while parsing headers\n");
+			LM_ERR("failed to parse headers\n");
 			return -2;
 		}
 		*uri = &(get_from(m)->uri);

@@ -54,12 +54,12 @@ int dbt_init_cache(void)
 		_cachesem = lock_alloc();
 		if(!_cachesem)
 		{
-			LOG(L_CRIT,"dbtext:dbt_init_cache: could not alloc a lock\n");
+			LM_CRIT("could not alloc a lock\n");
 			return -1;
 		}
 		if (lock_init(_cachesem)==0)
 		{
-			LOG(L_CRIT,"dbtext:dbt_init_cache: could not initialize a lock\n");
+			LM_CRIT("could not initialize a lock\n");
 			lock_dealloc(_cachesem);
 			return -1;
 		}
@@ -68,7 +68,7 @@ int dbt_init_cache(void)
 	if (!_cachedb) {
 		_cachedb = shm_malloc( sizeof(dbt_cache_p) );
 		if (!_cachedb) {
-			LOG(L_CRIT,"dbtext:dbt_init_cache: no enough shm mem\n");
+			LM_CRIT("no enough shm mem\n");
 			lock_dealloc(_cachesem);
 			return -1;
 		}
@@ -86,13 +86,13 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	dbt_cache_p _dcache=NULL;;
 	if(!_cachesem || !_cachedb)
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db:dbtext cache is not initialized!\n");
+		LM_ERR("dbtext cache is not initialized!\n");
 		return NULL;
 	}
 	if(!_s || !_s->s || _s->len<=0)
 		return NULL;
 
-	DBG("DBT:dbt_cache_get_db: looking for db %.*s!\n",_s->len,_s->s);
+	LM_DBG("looking for db %.*s!\n",_s->len,_s->s);
 
 	lock_get(_cachesem);
 	
@@ -106,7 +106,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 					&& !strncasecmp(_dcache->dbp->name.s, _s->s, _s->len))
 			{
 				lock_release(&_dcache->sem);
-				DBG("DBT:dbt_cache_get_db: db already cached!\n");
+				LM_DBG("db already cached!\n");
 				goto done;
 			}
 		}
@@ -116,23 +116,22 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	}
 	if(!dbt_is_database(_s))
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db: database [%.*s] does not exists!\n", 
-				_s->len, _s->s);
+		LM_ERR("database [%.*s] does not exists!\n", _s->len, _s->s);
 		goto done;
 	}
-	DBG("DBT:dbt_cache_get_db: new db!\n");
+	LM_DBG("new db!\n");
 	
 	_dcache = (dbt_cache_p)shm_malloc(sizeof(dbt_cache_t));
 	if(!_dcache)
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db: no memory for dbt_cache_t.\n");
+		LM_ERR(" no shm memory for dbt_cache_t.\n");
 		goto done;
 	}
 	
 	_dcache->dbp = (dbt_db_p)shm_malloc(sizeof(dbt_db_t));
 	if(!_dcache->dbp)
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db: no memory for dbt_db_t!\n");
+		LM_ERR(" no shm memory for dbt_db_t!\n");
 		shm_free(_dcache);
 		goto done;
 	}
@@ -140,7 +139,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	_dcache->dbp->name.s = (char*)shm_malloc(_s->len*sizeof(char));
 	if(!_dcache->dbp->name.s)
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db: no memory for s!!\n");
+		LM_ERR(" no shm memory for s!!\n");
 		shm_free(_dcache->dbp);
 		shm_free(_dcache);
 		_dcache = NULL;
@@ -153,7 +152,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	
 	if(!lock_init(&_dcache->sem))
 	{
-		LOG(L_ERR, "DBT:dbt_cache_get_db: no sems!\n");
+		LM_ERR(" no sems!\n");
 		shm_free(_dcache->dbp->name.s);
 		shm_free(_dcache->dbp);
 		shm_free(_dcache);
@@ -335,7 +334,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 												&(_tbc->dtp->mt))==1)
 				{
 					lock_release(&_dc->sem);
-					DBG("DBT:dbt_db_get_table: cache or mtime succeeded\n");
+					LM_DBG("cache or mtime succeeded\n");
 					return _tbc;
 				}
 				break;
@@ -363,7 +362,7 @@ tbl_cache_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	_dtp = dbt_load_file(_s, &(_dc->dbp->name));
 
 #ifdef DBT_EXTRA_DEBUG
-	DBG("DTB:dbt_db_get_table: %.*s\n", _s->len, _s->s);
+	LM_DBG("%.*s\n", _s->len, _s->s);
 	dbt_print_table(_dtp, NULL);
 #endif
 

@@ -149,7 +149,7 @@ static inline int acc_preparse_req(struct sip_msg *req)
 {
 	if ( (parse_headers(req,HDR_CALLID_F|HDR_CSEQ_F|HDR_FROM_F|HDR_TO_F,0)<0)
 	|| (parse_from_header(req)<0 ) ) {
-		LOG(L_ERR,"ERROR:acc:acc_preparse_req: failed to preparse request\n");
+		LM_ERR("failed to preparse request\n");
 		return -1;
 	}
 	return 0;
@@ -172,7 +172,7 @@ int w_acc_log_request(struct sip_msg *rq, char *comment, char *foo)
 int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 {
 	if (!table) {
-		LOG(L_ERR,"ERROR:acc:w_acc_db_request: DB support not configured\n");
+		LM_ERR("db support not configured\n");
 		return -1;
 	}
 	if (acc_preparse_req(rq)<0)
@@ -230,18 +230,17 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			/* report on missed calls */
 			((is_invite(t) && is_mc_on(ps->req))?TMCB_ON_FAILURE:0) ;
 		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
-			LOG(L_ERR,"ERROR:acc:acc_onreq: cannot register additional "
-				"callbacks\n");
+			LM_ERR("cannot register additional callbacks\n");
 			return;
 		}
 		/* also, if that is INVITE, disallow silent t-drop */
 		if (ps->req->REQ_METHOD==METHOD_INVITE) {
-			DBG("DEBUG: noisy_timer set for accounting\n");
+			LM_DBG("noisy_timer set for accounting\n");
 			t->flags |= T_NOISY_CTIMER_FLAG;
 		}
 		/* if required, determine request direction */
 		if( detect_direction && !rrb.is_direction(ps->req,RR_FLOW_UPSTREAM) ) {
-			DBG("DBUG:acc:acc_onreq: UPSTREAM req detected -> flaging it\n");
+			LM_DBG("detected an UPSTREAM req -> flaging it\n");
 			ps->req->msg_flags |= FL_REQ_UPSTREAM;
 		}
 	}

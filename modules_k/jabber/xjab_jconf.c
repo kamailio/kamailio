@@ -46,14 +46,14 @@ xj_jconf xj_jconf_new(str *u)
 	jcf = (xj_jconf)pkg_malloc(sizeof(t_xj_jconf));
 	if(jcf == NULL)
 	{
-		DBG("XJAB:xj_jconf_new: error - no pkg memory.\n");
+		LM_DBG("no pkg memory.\n");
 		return NULL;
 	}
 
 	jcf->uri.s = (char*)pkg_malloc((u->len+1)*sizeof(char));
 	if(jcf->uri.s == NULL)
 	{
-		DBG("XJAB:xj_jconf_new: error - no pkg memory!\n");
+		LM_DBG("no pkg memory!\n");
 		pkg_free(jcf);
 		return NULL;
 	}
@@ -86,7 +86,7 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 			|| !sid || !sid->s || sid->len <= 0)
 		return -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jconf_init_sip: parsing uri\n");
+	LM_DBG("parsing uri\n");
 #endif	
 	p = jcf->uri.s;
 	while(p<(jcf->uri.s + jcf->uri.len)	&& *p != '@') 
@@ -141,12 +141,12 @@ int xj_jconf_init_sip(xj_jconf jcf, str *sid, char dl)
 
 	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jconf_init_sip: conference id=%d\n", jcf->jcid);
+	LM_DBG("conference id=%d\n", jcf->jcid);
 #endif	
 	return 0;
 	
 bad_format:
-	DBG("XJAB:xj_jconf_init_sip: error parsing uri - bad format\n");
+	LM_ERR("failed to parse uri - bad format\n");
 	return -2;
 }
 
@@ -159,7 +159,7 @@ int xj_jconf_init_jab(xj_jconf jcf)
 	if(!jcf || !jcf->uri.s || jcf->uri.len <= 0)
 		return -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jconf_init_jab: parsing uri\n");
+	LM_DBG("parsing uri\n");
 #endif	
 	p = jcf->uri.s;
 	while(p<(jcf->uri.s + jcf->uri.len)	&& *p != '@') 
@@ -183,12 +183,12 @@ int xj_jconf_init_jab(xj_jconf jcf)
 	}
 	jcf->jcid = xj_get_hash(&jcf->room, &jcf->server);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jconf_init_jab: conference id=%d\n", jcf->jcid);
+	LM_DBG("conference id=%d\n", jcf->jcid);
 #endif
 	return 0;
 	
 bad_format:
-	DBG("XJAB:xj_jconf_init_jab: error parsing uri - bad format\n");
+	LM_ERR("failed to parse uri - bad format\n");
 	return -2;
 }
 
@@ -215,7 +215,7 @@ int xj_jconf_cmp(void *a, void *b)
 	if(b == NULL)
 	    return 1;
 	
-	// DBG("XJAB: xj_jconf_cmp: comparing <%.*s> / <%.*s>\n",((str *)a)->len,
+	// LM_DBG("comparing <%.*s> / <%.*s>\n",((str *)a)->len,
 	// 		((str *)a)->s, ((str *)b)->len, ((str *)b)->s);
 	if(((xj_jconf)a)->jcid < ((xj_jconf)b)->jcid)
 			return -1;

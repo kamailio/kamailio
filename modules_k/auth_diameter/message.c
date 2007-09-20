@@ -67,11 +67,11 @@ AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 		msg->buf.len += AVP_HDR_SIZE(avp->flags)+ to_32x_len( avp->data.len );
 	}
 
-//	DBG("xxxx len=%d\n",msg->buf.len);
+//	LM_DBG("xxxx len=%d\n",msg->buf.len);
 	/* allocate some memory */
 	msg->buf.s = (char*)ad_malloc( msg->buf.len );
 	if (!msg->buf.s) {
-		LOG(L_ERR,"ERROR:AAABuildMsgBuffer: no more free memory!\n");
+		LM_ERR(" no more pkg memory!\n");
 		goto error;
 	}
 	memset(msg->buf.s, 0, msg->buf.len);
@@ -121,13 +121,13 @@ AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 	}
 
 	if ((char*)p-msg->buf.s!=msg->buf.len) {
-		LOG(L_ERR,"BUG: build_buf_from_msg: mismatch between len and buf!\n");
+		LM_ERR("mismatch between len and buf!\n");
 		ad_free( msg->buf.s );
 		msg->buf.s = 0;
 		msg->buf.len = 0;
 		goto error;
 	}
-//	DBG("Message: %.*s\n", msg->buf.len, msg->buf.s);
+//	LM_DBG("Message: %.*s\n", msg->buf.len, msg->buf.s);
 	return AAA_ERR_SUCCESS;
 error:
 	return -1;
@@ -201,7 +201,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 
 	/* check the params */
 	if( !source || !sourceLen || sourceLen<AAA_MSG_HDR_SIZE) {
-		LOG(L_ERR,"ERROR:AAATranslateMessage: invalid buffered received!\n");
+		LM_ERR(" invalid buffered received!\n");
 		goto error;
 	}
 
@@ -213,7 +213,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	/* alloc a new message structure */
 	msg = (AAAMessage*)ad_malloc(sizeof(AAAMessage));
 	if (!msg) {
-		LOG(L_ERR,"ERROR:AAATranslateMessage: no more free memory!!\n");
+		LM_ERR(" no more free memory!!\n");
 		goto error;
 	}
 	memset(msg,0,sizeof(AAAMessage));
@@ -222,8 +222,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	version = (unsigned char)*ptr;
 	ptr += VER_SIZE;
 	if (version!=1) {
-		LOG(L_ERR,"ERROR:AAATranslateMessage: invalid version [%d]in "
-			"AAA msg\n",version);
+		LM_ERR(" invalid version [%d]in AAA msg\n",version);
 		goto error;
 	}
 
@@ -231,7 +230,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	msg_len = get_3bytes( ptr );
 	ptr += MESSAGE_LENGTH_SIZE;
 	if (msg_len>sourceLen) {
-		LOG(L_ERR,"ERROR:AAATranslateMessage: AAA message len [%d] bigger then"
+		LM_ERR(" AAA message len [%d] bigger then"
 			" buffer len [%d]\n",msg_len,sourceLen);
 		goto error;
 	}
@@ -259,7 +258,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	/* start decoding the AVPS */
 	while (ptr < source+msg_len) {
 		if (ptr+AVP_HDR_SIZE(0x80)>source+msg_len){
-			LOG(L_ERR,"ERROR:AAATranslateMessage: source buffer to short!! "
+			LM_ERR(" source buffer to short!! "
 				"Cannot read the whole AVP header!\n");
 			goto error;
 		}
@@ -273,8 +272,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 		avp_len = get_3bytes( ptr );
 		ptr += AVP_LENGTH_SIZE;
 		if (avp_len<1) {
-			LOG(L_ERR,"ERROR:AAATranslateMessage: invalid AVP len [%d]\n",
-				avp_len);
+			LM_ERR(" invalid AVP len [%d]\n", avp_len);
 			goto error;
 		}
 		/* avp vendor-ID */
@@ -287,7 +285,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 		avp_data_len = avp_len-AVP_HDR_SIZE(avp_flags);
 		/*check the data length */
 		if ( source+msg_len<ptr+avp_data_len) {
-			LOG(L_ERR,"ERROR:AAATranslateMessage: source buffer to short!! "
+			LM_ERR(" source buffer to short!! "
 				"Cannot read a whole data for AVP!\n");
 			goto error;
 		}
@@ -313,7 +311,7 @@ AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 	//AAAPrintMessage( msg );
 	return  msg;
 error:
-	LOG(L_ERR,"ERROR:AAATranslateMessage: message conversion droped!!\n");
+	LM_ERR(" message conversion droped!!\n");
 	AAAFreeMessage(&msg);
 	return 0;
 }
@@ -327,7 +325,7 @@ AAAMessage* AAAInMessage(AAACommandCode commandCode, AAAApplicationId appId)
 	msg = (AAAMessage*)ad_malloc(sizeof(AAAMessage));
 	if (!msg) 
 	{
-		LOG(L_ERR,"diameter_authorize(): no more free memory!\n");
+		LM_ERR("no more pkg memory!\n");
 		return NULL;
 	}
 	memset(msg, 0, sizeof(AAAMessage));
@@ -353,15 +351,15 @@ void AAAPrintMessage( AAAMessage *msg)
 	AAA_AVP *avp;
 
 	/* print msg info */
-	DBG("DEBUG: AAA_MESSAGE - %p\n",msg);
-	DBG("\tCode = %u\n",msg->commandCode);
-	DBG("\tFlags = %x\n",msg->flags);
+	LM_DBG("AAA_MESSAGE - %p\n",msg);
+	LM_DBG("\tCode = %u\n",msg->commandCode);
+	LM_DBG("\tFlags = %x\n",msg->flags);
 
 	/*print the AVPs */
 	avp = msg->avpList.head;
 	while (avp) {
 		AAAConvertAVPToString(avp,buf,1024);
-		DBG("\n%s\n",buf);
+		LM_DBG("\n%s\n",buf);
 		avp=avp->next;
 	}
 }

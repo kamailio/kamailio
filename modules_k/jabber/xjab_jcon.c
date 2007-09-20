@@ -103,17 +103,16 @@ int xj_jcon_connect(xj_jcon jbc)
     // open connection to server
     if((sock = socket(AF_INET, SOCK_STREAM, 0))<0)
     {
-    	DBG("XJAB:xj_jcon_connect: Error to create the socket\n");
+    	LM_DBG("failed to create the socket\n");
         return -1;
     }
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_connect: socket [%d]\n", sock);
+	LM_DBG("socket [%d]\n", sock);
 #endif
     he=gethostbyname(jbc->hostname);
     if(he == NULL)
     {
-    	DBG("XJAB:xj_jcon_connect: Error getting info about Jabber server"
-				" address\n");
+    	LM_DBG("failed to get info about Jabber server address\n");
         return -1;
     }
 
@@ -125,7 +124,7 @@ int xj_jcon_connect(xj_jcon jbc)
     // try to connect with Jabber server
     if (connect(sock, (struct sockaddr *)&address, sizeof(address))<0)
     {
-    	DBG("XJAB:xj_jcon_connect: Error to connect with Jabber server\n");
+    	LM_DBG("failed to connect with Jabber server\n");
         return -1;
     }
     jbc->sock = sock;
@@ -161,17 +160,17 @@ int xj_jcon_disconnect(xj_jcon jbc)
 	if(jbc == NULL || jbc->sock < 0)
 		return -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_disconnect: -----START-----\n");
-    DBG("XJAB:xj_jcon_disconnect: socket [%d]\n", jbc->sock);
+	LM_DBG("-----START-----\n");
+    LM_DBG("socket [%d]\n", jbc->sock);
 #endif
 	xj_jcon_send_presence(jbc, NULL, "unavailable", NULL, NULL);
 	if(send(jbc->sock, "</stream:stream>", 16, 0) < 16)
-		DBG("XJAB:xj_jcon_disconnect: error closing stream\n");
+		LM_DBG("failed to close the stream\n");
 	if(close(jbc->sock) == -1)
-		DBG("XJAB:xj_jcon_disconnect: error closing socket\n");
+		LM_DBG("failed to close the socket\n");
 	jbc->sock = -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_disconnect: -----END-----\n");
+	LM_DBG("-----END-----\n");
 #endif
 	return 0;
 }
@@ -271,7 +270,7 @@ int xj_jcon_user_auth(xj_jcon jbc, char *username, char *passwd,
 		//sprintf(msg_buff, "%s%s", jbc->stream_id, passwd);
 		strcpy(msg_buff, jbc->stream_id);
 		strcat(msg_buff, passwd);
-		//DBG("XJAB:xj_jcon_user_auth: [%s:%s]\n", jbc->stream_id, passwd);
+		//LM_DBG("[%s:%s]\n", jbc->stream_id, passwd);
 		p1 = shahash(msg_buff);
 
 		z = xode_insert_tag(y, "digest");
@@ -347,9 +346,6 @@ error:
 int xj_jcon_get_roster(xj_jcon jbc)
 {
 	int n = strlen(JB_IQ_ROSTER_GET);
-#ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_get_roster\n");
-#endif
 	if(send(jbc->sock, JB_IQ_ROSTER_GET, n, 0) != n)
 		return -1;
 	return 0;
@@ -390,7 +386,7 @@ int xj_jcon_set_roster(xj_jcon jbc, char* jid, char *type)
 	
 	if(send(jbc->sock, p, n, 0) != n)
 	{
-		DBG("XJAB:xj_jcon_set_roster: Error - item not sent\n");
+		LM_DBG("item not sent\n");
 		goto error;
 	}
 	xode_free(x);
@@ -438,11 +434,11 @@ int xj_jcon_send_msg(xj_jcon jbc, char *to, int tol, char *msg,
 	p = xode_to_str(x);
 	n = strlen(p);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_send_msg: jabber msg:\n%s\n", p);
+	LM_DBG("jabber msg:\n%s\n", p);
 #endif	
 	if(send(jbc->sock, p, n, 0) != n)
 	{
-		DBG("XJAB:xj_jcon_send_msg: error - message not sent\n");
+		LM_DBG(" message not sent\n");
 		goto error;
 	}
 	xode_free(x);
@@ -481,7 +477,7 @@ int xj_jcon_send_presence(xj_jcon jbc, char *sto, char *type, char *status,
 	if(jbc == NULL)
 		return -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_send_presence: -----START-----\n");
+	LM_DBG("-----START-----\n");
 #endif	
 	x = xode_new_tag("presence");
 	if(!x)
@@ -507,12 +503,12 @@ int xj_jcon_send_presence(xj_jcon jbc, char *sto, char *type, char *status,
 	
 	if(send(jbc->sock, p, n, 0) != n)
 	{
-		DBG("XJAB:xj_jcon_send_presence: Error - presence not sent\n");
+		LM_DBG("presence not sent\n");
 		goto error;
 	}
 	xode_free(x);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_send_presence: presence status was sent\n");
+	LM_DBG("presence status was sent\n");
 #endif
 	return 0;
 error:
@@ -547,7 +543,7 @@ int xj_jcon_send_subscribe(xj_jcon jbc, char *to, char *from, char *type)
 	
 	if(send(jbc->sock, p, n, 0) != n)
 	{
-		DBG("XJAB:xj_jcon_send_subscribe: Error - subscribe not sent\n");
+		LM_DBG("subscribe not sent\n");
 		goto error;
 	}
 	xode_free(x);
@@ -569,7 +565,7 @@ int xj_jcon_free(xj_jcon jbc)
 		return -1;
 
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_free: -----START-----\n");
+	LM_DBG("-----START-----\n");
 #endif
 	//if(jbc->sock != -1)
 	//	jb_disconnect(jbc);
@@ -582,7 +578,7 @@ int xj_jcon_free(xj_jcon jbc)
 	if(jbc->resource != NULL)
 		_M_FREE(jbc->resource);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_free: %d conferences\n", jbc->nrjconf);
+	LM_DBG("%d conferences\n", jbc->nrjconf);
 #endif
 	while(jbc->nrjconf > 0)
 	{
@@ -593,7 +589,7 @@ int xj_jcon_free(xj_jcon jbc)
 	xj_pres_list_free(jbc->plist);
 	_M_FREE(jbc);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB:xj_jcon_free: -----END-----\n");
+	LM_DBG("-----END-----\n");
 #endif
 	return 0;
 }
@@ -630,7 +626,7 @@ int xj_jcon_update(xj_jcon jbc, int cache_time)
 	if(jbc == NULL)
 		return -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_update [%.*s] %d\n", 
+	LM_DBG("params [%.*s] %d\n", 
 			jbc->jkey->id->len, jbc->jkey->id->s, cache_time);
 #endif
 	jbc->expire = get_ticks() + cache_time;
@@ -650,12 +646,12 @@ int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol, char dl)
 	if(!xj_jconf_check_addr(&sto, dl))
 	{
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB: xj_jcon_is_ready: destination=conference\n");
+		LM_DBG("destination=conference\n");
 #endif		
 		if((jcf=xj_jcon_get_jconf(jbc, &sto, dl))!=NULL)
 			return (jcf->status & XJ_JCONF_READY)?0:3;
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB: xj_jcon_is_ready: conference does not exist\n");
+		LM_DBG("conference does not exist\n");
 #endif
 		return -1;
 	}
@@ -678,7 +674,7 @@ int xj_jcon_is_ready(xj_jcon jbc, char *to, int tol, char dl)
 	if(!strncasecmp(p, XJ_YAH_NAME, XJ_YAH_LEN))
 		return (jbc->ready & XJ_NET_YAH)?0:((jbc->allowed & XJ_NET_YAH)?1:2);
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_is_ready: destination=jabber\n");
+	LM_DBG("destination=jabber\n");
 #endif
 	return 0;
 }
@@ -690,7 +686,7 @@ xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid, char dl)
 	if(!jbc || !sid || !sid->s || sid->len <= 0)
 		return NULL;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_get_jconf: looking for conference\n");	
+	LM_DBG("looking for conference\n");	
 #endif	
 	if((jcf = xj_jconf_new(sid))==NULL)
 		return NULL;
@@ -699,7 +695,7 @@ xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid, char dl)
 	if(jbc->nrjconf && (p = find234(jbc->jconf, (void*)jcf, NULL)) != NULL)
 	{
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB: xj_jcon_get_jconf: conference found\n");
+		LM_DBG("conference found\n");
 #endif
 		xj_jconf_free(jcf);
 		return p;
@@ -716,14 +712,14 @@ xj_jconf  xj_jcon_get_jconf(xj_jcon jbc, str* sid, char dl)
 	if((p = add234(jbc->jconf, (void*)jcf)) != NULL)
 	{
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB: xj_jcon_get_jconf: new conference created\n");
+		LM_DBG("new conference created\n");
 #endif
 		jbc->nrjconf++;
 		return p;
 	}
 
 clean:
-	DBG("XJAB: xj_jcon_get_jconf: error looking for conference\n");
+	LM_DBG("conference not found\n");
 	xj_jconf_free(jcf);
 	return NULL;
 }
@@ -736,7 +732,7 @@ xj_jconf xj_jcon_check_jconf(xj_jcon jbc, char* id)
 	if(!jbc || !id || !jbc->nrjconf)
 		return NULL;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_get_jconf: looking for conference\n");	
+	LM_DBG("conference not found\n");
 #endif	
 	sid.s = id;
 	sid.len = strlen(id);
@@ -747,14 +743,14 @@ xj_jconf xj_jcon_check_jconf(xj_jcon jbc, char* id)
 	if((p = find234(jbc->jconf, (void*)jcf, NULL)) != NULL)
 	{
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB: xj_jcon_get_jconf: conference found\n");
+		LM_DBG("conference found\n");
 #endif
 		xj_jconf_free(jcf);
 		return p;
 	}
 clean:
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_get_jconf: conference not found\n");
+	LM_DBG("conference not found\n");
 #endif
 	xj_jconf_free(jcf);
 	return NULL;	
@@ -782,8 +778,7 @@ int  xj_jcon_del_jconf(xj_jcon jbc, str *sid, char dl, int flag)
 	if(!jbc || !sid || !sid->s || sid->len <= 0)
 		return -1;
 #ifdef XJ_EXTRA_DEBUG
-	DBG("XJAB: xj_jcon_del_jconf: deleting conference of <%.*s>\n",
-			sid->len, sid->s);
+	LM_DBG("deleting conference of <%.*s>\n", sid->len, sid->s);
 #endif	
 	if((jcf = xj_jconf_new(sid))==NULL)
 		return -1;
@@ -802,7 +797,7 @@ int  xj_jcon_del_jconf(xj_jcon jbc, str *sid, char dl, int flag)
 		jbc->nrjconf--;
 		xj_jconf_free(p);
 #ifdef XJ_EXTRA_DEBUG
-		DBG("XJAB: xj_jcon_del_jconf: conference deleted\n");
+		LM_DBG("conference deleted\n");
 #endif
 	}
 

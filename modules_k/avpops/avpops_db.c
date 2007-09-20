@@ -53,14 +53,14 @@ int avpops_db_bind(char* db_url)
 {
 	if (bind_dbmod(db_url, &avpops_dbf ))
 	{
-		LOG(L_CRIT, "ERROR:avpops_db_bind: cannot bind to database module! "
+		LM_CRIT("cannot bind to database module! "
 			"Did you load a database module ?\n");
 		return -1;
 	}
 
 	if (!DB_CAPABILITY(avpops_dbf, DB_CAP_ALL))
 	{
-		LOG(L_CRIT, "ERROR:avpops_db_bind: Database modules does not "
+		LM_CRIT("database modules does not "
 			"provide all functions needed by avpops module\n");
 		return -1;
 	}
@@ -75,14 +75,12 @@ int avpops_db_init(char* db_url, char* db_table, char **db_cols)
 	db_hdl = avpops_dbf.init(db_url);
 	if (db_hdl==0)
 	{
-		LOG(L_CRIT,"ERROR:avpops_db_init: cannot initialize database "
-			"connection\n");
+		LM_ERR("cannot initialize database connection\n");
 		goto error;
 	}
 	if (avpops_dbf.use_table(db_hdl, db_table)<0)
 	{
-		LOG(L_CRIT,"ERROR:avpops_db_init: cannot select table \"%s\"\n",
-			db_table);
+		LM_ERR("cannot select table \"%s\"\n", db_table);
 		goto error;
 	}
 	def_table = db_table;
@@ -106,7 +104,7 @@ int avp_add_db_scheme( modparam_t type, void* val)
 	scheme = (struct db_scheme*)pkg_malloc( sizeof(struct db_scheme) );
 	if (scheme==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: no more pkg memory\n");
+		LM_ERR("no more pkg memory\n");
 		goto error;
 	}
 	memset( scheme, 0, sizeof(struct db_scheme));
@@ -114,20 +112,19 @@ int avp_add_db_scheme( modparam_t type, void* val)
 	/* parse the scheme */
 	if ( parse_avp_db_scheme( (char*)val, scheme)!=0 )
 	{
-		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: falied to parse scheme\n");
+		LM_ERR("failed to parse scheme\n");
 		goto error;
 	}
 
 	/* check for duplicates */
 	if ( avp_get_db_scheme(scheme->name)!=0 )
 	{
-		LOG(L_ERR,"ERROR:avpops:avp_add_db_scheme: duplicated scheme name "
-			"<%s>\n",scheme->name);
+		LM_ERR("duplicated scheme name <%s>\n",scheme->name);
 		goto error;
 	}
 
 	/* print scheme */
-	DBG("DEBUG:avpops:avp_add_db_scheme: new scheme <%s> added\n"
+	LM_DBG("new scheme <%s> added\n"
 		"\t\tuuid_col=<%s>\n\t\tusername_col=<%s>\n"
 		"\t\tdomain_col=<%s>\n\t\tvalue_col=<%s>\n"
 		"\t\tdb_flags=%d\n\t\ttable=<%s>\n",
@@ -164,16 +161,14 @@ static inline int set_table( char *table, char *func)
 	{
 		if ( avpops_dbf.use_table( db_hdl, table)<0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:db-%s: cannot set table \"%s\"\n",
-				func, table);
+			LM_ERR("db-%s: cannot set table \"%s\"\n", func, table);
 			return -1;
 		}
 		default_set = 0;
 	} else if (!default_set){
 		if ( avpops_dbf.use_table( db_hdl, def_table)<0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:db-%s: cannot set table \"%s\"\n",
-				func, def_table);
+			LM_ERR("db-%s: cannot set table \"%s\"\n", func, def_table);
 			return -1;
 		}
 		default_set = 1;
@@ -272,7 +267,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 
 void db_close_query( db_res_t *res )
 {
-	DBG("close avp query\n");
+	LM_DBG("close avp query\n");
 	avpops_dbf.free_result( db_hdl, res);
 }
 
@@ -287,7 +282,7 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table)
 	r = avpops_dbf.insert( db_hdl, keys, vals, n);
 	if (r<0)
 	{
-		LOG(L_ERR,"ERROR:avpops:db_store: insert failed\n");
+		LM_ERR("insert failed\n");
 		return -1;
 	}
 	return 0;
@@ -325,28 +320,28 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 	
 	if(query==NULL)
 	{
-		LOG(L_ERR,"avpops:db_query_avp: error - bad parameter\n");
+		LM_ERR("bad parameter\n");
 		return -1;
 	}
 	
 	if(avpops_dbf.raw_query(db_hdl, query, &db_res)!=0)
 	{
-		LOG(L_ERR,"avpops:db_query_avp: error - cannot do the query\n");
+		LM_ERR("cannot do the query\n");
 		return -1;
 	}
 
 	if(db_res==NULL || RES_ROW_N(db_res)<=0 || RES_COL_N(db_res)<=0)
 	{
-		DBG("avpops:db_query_avp: no result after query\n");
+		LM_DBG("no result after query\n");
 		db_close_query( db_res );
 		return 1;
 	}
 
-	DBG("avpops:db_query_avp: rows [%d]\n", RES_ROW_N(db_res));
+	LM_DBG("rows [%d]\n", RES_ROW_N(db_res));
 	/* reverse order of rows so that first row get's in front of avp list */
 	for(i = RES_ROW_N(db_res)-1; i >= 0; i--) 
 	{
-		DBG("avpops:db_query_avp: row [%d]\n", i);
+		LM_DBG("row [%d]\n", i);
 		crt = dest;
 		for(j = 0; j < RES_COL_N(db_res); j++) 
 		{
@@ -360,9 +355,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 				if(pv_get_avp_name(msg, &crt->sname.pvp, &avp_name,
 							&avp_type)!=0)
 				{
-					LOG(L_ERR,
-					"avpops:db_query_avp:error - cant get avp name [%d/%d]\n",
-					i, j);
+					LM_ERR("cant get avp name [%d/%d]\n", i, j);
 					goto next_avp;
 				}
 			}
@@ -411,7 +404,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 			}
 			if(add_avp(avp_type, avp_name, avp_val)!=0)
 			{
-				LOG(L_ERR,"avpops:db_query_avp: error - unable to add avp\n");
+				LM_ERR("unable to add avp\n");
 				db_close_query( db_res );
 				return -1;
 			}

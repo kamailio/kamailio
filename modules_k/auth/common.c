@@ -53,7 +53,7 @@ int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri** _u)
 	    && (_hftype == HDR_AUTHORIZATION_T)
 	   ) {
 		if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0)==-1) || (!_m->to))) {
-			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+			LM_ERR("failed to parse TO headers\n");
 			return -1;
 		}
 		
@@ -62,7 +62,7 @@ int get_realm(struct sip_msg* _m, hdr_types_t _hftype, struct sip_uri** _u)
 			return -1;
 	} else {
 		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "get_realm(): Error while parsing headers\n");
+			LM_ERR("failed to parse FROM headers\n");
 			return -2;
 		}
 		if((*_u = parse_from_uri(_m))==NULL)
@@ -83,7 +83,7 @@ int send_resp(struct sip_msg* _m, int _code, str* _reason,
 	/* Add new headers if there are any */
 	if ((_hdr) && (_hdr_len)) {
 		if (add_lump_rpl( _m, _hdr, _hdr_len, LUMP_RPL_HDR)==0) {
-			LOG(L_ERR,"ERROR:auth:send_resp: unable to append hdr\n");
+			LM_ERR("unable to append hdr\n");
 			return -1;
 		}
 	}

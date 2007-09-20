@@ -61,7 +61,7 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 	unsigned int uint;
 	str tmp;
 
-	/*DBG("s=%p s=%c(%d)\n",s,*s,*s);*/
+	/*LM_DBG("s=%p s=%c(%d)\n",s,*s,*s);*/
 	/* search for type identifier */
 	if ( s[0] && s[1]==':' )
 	{
@@ -76,8 +76,7 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 				attr->opd |= AVPOPS_VAL_STR;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:avpops:parse_avp_attr: invalid type '%c'\n",
-					s[0]);
+				LM_ERR("invalid type '%c'\n", s[0]);
 				goto error;
 		}
 		s += 2;
@@ -95,8 +94,7 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 			/* convert to ID (int) */
 			if ( str2int( &tmp, &uint)==-1 )
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_attr: attribute is not "
-					"int as type says <%s>\n", tmp.s);
+				LM_ERR("attribute is not int as type says <%s>\n", tmp.s);
 				goto error;
 			}
 			attr->type = AVPOPS_VAL_INT;
@@ -106,7 +104,7 @@ char *parse_avp_attr(char *s, struct fis_param *attr, char end)
 			attr->u.s.s = (char*)pkg_malloc(tmp.len + 1);
 			if (attr->u.s.s==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_attr: no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
 			attr->type = AVPOPS_VAL_STR;
@@ -130,7 +128,7 @@ struct fis_param *avpops_parse_pvar(char *in)
 	ap = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 	if (ap==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:avpops_parse_pvar: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		return NULL;
 	}
 	memset( ap, 0, sizeof(struct fis_param));
@@ -166,8 +164,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 	{
 		if(strlen(s)<1)
 		{
-			LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
-				"expected : $avp(name), *, s or i value\n");
+			LM_ERR("bad param - expected : $avp(name), *, s or i value\n");
 			return E_UNSPEC;
 		}
 		switch(*s) {
@@ -181,8 +178,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 				dbp->a.opd = AVPOPS_VAL_NONE;
 			break;
 			default:
-				LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
-					"expected : *, s or i AVP flag\n");
+				LM_ERR("bad param - expected : *, s or i AVP flag\n");
 			return E_UNSPEC;
 		}
 		/* flags */
@@ -193,8 +189,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			s0.len = strlen(s0.s);
 			if(str2int(&s0, &flags)!=0)
 			{
-				LOG(L_ERR,
-					"ERROR:avops:parse_avp_db:: error - bad avp flags\n");
+				LM_ERR("error - bad avp flags\n");
 				goto error;
 			}
 		}
@@ -205,8 +200,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		p = pv_parse_spec(&s0, &dbp->a.u.sval);
 		if (p==0 || *p!='\0' || dbp->a.u.sval.type!=PVT_AVP)
 		{
-			LOG(L_ERR,"ERROR:avops:parse_avp_db: bad param - "
-				"expected : $avp(name) or int/str value\n");
+			LM_ERR("bad param - expected : $avp(name) or int/str value\n");
 			return E_UNSPEC;
 		}
 		dbp->a.type = AVPOPS_VAL_PVAR;
@@ -222,7 +216,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 					dbp->a.u.sval.pvp.pvn.u.isname.name.s.len+1);
 			if (dbp->sa.s==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
 			memcpy(dbp->sa.s, dbp->a.u.sval.pvp.pvn.u.isname.name.s.s,
@@ -235,7 +229,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			dbp->sa.s = (char*)pkg_malloc( tmp.len + 1 );
 			if (dbp->sa.s==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
 			memcpy( dbp->sa.s, tmp.s, tmp.len);
@@ -256,13 +250,12 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		{
 			if (allow_scheme==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_db: function doesn't "
-					"support DB schemes\n");
+				LM_ERR("function doesn't support DB schemes\n");
 				goto error;
 			}
 			if (dbp->a.opd&AVPOPS_VAL_NONE)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_db: inconsistent usage of "
+				LM_ERR("inconsistent usage of "
 					"DB scheme without complet specification of AVP name\n");
 				goto error;
 			}
@@ -277,7 +270,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		tmp.len = s - tmp.s;
 		if (tmp.len==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_av_dbp: empty scheme/table name\n");
+			LM_ERR("empty scheme/table name\n");
 			goto error;
 		}
 		if (have_scheme)
@@ -285,8 +278,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			dbp->scheme = avp_get_db_scheme( tmp.s );
 			if (dbp->scheme==0) 
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_db: scheme <%s> not found\n",
-					tmp.s);
+				LM_ERR("scheme <%s> not found\n", tmp.s);
 				goto error;
 			}
 			/* update scheme flags with AVP name type*/
@@ -296,7 +288,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			dbp->table = (char*)pkg_malloc( tmp.len + 1 );
 			if (dbp->table==0)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_db: no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				goto error;;
 			}
 			memcpy( dbp->table, tmp.s, tmp.len);
@@ -328,16 +320,14 @@ struct fis_param* parse_intstr_value(char *p, int len)
 			flags = AVPOPS_VAL_STR;
 		else
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: unknown value type "
-				"<%c>\n",*p);
+			LM_ERR("unknown value type <%c>\n",*p);
 			goto error;
 		}
 		p += 2;
 		len -= 2;
 		if (*p==0 || len<=0 )
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: parse error arround "
-				"<%.*s>\n",len,p);
+			LM_ERR("parse error arround <%.*s>\n",len,p);
 				goto error;
 		}
 	} else {
@@ -347,7 +337,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 	vp = (struct fis_param*)pkg_malloc(sizeof(struct fis_param));
 	if (vp==0)
 	{
-		LOG(L_ERR,"ERROR:avpops:parse_intstr_value: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;;
 	}
 	memset( vp, 0, sizeof(struct fis_param));
@@ -360,14 +350,14 @@ struct fis_param* parse_intstr_value(char *p, int len)
 		{
 			if(hexstr2int(val_str.s+2, val_str.len-2, &uint))
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_intstr_value: value is not hex"
-					" int as type says <%.*s>\n", val_str.len, val_str.s);
+				LM_ERR("value is not hex int as type says <%.*s>\n", 
+						val_str.len, val_str.s);
 				goto error;
 			}
 		} else {
 			if(str2sint( &val_str, (int*)&uint)==-1)
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_intstr_value: value is not int"
+				LM_ERR("value is not int"
 					" as type says <%.*s>\n", val_str.len, val_str.s);
 				goto error;
 			}
@@ -379,7 +369,7 @@ struct fis_param* parse_intstr_value(char *p, int len)
 		vp->u.s.s = (char*)pkg_malloc((val_str.len+1)*sizeof(char));
 		if (vp->u.s.s==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_intstr_value: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			goto error;
 		}
 		vp->u.s.len = val_str.len;
@@ -399,8 +389,7 @@ error:
 		_p = (char*)pkg_malloc(_str.len+1); \
 		if (_p==0) \
 		{ \
-			LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: " \
-				"no more pkg memory\n");\
+			LM_ERR("no more pkg memory\n");\
 			goto _error; \
 		} \
 		memcpy( _p, _str.s, _str.len); \
@@ -512,21 +501,18 @@ int parse_avp_db_scheme( char *s, struct db_scheme *scheme)
 				scheme->db_flags = AVP_VAL_STR;
 			else
 			{
-				LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: unknown "
-					"value type <%.*s>\n",bar.len,bar.s);
+				LM_ERR("unknown value type <%.*s>\n",bar.len,bar.s);
 				goto error;
 			}
 		} else {
-			LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: unknown "
-				"attribute <%.*s>\n",foo.len,foo.s);
+			LM_ERR("unknown attribute <%.*s>\n",foo.len,foo.s);
 			goto error;
 		}
 	} /* end while */
 
 	return 0;
 parse_error:
-	LOG(L_ERR,"ERROR:avpops:parse_avp_sb_scheme: parse error in <%s> "
-		"around %ld\n", s, (long)(p-s));
+	LM_ERR("parse error in <%s> around %ld\n", s, (long)(p-s));
 error:
 	return -1;
 }
@@ -570,8 +556,7 @@ struct fis_param* parse_check_value(char *s)
 	} else if (strncasecmp(s,"xor",3)==0) {
 		ops |= AVPOPS_OP_BXOR;
 	} else {
-		LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown operation "
-			"<%.*s>\n",2,s);
+		LM_ERR("unknown operation <%.*s>\n",2,s);
 		goto error;
 	}
 	/* get the value */
@@ -588,23 +573,20 @@ struct fis_param* parse_check_value(char *s)
 		vp = avpops_parse_pvar(p);
 		if (vp==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_check_value: unable to get"
-					" pseudo-variable\n");
+			LM_ERR("unable to get pseudo-variable\n");
 			goto error;
 		}
 		if (vp->u.sval.type==PVT_NULL)
 		{
-			LOG(L_ERR,"ERROR:avops:parse_check_value: bad param; "
-				"expected : $pseudo-variable or int/str value\n");
+			LM_ERR("bad param; expected : $pseudo-variable or int/str value\n");
 			goto error;
 		}
 		opd |= AVPOPS_VAL_PVAR;
-		DBG("flag==%d/%d\n", opd, ops);
+		LM_DBG("flag==%d/%d\n", opd, ops);
 	} else {
 		/* value is explicitly given */
 		if ( (vp=parse_intstr_value(p,len))==0) {
-			LOG(L_ERR,"ERROR:avpops:parse_check_value: unable to "
-				"parse value\n");
+			LM_ERR("unable to parse value\n");
 			goto error;
 		}
 	}
@@ -628,8 +610,7 @@ struct fis_param* parse_check_value(char *s)
 					ops|=AVPOPS_FLAG_CI;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:parse_check_value: unknown flag "
-						"<%c>\n",*p);
+					LM_ERR("unknown flag <%c>\n",*p);
 					goto error;
 			}
 			p++;
@@ -640,8 +621,7 @@ struct fis_param* parse_check_value(char *s)
 	vp->opd |= opd;
 	return vp;
 parse_error:
-	LOG(L_ERR,"ERROR:avpops:parse_check_value: parse error in <%s> pos %ld\n",
-		s,(long)(p-s));
+	LM_ERR("parse error in <%s> pos %ld\n", s,(long)(p-s));
 error:
 	if (vp) pkg_free(vp);
 	return 0;
@@ -682,8 +662,7 @@ struct fis_param* parse_op_value(char *s)
 	} else if (strncasecmp(s,"not",3)==0) {
 		ops |= AVPOPS_OP_BNOT;
 	} else {
-		LOG(L_ERR,"ERROR:avpops:parse_op_value: unknown operation "
-			"<%.*s>\n",2,s);
+		LM_ERR("unknown operation <%.*s>\n",2,s);
 		goto error;
 	}
 	/* get the value */
@@ -700,26 +679,24 @@ struct fis_param* parse_op_value(char *s)
 		vp = avpops_parse_pvar(p);
 		if (vp==0)
 		{
-			LOG(L_ERR,"ERROR:avpops:parse_op_value: unable to get"
-					" pseudo-variable\n");
+			LM_ERR("unable to get pseudo-variable\n");
 			goto error;
 		}
 		if (vp->u.sval.type==PVT_NULL)
 		{
-			LOG(L_ERR,"ERROR:avops:parse_op_value: bad param; "
-				"expected : $pseudo-variable or int/str value\n");
+			LM_ERR("bad param; expected : $pseudo-variable or int/str value\n");
 			goto error;
 		}
 		opd |= AVPOPS_VAL_PVAR;
-		DBG("avops:parse_op_value: flag==%d/%d\n", opd, ops);
+		LM_DBG("flag==%d/%d\n", opd, ops);
 	} else {
 		/* value is explicitly given */
 		if ( (vp=parse_intstr_value(p,len))==0) {
-			LOG(L_ERR,"ERROR:avpops:parse_op_value: unable to parse value\n");
+			LM_ERR("unable to parse value\n");
 			goto error;
 		}
 		if((vp->opd&AVPOPS_VAL_INT)==0) {
-			LOG(L_ERR,"ERROR:avpops:parse_op_value: value must be int\n");
+			LM_ERR("value must be int\n");
 			goto error;
 		}
 	}
@@ -743,8 +720,7 @@ struct fis_param* parse_op_value(char *s)
 					ops|=AVPOPS_FLAG_DELETE;
 					break;
 				default:
-					LOG(L_ERR,"ERROR:avpops:parse_op_value: unknown flag "
-						"<%c>\n",*p);
+					LM_ERR("unknown flag <%c>\n",*p);
 					goto error;
 			}
 			p++;
@@ -755,8 +731,7 @@ struct fis_param* parse_op_value(char *s)
 	vp->opd |= opd;
 	return vp;
 parse_error:
-	LOG(L_ERR,"ERROR:avpops:parse_op_value: parse error in <%s> pos %ld\n",
-		s,(long)(p-s));
+	LM_ERR("parse error in <%s> pos %ld\n", s,(long)(p-s));
 error:
 	if (vp) pkg_free(vp);
 	return 0;

@@ -57,8 +57,7 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 	switch(gcp->id) {
 		case 1: /* Request-URI */
 			if(parse_sip_msg_uri(msg)<0) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
-					"Request-URI\n");
+				LM_ERR("failed to get Request-URI\n");
 				return -1;
 			}
 			turi = &msg->parsed_uri;
@@ -66,16 +65,14 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 
 		case 2: /* To */
 			if((turi=parse_to_uri(msg))==NULL) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
-					"To URI\n");
+				LM_ERR("failed to get To URI\n");
 				return -1;
 			}
 			break;
 
 		case 3: /* From */
 			if((turi=parse_from_uri(msg))==NULL) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to get "
-					"From URI\n");
+				LM_ERR("failed to get From URI\n");
 				return -1;
 			}
 			break;
@@ -85,8 +82,8 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 			if (!h) {
 				get_authorized_cred( msg->proxy_auth, &h);
 				if (!h) {
-					LOG(L_ERR, "ERROR:group:get_username_domain: no "
-						"authorized credentials found (error in scripts)\n");
+					LM_ERR("no authorized credentials found "
+							"(error in scripts)\n");
 					return -1;
 				}
 			}
@@ -97,13 +94,11 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 			if(pv_get_spec_value( msg, &gcp->sp, &value)!=0 
 				|| value.flags&PV_VAL_NULL || value.rs.len<=0)
 			{
-				LOG(L_ERR,"ERROR:group:get_username_domain: no AVP found"
-					" (error in scripts)\n");
+				LM_ERR("no AVP found (error in scripts)\n");
 				return -1;
 			}
 			if (parse_uri(value.rs.s, value.rs.len, &puri) < 0) {
-				LOG(L_ERR, "ERROR:group:get_username_domain: failed to parse "
-					"URI <%.*s>\n",value.rs.len, value.rs.s);
+				LM_ERR("failed to parse URI <%.*s>\n",value.rs.len, value.rs.s);
 				return -1;
 			}
 			turi = &puri;
@@ -139,7 +134,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 
 	if ( get_username_domain( _msg, (group_check_p)_hf, &(VAL_STR(vals)),
 	&(VAL_STR(vals+2)))!=0) {
-		LOG(L_ERR, "is_user_in(): Error while getting username@domain\n");
+		LM_ERR("failed to get username@domain\n");
 		return -1;
 	}
 
@@ -149,24 +144,24 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	VAL_STR(vals + 1) = *((str*)_grp);
 
 	if (group_dbf.use_table(group_dbh, table.s) < 0) {
-		LOG(L_ERR, "is_user_in(): Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		return -5;
 	}
 
 	if (group_dbf.query(group_dbh, keys, 0, vals, col, (use_domain) ? (3): (2),
 				1, 0, &res) < 0) {
-		LOG(L_ERR, "is_user_in(): Error while querying database\n");
+		LM_ERR("failed to query database\n");
 		return -5;
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("is_user_in(): User is not in group '%.*s'\n", 
+		LM_DBG("user is not in group '%.*s'\n", 
 		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
 		group_dbf.free_result(group_dbh, res);
 		return -6;
 	} else {
-		DBG("is_user_in(): User is in group '%.*s'\n", 
-		    ((str*)_grp)->len, ZSW(((str*)_grp)->s));
+		LM_DBG("user is in group '%.*s'\n", 
+			((str*)_grp)->len, ZSW(((str*)_grp)->s));
 		group_dbf.free_result(group_dbh, res);
 		return 1;
 	}
@@ -176,13 +171,12 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 int group_db_init(char* db_url)
 {
 	if (group_dbf.init==0){
-		LOG(L_CRIT, "BUG: group_db_bind: null dbf \n");
+		LM_CRIT("null dbf \n");
 		goto error;
 	}
 	group_dbh=group_dbf.init(db_url);
 	if (group_dbh==0){
-		LOG(L_ERR, "ERROR: group_db_bind: unable to connect to the "
-				"database\n");
+		LM_ERR("unable to connect to the database\n");
 		goto error;
 	}
 	return 0;
@@ -194,13 +188,12 @@ error:
 int group_db_bind(char* db_url)
 {
 	if (bind_dbmod(db_url, &group_dbf)<0){
-		LOG(L_ERR, "ERROR: group_db_bind: unable to bind to the database"
-				" module\n");
+		LM_ERR("unable to bind to the database module\n");
 		return -1;
 	}
 
 	if (!DB_CAPABILITY(group_dbf, DB_CAP_QUERY)) {
-		LOG(L_ERR, "ERROR: group_db_bind: Database module does not implement 'query' function\n");
+		LM_ERR("database module does not implement 'query' function\n");
 		return -1;
 	}
 
