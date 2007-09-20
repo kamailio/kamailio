@@ -653,7 +653,6 @@ ds_select_dst("1", "0");
 		</title>
 		<para>
 		It reloads the groups and included destinations.
-		Available only when DB support configured.
 		</para>
 		<para>
 		Name: <emphasis>ds_reload</emphasis>

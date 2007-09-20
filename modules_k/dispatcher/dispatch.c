@@ -37,6 +37,7 @@
  * ds_is_from_list and modified the function to work with IPv6 adresses.
  * 2007-07-18  removed index stuff 
  * 			   added DB support to load/reload data(ancuta)
+ * 2007-09-17  added list-file support for reload data (carstenbock)
  */
 
 #include <stdio.h>
@@ -269,6 +270,11 @@ int ds_load_list(char *lfile)
 	FILE *f = NULL;
 	int id, setn;
 	str uri;
+	
+	if( (*crt_idx) != (*next_idx)) {
+		LM_WARN("load command already generated, aborting reload...\n");
+		return 0;
+	}
 
 	if(lfile==NULL || strlen(lfile)<=0)
 	{
@@ -285,6 +291,10 @@ int ds_load_list(char *lfile)
 	}
 
 	id = setn = 0;
+
+	*next_idx = (*crt_idx + 1)%2;
+	destroy_list(*next_idx);
+	
 	p = fgets(line, 256, f);
 	while(p)
 	{
@@ -332,13 +342,16 @@ next_line:
 
 	fclose(f);
 	f = NULL;
+	/* Update list */
 	_ds_list_nr = setn;
+	*crt_idx = *next_idx;
 	return 0;
 
 error:
 	if(f!=NULL)
 		fclose(f);
 	destroy_list(*next_idx);
+	*next_idx = *crt_idx; 
 	return -1;
 }
 

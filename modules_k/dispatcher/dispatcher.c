@@ -564,14 +564,16 @@ struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 
 struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 {
-	if(ds_db_url==NULL)
-		return init_mi_tree(400, MI_NOT_SUPPORTED, MI_NOT_SUPPORTED_LEN);
-
-	if(ds_load_db()<0)
-		return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
-
+	if(ds_db_url==NULL) {
+		if (ds_load_list(dslistfile)!=0)
+			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	} else {
+		if(ds_load_db()<0)
+			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
+	}
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
+
 
 
 /**
