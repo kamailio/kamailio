@@ -45,7 +45,7 @@ int bind_usrloc(usrloc_api_t* api)
 	}
 	if (init_flag==0) {
 		LOG(L_ERR, "ERROR:usrloc:bind_usrloc: configuration error - trying "
-			"to bind to usrlo module before being initialized\n");
+			"to bind to usrloc module before being initialized\n");
 		return -1;
 	}
 
