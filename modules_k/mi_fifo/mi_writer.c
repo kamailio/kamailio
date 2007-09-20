@@ -50,8 +50,7 @@ int mi_writer_init( unsigned int size , char *indent)
 
 	mi_write_buffer = pkg_malloc(size);
 	if(!mi_write_buffer){
-		LOG(L_ERR, "ERROR:mi_fifo:mi_writer_init: pkg_malloc cannot "
-			"allocate any more memory!\n");
+		LM_ERR("pkg_malloc cannot allocate any more memory!\n");
 		return -1;
 	}
 
@@ -151,8 +150,7 @@ static int recur_write_tree(FILE *stream, struct mi_node *tree, str *buf,
 			buf->s = mi_write_buffer;
 			buf->len = mi_write_buffer_len;
 			if (mi_write_node( buf, tree, level)!=0) {
-				LOG(L_ERR,"ERROR:mi_fifo:recur_write_tree: failed to write - "
-					"line too long!!!\n");
+				LM_ERR("failed to write - line too long!\n");
 				return -1;
 			}
 		}
@@ -177,8 +175,7 @@ int mi_write_tree(FILE *stream, struct mi_root *tree)
 	/* write the root node */
 	code.s = int2str((unsigned long)tree->code, &code.len);
 	if (code.len+tree->reason.len+1>buf.len) {
-		LOG(L_ERR,"ERROR:mi_fifo:mi_write_tree: failed to write - "
-			"reason too long!!!\n");
+		LM_ERR("failed to write - reason too long!\n");
 		return -1;
 	}
 	memcpy( buf.s, code.s, code.len);
@@ -195,8 +192,7 @@ int mi_write_tree(FILE *stream, struct mi_root *tree)
 		return -1;
 
 	if (buf.len<=0) {
-		LOG(L_ERR,"ERROR:mi_fifo:mi_write_tree: failed to write - "
-			"EOC does not fit in!!!\n");
+		LM_ERR("failed to write - EOC does not fit in!\n");
 		return -1;
 	}
 	*(buf.s++)='\n';

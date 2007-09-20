@@ -62,8 +62,7 @@ retry:
 		if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK)) {
 			goto retry;
 		}
-		LOG(L_ERR, "ERROR:mi_fifo:mi_fifo_reply: fifo_error: write error "
-			": %s\n", strerror(errno));
+		LM_ERR("fifo_error: write error: %s\n", strerror(errno));
 		return -1;
 	}
 	return 0;

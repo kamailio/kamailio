@@ -48,8 +48,7 @@ int mi_parser_init( unsigned int size )
 	mi_parse_buffer = pkg_malloc(size);
 
 	if(!mi_parse_buffer){
-		LOG(L_ERR, "ERROR:mi_fifo:mi_parser_init: pkg_malloc cannot "
-			"allocate any more memory!\n");
+		LM_ERR("pkg_malloc cannot allocate any more memory!\n");
 		return -1;
 	}
 
@@ -72,12 +71,11 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 	/* read one line */
 	do {
 		if (mi_read_line( buf->s, buf->len, stream, &line_len)<0) {
-			LOG(L_ERR,"ERROR:mi_fifo:mi_parse_tree: failed to read from "
-				"fifo\n");
+			LM_ERR("failed to read from fifo\n");
 			return -1;
 		}
 		if (line_len == 1){
-			DBG("DEBUG:mi_fifo:mi_parse_tree: end of input tree\n");
+			LM_DBG("end of input tree\n");
 			return 1;
 		}
 
@@ -119,7 +117,7 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 
 			p += 2; /* for separator */
 
-			DBG("DEBUG:mi_fifo:mi_parse_node: attr name <%.*s> found\n",
+			LM_DBG("attr name <%.*s> found\n",
 				name->len, name->s);
 
 			/* consume the trailing spaces */
@@ -188,12 +186,11 @@ static inline int mi_parse_node( FILE *stream, str *buf, str *name, str *value)
 
 		/*read one more line */
 		if (mi_read_line( buf->s, buf->len, stream, &line_len)<0) {
-			LOG(L_ERR,"ERROR:mi_fifo:mi_parse_tree: failed to re-read from "
-				"fifo\n");
+			LM_ERR("failed to re-read from fifo\n");
 			return -1;
 		}
 		if (line_len == 1) {
-			DBG("DEBUG:mi_fifo:mi_parse_tree: end of input tree\n");
+			LM_DBG("end of input tree\n");
 			return -2;
 		}
 
@@ -206,7 +203,7 @@ done:
 	buf->s = p;
 	return 0;
 parse_err:
-	LOG(L_ERR,"ERROR:mi_fifo:mi_parse_node: parse error around %c\n",*p);
+	LM_ERR("parse error around %c\n",*p);
 	return -1;
 }
 
@@ -225,8 +222,7 @@ struct mi_root * mi_parse_tree(FILE *stream) {
 
 	root = init_mi_tree(0,0,0);
 	if (!root) {
-		LOG(L_ERR, "ERROR:mi_fifo:mi_parse_tree: the MI tree cannot be "
-			"initialized!\n");
+		LM_ERR("the MI tree cannot be initialized!\n");
 		goto error;
 	}
 	node = &root->node;
@@ -239,17 +235,16 @@ struct mi_root * mi_parse_tree(FILE *stream) {
 		if (ret==1)
 			return root;
 
-		DBG("DEBUG:mi_fifo:mi_parse_tree: adding node <%.*s> ; val <%.*s>\n",
+		LM_DBG("adding node <%.*s> ; val <%.*s>\n",
 			name.len,name.s, value.len,value.s);
 
 		if(!add_mi_node_child(node,0,name.s,name.len,value.s,value.len)){
-			LOG(L_ERR, "ERROR:mi_fifo:mi_parse_tree: cannot add the child "
-				"node to the tree\n");
+			LM_ERR("cannot add the child node to the tree\n");
 			goto error;
 		}
 	}
 
-	LOG(L_ERR, "ERROR:mi_fifo:mi_parse_tree: Parse error!\n");
+	LM_ERR("Parse error!\n");
 	if (ret==-1) {
 		/* consume the rest of the fifo request */
 		do {
