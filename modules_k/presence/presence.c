@@ -554,12 +554,12 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 	
 		if(update_watchers_status(pres_uri, ev, rules_doc)< 0)
 		{
-			LM_ERR( "updating watchers\n");
+			LM_ERR("failed to update watchers\n");
 			goto error;
 		}
 
 	}                 
-	else                 /* if a request to refresh Notified info */
+	else     /* if a request to refresh Notified info */
 	{
 		if(query_db_notify(&pres_uri, ev, NULL)< 0)
 		{
@@ -700,6 +700,13 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			lock_release(&subs_htable[hash_code].lock);
 			goto done;
 		}
+		LM_DBG("subs.status= %d\n", subs.status);
+		if(get_status_str(subs.status)== NULL)
+		{
+			LM_ERR("wrong status: %d\n", subs.status);
+			lock_release(&subs_htable[hash_code].lock);
+			goto done;
+		}
 		if(subs.status!= status || reason.len!= subs.reason.len ||
 			(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
 												  reason.len)))
@@ -794,15 +801,19 @@ int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 			cs->expires-= (int)time(NULL);
 			cs->next= (*subs_array);
 			(*subs_array)= cs;
-
 			if(s->status== TERMINATED_STATUS)
 			{
 				cs->expires= 0;
 				ps->next= s->next;
 				shm_free(s);
 			}
+			else
+				ps= ps->next;
+
+			printf_subs(cs);
 		}
-		ps= ps->next;
+		else
+			ps= ps->next;
 	}
 	LM_DBG("found %d matching dialogs\n", i);
 

@@ -159,8 +159,7 @@ error:
 	if(hdr_append2.s)
 		pkg_free(hdr_append2.s);
 
-	return 0;
-
+	return -1;
 }	
 presentity_t* new_presentity( str* domain,str* user,int expires, 
 		pres_ev_t* event, str* etag, str* sender)

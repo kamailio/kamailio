@@ -1731,7 +1731,7 @@ str* create_winfo_xml(watcher_t* watchers, char* version,
 		}	
 		
 		if(xmlNewProp(node, BAD_CAST "status", 
-					BAD_CAST get_status_str(w->status) )== NULL)
+					BAD_CAST get_status_str(w->status))== NULL)
 		{
 			LM_ERR("while adding new attribute\n");
 			goto error;
