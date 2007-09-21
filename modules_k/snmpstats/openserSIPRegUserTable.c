@@ -101,7 +101,7 @@ size_t openserSIPRegUserTable_oid_len = OID_LENGTH(openserSIPRegUserTable_oid);
  * callback for UL_CONTACT_INSERT and UL_CONTACT_EXPIRE.
  *
  * Returns 1 on success, and zero otherwise. */
-int registerForUSRLOCCallbacks()  
+int registerForUSRLOCCallbacks(void)  
 {
 	register_ulcb_t register_user_callbacks = 
 		(register_ulcb_t)find_export("ul_register_ulcb", 1, 0);

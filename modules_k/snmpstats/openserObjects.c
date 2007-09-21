@@ -663,22 +663,22 @@ int set_dlg_major_threshold(modparam_t type, void *val) {
 		&dialog_major_threshold);
 }
 
-int get_msg_queue_minor_threshold() 
+int get_msg_queue_minor_threshold(void) 
 {
 	return msgQueueMinorThreshold;
 }
 
-int get_msg_queue_major_threshold() 
+int get_msg_queue_major_threshold(void) 
 {
 	return msgQueueMajorThreshold;
 }
 
-int get_dialog_minor_threshold()
+int get_dialog_minor_threshold(void)
 {
 	return dialog_minor_threshold;
 }
 
-int get_dialog_major_threshold()
+int get_dialog_major_threshold(void)
 {
 	return dialog_major_threshold;
 }

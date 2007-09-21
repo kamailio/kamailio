@@ -367,7 +367,7 @@ static int get_used_waiting_queue(
  *       interface.  On other systems, zero will always be returned.  To change
  *       this in the future, add an equivalent for get_used_waiting_queue(). 
  */
-int get_total_bytes_waiting() 
+int get_total_bytes_waiting(void) 
 {
 	int bytesWaiting = 0;
 

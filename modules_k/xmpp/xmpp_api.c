@@ -37,7 +37,7 @@
 xmpp_cb_list_t *_xmpp_cb_list = 0;
 
 
-int init_xmpp_cb_list()
+int init_xmpp_cb_list(void)
 {
 	_xmpp_cb_list = (xmpp_cb_list_t*)shm_malloc(sizeof(xmpp_cb_list_t));
 	if (_xmpp_cb_list==0) {
@@ -49,7 +49,7 @@ int init_xmpp_cb_list()
 }
 
 
-void destroy_xmpp_cb_list()
+void destroy_xmpp_cb_list(void)
 {
 	xmpp_callback_t *it, *it1;
 

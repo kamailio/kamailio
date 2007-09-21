@@ -172,7 +172,7 @@ stat_var **in_message_code_stats  = NULL;
 stat_var **out_message_code_stats = NULL;
 
 /* Adds the message code statistics to the statistics framework */
-static int register_message_code_statistics() 
+static int register_message_code_statistics(void) 
 {
 	int i;
 
@@ -337,7 +337,7 @@ static void sigchld_handler(int signal)
  *       a normal system uptime. Support for this has been provided to try to
  *       match the IETF Draft SIP MIBs as closely as possible. 
  */
-static int spawn_sysUpTime_child() 
+static int spawn_sysUpTime_child(void) 
 {
 	struct sigaction new_sigchld_handler;
 

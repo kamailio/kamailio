@@ -75,7 +75,7 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer);
  * Initialize shared memory used to buffer communication between the usrloc
  * module and the SNMPStats module.  (Specifically, the user and contact tables)
  */
-int initInterprocessBuffers() 
+int initInterprocessBuffers(void) 
 {
 	/* Initialize the shared memory that will be used to buffer messages
 	 * over the usrloc module to RegUserTable callback. */
@@ -184,7 +184,7 @@ error:
  *       This is made possible by simply changing the head of the interprocess
  *       buffer, and then releasing the lock.  
  */
-void consumeInterprocessBuffer() 
+void consumeInterprocessBuffer(void) 
 {
 	interprocessBuffer_t *previousBuffer;
 	interprocessBuffer_t *currentBuffer;
