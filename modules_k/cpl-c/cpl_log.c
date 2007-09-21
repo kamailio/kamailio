@@ -37,7 +37,7 @@ static str  cpl_logs[MAX_LOG_NR];
 static int  nr_logs;
 
 
-void reset_logs()
+void reset_logs(void)
 {
 	nr_logs = 0;
 }

@@ -104,7 +104,7 @@ static inline char* trim(char* _s)
 #define ac_get_wday_yr(t) (int)((t)->tm_yday/7)
 #define ac_get_wday_mr(t) (int)(((t)->tm_mday-1)/7)
 
-ac_tm_p ac_tm_new()
+ac_tm_p ac_tm_new(void)
 {
 	ac_tm_p _atp = NULL;
 	_atp = (ac_tm_p)pkg_malloc(sizeof(ac_tm_t));
@@ -184,7 +184,7 @@ int ac_get_yweek(struct tm* _tm)
 	return week;
 }
 
-int ac_get_wkst()
+int ac_get_wkst(void)
 {
 #ifdef USE_YWEEK_U
 	return 0;
@@ -307,7 +307,7 @@ int ac_print(ac_tm_p _atp)
 
 #define _D(c) ((c) -'0')
 
-tr_byxxx_p tr_byxxx_new()
+tr_byxxx_p tr_byxxx_new(void)
 {
 	tr_byxxx_p _bxp = NULL;
 	_bxp = (tr_byxxx_p)pkg_malloc(sizeof(tr_byxxx_t));
@@ -351,7 +351,7 @@ int tr_byxxx_free(tr_byxxx_p _bxp)
 	return 0;
 }
 
-tmrec_p tmrec_new()
+tmrec_p tmrec_new(void)
 {
 	tmrec_p _trp = NULL;
 	_trp = (tmrec_p)pkg_malloc(sizeof(tmrec_t));

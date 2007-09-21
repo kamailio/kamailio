@@ -102,7 +102,8 @@ error:
 	return -1;
 }
 
-void cpl_db_close()
+
+void cpl_db_close(void)
 {
 	if (db_hdl && cpl_dbf.close){
 		cpl_dbf.close(db_hdl);
