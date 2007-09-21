@@ -89,7 +89,9 @@ extern int ds_force_dst;
 static db_func_t ds_dbf;
 static db_con_t* ds_db_handle=0;
 ds_set_p *ds_lists=NULL;
-int *ds_list_nr, *crt_idx, *next_idx;
+int *ds_list_nr = NULL;
+int *crt_idx    = NULL;
+int *next_idx   = NULL;
 
 #define _ds_list 	(ds_lists[*crt_idx])
 #define _ds_list_nr (*ds_list_nr)
@@ -515,11 +517,14 @@ err2:
 /*called from dispatcher.c: free all*/
 int ds_destroy_list(void)
 {
-	destroy_list(0);
-	destroy_list(1);
+	if (ds_lists) {
+		destroy_list(0);
+		destroy_list(1);
+		shm_free(ds_lists);
+	}
 
-	shm_free(ds_lists);
-	shm_free(crt_idx);
+	if (crt_idx)
+		shm_free(crt_idx);
 
 	return 0;
 }
