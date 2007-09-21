@@ -72,6 +72,7 @@ void slot_add(hslot_t* _s, struct urecord* _r);
 void slot_rem(hslot_t* _s, struct urecord* _r);
 
 int ul_init_locks();
+void ul_unlock_locks();
 void ul_destroy_locks();
 
 #ifndef GEN_LOCK_T_PREFERED

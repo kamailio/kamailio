@@ -58,6 +58,24 @@ int ul_init_locks(void)
 	} while (1);
 }
 
+
+void ul_unlock_locks(void)
+{
+	unsigned int i;
+
+	if (ul_locks==0)
+		return;
+
+	for (i=0;i<ul_locks_no;i++) {
+#ifdef GEN_LOCK_T_PREFERED
+		lock_release(&ul_locks->locks[i]);
+#else
+		ul_release_idx(i);
+#endif
+	};
+}
+
+
 void ul_destroy_locks(void)
 {
 	if (ul_locks !=0){

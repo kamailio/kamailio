@@ -396,6 +396,7 @@ static void destroy(void)
 {
 	/* we need to sync DB in order to flush the cache */
 	if (ul_dbh) {
+		ul_unlock_locks();
 		if (synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "timer(): Error while flushing cache\n");
 		}
