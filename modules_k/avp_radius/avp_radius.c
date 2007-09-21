@@ -360,7 +360,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		LM_ER("rc_auth failed\n");
+		LM_ERR("rc_auth failed\n");
 	}
 
 error:
