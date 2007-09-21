@@ -93,12 +93,12 @@ int pg_use_table(db_con_t* _con, const char* _t)
 
 #ifdef PARANOID
 	if (!_con) {
-		LOG(L_ERR, "PG[pg_use_table]: db_con_t parameter cannot be NULL\n");
+		LM_ERR("db_con_t parameter cannot be NULL\n");
 		return -1;
 	}
 
 	if (!_t) {
-		LOG(L_ERR, "PG[pg_use_table]: _t parameter cannot be NULL\n");
+		LM_ERR("_t parameter cannot be NULL\n");
 		return -1;
 	}
 
@@ -135,7 +135,7 @@ static int connect_db(db_con_t* _con)
 #ifdef PARANOID
 	if(! _con)
 	{
-		LOG(L_ERR, "PG[connect_db]: db_con_t parameter cannot be NULL\n");
+		LM_ERR("db_con_t parameter cannot be NULL\n");
 		return(-1);
 	}
 #endif
@@ -233,7 +233,7 @@ static int disconnect_db(db_con_t* _con)
 #ifdef PARANOID
 	if(! _con)
 	{
-		LOG(L_ERR, "PG[disconnect_db]: db_con_t parameter cannot be NULL\n");
+		LM_ERR("db_con_t parameter cannot be NULL\n");
 		return(-1);
 	}
 #endif
@@ -290,7 +290,7 @@ db_con_t *pg_init(const char* _url)
 
 	if (strlen(_url)>(SQLURL_LEN-1)) 
 	{
-		LOG(L_ERR, "PG[pg_init]: ERROR sql url too long\n");
+		LM_ERR("ERROR sql url too long\n");
 		return 0;
 	}
 
@@ -299,15 +299,17 @@ db_con_t *pg_init(const char* _url)
 	*/
 	_res = (db_con_t*)pkg_malloc(con_size);
 	if (!_res) {
-		LOG(L_ERR, "PG[pg_init]: Failed trying to allocate %d bytes for database connection\n", con_size);
+		LM_ERR("no more pkg memory for database connection(%i bytes)\n",
+				con_size);
 		return 0;
 	}
-	LOG(L_DBG, "PG[pg_init]: %p=pkg_malloc(%d) for database connection\n", (db_con_t*)_res, con_size);
+	LM_DBG("%p=pkg_malloc(%d) for database connection\n", 
+			(db_con_t*)_res, con_size);
 	memset(_res, 0, con_size);
 
 	id = new_db_id(_url);
 	if (!id) {
-		LOG(L_ERR, "PG[pg_init]: Error: Cannot parse URL '%s'\n", _url);
+		LM_ERR("cannot parse URL '%s'\n", _url);
 		goto err;
 	}
 
@@ -317,13 +319,13 @@ db_con_t *pg_init(const char* _url)
 		/* 
 		 * The LOG below exposes the username/password of the database connection
 		 * by default, it is commented.
-		 * LOG(L_DBG, "PG[pg_init]: Connection '%s' not found in pool\n", _url);
+		 * LM_DBG("connection '%s' not found in pool\n", _url);
 		 *
 		 */
-		LOG(L_DBG, "PG[pg_init]: Connection %p not found in pool\n", id);
+		LM_DBG("connection %p not found in pool\n", id);
 		_con = pg_new_conn(id);
 		if (!_con) {
-			LOG(L_ERR, "PG[pg_init]: Error: pg_new_con failed to add connection to pool\n");
+			LM_ERR("pg_new_con failed to add connection to pool\n");
 			goto err;
 		}
 		pool_insert((struct pool_con*)_con);
@@ -331,10 +333,10 @@ db_con_t *pg_init(const char* _url)
 		/* 
 		 * The LOG below exposes the username/password of the database connection
 		 * by default, it is commented.
-		 * LOG(L_DBG, "PG[pg_init]: Connection '%s' found in pool\n", _url);
+		 * LM_DBG("connection '%s' found in pool\n", _url);
 		 *
 		 */
-		LOG(L_DBG, "PG[pg_init]: Connection %p found in pool\n", id);
+		LM_DBG("connection %p found in pool\n", id);
 	}
 
 	_res->tail = (unsigned long)_con;
@@ -343,7 +345,7 @@ db_con_t *pg_init(const char* _url)
 err:
 	if (id) free_db_id(id);
 	if (_res) {
-		LOG(L_ERR, "PG[pg_init]: Error: Cleaning up: %p=pkg_free()\n", _res);
+		LM_ERR("cleaning up: %p=pkg_free()\n", _res);
 		pkg_free(_res);
 	}
 	return 0;
@@ -373,7 +375,7 @@ void pg_close(db_con_t* _con)
 		pg_free_conn((struct pg_con*)con);
 	}
 	
-	LOG(L_DBG, "PG[pg_close]: %p=pkg_free() _con\n", _con);
+	LM_DBG("%p=pkg_free() _con\n", _con);
 	pkg_free(_con);
 }
 
@@ -394,7 +396,7 @@ static int submit_query(db_con_t* _con, const char* _s)
 #ifdef PARANOID
 	if(! _con)
 	{
-		LOG(L_ERR, "PG[submit_query]: db_con_t parameter cannot be NULL\n");
+		LM_ERR("db_con_t parameter cannot be NULL\n");
 		return(-1);
 	}
 #endif
@@ -406,7 +408,7 @@ static int submit_query(db_con_t* _con, const char* _s)
 		case CONNECTION_OK: 
 			break;
 		case CONNECTION_BAD:
-			LOG(L_DBG, "PG[submit_query]: connection reset\n");
+			LM_DBG("connection reset\n");
 			PQreset(CON_CONNECTION(_con));
 			break;
 		case CONNECTION_STARTED:
@@ -417,7 +419,8 @@ static int submit_query(db_con_t* _con, const char* _s)
 		case CONNECTION_SSL_STARTUP:
 		case CONNECTION_NEEDED:
 		default:
-                	LOG(L_ERR, "PG[submit_query]: %p PQstatus(%s) invalid: %s\n", _con, PQerrorMessage(CON_CONNECTION(_con)), _s);
+                	LM_ERR("%p PQstatus(%s) invalid: %s\n", _con,
+							PQerrorMessage(CON_CONNECTION(_con)), _s);
 			return -1;
 	}
 
@@ -434,9 +437,10 @@ static int submit_query(db_con_t* _con, const char* _s)
 	*/
 
         if (PQsendQuery(CON_CONNECTION(_con), _s)) {
-                LOG(L_DBG, "PG[submit_query]: %p PQsendQuery(%s)\n", _con, _s);
+                LM_DBG("%p PQsendQuery(%s)\n", _con, _s);
         } else {
-                LOG(L_ERR, "PG[submit_query]: %p PQsendQuery Error: %s Query: %s\n", _con, PQerrorMessage(CON_CONNECTION(_con)), _s);
+                LM_ERR("%p PQsendQuery Error: %s Query: %s\n", _con,
+						PQerrorMessage(CON_CONNECTION(_con)), _s);
 		return -1;
         }
 	return 0;
@@ -457,15 +461,15 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
 
 #ifdef PARANOID
 	if (!_con) {
-                LOG(L_ERR, "PG[fetch_result]: db_con_t parameter cannot be NULL\n");
+                LM_ERR("db_con_t parameter cannot be NULL\n");
                 return -1;
 	}
 	if (!_res) {
-                LOG(L_ERR, "PG[fetch_result]: db_res_t parameter cannot be NULL\n");
+                LM_ERR("db_res_t parameter cannot be NULL\n");
                 return -1;
 	}
 	if (nrows < 0) {
-                LOG(L_ERR, "PG[fetch_result]: nrows parameter cannot be less than zero\n");
+                LM_ERR("nrows parameter cannot be less than zero\n");
                 return -1;
 	}
 #endif
@@ -491,7 +495,8 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
 			}
 		}
 		pqresult = PQresultStatus(CON_RESULT(_con));
-		LOG(L_DBG, "PG[fetch_result]: %p PQresultStatus(%s) PQgetResult(%p)\n", _con, PQresStatus(pqresult), CON_RESULT(_con));
+		LM_DBG("%p PQresultStatus(%s) PQgetResult(%p)\n", _con,
+				PQresStatus(pqresult), CON_RESULT(_con));
 
         	switch(pqresult) {
                 	case PGRES_COMMAND_OK:
@@ -500,7 +505,7 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
                 	case PGRES_TUPLES_OK:
                         	/* Successful completion of a command returning data (such as a SELECT or SHOW). */
 				if (pg_get_columns(_con, *_res) < 0) {
-					LOG(L_ERR, "PG[fetch_result]: Error while getting column names\n");
+					LM_ERR("failed to get column names\n");
 					return -2;
         			}
                         	break;
@@ -540,10 +545,11 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
 
         RES_ROW_N(*_res) = rows;
 
-	LOG(L_DBG, "PG[fetch_result]: Converting row %d of %d count %d\n", RES_LAST_ROW(*_res), RES_NUM_ROWS(*_res), RES_ROW_N(*_res));
+	LM_DBG("converting row %d of %d count %d\n", RES_LAST_ROW(*_res),
+			RES_NUM_ROWS(*_res), RES_ROW_N(*_res));
 
         if (pg_convert_rows(_con, *_res, RES_LAST_ROW(*_res), RES_ROW_N(*_res)) < 0) {
-                LOG(L_ERR, "PG[fetch_result]: Error while converting rows\n");
+                LM_ERR("failed to convert rows\n");
 		if (*_res) 
                 	pg_free_result(*_res);
         	*_res = 0;
@@ -571,7 +577,7 @@ static int free_query(db_con_t* _con)
 {
 	if(CON_RESULT(_con))
 	{
-		LOG(L_DBG, "PG[free_query]: PQclear(%p) result set\n", CON_RESULT(_con));
+		LM_DBG("PQclear(%p) result set\n", CON_RESULT(_con));
 		PQclear(CON_RESULT(_con));
 		CON_RESULT(_con) = 0;
 	}
@@ -650,7 +656,7 @@ static int begin_transaction(db_con_t * _con, char *_s)
 				** related to the parent process forking,
 				** or being forked.
 				*/
-				LOG(L_ERR,"PG[begin_transaction]: corrupt connection\n");
+				LM_ERR("corrupt connection\n");
 				CON_CONNECTED(_con) = 0;
 			}
 			else
@@ -659,14 +665,14 @@ static int begin_transaction(db_con_t * _con, char *_s)
 				** this is the normal way out.
 				** the transaction ran fine.
 				*/
-				LOG(L_DBG, "PG[begin_transaction]: %p PQclear(%p) result set\n", _con, mr);
+				LM_DBG("%p PQclear(%p) result set\n", _con, mr);
 				PQclear(mr);
 				return(0);
 			}
 		}
 		else
 		{
-			LOG(L_DBG, "PG[begin_transaction]: called before pg_init\n");
+			LM_DBG("called before pg_init\n");
 		}
 
 		/*
@@ -682,14 +688,14 @@ static int begin_transaction(db_con_t * _con, char *_s)
 			*/
 			char buf[SQL_BUF_LEN];
 			snprintf(buf, SQL_BUF_LEN, "no connection, FATAL %d!", rv);
-			LOG(L_DBG, "PG[begin_transaction]: %s\n", buf);
+			LM_DBG("%s\n", buf);
 			return(rv);
 		}
-		LOG(L_DBG, "PG[begin_transaction]: successfully reconnected\n");
+		LM_DBG("successfully reconnected\n");
 	}
 	else
 	{
-		LOG(L_DBG, "PG[begin_transaction]: must call pg_init first!\n");
+		LM_DBG("must call pg_init first!\n");
 		return(-1);
 	}
 
@@ -704,13 +710,13 @@ static int begin_transaction(db_con_t * _con, char *_s)
 		char buf[SQL_BUF_LEN];
 		snprintf(buf, SQL_BUF_LEN, "FATAL %s, '%s'!\n",
 			PQerrorMessage(CON_CONNECTION(_con)), _s);
-		LOG(L_DBG, "PG[begin_transaction]: %s\n", buf);
+		LM_DBG("%s\n", buf);
 		return(-1);
 	}
 
-	LOG(L_DBG, "PG[begin_transaction]: db channel reset successful\n");
+	LM_DBG("db channel reset successful\n");
 
-	LOG(L_DBG, "PG[begin_transaction]: %p PQclear(%p) result set\n", _con, mr);
+	LM_DBG("%p PQclear(%p) result set\n", _con, mr);
 	PQclear(mr);
 	return(0);
 }
@@ -733,10 +739,10 @@ static int commit_transaction(db_con_t * _con)
 	mr = PQexec(CON_CONNECTION(_con), "COMMIT");
 	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
 	{
-		LOG(L_ERR, "PG[commit_transaction]: error");
+		LM_ERR("error");
 		return -1;
 	}
-	LOG(L_DBG, "PG[commit_transaction]: %p PQclear(%p) result set\n", _con, mr);
+	LM_DBG("%p PQclear(%p) result set\n", _con, mr);
 	PQclear(mr);
 	return(0);
 }
@@ -759,10 +765,10 @@ static int rollback_transaction(db_con_t * _con)
 	mr = PQexec(CON_CONNECTION(_con), "ROLLBACK");
 	if(!mr || PQresultStatus(mr) != PGRES_COMMAND_OK)
 	{
-		LOG(L_ERR, "PG[rollback_transaction]: error");
+		LM_ERR("error");
 		return -1;
 	}
-	LOG(L_DBG, "PG[rollback_transaction]: %p PQclear(%p) result set\n", _con, mr);
+	LM_DBG("%p PQclear(%p) result set\n", _con, mr);
 	PQclear(mr);
 	return(0);
 }
@@ -806,12 +812,12 @@ int pg_query(db_con_t* _con, db_key_t* _k, db_op_t* _op,
 			" order by %s", _o);
 	}
 
-	LOG (L_DBG, "PG[pg_query]: %p %p %s\n", _con, _r, _s);
+	LM_DBG("%p %p %s\n", _con, _r, _s);
 
         if(_r) {
 		/* if(begin_transaction(_con, _s)) return(-1); */
 		if (submit_query(_con, _s) < 0) {
-			LOG(L_ERR, "PG[pg_query]: Error while submitting query\n");
+			LM_ERR("failed to submit query\n");
 			/* rollback_transaction(_con); */
 			return -2;
 		}
@@ -820,7 +826,7 @@ int pg_query(db_con_t* _con, db_key_t* _k, db_op_t* _op,
 		return(rv);
 	} else {
 		if (submit_query(_con, _s) < 0) {
-			LOG(L_ERR, "PG[pg_query]: Error while submitting query\n");
+			LM_ERR("failed to submit query\n");
 			return -2;
 		}
 	}
@@ -836,12 +842,12 @@ int pg_raw_query(db_con_t* _con, char* _s, db_res_t** _r)
 {
 	int rv;
 	
-	LOG (L_DBG, "PG[pg_raw_query]: %p %p %s\n", _con, _r, _s);
+	LM_DBG("%p %p %s\n", _con, _r, _s);
 
         if(_r) {
                 /* if(begin_transaction(_con, _s)) return(-1); */
                 if (submit_query(_con, _s) < 0) {
-                        LOG(L_ERR, "PG[pg_raw_query]: Error while submitting query\n");
+						LM_ERR("failed to submit query\n");
                         /* rollback_transaction(_con); */
                         return -2;
                 }
@@ -850,7 +856,7 @@ int pg_raw_query(db_con_t* _con, char* _s, db_res_t** _r)
                 return(rv);
         } else {
                 if (submit_query(_con, _s) < 0) {
-                        LOG(L_ERR, "PG[pg_raw_query]: Error while submitting query\n");
+						LM_ERR("failed to submit query\n");
                         return -2;
                 }
         }
@@ -901,7 +907,8 @@ int pg_get_result(db_con_t* _con, db_res_t** _r)
 
         pqresult = PQresultStatus(CON_RESULT(_con));
 	
-	LOG(L_DBG, "PG[get_result]: %p PQresultStatus(%s) PQgetResult(%p)\n", _con, PQresStatus(pqresult), CON_RESULT(_con));
+	LM_DBG("%p PQresultStatus(%s) PQgetResult(%p)\n", _con,
+			PQresStatus(pqresult), CON_RESULT(_con));
 
         switch(pqresult) {
                 case PGRES_COMMAND_OK:
@@ -911,7 +918,8 @@ int pg_get_result(db_con_t* _con, db_res_t** _r)
                 case PGRES_TUPLES_OK:
                         /* Successful completion of a command returning data (such as a SELECT or SHOW). */
                         if (pg_convert_result(_con, *_r) < 0) {
-                                LOG(L_ERR, "PG[get_result]: %p Error returned from convert_result()\n", _con);
+                                LM_ERR("%p Error returned from"
+										"convert_result()\n", _con);
        				if (*_r) pg_free_result(*_r);
         			*_r = 0;
                                 rc = -4;
@@ -924,10 +932,11 @@ int pg_get_result(db_con_t* _con, db_res_t** _r)
                 case PGRES_BAD_RESPONSE:
                 case PGRES_NONFATAL_ERROR:
                 case PGRES_FATAL_ERROR:
-        		LOG(L_WARN, "PG[get_result]: %p Warning: Probable invalid query\n", _con);
+        		LM_WARN("%p Probable invalid query\n", _con);
                 default:
-        		LOG(L_WARN, "PG[get_result]: %p Warning: %s\n", _con, PQresStatus(pqresult));
-        		LOG(L_WARN, "PG[get_result]: %p Warning: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
+        		LM_WARN("%p: %s\n", _con, PQresStatus(pqresult));
+        		LM_WARN("%p: %s\n", _con,
+						PQresultErrorMessage(CON_RESULT(_con)));
        			if (*_r) pg_free_result(*_r);
         		*_r = 0;
 			rc = (int)pqresult;
@@ -958,17 +967,17 @@ int pg_insert(db_con_t* _con, db_key_t* _k, db_val_t* _v, int _n)
 	*(_s + off++) = ')';
 	*(_s + off) = '\0';
 
-	LOG(L_DBG, "PG[insert]: %p %s\n", _con, _s);
+	LM_DBG("%p %s\n", _con, _s);
 
 	/* if(begin_transaction(_con, _s)) return(-1); */
 	if (submit_query(_con, _s) < 0) {
-		LOG(L_ERR, "PG[insert]: Error while inserting\n");
+		LM_ERR("failed to insert\n");
 		/* rollback_transaction(_con); */
 		return -2;
 	}
 	rv = pg_get_result(_con,&_r);	
 	if (rv != 0) {
-		LOG(L_WARN, "PG[insert]: Warning: %p Query: %s\n", _con, _s);
+		LM_WARN("%p Query: %s\n", _con, _s);
 	}
 	if (_r) 
 		pg_free_result(_r);
@@ -998,17 +1007,17 @@ int pg_delete(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 			_o, _v, _n, val2str);
 	}
 
-	LOG(L_DBG, "pg_delete: %p %s\n", _con, _s);
+	LM_DBG("%p %s\n", _con, _s);
 
 	/* if(begin_transaction(_con, _s)) return(-1); */
 	if (submit_query(_con, _s) < 0) {
-		LOG(L_ERR, "PG[delete]: Error while deleting\n");
+		LM_ERR("failed to delete\n");
 		/* rollback_transaction(_con); */
 		return -2;
 	}
 	rv = pg_get_result(_con,&_r);	
 	if (rv != 0) {
-		LOG(L_WARN, "PG[delete]: Warning: %p Query: %s\n", _con, _s);
+		LM_WARN("%p Query: %s\n", _con, _s);
 	}
 	if (_r) 
 		pg_free_result(_r);
@@ -1044,17 +1053,17 @@ int pg_update(db_con_t* _con, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		*(_s + off) = '\0';
 	}
 
-	LOG(L_DBG, "PG[update]: %p %s\n", _con, _s);
+	LM_DBG("%p %s\n", _con, _s);
 
 	/* if(begin_transaction(_con, _s)) return(-1); */
 	if (submit_query(_con, _s) < 0) {
-		LOG(L_ERR, "PG[update]: Error while updating\n");
+		LM_ERR("failed to update\n");
 		/* rollback_transaction(_con); */
 		return -2;
 	}
 	rv = pg_get_result(_con,&_r);	
 	if (rv != 0) {
-		LOG(L_WARN, "PG[update]: Warning: %p Query: %s\n", _con, _s);
+		LM_WARN("%p Query: %s\n", _con, _s);
 	}
 	if (_r) 
 		pg_free_result(_r);

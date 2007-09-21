@@ -42,7 +42,7 @@ int xr_writer_init( unsigned int size )
 
 	reply_buffer = pkg_malloc(size);
 	if(!reply_buffer){
-		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_writer_init: pkg_malloc cannot allocate any more memory!\n");
+		LM_ERR("pkg_malloc cannot allocate any more memory!\n");
 		return -1;
 	}
 	
@@ -108,7 +108,7 @@ static int recur_build_response_array( xmlrpc_env * env, struct mi_node * tree, 
 	for ( ; tree ; tree = tree->next ) {
 		
 		if ( xr_write_node( buf, tree ) != 0 ) {
-			LOG(L_ERR, "ERROR: mi_xmlrpc: recur_build_response: failed to get MI node data!\n");
+			LM_ERR("failed to get MI node data!\n");
 			return -1;
 		}	
 
@@ -136,7 +136,7 @@ int xr_build_response_array( xmlrpc_env * env, struct mi_root * tree )
 
 	/* test if mi root value is 200 OK (if not no point to continue) */
 	if ( tree->code<200 || tree->code>=300 ){
-		DBG("DEBUG: mi_xmlrpc: xr_build_response_array: Command processing failure: %s\n", tree->reason.s); 
+		LM_DBG("command processing failure: %s\n", tree->reason.s); 
 		if (tree->reason.s)
 			xmlrpc_env_set_fault(env, tree->code, tree->reason.s);
 		else
@@ -145,7 +145,7 @@ int xr_build_response_array( xmlrpc_env * env, struct mi_root * tree )
 	}
 	
 	if ( recur_build_response_array(env, (&tree->node)->kids, &buf) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_build_response_array: Failed to read from the MI tree!\n");
+		LM_ERR("failed to read from the MI tree!\n");
 		xmlrpc_env_set_fault(env, 500, "Failed to write reply");
 		goto error;
 	}
@@ -166,7 +166,7 @@ static int recur_build_response( xmlrpc_env * env, struct mi_node * tree, str * 
 			reply_buffer = (char*) pkg_realloc ( reply_buffer, 2*reply_buffer_len);
 
 			if ( !reply_buffer ){
-				LOG(L_ERR, "ERROR: mi_xmlrpc: recur_build_response: pkg_realloc cannot reallocate any more memory!\n");
+				LM_ERR("pkg_realloc cannot reallocate any more memory!\n");
 				return -1;
 			}
 
@@ -175,7 +175,7 @@ static int recur_build_response( xmlrpc_env * env, struct mi_node * tree, str * 
 			reply_buffer_len *=2 ;
 
 			if ( xr_write_node( buf, tree ) != 0 ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: recur_build_response: Failed to get MI node data!\n");
+				LM_ERR("failed to get MI node data!\n");
 				return -1;
 			}
 		}
@@ -197,8 +197,7 @@ char* xr_build_response( xmlrpc_env * env, struct mi_root * tree )
 	buf.len = reply_buffer_len;
 
 	if ( tree->code<200 || tree->code>=300 ){
-		DBG("DEBUG: mi_xmlrpc: xr_build_response: Command processing "
-			"failure: %s\n", tree->reason.s); 
+		LM_DBG("command processing failure: %s\n", tree->reason.s); 
 		if (tree->reason.s)
 			xmlrpc_env_set_fault(env, tree->code, tree->reason.s);
 		else
@@ -207,8 +206,7 @@ char* xr_build_response( xmlrpc_env * env, struct mi_root * tree )
 	}
 	
 	if ( recur_build_response(env, (&tree->node)->kids, &buf) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: xr_build_response: Failed to read "
-			"from the MI tree!\n");
+		LM_ERR("failed to read from the MI tree!\n");
 		xmlrpc_env_set_fault(env, 500, "Failed to build reply");
 		return 0;
 	}

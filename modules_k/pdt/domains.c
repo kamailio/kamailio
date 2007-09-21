@@ -54,14 +54,14 @@ pd_op_t* new_pd_op(pd_t *cell, int id, int op)
 	
 	if(cell==NULL)
 	{
-		LOG(L_ERR, "PDT:new_pd_op: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 	
 	pdo = (pd_op_t*)shm_malloc(sizeof(pd_op_t));
 	if(pdo==NULL)
 	{
-		LOG(L_ERR, "PDT:new_pd_op: no more shm\n");
+		LM_ERR("no more shm\n");
 		return NULL;
 	}
 	memset(pdo, 0, sizeof(pd_op_t));
@@ -89,7 +89,7 @@ pd_t* new_cell(str* p, str *d)
 	
 	if(p==NULL || p->s==NULL || d==NULL || d->s==NULL)
 	{
-		LOG(L_ERR, "PDT:new_cell: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 	
@@ -99,7 +99,7 @@ pd_t* new_cell(str* p, str *d)
 	/* if there is no space return just NULL */
 	if(cell==NULL)
 	{
-		LOG(L_ERR, "PDT:new_cell: no more shm memory.\n");
+		LM_ERR("no more shm memory.\n");
 		return NULL;
 	}
 	memset(cell, 0, sizeof(pd_t));
@@ -108,7 +108,7 @@ pd_t* new_cell(str* p, str *d)
 	if(cell->prefix.s==NULL)
 	{
 		shm_free(cell);
-		LOG(L_ERR, "PDT:new_cell: no more shm memory\n");
+		LM_ERR("no more shm memory\n");
 		return NULL;
 	}
 	strncpy(cell->prefix.s, p->s, p->len);
@@ -120,7 +120,7 @@ pd_t* new_cell(str* p, str *d)
 	{
 		shm_free(cell->prefix.s);
 		shm_free(cell);
-		LOG(L_ERR, "PDT:new_cell: no more shm memory!\n");
+		LM_ERR("no more shm memory!\n");
 		return NULL;
 	}
 	strncpy(cell->domain.s, d->s, d->len);
@@ -156,7 +156,7 @@ pd_t** init_hash_entries(unsigned int hash_size)
 	hash = (pd_t**)shm_malloc(hash_size*sizeof(pd_t*));
 	if(hash == NULL)
 	{
-		LOG(L_ERR, "PDT:init_hash: no more shm\n");
+		LM_ERR("no more shm\n");
 		return NULL;
 	}
 	memset(hash, 0, hash_size*sizeof(pd_t*));
@@ -194,7 +194,7 @@ hash_t* init_hash(int hash_size, str *sdomain)
 	
 	if(hash == NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_init_hash: no more shm\n");
+		LM_ERR("no more shm\n");
 		return NULL;
 	}
 	memset(hash, 0, sizeof(hash_t));
@@ -202,7 +202,7 @@ hash_t* init_hash(int hash_size, str *sdomain)
 	hash->sdomain.s = (char*)shm_malloc((sdomain->len+1)*sizeof(char));
 	if(hash->sdomain.s==NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_init_hash: no more shm\n");
+		LM_ERR("no more shm\n");
 		shm_free(hash);
 		return NULL;
 	}
@@ -214,7 +214,7 @@ hash_t* init_hash(int hash_size, str *sdomain)
 	{
 		shm_free(hash->sdomain.s);
 		shm_free(hash);
-		LOG(L_ERR, "PDT:pdt_init_hash: no more shm!\n");
+		LM_ERR("no more shm!\n");
 		return NULL;
 	}
 	
@@ -227,13 +227,13 @@ int set_hash_domain(hash_t *h, str *s)
 {
 	if(s==NULL || s->s==NULL || h==NULL)
 	{
-		LOG(L_ERR, "PDT:set_hash_domain(): wrong parameters\n");
+		LM_ERR("wrong parameters\n");
 		return -1;
 	}
 	h->sdomain.s = (char*)shm_malloc((s->len+1)*sizeof(char));
 	if( h->sdomain.s == NULL )
 	{
-		LOG(L_ERR, "PDT:set_hash_domain: no more shm!\n");
+		LM_ERR("no more shm!\n");
 		return -1;
 	}
 	memset(h->sdomain.s, 0, s->len+1);
@@ -279,7 +279,7 @@ hash_list_t* init_hash_list(int hs_two_pow)
 	hl = (hash_list_t*)shm_malloc(sizeof(hash_list_t));
 	if(hl == NULL)
 	{
-		LOG(L_ERR, "PDT: init_hash_list: no more shm\n");
+		LM_ERR("no more shm\n");
 		return NULL;
 	}
 	memset(hl, 0, sizeof(hash_list_t));
@@ -287,7 +287,7 @@ hash_list_t* init_hash_list(int hs_two_pow)
 	if(lock_init(&hl->hl_lock) == 0)
 	{
 		shm_free(hl);
-		LOG(L_ERR, "PDT:init_hash_list: cannot init the hl_lock\n");
+		LM_ERR("cannot init the hl_lock\n");
 		return NULL;
 	}
 	hl->hash_size = hash_size;
@@ -316,7 +316,7 @@ int add_to_hash(hash_t *hash, str *sp, str *sd)
 	if(hash==NULL || sp==NULL || sp->s==NULL
 			|| sd==NULL || sd->s==NULL)
 	{
-		LOG(L_ERR, "PDT: add_to_hash: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
@@ -361,7 +361,7 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 			|| sp==NULL || sp->s==NULL
 			|| sd==NULL || sd->s==NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_add_to_hash: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	lock_get(&hl->hl_lock);
@@ -382,13 +382,13 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 		ph = init_hash(hl->hash_size, sdomain);
 		if(ph==NULL)
 		{
-			LOG(L_ERR, "PDT: pdt_add_to_hash: null pointer returned\n");
+			LM_ERR("null pointer returned\n");
 			goto error1;
 		}
 		
 		if(add_to_hash(ph, sp, sd)<0)
 		{
-			LOG(L_ERR, "PDT: pdt_add_to_hash: could not add to hash\n");
+			LM_ERR("could not add to hash\n");
 			goto error;
 		}
 
@@ -405,7 +405,7 @@ int pdt_add_to_hash(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 		 */
 		if(add_to_hash(it, sp, sd)<0)
 		{
-			LOG(L_ERR, "PDT: pdt_add_to_hash: could not add to hash\n");
+			LM_ERR("could not add to hash\n");
 			goto error1;
 		}
 	}
@@ -427,7 +427,7 @@ hash_t* pdt_search_hash(hash_list_t* hl, str *sd)
 
 	if(sd==NULL || sd->s==NULL || hl==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_search_hash: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 	
@@ -461,7 +461,7 @@ int remove_from_hash(hash_t *hash, str *sd)
 
 	if(hash==NULL || sd==NULL || sd->s==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_remove_from_hash: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1; /* error */
 	}
 	
@@ -517,7 +517,7 @@ int pdt_remove_from_hash_list(hash_list_t *hl, str* sdomain, str *sd)
 			sd==NULL || sd->s==NULL ||
 			sdomain==NULL || sdomain->s==NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_remove_from_hash: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1; /* wrong parameters, error */
 	}
 
@@ -548,7 +548,7 @@ int pdt_remove_hash_from_hash_list(hash_list_t *hl, str* sdomain)
 	if(hl==NULL ||
 			sdomain==NULL || sdomain->s==NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_remove_from_hash: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
@@ -597,7 +597,7 @@ str* get_prefix(hash_t *ph, str* sd)
 	
 	if(ph==NULL || ph->dhash==NULL || ph->hash_size>MAX_HASH_SIZE)
 	{
-		LOG(L_ERR, "PDT:pdt_get_prefix: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 
@@ -625,7 +625,7 @@ str* pdt_get_prefix(hash_list_t *hl, str*sdomain, str* sd)
 			sd==NULL || sd->s==NULL ||
 			sdomain==NULL || sdomain->s==NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_get_prefix: bad parameters\n");
+		LM_ERR(" bad parameters\n");
 		return NULL;
 	}
 
@@ -649,7 +649,7 @@ int check_pd(hash_t *ph, str *sp, str *sd)
 	
 	if(ph==NULL || sp==NULL || sd==NULL)
 	{
-		LOG(L_ERR, "PDT:check_pd: bad parameters\n");
+		LM_ERR(" bad parameters\n");
 		return -1;
 	}
 	dhash = pdt_compute_hash(sd);
@@ -686,7 +686,7 @@ int pdt_check_pd(hash_list_t *hl, str* sdomain, str *sp, str *sd)
 			sd==NULL || sd->s==NULL ||
 			sdomain==NULL || sdomain->s==NULL)
 	{
-		LOG(L_ERR, "PDT: pdt_check_pd: bad parameters\n");
+		LM_ERR(" bad parameters\n");
 		return -1;
 	}
 	
@@ -717,7 +717,7 @@ void pdt_print_hash_list(hash_list_t* hl)
 	
 	if(hl==NULL)
 	{	
-		DBG("pdt_print_hash_list: hash list is empty\n");
+		LM_DBG("hash list is empty\n");
 		return;
 	}
 	
@@ -725,21 +725,22 @@ void pdt_print_hash_list(hash_list_t* hl)
 	lock_get(&hl->hl_lock);
 	while(hash!=NULL)
 	{
-		DBG("PDT: print_hash: SDOMAIN=%.*s\n", 
-				hash->sdomain.len, hash->sdomain.s);
+		LM_DBG("SDOMAIN=%.*s\n", hash->sdomain.len, hash->sdomain.s);
 		for(i=0; i<hash->hash_size; i++)
 		{
 			it = hash->dhash[i];
-			DBG(" PDT:print_hash: entry<%d>:\n", i);
+			LM_DBG("entry<%d>:\n", i);
 			count = 0;
 			while(it!=NULL)
 			{
-				DBG("  PDT:print_hash: |Domain: %.*s |Code: %.*s | DHash:%u \n", it->domain.len, it->domain.s, it->prefix.len, it->prefix.s, it->dhash);
+				LM_DBG("|Domain: %.*s |Code: %.*s | DHash:%u \n", 
+						it->domain.len, it->domain.s, it->prefix.len, 
+						it->prefix.s, it->dhash);
 				it = it->n;
 				count++;
 			}
 
-			DBG(" PDT:print_hash: ---- hash entry has %d records\n\n", count);
+			LM_DBG("---- hash entry has %d records\n\n", count);
 		
 		}
 		hash = hash->next;

@@ -56,12 +56,12 @@ static inline int get_uri_user(struct sip_msg* _m, str** _uri_user)
     if ((REQ_LINE(_m).method.len == 8) && 
 	(memcmp(REQ_LINE(_m).method.s, "REGISTER", 8) == 0)) {
 	if ((puri=parse_to_uri(_m))==NULL) {
-	    LOG(L_ERR, "get_uri_user(): Error while parsing To header\n");
+	    LM_ERR("failed to parse To header\n");
 	    return -1;
 	}
     } else {
 	if ((puri=parse_from_uri(_m))==NULL) {
-	    LOG(L_ERR, "get_uri_user(): Error while parsing From header\n");
+	    LM_ERR("parsing From header\n");
 	    return -1;
 	}
     }
@@ -89,7 +89,7 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
     /* get pre_auth domain from _realm pvar (if exists) */
     if (_realm) {
 	if (pv_printf_s(_msg, _realm, &domain)!=0) {
-	    LOG(L_ERR,"ERROR:auth_radius:authorize: pv_printf_s failed\n");
+	    LM_ERR("pv_printf_s failed\n");
 	    return AUTH_ERROR;
 	}
     } else {
@@ -114,23 +114,21 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
 					       &_msg->first_line.u.request.method,
 					       &pv_val.rs);
 	    } else {
-		LOG(L_ERR, "ERROR:auth_radius:authorize: "
-		    "uri_user pvar value is not string\n");
+		LM_ERR("uri_user pvar value is not string\n");
 		return AUTH_ERROR;
 	    }
 	} else {
-	    LOG(L_ERR, "ERROR:auth_radius:authorize: "
-		"cannot get uri_user pvar value\n");
+	    LM_ERR("cannot get uri_user pvar value\n");
 	    return AUTH_ERROR;
 	}
     } else {
 	if (get_uri_user(_msg, &uri_user) < 0) {
-	    LOG(L_ERR, "authorize(): To/From URI not found\n");
+	    LM_ERR("To/From URI not found\n");
 	    return AUTH_ERROR;
 	}
 	user.s = (char *)pkg_malloc(uri_user->len);
 	if (user.s == NULL) {
-	    LOG(L_ERR, "authorize: No memory left for user\n");
+	    LM_ERR("no pkg memory left for user\n");
 	    return AUTH_ERROR;
 	}
 	un_escape(uri_user, &user);

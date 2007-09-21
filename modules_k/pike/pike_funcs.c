@@ -85,9 +85,8 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		return 1;
 	}
 
-	DBG("DEBUG:pike_check_req: src IP [%s],node=%p; hits=[%d,%d],[%d,%d] "
-		"node_flags=%d func_flags=%d\n",
-		ip_addr2a( ip ), node,
+	LM_DBG("src IP [%s],node=%p; hits=[%d,%d],[%d,%d] node_flags=%d"
+		" func_flags=%d\n", ip_addr2a( ip ), node,
 		node->hits[PREV_POS],node->hits[CURR_POS],
 		node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS],
 		node->flags, flags);
@@ -101,7 +100,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 		append_to_timer( timer, &(node->timer_ll) );
 		node->flags |= NODE_INTIMER_FLAG;
 		if (father) {
-			DBG("DEBUG:pike_check_req: father %p: flags=%d kids->next=%p\n",
+			LM_DBG("father %p: flags=%d kids->next=%p\n",
 				father,father->flags,father->kids->next);
 			if (!(father->flags&NODE_IPLEAF_FLAG) && !father->kids->next){
 				/* debug */
@@ -147,8 +146,7 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	/*print_tree( 0 );*/ /* debug */
 
 	if (flags&RED_NODE) {
-		LOG(L_WARN,"DEBUG:pike_check_req: ALARM - TOO MANY HITS on "
-			"%s !!\n", ip_addr2a( ip ) );
+		LM_WARN("too many hits on %s !!\n", ip_addr2a( ip ) );
 		return -1;
 	}
 	return 1;
@@ -165,7 +163,7 @@ void clean_routine(unsigned int ticks , void *param)
 	struct ip_node   *node;
 	int i;
 
-	/* DBG("DEBUG:pike:clean_routine:  entering (%d)\n",ticks); */
+	/* LM_DBG("entering (%d)\n",ticks); */
 	/* before locking check first if the list is not empty and if can
 	 * be at least one element removed */
 	if ( is_list_empty( timer )) return; /* quick exit */
@@ -212,8 +210,8 @@ void clean_routine(unsigned int ticks , void *param)
 				continue;
 
 			/* process the node */
-			DBG("DEBUG:pike:clean_routine: clean node %p (kids=%p;"
-				"hits=[%d,%d];leaf=[%d,%d])\n", node,node->kids,
+			LM_DBG("clean node %p (kids=%p; hits=[%d,%d];leaf=[%d,%d])\n", 
+				node,node->kids,
 				node->hits[PREV_POS],node->hits[CURR_POS],
 				node->leaf_hits[PREV_POS],node->leaf_hits[CURR_POS]);
 			/* if it's a node, leaf for an ipv4 address inside an
@@ -246,8 +244,7 @@ void clean_routine(unsigned int ticks , void *param)
 						}
 					}
 				}
-				DBG("DEBUG:pike:clean_routine: rmv node %p[%d] \n",
-					node,node->byte);
+				LM_DBG("rmv node %p[%d] \n", node,node->byte);
 				/* del the node */
 				remove_node( node);
 			}
@@ -279,7 +276,7 @@ void swap_routine( unsigned int ticks, void *param)
 	struct ip_node *node;
 	int i;
 
-	/* DBG("DEBUG:pike:swap_routine:  entering \n"); */
+	/* LM_DBG("entering \n"); */
 	for(i=0;i<MAX_IP_BRANCHES;i++) {
 		node = get_tree_branch(i);
 		if (node) {

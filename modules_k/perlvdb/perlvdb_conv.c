@@ -249,7 +249,7 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 	/* Memory allocation for C side result structure */
 	*r = (db_res_t *)pkg_malloc(sizeof(db_res_t));
 	if (!(*r)) {
-		LOG(L_ERR, "new_result: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	memset(*r, 0, sizeof(db_res_t));
@@ -387,8 +387,7 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 						cur_val.nul = 0;
 						break;
 					default:
-						LOG(L_CRIT,
-							"perlvdb: cannot handle"							" this data type.\n");
+						LM_CRIT("cannot handle this data type.\n");
 						return -1;
 						break;
 				}
@@ -403,8 +402,7 @@ end:
 	av_undef(rowarray);
 	return retval;
 error:
-	LOG(L_CRIT, "perlvdb: Broken result set."
-			" Exiting, leaving OpenSER in unknown state.\n");
+	LM_CRIT("broken result set. Exiting, leaving OpenSER in unknown state.\n");
 	return -1;
 }
 

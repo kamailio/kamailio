@@ -60,15 +60,13 @@ unsigned long long ospGetTransactionId(
     unsigned long long id = 0;
     int errorcode = 0;
 
-    LOG(L_DBG, "osp: ospGetTransactionId\n");
-
     context = OSPPTransactionGetContext(transaction, &errorcode);
 
     if (errorcode == 0) {
         id = (unsigned long long)context->TransactionID;
     } else {
-        LOG(L_ERR, 
-            "osp: ERROR: failed to extract transaction_id from transaction handle %d (%d)\n",
+        LM_ERR("failed to extract transaction_id from transaction "
+			"handle %d (%d)\n",
             transaction,
             errorcode);
     }
@@ -106,8 +104,7 @@ void ospReportUsageWrapper(
     OSPTTHRATTR threadattr;
     int errorcode;
 
-    LOG(L_DBG, "osp: ospReportUsageWrapper\n");
-    LOG(L_DBG, "osp: schedule usage report for '%lld'\n", ospGetTransactionId(ospvTransaction));
+    LM_DBG("schedule usage report for '%lld'\n", ospGetTransactionId(ospvTransaction));
 
     usage = (osp_usage*)malloc(sizeof(osp_usage));
 
@@ -144,8 +141,6 @@ static OSPTTHREADRETURN ospReportUsageWork(
     osp_usage* usage;
     int errorcode;
 
-    LOG(L_DBG, "osp: ospReportUsageWork\n");
-
     usage = (osp_usage*)usagearg;
 
     OSPPTransactionRecordFailure(
@@ -166,13 +161,12 @@ static OSPTTHREADRETURN ospReportUsageWork(
             (unsigned char*)"", 0, 0, 0, 0, NULL, NULL);
 
         if (errorcode == 0) {
-            LOG(L_DBG, 
-                "osp: reporte usage for '%lld'\n", 
+            LM_DBG("reporte usage for '%lld'\n", 
                 ospGetTransactionId(usage->ospvTransaction));
             break;
         } else {
-            LOG(L_ERR, 
-                "osp: ERROR: failed to report usage for '%lld' (%d) attempt '%d' of '%d'\n",
+            LM_ERR("failed to report usage for '%lld' (%d) attempt '%d'"
+				"of '%d'\n",
                 ospGetTransactionId(usage->ospvTransaction), 
                 errorcode,
                 i,

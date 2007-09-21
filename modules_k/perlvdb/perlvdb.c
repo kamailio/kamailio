@@ -80,8 +80,7 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	if (!module_loaded("perl")) {
-		LOG(L_CRIT,
-			"perlvdb:mod_init: perl module not loaded. Exiting.\n");
+		LM_CRIT("perl module not loaded. Exiting.\n");
 		return -1;
 	}
 

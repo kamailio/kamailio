@@ -150,7 +150,7 @@ int m_extract_content_type(char* src, int len, content_type_t* ctype, int flag)
 					 && *p!=';' && *p!='\r' && *p!='\n')
 				p++;
 			
-			DBG("MSILO:m_extract_content_type: content-type found\n");
+			LM_DBG("content-type found\n");
 			f |= CT_TYPE;
 			ctype->type.len = p - ctype->type.s;
 			if(f == flag) {
@@ -180,7 +180,7 @@ done:
 	else
 		return -1;
 error:
-	DBG("MSILO:m_extract_content_type: error\n");
+	LM_DBG("error\n");
 	return -1;
 }
 
@@ -292,7 +292,7 @@ int ms_extract_time(str *time_str, int *time_val)
 	if(time_str==NULL || time_str->s==NULL  
 			|| time_str->len<=0 || time_val==NULL)
 	{
-		LOG(L_ERR, "MSILO:m_extract_time: error - bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
@@ -301,8 +301,7 @@ int ms_extract_time(str *time_str, int *time_val)
 	{
 		if(time_str->s[i]<'0' || time_str->s[i]>'9')
 		{
-			LOG(L_ERR, "MSILO:m_extract_time: error - bad time [%.*s]\n",
-					time_str->len, time_str->s);
+			LM_ERR("bad time [%.*s]\n", time_str->len, time_str->s);
 			return -1;
 		}
 		switch(i)
@@ -310,8 +309,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 0:
 				if(time_str->s[i]<'2')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad year in time [%.*s]\n",
+					LM_ERR("bad year in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -329,8 +327,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 4:
 				if(time_str->s[i]>'1')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad month in time[%.*s]\n",
+					LM_ERR("bad month in time[%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -340,8 +337,7 @@ int ms_extract_time(str *time_str, int *time_val)
 				if((time_str->s[i-1]=='0' && time_str->s[i]=='0')
 						|| (time_str->s[i-1]=='1' && time_str->s[i]>'2'))
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad month in time[%.*s]\n",
+					LM_ERR("bad month in time[%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -350,8 +346,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 6:
 				if(time_str->s[i]>'3')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad day in time [%.*s]\n",
+					LM_ERR("bad day in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -361,8 +356,7 @@ int ms_extract_time(str *time_str, int *time_val)
 				if((time_str->s[i-1]=='0' && time_str->s[i]=='0')
 						|| (time_str->s[i-1]=='3' && time_str->s[i]>'1'))
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad day in time [%.*s]\n",
+					LM_ERR("bad day in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -371,8 +365,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 8:
 				if(time_str->s[i]>'2')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad hour in time [%.*s]\n",
+					LM_ERR("bad hour in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -381,8 +374,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 9:
 				if(time_str->s[i-1]=='2' && time_str->s[i]>'3')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad hour in time [%.*s]\n",
+					LM_ERR("bad hour in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -391,8 +383,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 10:
 				if(time_str->s[i]>'5')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad min in time [%.*s]\n",
+					LM_ERR("bad min in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -404,8 +395,7 @@ int ms_extract_time(str *time_str, int *time_val)
 			case 12:
 				if(time_str->s[i]>'5')
 				{
-					LOG(L_ERR,
-						"MSILO:m_extract_time:error: bad sec in time [%.*s]\n",
+					LM_ERR("bad sec in time [%.*s]\n",
 							time_str->len, time_str->s);
 					return -1;
 				}
@@ -415,8 +405,7 @@ int ms_extract_time(str *time_str, int *time_val)
 				stm.tm_sec += (time_str->s[i]-'0');
 			break;
 			default:
-				LOG(L_ERR,
-					"MSILO:m_extract_time:error: time spec too long [%.*s]\n",
+				LM_ERR("time spec too long [%.*s]\n",
 						time_str->len, time_str->s);
 				return -1;
 		}

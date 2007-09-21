@@ -81,15 +81,13 @@ int reload_address_table(void)
     cols[3] = port_col;
 
     if (perm_dbf.use_table(db_handle, address_table) < 0) {
-	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
-	    " Error while trying to use address table\n");
-	return -1;
+	    LM_ERR("failed to use table\n");
+		return -1;
     }
     
     if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
-	LOG(L_ERR, "ERROR: permissions: reload_address_table():"
-	    " Error while querying database\n");
-	return -1;
+	    LM_ERR("failed to query database\n");
+		return -1;
     }
 
     /* Choose new hash table and free its old contents */
@@ -112,7 +110,7 @@ int reload_address_table(void)
 
     row = RES_ROWS(res);
 
-    DBG("Number of rows in address table: %d\n", RES_ROW_N(res));
+    LM_DBG("Number of rows in address table: %d\n", RES_ROW_N(res));
 		
     for (i = 0; i < RES_ROW_N(res); i++) {
 	val = ROW_VALUES(row + i);
@@ -130,12 +128,11 @@ int reload_address_table(void)
 					   (unsigned int)ip_addr.s_addr,
 					   (unsigned int)VAL_INT(val + 3))
 		    == -1) {
-		    LOG(L_ERR, "ERROR: permissions: "
-			"address_reload(): Hash table problem\n");
+		    LM_ERR("hash table problem\n");
 		    perm_dbf.free_result(db_handle, res);
 		    return -1;
 		}
-		DBG("Tuple <%u, %s, %u> inserted into address hash "
+		LM_DBG("Tuple <%u, %s, %u> inserted into address hash "
 		    "table\n", (unsigned int)VAL_INT(val),
 		    (char *)VAL_STRING(val + 1),
 		    (unsigned int)VAL_INT(val + 2));
@@ -146,20 +143,18 @@ int reload_address_table(void)
 					(unsigned int)VAL_INT(val + 2),
 					(unsigned int)VAL_INT(val + 3))
 		    == -1) {
-		    LOG(L_ERR, "ERROR: permissions: "
-			"address_reload(): subnet table problem\n");
+		    LM_ERR("subnet table problem\n");
 		    perm_dbf.free_result(db_handle, res);
 		    return -1;
 		}
-		DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
+		LM_DBG("Tuple <%u, %s, %u, %u> inserted into subnet "
 		    "table\n", (unsigned int)VAL_INT(val),
 		    (char *)VAL_STRING(val + 1),
 		    (unsigned int)VAL_INT(val + 2),
 		    (unsigned int)VAL_INT(val + 3));
 	    }
 	} else {
-	    LOG(L_ERR, "ERROR: permissions: address_reload():"
-		" Database problem\n");
+	    LM_ERR("database problem\n");
 	    perm_dbf.free_result(db_handle, res);
 	    return -1;
 	}
@@ -170,7 +165,7 @@ int reload_address_table(void)
     *addr_hash_table = new_hash_table;
     *subnet_table = new_subnet_table;
 
-    DBG("Address table reloaded successfully.\n");
+    LM_DBG("address table reloaded successfully.\n");
 	
     return 1;
 }
@@ -185,19 +180,17 @@ int init_addresses(void)
     str name;
 
     if (!db_url) {
-	LOG(L_INFO, "db_url parameter of permissions module not set, "
+	LM_INFO("db_url parameter of permissions module not set, "
 	    "disabling allow_addr\n");
 	return 0;
     } else {
 	if (bind_dbmod(db_url, &perm_dbf) < 0) {
-	    LOG(L_ERR, "ERROR: permissions: init_addresses: "
-		"load a database support module\n");
+	    LM_ERR("load a database support module\n");
 	    return -1;
 	}
 
 	if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
-	    LOG(L_ERR, "ERROR: permissions: init_addresses: "
-		"Database module does not implement 'query' function\n");
+	    LM_ERR("database module does not implement 'query' function\n");
 	    return -1;
 	}
     }
@@ -207,9 +200,8 @@ int init_addresses(void)
 
     db_handle = perm_dbf.init(db_url);
     if (!db_handle) {
-	LOG(L_ERR, "ERROR: permissions: init_addresses():"
-	    " Unable to connect database\n");
-	return -1;
+		LM_ERR("unable to connect database\n");
+		return -1;
     }
 
     name.s = address_table;
@@ -217,14 +209,11 @@ int init_addresses(void)
     ver = table_version(&perm_dbf, db_handle, &name);
 
     if (ver < 0) {
-	LOG(L_ERR, "permissions:init_addresses(): Error while querying "
-	    "table version\n");
+	LM_ERR("failed to query table version\n");
 	perm_dbf.close(db_handle);
 	return -1;
     } else if (ver < TABLE_VERSION) {
-	LOG(L_ERR, "permissions:init_addresses(): "
-	    "Invalid table version %d "
-	    "- expected %d\n", ver,TABLE_VERSION);
+	    LM_ERR("invalid table version %d - expected %d\n", ver,TABLE_VERSION);
 	perm_dbf.close(db_handle);
 	return -1;
     }
@@ -253,8 +242,7 @@ int init_addresses(void)
     *subnet_table = subnet_table_1;
 
     if (reload_address_table() == -1) {
-	LOG(L_CRIT, "permissions:init_addresses(): "
-	    "Reload of address table failed\n");
+	LM_CRIT("reload of address table failed\n");
 	goto error;
     }
 
@@ -264,6 +252,7 @@ int init_addresses(void)
     return 0;
 
 error:
+	LM_ERR("no more shm memory\n");
     if (addr_hash_table_1) {
 	free_addr_hash_table(addr_hash_table_1);
 	addr_hash_table_1 = 0;
@@ -303,8 +292,7 @@ int mi_init_addresses(void)
     if (!db_url || db_handle) return 0;
     db_handle = perm_dbf.init(db_url);
     if (!db_handle) {
-	LOG(L_ERR, "ERROR: permissions: init_mi_addresses():"
-	    " Unable to connect database\n");
+	LM_ERR("unable to connect database\n");
 	return -1;
     }
     return 0;
@@ -341,25 +329,22 @@ int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2)
 		addr_group = pv_val.ri;
 	    } else if (pv_val.flags & PV_VAL_STR) {
 		if (str2int(&(pv_val.rs), &addr_group) == -1) {
-		    LOG(L_ERR, "set_address_group(): Error while "
-			"converting group string to int\n");
+			LM_ERR("failed to convert group string to int\n");
 		    return -1;
 		}
 	    } else {
-		LOG(L_ERR, "set_address_group(): Error while converting "
-		    "group string to int\n");
+		LM_ERR("failed to convert group string to int\n");
 		return -1;
 	    }
 	} else {
-	    LOG(L_ERR, "set_address_group(): cannot get pseudo variable "
-		"value\n");
+	    LM_ERR("cannot get pseudo variable value\n");
 	    return -1;
 	}
     } else {
 	addr_group = i_or_p->i;
     }
 
-    DBG("Set addr_group to <%u>\n", addr_group);
+    LM_DBG("set addr_group to <%u>\n", addr_group);
 
     return 1;
 }
@@ -387,19 +372,17 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 	    addr = pv_val.ri;
 	} else if (pv_val.flags & PV_VAL_STR) {
 	    if (inet_aton(pv_val.rs.s, &addr_struct) == 0) {
-		LOG(L_ERR, "allow_address(): Error while converting "
-		    "IP address string to in_addr\n");
+		LM_ERR("failed to convert IP address string to in_addr\n");
 		return -1;
 	    } else {
 		addr = addr_struct.s_addr;
 	    }
 	} else {
-	    LOG(L_ERR, "allow_address(): Error while converting "
-		"IP address string to in_addr\n");
+	    LM_ERR("failed to convert IP address string to in_addr\n");
 	    return -1;
 	}
     } else {
-	LOG(L_ERR, "allow_address(): cannot get pseudo variable value\n");
+	LM_ERR("cannot get pseudo variable value\n");
 	return -1;
     }
 
@@ -408,17 +391,15 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 	    port = pv_val.ri;
 	} else if (pv_val.flags & PV_VAL_STR) {
 	    if (str2int(&(pv_val.rs), &port) == -1) {
-		LOG(L_ERR, "allow_address(): Error while converting "
-		    "port string to int\n");
+		LM_ERR("failed to convert port string to int\n");
 		return -1;
 	    }
 	} else {
-	    LOG(L_ERR, "allow_address(): Error while converting "
-		"port string to int\n");
+	    LM_ERR("failed to convert port string to int\n");
 	    return -1;
 	}
     } else {
-	LOG(L_ERR, "allow_address(): cannot get pseudo variable value\n");
+	LM_ERR("cannot get pseudo variable value\n");
 	return -1;
     }
 
@@ -448,25 +429,22 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
 		group = pv_val.ri;
 	    } else if (pv_val.flags & PV_VAL_STR) {
 		if (str2int(&(pv_val.rs), &group) == -1) {
-		    LOG(L_ERR, "allow_source_address(): Error while "
-			"converting group string to int\n");
+		    LM_ERR("failed to convert converting group string to int\n");
 		    return -1;
 		}
 	    } else {
-		LOG(L_ERR, "allow_source_address(): Error while converting "
-		    "group string to int\n");
+		LM_ERR("failed to convert group string to int\n");
 		return -1;
 	    }
 	} else {
-	    LOG(L_ERR, "allow_source_address(): cannot get pseudo variable "
-		"value\n");
+	    LM_ERR("cannot get pseudo variable value\n");
 	    return -1;
 	}
     } else {
 	group = i_or_p->i;
     }
 
-    DBG("allow_source_address(): looking for <%u, %x, %u>\n",
+    LM_DBG("looking for <%u, %x, %u>\n",
 	group, _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 
     if (match_addr_hash_table(*addr_hash_table, group,

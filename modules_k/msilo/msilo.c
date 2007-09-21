@@ -256,17 +256,17 @@ static int mod_init(void)
 	str _s;
 	int ver = 0;
 
-	DBG("MSILO: initializing ...\n");
+	LM_DBG("initializing ...\n");
 
 	/* binding to mysql module  */
 	if (bind_dbmod(ms_db_url, &msilo_dbf))
 	{
-		DBG("MSILO: ERROR: Database module not found\n");
+		LM_DBG("database module not found\n");
 		return -1;
 	}
 
 	if (!DB_CAPABILITY(msilo_dbf, DB_CAP_ALL)) {
-		LOG(L_ERR, "MSILO: ERROR: Database module does not implement "
+		LM_ERR("database module does not implement "
 		    "all functions needed by the module\n");
 		return -1;
 	}
@@ -275,16 +275,15 @@ static int mod_init(void)
 		_s.s = ms_snd_time_avp_param; _s.len = strlen(_s.s);
 		if (pv_parse_spec(&_s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:MSILO:mod_init: malformed or non AVP %s "
-				"AVP definition\n", ms_snd_time_avp_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n",
+					ms_snd_time_avp_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &ms_snd_time_avp_name,
 					&ms_snd_time_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:MSILO:mod_init: [%s]- invalid "
-				"AVP definition\n", ms_snd_time_avp_param);
+			LM_ERR("[%s]- invalid AVP definition\n", ms_snd_time_avp_param);
 			return -1;
 		}
 	} else {
@@ -295,7 +294,7 @@ static int mod_init(void)
 	db_con = msilo_dbf.init(ms_db_url);
 	if (!db_con)
 	{
-		LOG(L_ERR,"MSILO:mod_init: Error while connecting database\n");
+		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
 	_s.s = ms_db_table;
@@ -303,7 +302,7 @@ static int mod_init(void)
 	ver =  table_version(&msilo_dbf, db_con, &_s);
 	if(ver!=S_TABLE_VERSION)
 	{
-		LOG(L_ERR,"MSILO:mod_init: Wrong version v%d for table <%s>,"
+		LM_ERR("wrong version v%d for table <%s>,"
 				" need v%d\n", ver, ms_db_table, S_TABLE_VERSION);
 		return -1;
 	}
@@ -313,19 +312,19 @@ static int mod_init(void)
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR:msilo:mod_init: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		return -1;
 	}
 
 	ml = msg_list_init();
 	if(ml==NULL)
 	{
-		DBG("ERROR: msilo: mod_init: can't initialize msg list\n");
+		LM_ERR("can't initialize msg list\n");
 		return -1;
 	}
 	if(ms_check_time<0)
 	{
-		DBG("ERROR: msilo: mod_init: bad check time value\n");
+		LM_ERR("bad check time value\n");
 		return -1;
 	}
 	register_timer(m_clean_silo, 0, ms_check_time);
@@ -345,26 +344,26 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	DBG("MSILO: init_child #%d / pid <%d>\n", rank, getpid());
+	LM_DBG("rank #%d / pid <%d>\n", rank, getpid());
 	if (msilo_dbf.init==0)
 	{
-		LOG(L_CRIT, "BUG: msilo: child_init: database not bound\n");
+		LM_CRIT("database not bound\n");
 		return -1;
 	}
 	db_con = msilo_dbf.init(ms_db_url);
 	if (!db_con)
 	{
-		LOG(L_ERR,"MSILO: child %d: Error while connecting database\n", rank);
+		LM_ERR("child %d: failed to connect database\n", rank);
 		return -1;
 	}
 	else
 	{
 		if (msilo_dbf.use_table(db_con, ms_db_table) < 0) {
-			LOG(L_ERR, "MSILO: child %d: Error in use_table\n", rank);
+			LM_ERR("child %d: failed in use_table\n", rank);
 			return -1;
 		}
 		
-		DBG("MSILO: child %d: Database connection opened successfully\n", rank);
+		LM_DBG("#%d database connection opened successfully\n", rank);
 	}
 	return 0;
 }
@@ -397,20 +396,20 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	int_str        avp_value;
 	struct usr_avp *avp;
 
-	DBG("MSILO: m_store: ------------ start ------------\n");
+	LM_DBG("------------ start ------------\n");
 
 	/* get message body - after that whole SIP MESSAGE is parsed */
 	body.s = get_body( msg );
 	if (body.s==0) 
 	{
-		LOG(L_ERR,"MSILO:m_store: ERROR cannot extract body from msg\n");
+		LM_ERR("cannot extract body from msg\n");
 		goto error;
 	}
 	
 	/* content-length (if present) must be already parsed */
 	if (!msg->content_length) 
 	{
-		LOG(L_ERR,"MSILO:m_store: ERROR no Content-Length header found!\n");
+		LM_ERR("no Content-Length header found!\n");
 		goto error;
 	}
 	body.len = get_content_length( msg );
@@ -418,37 +417,36 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	/* check if the body of message contains something */
 	if(body.len <= 0)
 	{
-		DBG("MSILO:m_store: body of the message is empty!\n");
+		LM_ERR("body of the message is empty!\n");
 		goto error;
 	}
 	
 	/* get TO URI */
 	if(!msg->to || !msg->to->body.s)
 	{
-	    DBG("MSILO:m_store: cannot find 'to' header!\n");
+	    LM_ERR("cannot find 'to' header!\n");
 	    goto error;
 	}
 	
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		DBG("MSILO:m_store: 'To' header ALREADY PARSED: <%.*s>\n",
+		LM_DBG("the 'To' header ALREADY PARSED: <%.*s>\n",
 			pto->uri.len, pto->uri.s );	
 	}
 	else
 	{
-		DBG("MSILO:m_store: 'To' header NOT PARSED ->parsing ...\n");
+		LM_DBG("the 'To' header NOT PARSED ->parsing ...\n");
 		memset( &to , 0, sizeof(to) );
 		parse_to(msg->to->body.s, msg->to->body.s+msg->to->body.len+1, &to);
 		if(to.uri.len > 0) /* && to.error == PARSE_OK) */
 		{
-			DBG("MSILO:m_store: 'To' parsed OK <%.*s>.\n", 
-				to.uri.len, to.uri.s);
+			LM_DBG("'To' parsed OK <%.*s>.\n", to.uri.len, to.uri.s);
 			pto = &to;
 		}
 		else
 		{
-			DBG("MSILO:m_store: ERROR 'To' cannot be parsed\n");
+			LM_ERR("'To' cannot be parsed\n");
 			goto error;
 		}
 	}
@@ -456,7 +454,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	if(pto->uri.len == reg_addr.len && 
 			!strncasecmp(pto->uri.s, reg_addr.s, reg_addr.len))
 	{
-		DBG("MSILO:m_store: message to MSILO REGISTRAR!\n");
+		LM_DBG("message to MSILO REGISTRAR!\n");
 		goto error;
 	}
 
@@ -467,39 +465,38 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		printbuf_len = MSILO_PRINTBUF_SIZE-1;
 		if(pv_printf(msg, (pv_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
 		{
-			LOG(L_ERR, "MSILO:m_store: error - cannot print the format\n");
+			LM_ERR("cannot print the format\n");
 			return -1;
 		}
 		if(parse_uri(msilo_printbuf, printbuf_len, &puri)!=0)
 		{
-			LOG(L_ERR, "MSILO:m_store: bad owner SIP address!\n");
+			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			DBG("MSILO:m_store: using user id [%.*s]\n", printbuf_len,
-					msilo_printbuf);
+			LM_DBG("using user id [%.*s]\n", printbuf_len, msilo_printbuf);
 		}
 	} else { /* get it from R-URI */
 		if(msg->new_uri.len <= 0)
 		{
 			if(msg->first_line.u.request.uri.len <= 0)
 			{
-				LOG(L_ERR, "MSILO:m_store: bad dst URI!\n");
+				LM_ERR("bad dst URI!\n");
 				goto error;
 			}
 			duri = msg->first_line.u.request.uri;
 		} else {
 			duri = msg->new_uri;
 		}
-		DBG("MSILO:m_store: NEW R-URI found - check if is AoR!\n");
+		LM_DBG("NEW R-URI found - check if is AoR!\n");
 		if(parse_uri(duri.s, duri.len, &puri)!=0)
 		{
-			LOG(L_ERR, "MSILO:m_store: bad dst R-URI!!\n");
+			LM_ERR("bad dst R-URI!!\n");
 			goto error;
 		}
 	}
 	if(puri.user.len<=0)
 	{
-		LOG(L_ERR, "MSILO:m_store: no username for owner\n");
+		LM_ERR("no username for owner\n");
 		goto error;
 	}
 	
@@ -523,7 +520,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
 	{
-		LOG(L_ERR, "MSILO:m_store: Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		goto error;
 	}
 
@@ -531,12 +528,12 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	    db_cols[0] = sc_inc_time;
 	    if (msilo_dbf.query(db_con, db_keys, 0, db_vals, db_cols,
 				2, 1, 0, &res) < 0 ) {
-		LOG(L_ERR, "m_store(): Error while querying database\n");
-		return -1;
+			LM_ERR("failed to query the database\n");
+			return -1;
 	    }
 	    if (RES_ROW_N(res) >= ms_max_messages) {
-		LOG(L_INFO, "MSILO:m_store: Too many messages for AoR '%.*s@%.*s'\n",
-		    puri.user.len, puri.user.s, puri.host.len, puri.host.s);
+			LM_ERR("too many messages for AoR '%.*s@%.*s'\n",
+			    puri.user.len, puri.user.s, puri.host.len, puri.host.s);
  	        msilo_dbf.free_result(db_con, res);
 		return -1;
 	    }
@@ -556,28 +553,27 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	/* check FROM URI */
 	if(!msg->from || !msg->from->body.s)
 	{
-		DBG("MSILO:m_store: ERROR cannot find 'from' header!\n");
+		LM_ERR("cannot find 'from' header!\n");
 		goto error;
 	}
 
 	if(msg->from->parsed == NULL)
 	{
-		DBG("MSILO:m_store: 'From' header not parsed\n");
+		LM_DBG("'From' header not parsed\n");
 		/* parsing from header */
 		if ( parse_from_header( msg )<0 ) 
 		{
-			DBG("MSILO:m_store: ERROR cannot parse From header\n");
+			LM_ERR("cannot parse From header\n");
 			goto error;
 		}
 	}
 	pfrom = (struct to_body*)msg->from->parsed;
-	DBG("MSILO:m_store: 'From' header: <%.*s>\n", pfrom->uri.len,
-			pfrom->uri.s);	
+	LM_DBG("'From' header: <%.*s>\n", pfrom->uri.len, pfrom->uri.s);	
 	
 	if(reg_addr.s && pfrom->uri.len == reg_addr.len && 
 			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
 	{
-		DBG("MSILO:m_store: message from MSILO REGISTRAR!\n");
+		LM_DBG("message from MSILO REGISTRAR!\n");
 		goto error;
 	}
 
@@ -605,7 +601,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	/* add 'content-type' -- parse the content-type header */
 	if ((mime=parse_content_type_hdr(msg))<1 ) 
 	{
-		LOG(L_ERR,"MSILO:m_store: ERROR cannot parse Content-Type header\n");
+		LM_ERR("cannot parse Content-Type header\n");
 		goto error;
 	}
 
@@ -622,7 +618,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		if(m_extract_content_type(msg->content_type->body.s, 
 				msg->content_type->body.len, &ctype, CT_TYPE) != -1)
 		{
-			DBG("MSILO:m_store: 'content-type' found\n");
+			LM_DBG("'content-type' found\n");
 			db_vals[nr_keys].val.str_val.s   = ctype.type.s;
 			db_vals[nr_keys].val.str_val.len = ctype.type.len;
 		}
@@ -632,7 +628,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	/* check 'expires' -- no more parsing - already done by get_body() */
 	if(msg->expires && msg->expires->body.len > 0)
 	{
-		DBG("MSILO:m_store: 'expires' found\n");
+		LM_DBG("'expires' found\n");
 		val = atoi(msg->expires->body.s);
 		if(val > 0)
 			lexpire = (ms_expire_time<=val)?ms_expire_time:val;
@@ -675,10 +671,10 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	if(msilo_dbf.insert(db_con, db_keys, db_vals, nr_keys) < 0)
 	{
-		LOG(L_ERR, "MSILO:m_store: error storing message\n");
+		LM_ERR("failed to store message\n");
 		goto error;
 	}
-	DBG("MSILO:m_store: message stored. T:<%.*s> F:<%.*s>\n",
+	LM_DBG("message stored. T:<%.*s> F:<%.*s>\n",
 		pto->uri.len, pto->uri.s, pfrom->uri.len, pfrom->uri.s);
 	
 #ifdef STATISTICS
@@ -689,7 +685,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 			|| reg_addr.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1>=1024)
 		goto done;
 
-	DBG("MSILO:m_store: sending info message.\n");
+	LM_DBG("sending info message.\n");
 	strcpy(buf1, CONTACT_PREFIX);
 	strncat(buf1,reg_addr.s,reg_addr.len);
 	strncat(buf1, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
@@ -711,14 +707,14 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	if(ms_use_contact && msg->contact!=NULL && msg->contact->body.s!=NULL
 			&& msg->contact->body.len > 0)
 	{
-		DBG("MSILO:m_store: contact header found\n");
+		LM_DBG("contact header found\n");
 		if((msg->contact->parsed!=NULL 
 			&& ((contact_body_t*)(msg->contact->parsed))->contacts!=NULL)
 			|| (parse_contact(msg->contact)==0
 			&& msg->contact->parsed!=NULL
 			&& ((contact_body_t*)(msg->contact->parsed))->contacts!=NULL))
 		{
-			DBG("MSILO:m_store: using contact header for info msg\n");
+			LM_DBG("using contact header for info msg\n");
 			ctaddr.s = 
 			((contact_body_t*)(msg->contact->parsed))->contacts->uri.s;
 			ctaddr.len =
@@ -728,8 +724,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 				|| ctaddr.s[4]==' ')
 				ctaddr.s = NULL;
 			else
-				DBG("MSILO:m_store: feedback contact [%.*s]\n",
-						ctaddr.len,ctaddr.s);
+				LM_DBG("feedback contact [%.*s]\n",	ctaddr.len,ctaddr.s);
 		}
 	}
 		
@@ -786,7 +781,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	db_cols[5]=sc_inc_time;
 
 	
-	DBG("MSILO:m_dump: ------------ start ------------\n");
+	LM_DBG("------------ start ------------\n");
 	hdr_str.s=hdr_buf;
 	hdr_str.len=1024;
 	body_str.s=body_buf;
@@ -796,7 +791,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	if(msg->to==NULL && (parse_headers(msg, HDR_TO_F, 0)==-1
 				|| msg->to==NULL || msg->to->body.s==NULL))
 	{
-		LOG(L_ERR,"MSILO:m_dump: ERROR cannot find TO HEADER!\n");
+		LM_ERR("cannot find TO HEADER!\n");
 		goto error;
 	}
 
@@ -804,7 +799,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	if(msg->to->parsed != NULL)
 	{
 		pto = (struct to_body*)msg->to->parsed;
-		DBG("MSILO:m_dump: 'To' header ALREADY PARSED: <%.*s>\n",
+		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",
 			pto->uri.len, pto->uri.s );	
 	}
 	else
@@ -814,7 +809,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 			msg->to->body.s + msg->to->body.len + 1, &to);
 		if(to.uri.len <= 0) /* || to.error != PARSE_OK) */
 		{
-			DBG("MSILO:m_dump: 'To' header NOT parsed\n");
+			LM_ERR("'To' header NOT parsed\n");
 			goto error;
 		}
 		pto = &to;
@@ -831,23 +826,23 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 			i = atoi(msg->expires->body.s);
 			if(i <= 0)
 			{ /* user goes offline */
-				DBG("MSILO:m_dump: user <%.*s> goes offline - expires=%d\n",
+				LM_DBG("user <%.*s> goes offline - expires=%d\n",
 						pto->uri.len, pto->uri.s, i);
 				goto error;
 			}
 			else
-				DBG("MSILO:m_dump: user <%.*s> online - expires=%d\n",
+				LM_DBG("user <%.*s> online - expires=%d\n",
 						pto->uri.len, pto->uri.s, i);
 		}
 	}
 	else
 	{
-		DBG("MSILO:m_dump: 'expires' threw error at parsing\n");
+		LM_ERR("failed to parse 'expires'\n");
 		goto error;
 	}
 
 	if (check_message_support(msg)!=0) {
-	    DBG("MSILO:m_dump: MESSAGE method not supported\n");
+	    LM_DBG("MESSAGE method not supported\n");
 	    return -1;
 	}
 	 
@@ -858,28 +853,28 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		printbuf_len = MSILO_PRINTBUF_SIZE-1;
 		if(pv_printf(msg, (pv_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
 		{
-			LOG(L_ERR, "MSILO:m_dump: error - cannot print the format\n");
+			LM_ERR("cannot print the format\n");
 			return -1;
 		}
 		if(parse_uri(msilo_printbuf, printbuf_len, &puri)!=0)
 		{
-			LOG(L_ERR, "MSILO:m_dump: bad owner SIP address!\n");
+			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			DBG("MSILO:m_dump: using user id [%.*s]\n", printbuf_len,
+			LM_DBG("using user id [%.*s]\n", printbuf_len,
 					msilo_printbuf);
 		}
 	} else { /* get it from  To URI */
 		if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
 		{
-			LOG(L_ERR, "MSILO:m_dump: bad owner To URI!\n");
+			LM_ERR("bad owner To URI!\n");
 			goto error;
 		}
 	}
 	if(puri.user.len<=0 || puri.user.s==NULL
 			|| puri.host.len<=0 || puri.host.s==NULL)
 	{
-		LOG(L_ERR, "MSILO:m_dump: bad owner URI!\n");
+		LM_ERR("bad owner URI!\n");
 		goto error;
 	}
 
@@ -899,19 +894,18 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	
 	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
 	{
-		LOG(L_ERR, "MSILO:m_dump: Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		goto error;
 	}
 
 	if((msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
 				db_no_cols, NULL,&db_res)!=0) || (RES_ROW_N(db_res) <= 0))
 	{
-		DBG("MSILO:m_dump: no stored message for <%.*s>!\n", pto->uri.len,
-					pto->uri.s);
+		LM_DBG("no stored message for <%.*s>!\n", pto->uri.len,	pto->uri.s);
 		goto done;
 	}
 		
-	DBG("MSILO:m_dump: dumping [%d] messages for <%.*s>!!!\n", 
+	LM_DBG("dumping [%d] messages for <%.*s>!!!\n", 
 			RES_ROW_N(db_res), pto->uri.len, pto->uri.s);
 
 	for(i = 0; i < RES_ROW_N(db_res); i++) 
@@ -919,8 +913,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		mid =  RES_ROWS(db_res)[i].values[0].val.int_val;
 		if(msg_list_check_msg(ml, mid))
 		{
-			DBG("MSILO:m_dump: message[%d] mid=%d already sent.\n", 
-				i, mid);
+			LM_DBG("message[%d] mid=%d already sent.\n", i, mid);
 			continue;
 		}
 		
@@ -936,24 +929,22 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
 				str_vals[0]/*from*/, rtime /*Date*/) < 0)
 		{
-			LOG(L_ERR, "MSILO:m_dump: headers building failed [%d]\n", mid);
+			LM_ERR("headers building failed [%d]\n", mid);
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
-				DBG("MSILO:m_dump: Error while freeing result of"
-					" query\n");
+				LM_ERR("failed to free the query result\n");
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			goto error;
 		}
 			
-		DBG("MSILO:m_dump: msg [%d-%d] for: %.*s\n", i+1, mid,
-				pto->uri.len, pto->uri.s);
+		LM_DBG("msg [%d-%d] for: %.*s\n", i+1, mid,	pto->uri.len, pto->uri.s);
 			
 		/** sending using TM function: t_uac */
 		body_str.len = 1024;
 		n = m_build_body(&body_str, rtime, str_vals[2/*body*/], 0);
 		if(n<0)
-			DBG("MSILO:m_dump: sending simple body\n");
+			LM_DBG("sending simple body\n");
 		else
-			DBG("MSILO:m_dump: sending composed body\n");
+			LM_DBG("sending composed body\n");
 		
 			tmb.t_request(&msg_type,  /* Type of the message */
 					&str_vals[1],     /* Request-URI (To) */
@@ -973,7 +964,7 @@ done:
 	 * anymore
 	 */
 	if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0)
-		DBG("MSILO:m_dump: Error while freeing result of query\n");
+		LM_ERR("failed to free result of query\n");
 
 	return 1;
 error:
@@ -992,7 +983,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 	db_op_t  db_ops[1] = { OP_LEQ };
 	int n;
 	
-	DBG("MSILO:clean_silo: cleaning stored messages - %d\n", ticks);
+	LM_DBG("cleaning stored messages - %d\n", ticks);
 	
 	msg_list_check(ml);
 	mle = p = msg_list_reset(ml);
@@ -1012,12 +1003,12 @@ void m_clean_silo(unsigned int ticks, void *param)
 			db_vals[n].type = DB_INT;
 			db_vals[n].nul = 0;
 			db_vals[n].val.int_val = p->msgid;
-			DBG("MSILO:clean_silo: cleaning sent message [%d]\n", p->msgid);
+			LM_DBG("cleaning sent message [%d]\n", p->msgid);
 			n++;
 			if(n==MAX_DEL_KEYS)
 			{
 				if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0) 
-					DBG("MSILO:clean_silo: error cleaning %d messages.\n",n);
+					LM_ERR("failed to clean %d messages.\n",n);
 				n = 0;
 			}
 		}
@@ -1038,7 +1029,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 	if(n>0)
 	{
 		if (msilo_dbf.delete(db_con, db_keys, NULL, db_vals, n) < 0) 
-			DBG("MSILO:clean_silo: error cleaning %d messages\n", n);
+			LM_ERR("failed to clean %d messages\n", n);
 		n = 0;
 	}
 
@@ -1047,13 +1038,13 @@ void m_clean_silo(unsigned int ticks, void *param)
 	/* cleaning expired messages */
 	if(ticks%(ms_check_time*ms_clean_period)<ms_check_time)
 	{
-		DBG("MSILO:clean_silo: cleaning expired messages\n");
+		LM_DBG("cleaning expired messages\n");
 		db_keys[0] = sc_exp_time;
 		db_vals[0].type = DB_INT;
 		db_vals[0].nul = 0;
 		db_vals[0].val.int_val = (int)time(NULL);
 		if (msilo_dbf.delete(db_con, db_keys, db_ops, db_vals, 1) < 0) 
-			DBG("MSILO:clean_silo: ERROR cleaning expired messages\n");
+			LM_DBG("ERROR cleaning expired messages\n");
 	}
 }
 
@@ -1063,7 +1054,7 @@ void m_clean_silo(unsigned int ticks, void *param)
  */
 void destroy(void)
 {
-	DBG("MSILO: destroy module ...\n");
+	LM_DBG("msilo destroy module ...\n");
 	msg_list_free(ml);
 
 	if(db_con && msilo_dbf.close)
@@ -1077,28 +1068,25 @@ void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
 {
 	if(ps->param==NULL || *ps->param==0)
 	{
-		DBG("MSILO m_tm_callback: message id not received\n");
+		LM_DBG("message id not received\n");
 		goto done;
 	}
 	
-	LOG(L_DBG, "MSILO:m_tm_callback: completed with status %d [mid: %ld/%d]\n",
+	LM_DBG("completed with status %d [mid: %ld/%d]\n",
 		ps->code, (long)ps->param, *((int*)ps->param));
 	if(!db_con)
 	{
-		LOG(L_ERR, "MSILO:m_tm_callback: db_con is NULL\n");
+		LM_ERR("db_con is NULL\n");
 		goto done;
 	}
 	if(ps->code >= 300)
 	{
-		LOG(L_DBG,
-			"MSILO:m_tm_callback: message <%d> was not sent successfully\n",
-			*((int*)ps->param));
+		LM_DBG("message <%d> was not sent successfully\n", *((int*)ps->param));
 		msg_list_set_flag(ml, *((int*)ps->param), MS_MSG_ERRO);
 		goto done;
 	}
 
-	LOG(L_DBG, "MSILO:m_tm_callback: message <%d> was sent successfully\n",
-		*((int*)ps->param));
+	LM_DBG("message <%d> was sent successfully\n", *((int*)ps->param));
 	msg_list_set_flag(ml, *((int*)ps->param), MS_MSG_DONE);
 
 done:
@@ -1124,7 +1112,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 
 	if(ms_reminder.s==NULL)
 	{
-		LOG(L_WARN,"MSILO:m_send_ontimer: weird - reminder address null\n");
+		LM_WARN("reminder address null\n");
 		return;
 	}
 	
@@ -1142,7 +1130,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	db_cols[5]=sc_snd_time;
 
 	
-	DBG("MSILO:m_send_ontimer: ------------ start ------------\n");
+	LM_DBG("------------ start ------------\n");
 	hdr_str.s=hdr_buf;
 	hdr_str.len=1024;
 	body_str.s=body_buf;
@@ -1159,20 +1147,18 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	
 	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
 	{
-		LOG(L_ERR, "MSILO:m_send_ontimer: Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		return;
 	}
 
 	if((msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
 				db_no_cols, NULL,&db_res)!=0) || (RES_ROW_N(db_res) <= 0))
 	{
-		DBG("MSILO:m_send_ontimer: no message for <%.*s>!\n",
-				24, ctime((const time_t*)&ttime));
+		LM_DBG("no message for <%.*s>!\n", 24, ctime((const time_t*)&ttime));
 		goto done;
 	}
 		
-	DBG("MSILO:m_send_ontimer: dumping [%d] messages for <%.*s>!!!\n", 
-			RES_ROW_N(db_res), 24,
+	LM_DBG("dumping [%d] messages for <%.*s>!!!\n", RES_ROW_N(db_res), 24,
 			ctime((const time_t*)&ttime));
 
 	for(i = 0; i < RES_ROW_N(db_res); i++) 
@@ -1180,8 +1166,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		mid =  RES_ROWS(db_res)[i].values[0].val.int_val;
 		if(msg_list_check_msg(ml, mid))
 		{
-			DBG("MSILO:m_send_ontimer: message[%d] mid=%d already sent.\n", 
-				i, mid);
+			LM_DBG("message[%d] mid=%d already sent.\n", i, mid);
 			continue;
 		}
 		
@@ -1195,11 +1180,9 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		if(m_build_headers(&hdr_str, str_vals[3] /*ctype*/,
 				ms_reminder/*from*/,0/*Date*/) < 0)
 		{
-			LOG(L_ERR, "MSILO:m_send_ontimer: headers building failed [%d]\n",
-					mid);
+			LM_ERR("headers building failed [%d]\n", mid);
 			if (msilo_dbf.free_result(db_con, db_res) < 0)
-				DBG("MSILO:m_send_ontimer: Error while freeing result of"
-					" query\n");
+				LM_DBG("failed to free result of query\n");
 			msg_list_set_flag(ml, mid, MS_MSG_ERRO);
 			return;
 		}
@@ -1211,8 +1194,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 		puri.s[4+str_vals[0].len] = '@';
 		memcpy(puri.s+4+str_vals[0].len+1, str_vals[1].s, str_vals[1].len);
 		
-		DBG("MSILO:m_send_ontimer: msg [%d-%d] for: %.*s\n", i+1, mid,
-				puri.len, puri.s);
+		LM_DBG("msg [%d-%d] for: %.*s\n", i+1, mid,	puri.len, puri.s);
 			
 		/** sending using TM function: t_uac */
 		body_str.len = 1024;
@@ -1220,9 +1202,9 @@ void m_send_ontimer(unsigned int ticks, void *param)
 			(time_t)RES_ROWS(db_res)[i].values[5/*snd time*/].val.int_val;
 		n = m_build_body(&body_str, 0, str_vals[2/*body*/], stime);
 		if(n<0)
-			DBG("MSILO:m_send_ontimer: sending simple body\n");
+			LM_DBG("sending simple body\n");
 		else
-			DBG("MSILO:m_send_ontimer: sending composed body\n");
+			LM_DBG("sending composed body\n");
 		
 		msg_list_set_flag(ml, mid, MS_MSG_TSND);
 		
@@ -1243,7 +1225,7 @@ done:
 	 * Free the result because we don't need it anymore
 	 */
 	if (db_res!=NULL && msilo_dbf.free_result(db_con, db_res) < 0)
-		DBG("MSILO:m_send_ontimer: Error while freeing result of query\n");
+		LM_DBG("failed to free result of query\n");
 
 	return;
 }
@@ -1269,18 +1251,17 @@ int ms_reset_stime(int mid)
 	db_cvals[0].nul = 0;
 	db_cvals[0].val.int_val = 0;
 	
-	DBG("MSILO:ms_reset_stime: updating send time for [%d]!\n", mid);
+	LM_DBG("updating send time for [%d]!\n", mid);
 	
 	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
 	{
-		LOG(L_ERR, "MSILO:ms_reset_stime: Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		return -1;
 	}
 
 	if(msilo_dbf.update(db_con,db_keys,db_ops,db_vals,db_cols,db_cvals,1,1)!=0)
 	{
-		LOG(L_ERR, "MSILO:ms_reset_stime: error making update for [%d]!\n",
-				mid);
+		LM_ERR("failed to make update for [%d]!\n",	mid);
 		return -1;
 	}
 	return 0;
@@ -1302,7 +1283,7 @@ int check_message_support(struct sip_msg* msg)
 	/* Parse all headers in order to see all Allow headers */
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1)
 	{
-		LOG(L_ERR, "MSILO:check_message_method: Error while parsing headers\n");
+		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 
@@ -1311,22 +1292,21 @@ int check_message_support(struct sip_msg* msg)
 		allow_hdr = 1;
 		allow_message = get_allow_methods(msg) & METHOD_MESSAGE;
 	}
-	DBG("MSILO:check_message_method: Allow message: %u\n", allow_message);
+	LM_DBG("Allow message: %u\n", allow_message);
 
 	if (!msg->contact)
 	{
-		DBG("MSILO:check_message_method: No Contact found\n");
+		LM_ERR("no Contact found\n");
 		return -1;
 	}
 	if (parse_contact(msg->contact) < 0)
 	{
-		LOG(L_ERR,
-			"MSILO:check_message_method: Error while parsing Contact HF\n");
+		LM_ERR("failed to parse Contact HF\n");
 		return -1;
 	}
 	if (((contact_body_t*)msg->contact->parsed)->star)
 	{
-		DBG("MSILO:check_message_method: * Contact found\n");
+		LM_DBG("* Contact found\n");
 		return -1;
 	}
 
@@ -1345,26 +1325,24 @@ int check_message_support(struct sip_msg* msg)
 			methods_body = &(c->methods->body);
 			if (parse_methods(methods_body, &methods) < 0)
 			{
-				LOG(L_ERR, "MSILO:check_message_method: failed to parse "
-					"contact methods\n");
+				LM_ERR("failed to parse contact methods\n");
 				return -1;
 			}
 			if (methods & METHOD_MESSAGE)
 			{
-				DBG("MSILO:check_message_method: MESSAGE contact found\n");
+				LM_DBG("MESSAGE contact found\n");
 				return 0;
 			}
 		} else {
 			if (allow_message)
 			{
-				DBG("MSILO:check_message_method: MESSAGE found in "
-					"Allow Header\n");
+				LM_DBG("MESSAGE found in Allow Header\n");
 				return 0;
 			}
 		}
 		if (contact_iterator(&c, msg, c) < 0)
 		{
-			DBG("MSILO:check_message_method: MESSAGE contact not found\n");
+			LM_DBG("MESSAGE contact not found\n");
 			return -1;
 		}
 	}
@@ -1383,15 +1361,14 @@ static int fixup_msilo(void** param, int param_no)
 		s.s = (char*)(*param); s.len =  strlen(s.s);
 		if(pv_parse_format(&s, &model)<0)
 		{
-			LOG(L_ERR, "ERROR:msilo:fixup_msilo: wrong format[%s]\n",
-				(char*)(*param));
+			LM_ERR("wrong format[%s]\n", (char*)(*param));
 			return E_UNSPEC;
 		}
 			
 		*param = (void*)model;
 		return 0;
 	}
-	LOG(L_ERR, "ERROR:msilo:fixup_msilo: null format\n");
+	LM_ERR("null format\n");
 	return E_UNSPEC;
 }
 

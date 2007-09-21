@@ -48,15 +48,15 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 	received->len = 0;
 
 	if(parse_headers(_m, HDR_EOH_F, 0) < 0) {
-		LOG(L_ERR,"ERROR: build_path_vector(): Error while parsing message\n");
+		LM_ERR("failed to parse the message\n");
 		goto error;
 	}
 
 	for( hdr=_m->path,p=buf ; hdr ; hdr=hdr->sibling) {
 		/* check for max. Path length */
 		if( p-buf+hdr->body.len+1 >= MAX_PATH_SIZE) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Overall Path body "
-				"exceeds max. length of %d\n",MAX_PATH_SIZE);
+			LM_ERR("Overall Path body exceeds max. length of %d\n",
+					MAX_PATH_SIZE);
 			goto error;
 		}
 		if(p!=buf)
@@ -68,18 +68,15 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 	if (p!=buf) {
 		/* check if next hop is a loose router */
 		if (parse_rr_body( buf, p-buf, &route) < 0) {
-			LOG(L_ERR, "ERROR: build_path_vector(): Failed to parse Path "
-				"body, no head found\n");
+			LM_ERR("failed to parse Path body, no head found\n");
 			goto error;
 		}
 		if (parse_uri(route->nameaddr.uri.s,route->nameaddr.uri.len,&puri)<0){
-			LOG(L_ERR, "ERROR: build_path_vector(): Error while parsing "
-				"first Path URI\n");
+			LM_ERR("failed to parse the first Path URI\n");
 			goto error;
 		}
 		if (!puri.lr.s) {
-			LOG(L_ERR, "ERROR: build_path_vector(): First Path URI is not a "
-				"loose-router, not supported\n");
+			LM_ERR("first Path URI is not a loose-router, not supported\n");
 			goto error;
 		}
 		if (path_use_params) {
@@ -87,8 +84,7 @@ int build_path_vector(struct sip_msg *_m, str *path, str *received)
 			param_t *params;
 
 			if (parse_params(&(puri.params),CLASS_CONTACT,&hooks,&params)!=0){
-				LOG(L_ERR, "ERROR: build_path_vector(): Error parsing "
-					"parameters of first hop\n");
+				LM_ERR("failed to parse parameters of first hop\n");
 				goto error;
 			}
 			if (hooks.contact.received)

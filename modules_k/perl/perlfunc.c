@@ -59,12 +59,11 @@ int perl_checkfnc(char *fnc) {
 int perl_exec_simple(char* fnc, char* args[], int flags) {
 
 	if (perl_checkfnc(fnc)) {
-		DBG("perl_exec_simple:Running perl function \"%s\"", fnc);
+		LM_DBG("running perl function \"%s\"", fnc);
 
 		call_argv(fnc, flags, args);
 	} else {
-		LOG(L_ERR, "perl_exec_simple: Unknown function '%s' called.\n",
-				fnc);
+		LM_ERR("unknown function '%s' called.\n", fnc);
 		return -1;
 	}
 
@@ -98,13 +97,12 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	dSP;
 
 	if (!perl_checkfnc(fnc)) {
-		LOG(L_ERR, "perl:perl_exec: Unknown perl function called.\n");
+		LM_ERR("unknown perl function called.\n");
 		reason.s = "Internal error";
 		reason.len = sizeof("Internal error")-1;
 		if (slb.reply(_msg, 500, &reason) == -1)
 		{
-			LOG(L_ERR, "perl:perl_exec: Error while"
-					" sending reply\n");
+			LM_ERR("failed to send reply\n");
 		}
 		return -1;
 	}
@@ -112,14 +110,12 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	switch ((_msg->first_line).type) {
 	case SIP_REQUEST:
 		if (parse_sip_msg_uri(_msg) < 0) {
-			LOG(L_ERR, "perl:perl_exec: Error while"
-					" parsing Request-URI\n");
+			LM_ERR("failed to parse Request-URI\n");
 
 			reason.s = "Bad Request-URI";
 			reason.len = sizeof("Bad Request-URI")-1;
 			if (slb.reply(_msg, 400, &reason) == -1) {
-				LOG(L_ERR, "perl:perl_exec: Error while"
-						" sending reply\n");
+				LM_ERR("failed to send reply\n");
 			}
 			return -1;
 		}
@@ -127,7 +123,7 @@ int perl_exec2(struct sip_msg* _msg, char* fnc, char* mystr) {
 	case SIP_REPLY:
 		break;
 	default:
-		LOG(L_ERR, "perl:perl_exec: Invalid firstline");
+		LM_ERR("invalid firstline");
 		return -1;
 	}
 

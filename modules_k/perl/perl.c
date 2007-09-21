@@ -203,7 +203,7 @@ PerlInterpreter *parser_init() {
 	new_perl = perl_alloc();
 
 	if (!new_perl) {
-		LOG(L_ERR, "Could not allocate perl.\n");
+		LM_ERR("could not allocate perl.\n");
 		return NULL;
 	}
 
@@ -214,7 +214,7 @@ PerlInterpreter *parser_init() {
 	 /* Possible Include path extension by modparam */
 	if (modpath && (strlen(modpath) > 0)) {
 		modpathset = argc;
-		LOG(L_INFO, "perl: Setting lib path: '%s'\n", modpath);
+		LM_INFO("setting lib path: '%s'\n", modpath);
 		argv[argc] = pkg_malloc(strlen(modpath)+20);
 		sprintf(argv[argc], "-I%s", modpath);
 		argc++;
@@ -226,12 +226,11 @@ PerlInterpreter *parser_init() {
 	argc++;
 
 	if (perl_parse(new_perl, xs_init, argc, argv, NULL)) {
-		LOG(L_ERR, "Error loading perl file \"%s\".\n", argv[argc-1]);
+		LM_ERR("failed to load perl file \"%s\".\n", argv[argc-1]);
 		if (modpathset) pkg_free(argv[modpathset]);
 		return NULL;
 	} else {
-		LOG(L_INFO, "perl: Successfully loaded perl file \"%s\"\n",
-				argv[argc-1]);
+		LM_INFO("successfully loaded perl file \"%s\"\n", argv[argc-1]);
 	}
 
 	if (modpathset) pkg_free(argv[modpathset]);
@@ -304,11 +303,10 @@ static int mod_init() {
 
 	int ret = 0;
 
-	LOG(L_INFO, "perl module - initializing\n");
+	LM_INFO("initializing...\n");
 
 	if (!filename) {
-		LOG(L_ERR, "Insufficient module parameters."
-				" Module not loaded.\n");
+		LM_ERR("insufficient module parameters. Module not loaded.\n");
 		return -1;
 	}
 
@@ -320,7 +318,7 @@ static int mod_init() {
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:perl:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		return -1;
 	}
 

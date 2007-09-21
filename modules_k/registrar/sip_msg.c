@@ -71,31 +71,31 @@ int parse_message(struct sip_msg* _m)
 	
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
 		rerrno = R_PARSE;
-		LOG(L_ERR, "parse_message(): Error while parsing headers\n");
+		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 	
 	if (!_m->to) {
 		rerrno = R_TO_MISS;
-		LOG(L_ERR, "parse_message(): To not found\n");
+		LM_ERR("To not found\n");
 		return -2;
 	}
 
 	if (!_m->callid) {
 		rerrno = R_CID_MISS;
-		LOG(L_ERR, "parse_message(): Call-ID not found\n");
+		LM_ERR("Call-ID not found\n");
 		return -3;
 	}
 
 	if (!_m->cseq) {
 		rerrno = R_CS_MISS;
-		LOG(L_ERR, "parse_message(): CSeq not found\n");
+		LM_ERR("CSeq not found\n");
 		return -4;
 	}
 
 	if (_m->expires && !_m->expires->parsed && (parse_expires(_m->expires) < 0)) {
 		rerrno = R_PARSE_EXP;
-		LOG(L_ERR, "parse_message(): Error while parsing expires body\n");
+		LM_ERR("failed to parse expires body\n");
 		return -5;
 	}
 	
@@ -105,7 +105,7 @@ int parse_message(struct sip_msg* _m)
 			if (ptr->type == HDR_CONTACT_T) {
 				if (!ptr->parsed && (parse_contact(ptr) < 0)) {
 					rerrno = R_PARSE_CONT;
-					LOG(L_ERR, "parse_message(): Error while parsing Contact body\n");
+					LM_ERR("failed to parse Contact body\n");
 					return -6;
 				}
 			}
@@ -259,7 +259,7 @@ int calc_contact_q(param_t* _q, qvalue_t* _r)
 	} else {
 		if (str2q(_r, _q->body.s, _q->body.len) < 0) {
 			rerrno = R_INV_Q; /* Invalid q parameter */
-			LOG(L_ERR, "calc_contact_q(): Invalid q parameter\n");
+			LM_ERR("invalid q parameter\n");
 			return -1;
 		}
 	}

@@ -90,8 +90,7 @@ static int sipping_rpl_filter(struct sip_msg *rpl)
 
 	/* check the method -> we need CSeq header */
 	if ( (!rpl->cseq && parse_headers(rpl,HDR_CSEQ_F,0)!=0) || rpl->cseq==0 ) {
-		LOG(L_ERR,"ERROR:nathelper:sipping_rpl_filter: "
-			"failed to parse CSeq\n");
+		LM_ERR("failed to parse CSeq\n");
 		goto error;
 	}
 	cseq_b = (struct cseq_body*)rpl->cseq->parsed;
@@ -102,8 +101,7 @@ static int sipping_rpl_filter(struct sip_msg *rpl)
 	/* check constant part of callid */
 	if ( (!rpl->callid && parse_headers(rpl,HDR_CALLID_F,0)!=0) ||
 	rpl->callid==0 ) {
-		LOG(L_ERR,"ERROR:nathelper:sipping_rpl_filter: "
-			"failed to parse Call-ID\n");
+		LM_ERR("failed to parse Call-ID\n");
 		goto error;
 	}
 	if ( rpl->callid->body.len<=sipping_callid.len+1 ||
@@ -111,8 +109,7 @@ static int sipping_rpl_filter(struct sip_msg *rpl)
 	rpl->callid->body.s[sipping_callid.len]!='-')
 		goto skip;
 
-	DBG("DEBUG:nathelper:sipping_rpl_filter: reply for "
-		"SIP natping filtered\n");
+	LM_DBG("reply for SIP natping filtered\n");
 	/* it's a reply to a SIP NAT ping -> absorb it and stop any
 	 * further processing of it */
 	return 0;
@@ -145,8 +142,7 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 		s_len(CRLF"Content-Length: 0" CRLF CRLF)
 		> MAX_SIPPING_SIZE )
 	{
-		LOG(L_ERR,"ERROR:nathelper:build_option: len "
-			"exceeds %d\n",MAX_SIPPING_SIZE);
+		LM_ERR("len exceeds %d\n",MAX_SIPPING_SIZE);
 		return 0;
 	}
 

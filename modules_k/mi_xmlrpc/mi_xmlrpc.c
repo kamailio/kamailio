@@ -98,15 +98,15 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("DBG: mi_xmlrpc: mod_init: Testing port number...\n");
+	LM_DBG("testing port number...\n");
 
 	if ( port <= 1024 ) {
-		LOG(L_WARN,"WARNING: mi_xmlrpc: mod_init: port<1024, using 8080...\n");
+		LM_WARN("port<1024, using 8080...\n");
 		port = 8080;
 	}
 
 	if (init_async_lock()!=0) {
-		LOG(L_ERR, "ERROR mi_xmlrpc: mod_init: failed to init async lock\n");
+		LM_ERR("failed to init async lock\n");
 		return -1;
 	}
 
@@ -141,8 +141,7 @@ static void xmlrpc_process(int rank)
 {
 	/* install handler to catch termination of child processes */
 	if (signal(SIGCHLD, xmlrpc_sigchld)==SIG_ERR) {
-		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to install "
-			"signal handler for SIGCHLD\n");
+		LM_ERR("failed to install signal handler for SIGCHLD\n");
 		goto error;
 	}
 
@@ -152,14 +151,12 @@ static void xmlrpc_process(int rank)
 	MIMETypeInit();
 
 	if (!ServerCreate(&srv, "XmlRpcServer", port, "", log_file)) {
-		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to create XMLRPC "
-			"server\n");
+		LM_ERR("failed to create XMLRPC server\n");
 		goto error;
 	}
 
 	if (!ServerAddHandler(&srv, xmlrpc_server_abyss_rpc2_handler)) {
-		LOG(L_ERR,"ERROR: mi_xmlrpc: mod_child_init: failed to add handler "
-			"to server\n");
+		LM_ERR("failed to add handler to server\n");
 		goto error;
 	}
 
@@ -167,14 +164,12 @@ static void xmlrpc_process(int rank)
 	ServerInit(&srv);
 
 	if( init_mi_child() != 0 ) {
-		LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Failed to init "
-			"the mi process\n");
+		LM_CRIT("failed to init the mi process\n");
 		goto error;
 	}
 
 	if ( xr_writer_init(read_buf_size) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to init the "
-			"reply writer\n");
+		LM_ERR("failed to init the reply writer\n");
 		goto error;
 	}
 
@@ -183,25 +178,22 @@ static void xmlrpc_process(int rank)
 	if ( rpl_opt == 1 ) {
 		xr_response = xmlrpc_build_value(&env, "()");
 		if ( env.fault_occurred ){
-			LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to create "
-				"and emtpy array: %s\n", env.fault_string);
+			LM_ERR("failed to create an empty array: %s\n", env.fault_string);
 			goto cleanup;
 		}
 	}
 
 	if ( set_default_method(&env) != 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: mod_child_init: Failed to set up the "
-			"default method!\n");
+		LM_ERR("failed to set up the default method!\n");
 		goto cleanup;
 	}
 
 	/* Run server abyss */
-	LOG(L_INFO, "INFO: mi_xmlrpc: mod_child_init: Starting xmlrpc server "
-		"on (%d)\n", getpid());
+	LM_INFO("starting xmlrpc server\n", getpid());
 
 	ServerRun(&srv);
 
-	LOG(L_CRIT, "CRITICAL: mi_xmlrpc: mod_child_init: Server terminated!!!\n");
+	LM_CRIT("erver terminated!!!\n");
 
 cleanup:
 	xmlrpc_env_clean(&env);
@@ -213,7 +205,7 @@ error:
 
 int destroy(void)
 {
-	DBG("DBG: mi_xmlrpc: destroy: Destroying module ...\n");
+	LM_DBG("destroying module ...\n");
 
 	destroy_async_lock();
 

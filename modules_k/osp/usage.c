@@ -78,11 +78,9 @@ static void ospRecordTransaction(
     str cookie;
     char buffer[OSP_STRBUF_SIZE];
 
-    LOG(L_DBG, "osp: ospRecordTransaction\n");
-
     if (osp_rr.add_rr_param == 0) {
-        LOG(L_WARN,
-            "osp: WARN: add_rr_param function is not found, "
+        LM_WARN(
+            "add_rr_param function is not found, "
             "cannot record information about the "
             "OSP transaction\n");
         return;
@@ -112,11 +110,11 @@ static void ospRecordTransaction(
     }
 
     if (cookie.len < 0) {
-        LOG(L_ERR, "osp: ERROR: failed to create OSP cookie\n");
+        LM_ERR("failed to create OSP cookie\n");
         return;
     }
 
-    LOG(L_DBG, "osp: adding RR parameter '%s'\n", buffer);
+    LM_DBG("adding RR parameter '%s'\n", buffer);
     osp_rr.add_rr_param(msg, &cookie);
 }
 
@@ -140,8 +138,6 @@ void ospRecordOrigTransaction(
 {
     int isorig = 1;
 
-    LOG(L_DBG, "osp: ospRecordOrigTransaction\n");
-
     ospRecordTransaction(msg, tranid, uac, from, to, authtime, isorig, destinationCount);
 }
 
@@ -164,8 +160,6 @@ void ospRecordTermTransaction(
 {
     int isorig = 0;
     unsigned destinationCount = 0; /* N/A */
-
-    LOG(L_DBG, "osp: ospRecordTermTransaction\n");
 
     ospRecordTransaction(msg, tranid, uac, from, to, authtime, isorig, destinationCount);
 }
@@ -212,9 +206,7 @@ static int ospReportUsageFromCookie(
     int errorcode;
     unsigned destinationCount = 0;
 
-    LOG(L_DBG, "osp: ospReportUsageFromCookie\n");
-
-    LOG(L_DBG, "osp: '%s' isorig '%d'\n", cookie, isorig);
+    LM_DBG("'%s' isorig '%d'\n", cookie, isorig);
     for (token = strtok_r(cookie, "_", &tmp);
         token;
         token = strtok_r(NULL, "_", &tmp))
@@ -236,7 +228,7 @@ static int ospReportUsageFromCookie(
                 destinationCount = (unsigned)atoi(value);
                 break;
             default:
-                LOG(L_ERR, "osp: ERROR: unexpected tag '%c' / value '%s'\n", tag, value);
+                LM_ERR("unexpected tag '%c' / value '%s'\n", tag, value);
                 break;
         }
     }
@@ -246,15 +238,16 @@ static int ospReportUsageFromCookie(
     ospGetToUserpart(msg, to, sizeof(to));
     ospGetNextHop(msg, nexthop, sizeof(nexthop));
 
-    LOG(L_DBG, "osp: first via '%s' from '%s' to '%s' next hop '%s'\n",
+    LM_DBG("first via '%s' from '%s' to '%s' next hop '%s'\n",
         firstvia,
         from,
         to,
         nexthop);
 
     if (release == OSP_RELEASE_ORIG) {
-        LOG(L_DBG,
-            "osp: orig '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
+        LM_DBG(
+            "orig '%s' released the call, call_id '%.*s' "
+			"transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
@@ -264,8 +257,9 @@ static int ospReportUsageFromCookie(
         terminator = nexthop;
     } else {
         release = OSP_RELEASE_TERM;
-        LOG(L_DBG,
-            "osp: term '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
+        LM_DBG(
+            "term '%s' released the call, call_id '%.*s' "
+			"transaction_id '%lld'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
@@ -277,7 +271,7 @@ static int ospReportUsageFromCookie(
 
     errorcode = OSPPTransactionNew(_osp_provider, &transaction);
 
-    LOG(L_DBG, "osp: created transaction handle '%d' (%d)\n", transaction, errorcode);
+    LM_DBG("created transaction handle '%d' (%d)\n", transaction, errorcode);
 
     if (isorig == 1) {
         issource = OSPC_SOURCE;
@@ -312,7 +306,7 @@ static int ospReportUsageFromCookie(
         NULL,
         NULL);
 
-    LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
+    LM_DBG("built usage handle '%d' (%d)\n", transaction, errorcode);
 
     if (errorcode == 0 && destinationCount > 0) {
         errorcode = OSPPTransactionSetDestinationCount(
@@ -353,8 +347,6 @@ int ospReportUsage(
     OSPTCALLID* callid = NULL;
     int result = MODULE_RETURNCODE_FALSE;
 
-    LOG(L_DBG, "osp: ospReportUsage\n");
-
     ospGetCallId(msg, &callid);
 
     if (callid != NULL && ospGetRouteParameters(msg, parameters, sizeof(parameters)) == 0) {
@@ -362,30 +354,28 @@ int ospReportUsage(
         if (sscanf(whorelease, "%d", &release) != 1) {
             release = OSP_RELEASE_ORIG;
         }
-        LOG(L_DBG, "osp: who releases the call first '%d'\n", release);
+        LM_DBG("who releases the call first '%d'\n", release);
 
         for (token = strtok_r(parameters, ";", &tmp);
              token;
              token = strtok_r(NULL, ";", &tmp))
         {
             if (strncmp(token, OSP_ORIG_COOKIE, strlen(OSP_ORIG_COOKIE)) == 0) {
-                LOG(L_INFO,
-                    "osp: report originate duration usage for call_id '%.*s'\n",
+                LM_INFO("report originate duration usage for call_id '%.*s'\n",
                     callid->ospmCallIdLen,
                     callid->ospmCallIdVal);
                 isorig = 1;
                 ospReportUsageFromCookie(msg, token + strlen(OSP_ORIG_COOKIE) + 1, callid, release, isorig);
                 result = MODULE_RETURNCODE_TRUE;
             } else if (strncmp(token, OSP_TERM_COOKIE, strlen(OSP_TERM_COOKIE)) == 0) {
-                LOG(L_INFO,
-                    "osp: report terminate duration usage for call_id '%.*s'\n",
+                LM_INFO("report terminate duration usage for call_id '%.*s'\n",
                     callid->ospmCallIdLen,
                     callid->ospmCallIdVal);
                 isorig = 0;
                 ospReportUsageFromCookie(msg, token + strlen(OSP_TERM_COOKIE) + 1, callid, release, isorig);
                 result = MODULE_RETURNCODE_TRUE;
             } else {
-                LOG(L_DBG, "osp: ignoring parameter '%s'\n", token);
+                LM_DBG("ignoring parameter '%s'\n", token);
             }
         }
     }
@@ -395,7 +385,7 @@ int ospReportUsage(
     }
 
     if (result == MODULE_RETURNCODE_FALSE) {
-        LOG(L_DBG, "osp: without OSP orig or term usage information\n");
+        LM_DBG("without OSP orig or term usage information\n");
     }
 
     return result;
@@ -419,8 +409,6 @@ static int ospBuildUsageFromDestination(
     char* srcdev;
 
     dest->reported = 1;
-
-    LOG(L_DBG, "osp: ospBuildUsageFromDestination\n");
 
     if (dest->type == OSPC_SOURCE) {
         ospConvertAddress(dest->srcdev, addr, sizeof(addr));
@@ -491,8 +479,6 @@ void ospReportOrigSetupUsage(void)
     int lastcode = 0;
     int errorcode = 0;
 
-    LOG(L_DBG, "osp: ospReportOrigSetupUsage\n");
-
     errorcode = OSPPTransactionNew(_osp_provider, &transaction);
 
     for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
@@ -506,11 +492,11 @@ void ospReportOrigSetupUsage(void)
 
         if (dest->used == 1) {
             if (dest->reported == 1) {
-                LOG(L_DBG, "osp: orig setup already reported\n");
+                LM_DBG("orig setup already reported\n");
                 break;
             }
 
-            LOG(L_DBG, "osp: iterating through used destination\n");
+            LM_DBG("iterating through used destination\n");
 
             ospDumpDestination(dest);
 
@@ -520,14 +506,13 @@ void ospReportOrigSetupUsage(void)
 
             lastcode = dest->lastcode;
         } else {
-            LOG(L_DBG, "osp: destination has not been used, breaking out\n");
+            LM_DBG("destination has not been used, breaking out\n");
             break;
         }
     }
 
     if (lastused) {
-        LOG(L_INFO,
-            "osp: report orig setup for call_id '%.*s' transaction_id '%lld'\n",
+        LM_INFO("report orig setup for call_id '%.*s' transaction_id '%lld'\n",
             lastused->callidsize,
             lastused->callid,
             lastused->tid);
@@ -550,12 +535,10 @@ void ospReportTermSetupUsage(void)
     OSPTTRANHANDLE transaction = -1;
     int errorcode = 0;
 
-    LOG(L_DBG, "osp: ospReportTermSetupUsage\n");
-
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
-            LOG(L_INFO,
-                "osp: report term setup for call_id '%.*s' transaction_id '%lld'\n",
+            LM_INFO("report term setup for call_id '%.*s' "
+				"transaction_id '%lld'\n",
                 dest->callidsize,
                 dest->callid,
                 dest->tid);
@@ -563,9 +546,9 @@ void ospReportTermSetupUsage(void)
             errorcode = ospBuildUsageFromDestination(transaction, dest, 0);
             errorcode = ospReportUsageFromDestination(transaction, dest);
         } else {
-            LOG(L_DBG, "osp: term setup already reported\n");
+            LM_DBG("term setup already reported\n");
         }
     } else {
-        LOG(L_ERR, "osp: ERROR: without term setup to report\n");
+        LM_ERR("without term setup to report\n");
     }
 }

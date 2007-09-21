@@ -60,7 +60,7 @@ static int parse_expression_list(char *str, expression **e)
 					if (start<=j) {
 						/* valid word */
 						if (j-start+1+1>EXPRESSION_LENGTH) {
-							LOG(L_ERR,"ERROR:permission: expression too long "
+							LM_ERR("expression too long "
 								"<%.*s>(%d)\n",j-start+1,str+start,j-start+1);
 							goto error;
 						}
@@ -194,7 +194,7 @@ static rule *parse_config_line(char *line)
 			str1[colon] = '\0';
 			if (parse_expression(str1, &left, &left_exceptions)) {
 				/* error */
-				LOG(L_ERR, "ERROR parsing line-left: %s\n", line);
+				LM_ERR("failed to parse line-left: %s\n", line);
 				goto error;
 			}
 			
@@ -203,13 +203,13 @@ static rule *parse_config_line(char *line)
 			str2[i-colon-1] = '\0';
 			if (parse_expression(str2, &right, &right_exceptions)) {
 				/* error */
-				LOG(L_ERR, "ERROR parsing line-right: %s\n", line);
+				LM_ERR("failed to parse line-right: %s\n", line);
 				goto error;
 			}
 			
 			rule1 = new_rule();
 			if (!rule1) {
-				LOG(L_ERR, "ERROR: Can't create new rule\n");
+				LM_ERR("can't create new rule\n");
 				goto error;
 			}
 
@@ -220,7 +220,7 @@ static rule *parse_config_line(char *line)
 			return rule1;
 		} else {
 			/* error */
-			LOG(L_ERR, "ERROR parsing line: %s\n", line);
+			LM_ERR("failed to parse line: %s\n", line);
 		}
 	}
 	return 0;
@@ -248,7 +248,7 @@ rule *parse_config_file(char *filename)
 
 	file = fopen(filename,"r");
 	if (!file) {
-		LOG(L_WARN, "WARNING: File not found: %s\n", filename);
+		LM_WARN("file not found: %s\n", filename);
 		return NULL;
 	}
 	

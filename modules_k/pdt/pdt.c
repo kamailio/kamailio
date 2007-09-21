@@ -156,12 +156,12 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	DBG("PDT: initializing...\n");
+	LM_INFO("initializing...\n");
 
 	if(hs_two_pow<0)
 	{
-		LOG(L_ERR, "PDT:mod_init: hash_size_two_pow must be"
-					" positive and less than %d\n", MAX_HSIZE_TWO_POW);
+		LM_ERR("hash_size_two_pow must be positive and less than %d\n",
+				MAX_HSIZE_TWO_POW);
 		return -1;
 	}
 
@@ -169,21 +169,21 @@ static int mod_init(void)
 	pdt_char_list.len = strlen(pdt_char_list.s);
 	if(pdt_char_list.len<=0)
 	{
-		LOG(L_ERR, "PDT:mod_init: invalid pdt char list\n");
+		LM_ERR("invalid pdt char list\n");
 		return -1;
 	}
-	LOG(L_ERR,"PDT:mod_init: pdt_char_list=%s \n",pdt_char_list.s);
+	LM_ERR("pdt_char_list=%s \n",pdt_char_list.s);
 
 	/* binding to mysql module */
 	if(bind_dbmod(db_url, &pdt_dbf))
 	{
-		LOG(L_ERR, "PDT:mod_init: Database module not found\n");
+		LM_ERR("database module not found\n");
 		return -1;
 	}
 
 	if (!DB_CAPABILITY(pdt_dbf, DB_CAP_ALL))
 	{
-		LOG(L_ERR, "PDT: mod_init: Database module does not "
+		LM_ERR("database module does not "
 		    "implement all functions needed by the module\n");
 		return -1;
 	}
@@ -192,38 +192,37 @@ static int mod_init(void)
 	db_con = pdt_dbf.init(db_url);
 	if(db_con==NULL)
 	{
-		LOG(L_ERR,
-			"PDT: mod_init: Error while connecting to database\n");        
+		LM_ERR("failed to connect to the database\n");        
 		return -1;
 	}
 	
 	if (pdt_dbf.use_table(db_con, db_table) < 0)
 	{
-		LOG(L_ERR, "PDT: mod_init: Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		goto error1;
 	}
-	DBG("PDT: mod_init: Database connection opened successfully\n");
+	LM_DBG("database connection opened successfully\n");
 	
 	if ( (pdt_lock=lock_alloc())==0) {
-		LOG(L_CRIT,"PDT: mod_init: failed to alloc lock\n");
+		LM_CRIT("failed to alloc lock\n");
 		goto error1;
 	}
 	if (lock_init(pdt_lock)==0 ) {
-		LOG(L_CRIT,"PDT: mod_init: failed to init lock\n");
+		LM_CRIT("failed to init lock\n");
 		goto error1;
 	}
 	
 	/* pdt hash and tree pointers in shm */
 	_dhash = (hash_list_t**)shm_malloc( sizeof(hash_list_t*) );
 	if (_dhash==0) {
-		LOG(L_CRIT,"PDT:mod_init: failed to get shm mem for dhash\n");
+		LM_ERR("out of shm mem for dhash\n");
 		goto error1;
 	}
 	*_dhash=0;
 	
 	_ptree = (pdt_tree_t**)shm_malloc( sizeof(pdt_tree_t*) );
 	if (_ptree==0) {
-		LOG(L_CRIT,"PDT:mod_init: failed to get shm mem for ptree\n");
+		LM_ERR("out of shm mem for pdtree\n");
 		goto error1;
 	}
 	*_ptree=0;
@@ -231,7 +230,7 @@ static int mod_init(void)
 	/* loading all information from database */
 	if(pdt_load_db()!=0)
 	{
-		LOG(L_ERR, "PDT:mod_init: cannot load info from database\n");	
+		LM_ERR("cannot load info from database\n");	
 		goto error1;
 	}
 		
@@ -239,7 +238,6 @@ static int mod_init(void)
 	db_con = 0;
 
 	pdt_print_tree(*_ptree);
-	DBG("PDT:mod_init: -------------------\n");
 	pdt_print_hash_list(*_dhash);
 
 	/* success code */
@@ -271,13 +269,13 @@ static int child_init(void)
 	db_con = pdt_dbf.init(db_url);
 	if(db_con==NULL)
 	{
-		LOG(L_ERR,"ERROR:PDT:child_init: failed to connect to database\n");
+		LM_ERR("failed to connect to database\n");
 		return -1;
 	}
 
 	if (pdt_dbf.use_table(db_con, db_table) < 0)
 	{
-		LOG(L_ERR, "ERROR:PDT:child_init: use_table failed\n");
+		LM_ERR("use_table failed\n");
 		return -1;
 	}
 	return 0;
@@ -290,7 +288,7 @@ static int mod_child_init(int r)
 	if ( child_init()!=0 )
 		return -1;
 
-	DBG("PDT:mod_child_init #%d: Database connection opened successfully\n",r);
+	LM_DBG("#%d: database connection opened successfully\n",r);
 
 	return 0;
 }
@@ -298,7 +296,7 @@ static int mod_child_init(int r)
 
 static void mod_destroy(void)
 {
-	DBG("PDT: mod_destroy : Cleaning up\n");
+	LM_DBG("cleaning up\n");
 	if (_dhash!=NULL)
 	{
 		if (*_dhash!=NULL)
@@ -368,7 +366,7 @@ static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
 	
 	if(msg==NULL)
 	{
-		LOG(L_ERR,"PDT:prefix2domain: weird error\n");
+		LM_ERR("received null msg\n");
 		return -1;
 	}
 	
@@ -376,14 +374,14 @@ static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
 	if(msg->parsed_uri_ok==0)
 		if(parse_sip_msg_uri(msg)<0)
 		{
-			LOG(L_ERR,"PDT:prefix2domain: ERROR while parsing the R-URI\n");
+			LM_ERR("failed to parse the R-URI\n");
 			return -1;
 		}
 
     /* if the user part begin with the prefix for PSTN users, extract the code*/
 	if (msg->parsed_uri.user.len<=0)
 	{
-		DBG("PDT:prefix2domain: user part of the message is empty\n");
+		LM_DBG("user part of the message is empty\n");
 		return -1;
 	}   
     
@@ -391,12 +389,12 @@ static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
 	{
 		if (msg->parsed_uri.user.len<=prefix.len)
 		{
-			DBG("PDT:prefix2domain: user part is less than prefix\n");
+			LM_DBG("user part is less than prefix\n");
 			return -1;
 		}   
 		if(strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
 		{
-			DBG("PDT:prefix2domain: PSTN prefix did not matched\n");
+			LM_DBG("PSTN prefix did not matched\n");
 			return -1;
 		}
 	}   
@@ -404,7 +402,7 @@ static int prefix2domain(struct sip_msg* msg, int mode, int sd_en)
 	if(prefix.len>0 && prefix.len < msg->parsed_uri.user.len
 			&& strncasecmp(prefix.s, msg->parsed_uri.user.s, prefix.len)!=0)
 	{
-		DBG("PDT:prefix2domain: PSTN prefix did not matched\n");
+		LM_DBG("PSTN prefix did not matched\n");
 		return -1;
 			
 	}
@@ -428,15 +426,14 @@ again:
 		if(parse_from_header(msg)<0 ||  msg->from == NULL 
 				|| get_from(msg)==NULL)
 		{
-			LOG(L_ERR,
-				"prefix_to_domain: ERROR cannot parse FROM header\n");
+			LM_ERR("cannot parse FROM header\n");
 			goto error;
 		}	
 		
 		memset(&uri, 0, sizeof(struct sip_uri));
 		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
 		{
-			LOG(L_ERR,"prefix_to_domain: failed to parse From uri\n");
+			LM_ERR("failed to parse From uri\n");
 			goto error;
 		}
 	
@@ -447,8 +444,7 @@ again:
 			plen = 0;
 			if((d=pdt_get_domain(*_ptree, &all, &p, &plen))==NULL)
 			{
-				LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
-					p.len, p.s);
+				LM_INFO("no prefix found in [%.*s]\n", p.len, p.s);
 				goto error;
 			}
 		}
@@ -457,15 +453,14 @@ again:
 		if(parse_from_header(msg)<0 ||  msg->from == NULL
 				|| get_from(msg)==NULL)
 		{
-			LOG(L_ERR,
-				"prefix_to_domain: ERROR cannot parse FROM header\n");
+			LM_ERR("ERROR cannot parse FROM header\n");
 			goto error;
 		}	
 		
 		memset(&uri, 0, sizeof(struct sip_uri));
 		if (parse_uri(get_from(msg)->uri.s, get_from(msg)->uri.len , &uri)<0)
 		{
-			LOG(L_ERR,"prefix_to_domain: failed to parse From uri\n");
+			LM_ERR("failed to parse From uri\n");
 			goto error;
 		}
 	
@@ -473,8 +468,7 @@ again:
 		plen = 0;
 		if((d=pdt_get_domain(*_ptree, &uri.host, &p, &plen))==NULL)
 		{
-			LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
-				p.len, p.s);
+			LM_INFO("no prefix found in [%.*s]\n", p.len, p.s);
 			goto error;
 		}
 	} else {
@@ -482,8 +476,7 @@ again:
 		plen = 0;
 		if((d=pdt_get_domain(*_ptree, &all, &p, &plen))==NULL)
 		{
-			LOG(L_INFO, "PDT:prefix2domain: no prefix found in [%.*s]\n",
-				p.len, p.s);
+			LM_INFO("no prefix found in [%.*s]\n", p.len, p.s);
 			goto error;
 		}
 	}
@@ -491,7 +484,7 @@ again:
 	/* update the new uri */
 	if(update_new_uri(msg, plen, d, mode)<0)
 	{
-		LOG(L_ERR, "PDT:prefix2domain: new_uri cannot be updated\n");
+		LM_ERR("new_uri cannot be updated\n");
 		goto error;
 	}
 
@@ -513,7 +506,7 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	struct action act;
 	if(msg==NULL || d==NULL)
 	{
-		LOG(L_ERR, "PDT:update_new_uri: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
@@ -529,7 +522,7 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 
 		if (do_action(&act, msg) < 0)
 		{
-			LOG(L_ERR, "PDT:update_new_uri:Error removing prefix\n");
+			LM_ERR("failed to remove prefix\n");
 			return -1;
 		}
 	}
@@ -541,11 +534,11 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 
 	if (do_action(&act, msg) < 0)
 	{
-		LOG(L_ERR, "PDT:update_new_uri:Error changing domain\n");
+		LM_ERR("failed to change domain\n");
 		return -1;
 	}
 
-	DBG("PDT: update_new_uri: len=%d uri=%.*s\n", msg->new_uri.len, 
+	LM_DBG("len=%d uri=%.*s\n", msg->new_uri.len, 
 			msg->new_uri.len, msg->new_uri.s);
 	
 	return 0;
@@ -565,13 +558,13 @@ int pdt_load_db(void)
 	
 	if(db_con==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_load_db: no db connection\n");
+		LM_ERR("no db connection\n");
 		return -1;
 	}
 		
 	if (pdt_dbf.use_table(db_con, db_table) < 0)
 	{
-		LOG(L_ERR, "PDT:pdt_load_db: Error in use_table\n");
+		LM_ERR("failed to use_table\n");
 		return -1;
 	}
 	
@@ -589,7 +582,7 @@ int pdt_load_db(void)
 	/* init the hash and tree in share memory */
 	if( (_dhash_new = init_hash_list(hs_two_pow)) == NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_load_db: domain hash could not be allocated\n");	
+		LM_ERR("domain hash could not be allocated\n");	
 		goto error;
 	}
 	
@@ -608,28 +601,26 @@ int pdt_load_db(void)
 		if(p.s==NULL || d.s==NULL || sdomain.s==NULL ||
 				p.len<=0 || d.len<=0 || sdomain.len<=0)
 		{
-			LOG(L_ERR, "PDT:pdt_load_db: Error - bad values in db\n");
+			LM_ERR("Error - bad values in db\n");
 			continue;
 		}
 		
 		if(pdt_check_pd(_dhash_new, &sdomain, &p, &d)==1)
 		{
-			LOG(L_ERR,
-				"PDT:pdt_load_db:sdomain [%.*s]: prefix [%.*s] or domain"
-				" <%.*s> duplicated\n",
-				sdomain.len, sdomain.s, p.len, p.s, d.len, d.s);
-				continue;
+			LM_ERR("sdomain [%.*s]: prefix [%.*s] or domain <%.*s> "
+				"duplicated\n", sdomain.len, sdomain.s, p.len, p.s, d.len, d.s);
+			continue;
 		}
 
 		if(pdt_add_to_tree(&_ptree_new, &sdomain, &p, &d)<0)
 		{
-			LOG(L_ERR, "PDT:pdt_load_db: Error adding info to tree\n");
+			LM_ERR("Error adding info to tree\n");
 			goto error;
 		}
 			
 		if(pdt_add_to_hash(_dhash_new, &sdomain, &p, &d)!=0)
 		{
-			LOG(L_ERR, "PDT:pdt_load_db: Error adding info to hash\n");
+			LM_ERR("Error adding info to hash\n");
 			goto error;
 		}
  	}
@@ -681,7 +672,7 @@ static struct mi_root* pdt_mi_reload(struct mi_root *cmd_tree, void *param)
 	/* re-loading all information from database */
 	if(pdt_load_db()!=0)
 	{
-		LOG(L_ERR,"PDT:pdt_mi_reload: cannot re-load info from database\n");	
+		LM_ERR("cannot re-load info from database\n");	
 		goto error;
 	}
 	
@@ -710,7 +701,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 
 	if(_dhash==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: strange situation\n");
+		LM_ERR("strange situation\n");
 		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
@@ -734,7 +725,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	sp= node->value;
 	if(sp.s== NULL || sp.len==0)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: could not read prefix\n");
+		LM_ERR("could not read prefix\n");
 		return init_mi_tree( 404, "prefix not found", 16);
 	}
 
@@ -756,7 +747,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	sd= node->value;
 	if(sd.s== NULL || sd.len==0)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: could not read domain\n");
+		LM_ERR("could not read domain\n");
 		return init_mi_tree( 400, "domain not found", 16);
 	}
 
@@ -766,9 +757,9 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	
 	if(pdt_check_pd(*_dhash, &sdomain, &sp, &sd)==1)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: (sdomain,prefix,domain) exists\n");
+		LM_ERR("(sdomain,prefix,domain) exists\n");
 		return init_mi_tree( 400,
-			"(sdomain,prefix,domain) exists already", 38);
+				"(sdomain,prefix,domain) exists already", 38);
 	}
 	db_vals[0].type = DB_STR;
 	db_vals[0].nul = 0;
@@ -788,14 +779,14 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	/* insert a new domain into database */
 	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_add: error storing new prefix/domain\n");
+		LM_ERR("failed to store new prefix/domain\n");
 		return init_mi_tree( 500,"Cannot store prefix/domain", 26);
 	}
 
 	/* re-loading all information from database */
 	if(pdt_load_db()!=0)
 	{
-		LOG(L_ERR,"PDT:pdt_mi_delete: cannot re-load info from database\n");	
+		LM_ERR("cannot re-load info from database\n");	
 		goto error;
 	}
 	
@@ -806,7 +797,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	
 error:
 	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
-		LOG(L_ERR,"PDT:pdt_mi_add: database/cache are inconsistent\n");
+		LM_ERR("database/cache are inconsistent\n");
 	return init_mi_tree( 500, "could not add to cache", 23 );
 
 error1:
@@ -829,7 +820,7 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 
 	if(_dhash==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_delete: strange situation\n");
+		LM_ERR("strange situation\n");
 		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
@@ -853,7 +844,7 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 	sd= node->value;
 	if(sd.s== NULL || sd.len==0)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_delete: could not read domain\n");
+		LM_ERR("could not read domain\n");
 		return init_mi_tree(404, "domain not found", 16);
 	}
 
@@ -873,17 +864,17 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 
 	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, 2)<0)
 	{
-		LOG(L_ERR,"PDT:pdt_mi_delete: database/cache are inconsistent\n");
+		LM_ERR("database/cache are inconsistent\n");
 		return init_mi_tree( 500, "database/cache are inconsistent", 31 );
 	} 
 	/* re-loading all information from database */
 	if(pdt_load_db()!=0)
 	{
-		LOG(L_ERR,"PDT:pdt_mi_delete: cannot re-load info from database\n");	
+		LM_ERR("cannot re-load info from database\n");	
 		return init_mi_tree( 500, "cannot reload", 13 );
 	}
 
-	DBG("PDT:pdt_mi_delete: prefix for sdomain [%.*s] domain [%.*s] "
+	LM_DBG("prefix for sdomain [%.*s] domain [%.*s] "
 			"removed\n", sdomain.len, sdomain.s, sd.len, sd.s);
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 error:
@@ -920,10 +911,9 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 	struct mi_node* node = NULL;
 	struct mi_attr* attr= NULL;
 
-	DBG("PDT:pdt_mi_list ...\n");
 	if(_dhash==NULL)
 	{
-		LOG(L_ERR, "PDT:pdt_mi_list: empty domain list\n");
+		LM_ERR("empty domain list\n");
 		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
 	}
 
@@ -956,8 +946,7 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 				{
 					if(strpos(pdt_char_list.s,sp.s[i]) < 0)
 					{
-						LOG(L_ERR, "PDT:pdt_mi_list: bad prefix [%.*s]\n",
-							sp.len, sp.s);
+						LM_ERR("bad prefix [%.*s]\n", sp.len, sp.s);
 						return init_mi_tree( 400, "bad prefix", 10);
 					}
 					i++;

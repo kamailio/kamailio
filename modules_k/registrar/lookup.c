@@ -64,7 +64,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	else uri = _m->first_line.u.request.uri;
 	
 	if (extract_aor(&uri, &aor) < 0) {
-		LOG(L_ERR, "lookup(): Error while extracting address of record\n");
+		LM_ERR("failed to extract address of record\n");
 		return -3;
 	}
 	
@@ -73,7 +73,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	ul.lock_udomain((udomain_t*)_t, &aor);
 	res = ul.get_urecord((udomain_t*)_t, &aor, &r);
 	if (res > 0) {
-		DBG("lookup(): '%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
+		LM_DBG("'%.*s' Not found in usrloc\n", aor.len, ZSW(aor.s));
 		ul.unlock_udomain((udomain_t*)_t, &aor);
 		return -1;
 	}
@@ -92,7 +92,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 	ret = 1;
 	if (ptr) {
 		if (rewrite_uri(_m, &ptr->c) < 0) {
-			LOG(L_ERR, "lookup(): Unable to rewrite Request-URI\n");
+			LM_ERR("unable to rewrite Request-URI\n");
 			ret = -3;
 			goto done;
 		}
@@ -102,17 +102,17 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 		 * has to handle NAT. - agranig */
 		if (ptr->path.s && ptr->path.len) {
 			if (get_path_dst_uri(&ptr->path, &path_dst) < 0) {
-				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
+				LM_ERR("failed to get dst_uri for Path\n");
 				ret = -3;
 				goto done;
 			}
 			if (set_path_vector(_m, &ptr->path) < 0) {
-				LOG(L_ERR, "lookup(): Failed to set path vector\n");
+				LM_ERR("failed to set path vector\n");
 				ret = -3;
 				goto done;
 			}
 			if (set_dst_uri(_m, &path_dst) < 0) {
-				LOG(L_ERR, "lookup(): Failed to set dst_uri of Path\n");
+				LM_ERR("failed to set dst_uri of Path\n");
 				ret = -3;
 				goto done;
 			}
@@ -141,7 +141,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			path_dst.len = 0;
 			if(ptr->path.s && ptr->path.len 
 			&& get_path_dst_uri(&ptr->path, &path_dst) < 0) {
-				LOG(L_ERR, "lookup(): Failed to get dst_uri for Path\n");
+				LM_ERR("failed to get dst_uri for Path\n");
 				continue;
 			}
 
@@ -149,7 +149,7 @@ int lookup(struct sip_msg* _m, char* _t, char* _s)
 			 * regarding path vs. received. */
 			if (append_branch(_m,&ptr->c,path_dst.len?&path_dst:&ptr->received,
 			&ptr->path, ptr->q, ptr->cflags, ptr->sock) == -1) {
-				LOG(L_ERR, "lookup(): Error while appending a branch\n");
+				LM_ERR("failed to append a branch\n");
 				/* Also give a chance to the next branches*/
 				continue;
 			}
@@ -179,7 +179,7 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	else uri = _m->first_line.u.request.uri;
 	
 	if (extract_aor(&uri, &aor) < 0) {
-		LOG(L_ERR, "registered(): Error while extracting address of record\n");
+		LM_ERR("failed to extract address of record\n");
 		return -1;
 	}
 	
@@ -188,7 +188,7 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 
 	if (res < 0) {
 		ul.unlock_udomain((udomain_t*)_t, &aor);
-		LOG(L_ERR, "registered(): Error while querying usrloc\n");
+		LM_ERR("failed to query usrloc\n");
 		return -1;
 	}
 
@@ -200,12 +200,12 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 
 		if (ptr) {
 			ul.unlock_udomain((udomain_t*)_t, &aor);
-			DBG("registered(): '%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
+			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 			return 1;
 		}
 	}
 
 	ul.unlock_udomain((udomain_t*)_t, &aor);
-	DBG("registered(): '%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
+	LM_DBG("'%.*s' not found in usrloc\n", aor.len, ZSW(aor.s));
 	return -1;
 }

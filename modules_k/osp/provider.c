@@ -59,18 +59,16 @@ int ospSetupProvider(void)
     OSPTCERT* cacerts[1];
     int result;
 
-    LOG(L_DBG, "osp: ospSetupProvider\n");
-
     cacerts[0] = &cacert;
 
     if ((result = OSPPInit(_osp_crypto_hw)) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to initalize OSP (%i)\n", result);
+        LM_ERR("failed to initalize OSP (%i)\n", result);
     } else if (OSPPUtilLoadPEMPrivateKey(_osp_private_key, &privatekey) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to load private key from '%s'\n", _osp_private_key);
+        LM_ERR("failed to load private key from '%s'\n", _osp_private_key);
     } else if (OSPPUtilLoadPEMCert(_osp_local_certificate, &localcert) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to load local certificate from '%s'\n",_osp_local_certificate);
+        LM_ERR("failed to load local certificate from '%s'\n",_osp_local_certificate);
     } else if (OSPPUtilLoadPEMCert(_osp_ca_certificate, &cacert) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to load CA certificate from '%s'\n", _osp_ca_certificate);
+        LM_ERR("failed to load CA certificate from '%s'\n", _osp_ca_certificate);
     } else {
         result = OSPPProviderNew(
             _osp_sp_number,
@@ -92,9 +90,9 @@ int ospSetupProvider(void)
             "",
             &_osp_provider);
         if (result != 0) {
-            LOG(L_ERR, "osp: ERROR: failed to create provider (%i)\n", result);
+            LM_ERR("failed to create provider (%i)\n", result);
         } else {
-            LOG(L_DBG, "osp: created new (per process) provider '%d'\n", _osp_provider);
+            LM_DBG("created new (per process) provider '%d'\n", _osp_provider);
             result = 0;
         }
     }
@@ -126,10 +124,8 @@ int ospDeleteProvider(void)
 {
     int result;
 
-    LOG(L_DBG, "osp: ospDeleteProvider\n");
-
     if ((result = OSPPProviderDelete(_osp_provider, 0)) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to erase provider '%d' (%d)\n", _osp_provider, result);
+        LM_ERR("failed to erase provider '%d' (%d)\n", _osp_provider, result);
     }
     
     return result;

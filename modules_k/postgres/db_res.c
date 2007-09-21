@@ -69,9 +69,9 @@ db_res_t* pg_new_result(void)
 	db_res_t* _res = NULL;
 
 	_res = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	LOG(L_DBG, "PG[new_result]: %p=pkg_malloc(%lu) _res\n", _res, (unsigned long)sizeof(db_res_t));
+	LM_DBG("%p=pkg_malloc(%lu) _res\n", _res, (unsigned long)sizeof(db_res_t));
         if (!_res) {
-                LOG(L_ERR, "PG[new_result]: Failed to allocate %lu bytes for result structure\n", (unsigned long)sizeof(db_res_t));
+                LM_ERR("no more pkg memory\n");
                 return NULL;
         }
 	
@@ -88,23 +88,23 @@ int pg_convert_result(db_con_t* _con, db_res_t* _res)
 
 #ifdef PARANOID
         if (!_con)  {
-                LOG(L_ERR, "PG[convert_result]: db_con_t parameter cannot be NULL\n");
+                LM_ERR("db_con_t parameter cannot be NULL\n");
                 return -1;
         }
 
         if (!_res) {
-                LOG(L_ERR, "PG[convert_result]: db_res_t parameter cannot be NULL\n");
+                LM_ERR("db_res_t parameter cannot be NULL\n");
                 return -1;
         }
 #endif
 
         if (pg_get_columns(_con, _res) < 0) {
-                LOG(L_ERR, "PG[convert_result]: Error while getting column names\n");
+                LM_ERR("failed to get column names\n");
                 return -2;
         }
 
         if (pg_convert_rows(_con, _res, 0, PQntuples(CON_RESULT(_con))) < 0) {
-                LOG(L_ERR, "PG[convert_result]: Error while converting rows\n");
+               LM_ERR("failed to convert rows\n");
                 pg_free_columns(_res);
                 return -3;
         }
@@ -121,12 +121,12 @@ int pg_get_columns(db_con_t* _con, db_res_t* _res)
 
 #ifdef PARANOID
         if (!_con)  {
-                LOG(L_ERR, "PG[get_columns]: db_con_t parameter cannot be NULL\n");
+                LM_ERR("db_con_t parameter cannot be NULL\n");
                 return -1;
         }
 
         if (!_res) {
-                LOG(L_ERR, "PG[get_columns]: db_res_t parameter cannot be NULL\n");
+                LM_ERR("db_res_t parameter cannot be NULL\n");
                 return -1;
         }
 #endif
@@ -139,27 +139,31 @@ int pg_get_columns(db_con_t* _con, db_res_t* _res)
 	cols = PQnfields(CON_RESULT(_con));
 
         if (!cols) {
-                LOG(L_DBG, "PG[get_columns]: No columns returned from the query\n");
+                LM_DBG("No columns returned from the query\n");
                 return -2;
 	} else {
-		LOG(L_DBG, "PG[get_columns]: %d column(s) returned from the query\n", cols);
+		LM_DBG("%d column(s) returned from the query\n", cols);
         }
 
 	/* Allocate storage to hold a pointer to each column name */
         RES_NAMES(_res) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
-	LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res), (unsigned long)(sizeof(db_key_t) * cols));
+	LM_DBG("%p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res), 
+			(unsigned long)(sizeof(db_key_t) * cols));
 	if (!RES_NAMES(_res)) {
-                LOG(L_ERR, "PG[get_columns]: Failed to allocate %lu bytes for column names\n", (unsigned long)(sizeof(db_key_t) * cols));
+                LM_ERR("failed to allocate %lu bytes in pkg memory for column"
+						"names\n", (unsigned long)(sizeof(db_key_t) * cols));
                 return -3;
         }
 
 	/* Allocate storage to hold the type of each column */
         RES_TYPES(_res) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
-	LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%lu) RES_TYPES\n", RES_TYPES(_res), (unsigned long)(sizeof(db_type_t) * cols));
+	LM_DBG("%p=pkg_malloc(%lu) RES_TYPES\n", RES_TYPES(_res), 
+			(unsigned long)(sizeof(db_type_t) * cols));
         if (!RES_TYPES(_res)) {
-                LOG(L_ERR, "PG[get_columns]: Failed to allocate %lu bytes for column types\n", (unsigned long)(sizeof(db_type_t) * cols));
+                LM_ERR("failed to allocate %lu bytes in pkg memory for column"
+						"types\n", (unsigned long)(sizeof(db_type_t) * cols));
 		/* Free previously allocated storage that was to hold column names */
-		LOG(L_DBG, "PG[get_columns]: %p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
+		LM_DBG("%p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
 		pkg_free(RES_NAMES(_res));
                 return -4;
         }
@@ -183,15 +187,17 @@ int pg_get_columns(db_con_t* _con, db_res_t* _res)
 		 */
 		len = strlen(PQfname(CON_RESULT(_con),col));
 		RES_NAMES(_res)[col] = pkg_malloc(len+1);
-		LOG(L_DBG, "PG[get_columns]: %p=pkg_malloc(%d) RES_NAMES[%d]\n", RES_NAMES(_res)[col], len+1, col);
+		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]\n", RES_NAMES(_res)[col], 
+				len+1, col);
 		if (! RES_NAMES(_res)[col]) {
-			LOG(L_ERR, "PG[get_columns]: Failed to allocate %d bytes to hold column name\n", len+1);
+			LM_ERR("failed to allocate %d bytes to hold column name\n", len+1);
 			return -1;
 		}
 		memset((char *)RES_NAMES(_res)[col], 0, len+1);
 		strncpy((char *)RES_NAMES(_res)[col], PQfname(CON_RESULT(_con),col), len); 
 
-		LOG(L_DBG, "PG[get_columns]: RES_NAMES(%p)[%d]=[%s]\n", RES_NAMES(_res)[col], col, RES_NAMES(_res)[col]);
+		LM_DBG("RES_NAMES(%p)[%d]=[%s]\n", RES_NAMES(_res)[col], col,
+				RES_NAMES(_res)[col]);
 
 		/* PQftype: Returns the data type associated with the given column number.
 		 * The integer returned is the internal OID number of the type.
@@ -235,7 +241,8 @@ int pg_get_columns(db_con_t* _con, db_res_t* _res)
 			break;
 
 			default:
-				LOG(L_WARN, "PG[get_columns]: Unhandled data type column (%s) OID (%d), defaulting to STRING\n", RES_NAMES(_res)[col], ft);
+				LM_WARN("unhandled data type column (%s) OID (%d), "
+						"defaulting to STRING\n", RES_NAMES(_res)[col], ft);
 				RES_TYPES(_res)[col] = DB_STRING;
 			break;
 		}		
@@ -254,34 +261,34 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 
 #ifdef PARANOID
 	if (!_con)  {
-		LOG(L_ERR, "PG[convert_rows]: db_con_t parameter cannot be NULL\n");
+		LM_ERR("db_con_t parameter cannot be NULL\n");
 		return -1;
 	}
 
 	if (!_res)  {
-		LOG(L_ERR, "PG[convert_rows]: db_res_t parameter cannot be NULL\n");
+		LM_ERR("db_res_t parameter cannot be NULL\n");
 		return -1;
 	}
 #endif
 
 	if (row_count == 0) {
-		LOG(L_DBG, "PG[convert_rows]: No rows requested from the query\n");
+		LM_ERR("no rows requested from the query\n");
 		return 0;
 	}
 
 	if (!RES_NUM_ROWS(_res)) {
-		LOG(L_DBG, "PG[convert_rows]: No rows returned from the query\n");
+		LM_DBG("no rows returned from the query\n");
 		return 0;
 	}
 
 	if (row_start < 0)  {
-		LOG(L_ERR, "PG[convert_rows]: starting row (%d) cannot be less "
+		LM_ERR("starting row (%d) cannot be less "
 			"then zero, setting it to zero\n", row_start);
 		row_start = 0;
 	}
 
 	if ((row_start + row_count) > RES_NUM_ROWS(_res))  {
-		LOG(L_ERR, "PG[convert_rows]: Starting row + row count cannot be > "
+		LM_ERR("starting row + row count cannot be > "
 			"total rows. Setting row count to read remainder of result set\n");
 		row_count = RES_NUM_ROWS(_res) - row_start;
 	}
@@ -323,7 +330,7 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 	//}
 	/* Looking for the row instance with no values */
 	//if(!value){
-	//	LOG(L_ERR, "PG[convert_rows]: Row instance, does not have a column value!\n");
+	//	LM_ERR("row instance, does not have a column value!\n");
 	//	/* Set the number of rows in this Fetch to zero */
 	//	RES_ROW_N(_res) = 0;
 	//	return 0;
@@ -336,11 +343,10 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 	 */
 	len = sizeof(char *) * cols;
 	row_buf = (char **)pkg_malloc(len);
-	LOG(L_DBG, "PG[convert_rows]: %p=pkg_malloc(%d) row_buf %d pointers\n",
-		row_buf, len, cols);
+	LM_DBG("%p=pkg_malloc(%d) row_buf %d pointers\n", row_buf, len, cols);
 	if (!row_buf) {
-		LOG(L_ERR, "PG[_convert_rows]: Failed to allocate %d bytes for "
-			"row buffer\n", len);
+		LM_ERR("failed to allocate %d bytes in pkg memory for row buffer\n",
+				len);
 		return -1;
 	}
 	memset(row_buf, 0, len);
@@ -348,10 +354,10 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 	/* Allocate a row structure for each row in the current fetch. */
 	len = sizeof(db_row_t) * row_count;
 	RES_ROWS(_res) = (db_row_t*)pkg_malloc(len);
-	LOG(L_DBG, "PG[convert_rows]: %p=pkg_malloc(%d) RES_ROWS %d rows\n",
-		RES_ROWS(_res), len, row_count);
+	LM_DBG("%p=pkg_malloc(%d) RES_ROWS %d rows\n", 
+			RES_ROWS(_res), len, row_count);
 	if (!RES_ROWS(_res)) {
-		LOG(L_ERR, "PG[convert_rows]: Failed to allocate %d bytes %d rows "
+		LM_ERR("failed to allocate %d bytes in pkg memory, %d rows "
 			"for row structure\n", len, row_count);
 		return -1;
 	}
@@ -411,21 +417,19 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 				 */
 				s = PQgetvalue(CON_RESULT(_con), row, col);
 			// }
-			LOG(L_DBG, "PG[convert_rows]: PQgetvalue(%p,%d,%d)=[%s]\n",
-				_con, row, col, s);
+			LM_DBG("PQgetvalue(%p,%d,%d)=[%s]\n", _con, row, col, s);
 			len = strlen(s);
 			row_buf[col] = pkg_malloc(len+1);
 			if (!row_buf[col]) {
-				LOG(L_ERR, "PG[_convert_rows]: Failed to allocate %d bytes "
+				LM_ERR("failed to allocate %d bytes in pkg memory "
 					"for row_buf[%d]\n", len+1, col);
 				return -1;
 			}
 			memset(row_buf[col], 0, len+1);
-			LOG(L_DBG, "PG[convert_rows]: %p=pkg_malloc(%d) row_buf[%d]\n",
-				row_buf[col], len, col);
+			LM_DBG("%p=pkg_malloc(%d) row_buf[%d]\n", row_buf[col], len, col);
 
 			strncpy(row_buf[col], s, len);
-			LOG(L_DBG, "PG[convert_rows]: [%d][%d] Column[%s]=[%s]\n",
+			LM_DBG("[%d][%d] Column[%s]=[%s]\n",
 				row, col, RES_NAMES(_res)[col], row_buf[col]);
 		}
 
@@ -433,15 +437,13 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 		** ASSERT: row_buf contains an entire row in strings
 		*/
 		if(pg_convert_row(_con,_res,&(RES_ROWS(_res)[fetch_count]),row_buf)<0){
-			LOG(L_ERR, "PG[convert_rows]: Error converting row #%d\n",  row);
+			LM_ERR("failed to convert row #%d\n",  row);
 			RES_ROW_N(_res) = row - row_start;
 			for (col=0; col<cols; col++) {
-				LOG(L_DBG, "PG[convert_rows]: Error: %p=pkg_free() "
-					"row_buf[%d]\n", (char *)row_buf[col], col);
+				LM_DBG("%p=pkg_free() row_buf[%d]\n",(char *)row_buf[col], col);
 				pkg_free((char *)row_buf[col]);	
 			}
-			LOG(L_DBG, "PG[convert_rows]: Error %p=pkg_free() row_buf\n",
-				row_buf);
+			LM_DBG("%p=pkg_free() row_buf\n", row_buf);
 			pkg_free(row_buf);
 			return -4;
 		}
@@ -477,11 +479,11 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 				case DB_STR:
 					break;
 				default:
-					LOG(L_DBG, "PG[convert_rows]: [%d][%d] Col[%s] Type[%d] "
+					LM_DBG("[%d][%d] Col[%s] Type[%d] "
 						"Freeing row_buf[%p]\n", row, col,
 						RES_NAMES(_res)[col], RES_TYPES(_res)[col],
 						row_buf[col]);
-					LOG(L_DBG, "PG[convert_rows]: %p=pkg_free() row_buf[%d]\n",
+					LM_DBG("%p=pkg_free() row_buf[%d]\n",
 						(char *)row_buf[col], col);
 					pkg_free((char *)row_buf[col]);
 			}
@@ -502,7 +504,7 @@ int pg_convert_rows(db_con_t* _con, db_res_t* _res, int row_start, int row_count
 	fetch_count++;
 	}
 
-	LOG(L_DBG, "PG[convert_rows]: %p=pkg_free() row_buf\n", row_buf);
+	LM_DBG("%p=pkg_free() row_buf\n", row_buf);
 	pkg_free(row_buf);
 	row_buf = NULL;
 	return 0;
@@ -518,17 +520,17 @@ int pg_convert_row(db_con_t* _con, db_res_t* _res, db_row_t* _row,
 
 #ifdef PARANOID
 	if (!_con)  {
-		LOG(L_ERR, "PG[convert_row]: db_con_t parameter cannot be NULL\n");
+		LM_ERR("db_con_t parameter cannot be NULL\n");
 		return -1;
 	}
 
 	if (!_res)  {
-		LOG(L_ERR, "PG[convert_row]: db_res_t parameter cannot be NULL\n");
+		LM_ERR("db_res_t parameter cannot be NULL\n");
 		return -1;
 	}
 
 	if (!_row)  {
-		LOG(L_ERR, "PG[convert_row]: db_row_t parameter cannot be NULL\n");
+		LM_ERR("db_row_t parameter cannot be NULL\n");
 		return -1;
 	}
 #endif
@@ -537,11 +539,11 @@ int pg_convert_row(db_con_t* _con, db_res_t* _res, db_row_t* _row,
 	/* because PostgreSQL returns (most) data as strings */
 	len = sizeof(db_val_t) * RES_COL_N(_res);
 	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);
-	LOG(L_DBG,"PG[convert_row]: %p=pkg_malloc(%d) ROW_VALUES for %d columns\n",
+	LM_DBG("%p=pkg_malloc(%d) ROW_VALUES for %d columns\n",
 		ROW_VALUES(_row), len, RES_COL_N(_res));
 
 	if (!ROW_VALUES(_row)) {
-		LOG(L_ERR, "PG[convert_row]: No memory left\n");
+		LM_ERR("No memory left\n");
 		return -1;
 	}
 	memset(ROW_VALUES(_row), 0, len);
@@ -551,12 +553,12 @@ int pg_convert_row(db_con_t* _con, db_res_t* _res, db_row_t* _row,
 
 	/* For each column in the row */
 	for(col = 0; col < ROW_N(_row); col++) {
-		LOG(L_DBG, "PG[convert_row]: col[%d]\n", col);
+		LM_DBG("col[%d]\n", col);
 		/* Convert the string representation into the value representation */
 		if (pg_str2val(RES_TYPES(_res)[col], &(ROW_VALUES(_row)[col]),
 		row_buf[col], strlen(row_buf[col])) < 0) {
-			LOG(L_ERR, "PG[convert_row]: Error while converting value\n");
-			LOG(L_DBG, "PG[convert_row]: %p=pkg_free() _row\n", _row);
+			LM_ERR("failed to convert value\n");
+			LM_DBG("%p=pkg_free() _row\n", _row);
 			pg_free_row(_row);
 			return -3;
 		}
@@ -574,21 +576,21 @@ int pg_free_rows(db_res_t* _res)
 
 #ifdef PARANOID
 	if (!_res)  {
-		LOG(L_ERR, "PG[free_rows]: db_res_t parameter cannot be NULL\n");
+		LM_ERR("db_res_t parameter cannot be NULL\n");
 		return -1;
 	}
 #endif
 
-	LOG(L_DBG, "PG[free_rows]: Freeing %d rows\n", RES_ROW_N(_res));
+	LM_DBG("freeing %d rows\n", RES_ROW_N(_res));
 
 	for(row = 0; row < RES_ROW_N(_res); row++) {
-		LOG(L_DBG, "PG[free_rows]: Row[%d]=%p\n", row, &(RES_ROWS(_res)[row]));
+		LM_DBG("row[%d]=%p\n", row, &(RES_ROWS(_res)[row]));
 		pg_free_row(&(RES_ROWS(_res)[row]));
 	}
 	RES_ROW_N(_res) = 0;
 
 	if (RES_ROWS(_res)) {
-		LOG(L_DBG, "PG[free_rows]: %p=pkg_free() RES_ROWS\n", RES_ROWS(_res));
+		LM_DBG("%p=pkg_free() RES_ROWS\n", RES_ROWS(_res));
 		pkg_free(RES_ROWS(_res));
 		RES_ROWS(_res) = NULL;
 	}
@@ -611,7 +613,7 @@ int pg_free_row(db_row_t* _row)
 
 #ifdef PARANOID
 	if (!_row) {
-		LOG(L_ERR, "PG[free_row]: db_row_t parameter cannot be NULL\n");
+		LM_ERR("db_row_t parameter cannot be NULL\n");
 		return -1;
 	}
 #endif
@@ -627,19 +629,19 @@ int pg_free_row(db_row_t* _row)
 		_val = &(ROW_VALUES(_row)[col]);
 		switch (VAL_TYPE(_val)) {
 			case DB_STRING:
-				LOG(L_DBG, "PG[free_row]: %p=pkg_free() VAL_STRING[%d]\n",
+				LM_DBG("%p=pkg_free() VAL_STRING[%d]\n",
 					(char *)VAL_STRING(_val), col);
 				pkg_free((char *)(VAL_STRING(_val)));
 				VAL_STRING(_val) = (char *)NULL;
 				break;
 			case DB_STR:
-				LOG(L_DBG, "PG[free_row]: %p=pkg_free() VAL_STR[%d]\n",
+				LM_DBG("%p=pkg_free() VAL_STR[%d]\n",
 					(char *)(VAL_STR(_val).s), col);
 				pkg_free((char *)(VAL_STR(_val).s));
 				VAL_STR(_val).s = (char *)NULL;
 				break;
 			case DB_BLOB:
-				LOG(L_DBG, "PG[free_row]: %p=pkg_free() VAL_BLOB[%d]\n",
+				LM_DBG("%p=pkg_free() VAL_BLOB[%d]\n",
 					(char *)(VAL_BLOB(_val).s), col);
 				PQfreemem(VAL_BLOB(_val).s);
 				VAL_BLOB(_val).s = (char *)NULL;
@@ -651,8 +653,7 @@ int pg_free_row(db_row_t* _row)
 
 	/* Free db_val_t structure. */
 	if (ROW_VALUES(_row)) {
-		LOG(L_DBG, "PG[free_row]: %p=pkg_free() ROW_VALUES\n",
-			ROW_VALUES(_row));
+		LM_DBG("%p=pkg_free() ROW_VALUES\n", ROW_VALUES(_row));
 		pkg_free(ROW_VALUES(_row));
 		ROW_VALUES(_row) = NULL;
 	}
@@ -669,31 +670,27 @@ int pg_free_columns(db_res_t* _res)
 
 #ifdef PARANOID
 	if (!_res) {
-		LOG(L_ERR, "PG[free_columns]: db_res_t parameter cannot be NULL\n");
+		LM_ERR("db_res_t parameter cannot be NULL\n");
 		return -1;
 	}
 #endif
 
 	/* Free memory previously allocated to save column names */
 	for(col = 0; col < RES_COL_N(_res); col++) {
-		LOG(L_DBG, "PG[free_columns]: Freeing RES_NAMES(%p)[%d] -> "
-			"free(%p) '%s'\n", _res, col, RES_NAMES(_res)[col],
-			RES_NAMES(_res)[col]);
-		LOG(L_DBG, "PG[free_columns]: %p=pkg_free() RES_NAMES[%d]\n",
-			RES_NAMES(_res)[col], col);
+		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%s'\n", 
+				_res, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]);
+		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n",	RES_NAMES(_res)[col], col);
 		pkg_free((char *)RES_NAMES(_res)[col]);
 		RES_NAMES(_res)[col] = (char *)NULL;
 	}
  
 	if (RES_NAMES(_res)) {
-		LOG(L_DBG, "PG[free_columns]: %p=pkg_free() RES_NAMES\n",
-			RES_NAMES(_res));
+		LM_DBG("%p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
 		pkg_free(RES_NAMES(_res));
 		RES_NAMES(_res) = NULL;
 	}
 	if (RES_TYPES(_res)) {
-		LOG(L_DBG, "PG[free_columns]: %p=pkg_free() RES_TYPES\n",
-			RES_TYPES(_res));
+		LM_DBG("%p=pkg_free() RES_TYPES\n",	RES_TYPES(_res));
 		pkg_free(RES_TYPES(_res));
 		RES_TYPES(_res) = NULL;
 	}
@@ -709,7 +706,7 @@ int pg_free_result(db_res_t* _res)
 
 #ifdef PARANOID
 	if (!_res) {
-		LOG(L_ERR, "PG[free_result]: db_res_t parameter cannot be NULL\n");
+		LM_ERR("db_res_t parameter cannot be NULL\n");
 		return -1;
 	}
 #endif
@@ -717,7 +714,7 @@ int pg_free_result(db_res_t* _res)
 	pg_free_columns(_res);
 	pg_free_rows(_res);
 
-	LOG(L_DBG, "PG[free_result]: %p=pkg_free() _res\n", _res);
+	LM_DBG("%p=pkg_free() _res\n", _res);
 	pkg_free(_res);
 	_res = NULL;
 	return 0;

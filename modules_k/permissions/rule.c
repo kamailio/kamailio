@@ -42,7 +42,7 @@ rule *new_rule(void)
 
 	r = (rule *)pkg_malloc(sizeof(rule));
 	if (!r) {
-		LOG(L_ERR, "permissions:new_rule(): Not enough memory\n");
+		LM_ERR("not enough pkg memory\n");
 		return 0;
 	}
 
@@ -126,7 +126,7 @@ expression *new_expression(char *str)
 
 	e = (expression *)pkg_malloc(sizeof(expression));
 	if (!e) {
-		LOG(L_ERR, "permissions:new_expression(): Not enough memory\n");
+		LM_ERR("not enough pkg memory\n");
 		return 0;
 	}
 
@@ -134,13 +134,13 @@ expression *new_expression(char *str)
 	
 	e->reg_value = (regex_t*)pkg_malloc(sizeof(regex_t));
 	if (!e->reg_value) {
-		LOG(L_ERR, "permissions:new_expression(): Not enough memory\n");
+		LM_ERR("not enough pkg memory\n");
 		pkg_free(e);
 		return 0;
 	}
 
 	if (regcomp(e->reg_value, str, REG_EXTENDED|REG_NOSUB|REG_ICASE) ) {
-		LOG(L_ERR, "permissions:new_expression(): Bad regular expression: %s\n", str);
+		LM_ERR("bad regular expression: %s\n", str);
 		pkg_free(e->reg_value);
 		pkg_free(e);
 		return NULL;

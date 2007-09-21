@@ -59,8 +59,7 @@ int mwi_publ_handl(struct sip_msg* msg)
 	
     body.s = get_body(msg);
     if (body.s == NULL) {
-	LOG(L_ERR,"presence_mwi:mwi_publ_handl: ERROR cannot extract body"
-	    " from msg\n");
+	LM_ERR("cannot extract body from msg\n");
 	return -1;
     }
 
@@ -99,8 +98,7 @@ int mwi_publ_handl(struct sip_msg* msg)
     return 1;
 
 err:
-    DBG("DEBUG:presence_mwi:mwi_publ_handl: body check failed at "
-	"character number %d\n", at - body.s + 1);
+    LM_DBG("body check failed at character number %d\n", at - body.s + 1);
     return -1;
 
 }
@@ -123,8 +121,7 @@ int mwi_add_events()
     event.evs_publ_handl = mwi_publ_handl;
 	
     if (pres_add_event(&event) < 0) {
-	LOG(L_ERR, "presence_mwi: ERROR while adding event "
-	    "\"message-summary\"\n");
+	LM_ERR("failed to add event "\"message-summary\"\n");
 	return -1;
     }		
 	

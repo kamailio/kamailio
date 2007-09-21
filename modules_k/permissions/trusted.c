@@ -73,14 +73,12 @@ int reload_trusted_table(void)
 	cols[3] = tag_col;
 
 	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
-		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
-				" Error while trying to use trusted table\n");
+		LM_ERR("failed to use trusted table\n");
 		return -1;
 	}
 
 	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
-		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
-				" Error while querying database\n");
+		LM_ERR("failed to query database\n");
 		return -1;
 	}
 
@@ -95,7 +93,7 @@ int reload_trusted_table(void)
 
 	row = RES_ROWS(res);
 
-	DBG("Number of rows in trusted table: %d\n", RES_ROW_N(res));
+	LM_DBG("number of rows in trusted table: %d\n", RES_ROW_N(res));
 		
 	for (i = 0; i < RES_ROW_N(res); i++) {
 	    val = ROW_VALUES(row + i);
@@ -120,17 +118,15 @@ int reload_trusted_table(void)
 				      (char *)VAL_STRING(val),
 				      (char *)VAL_STRING(val + 1),
 				      pattern, tag) == -1) {
-		    LOG(L_ERR, "ERROR: permissions: "
-			"trusted_reload(): Hash table problem\n");
+		    LM_ERR("hash table problem\n");
 		    perm_dbf.free_result(db_handle, res);
 		    return -1;
 		}
-		DBG("Tuple <%s, %s, %s, %s> inserted into trusted hash "
+		LM_DBG("tuple <%s, %s, %s, %s> inserted into trusted hash "
 		    "table\n", VAL_STRING(val), VAL_STRING(val + 1),
 		    pattern, tag);
 	    } else {
-		LOG(L_ERR, "ERROR: permissions: trusted_reload():"
-		    " Database problem\n");
+		LM_ERR("database problem\n");
 		perm_dbf.free_result(db_handle, res);
 		return -1;
 	    }
@@ -140,7 +136,7 @@ int reload_trusted_table(void)
 
 	*hash_table = new_hash_table;
 
-	DBG("Trusted table reloaded successfully.\n");
+	LM_DBG("trusted table reloaded successfully.\n");
 	
 	return 1;
 }
@@ -156,19 +152,17 @@ int init_trusted(void)
 	/* Check if hash table needs to be loaded from trusted table */
 
 	if (!db_url) {
-		LOG(L_INFO, "db_url parameter of permissions module not set, "
+		LM_INFO("db_url parameter of permissions module not set, "
 			"disabling allow_trusted\n");
 		return 0;
 	} else {
 		if (bind_dbmod(db_url, &perm_dbf) < 0) {
-			LOG(L_ERR, "ERROR: permissions: init_trusted: "
-					"load a database support module\n");
+			LM_ERR("load a database support module\n");
 			return -1;
 		}
 
 		if (!DB_CAPABILITY(perm_dbf, DB_CAP_QUERY)) {
-			LOG(L_ERR, "ERROR: permissions: init_trusted: "
-				"Database module does not implement 'query' function\n");
+			LM_ERR("database module does not implement 'query' function\n");
 			return -1;
 		}
 	}
@@ -179,8 +173,7 @@ int init_trusted(void)
 	if (db_mode == ENABLE_CACHE) {
 		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
-			LOG(L_ERR, "ERROR: permissions: init_trusted():"
-					" Unable to connect database\n");
+			LM_ERR("unable to connect database\n");
 			return -1;
 		}
 
@@ -189,14 +182,12 @@ int init_trusted(void)
 		ver = table_version(&perm_dbf, db_handle, &name);
 
 		if (ver < 0) {
-			LOG(L_ERR, "permissions:init_trusted(): Error while querying "
-					"table version\n");
+			LM_ERR("failed to query table version\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "permissions:init_trusted(): Invalid table version %d "
-					"- expected %d (use openser_mysql.sh reinstall)\n",
-					ver,TABLE_VERSION);
+			LM_ERR("invalid table version %d - expected %d "
+					"(use openser_mysql.sh reinstall)\n", ver,TABLE_VERSION);
 			perm_dbf.close(db_handle);
 			return -1;
 		}
@@ -214,7 +205,7 @@ int init_trusted(void)
 		*hash_table = hash_table_1;
 
 		if (reload_trusted_table() == -1) {
-			LOG(L_CRIT, "init_trusted(): Reload of trusted table failed\n");
+			LM_CRIT("reload of trusted table failed\n");
 			goto error;
 		}
 
@@ -258,8 +249,7 @@ int init_child_trusted(int rank)
 	if (db_mode==DISABLE_CACHE && rank>0) {
 		db_handle = perm_dbf.init(db_url);
 		if (!db_handle) {
-			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Unable to connect database\n");
+			LM_ERR("unable to connect database\n");
 			return -1;
 		}
 
@@ -268,13 +258,11 @@ int init_child_trusted(int rank)
 		ver = table_version(&perm_dbf, db_handle, &name);
 
 		if (ver < 0) {
-			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Error while querying table version\n");
+			LM_ERR("failed to query table version\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LOG(L_ERR, "ERROR: permissions: init_child_trusted():"
-					" Invalid table version (use openser_mysql.sh reinstall)\n");
+			LM_ERR("invalid table version (use openser_mysql.sh reinstall)\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}		
@@ -293,8 +281,7 @@ int mi_init_trusted(void)
     if (!db_url || db_handle) return 0;
     db_handle = perm_dbf.init(db_url);
     if (!db_handle) {
-	LOG(L_ERR, "ERROR: permissions: init_mi_trusted():"
-	    " Unable to connect database\n");
+	LM_ERR("unable to connect database\n");
 	return -1;
     }
     return 0;
@@ -352,7 +339,7 @@ static inline int match_proto(char *proto_string, int proto_int)
 		}
 	}
 
-	LOG(L_ERR, "match_proto(): Unknown request protocol\n");
+	LM_ERR("unknown request protocol\n");
 
 	return 0;
 }
@@ -374,7 +361,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 	if (parse_from_header(msg) < 0) return -1;
 	uri = get_from(msg)->uri;
 	if (uri.len > MAX_URI_SIZE) {
-		LOG(L_ERR, "match_res(): From URI too large\n");
+		LM_ERR("message has From URI too large\n");
 		return -1;
 	}
 	memcpy(uri_string, uri.s, uri.len);
@@ -394,7 +381,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 	    {
 		if (VAL_NULL(val + 1)) goto found;
 		if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
-		    LOG(L_ERR, "match_res(): Error in regular expression\n");
+		    LM_ERR("invalid regular expression\n");
 		    continue;
 		}
 		if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
@@ -414,8 +401,7 @@ found:
 	    avp_val.s.s = (char *)VAL_STRING(val + 2);
 	    avp_val.s.len = strlen(avp_val.s.s);
 	    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, avp_val) != 0) {
-		LOG(L_ERR, "match_res(): ERROR: setting of "
-		    "tag_avp failed\n");
+		LM_ERR("failed to set of tag_avp failed\n");
 		return -1;
 	    }
 	}
@@ -439,7 +425,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 	db_key_t cols[3];
 
 	if (!db_url) {
-		LOG(L_ERR, "allow_trusted(): ERROR set db_mode parameter of permissions module first !\n");
+		LM_ERR("set db_mode parameter of permissions module first !\n");
 		return -1;
 	}
 
@@ -450,7 +436,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		cols[2] = tag_col;
 
 		if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
-			LOG(L_ERR, "allow_trusted(): Error while trying to use trusted table\n");
+			LM_ERR("failed to use trusted table\n");
 			return -1;
 		}
 		
@@ -459,7 +445,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
 
 		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 3, 0, &res) < 0){
-			LOG(L_ERR, "allow_trusted(): Error while querying database\n");
+			LM_ERR("failed to query database\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}
@@ -475,7 +461,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 	} else if (db_mode == ENABLE_CACHE) {
 		return match_hash_table(*hash_table, _msg);
 	} else {
-		LOG(L_ERR, "allow_trusted(): Error - set db_mode parameter of permissions module properly\n");
+		LM_ERR("set db_mode parameter of permissions module properly\n");
 		return -1;
 	}
 }

@@ -222,11 +222,11 @@ static int mod_init(void)
 	str s;
 	bind_usrloc_t bind_usrloc;
 
-	DBG("registrar - initializing\n");
+	LM_INFO("initializing...\n");
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:registrar:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		return -1;
 	}
 
@@ -239,15 +239,13 @@ static int mod_init(void)
 		s.s = rcv_avp_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:registrar:mod_init: malformed or non AVP %s "
-				"AVP definition\n", rcv_avp_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &rcv_avp_name, &rcv_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:registrar:mod_init: [%s]- invalid "
-				"AVP definition\n", rcv_avp_param);
+			LM_ERR("[%s]- invalid AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 	} else {
@@ -258,15 +256,13 @@ static int mod_init(void)
 		s.s = aor_avp_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:registrar:mod_init: malformed or non AVP %s "
-				"AVP definition\n", aor_avp_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n", aor_avp_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &aor_avp_name, &aor_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:registrar:mod_init: [%s]- invalid "
-				"AVP definition\n", aor_avp_param);
+			LM_ERR("[%s]- invalid AVP definition\n", aor_avp_param);
 			return -1;
 		}
 	} else {
@@ -276,19 +272,17 @@ static int mod_init(void)
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 	if (!bind_usrloc) {
-		LOG(L_ERR, "registrar: Can't bind usrloc\n");
+		LM_ERR("can't bind usrloc\n");
 		return -1;
 	}
 
 	/* Normalize default_q parameter */
 	if (default_q != Q_UNSPECIFIED) {
 		if (default_q > MAX_Q) {
-			DBG("registrar: default_q = %d, lowering to MAX_Q: %d\n",
-				default_q, MAX_Q);
+			LM_DBG("default_q = %d, lowering to MAX_Q: %d\n", default_q, MAX_Q);
 			default_q = MAX_Q;
 		} else if (default_q < MIN_Q) {
-			DBG("registrar: default_q = %d, raising to MIN_Q: %d\n",
-				default_q, MIN_Q);
+			LM_DBG("default_q = %d, raising to MIN_Q: %d\n", default_q, MIN_Q);
 			default_q = MIN_Q;
 		}
 	}
@@ -306,16 +300,14 @@ static int mod_init(void)
 	if (sock_hdr_name.s) {
 		sock_hdr_name.len = strlen(sock_hdr_name.s);
 		if (sock_hdr_name.len==0 || sock_flag==-1) {
-			LOG(L_WARN,"WARN:registrar:init: empty sock_hdr_name or "
-				"sock_flag no set -> reseting\n");
+			LM_WARN("empty sock_hdr_name or sock_flag no set -> reseting\n");
 			pkg_free(sock_hdr_name.s);
 			sock_hdr_name.s = 0;
 			sock_hdr_name.len = 0;
 			sock_flag = -1;
 		}
 	} else if (sock_flag!=-1) {
-		LOG(L_WARN,"WARN:registrar:init: sock_flag defined but no "
-			"sock_hdr_name -> reseting flag\n");
+		LM_WARN("sock_flag defined but no sock_hdr_name -> reseting flag\n");
 		sock_flag = -1;
 	}
 
@@ -349,7 +341,7 @@ static int domain_fixup(void** param, int param_no)
 
 	if (param_no == 1) {
 		if (ul.register_udomain((char*)*param, &d) < 0) {
-			LOG(L_ERR, "domain_fixup(): Error while registering domain\n");
+			LM_ERR("failed to register domain\n");
 			return E_UNSPEC;
 		}
 
@@ -373,13 +365,11 @@ static int save_fixup(void** param, int param_no)
 		s.s = (char*)*param;
 		s.len = strlen(s.s);
 		if ( (strno2int(&s, &flags )<0) || (flags>REG_SAVE_ALL_FL) ) {
-			LOG(L_ERR, "ERROR:registrar:save_fixup: bad flags <%s>\n",
-				(char *)(*param));
+			LM_ERR("bad flags <%s>\n", (char *)(*param));
 			return E_CFG;
 		}
 		if (ul.db_mode==DB_ONLY && flags&REG_SAVE_MEM_FL) {
-			LOG(L_ERR, "ERROR:registrar:save_fixup: MEM flag set while "
-				"using the DB_ONLY mode in USRLOC\n");
+			LM_ERR("MEM flag set while using the DB_ONLY mode in USRLOC\n");
 			return E_CFG;
 		}
 		pkg_free(*param);
@@ -411,19 +401,19 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 	si = msg->rcv.bind_address;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: failed to parse message\n");
+		LM_ERR("failed to parse message\n");
 		goto error;
 	}
 
 	anchor = anchor_lump( msg, msg->unparsed-msg->buf, 0, 0);
 	if (anchor==0) {
-		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: can't get anchor\n");
+		LM_ERR("can't get anchor\n");
 		goto error;
 	}
 
 	hdr.len = hdr_name->len + 2 + si->sock_str.len + CRLF_LEN;
 	if ( (hdr.s=(char*)pkg_malloc(hdr.len))==0 ) {
-		LOG(L_ERR,"ERROR:registrar:add_sock_hdr: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 
@@ -440,13 +430,12 @@ static int add_sock_hdr(struct sip_msg* msg, char *name, char *foo)
 	p += CRLF_LEN;
 
 	if ( p-hdr.s!=hdr.len ) {
-		LOG(L_CRIT,"BUG:registrar:add_sock_hdr: buffer overflow (%d!=%d)\n",
-			(int)(long)(p-hdr.s),hdr.len);
+		LM_CRIT("buffer overflow (%d!=%d)\n", (int)(long)(p-hdr.s),hdr.len);
 		goto error1;
 	}
 
 	if (insert_new_lump_before( anchor, hdr.s, hdr.len, 0) == 0) {
-		LOG(L_ERR, "ERROR:registrar:add_sock_hdr: can't insert lump\n");
+		LM_ERR("can't insert lump\n");
 		goto error1;
 	}
 

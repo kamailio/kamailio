@@ -91,7 +91,7 @@ static inline int star(udomain_t* _d, str* _a)
 	}
 
 	if (ul.delete_urecord(_d, _a, 0) < 0) {
-		LOG(L_ERR, "star(): Error while removing record from usrloc\n");
+		LM_ERR("failed to remove record from usrloc\n");
 		
 		     /* Delete failed, try to get corresponding
 		      * record structure and send back all existing
@@ -121,7 +121,7 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 	int proto;
 
 	if (parse_headers( msg, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR,"ERROR:registrar:get_sock_hdr: failed to parse message\n");
+		LM_ERR("failed to parse message\n");
 		return 0;
 	}
 
@@ -141,19 +141,17 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 
 	if (parse_phostport( socks.s, socks.len, &hosts.s, &hosts.len, 
 	&port, &proto)!=0) {
-		LOG(L_ERR,"ERROR:registrar:get_sock_hdr: bad socket <%.*s> in \n",
+		LM_ERR("bad socket <%.*s> in \n",
 			socks.len, socks.s);
 		return 0;
 	}
 	sock = grep_sock_info(&hosts,(unsigned short)port,(unsigned short)proto);
 	if (sock==0) {
-		LOG(L_WARN,"ERROR:registrar:get_sock_hdr: non-local socket <%.*s>\n",
-			socks.len, socks.s);
+		LM_ERR("non-local socket <%.*s>\n",	socks.len, socks.s);
 		return 0;
 	}
 
-	DBG("DEBUG:registrar:get_sock_hdr: %d:<%.*s>:%d -> p=%p\n",
-		proto,socks.len,socks.s,port_no,sock );
+	LM_DBG("%d:<%.*s>:%d -> p=%p\n", proto,socks.len,socks.s,port_no,sock );
 
 	return sock;
 }
@@ -175,8 +173,7 @@ static inline int no_contacts(udomain_t* _d, str* _a)
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
-		LOG(L_ERR, "ERROR:registrar:no_contacts: failed to retrieve record "
-			"from usrloc\n");
+		LM_ERR("failed to retrieve record from usrloc\n");
 		ul.unlock_udomain(_d, _a);
 		return -1;
 	}
@@ -215,7 +212,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		trim_trailing(&callid);
 		if (callid.len > CALLID_MAX_SIZE) {
 			rerrno = R_CALLID_LEN;
-			LOG(L_ERR, "ERROR:registrar:pack_ci: callid too long\n");
+			LM_ERR("callid too long\n");
 			goto error;
 		}
 		ci.callid = &callid;
@@ -223,8 +220,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		/* Get CSeq number of the message */
 		if (str2int(&get_cseq(_m)->number, (unsigned int*)&ci.cseq) < 0) {
 			rerrno = R_INV_CSEQ;
-			LOG(L_ERR, "ERROR:registrar:pack_ci: failed to convert "
-				"cseq number\n");
+			LM_ERR("failed to convert cseq number\n");
 			goto error;
 		}
 
@@ -282,7 +278,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		/* Calculate q value of the contact */
 		if (calc_contact_q(_c->q, &ci.q) < 0) {
 			rerrno = R_INV_Q;
-			LOG(L_ERR, "ERROR:registrar:pack_ci: failed to calculate q\n");
+			LM_ERR("failed to calculate q\n");
 			goto error;
 		}
 
@@ -293,8 +289,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 		if (_c->methods) {
 			if (parse_methods(&(_c->methods->body), &ci.methods) < 0) {
 				rerrno = R_PARSE;
-				LOG(L_ERR, "ERROR:usrloc:pack_ci: failed to parse "
-					"contact methods\n");
+				LM_ERR("failed to parse contact methods\n");
 				goto error;
 			}
 		} else {
@@ -322,8 +317,7 @@ static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
 								&& val.s.len > 0) {
 						if (val.s.len>RECEIVED_MAX_SIZE) {
 							rerrno = R_CONTACT_LEN;
-							LOG(L_ERR,"ERROR:registrar:pack_ci: received "
-								"too long\n");
+							LM_ERR("received too long\n");
 							goto error;
 						}
 						received = val.s;
@@ -386,8 +380,8 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 			continue;
 
 		if (max_contacts && (num >= max_contacts)) {
-			LOG(L_INFO,"INFO:registrar:insert_contacts: too many contacts "
-				"(%d) for AOR <%.*s>\n", num, _a->len, _a->s);
+			LM_INFO("too many contacts (%d) for AOR <%.*s>\n", 
+					num, _a->len, _a->s);
 			rerrno = R_TOO_MANY;
 			goto error;
 		}
@@ -396,16 +390,14 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		if (r==0) {
 			if (ul.insert_urecord(_d, _a, &r) < 0) {
 				rerrno = R_UL_NEW_R;
-				LOG(L_ERR, "ERROR:registrar:insert_contacts: failed to insert "
-					"new record structure\n");
+				LM_ERR("failed to insert new record structure\n");
 				goto error;
 			}
 		}
 
 		/* pack the contact_info */
 		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags))==0 ) {
-			LOG(L_ERR, "ERROR:registrar:insert_contacts: failed to extract "
-				"contact info\n");
+			LM_ERR("failed to extract contact info\n");
 			goto error;
 		}
 
@@ -413,15 +405,13 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		ul.get_ucontact(r, &_c->uri, ci->callid, ci->cseq+1, &c)!=0 ) {
 			if (ul.insert_ucontact( r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
-				LOG(L_ERR, "ERROR:registrar:insert_contacts: failed to insert "
-					"contact\n");
+				LM_ERR("failed to insert contact\n");
 				goto error;
 			}
 		} else {
 			if (ul.update_ucontact( r, c, ci) < 0) {
 				rerrno = R_UL_UPD_C;
-				LOG(L_ERR, "ERROR:registrar:insert_contacts: failed to update "
-					"contact\n");
+				LM_ERR("failed to update contact\n");
 				goto error;
 			}
 		}
@@ -429,12 +419,11 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		if (tcp_check) {
 			/* parse contact uri to see if transport is TCP */
 			if (parse_uri( _c->uri.s, _c->uri.len, &uri)<0) {
-				LOG(L_ERR,"ERROR:registrar:insert_contacts failed to parse "
-					"contact <%.*s>\n", _c->uri.len, _c->uri.s);
+				LM_ERR("failed to parse contact <%.*s>\n", 
+						_c->uri.len, _c->uri.s);
 			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS) {
 				if (e_max) {
-					LOG(L_WARN,"WARNING:registrar:insert_contacts: multiple "
-						"TCP contacts on single REGISTER\n");
+					LM_WARN("multiple TCP contacts on single REGISTER\n");
 					if (e>e_max) e_max = e;
 				} else {
 					e_max = e;
@@ -481,7 +470,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		}
 		ptr = ptr->next;
 	}
-	DBG("DEBUG:registrar:test_max_contacts: %d valid contacts\n", num);
+	LM_DBG("%d valid contacts\n", num);
 	
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
@@ -489,8 +478,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		
 		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &cont);
 		if (ret==-1) {
-			LOG(L_ERR,"ERROR:registrar:update_contacts: invalid cseq for aor "
-				"<%.*s>\n",_r->aor.len,_r->aor.s);
+			LM_ERR("invalid cseq for aor <%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
 			return -1;
 		} else if (ret==-2) {
@@ -504,10 +492,9 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 		}
 	}
 	
-	DBG("DEBUG:registrar:test_max_contacts: %d contacts after commit\n", num);
+	LM_DBG("%d contacts after commit\n", num);
 	if (num > max_contacts) {
-		LOG(L_INFO,"INFO:registrar:test_max_contacts: too many contacts "
-				"for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
+		LM_INFO("too many contacts for AOR <%.*s>\n", _r->aor.len, _r->aor.s);
 		rerrno = R_TOO_MANY;
 		return -1;
 	}
@@ -546,8 +533,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 
 	/* pack the contact_info */
 	if ( (ci=pack_ci( _m, 0, 0, flags))==0 ) {
-		LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
-			"initial pack contact info\n");
+		LM_ERR("failed to initial pack contact info\n");
 		goto error;
 	}
 
@@ -571,8 +557,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		/* search for the contact*/
 		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &c);
 		if (ret==-1) {
-			LOG(L_ERR,"ERROR:registrar:update_contacts: invalid cseq for aor "
-				"<%.*s>\n",_r->aor.len,_r->aor.s);
+			LM_ERR("invalid cseq for aor <%.*s>\n",_r->aor.len,_r->aor.s);
 			rerrno = R_INV_CSEQ;
 			goto error;
 		} else if (ret==-2) {
@@ -586,15 +571,13 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 
 			/* pack the contact_info */
 			if ( (ci=pack_ci( 0, _c, e, 0))==0 ) {
-				LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
-					"extract contact info\n");
+				LM_ERR("failed to extract contact info\n");
 				goto error;
 			}
 
 			if (ul.insert_ucontact( _r, &_c->uri, ci, &c) < 0) {
 				rerrno = R_UL_INS_C;
-				LOG(L_ERR, "ERROR:registrar:update_contacts: failed to insert "
-					"contact\n");
+				LM_ERR("failed to insert contact\n");
 				goto error;
 			}
 		} else {
@@ -609,23 +592,20 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 
 				if (ul.delete_ucontact(_r, c) < 0) {
 					rerrno = R_UL_DEL_C;
-					LOG(L_ERR, "ERROR:registrar:update_contacts: failed "
-						"to delete contact\n");
+					LM_ERR("failed to delete contact\n");
 					goto error;
 				}
 			} else {
 				/* do update */
 				/* pack the contact specific info */
 				if ( (ci=pack_ci( 0, _c, e, 0))==0 ) {
-					LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
-						"pack contact specific info\n");
+					LM_ERR("failed to pack contact specific info\n");
 					goto error;
 				}
 
 				if (ul.update_ucontact(_r, c, ci) < 0) {
 					rerrno = R_UL_UPD_C;
-					LOG(L_ERR, "ERROR:registrar:update_contacts: failed to "
-						"update contact\n");
+					LM_ERR("failed to update contact\n");
 					goto error;
 				}
 			}
@@ -634,12 +614,11 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 		if (tcp_check) {
 			/* parse contact uri to see if transport is TCP */
 			if (parse_uri( _c->uri.s, _c->uri.len, &uri)<0) {
-				LOG(L_ERR,"ERROR:registrar:update_contacts failed to parse "
-					"contact <%.*s>\n", _c->uri.len, _c->uri.s);
+				LM_ERR("failed to parse contact <%.*s>\n", 
+						_c->uri.len, _c->uri.s);
 			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS) {
 				if (e_max>0) {
-					LOG(L_WARN,"WARNING:registrar:update_contacts: multiple "
-						"TCP contacts on single REGISTER\n");
+					LM_WARN("multiple TCP contacts on single REGISTER\n");
 				}
 				if (e>e_max) e_max = e;
 			}
@@ -674,8 +653,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 	res = ul.get_urecord(_d, _a, &r);
 	if (res < 0) {
 		rerrno = R_UL_GET_R;
-		LOG(L_ERR, "ERROR:registrar:add_contacts: failed to retrieve record "
-			"from usrloc\n");
+		LM_ERR("failed to retrieve record from usrloc\n");
 		ul.unlock_udomain(_d, _a);
 		return -2;
 	}
@@ -724,8 +702,7 @@ int save(struct sip_msg* _m, char* _d, char* _cflags)
 	c = get_first_contact(_m);
 
 	if (extract_aor(&get_to(_m)->uri, &aor) < 0) {
-		LOG(L_ERR, "ERROR:registrar:save_real: failed to extract "
-			"Address Of Record\n");
+		LM_ERR("failed to extract Address Of Record\n");
 		goto error;
 	}
 

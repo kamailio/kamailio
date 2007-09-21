@@ -83,18 +83,16 @@ static gen_lock_set_t* init_lock_set(int *size)
 
 	lset=0; /* kill warnings */
 	for( ; *size ; *size=((*size)>>1) ) {
-		LOG(L_INFO,"INFO:pike:init_lock_set: probing %d set size\n",*size);
+		LM_INFO("probing %d set size\n", *size);
 		/* create a lock set */
 		lset = lock_set_alloc( *size );
 		if (lset==0) {
-			LOG(L_INFO,"INFO:pike:init_lock_set: cannot get %d locks\n",
-				*size);
+			LM_INFO("cannot get %d locks\n", *size);
 			continue;
 		}
 		/* init lock set */
 		if (lock_set_init(lset)==0) {
-			LOG(L_INFO,"INFO:pike:init_lock_set: cannot init %d locks\n",
-				*size);
+			LM_INFO("cannot init %d locks\n", *size);
 			lock_set_dealloc( lset );
 			lset = 0;
 			continue;
@@ -104,7 +102,7 @@ static gen_lock_set_t* init_lock_set(int *size)
 	}
 
 	if (*size==0) {
-		LOG(L_ERR,"ERROR:pike:init_lock_set: cannot get a lock set\n");
+		LM_ERR("cannot get a lock set\n");
 		return 0;
 	}
 	return lset;
@@ -121,7 +119,7 @@ int init_ip_tree(int maximum_hits)
 	/* create the root */
 	root = (struct ip_tree*)shm_malloc(sizeof(struct ip_tree));
 	if (root==0) {
-		LOG(L_ERR,"ERROR:pike:init_ip_tree: shm malloc failed\n");
+		LM_ERR("shm malloc failed\n");
 		goto error;
 	}
 	memset( root, 0, sizeof(struct ip_tree));
@@ -130,7 +128,7 @@ int init_ip_tree(int maximum_hits)
 	size = MAX_IP_BRANCHES;
 	root->entry_lock_set = init_lock_set( &size );
 	if (root->entry_lock_set==0) {
-		LOG(L_ERR,"ERROR:pike:init_ip_tree: failed to create locks\n");
+		LM_ERR("failed to create locks\n");
 		goto error;
 	}
 	/* assign to each branch a lock */
@@ -202,7 +200,7 @@ static inline struct ip_node *new_ip_node(unsigned char byte)
 
 	new_node = (struct ip_node*)shm_malloc(sizeof(struct ip_node));
 	if (!new_node) {
-		LOG(L_ERR,"ERROR:pike:new_ip_node: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return 0;
 	}
 	memset( new_node, 0, sizeof(struct ip_node));
@@ -270,7 +268,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 	node = 0;
 	byte_pos = 0;
 
-	DBG("DEBUG:pike:mark_node: search on branch %d (top=%p)\n", ip[0],kid);
+	LM_DBG("search on branch %d (top=%p)\n", ip[0],kid);
 	/* search into the ip tree the longest prefix matching the given IP */
 	while (kid && byte_pos<ip_len) {
 		while (kid && kid->byte!=(unsigned char)ip[byte_pos]) {
@@ -283,7 +281,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 		}
 	}
 
-	DBG("DEBUG:pike:mark_node: Only first %d were matched!\n",byte_pos);
+	LM_DBG("only first %d were matched!\n",byte_pos);
 	*flag = 0;
 	*father = 0;
 
@@ -314,8 +312,7 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 		if ( is_hot_non_leaf(node) ) {
 			/* we have to split the node */
 			*flag = NEW_NODE ;
-			DBG("DEBUG:pike:mark_node: splitting node %p [%d]\n",
-				node,node->byte);
+			LM_DBG("splitting node %p [%d]\n",node,node->byte);
 			*father = node;
 			node = split_node(node,ip[byte_pos]);
 		} else {
@@ -340,7 +337,7 @@ int is_red_leaf(struct ip_node *node)
 /* remove and destroy a IP node along with its subtree */
 void remove_node(struct ip_node *node)
 {
-	DBG("DEBUG:pike:remove_node: destroying node %p\n",node);
+	LM_DBG("destroying node %p\n",node);
 	/* is it a branch root node? (these nodes have no prev (father)) */
 	if (node->prev==0) {
 		assert(root->entries[node->byte].node==node);

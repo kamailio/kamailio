@@ -94,11 +94,11 @@ msg_list msg_list_init(void)
 		return NULL;
 	/* init locks */
 	if (lock_init(&ml->sem_sent)==0){
-		LOG(L_CRIT, "msilo: could not initialize a lock\n");
+		LM_CRIT("could not initialize a lock\n");
 		goto clean;
 	};
 	if (lock_init(&ml->sem_done)==0){
-		LOG(L_CRIT, "msilo: could not initialize a lock\n");
+		LM_CRIT("could not initialize a lock\n");
 		lock_destroy(&ml->sem_sent);
 		goto clean;
 	};
@@ -166,7 +166,7 @@ int msg_list_check_msg(msg_list ml, int mid)
 	if(!ml || mid==0)
 		goto errorx;
 
-	DBG("MSILO:msg_list_check_msg: checking msgid=%d\n", mid);
+	LM_DBG("checking msgid=%d\n", mid);
 	
 	lock_get(&ml->sem_sent);
 
@@ -182,7 +182,7 @@ int msg_list_check_msg(msg_list ml, int mid)
 	p0 = msg_list_el_new();
 	if(!p0)
 	{
-		DBG("MSILO:msg_list_check_msg: Error creating new msg elem.\n");
+		LM_ERR("failed to create new msg elem.\n");
 		goto error;
 	}
 	p0->msgid = mid;
@@ -200,11 +200,11 @@ int msg_list_check_msg(msg_list ml, int mid)
 done:
 	ml->nrsent++;
 	lock_release(&ml->sem_sent);
-	DBG("MSILO:msg_list_check_msg: msg added to sent list.\n");
+	LM_DBG("msg added to sent list.\n");
 	return MSG_LIST_OK;
 exist:
 	lock_release(&ml->sem_sent);
-	DBG("MSILO:msg_list_check_msg: msg already in sent list.\n");
+	LM_DBG("msg already in sent list.\n");
 	return MSG_LIST_EXIST;	
 error:
 	lock_release(&ml->sem_sent);
@@ -221,8 +221,7 @@ int msg_list_set_flag(msg_list ml, int mid, int fl)
 	
 	if(ml==0 || mid==0)
 	{
-		LOG(L_ERR, "MSILO: msg_list_set_flag: bad param %p / %d\n",
-			ml, fl);
+		LM_ERR("bad param %p / %d\n", ml, fl);
 		goto errorx;
 	}
 	
@@ -234,7 +233,7 @@ int msg_list_set_flag(msg_list ml, int mid, int fl)
 		if(p0->msgid==mid)
 		{
 			p0->flag |= fl;
-			DBG("MSILO: msg_list_set_flag: mid:%d fl:%d\n", p0->msgid, fl);
+			LM_DBG("mid:%d fl:%d\n", p0->msgid, fl);
 			goto done;
 		}
 		p0 = p0->next;
@@ -268,7 +267,7 @@ int msg_list_check(msg_list ml)
 	{
 		if(p0->flag & MS_MSG_DONE || p0->flag & MS_MSG_ERRO)
 		{
-			DBG("MSILO: msg_list_check: mid:%d got reply\n", p0->msgid);
+			LM_DBG("mid:%d got reply\n", p0->msgid);
 			if(p0->prev)
 				(p0->prev)->next = p0->next;
 			else

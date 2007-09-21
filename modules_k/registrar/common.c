@@ -65,7 +65,7 @@ int extract_aor(str* _uri, str* _a)
 
 	if (parse_uri(uri->s, uri->len, &puri) < 0) {
 		rerrno = R_AOR_PARSE;
-		LOG(L_ERR, "extract_aor(): Error while parsing Address of Record\n");
+		LM_ERR("failed to parse Address of Record\n");
 		return -1;
 	}
 	
@@ -73,7 +73,7 @@ int extract_aor(str* _uri, str* _a)
 	|| puri.user.len > USERNAME_MAX_SIZE
 	||  puri.host.len > DOMAIN_MAX_SIZE ) {
 		rerrno = R_AOR_LEN;
-		LOG(L_ERR, "extract_aor(): Address Of Record too long\n");
+		LM_ERR("Address Of Record too long\n");
 		return -2;
 	}
 
@@ -82,7 +82,7 @@ int extract_aor(str* _uri, str* _a)
 
 	if (un_escape(&puri.user, _a) < 0) {
 		rerrno = R_UNESCAPE;
-		LOG(L_ERR, "extract_aor(): Error while unescaping username\n");
+		LM_ERR("failed to unescape username\n");
 		return -3;
 	}
 

@@ -106,30 +106,30 @@ struct module_exports exports= {
 
 static int pike_init(void)
 {
-	LOG(L_INFO,"PIKE - initializing\n");
+	LM_INFO("initializing...\n");
 
 	/* alloc the timer lock */
 	timer_lock=lock_alloc();
 	if (timer_lock==0) {
-		LOG(L_ERR,"ERROR:pike_init: alloc locks failed!\n");
+		LM_ERR(" alloc locks failed!\n");
 		goto error1;
 	}
 	/* init the lock */
 	if (lock_init(timer_lock)==0){
-		LOG(L_ERR, "ERROR:pike_init: init lock failed\n");
+		LM_ERR(" init lock failed\n");
 		goto error1;
 	}
 
 	/* init the IP tree */
 	if ( init_ip_tree(max_reqs)!=0 ) {
-		LOG(L_ERR,"ERROR:pike_init: ip_tree creation failed!\n");
+		LM_ERR(" ip_tree creation failed!\n");
 		goto error2;
 	}
 
 	/* init timer list */
 	timer = (struct list_link*)shm_malloc(sizeof(struct list_link));
 	if (timer==0) {
-		LOG(L_ERR,"ERROR:pike_init: cannot alloc shm mem for timer!\n");
+		LM_ERR(" cannot alloc shm mem for timer!\n");
 		goto error3;
 	}
 	timer->next = timer->prev = timer;
@@ -153,7 +153,7 @@ error1:
 
 static int pike_exit(void)
 {
-	LOG(L_INFO,"PIKE - destroying module\n");
+	LM_INFO("destroying...\n");
 
 	/* destroy semaphore */
 	if (timer_lock) {

@@ -68,14 +68,13 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 	
 	start = p = dtgram->current;
 	end = dtgram->start + dtgram->len;
-	DBG("DBG:mi_datagram:mi_datagram_write_node:writing the name "
-		"<%.*s> and value <%.*s> \n",node->name.len, node->name.s, 
-			node->value.len, node->value.s);
+	LM_DBG("writing the name <%.*s> and value <%.*s> \n",
+			node->name.len, node->name.s, node->value.len, node->value.s);
 	/* write indents */
 	if (mi_datagram_indent.s) {
 		if (p + level*mi_datagram_indent.len>end)
 		{
-			DBG("datagram: write_node: a too long line\n");
+			LM_DBG("a too long line\n");
 			return -1;
 		}
 		for( ; level>0 ; level-- ) {
@@ -87,7 +86,7 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 	if (node->name.s!=NULL) {
 		if (p+node->name.len+3>end)
 		{
-			DBG("datagram: write node: too long name\n");
+			LM_DBG("too long name\n");
 			return -1;
 		}
 		memcpy(p,node->name.s,node->name.len);
@@ -97,25 +96,25 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 		*(p++) = ' ';
 	}
 	
-	/*DBG("DBG:mi_datagram:mi_datagram_writer: after adding the "
+	/*LM_DBG("after adding the "
 			"name, the datagram is %s\n ", dtgram->datagram.s);*/
 	if (node->value.s!=NULL) {
 		if (p+node->value.len>end)
 		{
-			DBG("datagram: write node: too long value\n");
+			LM_DBG("too long value\n");
 			return -1;
 		}
 		memcpy(p,node->value.s,node->value.len);
 		p += node->value.len;
 	}
-/*	DBG("DBG:mi_datagram:mi_datagram_writer: after adding the "
+/*	LM_DBG("after adding the "
 			"value,  the datagram is %s\n ", dtgram->datagram.s);*/
 	/* attributes */
 	for( attr=node->attributes ; attr!=NULL ; attr=attr->next ) {
 		if (attr->name.s!=NULL) {
 			if (p+attr->name.len+2>end)
 			{
-				DBG("datagram: write node: too long attr name\n");
+				LM_DBG("too long attr name\n");
 				return -1;
 			}
 			*(p++) = ' ';
@@ -126,18 +125,18 @@ static inline int mi_datagram_write_node(datagram_stream * dtgram,
 		if (attr->value.s!=NULL) {
 			if (p+attr->value.len>end)
 			{
-				DBG("datagram: write node: too long attr value\n");
+				LM_DBG("too long attr value\n");
 				return -1;
 			}
 			memcpy(p,attr->value.s,attr->value.len);
 			p += attr->value.len;
 		}
 	}
-/*	DBG("DBG:mi_datagram:mi_datagram_writer: after adding the "
+/*	LM_DBG("after adding the "
 			"attributes, the datagram is %s\n ", dtgram->datagram.s);*/
 	if (p+1>end)
 	{
-		DBG("datagram: write node: overflow before returning\n");
+		LM_DBG("overflow before returning\n");
 		return -1;
 	}
 	*(p++) = '\n';
@@ -155,8 +154,7 @@ static int datagram_recur_write_tree(datagram_stream *dtgram,
 {
 	for( ; tree ; tree=tree->next ) {
 		if (mi_datagram_write_node( dtgram, tree, level)!=0) {
-			LOG(L_ERR,"ERROR:mi_datagram:recur_write_tree:failed to write -"
-				"line too long!!!\n");
+			LM_ERR("failed to write -line too long!!!\n");
 			return -1;
 		}
 		if (tree->kids) {
@@ -178,8 +176,7 @@ int mi_datagram_write_tree(datagram_stream * dtgram, struct mi_root *tree)
 	/* write the root node */
 	code.s = int2str((unsigned long)tree->code, &code.len);
 	if (code.len+tree->reason.len+1 > dtgram->len) {
-		LOG(L_ERR,"ERROR:mi_datagram:mi_write_tree: failed to write - "
-			"reason too long!!!\n");
+		LM_ERR("failed to write - reason too long!!!\n");
 		return -1;
 	}
 
@@ -201,8 +198,7 @@ int mi_datagram_write_tree(datagram_stream * dtgram, struct mi_root *tree)
 		return -1;
 
 	if (dtgram->len<=0) {
-		LOG(L_ERR,"ERROR:mi_datagram:mi_write_tree: failed to write - "
-			"EOC does not fit in!!!\n");
+		LM_ERR("failed to write - EOC does not fit in!!!\n");
 		return -1;
 	}
 

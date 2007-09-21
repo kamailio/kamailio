@@ -148,37 +148,34 @@ static int mi_mod_init(void)
 	str port_str;
 
 	/* checking the mi_socket module param */
-	DBG("DBG: mi_datagram: mi_mod_init: testing socket existance ...\n");
+	LM_DBG("testing socket existance ...\n");
 
 	if( mi_socket==NULL || *mi_socket == 0) {
-		LOG(L_ERR, "ERROR:mi_datagram: mod_init: no DATAGRAM_ socket "
-			"configured\n");
+		LM_ERR("no DATAGRAM_ socket configured\n");
 		return -1;
 	}
 
-	DBG("DBG:mi_datagram:mi_mod_init: the socket's name/addres is "
-			"%s\n", mi_socket);
+	LM_DBG("the socket's name/addres is %s\n", mi_socket);
 
 	memset( &mi_dtgram_addr, 0, sizeof(mi_dtgram_addr) );
 
 	if(strncmp(mi_socket, "udp:",4) == 0)
 	{
 		/*for an UDP socket*/
-		DBG("DBG:mi_datagram:mi_mod_init: we have an udp socket\n");
+		LM_DBG("we have an udp socket\n");
 		/*separate proto and host */
 		p = mi_socket+4;
 		if( (*(p)) == '\0')
 		{
-			LOG(L_ERR,"ERROR:mi_datagram:mi_mod_init:malformed ip address\n");
+			LM_ERR("malformed ip address\n");
 			return -1;
 		}
 		host_s=p;
-		DBG("DBG: mi_datagram:mi_mod_init: the remaining address "
-			"after separating the protocol is %s\n",p);
+		LM_DBG("the remaining address after separating the protocol is %s\n",p);
 
 		if( (p = strrchr(p+1, ':')) == 0 )
 		{
-			LOG(L_ERR,"ERROR:mi_datagram:mi_mod_init: no port specified\n");
+			LM_ERR("no port specified\n");
 			return -1;
 		}
 
@@ -186,29 +183,25 @@ static int mi_mod_init(void)
 		*p = '\0'; p++;
 		port_str.s = p;
 		port_str.len = strlen(p);
-		DBG("DBG:mi_datagram:mi_mod_init: the port string is %s\n", p);
+		LM_DBG("the port string is %s\n", p);
 		if(str2int(&port_str, &port_no) != 0 ){
-			LOG(L_ERR, "ERROR: mi_datagram:mi_mod_init: there is not "
-				"a valid number port\n");
+			LM_ERR("there is not a valid number port\n");
 			return -1;
 		}
 		*p = '\0';
 		if (port_no<1024  || port_no>MAX_NB_PORT)
 		{
-			LOG(L_ERR, "ERROR: mi_datagram:mi_mod_init: invalid port "
-				"number; must be in [1024,%d]\n",MAX_NB_PORT);
+			LM_ERR("invalid port number; must be in [1024,%d]\n",MAX_NB_PORT);
 			return -1;
 		}
 		
 		if(! (host = resolvehost(host_s, 0)) ){
-			LOG(L_ERR, "ERROR: mi_datagram:mi_mod_init failed to resolv %s"
-				"\n", host_s);
+			LM_ERR("failed to resolve %s\n", host_s);
 			return -1;
 		}
-		DBG("DBG: mi_datagram:mi_init: the ip is %s\n",host_s);
+		LM_DBG("the ip is %s\n",host_s);
 		if(hostent2su( &(mi_dtgram_addr.udp_addr), host, 0, port_no ) !=0){
-			LOG(L_ERR, "ERROR: mi_datagram:mi_mod_init failed to resolv %s"
-				"\n", mi_socket);
+			LM_ERR("failed to resolve %s\n", mi_socket);
 			return -1;
 		}
 		mi_socket_domain = host->h_addrtype;
@@ -216,43 +209,39 @@ static int mi_mod_init(void)
 	else
 	{
 		/*in case of a Unix socket*/
-		DBG("DBG:mi_datagram:mi_mod_init we have an UNIX socket\n");
+		LM_DBG("we have an UNIX socket\n");
 		
 		n=stat(mi_socket, &filestat);
 		if( n==0){
-			LOG(L_INFO,"mi_datagram:mi_mid_init : the socket %s already exists"
-				"trying to delete it...\n",mi_socket);
+			LM_INFO("the socket %s already existstrying to delete it...\n",
+					mi_socket);
 			if (unlink(mi_socket)<0){
-				LOG(L_ERR, "ERROR: mi_datagram: mi_mod_init: cannot delete "
-					"old socket (%s): %s\n", mi_socket, strerror(errno));
+				LM_ERR("cannot delete old socket : %s\n", strerror(errno));
 				return -1;
 			}
 		}else if (n<0 && errno!=ENOENT){
-			LOG(L_ERR, "ERROR: mi_datagram: mi_mod_init: socket stat failed:"
-				"%s\n", strerror(errno));
+			LM_ERR("socket stat failed:%s\n", strerror(errno));
 			return -1;
 		}
 
 		/* check mi_unix_socket_mode */
 		if(!mi_unix_socket_mode){
-			LOG(L_WARN, "WARNING:mi_datagram: mi_mod_init: cannot specify "
-				"mi_unix_socket_mode = 0, forcing it to rw-------\n");
+			LM_WARN("cannot specify mi_unix_socket_mode = 0, "
+					"forcing it to rw-------\n");
 			mi_unix_socket_mode = S_IRUSR| S_IWUSR;
 		}
 	
 		if (mi_unix_socket_uid_s){
 			if (user2uid(&mi_unix_socket_uid, &mi_unix_socket_gid, 
 					mi_unix_socket_uid_s)<0){
-				LOG(L_ERR, "ERROR:mi_datagram: mi_mod_init:bad user name %s\n",
-					mi_unix_socket_uid_s);
+				LM_ERR("bad user name %s\n", mi_unix_socket_uid_s);
 				return -1;
 			}
 		}
 	
 		if (mi_unix_socket_gid_s){
 			if (group2gid(&mi_unix_socket_gid, mi_unix_socket_gid_s)<0){
-				LOG(L_ERR,"ERROR:mi_datagram: mi_mod_init:bad group name %s\n",
-					mi_unix_socket_gid_s);
+				LM_ERR("bad group name %s\n", mi_unix_socket_gid_s);
 				return -1;
 			}
 		}
@@ -272,8 +261,7 @@ static int mi_child_init(int rank)
 	if (rank==PROC_TIMER || rank>0 ) {
 		if(mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
 		mi_reply_indent )!= 0){
-			LOG(L_CRIT, "CRITICAL:mi_datagram:mi_child_init: failed to "
-				"initiate mi_datagram_writer\n");
+			LM_CRIT("failed to initiate mi_datagram_writer\n");
 			return -1;
 		}
 	}
@@ -291,8 +279,7 @@ static int pre_datagram_process(void)
 								mi_unix_socket_gid);
 
 	if ( res ) {
-		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_init: The function "
-			"mi_init_datagram_server returned with error!!!\n");
+		LM_CRIT("function mi_init_datagram_server returned with error!!!\n");
 		return -1;
 	}
 
@@ -302,25 +289,21 @@ static int pre_datagram_process(void)
 
 static void datagram_process(int rank)
 {
-	LOG(L_INFO,"INFO:mi_datagram:mi_child_init: a new child %d/%d\n",
-		rank, getpid());
+	LM_INFO("a new child %d/%d\n", rank, getpid());
 
 	/*child's initial settings*/
 	if ( init_mi_child()!=0) {
-		LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to init"
-			"the mi process\n");
+		LM_CRIT("failed to init the mi process\n");
 		exit(-1);
 	}
 	if (mi_init_datagram_buffer()!=0){
-		LOG(L_CRIT,"CRITICAL:mi_datagram:mi_child_init: failed to "
-			"allocate datagram buffer\n");
+		LM_ERR("failed to allocate datagram buffer\n");
 		exit(-1);
 	}
 
 	if (mi_datagram_writer_init( DATAGRAM_SOCK_BUF_SIZE ,
 	mi_reply_indent )!= 0){
-		LOG(L_CRIT, "CRITICAL:mi_datagram:mi_child_init: failed to "
-			"initiate mi_datagram_writer\n");
+		LM_CRIT("failed to initiate mi_datagram_writer\n");
 		exit(-1);
 	}
 
@@ -349,13 +332,12 @@ static int mi_destroy(void)
 		n=stat(mi_socket, &filestat);
 		if (n==0){
 			if (unlink(mi_socket)<0){
-				LOG(L_ERR, "ERROR: mi_datagram: mi_destroy: cannot delete the "
-					"socket (%s): %s\n", mi_socket, strerror(errno));
+				LM_ERR("cannot delete the socket (%s): %s\n", 
+						mi_socket, strerror(errno));
 				goto error;
 			}
 		} else if (n<0 && errno!=ENOENT) {
-			LOG(L_ERR, "ERROR: mi_datagram: mi_destroy: SOCKET stat failed:	"
-				"%s\n",	strerror(errno));
+			LM_ERR("socket stat failed:	%s\n",	strerror(errno));
 			goto error;
 		}
 	}

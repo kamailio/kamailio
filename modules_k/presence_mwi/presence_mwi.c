@@ -83,27 +83,27 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	presence_api_t pres;
-    DBG("presence_mwi: mod_init...\n");
+    LM_INFO("initializing...\n");
 
     bind_presence_t bind_presence;
 
     bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);
     if (!bind_presence) {
-	LOG(L_ERR, "presence_mwi:mod_init: Can't bind presence\n");
+	LM_ERR("can't bind presence\n");
 	return -1;
     }
     if (bind_presence(&pres) < 0) {
-	LOG(L_ERR, "presence_mwi:mod_init Can't bind pua\n");
+	LM_ERR("can't bind pua\n");
 	return -1;
     }
 
     pres_add_event = pres.add_event;
     if (add_event == NULL) {
-	LOG(L_ERR, "presence_mwi:mod_init Could not import add_event\n");
+	LM_ERR("could not import add_event\n");
 	return -1;
     }
     if(mwi_add_events() < 0) {
-	LOG(L_ERR, "presence_mwi:mod_init: ERROR while adding mwi events\n");
+	LM_ERR("failed to add mwi events\n");
 	return -1;		
     }	
     
@@ -112,14 +112,14 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-    DBG("presence_mwi: init_child [%d] pid [%d]\n", rank, getpid());
+    LM_DBG("[%d] pid [%d]\n", rank, getpid());
 	
     return 0;
 }	
 
 static void destroy(void)
 {	
-    DBG("presence_mwi: destroying module ...\n");
+    LM_DBG("destroying module ...\n");
 
     return;
 }

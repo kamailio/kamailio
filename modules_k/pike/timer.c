@@ -36,8 +36,7 @@
 
 void append_to_timer(struct list_link *head, struct list_link *new_ll )
 {
-	DBG("DEBUG:pike:append_to_timer:  %p in %p(%p,%p)\n",
-		new_ll, head,head->prev,head->next);
+	LM_DBG("%p in %p(%p,%p)\n",	new_ll, head,head->prev,head->next);
 	assert( !has_timer_set(new_ll) );
 
 	new_ll->prev = head->prev;
@@ -50,8 +49,7 @@ void append_to_timer(struct list_link *head, struct list_link *new_ll )
 
 void remove_from_timer(struct list_link *head, struct list_link *ll)
 {
-	DBG("DEBUG:pike:remove_from_timer:  %p from %p(%p,%p)\n",
-		ll, head,head->prev,head->next);
+	LM_DBG("%p from %p(%p,%p)\n", ll, head,head->prev,head->next);
 	assert( has_timer_set(ll) );
 
 	ll->next->prev = ll->prev;
@@ -76,15 +74,13 @@ void check_and_split_timer(struct list_link *head, unsigned int time,
 
 	ll = head->next;
 	while( ll!=head && (node=ll2ipnode(ll))->expires<=time) {
-		DBG("DEBUG:pike:check_and_split_timer: splitting %p(%p,%p)node=%p\n",
-			ll,ll->prev,ll->next, node);
+		LM_DBG("splitting %p(%p,%p)node=%p\n", ll,ll->prev,ll->next, node);
 		/* mark the node as expired and un-mark it as being in timer list */
 		node->flags |= NODE_EXPIRED_FLAG;
 		node->flags &= ~NODE_INTIMER_FLAG;
 		b = node->branch;
 		ll=ll->next;
-		/*DBG("DEBUG:pike:check_and_split_timer: b=%d; [%d,%d]\n",
-				b,b>>3,1<<(b&0x07));*/
+		/*LM_DBG("b=%d; [%d,%d]\n",	b,b>>3,1<<(b&0x07));*/
 		mask[b>>3] |= (1<<(b&0x07));
 	}
 
@@ -103,8 +99,7 @@ void check_and_split_timer(struct list_link *head, unsigned int time,
 		ll->prev = head;
 	}
 
-	DBG("DEBUG:pike:check_and_split_timer: succ. to split (h=%p)(p=%p,n=%p)\n",
-		head,head->prev,head->next);
+	LM_DBG("succ. to split (h=%p)(p=%p,n=%p)\n", head,head->prev,head->next);
 	return;
 }
 

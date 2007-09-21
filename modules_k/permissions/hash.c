@@ -54,12 +54,12 @@ int init_tag_avp(char *tag_avp_param)
 	s.s = tag_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type != PVT_AVP) {
-	    LOG(L_ERR, "ERROR:permissions:mod_init: malformed or non "
+	    LM_ERR("malformed or non "
 		"AVP %s peer_tag_avp definition\n", tag_avp_param);
 	    return -1;
 	}
 	if(pv_get_avp_name(0, &avp_spec.pvp, &tag_avp, &avp_flags)!=0) {
-	    LOG(L_ERR, "ERROR:permissions:mod_init: [%s]- invalid "
+	    LM_ERR("[%s]- invalid "
 		"peer_tag_avp AVP definition\n", tag_avp_param);
 	    return -1;
 	}
@@ -92,7 +92,7 @@ struct trusted_list** new_hash_table(void)
 	ptr = (struct trusted_list **)shm_malloc
 		(sizeof(struct trusted_list*) * PERM_HASH_SIZE);
 	if (!ptr) {
-		LOG(L_ERR, "new_hash_table(): No memory for hash table\n");
+		LM_ERR("no shm memory for hash table\n");
 		return 0;
 	}
 
@@ -126,8 +126,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 
 	np = (struct trusted_list *) shm_malloc(sizeof(*np));
 	if (np == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate shm memory "
-			"for table entry\n");
+		LM_ERR("cannot allocate shm memory for table entry\n");
 		return -1;
 	}
 
@@ -145,8 +144,8 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	        shm_free(np);
 		return 1;
 	} else {
-		LOG(L_CRIT, "hash_table_insert(): Unknown protocol\n");
-	        shm_free(np);
+		LM_CRIT("unknown protocol\n");
+	    shm_free(np);
 		return -1;
 	}
 
@@ -154,8 +153,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	np->src_ip.s = (char *) shm_malloc(np->src_ip.len);
 
 	if (np->src_ip.s == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory for src_ip "
-			"string\n");
+		LM_CRIT("cannot allocate shm memory for src_ip string\n");
 		shm_free(np);
 		return -1;
 	}
@@ -165,8 +163,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	if (pattern) {
 	    np->pattern = (char *) shm_malloc(strlen(pattern)+1);
 	    if (np->pattern == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory "
-		    "for pattern string\n");
+		LM_CRIT("cannot allocate shm memory for pattern string\n");
 		shm_free(np->src_ip.s);
 		shm_free(np);
 		return -1;
@@ -180,8 +177,7 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 	    np->tag.len = strlen(tag);
 	    np->tag.s = (char *) shm_malloc((np->tag.len) + 1);
 	    if (np->tag.s == NULL) {
-		LOG(L_CRIT, "hash_table_insert(): Cannot allocate memory "
-		    "for pattern string\n");
+		LM_CRIT("cannot allocate shm memory for pattern string\n");
 		shm_free(np->src_ip.s);
 		shm_free(np->pattern);
 		shm_free(np);
@@ -220,7 +216,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 	if (parse_from_header(msg) < 0) return -1;
 	uri = get_from(msg)->uri;
 	if (uri.len > MAX_URI_SIZE) {
-		LOG(L_ERR, "match_hash_table(): From URI too large\n");
+		LM_ERR("from URI too large\n");
 		return -1;
 	}
 	memcpy(uri_string, uri.s, uri.len);
@@ -232,7 +228,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 		((np->proto == PROTO_NONE) || (np->proto == msg->rcv.proto))) {
 		if (!(np->pattern)) goto found;
 		if (regcomp(&preg, np->pattern, REG_NOSUB)) {
-		    LOG(L_ERR, "match_hash_table(): Error in regular expression\n");
+		    LM_ERR("invalid regular expression\n");
 		    return -1;
 		}
 		if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
@@ -248,8 +244,7 @@ found:
 	if (tag_avp.n && np->tag.s) {
 	    val.s = np->tag;
 	    if (add_avp(tag_avp_type|AVP_VAL_STR, tag_avp, val) != 0) {
-		LOG(L_ERR, "match_hash_table(): ERROR: setting of "
-		    "tag_avp failed\n");
+		LM_ERR("setting of tag_avp failed\n");
 		return -1;
 	    }
 	}
@@ -319,8 +314,7 @@ struct addr_list** new_addr_hash_table(void)
     ptr = (struct addr_list **)shm_malloc
 	(sizeof(struct addr_list*) * PERM_HASH_SIZE);
     if (!ptr) {
-	LOG(L_ERR, "permissions:new_addr_hash_table(): "
-	    "No memory for hash table\n");
+	LM_ERR("no shm memory for hash table\n");
 	return 0;
     }
 
@@ -354,8 +348,7 @@ int addr_hash_table_insert(struct addr_list** table, unsigned int grp,
 	
     np = (struct addr_list *) shm_malloc(sizeof(*np));
     if (np == NULL) {
-	LOG(L_CRIT, "permissions:addr_hash_table_insert(): "
-	    "Cannot allocate shm memory for table entry\n");
+	LM_ERR("no shm memory for table entry\n");
 	return -1;
     }
 
@@ -457,8 +450,7 @@ struct subnet* new_subnet_table(void)
     ptr = (struct subnet *)shm_malloc
 	(sizeof(struct subnet) * (PERM_MAX_SUBNETS + 1));
     if (!ptr) {
-	LOG(L_ERR, "permissions:new_subnet_table(): "
-	    "No memory for subnet table\n");
+	LM_ERR("no shm memory for subnet table\n");
 	return 0;
     }
     ptr[PERM_MAX_SUBNETS].grp = 0;
@@ -480,8 +472,7 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
     count = table[PERM_MAX_SUBNETS].grp;
 
     if (count == PERM_MAX_SUBNETS) {
-	LOG(L_CRIT, "permissions:subnet_table_insert(): "
-	    "Subnet table is full\n");
+	LM_CRIT("subnet table is full\n");
 	return 0;
     }
 

@@ -112,15 +112,15 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	DBG("path module - initializing\n");
+	LM_INFO("initializing...\n");
 
 	if (use_received) {
 		if (load_rr_api(&path_rrb) != 0) {
-			LOG(L_ERR, "ERROR: path: mod_init: Error loading rr-API\n");
+			LM_ERR("failed to load rr-API\n");
 			return -1;
 		}
 		if (path_rrb.register_rrcb(path_rr_callback, 0) != 0) {
-			LOG(L_ERR, "ERROR: path: mod_init: Error registering rr callback\n");
+			LM_ERR("failed to register rr callback\n");
 			return -1;
 		}
 	}

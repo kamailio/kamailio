@@ -47,7 +47,7 @@ pdt_tree_t* pdt_init_tree(str* sdomain)
 	pt = (pdt_tree_t*)shm_malloc(sizeof(pdt_tree_t));
 	if(pt==NULL)
 	{
-		LOG(L_ERR, "pdt_init_tree:ERROR: no more pkg memory\n");
+		LM_ERR("no more shm memory\n");
 		return NULL;
 	}
 	memset(pt, 0, sizeof(pdt_tree_t));
@@ -56,7 +56,7 @@ pdt_tree_t* pdt_init_tree(str* sdomain)
 	if(pt->sdomain.s==NULL)
 	{
 		shm_free(pt);
-		LOG(L_ERR, "pdt_init_tree:ERROR: no more pkg mem\n");
+		LM_ERR("no more shm memory\n");
 		return NULL;
 	}
 	memset(pt->sdomain.s, 0,1+sdomain->len );
@@ -69,7 +69,7 @@ pdt_tree_t* pdt_init_tree(str* sdomain)
 	{
 		shm_free(pt->sdomain.s);
 		shm_free(pt);
-		LOG(L_ERR, "pdt_init_tree:ERROR: no more pkg mem\n");
+		LM_ERR("no more shm memory\n");
 		return NULL;
 	}
 	memset(pt->head, 0, PDT_NODE_SIZE*sizeof(pdt_node_t));
@@ -85,13 +85,13 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 	if(pt==NULL || sp==NULL || sp->s==NULL
 			|| sd==NULL || sd->s==NULL)
 	{
-		LOG(L_ERR, "pdt_add_to_tree:ERROR: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
 	if(sp->len>=PDT_MAX_DEPTH)
 	{
-		LOG(L_ERR, "pdt_add_to_tree:ERROR: max prefix len exceeded\n");
+		LM_ERR("max prefix len exceeded\n");
 		return -1;
 	}
 	
@@ -103,8 +103,7 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 	{
 		if(strpos(pdt_char_list.s,sp->s[l]) < 0)
 		{
-			LOG(L_ERR,
-			"pdt_add_to_tree:ERROR: invalid char %d in prefix [%c (0x%x)]\n",
+			LM_ERR("invalid char %d in prefix [%c (0x%x)]\n",
 				l, sp->s[l], sp->s[l]);
 			return -1;			
 		}
@@ -114,7 +113,7 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 			itn = (pdt_node_t*)shm_malloc(PDT_NODE_SIZE*sizeof(pdt_node_t));
 			if(itn == NULL)
 			{
-				LOG(L_ERR, "pdt_add_to_tree: no more pkg mem\n");
+				LM_ERR("no more shm mem\n");
 				return -1;
 			}
 			memset(itn, 0, PDT_NODE_SIZE*sizeof(pdt_node_t));
@@ -127,8 +126,7 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 
 	if(itn0[strpos(pdt_char_list.s,sp->s[l])%PDT_NODE_SIZE].domain.s!=NULL)
 	{
-		LOG(L_ERR,
-			"pdt_add_to_tree:ERROR: prefix already allocated [%.*s/[%.*s]\n",
+		LM_ERR("prefix already allocated [%.*s/[%.*s]\n",
 			sp->len, sp->s, sd->len, sd->s);
 		return -1;
 	}
@@ -137,7 +135,7 @@ int add_to_tree(pdt_tree_t *pt, str *sp, str *sd)
 			= (char*)shm_malloc((sd->len+1)*sizeof(char));
 	if(itn0[strpos(pdt_char_list.s,sp->s[l])%PDT_NODE_SIZE].domain.s==NULL)
 	{
-		LOG(L_ERR, "pdt_add_to_tree:ERROR: no more pkg mem!\n");
+		LM_ERR("no more shm mem!\n");
 		return -1;
 	}
 	strncpy(itn0[strpos(pdt_char_list.s,sp->s[l])%PDT_NODE_SIZE].domain.s,
@@ -158,7 +156,7 @@ pdt_tree_t* pdt_get_tree(pdt_tree_t *pl, str *sdomain)
 
 	if( sdomain==NULL || sdomain->s==NULL)
 	{
-		LOG(L_ERR, "pdt_get_tree:ERROR: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 
@@ -181,7 +179,7 @@ int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 			|| code==NULL || code->s==NULL
 			|| domain==NULL || domain->s==NULL)
 	{
-		LOG(L_ERR, "pdt_add_to_dlist:ERROR: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 	
@@ -203,14 +201,13 @@ int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 		ndl = pdt_init_tree(sdomain);
 		if(ndl==NULL)
 		{
-			LOG(L_ERR, "pdt_add_to_tree:ERROR: no more pkg memory\n");
+			LM_ERR("no more shm memory\n");
 			return -1; 
 		}
 
 		if(add_to_tree(ndl, code, domain)<0)
 		{
-			LOG(L_ERR,
-				"pdt_add_to_dlist:ERROR: pdt_add_to_tree internal error!\n");
+			LM_ERR("internal error!\n");
 			return -1;
 		}
 		ndl->next = it;
@@ -226,8 +223,7 @@ int pdt_add_to_tree(pdt_tree_t **dpt, str *sdomain, str *code, str *domain)
 		/* add (prefix, code) to already present sdomain */
 		if(add_to_tree(it, code, domain)<0)
 		{
-			LOG(L_ERR,
-				"pdt_add_to_dlist:ERROR: pdt_add_to_tree internal error!\n");
+			LM_ERR("internal error!\n");
 			return -1;
 		}
 
@@ -242,7 +238,7 @@ str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 
 	if(pt==NULL || sp==NULL || sp->s==NULL)
 	{
-		LOG(L_ERR, "pdt_get_domain:ERROR: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 	
@@ -255,8 +251,7 @@ str* get_domain(pdt_tree_t *pt, str *sp, int *plen)
 		/* check validity */
 		if(strpos(pdt_char_list.s,sp->s[l]) < 0)
 		{
-			LOG(L_ERR, "pdt_get_domain:ERROR: invalid char at %d in [%.*s]\n",
-					l, sp->len, sp->s);
+			LM_ERR("invalid char at %d in [%.*s]\n", l, sp->len, sp->s);
 			return NULL;
 		}
 
@@ -285,7 +280,7 @@ str* pdt_get_domain(pdt_tree_t *pl, str* sdomain, str *code, int *plen)
 	if(pl==NULL || sdomain==NULL || sdomain->s==NULL || code == NULL
 			|| code->s == NULL)
 	{
-		LOG(L_ERR, "pdt_get_domain:ERROR: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return NULL;
 	}
 
@@ -356,8 +351,8 @@ int pdt_print_node(pdt_node_t *pn, char *code, int len)
 	{
 		code[len]=pdt_char_list.s[i];
 		if(pn[i].domain.s!=NULL)
-			DBG("pdt_print_node: [%.*s] [%.*s]\n",
-				len+1, code, pn[i].domain.len, pn[i].domain.s);
+			LM_DBG("[%.*s] [%.*s]\n",
+					len+1, code, pn[i].domain.len, pn[i].domain.s);
 		pdt_print_node(pn[i].child, code, len+1);
 	}
 
@@ -371,11 +366,11 @@ int pdt_print_tree(pdt_tree_t *pt)
 
 	if(pt == NULL)
 	{
-		DBG("pdt_print_tree: tree is empty\n");
+		LM_DBG("tree is empty\n");
 		return 0;
 	}
 	
-	DBG("pdt_print_tree: [%.*s]\n", pt->sdomain.len, pt->sdomain.s);
+	LM_DBG("[%.*s]\n", pt->sdomain.len, pt->sdomain.s);
 	len = 0;
 	pdt_print_node(pt->head, code_buf, len);
 	return pdt_print_tree(pt->next);

@@ -461,16 +461,14 @@ static int rtpproxy_set_store(modparam_t type, void * val){
 	if(rtpp_sets==0){
 		rtpp_strings = (char**)pkg_malloc(sizeof(char*));
 		if(!rtpp_strings){
-			LOG(L_ERR, "ERROR:nathelper:rtpproxy_set_store: Can't allocate "
-						"memory\n");
+			LM_ERR("no pkg memory left\n");
 			return -1;
 		}
 	} else {/*realloc to make room for the current set*/
 		rtpp_strings = (char**)pkg_realloc(rtpp_strings, 
 										  (rtpp_sets+1)* sizeof(char*));
 		if(!rtpp_strings){
-			LOG(L_ERR, "ERROR:nathelper:rtpproxy_set_store: Can't reallocate "
-						"memory\n");
+			LM_ERR("no pkg memory left\n");
 			return -1;
 		}
 	}
@@ -480,8 +478,7 @@ static int rtpproxy_set_store(modparam_t type, void * val){
 	rtpp_strings[rtpp_sets] = (char*)pkg_malloc((len+1)*sizeof(char));
 
 	if(!rtpp_strings[rtpp_sets]){
-		LOG(L_ERR, "ERROR:nathelper:rtpproxy_set_store: Can't allocate "
-					"memory\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	
@@ -523,7 +520,7 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 		}
 		pnode = shm_malloc(sizeof(struct rtpp_node));
 		if (pnode == NULL) {
-			LOG(L_ERR, "nathelper: Can't allocate shm memory\n");
+			LM_ERR("no shm memory left\n");
 			return -1;
 		}
 		memset(pnode, 0, sizeof(*pnode));
@@ -535,15 +532,14 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
 		if (pnode->rn_url.s == NULL) {
 			shm_free(pnode);
-			LOG(L_ERR, "nathelper: Can't allocate shm memory\n");
+			LM_ERR("no shm memory left\n");
 			return -1;
 		}
 		memmove(pnode->rn_url.s, p1, p2 - p1);
 		pnode->rn_url.s[p2 - p1] 	= 0;
 		pnode->rn_url.len 			= p2-p1;
 			
-		LOG(L_DBG, "DBG:nathelper:add_rtp_proxy_socks: url is %s, len is %i\n "
-			, pnode->rn_url.s, pnode->rn_url.len);
+		LM_DBG("url is %s, len is %i\n", pnode->rn_url.s, pnode->rn_url.len);
 		/* Leave only address in rn_address */
 		pnode->rn_address = pnode->rn_url.s;
 		if (strncmp(pnode->rn_address, "udp:", 4) == 0) {
@@ -595,8 +591,7 @@ static int nathelper_add_rtpproxy_set( char * rtp_proxies){
 	rtp_proxies = strstr(p, "==");
 	if(rtp_proxies){
 		if(*(rtp_proxies +2)=='\0'){
-			LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-					"script error -invalid rtp proxy list!\n");
+			LM_ERR("script error -invalid rtp proxy list!\n");
 			return -1;
 		}
 			
@@ -606,8 +601,7 @@ static int nathelper_add_rtpproxy_set( char * rtp_proxies){
 		id_set.s = p;	id_set.len = p2 - p+1;
 			
 		if(id_set.len <= 0 ||str2int(&id_set, &my_current_id)<0 ){
-		LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-				"script error -invalid set_id value!\n");
+		LM_ERR("script error -invalid set_id value!\n");
 			return -1;
 		}
 			
@@ -620,8 +614,7 @@ static int nathelper_add_rtpproxy_set( char * rtp_proxies){
 	for(;*rtp_proxies && isspace(*rtp_proxies);rtp_proxies++);
 
 	if(!(*rtp_proxies)){
-		LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-			"script error -empty rtp_proxy list\n");
+		LM_ERR("script error -empty rtp_proxy list\n");
 		return -1;;
 	}
 
@@ -633,8 +626,7 @@ static int nathelper_add_rtpproxy_set( char * rtp_proxies){
 	if(rtpp_list==NULL){	/*if a new id_set : add a new set of rtpp*/
 		rtpp_list = shm_malloc(sizeof(struct rtpp_set));
 		if(!rtpp_list){
-			LOG(L_ERR, "ERROR:nathelper: nathelper_add_rtpproxy_sets:"
-				"failed to allocate rtppoxylist shm memory\n");
+			LM_ERR("no shm memory left\n");
 			return -1;
 		}
 		memset(rtpp_list, 0, sizeof(struct rtpp_set));
@@ -653,8 +645,7 @@ static int nathelper_add_rtpproxy_set( char * rtp_proxies){
 		if(!rtpp_set_list){/*initialize the list of set*/
 			rtpp_set_list = shm_malloc(sizeof(struct rtpp_set_head));
 			if(!rtpp_set_list){
-				LOG(L_ERR, "ERROR:nathelper:nathelper_add_rtpproxy_set: "
-					"Can't allocate memory\n");
+				LM_ERR("no shm memory left\n");
 				return -1;
 			}
 			memset(rtpp_set_list, 0, sizeof(struct rtpp_set_head));
@@ -690,16 +681,14 @@ static int fixup_set_id(void ** param, int param_no)
 	if (err == 0) {
 		pkg_free(*param);
 		if((rtpp_list = select_rtpp_set(int_val)) ==0){
-			LOG(L_ERR, "ERROR:nathelper:fixup_set_id: rtpp_proxy set %i "
-				"not configured\n", int_val);
+			LM_ERR("rtpp_proxy set %i not configured\n", int_val);
 			return E_CFG;
 		}
 		*param = (void *)rtpp_list;
 	
 		return 0;
 	} else {
-		LOG(L_ERR, "ERROR: nathelper:fixup_set_id: bad number <%s>\n",
-			(char *)(*param));
+		LM_ERR("bad number <%s>\n",	(char *)(*param));
 		return E_CFG;
 	}
 }
@@ -718,12 +707,11 @@ fixup_fix_sdp(void** param, int param_no)
 	model=NULL;
 	s.s = (char*)(*param); s.len = strlen(s.s);
 	if(pv_parse_format(&s,&model)<0) {
-		LOG(L_ERR, "ERROR:nathelper:fixup_fix_sdp: wrong format[%s]!\n",
-			(char*)(*param));
+		LM_ERR("wrong format[%s]!\n", (char*)(*param));
 		return E_UNSPEC;
 	}
 	if (model==NULL) {
-		LOG(L_ERR, "ERROR:nathelper:fixup_fix_sdp: empty parameter!\n");
+		LM_ERR("empty parameter!\n");
 		return E_UNSPEC;
 	}
 	*param = (void*)model;
@@ -733,8 +721,7 @@ fixup_fix_sdp(void** param, int param_no)
 static int fixup_fix_nated_register(void** param, int param_no)
 {
 	if (rcv_avp_name.n == 0) {
-		LOG(L_ERR, "ERROR:nathelper:fixup_fix_nated_register: you must set"
-				" 'received_avp' parameter. Must be same value as"
+		LM_ERR("you must set 'received_avp' parameter. Must be same value as"
 				" parameter 'received_avp' of registrar module\n");
 		return -1;
 	}
@@ -831,8 +818,7 @@ error:
 	do {\
 		(_string) = int2str((_value), &(_len));\
 		if((_string) == 0){\
-			LOG(L_ERR, "ERROR:nathelper:add_rtpp_node_int_info:"\
-				" cannot convert int value\n");\
+			LM_ERR("cannot convert int value\n");\
 				goto _error;\
 		}\
 		if(((_child) = add_mi_node_child((_parent), MI_DUP_VALUE, (_name), \
@@ -855,8 +841,7 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 
 	root = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 	if (!root) {
-		LOG(L_ERR, "ERROR:nathelper:mi_show_rtpproxies: the MI tree cannot be "
-			"initialized!\n");
+		LM_ERR("the MI tree cannot be initialized!\n");
 		return 0;
 	}
 
@@ -873,25 +858,21 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 
 			id =  int2str(rtpp_list->id_set, &id_len);
 			if(!id){
-				LOG(L_ERR, "ERROR:nathelper:mi_show_rtpproxies: cannot "
-					" convert set id\n");
+				LM_ERR("cannot convert set id\n");
 				goto error;
 			}
 
 			if(!(crt_node = add_mi_node_child(node, 0, crt_rtpp->rn_url.s, 
 					crt_rtpp->rn_url.len, 0,0)) ) {
-				LOG(L_ERR, "ERROR:nathelper:mi_show_rtpproxies: cannot add "
-					"the child node to the tree\n");
+				LM_ERR("cannot add the child node to the tree\n");
 				goto error;
 			}
 
-			LOG(L_DBG, "DBG:nathelper:mi_show_rtpropxies: adding node name %s "
-				"\n",crt_rtpp->rn_url.s );
+			LM_DBG("adding node name %s \n",crt_rtpp->rn_url.s );
 
 			if((attr = add_mi_attr(crt_node, MI_DUP_VALUE, MI_SET, MI_SET_LEN, 
 									id, id_len))== 0){
-				LOG(L_ERR, "ERROR:nathelper:mi_show_rtpproxies: cannot add "
-					"attributes to the node\n");
+				LM_ERR("cannot add attributes to the node\n");
 				goto error;
 			}
 
@@ -982,15 +963,13 @@ mod_init(void)
 		s.s = rcv_avp_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:nathelper:mod_init: malformed or non AVP %s "
-				"AVP definition\n", rcv_avp_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &rcv_avp_name, &rcv_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:nathelper:mod_init: [%s]- invalid "
-				"AVP definition\n", rcv_avp_param);
+			LM_ERR("[%s]- invalid AVP definition\n", rcv_avp_param);
 			return -1;
 		}
 	} else {
@@ -1026,7 +1005,7 @@ mod_init(void)
 	if (natping_interval > 0) {
 		bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
 		if (!bind_usrloc) {
-			LOG(L_ERR, "ERROR:nathelper:mod_init: Can't find usrloc module\n");
+			LM_ERR("can't find usrloc module\n");
 			return -1;
 		}
 
@@ -1036,7 +1015,7 @@ mod_init(void)
 
 		natping_state =(unsigned int *) shm_malloc(sizeof(unsigned int));
 		if (!natping_state) {
-			LOG(L_ERR, "ERROR:nathelper:mod_init: no shmem\n");
+			LM_ERR("no shmem left\n");
 			return -1;
 		}
 		*natping_state = MI_DEFAULT_NATPING_STATE;
@@ -1057,13 +1036,11 @@ mod_init(void)
 		/* set reply function if SIP natping is enabled */
 		if (sipping_flag) {
 			if (sipping_from.s==0 || sipping_from.s[0]==0) {
-				LOG(L_ERR,"ERROR:nathelper:mod_init: SIP ping enabled, but "
-					"SIP ping FROM is empty!\n");
+				LM_ERR("SIP ping enabled, but SIP ping FROM is empty!\n");
 				return -1;
 			}
 			if (sipping_method.s==0 || sipping_method.s[0]==0) {
-				LOG(L_ERR,"ERROR:nathelper:mod_init: SIP ping enabled, but "
-					"SIP ping method is empty!\n");
+				LM_ERR("SIP ping enabled, but SIP ping method is empty!\n");
 				return -1;
 			}
 			sipping_method.len = strlen(sipping_method.s);
@@ -1149,7 +1126,7 @@ child_init(int rank)
 			hints.ai_family = (pnode->rn_umode == 6) ? AF_INET6 : AF_INET;
 			hints.ai_socktype = SOCK_DGRAM;
 			if ((n = getaddrinfo(pnode->rn_address, cp, &hints, &res)) != 0) {
-				LOG(L_ERR, "nathelper: getaddrinfo: %s\n", gai_strerror(n));
+				LM_ERR("%s\n", gai_strerror(n));
 				return -1;
 			}
 			if (old_colon)
@@ -1158,13 +1135,13 @@ child_init(int rank)
 			pnode->rn_fd = socket((pnode->rn_umode == 6)
 			    ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
 			if (pnode->rn_fd == -1) {
-				LOG(L_ERR, "nathelper: can't create socket\n");
+				LM_ERR("can't create socket\n");
 				freeaddrinfo(res);
 				return -1;
 			}
 
 			if (connect(pnode->rn_fd, res->ai_addr, res->ai_addrlen) == -1) {
-				LOG(L_ERR, "nathelper: can't connect to a RTP proxy\n");
+				LM_ERR("can't connect to a RTP proxy\n");
 				close(pnode->rn_fd);
 				pnode->rn_fd = -1;
 				freeaddrinfo(res);
@@ -1274,7 +1251,7 @@ get_to_tag(struct sip_msg* _m, str* _tag)
 {
 
 	if (!_m->to) {
-		LOG(L_ERR, "get_to_tag(): To header field missing\n");
+		LM_ERR("To header field missing\n");
 		return -1;
 	}
 
@@ -1297,7 +1274,7 @@ get_from_tag(struct sip_msg* _m, str* _tag)
 {
 
 	if (parse_from_header(_m)<0) {
-		LOG(L_ERR, "get_from_tag(): Error while parsing From header\n");
+		LM_ERR("failed to parse From header\n");
 		return -1;
 	}
 
@@ -1322,12 +1299,12 @@ get_callid(struct sip_msg* _m, str* _cid)
 {
 
 	if ((parse_headers(_m, HDR_CALLID_F, 0) == -1)) {
-		LOG(L_ERR, "get_callid(): parse_headers() failed\n");
+		LM_ERR("failed to parse call-id header\n");
 		return -1;
 	}
 
 	if (_m->callid == NULL) {
-		LOG(L_ERR, "get_callid(): Call-ID not found\n");
+		LM_ERR("call-id not found\n");
 		return -1;
 	}
 
@@ -1347,7 +1324,7 @@ get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 	if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
 		return -1;
 	if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		LM_ERR("failed to parse Contact body\n");
 		return -1;
 	}
 	*_c = ((contact_body_t*)_m->contact->parsed)->contacts;
@@ -1356,7 +1333,7 @@ get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 		return -1;
 
 	if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact URI\n");
+		LM_ERR("failed to parse Contact URI\n");
 		return -1;
 	}
 	return 0;
@@ -1379,7 +1356,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	if (get_contact_uri(msg, &uri, &c) == -1)
 		return -1;
 	if ((c->uri.s < msg->buf) || (c->uri.s > (msg->buf + msg->len))) {
-		LOG(L_ERR, "ERROR: you can't call fix_nated_contact twice, "
+		LM_ERR("you can't call fix_nated_contact twice, "
 		    "check your config!\n");
 		return -1;
 	}
@@ -1397,7 +1374,7 @@ fix_nated_contact_f(struct sip_msg* msg, char* str1, char* str2)
 	len = c->uri.len + strlen(cp) + 6 /* :port */ - hostport.len + 1;
 	buf = pkg_malloc(len);
 	if (buf == NULL) {
-		LOG(L_ERR, "ERROR: fix_nated_contact: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
 	temp[0] = hostport.s[0];
@@ -1475,11 +1452,11 @@ sdp_1918(struct sip_msg* msg)
 	int pf;
 
 	if (extract_body(msg, &body) == -1) {
-		LOG(L_ERR,"ERROR: sdp_1918: cannot extract body from msg!\n");
+		LM_ERR("cannot extract body from msg!\n");
 		return 0;
 	}
 	if (extract_mediaip(&body, &ip, &pf,"c=") == -1) {
-		LOG(L_ERR, "ERROR: sdp_1918: can't extract media IP from the SDP\n");
+		LM_ERR("can't extract media IP from the SDP\n");
 		return 0;
 	}
 	if (pf != AF_INET || isnulladdr(&ip, pf))
@@ -1580,29 +1557,26 @@ replace_sdp_ip(struct sip_msg* msg, str *org_body, char *line, str *ip)
 		if (extract_mediaip(&body1, &oldip, &pf,line) == -1)
 			break;
 		if (pf != AF_INET) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: "
-				"not an IPv4 address in '%s' SDP\n",line);
+			LM_ERR("not an IPv4 address in '%s' SDP\n",line);
 				return -1;
 			}
 		if (!pf1)
 			pf1 = pf;
 		else if (pf != pf1) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: mismatching "
-				"address families in '%s' SDP\n",line);
+			LM_ERR("mismatching address families in '%s' SDP\n",line);
 			return -1;
 		}
 		body2.s = oldip.s + oldip.len;
 		body2.len = bodylimit - body2.s;
 		if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf,1) == -1) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: can't alter '%s' IP\n",line);
+			LM_ERR("can't alter '%s' IP\n",line);
 			return -1;
 		}
 		hasreplaced = 1;
 		body1 = body2;
 	}
 	if (!hasreplaced) {
-		LOG(L_ERR, "ERROR: fix_nated_sdp: can't extract '%s' IP "
-			"from the SDP\n",line);
+		LM_ERR("can't extract '%s' IP from the SDP\n",line);
 		return -1;
 	}
 
@@ -1623,7 +1597,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		return -1;
 
 	if (extract_body(msg, &body) == -1) {
-		LOG(L_ERR,"ERROR: fix_nated_sdp: cannot extract body from msg!\n");
+		LM_ERR("cannot extract body from msg!\n");
 		return -1;
 	}
 
@@ -1631,19 +1605,18 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		msg->msg_flags |= FL_FORCE_ACTIVE;
 		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: fix_nated_sdp: anchor_lump failed\n");
+			LM_ERR("anchor_lump failed\n");
 			return -1;
 		}
 		if (level & ADD_ADIRECTION) {
 			buf = pkg_malloc(ADIRECTION_LEN * sizeof(char));
 			if (buf == NULL) {
-				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+				LM_ERR("out of pkg memory\n");
 				return -1;
 			}
 			memcpy(buf, ADIRECTION, ADIRECTION_LEN);
 			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0)==NULL) {
-				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after "
-					"failed\n");
+				LM_ERR("insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
 			}
@@ -1651,13 +1624,12 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 		if ((level & ADD_ANORTPPROXY) && nortpproxy_str.len) {
 			buf = pkg_malloc(nortpproxy_str.len * sizeof(char));
 			if (buf == NULL) {
-				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
+				LM_ERR("out of pkg memory\n");
 				return -1;
 			}
 			memcpy(buf, nortpproxy_str.s, nortpproxy_str.len);
 			if (insert_new_lump_after(anchor, buf, nortpproxy_str.len, 0)==NULL) {
-				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after "
-					"failed\n");
+				LM_ERR("insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
 			}
@@ -1727,8 +1699,7 @@ extract_mediaip(str *body, str *mediaip, int *pf, char *line)
 		cp = eat_space_end(cp + len, mediaip->s + mediaip->len);
 	}
 	if (nextisip != 2 || mediaip->len == 0) {
-		LOG(L_ERR, "ERROR: extract_mediaip: "
-		    "no `IP[4|6]' in `%s' field\n",line);
+		LM_ERR("no `IP[4|6]' in `%s' field\n",line);
 		return -1;
 	}
 	return 1;
@@ -1749,7 +1720,7 @@ extract_mediaport(str *body, str *mediaport)
 		cp = cp1 + 2;
 	}
 	if (cp1 == NULL) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no `m=' in SDP\n");
+		LM_ERR("no `m=' in SDP\n");
 		return -1;
 	}
 	mediaport->s = cp1 + 2; /* skip `m=' */
@@ -1761,14 +1732,14 @@ extract_mediaport(str *body, str *mediaport)
 	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
 	mediaport->len -= cp - mediaport->s;
 	if (mediaport->len <= 0 || cp == mediaport->s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		LM_ERR("no port in `m='\n");
 		return -1;
 	}
 	mediaport->s = cp;
 	cp = eat_space_end(mediaport->s, mediaport->s + mediaport->len);
 	mediaport->len -= cp - mediaport->s;
 	if (mediaport->len <= 0 || cp == mediaport->s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		LM_ERR("no port in `m='\n");
 		return -1;
 	}
 	/* Extract port */
@@ -1776,7 +1747,7 @@ extract_mediaport(str *body, str *mediaport)
 	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
 	ptype.len = mediaport->len - (cp - mediaport->s);
 	if (ptype.len <= 0 || cp == mediaport->s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		LM_ERR("no port in `m='\n");
 		return -1;
 	}
 	ptype.s = cp;
@@ -1785,14 +1756,14 @@ extract_mediaport(str *body, str *mediaport)
 	cp = eat_space_end(ptype.s, ptype.s + ptype.len);
 	ptype.len -= cp - ptype.s;
 	if (ptype.len <= 0 || cp == ptype.s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
+		LM_ERR("no protocol type in `m='\n");
 		return -1;
 	}
 	/* Extract protocol type */
 	ptype.s = cp;
 	cp = eat_token_end(ptype.s, ptype.s + ptype.len);
 	if (cp == ptype.s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
+		LM_ERR("no protocol type in `m='\n");
 		return -1;
 	}
 	ptype.len = cp - ptype.s;
@@ -1824,7 +1795,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaip: anchor_lump failed\n");
+			LM_ERR("anchor_lump failed\n");
 			return -1;
 		}
 		if (oldpf == AF_INET6) {
@@ -1836,7 +1807,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		}
 		buf = pkg_malloc(omip.len + oldip->len + CRLF_LEN);
 		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
 		memcpy(buf, omip.s, omip.len);
@@ -1844,7 +1815,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		memcpy(buf + omip.len + oldip->len, CRLF, CRLF_LEN);
 		if (insert_new_lump_after(anchor, buf,
 		    omip.len + oldip->len + CRLF_LEN, 0) == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
+			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(buf);
 			return -1;
 		}
@@ -1854,7 +1825,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		nip.len = newip->len;
 		nip.s = pkg_malloc(nip.len);
 		if (nip.s == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
 		memcpy(nip.s, newip->s, newip->len);
@@ -1862,7 +1833,7 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 		nip.len = newip->len + 2;
 		nip.s = pkg_malloc(nip.len);
 		if (nip.s == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
 		memcpy(nip.s + 2, newip->s, newip->len);
@@ -1880,13 +1851,13 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 	offset = oip.s - msg->buf;
 	anchor = del_lump(msg, offset, oip.len, 0);
 	if (anchor == NULL) {
-		LOG(L_ERR, "ERROR: alter_mediaip: del_lump failed\n");
+		LM_ERR("del_lump failed\n");
 		pkg_free(nip.s);
 		return -1;
 	}
 
 	if (insert_new_lump_after(anchor, nip.s, nip.len, 0) == 0) {
-		LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
+		LM_ERR("insert_new_lump_after failed\n");
 		pkg_free(nip.s);
 		return -1;
 	}
@@ -1916,8 +1887,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	/* disabled: - it propagates to the reply and we don't want this
 	 *  -- andrei */
 	if (msg->msg_flags & FL_SDP_PORT_AFS) {
-		LOG(L_ERR, "ERROR: alter_mediaip: you can't rewrite the same "
-		  "SDP twice, check your config!\n");
+		LM_ERR("you can't rewrite the same SDP twice, check your config!\n");
 		return -1;
 	}
 #endif
@@ -1925,12 +1895,12 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 	if (preserve != 0) {
 		anchor = anchor_lump(msg, body->s + body->len - msg->buf, 0, 0);
 		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaport: anchor_lump failed\n");
+			LM_ERR("anchor_lump failed\n");
 			return -1;
 		}
 		buf = pkg_malloc(AOLDMEDPRT_LEN + oldport->len + CRLF_LEN);
 		if (buf == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaport: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
 		memcpy(buf, AOLDMEDPRT, AOLDMEDPRT_LEN);
@@ -1938,7 +1908,7 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 		memcpy(buf + AOLDMEDPRT_LEN + oldport->len, CRLF, CRLF_LEN);
 		if (insert_new_lump_after(anchor, buf,
 		    AOLDMEDPRT_LEN + oldport->len + CRLF_LEN, 0) == NULL) {
-			LOG(L_ERR, "ERROR: alter_mediaport: insert_new_lump_after failed\n");
+			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(buf);
 			return -1;
 		}
@@ -1946,19 +1916,19 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 
 	buf = pkg_malloc(newport->len);
 	if (buf == NULL) {
-		LOG(L_ERR, "ERROR: alter_mediaport: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
 	offset = oldport->s - msg->buf;
 	anchor = del_lump(msg, offset, oldport->len, 0);
 	if (anchor == NULL) {
-		LOG(L_ERR, "ERROR: alter_mediaport: del_lump failed\n");
+		LM_ERR("del_lump failed\n");
 		pkg_free(buf);
 		return -1;
 	}
 	memcpy(buf, newport->s, newport->len);
 	if (insert_new_lump_after(anchor, buf, newport->len, 0) == 0) {
-		LOG(L_ERR, "ERROR: alter_mediaport: insert_new_lump_after failed\n");
+		LM_ERR("insert_new_lump_after failed\n");
 		pkg_free(buf);
 		return -1;
 	}
@@ -1989,8 +1959,7 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 
 
 	if(node->rn_recheck_ticks == MI_MAX_RECHECK_TICKS){
-	    LOG(L_DBG, "DBG:nathelper:rtpp_test: rtpp %s disabled for ever\n",
-			node->rn_url.s);
+	    LM_DBG("rtpp %s disabled for ever\n", node->rn_url.s);
 		return 1;
 	}
 
@@ -2002,37 +1971,30 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 	}
 	cp = send_rtpp_command(node, v, 2);
 	if (cp == NULL) {
-		LOG(L_WARN,"WARNING: rtpp_test: can't get version of "
-		    "the RTP proxy\n");
+		LM_WARN("can't get version of the RTP proxy\n");
 		goto error;
 	}
 	rtpp_ver = atoi(cp);
 	if (rtpp_ver != SUP_CPROTOVER) {
-		LOG(L_WARN, "WARNING: rtpp_test: unsupported "
-		    "version of RTP proxy <%s> found: %d supported, "
-		    "%d present\n", node->rn_url.s,
-		    SUP_CPROTOVER, rtpp_ver);
+		LM_WARN("unsupported version of RTP proxy <%s> found: %d supported,"
+				"%d present\n", node->rn_url.s, SUP_CPROTOVER, rtpp_ver);
 		goto error;
 	}
 	cp = send_rtpp_command(node, vf, 4);
 	if (cp == NULL) {
-		LOG(L_WARN,"WARNING: rtpp_test: RTP proxy went down during "
-			"version query\n");
+		LM_WARN("RTP proxy went down during version query\n");
 		goto error;
 	}
 	if (cp[0] == 'E' || atoi(cp) != 1) {
-		LOG(L_WARN, "WARNING: rtpp_test: of RTP proxy <%s>"
-		    "doesn't support required protocol version %s\n",
-		    node->rn_url.s, REQ_CPROTOVER);
+		LM_WARN("of RTP proxy <%s> doesn't support required protocol version"
+				"%s\n", node->rn_url.s, REQ_CPROTOVER);
 		goto error;
 	}
-	LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
-	    "it %senabled\n",
+	LM_INFO("rtp proxy <%s> found, support for it %senabled\n",
 	    node->rn_url.s, force == 0 ? "re-" : "");
 	return 0;
 error:
-	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy <%s>"
-	    "has been disabled%s\n", node->rn_url.s,
+	LM_WARN("support for RTP proxy <%s> has been disabled%s\n", node->rn_url.s,
 	    rtpproxy_disable_tout < 0 ? "" : " temporarily");
 	if (rtpproxy_disable_tout >= 0)
 		node->rn_recheck_ticks = get_ticks() + rtpproxy_disable_tout;
@@ -2062,12 +2024,12 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 
 		fd = socket(AF_LOCAL, SOCK_STREAM, 0);
 		if (fd < 0) {
-			LOG(L_ERR, "ERROR: send_rtpp_command: can't create socket\n");
+			LM_ERR("can't create socket\n");
 			goto badproxy;
 		}
 		if (connect(fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
 			close(fd);
-			LOG(L_ERR, "ERROR: send_rtpp_command: can't connect to RTP proxy\n");
+			LM_ERR("can't connect to RTP proxy\n");
 			goto badproxy;
 		}
 
@@ -2076,7 +2038,7 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 		} while (len == -1 && errno == EINTR);
 		if (len <= 0) {
 			close(fd);
-			LOG(L_ERR, "ERROR: send_rtpp_command: can't send command to a RTP proxy\n");
+			LM_ERR("can't send command to a RTP proxy\n");
 			goto badproxy;
 		}
 		do {
@@ -2084,7 +2046,7 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 		} while (len == -1 && errno == EINTR);
 		close(fd);
 		if (len <= 0) {
-			LOG(L_ERR, "ERROR: send_rtpp_command: can't read reply from a RTP proxy\n");
+			LM_ERR("can't read reply from a RTP proxy\n");
 			goto badproxy;
 		}
 	} else {
@@ -2104,8 +2066,7 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 				len = writev(node->rn_fd, v, vcnt);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
-				LOG(L_ERR, "ERROR: send_rtpp_command: "
-				    "can't send command to a RTP proxy\n");
+				LM_ERR("can't send command to a RTP proxy\n");
 				goto badproxy;
 			}
 			while ((poll(fds, 1, rtpproxy_tout * 1000) == 1) &&
@@ -2114,8 +2075,7 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 					len = recv(node->rn_fd, buf, sizeof(buf) - 1, 0);
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
-					LOG(L_ERR, "ERROR: send_rtpp_command: "
-					    "can't read reply from a RTP proxy\n");
+					LM_ERR("can't read reply from a RTP proxy\n");
 					goto badproxy;
 				}
 				if (len >= (v[0].iov_len - 1) &&
@@ -2132,8 +2092,7 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 			}
 		}
 		if (i == rtpproxy_retr) {
-			LOG(L_ERR, "ERROR: send_rtpp_command: "
-			    "timeout waiting reply from a RTP proxy\n");
+			LM_ERR("timeout waiting reply from a RTP proxy\n");
 			goto badproxy;
 		}
 	}
@@ -2142,8 +2101,7 @@ out:
 	cp[len] = '\0';
 	return cp;
 badproxy:
-	LOG(L_ERR, "send_rtpp_command(): proxy <%s> does not respond, disable it\n",
-		node->rn_url.s);
+	LM_ERR("proxy <%s> does not respond, disable it\n", node->rn_url.s);
 	node->rn_disabled = 1;
 	node->rn_recheck_ticks = get_ticks() + rtpproxy_disable_tout;
 	
@@ -2160,15 +2118,14 @@ static struct rtpp_set * select_rtpp_set(int id_set ){
 	/*is it a valid set_id?*/
 	
 	if(!rtpp_set_list || !rtpp_set_list->rset_first){
-		LOG(L_ERR, "ERROR:nathelper:select_rtpp_set:no rtp_proxy configured\n");
+		LM_ERR("no rtp_proxy configured\n");
 		return 0;
 	}
 
 	for(rtpp_list=rtpp_set_list->rset_first; rtpp_list!=0 && 
 		rtpp_list->id_set!=id_set; rtpp_list=rtpp_list->rset_next);
 	if(!rtpp_list){
-		LOG(L_ERR, "ERROR:nathelper:select_rtpp_set: script error-invalid "
-			"id_set to be selected\n");
+		LM_ERR(" script error-invalid id_set to be selected\n");
 	}
 
 	return rtpp_list;
@@ -2187,8 +2144,7 @@ select_rtpp_node(str callid, int do_test)
 	int was_forced;
 
 	if(!selected_rtpp_set){
-		LOG(L_ERR, "ERROR:nathelper:select_rtpp_node: script error -no valid "
-			"set selected\n");
+		LM_ERR("script error -no valid set selected\n");
 		return NULL;
 	}
 	/* Most popular case: 1 proxy, nothing to calculate */
@@ -2258,16 +2214,16 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 						/* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
 
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
-		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get Call-Id field\n");
+		LM_ERR("can't get Call-Id field\n");
 		return -1;
 	}
 	to_tag.s = 0;
 	if (get_to_tag(msg, &to_tag) == -1) {
-		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get To tag\n");
+		LM_ERR("can't get To tag\n");
 		return -1;
 	}
 	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
-		LOG(L_ERR, "ERROR: unforce_rtp_proxy: can't get From tag\n");
+		LM_ERR("can't get From tag\n");
 		return -1;
 	}
 	STR2IOVEC(callid, v[3]);
@@ -2280,7 +2236,7 @@ unforce_rtp_proxy_f(struct sip_msg* msg, char* str1, char* str2)
 	
 	node = select_rtpp_node(callid, 1);
 	if (!node) {
-		LOG(L_ERR, "ERROR: unforce_rtp_proxy: no available proxies\n");
+		LM_ERR("no available proxies\n");
 		return -1;
 	}
 	send_rtpp_command(node, v, (to_tag.len > 0) ? 8 : 6);
@@ -2440,7 +2396,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			break;
 
 		default:
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", *cp);
+			LM_ERR("unknown option `%c'\n", *cp);
 			return -1;
 		}
 	}
@@ -2456,21 +2412,20 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	 * a side effect => don't move get_callid/get_to_tag in front of it
 	 * -- andrei */
 	if (extract_body(msg, &body) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't extract body "
-		    "from the message\n");
+		LM_ERR("can't extract body from the message\n");
 		return -1;
 	}
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get Call-Id field\n");
+		LM_ERR("can't get Call-Id field\n");
 		return -1;
 	}
 	to_tag.s = 0;
 	if (get_to_tag(msg, &to_tag) == -1) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get To tag\n");
+		LM_ERR("can't get To tag\n");
 		return -1;
 	}
 	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get From tag\n");
+		LM_ERR("can't get From tag\n");
 		return -1;
 	}
 	if (flookup != 0) {
@@ -2519,7 +2474,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	bodylimit = body.s + body.len;
 	v1p = find_sdp_line(body.s, bodylimit, 'v');
 	if (v1p == NULL) {
-		LOG(L_ERR, "ERROR: force_rtp_proxy2: no sessions in SDP\n");
+		LM_ERR("no sessions in SDP\n");
 		return -1;
 	}
 	v2p = find_next_sdp_line(v1p, bodylimit, 'v', bodylimit);
@@ -2541,13 +2496,13 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		/* get session origin */
 		o1p = find_sdp_line(v1p, v2p, 'o');
 		if (o1p==0) {
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: no o= in session\n");
+			LM_ERR("no o= in session\n");
 			return -1;
 		}
 		/* Have this session media description? */
 		m1p = find_sdp_line(o1p, v2p, 'm');
 		if (m1p == NULL) {
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: no m= in session\n");
+			LM_ERR("no m= in session\n");
 			return -1;
 		}
 		/*
@@ -2571,21 +2526,18 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			tmpstr1.s = c2p ? c2p : c1p;
 			if (tmpstr1.s == NULL) {
 				/* No "c=" */
-				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
-				    " find media IP in the message\n");
+				LM_ERR("can't find media IP in the message\n");
 				return -1;
 			}
 			tmpstr1.len = v2p - tmpstr1.s; /* limit is session limit text */
 			if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
-				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
-				    " extract media IP from the message\n");
+				LM_ERR("can't extract media IP from the message\n");
 				return -1;
 			}
 			tmpstr1.s = m1p;
 			tmpstr1.len = m2p - m1p;
 			if (extract_mediaport(&tmpstr1, &oldport) == -1) {
-				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
-				    " extract media port from the message\n");
+				LM_ERR("can't extract media port from the message\n");
 				return -1;
 			}
 			++medianum;
@@ -2621,13 +2573,12 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			do {
 				node = select_rtpp_node(callid, 1);
 				if (!node) {
-					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available "
-						"proxies\n");
+					LM_ERR("no available proxies\n");
 					return -1;
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
 			} while (cp == NULL);
-			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
+			LM_DBG("proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
 			argc = 0;
 			memset(argv, 0, sizeof(argv));
@@ -2701,8 +2652,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 				tmpstr1.s = c1p;
 				tmpstr1.len = v2p - tmpstr1.s;
 				if (extract_mediaip(&tmpstr1, &oldip, &pf,"c=") == -1) {
-					LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
-						" extract media IP from the message\n");
+					LM_ERR("can't extract media IP from the message\n");
 					return -1;
 				}
 				body1.s = c1p;
@@ -2718,8 +2668,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 				tmpstr1.s = o1p;
 				tmpstr1.len = v2p - tmpstr1.s;
 				if (extract_mediaip(&tmpstr1, &oldip, &pf,"o=") == -1) {
-					LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
-						" extract media IP from the message\n");
+					LM_ERR("can't extract media IP from the message\n");
 					return -1;
 				}
 				body1.s = o1p;
@@ -2734,18 +2683,18 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	if (proxied == 0 && nortpproxy_str.len) {
 		cp = pkg_malloc(nortpproxy_str.len * sizeof(char));
 		if (cp == NULL) {
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
 		anchor = anchor_lump(msg, body.s + body.len - msg->buf, 0, 0);
 		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: anchor_lump failed\n");
+			LM_ERR("anchor_lump failed\n");
 			pkg_free(cp);
 			return -1;
 		}
 		memcpy(cp, nortpproxy_str.s, nortpproxy_str.len);
 		if (insert_new_lump_after(anchor, cp, nortpproxy_str.len, 0) == NULL) {
-			LOG(L_ERR, "ERROR: force_rtp_proxy2: insert_new_lump_after failed\n");
+			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(cp);
 			return -1;
 		}
@@ -2805,7 +2754,7 @@ static int send_raw(const char *buf, int buf_len, union sockaddr_union *to,
 	int len = sizeof(struct ip) + sizeof(struct udphdr) + buf_len;
 
 	if (len > sizeof(packet)) {
-		LOG(L_ERR, "ERROR:send_raw: payload too big\n");
+		LM_ERR("payload too big\n");
 		return -1;
 	}
 
@@ -2858,7 +2807,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	if (cblen > 0) {
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
-			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			goto done;
 		}
 	}
@@ -2871,7 +2820,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		cblen = rval * 2;
 		buf = pkg_malloc(cblen);
 		if (buf == NULL) {
-			LOG(L_ERR, "ERROR:nathelper:nh_timer: out of memory\n");
+			LM_ERR("out of pkg memory\n");
 			goto done;
 		}
 		rval = ul.get_all_ucontacts(buf,cblen,(ping_nated_only?ul.nat_flag:0),
@@ -2929,7 +2878,7 @@ nh_timer(unsigned int ticks, void *timer_idx)
 		 * moment we are lucky since the curi is an IP -bogdan */
 		he = sip_resolvehost(&curi.host, &curi.port_no, &proto, 0, 0);
 		if (he == NULL){
-			LOG(L_ERR, "ERROR:nathelper:nh_timer: can't resolve_host\n");
+			LM_ERR("can't resolve_host\n");
 			continue;
 		}
 		hostent2su(&to, he, 0, curi.port_no);
@@ -2979,7 +2928,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	str proto;
 
 	if (!uri || !m) {
-		LOG(L_ERR,"ERROR:nathelper:create_rcv_uri: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -3011,7 +2960,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 		break;
 
 	default:
-		LOG(L_ERR, "BUG: create_rcv_uri: Unknown transport protocol\n");
+		LM_ERR("unknown transport protocol\n");
 		return -1;
 	}
 
@@ -3022,7 +2971,7 @@ create_rcv_uri(str* uri, struct sip_msg* m)
 	}
 
 	if (len > MAX_URI_SIZE) {
-		LOG(L_ERR, "ERROR:nathelper:create_rcv_uri: Buffer too small\n");
+		LM_ERR("buffer too small\n");
 		return -1;
 	}
 
@@ -3083,7 +3032,7 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 	while(c) {
 		param = (char*)pkg_malloc(RECEIVED_LEN + 2 + uri.len);
 		if (!param) {
-			LOG(L_ERR, "ERROR:nathelper:add_rcv_param: No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return -1;
 		}
 		memcpy(param, RECEIVED, RECEIVED_LEN);
@@ -3099,13 +3048,12 @@ add_rcv_param_f(struct sip_msg* msg, char* str1, char* str2)
 			anchor = anchor_lump(msg, c->uri.s + c->uri.len - msg->buf, 0, 0);
 		}
 		if (anchor == NULL) {
-			LOG(L_ERR, "ERROR:nathelper:add_rcv_param: anchor_lump failed\n");
+			LM_ERR("anchor_lump failed\n");
 			return -1;
 		}		
 
 		if (insert_new_lump_after(anchor, param, RECEIVED_LEN + 1 + uri.len + 1, 0) == 0) {
-			LOG(L_ERR, "ERROR:nathelper:add_rcv_param: "
-				"insert_new_lump_after failed\n");
+			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(param);
 			return -1;
 		}
@@ -3130,18 +3078,17 @@ static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 	                             /* 1 */   /* 2 */   /* 3 */    /* 4 */   /* 5 */    /* 6 */   /* 1 */
 
 	if (get_callid(msg, &callid) == -1 || callid.len == 0) {
-		LOG(L_ERR, "ERROR:nathelper:start_recording: can't get "
-			"Call-Id field\n");
+		LM_ERR("can't get Call-Id field\n");
 		return -1;
 	}
 
 	if (get_to_tag(msg, &to_tag) == -1) {
-		LOG(L_ERR, "ERROR:nathelper:start_recording: can't get To tag\n");
+		LM_ERR("can't get To tag\n");
 		return -1;
 	}
 
 	if (get_from_tag(msg, &from_tag) == -1 || from_tag.len == 0) {
-		LOG(L_ERR, "ERROR:nathelper:start_recording: can't get From tag\n");
+		LM_ERR("can't get From tag\n");
 		return -1;
 	}
 
@@ -3154,7 +3101,7 @@ static int start_recording_f(struct sip_msg* msg, char *foo, char *bar)
 	STR2IOVEC(to_tag, v[7]);
 	node = select_rtpp_node(callid, 1);
 	if (!node) {
-		LOG(L_ERR, "ERROR:nathelper:start_recording: no available proxies\n");
+		LM_ERR("no available proxies\n");
 		return -1;
 	}
 
@@ -3197,7 +3144,7 @@ fix_nated_register_f(struct sip_msg* msg, char* str1, char* str2)
 	val.s = uri;
 
 	if (add_avp(AVP_VAL_STR|rcv_avp_type, rcv_avp_name, val) < 0) {
-		LOG(L_ERR, "fix_nated_register: Error while creating AVP\n");
+		LM_ERR("failed to create AVP\n");
 		return -1;
 	}
 

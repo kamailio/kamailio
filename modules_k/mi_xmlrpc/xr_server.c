@@ -116,8 +116,7 @@ static inline struct mi_root* wait_async_reply(struct mi_handler *hdl)
 		}
 		lock_release(xr_lock);
 		if (x==0) {
-			LOG(L_INFO,"INFO:mi_xmlrpc:wait_async_reply: exiting before "
-				" receiving reply\n");
+			LM_INFO("exiting before receiving reply\n");
 			return NULL;
 		}
 	}
@@ -138,7 +137,7 @@ static inline struct mi_handler* build_async_handler(void)
 
 	hdl = (struct mi_handler*)shm_malloc( sizeof(struct mi_handler) );
 	if (hdl==0) {
-		LOG(L_ERR,"ERROR:mi_xmlrpc:build_async_handler: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return 0;
 	}
 
@@ -164,26 +163,24 @@ xmlrpc_value*  default_method	(xmlrpc_env* 	env,
 	char* response = 0;
 	int is_shm = 0;
 
-	DBG("DEBUG: mi_xmlrpc: default_method: starting up.....\n");
+	LM_DBG("starting up.....\n");
 
 	f = lookup_mi_cmd(methodName, strlen(methodName));
 	
 	if ( f == 0 ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: default_method: Command %s is not "
-			"available!\n", methodName);
+		LM_ERR("command %s is not available!\n", methodName);
 		xmlrpc_env_set_fault_formatted(env, XMLRPC_NO_SUCH_METHOD_ERROR, 
 			"Requested command (%s) is not available!", methodName);
 		goto error;
 	}
 
-	DBG("DEBUG: mi_xmlrpc: default_method: Done looking the mi command.\n");
+	LM_DBG("done looking the mi command.\n");
 
 	/* if asyncron cmd, build the async handler */
 	if (f->flags&MI_ASYNC_RPL_FLAG) {
 		hdl = build_async_handler( );
 		if (hdl==0) {
-			LOG(L_ERR, "ERROR:mi_xmlrpc:default_method: failed to build "
-				"async handler\n");
+			LM_ERR("failed to build async handler\n");
 			if ( !env->fault_occurred )
 				xmlrpc_env_set_fault(env, XMLRPC_INTERNAL_ERROR,
 					"Internal server error while processing request");
@@ -198,8 +195,7 @@ xmlrpc_value*  default_method	(xmlrpc_env* 	env,
 	} else {
 		mi_cmd = xr_parse_tree(env, paramArray);
 		if ( mi_cmd == NULL ){
-			LOG(L_ERR,"ERROR: mi_xmlrpc: default_method: error parsing"
-				" MI tree\n");
+			LM_ERR("failed to parse MI tree\n");
 			if ( !env->fault_occurred )
 				xmlrpc_env_set_fault(env, XMLRPC_INTERNAL_ERROR,
 					"The xmlrpc request could not be parsed into a MI tree!");
@@ -208,11 +204,10 @@ xmlrpc_value*  default_method	(xmlrpc_env* 	env,
 		mi_cmd->async_hdl = hdl;
 	}
 
-	DBG("DEBUG: mi_xmlrpc: default_method: Done parsing the mi tree.\n");
+	LM_DBG("done parsing the mi tree.\n");
 
 	if ( ( mi_rpl = run_mi_cmd(f, mi_cmd) ) == 0 ){
-		LOG(L_ERR, "ERROR: mi_xmlrpc: default_method: Command (%s) processing "
-			"failed.\n", methodName);
+		LM_ERR("command (%s) processing failed.\n", methodName);
 		xmlrpc_env_set_fault_formatted(env, XMLRPC_INTERNAL_ERROR, 
 			"Command (%s) processing failed.\n", methodName);
 		goto error;
@@ -227,32 +222,30 @@ xmlrpc_value*  default_method	(xmlrpc_env* 	env,
 		is_shm = 1;
 	}
 
-	DBG("DEBUG: mi_xmlrpc: default_method: Done running the mi command.\n");
+	LM_DBG("done running the mi command.\n");
 
 	if ( rpl_opt == 1 ) {
 		if ( xr_build_response_array( env, mi_rpl ) != 0 ){
 			if ( !env->fault_occurred ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: default_method: Failed to parse "
-					"the xmlrpc response from the mi tree.\n");
+				LM_ERR("failed parsing the xmlrpc response from the mi tree\n");
 				xmlrpc_env_set_fault(env, XMLRPC_INTERNAL_ERROR, 
 					"Failed to parse the xmlrpc response from the mi tree.");
 				}
 			goto error;
 		}
-		DBG("DEBUG:mi_xmlrpc:default_method: Done building response array.\n");
+		LM_DBG("done building response array.\n");
 
 		ret = xr_response;
 	} else {
 		if ( (response = xr_build_response( env, mi_rpl )) == 0 ){
 			if ( !env->fault_occurred ) {
-				LOG(L_ERR, "ERROR: mi_xmlrpc: default_method: Failed to parse "
-					"the xmlrpc response from the mi tree.\n");
+				LM_ERR("failed parsing the xmlrpc response from the mi tree\n");
 				xmlrpc_env_set_fault_formatted(env, XMLRPC_INTERNAL_ERROR,
 					"Failed to parse the xmlrpc response from the mi tree.");
 			}
 			goto error;
 		}
-		DBG("DEBUG: mi_xmlrpc: default_method: Done building response.\n");
+		LM_DBG("done building response.\n");
 
 		ret = xmlrpc_build_value(env, "s", response);
 	}
@@ -273,8 +266,7 @@ int set_default_method ( xmlrpc_env * env )
 	xmlrpc_registry_set_default_method(env, registry, &default_method, NULL);
 
 	if ( env->fault_occurred ) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: set_default_method: Failed to add "
-			"default method: %s\n", env->fault_string);
+		LM_ERR("failed to add default method: %s\n", env->fault_string);
 		return -1;
 	}
 
@@ -285,13 +277,11 @@ int init_async_lock(void)
 {
 	xr_lock = lock_alloc();
 	if (xr_lock==NULL) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: set_default_method: Failed to create "
-			"lock\n");
+		LM_ERR("failed to create lock\n");
 		return -1;
 	}
 	if (lock_init(xr_lock)==NULL) {
-		LOG(L_ERR, "ERROR: mi_xmlrpc: set_default_method: Failed to init "
-			"lock\n");
+		LM_ERR("failed to init lock\n");
 		return -1;
 	}
 

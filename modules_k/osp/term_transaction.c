@@ -55,8 +55,6 @@ int ospCheckHeader(
     unsigned char buffer[OSP_TOKENBUF_SIZE];
     unsigned int  buffersize = sizeof(buffer);
 
-    LOG(L_DBG, "osp: ospCheckHeader\n");
-
     if (ospGetOspHeader(msg, buffer, &buffersize) != 0) {
         return MODULE_RETURNCODE_FALSE;
     } else {
@@ -89,29 +87,27 @@ int ospValidateHeader (
     osp_dest dest;
     int result = MODULE_RETURNCODE_FALSE;
 
-    LOG(L_DBG, "osp: ospValidateHeader\n");
-
     ospInitDestination(&dest);
 
     if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction) != 0)) {
-        LOG(L_ERR, "osp: ERROR: failed to create a new OSP transaction handle (%d)\n", errorcode);
+        LM_ERR("failed to create a new OSP transaction handle (%d)\n", errorcode);
     } else if ((ospGetRpidUserpart(msg, dest.calling, sizeof(dest.calling)) != 0) && 
         (ospGetFromUserpart(msg, dest.calling, sizeof(dest.calling)) != 0))
     {
-        LOG(L_ERR, "osp: ERROR: failed to extract calling number\n");
+        LM_ERR("failed to extract calling number\n");
     } else if ((ospGetUriUserpart(msg, dest.called, sizeof(dest.called)) != 0) &&
         (ospGetToUserpart(msg, dest.called, sizeof(dest.called)) != 0))
     {
-        LOG(L_ERR, "osp: ERROR: failed to extract called number\n");
+        LM_ERR("failed to extract called number\n");
     } else if (ospGetCallId(msg, &callid) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to extract call id\n");
+        LM_ERR("failed to extract call id\n");
     } else if (ospGetSourceAddress(msg, dest.source, sizeof(dest.source)) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to extract source address\n");
+        LM_ERR("failed to extract source address\n");
     } else if (ospGetOspHeader(msg, token, &tokensize) != 0) {
-        LOG(L_ERR, "osp: ERROR: failed to extract OSP authorization token\n");
+        LM_ERR("failed to extract OSP authorization token\n");
     } else {
-        LOG(L_INFO, 
-            "osp: validate token for: "
+        LM_INFO( 
+            "validate token for: "
             "transaction_handle '%i' "
             "e164_source '%s' "
             "e164_dest '%s' "
@@ -164,8 +160,9 @@ int ospValidateHeader (
         ospSaveTermDestination(&dest);
 
         if ((errorcode == 0) && (authorized == 1)) {
-            LOG(L_DBG, 
-                "osp: call is authorized for %d seconds, call_id '%.*s' transaction_id '%lld'",
+            LM_DBG( 
+                "call is authorized for %d seconds, call_id '%.*s'"
+				"transaction_id '%lld'",
                 timelimit,
                 dest.callidsize,
                 dest.callid,
@@ -173,7 +170,7 @@ int ospValidateHeader (
             ospRecordTermTransaction(msg, dest.tid, dest.source, dest.calling, dest.called, dest.authtime);
             result = MODULE_RETURNCODE_TRUE;
         } else {
-            LOG(L_ERR, "osp: ERROR: token is invalid (%i)\n", errorcode);
+            LM_ERR("token is invalid (%i)\n", errorcode);
 
             /* 
              * Update terminating status code to 401 and report terminating setup usage.

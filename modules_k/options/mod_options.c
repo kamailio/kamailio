@@ -95,11 +95,11 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 
-	DBG("options initializing\n");
+	LM_INFO("initializing...\n");
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:options:mod_init: can't load SL API\n");
+		LM_ERR("can't load SL API\n");
 		return -1;
 	}
 
@@ -146,17 +146,17 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 
 	/* check if it is called for an OPTIONS request */
 	if (_msg->REQ_METHOD!=METHOD_OPTIONS) {
-		LOG(L_ERR, "options_reply(): called for non-OPTIONS request\n");
+		LM_ERR("called for non-OPTIONS request\n");
 		return -1;
 	}
 	if(_msg->parsed_uri_ok==0 && parse_sip_msg_uri(_msg)<0)
 	{
-		LOG(L_ERR, "options_reply(): ERROR while parsing the R-URI\n");
+		LM_ERR("ERROR while parsing the R-URI\n");
 		return -1;
 	}
 	/* FIXME: should we additionally check if ruri == server addresses ?! */
 	if (_msg->parsed_uri.user.len != 0) {
-		LOG(L_ERR, "options_reply(): ruri contains username\n");
+		LM_ERR("ruri contains username\n");
 		return -1;
 	}
 
@@ -166,7 +166,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 			acpt_lan_s.len + supt_s.len;
 	rpl_hf.s = (char*)pkg_malloc(rpl_hf.len);
 	if (!rpl_hf.s) {
-		LOG(L_CRIT, "options_reply(): out of memory\n");
+		LM_CRIT("out of pkg memory\n");
 		goto error;
 	}
 
@@ -198,8 +198,7 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 #ifdef EXTRA_DEBUG
 	offset += HF_SEP_STR_LEN;
 	if (offset != rpl_hf.len) {
-		LOG(L_CRIT, "options_reply(): headerlength (%i) != offset (%i)\n", 
-			rpl_hf.len, offset);
+		LM_CRIT("headerlength (%i) != offset (%i)\n", rpl_hf.len, offset);
 		abort();
 	}
 #endif
@@ -208,19 +207,19 @@ static int opt_reply(struct sip_msg* _msg, char* _foo, char* _bar) {
 	if (add_lump_rpl( _msg, rpl_hf.s, rpl_hf.len,
 	LUMP_RPL_HDR|LUMP_RPL_NODUP)!=0) {
 		if (slb.reply(_msg, 200, &opt_200_rpl) == -1) {
-			LOG(L_ERR, "options_reply(): failed to send 200 via send_reply\n");
+			LM_ERR("failed to send 200 via send_reply\n");
 			return -1;
 		}
 		else
 			return 0;
 	} else {
 		pkg_free(rpl_hf.s);
-		LOG(L_ERR, "options_reply(): add_lump_rpl failed\n");
+		LM_ERR("add_lump_rpl failed\n");
 	}
 
 error:
 	if (slb.reply(_msg, 500, &opt_500_rpl) == -1) {
-		LOG(L_ERR, "options_reply(): failed to send 500 via send_reply\n");
+		LM_ERR("failed to send 500 via send_reply\n");
 		return -1;
 	}
 	else

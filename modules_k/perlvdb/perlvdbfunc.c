@@ -113,27 +113,26 @@ db_con_t* perlvdb_db_init(const char* url) {
 	int consize = sizeof(db_con_t) + sizeof(SV);
 	
 	if (!url) {
-		LOG(L_ERR, "perlvdb_db_init: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return NULL;
 	}
 
 	cn = parseurl(url);
 	if (!cn) {
-		LOG(L_ERR, "perlvdb_db_init: Invalid perl vdb url.\n");
+		LM_ERR("invalid perl vdb url.\n");
 		return NULL;
 	}
 
 	obj = newvdbobj(cn);
 	if (!checkobj(obj)) {
-		LOG(L_ERR, "perlvdb_db_init: Could not initialize module."
-				" Not inheriting from %s?\n",
+		LM_ERR("could not initialize module. Not inheriting from %s?\n",
 				PERL_VDB_BASECLASS);
 		return NULL;
 	}
 
 	res = pkg_malloc(consize);
 	if (!res) {
-		LOG(L_ERR, "perlvdb_db_init: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return NULL;
 	}
 	memset(res, 0, consize);
@@ -151,7 +150,7 @@ int perlvdb_use_table(db_con_t* h, const char* t) {
 	SV *ret;
 	
 	if (!h || !t) {
-		LOG(L_ERR, "perlvdb_use_table: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -164,7 +163,7 @@ int perlvdb_use_table(db_con_t* h, const char* t) {
 
 void perlvdb_db_close(db_con_t* h) {
 	if (!h) {
-		LOG(L_ERR, "db_close: Invalid parameter value\n");
+		LM_ERR("nvalid parameter value\n");
 		return;
 	}
 
@@ -317,8 +316,7 @@ int perlvdb_db_query(db_con_t* h, db_key_t* k, db_op_t* op, db_val_t* v,
 	/* Transform perl result set to OpenSER result set */
 	if (!resultset) {
 		/* No results. */
-		LOG(L_ERR, "perlvdb:perlvdb_db_query: "
-				"Error in perl result set.\n");
+		LM_ERR("no perl result set.\n");
 		retval = -1;
 	} else {
 		if (sv_isa(resultset, "OpenSER::VDB::Result")) {
@@ -326,8 +324,7 @@ int perlvdb_db_query(db_con_t* h, db_key_t* k, db_op_t* op, db_val_t* v,
 		/* Nested refs are decreased/deleted inside the routine */
 			SvREFCNT_dec(resultset);
 		} else {
-			LOG(L_ERR, "Invalid result set retrieved from"
-					" perl call.\n");
+			LM_ERR("invalid result set retrieved from perl call.\n");
 			retval = -1;
 		}
 	}

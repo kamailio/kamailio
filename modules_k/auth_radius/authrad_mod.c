@@ -114,7 +114,7 @@ static int mod_init(void)
 	DICT_VENDOR *vend;
 	bind_auth_t bind_auth;
 
-	DBG("auth_radius - Initializing\n");
+	LM_INFO("initializing...\n");
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
@@ -137,30 +137,29 @@ static int mod_init(void)
 	vals[V_SIP_SESSION].n			= "Sip-Session";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LOG(L_ERR, "auth_radius: Error opening configuration file \n");
+		LM_ERR("failed to open configuration file \n");
 		return -1;
 	}
 
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
-		LOG(L_ERR, "auth_radius: Error opening dictionary file \n");
+		LM_ERR("failed to open dictionary file \n");
 		return -2;
 	}
 
 	vend = rc_dict_findvend(rh, "Cisco");
 	if (vend == NULL) {
-		DBG("auth_radius: No `Cisco' vendor in Radius "
-			   "dictionary\n");
+		LM_DBG("no `Cisco' vendor in Radius dictionary\n");
 		attrs[A_CISCO_AVPAIR].n = NULL;
 	}
 
 	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
 	if (!bind_auth) {
-		LOG(L_ERR, "auth_radius: Unable to find bind_auth function\n");
+		LM_ERR("unable to find bind_auth function\n");
 		return -1;
 	}
 
 	if (bind_auth(&auth_api) < 0) {
-		LOG(L_ERR, "auth_radius: Cannot bind to auth module\n");
+		LM_ERR("cannot bind to auth module\n");
 		return -4;
 	}
 
@@ -190,8 +189,7 @@ static int auth_fixup(void** param, int param_no)
 		} else {
 			s.len = strlen(s.s);
 			if (pv_parse_format(&s,&model)<0) {
-				LOG(L_ERR, "ERROR:auth_radius:auth_fixup: "
-				    "pv_parse_format failed\n");
+				LM_ERR("pv_parse_format failed\n");
 				return E_OUT_OF_MEM;
 			}
 		}
@@ -201,21 +199,18 @@ static int auth_fixup(void** param, int param_no)
 	if (param_no == 2) { /* URI user (a pvar) */
 		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 		if (sp == 0) {
-			LOG(L_ERR, "ERROR:auth_radius:auth_fixup(): "
-			    "no pkg memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return -1;
 		}
 		s.s = (char*)*param;
 		s.len = strlen(s.s);
 		if (pv_parse_spec(&s, sp) == 0) {
-			LOG(L_ERR,"ERROR:auth_radius:auth_fixup(): parsing of "
-			    "pseudo variable %s failed!\n", (char*)*param);
+			LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
 			pkg_free(sp);
 			return -1;
 		}
 		if (sp->type == PVT_NULL) {
-			LOG(L_ERR,"ERROR:auth_radius:auth_fixup(): bad pseudo "
-			    "variable\n");
+			LM_ERR("bad pseudo variable\n");
 			pkg_free(sp);
 			return -1;
 		}

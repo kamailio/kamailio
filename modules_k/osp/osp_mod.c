@@ -165,7 +165,7 @@ static int ospInitMod(void)
 {
     bind_auth_t bind_auth;
 
-    LOG(L_DBG, "osp: ospInitMod\n");
+    LM_INFO("initializing...\n");
 
     if (ospVerifyParameters() != 0) {
         /* At least one parameter incorrect -> error */
@@ -174,16 +174,18 @@ static int ospInitMod(void)
 
     /* Load the RR API */
     if (load_rr_api(&osp_rr) != 0) {
-        LOG(L_WARN, "osp: WARN: failed to load RR API\n");
-        LOG(L_WARN, "osp: WARN: add_rr_param is required for reporting duration for OSP transactions\n");
+        LM_WARN("failed to load RR API\n");
+        LM_WARN("add_rr_param is required for reporting duration for "
+				"OSP transactions\n");
         memset(&osp_rr, 0, sizeof(osp_rr));
     }
 
     /* Load the AUTH API */
     bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
     if ((bind_auth == NULL) || (bind_auth(&osp_auth) != 0)) {
-        LOG(L_WARN, "osp: WARN: failed to load AUTH API\n");
-        LOG(L_WARN, "osp: WARN: rpid_avp & rpid_avp_type is required for calling number translation\n");
+        LM_WARN("failed to load AUTH API\n");
+        LM_WARN("rpid_avp & rpid_avp_type is required for calling number"
+				"translation\n");
         memset(&osp_auth, 0, sizeof(osp_auth));
     }
 
@@ -200,7 +202,6 @@ static int ospInitMod(void)
  */
 static void ospDestMod(void)
 {
-    LOG(L_DBG, "osp: ospDestMod\n");
 }
 
 /*
@@ -213,11 +214,9 @@ static int ospInitChild(
 {
     int code = -1;
 
-    LOG(L_DBG, "osp: ospInitChild\n");
-
     code = ospSetupProvider();
 
-    LOG(L_DBG, "osp: provider '%i' (%d)\n", _osp_provider, code);
+    LM_DBG("provider '%i' (%d)\n", _osp_provider, code);
 
     return 0;
 }
@@ -230,8 +229,6 @@ static int ospVerifyParameters(void)
 {
     int i;
     int result = 0;
-
-    LOG(L_DBG, "osp: ospVerifyParamters\n");
 
     /* Default location for the cert files is in the compile time variable CFG_DIR */
     if (_osp_private_key == NULL) {
@@ -259,15 +256,13 @@ static int ospVerifyParameters(void)
 
     if (_osp_max_dests > OSP_DEF_DESTS || _osp_max_dests < 1) {
         _osp_max_dests = OSP_DEF_DESTS;    
-        LOG(L_WARN,
-            "osp: WARN: max_destinations is out of range, reset to %d\n", 
+        LM_WARN("max_destinations is out of range, reset to %d\n", 
             OSP_DEF_DESTS);
     }
 
     if (_osp_token_format < 0 || _osp_token_format > 2) {
         _osp_token_format = OSP_DEF_TOKEN;
-        LOG(L_WARN, 
-            "osp: WARN: token_format is out of range, reset to %d\n", 
+        LM_WARN("token_format is out of range, reset to %d\n", 
             OSP_DEF_TOKEN);
     }
 
@@ -286,7 +281,7 @@ static int ospVerifyParameters(void)
     }
 
     if (_osp_sp_number == 0) {
-        LOG(L_ERR, "osp: ERROR: at least one service point uri must be configured\n");
+        LM_ERR("at least one service point uri must be configured\n");
         result = -1;
     }
 
@@ -302,27 +297,26 @@ static void ospDumpParameters(void)
 {
     int i;
 
-    LOG(L_INFO, "osp: module configuration: ");
-    LOG(L_INFO, "    number of service points '%d'", _osp_sp_number);
+    LM_INFO("module configuration: ");
+    LM_INFO("    number of service points '%d'", _osp_sp_number);
     for (i = 0; i < _osp_sp_number; i++) {
-        LOG(L_INFO,
-            "    sp%d_uri '%s' sp%d_weight '%ld' ", 
+        LM_INFO("    sp%d_uri '%s' sp%d_weight '%ld' ", 
             osp_index[i], _osp_sp_uris[i], osp_index[i], _osp_sp_weights[i]);
     }
-    LOG(L_INFO, "    device_ip '%s' device_port '%s' ", _osp_device_ip, _osp_device_port);
-    LOG(L_INFO, "    private_key '%s' ", _osp_private_key);
-    LOG(L_INFO, "    local_certificate '%s' ", _osp_local_certificate);
-    LOG(L_INFO, "    ca_certificates '%s' ", _osp_ca_certificate);
-    LOG(L_INFO, "    enable_crypto_hardware_support '%d' ", _osp_crypto_hw);
-    LOG(L_INFO, "    token_format '%d' ", _osp_token_format);
-    LOG(L_INFO, "    ssl_lifetime '%d' ", _osp_ssl_lifetime);
-    LOG(L_INFO, "    persistence '%d' ", _osp_persistence);
-    LOG(L_INFO, "    retry_delay '%d' ", _osp_retry_delay);
-    LOG(L_INFO, "    retry_limit '%d' ", _osp_retry_limit);
-    LOG(L_INFO, "    timeout '%d' ", _osp_timeout);
-    LOG(L_INFO, "    validate_call_id '%d' ", _osp_validate_callid);
-    LOG(L_INFO, "    use_rpid_for_calling_number '%d' ", _osp_use_rpid);
-    LOG(L_INFO, "    redirection_uri_format '%d' ", _osp_redir_uri);
-    LOG(L_INFO, "    max_destinations '%d'\n", _osp_max_dests);
+    LM_INFO("    device_ip '%s' device_port '%s' ", _osp_device_ip, _osp_device_port);
+    LM_INFO("    private_key '%s' ", _osp_private_key);
+    LM_INFO("    local_certificate '%s' ", _osp_local_certificate);
+    LM_INFO("    ca_certificates '%s' ", _osp_ca_certificate);
+    LM_INFO("    enable_crypto_hardware_support '%d' ", _osp_crypto_hw);
+    LM_INFO("    token_format '%d' ", _osp_token_format);
+    LM_INFO("    ssl_lifetime '%d' ", _osp_ssl_lifetime);
+    LM_INFO("    persistence '%d' ", _osp_persistence);
+    LM_INFO("    retry_delay '%d' ", _osp_retry_delay);
+    LM_INFO("    retry_limit '%d' ", _osp_retry_limit);
+    LM_INFO("    timeout '%d' ", _osp_timeout);
+    LM_INFO("    validate_call_id '%d' ", _osp_validate_callid);
+    LM_INFO("    use_rpid_for_calling_number '%d' ", _osp_use_rpid);
+    LM_INFO("    redirection_uri_format '%d' ", _osp_redir_uri);
+    LM_INFO("    max_destinations '%d'\n", _osp_max_dests);
 }
 

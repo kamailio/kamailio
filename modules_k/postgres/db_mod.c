@@ -74,7 +74,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	LOG(L_INFO,"PostgreSQL - initializing\n");
+	LM_INFO("initializing...\n");
 	return 0;
 }
 

@@ -60,7 +60,7 @@ struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 	if (rpl_tree==NULL) return 0;
 
 	if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0) {
-		LOG(L_ERR,"permissions:mi_trusted_dump: Error while adding node\n");
+		LM_ERR("failed to add a node\n");
 		free_mi_tree(rpl_tree);
 		return 0;
 	}
@@ -93,7 +93,7 @@ struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
     if (rpl_tree==NULL) return 0;
     
     if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
-	LOG(L_ERR,"permissions:mi_address_dump: Error while adding node\n");
+	LM_ERR("failed to add a node\n");
 	free_mi_tree(rpl_tree);
 	return 0;
     }
@@ -113,7 +113,7 @@ struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
     if (rpl_tree==NULL) return 0;
     
     if(subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
-	LOG(L_ERR,"permissions:mi_subnet_dump: Error while adding node\n");
+	LM_ERR("failed to add a node\n");
 	free_mi_tree(rpl_tree);
 	return 0;
     }

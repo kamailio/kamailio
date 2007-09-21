@@ -91,7 +91,7 @@ int check_content_type(struct sip_msg *msg)
 
 	if (!msg->content_type)
 	{
-		LOG(L_WARN,"WARNING: check_content_type: Content-TYPE header absent!"
+		LM_WARN("the header Content-TYPE is absent!"
 			"let's assume the content is text/plain ;-)\n");
 		return 1;
 	}
@@ -116,8 +116,7 @@ int check_content_type(struct sip_msg *msg)
 		advance(p,1,str_type,error_1);
 	if (*p!='/')
 	{
-		LOG(L_ERR, "ERROR:check_content_type: parse error:"
-			"no / found after primary type\n");
+		LM_ERR("no / found after primary type\n");
 		goto error;
 	}
 	advance(p,1,str_type,error_1);
@@ -130,20 +129,19 @@ int check_content_type(struct sip_msg *msg)
 		goto other;
 
 	if (*p==';'||*p==' '||*p=='\t'||*p=='\n'||*p=='\r'||*p==0) {
-		DBG("DEBUG:check_content_type: type <%.*s> found valid\n",
-			(int)(p-str_type.s), str_type.s);
+		LM_DBG("type <%.*s> found valid\n", (int)(p-str_type.s), str_type.s);
 		return 1;
 	} else {
-		LOG(L_ERR,"ERROR:check_content_type: bad end for type!\n");
+		LM_ERR("bad end for type!\n");
 		return -1;
 	}
 
 error_1:
-	LOG(L_ERR,"ERROR:check_content_type: parse error: body ended :-(!\n");
+	LM_ERR("body ended :-(!\n");
 error:
 	return -1;
 other:
-	LOG(L_ERR,"ERROR:check_content_type: invalid type for a message\n");
+	LM_ERR("invalid type for a message\n");
 	return -1;
 }
 
@@ -156,12 +154,12 @@ int extract_body(struct sip_msg *msg, str *body )
 	
 	body->s = get_body(msg);
 	if (body->s==0) {
-		LOG(L_ERR, "ERROR: extract_body: failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		goto error;
 	}
 	body->len = msg->len -(int)(body->s-msg->buf);
 	if (body->len==0) {
-		LOG(L_ERR, "ERROR: extract_body: message body has length zero\n");
+		LM_ERR("message body has length zero\n");
 		goto error;
 	}
 	
@@ -170,11 +168,11 @@ int extract_body(struct sip_msg *msg, str *body )
 	/*is the content type correct?*/
 	if (check_content_type(msg)==-1)
 	{
-		LOG(L_ERR,"ERROR: extract_body: content type mismatching\n");
+		LM_ERR("content type mismatching\n");
 		goto error;
 	}
 	
-	/*DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);*/
+	/*LM_DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);*/
 
 	return 1;
 error:

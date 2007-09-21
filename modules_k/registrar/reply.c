@@ -122,7 +122,7 @@ int build_contact(ucontact_t* c)
 		if (!contact.buf) {
 			contact.data_len = 0;
 			contact.buf_len = 0;
-			LOG(L_ERR, "build_contact(): No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return -1;
 		} else {
 			contact.buf_len = contact.data_len;
@@ -183,7 +183,7 @@ int build_contact(ucontact_t* c)
 
 	contact.data_len = p - contact.buf;
 
-	DBG("build_contact(): Created Contact HF: %.*s\n", contact.data_len, contact.buf);
+	LM_DBG("created Contact HF: %.*s\n", contact.data_len, contact.buf);
 	return 0;
 }
 
@@ -305,7 +305,7 @@ static int add_retry_after(struct sip_msg* _m)
  	ra_s = int2str(retry_after, &ra_len);
  	buf = (char*)pkg_malloc(RETRY_AFTER_LEN + ra_len + CRLF_LEN);
  	if (!buf) {
- 		LOG(L_ERR, "add_retry_after: No memory left\n");
+ 		LM_ERR("no pkg memory left\n");
  		return -1;
  	}
  	memcpy(buf, RETRY_AFTER, RETRY_AFTER_LEN);
@@ -325,7 +325,7 @@ static int add_path(struct sip_msg* _m, str* _p)
 
  	buf = (char*)pkg_malloc(PATH_LEN + _p->len + CRLF_LEN);
  	if (!buf) {
- 		LOG(L_ERR, "add_path: No memory left\n");
+ 		LM_ERR("no pkg memory left\n");
  		return -1;
  	}
  	memcpy(buf, PATH, PATH_LEN);
@@ -345,7 +345,7 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
 
  	buf = (char*)pkg_malloc(UNSUPPORTED_LEN + _p->len + CRLF_LEN);
  	if (!buf) {
- 		LOG(L_ERR, "add_unsupported: No memory left\n");
+ 		LM_ERR("no pkg memory left\n");
  		return -1;
  	}
  	memcpy(buf, UNSUPPORTED, UNSUPPORTED_LEN);
@@ -405,7 +405,7 @@ int send_reply(struct sip_msg* _m)
 	if (code != 200) {
 		buf = (char*)pkg_malloc(E_INFO_LEN + error_info[rerrno].len + CRLF_LEN + 1);
 		if (!buf) {
-			LOG(L_ERR, "send_reply(): No memory left\n");
+			LM_ERR("no pkg memory left\n");
 			return -1;
 		}
 		memcpy(buf, E_INFO, E_INFO_LEN);
@@ -422,8 +422,7 @@ int send_reply(struct sip_msg* _m)
 	}
 	
 	if (slb.reply(_m, code, &msg) == -1) {
-		LOG(L_ERR, "send_reply(): Error while sending %ld %.*s\n",
-			code, msg.len,msg.s);
+		LM_ERR("failed to send %ld %.*s\n", code, msg.len,msg.s);
 		return -1;
 	} else return 0;
 }

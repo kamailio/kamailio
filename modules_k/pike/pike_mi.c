@@ -59,7 +59,7 @@ static inline void print_ip_stack( int level, struct mi_node *node)
 			ip_stack[2]->byte,
 			ip_stack[3]->byte );
 	} else {
-		LOG(L_CRIT,"BUG:TM:print_ip_stack: leaf node at depth %d!!!\n", level);
+		LM_CRIT("leaf node at depth %d!!!\n", level);
 		return;
 	}
 }
@@ -70,8 +70,7 @@ static void print_red_ips( struct ip_node *ip, int level, struct mi_node *node)
 	struct ip_node *foo;
 
 	if (level==MAX_IP_LEN) {
-		LOG(L_CRIT,"BUG:TM:print_red_ips: tree deeper than %d!!!\n",
-			MAX_IP_LEN);
+		LM_CRIT("tree deeper than %d!!!\n", MAX_IP_LEN);
 		return;
 	}
 	ip_stack[level] = ip;
