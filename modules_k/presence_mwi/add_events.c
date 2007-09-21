@@ -103,7 +103,7 @@ err:
 
 }
 
-int mwi_add_events()
+int mwi_add_events(void)
 {
     pres_ev_t event;
 	

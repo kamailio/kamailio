@@ -194,7 +194,7 @@ EXTERN_C void xs_init(pTHX) {
  * Initialize the perl interpreter.
  * This might later be used to reinit the module.
  */
-PerlInterpreter *parser_init() {
+PerlInterpreter *parser_init(void) {
 	int argc = 0;
 	char *argv[9];
 	PerlInterpreter *new_perl = NULL;
@@ -299,7 +299,7 @@ struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param)
  * mod_init
  * Called by openser at init time
  */
-static int mod_init() {
+static int mod_init(void) {
 
 	int ret = 0;
 
