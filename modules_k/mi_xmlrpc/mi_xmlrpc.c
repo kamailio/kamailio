@@ -189,7 +189,7 @@ static void xmlrpc_process(int rank)
 	}
 
 	/* Run server abyss */
-	LM_INFO("starting xmlrpc server\n", getpid());
+	LM_INFO("starting xmlrpc server\n");
 
 	ServerRun(&srv);
 
