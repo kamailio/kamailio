@@ -28,6 +28,7 @@ sw_is_hostmaster:boolean:0::hostmaster privilege:32:0:0:0:0:other
 sw_confirmation:string:2::registration confirmation:32:0:0:0:0:other
 sw_pending_ts:string:2::registration timestamp:32:0:0:0:0:other
 sw_require_confirm:boolean:0::@ff_reg_confirmation:32:0:1073807360:0:120:other
+sw_uname_assign_mode:list:2:a\:3\:{s\:4\:"fcfs";s\:23\:"first come first served";s\:5\:"email";s\:18\:"email verification";s\:9\:"adminonly";s\:10\:"admin only";}:@ff_uname_assign_mode:32:0:1073807360:0:122:other
 sw_send_missed:boolean:0::@ff_send_daily_missed_calls:32:0:1073807616:0:130:other
 uid_format:list:2:a\:3\:{i\:0;s\:14\:"username@realm";i\:1;s\:21\:"integer (incremental)";i\:2;s\:15\:"UUID by RFC4122";}:@ff_uid_format:32:0:1073741824:0:160:other
 did_format:list:2:a\:3\:{i\:0;s\:11\:"domain name";i\:1;s\:21\:"integer (incremental)";i\:2;s\:15\:"UUID by RFC4122";}:@ff_did_format:32:0:1073741824:0:170:other

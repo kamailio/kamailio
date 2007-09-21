@@ -221,6 +221,13 @@
 		<value col="global_attrs.value">57</value>
 		<value col="global_attrs.flags">32</value>
 	</row>
+
+	<row vendor-controlled="1">
+		<value col="global_attrs.name">sw_uname_assign_mode</value>
+		<value col="global_attrs.type">2</value>
+		<value col="global_attrs.value">fcfs</value>
+		<value col="global_attrs.flags">32</value>
+	</row>
 		
 	<row>
 		<value col="global_attrs.name">sw_show_status</value>

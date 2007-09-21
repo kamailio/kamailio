@@ -447,6 +447,18 @@
 	</row>
 	
 	<row vendor-controlled="1">
+		<value col="at.name">sw_uname_assign_mode</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">list</value>
+		<value col="at.desc">@ff_uname_assign_mode</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">1073807360</value>
+		<value col="at.order">122</value>
+		<value col="at.type_spec">a:3:{s:4:"fcfs";s:23:"first come first served";s:5:"email";s:18:"email verification";s:9:"adminonly";s:10:"admin only";}</value>
+	</row>
+	
+	<row vendor-controlled="1">
 		<value col="at.name">sw_send_missed</value>
 		<value col="at.type">0</value>
 		<value col="at.rich_t">boolean</value>
