@@ -179,7 +179,7 @@ struct ld_session* get_ld_session(char* _name)
 }
 
 
-int free_ld_sessions()
+int free_ld_sessions(void)
 {
 	struct ld_session* current = ld_sessions;
 	struct ld_session* tmp;

@@ -209,7 +209,7 @@ int ldap_write_result(
 	}
 }
 
-int ldap_result_next()
+int ldap_result_next(void)
 {
 	int rc;
 
