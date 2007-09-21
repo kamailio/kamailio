@@ -121,7 +121,7 @@ int mwi_add_events()
     event.evs_publ_handl = mwi_publ_handl;
 	
     if (pres_add_event(&event) < 0) {
-	LM_ERR("failed to add event "\"message-summary\"\n");
+	LM_ERR("failed to add event \"message-summary\"\n");
 	return -1;
     }		
 	
