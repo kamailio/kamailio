@@ -414,13 +414,13 @@ static int check_routing(struct sip_msg* msg, int idx)
 		}
 		
 		if (search_rule(deny[idx].rules, from_str, uri_str)) {
-			LM_INFO("deny rule found for one of branches => routing"
-					"is denied\n");
+			LM_DBG("deny rule found for one of branches => routing"
+			       "is denied\n");
 			return -1;
 		}
 	}
 	
-	LM_INFO("check of branches passed => routing is allowed\n");
+	LM_DBG("check of branches passed => routing is allowed\n");
 	return 1;
 }
 
@@ -448,7 +448,7 @@ static int load_fixup(void** param, int param_no)
 		table[rules_num].filename = pathname;
 		table[rules_num].rules = parse_config_file(pathname);
 		if (table[rules_num].rules) {
-			LM_INFO("file (%s) parsed\n", pathname);
+			LM_DBG("file (%s) parsed\n", pathname);
 		} else {
 			LM_WARN("file (%s) not found => empty rule set\n", pathname);
 		}
@@ -456,7 +456,7 @@ static int load_fixup(void** param, int param_no)
 		if (param_no == 2) rules_num++;
 	} else {
 		     /* File already parsed, re-use it */
-		LM_INFO("file (%s) already loaded, re-using\n", pathname);
+		LM_DBG("file (%s) already loaded, re-using\n", pathname);
 		pkg_free(pathname);
 		*param = (void*)(long)idx;
 	}
@@ -682,12 +682,12 @@ static int int_or_pvar_fixup(void** param, int param_no)
  */
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
+	LM_DBG("initializing...\n");
 
 	allow[0].filename = get_pathname(DEFAULT_ALLOW_FILE);
 	allow[0].rules = parse_config_file(allow[0].filename);
 	if (allow[0].rules) {
-		LM_INFO("default allow file (%s) parsed\n", allow[0].filename);
+		LM_DBG("default allow file (%s) parsed\n", allow[0].filename);
 	} else {
 		LM_WARN("default allow file (%s) not found => empty rule set\n",
 			allow[0].filename);
@@ -696,7 +696,7 @@ static int mod_init(void)
 	deny[0].filename = get_pathname(DEFAULT_DENY_FILE);
 	deny[0].rules = parse_config_file(deny[0].filename);
 	if (deny[0].rules) {
-		LM_INFO("default deny file (%s) parsed\n", deny[0].filename);
+		LM_DBG("default deny file (%s) parsed\n", deny[0].filename);
 	} else {
 		LM_WARN("default deny file (%s) not found => empty rule set\n",
 			deny[0].filename);
