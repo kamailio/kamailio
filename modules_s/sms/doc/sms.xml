@@ -92,7 +92,8 @@
 		"sip:user.host" format. Everything before the SIP address will
 		be discarded, the useful text begins exactly after the address
 		(for example SMS="For sip:user@host hello world!!" ->
-		SIP="hello world") In order to facilitate replying, the gateway
+		SIP="hello world"), view configuration for disable this behavior (modems parameters
+		's' y 't'). In order to facilitate replying, the gateway
 		sends all the <acronym>SMS</acronym> messages with a header
 		containing the source SIP address in the following format:
 		"From sip:user@host (if you reply DONOT remove

@@ -72,6 +72,21 @@ modem_param      = name "=" value
 		    for incomimg/outgoing <acronym>SMS</acronym>/SIP_MSG. Default is 20.
 		</para>
 	    </listitem>
+	    <listitem>
+		<para>
+		   t=to (optional) - uri for sip header TO.  Default is NULL.
+		</para>
+	    </listitem>
+	    <listitem>
+		<para>
+		    s=scan (optional) - Values: 
+		        	0: NOT SCAN uri from body sms, use URI in t=to.
+			1: SCAN uri from body sms (normal mode,
+			default mode, clasic mode)
+			2: SCAN MIX (both modes), First SCAN 
+			Default is 1 (SCAN).
+		</para>
+	    </listitem>
 	</itemizedlist>
 	<note>
 	    <para>
@@ -82,6 +97,7 @@ modem_param      = name "=" value
 	    <title>Set <varname>modems</varname> parameter</title>
 	    <programlisting>
 ...
+modparam("sms", "modems", "Nokia[d=/dev/ttyS1;s=0;t=sip:p-cscf@cidra.com.ar]") 
 modparam("sms", "modems", "Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
 modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
 ...
