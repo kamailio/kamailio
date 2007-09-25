@@ -259,13 +259,13 @@ int append_rpid_hf_p(struct sip_msg* _m, char* _prefix, char* _suffix)
 
 
 /*
- * Check if SIP URI in rpid contains an e164 user part
+ * Check if URI in RPID AVP contains an E164 user part
  */
 int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	struct usr_avp *avp;
 	name_addr_t parsed;
-	str tmp, user, rpid;
+	str tmp, rpid;
 	struct sip_uri uri;
 	int_str val;
 
@@ -296,17 +296,13 @@ int is_rpid_user_e164(struct sip_msg* _m, char* _s1, char* _s2)
 		tmp = rpid;
 	}
 
-	if ((tmp.len > 4) && (!strncasecmp(tmp.s, "sip:", 4))) {
-		if (parse_uri(tmp.s, tmp.len, &uri) < 0) {
-			LM_ERR("failed to parse RPID URI\n");
-			goto err;
-		}
-		user = uri.user;
-	} else {
-		user = tmp;
+	if (parse_uri(tmp.s, tmp.len, &uri) < 0) {
+	    LM_ERR("failed to parse RPID URI\n");
+	    goto err;
 	}
 
-	return ((is_e164(&user) == 1) ? 1 : -1);
+	return is_e164(&uri.user);
+
 err:
 	return -1;
 }
