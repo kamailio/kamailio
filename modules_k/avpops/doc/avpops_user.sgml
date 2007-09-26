@@ -503,6 +503,15 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 			<listitem>
 				<para><emphasis>query</emphasis> - must be a valid SQL
 				query. The parameter can contain pseudo-variables.</para>
+				<para>You must escape any pseudo-variables manually to prevent
+				SQL injection attacks. You can use the existing transformations
+				<emphasis>escape.common</emphasis> and <emphasis>unescape.common</emphasis>
+				to escape and unescape the content of any pseudo-variable.
+				Failing to escape the variables used in the query makes you vulnerable
+				to SQL injection, e.g. make it possible for an outside attacker to alter
+				your database content.
+				</para>
+
 			</listitem>
 			<listitem>
 				<para><emphasis>dest</emphasis> - a list with AVP names where
@@ -513,7 +522,6 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 				many rows, then multiple AVPs with corresponding name will
 				be added. The value type of the AVP (string or integer) will
 				be derived from the type of the columns.
-				</para>
 			</listitem>
 			</itemizedlist>
 			<para>
