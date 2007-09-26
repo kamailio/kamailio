@@ -33,3 +33,7 @@ sw_send_missed:boolean:0::@ff_send_daily_missed_calls:32:0:1073807616:0:130:othe
 uid_format:list:2:a\:3\:{i\:0;s\:14\:"username@realm";i\:1;s\:21\:"integer (incremental)";i\:2;s\:15\:"UUID by RFC4122";}:@ff_uid_format:32:0:1073741824:0:160:other
 did_format:list:2:a\:3\:{i\:0;s\:11\:"domain name";i\:1;s\:21\:"integer (incremental)";i\:2;s\:15\:"UUID by RFC4122";}:@ff_did_format:32:0:1073741824:0:170:other
 contact_email:email_adr:2::@ff_contact_email:32:4096:1073807360:0:0:general
+fwd_busy_target:sip_adr:2::@attr_fwd_busy_target:33:0:256:0:50:other
+fwd_noanswer_target:sip_adr:2::@attr_fwd_noanswer_target:33:0:256:0:55:other
+fwd_always_target:sip_adr:2::@attr_fwd_always_target:33:0:256:0:60:other
+domain_data_version:int:0::Version of data in domain table:33:0:0:0:0:other

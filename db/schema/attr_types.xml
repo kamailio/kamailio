@@ -506,5 +506,49 @@
 	</row>
 
 								      
+	<row vendor-controlled="1">
+		<value col="at.name">fwd_busy_target</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">sip_adr</value>
+		<value col="at.desc">@attr_fwd_busy_target</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">50</value>
+	</row>
+								      
+	<row vendor-controlled="1">
+		<value col="at.name">fwd_noanswer_target</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">sip_adr</value>
+		<value col="at.desc">@attr_fwd_noanswer_target</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">55</value>
+	</row>
+								      
+	<row vendor-controlled="1">
+		<value col="at.name">fwd_always_target</value>
+		<value col="at.type">2</value>
+		<value col="at.rich_t">sip_adr</value>
+		<value col="at.desc">@attr_fwd_always_target</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">256</value>
+		<value col="at.order">60</value>
+	</row>
+
+								      
+	<row vendor-controlled="1">
+		<value col="at.name">domain_data_version</value>
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">Version of data in domain table</value>
+		<value col="at.d_flags">33</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+		<value col="at.order">0</value>
+	</row>
 
 </table>

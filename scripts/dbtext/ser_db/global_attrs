@@ -3,6 +3,7 @@ sw_domain_default_flags:0:33:32
 sw_credential_default_flags:0:33:32
 sw_uri_default_flags:0:57:32
 sw_uname_assign_mode:2:fcfs:32
+domain_data_version:0:0:33
 sw_show_status:0:1:32
 sw_require_conf:0:1:32
 lang:2:en:33
