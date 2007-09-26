@@ -560,9 +560,9 @@ modparam("carrierroute", "fallback_default", 1)
 1.4.1. cr_rewrite_uri (string level, int hash_source)
 
    This function searches for the longest match for the Request
-   URI in the given level and rewrites the Request URI. Returns
-   -1 if there is no data found or an empty rewrite host on the
-   longest match.
+   URI at the given level in the default tree and rewrites the
+   Request URI. Returns -1 if there is no data found or an empty
+   rewrite host on the longest match is found.
 
    Meaning of the parameters is as follows:
 
@@ -592,9 +592,10 @@ modparam("carrierroute", "fallback_default", 1)
 
 1.4.3. cr_prime_balance_uri (string level, int hash_source)
 
-   Balances the request URI to the desination set given by level.
-   hash_source defines the parameter which is passed to the hash
-   function. Parameters are the same as for cr_rewrite_uri
+   Balances the request URI to the desination set given by level
+   in the default tree. The hash_source defines the parameter
+   which is passed to the hash function. Return codes are the
+   same as for cr_rewrite_uri.
 
    Meaning of the parameters is as follows:
 
@@ -608,9 +609,9 @@ modparam("carrierroute", "fallback_default", 1)
 
 1.4.4. cr_rewrite_by_to (string level, int hash_source)
 
-   Like route_uri, except that the to URI is used for prefix
-   matching instead the request URI. Parameters are the same as
-   for cr_rewrite_uri
+   Like cr_rewrite_uri, except that the to URI is used for prefix
+   matching instead the request URI. Return codes are the same as
+   for cr_rewrite_uri.
 
    Meaning of the parameters is as follows:
 
@@ -625,7 +626,7 @@ modparam("carrierroute", "fallback_default", 1)
 1.4.5. cr_prime_balance_by_to (string level, int hash_source)
 
    Like cr_prime_balance_uri, except that the to URI is used for
-   prefix matching instead the request URI. Parameters are the
+   prefix matching instead the request URI. Return codes are the
    same as for cr_rewrite_uri.
 
    Meaning of the parameters is as follows:
@@ -655,7 +656,7 @@ modparam("carrierroute", "fallback_default", 1)
 1.4.7. cr_tree_rewrite_uri (string tree, string level)
 
    Uses the carrier tree specified by tree and uses the given
-   level
+   level. Uses the call id as hash source.
 
    Meaning of the parameters is as follows:
 
@@ -791,12 +792,35 @@ openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Example 1-30. Configuration example - OpenSER script
 ...
-if(!cr_rewrite_uri("pstn", "call_id")){
-sl_send_reply("403", "Not allowed");
-} else {
-t_relay();
+route {
+        # route calls based on hash over callid
+        # choose route level 0 of the default carrier
+        if(!cr_rewrite_uri("0", "call_id")){
+                sl_send_reply("403", "Not allowed");
+        } else {
+                # In case of failure, re-route the request
+                t_on_failure("1");
+                # Relay the request to the gateway
+                t_relay();
+        }
 }
-break;
+
+failure_route(1) {
+        # In case of failure, send it to an alternative route:
+        if (t_check_status("408|5[0-9][0-9]")) {
+                #choose route level 1 of the default carrier
+                if(!cr_rewrite_uri("1", "call_id")){
+                        t_reply("403", "Not allowed");
+                } else {
+                        t_on_failure("2");
+                        t_relay();
+                }
+        }
+}
+
+failure_route(2) {
+        # further processing
+}
 ...
 
    Example 1-31. Configuration example - module configuration
