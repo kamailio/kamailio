@@ -398,6 +398,13 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 
      * query - must be a valid SQL query. The parameter can
        contain pseudo-variables.
+       You must escape any pseudo-variables manually to prevent
+       SQL injection attacks. You can use the existing
+       transformations escape.common and unescape.common to
+       escape and unescape the content of any pseudo-variable.
+       Failing to escape the variables used in the query makes
+       you vulnerable to SQL injection, e.g. make it possible for
+       an outside attacker to alter your database content.
      * dest - a list with AVP names where to store the result.
        The format is "$avp(name1);$avp(name2);...". If this
        parameter is ommited, the result is stored in
@@ -405,10 +412,6 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        then multiple AVPs with corresponding name will be added.
        The value type of the AVP (string or integer) will be
        derived from the type of the columns.
-       You must escape any pseudo-variables manually to prevent
-       SQL injection attacks. You can use the existing
-       transformations escape.common and unescape.common to
-       escape and unescape the content of any pseudo-variable.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
