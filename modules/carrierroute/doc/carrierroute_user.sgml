@@ -538,7 +538,7 @@ modparam("carrierroute", "default_tree", "default")
     </section>
 
     <section>
-	    <title><varname>use_domain</varname> (string)</title>
+	    <title><varname>use_domain</varname> (int)</title>
 	    <para>
 		    When using tree lookup per user, this parameter specifies whether
 		    to use the domain part for user matching or not.
@@ -552,14 +552,14 @@ modparam("carrierroute", "default_tree", "default")
 		    <title>Set <varname>use_domain</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "use_domain", "0")
+modparam("carrierroute", "use_domain", 0)
 ...
 		    </programlisting>
 	    </example>
     </section>
 
     <section>
-	    <title><varname>fallback_default</varname> (string)</title>
+	    <title><varname>fallback_default</varname> (int)</title>
 	    <para>
 		    This parameter defines the behaviour when using user-based tree
 		    lookup. If the user has a non-existing tree set and fallback_default
@@ -575,7 +575,7 @@ modparam("carrierroute", "use_domain", "0")
 		    <title>Set <varname>fallback_default</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "fallback_default", "1")
+modparam("carrierroute", "fallback_default", 1)
 ...
 		    </programlisting>
 	    </example>
