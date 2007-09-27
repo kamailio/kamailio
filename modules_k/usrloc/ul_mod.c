@@ -66,6 +66,7 @@ MODULE_VERSION
 #define SOCK_COL       "socket"
 #define METHODS_COL    "methods"
 #define LAST_MOD_COL   "last_modified"
+#define GETDATE_SQL    "now"
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -109,6 +110,9 @@ str sock_col        = str_init(SOCK_COL);
 str methods_col     = str_init(METHODS_COL);
 /* Name of column containing the last modified date */
 str last_mod_col     = str_init(LAST_MOD_COL);
+
+/* SQL function to be used to get date and time */
+str getdate_sql = str_init(GETDATE_SQL);
 
 /* Database URL */
 str db_url          = str_init(DEFAULT_DB_URL);
@@ -187,6 +191,7 @@ static param_export_t params[] = {
 	{"fetch_rows",        INT_PARAM, &ul_fetch_rows   },
 	{"hash_size",         INT_PARAM, &ul_hash_size    },
 	{"nat_bflag",         INT_PARAM, &nat_bflag       },
+	{"getdate_sql",       STR_PARAM, &getdate_sql.s   },
 	{0, 0, 0}
 };
 
@@ -242,6 +247,7 @@ static int mod_init(void)
 	domain_col.len = strlen(domain_col.s);
 	contact_col.len = strlen(contact_col.s);
 	expires_col.len = strlen(expires_col.s);
+	getdate_sql.len = strlen(getdate_sql.s);
 	q_col.len = strlen(q_col.s);
 	callid_col.len = strlen(callid_col.s);
 	cseq_col.len = strlen(cseq_col.s);

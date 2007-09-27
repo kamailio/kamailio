@@ -99,7 +99,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	for (dom = root; dom!=NULL ; dom=dom->next) {
 		/* build query */
 		i = snprintf( query_buf, sizeof(query_buf), "select %.*s, %.*s, %.*s,"
-			" %.*s, %.*s from %s where %.*s > now() and %.*s & %d = %d and "
+			" %.*s, %.*s from %s where %.*s > %.*s() and %.*s & %d = %d and "
 			"id %% %u = %u",
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
@@ -108,6 +108,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			path_col.len, path_col.s,
 			dom->d->name->s,
 			expires_col.len, expires_col.s,
+			getdate_sql.len, getdate_sql.s,
 			cflags_col.len, cflags_col.s,
 			flags, flags, part_max, part_idx);
 		if ( i>=sizeof(query_buf) ) {
