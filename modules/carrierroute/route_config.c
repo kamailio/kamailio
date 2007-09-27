@@ -88,7 +88,7 @@ int load_config(struct rewrite_data * rd) {
 	int backed_up_size = 0;
 	int * backed_up = NULL;
 	int backup = 0;
-	int status, hash_index, max_locdb, strip;
+	int status, hash_index, max_targets, strip;
 
 	if ((cfg = parse_config()) == NULL) {
 		return -1;
@@ -120,7 +120,7 @@ int load_config(struct rewrite_data * rd) {
 				prefix = NULL;
 			}
 			LM_INFO("loading prefix %s\n", prefix);
-			max_locdb = cfg_getint(p, "max_locdb");
+			max_targets = cfg_getint(p, "max_targets");
 			o = cfg_size(p, "target");
 			for (k = 0; k < o; k++) {
 				t = cfg_getnsec(p, "target", k);
@@ -149,7 +149,7 @@ int load_config(struct rewrite_data * rd) {
 				backup = cfg_getint(t, "backup");
 				LM_INFO("adding route for prefix %s, to host %s, prob %f, backed up: %i, backup: %i\n",
 				    prefix, rewrite_host, prob, backed_up_size, backup);
-				if (add_route(rd, 1, domain, prefix, max_locdb, prob, rewrite_host,
+				if (add_route(rd, 1, domain, prefix, max_targets, prob, rewrite_host,
 				              strip, rewrite_prefix, rewrite_suffix, status,
 				              hash_index, backup, backed_up, comment) < 0) {
 					LM_INFO("Error while adding route\n");
@@ -193,7 +193,7 @@ static cfg_t * parse_config(void) {
 
 	cfg_opt_t prefix_opts[] = {
 	                              CFG_SEC("target", target_opts, CFGF_MULTI | CFGF_TITLE),
-	                              CFG_INT("max_locdb", -1, CFGF_NONE),
+	                              CFG_INT("max_targets", -1, CFGF_NONE),
 	                              CFG_END()
 	                          };
 
@@ -277,7 +277,7 @@ static int save_route_data_recursor(struct route_tree_item * rt, FILE * outfile)
 	if (rt->rule_list) {
 		rr = rt->rule_list;
 		fprintf(outfile, "\tprefix %s {\n", rr->prefix.len ? rr->prefix.s : "NULL");
-		fprintf(outfile, "\t\tmax_locdb = %i\n\n", rt->max_locdb);
+		fprintf(outfile, "\t\tmax_targets = %i\n\n", rt->max_targets);
 		while (rr) {
 			fprintf(outfile, "\t\ttarget %s {\n", rr->host.len ? rr->host.s : "NULL");
 			fprintf(outfile, "\t\t\tprob = %f\n", rr->orig_prob);

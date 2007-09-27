@@ -567,7 +567,7 @@ modparam("carrierroute", "fallback_default", 1)
      * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
-       configuration parameter max_locdb. Possible values for
+       configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri,
        to_user.
      _________________________________________________________
@@ -583,7 +583,7 @@ modparam("carrierroute", "fallback_default", 1)
      * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
-       configuration parameter max_locdb. Possible values for
+       configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri,
        to_user.
      _________________________________________________________
@@ -600,7 +600,7 @@ modparam("carrierroute", "fallback_default", 1)
      * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
-       configuration parameter max_locdb. Possible values for
+       configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri,
        to_user.
      _________________________________________________________
@@ -616,7 +616,7 @@ modparam("carrierroute", "fallback_default", 1)
      * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
-       configuration parameter max_locdb. Possible values for
+       configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri,
        to_user.
      _________________________________________________________
@@ -632,7 +632,7 @@ modparam("carrierroute", "fallback_default", 1)
      * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
-       configuration parameter max_locdb. Possible values for
+       configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri,
        to_user.
      _________________________________________________________
@@ -842,7 +842,7 @@ failure_route(2) {
 ...
 domain proxy {
    prefix 49 {
-     max_locdb = 2
+     max_targets = 2
       target proxy1.localdomain {
          prob = 0.500000
          hash_index = 1
@@ -860,7 +860,7 @@ domain proxy {
 
 domain register {
    prefix 49 {
-     max_locdb = 2
+     max_targets = 2
       target register1.localdomain {
          prob = 0.500000
          hash_index = 1

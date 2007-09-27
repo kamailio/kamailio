@@ -57,7 +57,7 @@
 
 enum hash_algorithm {
     alg_crc32, /*!< hashing algorithm is CRC32 */
-    alg_prime /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % maxlocdb + 1 */
+    alg_prime /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
 };
 
 static int determine_and_rewrite_uri(struct sip_msg* msg, int domain,
@@ -765,7 +765,7 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 
 	switch (alg) {
 		case alg_prime:
-			if ((prob = prime_hash_func(msg, hash_source, route_tree->max_locdb)) < 0) {
+			if ((prob = prime_hash_func(msg, hash_source, route_tree->max_targets)) < 0) {
 				return -1;
 			}
 			if ((rr = get_rule_by_hash(route_tree, prob)) == NULL) {

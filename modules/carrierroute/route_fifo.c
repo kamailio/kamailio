@@ -781,7 +781,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 							destroy_route_rule(tmp);
 						}
 						rt->rule_num--;
-						rt->max_locdb--;
+						rt->max_targets--;
 						updated = 1;
 						break;
 					default:
