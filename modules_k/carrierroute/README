@@ -28,7 +28,7 @@ Henning Westerholt
               1.3.3. id_column (string)
               1.3.4. carrier_column (string)
               1.3.5. scan_prefix_column (string)
-              1.3.6. level_column (string)
+              1.3.6. domain_column (string)
               1.3.7. prob_column (string)
               1.3.8. rewrite_host_column (string)
               1.3.9. strip_column (string)
@@ -50,26 +50,26 @@ Henning Westerholt
 
         1.4. Exported Functions
 
-              1.4.1. cr_rewrite_uri (string level, int
+              1.4.1. cr_rewrite_uri (string domain, int
                       hash_source)
 
-              1.4.2. cr_rewrite_branches(string level,
+              1.4.2. cr_rewrite_branches(string domain,
                       hash_source)
 
-              1.4.3. cr_prime_balance_uri (string level, int
+              1.4.3. cr_prime_balance_uri (string domain, int
                       hash_source)
 
-              1.4.4. cr_rewrite_by_to (string level, int
+              1.4.4. cr_rewrite_by_to (string domain, int
                       hash_source)
 
-              1.4.5. cr_prime_balance_by_to (string level, int
+              1.4.5. cr_prime_balance_by_to (string domain, int
                       hash_source)
 
               1.4.6. cr_user_rewrite_uri (string user, string
-                      level)
+                      domain)
 
               1.4.7. cr_tree_rewrite_uri (string tree, string
-                      level)
+                      domain)
 
         1.5. MI Commands
 
@@ -95,7 +95,7 @@ Henning Westerholt
    1-3. Set id_column parameter
    1-4. Set carrier_column parameter
    1-5. Set scan_prefix_column parameter
-   1-6. Set level_column parameter
+   1-6. Set domain_column parameter
    1-7. Set prob_column parameter
    1-8. Set rewrite_host_column parameter
    1-9. Set strip_column parameter
@@ -137,7 +137,7 @@ Chapter 1. User's Guide
    or from a config file at OpenSER startup. It can uses one
    routing tree, or if needed for every user a different routing
    tree for number prefix based routing. It supports several
-   route tree levels, e.g. for failback routes. Based on the
+   route tree domains, e.g. for failback routes. Based on the
    tree, the module decides which number prefixes are forwarded
    to which gateway. It can also distribute the traffic by ratio
    parameters. Furthermore, the requests can be distributed by a
@@ -259,18 +259,18 @@ modparam("carrierroute", "scan_prefix_column", "scan_prefix")
 
      _________________________________________________________
 
-1.3.6. level_column (string)
+1.3.6. domain_column (string)
 
-   Name of column containing the rule level. You can define
-   several routing levels to have different routing rules. Maybe
-   you use level 0 for normal routing and level 1 if level 0
+   Name of column containing the rule domain. You can define
+   several routing domains to have different routing rules. Maybe
+   you use domain 0 for normal routing and domain 1 if domain 0
    failed.
 
-   Default value is "level". 
+   Default value is "domain". 
 
-   Example 1-6. Set level_column parameter
+   Example 1-6. Set domain_column parameter
 ...
-modparam("carrierroute", "level_column", "level")
+modparam("carrierroute", "domain_column", "domain")
 ...
 
      _________________________________________________________
@@ -284,7 +284,7 @@ modparam("carrierroute", "level_column", "level")
    for gateway A with a prob value of 0.7 and a rule for gateway
    B with a prob value of 0.3.
 
-   If all probabilities for a given prefix, tree and level don't
+   If all probabilities for a given prefix, tree and domain don't
    add to 100%, the prefix values will be adjusted according the
    given prob values. E.g. if three hosts with prob values of
    0.5, 0.5 and 0.4 are defined, the resulting probabilities are
@@ -549,24 +549,22 @@ modparam("carrierroute", "fallback_default", 1)
 1.4. Exported Functions
 
    All functions needs a string value to specify a certain tree
-   level or tree. If you operate in config file mode, the level
-   is equivalent to the specified domain. Its further necessary
-   to specify source of the hashing algorithm. If this parameter
-   is ommited like in the cr_user_rewrite_uri and
-   cr_tree_rewrite_uri functions, a default hash source, the call
-   id, is choosen.
+   domain or tree. Its further necessary to specify source of the
+   hashing algorithm. If this parameter is ommited like in the
+   cr_user_rewrite_uri and cr_tree_rewrite_uri functions, a
+   default hash source, the call id, is choosen.
      _________________________________________________________
 
-1.4.1. cr_rewrite_uri (string level, int hash_source)
+1.4.1. cr_rewrite_uri (string domain, int hash_source)
 
    This function searches for the longest match for the Request
-   URI at the given level in the default tree and rewrites the
+   URI at the given domain in the default tree and rewrites the
    Request URI. Returns -1 if there is no data found or an empty
    rewrite host on the longest match is found.
 
    Meaning of the parameters is as follows:
 
-     * level - Name of the routing level to be used.
+     * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_locdb. Possible values for
@@ -574,7 +572,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.2. cr_rewrite_branches(string level, hash_source)
+1.4.2. cr_rewrite_branches(string domain, hash_source)
 
    Like cr_rewrite_uri, the difference is that
    cr_rewrite_branches rewrites all branches of the transaction.
@@ -582,7 +580,7 @@ modparam("carrierroute", "fallback_default", 1)
 
    Meaning of the parameters is as follows:
 
-     * level - Name of the routing level to be used.
+     * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_locdb. Possible values for
@@ -590,16 +588,16 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.3. cr_prime_balance_uri (string level, int hash_source)
+1.4.3. cr_prime_balance_uri (string domain, int hash_source)
 
-   Balances the request URI to the desination set given by level
+   Balances the request URI to the desination set given by domain
    in the default tree. The hash_source defines the parameter
    which is passed to the hash function. Return codes are the
    same as for cr_rewrite_uri.
 
    Meaning of the parameters is as follows:
 
-     * level - Name of the routing level to be used.
+     * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_locdb. Possible values for
@@ -607,7 +605,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.4. cr_rewrite_by_to (string level, int hash_source)
+1.4.4. cr_rewrite_by_to (string domain, int hash_source)
 
    Like cr_rewrite_uri, except that the to URI is used for prefix
    matching instead the request URI. Return codes are the same as
@@ -615,7 +613,7 @@ modparam("carrierroute", "fallback_default", 1)
 
    Meaning of the parameters is as follows:
 
-     * level - Name of the routing level to be used.
+     * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_locdb. Possible values for
@@ -623,7 +621,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.5. cr_prime_balance_by_to (string level, int hash_source)
+1.4.5. cr_prime_balance_by_to (string domain, int hash_source)
 
    Like cr_prime_balance_uri, except that the to URI is used for
    prefix matching instead the request URI. Return codes are the
@@ -631,7 +629,7 @@ modparam("carrierroute", "fallback_default", 1)
 
    Meaning of the parameters is as follows:
 
-     * level - Name of the routing level to be used.
+     * domain - Name of the routing domain to be used.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_locdb. Possible values for
@@ -639,29 +637,31 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.6. cr_user_rewrite_uri (string user, string level)
+1.4.6. cr_user_rewrite_uri (string user, string domain)
 
    Rewrites the request URI, the given user is used to determine
-   the carrier tree to be used. The level identifies the routing
-   level inside the carrier tree. This function cannot be used in
-   the config file mode, as it needs a mapping of the given user
-   to a certain carrier.
+   the carrier tree to be used. The domain identifies the routing
+   domain inside the carrier tree. This function cannot be used
+   in the config file mode, as it needs a mapping of the given
+   user to a certain carrier.
 
    Meaning of the parameters is as follows:
 
-     * user - Name of the user for the carrier tree lookup
-     * level - Name of the routing level to be used.
+     * user - Name of the user for the carrier tree lookup.
+       Additional to a string value the request URI, from URI, to
+       URI or an AVP could used to determine the actual username.
+     * domain - Name of the routing domain to be used.
      _________________________________________________________
 
-1.4.7. cr_tree_rewrite_uri (string tree, string level)
+1.4.7. cr_tree_rewrite_uri (string tree, string domain)
 
    Uses the carrier tree specified by tree and uses the given
-   level. Uses the call id as hash source.
+   domain. Uses the call id as hash source.
 
    Meaning of the parameters is as follows:
 
      * tree - The routing tree to be used.
-     * level - Name of the routing level to be used.
+     * domain - Name of the routing domain to be used.
      _________________________________________________________
 
 1.5. MI Commands
@@ -794,7 +794,7 @@ openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 route {
         # route calls based on hash over callid
-        # choose route level 0 of the default carrier
+        # choose route domain 0 of the default carrier
         if(!cr_rewrite_uri("0", "call_id")){
                 sl_send_reply("403", "Not allowed");
         } else {
@@ -808,7 +808,7 @@ route {
 failure_route(1) {
         # In case of failure, send it to an alternative route:
         if (t_check_status("408|5[0-9][0-9]")) {
-                #choose route level 1 of the default carrier
+                #choose route domain 1 of the default carrier
                 if(!cr_rewrite_uri("1", "call_id")){
                         t_reply("403", "Not allowed");
                 } else {
@@ -838,8 +838,7 @@ failure_route(2) {
    autogenerated value, starting from one.
 
    Use the "null" prefix to specify an empty prefix in the config
-   file. The domain in this mode is equivalent to the level in
-   the database mode.
+   file.
 ...
 domain proxy {
    prefix 49 {
@@ -900,13 +899,13 @@ domain register {
 
    Example 1-32. Example database content - carrierroute table
 ...
-+----+---------+-------------+-------+------+-------+---------------+
-| id | carrier | scan_prefix | level | prob | strip | rewrite_host  |
-+----+---------+-------------+-------+------+-------+---------------+
-|  1 |       2 | 49          | 0     |  0.5 | 0     | host1.local   |
-|  2 |       2 | 49          | 0     |  0.5 | 0     | host2.local   |
-|  3 |       1 |             | 0     |    1 | 0     | default.local |
-+----+---------+-------------+-------+------+-------+---------------+
++----+---------+-------------+--------+------+-------+---------------+
+| id | carrier | scan_prefix | domain | prob | strip | rewrite_host  |
++----+---------+-------------+--------+------+-------+---------------+
+|  1 |       2 | 49          | 0      |  0.5 | 0     | host1.local   |
+|  2 |       2 | 49          | 0      |  0.5 | 0     | host2.local   |
+|  3 |       1 |             | 0      |    1 | 0     | default.local |
++----+---------+-------------+--------+------+-------+---------------+
 ...
 
    This table contains two routes to two hosts for the "49"

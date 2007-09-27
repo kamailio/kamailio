@@ -196,7 +196,7 @@ int load_route_data(struct rewrite_data * rd) {
 
 	if ((strlen("SELECT DISTINCT  FROM  WHERE = ")
 	                        + strlen(db_table)
-	                        + strlen(columns[COL_LEVEL])
+	                        + strlen(columns[COL_DOMAIN])
 	                        + strlen(columns[COL_CARRIER])
 	                        + 20) >  QUERY_LEN) {
 		LM_ERR("query too long\n");
@@ -219,7 +219,7 @@ int load_route_data(struct rewrite_data * rd) {
 	tmp = carriers;
 	for (i=0; i<carrier_count; i++) {
 		memset(query, 0, QUERY_LEN);
-		snprintf(query, QUERY_LEN, "SELECT DISTINCT %s FROM %s WHERE %s=%i", columns[COL_LEVEL], db_table, columns[COL_CARRIER], tmp->id);
+		snprintf(query, QUERY_LEN, "SELECT DISTINCT %s FROM %s WHERE %s=%i", columns[COL_DOMAIN], db_table, columns[COL_CARRIER], tmp->id);
 		if (dbf.raw_query(dbh, query, &res) < 0) {
 			LM_ERR("Failed to query database.\n");
 			goto errout;
@@ -249,7 +249,7 @@ int load_route_data(struct rewrite_data * rd) {
 		row = &RES_ROWS(res)[i];
 		if (add_route(rd,
 		              row->values[COL_CARRIER].val.int_val,
-		              row->values[COL_LEVEL].val.string_val,
+		              row->values[COL_DOMAIN].val.string_val,
 		              row->values[COL_SCAN_PREFIX].val.string_val,
 		              0,
 		              row->values[COL_PROB].val.double_val,

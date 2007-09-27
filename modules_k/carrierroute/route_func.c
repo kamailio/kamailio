@@ -60,22 +60,22 @@ enum hash_algorithm {
     alg_prime /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % maxlocdb + 1 */
 };
 
-static int determine_and_rewrite_uri(struct sip_msg* msg, int level,
+static int determine_and_rewrite_uri(struct sip_msg* msg, int domain,
                                      enum hash_source hash,
                                      enum hash_algorithm alg);
 
-static int determine_to_and_rewrite_uri(struct sip_msg* msg, int level,
+static int determine_to_and_rewrite_uri(struct sip_msg* msg, int domain,
                                         enum hash_source hash,
                                         enum hash_algorithm alg);
 
-static int determine_from_and_rewrite_uri(struct sip_msg* msg, int level,
+static int determine_from_and_rewrite_uri(struct sip_msg* msg, int domain,
         enum hash_source hash,
         enum hash_algorithm alg);
 
-static int rewrite_msg(int level, str * uri, struct sip_msg * msg, str * user,
+static int rewrite_msg(int domain, str * uri, struct sip_msg * msg, str * user,
                        enum hash_source hash_source, enum hash_algorithm alg);
 
-static int carrier_rewrite_msg(int carrier, int level,
+static int carrier_rewrite_msg(int carrier, int domain,
                                str * uri, struct sip_msg * msg, str * user,
                                enum hash_source hash_source,
                                enum hash_algorithm alg);
@@ -105,18 +105,18 @@ static struct route_rule * get_rule_by_hash(struct route_tree_item * rt, int pro
  * crc32 for hashing. The request URI is used to determine tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int route_uri(struct sip_msg* msg, char* level_param, char* hash) {
-	int level;
+int route_uri(struct sip_msg* msg, char* domain_param, char* hash) {
+	int domain;
 	enum hash_source my_hash_source;
 
-	level = (int)level_param;
+	domain = (int)domain_param;
 	my_hash_source = (enum hash_source)hash;
-	return determine_and_rewrite_uri(msg, level, my_hash_source, alg_crc32);
+	return determine_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
 }
 
 /**
@@ -126,18 +126,18 @@ int route_uri(struct sip_msg* msg, char* level_param, char* hash) {
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int prime_balance_uri(struct sip_msg * msg, char * level_param, char * hash) {
-	int level;
+int prime_balance_uri(struct sip_msg * msg, char * domain_param, char * hash) {
+	int domain;
 	enum hash_source my_hash_source;
 
-	level = (int)level_param;
+	domain = (int)domain_param;
 	my_hash_source = (enum hash_source)hash;
-	return determine_and_rewrite_uri(msg, level, my_hash_source, alg_prime);
+	return determine_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
 
 /*
@@ -178,23 +178,23 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u) {
  *
  * @param msg the current SIP message
  * @param _user the user to determine the route tree (Request-URI|from_uri|to_uri|avpname)
- * @param _level the requested routing level
+ * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
  */
-int user_route_uri(struct sip_msg * _msg, char * _user, char * _level) {
+int user_route_uri(struct sip_msg * _msg, char * _user, char * _domain) {
 	user_param_t * hf_type;
 	struct hdr_field* h;
-	str uri, user, domain;
+	str uri, user, str_domain;
 	struct auth_body* c = 0;
 	struct usr_avp *avp;
 	struct sip_uri puri;
 	int_str val;
 	str ruser;
 	str ruri;
-	int carrier_id, level, index;
+	int carrier_id, domain, index;
 	hf_type = (user_param_t *)_user;
-	level = (int)_level;
+	domain = (int)_domain;
 	struct rewrite_data * rd = NULL;
 	struct carrier_tree * ct = NULL;
 	switch (hf_type->id) {
@@ -244,14 +244,14 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _level) {
 	}
 	if (hf_type->id == CREDENTIALS) {
 		user = c->digest.username.user;
-		domain = c->digest.realm;
+		str_domain = c->digest.realm;
 	} else {
 		if (parse_uri(uri.s, uri.len, &puri) < 0) {
 			LM_ERR("Error while parsing URI\n");
 			return -5;
 		}
 		user = puri.user;
-		domain = puri.host;
+		str_domain = puri.host;
 	}
 	if (parse_sip_msg_uri(_msg) < 0) {
 		return -1;
@@ -265,7 +265,7 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _level) {
 		rd = get_data();
 	} while (rd == NULL);
 
-	if ((carrier_id = load_user_carrier(&user, &domain)) < 0) {
+	if ((carrier_id = load_user_carrier(&user, &str_domain)) < 0) {
 		release_data(rd);
 		return -1;
 	} else if (carrier_id == 0) {
@@ -284,7 +284,7 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _level) {
 		}
 	}
 	release_data(rd);
-	return carrier_rewrite_msg(index, level, &ruri, _msg, &ruser, shs_call_id, alg_crc32);
+	return carrier_rewrite_msg(index, domain, &ruri, _msg, &ruser, shs_call_id, alg_crc32);
 }
 
 /**
@@ -294,11 +294,11 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _level) {
  *
  * @param msg the current SIP message
  * @param _tree the routing tree to be used
- * @param _level the requested routing level
+ * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
  */
-int tree_route_uri(struct sip_msg * msg, char * _tree, char * _level) {
+int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	struct rewrite_data * rd = NULL;
 	int index;
 	str ruser;
@@ -315,7 +315,7 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _level) {
 	} while (rd == NULL);
 	index = rd->default_carrier_index;
 	release_data(rd);
-	return carrier_rewrite_msg(index, (int)_level, &ruri, msg, &ruser, shs_call_id, alg_crc32);
+	return carrier_rewrite_msg(index, (int)_domain, &ruri, msg, &ruser, shs_call_id, alg_crc32);
 }
 
 /**
@@ -324,18 +324,18 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _level) {
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int route_by_to(struct sip_msg* msg, char* level_param, char* hash) {
-	int level;
+int route_by_to(struct sip_msg* msg, char* domain_param, char* hash) {
+	int domain;
 	enum hash_source my_hash_source;
 
-	level = (int)level_param;
+	domain = (int)domain_param;
 	my_hash_source = (enum hash_source)hash;
-	return determine_to_and_rewrite_uri(msg, level, my_hash_source, alg_crc32);
+	return determine_to_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
 }
 
 /**
@@ -345,18 +345,18 @@ int route_by_to(struct sip_msg* msg, char* level_param, char* hash) {
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int prime_balance_by_to(struct sip_msg* msg, char* level_param, char* hash) {
-	int level;
+int prime_balance_by_to(struct sip_msg* msg, char* domain_param, char* hash) {
+	int domain;
 	enum hash_source my_hash_source;
 
-	level = (int)level_param;
+	domain = (int)domain_param;
 	my_hash_source = (enum hash_source)hash;
-	return determine_to_and_rewrite_uri(msg, level, my_hash_source, alg_prime);
+	return determine_to_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
 
 /**
@@ -365,18 +365,18 @@ int prime_balance_by_to(struct sip_msg* msg, char* level_param, char* hash) {
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int route_by_from(struct sip_msg* msg, char* level_param, char* hash) {
-	int level;
+int route_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
+	int domain;
 	enum hash_source my_hash_source;
 
-	level = (int)level_param;
+	domain = (int)domain_param;
 	my_hash_source = (enum hash_source)hash;
-	return determine_from_and_rewrite_uri(msg, level, my_hash_source, alg_crc32);
+	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
 }
 
 /**
@@ -386,18 +386,18 @@ int route_by_from(struct sip_msg* msg, char* level_param, char* hash) {
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int prime_balance_by_from(struct sip_msg* msg, char* level_param, char* hash) {
-	int level;
+int prime_balance_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
+	int domain;
 	enum hash_source my_hash_source;
 
-	level = (int)level_param;
+	domain = (int)domain_param;
 	my_hash_source = (enum hash_source)hash;
-	return determine_from_and_rewrite_uri(msg, level, my_hash_source, alg_prime);
+	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
 
 // this function is only needed for the 0700 functionality, and obselete
@@ -409,12 +409,12 @@ int prime_balance_by_from(struct sip_msg* msg, char* level_param, char* hash) {
  * determine tree node, respectively
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int rewrite_branches(struct sip_msg * msg, char * level_param, char * hash) {
+int rewrite_branches(struct sip_msg * msg, char * domain_param, char * hash) {
 	struct rewrite_data * rd;
 	struct route_tree * rt;
 	str new_uri;
@@ -425,24 +425,24 @@ int rewrite_branches(struct sip_msg * msg, char * level_param, char * hash) {
 	qvalue_t q;
 	struct socket_info * socket;
 	int ret;
-	int level;
+	int domain;
 	enum hash_source my_hash_source;
 
 	my_hash_source = (enum hash_source)hash;
 
-	level = (int) level_param;
+	domain = (int) domain_param;
 
 	do {
 		rd = get_data();
 	} while (rd == NULL);
 
-	if (level >= rd->tree_num) {
-		LM_ERR("Level too big. (We only have %d levels, you wanted %d.)\n",
-		    (rd->tree_num) - 1, level);
+	if (domain >= rd->tree_num) {
+		LM_ERR("Domain too big. (We only have %d domains, you wanted %d.)\n",
+		    (rd->tree_num) - 1, domain);
 		ret = -1;
 		goto unlock_and_out;
 	}
-	if ((rt = get_route_tree_by_id(rd->carriers[rd->default_carrier_index], level)) == NULL) {
+	if ((rt = get_route_tree_by_id(rd->carriers[rd->default_carrier_index], domain)) == NULL) {
 		LM_ERR("desired domain doesn't exist\n");
 		ret = -1;
 		goto unlock_and_out;
@@ -491,7 +491,7 @@ unlock_and_out:
  * to URI is used instead of the request URI
  *
  * @param msg the current SIP message
- * @param level the requested routing level
+ * @param domain the requested routing domain
  * @param hash the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
@@ -499,7 +499,7 @@ unlock_and_out:
  *
  * @see determine_and_rewrite_uri()
  */
-static int determine_to_and_rewrite_uri(struct sip_msg* msg, int level,
+static int determine_to_and_rewrite_uri(struct sip_msg* msg, int domain,
                                         enum hash_source hash,
                                         enum hash_algorithm alg) {
 	str user;
@@ -531,7 +531,7 @@ static int determine_to_and_rewrite_uri(struct sip_msg* msg, int level,
 	user.s = msg->parsed_uri.user.s;
 	user.len = msg->parsed_uri.user.len;
 
-	return rewrite_msg(level, &to_user, msg, &user, hash, alg);
+	return rewrite_msg(domain, &to_user, msg, &user, hash, alg);
 }
 
 /**
@@ -539,7 +539,7 @@ static int determine_to_and_rewrite_uri(struct sip_msg* msg, int level,
  * from URI is used instead of the request URI
  *
  * @param msg the current SIP message
- * @param level the requested routing level
+ * @param domain the requested routing domain
  * @param hash the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
@@ -547,7 +547,7 @@ static int determine_to_and_rewrite_uri(struct sip_msg* msg, int level,
  *
  * @see determine_and_rewrite_uri()
  */
-static int determine_from_and_rewrite_uri(struct sip_msg* msg, int level,
+static int determine_from_and_rewrite_uri(struct sip_msg* msg, int domain,
         enum hash_source hash,
         enum hash_algorithm alg) {
 	str user;
@@ -579,20 +579,20 @@ static int determine_from_and_rewrite_uri(struct sip_msg* msg, int level,
 	user.s = msg->parsed_uri.user.s;
 	user.len = msg->parsed_uri.user.len;
 
-	return rewrite_msg(level, &from_user, msg, &user, hash, alg);
+	return rewrite_msg(domain, &from_user, msg, &user, hash, alg);
 }
 
 /**
  * extracts the request URI from msg and passes it to rewrite_msg
  *
  * @param msg the current SIP message
- * @param level the requested routing level
+ * @param domain the requested routing domain
  * @param hash the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
  * @return 0 on success, -1 on failure
  */
-static int determine_and_rewrite_uri(struct sip_msg* msg, int level,
+static int determine_and_rewrite_uri(struct sip_msg* msg, int domain,
                                      enum hash_source hash,
                                      enum hash_algorithm alg) {
 	str user;
@@ -606,10 +606,10 @@ static int determine_and_rewrite_uri(struct sip_msg* msg, int level,
 	uri.s = msg->parsed_uri.user.s;
 	uri.len = msg->parsed_uri.user.len;
 
-	return rewrite_msg(level, &uri, msg, &user, hash, alg);
+	return rewrite_msg(domain, &uri, msg, &user, hash, alg);
 }
 
-static int rewrite_msg(int level,
+static int rewrite_msg(int domain,
                        str * uri, struct sip_msg * msg, str * user,
                        enum hash_source hash_source,
                        enum hash_algorithm alg) {
@@ -620,7 +620,7 @@ static int rewrite_msg(int level,
 	} while (rd == NULL);
 	index = rd->default_carrier_index;
 	release_data(rd);
-	return carrier_rewrite_msg(index, level, uri, msg, user, hash_source, alg);
+	return carrier_rewrite_msg(index, domain, uri, msg, user, hash_source, alg);
 }
 
 /**
@@ -628,7 +628,7 @@ static int rewrite_msg(int level,
  * new destination URI
  *
  * @param carrier the requested carrier
- * @param level the requested routing level
+ * @param domain the requested routing domain
  * @param uri the URI to be rewritten
  * @param msg the current SIP message
  * @param user the localpart of the URI to be rewritten
@@ -637,7 +637,7 @@ static int rewrite_msg(int level,
  *
  * @return 0 on success, -1 on failure
  */
-static int carrier_rewrite_msg(int carrier, int level,
+static int carrier_rewrite_msg(int carrier, int domain,
                                str * uri, struct sip_msg * msg, str * user,
                                enum hash_source hash_source,
                                enum hash_algorithm alg) {
@@ -652,12 +652,12 @@ static int carrier_rewrite_msg(int carrier, int level,
 	} while (rd == NULL);
 
 	if (carrier >= rd->tree_num) {
-		LM_ERR("Level too big. (We only have %d levels, you wanted %d.)\n",
-		    (rd->tree_num) - 1, level);
+		LM_ERR("Domain too big. (We only have %d domains, you wanted %d.)\n",
+		    (rd->tree_num) - 1, domain);
 		ret = -1;
 		goto unlock_and_out;
 	}
-	if ((rt = get_route_tree_by_id(rd->carriers[carrier], level)) == NULL) {
+	if ((rt = get_route_tree_by_id(rd->carriers[carrier], domain)) == NULL) {
 		LM_ERR("desired routing domain doesn't exist\n");
 		ret = -1;
 		goto unlock_and_out;
