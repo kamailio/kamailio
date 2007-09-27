@@ -60,7 +60,7 @@
 		  
 		  <column>
 			  <name>strip</name>
-			  <type>string</type>
+			  <type>unsigned int</type>
 			  <size>&flag_len;</size>
 			  <default>0</default>
 			  <description>Name of the column containing the number of digits to be stripped of the userpart of an URI before prepending rewrite_prefix.</description>
