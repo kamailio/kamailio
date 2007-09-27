@@ -44,11 +44,11 @@
 		  </column>
 		  
 		  <column>
-			  <name>level</name>
+			  <name>domain</name>
 			  <type>string</type>
 			  <size>&user_len;</size>
 			  <default/>
-			  <description>This column contains the route level. Additional levels could be used for example as fallback.</description>
+			  <description>This column contains the route domain. Additional domains could be used for example as fallback.</description>
 		  </column>
 		  
 		  <column>
