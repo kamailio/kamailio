@@ -1,1 +1,1 @@
-id(int,auto) carrier(int) scan_prefix(str) domain(str) prob(double) strip(str) rewrite_host(str) rewrite_prefix(str) rewrite_suffix(str) comment(str,null) 
+id(int,auto) carrier(int) scan_prefix(str) domain(str) prob(double) strip(int) rewrite_host(str) rewrite_prefix(str) rewrite_suffix(str) comment(str,null) 

@@ -5,7 +5,7 @@ CREATE TABLE carrierroute (
     scan_prefix VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(64) NOT NULL DEFAULT '',
     prob FLOAT NOT NULL DEFAULT 0,
-    strip VARCHAR(11) NOT NULL DEFAULT 0,
+    strip INT(11) UNSIGNED NOT NULL DEFAULT 0,
     rewrite_host VARCHAR(128) NOT NULL DEFAULT '',
     rewrite_prefix VARCHAR(64) NOT NULL DEFAULT '',
     rewrite_suffix VARCHAR(64) NOT NULL DEFAULT '',
