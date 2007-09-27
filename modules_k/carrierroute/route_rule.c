@@ -51,7 +51,7 @@ static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr
  *
  * @param rt the current route tree node
  * @param full_prefix the whole scan prefix
- * @param max_locdb the number of locdbs
+ * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
  * @param rewrite_local_prefix the rewrite prefix
@@ -70,7 +70,7 @@ static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr
  * @see add_route_to_tree()
  */
 int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-                   int max_locdb, double prob, const char * rewrite_hostpart, int strip,
+                   int max_targets, double prob, const char * rewrite_hostpart, int strip,
                    const char * rewrite_local_prefix, const char * rewrite_local_suffix,
                    int status, int hash_index, int backup, int * backed_up,
                    const char * comment) {
@@ -78,10 +78,10 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 	struct route_rule_p_list * t_rl;
 	int * t_bu;
 
-	if (max_locdb) {
-		route_tree->max_locdb = max_locdb;
+	if (max_targets) {
+		route_tree->max_targets = max_targets;
 	} else {
-		route_tree->max_locdb++;
+		route_tree->max_targets++;
 	}
 
 	if ((shm_rr = shm_malloc(sizeof(struct route_rule))) == NULL) {
@@ -240,8 +240,8 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 			rr = rr->next;
 		}
 
-		if (rt->rule_num != rt->max_locdb) {
-			LM_ERR("number of rules(%i) differs from max_locdb(%i), maybe your config is wrong?\n", rt->rule_num, rt->max_locdb);
+		if (rt->rule_num != rt->max_targets) {
+			LM_ERR("number of rules(%i) differs from max_targets(%i), maybe your config is wrong?\n", rt->rule_num, rt->max_targets);
 			return -1;
 		}
 		if(rt->rules){

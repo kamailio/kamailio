@@ -88,7 +88,7 @@ struct route_tree_item {
 	struct route_rule ** rules; /*!< The array points to the rules in order of hash indices */
 	int rule_num; /*!< The number of rules */
 	int dice_max; /*!< The DICE_MAX value for the rule set, calculated by rule_fixup */
-	int max_locdb; /*!< upper edge of hashing via prime number algorithm, must be eqal to @var rule_num */
+	int max_targets; /*!< upper edge of hashing via prime number algorithm, must be eqal to @var rule_num */
 };
 
 /**

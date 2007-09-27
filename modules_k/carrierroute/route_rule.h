@@ -46,7 +46,7 @@
  *
  * @param rt the current route tree node
  * @param full_prefix the whole scan prefix
- * @param max_locdb the number of locdbs
+ * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
  * @param strip the number of digits to be stripped off userpart before prepending prefix
@@ -66,7 +66,7 @@
  * @see add_route_to_tree()
  */
 int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-                   int max_locdb, double prob, const char * rewrite_hostpart, int strip,
+                   int max_targets, double prob, const char * rewrite_hostpart, int strip,
                    const char * rewrite_local_prefix, const char * rewrite_local_suffix,
                    int status, int hash_index, int backup, int * backed_up,
                    const char * comment);

@@ -203,7 +203,7 @@ int find_tree(const char * tree){
  * @param carrier_id the carrier id of the route to be added
  * @param domain the routing domain of the new route
  * @param scan_prefix the number prefix
- * @param max_locdb the number of locdbs
+ * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
  * @param strip the number of digits to be stripped off userpart before prepending prefix
@@ -221,7 +221,7 @@ int find_tree(const char * tree){
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct rewrite_data * rd, int carrier_id,
-              const char * domain, const char * scan_prefix, int max_locdb,
+              const char * domain, const char * scan_prefix, int max_targets,
               double prob, const char * rewrite_hostpart, int strip,
               const char * rewrite_local_prefix, const char * rewrite_local_suffix,
               int status, int hash_index, int backup, int * backed_up, const char * comment) {
@@ -239,7 +239,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
 		return -1;
 	}
 	LM_INFO("found route, now adding\n");
-	return add_route_to_tree(rt, scan_prefix, scan_prefix, max_locdb, prob, rewrite_hostpart,
+	return add_route_to_tree(rt, scan_prefix, scan_prefix, max_targets, prob, rewrite_hostpart,
 	                         strip, rewrite_local_prefix, rewrite_local_suffix, status,
 	                         hash_index, backup, backed_up, comment);
 }
