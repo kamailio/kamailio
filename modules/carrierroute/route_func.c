@@ -316,7 +316,11 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	do {
 		rd = get_data();
 	} while (rd == NULL);
-	index = rd->default_carrier_index;
+	if((int)_tree < 0){
+		index = rd->default_carrier_index;
+	} else {
+		index = (int)_tree;
+	}
 	release_data(rd);
 	return carrier_rewrite_msg(index, (int)_domain, &ruri, msg, &ruser, shs_call_id, alg_crc32);
 }

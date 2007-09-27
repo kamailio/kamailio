@@ -185,6 +185,12 @@ int find_tree(const char * tree){
 
 	while (tmp) {
 		if (strcmp(tree, tmp->name.s) == 0) {
+			/*
+			we return the number of the tree instead of the id, because the
+			user could choose the id randomly, this would lead to a not
+			optimal datastructure, e.g. for id=10000. So we're working 
+			internaly with this id instead of the id from the database.
+			*/
 			return tmp->no;
 		}
 		tmp = tmp->next;
@@ -400,7 +406,7 @@ int add_tree(const char * tree, int carrier_id) {
 	} else {
 		prev->next = tmp;
 	}
-	LM_INFO("tree %s has id %i\n", tree, id);
+	LM_INFO("tree %s has internal id %i\n", tree, id);
 	return id;
 }
 
