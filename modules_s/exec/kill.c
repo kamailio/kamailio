@@ -166,7 +166,9 @@ void destroy_kill()
 	/* if disabled ... */
 	if (time_to_kill==0) 
 		return; 
-	lock_destroy(kill_lock);
-	lock_dealloc(kill_lock);
+	if (kill_lock){
+		lock_destroy(kill_lock);
+		lock_dealloc(kill_lock);
+	}
 	return;
 }
