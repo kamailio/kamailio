@@ -197,6 +197,8 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _domain) {
 	domain = (int)_domain;
 	struct rewrite_data * rd = NULL;
 	struct carrier_tree * ct = NULL;
+	// TODO it would be better to use the new introduced pv_parse and pv_print functions
+	// like in textops:append_to_reply_f and :it_list_fixup.
 	switch (hf_type->id) {
 		case REQ_URI: /* Request-URI */
 			if (get_request_uri(_msg, &uri) < 0) {
@@ -277,6 +279,7 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _domain) {
 			} else {
 				LM_ERR("desired routing tree with id %i doesn't exist\n",
 					carrier_id);
+				release_data(rd);
 				return -1;
 			}
 		} else {
