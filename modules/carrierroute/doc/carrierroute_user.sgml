@@ -18,7 +18,7 @@
 		The module provides routing, balancing and blacklisting capabilities.
 		It reads routing entries from a database source or from a config file at OpenSER
 		startup. It can uses one routing tree, or if needed for every user a different
-		routing tree for number prefix based routing. It supports several route tree levels,
+		routing tree for number prefix based routing. It supports several route tree domains,
 		e.g. for failback routes. Based on the tree, the module decides which number
 		prefixes are forwarded to which gateway. It can also distribute the traffic by
 		ratio parameters. Furthermore, the requests can be distributed by a hash funcion 
@@ -188,22 +188,22 @@ modparam("carrierroute", "scan_prefix_column", "scan_prefix")
     </section>
 
     <section>
-	    <title><varname>level_column</varname> (string)</title>
+	    <title><varname>domain_column</varname> (string)</title>
 	    <para>
-		    Name of column containing the rule level. You can define several routing
-		    levels to have different routing rules. Maybe you use level 0 for normal
-		    routing and level 1 if level 0 failed.
+		    Name of column containing the rule domain. You can define several routing
+		    domains to have different routing rules. Maybe you use domain 0 for normal
+		    routing and domain 1 if domain 0 failed.
 	    </para>
 	    <para>
 		    <emphasis>
-			    Default value is <quote>level</quote>.
+			    Default value is <quote>domain</quote>.
 		    </emphasis>
 	    </para>
 	    <example>
-		    <title>Set <varname>level_column</varname> parameter</title>
+		    <title>Set <varname>domain_column</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "level_column", "level")
+modparam("carrierroute", "domain_column", "domain")
 ...
 		    </programlisting>
 	    </example>
@@ -219,7 +219,7 @@ modparam("carrierroute", "level_column", "level")
 		    rule for gateway B with a prob value of 0.3.
 	    </para>
 		<para>
-			If all probabilities for a given prefix, tree and level don't add to 100%,
+			If all probabilities for a given prefix, tree and domain don't add to 100%,
 			the prefix values will be adjusted according the given prob values. E.g. if
 			three hosts with prob values of 0.5, 0.5 and 0.4 are defined, the resulting
 			probabilities are 35.714, 35.714 and 28.571%. But its better to choose meaningful
@@ -600,8 +600,7 @@ modparam("carrierroute", "fallback_default", 1)
     <section>
 	<title>Exported Functions</title>
 	<para>
-		All functions needs a string value to specify a certain tree level or tree. If
-		you operate in config file mode, the level is equivalent to the specified domain.
+		All functions needs a string value to specify a certain tree domain or tree.
 		Its further necessary to specify source of the hashing algorithm. If this parameter
 		is ommited like in the <emphasis>cr_user_rewrite_uri</emphasis> and 
 		<emphasis>cr_tree_rewrite_uri</emphasis> functions, a default hash source, the call id,
@@ -610,18 +609,18 @@ modparam("carrierroute", "fallback_default", 1)
 		
 	<section>
 	    <title>
-		<function moreinfo="none">cr_rewrite_uri (string level, int hash_source)</function>
+		<function moreinfo="none">cr_rewrite_uri (string domain, int hash_source)</function>
 	    </title>
 	    <para>
 			This function searches for the longest match for the Request URI at the
-			given level in the default tree and rewrites the Request URI. 
+			given domain in the default tree and rewrites the Request URI. 
 			Returns -1 if there is no data found or an empty rewrite host on the longest
 			match is found.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 		<listitem>
@@ -634,7 +633,7 @@ modparam("carrierroute", "fallback_default", 1)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_rewrite_branches(string level, hash_source)</function>
+		<function moreinfo="none">cr_rewrite_branches(string domain, hash_source)</function>
 	    </title>
 	    <para>
 		    Like cr_rewrite_uri, the difference is that cr_rewrite_branches rewrites
@@ -643,7 +642,7 @@ modparam("carrierroute", "fallback_default", 1)
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 		<listitem>
@@ -656,17 +655,17 @@ modparam("carrierroute", "fallback_default", 1)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_prime_balance_uri (string level, int hash_source)</function>
+		<function moreinfo="none">cr_prime_balance_uri (string domain, int hash_source)</function>
 	    </title>
 	    <para>
-			Balances the request URI to the desination set given by level in the default tree. 
+			Balances the request URI to the desination set given by domain in the default tree. 
 			The hash_source defines the parameter which is passed to the hash function. 
 			Return codes are the same as for cr_rewrite_uri.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 		<listitem>
@@ -679,7 +678,7 @@ modparam("carrierroute", "fallback_default", 1)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_rewrite_by_to (string level, int hash_source)</function>
+		<function moreinfo="none">cr_rewrite_by_to (string domain, int hash_source)</function>
 	    </title>
 	    <para>
 		    Like cr_rewrite_uri, except that the to URI is used for prefix matching instead
@@ -688,7 +687,7 @@ modparam("carrierroute", "fallback_default", 1)
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 		<listitem>
@@ -701,7 +700,7 @@ modparam("carrierroute", "fallback_default", 1)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_prime_balance_by_to (string level, int hash_source)</function>
+		<function moreinfo="none">cr_prime_balance_by_to (string domain, int hash_source)</function>
 	    </title>
 	    <para>
 			Like cr_prime_balance_uri, except that the to URI is used for prefix 
@@ -711,7 +710,7 @@ modparam("carrierroute", "fallback_default", 1)
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 		<listitem>
@@ -724,32 +723,34 @@ modparam("carrierroute", "fallback_default", 1)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_user_rewrite_uri (string user, string level)</function>
+		<function moreinfo="none">cr_user_rewrite_uri (string user, string domain)</function>
 	    </title>
 	    <para>
 			Rewrites the request URI, the given user is used to determine the
-			carrier tree to be used. The level identifies the routing level
+			carrier tree to be used. The domain identifies the routing domain
 			inside the carrier tree. This function cannot be used in the config file mode,
 			as it needs a mapping of the given user to a certain carrier.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>user</emphasis> - Name of the user for the carrier tree lookup
+		    <para><emphasis>user</emphasis> - Name of the user for the carrier tree lookup.
+				Additional to a string value the request URI, from URI, to URI or an AVP could
+				used to determine the actual username.
 		    </para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 	    </itemizedlist>
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_tree_rewrite_uri (string tree, string level)</function>
+		<function moreinfo="none">cr_tree_rewrite_uri (string tree, string domain)</function>
 	    </title>
 	    <para>
-			Uses the carrier tree specified by tree and uses the given level. Uses
+			Uses the carrier tree specified by tree and uses the given domain. Uses
 			the call id as hash source.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
@@ -759,7 +760,7 @@ modparam("carrierroute", "fallback_default", 1)
 		    </para>
 		</listitem>
 		<listitem>
-		    <para><emphasis>level</emphasis> - Name of the routing level to be used.
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -968,7 +969,7 @@ openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 route {
 	# route calls based on hash over callid
-	# choose route level 0 of the default carrier
+	# choose route domain 0 of the default carrier
 	if(!cr_rewrite_uri("0", "call_id")){
 		sl_send_reply("403", "Not allowed");
 	} else {
@@ -982,7 +983,7 @@ route {
 failure_route(1) {
 	# In case of failure, send it to an alternative route:
 	if (t_check_status("408|5[0-9][0-9]")) {
-		#choose route level 1 of the default carrier
+		#choose route domain 1 of the default carrier
 		if(!cr_rewrite_uri("1", "call_id")){
 			t_reply("403", "Not allowed");
 		} else {
@@ -1015,8 +1016,6 @@ failure_route(2) {
 		</para>
 		<para>
 			Use the "null" prefix to specify an empty prefix in the config file.
-			The <emphasis>domain</emphasis> in this mode is equivalent to the
-			<emphasis>level</emphasis> in the database mode.
 		</para>
 		<programlisting format="linespecific">
 ...
@@ -1085,13 +1084,13 @@ domain register {
 		<title>Example database content - carrierroute table</title>
 		<programlisting format="linespecific">
 ...
-+----+---------+-------------+-------+------+-------+---------------+
-| id | carrier | scan_prefix | level | prob | strip | rewrite_host  |
-+----+---------+-------------+-------+------+-------+---------------+
-|  1 |       2 | 49          | 0     |  0.5 | 0     | host1.local   |
-|  2 |       2 | 49          | 0     |  0.5 | 0     | host2.local   |
-|  3 |       1 |             | 0     |    1 | 0     | default.local |
-+----+---------+-------------+-------+------+-------+---------------+
++----+---------+-------------+--------+------+-------+---------------+
+| id | carrier | scan_prefix | domain | prob | strip | rewrite_host  |
++----+---------+-------------+--------+------+-------+---------------+
+|  1 |       2 | 49          | 0      |  0.5 | 0     | host1.local   |
+|  2 |       2 | 49          | 0      |  0.5 | 0     | host2.local   |
+|  3 |       1 |             | 0      |    1 | 0     | default.local |
++----+---------+-------------+--------+------+-------+---------------+
 ...
 		</programlisting>
 	</example>

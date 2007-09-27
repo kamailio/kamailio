@@ -56,7 +56,7 @@
 #define COL_ID             0
 #define COL_CARRIER        1
 #define COL_SCAN_PREFIX    2
-#define COL_LEVEL          3
+#define COL_DOMAIN         3
 #define COL_PROB           4
 #define COL_REWRITE_HOST   5
 #define COL_STRIP          6

@@ -45,12 +45,12 @@
  * crc32 for hashing. The request URI is used to determine tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int route_uri(struct sip_msg * msg, char * level_param, char * hash);
+int route_uri(struct sip_msg * msg, char * domain_param, char * hash);
 
 /**
  * rewrites the request URI of msg by calculating a rule, using 
@@ -59,11 +59,11 @@ int route_uri(struct sip_msg * msg, char * level_param, char * hash);
  *
  * @param msg the current SIP message
  * @param _user the user to determine the route tree (Request-URI|from_uri|to_uri|avpname)
- * @param _level the requested routing level
+ * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
  */
-int user_route_uri(struct sip_msg * msg, char * _user, char * _level);
+int user_route_uri(struct sip_msg * msg, char * _user, char * _domain);
 
 /**
  * rewrites the request URI of msg by calculating a rule, using 
@@ -72,11 +72,11 @@ int user_route_uri(struct sip_msg * msg, char * _user, char * _level);
  *
  * @param msg the current SIP message
  * @param _tree the routing tree to be used
- * @param _level the requested routing level
+ * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
  */
-int tree_route_uri(struct sip_msg * msg, char * _tree, char * _level);
+int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain);
 
 /**
  * rewrites the request URI of msg by calculating a rule, using 
@@ -85,12 +85,12 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _level);
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int prime_balance_uri(struct sip_msg * msg, char * level_param, char * hash);
+int prime_balance_uri(struct sip_msg * msg, char * domain_param, char * hash);
 
 /**
  * rewrites the request URI of msg by calculating a rule, 
@@ -98,12 +98,12 @@ int prime_balance_uri(struct sip_msg * msg, char * level_param, char * hash);
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int route_by_to(struct sip_msg * msg, char * level_param, char * hash);
+int route_by_to(struct sip_msg * msg, char * domain_param, char * hash);
 
 /**
  * rewrites the request URI of msg by calculating a rule, using 
@@ -112,12 +112,12 @@ int route_by_to(struct sip_msg * msg, char * level_param, char * hash);
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int prime_balance_by_to(struct sip_msg * msg, char * level_param, char * hash);
+int prime_balance_by_to(struct sip_msg * msg, char * domain_param, char * hash);
 
 /**
  * rewrites the request URI of msg by calculating a rule, 
@@ -125,12 +125,12 @@ int prime_balance_by_to(struct sip_msg * msg, char * level_param, char * hash);
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int route_by_from(struct sip_msg * msg, char * level_param, char * hash);
+int route_by_from(struct sip_msg * msg, char * domain_param, char * hash);
 
 /**
  * rewrites the request URI of msg by calculating a rule, using 
@@ -139,12 +139,12 @@ int route_by_from(struct sip_msg * msg, char * level_param, char * hash);
  * tree node
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int prime_balance_by_from(struct sip_msg * msg, char * level_param, char * hash);
+int prime_balance_by_from(struct sip_msg * msg, char * domain_param, char * hash);
 
 
 // this function is only needed for the 0700 functionality, and obselete
@@ -156,12 +156,12 @@ int prime_balance_by_from(struct sip_msg * msg, char * level_param, char * hash)
  * determine tree node, respectively
  *
  * @param msg the current SIP message
- * @param level_param the requested routing level
+ * @param domain_param the requested routing domain
  * @param hash the message header used for hashing
  *
  * @return 1 on success, -1 on failure
  */
-int rewrite_branches(struct sip_msg * msg, char * level_param, char * unused);
+int rewrite_branches(struct sip_msg * msg, char * domain_param, char * unused);
 #endif
 
 
