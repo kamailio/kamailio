@@ -750,13 +750,14 @@ modparam("carrierroute", "fallback_default", 1)
 		<function moreinfo="none">cr_tree_rewrite_uri (string tree, string domain)</function>
 	    </title>
 	    <para>
-			Uses the carrier tree specified by tree and uses the given domain. Uses
-			the call id as hash source.
+			Uses the carrier tree specified by tree and uses the given domain. 
+			Uses the call id as hash source.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>tree</emphasis> - The routing tree to be used.
+		    <para><emphasis>tree</emphasis> - The routing tree to be used. Additional to a
+				string variable any pseudo-variable could be used as input.
 		    </para>
 		</listitem>
 		<listitem>

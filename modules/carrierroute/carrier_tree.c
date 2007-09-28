@@ -176,15 +176,19 @@ void release_data(struct rewrite_data *data) {
 	lock_release(&data->lock);
 }
 
-int find_tree(const char * tree){
+int find_tree(str tree){
 	struct tree_map * tmp;
 	if (!script_trees){
+		return -1;
+	}
+	if (tree.len <= 0) {
 		return -1;
 	}
 	tmp = *script_trees;
 
 	while (tmp) {
-		if (strcmp(tree, tmp->name.s) == 0) {
+		if (strncmp(tree.s, tmp->name.s,
+				(tmp->name.len>tree.len?tree.len:tmp->name.len)) == 0) {
 			/*
 			we return the number of the tree instead of the id, because the
 			user could choose the id randomly, this would lead to a not

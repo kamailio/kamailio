@@ -137,7 +137,15 @@ int add_route(struct rewrite_data * rd, int carrier_id,
  */
 int add_tree(const char * tree, int carrier_id);
 
-int find_tree(const char * tree);
+/**
+ * Searches for the internal ID for a Carrier-Name
+ *
+ * @param tree the carrier, we are looking for
+ *
+ * @return values: on succcess the internal id of for this carrier,
+ * -1 on failure
+ */
+int find_tree(str tree);
 
 /**
  * adds a carrier tree for the given carrier

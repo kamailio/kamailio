@@ -660,7 +660,8 @@ modparam("carrierroute", "fallback_default", 1)
 
    Meaning of the parameters is as follows:
 
-     * tree - The routing tree to be used.
+     * tree - The routing tree to be used. Additional to a string
+       variable any pseudo-variable could be used as input.
      * domain - Name of the routing domain to be used.
      _________________________________________________________
 
