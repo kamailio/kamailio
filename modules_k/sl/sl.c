@@ -193,10 +193,12 @@ static int fixup_sl_send_reply(void** param, int param_no)
 			{
 			   if(str2int(&s,
 					(unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0
-					   || model->spec.pvp.pvn.u.isname.name.n<100)
+					   || model->spec.pvp.pvn.u.isname.name.n<100
+					   || model->spec.pvp.pvn.u.isname.name.n>699)
 			   {
 					LM_ERR("wrong value [%s] for param no %d!\n",
 						s.s, param_no);
+					LM_ERR("allowed values: 1xx - 6xx only!\n");
 					return E_UNSPEC;
 			   }
 			}
@@ -224,7 +226,7 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if(pv_printf_s(msg, (pv_elem_p)str1, &code_s)!=0)
 			return -1;
-		if(str2int(&code_s, &code_i)!=0 || code_i<100)
+		if(str2int(&code_s, &code_i)!=0 || code_i<100 || code_i>699)
 			return -1;
 	} else {
 		code_i = ((pv_elem_p)str1)->spec.pvp.pvn.u.isname.name.n;
