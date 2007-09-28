@@ -277,15 +277,23 @@ static int user_route_fixup(void ** param, int param_no) {
 }
 
 static int tree_route_fixup(void ** param, int param_no) {
-	int tree, domain;
+	pv_elem_t *model;
+	str s;
+	int  domain;
 	if (param_no == 1) {
-		if ((tree = find_tree((char *)*param)) < 0) {
-			LM_ERR("could not find tree\n");
-			return -1;
+		/* Convert it to a str */
+		s.s = (char*)(*param);
+		s.len = strlen(s.s);
+		if (s.len <= 0) {
+			LM_ERR("Parameter missing [%d]\n", param_no);
+			return E_UNSPEC;
 		}
-		LM_NOTICE("tree %s has id %i\n", (char *)*param, tree);
-		pkg_free(*param);
-		*param = (void *)tree;
+		/* Check the format */
+		if(pv_parse_format(&s, &model)<0) {
+			LM_ERR("wrong format for carrier-name [%s]\n", (char*)(*param));
+			return E_UNSPEC;
+		}
+		*param = (void*)model;
 	} else if (param_no == 2) {
 		if ((domain = add_domain((char *)*param)) < 0) {
 			LM_ERR("could not add domain\n");

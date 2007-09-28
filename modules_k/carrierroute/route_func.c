@@ -303,12 +303,36 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _domain) {
  */
 int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	struct rewrite_data * rd = NULL;
+	pv_elem_t *model;
+	str carrier_name;
 	int index;
 	str ruser;
 	str ruri;
+
+	/* Check parameters */
+	if (_tree == NULL) {
+		LM_ERR("error - bad parameters\n");
+		return -1;
+	}
+
 	if (parse_sip_msg_uri(msg) < 0) {
 		return -1;
 	}
+
+	/* Retrieve Carrier-Name from Parameter */
+	model = (pv_elem_t*)_tree;
+	if (pv_printf_s(msg, model, &carrier_name)<0)	{
+		LM_ERR("error - cannot print the format\n");
+		return -1;
+	}
+	if ((index = find_tree(carrier_name)) < 0)
+		LM_NOTICE("could not find carrier %.*s\n",
+				carrier_name.len, carrier_name.s);
+	else
+		LM_NOTICE("tree %.*s has id %i\n", carrier_name.len, carrier_name.s, index);
+	
+	pkg_free(carrier_name.s);
+
 	ruser.s = msg->parsed_uri.user.s;
 	ruser.len = msg->parsed_uri.user.len;
 	ruri.s = msg->parsed_uri.user.s;
@@ -316,10 +340,14 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	do {
 		rd = get_data();
 	} while (rd == NULL);
-	if((int)_tree < 0){
-		index = rd->default_carrier_index;
-	} else {
-		index = (int)_tree;
+	if (index <= 0) {
+		if (fallback_default) {
+			index = rd->default_carrier_index;
+		} else {
+			LM_ERR("desired routing tree with id %i doesn't exist\n", index);
+			release_data(rd);
+			return -1;
+		}
 	}
 	release_data(rd);
 	return carrier_rewrite_msg(index, (int)_domain, &ruri, msg, &ruser, shs_call_id, alg_crc32);
