@@ -72,7 +72,7 @@ stat_var *rcv_acks;
 
 static cmd_export_t cmds[]={
 	{"sl_send_reply",   w_sl_send_reply,            2,  fixup_sl_send_reply,
-			REQUEST_ROUTE | ERROR_ROUTE},
+			REQUEST_ROUTE | ERROR_ROUTE | ONREPLY_ROUTE },
 	{"sl_reply_error",  w_sl_reply_error,           0,  0,
 			REQUEST_ROUTE},
 	{"register_slcb",  (cmd_function)register_slcb, 0,  0,
