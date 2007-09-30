@@ -31,6 +31,7 @@
 #include "trusted.h"
 #include "hash.h"
 #include "mi.h"
+#include "permissions.h"
 
 
 /*
@@ -119,4 +120,58 @@ struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
     }
 
     return rpl_tree;
+}
+
+#define MAX_FILE_LEN 128
+
+/*
+ * MI function to make allow_uri query.
+ */
+struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
+{
+    struct mi_node *node;
+    str *basenamep, *urip, *contactp;
+    char basename[MAX_FILE_LEN + 1];
+    char uri[MAX_URI_SIZE + 1], contact[MAX_URI_SIZE + 1]; 
+    unsigned int allow_suffix_len;
+
+    node = cmd->node.kids;
+    if (node == NULL || node->next == NULL || node->next->next == NULL ||
+	node->next->next->next != NULL)
+	return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+    
+    /* look for base name */
+    basenamep = &node->value;
+    if (basenamep == NULL)
+	return init_mi_tree(404, "Basename is NULL", 17);
+    allow_suffix_len = strlen(allow_suffix);
+    if (basenamep->len + allow_suffix_len + 1 > MAX_FILE_LEN)
+	return init_mi_tree(404, "Basename is too long", 21);
+    memcpy(basename, basenamep->s, basenamep->len);
+    memcpy(basename + basenamep->len, allow_suffix, allow_suffix_len);
+    basename[basenamep->len + allow_suffix_len] = 0;
+
+    /* look for uri */
+    urip = &node->next->value;
+    if (urip == NULL)
+	return init_mi_tree(404, "URI is NULL", 11);
+    if (urip->len > MAX_URI_SIZE)
+	return init_mi_tree(404, "URI is too long", 15);
+    memcpy(uri, urip->s, urip->len);
+    uri[urip->len] = 0;
+
+    /* look for contact */
+    contactp = &node->next->next->value;
+    if (contactp == NULL)
+	return init_mi_tree(404, "Contact is NULL", 15);
+    if (contactp->len > MAX_URI_SIZE)
+	return init_mi_tree(404, "Contact is too long", 19);
+    memcpy(contact, contactp->s, contactp->len);
+    contact[contactp->len] = 0;
+
+    if (allow_test(basename, uri, contact) == 1) {
+	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+    } else {
+	return init_mi_tree(403, "Forbidden", 9);
+    }
 }

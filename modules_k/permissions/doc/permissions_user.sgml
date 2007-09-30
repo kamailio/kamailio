@@ -1032,21 +1032,7 @@ if (allow_trusted()) {
 				the mask field (32 or smaller).
 
 		</para>
-		<para>
-		Name: <emphasis>address_reload</emphasis>
-		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:address_reload:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-
-
-
-		
 	</section>
 	
 	<section>
@@ -1057,21 +1043,10 @@ if (allow_trusted()) {
 				Causes permissions module to dump
                    contents of cache memory address table.
 
-				</para>
-		<para>
-		Name: <emphasis>address_dump</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:address_dump:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
-
-
 	</section>
+
 	<section>
 		<title>
 		<function moreinfo="none">subnet_dump</function>
@@ -1081,18 +1056,9 @@ if (allow_trusted()) {
                    contents of cache memory subnet table.
 
 				</para>
-		<para>
-		Name: <emphasis>subnet_dump</emphasis>
-		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:subnet_dump:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
 	</section>
+
 	<section>
 		<title>
 		<function moreinfo="none">trusted_reload</function>
@@ -1101,18 +1067,9 @@ if (allow_trusted()) {
 				Causes permissions module to re-read the contents of
 				trusted table into cache memory.
 				</para>
-		<para>
-		Name: <emphasis>trusted_reload</emphasis>
-		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:trusted_reload:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
 	</section>
+
 	<section>
 		<title>
 		<function moreinfo="none">trusted_dump</function>
@@ -1121,18 +1078,38 @@ if (allow_trusted()) {
 				Causes permissions module to dump contents of trusted
 				table from cache memory.
 				</para>
-		<para>
-		Name: <emphasis>trusted_dump</emphasis>
-		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
- 		<para>
-		MI FIFO Command Format:
-		</para>
-        <programlisting  format="linespecific">
-		:trusted_dump:_reply_fifo_file_
-		_empty_line_
-		</programlisting>
 	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">allow_uri</function>
+		</title>
+		<para>
+		Tests if (URI, Contact) pair is allowed according to
+		allow/deny files.  The files must already have been
+		 loaded by OpenSER.
+		</para>
+		<para>Parameters: </para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>basename</emphasis> -
+						Basename from
+		which allow and deny filenames will be created by
+		appending contents of allow_suffix and deny_suffix
+		parameters.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>URI</emphasis> - URI to be tested
+			</para></listitem>
+			<listitem><para>
+				<emphasis>Contact</emphasis> - Contact
+						to be tested
+			</para></listitem>
+		</itemizedlist>
+
+	</section>
+
 	</section>
 
 </chapter>

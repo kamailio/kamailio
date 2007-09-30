@@ -73,6 +73,7 @@ Juha Heinanen
               1.5.3. subnet_dump
               1.5.4. trusted_reload
               1.5.5. trusted_dump
+              1.5.6. allow_uri
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -779,13 +780,7 @@ if (allow_trusted()) {
    address table and subnet table depending on the value of the
    mask field (32 or smaller).
 
-   Name: address_reload
-
    Parameters: none
-
-   MI FIFO Command Format:
-                :address_reload:_reply_fifo_file_
-                _empty_line_
      _________________________________________________________
 
 1.5.2. address_dump
@@ -793,13 +788,7 @@ if (allow_trusted()) {
    Causes permissions module to dump contents of cache memory
    address table.
 
-   Name: address_dump
-
    Parameters: none
-
-   MI FIFO Command Format:
-                :address_dump:_reply_fifo_file_
-                _empty_line_
      _________________________________________________________
 
 1.5.3. subnet_dump
@@ -807,13 +796,7 @@ if (allow_trusted()) {
    Causes permissions module to dump contents of cache memory
    subnet table.
 
-   Name: subnet_dump
-
    Parameters: none
-
-   MI FIFO Command Format:
-                :subnet_dump:_reply_fifo_file_
-                _empty_line_
      _________________________________________________________
 
 1.5.4. trusted_reload
@@ -821,13 +804,7 @@ if (allow_trusted()) {
    Causes permissions module to re-read the contents of trusted
    table into cache memory.
 
-   Name: trusted_reload
-
    Parameters: none
-
-   MI FIFO Command Format:
-                :trusted_reload:_reply_fifo_file_
-                _empty_line_
      _________________________________________________________
 
 1.5.5. trusted_dump
@@ -835,13 +812,22 @@ if (allow_trusted()) {
    Causes permissions module to dump contents of trusted table
    from cache memory.
 
-   Name: trusted_dump
-
    Parameters: none
+     _________________________________________________________
 
-   MI FIFO Command Format:
-                :trusted_dump:_reply_fifo_file_
-                _empty_line_
+1.5.6. allow_uri
+
+   Tests if (URI, Contact) pair is allowed according to
+   allow/deny files. The files must already have been loaded by
+   OpenSER.
+
+   Parameters:
+
+     * basename - Basename from which allow and deny filenames
+       will be created by appending contents of allow_suffix and
+       deny_suffix parameters.
+     * URI - URI to be tested
+     * Contact - Contact to be tested
      _________________________________________________________
 
 Chapter 2. Developer's Guide

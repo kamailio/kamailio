@@ -53,7 +53,7 @@ static int rules_num;  /* Number of parsed allow/deny files */
 /* Module parameter variables */
 static char* default_allow_file = DEFAULT_ALLOW_FILE;
 static char* default_deny_file = DEFAULT_DENY_FILE;
-static char* allow_suffix = ".allow";
+char* allow_suffix = ".allow";
 static char* deny_suffix = ".deny";
 
 
@@ -184,6 +184,7 @@ static mi_export_t mi_cmds[] = {
 													mi_addr_child_init },
 	{ MI_ADDRESS_DUMP,    mi_address_dump,    MI_NO_INPUT_FLAG,  0,  0 },
 	{ MI_SUBNET_DUMP,     mi_subnet_dump,     MI_NO_INPUT_FLAG,  0,  0 },
+	{ MI_ALLOW_URI,       mi_allow_uri,       0,  0,  0 },
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -985,4 +986,53 @@ static int allow_uri(struct sip_msg* msg, char* _idx, char* _sp)
 	LM_DBG("neither allow nor deny rule found => URI is allowed\n");
 
 	return 1;
+}
+
+
+/*
+ * Test URI against Contact.
+ */
+int allow_test(char *file, char *uri, char *contact)
+{
+    char *pathname;
+    int idx;
+    
+    pathname = get_pathname(file);
+    if (!pathname) {
+	LM_ERR("Cannot get pathname of <%s>\n", file);
+	return 0;
+    }
+
+    idx = find_index(allow, pathname);
+    if (idx == -1) {
+	LM_ERR("File <%s> has not been loaded\n", pathname);
+	pkg_free(pathname);
+	return 0;
+    }
+
+    pkg_free(pathname);
+	
+    /* turn off control, allow any routing */
+    if ((!allow[idx].rules) && (!deny[idx].rules)) {
+	LM_DBG("No rules => Allowed\n");
+	return 1;
+    }
+    
+    LM_DBG("Looking for URI: %s, Contact: %s\n", uri, contact);
+
+    /* rule exists in allow file */
+    if (search_rule(allow[idx].rules, uri, contact)) {
+	LM_DBG("Allow rule found => Allowed\n");
+	return 1;
+    }
+	
+    /* rule exists in deny file */
+    if (search_rule(deny[idx].rules, uri, contact)) {
+	LM_DBG("Deny rule found => Denied\n");
+	return 0;
+    }
+
+    LM_DBG("Neither allow or deny rule found => Allowed\n");
+    return 1;
+
 }
