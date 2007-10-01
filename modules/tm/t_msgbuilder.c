@@ -94,7 +94,12 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
 	int branch_len;
 	str branch_str;
+	str via_id;
 	struct hostport hp;
+
+	/* init */
+	via_id.s=0;
+	via_id.len=0;
 
 	/* method, separators, version: "CANCEL sip:p2@iptel.org SIP/2.0" */
 	*len=SIP_VERSION_LEN + method_len + 2 /* spaces */ + CRLF_LEN;
@@ -107,8 +112,29 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	branch_str.s=branch_buf;
 	branch_str.len=branch_len;
 	set_hostport(&hp, (is_local(Trans))?0:(Trans->uas.request));
+#ifdef USE_TCP
+	if (!is_local(Trans) && ((Trans->uas.request->rcv.proto==PROTO_TCP)
+#ifdef USE_TLS
+				|| (Trans->uas.request->rcv.proto==PROTO_TLS)
+#endif /* USE_TLS */
+		)){
+		if ((via_id.s=id_builder(Trans->uas.request,
+									(unsigned int*)&via_id.len))==0){
+			LOG(L_ERR, "ERROR: build_local: id builder failed\n");
+			/* try to continue without id */
+		}
+	}
+#endif /* USE_TCP */
 	via=via_builder(&via_len, &Trans->uac[branch].request.dst,
-		&branch_str, 0, &hp );
+		&branch_str, via_id.s?&via_id:0 , &hp );
+	
+	/* via_id.s not needed anylonger => free it */
+	if (via_id.s){
+		pkg_free(via_id.s);
+		via_id.s=0;
+		via_id.len=0;
+	}
+	
 	if (!via)
 	{
 		LOG(L_ERR, "ERROR: build_local: "
