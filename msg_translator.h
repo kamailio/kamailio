@@ -113,6 +113,8 @@ int branch_builder( unsigned int hash_index,
 	/* output value: string and actual length */
 	char *branch_str, int *len );
 
+char* id_builder(struct sip_msg* msg, unsigned int *id_len);
+
 /* check if IP address in Via != source IP address of signaling */
 int received_test( struct sip_msg *msg );
 
