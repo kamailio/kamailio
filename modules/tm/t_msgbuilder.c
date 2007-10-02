@@ -701,22 +701,21 @@ static inline int print_content_length(str* dest, str* body)
 {
 	static char content_length[10];
 	int len;
+	int b_len;
 	char* tmp;
 
 	     /* Print Content-Length */
-	if (body) {
-		tmp = int2str(body->len, &len);
-		if (len >= sizeof(content_length)) {
-			LOG(L_ERR, "ERROR: print_content_length: content_len too big\n");
-			return -1;
-		}
-		memcpy(content_length, tmp, len); 
-		dest->s = content_length;
-		dest->len = len;
-	} else {
+	b_len=body?body->len:0;
+	tmp = int2str(b_len, &len);
+	if (len >= sizeof(content_length)) {
+		LOG(L_ERR, "ERROR: print_content_length: content_len too big\n");
 		dest->s = 0;
 		dest->len = 0;
+		return -1;
 	}
+	memcpy(content_length, tmp, len); 
+	dest->s = content_length;
+	dest->len = len;
 	return 0;
 }
 
@@ -924,7 +923,8 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	*len += CALLID_LEN + dialog->id.call_id.len + CRLF_LEN;                                      /* Call-ID */
 	*len += CSEQ_LEN + cseq.len + 1 + method->len + CRLF_LEN;                                    /* CSeq */
 	*len += calculate_routeset_length(dialog);                                                   /* Route set */
-	*len += (body ? (CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN) : 0);                   /* Content-Length */
+	*len += CONTENT_LENGTH_LEN + content_length.len + CRLF_LEN; /* Content-
+																	 Length */
 	*len += (server_signature ? (USER_AGENT_LEN + CRLF_LEN) : 0);                                /* Signature */
 	*len += (headers ? headers->len : 0);                                                        /* Additional headers */
 	*len += (body ? body->len : 0);                                                              /* Message body */
@@ -946,12 +946,10 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog, int bra
 	w = print_callid(w, dialog, t);                       /* Call-ID */
 	w = print_routeset(w, dialog);                        /* Route set */
 
-	     /* Content-Length */
-	if (body) {
-		memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
-		memapp(w, content_length.s, content_length.len);
-		memapp(w, CRLF, CRLF_LEN);
-	}
+     /* Content-Length */
+	memapp(w, CONTENT_LENGTH, CONTENT_LENGTH_LEN);
+	memapp(w, content_length.s, content_length.len);
+	memapp(w, CRLF, CRLF_LEN);
 	
 	     /* Server signature */
 	if (server_signature) memapp(w, USER_AGENT CRLF, USER_AGENT_LEN + CRLF_LEN);
