@@ -67,7 +67,6 @@ static int fixup_db_store_avp(void** param, int param_no);
 static int fixup_db_query_avp(void** param, int param_no);
 static int fixup_delete_avp(void** param, int param_no);
 static int fixup_copy_avp(void** param, int param_no);
-static int fixup_printf(void** param, int param_no);
 static int fixup_pushto_avp(void** param, int param_no);
 static int fixup_check_avp(void** param, int param_no);
 static int fixup_op_avp(void** param, int param_no);
@@ -82,7 +81,6 @@ static int w_dbquery1_avps(struct sip_msg* msg, char* query, char* param);
 static int w_dbquery2_avps(struct sip_msg* msg, char* query, char* dest);
 static int w_delete_avps(struct sip_msg* msg, char* param, char *foo);
 static int w_copy_avps(struct sip_msg* msg, char* param, char *check);
-static int w_printf(struct sip_msg* msg, char* dest, char *format);
 static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param);
 static int w_check_avps(struct sip_msg* msg, char* param, char *check);
 static int w_op_avps(struct sip_msg* msg, char* param, char *op);
@@ -108,8 +106,6 @@ static cmd_export_t cmds[] = {
 	{"avp_delete", w_delete_avps, 1, fixup_delete_avp,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"avp_copy",   w_copy_avps,  2,  fixup_copy_avp,
-					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_printf", w_printf,  2, fixup_printf,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"avp_pushto", w_pushto_avps, 2, fixup_pushto_avp,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
@@ -713,51 +709,6 @@ static int fixup_check_avp(void** param, int param_no)
 	return 0;
 }
 
-static int fixup_printf(void** param, int param_no)
-{
-	struct fis_param *ap;
-	pv_elem_t *model;
-	str s;
-
-	s.s = (char*)(*param);
-	if (param_no==1) {
-		/* attribute name / alias */
-		ap = avpops_parse_pvar(s.s);
-		if (ap==0)
-		{
-			LM_ERR("unable to get pseudo-variable in param\n");
-			return E_OUT_OF_MEM;
-		}
-
-		if (ap->u.sval.type!=PVT_AVP)
-		{
-			LM_ERR("bad avp name <%s>\n", (char*)*param);
-			return E_UNSPEC;
-		}
-		*param=(void*)ap;
-	} else if (param_no==2) {
-		if(*param)
-		{
-			s.len = strlen(s.s);
-			if(pv_parse_format(&s, &model)<0)
-			{
-				LM_ERR(" wrong format[%s]\n", (char*)(*param));
-				return E_UNSPEC;
-			}
-			
-			*param = (void*)model;
-			return 0;
-		}
-		else
-		{
-			LM_ERR("null format\n");
-			return E_UNSPEC;
-		}
-	}
-
-	return 0;
-}
-
 static int fixup_subst(void** param, int param_no)
 {
 	struct subst_expr* se;
@@ -1056,11 +1007,6 @@ static int w_copy_avps(struct sip_msg* msg, char* name1, char *name2)
 {
 	return ops_copy_avp ( msg, (struct fis_param*)name1,
 								(struct fis_param*)name2);
-}
-
-static int w_printf(struct sip_msg* msg, char* dest, char *format)
-{
-	return ops_printf(msg, (struct fis_param*)dest, (pv_elem_t*)format);
 }
 
 static int w_pushto_avps(struct sip_msg* msg, char* destination, char *param)

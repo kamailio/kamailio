@@ -826,12 +826,16 @@ avp_copy("$avp(old)","$avp(new)/gd");
 				</function>
 			</title>
 			<para>
+			NOTE: since &ser; 1.3.0 the function has been moved to core
+			and it is an alias to pv_printf().
+			</para>
+			<para>
 			Prints the formatted string 'format' in the AVP 'dest'. The
 			'format' parameter can include any pseudo-variable defined in
 			&ser;. The list with all pseudo-variables in &ser; can be found 
 			at:	
-			<ulink url="http://openser.org/docs/pseudo-variables-1.1.x.html">
-			http://openser.org/docs/pseudo-variables-1.1.x.html</ulink>.
+			<ulink url="http://openser.org/dokuwiki/">
+			http://openser.org/dokuwiki/</ulink>.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>

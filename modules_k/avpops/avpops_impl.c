@@ -1315,51 +1315,6 @@ int ops_print_avp(void)
 	return 1;
 }
 
-int ops_printf(struct sip_msg* msg, struct fis_param* dest, pv_elem_t *format)
-{
-	int printbuf_len;
-	int_str avp_val;
-	int_str avp_name;
-	unsigned short flags;
-	unsigned short name_type;
-
-	if(msg==NULL || dest==NULL || format==NULL)
-	{
-		LM_ERR("bad parameters\n");
-		return -1;
-	}
-	
-	printbuf_len = AVP_PRINTBUF_SIZE-1;
-	if(pv_printf(msg, format, printbuf, &printbuf_len)<0)
-	{
-		LM_ERR("cannot print the format\n");
-		return -1;
-	}
-	avp_val.s.s   = printbuf;
-	avp_val.s.len = printbuf_len;
-		
-	/* set the proper flag */
-	flags = AVP_VAL_STR;
-	
-	/* is dynamic avp name ? */
-	if(avpops_get_aname(msg, dest, &avp_name, &name_type)!=0)
-	{
-		LM_ERR("failed to get dst AVP name\n");
-		return -1;
-	}
-
-	if(name_type == AVP_NAME_STR)
-		flags |=  AVP_NAME_STR;
-
-	if (add_avp(flags, avp_name, avp_val)<0)
-	{
-		LM_ERR("cannot add AVP\n");
-		return -1;
-	}
-
-	return 1;
-}
-
 int ops_subst(struct sip_msg* msg, struct fis_param** src,
 		struct subst_expr* se)
 {

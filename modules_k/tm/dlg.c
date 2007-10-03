@@ -288,19 +288,22 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 	rr_t* last, *p, *t;
 	
 	last = 0;
+	*_rs = 0;
 
 	ptr = _m->record_route;
 	while(ptr) {
 		if (ptr->type == HDR_RECORDROUTE_T) {
 			if (parse_rr(ptr) < 0) {
-				LOG(L_ERR, "get_route_set(): Error while parsing Record-Route body\n");
+				LOG(L_ERR, 
+					"get_route_set(): Error while parsing Record-Route body\n");
 				goto error;
 			}
 
 			p = (rr_t*)ptr->parsed;
 			while(p) {
 				if (shm_duplicate_rr(&t, p) < 0) {
-					LOG(L_ERR, "get_route_set(): Error while duplicating rr_t\n");
+					LOG(L_ERR,
+						"get_route_set(): Error while duplicating rr_t\n");
 					goto error;
 				}
 				if (_order == NORMAL_ORDER) {
