@@ -60,6 +60,9 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps);
 static void trace_sl_onreply_out(unsigned int types, struct sip_msg* req,
 									struct sl_cb_param *sl_param);
+static void trace_sl_ack_in(unsigned int types, struct sip_msg* req,
+									struct sl_cb_param *sl_param);
+
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
 char* db_url       = DEFAULT_RODB_URL;
@@ -241,6 +244,12 @@ static int mod_init(void)
 	{
 		LOG(L_ERR,
 			"siptrace:mod_init:ERROR: can't register trace_sl_onreply_out\n");
+		return -1;
+	}
+	if(register_slcb_f(SLCB_ACK_IN,trace_sl_ack_in, NULL)!=0)
+	{
+		LOG(L_ERR,
+			"siptrace:mod_init:ERROR: can't register trace_sl_ack_in\n");
 		return -1;
 	}
 
@@ -1205,6 +1214,13 @@ done:
 	return;
 error:
 	return;
+}
+
+static void trace_sl_ack_in( unsigned int types, struct sip_msg* req,
+									struct sl_cb_param *sl_param)
+{
+	LM_DBG("storing ack...\n");
+	sip_trace(req, 0, 0);
 }
 
 static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
