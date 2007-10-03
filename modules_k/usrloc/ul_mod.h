@@ -62,8 +62,6 @@ extern str sock_col;
 extern str methods_col;
 extern str last_mod_col;
 
-extern str getdate_sql;
-
 extern str db_url;
 extern int timer_interval;
 extern int db_mode;

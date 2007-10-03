@@ -671,31 +671,6 @@ modparam("usrloc", "fetch_rows", 3000)
 modparam("usrloc", "hash_size", 10)
 ...
 </programlisting>
-                </example>
-        </section>
-
-        <section>
-                <title><varname>getdate_sql</varname> (string)</title>
-                <para>
-		The SQL function returning the current date and time, to be
-                used in SQL queries where expiration time of entries is
-                compared to current time, in order to select only valid
-                (not expired) entrie. The default values works fine with
-                mysql and postgresql, however you might need to use an other
-                value to match your database, i.e. SQL Server (c.f. example).
-                </para>
-                <para>
-                <emphasis>
-                        Default value is <quote>"now"</quote>.
-                </emphasis>
-                </para>
-                <example>
-                <title>Set <varname>getdate_sql</varname> parameter</title>
-                <programlisting format="linespecific">
-...
-modparam("usrloc", "getdate_sql", "getdate")
-...
-</programlisting>
 		</example>
 	</section>
 

@@ -54,7 +54,6 @@ Bogdan-Andrei Iancu
               1.3.22. cseq_delay (integer)
               1.3.23. fetch_rows (integer)
               1.3.24. hash_size (integer)
-              1.3.25. getdate_sql (string)
 
         1.4. Exported Functions
         1.5. Exported MI Functions
@@ -126,7 +125,6 @@ Bogdan-Andrei Iancu
    1-22. Set cseq_delay parameter
    1-23. Set fetch_rows parameter
    1-24. Set hash_size parameter
-   1-25. Set getdate_sql parameter
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -548,23 +546,6 @@ modparam("usrloc", "fetch_rows", 3000)
    Example 1-24. Set hash_size parameter
 ...
 modparam("usrloc", "hash_size", 10)
-...
-     _________________________________________________________
-
-1.3.25. getdate_sql (string)
-
-   The SQL function returning the current date and time, to be
-   used in SQL queries where expiration time of entries is
-   compared to current time, in order to select only valid (not
-   expired) entrie. The default values works fine with mysql and
-   postgresql, however you might need to use an other value to
-   match your database, i.e. SQL Server (c.f. example).
-
-   Default value is ""now"". 
-
-   Example 1-25. Set getdate_sql parameter
-...
-modparam("usrloc", "getdate_sql", "getdate")
 ...
      _________________________________________________________
 
