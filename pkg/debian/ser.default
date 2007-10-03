@@ -1,0 +1,18 @@
+# configuration for ser - Sip Expres Router
+#
+# this file is sourced by ser init script /etc/init.d/ser
+
+# ser configuration file
+SER_CFG_FILE="/etc/ser/ser.cfg"
+
+# user to run ser as
+#SER_USER="ser"
+
+# group to run ser as
+#SER_GROUP="ser"
+
+# ser pidfile
+#SER_PIDFILE="/var/run/ser/ser.pid"
+
+
+

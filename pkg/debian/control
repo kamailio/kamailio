@@ -8,8 +8,8 @@ Standards-Version: 3.5.2
 Package: ser
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, adduser
-Suggests: ser-mysql-module, ser-jabber-module, ser-cpl-module, ser-pa-module, ser-radius-modules
-Conflicts: ser-mysql-module (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-pa-module (<< ${Source-Version}), ser-postgres-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
+Suggests: ser-mysql-modules, ser-jabber-module, ser-cpl-module, ser-presence-modules, ser-radius-modules
+Conflicts: ser-mysql-modules (<< ${Source-Version}), ser-jabber-module (<< ${Source-Version}), ser-radius-modules (<< ${Source-Version}), ser-cpl-module (<< ${Source-Version}), ser-presence-modules (<< ${Source-Version}), ser-postgres-module (<< ${Source-Version}), ser-acc-db-module (<< ${Source-Version}), ser-acc-radius-module (<< ${Source-Version})
 Description: Sip Express Router, very fast and configurable SIP proxy
  ser or SIP Express Router is a very fast and flexible SIP (RFC3621)
  proxy server. Written entirely in C, ser can handle thousands calls
@@ -21,10 +21,10 @@ Description: Sip Express Router, very fast and configurable SIP proxy
  Authentication, Record Routing, SMS Gateway, Jabber Gateway, Transaction 
  Module, Registrar and User Location.
 
-Package: ser-mysql-module
+Package: ser-mysql-modules
 Architecture: any
 Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the MySQL database connectivity module
+Description: contains the MySQL database connectivity modules
  This has been split out of the main ser package, so that ser will not
  depend upon libmysqlclient. This module will enable you to use the digest
  authentication module or persistent user location entries.
@@ -44,12 +44,12 @@ Description: contains the cpl-c module (CPL support)
  This has been split out of the main ser package, so that ser will not
  depend upon libxml2.
 
-Package: ser-presence-module
-Architecture: any
-Depends: ${shlibs:Depends}, ser (= ${Source-Version})
-Description: contains the SIMPLE based presence support (Presence server)
- This module contains modules and libraries needed to implement SIMPLE
- based presence support in SER
+#Package: ser-presence-modules
+#Architecture: any
+#Depends: ${shlibs:Depends}, ser (= ${Source-Version})
+#Description: contains the SIMPLE based presence support (Presence server)
+# This module contains modules and libraries needed to implement SIMPLE
+# based presence support in SER
 
 Package: ser-radius-modules
 Architecture: any
@@ -75,3 +75,13 @@ Description: contains the XML-RPC based interface to SER
  interface can be used to change various configuration options of
  SER at runtime. Other applications, such as serctl command line
  tools and SERWeb use XML-RPC interface to communicate with SER
+
+Package: ser-oob
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ser, ser-mysql-modules, ser-xmlrpc-module, serctl
+Suggests: rttpproxy, lorotate, ngrep
+Description: Sip Express Router - package for "out of the box" installation
+ This package conatins advanced configuration file for ser - SIP Express Router
+ and depends on ser and all needed ser modules. It can be used for easy installation 
+ of ser "out of the box".
+
