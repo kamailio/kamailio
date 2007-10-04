@@ -1,0 +1,239 @@
+/*
+ * $Id$
+ *
+ * db_berkeley module, portions of this code were templated using
+ * the dbtext and postgres modules.
+
+ * Copyright (C) 2007 Cisco Systems
+ *
+ * This file is part of openser, a free SIP server.
+ *
+ * openser is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * openser is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License 
+ * along with this program; if not, write to the Free Software 
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * 
+ * History:
+ * --------
+ * 2007-09-19  genesis (wiquan)
+ */
+ 
+
+#include "../../db/db_val.h"
+#include "../../db/db_ut.h"
+#include "db_berkeley.h"
+#include "bdb_res.h"
+#include "bdb_val.h"
+#include <string.h>
+
+/**
+ * Does not copy strings
+ */
+int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
+{
+
+	static str dummy_string = {"", 0};
+
+	if(!_s)
+	{
+		memset(_v, 0, sizeof(db_val_t));
+		/* Initialize the string pointers to a dummy empty
+		 * string so that we do not crash when the NULL flag
+		 * is set but the module does not check it properly
+		 */
+		VAL_STRING(_v) = dummy_string.s;
+		VAL_STR(_v) = dummy_string;
+		VAL_BLOB(_v) = dummy_string;
+		VAL_TYPE(_v) = _t;
+		VAL_NULL(_v) = 1;
+		return 0;
+	}
+	VAL_NULL(_v) = 0;
+
+	switch(_t) {
+	case DB_INT:
+		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
+			LOG(L_ERR, "berkeley_db[str2val]: Error while converting INT value from string\n");
+			return -2;
+		} else {
+			VAL_TYPE(_v) = DB_INT;
+			return 0;
+		}
+		break;
+
+	case DB_BITMAP:
+		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
+			LOG(L_ERR, "berkeley_db[str2val]: Error while converting BITMAP value from string\n");
+			return -3;
+		} else {
+			VAL_TYPE(_v) = DB_BITMAP;
+			return 0;
+		}
+		break;
+
+	case DB_DOUBLE:
+		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
+			LOG(L_ERR, "berkeley_db[str2val]: Error while converting DOUBLE value from string\n");
+			return -4;
+		} else {
+			VAL_TYPE(_v) = DB_DOUBLE;
+			return 0;
+		}
+		break;
+
+	case DB_STRING:
+		VAL_STRING(_v) = _s;
+		VAL_TYPE(_v) = DB_STRING;
+		
+		if( strlen(_s)==4 && !strncasecmp(_s, "NULL", 4) )
+			VAL_NULL(_v) = 1;
+		
+		return 0;
+
+	case DB_STR:
+		VAL_STR(_v).s = (char*)_s;
+		VAL_STR(_v).len = _l;
+		VAL_TYPE(_v) = DB_STR;
+
+		if( strlen(_s)==4 && !strncasecmp(_s, "NULL", 4) )
+			VAL_NULL(_v) = 1;
+
+		return 0;
+
+	case DB_DATETIME:
+		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
+			LOG(L_ERR, "berkeley_db[str2val]: Error converting datetime\n");
+			return -5;
+		} else {
+			VAL_TYPE(_v) = DB_DATETIME;
+			return 0;
+		}
+		break;
+
+	case DB_BLOB:
+		VAL_BLOB(_v).s = _s;
+		VAL_TYPE(_v) = DB_BLOB;
+		LOG(L_DBG, "berkeley_db[str2val]: got blob len %d\n", _l);
+		return 0;
+	}
+
+	return -6;
+}
+
+
+/*
+ * Used when converting result from a query
+ */
+int sc_val2str(db_val_t* _v, char* _s, int* _len)
+{
+	int l;
+
+	if (VAL_NULL(_v)) 
+	{
+		*_len = snprintf(_s, *_len, "NULL");
+		return 0;
+	}
+	
+	switch(VAL_TYPE(_v)) {
+	case DB_INT:
+		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
+			LOG(L_ERR, "berkeley_db[val2str]: Error while converting int to string\n");
+			return -2;
+		} else {
+			LOG(L_DBG, "berkeley_db[val2str]: Converted int to string\n");
+			return 0;
+		}
+		break;
+
+	case DB_BITMAP:
+		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
+			LOG(L_ERR, "berkeley_db[val2str]: Error while converting bitmap to string\n");
+			return -3;
+		} else {
+			LOG(L_DBG, "berkeley_db[val2str]: Converted bitmap to string\n");
+			return 0;
+		}
+		break;
+
+	case DB_DOUBLE:
+		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
+			LOG(L_ERR, "berkeley_db[val2str]: Error while converting double  to string\n");
+			return -3;
+		} else {
+			LOG(L_DBG, "berkeley_db[val2str]: Converted double to string\n");
+			return 0;
+		}
+		break;
+
+	case DB_STRING:
+		l = strlen(VAL_STRING(_v));
+		if (*_len < l ) 
+		{	LOG(L_ERR, "berkeley_db[val2str]: Destination buffer too short for string\n");
+			return -4;
+		} 
+		else 
+		{	LOG(L_DBG, "berkeley_db[val2str]: Converted string to string\n");
+			strncpy(_s, VAL_STRING(_v) , l);
+			_s[l] = 0;
+			*_len = l;
+			return 0;
+		}
+		break;
+
+	case DB_STR:
+		l = VAL_STR(_v).len;
+		if (*_len < l) 
+		{
+			LOG(L_ERR, "berkeley_db[val2str]: Destination buffer too short for str\n");
+			return -5;
+		} 
+		else 
+		{
+			LOG(L_DBG, "berkeley_db[val2str]: Converted str to string\n");
+			strncpy(_s, VAL_STR(_v).s , VAL_STR(_v).len);
+			*_len = VAL_STR(_v).len;
+			return 0;
+		}
+		break;
+
+	case DB_DATETIME:
+		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
+			LOG(L_ERR, "berkeley_db[val2str]: Error while converting time_t to string\n");
+			return -6;
+		} else {
+			LOG(L_DBG, "berkeley_db[val2str]: Converted time_t to string\n");
+			return 0;
+		}
+		break;
+
+	case DB_BLOB:
+		l = VAL_BLOB(_v).len;
+		if (*_len < l) 
+		{
+			LOG(L_ERR, "berkeley_db[val2str]: Destination buffer too short for blob\n");
+			return -7;
+		} 
+		else 
+		{
+			LOG(L_DBG, "berkeley_db[str2val]: Converting BLOB [%s]\n", _s);
+			_s = VAL_BLOB(_v).s;
+			*_len = 0;
+			return -8;
+		}
+		break;
+
+	default:
+		LOG(L_DBG, "berkeley_db[val2str]: Unknown data type\n");
+		return -8;
+	}
+	return -9;
+}

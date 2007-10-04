@@ -1,0 +1,22 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+    <chapterinfo>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 846 $</revnumber>
+		<date>$Date: 2006-05-22 09:15:40 -0500 (Mon, 22 May 2006) $</date>
+	    </revision>
+	</revhistory>
+    </chapterinfo>
+    <title>Developer's Guide</title>
+    <para>
+	The module does not provide any <acronym>API</acronym> to use in other &ser; modules.
+    </para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("db_berkeley.sgml" "book" "chapter")
+End:
+-->
