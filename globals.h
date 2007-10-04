@@ -43,10 +43,10 @@
 #define DO_REV_DNS 2
 
 
-
-extern char * cfg_file;
+extern char* mods_dir;   /* directory with dyn. loadable modules */
+extern char* cfg_file;
 extern int config_check;
-extern char *stat_file;
+extern char* stat_file;
 extern unsigned short port_no;
 
 extern pid_t creator_pid;  /* pid of first process before daemonization */

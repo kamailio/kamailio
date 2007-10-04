@@ -178,37 +178,38 @@ char compiled[]= __TIME__ " " __DATE__ ;
 
 
 static char help_msg[]= "\
-Usage: " NAME " -l address [-p port] [-l address [-p port]...] [options]\n\
+Usage: " NAME " [options]\n\
 Options:\n\
-    -f file      Configuration file (default " CFG_FILE ")\n\
+    -f file      Configuration file (default: " CFG_FILE ")\n\
+    -L dir       Modules directory (default: " MODS_DIR ")\n\
     -c           Check configuration file for errors\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
-                  mean listening on more addresses).  The address format is\n\
-                  [proto:]addr[:port], where proto=udp|tcp and \n\
-                  addr= host|ip_address|interface_name. E.g: -l locahost, \n\
-                  -l udp:127.0.0.1:5080, -l eth0:5062 The default behavior\n\
-                  is to listen on all the interfaces.\n\
+		  mean listening on more addresses).  The address format is\n\
+		  [proto:]addr[:port], where proto=udp|tcp and \n\
+		  addr= host|ip_address|interface_name. E.g: -l locahost, \n\
+		  -l udp:127.0.0.1:5080, -l eth0:5062 The default behavior\n\
+		  is to listen on all the interfaces.\n\
     -n processes Number of child processes to fork per interface\n\
-                  (default: 8)\n\
+		  (default: 8)\n\
     -r           Use dns to check if is necessary to add a \"received=\"\n\
-                  field to a via\n\
+		  field to a via\n\
     -R           Same as `-r` but use reverse dns;\n\
-                  (to use both use `-rR`)\n\
+		  (to use both use `-rR`)\n\
     -v           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
-    -D           1..do not fork (almost) anyway, 2..do not daemonize creator, 3..daemonize(default)\n\
+    -D           1..do not fork (almost) anyway, 2..do not daemonize creator, 3..daemonize (default)\n\
     -E           Log to stderr\n"
 #ifdef USE_TCP
 "    -T           Disable tcp\n\
-    -N           Number of tcp child processes (default: equal to `-n`)\n\
+    -N           Number of tcp child processes (default: equal to `-n')\n\
     -W           poll method\n"
 #endif
 "    -V           Version number\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
-                  auto-probing procedure even if  OS allows\n\
+		  auto-probing procedure even if  OS allows\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
-    -w dir       Change the working directory to \"dir\" (default \"/\")\n\
+    -w dir       Change the working directory to \"dir\" (default: \"/\")\n\
     -t dir       Chroot to \"dir\"\n\
     -u uid       Change uid \n\
     -g gid       Change gid \n\
@@ -260,6 +261,9 @@ void receive_stdin_loop()
 
 int own_pgid = 0; /* whether or not we have our own pgid (and it's ok
 					 to use kill(0, sig) */
+
+char* mods_dir = MODS_DIR;  /* directory with dyn. loadable modules */
+
 char* cfg_file = 0;
 unsigned int maxbuffer = MAX_RECV_BUFFER_SIZE; /* maximum buffer size we do
 												  not want to exceed during the
@@ -345,7 +349,7 @@ int mlock_pages=0; /* default off, try to disable swapping */
 
 /* real time options */
 int real_time=0; /* default off, flags: 1 on only timer, 2  slow timer,
-					                    4 all procs (7=all) */
+							    4 all procs (7=all) */
 int rt_prio=0;
 int rt_policy=0; /* SCHED_OTHER */
 int rt_timer1_prio=0;  /* "fast" timer */
@@ -1236,7 +1240,7 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-	options=  "f:cm:dVhEb:l:n:vrRDTN:W:w:t:u:g:P:G:"
+	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1251,7 +1255,7 @@ int main(int argc, char** argv)
 			break;
 		}
 	}
-	/* process command line (get port no, cfg. file path etc) */
+	/* process command line (cfg. file path etc) */
 	optind = 1;  /* reset getopt */
 	/* switches required before script processing */
 	while((c=getopt(argc,argv,options))!=-1) {
@@ -1262,6 +1266,9 @@ int main(int argc, char** argv)
 			case 'c':
 					config_check=1;
 					log_stderr=1; /* force stderr logging */
+					break;
+			case 'L':
+					mods_dir = optarg;
 					break;
 			case 'm':
 					shm_mem_size=strtol(optarg, &tmp, 10) * 1024 * 1024;
@@ -1305,21 +1312,20 @@ int main(int argc, char** argv)
 			case 'u':
 			case 'g':
 			case 'P':
-		        case 'G':
+			case 'G':
 			case 's':
 					break;
 			case '?':
-					if (isprint(optopt))
-						fprintf(stderr, "Unknown option `-%c. Use -h for help.\n", optopt);
-					else
-						fprintf(stderr,
-								"Unknown option character `\\x%x. Use -h for help.\n",
-								optopt);
+					if (isprint(optopt)) {
+						fprintf(stderr, "Unknown option `-%c'. Use -h for help.\n", optopt);
+					} else {
+						fprintf(stderr, "Unknown option character `\\x%x'. Use -h for help.\n",
+							optopt);
+					}
 					goto error;
 			case ':':
-					fprintf(stderr,
-								"Option `-%c requires an argument. Use -h for help.\n",
-								optopt);
+					fprintf(stderr, "Option `-%c' requires an argument. Use -h for help.\n",
+						optopt);
 					goto error;
 			default:
 					abort();
@@ -1396,7 +1402,7 @@ try_again:
 			case 'b':
 					maxbuffer=strtol(optarg, &tmp, 10);
 					if (tmp &&(*tmp)){
-						fprintf(stderr, "bad max buffer size number: -p %s\n",
+						fprintf(stderr, "bad max buffer size number: -b %s\n",
 											optarg);
 						goto error;
 					}
@@ -1481,9 +1487,9 @@ try_again:
 			case 'P':
 					pid_file=optarg;
 					break;
-		        case 'G':
-				        pgid_file=optarg;
-				        break;
+			case 'G':
+					pgid_file=optarg;
+					break;
 			case 's':
 				#ifdef STATS
 					stat_file=optarg;

@@ -33,7 +33,7 @@
  *  2003-03-29  cleaning pkg_mallocs introduced (jiri)
  *  2003-04-24  module version checking introduced (jiri)
  *  2004-09-19  compile flags are checked too (andrei)
- *  2005-01-07  removed find_module-overloading problems, added 
+ *  2005-01-07  removed find_module-overloading problems, added
  *               find_export_record
  *  2006-02-07  added fix_flag (andrei)
  */
@@ -49,7 +49,9 @@
 #include "route_struct.h"
 #include "flags.h"
 #include "trim.h"
+#include "globals.h"
 
+#include <sys/stat.h>
 #include <regex.h>
 #include <dlfcn.h>
 #include <strings.h>
@@ -71,19 +73,19 @@ struct sr_module* modules=0;
 #endif
 
 #ifdef STATIC_AUTH
-        extern struct module_exports* auth_exports();
+	extern struct module_exports* auth_exports();
 #endif
 
 #ifdef STATIC_RR
-        extern struct module_exports* rr_exports();
+	extern struct module_exports* rr_exports();
 #endif
 
 #ifdef STATIC_USRLOC
-        extern struct module_exports* usrloc_exports();
+	extern struct module_exports* usrloc_exports();
 #endif
 
 #ifdef STATIC_SL
-        extern struct module_exports* sl_exports();
+	extern struct module_exports* sl_exports();
 #endif
 
 
@@ -213,15 +215,74 @@ int load_module(char* path)
 	char* error;
 	struct module_exports* exp;
 	struct sr_module* t;
+	struct stat stat_buf;
+	char* modname;
+	int len;
 
 #ifndef RTLD_NOW
 /* for openbsd */
 #define RTLD_NOW DL_LAZY
 #endif
+
+	if (!strchr(path, '/') && !strchr(path, '.')) {
+		/* module name was given, we try to construct the path */
+		modname = path;
+
+		/* try path <MODS_DIR>/<modname>.so */
+		path = (char*)pkg_malloc(
+			strlen(mods_dir) + 1 /* "/" */ +
+			strlen(modname) + 3 /* ".so" */ + 1);
+		strcpy(path, mods_dir);
+		len = strlen(path);
+		if (len != 0 && path[len - 1] != '/') {
+			strcat(path, "/");
+		}
+		strcat(path, modname);
+		strcat(path, ".so");
+
+#ifdef EXTRA_DEBUG
+		if (stat(path, &stat_buf) == -1) {
+			DBG("load_module: module file not found <%s>\n", path);
+			pkg_free(path);
+
+			/* try path <MODS_DIR>/<modname>/<modname>.so */
+			path = (char*)pkg_malloc(
+				strlen(mods_dir) + 1 /* "/" */ +
+				strlen(modname) + 1 /* "/" */ +
+				strlen(modname) + 3 /* ".so" */ + 1);
+			strcpy(path, mods_dir);
+			len = strlen(path);
+			if (len != 0 && path[len - 1] != '/') {
+				strcat(path, "/");
+			}
+			strcat(path, modname);
+			strcat(path, "/");
+			strcat(path, modname);
+			strcat(path, ".so");
+
+			if (stat(path, &stat_buf) == -1) {
+				DBG("load_module: module file not found <%s>\n", path);
+				pkg_free(path);
+				LOG(L_ERR, "ERROR: load_module: could not find module <%s>\n",
+					modname);
+				goto error;
+			}
+		}
+#else /* !EXTRA_DEBUG */
+		if (stat(path, &stat_buf) == -1) {
+			DBG("load_module: module file not found <%s>\n", path);
+			pkg_free(path);
+			LOG(L_ERR, "ERROR: load_module: could not find module <%s>\n",
+				modname);
+			goto error;
+		}
+#endif /* !EXTRA_DEBUG */
+	}
+
 	handle=dlopen(path, RTLD_NOW); /* resolve all symbols now */
 	if (handle==0){
 		LOG(L_ERR, "ERROR: load_module: could not open module <%s>: %s\n",
-					path, dlerror() );
+			path, dlerror());
 		goto error;
 	}
 
@@ -538,7 +599,7 @@ int init_modules(void)
 
 action_u_t *fixup_get_param(void **cur_param, int cur_param_no, int required_param_no) {
 	action_u_t *a, a2;
-        /* cur_param points to a->u.string, get pointer to a */
+	/* cur_param points to a->u.string, get pointer to a */
 	a = (void*) ((char *)cur_param - ((char *)&a2.u.string-(char *)&a2));
 	return a + required_param_no - cur_param_no;
 }
@@ -567,7 +628,7 @@ int fix_flag( modparam_t type, void* val,
 	int f, len;
 	char* s;
 	char *p;
-	
+
 	if ((type & PARAM_STRING)==0){
 		LOG(L_CRIT, "BUG: %s: fix_flag(%s): bad parameter type\n",
 					mod_name, param_name);
@@ -617,12 +678,12 @@ int fix_flag( modparam_t type, void* val,
  * parameter types
  */
 int fix_param(int type, void** param)
-{	
+{
     fparam_t* p;
     str name, s;
     unsigned int num;
     int err;
-    
+
     p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
     if (!p) {
 	ERR("No memory left\n");
@@ -630,21 +691,21 @@ int fix_param(int type, void** param)
     }
     memset(p, 0, sizeof(fparam_t));
     p->orig = *param;
-    
+
     switch(type) {
     case FPARAM_UNSPEC:
 	ERR("Invalid type value\n");
 	goto error;
-	
+
     case FPARAM_STRING:
 	p->v.asciiz = *param;
 	break;
-	
+
     case FPARAM_STR:
 	p->v.str.s = (char*)*param;
 	p->v.str.len = strlen(p->v.str.s);
 	break;
-	
+
     case FPARAM_INT:
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
@@ -657,7 +718,7 @@ int fix_param(int type, void** param)
 	    return 1;
 	}
 	break;
-	
+
     case FPARAM_REGEX:
 	if ((p->v.regex = pkg_malloc(sizeof(regex_t))) == 0) {
 	    ERR("No memory left\n");
@@ -669,7 +730,7 @@ int fix_param(int type, void** param)
 	    goto error;
 	}
 	break;
-	
+
     case FPARAM_AVP:
 	name.s = (char*)*param;
 	name.len = strlen(name.s);
@@ -681,13 +742,13 @@ int fix_param(int type, void** param)
 	}
 	name.s++;
 	name.len--;
-	
+
 	if (parse_avp_ident(&name, &p->v.avp) < 0) {
 	    ERR("Error while parsing attribute name\n");
 	    goto error;
 	}
 	break;
-	
+
     case FPARAM_SELECT:
 	name.s = (char*)*param;
 	name.len = strlen(name.s);
@@ -697,7 +758,7 @@ int fix_param(int type, void** param)
 	    pkg_free(p);
 	    return 1;
 	}
-	
+
 	if (parse_select(&name.s, &p->v.select) < 0) {
 	    ERR("Error while parsing select identifier\n");
 	    goto error;
@@ -714,11 +775,11 @@ int fix_param(int type, void** param)
 	}
 	break;
     }
-    
+
     p->type = type;
     *param = (void*)p;
     return 0;
-    
+
  error:
     pkg_free(p);
     return E_UNSPEC;
@@ -762,7 +823,7 @@ int fixup_var_str_2(void** param, int param_no)
 /*
  * Fixup variable integer, the parameter can be
  * AVP, SELECT, or ordinary integer. AVP and select
- * identifiers will be resolved to their values and 
+ * identifiers will be resolved to their values and
  * converted to int if necessary during runtime
  *
  * The parameter value will be converted to fparam structure
@@ -943,13 +1004,13 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
     case FPARAM_INT:
 	*dst = param->v.i;
 	return 0;
-	
+
     case FPARAM_REGEX:
     case FPARAM_UNSPEC:
     case FPARAM_STRING:
     case FPARAM_STR:
 	return -1;
-	
+
     case FPARAM_AVP:
 	avp = search_first_avp(param->v.avp.flags, param->v.avp.name, &val, 0);
 	if (!avp) {
