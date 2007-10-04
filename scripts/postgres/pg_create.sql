@@ -169,6 +169,7 @@ CREATE TABLE location (
 );
 
 CREATE INDEX location_contact ON location (contact);
+CREATE INDEX location_expires ON location (expires);
 
 CREATE TABLE contact_attrs (
     uid VARCHAR(64) NOT NULL,

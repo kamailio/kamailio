@@ -171,7 +171,8 @@ CREATE TABLE location (
     user_agent VARCHAR(64),
     instance VARCHAR(255),
     UNIQUE KEY location_key (uid, contact),
-    KEY location_contact (contact)
+    KEY location_contact (contact),
+    KEY location_expires (expires)
 );
 
 INSERT INTO version (table_name, table_version) values ('contact_attrs','1');
