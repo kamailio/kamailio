@@ -551,4 +551,15 @@
 		<value col="at.order">0</value>
 	</row>
 
+	<row vendor-controlled="1">
+		<value col="at.name">sw_highest_alias_number</value>
+		<value col="at.type">0</value>
+		<value col="at.rich_t">int</value>
+		<value col="at.desc">highest assigned alias number</value>
+		<value col="at.d_flags">32</value>
+		<value col="at.flags">0</value>
+		<value col="at.prior">0</value>
+		<value col="at.order">0</value>
+	</row>
+
 </table>
