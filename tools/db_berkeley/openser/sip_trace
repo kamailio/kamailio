@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+callid(str) date(datetime) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str)
+METADATA_KEY
+0
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

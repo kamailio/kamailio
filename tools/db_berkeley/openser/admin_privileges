@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+username(str) domain(str) priv_name(str) priv_value(str)
+METADATA_KEY
+0 1
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

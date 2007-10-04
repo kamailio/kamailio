@@ -104,6 +104,14 @@ case $DBENGINE in
 			merr "could not load the script in $MYLIBDIR/openserdbctl.dbtext for database engine $DBENGINE"
 		fi
 		;;
+	db_berkeley|DB_BERKELEY|sleepycat)
+		if [ -f "$MYLIBDIR/openserdbctl.db_berkeley" ]; then
+			. "$MYLIBDIR/openserdbctl.db_berkeley"
+			DBENGINELOADED=1
+		else
+			merr "could not load the script in $MYLIBDIR/openserdbctl.db_berkeley for database engine $DBENGINE"
+		fi
+		;;
 esac
 
 if [ $DBENGINELOADED -eq 1 ] ; then

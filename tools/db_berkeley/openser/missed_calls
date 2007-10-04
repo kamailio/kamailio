@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+callid(str) method(str) from_tag(str) to_tag(str) sip_code(str) sip_reason(str) time(datetime)
+METADATA_KEY
+0
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

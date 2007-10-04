@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+username(str) domain(str) cpl_xml(str) cpl_bin(str)
+METADATA_KEY
+0 1
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

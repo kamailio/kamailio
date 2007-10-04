@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+rule(str) att(str) val(str) type(str) comment(str)
+METADATA_KEY
+0 1 2
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

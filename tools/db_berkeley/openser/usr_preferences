@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+uuid(str) username(str) domain(str) attribute(str) type(int) value(str) modified(int)
+METADATA_KEY
+0
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

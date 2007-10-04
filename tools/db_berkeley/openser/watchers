@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+p_user(str) w_user(str) w_domain(str) event(str) subs_status(str) reason(str) inserted_time(int)
+METADATA_KEY
+0
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

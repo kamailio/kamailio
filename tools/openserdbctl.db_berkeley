@@ -1,0 +1,360 @@
+#!/bin/sh
+
+ #
+ # $Id:  $
+ #
+ # Script for maintaining OpenSER Berkeley DB tables
+ # Copyright (C) 2007 Cisco Systems
+ #
+ # This file is part of openser, a free SIP server.
+ #
+ # openser is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+ # the Free Software Foundation; either version 2 of the License, or
+ # (at your option) any later version
+ #
+ # openser is distributed in the hope that it will be useful,
+ # but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License 
+ # along with this program; if not, write to the Free Software 
+ # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ # 
+ # History:
+ # --------
+ # 2007-09-19  genesis (wiquan)
+ #
+
+#constants
+PATH=$PATH:/usr/local/BerkeleyDB.4.6/bin
+DELIM="|"
+BACKUP_CMD="tar czvf "
+RESTORE_CMD="tar xzvf "
+
+STANDARD_TABLES="version acc dbaliases lcr domain grp uri speed_dial gw pdt
+		   subscriber location re_grp trusted address missed_calls
+		   usr_preferences aliases gw_grp silo"
+
+EXTRA_TABLES="imc_members imc_rooms cpl sip_trace domainpolicy"
+
+PRESENCE_TABLES="presentity active_watchers watchers xcap pua"
+
+SERWEB_TABLES="active_sessions pending phonebook usr_preferences_types
+		server_monitoring server_monitoring_agg admin_privileges"
+
+#berkeley db utility program that writes out db to plain text
+DUMP_CMD="db_dump -p "
+
+#berkeley db utility program that imports data from plain text file
+LOAD_CMD="db_load -T -t hash "
+
+# path to the database schemas
+DATA_DIR="/usr/local/share/openser"
+if [ -d "$DATA_DIR/db_berkeley/openser" ] ; then
+	DB_SCHEMA="$DATA_DIR/db_berkeley/openser"
+else
+	DB_SCHEMA="./berkeley/openser"
+fi
+
+# path to the berkeley database (envirnment)
+if [ -z "$DB_HOME" ]; then
+	DB_HOME="/usr/local/etc/openser/db_berkeley"
+fi
+
+
+openser_usage() 
+{
+COMMAND=`basename $0`
+cat <<EOF
+Script for maintaining OpenSER Berkeley DB tables
+usage: $COMMAND create   [DB_HOME] (creates the db with files with metadata)
+       $COMMAND presence [DB_HOME] (adds the presence related tables)
+       $COMMAND extra    [DB_HOME] (adds the extra tables - imc,cpl,siptrace,domainpolicy)
+       $COMMAND drop     [DB_HOME] (deletes db files in DB_HOME)
+       $COMMAND reinit   [DB_HOME] (drop and create tables in one step)
+       $COMMAND list     [DB_HOME] (lists the underlying db files on the FS)
+       $COMMAND backup   [DB_HOME] (tars current database)
+       $COMMAND restore   <bu> [DB_HOME] (untar bu into DB_HOME)
+       $COMMAND dump      <db> [DB_HOME] (db_dump the underlying db file to STDOUT)
+       $COMMAND swap      <db> [DB_HOME] (installs db.new by db -> db.old; db.new -> db)
+       $COMMAND append    <db> <datafile> [DB_HOME] (appends data to an existing db;output DB_HOME/db.new)
+       $COMMAND newappend <db> <datafile> [DB_HOME] (appends data to a new instance of db; output DB_HOME/db.new)
+EOF
+} #usage
+
+
+openser_swap()  # parms: <db> [DB_HOME]
+{
+	if [ $# -lt 2  ]; then
+		echo  "openser_swap parms: <db> [DB_HOME]"
+		exit 1
+	fi
+	
+	DB=$2/$1
+	DBNEW=$DB.new
+	DBOLD=$DB.old
+	cp $DB $DBOLD
+	mv $DBNEW $DB
+}
+
+#####
+# append process is:
+# 1. copy DB_HOME/db to DB_HOME/db.new
+# 2. appends contents of newdata to DB_HOME/db.new
+#
+openser_append()  # parms: <db> <newdata> [DB_HOME]
+{
+	if [ $# -lt 3  ]; then
+		echo  "openser_append parms: <db> <newdata> [DB_HOME]"
+		exit 1
+	fi
+	
+	DB=$3/$1
+	DBNEW=$DB.new
+	if [ -f $DB.new ] ; then
+		rm $DB.new
+	fi
+	
+	cp $DB $DBNEW
+#  echo "$LOAD_CMD -f $2 -h $3 $1.new"
+	$LOAD_CMD -f $2 -h $3 $1.new
+	
+#  echo "db_load -r fileid -h $3 $1.new"
+  	db_load -r fileid -h $3 $1.new
+}
+
+
+#####
+# newappend process is:
+# 1. create a new temp DBENV in /tmp/sc-<processID>
+# 2. appends contents of newdata to /tmp/sc-<processID>/db
+# 3. move /tmp/sc-<processID>/db over to DB_HOME/db.new
+# 4. delete temp DBENV dir /tmp/sc-<processID>
+#
+openser_newappend()  # parms: <db> <newdata> [DB_HOME]
+{
+	if [ $# -lt 3  ]; then
+		echo  "openser_append parms: <db> <newdata> [DB_HOME]"
+		exit 1
+	fi
+	
+	DB=$3/$1
+	DBNEW=$DB.new
+	if [ -f $DBNEW ] ; then
+		rm $DBNEW
+	fi
+	TMPENV=/tmp/sc-$$
+	openser_create $TMPENV
+	cd $OLDPWD
+	$LOAD_CMD -f $2 -h $TMPENV $1
+	mv $TMPENV/$1 $DBNEW
+	rm -rf $TMPENV
+}
+
+
+# dump all rows to STDOUT
+openser_dump()  # pars: <database name> <DB_HOME>
+{
+	if [ $# -ne 2 ] ; then
+		echo  "openser_dump params <db> [DB_HOME]"
+		exit 1
+	fi
+	
+	$DUMP_CMD -h $2 $1
+}
+
+
+
+# copy a database to database_bak
+openser_backup() # par: <DB_HOME>
+{
+	if [ $# -ne 1 ] ; then
+		echo  "openser_backup params [DB_HOME]"
+		exit 1
+	fi
+	
+	DATE=`date "+%m%d%Y"`
+	BU=$1/berkeleydb-$DATE-$$.tgz
+	$BACKUP_CMD $BU $1
+	if [ "$?" -ne 0 ] ; then
+		echo "openser_backup failed"
+		exit 1
+	fi
+}
+
+
+openser_restore() #pars: <filename>
+{
+	if [ $# -ne 2 ] ; then
+		echo "openser_restore params <bakfile> [DB_HOME]"
+		exit 1
+	fi
+	cd $1
+	$RESTORE_CMD $2 -C /
+	cd $OLDPWD
+}
+
+
+openser_drop()  # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		echo "openser_drop function takes one param"
+		exit 1
+	fi
+	
+	if [ ! -d $1 ] ; then
+		echo "Directory does not exist:  $1"
+	fi
+	
+	minfo "Dropping Berkeley DB database at: $1 ..."
+	
+	# core
+	if [ -f $1/version ] ; then
+		for TABLE in $STANDARD_TABLES; do
+		    mdbg "Dropping core table: $TABLE"
+		    rm -f $1/$TABLE
+		done
+	fi
+	
+	# presence
+	if [ -f $1/presentity ] ; then
+		for TABLE in $PRESENCE_TABLES; do
+		    mdbg "Dropping presence table: $TABLE"
+		    rm -f $1/$TABLE
+		done
+	fi
+	
+	# extra tables
+	if [ -f $1/cpl ] ; then
+		for TABLE in $EXTRA_TABLES; do
+		    mdbg "Dropping extra table: $TABLE"
+		    rm -f $1/$TABLE
+		done
+	fi
+	
+	# serweb tables
+	if [ -f $1/active_sessions ] ; then
+		for TABLE in $SERWEB_TABLES; do
+		    mdbg "Dropping serweb table: $TABLE"
+		    rm -f $1/$TABLE
+		done
+	fi
+	
+}
+
+
+openser_create() # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		echo "openser_create param [DB_HOME]"
+		exit 1
+	fi
+	
+	DB_HOME=$1
+	minfo "creating Berkeley DB database at: $1 ..."
+	mkdir -p $DB_HOME
+	
+	for TABLE in $STANDARD_TABLES; do
+	    mdbg "Creating core table: $TABLE"
+	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    if [ $? -ne 0 ] ; then
+		merr "Creating core tables failed!"
+		exit 1
+	    fi
+	done
+	
+	echo -n "Install presence related tables ?(y/n):"
+	read INPUT
+	if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+	then
+		presence_create $1
+	fi
+	
+	echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
+	read INPUT
+	if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+	then
+		extra_create $1
+	fi
+	
+	echo -n "Install SERWEB related tables ?(y/n):"
+	read INPUT
+	if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
+	then
+		HAS_SERWEB="yes"
+		serweb_create $1
+	fi
+	
+} # openser_create
+
+
+presence_create() # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		merr "presence_create param [DB_HOME]"
+		exit 1
+	fi
+	
+	DB_HOME=$1
+	minfo "creating BerkeleyDB presence database at: $1 .."
+	minfo "creating BerkeleyDB presence database at: $DB_HOME ..."
+	mkdir -p $DB_HOME
+	
+	for TABLE in $PRESENCE_TABLES; do
+	    mdbg "Creating presence table: $TABLE"
+	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    if [ $? -ne 0 ] ; then
+		merr "Creating presence tables failed!"
+		exit 1
+	    fi
+	done
+	
+}  # end presence_create
+
+
+extra_create() # pars: <DB_HOME>
+{
+
+	if [ $# -ne 1 ] ; then
+		merr "extra_create function takes one param (DB_HOME)"
+		exit 1
+	fi
+	
+	DB_HOME=$1
+	minfo "creating BerkeleyDB extra tables at: $DB_HOME ..."
+	
+	for TABLE in $EXTRA_TABLES; do
+	    mdbg "Creating extra table: $TABLE"
+	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    if [ $? -ne 0 ] ; then
+		merr "Creating extra tables failed!"
+		exit 1
+	    fi
+	done
+	
+}  # end extra_create
+
+
+serweb_create () # pars: <database name>
+{
+	if [ $# -ne 1 ] ; then
+		merr "serweb_create function takes one param"
+		exit 1
+	fi
+	
+	mwarn "admin data for serweb is missing!"
+	
+	minfo "creating BerkeleyDB serweb tables at: $DB_HOME ..."
+	
+	for TABLE in $SERWEB_TABLES; do
+	    mdbg "Creating serweb table: $TABLE"
+	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    if [ $? -ne 0 ] ; then
+		merr "Creating serweb tables failed!"
+		exit 1
+	    fi
+	done
+	
+}  # end serweb_create

@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+username(str) domain(str) alias_username(str) alias_domain(str)
+METADATA_KEY
+2 3
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0

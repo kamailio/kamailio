@@ -1,0 +1,8 @@
+METADATA_COLUMNS
+username(str) domain(str) phplib_id(str) password(str) firstname(str) lastname(str) phone(str) email_address(str) datetime_created(int) datetime_modified(int) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) allow_find(str) timezone(str) rpid(str)
+METADATA_KEY
+0 1
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
