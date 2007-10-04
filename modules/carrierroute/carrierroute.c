@@ -106,20 +106,20 @@ static int parse_avp_param(char *s, int *flags, int_str *name);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
-	{"cr_rewrite_uri",           route_uri,             2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_balance_uri",     prime_balance_uri,     2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_rewrite_by_to",         route_by_to,           2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_balance_by_to",   prime_balance_by_to,   2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_rewrite_by_from",       route_by_from,         2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_balance_by_from", prime_balance_by_from, 2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_user_rewrite_uri",      user_route_uri,        2, user_route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_tree_rewrite_uri",      tree_route_uri,        2, tree_route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_uri",           route_uri,             2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_balance_uri",     prime_balance_uri,     2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_by_to",         route_by_to,           2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_balance_by_to",   prime_balance_by_to,   2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_by_from",       route_by_from,         2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_balance_by_from", prime_balance_by_from, 2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_user_rewrite_uri",      user_route_uri,        2, user_route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_tree_rewrite_uri",      tree_route_uri,        2, tree_route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 // this function is only needed for the 0700 functionality, and obselete
 // needs the add-rewrite-branches patch for the rewrite_branches function in core
 #ifdef SP_ROUTE2_0700
-	{"cr_rewrite_branches",      rewrite_branches,      2, route_fixup, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_branches",      rewrite_branches,      2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 #endif
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]= {
