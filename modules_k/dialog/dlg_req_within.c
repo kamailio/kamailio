@@ -40,6 +40,12 @@
 #include "dlg_req_within.h"
 
 
+#define MAX_FWD_HDR        "Max-Forwards: " MAX_FWD CRLF
+#define MAX_FWD_HDR_LEN    (sizeof(MAX_FWD_HDR) - 1)
+
+extern str dlg_extra_hdrs;
+
+
 
 int free_tm_dlg(dlg_t *td)
 {
@@ -166,48 +172,33 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 
 
-int build_extra_hdr(struct dlg_cell * cell, int dir, str ** hdr){
+static inline int build_extra_hdr(struct dlg_cell * cell, int dir,
+											str *extra_hdrs, str *str_hdr)
+{
+	char *p;
 
-	str * str_hdr = NULL;
-	int len;
+	str_hdr->len = MAX_FWD_HDR_LEN + dlg_extra_hdrs.len + extra_hdrs->len;
 
-	str_hdr = (str *)pkg_malloc(sizeof(str));
-	if(!str_hdr){
-		LM_ERR("out of pkg memory");
-		goto error;
-	}
-	str_hdr->s = 0;
-	str_hdr->len = 0;
-
-	str_hdr->s = (char*)pkg_malloc(MAX_SIZE* sizeof(char));
+	str_hdr->s = (char*)pkg_malloc( str_hdr->len * sizeof(char) );
 	if(!str_hdr->s){
 		LM_ERR("out of pkg memory\n");
+		goto error;
+	}
 
-		goto error;
+	memcpy(str_hdr->s , MAX_FWD_HDR, MAX_FWD_HDR_LEN );
+	p = str_hdr->s + MAX_FWD_HDR_LEN;
+	if (dlg_extra_hdrs.len) {
+		memcpy( p, dlg_extra_hdrs.s, dlg_extra_hdrs.len);
+		p += dlg_extra_hdrs.len;
 	}
-	
-	strncpy(str_hdr->s ,"Max-Forwards: ", 14);
-	str_hdr->len = 14;
-	len= sprintf(str_hdr->s+str_hdr->len, "%d", MAX_FWD);
-	if(len<= 0){
-		LM_ERR("failed to set MAX_FWD\n");
-		goto error;
+	if (extra_hdrs->len) {
+		memcpy( p, extra_hdrs->s, extra_hdrs->len);
+		p += extra_hdrs->len;
 	}
-	
-	str_hdr->len += len;
-	strncpy(str_hdr->s + str_hdr->len, CRLF, CRLF_LEN);
-	str_hdr->len += CRLF_LEN;
-	
-	*hdr = str_hdr;
+
 	return 0;
 
 error: 
-	if(str_hdr)
-		pkg_free(str_hdr);
-
-	if(str_hdr->s)
-		pkg_free(str_hdr->s);
-
 	return -1;
 }
 
@@ -218,21 +209,21 @@ error:
  * 		DLG_CALLER_LEG (0): caller
  * 		DLG_CALLEE_LEG (1): callee
  */
-int send_bye(struct dlg_cell * cell, int dir){
-
+static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
+{
 	/*verify direction*/
 	dlg_t* dialog_info;
 	str met = {"BYE", 3};
-	str* str_hdr = NULL;
+	str str_hdr = {NULL,0};
 	struct dlg_entry *d_entry;
 	int result;
-	
-	if((dialog_info = build_dlg_t(cell, dir)) == 0){
+
+	if ((dialog_info = build_dlg_t(cell, dir)) == 0){
 		LM_ERR("failed to create dlg_t\n");
 		goto err;
 	}
 
-	if((build_extra_hdr(cell, dir, &str_hdr)) != 0){
+	if ((build_extra_hdr(cell, dir, extra_hdrs, &str_hdr)) != 0){
 		LM_ERR("failed to create extra headers\n");
 		goto err;
 	}
@@ -246,7 +237,7 @@ int send_bye(struct dlg_cell * cell, int dir){
 
 	result = d_tmb.t_request_within
 		(&met,         /* method*/
-		str_hdr,       /* extra headers*/
+		&str_hdr,      /* extra headers*/
 		NULL,          /* body*/
 		dialog_info,   /* dialog structure*/
 		bye_reply_cb,  /* callback function*/
@@ -258,7 +249,7 @@ int send_bye(struct dlg_cell * cell, int dir){
 	}
 
 	pkg_free(dialog_info);
-	pkg_free(str_hdr);
+	pkg_free(str_hdr.s);
 
 	LM_DBG("bye sent to %s\n", (dir==0)?"caller":"callee");
 	return 0;
@@ -266,13 +257,10 @@ int send_bye(struct dlg_cell * cell, int dir){
 err1:
 	unref_dlg(cell, 1);
 err:
-	if(dialog_info){
+	if(dialog_info)
 		free_tm_dlg(dialog_info);
-	}
-
-	if(str_hdr){
-		pkg_free(str_hdr);	
-	}
+	if(str_hdr.s)
+		pkg_free(str_hdr.s);
 	return -1;
 }
 
@@ -284,40 +272,46 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 	struct mi_node* node;
 	unsigned int h_entry, h_id;
 	struct dlg_cell * dlg = NULL;
+	str mi_extra_hdrs = {NULL,0};
 
 
 	if( d_table ==NULL)
 		goto end;
 
 	node = cmd_tree->node.kids;
-	if(node == NULL || node->value.s == NULL || node->value.len ==0)
-		goto error;
-	
-	if(strno2int(&node->value, &h_entry) <0 )
-		goto error;
 
-		node = node->next;
-	if(node == NULL || node->value.s == NULL || node->value.len == 0)
+	if (node==NULL || node->next==NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	if( strno2int( &node->value, &h_id) <0)
+	if (!node->value.s|| !node->value.len|| strno2int(&node->value,&h_entry)<0)
 		goto error;
+
+	node = node->next;
+	if ( !node->value.s || !node->value.len || strno2int(&node->value,&h_id)<0)
+		goto error;
+
+	if (node->next) {
+		node = node->next;
+		if (node!=NULL)
+			return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+		if (node->value.len && node->value.s)
+			mi_extra_hdrs = node->value;
+	}
 
 	LM_DBG("h_entry %u h_id %u\n", h_entry, h_id);
 
 	dlg = lookup_dlg(h_entry, h_id);
 
 	if(dlg){
-
-		if((send_bye(dlg,DLG_CALLER_LEG)!=0)||(send_bye(dlg,DLG_CALLEE_LEG)!=0))
-
-			return init_mi_tree(500, MI_DLG_OPERATION_ERR, MI_DLG_OPERATION_ERR_LEN);
-
+		if ( (send_bye(dlg,DLG_CALLER_LEG,&mi_extra_hdrs)!=0) ||
+		(send_bye(dlg,DLG_CALLEE_LEG,&mi_extra_hdrs)!=0)) {
+			return init_mi_tree(500, MI_DLG_OPERATION_ERR,
+				MI_DLG_OPERATION_ERR_LEN);
+		}
 		return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 	}
 
 end:
-
 	return init_mi_tree(404, MI_DIALOG_NOT_FOUND, MI_DIALOG_NOT_FOUND_LEN);
 	
 error:
