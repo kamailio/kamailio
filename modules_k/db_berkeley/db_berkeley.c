@@ -150,7 +150,7 @@ db_con_t* sc_init(const char* _sqlurl)
 	_s.len = strlen(_sqlurl);
 	if(_s.len <= SC_ID_LEN || strncmp(_s.s, SC_ID, SC_ID_LEN)!=0)
 	{
-		LOG(L_ERR, "sc_init: invalid database URL - should be:"
+		LM_ERR("invalid database URL - should be:"
 			" <%s[/]path/to/directory>\n", SC_ID);
 		return NULL;
 	}
@@ -161,7 +161,7 @@ db_con_t* sc_init(const char* _sqlurl)
 	{
 		if(sizeof(CFG_DIR)+_s.len+2 > SC_PATH_LEN)
 		{
-			LOG(L_ERR, "sc_init: path to database is too long\n");
+			LM_ERR("path to database is too long\n");
 			return NULL;
 		}
 		strcpy(sc_path, CFG_DIR);
@@ -174,7 +174,7 @@ db_con_t* sc_init(const char* _sqlurl)
 	_res = pkg_malloc(sizeof(db_con_t)+sizeof(sc_con_t));
 	if (!_res)
 	{
-		LOG(L_ERR, "sc_init: No memory left\n");
+		LM_ERR("No private memory left\n");
 		return NULL;
 	}
 	memset(_res, 0, sizeof(db_con_t) + sizeof(sc_con_t));
@@ -183,7 +183,7 @@ db_con_t* sc_init(const char* _sqlurl)
 	SC_CON_CONNECTION(_res) = sclib_get_db(&_s);
 	if (!SC_CON_CONNECTION(_res))
 	{
-		LOG(L_ERR, "sc_init: cannot get the link to database\n");
+		LM_ERR("cannot get the link to database\n");
 		return NULL;
 	}
 
@@ -208,9 +208,7 @@ void sc_reload(char* _n)
 {
 	
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("------- RELOAD in %s\n", _n);
-	DBG("-------------------------------------------------\n");
+	LM_DBG("RELOAD in %s\n", _n);
 #endif
 
 	sclib_close(_n);
@@ -244,7 +242,7 @@ void sc_check_reload(db_con_t* _con)
 	len+=s.len;
 	
 	if(len > MAX_ROW_SIZE)
-	{	LOG(L_ERR, "sc_check_reload: dbenv name too long \n");
+	{	LM_ERR("dbenv name too long \n");
 		return;
 	}
 	
@@ -253,7 +251,7 @@ void sc_check_reload(db_con_t* _con)
 	
 	len++;
 	if(len > MAX_ROW_SIZE)
-	{	LOG(L_ERR, "sc_check_reload: dbenv name too long \n");
+	{	LM_ERR("dbenv name too long \n");
 		return;
 	}
 	
@@ -267,7 +265,7 @@ void sc_check_reload(db_con_t* _con)
 	len+=s.len;
 	
 	if((len>MAX_ROW_SIZE) || (s.len > MAX_TABLENAME_SIZE) )
-	{	LOG(L_ERR, "sc_check_reload: table name too long \n");
+	{	LM_ERR("table name too long \n");
 		return;
 	}
 
@@ -284,7 +282,7 @@ void sc_check_reload(db_con_t* _con)
 	if( (tp = tbc->dtp) == NULL)
 		return;
 	
-	DBG("sc_check_reload: stat file [%.*s]\n", len, n);
+	LM_DBG("stat file [%.*s]\n", len, n);
 	rc = stat(n, &st);
 	if(!rc)
 	{	if((tp->ino!=0) && (st.st_ino != tp->ino))
@@ -338,7 +336,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if ((!_con) || (!_r) || !CON_TABLE(_con))
 	{
 #ifdef SC_EXTRA_DEBUG
-		LOG(L_ERR, "sc_query: Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 #endif
 		return -1;
 	}
@@ -353,23 +351,21 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	_tbc = sclib_get_table(SC_CON_CONNECTION(_con), &s);
 	if(!_tbc)
-	{	DBG("sc_query: table does not exist!\n");
+	{	LM_WARN("table does not exist!\n");
 		return -1;
 	}
 
 	_tp = _tbc->dtp;
 	if(!_tp)
-	{	DBG("sc_query: table not loaded!\n");
+	{	LM_WARN("table not loaded!\n");
 		return -1;
 	}
 
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("------- QUERY in %.*s\n", _tp->name.len, _tp->name.s);
-	DBG("-------------------------------------------------\n");
+	LM_DBG("QUERY in %.*s\n", _tp->name.len, _tp->name.s);
 
-	if (_o)  DBG("sc_query: DONT-CARE : _o: order by the specified column \n");
-	if (_op) DBG("sc_query: DONT-CARE : _op: operators for refining query \n");
+	if (_o)  LM_DBG("DONT-CARE : _o: order by the specified column \n");
+	if (_op) LM_DBG("DONT-CARE : _op: operators for refining query \n");
 #endif
 	
 	db = _tp->db;
@@ -409,14 +405,12 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		i =0 ;
 
 #ifdef SC_EXTRA_DEBUG
-		DBG("------------------------------------------------------\n");
-		DBG("------- SELECT * FROM %.*s\n", _tp->name.len, _tp->name.s);
-		DBG("------------------------------------------------------\n");
+		LM_DBG("SELECT * FROM %.*s\n", _tp->name.len, _tp->name.s);
 #endif
 
 		/* Acquire a cursor for the database. */
 		if ((ret = db->cursor(db, NULL, &dbcp, 0)) != 0) 
-		{	LOG(L_ERR, "sc_query: Error creating cursor\n");
+		{	LM_ERR("Error creating cursor\n");
 			goto error;
 		}
 		
@@ -431,12 +425,12 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		ret=0;
 		
 #ifdef SC_EXTRA_DEBUG
-		DBG("--- %i = SELECT COUNT(*) FROM %.*s\n", i, _tp->name.len, _tp->name.s);
+		LM_DBG("%i = SELECT COUNT(*) FROM %.*s\n", i, _tp->name.len, _tp->name.s);
 #endif
 
 		*_r = sc_result_new();
 		if (!*_r) 
-		{	LOG(L_ERR, "sc_query: no memory left for result \n");
+		{	LM_ERR("no memory left for result \n");
 			ret = -2;
 			goto error;
 		}
@@ -457,13 +451,13 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		
 		/*fill in the column part of db_res_t (metadata) */
 		if ((ret = sc_get_columns(_tbc->dtp, *_r, lres, _nc)) < 0) 
-		{	LOG(L_ERR, "sc_query: Error while getting column names\n");
+		{	LM_ERR("Error while getting column names\n");
 			goto error;
 		}
 		
 		/* Acquire a cursor for the database. */
 		if ((ret = db->cursor(db, NULL, &dbcp, 0)) != 0) 
-		{	LOG(L_ERR, "sc_query: Error creating cursor\n");
+		{	LM_ERR("Error creating cursor\n");
 			goto error;
 		}
 
@@ -475,7 +469,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 				continue;
 			
 #ifdef SC_EXTRA_DEBUG
-		DBG("     KEY:  [%.*s]\n     DATA: [%.*s]\n"
+		LM_DBG("KEY: [%.*s]\nDATA: [%.*s]\n"
 			, (int)   key.size
 			, (char *)key.data
 			, (int)   data.size
@@ -484,7 +478,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 			/*fill in the row part of db_res_t */
 			if ((ret=sc_append_row( *_r, dbuf, lres, i)) < 0) 
-			{	LOG(L_ERR, "sc_query: Error while converting row\n");
+			{	LM_ERR("Error while converting row\n");
 				goto error;
 			}
 			i++;
@@ -496,7 +490,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	}
 
 	if ( (ret = sclib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, SC_KEY)) != 0 ) 
-	{	LOG(L_ERR, "sc_query: error in query key \n");
+	{	LM_ERR("error in query key \n");
 		goto error;
 	}
 
@@ -512,7 +506,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	/*create an empty db_res_t which gets returned even if no result*/
 	*_r = sc_result_new();
 	if (!*_r) 
-	{	LOG(L_ERR, "sc_convert_result: no memory left for result \n");
+	{	LM_ERR("no memory left for result \n");
 		ret = -2;
 		goto error;
 	}
@@ -520,34 +514,30 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	SC_CON_RESULT(_con) = *_r;
 
 #ifdef SC_EXTRA_DEBUG
-		DBG("-------------------------------------------------\n");
-		DBG("SELECT  KEY: [%.*s]\n"
+		LM_DBG("SELECT  KEY: [%.*s]\n"
 			, (int)   key.size
 			, (char *)key.data );
-		DBG("-------------------------------------------------\n");
 #endif
 
 	/*query Berkely DB*/
 	if ((ret = db->get(db, NULL, &key, &data, 0)) == 0) 
 	{
 #ifdef SC_EXTRA_DEBUG
-		DBG("-------------------------------------------------\n");
-		DBG("-- RESULT\n     KEY:  [%.*s]\n     DATA: [%.*s]\n"
+		LM_DBG("RESULT\nKEY:  [%.*s]\nDATA: [%.*s]\n"
 			, (int)   key.size
 			, (char *)key.data
 			, (int)   data.size
 			, (char *)data.data);
-		DBG("-------------------------------------------------\n");
 #endif
 
 		/*fill in the col part of db_res_t */
 		if ((ret = sc_get_columns(_tbc->dtp, *_r, lres, _nc)) < 0) 
-		{	LOG(L_ERR, "sc_query: Error while getting column names\n");
+		{	LM_ERR("Error while getting column names\n");
 			goto error;
 		}
 		/*fill in the row part of db_res_t */
 		if ((ret=sc_convert_row( *_r, dbuf, lres)) < 0) 
-		{	LOG(L_ERR, "sc_query: Error while converting row\n");
+		{	LM_ERR("Error while converting row\n");
 			goto error;
 		}
 		
@@ -565,9 +555,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		case DB_NOTFOUND:
 		
 #ifdef SC_EXTRA_DEBUG
-			DBG("------------------------------\n");
-			DBG("-- NO RESULT for QUERY \n");
-			DBG("------------------------------\n");
+			LM_DBG("NO RESULT for QUERY \n");
 #endif
 		
 			ret=0;
@@ -579,7 +567,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		// A secondary index references a nonexistent primary key. 
 		case DB_RUNRECOVERY:
 		default:
-			LOG(L_CRIT,"sc_query: DB->get error: %s.\n", db_strerror(ret));
+			LM_CRIT("DB->get error: %s.\n", db_strerror(ret));
 			sclib_recover(_tp,ret);
 			goto error;
 		}
@@ -606,11 +594,7 @@ error:
  */
 int sc_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
-#ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("------- Todo: Implement DB RAW QUERY \n");
-	DBG("-------------------------------------------------\n");
-#endif
+	LM_CRIT("DB RAW QUERY not implemented!\n");
 	return -1;
 }
 
@@ -640,9 +624,7 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	if (!_k)
 	{
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("------- Todo: Implement DB INSERT w.o KEYs !! \n");
-	DBG("-------------------------------------------------\n");
+	LM_FATAL("DB INSERT without KEYs not implemented! \n");
 #endif
 		return -2;
 	}
@@ -652,20 +634,18 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	_tbc = sclib_get_table(SC_CON_CONNECTION(_h), &s);
 	if(!_tbc)
-	{	DBG("sc_insert: table does not exist!\n");
+	{	LM_WARN("table does not exist!\n");
 		return -3;
 	}
 
 	_tp = _tbc->dtp;
 	if(!_tp)
-	{	DBG("sc_insert: table not loaded!\n");
+	{	LM_WARN("table not loaded!\n");
 		return -4;
 	}
 
 #ifdef SC_EXTRA_DEBUG
-		DBG("---------------------------------------------------\n");
-		DBG("------- INSERT in %.*s\n", _tp->name.len, _tp->name.s );
-		DBG("---------------------------------------------------\n");
+	LM_DBG("INSERT in %.*s\n", _tp->name.len, _tp->name.s );
 #endif
 	
 	db = _tp->db;
@@ -673,12 +653,12 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	memset(kbuf, 0, klen);
 	
 	if(_tp->ncols<_n) 
-	{	DBG("sc_insert: more values than columns!!\n");
+	{	LM_WARN("more values than columns!!\n");
 		return -5;
 	}
 
 	if(_tp->ncols>_n) 
-	{	DBG("sc_insert: not enough values(%i) to fill the columns(%i) !!\n", _n, _tp->ncols);
+	{	LM_WARN("not enough values(%i) to fill the columns(%i) !!\n", _n, _tp->ncols);
 		return -6;
 	}
 	
@@ -691,7 +671,7 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	{	j = (lkey)?lkey[i]:i;
 		if(sc_is_neq_type(_tp->colp[j]->type, _v[i].type))
 		{
-			DBG("sc_insert: incompatible types v[%d] - c[%d]!\n", i, j);
+			LM_WARN("incompatible types v[%d] - c[%d]!\n", i, j);
 			ret = -8;
 			goto error;
 		}
@@ -699,7 +679,7 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	
 	/* make the key */
 	if ( (ret = sclib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, SC_KEY)) != 0 ) 
-	{	LOG(L_ERR, "sc_insert: error in sclib_valtochar  \n");
+	{	LM_ERR("Error in sclib_valtochar  \n");
 		ret = -9;
 		goto error;
 	}
@@ -714,7 +694,7 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	memset(dbuf, 0, MAX_ROW_SIZE);
 
 	if ( (ret = sclib_valtochar(_tp, lkey, dbuf, &dlen, _v, _n, SC_VALUE)) != 0 ) 
-	{	LOG(L_ERR, "sc_insert: error in sclib_valtochar \n");
+	{	LM_ERR("Error in sclib_valtochar \n");
 		ret = -9;
 		goto error;
 	}
@@ -729,13 +709,11 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		sclib_log(JLOG_INSERT, _tp, dbuf, dlen);
 
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("-- INSERT\n     KEY:  [%.*s]\n     DATA: [%.*s]\n"
+	LM_DBG("INSERT\nKEY:  [%.*s]\nDATA: [%.*s]\n"
 		, (int)   key.size
 		, (char *)key.data
 		, (int)   data.size
 		, (char *)data.data);
-	DBG("-------------------------------------------------\n");
 #endif
 	}
 	else
@@ -748,7 +726,7 @@ int sc_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		
 		case DB_RUNRECOVERY:
 		default:
-			LOG(L_CRIT, "sc_insert: DB->put error: %s.\n", db_strerror(ret));
+			LM_CRIT("DB->put error: %s.\n", db_strerror(ret));
 			sclib_recover(_tp, ret);
 			goto error;
 		}
@@ -797,20 +775,18 @@ int sc_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 
 	_tbc = sclib_get_table(SC_CON_CONNECTION(_h), &s);
 	if(!_tbc)
-	{	DBG("sc_delete: table does not exist!\n");
+	{	LM_WARN("table does not exist!\n");
 		return -3;
 	}
 
 	_tp = _tbc->dtp;
 	if(!_tp)
-	{	DBG("sc_delete: table not loaded!\n");
+	{	LM_WARN("table not loaded!\n");
 		return -4;
 	}
 
 #ifdef SC_EXTRA_DEBUG
-		DBG("-------------------------------------------------\n");
-		DBG("------- DELETE in %.*s\n", _tp->name.len, _tp->name.s );
-		DBG("-------------------------------------------------\n");
+		LM_DBG("DELETE in %.*s\n", _tp->name.len, _tp->name.s );
 #endif
 
 	db = _tp->db;
@@ -821,7 +797,7 @@ int sc_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 	{
 		/* Acquire a cursor for the database. */
 		if ((ret = db->cursor(db, NULL, &dbcp, DB_WRITECURSOR) ) != 0) 
-		{	LOG(L_ERR, "sc_query: Error creating cursor\n");
+		{	LM_ERR("Error creating cursor\n");
 			goto error;
 		}
 		
@@ -830,7 +806,7 @@ int sc_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 			if(!strncasecmp((char*)key.data,"METADATA",8)) 
 				continue;
 #ifdef SC_EXTRA_DEBUG
-			DBG("     KEY: [%.*s]\n "
+			LM_DBG("KEY: [%.*s]\n"
 				, (int)   key.size
 				, (char *)key.data);
 #endif
@@ -846,7 +822,7 @@ int sc_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 
 	/* make the key */
 	if ( (ret = sclib_valtochar(_tp, lkey, kbuf, &klen, _v, _n, SC_KEY)) != 0 ) 
-	{	LOG(L_ERR, "sc_delete: error in sclib_makekey  \n");
+	{	LM_ERR("Error in sclib_makekey\n");
 		ret = -6;
 		goto error;
 	}
@@ -861,9 +837,7 @@ int sc_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 		sclib_log(JLOG_DELETE, _tp, kbuf, klen);
 
 #ifdef SC_EXTRA_DEBUG
-		DBG("-------------------------------------------------\n");
-		DBG("-- DELETED ROW \n KEY: %s \n", (char *)key.data);
-		DBG("-------------------------------------------------\n");
+		LM_DBG("DELETED ROW \n KEY: %s \n", (char *)key.data);
 #endif
 	}
 	else
@@ -881,7 +855,7 @@ int sc_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 		/* A secondary index references a nonexistent primary key. */
 		case DB_RUNRECOVERY:
 		default:
-			LOG(L_CRIT,"sc_delete: DB->del error: %s.\n"
+			LM_CRIT("DB->del error: %s.\n"
 				, db_strerror(ret));
 			sclib_recover(_tp, ret);
 			goto error;
@@ -929,20 +903,18 @@ int _sc_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, in
 
 	_tbc = sclib_get_table(SC_CON_CONNECTION(_h), &s);
 	if(!_tbc)
-	{	DBG("_sc_delete_cursor: table does not exist!\n");
+	{	LM_WARN("table does not exist!\n");
 		return -3;
 	}
 
 	_tp = _tbc->dtp;
 	if(!_tp)
-	{	DBG("_sc_delete_cursor: table not loaded!\n");
+	{	LM_WARN("table not loaded!\n");
 		return -4;
 	}
 	
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("------- DELETE by cursor in %.*s\n", _tp->name.len, _tp->name.s );
-	DBG("-------------------------------------------------\n");
+	LM_DBG("DELETE by cursor in %.*s\n", _tp->name.len, _tp->name.s );
 #endif
 
 	if(_k)
@@ -956,14 +928,14 @@ int _sc_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, in
 	/* create an empty db_res_t which gets returned even if no result */
 	_r = sc_result_new();
 	if (!_r) 
-	{	LOG(L_ERR, "_sc_delete_cursor: no memory for result \n");
+	{	LM_ERR("no memory for result \n");
 	}
 	
 	RES_ROW_N(_r) = 0;
 	
 	/* fill in the col part of db_res_t */
 	if ((ret = sc_get_columns(_tp, _r, 0, 0)) != 0) 
-	{	LOG(L_ERR, "_sc_delete_cursor: Error while getting column names\n");
+	{	LM_ERR("Error while getting column names\n");
 		goto error;
 	}
 	
@@ -979,7 +951,7 @@ int _sc_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, in
 	
 	/* Acquire a cursor for the database. */
 	if ((ret = db->cursor(db, NULL, &dbcp, DB_WRITECURSOR)) != 0) 
-	{	LOG(L_ERR, "_sc_delete_cursor: Error creating cursor\n");
+	{	LM_ERR("Error creating cursor\n");
 	}
 	
 	while ((ret = dbcp->c_get(dbcp, &key, &data, DB_NEXT)) == 0)
@@ -989,7 +961,7 @@ int _sc_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, in
 		
 		/*fill in the row part of db_res_t */
 		if ((ret=sc_convert_row( _r, dbuf, 0)) < 0) 
-		{	LOG(L_ERR, "_sc_delete_cursor: Error while converting row\n");
+		{	LM_ERR("Error while converting row\n");
 			goto error;
 		}
 		
@@ -997,15 +969,14 @@ int _sc_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, in
 		{
 
 #ifdef SC_EXTRA_DEBUG
-			DBG("[_sc_delete_cursor] DELETE ROW by KEY:  [%.*s]\n"
-				, (int) key.size, (char *)key.data);
+			LM_DBG("DELETE ROW by KEY:  [%.*s]\n", (int) key.size, 
+				(char *)key.data);
 #endif
 
 			if((ret = dbcp->c_del(dbcp, 0)) != 0)
 			{	
 				/* Berkeley DB error handler */
-				LOG(L_CRIT,"_sc_delete_cursor: DB->get error: %s.\n"
-					, db_strerror(ret));
+				LM_CRIT("DB->get error: %s.\n", db_strerror(ret));
 				sclib_recover(_tp,ret);
 			}
 			
@@ -1063,27 +1034,25 @@ int sc_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 	_tbc = sclib_get_table(SC_CON_CONNECTION(_con), &s);
 	if(!_tbc)
-	{	LOG(L_ERR, "ERROR: sc_update:: table does not exist\n");
+	{	LM_ERR("table does not exist\n");
 		return -1;
 	}
 
 	_tp = _tbc->dtp;
 	if(!_tp)
-	{	LOG(L_ERR, "ERROR: sc_update:: table not loaded\n");
+	{	LM_ERR("table not loaded\n");
 		return -1;
 	}
 	
 	db = _tp->db;
 	if(!db)
-	{	LOG(L_ERR, "ERROR: sc_update:: DB null ptr\n");
+	{	LM_ERR("DB null ptr\n");
 		return -1;
 	}
 	
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("-- UPDATE in %.*s\n", _tp->name.len, _tp->name.s);
-	DBG("-------------------------------------------------\n");
-	if (_op) DBG("sc_update: DONT-CARE : _op: operators for refining query \n");
+	LM_DBG("UPDATE in %.*s\n", _tp->name.len, _tp->name.s);
+	if (_op) LM_DBG("DONT-CARE : _op: operators for refining query \n");
 #endif
 	
 	memset(&key, 0, sizeof(DBT));
@@ -1101,14 +1070,14 @@ int sc_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	}
 	else
 	{
-		LOG(L_ERR, "ERROR: sc_update:: Null keys in update _k=0 \n");
+		LM_ERR("Null keys in update _k=0 \n");
 		return -1;
 	}
 	
 	len = MAX_ROW_SIZE;
 	
 	if ( (ret = sclib_valtochar(_tp, lkey, kbuf, &len, _v, _n, SC_KEY)) != 0 ) 
-	{	LOG(L_ERR, "sc_update: error in query key \n");
+	{	LM_ERR("Error in query key \n");
 		goto cleanup;
 	}
 	
@@ -1124,7 +1093,7 @@ int sc_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	{
 
 #ifdef SC_EXTRA_DEBUG
-		DBG("---1 uRESULT\n     KEY:  [%.*s]\n     DATA: [%.*s]\n"
+		LM_DBG("RESULT\nKEY:  [%.*s]\nDATA: [%.*s]\n"
 			, (int)   key.size
 			, (char *)key.data
 			, (int)   qdata.size
@@ -1159,7 +1128,7 @@ int sc_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		sum+=len;
 		
 		if(sum > MAX_ROW_SIZE)
-		{	LOG(L_ERR, "sc_update: value too long for string \n");
+		{	LM_ERR("value too long for string \n");
 			ret = -3;
 			goto cleanup;
 		}
@@ -1171,7 +1140,7 @@ int sc_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 			{	/* update this col */
 				int j = MAX_ROW_SIZE - sum;
 				if( sc_val2str( &_uv[i], t, &j) )
-				{	LOG(L_ERR, "sc_update: value too long for string \n");
+				{	LM_ERR("value too long for string \n");
 					ret = -3;
 					goto cleanup;
 				}
@@ -1190,7 +1159,7 @@ next:
 		/* append DELIM */
 		sum += DELIM_LEN;
 		if(sum > MAX_ROW_SIZE)
-		{	LOG(L_ERR, "sc_update: value too long for string \n");
+		{	LM_ERR("value too long for string \n");
 			ret = -3;
 			goto cleanup;
 		}
@@ -1209,7 +1178,7 @@ next:
 	udata.size  = sum;
 
 #ifdef SC_EXTRA_DEBUG
-	DBG("---2 MODIFIED Data\n     KEY:  [%.*s]\n     DATA: [%.*s]\n"
+	LM_DBG("MODIFIED Data\nKEY:  [%.*s]\nDATA: [%.*s]\n"
 		, (int)   key.size
 		, (char *)key.data
 		, (int)   udata.size
@@ -1219,7 +1188,7 @@ next:
 	if ((ret = db->del(db, NULL, &key, 0)) == 0)
 	{
 #ifdef SC_EXTRA_DEBUG
-		DBG("---3 uDELETED ROW \n KEY: %s \n", (char *)key.data);
+		LM_DBG("DELETED ROW\nKEY: %s \n", (char *)key.data);
 #endif
 	}
 	else
@@ -1231,7 +1200,7 @@ next:
 	{
 		sclib_log(JLOG_UPDATE, _tp, ubuf, sum);
 #ifdef SC_EXTRA_DEBUG
-	DBG("---4 INSERT \n     KEY:  [%.*s]\n     DATA: [%.*s]\n"
+	LM_DBG("INSERT \nKEY:  [%.*s]\nDATA: [%.*s]\n"
 		, (int)   key.size
 		, (char *)key.data
 		, (int)   udata.size
@@ -1243,9 +1212,7 @@ next:
 	}
 
 #ifdef SC_EXTRA_DEBUG
-	DBG("-------------------------------------------------\n");
-	DBG("-- UPDATE COMPLETE \n");
-	DBG("-------------------------------------------------\n");
+	LM_DBG("UPDATE COMPLETE \n");
 #endif
 
 
@@ -1265,9 +1232,7 @@ db_error:
 	case DB_NOTFOUND:
 	
 #ifdef SC_EXTRA_DEBUG
-		DBG("------------------------------\n");
-		DBG("--- NO RESULT \n");
-		DBG("------------------------------\n");
+		LM_DBG("NO RESULT \n");
 #endif
 		return -1;
 	
@@ -1278,7 +1243,7 @@ db_error:
 	/* A secondary index references a nonexistent primary key.*/ 
 	case DB_RUNRECOVERY:
 	default:
-		LOG(L_CRIT,"sc_update: DB->get error: %s.\n", db_strerror(ret));
+		LM_CRIT("DB->get error: %s.\n", db_strerror(ret));
 		sclib_recover(_tp,ret);
 	}
 	

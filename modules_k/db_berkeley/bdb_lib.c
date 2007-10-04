@@ -52,7 +52,7 @@ int sclib_init(db_parms_p _p)
 	{
 		_cachedb = pkg_malloc( sizeof(database_p) );
 		if (!_cachedb) 
-		{	LOG(L_CRIT,"sclib_init: no enough pkg mem\n");
+		{	LM_CRIT("not enough private memory\n");
 			return -1;
 		}
 		
@@ -61,7 +61,7 @@ int sclib_init(db_parms_p _p)
 		/*create default parms*/
 		db_parms_p dp = (db_parms_p) pkg_malloc( sizeof(db_parms_t) );
 		if (!dp) 
-		{	LOG(L_CRIT,"sclib_init: no enough pkg mem\n");
+		{	LM_CRIT("not enough private memory\n");
 			return -1;
 		}
 		
@@ -126,7 +126,7 @@ int sclib_close(char* _n)
 		!strncasecmp(s.s, _db_p->name.s, _db_p->name.len))
 		{
 			//close the whole dbenv
-			DBG("-- sclib_close ENV %.*s \n", s.len, s.s);
+			LM_DBG("ENV %.*s \n", s.len, s.s);
 			while(_tbc)
 			{
 				if(_tbc->dtp)
@@ -136,8 +136,7 @@ int sclib_close(char* _n)
 					if(_db)
 						rc = _db->close(_db, 0);
 					if(rc != 0)
-						LOG(L_CRIT,"lib_close: error closing %s\n"
-							, _tbc->dtp->name.s);
+						LM_CRIT("error closing %s\n", _tbc->dtp->name.s);
 					_tbc->dtp->db = NULL;
 					
 					lock_release(&_tbc->dtp->sem);
@@ -154,7 +153,7 @@ int sclib_close(char* _n)
 		{
 			if(_tbc->dtp)
 			{
-				DBG("-- sclib_close DB %.*s \n", s.len, s.s);
+				LM_DBG("DB %.*s \n", s.len, s.s);
 				if(_tbc->dtp->name.len == s.len && 
 				!strncasecmp(_tbc->dtp->name.s, s.s, s.len ))
 				{
@@ -163,8 +162,7 @@ int sclib_close(char* _n)
 					if(_db)
 						rc = _db->close(_db, 0);
 					if(rc != 0)
-						LOG(L_CRIT,"lib_close: error closing %s\n"
-							, _tbc->dtp->name.s);
+						LM_CRIT("error closing %s\n", _tbc->dtp->name.s);
 					_tbc->dtp->db = NULL;
 					lock_release(&_tbc->dtp->sem);
 					return 0;
@@ -207,7 +205,7 @@ int sclib_reopen(char* _n)
 		!strncasecmp(s.s, _db_p->name.s,_db_p->name.len))
 		{
 			//open the whole dbenv
-			DBG("-- sclib_reopen ENV %.*s \n", s.len, s.s);
+			LM_DBG("-- sclib_reopen ENV %.*s \n", s.len, s.s);
 			if(!_db_p->dbenv)
 			{	rc = sclib_create_dbenv(&_env, _n);
 				_db_p->dbenv = _env;
@@ -226,15 +224,14 @@ int sclib_reopen(char* _n)
 					{
 						if ((rc = db_create(&_db, _env, 0)) != 0)
 						{	_env->err(_env, rc, "db_create");
-							LOG(L_CRIT, "sclib_reopen: error in db_create.\n");
-							LOG(L_CRIT, "sclib_reopen: db error: %s.\n",db_strerror(rc));
+							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
 							sclib_recover(_tbc->dtp, rc);
 						}
 					}
 					
 					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
 					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
-						LOG(L_CRIT, "sclib_reopen:bdb open: %s.\n",db_strerror(rc));
+						LM_CRIT("error in db_open: %s.\n",db_strerror(rc));
 						sclib_recover(_tbc->dtp, rc);
 					}
 					
@@ -252,7 +249,7 @@ int sclib_reopen(char* _n)
 		{
 			if(_tbc->dtp)
 			{
-				DBG("-- sclib_reopen DB %.*s \n", s.len, s.s);
+				LM_DBG("DB %.*s \n", s.len, s.s);
 				if(_tbc->dtp->name.len == s.len && 
 				!strncasecmp(_tbc->dtp->name.s, s.s, s.len ))
 				{
@@ -261,15 +258,14 @@ int sclib_reopen(char* _n)
 					{
 						if ((rc = db_create(&_db, _env, 0)) != 0)
 						{	_env->err(_env, rc, "db_create");
-							LOG(L_CRIT, "sclib_reopen: error in db_create.\n");
-							LOG(L_CRIT, "sclib_reopen: db error: %s.\n",db_strerror(rc));
+							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
 							sclib_recover(_tbc->dtp, rc);
 						}
 					}
 					
 					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
 					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
-						LOG(L_CRIT, "sclib_reopen:bdb open: %s.\n",db_strerror(rc));
+						LM_CRIT("bdb open: %s.\n",db_strerror(rc));
 						sclib_recover(_tbc->dtp, rc);
 					}
 					_tbc->dtp->db = _db;
@@ -299,8 +295,7 @@ int sclib_create_dbenv(DB_ENV **_dbenv, char* _home)
 	/* Create an environment and initialize it for additional error * reporting. */ 
 	if ((rc = db_env_create(&env, 0)) != 0) 
 	{
-		LOG(L_ERR, "sclib_create_dbenv: db_env_create failed !\n");
-		LOG(L_ERR, "sc_lib:bdb error: %s.\n",db_strerror(rc)); 
+		LM_ERR("db_env_create failed! bdb error: %s.\n", db_strerror(rc)); 
 		return (rc);
 	}
  
@@ -309,8 +304,7 @@ int sclib_create_dbenv(DB_ENV **_dbenv, char* _home)
 	/*  Specify the shared memory buffer pool cachesize */ 
 	if ((rc = env->set_cachesize(env, 0, _db_parms->cache_size, 0)) != 0) 
 	{
-		LOG(L_ERR, "sclib_create_dbenv: dbenv set_cachsize failed !\n");
-		LOG(L_ERR, "sc_lib:bdb error: %s.\n",db_strerror(rc));
+		LM_ERR("dbenv set_cachsize failed! bdb error: %s.\n", db_strerror(rc));
 		env->err(env, rc, "set_cachesize"); 
 		goto err; 
 	}
@@ -335,8 +329,7 @@ int sclib_create_dbenv(DB_ENV **_dbenv, char* _home)
 	/* Open the environment */ 
 	if ((rc = env->open(env, _home, flags, 0)) != 0) 
 	{ 
-		LOG(L_ERR, "sclib_create_dbenv: dbenv is not initialized!\n");
-		LOG(L_ERR, "sc_lib:bdb error: %s.\n",db_strerror(rc));
+		LM_ERR("dbenv is not initialized! bdb error: %s.\n",db_strerror(rc));
 		env->err(env, rc, "environment open: %s", _home); 
 		goto err; 
 	}
@@ -362,28 +355,27 @@ database_p sclib_get_db(str *_s)
 
 	if( !_cachedb)
 	{
-		LOG(L_ERR, "sclib_get_db: _cachedb is not initialized!\n");
+		LM_ERR("_cachedb is not initialized!\n");
 		return NULL;
 	}
 
 	_db_p = *_cachedb;
 	if(_db_p)
 	{
-		DBG("sclib_get_db: db already cached!\n");
+		LM_DBG("db already cached!\n");
 		return _db_p;
 	}
 
 	if(!sc_is_database(_s))
 	{	
-		LOG(L_ERR, "sclib_get_db: database [%.*s] does not exists!\n"
-			,_s->len , _s->s);
+		LM_ERR("database [%.*s] does not exists!\n" ,_s->len , _s->s);
 		return NULL;
 	}
 
 	_db_p = (database_p)pkg_malloc(sizeof(database_t));
 	if(!_db_p)
 	{
-		LOG(L_ERR, "sclib_get_db: no memory for dbenv_t.\n");
+		LM_ERR("no private memory for dbenv_t.\n");
 		pkg_free(_db_p);
 		return NULL;
 	}
@@ -397,7 +389,7 @@ database_p sclib_get_db(str *_s)
 
 	if ((rc = sclib_create_dbenv(&(_db_p->dbenv), name)) != 0)
 	{
-		LOG(L_ERR, "sclib_get_db: sclib_create_dbenv failed");
+		LM_ERR("sclib_create_dbenv failed");
 		pkg_free(_db_p->name.s);
 		pkg_free(_db_p);
 		return NULL;
@@ -455,12 +447,12 @@ tbl_cache_p sclib_get_table(database_p _db, str *_s)
 	_tp = sclib_create_table(_db, _s);
 
 #ifdef SC_EXTRA_DEBUG
-	DBG("DBG:sclib_get_table: %.*s\n", _s->len, _s->s);
+	LM_DBG("table: %.*s\n", _s->len, _s->s);
 #endif
 
 	if(!_tp)
 	{
-		LOG(L_ERR, "sclib_get_table: failed to create table.\n");
+		LM_ERR("failed to create table.\n");
 		pkg_free(_tbc);
 		return NULL;
 	}
@@ -497,7 +489,7 @@ void sclib_log(int op, table_p _tp, char* _msg, int len)
 			{	/*try to roll logfile*/
 				if(sclib_create_journal(_tp))
 				{
-					LOG(L_ERR, "sclib_log: Journaling has FAILED !\n");
+					LM_ERR("Journaling has FAILED !\n");
 					return;
 				}
 			}
@@ -551,22 +543,21 @@ table_p sclib_create_table(database_p _db, str *_s)
 
 	if(!_db || !_db->dbenv)
 	{
-		LOG(L_ERR, "sclib_create_table: no database_p or dbenv.\n");
+		LM_ERR("no database_p or dbenv.\n");
 		return NULL;
 	}
 
 	tp = (table_p)pkg_malloc(sizeof(table_t));
 	if(!tp)
 	{
-		LOG(L_ERR, "sclib_create_table: no memory for table_t.\n");
+		LM_ERR("no private memory for table_t.\n");
 		return NULL;
 	}
 
 	if ((rc = db_create(&bdb, _db->dbenv, 0)) != 0)
 	{ 
 		_db->dbenv->err(_db->dbenv, rc, "database create");
-		LOG(L_ERR, "sclib_create_table: error in db_create.\n");
-		LOG(L_ERR, "sc_lib:bdb error: %s.\n",db_strerror(rc));
+		LM_ERR("error in db_create, bdb error: %s.\n",db_strerror(rc));
 		pkg_free(tp);
 		return NULL;
 	}
@@ -575,9 +566,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 	strncpy(tblname, _s->s, _s->len);
 
 #ifdef SC_EXTRA_DEBUG
-	DBG("-----------------------------------\n");
-	DBG("------- CREATE TABLE = %s\n", tblname);
-	DBG("-----------------------------------\n");
+	LM_DBG("CREATE TABLE = %s\n", tblname);
 #endif
 
 	flags = DB_CREATE | DB_THREAD;
@@ -585,7 +574,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 	if ((rc = bdb->open(bdb, NULL, tblname, NULL, DB_HASH, flags, 0664)) != 0)
 	{ 
 		_db->dbenv->err(_db->dbenv, rc, "DB->open: %s", tblname);
-		LOG(L_ERR, "sclib_create_table:bdb open: %s.\n",db_strerror(rc));
+		LM_ERR("bdb open: %s.\n",db_strerror(rc));
 		pkg_free(tp);
 		return NULL;
 	}
@@ -616,14 +605,14 @@ table_p sclib_create_table(database_p _db, str *_s)
 	rc = load_metadata_columns(tp);
 	if(rc!=0)
 	{
-		LOG(L_ERR, "sclib_create_table: FAILED to load METADATA COLS in table: %s.\n", tblname);
+		LM_ERR("FAILED to load METADATA COLS in table: %s.\n", tblname);
 		goto error;
 	}
 
 	rc = load_metadata_keys(tp);
 	if(rc!=0)
 	{
-		LOG(L_ERR, "sclib_create_table: FAILED to load METADATA KEYS in table: %s.\n", tblname);
+		LM_ERR("FAILED to load METADATA KEYS in table: %s.\n", tblname);
 		/*will have problems later figuring column types*/
 		goto error;
 	}
@@ -632,7 +621,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 	rc = load_metadata_readonly(tp);
 	if(rc!=0)
 	{
-		LOG(L_INFO, "sclib_create_table: No METADATA_READONLY in table: %s.\n", tblname);
+		LM_INFO("No METADATA_READONLY in table: %s.\n", tblname);
 		/*non-critical; table will default to READWRITE*/
 	}
 
@@ -640,14 +629,14 @@ table_p sclib_create_table(database_p _db, str *_s)
 	{	
 		/*schema defines this table RO readonly*/
 #ifdef SC_EXTRA_DEBUG
-		DBG("TABLE %.*s is changing to READONLY mode\n"
+		LM_DBG("TABLE %.*s is changing to READONLY mode\n"
 			, tp->name.len, tp->name.s);
 #endif
 		
 		if ((rc = bdb->close(bdb,0)) != 0)
 		{ 
 			_db->dbenv->err(_db->dbenv, rc, "DB->close: %s", tblname);
-			LOG(L_ERR, "sclib_create_table:bdb close: %s.\n",db_strerror(rc));
+			LM_ERR("bdb close: %s.\n",db_strerror(rc));
 			goto error;
 		}
 		
@@ -655,7 +644,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 		if ((rc = db_create(&bdb, _db->dbenv, 0)) != 0)
 		{ 
 			_db->dbenv->err(_db->dbenv, rc, "database create");
-			LOG(L_ERR, "sclib_create_table: error in db_create.\n");
+			LM_ERR("error in db_create.\n");
 			goto error;
 		}
 		
@@ -663,7 +652,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 		if ((rc = bdb->open(bdb, NULL, tblname, NULL, DB_HASH, flags, 0664)) != 0)
 		{ 
 			_db->dbenv->err(_db->dbenv, rc, "DB->open: %s", tblname);
-			LOG(L_ERR, "sclib_create_table:bdb open: %s.\n",db_strerror(rc));
+			LM_ERR("bdb open: %s.\n",db_strerror(rc));
 			goto error;
 		}
 		tp->db=bdb;
@@ -674,7 +663,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 	*/
 	rc = load_metadata_logflags(tp);
 	if(rc!=0)
-		LOG(L_INFO, "sclib_create_table: No METADATA_LOGFLAGS in table: %s.\n", tblname);
+		LM_INFO("No METADATA_LOGFLAGS in table: %s.\n", tblname);
 	
 	if ((tp->logflags & JLOG_FILE) == JLOG_FILE)
 		sclib_create_journal(tp);
@@ -723,8 +712,8 @@ int sclib_create_journal(table_p _tp)
 	if(_tp->fp)
 	{	/* must be rolling. */
 		if( fclose(_tp->fp) )
-		{	LOG(L_ERR, "sclib_create_journal: Failed to Close Log in table: %.*s .\n"
-				,_tp->name.len, _tp->name.s);
+		{	LM_ERR("Failed to Close Log in table: %.*s .\n", _tp->name.len,
+			 _tp->name.s);
 			return -1;
 		}
 	}
@@ -735,8 +724,7 @@ int sclib_create_journal(table_p _tp)
 	}
 	else
 	{
-		LOG(L_ERR, "sclib_create_journal: Failed to Open Log in table: %.*s .\n"
-			,_tp->name.len, _tp->name.s);
+		LM_ERR("Failed to Open Log in table: %.*s .\n",_tp->name.len, _tp->name.s);
 		return -1;
 	}
 	
@@ -778,7 +766,7 @@ int load_metadata_columns(table_p _tp)
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
 		db->err(db, ret, "load_metadata_columns DB->get failed");
-		LOG(L_ERR, "load_metadata_columns: FAILED to find METADATA_COLUMNS in DB \n");
+		LM_ERR("FAILED to find METADATA_COLUMNS in DB \n");
 		return -1;
 	}
 
@@ -792,7 +780,7 @@ int load_metadata_columns(table_p _tp)
 		/* create column*/
 		col = (column_p) pkg_malloc(sizeof(column_t));
 		if(!col)
-		{	LOG(L_ERR, "load_metadata_columns: out of memory \n");
+		{	LM_ERR("out of private memory \n");
 			return -1;
 		}
 		
@@ -854,7 +842,7 @@ int load_metadata_keys(table_p _tp)
 	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
 	{
 		db->err(db, ret, "load_metadata_keys DB->get failed");
-		LOG(L_ERR, "load_metadata_keys: FAILED to find METADATA in table \n");
+		LM_ERR("FAILED to find METADATA in table \n");
 		return ret;
 	}
 	
@@ -968,9 +956,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 	if(! _lres)
 	{	
 #ifdef SC_EXTRA_DEBUG
-		DBG("-------------------------------------------------\n");
-		DBG("-- sclib_valtochar: schema has NOT specified any keys! \n");
-		DBG("-------------------------------------------------\n");	
+		LM_DBG("schema has NOT specified any keys! \n");
 #endif
 
 		/* schema has not specified keys
@@ -979,13 +965,13 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 		for(i=0;i<_n;i++)
 		{	len = total - sum;
 			if ( sc_val2str(&_v[i], sk, &len) != 0 ) 
-			{	LOG(L_ERR, "sclib_makekey: error building composite key \n");
+			{	LM_ERR("error building composite key \n");
 				return -2;
 			}
 
 			sum += len;
 			if(sum > total)
-			{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for subval %s\n",sk);
+			{	LM_ERR("Destination buffer too short for subval %s\n",sk);
 				return -2;
 			} 
 
@@ -996,7 +982,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 
 			sum += DELIM_LEN;
 			if(sum > total)
-			{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for delim \n");
+			{	LM_ERR("Destination buffer too short for delim \n");
 				return -3;
 			}
 			
@@ -1045,7 +1031,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 				 index k for anything else
 				*/
 #ifdef SC_EXTRA_DEBUG
-				DBG("-- KEY PROVIDED[%i]: %.*s.%.*s \n", i 
+				LM_DBG("KEY PROVIDED[%i]: %.*s.%.*s \n", i 
 					, _tp->name.len , ZSW(_tp->name.s) 
 					, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
 				   );
@@ -1053,13 +1039,13 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 
 				len = total - sum;
 				if ( sc_val2str(&_v[j], sk, &len) != 0)
-				{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for subval %s\n",sk);
+				{	LM_ERR("Destination buffer too short for subval %s\n",sk);
 					return -4;
 				}
 				
 				sum += len;
 				if(sum > total)
-				{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for subval %s\n",sk);
+				{	LM_ERR("Destination buffer too short for subval %s\n",sk);
 					return -5;
 				}
 
@@ -1069,7 +1055,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 
 				sum += DELIM_LEN;
 				if(sum > total)
-				{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for delim \n");
+				{	LM_ERR("Destination buffer too short for delim \n");
 					return -5;
 				} 
 				
@@ -1093,7 +1079,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 		 is considered a key according to our schema.
 		*/
 #ifdef SC_EXTRA_DEBUG
-		DBG("-- Missing KEY[%i]: %.*s.%.*s \n", i
+		LM_DBG("Missing KEY[%i]: %.*s.%.*s \n", i
 			, _tp->name.len , ZSW(_tp->name.s) 
 			, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
 		   );
@@ -1101,7 +1087,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 		len = strlen(cNULL);
 		sum += len;
 		if(sum > total)
-		{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for subval %s\n",cNULL);
+		{	LM_ERR("Destination buffer too short for subval %s\n",cNULL);
 			return -5;
 		}
 		
@@ -1111,7 +1097,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 		
 		sum += DELIM_LEN;
 		if(sum > total)
-		{	LOG(L_ERR, "[sclib_makekey]: Destination buffer too short for delim \n");
+		{	LM_ERR("Destination buffer too short for delim \n");
 			return -5;
 		} 
 		
@@ -1211,10 +1197,10 @@ int sclib_recover(table_p _tp, int _rc)
 	switch(_rc)
 	{
 		case DB_LOCK_DEADLOCK:
-		LOG(L_ERR, "[sclib_recover] DB_LOCK_DEADLOCK detected !!\n");
+		LM_ERR("DB_LOCK_DEADLOCK detected !!\n");
 		
 		case DB_RUNRECOVERY:
-		LOG(L_ERR, "[sclib_recover] DB_RUNRECOVERY detected !! \n");
+		LM_ERR("DB_RUNRECOVERY detected !! \n");
 		sclib_destroy();
 		exit(1);
 		break;
