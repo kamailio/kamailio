@@ -752,6 +752,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 {
 	struct to_body to, *pto = NULL;
 	db_key_t db_keys[3];
+	db_key_t ob_key;
 	db_op_t  db_ops[3];
 	db_val_t db_vals[3];
 	db_key_t db_cols[6];
@@ -766,6 +767,8 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	int printbuf_len;
 	
 	/* init */
+	ob_key = sc_mid;
+
 	db_keys[0]=sc_uri_user;
 	db_keys[1]=sc_uri_host;
 	db_keys[2]=sc_snd_time;
@@ -899,7 +902,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	}
 
 	if((msilo_dbf.query(db_con,db_keys,db_ops,db_vals,db_cols,db_no_keys,
-				db_no_cols, NULL,&db_res)!=0) || (RES_ROW_N(db_res) <= 0))
+				db_no_cols, ob_key, &db_res)!=0) || (RES_ROW_N(db_res) <= 0))
 	{
 		LM_DBG("no stored message for <%.*s>!\n", pto->uri.len,	pto->uri.s);
 		goto done;
