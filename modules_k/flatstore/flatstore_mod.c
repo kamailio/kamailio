@@ -71,11 +71,11 @@ time_t local_timestamp;
  * Flatstore database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",   (cmd_function)flat_use_table, 2, 0, 0},
-	{"db_init",        (cmd_function)flat_db_init,   1, 0, 0},
-	{"db_close",       (cmd_function)flat_db_close,  2, 0, 0},
-	{"db_insert",      (cmd_function)flat_db_insert, 2, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"db_use_table",   (cmd_function)flat_use_table, 2, 0, 0, 0},
+	{"db_init",        (cmd_function)flat_db_init,   1, 0, 0, 0},
+	{"db_close",       (cmd_function)flat_db_close,  2, 0, 0, 0},
+	{"db_insert",      (cmd_function)flat_db_insert, 2, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

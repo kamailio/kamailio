@@ -113,9 +113,9 @@ int credentials_n           = 0; /* Number of credentials in the list */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"www_authorize",   www_authorize,   2, auth_fixup, REQUEST_ROUTE},
-	{"proxy_authorize", proxy_authorize, 2, auth_fixup, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"www_authorize",   www_authorize,   2, auth_fixup, 0, REQUEST_ROUTE},
+	{"proxy_authorize", proxy_authorize, 2, auth_fixup, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

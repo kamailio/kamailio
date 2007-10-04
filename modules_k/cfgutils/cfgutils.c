@@ -84,20 +84,20 @@ static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
 		set_prob,  /* C function name */
 		1,          /* number of parameters */
-		fixup_prob,          /* */
+		fixup_prob, 0,         /* */
 		/* can be applied to original/failed requests and replies */
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
-	{"rand_reset_prob", reset_prob, 0, 0,
+	{"rand_reset_prob", reset_prob, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
-	{"rand_get_prob", get_prob, 0, 0,
+	{"rand_get_prob", get_prob, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"rand_event", rand_event, 0, 0,
+	{"rand_event", rand_event, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"sleep",    m_sleep,    1,      fixup_str2int, 
+	{"sleep",    m_sleep,    1,      fixup_str2int, 0, 
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"usleep",   m_usleep,   1,      fixup_str2int, 
+	{"usleep",   m_usleep,   1,      fixup_str2int, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={ 

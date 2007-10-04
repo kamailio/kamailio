@@ -123,11 +123,11 @@ db_con_t* group_dbh = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user_in",      is_user_in,      2,  hf_fixup,
+	{"is_user_in",      is_user_in,      2,  hf_fixup, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
-	{"get_user_group",  get_user_group,  2,  get_gid_fixup,
+	{"get_user_group",  get_user_group,  2,  get_gid_fixup, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 

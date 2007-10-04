@@ -68,12 +68,12 @@ static int service_type = -1;
  */
 static cmd_export_t cmds[] = {
 	{"radius_www_authorize",   radius_www_authorize,   1, auth_fixup,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"radius_proxy_authorize", radius_proxy_authorize_1, 1, auth_fixup,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"radius_proxy_authorize", radius_proxy_authorize_2, 2, auth_fixup,
-			REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+			0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

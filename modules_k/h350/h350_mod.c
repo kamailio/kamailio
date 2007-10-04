@@ -78,14 +78,14 @@ ldap_api_t ldap_api;
  */
 static cmd_export_t cmds[] = {
 	{"h350_sipuri_lookup",           w_h350_sipuri_lookup,     1,
-	 one_str_pv_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	 one_str_pv_elem_fixup, 0,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"h350_auth_lookup",             w_h350_auth_lookup,       2,
-	 h350_auth_lookup_fixup,         REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	 h350_auth_lookup_fixup, 0,         REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"h350_result_call_preferences", w_h350_call_preferences,  1,
-	 one_str_pv_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	 one_str_pv_elem_fixup, 0,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"h350_result_service_level",    w_h350_service_level,     1,
-	 one_str_pv_elem_fixup,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{0, 0, 0, 0, 0}
+	 one_str_pv_elem_fixup, 0,          REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

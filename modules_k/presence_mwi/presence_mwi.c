@@ -53,7 +53,7 @@ add_event_t pres_add_event;
 /* module exported commands */
 static cmd_export_t cmds[] =
 {
-    {0,	0, 0, 0, 0}
+    {0,	0, 0, 0, 0, 0}
 };
 
 /* module exported paramaters */

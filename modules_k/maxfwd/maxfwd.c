@@ -59,10 +59,10 @@ static int mod_init(void);
 
 static cmd_export_t cmds[]={
 	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1,
-		fixup_maxfwd_header, REQUEST_ROUTE},
+		fixup_maxfwd_header, 0, REQUEST_ROUTE},
 	{"is_maxfwd_lt", is_maxfwd_lt, 1,
-		fixup_maxfwd_header, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{0,0,0,0,0}
+		fixup_maxfwd_header, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={

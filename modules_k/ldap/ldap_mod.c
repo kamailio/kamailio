@@ -96,30 +96,30 @@ static dictionary* config_vals = NULL;
 */
 static cmd_export_t cmds[] = {
 	{"ldap_search",            w_ldap_search,            1, 
-		ldap_search_fixup,
+		ldap_search_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"ldap_result",            w_ldap_result1,           1, 
-		ldap_result_fixup,
+		ldap_result_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"ldap_result",            w_ldap_result2,           2, 
-		ldap_result_fixup, 
+		ldap_result_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"ldap_result_next",       w_ldap_result_next,       0, 
-		0,
+		0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"ldap_result_check",      w_ldap_result_check_1,    1, 
-		ldap_result_check_fixup,
+		ldap_result_check_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"ldap_result_check",      w_ldap_result_check_2,    2, 
-		ldap_result_check_fixup,
+		ldap_result_check_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"ldap_filter_url_encode", w_ldap_filter_url_encode, 2, 
-		ldap_filter_url_encode_fixup,
+		ldap_filter_url_encode_fixup, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
 	{"load_ldap",              (cmd_function)load_ldap,  0,
-		0,
+		0, 0,
 		0},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 

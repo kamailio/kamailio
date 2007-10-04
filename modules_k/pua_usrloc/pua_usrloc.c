@@ -71,8 +71,8 @@ send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {
-	{"pua_set_publish",			pua_set_publish,   0, 0, REQUEST_ROUTE}, 	
-	{0,							0,				   0, 0, 0} 
+	{"pua_set_publish",			pua_set_publish,   0, 0, 0, REQUEST_ROUTE}, 	
+	{0,							0, 0,				   0, 0, 0} 
 };
 
 static param_export_t params[]={

@@ -127,9 +127,9 @@ int add_rls_event(modparam_t type, void* val);
 
 static cmd_export_t cmds[]=
 {
-	{"rls_handle_subscribe",	rls_handle_subscribe,  0,	 0, REQUEST_ROUTE},
-	{"rls_handle_notify",   	rls_handle_notify,     0,	 0, REQUEST_ROUTE},
-	{0,				        		  0,		       0,	 0,     0	     }	 
+	{"rls_handle_subscribe",	rls_handle_subscribe,  0,	 0, 0, REQUEST_ROUTE},
+	{"rls_handle_notify",   	rls_handle_notify,     0,	 0, 0, REQUEST_ROUTE},
+	{0,				        		  0, 0,		       0,	 0,     0	     }	 
 };
 
 static param_export_t params[]={

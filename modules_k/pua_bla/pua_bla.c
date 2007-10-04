@@ -54,9 +54,9 @@ int bla_set_flag(struct sip_msg* , char*, char*);
 
 static cmd_export_t cmds[]=
 {
-	{"bla_set_flag",            bla_set_flag,		 0, 0, REQUEST_ROUTE},
-	{"bla_handle_notify",		bla_handle_notify,   0, 0, REQUEST_ROUTE}, 	
-	{0,							0,					 0, 0, 0} 
+	{"bla_set_flag",            bla_set_flag,		 0, 0, 0, REQUEST_ROUTE},
+	{"bla_handle_notify",		bla_handle_notify,   0, 0, 0, REQUEST_ROUTE}, 	
+	{0,							0, 0,					 0, 0, 0} 
 };
 static param_export_t params[]=
 {

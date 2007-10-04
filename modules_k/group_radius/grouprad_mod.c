@@ -60,8 +60,8 @@ int use_domain = 0;  /* By default we use domain */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_is_user_in", radius_is_user_in, 2, hf_fixup, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"radius_is_user_in", radius_is_user_in, 2, hf_fixup, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

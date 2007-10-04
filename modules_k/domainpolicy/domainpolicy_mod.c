@@ -104,9 +104,9 @@ unsigned short send_socket_avp_name_str;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"dp_can_connect",  dp_can_connect,  0, 0, REQUEST_ROUTE},
-	{"dp_apply_policy", dp_apply_policy, 0, 0, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"dp_can_connect",  dp_can_connect,  0, 0, 0, REQUEST_ROUTE},
+	{"dp_apply_policy", dp_apply_policy, 0, 0, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

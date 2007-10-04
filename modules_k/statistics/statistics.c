@@ -48,11 +48,11 @@ static int fixup_stat(void** param, int param_no);
 
 
 static cmd_export_t cmds[]={
-	{"update_stat",  w_update_stat,  2, fixup_stat,
+	{"update_stat",  w_update_stat,  2, fixup_stat, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{"reset_stat",   w_reset_stat,    1, fixup_stat,
+	{"reset_stat",   w_reset_stat,    1, fixup_stat, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE},
-	{0,0,0,0,0}
+	{0,0,0,0,0,0}
 };
 
 static param_export_t mod_params[]={

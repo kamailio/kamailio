@@ -99,8 +99,8 @@ static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
 
 
 static cmd_export_t cmds[]={
-	{"load_dlg",  (cmd_function)load_dlg,   0, 0,  0},
-	{0,0,0,0,0}
+	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
+	{0,0,0,0,0,0}
 };
 
 static param_export_t mod_params[]={

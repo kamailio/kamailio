@@ -81,13 +81,13 @@ static int initial=0;
 static unsigned int *gflags=0;
 
 static cmd_export_t cmds[]={
-	{"set_gflag",    set_gflag,   1,   fixup_gflags,
+	{"set_gflag",    set_gflag,   1,   fixup_gflags, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"reset_gflag",  reset_gflag, 1,   fixup_gflags,
+	{"reset_gflag",  reset_gflag, 1,   fixup_gflags, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"is_gflag",     is_gflag,    1,   fixup_gflags,
+	{"is_gflag",     is_gflag,    1,   fixup_gflags, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={

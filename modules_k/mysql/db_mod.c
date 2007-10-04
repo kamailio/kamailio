@@ -46,20 +46,20 @@ MODULE_VERSION
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",        (cmd_function)db_mysql_use_table,     2, 0, 0},
-	{"db_init",             (cmd_function)db_mysql_init,          1, 0, 0},
-	{"db_close",            (cmd_function)db_mysql_close,         2, 0, 0},
-	{"db_query",            (cmd_function)db_mysql_query,         2, 0, 0},
-	{"db_fetch_result",     (cmd_function)db_mysql_fetch_result,  2, 0, 0},
-	{"db_raw_query",        (cmd_function)db_mysql_raw_query,     2, 0, 0},
-	{"db_free_result",      (cmd_function)db_mysql_free_result,   2, 0, 0},
-	{"db_insert",           (cmd_function)db_mysql_insert,        2, 0, 0},
-	{"db_delete",           (cmd_function)db_mysql_delete,        2, 0, 0},
-	{"db_update",           (cmd_function)db_mysql_update,        2, 0, 0},
-	{"db_replace",          (cmd_function)db_mysql_replace,       2, 0, 0},
-	{"db_last_inserted_id", (cmd_function)db_last_inserted_id,    1, 0, 0},
-	{"db_insert_update",    (cmd_function)db_insert_update,       2, 0, 0},
-	{0, 0, 0, 0, 0}
+	{"db_use_table",        (cmd_function)db_mysql_use_table,     2, 0, 0, 0},
+	{"db_init",             (cmd_function)db_mysql_init,          1, 0, 0, 0},
+	{"db_close",            (cmd_function)db_mysql_close,         2, 0, 0, 0},
+	{"db_query",            (cmd_function)db_mysql_query,         2, 0, 0, 0},
+	{"db_fetch_result",     (cmd_function)db_mysql_fetch_result,  2, 0, 0, 0},
+	{"db_raw_query",        (cmd_function)db_mysql_raw_query,     2, 0, 0, 0},
+	{"db_free_result",      (cmd_function)db_mysql_free_result,   2, 0, 0, 0},
+	{"db_insert",           (cmd_function)db_mysql_insert,        2, 0, 0, 0},
+	{"db_delete",           (cmd_function)db_mysql_delete,        2, 0, 0, 0},
+	{"db_update",           (cmd_function)db_mysql_update,        2, 0, 0, 0},
+	{"db_replace",          (cmd_function)db_mysql_replace,       2, 0, 0, 0},
+	{"db_last_inserted_id", (cmd_function)db_last_inserted_id,    1, 0, 0, 0},
+	{"db_insert_update",    (cmd_function)db_insert_update,       2, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

@@ -87,9 +87,9 @@ struct seas_functions seas_f;
 
 static cmd_export_t cmds[]=
 {
-   {"as_relay_t", w_as_relay_t, 1,fixup_as_relay, REQUEST_ROUTE},
-   {"as_relay_sl", w_as_relay_sl, 1,fixup_as_relay, REQUEST_ROUTE},
-   {0,0,0,0,0}
+   {"as_relay_t", w_as_relay_t, 1,fixup_as_relay, 0, REQUEST_ROUTE},
+   {"as_relay_sl", w_as_relay_sl, 1,fixup_as_relay, 0, REQUEST_ROUTE},
+   {0,0,0,0,0,0}
 };
 
 static param_export_t params[]=

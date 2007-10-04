@@ -126,12 +126,12 @@ static proc_export_t cpl_procs[] = {
  */
 static cmd_export_t cmds[] = {
 	{"cpl_run_script",            cpl_invoke_script,        2,
-			fixup_cpl_run_script, REQUEST_ROUTE},
+			fixup_cpl_run_script, 0, REQUEST_ROUTE},
 	{"cpl_process_register",      w_process_register,       0,
-			0,                    REQUEST_ROUTE},
+			0, 0,                    REQUEST_ROUTE},
 	{"cpl_process_register_norpl",w_process_register_norpl, 0,
-			0,                    REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+			0, 0,                    REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

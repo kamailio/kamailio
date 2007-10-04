@@ -56,15 +56,15 @@ static int pvar_fixup(void** param, int param_no);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_user",        is_user,        1, str_fixup, REQUEST_ROUTE},
-	{"has_totag", 	   has_totag,      0, 0,         REQUEST_ROUTE},
-	{"uri_param",      uri_param_1,    1, str_fixup, REQUEST_ROUTE},
-	{"uri_param",      uri_param_2,    2, uri_fixup, REQUEST_ROUTE},
-	{"add_uri_param",  add_uri_param,  1, str_fixup, REQUEST_ROUTE},
-	{"tel2sip",        tel2sip,        0, 0,         REQUEST_ROUTE},
-	{"is_uri_user_e164", is_uri_user_e164, 1, pvar_fixup,
+	{"is_user",        is_user,        1, str_fixup, 0, REQUEST_ROUTE},
+	{"has_totag", 	   has_totag,      0, 0, 0,         REQUEST_ROUTE},
+	{"uri_param",      uri_param_1,    1, str_fixup, 0, REQUEST_ROUTE},
+	{"uri_param",      uri_param_2,    2, uri_fixup, 0, REQUEST_ROUTE},
+	{"add_uri_param",  add_uri_param,  1, str_fixup, 0, REQUEST_ROUTE},
+	{"tel2sip",        tel2sip,        0, 0,         0, REQUEST_ROUTE},
+	{"is_uri_user_e164", is_uri_user_e164, 1, pvar_fixup, 0,
 	 REQUEST_ROUTE|FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 

@@ -91,33 +91,33 @@ static int w_is_avp_set(struct sip_msg* msg, char* param, char *foo);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"avp_print",  w_print_avps, 0, 0,
+	{"avp_print",  w_print_avps, 0, 0, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_db_load",   w_dbload_avps,  2, fixup_db_load_avp,
+	{"avp_db_load",   w_dbload_avps,  2, fixup_db_load_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_db_delete", w_dbdelete_avps, 2, fixup_db_delete_avp,
+	{"avp_db_delete", w_dbdelete_avps, 2, fixup_db_delete_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_db_store",  w_dbstore_avps,  2, fixup_db_store_avp,
+	{"avp_db_store",  w_dbstore_avps,  2, fixup_db_store_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_db_query",  w_dbquery1_avps, 1, fixup_db_query_avp,
+	{"avp_db_query",  w_dbquery1_avps, 1, fixup_db_query_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_db_query",  w_dbquery2_avps, 2, fixup_db_query_avp,
+	{"avp_db_query",  w_dbquery2_avps, 2, fixup_db_query_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_delete", w_delete_avps, 1, fixup_delete_avp,
+	{"avp_delete", w_delete_avps, 1, fixup_delete_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_copy",   w_copy_avps,  2,  fixup_copy_avp,
+	{"avp_copy",   w_copy_avps,  2,  fixup_copy_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_pushto", w_pushto_avps, 2, fixup_pushto_avp,
+	{"avp_pushto", w_pushto_avps, 2, fixup_pushto_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_check",  w_check_avps, 2, fixup_check_avp,
+	{"avp_check",  w_check_avps, 2, fixup_check_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_op",     w_op_avps, 2, fixup_op_avp,
+	{"avp_op",     w_op_avps, 2, fixup_op_avp, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"avp_subst",  w_subst,   2, fixup_subst,
+	{"avp_subst",  w_subst,   2, fixup_subst, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{"is_avp_set", w_is_avp_set, 1, fixup_is_avp_set,
+	{"is_avp_set", w_is_avp_set, 1, fixup_is_avp_set, 0,
 					REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|ONREPLY_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 

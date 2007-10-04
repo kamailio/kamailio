@@ -68,15 +68,15 @@ static int setf_fixup(void** param, int param_no);
 
 
 static cmd_export_t cmds[] = {
-	{"set_deny_filter",   w_set_deny,      2,  setf_fixup,
+	{"set_deny_filter",   w_set_deny,      2,  setf_fixup, 0,
 			FAILURE_ROUTE },
-	{"set_accept_filter", w_set_accept,    2,  setf_fixup,
+	{"set_accept_filter", w_set_accept,    2,  setf_fixup, 0,
 			FAILURE_ROUTE },
-	{"get_redirects",      w_get_redirect2,  2,  get_redirect_fixup,
+	{"get_redirects",      w_get_redirect2,  2,  get_redirect_fixup, 0,
 			FAILURE_ROUTE },
-	{"get_redirects",      w_get_redirect1,  1,  get_redirect_fixup,
+	{"get_redirects",      w_get_redirect1,  1,  get_redirect_fixup, 0,
 			FAILURE_ROUTE },
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[] = {

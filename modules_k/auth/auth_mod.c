@@ -123,24 +123,24 @@ static pv_spec_t passwd_spec;
  */
 static cmd_export_t cmds[] = {
 	{"www_challenge",       www_challenge,           2, challenge_fixup,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"proxy_challenge",     proxy_challenge,         2, challenge_fixup,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"pv_www_authorize",    pv_www_authorize,        1, auth_fixup,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"pv_proxy_authorize",  pv_proxy_authorize,      1, auth_fixup,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"consume_credentials", consume_credentials,     0, 0,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"is_rpid_user_e164",   is_rpid_user_e164,       0, 0,
-			REQUEST_ROUTE},
+			0, REQUEST_ROUTE},
 	{"append_rpid_hf",      append_rpid_hf,          0, 0,
-			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"append_rpid_hf",      append_rpid_hf_p,        2, rpid_fixup,
-			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"bind_auth",           (cmd_function)bind_auth, 0, 0,
-			0},
-	{0, 0, 0, 0, 0}
+			0, 0},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

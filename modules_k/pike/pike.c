@@ -68,8 +68,8 @@ struct list_link*       timer = 0;
 
 
 static cmd_export_t cmds[]={
-	{"pike_check_req",  pike_check_req,  0,  0, REQUEST_ROUTE},
-	{0,0,0,0,0}
+	{"pike_check_req",  pike_check_req,  0,  0, 0, REQUEST_ROUTE},
+	{0,0,0,0,0,0}
 };
 
 static param_export_t params[]={

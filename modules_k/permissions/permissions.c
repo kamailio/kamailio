@@ -127,27 +127,27 @@ static int mi_addr_child_init();
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"allow_routing",  allow_routing_0,  0, 0,
+	{"allow_routing",  allow_routing_0,  0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_routing",  allow_routing_1,  1, single_fixup,
+	{"allow_routing",  allow_routing_1,  1, single_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_routing",  allow_routing_2,  2, load_fixup,
+	{"allow_routing",  allow_routing_2,  2, load_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_register", allow_register_1, 1, single_fixup,
+	{"allow_register", allow_register_1, 1, single_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_register", allow_register_2, 2, load_fixup,
+	{"allow_register", allow_register_2, 2, load_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_trusted",  allow_trusted,    0, 0,
+	{"allow_trusted",  allow_trusted,    0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_uri", allow_uri, 2, double_fixup,
+	{"allow_uri", allow_uri, 2, double_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"set_address_group", set_address_group, 1, int_or_pvar_fixup,
+	{"set_address_group", set_address_group, 1, int_or_pvar_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_address", allow_address, 2, address_fixup,
+	{"allow_address", allow_address, 2, address_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_source_address", allow_source_address, 1, int_or_pvar_fixup,
+	{"allow_source_address", allow_source_address, 1, int_or_pvar_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 /* Exported parameters */

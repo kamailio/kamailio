@@ -88,11 +88,11 @@ struct domain_list **hash_table_2 = 0;	/* Pointer to hash table 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_from_local",       is_from_local,       0,  0,
+	{"is_from_local",       is_from_local,       0,  0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_uri_host_local",   is_uri_host_local,   0,  0,
+	{"is_uri_host_local",   is_uri_host_local,   0,  0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_domain_local",     w_is_domain_local,   1,  parameter_fixup,
+	{"is_domain_local",     w_is_domain_local,   1,  parameter_fixup, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0}
 };

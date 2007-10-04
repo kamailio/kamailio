@@ -68,11 +68,11 @@ struct rr_binds path_rrb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{ "add_path",          add_path,              0,  0,         REQUEST_ROUTE },
-	{ "add_path",          add_path_usr,          1,  str_fixup, REQUEST_ROUTE },
-	{ "add_path_received", add_path_received,     0,  0,         REQUEST_ROUTE },
-	{ "add_path_received", add_path_received_usr, 1,  str_fixup, REQUEST_ROUTE },
-	{ 0, 0, 0, 0, 0 }
+	{ "add_path",          add_path,              0,  0,         0, REQUEST_ROUTE },
+	{ "add_path",          add_path_usr,          1,  str_fixup, 0, REQUEST_ROUTE },
+	{ "add_path_received", add_path_received,     0,  0,         0, REQUEST_ROUTE },
+	{ "add_path_received", add_path_received_usr, 1,  str_fixup, 0, REQUEST_ROUTE },
+	{ 0, 0, 0, 0, 0, 0 }
 };
 
 

@@ -93,19 +93,19 @@ struct mi_root* perl_mi_reload(struct mi_root *cmd_tree, void *param);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{ "perl_exec_simple", perl_exec_simple1, 1,  NULL, REQUEST_ROUTE
+	{ "perl_exec_simple", perl_exec_simple1, 1,  NULL, 0, REQUEST_ROUTE
 							   | FAILURE_ROUTE
 							   | ONREPLY_ROUTE
 							   | BRANCH_ROUTE },
-	{ "perl_exec_simple", perl_exec_simple2, 2,  NULL, REQUEST_ROUTE
+	{ "perl_exec_simple", perl_exec_simple2, 2,  NULL, 0, REQUEST_ROUTE
 							   | FAILURE_ROUTE
 							   | ONREPLY_ROUTE
 							   | BRANCH_ROUTE },
-	{ "perl_exec", perl_exec1, 1,  NULL, REQUEST_ROUTE | FAILURE_ROUTE
+	{ "perl_exec", perl_exec1, 1,  NULL, 0, REQUEST_ROUTE | FAILURE_ROUTE
 							   | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{ "perl_exec", perl_exec2, 2, NULL, REQUEST_ROUTE | FAILURE_ROUTE
+	{ "perl_exec", perl_exec2, 2, NULL, 0, REQUEST_ROUTE | FAILURE_ROUTE
 							   | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{ 0, 0, 0, 0, 0 }
+	{ 0, 0, 0, 0, 0, 0 }
 };
 
 

@@ -71,9 +71,9 @@ db_con_t* db_handle=0;   /* Database connection handle */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"sd_lookup", sd_lookup, 1, 0, REQUEST_ROUTE},
-	{"sd_lookup", sd_lookup, 2, fixup_sd, REQUEST_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"sd_lookup", sd_lookup, 1, 0, 0, REQUEST_ROUTE},
+	{"sd_lookup", sd_lookup, 2, fixup_sd, 0, REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 

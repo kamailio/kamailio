@@ -118,11 +118,11 @@ phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish",		handle_publish,	     0,	   0,         REQUEST_ROUTE},
-	{"handle_publish",		handle_publish,	     1,fixup_presence,REQUEST_ROUTE},
-	{"handle_subscribe",	handle_subscribe,	 0,	   0,         REQUEST_ROUTE},
-	{"bind_presence",(cmd_function)bind_presence,1,    0,            0         },
-	{0,						0,				     0,	   0,            0	       }	 
+	{"handle_publish",		handle_publish,	     0,	   0,         0, REQUEST_ROUTE},
+	{"handle_publish",		handle_publish,	     1,fixup_presence,0, REQUEST_ROUTE},
+	{"handle_subscribe",	handle_subscribe,	 0,	   0,         0, REQUEST_ROUTE},
+	{"bind_presence",(cmd_function)bind_presence,1,    0,            0, 0         },
+	{0,						0,				     0,	   0,            0, 0	       }	 
 };
 
 static param_export_t params[]={

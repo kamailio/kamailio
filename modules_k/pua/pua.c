@@ -91,9 +91,9 @@ void hashT_clean(unsigned int ticks,void *param);
 
 static cmd_export_t cmds[]=
 {
-	{"bind_libxml_api",  (cmd_function)bind_libxml_api,  1, 0, 0},
-	{"bind_pua",	     (cmd_function)bind_pua,		 1, 0, 0},
-	{0,							0,					     0, 0, 0} 
+	{"bind_libxml_api",  (cmd_function)bind_libxml_api,  1, 0, 0, 0},
+	{"bind_pua",	     (cmd_function)bind_pua,		 1, 0, 0, 0},
+	{0,							0,					     0, 0, 0, 0} 
 };
 
 static param_export_t params[]={

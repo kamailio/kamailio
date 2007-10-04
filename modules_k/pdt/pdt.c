@@ -107,10 +107,10 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 int pdt_load_db();
 
 static cmd_export_t cmds[]={
-	{"prefix2domain", w_prefix2domain,   0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"prefix2domain", w_prefix2domain_1, 1, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"prefix2domain", w_prefix2domain_2, 2, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{"prefix2domain", w_prefix2domain,   0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", w_prefix2domain_1, 1, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", w_prefix2domain_2, 2, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={

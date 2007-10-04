@@ -253,25 +253,25 @@ int next_contacts (struct sip_msg*, char*, char*);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_gws",      load_gws,      0, 0,
+	{"load_gws",      load_gws,      0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_gws",      load_gws_grp,  1, fixstringloadgws,
+	{"load_gws",      load_gws_grp,  1, fixstringloadgws, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"next_gw",       next_gw,       0, 0,
+	{"next_gw",       next_gw,       0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"from_gw",       from_gw,       0, 0,
+	{"from_gw",       from_gw,       0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw",       from_gw_grp,   1, fixup_str2int,
+	{"from_gw",       from_gw_grp,   1, fixup_str2int, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"to_gw",         to_gw,         0, 0,
+	{"to_gw",         to_gw,         0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"to_gw",         to_gw_grp,     1, fixup_str2int,
+	{"to_gw",         to_gw_grp,     1, fixup_str2int, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_contacts", load_contacts, 0, 0,
+	{"load_contacts", load_contacts, 0, 0, 0,
 		REQUEST_ROUTE},
-	{"next_contacts", next_contacts, 0, 0,
+	{"next_contacts", next_contacts, 0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0}
+	{0, 0, 0, 0, 0, 0}
 };
 
 
