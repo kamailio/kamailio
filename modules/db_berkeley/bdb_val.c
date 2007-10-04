@@ -62,7 +62,7 @@ int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 	switch(_t) {
 	case DB_INT:
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LOG(L_ERR, "berkeley_db[str2val]: Error while converting INT value from string\n");
+			LM_ERR("Error while converting INT value from string\n");
 			return -2;
 		} else {
 			VAL_TYPE(_v) = DB_INT;
@@ -72,7 +72,7 @@ int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 
 	case DB_BITMAP:
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
-			LOG(L_ERR, "berkeley_db[str2val]: Error while converting BITMAP value from string\n");
+			LM_ERR("Error while converting BITMAP value from string\n");
 			return -3;
 		} else {
 			VAL_TYPE(_v) = DB_BITMAP;
@@ -82,7 +82,7 @@ int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 
 	case DB_DOUBLE:
 		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
-			LOG(L_ERR, "berkeley_db[str2val]: Error while converting DOUBLE value from string\n");
+			LM_ERR("Error while converting DOUBLE value from string\n");
 			return -4;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
@@ -111,7 +111,7 @@ int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 
 	case DB_DATETIME:
 		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
-			LOG(L_ERR, "berkeley_db[str2val]: Error converting datetime\n");
+			LM_ERR("Error converting datetime\n");
 			return -5;
 		} else {
 			VAL_TYPE(_v) = DB_DATETIME;
@@ -122,7 +122,7 @@ int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 	case DB_BLOB:
 		VAL_BLOB(_v).s = _s;
 		VAL_TYPE(_v) = DB_BLOB;
-		LOG(L_DBG, "berkeley_db[str2val]: got blob len %d\n", _l);
+		LM_DBG("got blob len %d\n", _l);
 		return 0;
 	}
 
@@ -146,30 +146,30 @@ int sc_val2str(db_val_t* _v, char* _s, int* _len)
 	switch(VAL_TYPE(_v)) {
 	case DB_INT:
 		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
-			LOG(L_ERR, "berkeley_db[val2str]: Error while converting int to string\n");
+			LM_ERR("Error while converting int to string\n");
 			return -2;
 		} else {
-			LOG(L_DBG, "berkeley_db[val2str]: Converted int to string\n");
+			LM_DBG("Converted int to string\n");
 			return 0;
 		}
 		break;
 
 	case DB_BITMAP:
 		if (db_int2str(VAL_INT(_v), _s, _len) < 0) {
-			LOG(L_ERR, "berkeley_db[val2str]: Error while converting bitmap to string\n");
+			LM_ERR("Error while converting bitmap to string\n");
 			return -3;
 		} else {
-			LOG(L_DBG, "berkeley_db[val2str]: Converted bitmap to string\n");
+			LM_DBG("Converted bitmap to string\n");
 			return 0;
 		}
 		break;
 
 	case DB_DOUBLE:
 		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
-			LOG(L_ERR, "berkeley_db[val2str]: Error while converting double  to string\n");
+			LM_ERR("Error while converting double  to string\n");
 			return -3;
 		} else {
-			LOG(L_DBG, "berkeley_db[val2str]: Converted double to string\n");
+			LM_DBG("Converted double to string\n");
 			return 0;
 		}
 		break;
@@ -177,11 +177,11 @@ int sc_val2str(db_val_t* _v, char* _s, int* _len)
 	case DB_STRING:
 		l = strlen(VAL_STRING(_v));
 		if (*_len < l ) 
-		{	LOG(L_ERR, "berkeley_db[val2str]: Destination buffer too short for string\n");
+		{	LM_ERR("Destination buffer too short for string\n");
 			return -4;
 		} 
 		else 
-		{	LOG(L_DBG, "berkeley_db[val2str]: Converted string to string\n");
+		{	LM_DBG("Converted string to string\n");
 			strncpy(_s, VAL_STRING(_v) , l);
 			_s[l] = 0;
 			*_len = l;
@@ -193,12 +193,12 @@ int sc_val2str(db_val_t* _v, char* _s, int* _len)
 		l = VAL_STR(_v).len;
 		if (*_len < l) 
 		{
-			LOG(L_ERR, "berkeley_db[val2str]: Destination buffer too short for str\n");
+			LM_ERR("Destination buffer too short for str\n");
 			return -5;
 		} 
 		else 
 		{
-			LOG(L_DBG, "berkeley_db[val2str]: Converted str to string\n");
+			LM_DBG("Converted str to string\n");
 			strncpy(_s, VAL_STR(_v).s , VAL_STR(_v).len);
 			*_len = VAL_STR(_v).len;
 			return 0;
@@ -207,10 +207,10 @@ int sc_val2str(db_val_t* _v, char* _s, int* _len)
 
 	case DB_DATETIME:
 		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
-			LOG(L_ERR, "berkeley_db[val2str]: Error while converting time_t to string\n");
+			LM_ERR("Error while converting time_t to string\n");
 			return -6;
 		} else {
-			LOG(L_DBG, "berkeley_db[val2str]: Converted time_t to string\n");
+			LM_DBG("Converted time_t to string\n");
 			return 0;
 		}
 		break;
@@ -219,12 +219,12 @@ int sc_val2str(db_val_t* _v, char* _s, int* _len)
 		l = VAL_BLOB(_v).len;
 		if (*_len < l) 
 		{
-			LOG(L_ERR, "berkeley_db[val2str]: Destination buffer too short for blob\n");
+			LM_ERR("Destination buffer too short for blob\n");
 			return -7;
 		} 
 		else 
 		{
-			LOG(L_DBG, "berkeley_db[str2val]: Converting BLOB [%s]\n", _s);
+			LM_DBG("Converting BLOB [%s]\n", _s);
 			_s = VAL_BLOB(_v).s;
 			*_len = 0;
 			return -8;
@@ -232,7 +232,7 @@ int sc_val2str(db_val_t* _v, char* _s, int* _len)
 		break;
 
 	default:
-		LOG(L_DBG, "berkeley_db[val2str]: Unknown data type\n");
+		LM_DBG("Unknown data type\n");
 		return -8;
 	}
 	return -9;
