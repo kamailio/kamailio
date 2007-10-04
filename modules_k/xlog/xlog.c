@@ -136,6 +136,9 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 {
 	int log_len;
 
+	if(!is_printable(L_ERR))
+		return 1;
+
 	log_len = buf_size;
 
 	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
@@ -153,6 +156,9 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 {
 	int log_len;
 
+	if(!is_printable((int)(long)lev))
+		return 1;
+
 	log_len = buf_size;
 
 	if(xl_print_log(msg, (pv_elem_t*)frm, log_buf, &log_len)<0)
@@ -169,6 +175,9 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 {
 	int log_len;
+
+	if(!is_printable(L_DBG))
+		return 1;
 
 	log_len = buf_size;
 
