@@ -549,7 +549,7 @@ int select_anyheader(str* res, select_t* s, struct sip_msg* msg)
 	hf0 = NULL;
 
 	/* extract header index if present */
-	if (s->param_offset[s->lvl+1] == 3) {
+	if (s->param_offset[select_level+1] == 3) {
 		if (s->params[2].type == SEL_PARAM_INT) {
 			hi = s->params[2].v.i;
 		} else {
@@ -689,7 +689,7 @@ int select_uri_params(str* res, select_t* s, struct sip_msg* msg)
 	if (parse_uri(res->s, res->len, &uri)<0)
 		return -1;
 	
-	if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1)
+	if (s->param_offset[select_level+1]-s->param_offset[select_level]==1)
 		RETURN0_res(uri.params);
 
 	*res=uri.params;
@@ -704,17 +704,17 @@ int select_any_params(str* res, select_t* s, struct sip_msg* msg)
 	int i;
 
 	if (!msg || !res) {
-		if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1) return 0;
-		if (s->params[s->param_offset[s->lvl]+1].type!=SEL_PARAM_STR) return -1;
-		wanted=&s->params[s->param_offset[s->lvl]+1].v.s;
+		if (s->param_offset[select_level+1]-s->param_offset[select_level]==1) return 0;
+		if (s->params[s->param_offset[select_level]+1].type!=SEL_PARAM_STR) return -1;
+		wanted=&s->params[s->param_offset[select_level]+1].v.s;
 		for (i=0; i<wanted->len; i++) 
 			if (wanted->s[i]=='_') 
 				wanted->s[i]='-';
 		return 0;
 	}
 	
-	if (s->params[s->param_offset[s->lvl]+1].type!=SEL_PARAM_STR) return -1;
-	wanted=&s->params[s->param_offset[s->lvl]+1].v.s;
+	if (s->params[s->param_offset[select_level]+1].type!=SEL_PARAM_STR) return -1;
+	wanted=&s->params[s->param_offset[select_level]+1].v.s;
 	
 	if (!res->len) return -1;
 	if (parse_params(res, CLASS_ANY, &h, &list)<0) return -1;
@@ -1062,7 +1062,7 @@ int select_nameaddr_params(str* res, select_t* s, struct sip_msg* msg)
 	res->len=res->len - (p-res->s) -1;
 	res->s=p +1;
 	
-	if (s->param_offset[s->lvl+1]-s->param_offset[s->lvl]==1)
+	if (s->param_offset[select_level+1]-s->param_offset[select_level]==1)
 		return (res->len ? 0 : 1);
 
 	return select_any_params(res, s, msg);

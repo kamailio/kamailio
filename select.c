@@ -55,6 +55,11 @@
  */
 static select_table_t *select_list = &select_core_table;
 
+/* the level of the select call that is beeing evaluated
+ * by the child process
+ */
+int select_level = 0;
+
 /*
  * Parse select string into select structure s
  * moves pointer p to the first unused char
@@ -274,7 +279,7 @@ int resolve_select(select_t* s)
 		}
 
 		if (t->table[table_idx].flags & FIXUP_CALL) {
-			s->lvl = nested;
+			select_level = nested;
 			s->param_offset[nested+1] = param_idx;
 			if (t->table[table_idx].new_f(NULL, s, NULL)<0) goto not_found;
 		}
@@ -305,7 +310,7 @@ not_found:
 
 int run_select(str* res, select_t* s, struct sip_msg* msg)
 {
-	int ret;
+	int ret, orig_level;
 
 	if (res == NULL) {
 		BUG("Select unprepared result space\n");
@@ -321,10 +326,17 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 	}
 	DBG("Calling SELECT %p \n", s->f);
 
+	/* save and resore the original select_level
+	 * because of the nested selets */
+	orig_level = select_level;
 	ret = 0;
-	for (s->lvl=0; (ret == 0) && (s->f[s->lvl] !=0 ) && (s->lvl<MAX_NESTED_CALLS); (s->lvl)++)	{
-		ret = s->f[s->lvl](res, s, msg);
+	for (	select_level=0;
+		(ret == 0) && (s->f[select_level] !=0 ) && (select_level<MAX_NESTED_CALLS);
+		select_level++
+	) {
+		ret = s->f[select_level](res, s, msg);
 	}
+	select_level = orig_level;
 	return ret;
 }
 
