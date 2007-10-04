@@ -330,11 +330,15 @@ static int mod_init(void)
 	}
 
 	/*if a database should be used to store the dialogs' information*/
-	if (dlg_db_mode==DB_MODE_NONE)
+	if (dlg_db_mode==DB_MODE_NONE) {
 		db_url = 0;
-	if ( db_url && db_url[0]!='\0' ) {
+	} else {
 		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED){
 			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
+			return -1;
+		}
+		if ( db_url==0 || db_url[0]==0 ) {
+			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
 		return init_dlg_db( db_url, dlg_hash_size, db_update_period);
