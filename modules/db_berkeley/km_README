@@ -1,0 +1,482 @@
+
+Berkeley DB Module
+
+Will Quan
+
+   Cisco Systems
+
+Edited by
+
+Will Quan
+
+   Copyright © 2007 Cisco Systems
+     _________________________________________________________
+
+   Table of Contents
+   1. User's Guide
+
+        1.1. Overview
+        1.2. Dependencies
+
+              1.2.1. OpenSER Modules
+              1.2.2. External Libraries or Applications
+
+        1.3. Exported Parameters
+
+              1.3.1. auto_reload (integer)
+              1.3.2. log_enable (integer)
+              1.3.3. journal_roll_interval (integer seconds)
+
+        1.4. Exported Functions
+        1.5. Installation and Running
+        1.6. Database Schema and Metadata
+        1.7. METADATA_COLUMNS (required)
+        1.8. METADATA_KEYS (required)
+        1.9. METADATA_READONLY (optional)
+        1.10. METADATA_LOGFLAGS (optional)
+        1.11. Maintaince Shell Script : db_berkeley.sh
+        1.12. DB Recovery : bdb_recover
+
+   2. Developer's Guide
+   3. Frequently Asked Questions
+
+   List of Examples
+   1-1. Set auto_reload parameter
+   1-2. Set log_enable parameter
+   1-3. Set journal_roll_interval parameter
+   1-4. 1
+   1-5. 2
+   1-6. 3
+   1-7. contents of version table
+   1-8. METADATA_COLUMNS
+   1-9. METADATA_KEYS
+   1-10. METADATA_LOGFLAGS
+   1-11. db_berkeley.sh usageS
+   1-12. bdb_recover usage
+     _________________________________________________________
+
+Chapter 1. User's Guide
+
+1.1. Overview
+
+   This is a module which integrates the Berkeley DB into
+   OpenSER. It implements the DB API defined in OpenSER.
+     _________________________________________________________
+
+1.2. Dependencies
+
+1.2.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * No dependencies on other OpenSER modules.
+     _________________________________________________________
+
+1.2.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * Berkeley Berkeley DB 4.5 - an embedded database.
+     _________________________________________________________
+
+1.3. Exported Parameters
+
+1.3.1. auto_reload (integer)
+
+   The auto-reload will close and reopen a Berkeley DB when the
+   files inode has changed. The operation occurs only duing a
+   query. Other operations such as insert or delete, do not
+   invoke auto_reload.
+
+   Default value is 0 (1 - on / 0 - off). 
+
+   Example 1-1. Set auto_reload parameter
+...
+modparam("db_berkeley", "auto_reload", 1)
+...
+     _________________________________________________________
+
+1.3.2. log_enable (integer)
+
+   The log_enable boolean controls when to create journal files.
+   The following operations can be journaled: INSERT, UPDATE,
+   DELETE. Other operations such as SELECT, do not. This
+   journaling are required if you need to recover from a corrupt
+   DB file. That is, bdb_recover requires these to rebuild the db
+   file. If you find this log feature useful, you may also be
+   interested in the METADATA_LOGFLAGS bitfield that each table
+   has. It will allow you to control which operations to journal,
+   and the destination (like syslog, stdout, local-file). Refer
+   to sclib_log() and documentation on METADATA.
+
+   Default value is 0 (1 - on / 0 - off). 
+
+   Example 1-2. Set log_enable parameter
+...
+modparam("db_berkeley", "log_enable", 1)
+...
+     _________________________________________________________
+
+1.3.3. journal_roll_interval (integer seconds)
+
+   The journal_roll_interval will close and open a new log file.
+   The roll operation occurs only at the end of writing a log, so
+   it is not guaranteed to to roll 'on time'.
+
+   Default value is 0 (off). 
+
+   Example 1-3. Set journal_roll_interval parameter
+...
+modparam("db_berkeley", "journal_roll_interval", 3600)
+...
+     _________________________________________________________
+
+1.4. Exported Functions
+
+   No function exported to be used from configuration file.
+     _________________________________________________________
+
+1.5. Installation and Running
+
+   First download, compile and install the Berkeley DB. This is
+   outside the scope of this document. Documentation for this
+   procedure is available on the Internet.
+
+   Next, we setup to compile OpenSER with the db_berkeley module.
+   In the directory /modules/db_berkeley , modify the Makefile to
+   point to your distribution of Berkeley DB.
+
+   You may also define 'SC_EXTRA_DEBUG' to compile in extra debug
+   logs. However, it is not a recommended deployment to
+   production servers. Because the module dependes on an external
+   library, the db_berkeley module is not compiled and installed
+   by default. You can use one of the next options.
+
+     * edit the "Makefile" and remove "db_berkeley" from
+       "excluded_modules" list. Then follow the standard
+       procedure to install OpenSER: "make all; make install".
+     * from command line use: 'make all
+       include_modules="db_berkeley"; make install
+       include_modules="db_berkeley"'.
+
+   Installation of OpenSER is performed by simply running make
+   install as root user of the main directory. This will install
+   the binaries in /usr/local/sbin/. If this was successful, the
+   scripts/db_berkeley.sh file should now be installed as
+   /usr/local/sbin/openser_db_berkeley.sh
+
+   Once you decide where you want to install the Berkeley DB
+   files, for instance '/var/db_berkeley/bdb', we must initially
+   create the files there. OpenSER will not startup without these
+   DB files already existing. Here are a couple of ways to do
+   this:
+
+   Example 1-4. 1
+export DB_HOME=/var/db_berkeley/bdb ; /usr/local/sbin/openser_db_berkel
+ey.sh create
+
+   This way, any later operations with openser_db_berkeley.sh
+   will not require you to provide the path to your DB files.
+   Alternately, you can specify them on the command line like
+   this:
+
+   Example 1-5. 2
+/usr/local/sbin/openser_db_berkeley.sh create /var/db_berkeley/bdb
+
+   After this creation step, the DB files are now seeded with the
+   necessary meta-data for OpenSER to startup. For a description
+   of the meta-data refer to the section about db_berkeley.sh
+   operations. Modify the OpenSER configuration file to use
+   db_berkeley. The database URL for modules must be the path to
+   the directory where the Berkeley DB table-files are located,
+   prefixed by "db_berkeley://", e.g.,
+   "db_berkeley:///var/db_berkeley/bdb". If you require the DB
+   file to automatically reload be sure to include the modparam
+   line for that.
+
+   A couple other things to consider are the 'db_mode' and the
+   'use_domain' modparams, as they will impact things as well.
+   The best description of these parameters are found in usrloc
+   documentation.
+
+   The '|' pipe character is used as a record delimiter within
+   this Berkeley DB implementation and must not be present in any
+   DB field.
+     _________________________________________________________
+
+1.6. Database Schema and Metadata
+
+   Each Berkeley DB is must be manually, initially created via
+   the openser_db_berkeley.sh maintenance utility. This section
+   provides some details as to the content and format of the DB
+   file upon creation.
+
+   Since the Berkeley DB stores key value pairs, the database is
+   seeded with a few meta-data rows . The keys to these rows must
+   begin with 'METADATA'. Here is an example of table meta-data,
+   taken from the table 'version'.
+
+   Example 1-6. 3
+METADATA_COLUMNS
+table_name(str) table_version(int)
+METADATA_KEY
+0
+
+   In the above example, the row METADATA_COLUMNS defines the
+   column names and type, and the row METADATA_KEY defines which
+   column(s) form the key. Here the value of 0 indicates that
+   column 0 is the key(ie table_name). With respect to column
+   types, the db_berkeley modules only has the following types:
+   string, str, int, double, and datetime. The default type is
+   string, and is used when one of the others is not specified.
+   The columns of the meta-data are delimited by whitespace.
+
+   The actual column data is stored as a string value, and
+   delimited by the '|' pipe character. Since the code tokenizes
+   on this delimiter, it is important that this character not
+   appear in any valid data field. The following is the output of
+   the 'db_berkeley.sh dump version' command. It shows contents
+   of table 'version' in plain text.
+
+   Example 1-7. contents of version table
+VERSION=3
+format=print
+type=hash
+h_nelem=21
+db_pagesize=4096
+HEADER=END
+ METADATA_READONLY
+ 1
+ address|
+ address|3
+ aliases|
+ aliases|1004
+ dbaliases|
+ dbaliases|1
+ domain|
+ domain|1
+ gw_grp|
+ gw_grp|1
+ gw|
+ gw|4
+ speed_dial|
+ speed_dial|2
+ subscriber|
+ subscriber|6
+ uri|
+ uri|1
+ METADATA_COLUMNS
+ table_name(str) table_version(int)
+ METADATA_KEY
+ 0
+ acc|
+ acc|4
+ grp|
+ grp|2
+ lcr|
+ lcr|2
+ location|
+ location|1004
+ missed_calls|
+ missed_calls|3
+ re_grp|
+ re_grp|1
+ silo|
+ silo|5
+ trusted|
+ trusted|4
+ usr_preferences|
+ usr_preferences|2
+DATA=END
+     _________________________________________________________
+
+1.7. METADATA_COLUMNS (required)
+
+   The METADATA_COLUMNS row contains the column names and types.
+   Each is space delimited. Here is an example of the data taken
+   from table subscriber :
+
+   Example 1-8. METADATA_COLUMNS
+METADATA_COLUMNS
+username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(s
+tr) last_name(str) email_address(str) datetime_created(datetime) timezo
+ne(str) rpid(str)
+
+
+   Related (hardcoded) limitations:
+
+     * maximum of 32 columns per table.
+     * maximum tablename size is 64.
+     * maximum data length is 2048
+
+   Currently supporting these five types: str, datetime, int,
+   double, string.
+     _________________________________________________________
+
+1.8. METADATA_KEYS (required)
+
+   The METADATA_KEYS row indicates the indexes of the key
+   columns, with respect to the order specified in
+   METADATA_COLUMNS. Here is an example taken from table
+   subscriber that brings up a good point:
+
+   Example 1-9. METADATA_KEYS
+ METADATA_KEY
+ 0 1
+
+
+   The point is that both the username and domain name are
+   require as the key to this record. Thus, usrloc modparam
+   use_domain = 1 must be set for this to work.
+     _________________________________________________________
+
+1.9. METADATA_READONLY (optional)
+
+   The METADATA_READONLY row contains a boolean 0 or 1. By
+   default, its value is 0. On startup the DB will open initially
+   as read-write (loads metadata) and then if this is set=1, it
+   will close and reopen as read only (ro). I found this useful
+   because readonly has impacts on the internal db locking etc.
+     _________________________________________________________
+
+1.10. METADATA_LOGFLAGS (optional)
+
+   The METADATA_LOGFLAGS row contains a bitfield that customizes
+   the journaling on a per table basis. If not present the
+   default value is taken as 0. Here are the masks so far (taken
+   from sc_lib.h):
+
+   Example 1-10. METADATA_LOGFLAGS
+#define JLOG_NONE 0
+#define JLOG_INSERT 1
+#define JLOG_DELETE 2
+#define JLOG_UPDATE 4
+#define JLOG_STDOUT 8
+#define JLOG_SYSLOG 16
+
+   This means that if you want to journal INSERTS to local file
+   and syslog the value should be set to 1+16=17. Or if you do
+   not want to journal at all, set this to 0.
+     _________________________________________________________
+
+1.11. Maintaince Shell Script : db_berkeley.sh
+
+   The db_berkeley.sh is located in the
+   [openser_root_dir]/scripts directory. The script will print
+   help when invoked without parameters on the command line. The
+   following is the help text.
+
+   Script for maintaining OpenSER Berkeley DB tables
+
+   Example 1-11. db_berkeley.sh usageS
+usage: db_berkeley.sh create   [DB_HOME] (creates the db with files wit
+h metadata)
+       db_berkeley.sh presence [DB_HOME] (adds the presence related tab
+les)
+       db_berkeley.sh extra    [DB_HOME] (adds the extra tables - imc,c
+pl,siptrace,domainpolicy)
+       db_berkeley.sh drop     [DB_HOME] (deletes db files in DB_HOME)
+       db_berkeley.sh reinit   [DB_HOME] (drop and create tables in one
+ step)
+       db_berkeley.sh list     [DB_HOME] (lists the underlying db files
+ on the FS)
+       db_berkeley.sh backup   [DB_HOME] (tars current database)
+       db_berkeley.sh restore   bu [DB_HOME] (untar bu into DB_HOME)
+       db_berkeley.sh dump      db [DB_HOME] (db_dump the underlying db
+ file to STDOUT)
+       db_berkeley.sh swap      db [DB_HOME] (installs db.new by db ->
+db.old; db.new -> db)
+       db_berkeley.sh newappend db datafile [DB_HOME] (appends data to
+a new instance of db; output DB_HOME/db.new)
+     _________________________________________________________
+
+1.12. DB Recovery : bdb_recover
+
+   The db_berkeley module uses the Concurrent Data Store (CDS)
+   architecture. As such, no transaction or journaling is
+   provided by the DB natively. The application bdb_recover is
+   specifically written to recover data from journal files that
+   OpenSER creates. The bdb_recover application requires an
+   additional text file that contains the table schema.
+
+   The schema is loaded with the '-s' option and is required for
+   all operations.
+
+   The '-h' home option is the DB_HOME path. Unlike the Berkeley
+   utilities, this application does not look for the DB_HOME
+   environment variable, so you have to specify it. If not
+   specified, it will assume the current working directory. The
+   last argument is the operation. There are fundamentally only
+   two operations- create and recover.
+
+   The following illustrates the four operations available to the
+   administrator.
+
+   Example 1-12. bdb_recover usage
+usage: ./bdb_recover -s schemafile [-h home] [-c tablename]
+        This will create a brand new DB file with metadata.
+
+usage: ./bdb_recover -s schemafile [-h home] [-C all]
+        This will create all the core tables, each with metadata.
+
+usage: ./bdb_recover -s schemafile [-h home] [-r journal-file]
+        This will rebuild a DB and populate it with operation from jour
+nal-file.
+        The table name is embedded in the journal-file name by conventi
+on.
+
+usage: ./bdb_recover -s schemafile [-h home] [-R lastN]
+        This will iterate over all core tables enumerated. If journal f
+iles exist in 'home',
+        a new DB file will be created and populated with the data found
+ in the last N files.
+        The files are 'replayed' in chronological order (oldest to newe
+st). This
+        allows the administrator to rebuild the db with a subset of all
+ possible
+        operations if needed. For example, you may only be interested i
+n
+        the last hours data in table location.
+
+   It is important to note that the corrupted DB file must be
+   moved out of the way before bdb_recover is executed.
+     _________________________________________________________
+
+Chapter 2. Developer's Guide
+
+   The module does not provide any API to use in other OpenSER
+   modules.
+     _________________________________________________________
+
+Chapter 3. Frequently Asked Questions
+
+   3.1. Where can I find more about OpenSER?
+   3.2. Where can I post a question about this module?
+   3.3. How can I report a bug?
+
+   3.1. Where can I find more about OpenSER?
+
+   Take a look at http://openser.org/.
+
+   3.2. Where can I post a question about this module?
+
+   First at all check if your question was already answered on
+   one of our mailing lists:
+
+     * User Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/users
+     * Developer Mailing List -
+       http://openser.org/cgi-bin/mailman/listinfo/devel
+
+   E-mails regarding any stable OpenSER release should be sent to
+   <users@openser.org> and e-mails regarding development versions
+   should be sent to <devel@openser.org>.
+
+   If you want to keep the mail private, send it to
+   <team@openser.org>.
+
+   3.3. How can I report a bug?
+
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143.
