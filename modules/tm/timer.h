@@ -98,7 +98,7 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 	}
 	/* set active & if retr==-1 set disabled */
 	rb->flags|= (F_RB_RETR_DISABLED & -(retr==-1)); 
-	rb->fr_expire=ticks+timeout;
+	if (rb->fr_expire==0) rb->fr_expire=ticks+timeout;
 #ifdef TIMER_DEBUG
 	ret=timer_add_safe(&(rb)->timer, (timeout<retr)?timeout:retr,
 							file, func, line);
