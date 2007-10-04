@@ -86,7 +86,7 @@ static inline int encode_from( str *src, str *dst )
 	dst->s = buf;
 	if (dst->len>text3B64_len(MAX_URI_SIZE))
 	{
-		LOG(L_ERR,"ERROR:uac:encode_from: uri too long\n");
+		LM_ERR("uri too long\n");
 		return -1;
 	}
 
@@ -131,7 +131,7 @@ static inline int decode_from( str *src , str *dst)
 	dst->s = buf;
 	if (dst->len>MAX_URI_SIZE)
 	{
-		LOG(L_ERR,"ERROR:uac:decode_from: uri too long\n");
+		LM_ERR("uri too long\n");
 		return -1;
 	}
 
@@ -145,8 +145,7 @@ static inline int decode_from( str *src , str *dst)
 			c = dec_table64[(unsigned char)src->s[i++]];
 			if ( c<0 )
 			{
-				LOG(L_ERR,"ERROR:uac:decode_from: invalid base64 string "
-					"\"%.*s\"\n",src->len,src->s);
+				LM_ERR("invalid base64 string\"%.*s\"\n",src->len,src->s);
 				return -1;
 			}
 			block += c << (18 - 6*j);
@@ -176,8 +175,7 @@ static inline struct lump* get_fdisplay_anchor(struct sip_msg *msg,
 		/* is quoted */
 		l = anchor_lump( msg, p2 - msg->buf, 0, 0);
 		if (l==0) {
-			LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: unable to build lump "
-				"anchor\n");
+			LM_ERR("unable to build lump anchor\n");
 			return 0;
 		}
 		dsp->s[dsp->len++] = ' ';
@@ -187,26 +185,24 @@ static inline struct lump* get_fdisplay_anchor(struct sip_msg *msg,
 	/* not quoted - more complicated....must place the closing bracket */
 	l = anchor_lump( msg, (from->uri.s+from->uri.len) - msg->buf, 0, 0);
 	if (l==0) {
-		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: unable to build lump "
-			"anchor\n");
+		LM_ERR("unable to build lump anchor\n");
 		return 0;
 	}
 	p1 = (char*)pkg_malloc(1);
 	if (p1==0) {
-		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: no more pkg mem \n");
+		LM_ERR("no more pkg mem \n");
 		return 0;
 	}
 	*p1 = '>';
 	if (insert_new_lump_after( l, p1, 1, 0)==0) {
-		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: insert lump failed\n");
+		LM_ERR("insert lump failed\n");
 		pkg_free(p1);
 		return 0;
 	}
 	/* build anchor for display */
 	l = anchor_lump( msg, from->uri.s - msg->buf, 0, 0);
 	if (l==0) {
-		LOG(L_ERR,"ERROR:uac:get_fdisplay_anchor: unable to build lump "
-			"anchor\n");
+		LM_ERR("unable to build lump anchor\n");
 		return 0;
 	}
 	dsp->s[dsp->len++] = ' ';
@@ -233,12 +229,11 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	 * in sequential request */
 	if (from_restore_mode==FROM_AUTO_RESTORE && from_uri && from_uri->len) {
 		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
-			LOG(L_ERR,"ERROR:uac:replace_from: failed to parse TO hdr\n");
+			LM_ERR("failed to parse TO hdr\n");
 			goto error;
 		}
 		if (get_to(msg)->tag_value.len!=0) {
-			LOG(L_ERR,"ERROR:uac:replace_from: decline FROM replacing in "
-				"sequential request in auto mode (has TO tag)\n");
+			LM_ERR("decline FROM replacing in sequential request in auto mode (has TO tag)\n");
 			goto error;
 		}
 	}
@@ -246,14 +241,14 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	/* parse original from hdr */
 	if (parse_from_header(msg)<0 )
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: failed to find/parse FROM hdr\n");
+		LM_ERR("failed to find/parse FROM hdr\n");
 		goto error;
 	}
 	from = (struct to_body*)msg->from->parsed;
 	/* some validity checks */
 	if (from->param_lst==0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: broken FROM hdr; no tag param\n");
+		LM_ERR("broken FROM hdr; no tag param\n");
 		goto error;
 	}
 
@@ -265,13 +260,12 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 		/* first remove the existing display */
 		if ( from->display.len)
 		{
-			DBG("DEBUG:uac:replace_from: removing display [%.*s]\n",
-				from->display.len,from->display.s);
+			LM_DBG("removing display [%.*s]\n",from->display.len,from->display.s);
 			/* build del lump */
 			l = del_lump( msg, from->display.s-msg->buf, from->display.len, 0);
 			if (l==0)
 			{
-				LOG(L_ERR,"ERROR:uac:replace_from: display del lump failed\n");
+				LM_ERR("display del lump failed\n");
 				goto error;
 			}
 		}
@@ -282,20 +276,19 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 			buf.s = pkg_malloc( from_dsp->len + 2 );
 			if (buf.s==0)
 			{
-				LOG(L_ERR,"ERROR:uac:replace_from: no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				goto error;
 			}
 			memcpy( buf.s, from_dsp->s, from_dsp->len);
 			buf.len =  from_dsp->len;
 			if (l==0 && (l=get_fdisplay_anchor(msg,from,&buf))==0)
 			{
-				LOG(L_ERR,"ERROR:uac:replace_from: failed to insert anchor\n");
+				LM_ERR("failed to insert anchor\n");
 				goto error;
 			}
 			if (insert_new_lump_after( l, buf.s, buf.len, 0)==0)
 			{
-				LOG(L_ERR,"ERROR:uac:replace_from: insert new "
-					"display lump failed\n");
+				LM_ERR("insert new display lump failed\n");
 				pkg_free(buf.s);
 				goto error;
 			}
@@ -307,27 +300,25 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 		/* do not touch URI part */
 		return 0;
 
-	DBG("DEBUG:uac:replace_from: uri to replace [%.*s]\n",
-		from->uri.len, from->uri.s);
-	DBG("DEBUG:uac:replace_from: replacement uri is [%.*s]\n",
-		from_uri->len, from_uri->s);
+	LM_DBG("uri to replace [%.*s]\n",from->uri.len, from->uri.s);
+	LM_DBG("replacement uri is [%.*s]\n",from_uri->len, from_uri->s);
 
 	/* build del/add lumps */
 	if ((l=del_lump( msg, from->uri.s-msg->buf, from->uri.len, 0))==0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: del lump failed\n");
+		LM_ERR("del lump failed\n");
 		goto error;
 	}
 	p = pkg_malloc( from_uri->len);
 	if (p==0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 	memcpy( p, from_uri->s, from_uri->len); 
 	if (insert_new_lump_after( l, p, from_uri->len, 0)==0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: insert new lump failed\n");
+		LM_ERR("insert new lump failed\n");
 		pkg_free(p);
 		goto error;
 	}
@@ -339,7 +330,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	buf.s = buf_s;
 	if ( from->uri.len>from_uri->len ) {
 		if (from->uri.len>MAX_URI_SIZE) {
-			LOG(L_ERR,"ERROR:uac:replace_from: old from uri to long\n");
+			LM_ERR("old from uri to long\n");
 			goto error;
 		}
 		memcpy( buf.s, from->uri.s, from->uri.len);
@@ -348,7 +339,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 		buf.len = from->uri.len;
 	} else {
 		if (from_uri->len>MAX_URI_SIZE) {
-			LOG(L_ERR,"ERROR:uac:replace_from: new from uri to long\n");
+			LM_ERR("new from uri to long\n");
 			goto error;
 		}
 		memcpy( buf.s, from_uri->s, from_uri->len);
@@ -365,18 +356,17 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	/* encode the param */
 	if (encode_from( &buf , &replace)<0 )
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: failed to encode uris\n");
+		LM_ERR("failed to encode uris\n");
 		goto error;
 	}
-	DBG("DEBUG:uac:replace_from: encode is=<%.*s> len=%d\n",
-		replace.len,replace.s,replace.len);
+	LM_DBG("encode is=<%.*s> len=%d\n",replace.len,replace.s,replace.len);
 
 	/* add RR parameter */
 	param.len = 1+rr_param.len+1+replace.len;
 	param.s = (char*)pkg_malloc(param.len);
 	if (param.s==0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 	p = param.s;
@@ -389,7 +379,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 
 	if (uac_rrb.add_rr_param( msg, &param)!=0)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: add_RR_param failed\n");
+		LM_ERR("add_RR_param failed\n");
 		goto error1;
 	}
 	msg->msg_flags |= FL_USE_UAC_FROM;
@@ -397,7 +387,7 @@ int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri)
 	/* add TM callback to restore the FROM hdr in reply */
 	if (uac_tmb.register_tmcb(msg,0,TMCB_RESPONSE_IN,restore_from_reply,0)!=1)
 	{
-		LOG(L_ERR,"ERROR:uac:replace_from: failed to install TM callback\n");
+		LM_ERR("failed to install TM callback\n");
 		goto error1;
 	}
 
@@ -440,7 +430,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 
 	/* decode the parameter val to a URI */
 	if (decode_from( &param_val, &new_uri)<0 ) {
-		LOG(L_ERR,"ERROR:uac:restore_from: failed to decode uri\n");
+		LM_ERR("failed to decode uri\n");
 		goto failed;
 	}
 
@@ -453,7 +443,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	if (uac_rrb.is_direction( msg, RR_FLOW_UPSTREAM)==0) {
 		/* replace the TO URI */
 		if ( msg->to==0 && (parse_headers(msg,HDR_TO_F,0)!=0 || msg->to==0) ) {
-			LOG(L_ERR,"ERROR:uac:restore_from: failed to parse TO hdr\n");
+			LM_ERR("failed to parse TO hdr\n");
 			goto failed;
 		}
 		old_uri = ((struct to_body*)msg->to->parsed)->uri;
@@ -462,8 +452,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	} else {
 		/* replace the FROM URI */
 		if ( parse_from_header(msg)<0 ) {
-			LOG(L_ERR,"ERROR:uac:restore_from: failed to find/parse "
-				"FROM hdr\n");
+			LM_ERR("failed to find/parse FROM hdr\n");
 			goto failed;
 		}
 		old_uri = ((struct to_body*)msg->from->parsed)->uri;
@@ -473,7 +462,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 
 	/* get new uri */
 	if ( new_uri.len<old_uri.len ) {
-		LOG(L_ERR,"ERROR:uac:restore_from: new URI shorter than old URI\n");
+		LM_ERR("new URI shorter than old URI\n");
 		goto failed;
 	}
 	for( i=0 ; i<old_uri.len ; i++ )
@@ -481,7 +470,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	if (new_uri.len==old_uri.len) {
 		for( ; new_uri.len && (new_uri.s[new_uri.len-1]==0) ; new_uri.len-- );
 		if (new_uri.len==0) {
-			LOG(L_ERR,"ERROR:uac:restore_from: new URI got 0 len\n");
+			LM_ERR("new URI got 0 len\n");
 			goto failed;
 		}
 	}
@@ -492,7 +481,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	/* duplicate the decoded value */
 	p = pkg_malloc( new_uri.len);
 	if (p==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto failed;
 	}
 	memcpy( p, new_uri.s, new_uri.len);
@@ -501,12 +490,12 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	/* build del/add lumps */
 	l = del_lump( msg, old_uri.s-msg->buf, old_uri.len, 0);
 	if (l==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from: del lump failed\n");
+		LM_ERR("del lump failed\n");
 		goto failed1;
 	}
 
 	if (insert_new_lump_after( l, new_uri.s, new_uri.len, 0)==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from: insert new lump failed\n");
+		LM_ERR("insert new lump failed\n");
 		goto failed1;
 	}
 
@@ -535,7 +524,7 @@ void rr_checker(struct sip_msg *msg, str *r_param, void *cb_param)
 		 * by restore_from() function */
 		if ( uac_tmb.register_tmcb( msg, 0, TMCB_RESPONSE_IN,
 		is_from?restore_from_reply:restore_to_reply, 0)!=1 ) {
-			LOG(L_ERR,"ERROR:uac:rr_checker: failed to install TM callback\n");
+			LM_ERR("failed to install TM callback\n");
 				return;
 		}
 	}
@@ -560,15 +549,14 @@ void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 
 	/* parse FROM in reply */
 	if (parse_from_header( p->rpl )<0 ) {
-		LOG(L_ERR,"ERROR:uac:restore_from_reply: failed to find/parse "
-			"FROM hdr\n");
+		LM_ERR("failed to find/parse FROM hdr\n");
 		return;
 	}
 
 	/* duplicate the new from value */
 	new_val.s = pkg_malloc( req->from->len );
 	if (p==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from_reply: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		return;
 	}
 	memcpy( new_val.s, req->from->name.s, req->from->len);
@@ -579,14 +567,14 @@ void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 			rpl->from->len,rpl->from->name.s);
 	l = del_lump( rpl, rpl->from->name.s-rpl->buf, rpl->from->len, 0);
 	if (l==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from_reply: del lump failed\n");
+		LM_ERR("del lump failed\n");
 		return;
 	}
 
 	DBG("DBG:uac::restore_from_reply: inserting <%.*s>\n",
 			new_val.len,new_val.s);
 	if (insert_new_lump_after( l, new_val.s, new_val.len, 0)==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from_reply: insert new lump failed\n");
+		LM_ERR("insert new lump failed\n");
 		return;
 	}
 }
@@ -609,14 +597,14 @@ void restore_to_reply(struct cell* t, int type, struct tmcb_params *p)
 
 	/* parse TO in reply */
 	if ( rpl->to==0 && (parse_headers(rpl,HDR_TO_F,0)!=0 || rpl->to==0) ) {
-		LOG(L_ERR,"ERROR:uac:restore_to_reply: failed to parse TO hdr\n");
+		LM_ERR("failed to parse TO hdr\n");
 		return;
 	}
 
 	/* duplicate the new from value */
 	new_val.s = pkg_malloc( req->to->len );
 	if (p==0) {
-		LOG(L_ERR,"ERROR:uac:restore_from_reply: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		return;
 	}
 	memcpy( new_val.s, req->to->name.s, req->to->len);
@@ -626,14 +614,14 @@ void restore_to_reply(struct cell* t, int type, struct tmcb_params *p)
 			rpl->to->len,rpl->to->name.s);
 	l = del_lump( rpl, rpl->to->name.s-rpl->buf, rpl->to->len, 0);
 	if (l==0) {
-		LOG(L_ERR,"ERROR:uac:restore_to_reply: del lump failed\n");
+		LM_ERR("del lump failed\n");
 		return;
 	}
 
 	DBG("DBG:uac::restore_to_reply: inserting <%.*s>\n",
 		new_val.len, new_val.s);
 	if (insert_new_lump_after( l, new_val.s, new_val.len, 0)==0) {
-		LOG(L_ERR,"ERROR:uac:restore_to_reply: insert new lump failed\n");
+		LM_ERR("insert new lump failed\n");
 		return;
 	}
 }

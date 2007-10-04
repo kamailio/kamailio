@@ -128,8 +128,7 @@ inline static int parse_auth_avp( char *avp_spec, pv_spec_t *avp, char *txt)
 	str s;
 	s.s = avp_spec; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, avp)) {
-		LOG(L_ERR, "ERROR:uac:parse_auth_avp: malformed or non AVP %s "
-			"AVP definition\n",txt);
+		LM_ERR("malformed or non AVP %s AVP definition\n",txt);
 		return -1;
 	}
 	return 0;
@@ -138,7 +137,7 @@ inline static int parse_auth_avp( char *avp_spec, pv_spec_t *avp, char *txt)
 
 static int mod_init(void)
 {
-	LOG(L_INFO,"UAC - initializing\n");
+	LM_INFO("UAC - initializing\n");
 
 	if (from_restore_mode_str && *from_restore_mode_str) {
 		if (strcasecmp(from_restore_mode_str,"none")==0) {
@@ -148,8 +147,7 @@ static int mod_init(void)
 		} else if (strcasecmp(from_restore_mode_str,"auto")==0) {
 			from_restore_mode = FROM_AUTO_RESTORE;
 		} else {
-			LOG(L_ERR,"ERROR:uac:mod_init: unsupported value '%s' for "
-				"from_restore_mode\n",from_restore_mode_str);
+			LM_ERR("unsupported value '%s' for from_restore_mode\n",from_restore_mode_str);
 			goto error;
 		}
 	}
@@ -157,8 +155,7 @@ static int mod_init(void)
 	rr_param.len = strlen(rr_param.s);
 	if (rr_param.len==0 && from_restore_mode!=FROM_NO_RESTORE)
 	{
-		LOG(L_ERR,"ERROR:uac:mod_init: rr_store_param cannot be empty "
-			"if FROM is restoreable\n");
+		LM_ERR("rr_store_param cannot be empty if FROM is restoreable\n");
 		goto error;
 	}
 
@@ -167,7 +164,7 @@ static int mod_init(void)
 	/* parse the auth AVP spesc, if any */
 	if ( auth_username_avp || auth_password_avp || auth_realm_avp) {
 		if (!auth_username_avp || !auth_password_avp || !auth_realm_avp) {
-			LOG(L_ERR,"ERROR:uac:mod_init: partial definition of auth AVP!");
+			LM_ERR("partial definition of auth AVP!");
 			goto error;
 		}
 		if ( parse_auth_avp(auth_realm_avp, &auth_realm_spec, "realm")<0
@@ -185,22 +182,21 @@ static int mod_init(void)
 	/* load the TM API - FIXME it should be loaded only
 	 * if NO_RESTORE and AUTH */
 	if (load_tm_api(&uac_tmb)!=0) {
-		LOG(L_ERR, "ERROR:uac:mod_init: can't load TM API\n");
+		LM_ERR("can't load TM API\n");
 		goto error;
 	}
 
 	if (from_restore_mode!=FROM_NO_RESTORE) {
 		/* load the RR API */
 		if (load_rr_api(&uac_rrb)!=0) {
-			LOG(L_ERR, "ERROR:uac:mod_init: can't load RR API\n");
+			LM_ERR("can't load RR API\n");
 			goto error;
 		}
 
 		if (from_restore_mode==FROM_AUTO_RESTORE) {
 			/* get all requests doing loose route */
 			if (uac_rrb.register_rrcb( rr_checker, 0)!=0) {
-				LOG(L_ERR,"ERROR:uac:mod_init: failed to install "
-					"RR callback\n");
+				LM_ERR("failed to install RR callback\n");
 				goto error;
 			}
 		}
@@ -232,13 +228,12 @@ static int fixup_replace_from1(void** param, int param_no)
 	s.s = (char*)(*param); s.len = strlen(s.s);
 	if(pv_parse_format(&s, &model)<0)
 	{
-		LOG(L_ERR, "ERROR:uac:fixup_replace_from1: wrong format[%s]!\n",
-			(char*)(*param));
+		LM_ERR("wrong format[%s]!\n",(char*)(*param));
 		return E_UNSPEC;
 	}
 	if (model==NULL)
 	{
-		LOG(L_ERR, "ERROR:uac:fixup_replace_from1: empty parameter!\n");
+		LM_ERR("empty parameter!\n");
 		return E_UNSPEC;
 	}
 	*param = (void*)model;
@@ -266,7 +261,7 @@ static int fixup_replace_from2(void** param, int param_no)
 			p = (char*)pkg_malloc(s.len+3);
 			if (p==0)
 			{
-				LOG(L_CRIT,"ERROR:uac:fixup_replace_from2: no more pkg mem\n");
+				LM_CRIT("no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
 			p[0] = '\"';
@@ -282,8 +277,7 @@ static int fixup_replace_from2(void** param, int param_no)
 	{
 		if(pv_parse_format(&s ,&model)<0)
 		{
-			LOG(L_ERR, "ERROR:uac:fixup_replace_from2: wrong format [%s] "
-				"for param no %d!\n", s.s, param_no);
+			LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
 			pkg_free(s.s);
 			return E_UNSPEC;
 		}
@@ -301,8 +295,7 @@ static int w_restore_from(struct sip_msg *msg,  char* foo, char* bar)
 {
 	/* safety checks - must be a request */
 	if (msg->first_line.type!=SIP_REQUEST) {
-		LOG(L_ERR,"ERROR:uac:w_restore_from: called for something "
-			"not request\n");
+		LM_ERR("called for something not request\n");
 		return -1;
 	}
 

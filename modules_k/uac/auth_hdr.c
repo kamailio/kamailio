@@ -100,7 +100,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 
 	if (body->s==0 || *body->s==0 )
 	{
-		LOG(L_ERR,"ERROR:uac:parse_authenticate_body: empty body\n");
+		LM_ERR("empty body\n");
 		goto error;
 	}
 
@@ -206,7 +206,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 			while (p<end && isspace((int)*p)) p++;
 		}
 
-		DBG("DEBUG:uac:parse_authenticate_body: <%.*s>=\"%.*s\" state=%d\n",
+		LM_DBG("<%.*s>=\"%.*s\" state=%d\n",
 			name.len,name.s,val.len,val.s,state);
 
 		/* process the AVP */
@@ -214,8 +214,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 		{
 			case QOP_STATE:
 				/* TODO - add qop support */
-				LOG(L_NOTICE,"NOTICE:uac:parse_authenticate_body: no qop "
-					"support for the moment :-( -> ignoring\n");
+				LM_NOTICE("no qop support for the moment :-( -> ignoring\n");
 				break;
 			case REALM_STATE:
 				auth->realm = val;
@@ -235,8 +234,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 					if ( LOWER4B(GET3B(val.s))==0x6d6435ff) /*MD5*/
 						auth->flags |= AUTHENTICATE_MD5;
 				} else {
-					LOG(L_ERR,"ERROR:uac:parse_authenticate_body: "
-						"unsupported algorithm \"%.*s\"\n",val.len,val.s);
+					LM_ERR("unsupported algorithm \"%.*s\"\n",val.len,val.s);
 					goto error;
 				}
 				break;
@@ -247,8 +245,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 				} else if ( !(val.len==5 && val.s[4]=='e' && 
 					LOWER4B(GET4B(val.s))==0x66616c73) )
 				{
-					LOG(L_ERR,"ERROR:uac:parse_authenticate_body: "
-						"unsupported stale value \"%.*s\"\n",val.len,val.s);
+					LM_ERR("unsupported stale value \"%.*s\"\n",val.len,val.s);
 					goto error;
 				}
 				break;
@@ -260,15 +257,13 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 	/* some checkings */
 	if (auth->nonce.s==0 || auth->realm.s==0)
 	{
-		LOG(L_ERR,"ERROR:uac:parse_authenticate_body: realm or "
-			"nonce missing\n");
+		LM_ERR("realm or nonce missing\n");
 		goto error;
 	}
 
 	return 0;
 parse_error:
-		LOG(L_ERR,"ERROR:uac:parse_authenticate_body: parse error in <%.*s> "
-		"around %ld\n", body->len, body->s, (long)(p-body->s));
+		LM_ERR("parse error in <%.*s> around %ld\n", body->len, body->s, (long)(p-body->s));
 error:
 	return -1;
 }
@@ -331,7 +326,7 @@ str* build_authorization_hdr(int code, str *uri,
 	hdr.s = (char*)pkg_malloc( len + 1);
 	if (hdr.s==0)
 	{
-		LOG(L_ERR,"ERROR:uac:build_authorization_hdr: no more mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 
@@ -378,13 +373,12 @@ str* build_authorization_hdr(int code, str *uri,
 
 	if (hdr.len!=len)
 	{
-		LOG(L_CRIT,"BUG:uac:build_authorization_hdr: bad buffer computation "
-			"(%d<>%d)\n",len,hdr.len);
+		LM_CRIT("bad buffer computation (%d<>%d)\n",len,hdr.len);
 		pkg_free( hdr.s );
 		goto error;
 	}
 
-	DBG("DEBUG:uac:build_authorization_hdr: hdr is <%.*s>\n",
+	LM_DBG("hdr is <%.*s>\n",
 		hdr.len,hdr.s);
 
 	return &hdr;

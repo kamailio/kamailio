@@ -56,8 +56,7 @@ static struct uac_credential *crd_list = 0;
 		_strd.s = (char*)pkg_malloc(_strs.len); \
 		if (_strd.s==0) \
 		{ \
-			LOG(L_ERR,"ERROR:uac:add_credential: " \
-				"no more pkg memory\n");\
+			LM_ERR("no more pkg memory\n");\
 			goto _error; \
 		} \
 		memcpy( _strd.s, _strs.s, _strs.len); \
@@ -108,7 +107,7 @@ int add_credential( unsigned int type, void *val)
 	crd = (struct uac_credential*)pkg_malloc(sizeof(struct uac_credential));
 	if (crd==0)
 	{
-		LOG(L_ERR,"ERROR:uac:add_credential: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 	memset( crd, 0, sizeof(struct uac_credential));
@@ -176,7 +175,7 @@ int add_credential( unsigned int type, void *val)
 	pkg_free(val);
 	return 0;
 parse_error:
-		LOG(L_ERR,"ERROR:uac:add_credential: parse error in <%s> "
+		LM_ERR("parse error in <%s> "
 		"around %ld\n", (char*)val, (long)(p-(char*)val));
 error:
 	if (crd)
@@ -214,18 +213,18 @@ static inline struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl,
 		hdr_name.s = PROXY_AUTH_HDR;
 		hdr_name.len = PROXY_AUTH_HDR_LEN;
 	} else {
-		LOG( L_ERR,"ERROR:uac:get_autenticate_hdr: reply is not an "
+		LM_ERR("reply is not an "
 			"auth request\n");
 		goto error;
 	}
 
-	DBG("DEBUG:uac:get_autenticate_hdr: looking for header \"%.*s\"\n",
+	LM_DBG("looking for header \"%.*s\"\n",
 		hdr_name.len, hdr_name.s);
 
 	/* search the auth hdr, but first parse them all */
 	if (parse_headers( rpl, HDR_EOH_F, 0)<0)
 	{
-		LOG( L_ERR,"ERROR:uac:get_autenticate_hdr: failed to parse reply\n");
+		LM_ERR("failed to parse reply\n");
 		goto error;
 	}
 	for( hdr=rpl->headers ; hdr ; hdr=hdr->next )
@@ -237,7 +236,7 @@ static inline struct hdr_field *get_autenticate_hdr(struct sip_msg *rpl,
 			return hdr;
 	}
 
-	LOG( L_ERR,"ERROR:uac:get_autenticate_hdr: reply has no "
+	LM_ERR("reply has no "
 		"auth hdr (%.*s)\n", hdr_name.len, hdr_name.s);
 error:
 	return 0;
@@ -318,7 +317,7 @@ static inline int apply_urihdr_changes( struct sip_msg *req,
 	req->new_uri.s = (char*)pkg_malloc(uri->len+1);
 	if (req->new_uri.s==0)
 	{
-		LOG(L_ERR,"ERROR:uac:apply_urihdr_changes: no more pkg\n");
+		LM_ERR("no more pkg\n");
 		goto error;
 	}
 	memcpy( req->new_uri.s, uri->s, uri->len);
@@ -328,20 +327,20 @@ static inline int apply_urihdr_changes( struct sip_msg *req,
 	/* add the header */
 	if (parse_headers(req, HDR_EOH_F, 0) == -1)
 	{
-		LOG(L_ERR,"ERROR:uac:apply_urihdr_changes: failed to parse message\n");
+		LM_ERR("failed to parse message\n");
 		goto error;
 	}
 
 	anchor = anchor_lump(req, req->unparsed - req->buf, 0, 0);
 	if (anchor==0)
 	{
-		LOG(L_ERR,"ERROR:uac:apply_urihdr_changes: failed to get anchor\n");
+		LM_ERR("failed to get anchor\n");
 		goto error;
 	}
 
 	if (insert_new_lump_before(anchor, hdr->s, hdr->len, 0) == 0)
 	{
-		LOG(L_ERR,"ERROR:uac:apply_urihdr_changes: faield to insert lump\n");
+		LM_ERR("faield to insert lump\n");
 		goto error;
 	}
 
@@ -368,45 +367,45 @@ int uac_auth( struct sip_msg *msg)
 	t = uac_tmb.t_gett();
 	if (t==T_UNDEFINED || t==T_NULL_CELL)
 	{
-		LOG(LOG_CRIT,"BUG:uac:uac_auth: no current transaction found\n");
+		LM_CRIT("no current transaction found\n");
 		goto error;
 	}
 
 	/* get the selected branch */
 	branch = uac_tmb.t_get_picked();
 	if (branch<0) {
-		LOG(L_CRIT,"BUG:uac:uac_auth: no picked branch (%d)\n",branch);
+		LM_CRIT("no picked branch (%d)\n",branch);
 		goto error;
 	}
 
 	rpl = t->uac[branch].reply;
 	code = t->uac[branch].last_received;
-	DBG("DEBUG:uac:uac_auth: picked reply is %p, code %d\n",rpl,code);
+	LM_DBG("picked reply is %p, code %d\n",rpl,code);
 
 	if (rpl==0)
 	{
-		LOG(L_CRIT,"BUG:uac:uac_auth: empty reply on picked branch\n");
+		LM_CRIT("empty reply on picked branch\n");
 		goto error;
 	}
 	if (rpl==FAKED_REPLY)
 	{
-		LOG(L_ERR,"ERROR:uac:uac_auth: cannot process a FAKED reply\n");
+		LM_ERR("cannot process a FAKED reply\n");
 		goto error;
 	}
 
 	hdr = get_autenticate_hdr( rpl, code);
 	if (hdr==0)
 	{
-		LOG( L_ERR,"ERROR:uac:uac_auth: failed to extract authenticate hdr\n");
+		LM_ERR("failed to extract authenticate hdr\n");
 		goto error;
 	}
 
-	DBG("DEBUG:uac:uac_auth: header found; body=<%.*s>\n",
+	LM_DBG("header found; body=<%.*s>\n",
 		hdr->body.len, hdr->body.s);
 
 	if (parse_authenticate_body( &hdr->body, &auth)<0)
 	{
-		LOG(L_ERR,"ERROR:uac:uac_auth: failed to parse auth hdr body\n");
+		LM_ERR("failed to parse auth hdr body\n");
 		goto error;
 	}
 
@@ -421,7 +420,7 @@ int uac_auth( struct sip_msg *msg)
 	/* found? */
 	if (crd==0)
 	{
-		DBG("DEBUG:uac:uac_auth: no credential for realm \"%.*s\"\n",
+		LM_DBG("no credential for realm \"%.*s\"\n",
 			auth.realm.len, auth.realm.s);
 		goto error;
 	}
@@ -434,14 +433,14 @@ int uac_auth( struct sip_msg *msg)
 		crd, &auth, response);
 	if (new_hdr==0)
 	{
-		LOG(L_ERR,"ERROR:uac:uac_auth: failed to build authorization hdr\n");
+		LM_ERR("failed to build authorization hdr\n");
 		goto error;
 	}
 
 	/* so far, so good -> add the header and set the proper RURI */
 	if ( apply_urihdr_changes( msg, &t->uac[branch].uri, new_hdr)<0 )
 	{
-		LOG(L_ERR,"ERROR:uac:uac_auth: failed to apply changes\n");
+		LM_ERR("failed to apply changes\n");
 		goto error;
 	}
 
