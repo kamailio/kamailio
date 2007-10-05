@@ -133,8 +133,7 @@ modparam("sl", "enable_stats", 0)
      * code - Return code.
      * reason - Reason phrase.
 
-   This function can be used from REQUEST_ROUTE, ERROR_ROUTE and
-   ONREPLY_ROUTE.
+   This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
 
    Example 1-2. sl_send_reply usage
 ...
