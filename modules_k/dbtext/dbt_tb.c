@@ -270,7 +270,7 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 		{
 			case DB_STR:
 			case DB_BLOB:
-				_drp->fields[_idx].type = DB_STR;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.str_val.s = 
 					(char*)shm_malloc(_vp->val.str_val.len*sizeof(char));
 				if(!_drp->fields[_idx].val.str_val.s)
@@ -284,11 +284,11 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			break;
 			
 			case DB_STRING:
-				_drp->fields[_idx].type = DB_STR;
-				_drp->fields[_idx].val.str_val.len=strlen(_vp->val.string_val);
+				_drp->fields[_idx].type = _t;
+				_drp->fields[_idx].val.str_val.len=_vp->val.str_val.len;
 				
 				_drp->fields[_idx].val.str_val.s = 
-					(char*)shm_malloc(_drp->fields[_idx].val.str_val.len
+					(char*)shm_malloc((_drp->fields[_idx].val.str_val.len+1)
 									  *sizeof(char));
 				if(!_drp->fields[_idx].val.str_val.s)
 				{
@@ -297,6 +297,7 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.string_val,
 					_drp->fields[_idx].val.str_val.len);
+				_drp->fields[_idx].val.str_val.s[_drp->fields[_idx].val.str_val.len] = '\0';
 			break;
 			
 			case DB_DOUBLE:
@@ -310,7 +311,7 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			break;
 			
 			case DB_DATETIME:
-				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
 			break;
 			

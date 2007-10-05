@@ -360,6 +360,8 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 			LM_DBG("incompatible types v[%d] - c[%d]!\n", i, j);
 			goto clean;
 		}
+		if(_v[i].type == DB_STRING)
+			_v[i].val.str_val.len = strlen(_v[i].val.string_val);
 		if(dbt_row_set_val(_drp, &(_v[i]), _v[i].type, j))
 		{
 			LM_DBG("cannot set v[%d] in c[%d]!\n", i, j);

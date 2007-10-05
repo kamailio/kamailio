@@ -200,13 +200,30 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						colp->type = DB_DOUBLE;
 						LM_DBG("column[%d] is DOUBLE!\n", ccol+1);
 					break;
+					case 'b':
+					case 'B':
+						colp->type = DB_BLOB;
+						LM_DBG("column[%d] is BLOB!\n", ccol+1);
+					break;
+					case 't':
+					case 'T':
+						colp->type = DB_DATETIME;
+						LM_DBG("column[%d] is TIME!\n", ccol+1);
+					break;
 					default:
 						LM_DBG("wrong column type!\n");
 						goto clean;
 				}
 
-				while(c!=')' && c!= ',')
+				while(c!='\n' && c!=EOF && c!=')' && c!= ',')
+				{
+					if(colp->type == DB_STR && (c=='i'|| c=='I'))
+					{
+						colp->type = DB_STRING;
+						LM_DBG("column[%d] is actually STRING!\n", ccol+1);
+					}
 					c = fgetc(fin);
+				}
 				if(c==',')
 				{
 					//LM_DBG("c=%c!\n", c);
@@ -294,9 +311,10 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 				switch(dtp->colv[ccol]->type)
 				{
 					case DB_INT:
+					case DB_DATETIME:
 						//LM_DBG("INT value!\n");
 						dtval.val.int_val = 0;
-						dtval.type = DB_INT;
+						dtval.type = dtp->colv[ccol]->type;
 
 						if(c==DBT_DELIM || 
 								(ccol==dtp->nrcols-1
@@ -324,7 +342,8 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						}
 						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
 							goto clean;
-						if(dbt_row_set_val(rowp,&dtval,DB_INT,ccol))
+						if(dbt_row_set_val(rowp,&dtval,dtp->colv[ccol]->type,
+									ccol))
 							goto clean;
 						if(ccol == dtp->auto_col)
 							max_auto = (max_auto<dtval.val.int_val)?
@@ -379,11 +398,13 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 					break;
 					
 					case DB_STR:
+					case DB_STRING:
+					case DB_BLOB:
 						//LM_DBG("STR value!\n");
 						
 						dtval.val.str_val.s = NULL;
 						dtval.val.str_val.len = 0;
-						dtval.type = DB_STR;
+						dtval.type = dtp->colv[ccol]->type;
 						
 						bp = 0;
 						if(c==DBT_DELIM || 
@@ -432,7 +453,8 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 						}
 						if(c!=DBT_DELIM && c!=DBT_DELIM_R && c!=EOF)
 							goto clean;
-						if(dbt_row_set_val(rowp,&dtval,DB_STR,ccol))
+						if(dbt_row_set_val(rowp,&dtval,dtp->colv[ccol]->type,
+									ccol))
 							goto clean;
 					break;
 					default:
@@ -508,6 +530,15 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 			case DB_STR:
 				fprintf(fout, "%.*s(str", colp->name.len, colp->name.s);
 			break;
+			case DB_STRING:
+				fprintf(fout, "%.*s(string", colp->name.len, colp->name.s);
+			break;
+			case DB_BLOB:
+				fprintf(fout, "%.*s(blob", colp->name.len, colp->name.s);
+			break;
+			case DB_DATETIME:
+				fprintf(fout, "%.*s(time", colp->name.len, colp->name.s);
+			break;
 			default:
 				if(fout!=stdout)
 					fclose(fout);
@@ -532,6 +563,7 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 		{
 			switch(_dtp->colv[ccol]->type)
 			{
+				case DB_DATETIME:
 				case DB_INT:
 					if(!rowp->fields[ccol].nul)
 						fprintf(fout,"%d",
@@ -543,6 +575,8 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 								rowp->fields[ccol].val.double_val);
 				break;
 				case DB_STR:
+				case DB_STRING:
+				case DB_BLOB:
 					if(!rowp->fields[ccol].nul)
 					{
 						p = rowp->fields[ccol].val.str_val.s;
