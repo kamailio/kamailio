@@ -45,6 +45,6 @@
     <index>
         <name>d_domain</name>
         <colref linkend="dom"/>
-    <unique/>
+        <unique/>
     </index>
 </table>

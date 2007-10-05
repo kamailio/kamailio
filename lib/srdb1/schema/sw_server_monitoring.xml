@@ -15,19 +15,19 @@
         <db:para>Server monitoring table used from SERWeb.</db:para>
     </description>
 
-    <column>
-        <name>time</name>
-        <type>datetime</type>
-        <default>&DEFAULT_DATETIME;</default>
-        <description>Time</description>
-    </column>
-
     <column id="id">
         <name>id</name>
         <type>unsigned int</type>
         <size>&table_id_len;</size>
         <default>0</default>
         <description>Unique ID</description>
+    </column>
+
+    <column>
+        <name>time</name>
+        <type>datetime</type>
+        <default>&DEFAULT_DATETIME;</default>
+        <description>Time</description>
     </column>
 
     <column id="param">
