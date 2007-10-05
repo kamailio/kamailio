@@ -1,1 +1,1 @@
-id(int,auto) uuid(str) username(str) domain(str) attribute(str) type(int) value(str) last_modified(int) 
+id(int,auto) uuid(string) username(string) domain(string) attribute(string) type(int) value(string) last_modified(int) 

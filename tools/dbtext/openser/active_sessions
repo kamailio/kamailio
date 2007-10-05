@@ -1,1 +1,1 @@
-sid(str) name(str) val(str,null) changed(str) 
+sid(string) name(string) val(string,null) changed(string) 

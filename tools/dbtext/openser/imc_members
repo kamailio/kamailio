@@ -1,1 +1,1 @@
-id(int,auto) username(str) domain(str) room(str) flag(int) 
+id(int,auto) username(string) domain(string) room(string) flag(int) 

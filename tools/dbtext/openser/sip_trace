@@ -1,1 +1,1 @@
-id(int,auto) date(int) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str) 
+id(int,auto) date(int) callid(string) traced_user(string) msg(string) method(string) status(string) fromip(string) toip(string) fromtag(string) direction(string) 

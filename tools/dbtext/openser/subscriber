@@ -1,1 +1,1 @@
-id(int,auto) username(str) domain(str) password(str) first_name(str) last_name(str) email_address(str) datetime_created(int) ha1(str) ha1b(str) timezone(str,null) rpid(str,null) 
+id(int,auto) username(string) domain(string) password(string) first_name(string) last_name(string) email_address(string) datetime_created(int) ha1(string) ha1b(string) timezone(string,null) rpid(string,null) 

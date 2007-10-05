@@ -1,1 +1,1 @@
-att_name(str) att_rich(str) att_raw_type(int) att_type_spec(str) default_value(str) 
+att_name(string) att_rich(string) att_raw_type(int) att_type_spec(string) default_value(string) 

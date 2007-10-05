@@ -1,1 +1,1 @@
-id(int,auto) rule(str) type(str) att(str,null) val(str,null) comment(str) 
+id(int,auto) rule(string) type(string) att(string,null) val(string,null) comment(string) 

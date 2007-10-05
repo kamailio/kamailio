@@ -1,1 +1,1 @@
-id(int,auto) prefix(str) from_uri(str,null) grp_id(int) priority(int) 
+id(int,auto) prefix(string) from_uri(string,null) grp_id(int) priority(int) 

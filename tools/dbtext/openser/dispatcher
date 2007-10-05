@@ -1,1 +1,1 @@
-id(int,auto) setid(int) destination(str) description(str) 
+id(int,auto) setid(int) destination(string) description(string) 

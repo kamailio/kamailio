@@ -1,1 +1,1 @@
-id(int,auto) username(str) domain(str) uri_user(str) last_modified(int) 
+id(int,auto) username(string) domain(string) uri_user(string) last_modified(int) 

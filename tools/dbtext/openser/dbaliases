@@ -1,1 +1,1 @@
-id(int,auto) alias_username(str) alias_domain(str) username(str) domain(str) 
+id(int,auto) alias_username(string) alias_domain(string) username(string) domain(string) 
