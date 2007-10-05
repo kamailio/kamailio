@@ -1,6 +1,6 @@
 # $Id: Makefile 882 2006-05-30 15:31:09Z miconda $
 #
-#  serunix Makefile
+#  db_berkeley Makefile
 # 
 
 include ../../Makefile.defs
@@ -17,6 +17,7 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
         
 LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -L$(LOCALBASE)/BerkeleyDB.4.6/lib -ldb
 
-all:
+include ../../Makefile.rules
 
-#include ../../Makefile.rules
+modules:
+
