@@ -351,6 +351,14 @@ static int pv_get_color(struct sip_msg *msg, pv_param_t *param,
 	char* p;
 	char* end;
 
+	if(log_stderr==0 && force_color==0)
+	{
+		res->rs.s = "";
+		res->rs.len = 0;
+		res->flags = PV_VAL_STR;
+		return 0;
+	}
+
 	p = color;
 	end = p + COL_BUF;
         
