@@ -227,7 +227,7 @@ modparam("mi_fifo", "reply_indent", "    ")
 		<title>FIFO request</title>
 		<programlisting format="linespecific">
 
-get_statistics:/tmp/reply_fifo\n
+:get_statistics:reply_fifo\n
 dialog:\n
 tm:\n
 \n
