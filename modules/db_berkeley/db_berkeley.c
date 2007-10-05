@@ -36,6 +36,7 @@
 #include "../../mem/mem.h"
 
 #include "../../sr_module.h"
+#include "../../db/db_res.h"
 #include "db_berkeley.h"
 #include "bdb_lib.h"
 #include "bdb_res.h"
@@ -428,7 +429,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		LM_DBG("%i = SELECT COUNT(*) FROM %.*s\n", i, _tp->name.len, _tp->name.s);
 #endif
 
-		*_r = sc_result_new();
+		*_r = db_new_result();
 		if (!*_r) 
 		{	LM_ERR("no memory left for result \n");
 			ret = -2;
@@ -504,7 +505,7 @@ int sc_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	data.flags = DB_DBT_USERMEM;
 
 	/*create an empty db_res_t which gets returned even if no result*/
-	*_r = sc_result_new();
+	*_r = db_new_result();
 	if (!*_r) 
 	{	LM_ERR("no memory left for result \n");
 		ret = -2;
@@ -926,7 +927,7 @@ int _sc_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, in
 	}
 	
 	/* create an empty db_res_t which gets returned even if no result */
-	_r = sc_result_new();
+	_r = db_new_result();
 	if (!_r) 
 	{	LM_ERR("no memory for result \n");
 	}
