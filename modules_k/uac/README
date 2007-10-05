@@ -1,4 +1,3 @@
-
 UAC Module
 
 Ramona-Elena Modroiu
@@ -10,7 +9,7 @@ Edited by
 Ramona-Elena Modroiu
 
    Copyright © 2005 Voice Sistem
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -53,7 +52,7 @@ Ramona-Elena Modroiu
    1-9. uac_replace_from usage
    1-10. uac_restore_from usage
    1-11. uac_auth usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -65,10 +64,11 @@ Chapter 1. User's Guide
 
    Known limitations in this version:
 
-     * authentication does not support qop;
-     * CSeq not increased during authentication - the response
-       may be rejected.
-     _________________________________________________________
+     * authentication does not support qop auth-int, just qop
+       auth;
+     * CSeq not increased during authentication - the response may
+       be rejected.
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -77,9 +77,9 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * TM - Transaction Module
-     * RR - Record-Route Module, but only if restore mode for
-       FROM URI is set to "auto".
-     _________________________________________________________
+     * RR - Record-Route Module, but only if restore mode for FROM
+       URI is set to "auto".
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -87,7 +87,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -96,13 +96,13 @@ Chapter 1. User's Guide
    Name of Record-Route header parameter that will be used to
    store (encoded) the original FROM URI.
 
-   This parameter is optional, it's default value being "vsf". 
+   This parameter is optional, it's default value being "vsf".
 
    Example 1-1. Set rr_store_param parameter
 ...
 modparam("uac","rr_store_param","my_param")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. from_restore_mode (string)
 
@@ -116,39 +116,39 @@ modparam("uac","rr_store_param","my_param")
      * "auto" - all sequential requests and replies will be
        automatically updated based on stored original URI.
 
-   This parameter is optional, it's default value being "auto". 
+   This parameter is optional, it's default value being "auto".
 
-   Example 1-2. Set from_restore_mode parameter 
+   Example 1-2. Set from_restore_mode parameter
 ...
 modparam("uac","from_restore_mode","auto")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. from_passwd (string)
 
    String password to be used to encrypt the RR storing paramter.
    If empty, no encryption will be used.
 
-   Default value of this parameter is empty. 
+   Default value of this parameter is empty.
 
    Example 1-3. Set from_passwd parameter
 ...
 modparam("uac","from_passwd","my_secret_passwd")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. credential (string)
 
    Contains a multiple definition of credentials used to perform
    authentication.
 
-   This parameter is required if UAC authentication is used. 
+   This parameter is required if UAC authentication is used.
 
    Example 1-4. Set credential parameter
 ...
 modparam("uac","credential","username:domain:password")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. auth_realm_avp (string)
 
@@ -156,13 +156,13 @@ modparam("uac","credential","username:domain:password")
    used to perform authentication.
 
    If you define it, you also need to define "auth_username_avp"
-   (Section 1.3.6) and "auth_username_avp" (Section 1.3.7). 
+   (Section 1.3.6) and "auth_username_avp" (Section 1.3.7).
 
    Example 1-5. Set auth_realm_avp parameter
 ...
 modparam("uac","auth_realm_avp","$avp(i:10)")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. auth_username_avp (string)
 
@@ -170,13 +170,13 @@ modparam("uac","auth_realm_avp","$avp(i:10)")
    used to perform authentication.
 
    If you define it, you also need to define "auth_realm_avp"
-   (Section 1.3.5) and "auth_username_avp" (Section 1.3.7). 
+   (Section 1.3.5) and "auth_username_avp" (Section 1.3.7).
 
    Example 1-6. Set auth_username_avp parameter
 ...
 modparam("uac","auth_username_avp","$avp(i:11)")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. auth_password_avp (string)
 
@@ -184,13 +184,13 @@ modparam("uac","auth_username_avp","$avp(i:11)")
    used to perform authentication.
 
    If you define it, you also need to define "auth_password_avp"
-   (Section 1.3.7) and "auth_username_avp" (Section 1.3.7). 
+   (Section 1.3.7) and "auth_username_avp" (Section 1.3.7).
 
    Example 1-7. Set auth_password_avp parameter
 ...
 modparam("uac","auth_password_avp","$avp(i:12)")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -213,7 +213,7 @@ uac_replace_from("","sip:robin@gotham.org");
 # remove display and do not touch uri
 uac_replace_from("","");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. uac_replace_from(uri)
 
@@ -228,7 +228,7 @@ uac_replace_from("","");
 ...
 uac_replace_from("sip:batman@gotham.org");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. uac_restore_from()
 
@@ -242,13 +242,13 @@ uac_replace_from("sip:batman@gotham.org");
 ...
 uac_restore_from();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.4. uac_auth()
 
    This function can be called only from failure route and will
-   build the authentication response header and insert it into
-   the request without sending anything.
+   build the authentication response header and insert it into the
+   request without sending anything.
 
    This function can be used from FAILURE_ROUTE.
 
@@ -256,13 +256,13 @@ uac_restore_from();
 ...
 uac_auth();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -276,8 +276,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

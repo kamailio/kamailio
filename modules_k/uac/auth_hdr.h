@@ -40,6 +40,8 @@ struct authenticate_body {
 	str nonce;
 	str opaque;
 	str qop;
+	str *nc;
+	str *cnonce;
 };
 
 #define AUTHENTICATE_MD5         (1<<0)

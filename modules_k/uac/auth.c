@@ -71,6 +71,8 @@ static struct uac_credential *crd_list = 0;
 #define PROXY_AUTH_HDR      "Proxy-Authenticate"
 #define PROXY_AUTH_HDR_LEN  (sizeof(PROXY_AUTH_HDR)-1)
 
+static str nc = {"00000001", 8};
+static str cnonce = {"o", 1};
 
 int has_credentials(void)
 {
@@ -293,12 +295,27 @@ static inline void do_uac_auth(struct sip_msg *req, str *uri,
 	HASHHEX ha1;
 	HASHHEX ha2;
 
-	/* do authentication */
-	uac_calc_HA1( crd, auth, 0/*cnonce*/, ha1);
-	uac_calc_HA2( &req->first_line.u.request.method, uri,
-		auth, 0/*hentity*/, ha2 );
+	if((auth->flags&QOP_AUTH) || (auth->flags&QOP_AUTH_INT))
+	{
+		/* if qop generate nonce-count and cnonce */
+		cnonce.s = int2str(core_hash(&auth->nonce, 0, 0),&cnonce.len);
 
-	uac_calc_response( ha1, ha2, auth, 0/*nc*/, 0/*cnonce*/, response);
+		/* do authentication */
+		uac_calc_HA1( crd, auth, &cnonce, ha1);
+		uac_calc_HA2( &req->first_line.u.request.method, uri,
+			auth, 0/*hentity*/, ha2 );
+
+		uac_calc_response( ha1, ha2, auth, &nc, &cnonce, response);
+		auth->nc = &nc;
+		auth->cnonce = &cnonce;
+	} else {
+		/* do authentication */
+		uac_calc_HA1( crd, auth, 0/*cnonce*/, ha1);
+		uac_calc_HA2( &req->first_line.u.request.method, uri,
+			auth, 0/*hentity*/, ha2 );
+
+		uac_calc_response( ha1, ha2, auth, 0/*nc*/, 0/*cnonce*/, response);
+	}
 }
 
 

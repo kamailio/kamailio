@@ -25,7 +25,7 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				authentication does not support qop;
+				authentication does not support qop auth-int, just qop auth;
 			</para>
 			</listitem>
 			<listitem>

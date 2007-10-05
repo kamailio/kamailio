@@ -213,8 +213,9 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 		switch (state)
 		{
 			case QOP_STATE:
-				/* TODO - add qop support */
-				LM_NOTICE("no qop support for the moment :-( -> ignoring\n");
+				auth->qop = val;
+				if(val.len>=4 && !strncmp(val.s, "auth", 4))
+					auth->flags |= QOP_AUTH;
 				break;
 			case REALM_STATE:
 				auth->realm = val;
@@ -293,6 +294,13 @@ error:
 #define FIELD_SEPARATOR_S        "\", "
 #define FIELD_SEPARATOR_LEN      (sizeof(FIELD_SEPARATOR_S)-1)
 
+#define QOP_FIELD_S              "qop=\""
+#define QOP_FIELD_LEN            (sizeof(QOP_FIELD_S)-1)
+#define NC_FIELD_S               "nc=\""
+#define NC_FIELD_LEN             (sizeof(NC_FIELD_S)-1)
+#define CNONCE_FIELD_S           "cnonce=\""
+#define CNONCE_FIELD_LEN         (sizeof(CNONCE_FIELD_S)-1)
+
 #define add_string( _p, _s, _l) \
 	do {\
 		memcpy( _p, _s, _l);\
@@ -322,6 +330,10 @@ str* build_authorization_hdr(int code, str *uri,
 			(OPAQUE_FIELD_LEN + auth->opaque.len + FIELD_SEPARATOR_LEN):0) +
 		RESPONSE_FIELD_LEN + response_len + FIELD_SEPARATOR_LEN +
 		ALGORITHM_FIELD_LEN + CRLF_LEN;
+	if((auth->flags&QOP_AUTH) || (auth->flags&QOP_AUTH_INT))
+		len += QOP_FIELD_LEN + 4 /*auth*/ + FIELD_SEPARATOR_LEN +
+				NC_FIELD_LEN + auth->nc->len + FIELD_SEPARATOR_LEN +
+				CNONCE_FIELD_LEN + auth->cnonce->len + FIELD_SEPARATOR_LEN;
 
 	hdr.s = (char*)pkg_malloc( len + 1);
 	if (hdr.s==0)
@@ -361,6 +373,18 @@ str* build_authorization_hdr(int code, str *uri,
 			FIELD_SEPARATOR_LEN+OPAQUE_FIELD_LEN);
 		add_string( p, auth->opaque.s, auth->opaque.len);
 	}
+	if((auth->flags&QOP_AUTH) || (auth->flags&QOP_AUTH_INT))
+	{
+		add_string( p, FIELD_SEPARATOR_S NC_FIELD_S, 
+			FIELD_SEPARATOR_LEN+NC_FIELD_LEN);
+		add_string( p, auth->nc->s, auth->nc->len);
+		add_string( p, FIELD_SEPARATOR_S CNONCE_FIELD_S, 
+			FIELD_SEPARATOR_LEN+CNONCE_FIELD_LEN);
+		add_string( p, auth->cnonce->s, auth->cnonce->len);
+		add_string( p, FIELD_SEPARATOR_S QOP_FIELD_S, 
+			FIELD_SEPARATOR_LEN+QOP_FIELD_LEN);
+		add_string( p, "auth", 4);
+	}
 	/* RESPONSE */
 	add_string( p, FIELD_SEPARATOR_S RESPONSE_FIELD_S,
 		FIELD_SEPARATOR_LEN+RESPONSE_FIELD_LEN);
@@ -373,7 +397,8 @@ str* build_authorization_hdr(int code, str *uri,
 
 	if (hdr.len!=len)
 	{
-		LM_CRIT("bad buffer computation (%d<>%d)\n",len,hdr.len);
+		LM_CRIT("BUG: bad buffer computation "
+			"(%d<>%d)\n",len,hdr.len);
 		pkg_free( hdr.s );
 		goto error;
 	}
