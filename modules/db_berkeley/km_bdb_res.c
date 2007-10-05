@@ -499,22 +499,6 @@ int* sc_get_colmap(table_p _dtp, db_key_t* _k, int _n)
 }
 
 
-db_res_t* sc_result_new(void)
-{
-	db_res_t* _res = NULL;
-	_res = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	if (!_res) 
-	{
-		LM_ERR("Failed to allocate %lu bytes for result structure\n"
-			, (unsigned long)sizeof(db_res_t));
-		return NULL;
-	}
-	
-	memset(_res, 0, sizeof(db_res_t));
-	return _res;
-}
-
-
 int sc_free_result(db_res_t* _res)
 {
 	sc_free_columns(_res);
