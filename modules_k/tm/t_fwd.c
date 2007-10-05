@@ -506,60 +506,26 @@ error:
 
 
 
-void e2e_cancel( struct sip_msg *cancel_msg, 
-	struct cell *t_cancel, struct cell *t_invite )
+void cancel_invite(struct sip_msg *cancel_msg,
+								struct cell *t_cancel, struct cell *t_invite )
 {
-	branch_bm_t cancel_bm;
+	branch_bm_t cancel_bitmap;
 	branch_bm_t dummy_bm;
-	int i;
-	int lowest_error;
-	str backup_uri;
 	str reason;
-	int ret;
+	unsigned int i;
+	int lowest_error;
 
-	cancel_bm=0;
 	lowest_error=0;
+	cancel_bitmap=0;
 
-	/* e2e_cancel_branch() makes no RURI parsing, so no need to 
-	 * save the -> parse_uri_ok */
-	backup_uri = cancel_msg->new_uri;
+	/* send back 200 OK as per RFC3261 */
+	reason.s = CANCELING;
+	reason.len = sizeof(CANCELING)-1;
+	t_reply( t_cancel, cancel_msg, 200, &reason );
 
-	/* determine which branches to cancel ... */
-	which_cancel( t_invite, &cancel_bm );
-	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
-	t_cancel->first_branch=t_invite->first_branch;
-	/* fix label -- it must be same for reply matching */
-	t_cancel->label=t_invite->label;
-	/* ... and install CANCEL UACs */
-	for (i=t_invite->first_branch; i<t_invite->nr_of_outgoings; i++) {
-		if (cancel_bm & (1<<i)) {
-			ret=e2e_cancel_branch(cancel_msg, t_cancel, t_invite, i);
-			if (ret<0) cancel_bm &= ~(1<<i);
-			if (ret<lowest_error) lowest_error=ret;
-		}
-	}
-	/* restore new_uri */
-	cancel_msg->new_uri = backup_uri;
-	cancel_msg->parsed_uri_ok = 0;
-
-	/* set flags */
-	t_cancel->uas.request->flags = cancel_msg->flags;
-
-	/* send them out */
-	for (i=t_cancel->first_branch; i<t_cancel->nr_of_outgoings; i++) {
-		if (cancel_bm & (1<<i)) {
-			if ( has_tran_tmcbs( t_cancel, TMCB_REQUEST_BUILT) ) {
-				set_extra_tmcb_params( &t_cancel->uac[i].request.buffer,
-					&t_cancel->uac[i].request.dst);
-				run_trans_callbacks( TMCB_REQUEST_BUILT, t_cancel, cancel_msg,
-					0, -cancel_msg->REQ_METHOD);
-			}
-			if (SEND_BUFFER( &t_cancel->uac[i].request)==-1) {
-				LOG(L_ERR, "ERROR: e2e_cancel: send failed\n");
-			}
-			start_retr( &t_cancel->uac[i].request );
-		}
-	}
+	/* generate local cancels for all branches */
+	which_cancel(t_invite, &cancel_bitmap );
+	cancel_uacs(t_invite, cancel_bitmap );
 
 	/* internally cancel branches with no received reply */
 	for (i=t_invite->first_branch; i<t_invite->nr_of_outgoings; i++) {
@@ -572,69 +538,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				lowest_error = -1; /* force sending 500 error */
 		}
 	}
-
-	/* do not attmpt to send reply for CANCEL if we already did it once;
-	 * to work arround the race between receiveing reply and generating
-	 * local reply, we better check if we are in failure route (which means that
-	 * the reply to UAC is /to be/ sent) or if was actually sent out */
-	/* calling here t_relay from within failure route will lead to dead lock
-	 * on the transaction's reply lock -bogdan */
-	if (route_type==FAILURE_ROUTE || t_cancel->uas.status>=200)
-		return;
-
-	/* if error occurred, let it know upstream (final reply
-	   will also move the transaction on wait state
-	*/
-	if (lowest_error<0) {
-		LOG(L_ERR, "ERROR: cancel error\n");
-		reason.s = "cancel error";
-		reason.len = 12;
-		t_reply( t_cancel, cancel_msg, 500, &reason);
-	/* if there are pending branches, let upstream know we
-	   are working on it
-	*/
-	} else if (cancel_bm) {
-		DBG("DEBUG: e2e_cancel: e2e cancel proceeding\n");
-		t_cancel->flags |= T_HOPBYHOP_CANCEL_FLAG;
-		reason.s = CANCELING;
-		reason.len = sizeof(CANCELING)-1;
-		t_reply( t_cancel, cancel_msg, 200, &reason );
-	/* if the transaction exists, but there is no more pending
-	   branch, tell upstream we're done
-	*/
-	} else {
-		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");
-		reason.s = CANCEL_DONE;
-		reason.len = sizeof(CANCEL_DONE)-1;
-		t_reply( t_cancel, cancel_msg, 200, &reason );
-	}
-
-#ifdef LOCAL_487
-
-	/* local 487s have been deprecated -- it better handles
-	 * race conditions (UAS sending 200); hopefully there are
-	 * no longer UACs who go crazy waiting for the 487 whose
-	 * forwarding is being blocked by other unresponsive branch
-	 */
-
-	/* we could await downstream UAS's 487 replies; however,
-	   if some of the branches does not do that, we could wait
-	   long time and annoy upstream UAC which wants to see 
-	   a result of CANCEL quickly
-	*/
-	DBG("DEBUG: e2e_cancel: sending 487\n");
-	/* in case that something in the meantime has been sent upstream
-	   (like if FR hit at the same time), don't try to send */
-	if (t_invite->uas.status>=200) return;
-	/* there is still a race-condition -- the FR can hit now; that's
-	   not too bad -- we take care in t_reply's REPLY_LOCK; in
-	   the worst case, both this t_reply and other replier will
-	   try, and the later one will result in error message 
-	   "can't reply twice"
-	*/
-	t_reply(t_invite, t_invite->uas.request, 487, CANCELED );
-#endif
 }
+
 
 
 /* function returns:
@@ -668,7 +573,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 		t_invite=t_lookupOriginalT(  p_msg );
 		if (t_invite!=T_NULL_CELL) {
 			t_invite->flags |= T_WAS_CANCELLED_FLAG;
-			e2e_cancel( p_msg, t, t_invite );
+			cancel_invite( p_msg, t, t_invite );
 			return 1;
 		}
 	}
