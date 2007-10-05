@@ -165,19 +165,19 @@ struct socket_info* get_send_socket(struct sip_msg *msg,
 			msg->force_send_socket=find_si(&(msg->force_send_socket->address),
 											msg->force_send_socket->port_no,
 											proto);
-		}
-		if (msg->force_send_socket && (msg->force_send_socket->socket!=-1)) 
-			return msg->force_send_socket;
-		else{
-			if (msg->force_send_socket->socket==-1)
-				LOG(L_WARN, "WARNING: get_send_socket: not listening"
-						 " on the requested socket, no fork mode?\n");
-			else
+			if (msg->force_send_socket == 0){
 				LOG(L_WARN, "WARNING: get_send_socket: "
 						"protocol/port mismatch\n");
+				goto not_forced;
+			}
 		}
+		if (msg->force_send_socket->socket!=-1)
+				return msg->force_send_socket;
+		else
+			LOG(L_WARN, "WARNING: get_send_socket: not listening"
+						 " on the requested socket, no fork mode?\n");
 	};
-
+not_forced:
 	if (mhomed && proto==PROTO_UDP){
 		send_sock=get_out_socket(to, proto);
 		if ((send_sock==0) || (send_sock->socket!=-1))
