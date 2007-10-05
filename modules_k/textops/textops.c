@@ -112,6 +112,7 @@ static int is_privacy_f(struct sip_msg *msg, char *privacy, char *str2 );
 
 static int fixup_substre(void**, int);
 static int hname_fixup(void** param, int param_no);
+static int free_hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
@@ -158,9 +159,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"append_urihf",     append_urihf,      2, str_fixup, free_str_fixup,
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"remove_hf",        remove_hf_f,       1, hname_fixup, 0,
+	{"remove_hf",        remove_hf_f,       1, hname_fixup, free_hname_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"is_present_hf",    is_present_hf_f,   1, hname_fixup, 0,
+	{"is_present_hf",    is_present_hf_f,   1, hname_fixup, free_hname_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{"subst",            subst_f,           1, fixup_substre, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
@@ -1059,6 +1060,18 @@ static int hname_fixup(void** param, int param_no)
 	}
 	
 	*param = (void*)s;
+	return 0;
+}
+
+static int free_hname_fixup(void** param, int param_no)
+{
+	if(*param)
+	{
+		if(((str*)(*param))->s)
+			pkg_free(((str*)(*param))->s);
+		pkg_free(*param);
+		*param = 0;
+	}
 	return 0;
 }
 
