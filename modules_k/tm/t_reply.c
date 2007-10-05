@@ -662,7 +662,7 @@ static inline int t_pick_branch( struct cell *t, int *res_code)
 	int cancelled;
 
 	lowest_b=-1; lowest_s=999;
-	cancelled = (t->flags&T_WAS_CANCELLED_FLAG);
+	cancelled = was_cancelled(t);
 	for ( b=t->first_branch; b<t->nr_of_outgoings ; b++ ) {
 		/* skip 'empty branches' */
 		if (!t->uac[b].request.buffer.s) continue;

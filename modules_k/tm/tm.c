@@ -815,7 +815,7 @@ static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar)
 			"a reply without a transaction\n");
 		return -1;
 	}
-	return (t->flags&T_WAS_CANCELLED_FLAG)?1:-1;
+	return was_cancelled(t)?1:-1;
 }
 
 
