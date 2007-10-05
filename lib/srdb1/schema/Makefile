@@ -19,6 +19,10 @@ POSTGRES_XSL = $(STYLESHEETS)/postgres.xsl
 # Stylesheet used to generate dbtext database schema
 DBTEXT_XSL = $(STYLESHEETS)/dbtext.xsl
 
+# Stylesheet used to generate berkeley database schema
+DB_BERKELEY_XSL = $(STYLESHEETS)/db_berkeley.xsl
+
+
 # Stylesheet used to generate oracle database schema
 ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 
@@ -45,7 +49,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext docbook #oracle
+all: mysql postgres dbtext db_berkeley docbook #oracle
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -107,6 +111,29 @@ dbtext:
 
 dbtext_clean:
 	-@rm -f $(ROOT)/scripts/dbtext/openser_db/*
+
+.PHONY: db_berkeley db_berkeley_clean
+db_berkeley:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/scripts/db_berkeley/openser" \
+		--stringparam prefix "" \
+		--stringparam db "db_berkeley" \
+		$(DB_BERKELEY_XSL) openser-"$$FILE".xml ; \
+	done
+	# small hack to create the version table entries, this is here easier as with XSL
+	for FILE in  $(wildcard $(ROOT)/scripts/db_berkeley/openser/*) ; do \
+		if [ -f "$$FILE" ]; then \
+			tail -n 2 "$$FILE" >> "$(ROOT)/scripts/db_berkeley/openser/version" ; \
+ 			head -n -2 "$$FILE" > /tmp/openser-db_berkeley.tmp ; \
+			cp /tmp/openser-db_berkeley.tmp "$$FILE" ; \
+		fi ; \
+	done ; \
+	rm -f /tmp/openser-db_berkeley.tmp
+
+db_berkeley_clean:
+	-@rm -f $(ROOT)/scripts/dbtext/openser_db/*
+
 
 .PHONY: docbook docbook_clean
 docbook:
