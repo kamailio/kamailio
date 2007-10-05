@@ -260,7 +260,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 			case DB_INT:
 			case DB_DATETIME:
 			case DB_BITMAP:
-				_rp->fields[i].type = DB_INT;
+				_rp->fields[i].type = _dres->colv[i].type;
 				_rp->fields[i].val.int_val = _drp->fields[n].val.int_val;
 			break;
 			case DB_DOUBLE:
@@ -270,7 +270,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 			case DB_STRING:
 			case DB_STR:
 			case DB_BLOB:
-				_rp->fields[i].type = DB_STRING;
+				_rp->fields[i].type = _dres->colv[i].type;
 				_rp->fields[i].val.str_val.len =
 						_drp->fields[n].val.str_val.len;
 				_rp->fields[i].val.str_val.s =(char*)pkg_malloc(sizeof(char)*
@@ -299,7 +299,9 @@ clean:
 	LM_DBG("make clean!\n");
 	while(i>=0)
 	{
-		if((_rp->fields[i].type == DB_STRING || _rp->fields[i].type == DB_STR)
+		if((_rp->fields[i].type == DB_STRING
+					|| _rp->fields[i].type == DB_STR
+					|| _rp->fields[i].type == DB_BLOB)
 				&& !_rp->fields[i].nul
 				&& _rp->fields[i].val.str_val.s)
 			pkg_free(_rp->fields[i].val.str_val.s);

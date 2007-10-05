@@ -197,15 +197,14 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 		RES_NAMES(_r)[i] = DBT_CON_RESULT(_h)->colv[i].name.s;
 		switch( DBT_CON_RESULT(_h)->colv[i].type) 
 		{
+			case DB_STR:
+			case DB_STRING:
+			case DB_BLOB:
 			case DB_INT:
 			case DB_DATETIME:
-				RES_TYPES(_r)[i] = DB_INT;
-			break;
-
 			case DB_DOUBLE:
-				RES_TYPES(_r)[i] = DB_DOUBLE;
+				RES_TYPES(_r)[i] = DBT_CON_RESULT(_h)->colv[i].type;
 			break;
-
 			default:
 				RES_TYPES(_r)[i] = DB_STR;
 			break;
@@ -310,7 +309,7 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STRING;
 			break;
 
 			case DB_STR:
@@ -324,7 +323,7 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 			case DB_DATETIME:
 				VAL_INT(&(ROW_VALUES(_r)[i])) = 
 						DBT_CON_ROW(_h)->fields[i].val.int_val;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_INT;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_DATETIME;
 			break;
 
 			case DB_BLOB:
@@ -332,7 +331,7 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 						DBT_CON_ROW(_h)->fields[i].val.str_val.s;
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
-				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
+				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_BLOB;
 			break;
 
 			case DB_BITMAP:
