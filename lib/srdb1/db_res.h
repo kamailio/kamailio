@@ -56,4 +56,9 @@ typedef struct db_res {
  */
 int db_free_rows(db_res_t* _r);
 
+/*
+ * Create a new result structure and initialize it
+ */
+inline db_res_t* db_new_result(void);
+
 #endif /* DB_RES_H */

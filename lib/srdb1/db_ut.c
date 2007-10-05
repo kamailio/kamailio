@@ -245,7 +245,6 @@ int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n,
 }
 
 
-
 /*
  * Print where clause of SQL statement
  */
