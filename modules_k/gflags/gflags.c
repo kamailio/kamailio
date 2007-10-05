@@ -120,6 +120,10 @@ struct module_exports exports = {
 
 
 /**************************** fixup functions ******************************/
+/**
+ * convert char* to int and do bitwise right-shift
+ * char* must be pkg_alloced and will be freed by the function
+ */
 static int fixup_gflags( void** param, int param_no)
 {
 	unsigned int myint;
