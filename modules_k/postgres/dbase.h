@@ -56,11 +56,6 @@ void pg_close(db_con_t* _h);
  */
 int pg_get_result(db_con_t* _h, db_res_t** _r);
 
-/**
- * create a new result set structure
- */
-db_res_t* pg_new_result(void);
-
 
 /**
  * Free all memory allocated by get_result

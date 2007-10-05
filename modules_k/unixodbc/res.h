@@ -35,12 +35,6 @@
 
 
 /*
- * Create a new result structure and initialize it
- */
-db_res_t* new_result(void);
-
-
-/*
  * Fill the structure with data from database
  */
 int convert_result(db_con_t* _h, db_res_t* _r);

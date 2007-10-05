@@ -26,6 +26,7 @@
 #include <string.h>
 #include <mysql/mysql.h>
 #include "../../db/db_res.h"
+#include "../../db/db_col.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "row.h"
@@ -154,38 +155,6 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 
 
 /*
- * Release memory used by columns
- */
-static inline int db_mysql_free_columns(db_res_t* _r)
-{
-	if (!_r) {
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-
-	if (RES_NAMES(_r)) pkg_free(RES_NAMES(_r));
-	if (RES_TYPES(_r)) pkg_free(RES_TYPES(_r));
-	return 0;
-}
-
-
-/*
- * Create a new result structure and initialize it
- */
-db_res_t* db_mysql_new_result(void)
-{
-	db_res_t* r = NULL;
-	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	if (!r) {
-		LM_ERR("no private memory left\n");
-		return 0;
-	}
-	memset(r, 0, sizeof(db_res_t));
-	return r;
-}
-
-
-/*
  * Fill the structure with data from database
  */
 int db_mysql_convert_result(db_con_t* _h, db_res_t* _r)
@@ -202,7 +171,7 @@ int db_mysql_convert_result(db_con_t* _h, db_res_t* _r)
 
 	if (db_mysql_convert_rows(_h, _r) < 0) {
 		LM_ERR("error while converting rows\n");
-		db_mysql_free_columns(_r);
+		db_free_columns(_r);
 		return -3;
 	}
 	return 0;
@@ -219,7 +188,7 @@ int db_mysql_free_dbresult(db_res_t* _r)
 		return -1;
 	}
 
-	db_mysql_free_columns(_r);
+	db_free_columns(_r);
 	db_free_rows(_r);
 	pkg_free(_r);
 	return 0;

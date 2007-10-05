@@ -33,6 +33,7 @@
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
 #include "../../db/db_ut.h"
+#include "../../db/db_res.h"
 #include "val.h"
 #include "my_con.h"
 #include "res.h"
@@ -185,7 +186,7 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 		return -1;
 	}
 
-	*_r = db_mysql_new_result();
+	*_r = db_new_result();
 	if (*_r == 0) {
 		LM_ERR("no memory left\n");
 		return -2;
@@ -351,7 +352,7 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 
 	if(*_r==0) {
 		/* Allocate a new result structure */
-		*_r = db_mysql_new_result();
+		*_r = db_new_result();
 		if (*_r == 0) {
 			LM_ERR("no memory left\n");
 			return -2;

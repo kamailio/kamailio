@@ -39,16 +39,6 @@
 int dbt_free_columns(db_res_t* _r);
 
 /*
- * Release memory used by row
- */
-int dbt_free_row(db_row_t* _r);
-
-/*
- * Release memory used by rows
- */
-int dbt_free_rows(db_res_t* _r);
-
-/*
  * Release memory used by a result structure
  */
 int dbt_free_result(db_res_t* _r);

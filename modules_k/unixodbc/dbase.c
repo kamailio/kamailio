@@ -41,6 +41,7 @@
 #include "../../dprint.h"
 #include "../../db/db_pool.h"
 #include "../../db/db_ut.h"
+#include "../../db/db_res.h"
 #include "val.h"
 #include "my_con.h"
 #include "res.h"
@@ -264,7 +265,7 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 		return -1;
 	}
 
-	*_r = new_result();
+	*_r = db_new_result();
 
 	if (*_r == 0)
 	{

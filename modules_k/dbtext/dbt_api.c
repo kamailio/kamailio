@@ -29,6 +29,7 @@
 
 #include <string.h>
 
+#include "../../db/db_res.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
 
@@ -54,46 +55,6 @@ int dbt_free_columns(db_res_t* _r)
 	return 0;
 }
 
-/*
- * Release memory used by row
- */
-int dbt_free_row(db_row_t* _r)
-{
-	if (!_r) 
-	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
-		return -1;
-	}
-	if(ROW_VALUES(_r))
-		pkg_free(ROW_VALUES(_r));
-	return 0;
-}
-
-/*
- * Release memory used by rows
- */
-int dbt_free_rows(db_res_t* _r)
-{
-	int i;
-	if (!_r) 
-	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
-		return -1;
-	}
-	if (RES_ROWS(_r))
-	{
-		for(i = 0; i < RES_ROW_N(_r); i++) 
-		{
-			dbt_free_row(&(RES_ROWS(_r)[i]));
-		}
-		pkg_free(RES_ROWS(_r));
-	}
-	return 0;
-}
 
 /*
  * Release memory used by a result structure
@@ -108,7 +69,7 @@ int dbt_free_result(db_res_t* _r)
 		return -1;
 	}
 	dbt_free_columns(_r);
-	dbt_free_rows(_r);
+	db_free_rows(_r);
 	pkg_free(_r);
 	return 0;
 }
@@ -127,25 +88,6 @@ int dbt_use_table(db_con_t* _h, const char* _t)
 	CON_TABLE(_h) = _t;
 	
 	return 0;
-}
-
-/*
- * Create a new result structure and initialize it
- */
-db_res_t* dbt_new_result(void)
-{
-	db_res_t* r = NULL;
-	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	if (!r) {
-		LM_ERR("no pkg memory left\n");
-		return 0;
-	}
-	RES_NAMES(r) = 0;
-	RES_TYPES(r) = 0;
-	RES_COL_N(r) = 0;
-	RES_ROWS(r) = 0;
-	RES_ROW_N(r) = 0;
-	return r;
 }
 
 
@@ -194,7 +136,7 @@ int dbt_get_result(db_con_t* _h, db_res_t** _r)
 		return -3;
 	}
 
-	*_r = dbt_new_result();
+	*_r = db_new_result();
 	if (*_r == 0) 
 	{
 		LM_ERR("no pkg memory left\n");
@@ -308,14 +250,14 @@ int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 		{
 			LM_ERR("failed to get current row\n");
 			RES_ROW_N(_r) = i;
-			dbt_free_rows(_r);
+			db_free_rows(_r);
 			return -3;
 		}
 		if (dbt_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) 
 		{
 			LM_ERR("failed to convert row #%d\n", i);
 			RES_ROW_N(_r) = i;
-			dbt_free_rows(_r);
+			db_free_rows(_r);
 			return -4;
 		}
 		i++;

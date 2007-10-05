@@ -33,6 +33,7 @@
 #include "../../dprint.h"
 #include "row.h"
 #include "../../db/db_res.h"
+#include "../../db/db_col.h"
 #include "my_con.h"
 #include "res.h"
 #include "list.h"
@@ -227,41 +228,6 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	return 0;
 }
 
-/*
- * Release memory used by columns
- */
-static inline int free_columns(db_res_t* _r)
-{
-	if (!_r)
-	{
-		LOG(L_ERR, "free_columns: Invalid parameter\n");
-		return -1;
-	}
-
-	if (RES_NAMES(_r)) pkg_free(RES_NAMES(_r));
-	if (RES_TYPES(_r)) pkg_free(RES_TYPES(_r));
-	return 0;
-}
-
-/*
- * Create a new result structure and initialize it
- */
-db_res_t* new_result(void)
-{
-	db_res_t* r = NULL;
-	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	if (!r)
-	{
-		LOG(L_ERR, "new_result: No memory left\n");
-		return 0;
-	}
-	RES_NAMES(r) = 0;
-	RES_TYPES(r) = 0;
-	RES_COL_N(r) = 0;
-	RES_ROWS(r) = 0;
-	RES_ROW_N(r) = 0;
-	return r;
-}
 
 /*
  * Fill the structure with data from database
@@ -283,7 +249,7 @@ int convert_result(db_con_t* _h, db_res_t* _r)
 	if (convert_rows(_h, _r) < 0)
 	{
 		LOG(L_ERR, "convert_result: Error while converting rows\n");
-		free_columns(_r);
+		db_free_columns(_r);
 		return -3;
 	}
 	return 0;
@@ -300,7 +266,7 @@ int free_result(db_res_t* _r)
 		return -1;
 	}
 
-	free_columns(_r);
+	db_free_columns(_r);
 	db_free_rows(_r);
 	pkg_free(_r);
 	return 0;

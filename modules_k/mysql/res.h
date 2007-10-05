@@ -30,12 +30,6 @@
 
 
 /*
- * Create a new result structure and initialize it
- */
-db_res_t* db_mysql_new_result(void);
-
-
-/*
  * Fill the structure with data from database
  */
 int db_mysql_convert_result(db_con_t* _h, db_res_t* _r);

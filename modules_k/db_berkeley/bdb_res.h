@@ -53,7 +53,6 @@ int sc_convert_row( db_res_t* _res, char *bdb_result, int* _lres);
 int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx);
 int* sc_get_colmap(table_p _tp, db_key_t* _k, int _n);
 
-db_res_t*  sc_result_new(void);
 int sc_free_result(db_res_t* _res);
 int sc_free_columns(db_res_t* _res);
 int sc_free_rows(db_res_t* _res);

@@ -71,6 +71,7 @@
 #include "../../mem/mem.h"
 #include "../../db/db.h"
 #include "../../db/db_ut.h"
+#include "../../db/db_res.h"
 #include "defs.h"
 #include "dbase.h"
 #include "pg_con.h"
@@ -484,7 +485,7 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
 
 	if (*_res == NULL) {
 		/* Allocate a new result structure */
-		*_res = pg_new_result();
+		*_res = db_new_result();
 
 		/* Get the result of the previous query */
 		while (1) {
@@ -895,7 +896,7 @@ int pg_get_result(db_con_t* _con, db_res_t** _r)
         ExecStatusType pqresult;
 	int rc = 0;
 
-	*_r = pg_new_result();
+	*_r = db_new_result();
 
 	while (1) {
 		if ((res = PQgetResult(CON_CONNECTION(_con)))) {

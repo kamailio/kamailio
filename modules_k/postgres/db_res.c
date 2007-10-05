@@ -51,34 +51,6 @@
 #include "pg_con.h"
 #include "pg_type.h"
 
-/**
- * Create a new result structure and initialize it
- * The elements of the structure can be accessed using the following helpers:
- *
- * RES_NAMES(r)		((r)->col.names)	Column Names
- * RES_TYPES(r)		((r)->col.types)	Column Data Types
- * RES_COL_N(r)		((r)->col.n)		Number of Columns
- * RES_ROWS(r)		((r)->rows)		Row Structure
- * RES_ROW_N(r)		((r)->n)		Number of Rows in the current Fetch
- * RES_LAST_ROW(r)	((r)->last_row)		Last Row Processed
- * RES_NUM_ROWS(r)	((r)->res_rows)		Number of total Rows in the Query
- *
- */
-db_res_t* pg_new_result(void)
-{
-	db_res_t* _res = NULL;
-
-	_res = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	LM_DBG("%p=pkg_malloc(%lu) _res\n", _res, (unsigned long)sizeof(db_res_t));
-        if (!_res) {
-                LM_ERR("no more pkg memory\n");
-                return NULL;
-        }
-	
-	memset(_res, 0, sizeof(db_res_t));
-
-	return _res;
-}
 
 /**
  * Fill the result structure with data from the query
