@@ -10,7 +10,7 @@ ALL_PACKAGES = openser openser-mysql-module openser-postgres-module \
 	openser-jabber-module openser-cpl-module openser-radius-modules \
 	openser-unixodbc-module openser-presence-modules openser-xmlrpc-module \
 	openser-perl-module openser-snmpstats-module openser-xmpp-module \
-	openser-carrierroute-module
+	openser-carrierroute-module openser-berkeley-module
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
@@ -55,8 +55,10 @@ SNMPSTATS_MODULES = snmpstats
 XMPP_MODULES = xmpp
 # Carrierroute module
 CROUTE_MODULES = carrierroute
+# Berkeley DB module
+BERKELEY_MODULES = db_berkeley
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES)
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES)
 
 # modules not in the "main" package or unstable modules
 EXCLUDED_MODULES = $(ALL_MODULES) pa osp
@@ -74,6 +76,7 @@ PERL_MOD_PATH=$(addprefix modules/, $(PERL_MODULES))
 SNMPSTATS_MOD_PATH=$(addprefix modules/, $(SNMPSTATS_MODULES))
 XMPP_MOD_PATH=$(addprefix modules/, $(XMPP_MODULES))
 CROUTE_MOD_PATH=$(addprefix modules/, $(CROUTE_MODULES))
+BERKELEY_MOD_PATH=$(addprefix modules/, $(BERKELEY_MODULES))
 
 ifeq (cc, $(CC))
 	CC = gcc
@@ -117,9 +120,14 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(SNMPSTATS_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMPP_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CROUTE_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(BERKELEY_MOD_PATH)" cfg-target=/etc/openser/
 
 	# generate the db schemas
-	$(MAKE) dbschema
+	$(MAKE)
+
+	# generate the utils db_berkeley
+	$(MAKE) utils include_modules="db_berkeley"
+
 
 	touch build-stamp
 
@@ -133,6 +141,7 @@ real-clean:
 	-$(MAKE) TLS=$(TLS) include_modules="$(ALL_MODULES)" proper
 	rm -f cfg.tab.h
 	rm -f utils/openserunix/openserunix.o utils/openserunix/openserunix
+	rm -f utils/db_berkeley/bdb_recover.o utils/db_berkeley/bdb_recover
 
 	dh_clean
 
@@ -252,6 +261,15 @@ install: build
 		cfg-prefix=$(CURDIR)/debian/openser-carrierroute-module \
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-carrierroute-module
+
+	# install only the db_berkeley module
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(BERKELEY_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-berkeley-module \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-berkeley-module \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-berkeley-module
+
 
 
 	# the modules packages all ship an empty /usr/sbin directory, let's clean that up

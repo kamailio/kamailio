@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Debian VoIP Maintainers <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Julien BLACHE <jblache@debian.org>
-Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp5-dev, libsensors-dev, libconfuse0, libconfuse-dev
+Build-Depends: debhelper (>= 4), dpatch, libmysqlclient14-dev | libmysqlclient-dev, libexpat1-dev, libxml2-dev, postgresql-dev, libradius-ng-dev, flex, bison, zlib1g-dev, unixodbc-dev, libxmlrpc-c3-dev, libperl-dev, libsnmp5-dev, libsensors-dev, libconfuse-dev, libdb4.3-dev
 Standards-Version: 3.7.2
 
 Package: openser
@@ -167,3 +167,15 @@ Description: Carrierroute module for OpenSER
  .
  This package provides the carrierroute module for OpenSER, an integrated
  solution for routing, balancing and blacklisting.
+
+Package: openser-berkeley-module
+Architecture: any
+Depends: ${shlibs:Depends}, openser (= ${Source-Version}), libdb4.3
+Description: Berkeley Database module for OpenSER
+ OpenSER is a very fast and flexible SIP (RFC3261)
+ proxy server. Written entirely in C, OpenSER can handle thousands calls
+ per second even on low-budget hardware.
+ .
+ This package provides the berkeley database module for OpenSER, a
+ high-performance embedded DB kernel. All database tables are stored
+ in files, no additional server is necessary.
