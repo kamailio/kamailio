@@ -56,8 +56,8 @@ CREATE TABLE usr_preferences_types (
 
 INSERT INTO version (table_name, table_version) values ('server_monitoring','1');
 CREATE TABLE server_monitoring (
-    time DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
     id INT(10) UNSIGNED NOT NULL DEFAULT 0,
+    time DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
     param VARCHAR(32) NOT NULL DEFAULT '',
     value INT(10) NOT NULL DEFAULT 0,
     increment INT(10) NOT NULL DEFAULT 0,

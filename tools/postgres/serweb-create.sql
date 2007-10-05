@@ -58,8 +58,8 @@ CREATE TABLE usr_preferences_types (
 
 INSERT INTO version (table_name, table_version) values ('server_monitoring','1');
 CREATE TABLE server_monitoring (
-    time TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01',
     id INTEGER NOT NULL DEFAULT 0,
+    time TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01',
     param VARCHAR(32) NOT NULL DEFAULT '',
     value INTEGER NOT NULL DEFAULT 0,
     increment INTEGER NOT NULL DEFAULT 0,
