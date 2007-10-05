@@ -173,7 +173,7 @@ require_ctlengine() {
 # output: false if exists, true otherwise
 is_user() {
     if  [ "$DBENGINE" = "DBTEXT" ] ; then
-        CNT=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | wc -w`
+        CNT=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | wc -w`
 
         if [ "0$CNT" -eq 0 ] ; then
                 false
@@ -186,7 +186,7 @@ is_user() {
 	QUERY="select count(*) from $SUB_TABLE where \
 $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 
-	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
 	mdbg "is_user: user counter=$CNT"
 	if [ "$CNT" = "0" ] ; then
 		false
@@ -218,7 +218,7 @@ acl() {
                                                 exit 1
                                         fi
                                 fi
-                                EGREP_COND="^$SERUSER:$SERDOMAIN:"
+                                EGREP_COND="^$OSERUSER:$OSERDOMAIN:"
                         elif [ $# -ne 1 ] ; then
                                 usage_acl
                                 exit 1
@@ -265,12 +265,14 @@ acl() {
                                         fi
                                 fi
 
-                                line="$SERUSER:$SERDOMAIN:$1:$date_now"
+				date_now=`date +%s`
+				get_next_id $ACL_FILE
+                                line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$1:$date_now"
                                 echo $line >> $ACL_FILE
                                 shift
                         done
 
-                        $0 acl show $SERUSER@$SERDOMAIN
+                        $0 acl show $OSERUSER@$OSERDOMAIN
 
                         ;;
 
@@ -284,7 +286,7 @@ acl() {
 
                         set_user $2
 
-                        cat $ACL_FILE | $EGREP -v "^$SERUSER:$SERDOMAIN:$CLAUSE" >> $ACL_FILE.tmp
+                        cat $ACL_FILE | $EGREP -v "^[0-9]+:$OSERUSER:$OSERDOMAIN:$CLAUSE" >> $ACL_FILE.tmp
                         mv -f $ACL_FILE.tmp $ACL_FILE
                         $0 acl show $2
 
@@ -417,14 +419,14 @@ check_ul_alias() {
 		merr "OpenSER $CTLENGINE not accessible: $RET"
 		exit 1
 	fi
-	echo "$RES" | grep "^404" > /dev/null
+	echo "$RES" | $EGREP "^404" > /dev/null
 	if [ $? -ne 0 ] ; then
-		echo "$RES" | grep "^400" > /dev/null
+		echo "$RES" | $EGREP "^400" > /dev/null
 		if [ $? -eq 0 ] ; then
 			merr "400; check if you use aliases in OpenSER"
 			exit 1
 		fi
-		echo "$RES" | grep "^200" > /dev/null
+		echo "$RES" | $EGREP "^200" > /dev/null
 		if [ $? -eq 0 ] ; then
 			ALIAS_UL_EXISTS=1
 		fi
@@ -441,7 +443,7 @@ check_db_alias() {
 
 	QUERY="select count(*) from $DA_TABLE where $DA_ALIAS_USER_COLUMN='$1' \
 and $DA_ALIAS_DOMAIN_COLUMN='$2';"
-	CNT=`$DBROCMD "$QUERY" | grep -v ERROR | $LAST_LINE`
+	CNT=`$DBROCMD "$QUERY" | $EGREP -v ERROR | $LAST_LINE`
 	mdbg "check_db_alias: alias counter=$CNT"
 	if [ "$CNT" = "0" ] ; then
 		ALIAS_DB_EXISTS=0
@@ -1021,7 +1023,9 @@ domain() {
                                 merr "missing domain to be added"
                                 exit 1
                         fi
-                        line="$1:$date_now"
+			date_now=`date +%s`
+			get_next_id $DOMAIN_FILE
+                        line="$get_next_id_next_id:$1:$date_now"
                         echo "$line" >> $DOMAIN_FILE
                         minfo "Domain $1 saved into DBTEXT database"
 			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
@@ -1034,7 +1038,7 @@ domain() {
                                 merr "missing domain to be removed"
                                 exit 1
                         fi
-                        cat $DOMAIN_FILE | $EGREP -v "^$1:" > $DOMAIN_FILE.tmp
+                        cat $DOMAIN_FILE | $EGREP -v "^[0-9]+:$1:" > $DOMAIN_FILE.tmp
                         mv -f $DOMAIN_FILE.tmp $DOMAIN_FILE
                         minfo "Domain $1 removed from DBTEXT database"
 			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
@@ -1137,7 +1141,8 @@ lcr() {
                                 merr "error: group already present"
                                 exit 1
                         fi
-                        echo $2:$1 >> $GW_GRP_FILE
+			get_next_id $GW_GRP_FILE
+                        echo $get_next_id_next_id:$2:$1 >> $GW_GRP_FILE
                         chown_openser $GW_GRP_FILE
                         #FIXME: lcr_reload command not supported yet
                         #fifo_cmd lcr_reload
@@ -1149,7 +1154,7 @@ lcr() {
                                 echo missing grp_id to be removed
                                 exit 1
                         fi
-                        cat $GW_GRP_FILE | $EGREP -v "^$1:" > $GW_GRP_FILE.tmp
+                        cat $GW_GRP_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_GRP_FILE.tmp
                         mv -f $GW_GRP_FILE.tmp $GW_GRP_FILE
                         chown_openser $GW_GRP_FILE
                         #FIXME: lcr_reload command not supported yet
@@ -1192,7 +1197,10 @@ lcr() {
                                 GW_TRANSPORT=3
                         fi
                         GW_GRP_ID=$6
-                        echo $GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX >> $GW_FILE
+			# FIXME
+			GW_DM=1
+			get_next_id $GW_FILE
+                        echo $get_next_id_next_id:$GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX:$GW_DM >> $GW_FILE
                         chown_openser $GW_FILE
                         #FIXME: lcr_reload command not supported yet
                         #fifo_cmd lcr_reload
@@ -1204,7 +1212,7 @@ lcr() {
                                 merr "missing gateway to be removed"
                                 exit 1
                         fi
-                        cat $GW_FILE | $EGREP -v "^$1:" > $GW_FILE.tmp
+                        cat $GW_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_FILE.tmp
                         mv -f $GW_FILE.tmp $GW_FILE
                         chown_openser $GW_FILE
                         #FIXME: lcr_reload command not supported yet
@@ -1218,7 +1226,8 @@ lcr() {
                                 usage
                                 exit 1
                         fi
-                        echo $1:$2:$3:$4 >> $LCR_FILE
+			get_next_id $LCR_FILE
+                        echo $get_next_id_next_id:$1:$2:$3:$4 >> $LCR_FILE
                         chown_openser $LCR_FILE
                         #FIXME: lcr_reload command not supported yet
                         #fifo_cmd lcr_reload
@@ -1231,7 +1240,7 @@ lcr() {
                                 usage
                                 exit 1
                         fi
-                        cat $LCR_FILE | $EGREP -v "^$1:$2:$3:$4\$" > $LCR_FILE.tmp
+                        cat $LCR_FILE | $EGREP -v "^[0-9]+:$1:$2:$3:$4\$" > $LCR_FILE.tmp
                         mv -f $LCR_FILE.tmp $LCR_FILE
                         chown_openser $LCR_FILE
                         #FIXME: lcr_reload command not supported yet
@@ -1412,7 +1421,7 @@ openser_start() {
 	echo
 	minfo "Starting OpenSER : "
 	if [ -r $PID_FILE ] ; then
-		ps axw | grep openser
+		ps axw | $EGREP openser
 		ls -l $PID_FILE
 		minfo "PID file exists ($PID_FILE)! OpenSER already running?"
 		exit 1
@@ -1451,7 +1460,7 @@ openser_stop() {
 	else
 		echo
 		merr "No PID file found ($PID_FILE)! OpenSER probably not running"
-		minfo "check with 'ps axw | grep openser'"
+		minfo "check with 'ps axw | $EGREP openser'"
 		exit 1
 	fi
 }
@@ -1493,7 +1502,7 @@ rpid() {
                                         merr "non-existent user"
                                         exit 1;
                                 fi
-                                CLAUSE=":$SERUSER:$SERDOMAIN:"
+                                CLAUSE=":$OSERUSER:$OSERDOMAIN:"
 
                         elif [ $# -ne 1 ] ; then
                                 usage
@@ -1503,8 +1512,8 @@ rpid() {
                         if [ -z $CLAUSE ]; then
                                 CLAUSE=""
                         fi
-                        #19 is the rpid field
-                        cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,19
+                        #12 is the rpid field
+                        cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,12
                         echo
                         ;;
                 add|rm)
@@ -1535,15 +1544,14 @@ rpid() {
                                 RPID_VAL="";
                         fi
 
-                        old_line=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
-                        pre_rpid=`echo $old_line | cut -s -d : -f 1-18`
-                        post_rpid=`echo $old_line | cut -s -d : -f 20-25`
-                        new_line=$pre_rpid:$RPID_VAL:$post_rpid
+                        old_line=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
+                        pre_rpid=`echo $old_line | cut -s -d : -f 1-11`
+                        new_line=$pre_rpid:$RPID_VAL
                         cat $SUB_FILE | sed s/$old_line/$new_line/g >> $SUB_FILE.tmp
                         mv -f $SUB_FILE.tmp $SUB_FILE
 
                         minfo "RPID added/removed ... showing current value"
-                        $0 rpid show $SERUSER@$SERDOMAIN
+                        $0 rpid show $OSERUSER@$OSERDOMAIN
 
                         ;;
 
@@ -1631,7 +1639,7 @@ send_email() {
 	set_user $1
 	QUERY="select $EMAIL_COLUMN from $SUB_TABLE where \
 $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
-	EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+	EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
 	if [ $? -ne 0 ] ; then
 		merr "mail - SQL query failed"
 		exit 1
@@ -1933,13 +1941,13 @@ subscriber() {
 			set_user $1
 			QUERY="select $EMAIL_COLUMN from $SUB_TABLE where \
 $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
-			EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+			EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
 			if [ $? -ne 0 ] ; then
 				merr "mail - SQL query failed"
 				exit 1
 			fi
 			mecho "Write email to $1: $EA now ..."
-			mail -s "Message from $SERDOMAIN SIP admin" $EA
+			mail -s "Message from $OSERDOMAIN SIP admin" $EA
 			if [ $? -eq 0 ] ; then
 				mecho "message sent"
 			else
@@ -2309,18 +2317,25 @@ dbtext_add() {
                 fi
 
                 #Add to SUBSCRIBER file                 
-                #phplib_id(str) username(str) domain(str) password(str) 
-                #first_name(str,null) last_name(str,null) phone(str,null) email_address(str) 
-                #datetime_created(int) datetime_modified(int) confirmation(str,null) flag(str,null) sendnotification(str,null) greeting(str,null) ha1(str) ha1b(str) allow_find(str) timezone(str,null) rpid(str,null) domn(int,null) uuid(str,null)
-                line="$HA1:$SERUSER:$SERDOMAIN:$2::::$3:$date_now:$date_now::o:::$HA1:$HA1B:0::::"
+		# FIXME: this is the stripped down version of the subscriber table
+		#        we need to fix it for serweb
+		#
+		#id(int,auto) username(str) domain(str) password(str)
+		#first_name(str) last_name(str) email_address(str) datetime_created(int)
+		#ha1(str) ha1b(str) timezone(str,null) rpid(str,null)
+		get_next_id $SUB_FILE
+		date_now=`date +%s`
+		line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$2: : :$3:$date_now:$HA1:$HA1B:0:"
+
                 echo $line >> $SUB_FILE
 
                 #Add to URI file
-                #username(str) domain(str) uri_user(str) last_modified(int)
-                line="$SERUSER:$SERDOMAIN:$SERUSER:$date_now"
+                #id(int,auto) username(str) domain(str) uri_user(str) last_modified(int)
+		get_next_id $URI_FILE
+                line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$OSERUSER:$date_now"
                 echo $line >> $URI_FILE
 
-                minfo "New user ($SERUSER@$SERDOMAIN) added to DBTEXT files"
+                minfo "New user ($OSERUSER@$OSERDOMAIN) added to DBTEXT files"
 	else
 		merr "dbtext_add: unknown command for DBENGINE=$DBENGINE"
 	fi
@@ -2341,12 +2356,19 @@ dbtext_passwd() {
                         exit 1
                 fi
 
-                line1=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | head -n 1`
-                #9 is the date_created field
-                line1_keep1=`echo $line1 | cut -s -d : -f 5,6,7,8,9`
-                line1_keep2=`echo $line1 | cut -s -d : -f 11,12,13,14`
-                line1_keep3=`echo $line1 | cut -s -d : -f 17,18,19,20,21`
-                line2_update="$HA1:$SERUSER:$SERDOMAIN:$2:$line1_keep1:$date_now:$line1_keep2:$HA1:$HA1B:$line1_keep3"
+		date_now=`date +%s`
+                line1=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
+		# FIXME: this is the stripped down version of the subscriber table
+		#        we need to fix it for serweb
+		#
+                line1_keep1=`echo $line1 | cut -s -d : -f 1,2,3`
+		#  4 - password(str)
+                line1_keep2=`echo $line1 | cut -s -d : -f 5,6,7`
+		#  8 - datetime_created(int)
+		#  9 - ha1(str)
+		# 10 - ha1b(str)
+                line1_keep3=`echo $line1 | cut -s -d : -f 11,12`
+                line2_update="$line1_keep1:$2:$line1_keep2:$date_now:$HA1:$HA1B:$line1_keep3"
                 cat $SUB_FILE | sed s/"$line1"/"$line2_update"/g >> $SUB_FILE.tmp
                 mv -f $SUB_FILE.tmp $SUB_FILE
                 minfo "Password change succeeded (DBTEXT)"
@@ -2373,16 +2395,16 @@ dbtext_rm() {
                 # begin with remove all user's privileges
                 minfo "ACL revoke not implemented for DBTEXT ... rights not removed"
 
-                cat $URI_FILE | $EGREP -v "^$SERUSER:" > $URI_FILE.tmp
+                cat $URI_FILE | $EGREP -v "^[0-9]+:$OSERUSER:" > $URI_FILE.tmp
                 mv -f $URI_FILE.tmp $URI_FILE
 
                 # destroy the user now
-                cat $SUB_FILE | $EGREP -v ":$SERUSER:$SERDOMAIN:" >> $SUB_FILE.tmp
+                cat $SUB_FILE | $EGREP -v "^[0-9]+:$OSERUSER:$OSERDOMAIN:" >> $SUB_FILE.tmp
                 mv -f $SUB_FILE.tmp $SUB_FILE
 
                 # and also all his contacts
                 $0 ul rm $1   > /dev/null 2>&1
-                minfo "\nUSER $SERUSER removed\n"
+                minfo "\nUSER $OSERUSER removed\n"
 
         else
                 merr "dbtext_rm: unknown command for DBENGINE=$DBENGINE"
@@ -2399,15 +2421,17 @@ dbtext_showdb() {
                                 merr "nnon-existent user"
                                 exit 1;
                         fi
-                        #The email field is number 8 ...
+                        #The email field is number 7 ...
                         echo -e "\n** In Subscriber Table: ** "
-                        cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | cut -s -d : -f 8
+                        cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | cut -s -d : -f 7
                         echo -e "\n** In Location Table: ** "
-                        cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null"/""/g | tr " " ":"
-                        cat $UL_FILE | $EGREP "^$SERUSER:($SERDOMAIN)?\B?:" 
+                        cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null\|auto"/""/g | tr " " ":"
+                        cat $UL_FILE | $EGREP "^$OSERUSER:($OSERDOMAIN)?\B?:" 
                 else
-                        usr_loc=`cat $UL_FILE | cut -s -d : -f 1 | tr '\n' '|' | sed s/'|\$'/''/g`
-                        if [ -n $usr_loc ]; then
+                        usr_loc=`cat $UL_FILE | cut -s -d : -f 2 | tr '\n' '|' | sed s/'|\$'/''/g`
+                        if [ "$usr_loc" = "" ]; then
+				echo -e "\n** No subscribers currently registered: ** "
+			else
                                 echo -e "\n** Subscribers (username and email) currently registered: ** " 
                                 cat $SUB_FILE | $EGREP $usr_loc | cut -s -d : -f 2,8
                                 echo -e "\n** Deatailed location data available on disk (username, domain, contact, callid): ** " 
@@ -2429,9 +2453,9 @@ dbtext_mail() {
                 fi
                 shift
                 set_user $1
-                EA=`cat $SUB_FILE | $EGREP :$SERUSER:$SERDOMAIN: | cut -s -d : -f 8 | $LAST_LINE`
+                EA=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | cut -s -d : -f 7 | $LAST_LINE`
                 minfo "Write email to $1: $EA now ..."
-                mail -s "Message from $SERDOMAIN SIP admin" $EA
+                mail -s "Message from $OSERDOMAIN SIP admin" $EA
                 if [ $? -eq 0 ] ; then
                         minfo "message sent"
                 else

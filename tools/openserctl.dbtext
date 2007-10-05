@@ -49,6 +49,18 @@ fi
 
 #===================================================================
 
+get_next_id() {
+	get_next_id_lines=`wc -l $1 | cut -d " " -f 1`
+
+	if [ "$get_next_id_lines" = "1" ] ; then
+		get_next_id_next_id="1"
+	else
+		let "get_next_id_lines=$get_next_id_lines-1"
+		get_next_id_max_id=`tail -n $get_next_id_lines $1 | sort -g | tail -n 1 | cut -d ":" -f 1`
+		let "get_next_id_next_id=$get_next_id_max_id+1"
+	fi
+}
+
 chown_openser() {
         if [ -n "$OPENSER_USER" -a -n "$OPENSER_GROUP" ] ; then
                 chown $OPENSER_USER:$OPENSER_GROUP $1
