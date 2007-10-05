@@ -203,7 +203,7 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	LOG(L_INFO, "TextOPS - initializing\n");
+	LM_INFO("initializing...\n");
 	return 0;
 }
 
@@ -232,12 +232,12 @@ static int search_body_f(struct sip_msg* msg, char* key, char* str2)
 
 	body.s = get_body(msg);
 	if (body.s==0) {
-		LOG(L_ERR, "ERROR:search_body_f: failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
 	body.len = msg->len -(int)(body.s-msg->buf);
 	if (body.len==0) {
-		DBG("ERROR:search_body_f: message body has zero length\n");
+		LM_DBG("message body has zero length\n");
 		return -1;
 	}
 
@@ -265,12 +265,12 @@ static int search_append_f(struct sip_msg* msg, char* key, char* str2)
 		len=strlen(str2);
 		s=pkg_malloc(len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: search_append_f: mem. allocation failure\n");
+			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
 		memcpy(s, str2, len); 
 		if (insert_new_lump_after(l, s, len, 0)==0){
-			LOG(L_ERR, "ERROR: could not insert new lump\n");
+			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -290,13 +290,12 @@ static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
 
 	body.s = get_body(msg);
 	if (body.s==0) {
-		LOG(L_ERR,
-				"ERROR:search_append_body_f: failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
 	body.len = msg->len -(int)(body.s-msg->buf);
 	if (body.len==0) {
-		DBG("ERROR:search_append_body_f: message body has zero length\n");
+		LM_DBG("message body has zero length\n");
 		return -1;
 	}
 
@@ -309,12 +308,12 @@ static int search_append_body_f(struct sip_msg* msg, char* key, char* str2)
 		len=strlen(str2);
 		s=pkg_malloc(len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: search_append_f: mem. allocation failure\n");
+			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
 		memcpy(s, str2, len); 
 		if (insert_new_lump_after(l, s, len, 0)==0){
-			LOG(L_ERR, "ERROR: could not insert new lump\n");
+			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -346,22 +345,22 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 		/* change eflags, not to match any more at string start */
 		eflags|=REG_NOTBOL;
 		if (pmatch.rm_so==-1){
-			LOG(L_ERR, "ERROR: replace_all_f: offset unknown\n");
+			LM_ERR("offset unknown\n");
 			return -1;
 		}
 		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0) {
-			LOG(L_ERR, "ERROR: replace_all_f: del_lump failed\n");
+			LM_ERR("del_lump failed\n");
 			return -1;
 		}
 		s=pkg_malloc(len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: replace_all_f: mem. allocation failure\n");
+			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
 		memcpy(s, str2, len); 
 		if (insert_new_lump_after(l, s, len, 0)==0){
-			LOG(L_ERR, "ERROR: replace_all_f: could not insert new lump\n");
+			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -386,13 +385,12 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 
 	body.s = get_body(msg);
 	if (body.s==0) {
-		LOG(L_ERR,
-				"ERROR:replace_body_all_f: failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
 	body.len = msg->len -(int)(body.s-msg->buf);
 	if (body.len==0) {
-		DBG("ERROR:replace_body_all_f: message body has zero length\n");
+		LM_DBG("message body has zero length\n");
 		return -1;
 	}
 
@@ -407,23 +405,22 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 		/* change eflags, not to match any more at string start */
 		eflags|=REG_NOTBOL;
 		if (pmatch.rm_so==-1){
-			LOG(L_ERR, "ERROR: replace_body_all_f: offset unknown\n");
+			LM_ERR("offset unknown\n");
 			return -1;
 		}
 		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0) {
-			LOG(L_ERR, "ERROR: replace_body_all_f: del_lump failed\n");
+			LM_ERR("del_lump failed\n");
 			return -1;
 		}
 		s=pkg_malloc(len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: replace_body_all_f: mem. allocation failure\n");
+			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
 		memcpy(s, str2, len); 
 		if (insert_new_lump_after(l, s, len, 0)==0){
-			LOG(L_ERR,
-				"ERROR: replace_body_all_f: could not insert new lump\n");
+			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -455,12 +452,12 @@ static int replace_f(struct sip_msg* msg, char* key, char* str2)
 		len=strlen(str2);
 		s=pkg_malloc(len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: replace_f: mem. allocation failure\n");
+			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
 		memcpy(s, str2, len); 
 		if (insert_new_lump_after(l, s, len, 0)==0){
-			LOG(L_ERR, "ERROR: could not insert new lump\n");
+			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -482,13 +479,12 @@ static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
 
 	body.s = get_body(msg);
 	if (body.s==0) {
-		LOG(L_ERR,
-				"ERROR:replace_body_f: failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
 	body.len = msg->len -(int)(body.s-msg->buf);
 	if (body.len==0) {
-		DBG("ERROR:replace_body_f: message body has zero length\n");
+		LM_DBG("message body has zero length\n");
 		return -1;
 	}
 
@@ -504,12 +500,12 @@ static int replace_body_f(struct sip_msg* msg, char* key, char* str2)
 		len=strlen(str2);
 		s=pkg_malloc(len);
 		if (s==0){
-			LOG(L_ERR, "ERROR: replace_body_f: mem. allocation failure\n");
+			LM_ERR("memory allocation failure\n");
 			return -1;
 		}
 		memcpy(s, str2, len); 
 		if (insert_new_lump_after(l, s, len, 0)==0){
-			LOG(L_ERR, "ERROR: replace_body_f: could not insert new lump\n");
+			LM_ERR("could not insert new lump\n");
 			pkg_free(s);
 			return -1;
 		}
@@ -540,7 +536,7 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 	if ((lst=subst_run(se, begin, msg, &nmatches))==0)
 		goto error; /* not found */
 	for (rpl=lst; rpl; rpl=rpl->next){
-		DBG(" %s: subst_f: replacing at offset %d [%.*s] with [%.*s]\n",
+		LM_DBG("%s: replacing at offset %d [%.*s] with [%.*s]\n",
 				exports.name, rpl->offset+off,
 				rpl->size, rpl->offset+off+msg->buf,
 				rpl->rpl.len, rpl->rpl.s);
@@ -549,7 +545,7 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 		/* hack to avoid re-copying rpl, possible because both 
 		 * replace_lst & lumps use pkg_malloc */
 		if (insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0)==0){
-			LOG(L_ERR, "ERROR: %s: subst_f: could not insert new lump\n",
+			LM_ERR("ERROR: %s: subst_f: could not insert new lump\n",
 					exports.name);
 			goto error;
 		}
@@ -560,10 +556,10 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 	}
 	ret=1;
 error:
-	DBG("subst_f: lst was %p\n", lst);
+	LM_DBG("lst was %p\n", lst);
 	if (lst) replace_lst_free(lst);
 	if (nmatches<0)
-		LOG(L_ERR, "ERROR: %s: subst_run failed\n", exports.name);
+		LM_ERR("ERROR: %s: subst_run failed\n", exports.name);
 	return ret;
 }
 
@@ -596,7 +592,7 @@ static int subst_uri_f(struct sip_msg* msg, char*  subst, char* ignored)
 	result=subst_str(tmp, msg, se, 0); /* pkg malloc'ed result */
 	tmp[len]=c;
 	if (result){
-		DBG("%s: subst_uri_f: match - old uri= [%.*s], new uri= [%.*s]\n",
+		LM_DBG("%s match - old uri= [%.*s], new uri= [%.*s]\n",
 				exports.name, len, tmp,
 				(result->len)?result->len:0,(result->s)?result->s:"");
 		if (msg->new_uri.s) pkg_free(msg->new_uri.s);
@@ -640,7 +636,7 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 	if (c)	user.s[user.len]=c;
 	if (result == NULL) {
 		if (nmatches<0)
-			LOG(L_ERR, "subst_user(): subst_str() failed\n");
+			LM_ERR("subst_user(): subst_str() failed\n");
 		return -1;
 	}
 	/* result->s[result->len] = '\0';  --subst_str returns 0-term strings */
@@ -670,13 +666,12 @@ static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
 
 	body.s = get_body(msg);
 	if (body.s==0) {
-		LOG(L_ERR,
-				"ERROR:subst_body_f: failed to get the message body\n");
+		LM_ERR("failed to get the message body\n");
 		return -1;
 	}
 	body.len = msg->len -(int)(body.s-msg->buf);
 	if (body.len==0) {
-		DBG("ERROR:subst_body_f: message body has zero length\n");
+		LM_DBG("message body has zero length\n");
 		return -1;
 	}
 	
@@ -688,7 +683,7 @@ static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
 	if ((lst=subst_run(se, begin, msg, &nmatches))==0)
 		goto error; /* not found */
 	for (rpl=lst; rpl; rpl=rpl->next){
-		DBG("%s:subst_body_f: replacing at offset %d [%.*s] with [%.*s]\n",
+		LM_DBG("%s replacing at offset %d [%.*s] with [%.*s]\n",
 				exports.name, rpl->offset+off,
 				rpl->size, rpl->offset+off+msg->buf,
 				rpl->rpl.len, rpl->rpl.s);
@@ -697,7 +692,7 @@ static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
 		/* hack to avoid re-copying rpl, possible because both 
 		 * replace_lst & lumps use pkg_malloc */
 		if (insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0)==0){
-			LOG(L_ERR, "ERROR:%s: subst_body_f: could not insert new lump\n",
+			LM_ERR("%s could not insert new lump\n",
 					exports.name);
 			goto error;
 		}
@@ -708,10 +703,10 @@ static int subst_body_f(struct sip_msg* msg, char*  subst, char* ignored)
 	}
 	ret=1;
 error:
-	DBG("subst_body_f: lst was %p\n", lst);
+	LM_DBG("lst was %p\n", lst);
 	if (lst) replace_lst_free(lst);
 	if (nmatches<0)
-		LOG(L_ERR, "ERROR:%s:subst_body_f: subst_run failed\n", exports.name);
+		LM_ERR("%s subst_run failed\n", exports.name);
 	return ret;
 }
 
@@ -741,7 +736,7 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 		}
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
 		if (l==0) {
-			LOG(L_ERR, "ERROR: remove_hf_f: no memory\n");
+			LM_ERR("no memory\n");
 			return -1;
 		}
 		cnt++;
@@ -777,13 +772,13 @@ static int fixup_substre(void** param, int param_no)
 	struct subst_expr* se;
 	str subst;
 
-	DBG("%s module -- fixing %s\n", exports.name, (char*)(*param));
+	LM_DBG("%s module -- fixing %s\n", exports.name, (char*)(*param));
 	if (param_no!=1) return 0;
 	subst.s=*param;
 	subst.len=strlen(*param);
 	se=subst_parser(&subst);
 	if (se==0){
-		LOG(L_ERR, "ERROR: %s: bad subst. re %s\n", exports.name, 
+		LM_ERR("%s: bad subst. re %s\n", exports.name, 
 				(char*)*param);
 		return E_BAD_RE;
 	}
@@ -808,13 +803,13 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 
 	bd_time=gmtime(&now);
 	if (bd_time==NULL) {
-		LOG(L_ERR, "ERROR: append_time: gmtime failed\n");
+		LM_ERR("gmtime failed\n");
 		return -1;
 	}
 
 	len=strftime(time_str, MAX_TIME, TIME_FORMAT, bd_time);
 	if (len>MAX_TIME-2 || len==0) {
-		LOG(L_ERR, "ERROR: append_time: unexpected time length\n");
+		LM_ERR("unexpected time length\n");
 		return -1;
 	}
 
@@ -824,7 +819,7 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 
 	if (add_lump_rpl(msg, time_str, len+2, LUMP_RPL_HDR)==0)
 	{
-		LOG(L_ERR, "ERROR: append_time: unable to add lump\n");
+		LM_ERR("unable to add lump\n");
 		return -1;
 	}
 
@@ -839,20 +834,20 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 
 	if(key==NULL)
 	{
-		LOG(L_ERR,"ERROR:append_to_reply: error - bad parameters\n");
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
 	model = (pv_elem_t*)key;
 	if (pv_printf_s(msg, model, &s0)<0)
 	{
-		LOG(L_ERR,"textops:add_hf_helper: error - cannot print the format\n");
+		LM_ERR("cannot print the format\n");
 		return -1;
 	}
  
 	if ( add_lump_rpl( msg, s0.s, s0.len, LUMP_RPL_HDR)==0 )
 	{
-		LOG(L_ERR,"ERROR:append_to_reply : unable to add lump_rl\n");
+		LM_ERR("unable to add lump_rl\n");
 		return -1;
 	}
 
@@ -872,7 +867,7 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	str s0;
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR, "textops:add_hf_helper: Error while parsing message\n");
+		LM_ERR("error while parsing message\n");
 		return -1;
 	}
 	
@@ -908,7 +903,7 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 
 	if(anchor == 0) {
-		LOG(L_ERR, "textops:add_hf_helper: Can't get anchor\n");
+		LM_ERR("can't get anchor\n");
 		return -1;
 	}
 
@@ -918,8 +913,7 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		if(model) {
 			if (pv_printf_s(msg, model, &s0)<0)
 			{
-				LOG(L_ERR,
-				"textops:add_hf_helper: error - cannot print the format\n");
+				LM_ERR("cannot print the format\n");
 				return -1;
 			}
 		} else {
@@ -933,7 +927,7 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 
 	s = (char*)pkg_malloc(len);
 	if (!s) {
-		LOG(L_ERR, "textops:add_hf_helper: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 
@@ -944,7 +938,7 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 
 	if (insert_new_lump_before(anchor, s, len, 0) == 0) {
-		LOG(L_ERR, "textops:add_hf_helper: Can't insert lump\n");
+		LM_ERR("can't insert lump\n");
 		pkg_free(s);
 		return -1;
 	}
@@ -995,7 +989,7 @@ static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
 	}
 	if(parse_headers(msg, HDR_CSEQ_F, 0)!=0 || msg->cseq==NULL)
 	{
-		LOG(L_ERR, "textops:is_method: ERROR - cannot parse cseq header\n");
+		LM_ERR("cannot parse cseq header\n");
 		return -1; /* should it be 0 ?!?! */
 	}
 	if(m->s==0)
@@ -1019,7 +1013,7 @@ static int hname_fixup(void** param, int param_no)
 
 	s = (str*)pkg_malloc(sizeof(str));
 	if (!s) {
-		LOG(L_ERR, "textops:hname_fixup: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return E_UNSPEC;
 	}
 
@@ -1027,7 +1021,7 @@ static int hname_fixup(void** param, int param_no)
 	s->len = strlen(s->s);
 	if(s->len==0)
 	{
-		LOG(L_ERR,"textops:hname_fixup: empty header name parameter\n");
+		LM_ERR("empty header name parameter\n");
 		pkg_free(s);
 		return E_UNSPEC;
 	}
@@ -1038,7 +1032,7 @@ static int hname_fixup(void** param, int param_no)
 	
 	if (parse_hname2(s->s, s->s + ((s->len<4)?4:s->len), &hdr)==0)
 	{
-		LOG(L_ERR,"textops:hname_fixup: error parsing header name\n");
+		LM_ERR("error parsing header name\n");
 		pkg_free(s);
 		return E_UNSPEC;
 	}
@@ -1048,15 +1042,13 @@ static int hname_fixup(void** param, int param_no)
 
 	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 	{
-		LOG(L_INFO,"INFO:textops:hname_fixup: using "
-				"hdr type (%d) instead of <%.*s>\n",
+		LM_INFO("using hdr type (%d) instead of <%.*s>\n",
 				hdr.type, s->len, s->s);
 		pkg_free(s->s);
 		s->s = NULL;
 		s->len = hdr.type;
 	} else {
-		LOG(L_INFO,"INFO:textops:hname_fixup: using "
-				"hdr type name <%.*s>\n", s->len, s->s);
+		LM_INFO("using hdr type name <%.*s>\n", s->len, s->s);
 	}
 	
 	*param = (void*)s;
@@ -1087,7 +1079,7 @@ static int fixup_method(void** param, int param_no)
 	
 	s = (str*)pkg_malloc(sizeof(str));
 	if (!s) {
-		LOG(L_ERR, "textops:fixup_method: No memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return E_UNSPEC;
 	}
 
@@ -1095,7 +1087,7 @@ static int fixup_method(void** param, int param_no)
 	s->len = strlen(s->s);
 	if(s->len==0)
 	{
-		LOG(L_ERR,"textops:fixup_method: empty method name\n");
+		LM_ERR("empty method name\n");
 		pkg_free(s);
 		return E_UNSPEC;
 	}
@@ -1112,7 +1104,7 @@ static int fixup_method(void** param, int param_no)
 	}
 	if(parse_methods(s, &method)!=0)
 	{
-		LOG(L_ERR,"textops:fixup_method: bad method names\n");
+		LM_ERR("bad method names\n");
 		pkg_free(s);
 		return E_UNSPEC;
 	}
@@ -1121,25 +1113,23 @@ static int fixup_method(void** param, int param_no)
 	{
 		if(method==METHOD_UNDEF || method&METHOD_OTHER)
 		{
-			LOG(L_ERR,
-				"textops:fixup_method: unknown method in list [%.*s/%d]"
-				" - must be only defined methods\n",
+			LM_ERR("unknown method in list [%.*s/%d] - must be only defined methods\n",
 				s->len, s->s, method);
 			return E_UNSPEC;
 		}
-		DBG("textops:fixup_method: using id for methods [%.*s/%d]\n",
+		LM_DBG("using id for methods [%.*s/%d]\n",
 				s->len, s->s, method);
 		s->s = 0;
 		s->len = method;
 	} else {
 		if(method!=METHOD_UNDEF && method!=METHOD_OTHER)
 		{
-			DBG("textops:fixup_method: using id for method [%.*s/%d]\n",
+			LM_DBG("using id for method [%.*s/%d]\n",
 				s->len, s->s, method);
 			s->s = 0;
 			s->len = method;
 		} else
-			DBG("textops:fixup_method: name for method [%.*s/%d]\n",
+			LM_DBG("name for method [%.*s/%d]\n",
 				s->len, s->s, method);
 	}
 
@@ -1159,12 +1149,12 @@ static int fixup_privacy(void** param, int param_no)
     p.len = strlen(p.s);
 
     if (p.len == 0) {
-	LOG(L_ERR,"textops:fixup_privacy: empty privacy value\n");
+	LM_ERR("empty privacy value\n");
 	return E_UNSPEC;
     }
 
     if (parse_priv_value(p.s, p.len, &val) != p.len) {
-	LOG(L_ERR,"textops:fixup_privacy: invalid privacy value\n");
+	LM_ERR("invalid privacy value\n");
 	return E_UNSPEC;
     }
     
@@ -1184,7 +1174,7 @@ static int it_list_fixup(void** param, int param_no)
 		s.s = (char*)(*param); s.len = strlen(s.s);
 		if(pv_parse_format(&s, &model)<0)
 		{
-			LOG(L_ERR, "ERROR:textops:item_list_fixup: wrong format[%s]\n",
+			LM_ERR("wrong format[%s]\n",
 				(char*)(*param));
 			return E_UNSPEC;
 		}
@@ -1201,8 +1191,7 @@ static int add_header_fixup(void** param, int param_no)
 	} else if(param_no==2) {
 		return hname_fixup(param, param_no);
 	} else {
-		LOG(L_ERR,
-			"ERROR:textops:add_header_fixup: wrong number of parameters\n");
+		LM_ERR("wrong number of parameters\n");
 		return E_UNSPEC;
 	}
 }
@@ -1221,13 +1210,11 @@ static int fixup_body_type(void** param, int param_no)
 		} else {
 			r = decode_mime_type( p, p+strlen(p) , &type);
 			if (r==0) {
-				LOG(L_ERR,"ERROR:textops:fixup_body_type: unsupported "
-					"mime <%s>\n",p);
+				LM_ERR("unsupported mime <%s>\n",p);
 				return E_CFG;
 			}
 			if ( r!=p+strlen(p) ) {
-				LOG(L_ERR,"ERROR:textops:fixup_body_type: multiple mimes not "
-					"supported!\n");
+				LM_ERR("multiple mimes not supported!\n");
 				return E_CFG;
 			}
 		}
@@ -1249,13 +1236,12 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 
 	/* all headears are already parsed by "get_body" */
 	if (msg->content_length==0) {
-		LOG (L_ERR, "ERROR:textops:has_body: very bogus message with body "
-			"but no content length hdr\n");
+		LM_ERR("very bogus message with body, but no content length hdr\n");
 		return -1;
 	}
 
 	if (get_content_length (msg)==0) {
-		DBG("DEBUG:textops:has_body: content length is zero\n");
+		LM_DBG("content length is zero\n");
 		/* Nothing to see here, please move on. */
 		return -1;
 	}
@@ -1266,8 +1252,7 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 
 	mime = parse_content_type_hdr (msg);
 	if (mime<0) {
-		LOG (L_ERR, "ERROR:textops:has_body: failed to extract "
-			"content type hdr\n");
+		LM_ERR("failed to extract content type hdr\n");
 		return -1;
 	}
 	if (mime==0) {
@@ -1275,7 +1260,7 @@ static int has_body_f(struct sip_msg *msg, char *type, char *str2 )
 		 * assume APPLICATION/SDP  --bogdan */
 		mime = ((TYPE_APPLICATION << 16) + SUBTYPE_SDP);
 	}
-	DBG("DBUG:textops:has_body: Content type is %d\n",mime);
+	LM_DBG("content type is %d\n",mime);
 
 	if ( (unsigned int)mime!=(unsigned int)(unsigned long)type )
 		return -1;

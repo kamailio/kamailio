@@ -60,7 +60,7 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 	mysql_init(ptr->con);
 
 	if (id->port) {
-		LM_DBG("ppening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
+		LM_DBG("opening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
 		    ZSW(id->username),
 		    ZSW(id->password),
 		    ZSW(id->host),

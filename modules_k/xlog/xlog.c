@@ -111,11 +111,11 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	DBG("XLOG: initializing ...\n");
+	LM_INFO("initializing...\n");
 	log_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(log_buf==NULL)
 	{
-		LOG(L_ERR, "XLOG:mod_init: ERROR: no more memory\n");
+		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
 	return 0;
@@ -126,7 +126,7 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	DBG("XLOG: init_child [%d]  pid [%d]\n", rank, getpid());
+	LM_DBG("init_child [%d]  pid [%d]\n", rank, getpid());
 	return 0;
 }
 
@@ -195,7 +195,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
  */
 void destroy(void)
 {
-	DBG("XLOG: destroy module ...\n");
+	LM_DBG("destroy module...\n");
 	if(log_buf)
 		pkg_free(log_buf);
 }
@@ -208,7 +208,7 @@ static int xlog_fixup(void** param, int param_no)
 	{
 		if(*param==NULL || strlen((char*)(*param))<3)
 		{
-			LOG(L_ERR, "XLOG:xlog_fixup: wrong log level\n");
+			LM_ERR("wrong log level\n");
 			return E_UNSPEC;
 		}
 		switch(((char*)(*param))[2])
@@ -221,7 +221,7 @@ static int xlog_fixup(void** param, int param_no)
         	case 'I': level = L_INFO; break;
 	        case 'D': level = L_DBG; break;
 			default:
-				LOG(L_ERR, "XLOG:xlog_fixup: unknown log level\n");
+				LM_ERR("unknown log level\n");
 				return E_UNSPEC;
 		}
 		pkg_free(*param);
@@ -249,14 +249,14 @@ static int xdbg_fixup(void** param, int param_no)
 			{
 				if(pv_parse_format(&s, &model)<0)
 				{
-					LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]\n",
+					LM_ERR("ERROR: wrong format[%s]\n",
 						(char*)(*param));
 					return E_UNSPEC;
 				}
 			} else {
 				if(pv_parse_format(&s, &model)<0)
 				{
-					LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: wrong format[%s]!\n",
+					LM_ERR("ERROR: wrong format[%s]!\n",
 						(char*)(*param));
 					return E_UNSPEC;
 				}
@@ -267,7 +267,7 @@ static int xdbg_fixup(void** param, int param_no)
 		}
 		else
 		{
-			LOG(L_ERR, "XLOG:xdbg_fixup: ERROR: null format\n");
+			LM_ERR("ERROR: null format\n");
 			return E_UNSPEC;
 		}
 	}

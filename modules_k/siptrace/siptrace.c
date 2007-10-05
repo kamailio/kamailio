@@ -186,12 +186,11 @@ static int mod_init(void)
 	pv_spec_t avp_spec;
 	str s;
 
-	DBG("siptrace - initializing\n");
+	LM_INFO("initializing...\n");
 	
 	if(siptrace_table==0 || strlen(siptrace_table)<=0)
 	{
-		LOG(L_ERR,
-			"siptrace:mod_init:ERROR: invalid table name\n");
+		LM_ERR("invalid table name\n");
 		return -1;
 	}
 
@@ -201,20 +200,19 @@ static int mod_init(void)
 	/* Find a database module */
 	if (bind_dbmod(db_url, &db_funcs))
 	{
-		LOG(L_ERR, "siptrace:mod_init: Unable to bind database module\n");
+		LM_ERR("unable to bind database module\n");
 		return -1;
 	}
 	if (!DB_CAPABILITY(db_funcs, DB_CAP_INSERT))
 	{
-		LOG(L_ERR, "siptrace:mod_init: Database modules does not "
-			"provide all functions needed by module\n");
+		LM_ERR("database modules does not provide all functions needed by module\n");
 		return -1;
 	}
 
 	trace_on_flag = (int*)shm_malloc(sizeof(int));
 	if(trace_on_flag==NULL)
 	{
-		LOG(L_ERR, "siptrace:mod_init:ERROR: no more shm\n");
+		LM_ERR("no more shm memory left\n");
 		return -1;
 	}
 	
@@ -223,13 +221,13 @@ static int mod_init(void)
 	/* register callbacks to TM */
 	if (load_tm_api(&tmb)!=0)
 	{
-		LOG(L_ERR, "siptrace:mod_init:ERROR: can't load tm api\n");
+		LM_ERR("can't load tm api\n");
 		return -1;
 	}
 
 	if(tmb.register_tmcb( 0, 0, TMCB_REQUEST_IN, trace_onreq_in, 0) <=0)
 	{
-		LOG(L_ERR,"siptrace:mod_init:ERROR: can't register trace_onreq_in\n");
+		LM_ERR("can't register trace_onreq_in\n");
 		return -1;
 	}
 
@@ -237,19 +235,17 @@ static int mod_init(void)
 	register_slcb_f = (register_slcb_t)find_export("register_slcb", 0, 0);
 	if(register_slcb_f==NULL)
 	{
-		LOG(L_ERR, "siptrace:mod_init:ERROR: can't load sl api\n");
+		LM_ERR("can't load sl api\n");
 		return -1;
 	}
 	if(register_slcb_f(SLCB_REPLY_OUT,trace_sl_onreply_out, NULL)!=0)
 	{
-		LOG(L_ERR,
-			"siptrace:mod_init:ERROR: can't register trace_sl_onreply_out\n");
+		LM_ERR("can't register trace_sl_onreply_out\n");
 		return -1;
 	}
 	if(register_slcb_f(SLCB_ACK_IN,trace_sl_ack_in, NULL)!=0)
 	{
-		LOG(L_ERR,
-			"siptrace:mod_init:ERROR: can't register trace_sl_ack_in\n");
+		LM_ERR("can't register trace_sl_ack_in\n");
 		return -1;
 	}
 
@@ -257,12 +253,12 @@ static int mod_init(void)
 		dup_uri_str.len = strlen(dup_uri_str.s);
 		dup_uri = (struct sip_uri *)pkg_malloc(sizeof(struct sip_uri));
 		if(dup_uri==0) {
-			LOG(L_ERR, "siptrace:mod_init:ERROR: no more pkg memory\n");
+			LM_ERR("no more pkg memory left\n");
 			return -1;
 		}
 		memset(dup_uri, 0, sizeof(struct sip_uri));
 		if(parse_uri(dup_uri_str.s, dup_uri_str.len, dup_uri)<0) {
-			LOG(L_ERR, "siptrace:mod_init:ERROR: bad dup uri\n");
+			LM_ERR("bad dup uri\n");
 			return -1;
 		}
 	}
@@ -272,16 +268,14 @@ static int mod_init(void)
 		s.s = traced_user_avp_str; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:siptrace:mod_init: malformed or non AVP %s "
-				"AVP definition\n", traced_user_avp_str);
+			LM_ERR("malformed or non AVP %s AVP definition\n", traced_user_avp_str);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &traced_user_avp,
 					&traced_user_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:siptrace:mod_init: [%s]- invalid "
-				"AVP definition\n", traced_user_avp_str);
+			LM_ERR("[%s] - invalid AVP definition\n", traced_user_avp_str);
 			return -1;
 		}
 	} else {
@@ -293,16 +287,14 @@ static int mod_init(void)
 		s.s = trace_table_avp_str; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:siptrace:mod_init: malformed or non AVP %s "
-				"AVP definition\n", trace_table_avp_str);
+			LM_ERR("malformed or non AVP %s AVP definition\n", trace_table_avp_str);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &trace_table_avp,
 					&trace_table_avp_type)!=0)
 		{
-			LOG(L_ERR, "ERROR:siptrace:mod_init: [%s]- invalid "
-				"AVP definition\n", trace_table_avp_str);
+			LM_ERR("[%s] - invalid AVP definition\n", trace_table_avp_str);
 			return -1;
 		}
 	} else {
@@ -319,7 +311,7 @@ static int child_init(int rank)
 	db_con = db_funcs.init(db_url);
 	if (!db_con)
 	{
-		LOG(L_ERR, "siptrace:init_child: Unable to connect database\n");
+		LM_ERR("unable to connect database\n");
 		return -1;
 	}
 
@@ -365,7 +357,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	
 	if(msg==NULL)
 	{
-		DBG("sip_trace: no uas request, local transaction\n");
+		LM_DBG("no uas request, local transaction\n");
 		return -1;
 	}
 
@@ -376,20 +368,20 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 
 	if((avp==NULL) && (trace_on_flag==NULL || *trace_on_flag==0))
 	{
-		DBG("sip_trace: trace off...\n");
+		LM_DBG("trace off...\n");
 		return -1;
 	}
 	
 	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "sip_trace: ERROR cannot parse FROM header\n");
+		LM_ERR("cannot parse FROM header\n");
 		goto error;
 	}
 	
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0 || msg->callid==NULL
 			|| msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "sip_trace: ERROR cannot parse call-id\n");
+		LM_ERR("cannot parse call-id\n");
 		goto error;
 	}
 
@@ -479,10 +471,10 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
-		DBG("sip_trace: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "sip_trace: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 #ifdef STATISTICS
@@ -499,10 +491,10 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_vals[9].val.str_val.s = avp_value.s.s;
 	db_vals[9].val.str_val.len = avp_value.s.len;
 
-	DBG("sip_trace: storing info...\n");
+	LM_DBG("storing info...\n");
 	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 	{
-		LOG(L_ERR, "sip_trace: error storing trace\n");
+		LM_ERR("error storing trace\n");
 		goto error;
 	}
 
@@ -512,10 +504,10 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 		db_vals[9].val.str_val.s = avp_value.s.s;
 		db_vals[9].val.str_val.len = avp_value.s.len;
 
-		DBG("sip_trace: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "sip_trace: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 		avp = search_next_avp( avp, &avp_value);
@@ -539,14 +531,14 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 
 	if(t==NULL || ps==NULL)
 	{
-		DBG("trace_onreq_in: no uas request, local transaction\n");
+		LM_DBG("no uas request, local transaction\n");
 		return;
 	}
 	
 	msg = ps->req;
 	if(msg==NULL)
 	{
-		DBG("trace_onreq_in: no uas request, local transaction\n");
+		LM_DBG("no uas request, local transaction\n");
 		return;
 	}
 	
@@ -557,44 +549,42 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 
 	if((avp==NULL) && trace_is_off(msg))
 	{
-		DBG("trace_onreq_in: trace off...\n");
+		LM_DBG("trace off...\n");
 		return;
 	}
 	
 	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "trace_onreq_in: ERROR cannot parse FROM header\n");
+		LM_ERR("cannot parse FROM header\n");
 		return;
 	}
 
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0)
 	{
-		LOG(L_ERR, "trace_onreq_in: ERROR cannot parse call-id\n");
+		LM_ERR("cannot parse call-id\n");
 		return;
 	}
 
 	if (msg->REQ_METHOD==METHOD_INVITE)
 	{
-		DBG("trace_onreq_in: noisy_timer set for tracing\n");
+		LM_DBG("noisy_timer set for tracing\n");
 		t->flags |= T_NOISY_CTIMER_FLAG;
 	}
 	if(tmb.register_tmcb( 0, t, TMCB_REQUEST_BUILT, trace_onreq_out, 0) <=0)
 	{
-		LOG(L_ERR,"trace_onreq_in:ERROR: can't register trace_onreq_out\n");
+		LM_ERR("can't register trace_onreq_out\n");
 		return;
 	}
 
 	if(tmb.register_tmcb( 0, t, TMCB_RESPONSE_IN, trace_onreply_in, 0) <=0)
 	{
-		LOG(L_ERR,
-			"trace_onreq_in:ERROR: can't register trace_onreply_in\n");
+		LM_ERR("can't register trace_onreply_in\n");
 		return;
 	}
 
 	if(tmb.register_tmcb( 0, t, TMCB_RESPONSE_OUT, trace_onreply_out, 0) <=0)
 	{
-		LOG(L_ERR,
-			"trace_onreq_in:ERROR: can't register trace_onreply_out\n");
+		LM_ERR("can't register trace_onreply_out\n");
 		return;
 	}
 }
@@ -615,13 +605,13 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	
 	if(t==NULL || ps==NULL)
 	{
-		DBG("trace_onreq_out: no uas request, local transaction\n");
+		LM_DBG("no uas request, local transaction\n");
 		return;
 	}
 	msg=ps->req;
 	if(msg==NULL)
 	{
-		DBG("trace_onreq_out: no uas msg, local transaction\n");
+		LM_DBG("no uas msg, local transaction\n");
 		return;
 	}
 	
@@ -632,19 +622,19 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 
 	if((avp==NULL) && trace_is_off(msg) )
 	{
-		DBG("trace_onreq_out: trace off...\n");
+		LM_DBG("trace off...\n");
 		return;
 	}
 
 	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "trace_onreq_out: ERROR cannot parse FROM header\n");
+		LM_ERR("cannot parse FROM header\n");
 		goto error;
 	}
 
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0)
 	{
-		LOG(L_ERR, "trace_onreq_out: ERROR cannot parse call-id\n");
+		LM_ERR("cannot parse call-id\n");
 		return;
 	}
 
@@ -664,7 +654,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	/* check Call-ID header */
 	if(msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "trace_onreq_out: ERROR cannot find Call-ID header!\n");
+		LM_ERR("cannot find Call-ID header!\n");
 		goto error;
 	}
 
@@ -733,7 +723,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		strcat(toip_buff+4, ":");
 		strcat(toip_buff+4,
 				int2str((unsigned long)su_getport(&dst->to), &len));
-		DBG("siptrace:trace_onreq_out: dest [%s]\n", toip_buff);
+		LM_DBG("dest [%s]\n", toip_buff);
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
@@ -763,10 +753,10 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
-		DBG("trace_onreq_out: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_onreq_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 #ifdef STATISTICS
@@ -783,10 +773,10 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[9].val.str_val.s = avp_value.s.s;
 	db_vals[9].val.str_val.len = avp_value.s.len;
 
-	DBG("trace_onreq_out: storing info...\n");
+	LM_DBG("storing info...\n");
 	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 	{
-		LOG(L_ERR, "trace_onreq_out: error storing trace\n");
+		LM_ERR("error storing trace\n");
 		goto error;
 	}
 
@@ -796,10 +786,10 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[9].val.str_val.s = avp_value.s.s;
 		db_vals[9].val.str_val.len = avp_value.s.len;
 
-		DBG("trace_onreq_out: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_onreq_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 		avp = search_next_avp( avp, &avp_value);
@@ -826,7 +816,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	
 	if(t==NULL || t->uas.request==0 || ps==NULL)
 	{
-		DBG("trace_onreply_in: no uas request, local transaction\n");
+		LM_DBG("no uas request, local transaction\n");
 		return;
 	}
 
@@ -834,7 +824,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	msg = ps->rpl;
 	if(msg==NULL || req==NULL)
 	{
-		DBG("trace_onreply_in: no reply\n");
+		LM_DBG("no reply\n");
 		return;
 	}
 	
@@ -845,19 +835,19 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 
 	if((avp==NULL) &&  trace_is_off(req))
 	{
-		DBG("trace_onreply_in: trace off...\n");
+		LM_DBG("trace off...\n");
 		return;
 	}
 
 	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "trace_onreply_in: ERROR cannot parse FROM header\n");
+		LM_ERR("cannot parse FROM header\n");
 		goto error;
 	}
 
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0)
 	{
-		LOG(L_ERR, "trace_onreply_in: ERROR cannot parse call-id\n");
+		LM_ERR("cannot parse call-id\n");
 		return;
 	}
 
@@ -875,7 +865,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	/* check Call-ID header */
 	if(msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "trace_onreply_in: ERROR cannot find Call-ID header!\n");
+		LM_ERR("cannot find Call-ID header!\n");
 		goto error;
 	}
 
@@ -951,10 +941,10 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
-		DBG("trace_onreply_in: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_onreply_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 	}
@@ -968,10 +958,10 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[9].val.str_val.s = avp_value.s.s;
 	db_vals[9].val.str_val.len = avp_value.s.len;
 
-	DBG("trace_onreply_in: storing info...\n");
+	LM_DBG("storing info...\n");
 	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 	{
-		LOG(L_ERR, "trace_onreply_in: error storing trace\n");
+		LM_ERR("error storing trace\n");
 		goto error;
 	}
 
@@ -981,10 +971,10 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[9].val.str_val.s = avp_value.s.s;
 		db_vals[9].val.str_val.len = avp_value.s.len;
 
-		DBG("### - trace_onreply_in: storing info ...\n");
+		LM_DBG("storing info ...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_onreply_in: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 		avp = search_next_avp( avp, &avp_value);
@@ -1015,7 +1005,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 
 	if (t==NULL || t->uas.request==0 || ps==NULL)
 	{
-		DBG("trace_onreply_out: no uas request, local transaction\n");
+		LM_DBG("no uas request, local transaction\n");
 		return;
 	}
 	
@@ -1026,7 +1016,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 
 	if((avp==NULL) &&  trace_is_off(t->uas.request))
 	{
-		DBG("trace_onreply_out: trace off...\n");
+		LM_DBG("trace off...\n");
 		return;
 	}
 	
@@ -1040,13 +1030,13 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 
 	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "trace_onreply_out: ERROR cannot parse FROM header\n");
+		LM_ERR("cannot parse FROM header\n");
 		goto error;
 	}
 
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0)
 	{
-		LOG(L_ERR, "trace_onreply_out: ERROR cannot parse call-id\n");
+		LM_ERR("cannot parse call-id\n");
 		return;
 	}
 
@@ -1085,7 +1075,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	/* check Call-ID header */
 	if(msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "trace_onreply_out: ERROR cannot find Call-ID header!\n");
+		LM_ERR("cannot find Call-ID header!\n");
 		goto error;
 	}
 
@@ -1141,7 +1131,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		strcat(toip_buff+4, ":");
 		strcat(toip_buff+4,
 				int2str((unsigned long)su_getport(&dst->to), &len));
-		DBG("siptrace:trace_onreply_out: dest [%s]\n", toip_buff);
+		LM_DBG("dest [%s]\n", toip_buff);
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
@@ -1171,10 +1161,10 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
-		DBG("trace_onreply_out: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_onreply_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 	}
@@ -1188,10 +1178,10 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[9].val.str_val.s = avp_value.s.s;
 	db_vals[9].val.str_val.len = avp_value.s.len;
 
-	DBG("trace_onreply_out: storing info...\n");
+	LM_DBG("storing info...\n");
 	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 	{
-		LOG(L_ERR, "trace_onreply_out: error storing trace\n");
+		LM_ERR("error storing trace\n");
 		goto error;
 	}
 
@@ -1201,10 +1191,10 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[9].val.str_val.s = avp_value.s.s;
 		db_vals[9].val.str_val.len = avp_value.s.len;
 
-		DBG("### - trace_onreply_out: storing info (%d) ...\n", faked);
+		LM_DBG("### - storing info (%d) ...\n", faked);
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_onreply_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 		avp = search_next_avp( avp, &avp_value);
@@ -1240,7 +1230,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 
 	if(req==NULL || sl_param==NULL)
 	{
-		LOG(L_ERR, "trace_sl_onreply_out: bad parameters\n");
+		LM_ERR("bad parameters\n");
 		goto error;
 	}
 	
@@ -1251,7 +1241,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 
 	if((avp==NULL) && trace_is_off(req))
 	{
-		DBG("trace_sl_onreply_out: trace off...\n");
+		LM_DBG("trace off...\n");
 		return;
 	}
 	
@@ -1260,13 +1250,13 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	
 	if(parse_from_header(msg)==-1 || msg->from==NULL || get_from(msg)==NULL)
 	{
-		LOG(L_ERR, "trace_sl_onreply_out: ERROR cannot parse FROM header\n");
+		LM_ERR("cannot parse FROM header\n");
 		goto error;
 	}
 
 	if(parse_headers(msg, HDR_CALLID_F, 0)!=0)
 	{
-		LOG(L_ERR, "trace_sl_onreply_out: ERROR cannot parse call-id\n");
+		LM_ERR("cannot parse call-id\n");
 		return;
 	}
 
@@ -1279,7 +1269,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	/* check Call-ID header */
 	if(msg->callid==NULL || msg->callid->body.s==NULL)
 	{
-		LOG(L_ERR, "trace_sl_onreply_out: ERROR cannot find Call-ID header!\n");
+		LM_ERR("cannot find Call-ID header!\n");
 		goto error;
 	}
 
@@ -1333,7 +1323,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		strcat(toip_buff+4, ":");
 		strcat(toip_buff+4,
 				int2str((unsigned long)su_getport(sl_param->dst), &len));
-		DBG("siptrace:trace_sl_onreply_out: dest [%s]\n", toip_buff);
+		LM_DBG("dest [%s]\n", toip_buff);
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
@@ -1363,10 +1353,10 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		db_vals[9].val.str_val.s   = "";
 		db_vals[9].val.str_val.len = 0;
 	
-		DBG("trace_sl_onreply_out: storing info...\n");
+		LM_DBG("storing info...\n");
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_sl_onreply_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 	}
@@ -1380,10 +1370,10 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	db_vals[9].val.str_val.s = avp_value.s.s;
 	db_vals[9].val.str_val.len = avp_value.s.len;
 
-	DBG("trace_sl_onreply_out: storing info...\n");
+	LM_DBG("storing info...\n");
 	if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 	{
-		LOG(L_ERR, "trace_sl_onreply_out: error storing trace\n");
+		LM_ERR("error storing trace\n");
 		goto error;
 	}
 
@@ -1393,10 +1383,10 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		db_vals[9].val.str_val.s = avp_value.s.s;
 		db_vals[9].val.str_val.len = avp_value.s.len;
 
-		DBG("### - trace_sl_onreply_out: storing info (%d) ...\n", faked);
+		LM_DBG("### - storing info (%d) ...\n", faked);
 		if(db_funcs.insert(db_con, db_keys, db_vals, NR_KEYS) < 0)
 		{
-			LOG(L_ERR, "trace_sl_onreply_out: error storing trace\n");
+			LM_ERR("error storing trace\n");
 			goto error;
 		}
 		avp = search_next_avp( avp, &avp_value);
@@ -1462,7 +1452,7 @@ static int trace_send_duplicate(char *buf, int len)
 	
 	to=(union sockaddr_union*)pkg_malloc(sizeof(union sockaddr_union));
 	if (to==0){
-		LOG(L_ERR, "trace_send_duplicate:ERROR: out of memory\n");
+		LM_ERR("out of pkg memory\n");
 		return -1;
 	}
 	
@@ -1471,7 +1461,7 @@ static int trace_send_duplicate(char *buf, int len)
 	p=mk_proxy(&dup_uri->host, (dup_uri->port_no)?dup_uri->port_no:SIP_PORT,
 			proto, 0);
 	if (p==0){
-		LOG(L_ERR, "trace_send_duplicate:ERROR:  bad host name in uri\n");
+		LM_ERR("bad host name in uri\n");
 		pkg_free(to);
 		return -1;
 	}
@@ -1484,15 +1474,13 @@ static int trace_send_duplicate(char *buf, int len)
 	do {
 		send_sock=get_send_socket(0, to, proto);
 		if (send_sock==0){
-			LOG(L_ERR,
-				"trace_send_duplicate:ERROR: cannot forward to af %d, proto %d"
-				" no corresponding listening socket\n", to->s.sa_family,proto);
+			LM_ERR("can't forward to af %d, proto %d no corresponding listening socket\n", 
+					to->s.sa_family,proto);
 			continue;
 		}
 
 		if (msg_send(send_sock, proto, to, 0, buf, len)<0){
-			LOG(L_ERR,
-				"trace_send_duplicate:ERROR: cannot send duplicate message\n");
+			LM_ERR("cannot send duplicate message\n");
 			continue;
 		}
 		ret = 0;

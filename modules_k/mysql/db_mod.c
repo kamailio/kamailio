@@ -91,6 +91,6 @@ struct module_exports exports = {
 
 static int mysql_mod_init(void)
 {
-	DBG("mysql: MySQL client version is %s\n", mysql_get_client_info());
+	LM_DBG("mysql: MySQL client version is %s\n", mysql_get_client_info());
 	return 0;
 }

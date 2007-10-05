@@ -95,7 +95,7 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	LM_NOTICE("initializing\n");
+	LM_NOTICE("initializing...\n");
 	if ( max_limit<1 || max_limit>MAXFWD_UPPER_LIMIT ) {
 		LM_ERR("invalid max limit (%d) [1,%d]\n",
 			max_limit,MAXFWD_UPPER_LIMIT);
