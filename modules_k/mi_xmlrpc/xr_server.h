@@ -22,6 +22,7 @@
  * History:
  * ---------
  *  2006-11-30  first version (lavinia)
+ *  2007-10-05  support for libxmlrpc-c3 version 1.x.x added (dragos)
  */
 
 
@@ -32,10 +33,18 @@
 #define XMLRPC_WANT_INTERNAL_DECLARATIONS
 #include <xmlrpc.h>
 
-xmlrpc_value * default_method ( xmlrpc_env * env, char * host,
-		char * methodName, xmlrpc_value * paramArray, void * serverInfo );
+#ifdef XMLRPC_OLD_VERSION
 
-int set_default_method ( xmlrpc_env * env );
+xmlrpc_value * default_method ( xmlrpc_env * env, char * host,
+		 char * methodName, xmlrpc_value * paramArray, void * serverInfo );
+
+#else
+
+xmlrpc_value * default_method ( xmlrpc_env * env, const char * host,
+		const char * methodName, xmlrpc_value * paramArray, void * serverInfo );
+
+#endif
+int set_default_method ( xmlrpc_env * env , xmlrpc_registry * registry);
 
 int init_async_lock(void);
 

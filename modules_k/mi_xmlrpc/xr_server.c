@@ -23,6 +23,7 @@
  * ---------
  *  2006-11-30  first version (lavinia)
  *  2007-02-02  support for asyncronous reply added (bogdan)
+ *  2007-10-05  support for libxmlrpc-c3 version 1.x.x added (dragos)
  */
 
 
@@ -38,7 +39,11 @@
 #include "xr_parser.h"
 #include "mi_xmlrpc.h"
 #include "xr_server.h"
+
+#ifdef XMLRPC_OLD_VERSION
 #include <xmlrpc_abyss.h>
+#endif
+
 
 gen_lock_t *xr_lock;
 
@@ -148,13 +153,20 @@ static inline struct mi_handler* build_async_handler(void)
 }
 
 
-
+#ifdef XMLRPC_OLD_VERSION
 xmlrpc_value*  default_method	(xmlrpc_env* 	env, 
 								char* 			host,
 								char* 			methodName,
 								xmlrpc_value* 	paramArray,
-								void* 			serverInfo){
-
+								void* 			serverInfo)
+#else
+xmlrpc_value*  default_method	(xmlrpc_env* 	env, 
+								const char* 	host,
+								const char* 	methodName,
+								xmlrpc_value* 	paramArray,
+								void* 			serverInfo)
+#endif
+{
 	xmlrpc_value* ret = NULL;
 	struct mi_root* mi_cmd = NULL;
 	struct mi_root* mi_rpl = NULL;
@@ -165,7 +177,7 @@ xmlrpc_value*  default_method	(xmlrpc_env* 	env,
 
 	LM_DBG("starting up.....\n");
 
-	f = lookup_mi_cmd(methodName, strlen(methodName));
+	f = lookup_mi_cmd((char*)methodName, strlen(methodName));
 	
 	if ( f == 0 ) {
 		LM_ERR("command %s is not available!\n", methodName);
@@ -258,11 +270,8 @@ error:
 }
 
 
-int set_default_method ( xmlrpc_env * env )
+int set_default_method ( xmlrpc_env * env , 	xmlrpc_registry * registry)
 {
-	xmlrpc_registry * registry;
-
-	registry = xmlrpc_server_abyss_registry();
 	xmlrpc_registry_set_default_method(env, registry, &default_method, NULL);
 
 	if ( env->fault_occurred ) {

@@ -22,6 +22,7 @@
  * History:
  * ---------
  *  2006-11-30  first version (lavinia)
+ *  2007-10-05  support for libxmlrpc-c3 version 1.x.x added (dragos)
  */
 
 
@@ -40,9 +41,25 @@
 #include "xr_writer.h"
 #include "xr_parser.h"
 #include "xr_server.h"
+
 #define XMLRPC_SERVER_WANT_ABYSS_HANDLERS
+
+#ifdef XMLRPC_OLD_VERSION
+
 #include "abyss.h"
 #include <xmlrpc_abyss.h>
+#include <xmlrpc.h>
+
+#else
+
+#include <xmlrpc-c/base.h>
+#include <xmlrpc-c/abyss.h>
+#include <xmlrpc-c/server.h>
+#include <xmlrpc-c/server_abyss.h>
+
+#endif
+
+
 #include "../../sr_module.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
@@ -50,6 +67,8 @@
 
 xmlrpc_env env;
 xmlrpc_value * xr_response;
+xmlrpc_registry * registryP;
+
 int rpl_opt = 0;
 
 /* module functions */
@@ -146,7 +165,16 @@ static void xmlrpc_process(int rank)
 	}
 
 	/* Server Abyss init */
+
+	xmlrpc_env_init(&env);
+
+	#ifdef XMLRPC_OLD_VERSION
 	xmlrpc_server_abyss_init_registry();
+	registryP= xmlrpc_server_abyss_registry();
+	#else
+	registryP = xmlrpc_registry_new(&env);    
+	#endif
+
 	DateInit();
 	MIMETypeInit();
 
@@ -155,12 +183,20 @@ static void xmlrpc_process(int rank)
 		goto error;
 	}
 
+	#ifdef XMLRPC_OLD_VERSION
 	if (!ServerAddHandler(&srv, xmlrpc_server_abyss_rpc2_handler)) {
 		LM_ERR("failed to add handler to server\n");
 		goto error;
 	}
 
 	ServerDefaultHandler(&srv, xmlrpc_server_abyss_default_handler);
+
+	#else
+
+	xmlrpc_server_abyss_set_handlers2(&srv, "/RPC2", registryP);
+
+	#endif
+
 	ServerInit(&srv);
 
 	if( init_mi_child() != 0 ) {
@@ -172,8 +208,9 @@ static void xmlrpc_process(int rank)
 		LM_ERR("failed to init the reply writer\n");
 		goto error;
 	}
-
+	#ifdef XMLRPC_OLD_VERSION
 	xmlrpc_env_init(&env);
+	#endif
 
 	if ( rpl_opt == 1 ) {
 		xr_response = xmlrpc_build_value(&env, "()");
@@ -183,7 +220,7 @@ static void xmlrpc_process(int rank)
 		}
 	}
 
-	if ( set_default_method(&env) != 0 ) {
+	if ( set_default_method(&env,registryP) != 0 ) {
 		LM_ERR("failed to set up the default method!\n");
 		goto cleanup;
 	}
@@ -193,7 +230,7 @@ static void xmlrpc_process(int rank)
 
 	ServerRun(&srv);
 
-	LM_CRIT("erver terminated!!!\n");
+	LM_CRIT("Server terminated!!!\n");
 
 cleanup:
 	xmlrpc_env_clean(&env);
@@ -211,4 +248,3 @@ int destroy(void)
 
 	return 0;
 }
-

@@ -22,16 +22,17 @@
  * History:
  * ---------
  *  2006-11-30  first version (lavinia)
+ *  2007-10-05  support for libxmlrpc-c3 version 1.x.x added (dragos)
  */
 
 
 #include <string.h>
+#include <stdlib.h>
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "xr_parser.h"
 #include "xr_parser_lib.h"
 #include "mi_xmlrpc.h"
-
 
 /*
  * Convert in argument string each LFLF to CRLF and return length of
@@ -66,11 +67,19 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 	
 	int size, i;
 	size_t length;
-	void * cptrValue;
+
 	xmlrpc_int32 intValue;
 	xmlrpc_bool boolValue;
+
+	#ifdef XMLRPC_OLD_VERSION
 	double doubleValue;
-	char * stringValue = 0, * byteStringValue = 0, * contents;
+	char * contents;
+	#else
+	xmlrpc_double doubleValue;
+	#endif
+
+	char * stringValue ;
+	char * byteStringValue =0;
 	xmlrpc_value * item;
 	
 	mi_root = init_mi_tree(0, 0, 0);
@@ -93,62 +102,61 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 		switch ( xmlrpc_value_type(item) ) {
 		
 		case (XMLRPC_TYPE_INT):
-			
-			validateType(env, item, XMLRPC_TYPE_INT);
-			
-			if ( env->fault_occurred ) {
-				LM_ERR("failed to read the intValue: %s\n", env->fault_string);
-				goto error;
-			}
-			
+
+			#ifdef XMLRPC_OLD_VERSION
 			intValue = item->_value.i;
+			#else 
+			xmlrpc_read_int(env,item,&intValue);
+			#endif
+
 			if (addf_mi_node_child(&mi_root->node,0,0,0,"%d",intValue)==NULL) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
-			break;
 
+			break;
 		case (XMLRPC_TYPE_BOOL):
-			
-			validateType(env, item, XMLRPC_TYPE_BOOL);
-			
-			if ( env->fault_occurred ) {
-				LM_ERR("failed to read the boolValue: %s\n", env->fault_string);
-				goto error;
-			}
-			
+
+			#ifdef XMLRPC_OLD_VERSION
 			boolValue = item->_value.b;
+			#else
+			xmlrpc_read_bool(env,item,&boolValue);
+			#endif
+
 			if (addf_mi_node_child(&mi_root->node,0,0,0,"%u",boolValue)==NULL){
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
+
 			break;
 
 		case (XMLRPC_TYPE_DOUBLE):
-			
-			validateType(env, item, XMLRPC_TYPE_DOUBLE);
-			
-			if ( env->fault_occurred ) {
-				LM_ERR("failed to read the doubleValue:%s\n",env->fault_string);
-				goto error;
-			}
 
+			#ifdef XMLRPC_OLD_VERSION
 			doubleValue = item->_value.d;
+			#else
+			xmlrpc_read_double(env,item,&doubleValue);
+			#endif
+
 			if ( addf_mi_node_child(&mi_root->node, 0, 0, 0, "%lf",
 			doubleValue) == NULL ) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
+
 			break;
 
 		case (XMLRPC_TYPE_STRING):
-			
+
 			#if HAVE_UNICODE_WCHAR
 			char * stringValueW;
+			#ifdef  XMLRPC_OLD_VERSION
 			xmlrpc_read_string_w(env, item, &stringValueW);
-			
+			#else
+			xmlrpc_read_string_w(env, item , stringValueW);
+			#endif
 			if ( env->fault_occurred ) {
-				LM_ERR("failed to read stringValueW: %s!\n", env->fault_string);
+				LM_ERR("failed to read stringValueW: %s!\n",env->fault_string);
 				goto error;
 			}
 
@@ -158,15 +166,17 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 				goto error;
 			}
 			#else
+			#ifdef  XMLRPC_OLD_VERSION
 			xmlrpc_read_string(env, item, &stringValue);
-			
+			#else
+			xmlrpc_read_string(env, item, (const char **)&stringValue);
+			#endif
 			if ( env->fault_occurred ) {
 				LM_ERR("failed to read stringValue: %s!\n", env->fault_string);
 				goto error;
 			}
 			if ( add_mi_node_child(&mi_root->node, 0, 0, 0,
-					       stringValue,
-					       lflf_to_crlf_hack(stringValue)) == NULL ) {
+					       stringValue,strlen(stringValue)) == NULL ) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
@@ -175,19 +185,13 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 			break;
 
 		case (XMLRPC_TYPE_BASE64):
-			
-			validateType(env, item, XMLRPC_TYPE_BASE64);
-			
-			if ( env->fault_occurred ) {
-				LM_ERR("failed to read byteStringValue: %s!\n", 
-						env->fault_string);
-				goto error;
-			}
-			
+
+			#ifdef XMLRPC_OLD_VERSION
+
 			length = XMLRPC_TYPED_MEM_BLOCK_SIZE(char, &item->_block);
 			contents = XMLRPC_TYPED_MEM_BLOCK_CONTENTS(char, &item->_block);
 			byteStringValue = pkg_malloc(length);
-			
+
 			if ( !byteStringValue ){
 				xmlrpc_env_set_fault_formatted(env, XMLRPC_INTERNAL_ERROR,
 					"Unable to allocate %u bytes for byte string.", length);
@@ -195,30 +199,41 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 				goto error;
 			} else
 				memcpy(byteStringValue, contents, length);
-			
+
 			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, byteStringValue,
 			length) == NULL ) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
-			break;
 
-		case (XMLRPC_TYPE_C_PTR):
-			
-			validateType(env, item, XMLRPC_TYPE_C_PTR);
-			
+			#else
+
+			xmlrpc_read_base64(env, item, &length,
+				(const unsigned char **)(void*)&byteStringValue);
+
 			if ( env->fault_occurred ) {
-				LM_ERR("failed to read the cptrValue: %s\n", env->fault_string);
+				LM_ERR("failed to read byteStringValue: %s!\n", 
+						env->fault_string);
 				goto error;
 			}
 
-			cptrValue = item->_value.c_ptr;
-			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, (char*)cptrValue,
-			strlen((char*)cptrValue)) == NULL ) {
+			if ( add_mi_node_child(&mi_root->node, MI_DUP_VALUE, 0, 0, 
+			byteStringValue, length) == NULL ) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
+			free(byteStringValue);
+
+			#endif
+
 			break;
+
+		default :
+			LM_ERR("unsupported node type %d\n",  xmlrpc_value_type(item)  );
+			xmlrpc_env_set_fault_formatted( env, XMLRPC_TYPE_ERROR, 
+				"Unsupported value of type %d supplied",
+				xmlrpc_value_type(item));
+			goto error;
 		}
 	}
 	
@@ -233,5 +248,3 @@ error:
 	#endif
 	return 0;
 }
-
-
