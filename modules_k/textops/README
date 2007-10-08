@@ -408,7 +408,8 @@ if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 ...
 if (has_body("multipart/mixed")) {
     if (filter_body("application/sdp") {
-        $cT = "application/sdp";
+        remove_hf("Content-Type");
+        append_hf("Content-Type: application/sdp\r\n");
     } else {
         xlog("Body part application/sdp not found\n");
     }
