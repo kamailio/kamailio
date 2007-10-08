@@ -109,11 +109,11 @@ int startup_time=0;
 str db_url = {0, 0};
 int expires_offset = 0;
 int max_expires= 3600;
-int shtable_size;
+int shtable_size= 9;
 shtable_t subs_htable= NULL;
 int fallback2db= 0;
 
-int phtable_size;
+int phtable_size= 9;
 phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
@@ -136,7 +136,8 @@ static param_export_t params[]={
 	{ "expires_offset",			INT_PARAM, &expires_offset },
 	{ "max_expires",			INT_PARAM, &max_expires },
 	{ "server_address",         STR_PARAM, &server_address.s},
-	{ "hash_size",              INT_PARAM, &shtable_size},
+	{ "subs_htable_size",       INT_PARAM, &shtable_size},
+	{ "pres_htable_size",       INT_PARAM, &phtable_size},
 	{ "fallback2db",            INT_PARAM, &fallback2db},
 	{0,0,0}
 };

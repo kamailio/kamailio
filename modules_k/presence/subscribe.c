@@ -893,12 +893,12 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 		goto error;
 	}
 	subs->contact = b->contacts->uri;
-
+	
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
 			subs->contact.s, subs->contact.len);	
 
 	/*process record route and add it to a string*/
-	if (msg->record_route!=NULL)
+	if (to_tag_gen && msg->record_route!=NULL)
 	{
 		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
 		if(rt != 0)
@@ -1025,6 +1025,17 @@ found_rec:
 		reason.len= s->reason.len;
 		subs->reason= reason;
 	}
+	if(s->record_route.s && s->record_route.len)
+	{
+		subs->record_route.s= (char*)pkg_malloc
+			(s->record_route.len* sizeof(char));
+		if(subs->record_route.s== NULL)
+		{
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(subs->record_route.s, s->record_route.s, s->record_route.len);
+		subs->record_route.len= s->record_route.len;
+	}
 
 	subs->local_cseq= s->local_cseq;
 	
@@ -1049,6 +1060,9 @@ error:
 	if(subs->reason.s)
 		pkg_free(subs->reason.s);
 	subs->reason.s= NULL;
+	if(subs->record_route.s)
+		pkg_free(subs->record_route.s);
+	subs->record_route.s= NULL;
 	return -1;
 }
 
@@ -1056,16 +1070,17 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 {	
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
-	db_key_t result_cols[7];
+	db_key_t result_cols[8];
 	db_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
+	int record_route_col;
 	int pres_uri_col;
 	unsigned int remote_cseq;
-	str pres_uri;
+	str pres_uri, record_route;
 	str reason;
 
 	*error_ret= -1;
@@ -1136,6 +1151,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	result_cols[local_cseq_col=n_result_cols++] = "local_cseq";
 	result_cols[status_col=n_result_cols++] = "status";
 	result_cols[reason_col=n_result_cols++] = "reason";
+	result_cols[record_route_col=n_result_cols++] = "record_route";
 	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -1214,6 +1230,20 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	}
 	memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
 	subs->pres_uri.len= pres_uri.len;
+
+	record_route.s= (char*)row_vals[record_route_col].val.string_val;
+	if(record_route.s)
+	{
+		record_route.len= strlen(record_route.s);
+		subs->record_route.s= (char*)pkg_malloc(record_route.len*sizeof(char));
+		if(subs->record_route.s== NULL)
+		{
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(subs->record_route.s, record_route.s, record_route.len);
+		subs->record_route.len= record_route.len;
+	}
+
 
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
