@@ -52,6 +52,8 @@
  *  2006-04-21  basic comp via param support (andrei)
  *  2006-07-31  forward_request can resolve destination on its own, uses the 
  *              dns cache and falls back on send error to other ips (andrei)
+ *  2007-10-08  get_send_socket() will ignore force_send_socket if the forced
+ *               socket is multicast (andrei)
  */
 
 
@@ -89,6 +91,7 @@
 #ifdef USE_DST_BLACKLIST
 #include "dst_blacklist.h"
 #endif
+#include "compiler_opt.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -158,24 +161,27 @@ struct socket_info* get_send_socket(struct sip_msg *msg,
 	struct socket_info* send_sock;
 	
 	/* check if send interface is not forced */
-	if (msg && msg->force_send_socket){
-		if (msg->force_send_socket->proto!=proto){
+	if (unlikely(msg && msg->force_send_socket)){
+		if (unlikely(msg->force_send_socket->proto!=proto)){
 			DBG("get_send_socket: force_send_socket of different proto"
 					" (%d)!\n", proto);
 			msg->force_send_socket=find_si(&(msg->force_send_socket->address),
 											msg->force_send_socket->port_no,
 											proto);
-			if (msg->force_send_socket == 0){
+			if (unlikely(msg->force_send_socket == 0)){
 				LOG(L_WARN, "WARNING: get_send_socket: "
 						"protocol/port mismatch\n");
 				goto not_forced;
 			}
 		}
-		if (msg->force_send_socket->socket!=-1)
+		if (likely((msg->force_send_socket->socket!=-1) &&
+					!(msg->force_send_socket->flags & SI_IS_MCAST)))
 				return msg->force_send_socket;
-		else
-			LOG(L_WARN, "WARNING: get_send_socket: not listening"
-						 " on the requested socket, no fork mode?\n");
+		else{
+			if (!(msg->force_send_socket->flags & SI_IS_MCAST))
+				LOG(L_WARN, "WARNING: get_send_socket: not listening"
+							 " on the requested socket, no fork mode?\n");
+		}
 	};
 not_forced:
 	if (mhomed && proto==PROTO_UDP){
