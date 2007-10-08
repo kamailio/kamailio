@@ -78,7 +78,7 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 	xmlrpc_double doubleValue;
 	#endif
 
-	char * stringValue ;
+	char * stringValue = 0;
 	char * byteStringValue =0;
 	xmlrpc_value * item;
 	
@@ -149,28 +149,23 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 		case (XMLRPC_TYPE_STRING):
 
 			#if HAVE_UNICODE_WCHAR
-			char * stringValueW;
+			
 			#ifdef  XMLRPC_OLD_VERSION
-			xmlrpc_read_string_w(env, item, &stringValueW);
+			xmlrpc_read_string_w(env, item, &stringValue);
 			#else
-			xmlrpc_read_string_w(env, item , stringValueW);
+			xmlrpc_read_string_w(env, item , (const char **)&stringValue);
 			#endif
-			if ( env->fault_occurred ) {
-				LM_ERR("failed to read stringValueW: %s!\n",env->fault_string);
-				goto error;
-			}
 
-			if ( add_mi_node_child(&mi_root->node, 0, 0, 0, stringValueW,
-			strlen(stringValueW)) == NULL ) {
-				LM_ERR("failed to add node to the MI tree.\n");
-				goto error;
-			}
 			#else
+
 			#ifdef  XMLRPC_OLD_VERSION
 			xmlrpc_read_string(env, item, &stringValue);
 			#else
 			xmlrpc_read_string(env, item, (const char **)&stringValue);
 			#endif
+
+			#endif
+
 			if ( env->fault_occurred ) {
 				LM_ERR("failed to read stringValue: %s!\n", env->fault_string);
 				goto error;
@@ -180,7 +175,6 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
-			#endif
 			
 			break;
 
@@ -242,9 +236,5 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 error:
 	if ( mi_root ) free_mi_tree(mi_root);
 	if ( byteStringValue ) pkg_free(byteStringValue);
-	if ( stringValue ) pkg_free(stringValue);
-	#if HAVE_UNICODE_WCHAR
-		if ( stringValueW ) pkg_free(stringValueW);
-	#endif
 	return 0;
 }

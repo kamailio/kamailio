@@ -40,6 +40,33 @@
 #define XMLRPC_WANT_INTERNAL_DECLARATIONS
 #include <xmlrpc.h>
 
+static char * xmlrpc_typeName ( xmlrpc_type type ) {
+
+    switch(type) {
+
+    case XMLRPC_TYPE_INT:      return "INT";
+    case XMLRPC_TYPE_BOOL:     return "BOOL";
+    case XMLRPC_TYPE_DOUBLE:   return "DOUBLE";
+    case XMLRPC_TYPE_DATETIME: return "DATETIME";
+    case XMLRPC_TYPE_STRING:   return "STRING";
+    case XMLRPC_TYPE_BASE64:   return "BASE64";
+    case XMLRPC_TYPE_ARRAY:    return "ARRAY";
+    case XMLRPC_TYPE_STRUCT:   return "STRUCT";
+    case XMLRPC_TYPE_C_PTR:    return "C_PTR";
+    case XMLRPC_TYPE_DEAD:     return "DEAD";
+    default:                   return "Unknown";
+    }
+}
+
+static void validateType ( xmlrpc_env * env, xmlrpc_value * value, xmlrpc_type expectedType ) {
+	
+    if ( value->_type != expectedType ) {
+    	xmlrpc_env_set_fault_formatted(
+            env, XMLRPC_TYPE_ERROR, "Value of type %s supplied where type %s was expected.", 
+            xmlrpc_typeName(value->_type), xmlrpc_typeName(expectedType));
+    }
+}
+
 
 static void verifyNoNulls ( xmlrpc_env * env, char * content, unsigned int len ) {
 
