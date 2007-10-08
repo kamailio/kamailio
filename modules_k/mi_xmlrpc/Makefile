@@ -21,9 +21,8 @@ XMLRPC_VERSION=$(shell echo $(XMLRPC_VER) | sed  "s/\.\([0-9]\)\./.0\1./g" | sed
 
 
 # check the versions
-OLD=$(shell if (("$(XMLRPC_VERSION)" <= "$(OLD_VERSION_THRESHOLD_UP)")) && (("$(XMLRPC_VERSION)" >= "$(OLD_VERSION_THRESHOLD_DOWN)")) ; then echo "yes"; fi ; )
-
-NEW=$(shell if (("$(XMLRPC_VERSION)" <= "$(NEW_VERSION_THRESHOLD_UP)")) && (("$(XMLRPC_VERSION)" >= "$(NEW_VERSION_THRESHOLD_DOWN)")) ; then echo "yes"; fi ; )
+OLD=$(shell echo $(XMLRPC_VERSION) $(OLD_VERSION_THRESHOLD_UP) $(OLD_VERSION_THRESHOLD_DOWN) | awk '{ if (($$1 <= $$2) && ($$1 >= $$3)) print "yes"}' )
+NEW=$(shell echo $(XMLRPC_VERSION) $(NEW_VERSION_THRESHOLD_UP) $(NEW_VERSION_THRESHOLD_DOWN) | awk '{ if (($$1 <= $$2) && ($$1 >= $$3)) print "yes"}' )
 
 
 # supported version ?
