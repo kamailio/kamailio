@@ -784,13 +784,17 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 		    len = len - content_type->len - 2;
 		    if (del_lump(msg, body.s - msg->buf, start - body.s, 0)
 			== 0) {
-			LM_ERR("Deleting lump failed\n");
+			LM_ERR("Deleting lump <%.*s> failed\n",
+			       start - body.s, body.s);
 			return -1;
 		    }
 		    if (find_line_start("--Boundary", 10, &start, &len)) {
 			if (del_lump(msg, start - msg->buf, len, 0) == 0) {
-			    LM_ERR("Deleting lump failed\n");
+			    LM_ERR("Deleting lump <%.*s> failed\n",
+				   len, start);
 			    return -1;
+			} else {
+			    return 1;
 			}
 		    } else {
 			LM_ERR("Boundary not found after content\n");
