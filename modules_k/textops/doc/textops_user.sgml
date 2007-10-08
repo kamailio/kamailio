@@ -499,6 +499,42 @@ if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 
 	<section>
 		<title>
+		<function moreinfo="none">filter_body(content_type)</function>
+		</title>
+		<para>
+		Filters multipart body by leaving out all other body
+		parts except the first body part of given type.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>content_type</emphasis> -
+				Content type to be left in the body.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>filter_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (has_body("multipart/mixed")) {
+    if (filter_body("application/sdp") {
+        $cT = "application/sdp";
+    } else {
+        xlog("Body part application/sdp not found\n");
+    }
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
 		<function moreinfo="none">append_to_reply(txt)</function>
 		</title>
 		<para>

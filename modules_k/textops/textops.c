@@ -95,6 +95,7 @@ static int subst_f(struct sip_msg*, char*, char*);
 static int subst_uri_f(struct sip_msg*, char*, char*);
 static int subst_user_f(struct sip_msg*, char*, char*);
 static int subst_body_f(struct sip_msg*, char*, char*);
+static int filter_body_f(struct sip_msg*, char*, char*);
 static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int search_append_f(struct sip_msg*, char*, char*);
@@ -170,6 +171,8 @@ static cmd_export_t cmds[]={
 	{"subst_user",       subst_user_f,      1, fixup_substre, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"subst_body",       subst_body_f,      1, fixup_substre, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"filter_body",      filter_body_f,     1, str_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"append_time",      append_time_f,     0, 0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
@@ -708,6 +711,97 @@ error:
 	if (nmatches<0)
 		LM_ERR("%s subst_run failed\n", exports.name);
 	return ret;
+}
+
+
+static inline int find_line_start(char *text, unsigned int text_len,
+				  char **buf, unsigned int *buf_len)
+{
+    char *ch, *start;
+    unsigned int len;
+
+    start = *buf;
+    len = *buf_len;
+
+    while (text_len <= len) {
+	if (strncmp(text, start, text_len) == 0) {
+	    *buf = start;
+	    *buf_len = len;
+	    return 1;
+	}
+	if ((ch = memchr(start, 13, len - 1))) {
+	    if (*(ch + 1) != 10) {
+		LM_ERR("No LF after CR\n");
+		return 0;
+	    }
+	    len = len - (ch - start + 2);
+	    start = ch + 2;
+	} else {
+	    LM_ERR("No CRLF found\n");
+	    return 0;
+	}
+    }
+    return 0;
+}
+
+
+/* Filters multipart body by leaving out everything else except
+ * first body part of given content type. */
+static int filter_body_f(struct sip_msg* msg, char* _content_type,
+			 char* ignored)
+{
+	char *start;
+	unsigned int len;
+	str *content_type, body;
+
+	body.s = get_body(msg);
+	if (body.s == 0) {
+		LM_ERR("Failed to get the message body\n");
+		return -1;
+	}
+	body.len = msg->len - (int)(body.s - msg->buf);
+	if (body.len == 0) {
+		LM_DBG("Message body has zero length\n");
+		return -1;
+	}
+	
+	content_type = (str *)_content_type;
+	start = body.s;
+	len = body.len;
+	
+	while (find_line_start("Content-Type: ", 14, &start, &len)) {
+	    start = start + 14;
+	    len = len - 14;
+	    if (len > content_type->len + 2) {
+		if (strncasecmp(start, content_type->s, content_type->len)
+		    == 0) {
+		    start = start + content_type->len;
+		    if ((*start != 13) || (*(start + 1) != 10)) {
+			LM_ERR("No CRLF found after content type\n");
+			return -1;
+		    }
+		    start = start + 2;
+		    len = len - content_type->len - 2;
+		    if (del_lump(msg, body.s - msg->buf, start - body.s, 0)
+			== 0) {
+			LM_ERR("Deleting lump failed\n");
+			return -1;
+		    }
+		    if (find_line_start("--Boundary", 10, &start, &len)) {
+			if (del_lump(msg, start - msg->buf, len, 0) == 0) {
+			    LM_ERR("Deleting lump failed\n");
+			    return -1;
+			}
+		    } else {
+			LM_ERR("Boundary not found after content\n");
+			return -1;
+		    }
+		}
+	    } else {
+		return -1;
+	    }
+	}
+	return -1;
 }
 
 
