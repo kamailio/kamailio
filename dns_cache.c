@@ -3132,6 +3132,10 @@ int dns_get_server_state(void)
 /* rpc functions */
 void dns_cache_mem_info(rpc_t* rpc, void* ctx)
 {
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	rpc->add(ctx, "dd",  *dns_cache_mem_used, dns_cache_max_mem);
 }
 
@@ -3142,6 +3146,10 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 	struct dns_hash_entry* e;
 	ticks_t now;
 
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
@@ -3159,6 +3167,39 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 
 
 #ifdef USE_DNS_CACHE_STATS
+static unsigned long  stat_sum(int ivar, int breset)
+{
+	unsigned long isum=0;
+	int i1=0;
+
+	for (; i1 < get_max_procs(); i1++)
+		switch (ivar) {
+			case 0:
+				isum+=dns_cache_stats[i1].dns_req_cnt;
+				if (breset)
+					dns_cache_stats[i1].dns_req_cnt=0;
+				break;
+			case 1:
+				isum+=dns_cache_stats[i1].dc_hits_cnt;
+				if (breset)
+					dns_cache_stats[i1].dc_hits_cnt=0;
+				break;
+			case 2:
+				isum+=dns_cache_stats[i1].dc_neg_hits_cnt;
+				if (breset)
+					dns_cache_stats[i1].dc_neg_hits_cnt=0;
+				break;
+			case 3:
+				isum+=dns_cache_stats[i1].dc_lru_cnt;
+				if (breset)
+					dns_cache_stats[i1].dc_lru_cnt=0;
+				break;
+		}
+
+	return isum;
+}
+
+
 void dns_cache_stats_get(rpc_t* rpc, void* c)
 {
 	char *name=NULL;
@@ -3172,36 +3213,6 @@ void dns_cache_stats_get(rpc_t* rpc, void* c)
 		"dc_lru_cnt",
 		NULL
 	};
-	unsigned long  stat_sum(int ivar, int breset) {
-		unsigned long isum=0;
-		int i1=0;
-
-		for (; i1 < get_max_procs(); i1++)
-			switch (ivar) {
-				case 0:
-					isum+=dns_cache_stats[i1].dns_req_cnt;
-					if (breset)
-						dns_cache_stats[i1].dns_req_cnt=0;
-					break;
-				case 1:
-					isum+=dns_cache_stats[i1].dc_hits_cnt;
-					if (breset)
-						dns_cache_stats[i1].dc_hits_cnt=0;
-					break;
-				case 2:
-					isum+=dns_cache_stats[i1].dc_neg_hits_cnt;
-					if (breset)
-						dns_cache_stats[i1].dc_neg_hits_cnt=0;
-					break;
-				case 3:
-					isum+=dns_cache_stats[i1].dc_lru_cnt;
-					if (breset)
-						dns_cache_stats[i1].dc_lru_cnt=0;
-					break;
-			}
-
-		return isum;
-	}
 
 
 	if (!use_dns_cache) {
@@ -3249,6 +3260,10 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 	int i;
 	ticks_t now;
 
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
@@ -3295,6 +3310,7 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 	UNLOCK_DNS_HASH();
 }
 
+
 static char *print_type(unsigned short type)
 {
 	switch (type) {
@@ -3323,6 +3339,10 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	str s;
 
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 	for (h=0; h<DNS_HASH_SIZE; h++){
@@ -3425,6 +3445,10 @@ void dns_cache_flush(void)
 /* deletes all the entries from the cache */
 void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 {
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	dns_cache_flush();
 }
 
@@ -3570,6 +3594,11 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	ip_addr = 0;
 	size = 0;
 
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
+	
 	switch(type) {
 	case T_A:
 	case T_AAAA:
@@ -3772,6 +3801,11 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 	str name;
 	int err, h, found=0;
 
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
+	
 	if (rpc->scan(ctx, "S", &name) < 1)
 		return;
 
@@ -3834,6 +3868,10 @@ void dns_set_server_state_rpc(rpc_t* rpc, void* ctx)
 {
 	int	state;
 
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	if (rpc->scan(ctx, "d", &state) < 1)
 		return;
 	dns_set_server_state(state);
@@ -3842,6 +3880,10 @@ void dns_set_server_state_rpc(rpc_t* rpc, void* ctx)
 /* prints the DNS server state */
 void dns_get_server_state_rpc(rpc_t* rpc, void* ctx)
 {
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	rpc->add(ctx, "d", dns_get_server_state());
 }
 #endif /* DNS_WATCHDOG_SUPPORT */

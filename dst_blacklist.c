@@ -39,6 +39,7 @@
 #ifdef USE_DST_BLACKLIST
 
 #include "dst_blacklist.h"
+#include "globals.h"
 #include "mem/shm_mem.h"
 #include "hashes.h"
 #include "locking.h"
@@ -834,6 +835,10 @@ int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg)
 /* rpc functions */
 void dst_blst_mem_info(rpc_t* rpc, void* ctx)
 {
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	rpc->add(ctx, "dd",  *blst_mem_used, blst_max_mem);
 }
 
@@ -857,6 +862,29 @@ static char* get_proto_name(unsigned char proto)
 
 
 #ifdef USE_DST_BLACKLIST_STATS
+
+static unsigned long  stat_sum(int ivar, int breset) {
+	unsigned long isum=0;
+	int i1=0;
+
+	for (; i1 < get_max_procs(); i1++)
+		switch (ivar) {
+			case 0:
+				isum+=dst_blacklist_stats[i1].bkl_hit_cnt;
+				if (breset)
+					dst_blacklist_stats[i1].bkl_hit_cnt=0;
+				break;
+			case 1:
+				isum+=dst_blacklist_stats[i1].bkl_lru_cnt;
+				if (breset)
+					dst_blacklist_stats[i1].bkl_lru_cnt=0;
+				break;
+		}
+
+		return isum;
+}
+
+
 void dst_blst_stats_get(rpc_t* rpc, void* c)
 {
 	char *name=NULL;
@@ -868,27 +896,11 @@ void dst_blst_stats_get(rpc_t* rpc, void* c)
 		"bkl_lru_cnt",
 		NULL
 	};
-	unsigned long  stat_sum(int ivar, int breset) {
-		unsigned long isum=0;
-		int i1=0;
-
-		for (; i1 < get_max_procs(); i1++)
-			switch (ivar) {
-				case 0:
-					isum+=dst_blacklist_stats[i1].bkl_hit_cnt;
-					if (breset)
-						dst_blacklist_stats[i1].bkl_hit_cnt=0;
-					break;
-				case 1:
-					isum+=dst_blacklist_stats[i1].bkl_lru_cnt;
-					if (breset)
-						dst_blacklist_stats[i1].bkl_lru_cnt=0;
-					break;
-			}
-
-			return isum;
+	
+	if (!use_dst_blacklist){
+		rpc->fault(c, 500, "dst blacklist support disabled");
+		return;
 	}
-
 	if (rpc->scan(c, "s", &name) < 0)
 		return;
 	if (rpc->scan(c, "d", &reset) < 0)
@@ -928,6 +940,10 @@ void dst_blst_debug(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	now=get_ticks_raw();
 		for(h=0; h<DST_BLST_HASH_SIZE; h++){
 			LOCK_BLST(h);
@@ -954,7 +970,10 @@ void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
 
 	n=0;
 #endif
-
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 		for(h=0; h<DST_BLST_HASH_SIZE; h++){
 #ifdef BLST_HASH_STATS
 			LOCK_BLST(h);
@@ -975,6 +994,10 @@ void dst_blst_view(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	now=get_ticks_raw();
 	for(h=0; h<DST_BLST_HASH_SIZE; h++) {
 		LOCK_BLST(h);
@@ -1025,6 +1048,10 @@ void dst_blst_flush(void)
 /* rpc wrapper function for dst_blst_flush() */
 void dst_blst_delete_all(rpc_t* rpc, void* ctx)
 {
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	dst_blst_flush();
 }
 
@@ -1036,6 +1063,10 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 	unsigned char err_flags;
 	struct ip_addr *ip_addr;
 
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	if (rpc->scan(ctx, "Sddd", &ip, &port, &proto, &flags) < 4)
 		return;
 
