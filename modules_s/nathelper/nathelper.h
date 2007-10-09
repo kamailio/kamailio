@@ -43,11 +43,13 @@ int natpinger_cleanup(void);
 
 int natping_contact(str, struct dest_info *);
 
+int intercept_ping_reply(struct sip_msg* msg);
+
 /* Variables from natping.c referenced from nathelper.c */
 extern int natping_interval;
 extern int ping_nated_only;
 extern char *natping_method;
-extern int tcpping_crlf;
-
+extern int natping_stateful;
+extern int natping_crlf;
 
 #endif

@@ -165,7 +165,8 @@
  *
  * 2007-04-23	New function start_recording() allowing to start recording RTP
  *		session in the RTP proxy.
- * 2007-08-28 tcpping_crlf option was introduced (jiri)
+ * 2007-08-28	natping_crlf option was introduced (jiri)
+ * 2007-09-12	added stateless sip natping (andrei)
  *
  */
 
@@ -334,8 +335,9 @@ static cmd_export_t cmds[] = {
 
 static param_export_t params[] = {
 	{"natping_interval",      PARAM_INT,    &natping_interval      },
-	{"tcpping_crlf",      	  PARAM_INT,    &tcpping_crlf		},
+	{"natping_crlf",      	  PARAM_INT,    &natping_crlf	       },
 	{"natping_method",        PARAM_STRING, &natping_method        },
+	{"natping_stateful",      PARAM_INT,    &natping_stateful      },
 	{"ping_nated_only",       PARAM_INT,    &ping_nated_only       },
 	{"rtpproxy_sock",         PARAM_STRING, &rtpproxy_sock         },
 	{"rtpproxy_disable",      PARAM_INT,    &rtpproxy_disable      },
@@ -352,7 +354,7 @@ struct module_exports exports = {
 	0,       /* RPC methods */
 	params,
 	mod_init,
-	0, /* reply processing */
+	intercept_ping_reply, /* reply processing */
 	mod_cleanup, /* destroy function */
 	0, /* on_break */
 	child_init
