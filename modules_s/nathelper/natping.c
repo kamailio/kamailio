@@ -120,6 +120,10 @@ natpinger_init(void)
 				LOG(L_WARN, "WARNING: nathelper::natpinger_init: "
 				    "natping_stateful!=0 has no effect, please also set "
 				    "natping_method\n");
+		} else if (natping_crlf != 0 && natping_stateful != 0) {
+			LOG(L_WARN, "WARNING: nathelper::natpinger_init: "
+			    "natping_crlf!=0 has no effect when the"
+			    "natping_stateful!=0\n");
 		}
 	}
 
