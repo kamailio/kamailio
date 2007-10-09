@@ -35,6 +35,7 @@
 #ifdef USE_DST_BLACKLIST
 
 #include "dst_blacklist.h"
+#include "globals.h"
 #include "mem/shm_mem.h"
 #include "hashes.h"
 #include "locking.h"
@@ -460,6 +461,10 @@ int dst_is_blacklisted(struct dest_info* si)
 /* rpc functions */
 void dst_blst_mem_info(rpc_t* rpc, void* ctx)
 {
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	rpc->add(ctx, "dd",  *blst_mem_used, blst_max_mem);
 }
 
@@ -491,6 +496,10 @@ void dst_blst_debug(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 	
+	if (!use_dst_blacklist){
+		rpc->fault(ctx, 500, "dst blacklist support disabled");
+		return;
+	}
 	now=get_ticks_raw();
 	LOCK_BLST();
 		for(h=0; h<DST_BLST_HASH_SIZE; h++){

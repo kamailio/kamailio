@@ -2341,6 +2341,10 @@ int dns_srv_get_ip(str* name, struct ip_addr* ip, unsigned short* port,
 /* rpc functions */
 void dns_cache_mem_info(rpc_t* rpc, void* ctx)
 {
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	rpc->add(ctx, "dd",  *dns_cache_mem_used, dns_cache_max_mem);
 }
 
@@ -2351,6 +2355,10 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 	struct dns_hash_entry* e;
 	ticks_t now;
 	
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
@@ -2378,6 +2386,10 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 	int i;
 	ticks_t now;
 	
+	if (!use_dns_cache){
+		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
+		return;
+	}
 	now=get_ticks_raw();
 	LOCK_DNS_HASH();
 		for (h=0; h<DNS_HASH_SIZE; h++){
