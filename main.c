@@ -184,20 +184,21 @@ Options:\n\
     -L dir       Modules directory (default: " MODS_DIR ")\n\
     -c           Check configuration file for errors\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
-		  mean listening on more addresses).  The address format is\n\
-		  [proto:]addr[:port], where proto=udp|tcp and \n\
-		  addr= host|ip_address|interface_name. E.g: -l locahost, \n\
-		  -l udp:127.0.0.1:5080, -l eth0:5062 The default behavior\n\
-		  is to listen on all the interfaces.\n\
+                  mean listening on more addresses).  The address format is\n\
+                  [proto:]addr[:port], where proto=udp|tcp and \n\
+                  addr= host|ip_address|interface_name. E.g: -l locahost, \n\
+                  -l udp:127.0.0.1:5080, -l eth0:5062 The default behavior\n\
+                  is to listen on all the interfaces.\n\
     -n processes Number of child processes to fork per interface\n\
-		  (default: 8)\n\
+                  (default: 8)\n\
     -r           Use dns to check if is necessary to add a \"received=\"\n\
-		  field to a via\n\
+                  field to a via\n\
     -R           Same as `-r` but use reverse dns;\n\
-		  (to use both use `-rR`)\n\
+                  (to use both use `-rR`)\n\
     -v           Turn on \"via:\" host checking when forwarding replies\n\
     -d           Debugging mode (multiple -d increase the level)\n\
-    -D           1..do not fork (almost) anyway, 2..do not daemonize creator, 3..daemonize (default)\n\
+    -D no        1..do not fork (almost) anyway, 2..do not daemonize creator\n\
+                  3..daemonize (default)\n\
     -E           Log to stderr\n"
 #ifdef USE_TCP
 "    -T           Disable tcp\n\
@@ -207,7 +208,7 @@ Options:\n\
 "    -V           Version number\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
-		  auto-probing procedure even if  OS allows\n\
+                  auto-probing procedure even if  OS allows\n\
     -m nr        Size of shared memory allocated in Megabytes\n\
     -w dir       Change the working directory to \"dir\" (default: \"/\")\n\
     -t dir       Chroot to \"dir\"\n\
@@ -349,7 +350,7 @@ int mlock_pages=0; /* default off, try to disable swapping */
 
 /* real time options */
 int real_time=0; /* default off, flags: 1 on only timer, 2  slow timer,
-							    4 all procs (7=all) */
+										4 all procs (7=all) */
 int rt_prio=0;
 int rt_policy=0; /* SCHED_OTHER */
 int rt_timer1_prio=0;  /* "fast" timer */
@@ -1317,14 +1318,17 @@ int main(int argc, char** argv)
 					break;
 			case '?':
 					if (isprint(optopt)) {
-						fprintf(stderr, "Unknown option `-%c'. Use -h for help.\n", optopt);
+						fprintf(stderr, "Unknown option `-%c'."
+										" Use -h for help.\n", optopt);
 					} else {
-						fprintf(stderr, "Unknown option character `\\x%x'. Use -h for help.\n",
+						fprintf(stderr, "Unknown option character `\\x%x'."
+										" Use -h for help.\n",
 							optopt);
 					}
 					goto error;
 			case ':':
-					fprintf(stderr, "Option `-%c' requires an argument. Use -h for help.\n",
+					fprintf(stderr, "Option `-%c' requires an argument."
+									" Use -h for help.\n",
 						optopt);
 					goto error;
 			default:
