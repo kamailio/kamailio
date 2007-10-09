@@ -204,7 +204,7 @@ void ul_publish(ucontact_t* c, int type, void* param)
 				if(type & UL_CONTACT_EXPIRE)
 					LM_DBG("\nul_publish: EXPIRE type\n");
 
-	if((type & UL_CONTACT_INSERT) || (type& UL_CONTACT_UPDATE))
+	if(type & UL_CONTACT_INSERT)
 	{
 		body= build_pidf(c);
 		if(body == NULL || body->s == NULL)
