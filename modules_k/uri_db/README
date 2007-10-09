@@ -76,7 +76,7 @@ Chapter 1. User's Guide
 
    The following modules must be loaded before this module:
 
-     * a OpenSER database module (optional).
+     * a OpenSER database module .
      _________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -93,8 +93,8 @@ Chapter 1. User's Guide
 
    URL of the database to be used.
 
-   If the db_url string is empty, the DB backend will be disabled
-   - some function may operated without DB support.
+   If the db_url string is empty, the default database URL will
+   be used.
 
    Default value is "DEFAULT_RODB_URL". 
 
@@ -194,8 +194,6 @@ modparam("uri_db", "subscriber_domain_column", "domain")
    Specify if the "uri" table should be used for checkings
    instead of "subscriber" table. Non 0 value means true.
 
-   If enabled, setting a non-null db_url is mandatory.
-
    Default value is "0 (false)". 
 
    Example 1-9. Set use_uri_table parameter
@@ -256,8 +254,7 @@ if (check_from()) {
    user.
 
    As the checking is done against URI table (if use_uri_table is
-   set) or subscriber table, setting a non-null db_url is
-   mandatory.
+   set) or subscriber table.
 
    This function can be used from REQUEST_ROUTE.
 

@@ -24,7 +24,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>a &ser; database module (optional)</emphasis>.
+				<emphasis>a &ser; database module </emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -54,8 +54,8 @@
 		&url; of the database to be used.
 		</para>
 		<para>
-		If the db_url string is empty, the DB backend will be disabled - some
-		function may operated without DB support.
+		If the db_url string is empty, the default database URL
+		will be used.
 		</para>
 		<para>
 		<emphasis>
@@ -219,9 +219,6 @@ modparam("uri_db", "subscriber_domain_column", "domain")
 		instead of <quote>subscriber</quote> table. Non 0 value means true.
 		</para>
 		<para>
-		If enabled, setting a non-null db_url is mandatory.
-		</para>
-		<para>
 		<emphasis>
 			Default value is <quote>0 (false)</quote>.
 		</emphasis>
@@ -316,7 +313,7 @@ if (check_from()) {
 		</para>
 		<para>
 		As the checking is done against &uri; table (if use_uri_table is set) 
-		or subscriber table, setting a non-null db_url is mandatory.
+		or subscriber table.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
