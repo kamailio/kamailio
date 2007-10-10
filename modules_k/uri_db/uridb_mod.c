@@ -164,13 +164,13 @@ static int mod_init(void)
 {
 	int ver;
 
-	DBG("uri_db - initializing\n");
+	LM_DBG("uri_db - initializing\n");
 
 	db_url.len = strlen(db_url.s);
 	if (db_url.len == 0 ) {
 		if (use_uri_table) {
-			LOG(L_ERR, "ERROR:uri_db:mod_init: configuration error - no "
-				"database URL, but use_uri_table is set!\n");
+            LM_ERR("configuration error - no database URL, "
+                   "but use_uri_table is set!\n");
 			goto error;
 		}
 		return 0;
@@ -185,7 +185,7 @@ static int mod_init(void)
 	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
 
 	if (uridb_db_bind(db_url.s)) {
-		LOG(L_ERR, "ERROR: uri_db:mod_init(): No database module found\n");
+		LM_ERR("No database module found\n");
 		goto error;
 	}
 
@@ -193,24 +193,20 @@ static int mod_init(void)
 		/* Check table version */
 		ver = uridb_db_ver(db_url.s, &uri_table);
 		if (ver < 0) {
-			LOG(L_ERR, "ERROR: uri_db:mod_init():"
-					" Error while querying table version\n");
+			LM_ERR("Error while querying table version\n");
 			goto error;
 		} else if (ver < URI_TABLE_VERSION) {
-			LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version"
-					" of uri table (use openser_mysql.sh reinstall)\n");
+			LM_ERR("Invalid table version of the uri table\n");
 			goto error;
 		}
 	} else {
 		/* Check table version */
 		ver = uridb_db_ver(db_url.s, &subscriber_table);
 		if (ver < 0) {
-			LOG(L_ERR, "ERROR: uri_db:mod_init():"
-					" Error while querying table version\n");
+			LM_ERR("Error while querying table version\n");
 			goto error;
 		} else if (ver < SUBSCRIBER_TABLE_VERSION) {
-			LOG(L_ERR, "ERROR: uri_db:mod_init(): Invalid table version of"
-					" subscriber table (use openser_mysql.sh reinstall)\n");
+			LM_ERR("Invalid table version of the subscriber table\n");
 			goto error;
 		}
 	}
@@ -230,8 +226,7 @@ static void destroy(void)
 static int fixup_exist(void** param, int param_no)
 {
 	if (db_url.len == 0) {
-		LOG(L_ERR, "ERROR:uri_db:fixup_exist: configuration error - no "
-			"database URL, but does_uri_exist() is called!\n");
+        LM_ERR("configuration error - does_uri_exist() called with no database URL!\n");
 		return E_CFG;
 	}
 	return 0;

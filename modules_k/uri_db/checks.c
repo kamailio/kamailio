@@ -58,7 +58,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	db_res_t* res = NULL;
 
 	if (!_uri) {
-		LOG(L_ERR, "check_username(): Bad parameter\n");
+		LM_ERR("Bad parameter\n");
 		return -1;
 	}
 
@@ -67,10 +67,8 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	if (!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
-			LOG(L_ERR, "check_username(): No authorized credentials "
-				"found (error in scripts)\n");
-			LOG(L_ERR, "check_username(): Call {www,proxy}_authorize "
-				"before calling check_* function !\n");
+			LM_ERR("No authorized credentials found (error in scripts)\n");
+			LM_ERR("Call {www,proxy}_authorize before calling check_* functions!\n");
 			return -2;
 		}
 	}
@@ -80,7 +78,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	/* Parse To/From URI */
 	/* Make sure that the URI contains username */
 	if (!_uri->user.len) {
-		LOG(L_ERR, "check_username(): Username not found in URI\n");
+		LM_ERR("Username not found in URI\n");
 		return -4;
 	}
 
@@ -91,8 +89,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	 */
 	if (use_uri_table) {
 		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
-			LOG(L_ERR, "ERROR: check_username(): "
-					"Error while trying to use uri table\n");
+			LM_ERR("Error while trying to use uri table\n");
 			return -7;
 		}
 
@@ -110,8 +107,7 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 
 		if (uridb_dbf.query(db_handle, keys, 0, vals, cols, 3, 1, 0, &res) < 0)
 		{
-			LOG(L_ERR, "ERROR: check_username():"
-					" Error while querying database\n");
+			LM_ERR("Error while querying database\n");
 			return -8;
 		}
 
@@ -120,13 +116,13 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		 * and thus this combination is allowed and the function will match
 		 */
 		if (RES_ROW_N(res) == 0) {
-			DBG("check_username(): From/To user '%.*s' is spoofed\n", 
-			    _uri->user.len, ZSW(_uri->user.s));
+			LM_DBG("From/To user '%.*s' is spoofed\n",
+				   _uri->user.len, ZSW(_uri->user.s));
 			uridb_dbf.free_result(db_handle, res);
 			return -9;
 		} else {
-			DBG("check_username(): From/To user '%.*s' and auth user match\n", 
-			    _uri->user.len, ZSW(_uri->user.s));
+			LM_DBG("From/To user '%.*s' and auth user match\n",
+				   _uri->user.len, ZSW(_uri->user.s));
 			uridb_dbf.free_result(db_handle, res);
 			return 1;
 		}
@@ -137,14 +133,12 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 		if (_uri->user.len == c->digest.username.user.len) {
 			if (!strncasecmp(_uri->user.s, c->digest.username.user.s, 
 			_uri->user.len)) {
-				DBG("check_username(): Digest username and URI "
-					"username match\n");
+				LM_DBG("Digest username and URI username match\n");
 				return 1;
 			}
 		}
 
-		DBG("check_username(): Digest username and URI username "
-			"do NOT match\n");
+		LM_DBG("Digest username and URI username do NOT match\n");
 		return -10;
 	}
 }
@@ -156,11 +150,11 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	if (!_m->to && ((parse_headers(_m, HDR_TO_F, 0) == -1) || (!_m->to))) {
-		LOG(L_ERR, "check_to(): Error while parsing To header field\n");
+		LM_ERR("Error while parsing To header field\n");
 		return -1;
 	}
 	if(parse_to_uri(_m)==NULL) {
-		LOG(L_ERR, "check_to(): Error while parsing To header URI\n");
+		LM_ERR("Error while parsing To header URI\n");
 		return -1;
 	}
 
@@ -174,11 +168,11 @@ int check_to(struct sip_msg* _m, char* _s1, char* _s2)
 int check_from(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	if (parse_from_header(_m) < 0) {
-		LOG(L_ERR, "check_from(): Error while parsing From header field\n");
+		LM_ERR("Error while parsing From header field\n");
 		return -1;
 	}
 	if(parse_from_uri(_m)==NULL) {
-		LOG(L_ERR, "check_from(): Error while parsing From header URI\n");
+		LM_ERR("Error while parsing From header URI\n");
 		return -1;
 	}
 
@@ -197,14 +191,13 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	db_res_t* res = NULL;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-		LOG(L_ERR, "does_uri_exist(): Error while parsing URI\n");
+		LM_ERR("Error while parsing URI\n");
 		return -1;
 	}
 
 	if (use_uri_table) {
 		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
-			LOG(L_ERR, "ERROR: does_uri_exist(): "
-					"Error while trying to use uri table\n");
+			LM_ERR("Error while trying to use uri table\n");
 			return -2;
 		}
 		keys[0] = uri_uriuser_col.s;
@@ -212,8 +205,7 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 		cols[0] = uri_uriuser_col.s;
 	} else {
 		if (uridb_dbf.use_table(db_handle, subscriber_table.s) < 0) {
-			LOG(L_ERR, "ERROR: does_uri_exist():"
-					" Error while trying to use subscriber table\n");
+			LM_ERR("Error while trying to use subscriber table\n");
 			return -3;
 		}
 		keys[0] = subscriber_user_col.s;
@@ -228,16 +220,16 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 
 	if (uridb_dbf.query(db_handle, keys, 0, vals, cols, (use_domain ? 2 : 1),
 				1, 0, &res) < 0) {
-		LOG(L_ERR, "does_uri_exist(): Error while querying database\n");
+		LM_ERR("Error while querying database\n");
 		return -4;
 	}
 	
 	if (RES_ROW_N(res) == 0) {
-		DBG("does_uri_exit(): User in request uri does not exist\n");
+		LM_DBG("User in request uri does not exist\n");
 		uridb_dbf.free_result(db_handle, res);
 		return -5;
 	} else {
-		DBG("does_uri_exit(): User in request uri does exist\n");
+		LM_DBG("User in request uri does exist\n");
 		uridb_dbf.free_result(db_handle, res);
 		return 1;
 	}
@@ -248,12 +240,12 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 int uridb_db_init(char* db_url)
 {
 	if (uridb_dbf.init==0){
-		LOG(L_CRIT, "BUG: uridb_db_bind: null dbf\n");
+		LM_CRIT("BUG: null dbf\n");
 		goto error;
 	}
 	db_handle=uridb_dbf.init(db_url);
 	if (db_handle==0){
-		LOG(L_ERR, "ERROR: uridb_db_bind: unable to connect to the database\n");
+		LM_ERR("unable to connect to the database\n");
 		goto error;
 	}
 	return 0;
@@ -266,14 +258,12 @@ error:
 int uridb_db_bind(char* db_url)
 {
 	if (bind_dbmod(db_url, &uridb_dbf)<0){
-		LOG(L_ERR, "ERROR: uridb_db_bind: unable to bind to the database"
-				" module\n");
+		LM_ERR("unable to bind to the database module\n");
 		return -1;
 	}
 
 	if (!DB_CAPABILITY(uridb_dbf, DB_CAP_QUERY)) {
-		LOG(L_ERR, "ERROR: uridb_db_bind: Database module does not "
-		    "implement 'query' function\n");
+		LM_ERR("Database module does not implement the 'query' function\n");
 		return -1;
 	}
 
@@ -296,12 +286,12 @@ int uridb_db_ver(char* db_url, str* name)
 	int ver;
 
 	if (uridb_dbf.init==0){
-		LOG(L_CRIT, "BUG: uridb_db_ver: unbound database\n");
+		LM_CRIT("BUG: unbound database\n");
 		return -1;
 	}
 	dbh=uridb_dbf.init(db_url);
 	if (dbh==0){
-		LOG(L_ERR, "ERROR: uridb_db_ver: unable to open database connection\n");
+		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
 	ver=table_version(&uridb_dbf, dbh, name);
