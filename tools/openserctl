@@ -2317,9 +2317,6 @@ dbtext_add() {
                 fi
 
                 #Add to SUBSCRIBER file                 
-		# FIXME: this is the stripped down version of the subscriber table
-		#        we need to fix it for serweb
-		#
 		#id(int,auto) username(str) domain(str) password(str)
 		#first_name(str) last_name(str) email_address(str) datetime_created(int)
 		#ha1(str) ha1b(str) timezone(str,null) rpid(str,null)

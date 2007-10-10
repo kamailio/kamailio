@@ -160,6 +160,10 @@ openser_restore() #pars: <database name> <filename>
 case $1 in
 # FIXME needs update for 1.3
 	migrate)
+		if [ "$DBTEXT" = "1" ] ; then
+			merr "DBTEXT don't support this operation"
+			exit 1
+		fi
 		merr "not implemented yet"
 #		if [ $# -ne 3 ] ; then
 #			merr "migrate requires 2 parameters: old and new database"
