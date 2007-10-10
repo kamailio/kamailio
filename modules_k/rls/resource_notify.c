@@ -552,6 +552,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 			rlmi_doc= NULL;
 			pkg_free(rl_uri);
 			rl_uri= NULL;
+			pkg_free(dialog);
+			dialog= NULL;
 		}
 
 		if(prev_did== NULL || strcmp(prev_did, curr_did)) /*if first or different*/
@@ -733,6 +735,8 @@ void timer_send_notify(unsigned int ticks,void *param)
 		}
 		pkg_free(rl_uri);
 		rl_uri= NULL;
+		pkg_free(dialog);
+		dialog= NULL;
 	}
 
 	/* update the rlpres table */
@@ -767,7 +771,8 @@ done:
 		
 	if(buf)
 		pkg_free(buf);
-
+	if(dialog)
+		pkg_free(dialog);
 	return;
 }
 

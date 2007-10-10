@@ -1283,12 +1283,19 @@ void timer_db_update(unsigned int ticks,void *param)
 
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
-	
-	update_db_subs(active_watchers_table, subs_htable, 
+
+	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
+	{
+		LM_ERR("sql use table failed\n");
+		return;
+	}
+
+	update_db_subs(pa_db, pa_dbf, subs_htable, 
 			shtable_size, no_lock, handle_expired_subs);
+
 }
 
-void update_db_subs(char* db_table, shtable_t hash_table,
+void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {	
 	db_key_t query_cols[22], update_cols[7], result_cols[6];
@@ -1442,15 +1449,10 @@ void update_db_subs(char* db_table, shtable_t hash_table,
 
 	result_cols[0]= "expires";
 
-	if(pa_db== NULL)
+	if(db== NULL)
 	{
 		LM_ERR("null database connection\n");
 		return;
-	}
-	if(pa_dbf.use_table(pa_db, db_table)< 0)
-	{
-		LM_ERR("in use table\n");
-		return ;
 	}
 	for(i=0; i<htable_size; i++) 
 	{
@@ -1506,7 +1508,7 @@ void update_db_subs(char* db_table, shtable_t hash_table,
 					update_vals[u_status_col].val.int_val= s->status;
 					update_vals[u_reason_col].val.str_val= s->reason;
 
-					if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols, 
+					if(dbf.update(db, query_cols, 0, query_vals, update_cols, 
 								update_vals, n_query_update, n_update_cols)< 0)
 					{
 						LM_ERR("updating in database\n");
@@ -1541,7 +1543,7 @@ void update_db_subs(char* db_table, shtable_t hash_table,
 					query_vals[reason_col].val.str_val= s->reason;
 					query_vals[socket_info_col].val.str_val= s->sockinfo_str;
 				
-					if(pa_dbf.insert(pa_db,query_cols,query_vals,n_query_cols )<0)
+					if(dbf.insert(db,query_cols,query_vals,n_query_cols )<0)
 					{
 						LM_ERR("unsuccessful sql insert\n");
 						if(!no_lock)
@@ -1562,7 +1564,7 @@ void update_db_subs(char* db_table, shtable_t hash_table,
 
 	update_vals[0].val.int_val= (int)time(NULL)- 10;
 	update_ops[0]= OP_LT;
-	if(pa_dbf.delete(pa_db, update_cols, update_ops, update_vals, 1) < 0)
+	if(dbf.delete(db, update_cols, update_ops, update_vals, 1) < 0)
 	{
 		LM_ERR("deleting expired information from database\n");
 	}

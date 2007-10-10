@@ -498,7 +498,12 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
 	
-	pres_update_db_subs(rlsubs_table, rls_table, hash_size, 
+	if(rls_dbf.use_table(rls_db, rlsubs_table)< 0)
+	{
+		LM_ERR("sql use table failed\n");
+		return;
+	}
+	pres_update_db_subs(rls_db, rls_dbf, rls_table, hash_size, 
 			no_lock, handle_expired_record);
 
 }

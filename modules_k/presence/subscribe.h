@@ -31,6 +31,7 @@
 
 //#include "presence.h"
 #include "../../str.h"
+#include "../../db/db.h"
 
 struct pres_ev;
 
@@ -91,10 +92,11 @@ typedef int (*refresh_watcher_t)(str*, str* , str* ,int , str* );
 int restore_db_subs(void);
 
 typedef int (*handle_expired_func_t)(subs_t* );
-void update_db_subs(char* db_table, shtable_t hash_table,int htable_size,
-		int no_lock, handle_expired_func_t handle_expired_subs);
 
-typedef void (*update_db_subs_t)(char* ,shtable_t ,int ,int ,
+void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
+	int htable_size, int no_lock, handle_expired_func_t handle_expired_func);
+
+typedef void (*update_db_subs_t)(db_con_t * ,db_func_t ,shtable_t ,int ,int ,
 		handle_expired_func_t);
 
 int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int max_expire,

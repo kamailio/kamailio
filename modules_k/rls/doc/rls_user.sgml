@@ -193,7 +193,8 @@ modparam("rls", "clean_period", 100)
 		<title><varname>waitn_time</varname> (int)</title>
 		<para>
 	 The timer period at which the server should attempt to send
-	 Notifies with the updated state of the subscribed list.
+	 Notifies with the updated presence state of the subscribed list
+	 or watcher information.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>50</quote>.
