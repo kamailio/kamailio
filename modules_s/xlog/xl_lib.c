@@ -1644,7 +1644,7 @@ int xl_mod_init()
 			if (he->h_addr_list) {
 				for (i=0; he->h_addr_list[i]; i++) {
 					if (inet_ntop(he->h_addrtype, he->h_addr_list[i], s, HOSTNAME_MAX)) {
-						if (!i) {
+						if (str_ipaddr.len==0) {
 							str_ipaddr.len=strlen(s);
 							str_ipaddr.s=(char*)pkg_malloc(str_ipaddr.len);
 							if (str_ipaddr.s) {
@@ -1653,7 +1653,7 @@ int xl_mod_init()
 								str_ipaddr.len=0;
 								LOG(L_ERR, "ERROR: xl_mod_init: No memory left for str_ipaddr\n");
 							}
-						} else {
+						} else if (strncmp(str_ipaddr.s, s, str_ipaddr.len)!=0) {
 							LOG(L_WARN, "WARNING: xl_mod_init: more IP %s not used\n", s);
 						}
 					}
