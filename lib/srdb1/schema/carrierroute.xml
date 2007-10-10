@@ -7,7 +7,7 @@
 	  
 	  ]>
 	  
-	  <table id="sp-route2" xmlns:db="http://docbook.org/ns/docbook">
+	  <table id="carrierroute" xmlns:db="http://docbook.org/ns/docbook">
 		  <name>carrierroute</name>
 		  <version>1</version>
 		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
