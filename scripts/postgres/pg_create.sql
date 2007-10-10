@@ -82,6 +82,8 @@ CREATE TABLE credentials (
 
 CREATE INDEX cred_idx ON credentials (auth_username, did);
 CREATE INDEX uid ON credentials (uid);
+CREATE INDEX did_idx ON credentials (did);
+CREATE INDEX realm_idx ON credentials (realm);
 
 INSERT INTO version (table_name, table_version) values ('attr_types','4');
 CREATE TABLE attr_types (
@@ -149,6 +151,8 @@ CREATE TABLE domain (
     flags INTEGER NOT NULL DEFAULT '0',
     CONSTRAINT domain_idx UNIQUE (domain)
 );
+
+CREATE INDEX did_idx ON domain (did);
 
 INSERT INTO version (table_name, table_version) values ('domain_settings','1');
 CREATE TABLE domain_settings (

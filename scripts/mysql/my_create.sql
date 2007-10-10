@@ -76,7 +76,9 @@ CREATE TABLE credentials (
     ha1b VARCHAR(32) NOT NULL DEFAULT '',
     uid VARCHAR(64) NOT NULL,
     KEY cred_idx (auth_username, did),
-    KEY uid (uid)
+    KEY uid (uid),
+    KEY did_idx (did),
+    KEY realm_idx (realm)
 );
 
 INSERT INTO version (table_name, table_version) values ('attr_types','4');
@@ -142,7 +144,8 @@ CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
-    UNIQUE KEY domain_idx (domain)
+    UNIQUE KEY domain_idx (domain),
+    KEY did_idx (did)
 );
 
 INSERT INTO version (table_name, table_version) values ('domain_settings','1');
