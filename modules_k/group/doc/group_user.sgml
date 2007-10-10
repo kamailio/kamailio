@@ -351,7 +351,7 @@ if (is_user_in("Request-URI", "ld")) {
 		<para>
 		This function is to be used for regular expression based group 
 		membership. The function returns true if username in the given &uri; 
-		belongs to at least on group; the group ID(s) are returned as AVPs.
+		belongs to at least one group; the group ID(s) are returned as AVPs.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
