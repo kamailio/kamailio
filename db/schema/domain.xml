@@ -204,4 +204,9 @@
 	<unique/>
 	<colref linkend="domain.domain"/>
     </index>
+
+    <index>
+	<name>did_idx</name>
+	<colref linkend="domain.did"/>
+    </index>
 </table>
