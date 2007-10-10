@@ -218,16 +218,16 @@ static param_export_t parameters[] = {
 struct module_exports exports = {
     "mediaproxy",    // module name
     DEFAULT_DLFLAGS, // dlopen flags
-    commands,        // module exported functions
-    parameters,      // module exported parameters
+    commands,        // exported functions
+    parameters,      // exported parameters
     NULL,            // exported statistics
     NULL,            // exported MI functions
     NULL,            // exported pseudo-variables
     NULL,            // extra processes
-    mod_init,        // module init (before fork. kids will inherit)
-    NULL,            // reply processing
+    mod_init,        // module init function (before fork. kids will inherit)
+    NULL,            // reply processing function
     NULL,            // destroy function
-    NULL             // child_init
+    NULL             // child init function
 };
 
 
