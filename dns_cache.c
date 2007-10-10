@@ -50,7 +50,7 @@
 
 
 
-#define DNS_CACHE_DEBUG /* extra sanity checks and debugging */
+/* #define DNS_CACHE_DEBUG *//* extra sanity checks and debugging */
 
 
 #ifndef MAX
@@ -66,7 +66,7 @@
 #define DEFAULT_DNS_CACHE_MAX_TTL ((unsigned int)(-1)) /* (maxint) */
 #define DEFAULT_DNS_MAX_MEM 500 /* 500 Kb */
 #define DEFAULT_DNS_TIMER_INTERVAL 120  /* 2 min. */
-#define DNS_HE_MAX_ADDR 10  /* maxium addresses returne in a hostent struct */
+#define DNS_HE_MAX_ADDR 10 /* maximum addresses returned in a hostent struct */
 #define MAX_CNAME_CHAIN  10 
 
 
