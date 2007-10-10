@@ -261,8 +261,10 @@ void db_disconnect(db_ctx_t* ctx)
 {
 	int i;
 
-	for(i = 0; i < ctx->con_n; i++) {
-		if (ctx->con[i]->disconnect) ctx->con[i]->disconnect(ctx->con[i]);
+	if (ctx != NULL) {
+		for(i = 0; i < ctx->con_n; i++) {
+			if (ctx->con[i]->disconnect) ctx->con[i]->disconnect(ctx->con[i]);
+		}
 	}
 }
 

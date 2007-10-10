@@ -90,7 +90,10 @@ db_fld_t* db_fld(size_t n)
 
  error:
 	if (newp) {
-		db_gen_free(&newp->gen);
+		while(i >= 0) {
+			db_gen_free(&newp[i].gen);
+			i--;
+		}
 		pkg_free(newp);
 	}
 	return NULL;
@@ -99,7 +102,7 @@ db_fld_t* db_fld(size_t n)
 
 db_fld_t* db_fld_copy(db_fld_t* fld)
 {
-	int n;
+	int i, n;
 	db_fld_t* newp;
 
 	for(n = 0; fld[n].name; n++);
@@ -111,13 +114,20 @@ db_fld_t* db_fld_copy(db_fld_t* fld)
 		return NULL;
 	}
 	memcpy(newp, fld, sizeof(db_fld_t) * n);
-	if (db_fld_init(newp) < 0) goto error;
+	for(i = 0; i < n; i++) {
+		if (db_gen_init(&newp[i].gen) < 0) goto error;
+	}
+	
 	return newp;
 
  error:
  	ERR("db_fld_copy() failed\n");
 	if (newp) {
-		db_gen_free(&newp->gen);
+		/* Free everything allocated in this function so far */
+		while(i >= 0) {
+			db_gen_free(&newp[i].gen);
+			i--;
+		}
 		pkg_free(newp);
 	}
 	return NULL;
@@ -126,7 +136,12 @@ db_fld_t* db_fld_copy(db_fld_t* fld)
 
 void db_fld_free(db_fld_t* fld)
 {
-	db_fld_close(fld);
+	int i;
+	
+	if (DB_FLD_EMPTY(fld)) return;
+	for(i = 0; !DB_FLD_LAST(fld[i]); i++) {
+		db_gen_free(&fld[i].gen);
+	}
 	pkg_free(fld);
 }
 

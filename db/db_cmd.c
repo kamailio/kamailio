@@ -31,6 +31,7 @@
  */
 
 #include <string.h>
+#include <stdarg.h>
 #include "../dprint.h"
 #include "../mem/mem.h"
 #include "../ut.h"
@@ -205,5 +206,33 @@ int db_exec(db_res_t** res, db_cmd_t* cmd)
 	if (res) *res = r;
 	return ret;
 }
+
+
+int db_setopt(db_cmd_t* cmd, char* optname, ...)
+{
+       int i, r;
+       db_drv_func_t func;
+       db_con_t* con;
+       va_list ap;
+
+       for(i = 0; i < cmd->ctx->con_n; i++) {
+               con = cmd->ctx->con[i];
+
+               r = db_drv_func(&func, &con->uri->scheme, "db_setopt");
+               if (r < 0) return -1;
+               if (r > 0) func = NULL;
+               db_payload_idx = i;
+
+               va_start(ap, optname);
+               if (func && func(cmd, optname, ap) < 0) {
+                       va_end(ap);
+                       return -1;
+               }
+               va_end(ap);
+       }
+
+       return 0;
+}
+
 
 /** @} */
