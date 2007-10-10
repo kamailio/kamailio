@@ -59,7 +59,7 @@ MAIN_NAME=ser
 VERSION = 0
 PATCHLEVEL = 9
 SUBLEVEL = 7
-EXTRAVERSION = -pre8
+EXTRAVERSION = -pre9
 
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
@@ -664,22 +664,23 @@ endif	#ARCH, sparc64
 
 	#if ipaq/netwinder
 ifeq	($(ARCH), arm)
-		# if gcc 
+		# if gcc
 ifeq		($(CC_NAME), gcc)
 				#common stuff
 				CFLAGS=-O9 -funroll-loops  -Wcast-align $(PROFILE) \
-					-Wall   
+					-Wall  
+				CPU ?= strongarm1100
 			#if gcc 4.x+
 ifeq			($(CC_SHORTVER), 4.x)
-					CFLAGS+=-mcpu=strongarm1100 -ftree-vectorize
+					CFLAGS+=-mcpu=$(CPU) -ftree-vectorize
 else
 			#if gcc 3.4+
 ifeq			($(CC_SHORTVER), 3.4)
-					CFLAGS+= -mcpu=strongarm1100
+					CFLAGS+= -mcpu=$(CPU)
 else
 			#if gcc 3.0
 ifeq			($(CC_SHORTVER), 3.0)
-					CFLAGS+= -mcpu=strongarm1100
+					CFLAGS+= -mcpu=$(CPU)
 							#-mcpu=athlon
 else
 ifeq			($(CC_SHORTVER), 2.9x) #older gcc version (2.9[1-5])
@@ -978,7 +979,7 @@ ifeq ($(YACC),)
 endif
 YACC_FLAGS=-d -b cfg
 # on solaris add -lxnet (e.g. LIBS= -lxnet)
-LIBS= -lfl -ldl -lresolv
+LIBS= -ldl -lresolv
 
 
 #os specific stuff
