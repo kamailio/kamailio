@@ -3333,6 +3333,7 @@ static char *print_type(unsigned short type)
 void dns_cache_view(rpc_t* rpc, void* ctx)
 {
 	int h;
+	int expires;
 	struct dns_hash_entry* e;
 	struct dns_rr* rr;
 	struct ip_addr ip;
@@ -3347,15 +3348,17 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 	LOCK_DNS_HASH();
 	for (h=0; h<DNS_HASH_SIZE; h++){
 		clist_foreach(&dns_hash[h], e, next){
+			expires = (s_ticks_t)(e->expire-now)<0?-1: TICKS_TO_S(e->expire-now);
+			if (expires < 0) {
+				continue;
+			}
 			rpc->printf(ctx, "{\n%sname: %s", SPACE_FORMAT, e->name);
 			rpc->printf(ctx, "%stype: %s", SPACE_FORMAT, print_type(e->type));
 			rpc->printf(ctx, "%ssize (bytes): %d", SPACE_FORMAT,
 								e->total_size);
 			rpc->printf(ctx, "%sreference counter: %d", SPACE_FORMAT,
 								e->refcnt.val);
-			rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT,
-								(s_ticks_t)(e->expire-now)<0?-1:
-								TICKS_TO_S(e->expire-now));
+			rpc->printf(ctx, "%sexpires in (s): %d", SPACE_FORMAT, expires);
 			rpc->printf(ctx, "%slast used (s): %d", SPACE_FORMAT,
 								TICKS_TO_S(now-e->last_used));
 			rpc->printf(ctx, "%serror flags: %d", SPACE_FORMAT, e->err_flags);
