@@ -141,7 +141,7 @@ modparam("pike", "remove_latency", 130)
 
    Example 1-4. pike_check_req usage
 ...
-if (!pike_check_req()) { break; };
+if (!pike_check_req()) { exit; };
 ...
      _________________________________________________________
 
