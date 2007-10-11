@@ -343,12 +343,12 @@ route{
 
                 if (method=="REGISTER") {
                         save("location");
-                        break;
+                        exit;
                 };
 
                 if (!lookup("location")) {
                         sl_send_reply("404", "Not Found");
-                        break;
+                        exit;
                 };
                 # do redirect with accounting
                 t_on_failure("2");

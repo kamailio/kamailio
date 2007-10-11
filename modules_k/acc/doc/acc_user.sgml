@@ -133,7 +133,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
     if (!proxy_authorize("sip_domain.net" /* realm */,
     "subscriber" /* table name */))  {
         proxy_challenge("sip_domain.net" /* realm */, "0" /* no qop */ );
-        break;
+        exit;
     }
 
     if (method=="INVITE" & !check_from()) {

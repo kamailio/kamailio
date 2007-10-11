@@ -303,11 +303,11 @@ route{
     # max_forwards==0, or excessively long requests
     if (!mf_process_maxfwd_header("10")) {
         sl_send_reply("483","Too Many Hops");
-        break;
+        exit;
     };
     if (msg:len >=  max_len ) {
         sl_send_reply("513", "Message too big");
-        break;
+        exit;
     };
 
     # we record-route all messages -- to make sure that
@@ -322,14 +322,14 @@ route{
         # mark routing logic in request
         append_hf("P-hint: rr-enforced\r\n");
         route(1);
-        break;
+        exit;
     };
 
     if (!uri==myself) {
         # mark routing logic in request
         append_hf("P-hint: outbound\r\n");
         route(1);
-        break;
+        exit;
     };
 
     # if the request is for other domain use UsrLoc
@@ -340,24 +340,24 @@ route{
             # digest authentication
             if (!www_authorize("", "subscriber")) {
                 www_challenge("", "0");
-                break;
+                exit;
             };
 
             save("location");
-            break;
+            exit;
         };
 
         lookup("aliases");
         if (!uri==myself) {
             append_hf("P-hint: outbound alias\r\n");
             route(1);
-            break;
+            exit;
         };
 
         # native SIP destinations are handled using our USRLOC DB
         if (!lookup("location")) {
             sl_send_reply("404", "Not Found");
-            break;
+            exit;
         };
     };
     append_hf("P-hint: usrloc applied\r\n");

@@ -801,7 +801,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 if (method=="REGISTER") {
 	if (allow_register("register")) {
 		save("location");
-		break;
+		exit;
 	} else {
 		sl_send_reply("403", "Forbidden");
 	};
@@ -850,7 +850,7 @@ if (method=="REGISTER") {
 if (method=="REGISTER") {
 	if (allow_register("register.allow", "register.deny")) {
 		save("location");
-		break;
+		exit;
 	} else {
 		sl_send_reply("403", "Forbidden");
 	};

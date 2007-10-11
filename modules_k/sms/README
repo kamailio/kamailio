@@ -330,7 +330,7 @@ if (sms_send_msg_to_net("D1"))
                 # if replying failed, retry statelessly
                 sl_reply_error();
         };
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -357,7 +357,7 @@ if (sms_send_msg_to_net())
                 # if replying failed, retry statelessly
                 sl_reply_error();
         };
-        break;
+        exit;
 };
 ...
      _________________________________________________________

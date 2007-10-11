@@ -171,7 +171,7 @@ modparam("auth_diameter", "use_domain", 1)
 ...
 if(!diameter_www_authorize("siphub.net"))
 { /* user is not authorized */
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -196,7 +196,7 @@ if(!diameter_www_authorize("siphub.net"))
 ...
 if(!diameter_proxy_authorize("siphub.net"))
 { /* user is not authorized */
-        break;
+        exit;
 };
 ...
      _________________________________________________________
@@ -219,7 +219,7 @@ if(!diameter_proxy_authorize("siphub.net"))
 ...
 if(!diameter_is_user_in("From", "voicemail"))
 { /* user is not authorized */
-        break;
+        exit;
 };
 ...
      _________________________________________________________
