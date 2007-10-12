@@ -1763,10 +1763,14 @@ inline int encode_branch_info(str *info, struct contact *con)
     at = at + con->path.len;
     *at = '\n';
     at++;
-    len = MAX_SOCKET_STR;
-    if (!socket2str(con->sock, at, &len)) {
-	LM_ERR("Failed to convert socket to str\n");
-	return 0;
+    if (con->sock) {
+	len = MAX_SOCKET_STR;
+	if (!socket2str(con->sock, at, &len)) {
+	    LM_ERR("Failed to convert socket to str\n");
+	    return 0;
+	}
+    } else {
+	len = 0;
     }
     at = at + len;
     *at = '\n';
