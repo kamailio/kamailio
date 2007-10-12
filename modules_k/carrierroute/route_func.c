@@ -498,7 +498,7 @@ int rewrite_branches(struct sip_msg * msg, char * domain_param, char * hash) {
 		extract_localpart(&uri, &old_uri);
 		if (rewrite_uri_recursor(rt->tree, &old_uri, &new_uri, msg, &user, my_hash_source, alg_crc32)
 		        != 0) {
-			/* rewrite_uri_recursor already complained.  */
+			LM_ERR("error during rewrite_uri_recursor");
 			release_data(rd);
 			ret = -1;
 			goto unlock_and_out;
@@ -530,7 +530,7 @@ unlock_and_out:
  * @param hash the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
- * @return 0 on success, -1 on failure
+ * @return 1 on success, -1 on failure
  *
  * @see determine_and_rewrite_uri()
  */
@@ -578,7 +578,7 @@ static int determine_to_and_rewrite_uri(struct sip_msg* msg, int domain,
  * @param hash the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
- * @return 0 on success, -1 on failure
+ * @return 1 on success, -1 on failure
  *
  * @see determine_and_rewrite_uri()
  */
@@ -625,7 +625,7 @@ static int determine_from_and_rewrite_uri(struct sip_msg* msg, int domain,
  * @param hash the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
- * @return 0 on success, -1 on failure
+ * @return 1 on success, -1 on failure
  */
 static int determine_and_rewrite_uri(struct sip_msg* msg, int domain,
                                      enum hash_source hash,
@@ -670,7 +670,7 @@ static int rewrite_msg(int domain,
  * @param hash_source the SIP header used for hashing
  * @param alg the algorithm used for hashing
  *
- * @return 0 on success, -1 on failure
+ * @return 1 on success, -1 on failure
  */
 static int carrier_rewrite_msg(int carrier, int domain,
                                str * uri, struct sip_msg * msg, str * user,
@@ -698,7 +698,7 @@ static int carrier_rewrite_msg(int carrier, int domain,
 		goto unlock_and_out;
 	}
 	if (rewrite_uri_recursor(rt->tree, uri, &dest, msg, user, hash_source, alg) != 0) {
-		/* rewrite_uri_recursor already complained.  */
+		LM_ERR("error during rewrite_uri_recursor");
 		ret = -1;
 		goto unlock_and_out;
 	}
@@ -752,6 +752,7 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 	}
 	if (uri->len == 0 || route_tree->nodes[*uri->s - '0'] == NULL) {
 		if (route_tree->rule_list == NULL) {
+			LM_ERR("empty rule list");
 			return 1;
 		} else {
 			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
@@ -768,6 +769,7 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 				if (route_tree->rule_list != NULL) {
 					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
 				} else {
+					LM_ERR("empty rule list");
 					return 1;
 				}
 			default:
