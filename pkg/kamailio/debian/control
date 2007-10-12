@@ -159,7 +159,7 @@ Description: XMPP gateway module for OpenSER
 
 Package: openser-carrierroute-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version}), libconfuse0
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: Carrierroute module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -170,7 +170,7 @@ Description: Carrierroute module for OpenSER
 
 Package: openser-berkeley-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version}), libdb4.5
+Depends: ${shlibs:Depends}, openser (= ${Source-Version})
 Description: Berkeley Database module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
