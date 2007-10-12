@@ -70,7 +70,6 @@ static cmd_export_t cmds[] = {
 	{"db_init",        (cmd_function)sc_init,       1, 0, 0, 0},
 	{"db_close",       (cmd_function)sc_close,      2, 0, 0, 0},
 	{"db_query",       (cmd_function)sc_query,      2, 0, 0, 0},
-	{"db_raw_query",   (cmd_function)sc_raw_query,  2, 0, 0, 0},
 	{"db_free_result", (cmd_function)sc_free_query, 2, 0, 0, 0},
 	{"db_insert",     (cmd_function)sc_insert,      2, 0, 0, 0},
 	{"db_delete",     (cmd_function)sc_delete,      2, 0, 0, 0},
