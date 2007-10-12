@@ -84,6 +84,7 @@
  * 2007-06-16  added DDNS_SRV_LB, DNS_TRY_NAPTR (andrei)
  * 2007-09-10  introduced phone2tel option which allows NOT to consider
  *             user=phone URIs as TEL URIs (jiri)
+ * 2007-10-10  added DNS_SEARCH_FMATCH (mma)
 */
 
 %{
@@ -284,6 +285,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS_RETR_NO
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
+%token DNS_SEARCH_FMATCH
 %token DNS_USE_CACHE
 %token DNS_USE_FAILOVER
 %token DNS_CACHE_FLAGS
@@ -607,6 +609,8 @@ assign_stm:
 	| DNS_SERVERS_NO error { yyerror("number expected"); }
 	| DNS_USE_SEARCH EQUAL NUMBER   { dns_search_list=$3; }
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
+	| DNS_SEARCH_FMATCH EQUAL NUMBER   { dns_search_fmatch=$3; }
+	| DNS_SEARCH_FMATCH error { yyerror("boolean value expected"); }
 	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(use_dns_cache=$3); }
 	| DNS_USE_CACHE error { yyerror("boolean value expected"); }
 	| DNS_USE_FAILOVER EQUAL NUMBER   { IF_DNS_FAILOVER(use_dns_failover=$3);}

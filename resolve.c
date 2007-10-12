@@ -36,6 +36,11 @@
  *  2006-08-18  get_record can append also the additional records to the
  *               returned list (andrei)
  *  2007-06-15  naptr support (andrei)
+ *  2007-10-10  short name resolution using search list supported (mma)
+ *              set dns_use_search_list=1 (default on)
+ *              new option dns_search_full_match (default on) controls
+ *              whether rest of the name is matched against search list
+ *              or blindly accepted (better performance but exploitable)
  */ 
 
 
@@ -84,7 +89,7 @@ int dns_retr_time=-1;
 int dns_retr_no=-1;
 int dns_servers_no=-1;
 int dns_search_list=-1;
-
+int dns_search_fmatch=-1;
 
 #ifdef USE_NAPTR
 void init_naptr_proto_prefs()
@@ -412,7 +417,20 @@ void free_rdata_list(struct rdata* head)
 	}
 }
 
-
+#ifdef HAVE_RESOLV_RES
+/* checks whether supplied name exists in the resolver search list
+ * returns 1 if found
+ *         0 if not found
+ */
+int match_search_list(const res_state res, char* name) {
+	int i;
+	for (i=0; (i<MAXDNSRCH) && (res->dnsrch[i]); i++) {
+		if (strcasecmp(name, res->dnsrch[i])==0) 
+			return 1;
+	}
+	return 0;
+}
+#endif
 
 /* gets the DNS records for name:type
  * returns a dyn. alloc'ed struct rdata linked list with the parsed responses
@@ -437,7 +455,19 @@ struct rdata* get_record(char* name, int type, int flags)
 	struct rdata* rd;
 	struct srv_rdata* srv_rd;
 	struct srv_rdata* crt_srv;
+	int search_list_used;
+	int name_len;
+	struct rdata* fullname_rd;
 	
+	if (dns_search_list==0) {
+		search_list_used=0;
+		name_len=0;
+	} else {
+		search_list_used=1;
+		name_len=strlen(name);
+	}
+	fullname_rd=0;
+
 	size=res_search(name, C_IN, type, buff.buff, sizeof(buff));
 	if (size<0) {
 		DBG("get_record: lookup(%s, %d) failed\n", name, type);
@@ -527,6 +557,29 @@ again:
 		memcpy(rd->name, rec_name, rec_name_len);
 		rd->name[rec_name_len]=0;
 		rd->name_len=rec_name_len;
+		/* check if full name matches */
+		if ((search_list_used==1)&&(fullname_rd==0)&&
+				(rec_name_len>=name_len)&&
+				(strncasecmp(rec_name, name, name_len)==0)) {
+			/* now we have record which's name is the same (up-to the name_len
+			 * with the searched one
+			 * if the length is the same - we found full match, no fake cname
+			 *   needed, just clear the flag
+			 * if the length of the name differs - it has matched using search list
+			 *   remember the rd, so we can create fake CNAME record when all answers
+			 *   are used and no better match found
+			 */
+			if (rec_name_len==name_len)
+				search_list_used=0;
+			/* this is safe.... here was rec_name_len > name_len */
+			else if (rec_name[name_len]=='.') {
+#ifdef HAVE_RESOLV_RES
+				if ((dns_search_fmatch==0) ||
+						(match_search_list(&_res, rec_name+name_len+1)!=0))
+#endif
+					fullname_rd=rd;
+			}
+		}
 		switch(rtype){
 			case T_SRV:
 				srv_rd= dns_srv_parser(buff.buff, end, p);
@@ -609,7 +662,36 @@ again:
 #endif
 		goto again; /* add also the additional records */
 	}
-			
+
+    /* if the name was expanded using DNS search list
+	 * create fake CNAME record to convert the short name
+	 * (queried) to long name (answered)
+	 */
+    if ((search_list_used==1)&&(fullname_rd!=0)) {
+		rd=(struct rdata*) local_malloc(sizeof(struct rdata)+name_len+1-1);
+		if (rd==0){
+			LOG(L_ERR, "ERROR: get_record: out of memory\n");
+			goto error;
+		}
+		rd->type=T_CNAME;
+		rd->class=fullname_rd->class;
+		rd->ttl=fullname_rd->ttl;
+		rd->next=head;
+		memcpy(rd->name, name, name_len);
+		rd->name[name_len]=0;
+		rd->name_len=name_len;
+		/* alloc sizeof struct + space for the null terminated name */
+		rd->rdata=(void*)local_malloc(sizeof(struct cname_rdata)-1+head->name_len+1);
+		if(rd->rdata==0){
+			LOG(L_ERR, "ERROR: get_record: out of memory\n");
+			goto error_rd;
+		}
+		((struct cname_rdata*)(rd->rdata))->name_len=fullname_rd->name_len;
+		memcpy(((struct cname_rdata*)(rd->rdata))->name, fullname_rd->name, fullname_rd->name_len);
+		((struct cname_rdata*)(rd->rdata))->name[head->name_len]=0;
+		head=rd;
+	}
+
 	return head;
 error_boundary:
 		LOG(L_ERR, "ERROR: get_record: end of query buff reached\n");
@@ -620,6 +702,7 @@ error_parse:
 						" rtype=%d, class=%d, ttl=%d, rdlength=%d \n",
 				name, type,
 				p, end, rtype, class, ttl, rdlength);
+error_rd:
 		if (rd) local_free(rd); /* rd->rdata=0 & rd is not linked yet into
 								   the list */
 error:

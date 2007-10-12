@@ -45,6 +45,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
+#include <resolv.h>
 
 #ifdef __OS_darwin
 #include <arpa/nameser_compat.h>
@@ -151,7 +152,9 @@ struct cname_rdata {
 #define CNAME_RDATA_SIZE(s) (sizeof(struct cname_rdata)+(s).name_len)
 
 
-
+#ifdef HAVE_RESOLV_RES
+int match_search_list(const res_state res, char* name);
+#endif
 struct rdata* get_record(char* name, int type, int flags);
 void free_rdata_list(struct rdata* head);
 

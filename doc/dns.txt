@@ -97,14 +97,15 @@ DNS Resolver Options
       (according to RFC2915). If the values are positive but different, ser
       will select the NAPTR record whose protocol it prefers the most
       (the protocol with the highest dns_<proto>_pref number). If there are 
-       several NAPTR records with the same preferred protocol, ser will select        among them based on their order and preference (see RFC2915).
+      several NAPTR records with the same preferred protocol, ser will select
+      among them based on their order and preference (see RFC2915).
       To completely disable selecting a specific protocol, use  a negative
-       number. For example dns_tcp_pref=-1 will completely disable selection
-       of tcp NAPTR records, even if this will result in the NAPTR lookup
-       failure.
-       Default: dns_udp_pref=3, dns_tcp_pref=2 and dns_tls_pref=1
-       (prefer udp, but if no udp NAPTR record found or no SRV-resolvable 
-        udp NAPTR record found use tcp records and if this fails too use tls)
+      number. For example dns_tcp_pref=-1 will completely disable selection
+      of tcp NAPTR records, even if this will result in the NAPTR lookup
+      failure.
+      Default: dns_udp_pref=3, dns_tcp_pref=2 and dns_tls_pref=1
+      (prefer udp, but if no udp NAPTR record found or no SRV-resolvable 
+      udp NAPTR record found use tcp records and if this fails too use tls)
 
    dns_tcp_pref = number  (see dns_udp_pref above)
 
@@ -127,6 +128,14 @@ DNS Resolver Options
       to "no" will still be "faster", because an empty search list is in 
       fact search "" (so even if the search list is empty/missing there will
       still be 2 dns queries, eg. foo+'.' and foo+""+'.')
+
+   dns_search_full_match = yes/no - controls the check of the name part
+      which is found in the answer expanding the searched name before
+      the answer is treated as correct and "link" (fake CNAME record)
+      between the short name (query) and long name (answer) is created
+      which is then stored in dns_cache and reused for next queries.
+      If set to no - no additional check is done.
+      If set to yes - the additional part is checked against the search list.
 
  The maximum time a dns request can take (before failing) is:
  (dns_retr_time*dns_retr_no)*(search_list_domains) If dns_try_ipv6 is yes,

@@ -71,6 +71,7 @@
  *  2007-06-18  added DNS_{UDP,TCP,TLS}_PREF (andrei)
  *  2007-09-10  introduced phone2tel option which allows NOT to consider
  *              user=phone URIs as TEL URIs (jiri)
+ *  2007-10-10  added DNS_SEARCH_FMATCH (mma)
 */
 
 
@@ -244,6 +245,7 @@ DNS_RETR_TIME	dns_retr_time
 DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
+DNS_SEARCH_FMATCH	dns_search_full_match
 /* dns cache */
 DNS_USE_CACHE	use_dns_cache
 DNS_USE_FAILOVER	use_dns_failover
@@ -485,6 +487,8 @@ EAT_ABLE	[\ \t\b\r]
 								return DNS_SERVERS_NO; }
 <INITIAL>{DNS_USE_SEARCH}	{ count(); yylval.strval=yytext;
 								return DNS_USE_SEARCH; }
+<INITIAL>{DNS_SEARCH_FMATCH}	{ count(); yylval.strval=yytext;
+								return DNS_SEARCH_FMATCH; }
 <INITIAL>{DNS_USE_CACHE}	{ count(); yylval.strval=yytext;
 								return DNS_USE_CACHE; }
 <INITIAL>{DNS_USE_FAILOVER}	{ count(); yylval.strval=yytext;
