@@ -30,8 +30,8 @@ Description: very fast and configurable SIP proxy
 Package: openser-dbg
 Priority: extra
 Architecture: any
-Depends: openser (= ${Source-Version})
-Conflicts: openser (<< ${Source-Version})
+Depends: openser (= ${binary:Version})
+Conflicts: openser (<< ${source:Version})
 Description: very fast and configurable SIP proxy [debug symbols]
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -42,7 +42,7 @@ Description: very fast and configurable SIP proxy [debug symbols]
 
 Package: openser-mysql-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version}), mysql-client
+Depends: ${shlibs:Depends}, openser (= ${binary:Version}), mysql-client
 Description: MySQL database connectivity module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -52,7 +52,7 @@ Description: MySQL database connectivity module for OpenSER
 
 Package: openser-postgres-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version}), postgresql-client
+Depends: ${shlibs:Depends}, openser (= ${binary:Version}), postgresql-client
 Description: PostgreSQL database connectivity module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -62,7 +62,7 @@ Description: PostgreSQL database connectivity module for OpenSER
 
 Package: openser-jabber-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: Jabber gateway module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -72,7 +72,7 @@ Description: Jabber gateway module for OpenSER
 
 Package: openser-cpl-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: CPL module (CPL interpreter engine) for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -83,7 +83,7 @@ Description: CPL module (CPL interpreter engine) for OpenSER
 
 Package: openser-radius-modules
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: radius modules for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -95,7 +95,7 @@ Description: radius modules for OpenSER
 
 Package: openser-unixodbc-module 
 Architecture: any 
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: unixODBC database connectivity module for OpenSER 
  OpenSER is a very fast and flexible SIP (RFC3261) 
  proxy server. Written entirely in C, OpenSER can handle thousands calls 
@@ -105,7 +105,7 @@ Description: unixODBC database connectivity module for OpenSER
 
 Package: openser-presence-modules
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: SIMPLE presence modules for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -117,7 +117,7 @@ Description: SIMPLE presence modules for OpenSER
 
 Package: openser-xmlrpc-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: XMLRPC support for OpenSER's Management Interface
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -128,7 +128,7 @@ Description: XMLRPC support for OpenSER's Management Interface
 
 Package: openser-perl-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: Perl module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -138,7 +138,7 @@ Description: Perl module for OpenSER
 
 Package: openser-snmpstats-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version}), snmpd
+Depends: ${shlibs:Depends}, openser (= ${binary:Version}), snmpd
 Description: SNMP AgentX subagent module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -149,7 +149,7 @@ Description: SNMP AgentX subagent module for OpenSER
 
 Package: openser-xmpp-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: XMPP gateway module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -159,7 +159,7 @@ Description: XMPP gateway module for OpenSER
 
 Package: openser-carrierroute-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: Carrierroute module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
@@ -170,7 +170,7 @@ Description: Carrierroute module for OpenSER
 
 Package: openser-berkeley-module
 Architecture: any
-Depends: ${shlibs:Depends}, openser (= ${Source-Version})
+Depends: ${shlibs:Depends}, openser (= ${binary:Version})
 Description: Berkeley Database module for OpenSER
  OpenSER is a very fast and flexible SIP (RFC3261)
  proxy server. Written entirely in C, OpenSER can handle thousands calls
