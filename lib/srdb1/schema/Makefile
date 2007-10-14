@@ -165,6 +165,7 @@ docbook:
 
 docbook_clean:
 	-@rm -f $(ROOT)/doc/database/*.xml
+	-@rm -f $(ROOT)/doc/database/tables.sgml
 
 
 .PHONY: clean
