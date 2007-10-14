@@ -98,7 +98,8 @@ int mwi_publ_handl(struct sip_msg* msg)
     return 1;
 
 err:
-    LM_DBG("body check failed at character number %d\n", at - body.s + 1);
+    LM_ERR("check of body <%.*s> failed at character number %d\n",
+	   body.len, body.s, at - body.s + 1);
     return -1;
 
 }

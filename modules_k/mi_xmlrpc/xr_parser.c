@@ -171,7 +171,8 @@ struct mi_root * xr_parse_tree( xmlrpc_env * env, xmlrpc_value * paramArray ) {
 				goto error;
 			}
 			if ( add_mi_node_child(&mi_root->node, 0, 0, 0,
-					       stringValue,strlen(stringValue)) == NULL ) {
+					       stringValue,
+					       lflf_to_crlf_hack(stringValue)) == NULL ) {
 				LM_ERR("failed to add node to the MI tree.\n");
 				goto error;
 			}
