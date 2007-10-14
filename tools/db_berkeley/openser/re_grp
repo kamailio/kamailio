@@ -1,7 +1,7 @@
 METADATA_COLUMNS
-reg_exp(str) group_id(str)
+id(int) reg_exp(str) group_id(str)
 METADATA_KEY
-0
+0 2
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

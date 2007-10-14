@@ -1,7 +1,7 @@
 METADATA_COLUMNS
-username(str) domain(str) fname(str) lname(str) sip_uri(str)
+id(int) username(str) domain(str) fname(str) lname(str) sip_uri(str)
 METADATA_KEY
-0 1
+0 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

@@ -1,7 +1,7 @@
 METADATA_COLUMNS
-p_user(str) w_user(str) w_domain(str) event(str) subs_status(str) reason(str) inserted_time(int)
+id(int) p_uri(str) w_user(str) w_domain(str) event(str) subs_status(int) reason(str) inserted_time(int)
 METADATA_KEY
-0
+0 4 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

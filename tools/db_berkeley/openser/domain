@@ -1,7 +1,7 @@
 METADATA_COLUMNS
-domain(str) last_modified(datetime)
+id(int) domain(str) last_modified(datetime)
 METADATA_KEY
-0
+0 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

@@ -1,7 +1,7 @@
 METADATA_COLUMNS
-gw_name(str) grp_id(int) ip_addr(str) port(int) uri_scheme(int) transport(int) strip(int) prefix(str) dm(int)
+id(int) gw_name(str) grp_id(int) ip_addr(str) port(int) uri_scheme(int) transport(int) strip(int) prefix(str) dm(int)
 METADATA_KEY
-0
+0 1 2 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

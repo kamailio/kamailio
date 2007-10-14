@@ -1,7 +1,7 @@
 METADATA_COLUMNS
-username(str) domain(str) sd_username(str) sd_domain(str) new_uri(str) fname(str) lname(str) description(str)
+id(int) username(str) domain(str) sd_username(str) sd_domain(str) new_uri(str) fname(str) lname(str) description(str)
 METADATA_KEY
-0
+0 1 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
