@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -33,7 +33,6 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/keys.h"
-#include "../../parser/hf.h"
 #include "../../parser/contact/parse_contact.h"
 
 #include "../tm/ut.h"
@@ -165,12 +164,18 @@ int cseqhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 /* Date */
 int datehdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
-	if (!msg->date && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
+	if ((!msg->date) && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
 		LOG(L_ERR, "AUTH_INDENTITY:datehdr_proc: Error while parsing DATE header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->date) {
+		LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY:datehdr_proc: DATE header field is not found\n");
 		return AUTH_NOTFOUND;
+	}
+	/* we must call parse_date_header explicitly */
+	if ((!(msg->date)->parsed) && (parse_date_header(msg) < 0)) {
+		LOG(L_ERR, "AUTH_INDENTITY:datehdr_proc: Error while parsing DATE body\n");
+		return AUTH_ERROR;
 	}
 
 	if (sout)
@@ -261,8 +266,9 @@ int identityhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 	if (!msg->identity) {
 		return AUTH_NOTFOUND;
 	}
-	if (!msg->identity->parsed) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityhdr_proc: IDENTITY is not parsed\n");
+	/* we must call parse_identityinfo_header explicitly */
+	if ((!(msg->identity)->parsed) && (parse_identity_header(msg) < 0)) {
+		LOG(L_ERR, "AUTH_INDENTITY:identityhdr_proc: Error while parsing IDENTITY body\n");
 		return AUTH_ERROR;
 	}
 
@@ -283,8 +289,9 @@ int identityinfohdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 		LOG(L_ERR, "AUTH_INDENTITY:identityinfohdr_proc: IDENTITY-INFO header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
-	if (!msg->identity_info->parsed) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityinfohdr_proc: IDENTITY-INFO is not parsed\n");
+	/* we must call parse_identityinfo_header explicitly */
+	if ((!(msg->identity_info)->parsed) && (parse_identityinfo_header(msg) < 0)) {
+		LOG(L_ERR, "AUTH_INDENTITY:identityinfohdr_proc: Error while parsing IDENTITY-INFO body\n");
 		return AUTH_ERROR;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -36,6 +36,11 @@
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"	/* struct sip_msg */
 #include "../../str.h"					/* struct str */
+#include "../../parser/parse_identity.h"
+#include "../../parser/parse_identityinfo.h"
+#include "../../parser/parse_date.h"
+
+#define NEW_RSA_PROC
 
 #define AUTH_DBG_LEVEL L_DBG
 
