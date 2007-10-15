@@ -103,7 +103,8 @@
 		<section>
 			<title><varname>privatekey_path</varname> (string)</title>
 			<para>
-				The path of private key of the authentication service.
+				The path of private key of the authentication service. The key
+				must be in PEM format.
 			</para>
 			<para>
 				This parameter is required by authentication service.
@@ -121,7 +122,8 @@ modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 		<section>
 			<title><varname>certificate_path</varname> (string)</title>
 			<para>
-				The path of certificate of the authentication service.
+				The path of certificate of the authentication service. The
+				certificate must be in PEM format.
 			</para>
 			<para>
 				This parameter is required by authentication service.
@@ -131,7 +133,7 @@ modparam("auth_identity","privatekey_path","/etc/ssl/private/key.pem")
 				</title>
 				<programlisting>
 ...
-modparam("auth_identity","certificate_path","/var/www/ssl/mycert.crt")
+modparam("auth_identity","certificate_path","/var/www/ssl/mycert.pem")
 ...
 				</programlisting>
 			</example>
@@ -141,7 +143,8 @@ modparam("auth_identity","certificate_path","/var/www/ssl/mycert.crt")
 			<title><varname>certificate_url</varname> (string)</title>
 			<para>
 				The url where certificate is available for other verifier
-				services. (value of Identity-info header)
+				services. (value of Identity-info header) The
+				certificate should be in DER format.
 			</para>
 			<para>
 				This parameter is required by authentication service.
@@ -151,7 +154,7 @@ modparam("auth_identity","certificate_path","/var/www/ssl/mycert.crt")
 				</title>
 				<programlisting>
 ...
-modparam("auth_identity","certificate_url","https://foo.bar/mycert.crt")
+modparam("auth_identity","certificate_url","https://foo.bar/mycert.der")
 ...
 				</programlisting>
 			</example>
