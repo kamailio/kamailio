@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -37,135 +37,143 @@
  * Parse Identity header field
  */
 
+#define SP(_c) ((_c)=='\t' || (_c)==' ')
+inline static int isendofhash (char* p, char* end)
+{
+	/* new header line */
+	if ((p<end && *p=='"')
+		/* end of message */
+		|| ((*p=='\n' || *p=='\r') && p+1==end))
+		return 1;
+	else
+		return 0;
+}
+
+
 /*
  * If the value of Identity header contains any LWS then we've to create
  * a new buffer and move there the LWSless part
  */
-int movetomybuffer (char *buffer, char *end, char *p, struct identity_body *ib)
+int movetomybuffer (char *pstart,
+					char *pend,
+					char *pcur,
+					struct identity_body *ib)
 {
-	char *bufend;
+	char *phashend;
 
-	if (!(bufend=q_memchr(p, '"', end-p))) {
-		LOG(L_ERR, "parse_identity: quotation mark is missing\n");
-		return -1;
-	}
+	for (phashend = pcur; !isendofhash(phashend, pend); phashend++);
 
-	if (!(ib->hash.s=pkg_malloc(bufend-buffer))) {
+	if (!(ib->hash.s=pkg_malloc(phashend-pstart))) {
 		LOG(L_ERR, "parse_identity: out of memory\n");
 		return -2;
 	}
 	ib->ballocated=1;
 
-	memcpy(ib->hash.s, buffer, ib->hash.len);
+	memcpy(ib->hash.s, pstart, ib->hash.len);
 
 	return 0;
 }
 
-char* parse_identity(char *buffer, char* end, struct identity_body* ib)
+
+void parse_identity(char *buffer, char* end, struct identity_body* ib)
 {
-	char *p=NULL;
-	char bpadded=0;
+	char *p=NULL, *pstart=NULL;
 
 	if (!buffer || !end || !ib)
 		goto error;
 
 	ib->error=PARSE_ERROR;
 
-	/* there must be '"' sign because there might be '=' sign in the
-	 * value of Identity header
-	 */
-	if (*buffer != '"') {
-		LOG(L_ERR, "parse_identity: quotation mark is missing\n");
-		goto error;
-	}
+	/* if there is a '"' sign then we'll step over it */
+	*buffer == '"' ? (pstart = buffer + 1) : (pstart = buffer);
 
-	/* we step over the '"' mark */
-	ib->hash.s=buffer+1;
+	ib->hash.s=pstart;
 	ib->hash.len=0;
 
-	for (p=buffer+1; p < end && *p != '"'; p++) {
+	for (p = pstart; p < end; p++) {
 		/* check the BASE64 alphabet */
-		if (!bpadded
-		    && ((*p >= 'a' && *p <='z')
-			 	|| (*p >= 'A' && *p <='Z')
-				|| (*p >= '0' && *p <='9')
-				|| (*p == '+' || *p == '/'))) {
+		if (((*p >= 'a' && *p <='z')
+			|| (*p >= 'A' && *p <='Z')
+			|| (*p >= '0' && *p <='9')
+			|| (*p == '+' || *p == '/' || *p == '='))) {
 			if (ib->ballocated)
 				ib->hash.s[ib->hash.len]=*p;
 			ib->hash.len++;
 			continue;
 		}
 
-		/* check the BASE64 padding */
-		if ((p+1 < end && *p == '=' && *(p+1) != '=')
-		    || (p+2 < end && *p == '=' && *(p+1) == '=' && *(p+2) != '=')) {
-			bpadded=1;
-			if (ib->ballocated)
-				ib->hash.s[ib->hash.len]=*p;
-			ib->hash.len++;
+		/* LWS */
+		if (*p=='\n' && p+1<end && SP(*(p+1))) {
+			/* p - 1 because we don't want to pass '\n' */
+			if (!ib->ballocated && (movetomybuffer(pstart, end, p-1, ib)))
+				goto error;
+			/* p + 1 < end because 'continue' increases p so we'd skip \n
+			   we need after this for loop */
+			for (p+=1; p + 1 < end && SP(*(p + 1)); p++);
+			continue;
+		}
+		if (*p=='\r' && p+2<end && *(p+1)=='\n' && SP(*(p+2))) {
+			if (!ib->ballocated && (movetomybuffer(pstart, end, p-1, ib)))
+				goto error;
+			for (p+=2; p + 1 < end && SP(*(p + 1)); p++);
 			continue;
 		}
 
-		/* LSW case */
-		if (*p == ' ' || *p == '\t') {
-			for (p++; p < end && (*p == ' ' || *p == '\t'); p++);
-			if (p == end)
-				goto parseerror;
-			/* we've to create another whitespaceless buffer */
-			if (!ib->ballocated && (movetomybuffer(buffer+1, end, p-1, ib)))
-				goto error;
-		}
-		if (p+2 < end && *p == '\n' && *(p+1) == ' '
-		    && !(*(p+2) == ' ' || *(p+2) == '\t')) {
-			/* we've to create another whitespaceless buffer */
-			if (!ib->ballocated && (movetomybuffer(buffer+1, end, p-1, ib)))
-				goto error;
-			p+=1;
-			continue;
-		}
-		if (p+3 < end && *p == '\r' && *(p+1) == '\n' && *(p+2) == ' '
-		  	&& !(*(p+3) == ' ' || *(p+3) == '\t')) {
-			/* we've to create another whitespaceless buffer */
-			if (!ib->ballocated && (movetomybuffer(buffer+1, end, p-1, ib)))
-				goto error;
-			p+=2;
-			continue;
-		}
+		if (isendofhash(p, end))
+			break;
 
 		/* parse error */
-		break;
-	}
-	if (p == end || *p != '"')
 		goto parseerror;
+	}
 
-	/* we step over '"' */
-	p++;
-
-	p=eat_lws_end(p, end);
-	/*check if the header ends here*/
-	if (p>=end) {
-		LOG(L_ERR, "ERROR: parse_identity: strange EoHF\n");
-		goto error;
-	}
-	if (*p=='\r' && p+1<end && *(p+1)=='\n') {
-		ib->error=PARSE_OK;
-		return p+2;
-	}
-	if (*p=='\n') {
-		ib->error=PARSE_OK;
-		return p+1;
-	}
-	LOG(L_ERR, "ERROR: Identity EoL expected\n");
-	goto error;
+	/* this is the final quotation mark so we step over */
+	ib->error=PARSE_OK;
+	return ;
 
 parseerror:
 	LOG( L_ERR , "ERROR: parse_identity: "
-		"unexpected char [%c]: <<%.*s>> .\n",
+		"unexpected char [0x%X]: <<%.*s>> .\n",
 		*p,(int)(p-buffer), ZSW(buffer));
 error:
-	return p;
+	return ;
 }
 
+int parse_identity_header(struct sip_msg *msg)
+{
+	struct identity_body* identity_b;
+
+
+	if ( !msg->identity
+		 && (parse_headers(msg,HDR_IDENTITY_F,0)==-1
+		 || !msg->identity) ) {
+		LOG(L_ERR,"ERROR:parse_identity_header: bad msg or missing IDENTITY header\n");
+		goto error;
+	}
+
+	/* maybe the header is already parsed! */
+	if (msg->identity->parsed)
+		return 0;
+
+	identity_b=pkg_malloc(sizeof(*identity_b));
+	if (identity_b==0){
+		LOG(L_ERR, "ERROR:parse_identity_header: out of memory\n");
+		goto error;
+	}
+	memset(identity_b, 0, sizeof(*identity_b));
+
+	parse_identity(msg->identity->body.s,
+				   msg->identity->body.s + msg->identity->body.len+1,
+				   identity_b);
+	if (identity_b->error==PARSE_ERROR){
+		free_identity(identity_b);
+		goto error;
+	}
+	msg->identity->parsed=(void*)identity_b;
+
+	return 0;
+error:
+	return -1;
+}
 
 void free_identity(struct identity_body *ib)
 {

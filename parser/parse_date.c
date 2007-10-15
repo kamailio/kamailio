@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -140,45 +140,58 @@ static int rfc1123totm (char *stime, struct tm *ttm ) {
 	return 0;
 }
 
-char* parse_date(char *buffer, char *end, struct date_body *db)
+void parse_date(char *buffer, char *end, struct date_body *db)
 {
-	char *p;
-	int i1;
-
 	db->error=PARSE_ERROR;
-	p = buffer;
 
 	/* check whether enough characters are available */
-	for (i1 = 0; i1 < RFC1123DATELENGTH || p[i1] == '\n' || p + i1 >= end;i1++);
-	if (i1 < RFC1123DATELENGTH)
+	if (end - buffer < RFC1123DATELENGTH)
 		goto error;
 
 	if (rfc1123totm(buffer,&db->date))
 		goto error;
 
-	p+=RFC1123DATELENGTH;
-
-	p=eat_lws_end(p, end);
-	/*check if the header ends here*/
-	if (p>=end) {
-		LOG(L_ERR, "ERROR: parse_date: strange EoHF\n");
-		goto error;
-	}
-	if (*p=='\r' && p+1<end && *(p+1)=='\n') {
-		db->error=PARSE_OK;
-		return p+2;
-	}
-	if (*p=='\n') {
-		db->error=PARSE_OK;
-		return p+1;
-	}
-	LOG(L_ERR, "ERROR: Date EoL expected\n");
+	db->error=PARSE_OK;
+	return ;
 error:
-	LOG(L_ERR,"ERROR: parse_date: parse error: \"%.*s\" (%d)\n",
-				i1, buffer, i1);
-	return p;
+	LOG(L_ERR,"ERROR: parse_date: parse error\n");
+	return ;
 }
 
+int parse_date_header(struct sip_msg *msg)
+{
+	struct date_body* date_b;
+
+
+	if ( !msg->date && (parse_headers(msg,HDR_DATE_F,0)==-1 || !msg->date) ) {
+		LOG(L_ERR,"ERROR:parse_date_header: bad msg or missing DATE header\n");
+		goto error;
+	}
+
+	/* maybe the header is already parsed! */
+	if (msg->date->parsed)
+		return 0;
+
+	date_b=pkg_malloc(sizeof(*date_b));
+	if (date_b==0){
+		LOG(L_ERR, "ERROR:parse_date_header: out of memory\n");
+		goto error;
+	}
+	memset(date_b, 0, sizeof(*date_b));
+
+	parse_date(msg->date->body.s,
+			   msg->date->body.s + msg->date->body.len+1,
+			   date_b);
+	if (date_b->error==PARSE_ERROR){
+		free_date(date_b);
+		goto error;
+	}
+	msg->date->parsed=(void*)date_b;
+
+	return 0;
+error:
+	return -1;
+}
 
 void free_date(struct date_body *db)
 {

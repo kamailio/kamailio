@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -34,14 +34,15 @@
 #include "parser_f.h"  /* eat_space_end and so on */
 
 
-char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
+void parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b)
 {
 	int status = II_START;
 	int mainstatus = II_M_START;
 	char *p;
 
 
-	if (!buffer || !end || !ii_b) return NULL;
+	if (!buffer || !end || !ii_b) return ;
+
 
 	ii_b->error = PARSE_ERROR;
 
@@ -56,35 +57,38 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 					goto parseerror;
 					break;
 			case 'h':
-				case 'H': /* "http://" or "https://" part  */
-					switch (status) {
-						case II_URI_BEGIN:
-							if (end - p <= 8 || strncasecmp(p,"http",strlen("http")))
-								goto parseerror;
-							p+=4;
-							if (*p == 's' || *p == 'S') p++;
-							if (memcmp(p,"://",strlen("://")))
-								goto parseerror;
-							p+=2;
-							status = II_URI_DOMAIN;
-							break;
-						case II_URI_DOMAIN:
-							status = II_URI_IPV4;
-						case II_URI_IPV4:
-						case II_URI_IPV6:
-						case II_URI_PATH:
-						case II_TOKEN:
-						case II_TAG:
-							break;
-						case II_EQUAL:
-							status = II_TOKEN;
-							mainstatus = II_M_TOKEN;
-							ii_b->alg.s = p;
-							break;
-						default:
+			case 'H': /* "http://" or "https://" part  */
+				switch (status) {
+					case II_URI_BEGIN:
+						if (end - p <= 8 || strncasecmp(p,"http",strlen("http")))
 							goto parseerror;
-					}
-					break;
+						p+=4;
+						if (*p == 's' || *p == 'S') p++;
+						if (memcmp(p,"://",strlen("://")))
+							goto parseerror;
+						p+=2;
+						status = II_URI_DOMAIN;
+						break;
+					case II_URI_DOMAIN:
+						status = II_URI_IPV4;
+					case II_URI_IPV4:
+					case II_URI_IPV6:
+					case II_URI_PATH:
+					case II_TOKEN:
+					case II_TAG:
+						break;
+					case II_EQUAL:
+						status = II_TOKEN;
+						mainstatus = II_M_TOKEN;
+						ii_b->alg.s = p;
+						break;
+					case II_LWSCRLF:
+						ii_b->error=PARSE_OK;
+						return ;
+					default:
+						goto parseerror;
+				}
+				break;
 			case '/':
 				switch(status){
 					case II_URI_IPV4:
@@ -105,7 +109,7 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 					mainstatus = II_M_URI_END;
 				} else
 					goto parseerror;
-					break;
+				break;
 			case ' ':
 			case '\t':
 				switch (status) {
@@ -116,6 +120,7 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 						status = II_LWS;
 						break;
 					case II_LWS:
+					case II_LWSCRLFSP:
 						break;
 					case II_LWSCRLF:
 						status = II_LWSCRLFSP;
@@ -137,12 +142,18 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 					case II_LWS:
 						status = II_LWSCR;
 						break;
+					case II_LWSCRLF:
+						ii_b->error=PARSE_OK;
+						return ;
 					default:
 						goto parseerror;
 				}
 				break;
 			case '\n':
 				switch (status) {
+					case II_LWSCRLF:
+						ii_b->error=PARSE_OK;
+						return ;
 					case II_EQUAL:
 					case II_TAG:
 					case II_SEMIC:
@@ -151,26 +162,17 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 					case II_LWSCR:
 						status = II_LWSCRLF;
 						break;
-						case II_TOKEN: /* if there was not '\r' */
-							ii_b->alg.len = p - ii_b->alg.s;
+					case II_TOKEN: /* if there was not '\r' */
+						ii_b->alg.len = p - ii_b->alg.s;
 					case II_ENDHEADER:
 						p=eat_lws_end(p, end);
 						/*check if the header ends here*/
 						if (p>=end) {
-							LOG(L_ERR, "ERROR: parse_date: strange EoHF\n");
+							LOG(L_ERR, "ERROR: parse_identityinfo: strange EoHF\n");
 							goto parseerror;
 						}
-						if (*p=='\r' && p+1<end && *(p+1)=='\n') {
-							ii_b->error=PARSE_OK;
-							return p+2;
-						}
-						if (*p=='\n') {
-							ii_b->error=PARSE_OK;
-							return p+1;
-						}
-						LOG(L_ERR, "ERROR: Date EoL expected\n");
-						goto error;
-						break;
+						ii_b->error=PARSE_OK;
+						return ;
 					default:
 						goto parseerror;
 				}
@@ -190,7 +192,7 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 						goto parseerror;
 				}
 				break;
-				case 'a': /* tag part of 'alg' parameter */
+			case 'a': /* tag part of 'alg' parameter */
 			case 'A':
 				switch (status) {
 					case II_LWS:
@@ -217,6 +219,9 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 						mainstatus = II_M_TOKEN;
 						ii_b->alg.s = p;
 						break;
+					case II_LWSCRLF:
+						ii_b->error=PARSE_OK;
+						return ;
 					default:
 						goto parseerror;
 				}
@@ -279,6 +284,9 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 						break;
 					case II_TOKEN:
 						break;
+					case II_LWSCRLF:
+						ii_b->error=PARSE_OK;
+						return ;
 					case II_URI_DOMAIN:
 						ii_b->domain.s = p;
 						status = II_URI_IPV4;
@@ -288,22 +296,60 @@ char* parse_identityinfo(char *buffer, char *end, struct identityinfo_body *ii_b
 						    || *p == '-'
 						    || *p == '.'
 						    || *p == ':' )
-							break;
+						break;
 					case II_START:
 						goto parseerror;
 				}
 				break;
 		}
 	}
+	/* we successfully parse the header */
+	ii_b->error=PARSE_OK;
+	return ;
 
 parseerror:
-		LOG( L_ERR , "ERROR: parse_identityinfo: "
-		"unexpected char [%c] in status %d: <<%.*s>> .\n",
-		*p,status, (int)(p-buffer), ZSW(buffer));
-error:
-		return p;
+	LOG( L_ERR , "ERROR: parse_identityinfo: "
+	"unexpected char [%c] in status %d: <<%.*s>> .\n",
+	*p,status, (int)(p-buffer), ZSW(p));
+	return ;
 }
 
+int parse_identityinfo_header(struct sip_msg *msg)
+{
+	struct identityinfo_body* identityinfo_b;
+
+
+	if ( !msg->identity_info
+		 && (parse_headers(msg,HDR_IDENTITY_INFO_F,0)==-1
+			 || !msg->identity_info) ) {
+		LOG(L_ERR,"ERROR:parse_identityinfo_header: bad msg or missing IDENTITY-INFO header\n");
+		goto error;
+	}
+
+	/* maybe the header is already parsed! */
+	if (msg->identity_info->parsed)
+		return 0;
+
+	identityinfo_b=pkg_malloc(sizeof(*identityinfo_b));
+	if (identityinfo_b==0){
+		LOG(L_ERR, "ERROR:parse_identityinfo_header: out of memory\n");
+		goto error;
+	}
+	memset(identityinfo_b, 0, sizeof(*identityinfo_b));
+
+	parse_identityinfo(msg->identity_info->body.s,
+					   msg->identity_info->body.s + msg->identity_info->body.len+1,
+					   identityinfo_b);
+	if (identityinfo_b->error==PARSE_ERROR){
+		free_identityinfo(identityinfo_b);
+		goto error;
+	}
+	msg->identity_info->parsed=(void*)identityinfo_b;
+
+	return 0;
+error:
+	return -1;
+}
 
 void free_identityinfo(struct identityinfo_body *ii_b)
 {
