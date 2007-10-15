@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -58,7 +58,7 @@ int retrieve_x509(X509 **pcert, str *scert)
 			break;
 		}
 
-		if (!(*pcert = PEM_read_bio_X509(bcer, NULL, NULL, NULL))) {
+		if (!(*pcert = d2i_X509_bio(bcer, NULL))) {
 			ERR_error_string_n(ERR_get_error(), serr, sizeof(serr));
 			LOG(L_ERR, "AUTH_INDENTITY:retrieve_x509: Certificate %s\n", serr);
 			iRet=-3;
@@ -117,14 +117,29 @@ int rsa_sha1_enc (dynstr *sdigeststr,
 		 getstr_dynstr(sdigeststr).len,
 		 sstrcrypted);
 
+#ifdef NEW_RSA_PROC
+	ires = senc->size;
+	if (RSA_sign(NID_sha1,
+			 	 sstrcrypted,
+			 	 sizeof sstrcrypted,
+				 (unsigned char*)getstr_dynstr(senc).s,
+				 (unsigned int*)&ires,
+			 	 hmyprivkey) != 1) {
+		ERR_error_string_n(ERR_get_error(), serr, sizeof serr);
+		LOG(L_ERR, "AUTH_INDENT:rsa_sha1_enc: '%s'\n", serr);
+		return -2;
+	}
+#else
 	ires=RSA_private_encrypt(sizeof sstrcrypted, sstrcrypted,
-							 (unsigned char*)getstr_dynstr(senc).s, hmyprivkey, RSA_PKCS1_PADDING );
+							 (unsigned char*)getstr_dynstr(senc).s, hmyprivkey,
+							 RSA_PKCS1_PADDING );
 	if (ires<0)
 	{
 		ERR_error_string_n(ERR_get_error(), serr, sizeof serr);
 		LOG(L_ERR, "AUTH_INDENT:rsa_sha1_enc: '%s'\n", serr);
 		return -1;
 	}
+#endif
 
 	base64encode(getstr_dynstr(senc).s, senc->size, getstr_dynstr(sencb64).s, &getstr_dynstr(sencb64).len );
 
@@ -157,13 +172,22 @@ int rsa_sha1_dec (char *sencedsha, int iencedshalen,
 		return -2;
 	}
 
+#ifdef NEW_RSA_PROC
+	if (!RSA_verify(NID_sha1,
+		 			(unsigned char*)ssha, sshasize,
+					(unsigned char*)sencedsha, iencedshalen,
+					hpubkey)) {
+		LOG(L_INFO, "AUTH_INDENTITY VERIFIER: Invalid Identity Header\n");
+		RSA_free(hpubkey);
+		return -5;
+	}
+#else
 	/* it is bigger than the output buffer */
 	if (RSA_size(hpubkey) > sshasize) {
 		LOG(L_ERR, "AUTH_INDENTITY:decrypt_identity: Unexpected Identity hash length (%d > %d)\n", RSA_size(hpubkey), sshasize);
 		RSA_free(hpubkey);
 		return -3;
 	}
-
 	*ishalen=RSA_public_decrypt(iencedshalen,
 								(unsigned char*)sencedsha,
 								(unsigned char*)ssha,
@@ -175,6 +199,7 @@ int rsa_sha1_dec (char *sencedsha, int iencedshalen,
 		RSA_free(hpubkey);
 		return -4;
 	}
+#endif
 
 	RSA_free(hpubkey);
 

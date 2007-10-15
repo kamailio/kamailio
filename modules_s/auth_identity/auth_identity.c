@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -450,17 +450,18 @@ static int get_certificate(struct sip_msg* msg, char* srt1, char* str2)
 	   return -4;
 	}
 
-	/* we support rsa-sha1 only */
-	if (get_identityinfo(msg)->alg.len != strlen("rsa-sha1")
-	    || strncasecmp("rsa-sha1",
-					   get_identityinfo(msg)->alg.s,
-					   get_identityinfo(msg)->alg.len )) {
+	/* we support rsa-sha1 only (alg.len==0 then we use rsa-sha1) */
+	if (get_identityinfo(msg)->alg.len
+		&& (get_identityinfo(msg)->alg.len != strlen("rsa-sha1")
+		    || strncasecmp("rsa-sha1",
+							get_identityinfo(msg)->alg.s,
+							get_identityinfo(msg)->alg.len ))) {
 		LOG(L_ERR, "AUTH_INDENTITY:get_certificate: Unsupported Identity-Info algorithm\n");
 		return -5;
 	}
 
 
-	/* we thep over 'http' characters in the identity-info url */
+	/* we step over 'http' characters in the identity-info url */
 	glb_tcert.surl.s=suri.s+4;
 	glb_tcert.surl.len=suri.len-4;
 	/* this case ivalidbefore==0 singns that this certificate was downloaded */
@@ -494,7 +495,9 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 	str sidentity;
 	char sencedsha[HASH_STR_SIZE];
 	int iencedshalen;
+#ifndef NEW_RSA_PROC
 	char ssha[HASH_STR_SIZE];
+#endif
 	int ishalen;
 	unsigned char sstrcrypted[SHA_DIGEST_LENGTH];
 	int iRet=1;
@@ -522,6 +525,27 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 		/* base64 decode the value of Identity header */
 		base64decode(sidentity.s, sidentity.len, sencedsha, &iencedshalen);
 
+		/* assemble the digest string to be able to compare it with decrypted one */
+		if (digeststr_asm(&glb_sdgst, msg, NULL, AUTH_INCOMING_BODY)) {
+			iRet=-5;
+			break;
+		}
+		/* calculate hash */
+		SHA1((unsigned char*)getstr_dynstr(&glb_sdgst).s,
+			  getstr_dynstr(&glb_sdgst).len,
+			  sstrcrypted);
+
+#ifdef NEW_RSA_PROC
+		/* decrypt with public key retrieved from the downloaded certificate
+		   and compare it with the calculated digest hash */
+		if (rsa_sha1_dec(sencedsha, iencedshalen,
+						 (char *)sstrcrypted, sizeof(sstrcrypted), &ishalen,
+						 glb_pcertx509)) {
+			iRet=-3;
+			break;
+		} else
+			LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Identity OK\n");
+#else
 		/* decrypt with public key retrieved from the downloaded certificate */
 		if (rsa_sha1_dec(sencedsha, iencedshalen,
 						 ssha, sizeof(ssha), &ishalen,
@@ -536,18 +560,6 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 			iRet=-4;
 			break;
 		}
-		/* assemble the digest string to be able to compare it with decrypted one */
-		if (digeststr_asm(&glb_sdgst, msg, NULL, AUTH_INCOMING_BODY)) {
-			iRet=-5;
-			break;
-		}
-
-		/* calculate hash */
-		SHA1((unsigned char*)getstr_dynstr(&glb_sdgst).s,
-			  getstr_dynstr(&glb_sdgst).len,
-			  sstrcrypted);
-
-
 		/* compare */
 		if (memcmp(sstrcrypted, ssha, ishalen)) {
 			LOG(L_INFO, "AUTH_INDENTITY VERIFIER: Invalid Identity Header\n");
@@ -555,6 +567,7 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 			break;
 		} else
 			LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Identity OK\n");
+#endif
 	} while (0);
 
 	glb_pcertx509=NULL;
@@ -700,7 +713,7 @@ static int date_proc(struct sip_msg* msg, char* srt1, char* str2)
 	time_t tmsg, tnow;
 
 	if (glb_authservice_disabled) {
-		LOG(L_ERR, "AUTH_IDENTITY:date_proc: Authentication Service is disabled\n");
+		LOG(L_WARN, "AUTH_IDENTITY:date_proc: Authentication Service is disabled\n");
 		return -1;
 	}
 
@@ -774,7 +787,7 @@ static int add_identity(struct sip_msg* msg, char* srt1, char* str2)
 
 
 	if (glb_authservice_disabled) {
-		LOG(L_ERR, "AUTH_IDENTITY:add_identity: Authentication Service is disabled\n");
+		LOG(L_WARN, "AUTH_IDENTITY:add_identity: Authentication Service is disabled\n");
 		return -1;
 	}
 
