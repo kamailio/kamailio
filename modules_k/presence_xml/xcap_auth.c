@@ -57,12 +57,12 @@ int pres_watcher_allowed(subs_t* subs)
 		subs->reason.len= 0;
 		return 0;
 	}
+	subs->status= PENDING_STATUS;
+	subs->reason.s= NULL;
+	subs->reason.len= 0;
 
 	if(subs->auth_rules_doc== NULL)
 	{
-		subs->status= PENDING_STATUS;
-		subs->reason.s= NULL;
-		subs->reason.len= 0;
 		return 0;
 	}
 
@@ -129,6 +129,13 @@ int pres_watcher_allowed(subs_t* subs)
 		subs->status = ACTIVE_STATUS;
 		subs->reason.s = NULL;
 	}
+	else
+	{
+		LM_ERR("unknown subscription handling action\n");
+		xmlFree(sub_handling);
+		return -1;
+	}
+
 	xmlFree(sub_handling);
 
 	return 0;

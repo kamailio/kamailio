@@ -289,7 +289,7 @@ static int child_init(int rank)
 
 static void destroy(void)
 {	
-	LM_DBG("...\n");
+	LM_DBG("start\n");
 	if(pxml_db && pxml_dbf.close)
 		pxml_dbf.close(pxml_db);
 
