@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -30,6 +30,7 @@
 #define PARSE_DATE
 
 #include <time.h>
+#include "msg_parser.h"
 
 #define RFC1123DATELENGTH	29
 
@@ -46,8 +47,8 @@ struct date_body{
 /*
  * Parse Date header field
  */
-char* parse_date(char *buf, char *end, struct date_body *db);
-
+void parse_date(char *buf, char *end, struct date_body *db);
+int parse_date_header(struct sip_msg *msg);
 
 /*
  * Free all associated memory

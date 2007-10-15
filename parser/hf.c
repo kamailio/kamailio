@@ -39,6 +39,8 @@
 #include "parse_to.h"
 #include "parse_cseq.h"
 #include "parse_date.h"
+#include "parse_identity.h"
+#include "parse_identityinfo.h"
 #include "../dprint.h"
 #include "../mem/mem.h"
 #include "parse_def.h"

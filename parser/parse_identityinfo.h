@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -30,6 +30,7 @@
 #define PARSE_IDENTITYNFO
 
 #include "../str.h"
+#include "msg_parser.h"
 
 enum {
 	II_START,
@@ -77,8 +78,8 @@ struct identityinfo_body {
 /*
  * Parse Identity-Info header field
  */
-char* parse_identityinfo(char *buffer, char* end, struct identityinfo_body *ii_b);
-
+void parse_identityinfo(char *buffer, char* end, struct identityinfo_body *ii_b);
+int parse_identityinfo_header(struct sip_msg *msg);
 
 /*
  * Free all associated memory

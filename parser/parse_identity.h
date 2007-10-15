@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -30,6 +30,7 @@
 #define PARSE_IDENTITY
 
 #include "../str.h"
+#include "msg_parser.h"
 
 struct identity_body{
 	int error;  		/* Error code */
@@ -45,7 +46,8 @@ struct identity_body{
 /*
  * Parse Identity header field
  */
-char* parse_identity(char *buf, char *end, struct identity_body *ib);
+void parse_identity(char *buf, char *end, struct identity_body *ib);
+int parse_identity_header(struct sip_msg *msg);
 
 
 /*
