@@ -44,7 +44,7 @@
 #include "../sl/sl_api.h"
 
 /* if DB support is used, this values must not exceed the 
- * storage capacity of the DB columns! See scripts/mysqldb.sh */
+ * storage capacity of the DB columns! See db/schema/entities.xml */
 #define CONTACT_MAX_SIZE       255
 #define RECEIVED_MAX_SIZE      255
 #define USERNAME_MAX_SIZE      64
