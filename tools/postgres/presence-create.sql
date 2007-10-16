@@ -11,14 +11,14 @@ CREATE TABLE presentity (
     CONSTRAINT udee_presentity UNIQUE (username, domain, event, etag)
 );
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','8');
+INSERT INTO version (table_name, table_version) values ('active_watchers','9');
 CREATE TABLE active_watchers (
     id SERIAL PRIMARY KEY NOT NULL,
-    pres_uri VARCHAR(128) NOT NULL,
+    presentity_uri VARCHAR(128) NOT NULL,
+    watcher_username VARCHAR(64) NOT NULL,
+    watcher_domain VARCHAR(64) NOT NULL,
     to_user VARCHAR(64) NOT NULL,
     to_domain VARCHAR(64) NOT NULL,
-    from_user VARCHAR(64) NOT NULL,
-    from_domain VARCHAR(64) NOT NULL,
     event VARCHAR(64) NOT NULL DEFAULT 'presence',
     event_id VARCHAR(64),
     to_tag VARCHAR(64) NOT NULL,
@@ -34,20 +34,20 @@ CREATE TABLE active_watchers (
     version INTEGER NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    CONSTRAINT pctt_watchers UNIQUE (pres_uri, callid, to_tag, from_tag)
+    CONSTRAINT pctt_watchers UNIQUE (presentity_uri, callid, to_tag, from_tag)
 );
 
-INSERT INTO version (table_name, table_version) values ('watchers','2');
+INSERT INTO version (table_name, table_version) values ('watchers','3');
 CREATE TABLE watchers (
     id SERIAL PRIMARY KEY NOT NULL,
-    p_uri VARCHAR(128) NOT NULL,
-    w_user VARCHAR(64) NOT NULL,
-    w_domain VARCHAR(64) NOT NULL,
+    presentity_uri VARCHAR(128) NOT NULL,
+    watcher_username VARCHAR(64) NOT NULL,
+    watcher_domain VARCHAR(64) NOT NULL,
     event VARCHAR(64) NOT NULL DEFAULT 'presence',
-    subs_status INTEGER NOT NULL,
+    status INTEGER NOT NULL,
     reason VARCHAR(64),
     inserted_time INTEGER NOT NULL,
-    CONSTRAINT uude_watchers UNIQUE (p_uri, w_user, w_domain, event)
+    CONSTRAINT uude_watchers UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
 );
 
 INSERT INTO version (table_name, table_version) values ('xcap','3');

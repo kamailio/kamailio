@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) p_uri(str) w_user(str) w_domain(str) event(str) subs_status(int) reason(str) inserted_time(int)
+id(int) presentity_uri(str) watcher_username(str) watcher_domain(str) event(str) status(int) reason(str) inserted_time(int)
 METADATA_KEY
 0 4 
 METADATA_READONLY

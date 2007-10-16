@@ -11,14 +11,14 @@ CREATE TABLE presentity (
     UNIQUE KEY udee_presentity (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('active_watchers','8');
+INSERT INTO version (table_name, table_version) values ('active_watchers','9');
 CREATE TABLE active_watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    pres_uri VARCHAR(128) NOT NULL,
+    presentity_uri VARCHAR(128) NOT NULL,
+    watcher_username VARCHAR(64) NOT NULL,
+    watcher_domain VARCHAR(64) NOT NULL,
     to_user VARCHAR(64) NOT NULL,
     to_domain VARCHAR(64) NOT NULL,
-    from_user VARCHAR(64) NOT NULL,
-    from_domain VARCHAR(64) NOT NULL,
     event VARCHAR(64) NOT NULL DEFAULT 'presence',
     event_id VARCHAR(64),
     to_tag VARCHAR(64) NOT NULL,
@@ -34,20 +34,20 @@ CREATE TABLE active_watchers (
     version INT(11) NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    UNIQUE KEY pctt_watchers (pres_uri, callid, to_tag, from_tag)
+    UNIQUE KEY pctt_watchers (presentity_uri, callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('watchers','2');
+INSERT INTO version (table_name, table_version) values ('watchers','3');
 CREATE TABLE watchers (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    p_uri VARCHAR(128) NOT NULL,
-    w_user VARCHAR(64) NOT NULL,
-    w_domain VARCHAR(64) NOT NULL,
+    presentity_uri VARCHAR(128) NOT NULL,
+    watcher_username VARCHAR(64) NOT NULL,
+    watcher_domain VARCHAR(64) NOT NULL,
     event VARCHAR(64) NOT NULL DEFAULT 'presence',
-    subs_status INT(11) NOT NULL,
+    status INT(11) NOT NULL,
     reason VARCHAR(64),
     inserted_time INT(11) NOT NULL,
-    UNIQUE KEY uude_watchers (p_uri, w_user, w_domain, event)
+    UNIQUE KEY uude_watchers (presentity_uri, watcher_username, watcher_domain, event)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('xcap','3');

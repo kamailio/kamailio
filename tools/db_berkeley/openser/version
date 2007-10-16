@@ -10,8 +10,6 @@ acc|
 acc|4
 active_sessions|
 active_sessions|1
-active_watchers|
-active_watchers|8
 address|
 address|3
 admin_privileges|
@@ -87,6 +85,6 @@ usr_preferences|2
 usr_preferences_types|
 usr_preferences_types|1
 watchers|
-watchers|2
+watchers|3
 xcap|
 xcap|3
