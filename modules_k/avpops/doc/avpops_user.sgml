@@ -25,6 +25,13 @@
 		testing/checking the value of an AVP.
 		</para>
 		<para>
+		AVPs are persistent per SIP transaction, being available in "route", 
+		"branch_route" and "failure_route". To make them available in 
+		"onreply_route" armed via TM module, set "onreply_avp_mode" parameter
+		of TM module (note that in the default "onreply_route", the AVPs of
+		the transaction are not available).
+		</para>
+		<para>
 		An up-to-date tutorial providing more information (detailed
 		explanations and commented examples) can be found on Voice Sistem
 		documentation web page at http://voice-system.ro/docs/avpops .
