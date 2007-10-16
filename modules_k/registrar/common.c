@@ -45,6 +45,8 @@
 int extract_aor(str* _uri, str* _a)
 {
 	static char aor_buf[MAX_AOR_LEN];
+	memset(aor_buf, 0, MAX_AOR_LEN);
+
 	str tmp;
 	struct sip_uri puri;
 	int user_len;
