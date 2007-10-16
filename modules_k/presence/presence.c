@@ -60,9 +60,9 @@
 
 MODULE_VERSION
 
-#define S_TABLE_VERSION  2
+#define S_TABLE_VERSION  3
 #define P_TABLE_VERSION  2
-#define ACTWATCH_TABLE_VERSION 8
+#define ACTWATCH_TABLE_VERSION 9
 
 char *log_buf = NULL;
 static int clean_period=100;
@@ -593,7 +593,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	db_val_t *row_vals ;
 	int i;
 	str w_user, w_domain, reason;
-	int status;
+	unsigned int status;
 	int status_col, w_user_col, w_domain_col, reason_col;
 	int u_status_col, u_reason_col, q_wuser_col, q_wdomain_col;
 	subs_t* subs_array= NULL,* s;
@@ -615,7 +615,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	subs.auth_rules_doc= rules_doc;
 
 	/* update in watchers_table */
-	query_cols[n_query_cols]= "p_uri";
+	query_cols[n_query_cols]= "presentity_uri";
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	query_vals[n_query_cols].val.str_val= pres_uri;
@@ -627,12 +627,12 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	query_vals[n_query_cols].val.str_val= ev->name;
 	n_query_cols++;
 
-	result_cols[status_col= n_result_cols++]= "subs_status";
+	result_cols[status_col= n_result_cols++]= "status";
 	result_cols[reason_col= n_result_cols++]= "reason";
-	result_cols[w_user_col= n_result_cols++]= "w_user";
-	result_cols[w_domain_col= n_result_cols++]= "w_domain";
+	result_cols[w_user_col= n_result_cols++]= "watcher_username";
+	result_cols[w_domain_col= n_result_cols++]= "watcher_domain";
 	
-	update_cols[u_status_col= n_update_cols]= "subs_status";
+	update_cols[u_status_col= n_update_cols]= "status";
 	update_vals[u_status_col].nul= 0;
 	update_vals[u_status_col].type= DB_INT;
 	n_update_cols++;
@@ -663,12 +663,12 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		goto done;
 	}
 
-	query_cols[q_wuser_col=n_query_cols]= "w_user";
+	query_cols[q_wuser_col=n_query_cols]= "watcher_username";
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	n_query_cols++;
 
-	query_cols[q_wdomain_col=n_query_cols]= "w_domain";
+	query_cols[q_wdomain_col=n_query_cols]= "watcher_domain";
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	n_query_cols++;

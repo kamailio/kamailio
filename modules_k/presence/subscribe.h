@@ -61,7 +61,7 @@ struct subscription
 	str local_contact;
 	str record_route;
 	unsigned int expires;
-	int status;
+	unsigned int status;
 	str reason;
 	int version;
 	int send_on_cback;

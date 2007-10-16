@@ -451,7 +451,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	/* now we have all the necessary values */
 	/* fill in the filds of the structure */
 
-	presentity= new_presentity(&pres_domain, &pres_user, lexpire, event, &etag, sender);
+	presentity= new_presentity(&pres_domain, &pres_user, lexpire, event,
+			&etag, sender);
 	if(presentity== NULL)
 	{
 		LM_ERR("creating presentity structure\n");

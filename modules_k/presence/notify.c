@@ -242,7 +242,7 @@ int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
 	int status_col, expires_col, from_user_col, from_domain_col;
 	str from_user, from_domain;
 
-	query_cols[n_query_cols] = "pres_uri";
+	query_cols[n_query_cols] = "presentity_uri";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -258,8 +258,8 @@ int get_wi_subs_db(subs_t* subs, watcher_t** watchers)
 
 	result_cols[status_col=n_result_cols++] = "status" ;
 	result_cols[expires_col=n_result_cols++] = "expires";
-	result_cols[from_user_col=n_result_cols++] = "from_user";
-	result_cols[from_domain_col=n_result_cols++] = "from_domain";
+	result_cols[from_user_col=n_result_cols++] = "watcher_username";
+	result_cols[from_domain_col=n_result_cols++] = "watcher_domain";
 	
 	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
 	{
@@ -890,7 +890,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	}
 
 	LM_DBG("querying database table = active_watchers\n");
-	query_cols[n_query_cols] = "pres_uri";
+	query_cols[n_query_cols] = "presentity_uri";
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
@@ -924,8 +924,8 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 
 	result_cols[to_user_col=n_result_cols++]      =   "to_user" ;
 	result_cols[to_domain_col=n_result_cols++]    =   "to_domain";
-	result_cols[from_user_col=n_result_cols++]    =   "from_user" ;
-	result_cols[from_domain_col=n_result_cols++]  =   "from_domain" ;
+	result_cols[from_user_col=n_result_cols++]    =   "watcher_username" ;
+	result_cols[from_domain_col=n_result_cols++]  =   "watcher_domain" ;
 	result_cols[event_id_col=n_result_cols++]     =   "event_id";
 	result_cols[from_tag_col=n_result_cols++]     =   "from_tag";
 	result_cols[to_tag_col=n_result_cols++]       =   "to_tag";	
