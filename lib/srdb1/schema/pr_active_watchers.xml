@@ -9,7 +9,7 @@
 
 <table id="active_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>active_watchers</name>
-    <version>8</version>
+    <version>9</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: &OPENSER_MOD_DOC;presence.html
@@ -27,11 +27,25 @@
         <description>Unique ID</description>
     </column>
 
-    <column id="pres_uri">
-        <name>pres_uri</name>
+    <column id="presentity_uri">
+        <name>presentity_uri</name>
         <type>string</type>
         <size>&uri_len;</size>
         <description>Presence URI</description>
+    </column>
+   
+	<column>
+        <name>watcher_username</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <description>From User</description>
+    </column>
+
+    <column>
+        <name>watcher_domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
+        <description>From Domain</description>
     </column>
 
     <column>
@@ -48,20 +62,7 @@
         <description>To Domain</description>
     </column>
 
-    <column>
-        <name>from_user</name>
-        <type>string</type>
-        <size>&user_len;</size>
-        <description>From User</description>
-    </column>
-
-    <column>
-        <name>from_domain</name>
-        <type>string</type>
-        <size>&domain_len;</size>
-        <description>From Domain</description>
-    </column>
-
+  
     <column>
         <name>event</name>
         <type>string</type>
@@ -173,7 +174,7 @@
 
     <index>
         <name>pctt_watchers</name>
-        <colref linkend="pres_uri"/>
+        <colref linkend="presentity_uri"/>
         <colref linkend="callid"/>
         <colref linkend="to_tag"/>
         <colref linkend="from_tag"/>

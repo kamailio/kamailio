@@ -9,7 +9,7 @@
 
 <table id="watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>watchers</name>
-    <version>2</version>
+    <version>3</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for the presence module. More information can be found at: &OPENSER_MOD_DOC;presence.html
@@ -27,22 +27,22 @@
         <description>Unique ID</description>
     </column>
 
-    <column id="p_uri">
-        <name>p_uri</name>
+    <column id="presentity_uri">
+        <name>presentity_uri</name>
         <type>string</type>
         <size>&uri_len;</size>
         <description>Presentity Uri</description>
     </column>
 
-    <column id="w_user">
-        <name>w_user</name>
+    <column id="watcher_username">
+        <name>watcher_username</name>
         <type>string</type>
         <size>&user_len;</size>
         <description>Watcher User</description>
     </column>
 
-    <column id="w_domain">
-        <name>w_domain</name>
+    <column id="watcher_domain">
+        <name>watcher_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>Watcher Domain</description>
@@ -57,7 +57,7 @@
     </column>
 
     <column>
-        <name>subs_status</name>
+        <name>status</name>
 		<type>int</type>
 		<size>11</size>
         <description>Status</description>
@@ -79,9 +79,9 @@
 
     <index>
         <name>uude_watchers</name>
-        <colref linkend="p_uri"/>
-        <colref linkend="w_user"/>
-        <colref linkend="w_domain"/>
+        <colref linkend="presentity_uri"/>
+        <colref linkend="watcher_username"/>
+        <colref linkend="watcher_domain"/>
         <colref linkend="event"/>
         <unique/>
     </index>
