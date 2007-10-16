@@ -74,7 +74,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
                    const char * rewrite_local_prefix, const char * rewrite_local_suffix,
                    int status, int hash_index, int backup, int * backed_up,
                    const char * comment) {
-	struct route_rule * shm_rr;
+	struct route_rule * shm_rr, * prev = NULL, * tmp = NULL;
 	struct route_rule_p_list * t_rl;
 	int * t_bu;
 
@@ -177,8 +177,19 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 		t_bu++;
 	}
 
-	shm_rr->next = route_tree->rule_list;
-	route_tree->rule_list = shm_rr;
+	/* rules with a probability of zero are always at the beginning of the list */
+	tmp = route_tree->rule_list;
+	while(tmp && tmp->prob == 0){
+		prev = tmp;
+		tmp = tmp->next;
+	}
+	if(prev){
+		shm_rr->next = prev->next;
+		prev->next = shm_rr;
+	} else {
+		shm_rr->next = route_tree->rule_list;
+		route_tree->rule_list = shm_rr;
+	}
 
 	return 0;
 }

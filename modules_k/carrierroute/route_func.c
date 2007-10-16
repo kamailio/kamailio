@@ -342,9 +342,10 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	} while (rd == NULL);
 	if (index <= 0) {
 		if (fallback_default) {
+			LM_NOTICE("invalid tree id %i specified, use default tree\n", (int)_tree);
 			index = rd->default_carrier_index;
 		} else {
-			LM_ERR("desired routing tree with id %i doesn't exist\n", index);
+			LM_ERR("invalid tree id %i specified and fallback deactivated\n", (int)_tree);
 			release_data(rd);
 			return -1;
 		}
@@ -705,11 +706,9 @@ static int carrier_rewrite_msg(int carrier, int domain,
 
 	LM_INFO("uri %.*s was rewritten to %.*s\n", user->len, user->s, dest.len, dest.s);
 
-	act.n = 1;
 	act.type = SET_URI_T;
 	act.elem[0].type= STRING_ST;
 	act.elem[0].u.string = dest.s;
-	act.line = 0;
 	act.next = NULL;
 
 	ret = do_action(&act, msg);
@@ -811,6 +810,9 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 			}
 			break;
 		case alg_crc32:
+			if(route_tree->dice_max == 0){
+				return -1;
+			}
 			if ((prob = hash_func(msg, hash_source, route_tree->dice_max)) < 0) {
 				return -1;
 			}
