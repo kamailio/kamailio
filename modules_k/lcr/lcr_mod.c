@@ -1747,7 +1747,7 @@ inline int encode_branch_info(str *info, struct contact *con)
 	con->path.len + MAX_SOCKET_STR + INT2STR_MAX_LEN + 5;
     info->s = pkg_malloc(info->len);
     if (!info->s) {
-	LM_ERR("No mamory left for branch info\n");
+	LM_ERR("No memory left for branch info\n");
 	return 0;
     }
     at = info->s;
