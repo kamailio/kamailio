@@ -284,7 +284,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 				LM_DBG("no service_uri found\n");
 			else
 				LM_DBG("found service_uri = %s\n", service_uri);
-
+			i = 0;
 			if(service_uri!= NULL)
 			{
 				while(service_uri[i]!= ':')
@@ -373,8 +373,7 @@ str* get_final_notify_body( subs_t *subs, str* notify_body, xmlNodePtr rule_node
 				}
 			
 				if(xmlStrcasecmp(provide_node->name,
-							(unsigned char*)"service-uri-scheme")==0
-						&& service_uri_scheme)
+						(unsigned char*)"service-uri-scheme")==0&& i)
 				{
 					content = (char*)xmlNodeGetContent(provide_node);
 					LM_DBG("service_uri_scheme=%s\n",content);
