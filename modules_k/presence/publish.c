@@ -415,7 +415,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		body.len= get_content_length( msg );
 	}	
 	memset(&puri, 0, sizeof(struct sip_uri));
-	if(sender_uri && strcmp(sender_uri, ""))
+	if(sender_uri)
 	{
 		sender=(str*)pkg_malloc(sizeof(str));
 		if(sender== NULL)
