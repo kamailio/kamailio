@@ -427,7 +427,7 @@ natping_contact(str contact, struct dest_info *dst)
 		/* XXX: add send_sock handling */
 		p_method.s = natping_method;
 		p_method.len = strlen(p_method.s);
-		p_from.s = "sip:registrar"; /* XXX */
+		p_from.s = "sip:registrar@127.0.0.1:9"; /* XXX */
 		p_from.len = strlen(p_from.s);
 		set_uac_req(&uac_r, &p_method, 0, 0, 0, 0, 0, 0);
 		if (tmb.t_request(&uac_r, &contact, &contact, &p_from, 0) == -1) {
@@ -463,7 +463,7 @@ natping_contact(str contact, struct dest_info *dst)
 			pp.method.s = natping_method;
 			pp.method.len = strlen(natping_method);
 			pp.uri = contact;
-			pp.from_uri.s = "sip:registrar"; /* XXX */
+			pp.from_uri.s = "sip:registrar@127.0.0.1:9"; /* XXX */
 			pp.from_uri.len = strlen(pp.from_uri.s);
 			pp.to_uri = contact;
 			pp.send_info = dst;
