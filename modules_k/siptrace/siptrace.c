@@ -327,6 +327,22 @@ static void destroy(void)
 		shm_free(trace_on_flag);
 }
 
+static inline int siptrace_copy_proto(int proto, char *buf)
+{
+	if(buf==0)
+		return -1;
+	if(proto==PROTO_TCP) {
+		strcpy(buf, "tcp:");
+	} else if(proto==PROTO_TLS) {
+		strcpy(buf, "tls:");
+	} else if(proto==PROTO_SCTP) {
+		strcpy(buf, "sctp:");
+	} else {
+		strcpy(buf, "udp:");
+	}
+	return 0;
+}
+
 static inline char* siptrace_get_table(void)
 {
 	int_str        avp_value;
@@ -424,7 +440,8 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_keys[4] = fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
-	strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
+	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
+	strcat(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
 	strcat(fromip_buff,":");
 	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
 	db_vals[4].val.string_val = fromip_buff;
@@ -433,16 +450,10 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
-	if(msg->rcv.proto==PROTO_TCP) {
-		memcpy(toip_buff, "tcp:", 4);
-	} else if(msg->rcv.proto==PROTO_TLS) {
-		memcpy(toip_buff, "tls:", 4);
-	} else {
-		memcpy(toip_buff, "udp:", 4);
-	}
-	strcpy(toip_buff+4, ip_addr2a(&msg->rcv.dst_ip));
-	strcat(toip_buff+4,":");
-	strcat(toip_buff+4, int2str(msg->rcv.dst_port, NULL));
+	siptrace_copy_proto(msg->rcv.proto, toip_buff);
+	strcat(toip_buff, ip_addr2a(&msg->rcv.dst_ip));
+	strcat(toip_buff,":");
+	strcat(toip_buff, int2str(msg->rcv.dst_port, NULL));
 	db_vals[5].val.string_val = toip_buff;
 	
 	db_keys[6] = date_column;
@@ -694,7 +705,9 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	else {
 		if(dst==0 || dst->send_sock==0 || dst->send_sock->sock_str.s==0)
 		{
-			strcpy(fromip_buff, ip_addr2a(&msg->rcv.dst_ip));
+			siptrace_copy_proto(msg->rcv.proto, fromip_buff);
+
+			strcat(fromip_buff, ip_addr2a(&msg->rcv.dst_ip));
 			strcat(fromip_buff,":");
 			strcat(fromip_buff, int2str(msg->rcv.dst_port, NULL));
 			db_vals[4].val.string_val = fromip_buff;
@@ -709,19 +722,13 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[5].nul = 0;
 	if(dst==0)
 	{
-		db_vals[5].val.string_val = "255.255.255.255";
+		db_vals[5].val.string_val = "any:255.255.255.255";
 	} else {
 		su2ip_addr(&to_ip, &dst->to);
-		if(dst->proto==PROTO_TCP) {
-			memcpy(toip_buff, "tcp:", 4);
-		} else if(dst->proto==PROTO_TLS) {
-			memcpy(toip_buff, "tls:", 4);
-		} else {
-			memcpy(toip_buff, "udp:", 4);
-		}
-		strcpy(toip_buff+4, ip_addr2a(&to_ip));
-		strcat(toip_buff+4, ":");
-		strcat(toip_buff+4,
+		siptrace_copy_proto(dst->proto, toip_buff);
+		strcat(toip_buff, ip_addr2a(&to_ip));
+		strcat(toip_buff, ":");
+		strcat(toip_buff,
 				int2str((unsigned long)su_getport(&dst->to), &len));
 		LM_DBG("dest [%s]\n", toip_buff);
 		db_vals[5].val.string_val = toip_buff;
@@ -890,6 +897,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	db_keys[4] = fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
+	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
 	strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
 	strcat(fromip_buff,":");
 	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
@@ -902,16 +910,10 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	if(trace_local_ip)
 		db_vals[5].val.string_val = trace_local_ip;
 	else {
-		if(msg->rcv.proto==PROTO_TCP) {
-			memcpy(toip_buff, "tcp:", 4);
-		} else if(msg->rcv.proto==PROTO_TLS) {
-			memcpy(toip_buff, "tls:", 4);
-		} else {
-			memcpy(toip_buff, "udp:", 4);
-		}
-		strcpy(toip_buff+4, ip_addr2a(&msg->rcv.dst_ip));
-		strcat(toip_buff+4,":");
-		strcat(toip_buff+4, int2str(msg->rcv.dst_port, NULL));
+		siptrace_copy_proto(msg->rcv.proto, toip_buff);
+		strcat(toip_buff, ip_addr2a(&msg->rcv.dst_ip));
+		strcat(toip_buff,":");
+		strcat(toip_buff, int2str(msg->rcv.dst_port, NULL));
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
@@ -1098,6 +1100,8 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	if(trace_local_ip)
 		db_vals[4].val.string_val = trace_local_ip;
 	else {
+		siptrace_copy_proto(msg->rcv.proto, fromip_buff);
+
 		strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
 		strcat(fromip_buff,":");
 		strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
@@ -1117,19 +1121,13 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	dst = (struct dest_info*)ps->extra2;
 	if(dst==0)
 	{
-		db_vals[5].val.string_val = "255.255.255.255";
+		db_vals[5].val.string_val = "any:255.255.255.255";
 	} else {
 		su2ip_addr(&to_ip, &dst->to);
-		if(dst->proto==PROTO_TCP) {
-			memcpy(toip_buff, "tcp:", 4);
-		} else if(dst->proto==PROTO_TLS) {
-			memcpy(toip_buff, "tls:", 4);
-		} else {
-			memcpy(toip_buff, "udp:", 4);
-		}
-		strcpy(toip_buff+4, ip_addr2a(&to_ip));
-		strcat(toip_buff+4, ":");
-		strcat(toip_buff+4,
+		siptrace_copy_proto(dst->proto, toip_buff);
+		strcat(toip_buff, ip_addr2a(&to_ip));
+		strcat(toip_buff, ":");
+		strcat(toip_buff,
 				int2str((unsigned long)su_getport(&dst->to), &len));
 		LM_DBG("dest [%s]\n", toip_buff);
 		db_vals[5].val.string_val = toip_buff;
@@ -1291,7 +1289,9 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	if(trace_local_ip)
 		db_vals[4].val.string_val = trace_local_ip;
 	else {
-		strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
+		siptrace_copy_proto(msg->rcv.proto, fromip_buff);
+
+		strcat(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
 		strcat(fromip_buff,":");
 		strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
 		db_vals[4].val.string_val = fromip_buff;
@@ -1309,19 +1309,14 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	memset(&to_ip, 0, sizeof(struct ip_addr));
 	if(sl_param->dst==0)
 	{
-		db_vals[5].val.string_val = "255.255.255.255";
+		db_vals[5].val.string_val = "any:255.255.255.255";
 	} else {
 		su2ip_addr(&to_ip, sl_param->dst);
-		if(req->rcv.proto==PROTO_TCP) {
-			memcpy(toip_buff, "tcp:", 4);
-		} else if(req->rcv.proto==PROTO_TLS) {
-			memcpy(toip_buff, "tls:", 4);
-		} else {
-			memcpy(toip_buff, "udp:", 4);
-		}
-		strcpy(toip_buff+4, ip_addr2a(&to_ip));
-		strcat(toip_buff+4, ":");
-		strcat(toip_buff+4,
+		siptrace_copy_proto(req->rcv.proto, toip_buff);
+
+		strcat(toip_buff, ip_addr2a(&to_ip));
+		strcat(toip_buff, ":");
+		strcat(toip_buff,
 				int2str((unsigned long)su_getport(sl_param->dst), &len));
 		LM_DBG("dest [%s]\n", toip_buff);
 		db_vals[5].val.string_val = toip_buff;
