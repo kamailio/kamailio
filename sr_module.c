@@ -676,6 +676,11 @@ int fix_flag( modparam_t type, void* val,
  * Generic parameter fixup function which creates
  * fparam_t structure. type parameter contains allowed
  * parameter types
+ *
+ * Returns:
+ *    0 on success, 
+ *    1 if the param doesn't match the specified type
+ *    <0 on failure
  */
 int fix_param(int type, void** param)
 {
@@ -713,7 +718,7 @@ int fix_param(int type, void** param)
 	if (err == 0) {
 	    p->v.i = (int)num;
 	} else {
-		 /* Not a number */
+	    /* Not a number */
 	    pkg_free(p);
 	    return 1;
 	}
@@ -736,7 +741,7 @@ int fix_param(int type, void** param)
 	name.len = strlen(name.s);
 	trim(&name);
 	if (!name.len || name.s[0] != '$') {
-		 /* Not an AVP identifier */
+	    /* Not an AVP identifier */
 	    pkg_free(p);
 	    return 1;
 	}
@@ -754,7 +759,7 @@ int fix_param(int type, void** param)
 	name.len = strlen(name.s);
 	trim(&name);
 	if (!name.len || name.s[0] != '@') {
-		 /* Not a select identifier */
+	    /* Not a select identifier */
 	    pkg_free(p);
 	    return 1;
 	}
@@ -771,7 +776,7 @@ int fix_param(int type, void** param)
 	p->v.subst = subst_parser(&s);
 	if (!p->v.subst) {
 	    ERR("Error while parsing regex substitution\n");
-	    return -1;
+	    goto error;
 	}
 	break;
     }
