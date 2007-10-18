@@ -64,7 +64,7 @@ static usrloc_api_t ul;
 /* TM bind */
 static struct tm_binds tmb;
 static int cblen = 0;
-static const char sbuf[4] = (CRLF CRLF);
+static char sbuf[4] = (CRLF CRLF);
 
 static void natping(unsigned int ticks, void *param);
 static void natping_cycle(void);
@@ -449,7 +449,7 @@ natping_contact(str contact, struct dest_info *dst)
 			return -1;
 		}
 		hostent2su(&dst->to, he, 0, curi.port_no);
-		if (dst->send_sock == NULL) {
+		if (dst->send_sock == NULL || (dst->send_sock->flags & SI_IS_MCAST)) {
 			dst->send_sock = force_socket ? force_socket :
 			    get_send_socket(0, &dst->to, proto);
 		}
