@@ -32,6 +32,19 @@ if [ -z "$USERCOL" ]; then
 	USERCOL="username"
 fi
 
+# Describe what additional tables to install. Valid values for the variables
+# below are yes/no/ask. With ask it will interactively ask the user for the
+# answer, while yes/no allow for automated, unassisted installs.
+#
+
+# If to install tables for the modules in EXTRA_MODULES
+INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
+
+INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
+
+INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
+
+
 # SQL definitions
 # If you change this definitions here, then you must change them
 # in db/schema/entities.xml too.
@@ -202,3 +215,29 @@ merr() {
 		echo "** ERROR: $1"
 	fi
 }
+
+# Get a y/n value from a variable. If the variable contains the keyword
+# `ask', then interactively ask the user for an answer.
+#
+# Arguments:
+#  $1 - variable holding yes/no/ask
+#  $2 - question to print if value of variable is ask
+#
+# Return:
+#  On return $ANSWER will be available with y/n
+#
+get_answer ()
+{
+    value=$1
+    question=$2
+    if [ "${value}" = "ask" ]; then
+        echo -n "$question"
+        read ANSWER
+    else
+        ANSWER=${value}
+    fi
+    ANSWER=${ANSWER:0:1}
+    ANSWER=${ANSWER/Y/y}
+    ANSWER=${ANSWER/N/n}
+}
+

@@ -64,6 +64,20 @@
 # SED="sed"
 
 
+# Describe what additional tables to install. Valid values for the variables
+# below are yes/no/ask. With ask (default) it will interactively ask the user
+# for an answer, while yes/no allow for automated, unassisted installs.
+#
+
+# If to install tables for the modules in EXTRA_MODULES
+#INSTALL_EXTRA_TABLES=ask
+
+# If to install presence related tables
+#INSTALL_PRESENCE_TABLES=ask
+
+# If to install SERWEB related tables
+#INSTALL_SERWEB_TABLES=ask
+
 # define what modules should be installed
 
 # openser standard modules

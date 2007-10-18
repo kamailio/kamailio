@@ -179,24 +179,18 @@ fi
 
 minfo "Core OpenSER tables succesfully created."
 
-echo -n "Install presence related tables ?(y/n):"
-read INPUT
-if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
-then
+get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
+if [ "$ANSWER" = "y" ]; then
 	presence_create $1
 fi
 
-echo -n "Install extra tables - imc,cpl,siptrace,domainpolicy ?(y/n):"
-read INPUT
-if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
-then
+get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
+if [ "$ANSWER" = "y" ]; then
 	extra_create $1
 fi
 
-echo -n "Install SERWEB related tables ?(y/n):"
-read INPUT
-if [ "$INPUT" = "y" ] || [ "$INPUT" = "Y" ]
-then
+get_answer $INSTALL_SERWEB_TABLES "Install SERWEB related tables? (y/n): "
+if [ "$ANSWER" = "y" ]; then
 	serweb_create $1
 fi
 } # openser_create
