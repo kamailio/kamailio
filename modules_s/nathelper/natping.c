@@ -110,6 +110,8 @@ natpinger_init(void)
 		 */
 		if (dont_fork)
 			register_timer(natping, NULL, natping_interval);
+		else
+			register_procs(1); /* register the separate natpinger process*/
 
 		if (natping_method == NULL) {
 			if (natping_crlf == 0)
@@ -138,15 +140,14 @@ natpinger_child_init(int rank)
 	if (dont_fork)
 		return 0;
 
-	/* don't do anything for main process and TCP manager process */
-	if (rank == PROC_INIT || rank == PROC_MAIN || rank == PROC_TCP_MAIN)
+	/* fork only from PROC_MAIN (see doc/modules_init.txt) and only
+	 *  if ping is requested */
+	if ((rank != PROC_MAIN) || (natping_interval == 0))
 		return 0;
 
-	/* only child 1 will fork the aux process, if ping requested */
-	if ((rank != 1) || (natping_interval == 0))
-		return 0;
-
-	aux_process = fork();
+	/* create a new "ser" process, with access to the tcp send, but
+	 * don't call child_init() for this process (no need, it's just a pinger)*/
+	aux_process = fork_process(PROC_NOCHLDINIT, "nathelper pinger", 1);
 	if (aux_process == -1) {
 		LOG(L_ERR, "natping_child_init(): fork: %s\n",
 		    strerror(errno));
