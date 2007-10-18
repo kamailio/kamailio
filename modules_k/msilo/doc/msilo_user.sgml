@@ -168,6 +168,28 @@ modparam("msilo", "reminder", "sip:registrar@example.org")
 		</example>
 	</section>
 	<section>
+		<title><varname>outbound_proxy</varname> (string)</title>
+		<para>
+		The &sip; address used as next hop when sending the message. Very
+		useful when using OpenSER with a domain name not in DNS, or when
+		using a separate OpenSER instance for msilo processing. If not set,
+		the message will be sent to the address in destination URI.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>outbound_proxy</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "outbound_proxy", "sip:openser.org;transport=tcp")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
 		<title><varname>expire_time</varname> (int)</title>
 		<para>
 		Expire time of stored messages - seconds. When this time passed, the message is

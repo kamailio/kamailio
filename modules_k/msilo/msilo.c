@@ -133,6 +133,8 @@ char *ms_db_url=DEFAULT_DB_URL;
 char *ms_db_table="silo";
 str  ms_registrar={NULL, 0}; /*"sip:registrar@example.org";*/
 str  ms_reminder={NULL, 0};
+str  ms_outbound_proxy={NULL, 0};
+
 int  ms_expire_time=259200;
 int  ms_check_time=60;
 int  ms_send_time=0;
@@ -187,6 +189,7 @@ static param_export_t params[]={
 	{ "db_table",     STR_PARAM, &ms_db_table           },
 	{ "registrar",    STR_PARAM, &ms_registrar.s        },
 	{ "reminder",     STR_PARAM, &ms_reminder.s         },
+	{ "outbound_proxy",STR_PARAM, &ms_outbound_proxy.s  },
 	{ "expire_time",  INT_PARAM, &ms_expire_time        },
 	{ "check_time",   INT_PARAM, &ms_check_time         },
 	{ "send_time",    INT_PARAM, &ms_send_time          },
@@ -335,6 +338,8 @@ static int mod_init(void)
 		ms_registrar.len = strlen(ms_registrar.s);
 	if(ms_reminder.s!=NULL)
 		ms_reminder.len = strlen(ms_reminder.s);
+	if(ms_outbound_proxy.s!=NULL)
+		ms_outbound_proxy.len = strlen(ms_outbound_proxy.s);
 
 	return 0;
 }
@@ -734,7 +739,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 			&reg_addr,        /* From */
 			&str_hdr,         /* Optional headers including CRLF */
 			&body,            /* Message body */
-			0,                /* outbound uri */
+			(ms_outbound_proxy.s)?&ms_outbound_proxy:0, /* outbound uri */
 			NULL,             /* Callback function */
 			NULL              /* Callback parameter */
 		);
@@ -955,7 +960,8 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 					&str_vals[0],     /* From */
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
-					0,                /* outbound uri */
+					(ms_outbound_proxy.s)?&ms_outbound_proxy:0,
+									/* outbound uri */
 					m_tm_callback,    /* Callback function */
 					(void*)(long)mid  /* Callback parameter */
 				);
@@ -1217,9 +1223,10 @@ void m_send_ontimer(unsigned int ticks, void *param)
 					&ms_reminder,     /* From */
 					&hdr_str,         /* Optional headers including CRLF */
 					(n<0)?&str_vals[2]:&body_str, /* Message body */
-					0,                /* outbound uri */
+					(ms_outbound_proxy.s)?&ms_outbound_proxy:0,
+							/* outbound uri */
 					m_tm_callback,    /* Callback function */
-					(void*)(long)mid        /* Callback parameter */
+					(void*)(long)mid  /* Callback parameter */
 				);
 	}
 

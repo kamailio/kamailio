@@ -1,4 +1,3 @@
-
 MSILO Module
 
 Daniel-Constantin Mierla
@@ -10,7 +9,7 @@ Edited by
 Daniel-Constantin Mierla
 
    Copyright © 2003 FhG FOKUS
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -27,24 +26,25 @@ Daniel-Constantin Mierla
               1.3.2. db_table (string)
               1.3.3. registrar (string)
               1.3.4. reminder (string)
-              1.3.5. expire_time (int)
-              1.3.6. check_time (int)
-              1.3.7. send_time (int)
-              1.3.8. clean_period (int)
-              1.3.9. use_contact (int)
-              1.3.10. sc_mid (string)
-              1.3.11. sc_from (string)
-              1.3.12. sc_to (string)
-              1.3.13. sc_uri_user (string)
-              1.3.14. sc_uri_host (string)
-              1.3.15. sc_body (string)
-              1.3.16. sc_ctype (string)
-              1.3.17. sc_exp_time (string)
-              1.3.18. sc_inc_time (string)
-              1.3.19. sc_snd_time (string)
-              1.3.20. snd_time_avp (str)
-              1.3.21. add_date (int)
-              1.3.22. max_messages (int)
+              1.3.5. outbound_proxy (string)
+              1.3.6. expire_time (int)
+              1.3.7. check_time (int)
+              1.3.8. send_time (int)
+              1.3.9. clean_period (int)
+              1.3.10. use_contact (int)
+              1.3.11. sc_mid (string)
+              1.3.12. sc_from (string)
+              1.3.13. sc_to (string)
+              1.3.14. sc_uri_user (string)
+              1.3.15. sc_uri_host (string)
+              1.3.16. sc_body (string)
+              1.3.17. sc_ctype (string)
+              1.3.18. sc_exp_time (string)
+              1.3.19. sc_inc_time (string)
+              1.3.20. sc_snd_time (string)
+              1.3.21. snd_time_avp (str)
+              1.3.22. add_date (int)
+              1.3.23. max_messages (int)
 
         1.4. Exported Functions
 
@@ -71,36 +71,37 @@ Daniel-Constantin Mierla
    1-2. Set the "db_table" parameter
    1-3. Set the "registrar" parameter
    1-4. Set the "reminder" parameter
-   1-5. Set the "expire_time" parameter
-   1-6. Set the "check_time" parameter
-   1-7. Set the "send_time" parameter
-   1-8. Set the "clean_period" parameter
-   1-9. Set the "use_contact" parameter
-   1-10. Set the "sc_mid" parameter
-   1-11. Set the "sc_from" parameter
-   1-12. Set the "sc_to" parameter
-   1-13. Set the "sc_uri_user" parameter
-   1-14. Set the "sc_uri_host" parameter
-   1-15. Set the "sc_body" parameter
-   1-16. Set the "sc_ctype" parameter
-   1-17. Set the "sc_exp_time" parameter
-   1-18. Set the "sc_inc_time" parameter
-   1-19. Set the "sc_snd_time" parameter
-   1-20. Set the "snd_time_avp" parameter
-   1-21. Set the "add_date" parameter
-   1-22. Set the "max_messages" parameter
-   1-23. m_store usage
-   1-24. m_dump usage
-   1-25. OpenSER config script - sample msilo usage
-     _________________________________________________________
+   1-5. Set the "outbound_proxy" parameter
+   1-6. Set the "expire_time" parameter
+   1-7. Set the "check_time" parameter
+   1-8. Set the "send_time" parameter
+   1-9. Set the "clean_period" parameter
+   1-10. Set the "use_contact" parameter
+   1-11. Set the "sc_mid" parameter
+   1-12. Set the "sc_from" parameter
+   1-13. Set the "sc_to" parameter
+   1-14. Set the "sc_uri_user" parameter
+   1-15. Set the "sc_uri_host" parameter
+   1-16. Set the "sc_body" parameter
+   1-17. Set the "sc_ctype" parameter
+   1-18. Set the "sc_exp_time" parameter
+   1-19. Set the "sc_inc_time" parameter
+   1-20. Set the "sc_snd_time" parameter
+   1-21. Set the "snd_time_avp" parameter
+   1-22. Set the "add_date" parameter
+   1-23. Set the "max_messages" parameter
+   1-24. m_store usage
+   1-25. m_dump usage
+   1-26. OpenSER config script - sample msilo usage
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    This modules provides offline message storage for the Open SIP
-   Express Router. It stores received messages for an offline
-   user and sends them when the user becomes online.
+   Express Router. It stores received messages for an offline user
+   and sends them when the user becomes online.
 
    For each message, the modules stores "Request-URI" ("R-URI")
    only if it is a complete address of record
@@ -123,7 +124,7 @@ Chapter 1. User's Guide
    Agent to have no support for MESSAGE request. In this case it
    should be used the "failure_route" to store the undelivered
    requests.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -135,7 +136,7 @@ Chapter 1. User's Guide
        implements the "db" interface and provides support for
        storing/receiving data to/from a database system.
      * TM--transaction module--is used to send SIP requests.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External libraries or applications
 
@@ -143,7 +144,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module:
 
      * none.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -151,26 +152,25 @@ Chapter 1. User's Guide
 
    Database URL.
 
-   Default value is
-   "mysql://openser:openserrw@localhost/openser". 
+   Default value is "mysql://openser:openserrw@localhost/openser".
 
    Example 1-1. Set the "db_url" parameter
 ...
 modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. db_table (string)
 
    The name of table where to store the messages.
 
-   Default value is "silo". 
+   Default value is "silo".
 
    Example 1-2. Set the "db_table" parameter
 ...
 modparam("msilo", "db_table", "silo")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. registrar (string)
 
@@ -181,56 +181,72 @@ modparam("msilo", "db_table", "silo")
    intended for this SIP address will not be stored for lately
    delivery.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1-3. Set the "registrar" parameter
 ...
 modparam("msilo", "registrar", "sip:registrar@example.org")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. reminder (string)
 
    The SIP address used to send reminder messages. If this value
    is not set, the reminder feature is disabled.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1-4. Set the "reminder" parameter
 ...
 modparam("msilo", "reminder", "sip:registrar@example.org")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.5. expire_time (int)
+1.3.5. outbound_proxy (string)
+
+   The SIP address used as next hop when sending the message. Very
+   useful when using OpenSER with a domain name not in DNS, or
+   when using a separate OpenSER instance for msilo processing. If
+   not set, the message will be sent to the address in destination
+   URI.
+
+   Default value is "NULL".
+
+   Example 1-5. Set the "outbound_proxy" parameter
+...
+modparam("msilo", "outbound_proxy", "sip:openser.org;transport=tcp")
+...
+     __________________________________________________________
+
+1.3.6. expire_time (int)
 
    Expire time of stored messages - seconds. When this time
    passed, the message is silently discarded from database.
 
-   Default value is "259200 (72 hours = 3 days)". 
+   Default value is "259200 (72 hours = 3 days)".
 
-   Example 1-5. Set the "expire_time" parameter
+   Example 1-6. Set the "expire_time" parameter
 ...
 modparam("msilo", "expire_time", 36000)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.6. check_time (int)
+1.3.7. check_time (int)
 
    Timer interval to check if dumped messages are sent OK -
-   seconds. The module keeps each request send by itself for a
-   new online user and if the reply is 2xx then the message is
-   deleted from database.
+   seconds. The module keeps each request send by itself for a new
+   online user and if the reply is 2xx then the message is deleted
+   from database.
 
-   Default value is "30". 
+   Default value is "30".
 
-   Example 1-6. Set the "check_time" parameter
+   Example 1-7. Set the "check_time" parameter
 ...
 modparam("msilo", "check_time", 10)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.7. send_time (int)
+1.3.8. send_time (int)
 
    Timer interval in seconds to check if there are reminder
    messages. The module takes all reminder messages that must be
@@ -238,172 +254,166 @@ modparam("msilo", "check_time", 10)
 
    If the value is 0, the reminder feature is disabled.
 
-   Default value is "0". 
+   Default value is "0".
 
-   Example 1-7. Set the "send_time" parameter
+   Example 1-8. Set the "send_time" parameter
 ...
 modparam("msilo", "send_time", 60)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.8. clean_period (int)
+1.3.9. clean_period (int)
 
    Number of "check_time" cycles when to check if there are
    expired messages in database.
 
-   Default value is "5". 
+   Default value is "5".
 
-   Example 1-8. Set the "clean_period" parameter
+   Example 1-9. Set the "clean_period" parameter
 ...
 modparam("msilo", "clean_period", "3")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.9. use_contact (int)
+1.3.10. use_contact (int)
 
    Turns on/off the usage of the Contact address to send
    notification back to sender whose message is stored by MSILO.
 
-   Default value is "1 (0 = off, 1 = on)". 
+   Default value is "1 (0 = off, 1 = on)".
 
-   Example 1-9. Set the "use_contact" parameter
+   Example 1-10. Set the "use_contact" parameter
 ...
 modparam("msilo", "use_contact", 0)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.10. sc_mid (string)
+1.3.11. sc_mid (string)
 
    The name of the column in silo table, storing message id.
 
    Default value is "mid".
 
-   Example 1-10. Set the "sc_mid" parameter
+   Example 1-11. Set the "sc_mid" parameter
 ...
 modparam("msilo", "sc_mid", "other_mid")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.11. sc_from (string)
+1.3.12. sc_from (string)
 
    The name of the column in silo table, storing the source
    address.
 
    Default value is "src_addr".
 
-   Example 1-11. Set the "sc_from" parameter
+   Example 1-12. Set the "sc_from" parameter
 ...
 modparam("msilo", "sc_from", "source_address")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.12. sc_to (string)
+1.3.13. sc_to (string)
 
    The name of the column in silo table, storing the destination
    address.
 
    Default value is "dst_addr".
 
-   Example 1-12. Set the "sc_to" parameter
+   Example 1-13. Set the "sc_to" parameter
 ...
 modparam("msilo", "sc_to", "destination_address")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.13. sc_uri_user (string)
+1.3.14. sc_uri_user (string)
 
    The name of the column in silo table, storing the user name.
 
    Default value is "username".
 
-   Example 1-13. Set the "sc_uri_user" parameter
+   Example 1-14. Set the "sc_uri_user" parameter
 ...
 modparam("msilo", "sc_uri_user", "user")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.14. sc_uri_host (string)
+1.3.15. sc_uri_host (string)
 
    The name of the column in silo table, storing the domain.
 
    Default value is "domain".
 
-   Example 1-14. Set the "sc_uri_host" parameter
+   Example 1-15. Set the "sc_uri_host" parameter
          ...
          modparam("msilo", "sc_uri_host", "domain")
          ...
+     __________________________________________________________
 
-     _________________________________________________________
-
-1.3.15. sc_body (string)
+1.3.16. sc_body (string)
 
    The name of the column storing the message body in silo table.
 
    Default value is "body".
 
-   Example 1-15. Set the "sc_body" parameter
+   Example 1-16. Set the "sc_body" parameter
         ...
         modparam("msilo", "sc_body", "message_body")
         ...
+     __________________________________________________________
 
-     _________________________________________________________
-
-1.3.16. sc_ctype (string)
+1.3.17. sc_ctype (string)
 
    The name of the column in silo table, storing content type.
 
    Default value is "ctype".
 
-   Example 1-16. Set the "sc_ctype" parameter
+   Example 1-17. Set the "sc_ctype" parameter
          ...
          modparam("msilo", "sc_body", "content_type")
          ...
+     __________________________________________________________
 
-     _________________________________________________________
-
-1.3.17. sc_exp_time (string)
+1.3.18. sc_exp_time (string)
 
    The name of the column in silo table, storing the expire time
    of the message.
 
    Default value is "exp_time".
 
-   Example 1-17. Set the "sc_exp_time" parameter
+   Example 1-18. Set the "sc_exp_time" parameter
          ...
          modparam("msilo", "sc_exp_time", "expire_time")
          ...
+     __________________________________________________________
 
-     _________________________________________________________
+1.3.19. sc_inc_time (string)
 
-1.3.18. sc_inc_time (string)
-
-   The name of the column in silo table, storing the incoming
-   time of the message.
+   The name of the column in silo table, storing the incoming time
+   of the message.
 
    Default value is "inc_time".
 
-   Example 1-18. Set the "sc_inc_time" parameter
+   Example 1-19. Set the "sc_inc_time" parameter
          ...
          modparam("msilo", "sc_inc_time", "incoming_time")
          ...
+     __________________________________________________________
 
-     _________________________________________________________
+1.3.20. sc_snd_time (string)
 
-1.3.19. sc_snd_time (string)
-
-   The name of the column in silo table, storing the send time
-   for the reminder.
+   The name of the column in silo table, storing the send time for
+   the reminder.
 
    Default value is "snd_time".
 
-   Example 1-19. Set the "sc_snd_time" parameter
+   Example 1-20. Set the "sc_snd_time" parameter
          ...
          modparam("msilo", "sc_inc_time", "send_reminder_time")
          ...
+     __________________________________________________________
 
-     _________________________________________________________
-
-1.3.20. snd_time_avp (str)
+1.3.21. snd_time_avp (str)
 
    The name of an AVP which may contain the time when to sent the
    received message as reminder.The AVP is used ony by m_store().
@@ -413,38 +423,38 @@ modparam("msilo", "sc_uri_user", "user")
    expects in the AVP to be a time value in format YYYYMMDDHHMMSS
    (e.g., 20060101201500).
 
-   Default value is "null". 
+   Default value is "null".
 
-   Example 1-20. Set the "snd_time_avp" parameter
+   Example 1-21. Set the "snd_time_avp" parameter
 ...
 modparam("msilo", "snd_time_avp", "$avp(i:123)")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.21. add_date (int)
+1.3.22. add_date (int)
 
    Wheter to add as prefix the date when the message was stored.
 
-   Default value is "1" (1==on/0==off). 
+   Default value is "1" (1==on/0==off).
 
-   Example 1-21. Set the "add_date" parameter
+   Example 1-22. Set the "add_date" parameter
 ...
 modparam("msilo", "add_date", "0")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
-1.3.22. max_messages (int)
+1.3.23. max_messages (int)
 
    Maximum number of stored message for an AoR. Value 0 equals to
    no limit.
 
-   Default value is 0. 
+   Default value is 0.
 
-   Example 1-22. Set the "max_messages" parameter
+   Example 1-23. Set the "max_messages" parameter
 ...
 modparam("msilo", "max_messages", 0)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -455,8 +465,8 @@ modparam("msilo", "max_messages", 0)
    destination user is offline or his UA does not support MESSAGE
    requests). If the user is registered with a UA which does not
    support MESSAGE requests you should not use mode="0" if you
-   have changed the request uri with the contact address of
-   user's UA.
+   have changed the request uri with the contact address of user's
+   UA.
 
    Meaning of the parameters is as follows:
 
@@ -467,61 +477,61 @@ modparam("msilo", "max_messages", 0)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-23. m_store usage
+   Example 1-24. m_store usage
 ...
 m_store();
 m_store("$tu");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. m_dump([owner])
 
-   The method sends stored messages for the SIP user that is
-   going to register to his actual contact address. The method
-   should be called when a REGISTER request is received and the
-   "Expire" header has a value greater than zero.
+   The method sends stored messages for the SIP user that is going
+   to register to his actual contact address. The method should be
+   called when a REGISTER request is received and the "Expire"
+   header has a value greater than zero.
 
    Meaning of the parameters is as follows:
 
-     * owner - is a string that must contain a SIP URI whose
-       inbox will be dumped. It can have any pseudo variable. If
-       "owner" is missing, the SIP address is taken from To URI.
+     * owner - is a string that must contain a SIP URI whose inbox
+       will be dumped. It can have any pseudo variable. If "owner"
+       is missing, the SIP address is taken from To URI.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-24. m_dump usage
+   Example 1-25. m_dump usage
 ...
 m_store();
 m_store("$fu");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Exported Statistics
 
 1.5.1. stored_messages
 
    The number of messages stored by msilo.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.2. dumped_messages
 
    The number of dumped messages.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.3. failed_messages
 
    The number of failed dumped messages.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.4. dumped_reminders
 
    The number of dumped reminder messages.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.5. failed_reminders
 
    The number of failed reminder messages.
-     _________________________________________________________
+     __________________________________________________________
 
 1.6. Installation & Running
 
@@ -529,7 +539,7 @@ m_store("$fu");
 
    Next picture displays a sample usage of msilo.
 
-   Example 1-25. OpenSER config script - sample msilo usage
+   Example 1-26. OpenSER config script - sample msilo usage
 ...
 # $Id$
 #
@@ -609,7 +619,7 @@ route{
             }else{
                 log("MSILO: no offline messages dumped\n");
             };
-            exit;
+            break;
         };
 
         # domestic SIP destinations are handled using our USRLOC DB
@@ -619,7 +629,7 @@ route{
             if (! t_newtran())
                {
                 sl_reply_error();
-                exit;
+                break;
                };
             # we do not care about anything else but MESSAGEs
             if (!method=="MESSAGE")
@@ -628,7 +638,7 @@ route{
                 {
                     sl_reply_error();
                 };
-                exit;
+                break;
             };
             log("MESSAGE received -> storing using MSILO\n");
             # MSILO - storing as offline message
@@ -646,13 +656,13 @@ route{
                     sl_reply_error();
                 };
             };
-            exit;
+            break;
         };
         # if the downstream UA does not support MESSAGE requests
         # go to failure_route[1]
         t_on_failure("1");
         t_relay();
-        exit;
+        break;
     };
 
     # forward anything else
@@ -663,7 +673,7 @@ failure_route[1] {
     # forwarding failed -- check if the request was a MESSAGE
     if (!method=="MESSAGE")
     {
-        exit;
+        break;
     };
 
     log(1,"MSILO:the downstream UA doesn't support MESSAGEs\n");
@@ -681,13 +691,13 @@ failure_route[1] {
 
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -701,8 +711,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users
