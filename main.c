@@ -1006,7 +1006,7 @@ int main_loop()
 			if (udp_init(si)==-1) goto error;
 			/* get first ipv4/ipv6 socket*/
 			if ((si->address.af==AF_INET)&&
-					((sendipv4==0)||(sendipv4->flags&SI_IS_LO)))
+					((sendipv4==0)||(sendipv4->flags&(SI_IS_LO|SI_IS_MCAST))))
 				sendipv4=si;
 	#ifdef USE_IPV6
 			if((sendipv6==0)&&(si->address.af==AF_INET6))
@@ -1020,7 +1020,8 @@ int main_loop()
 				if (tcp_init(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
 				if ((si->address.af==AF_INET)&&
-						((sendipv4_tcp==0)||(sendipv4_tcp->flags&SI_IS_LO)))
+						((sendipv4_tcp==0)||
+						 	(sendipv4_tcp->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_tcp=si;
 		#ifdef USE_IPV6
 				if((sendipv6_tcp==0)&&(si->address.af==AF_INET6))
@@ -1035,7 +1036,8 @@ int main_loop()
 				if (tls_init(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
 				if ((si->address.af==AF_INET)&&
-						((sendipv4_tls==0)||(sendipv4_tls->flags&SI_IS_LO)))
+						((sendipv4_tls==0)||
+						 	(sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_tls=si;
 		#ifdef USE_IPV6
 				if((sendipv6_tls==0)&&(si->address.af==AF_INET6))
