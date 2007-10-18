@@ -14,5 +14,4 @@
     <xi:include href="pr_watchers.xml"/>
     <xi:include href="pr_xcap_xml.xml"/>
     <xi:include href="pr_pua.xml"/>
-    -->
 </database>
