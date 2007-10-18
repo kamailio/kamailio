@@ -321,7 +321,7 @@ static int ospReportUsageFromCookie(
 
     ospReportUsageWrapper(
         transaction,
-        10016,
+        cookie == NULL ? 9016 : 10016,
         cookie == NULL ? 0 : endtime - authtime,
         authtime,
         endtime,
@@ -348,7 +348,7 @@ int ospReportUsage(
     char *tmp;
     char *token;
     char parameters[OSP_HEADERBUF_SIZE];
-    OSPTCALLID* callid = NULL;
+    OSPTCALLID *callid = NULL;
     int result = MODULE_RETURNCODE_FALSE;
 
     ospGetCallId(msg, &callid);
