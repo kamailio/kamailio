@@ -898,7 +898,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
 	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
-	strcpy(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
+	strcat(fromip_buff, ip_addr2a(&msg->rcv.src_ip));
 	strcat(fromip_buff,":");
 	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
 	db_vals[4].val.string_val = fromip_buff;
@@ -1102,7 +1102,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	else {
 		siptrace_copy_proto(msg->rcv.proto, fromip_buff);
 
-		strcpy(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
+		strcat(fromip_buff, ip_addr2a(&req->rcv.dst_ip));
 		strcat(fromip_buff,":");
 		strcat(fromip_buff, int2str(req->rcv.dst_port, NULL));
 		db_vals[4].val.string_val = fromip_buff;
