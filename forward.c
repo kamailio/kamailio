@@ -52,6 +52,8 @@
  *  2006-04-21  basic comp via param support (andrei)
  *  2006-07-31  forward_request can resolve destination on its own, uses the 
  *              dns cache and falls back on send error to other ips (andrei)
+ *  2007-10-08  get_send_socket() will ignore force_send_socket if the forced
+ *               socket is multicast (andrei)
  */
 
 
@@ -171,11 +173,14 @@ struct socket_info* get_send_socket(struct sip_msg *msg,
 				goto not_forced;
 			}
 		}
-		if (msg->force_send_socket->socket!=-1)
+		if ((msg->force_send_socket->socket!=-1) &&
+					!(msg->force_send_socket->flags & SI_IS_MCAST))
 				return msg->force_send_socket;
-		else
-			LOG(L_WARN, "WARNING: get_send_socket: not listening"
-						 " on the requested socket, no fork mode?\n");
+		else{
+			if (!(msg->force_send_socket->flags & SI_IS_MCAST))
+				LOG(L_WARN, "WARNING: get_send_socket: not listening"
+							 " on the requested socket, no fork mode?\n");
+		}
 	};
 not_forced:
 	if (mhomed && proto==PROTO_UDP){

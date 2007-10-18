@@ -35,6 +35,8 @@
  *  2003-04-15  added tcp_disable support (andrei)
  *  2006-04-12  reduced msg_send() parameter list: it uses now a struct 
  *               dest_info param. (andrei)
+ *  2007-10-08  msg_send() will ignore a mcast send_sock and choose another
+ *               one by itself (andrei)
  */
 
 
@@ -79,7 +81,8 @@ int forward_reply( struct sip_msg* msg);
 
 /* params:
  * dst = struct dest_info containing:
- *    send_sock = 0 if not known (e.g. for udp in some cases), non-0 otherwise
+ *    send_sock = 0 if not known (e.g. for udp in some cases), non-0 otherwise;
+ *                if 0 or mcast a new send_sock will be automatically choosen
  *    proto = TCP|UDP
  *    to = destination (sockaddr_union)
  *    id = only used on tcp, it will force sending on connection "id" if id!=0 
@@ -90,13 +93,18 @@ int forward_reply( struct sip_msg* msg);
  * returns: 0 if ok, -1 on error*/
 static inline int msg_send(struct dest_info* dst, char* buf, int len)
 {
+	struct dest_info new_dst;
 	
 	if (dst->proto==PROTO_UDP){
-		if (dst->send_sock==0) 
-			dst->send_sock=get_send_socket(0, &dst->to, dst->proto);
-		if (dst->send_sock==0){
-			LOG(L_ERR, "msg_send: ERROR: no sending socket found\n");
-			goto error;
+		if ((dst->send_sock==0) || 
+					(dst->send_sock->flags & SI_IS_MCAST)){
+			new_dst=*dst;
+			new_dst.send_sock=get_send_socket(0, &dst->to, dst->proto);
+			if (new_dst.send_sock==0){
+				LOG(L_ERR, "msg_send: ERROR: no sending socket found\n");
+				goto error;
+			}
+			dst=&new_dst;
 		}
 		if (udp_send(dst, buf, len)==-1){
 			STATS_TX_DROPS;
