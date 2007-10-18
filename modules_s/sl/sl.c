@@ -191,9 +191,7 @@ static int fixup_sl_reply(void** param, int param_no)
 	int ret;
 
 	if (param_no == 1) {
-		ret = fix_param(FPARAM_AVP, param);
-		if (ret <= 0) return ret;		
-		return fix_param(FPARAM_INT, param);
+		return fixup_var_int_12(param, 1);
 	} else if (param_no == 2) {
 	        return fixup_var_str_12(param, 2);
 	}
