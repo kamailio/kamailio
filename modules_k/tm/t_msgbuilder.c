@@ -66,7 +66,7 @@
 #define SET_FOUND(_new_state) \
 	do{\
 		fill->s=b;fill->len=p-b;\
-		DBG("DEBUG:tm:extract_hdrs: hdr %d extracted as <%.*s>\n",\
+		LM_DBG("hdr %d extracted as <%.*s>\n",\
 			flag,fill->len,fill->s);\
 		flags&=~(flag);\
 		if (flags) {state=_new_state;}\
@@ -173,7 +173,7 @@ static int extract_hdrs( char *buf, int len, str *from, str *to, str *cseq)
 		p++;
 	}
 
-	LOG(L_CRIT,"BUG:tm:extract_hdrs: no hdrs found in outgoing buffer\n");
+	LM_CRIT("no hdrs found in outgoing buffer\n");
 	return -1;
 done:
 	return 0;
@@ -208,12 +208,11 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		(req->msg_flags&FL_USE_UAC_FROM)?&from:0 ,
 		(req->msg_flags&FL_USE_UAC_TO)?&to:0 ,
 		(req->msg_flags&FL_USE_UAC_CSEQ)?&cseq_n:0 )!=0 ) {
-			LOG(L_ERR, "ERROR:tm:build_local: "
-				"failed to extract UAC hdrs\n");
+			LM_ERR("build_local: failed to extract UAC hdrs\n");
 			goto error;
 		}
 	}
-	DBG("DEBUG:tm:build_local: using FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
+	LM_DBG("using FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
 		from.len,from.s , to.len,to.s , cseq_n.len,cseq_n.s);
 
 	/* method, separators, version  */
@@ -229,8 +228,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
 	if (!via)
 	{
-		LOG(L_ERR, "ERROR: build_local: "
-			"no via header got from builder\n");
+		LM_ERR("no via header got from builder\n");
 		goto error;
 	}
 	*len+= via_len;
@@ -256,7 +254,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
 	{
-		LOG(L_ERR, "ERROR: build_local: cannot allocate memory\n");
+		LM_ERR("no more share memory\n");
 		goto error01;
 	}
 	p = cancel_buf;
@@ -345,7 +343,7 @@ static inline int process_routeset(struct sip_msg* msg, str* contact, struct rte
 	while(ptr) {
 		if (ptr->type == HDR_RECORDROUTE_T) {
 			if (parse_rr(ptr) < 0) {
-				LOG(L_ERR, "process_routeset: Error while parsing Record-Route header\n");
+				LM_ERR("failed to parse Record-Route header\n");
 				return -1;
 			}
 			
@@ -353,7 +351,7 @@ static inline int process_routeset(struct sip_msg* msg, str* contact, struct rte
 			while(p) {
 				t = (struct rte*)pkg_malloc(sizeof(struct rte));
 				if (!t) {
-					LOG(L_ERR, "process_routeset: No memory left\n");
+					LM_ERR("no more pkg memory\n");
 					free_rte_list(head);
 					return -1;
 				}
@@ -368,7 +366,7 @@ static inline int process_routeset(struct sip_msg* msg, str* contact, struct rte
 	
 	if (head) {
 		if (parse_uri(head->ptr->nameaddr.uri.s, head->ptr->nameaddr.uri.len, &puri) < 0) {
-			LOG(L_ERR, "process_routeset: Error while parsing URI\n");
+			LM_ERR("failed to parse URI\n");
 			free_rte_list(head);
 			return -1;
 		}
@@ -472,14 +470,14 @@ static inline int get_contact_uri(struct sip_msg* msg, str* uri)
 	if (!msg->contact) return 1;
 	
 	if (parse_contact(msg->contact) < 0) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		LM_ERR("failed to parse Contact body\n");
 		return -1;
 	}
 	
 	c = ((contact_body_t*)msg->contact->parsed)->contacts;
 	
 	if (!c) {
-		LOG(L_ERR, "get_contact_uri: Empty body or * contact\n");
+		LM_ERR("body or * contact\n");
 		return -2;
 	}
 	
@@ -553,7 +551,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 	via = via_builder(&via_len, send_sock, &branch_str, 0, 
 			send_sock->proto, &hp);
 	if (!via) {
-		LOG(L_ERR, "build_dlg_ack: No via header got from builder\n");
+		LM_ERR("no via header got from builder\n");
 		goto error;
 	}
 	*len+= via_len;
@@ -574,7 +572,7 @@ char *build_dlg_ack(struct sip_msg* rpl, struct cell *Trans,
 
 	req_buf = shm_malloc(*len + 1);
 	if (!req_buf) {
-		LOG(L_ERR, "build_dlg_ack: Cannot allocate memory\n");
+		LM_ERR("no more share memory\n");
 		goto error01;
 	}
 	p = req_buf;
@@ -667,7 +665,7 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 	struct hostport hp;
 
 	if (!t_calc_branch(t, branch, branch_buf, &len)) {
-		LOG(L_ERR, "ERROR: assemble_via: branch calculation failed\n");
+		LM_ERR("branch calculation failed\n");
 		return -1;
 	}
 	
@@ -681,7 +679,7 @@ static inline int assemble_via(str* dest, struct cell* t, struct socket_info* so
 	set_hostport(&hp, 0);
 	via = via_builder(&via_len, sock, &branch_str, 0, sock->proto, &hp);
 	if (!via) {
-		LOG(L_ERR, "assemble_via: via building failed\n");
+		LM_ERR("via building failed\n");
 		return -2;
 	}
 	
@@ -704,7 +702,7 @@ static inline char* print_request_uri(char* w, str* method, dlg_t* dialog, struc
 
 	append_string(w, dialog->hooks.request_uri->s, dialog->hooks.request_uri->len); 
 	append_string(w, " " SIP_VERSION CRLF, 1 + SIP_VERSION_LEN + CRLF_LEN);
-	DBG("print_request_uri: %.*s\n",dialog->hooks.request_uri->len, dialog->hooks.request_uri->s );
+	LM_DBG("%.*s\n",dialog->hooks.request_uri->len, dialog->hooks.request_uri->s );
 	return w;
 }
 
@@ -808,22 +806,22 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 	str content_length, cseq, via;
 
 	if (!method || !dialog) {
-		LOG(L_ERR, "build_uac_req(): Invalid parameter value\n");
+		LM_ERR("inalid parameter value\n");
 		return 0;
 	}
 	if (print_content_length(&content_length, body) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while printing content-length\n");
+		LM_ERR("failed to print content-length\n");
 		return 0;
 	}
 	if (print_cseq_num(&cseq, dialog) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while printing CSeq number\n");
+		LM_ERR("failed to print CSeq number\n");
 		return 0;
 	}
 	*len = method->len + 1 + dialog->hooks.request_uri->len + 1 + 
 		SIP_VERSION_LEN + CRLF_LEN;
 
 	if (assemble_via(&via, t, dialog->send_sock, branch) < 0) {
-		LOG(L_ERR, "build_uac_req(): Error while assembling Via\n");
+		LM_ERR("failed to assemble Via\n");
 		return 0;
 	}
 	*len += via.len;
@@ -855,7 +853,7 @@ char* build_uac_req(str* method, str* headers, str* body, dlg_t* dialog,
 
 	buf = shm_malloc(*len + 1);
 	if (!buf) {
-		LOG(L_ERR, "build_uac_req(): no shmem\n");
+		LM_ERR("no more share memory\n");
 		goto error;
 	}
 	
@@ -920,21 +918,20 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	struct hostport hp;
 	str content_length;
 
-	DBG("DEBUG:tm:build_uac_cancel: using FROM=<%.*s>, TO=<%.*s>, "
-		"CSEQ_N=<%.*s>\n", cancelledT->from.len, cancelledT->from.s,
-		 cancelledT->to.len, cancelledT->to.s, cancelledT->cseq_n.len,
-		 cancelledT->cseq_n.s);
+	LM_DBG("sing FROM=<%.*s>, TO=<%.*s>, CSEQ_N=<%.*s>\n",
+		cancelledT->from.len, cancelledT->from.s, cancelledT->to.len,
+		cancelledT->to.s, cancelledT->cseq_n.len, cancelledT->cseq_n.s);
 
 	branch_str.s=branch_buf;
 	if (!t_calc_branch(cancelledT,  branch, branch_str.s, &branch_str.len )){
-		LOG(L_ERR, "ERROR: build_uac_cancel: unable to create branch !\n");
+		LM_ERR("failed to create branch !\n");
 		goto error;
 	}
 	set_hostport(&hp,0);
 	via=via_builder(&via_len, cancelledT->uac[branch].request.dst.send_sock,
 			&branch_str, 0, cancelledT->uac[branch].request.dst.proto, &hp );
 	if (!via){
-		LOG(L_ERR,"ERROR: build_uac_cancel: no via header got from builder\n");
+		LM_ERR("no via header got from builder\n");
 		goto error;
 	}
 
@@ -957,8 +954,7 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	}
 	/* Content Length  */
 	if (print_content_length(&content_length, body) < 0) {
-		LOG(L_ERR, "ERROR:build_uac_cancel(): Error while printing "
-			"content-length\n");
+		LM_ERR("failed to print content-length\n");
 		return 0;
 	}
 	/* Content-Length */
@@ -973,7 +969,7 @@ char *build_uac_cancel(str *headers,str *body,struct cell *cancelledT,
 	cancel_buf=shm_malloc( *len+1 );
 	if (!cancel_buf)
 	{
-		LOG(L_ERR, "ERROR: build_uac_cancel: cannot allocate memory\n");
+		LM_ERR("no more share memory\n");
 		goto error01;
 	}
 	p = cancel_buf;

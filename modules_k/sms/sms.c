@@ -134,8 +134,7 @@ static int fixup_sms_send_msg_to_net(void** param, int param_no)
 			if (!strcasecmp(networks[i].name,*param))
 				net_nr = i;
 		if (net_nr==-1) {
-			LOG(L_ERR,"ERROR:fixup_sms_send_msg_to_net: network \"%s\""
-				" not found in net list!\n",(char*)*param);
+			LM_ERR("etwork \"%s\" not found in net list!\n",(char*)*param);
 			return E_UNSPEC;
 		} else {
 			pkg_free(*param);
@@ -162,7 +161,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 	int err, foo;
 
 	if (*(arg+1)!='=') {
-		LOG(L_ERR,"ERROR: invalid parameter syntax near [=]\n");
+		LM_ERR("invalid parameter syntax near [=]\n");
 		goto error;
 	}
 	switch (*arg)
@@ -189,7 +188,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 			&& arg_end-arg-2==3) {
 				mdm->mode = MODE_NEW;
 			} else {
-				LOG(L_ERR,"ERROR: invalid value \"%.*s\" for param [m]\n",
+				LM_ERR("invalid value \"%.*s\" for param [m]\n",
 					(int)(arg_end-arg-2),arg+2);
 				goto error;
 			}
@@ -201,8 +200,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 		case 'r':  /* retry time */
 			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
-				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [r] arg to"
-					" integer!\n");
+				LM_ERR("failed to convert [r] arg to integer!\n");
 				goto error;
 			}
 			mdm->retry = foo;
@@ -210,8 +208,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 		case 'l':  /* looping interval */
 			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
-				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [l] arg to"
-					" integer!\n");
+				LM_ERR("failed to convert [l] arg to integer!\n");
 				goto error;
 			}
 			mdm->looping_interval = foo;
@@ -219,8 +216,7 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 		case 'b':  /* baudrate */
 			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
-				LOG(L_ERR,"ERROR:set_modem_arg: cannot convert [b] arg to"
-					" integer!\n");
+				LM_ERR("failed to convert [b] arg to integer!\n");
 				goto error;
 			}
 			switch (foo) {
@@ -232,14 +228,13 @@ int set_modem_arg(struct modem *mdm, char *arg, char *arg_end)
 				case 38400: foo=B38400; break;
 				case 57600: foo=B57600; break;
 				default:
-					LOG(L_ERR,"ERROR:set_modem_arg: unsupported value %d "
-						"for [b] arg!\n",foo);
+					LM_ERR("unsupported value %d for [b] arg!\n",foo);
 					goto error;
 			}
 			mdm->baudrate = foo;
 			break;
 		default:
-			LOG(L_ERR,"ERROR:set_modem_arg: unknown param name [%c]\n",*arg);
+			LM_ERR("unknown param name [%c]\n",*arg);
 			goto error;
 	}
 
@@ -256,7 +251,7 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 	int err,foo;
 
 	if (*(arg+1)!='=') {
-		LOG(L_ERR,"ERROR:set_network_arg:invalid parameter syntax near [=]\n");
+		LM_ERR("invalid parameter syntax near [=]\n");
 		goto error;
 	}
 	switch (*arg)
@@ -264,14 +259,13 @@ int set_network_arg(struct network *net, char *arg, char *arg_end)
 		case 'm':  /* maximum sms per one call */
 			foo=str2s(arg+2,arg_end-arg-2,&err);
 			if (err) {
-				LOG(L_ERR,"ERROR:set_network_arg: cannot convert [m] arg to"
-					" integer!\n");
+				LM_ERR("cannot convert [m] arg to integer!\n");
 				goto error;
 			}
 			net->max_sms_per_call = foo;
 			break;
 		default:
-			LOG(L_ERR,"ERROR:set_network_arg: unknown param name [%c]\n",*arg);
+			LM_ERR("unknown param name [%c]\n",*arg);
 			goto error;
 	}
 
@@ -295,8 +289,7 @@ int parse_config_lines(void)
 	step = 1;
 	/* parsing modems configuration string */
 	if ( (p = modems_config)==0) {
-		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"modems\" not"
-			" found\n");
+		LM_ERR("param \"modems\" not found\n");
 		goto error;
 	}
 	while (*p)
@@ -345,14 +338,13 @@ int parse_config_lines(void)
 		p++;
 		/* end of element */
 		if (modems[nr_of_modems].device[0]==0) {
-			LOG(L_ERR,"ERROR:SMS parse config modems: modem %s has no device"
-				" associated\n",modems[nr_of_modems].name);
+			LM_ERR("modem %s has no device associated\n",
+					modems[nr_of_modems].name);
 			goto error;
 		}
 		if (modems[nr_of_modems].smsc[0]==0) {
-			LOG(L_WARN,"WARNING:SMS parse config modem: modem %s has no sms"
-				" center associated -> using the default one from modem\n",
-				modems[nr_of_modems].name);
+			LM_WARN("modem %s has no sms center associated -> using"
+				" the default one from modem\n",modems[nr_of_modems].name);
 		}
 		nr_of_modems++;
 		eat_spaces(p);
@@ -363,15 +355,14 @@ int parse_config_lines(void)
 	}
 	if (nr_of_modems==0)
 	{
-		LOG(L_ERR,"ERROR:SMS parse config modems - no modem found!\n");
+		LM_ERR("failed to parse config modems - no modem found!\n");
 		goto error;
 	}
 
 	step++;
 	/* parsing networks configuration string */
 	if ( (p = networks_config)==0) {
-		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"networks\" not "
-			"found\n");
+		LM_ERR("param \"networks\" not found\n");
 		goto error;
 	}
 	while (*p)
@@ -419,15 +410,14 @@ int parse_config_lines(void)
 	}
 	if (nr_of_networks==0)
 	{
-		LOG(L_ERR,"ERROR:SMS parse config networks - no network found!\n");
+		LM_ERR("no network found!\n");
 		goto error;
 	}
 
 	step++;
 	/* parsing links configuration string */
 	if ( (p = links_config)==0) {
-		LOG(L_ERR,"ERROR:SMS parse_config_lines: param \"links\" not "
-			"found\n");
+		LM_ERR("param \"links\" not found\n");
 		goto error;
 	}
 	while (*p)
@@ -445,8 +435,7 @@ int parse_config_lines(void)
 			modems[i].name[p-start]==0)
 				mdm_nr = i;
 		if (mdm_nr==-1) {
-			LOG(L_ERR,"ERROR:sms_parse_conf_line: unknown modem %.*s \n,",
-				(int)(p-start), start);
+			LM_ERR("unknown modem %.*s \n,",(int)(p-start), start);
 			goto error;
 		}
 		/*get associated networks list*/
@@ -469,13 +458,12 @@ int parse_config_lines(void)
 				&& networks[i].name[p-start]==0)
 					net_nr = i;
 			if (net_nr==-1) {
-				LOG(L_ERR,"ERROR:SMS parse modem config - associated"
-					" net <%.*s> not found in net list\n",
+				LM_ERR("associated net <%.*s> not found in net list\n",
 					(int)(p-start), start);
 				goto error;
 			}
-			DBG("DEBUG:sms startup: linking net \"%s\" to modem \"%s\" on "
-				"pos %d.\n",networks[net_nr].name,modems[mdm_nr].name,k);
+			LM_DBG("linking net \"%s\" to modem \"%s\" on pos %d.\n",
+					networks[net_nr].name,modems[mdm_nr].name,k);
 			modems[mdm_nr].net_list[k++]=net_nr;
 			eat_spaces(p);
 			if (*p==';') {
@@ -500,8 +488,7 @@ int parse_config_lines(void)
 			if (!strcasecmp(networks[i].name,default_net_str))
 				net_nr = i;
 		if (net_nr==-1) {
-			LOG(L_ERR,"ERROR:SMS setting default net: network \"%s\""
-				" not found in net list!\n",default_net_str);
+			LM_ERR("network \"%s\" not found in net list!\n",default_net_str);
 			goto error;
 		}
 		default_net = net_nr;
@@ -509,11 +496,12 @@ int parse_config_lines(void)
 
 	return 0;
 parse_error:
-	LOG(L_ERR,"ERROR: SMS %s config: parse error before  chr %d [%.*s]\n",
+	LM_ERR("SMS %s config: parse error before  chr %d [%.*s]\n",
 		(step==1)?"modems":(step==2?"networks":"links"),
 		(int)(p - ((step==1)?modems_config:
 				   (step==2?networks_config:links_config))),
 		(*p==0)?4:1,(*p==0)?"NULL":p );
+					
 error:
 	return -1;
 }
@@ -529,7 +517,7 @@ int global_init(void)
 
 	/* load the TM API */
 	if (load_tm_api(&tmb)!=0) {
-		LOG(L_ERR, "ERROR:sms:global_init: can't load TM API\n");
+		LM_ERR("failed to load TM API\n");
 		goto error;
 	}
 
@@ -540,7 +528,7 @@ int global_init(void)
 	} else {
 		si=get_first_socket();
 		if (si==0){
-			LOG(L_CRIT, "BUG: sms_init_child: null listen socket list\n");
+			LM_CRIT("null listen socket list\n");
 			goto error;
 		}
 		/*do I have to add port?*/
@@ -548,7 +536,7 @@ int global_init(void)
 		domain.len = si->name.len + i*(si->port_no_str.len+1);
 		domain.s = (char*)pkg_malloc(domain.len);
 		if (!domain.s) {
-			LOG(L_ERR,"ERROR:sms_init_child: no free pkg memory!\n");
+			LM_ERR("no more pkg memory!\n");
 			goto error;
 		}
 		p = domain.s;
@@ -566,20 +554,19 @@ int global_init(void)
 	{
 		/* create the pipe*/
 		if (pipe(net_pipe)==-1) {
-			LOG(L_ERR,"ERROR: sms_global_init: cannot create pipe!\n");
+			LM_ERR("failed create pipe!\n");
 			goto error;
 		}
 		networks[i].pipe_out = net_pipe[0];
 		net_pipes_in[i] = net_pipe[1];
 		/* sets reading from pipe to non blocking */
 		if ((foo=fcntl(net_pipe[0],F_GETFL,0))<0) {
-			LOG(L_ERR,"ERROR: sms_global_init: cannot get flag for pipe"
-				" - fcntl\n");
+			LM_ERR("failed to get flag for pipe - fcntl\n");
 			goto error;
 		}
 		foo |= O_NONBLOCK;
 		if (fcntl(net_pipe[0],F_SETFL,foo)<0) {
-			LOG(L_ERR,"ERROR: sms_global_init: cannot set flag for pipe"
+			LM_ERR("failed to set flag for pipe"
 				" - fcntl\n");
 			goto error;
 		}
@@ -587,14 +574,14 @@ int global_init(void)
 
 	/* if report will be used, init the report queue */
 	if (sms_report_type!=NO_REPORT && !init_report_queue()) {
-		LOG(L_ERR,"ERROR: sms_global_init: cannot get shm memory!\n");
+		LM_ERR("no more share memory!\n");
 		goto error;
 	}
 
 	/* alloc in shm for queued_msgs */
 	queued_msgs = (int*)shm_malloc(sizeof(int));
 	if (!queued_msgs) {
-		LOG(L_ERR,"ERROR: sms_global_init: cannot get shm memory!\n");
+		LM_ERR("no more share memory!\n");
 		goto error;
 	}
 	*queued_msgs = 0;
@@ -616,7 +603,7 @@ void sms_process(int rank)
 
 static int sms_init(void)
 {
-	LOG(L_INFO,"SMS - initializing\n");
+	LM_INFO("SMS - initializing\n");
 
 	if (parse_config_lines()==-1)
 		return -1;

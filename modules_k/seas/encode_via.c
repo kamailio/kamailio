@@ -76,7 +76,7 @@ int encode_via_body(char *hdr,int hdrlen,struct via_body *via_parsed,unsigned ch
    if(via_parsed)
       for(via_offset=0,i=0,myvia=via_parsed;myvia;myvia=myvia->next,i++){
 	 if((k=encode_via(hdr,hdrlen,myvia,&tmp[via_offset]))<0){
-	    LOG(L_ERR,"parsing via number %d\n",i);
+	    LM_ERR("failed to parse via number %d\n",i);
 	    return -1;
 	 }
 	 where[2+i]=(unsigned char)k;
@@ -162,7 +162,7 @@ int print_encoded_via_body(int fd,char *hdr,int hdrlen,unsigned char *payload,in
    numvias=payload[1];
    dprintf(fd,"%s%d","NUMBER OF VIAS:",numvias);
    if(numvias==0){
-      LOG(L_ERR,"no vias present?\n");
+      LM_ERR("no vias present?\n");
       return -1;
    }
    for(i=0,offset=2+numvias;i<numvias;i++){
@@ -237,7 +237,7 @@ int dump_via_body_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,in
 
    numvias=payload[1];
    if(numvias==0){
-      LOG(L_ERR,"no vias present?\n");
+      LM_ERR("no vias present?\n");
       return -1;
    }
    if(segregationLevel & SEGREGATE)

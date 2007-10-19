@@ -110,8 +110,7 @@ hashSlot_t  *createHashTable(int size)
 
 	if (!hashTable)
 	{
-		LOG(L_ERR, "ERROR: SNMPStats: unable to allocate hash table"
-				"memory");
+		LM_ERR("no more pkg memory");
 		return NULL;
 	}
 
@@ -249,8 +248,7 @@ aorToIndexStruct_t *createHashRecord(int userIndex, char *aor)
 
 	if (theRecord == NULL)
 	{
-		LOG(L_ERR, "ERROR: SNMPStats: Unable to create a mapping "
-				"record for %s", aor);
+		LM_ERR("failed to create a mapping record for %s", aor);
 		return NULL;
 	}
 
@@ -272,10 +270,10 @@ void printHashSlot(hashSlot_t *theTable, int index)
 {
 	aorToIndexStruct_t *currentRecord = theTable[index].first;
 
-	LOG(L_ERR, "printHashSlot: Dumping Hash Slot #%d\n", index);
+	LM_ERR("dumping Hash Slot #%d\n", index);
 
 	while (currentRecord != NULL) {
-		LOG(L_ERR, "\tString: %s - Index: %d\n", 
+		LM_ERR( "\tString: %s - Index: %d\n", 
 				currentRecord->aor, currentRecord->userIndex);
 		currentRecord = currentRecord->next;
 	}

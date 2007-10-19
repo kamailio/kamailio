@@ -43,7 +43,7 @@ int init_ulcb_list(void)
 	ulcb_list = (struct ulcb_head_list*)shm_malloc
 		( sizeof(struct ulcb_head_list) );
 	if (ulcb_list==0) {
-		LOG(L_CRIT,"ERROR:usrloc:init_ulcb_list: no more shared mem\n");
+		LM_CRIT("no more shared mem\n");
 		return -1;
 	}
 	ulcb_list->first = 0;
@@ -79,19 +79,18 @@ int register_ulcb( int types, ul_cb f, void *param )
 
 	/* are the callback types valid?... */
 	if ( types<0 || types>ULCB_MAX ) {
-		LOG(L_CRIT, "BUG:usrloc:register_ulcb: invalid callback types: "
-			"mask=%d\n",types);
+		LM_CRIT("invalid callback types: mask=%d\n",types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
 	if (f==0) {
-		LOG(L_CRIT, "BUG:usrloc:register_ulcb: null callback function\n");
+		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	/* build a new callback structure */
 	if (!(cbp=(struct ul_callback*)shm_malloc(sizeof( struct ul_callback)))) {
-		LOG(L_ERR, "ERROR:usrloc:register_ulcb: out of shm. mem\n");
+		LM_ERR("no more share mem\n");
 		return E_OUT_OF_MEM;
 	}
 

@@ -235,7 +235,7 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	DBG("usrloc - initializing\n");
+	LM_DBG("initializing\n");
 
 	/* Compute the lengths of string parameters */
 	user_col.len = strlen(user_col.s);
@@ -267,13 +267,12 @@ static int mod_init(void)
 		case CONTACT_CALLID:
 			break;
 		default:
-			LOG(L_ERR,"ERROR:usrloc:mod_init: invalid matching mode %d\n",
-				matching_mode);
+			LM_ERR("invalid matching mode %d\n", matching_mode);
 	}
 
 	if(ul_init_locks()!=0)
 	{
-		LOG(L_ERR, "ERROR: usrloc: locks array initialization failed\n");
+		LM_ERR("locks array initialization failed\n");
 		return -1;
 	}
 
@@ -282,24 +281,23 @@ static int mod_init(void)
 
 	/* init the callbacks list */
 	if ( init_ulcb_list() < 0) {
-		LOG(L_ERR, "ERROR: usrloc/callbacks initialization failed\n");
+		LM_ERR("usrloc/callbacks initialization failed\n");
 		return -1;
 	}
 
 	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
 		if (bind_dbmod(db_url.s, &ul_dbf) < 0) { /* Find database module */
-			LOG(L_ERR, "ERROR: mod_init(): Can't bind database module\n");
+			LM_ERR("failed to bind database module\n");
 			return -1;
 		}
 		if (!DB_CAPABILITY(ul_dbf, DB_CAP_ALL)) {
-			LOG(L_ERR, "usrloc:mod_init: Database module does not implement"
-						" all functions needed by the module\n");
+			LM_ERR("database module does not implement all functions"
+					" needed by the module\n");
 			return -1;
 		}
 		if(ul_fetch_rows<=0) {
-			LOG(L_ERR, "usrloc:mod_init: invalid fetch_rows number '%d'\n",
-					ul_fetch_rows);
+			LM_ERR("invalid fetch_rows number '%d'\n", ul_fetch_rows);
 			return -1;
 		}
 	}
@@ -307,8 +305,7 @@ static int mod_init(void)
 	if (nat_bflag==(unsigned int)-1) {
 		nat_bflag = 0;
 	} else if ( nat_bflag>=8*sizeof(nat_bflag) ) {
-		LOG(L_ERR,"ERROR:usrloc:mod_init: bflag index (%d) too big!\n",
-			nat_bflag);
+		LM_ERR("bflag index (%d) too big!\n", nat_bflag);
 		return -1;
 	} else {
 		nat_bflag = 1<<nat_bflag;
@@ -345,8 +342,7 @@ static int child_init(int _rank)
 
 	ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
 	if (!ul_dbh) {
-		LOG(L_ERR, "ERROR:ul:child_init(%d): "
-				"Error while connecting database\n", _rank);
+		LM_ERR("child(%d): failed to connect to database\n", _rank);
 		return -1;
 	}
 	/* _rank==1 is used even when fork is disabled */
@@ -354,10 +350,8 @@ static int child_init(int _rank)
 		/* if cache is used, populate domains from DB */
 		for( ptr=root ; ptr ; ptr=ptr->next) {
 			if (preload_udomain(ul_dbh, ptr->d) < 0) {
-				LOG(L_ERR,
-					"ERROR:ul:child_init(%d): Error while preloading "
-					"domain '%.*s'\n", _rank, ptr->name.len,
-					ZSW(ptr->name.s));
+				LM_ERR("child(%d): failed to preload domain '%.*s'\n",
+						_rank, ptr->name.len, ZSW(ptr->name.s));
 				return -1;
 			}
 		}
@@ -378,8 +372,7 @@ static int mi_child_init(void)
 	if (db_mode != NO_DB) {
 		ul_dbh = ul_dbf.init(db_url.s);
 		if (!ul_dbh) {
-			LOG(L_ERR, "ERROR:ul:mi_child_init: "
-					"Error while connecting database\n");
+			LM_ERR("failed to connect to database\n");
 			return -1;
 		}
 	}
@@ -398,7 +391,7 @@ static void destroy(void)
 	if (ul_dbh) {
 		ul_unlock_locks();
 		if (synchronize_all_udomains() != 0) {
-			LOG(L_ERR, "timer(): Error while flushing cache\n");
+			LM_ERR("flushing cache failed\n");
 		}
 		ul_dbf.close(ul_dbh);
 	}
@@ -417,7 +410,7 @@ static void destroy(void)
 static void timer(unsigned int ticks, void* param)
 {
 	if (synchronize_all_udomains() != 0) {
-		LOG(L_ERR, "timer(): Error while synchronizing cache\n");
+		LM_ERR("synchronizing cache failed\n");
 	}
 }
 

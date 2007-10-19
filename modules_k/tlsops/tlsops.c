@@ -258,7 +258,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("%s module - initializing...\n", exports.name);
+	LM_DBG("%s module - initializing...\n", exports.name);
 	
 	return 0;
 }
@@ -266,7 +266,7 @@ static int mod_init(void)
 
 static void mod_destroy(void)
 {
-	DBG("%s module - shutting down...\n", exports.name);
+	LM_DBG("%s module - shutting down...\n", exports.name);
 }
 
 
@@ -277,32 +277,29 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 	long ssl_verify;
 	X509 *x509_cert;
 
-	LOG(L_DBG, "tlsops:is_peer_verified: is_peer_verified() started...\n");
+	LM_DBG("started...\n");
 	if (msg->rcv.proto != PROTO_TLS) {
-		LOG(L_ERR, "tlsops:is_peer_verified: ERROR: proto != TLS -->"
-			" peer can't be verified, return -1\n");
+		LM_ERR("proto != TLS --> peer can't be verified, return -1\n");
 		return -1;
 	}
 
-	LOG(L_DBG, "tlsops:is_peer_verified: trying to find TCP connection "
-		"of received message...\n");
+	LM_DBG("trying to find TCP connection of received message...\n");
 	/* what if we have multiple connections to the same remote socket? e.g. we can have 
 	     connection 1: localIP1:localPort1 <--> remoteIP:remotePort
 	     connection 2: localIP2:localPort2 <--> remoteIP:remotePort
 	   but I think the is very unrealistic */
 	c=tcpconn_get(0, &(msg->rcv.src_ip), msg->rcv.src_port, tcp_con_lifetime);
 	if (!c) {
-		LOG(L_ERR, "tlsops:is_peer_verified: ERROR: no corresponding TLS/TCP "
-			"connection found. This should not happen... return -1\n");
+		LM_ERR("no corresponding TLS/TCP connection found."
+				" This should not happen... return -1\n");
 		return -1;
 	}
-	LOG(L_DBG, "tlsops:is_peer_verified: corresponding TLS/TCP connection "
-		"found. s=%d, fd=%d, id=%d\n", c->s, c->fd, c->id);
+	LM_DBG("corresponding TLS/TCP connection found. s=%d, fd=%d, id=%d\n",
+			c->s, c->fd, c->id);
 
 	if (!c->extra_data) {
-		LOG(L_ERR, "tlsops:is_peer_verified: ERROR: no extra_data specified "
-			"in TLS/TCP connection found. This should not happen... "
-			"return -1\n");
+		LM_ERR("no extra_data specified in TLS/TCP connection found."
+				" This should not happen... return -1\n");
 		tcpconn_put(c);
 		return -1;
 	}
@@ -311,8 +308,7 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 
 	ssl_verify = SSL_get_verify_result(ssl);
 	if ( ssl_verify != X509_V_OK ) {
-		LOG(L_WARN, "tlsops:is_peer_verified: WARNING: verification of "
-				"presented certificate failed... return -1\n");
+		LM_WARN("verification of presented certificate failed... return -1\n");
 		tcpconn_put(c);
 		return -1;
 	}
@@ -322,7 +318,7 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 	 */
 	x509_cert = SSL_get_peer_certificate(ssl);
 	if ( x509_cert == NULL ) {
-		LOG(L_WARN, "tlsops:is_peer_verified: WARNING: peer did not presented "
+		LM_WARN("tlsops:is_peer_verified: WARNING: peer did not presented "
 			"a certificate. Thus it could not be verified... return -1\n");
 		tcpconn_put(c);
 		return -1;
@@ -332,7 +328,7 @@ static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)
 	
 	tcpconn_put(c);
 	
-	LOG(L_DBG, "tlsops:is_peer_verified: peer is successfuly verified"
+	LM_DBG("tlsops:is_peer_verified: peer is successfuly verified"
 		"...done\n");
 	return 1;
 }

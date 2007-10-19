@@ -70,7 +70,7 @@ static inline void run_xmpp_callbacks( int type, char *msg)
 
 	for (it=_xmpp_cb_list->first; it; it=it->next)  {
 		if(it->types&type) {
-			DBG("DBG:xmpp:cb: msg=%p, callback type %d/%d fired\n",
+			LM_DBG("cb: msg=%p, callback type %d/%d fired\n",
 				msg, type, it->types );
 			it->cbf( msg, type, it->cbp );
 		}

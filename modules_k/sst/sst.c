@@ -141,7 +141,7 @@ struct module_exports exports= {
 static int mod_init(void) 
 {
 	str s;
-	LOG(L_INFO,"SIP Session Timer module - initializing\n");
+	LM_INFO("SIP Session Timer module - initializing\n");
 	/*
 	 * if statistics are disabled, prevent their registration to core.
 	 */
@@ -150,28 +150,28 @@ static int mod_init(void)
 	}
 
 	if (sst_flag == -1) {
-		LOG(L_ERR,"ERROR:sst:mod_init: no sst flag set!!\n");
+		LM_ERR("no sst flag set!!\n");
 		return -1;
 	} 
 	else if (sst_flag > MAX_FLAG) {
-		LOG(L_ERR,"ERROR:sst:mod_init: invalid sst flag %d!!\n", sst_flag);
+		LM_ERR("invalid sst flag %d!!\n", sst_flag);
 		return -1;
 	}
 
 	if (timeout_spec != NULL) {
-		DBG("Dialog AVP is %s", timeout_spec);
+		LM_DBG("Dialog AVP is %s", timeout_spec);
 		s.s = timeout_spec; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &timeout_avp)==0 
 		&& (timeout_avp.type != PVT_AVP)){
-			LOG(L_ERR, "ERROR:sst:modInit: malformed or non AVP timeout AVP "
-				"definition in '%s'\n",timeout_spec);
+			LM_ERR("malformed or non AVP timeout AVP definition in '%s'\n",
+					timeout_spec);
 			return -1;
 		}
 	}
 
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
-		LOG(L_ERR, "ERROR:sst:modInit: can't load SL API\n");
+		LM_ERR("failed to load SL API\n");
 		return -1;
 	}
 
@@ -185,7 +185,7 @@ static int mod_init(void)
 	 * Register the main (static) dialog call back.
 	 */
 	if (load_dlg_api(&dialog_st) != 0) {
-		LOG(L_ERR, "Can't load dialog hooks");
+		LM_ERR("failed to load dialog hooks");
 		return(-1);
 	}
 

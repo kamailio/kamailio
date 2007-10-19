@@ -52,19 +52,19 @@ int has_totag(struct sip_msg* _m, char* _foo, char* _bar)
 	str tag;
 
 	if (!_m->to && parse_headers(_m, HDR_TO_F,0)==-1) {
-		LOG(L_ERR, "ERROR: has_totag: To parsing failed\n");
+		LM_ERR("To parsing failed\n");
 		return -1;
 	}
 	if (!_m->to) {
-		LOG(L_ERR, "ERROR: has_totag: no To\n");
+		LM_ERR("no To\n");
 		return -1;
 	}
 	tag=get_to(_m)->tag_value;
 	if (tag.s==0 || tag.len==0) {
-		DBG("DEBUG: has_totag: no totag\n");
+		LM_DBG("no totag\n");
 		return -1;
 	}
-	DBG("DEBUG: has_totag: totag found\n");
+	LM_DBG("totag found\n");
 	return 1;
 }
 
@@ -84,8 +84,8 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 	if (!h) {
 		get_authorized_cred(_m->proxy_auth, &h);
 		if (!h) {
-			LOG(L_ERR, "is_user(): No authorized credentials found (error in scripts)\n");
-			LOG(L_ERR, "is_user(): Call {www,proxy}_authorize before calling is_user function !\n");
+			LM_ERR("no authorized credentials found (error in scripts)\n");
+			LM_ERR("Call {www,proxy}_authorize before calling is_user function !\n");
 			return -1;
 		}
 	}
@@ -93,20 +93,20 @@ int is_user(struct sip_msg* _m, char* _user, char* _str2)
 	c = (auth_body_t*)(h->parsed);
 
 	if (!c->digest.username.user.len) {
-		DBG("is_user(): Username not found in credentials\n");
+		LM_DBG("username not found in credentials\n");
 		return -1;
 	}
 
 	if (s->len != c->digest.username.user.len) {
-		DBG("is_user(): Username length does not match\n");
+		LM_DBG("username length does not match\n");
 		return -1;
 	}
 
 	if (!memcmp(s->s, c->digest.username.user.s, s->len)) {
-		DBG("is_user(): Username matches\n");
+		LM_DBG("username matches\n");
 		return 1;
 	} else {
-		DBG("is_user(): Username differs\n");
+		LM_DBG("username differs\n");
 		return -1;
 	}
 }
@@ -135,14 +135,14 @@ int uri_param_2(struct sip_msg* _msg, char* _param, char* _value)
 	value = (str*)_value;
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-	        LOG(L_ERR, "uri_param(): ruri parsing failed\n");
+	        LM_ERR("ruri parsing failed\n");
 	        return -1;
 	}
 
 	t = _msg->parsed_uri.params;
 
 	if (parse_params(&t, CLASS_ANY, &hooks, &params) < 0) {
-	        LOG(L_ERR, "uri_param(): ruri parameter parsing failed\n");
+	        LM_ERR("ruri parameter parsing failed\n");
 	        return -1;
 	}
 
@@ -195,7 +195,7 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 	}
 
 	if (parse_sip_msg_uri(_msg) < 0) {
-	        LOG(L_ERR, "add_uri_param(): ruri parsing failed\n");
+	        LM_ERR("ruri parsing failed\n");
 	        return -1;
 	}
 
@@ -206,12 +206,12 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		cur_uri =  GET_RURI(_msg);
 		new_uri.len = cur_uri->len + param->len + 1;
 		if (new_uri.len > MAX_URI_SIZE) {
-			LOG(L_ERR, "add_uri_param(): new ruri too long\n");
+			LM_ERR("new ruri too long\n");
 			return -1;
 		}
 		new_uri.s = pkg_malloc(new_uri.len);
 		if (new_uri.s == 0) {
-			LOG(L_ERR, "add_uri_param(): Memory allocation failure\n");
+			LM_ERR("add_uri_param(): Memory allocation failure\n");
 			return -1;
 		}
 		memcpy(new_uri.s, cur_uri->s, cur_uri->len);
@@ -233,13 +233,13 @@ int add_uri_param(struct sip_msg* _msg, char* _param, char* _s2)
 		parsed_uri->params.len + param->len + 1 +
 		parsed_uri->headers.len + 1;
 	if (new_uri.len > MAX_URI_SIZE) {
-	        LOG(L_ERR, "add_uri_param(): new ruri too long\n");
+	        LM_ERR("new ruri too long\n");
 		return -1;
 	}
 
 	new_uri.s = pkg_malloc(new_uri.len);
 	if (new_uri.s == 0) {
-		LOG(L_ERR, "add_uri_param(): Memory allocation failure\n");
+		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 
@@ -308,14 +308,14 @@ int tel2sip(struct sip_msg* _msg, char* _s1, char* _s2)
 	if (strncmp(ruri->s, "tel:", 4) != 0) return 1;
 
 	if ((pfuri=parse_from_uri(_msg))==NULL) {
-		LOG(L_ERR, "tel2sip(): Error while parsing From header\n");
+		LM_ERR("parsing From header failed\n");
 		return -1;
 	}
 
 	suri.len = 4 + ruri->len - 4 + 1 + pfuri->host.len + 1 + 10;
 	suri.s = pkg_malloc(suri.len);
 	if (suri.s == 0) {
-		LOG(L_ERR, "tel2sip(): Memory allocation failure\n");
+		LM_ERR("no more pkg memory\n");
 		return -1;
 	}
 	at = suri.s;
@@ -374,17 +374,16 @@ int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
     if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_STR) {
 	    if (parse_uri(pv_val.rs.s, pv_val.rs.len, &puri) < 0) {
-		LOG(L_ERR, "is_uri_user_e164(): Error while parsing URI\n");
+		LM_ERR("parsing URI failed\n");
 		return -1;
 	    }
 	    return e164_check(&(puri.user));
 	} else {
-	    LOG(L_ERR, "is_uri_user_e164(): pseudo variable value is "
-		"not string\n");
+	    LM_ERR("pseudo variable value is not string\n");
 	    return -1;
 	}
     } else {
-	LOG(L_ERR, "is_uri_user_e164(): cannot get pseudo variable value\n");
+	LM_ERR("failed to get pseudo variable value\n");
 	return -1;
     }
 }

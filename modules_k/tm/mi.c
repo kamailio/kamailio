@@ -107,7 +107,7 @@ static inline struct str_list *new_str(char *s, int len,
 	struct str_list *new;
 	new=pkg_malloc(sizeof(struct str_list));
 	if (!new) {
-		LOG(L_ERR, "ERROR:TM:new_str: not enough pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		return 0;
 	}
 	new->s.s=s;
@@ -163,8 +163,7 @@ static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l,
 							if (*send_sock==0){
 								*send_sock=uri2sock(0, uri, &to_su,PROTO_NONE);
 								if (!*send_sock) {
-									LOG(L_ERR, "ERROR:tm:get_hfblock: "
-										"send_sock failed\n");
+									LM_ERR("send_sock failed\n");
 									goto error;
 								}
 							}
@@ -193,14 +192,14 @@ static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l,
 		/* proceed to next header */
 		/* new=new_str(CRLF, CRLF_LEN, &last, &total_len );
 		if (!new) goto error; */
-		DBG("DEBUG: get_hfblock: one more hf processed\n");
+		LM_DBG("one more hf processed\n");
 	} /* header loop */
 
 
 	/* construct a single header block now */
 	ret=pkg_malloc(total_len);
 	if (!ret) {
-		LOG(L_ERR, "ERROR: get_hf:block no pkg mem for hf block\n");
+		LM_ERR("no pkg mem for hf block\n");
 		goto error;
 	}
 	i=sl.next;
@@ -253,7 +252,7 @@ static inline void mi_print_routes( struct mi_node *node, dlg_t* dlg)
 
 	s = pkg_malloc( len );
 	if (s==0) {
-		LOG(L_ERR,"ERROR:tm:mi_print_routes: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		return;
 	}
 
@@ -292,13 +291,13 @@ static inline int mi_print_uris( struct mi_node *node, struct sip_msg* reply)
 
 	dlg = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (!dlg) {
-		LOG(L_ERR, "ERROR:tm:mi_print_uris: no shm memory left\n");
+		LM_ERR("no shm memory left\n");
 		return -1;
 	}
 
 	memset(dlg, 0, sizeof(dlg_t));
 	if (dlg_response_uac(dlg, reply) < 0) {
-		LOG(L_ERR, "ERROR:tm:mi_print_uris: failed to create dialog\n");
+		LM_ERR("failed to create dialog\n");
 		free_dlg(dlg);
 		return -1;
 	}
@@ -340,7 +339,7 @@ static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
 	struct mi_root *rpl_tree;
 	str text;
 
-	DBG("DEBUG: MI UAC generated status %d\n", ps->code);
+	LM_DBG("MI UAC generated status %d\n", ps->code);
 	if (!*ps->param)
 		return;
 
@@ -353,7 +352,7 @@ static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
 	if (ps->rpl==FAKED_REPLY) {
 		get_reply_status( &text, ps->rpl, ps->code);
 		if (text.s==0) {
-			LOG(L_ERR, "ERROR:tm:mi_uac_dlg_hdl: get_reply_status failed\n");
+			LM_ERR("get_reply_status failed\n");
 			rpl_tree = 0;
 			goto done;
 		}
@@ -373,7 +372,7 @@ static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
 			ps->rpl->len-(ps->rpl->headers->name.s - ps->rpl->buf));
 	}
 
-	DBG("DEBUG:tm: mi_callback successfully completed\n");
+	LM_DBG("mi_callback successfully completed\n");
 done:
 	if (ps->code >= 200) {
 		mi_hdl->handler_f( rpl_tree, mi_hdl, 1 /*done*/ );
@@ -575,7 +574,7 @@ struct mi_root* mi_tm_cancel(struct mi_root* cmd_tree, void* param)
 		return init_mi_tree( 481, "No such transaction", 19);
 
 	/* cancel the call */
-	DBG("DEBUG:TM:mi_tm_cancel: cancelling transaction %p\n",trans);
+	LM_DBG("cancelling transaction %p\n",trans);
 
 	cancel_uacs( trans, ~0/*all branches*/);
 

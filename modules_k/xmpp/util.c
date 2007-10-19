@@ -41,7 +41,7 @@ char *decode_uri_sip_xmpp(char *uri)
 	if (!uri)
 		return NULL;
 	if (parse_uri(uri, strlen(uri), &puri) < 0) {
-		LOG(L_ERR, "xmpp: unable to parse URI\n");
+		LM_ERR("failed to parse URI\n");
 		return NULL;
 	}
 	strncpy(buf, puri.user.s, sizeof(buf));
@@ -63,7 +63,7 @@ char *encode_uri_sip_xmpp(char *uri)
 	if (!uri)
 		return NULL;
 	if (parse_uri(uri, strlen(uri), &puri) < 0) {
-		LOG(L_ERR, "xmpp: unable to parse URI\n");
+		LM_ERR("failed to parse URI\n");
 		return NULL;
 	}
 	snprintf(buf, sizeof(buf), "%.*s%c%.*s@%s",

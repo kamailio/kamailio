@@ -87,11 +87,10 @@ static int reg_param_stat( modparam_t type, void* val)
 
 static int mod_init(void)
 {
-	LOG(L_INFO,"Statistics module - initializing\n");
+	LM_INFO("initializing\n");
 
 	if (register_all_mod_stats()!=0) {
-		LOG(L_ERR,"ERROR:statistics:mod_init: failed to register statistic "
-			"variables\n");
+		LM_ERR("failed to register statistic variables\n");
 		return E_UNSPEC;
 	}
 	return 0;
@@ -112,7 +111,7 @@ static int fixup_stat(void** param, int param_no)
 		/* var name - string */
 		stat = get_stat( &s );
 		if (stat==0) {
-			LOG(L_ERR,"ERROR:statistics:fixup_stat: variable <%s> not "
+			LM_ERR("fixup_stat: variable <%s> not "
 				"defined\n", s.s);
 			return E_CFG;
 		}
@@ -130,16 +129,14 @@ static int fixup_stat(void** param, int param_no)
 		}
 		if (err==0){
 			if (n==0) {
-				LOG(L_ERR,"ERROR:statistics:fixup_stat: update with 0 has "
-					"no sense\n");
+				LM_ERR("update with 0 has no sense\n");
 				return E_CFG;
 			}
 			pkg_free(*param);
 			*param=(void*)n;
 			return 0;
 		}else{
-			LOG(L_ERR, "ERROR:statistics:fixup_stat: bad update number <%s>\n",
-					(char*)(*param));
+			LM_ERR("bad update number <%s>\n",(char*)(*param));
 			return E_CFG;
 		}
 	}

@@ -233,8 +233,8 @@ int handle_openserSIPServiceStartTime(netsnmp_mib_handler *handler,
 	/* Open the file created by spawn_sysUpTime_child(), and parse our the
 	 * required data.  */
 	if (theFile == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: couldn't read sysUpTime file at "
-				"%s\n", SNMPGET_TEMP_FILE);
+		LM_ERR("failed to read sysUpTime file at %s\n",
+				SNMPGET_TEMP_FILE);
 	} else {
 		fgets(buffer, SNMPGET_MAX_BUFFER, theFile);
 
@@ -501,9 +501,8 @@ int handleSipEntityType( modparam_t type, void* val)
 		openserEntityType |= TC_SIP_ENTITY_ROLE_REGISTRAR_SERVER;
 	}
 	else {
-		LOG(L_ERR,"ERROR: SNMPStats: The configuration file specified "
-				"sipEntityType=%s, an unknown type\n", 
-					strEntityType);
+		LM_ERR("The configuration file specified sipEntityType=%s,"
+				" an unknown type\n", strEntityType);
 		return -1;
 	}
 

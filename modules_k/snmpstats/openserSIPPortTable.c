@@ -77,8 +77,7 @@ oid *createIndex(int ipType, int *ipAddress, int *sizeOfOID)
 	currentOIDIndex = pkg_malloc((*sizeOfOID) * sizeof(oid));
 
 	if (currentOIDIndex == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for"
-				"openserSIPPortTable\n");
+		LM_ERR("failed to create a row for openserSIPPortTable\n");
 		*sizeOfOID = 0;
 		return NULL;
 	}
@@ -201,7 +200,7 @@ void createRowsFromIPList(int *theList, int listSize, int protocol,
 		currentRow = getRow(1, &theList[curIndexOfIP]);
 
 		if (currentRow == NULL) {
-			LOG(L_ERR, "ERROR: SNMPStats: Unable to create all the "
+			LM_ERR("failed to create all the "
 					"rows for the openserSIPPortTable\n");
 			return;
 		}

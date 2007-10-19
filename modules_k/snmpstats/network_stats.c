@@ -133,8 +133,7 @@ int get_socket_list_from_proto(int **ipList, int protocol) {
 	/* We couldn't allocate memory for the IP List.  So all we can do is
 	 * fail. */
 	if (*ipList == NULL) {
-		LOG(L_ERR, "Could not allocate memory for"
-				"get_socket_list_from_proto()");
+		LM_ERR("no more pkg memory");
 		return 0;
 	}
 
@@ -329,9 +328,8 @@ static int get_used_waiting_queue(
 	fp = fopen(fileToOpen, "r");
 
 	if (fp == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not open %s. openserMsgQueu"
-				"eDepth and its related alarms will not be "
-				"available.\n", fileToOpen);
+		LM_ERR("Could not open %s. openserMsgQueu eDepth and its related"
+				" alarms will not be available.\n", fileToOpen);
 		return 0;
 	}
 

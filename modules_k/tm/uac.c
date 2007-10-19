@@ -79,14 +79,13 @@ int uac_init(void)
 	struct socket_info *si;
 
 	if (RAND_MAX < TM_TABLE_ENTRIES) {
-		LOG(L_WARN, "Warning: uac does not spread "
-		    "across the whole hash table\n");
+		LM_WARN("uac does not spread across the whole hash table\n");
 	}
 	/* on tcp/tls bind_address is 0 so try to get the first address we listen
 	 * on no matter the protocol */
 	si=bind_address?bind_address:get_first_socket();
 	if (si==0){
-		LOG(L_CRIT, "BUG: uac_init: null socket list\n");
+		LM_CRIT("null socket list\n");
 		return -1;
 	}
 
@@ -122,22 +121,22 @@ void generate_fromtag(str* tag, str* callid)
 static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 {
 	if (!method || !to || !from || !dialog) {
-		LOG(L_ERR, "check_params(): Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	if (!method->s || !method->len) {
-		LOG(L_ERR, "check_params(): Invalid request method\n");
+		LM_ERR("invalid request method\n");
 		return -2;
 	}
 
 	if (!to->s || !to->len) {
-		LOG(L_ERR, "check_params(): Invalid To URI\n");
+		LM_ERR("invalid To URI\n");
 		return -4;
 	}
 
 	if (!from->s || !from->len) {
-		LOG(L_ERR, "check_params(): Invalid From URI\n");
+		LM_ERR("invalid From URI\n");
 		return -5;
 	}
 	return 0;
@@ -150,7 +149,7 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 
 	cseq_nr.s=int2str(dlg->loc_seq.value, &cseq_nr.len);
 	hashid = tm_hash(dlg->id.call_id, cseq_nr);
-	DBG("DEBUG: dlg2hash: %d\n", hashid);
+	LM_DBG("%d\n", hashid);
 	return hashid;
 }
 
@@ -175,7 +174,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	if(!dialog->hooks.next_hop && w_calculate_hooks(dialog)<0)
 		goto error2;
 
-	DBG("DEBUG:tm:t_uac: next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
+	LM_DBG("next_hop=<%.*s>\n",dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
 	/* it's a new message, so we will take the default socket */
 	if (dialog->send_sock) {
@@ -188,7 +187,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 			PROTO_NONE);
 		if (dialog->send_sock==0) {
 			ret=ser_error;
-			LOG(L_ERR, "t_uac: no socket found\n");
+			LM_ERR("no socket found\n");
 			goto error2;
 		}
 	}
@@ -196,7 +195,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	new_cell = build_cell(0); 
 	if (!new_cell) {
 		ret=E_OUT_OF_MEM;
-		LOG(L_ERR, "t_uac: short of cell shmem\n");
+		LM_ERR("short of cell shmem\n");
 		goto error2;
 	}
 
@@ -215,7 +214,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		flags |= TMCB_LOCAL_RESPONSE_OUT;
 	if(cb && insert_tmcb(&(new_cell->tmcb_hl),flags,cb,cbp)!=1){
 		ret=E_OUT_OF_MEM;
-		LOG(L_ERR, "t_uac: short of tmcb shmem\n");
+		LM_ERR("short of tmcb shmem\n");
 		goto error2;
 	}
 
@@ -236,7 +235,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 
 	buf = build_uac_req(method, headers, body, dialog, 0, new_cell, &buf_len);
 	if (!buf) {
-		LOG(L_ERR, "t_uac: Error while building message\n");
+		LM_ERR("failed to build message\n");
 		ret=E_OUT_OF_MEM;
 		goto error1;
 	}
@@ -249,7 +248,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	new_cell->nr_of_outgoings++;
 	
 	if (SEND_BUFFER(request) == -1) {
-		LOG(L_ERR, "t_uac: Attempt to send to '%.*s' failed\n", 
+		LM_ERR("attempt to send to '%.*s' failed\n", 
 			dialog->hooks.next_hop->len,
 			dialog->hooks.next_hop->s);
 	}
@@ -274,12 +273,12 @@ int req_within(str* method, str* headers, str* body, dlg_t* dialog,
 									transaction_cb completion_cb, void* cbp)
 {
 	if (!method || !dialog) {
-		LOG(L_ERR, "req_within: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		goto err;
 	}
 
 	if (dialog->state != DLG_CONFIRMED) {
-		LOG(L_ERR, "req_within: Dialog is not confirmed yet\n");
+		LM_ERR("dialog is not confirmed yet\n");
 		goto err;
 	}
 
@@ -308,7 +307,7 @@ int req_outside(str* method, str* to, str* from, str* headers, str* body,
 	generate_fromtag(&fromtag, &callid);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, dialog) < 0) {
-		LOG(L_ERR, "req_outside(): Error while creating new dialog\n");
+		LM_ERR("failed to create new dialog\n");
 		goto err;
 	}
 
@@ -334,7 +333,7 @@ int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi,
 	generate_fromtag(&fromtag, &callid);
 
 	if (new_dlg_uac(&callid, &fromtag, DEFAULT_CSEQ, from, to, &dialog) < 0) {
-		LOG(L_ERR, "request(): Error while creating temporary dialog\n");
+		LM_ERR("failed to create temporary dialog\n");
 		goto err;
 	}
 

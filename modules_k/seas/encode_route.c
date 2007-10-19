@@ -72,7 +72,7 @@ int encode_route_body(char *hdr,int hdrlen,rr_t *route_parsed,unsigned char *whe
    flags=0;
    for(route_offset=0,i=0,myroute=route_parsed;myroute;myroute=myroute->next,i++){
       if((k=encode_route(hdr,hdrlen,myroute,&tmp[route_offset]))<0){
-	 LOG(L_ERR,"parsing route number %d\n",i);
+	 LM_ERR("parsing route number %d\n",i);
 	 return -1;
       }
       where[2+i]=(unsigned char)k;
@@ -108,11 +108,11 @@ int encode_route(char *hdrstart,int hdrlen,rr_t *body,unsigned char *where)
    }
 
    if (parse_uri(body->nameaddr.uri.s, body->nameaddr.uri.len,&puri) < 0 ) {
-      LOG(L_ERR, "Bad URI in address\n");
-      return -1;
+      LM_ERR("Bad URI in address\n");
+	  return -1;
    }else{
       if((j=encode_uri2(hdrstart,hdrlen,body->nameaddr.uri,&puri,&where[i]))<0){
-	 LOG(L_ERR, "error codifying the URI\n");
+	 LM_ERR("error codifying the URI\n");
 	 return -1;
       }else{
 	 i+=j;
@@ -137,7 +137,7 @@ int print_encoded_route_body(int fd,char *hdr,int hdrlen,unsigned char *payload,
 
    numroutes=payload[1];
    if(numroutes==0){
-      LOG(L_ERR,"no routes present?\n");
+      LM_ERR("no routes present?\n");
       return -1;
    }
    for(i=0,offset=2+numroutes;i<numroutes;i++){
@@ -189,7 +189,7 @@ int dump_route_body_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,
 
    numroutes=payload[1];
    if(numroutes==0){
-      LOG(L_ERR,"no routes present?\n");
+      LM_ERR("no routes present?\n");
       return -1;
    }
    if(segregationLevel & (JUNIT|SEGREGATE|ONLY_URIS)){

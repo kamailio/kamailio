@@ -81,14 +81,14 @@ void cancel_branch( struct cell *t, int branch )
 
 #	ifdef EXTRA_DEBUG
 	if (crb->buffer.s!=0 && crb->buffer.s!=BUSY_BUFFER) {
-		LOG(L_CRIT, "ERROR: attempt to rewrite cancel buffer\n");
+		LM_CRIT("attempt to rewrite cancel buffer failed\n");
 		abort();
 	}
 #	endif
 
 	cancel=build_cancel(t, branch, &len);
 	if (!cancel) {
-		LOG(L_ERR, "ERROR: attempt to build a CANCEL failed\n");
+		LM_ERR("attempt to build a CANCEL failed\n");
 		return;
 	}
 	/* install cancel now */
@@ -106,7 +106,7 @@ void cancel_branch( struct cell *t, int branch )
 			-t->uas.request->REQ_METHOD);
 	}
 
-	DBG("DEBUG: cancel_branch: sending cancel...\n");
+	LM_DBG("sending cancel...\n");
 	SEND_BUFFER( crb );
 
 	/*sets and starts the FINAL RESPONSE timer */
@@ -141,23 +141,22 @@ unsigned int t_uac_cancel( str *headers, str *body,
 	ret=0;
 
 	if(t_lookup_ident(&t_invite,cancelled_hashIdx,cancelled_label)<0){
-		LOG(L_ERR,"t_uac_cancel: Failed to t_lookup_ident hash_idx=%d,"
+		LM_ERR("failed to t_lookup_ident hash_idx=%d,"
 			"label=%d\n", cancelled_hashIdx,cancelled_label);
 		return 0;
 	}
 	/* <sanity_checks> */
 	if(! is_local(t_invite)){
-		LOG(L_ERR,"t_uac_cancel: tried to cancel a non-local transaction\n");
+		LM_ERR("tried to cancel a non-local transaction\n");
 		goto error3;
 	}
 	if(t_invite->uac[0].last_received < 100){
-		LOG(L_WARN,"t_uac_cancel: trying to cancel a transaction not in "
+		LM_WARN("trying to cancel a transaction not in "
 			"Proceeding state !\n");
 		goto error3;
 	}
 	if(t_invite->uac[0].last_received > 200){
-		LOG(L_WARN,"t_uac_cancel: trying to cancel a completed "
-			"transaction !\n");
+		LM_WARN("trying to cancel a completed transaction !\n");
 		goto error3;
 	}
 	/* </sanity_checks*/
@@ -166,14 +165,14 @@ unsigned int t_uac_cancel( str *headers, str *body,
 	/* <build_cell> */
 	if(!(cancel_cell = build_cell(0))){
 		ret=0;
-		LOG(L_ERR,"t_uac_cancel: out of shm memory !\n");
+		LM_ERR("no more shm memory!\n");
 		goto error3;
 	}
 	reset_avps();
 	if(cb && insert_tmcb(&(cancel_cell->tmcb_hl),
 	TMCB_RESPONSE_IN|TMCB_LOCAL_COMPLETED,cb,cbp)!=1){
 		ret=0;
-		LOG(L_ERR, "t_uac_cancel: short of tmcb shmem !\n");
+		LM_ERR("short of tmcb shmem !\n");
 		goto error2;
 	}
 	/* </build_cell> */
@@ -201,7 +200,7 @@ unsigned int t_uac_cancel( str *headers, str *body,
 
 	if(!(buf = build_uac_cancel(headers,body,t_invite,0,&len))){
 		ret=0;
-		LOG(L_ERR, "ERROR:t_uac_cancel:attempt to build a CANCEL failed\n");
+		LM_ERR("attempt to build a CANCEL failed\n");
 		goto error1;
 	}
 	cancel->buffer.s=buf;
@@ -215,7 +214,7 @@ unsigned int t_uac_cancel( str *headers, str *body,
 	cancel_cell->nr_of_outgoings++;
 	if (SEND_BUFFER(cancel)==-1) {
 		ret=0;
-		LOG(L_ERR, "ERROR:t_uac_cancel: send failed\n");
+		LM_ERR("send failed\n");
 		goto error1;
 	}
 	start_retr(cancel);

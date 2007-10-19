@@ -60,8 +60,8 @@ char *build_conn_str(struct db_id* id, char *buf)
 		+ PWD_ATTR_LEN + lp + 1;
 
 	if ( len>=MAX_CONN_STR_LEN ){
-		LOG(L_ERR,"ERROR:unixodbc:build_conn_str: connection string too long!"
-			"Increase MAX_CONN_STR_LEN and recompile\n");
+		LM_ERR("connection string too long!Increase MAX_CONN_STR_LEN"
+				" and recompile\n");
 		return 0;
 	}
 
@@ -89,7 +89,7 @@ char *build_conn_str(struct db_id* id, char *buf)
 	*(p++) = ';';
 	*p = 0 ; /* make it null terminated */
 
-	DBG("DEBUG:unixodbc:build_conn_str: connection string is <%s>\n",buf);
+	LM_DBG("connection string is <%s>\n",buf);
 	return buf;
 }
 
@@ -108,14 +108,14 @@ struct my_con* new_connection(struct db_id* id)
 
 	if (!id)
 	{
-		LOG(L_ERR,"ERROR:unixodbc:new_connection: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr)
 	{
-		LOG(L_ERR,"ERROR:unixodbc:new_connection: No memory left\n");
+		LM_ERR("no more memory left\n");
 		return 0;
 	}
 
@@ -127,8 +127,7 @@ struct my_con* new_connection(struct db_id* id)
 	SQLAllocHandle(SQL_HANDLE_DBC, ptr->env, &(ptr->dbc));
 
 	if (!build_conn_str(id, conn_str)) {
-		LOG(L_ERR, "ERROR:unixodbc:new_connection: failed to build "
-			"connection string\n");
+		LM_ERR("failed to build connection string\n");
 		return 0;
 	}
 	ret = SQLDriverConnect(ptr->dbc, (void *)1, (SQLCHAR*)conn_str, SQL_NTS,
@@ -136,18 +135,16 @@ struct my_con* new_connection(struct db_id* id)
 		SQL_DRIVER_COMPLETE);
 	if (SQL_SUCCEEDED(ret))
 	{
-		DBG("DEBUG:unixodbc:new_connection: connection succeeded with reply"
-			" <%s>\n", outstr);
+		LM_DBG("connection succeeded with reply <%s>\n", outstr);
 		if (ret == SQL_SUCCESS_WITH_INFO)
 		{
-			DBG("DEBUG:unixodbc:new_connection: driver reported the "
-				"following diagnostics\n");
+			LM_DBG("driver reported the following diagnostics\n");
 			extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
 		}
 	}
 	else
 	{
-		LOG(L_ERR, "ERROR:unixodbc:new_connection: failed to connect\n");
+		LM_ERR("failed to connect\n");
 		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
 		goto err;
 	}
@@ -194,7 +191,7 @@ char* stret)
 		ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
 			sizeof(text), &len );
 		if (SQL_SUCCEEDED(ret)) {
-			LOG(L_ERR,"unixodbc:%s=%s:%ld:%ld:%s\n", fn, state, (long)i, 
+			LM_ERR("unixodbc:%s=%s:%ld:%ld:%s\n", fn, state, (long)i, 
 					(long)native, text);
 			if(stret) strcpy( stret, (char*)state );
 		}

@@ -50,28 +50,28 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 
 	if ((!_h) || (!_r))
 	{
-		LOG(L_ERR, "unixodbc:get_columns: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	SQLNumResultCols(CON_RESULT(_h), &n);
 	if (!n)
 	{
-		LOG(L_ERR, "unixodbc:get_columns: No columns\n");
+		LM_ERR("no columns\n");
 		return -2;
 	}
 
 	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
 	if (!RES_NAMES(_r))
 	{
-		LOG(L_ERR, "unixodbc:get_columns: No memory left\n");
+		LM_ERR("no memory left\n");
 		return -3;
 	}
 
 	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
 	if (!RES_TYPES(_r))
 	{
-		LOG(L_ERR, "unixodbc:get_columns: No memory left\n");
+		LM_ERR("no memory left\n");
 		pkg_free(RES_NAMES(_r));
 		return -4;
 	}
@@ -88,7 +88,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 			&NameLength, &DataType, &ColumnSize, &DecimalDigits, &Nullable);
 		if(!SQL_SUCCEEDED(ret))
 		{
-			LOG(L_ERR, "SQLDescribeCol fallita: %d\n", ret);
+			LM_ERR("SQLDescribeCol fallita: %d\n", ret);
 			extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT, 
 				NULL);
 		}
@@ -147,7 +147,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 
 	if((!_h) || (!_r))
 	{
-		LOG(L_ERR, "unixodbc:convert_rows: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
@@ -155,7 +155,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	temp_row = (strn*)pkg_malloc( columns*sizeof(strn) );
 	if(!temp_row)
 	{
-		LOG(L_ERR, "unixodbc:convert_rows: No memory left\n");
+		LM_ERR("no memory left\n");
 		return -1;
 	}
 
@@ -172,12 +172,12 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 			}
 			else
 			{
-				LOG(L_ERR, "unixodbc:convert_rows:Error in SQLGetData\n");
+				LM_ERR("SQLGetData failed\n");
 			}
 		}
 
 		if (insert(&rowstart, &rows, columns, temp_row) < 0) {
-			LOG(L_ERR, "unixodbc:convertrows: insert failed\n");
+			LM_ERR("insert failed\n");
 			pkg_free(temp_row);
 			temp_row= NULL;
 			return -5;
@@ -198,7 +198,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	RES_ROWS(_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * row_n);
 	if (!RES_ROWS(_r))
 	{
-		LOG(L_ERR, "unixodbc:convert_rows: No memory left\n");
+		LM_ERR("no more memory left\n");
 		return -2;
 	}
 	i = 0;
@@ -208,15 +208,14 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 		CON_ROW(_h) = rows->data;
 		if (!CON_ROW(_h))
 		{
-			LOG(L_ERR, "unixodbc:convert_rows: string null\n");
+			LM_ERR("string null\n");
 			RES_ROW_N(_r) = row_n;
 			db_free_rows(_r);
 			return -3;
 		}
 		if (convert_row(_h, _r, &(RES_ROWS(_r)[i]), rows->lengths) < 0)
 		{
-			LOG(L_ERR, "unixodbc:convert_rows: Error while converting "
-				"row #%d\n", i);
+			LM_ERR("converting row failed #%d\n", i);
 			RES_ROW_N(_r) = i;
 			db_free_rows(_r);
 			return -4;
@@ -236,19 +235,19 @@ int convert_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
-		LOG(L_ERR, "convert_result: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	if (get_columns(_h, _r) < 0)
 	{
-		LOG(L_ERR, "convert_result: Error while getting column names\n");
+		LM_ERR("getting column names failed\n");
 		return -2;
 	}
 
 	if (convert_rows(_h, _r) < 0)
 	{
-		LOG(L_ERR, "convert_result: Error while converting rows\n");
+		LM_ERR("converting rows failed\n");
 		db_free_columns(_r);
 		return -3;
 	}
@@ -262,7 +261,7 @@ int free_result(db_res_t* _r)
 {
 	if (!_r)
 	{
-		LOG(L_ERR, "free_result: Invalid parameter\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 

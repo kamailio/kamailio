@@ -96,7 +96,7 @@ static inline void _lock( ser_lock_t* s )
 #endif
 {
 #ifdef DBG_LOCK
-	DBG("DEBUG: lock : entered from %s , %s(%d)\n", function, file, line );
+	LM_DBG("lock : entered from %s , %s(%d)\n", function, file, line );
 #endif
 #ifdef GEN_LOCK_T_PREFERED 
 	lock_get(s);
@@ -115,7 +115,7 @@ static inline void _unlock( ser_lock_t* s )
 #endif
 {
 #ifdef DBG_LOCK
-	DBG("DEBUG: unlock : entered from %s, %s:%d\n", file, function, line );
+	LM_DBG("unlock : entered from %s, %s:%d\n", file, function, line );
 #endif
 #ifdef GEN_LOCK_T_PREFERED
 	lock_release(s);

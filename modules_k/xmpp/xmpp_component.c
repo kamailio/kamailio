@@ -61,10 +61,10 @@ static int xode_send(int fd, xode x)
 	char *str = xode_to_str(x);
 	int len = strlen(str);
 	
-	DBG("xmpp: xode_send [%s]\n", str);
+	LM_DBG("xode_send [%s]\n", str);
 
 	if (net_send(fd, str, len) != len) {
-		LOG(L_ERR, "xmpp: send() error: %s\n", strerror(errno));
+		LM_ERR("send() error: %s\n", strerror(errno));
 		return -1;
 	}
 	/* should str be freed?!?! */
@@ -78,7 +78,7 @@ static void stream_node_callback(int type, xode node, void *arg)
 	char buf[4096];
 	xode x;
 
-	DBG("xmpp: stream callback: %d: %s\n", type, node ? xode_get_name(node) : "n/a");
+	LM_DBG("stream callback: %d: %s\n", type, node ? xode_get_name(node) : "n/a");
 	switch (type) {
 	case XODE_STREAM_ROOT:
 		id = xode_get_attrib(node, "id");
@@ -93,9 +93,9 @@ static void stream_node_callback(int type, xode node, void *arg)
 	case XODE_STREAM_NODE:
 		tag = xode_get_name(node);
 		if (!strcmp(tag, "handshake")) {
-			DBG("xmpp: handshake succeeded\n");
+			LM_DBG("handshake succeeded\n");
 		} else if (!strcmp(tag, "message")) {
-			DBG("xmpp: XMPP IM received\n");
+			LM_DBG("XMPP IM received\n");
 			char *from = xode_get_attrib(node, "from");
 			char *to = xode_get_attrib(node, "to");
 			char *type = xode_get_attrib(node, "type");
@@ -105,12 +105,12 @@ static void stream_node_callback(int type, xode node, void *arg)
 			if (!type)
 				type = "chat";
 			if (!strcmp(type, "error")) {	
-				DBG("xmpp: received message error stanza\n");
+				LM_DBG("received message error stanza\n");
 				goto out;
 			}
 			
 			if (!from || !to || !body) {
-				DBG("xmpp: invalid <message/> attributes\n");
+				LM_DBG("invalid <message/> attributes\n");
 				goto out;
 			}
 
@@ -122,16 +122,16 @@ static void stream_node_callback(int type, xode node, void *arg)
 				msg);
 		} else if (!strcmp(tag, "presence")) {
 			/* call presence callbacks */
-			DBG("xmpp: XMPP Presence received\n");
+			LM_DBG("XMPP Presence received\n");
 			run_xmpp_callbacks(XMPP_RCV_PRESENCE, xode_to_str(node));
 		}else if (!strcmp(tag, "iq")) {
 			/* call presence callbacks */
-			DBG("xmpp: XMPP IQ received\n");
+			LM_DBG("XMPP IQ received\n");
 			run_xmpp_callbacks(XMPP_RCV_IQ, xode_to_str(node));
 		}
 		break;
 	case XODE_STREAM_ERROR:
-		LOG(L_ERR, "xmpp: stream error\n");
+		LM_ERR("stream error\n");
 		/* fall-through */
 	case XODE_STREAM_CLOSE:
 		priv->running = 0;
@@ -149,7 +149,7 @@ static int do_send_message_component(struct xmpp_private_data *priv,
 {
 	xode x;
 
-	DBG("xmpp: do_send_message_component from=[%s] to=[%s] body=[%s]\n",
+	LM_DBG("do_send_message_component from=[%s] to=[%s] body=[%s]\n",
 			cmd->from, cmd->to, cmd->body);
 
 	x = xode_new_tag("message");
@@ -171,12 +171,11 @@ static int do_send_bulk_message_component(struct xmpp_private_data *priv,
 {
 	int len;
 
-	DBG("xmpp: do_send_bulk_message_component from=[%s] to=[%s] body=[%s]\n",
+	LM_DBG("do_send_bulk_message_component from=[%s] to=[%s] body=[%s]\n",
 			cmd->from, cmd->to, cmd->body);
 	len = strlen(cmd->body);
 	if (net_send(priv->fd, cmd->body, len) != len) {
-		LOG(L_ERR, "xmpp: do_send_bulk_message_component: %s\n",
-				strerror(errno));
+		LM_ERR("do_send_bulk_message_component: %s\n",strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -219,7 +218,7 @@ int xmpp_component_child_process(int data_pipe)
 			rv = select(maxfd + 1, &fdset, NULL, NULL, NULL);
 			
 			if (rv < 0) {
-				LOG(L_ERR, "xmpp: select() error: %s\n", strerror(errno));
+				LM_ERR("select() failed: %s\n", strerror(errno));
 			} else if (!rv) {
 				/* timeout */
 			} else if (FD_ISSET(fd, &fdset)) {
@@ -229,14 +228,14 @@ int xmpp_component_child_process(int data_pipe)
 					/* connection closed */
 					break;
 
-				DBG("xmpp: server read\n[%s]\n", buf);
+				LM_DBG("server read\n[%s]\n", buf);
 				xode_stream_eat(stream, buf, strlen(buf));
 			} else if (FD_ISSET(data_pipe, &fdset)) {
 				if (read(data_pipe, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-					LOG(L_ERR, "xmpp: unable to read from command pipe: %s\n",
+					LM_ERR("failed to read from command pipe: %s\n",
 							strerror(errno));
 				} else {
-					DBG("xmpp: got pipe cmd %d\n", cmd->type);
+					LM_DBG("got pipe cmd %d\n", cmd->type);
 					switch (cmd->type) {
 					case XMPP_PIPE_SEND_MESSAGE:
 						do_send_message_component(&priv, cmd);

@@ -83,7 +83,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 
 	     /* first try to look at r-uri for a username */
 	if (parse_uri(_m->first_line.u.request.uri.s, _m->first_line.u.request.uri.len, &puri) < 0) {
-		LOG(L_ERR, "get_username(): Error while parsing R-URI\n");
+		LM_ERR("failed to parse R-URI\n");
 		return -1;
 	}
 
@@ -94,7 +94,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 	 */
 	if (!puri.user.len && _m->new_uri.s) {
 		if (parse_uri(_m->new_uri.s, _m->new_uri.len, &puri) < 0) {
-			LOG(L_ERR, "get_username(): Error while parsing new_uri\n");
+			LM_ERR("failed to parse new_uri\n");
 			return -2;
 	        }
 	}
@@ -114,7 +114,7 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
 	/* duplicate data in pkg mem */
 	s1 = (char*)pkg_malloc(l);
 	if (s1==0) {
-		LOG(L_ERR,"ERROR:rr:insert_r_param_lump: no more pkg mem (%d)\n",l);
+		LM_ERR("no more pkg mem (%d)\n",l);
 		return 0;
 	}
 	memcpy( s1, s, l);
@@ -122,7 +122,7 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
 	/* add lump */
 	rrp_l = insert_new_lump_before( before, s1, l, HDR_RECORDROUTE_T);
 	if (rrp_l==0) {
-		LOG(L_ERR,"ERROR:rr:insert_r_param_lump: failed to add before lump\n");
+		LM_ERR("failed to add before lump\n");
 		pkg_free(s1);
 		return 0;
 	}
@@ -155,7 +155,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	r2 = pkg_malloc(RR_R2_LEN);
 
 	if (!prefix || !suffix || !term || !r2) {
-		LOG(L_ERR, "build_rr(): No memory left\n");
+		LM_ERR("No more pkg memory\n");
 		if (suffix) pkg_free(suffix);
 		if (prefix) pkg_free(prefix);
 		if (term) pkg_free(term);
@@ -233,7 +233,7 @@ static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
 	return 0;
 	
 lump_err:
-	LOG(L_ERR, "build_rr(): Error while inserting lumps\n");
+	LM_ERR("failed to insert lumps\n");
 	if (prefix) pkg_free(prefix);
 	if (suffix) pkg_free(suffix);
 	if (r2) pkg_free(r2);
@@ -259,14 +259,14 @@ int record_route(struct sip_msg* _m, str *params)
 	
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
-			LOG(L_ERR, "insert_RR(): Error while extracting username\n");
+			LM_ERR("failed to extract username\n");
 			return -1;
 		}
 	}
 
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "insert_RR(): From parsing failed\n");
+			LM_ERR("From parsing failed\n");
 			return -2;
 		}
 		from = (struct to_body*)_m->from->parsed;
@@ -284,18 +284,17 @@ int record_route(struct sip_msg* _m, str *params)
 		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
-			LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
+			LM_ERR("failed to create an anchor\n");
 			return -5;
 		}
 		l = insert_cond_lump_after(l, COND_IF_DIFF_REALMS, 0);
 		l2 = insert_cond_lump_before(l2, COND_IF_DIFF_REALMS, 0);
 		if (!l || !l2) {
-			LOG(L_ERR,"insert_RR(): Error while inserting conditional lump\n");
+			LM_ERR("failed to insert conditional lump\n");
 			return -6;
 		}
 		if (build_rr(l, l2, &user, tag, params, OUTBOUND) < 0) {
-			LOG(L_ERR, "insert_RR(): Error while inserting outbound "
-				"Record-Route\n");
+			LM_ERR("failed to insert outbound Record-Route\n");
 			return -7;
 		}
 	}
@@ -303,12 +302,12 @@ int record_route(struct sip_msg* _m, str *params)
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
-		LOG(L_ERR, "insert_RR(): Error while creating an anchor\n");
+		LM_ERR("failed to create an anchor\n");
 		return -3;
 	}
 	
 	if (build_rr(l, l2, &user, tag, params, INBOUND) < 0) {
-		LOG(L_ERR,"insert_RR(): Error while inserting inbound Record-Route\n");
+		LM_ERR("failed to insert inbound Record-Route\n");
 		return -4;
 	}
 
@@ -336,15 +335,14 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 
 	if (add_username) {
 		if (get_username(_m, &user) < 0) {
-			LOG(L_ERR, "ERROR:rr:record_route_preset: failed to "
-				"extract username\n");
+			LM_ERR("failed to extract username\n");
 			return -1;
 		}
 	}
 
 	if (append_fromtag) {
 		if (parse_from_header(_m) < 0) {
-			LOG(L_ERR, "ERROR:rr:record_route_preset: From parsing failed\n");
+			LM_ERR("From parsing failed\n");
 			return -2;
 		}
 		from = (struct to_body*)_m->from->parsed;
@@ -352,8 +350,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	
 	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l) {
-		LOG(L_ERR, "ERROR:rr:record_route_preset: failed to create "
-			"lump anchor\n");
+		LM_ERR("failed to create lump anchor\n");
 		return -3;
 	}
 
@@ -376,7 +373,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 
 	hdr = pkg_malloc(hdr_len);
 	if (!hdr) {
-		LOG(L_ERR, "ERROR:rr:record_route_preset: no pkg memory left\n");
+		LM_ERR("no pkg memory left\n");
 		return -4;
 	}
 
@@ -412,7 +409,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 	memcpy(p, RR_TERM, RR_TERM_LEN);
 
 	if (!insert_new_lump_after(l, hdr, hdr_len, 0)) {
-		LOG(L_ERR, "record_route_preset(): Error while inserting new lump\n");
+		LM_ERR("failed to insert new lump\n");
 		pkg_free(hdr);
 		return -5;
 	}
@@ -450,18 +447,17 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 	if (last_param) {
 		/* RR was already done -> have to add a new lump before this one */
 		if (insert_rr_param_lump( last_param, rr_param->s, rr_param->len)==0) {
-			LOG(L_ERR,"ERROR:rr:add_rr_param: failed to add lump\n");
+			LM_ERR("failed to add lump\n");
 			goto error;
 		}
 		/* double routing enabled? */
 		if (enable_double_rr) {
 			if (root==0 || (last_param=get_rr_param_lump(&root))==0) {
-				LOG(L_CRIT,"BUG:rr:add_rr_param: failed to locate "
-					"double RR lump\n");
+				LM_CRIT("failed to locate double RR lump\n");
 				goto error;
 			}
 			if (insert_rr_param_lump(last_param,rr_param->s,rr_param->len)==0){
-				LOG(L_ERR,"ERROR:rr:add_rr_param: failed to add 2nd lump\n");
+				LM_ERR("failed to add 2nd lump\n");
 				goto error;
 			}
 		}
@@ -473,14 +469,12 @@ int add_rr_param(struct sip_msg* msg, str* rr_param)
 			rr_param_msg = msg->id;
 		}
 		if (rr_param_buf.len+rr_param->len>RR_PARAM_BUF_SIZE) {
-			LOG(L_ERR,"ERROR:rr:add_rr_param: maximum size of "
-				"rr_param_buf exceeded\n");
+			LM_ERR("maximum size of rr_param_buf exceeded\n");
 			goto error;
 		}
 		memcpy( rr_param_buf.s+rr_param_buf.len, rr_param->s, rr_param->len);
 		rr_param_buf.len += rr_param->len;
-		DBG("DEBUG:rr:add_rr_param: rr_param_buf=<%.*s>\n",rr_param_buf.len,
-			rr_param_buf.s);
+		LM_DBG("rr_param_buf=<%.*s>\n",rr_param_buf.len, rr_param_buf.s);
 	}
 	return 0;
 

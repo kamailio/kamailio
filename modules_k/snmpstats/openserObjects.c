@@ -608,22 +608,21 @@ static int set_if_valid_threshold(modparam_t type, void *val, char *varStr,
 	int *newVal) 
 {
 	if (val==0) {
-		LOG(L_ERR, "ERROR: SNMPStats: %s called with a null value!\n",
-				varStr);
+		LM_ERR("%s called with a null value!\n", varStr);
 		return -1;
 	}
 
 	if (type != INT_PARAM) {
-		LOG(L_ERR,"ERROR: SNMPStats: %s called with type %d instead of"
-				" %d!\n", varStr, type, INT_PARAM);
+		LM_ERR("%s called with type %d instead of %d!\n",
+				varStr, type, INT_PARAM);
 		return -1;
 	}
 	
 	int new_threshold = (int) (int *)val;
 
 	if (new_threshold < -1) {
-		LOG(L_ERR, "ERROR: SNMPStats: %s called with an invalid "
-				"threshold=%d!\n", varStr, new_threshold); 
+		LM_ERR("%s called with an invalid threshold=%d!\n",
+				varStr, new_threshold); 
 		return -1;
 	}
 	

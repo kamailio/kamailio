@@ -66,8 +66,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 #endif
 					return proto;
 				default:
-					LOG(L_ERR, "ERROR: get_proto: unsupported transport:"
-						" %d\n", proto );
+					LM_ERR("unsupported transport: %d\n", proto );
 					return PROTO_NONE;
 			}
 		case PROTO_UDP: /* some protocol has been forced -- take it */
@@ -79,8 +78,7 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 #endif
 			return force_proto;
 		default:
-			LOG(L_ERR, "ERROR: get_proto: unsupported forced protocol: "
-				"%d\n", force_proto);
+			LM_ERR("unsupported forced protocol: %d\n", force_proto);
 			return PROTO_NONE;
 	}
 }
@@ -97,15 +95,13 @@ inline static struct proxy_l *uri2proxy( str *uri, int forced_proto )
 	enum sip_protos proto;
 
 	if (parse_uri(uri->s, uri->len, &parsed_uri) < 0) {
-		LOG(L_ERR, "ERROR: uri2proxy: bad_uri: %.*s\n",
-		    uri->len, uri->s );
+		LM_ERR("bad_uri: %.*s\n", uri->len, uri->s );
 		return 0;
 	}
 	
 	if (parsed_uri.type==SIPS_URI_T &&
 	((parsed_uri.proto!=PROTO_TLS) && (parsed_uri.proto!=PROTO_NONE)) ) {
-		LOG(L_ERR, "ERROR: uri2proxy: bad transport for sips uri: %d\n",
-			parsed_uri.proto);
+		LM_ERR("bad transport for sips uri: %d\n", parsed_uri.proto);
 		return 0;
 	}
 	proto=parsed_uri.proto;
@@ -115,8 +111,7 @@ inline static struct proxy_l *uri2proxy( str *uri, int forced_proto )
 	p = mk_proxy( &parsed_uri.host, parsed_uri.port_no, proto,
 		(parsed_uri.type==SIPS_URI_T)?1:0 );
 	if (p == 0) {
-		LOG(L_ERR, "ERROR: uri2proxy: bad host name in URI <%.*s>\n",
-			uri->len, ZSW(uri->s));
+		LM_ERR("bad host name in URI <%.*s>\n", uri->len, ZSW(uri->s));
 		return 0;
 	}
 	
@@ -131,7 +126,7 @@ static inline int uri2su(str *uri, union sockaddr_union *to_su, int proto)
 	proxy = uri2proxy(uri, proto);
 	if (!proxy) {
 		ser_error = E_BAD_ADDRESS;
-		LOG(L_ERR, "ERROR: uri2sock: Can't create a dst proxy\n");
+		LM_ERR("failed create a dst proxy\n");
 		return -1;
 	}
 
@@ -159,8 +154,7 @@ static inline struct socket_info *uri2sock(struct sip_msg* msg, str *uri,
 
 	send_sock = get_send_socket(msg, to_su, proto);
 	if (!send_sock) {
-		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
-		    to_su->s.sa_family);
+		LM_ERR("no corresponding socket for af %d\n", to_su->s.sa_family);
 		ser_error = E_NO_SOCKET;
 	}
 

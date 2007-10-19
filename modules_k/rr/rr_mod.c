@@ -137,7 +137,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("rr - initializing\n");
+	LM_DBG("rr - initializing\n");
 #ifdef ENABLE_USER_CHECK
 	if(ignore_user)
 	{
@@ -169,8 +169,7 @@ static int it_list_fixup(void** param, int param_no)
 		s.s = (char*)(*param); s.len = strlen(s.s);
 		if(pv_parse_format(&s, &model)<0)
 		{
-			LOG(L_ERR, "ERROR:textops:item_list_fixup: wrong format[%s]\n",
-				(char*)(*param));
+			LM_ERR("wrong format[%s]\n",(char*)(*param));
 			return E_UNSPEC;
 		}
 		*param = (void*)model;
@@ -185,8 +184,8 @@ static int direction_fixup(void** param, int param_no)
 	int n;
 
 	if (!append_fromtag) {
-		LOG(L_ERR,"ERROR:rr:direction_fixup: usage of \"is_direction\" function "
-			"requires parameter \"append_fromtag\" enabled!!");
+		LM_ERR("usage of \"is_direction\" function requires parameter"
+				"\"append_fromtag\" enabled!!");
 		return E_CFG;
 	}
 	if (param_no==1) {
@@ -197,7 +196,7 @@ static int direction_fixup(void** param, int param_no)
 		} else if ( strcasecmp(s,"upstream")==0 ) {
 			n = RR_FLOW_UPSTREAM;
 		} else {
-			LOG(L_ERR,"ERROR:rr:direction_fixup: unknown direction '%s'\n",s);
+			LM_ERR("unknown direction '%s'\n",s);
 			return E_CFG;
 		}
 		/* free string */
@@ -214,13 +213,12 @@ static int w_record_route(struct sip_msg *msg, char *key, char *bar)
 	str s;
 
 	if (msg->id == last_rr_msg) {
-		LOG(L_ERR, "ERROR:rr:record_route: Double attempt to record-route\n");
+		LM_ERR("Double attempt to record-route\n");
 		return -1;
 	}
 
 	if (key && pv_printf_s(msg, (pv_elem_t*)key, &s)<0) {
-		LOG(L_ERR,"ERROR:rr:w_record_route1: failed to print "
-			"the format\n");
+		LM_ERR("failed to print the format\n");
 		return -1;
 	}
 	if ( record_route( msg, key?&s:0 )<0 )
@@ -236,14 +234,12 @@ static int w_record_route_preset(struct sip_msg *msg, char *key, char *bar)
 	str s;
 
 	if (msg->id == last_rr_msg) {
-		LOG(L_ERR, "ERROR:rr:record_route_preset: Double attempt to "
-			"record-route\n");
+		LM_ERR("Duble attempt to record-route\n");
 		return -1;
 	}
 
 	if (pv_printf_s(msg, (pv_elem_t*)key, &s)<0) {
-		LOG(L_ERR,"ERROR:rr:w_record_route_preset: failed to print "
-			"the format\n");
+		LM_ERR("failed to print the format\n");
 		return -1;
 	}
 	if ( record_route_preset( msg, &s)<0 )
@@ -259,7 +255,7 @@ static int w_add_rr_param(struct sip_msg *msg, char *key, char *foo)
 	str s;
 
 	if (pv_printf_s(msg, (pv_elem_t*)key, &s)<0) {
-		LOG(L_ERR,"ERROR:rr:w_add_rr_param: failed to print the format\n");
+		LM_ERR("failed to print the format\n");
 		return -1;
 	}
 	return ((add_rr_param( msg, &s)==0)?1:-1);

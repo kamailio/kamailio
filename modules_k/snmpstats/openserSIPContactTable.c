@@ -172,8 +172,7 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 	theRow = SNMP_MALLOC_TYPEDEF(openserSIPContactTable_context);
 
 	if (theRow == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for"
-				"openserSIPContactTable\n");
+		LM_ERR("failed to create a row for openserSIPContactTable\n");
 		return 0;
 	}
 
@@ -182,8 +181,7 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 
 	if (OIDIndex == NULL) {
 		free(theRow);
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for"
-				"openserSIPContactTable\n");
+		LM_ERR("failed to create a row for openserSIPContactTable\n");
 		return 0;
 	}
 

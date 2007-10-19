@@ -71,7 +71,7 @@ int init_callid(void)
 	callid_prefix.s = callid_buf;
 
 	if (callid_prefix.len > CALLID_NR_LEN) {
-		LOG(L_ERR, "ERROR: Too small callid buffer\n");
+		LM_ERR("too small callid buffer\n");
 		return -1;
 	}
 	
@@ -89,11 +89,11 @@ int init_callid(void)
 
 	i = snprintf(callid_prefix.s, callid_prefix.len + 1, "%0*lx", callid_prefix.len, callid_nr);
 	if ((i == -1) || (i > callid_prefix.len)) {
-		LOG(L_CRIT, "BUG: SORRY, callid calculation failed\n");
+		LM_CRIT("callid calculation failed\n");
 		return -2;
 	}
 	
-	DBG("Call-ID initialization: '%.*s'\n", callid_prefix.len, callid_prefix.s);
+	LM_DBG("Call-ID initialization: '%.*s'\n", callid_prefix.len, callid_prefix.s);
 	return 0;
 }
 
@@ -109,7 +109,7 @@ int child_init_callid(int rank)
 	 * on no matter the protocol */
 	si=bind_address?bind_address:get_first_socket();
 	if (si==0){
-		LOG(L_CRIT, "BUG: child_init_callid: null socket list\n");
+		LM_CRIT("null socket list\n");
 		return -1;
 	}
 	callid_suffix.s = callid_buf + callid_prefix.len;
@@ -119,11 +119,11 @@ int child_init_callid(int rank)
 				     si->address_str.len,
 				     si->address_str.s);
 	if ((callid_suffix.len == -1) || (callid_suffix.len > CALLID_SUFFIX_LEN)) {
-		LOG(L_ERR, "ERROR: child_init_callid: buffer too small\n");
+		LM_ERR("buffer too small\n");
 		return -1;
 	}
 
-	DBG("DEBUG: callid: '%.*s'\n", callid_prefix.len + callid_suffix.len, callid_prefix.s);
+	LM_DBG("callid: '%.*s'\n", callid_prefix.len + callid_suffix.len, callid_prefix.s);
 	return 0;
 }
 

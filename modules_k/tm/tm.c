@@ -303,7 +303,7 @@ static int fixup_t_replicate(void** param, int param_no)
 		/* string */
 		s = (str*)pkg_malloc( sizeof(str) );
 		if (s==0) {
-			LOG(L_ERR,"ERROR:tm:fixup_str: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			return E_OUT_OF_MEM;
 		}
 		s->s = (char*)*param;
@@ -312,8 +312,7 @@ static int fixup_t_replicate(void** param, int param_no)
 	} else {
 		/* flags */
 		if (flag_fixup( param, 1)!=0) {
-			LOG(L_ERR, "ERROR:TM:fixup_t_relay2: bad flags <%s>\n",
-				(char *)(*param));
+			LM_ERR("bad flags <%s>\n", (char *)(*param));
 			return E_CFG;
 		}
 	}
@@ -330,27 +329,24 @@ static int fixup_phostport2proxy(void** param, int param_no)
 	str host;
 
 	if (param_no!=1) {
-		LOG(L_CRIT,"BUG:tm:fixup_phostport2proxy: called with more than "
-			" one parameter\n");
+		LM_CRIT("called with more than  one parameter\n");
 		return E_BUG;
 	}
 
 	s = (char *) (*param);
 	if (s==0 || *s==0) {
-		LOG(L_CRIT,"ERROR:tm:fixup_phostport2proxy: empty parameter\n");
+		LM_CRIT("empty parameter\n");
 		return E_UNSPEC;
 	}
 
 	if (parse_phostport( s, strlen(s), &host.s, &host.len, &port, &proto)!=0){
-		LOG(L_CRIT,"ERROR:tm:fixup_phostport2proxy: invalid parameter "
-			"<%s>\n",s);
+		LM_CRIT("invalid parameter <%s>\n",s);
 		return E_UNSPEC;
 	}
 
 	proxy = mk_proxy( &host, port, proto, 0);
 	if (proxy==0) {
-		LOG(L_ERR, "ERROR:tm:fixup_phostport2proxy: failed to resolve "
-			"<%.*s>\n", host.len, host.s );
+		LM_ERR("failed to resolve <%.*s>\n", host.len, host.s );
 		return ser_error;
 	}
 	*(param)=proxy;
@@ -369,8 +365,7 @@ static int fixup_t_relay1(void** param, int param_no)
 		/* param is OBP -> nothing else to do */
 		return 0;
 	} else {
-		LOG(L_ERR,"ERROR:TM:fixup_t_relay1: param is neither flag, nor OBP "
-			"<%s>\n",(char *)(*param));
+		LM_ERR("param is neither flag, nor OBP <%s>\n",(char *)(*param));
 		return E_CFG;
 	}
 }
@@ -382,8 +377,7 @@ static int fixup_t_relay2(void** param, int param_no)
 		return fixup_phostport2proxy( param, param_no);
 	} else if (param_no==2) {
 		if (flag_fixup( param, 1)!=0) {
-			LOG(L_ERR, "ERROR:TM:fixup_t_relay2: bad flags <%s>\n",
-				(char *)(*param));
+			LM_ERR("bad flags <%s>\n", (char *)(*param));
 			return E_CFG;
 		}
 	}
@@ -405,14 +399,13 @@ static int fixup_t_send_reply(void** param, int param_no)
 			*param=(void*)code;
 			return 0;
 		}else{
-			LOG(L_ERR, "ERROR:tm:fixup_t_send_reply: bad  number <%s>\n",
-					(char*)(*param));
+			LM_ERR("bad  number <%s>\n", (char*)(*param));
 			return E_UNSPEC;
 		}
 	} else if (param_no==2) {
 		s = (str*)pkg_malloc(sizeof(str));
 		if (s==0) {
-			LOG(L_ERR, "ERROR:sl:fixup_t_send_reply: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			return E_OUT_OF_MEM;
 		}
 		s->s = (char*)*param;
@@ -438,8 +431,7 @@ static int fixup_local_replied(void** param, int param_no)
 		} else if (strcasecmp(val,"last")==0) {
 			n = 2;
 		} else {
-			LOG(L_ERR,"ERROR:tm:fixup_local_replied: invalid param \"%s\"\n",
-				val);
+			LM_ERR("invalid param \"%s\"\n", val);
 			return E_CFG;
 		}
 		/* free string */
@@ -447,7 +439,7 @@ static int fixup_local_replied(void** param, int param_no)
 		/* replace it with the compiled re */
 		*param=(void*)(long)n;
 	} else {
-		LOG(L_ERR,"ERROR:fixup_local_replied: called with parameter != 1\n");
+		LM_ERR("called with parameter != 1\n");
 		return E_BUG;
 	}
 	return 0;
@@ -535,12 +527,12 @@ static int script_init( struct sip_msg *foo, void *bar)
 
 static int mod_init(void)
 {
-	LOG(L_INFO,"TM - initializing...\n");
+	LM_INFO("TM - initializing...\n");
 
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
 	if (MAX_BRANCHES+1>31) {
-		LOG(L_CRIT, "Too many max UACs for UAC branch_bm_t bitmap: %d\n",
+		LM_CRIT("Too many max UACs for UAC branch_bm_t bitmap: %d\n",
 			MAX_BRANCHES );
 		return -1;
 	}
@@ -554,13 +546,13 @@ static int mod_init(void)
 #endif
 
 	if (init_callid() < 0) {
-		LOG(L_CRIT, "Error while initializing Call-ID generator\n");
+		LM_CRIT("Error while initializing Call-ID generator\n");
 		return -1;
 	}
 
 	/* building the hash table*/
 	if (!init_hash_table()) {
-		LOG(L_ERR, "ERROR:tm:mod_init: initializing hash_table failed\n");
+		LM_ERR("initializing hash_table failed\n");
 		return -1;
 	}
 
@@ -568,51 +560,49 @@ static int mod_init(void)
 	init_t();
 
 	if (!tm_init_timers()) {
-		LOG(L_ERR, "ERROR:tm:mod_init: timer init failed\n");
+		LM_ERR("timer init failed\n");
 		return -1;
 	}
 
 	/* register the timer functions */
 	if (register_timer( timer_routine , 0, 1 )<0) {
-		LOG(L_ERR, "ERROR:tm:mod_init: failed to register timer\n");
+		LM_ERR("failed to register timer\n");
 		return -1;
 	}
 	if (register_utimer( utimer_routine , 0, 100*1000 )<0) {
-		LOG(L_ERR, "ERROR:tm:mod_init: failed to register utimer\n");
+		LM_ERR("failed to register utimer\n");
 		return -1;
 	}
 
 	if (uac_init()==-1) {
-		LOG(L_ERR, "ERROR:tm:mod_init: uac_init failed\n");
+		LM_ERR("uac_init failed\n");
 		return -1;
 	}
 
 	if (init_tmcb_lists()!=1) {
-		LOG(L_CRIT, "ERROR:tm:mod_init: failed to init tmcb lists\n");
+		LM_CRIT("failed to init tmcb lists\n");
 		return -1;
 	}
 
 	tm_init_tags();
 	init_twrite_lines();
 	if (init_twrite_sock() < 0) {
-		LOG(L_ERR, "ERROR:tm:mod_init: Unable to create socket\n");
+		LM_ERR("failed to create socket\n");
 		return -1;
 	}
 
 	/* register post-script clean-up function */
 	if (register_script_cb( do_t_unref, POST_SCRIPT_CB|REQ_TYPE_CB, 0)<0 ) {
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to register POST request "
-			"callback\n");
+		LM_ERR("failed to register POST request callback\n");
 		return -1;
 	}
 	if (register_script_cb( script_init, PRE_SCRIPT_CB|REQ_TYPE_CB , 0)<0 ) {
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to register PRE request "
-			"callback\n");
+		LM_ERR("failed to register PRE request callback\n");
 		return -1;
 	}
 
 	if ( init_avp_params( fr_timer_param, fr_inv_timer_param)<0 ){
-		LOG(L_ERR,"ERROR:tm:mod_init: failed to process timer AVPs\n");
+		LM_ERR("ERROR:tm:mod_init: failed to process timer AVPs\n");
 		return -1;
 	}
 
@@ -623,8 +613,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (child_init_callid(rank) < 0) {
-		LOG(L_ERR, "ERROR:tm:child_init: Error while initializing "
-			"Call-ID generator\n");
+		LM_ERR("failed to initialize Call-ID generator\n");
 		return -2;
 	}
 
@@ -647,8 +636,8 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 	/* first get the transaction */
 	t = get_t();
 	if ( t==0 || t==T_UNDEFINED ) {
-		LOG(L_ERR, "ERROR: t_check_status: cannot check status for a reply "
-			"which has no T-state established\n");
+		LM_ERR("cannot check status for a reply which"
+				" has no T-state established\n");
 		return -1;
 	}
 	backup = 0;
@@ -667,19 +656,18 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 		case FAILURE_ROUTE:
 			/* use the status of the winning reply */
 			if ( (branch=t_get_picked_branch())<0 ) {
-				LOG(L_CRIT,"BUG:t_check_status: no picked branch (%d) for"
-					" a final response in MODE_ONFAILURE\n", branch);
+				LM_CRIT("no picked branch (%d) for a final response"
+						" in MODE_ONFAILURE\n", branch);
 				return -1;
 			}
 			status = int2str( t->uac[branch].last_received , 0);
 			break;
 		default:
-			LOG(L_ERR,"ERROR:t_check_status: unsupported route_type %d\n",
-					route_type);
+			LM_ERR("unsupported route_type %d\n", route_type);
 			return -1;
 	}
 
-	DBG("DEBUG:t_check_status: checked status is <%s>\n",status);
+	LM_DBG("checked status is <%s>\n",status);
 	/* do the checking */
 	n = regexec((regex_t*)regexp, status, 1, &pmatch, 0);
 
@@ -696,7 +684,7 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		/* parse needed hdrs*/
 		if (check_transaction_quadruple(msg)==0) {
-			LOG(L_ERR, "ERROR:tm:t_check_trans: too few headers\n");
+			LM_ERR("too few headers\n");
 			return 0; /*drop request!*/
 		}
 		if (!msg->hash_index)
@@ -739,8 +727,8 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 	/* first get the transaction */
 	t = get_t();
 	if ( t==0 || t==T_UNDEFINED) {
-		LOG(L_ERR, "ERROR: t_flush_flags: cannot flush flags for a message "
-			"which has no T-state established\n");
+		LM_ERR("failed to flush flags for a message which has"
+				" no T-state established\n");
 		return -1;
 	}
 
@@ -758,7 +746,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 
 	t = get_t();
 	if (t==0 || t==T_UNDEFINED) {
-		LOG(L_ERR,"ERROR:t_local_replied: no trasaction created\n");
+		LM_ERR("no trasaction created\n");
 		return -1;
 	}
 
@@ -775,7 +763,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 			if (route_type==FAILURE_ROUTE) {
 				/* use the the winning reply */
 				if ( (branch=t_get_picked_branch())<0 ) {
-					LOG(L_CRIT,"BUG:t_local_replied: no picked branch (%d) for"
+					LM_CRIT("no picked branch (%d) for"
 						" a final response in MODE_ONFAILURE\n", branch);
 					return -1;
 				}
@@ -789,7 +777,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 			if (route_type==FAILURE_ROUTE) {
 				/* use the the winning reply */
 				if ( (branch=t_get_picked_branch())<0 ) {
-					LOG(L_CRIT,"BUG:t_local_replied: no picked branch (%d) for"
+					LM_CRIT("no picked branch (%d) for"
 						" a final response in MODE_ONFAILURE\n", branch);
 					return -1;
 				}
@@ -811,8 +799,8 @@ static int t_was_cancelled(struct sip_msg* msg, char *foo, char *bar)
 	/* first get the transaction */
 	t = get_t();
 	if ( t==0 || t==T_UNDEFINED ) {
-		LOG(L_ERR, "ERROR:tm:t_was_cancelled: cannot check cancel flag for "
-			"a reply without a transaction\n");
+		LM_ERR("failed to check cancel flag for a reply"
+				" without a transaction\n");
 		return -1;
 	}
 	return was_cancelled(t)?1:-1;
@@ -824,13 +812,13 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 	struct cell *t;
 
 	if (msg->REQ_METHOD==METHOD_ACK) {
-		LOG(L_WARN, "WARNING: t_reply: ACKs are not replied\n");
+		LM_WARN("ACKs are not replied\n");
 		return -1;
 	}
 	t=get_t();
 	if ( t==0 || t==T_UNDEFINED ) {
-		LOG(L_ERR, "ERROR: t_reply: cannot send a t_reply to a message "
-			"for which no T-state has been established\n");
+		LM_ERR("failed to send a t_reply to a message for which no T-state"
+				" has been established\n");
 		return -1;
 	}
 	/* if called from reply_route, make sure that unsafe version
@@ -839,13 +827,12 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 	 */
 	switch (route_type) {
 		case FAILURE_ROUTE:
-			DBG("DEBUG: t_reply_unsafe called from w_t_reply\n");
+			LM_DBG("t_reply_unsafe called from w_t_reply\n");
 			return t_reply_unsafe(t, msg, (unsigned int)(long)str1,(str*)str2);
 		case REQUEST_ROUTE:
 			return t_reply( t, msg, (unsigned int)(long) str1, (str*)str2);
 		default:
-			LOG(L_CRIT, "BUG:tm:w_t_reply: unsupported route_type (%d)\n",
-				route_type);
+			LM_CRIT("unsupported route_type (%d)\n", route_type);
 			return -1;
 	}
 }
@@ -907,7 +894,7 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 	if (!t || t==T_UNDEFINED) {
 		/* no transaction yet */
 		if (route_type==FAILURE_ROUTE) {
-			LOG(L_CRIT, "BUG:tm:w_t_relay: undefined T\n");
+			LM_CRIT("undefined T\n");
 			return -1;
 		}
 		return t_relay_to( p_msg, (struct proxy_l *)proxy, (int)(long)flags );
@@ -928,13 +915,12 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 
 		ret = t_forward_nonack( t, p_msg, (struct proxy_l *)proxy);
 		if (ret<=0 )
-			LOG(L_ERR, "ERROR:tm:w_t_relay: t_forward_nonack failed\n");
+			LM_ERR("t_forward_nonack failed\n");
 		return ret;
 	}
 
 route_err:
-	LOG(L_CRIT, "ERROR:tm:w_t_relay: unsupported route type: %d\n",
-		route_type);
+	LM_CRIT("unsupported route type: %d\n", route_type);
 	return 0;
 }
 
@@ -990,22 +976,20 @@ static int pv_get_tm_reply_code(struct sip_msg *msg, pv_param_t *param,
 			case FAILURE_ROUTE:
 				/* use the status of the winning reply */
 				if ( (branch=t_get_picked_branch())<0 ) {
-					LOG(L_CRIT,"BUG:tm:it_get_tm_reply_code: no picked "
-						"branch (%d) for a final response in MODE_ONFAILURE\n",
-						branch);
+					LM_CRIT("no picked branch (%d) for a final response"
+							" in MODE_ONFAILURE\n", branch);
 					code = 0;
 				} else {
 					code = t->uac[branch].last_received;
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:tm:it_get_tm_reply_code: unsupported "
-					"route_type %d\n", route_type);
+				LM_ERR("unsupported route_type %d\n", route_type);
 				code = 0;
 		}
 	}
 
-	DBG("DEBUG:it_get_tm_reply_code: reply code is <%d>\n",code);
+	LM_DBG("reply code is <%d>\n",code);
 
 	res->rs.s = int2str( code, &res->rs.len);
 

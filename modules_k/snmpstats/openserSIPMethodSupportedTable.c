@@ -73,8 +73,7 @@ void createRow(int index, char *stringToRegister) {
 	theRow = SNMP_MALLOC_TYPEDEF(openserSIPMethodSupportedTable_context);
 
 	if (theRow == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for "
-				"openserSIPMethodSupportedTable\n");
+		LM_ERR("failed to create a row for openserSIPMethodSupportedTable\n");
 		return;
 	}
 
@@ -82,8 +81,7 @@ void createRow(int index, char *stringToRegister) {
 
 	if (OIDIndex == NULL) {
 		free(theRow);
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for "
-				"openserSIPMethodSupportedTable\n");
+		LM_ERR("failed to create a row for openserSIPMethodSupportedTable\n");
 		return;
 	}
 
@@ -92,8 +90,7 @@ void createRow(int index, char *stringToRegister) {
 	copiedString = pkg_malloc((stringLength + 1) * sizeof(char));
 
 	if (copiedString == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for "
-				"openserSIPMethodSupportedTable\n");
+		LM_ERR("failed to create a row for openserSIPMethodSupportedTable\n");
 		return;
 	}
 

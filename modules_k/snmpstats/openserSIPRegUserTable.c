@@ -108,10 +108,9 @@ int registerForUSRLOCCallbacks(void)
 
 	if (!register_user_callbacks)
 	{
-		LOG(L_INFO, "INFO: SNMPStats: Could not register for callbacks"
-				" with the USRLOC module.");
-		LOG(L_INFO, "INFO: SNMPStats: openserSIPContactTable and "
-				"openserSIPUserTable will be unavailable");
+		LM_INFO("failed to register for callbacks with the USRLOC module.");
+		LM_INFO("openserSIPContactTable and openserSIPUserTable will be"
+				" unavailable");
 		return 0;
 	}
 
@@ -187,9 +186,8 @@ void updateUser(char *userName)
 
 	if (userIndex == 0) 
 	{
-		LOG(L_ERR, "ERROR: SNMPStats: openserSIPRegUserTable ran out "
-				"of memory.  Not able to add user: %s",
-				userName);
+		LM_ERR("openserSIPRegUserTable ran out of memory."
+				"  Not able to add user: %s", userName);
 		return;
 	}
 
@@ -200,9 +198,8 @@ void updateUser(char *userName)
 	 * table and fail. */
 	if (newRecord == NULL) {
 		deleteRegUserRow(userIndex);
-		LOG(L_ERR, "ERROR: SNMPStats: openserSIPRegUserTable was not "
-				"able to push %s into the hash.  User not "
-				"added to this table\n", userName);
+		LM_ERR("openserSIPRegUserTable was not able to push %s into the hash."
+				"  User not added to this table\n", userName);
 		return;
 	}
 	
@@ -235,8 +232,7 @@ int createRegUserRow(char *stringToRegister)
 	theRow = SNMP_MALLOC_TYPEDEF(openserSIPRegUserTable_context);
 
 	if (theRow == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for"
-				"openserSIPRegUserTable\n");
+		LM_ERR("failed to create a row for openserSIPRegUserTable\n");
 		return 0;
 	}
 
@@ -244,8 +240,7 @@ int createRegUserRow(char *stringToRegister)
 
 	if (OIDIndex == NULL) {
 		free(theRow);
-		LOG(L_ERR, "ERROR: SNMPStats: Could not create a row for"
-				"openserSIPRegUserTable\n");
+		LM_ERR("failed to create a row for openserSIPRegUserTable\n");
 		return 0;
 	}
 

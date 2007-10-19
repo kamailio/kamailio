@@ -32,7 +32,7 @@
 #include "../../resolve.h" /*resolvehost*/
 #include "../../mem/mem.h" /*pkg_malloc*/
 #include "../../mem/shm_mem.h" /*shm_malloc*/
-#include "../../dprint.h" /*LOG*/
+#include "../../dprint.h" /*LM_**/
 #include "../../error.h" /*ser_error*/
 #include "../tm/tm_load.h" /*load_tm_api*/
 #include "../tm/h_table.h" /*cell*/
@@ -140,12 +140,12 @@ static int fixup_as_relay(void** param, int param_no)
    }
    if (!(*entry)) {
       if (!(*entry=(struct as_entry *)shm_malloc(sizeof(struct as_entry)))) {
-	 LOG(L_ERR,"Out of shm_mem\n");
+	 LM_ERR("no more shm_mem\n");
 	 goto error;
       }
       memset(*entry,0,sizeof(struct as_entry));
       if(!((*entry)->name.s=shm_malloc(len))){
-	 LOG(L_ERR,"Out of mem\n");
+	 LM_ERR("no more share mem\n");
 	 goto error;
       }
       (*entry)->name.len=len;
@@ -157,7 +157,7 @@ static int fixup_as_relay(void** param, int param_no)
       *param=*entry;
    }
    for (tmp=as_list;tmp;tmp=tmp->next)
-      LOG(L_DBG,"%.*s\n",tmp->name.len,tmp->name.s);
+      LM_DBG("%.*s\n",tmp->name.len,tmp->name.s);
    return 1;
 error:
    return -1;
@@ -175,7 +175,7 @@ void seas_sighandler(int signo)
       case SIGPIPE:
 	 if(is_dispatcher)
 	    return;
-	 LOG(L_INFO,"%s exiting\n",whoami);
+	 LM_INFO("%s exiting\n",whoami);
 	 if(my_as->u.as.ac_buffer.s){
 	    pkg_free(my_as->u.as.ac_buffer.s);
 	    my_as->u.as.ac_buffer.s=0;
@@ -187,18 +187,18 @@ void seas_sighandler(int signo)
 	 exit(0);
 	 break;
       case SIGCHLD:
-	 LOG(L_INFO,"Child stopped or terminated\n");
+	 LM_INFO("Child stopped or terminated\n");
 	 break;
       case SIGUSR1:
       case SIGUSR2:
-	 LOG(memlog,"Memory status (pkg):\n");
+	 LM_DBG("Memory status (pkg):\n");
 #ifdef PKG_MALLOC
 	 pkg_status();
 #endif
 	 break;
       case SIGINT:
       case SIGTERM:
-	 LOG(L_INFO,"INFO: signal %d received\n",signo);
+	 LM_INFO("INFO: signal %d received\n",signo);
 #ifdef PKG_MALLOC
 	 pkg_status();
 #endif
@@ -210,7 +210,7 @@ void seas_sighandler(int signo)
 	    while(wait(0) > 0);
 	    exit(0);
 	 }else{
-	    LOG(L_INFO,"%s exiting\n",whoami);
+	    LM_INFO("%s exiting\n",whoami);
 	    if(my_as && my_as->u.as.ac_buffer.s)
 	       pkg_free(my_as->u.as.ac_buffer.s);
 	    if(my_as && my_as->u.as.action_fd!=-1)
@@ -256,43 +256,43 @@ static int w_as_relay_t(struct sip_msg *msg, char *entry, char *foo)
    /*new transaction created, let's pass it to an APP SERVER*/
    if (msg->REQ_METHOD==METHOD_INVITE )
    {
-      LOG(L_DBG,"new INVITE\n");
+      LM_DBG("new INVITE\n");
       if(!seas_f.tmb.t_reply(msg,100,&msg100)){
-	 LOG(L_DBG,"t_reply (100)\n");
+	 LM_DBG("t_reply (100)\n");
 	 goto error;
       }
    }
    as=(struct as_entry *)entry;
    if(!as->connected){
-      LOG(L_ERR,"app server %.*s not connected\n",as->name.len,as->name.s);
+      LM_ERR("app server %.*s not connected\n",as->name.len,as->name.s);
       goto error;
    }
    if(as->type==AS_TYPE){
       if((processor_id=get_processor_id(&msg->rcv,&(as->u.as)))<0){
-	 LOG(L_ERR,"no processor found for packet with dst port:%d\n",msg->rcv.dst_port);
+	 LM_ERR("no processor found for packet with dst port:%d\n",msg->rcv.dst_port);
 	 goto error;
       }
    }else if(as->type==CLUSTER_TYPE){
-      LOG(L_ERR,"clustering not fully implemented\n");
+      LM_ERR("clustering not fully implemented\n");
       return 0;
    }else{
-      LOG(L_ERR,"unknown type of as (neither cluster nor as)\n");
+      LM_ERR("unknown type of as (neither cluster nor as)\n");
       return -1;
    }
-   LOG(L_DBG,"as found ! (%.*s) processor id = %d\n",as->name.len,as->name.s,processor_id);
+   LM_DBG("as found ! (%.*s) processor id = %d\n",as->name.len,as->name.s,processor_id);
    if(new_tran==1 && msg->REQ_METHOD==METHOD_ACK){
       /* core should forward statelessly (says t_newtran)*/
-      LOG(L_DBG,"forwarding statelessly !!!\n");
+      LM_DBG("forwarding statelessly !!!\n");
       if(!(buffer=create_as_event_sl(msg,processor_id,&len,0))){
-	 LOG(L_ERR,"create_as_event_sl() unable to create event code\n");
+	 LM_ERR("create_as_event_sl() unable to create event code\n");
 	 goto error;
       }
    }else if(!(buffer=create_as_event_t(seas_f.tmb.t_gett(),msg,processor_id,&len,0))){
-      LOG(L_ERR,"unable to create event code\n");
+      LM_ERR("unable to create event code\n");
       goto error;
    }
    if(!(my_as_ev=shm_malloc(sizeof(as_msg_t)))){
-      LOG(L_ERR,"Out of shared mem!\n");
+      LM_ERR("Out of shared mem!\n");
       goto error;
    }
    my_as_ev->msg = buffer;
@@ -308,7 +308,7 @@ again:
       if(errno==EINTR)
 	 goto again;
       else if(errno==EPIPE){
-	 LOG(L_ERR,"SEAS Event Dispatcher has closed the pipe. Invalidating it !\n");
+	 LM_ERR("SEAS Event Dispatcher has closed the pipe. Invalidating it !\n");
 	 goto error;
 	 /** TODO handle this correctly !!!*/
       }
@@ -321,7 +321,7 @@ error:
    mycel=seas_f.tmb.t_gett();
    if(mycel && mycel!=T_UNDEFINED){
       if(!seas_f.tmb.t_reply(msg,500,&msg500)){
-	 LOG(L_ERR,"t_reply (500)\n");
+	 LM_ERR("t_reply (500)\n");
       }
    }
    if(my_as_ev)
@@ -347,20 +347,20 @@ static int w_as_relay_sl(struct sip_msg *msg, char *as_name, char *foo)
 
    if(as->type==AS_TYPE){
       if((processor_id=get_processor_id(&msg->rcv,&(as->u.as)))<0){
-	 LOG(L_ERR,"no processor found for packet with dst port:%d\n",msg->rcv.dst_port);
+	 LM_ERR("no processor found for packet with dst port:%d\n",msg->rcv.dst_port);
 	 goto error;
       }
    }else if (as->type==CLUSTER_TYPE) {
-      LOG(L_ERR,"clustering not fully implemented\n");
+      LM_ERR("clustering not fully implemented\n");
       goto error;
    }else{
-      LOG(L_ERR,"unknown type of as\n");
+      LM_ERR("unknown type of as\n");
       goto error;
    }
 
-   LOG(L_DBG,"as found ! (%.*s) processor id = %d\n",as->name.len,as->name.s,processor_id);
+   LM_DBG("as found ! (%.*s) processor id = %d\n",as->name.len,as->name.s,processor_id);
    if(!(buffer=create_as_event_sl(msg,processor_id,&len,0))){
-      LOG(L_ERR,"unable to create event code\n");
+      LM_ERR("unable to create event code\n");
       goto error;
    }
    if(!(my_as_ev=shm_malloc(sizeof(as_msg_t))))
@@ -378,7 +378,7 @@ again:
       if(errno==EINTR)
 	 goto again;
       else if(errno==EPIPE){
-	 LOG(L_ERR,"SEAS Event Dispatcher has closed the pipe. Invalidating it !\n");
+	 LM_ERR("SEAS Event Dispatcher has closed the pipe. Invalidating it !\n");
 	 return -2;
 	 /** TODO handle this correctly !!!*/
       }
@@ -428,7 +428,7 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
    originalT=0;
 
    if(!(buffer=shm_malloc(ENCODED_MSG_SIZE))){
-      LOG(L_ERR,"Out Of Memory !!\n");
+      LM_ERR("Out Of Memory !!\n");
       return 0;
    }
    *evt_len=0;
@@ -437,7 +437,7 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
       label=t->label;
    }else{
       /**seas_f.tmb.t_get_trans_ident(msg,&hash_index,&label); this is bad, because it ref-counts !!!*/
-      LOG(L_ERR,"no transaction provided...\n");
+      LM_ERR("no transaction provided...\n");
       goto error;
    }
 
@@ -450,17 +450,17 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
    if(is_e2e_ack(t,msg)){
       flags|=E2E_ACK;
    }else if(msg->REQ_METHOD==METHOD_CANCEL){
-      LOG(L_DBG,"new CANCEL\n");
+      LM_DBG("new CANCEL\n");
       originalT=seas_f.tmb.t_lookup_original_t(msg);
       if(!originalT || originalT==T_UNDEFINED){
 	 /** we dont even pass the unknown CANCEL to JAIN*/
-	 LOG(L_WARN,"CANCEL does not match any existing transaction!!\n");
+	 LM_WARN("CANCEL does not match any existing transaction!!\n");
 	 goto error;
       }else{
 	 flags|=CANCEL_FOUND;
 	 seas_f.tmb.unref_cell(originalT);
       }
-      LOG(L_DBG,"Cancelling transaction !!\n");
+      LM_DBG("Cancelling transaction !!\n");
    }
    flags=htonl(flags);
    memcpy(buffer+k,&flags,4);
@@ -494,7 +494,7 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
    memcpy(buffer+k,&i,4);
    k+=4;
    if(msg->REQ_METHOD==METHOD_CANCEL && originalT){
-      LOG(L_DBG,"Cancelled transaction: Hash_Index=%d, Label=%d\n",originalT->hash_index,originalT->label);
+      LM_DBG("Cancelled transaction: Hash_Index=%d, Label=%d\n",originalT->hash_index,originalT->label);
       /*hash_index*/
       i=htonl(originalT->hash_index);
       memcpy(buffer+k,&i,4);
@@ -507,7 +507,7 @@ char * create_as_event_t(struct cell *t,struct sip_msg *msg,char processor_id,in
 
    /*length of event (hdr+payload-4), copied at the beginning*/
    if(encode_msg(msg,buffer+k,ENCODED_MSG_SIZE-k)<0){
-      LOG(L_ERR,"Unable to encode msg\n");
+      LM_ERR("Unable to encode msg\n");
       goto error;
    }
    i = GET_PAY_SIZE(buffer+k);
@@ -546,7 +546,7 @@ char * create_as_event_sl(struct sip_msg *msg,char processor_id,int *evt_len,int
    char *buffer=NULL;
 
    if(!(buffer=shm_malloc(ENCODED_MSG_SIZE))){
-      LOG(L_ERR,"create_as_event_t Out Of Memory !!\n");
+      LM_ERR("create_as_event_t Out Of Memory !!\n");
       return 0;
    }
    *evt_len=0;
@@ -583,7 +583,7 @@ char * create_as_event_sl(struct sip_msg *msg,char processor_id,int *evt_len,int
    k+=2;
    /*length of event (hdr+payload-4), copied at the beginning*/
    if(encode_msg(msg,buffer+k,ENCODED_MSG_SIZE-k)<0){
-      LOG(L_ERR,"Unable to encode msg\n");
+      LM_ERR("Unable to encode msg\n");
       goto error;
    }
    i = GET_PAY_SIZE(buffer+k);
@@ -620,11 +620,11 @@ static int seas_init(void)
    int c_pipe[2],mierr,i;
    /** Populate seas_functions*/
    if (load_tm_api(&seas_f.tmb)!=0) {
-      LOG(L_ERR, "can't load TM API\n");
+      LM_ERR( "can't load TM API\n");
       return -1;
    }
    if(!(seas_f.t_check_orig_trans = find_export("t_check_trans", 0, 0))){
-      LOG(L_ERR, "Seas requires transaction module (t_check_trans not found)\n");
+      LM_ERR( "Seas requires transaction module (t_check_trans not found)\n");
       return -1;
    }
    /** Populate seas_functions*/
@@ -651,13 +651,13 @@ static int seas_init(void)
 	 goto error;
       hostent2ip_addr(seas_listen_ip, he, 0);
       if(port!=(char *)0 && (seas_listen_port=str2s(port,strlen(port),&mierr))==0){
-	 LOG(L_ERR,"invalid port %s \n",port);
+	 LM_ERR("invalid port %s \n",port);
 	 goto error;
       }
    }
    memset(unc_as_t,0,2*MAX_UNC_AS_NR*sizeof(struct unc_as));//useless because unc_as_t is in bss?
    if (pipe(c_pipe)==-1) {
-      LOG(L_ERR,"cannot create pipe!\n");
+      LM_ERR("cannot create pipe!\n");
       goto error;
    }
    read_pipe=c_pipe[0];
@@ -687,7 +687,7 @@ error:
 static void seas_init_tags(void)
 {
    init_tags(seas_tags, &seas_tag_suffix,"VozTele-Seas/tags",'-');
-   LOG(L_DBG,"seas_init_tags, seas_tags=%s\n",seas_tags);
+   LM_DBG("seas_init_tags, seas_tags=%s\n",seas_tags);
 }
 
 /**
@@ -709,7 +709,7 @@ static int seas_child_init(int rank)
       return 0;
    }
    if ((pid=fork())<0) {
-      LOG(L_ERR,"cannot fork \n");
+      LM_ERR("forking failed\n");
       return -1;
    }
    if (!pid) {

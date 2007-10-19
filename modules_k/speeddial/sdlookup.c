@@ -58,7 +58,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 	
 	if (do_action(&act, _m) < 0)
 	{
-		LOG(L_ERR, "sd:rewrite_ruri: Error in do_action\n");
+		LM_ERR("do_action failed\n");
 		return -1;
 	}
 	return 0;
@@ -89,22 +89,21 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		printbuf_len = SD_PRINTBUF_SIZE-1;
 		if(pv_printf(_msg, (pv_elem_t*)_owner, sd_printbuf, &printbuf_len)<0)
 		{
-			LOG(L_ERR, "sd_lookup: error - cannot print the format\n");
+			LM_ERR("failed to print the format\n");
 			return -1;
 		}
 		if(parse_uri(sd_printbuf, printbuf_len, &turi)!=0)
 		{
-			LOG(L_ERR, "sd_lookup: bad owner SIP address!\n");
+			LM_ERR("bad owner SIP address!\n");
 			goto err_server;
 		}
-		DBG("sd_lookup: using user id [%.*s]\n", printbuf_len,
-					sd_printbuf);
+		LM_DBG("using user id [%.*s]\n", printbuf_len, sd_printbuf);
 		puri = &turi;
 	} else {
 		/* take username@domain from From header */
 		if ( (puri = parse_from_uri(_msg ))==NULL )
 		{
-			LOG(L_ERR, "sd_lookup: ERROR cannot parse FROM header\n");
+			LM_ERR("failed to parse FROM header\n");
 			goto err_server;
 		}
 	}
@@ -136,7 +135,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	/* take sd from r-uri */
 	if (parse_sip_msg_uri(_msg) < 0)
 	{
-		LOG(L_ERR, "sd_lookup: Error while parsing Request-URI\n");
+		LM_ERR("failed to parsing Request-URI\n");
 		goto err_server;
 	}
 	
@@ -169,15 +168,15 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
 		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
 	{
-		LOG(L_ERR, "sd_lookup: error querying database\n");
+		LM_ERR("failed to query database\n");
 		goto err_server;
 	}
 
 	if (RES_ROW_N(db_res)<=0 || RES_ROWS(db_res)[0].values[0].nul != 0)
 	{
-		DBG("sd_lookup: no sip addres found for R-URI\n");
+		LM_DBG("no sip addres found for R-URI\n");
 		if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
-			DBG("sd_lookup: Error while freeing result of query\n");
+			LM_DBG("failed to free result of query\n");
 		return -1;
 	}
 
@@ -203,10 +202,10 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 			user_s.len = RES_ROWS(db_res)[0].values[0].val.blob_val.len;
 			user_s.s[user_s.len] = '\0';
 		default:
-			LOG(L_ERR, "sd_lookup: Unknown type of DB new_uri column\n");
+			LM_ERR("unknown type of DB new_uri column\n");
 			if (db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
 			{
-				DBG("sd_lookup: Error while freeing result of query\n");
+				LM_DBG("failed to free result of query\n");
 			}
 			goto err_server;
 	}
@@ -223,13 +222,13 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	 * Free the result because we don't need it anymore
 	 */
 	if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
-		DBG("sd_lookup: Error while freeing result of query\n");
+		LM_DBG("failed to free result of query\n");
 
 	/* set the URI */
-	DBG("sd_lookup: URI of sd from R-URI [%s]\n", user_s.s);
+	LM_DBG("URI of sd from R-URI [%s]\n", user_s.s);
 	if(rewrite_ruri(_msg, user_s.s)<0)
 	{
-		LOG(L_ERR, "sd_lookup: Cannot replace the R-URI\n");
+		LM_ERR("failed to replace the R-URI\n");
 		goto err_server;
 	}
 

@@ -121,7 +121,7 @@ int encode_uri2(char *hdr,int hdrlen,str uri_str, struct sip_uri *uri_parsed,uns
 
    uriptr=REL_PTR(hdr,uri_str.s);
    if(uri_str.len>255 || uriptr>hdrlen){
-      LOG(L_ERR,"uri too long, or out of the sip_msg bounds\n");
+      LM_ERR("uri too long, or out of the sip_msg bounds\n");
       return -1;
    }
    payload[0]=uriptr;

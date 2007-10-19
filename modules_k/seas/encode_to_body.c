@@ -86,11 +86,11 @@ int encode_to_body(char *hdrstart,int hdrlen,struct to_body *body,unsigned char 
       where[i++]=(unsigned char)body->tag_value.len;
    }
    if (parse_uri(body->uri.s, body->uri.len,&puri) < 0 ) {
-      LOG(L_ERR, "Bad URI in address\n");
+      LM_ERR("Bad URI in address\n");
       return -1;
    }else{
       if((j=encode_uri2(hdrstart,hdrlen,body->uri,&puri,&where[i]))<0){
-	 LOG(L_ERR, "error codifying the URI\n");
+	 LM_ERR("failed to codify the URI\n");
 	 return -1;
       }else{
 	 i+=j;

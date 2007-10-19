@@ -88,12 +88,12 @@ static inline int calculate_hooks(dlg_t* _d)
 	if (_d->route_set) {
 		uri = &_d->route_set->nameaddr.uri;
 		if (parse_uri(uri->s, uri->len, &puri) < 0) {
-			LOG(L_ERR, "calculate_hooks(): Error while parsing URI\n");
+			LM_ERR("failed parse to URI\n");
 			return -1;
 		}
 
 		if (parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
-			LOG(L_ERR, "calculate_hooks(): Error while parsing parameters\n");
+			LM_ERR("failed to parse parameters\n");
 			return -2;
 		}
 		free_params(params);
@@ -149,13 +149,13 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 	dlg_t* res;
 
 	if (!_cid || !_ltag || !_luri || !_ruri || !_d) {
-		LOG(L_ERR, "new_dlg_uac(): Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	res = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (res == 0) {
-		LOG(L_ERR, "new_dlg_uac(): No memory left\n");
+		LM_ERR("No memory left\n");
 		return -2;
 	}
 
@@ -178,7 +178,7 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 	*_d = res;
 
 	if (calculate_hooks(*_d) < 0) {
-		LOG(L_ERR, "new_dlg_uac(): Error while calculating hooks\n");
+		LM_ERR("failed to calculate hooks\n");
 		/* FIXME: free everything here */
 		shm_free(res);
 		return -2;
@@ -201,14 +201,14 @@ static inline int get_contact_uri(struct sip_msg* _m, str* _uri)
 	if (!_m->contact) return 1;
 
 	if (parse_contact(_m->contact) < 0) {
-		LOG(L_ERR, "get_contact_uri(): Error while parsing Contact body\n");
+		LM_ERR("failed to parse Contact body\n");
 		return -2;
 	}
 
 	c = ((contact_body_t*)_m->contact->parsed)->contacts;
 
 	if (!c) {
-		LOG(L_ERR, "get_contact_uri(): Empty body or * contact\n");
+		LM_ERR("Empty body or * contact\n");
 		return -3;
 	}
 
@@ -225,7 +225,7 @@ static inline int get_contact_uri(struct sip_msg* _m, str* _uri)
 static inline int get_to_tag(struct sip_msg* _m, str* _tag)
 {
 	if (!_m->to) {
-		LOG(L_ERR, "get_to_tag(): To header field missing\n");
+		LM_ERR("To header field missing\n");
 		return -1;
 	}
 
@@ -246,7 +246,7 @@ static inline int get_to_tag(struct sip_msg* _m, str* _tag)
 static inline int get_from_tag(struct sip_msg* _m, str* _tag)
 {
 	if (parse_from_header(_m)<0) {
-		LOG(L_ERR, "get_from_tag(): Error while parsing From header\n");
+		LM_ERR("failed to parse From header\n");
 		return -1;
 	}
 
@@ -268,7 +268,7 @@ static inline int get_from_tag(struct sip_msg* _m, str* _tag)
 static inline int get_callid(struct sip_msg* _m, str* _cid)
 {
 	if (_m->callid == 0) {
-		LOG(L_ERR, "get_callid(): Call-ID not found\n");
+		LM_ERR("Call-ID not found\n");
 		return -1;
 	}
 
@@ -294,16 +294,14 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 	while(ptr) {
 		if (ptr->type == HDR_RECORDROUTE_T) {
 			if (parse_rr(ptr) < 0) {
-				LOG(L_ERR, 
-					"get_route_set(): Error while parsing Record-Route body\n");
+				LM_ERR("failed to parse Record-Route body\n");
 				goto error;
 			}
 
 			p = (rr_t*)ptr->parsed;
 			while(p) {
 				if (shm_duplicate_rr(&t, p) < 0) {
-					LOG(L_ERR,
-						"get_route_set(): Error while duplicating rr_t\n");
+					LM_ERR("duplicating rr_t\n");
 					goto error;
 				}
 				if (_order == NORMAL_ORDER) {
@@ -340,7 +338,7 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 
 	     /* Parse the whole message, we will need all Record-Route headers */
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR, "response2dlg(): Error while parsing headers\n");
+		LM_ERR("failed to parse headers\n");
 		return -1;
 	}
 	
@@ -397,7 +395,7 @@ static inline int dlg_new_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		_d->state = DLG_CONFIRMED;
 
 		if (calculate_hooks(_d) < 0) {
-			LOG(L_ERR, "dlg_new_resp_uac(): Error while calculating hooks\n");
+			LM_ERR("failed to calculate hooks\n");
 			return -2;
 		}
 	} else {
@@ -437,7 +435,7 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		_d->state = DLG_CONFIRMED;
 
 		if (calculate_hooks(_d) < 0) {
-			LOG(L_ERR, "dlg_early_resp_uac(): Error while calculating hooks\n");
+			LM_ERR("failed to calculate hooks\n");
 			return -2;
 		}
 	} else {
@@ -457,7 +455,7 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 static inline int get_cseq_method(struct sip_msg* _m, str* _method)
 {
 	if (!_m->cseq && ((parse_headers(_m, HDR_CSEQ_F, 0)==-1) || !_m->cseq)) {
-		LOG(L_ERR, "get_cseq_method(): Error while parsing CSeq\n");
+		LM_ERR("failed to parse CSeq\n");
 		return -1;
 	}
 
@@ -505,7 +503,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 	if ((method.len == 6) && !memcmp("INVITE", method.s, 6)) {
 		     /* Get contact if any and update remote target */
 		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
-			LOG(L_ERR, "dlg_confirmed_resp_uac(): Error while parsing headers\n");
+			LM_ERR("failed to parse headers\n");
 			return -2;
 		}
 
@@ -530,7 +528,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
 {
 	if (!_d || !_m) {
-		LOG(L_ERR, "dlg_response_uac(): Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -546,11 +544,11 @@ int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
 		return dlg_confirmed_resp_uac(_d, _m);
 
 	case DLG_DESTROYED:
-		LOG(L_ERR, "dlg_response_uac(): Cannot handle destroyed dialog\n");
+		LM_ERR("failed handle destroyed dialog\n");
 		return -2;
 	}
 
-	LOG(L_ERR, "dlg_response_uac(): Error in switch statement\n");
+	LM_ERR("unsuccessful switch statement\n");
 	return -3;
 }
 
@@ -564,7 +562,7 @@ static inline int get_cseq_value(struct sip_msg* _m, unsigned int* _cs)
 	str num;
 
 	if (_m->cseq == 0) {
-		LOG(L_ERR, "get_cseq_value(): CSeq header not found\n");
+		LM_ERR("CSeq header not found\n");
 		return -1;
 	}
 
@@ -573,7 +571,7 @@ static inline int get_cseq_value(struct sip_msg* _m, unsigned int* _cs)
 
 	trim_leading(&num);
 	if (str2int(&num, _cs) < 0) {
-		LOG(L_ERR, "get_cseq_value(): Error while converting cseq number\n");
+		LM_ERR("converting cseq number failed\n");
 		return -2;
 	}
 	return 0;
@@ -591,7 +589,7 @@ static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 	int tag_len = 0, len;
 
 	if (!_h) {
-		LOG(L_ERR, "get_dlg_uri(): Header field not found\n");
+		LM_ERR("header field not found\n");
 		return -1;
 	}
 
@@ -626,7 +624,7 @@ static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 
 	_s->s = shm_malloc(_h->body.len - tag_len);
 	if (!_s->s) {
-		LOG(L_ERR, "get_dlg_uri(): No memory left\n");
+		LM_ERR("No share memory left\n");
 		return -1;
 	}
 
@@ -653,7 +651,7 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 	str contact, rtag, callid;
 
 	if (parse_headers(_m, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR, "request2dlg(): Error while parsing headers");
+		LM_ERR("failed to parse headers");
 		return -1;
 	}
 
@@ -708,25 +706,25 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 	str tag;
 
 	if (!_req || /*!_tag ||*/ !_d) {
-		LOG(L_ERR, "new_dlg_uas(): Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
 	if ((_code < 200) || (_code > 299)) {
-		DBG("new_dlg_uas(): Not a 2xx, no dialog created\n");
+		LM_DBG("not a 2xx, no dialog created\n");
 		return -2;
 	}
 
 	res = (dlg_t*)shm_malloc(sizeof(dlg_t));
 	if (res == 0) {
-		LOG(L_ERR, "new_dlg_uac(): No memory left\n");
+		LM_ERR("no more share memory\n");
 		return -3;
 	}
 	     /* Clear everything */
 	memset(res, 0, sizeof(dlg_t));	
 
 	if (request2dlg(_req, res) < 0) {
-		LOG(L_ERR, "new_dlg_uas(): Error while converting request to dialog\n");
+		LM_ERR("converting request to dialog failed\n");
 		return -4;
 	}
 
@@ -742,7 +740,7 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 
 	(*_d)->state = DLG_CONFIRMED;
 	if (calculate_hooks(*_d) < 0) {
-		LOG(L_ERR, "new_dlg_uas(): Error while calculating hooks\n");
+		LM_ERR("calculating hooks failed\n");
 		shm_free(*_d);
 		return -6;
 	}
@@ -760,7 +758,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 	unsigned int cseq;
 
 	if (!_d || !_m) {
-		LOG(L_ERR, "dlg_request_uas(): Invalid parameter value\n");
+		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
@@ -768,7 +766,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 	      * first, if so then we will not update anything
 	      */
 	if (parse_headers(_m, HDR_CSEQ_F, 0) == -1) {
-		LOG(L_ERR, "dlg_request_uas(): Error while parsing headers\n");
+		LM_ERR("parsing headers failed\n");
 		return -2;
 	}
 	if (get_cseq_value(_m, &cseq) < 0) return -3;
@@ -784,7 +782,7 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 	if (_m->first_line.u.request.method_value == METHOD_INVITE) {
 		     /* target refresher */
 		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
-			LOG(L_ERR, "dlg_request_uas(): Error while parsing headers\n");
+			LM_ERR("parsing headers failed\n");
 			return -4;
 		}
 		

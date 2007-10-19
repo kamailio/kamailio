@@ -62,15 +62,14 @@ static int reconnect(db_con_t* _h, const char* _s)
 	SQLSMALLINT outstrlen;
 	char conn_str[MAX_CONN_STR_LEN];
 
-	LOG(L_ERR, "ERROR:unixodbc:reconnect: Attempting DB reconnect\n");
+	LM_ERR("Attempting DB reconnect\n");
 
 	/* Disconnect */
 	SQLDisconnect (CON_CONNECTION(_h));
 
 	/* Reconnect */
 	if (!build_conn_str(CON_ID(_h), conn_str)) {
-		LOG(L_ERR, "ERROR:unixodbc:reconnect: failed to build "
-			"connection string\n");
+		LM_ERR("failed to build connection string\n");
 		return ret;
 	}
 
@@ -78,7 +77,7 @@ static int reconnect(db_con_t* _h, const char* _s)
 			(SQLCHAR*)conn_str, SQL_NTS, outstr, sizeof(outstr),
 			&outstrlen, SQL_DRIVER_COMPLETE);
 	if (!SQL_SUCCEEDED(ret)) {
-		LOG(L_ERR, "ERROR:unixodbc:reconnect: failed to connect\n");
+		LM_ERR("failed to connect\n");
 		extract_error("SQLDriverConnect", CON_CONNECTION(_h),
 			SQL_HANDLE_DBC, NULL);
 		return ret;
@@ -87,8 +86,7 @@ static int reconnect(db_con_t* _h, const char* _s)
 	ret = SQLAllocHandle(SQL_HANDLE_STMT, CON_CONNECTION(_h),
 			&CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret)) {
-		LOG(L_ERR, "ERROR:unixodbc:reconnect: Statement allocation "
-			"error %d\n", (int)(long)CON_CONNECTION(_h));
+		LM_ERR("Statement allocation error %d\n", (int)(long)CON_CONNECTION(_h));
 		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,NULL);
 		return ret;
 	}
@@ -114,8 +112,8 @@ static int submit_query(db_con_t* _h, const char* _s)
 	ret = SQLAllocHandle(SQL_HANDLE_STMT, CON_CONNECTION(_h), &CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret))
 	{
-		LOG(L_ERR, "ERROR:unixodbc:submit_query: Statement allocation "
-			"error %d\n", (int)(long)CON_CONNECTION(_h));
+		LM_ERR("statement allocation error %d\n",
+				(int)(long)CON_CONNECTION(_h));
 		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,
 			(char*)sqlstate);
 		
@@ -133,7 +131,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 	if (!SQL_SUCCEEDED(ret))
 	{
 		SQLCHAR sqlstate[7];
-		LOG(L_ERR, "unixodbc:SQLExecDirect, rv=%d. Query= %s\n", ret, _s);
+		LM_ERR("rv=%d. Query= %s\n", ret, _s);
 		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
 			(char*)sqlstate);
 
@@ -147,7 +145,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 				/* Try again */
 				ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
 				if (!SQL_SUCCEEDED(ret)) {
-					LOG(L_ERR, "unixodbc:SQLExecDirect, rv=%d. Query= %s\n",
+					LM_ERR("rv=%d. Query= %s\n",
 						ret, _s);
 					extract_error("SQLExecDirect", CON_RESULT(_h),
 						SQL_HANDLE_STMT, (char*)sqlstate);
@@ -185,14 +183,14 @@ db_con_t* db_init(const char* _url)
 
 	if (!_url)
 	{
-		LOG(L_ERR, "db_init: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct my_con*));
 	if (!res)
 	{
-		LOG(L_ERR, "db_init: No memory left\n");
+		LM_ERR("no more pkg memory\n");
 		return 0;
 	}
 	memset(res, 0, sizeof(db_con_t) + sizeof(struct my_con*));
@@ -200,7 +198,7 @@ db_con_t* db_init(const char* _url)
 	id = new_db_id(_url);
 	if (!id)
 	{
-		LOG(L_ERR, "db_init: Cannot parse URL '%s'\n", _url);
+		LM_ERR("failed to parse URL '%s'\n", _url);
 		goto err;
 	}
 
@@ -208,7 +206,7 @@ db_con_t* db_init(const char* _url)
 	con = (struct my_con*)pool_get(id);
 	if (!con)
 	{
-		DBG("db_init: Connection '%s' not found in pool\n", _url);
+		LM_DBG("Connection '%s' not found in pool\n", _url);
 /* Not in the pool yet */
 		con = new_connection(id);
 		if (!con)
@@ -219,7 +217,7 @@ db_con_t* db_init(const char* _url)
 	}
 	else
 	{
-		DBG("db_init: Connection '%s' found in pool\n", _url);
+		LM_DBG("Connection '%s' found in pool\n", _url);
 	}
 
 	res->tail = (unsigned long)con;
@@ -241,7 +239,7 @@ void db_close(db_con_t* _h)
 
 	if (!_h)
 	{
-		LOG(L_ERR, "db_close: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return;
 	}
 
@@ -261,7 +259,7 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 {
 	if ((!_h) || (!_r))
 	{
-		LOG(L_ERR, "store_result: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -269,13 +267,13 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 
 	if (*_r == 0)
 	{
-		LOG(L_ERR, "store_result: No memory left\n");
+		LM_ERR("no memory left\n");
 		return -2;
 	}
 
 	if (convert_result(_h, *_r) < 0)
 	{
-		LOG(L_ERR, "store_result: Error while converting result\n");
+		LM_ERR("failed to convert result\n");
 		pkg_free(*_r);
 		*_r = 0;
 		return -4;
@@ -290,13 +288,13 @@ int db_free_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
-		LOG(L_ERR, "db_free_result: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	if (free_result(_r) < 0)
 	{
-		LOG(L_ERR, "db_free_result: Unable to free result structure\n");
+		LM_ERR("failed to free result structure\n");
 		return -1;
 	}
 	SQLFreeHandle(SQL_HANDLE_STMT, CON_RESULT(_h));
@@ -323,7 +321,7 @@ db_key_t _o, db_res_t** _r)
 
 	if (!_h)
 	{
-		LOG(L_ERR, "db_query: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -367,14 +365,14 @@ db_key_t _o, db_res_t** _r)
 	*(sql_buf + off) = '\0';
 	if (submit_query(_h, sql_buf) < 0)
 	{
-		LOG(L_ERR, "unixodbc:db_query: Error while submitting query\n");
+		LM_ERR("submitting query failed\n");
 		return -2;
 	}
 
 	return store_result(_h, _r);
 
 	error:
-	LOG(L_ERR, "unixodbc:db_query: Error in snprintf\n");
+	LM_ERR("snprintf failed\n");
 	return -1;
 }
 
@@ -385,13 +383,13 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
 {
 	if ((!_h) || (!_s))
 	{
-		LOG(L_ERR, "db_raw_query: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	if (submit_query(_h, _s) < 0)
 	{
-		LOG(L_ERR, "db_raw_query: Error while submitting query\n");
+		LM_ERR("submitting query failed\n");
 		return -2;
 	}
 
@@ -413,7 +411,7 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	if ((!_h) || (!_k) || (!_v) || (!_n))
 	{
-		LOG(L_ERR, "db_insert: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -438,13 +436,13 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	if (submit_query(_h, sql_buf) < 0)
 	{
-		LOG(L_ERR, "db_insert: Error while submitting query\n");
+		LM_ERR("submitting query failed\n");
 		return -2;
 	}
 	return 0;
 
 	error:
-	LOG(L_ERR, "db_insert: Error in snprintf\n");
+	LM_ERR("snprintf failed\n");
 	return -1;
 }
 
@@ -462,7 +460,7 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 
 	if (!_h)
 	{
-		LOG(L_ERR, "db_delete: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -484,13 +482,13 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	*(sql_buf + off) = '\0';
 	if (submit_query(_h, sql_buf) < 0)
 	{
-		LOG(L_ERR, "db_delete: Error while submitting query\n");
+		LM_ERR("submitting query failed\n");
 		return -2;
 	}
 	return 0;
 
 	error:
-	LOG(L_ERR, "db_delete: Error in snprintf\n");
+	LM_ERR("snprintf failed\n");
 	return -1;
 }
 
@@ -512,7 +510,7 @@ db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 
 	if ((!_h) || (!_uk) || (!_uv) || (!_un))
 	{
-		LOG(L_ERR, "db_update: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -539,13 +537,13 @@ db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 
 	if (submit_query(_h, sql_buf) < 0)
 	{
-		LOG(L_ERR, "db_update: Error while submitting query\n");
+		LM_ERR("submitting query failed\n");
 		return -2;
 	}
 	return 0;
 
 	error:
-	LOG(L_ERR, "db_update: Error in snprintf\n");
+	LM_ERR("snprintf failed\n");
 	return -1;
 }
 
@@ -558,7 +556,7 @@ int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 
 	if (!handle || !keys || !vals)
 	{
-		LOG(L_ERR, "db_replace: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -583,12 +581,12 @@ int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
 
 	if (submit_query(handle, sql_buf) < 0)
 	{
-		LOG(L_ERR, "db_replace: Error while submitting query\n");
+		LM_ERR("submitting query failed\n");
 		return -2;
 	}
 	return 0;
 
 	error:
-	LOG(L_ERR, "db_replace: Error in snprintf\n");
+	LM_ERR("snprintf failed\n");
 	return -1;
 }

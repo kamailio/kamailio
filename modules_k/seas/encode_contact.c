@@ -77,7 +77,7 @@ int encode_contact_body(char *hdr,int hdrlen,contact_body_t *contact_parsed,unsi
    }
    for(contact_offset=0,i=0,mycontact=contact_parsed->contacts;mycontact;mycontact=mycontact->next,i++){
       if((k=encode_contact(hdr,hdrlen,mycontact,&tmp[contact_offset]))<0){
-	 LOG(L_ERR,"parsing contact number %d\n",i);
+	 LM_ERR("parsing contact number %d\n",i);
 	 return -1;
       }
       where[2+i]=k;
@@ -140,11 +140,11 @@ int encode_contact(char *hdrstart,int hdrlen,contact_t *body,unsigned char *wher
    }
 
    if (parse_uri(body->uri.s, body->uri.len,&puri) < 0 ) {
-      LOG(L_ERR, "Bad URI in address\n");
+      LM_ERR("Bad URI in address\n");
       return -1;
    }else{
       if((j=encode_uri2(hdrstart,hdrlen,body->uri,&puri,&where[i]))<0){
-	 LOG(L_ERR, "error codifying the URI\n");
+	 LM_ERR("failed to codify the URI\n");
 	 return -1;
       }else{
 	 i+=j;
@@ -175,7 +175,7 @@ int print_encoded_contact_body(int fd,char *hdr,int hdrlen,unsigned char *payloa
    }
    numcontacts=payload[1];
    if(numcontacts==0){
-      LOG(L_ERR,"no contacts present?\n");
+      LM_ERR("no contacts present?\n");
       return -1;
    }
    for(i=0,offset=2+numcontacts;i<numcontacts;i++){
@@ -245,7 +245,7 @@ int dump_contact_body_test(char *hdr,int hdrlen,unsigned char *payload,int payle
    }
    numcontacts=payload[1];
    if(numcontacts==0){
-      LOG(L_ERR,"no contacts present?\n");
+      LM_ERR("no contacts present?\n");
       return -1;
    }
    if(segregationLevel & (JUNIT|SEGREGATE|ONLY_URIS)){

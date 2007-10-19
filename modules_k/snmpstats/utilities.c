@@ -72,16 +72,15 @@ int stringHandlerSanityCheck( modparam_t type, void *val, char *parameterName)
 
 	/* Make sure the function was called correctly. */
 	if (type != STR_PARAM) {
-		LOG(L_ERR,"ERROR: SNMPStats: The %s parameter was assigned "
-				" a type %d instead of %d\n", parameterName, 
-					type, STR_PARAM);
+		LM_ERR("the %s parameter was assigned a type %d instead of %d\n",
+				parameterName, type, STR_PARAM);
 		return 0;
 	}
 
 	/* An empty string was supplied.  We consider this illegal */
 	if (theString==0 || (theString[0])==0) {
-		LOG(L_ERR, "ERROR: SNMPStats: The %s parameter was specified "
-				" with an empty string\n", parameterName); 
+		LM_ERR("the %s parameter was specified  with an empty string\n",
+				parameterName); 
 		return 0;
 	}
 
@@ -107,8 +106,7 @@ int get_statistic(char *statName)
 	stat_var *theVar = get_stat(&theStr);
 	
 	if (theVar==0) {
-		LOG(L_INFO, "INFO: SNMPStats: Couldn't retrieve statistics "
-				"for %s\n", statName);
+		LM_INFO("failed to retrieve statistics for %s\n", statName);
 	} else {
 		result = get_stat_val(theVar);
 	}

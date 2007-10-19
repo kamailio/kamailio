@@ -56,7 +56,7 @@ int reg_statistic( char* name)
 	int flags;
 
 	if (name==0 || *name==0) {
-		LOG(L_ERR,"ERROR:statistics:reg_statistics: empty parameter\n");
+		LM_ERR("empty parameter\n");
 		goto error;
 	}
 
@@ -68,15 +68,14 @@ int reg_statistic( char* name)
 		if (strcasecmp( flag_str, NORESET_FLAG_STR)==0) {
 			flags |= STAT_NO_RESET;
 		} else {
-			LOG(L_ERR,"ERROR:statistics:reg_statistics: unsuported flag "
-				"<%s>\n",flag_str);
+			LM_ERR("unsuported flag <%s>\n",flag_str);
 			goto error;
 		}
 	}
 
 	se = (stat_elem*)pkg_malloc( sizeof(stat_elem) );
 	if (se==0) {
-		LOG(L_ERR,"ERROR:statistics:reg_statistics: no more pkh mem\n");
+		LM_ERR("no more pkg mem\n");
 		goto error;
 	}
 
@@ -106,8 +105,8 @@ int register_all_mod_stats(void)
 
 		/* register the new variable */
 		if (register_stat(MODULE_STATS, se_tmp->name, &stat, se_tmp->flags)!=0){
-			LOG(L_ERR,"ERROR:statistics:register_all_mod_stats: failed to "
-				"register var. <%s> flags %d\n",se_tmp->name,se_tmp->flags);
+			LM_ERR("failed to register var. <%s> flags %d\n",
+					se_tmp->name,se_tmp->flags);
 			return -1;
 		}
 		pkg_free(se_tmp);

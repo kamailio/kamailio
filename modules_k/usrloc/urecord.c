@@ -53,14 +53,14 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 {
 	*_r = (urecord_t*)shm_malloc(sizeof(urecord_t));
 	if (*_r == 0) {
-		LOG(L_ERR, "ERROR:usrloc:new_urecord: no shm memory left\n");
+		LM_ERR("no more share memory\n");
 		return -1;
 	}
 	memset(*_r, 0, sizeof(urecord_t));
 
 	(*_r)->aor.s = (char*)shm_malloc(_aor->len);
 	if ((*_r)->aor.s == 0) {
-		LOG(L_ERR, "ERROR:usrloc:new_urecord: no shm memory left!\n");
+		LM_ERR("no more share memory\n");
 		shm_free(*_r);
 		*_r = 0;
 		return -2;
@@ -139,8 +139,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 	ucontact_t* c;
 
 	if ( (c=new_ucontact(_r->domain, &_r->aor, _c, _ci)) == 0) {
-		LOG(L_ERR, "ERROR:usrloc:mem_insert_ucontact: failed to "
-			"create new contact\n");
+		LM_ERR("failed to create new contact\n");
 		return 0;
 	}
 	if_update_stat( _r->slot, _r->slot->d->contacts, 1);
@@ -226,7 +225,7 @@ static inline int nodb_timer(urecord_t* _r)
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			DBG("DEBUG:usrloc:nodb_timer: Binding '%.*s','%.*s' has expired\n",
+			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
 
@@ -264,7 +263,7 @@ static inline int wt_timer(urecord_t* _r)
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			DBG("DEBUG:usrloc:wt_timer: Binding '%.*s','%.*s' has expired\n",
+			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
 
@@ -272,8 +271,7 @@ static inline int wt_timer(urecord_t* _r)
 			ptr = ptr->next;
 
 			if (db_delete_ucontact(t) < 0) {
-				LOG(L_ERR, "wt_timer(): Error while deleting contact from "
-				    "database\n");
+				LM_ERR("deleting contact from database failed\n");
 			}
 			mem_delete_ucontact(_r, t);
 			update_stat( _r->slot->d->expires, 1);
@@ -306,7 +304,7 @@ static inline int wb_timer(urecord_t* _r)
 
 			notify_watchers(_r, ptr, PRES_OFFLINE);
 
-			DBG("DEBUG:usrloc:wb_timer: Binding '%.*s','%.*s' has expired\n",
+			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
 			update_stat( _r->slot->d->expires, 1);
@@ -317,8 +315,7 @@ static inline int wb_timer(urecord_t* _r)
 			/* Should we remove the contact from the database ? */
 			if (st_expired_ucontact(t) == 1) {
 				if (db_delete_ucontact(t) < 0) {
-					LOG(L_ERR, "wb_timer: Can't delete contact from "
-						"the database\n");
+					LM_ERR("failed to delete contact from the database\n");
 				}
 			}
 			
@@ -333,14 +330,13 @@ static inline int wb_timer(urecord_t* _r)
 
 			case 1: /* insert */
 				if (db_insert_ucontact(ptr) < 0) {
-					LOG(L_ERR, "wb_timer: Error while inserting contact "
-						"into database\n");
+					LM_ERR("inserting contact into database failed\n");
 				}
 				break;
 
 			case 2: /* update */
 				if (db_update_ucontact(ptr) < 0) {
-					LOG(L_ERR,"wb_timer: Error while updating contact in db\n");
+					LM_ERR("updating contact in db failed\n");
 				}
 				break;
 			}
@@ -391,13 +387,12 @@ int db_delete_urecord(urecord_t* _r)
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _r->domain->s) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:db_delete_urecord: use_table failed\n");
+		LM_ERR("use_table failed\n");
 		return -1;
 	}
 
 	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (2) : (1)) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:db_delete_urecord:"
-				" failed to delete from database\n");
+		LM_ERR("failed to delete from database\n");
 		return -1;
 	}
 
@@ -427,7 +422,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 															ucontact_t** _c)
 {
 	if ( ((*_c)=mem_insert_ucontact(_r, _contact, _ci)) == 0) {
-		LOG(L_ERR, "ERROR:usrloc:insert_ucontact: failed to insert contact\n");
+		LM_ERR("failed to insert contact\n");
 		return -1;
 	}
 
@@ -440,8 +435,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_insert_ucontact(*_c) < 0) {
-			LOG(L_ERR, "ERROR:usrloc:insert_ucontact: failed to insert "
-				"in database\n");
+			LM_ERR("failed to insert in database\n");
 		}
 		(*_c)->state = CS_SYNC;
 	}
@@ -464,8 +458,7 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	if (st_delete_ucontact(_c) > 0) {
 		if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 			if (db_delete_ucontact(_c) < 0) {
-				LOG(L_ERR, "delete_ucontact(): Can't remove contact from "
-					"database\n");
+				LM_ERR("failed to remove contact from database\n");
 			}
 		}
 
@@ -533,8 +526,7 @@ int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 			no_callid = 1;
 			break;
 		default:
-			LOG(L_CRIT,"BUG:usrloc:get_ucontact: unknown matching_mode %d\n",
-				matching_mode);
+			LM_CRIT("unknown matching_mode %d\n", matching_mode);
 			return -1;
 	}
 

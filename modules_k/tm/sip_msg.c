@@ -262,7 +262,7 @@ static inline int clone_authorized_hooks(struct sip_msg* new,
 	while(ptr) {
 		if (ptr == hook1) {
 			if (!new->authorization || !new->authorization->parsed) {
-				LOG(L_CRIT, "BUG: Error in message cloner (authorization)\n");
+				LM_CRIT("message cloner (authorization) failed\n");
 				return -1;
 			}
 			((struct auth_body*)new->authorization->parsed)->authorized =
@@ -272,7 +272,7 @@ static inline int clone_authorized_hooks(struct sip_msg* new,
 		
 		if (ptr == hook2) {
 			if (!new->proxy_auth || !new->proxy_auth->parsed) {
-				LOG(L_CRIT, "BUG: Error in message cloner (proxy_auth)\n");
+				LM_CRIT("message cloner (proxy_auth) failed\n");
 				return -1;
 			}
 			((struct auth_body*)new->proxy_auth->parsed)->authorized =
@@ -386,8 +386,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 
 			default:
 				if (hdr->parsed) {
-					LOG(L_WARN, "WARNING: sip_msg_cloner: "
-						"header body ignored: %d\n", hdr->type );
+					LM_WARN("header body ignored: %d\n", hdr->type );
 				}
 				break;
 		}/*switch*/
@@ -427,7 +426,7 @@ do { \
 	p=(char *)shm_malloc(len);
 	if (!p)
 	{
-		LOG(L_ERR , "ERROR: sip_msg_cloner: cannot allocate memory\n" );
+		LM_ERR("no more share memory\n" );
 		return 0;
 	}
 	if (sip_msg_len)

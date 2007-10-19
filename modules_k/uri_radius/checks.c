@@ -82,9 +82,9 @@ static int generate_avps(VALUE_PAIR* received)
 		name.s = name_str;
 		val.s = val_str;
 		if (add_avp(AVP_NAME_STR | AVP_VAL_STR, name, val) < 0) {
-			LOG(L_ERR, "generate_avps: Unable to create a new AVP\n");
+			LM_ERR("failed to create a new AVP\n");
 		} else {
-			DBG("generate_avps: AVP '%.*s'='%.*s' has been added\n",
+			LM_DBG("AVP '%.*s'='%.*s' has been added\n",
 			    name_str.len, ZSW(name_str.s), 
 			    val_str.len, ZSW(val_str.s));
 		}
@@ -109,13 +109,13 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	send = received = 0;
 
 	if (parse_sip_msg_uri(_m) < 0) {
-		LOG(L_ERR, "radius_does_uri_exist(): Error while parsing URI\n");
+		LM_ERR("parsing URI failed\n");
 		return -1;
 	}
 	
 	uri = (char*)pkg_malloc(_m->parsed_uri.user.len + _m->parsed_uri.host.len + 2);
 	if (!uri) {
-		LOG(L_ERR, "radius_does_uri_exist(): No memory left\n");
+		LM_ERR("no more pkg memory\n");
 		return -2;
 	}
 
@@ -129,7 +129,7 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	*at = '\0';
 
 	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, uri, -1, 0)) {
-		LOG(L_ERR, "radius_does_uri_exist(): Error adding User-Name\n");
+		LM_ERR("adding User-Name failed\n");
 		rc_avpair_free(send);
 		pkg_free(uri);
 	 	return -3;
@@ -137,21 +137,21 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 
 	service = vals[V_CALL_CHECK].v;
 	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-		LOG(L_ERR, "radius_does_uri_exist(): Error adding service type\n");
+		LM_ERR("adding service type failed\n");
 		rc_avpair_free(send);
 		pkg_free(uri);
 	 	return -4;  	
 	}
 	
 	if (rc_auth(rh, 0, send, &received, msg) == OK_RC) {
-		DBG("radius_does_uri_exist(): Success\n");
+		LM_DBG("success\n");
 		rc_avpair_free(send);
 		generate_avps(received);
 		rc_avpair_free(received);
 		pkg_free(uri);
 		return 1;
 	} else {
-		DBG("radius_does_uri_exist(): Failure\n");
+		LM_DBG("failure\n");
 		rc_avpair_free(send);
 		rc_avpair_free(received);
 		pkg_free(uri);

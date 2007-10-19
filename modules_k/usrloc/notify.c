@@ -51,7 +51,7 @@ int add_watcher(struct urecord* _r, notcb_t _c, void* _d)
 
 	ptr = (notify_cb_t*)shm_malloc(sizeof(notify_cb_t));
 	if (ptr == 0) {
-		LOG(L_ERR, "add_watcher(): No memory left\n");
+		LM_ERR("no more share memory\n");
 		return -1;
 	}
 
@@ -97,7 +97,7 @@ int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 		return 0;
 
 	if (find_domain(&dom, &d) > 0) {
-		LOG(L_ERR, "register_watcher(): Domain '%.*s' not found\n", dom.len, ZSW(dom.s));
+		LM_ERR("Domain '%.*s' not found\n", dom.len, ZSW(dom.s));
 		return -1;
 	}
 
@@ -106,14 +106,13 @@ int register_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	if (get_urecord(d, _t, &r) > 0) {
 		if (insert_urecord(d, _t, &r) < 0) {
 			unlock_udomain(d, _t);
-			LOG(L_ERR,
-				"register_watcher(): Error while creating a new record\n");
+			LM_ERR("creating a new record failed\n");
 			return -2;
 		}
 	}
 
 	if (add_watcher(r, _c, _data) < 0) {
-		LOG(L_ERR, "register_watcher(): Error while adding a watcher\n");
+		LM_ERR("adding a watcher failed\n");
 		release_urecord(r);
 		unlock_udomain(d, _t);
 		return -3;
@@ -134,7 +133,7 @@ int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 		return 0;
 
 	if (find_domain(&dom, &d) > 0) {
-		LOG(L_ERR, "unregister_watcher(): Domain '%.*s' not found\n", dom.len, ZSW(dom.s));
+		LM_ERR("Domain '%.*s' not found\n", dom.len, ZSW(dom.s));
 		return -1;
 	}
 	
@@ -142,7 +141,7 @@ int unregister_watcher(str* _f, str* _t, notcb_t _c, void* _data)
 	
 	if (get_urecord(d, _t, &r) > 0) {
 		unlock_udomain(d, _t);
-		DBG("unregister_watcher(): Record not found\n");
+		LM_DBG("Record not found\n");
 		return 0;
 	}
 

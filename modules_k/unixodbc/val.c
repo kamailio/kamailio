@@ -49,7 +49,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 
 	if (!_v)
 	{
-		LOG(L_ERR, "str2val: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -74,8 +74,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_INT:
 			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
-				LOG(L_ERR,
-				"str2val: Error while converting integer value from string\n");
+				LM_ERR("converting integer value from string failed\n");
 				return -2;
 			}
 			else
@@ -88,8 +87,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_BITMAP:
 			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
-				LOG(L_ERR,
-				"str2val: Error while converting bitmap value from string\n");
+				LM_ERR("converting bitmap value from string failed\n");
 				return -3;
 			}
 			else
@@ -102,8 +100,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_DOUBLE:
 			if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0)
 			{
-				LOG(L_ERR,
-				"str2val: Error while converting double value from string\n");
+				LM_ERR("converting double value from string failed\n");
 				return -4;
 			}
 			else
@@ -127,8 +124,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 		case DB_DATETIME:
 			if (db_str2time(_s, &VAL_TIME(_v)) < 0)
 			{
-				LOG(L_ERR,
-				"str2val: Error while converting datetime value from string\n");
+				LM_ERR("converting datetime value from string failed\n");
 				return -5;
 			}
 			else
@@ -157,7 +153,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 
 	if (!_c || !_v || !_s || !_len || !*_len)
 	{
-		LOG(L_ERR, "val2str: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -165,7 +161,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 	{
 		if (*_len < sizeof("NULL"))
 		{
-			LOG(L_ERR, "val2str: Buffer too small\n");
+			LM_ERR("buffer too small\n");
 			return -1;
 		}
 		*_len = snprintf(_s, *_len, "NULL");
@@ -177,7 +173,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 		case DB_INT:
 			if (db_int2str(VAL_INT(_v), _s, _len) < 0)
 			{
-				LOG(L_ERR, "val2str: Error while converting string to int\n");
+				LM_ERR("converting string to int failed\n");
 				return -2;
 			}
 			else
@@ -189,7 +185,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 		case DB_BITMAP:
 			if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0)
 			{
-				LOG(L_ERR, "val2str: Error while converting string to int\n");
+				LM_ERR("converting string to int failed\n");
 				return -3;
 			}
 			else
@@ -201,8 +197,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 		case DB_DOUBLE:
 			if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0)
 			{
-				LOG(L_ERR,
-					"val2str: Error while converting string to double\n");
+				LM_ERR("converting string to double failed\n");
 				return -4;
 			}
 			else
@@ -215,7 +210,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 			l = strlen(VAL_STRING(_v));
 			if (*_len < (l * 2 + 3))
 			{
-				LOG(L_ERR, "val2str: Destination buffer too short\n");
+				LM_ERR("destination buffer too short\n");
 				return -5;
 			}
 			else
@@ -240,7 +235,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 			l = VAL_STR(_v).len;
 			if (*_len < (l * 2 + 3))
 			{
-				LOG(L_ERR, "val2str: Destination buffer too short\n");
+				LM_ERR("destination buffer too short\n");
 				return -6;
 			}
 			else
@@ -264,8 +259,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 		case DB_DATETIME:
 			if (db_time2str(VAL_TIME(_v), _s, _len) < 0)
 			{
-				LOG(L_ERR,
-					"val2str: Error while converting string to time_t\n");
+				LM_ERR("converting string to time_t failed\n");
 				return -7;
 			}
 			else
@@ -278,7 +272,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 			l = VAL_BLOB(_v).len;
 			if (*_len < (l * 2 + 3))
 			{
-				LOG(L_ERR, "val2str: Destination buffer too short\n");
+				LM_ERR("destination buffer too short\n");
 				return -8;
 			}
 			else
@@ -300,7 +294,7 @@ int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
 			break;
 
 		default:
-			DBG("val2str: Unknown data type\n");
+			LM_DBG("unknown data type\n");
 			return -9;
 	}
 /*return -8; --not reached*/

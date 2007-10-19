@@ -50,7 +50,7 @@ int init_tmcb_lists(void)
 	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
 		( sizeof(struct tmcb_head_list) );
 	if (req_in_tmcb_hl==0) {
-		LOG(L_CRIT,"ERROR:tm:init_tmcb_lists: no more shared mem\n");
+		LM_CRIT("no more shared mem\n");
 		return -1;
 	}
 	req_in_tmcb_hl->first = 0;
@@ -91,7 +91,7 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 
 	/* build a new callback structure */
 	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
-		LOG(L_ERR, "ERROR:tm:insert_tmcb: out of shm. mem\n");
+		LM_ERR("no more share memory\n");
 		return E_OUT_OF_MEM;
 	}
 
@@ -124,24 +124,24 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 
 	/* are the callback types valid?... */
 	if ( types<0 || types>TMCB_MAX ) {
-		LOG(L_CRIT, "BUG:tm:register_tmcb: invalid callback types: mask=%d\n",
+		LM_CRIT("invalid callback types: mask=%d\n",
 			types);
 		return E_BUG;
 	}
 	/* we don't register null functions */
 	if (f==0) {
-		LOG(L_CRIT, "BUG:tm:register_tmcb: null callback function\n");
+		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	if (types&TMCB_REQUEST_IN) {
 		if (types!=TMCB_REQUEST_IN) {
-			LOG(L_CRIT, "BUG:tm:register_tmcb: callback type TMCB_REQUEST_IN "
+			LM_CRIT("callback type TMCB_REQUEST_IN "
 				"can't be register along with types\n");
 			return E_BUG;
 		}
 		if (req_in_tmcb_hl==0) {
-			LOG(L_ERR, "ERROR:tm:register_tmcb: callback type TMCB_REQUEST_IN "
+			LM_ERR("callback type TMCB_REQUEST_IN "
 				"registration attempt before TM module initialization\n");
 			return E_CFG;
 		}
@@ -149,8 +149,7 @@ int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
 	} else {
 		if (!t) {
 			if (!p_msg) {
-				LOG(L_CRIT,"BUG:tm:register_tmcb: no sip_msg, nor transaction"
-					" given\n");
+				LM_CRIT("no sip_msg, nor transaction given\n");
 				return E_BUG;
 			}
 			/* look for the transaction */
@@ -199,7 +198,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 	backup = set_avp_list( &trans->user_avps );
 	for (cbp=trans->tmcb_hl.first; cbp; cbp=cbp->next)  {
 		if ( (cbp->types)&type ) {
-			DBG("DBG: trans=%p, callback type %d, id %d entered\n",
+			LM_DBG("trans=%p, callback type %d, id %d entered\n",
 				trans, type, cbp->id );
 			params.param = &(cbp->param);
 			cbp->callback( trans, type, &params );
@@ -225,7 +224,7 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 
 	backup = set_avp_list( &trans->user_avps );
 	for (cbp=req_in_tmcb_hl->first; cbp; cbp=cbp->next)  {
-		DBG("DBG: trans=%p, callback type %d, id %d entered\n",
+		LM_DBG("trans=%p, callback type %d, id %d entered\n",
 			trans, cbp->types, cbp->id );
 		params.param = &(cbp->param);
 		cbp->callback( trans, cbp->types, &params );

@@ -41,7 +41,7 @@ int init_xmpp_cb_list(void)
 {
 	_xmpp_cb_list = (xmpp_cb_list_t*)shm_malloc(sizeof(xmpp_cb_list_t));
 	if (_xmpp_cb_list==0) {
-		LOG(L_CRIT,"ERROR:xmpp:init_xmpp_cb_list: no more shared mem\n");
+		LM_CRIT("no more shared memory\n");
 		return -1;
 	}
 	memset(_xmpp_cb_list, 0, sizeof(xmpp_cb_list_t));
@@ -76,20 +76,20 @@ int register_xmpp_cb( int types, xmpp_cb_f f, void *param )
 
 	if(_xmpp_cb_list==0)
 	{
-		LOG(L_CRIT, "BUG:register_xmpp_cb: null callback list\n");
+		LM_CRIT("null callback list\n");
 		return E_BUG;
 	}
 
 	/* check null functions */
 	if (f==0) {
-		LOG(L_CRIT, "BUG:register_xmpp_cb: null callback function\n");
+		LM_CRIT("null callback function\n");
 		return E_BUG;
 	}
 
 	/* build callback structure */
 	if (!(it=(xmpp_callback_t*)shm_malloc(sizeof(xmpp_callback_t))))
 	{
-		LOG(L_ERR, "ERROR:register_xmpp_cb: out of shm. mem\n");
+		LM_ERR("no more share memory\n");
 		return E_OUT_OF_MEM;
 	}
 
@@ -110,7 +110,7 @@ int bind_xmpp(xmpp_api_t* api)
 {
 	if (api==NULL)
 	{
-		LOG(L_ERR, "bind_xmpp: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 	api->register_callback = register_xmpp_cb;

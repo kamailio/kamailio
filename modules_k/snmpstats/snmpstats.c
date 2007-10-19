@@ -215,7 +215,7 @@ static int register_message_code_statistics(void)
  * modules. */
 static int mod_init(void) 
 {
-	LOG(L_INFO, "INFO: SNMPStats: Starting up the SNMPStats Module\n");
+	LM_INFO("Starting up the SNMPStats Module\n");
 
 	if (register_message_code_statistics() < 0) 
 	{
@@ -240,12 +240,12 @@ static int mod_init(void)
 		 * the messages are commented out for now */
 		
 		/*
-		LOG(L_ERR, "ERROR: snmpstats module was unable to register callbacks" 
+		LM_ERR("snmpstats module was unable to register callbacks" 
 						" with the usrloc module\n");
-		LOG(L_ERR, "       Are you sure that the usrloc module was loaded"
-						"before the snmpstats module in ");
-		LOG(L_ERR, "     openser.cfg?  openserSIPRegUserTable will not be "
-						"updated.");
+		LM_ERR("Are you sure that the usrloc module was loaded"
+				" before the snmpstats module in ");
+		LM_ERR("openser.cfg?  openserSIPRegUserTable will not be "
+			   "updated.");
 		*/
 	} 
 
@@ -277,9 +277,9 @@ static int mod_child_init(int rank)
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy(void) 
 {
-	LOG(L_INFO, "INFO: SNMPStats: The SNMPStats module got the kill "
+	LM_INFO("The SNMPStats module got the kill "
 			"signal\n");
-	LOG(L_INFO, "                 Shutting down the AgentX Sub-Agent!\n");
+	LM_INFO("                 Shutting down the AgentX Sub-Agent!\n");
 }
 
 
@@ -358,8 +358,7 @@ static int spawn_sysUpTime_child(void)
 	pid_t result_pid = fork();
 
 	if (result_pid < 0) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not spawn an agent to "
-				"check sysUpTime\n");
+		LM_ERR("failed to not spawn an agent to check sysUpTime\n");
 		return -1;
 	} else if (result_pid != 0) {
 
@@ -380,7 +379,7 @@ static int spawn_sysUpTime_child(void)
 
 
 	if (snmpget_fd == -1) {
-		LOG(L_ERR, "ERROR: SNMPStats: Could not open a temporary file "
+		LM_ERR("failed to open a temporary file "
 				"for snmpget to write to\n");
 		return -1;
 	}
@@ -391,9 +390,8 @@ static int spawn_sysUpTime_child(void)
 	if (snmp_community != NULL) {
 		snmp_community_string = snmp_community;
 	} else {
-		LOG(L_INFO, "INFO: SNMPStats: An snmpCommunity parameter was"
-				" not provided.  Defaulting to %s\n", 
-				snmp_community_string);
+		LM_INFO("An snmpCommunity parameter was not provided."
+				"  Defaulting to %s\n",	snmp_community_string);
 	}
 
 	char *args[] = {"-Ov", "-c",  snmp_community_string, "localhost", 
@@ -403,9 +401,8 @@ static int spawn_sysUpTime_child(void)
 	 * sysUpTime. */
 	if (snmpget_path == NULL) 
 	{
-		LOG(L_INFO, "INFO: SNMPStats: An snmpgetPath parameter was not"
-				" specified.  Defaulting to %s\n", 
-				local_path_to_snmpget);
+		LM_INFO("An snmpgetPath parameter was not specified."
+				"  Defaulting to %s\n", local_path_to_snmpget);
 	}
 	else 
 	{
@@ -424,9 +421,8 @@ static int spawn_sysUpTime_child(void)
 
 	if (full_path_to_snmpget == NULL) 
 	{
-		LOG(L_ERR, "ERROR: SNMPStats: Ran out of memory while trying to"
-				" retrieve sysUpTime.  ");
-		LOG(L_ERR, "                  openserSIPServiceStartTime is "
+		LM_ERR("Ran out of memory while trying to retrieve sysUpTime.  ");
+		LM_ERR( "                  openserSIPServiceStartTime is "
 				"defaulting to zero\n");
 		return -1;
 	}
@@ -440,12 +436,9 @@ static int spawn_sysUpTime_child(void)
 
 	/* snmpget -Ov -c public localhost .1.3.6.1.2.1.1.3.0  */
 	if (execve(full_path_to_snmpget, args, NULL) == -1) {
-		LOG(L_ERR, "ERROR: SNMPStats: snmpget failed to run.  Did you "
-				"supply the snmpstats\n");
-		LOG(L_ERR, "       module with a proper snmpgetPath parameter?"
-				"  The \n");
-		LOG(L_ERR, "       openserSIPServiceStartTime is defaulting to "
-				"zero\n");
+		LM_ERR( "snmpget failed to run.  Did you supply the snmpstats module"
+				" with a proper snmpgetPath parameter? The "
+				"openserSIPServiceStartTime is defaulting to zero\n");
 		close(snmpget_fd);
 		free(full_path_to_snmpget);
 		exit(-1);

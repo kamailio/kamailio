@@ -53,7 +53,7 @@ static char *build_stat_name( str* domain, char *var_name)
 	n = domain->len + 1 + strlen(var_name) + 1;
 	s = (char*)shm_malloc( n );
 	if (s==0) {
-		LOG(L_ERR,"ERROR:usrloc:build_stat_name: no more shm mem\n");
+		LM_ERR("no more shm mem\n");
 		return 0;
 	}
 	memcpy( s, domain->s, domain->len);
@@ -88,14 +88,14 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	 */
 	*_d = (udomain_t*)shm_malloc(sizeof(udomain_t));
 	if (!(*_d)) {
-		LOG(L_ERR, "new_udomain(): No memory left\n");
+		LM_ERR("new_udomain(): No memory left\n");
 		goto error0;
 	}
 	memset(*_d, 0, sizeof(udomain_t));
 	
 	(*_d)->table = (hslot_t*)shm_malloc(sizeof(hslot_t) * _s);
 	if (!(*_d)->table) {
-		LOG(L_ERR, "new_udomain(): No memory left 2\n");
+		LM_ERR("no memory left 2\n");
 		goto error1;
 	}
 
@@ -103,7 +103,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	
 	for(i = 0; i < _s; i++) {
 		if (init_slot(*_d, &((*_d)->table[i]), i) < 0) {
-			LOG(L_ERR, "new_udomain(): Error while initializing hash table\n");
+			LM_ERR("initializing hash table failed\n");
 			goto error2;
 		}
 	}
@@ -114,17 +114,17 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	/* register the statistics */
 	if ( (name=build_stat_name(_n,"users"))==0 || register_stat("usrloc",
 	name, &(*_d)->users, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
-		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
+		LM_ERR("failed to add stat variable\n");
 		goto error2;
 	}
 	if ( (name=build_stat_name(_n,"contacts"))==0 || register_stat("usrloc",
 	name, &(*_d)->contacts, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
-		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
+		LM_ERR("failed to add stat variable\n");
 		goto error2;
 	}
 	if ( (name=build_stat_name(_n,"expires"))==0 || register_stat("usrloc",
 	name, &(*_d)->expires, STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
-		LOG(L_ERR,"ERROR:usrloc:new_udomain: failed to add stat variable\n");
+		LM_ERR("failed to add stat variable\n");
 		goto error2;
 	}
 #endif
@@ -221,45 +221,45 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 
 	contact->s = (char*)VAL_STRING(vals);
 	if (VAL_NULL(vals) || contact->s==0 || contact->s[0]==0) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: bad contact\n");
+		LM_CRIT("bad contact\n");
 		return 0;
 	}
 	contact->len = strlen(contact->s);
 
 	if (VAL_NULL(vals+1)) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty expire\n");
+		LM_CRIT("empty expire\n");
 		return 0;
 	}
 	ci.expires = VAL_TIME(vals+1);
 
 	if (VAL_NULL(vals+2)) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty q\n");
+		LM_CRIT("empty q\n");
 		return 0;
 	}
 	ci.q = double2q(VAL_DOUBLE(vals+2));
 
 	if (VAL_NULL(vals+4)) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty cseq_nr\n");
+		LM_CRIT("empty cseq_nr\n");
 		return 0;
 	}
 	ci.cseq = VAL_INT(vals+4);
 
 	callid.s = (char*)VAL_STRING(vals+3);
 	if (VAL_NULL(vals+3) || !callid.s || !callid.s[0]) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: bad callid\n");
+		LM_CRIT("bad callid\n");
 		return 0;
 	}
 	callid.len  = strlen(callid.s);
 	ci.callid = &callid;
 
 	if (VAL_NULL(vals+5)) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty flag\n");
+		LM_CRIT("empty flag\n");
 		return 0;
 	}
 	ci.flags  = VAL_BITMAP(vals+5);
 
 	if (VAL_NULL(vals+6)) {
-		LOG(L_CRIT, "ERROR:usrloc:dbrow2info: empty cflag\n");
+		LM_CRIT("empty cflag\n");
 		return 0;
 	}
 	ci.cflags  = VAL_BITMAP(vals+6);
@@ -298,13 +298,12 @@ static inline ucontact_info_t* dbrow2info( db_val_t *vals, str *contact)
 	} else {
 		if (parse_phostport( p, strlen(p), &host.s, &host.len, 
 		&port, &proto)!=0) {
-			LOG(L_ERR,"ERROR:usrloc:dbrow2info: bad socket <%s>\n", p);
+			LM_ERR("bad socket <%s>\n", p);
 			return 0;
 		}
 		ci.sock = grep_sock_info( &host, (unsigned short)port, proto);
 		if (ci.sock==0) {
-			LOG(L_WARN,"WARNING:usrloc:dbrow2info: non-local socket "
-				"<%s>...ignoring\n", p);
+			LM_WARN("non-local socket <%s>...ignoring\n", p);
 		}
 	}
 
@@ -356,35 +355,34 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	columns[14] = domain_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
-		LOG(L_ERR, "preload_udomain(): Error in use_table\n");
+		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 
 #ifdef EXTRA_DEBUG
-	LOG(L_ERR, "usrloc:preload_udomain(): load start time [%d]\n",
-			(int)time(NULL));
+	LM_ERR("load start time [%d]\n", (int)time(NULL));
 #endif
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
 		0) < 0) {
-			LOG(L_ERR, "preload_udomain(): Error while doing db_query (1)\n");
+			LM_ERR("db_query (1) failed\n");
 			return -1;
 		}
 		if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
-			LOG(L_ERR, "preload_udomain(): Error fetching rows\n");
+			LM_ERR("fetching rows failed\n");
 			return -1;
 		}
 	} else {
 		if (ul_dbf.query(_c, 0, 0, 0, columns, 0, (use_domain)?(15):(14), 0,
 		&res) < 0) {
-			LOG(L_ERR, "preload_udomain(): Error while doing db_query\n");
+			LM_ERR("db_query failed\n");
 			return -1;
 		}
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("preload_udomain(): Table is empty\n");
+		LM_DBG("table is empty\n");
 		ul_dbf.free_result(_c, res);
 		return 0;
 	}
@@ -392,30 +390,30 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 	n = 0;
 	do {
-		DBG("preload_udomain(): loading records - cycle [%d]\n", ++n);
+		LM_DBG("loading records - cycle [%d]\n", ++n);
 		for(i = 0; i < RES_ROW_N(res); i++) {
 			row = RES_ROWS(res) + i;
 
 			user.s = (char*)VAL_STRING(ROW_VALUES(row));
 			if (VAL_NULL(ROW_VALUES(row)) || user.s==0 || user.s[0]==0) {
-				LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty username "
-					"record in table %s...skipping\n",_d->name->s);
+				LM_CRIT("empty username record in table %s...skipping\n",
+						_d->name->s);
 				continue;
 			}
 			user.len = strlen(user.s);
 
 			ci = dbrow2info( ROW_VALUES(row)+1, &contact);
 			if (ci==0) {
-				LOG(L_ERR, "ERROR:usrloc:preload_udomain: skipping record for "
-					"%.*s in table %s\n", user.len, user.s, _d->name->s);
+				LM_ERR("sipping record for %.*s in table %s\n",
+						user.len, user.s, _d->name->s);
 				continue;
 			}
 
 			if (use_domain) {
 				domain = (char*)VAL_STRING(ROW_VALUES(row) + 14);
 				if (VAL_NULL(ROW_VALUES(row)+13) || domain==0 || domain[0]==0){
-					LOG(L_CRIT, "ERROR:usrloc:preload_udomain: empty domain "
-					"record for user %.*s...skipping\n", user.len, user.s);
+					LM_CRIT("empty domain record for user %.*s...skipping\n",
+							user.len, user.s);
 					continue;
 				}
 				/* user.s cannot be NULL - checked previosly */
@@ -423,9 +421,8 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 					user.len, user.s, domain);
 				user.s = uri;
 				if (user.s[user.len]!=0) {
-					LOG(L_CRIT,"ERROR:usrloc:preload_udomain: URI '%.*s@%s' "
-						"longer than %d\n", user.len, user.s, domain,
-						MAX_URI_SIZE);
+					LM_CRIT("URI '%.*s@%s' longer than %d\n", user.len, user.s,
+							domain,	MAX_URI_SIZE);
 					continue;
 				}
 			}
@@ -434,15 +431,14 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 			lock_udomain(_d, &user);
 			if (get_urecord(_d, &user, &r) > 0) {
 				if (mem_insert_urecord(_d, &user, &r) < 0) {
-					LOG(L_ERR, "ul:preload_udomain(): Can't create a record\n");
+					LM_ERR("failed to create a record\n");
 					unlock_udomain(_d, &user);
 					goto error;
 				}
 			}
 
 			if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
-				LOG(L_ERR,
-					"ul:preload_udomain(): Error while inserting contact\n");
+				LM_ERR("inserting contact failed\n");
 				unlock_udomain(_d, &user);
 				goto error1;
 			}
@@ -455,7 +451,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 
 		if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
 			if(ul_dbf.fetch_result(_c, &res, ul_fetch_rows)<0) {
-				LOG(L_ERR, "ul:preload_udomain(): Error fetching rows (1)\n");
+				LM_ERR("fetching rows (1) failed\n");
 				ul_dbf.free_result(_c, res);
 				return -1;
 			}
@@ -467,8 +463,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	ul_dbf.free_result(_c, res);
 
 #ifdef EXTRA_DEBUG
-	LOG(L_ERR, "usrloc:preload_udomain(): load end time [%d]\n",
-			(int)time(NULL));
+	LM_ERR("load end time [%d]\n", (int)time(NULL));
 #endif
 
 	return 0;
@@ -539,18 +534,18 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 		order = q_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: failed to use_table\n");
+		LM_ERR("failed to use_table\n");
 		return 0;
 	}
 
 	if (ul_dbf.query(_c, keys, 0, vals, columns, (use_domain)?2:1, 13, order,
 				&res) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:db_load_urecord: db_query failed\n");
+		LM_ERR("db_query failed\n");
 		return 0;
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		DBG("DEBUG:usrloc:db_load_urecord: aor not found in DB\n");
+		LM_DBG("aor not found in DB\n");
 		ul_dbf.free_result(_c, res);
 		return 0;
 	}
@@ -560,8 +555,8 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	for(i = 0; i < RES_ROW_N(res); i++) {
 		ci = dbrow2info(  ROW_VALUES(RES_ROWS(res) + i), &contact);
 		if (ci==0) {
-			LOG(L_ERR, "ERROR:usrloc:db_load_urecord: skipping record for "
-				"%.*s in table %s\n", _aor->len, _aor->s, _d->name->s);
+			LM_ERR("skipping record for %.*s in table %s\n",
+					_aor->len, _aor->s, _d->name->s);
 			continue;
 		}
 		
@@ -569,7 +564,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 			get_static_urecord( _d, _aor, &r);
 
 		if ( (c=mem_insert_ucontact(r, &contact, ci)) == 0) {
-			LOG(L_ERR, "ERROR:usrloc:db_load_urecord: mem_insert failed\n");
+			LM_ERR("mem_insert failed\n");
 			free_urecord(r);
 			ul_dbf.free_result(_c, res);
 			return 0;
@@ -604,13 +599,12 @@ int db_timer_udomain(udomain_t* _d)
 	vals[1].val.time_val = 0;
 
 	if (ul_dbf.use_table(ul_dbh, _d->name->s) < 0) {
-		LOG(L_ERR, "ERROR:usrloc: db_timer_udomain: use_table failed\n");
+		LM_ERR("use_table failed\n");
 		return -1;
 	}
 
 	if (ul_dbf.delete(ul_dbh, keys, ops, vals, 2) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:db_timer_udomain: failed to delete from "
-			"table %s\n",_d->name->s);
+		LM_ERR("failed to delete from table %s\n",_d->name->s);
 		return -1;
 	}
 
@@ -626,7 +620,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d)
 	db_res_t* res = NULL;
 
 	if (ul_dbf.use_table(con, d->name->s) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:testdb_udomain: failed to change table\n");
+		LM_ERR("failed to change table\n");
 		return -1;
 	}
 
@@ -638,7 +632,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d)
 	VAL_STRING(val) = "dummy_user";
 	
 	if (ul_dbf.query( con, key, 0, val, col, 1, 1, 0, &res) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:testdb_udomain: failure in db_query\n");
+		LM_ERR("failure in db_query\n");
 		return -1;
 	}
 
@@ -655,7 +649,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 	int sl;
 	
 	if (new_urecord(_d->name, _aor, _r) < 0) {
-		LOG(L_ERR, "insert_urecord(): Error while creating urecord\n");
+		LM_ERR("creating urecord failed\n");
 		return -1;
 	}
 
@@ -692,7 +686,7 @@ int mem_timer_udomain(udomain_t* _d)
 
 		while(ptr) {
 			if (timer_urecord(ptr) < 0) {
-				LOG(L_ERR, "timer_udomain(): Error in timer_urecord\n");
+				LM_ERR("timer_urecord failed\n");
 				unlock_ulslot(_d, i);
 				return -1;
 			}
@@ -784,7 +778,7 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 {
 	if (db_mode!=DB_ONLY) {
 		if (mem_insert_urecord(_d, _aor, _r) < 0) {
-			LOG(L_ERR, "insert_urecord(): Error while inserting record\n");
+			LM_ERR("inserting record failed\n");
 			return -1;
 		}
 	} else {
@@ -841,7 +835,7 @@ int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r)
 		if (_r==0)
 			get_static_urecord( _d, _aor, &_r);
 		if (db_delete_urecord(_r)<0) {
-			LOG(L_ERR, "ERROR:usrloc:delete_urecord: DB delete failed\n");
+			LM_ERR("DB delete failed\n");
 			return -1;
 		}
 		free_urecord(_r);
@@ -859,7 +853,7 @@ int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r)
 		t = c;
 		c = c->next;
 		if (delete_ucontact(_r, t) < 0) {
-			LOG(L_ERR, "delete_urecord(): Error while deleting contact\n");
+			LM_ERR("deleting contact failed\n");
 			return -1;
 		}
 	}

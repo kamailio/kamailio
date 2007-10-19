@@ -99,7 +99,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 
 #define UNREF_UNSAFE(_T_cell) do { \
 	((_T_cell)->ref_count--);\
-	DBG("DEBUG:tm:UNREF_UNSAFE: after is %d\n",(_T_cell)->ref_count);\
+	LM_DBG("UNREF_UNSAFE: after is %d\n",(_T_cell)->ref_count);\
 	}while(0)
 #define UNREF(_T_cell) do{ \
 	LOCK_HASH( (_T_cell)->hash_index ); \
@@ -107,7 +107,7 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 	UNLOCK_HASH( (_T_cell)->hash_index ); }while(0)
 #define REF_UNSAFE(_T_cell) do {\
 	((_T_cell)->ref_count++);\
-	DBG("DEBUG:tm:REF_UNSAFE: after is %d\n",(_T_cell)->ref_count);\
+	LM_DBG("REF_UNSAFE: after is %d\n",(_T_cell)->ref_count);\
 	}while(0)
 #define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
@@ -136,7 +136,7 @@ inline static void _set_fr_retr( struct retr_buf *rb, int retr )
 	}
 
 	if (!fr_avp2timer(&timer)) {
-		DBG("DEBUG:tm:_set_fr_retr: FR_TIMER = %llu\n", timer);
+		LM_DBG("FR_TIMER = %llu\n", timer);
 		set_timer(&rb->fr_timer, FR_TIMER_LIST, &timer);
 		/* Automatically enable noisy_ctimer for the transaction */
 		rb->my_T->flags |= T_NOISY_CTIMER_FLAG;

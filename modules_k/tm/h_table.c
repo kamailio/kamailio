@@ -359,7 +359,7 @@ struct s_table* init_hash_table(void)
 	/*allocs the table*/
 	tm_table= (struct s_table*)shm_malloc( sizeof( struct s_table ) );
 	if ( !tm_table) {
-		LOG(L_ERR, "ERROR: init_hash_table: no shmem for TM table\n");
+		LM_ERR("no more share memory\n");
 		goto error0;
 	}
 
@@ -428,7 +428,7 @@ void remove_from_hash_table_unsafe( struct cell * p_cell)
 		p_entry->last_cell = p_cell->prev_cell;
 # ifdef EXTRA_DEBUG
 	if (p_entry->cur_entries==0) {
-		LOG(L_CRIT, "BUG: bad things happened: cur_entries=0\n");
+		LM_CRIT("bad things happened: cur_entries=0\n");
 		abort();
 	}
 # endif

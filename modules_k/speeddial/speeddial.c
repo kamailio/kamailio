@@ -116,7 +116,7 @@ static int child_init(int rank)
 	db_handle = db_funcs.init(db_url);
 	if (!db_handle)
 	{
-		LOG(L_ERR, "speeddial:init_child: Unable to connect database\n");
+		LM_ERR("failed to connect database\n");
 		return -1;
 	}
 	return 0;
@@ -129,17 +129,17 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	DBG("speeddial module - initializing\n");
+	LM_DBG("initializing\n");
 
     /* Find a database module */
 	if (bind_dbmod(db_url, &db_funcs))
 	{
-		LOG(L_ERR, "speeddial:mod_init: Unable to bind database module\n");
+		LM_ERR("failed to bind database module\n");
 		return -1;
 	}
 	if (!DB_CAPABILITY(db_funcs, DB_CAP_QUERY))
 	{
-		LOG(L_ERR, "speeddial:mod_init: Database modules does not "
+		LM_ERR("Database modules does not "
 			"provide all functions needed by SPEEDDIAL module\n");
 		return -1;
 	}
@@ -181,15 +181,14 @@ static int fixup_sd(void** param, int param_no)
 		s.s = (char*)(*param); s.len = strlen(s.s);
 		if(pv_parse_format(&s, &model)<0)
 		{
-			LOG(L_ERR, "ERROR:speeddial:fixup_sd: wrong format[%s]\n",
-				(char*)(*param));
+			LM_ERR("wrong format[%s]\n",(char*)(*param));
 			return E_UNSPEC;
 		}
 			
 		*param = (void*)model;
 		return 0;
 	}
-	LOG(L_ERR, "ERROR:speeddial:fixup_sd: null format\n");
+	LM_ERR("null format\n");
 	return E_UNSPEC;
 }
 

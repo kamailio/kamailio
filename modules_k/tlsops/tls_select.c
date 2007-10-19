@@ -40,15 +40,13 @@ struct tcp_connection* get_cur_connection(struct sip_msg* msg)
 	struct tcp_connection* c;
 
 	if (msg->rcv.proto != PROTO_TLS) {
-		LOG(L_ERR,"ERROR:tlsops:get_cur_connection: transport protocol is not "
-			"TLS (bug in config)\n");
+		LM_ERR("transport protocol is not TLS (bug in config)\n");
 		return 0;
 	}
 
 	c = tcpconn_get(msg->rcv.proto_reserved1, 0, 0, tcp_con_lifetime);
 	if (c && c->type != PROTO_TLS) {
-		LOG(L_ERR,"ERROR:tlsops:get_cur_connection: connection found but is "
-			"not TLS (bug in config)\n");
+		LM_ERR("connection found but is not TLS (bug in config)\n");
 		tcpconn_put(c);
 		return 0;
 	}
@@ -59,8 +57,7 @@ struct tcp_connection* get_cur_connection(struct sip_msg* msg)
 static inline SSL* get_ssl(struct tcp_connection* c)
 {
 	if (!c || !c->extra_data) {
-		LOG(L_ERR,"ERROR:get_ssl: unable to extract SSL data "
-			"from TLS connection\n");
+		LM_ERR("failed to extract SSL data from TLS connection\n");
 		return 0;
 	}
 	return c->extra_data;
@@ -75,15 +72,14 @@ static inline int get_cert(X509** cert, struct tcp_connection** c,
 	*cert = 0;
 	*c = get_cur_connection(msg);
 	if (!(*c)) {
-		LOG(L_INFO,"INFO:tlsops:get_cert: TLS connection not found\n");
+		LM_INFO("TLS connection not found\n");
 		return -1;
 	}
 	ssl = get_ssl(*c);
 	if (!ssl) goto err;
 	*cert = my ? SSL_get_certificate(ssl) : SSL_get_peer_certificate(ssl);
 	if (!*cert) {
-		LOG(L_ERR,"ERROR:tlsops:get_cert: unable to get certificate "
-			"from SSL structure\n");
+		LM_ERR("failed to get certificate from SSL structure\n");
 		goto err;
 	}
 
@@ -105,8 +101,7 @@ int tlsops_cipher(struct sip_msg *msg, pv_param_t *param,
 
 	c = get_cur_connection(msg);
 	if (!c) {
-		LOG(L_INFO,"INFO:tlsops:tlsops_cipher: TLS connection not found "
-			"in select_cipher\n");
+		LM_INFO("TLS connection not found in select_cipher\n");
 		goto err;
 	}
 	ssl = get_ssl(c);
@@ -115,7 +110,7 @@ int tlsops_cipher(struct sip_msg *msg, pv_param_t *param,
 	cipher.s = (char*)SSL_CIPHER_get_name(SSL_get_current_cipher(ssl));
 	cipher.len = cipher.s ? strlen(cipher.s) : 0;
 	if (cipher.len >= 1024) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_cipher: cipher name too long\n");
+		LM_ERR("cipher name too long\n");
 		goto err;
 	}
 	memcpy(buf, cipher.s, cipher.len);
@@ -143,8 +138,7 @@ int tlsops_bits(struct sip_msg *msg, pv_param_t *param,
 
 	c = get_cur_connection(msg);
 	if (!c) {
-		LOG(L_INFO,"INFO:tlsops:tlsops_bits: TLS connection not found in "
-			"select_bits\n");
+		LM_INFO("TLS connection not found in select_bits\n");
 		goto err;
 	}
 	ssl = get_ssl(c);
@@ -153,7 +147,7 @@ int tlsops_bits(struct sip_msg *msg, pv_param_t *param,
 	b = SSL_CIPHER_get_bits(SSL_get_current_cipher(ssl), 0);
 	bits.s = int2str(b, &bits.len);
 	if (bits.len >= 1024) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_bits: bits string too long\n");
+		LM_ERR("bits string too long\n");
 		goto err;
 	}
 	memcpy(buf, bits.s, bits.len);
@@ -181,8 +175,7 @@ int tlsops_version(struct sip_msg *msg, pv_param_t *param,
 
 	c = get_cur_connection(msg);
 	if (!c) {
-		LOG(L_INFO,"INFO:tlsops:tlsops_version: TLS connection not found "
-			"in select_version\n");
+		LM_INFO("TLS connection not found in select_version\n");
 		goto err;
 	}
 	ssl = get_ssl(c);
@@ -191,7 +184,7 @@ int tlsops_version(struct sip_msg *msg, pv_param_t *param,
 	version.s = (char*)SSL_get_version(ssl);
 	version.len = version.s ? strlen(version.s) : 0;
 	if (version.len >= 1024) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_version: version string too long\n");
+		LM_ERR("version string too long\n");
 		goto err;
 	}
 	memcpy(buf, version.s, version.len);
@@ -219,8 +212,7 @@ int tlsops_desc(struct sip_msg *msg, pv_param_t *param,
 
 	c = get_cur_connection(msg);
 	if (!c) {
-		LOG(L_INFO,"INFO:tlsops:tlsops_desc: TLS connection not found in "
-			"select_desc\n");
+		LM_INFO("TLS connection not found in select_desc\n");
 		goto err;
 	}
 	ssl = get_ssl(c);
@@ -255,8 +247,7 @@ int tlsops_cert_version(struct sip_msg *msg, pv_param_t *param,
 	} else if (param->pvn.u.isname.name.n & CERT_LOCAL) {
 		my = 1;
 	} else {
-		LOG(L_CRIT,"BUG:tlsops:tlsops_version: bug in call to "
-			"tlsops_cert_version\n");
+		LM_CRIT("bug in call to tlsops_cert_version\n");
 		return pv_get_null(msg, param, res);
 	}
 
@@ -292,8 +283,8 @@ int tlsops_check_cert(struct sip_msg *msg, pv_param_t *param,
 	case CERT_EXPIRED:    err = X509_V_ERR_CERT_HAS_EXPIRED;            break;
 	case CERT_SELFSIGNED: err = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT; break;
 	default:
-		LOG(L_CRIT,"BUG:tlsops:tlsops_check_cert: unexpected parameter "
-			"value \"%d\"\n", param->pvn.u.isname.name.n);
+		LM_CRIT("unexpected parameter value \"%d\"\n",
+				param->pvn.u.isname.name.n);
 		return pv_get_null(msg, param, res);
 	}   
 
@@ -342,27 +333,24 @@ int tlsops_validity(struct sip_msg *msg, pv_param_t *param,
 	case CERT_NOTBEFORE: date = X509_get_notBefore(cert); break;
 	case CERT_NOTAFTER:  date = X509_get_notAfter(cert);  break;
 	default:
-		LOG(L_CRIT,"BUG:tlsops:tlsops_validity: unexpected parameter value "
-			"\"%d\"\n", param->pvn.u.isname.name.n);
+		LM_CRIT("unexpected parameter value \"%d\"\n", param->pvn.u.isname.name.n);
 		goto err;
 	}
 
 	mem = BIO_new(BIO_s_mem());
 	if (!mem) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_validity: failed to create "
-			"memory BIO\n");
+		LM_ERR("failed to create memory BIO\n");
 		goto err;
 	}
 
 	if (!ASN1_TIME_print(mem, date)) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_validity: failed to print "
-			"certificate date/time\n");
+		LM_ERR("failed to print certificate date/time\n");
 		goto err;
 	}
 	
 	BIO_get_mem_ptr(mem, &p);
 	if (p->length >= 1024) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_validity: Date/time too long\n");
+		LM_ERR("Date/time too long\n");
 		goto err;
 	}
 	memcpy(buf, p->data, p->length);
@@ -397,7 +385,7 @@ int tlsops_sn(struct sip_msg *msg, pv_param_t *param,
 	} else if (param->pvn.u.isname.name.n & CERT_LOCAL) {
 		my = 1;
 	} else {
-		LOG(L_CRIT,"BUG:tlsops:tlsops_sn: could not determine certificate\n");
+		LM_CRIT("could not determine certificate\n");
 		return pv_get_null(msg, param, res);
 	}
 	
@@ -441,8 +429,7 @@ int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
 		my = 1;
 		ind_local = ind_local ^ CERT_LOCAL;
 	} else {
-		LOG(L_CRIT,"BUG:tlsops:tlsops_comp: could not determine "
-			"certificate\n");
+		LM_CRIT("could not determine certificate\n");
 		return pv_get_null(msg, param, res);
 	}
 
@@ -453,8 +440,7 @@ int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
 		issuer = 1;
 		ind_local = ind_local ^ CERT_ISSUER;
 	} else {
-		LOG(L_CRIT,"BUG:tlsops:tlsops_comp: could not determine "
-			"subject or issuer\n");
+		LM_CRIT("could not determine subject or issuer\n");
 		return pv_get_null(msg, param, res);
 	}
 
@@ -472,8 +458,8 @@ int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
 
 	name = issuer ? X509_get_issuer_name(cert) : X509_get_subject_name(cert);
 	if (!name) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_comp: cannot extract subject or "
-			"issuer name from peer certificate\n");
+		LM_ERR("cannot extract subject or issuer name from peer"
+				" certificate\n");
 		goto err;
 	}
 
@@ -503,8 +489,7 @@ int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
 		asn1 = X509_NAME_ENTRY_get_data(e);
 		text.len = ASN1_STRING_to_UTF8((unsigned char**)(void*)&text.s, asn1);
 		if (text.len < 0 || text.len >= 1024) {
-			LOG(L_ERR,"ERROR:tlsops:tlsops_comp: failed to convert "
-				"ASN1 string\n");
+			LM_ERR("failed to convert ASN1 string\n");
 			goto err;
 		}
 		memcpy(buf, text.s, text.len);
@@ -546,7 +531,7 @@ int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
 		my = 1;
 		ind_local = ind_local ^ CERT_LOCAL;
 	} else {
-		LOG(L_CRIT,"BUG:tlsops:tlsops_alt: could not determine certificate\n");
+		LM_CRIT("could not determine certificate\n");
 		return pv_get_null(msg, param, res);
 	}
 
@@ -556,7 +541,7 @@ int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
 		case COMP_URI:  type = GEN_URI;   break;
 		case COMP_IP:   type = GEN_IPADD; break;
 		default:
-			LOG(L_CRIT,"BUG:tlsops:tlsops_alt: ind_local=%d\n", ind_local);
+			LM_CRIT("ind_local=%d\n", ind_local);
 			return pv_get_null(msg, param, res);
 	}
 
@@ -564,8 +549,7 @@ int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
 
 	names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
 	if (!names) {
-		LOG(L_ERR,"ERROR:tlsops:tlsops_alt: cannot get certificate "
-			"alternative subject\n");
+		LM_ERR("cannot get certificate alternative subject\n");
 		goto err;
 
 	}
@@ -580,8 +564,7 @@ int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
 			text.s = (char*)nm->d.ia5->data;
 			text.len = nm->d.ia5->length;
 			if (text.len >= 1024) {
-				LOG(L_ERR,"ERROR:tlsops:tlsops_alt: alternative subject "
-					"text too long\n");
+				LM_ERR("alternative subject text too long\n");
 				goto err;
 			}
 			memcpy(buf, text.s, text.len);

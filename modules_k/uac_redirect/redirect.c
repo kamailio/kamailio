@@ -120,14 +120,13 @@ int get_nr_max(char *s, unsigned char *max)
 		nr = str2s(s, strlen(s), &err);
 		if (err==0){
 			if (nr>255){
-				LOG(L_ERR, "ERROR:uac_redirect:get_nr_max: "
-					"number to big <%d> (max=255)\n",nr);
+				LM_ERR("number too big <%d> (max=255)\n",nr);
 				return -1;
 			}
 			*max = (unsigned char)nr;
 			return 0;
 		}else{
-			LOG(L_ERR, "ERROR:uac_redirect:nr_fixup: bad  number <%s>\n",s);
+			LM_ERR("bad  number <%s>\n",s);
 			return -1;
 		}
 	}
@@ -166,16 +165,14 @@ static int get_redirect_fixup(void** param, int param_no)
 			return 0;
 		/* must import the acc stuff */
 		if (acc_fct_s==0 || acc_fct_s[0]==0) {
-			LOG(L_ERR, "ERROR:uac_redirect:get_redirect_fixup: acc support "
-				"enabled, but no acc function defined\n");
+			LM_ERR("acc support enabled, but no acc function defined\n");
 			return E_UNSPEC;
 		}
 		fct = find_export(acc_fct_s, 2, REQUEST_ROUTE);
 		if ( fct==0 )
 			fct = find_export(acc_fct_s, 1, REQUEST_ROUTE);
 		if ( fct==0 ) {
-			LOG(L_ERR, "ERROR:uac_redirect:get_redirect_fixup: cannot "
-				"import %s function; is acc loaded and proper "
+			LM_ERR("cannot import %s function; is acc loaded and proper "
 				"compiled?\n", acc_fct_s);
 			return E_UNSPEC;
 		}
@@ -183,8 +180,7 @@ static int get_redirect_fixup(void** param, int param_no)
 		/* set the reason str */
 		reason = (str*)pkg_malloc(sizeof(str));
 		if (reason==0) {
-			LOG(L_ERR,"ERROR:uac_redirect:get_redirect_fixup: no more "
-				"pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			return E_UNSPEC;
 		}
 		if (s!=0 && *s!=0) {
@@ -211,8 +207,7 @@ static int setf_fixup(void** param, int param_no)
 	if (param_no==1) {
 		/* compile the filter */
 		if (regexp_compile( s, &filter)<0) {
-			LOG(L_ERR,"ERROR:uac_redirect:setf_fixup: cannot init "
-				"filter <%s>\n", s);
+			LM_ERR("cannot init filter <%s>\n", s);
 			return E_BAD_RE;
 		}
 		pkg_free(*param);
@@ -227,8 +222,7 @@ static int setf_fixup(void** param, int param_no)
 		} else if (strcasecmp(s,"reset_added")==0) {
 			nr = RESET_ADDED;
 		} else {
-			LOG(L_ERR, "ERROR:uac_redirect:setf_fixup: unknown "
-				"reset type <%s>\n",s);
+			LM_ERR("unknown reset type <%s>\n",s);
 			return E_UNSPEC;
 		}
 		pkg_free(*param);
@@ -251,8 +245,7 @@ static int regexp_compile(char *re_s, regex_t **re)
 		if (regcomp(*re, re_s, REG_EXTENDED|REG_ICASE|REG_NEWLINE) ){
 			pkg_free(*re);
 			*re = 0;
-			LOG(L_ERR, "ERROR:uac_redirect:regexp_compile: "
-				"bad regexp <%s>\n", re_s);
+			LM_ERR("regexp_compile:bad regexp <%s>\n", re_s);
 			return E_BAD_RE;
 		}
 	}
@@ -267,7 +260,7 @@ static int redirect_init(void)
 
 	/* load the TM API */
 	if (load_tm_api(&rd_tmb)!=0) {
-		LOG(L_ERR, "ERROR:uac_redirect:init: can't load TM API\n");
+		LM_ERR("failed to load TM API\n");
 		goto error;
 	}
 
@@ -281,21 +274,20 @@ static int redirect_init(void)
 		} else if ( !strcasecmp(def_filter_s,DENY_RULE_STR) ) {
 			set_default_rule( DENY_RULE );
 		} else {
-			LOG(L_ERR,"ERROR:uac_redirect:init: unknown default "
-				"filter <%s>\n",def_filter_s);
+			LM_ERR("unknown default filter <%s>\n",def_filter_s);
 		}
 	}
 
 	/* if accept filter specify, compile it */
 	if (regexp_compile(accept_filter_s, &filter)<0) {
-		LOG(L_ERR,"ERROR:uac_redirect:init: cannot init accept filter\n");
+		LM_ERR("failed to init accept filter\n");
 		goto error;
 	}
 	add_default_filter( ACCEPT_FILTER, filter);
 
 	/* if deny filter specify, compile it */
 	if (regexp_compile(deny_filter_s, &filter)<0) {
-		LOG(L_ERR,"ERROR:uac_redirect:init: cannot init deny filter\n");
+		LM_ERR("failed to init deny filter\n");
 		goto error;
 	}
 	add_default_filter( DENY_FILTER, filter);
@@ -316,8 +308,7 @@ static inline void msg_tracer(struct sip_msg* msg, int reset)
 	} else {
 		if (set) {
 			if (id!=msg->id) {
-				LOG(L_WARN,"WARNING:uac_redirect:msg_tracer: filters set "
-					"but not used -> reseting to default\n");
+				LM_WARN("filters set but not used -> reseting to default\n");
 				reset_filters();
 				id = msg->id;
 			}

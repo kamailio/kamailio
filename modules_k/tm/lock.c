@@ -85,11 +85,11 @@ int lock_initialize(void)
 #endif
 
 	/* first try allocating semaphore sets with fixed number of semaphores */
-	DBG("DEBUG: lock_initialize: lock initialization started\n");
+	LM_DBG("lock initialization started\n");
 
 	timer_group_lock=shm_malloc(TG_NR*sizeof(ser_lock_t));
 	if (timer_group_lock==0){
-		LOG(L_CRIT, "ERROR: lock_initialize: out of shm mem\n");
+		LM_CRIT("no more share mem\n");
 		goto error;
 	}
 #ifdef GEN_LOCK_T_PREFERED
@@ -99,8 +99,7 @@ int lock_initialize(void)
 	if (((timer_semaphore= lock_set_alloc( TG_NR ) ) == 0)||
 			(lock_set_init(timer_semaphore)==0)){
 		if (timer_semaphore) lock_set_destroy(timer_semaphore);
-		LOG(L_CRIT, "ERROR: lock_initialize:  "
-			"transaction timer semaphore initialization failure: %s\n",
+		LM_CRIT("transaction timer semaphore initialization failure: %s\n",
 				strerror(errno));
 		goto error;
 	}
@@ -126,30 +125,27 @@ again:
 		}
 		
 		if (i==0){
-			LOG(L_CRIT, "lock_initialize: could not allocate semaphore"
-					" sets\n");
+			LM_CRIT("failed allocate semaphore sets\n");
 			goto error;
 		}
 		
 		if (((entry_semaphore=lock_set_alloc(i))==0)||
 			(lock_set_init(entry_semaphore)==0)) {
-			DBG("DEBUG: lock_initialize: entry semaphore "
-					"initialization failure:  %s\n", strerror( errno ) );
+			LM_DBG("entry semaphore initialization failure:  %s\n",
+					strerror( errno ) );
 			if (entry_semaphore){
 				lock_set_dealloc(entry_semaphore);
 				entry_semaphore=0;
 			}
 			/* first time: step back and try again */
 			if (probe_run==0) {
-					DBG("DEBUG: lock_initialize: first time "
-								"semaphore allocation failure\n");
+					LM_DBG("first time semaphore allocation failure\n");
 					i--;
 					probe_run=1;
 					continue;
 				/* failure after we stepped back; give up */
 			} else {
-					DBG("DEBUG: lock_initialize:   second time semaphore"
-							" allocation failure\n");
+					LM_DBG("second time semaphore allocation failure\n");
 					goto error;
 			}
 		}
@@ -172,15 +168,15 @@ again:
 				lock_set_dealloc(reply_semaphore);
 				reply_semaphore=0;
 			}
-			DBG("DEBUG:lock_initialize: reply semaphore initialization"
-				" failure: %s\n", strerror(errno));
+			LM_DBG("reply semaphore initialization failure: %s\n",
+					strerror(errno));
 			probe_run=1;
 			i--;
 			goto again;
 	}
 
 	/* return success */
-	LOG(L_INFO, "INFO: semaphore arrays of size %d allocated\n", sem_nr );
+	LM_INFO("semaphore arrays of size %d allocated\n", sem_nr );
 #endif /* GEN_LOCK_T_PREFERED*/
 	return 0;
 error:

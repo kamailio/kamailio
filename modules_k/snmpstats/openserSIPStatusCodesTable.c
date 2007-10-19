@@ -582,8 +582,7 @@ void openserSIPStatusCodesTable_set_action( netsnmp_request_group *rg )
 					/* We should never be here, because the RESERVE
 					 * functions should have taken care of all other
 					 * values. */
-					LOG(L_ERR, "BUG: SNMPStats: Invalid RowStatus in"
-							" openserSIPStatusCodesTable\n");
+				LM_ERR("Invalid RowStatus in openserSIPStatusCodesTable\n");
 				}
 
 				break;

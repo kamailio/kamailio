@@ -183,43 +183,41 @@ static void delete_cell( struct cell *p_cell, int unlock )
 
 #ifdef EXTRA_DEBUG
 	if (is_in_timer_list2(& p_cell->wait_tl )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-			" still on WAIT, timeout=%lld\n",p_cell, p_cell->wait_tl.time_out);
+		LM_ERR("transaction %p scheduled for deletion and still on WAIT,"
+				" timeout=%lld\n",p_cell, p_cell->wait_tl.time_out);
 		abort();
 	}
 	if (is_in_timer_list2(& p_cell->uas.response.retr_timer )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-			" still on RETR (rep), timeout=%lld\n",
-			p_cell, p_cell->uas.response.retr_timer.time_out);
+		LM_ERR("transaction %p scheduled for deletion and still on RETR (rep),"
+			"timeout=%lld\n",p_cell, p_cell->uas.response.retr_timer.time_out);
 		abort();
 	}
 	if (is_in_timer_list2(& p_cell->uas.response.fr_timer )) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-			" still on FR (rep), timeout=%lld\n", p_cell,
-			p_cell->uas.response.fr_timer.time_out);
+		LM_ERR("transaction %p scheduled for deletion and still on FR (rep),"
+			" timeout=%lld\n", p_cell,p_cell->uas.response.fr_timer.time_out);
 		abort();
 	}
 	for (i=0; i<p_cell->nr_of_outgoings; i++) {
 		if (is_in_timer_list2(& p_cell->uac[i].request.retr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
-				" still on RETR (req %d), timeout %lld\n", p_cell, i,
+			LM_ERR("transaction %p scheduled for deletion and still on RETR "
+				"(req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.retr_timer.time_out);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->uac[i].request.fr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			LM_ERR("transaction %p scheduled for deletion and"
 				" still on FR (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.fr_timer.time_out);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->uac[i].local_cancel.retr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			LM_ERR("transaction %p scheduled for deletion and"
 				" still on RETR/cancel (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.retr_timer.time_out);
 			abort();
 		}
 		if (is_in_timer_list2(& p_cell->uac[i].local_cancel.fr_timer)) {
-			LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+			LM_ERR("transaction %p scheduled for deletion and"
 				" still on FR/cancel (req %d), timeout %lld\n", p_cell, i,
 				p_cell->uac[i].request.fr_timer.time_out);
 			abort();
@@ -229,7 +227,7 @@ static void delete_cell( struct cell *p_cell, int unlock )
 #endif
 	/* still in use ... don't delete */
 	if ( IS_REFFED_UNSAFE(p_cell) ) {
-		DBG("DEBUG: delete_cell %p: can't delete -- still reffed (%d)\n",
+		LM_DBG("delete_cell %p: can't delete -- still reffed (%d)\n",
 			p_cell, p_cell->ref_count);
 		if (unlock) UNLOCK_HASH(p_cell->hash_index);
 		/* set to NULL so that set_timer will work */
@@ -238,7 +236,7 @@ static void delete_cell( struct cell *p_cell, int unlock )
 		set_timer( &(p_cell->dele_tl), DELETE_LIST, 0 );
 	} else {
 		if (unlock) UNLOCK_HASH(p_cell->hash_index);
-		DBG("DEBUG: delete transaction %p\n", p_cell );
+		LM_DBG("delete transaction %p\n", p_cell );
 		free_cell( p_cell );
 	}
 }
@@ -281,7 +279,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 	r_buf = get_retr_timer_payload(retr_tl);
 #ifdef EXTRA_DEBUG
 	if (r_buf->my_T->damocles) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+		LM_ERR("transaction %p scheduled for deletion and"
 			" called from RETR timer\n",r_buf->my_T);
 		abort();
 	}	
@@ -291,18 +289,16 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 	/* retransmission */
 	if ( r_buf->activ_type==TYPE_LOCAL_CANCEL 
 		|| r_buf->activ_type==TYPE_REQUEST ) {
-			DBG("DEBUG: retransmission_handler : "
-				"request resending (t=%p, %.9s ... )\n", 
-				r_buf->my_T, r_buf->buffer.s);
+			LM_DBG("retransmission_handler : request resending"
+				" (t=%p, %.9s ... )\n", r_buf->my_T, r_buf->buffer.s);
 			if (SEND_BUFFER( r_buf )==-1) {
 				reset_timer( &r_buf->fr_timer );
 				fake_reply(r_buf->my_T, r_buf->branch, 503 );
 				return;
 			}
 	} else {
-			DBG("DEBUG: retransmission_handler : "
-				"reply resending (t=%p, %.9s ... )\n", 
-				r_buf->my_T, r_buf->buffer.s);
+			LM_DBG("retransmission_handler : reply resending "
+				"(t=%p, %.9s ... )\n", r_buf->my_T, r_buf->buffer.s);
 			t_retransmit_reply(r_buf->my_T);
 	}
 
@@ -312,7 +308,7 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 	retr_tl->timer_list= NULL; /* set to NULL so that set_timer will work */
 	set_timer( retr_tl, id < RT_T2 ? id + 1 : RT_T2, 0 );
 
-	DBG("DEBUG: retransmission_handler : done\n");
+	LM_DBG("retransmission_handler : done\n");
 }
 
 
@@ -326,7 +322,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 
 	if (fr_tl==0){
 		/* or BUG?, ignoring it for now */
-		LOG(L_CRIT, "ERROR: final_response_handler(0) called\n");
+		LM_CRIT("final_response_handler(0) called\n");
 		return;
 	}
 	r_buf = get_fr_timer_payload(fr_tl);
@@ -335,7 +331,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 #	ifdef EXTRA_DEBUG
 	if (t->damocles) 
 	{
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+		LM_ERR("transaction %p scheduled for deletion and"
 			" called from FR timer\n",r_buf->my_T);
 		abort();
 	}
@@ -348,7 +344,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 	/* FR for local cancels.... */
 	if (r_buf->activ_type==TYPE_LOCAL_CANCEL)
 	{
-		DBG("DEBUG: final_response_handler: stop retr for Local Cancel\n");
+		LM_DBG("stop retr for Local Cancel\n");
 		return;
 	}
 
@@ -357,7 +353,7 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 #		ifdef EXTRA_DEBUG
 		if (t->uas.request->REQ_METHOD!=METHOD_INVITE
 			|| t->uas.status < 200 ) {
-			LOG(L_ERR, "ERROR: final_response_handler: unknown type reply buffer\n");
+			LM_ERR("unknown type reply buffer\n");
 			abort();
 		}
 #		endif
@@ -391,15 +387,15 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 		&& has_noisy_ctimer(t)==0;
 	if (silent) {
 		UNLOCK_REPLIES(t);
-		DBG("DEBUG: final_response_handler: transaction silently dropped (%p)\n",t);
+		LM_DBG("transaction silently dropped (%p)\n",t);
 		put_on_wait( t );
 		return;
 	}
 
-	DBG("DEBUG: final_response_handler:stop retr. and send CANCEL (%p)\n", t);
+	LM_DBG("stop retr. and send CANCEL (%p)\n", t);
 	fake_reply(t, r_buf->branch, 408 );
 
-	DBG("DEBUG: final_response_handler : done\n");
+	LM_DBG("done\n");
 }
 
 
@@ -421,11 +417,11 @@ inline static void wait_handler( struct timer_link *wait_tl )
 	p_cell = get_wait_timer_payload( wait_tl );
 #ifdef EXTRA_DEBUG
 	if (p_cell->damocles) {
-		LOG( L_ERR, "ERROR: transaction %p scheduled for deletion and"
+		LM_ERR("transaction %p scheduled for deletion and"
 			" called from WAIT timer\n",p_cell);
 		abort();
 	}	
-	DBG("DEBUG: WAIT timer hit\n");
+	LM_DBG("WAIT timer hit\n");
 #endif
 
 	/* stop cancel timers if any running */
@@ -433,7 +429,7 @@ inline static void wait_handler( struct timer_link *wait_tl )
 
 	/* the transaction is already removed from WT_LIST by the timer */
 	/* remove the cell from the hash table */
-	DBG("DEBUG: wait_handler : removing %p from table \n", p_cell );
+	LM_DBG("removing %p from table \n", p_cell );
 	LOCK_HASH( p_cell->hash_index );
 	remove_from_hash_table_unsafe(  p_cell );
 	/* jku: no more here -- we do it when we put a transaction on wait */
@@ -442,7 +438,7 @@ inline static void wait_handler( struct timer_link *wait_tl )
 #endif
 	/* delete (returns with UNLOCK-ed_HASH) */
 	delete_cell( p_cell, 1 /* unlock on return */ );
-	DBG("DEBUG: wait_handler : done\n");
+	LM_DBG("done\n");
 }
 
 
@@ -452,10 +448,10 @@ inline static void delete_handler( struct timer_link *dele_tl )
 	struct cell *p_cell;
 
 	p_cell = get_dele_timer_payload( dele_tl );
-	DBG("DEBUG: delete_handler : removing %p \n", p_cell );
+	LM_DBG("removing %p \n", p_cell );
 #ifdef EXTRA_DEBUG
 	if (p_cell->damocles==0) {
-		LOG( L_ERR, "ERROR: transaction %p not scheduled for deletion"
+		LM_ERR("transaction %p not scheduled for deletion"
 			" and called from DELETE timer\n",p_cell);
 		abort();
 	}	
@@ -471,7 +467,7 @@ inline static void delete_handler( struct timer_link *dele_tl )
 	   zero safely without locking
 	*/
 	delete_cell( p_cell, 0 /* don't unlock on return */ );
-	DBG("DEBUG: delete_handler : done\n");
+	LM_DBG("done\n");
 }
 
 
@@ -495,7 +491,7 @@ void unlink_timer_lists(void)
 	/* unlink the timer lists */
 	for( i=0; i<NR_OF_TIMER_LISTS ; i++ )
 		reset_timer_list( i );
-	DBG("DEBUG: unlink_timer_lists : emptying DELETE list\n");
+	LM_DBG("emptying DELETE list\n");
 	/* deletes all cells from DELETE_LIST list 
 	   (they are no more accessible from entrys) */
 	while (tl!=end) {
@@ -514,38 +510,38 @@ struct timer_table *tm_init_timers(void)
 
 	timertable=(struct timer_table *) shm_malloc(sizeof(struct timer_table));
 	if (!timertable) {
-		LOG(L_ERR, "ERROR: tm_init_timers: no shmem for timer_Table\n");
+		LM_ERR("no more share memory\n");
 		goto error0;
 	}
 	memset(timertable, 0, sizeof (struct timer_table));
 
 	/* check the timeout values */
 	if ( timer_id2timeout[FR_TIMER_LIST]<MIN_TIMER_VALUE ) {
-		LOG(L_ERR, "ERROR:tm_init_timers: FR_TIMER must be at least %d\n",
+		LM_ERR("FR_TIMER must be at least %d\n",
 			MIN_TIMER_VALUE);
 		goto error0;
 	}
 
 	if ( timer_id2timeout[FR_INV_TIMER_LIST]<MIN_TIMER_VALUE ) {
-		LOG(L_ERR, "ERROR:tm_init_timers: FR_INV_TIMER must be at least %d\n",
+		LM_ERR("FR_INV_TIMER must be at least %d\n",
 			MIN_TIMER_VALUE);
 		goto error0;
 	}
 
 	if ( timer_id2timeout[WT_TIMER_LIST]<MIN_TIMER_VALUE ) {
-		LOG(L_ERR, "ERROR:tm_init_timers: WT_TIMER must be at least %d\n",
+		LM_ERR("WT_TIMER must be at least %d\n",
 			MIN_TIMER_VALUE);
 		goto error0;
 	}
 
 	if ( timer_id2timeout[DELETE_LIST]<MIN_TIMER_VALUE ) {
-		LOG(L_ERR, "ERROR:tm_init_timers: DELETE_TIMER must be at least %d\n",
+		LM_ERR("DELETE_TIMER must be at least %d\n",
 			MIN_TIMER_VALUE);
 		goto error0;
 	}
 
 	if ( timer_id2timeout[RT_T2]<=timer_id2timeout[RT_T1_TO_1] ) {
-		LOG(L_ERR, "ERROR:tm_init_timers: T2 must be greater than T1\n");
+		LM_ERR("T2 must be greater than T1\n");
 		goto error0;
 	}
 
@@ -628,7 +624,7 @@ void print_timer_list( enum lists list_id)
 	tl = timer_list->first_tl.next_tl;
 	while (tl!=& timer_list->last_tl)
 	{
-		DBG("DEBUG: print_timer_list[%d]: %p, next=%p \n",
+		LM_DBG("[%d]: %p, next=%p \n",
 			list_id, tl, tl->next_tl);
 		tl = tl->next_tl;
 	}
@@ -644,16 +640,14 @@ static void check_timer_list(enum lists list_id, char *txt )
 	struct timer_link *tl1 ;
 
 	if (list_id<0 || list_id>=NR_OF_TIMER_LISTS) {
-			LOG(L_CRIT,"------- list [%d] bug [%s]\n",
-				list_id, txt);
+			LM_CRIT("------- list [%d] bug [%s]\n",list_id, txt);
 			abort(0);
 	}
 
 	tl = timer_list->last_tl.prev_tl;
 	while (tl!=&timer_list->first_tl) {
 		if (tl->prev_tl==0) {
-			LOG(L_CRIT,"------- list [%d] prev_tl==0 [%s]\n",
-				list_id, txt);
+			LM_CRIT("------- list [%d] prev_tl==0 [%s]\n",list_id, txt);
 			abort(0);
 		}
 		tl = tl->prev_tl;
@@ -662,8 +656,7 @@ static void check_timer_list(enum lists list_id, char *txt )
 	tl = timer_list->first_tl.next_tl;
 	while (tl!=&timer_list->last_tl) {
 		if (tl->next_tl==0) {
-			LOG(L_CRIT,"------- list [%d] next_tl==0 [%s]\n",
-				list_id, txt);
+			LM_CRIT("------- list [%d] next_tl==0 [%s]\n",list_id, txt);
 			abort(0);
 		}
 		tl = tl->next_tl;
@@ -672,12 +665,11 @@ static void check_timer_list(enum lists list_id, char *txt )
 	tl = timer_list->first_tl.next_tl;
 	while (tl!=&timer_list->last_tl) {
 		if (tl->ld_tl==0) {
-			LOG(L_CRIT,"------- list [%d] currupted - ld=0 [%s]\n",
-				list_id, txt);
+			LM_CRIT("------- list [%d] currupted - ld=0 [%s]\n",list_id, txt);
 			abort(0);
 		}
 		if (tl->ld_tl->ld_tl!=tl) {
-			LOG(L_CRIT,"------- list [%d] currupted - ld cycle broken [%s]\n",
+			LM_CRIT("------- list [%d] currupted - ld cycle broken [%s]\n",
 				list_id, txt);
 			abort(0);
 		}
@@ -686,7 +678,7 @@ static void check_timer_list(enum lists list_id, char *txt )
 			tl1 = tl->next_tl;
 			while(tl1!=tl->ld_tl) {
 				if (tl1->ld_tl) {
-					LOG(L_CRIT,"------- list [%d] currupted - ld!=0 inside "
+					LM_CRIT("------- list [%d] currupted - ld!=0 inside "
 						"cycle [%s]\n", list_id, txt);
 					abort(0);
 				}
@@ -705,14 +697,13 @@ static void remove_timer_unsafe(  struct timer_link* tl )
 #ifdef EXTRA_DEBUG
 	if (tl && is_in_timer_list2(tl) &&
 		tl->timer_list->last_tl.prev_tl==0) {
-		LOG( L_CRIT,
-		"CRITICAL : Oh no, zero link in trailing timer element\n");
+		LM_CRIT("Oh no, zero link in trailing timer element\n");
 		abort();
 	};
 #endif
 	if (is_in_timer_list2( tl )) {
 #ifdef EXTRA_DEBUG
-		DBG("DEBUG: unlinking timer: tl=%p, timeout=%lld, group=%d\n", 
+		LM_DBG("unlinking timer: tl=%p, timeout=%lld, group=%d\n", 
 			tl, tl->time_out, tl->tg);
 #endif
 #ifdef TM_TIMER_DEBUG
@@ -776,7 +767,7 @@ static void insert_timer_unsafe( struct timer *timer_list,
 	check_timer_list( timer_list->id, "after insert" );
 #endif
 
-	DBG("DEBUG: add_to_tail_of_timer[%d]: %p (%lld)\n",timer_list->id,
+	LM_DBG("[%d]: %p (%lld)\n",timer_list->id,
 		tl,tl->time_out);
 }
 
@@ -827,8 +818,7 @@ static struct timer_link  *check_and_split_time_list( struct timer *timer_list,
 
 #ifdef EXTRA_DEBUG
 	if (timer_list->last_tl.prev_tl==0) {
-		LOG( L_CRIT,
-		"CRITICAL : Oh no, zero link in trailing timer element\n");
+		LM_CRIT("Oh no, zero link in trailing timer element\n");
 		abort();
 	};
 #endif
@@ -856,7 +846,7 @@ void reset_timer( struct timer_link* tl )
 	*/
 	tl->deleted = 1;
 #ifdef EXTRA_DEBUG
-	DBG("DEBUG: reset_timer (group %d, tl=%p)\n", tl->tg, tl );
+	LM_DBG("(group %d, tl=%p)\n", tl->tg, tl );
 #endif
 }
 
@@ -878,7 +868,7 @@ void set_timer( struct timer_link *new_tl, enum lists list_id,
 	struct timer* list;
 
 	if (list_id>=NR_OF_TIMER_LISTS) {
-		LOG(L_CRIT, "BUG:set_timer: unknown list: %d\n", list_id);
+		LM_CRIT("unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();
 #endif
@@ -890,7 +880,7 @@ void set_timer( struct timer_link *new_tl, enum lists list_id,
 	} else {
 		timeout = *ext_timeout;
 	}
-	DBG("DEBUG:tm:set_timer: relative timeout is %lld\n",timeout);
+	LM_DBG("relative timeout is %lld\n",timeout);
 
 	list= &(timertable->timers[ list_id ]);
 
@@ -900,7 +890,7 @@ void set_timer( struct timer_link *new_tl, enum lists list_id,
 	 * (sideffect: reset_timer ; set_timer is not safe, a reseted timer
 	 *  might be lost, depending on this race condition ) */
 	if (new_tl->timer_list==DETACHED_LIST){
-		LOG(L_CRIT, "WARNING: set_timer for %d list called on a \"detached\" "
+		LM_CRIT("set_timer for %d list called on a \"detached\" "
 			"timer -- ignoring: %p\n", list_id, new_tl);
 		goto end;
 	}
@@ -925,7 +915,7 @@ void set_1timer( struct timer_link *new_tl, enum lists list_id,
 
 
 	if (list_id>=NR_OF_TIMER_LISTS) {
-		LOG(L_CRIT, "ERROR: set_timer: unknown list: %d\n", list_id);
+		LM_CRIT("unknown list: %d\n", list_id);
 #ifdef EXTRA_DEBUG
 		abort();
 #endif
@@ -1019,7 +1009,7 @@ static void unlink_timers( struct cell *t )
 		/* reset the timer list linkage */\
 		tmp_tl = (_tl)->next_tl;\
 		(_tl)->next_tl = (_tl)->prev_tl = 0;\
-		DBG("DEBUG: timer routine:%d,tl=%p next=%p, timeout=%lld\n",\
+		LM_DBG("timer routine:%d,tl=%p next=%p, timeout=%lld\n",\
 			id,(_tl),tmp_tl,(_tl)->time_out);\
 		if ( !(_tl)->deleted ) \
 			(_handler)( _tl );\

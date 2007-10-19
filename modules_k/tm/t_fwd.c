@@ -96,7 +96,7 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 	if (!t_calc_branch(t, branch, request->add_to_branch_s,
 			&request->add_to_branch_len ))
 	{
-		LOG(L_ERR, "ERROR:pre_print_uac_request: branch computation failed\n");
+		LM_ERR("branch computation failed\n");
 		goto error;
 	}
 
@@ -109,7 +109,7 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		t->uac[branch].path_vec.s =
 			shm_resize(t->uac[branch].path_vec.s, request->path_vec.len+1);
 		if (t->uac[branch].path_vec.s==NULL) {
-			LOG(L_ERR,"ERROR:pre_print_uac_request: shm_resize failed\n");
+			LM_ERR("shm_resize failed\n");
 			goto error;
 		}
 		t->uac[branch].path_vec.len = request->path_vec.len;
@@ -125,7 +125,7 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		/* need to pkg_malloc the dst_uri */
 		if ( request->dst_uri.len ) {
 			if ( (p=pkg_malloc(request->dst_uri.len))==0 ) {
-				LOG(L_ERR,"ERROR:tm:pre_print_uac_request: no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				ser_error=E_OUT_OF_MEM;
 				goto error;
 			}
@@ -134,7 +134,7 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 		}
 		/* need to pkg_malloc the new_uri */
 		if ( (p=pkg_malloc(request->new_uri.len))==0 ) {
-			LOG(L_ERR,"ERROR:tm:pre_print_uac_request: no more pkg mem\n");
+			LM_ERR("no more pkg mem\n");
 			ser_error=E_OUT_OF_MEM;
 			goto error;
 		}
@@ -148,8 +148,8 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 
 		_tm_branch_index = branch+1;
 		if (run_top_route(branch_rlist[t->on_branch], request)&ACT_FL_DROP) {
-			DBG("DEBUG:tm:pre_print_uac_request: dropping branch <%.*s>\n",
-				request->new_uri.len, request->new_uri.s);
+			LM_DBG("dropping branch <%.*s>\n", request->new_uri.len,
+					request->new_uri.s);
 			_tm_branch_index = 0;
 			goto error;
 		}
@@ -180,7 +180,7 @@ static inline char *print_uac_request(struct sip_msg *i_req, unsigned int *len,
 	/* build the shm buffer now */
 	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
 	if (!buf) {
-		LOG(L_ERR, "ERROR:tm:print_uac_request: no pkg_mem\n"); 
+		LM_ERR("no more pkg_mem\n"); 
 		ser_error=E_OUT_OF_MEM;
 		goto error01;
 	}
@@ -188,7 +188,7 @@ static inline char *print_uac_request(struct sip_msg *i_req, unsigned int *len,
 	shbuf=(char *)shm_malloc(*len);
 	if (!shbuf) {
 		ser_error=E_OUT_OF_MEM;
-		LOG(L_ERR, "ERROR:tm:print_uac_request: no shmem\n");
+		LM_ERR("no more share memory\n");
 		goto error02;
 	}
 	memcpy( shbuf, buf, *len );
@@ -232,7 +232,7 @@ static inline struct proxy_l* shm_clone_proxy(struct proxy_l *sp,
 
 	dp = (struct proxy_l*)shm_malloc(sizeof(struct proxy_l));
 	if (dp==NULL) {
-		LOG(L_ERR,"ERROR:tm:shm_clone_proxy:no more shm memory\n");
+		LM_ERR("no more shm memory\n");
 		return 0;
 	}
 	memset( dp , 0 , sizeof(struct proxy_l));
@@ -282,14 +282,13 @@ int add_blind_uac(void)  /*struct cell *t*/
 
 	t=get_t();
 	if (t==T_UNDEFINED || !t ) {
-		LOG(L_ERR, "ERROR: add_blind_uac: no transaction context\n");
+		LM_ERR("no transaction context\n");
 		return -1;
 	}
 
 	branch=t->nr_of_outgoings;	
 	if (branch==MAX_BRANCHES) {
-		LOG(L_ERR, "ERROR: add_blind_uac: "
-			"maximum number of branches exceeded\n");
+		LM_ERR("maximum number of branches exceeded\n");
 		return -1;
 	}
 	/* make sure it will be replied */
@@ -318,7 +317,7 @@ static inline int update_uac_dst( struct sip_msg *request,
 	send_sock = get_send_socket( request, &uac->request.dst.to ,
 			uac->request.dst.proto );
 	if (send_sock==0) {
-		LOG(L_ERR, "ERROR:tm:update_uac_dst: can't fwd to af %d, proto %d "
+		LM_ERR("failed to fwd to af %d, proto %d "
 			" (no corresponding listening socket)\n",
 			uac->request.dst.to.s.sa_family, uac->request.dst.proto );
 		ser_error=E_NO_SOCKET;
@@ -361,14 +360,14 @@ static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 
 	branch=t->nr_of_outgoings;
 	if (branch==MAX_BRANCHES) {
-		LOG(L_ERR, "ERROR:tm:add_uac: maximum number of branches exceeded\n");
+		LM_ERR("maximum number of branches exceeded\n");
 		ret=E_CFG;
 		goto error;
 	}
 
 	/* check existing buffer -- rewriting should never occur */
 	if (t->uac[branch].request.buffer.s) {
-		LOG(L_CRIT, "ERROR:tm:add_uac: buffer rewrite attempt\n");
+		LM_CRIT("buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
 	}
@@ -447,7 +446,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	str bk_path_vec;
 
 	if (t_cancel->uac[branch].request.buffer.s) {
-		LOG(L_CRIT, "ERROR: e2e_cancel_branch: buffer rewrite attempt\n");
+		LM_CRIT("buffer rewrite attempt\n");
 		ret=ser_error=E_BUG;
 		goto error;
 	}
@@ -478,7 +477,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		t_invite->uac[branch].request.dst.send_sock,
 		t_invite->uac[branch].request.dst.proto);
 	if (!shbuf) {
-		LOG(L_ERR, "ERROR: e2e_cancel_branch: printing e2e cancel failed\n");
+		LM_ERR("printing e2e cancel failed\n");
 		ret=ser_error=E_OUT_OF_MEM;
 		goto error01;
 	}
@@ -580,8 +579,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 
 	/* do not forward requests which were already cancelled*/
 	if (was_cancelled(t)) {
-		LOG(L_ERR,"ERROR:tm:t_forward_nonack: discarding fwd for "
-				"a cancelled transaction\n");
+		LM_ERR("discarding fwd for a cancelled transaction\n");
 		return -1;
 	}
 
@@ -645,11 +643,10 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
-			LOG(L_ERR, "ERROR:tm:t_forward_nonack: no branch for "
-				"forwarding\n");
+			LM_ERR("no branch for forwarding\n");
 			return -1;
 		}
-		LOG(L_ERR, "ERROR:tm:t_forward_nonack: failure to add branches\n");
+		LM_ERR("failure to add branches\n");
 		return lowest_ret;
 	}
 
@@ -662,15 +659,14 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 				&t->uac[i].request.dst.to,
 				t->uac[i].request.buffer.s,
 				t->uac[i].request.buffer.len)) {
-					DBG("DEBUG:tm:t_forward_nonack: blocked by blacklists\n");
+					LM_DBG("blocked by blacklists\n");
 					ser_error=E_IP_BLOCKED;
 				} else {
 					if (SEND_BUFFER( &t->uac[i].request)==0) {
 						ser_error = 0;
 						break;
 					}
-					LOG(L_ERR, "ERROR:tm:t_forward_nonack: sending request "
-						"failed\n");
+					LM_ERR("sending request failed\n");
 					ser_error=E_SEND;
 				}
 				/* get next dns entry */
@@ -721,12 +717,12 @@ int t_replicate(struct sip_msg *p_msg, str *dst, int flags)
 	*/
 
 	if ( set_dst_uri( p_msg, dst)!=0 ) {
-		LOG(L_ERR,"ERROR:tm:t_replicate: failed to set dst uri\n");
+		LM_ERR("failed to set dst uri\n");
 		return -1;
 	}
 
 	if ( branch_uri2dset( GET_RURI(p_msg) )!=0 ) {
-		LOG(L_ERR,"ERROR:tm:t_replicate: failed to convert uri to dst\n");
+		LM_ERR("failed to convert uri to dst\n");
 		return -1;
 	}
 

@@ -64,7 +64,7 @@ inline static int load_rr_api( struct rr_binds *rrb )
 
 	/* import the RR auto-loading function */
 	if ( !(load_rr_v=(load_rr_f)find_export("load_rr", 0, 0))) {
-		LOG(L_ERR, "ERROR:rr:load_rr_api: can't import load_rr\n");
+		LM_ERR("failed to import load_rr\n");
 		return -1;
 	}
 	/* let the auto-loading function load all RR stuff */

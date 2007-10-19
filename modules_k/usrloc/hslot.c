@@ -40,8 +40,7 @@ int ul_init_locks(void)
 				(lock_set_init(ul_locks)!=0))
 		{
 			ul_locks_no = i;
-			LOG(L_INFO, "INFO:ul_init_locks: locks array size %d\n",
-					ul_locks_no);
+			LM_INFO("locks array size %d\n", ul_locks_no);
 			return 0;
 
 		}
@@ -52,7 +51,7 @@ int ul_init_locks(void)
 		i--;
 		if(i==0)
 		{
-			LOG(L_ERR, "INFO:ul_init_locks: error - cannot allocate locks\n");
+			LM_ERR("failed to allocate locks\n");
 			return -1;
 		}
 	} while (1);

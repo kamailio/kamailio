@@ -182,15 +182,15 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 
-	DBG("xmpp: mod_init\n");
+	LM_DBG("initializing\n");
 
 	if (load_tm_api(&tmb)) {
-		LOG(L_ERR, "xmpp: cannot load tm API\n");
+		LM_ERR("failed to load tm API\n");
 		return -1;
 	}
 	
 	if (strcmp(backend, "component") && strcmp(backend, "server")) {
-		LOG(L_ERR, "xmpp: invalid backend '%s'\n", backend);
+		LM_ERR("invalid backend '%s'\n", backend);
 		return -1;
 	}
 
@@ -206,12 +206,12 @@ static int mod_init(void) {
 		domain_separator = *domain_sep_str;
 
 	if(init_xmpp_cb_list()<0){
-		LOG(L_ERR, "xmpp: cannot init callback list\n");
+		LM_ERR("failed to init callback list\n");
 		return -1;
 	}
 
 	if (pipe(pipe_fds) < 0) {
-		LOG(L_ERR, "xmpp: cannot pipe()\n");
+		LM_ERR("pipe() failed\n");
 		return -1;
 	}
 
@@ -226,7 +226,7 @@ static void xmpp_process(int rank)
 	 */
 	close(pipe_fds[1]);
 
-	DBG("xmpp: started child connection process\n");
+	LM_DBG("started child connection process\n");
 	if (!strcmp(backend, "component"))
 		xmpp_component_child_process(pipe_fds[0]);
 	else if (!strcmp(backend, "server"))
@@ -234,10 +234,10 @@ static void xmpp_process(int rank)
 }
 
 
-/* to be done */
+/* TODO */
 void destroy(void)
 {
-	DBG("xmpp: destroy: cleaning up...\n");
+	LM_DBG("cleaning up...\n");
 }
 
 /*********************************************************************************/
@@ -309,7 +309,7 @@ static int xmpp_send_pipe_cmd(enum xmpp_pipe_cmd_type type, str *from, str *to,
 	cmd->id = shm_strdup(id);
 
 	if (write(pipe_fds[1], &cmd, sizeof(cmd)) != sizeof(cmd)) {
-		LOG(L_ERR, "xmpp: unable to write to command pipe: %s\n", strerror(errno));
+		LM_ERR("failed to write to command pipe: %s\n", strerror(errno));
 		xmpp_free_pipe_cmd(cmd);
 		return -1;
 	}
@@ -321,56 +321,56 @@ static int cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar)
 	str body, from_uri, dst, tagid;
 	int mime;
 
-	DBG("xmpp: cmd_send_message\n");
+	LM_DBG("cmd_send_message\n");
 	
 	/* extract body */
 	if (!(body.s = get_body(msg))) {
-		LOG(L_ERR, "xmpp: cannot extract body\n");
+		LM_ERR("failed to extract body\n");
 		return -1;
 	}
 	if (!msg->content_length) {
-		LOG(L_ERR, "xmpp: no content-length found\n");
+		LM_ERR("no content-length found\n");
 		return -1;
 	}
 	body.len = get_content_length(msg);
 	if ((mime = parse_content_type_hdr(msg)) < 1) {
-		LOG(L_ERR, "xmpp: cannot parse content-type\n");
+		LM_ERR("failed parse content-type\n");
 		return -1;
 	}
 	if (mime != (TYPE_TEXT << 16) + SUBTYPE_PLAIN 
 			&& mime != (TYPE_MESSAGE << 16) + SUBTYPE_CPIM) {
-		LOG(L_ERR, "xmpp: invalid content-type 0x%x\n", mime);
+		LM_ERR("invalid content-type 0x%x\n", mime);
 		return -1;
 	}
 
 	/* extract sender */
 	if (parse_headers(msg, HDR_TO_F | HDR_FROM_F, 0) == -1 || !msg->to
 			|| !msg->from) {
-		LOG(L_ERR, "xmpp: no To/From headers\n");
+		LM_ERR("no To/From headers\n");
 		return -1;
 	}
 	if (parse_from_header(msg) < 0 || !msg->from->parsed) {
-		LOG(L_ERR, "xmpp: cannot parse From header\n");
+		LM_ERR("failed to parse From header\n");
 		return -1;
 	}
 	from_uri = ((struct to_body *) msg->from->parsed)->uri;
 	tagid = ((struct to_body *) msg->from->parsed)->tag_value;
-	DBG("xmpp: message from <%.*s>\n", from_uri.len, from_uri.s);
+	LM_DBG("message from <%.*s>\n", from_uri.len, from_uri.s);
 
 	/* extract recipient */
 	dst.len = 0;
 	if (msg->new_uri.len > 0) {
-		DBG("xmpp: using new URI as destination\n");
+		LM_DBG("using new URI as destination\n");
 		dst = msg->new_uri;
 	} else if (msg->first_line.u.request.uri.s 
 			&& msg->first_line.u.request.uri.len > 0) {
-		DBG("xmpp: using R-URI as destination\n");
+		LM_DBG("using R-URI as destination\n");
 		dst = msg->first_line.u.request.uri;
 	} else if (msg->to->parsed) {
-		DBG("xmpp: using TO-URI as destination\n");
+		LM_DBG("using TO-URI as destination\n");
 		dst = ((struct to_body *) msg->to->parsed)->uri;
 	} else {
-		LOG(L_ERR, "xmpp: cannot find a valid destination\n");
+		LM_ERR("failed to find a valid destination\n");
 		return -1;
 	}
 	

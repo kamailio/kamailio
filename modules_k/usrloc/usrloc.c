@@ -40,12 +40,12 @@ extern unsigned int init_flag;
 int bind_usrloc(usrloc_api_t* api)
 {
 	if (!api) {
-		LOG(L_ERR, "ERROR:usrloc:bind_usrloc: invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 	if (init_flag==0) {
-		LOG(L_ERR, "ERROR:usrloc:bind_usrloc: configuration error - trying "
-			"to bind to usrloc module before being initialized\n");
+		LM_ERR("configuration error - trying to bind to usrloc module"
+				" before being initialized\n");
 		return -1;
 	}
 

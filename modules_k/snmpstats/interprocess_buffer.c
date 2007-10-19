@@ -161,9 +161,8 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param)
 	return;
 
 error:
-	LOG(L_ERR, "ERROR: SNMPStats: Not enough shared memory for "
-			" openserSIPRegUserTable insert. (%s)\n", 
-				contactInfo->c.s);
+	LM_ERR("Not enough shared memory for  openserSIPRegUserTable insert."
+			" (%s)\n", contactInfo->c.s);
 }
 
 
@@ -248,8 +247,8 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 		/* Currently we only support UL_CONTACT_INSERT and
 		 * UL_CONTACT_EXPIRE.  If we receive another callback type, this
 		 * is a bug. */
-		LOG(L_ERR, "BUG: SNMPStats: Found a command on the interprocess"
-				" buffer that wasn't an INSERT or EXPIRE");
+		LM_ERR("found a command on the interprocess buffer that"
+				" was not an INSERT or EXPIRE");
 		return;
 	}
 
@@ -259,9 +258,8 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 
 	/* This should never happen.  This is more of a sanity check. */
 	if (currentUser == NULL) {
-		LOG(L_ERR, "ERROR: SNMPStats: Received a request for "
-				"contact: %s for user: %s who doesn't "
-				"exists\n", currentBuffer->stringName,
+		LM_ERR("Received a request for contact: %s for user: %s who doesn't "
+				"exists\n", currentBuffer->stringName, 
 				currentBuffer->stringContact);
 		return;
 	} 
@@ -280,11 +278,9 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 			currentUser->contactIndex, 
 				currentBuffer->stringContact)) {
 
-			LOG(L_ERR, "ERROR: SNMPStats: openserSIPRegUserTable "
-					"was unable to allocate memory for "
-					"adding contact: %s to user %s.\n", 
-					currentBuffer->stringName,
-					currentBuffer->stringContact);
+			LM_ERR("openserSIPRegUserTable was unable to allocate memory for "
+					"adding contact: %s to user %s.\n",
+					currentBuffer->stringName, currentBuffer->stringContact);
 
 			/* We didn't use the index, so decrement it so we can
 			 * use it next time around. */
@@ -314,11 +310,9 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 		 * to print out debug messages in case there is a hidden bug.  */
 		if(delContactIndex == 0) {
 			
-			LOG(L_ERR, "ERROR: SNMPStats: Received a request to delete"
-				" contact: %s for user: %s  who doesn't exist\n",
-				currentBuffer->stringName,
+			LM_ERR("Received a request to delete contact: %s for user: %s"
+				"  who doesn't exist\n", currentBuffer->stringName,
 				currentBuffer->stringContact);
-
 			return;
 
 		}		

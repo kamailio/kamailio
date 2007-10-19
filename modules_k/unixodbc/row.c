@@ -45,7 +45,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengt
 
 	if ((!_h) || (!_res) || (!_r))
 	{
-		LOG(L_ERR, "convert_row: Invalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
@@ -53,7 +53,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengt
 	ROW_N(_r) = RES_COL_N(_res);
 	if (!ROW_VALUES(_r))
 	{
-		LOG(L_ERR, "convert_row: No memory left\n");
+		LM_ERR("no memory left\n");
 		return -1;
 	}
 	for(i = 0; i < RES_COL_N(_res); i++)
@@ -61,7 +61,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengt
 		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			((CON_ROW(_h))[i]), lengths[i]) < 0)
 		{
-			LOG(L_ERR, "convert_row: Error while converting value\n");
+			LM_ERR("converting value failed\n");
 			db_free_row(_r);
 			return -3;
 		}

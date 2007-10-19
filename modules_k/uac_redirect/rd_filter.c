@@ -73,8 +73,7 @@ void add_default_filter( int type, regex_t *filter)
 int add_filter( int type, regex_t *filter, int flags)
 {
 	if ( nr_filters[type]==MAX_FILTERS ) {
-		LOG(L_ERR,"ERROR:uac_redirect:add_filter: too many filters type %d\n",
-				type);
+		LM_ERR("too many filters type %d\n", type);
 		return -1;
 	}
 

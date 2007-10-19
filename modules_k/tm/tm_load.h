@@ -83,7 +83,7 @@ static inline int load_tm_api( struct tm_binds *tmb )
 
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", 0, 0))) {
-		LOG(L_ERR, "ERROR:tm:load_tm_api: can't import load_tm\n");
+		LM_ERR("failed to import load_tm\n");
 		return -1;
 	}
 	/* let the auto-loading function load all TM stuff */

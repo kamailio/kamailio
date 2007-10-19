@@ -136,7 +136,7 @@ static struct xmpp_connection *conn_new(int type, int fd, char *domain)
 
 	if(conn==NULL) 
 	{
-		LOG(L_ERR, "xmpp: conn_new: out of memory\n");
+		LM_ERR("out of memory\n");
 		return NULL;
 	}
 	
@@ -211,10 +211,10 @@ static int xode_send(int fd, xode x)
 	char *str = xode_to_str(x);
 	int len = strlen(str);
 	
-	DBG("xmpp: xode_send->%d [%s]\n", fd, str);
+	LM_DBG("xode_send->%d [%s]\n", fd, str);
 
 	if (net_send(fd, str, len) != len) {
-		LOG(L_ERR, "xmpp: send() error: %s\n", strerror(errno));
+		LM_ERR("send() failed: %s\n", strerror(errno));
 		return -1;
 	}
 	return len;
@@ -242,7 +242,7 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 	char *tag;
 	xode x;
 
-	DBG("xmpp: outstream callback: %d: %s\n", type, 
+	LM_DBG("outstream callback: %d: %s\n", type, 
 			node?xode_get_name(node):"n/a");
 
 	if (conn->domain)
@@ -282,8 +282,8 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 				if (in_conn)
 					xode_send(in_conn->fd, x);
 				else
-					LOG(L_ERR, "xmpp: need to send reply to domain '%s',"
-							" but no inbound connection found\n", from);
+					LM_ERR("need to send reply to domain '%s', but no inbound"
+							" connection found\n", from);
 				xode_free(x);
 			}
 		} else if (!strcmp(tag, "db:result")) {
@@ -294,7 +294,7 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 				 * we can now send data */
 				for (x = xode_get_firstchild(conn->todo); x;
 						x = xode_get_nextsibling(x)) {
-					DBG("xmpp: sending todo tag '%s'\n", xode_get_name(x));
+					LM_DBG("sending todo tag '%s'\n", xode_get_name(x));
 					xode_send(conn->fd, x);
 				}
 				xode_free(conn->todo);
@@ -303,7 +303,7 @@ static void out_stream_node_callback(int type, xode node, void *arg)
 		}
 		break;
 	case XODE_STREAM_ERROR:
-		LOG(L_ERR, "xmpp: outstream error\n");
+		LM_ERR("outstream error\n");
 		/* fall-through */
 	case XODE_STREAM_CLOSE:
 		conn->type = CONN_DEAD;
@@ -318,7 +318,7 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 	char *tag;
 	xode x;
 
-	DBG("xmpp: instream callback: %d: %s\n",
+	LM_DBG("instream callback: %d: %s\n",
 			type, node ? xode_get_name(node) : "n/a");
 	switch (type) {
 	case XODE_STREAM_ROOT:
@@ -341,13 +341,13 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 			
 			if (!type) {
 				if (conn->domain) {
-					DBG("xmpp: warning: connection %d has old domain '%s'\n",
-							conn->fd, conn->domain);
+					LM_DBG("connection %d has old domain '%s'\n",conn->fd,
+							conn->domain);
 					free(conn->domain);
 				}
 				conn->domain = strdup(from);
-				DBG("xmpp: connection %d set domain '%s'\n", conn->fd,
-						conn->domain);
+				LM_DBG("connection %d set domain '%s'\n",
+						conn->fd, conn->domain);
 
 				/* it's a request; send verification over outgoing connection */
 				x = xode_new_tag("db:verify");
@@ -392,12 +392,12 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 			if (!type)
 				type = "chat";
 			if (!strcmp(type, "error")) {	
-				DBG("xmpp: received message error stanza\n");
+				LM_DBG("received message error stanza\n");
 				goto out;
 			}
 			
 			if (!from || !to || !body) {
-				DBG("xmpp: invalid <message/> attributes\n");
+				LM_DBG("invalid <message/> attributes\n");
 				goto out;
 			}
 
@@ -414,7 +414,7 @@ static void in_stream_node_callback(int type, xode node, void *arg)
 
 		break;
 	case XODE_STREAM_ERROR:
-		LOG(L_ERR, "xmpp: instream error\n");
+		LM_ERR("instream error\n");
 		/* fall-through */
 	case XODE_STREAM_CLOSE:
 		conn->type = CONN_DEAD;
@@ -429,8 +429,7 @@ static void do_send_message_server(struct xmpp_pipe_cmd *cmd)
 	char *domain;
 	xode x;
 
-	DBG("xmpp: do_send_message_server from=[%s] to=[%s] body=[%s]\n", cmd->from,
-			cmd->to, cmd->body);
+	LM_DBG("rom=[%s] to=[%s] body=[%s]\n", cmd->from,cmd->to, cmd->body);
 
 	x = xode_new_tag("message");
 	xode_put_attrib(x, "xmlns", "jabber:client");
@@ -495,7 +494,7 @@ int xmpp_server_child_process(int data_pipe)
 
 		rv = select(FD_SETSIZE, &fdset, NULL, NULL, NULL);
 		if (rv < 0) {
-			LOG(L_ERR, "xmpp: select() error: %s\n", strerror(errno));
+			LM_ERR("select() failed: %s\n", strerror(errno));
 		} else if (!rv) {
 			/* timeout */
 		} else {
@@ -505,7 +504,7 @@ int xmpp_server_child_process(int data_pipe)
 					if (!buf) {
 						conn->type = CONN_DEAD;
 					} else {
-						DBG("xmpp: stream (fd %d, domain '%s') read\n[%s]\n",
+						LM_DBG("stream (fd %d, domain '%s') read\n[%s]\n",
 								conn->fd, conn->domain, buf);
 						xode_stream_eat(conn->stream, buf, strlen(buf));
 					}
@@ -518,9 +517,9 @@ int xmpp_server_child_process(int data_pipe)
 				int fd;
 
 				if ((fd = accept(listen_fd,(struct sockaddr*)&sin, &len))<0) {
-					LOG(L_ERR, "xmpp: cannot accept(): %s\n", strerror(errno));
+					LM_ERR("accept() failed: %s\n", strerror(errno));
 				} else {
-					DBG("xmpp: accept()ed connection from %s:%d\n",
+					LM_DBG("accept()ed connection from %s:%d\n",
 							inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
 					conn_new(CONN_INBOUND, fd, NULL);
 				}
@@ -530,10 +529,10 @@ int xmpp_server_child_process(int data_pipe)
 				struct xmpp_pipe_cmd *cmd;
 
 				if (read(data_pipe, &cmd, sizeof(cmd)) != sizeof(cmd)) {
-					LOG(L_ERR, "xmpp: unable to read from command pipe: %s\n",
+					LM_ERR("failed to read from command pipe: %s\n",
 							strerror(errno));
 				} else {
-					DBG("xmpp: got pipe cmd %d\n", cmd->type);
+					LM_DBG("got pipe cmd %d\n", cmd->type);
 					switch (cmd->type) {
 					case XMPP_PIPE_SEND_MESSAGE:
 						do_send_message_server(cmd);

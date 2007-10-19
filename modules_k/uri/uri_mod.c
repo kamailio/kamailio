@@ -120,21 +120,19 @@ static int pvar_fixup(void** param, int param_no)
 
 	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
 	if (sp == 0) {
-	    LOG(L_ERR,"permissions:double_fixup(): no pkg memory left\n");
+	    LM_ERR("no pkg memory left\n");
 	    return -1;
 	}
 
 	s.s = (char*)*param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, sp) == 0) {
-	    LOG(L_ERR,"permissions:double_fixup(): parsing of "
-		"pseudo variable %s failed!\n", (char*)*param);
+	    LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
 	    pkg_free(sp);
 	    return -1;
 	}
 
 	if (sp->type == PVT_NULL) {
-	    LOG(L_ERR,"permissions:double_fixup(): bad pseudo "
-		"variable\n");
+	    LM_ERR("bad pseudo variable\n");
 	    pkg_free(sp);
 	    return -1;
 	}

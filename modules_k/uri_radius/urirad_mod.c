@@ -89,7 +89,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("uri_radius - initializing\n");
+	LM_DBG("initializing\n");
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
@@ -99,12 +99,12 @@ static int mod_init(void)
 	attrs[A_SIP_AVP].n		= "SIP-AVP";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LOG(L_ERR, "uri_radius: Error opening configuration file \n");
+		LM_ERR("opening configuration file failed\n");
 		return -1;
 	}
     
 	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
-		LOG(L_ERR, "uri_radius: Error opening dictionary file \n");
+		LM_ERR("opening dictionary file failed\n");
 		return -2;
 	}
 

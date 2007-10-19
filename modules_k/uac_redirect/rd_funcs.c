@@ -57,26 +57,22 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb, str *reason)
 	t = rd_tmb.t_gett();
 	if (t==T_UNDEFINED || t==T_NULL_CELL)
 	{
-		LOG(LOG_CRIT,"BUG:uac_redirect:get_redirect: no current "
-			"transaction found\n");
+		LM_CRIT("no current transaction found\n");
 		goto error;
 	}
 
-	DBG("DEBUG:uac_redirect:get_redirect: resume branch=%d\n",
-		t->first_branch);
+	LM_DBG("resume branch=%d\n", t->first_branch);
 
 	cts_added = 0; /* no contact added */
 	backup_uri = msg->new_uri; /* shmcontact2dset will ater this value */
 
 	/* look if there are any 3xx branches starting from resume_branch */
 	for( i=t->first_branch ; i<t->nr_of_outgoings ; i++) {
-		DBG("DEBUG:uac_redirect:get_redirect: checking branch=%d "
-			"(added=%d)\n", i, cts_added);
+		LM_DBG("checking branch=%d (added=%d)\n", i, cts_added);
 		/* is a redirected branch? */
 		if (t->uac[i].last_received<300 || t->uac[i].last_received>399)
 			continue;
-		DBG("DEBUG:uac_redirect:get_redirect: branch=%d is a redirect "
-			"(added=%d)\n", i, cts_added);
+		LM_DBG("branch=%d is a redirect (added=%d)\n", i, cts_added);
 		/* ok - we have a new redirected branch -> how many contacts can
 		 * we get from it*/
 		if (maxb==0) {
@@ -89,8 +85,7 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb, str *reason)
 		/* get the contact from it */
 		n = shmcontact2dset( msg, t->uac[i].reply, max, reason);
 		if ( n<0 ) {
-			LOG(L_ERR,"ERROR:uac_redirect:get_redirects: get contact from "
-				"shm_reply branch %d failed\n",i);
+			LM_ERR("get contact from shm_reply branch %d failed\n",i);
 			/* do not go to error, try next branches */
 		} else {
 			/* count the added contacts */
@@ -136,13 +131,12 @@ static int sort_contacts(contact_t *ct_list, contact_t **ct_array,
 			q = DEFAULT_Q_VALUE;
 		} else {
 			if (str2q( &q, q_para->body.s, q_para->body.len)!=0) {
-				LOG(L_ERR, "ERROR:uac_redirect:sort_contacts: "
-					"invalid q param\n");
+				LM_ERR("invalid q param\n");
 				/* skip this contact */
 				continue;
 			}
 		}
-		DBG("DEBUG:uac_redirect:sort_contacts: <%.*s> q=%d\n",
+		LM_DBG("sort_contacts: <%.*s> q=%d\n",
 				ct_list->uri.len,ct_list->uri.s,q);
 		/*insert the contact into the sorted array */
 		for(i=0;i<n;i++) {
@@ -208,14 +202,12 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 			dup = 2;
 			/* ok -> force the parsing of contact header */
 			if ( parse_headers( &dup_rpl, HDR_CONTACT_T, 0)<0 ) {
-				LOG(L_ERR,"ERROR:uac_redirect:shmcontact2dset: dup_rpl "
-					"parse failed\n");
+				LM_ERR("dup_rpl parse failed\n");
 				ret = -1;
 				goto restore;
 			}
 			if (dup_rpl.contact==0) {
-				DBG("DEBUG:uac_redirect:shmcontact2dset: contact hdr not "
-					"found in dup_rpl\n");
+				LM_DBG("contact hdr not found in dup_rpl\n");
 				goto restore;
 			}
 			contact_hdr = dup_rpl.contact;
@@ -223,14 +215,12 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 			dup = 3;
 			/* force the parsing of contact header */
 			if ( parse_headers( sh_rpl, HDR_CONTACT_T, 0)<0 ) {
-				LOG(L_ERR,"ERROR:uac_redirect:shmcontact2dset: sh_rpl "
-					"parse failed\n");
+				LM_ERR("sh_rpl parse failed\n");
 				ret = -1;
 				goto restore;
 			}
 			if (sh_rpl->contact==0) {
-				DBG("DEBUG:uac_redirect:shmcontact2dset: contact hdr not "
-					"found in sh_rpl\n");
+				LM_DBG("contact hdr not found in sh_rpl\n");
 				goto restore;
 			}
 			contact_hdr = sh_rpl->contact;
@@ -242,8 +232,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	/* parse the body of contact header */
 	if (contact_hdr->parsed==0) {
 		if ( parse_contact(contact_hdr)<0 ) {
-			LOG(L_ERR,"ERROR:uac_redirect:shmcontact2dset: contact hdr "
-				"parse failed\n");
+			LM_ERR("contact hdr parse failed\n");
 			ret = -1;
 			goto restore;
 		}
@@ -256,14 +245,12 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	 * based on the q value */
 	contacts = ((contact_body_t*)contact_hdr->parsed)->contacts;
 	if (contacts==0) {
-		DBG("DEBUG:uac_redirect:shmcontact2dset: contact hdr "
-			"has no contacts\n");
+		LM_DBG("contact hdr has no contacts\n");
 		goto restore;
 	}
 	n = sort_contacts( contacts, scontacts, sqvalues);
 	if (n==0) {
-		DBG("DEBUG:uac_redirect:shmcontact2dset: no contacts left "
-			"after filtering\n");
+		LM_DBG("no contacts left after filtering\n");
 		goto restore;
 	}
 
@@ -275,11 +262,9 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 
 	/* add the sortet contacts as branches in dset and log this! */
 	for ( i=0 ; i<n ; i++ ) {
-		DBG("DEBUG:uac_redirect:shmcontact2dset: adding contact <%.*s>\n",
-			scontacts[i]->uri.len, scontacts[i]->uri.s);
+		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len, scontacts[i]->uri.s);
 		if (append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], 0, 0)<0) {
-			LOG(L_ERR,"ERROR:uac_redirect:shmcontact2dset: failed to add "
-				"contact to dset\n");
+			LM_ERR("failed to add contact to dset\n");
 		} else {
 			added++;
 			if (rd_acc_fct!=0 && reason) {

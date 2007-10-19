@@ -54,7 +54,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 
 	c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!c) {
-		LOG(L_ERR, "ERROR:usrloc:new_ucontact: no more shm memory\n");
+		LM_ERR("no more shm memory\n");
 		return 0;
 	}
 	memset(c, 0, sizeof(ucontact_t));
@@ -84,7 +84,7 @@ ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 
 	return c;
 error:
-	LOG(L_ERR, "ERROR:usrloc:new_contact: no more shm memory\n");
+	LM_ERR("no more shm memory\n");
 	if (c->path.s) shm_free(c->path.s);
 	if (c->received.s) shm_free(c->received.s);
 	if (c->user_agent.s) shm_free(c->user_agent.s);
@@ -175,8 +175,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 		if ((_old)->len < (_new)->len) { \
 			ptr = (char*)shm_malloc((_new)->len); \
 			if (ptr == 0) { \
-				LOG(L_ERR, "ERROR:usrloc:update_ucontact: no "\
-					"more shm memory\n"); \
+				LM_ERR("no more shm memory\n"); \
 				return -1; \
 			}\
 			memcpy(ptr, (_new)->s, (_new)->len);\
@@ -493,12 +492,12 @@ int db_insert_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
-		LOG(L_ERR, "db_insert_ucontact(): Error in use_table\n");
+		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 
 	if (ul_dbf.insert(ul_dbh, keys, vals, (use_domain) ? (15) : (14)) < 0) {
-		LOG(L_ERR, "db_insert_ucontact(): Error while inserting contact\n");
+		LM_ERR("inserting contact in db failed\n");
 		return -1;
 	}
 
@@ -621,13 +620,13 @@ int db_update_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
-		LOG(L_ERR, "db_upd_ucontact(): Error in use_table\n");
+		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 
 	if (ul_dbf.update(ul_dbh, keys1, 0, vals1, keys2, vals2, 
 	(use_domain) ? (4) : (3), 11) < 0) {
-		LOG(L_ERR, "db_upd_ucontact(): Error while updating database\n");
+		LM_ERR("updating database failed\n");
 		return -1;
 	}
 
@@ -676,12 +675,12 @@ int db_delete_ucontact(ucontact_t* _c)
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain->s) < 0) {
-		LOG(L_ERR, "db_del_ucontact: Error in use_table\n");
+		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
 
 	if (ul_dbf.delete(ul_dbh, keys, 0, vals, (use_domain) ? (4) : (3)) < 0) {
-		LOG(L_ERR, "db_del_ucontact(): Error while deleting from database\n");
+		LM_ERR("deleting from database failed\n");
 		return -1;
 	}
 
@@ -759,12 +758,14 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 	/* we have to update memory in any case, but database directly
 	 * only in db_mode 1 */
 	if (mem_update_ucontact( _c, _ci) < 0) {
-		LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update memory\n");
+		LM_ERR("failed to update memory\n");
 		return -1;
 	}
 
 	/* run callbacks for UPDATE event */
-	if (exists_ulcb_type(UL_CONTACT_UPDATE)) {
+	if (exists_ulcb_type(UL_CONTACT_UPDATE))
+	{
+		LM_DBG("exists callback for type= UL_CONTACT_UPDATE\n");
 		run_ul_callbacks( UL_CONTACT_UPDATE, _c);
 	}
 
@@ -775,8 +776,7 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_update_ucontact(_c) < 0) {
-			LOG(L_ERR, "ERROR:usrloc:update_ucontact: failed to update "
-				"database\n");
+			LM_ERR("failed to update database\n");
 		}
 	}
 	return 0;

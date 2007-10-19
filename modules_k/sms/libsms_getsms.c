@@ -156,7 +156,7 @@ static int fetchsms(struct modem *mdm, int sim, char* pdu)
 			if (end==position+7) {
 				foo = str2s(position+7,end-position-7,&err);
 				if (!err) {
-					DBG("DEBUG:fetchsms:Found a message at memory %i\n",foo);
+					LM_DBG("found a message at memory %i\n",foo);
 					sim=foo;
 				}
 				position = 0;
@@ -164,7 +164,7 @@ static int fetchsms(struct modem *mdm, int sim, char* pdu)
 			position = 0;
 		}
 	} else {
-		DBG("DEBUG:fetchsms:Trying to get stored message %i\n",sim);
+		LM_DBG("trying to get stored message %i\n",sim);
 		clen=sprintf(command,"AT+CMGR=%i\r",sim);
 		put_command(mdm,command,clen,answer,sizeof(answer),50,0);
 		/* search for beginning of the answer */
@@ -203,7 +203,7 @@ static void deletesms(struct modem *mdm, int sim) {
 	char answer[128];
 	int  clen;
 
-	DBG("DEBUG:deletesms: Deleting message %i !\n",sim);
+	LM_DBG("deleting message %i !\n",sim);
 	clen = sprintf(command,"AT+CMGD=%i\r",sim);
 	put_command(mdm, command, clen, answer, sizeof(answer), 50, 0);
 }
@@ -232,9 +232,8 @@ int check_memory(struct modem *mdm, int flag)
 					if (flag==USED_MEM ) {
 						foo = str2s(posi,laenge,&err);
 						if (err) {
-							LOG(L_ERR,"ERROR:sms_check_memory: unable to "
-								"convert into integer used_memory from CPMS"
-								" response\n");
+							LM_ERR("failed to convert into integer used_memory"
+									" from CPMS response\n");
 						} else {
 							return foo;
 						}
@@ -243,9 +242,8 @@ int check_memory(struct modem *mdm, int flag)
 					if ( (laenge=strcspn(posi,",\r"))!=0 ) {
 						foo = str2s(posi,laenge,&err);
 						if (err) {
-							LOG(L_ERR,"ERROR:sms_check_memory: unable to"
-								"convert into integer max_memory from CPMS"
-								" response\n");
+							LM_ERR("failed to convert into integer max_memory"
+									" from CPMS response\n");
 						} else {
 							return foo;
 						}
@@ -255,18 +253,15 @@ int check_memory(struct modem *mdm, int flag)
 		} /* if(put_command) */
 		/* if we are here ->  some error happend */
 		if (checkmodem(mdm)!=0) {
-			LOG(L_WARN,"WARNING:sms_check_memory: something happend with the"
-				" modem -> was reinit -> let's retry\n");
+			LM_WARN("something happend with the modem -> was reinit -> let's retry\n");
 		} else {
-			LOG(L_ERR,"ERROR:sms_check_memory: modem seems to be ok, but we"
-				"had an error? I give up!\n");
+			LM_ERR("modem seems to be ok, but we had an error? I give up!\n");
 			out = 1;
 		}
 	} /* for */
 
 	if (out==0)
-		LOG(L_ERR,"ERROR:sms_check_memory: modem does not respond after 10"
-			"reties! I give up :-(\n");
+		LM_ERR("modem does not respond after 10 reties! I give up :-(\n");
 
 	return -1;
 }
@@ -481,7 +476,7 @@ static inline int decode_pdu( struct modem *mdm, char *pdu,
 		ret = splitpdu(mdm, pdu, sms);
 
 	if (ret==-1) {
-		LOG(L_ERR,"ERROR:decode_pdu: unable split pdu/ascii!\n");
+		LM_ERR("failed to split pdu/ascii!\n");
 		return -1;
 	}
 	return 1;
@@ -498,7 +493,7 @@ int getsms( struct incame_sms *sms, struct modem *mdm, int sim)
 
 	found = fetchsms(mdm,sim,pdu);
 	if ( !found ) {
-		LOG(L_ERR,"ERROR:getsms: unable to fetch sms %d!\n",sim);
+		LM_ERR("failed to fetch sms %d!\n",sim);
 		return -1;
 	}
 
@@ -525,14 +520,14 @@ int cds2sms(struct incame_sms *sms, struct modem *mdm, char *s, int s_len)
 	ptr = s;
 	for ( n=0 ; n<2 && (ptr=strstr(ptr,"\r\n")) ; n++,ptr+=2 );
 	if (n<2) {
-		LOG(L_ERR,"ERROR:cds2sms: cannot find pdu begining in CDS!\n");
+		LM_ERR("failed to find pdu begining in CDS!\n");
 		goto error;
 	}
 	data = ptr;
 
 	/* pdu end with "\r\n" */
 	if (!(ptr=strstr(data,"\r\n"))) {
-		LOG(L_ERR,"ERROR:cds2sms: cannot find pdu end in CDS!\n");
+		LM_ERR("failed to find pdu end in CDS!\n");
 		goto error;
 		}
 	tmp = ptr[0];

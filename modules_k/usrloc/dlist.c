@@ -122,12 +122,11 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			cflags_col.len, cflags_col.s,
 			flags, flags, part_max, part_idx);
 		if ( i>=sizeof(query_buf) ) {
-			LOG(L_ERR,"ERROR:usrloc:get_all_db_ucontacts: DB query "
-				"too long\n");
+			LM_ERR("DB query too long\n");
 			return -1;
 		}
 		if ( ul_dbf.raw_query( ul_dbh, query_buf, &res)<0 ) {
-			LOG(L_ERR,"ERROR:usrloc:get_all_db_ucontacts: raw_query failed\n");
+			LM_ERR("raw_query failed\n");
 			return -1;
 		}
 		if( RES_ROW_N(res)==0 ) {
@@ -144,8 +143,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 				/* contact */
 				p = (char*)VAL_STRING(ROW_VALUES(row)+1);
 				if (VAL_NULL(ROW_VALUES(row)+1) || p==0 || p[0]==0) {
-					LOG(L_ERR,"ERROR:usrloc:get_all_db_ucontacts: empty "
-						" contact -> skipping\n");
+					LM_ERR("empty contact -> skipping\n");
 					continue;
 				}
 			}
@@ -170,14 +168,12 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			} else {
 				if (parse_phostport( p, strlen(p), &host.s, &host.len,
 				&port, &proto)!=0) {
-					LOG(L_ERR,"ERROR:usrloc:get_all_db_ucontacts: "
-						"bad socket <%s>...ignoring\n", p);
+					LM_ERR("bad socket <%s>...ignoring\n", p);
 					sock = 0;
 				} else {
 					sock = grep_sock_info( &host, (unsigned short)port, proto);
 					if (sock==0) {
-						LOG(L_WARN,"WARNING:usrloc:get_all_db_ucontacts: "
-							"non-local socket <%s>...ignoring\n", p);
+						LM_WARN("non-local socket <%s>...ignoring\n", p);
 					}
 				}
 			}
@@ -382,7 +378,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	 */
 	ptr = (dlist_t*)shm_malloc(sizeof(dlist_t));
 	if (ptr == 0) {
-		LOG(L_ERR, "new_dlist(): No memory left\n");
+		LM_ERR("no more share memory\n");
 		return -1;
 	}
 	memset(ptr, 0, sizeof(dlist_t));
@@ -390,7 +386,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	/* copy domain name as null terminated string */
 	ptr->name.s = (char*)shm_malloc(_n->len+1);
 	if (ptr->name.s == 0) {
-		LOG(L_ERR, "new_dlist(): No memory left 2\n");
+		LM_ERR("no more memory left\n");
 		shm_free(ptr);
 		return -2;
 	}
@@ -400,7 +396,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 	ptr->name.s[ptr->name.len] = 0;
 
 	if (new_udomain(&(ptr->name), ul_hash_size, &(ptr->d)) < 0) {
-		LOG(L_ERR, "new_dlist(): Error while creating domain structure\n");
+		LM_ERR("creating domain structure failed\n");
 		shm_free(ptr->name.s);
 		shm_free(ptr);
 		return -3;
@@ -433,7 +429,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 	}
 	
 	if (new_dlist(&s, &d) < 0) {
-		LOG(L_ERR, "register_udomain(): Error while creating new domain\n");
+		LM_ERR("failed to create new domain\n");
 		return -1;
 	}
 
@@ -443,26 +439,22 @@ int register_udomain(const char* _n, udomain_t** _d)
 	if (db_mode != NO_DB) {
 		con = ul_dbf.init(db_url.s);
 		if (!con) {
-			LOG(L_ERR, "register_udomain(): Can not open "
-				"database connection\n");
+			LM_ERR("failed to open database connection\n");
 			goto err;
 		}
 
 		ver = table_version(&ul_dbf, con, &s);
 
 		if (ver < 0) {
-			LOG(L_ERR, "register_udomain(): Error while querying "
-				"table version\n");
+			LM_ERR("querying table version failed\n");
 			goto err;
 		} else if (ver < UL_TABLE_VERSION) {
-			LOG(L_ERR, "register_udomain(): Invalid table version "
-				"(use openser_mysql.sh reinstall)\n");
+			LM_ERR("Invalid table version (use openser_mysql.sh reinstall)\n");
 			goto err;
 		}
 		/* test if DB really exists */
 		if (testdb_udomain(con, d->d) < 0) {
-			LOG(L_ERR, "register_udomain(): Error while testing "
-				"domain '%.*s'\n", s.len, ZSW(s.s));
+			LM_ERR("testing domain '%.*s' failed\n", s.len, ZSW(s.s));
 			goto err;
 		}
 

@@ -77,11 +77,10 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len
 				         rb->dst.proto_reserved1, buf, len);
 	else {
 #ifdef EXTRA_DEBUG
-		LOG(L_CRIT, "ERROR: send_pr_buffer: sending an empty buffer"
-				"from %s: %s (%d)\n", file, function, line );
+		LM_CRIT("sending an empty buffer from %s: %s (%d)\n",file,
+				function, line);
 #else
-		LOG(L_CRIT, "ERROR: send_pr_buffer: attempt to send an "
-				"empty buffer\n");
+		LM_CRIT("attempt to send an empty buffer\n");
 #endif
 		return -1;
 	}
@@ -92,19 +91,19 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len
 void tm_shutdown(void)
 {
 
-	DBG("DEBUG: tm_shutdown : start\n");
+	LM_DBG("tm_shutdown : start\n");
 	unlink_timer_lists();
 
 	/* destroy the hash table */
-	DBG("DEBUG: tm_shutdown : emptying hash table\n");
+	LM_DBG("emptying hash table\n");
 	free_hash_table( );
-	DBG("DEBUG: tm_shutdown : releasing timers\n");
+	LM_DBG("releasing timers\n");
 	free_timer_table();
-	DBG("DEBUG: tm_shutdown : removing semaphores\n");
+	LM_DBG("removing semaphores\n");
 	lock_cleanup();
-	DBG("DEBUG: tm_shutdown : destroying tmcb lists\n");
+	LM_DBG("destroying tmcb lists\n");
 	destroy_tmcb_lists();
-	DBG("DEBUG: tm_shutdown : done\n");
+	LM_DBG("tm_shutdown : done\n");
 }
 
 
@@ -133,7 +132,7 @@ void put_on_wait(  struct cell  *Trans  )
 {
 
 #ifdef EXTRA_DEBUG
-	DBG("DEBUG: put on WAIT \n");
+	LM_DBG("put on WAIT \n");
 #endif
 
 
@@ -181,7 +180,7 @@ static int kill_transaction( struct cell *trans )
 		/* t_release_transaction( T ); */
 		return reply_ret;
 	} else {
-		LOG(L_ERR, "ERROR: kill_transaction: err2reason failed\n");
+		LM_ERR("err2reason failed\n");
 		return -1;
 	}
 }
@@ -217,7 +216,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 
 	/* ACKs do not establish a transaction and are fwd-ed statelessly */
 	if ( p_msg->REQ_METHOD==METHOD_ACK) {
-		DBG("DEBUG:tm:t_relay: forwarding ACK\n");
+		LM_DBG("forwarding ACK\n");
 		/* send it out */
 		if (proxy==0) {
 			uri = GET_RURI(p_msg);
@@ -252,7 +251,7 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 	/* now go ahead and forward ... */
 	ret=t_forward_nonack( t, p_msg, proxy);
 	if (ret<=0) {
-		DBG( "ERROR:tm:t_relay_to: t_forward_nonack returned error \n");
+		LM_DBG("t_forward_nonack returned error \n");
 		/* we don't want to pass upstream any reply regarding replicating
 		 * a request; replicated branch must stop at us*/
 		if (!(flags&(TM_T_REPLY_repl_FLAG|TM_T_REPLY_noerr_FLAG))) {
@@ -260,16 +259,14 @@ int t_relay_to( struct sip_msg  *p_msg , struct proxy_l *proxy, int flags)
 			if (reply_ret>0) {
 				/* we have taken care of all -- do nothing in
 				script */
-				DBG("ERROR: generation of a stateful reply "
-					"on error succeeded\n");
+				LM_DBG("generation of a stateful reply on error succeeded\n");
 				ret=0;
 			}  else {
-				DBG("ERROR: generation of a stateful reply "
-					"on error failed\n");
+				LM_DBG("generation of a stateful reply on error failed\n");
 			}
 		}
 	} else {
-		DBG( "DEBUG:tm:t_relay_to: new transaction fwd'ed\n");
+		LM_DBG("new transaction fwd'ed\n");
 	}
 
 done:
@@ -291,15 +288,13 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 		s.s = fr_timer_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:tm:init_avp_params: malformed or non AVP %s "
-				"AVP definition\n", fr_timer_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n", fr_timer_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &fr_timer_avp, &avp_flags)!=0)
 		{
-			LOG(L_ERR, "ERROR:tm:init_avp_params: [%s]- invalid "
-				"AVP definition\n", fr_timer_param);
+			LM_ERR("[%s]- invalid AVP definition\n", fr_timer_param);
 			return -1;
 		}
 		fr_timer_avp_type = avp_flags;
@@ -312,15 +307,14 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 		s.s = fr_inv_timer_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LOG(L_ERR, "ERROR:tm:init_avp_params: malformed or non AVP %s "
-				"AVP definition\n", fr_inv_timer_param);
+			LM_ERR("malformed or non AVP %s AVP definition\n",
+					fr_inv_timer_param);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &fr_inv_timer_avp, &avp_flags)!=0)
 		{
-			LOG(L_ERR, "ERROR:tm:init_avp_params: [%s]- invalid "
-				"AVP definition\n", fr_inv_timer_param);
+			LM_ERR("[%s]- invalid AVP definition\n", fr_inv_timer_param);
 			return -1;
 		}
 		fr_inv_timer_avp_type = avp_flags;
@@ -348,7 +342,7 @@ static inline int avp2timer(utime_t *timer, int type, int_str name)
 	if (avp->flags & AVP_VAL_STR) {
 		*timer = str2s(val_istr.s.s, val_istr.s.len, &err);
 		if (err) {
-			LOG(L_ERR,"avp2timer: Error while converting string to integer\n");
+			LM_ERR("failed to convert string to integer\n");
 			return -1;
 		}
 	} else {
