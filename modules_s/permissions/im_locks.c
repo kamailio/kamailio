@@ -26,6 +26,7 @@
  *
  */
 
+#include "../../sched_yield.h"
 #include "im_locks.h"
 
 /* reader lock for ipmatch cache */
