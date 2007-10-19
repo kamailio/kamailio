@@ -38,8 +38,8 @@ static db_cmd_t	*cmd_load_im = NULL;
 int init_im_db(void)
 {
 	db_fld_t load_res_cols[] = {
-		{.name = "ip",		.type = DB_STR},
-		{.name = "avp_val",	.type = DB_STR},
+		{.name = "ip",		.type = DB_CSTR},
+		{.name = "avp_val",	.type = DB_CSTR},
 		{.name = "mark",	.type = DB_BITMAP},
 		{.name = "flags",	.type = DB_BITMAP},
 		{.name = NULL}
@@ -119,9 +119,9 @@ static int load_db(im_entry_t **hash)
 			avp_val = NULL;
 
 		if (rec->fld[2].flags & DB_NULL)
-			mark = rec->fld[2].v.bitmap;	/* get mark */
-		else
 			mark = (unsigned int)-1;	/* will match eveything */
+		else
+			mark = rec->fld[2].v.bitmap;	/* get mark */
 
 		/* create a new entry and insert it into the hash table */
 		if (insert_im_hash(ip, avp_val, mark, hash)) {
@@ -155,6 +155,13 @@ int reload_im_cache(void)
 {
 	im_entry_t	**hash, **old_hash;
 	int	ret;
+
+
+	if (!IM_HASH) {
+		LOG(L_CRIT, "ERROR: reload_im_cache(): ipmatch hash table is not initialied. "
+			"Have you set the database url?\n");
+		return -1;
+	}
 
 	/* make sure that there is no other writer process */
 	writer_lock_imhash();

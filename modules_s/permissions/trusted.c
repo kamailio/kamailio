@@ -108,20 +108,20 @@ void clean_trusted(void)
 int init_trusted_db(void)
 {
 	db_fld_t load_res_cols[] = {
-		{.name = source_col,	.type = DB_STR},
-		{.name = proto_col,	.type = DB_STR},
-		{.name = from_col,	.type = DB_STR},
+		{.name = source_col,	.type = DB_CSTR},
+		{.name = proto_col,	.type = DB_CSTR},
+		{.name = from_col,	.type = DB_CSTR},
 		{.name = NULL}
 	};
 
 	db_fld_t query_match[] = {
-		{.name = source_col,	.type = DB_STR},
+		{.name = source_col,	.type = DB_CSTR},
 		{.name = NULL}
 	};
 
 	db_fld_t query_res_cols[] = {
-		{.name = proto_col,	.type = DB_STR},
-		{.name = from_col,	.type = DB_STR},
+		{.name = proto_col,	.type = DB_CSTR},
+		{.name = from_col,	.type = DB_CSTR},
 		{.name = NULL}
 	};
 
@@ -211,7 +211,7 @@ static inline int match_proto(char *proto_string, int proto_int)
 
 /*
  * Matches from uri against patterns returned from database.  Returns 1 when
- * first pattern matches and 0 if none of the patterns match.
+ * first pattern matches and -1 if none of the patterns match.
  */
 static int match_res(struct sip_msg* msg, db_res_t* _r)
 {
@@ -239,7 +239,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 			goto next;
 
 		/* check the protocol */
-		if (!match_proto(rec->fld[0].v.cstr, msg->rcv.proto))
+		if (match_proto(rec->fld[0].v.cstr, msg->rcv.proto) <= 0)
 			goto next;
 
 		/* check the from uri */

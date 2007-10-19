@@ -80,6 +80,12 @@ static int ipmatch(struct ip_addr *ip, unsigned short port,
 
 	ret = 0;
 
+	if (!IM_HASH) {
+		LOG(L_CRIT, "ERROR: ipmatch(): ipmatch hash table is not initialied. "
+			"Have you set the database url?\n");
+		return 0;
+	}
+
 	/* lock hash table for reading */
 	reader_lock_imhash();
 
