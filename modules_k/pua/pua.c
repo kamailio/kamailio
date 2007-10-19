@@ -418,15 +418,17 @@ int db_restore(void)
 		extra_headers.s= (char*)row_vals[extra_headers_col].val.string_val;
 		if(extra_headers.s)
 			extra_headers.len= strlen(extra_headers.s);
+		else
+			extra_headers.len= 0;
 
-		size= sizeof(ua_pres_t)+ sizeof(str)+ pres_uri.len+ pres_id.len+
-					tuple_id.len;
-		if(extra_headers.len)
+		size= sizeof(ua_pres_t)+ sizeof(str)+ (pres_uri.len+ pres_id.len+
+					tuple_id.len)* sizeof(char);
+		if(extra_headers.s)
 				size+= sizeof(str)+ extra_headers.len* sizeof(char);
 
 		if(watcher_uri.s)
-			size+= sizeof(str)+ watcher_uri.len+ call_id.len+ to_tag.len+
-				from_tag.len+ record_route.len+ contact.len;
+			size+= sizeof(str)+ (watcher_uri.len+ call_id.len+ to_tag.len+
+				from_tag.len+ record_route.len+ contact.len)* sizeof(char);
 		
 		p= (ua_pres_t*)shm_malloc(size);
 		if(p== NULL)
@@ -508,6 +510,7 @@ int db_restore(void)
 			size+= extra_headers.len;
 		}
 
+		LM_DBG("size= %d\n", size);
 		p->event= row_vals[event_col].val.int_val;
 		p->expires= row_vals[expires_col].val.int_val;
 		p->desired_expires= row_vals[desired_expires_col].val.int_val;
@@ -526,7 +529,6 @@ int db_restore(void)
 			memcpy(p->etag.s, etag.s, etag.len);
 			p->etag.len= etag.len;
 		}
-
 		print_ua_pres(p);
 		insert_htable(p);
 	}
