@@ -1243,9 +1243,16 @@ int ds_set_state(int group, str *address, int state, int type)
 				&& strncasecmp(idx->dlist[i].uri.s, address->s,
 					address->len)==0)
 		{
+			
 			/* remove the Probing/Inactive-State? Set the fail-count to 0. */
 			if (state == DS_PROBING_DST) {
 				if (type) {
+					if (idx->dlist[i].flags & DS_INACTIVE_DST) {
+						LM_INFO("Ignoring the request to set this destination"
+								" to probing: It is already inactive!\n");
+						return 0;
+					}
+					
 					idx->dlist[i].failure_count++;
 					/* Fire only, if the Threshold is reached. */
 					if (idx->dlist[i].failure_count 
