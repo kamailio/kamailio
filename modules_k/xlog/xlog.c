@@ -145,8 +145,8 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
-	LM_ERR("%.*s", log_len, log_buf);
-
+	LOG(L_ERR, "%.*s", log_len, log_buf);
+	
 	return 1;
 }
 
