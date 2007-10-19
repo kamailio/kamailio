@@ -49,6 +49,11 @@ int init_trusted(void);
  */
 void clean_trusted(void);
 
+/* prepare the DB cmds */
+int init_trusted_db(void);
+
+/* destroy the DB cmds */
+void destroy_trusted_db(void);
 
 /*
  * Check if request comes from trusted ip address with matching from URI

@@ -70,8 +70,7 @@ extern char* from_col;      /* Name of from pattern column */
 extern char* ipmatch_table; /* Name of trusted table */
 
 /* Database API */
-extern db_func_t	perm_dbf;
-extern db_con_t	*db_handle;
+extern db_ctx_t	*db_conn;
 
 #define DISABLE_CACHE 0
 #define ENABLE_CACHE 1

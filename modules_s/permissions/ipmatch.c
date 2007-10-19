@@ -38,8 +38,6 @@
 /* initialize ipmatch table */
 int init_ipmatch(void)
 {
-	if (!db_handle) return -1;
-
 	if (db_mode != ENABLE_CACHE) {
 		/* not an error, but ipmatch functions will not operate */
 		LOG(L_WARN, "WARNING: ipmatch_init(): Database cache is disabled, thus ipmatch functions cannot be used\n");

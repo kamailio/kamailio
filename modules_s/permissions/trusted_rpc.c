@@ -57,22 +57,10 @@ void trusted_reload(rpc_t* rpc, void* ctx)
 		return;
 	}
 
-	/* connect to the DB */
-	db_handle = perm_dbf.init(db_url);
-	if (!db_handle) {
-		LOG(L_ERR, "ERROR: Unable to connect to database\n");
-		rpc->fault(ctx, 400, "Trusted Table Reload Failed");
-		return;
-	}
-
 	/* reload cache */
 	if (reload_trusted_table() < 0) {
 		rpc->fault(ctx, 400, "Trusted Table Reload Failed");
 	}
-
-	/* close DB connection */
-	perm_dbf.close(db_handle);
-	db_handle = 0;
 }
 
 

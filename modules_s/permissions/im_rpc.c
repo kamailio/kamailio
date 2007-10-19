@@ -45,14 +45,6 @@ void im_reload(rpc_t *rpc, void *c)
 		return;
 	}
 
-	/* connect to the DB */
-	db_handle = perm_dbf.init(db_url);
-	if (!db_handle) {
-		LOG(L_ERR, "ERROR: Unable to connect to database\n");
-		rpc->fault(c, 400, "Reloading failed");
-		return;
-	}
-
 	if (reload_im_cache()) {
 		/* error occured during the reload */
 		LOG(L_ERR, "ERROR: Reloading of ipmatch cache failed\n");
@@ -61,9 +53,4 @@ void im_reload(rpc_t *rpc, void *c)
 		/* reload is successful */
 		LOG(L_INFO, "INFO: ipmatch cache is reloaded\n");
 	}
-
-	/* close DB connection */
-	perm_dbf.close(db_handle);
-	db_handle = 0;
-
 }

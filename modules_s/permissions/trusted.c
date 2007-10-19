@@ -47,18 +47,19 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 
-struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
-struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
-struct trusted_list **hash_table_2;   /* Pointer to hash table 2 */
+struct trusted_list ***hash_table = NULL;     /* Pointer to current hash table pointer */
+struct trusted_list **hash_table_1 = NULL;   /* Pointer to hash table 1 */
+struct trusted_list **hash_table_2 = NULL;;   /* Pointer to hash table 2 */
+
+/* DB commands to query and load the table */
+static db_cmd_t	*cmd_load_trusted = NULL;
+static db_cmd_t	*cmd_query_trusted = NULL;
 
 /*
  * Initialize data structures
  */
 int init_trusted(void)
 {
-	hash_table_1 = hash_table_2 = 0;
-	hash_table = 0;
-
 	if (db_mode == ENABLE_CACHE) {
 
 		hash_table_1 = new_hash_table();
@@ -80,9 +81,7 @@ int init_trusted(void)
 	return 0;
 
  error:
-	if (hash_table_1) free_hash_table(hash_table_1);
-	if (hash_table_2) free_hash_table(hash_table_2);
-	if (hash_table) shm_free(hash_table);
+	clean_trusted();
 	return -1;
 }
 
@@ -91,11 +90,72 @@ int init_trusted(void)
  */
 void clean_trusted(void)
 {
-	if (hash_table_1) free_hash_table(hash_table_1);
-	if (hash_table_2) free_hash_table(hash_table_2);
-	if (hash_table) shm_free(hash_table);
+	if (hash_table_1) {
+		free_hash_table(hash_table_1);
+		hash_table_1 = NULL;
+	}
+	if (hash_table_2) {
+		free_hash_table(hash_table_2);
+		hash_table_2 = NULL;
+	}
+	if (hash_table) {
+		shm_free(hash_table);
+		hash_table = NULL;
+	}
 }
 
+/* prepare the DB cmds */
+int init_trusted_db(void)
+{
+	db_fld_t load_res_cols[] = {
+		{.name = source_col,	.type = DB_STR},
+		{.name = proto_col,	.type = DB_STR},
+		{.name = from_col,	.type = DB_STR},
+		{.name = NULL}
+	};
+
+	db_fld_t query_match[] = {
+		{.name = source_col,	.type = DB_STR},
+		{.name = NULL}
+	};
+
+	db_fld_t query_res_cols[] = {
+		{.name = proto_col,	.type = DB_STR},
+		{.name = from_col,	.type = DB_STR},
+		{.name = NULL}
+	};
+
+	if (!db_conn) return -1;
+
+	if (db_mode == ENABLE_CACHE) {
+		cmd_load_trusted =
+			db_cmd(DB_GET, db_conn, trusted_table, load_res_cols, NULL, NULL);
+		if (!cmd_load_trusted)
+			goto error;
+	} else {
+		cmd_query_trusted =
+			db_cmd(DB_GET, db_conn, trusted_table, query_res_cols, query_match, NULL);
+		if (!cmd_query_trusted)
+			goto error;
+	}
+	return 0;
+error:
+	LOG(L_ERR, "init_trusted_db(): failed to prepare DB commands\n");
+	return -1;
+}
+
+/* destroy the DB cmds */
+void destroy_trusted_db(void)
+{
+	if (cmd_load_trusted) {
+		db_cmd_free(cmd_load_trusted);
+		cmd_load_trusted = NULL;
+	}
+	if (cmd_query_trusted) {
+		db_cmd_free(cmd_query_trusted);
+		cmd_query_trusted = NULL;
+	}
+}
 
 /*
  * Matches protocol string against the protocol of the request.  Returns 1 on
@@ -142,18 +202,25 @@ static inline int match_proto(char *proto_string, int proto_int)
 	return 0;
 }
 
+#define VAL_NULL_STR(fld) ( \
+		((fld).flags & DB_NULL) \
+		|| (((fld).type == DB_CSTR) && ((fld).v.cstr[0] == '\0')) \
+		|| (((fld).type == DB_STR) && \
+			(((fld).v.lstr.len == 0) || ((fld).v.lstr.s[0] == '\0'))) \
+	)
+
 /*
  * Matches from uri against patterns returned from database.  Returns 1 when
  * first pattern matches and 0 if none of the patterns match.
  */
 static int match_res(struct sip_msg* msg, db_res_t* _r)
 {
-	int i;
 	str uri;
 	char uri_string[MAX_URI_SIZE+1];
-	db_row_t* row;
-	db_val_t* val;
+	db_rec_t	*rec;
 	regex_t preg;
+
+	if (!_r) return -1;
 
 	if (parse_from_header(msg) < 0) return -1;
 	uri = get_from(msg)->uri;
@@ -164,30 +231,37 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 	memcpy(uri_string, uri.s, uri.len);
 	uri_string[uri.len] = (char)0;
 
-	row = RES_ROWS(_r);
+	rec = db_first(_r);
+	while (rec) {
 
-	for(i = 0; i < RES_ROW_N(_r); i++) {
-		val = ROW_VALUES(row + i);
-		if ((ROW_N(row + i) == 2) &&
-		    (VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
-		    match_proto((char *)VAL_STRING(val), msg->rcv.proto) &&
-		    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1)) {
-			if (regcomp(&preg, (char *)VAL_STRING(val + 1), REG_NOSUB)) {
-				LOG(L_ERR, "match_res(): Error in regular expression\n");
-				continue;
-			}
-			if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
-				regfree(&preg);
-				continue;
-			} else {
-				regfree(&preg);
-				return 1;
-			}
+		if (VAL_NULL_STR(rec->fld[0])
+		|| VAL_NULL_STR(rec->fld[1]))
+			goto next;
+
+		/* check the protocol */
+		if (!match_proto(rec->fld[0].v.cstr, msg->rcv.proto))
+			goto next;
+
+		/* check the from uri */
+		if (regcomp(&preg, rec->fld[1].v.cstr, REG_NOSUB)) {
+			LOG(L_ERR, "match_res(): Error in regular expression: %s\n",
+					rec->fld[0].v.cstr);
+			goto next;
 		}
+		if (regexec(&preg, uri_string, 0, (regmatch_t *)0, 0)) {
+			regfree(&preg);
+			goto next;
+		}
+		regfree(&preg);
+
+		/* everything matched */
+		return 1;
+
+next:
+		rec = db_next(_r);
 	}
 	return -1;
 }
-
 
 /*
  * Checks based on request's source address, protocol, and from field
@@ -198,11 +272,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 {
 	int result;
-	db_res_t* res;
-
-	db_key_t keys[1];
-	db_val_t vals[1];
-	db_key_t cols[2];
+	db_res_t	*res = NULL;
 
 	if (!db_url) {
 		LOG(L_ERR, "allow_trusted(): ERROR set db_mode parameter of permissions module first !\n");
@@ -210,41 +280,32 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 	}
 
 	if (db_mode == DISABLE_CACHE) {
-		keys[0] = source_col;
-		cols[0] = proto_col;
-		cols[1] = from_col;
+		if (!cmd_query_trusted) return -1;
 
-		if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
-			LOG(L_ERR, "allow_trusted(): Error while trying to use trusted table\n");
+		if (!(cmd_query_trusted->match[0].v.cstr =
+			ip_addr2a(&(_msg->rcv.src_ip)))
+		) {
+			LOG(L_ERR, "allow_trusted(): Error in ip address\n");
 			return -1;
 		}
-
-		VAL_TYPE(vals) = DB_STRING;
-		VAL_NULL(vals) = 0;
-		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
-
-		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 2, 0, &res) < 0){
+		if (db_exec(&res, cmd_query_trusted) < 0) {
 			LOG(L_ERR, "allow_trusted(): Error while querying database\n");
 			return -1;
 		}
 
-		if (RES_ROW_N(res) == 0) {
-			perm_dbf.free_result(db_handle, res);
-			return -1;
-		}
-
 		result = match_res(_msg, res);
-		perm_dbf.free_result(db_handle, res);
+
+		if (res) db_res_free(res);
 		return result;
+
 	} else if (db_mode == ENABLE_CACHE) {
 		return match_hash_table(*hash_table, _msg);
+
 	} else {
 		LOG(L_ERR, "allow_trusted(): Error - set db_mode parameter of permissions module properly\n");
 		return -1;
 	}
 }
-
-
 
 /*
  * Reload trusted table to new hash table and when done, make new hash table
@@ -252,27 +313,15 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
  */
 int reload_trusted_table(void)
 {
-	db_key_t cols[3];
-	db_res_t* res;
-	db_row_t* row;
-	db_val_t* val;
-
+	db_res_t	*res = NULL;
+	db_rec_t	*rec;
 	struct trusted_list **new_hash_table;
-	int i;
+	int row;
+	char	*source, *proto, *from;
 
-	cols[0] = source_col;
-	cols[1] = proto_col;
-	cols[2] = from_col;
+	if (!cmd_load_trusted) return -1;
 
-	if (!db_handle) return 1;
-
-	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
-		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
-				" Error while trying to use trusted table\n");
-		return -1;
-	}
-
-	if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 3, 0, &res) < 0) {
+	if (db_exec(&res, cmd_load_trusted) < 0) {
 		LOG(L_ERR, "ERROR: permissions: reload_trusted_table():"
 				" Error while querying database\n");
 		return -1;
@@ -287,42 +336,43 @@ int reload_trusted_table(void)
 		new_hash_table = hash_table_1;
 	}
 
-	row = RES_ROWS(res);
-
-	DBG("Number of rows in trusted table: %d\n", RES_ROW_N(res));
-
-	for (i = 0; i < RES_ROW_N(res); i++) {
-		val = ROW_VALUES(row + i);
-		if ((ROW_N(row + i) == 3) &&
-		    (VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
-		    (VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1) &&
-		    (VAL_TYPE(val + 2) == DB_STRING) && !VAL_NULL(val + 2)) {
-			if (hash_table_insert(new_hash_table,
-					       (char *)VAL_STRING(val),
-					       (char *)VAL_STRING(val + 1),
-					       (char *)VAL_STRING(val + 2)) == -1) {
-				LOG(L_ERR, "ERROR: permissions: "
-						"trusted_reload(): Hash table problem\n");
-				perm_dbf.free_result(db_handle, res);
-				perm_dbf.close(db_handle);
-				return -1;
-			}
-			DBG("Tuple <%s, %s, %s> inserted into trusted hash table\n",
-			    VAL_STRING(val), VAL_STRING(val + 1), VAL_STRING(val + 2));
-		} else {
+	row = 0;
+	rec = db_first(res);
+	while (rec) {
+		if (VAL_NULL_STR(rec->fld[0])
+		|| VAL_NULL_STR(rec->fld[1])
+		|| VAL_NULL_STR(rec->fld[2])) {
 			LOG(L_ERR, "ERROR: permissions: trusted_reload():"
-					" Database problem\n");
-			perm_dbf.free_result(db_handle, res);
-			perm_dbf.close(db_handle);
-			return -1;
+				" Database problem, NULL filed is not allowed\n");
+			goto error;
 		}
-	}
+		source = rec->fld[0].v.cstr;
+		proto = rec->fld[1].v.cstr;
+		from = rec->fld[2].v.cstr;
 
-	perm_dbf.free_result(db_handle, res);
+		if (hash_table_insert(new_hash_table,
+					source,
+					proto,
+					from) == -1) {
+			LOG(L_ERR, "ERROR: permissions: "
+					"trusted_reload(): Hash table problem\n");
+			goto error;
+		}
+		DBG("Tuple <%s, %s, %s> inserted into trusted hash table\n",
+			source, proto, from);
+
+		row++;
+		rec = db_next(res);
+	}
+	DBG("Number of rows in trusted table: %d\n", row);
 
 	*hash_table = new_hash_table;
-
 	DBG("Trusted table reloaded successfully.\n");
 
+	if (res) db_res_free(res);
 	return 1;
+
+error:
+	if (res) db_res_free(res);
+	return -1;
 }

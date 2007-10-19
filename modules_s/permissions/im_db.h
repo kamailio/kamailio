@@ -31,6 +31,12 @@
 
 #include "../../db/db.h"
 
+/* prepare the DB cmds */
+int init_im_db(void);
+
+/* destroy the DB cmds */
+void destroy_im_db(void);
+
 /* reload DB cache
  * return value
  *   0: success

@@ -44,6 +44,7 @@
 #include "trusted.h"
 #include "allow_files.h"
 #include "ipmatch.h"
+#include "im_db.h"
 #include "permissions_rpc.h"
 
 MODULE_VERSION
@@ -77,11 +78,7 @@ char* from_col = "from_pattern";   /* Name of from pattern column */
 char	*ipmatch_table = "ipmatch";
 
 /* Database API */
-db_func_t	perm_dbf;
-db_con_t	*db_handle = 0;
-
-#define TRUSTED_TABLE_VERSION	1
-#define IPMATCH_TABLE_VERSION	1
+db_ctx_t	*db_conn = NULL;
 
 /* fixup function prototypes */
 static int fixup_files_1(void** param, int param_no);
@@ -233,25 +230,33 @@ static int fixup_files_1(void** param, int param_no)
 	return 0;
 }
 
-/* checks if the DB table is up-to-date */
-static int check_table_version(char *_name, int _version) {
-	str	db_table;
-	int	ver;
-
-	db_table.s = _name;
-	db_table.len = strlen(_name);
-	ver = table_version(&perm_dbf, db_handle, &db_table);
-
-	if (ver <= 0) {
-		LOG(L_ERR, "ERROR: Error while quering version for sql table '%s'\n", _name);
+/* connect to the database */
+static int perm_init_db(void)
+{
+	db_conn = db_ctx("permissions");
+	if (db_conn == NULL) {
+		LOG(L_ERR, "perm_init_db(): Unable to create database context\n");
 		return -1;
 	}
-	if (ver < _version) {
-		LOG(L_ERR, "ERROR: version of sql table '%s' is invalid (%d instead of %d)" \
-			", update table structure!\n", _name, ver, _version);
+	if (db_add_db(db_conn, db_url) < 0) {
+		LOG(L_ERR, "perm_init_db(): cannot add the url to database context\n");
+		return -1;
+	}
+	if (db_connect(db_conn) < 0) {
+		LOG(L_ERR, "perm_init_db(): Unable to connect to database\n");
 		return -1;
 	}
 	return 0;
+}
+
+/* destroy the DB connection */
+static void perm_destroy_db(void)
+{
+	if (db_conn) {
+		db_disconnect(db_conn);
+		db_ctx_free(db_conn);
+		db_conn = NULL;
+	}
 }
 
 /*
@@ -263,68 +268,100 @@ static int mod_init(void)
 
 	/* do not load the files if not necessary */
 	if (strlen(default_allow_file) || strlen(default_deny_file)) {
-		if (load_file(default_allow_file, &allow, &allow_rules_num, 1) != 0) return -1;
-		if (load_file(default_deny_file, &deny, &deny_rules_num, 1) != 0) return -1;
+		if (load_file(default_allow_file, &allow, &allow_rules_num, 1) != 0) goto error;
+		if (load_file(default_deny_file, &deny, &deny_rules_num, 1) != 0) goto error;
 	}
 
-	if (db_url) {
-		/* database backend is enabled */
-		if (bind_dbmod(db_url, &perm_dbf)) {
-			LOG(L_ERR, "ERROR: unable to bind database module, load it first!\n");
-			return -1;
-		}
-		db_handle = perm_dbf.init(db_url);
-		if (!db_handle) {
-			LOG(L_ERR, "ERROR: Unable to connect to database\n");
-			return -1;
-		}
+	if (db_url && (db_mode == ENABLE_CACHE)) {
+		/* database backend is enabled, and cache is requested -- load the DB */
+		if (perm_init_db()) goto error;
 
-		/* check trusted table version */
-		if (check_table_version(trusted_table, TRUSTED_TABLE_VERSION)) {
-			perm_dbf.close(db_handle);
-			return -1;
-		}
-
-		/* check ipmatch table version */
-		if (check_table_version(ipmatch_table, IPMATCH_TABLE_VERSION)) {
-			perm_dbf.close(db_handle);
-			return -1;
+		/* prepare DB commands for trusted table */
+		if (init_trusted_db()) {
+			LOG(L_ERR, "Error while preparing DB commands for trusted table\n");
+			goto error;
 		}
 
 		/* init trusted tables */
 		if (init_trusted() != 0) {
 			LOG(L_ERR, "Error while initializing allow_trusted function\n");
-			perm_dbf.close(db_handle);
-			return -1;
+			goto error;
+		}
+
+		/* prepare DB commands for ipmatch table */
+		if (init_im_db()) {
+			LOG(L_ERR, "Error while preparing DB commands for ipmatch table\n");
+			goto error;
 		}
 
 		/* init ipmatch table */
 		if (init_ipmatch() != 0) {
 			LOG(L_ERR, "Error while initializing ipmatch table\n");
-			perm_dbf.close(db_handle);
-			return -1;
+			goto error;
 		}
 		
-		perm_dbf.close(db_handle);
-		db_handle = 0;
+		/* Destory DB connection, we do not need it anymore,
+		each child process will create its own connection */
+		destroy_trusted_db();
+		destroy_im_db();
+		perm_destroy_db();
 	}
 
 	return 0;
+
+error:
+	/* free file containers */
+	delete_files(&allow, allow_rules_num);
+	delete_files(&deny, deny_rules_num);
+
+	/* destroy DB cmds */
+	destroy_trusted_db();
+	destroy_im_db();
+
+	/* destory DB connection */
+	perm_destroy_db();
+
+	/* free the cache */
+	clean_trusted();
+	clean_ipmatch();
+
+	return -1;
 }
 
 static int child_init(int rank)
 {
-	if (rank <= 0) return 0;
+	if ((rank <= 0) && (rank != PROC_RPC) && (rank != PROC_UNIXSOCK))
+		return 0;
 
-	if (db_url && (db_mode == DISABLE_CACHE)) {
-		/* we need DB connection for each child */
-		db_handle = perm_dbf.init(db_url);
-		if (!db_handle) {
-			LOG(L_CRIT, "ERROR: Unable to connect to database\n");
-			return -1;
+	if (db_url) {
+		/* Connect to the DB regarless of cache or non-cache mode,
+		because we either have to query the DB runtime, or reload
+		the cache via RPC call */
+		if (perm_init_db()) goto error;
+
+		/* prepare DB commands for trusted tables */
+		if (init_trusted_db()) {
+			LOG(L_ERR, "Error while preparing DB commands for trusted table\n");
+			goto error;
+		}
+
+		/* prepare DB commands for ipmatch tables */
+		if (init_im_db()) {
+			LOG(L_ERR, "Error while preparing DB commands for ipmatch table\n");
+			goto error;
 		}
 	}
 	return 0;
+
+error:
+	/* destroy DB cmds */
+	destroy_trusted_db();
+	destroy_im_db();
+
+	/* destroy DB connection */
+	perm_destroy_db();
+
+	return -1;
 }
 
 /*

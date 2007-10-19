@@ -31,7 +31,48 @@
 #include "im_locks.h"
 #include "im_db.h"
 
-#define VAL_NULL_STRING(dv)	((dv)->val.string_val[0] == '\0')
+/* DB commands to load the table */
+static db_cmd_t	*cmd_load_im = NULL;
+
+/* prepare the DB cmds */
+int init_im_db(void)
+{
+	db_fld_t load_res_cols[] = {
+		{.name = "ip",		.type = DB_STR},
+		{.name = "avp_val",	.type = DB_STR},
+		{.name = "mark",	.type = DB_BITMAP},
+		{.name = "flags",	.type = DB_BITMAP},
+		{.name = NULL}
+	};
+
+	if (db_mode != ENABLE_CACHE) return 0; /* nothing to do */
+	if (!db_conn) return -1;
+
+	cmd_load_im =
+		db_cmd(DB_GET, db_conn, ipmatch_table, load_res_cols, NULL, NULL);
+
+	if (!cmd_load_im) {
+		LOG(L_ERR, "init_im_db(): failed to prepare DB commands\n");
+		return -1;
+	}
+	return 0;
+}
+
+/* destroy the DB cmds */
+void destroy_im_db(void)
+{
+	if (cmd_load_im) {
+		db_cmd_free(cmd_load_im);
+		cmd_load_im = NULL;
+	}
+}
+
+#define VAL_NULL_STR(fld) ( \
+		((fld).flags & DB_NULL) \
+		|| (((fld).type == DB_CSTR) && ((fld).v.cstr[0] == '\0')) \
+		|| (((fld).type == DB_STR) && \
+			(((fld).v.lstr.len == 0) || ((fld).v.lstr.s[0] == '\0'))) \
+	)
 
 /*
  * reads the table from SQL database, and inserts the IP addresses into
@@ -40,66 +81,60 @@
  */
 static int load_db(im_entry_t **hash)
 {
-	db_res_t	*res;
-	db_val_t	*val;
-	int		i, row_num, found;
+	db_res_t	*res = NULL;
+	db_rec_t	*rec;
+	int		found;
 	char		*ip, *avp_val;
 	unsigned int	flags, mark;
 
-	if (!hash || !db_handle) return -1;
+	if (!hash || !cmd_load_im) return -1;
 
-	if (perm_dbf.use_table(db_handle, ipmatch_table) < 0) {
-                LOG(L_ERR, "ERROR: load_db(): Error while trying to use ipmatch table\n");
-		return -1;
-	}
-
-        if (perm_dbf.query(db_handle, 0, 0, 0, 0, 0, 0, 0, &res) < 0) {
+	if (db_exec(&res, cmd_load_im) < 0) {
                 LOG(L_ERR, "ERROR: load_db(): Error while querying database\n");
                 return -1;
         }
 
-	row_num = RES_ROW_N(res);
-	LOG(L_DBG, "DEBUG: load_db(): number of rows in ipmatch table: %d\n", row_num); 
-
-	if (!row_num) {
-                LOG(L_WARN, "WARNING: load_db(): ipmatch table is empty!\n");
-		perm_dbf.free_result(db_handle, res);
-	        return -2;
-	}
-
 	found = 0;
-	for (i = 0; i < row_num; i++) {
-
+	rec = db_first(res);
+	while (rec) {
 		/* get every value of the row */
 		/* start with flags */
-		flags = RES_ROWS(res)[i].values[3].val.int_val;
+		if (rec->fld[3].flags & DB_NULL) goto skip;
+		flags = rec->fld[3].v.bitmap;
 		if ((flags & DB_DISABLED)
-		|| ((flags & DB_LOAD_SER) == 0)) continue;
+		|| ((flags & DB_LOAD_SER) == 0)) goto skip;
 
-		found = 1;
-		val = &(RES_ROWS(res)[i].values[0]); /* get IP address */
-		if (VAL_NULL(val) || VAL_NULL_STRING(val)) {
+		found++;
+		/* get IP address */
+		if (VAL_NULL_STR(rec->fld[0])) {
 			LOG(L_ERR, "ERROR: load_db(): ip address can not be NULL!\n");
 			goto error;
 		}
-		ip = (char *)val->val.string_val;
+		ip = rec->fld[0].v.cstr;
 
-		val = &(RES_ROWS(res)[i].values[1]);	/* output AVP value */
-		if (!VAL_NULL(val) && !VAL_NULL_STRING(val)) avp_val = (char *)val->val.string_val;
-		else avp_val = NULL;
+		/* output AVP value */
+		if (!VAL_NULL_STR(rec->fld[1]))
+			avp_val = rec->fld[1].v.cstr;
+		else
+			avp_val = NULL;
 
-		mark = RES_ROWS(res)[i].values[2].val.int_val;	/* get mark */
+		if (rec->fld[2].flags & DB_NULL)
+			mark = rec->fld[2].v.bitmap;	/* get mark */
+		else
+			mark = (unsigned int)-1;	/* will match eveything */
 
 		/* create a new entry and insert it into the hash table */
 		if (insert_im_hash(ip, avp_val, mark, hash)) {
 			LOG(L_ERR, "ERROR: load_db(): could not insert entry into the hash table\n");
 			goto error;
 		}
-
+skip:
+		rec = db_next(res);
 	}
 
-	perm_dbf.free_result(db_handle, res);
+	if (res) db_res_free(res);
 	if (found) {
+		LOG(L_DBG, "DEBUG: load_db(): number of rows in ipmatch table: %d\n", found); 
 		return 0;
 	} else {
 		LOG(L_WARN, "WARNING: load_db(): there is no active row in ipmatch table!\n");
@@ -107,7 +142,7 @@ static int load_db(im_entry_t **hash)
 	}
 
 error:
-	perm_dbf.free_result(db_handle, res);
+	if (res) db_res_free(res);
 	return -1;
 }
 
