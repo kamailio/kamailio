@@ -67,10 +67,11 @@ db_con_t* flat_db_init(const char* url)
 		return 0;
 	}
 
-	     /* We do not know the name of the table (and the name of the corresponding file)
-	      * at this point, we will simply store the path taken from url parameter in the
-	      * table variable, flat_use_table will then pick that value and open file
-	      */
+	/* We do not know the name of the table (and the name of the corresponding
+	 * file) at this point, we will simply store the path taken from url 
+	 * parameter in the table variable, flat_use_table will then pick that 
+	 * value and open file
+	 */
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct flat_con*));
 	if (!res) {
 		LM_ERR("no pkg memory left\n");
@@ -153,15 +154,15 @@ int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
 	int l;
 	char *s, *p;
 
+	if (local_timestamp < *flat_rotate) {
+		flat_rotate_logs();
+		local_timestamp = *flat_rotate;
+	}
+
 	f = CON_FILE(h);
 	if (!f) {
 		LM_ERR("uninitialized connection\n");
 		return -1;
-	}
-
-	if (local_timestamp < *flat_rotate) {
-		flat_rotate_logs();
-		local_timestamp = *flat_rotate;
 	}
 
 	for(i = 0; i < n; i++) {
