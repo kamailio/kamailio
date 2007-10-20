@@ -53,30 +53,30 @@
         <size>11</size>
         <description>Document type</description>
     </column>
-	
-	<column id="etag">
+
+    <column id="etag">
         <name>etag</name>
         <type>string</type>
         <size>&user_len;</size>
         <description>Document Etag</description>
     </column>
 
-	<column id="source">
+    <column id="source">
         <name>source</name>
         <type>int</type>
         <size>11</size>
         <description>Entity inserting the record</description>
     </column>
-	
-	<column id="doc_uri">
-		<name>doc_uri</name>
+
+    <column id="doc_uri">
+        <name>doc_uri</name>
         <type>string</type>
         <size>&uri_len;</size>
         <description>Document uri</description>
     </column>
 
-	<column id="port">
-		<name>port</name>
+    <column id="port">
+        <name>port</name>
         <type>int</type>
         <size>11</size>
         <description>XCAP server port</description>
@@ -90,9 +90,9 @@
         <unique/>
     </index>
 
-	<index>
-		<name>source_xcap</name>
-		<colref linkend="source"/>
-	</index>
+    <index>
+        <name>source_xcap</name>
+        <colref linkend="source"/>
+    </index>
 
 </table>

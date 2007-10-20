@@ -12,8 +12,8 @@
     <version>0</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-		<db:para>Table for RLS module used for storing resource lists subscribe
-			information.
+        <db:para>Table for RLS module used for storing resource lists subscribe
+                 information.
         </db:para>
     </description>
 
@@ -137,13 +137,13 @@
 
     <column>
         <name>status</name>
-		<type>int</type>
+        <type>int</type>
         <size>11</size>
         <default>2</default>
         <description>Status</description>
     </column>
-	
-	<column>
+
+    <column>
         <name>reason</name>
         <type>string</type>
         <size>&user_len;</size>
@@ -171,8 +171,8 @@
         <size>&uri_len;</size>
         <description>Local contact</description>
     </column>
-	
-	<index>
+
+    <index>
         <name>pctt_rlwatchers</name>
         <colref linkend="pres_uri"/>
         <colref linkend="callid"/>

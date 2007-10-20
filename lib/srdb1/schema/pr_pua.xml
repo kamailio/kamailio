@@ -54,8 +54,8 @@
         <size>&expires_len;</size>
         <description>Expires</description>
     </column>
-	
-	<column>
+
+    <column>
         <name>desired_expires</name>
         <type>int</type>
         <size>&expires_len;</size>
@@ -124,20 +124,20 @@
         <null/>
         <description>Record route</description>
     </column>
-   
-	<column>
+
+    <column>
         <name>contact</name>
         <type>string</type>
-		<size>&uri_len;</size>
-		<description>Contact</description>
+        <size>&uri_len;</size>
+        <description>Contact</description>
     </column>
 
     <column>
         <name>version</name>
         <type>int</type>
         <size>11</size>
-	</column>
-	<column>
+        </column>
+        <column>
         <name>extra_headers</name>
         <type>text</type>
         <description>Extra Headers</description>

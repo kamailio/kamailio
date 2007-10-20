@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.0//EN"
-	  "http://openser.org/pub/openser/dbschema/dtd/1.0/dbschema.dtd"[
-  <!ENTITY % entities SYSTEM "entities.xml">
-  %entities;
+    "http://openser.org/pub/openser/dbschema/dtd/1.0/dbschema.dtd"[
+    <!ENTITY % entities SYSTEM "entities.xml">
+    %entities;
 
 ]>
 
@@ -11,13 +11,13 @@
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
 
     <column id="tn">
-	<name>table_name</name>
-	<type>string</type>
-	<size>32</size>
+        <name>table_name</name>
+        <type>string</type>
+        <size>32</size>
     </column>
     <column id="tv">
-	<name>table_version</name>
-	<type>unsigned int</type>
-	<default>0</default>
+        <name>table_version</name>
+        <type>unsigned int</type>
+        <default>0</default>
     </column>
 </table>

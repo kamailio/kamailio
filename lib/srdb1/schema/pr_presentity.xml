@@ -81,6 +81,6 @@
         <colref linkend="event"/>
         <colref linkend="etag"/>
         <unique/>
-	</index>
+    </index>
 
 </table>

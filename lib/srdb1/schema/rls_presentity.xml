@@ -12,8 +12,8 @@
     <version>0</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-		<db:para>Table for the RLS module.
-		</db:para>
+        <db:para>Table for the RLS module.
+        </db:para>
     </description>
 
     <column id="id">
@@ -42,7 +42,7 @@
     </column>
 
     <column>
-		<name>content_type</name>
+        <name>content_type</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>Event</description>
@@ -59,8 +59,8 @@
         <size>&expires_len;</size>
         <description>Expires</description>
     </column>
-	
-	<column id="updated">
+
+    <column id="updated">
         <name>updated</name>
         <type>int</type>
         <size>&expires_len;</size>
@@ -73,26 +73,25 @@
         <size>&expires_len;</size>
         <description>Watcher authorization state</description>
     </column>
-   
-	<column>
+
+    <column>
         <name>reason</name>
         <type>string</type>
         <size>&user_len;</size>
-		<description>reason for watcher authorization state</description>
+        <description>reason for watcher authorization state</description>
     </column>
-
 
     <index>
         <name>udid_rlspres</name>
         <colref linkend="rlsubs_did"/>
         <colref linkend="resource_uri"/>
         <unique/>
-	</index>
-	
-	<index>
+    </index>
+
+    <index>
         <name>u_rlspres</name>
         <colref linkend="updated"/>
         <unique/>
-	</index>
+    </index>
 
 </table>

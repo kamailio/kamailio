@@ -33,8 +33,8 @@
         <size>&uri_len;</size>
         <description>Presence URI</description>
     </column>
-   
-	<column>
+
+    <column>
         <name>watcher_username</name>
         <type>string</type>
         <size>&user_len;</size>
@@ -62,7 +62,6 @@
         <description>To Domain</description>
     </column>
 
-  
     <column>
         <name>event</name>
         <type>string</type>
@@ -137,13 +136,13 @@
 
     <column>
         <name>status</name>
-		<type>int</type>
+        <type>int</type>
         <size>11</size>
         <default>2</default>
         <description>Status</description>
     </column>
-	
-	<column>
+
+    <column>
         <name>reason</name>
         <type>string</type>
         <size>&user_len;</size>

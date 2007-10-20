@@ -12,7 +12,7 @@
     <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-	    <db:para>This table us used by the avpops module to implement Attribute Value Pairs (AVP's). More information about the avpops module can be found at: &OPENSER_MOD_DOC;avpops.html
+        <db:para>This table us used by the avpops module to implement Attribute Value Pairs (AVP's). More information about the avpops module can be found at: &OPENSER_MOD_DOC;avpops.html
         </db:para>
     </description>
 
@@ -94,4 +94,5 @@
         <colref linkend="domain"/>
         <colref linkend="attribute"/>
     </index>
+
 </table>

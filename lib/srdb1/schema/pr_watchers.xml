@@ -47,8 +47,8 @@
         <size>&domain_len;</size>
         <description>Watcher Domain</description>
     </column>
-	
-	<column id="event">
+
+    <column id="event">
         <name>event</name>
         <type>string</type>
         <size>&user_len;</size>
@@ -58,8 +58,8 @@
 
     <column>
         <name>status</name>
-		<type>int</type>
-		<size>11</size>
+        <type>int</type>
+        <size>11</size>
         <description>Status</description>
     </column>
 
@@ -85,4 +85,5 @@
         <colref linkend="event"/>
         <unique/>
     </index>
+
 </table>

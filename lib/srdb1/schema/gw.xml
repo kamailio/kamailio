@@ -13,93 +13,94 @@
     <version>5</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-	<db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
-		More information can be found at: &OPENSER_MOD_DOC;lcr.html.
-	</db:para>
+        <db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
+                 More information can be found at: &OPENSER_MOD_DOC;lcr.html.
+        </db:para>
     </description>
 
     <column id="id">
-	<name>id</name>
-	<type>unsigned int</type>
-	<size>&table_id_len;</size>
-	<autoincrement/>
-	<primary/>
-	<type db="postgres">SERIAL PRIMARY KEY</type>
-	<type db="dbtext">int,auto</type>
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
+        <type db="dbtext">int,auto</type>
     </column>
 
     <column id="gw_name">
-	<name>gw_name</name>
-	<type>string</type>
-	<size>128</size>
-	<description>Gateway Name</description>
+        <name>gw_name</name>
+        <type>string</type>
+        <size>128</size>
+        <description>Gateway Name</description>
     </column>
 
     <column id="grp_id">
-	    <name>grp_id</name>
-	    <type>unsigned int</type>
-	    <description>Gateway ID</description>
+        <name>grp_id</name>
+        <type>unsigned int</type>
+        <description>Gateway ID</description>
     </column>
 
     <column>
-	    <name>ip_addr</name>
-	    <type>string</type>
-	    <size>15</size>
-	    <description>IP Address of the gateway</description>
+        <name>ip_addr</name>
+        <type>string</type>
+        <size>15</size>
+        <description>IP Address of the gateway</description>
     </column>
 
     <column>
-	<name>port</name>
-	<type>unsigned short</type>
-	<null/>
-	<description>Port of the gateway</description>
+        <name>port</name>
+        <type>unsigned short</type>
+        <null/>
+        <description>Port of the gateway</description>
     </column>
 
     <column>
-	<name>uri_scheme</name>
-	<type>unsigned char</type>
-	<null/>
-	<description>URI scheme of the gateway</description>
+        <name>uri_scheme</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>URI scheme of the gateway</description>
     </column>
 
     <column>
-	<name>transport</name>
-	<type>unsigned char</type>
-	<null/>
-	<description>Transport type to be used for the gateway</description>
+        <name>transport</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>Transport type to be used for the gateway</description>
     </column>
 
     <column>
-	    <name>strip</name>
-	    <type>unsigned char</type>
-	    <null/>
-	    <description>The number of digits to strip from the RURI before applying the prefix.</description>
+        <name>strip</name>
+        <type>unsigned char</type>
+        <null/>
+        <description>The number of digits to strip from the RURI before applying the prefix.</description>
     </column>
 
     <column>
-	    <name>prefix</name>
-	    <type>string</type>
-	    <size>16</size>
-	    <null/>
-	    <default><null/></default>
-	    <description>The R-URI(destination) prefix</description>
+        <name>prefix</name>
+        <type>string</type>
+        <size>16</size>
+        <null/>
+        <default><null/></default>
+        <description>The R-URI(destination) prefix</description>
     </column>
 
     <column>
-	    <name>dm</name>
-	    <type>unsigned char</type>
-	    <default>&DEFAULT_DM;</default>
-	    <description>Does gateway support directed media (0 = no, 1 = yes)</description>
+        <name>dm</name>
+        <type>unsigned char</type>
+        <default>&DEFAULT_DM;</default>
+        <description>Does gateway support directed media (0 = no, 1 = yes)</description>
     </column>
 
     <index>
-	<name>name_gw</name>
-	<colref linkend="gw_name"/>
-	<unique/>
+        <name>name_gw</name>
+        <colref linkend="gw_name"/>
+        <unique/>
     </index>
 
     <index>
-	<name>gid_gw</name>
-	<colref linkend="grp_id"/>
+        <name>gid_gw</name>
+        <colref linkend="grp_id"/>
     </index>
+
 </table>

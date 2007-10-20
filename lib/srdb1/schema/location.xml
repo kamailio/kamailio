@@ -13,41 +13,41 @@
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Persistent user location information for the usrloc module. More information can be found at: &OPENSER_MOD_DOC;usrloc.html
-	</db:para>
+        </db:para>
     </description>
 
     <column id="id">
-	<name>id</name>
-	<type>unsigned int</type>
-	<size>&table_id_len;</size>
-	<autoincrement/>
-	<primary/>
-	<type db="postgres">SERIAL PRIMARY KEY</type>
-	<type db="dbtext">int,auto</type>
-	<description>unique ID</description>
+        <name>id</name>
+        <type>unsigned int</type>
+        <size>&table_id_len;</size>
+        <autoincrement/>
+        <primary/>
+        <type db="postgres">SERIAL PRIMARY KEY</type>
+        <type db="dbtext">int,auto</type>
+        <description>unique ID</description>
     </column>
 
     <column id="username">
-	    <name>&USERCOL;</name>
-	    <type>string</type>
-	    <size>&user_len;</size>
-            <default/>
-            <description>Alias Username / Phone Number </description>
+        <name>&USERCOL;</name>
+        <type>string</type>
+        <size>&user_len;</size>
+        <default/>
+        <description>Alias Username / Phone Number </description>
     </column>
 
     <column id="domain">
-	<name>domain</name>
-	<type>string</type>
-	<size>&domain_len;</size>
+        <name>domain</name>
+        <type>string</type>
+        <size>&domain_len;</size>
         <default/>
-	<description>Domain name</description>
+        <description>Domain name</description>
     </column>
 
     <column id="contact">
-	<name>contact</name>
-	<type>string</type>
-	<size>&hf_len;</size>
-	<default/>
+        <name>contact</name>
+        <type>string</type>
+        <size>&hf_len;</size>
+        <default/>
         <description>Contact header field value provides a URI whoses meaning depends on the type of request or response it is in.</description>
     </column>
 
@@ -150,9 +150,10 @@
     </column>
 
     <index>
-	<name>udc_loc</name>
-	<colref linkend="username"/>
-	<colref linkend="domain"/>
+        <name>udc_loc</name>
+        <colref linkend="username"/>
+        <colref linkend="domain"/>
         <colref linkend="contact"/>
     </index>
+
 </table>
