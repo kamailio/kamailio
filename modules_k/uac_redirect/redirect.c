@@ -136,10 +136,10 @@ int get_nr_max(char *s, unsigned char *max)
 static int get_redirect_fixup(void** param, int param_no)
 {
 	unsigned char maxb,maxt;
+	struct acc_param *accp;
 	cmd_function fct;
 	char *p;
 	char *s;
-	str  *reason;
 
 	s = (char*)*param;
 	if (param_no==1) {
@@ -178,19 +178,20 @@ static int get_redirect_fixup(void** param, int param_no)
 		}
 		rd_acc_fct = fct;
 		/* set the reason str */
-		reason = (str*)pkg_malloc(sizeof(str));
-		if (reason==0) {
+		accp = (struct acc_param*)pkg_malloc(sizeof(struct acc_param));
+		if (accp==0) {
 			LM_ERR("no more pkg mem\n");
 			return E_UNSPEC;
 		}
+		memset( accp, 0, sizeof(struct acc_param));
 		if (s!=0 && *s!=0) {
-			reason->s = s;
-			reason->len = strlen(s);
+			accp->reason.s = s;
+			accp->reason.len = strlen(s);
 		} else {
-			reason->s = "n/a";
-			reason->len = 3;
+			accp->reason.s = "n/a";
+			accp->reason.len = 3;
 		}
-		*param=(void*)reason;
+		*param=(void*)accp;
 	}
 
 	return 0;
@@ -342,13 +343,14 @@ static int w_get_redirect2(struct sip_msg* msg, char *max_c, char *reason)
 	msg_tracer( msg, 0);
 	/* get the contacts */
 	max = (unsigned short)(long)max_c;
-	n = get_redirect( msg , (max>>8)&0xff, max&0xff, (str*)reason);
+	n = get_redirect(msg , (max>>8)&0xff, max&0xff, (struct acc_param*)reason);
 	reset_filters();
 	/* reset the tracer */
 	msg_tracer( msg, 1);
 
 	return n;
 }
+
 
 static int w_get_redirect1(struct sip_msg* msg, char *max_c, char *foo)
 {
