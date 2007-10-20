@@ -350,7 +350,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if ( (dlg_db_mode==DB_MODE_REALTIME && rank>0) ||
+	if ( (dlg_db_mode==DB_MODE_REALTIME && (rank>0 || rank==PROC_TIMER)) ||
 	(dlg_db_mode==DB_MODE_DELAYED && (rank==PROC_MAIN || rank==PROC_TIMER ||
 	rank>0) )){
 		if ( dlg_connect_db(db_url) ) {
