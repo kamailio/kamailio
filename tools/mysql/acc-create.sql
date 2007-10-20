@@ -8,7 +8,7 @@ CREATE TABLE acc (
     sip_code VARCHAR(3) NOT NULL DEFAULT '',
     sip_reason VARCHAR(32) NOT NULL DEFAULT '',
     time DATETIME NOT NULL,
-    KEY acc_callid_idx (callid)
+    KEY callid_idx (callid)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('missed_calls','3');
@@ -21,6 +21,6 @@ CREATE TABLE missed_calls (
     sip_code VARCHAR(3) NOT NULL DEFAULT '',
     sip_reason VARCHAR(32) NOT NULL DEFAULT '',
     time DATETIME NOT NULL,
-    KEY mc_callid_idx (callid)
+    KEY callid_idx (callid)
 ) ENGINE=MyISAM;
 

@@ -10,10 +10,10 @@ CREATE TABLE gw (
     strip SMALLINT,
     prefix VARCHAR(16) DEFAULT NULL,
     dm SMALLINT NOT NULL DEFAULT 1,
-    CONSTRAINT name_gw UNIQUE (gw_name)
+    CONSTRAINT gw_name_idx UNIQUE (gw_name)
 );
 
-CREATE INDEX gid_gw ON gw (grp_id);
+CREATE INDEX grp_id_idx ON gw (grp_id);
 
 INSERT INTO version (table_name, table_version) values ('gw_grp','1');
 CREATE TABLE gw_grp (
@@ -30,7 +30,7 @@ CREATE TABLE lcr (
     priority SMALLINT NOT NULL
 );
 
-CREATE INDEX lcr_prefix_idx ON lcr (prefix);
-CREATE INDEX lcr_from_uri_idx ON lcr (from_uri);
-CREATE INDEX lcr_grp_id_idx ON lcr (grp_id);
+CREATE INDEX prefix_idx ON lcr (prefix);
+CREATE INDEX from_uri_idx ON lcr (from_uri);
+CREATE INDEX grp_id_idx ON lcr (grp_id);
 

@@ -9,6 +9,6 @@ CREATE TABLE speed_dial (
     fname VARCHAR(64) NOT NULL DEFAULT '',
     lname VARCHAR(64) NOT NULL DEFAULT '',
     description VARCHAR(64) NOT NULL DEFAULT '',
-    UNIQUE KEY udss_sd (username, domain, sd_domain, sd_username)
+    UNIQUE KEY speed_dial_idx (username, domain, sd_domain, sd_username)
 ) ENGINE=MyISAM;
 

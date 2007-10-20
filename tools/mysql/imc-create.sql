@@ -4,7 +4,7 @@ CREATE TABLE imc_rooms (
     name VARCHAR(64) NOT NULL,
     domain VARCHAR(64) NOT NULL,
     flag INT(11) NOT NULL,
-    UNIQUE KEY nd_imc (name, domain)
+    UNIQUE KEY name_domain_idx (name, domain)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('imc_members','1');
@@ -14,6 +14,6 @@ CREATE TABLE imc_members (
     domain VARCHAR(64) NOT NULL,
     room VARCHAR(64) NOT NULL,
     flag INT(11) NOT NULL,
-    UNIQUE KEY ndr_imc (username, domain, room)
+    UNIQUE KEY account_room_idx (username, domain, room)
 ) ENGINE=MyISAM;
 

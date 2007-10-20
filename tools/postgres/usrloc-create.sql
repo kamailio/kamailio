@@ -10,7 +10,7 @@ CREATE TABLE location (
     q REAL NOT NULL DEFAULT 1.0,
     callid VARCHAR(255) NOT NULL DEFAULT 'Default-Call-ID',
     cseq INTEGER NOT NULL DEFAULT 13,
-    last_modified TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00',
+    last_modified TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01',
     flags INTEGER NOT NULL DEFAULT 0,
     cflags INTEGER NOT NULL DEFAULT 0,
     user_agent VARCHAR(255) NOT NULL DEFAULT '',
@@ -18,5 +18,5 @@ CREATE TABLE location (
     methods INTEGER DEFAULT NULL
 );
 
-CREATE INDEX udc_loc ON location (username, domain, contact);
+CREATE INDEX account_contact_idx ON location (username, domain, contact);
 

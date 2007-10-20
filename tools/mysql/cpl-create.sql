@@ -5,6 +5,6 @@ CREATE TABLE cpl (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     cpl_xml TEXT,
     cpl_bin TEXT,
-    UNIQUE KEY ud_cpl (username, domain)
+    UNIQUE KEY account_idx (username, domain)
 ) ENGINE=MyISAM;
 

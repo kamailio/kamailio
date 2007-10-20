@@ -10,8 +10,8 @@ CREATE TABLE gw (
     strip TINYINT UNSIGNED,
     prefix VARCHAR(16) DEFAULT NULL,
     dm TINYINT UNSIGNED NOT NULL DEFAULT 1,
-    UNIQUE KEY name_gw (gw_name),
-    KEY gid_gw (grp_id)
+    UNIQUE KEY gw_name_idx (gw_name),
+    KEY grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('gw_grp','1');
@@ -27,8 +27,8 @@ CREATE TABLE lcr (
     from_uri VARCHAR(64) DEFAULT NULL,
     grp_id INT UNSIGNED NOT NULL,
     priority TINYINT UNSIGNED NOT NULL,
-    KEY lcr_prefix_idx (prefix),
-    KEY lcr_from_uri_idx (from_uri),
-    KEY lcr_grp_id_idx (grp_id)
+    KEY prefix_idx (prefix),
+    KEY from_uri_idx (from_uri),
+    KEY grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
 

@@ -12,7 +12,7 @@ CREATE TABLE subscriber (
     ha1b VARCHAR(64) NOT NULL DEFAULT '',
     timezone VARCHAR(64) DEFAULT NULL,
     rpid VARCHAR(64) DEFAULT NULL,
-    UNIQUE KEY user_id (username, domain),
-    KEY username_id (username)
+    UNIQUE KEY account_idx (username, domain),
+    KEY username_idx (username)
 ) ENGINE=MyISAM;
 

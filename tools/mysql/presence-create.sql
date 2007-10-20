@@ -8,7 +8,7 @@ CREATE TABLE presentity (
     expires INT(11) NOT NULL,
     received_time INT(11) NOT NULL,
     body BLOB NOT NULL,
-    UNIQUE KEY udee_presentity (username, domain, event, etag)
+    UNIQUE KEY presentity_idx (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','9');
@@ -34,7 +34,7 @@ CREATE TABLE active_watchers (
     version INT(11) NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    UNIQUE KEY pctt_watchers (presentity_uri, callid, to_tag, from_tag)
+    UNIQUE KEY active_watchers_idx (presentity_uri, callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('watchers','3');
@@ -47,7 +47,7 @@ CREATE TABLE watchers (
     status INT(11) NOT NULL,
     reason VARCHAR(64),
     inserted_time INT(11) NOT NULL,
-    UNIQUE KEY uude_watchers (presentity_uri, watcher_username, watcher_domain, event)
+    UNIQUE KEY watcher_idx (presentity_uri, watcher_username, watcher_domain, event)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('xcap','3');
@@ -61,8 +61,8 @@ CREATE TABLE xcap (
     source INT(11) NOT NULL,
     doc_uri VARCHAR(128) NOT NULL,
     port INT(11) NOT NULL,
-    UNIQUE KEY udd_xcap (username, domain, doc_type),
-    KEY source_xcap (source)
+    UNIQUE KEY account_doc_type_idx (username, domain, doc_type),
+    KEY source_idx (source)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('pua','5');

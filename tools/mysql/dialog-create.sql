@@ -19,6 +19,6 @@ CREATE TABLE dialog (
     state INT(10) UNSIGNED NOT NULL,
     start_time INT(10) UNSIGNED NOT NULL,
     timeout INT(10) UNSIGNED NOT NULL,
-    KEY ei_dialog (hash_entry, hash_id)
+    KEY hash_idx (hash_entry, hash_id)
 ) ENGINE=MyISAM;
 

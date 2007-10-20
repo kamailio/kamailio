@@ -10,12 +10,12 @@ CREATE TABLE aliases (
     q FLOAT(10,2) NOT NULL DEFAULT 1.0,
     callid VARCHAR(255) NOT NULL DEFAULT 'Default-Call-ID',
     cseq INT(11) NOT NULL DEFAULT 13,
-    last_modified DATETIME NOT NULL DEFAULT '1900-01-01 00:00',
+    last_modified DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
     flags INT(11) NOT NULL DEFAULT 0,
     cflags INT(11) NOT NULL DEFAULT 0,
     user_agent VARCHAR(255) NOT NULL DEFAULT '',
     socket VARCHAR(64) DEFAULT NULL,
     methods INT(11) DEFAULT NULL,
-    KEY udc_als (username, domain, contact)
+    KEY alias_idx (username, domain, contact)
 ) ENGINE=MyISAM;
 

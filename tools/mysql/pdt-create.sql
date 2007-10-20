@@ -4,6 +4,6 @@ CREATE TABLE pdt (
     sdomain VARCHAR(128) NOT NULL,
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(128) NOT NULL DEFAULT '',
-    UNIQUE KEY sp_pdt (sdomain, prefix)
+    UNIQUE KEY sdomain_prefix_idx (sdomain, prefix)
 ) ENGINE=MyISAM;
 

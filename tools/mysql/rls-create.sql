@@ -9,8 +9,8 @@ CREATE TABLE rls_presentity (
     updated INT(11) NOT NULL,
     auth_state INT(11) NOT NULL,
     reason VARCHAR(64) NOT NULL,
-    UNIQUE KEY udid_rlspres (rlsubs_did, resource_uri),
-    UNIQUE KEY u_rlspres (updated)
+    UNIQUE KEY rls_presentity_idx (rlsubs_did, resource_uri),
+    UNIQUE KEY updated_idx (updated)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('rls_watchers','0');
@@ -36,6 +36,6 @@ CREATE TABLE rls_watchers (
     version INT(11) NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    UNIQUE KEY pctt_rlwatchers (pres_uri, callid, to_tag, from_tag)
+    UNIQUE KEY rls_watcher_idx (pres_uri, callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 

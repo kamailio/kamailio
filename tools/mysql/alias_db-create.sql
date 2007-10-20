@@ -5,7 +5,7 @@ CREATE TABLE dbaliases (
     alias_domain VARCHAR(64) NOT NULL DEFAULT '',
     username VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(64) NOT NULL DEFAULT '',
-    UNIQUE KEY alias_key (alias_username, alias_domain),
-    KEY alias_user (username, domain)
+    UNIQUE KEY alias_idx (alias_username, alias_domain),
+    KEY target_idx (username, domain)
 ) ENGINE=MyISAM;
 

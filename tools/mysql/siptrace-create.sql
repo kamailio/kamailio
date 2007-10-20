@@ -11,9 +11,9 @@ CREATE TABLE sip_trace (
     toip VARCHAR(50) NOT NULL DEFAULT '',
     fromtag VARCHAR(64) NOT NULL DEFAULT '',
     direction VARCHAR(4) NOT NULL DEFAULT '',
-    KEY user_idx (traced_user),
-    KEY date_id (date),
-    KEY ip_idx (fromip),
-    KEY call_id (callid)
+    KEY traced_user_idx (traced_user),
+    KEY date_idx (date),
+    KEY fromip_idx (fromip),
+    KEY callid_idx (callid)
 ) ENGINE=MyISAM;
 

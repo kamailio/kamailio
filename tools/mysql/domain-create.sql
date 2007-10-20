@@ -3,6 +3,6 @@ CREATE TABLE domain (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     domain VARCHAR(64) NOT NULL DEFAULT '',
     last_modified DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
-    UNIQUE KEY d_domain (domain)
+    UNIQUE KEY domain_idx (domain)
 ) ENGINE=MyISAM;
 

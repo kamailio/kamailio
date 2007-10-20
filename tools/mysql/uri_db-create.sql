@@ -5,6 +5,6 @@ CREATE TABLE uri (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     uri_user VARCHAR(64) NOT NULL DEFAULT '',
     last_modified DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
-    UNIQUE KEY udu_uri (username, domain, uri_user)
+    UNIQUE KEY account_idx (username, domain, uri_user)
 ) ENGINE=MyISAM;
 

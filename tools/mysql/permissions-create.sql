@@ -5,7 +5,7 @@ CREATE TABLE trusted (
     proto VARCHAR(4) NOT NULL,
     from_pattern VARCHAR(64) DEFAULT NULL,
     tag VARCHAR(32),
-    KEY ip_addr (src_ip)
+    KEY peer_idx (src_ip)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('address','3');

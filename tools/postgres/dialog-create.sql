@@ -21,5 +21,5 @@ CREATE TABLE dialog (
     timeout INTEGER NOT NULL
 );
 
-CREATE INDEX ei_dialog ON dialog (hash_entry, hash_id);
+CREATE INDEX hash_idx ON dialog (hash_entry, hash_id);
 

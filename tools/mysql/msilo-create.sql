@@ -10,6 +10,6 @@ CREATE TABLE silo (
     snd_time INT NOT NULL DEFAULT 0,
     ctype VARCHAR(32) NOT NULL DEFAULT 'text/plain',
     body BLOB NOT NULL DEFAULT '',
-    KEY ud_silo (username, domain)
+    KEY account_idx (username, domain)
 ) ENGINE=MyISAM;
 

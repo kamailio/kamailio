@@ -5,7 +5,7 @@ CREATE TABLE grp (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     grp VARCHAR(64) NOT NULL DEFAULT '',
     last_modified TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01',
-    CONSTRAINT udg_grp UNIQUE (username, domain, grp)
+    CONSTRAINT account_group_idx UNIQUE (username, domain, grp)
 );
 
 INSERT INTO version (table_name, table_version) values ('re_grp','1');
@@ -15,5 +15,5 @@ CREATE TABLE re_grp (
     group_id VARCHAR(11) NOT NULL DEFAULT 0
 );
 
-CREATE INDEX gid_grp ON re_grp (group_id);
+CREATE INDEX group_idx ON re_grp (group_id);
 
