@@ -82,14 +82,14 @@
     </column>
 
     <index>
-        <name>udid_rlspres</name>
+        <name>rls_presentity_idx</name>
         <colref linkend="rlsubs_did"/>
         <colref linkend="resource_uri"/>
         <unique/>
     </index>
 
     <index>
-        <name>u_rlspres</name>
+        <name>updated_idx</name>
         <colref linkend="updated"/>
         <unique/>
     </index>

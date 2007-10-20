@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Alias Username / Phone Number </description>
+        <description>Username / phone number </description>
     </column>
 
     <column id="domain">
@@ -150,7 +150,7 @@
     </column>
 
     <index>
-        <name>udc_loc</name>
+        <name>account_contact_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="contact"/>

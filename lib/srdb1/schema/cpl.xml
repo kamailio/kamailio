@@ -52,7 +52,7 @@
     </column>
 
     <index>
-        <name>ud_cpl</name>
+        <name>account_idx</name>
         <unique/>
         <colref linkend="username"/>
         <colref linkend="domain"/>

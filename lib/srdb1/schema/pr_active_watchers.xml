@@ -172,7 +172,7 @@
     </column>
 
     <index>
-        <name>pctt_watchers</name>
+        <name>active_watchers_idx</name>
         <colref linkend="presentity_uri"/>
         <colref linkend="callid"/>
         <colref linkend="to_tag"/>

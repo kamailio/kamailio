@@ -61,7 +61,7 @@
     </column>
 
     <index>
-        <name>ip_addr</name>
+        <name>peer_idx</name>
         <colref linkend="src_ip"/>
     </index>
 

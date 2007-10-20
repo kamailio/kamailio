@@ -92,7 +92,7 @@
     </column>
 
     <index>
-        <name>udss_sd</name>
+        <name>speed_dial_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="sd_domain"/>

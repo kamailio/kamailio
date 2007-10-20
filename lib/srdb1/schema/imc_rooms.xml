@@ -49,7 +49,7 @@
     </column>
 
     <index>
-        <name>nd_imc</name>
+        <name>name_domain_idx</name>
         <colref linkend="name"/>
         <colref linkend="domain"/>
         <unique/>

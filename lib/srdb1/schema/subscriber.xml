@@ -117,14 +117,14 @@
     </column>
 
     <index>
-        <name>user_id</name>
+        <name>account_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <unique/>
     </index>
 
     <index>
-        <name>username_id</name>
+        <name>username_idx</name>
         <colref linkend="username"/>
     </index>
 

@@ -78,7 +78,7 @@
     </column>
 
     <index>
-        <name>uude_watchers</name>
+        <name>watcher_idx</name>
         <colref linkend="presentity_uri"/>
         <colref linkend="watcher_username"/>
         <colref linkend="watcher_domain"/>

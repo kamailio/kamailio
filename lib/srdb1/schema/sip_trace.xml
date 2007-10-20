@@ -105,22 +105,22 @@
     </column>
 
     <index>
-        <name>user_idx</name>
+        <name>traced_user_idx</name>
         <colref linkend="traced_user"/>
     </index>
 
     <index>
-        <name>date_id</name>
+        <name>date_idx</name>
         <colref linkend="date"/>
     </index>
 
     <index>
-        <name>ip_idx</name>
+        <name>fromip_idx</name>
         <colref linkend="fromip"/>
     </index>
 
     <index>
-        <name>call_id</name>
+        <name>callid_idx</name>
         <colref linkend="callid"/>
     </index>
 

@@ -96,7 +96,7 @@
     </column>
 
     <index>
-        <name>ud_silo</name>
+        <name>account_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
     </index>

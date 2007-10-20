@@ -59,7 +59,7 @@
     </column>
 
     <index>
-        <name>udu_uri</name>
+        <name>account_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="uri_user"/>

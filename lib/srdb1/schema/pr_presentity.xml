@@ -75,7 +75,7 @@
     </column>
 
     <index>
-        <name>udee_presentity</name>
+        <name>presentity_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="event"/>

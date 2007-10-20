@@ -83,7 +83,7 @@
     </column>
 
     <index>
-        <name>udd_xcap</name>
+        <name>account_doc_type_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="doc_type"/>
@@ -91,7 +91,7 @@
     </index>
 
     <index>
-        <name>source_xcap</name>
+        <name>source_idx</name>
         <colref linkend="source"/>
     </index>
 

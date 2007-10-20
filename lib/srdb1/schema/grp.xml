@@ -59,10 +59,11 @@
     </column>
 
     <index>
-        <name>udg_grp</name>
+        <name>account_group_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="group"/>
         <unique/>
     </index>
+
 </table>

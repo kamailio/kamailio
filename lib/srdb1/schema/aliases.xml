@@ -150,7 +150,7 @@
     </column>
 
     <index>
-        <name>udc_als</name>
+        <name>alias_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="contact"/>

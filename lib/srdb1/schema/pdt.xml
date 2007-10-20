@@ -50,7 +50,7 @@
     </column>
 
     <index>
-        <name>sp_pdt</name>
+        <name>sdomain_prefix_idx</name>
         <colref linkend="sdomain"/>
         <colref linkend="prefix"/>
         <unique/>

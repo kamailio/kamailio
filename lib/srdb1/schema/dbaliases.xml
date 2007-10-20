@@ -60,14 +60,14 @@
     </column>
 
     <index>
-        <name>alias_key</name>
+        <name>alias_idx</name>
         <colref linkend="alias_username"/>
         <colref linkend="alias_domain"/>
         <unique/>
     </index>
 
     <index>
-        <name>alias_user</name>
+        <name>target_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
     </index>

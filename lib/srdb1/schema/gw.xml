@@ -93,13 +93,13 @@
     </column>
 
     <index>
-        <name>name_gw</name>
+        <name>gw_name_idx</name>
         <colref linkend="gw_name"/>
         <unique/>
     </index>
 
     <index>
-        <name>gid_gw</name>
+        <name>grp_id_idx</name>
         <colref linkend="grp_id"/>
     </index>
 

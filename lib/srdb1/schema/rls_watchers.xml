@@ -173,7 +173,7 @@
     </column>
 
     <index>
-        <name>pctt_rlwatchers</name>
+        <name>rls_watcher_idx</name>
         <colref linkend="pres_uri"/>
         <colref linkend="callid"/>
         <colref linkend="to_tag"/>

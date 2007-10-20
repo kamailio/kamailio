@@ -165,7 +165,7 @@
 	</column>
 
 	<index>
-		<name>ei_dialog</name>
+		<name>hash_idx</name>
 		<colref linkend="hash_entry"/>
 		<colref linkend="hash_id"/>
 	</index>

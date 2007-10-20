@@ -81,7 +81,7 @@
     </column>
     
     <index>
-        <name>mc_callid_idx</name>
+        <name>callid_idx</name>
         <colref linkend="callid"/>
     </index>
 </table>

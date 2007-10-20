@@ -55,7 +55,7 @@
     </column>
 
     <index>
-        <name>ndr_imc</name>
+        <name>account_room_idx</name>
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="room"/>

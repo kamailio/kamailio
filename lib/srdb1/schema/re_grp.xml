@@ -44,7 +44,8 @@
     </column>
 
     <index>
-        <name>gid_grp</name>
+        <name>group_idx</name>
         <colref linkend="group_id"/>
     </index>
+
 </table>
