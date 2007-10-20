@@ -187,6 +187,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 {
 	struct tm_callback    *cbp;
 	struct usr_avp **backup;
+	struct cell *trans_backup = get_t();
 
 	params.req = req;
 	params.rpl = rpl;
@@ -206,6 +207,7 @@ void run_trans_callbacks( int type , struct cell *trans,
 	}
 	set_avp_list( backup );
 	params.extra1 = params.extra2 = 0;
+	set_t(trans_backup);
 }
 
 
@@ -214,6 +216,7 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 {
 	struct tm_callback    *cbp;
 	struct usr_avp **backup;
+	struct cell *trans_backup = get_t();
 
 	params.req = req;
 	params.rpl = 0;
@@ -232,4 +235,5 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 	set_avp_list( backup );
 	params.extra1 = params.extra2 = 0;
 }
+	set_t(trans_backup);
 
