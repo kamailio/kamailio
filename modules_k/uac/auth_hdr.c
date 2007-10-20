@@ -289,14 +289,16 @@ error:
 #define OPAQUE_FIELD_LEN         (sizeof(OPAQUE_FIELD_S)-1)
 #define RESPONSE_FIELD_S         "response=\""
 #define RESPONSE_FIELD_LEN       (sizeof(RESPONSE_FIELD_S)-1)
-#define ALGORITHM_FIELD_S        "algorithm=\"MD5\""
+#define ALGORITHM_FIELD_S        "algorithm=MD5"
 #define ALGORITHM_FIELD_LEN       (sizeof(ALGORITHM_FIELD_S)-1)
 #define FIELD_SEPARATOR_S        "\", "
 #define FIELD_SEPARATOR_LEN      (sizeof(FIELD_SEPARATOR_S)-1)
+#define FIELD_SEPARATOR_UQ_S     ", "
+#define FIELD_SEPARATOR_UQ_LEN   (sizeof(FIELD_SEPARATOR_UQ_S)-1)
 
-#define QOP_FIELD_S              "qop=\""
+#define QOP_FIELD_S              "qop="
 #define QOP_FIELD_LEN            (sizeof(QOP_FIELD_S)-1)
-#define NC_FIELD_S               "nc=\""
+#define NC_FIELD_S               "nc="
 #define NC_FIELD_LEN             (sizeof(NC_FIELD_S)-1)
 #define CNONCE_FIELD_S           "cnonce=\""
 #define CNONCE_FIELD_LEN         (sizeof(CNONCE_FIELD_S)-1)
@@ -331,8 +333,8 @@ str* build_authorization_hdr(int code, str *uri,
 		RESPONSE_FIELD_LEN + response_len + FIELD_SEPARATOR_LEN +
 		ALGORITHM_FIELD_LEN + CRLF_LEN;
 	if((auth->flags&QOP_AUTH) || (auth->flags&QOP_AUTH_INT))
-		len += QOP_FIELD_LEN + 4 /*auth*/ + FIELD_SEPARATOR_LEN +
-				NC_FIELD_LEN + auth->nc->len + FIELD_SEPARATOR_LEN +
+		len += QOP_FIELD_LEN + 4 /*auth*/ + FIELD_SEPARATOR_UQ_LEN +
+				NC_FIELD_LEN + auth->nc->len + FIELD_SEPARATOR_UQ_LEN +
 				CNONCE_FIELD_LEN + auth->cnonce->len + FIELD_SEPARATOR_LEN;
 
 	hdr.s = (char*)pkg_malloc( len + 1);
@@ -375,15 +377,15 @@ str* build_authorization_hdr(int code, str *uri,
 	}
 	if((auth->flags&QOP_AUTH) || (auth->flags&QOP_AUTH_INT))
 	{
-		add_string( p, FIELD_SEPARATOR_S NC_FIELD_S, 
-			FIELD_SEPARATOR_LEN+NC_FIELD_LEN);
-		add_string( p, auth->nc->s, auth->nc->len);
-		add_string( p, FIELD_SEPARATOR_S CNONCE_FIELD_S, 
-			FIELD_SEPARATOR_LEN+CNONCE_FIELD_LEN);
-		add_string( p, auth->cnonce->s, auth->cnonce->len);
 		add_string( p, FIELD_SEPARATOR_S QOP_FIELD_S, 
 			FIELD_SEPARATOR_LEN+QOP_FIELD_LEN);
 		add_string( p, "auth", 4);
+		add_string( p, FIELD_SEPARATOR_UQ_S NC_FIELD_S, 
+			FIELD_SEPARATOR_UQ_LEN+NC_FIELD_LEN);
+		add_string( p, auth->nc->s, auth->nc->len);
+		add_string( p, FIELD_SEPARATOR_UQ_S CNONCE_FIELD_S, 
+			FIELD_SEPARATOR_UQ_LEN+CNONCE_FIELD_LEN);
+		add_string( p, auth->cnonce->s, auth->cnonce->len);
 	}
 	/* RESPONSE */
 	add_string( p, FIELD_SEPARATOR_S RESPONSE_FIELD_S,
