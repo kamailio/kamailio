@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Username / Phone Number</description>
+        <description>Username / phone number</description>
     </column>
 
     <column id="domain">
@@ -40,7 +40,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Domain Name</description>
+        <description>Domain name</description>
     </column>
 
     <column id="uri_user">
@@ -48,14 +48,14 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Username / Phone Number</description>
+        <description>Username / phone number</description>
     </column>
 
     <column>
         <name>last_modified</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
-        <description>Date / Time this record was last modified.</description>
+        <description>Date and time when this record was last modified.</description>
     </column>
 
     <index>

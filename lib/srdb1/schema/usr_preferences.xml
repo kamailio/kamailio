@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Unique User ID</description>
+        <description>Unique user ID</description>
     </column>
 
     <column id="username">
@@ -40,7 +40,7 @@
         <type>string</type>
         <size>&uri_len;</size>
         <default>0</default>
-        <description>Username / Phone Number</description>
+        <description>Username / phone number</description>
     </column>
 
     <column id="domain">
@@ -48,7 +48,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Domain Name</description>
+        <description>Domain name</description>
     </column>
 
     <column id="attribute">
@@ -56,7 +56,7 @@
         <type>string</type>
         <size>&avp_name_len;</size>
         <default/>
-        <description>AVP Attribute</description>
+        <description>AVP attribute</description>
     </column>
 
     <column>
@@ -64,7 +64,7 @@
         <type>int</type>
         <size>&flag_len;</size>
         <default>0</default>
-        <description>AVP Type</description>
+        <description>AVP type</description>
     </column>
 
     <column>
@@ -72,14 +72,14 @@
         <type>string</type>
         <size>&avp_val_len;</size>
         <default/>
-        <description>AVP Value</description>
+        <description>AVP value</description>
     </column>
 
     <column>
         <name>last_modified</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
-        <description>Date/Time this record was last modified</description>
+        <description>Date and time when this record was last modified.</description>
     </column>
 
     <index>

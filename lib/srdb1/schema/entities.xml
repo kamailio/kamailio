@@ -22,6 +22,6 @@
 <!ENTITY DEFAULT_Q  "1.0">
 <!ENTITY DEFAULT_CALLID "Default-Call-ID">
 <!ENTITY DEFAULT_CSEQ "13">
-<!ENTITY DEFAULT_DATETIME "1900-01-01 00:00:01"> <!-- postgresql don't like 0000-00-00 00:00:00 -->
+<!ENTITY DEFAULT_DATETIME "1900-01-01 00:00:01"> <!-- postgresql doesn't like 0000-00-00 00:00:00 -->
 <!ENTITY DEFAULT_DM "1">
 <!ENTITY OPENSER_MOD_DOC "http://www.openser.org/docs/modules/devel/">

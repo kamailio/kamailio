@@ -39,7 +39,7 @@
         <name>last_modified</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
-        <description>Date / Time this record was last modified</description>
+        <description>Date and time when this record was last modified.</description>
     </column>
 
     <index>

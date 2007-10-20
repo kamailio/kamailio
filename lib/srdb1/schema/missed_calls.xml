@@ -77,7 +77,7 @@
     <column>
         <name>time</name>
         <type>datetime</type>
-        <description>Date / Time this record was written.</description>
+        <description>Date and time when this record was written.</description>
     </column>
     
     <index>

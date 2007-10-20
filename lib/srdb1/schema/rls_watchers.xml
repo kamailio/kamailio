@@ -39,28 +39,28 @@
         <name>to_user</name>
         <type>string</type>
         <size>&user_len;</size>
-        <description>To User</description>
+        <description>To user</description>
     </column>
 
     <column>
         <name>to_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
-        <description>To Domain</description>
+        <description>To domain</description>
     </column>
 
     <column>
         <name>from_user</name>
         <type>string</type>
         <size>&user_len;</size>
-        <description>From User</description>
+        <description>From user</description>
     </column>
 
     <column>
         <name>from_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
-        <description>From Domain</description>
+        <description>From domain</description>
     </column>
 
     <column>

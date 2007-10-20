@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Username / Phone Number</description>
+        <description>Username / phone number</description>
     </column>
 
     <column id="domain">
@@ -40,7 +40,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Domain Name</description>
+        <description>Domain name</description>
     </column>
 
     <column id="sd_username">
@@ -48,7 +48,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Speed Dial Username</description>
+        <description>Speed dial username</description>
     </column>
 
     <column id="sd_domain">
@@ -56,7 +56,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Speed Dial Domain</description>
+        <description>Speed dial domain</description>
     </column>
 
     <column>
@@ -72,7 +72,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>First Name</description>
+        <description>First name</description>
     </column>
 
     <column>
@@ -80,7 +80,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Last Name</description>
+        <description>Last name</description>
     </column>
 
     <column>

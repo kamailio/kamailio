@@ -31,7 +31,7 @@
         <name>reg_exp</name>
         <type>string</type>
         <size>128</size>
-        <description>Regular Expression</description>
+        <description>Regular expression</description>
         <default/>
     </column>
 

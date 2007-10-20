@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Alias Username / Phone Number</description>
+        <description>Alias username / phone number</description>
     </column>
 
     <column id="alias_domain">
@@ -40,7 +40,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Alias Domainname</description>
+        <description>Alias domain name</description>
     </column>
 
     <column id="username">
@@ -48,7 +48,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Username / Phone Number</description>
+        <description>Username / phone number</description>
     </column>
 
     <column id="domain">
@@ -56,7 +56,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Domainname</description>
+        <description>Domain name</description>
     </column>
 
     <index>

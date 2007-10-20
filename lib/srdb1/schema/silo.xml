@@ -56,7 +56,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-        <description>Username / Phone Number of target user</description>
+        <description>Username / phone number of target user</description>
     </column>
 
     <column>

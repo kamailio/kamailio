@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Username / Phone Number</description>
+        <description>Username / phone number</description>
     </column>
 
     <column id="domain">
@@ -72,14 +72,14 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-        <description>Email Address</description>
+        <description>Email address</description>
     </column>
 
     <column>
         <name>datetime_created</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
-        <description>Date / Time this record was created</description>
+        <description>Date and time when this record was created</description>
     </column>
 
     <column>
@@ -104,7 +104,7 @@
         <size>&domain_len;</size>
         <null/>
         <default><null/></default>
-        <description>Users time zone</description>
+        <description>User's time zone</description>
     </column>
 
     <column>
@@ -127,4 +127,5 @@
         <name>username_id</name>
         <colref linkend="username"/>
     </index>
+
 </table>

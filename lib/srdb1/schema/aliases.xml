@@ -73,7 +73,7 @@
         <name>expires</name>
         <type>datetime</type>
         <default>&DEFAULT_ALIASES_EXPIRES;</default>
-        <description>Date / Time that this entry expires.</description>
+        <description>Date and time when this entry expires.</description>
     </column>
 
     <column>
@@ -104,7 +104,7 @@
         <name>last_modified</name>
         <type>datetime</type>
         <default>1900-01-01 00:00</default>
-        <description>Date / Time this entry was last changed.</description>
+        <description>Date and time when this entry was last changed.</description>
     </column>
 
     <column>
