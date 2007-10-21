@@ -132,7 +132,7 @@ db_berkeley:
 	rm -f /tmp/openser-db_berkeley.tmp
 
 db_berkeley_clean:
-	-@rm -f $(ROOT)/scripts/dbtext/openser/*
+	-@rm -f $(ROOT)/scripts/db_berkeley/openser/*
 
 
 .PHONY: docbook docbook_clean
