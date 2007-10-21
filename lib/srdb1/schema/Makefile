@@ -110,7 +110,7 @@ dbtext:
 	rm -f /tmp/openser-dbtext.tmp
 
 dbtext_clean:
-	-@rm -f $(ROOT)/scripts/dbtext/openser_db/*
+	-@rm -f $(ROOT)/scripts/dbtext/openser/*
 
 .PHONY: db_berkeley db_berkeley_clean
 db_berkeley:
@@ -132,7 +132,7 @@ db_berkeley:
 	rm -f /tmp/openser-db_berkeley.tmp
 
 db_berkeley_clean:
-	-@rm -f $(ROOT)/scripts/dbtext/openser_db/*
+	-@rm -f $(ROOT)/scripts/dbtext/openser/*
 
 
 .PHONY: docbook docbook_clean
