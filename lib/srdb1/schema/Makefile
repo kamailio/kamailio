@@ -169,4 +169,4 @@ docbook_clean:
 
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean docbook_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean docbook_clean
