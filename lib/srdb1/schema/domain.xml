@@ -27,7 +27,7 @@
         <description>unique ID</description>
     </column>
 
-    <column id="domain">
+    <column id="dom">
         <name>domain</name>
         <type>string</type>
         <size>&domain_len;</size>
@@ -44,7 +44,7 @@
 
     <index>
         <name>domain_idx</name>
-        <colref linkend="domain"/>
+        <colref linkend="dom"/>
         <unique/>
     </index>
 </table>
