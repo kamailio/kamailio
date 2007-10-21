@@ -234,6 +234,6 @@ void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code )
 	}
 	set_avp_list( backup );
 	params.extra1 = params.extra2 = 0;
-}
 	set_t(trans_backup);
+}
 
