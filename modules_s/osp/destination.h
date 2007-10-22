@@ -60,23 +60,24 @@ typedef struct _osp_dest {
     time_t time180;
     time_t time200;
     int type;
-    unsigned long long tid;
+    unsigned long long transid;
     int supported;
     int used;
     int reported;
+    unsigned int destinationCount;
 } osp_dest;
 
-osp_dest* ospInitDestination(osp_dest* dest);
-int ospSaveOrigDestination(osp_dest* dest);
-int ospSaveTermDestination(osp_dest* dest);
+osp_dest *ospInitDestination(osp_dest *dest);
+int ospSaveOrigDestination(osp_dest *dest);
+int ospSaveTermDestination(osp_dest *dest);
 int ospCheckOrigDestination(void);
-osp_dest* ospGetNextOrigDestination(void);
-osp_dest* ospGetLastOrigDestination(void);
-osp_dest* ospGetTermDestination(void);
+osp_dest *ospGetNextOrigDestination(void);
+osp_dest *ospGetLastOrigDestination(void);
+osp_dest *ospGetTermDestination(void);
 void ospRecordEvent(int clientcode, int servercode);
-void ospDumpDestination(osp_dest* dest);
+void ospDumpDestination(osp_dest *dest);
 void ospDumpAllDestination(void);
-void ospConvertAddress(char* src, char* dst, int buffersize);
+void ospConvertAddress(char *src, char *dst, int buffersize);
 
 #endif /* _OSP_MOD_DESTINATION_H_ */
 

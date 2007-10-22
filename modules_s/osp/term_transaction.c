@@ -40,7 +40,7 @@
 #include "osptoolkit.h"
 #include "usage.h"
 
-extern char* _osp_device_ip;
+extern char *_osp_device_ip;
 extern int _osp_token_format;
 extern int _osp_validate_callid;
 extern OSPTPROVHANDLE _osp_provider;
@@ -53,9 +53,9 @@ extern OSPTPROVHANDLE _osp_provider;
  * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospCheckHeader(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     unsigned char buffer[OSP_TOKENBUF_SIZE];
     unsigned int  buffersize = sizeof(buffer);
@@ -76,18 +76,18 @@ int ospCheckHeader(
  * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospValidateHeader (
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     int errorcode; 
     OSPTTRANHANDLE transaction = -1;
     unsigned int authorized = 0;
     unsigned int timelimit = 0;
-    void* detaillog = NULL;
+    void *detaillog = NULL;
     unsigned int logsize = 0;
-    unsigned char* callidval = (unsigned char*)"";
-    OSPTCALLID* callid = NULL;
+    unsigned char *callidval = (unsigned char*)"";
+    OSPTCALLID *callid = NULL;
     unsigned callidsize = 0;
     unsigned char token[OSP_TOKENBUF_SIZE];
     unsigned int tokensize = sizeof(token);
@@ -161,7 +161,7 @@ int ospValidateHeader (
         }
         memcpy(dest.callid, callid->ospmCallIdVal, dest.callidsize);
         dest.callid[dest.callidsize] = 0;
-        dest.tid = ospGetTransactionId(transaction);
+        dest.transid = ospGetTransactionId(transaction);
         dest.type = OSPC_DESTINATION;
         dest.authtime = time(NULL);
         strcpy(dest.host, _osp_device_ip);
@@ -170,12 +170,12 @@ int ospValidateHeader (
 
         if ((errorcode == 0) && (authorized == 1)) {
             LOG(L_DBG, 
-                "osp: call is authorized for %d seconds, call_id '%.*s' transaction_id '%lld'",
+                "osp: call is authorized for %d seconds, call_id '%.*s' transaction_id '%llu'",
                 timelimit,
                 dest.callidsize,
                 dest.callid,
-                dest.tid);
-            ospRecordTermTransaction(msg, transaction, dest.source, dest.calling, dest.called, dest.authtime);
+                dest.transid);
+            ospRecordTermTransaction(msg, dest.transid, dest.source, dest.calling, dest.called, dest.authtime);
             result = MODULE_RETURNCODE_TRUE;
         } else {
             LOG(L_ERR, "osp: ERROR: token is invalid (%i)\n", errorcode);

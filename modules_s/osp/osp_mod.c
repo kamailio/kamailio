@@ -45,13 +45,13 @@
 MODULE_VERSION
 
 extern unsigned int _osp_sp_number;
-extern char* _osp_sp_uris[];
+extern char *_osp_sp_uris[];
 extern unsigned long _osp_sp_weights[];
-extern char* _osp_device_ip;
-extern char* _osp_device_port;
-extern unsigned char* _osp_private_key;
-extern unsigned char* _osp_local_certificate;
-extern unsigned char* _osp_ca_certificate;
+extern char *_osp_device_ip;
+extern char *_osp_device_port;
+extern unsigned char *_osp_private_key;
+extern unsigned char *_osp_local_certificate;
+extern unsigned char *_osp_ca_certificate;
 extern int _osp_crypto_hw;
 extern int _osp_validate_callid;
 extern int _osp_token_format;
@@ -69,6 +69,7 @@ extern char _osp_CA_CERTIFICATE[];
 extern OSPTPROVHANDLE _osp_provider;
 
 int osp_index[OSP_DEF_SPS];
+
 static int ospInitMod(void);
 static void ospDestMod(void);
 static int ospInitChild(int);

@@ -45,8 +45,8 @@
 #include "sipheader.h"
 #include "usage.h"
 
-extern char* _osp_device_ip;
-extern char* _osp_device_port;
+extern char *_osp_device_ip;
+extern char *_osp_device_port;
 extern int _osp_max_dests;
 extern OSPTPROVHANDLE _osp_provider;
 extern auth_api_t osp_auth;
@@ -58,8 +58,8 @@ const int OSP_MAIN_ROUTE = 1;
 const int OSP_BRANCH_ROUTE = 0;
 const str OSP_CALLING_NAME = {"_osp_calling_translated_", 24};
 
-static int ospLoadRoutes(struct sip_msg* msg, OSPTTRANHANDLE transaction, int destcount, char* source, char* sourcedev, time_t authtime);
-static int ospPrepareDestination(struct sip_msg* msg, int isfirst, int type, int format);
+static int ospLoadRoutes(struct sip_msg *msg, OSPTTRANHANDLE transaction, int destcount, char *source, char *sourcedev, time_t authtime);
+static int ospPrepareDestination(struct sip_msg *msg, int isfirst, int type, int format);
 
 /*
  * Get routes from AuthRsp
@@ -72,16 +72,16 @@ static int ospPrepareDestination(struct sip_msg* msg, int isfirst, int type, int
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 static int ospLoadRoutes(
-    struct sip_msg* msg, 
+    struct sip_msg *msg, 
     OSPTTRANHANDLE transaction, 
     int destcount, 
-    char* source, 
-    char* sourcedev, 
+    char *source, 
+    char *sourcedev, 
     time_t authtime)
 {
     int count;
     int errorcode;
-    osp_dest* dest;
+    osp_dest *dest;
     osp_dest dests[OSP_DEF_DESTS];
     OSPE_DEST_PROT protocol;
     OSPE_DEST_OSP_ENABLED enabled;
@@ -97,6 +97,8 @@ static int ospLoadRoutes(
             result = MODULE_RETURNCODE_FALSE;
             break;
         }
+
+        dest->destinationCount = count + 1;
 
         if (count == 0) {
             errorcode = OSPPTransactionGetFirstDestination(
@@ -189,7 +191,7 @@ static int ospLoadRoutes(
         strcpy(dest->source, source);
         strcpy(dest->srcdev, sourcedev);
         dest->type = OSPC_SOURCE;
-        dest->tid = ospGetTransactionId(transaction);
+        dest->transid = ospGetTransactionId(transaction);
         dest->authtime = authtime;
 
         LOG(L_INFO,
@@ -240,9 +242,9 @@ static int ospLoadRoutes(
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospRequestRouting(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     int errorcode;
     time_t authtime;
@@ -251,12 +253,13 @@ int ospRequestRouting(
     char sourcedev[OSP_STRBUF_SIZE];
     char destination[OSP_E164BUF_SIZE];
     unsigned int callidnumber = 1;
-    OSPTCALLID* callids[callidnumber];
+    OSPTCALLID *callids[callidnumber];
     unsigned int logsize = 0;
-    char* detaillog = NULL;
-    const char** preferred = NULL;
+    char *detaillog = NULL;
+    const char **preferred = NULL;
     unsigned int destcount;
     OSPTTRANHANDLE transaction = -1;
+    unsigned long long transid;
     int result = MODULE_RETURNCODE_FALSE;
 
     LOG(L_DBG, "osp: ospRequestRouting\n");
@@ -280,11 +283,12 @@ int ospRequestRouting(
     } else if (ospGetSourceAddress(msg, sourcedev, sizeof(sourcedev)) != 0) {
         LOG(L_ERR, "osp: ERROR: failed to extract source address\n");
     } else {
+        transid = ospGetTransactionId(transaction);
         ospConvertAddress(sourcedev, tmp, sizeof(tmp));
 
         LOG(L_INFO,
             "osp: request auth and routing for: "
-            "transaction '%i' "
+            "transaction_id '%llu' "
             "source '%s' "
             "source_port '%s' "
             "source_dev '%s' "
@@ -292,7 +296,7 @@ int ospRequestRouting(
             "e164_dest '%s' "
             "call_id '%.*s' "
             "dest_count '%i'\n",
-            transaction,
+            transid,
             _osp_device_ip,
             _osp_device_port,
             tmp,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
@@ -329,28 +333,29 @@ int ospRequestRouting(
 
         if ((errorcode == 0) && (destcount > 0)) {
             LOG(L_INFO, 
-                "osp: there are '%d' OSP routes, call_id '%.*s' transaction_id '%lld'\n",
+                "osp: there are '%d' OSP routes, call_id '%.*s' transaction_id '%llu'\n",
                 destcount,
                 callids[0]->ospmCallIdLen, 
                 callids[0]->ospmCallIdVal,
-                ospGetTransactionId(transaction));
-            ospRecordOrigTransaction(msg, transaction, sourcedev, source, destination, authtime);
+                transid);
+            /* SER does not support record_route in BRANCH_ROUTE. Otherwise, the next line should be moved to ospAppendHeaders */
+            ospRecordOrigTransaction(msg, transid, sourcedev, source, destination, authtime, 0);
             result = ospLoadRoutes(msg, transaction, destcount, _osp_device_ip, sourcedev, authtime);
         } else if ((errorcode == 0) && (destcount == 0)) {
             LOG(L_INFO, 
-                "osp: there is 0 osp routes, call_id '%.*s' transaction_id '%lld'\n",
+                "osp: there is 0 osp routes, call_id '%.*s' transaction_id '%llu'\n",
                 callids[0]->ospmCallIdLen,
                 callids[0]->ospmCallIdVal,
-                ospGetTransactionId(transaction));
+                transid);
             /* Must do manually since callback does not work for this case. Do not know why. */
             ospRecordEvent(0, 503);
         } else {
             LOG(L_ERR, 
-                "osp: ERROR: failed to request auth and routing (%i), call_id '%.*s' transaction_id '%lld'\n",
+                "osp: ERROR: failed to request auth and routing (%i), call_id '%.*s' transaction_id '%llu'\n",
                 errorcode,
                 callids[0]->ospmCallIdLen,
                 callids[0]->ospmCallIdVal,
-                ospGetTransactionId(transaction));
+                transid);
         }
     }
 
@@ -373,9 +378,9 @@ int ospRequestRouting(
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospCheckRoute(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     LOG(L_DBG, "osp: ospCheckRoute\n");
 
@@ -396,11 +401,11 @@ int ospCheckRoute(
  * return MODULE_RETURNCODE_TRUE success MODULE_RETURNCODE_FALSE failed
  */
 int ospAppendHeaders(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
-    osp_dest* dest;
+    osp_dest *dest;
     int result = MODULE_RETURNCODE_FALSE;
 
     LOG(L_DBG, "osp: ospAppendHeaders\n");
@@ -425,7 +430,7 @@ int ospAppendHeaders(
  * return MODULE_RETURNCODE_TRUE success MODULE_RETURNCODE_FALSE failure
  */
 static int ospPrepareDestination(
-    struct sip_msg* msg, 
+    struct sip_msg *msg, 
     int isfirst,
     int type,
     int format)
@@ -435,18 +440,18 @@ static int ospPrepareDestination(
 
     LOG(L_DBG, "osp: ospPrepareDestination\n");
 
-    osp_dest* dest = ospGetNextOrigDestination();
+    osp_dest *dest = ospGetNextOrigDestination();
 
     if (dest != NULL) {
         ospRebuildDestionationUri(&newuri, dest->called, dest->host, "", format);
 
         LOG(L_INFO, 
-            "osp: prepare route to URI '%.*s' for call_id '%.*s' transaction_id '%lld'\n",
+            "osp: prepare route to URI '%.*s' for call_id '%.*s' transaction_id '%llu'\n",
             newuri.len,
             newuri.s,
             dest->callidsize,
             dest->callid,
-            dest->tid);
+            dest->transid);
 
         if (type == OSP_MAIN_ROUTE) {
             if (isfirst == OSP_FIRST_ROUTE) {
@@ -481,9 +486,9 @@ static int ospPrepareDestination(
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospPrepareFirstRoute(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     int result = MODULE_RETURNCODE_TRUE;
 
@@ -504,9 +509,9 @@ int ospPrepareFirstRoute(
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospPrepareNextRoute(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     int result = MODULE_RETURNCODE_TRUE;
 
@@ -526,9 +531,9 @@ int ospPrepareNextRoute(
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospPrepareAllRoutes(
-    struct sip_msg* msg, 
-    char* ignore1, 
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1, 
+    char *ignore2)
 {
     int result = MODULE_RETURNCODE_TRUE;
 

@@ -33,6 +33,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <osp/osp.h>
 #include "../../sr_module.h"
 #include "../../usr_avp.h"
 #include "usage.h"
@@ -50,49 +51,65 @@
 const str OSP_ORIGCOOKIE_NAME = {"_osp_orig_cookie_", 17};
 const str OSP_TERMCOOKIE_NAME = {"_osp_term_cookie_", 17};
 
-extern char* _osp_device_ip;
+extern char *_osp_device_ip;
 extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_NAME;
 
-static void ospRecordTransaction(struct sip_msg* msg, OSPTTRANHANDLE transaction, char* uac, char* from, char* to, time_t authtime, int isorig);
-static int ospBuildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest, int lastcode);
-static int ospReportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest* dest);
+static void ospRecordTransaction(struct sip_msg *msg, unsigned long long transid, char *uac, char *from, char *to, time_t authtime, int isorig, unsigned destinationCount);
+static int ospBuildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest *dest, int lastcode);
+static int ospReportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest *dest);
 /* SER checks ftag by itself, without release parameter */
-static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID* callid, int isorig);
+static int ospReportUsageFromCookie(struct sip_msg *msg, char *cooky, OSPTCALLID *callid, OSPE_MSG_ROLETYPES type);
 
 /*
  * Create OSP cookie and insert it into Record-Route header
  * param msg SIP message
- * param tansaction Transaction handle
+ * param tansid Transaction ID
  * param uac Source IP
  * param from
  * param to
  * param authtime Request authorization time
  * param isorig Originate / Terminate
+ * param destinationCount Destination count
  */
 static void ospRecordTransaction(
-    struct sip_msg* msg, 
-    OSPTTRANHANDLE transaction, 
-    char* uac, 
-    char* from, 
-    char* to, 
+    struct sip_msg *msg, 
+    unsigned long long transid,
+    char *uac, 
+    char *from, 
+    char *to, 
     time_t authtime, 
-    int isorig)
+    int isorig,
+    unsigned destinationCount)
 {
-    const str* name;
+    const str *name;
     str cookie;
     char buffer[OSP_STRBUF_SIZE];
 
     LOG(L_DBG, "osp: ospRecordTransaction\n");
+LOG(L_WARN, "SDS: ospRecordTransaction\n");
 
     cookie.s = buffer;
-    cookie.len = snprintf(
-        buffer,
-        sizeof(buffer),
-        "t%llu_s%s_T%d",
-        ospGetTransactionId(transaction),
-        uac,
-        (unsigned int)authtime);
+
+    if (isorig == 1) {
+        cookie.len = snprintf(
+            buffer,
+            sizeof(buffer),
+            "t%llu_s%s_T%d_c%d",
+            transid,
+            uac,
+            (unsigned int)authtime,
+            destinationCount);
+    } else {
+        cookie.len = snprintf(
+            buffer,
+            sizeof(buffer),
+            "t%llu_s%s_T%d",
+            transid,
+            uac,
+            (unsigned int)authtime);
+    }
+
     if (cookie.len < 0) {
         LOG(L_ERR, "osp: ERROR: failed to create OSP cookie\n");
         return;
@@ -109,49 +126,52 @@ static void ospRecordTransaction(
 /*
  * Create OSP originate cookie and insert it into Record-Route header
  * param msg SIP message
- * param tansaction Transaction handle
+ * param tansid Transaction ID
  * param uac Source IP
  * param from
  * param to
  * param authtime Request authorization time
+ * param destinationCount Destination count
  */
 void ospRecordOrigTransaction(
-    struct sip_msg* msg, 
-    OSPTTRANHANDLE transaction, 
-    char* uac, 
-    char* from, 
-    char* to, 
-    time_t authtime)
+    struct sip_msg *msg, 
+    unsigned long long transid, 
+    char *uac, 
+    char *from, 
+    char *to, 
+    time_t authtime,
+    unsigned destinationCount)
 {
     int isorig = 1;
 
     LOG(L_DBG, "osp: ospRecordOrigTransaction\n");
 
-    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig);
+    ospRecordTransaction(msg, transid, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
  * Create OSP terminate cookie and insert it into Record-Route header
  * param msg SIP message
- * param tansaction Transaction handle
+ * param tansid Transaction ID
  * param uac Source IP
  * param from
  * param to
  * param authtime Request authorization time
  */
 void ospRecordTermTransaction(
-    struct sip_msg* msg, 
-    OSPTTRANHANDLE transaction, 
-    char* uac, 
-    char* from, 
-    char* to, 
+    struct sip_msg *msg, 
+    unsigned long long transid, 
+    char *uac, 
+    char *from, 
+    char *to, 
     time_t authtime)
 {
     int isorig = 0;
+    unsigned destinationCount = 0; /* N/A */
 
     LOG(L_DBG, "osp: ospRecordTermTransaction\n");
 
-    ospRecordTransaction(msg, transaction, uac, from, to, authtime, isorig);
+    ospRecordTransaction(msg, transid, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
@@ -160,64 +180,69 @@ void ospRecordTermTransaction(
  * param msg SIP message
  * param cookie OSP cookie
  * param callid Call ID
- * param isorig Originate / Terminate
+ * param type Usage type
  * return
  */
 static int ospReportUsageFromCookie(
-    struct sip_msg* msg,
-    char* cookie, 
-    OSPTCALLID* callid, 
-    int isorig) 
+    struct sip_msg *msg,
+    char *cookie, 
+    OSPTCALLID *callid, 
+    OSPE_MSG_ROLETYPES type)
 {
     int release;
-    char* tmp;
-    char* token;
+    char *tmp;
+    char *token;
     char tag;
-    char* value;
-    unsigned long long transactionid = 0;
-    char* uac = "";
-    time_t authtime = -1;
+    char *value;
+    unsigned long long transid = 0;
+    time_t authtime = 0;
+    unsigned destinationCount = 0;
     time_t endtime = time(NULL);
     char firstvia[OSP_STRBUF_SIZE];
     char from[OSP_STRBUF_SIZE];
     char to[OSP_STRBUF_SIZE];
     char nexthop[OSP_STRBUF_SIZE];
-    char* calling;
-    char* called;
-    char* terminator;
-    unsigned issource;
-    char* source;
+    char *calling;
+    char *called;
+    char *originator = NULL;
+    char *terminator;
+    char *source;
     char srcbuf[OSP_STRBUF_SIZE];
-    char* destination;
+    char *destination;
     char dstbuf[OSP_STRBUF_SIZE];
-    char* srcdev;
+    char *srcdev;
     char devbuf[OSP_STRBUF_SIZE];
     OSPTTRANHANDLE transaction = -1;
     int errorcode;
 
     LOG(L_DBG, "osp: ospReportUsageFromCookie\n");
 
-    LOG(L_DBG, "osp: '%s' isorig '%d'\n", cookie, isorig);
-    for (token = strtok_r(cookie, "_", &tmp);
-        token;
-        token = strtok_r(NULL, "_", &tmp))
-    {
-        tag = *token;
-        value= token + 1;
+    LOG(L_DBG, "osp: '%s' type '%d'\n", cookie, type);
+    if (cookie != NULL) {
+        for (token = strtok_r(cookie, "_", &tmp);
+            token;
+            token = strtok_r(NULL, "_", &tmp))
+        {
+            tag = *token;
+            value= token + 1;
 
-        switch (tag) {
-            case 't':
-                transactionid = atoll(value);
-                break;
-            case 'T':
-                authtime = atoi(value);
-                break;
-            case 's':
-                uac = value;
-                break;
-            default:
-                LOG(L_ERR, "osp: ERROR: unexpected tag '%c' / value '%s'\n", tag, value);
-                break;
+            switch (tag) {
+                case 't':
+                    transid = atoll(value);
+                    break;
+                case 'T':
+                    authtime = atoi(value);
+                    break;
+                case 's':
+                    originator = value;
+                    break;
+                case 'c':
+                    destinationCount = (unsigned)atoi(value);
+                    break;
+                default:
+                    LOG(L_ERR, "osp: ERROR: unexpected tag '%c' / value '%s'\n", tag, value);
+                    break;
+            }
         }
     }
 
@@ -243,7 +268,7 @@ static int ospReportUsageFromCookie(
             break;
         default:
             /* This approach has a problem of flipping called/calling number */
-            if (strcmp(firstvia, uac) == 0) {
+            if (strcmp(firstvia, originator) == 0) {
                 release = OSP_RELEASE_ORIG;
             } else {
                 release = OSP_RELEASE_TERM;
@@ -252,22 +277,28 @@ static int ospReportUsageFromCookie(
 
     if (release == OSP_RELEASE_ORIG) {
         LOG(L_DBG,
-            "osp: orig '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
+            "osp: orig '%s' released the call, call_id '%.*s' transaction_id '%llu'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
-            transactionid);
+            transid);
+        if (originator == NULL) {
+            originator = firstvia;
+        }
         calling = from;
         called = to;
         terminator = nexthop;
     } else {
         release = OSP_RELEASE_TERM;
         LOG(L_DBG,
-            "osp: term '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
+            "osp: term '%s' released the call, call_id '%.*s' transaction_id '%llu'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
-            transactionid);
+            transid);
+        if (originator == NULL) {
+            originator = nexthop;
+        }
         calling = to;
         called = from;
         terminator = firstvia;
@@ -277,25 +308,29 @@ static int ospReportUsageFromCookie(
 
     LOG(L_DBG, "osp: created transaction handle '%d' (%d)\n", transaction, errorcode);
 
-    if (isorig == 1) {
-        issource = OSPC_SOURCE;
-        source = _osp_device_ip;
-        ospConvertAddress(terminator, dstbuf, sizeof(dstbuf));
-        destination = dstbuf;
-        ospConvertAddress(uac, devbuf, sizeof(devbuf));
-        srcdev = devbuf;
-    } else {
-        issource = OSPC_DESTINATION;
-        ospConvertAddress(uac, srcbuf, sizeof(srcbuf));
-        source = srcbuf;
-        destination = _osp_device_ip;
-        srcdev = "";
+    switch (type) {
+        case OSPC_DESTINATION:
+            ospConvertAddress(originator, srcbuf, sizeof(srcbuf));
+            source = srcbuf;
+            destination = _osp_device_ip;
+            srcdev = "";
+            break;
+        case OSPC_SOURCE:
+        case OSPC_OTHER:
+        case OSPC_UNDEFINED_ROLE:
+        default:
+            source = _osp_device_ip;
+            ospConvertAddress(terminator, dstbuf, sizeof(dstbuf));
+            destination = dstbuf;
+            ospConvertAddress(originator, devbuf, sizeof(devbuf));
+            srcdev = devbuf;
+            break;
     }
 
     errorcode = OSPPTransactionBuildUsageFromScratch(
         transaction,
-        transactionid,
-        issource,
+        transid,
+        type,
         source,
         destination,
         srcdev,
@@ -312,10 +347,16 @@ static int ospReportUsageFromCookie(
 
     LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
 
+    if (errorcode == 0 && destinationCount > 0) {
+        errorcode = OSPPTransactionSetDestinationCount(
+            transaction,
+            destinationCount);
+    }
+
     ospReportUsageWrapper(
         transaction,
-        10016,
-        endtime - authtime,
+        cookie == NULL ? 9016 : 10016,
+        cookie == NULL ? 0 : endtime - authtime,
         authtime,
         endtime,
         0,0,
@@ -334,22 +375,22 @@ static int ospReportUsageFromCookie(
  * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospReportUsage(
-    struct sip_msg* msg, 
-    char* ignore1,
-    char* ignore2)
+    struct sip_msg *msg, 
+    char *ignore1,
+    char *ignore2)
 {
     int_str cookieval;
-    struct usr_avp* cookieavp = NULL;
+    struct usr_avp *cookieavp = NULL;
     static const int FROMFLAGS = AVP_TRACK_FROM | AVP_CLASS_URI | AVP_NAME_STR | AVP_VAL_STR;
     static const int TOFLAGS = AVP_TRACK_TO | AVP_CLASS_URI | AVP_NAME_STR | AVP_VAL_STR;
     char buffer[OSP_HEADERBUF_SIZE];
-    int isorig;
-    OSPTCALLID* callid = NULL;
+    OSPTCALLID *callid = NULL;
     int result = MODULE_RETURNCODE_FALSE;
 
     LOG(L_DBG, "osp: ospReportUsage\n");
 
     ospGetCallId(msg, &callid);
+
     if (callid != NULL) {
         if ((cookieavp = search_first_avp(FROMFLAGS, (int_str)OSP_ORIGCOOKIE_NAME, &cookieval, NULL)) != 0 ||
             (cookieavp = search_first_avp(TOFLAGS, (int_str)OSP_ORIGCOOKIE_NAME, &cookieval, NULL)) != 0)
@@ -360,8 +401,7 @@ int ospReportUsage(
                 "osp: report orig duration for call_id '%.*s'\n",
                 callid->ospmCallIdLen,
                 callid->ospmCallIdVal);
-            isorig = 1;
-            ospReportUsageFromCookie(msg, buffer, callid, isorig);
+            ospReportUsageFromCookie(msg, buffer, callid, OSPC_SOURCE);
             result = MODULE_RETURNCODE_TRUE;
         }
 
@@ -374,15 +414,24 @@ int ospReportUsage(
                 "osp: report term duration for call_id '%.*s'\n",
                 callid->ospmCallIdLen,
                 callid->ospmCallIdVal);
-            isorig = 0;
-            ospReportUsageFromCookie(msg, buffer, callid, isorig);
+            ospReportUsageFromCookie(msg, buffer, callid, OSPC_DESTINATION);
             result = MODULE_RETURNCODE_TRUE;
         }
+
+        if (result == MODULE_RETURNCODE_FALSE) {
+            LOG(L_DBG, "without orig or term OSP information\n");
+            LOG(L_INFO, "report other duration for call_id '%.*s'\n",
+               callid->ospmCallIdLen,
+               callid->ospmCallIdVal);
+            ospReportUsageFromCookie(msg, NULL, callid, OSPC_SOURCE);
+            result = MODULE_RETURNCODE_TRUE;
+        }
+
         OSPPCallIdDelete(&callid);
     }
 
     if (result == MODULE_RETURNCODE_FALSE) {
-        LOG(L_DBG, "osp: without OSP orig or term usage information\n");
+        LOG(L_DBG, "osp: failed to report usage\n");
     }
 
     return result;
@@ -397,13 +446,13 @@ int ospReportUsage(
  */
 static int ospBuildUsageFromDestination(
     OSPTTRANHANDLE transaction, 
-    osp_dest* dest, 
+    osp_dest *dest, 
     int lastcode)
 {
     int errorcode;
     char addr[OSP_STRBUF_SIZE];
-    char* source;
-    char* srcdev;
+    char *source;
+    char *srcdev;
 
     dest->reported = 1;
 
@@ -421,7 +470,7 @@ static int ospBuildUsageFromDestination(
 
     errorcode = OSPPTransactionBuildUsageFromScratch(
         transaction,
-        dest->tid,
+        dest->transid,
         dest->type,
         source,
         dest->host,
@@ -448,7 +497,7 @@ static int ospBuildUsageFromDestination(
  */
 static int ospReportUsageFromDestination(
     OSPTTRANHANDLE transaction, 
-    osp_dest* dest)
+    osp_dest *dest)
 {
     ospReportUsageWrapper(
         transaction,                                          /* In - Transaction handle */
@@ -470,9 +519,9 @@ static int ospReportUsageFromDestination(
  */
 void ospReportOrigSetupUsage(void)
 {
-    osp_dest* dest = NULL;
-    osp_dest* lastused = NULL;
-    struct usr_avp* destavp = NULL;
+    osp_dest *dest = NULL;
+    osp_dest *lastused = NULL;
+    struct usr_avp *destavp = NULL;
     int_str destval;
     struct search_state state;
     OSPTTRANHANDLE transaction = -1;
@@ -513,10 +562,10 @@ void ospReportOrigSetupUsage(void)
 
     if (lastused) {
         LOG(L_INFO,
-            "osp: report orig setup for call_id '%.*s' transaction_id '%lld'\n",
+            "osp: report orig setup for call_id '%.*s' transaction_id '%llu'\n",
             lastused->callidsize,
             lastused->callid,
-            lastused->tid);
+            lastused->transid);
         errorcode = ospReportUsageFromDestination(transaction, lastused);
     } else {
         /* If a Toolkit transaction handle was created, but we did not find
@@ -532,7 +581,7 @@ void ospReportOrigSetupUsage(void)
  */
 void ospReportTermSetupUsage(void)
 {
-    osp_dest* dest = NULL;
+    osp_dest *dest = NULL;
     OSPTTRANHANDLE transaction = -1;
     int errorcode = 0;
 
@@ -541,10 +590,10 @@ void ospReportTermSetupUsage(void)
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
             LOG(L_INFO,
-                "osp: report term setup for call_id '%.*s' transaction_id '%lld'\n",
+                "osp: report term setup for call_id '%.*s' transaction_id '%llu'\n",
                 dest->callidsize,
                 dest->callid,
-                dest->tid);
+                dest->transid);
             errorcode = OSPPTransactionNew(_osp_provider, &transaction);
             errorcode = ospBuildUsageFromDestination(transaction, dest, 0);
             errorcode = ospReportUsageFromDestination(transaction, dest);
