@@ -243,7 +243,7 @@ int parse_authenticate_body( str *body, struct authenticate_body *auth)
 				if (val.len==4 && LOWER4B(GET4B(val.s))==0x74727565) /*true*/
 				{
 						auth->flags |= AUTHENTICATE_STALE;
-				} else if ( !(val.len==5 && val.s[4]=='e' && 
+				} else if ( !(val.len==5 && LOWER1B(val.s[4])=='e' && 
 					LOWER4B(GET4B(val.s))==0x66616c73) )
 				{
 					LM_ERR("unsupported stale value \"%.*s\"\n",val.len,val.s);
