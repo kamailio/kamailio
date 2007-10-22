@@ -1,0 +1,159 @@
+#! /bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          openser
+# Required-Start:    $syslog $network $local_fs $time
+# Required-Stop:     $syslog $network $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start the OpenSER SIP proxy server
+# Description:       Start the OpenSER SIP proxy server
+### END INIT INFO
+#
+# TODO:
+# The following fields should be added (and completed):
+# Should-Start:      postgresql mysql radius
+# Should-Stop:       postgresql mysql radius
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/sbin/openser
+NAME=openser
+DESC=openser
+HOMEDIR=/var/run/openser
+PIDFILE=$HOMEDIR/$NAME.pid
+DEFAULTS=/etc/default/openser
+RUN_OPENSER=no
+
+# Do not start openser if fork=no is set in the config file
+# otherwise the boot process will just stop
+check_fork ()
+{
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/openser/openser.cfg; then
+	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/openser debug instead"
+	exit 1
+    fi
+}
+
+check_openser_config ()
+{
+	# Check if openser configuration is valid before starting the server
+	set +e
+	out=$($DAEMON -c 2>&1 > /dev/null)
+	retcode=$?
+	set -e
+	if [ "$retcode" != '0' ]; then
+	    echo "Not starting $DESC: invalid configuration file!"
+	    echo -e "\n$out\n"
+	    exit 1
+	fi
+}
+
+create_radius_seqfile ()
+{
+    # Create a radius sequence file to be used by the radius client if
+    # radius accounting is enabled. This is needed to avoid any issue
+    # with the file not being writable if openser first starts as user
+    # root because DUMP_CORE is enabled and creates this file as user
+    # root and then later it switches back to user openser and cannot
+    # write to the file. If the file exists before openser starts, it
+    # won't change it's ownership and will be writable for both root
+    # and openser, no matter what options are chosen at install time
+    RADIUS_SEQ_FILE=/var/run/openser/openser_radius.seq
+    if [ -d /var/run/openser ]; then
+	chown ${USER}:${GROUP} /var/run/openser
+
+	if [ ! -f $RADIUS_SEQ_FILE ]; then
+	    touch $RADIUS_SEQ_FILE
+	fi
+
+	chown ${USER}:${GROUP} $RADIUS_SEQ_FILE
+	chmod 660 $RADIUS_SEQ_FILE
+    fi
+}
+
+test -f $DAEMON || exit 0
+
+# Load startup options if available
+if [ -f $DEFAULTS ]; then
+   . $DEFAULTS || true
+fi
+
+if [ "$RUN_OPENSER" != "yes" ]; then
+    echo "OpenSER not yet configured. Edit /etc/default/openser first."
+    exit 0
+fi
+
+set -e
+
+MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
+[ -z "$USER" ]  && USER=openser
+[ -z "$GROUP" ] && GROUP=openser
+[ $MEMORY -le 0 ] && MEMORY=32
+
+if test "$DUMP_CORE" = "yes" ; then
+    # set proper ulimit
+    ulimit -c unlimited
+    
+    # directory for the core dump files
+    # COREDIR=/home/corefiles
+    # [ -d $COREDIR ] || mkdir $COREDIR
+    # chmod 777 $COREDIR
+    # echo "$COREDIR/core.%e.sig%s.%p" > /proc/sys/kernel/core_pattern
+fi
+
+OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
+
+case "$1" in
+  start|debug)
+	check_openser_config
+	create_radius_seqfile
+
+	if [ "$1" != "debug" ]; then
+	    check_fork
+	fi
+
+	echo -n "Starting $DESC: $NAME"
+	start-stop-daemon --start --quiet --pidfile $PIDFILE \
+		--exec $DAEMON -- $OPTIONS || echo -n " already running"
+	echo "."
+	;;
+  stop)
+	echo -n "Stopping $DESC: $NAME"
+	start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
+		--exec $DAEMON
+	echo "."
+	;;
+  restart|force-reload)
+	check_openser_config
+	create_radius_seqfile
+
+	echo -n "Restarting $DESC: $NAME"
+	start-stop-daemon --oknodo --stop --quiet --pidfile \
+		$PIDFILE --exec $DAEMON
+	sleep 1
+	start-stop-daemon --start --quiet --pidfile \
+		$PIDFILE --exec $DAEMON  -- $OPTIONS
+	echo "."
+	;;
+  status)
+	echo -n "Status of $DESC: "
+	if [ ! -r "$PIDFILE" ]; then
+		echo "$NAME is not running."
+		exit 3
+	fi
+	if read pid < "$PIDFILE" && ps -p "$pid" > /dev/null 2>&1; then
+		echo "$NAME is running."
+		exit 0
+	else
+		echo "$NAME is not running but $PIDFILE exists."
+		exit 1
+	fi
+	;;
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|restart|force-reload|debug|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

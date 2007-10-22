@@ -1,0 +1,27 @@
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 10_no_lib64_on_64_bits.dpatch by  <jblache@debian.org>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: Debian uses /usr/lib even for 64bit architectures.
+
+@DPATCH@
+diff -urNad openser-1.2.0~/Makefile.defs openser-1.2.0/Makefile.defs
+--- openser-1.2.0~/Makefile.defs	2007-02-24 12:35:45.000000000 +0100
++++ openser-1.2.0/Makefile.defs	2007-02-24 16:26:45.886854110 +0100
+@@ -123,14 +123,12 @@
+ bin-dir = sbin/
+ 
+ ARCH_B= $(shell echo $(ARCH) | sed -e 's/.*64.*/64b/')
+-ifeq ($(ARCH_B),64b)
+-	LIBDIR ?= lib64
+-else
+-	LIBDIR ?= lib
++ifneq ($(ARCH_B),64b)
+ 	# assume 32b - it is not really used further
+ 	ARCH_B=32b
+ endif
+ 
++LIBDIR ?= lib
+ lib-dir = $(LIBDIR)/$(MAIN_NAME)
+ modules-dir = $(LIBDIR)/$(MAIN_NAME)/modules/
+ 

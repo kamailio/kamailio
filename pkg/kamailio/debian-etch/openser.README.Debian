@@ -1,0 +1,38 @@
+OpenSER for Debian
+------------------
+
+* init script check for fork=no
+-------------------------------
+
+The OpenSER init script will not start OpenSER on boot if fork=no is
+specified in the config file. The check in the initscript will match
+any occurrence of fork=no in the file, even inside C-style comments.
+
+You can disable this check in the init script if you wish; just comment
+out the calls to the check_fork function in the script. Your changes to
+the init script will be preserved upon upgrade, as the file is tagged
+as a conffile.
+
+
+* OpenSER setup
+---------------
+
+To setup OpenSER, you need to:
+ - configure OpenSER properly to suit your needs
+ - edit /etc/default/openser, adjust the MEMORY parameter and set
+   RUN_OPENSER to "yes"
+
+If you are building an HA cluster using heartbeat or similar, you'll want
+to disable the init script by running:
+
+  update-rc.d openser remove
+
+so that OpenSER will not be launched at system startup. You still need
+to set RUN_OPENSER to "yes" if you want to use the /etc/init.d/openser init
+script.
+
+Set the DUMP_CORE parameter in /etc/default/openser to "yes" if you want to
+get a core dump in case OpenSER crashes. The debug symbols for OpenSER are
+provided by the openser-dbg package.
+
+-- Julien BLACHE <jblache@debian.org>, Fri, 08 Sep 2006 14:43:21 +0200

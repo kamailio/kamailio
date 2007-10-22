@@ -1,0 +1,24 @@
+#
+# OpenSER startup options
+#
+
+# Set to yes to enable openser, once configured properly.
+RUN_OPENSER=no
+
+# User to run as
+USER=openser
+
+# Group to run as
+GROUP=openser
+
+# Amount of memory to allocate for the running OpenSER server (in Mb)
+MEMORY=64
+
+# Enable the server to leave a core file when it crashes.
+# Set this to 'yes' to enable OpenSER to leave a core file when it crashes
+# or 'no' to disable this feature. This option is case sensitive and only
+# accepts 'yes' and 'no' and only in lowercase letters.
+# On some systems (e.g. Ubuntu 6.10, Debian 4.0) it is necessary to specify
+# a directory for the core files to get a dump. Look into the openser
+# init file for an example configuration.
+DUMP_CORE=no
