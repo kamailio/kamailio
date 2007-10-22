@@ -42,13 +42,15 @@ typedef struct _xl_elog
 	struct _xl_elog *next;
 } xl_elog_t, *xl_elog_p;
 
-int xl_elog_free_all(xl_elog_p log);
+typedef int (xl_elog_free_all_f)(xl_elog_p log);
+/* int xl_elog_free_all(xl_elog_p log); */
 typedef int (xl_parse_format_f)(char *s, xl_elog_p *el);
 //int xl_parse_format(char *s, xl_elog_p *el);
 typedef int (xl_print_log_f)(struct sip_msg*, xl_elog_t*, char*, int*);
 //int xl_print_log(struct sip_msg* msg, xl_elog_p log, char *buf, int *len);
 typedef str* (xl_get_nulstr_f)(void);
 
+xl_elog_free_all_f xl_elog_free_all;
 xl_parse_format_f xl_parse_format;
 xl_print_log_f xl_print_log;
 xl_get_nulstr_f xl_get_nulstr;

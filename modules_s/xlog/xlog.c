@@ -69,6 +69,7 @@ static cmd_export_t cmds[]={
 		ONREPLY_ROUTE | BRANCH_ROUTE},
 	{"xprint", (cmd_function)xl_print_log, NO_SCRIPT, 0, 0},
 	{"xparse", (cmd_function)xl_parse_format, NO_SCRIPT, 0, 0},
+	{"xfree",  (cmd_function)xl_elog_free_all, NO_SCRIPT, 0, 0},
 	{"xnulstr", (cmd_function)xl_get_nulstr, NO_SCRIPT, 0, 0},
 	{0,0,0,0,0}
 };
