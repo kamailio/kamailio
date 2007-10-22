@@ -78,10 +78,11 @@ struct hdr_name {
 
 static int xlbuf_size=256;
 static char* xlbuf=NULL;
-str* xl_nul=NULL;
-xl_print_log_f* xl_print=NULL;
-xl_parse_format_f* xl_parse=NULL;
-xl_get_nulstr_f* xl_getnul=NULL;
+static str* xl_nul=NULL;
+static xl_print_log_f* xl_print=NULL;
+static xl_parse_format_f* xl_parse=NULL;
+static xl_elog_free_all_f* xl_free=NULL;
+static xl_get_nulstr_f* xl_getnul=NULL;
 
 
 static int set_iattr(struct sip_msg* msg, char* p1, char* p2);
@@ -96,6 +97,7 @@ static int attr_equals(struct sip_msg* msg, char* p1, char* p2);
 static int attr_exists(struct sip_msg* msg, char* p1, char* p2);
 static int attr_equals_xl(struct sip_msg* msg, char* p1, char* p2);
 static int xlset_attr(struct sip_msg* msg, char* p1, char* p2);
+static int xlfix_attr(struct sip_msg* msg, char* p1, char* p2);
 static int insert_req(struct sip_msg* msg, char* p1, char* p2);
 static int append_req(struct sip_msg* msg, char* p1, char* p2);
 static int replace_req(struct sip_msg* msg, char* p1, char* p2);
@@ -113,6 +115,7 @@ static int fixup_part(void**, int);
 static int fixup_xl_1(void**, int);
 static int fixup_attr_1_xl_2(void**, int);
 static int fixup_str_1_attr_2(void**, int);
+static int xlfix_attr_fixup(void** param, int param_no);
 static int attr_hdr_body2attrs_fixup(void**, int);
 static int attr_hdr_body2attrs2_fixup(void**, int);
 static int avpgroup_fixup(void**, int);
@@ -137,6 +140,7 @@ static cmd_export_t cmds[] = {
     {"attr_exists",       attr_exists,          1 , fixup_var_str_1,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
     {"attr_equals_xl",    attr_equals_xl,       2, fixup_attr_1_xl_2,          REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
     {"xlset_attr",        xlset_attr,           2, fixup_attr_1_xl_2,          REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE},
+    {"xlfix_attr",        xlfix_attr,           1, xlfix_attr_fixup,           REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE}, 
     {"insert_attr_hf",    insert_req,           2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
     {"insert_attr_hf",    insert_req,           1, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
     {"append_attr_hf",    append_req,           2, fixup_str_1_attr_2,         REQUEST_ROUTE | FAILURE_ROUTE},
@@ -720,14 +724,9 @@ static int attr_equals_xl(struct sip_msg* msg, char* p1, char* format)
     return -1;
 }
 
-
-/*
- * Convert xl format string to xl format description
- */
-static int fixup_xl_1(void** param, int param_no)
+/* get the pointer to the xl lib functions */
+static int get_xl_functions(void)
 {
-    xl_elog_t* model;
-    
     if (!xl_print) {
 	xl_print=(xl_print_log_f*)find_export("xprint", NO_SCRIPT, 0);
 	
@@ -745,7 +744,16 @@ static int fixup_xl_1(void** param, int param_no)
 	    return -1;
 	}
     }
-    
+
+    if (!xl_free) {
+	xl_free=(xl_elog_free_all_f*)find_export("xfree", NO_SCRIPT, 0);
+	
+	if (!xl_free) {
+	    LOG(L_CRIT,"ERROR: cannot find \"xfree\", is module xlog loaded?\n");
+	    return -1;
+	}
+    }
+
     if (!xl_nul) {
 	xl_getnul=(xl_get_nulstr_f*)find_export("xnulstr", NO_SCRIPT, 0);
 	if (xl_getnul) {
@@ -760,7 +768,19 @@ static int fixup_xl_1(void** param, int param_no)
 	}
 	
     }
-    
+
+    return 0;
+}
+
+/*
+ * Convert xl format string to xl format description
+ */
+static int fixup_xl_1(void** param, int param_no)
+{
+    xl_elog_t* model;
+
+    if (get_xl_functions()) return -1;
+
     if (param_no == 1) {
 	if(*param) {
 	    if(xl_parse((char*)(*param), &model)<0) {
@@ -778,7 +798,6 @@ static int fixup_xl_1(void** param, int param_no)
     
     return 0;
 }
-
 
 static int fixup_attr_1_xl_2(void** param, int param_no)
 {
@@ -808,6 +827,66 @@ static int xlset_attr(struct sip_msg* msg, char* p1, char* format)
     
     ERR("xlset_attr:Error while expanding xl_format\n");
     return -1;
+}
+
+/*
+ * get the xl function pointers and fix up the AVP parameter
+ */
+static int xlfix_attr_fixup(void** param, int param_no)
+{
+    if (get_xl_functions()) return -1;
+
+    if (param_no == 1)
+	return avpid_fixup(param, 1);
+
+    return 0;
+}
+
+/* fixes an attribute containing xl formatted string to pure string runtime */
+static int xlfix_attr(struct sip_msg* msg, char* p1, char* p2)
+{
+    avp_t* avp;
+    avp_ident_t* avpid;
+    avp_value_t val;
+    xl_elog_t* format=NULL;
+    int ret=-1;
+    
+    avpid = &((fparam_t*)p1)->v.avp;
+
+    /* search the AVP */
+    avp = search_avp(*avpid, &val, 0);
+    if (!avp) {
+	DBG("xlfix_attr: AVP does not exist\n");
+	goto error;
+    }
+    if ((avp->flags & AVP_VAL_STR) == 0) {
+	DBG("xlfix_attr: Not a string AVP\n");
+	goto error;
+    }
+
+    /* parse the xl syntax -- AVP values are always
+    zero-terminated */
+    if (xl_parse(val.s.s, &format)<0) {
+	LOG(L_ERR, "ERROR: xlfix_attr: wrong format[%s]\n", val.s.s);
+	goto error;
+    }
+
+    if (xl_printstr(msg, format, &val.s.s, &val.s.len) > 0) {
+	/* we must delete and re-add the AVP again */
+	destroy_avp(avp);
+	if (add_avp(avpid->flags | AVP_VAL_STR, avpid->name, val)) {
+	    ERR("xlfix_attr:Error adding new AVP\n");
+	    goto error;
+	}
+	/* everything went OK */
+	ret = 1;
+    }
+
+error:
+    /* free the parsed xl expression */
+    if (format) xl_free(format);
+
+    return ret;
 }
 
 
