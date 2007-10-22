@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "osptoolkit.h"
 
-static OSPTTHREADRETURN ospReportUsageWork(void* usagearg);
+static OSPTTHREADRETURN ospReportUsageWork(void *usagearg);
 
 typedef struct _osp_usage
 {
@@ -56,7 +56,7 @@ typedef struct _osp_usage
 unsigned long long ospGetTransactionId(
     OSPTTRANHANDLE transaction)
 {
-    OSPTTRANS* context = NULL;
+    OSPTTRANS *context = NULL;
     unsigned long long id = 0;
     int errorcode = 0;
 
@@ -65,8 +65,7 @@ unsigned long long ospGetTransactionId(
     if (errorcode == 0) {
         id = (unsigned long long)context->TransactionID;
     } else {
-        LM_ERR("failed to extract transaction_id from transaction "
-			"handle %d (%d)\n",
+        LM_ERR("failed to extract transaction_id from transaction handle %d (%d)\n",
             transaction,
             errorcode);
     }
@@ -99,12 +98,12 @@ void ospReportUsageWrapper(
     unsigned ospvPostDialDelay,
     unsigned ospvReleaseSource)
 {
-    osp_usage* usage;
+    osp_usage *usage;
     OSPTTHREADID threadid;
     OSPTTHRATTR threadattr;
     int errorcode;
 
-    LM_DBG("schedule usage report for '%lld'\n", ospGetTransactionId(ospvTransaction));
+    LM_DBG("schedule usage report for '%llu'\n", ospGetTransactionId(ospvTransaction));
 
     usage = (osp_usage*)malloc(sizeof(osp_usage));
 
@@ -134,11 +133,11 @@ void ospReportUsageWrapper(
  * return
  */
 static OSPTTHREADRETURN ospReportUsageWork(
-    void* usagearg)
+    void *usagearg)
 {
     int i;
     const int MAX_RETRIES = 5;
-    osp_usage* usage;
+    osp_usage *usage;
     int errorcode;
 
     usage = (osp_usage*)usagearg;
@@ -161,12 +160,11 @@ static OSPTTHREADRETURN ospReportUsageWork(
             (unsigned char*)"", 0, 0, 0, 0, NULL, NULL);
 
         if (errorcode == 0) {
-            LM_DBG("reporte usage for '%lld'\n", 
+            LM_DBG("reporte usage for '%llu'\n", 
                 ospGetTransactionId(usage->ospvTransaction));
             break;
         } else {
-            LM_ERR("failed to report usage for '%lld' (%d) attempt '%d'"
-				"of '%d'\n",
+            LM_ERR("failed to report usage for '%llu' (%d) attempt '%d' of '%d'\n",
                 ospGetTransactionId(usage->ospvTransaction), 
                 errorcode,
                 i,

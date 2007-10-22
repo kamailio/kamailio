@@ -42,8 +42,8 @@
 const str OSP_ORIGDEST_NAME = {"_osp_orig_dests_", 16};
 const str OSP_TERMDEST_NAME = {"_osp_term_dests_", 16};
 
-static int ospSaveDestination(osp_dest* dest, const str* name);
-static void ospRecordCode(int code, osp_dest* dest);
+static int ospSaveDestination(osp_dest *dest, const str *name);
+static void ospRecordCode(int code, osp_dest *dest);
 static int ospIsToReportUsage(int code);
 
 /*
@@ -51,8 +51,8 @@ static int ospIsToReportUsage(int code);
  * param dest Destination data structure
  * return initialized destination sturcture
  */
-osp_dest* ospInitDestination(
-    osp_dest* dest)
+osp_dest *ospInitDestination(
+    osp_dest *dest)
 {
     memset(dest, 0, sizeof(osp_dest));
 
@@ -60,7 +60,7 @@ osp_dest* ospInitDestination(
     dest->tokensize = sizeof(dest->token);
 
     LM_DBG("callidsize '%d' tokensize '%d'\n", 
-			dest->callidsize, dest->tokensize);
+        dest->callidsize, dest->tokensize);
 
     return dest;
 }
@@ -74,8 +74,8 @@ osp_dest* ospInitDestination(
  * return 0 success, -1 failure
  */
 static int ospSaveDestination(
-    osp_dest* dest, 
-    const str* name)
+    osp_dest *dest, 
+    const str *name)
 {
     str wrapper;
     int result = -1;
@@ -103,7 +103,7 @@ static int ospSaveDestination(
  * return 0 success, -1 failure
  */
 int ospSaveOrigDestination(
-    osp_dest* dest
+    osp_dest *dest
     )
 {
     return ospSaveDestination(dest, &OSP_ORIGDEST_NAME);
@@ -115,7 +115,7 @@ int ospSaveOrigDestination(
  * return 0 success, -1 failure
  */
 int ospSaveTermDestination(
-    osp_dest* dest)
+    osp_dest *dest)
 {
     return ospSaveDestination(dest, &OSP_TERMDEST_NAME);
 }
@@ -129,9 +129,9 @@ int ospSaveTermDestination(
  */
 int ospCheckOrigDestination(void)
 {
-    struct usr_avp* destavp = NULL;
+    struct usr_avp *destavp = NULL;
     int_str destval;
-    osp_dest* dest = NULL;
+    osp_dest *dest = NULL;
     int result = -1;
 
     for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
@@ -172,12 +172,12 @@ int ospCheckOrigDestination(void)
  *     return it, and mark it as used (used==1).
  * return NULL on failure
  */
-osp_dest* ospGetNextOrigDestination(void)
+osp_dest *ospGetNextOrigDestination(void)
 {
-    struct usr_avp* destavp = NULL;
+    struct usr_avp *destavp = NULL;
     int_str destval;
-    osp_dest* dest = NULL;
-    osp_dest* result = NULL;
+    osp_dest *dest = NULL;
+    osp_dest *result = NULL;
 
     for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
@@ -224,12 +224,12 @@ osp_dest* ospGetNextOrigDestination(void)
  *    be wrong for loop condition.
  *  return NULL on failure
  */
-osp_dest* ospGetLastOrigDestination(void)
+osp_dest *ospGetLastOrigDestination(void)
 {
-    struct usr_avp* destavp = NULL;
+    struct usr_avp *destavp = NULL;
     int_str destval;
-    osp_dest* dest = NULL;
-    osp_dest* lastdest = NULL;
+    osp_dest *dest = NULL;
+    osp_dest *lastdest = NULL;
 
     for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
@@ -260,11 +260,11 @@ osp_dest* ospGetLastOrigDestination(void)
  *     There can be 0 or 1 term destinations. Find and return it.
  *  return NULL on failure (no terminate destination)
  */
-osp_dest* ospGetTermDestination(void)
+osp_dest *ospGetTermDestination(void)
 {
-    struct usr_avp* destavp = NULL;
+    struct usr_avp *destavp = NULL;
     int_str destval;
-    osp_dest* dest = NULL;
+    osp_dest *dest = NULL;
 
     destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, NULL, 0);
 
@@ -287,7 +287,7 @@ osp_dest* ospGetTermDestination(void)
  */
 static void ospRecordCode(
     int code, 
-    osp_dest* dest)
+    osp_dest *dest)
 {
     LM_DBG("code '%d'\n", code);
     dest->lastcode = code;
@@ -350,7 +350,7 @@ void ospRecordEvent(
     int clientcode, 
     int servercode)
 {
-    osp_dest* dest;
+    osp_dest *dest;
 
     LM_DBG("client status '%d'\n", clientcode);
     if ((clientcode != 0) && (dest = ospGetLastOrigDestination())) {
@@ -375,7 +375,7 @@ void ospRecordEvent(
  * Dump destination information
  * param dest Destination
  */
-void ospDumpDestination(osp_dest* dest)
+void ospDumpDestination(osp_dest *dest)
 {
     LM_DBG("dest->host..........'%s'\n", dest->host);
     LM_DBG("dest->used..........'%d'\n", dest->used);
@@ -390,14 +390,14 @@ void ospDumpDestination(osp_dest* dest)
  */
 void ospDumpAllDestination(void)
 {
-    struct usr_avp* destavp = NULL;
+    struct usr_avp *destavp = NULL;
     int_str destval;
-    osp_dest* dest = NULL;
+    osp_dest *dest = NULL;
     int count = 0;
 
     for (destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_ORIGDEST_NAME, NULL, 0);
         destavp != NULL;
-        destavp = search_next_avp(destavp,NULL))
+        destavp = search_next_avp(destavp, NULL))
     {
         get_avp_val(destavp, &destval);
 
@@ -435,8 +435,8 @@ void ospDumpAllDestination(void)
  * param buffersize Size of dst buffer
  */
 void ospConvertAddress(
-    char* src,
-    char* dst,
+    char *src,
+    char *dst,
     int buffersize)
 {
     struct in_addr inp;

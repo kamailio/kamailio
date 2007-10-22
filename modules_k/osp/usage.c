@@ -51,24 +51,25 @@ extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_NAME;
 extern struct rr_binds osp_rr;
 
-static void ospRecordTransaction(struct sip_msg *msg, unsigned long long tranid, char *uac, char *from, char *to, time_t authtime, int isorig, unsigned destinationCount);
+static void ospRecordTransaction(struct sip_msg *msg, unsigned long long transid, char *uac, char *from, char *to, time_t authtime, int isorig, unsigned destinationCount);
 static int ospBuildUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest *dest, int lastcode);
 static int ospReportUsageFromDestination(OSPTTRANHANDLE transaction, osp_dest *dest);
-static int ospReportUsageFromCookie(struct sip_msg *msg, char *cooky, OSPTCALLID* callid, int release, OSPE_MSG_ROLETYPES type);
+static int ospReportUsageFromCookie(struct sip_msg *msg, char *cooky, OSPTCALLID *callid, int release, OSPE_MSG_ROLETYPES type);
 
 /*
  * Create OSP cookie and insert it into Record-Route header
  * param msg SIP message
- * param tansaction Transaction handle
+ * param tansid Transaction ID
  * param uac Source IP
  * param from
  * param to
  * param authtime Request authorization time
  * param isorig Originate / Terminate
+ * param destinationCount Destination count
  */
 static void ospRecordTransaction(
     struct sip_msg *msg, 
-    unsigned long long tranid, 
+    unsigned long long transid, 
     char *uac, 
     char *from, 
     char *to, 
@@ -92,7 +93,7 @@ static void ospRecordTransaction(
             sizeof(buffer),
             ";%s=t%llu_s%s_T%d_c%d",
             OSP_ORIG_COOKIE,
-            tranid,
+            transid,
             uac,
             (unsigned int)authtime,
             destinationCount);
@@ -102,7 +103,7 @@ static void ospRecordTransaction(
             sizeof(buffer),
             ";%s=t%llu_s%s_T%d",
             OSP_TERM_COOKIE,
-            tranid,
+            transid,
             uac,
             (unsigned int)authtime);
     }
@@ -119,15 +120,16 @@ static void ospRecordTransaction(
 /*
  * Create OSP originate cookie and insert it into Record-Route header
  * param msg SIP message
- * param tansaction Transaction handle
+ * param tansid Transaction ID
  * param uac Source IP
  * param from
  * param to
  * param authtime Request authorization time
+ * param destinationCount Destination count
  */
 void ospRecordOrigTransaction(
     struct sip_msg *msg, 
-    unsigned long long tranid, 
+    unsigned long long transid, 
     char *uac, 
     char *from, 
     char *to, 
@@ -136,13 +138,13 @@ void ospRecordOrigTransaction(
 {
     int isorig = 1;
 
-    ospRecordTransaction(msg, tranid, uac, from, to, authtime, isorig, destinationCount);
+    ospRecordTransaction(msg, transid, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
  * Create OSP terminate cookie and insert it into Record-Route header
  * param msg SIP message
- * param tansaction Transaction handle
+ * param tansid Transaction ID
  * param uac Source IP
  * param from
  * param to
@@ -150,7 +152,7 @@ void ospRecordOrigTransaction(
  */
 void ospRecordTermTransaction(
     struct sip_msg *msg, 
-    unsigned long long tranid, 
+    unsigned long long transid, 
     char *uac, 
     char *from, 
     char *to, 
@@ -159,7 +161,7 @@ void ospRecordTermTransaction(
     int isorig = 0;
     unsigned destinationCount = 0; /* N/A */
 
-    ospRecordTransaction(msg, tranid, uac, from, to, authtime, isorig, destinationCount);
+    ospRecordTransaction(msg, transid, uac, from, to, authtime, isorig, destinationCount);
 }
 
 /*
@@ -182,7 +184,7 @@ static int ospReportUsageFromCookie(
     char *token;
     char tag;
     char *value;
-    unsigned long long transactionid = 0;
+    unsigned long long transid = 0;
     time_t authtime = 0;
     unsigned destinationCount = 0;
     time_t endtime = time(NULL);
@@ -214,7 +216,7 @@ static int ospReportUsageFromCookie(
 
             switch (tag) {
                 case 't':
-                    transactionid = atoll(value);
+                    transid = atoll(value);
                     break;
                 case 'T':
                     authtime = atoi(value);
@@ -244,11 +246,11 @@ static int ospReportUsageFromCookie(
         nexthop);
 
     if (release == OSP_RELEASE_ORIG) {
-        LM_DBG("orig '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
+        LM_DBG("orig '%s' released the call, call_id '%.*s' transaction_id '%llu'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
-            transactionid);
+            transid);
         if (originator == NULL) {
             originator = firstvia;
         }
@@ -257,11 +259,11 @@ static int ospReportUsageFromCookie(
         terminator = nexthop;
     } else {
         release = OSP_RELEASE_TERM;
-        LM_DBG("term '%s' released the call, call_id '%.*s' transaction_id '%lld'\n",
+        LM_DBG("term '%s' released the call, call_id '%.*s' transaction_id '%llu'\n",
             firstvia,
             callid->ospmCallIdLen,
             callid->ospmCallIdVal,
-            transactionid);
+            transid);
         if (originator == NULL) {
             originator = nexthop;
         }
@@ -295,7 +297,7 @@ static int ospReportUsageFromCookie(
 
     errorcode = OSPPTransactionBuildUsageFromScratch(
         transaction,
-        transactionid,
+        transid,
         type,
         source,
         destination,
@@ -433,7 +435,7 @@ static int ospBuildUsageFromDestination(
 
     errorcode = OSPPTransactionBuildUsageFromScratch(
         transaction,
-        dest->tid,
+        dest->transid,
         dest->type,
         source,
         dest->host,
@@ -523,10 +525,10 @@ void ospReportOrigSetupUsage(void)
     }
 
     if (lastused) {
-        LM_INFO("report orig setup for call_id '%.*s' transaction_id '%lld'\n",
+        LM_INFO("report orig setup for call_id '%.*s' transaction_id '%llu'\n",
             lastused->callidsize,
             lastused->callid,
-            lastused->tid);
+            lastused->transid);
         errorcode = ospReportUsageFromDestination(transaction, lastused);
     } else {
         /* If a Toolkit transaction handle was created, but we did not find
@@ -548,10 +550,10 @@ void ospReportTermSetupUsage(void)
 
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
-            LM_INFO("report term setup for call_id '%.*s' transaction_id '%lld'\n",
+            LM_INFO("report term setup for call_id '%.*s' transaction_id '%llu'\n",
                 dest->callidsize,
                 dest->callid,
-                dest->tid);
+                dest->transid);
             errorcode = OSPPTransactionNew(_osp_provider, &transaction);
             errorcode = ospBuildUsageFromDestination(transaction, dest, 0);
             errorcode = ospReportUsageFromDestination(transaction, dest);

@@ -45,13 +45,13 @@
 MODULE_VERSION
 
 extern unsigned int _osp_sp_number;
-extern char* _osp_sp_uris[];
+extern char *_osp_sp_uris[];
 extern unsigned long _osp_sp_weights[];
-extern char* _osp_device_ip;
-extern char* _osp_device_port;
-extern unsigned char* _osp_private_key;
-extern unsigned char* _osp_local_certificate;
-extern unsigned char* _osp_ca_certificate;
+extern char *_osp_device_ip;
+extern char *_osp_device_port;
+extern unsigned char *_osp_private_key;
+extern unsigned char *_osp_local_certificate;
+extern unsigned char *_osp_ca_certificate;
 extern int _osp_crypto_hw;
 extern int _osp_validate_callid;
 extern int _osp_token_format;
@@ -175,8 +175,7 @@ static int ospInitMod(void)
     /* Load the RR API */
     if (load_rr_api(&osp_rr) != 0) {
         LM_WARN("failed to load RR API\n");
-        LM_WARN("add_rr_param is required for reporting duration for "
-				"OSP transactions\n");
+        LM_WARN("add_rr_param is required for reporting duration for OSP transactions\n");
         memset(&osp_rr, 0, sizeof(osp_rr));
     }
 
@@ -184,8 +183,7 @@ static int ospInitMod(void)
     bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
     if ((bind_auth == NULL) || (bind_auth(&osp_auth) != 0)) {
         LM_WARN("failed to load AUTH API\n");
-        LM_WARN("rpid_avp & rpid_avp_type is required for calling number"
-				"translation\n");
+        LM_WARN("rpid_avp & rpid_avp_type is required for calling number translation\n");
         memset(&osp_auth, 0, sizeof(osp_auth));
     }
 
@@ -233,17 +231,17 @@ static int ospVerifyParameters(void)
     /* Default location for the cert files is in the compile time variable CFG_DIR */
     if (_osp_private_key == NULL) {
         sprintf(_osp_PRIVATE_KEY, "%spkey.pem", CFG_DIR);
-        _osp_private_key = (unsigned char *)_osp_PRIVATE_KEY;
+        _osp_private_key = (unsigned char*)_osp_PRIVATE_KEY;
     } 
 
     if (_osp_local_certificate == NULL) {
         sprintf(_osp_LOCAL_CERTIFICATE, "%slocalcert.pem", CFG_DIR);
-        _osp_local_certificate = (unsigned char *)_osp_LOCAL_CERTIFICATE;
+        _osp_local_certificate = (unsigned char*)_osp_LOCAL_CERTIFICATE;
     }
 
     if (_osp_ca_certificate == NULL) {
         sprintf(_osp_CA_CERTIFICATE, "%scacert_0.pem", CFG_DIR);
-        _osp_ca_certificate = (unsigned char *)_osp_CA_CERTIFICATE;
+        _osp_ca_certificate = (unsigned char*)_osp_CA_CERTIFICATE;
     }
 
     if (_osp_device_ip == NULL) {

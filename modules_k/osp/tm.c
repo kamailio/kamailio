@@ -38,8 +38,8 @@
 
 struct tm_binds osp_tmb;
 
-static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps);
-static void ospTmcbFunc(struct cell* t, int type, struct tmcb_params* ps);
+static void ospOnReq(struct cell *t, int type, struct tmcb_params *ps);
+static void ospTmcbFunc(struct cell *t, int type, struct tmcb_params *ps);
 
 /*
  * Load TM API
@@ -69,7 +69,7 @@ int ospInitTm(void)
  * param type
  * param ps
  */
-static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps)
+static void ospOnReq(struct cell *t, int type, struct tmcb_params *ps)
 {
     int tmcb_types;
 
@@ -109,9 +109,9 @@ static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps)
  * param ps
  */
 static void ospTmcbFunc(
-    struct cell* t, 
+    struct cell *t, 
     int type, 
-    struct tmcb_params* ps)
+    struct tmcb_params *ps)
 {
     if (type & TMCB_RESPONSE_OUT) {
         LM_DBG("RESPONSE_OUT\n");
