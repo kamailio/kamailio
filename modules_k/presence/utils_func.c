@@ -38,7 +38,6 @@
 #include "event_list.h"
 #include "presence.h"
 
-static str pu_489_rpl  = str_init("Bad Event");
 
 static const char base64digits[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -95,48 +94,52 @@ int a_to_i (char *s,int len)
 	return n;
 }
 
-int reply_bad_event(struct sip_msg * msg)
+int send_error_reply(struct sip_msg* msg, int reply_code, str reply_str)
 {
-	str hdr_append;
-	char buffer[256];
-	int i;
-	pres_ev_t* ev= EvList->events;
-
-	hdr_append.s = buffer;
-	hdr_append.s[0]='\0';
-	hdr_append.len = sprintf(hdr_append.s, "Allow-Events: ");
-	if(hdr_append.len < 0)
+	if(reply_code== 481)
 	{
-		LM_ERR("unsuccessful sprintf\n");
-		return -1;
-	}
+		str hdr_append;
+		char buffer[256];
+		int i;
+		pres_ev_t* ev= EvList->events;
 
-	for(i= 0; i< EvList->ev_count; i++)
-	{
-		if(i> 0)
+		hdr_append.s = buffer;
+		hdr_append.s[0]='\0';
+		hdr_append.len = sprintf(hdr_append.s, "Allow-Events: ");
+		if(hdr_append.len < 0)
 		{
-			memcpy(hdr_append.s+ hdr_append.len, ", ", 2);
-			hdr_append.len+= 2;
-		}	
-		memcpy(hdr_append.s+ hdr_append.len, ev->name.s, ev->name.len );
-		hdr_append.len+= ev->name.len ;
-		ev= ev->next;
-	}
-	memcpy(hdr_append.s+ hdr_append.len, CRLF, CRLF_LEN);
-	hdr_append.len+=  CRLF_LEN;
-	hdr_append.s[hdr_append.len]= '\0';
+			LM_ERR("unsuccessful sprintf\n");
+			return -1;
+		}
+
+		for(i= 0; i< EvList->ev_count; i++)
+		{
+			if(i> 0)
+			{
+				memcpy(hdr_append.s+ hdr_append.len, ", ", 2);
+				hdr_append.len+= 2;
+			}	
+			memcpy(hdr_append.s+ hdr_append.len, ev->name.s, ev->name.len );
+			hdr_append.len+= ev->name.len ;
+			ev= ev->next;
+		}
+		memcpy(hdr_append.s+ hdr_append.len, CRLF, CRLF_LEN);
+		hdr_append.len+=  CRLF_LEN;
+		hdr_append.s[hdr_append.len]= '\0';
 		
-	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
-	{
-		LM_ERR("unable to add lump_rl\n");
-		return -1;
+		if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
+		{
+			LM_ERR("unable to add lump_rl\n");
+			return -1;
+		}
 	}
 
-	if (slb.reply(msg, 489, &pu_489_rpl) == -1)
+	if (slb.reply(msg, reply_code, &reply_str) == -1)
 	{
-		LM_ERR("sending '489 Bad Event' reply\n");
+		LM_ERR("sending %d %.*s reply\n", reply_code, reply_str.len, reply_str.s);
 		return -1;
 	}
 	return 0;
+
 }
 

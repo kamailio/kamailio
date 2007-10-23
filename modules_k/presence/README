@@ -321,6 +321,13 @@ modparam("presence", "pres_htable_size", 11)
 
    This function can be used from REQUEST_ROUTE.
 
+   Return code:
+
+     * 1 - if success.
+     * -1 - if error.
+
+   The module sends an appropriate stateless reply in all cases.
+
    Example 1-14. handle_publish usage
 ...
         if(is_method("PUBLISH"))
@@ -342,6 +349,13 @@ modparam("presence", "pres_htable_size", 11)
    received
 
    This function can be used from REQUEST_ROUTE.
+
+   Return code:
+
+     * 1 - if success.
+     * -1 - if error.
+
+   The module sends an appropriate stateless reply in all cases.
 
    Example 1-15. handle_subscribe usage
 ...

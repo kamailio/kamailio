@@ -227,7 +227,7 @@ error:
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
-		int new_t)
+		int new_t, int* sent_reply)
 {
 	db_key_t query_cols[11], update_keys[7], result_cols[5];
 	db_op_t  query_ops[11];
@@ -240,6 +240,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	str cur_etag= {0, 0};
 	str* rules_doc= NULL;
 
+	*sent_reply= 0;
 	if(presentity->event->req_auth)
 	{
 		/* get rules_document */
@@ -330,6 +331,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			LM_ERR("sending 200OK\n");
 			goto error;
 		}
+		*sent_reply= 1;
 		goto send_notify;
 	}
 	else
@@ -361,6 +363,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					LM_ERR("sending 200OK reply\n");
 					goto error;
 				}
+				*sent_reply= 1;
 				if( publ_notify( presentity, body, &presentity->etag, rules_doc)< 0 )
 				{
 					LM_ERR("while sending notify\n");
@@ -476,6 +479,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					pkg_free(etag.s);
 				return -1;
 			}
+			*sent_reply= 1;
+			
 			if(etag.s)
 				pkg_free(etag.s);
 			etag.s= NULL;
@@ -495,6 +500,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				LM_ERR("sending '412 Conditional request failed' reply\n");
 				goto error;
 			}
+			*sent_reply= 1;
 		}
 	}
 

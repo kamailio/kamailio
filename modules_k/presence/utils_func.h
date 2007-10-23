@@ -157,7 +157,8 @@ static inline str* get_local_contact(struct sip_msg* msg)
 int a_to_i (char *s,int len);
 
 void to64frombits(unsigned char *out, const unsigned char *in, int inlen);
-int reply_bad_event(struct sip_msg * msg);
+
+int send_error_reply(struct sip_msg* msg, int reply_code, str reply_str);
 
 #endif
 

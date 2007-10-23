@@ -361,6 +361,26 @@ modparam("presence", "pres_htable_size", 11)
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if success</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if error</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+			The module sends an appropriate stateless reply
+			in all cases.
+		</para>
+
 		<example>
 		<title><function>handle_publish</function> usage</title>
 		<programlisting format="linespecific">
@@ -390,6 +410,26 @@ modparam("presence", "pres_htable_size", 11)
 		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if success</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if error</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+		<para>
+			The module sends an appropriate stateless reply
+			in all cases.
+		</para>
+
 		<example>
 		<title><function>handle_subscribe</function> usage</title>
 		<programlisting format="linespecific">

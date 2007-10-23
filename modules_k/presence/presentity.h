@@ -59,7 +59,8 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
  		pres_ev_t* event, str* etag, str* sender);
 
 /* update presentity in database */
-int update_presentity(struct sip_msg* msg,presentity_t* p,str* body,int t_new);
+int update_presentity(struct sip_msg* msg,presentity_t* p,str* body,int t_new,
+		int* sent_reply);
 
 /* free memory */
 void free_presentity(presentity_t* p);

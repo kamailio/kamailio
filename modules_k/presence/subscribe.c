@@ -38,8 +38,8 @@
 #include "notify.h"
 #include "../pua/hash.h"
 
-int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret);
-int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret);
+int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret, str* reply_str);
+int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret, str* reply_str);
 int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
 		int status, str* reason);
 
@@ -49,8 +49,12 @@ int insert_db_subs_auth(subs_t* subs);
 static str su_200_rpl  = str_init("OK");
 static str pu_481_rpl  = str_init("Subscription does not exist");
 static str pu_400_rpl  = str_init("Bad request");
+static str pu_500_rpl  = str_init("Server Internal Error");
+static str pu_489_rpl  = str_init("Bad Event");
 
-int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
+
+int send_2XX_reply(struct sip_msg * msg, int reply_code, int lexpire,
+		str *rtag, str* local_contact)
 {
 	static str hdr_append;
 	
@@ -78,7 +82,7 @@ int send_202ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
 		goto error;
 	}
 
-	if( slb.reply_dlg( msg, 202, &su_200_rpl, rtag)== -1)
+	if( slb.reply_dlg( msg, reply_code, &su_200_rpl, rtag)== -1)
 	{
 		LM_ERR("sending reply\n");
 		goto error;
@@ -93,47 +97,6 @@ error:
 	return -1;
 }
 
-int send_200ok(struct sip_msg * msg, int lexpire, str *rtag, str* local_contact)
-{
-	static str hdr_append;	
-
-	hdr_append.s = (char *)pkg_malloc( sizeof(char)*(local_contact->len+ 128));
-	if(hdr_append.s == NULL)
-	{
-		LM_ERR("unable to add lump_rl\n");
-		return -1;
-	}
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n", lexpire);
-	strncpy(hdr_append.s+hdr_append.len ,"Contact: <", 10);
-	hdr_append.len += 10;
-	strncpy(hdr_append.s+hdr_append.len, local_contact->s, local_contact->len);
-	hdr_append.len+= local_contact->len;
-	strncpy(hdr_append.s+hdr_append.len, ">", 1);
-	hdr_append.len += 1;
-	strncpy(hdr_append.s+hdr_append.len, CRLF, CRLF_LEN);
-	hdr_append.len += CRLF_LEN;
-
-	hdr_append.s[hdr_append.len]= '\0';
-
-	if (add_lump_rpl( msg, hdr_append.s, hdr_append.len, LUMP_RPL_HDR)==0 )
-	{
-		LM_ERR("unable to add lump_rl\n");
-		goto error;
-	}
-
-	if( slb.reply_dlg( msg, 200, &su_200_rpl, rtag)== -1)
-	{
-		LM_ERR("sending 200OK reply\n");
-		goto error;
-	}
-	
-	pkg_free(hdr_append.s);
-	return 0;
-error:
-	pkg_free(hdr_append.s);
-	return -1;
-
-}
 
 int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 {
@@ -288,12 +251,15 @@ int update_subs_db(subs_t* subs, int type)
 	return 0;
 }
 
-int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
+int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
+		int* sent_reply)
 {	
 	unsigned int hash_code;
-
+	
 	printf_subs(subs);	
 	
+	*sent_reply= 0;
+
 	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
 
 	if( to_tag_gen ==0) /*if a SUBSCRIBE within a dialog */
@@ -315,12 +281,13 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 		
 			if(subs->event->type & PUBL_TYPE)
 			{	
-				if( send_202ok(msg, subs->expires, &subs->to_tag, &subs->local_contact) <0)
+				if( send_2XX_reply(msg, 202, subs->expires, &subs->to_tag,
+							&subs->local_contact) <0)
 				{
 					LM_ERR("sending 202 OK\n");
 					goto error;
 				}
-				
+				*sent_reply= 1;
 				if(subs->event->wipeer)
 				{
 					if(query_db_notify(&subs->pres_uri,
@@ -334,11 +301,13 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 			}	
 			else /* if unsubscribe for winfo */
 			{
-				if( send_200ok(msg, subs->expires, &subs->to_tag, &subs->local_contact) <0)
+				if( send_2XX_reply(msg, 200, subs->expires, &subs->to_tag,
+							&subs->local_contact) <0)
 				{
 					LM_ERR("sending 202 OK reply\n");
 					goto error;
 				}
+				*sent_reply= 1;
 			}
 		
 			subs->status= TERMINATED_STATUS;
@@ -388,11 +357,13 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 
 	if(subs->event->type & PUBL_TYPE)
 	{	
-		if(send_202ok(msg,subs->expires,&subs->to_tag,&subs->local_contact)<0)
+		if(send_2XX_reply(msg, 202, subs->expires,&subs->to_tag,
+					&subs->local_contact)<0)
 		{
 			LM_ERR("sending 202 OK reply\n");
 			goto error;
 		}
+		*sent_reply= 1;
 		
 		if(subs->expires!= 0 && subs->event->wipeer)
 		{	
@@ -423,11 +394,14 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen)
 	}
 	else 
 	{
-		if( send_200ok(msg,subs->expires,&subs->to_tag,&subs->local_contact)<0)
+		if( send_2XX_reply(msg, 200, subs->expires, &subs->to_tag,
+					&subs->local_contact)<0)
 		{
 			LM_ERR("sending 202 OK reply\n");
 			goto error;
 		}		
+		*sent_reply= 1;
+		
 		if(notify(subs, NULL, NULL, 0 )< 0)
 		{
 			LM_ERR("sending notify request\n");
@@ -501,22 +475,23 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	int found;
 	str reason= {0, 0};
 	struct sip_uri uri;
-	int error_ret= -1;
+	int reply_code;
+	str reply_str;
+	int sent_reply= 0;
 
 	/* ??? rename to avoid collisions with other symbols */
 	counter++;
 
 	memset(&subs, 0, sizeof(subs_t));
+	
+	reply_code= 500;
+	reply_str= pu_500_rpl;
 
 	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
-
-		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
-		{
-			LM_ERR("sending 400 reply\n");
-		}
-		error_ret = 0;
+		reply_code= 400;
+		reply_str= pu_400_rpl;
 		goto error;
 	}
 	
@@ -525,7 +500,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	{
 		if (!msg->event->parsed && (parse_event(msg->event) < 0))
 		{
-			LM_ERR("cannot parse Event header\n");
+			reply_code= 400;
+			reply_str= pu_400_rpl;
 			goto error;
 		}
 		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
@@ -575,7 +551,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	}
 	else
 	{
-		if(get_stored_info(msg, &subs, &error_ret )< 0)
+		if(get_stored_info(msg, &subs, &reply_code, &reply_str )< 0)
 		{
 			LM_ERR("getting stored info\n");
 			goto error;
@@ -666,7 +642,7 @@ after_status:
 		goto error;
 	}
 	
-	if( update_subscription(msg, &subs, to_tag_gen) <0 )
+	if( update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0 )
 	{	
 		LM_ERR("in update_subscription\n");
 		goto error;
@@ -698,12 +674,18 @@ bad_event:
 	if(parsed_event)
 		LM_ERR("\tevent= %.*s\n",parsed_event->text.len,parsed_event->text.s);
 	
-	if(reply_bad_event(msg)< 0)
-		goto error;
-
-	error_ret = 0;
+	reply_code= 489;
+	reply_str= pu_489_rpl;
 
 error:
+	
+	if(sent_reply== 0)
+	{
+		if(send_error_reply(msg, reply_code, reply_str)< 0)
+		{
+			LM_ERR("failed to send reply on error case\n");
+		}
+	}
 
 	if(subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
@@ -724,7 +706,7 @@ error:
 	if(subs.record_route.s)
 		pkg_free(subs.record_route.s);
 
-	return error_ret;
+	return -1;
 
 }
 
@@ -947,14 +929,13 @@ error:
 }
 
 
-int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
+int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
+		str* reply_str)
 {	
 	str pres_uri= {0, 0}, reason={0, 0};
 	subs_t* s;
 	int i;
 	unsigned int hash_code;
-
-	*error_ret= -1;
 
 	/* first try to_user== pres_user and to_domain== pres_domain */
 
@@ -1000,16 +981,13 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 
 	if(fallback2db)
 	{
-		return get_database_info(msg, subs, error_ret);	
+		return get_database_info(msg, subs, reply_code, reply_str);	
 	}
 
 	LM_ERR("record not found in hash_table\n");
-	if (slb.reply(msg, 481, &pu_481_rpl) == -1)
-	{
-		LM_ERR("sending '481 Subscription does not exist' reply\n");
-		return -1;
-	}
-	*error_ret= 0;
+	*reply_code= 481;
+	*reply_str= pu_481_rpl;
+
 	return -1;
 
 found_rec:
@@ -1047,12 +1025,10 @@ found_rec:
 	{
 		LM_ERR("wrong sequence number;received: %d - stored: %d\n",
 				subs->remote_cseq, s->remote_cseq);
-		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
-		{
-			LM_ERR("sending '400 Bad request' reply\n");
-		}
-		else
-			*error_ret= 0;
+		
+		*reply_code= 400;
+		*reply_str= pu_400_rpl;
+
 		lock_release(&subs_htable[i].lock);
 		goto error;
 	}	
@@ -1070,7 +1046,7 @@ error:
 	return -1;
 }
 
-int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
+int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* reply_str)
 {	
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
@@ -1086,8 +1062,6 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	unsigned int remote_cseq;
 	str pres_uri, record_route;
 	str reason;
-
-	*error_ret= -1;
 
 	query_cols[n_query_cols] = "to_user";
 	query_vals[n_query_cols].type = DB_STR;
@@ -1178,14 +1152,10 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	{
 		LM_ERR("No matching subscription dialog found in database\n");
 		
-		if (slb.reply(msg, 481, &pu_481_rpl) == -1)
-		{
-			LM_ERR("sending '481 Subscription does not exist' reply\n");
-			pa_dbf.free_result(pa_db, result);
-			return -1;
-		}
 		pa_dbf.free_result(pa_db, result);
-		*error_ret= 0;
+		*reply_code= 481;
+		*reply_str= pu_481_rpl;
+
 		return -1;
 	}
 
@@ -1197,12 +1167,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret)
 	{
 		LM_ERR("wrong sequence number received: %d - stored: %d\n",
 				subs->remote_cseq, remote_cseq);
-
-		if (slb.reply(msg, 400, &pu_400_rpl) == -1)
-			LM_ERR("sending '400 Bad request' reply\n");
-		else
-			*error_ret= 0;
-
+		*reply_code= 400;
+		*reply_str= pu_400_rpl;
 		pa_dbf.free_result(pa_db, result);
 		return -1;
 	}

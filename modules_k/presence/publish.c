@@ -53,6 +53,8 @@ extern int startup_time;
 
 static str pu_400a_rpl = str_init("Bad request");
 static str pu_400b_rpl = str_init("Invalid request");
+static str pu_500_rpl  = str_init("Server Internal Error");
+static str pu_489_rpl  = str_init("Bad Event");
 
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
@@ -270,7 +272,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	struct hdr_field* hdr;
 	int found= 0, etag_gen = 0;
 	str etag={0, 0};
-	int error_ret = -1; 
 	str* sender= NULL;
 	static char buf[256];
 	int buf_len= 255;
@@ -278,16 +279,20 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	str pres_user;
 	str pres_domain;
 	struct sip_uri pres_uri;
+	int reply_code;
+	str reply_str;
+	int sent_reply= 0;
+
+	reply_code= 500;
+	reply_str= pu_500_rpl;
 
 	counter++;
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("parsing headers\n");
-		if (slb.reply(msg, 400, &pu_400a_rpl) == -1)
- 			LM_ERR("Error while sending 400 reply\n");
-		else
-			error_ret = 0;
-		return error_ret;
+		reply_code= 400;
+		reply_str= pu_400a_rpl;
+		goto error;
 	}
 	memset(&body, 0, sizeof(str));
 	
@@ -298,6 +303,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if (!msg->event->parsed && (parse_event(msg->event) < 0))
 		{
 			LM_ERR("cannot parse Event header\n");
+			reply_code= 400;
+			reply_str= pu_400a_rpl;
 			goto error;
 		}
 		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
@@ -334,7 +341,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if(etag.s == NULL)
 		{
 			LM_ERR("when generating etag\n");
-			return -1;
+			goto error;
 		}
 		etag.len=(strlen(etag.s));
 		etag_gen=1;
@@ -379,6 +386,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 				msg->first_line.u.request.uri.len, &pres_uri)< 0)
 	{
 		LM_ERR("parsing Request URI\n");
+		reply_code= 400; 
+		reply_str= pu_400a_rpl;
 		goto error;
 	}
 	pres_user= pres_uri.user;
@@ -387,6 +396,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	if (!msg->content_length) 
 	{
 		LM_ERR("no Content-Length header found!\n");
+		reply_code= 400; 
+		reply_str= pu_400a_rpl;
 		goto error;
 	}	
 
@@ -397,10 +408,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if (etag_gen)
 		{
 			LM_ERR("No E-Tag and no body found\n");
-			if (slb.reply(msg, 400, &pu_400b_rpl) == -1)
-				LM_ERR("sending 400 Invalid request reply\n");
-			else
-				error_ret = 0;
+			reply_code= 400;
+			reply_str= pu_400b_rpl;
 			goto error;
 		}
 	}
@@ -410,6 +419,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if (body.s== NULL) 
 		{
 			LM_ERR("cannot extract body\n");
+			reply_code= 400; 
+			reply_str= pu_400a_rpl;
 			goto error;
 		}
 		body.len= get_content_length( msg );
@@ -430,8 +441,11 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		if(parse_uri(buf, buf_len, &puri)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
+			reply_code= 400; 
+			reply_str= pu_400a_rpl;
 			goto error;
-		} else 
+		} 
+		else 
 		{
 			LM_DBG("using user id [%.*s]\n",buf_len,buf);
 		}
@@ -460,7 +474,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	}
 
 	/* querry the database and update or insert */
-	if(update_presentity(msg, presentity, &body, etag_gen) <0)
+	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply) <0)
 	{
 		LM_ERR("when updating presentity\n");
 		goto error;
@@ -475,7 +489,24 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 
 	return 1;
 
+unsupported_event:
+	
+	LM_ERR("Missing or unsupported event header field value\n");
+		
+	if(msg->event && msg->event->body.s && msg->event->body.len>0)
+		LM_ERR("\tevent=[%.*s]\n", msg->event->body.len, msg->event->body.s);
+
+	reply_code= 489;
+	reply_str=	pu_489_rpl; 
+
 error:
+	if(sent_reply== 0)
+	{
+		if(send_error_reply(msg, reply_code, reply_str)< 0)
+		{
+			LM_ERR("failed to send error reply\n");
+		}
+	}
 	
 	if(presentity)
 		pkg_free(presentity);
@@ -483,20 +514,8 @@ error:
 		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);
-	
-	return error_ret;
 
-unsupported_event:
-	
-	LM_ERR("Missing or unsupported event header field value\n");
-		
-	if(msg->event && msg->event->body.s && msg->event->body.len>0)
-		LM_ERR("\tevent=[%.*s]\n", msg->event->body.len, msg->event->body.s);
-	
-	if(reply_bad_event(msg)< 0)
-		return -1;
-
-	return 0;
+	return -1;
 
 }
 
