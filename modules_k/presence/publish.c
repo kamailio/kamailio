@@ -496,7 +496,7 @@ unsupported_event:
 	if(msg->event && msg->event->body.s && msg->event->body.len>0)
 		LM_ERR("\tevent=[%.*s]\n", msg->event->body.len, msg->event->body.s);
 
-	reply_code= 489;
+	reply_code= BAD_EVENT_CODE;
 	reply_str=	pu_489_rpl; 
 
 error:

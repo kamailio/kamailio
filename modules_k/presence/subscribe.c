@@ -674,7 +674,7 @@ bad_event:
 	if(parsed_event)
 		LM_ERR("\tevent= %.*s\n",parsed_event->text.len,parsed_event->text.s);
 	
-	reply_code= 489;
+	reply_code= BAD_EVENT_CODE;
 	reply_str= pu_489_rpl;
 
 error:

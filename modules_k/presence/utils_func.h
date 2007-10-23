@@ -38,6 +38,7 @@
 #include "../../parser/msg_parser.h"
 
 #define LCONTACT_BUF_SIZE 1024
+#define BAD_EVENT_CODE 489
 
 static inline int uandd_to_uri(str user,  str domain, str *out)
 {
