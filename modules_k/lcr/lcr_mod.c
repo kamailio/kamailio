@@ -298,7 +298,7 @@ static param_export_t params[] = {
 	{"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
 	{"contact_avp",              STR_PARAM, &contact_avp_param },
 	{"rpid_avp",                 STR_PARAM, &rpid_avp_param },
-	{"fr_timer",                 INT_PARAM, &fr_inv_timer },
+	{"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
 	{"fr_inv_timer_next",        INT_PARAM,	&fr_inv_timer_next },
 	{"dm_flag",                  INT_PARAM,	&dm_flag },
 	{0, 0, 0}
