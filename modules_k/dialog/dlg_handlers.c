@@ -590,7 +590,8 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		return;
 	}
 
-	if (event==DLG_EVENT_REQ && new_state==DLG_STATE_CONFIRMED) {
+	if ( (event==DLG_EVENT_REQ || event==DLG_EVENT_REQACK)
+	&& new_state==DLG_STATE_CONFIRMED) {
 		LM_DBG("sequential request successfully processed\n");
 		dlg->lifetime = get_dlg_timeout(req);
 		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1) {
