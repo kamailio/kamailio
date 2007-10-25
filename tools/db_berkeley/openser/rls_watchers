@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) pres_uri(str) to_user(str) to_domain(str) from_user(str) from_domain(str) event(str) event_id(str) to_tag(str) from_tag(str) callid(str) local_cseq(int) remote_cseq(int) contact(str) record_route(str) expires(int) status(int) reason(str) version(int) socket_info(str) local_contact(str)
+id(int) presentity_uri(str) to_user(str) to_domain(str) watcher_username(str) watcher_domain(str) event(str) event_id(str) to_tag(str) from_tag(str) callid(str) local_cseq(int) remote_cseq(int) contact(str) record_route(str) expires(int) status(int) reason(str) version(int) socket_info(str) local_contact(str)
 METADATA_KEY
 0 1 
 METADATA_READONLY

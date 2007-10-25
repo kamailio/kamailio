@@ -13,14 +13,14 @@ CREATE TABLE rls_presentity (
     CONSTRAINT updated_idx UNIQUE (updated)
 );
 
-INSERT INTO version (table_name, table_version) values ('rls_watchers','0');
+INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
 CREATE TABLE rls_watchers (
     id SERIAL PRIMARY KEY NOT NULL,
-    pres_uri VARCHAR(128) NOT NULL,
+    presentity_uri VARCHAR(128) NOT NULL,
     to_user VARCHAR(64) NOT NULL,
     to_domain VARCHAR(64) NOT NULL,
-    from_user VARCHAR(64) NOT NULL,
-    from_domain VARCHAR(64) NOT NULL,
+    watcher_username VARCHAR(64) NOT NULL,
+    watcher_domain VARCHAR(64) NOT NULL,
     event VARCHAR(64) NOT NULL DEFAULT 'presence',
     event_id VARCHAR(64),
     to_tag VARCHAR(64) NOT NULL,
@@ -36,6 +36,6 @@ CREATE TABLE rls_watchers (
     version INTEGER NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    CONSTRAINT rls_watcher_idx UNIQUE (pres_uri, callid, to_tag, from_tag)
+    CONSTRAINT rls_watcher_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
 );
 
