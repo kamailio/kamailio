@@ -9,7 +9,7 @@
 
 <table id="rls_watchers" xmlns:db="http://docbook.org/ns/docbook">
     <name>rls_watchers</name>
-    <version>0</version>
+    <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>Table for RLS module used for storing resource lists subscribe
@@ -28,8 +28,8 @@
         <description>Unique ID</description>
     </column>
 
-    <column id="pres_uri">
-        <name>pres_uri</name>
+    <column id="presentity_uri">
+        <name>presentity_uri</name>
         <type>string</type>
         <size>&uri_len;</size>
         <description>Presence URI</description>
@@ -50,14 +50,14 @@
     </column>
 
     <column>
-        <name>from_user</name>
+        <name>watcher_username</name>
         <type>string</type>
         <size>&user_len;</size>
         <description>From user</description>
     </column>
 
     <column>
-        <name>from_domain</name>
+        <name>watcher_domain</name>
         <type>string</type>
         <size>&domain_len;</size>
         <description>From domain</description>
@@ -174,7 +174,7 @@
 
     <index>
         <name>rls_watcher_idx</name>
-        <colref linkend="pres_uri"/>
+        <colref linkend="presentity_uri"/>
         <colref linkend="callid"/>
         <colref linkend="to_tag"/>
         <colref linkend="from_tag"/>
