@@ -57,7 +57,7 @@
 MODULE_VERSION
 
 #define P_TABLE_VERSION 0
-#define W_TABLE_VERSION 0
+#define W_TABLE_VERSION 1
 
 /** database connection */
 db_con_t *rls_db = NULL;
@@ -527,14 +527,14 @@ int rls_restore_db_subs(void)
 	unsigned int expires;
 	unsigned int hash_code;
 
-	result_cols[pres_uri_col=n_result_cols++]	="pres_uri";		
+	result_cols[pres_uri_col=n_result_cols++]	="presentity_uri";		
 	result_cols[expires_col=n_result_cols++]="expires";
 	result_cols[event_col=n_result_cols++]	="event";
 	result_cols[event_id_col=n_result_cols++]="event_id";
 	result_cols[to_user_col=n_result_cols++]	="to_user";
 	result_cols[to_domain_col=n_result_cols++]	="to_domain";
-	result_cols[from_user_col=n_result_cols++]	="from_user";
-	result_cols[from_domain_col=n_result_cols++]="from_domain";
+	result_cols[from_user_col=n_result_cols++]	="watcher_username";
+	result_cols[from_domain_col=n_result_cols++]="watcher_domain";
 	result_cols[callid_col=n_result_cols++] ="callid";
 	result_cols[totag_col=n_result_cols++]	="to_tag";
 	result_cols[fromtag_col=n_result_cols++]="from_tag";
