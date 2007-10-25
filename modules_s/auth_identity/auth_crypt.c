@@ -31,6 +31,8 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/sha.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include "../../mem/mem.h"
 
@@ -70,12 +72,59 @@ int retrieve_x509(X509 **pcert, str *scert)
 	return iRet;
 }
 
-int verify_x509(X509 *pcert, X509_STORE *pcacerts, str *sdom)
+int check_x509_subj(X509 *pcert, str* sdom)
+{
+	STACK_OF(GENERAL_NAME) *altnames;
+	int ialts, i1, ilen;
+	const GENERAL_NAME *actname;
+	char scname[AUTH_DOMAIN_LENGTH];
+	const char *altptr;
+
+
+	/* we're looking for subjectAltName for the first time */
+	altnames = X509_get_ext_d2i(pcert, NID_subject_alt_name, NULL, NULL);
+
+	if (altnames) {
+		ialts = sk_GENERAL_NAME_num(altnames);
+
+		for (i1=0; i1 < ialts; i1++) {
+			actname = sk_GENERAL_NAME_value(altnames, i1);
+
+			if (actname->type == GEN_DNS) {
+				/* we've found one */
+				altptr = (char *)ASN1_STRING_data(actname->d.ia5);
+				if (sdom->len != strlen(altptr)
+								|| strncasecmp(altptr, sdom->s, sdom->len)) {
+					LOG(L_INFO, "AUTH_INDENTITY VERIFIER: subAltName of certificate doesn't match host name\n");
+					GENERAL_NAMES_free(altnames);
+					return -1;
+				} else {
+					GENERAL_NAMES_free(altnames);
+					return 0;
+				}
+			}
+		}
+		GENERAL_NAMES_free(altnames);
+	}
+
+	/* certificate supplier host and certificate subject match check */
+	ilen=X509_NAME_get_text_by_NID (X509_get_subject_name (pcert),
+									NID_commonName,
+									scname,
+									sizeof (scname));
+	if (sdom->len != ilen || strncasecmp(scname, sdom->s, sdom->len)) {
+		LOG(L_INFO, "AUTH_INDENTITY VERIFIER: common name of certificate doesn't match host name\n");
+		return -2;
+	}
+
+	return 0;
+}
+
+int verify_x509(X509 *pcert, X509_STORE *pcacerts)
 {
 	X509_STORE_CTX ca_ctx;
 	char *strerr;
-	char scname[AUTH_DOMAIN_LENGTH];
-	int ilen;
+
 
 	if (X509_STORE_CTX_init(&ca_ctx, pcacerts, pcert, NULL) != 1) {
 		LOG(L_ERR, "AUTH_INDENTITY:verify_x509: Unable to init X509 store ctx\n");
@@ -89,14 +138,6 @@ int verify_x509(X509 *pcert, X509_STORE *pcacerts, str *sdom)
 		return -2;
 	}
 	X509_STORE_CTX_cleanup(&ca_ctx);
-
-	/* certificate supplier host and certificate subject match check */
-	ilen=X509_NAME_get_text_by_NID (X509_get_subject_name (pcert),
-							   		NID_commonName, scname, sizeof (scname));
-	if (sdom->len != ilen || strncasecmp(scname, sdom->s, sdom->len)) {
-		LOG(L_ERR, "AUTH_INDENTITY VERIFIER: certificate common name doesn't match host name\n");
-		return -3;
-	}
 
 	LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Certificate is valid\n");
 

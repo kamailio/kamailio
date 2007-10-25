@@ -227,7 +227,8 @@ int download_cer(str *suri, CURL *hcurl);
 
 /* OpenSSL, Base64 functions */
 int retrieve_x509(X509 **pcert, str *scert);
-int verify_x509(X509 *pcert, X509_STORE *pcacerts, str *sdom);
+int check_x509_subj(X509 *pcert, str* sdom);
+int verify_x509(X509 *pcert, X509_STORE *pcacerts);
 int rsa_sha1_dec (char *sencedsha, int iencedshalen,
 				  char *ssha, int sshasize, int *ishalen,
 				  X509 *pcertx509);
