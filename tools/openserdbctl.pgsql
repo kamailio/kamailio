@@ -212,11 +212,19 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
+sql_query "$1" < $DB_SCHEMA/rls-create.sql
+
+if [ $? -ne 0 ] ; then
+	merr "Failed to create rls-presence tables!"
+	exit 1
+fi
+
 sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE 	active_watchers, active_watchers_id_seq,
 		presentity, presentity_id_seq, watchers, watchers_id_seq, xcap,
-		xcap_id_seq, pua, pua_id_seq TO $DBRWUSER;
+		xcap_id_seq, pua, pua_id_seq, rls_presentity, rls_presentity_id_seq,
+		rls_watchers, rls_watchers_id_seq TO $DBRWUSER;
 		GRANT SELECT ON TABLE active_watchers, presentity, watchers, xcap,
-		pua TO $DBROUSER;"
+		pua, rls_presentity, rls_watchers TO $DBROUSER;"
 
 if [ $? -ne 0 ] ; then
 	merr "Grant privileges to presences tables failed!"

@@ -205,6 +205,13 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
+sql_query $1 < $DB_SCHEMA/rls-create.sql
+
+if [ $? -ne 0 ] ; then
+	merr "Failed to create rls-presence tables!"
+	exit 1
+fi
+
 minfo "Presence tables succesfully created."
 }  # end presence_create
 
