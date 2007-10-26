@@ -12,6 +12,6 @@
     <xi:include href="pr_presentity.xml"/>
     <xi:include href="pr_active_watchers.xml"/>
     <xi:include href="pr_watchers.xml"/>
-    <xi:include href="pr_xcap_xml.xml"/>
+    <xi:include href="pr_xcap.xml"/>
     <xi:include href="pr_pua.xml"/>
 </database>
