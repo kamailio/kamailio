@@ -213,9 +213,9 @@ if [ $? -ne 0 ] ; then
 fi
 
 sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE 	active_watchers, active_watchers_id_seq,
-		presentity, presentity_id_seq, watchers, watchers_id_seq, xcap_xml,
-		xcap_xml_id_seq, pua, pua_id_seq TO $DBRWUSER;
-		GRANT SELECT ON TABLE active_watchers, presentity, watchers, xcap_xml,
+		presentity, presentity_id_seq, watchers, watchers_id_seq, xcap,
+		xcap_id_seq, pua, pua_id_seq TO $DBRWUSER;
+		GRANT SELECT ON TABLE active_watchers, presentity, watchers, xcap,
 		pua TO $DBROUSER;"
 
 if [ $? -ne 0 ] ; then

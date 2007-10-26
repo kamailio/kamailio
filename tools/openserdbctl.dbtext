@@ -17,7 +17,7 @@ STANDARD_TABLES="version acc dbaliases lcr domain grp uri speed_dial gw pdt
 
 EXTRA_TABLES="imc_members imc_rooms cpl sip_trace domainpolicy"
 
-PRESENCE_TABLES="presentity active_watchers watchers xcap_xml pua"
+PRESENCE_TABLES="presentity active_watchers watchers xcap pua"
 
 SERWEB_TABLES="active_sessions pending phonebook usr_preferences_types
 		server_monitoring server_monitoring_agg admin_privileges"
