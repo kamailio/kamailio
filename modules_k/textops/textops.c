@@ -782,6 +782,10 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 		    }
 		    start = start + 2;
 		    len = len - content_type->len - 2;
+		    while ((len > 0) && ((*start == 13) || (*start == 10))) {
+			len = len - 1;
+			start = start + 1;
+		    }
 		    if (del_lump(msg, body.s - msg->buf, start - body.s, 0)
 			== 0) {
 			LM_ERR("Deleting lump <%.*s> failed\n",
