@@ -177,7 +177,7 @@ modparam("presence_xml", "pidf_manipulation", 1)
 		This parameter is a flag for the type of XCAP server or servers 
 		used. If integrated ones, like XCAP-lite from AG Projects, 
 		with direct access to database table, the parameter should be
-		set to a positive value. Apart from updating in xcap_xml table,
+		set to a positive value. Apart from updating in xcap table,
 		the integrated server must send an MI command refershWatchers 
 		[pres_uri] [event] when a user modifies a rules document. 
 		</para>
@@ -224,7 +224,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires 1 table in OpenSER database: xcap_xml. The SQL 
+	The module requires 1 table in OpenSER database: xcap. The SQL 
 	syntax to create it can be found in presence_xml-create.sql     
 	script in the database directories in the openser/scripts folder.
 	You can also find the complete database documentation on the
