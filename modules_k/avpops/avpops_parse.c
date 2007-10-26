@@ -210,6 +210,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 	 * speed up db querie builds */
 	if (dbp->a.type == AVPOPS_VAL_PVAR)
 	{
+		dbp->a.opd = AVPOPS_VAL_PVAR;
 		if(pv_has_sname(&dbp->a.u.sval))
 		{
 			dbp->sa.s=(char*)pkg_malloc(
@@ -223,6 +224,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 					dbp->a.u.sval.pvp.pvn.u.isname.name.s.len);
 			dbp->sa.len = dbp->a.u.sval.pvp.pvn.u.isname.name.s.len;
 			dbp->sa.s[dbp->sa.len] = 0;
+			dbp->a.opd = AVPOPS_VAL_PVAR|AVPOPS_VAL_STR;
 		} else if(pv_has_iname(&dbp->a.u.sval)) {
 			ul = (unsigned long)dbp->a.u.sval.pvp.pvn.u.isname.name.n;
 			tmp.s = int2str( ul, &(tmp.len) );
@@ -235,6 +237,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			memcpy( dbp->sa.s, tmp.s, tmp.len);
 			dbp->sa.len = tmp.len;
 			dbp->sa.s[dbp->sa.len] = 0;
+			dbp->a.opd = AVPOPS_VAL_PVAR|AVPOPS_VAL_INT;
 		}
 	}
 

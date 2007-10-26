@@ -100,7 +100,7 @@ void init_store_avps( char **db_columns)
  * value 2 - attr type
  */
 static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
-														int just_val_flags)
+											int attr_type, int just_val_flags)
 {
 	unsigned int uint;
 	int  db_flags;
@@ -157,6 +157,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 	{
 		/* use the name  */
 		avp_attr = attr;
+		db_flags |= attr_type;
 	} else {
 		/* take the name from db response */
 		if (row->values[1].type==DB_STRING)
@@ -215,7 +216,8 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 	/* added the avp */
 	db_flags |= AVP_IS_IN_DB;
 	/* set script flags */
-	db_flags |= dbp->a.u.sval.pvp.pvn.u.isname.type&0xff00;
+	if(dbp->a.type==AVPOPS_VAL_PVAR)
+		db_flags |= dbp->a.u.sval.pvp.pvn.u.isname.type&0xff00;
 	return add_avp( (unsigned short)db_flags, avp_attr, avp_val);
 }
 
@@ -288,6 +290,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	int  i, n, sh_flg;
 	str *s0, *s1, *s2;
 	int_str avp_name;
+	int avp_type = 0;
 	pv_value_t xvalue;
 
 	s0 = s1 = s2 = NULL;
@@ -339,33 +342,36 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	}
 
 	/* is dynamic avp name ? */
-	if(pv_has_dname(&(dbp->a.u.sval)))
+	if(dbp->a.type==AVPOPS_VAL_PVAR)
 	{
-		if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
+		if(pv_has_dname(&(dbp->a.u.sval)))
 		{
-			LM_CRIT("failed to get value for P2\n");
-			goto error;
-		}
-		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
-		{
-			LM_ERR("no value for p2\n");
-			goto error;
-		}
-		if(xvalue.flags&PV_VAL_STR)
-		{
-			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+			if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
 			{
-				LM_ERR("name too long [%d/%.*s...]\n",
-					xvalue.rs.len, 16, xvalue.rs.s);
+				LM_CRIT("failed to get value for P2\n");
 				goto error;
 			}
-			dbp->sa.s = avpops_attr_buf;
-			memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
-			dbp->sa.len = xvalue.rs.len;
-			dbp->sa.s[dbp->sa.len] = '\0';
-		} else {
-			LM_INFO("no string value for p2\n");
-			goto error;
+			if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
+			{
+				LM_ERR("no value for p2\n");
+				goto error;
+			}
+			if(xvalue.flags&PV_VAL_STR)
+			{
+				if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+				{
+					LM_ERR("name too long [%d/%.*s...]\n",
+						xvalue.rs.len, 16, xvalue.rs.s);
+					goto error;
+				}
+				dbp->sa.s = avpops_attr_buf;
+				memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
+				dbp->sa.len = xvalue.rs.len;
+				dbp->sa.s[dbp->sa.len] = '\0';
+			} else {
+				LM_INFO("no string value for p2\n");
+				goto error;
+			}
 		}
 	}
 
@@ -387,19 +393,24 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	{
 		/* validate row */
 		memset(&avp_name, 0, sizeof(int_str));
-		if(pv_has_dname(&dbp->a.u.sval))
+		if(dbp->a.type==AVPOPS_VAL_PVAR)
 		{
-			if(xvalue.flags&PV_TYPE_INT)
+			if(pv_has_dname(&dbp->a.u.sval))
 			{
-				avp_name.n = xvalue.ri;
+				if(xvalue.flags&PV_TYPE_INT)
+				{
+					avp_name.n = xvalue.ri;
+				} else {
+					avpops_str2int_str(xvalue.rs, avp_name);
+					avp_type = AVP_NAME_STR;
+				}
 			} else {
-				avpops_str2int_str(xvalue.rs, avp_name);
+				avp_name = dbp->a.u.sval.pvp.pvn.u.isname.name;
+				avp_type = dbp->a.u.sval.pvp.pvn.u.isname.type;
 			}
-		} else {
-			avp_name = dbp->a.u.sval.pvp.pvn.u.isname.name;
 		}
 		//if ( dbrow2avp( &res->rows[i], dbp->a.opd, avp_name, sh_flg) < 0 )
-		if ( dbrow2avp( &res->rows[i], dbp, avp_name, sh_flg) < 0 )
+		if ( dbrow2avp( &res->rows[i], dbp, avp_name, avp_type, sh_flg) < 0 )
 			continue;
 		n++;
 	}
@@ -472,33 +483,36 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	}
 
 	/* is dynamic avp name ? */
-	if(pv_has_dname(&dbp->a.u.sval))
+	if(dbp->a.type==AVPOPS_VAL_PVAR)
 	{
-		if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
+		if(pv_has_dname(&dbp->a.u.sval))
 		{
-			LM_CRIT("failed to get value for P2\n");
-			goto error;
-		}
-		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
-		{
-			LM_INFO("no value for p2\n");
-			goto error;
-		}
-		if(xvalue.flags&PV_VAL_STR)
-		{
-			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+			if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
 			{
-				LM_ERR("name too long [%d/%.*s...]\n",
-					xvalue.rs.len, 16, xvalue.rs.s);
+				LM_CRIT("failed to get value for P2\n");
 				goto error;
 			}
-			dbp->sa.s = avpops_attr_buf;
-			memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
-			dbp->sa.len = xvalue.rs.len;
-			dbp->sa.s[dbp->sa.len] = '\0';
-		} else {
-			LM_INFO("no string value for p2\n");
-			goto error;
+			if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
+			{
+				LM_INFO("no value for p2\n");
+				goto error;
+			}
+			if(xvalue.flags&PV_VAL_STR)
+			{
+				if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+				{
+					LM_ERR("name too long [%d/%.*s...]\n",
+						xvalue.rs.len, 16, xvalue.rs.s);
+					goto error;
+				}
+				dbp->sa.s = avpops_attr_buf;
+				memcpy(dbp->sa.s, xvalue.rs.s, xvalue.rs.len);
+				dbp->sa.len = xvalue.rs.len;
+				dbp->sa.s[dbp->sa.len] = '\0';
+			} else {
+				LM_INFO("no string value for p2\n");
+				goto error;
+			}
 		}
 	}
 
@@ -594,29 +608,31 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 		store_vals[5].val.str_val = (s2)?*s2:empty;
 
 	/* is dynamic avp name ? */
-	if(pv_has_dname(&dbp->a.u.sval))
+	if(dbp->a.type==AVPOPS_VAL_PVAR)
 	{
-		if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
+		if(pv_has_dname(&dbp->a.u.sval))
 		{
-			LM_CRIT("failed to get value for P2\n");
-			goto error;
-		}
-		if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
-		{
-			LM_INFO("no value for P2\n");
-			goto error;
-		}
-		if(xvalue.flags&PV_TYPE_INT)
-		{
-			name_type = 0;
-			avp_name.n = xvalue.ri;
-		} else {
-			name_type = AVP_NAME_STR;
-		}
-		if(xvalue.flags&PV_VAL_STR)
-		{
-			if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+			if(pv_get_spec_name(msg, &(dbp->a.u.sval.pvp), &xvalue)!=0)
 			{
+				LM_CRIT("failed to get value for P2\n");
+				goto error;
+			}
+			if(xvalue.flags&(PV_VAL_NULL|PV_VAL_EMPTY))
+			{
+				LM_INFO("no value for P2\n");
+				goto error;
+			}
+			if(xvalue.flags&PV_TYPE_INT)
+			{
+				name_type = 0;
+				avp_name.n = xvalue.ri;
+			} else {
+				name_type = AVP_NAME_STR;
+			}
+			if(xvalue.flags&PV_VAL_STR)
+			{
+				if(xvalue.rs.len>=AVPOPS_ATTR_LEN)
+				{
 				LM_ERR("name too long [%d/%.*s...]\n",
 					xvalue.rs.len, 16, xvalue.rs.s);
 				goto error;
@@ -626,17 +642,19 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 			dbp->sa.len = xvalue.rs.len;
 			dbp->sa.s[dbp->sa.len] = '\0';
 			avp_name.s = dbp->sa;
+			} else {
+				LM_INFO("no string value for p2\n");
+				goto error;
+			}
 		} else {
-			LM_INFO("no string value for p2\n");
-			goto error;
+			name_type = dbp->a.u.sval.pvp.pvn.u.isname.type;
+			avp_name = dbp->a.u.sval.pvp.pvn.u.isname.name;
 		}
-	} else if((dbp->a.opd&AVPOPS_VAL_NONE)==0) {
-		name_type = dbp->a.u.sval.pvp.pvn.u.isname.type;
-		avp_name = dbp->a.u.sval.pvp.pvn.u.isname.name;
 	}
 
 	/* set the script flags */
-	name_type |= dbp->a.u.sval.pvp.pvn.u.isname.type&0xff00;
+	if(dbp->a.type==AVPOPS_VAL_PVAR)
+		name_type |= dbp->a.u.sval.pvp.pvn.u.isname.type&0xff00;
 	
 	/* set uuid/(username and domain) fields */
 
