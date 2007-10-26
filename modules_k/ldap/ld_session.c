@@ -52,6 +52,7 @@ int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d)
 		LM_ERR("no memory\n");
 		return -1;
 	}
+	memset( new_lds, 0, sizeof(struct ld_session));
 
 	/* name */
 	strncpy(new_lds->name, _name, 255);
