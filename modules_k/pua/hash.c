@@ -44,7 +44,11 @@ void print_ua_pres(ua_pres_t* p)
 		LM_DBG("\tcall_id= %.*s   len= %d\n", p->call_id.len, p->call_id.s, p->call_id.len);
 	}	
 	else
+	{
 		LM_DBG("\tetag= %.*s - len= %d\n", p->etag.len, p->etag.s, p->etag.len);
+		if(p->id.s)
+			LM_DBG("\tid= %.*s\n", p->id.len, p->id.s);
+	}
 	LM_DBG("\texpires= %d\n", p->expires- (int)time(NULL));
 }
 
@@ -140,7 +144,12 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 						if(pres->etag.len== p->etag.len &&
 							strncmp(p->etag.s, pres->etag.s,pres->etag.len)==0)
 							break;		
-					}	
+					}
+					else
+					{
+						LM_DBG("no etag restriction\n");
+						break;
+					}
 				}
 			}
 		}

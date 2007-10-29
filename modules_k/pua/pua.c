@@ -854,7 +854,7 @@ void db_update(unsigned int ticks,void *param)
 				p= p->next;
 				continue;
 			}
-
+			
 			switch(p->db_flag)
 			{
 				case NO_UPDATEDB_FLAG:
@@ -865,7 +865,7 @@ void db_update(unsigned int ticks,void *param)
 				
 				case UPDATEDB_FLAG:
 				{
-					LM_DBG("UPDATEDB_FLAG\n ");
+					LM_DBG("UPDATEDB_FLAG\n");
 					n_update_cols= 0;
 					n_query_update= 0;
 
@@ -950,7 +950,7 @@ void db_update(unsigned int ticks,void *param)
 				}
 				case INSERTDB_FLAG:
 				{	
-					LM_DBG("INSERTDB_FLAG\n ");
+					LM_DBG("INSERTDB_FLAG\n");
 					q_vals[puri_col].val.str_val = *(p->pres_uri);
 					q_vals[pid_col].val.str_val = p->id;
 					q_vals[flag_col].val.int_val = p->flag;
