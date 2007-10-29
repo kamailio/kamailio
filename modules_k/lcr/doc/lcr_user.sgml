@@ -484,7 +484,7 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 		<title>Setting <varname>rpid_avp</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("^auth$|domain|lcr", "rpid_avp", "$avp(i:302)")
+modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 ...
 </programlisting>
 		</example>

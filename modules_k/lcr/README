@@ -398,7 +398,7 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 
    Example 1-18. Setting rpid_avp module parameter
 ...
-modparam("^auth$|domain|lcr", "rpid_avp", "$avp(i:302)")
+modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 ...
      _________________________________________________________
 
