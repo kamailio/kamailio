@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) time(datetime) param(str) value(int) increment(int)
 METADATA_KEY
-0 
+0 2 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

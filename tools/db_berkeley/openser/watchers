@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) presentity_uri(str) watcher_username(str) watcher_domain(str) event(str) status(int) reason(str) inserted_time(int)
 METADATA_KEY
-0 4 
+1 2 3 4 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

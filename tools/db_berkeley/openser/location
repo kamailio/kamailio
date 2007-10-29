@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) username(str) domain(str) contact(str) received(str) path(str) expires(datetime) q(double) callid(str) cseq(int) last_modified(datetime) flags(int) cflags(int) user_agent(str) socket(str) methods(int)
 METADATA_KEY
-0 1 
+1 2 3 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

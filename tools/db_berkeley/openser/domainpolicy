@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) rule(str) type(str) att(str) val(str) comment(str)
 METADATA_KEY
-0 1 1 
+1 3 4 1 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 sid(str) name(str) val(str) changed(str)
 METADATA_KEY
-0 3
+1 0 3 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

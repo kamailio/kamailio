@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) pres_uri(str) pres_id(str) event(int) expires(int) desired_expires(int) flag(int) etag(str) tuple_id(str) watcher_uri(str) call_id(str) to_tag(str) from_tag(str) cseq(int) record_route(str) contact(str) version(int) extra_headers(str)
 METADATA_KEY
-0 
+
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
