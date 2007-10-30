@@ -179,7 +179,7 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 			{
 				/* sent a PUBLISH within a dialog that no longer exists
 				 * send again an intial PUBLISH */
-				LM_DBG("received s 412 reply- send an INSERT_TYPE"
+				LM_DBG("received a 412 reply- send an INSERT_TYPE"
 						" publish request\n");
 				delete_htable(presentity, hash_code);
 				lock_release(&HashT->p_records[hash_code].lock);
@@ -475,6 +475,7 @@ insert:
 		if(publ->expires== 0)
 		{
 			LM_DBG("expires= 0- delete from hash table\n");
+			lock_release(&HashT->p_records[hash_code].lock);
 			goto send_publish;
 		}
 		presentity->version++;
