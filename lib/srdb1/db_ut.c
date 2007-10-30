@@ -125,14 +125,15 @@ inline int db_double2str(double _v, char* _s, int* _l)
  */
 inline int db_str2time(const char* _s, time_t* _v)
 {
+	struct tm time;
+
 	if ((!_s) || (!_v)) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
 
-	// Convert database time representation to time_t structure
-	struct tm time;
-	/* It is necessary to zero tm structure first */
+	/* Convert database time representation to time_t structure
+	   It is necessary to zero tm structure first */
 	memset(&time, '\0', sizeof(struct tm));
 	if (strptime(_s, "%Y-%m-%d %H:%M:%S", &time) == NULL) {
 		LM_ERR("Error during time conversion\n");
@@ -156,6 +157,7 @@ inline int db_str2time(const char* _s, time_t* _v)
  */
 inline int db_time2str(time_t _v, char* _s, int* _l)
 {
+	struct tm* t;
 	int l;
 
 	if ((!_s) || (!_l) || (*_l < 2)) {
@@ -165,14 +167,13 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 
 	*_s++ = '\'';
 
-	// Convert time_t structure to format accepted by the database
-	struct tm* t;
+	/* Convert time_t structure to format accepted by the database */
 	t = localtime(&_v);
 	l = strftime(_s, *_l -1, "%Y-%m-%d %H:%M:%S", t);
 
 	if (l == 0) {
 		LM_ERR("Error during time conversion\n");
-		// the value of _s is now unspecified
+		/* the value of _s is now unspecified */
 		_s = NULL;
 		_l = 0;
 		return -1;
