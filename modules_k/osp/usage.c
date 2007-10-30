@@ -421,8 +421,6 @@ static int ospBuildUsageFromDestination(
     char *source;
     char *srcdev;
 
-    dest->reported = 1;
-
     if (dest->type == OSPC_SOURCE) {
         ospConvertAddress(dest->srcdev, addr, sizeof(addr));
         source = dest->source;
@@ -507,6 +505,8 @@ void ospReportOrigSetupUsage(void)
             if (dest->reported == 1) {
                 LM_DBG("orig setup already reported\n");
                 break;
+            } else {
+                dest->reported = 1;
             }
 
             LM_DBG("iterating through used destination\n");
@@ -550,6 +550,7 @@ void ospReportTermSetupUsage(void)
 
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
+            dest->reported = 1;
             LM_INFO("report term setup for call_id '%.*s' transaction_id '%llu'\n",
                 dest->callidsize,
                 dest->callid,
