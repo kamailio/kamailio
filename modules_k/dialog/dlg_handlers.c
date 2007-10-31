@@ -322,6 +322,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
 		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl);
+		/* do unref */
 		if (unref)
 			unref_dlg(dlg,unref);
 		if (old_state==DLG_STATE_EARLY)
@@ -583,9 +584,13 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		/* dialog terminated (BYE) */
 		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req);
 
+		/* delete the dialog from DB */
+		if (dlg_db_mode)
+			remove_dialog_from_db(dlg);
+
 		/* destroy dialog */
 		unref_dlg(dlg, unref+1);
-		
+
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		return;
 	}
@@ -643,6 +648,10 @@ void dlg_ontimeout( struct dlg_tl *tl)
 
 		/* dialog timeout */
 		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0);
+
+		/* delete the dialog from DB */
+		if (dlg_db_mode)
+			remove_dialog_from_db(dlg);
 
 		unref_dlg(dlg, unref);
 

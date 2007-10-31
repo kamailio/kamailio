@@ -378,13 +378,13 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 	struct dlg_entry entry;
 	db_val_t values[DIALOG_TABLE_COL_NO];
 
-	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = {		h_entry_column,
-			h_id_column,		call_id_column,		from_uri_column,
-			from_tag_column,	to_uri_column,		to_tag_column,
-			from_sock_column,	to_sock_column,
-			start_time_column,	state_column,		timeout_column,
-			from_cseq_column,	to_cseq_column,		from_route_column,
-			to_route_column, 	from_contact_column, to_contact_column};
+	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = { h_entry_column,
+			h_id_column,        call_id_column,     from_uri_column,
+			from_tag_column,    to_uri_column,      to_tag_column,
+			from_sock_column,   to_sock_column,
+			start_time_column,  state_column,       timeout_column,
+			from_cseq_column,   to_cseq_column,     from_route_column,
+			to_route_column,    from_contact_column,to_contact_column};
 
 	if(use_dialog_table()!=0)
 		return -1;

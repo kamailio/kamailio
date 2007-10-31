@@ -46,7 +46,6 @@
 #include "../../hash_func.h"
 #include "../../mi/mi.h"
 #include "dlg_hash.h"
-#include "dlg_db_handler.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -108,8 +107,6 @@ error0:
 inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	LM_DBG("destroing dialog %p\n",dlg);
-	if (dlg_db_mode)
-		remove_dialog_from_db(dlg);
 
 	if (dlg->tag[DLG_CALLER_LEG].s)
 		shm_free(dlg->tag[DLG_CALLER_LEG].s);

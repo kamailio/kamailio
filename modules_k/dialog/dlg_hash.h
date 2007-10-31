@@ -133,7 +133,7 @@ inline void destroy_dlg(struct dlg_cell *dlg);
 			(_dlg),(_cnt),(_dlg)->ref);\
 		if ((_dlg)->ref<=0) { \
 			unlink_unsafe_dlg( _d_entry, _dlg);\
-			LM_DBG("destroying a dialog\n");\
+			LM_DBG("ref <=0 for dialog %p\n",_dlg);\
 			destroy_dlg(_dlg);\
 		}\
 	}while(0)
