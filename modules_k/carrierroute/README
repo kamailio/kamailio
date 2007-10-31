@@ -146,7 +146,9 @@ Chapter 1. User's Guide
    This modules scales up to more than a million users, and is
    able to handle more than ten thousand routing table entries.
    It should be able to handle more, but this is untested at the
-   moment.
+   moment. In load balancing scenarios the usage of the config
+   file mode is recommended, to avoid the additional complexity
+   that the database driven routing creates.
 
    Routing tables can be reloaded and edited (in config file
    mode) with the MI interface, the config file is updated
@@ -159,7 +161,8 @@ Chapter 1. User's Guide
    file mode, as it is not possible to specify all information
    that can be stored in the database tables in the config file.
    Further information about these limitations is given in later
-   sections.
+   sections. For user based routing or LCR you should use the
+   database mode.
 
    Basically this module could be used as an replacement for the
    lcr and the dispatcher module, if you have certain
@@ -926,9 +929,10 @@ domain register {
    This table contains the mapping of the carrier id to actual
    names.
 
-   For a functional routing the "cr_prefered_carrier" column must
-   be added to the subscriber table to choose the actual carrier
-   for the users.
+   For a functional routing the "cr_preferred_carrier" column
+   must be added to the subscriber table (or to the table and
+   column that you specified as modul parameter) to choose the
+   actual carrier for the users.
      _________________________________________________________
 
 Chapter 2. Developer's Guide
