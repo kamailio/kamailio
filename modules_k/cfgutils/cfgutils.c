@@ -169,7 +169,7 @@ static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param )
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	if( strno2int( &node->value, &percent) <0)
+	if( str2int( &node->value, &percent) <0)
 		goto error;
 	if (percent > 100) {
 		LM_ERR("incorrect probability <%u>\n", percent);
