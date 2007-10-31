@@ -96,6 +96,8 @@ void db_cmd_free(struct db_cmd* cmd);
 
 int db_exec(struct db_res** res, struct db_cmd* cmd);
 
+int db_getopt(db_cmd_t* cmd, char* optname, ...);
+
 int db_setopt(db_cmd_t* cmd, char* optname, ...);
 
 #ifdef __cplusplus
