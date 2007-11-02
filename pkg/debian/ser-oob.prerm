@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+if test "$1" = "upgrade"; then
+  exit 0
+fi
+
+#DEBHELPER#
+
+
+exit 0
+
+

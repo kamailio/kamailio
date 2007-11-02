@@ -12,14 +12,39 @@
 #  adapted for ser by Andrei Pelinescu-Onciul <pelinescu-onciul@fokus.gmd.de>
 # $Id$
 
+# read configuration from /etc/default/ser file
+DEFAULT_FILE="/etc/default/ser"
+
+if test -f "$DEFAULT_FILE" ; then
+  . /etc/default/ser
+fi
+
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/ser
 NAME=ser
 DESC=ser
-PIDFILE=/var/run/$NAME/$NAME.pid
-PARAMS="-P $PIDFILE -u ser -g ser"
+
+if test "$SER_PIDFILE" = ""; then
+  SER_PIDFILE="/var/run/$NAME/$NAME.pid"
+fi
+
+if test "$SER_USER" = "" ; then
+  SER_USER="ser"
+fi
+if test "$SER_GROUP" = "" ; then
+  SER_GROUP="ser"
+fi
+
+PARAMS="-P $SER_PIDFILE -u $SER_USER -g $SER_GROUP"
 LD_LIBRARY_PATH=/usr/lib/ser
+
+CFGPARAMS=""
+if test "$SER_CFG_FILE" != "" ; then
+  CFGPARAMS="-f $SER_CFG_FILE"
+fi
+
+PARAMS="$PARAMS $CFGPARAMS"
 
 test -f $DAEMON || exit 0
 
@@ -29,13 +54,13 @@ set -e
 case "$1" in
   start)
 	echo -n "Starting $DESC: $NAME"
-	start-stop-daemon --start --quiet --pidfile $PIDFILE \
+	start-stop-daemon --start --quiet --pidfile $SER_PIDFILE \
 		--exec $DAEMON -- $PARAMS
 	echo "."
 	;;
   stop)
 	echo -n "Stopping $DESC: $NAME"
-	start-stop-daemon --oknodo --stop --quiet --pidfile $PIDFILE \
+	start-stop-daemon --oknodo --stop --quiet --pidfile $SER_PIDFILE \
 		--exec $DAEMON
 	echo "."
 	;;
@@ -49,7 +74,7 @@ case "$1" in
 	#
 	# echo "Reloading $DESC configuration files."
 	# start-stop-daemon --stop --signal 1 --quiet --pidfile \
-	#	$PIDFILE --exec $DAEMON
+	#	$SER_PIDFILE --exec $DAEMON
   #;;
   restart|force-reload)
 	#
@@ -58,19 +83,19 @@ case "$1" in
 	#	just the same as "restart".
 	#
 	# Check if ser configuration is valid before restarting the server
-        (($DAEMON -c 2>&1) | grep "config file ok, exiting") > /dev/null
+        (($DAEMON $CFGPARAMS -c 2>&1) | grep "config file ok, exiting") > /dev/null
 	if [ $? -ne 0 ]; then
-            ($DAEMON -c 2>&1)
+            ($DAEMON $CFGPARAMS -c 2>&1)
 	    echo -e "\nThere are errors in the configuration file. Please fix them first"
 	    echo -e "\n$out\n"
 	    exit 0
 	fi
 	echo -n "Restarting $DESC: $NAME"
 	start-stop-daemon --oknodo --stop --quiet --pidfile \
-		$PIDFILE --exec $DAEMON
+		$SER_PIDFILE --exec $DAEMON
 	sleep 1
 	start-stop-daemon --start --quiet --pidfile \
-		$PIDFILE --exec $DAEMON  -- $PARAMS
+		$SER_PIDFILE --exec $DAEMON  -- $PARAMS
 	echo "."
 	;;
   *)
@@ -82,3 +107,4 @@ case "$1" in
 esac
 
 exit 0
+

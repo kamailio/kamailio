@@ -1,3 +1,15 @@
+ser (2.1.0-0dev12) unstable; urgency=low
+
+  * Updated Debian specification for cvs HEAD version.
+
+ -- Pavel Kasparek <pavel@iptel.org>  Wed, 31 Oct 2007 13:35:40 +0100
+
+ser (2.0.0-0rc5.7) unstable; urgency=low
+
+  * Updated Debian specification for upcoming SER 2.0.0 version.
+
+ -- Pavel Kasparek <pavel@iptel.org>  Tue, 11 Sep 2007 12:08:05 +0200
+
 ser (0.9.4-0.2) unstable; urgency=low
 
   * minor debian rules clean target fix 

@@ -64,7 +64,7 @@ if [ -x "/etc/init.d/ser" ]; then
 	 if ! invoke-rc.d ser restart ; then
 		echo ""
 		echo "ser failed to (re)start. Perhaps your configuration requires "
-		echo "additional modules (e.g. ser-mysql-module, ser-jabber-module "
+		echo "additional modules (e.g. ser-mysql-modules, ser-jabber-module "
 		echo "or ser-radius-modules). Next try to install any additional ser"
 		echo "modules you might need and then (re)start ser by executing "
 		echo "the command '/etc/init.d/ser start|restart'."
