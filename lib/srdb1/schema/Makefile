@@ -102,9 +102,11 @@ dbtext:
 	# small hack to create the version table entries, this is here easier as with XSL
 	for FILE in  $(wildcard $(ROOT)/scripts/dbtext/openser/*) ; do \
 		if [ -f "$$FILE" ]; then \
-			tail -n 1 "$$FILE" >> "$(ROOT)/scripts/dbtext/openser/version" ; \
- 			head -n -1 "$$FILE" > /tmp/openser-dbtext.tmp ; \
-			cp /tmp/openser-dbtext.tmp "$$FILE" ; \
+			if [  "$$FILE" != "$(ROOT)/scripts/dbtext/openser/version" ]; then \
+				tail -n 1 "$$FILE" >> "$(ROOT)/scripts/dbtext/openser/version" ; \
+ 				head -n 1 "$$FILE" > /tmp/openser-dbtext.tmp ; \
+				cp /tmp/openser-dbtext.tmp "$$FILE" ; \
+			fi ; \
 		fi ; \
 	done ; \
 	rm -f /tmp/openser-dbtext.tmp
@@ -124,9 +126,11 @@ db_berkeley:
 	# small hack to create the version table entries, this is here easier as with XSL
 	for FILE in  $(wildcard $(ROOT)/scripts/db_berkeley/openser/*) ; do \
 		if [ -f "$$FILE" ]; then \
-			tail -n 2 "$$FILE" >> "$(ROOT)/scripts/db_berkeley/openser/version" ; \
- 			head -n -2 "$$FILE" > /tmp/openser-db_berkeley.tmp ; \
-			cp /tmp/openser-db_berkeley.tmp "$$FILE" ; \
+			if [  "$$FILE" != "$(ROOT)/scripts/db_berkeley/openser/version" ]; then \
+				tail -n 2 "$$FILE" >> "$(ROOT)/scripts/db_berkeley/openser/version" ; \
+ 				head -n 8 "$$FILE" > /tmp/openser-db_berkeley.tmp ; \
+				cp /tmp/openser-db_berkeley.tmp "$$FILE" ; \
+			fi ; \
 		fi ; \
 	done ; \
 	rm -f /tmp/openser-db_berkeley.tmp
