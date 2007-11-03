@@ -1,104 +1,116 @@
 db_ops module
 =============
 
-Author: tomas.mandys at iptel dot org
+Author: tomas.mandys at iptel dot org
 
 db operations from route script
 
-mod_params
------------
-db_url - default database
-declare_query - declare query for @db.query (see select syntax) or for reference from db_query(declare_no)
-max_queries - number of max. open queries, i.e. max query_handle
-
-format:
+Syntax
+------
 
 xltext = text_parsed_by_xl_lib
-database = type ":" user:psw "@" host "/" database_name
+database = type "://" user:psw "@" host "/" database_name
 field = xltext
 fields = field [ "," field ... ]
-op = "=" | "<" | ">" | "<=" | ">="  ; note: non-equal nit supported by db API
+op = "=" | "<" | ">" | "<=" | ">="  ; note: non-equal not yet supported by db API
 where = fields
 ops = op [ "," op ... ]
 order = field
 type = "s" | "i" | "d" | "f" | "t" ; enables to force particular type when writing to db driver (string/int/double/float/datetime), valueable especially for datetime
 value = [type ":"] xltext
 values = value [ "," value ...]
+extra_op = name "=" [type ":"] text
+extra_ops = extra_op [ "," extra_op]
 
-select = "select/" [database "/"] table "/" fields "/" where "/" ops "/" order "/" values
-insert = "insert/" [database "/"] table "/" fields "/" values
-update = "update/" [database "/"] table "/" fields "/" where "/" ops "/" values
-replace = "replace/" [database "/"] table "/" fields "/" values
-delete = "delete/" [database "/"] table "/" where "/" ops "/" values
-raw_query = "select ...." | "insert ..."   # not delimited by "/"
+select = [database "/"] "select/" table "/" fields "/" where "/" ops "/" order "/" values [ "/" extra_ops ]
+insert = [database "/"] "insert/" table "/" fields "/" values [ "/" extra_ops ]
+update = [database "/"] "update/" table "/" fields "/" where "/" ops "/" values [ "/" extra_ops ]
+replace = [database "/"] "replace/" table "/" fields "/" values [ "/" extra_ops ]
+delete = [database "/"] "delete/" table "/" where "/" ops "/" values [ "/" extra_ops ]
+raw_query = [database "/"] "select ...." | "insert ..." [[ / "values" [ "/" extra_ops ]]  # not delimited by "/"
+query = (select | insert | update | replace | delete | raw_query)
+query_id = alphanum
+handle = alphanum  (plain text possible but alphanum recommended)
+declare_query_param = query_id "=" query
+declare_handle_param = handle
 
-Note that even table/field/where/order are ptrcessed using xl_lib parser. Table name may be determined via AVP, probably useless but "magnifique".
+mod_params
+-----------
+db_url  (syntax: database)
+  default database
+
+declare_query  (syntax: declare_query_param)
+  declare query_id for @db.query (see select syntax) or for reference from db_query(query_id), see declare_query_param
+  
+declare_handle  (syntax: declare_handle_param)
+  declare handle for fetching
+
+
+Queries are pre-compiled therefore volatile stuff must be passed via parameters (AVP or so)
 
 commands
 --------
 
-db_query ( (insert | update | replace | delete) | declare_no)
+db_query ( query | query_id) )
 
-db_query (select | declare_no, query_handle)
-  query is accesable using @db.fetch select
-db_close (query_handle)
+db_query ( (select | query_id), handle)
+  query is accesable using @db.fetch select, and seek first record, returns true if table not empty
+db_close (handle)
   note all close after script processing automatically
+db_first (handle)
+  returns true if not EOF
+db_next (handle)
+  returns true if not EOF
+db_seek (handle, row_no)
+  returns true if succesfull
 
-db_foreach(select | declare_no, route)
+db_foreach(query_id, route)
   call route for each row, loop is interrupted if route return code <= 0, retcode of the last route call is returned as result of db_foreach (or -1 when no select is empty)
 
-declare_no references to query declared using "declare_query"
+query_id references to query declared using "declare_query"
+handle references to query declared using "declare_handle"
+
+db_proper ()
+  hack which enables using db_ops in failure route... call it at the beginning of failure_route block
 
 selects
 -------
 
 @db.query look in table defined using declare_query, opens query, fetches value and closes table
 
-@db.query[declare_no]                  .. get value from first row and first field
-@db.query[declare_no].count            .. get number of rows
-@db.query[declare_no].field[m]         .. get value from first row and m-th field
-@db.query[declare_no].row[n]           .. get value from n-th row and first field, negative values count from the end (-1 == last row)
-@db.query[declare_no].row[n].field[m]  .. get value from n-th row and m-th field
+@db.query.query_id                  .. get value from first row and first field
+@db.query.query_id.count            .. get number of rows, invalidates current record, do seek/db_first!
+@db.query.query_id.is_empty         .. get 1 if query is empty
+@db.query.query_id.field[m]         .. get value from first row and m-th field
+@db.query.query_id.row[n]           .. get value from n-th row and first field, negative values count from the end (-1 == last row)
+@db.query.query_id.row[n].field[m]  .. get value from n-th row and m-th field
 
 @db.fetch get value from query opened using dbops_open_query. Note all opened queries are closed in POST_SCRIPT callback not to leak memory
 
-@db.fetch[query_handle]
-@db.fetch[query_handle].count
-@db.fetch[query_handle].field[m]
-@db.fetch[query_handle].row[n]
-@db.fetch[query_handle].row[n].field[m]
+@db.fetch.query_handle
+@db.fetch.query_handle.count
+@db.fetch.query_handle.is_empty
+@db.fetch.query_handle.row_no         .. get current row_no
+@db.fetch.query_handle.field
+@db.fetch.query_handle.field[m]
 
 @*.field supports select_any_uri and select_any_nameaddr
-
-m4 processor
-------------
-
-define(`db_declare_query', `gen_id(`db_declare_query_cnt') define(`$1', indir(`db_declare_query_cnt')) modparam("`db_ops'", "`declare_query'", $2)')
-
-usage:
-
-db_declare_query(SELECT_1, "select/foo/bar/rab///%$avp");
-db_declare_query(SELECT_2, "select/foo/bar/rab,bra/=,>//%$avp,1");
-db_declare_query(SELECT_3, "select contact from location where nat=1 and expires>=now()");
-
-@db.query[SELECT_2]
-db_query(SELECT_1, 1);
 
 
 Examples:
 --------
 1) example
-modparam("db_ops", "declare_query", "select/location/received/uid///%$f.uid");  #0
-modparam("db_ops", "declare_query", "select/subscriber/email_address,greeting/uid,allow_find///%$uidparam,1");  #1
-modparam("db_ops", "declare_query", "select/silo/body/uid//inc_time/%$f.uid");  #2
-modparam("db_ops", "declare_query", "delete from location where expires<now()");  # 3  raw query
+modparam("db_ops", "declare_query", "sel1=select/location/received/uid///%$f.uid");  
+modparam("db_ops", "declare_query", "sel2=select/subscriber/email_address,greeting/uid,allow_find///%$uidparam,1");  
+modparam("db_ops", "declare_query", "sel3=select/silo/body/uid//inc_time/%$f.uid");  
+modparam("db_ops", "declare_query", "del1=delete from location where expires<now()");  raw query
 
-@db.query[0]               ..  SELECT received FROM location WHERE uid = "%$f.uid"
-@db.query[0].count         ..  SELECT count(*) FROM location WHERE uid = "%$f.uid"
-@db.query[1].field[0]      ..  SELECT email_address FROM subscriber WHERE uid = "%$f.uid" AND allow_find=1
-@db.query[1].field[1]      ..  SELECT greeting FROM subscriber WHERE uid = "%$f.uid" AND allow_find=1
-@db.query[2].count         ..  SELECT count(*) FROM silo WHERE uid = "%$f.uid"
-@db.query[2].row[-1]       ..  SELECT body FROM silo WHERE uid = "%$f.uid" ORDER BY inc_time .. last row
+@db.query.sel1             ..  SELECT received FROM location WHERE uid = "%$f.uid"
+@db.query.sel1.count       ..  SELECT count(*) FROM location WHERE uid = "%$f.uid"
+@db.query.sel2.field[0]    ..  SELECT email_address FROM subscriber WHERE uid = "%$f.uid" AND allow_find=1
+@db.query.sel2.field[1]    ..  SELECT greeting FROM subscriber WHERE uid = "%$f.uid" AND allow_find=1
+@db.query.sel3.count       ..  SELECT count(*) FROM silo WHERE uid = "%$f.uid"
+@db.query.sel1.is_empty
 
 
 db_query("delete/silo///");     ..  DELETE FROM silo
@@ -106,117 +118,143 @@ db_query("delete/silo/expired/<=/%Ts");     ..  DELETE FROM silo WHERE expired <
 db_query("insert/foo/bar,rab,abr,rbs/%$f.id,'hello world %fu',1,2");  .. INSERT INTO foo(bar,rab,abr,rbs) VALUES ("%$f.id","hello world %fu",1,2)
 db_query("update/foo/rab,abr/bar//'hello world %f',1,2,%$f.id");       .. UPDATE foo SET rab="hello world %fu",rbs=45 WHERE bar="%$f.id"
 
-db_query("delete/mysql://pretorian:sandra@net/fbi/identities//");
+db_query("mysql://pretorian:sandra@net/delete/fbi/identities//");
 
-db_query("select/silo/body/uid//inc_time/%$f.uid", 4);  .. SELECT body FROM silo WHERE uid = "%$f.uid" ORDER BY inc_time
-@db.fetch[4]             ..  get first raw
-@db.fetch[4].raw[1]      ..  get second raw
+if (db_query("select/silo/body/uid//inc_time/%$f.uid", my_handle)) { #  SELECT body FROM silo WHERE uid = "%$f.uid" ORDER BY inc_time
+    @db.fetch.my_handle             ..  get first raw
+    if (db_next(my_handle)) {
+	@db.fetch.my_handle      ..  get second raw
+    }
+}
 
-db_query("select/silo/src_addr,dest_addr,body/uid//inc_time/%$t.uid", 5);  .. SELECT src_addr,dest_addr,body FROM silo WHERE uid = "%$t.uid" ORDER BY inc_time
-@db.fetch[5].raw[-1].field[1]	.. get last dest_addr
-db_close(4);
-db_close(5);
+if (db_query("select/silo/src_addr,dest_addr,body/uid//inc_time/%$t.uid", my_next_handle)) { # SELECT src_addr,dest_addr,body FROM silo WHERE uid = "%$t.uid" ORDER BY inc_time
+    @db.fetch.my_next_handle.row[-1].field[1]	.. get last dest_addr, not supported now!
+}
+db_close(my_handle);
+db_close(my_next_handle);
 
 # parametrization of queries
 $uidparam="xx";
-@db.query[1]
+@db.query.sel2
 
 $uidparam="yy";
-@db.query[1]
+@db.query.sel2
 
 $uidparam="zz";
-db_query(1, 5);
+db_query(sel2, my_handle);
+
 $uidparam="qq";
-db_query(1, 6);
-if (@db.fetch[6] == @db.fetch[5]) ....
+db_query(sel2, my_next_handle);
+if (@db.fetch.my_handle == @db.fetch.my_next_handle) ....
 
-db_close(5);
-db_close(6);
+db_close(my_handle);
+db_close(my_next_handle);
 
-db_query(SELECT_3, 1);
-forach(1, PROCESS_ROW_ROUTE);
+db_query(sel3, my_handle);
+forach(my_handle, PROCESS_ROW_ROUTE);
 
 
 2)Test config
------------
-loadmodule "modules/mysql/mysql.so"
-loadmodule "modules/xlog/xlog.so"
-loadmodule "../../mods/db_ops/trunk/db_ops.so"
+-------------
+
+
+loadmodule "mycomcol.so"
+loadmodule "xlog.so"
+loadmodule "db_ops.so"
+loadmodule "timer.so"
+
+modparam("timer", "declare_timer", "timer_route,1000,,enable");
 
 # -------------------------  request routing logic -------------------
 
+modparam("db_ops", "db_url", "mysql://awadmin:5764801@127.0.0.1:15616/TekCore");
 
-modparam("db_ops", "declare_query", "select/location/received/uid///%$f.uid");
-modparam("db_ops", "declare_query", "select/subscriber/email_address,greeting/uid,allow_find///%$t.uid,1");
-modparam("db_ops", "declare_query", "select/silo/body/uid//inc_time/%$f.uid");
-modparam("db_ops", "declare_query", "select/flexroute/flexroute_name,avps_in,avps_out/flexroute_name//priority/%$fxname");
-modparam("db_ops", "declare_query", "select * from location");
+modparam("db_ops", "declare_query", "q1=select/location/uid,aor,contact,received//////"); #key=location_key,key_omit=i:3");
+modparam("db_ops", "declare_query", "q2=select/location/uid,aor,contact,received/uid///%$f.uid/key=location_key,key_omit=i:1");
+# select raw query not yet supported
+modparam("db_ops", "declare_query", "q3=select uid,aor,contact,received from location where uid=?/%$f.uid");
+modparam("db_ops", "declare_query", "q4=mysql://awadmin:5764801@127.0.0.1:15616/TekCore/replace/location/uid,aor,contact,received,expires,q,callid,cseq,user_agent,instance,path,service_route,assoc_uri,flags,nated_contact,term_toi/QWERTY,aor@qqq,1.2.3.4:5678,1.2.3.4:5678;proto=tcp,d:1000,0.8,CAALL,6543,bubak,INSTANCE@bubak,sip:path_to_localhost,,,0,1,,");
+modparam("db_ops", "declare_query", "q5=mysql://awadmin:5764801@127.0.0.1:15616/TekCore/delete from location where uid=?/s:QWERTY");
 
-# main routing logic
+modparam("db_ops", "declare_handle", "h0");
+modparam("db_ops", "declare_handle", "h1");
 
-route{
+route["print_count"] {
+# testing count
+	xlog("L_INFO", "print count\n");
+	db_query("q1", "h1");
+	xlog("L_INFO", "fetch: row_no: %@db.fetch.h1.row_no, count: %@db.fetch.h1.count, row_no: %@db.fetch.h1.row_no, is_empty: %@db.fetch.h1.is_empty, row_no: %@db.fetch.h1.row_no\n");
 
-$f.uid="QWERTY";
+	xlog("L_INFO", "query: is_empty: %@db.query.q1.is_empty, count: %@db.query.q1.count\n");
+}
 
-#db_query("delete/silo///");
-#db_query("insert/foo/bar,rab,abr,rbs/%$f.id,'hello world %fu %$f.uid',1,2");
-#db_query("update/foo/rab,abr/bar//'hello world %fu',1,%$f.id");
-
-#db_query("delete/mysql://root@localhost/tekcore/identities///");
-
-$fxname="enum";
-
-$f.count=@db.query[3].count;
-$f.r0f0=@db.query[3];
-$f.r0f1=@db.query[3].field[1];
-$f.r0f2=@db.query[3].field[2];
-$f.r1f0=@db.query[3].row[1];
-$f.r1f1=@db.query[3].row[1].field[1];
-$f.r1f2=@db.query[3].row[1].field[2];
-$f.rnf0=@db.query[3].row[-1];
-$f.rnf1=@db.query[3].row[-1].field[1];
-$f.rnf2=@db.query[3].row[-1].field[2];
-xlog("L_INFO","LOG_SELECT: count:%$f.count {{%$f.r0f0,'%$f.r0f1','%$f.r0f2'},{%$f.r1f0,'%$f.r1f1','%$f.r1f2'}, {%$f.rnf0,'%$f.rnf1','%$f.rnf2'}}\n");
-
-db_query("select/flexroute/domain_name,avps_in,avps_out/flexroute_name//priority/tc2ms", 4);
-
-$f.count=@db.fetch[4].count;
-$f.r0f0=@db.fetch[4];
-$f.r0f1=@db.fetch[4].field[1];
-$f.r0f2=@db.fetch[4].field[2];
-$f.r1f0=@db.fetch[4].row[1];
-$f.r1f1=@db.fetch[4].row[1].field[1];
-$f.r1f2=@db.fetch[4].row[1].field[2];
-$f.rnf0=@db.fetch[4].row[-1];
-$f.rnf1=@db.fetch[4].row[-1].field[1];
-$f.rnf2=@db.fetch[4].row[-1].field[2];
-
-xlog("L_INFO","LOG_FETCH: count:%$f.count {{%$f.r0f0,'%$f.r0f1','%$f.r0f2'},{%$f.r1f0,'%$f.r1f1','%$f.r1f2'}, {%$f.rnf0,'%$f.rnf1','%$f.rnf2'}}\n");
-
-
-#@db.fetch[4]             ..  get first raw
-#@db.fetch[4].raw[1]      ..  get second raw
-
-#parametrized query
-$fxname="tc2smg";
-db_query(3, 5);
-$f.count=@db.fetch[5].count;
-$f.r0f0=@db.fetch[5];
-$f.r0f1=@db.fetch[5].field[1];
-$f.r0f2=@db.fetch[5].field[2];
-$f.r1f0=@db.fetch[5].row[1];
-$f.r1f1=@db.fetch[5].row[1].field[1];
-$f.r1f2=@db.fetch[5].row[1].field[2];
-$f.rnf0=@db.fetch[5].row[-1];
-$f.rnf1=@db.fetch[5].row[-1].field[1];
-$f.rnf2=@db.fetch[5].row[-1].field[2];
-
-xlog("L_INFO","LOG_FETCH_REF: count:%$f.count {{%$f.r0f0,'%$f.r0f1','%$f.r0f2'},{%$f.r1f0,'%$f.r1f1','%$f.r1f2'}, {%$f.rnf0,'%$f.rnf1','%$f.rnf2'}}\n");
-
-#db_query("select/silo/src_addr,dest_addr,body/uid//inc_time/%$t.uid", 5);
-# $avm = db.fetch[5].raw[-1].field[1] ==
-db_close(4);
-db_close(5);
+route["print_record"] {
+	xlog("L_INFO","row_no: %@db.fetch.h0.row_no, record: %@db.fetch.h0.field[0], %@db.fetch.h0.field[1],  %@db.fetch.h0.field[2],  %@db.fetch.h0.field[3]\n");
 
 }
 
+route["print_tbl"] {
+	route("print_record");
+	if (!db_next("h0")) return;
+	route("print_record");
+	if (!db_next("h0")) return;
+	route("print_record");
+	if(!db_seek("h0", 5)) return;
+	route("print_record");
+	if (!db_first("h0")) return;
+	route("print_record");
+
+}
+
+route["db_test"] {
+
+	route("print_count");
+	
+	$f.uid="QWERTY";
+	xlog("L_INFO", "query #1\n");
+	if (db_query("q1", "h0")) {
+		route("print_tbl");
+	}
+	db_close("h0");
+
+	xlog("L_INFO", "replace\n"); 
+	db_query("q4");
+
+	xlog("L_INFO", "query #2\n");
+	if (db_query("q2", "h0")) {
+		route("print_tbl");
+	}
+	db_close("h0");
+
+	xlog("L_INFO", "query #3\n");
+	if (db_query("q3", "h0")) {
+		route("print_tbl");
+	}
+	db_close("h0");
+
+	route("print_count");
+
+
+	db_query("q5");
+	route("print_count");
+
+	
+	xlog("L_INFO", "foreach\n");
+	db_query("q1", "h0");
+	db_foreach("h0", "print_record");
+
+	xlog("L_INFO", "query test\n");
+	xlog("L_INFO", "#0: %@db.query.q1.row[0].field[0], %@db.query.q1.row[0].field[1], %@db.query.q1.row[0].field[2], %@db.query.q1.row[0].field[3]\n");
+	xlog("L_INFO", "#1: %@db.query.q1.row[1].field[0], %@db.query.q1.row[1].field[1], %@db.query.q1.row[1].field[2], %@db.query.q1.row[1].field[3]\n");
+	xlog("L_INFO", "#3: %@db.query.q1.row[3].field[0], %@db.query.q1.row[3].field[1], %@db.query.q1.row[3].field[2], %@db.query.q1.row[3].field[3]\n");
+
+
+}
+
+route["timer_route"] {
+	xlog("L_INFO", "\n\n\ntimer\n");
+	route("db_test");
+
+	timer_enable(0, 0);
+	xlog("L_INFO", "\n\n\n");
+}
