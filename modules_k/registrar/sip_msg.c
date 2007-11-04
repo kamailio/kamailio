@@ -231,7 +231,7 @@ void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e)
 		*_e = get_expires_hf(_m);
 	} else {
 		if (str2int(&_ep->body, (unsigned int*)_e) < 0) {
-			*_e = 3600;
+			*_e = default_expires;
 		}
 		/* Convert to absolute value */
 		if (*_e != 0) *_e += act_time;
