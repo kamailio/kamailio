@@ -304,7 +304,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 			act->elem[1].type = MODFIXUP_ST;
 		}
 		if (argc==0) {
-			*retval = exp_func_struct->fixup(&(act->elem[0].u.data), 0);
+			*retval = exp_func_struct->fixup(0, 0);
 			if (*retval < 0) {
 				LM_ERR("Error in fixup (0)\n");
 				return -1;
