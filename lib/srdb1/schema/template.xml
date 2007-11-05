@@ -38,6 +38,13 @@
         <description>column documentation</description>
     </column>
 
+    <column id="another_id">
+        <name>test123</name>
+        <type>string</type>
+        <size>25</size>
+        <naturalkey/><!-- This column is a natural key for non SQL databases, e.g. db_berkeley -->
+    </column>
+
     <index>
         <name>bar</name>
         <!--<unique/> -> UNIQUE KEY -->
