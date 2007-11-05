@@ -46,6 +46,7 @@
 #include "../../route_struct.h"
 #include "../../serialize.h"
 #include "../../qvalue.h"
+#include "../../dprint.h"
 
 extern int unsafemodfnc;
 
@@ -140,7 +141,7 @@ SV *getStringFromURI(SV *self, enum xs_uri_members what) {
 	str *ret = NULL;
 
 	if (!myuri) {
-		LOG(L_ERR, "perl: Invalid URI reference\n");
+		LM_ERR("Invalid URI reference\n");
 		ret = NULL;
 	} else {
 		
@@ -186,7 +187,7 @@ SV *getStringFromURI(SV *self, enum xs_uri_members what) {
 			case XS_URI_R2_VAL:	ret = &(myuri->r2_val);
 						break;
 
-			default:	LOG(L_INFO, "Unknown URI element"
+			default:	LM_INFO("Unknown URI element"
 						" requested: %d\n", what);
 					break;
 		}
@@ -221,12 +222,12 @@ int moduleFunc(struct sip_msg *m, char *func,
 	action_elem_t elems[MAX_ACTION_ELEMS];
 
 	if (!func) {
-		LOG(L_ERR, "moduleFunc called with null function name. Error.");
+		LM_ERR("moduleFunc called with null function name. Error.");
 		return -1;
 	}
 
 	if ((!param1) && param2) {
-		LOG(L_ERR, "moduleFunc called with parameter 1 UNSET and"
+		LM_ERR("moduleFunc called with parameter 1 UNSET and"
 			   " parameter 2 SET. Error.");
 		return -1;
 	}
@@ -250,7 +251,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	exp_func_struct = find_cmd_export_t(func, argc, 0);
 	if (!exp_func_struct) {
-		LOG(L_ERR, "function '%s' called, but not available.", func);
+		LM_ERR("function '%s' called, but not available.", func);
 		*retval = -1;
 		if (argv[0]) pkg_free(argv[0]);
 		if (argv[1]) pkg_free(argv[1]);
@@ -270,7 +271,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 
 	if (!act) {
-		LOG(L_ERR, "action structure could not be created. Error.");
+		LM_ERR("action structure could not be created. Error.");
 		if (argv[0]) pkg_free(argv[0]);
 		if (argv[1]) pkg_free(argv[1]);
 		return -1;
@@ -279,7 +280,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	if (exp_func_struct->fixup) {
 		if (!unsafemodfnc) {
-			LOG(L_ERR, "perl: Module function '%s' is unsafe. Call is refused.\n", func);
+			LM_ERR("Module function '%s' is unsafe. Call is refused.\n", func);
 			if (argv[0]) pkg_free(argv[0]);
 			if (argv[1]) pkg_free(argv[1]);
 			*retval = -1;
@@ -289,7 +290,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 		if (argc>=2) {
 			*retval = exp_func_struct->fixup(&(act->elem[2].u.data), 2);
 			if (*retval < 0) {
-				LOG(L_ERR, "Error in fixup (2)\n");
+				LM_ERR("Error in fixup (2)\n");
 				return -1;
 			}
 			act->elem[2].type = MODFIXUP_ST;
@@ -297,7 +298,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 		if (argc>=1) {
 			*retval = exp_func_struct->fixup(&(act->elem[1].u.data), 1);
 			if (*retval < 0) {
-				LOG(L_ERR, "Error in fixup (1)\n");
+				LM_ERR("Error in fixup (1)\n");
 				return -1;
 			}
 			act->elem[1].type = MODFIXUP_ST;
@@ -305,7 +306,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 		if (argc==0) {
 			*retval = exp_func_struct->fixup(&(act->elem[0].u.data), 0);
 			if (*retval < 0) {
-				LOG(L_ERR, "Error in fixup (0)\n");
+				LM_ERR("Error in fixup (0)\n");
 				return -1;
 			}
 		}
@@ -315,13 +316,13 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	if ((act->elem[2].type == MODFIXUP_ST) && (act->elem[2].u.data)) {
 		/* pkg_free(act->elem[2].u.data); */
-		LOG(L_WARN, "perl:moduleFunction: A fixup function was called. "
+		LM_ERR("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
 	}
 
 	if ((act->elem[1].type == MODFIXUP_ST) && (act->elem[1].u.data)) {
 		/* pkg_free(act->elem[1].u.data); */
-		LOG(L_WARN, "perl:moduleFunction: A fixup function was called. "
+		LM_WARN("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
 	}
 
@@ -348,7 +349,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
 	
 	if (do_action(&act, _m) < 0)
 	{
-		LOG(L_ERR, "perl:rewrite_ruri: Error in do_action\n");
+		LM_ERR("rewrite_ruri: Error in do_action\n");
 		return -1;
 	}
 	return 0;
@@ -367,13 +368,13 @@ char *pv_sprintf(struct sip_msg *m, char *fmt) {
 	char *ret = NULL;
 
 	if (!out) {
-		LOG(L_ERR, "perl:pv_sprintf: Memory exhausted!\n");
+		LM_ERR("pv_sprintf: Memory exhausted!\n");
 		return NULL;
 	}
 
 	s.s = fmt; s.len = strlen(s.s);
 	if(pv_parse_format(&s, &model) < 0) {
-		LOG(L_ERR, "perl:pv_sprintf: ERROR: wrong format[%s]!\n",
+		LM_ERR("pv_sprintf: ERROR: wrong format[%s]!\n",
 			fmt);
 		return NULL;
 	}
@@ -404,7 +405,7 @@ inline int sv2int_str(SV *val, int_str *is,
 	STRLEN len;
 
 	if (!SvOK(val)) {
-		LOG(L_ERR, "perl:AVP:sv2int_str: Invalid value "
+		LM_ERR("AVP:sv2int_str: Invalid value "
 			"(not a scalar).\n");
 		return 0;
 	}
@@ -420,7 +421,7 @@ inline int sv2int_str(SV *val, int_str *is,
 		(*flags) |= strflag;
 		return 1;
 	} else {
-		LOG(L_ERR, "perl:AVP:sv2int_str: Invalid value "
+		LM_ERR("AVP:sv2int_str: Invalid value "
 			"(neither string nor integer).\n");
 		return 0;
 	}
@@ -468,7 +469,15 @@ log(level, log)
   PREINIT:
   INIT:
   CODE:
-	LOG(level, "%s", log);
+	switch (level) {
+	case L_ALERT:	LM_ALERT("%s", log); break;
+	case L_CRIT:	LM_CRIT("%s", log); break;
+	case L_ERR:	LM_ERR("%s", log); break;
+	case L_WARN:	LM_WARN("%s", log); break;
+	case L_NOTICE:	LM_NOTICE("%s", log); break;
+	case L_INFO:	LM_INFO("%s", log); break;
+	default:	LM_DBG("%s", log); break;
+	}
   OUTPUT:
 
 
@@ -521,11 +530,11 @@ getStatus(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		if (getType(msg) != SIP_REPLY) {
-			LOG(L_ERR, "perl:getStatus: Status not available in"
+			LM_ERR("getStatus: Status not available in"
 				" non-reply messages.");
 			ST(0) = &PL_sv_undef;
 		} else {
@@ -551,11 +560,11 @@ getReason(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		if (getType(msg) != SIP_REPLY) {
-			LOG(L_ERR, "perl:getReason: Reason not available in"
+			LM_ERR("getReason: Reason not available in"
 				" non-reply messages.");
 			ST(0) = &PL_sv_undef;
 		} else {
@@ -580,7 +589,7 @@ getVersion(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		if (getType(msg) == SIP_REQUEST) {
@@ -614,11 +623,11 @@ getRURI(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		if (getType(msg) != SIP_REQUEST) {
-			LOG(L_ERR, "perl: Not a request message - "
+			LM_ERR("Not a request message - "
 				"no RURI available.\n");
 			ST(0) = &PL_sv_undef;
 		} else {
@@ -647,11 +656,11 @@ getMethod(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		if (getType(msg) != SIP_REQUEST) {
-			LOG(L_ERR, "perl: Not a request message - "
+			LM_ERR("Not a request message - "
 				"no method available.\n");
 			ST(0) = &PL_sv_undef;
 		} else {
@@ -681,11 +690,11 @@ getFullHeader(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		if (getType(msg) == SIP_INVALID) {
-			LOG(L_ERR, "perl:getFullHeader: Invalid message type.\n");
+			LM_ERR("getFullHeader: Invalid message type.\n");
 			ST(0)  = &PL_sv_undef;
 		} else {
 			parse_headers(msg, ~0, 0);
@@ -725,7 +734,7 @@ getBody(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		parse_headers(msg, ~0, 0);
@@ -747,7 +756,7 @@ getMessage(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		ST(0) = sv_2mortal(newSVpv(msg->buf, 0));
@@ -779,7 +788,7 @@ getHeader(self, name)
 	DBG("getHeader: searching '%s'\n", name);
 	
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 	} else {
 		parse_headers(msg, ~0, 0);
 		for (hf = msg->headers; hf; hf = hf->next) {
@@ -816,7 +825,7 @@ getHeaderNames(self)
   PPCODE:
 	
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 	} else {
 		parse_headers(msg, ~0, 0);
 		for (hf = msg->headers; hf; hf = hf->next) {
@@ -966,12 +975,12 @@ moduleFunction (self, func, string1 = NULL, string2 = NULL)
     int ret;    /* Return value of moduleFunc - < 0 for "non existing function" and other errors */
   INIT:
   CODE:
-	LOG(L_DBG, "perl: Calling exported func '%s', Param1 is '%s',"
+	LM_DBG("Calling exported func '%s', Param1 is '%s',"
 		" Param2 is '%s'\n", func, string1, string2);
 
 	ret = moduleFunc(msg, func, string1, string2, &retval);
 	if (ret < 0) {
-		LOG(L_ERR, "perl: calling module function '%s' failed."
+		LM_ERR("calling module function '%s' failed."
 			" Missing loadmodule?\n", func);
 		retval = -1;
 	}
@@ -1007,7 +1016,15 @@ log(self, level, log)
   PREINIT:
   INIT:
   CODE:
-	LOG(level, "%s", log);
+	switch (level) {
+	case L_ALERT:	LM_ALERT("%s", log); break;
+	case L_CRIT:	LM_CRIT("%s", log); break;
+	case L_ERR:	LM_ERR("%s", log); break;
+	case L_WARN:	LM_WARN("%s", log); break;
+	case L_NOTICE:	LM_NOTICE("%s", log); break;
+	case L_INFO:	LM_INFO("%s", log); break;
+	default:	LM_DBG("%s", log); break;
+	}
 
 
 
@@ -1031,11 +1048,11 @@ rewrite_ruri(self, newruri)
   INIT:
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		if (getType(msg) != SIP_REQUEST) {
-			LOG(L_ERR, "perl:rewrite_ruri: Not a Request. "
+			LM_ERR("rewrite_ruri: Not a Request. "
 				"RURI rewrite unavailable.\n");
 			RETVAL = -1;
 		} else {
@@ -1064,7 +1081,7 @@ setFlag(self, flag)
   INIT:
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		RETVAL = setflag(msg, flag);
@@ -1088,7 +1105,7 @@ resetFlag(self, flag)
   INIT:
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		RETVAL = resetflag(msg, flag);
@@ -1111,7 +1128,7 @@ isFlagSet(self, flag)
   INIT:
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		RETVAL = isflagset(msg, flag) == 1 ? 1 : 0;
@@ -1138,7 +1155,7 @@ pseudoVar(self, varstring)
 	char *ret;
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = &PL_sv_undef;
 	} else {
 		ret = pv_sprintf(msg, varstring);
@@ -1172,12 +1189,12 @@ append_branch(self, branch = NULL, qval = NULL)
   INIT:
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		if (qval) {
 			if (str2q(&q, qval, strlen(qval)) < 0) {
-				LOG(L_ERR, "perl:append_branch: Bad q value.");
+				LM_ERR("append_branch: Bad q value.");
 			} else { /* branch and qval set */
 				elems[0].type = STRING_ST;
 				elems[0].u.data = branch;
@@ -1234,7 +1251,7 @@ int serialize_branches(self, clean_before)
 	struct sip_msg *msg = sv2msg(self);
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		RETVAL = serialize_branches(msg, clean_before);
@@ -1257,7 +1274,7 @@ next_branches(self)
 	struct sip_msg *msg = sv2msg(self);
   CODE:
   	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		RETVAL = -1;
 	} else {
 		RETVAL = next_branches(msg);
@@ -1284,7 +1301,7 @@ getParsedRURI(self)
   INIT:
   CODE:
 	if (!msg) {
-		LOG(L_ERR, "perl: Invalid message reference\n");
+		LM_ERR("Invalid message reference\n");
 		ST(0) = NULL;
 	} else {
 		parse_sip_msg_uri(msg);
@@ -1660,11 +1677,11 @@ get(p_name)
   CODE:
 	if (SvOK(p_name)) {
 		if (!sv2int_str(p_name, &name, &flags, AVP_NAME_STR)) {
-			LOG(L_ERR, "perl:AVP:get: Invalid name.");
+			LM_ERR("AVP:get: Invalid name.");
 			err = 1;
 		}
 	} else {
-		LOG(L_ERR, "perl:AVP:get: Invalid name.");
+		LM_ERR("AVP:get: Invalid name.");
 		err = 1;
 	}
 	
@@ -1712,11 +1729,11 @@ destroy(p_name)
 	if (SvOK(p_name)) {
 		if (!sv2int_str(p_name, &name, &flags, AVP_NAME_STR)) {
 			RETVAL = 0;
-			LOG(L_ERR, "perl:AVP:destroy: Invalid name.");
+			LM_ERR("AVP:destroy: Invalid name.");
 		}
 	} else {
 		RETVAL = 0;
-		LOG(L_ERR, "perl:AVP:destroy: Invalid name.");
+		LM_ERR("VP:destroy: Invalid name.");
 	}
 	
 	if (RETVAL == 1) {
