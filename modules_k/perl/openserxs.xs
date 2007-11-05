@@ -316,7 +316,7 @@ int moduleFunc(struct sip_msg *m, char *func,
 
 	if ((act->elem[2].type == MODFIXUP_ST) && (act->elem[2].u.data)) {
 		/* pkg_free(act->elem[2].u.data); */
-		LM_ERR("moduleFunction: A fixup function was called. "
+		LM_WARN("moduleFunction: A fixup function was called. "
 				"This currently creates a memory leak.\n");
 	}
 
