@@ -165,8 +165,6 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 		return -1;
 	}
 
-	*_s++ = '\'';
-
 	/* Convert time_t structure to format accepted by the database */
 	t = localtime(&_v);
 	l = strftime(_s, *_l -1, "%Y-%m-%d %H:%M:%S", t);
@@ -179,8 +177,6 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 		return -1;
 	}
 
-	*(_s + l) = '\'';
-	*_l = l + 2;
 	return 0;
 }
 
