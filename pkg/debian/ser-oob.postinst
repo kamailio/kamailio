@@ -30,17 +30,8 @@ if ! test -e $CONFIGFILE; then
 fi
 
 if ! test -e $DEFAULTFILE; then
-  echo "Warning: ser-oob postinst script can't find config file $CONFIGFILE. Configuration aborted."
+  echo "Warning: ser-oob postinst script can't find config file $DEFAULTFILE. Configuration aborted."
   exit 0
-else
-  # do not modify the default file more than once
-  if ! cat $DEFAULTFILE | grep -q "#SER-OOB_CONFIGURED" ; then
-    echo "Package ser-oob postinst script: setting ser configuration file to ser-oob.cfg in $DEFAULTFILE"
-    cp -f $DEFAULTFILE ${DEFAULTFILE}.config_bck
-    cat ${DEFAULTFILE}.config_bck | sed -e "s+^SER_CFG_FILE=.*$+SER_CFG_FILE=$CONFIGFILE+" >$DEFAULTFILE
-    echo "#the following line marks that ser config filename was updated by ser-oob postinst script, and will not be modified again" >>$DEFAULTFILE
-    echo "#SER-OOB_CONFIGURED" >>$DEFAULTFILE
-  fi
 fi
 
 
@@ -113,16 +104,23 @@ padLines() {
 
 #----------------------------------------------------------------------------
 
+db_get ser-oob/CFG_FILE
+if test "$RET" != "!" ; then
+  echo "Package ser-oob postinstall script: MODIFYING config file $DEFAULTFILE."
+  fn_config_replace $DEFAULTFILE CFG_FILE <<+++
+SER_CFG_FILE="$RET"
++++
+fi
 
 db_get ser-oob/config
 if [ "$RET" = "false" ] ; then
   # do not change config file
-  echo "Package ser-oob postinst script: NOT modifying config file $CONFIGFILE."
+  echo "Package ser-oob postinstall script: NOT modifying config file $CONFIGFILE."
 else
 
 BACKUP="$CONFIGFILE.config_bck"
 
-echo "Package ser-oob config script: MODIFYING config file $CONFIGFILE."
+echo "Package ser-oob postinstall script: MODIFYING config file $CONFIGFILE."
 echo "Creating backup copy as $BACKUP"
 cp -f $CONFIGFILE $BACKUP
 

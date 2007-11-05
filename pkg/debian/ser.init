@@ -13,42 +13,57 @@
 # $Id$
 
 # read configuration from /etc/default/ser file
-DEFAULT_FILE="/etc/default/ser"
-
-if test -f "$DEFAULT_FILE" ; then
+if test -f /etc/default/ser ; then
   . /etc/default/ser
 fi
-
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/sbin/ser
 NAME=ser
 DESC=ser
 
-if test "$SER_PIDFILE" = ""; then
-  SER_PIDFILE="/var/run/$NAME/$NAME.pid"
+PARAMS=""
+
+if test "$SER_PIDFILE" ; then
+  PARAMS="$PARAMS -P $SER_PIDFILE"
 fi
 
-if test "$SER_USER" = "" ; then
-  SER_USER="ser"
-fi
-if test "$SER_GROUP" = "" ; then
-  SER_GROUP="ser"
+if test "$SER_USER" ; then
+  PARAMS="$PARAMS -u $SER_USER"
 fi
 
-PARAMS="-P $SER_PIDFILE -u $SER_USER -g $SER_GROUP"
-LD_LIBRARY_PATH=/usr/lib/ser
+if test "$SER_GROUP" ; then
+  PARAMS="$PARAMS -g $SER_GROUP"
+fi
 
-CFGPARAMS=""
-if test "$SER_CFG_FILE" != "" ; then
+if test "$SER_CFG_FILE" ; then
+  PARAMS="$PARAMS -f $SER_CFG_FILE"
   CFGPARAMS="-f $SER_CFG_FILE"
 fi
 
-PARAMS="$PARAMS $CFGPARAMS"
+if test "$SER_WORKDIR" ; then
+  PARAMS="$PARAMS -w $SER_WORKDIR"
+  # try to create the working dir
+  mkdir -p $SER_WORKDIR || echo "Warning: error creating ser working dir $SER_WORKDIR"
+fi
 
-test -f $DAEMON || exit 0
+if test "$SER_MEMORY" ; then
+  PARAMS="$PARAMS -m $SER_MEMORY"
+fi
 
+if test "$SER_KERNEL_CORE_PID" = "true" ; then
+  # enable using pid for cores
+  echo 1 > /proc/sys/kernel/core_uses_pid || echo "Warning: error when enabling /proc/sys/kernel/core_uses_pid"
+fi
+
+if ! test -f $DAEMON ; then
+  echo "Error: cannot find $DAEMON"
+  exit 0
+fi
+
+LD_LIBRARY_PATH=/usr/lib/ser
 export LD_LIBRARY_PATH
+
 set -e
 
 case "$1" in

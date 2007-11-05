@@ -1,3 +1,9 @@
+ser (2.0.0-0rc5.8) unstable; urgency=low
+
+  * Added debconf configuration for ser package, added ser-nth package.
+
+ -- Pavel Kasparek <pavel@iptel.org>  Mon,  5 Nov 2007 14:02:49 +0100
+
 ser (2.0.0-0rc5.7) unstable; urgency=low
 
   * Updated Debian specification for upcoming SER 2.0.0 version.

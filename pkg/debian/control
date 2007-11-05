@@ -79,9 +79,16 @@ Description: contains the XML-RPC based interface to SER
 Package: ser-oob
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ser, ser-mysql-modules, ser-xmlrpc-module, serctl
-Suggests: rttpproxy, lorotate, ngrep
+Suggests: rttpproxy, logrotate, ngrep
 Description: Sip Express Router - package for "out of the box" installation
  This package conatins advanced configuration file for ser - SIP Express Router
  and depends on ser and all needed ser modules. It can be used for easy installation 
  of ser "out of the box".
+
+Package: ser-nth
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, screen, gdb, binutils, gcc, bison, flex, ngrep, tcpdump, iftop, lsof, psmisc, vim, bvi, most, serctl, mc, sipsak
+Description: Sip Express Router - package for "nice to have" installation
+ This is a meta-package for easy installation various useful tools that may be
+ handy on server with SER installed.
 

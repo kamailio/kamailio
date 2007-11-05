@@ -1,15 +1,33 @@
+Template: ser-oob/CFG_FILE
+Type: string
+Default: /etc/ser/ser-oob.cfg
+Description: SER config file name 
+ This option sets SER config file name in '/etc/default/ser' file, which is used by SER init
+ script to start SER.
+ .
+ It is recommended to use the default value '/etc/ser/ser-oob.cfg'.
+ .
+ If you do not want to modify this setting now you can modify it manually later,
+ or repeat this configuartion by running "dpkg-reconfigure ser-oob".
+ .
+ Note: this value you enter here will be automatically applied to '/etc/default/ser' file
+ each time the ser-oob package is upgraded (or installed without purging previous
+ installation).
+ .
+ Enter "!" to not modify this option.
+
 Template: ser-oob/config
 Type: boolean
 Default: false
 Description: Change config file now ?
- You have now opportunity to modify basic configuration values in "ser-oob.cfg"
+ You have now opportunity to modify basic configuration values in 'ser-oob.cfg'
  config file for SER Sip Express Router, installed from 'ser-oob' package.
  If you do not want to modify the config file now you can modify it manually later,
  or repeat this configuartion by running "dpkg-reconfigure ser-oob".
  .
- Note: the values you enter here will be automatically applied to "ser-oob.cfg" file
- each time the ser-oob package is upgraded (or installed without purging previous installation)
- by ser-oob package post-install script.
+ Note: the values you enter here will be automatically applied to 'ser-oob.cfg' file
+ each time the ser-oob package is upgraded (or installed without purging previous
+ installation).
 
 Template: ser-oob/LISTEN
 Type: string
@@ -62,7 +80,7 @@ Description: RTP proxy socket
 
 Template: ser-oob/NATPING_INTERVAL
 Type: select
-Choices: 0, 15
+Choices: 0, 15, !
 Default: 15
 Description: NAT ping interval
  Set NAT ping interval.
