@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) username(str) domain(str) doc(str) doc_type(int) etag(str) source(int) doc_uri(str) port(int)
 METADATA_KEY
-1 2 4 6 
+1 2 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

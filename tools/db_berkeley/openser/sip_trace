@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) date(datetime) callid(str) traced_user(str) msg(str) method(str) status(str) fromip(str) toip(str) fromtag(str) direction(str)
 METADATA_KEY
-3 1 7 2 
+2 
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

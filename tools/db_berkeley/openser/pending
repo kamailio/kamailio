@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 id(int) phplib_id(str) username(str) domain(str) password(str) firstname(str) lastname(str) phone(str) email_address(str) datetime_created(datetime) datetime_modified(datetime) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1(str) ha1b(str) allow_find(str) timezone(str) rpid(str)
 METADATA_KEY
-2 3 1 2 
+
 METADATA_READONLY
 0
 METADATA_LOGFLAGS

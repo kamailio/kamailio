@@ -1,7 +1,7 @@
 METADATA_COLUMNS
 username(str) domain(str) priv_name(str) priv_value(str)
 METADATA_KEY
-0 2 3 1 
+
 METADATA_READONLY
 0
 METADATA_LOGFLAGS
