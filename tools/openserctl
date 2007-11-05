@@ -2305,7 +2305,7 @@ tls_ca() {
 dbtext_add() {
 	if [ "$DBENGINE" = "DBTEXT" ] ; then
                 if [ $# -ne 4 ] ; then
-                        usage
+                        usage_subscriber
                         exit 1
                 fi
                 shift
@@ -2341,7 +2341,7 @@ dbtext_add() {
 dbtext_passwd() {
 	if [ "$DBENGINE" = "DBTEXT" ] ; then
                 if [ $# -ne 3 ] ; then
-                        usage
+                        usage_subscriber
                         exit 1
                 fi
                 shift
@@ -2377,7 +2377,7 @@ dbtext_passwd() {
 dbtext_rm() {
         if [ "$DBENGINE" = "DBTEXT" ] ; then
                 if [ $# -ne 2 ] ; then
-                        usage
+                        usage_subscriber
                         exit 1
                 fi
                 shift
@@ -2445,7 +2445,7 @@ dbtext_mail() {
 	if [ "$DBENGINE" = "DBTEXT" ] ; then
                 if [ $# -ne 2 ] ; then
 			merr "wrong parameters"
-			usage 
+			usage_subscriber
                         exit 1
                 fi
                 shift
@@ -2557,7 +2557,7 @@ case $1 in
 		dbtext_mail "$@"
 	    else
 		if [ $# -ne 2 ] ; then
-			usage_send_email
+			usage_subscriber
 			exit 1
 		fi
 		send_email $1
