@@ -21,7 +21,8 @@
 			  <type>unsigned int</type>
 			  <size>&table_id_len;</size>
 			  <primary/>
-		          <default>0</default>
+			  <default>0</default>
+			  <naturalkey/>
 			  <description>unique ID</description>
 		  </column>
 		  

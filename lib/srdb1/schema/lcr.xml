@@ -32,6 +32,7 @@
         <type>string</type>
         <size>16</size>
         <description>The Request-URI (destination) prefix.</description>
+	<naturalkey/>
     </column>
 
     <column id="from_uri">

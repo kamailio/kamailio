@@ -32,6 +32,7 @@
         <type>string</type>
         <size>&uri_len;</size>
         <description>Presence URI</description>
+	<naturalkey/>
     </column>
 
     <column>
@@ -68,6 +69,7 @@
         <size>&user_len;</size>
         <default>presence</default>
         <description>Event description</description>
+	<naturalkey/>
     </column>
 
     <column>

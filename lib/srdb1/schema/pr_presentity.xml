@@ -32,6 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <description>User name</description>
+	<naturalkey/>
     </column>
 
     <column id="domain">
@@ -39,6 +40,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Domain</description>
+	<naturalkey/>
     </column>
 
     <column id="event">
@@ -46,6 +48,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <description>Event</description>
+	<naturalkey/>
     </column>
 
     <column id="etag">

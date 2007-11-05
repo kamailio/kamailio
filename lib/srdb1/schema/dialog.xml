@@ -34,6 +34,7 @@
 		<size>10</size>
 		<description>Number of the hash entry in the dialog hash table
 		</description>
+		<naturalkey/>
 	</column>
 
 	<column id="hash_id">
@@ -41,6 +42,7 @@
 		<type>unsigned int</type>
 		<size>10</size>
 		<description>The ID on the hash entry</description>
+		<naturalkey/>
 	</column>
 
 	<column>
@@ -48,6 +50,7 @@
 		<type>string</type>
 		<size>&hf_len;</size>
 		<description>Call-ID of the dialog</description>
+		
 	</column>
 
 	<column>

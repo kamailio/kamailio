@@ -33,6 +33,7 @@
         <size>&user_len;</size>
         <default/>
         <description>Alias username / phone number</description>
+	<naturalkey/>
     </column>
 
     <column id="alias_domain">
@@ -41,6 +42,7 @@
         <size>&domain_len;</size>
         <default/>
         <description>Alias domain name</description>
+	<naturalkey/>
     </column>
 
     <column id="username">

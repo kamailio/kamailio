@@ -53,7 +53,8 @@
 
     <column id="callid">
         <name>callid</name>
-        <type>string</type>
+	<type>string</type>
+	<naturalkey/>
         <size>&domain_len;</size>
         <default/>
         <description>Call-ID header field uniquely identifies a particular invitation or all registrations of a particular client. </description>

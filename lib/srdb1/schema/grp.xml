@@ -33,6 +33,7 @@
         <size>&user_len;</size>
         <default/>
         <description>Username / phone number</description>
+	<naturalkey/>
     </column>
 
     <column id="domain">
@@ -41,6 +42,7 @@
         <size>&domain_len;</size>
         <default/>
         <description>Domain name</description>
+	<naturalkey/>
     </column>
 
     <column id="group">
@@ -49,6 +51,7 @@
         <size>&id_len;</size>
         <default/>
         <description>Group name</description>
+	<naturalkey/>
     </column>
 
     <column>

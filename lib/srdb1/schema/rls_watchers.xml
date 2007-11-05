@@ -54,6 +54,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <description>From user</description>
+	<naturalkey/>
     </column>
 
     <column>
@@ -61,6 +62,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>From domain</description>
+	<naturalkey/>
     </column>
 
     <column>
