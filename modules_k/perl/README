@@ -9,7 +9,7 @@ Edited by
 
 Bastian Friedrich
 
-   Copyright © 2007 Collax GmbH
+   Copyright Â© 2007 Collax GmbH
      __________________________________________________________
 
    Table of Contents
@@ -212,8 +212,8 @@ Chapter 1. User's Guide
    values similar to the output of
 PERLLDOPTS: perl -MExtUtils::Embed -e ldopts
 PERLCCOPTS: perl -MExtUtils::Embed -e ccopts
-TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ext
-Utils/typemap"
+TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ex
+tUtils/typemap"
 
    The exact position of your (precompiled!) perl libraries
    depends on the setup of your environment.
@@ -995,8 +995,8 @@ my @rows = $ldap-search("uid=andi","ou=people,ou=coreworks,ou=de");
    Procedural interface:
 use OpenSER::LDAPUtils::LDAPConnection;
 my @rows = $ldap->search(
-      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=cor
-eworks,ou=de");
+      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=co
+reworks,ou=de");
 
    This perl module offers a somewhat simplified interface to the
    Net::LDAP functionality. It is intended for cases where just a
@@ -1440,15 +1440,34 @@ Chapter 4. Perl samples
 
 Chapter 5. Frequently Asked Questions
 
-   5.1. Where can I find more about OpenSER?
-   5.2. Where can I post a question about this module?
-   5.3. How can I report a bug?
+   5.1. Are there known bugs in the Perl module?
+   5.2. Where can I find more about OpenSER?
+   5.3. Where can I post a question about this module?
+   5.4. How can I report a bug?
 
-   5.1. Where can I find more about OpenSER?
+   5.1. Are there known bugs in the Perl module?
+
+   The Perl module does have a few shortcomings that may be
+   regarded as bugs.
+
+     * Missing module functions. Not all functions of other
+       modules are available for Perl access. The reason for this
+       is a design property of OpenSER. Making available more
+       functions is work in progress.
+     * Perl and threads. Perl itself is, when compiled with the
+       correct parameters, thread safe; unfortunately, not all
+       Perl modules are. The DBI modules, especially (but not
+       restricted to) DBI::ODBC are known NOT to be thread safe.
+       Using DBI::ODBC -- and possibly other non-thread-safe Perl
+       extensions -- may result in erroneous behavior of OpenSER,
+       including (but not restricted to) server crashes and wrong
+       routing.
+
+   5.2. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   5.2. Where can I post a question about this module?
+   5.3. Where can I post a question about this module?
 
    First at all check if your question was already answered on one
    of our mailing lists:
@@ -1465,7 +1484,7 @@ Chapter 5. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   5.3. How can I report a bug?
+   5.4. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.

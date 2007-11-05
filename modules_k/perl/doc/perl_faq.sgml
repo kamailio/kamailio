@@ -13,6 +13,32 @@
     <qandaset defaultlabel="number">
 	<qandaentry>
 	    <question>
+		<para>Are there known bugs in the Perl module?</para>
+	    </question>
+	    <answer>
+		<para>
+		    The Perl module does have a few shortcomings that may be regarded as bugs.
+		</para>
+		<itemizedlist>
+		    <listitem>
+			<para>Missing module functions. Not all functions of other modules are
+			available for Perl access. The reason for this is a design property of
+			OpenSER. Making available more functions is work in progress.</para>
+		    </listitem>
+		    <listitem>
+			<para>Perl and threads. Perl itself is, when compiled with the correct
+			parameters, thread safe; unfortunately, not all Perl modules are.
+			The DBI modules, especially (but not restricted to) DBI::ODBC are known
+			NOT to be thread safe.</para>
+			<para>Using DBI::ODBC -- and possibly other non-thread-safe Perl
+			extensions -- may result in erroneous behavior of OpenSER, including
+			(but not restricted to) server crashes and wrong routing.</para>
+		    </listitem>
+		</itemizedlist>
+	    </answer>
+	</qandaentry>
+	<qandaentry>
+	    <question>
 		<para>Where can I find more about OpenSER?</para>
 	    </question>
 	    <answer>
