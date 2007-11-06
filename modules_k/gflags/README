@@ -42,7 +42,7 @@ Daniel-Constantin Mierla
    1-4. is_gflag() usage
    1-5. set_gflag usage
    1-6. reset_gflag usage
-   1-7. set_gflag usage
+   1-7. is_gflag usage
    1-8. get_gflags usage
      _________________________________________________________
 
@@ -138,11 +138,16 @@ if(is_gflag("4"))
 
 1.5. MI Commands
 
+   Functions that check or change some flags accepts one
+   parameter which is the flag bitmap/mask specifing the
+   corresponding flags. It is not possible to specify directly
+   the flag position that should be changed as in the functions
+   available in the routing script.
+     _________________________________________________________
+
 1.5.1. set_gflag
 
-   Set the value of some flags to 1. The function accepts one
-   parameter which is the flag bitmap/mask specifing the flags to
-   be set.
+   Set the value of some flags to 1.
 
    The parameter value must be a number in decimal or hexa format
 
@@ -155,9 +160,7 @@ $ openserctl fifo set_gflag 0x3
 
 1.5.2. reset_gflag
 
-   Reset the value of some flags to 0. The function accepts one
-   parameter which is the flag bitmap/mask specifing the flags to
-   be reset.
+   Reset the value of some flags to 0.
 
    The parameter value must be a number in decimal or hexa format
 
@@ -170,17 +173,27 @@ $ openserctl fifo reset_gflag 0x3
 
 1.5.3. is_gflag
 
-   Return the status of a set of flags. The function accepts one
-   parameter which is the flag bitmap/mask specifing the flags to
-   be checked.
+   Return the status of a set of flags.
 
    The function returns TRUE if all the flags from the set are
    set and FALSE if at least one is not set.
 
-   Example 1-7. set_gflag usage
+   Example 1-7. is_gflag usage
 ...
-$ openserctl fifo is_gflag 1
-$ openserctl fifo is_gflag 0x3
+$ openserctl fifo set_gflag 1024
+$ openserctl fifo is_gflag 1024
+TRUE
+$ openserctl fifo is_gflag 1025
+TRUE
+$ openserctl fifo is_gflag 1023
+FALSE
+$ openserctl fifo set_gflag 0x10
+$ openserctl fifo is_gflag 1023
+TRUE
+$ openserctl fifo is_gflag 1007
+FALSE
+$ openserctl fifo is_gflag 16
+TRUE
 ...
      _________________________________________________________
 
