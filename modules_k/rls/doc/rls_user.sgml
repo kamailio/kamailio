@@ -66,8 +66,15 @@
 			<para>
 				<emphasis>tm</emphasis>.
 			</para>
+			</listitem>
+			<listitem>
 			<para>
 				<emphasis>presence- in a library mode</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
 			</para>
 
 			</listitem>

@@ -106,7 +106,8 @@ Chapter 1. User's Guide
      * a database module.
      * sl.
      * tm.
-       presence- in a library mode.
+     * presence- in a library mode.
+     * pua.
      __________________________________________________________
 
 1.2.2. External Libraries or Applications
@@ -185,7 +186,8 @@ modparam("rls", "clean_period", 100)
 1.3.6. waitn_time (int)
 
    The timer period at which the server should attempt to send
-   Notifies with the updated state of the subscribed list.
+   Notifies with the updated presence state of the subscribed list
+   or watcher information.
 
    Default value is "50".
 
