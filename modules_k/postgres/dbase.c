@@ -81,8 +81,6 @@ long getpid();
 static char _s[SQL_BUF_LEN];
 
 static int submit_query(db_con_t* _con, const char* _s);
-//static int connect_db(db_con_t* _con);
-//static int disconnect_db(db_con_t* _con);
 static int free_query(db_con_t* _con);
 
 /*
@@ -108,164 +106,6 @@ int pg_use_table(db_con_t* _con, const char* _t)
 	CON_TABLE(_con) = _t;
 	return 0;
 }
-
-#if 0
-/*
-** connect_db	Connect to a database
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by pg_init()
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-**
-**	Notes :
-**		If currently connected, a disconnect is done first
-**		if this process did the connection, otherwise the
-**		disconnect is not done before the new connect.
-**		This is important, as the process that owns the connection
-**		should clean up after itself.
-*/
-
-static int connect_db(db_con_t* _con)
-{
-	char* user, *password, *host, *port, *database;
-	char urlbuf[SQLURL_LEN];
-
-#ifdef PARANOID
-	if(! _con)
-	{
-		LM_ERR("db_con_t parameter cannot be NULL\n");
-		return(-1);
-	}
-#endif
-
-	if(CON_CONNECTED(_con))
-	{
-		DLOG("connect_db", "disconnect first!");
-		disconnect_db(_con);
-	}
-	
-	if (!CON_SQLURL(_con)) {
-		PLOG("connect_db","FATAL ERROR: no sql url!");
-		return(-1);
-	}
-
-	/*
-	** CON_CONNECTED(_con) is now 0, set by disconnect_db()
-	*/
-
-	/*
-	** Note :
-	** Make a scratch pad copy of given SQL URL in urlbuf and work on it.
-	** all memory allocated to this connection is rooted
-	** from this.
-	** This is an important concept.
-	** as long as you always allocate memory using the function:
-	** mem = aug_alloc(size, CON_SQLURL(_con)) or
-	** where size is the amount of memory, then in the future
-	** when CON_SQLURL(_con) is freed (in the function disconnect_db())
-	** all other memory allocated in this manner is freed.
-	** this will keep memory leaks from happening.
-	*/
-
-	snprintf(urlbuf,SQLURL_LEN,"%s",CON_SQLURL(_con));
-
-	/*
-	** get the connection parameters parsed from the db_url string
-	** it looks like: postgres://username:userpass@dbhost:dbport/dbname
-	** username/userpass : name and password for the database
-	** dbhost :            the host name or ip address hosting the database
-	** dbport :            the port to connect to database on
-	** dbname :            the name of the database
-	*/
-	if(parse_sql_url(urlbuf, &user, &password, &host, &port, &database) < 0)
-	{
-		char buf[SQL_BUF_LEN];
-		snprintf(buf, SQL_BUF_LEN, "Error while parsing %s", CON_SQLURL(_con));
-		PLOG("connect_db", buf);
-
-		return -3;
-	}
-
-	/*
-	** finally, actually connect to the database
-	*/
-	CON_CONNECTION(_con) =
-		PQsetdbLogin(host,port,NULL,NULL,database,user, password);
-
-	if(CON_CONNECTION(_con) == 0
-	    || PQstatus(CON_CONNECTION(_con)) != CONNECTION_OK)
-	{
-		PLOG("connect_db", PQerrorMessage(CON_CONNECTION(_con)));
-		PQfinish(CON_CONNECTION(_con));
-		return -4;
-	}
-
-	CON_PID(_con) = getpid();
-
-	/*
-	** all is well, database was connected, we can now submit_query's
-	*/
-	CON_CONNECTED(_con) = 1;
-	return 0;
-}
-
-
-/*
-** disconnect_db	Disconnect a database
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by pg_init()
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-**
-**	Notes :
-**		All memory associated with CON_SQLURL is freed.
-**		
-*/
-
-static int disconnect_db(db_con_t* _con)
-{
-
-#ifdef PARANOID
-	if(! _con)
-	{
-		LM_ERR("db_con_t parameter cannot be NULL\n");
-		return(-1);
-	}
-#endif
-
-	/*
-	** ignore if there is no current connection
-	*/
-	if(CON_CONNECTED(_con) != 1)
-	{
-		DLOG("disconnect_db", "not connected, ignored!\n");
-		return 0;
-	}
-
-	/*
-	** make sure we are trying to close a connection that was opened
-	** by our process ID
-	*/
-	if(CON_PID(_con) == getpid())
-	{
-		PQfinish(CON_CONNECTION(_con));
-		CON_CONNECTED(_con) = 0;
-	}
-	else
-	{
-		DLOG("disconnect_db",
-			"attempt to release connection not owned, ignored!\n");
-	}
-
-	return 0;
-}
-#endif
 
 
 /*
@@ -353,7 +193,7 @@ err:
 }
 
 
-/**
+/*
 ** pg_close	last function to call when db is no longer needed
 **
 **	Arguments :
@@ -448,7 +288,7 @@ static int submit_query(db_con_t* _con, const char* _s)
 
 }
 
-/**
+/*
  *
  * pg_fetch_result: Gets a partial result set.
  *
@@ -563,7 +403,7 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
         return 0;
 }
 
-/**
+/*
 ** free_query	clear the db channel and clear any old query result status
 **
 **	Arguments :
