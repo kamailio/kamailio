@@ -41,7 +41,7 @@
         <size>11</size>
         <default>0</default>
         <description>Group ID</description>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <index>

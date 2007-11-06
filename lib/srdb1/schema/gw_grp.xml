@@ -32,6 +32,6 @@
         <type>string</type>
         <size>&id_len;</size>
         <description>Group name</description>
-	<naturalkey/>
+	<natural/>
     </column>
 </table>

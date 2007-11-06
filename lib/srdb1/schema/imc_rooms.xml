@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Name of the room</description>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column id="domain">
@@ -40,7 +40,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Domain of the room</description>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column>

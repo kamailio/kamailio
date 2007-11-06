@@ -33,7 +33,7 @@
         <size>&domain_len;</size>
         <description>Domain name</description>
         <default/>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column>

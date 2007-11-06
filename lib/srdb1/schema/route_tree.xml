@@ -22,7 +22,7 @@
 			  <size>&table_id_len;</size>
 			  <primary/>
 			  <default>0</default>
-			  <naturalkey/>
+			  <natural/>
 			  <description>unique ID</description>
 		  </column>
 		  

@@ -34,7 +34,7 @@
 		<size>10</size>
 		<description>Number of the hash entry in the dialog hash table
 		</description>
-		<naturalkey/>
+		<natural/>
 	</column>
 
 	<column id="hash_id">
@@ -42,7 +42,7 @@
 		<type>unsigned int</type>
 		<size>10</size>
 		<description>The ID on the hash entry</description>
-		<naturalkey/>
+		<natural/>
 	</column>
 
 	<column>

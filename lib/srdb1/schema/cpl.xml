@@ -30,7 +30,7 @@
         <name>username</name>
         <type>string</type>
         <size>&user_len;</size>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column id="domain">
@@ -38,7 +38,7 @@
         <type>string</type>
         <size>64</size>
         <default/>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column>

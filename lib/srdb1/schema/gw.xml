@@ -33,7 +33,7 @@
         <type>string</type>
         <size>128</size>
         <description>Gateway Name</description>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column id="grp_id">

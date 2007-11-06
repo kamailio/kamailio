@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&uri_len;</size>
         <description>Source domain</description>
-	<naturalkey/>
+	<natural/>
     </column>
 
     <column id="prefix">
