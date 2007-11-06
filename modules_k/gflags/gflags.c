@@ -195,6 +195,8 @@ static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
 		LM_ERR("incorrect flag\n");
 		goto error;
 	}
+	/* convert from flag index to flag bitmap */
+	flag = 1 << flag;
 
 	(*gflags) |= flag;
 
@@ -220,6 +222,8 @@ static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
 		LM_ERR("incorrect flag\n");
 		goto error;
 	}
+	/* convert from flag index to flag bitmap */
+	flag = 1 << flag;
 
 	(*gflags) &= ~ flag;
 
@@ -250,6 +254,9 @@ static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if(rpl_tree ==0)
 		return 0;
+
+	/* convert from flag index to flag bitmap */
+	flag = 1 << flag;
 
 	if((*gflags) & flag)
 		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "TRUE", 4);
