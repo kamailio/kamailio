@@ -33,9 +33,20 @@
 #include <string.h>
 #include <strings.h>
 
+/**
+ * \file db_ut.c
+ * \brief Utility functions that are needed from database drivers.
+ *
+ * Contains methods for datatype conversation in both directions 
+ * and some SQL print functions.
+ */
 
-/*
+
+/**
  * Convert a string to integer
+ * \param _s source string
+ * \param _v target value
+ * \return -1 on error, 0 on success
  */
 inline int db_str2int(const char* _s, int* _v)
 {
@@ -152,8 +163,15 @@ inline int db_str2time(const char* _s, time_t* _v)
 }
 
 
-/*
- * Convert time_t to string
+/**
+ * Convert a time_t value to string
+ * \param _v source value
+ * \param _s target string
+ * \param _l available length and target length
+ * \return -1 on error, 0 on success
+ * \todo This functions add quotes to the time value. This
+ * should be done in the val2str function, as some databases
+ * like db_berkeley don't need or like this at all.
  */
 inline int db_time2str(time_t _v, char* _s, int* _l)
 {
