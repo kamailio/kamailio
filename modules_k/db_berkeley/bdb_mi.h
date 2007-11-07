@@ -1,9 +1,8 @@
 /*
- * $Id$
+ * $Id: $
  *
- * db_berkeley module, portions of this code were templated using
- * the dbtext and postgres modules.
-
+ * Header file for db_berkeley MI functions
+ *
  * Copyright (C) 2007 Cisco Systems
  *
  * This file is part of openser, a free SIP server.
@@ -21,19 +20,17 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- * 
- * History:
- * --------
- * 2007-09-19  genesis (wiquan)
  */
 
 
-#ifndef _BDB_UTIL_H_
-#define _BDB_UTIL_H_
+#ifndef _BDB_MI_H_
+#define _BDB_MI_H_
 
-#include "../../str.h"
+#include "../../mi/mi.h"
 
-int bdb_is_database(str *);
+#define MI_BDB_RELOAD "bdb_reload"
+
+struct mi_root* mi_bdb_reload(struct mi_root *cmd, void *param);
+
 
 #endif
-

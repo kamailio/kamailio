@@ -6,7 +6,7 @@
 # WARNING: do not run this directly, it should be run by the master Makefile
 
 # extra debug messages
-# -DSC_EXTRA_DEBUG is optional
+# -DBDB_EXTRA_DEBUG is optional
 DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
 	-I$(SYSBASE)/include
 
