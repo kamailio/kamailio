@@ -53,37 +53,70 @@ else
 	DB_SCHEMA="./berkeley/openser"
 fi
 
-# path to the berkeley database (envirnment)
-if [ -z "$DB_HOME" ]; then
-	DB_HOME="/usr/local/etc/openser/db_berkeley"
+# path to the db_berkeley database
+if [ -z "$DB_PATH" ]; then
+	DB_PATH="/usr/local/etc/openser/db_berkeley"
 fi
 
-
-openser_usage() 
+berkeley_usage() 
 {
 COMMAND=`basename $0`
 cat <<EOF
 Script for maintaining OpenSER Berkeley DB tables
-usage: $COMMAND create   [DB_HOME] (creates the db with files with metadata)
-       $COMMAND presence [DB_HOME] (adds the presence related tables)
-       $COMMAND extra    [DB_HOME] (adds the extra tables - imc,cpl,siptrace,domainpolicy)
-       $COMMAND drop     [DB_HOME] (deletes db files in DB_HOME)
-       $COMMAND reinit   [DB_HOME] (drop and create tables in one step)
-       $COMMAND list     [DB_HOME] (lists the underlying db files on the FS)
-       $COMMAND backup   [DB_HOME] (tars current database)
-       $COMMAND restore   <bu> [DB_HOME] (untar bu into DB_HOME)
-       $COMMAND dump      <db> [DB_HOME] (db_dump the underlying db file to STDOUT)
-       $COMMAND swap      <db> [DB_HOME] (installs db.new by db -> db.old; db.new -> db)
-       $COMMAND append    <db> <datafile> [DB_HOME] (appends data to an existing db;output DB_HOME/db.new)
-       $COMMAND newappend <db> <datafile> [DB_HOME] (appends data to a new instance of db; output DB_HOME/db.new)
+       $COMMAND list      (lists the underlying db files in DB_PATH)
+       $COMMAND cat       <db>  (db_dump the underlying db file to STDOUT)
+       $COMMAND swap      <db>  (installs db.new by db -> db.old; db.new -> db)
+       $COMMAND append    <db> <datafile> (appends data to an existing db;output DB_PATH/db.new)
+       $COMMAND newappend <db> <datafile> (appends data to a new instance of db; output DB_PATH/db.new)
 EOF
 } #usage
 
 
-openser_swap()  # parms: <db> [DB_HOME]
+#
+# 
+#
+openser_berkeley()  # parms: <op> <arg1> <arg2>
+{
+	case $1 in
+		list|ls)
+			ls -l $DB_PATH
+			exit $?
+			;;
+		cat)
+			shift
+			openser_cat $1 $DB_PATH
+			exit $?
+			;;
+
+		swap)
+			shift
+			openser_swap $1 $DB_PATH
+			exit $?
+			;;
+
+		append)
+			shift
+			openser_append  $1 $2 $DB_PATH
+			exit $?
+			;;
+
+		newappend)
+			shift
+			openser_newappend  $1 $2 $DB_PATH
+			exit $?
+			;;
+
+		*)
+			berkeley_usage
+			exit 1;
+			;;
+esac
+}
+
+openser_swap()  # parms: <db> [DB_PATH]
 {
 	if [ $# -lt 2  ]; then
-		echo  "openser_swap parms: <db> [DB_HOME]"
+		echo  "openser_swap parms: <db> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -96,13 +129,13 @@ openser_swap()  # parms: <db> [DB_HOME]
 
 #####
 # append process is:
-# 1. copy DB_HOME/db to DB_HOME/db.new
-# 2. appends contents of newdata to DB_HOME/db.new
+# 1. copy DB_PATH/db to DB_PATH/db.new
+# 2. appends contents of newdata to DB_PATH/db.new
 #
-openser_append()  # parms: <db> <newdata> [DB_HOME]
+openser_append()  # parms: <db> <newdata> [DB_PATH]
 {
 	if [ $# -lt 3  ]; then
-		echo  "openser_append parms: <db> <newdata> [DB_HOME]"
+		echo  "openser_append parms: <db> <newdata> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -125,13 +158,13 @@ openser_append()  # parms: <db> <newdata> [DB_HOME]
 # newappend process is:
 # 1. create a new temp DBENV in /tmp/sc-<processID>
 # 2. appends contents of newdata to /tmp/sc-<processID>/db
-# 3. move /tmp/sc-<processID>/db over to DB_HOME/db.new
+# 3. move /tmp/sc-<processID>/db over to DB_PATH/db.new
 # 4. delete temp DBENV dir /tmp/sc-<processID>
 #
-openser_newappend()  # parms: <db> <newdata> [DB_HOME]
+openser_newappend()  # parms: <db> <newdata> [DB_PATH]
 {
 	if [ $# -lt 3  ]; then
-		echo  "openser_append parms: <db> <newdata> [DB_HOME]"
+		echo  "openser_append parms: <db> <newdata> [DB_PATH]"
 		exit 1
 	fi
 	
@@ -149,50 +182,18 @@ openser_newappend()  # parms: <db> <newdata> [DB_HOME]
 }
 
 
-# dump all rows to STDOUT
-openser_dump()  # pars: <database name> <DB_HOME>
+# cat all rows to STDOUT
+openser_cat()  # pars: <database name> <DB_PATH>
 {
 	if [ $# -ne 2 ] ; then
-		echo  "openser_dump params <db> [DB_HOME]"
+		echo  "openser_cat params <db> [DB_PATH]"
 		exit 1
 	fi
 	
 	$DUMP_CMD -h $2 $1
 }
 
-
-
-# copy a database to database_bak
-openser_backup() # par: <DB_HOME>
-{
-	if [ $# -ne 1 ] ; then
-		echo  "openser_backup params [DB_HOME]"
-		exit 1
-	fi
-	
-	DATE=`date "+%m%d%Y"`
-	BU=$1/berkeleydb-$DATE-$$.tgz
-	$BACKUP_CMD $BU $1
-	if [ "$?" -ne 0 ] ; then
-		echo "openser_backup failed"
-		exit 1
-	fi
-}
-
-
-openser_restore() #pars: <filename>
-{
-	if [ $# -ne 2 ] ; then
-		echo "openser_restore params <bakfile> [DB_HOME]"
-		exit 1
-	fi
-	cd $1
-	$RESTORE_CMD $2 -C /
-	cd $OLDPWD
-}
-
-
-openser_drop()  # pars: <database name>
+openser_drop()  # pars:  <DB_PATH>
 {
 	if [ $# -ne 1 ] ; then
 		echo "openser_drop function takes one param"
@@ -232,50 +233,50 @@ openser_drop()  # pars: <database name>
 }
 
 
-openser_create() # pars: <database name>
+openser_create() # pars: <DB_PATH>
 {
 	if [ $# -ne 1 ] ; then
-		echo "openser_create param [DB_HOME]"
+		echo "openser_create param [DB_PATH]"
 		exit 1
 	fi
 	
-	DB_HOME=$1
-	minfo "creating Berkeley DB database at: $1 ..."
-	mkdir -p $DB_HOME
+	DB_PATH=$1
+	if [ ! -d $1 ] ; then
+		minfo "creating Berkeley DB database at: [$1]"
+		mkdir -p $DB_PATH
+	fi
 	
 	for TABLE in $STANDARD_TABLES; do
-	    mdbg "Creating core table: $TABLE"
+	    mdbg "Creating standard table: $TABLE"
 	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
 	    if [ $? -ne 0 ] ; then
-		merr "Creating core tables failed!"
+		merr "Creating standard tables failed!"
 		exit 1
 	    fi
 	done
 	
-	get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
-	if [ "$ANSWER" = "y" ]; then
-		presence_create $1
-	fi
-	
-	get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
-	if [ "$ANSWER" = "y" ]; then
-		extra_create $1
-	fi
-	
 } # openser_create
 
 
-presence_create() # pars: <database name>
+presence_create() # pars: <DB_PATH>
 {
 	if [ $# -ne 1 ] ; then
-		merr "presence_create param [DB_HOME]"
+		merr "presence_create param [DB_PATH]"
 		exit 1
 	fi
 	
-	DB_HOME=$1
-	minfo "creating BerkeleyDB presence database at: $1 .."
-	minfo "creating BerkeleyDB presence database at: $DB_HOME ..."
-	mkdir -p $DB_HOME
+	DB_PATH=$1
+	if [ ! -d $1 ] ; then
+		# Assert: the directory should already exist
+		merr "BerkeleyDB directory does not exist at: [$1]"
+		exit 1
+	fi
+
+	if [ ! -f $1/version ] ; then
+		# Assert: directory should already contain table 'version'
+		merr "BerkeleyDB directory does not have VERSION table at: [$1]"
+		exit 1
+	fi
 	
 	for TABLE in $PRESENCE_TABLES; do
 	    mdbg "Creating presence table: $TABLE"
@@ -289,16 +290,26 @@ presence_create() # pars: <database name>
 }  # end presence_create
 
 
-extra_create() # pars: <DB_HOME>
+extra_create() # pars: <DB_PATH>
 {
 
 	if [ $# -ne 1 ] ; then
-		merr "extra_create function takes one param (DB_HOME)"
+		merr "extra_create function takes one param (DB_PATH)"
 		exit 1
 	fi
 	
-	DB_HOME=$1
-	minfo "creating BerkeleyDB extra tables at: $DB_HOME ..."
+	DB_PATH=$1
+	if [ ! -d $1 ] ; then
+		# Assert: the directory should already exist
+		merr "BerkeleyDB directory does not exist at: [$1]"
+		exit 1
+	fi
+
+	if [ ! -f $1/version ] ; then
+		# Assert: directory should already contain table 'version'
+		merr "BerkeleyDB directory does not have VERSION table at: [$1]"
+		exit 1
+	fi
 	
 	for TABLE in $EXTRA_TABLES; do
 	    mdbg "Creating extra table: $TABLE"

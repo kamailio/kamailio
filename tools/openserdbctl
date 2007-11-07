@@ -104,10 +104,11 @@ case $DBENGINE in
 			merr "could not load the script in $MYLIBDIR/openserdbctl.dbtext for database engine $DBENGINE"
 		fi
 		;;
-	db_berkeley|DB_BERKELEY|sleepycat)
+	DB_BERKELEY|db_berkeley)
 		if [ -f "$MYLIBDIR/openserdbctl.db_berkeley" ]; then
 			. "$MYLIBDIR/openserdbctl.db_berkeley"
 			DBENGINELOADED=1
+			DBTEXT=1
 		else
 			merr "could not load the script in $MYLIBDIR/openserdbctl.db_berkeley for database engine $DBENGINE"
 		fi
@@ -248,11 +249,11 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
-			DBTEXT_PATH="$1"
+			DB_PATH="$1"
 		fi
 
 		if [ "$DBTEXT" = "1" ] ; then
-			openser_create $DBTEXT_PATH
+			openser_create $DB_PATH
 		else
 			openser_create $DBNAME
 		fi
@@ -260,7 +261,8 @@ case $1 in
 		;;
 	serweb)
 		if [ "$DBTEXT" = "1" ] ; then
-			serweb_create $DBTEXT_PATH
+			merr "DBTEXT don't support this operation"
+			exit 1
 		else
 			serweb_create $DBNAME
 		fi
@@ -268,7 +270,7 @@ case $1 in
 		;;
 	presence)
 		if [ "$DBTEXT" = "1" ] ; then
-			presence_create $DBTEXT_PATH
+			presence_create $DB_PATH
 		else
 			presence_create $DBNAME
 		fi
@@ -276,7 +278,7 @@ case $1 in
 		;;
 	extra)
 		if [ "$DBTEXT" = "1" ] ; then
-			extra_create $DBTEXT_PATH
+			extra_create $DB_PATH
 		else
 			extra_create $DBNAME
 		fi
@@ -288,11 +290,11 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
-			DBTEXT_PATH="$1"
+			DB_PATH="$1"
 		fi
 
 		if [ "$DBTEXT" = "1" ] ; then
-			openser_drop $DBTEXT_PATH
+			openser_drop $DB_PATH
 		else
 			openser_drop $DBNAME
 		fi
@@ -304,10 +306,10 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
-			DBTEXT_PATH="$1"
+			DB_PATH="$1"
 		fi
 		if [ "$DBTEXT" = "1" ] ; then
-			openser_drop $DBTEXT_PATH
+			openser_drop $DB_PATH
 		else
 			openser_drop $DBNAME
 		fi
@@ -316,10 +318,15 @@ case $1 in
 			exit $ret
 		fi
 		if [ "$DBTEXT" = "1" ] ; then
-			openser_create $DBTEXT_PATH
+			openser_create $DB_PATH
 		else
 			openser_create $DBNAME
 		fi
+		exit $?
+		;;
+	bdb|db_berkeley)
+		shift
+		openser_berkeley "$@"
 		exit $?
 		;;
 	*)

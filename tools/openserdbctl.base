@@ -101,9 +101,9 @@ fi
 usage() {
 COMMAND=`basename $0`
 cat <<EOF
-usage: $COMMAND create <db name or dbtext path, optional> .....(creates a new database)
-       $COMMAND drop <db name or dbtext path, optional> .......(!entirely deletes tables!)
-       $COMMAND reinit <db name or dbtext path, optional> .....(!entirely deletes and than re-creates tables!)
+usage: $COMMAND create <db name or db_path, optional> .....(creates a new database)
+       $COMMAND drop <db name or db_path, optional> .......(!entirely deletes tables!)
+       $COMMAND reinit <db name or db_path, optional> .....(!entirely deletes and than re-creates tables!)
        $COMMAND backup <file> .................................(dumps current database to file)
        $COMMAND restore <file> ................................(restores tables from a file)
        $COMMAND copy <new_db> .................................(creates a new db from an existing one)

@@ -7,7 +7,7 @@
 ## your SIP domain
 # SIP_DOMAIN=openser.org
 
-## database type: MYSQL, PGSQL or DBTEXT, by default none is loaded
+## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT, by default none is loaded
 # DBENGINE=MYSQL
 
 ## database host
@@ -16,8 +16,8 @@
 ## database name
 # DBNAME=openser
 
-# dbtext database path
-# DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+# database path used by dbtext or db_berkeley
+# DB_PATH="/usr/local/etc/openser/dbtext"
 
 ## database read/write user
 # DBRWUSER=openser

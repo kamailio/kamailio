@@ -1,0 +1,61 @@
+# $Id:  $
+#
+# openser control; tool for maintaining openser's databases
+#
+# History:
+# --------
+# 2007-11-05 genesis (wiquan)
+
+#===================================================================
+
+# path to the db_berkeley directory
+if [ -z "$DB_PATH" ] ; then
+	DB_PATH="/usr/local/etc/openser/db_berkeley"
+fi
+
+#===================================================================
+
+openser_bdb() {
+case $1 in
+	reload)
+		shift
+		if [ "$#" -lt 1 ] ; then
+			merr "reload - too few parameters"
+			exit 1
+		fi
+		
+		$CTLCMD bdb_reload $1
+		exit $?
+		;;
+	*)
+		usage
+		exit 1
+		;;
+esac
+}
+
+# domain don't support reload at the moment
+usage_domain() {
+        echo
+        mecho " -- command 'domain' - manage domains"
+	echo
+cat <<EOF
+ domain show ........................ show list of served domains
+ domain add <domainname> ............ add a new served domain
+ domain rm <domainname> ............. remove a served domain
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_domain"
+
+# showdb is not implemented for SQL databases
+usage_showdb() {
+        echo
+        mecho " -- command 'showdb|userdb' - dump offline users"
+        echo
+cat <<EOF
+ showdb ............................. display offline users
+ userdb ............................. display offline users
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_showdb"
+

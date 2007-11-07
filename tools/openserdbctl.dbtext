@@ -28,8 +28,8 @@ else
 fi
 
 # path to the dbtext database
-if [ -z "$DBTEXT_PATH" ] ; then
-	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+if [ -z "$DB_PATH" ] ; then
+	DB_PATH="/usr/local/etc/openser/dbtext"
 fi
 
 openser_drop()  # pars: <database name>
@@ -39,28 +39,28 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
-DBTEXT_PATH=$1
+DB_PATH=$1
 
-minfo "DBTEXT ... erasing all files at: $DBTEXT_PATH"
-rm -f $DBTEXT_PATH/*
+minfo "DBTEXT ... erasing all files at: $DB_PATH"
+rm -f $DB_PATH/*
 }
 
 openser_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "openser_create function takes one param (DBTEXT_PATH)"
+	merr "openser_create function takes one param (DB_PATH)"
 	exit 1
 fi
 
-DBTEXT_PATH=$1
+DB_PATH=$1
 
-minfo "creating DBTEXT tables at: $DBTEXT_PATH ..."
+minfo "creating DBTEXT tables at: $DB_PATH ..."
 
-mkdir -p $DBTEXT_PATH
+mkdir -p $DB_PATH
 
 for TABLE in $STANDARD_TABLES; do
     mdbg "Creating core table: $TABLE"
-    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    cp $DB_SCHEMA/$TABLE $DB_PATH/$TABLE
     if [ $? -ne 0 ] ; then
 	merr "Creating core tables failed!"
 	exit 1
@@ -80,19 +80,19 @@ fi
 presence_create () # pars: <database name>
 {
 if [ $# -ne 1 ] ; then
-	merr "presence_create function takes one param (DBTEXT_PATH)"
+	merr "presence_create function takes one param (DB_PATH)"
 	exit 1
 fi
 
-DBTEXT_PATH=$1
+DB_PATH=$1
 
-minfo "creating DBTEXT presence tables at: $DBTEXT_PATH ..."
+minfo "creating DBTEXT presence tables at: $DB_PATH ..."
 
-mkdir -p $DBTEXT_PATH
+mkdir -p $DB_PATH
 
 for TABLE in $PRESENCE_TABLES; do
     mdbg "Creating presence table: $TABLE"
-    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    cp $DB_SCHEMA/$TABLE $DB_PATH/$TABLE
     if [ $? -ne 0 ] ; then
 	merr "Creating presence tables failed!"
 	exit 1
@@ -109,11 +109,11 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
-minfo "creating DBTEXT extra tables at: $DBTEXT_PATH ..."
+minfo "creating DBTEXT extra tables at: $DB_PATH ..."
 
 for TABLE in $EXTRA_TABLES; do
     mdbg "Creating extra table: $TABLE"
-    cp $DB_SCHEMA/$TABLE $DBTEXT_PATH/$TABLE
+    cp $DB_SCHEMA/$TABLE $DB_PATH/$TABLE
     if [ $? -ne 0 ] ; then
 	merr "Creating extra tables failed!"
 	exit 1
