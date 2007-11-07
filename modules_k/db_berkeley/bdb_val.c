@@ -35,6 +35,47 @@
 #include "bdb_val.h"
 #include <string.h>
 
+/**
+ * A copy of db_ut::db_time2str EXCEPT does not wrap the date in single-quotes
+ *
+ * Convert a time_t value to string (w.o single-quote)
+ * \param _v source value
+ * \param _s target string
+ * \param _l available length and target length
+ * \return -1 on error, 0 on success
+ * \todo This functions add quotes to the time value. This
+ * should be done in the val2str function, as some databases
+ * like db_berkeley don't need or like this at all.
+ */
+inline int bdb_time2str(time_t _v, char* _s, int* _l)
+{
+	struct tm* t;
+	int l;
+
+	if ((!_s) || (!_l) || (*_l < 2)) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+//	*_s++ = '\'';
+
+	/* Convert time_t structure to format accepted by the database */
+	t = localtime(&_v);
+	l = strftime(_s, *_l -1, "%Y-%m-%d %H:%M:%S", t);
+
+	if (l == 0) {
+		LM_ERR("Error during time conversion\n");
+		/* the value of _s is now unspecified */
+		_s = NULL;
+		_l = 0;
+		return -1;
+	}
+	*_l = l;
+
+//	*(_s + l) = '\'';
+//	*_l = l + 2;
+	return 0;
+}
 
 /**
  * Does not copy strings
@@ -207,7 +248,7 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		break;
 
 	case DB_DATETIME:
-		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
+		if (bdb_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LM_ERR("Error while converting time_t to string\n");
 			return -6;
 		} else {
