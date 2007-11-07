@@ -247,6 +247,8 @@ MODULE_VERSION
 #define MI_PING_DISABLED_LEN		(sizeof(MI_PING_DISABLED)-1)
 #define MI_SET						"set"
 #define MI_SET_LEN					(sizeof(MI_SET)-1)
+#define MI_INDEX					"index"
+#define MI_INDEX_LEN				(sizeof(MI_INDEX)-1)
 #define MI_DISABLED					"disabled"
 #define MI_DISABLED_LEN				(sizeof(MI_DISABLED)-1)
 #define MI_WEIGHT					"weight"
@@ -370,6 +372,11 @@ static unsigned int current_msg_id = (unsigned int)-1;
 struct rtpp_set_head * rtpp_set_list =0;
 struct rtpp_set * selected_rtpp_set =0;
 struct rtpp_set * default_rtpp_set=0;
+
+/* array with the sockets used by rtpporxy (per process)*/
+static unsigned int rtpp_no = 0;
+static int *rtpp_socks = 0;
+
 
 /*0-> disabled, 1 ->enabled*/
 unsigned int *natping_state=0;
@@ -524,10 +531,10 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 			return -1;
 		}
 		memset(pnode, 0, sizeof(*pnode));
+		pnode->idx = rtpp_no++;
 		pnode->rn_recheck_ticks = 0;
 		pnode->rn_weight = weight;
 		pnode->rn_umode = 0;
-		pnode->rn_fd = -1;
 		pnode->rn_disabled = 0;
 		pnode->rn_url.s = shm_malloc(p2 - p1 + 1);
 		if (pnode->rn_url.s == NULL) {
@@ -538,7 +545,7 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 		memmove(pnode->rn_url.s, p1, p2 - p1);
 		pnode->rn_url.s[p2 - p1] 	= 0;
 		pnode->rn_url.len 			= p2-p1;
-			
+
 		LM_DBG("url is %s, len is %i\n", pnode->rn_url.s, pnode->rn_url.len);
 		/* Leave only address in rn_address */
 		pnode->rn_address = pnode->rn_url.s;
@@ -569,8 +576,8 @@ static int add_rtpproxy_socks(struct rtpp_set * rtpp_list,
 /*	0-succes
  *  -1 - erorr
  * */
-static int nathelper_add_rtpproxy_set( char * rtp_proxies){
-	
+static int nathelper_add_rtpproxy_set( char * rtp_proxies)
+{
 	char *p,*p2;
 	struct rtpp_set * rtpp_list;
 	unsigned int my_current_id;
@@ -876,6 +883,8 @@ static struct mi_root* mi_show_rtpproxies(struct mi_root* cmd_tree,
 				goto error;
 			}
 
+			add_rtpp_node_int_info(crt_node, MI_INDEX, MI_INDEX_LEN,
+				crt_rtpp->idx, child, len,string,error);
 			add_rtpp_node_int_info(crt_node, MI_DISABLED, MI_DISABLED_LEN,
 				crt_rtpp->rn_disabled, child, len,string,error);
 			add_rtpp_node_int_info(crt_node, MI_WEIGHT, MI_WEIGHT_LEN,
@@ -1065,18 +1074,20 @@ mod_init(void)
 		nets_1918[i].netaddr = ntohl(addr.s_addr) & nets_1918[i].mask;
 	}
 
-	/*storing the list of rtp proxy sets in shared memory*/
+	/* storing the list of rtp proxy sets in shared memory*/
 	for(i=0;i<rtpp_sets;i++){
 		if(nathelper_add_rtpproxy_set(rtpp_strings[i]) !=0){
 			for(;i<rtpp_sets;i++)
 				if(rtpp_strings[i])
 					pkg_free(rtpp_strings[i]);
+			pkg_free(rtpp_strings);
 			return -1;
-				
 		}
 		if(rtpp_strings[i])
 			pkg_free(rtpp_strings[i]);
 	}
+	if (rtpp_strings)
+		pkg_free(rtpp_strings);
 
 	return 0;
 }
@@ -1100,14 +1111,23 @@ child_init(int rank)
 	/* Iterate known RTP proxies - create sockets */
 	mypid = getpid();
 
+	rtpp_socks = (int*)pkg_malloc( sizeof(int)*rtpp_no );
+	if (rtpp_socks==NULL) {
+		LM_ERR("no more pkg memory\n");
+		return -1;
+	}
+
 	for(rtpp_list = rtpp_set_list->rset_first; rtpp_list != 0;
 		rtpp_list = rtpp_list->rset_next){
 
 		for (pnode=rtpp_list->rn_first; pnode!=0; pnode = pnode->rn_next){
 			char *old_colon;
 
-			if (pnode->rn_umode == 0)
-			goto rptest;
+			if (pnode->rn_umode == 0) {
+				rtpp_socks[pnode->idx] = -1;
+				goto rptest;
+			}
+
 			/*
 			 * This is UDP or UDP6. Detect host and port; lookup host;
 			 * do connect() in order to specify peer address
@@ -1132,18 +1152,18 @@ child_init(int rank)
 			if (old_colon)
 				*old_colon = ':'; /* restore rn_address */
 
-			pnode->rn_fd = socket((pnode->rn_umode == 6)
+			rtpp_socks[pnode->idx] = socket((pnode->rn_umode == 6)
 			    ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
-			if (pnode->rn_fd == -1) {
+			if ( rtpp_socks[pnode->idx] == -1) {
 				LM_ERR("can't create socket\n");
 				freeaddrinfo(res);
 				return -1;
 			}
 
-			if (connect(pnode->rn_fd, res->ai_addr, res->ai_addrlen) == -1) {
+			if (connect( rtpp_socks[pnode->idx], res->ai_addr, res->ai_addrlen) == -1) {
 				LM_ERR("can't connect to a RTP proxy\n");
-				close(pnode->rn_fd);
-				pnode->rn_fd = -1;
+				close( rtpp_socks[pnode->idx] );
+				rtpp_socks[pnode->idx] = -1;
 				freeaddrinfo(res);
 				return -1;
 			}
@@ -1162,15 +1182,13 @@ static void mod_destroy(void)
 	struct rtpp_set * crt_list, * last_list;
 	struct rtpp_node * crt_rtpp, *last_rtpp;
 
-
-	
 	/*free the shared memory*/
 	if (natping_state)
 		shm_free(natping_state);
-	
+
 	if(rtpp_set_list == NULL)
 		return;
-	
+
 	for(crt_list = rtpp_set_list->rset_first; crt_list != NULL; ){
 
 		for(crt_rtpp = crt_list->rn_first; crt_rtpp != NULL;  ){
@@ -1178,18 +1196,20 @@ static void mod_destroy(void)
 			if(crt_rtpp->rn_url.s)
 				shm_free(crt_rtpp->rn_url.s);
 
-			last_rtpp = crt_rtpp; 
+			last_rtpp = crt_rtpp;
 			crt_rtpp = last_rtpp->rn_next;
-			shm_free(last_rtpp);  
+			shm_free(last_rtpp);
 		}
-			
-		last_list = crt_list;     
+
+		last_list = crt_list;
 		crt_list = last_list->rset_next;
-		shm_free(last_list);  	  
+		shm_free(last_list);
 	}
 
-	shm_free(rtpp_set_list);  
+	shm_free(rtpp_set_list);
 }
+
+
 
 static int
 isnulladdr(str *sx, int pf)
@@ -2050,20 +2070,20 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 			goto badproxy;
 		}
 	} else {
-		fds[0].fd = node->rn_fd;
+		fds[0].fd = rtpp_socks[node->idx];
 		fds[0].events = POLLIN;
 		fds[0].revents = 0;
 		/* Drain input buffer */
 		while ((poll(fds, 1, 0) == 1) &&
 		    ((fds[0].revents & POLLIN) != 0)) {
-			recv(node->rn_fd, buf, sizeof(buf) - 1, 0);
+			recv(rtpp_socks[node->idx], buf, sizeof(buf) - 1, 0);
 			fds[0].revents = 0;
 		}
 		v[0].iov_base = gencookie();
 		v[0].iov_len = strlen(v[0].iov_base);
 		for (i = 0; i < rtpproxy_retr; i++) {
 			do {
-				len = writev(node->rn_fd, v, vcnt);
+				len = writev(rtpp_socks[node->idx], v, vcnt);
 			} while (len == -1 && (errno == EINTR || errno == ENOBUFS));
 			if (len <= 0) {
 				LM_ERR("can't send command to a RTP proxy\n");
@@ -2072,7 +2092,7 @@ send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 			while ((poll(fds, 1, rtpproxy_tout * 1000) == 1) &&
 			    (fds[0].revents & POLLIN) != 0) {
 				do {
-					len = recv(node->rn_fd, buf, sizeof(buf) - 1, 0);
+					len = recv(rtpp_socks[node->idx], buf, sizeof(buf)-1, 0);
 				} while (len == -1 && errno == EINTR);
 				if (len <= 0) {
 					LM_ERR("can't read reply from a RTP proxy\n");
