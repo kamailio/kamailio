@@ -35,10 +35,11 @@
 #include "bdb_val.h"
 #include <string.h>
 
+
 /**
  * Does not copy strings
  */
-int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
+int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 {
 
 	static str dummy_string = {"", 0};
@@ -133,7 +134,7 @@ int sc_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int sc_val2str(db_val_t* _v, char* _s, int* _len)
+int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 {
 	int l;
 

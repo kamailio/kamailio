@@ -67,11 +67,11 @@
 #define DELIM "|"
 #define DELIM_LEN (sizeof(DELIM)-1)
 
-typedef db_val_t sc_val_t, *sc_val_p;
+typedef db_val_t bdb_val_t, *bdb_val_p;
 
 typedef struct _row
 {
-	sc_val_p fields;
+	bdb_val_p fields;
 	struct _row *prev;
 	struct _row *next;
 } row_t, *row_p;
@@ -94,7 +94,7 @@ typedef struct _table
 	int ro;       /*db readonly flag*/
 	int logflags; /*flags indication what-where to journal log */
 	FILE* fp;     /*jlog file pointer */
-	time_t t;     /*jlog creation time*/
+	time_t t;     /*jlog creation time */
 	ino_t ino;
 } table_t, *table_p;
 
@@ -122,17 +122,17 @@ typedef struct _db_parms
 } db_parms_t, *db_parms_p;
 
 
-int sclib_init(db_parms_p _parms);
-int sclib_destroy(void);
-int sclib_close(char* _n);
-int sclib_reopen(char* _n);
-int sclib_recover(table_p _tp, int error_code);
-void sclib_log(int op, table_p _tp, char* _msg, int len);
-int sclib_create_dbenv(DB_ENV **dbenv, char* home);
-int sclib_create_journal(table_p _tp);
-database_p  	sclib_get_db(str *_s);
-tbl_cache_p 	sclib_get_table(database_p _db, str *_s);
-table_p 	sclib_create_table(database_p _db, str *_s);
+int bdblib_init(db_parms_p _parms);
+int bdblib_destroy(void);
+int bdblib_close(char* _n);
+int bdblib_reopen(char* _n);
+int bdblib_recover(table_p _tp, int error_code);
+void bdblib_log(int op, table_p _tp, char* _msg, int len);
+int bdblib_create_dbenv(DB_ENV **dbenv, char* home);
+int bdblib_create_journal(table_p _tp);
+database_p  	bdblib_get_db(str *_s);
+tbl_cache_p 	bdblib_get_table(database_p _db, str *_s);
+table_p 	bdblib_create_table(database_p _db, str *_s);
 
 int db_free(database_p _dbp);
 int tbl_cache_free(tbl_cache_p _tbc);
@@ -143,6 +143,6 @@ int load_metadata_keys(table_p _tp);
 int load_metadata_readonly(table_p _tp);
 int load_metadata_logflags(table_p _tp);
 
-int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko);
+int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko);
 
 #endif

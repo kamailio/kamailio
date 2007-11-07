@@ -36,7 +36,7 @@
 /**
  *
  */
-int sc_is_database(str *_s)
+int bdb_is_database(str *_s)
 {
 	DIR *dirp = NULL;
 	char buf[512];
