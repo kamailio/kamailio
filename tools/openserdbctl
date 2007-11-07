@@ -197,7 +197,7 @@ case $1 in
 			usage
 			exit 1
 		fi
-		tmp_file=/tmp/openser_database.$$
+		tmp_file=`mktemp /tmp/openserdbctl.XXXXXXXXXX` || exit 1
 		openser_dump $DBNAME $tmp_file
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
