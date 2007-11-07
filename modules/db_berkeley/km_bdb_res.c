@@ -37,7 +37,7 @@
 /**
 * 
 */
-int sc_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
+int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 {
 	int col, len;
 
@@ -62,8 +62,8 @@ int sc_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 	/* Allocate storage to hold a pointer to each column name */
 	RES_NAMES(_res) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * _nc);
 
-#ifdef SC_EXTRA_DEBUG
-	LM_DBG, "%p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res)
+#ifdef BDB_EXTRA_DEBUG
+	LM_DBG("%p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res)
 		, (unsigned long)(sizeof(db_key_t) * _nc));
 #endif
 
@@ -78,7 +78,7 @@ int sc_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 	/* Allocate storage to hold the type of each column */
 	RES_TYPES(_res) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * _nc);
 
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 	LM_DBG("%p=pkg_malloc(%lu) RES_TYPES\n", RES_TYPES(_res)
 		, (unsigned long)(sizeof(db_type_t) * _nc));
 #endif
@@ -107,7 +107,7 @@ int sc_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 		len = cp->name.len;
 		RES_NAMES(_res)[col] = pkg_malloc(len+1);
 		
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]\n"
 			, RES_NAMES(_res)[col], len+1, col);
 #endif
@@ -134,7 +134,7 @@ int sc_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 /**
  * Convert rows from Berkeley DB to db API representation
  */
-int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
+int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 {
         int col, len, i, j;
 	char **row_buf, *s;
@@ -143,7 +143,7 @@ int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	
 	if (!_res)
 	{
-		LM_ERR("sc_convert_row: db_res_t parameter cannot be NULL\n");
+		LM_ERR("bdb_convert_row: db_res_t parameter cannot be NULL\n");
 		return -1;
 	}
 
@@ -171,7 +171,7 @@ int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 
 	if (!ROW_VALUES(row)) 
 	{	
-		LM_ERR("sc_convert_row: No memory left\n");
+		LM_ERR("bdb_convert_row: No memory left\n");
 		return -1;
 	}
 	memset(ROW_VALUES(row), 0, len);
@@ -241,20 +241,20 @@ int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 
 		LM_DBG("col[%d]\n", col);
 		/* Convert the string representation into the value representation */
-		if (sc_str2val(	RES_TYPES(_res)[col]
+		if (bdb_str2val(	RES_TYPES(_res)[col]
 				, &(ROW_VALUES(row)[col])
 				, row_buf[col]
 				, strlen(row_buf[col])) < 0) 
 		{
 			LM_ERR("Error while converting value\n");
 			LM_DBG("%p=pkg_free() _row\n", row);
-			sc_free_row(row);
+			bdb_free_row(row);
 			return -3;
 		}
 	}
 
 	/* pkg_free() must be done for the above allocations now that the row has been converted.
-	 * During sc_convert_row (and subsequent sc_str2val) processing, data types that don't need to be
+	 * During bdb_convert_row (and subsequent bdb_str2val) processing, data types that don't need to be
 	 * converted (namely STRINGS) have their addresses saved.  These data types should not have
 	 * their pkg_malloc() allocations freed here because they are still needed.  However, some data types
 	 * (ex: INT, DOUBLE) should have their pkg_malloc() allocations freed because during the conversion
@@ -262,8 +262,8 @@ int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	 *
 	 * Warning: when the converted row is no longer needed, the data types whose addresses
 	 * were saved in the db_val_t structure must be freed or a memory leak will happen.
-	 * This processing should happen in the sc_free_row() subroutine.  The caller of
-	 * this routine should ensure that sc_free_rows(), sc_free_row() or sc_free_result()
+	 * This processing should happen in the bdb_free_row() subroutine.  The caller of
+	 * this routine should ensure that bdb_free_rows(), bdb_free_row() or bdb_free_result()
 	 * is eventually called.
 	 */
 	for (col=0; col<RES_COL_N(_res); col++) 
@@ -274,7 +274,7 @@ int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 			case DB_STR:
 				break;
 			default:
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 			LM_DBG("col[%d] Col[%s] Type[%d] Freeing row_buf[%p]\n", col
 				, RES_NAMES(_res)[col], RES_TYPES(_res)[col]
 				, (char*) row_buf[col]);
@@ -303,7 +303,7 @@ int sc_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 }
 
 /*rx is row index*/
-int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
+int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 {
 	int col, len, i, j;
 	char **row_buf, *s;
@@ -375,7 +375,7 @@ int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 		{
 			len = strlen(s);
 
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("col[%i] = [%.*s]\n", col , len, s );
 #endif
 
@@ -396,26 +396,26 @@ int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	/*do the type conversion per col*/
 	for(col = 0; col < ROW_N(row); col++) 
 	{
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("tc 1: col[%i] == ", col );
 #endif
 
 		/*skip the unrequested cols (as already specified)*/
 		if(!row_buf[col])  continue;
 
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("tc 2: col[%i] \n", col );
 #endif
 
 		/* Convert the string representation into the value representation */
-		if (sc_str2val(	RES_TYPES(_res)[col]
+		if (bdb_str2val(	RES_TYPES(_res)[col]
 				, &(ROW_VALUES(row)[col])
 				, row_buf[col]
 				, strlen(row_buf[col])) < 0) 
 		{
 			LM_ERR("Error while converting value\n");
 			LM_DBG("%p=pkg_free() _row\n", row);
-			sc_free_row(row);
+			bdb_free_row(row);
 			return -3;
 		}
 		
@@ -423,7 +423,7 @@ int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	}
 
 	/* pkg_free() must be done for the above allocations now that the row has been converted.
-	 * During sc_convert_row (and subsequent sc_str2val) processing, data types that don't need to be
+	 * During bdb_convert_row (and subsequent bdb_str2val) processing, data types that don't need to be
 	 * converted (namely STRINGS) have their addresses saved.  These data types should not have
 	 * their pkg_malloc() allocations freed here because they are still needed.  However, some data types
 	 * (ex: INT, DOUBLE) should have their pkg_malloc() allocations freed because during the conversion
@@ -431,15 +431,15 @@ int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	 *
 	 * Warning: when the converted row is no longer needed, the data types whose addresses
 	 * were saved in the db_val_t structure must be freed or a memory leak will happen.
-	 * This processing should happen in the sc_free_row() subroutine.  The caller of
-	 * this routine should ensure that sc_free_rows(), sc_free_row() or sc_free_result()
+	 * This processing should happen in the bdb_free_row() subroutine.  The caller of
+	 * this routine should ensure that bdb_free_rows(), bdb_free_row() or bdb_free_result()
 	 * is eventually called.
 	 */
 	for (col=0; col<RES_COL_N(_res); col++) 
 	{
 		if (RES_TYPES(_res)[col] != DB_STRING) 
 		{
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 			LM_DBG("[%d][%d] Col[%s] Type[%d] Freeing row_buf[%i]\n"
 				, _rx, col, RES_NAMES(_res)[col], RES_TYPES(_res)[col], col);
 #endif
@@ -463,7 +463,7 @@ int sc_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 
 
 
-int* sc_get_colmap(table_p _dtp, db_key_t* _k, int _n)
+int* bdb_get_colmap(table_p _dtp, db_key_t* _k, int _n)
 {
 	int i, j, *_lref=NULL;
 	
@@ -499,10 +499,10 @@ int* sc_get_colmap(table_p _dtp, db_key_t* _k, int _n)
 }
 
 
-int sc_free_result(db_res_t* _res)
+int bdb_free_result(db_res_t* _res)
 {
-	sc_free_columns(_res);
-	sc_free_rows(_res);
+	bdb_free_columns(_res);
+	bdb_free_rows(_res);
 	LM_DBG("%p=pkg_free() _res\n", _res);
 	pkg_free(_res);
 	_res = NULL;
@@ -513,7 +513,7 @@ int sc_free_result(db_res_t* _res)
 /**
  * Release memory used by rows
  */
-int sc_free_rows(db_res_t* _res)
+int bdb_free_rows(db_res_t* _res)
 {
 	int row;
 
@@ -522,7 +522,7 @@ int sc_free_rows(db_res_t* _res)
 	for(row = 0; row < RES_ROW_N(_res); row++) 
 	{
 		LM_DBG("Row[%d]=%p\n", row, &(RES_ROWS(_res)[row]));
-		sc_free_row(&(RES_ROWS(_res)[row]));
+		bdb_free_row(&(RES_ROWS(_res)[row]));
 	}
 
 	RES_ROW_N(_res) = 0;
@@ -537,7 +537,7 @@ int sc_free_rows(db_res_t* _res)
         return 0;
 }
 
-int sc_free_row(db_row_t* _row)
+int bdb_free_row(db_row_t* _row)
 {
 	int	col;
 	db_val_t* _val;
@@ -584,17 +584,17 @@ int sc_free_row(db_row_t* _row)
 /**
  * Release memory used by columns
  */
-int sc_free_columns(db_res_t* _res)
+int bdb_free_columns(db_res_t* _res)
 {
 	int col;
 
 	/* Free memory previously allocated to save column names */
 	for(col = 0; col < RES_COL_N(_res); col++) 
 	{
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%s'\n", _res
 			, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]);
-		LM_DBG, "%p=pkg_free() RES_NAMES[%d]\n", RES_NAMES(_res)[col], col);
+		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n", RES_NAMES(_res)[col], col);
 #endif
 		
 		pkg_free((char *)RES_NAMES(_res)[col]);
@@ -620,7 +620,7 @@ int sc_free_columns(db_res_t* _res)
 	return 0;
 }
 
-int sc_is_neq_type(db_type_t _t0, db_type_t _t1)
+int bdb_is_neq_type(db_type_t _t0, db_type_t _t1)
 {
 	if(_t0 == _t1)	return 0;
 	
@@ -655,7 +655,7 @@ int sc_is_neq_type(db_type_t _t0, db_type_t _t1)
 
 /*
 */
-int sc_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r, int* _lkey )
+int bdb_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r, int* _lkey )
 {
 	int i, res;
 	db_row_t* row = NULL;
@@ -667,7 +667,7 @@ int sc_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r,
 	
 	for(i=0; i<_n; i++)
 	{
-		res = sc_cmp_val(&(ROW_VALUES(row)[_lkey[i]]), &_v[i]);
+		res = bdb_cmp_val(&(ROW_VALUES(row)[_lkey[i]]), &_v[i]);
 
 		if(!_op || !strcmp(_op[i], OP_EQ))
 		{
@@ -703,7 +703,7 @@ int sc_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r,
 
 /*
 */
-int sc_cmp_val(db_val_t* _vp, db_val_t* _v)
+int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 {
 	int _l, _n;
 	

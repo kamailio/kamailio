@@ -46,7 +46,7 @@ static db_parms_p _db_parms = NULL;
 /**
  *
  */
-int sclib_init(db_parms_p _p) 
+int bdblib_init(db_parms_p _p) 
 {
 	if (!_cachedb)
 	{
@@ -89,7 +89,7 @@ int sclib_init(db_parms_p _p)
 /**
  * close all DBs and then the DBENV; free all memory
  */
-int sclib_destroy(void)
+int bdblib_destroy(void)
 {
 	if (_cachedb)	db_free(*_cachedb);
 	if(_db_parms)	pkg_free(_db_parms);
@@ -101,7 +101,7 @@ int sclib_destroy(void)
   assumes the lib data-structures are already initialzed;
   used to sync and reload the db file.
 */
-int sclib_close(char* _n)
+int bdblib_close(char* _n)
 {
 	str s;
 	int rc;
@@ -121,7 +121,9 @@ int sclib_close(char* _n)
 	{	
 		_env = _db_p->dbenv;
 		_tbc = _db_p->tables;
-		
+LM_DBG("ENV %.*s \n"
+	, _db_p->name.len
+	, _db_p->name.s);
 		if(s.len == _db_p->name.len && 
 		!strncasecmp(s.s, _db_p->name.s, _db_p->name.len))
 		{
@@ -153,10 +155,14 @@ int sclib_close(char* _n)
 		{
 			if(_tbc->dtp)
 			{
-				LM_DBG("DB %.*s \n", s.len, s.s);
+	LM_DBG("checking DB %.*s \n"
+		, _tbc->dtp->name.len
+		, _tbc->dtp->name.s);
+				
 				if(_tbc->dtp->name.len == s.len && 
 				!strncasecmp(_tbc->dtp->name.s, s.s, s.len ))
 				{
+					LM_DBG("DB %.*s \n", s.len, s.s);
 					lock_get(&_tbc->dtp->sem);
 					_db = _tbc->dtp->db;
 					if(_db)
@@ -171,15 +177,15 @@ int sclib_close(char* _n)
 			_tbc = _tbc->next;
 		}
 	}
-	
-	return 0;
+	LM_DBG("DB not found %.*s \n", s.len, s.s);
+	return 1; /*table not found*/
 }
 
 /** opens the underlying Berkeley DB.
   assumes the lib data-structures are already initialzed;
   used to sync and reload the db file.
 */
-int sclib_reopen(char* _n)
+int bdblib_reopen(char* _n)
 {
 	str s;
 	int rc, flags;
@@ -205,9 +211,9 @@ int sclib_reopen(char* _n)
 		!strncasecmp(s.s, _db_p->name.s,_db_p->name.len))
 		{
 			//open the whole dbenv
-			LM_DBG("-- sclib_reopen ENV %.*s \n", s.len, s.s);
+			LM_DBG("-- bdblib_reopen ENV %.*s \n", s.len, s.s);
 			if(!_db_p->dbenv)
-			{	rc = sclib_create_dbenv(&_env, _n);
+			{	rc = bdblib_create_dbenv(&_env, _n);
 				_db_p->dbenv = _env;
 			}
 			
@@ -225,14 +231,14 @@ int sclib_reopen(char* _n)
 						if ((rc = db_create(&_db, _env, 0)) != 0)
 						{	_env->err(_env, rc, "db_create");
 							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
-							sclib_recover(_tbc->dtp, rc);
+							bdblib_recover(_tbc->dtp, rc);
 						}
 					}
 					
 					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
 					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
 						LM_CRIT("error in db_open: %s.\n",db_strerror(rc));
-						sclib_recover(_tbc->dtp, rc);
+						bdblib_recover(_tbc->dtp, rc);
 					}
 					
 					_tbc->dtp->db = _db;
@@ -249,24 +255,28 @@ int sclib_reopen(char* _n)
 		{
 			if(_tbc->dtp)
 			{
-				LM_DBG("DB %.*s \n", s.len, s.s);
+	LM_DBG("checking DB %.*s \n"
+		, _tbc->dtp->name.len
+		, _tbc->dtp->name.s);
+				
 				if(_tbc->dtp->name.len == s.len && 
 				!strncasecmp(_tbc->dtp->name.s, s.s, s.len ))
 				{
+					LM_DBG("DB %.*s \n", s.len, s.s);
 					lock_get(&_tbc->dtp->sem);
 					if(!_tbc->dtp->db) 
 					{
 						if ((rc = db_create(&_db, _env, 0)) != 0)
 						{	_env->err(_env, rc, "db_create");
 							LM_CRIT("error in db_create, db error: %s.\n",db_strerror(rc));
-							sclib_recover(_tbc->dtp, rc);
+							bdblib_recover(_tbc->dtp, rc);
 						}
 					}
 					
 					if ((rc = _db->open(_db, NULL, _n, NULL, DB_HASH, DB_CREATE, 0664)) != 0)
 					{	_db->dbenv->err(_env, rc, "DB->open: %s", _n);
 						LM_CRIT("bdb open: %s.\n",db_strerror(rc));
-						sclib_recover(_tbc->dtp, rc);
+						bdblib_recover(_tbc->dtp, rc);
 					}
 					_tbc->dtp->db = _db;
 					lock_release(&_tbc->dtp->sem);
@@ -275,16 +285,17 @@ int sclib_reopen(char* _n)
 			}
 			_tbc = _tbc->next;
 		}
+		
 	}
-
-	return 0;
+	LM_DBG("DB not found %.*s \n", s.len, s.s);
+	return 1; /*table not found*/
 }
 
 
 /**
  *
  */
-int sclib_create_dbenv(DB_ENV **_dbenv, char* _home)
+int bdblib_create_dbenv(DB_ENV **_dbenv, char* _home)
 {
 	DB_ENV *env;
 	char *progname;
@@ -344,7 +355,7 @@ err: (void)env->close(env, 0);
 
 /**
  */
-database_p sclib_get_db(str *_s)
+database_p bdblib_get_db(str *_s)
 {
 	int rc;
 	database_p _db_p=NULL;
@@ -366,7 +377,7 @@ database_p sclib_get_db(str *_s)
 		return _db_p;
 	}
 
-	if(!sc_is_database(_s))
+	if(!bdb_is_database(_s))
 	{	
 		LM_ERR("database [%.*s] does not exists!\n" ,_s->len , _s->s);
 		return NULL;
@@ -387,9 +398,9 @@ database_p sclib_get_db(str *_s)
 	strncpy(name, _s->s, _s->len);
 	name[_s->len] = 0;
 
-	if ((rc = sclib_create_dbenv(&(_db_p->dbenv), name)) != 0)
+	if ((rc = bdblib_create_dbenv(&(_db_p->dbenv), name)) != 0)
 	{
-		LM_ERR("sclib_create_dbenv failed");
+		LM_ERR("bdblib_create_dbenv failed");
 		pkg_free(_db_p->name.s);
 		pkg_free(_db_p);
 		return NULL;
@@ -406,7 +417,7 @@ database_p sclib_get_db(str *_s)
  * look thru a linked list for the table. if dne, create a new one
  * and add to the list
 */
-tbl_cache_p sclib_get_table(database_p _db, str *_s)
+tbl_cache_p bdblib_get_table(database_p _db, str *_s)
 {
 	tbl_cache_p _tbc = NULL;
 	table_p _tp = NULL;
@@ -444,9 +455,9 @@ tbl_cache_p sclib_get_table(database_p _db, str *_s)
 		return NULL;
 	}
 
-	_tp = sclib_create_table(_db, _s);
+	_tp = bdblib_create_table(_db, _s);
 
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 	LM_DBG("table: %.*s\n", _s->len, _s->s);
 #endif
 
@@ -471,7 +482,7 @@ tbl_cache_p sclib_get_table(database_p _db, str *_s)
 }
 
 
-void sclib_log(int op, table_p _tp, char* _msg, int len)
+void bdblib_log(int op, table_p _tp, char* _msg, int len)
 {
 	if(!_tp || !len) 		return;
 	if(! _db_parms->log_enable) 	return;
@@ -487,7 +498,7 @@ void sclib_log(int op, table_p _tp, char* _msg, int len)
 		{
 			if((_tp->t) && (now - _tp->t) > _db_parms->journal_roll_interval)
 			{	/*try to roll logfile*/
-				if(sclib_create_journal(_tp))
+				if(bdblib_create_journal(_tp))
 				{
 					LM_ERR("Journaling has FAILED !\n");
 					return;
@@ -533,7 +544,7 @@ void sclib_log(int op, table_p _tp, char* _msg, int len)
 /**
  *
  */
-table_p sclib_create_table(database_p _db, str *_s)
+table_p bdblib_create_table(database_p _db, str *_s)
 {
 
 	int rc,i,flags;
@@ -565,7 +576,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 	memset(tblname, 0, MAX_TABLENAME_SIZE);
 	strncpy(tblname, _s->s, _s->len);
 
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 	LM_DBG("CREATE TABLE = %s\n", tblname);
 #endif
 
@@ -628,7 +639,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 	if(tp->ro)
 	{	
 		/*schema defines this table RO readonly*/
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("TABLE %.*s is changing to READONLY mode\n"
 			, tp->name.len, tp->name.s);
 #endif
@@ -666,7 +677,7 @@ table_p sclib_create_table(database_p _db, str *_s)
 		LM_INFO("No METADATA_LOGFLAGS in table: %s.\n", tblname);
 	
 	if ((tp->logflags & JLOG_FILE) == JLOG_FILE)
-		sclib_create_journal(tp);
+		bdblib_create_journal(tp);
 	
 	return tp;
 	
@@ -679,7 +690,7 @@ error:
 	return NULL;
 }
 
-int sclib_create_journal(table_p _tp)
+int bdblib_create_journal(table_p _tp)
 {
 	char *s;
 	char fn[1024];
@@ -932,7 +943,7 @@ int load_metadata_logflags(table_p _tp)
   resulting value: _k = "KEY1 | KEY2"
   ko = key only
 */
-int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko)
+int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko)
 {
 	char *p; 
 	char sk[MAX_ROW_SIZE]; // subkey(sk) val
@@ -955,7 +966,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 	
 	if(! _lres)
 	{	
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("schema has NOT specified any keys! \n");
 #endif
 
@@ -964,7 +975,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 		*/
 		for(i=0;i<_n;i++)
 		{	len = total - sum;
-			if ( sc_val2str(&_v[i], sk, &len) != 0 ) 
+			if ( bdb_val2str(&_v[i], sk, &len) != 0 ) 
 			{	LM_ERR("error building composite key \n");
 				return -2;
 			}
@@ -1030,7 +1041,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 				 now we know its a match, and we dont need
 				 index k for anything else
 				*/
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 				LM_DBG("KEY PROVIDED[%i]: %.*s.%.*s \n", i 
 					, _tp->name.len , ZSW(_tp->name.s) 
 					, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
@@ -1038,7 +1049,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 #endif
 
 				len = total - sum;
-				if ( sc_val2str(&_v[j], sk, &len) != 0)
+				if ( bdb_val2str(&_v[j], sk, &len) != 0)
 				{	LM_ERR("Destination buffer too short for subval %s\n",sk);
 					return -4;
 				}
@@ -1078,7 +1089,7 @@ int sclib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v,
 		 NO KEY provided; append a 'NULL' value since i
 		 is considered a key according to our schema.
 		*/
-#ifdef SC_EXTRA_DEBUG
+#ifdef BDB_EXTRA_DEBUG
 		LM_DBG("Missing KEY[%i]: %.*s.%.*s \n", i
 			, _tp->name.len , ZSW(_tp->name.s) 
 			, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
@@ -1192,7 +1203,7 @@ int tbl_free(table_p _tp)
 	return 0;
 }
 
-int sclib_recover(table_p _tp, int _rc)
+int bdblib_recover(table_p _tp, int _rc)
 {
 	switch(_rc)
 	{
@@ -1201,7 +1212,7 @@ int sclib_recover(table_p _tp, int _rc)
 		
 		case DB_RUNRECOVERY:
 		LM_ERR("DB_RUNRECOVERY detected !! \n");
-		sclib_destroy();
+		bdblib_destroy();
 		exit(1);
 		break;
 	}
