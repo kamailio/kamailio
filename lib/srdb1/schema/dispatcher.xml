@@ -32,7 +32,7 @@
         <type>int</type>
         <description>Destination set id</description>
         <default>0</default>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="dst">

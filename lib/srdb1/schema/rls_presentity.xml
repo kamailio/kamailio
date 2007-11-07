@@ -32,7 +32,7 @@
         <type>string</type>
         <size>512</size>
         <description>Resource list subscribe dialog id</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="resource_uri">

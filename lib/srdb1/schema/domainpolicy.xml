@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&rule_len;</size>
         <description>Domain policy rule name which is equal to the URI as published in the domain policy NAPTRs.</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column>
@@ -40,7 +40,7 @@
         <type>string</type>
         <size>&rule_len;</size>
         <description> Domain policy rule type. In the case of federation names, this is "fed". For standard referrals according to draft-lendl-speermint-technical-policy-00, this is "std". For direct domain lookups, this is "dom". Default value is "type".</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="att">

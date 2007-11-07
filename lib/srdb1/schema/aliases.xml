@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&user_len;</size>
         <default/>
-	<natural/>
+        <natural/>
         <description>Alias Username / Phone Number </description>
     </column>
 
@@ -41,7 +41,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <default/>
-	<natural/>
+        <natural/>
         <description>Domain name</description>
     </column>
 

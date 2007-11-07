@@ -14,7 +14,7 @@
         <name>table_name</name>
         <type>string</type>
         <size>32</size>
-	<natural/>
+        <natural/>
     </column>
     <column id="tv">
         <name>table_version</name>

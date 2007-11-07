@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&uri_len;</size>
         <description>Presentity Uri</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="watcher_username">
@@ -55,7 +55,7 @@
         <size>&user_len;</size>
         <default>presence</default>
         <description>Event description</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column>

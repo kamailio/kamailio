@@ -40,7 +40,7 @@
         <size>&hf_len;</size>
         <default/>
         <description>call ID from SIP message</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="traced_user">

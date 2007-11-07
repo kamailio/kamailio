@@ -49,7 +49,7 @@
         <size>&user_len;</size>
         <default/>
         <description>SIP domain of target user</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="domain">
@@ -58,7 +58,7 @@
         <size>&domain_len;</size>
         <default/>
         <description>Username / phone number of target user</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column>

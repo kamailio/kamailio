@@ -33,7 +33,7 @@
         <size>&user_len;</size>
         <default/>
         <description>Username / phone number</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="domain">
@@ -42,7 +42,7 @@
         <size>&domain_len;</size>
         <default/>
         <description>Domain name</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="group">
@@ -51,7 +51,7 @@
         <size>&id_len;</size>
         <default/>
         <description>Group name</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column>

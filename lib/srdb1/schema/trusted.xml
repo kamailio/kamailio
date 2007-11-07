@@ -34,7 +34,7 @@
         <type>string</type>
         <size>&ip_add_len;</size>
         <description>Source address is equal to source address of request</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column>

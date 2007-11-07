@@ -32,7 +32,7 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Username</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="domain">
@@ -40,14 +40,14 @@
         <type>string</type>
         <size>&domain_len;</size>
         <description>Domain</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="room">
         <name>room</name>
         <type>string</type>
         <size>&realm_len;</size>
-	<natural/>
+        <natural/>
     </column>
 
     <column>

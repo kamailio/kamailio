@@ -41,7 +41,7 @@
         <size>&uri_len;</size>
         <default>0</default>
         <description>Username / phone number</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="domain">
@@ -50,7 +50,7 @@
         <size>&domain_len;</size>
         <default/>
         <description>Domain name</description>
-	<natural/>
+        <natural/>
     </column>
 
     <column id="attribute">
