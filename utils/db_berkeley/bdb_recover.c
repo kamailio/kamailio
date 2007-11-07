@@ -27,12 +27,6 @@
 
 #include "bdb_recover.h"
 
-/**
-* limitations:
-* 1. only support the core tables
-* 2. table version is not created with the data rows
-*/
-
 tbl_cache_p tables;
 char* schema_dir = NULL;
 char* db_home = NULL;
