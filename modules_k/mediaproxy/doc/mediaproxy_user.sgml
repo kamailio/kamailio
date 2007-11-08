@@ -171,6 +171,35 @@
 	</section>
 	
 	<section>
+	<title>Dependencies</title>
+		<section>
+		<title>&ser; Modules</title>
+			<para>
+				The following modules must be loaded before this module:
+				<itemizedlist>
+					<listitem><para>
+						<emphasis>usrloc</emphasis> module - this is required if pinging of
+						contacts behind NAT is enabled. In this case the nat_bflag must also
+						be defined on the ursloc module.
+					</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+		<section>
+		<title>External Libraries or Applications</title>
+			<para>
+				The following libraries or applications must be installed before
+				running &ser; with this module loaded:
+				<itemizedlist>
+					<listitem><para>
+						<emphasis>None</emphasis>.
+					</para></listitem>
+				</itemizedlist>
+			</para>
+		</section>
+	</section>
+	
+	<section>
 	<title>Exported parameters</title>
 		<section>
 		<title><varname>mediaproxy_socket</varname> (string)</title>

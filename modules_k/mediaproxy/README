@@ -16,24 +16,29 @@ Dan Pascu
         1.2. Principle of operation
         1.3. Types of SIP clients
         1.4. Features
-        1.5. Exported parameters
+        1.5. Dependencies
 
-              1.5.1. mediaproxy_socket (string)
-              1.5.2. sip_asymmetrics (string)
-              1.5.3. rtp_asymmetrics (string)
-              1.5.4. natping_interval (integer)
-              1.5.5. signaling_ip_avp (string)
-              1.5.6. domain_avp (string)
+              1.5.1. OpenSER Modules
+              1.5.2. External Libraries or Applications
 
-        1.6. Exported Functions
+        1.6. Exported parameters
 
-              1.6.1. client_nat_test(type)
-              1.6.2. fix_contact()
-              1.6.3. use_media_proxy()
-              1.6.4. end_media_session()
+              1.6.1. mediaproxy_socket (string)
+              1.6.2. sip_asymmetrics (string)
+              1.6.3. rtp_asymmetrics (string)
+              1.6.4. natping_interval (integer)
+              1.6.5. signaling_ip_avp (string)
+              1.6.6. domain_avp (string)
 
-        1.7. Comparison with the nathelper module
-        1.8. How to use sip_ping from the nathelper module
+        1.7. Exported Functions
+
+              1.7.1. client_nat_test(type)
+              1.7.2. fix_contact()
+              1.7.3. use_media_proxy()
+              1.7.4. end_media_session()
+
+        1.8. Comparison with the nathelper module
+        1.9. How to use sip_ping from the nathelper module
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -198,9 +203,28 @@ Chapter 1. User's Guide
        the NAT box.
      __________________________________________________________
 
-1.5. Exported parameters
+1.5. Dependencies
 
-1.5.1. mediaproxy_socket (string)
+1.5.1. OpenSER Modules
+
+   The following modules must be loaded before this module:
+
+     * usrloc module - this is required if pinging of contacts
+       behind NAT is enabled. In this case the nat_bflag must also
+       be defined on the ursloc module.
+     __________________________________________________________
+
+1.5.2. External Libraries or Applications
+
+   The following libraries or applications must be installed
+   before running OpenSER with this module loaded:
+
+     * None.
+     __________________________________________________________
+
+1.6. Exported parameters
+
+1.6.1. mediaproxy_socket (string)
 
    It is the path to the filesystem socket where the proxy server
    listens for commands from the module.
@@ -214,7 +238,7 @@ ck")
 ...
      __________________________________________________________
 
-1.5.2. sip_asymmetrics (string)
+1.6.2. sip_asymmetrics (string)
 
    It is the path to a file that lists regular expressions that
    match 'User-Agent' or 'Server' fields from clients that are
@@ -231,7 +255,7 @@ clients")
 ...
      __________________________________________________________
 
-1.5.3. rtp_asymmetrics (string)
+1.6.3. rtp_asymmetrics (string)
 
    It is the path to a file that lists regular expressions that
    match 'User-Agent' or 'Server' fields from clients that are
@@ -248,7 +272,7 @@ clients")
 ...
      __________________________________________________________
 
-1.5.4. natping_interval (integer)
+1.6.4. natping_interval (integer)
 
    It holds an integer value representing how often the module
    will send packets to all registered clients that are behind NAT
@@ -263,7 +287,7 @@ modparam("mediaproxy", "natping_interval", 20)
 ...
      __________________________________________________________
 
-1.5.5. signaling_ip_avp (string)
+1.6.5. signaling_ip_avp (string)
 
    Specification of the AVP which holds the IP address from where
    the SIP signaling originated. If this AVP is set it will be
@@ -287,7 +311,7 @@ modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
 ...
      __________________________________________________________
 
-1.5.6. domain_avp (string)
+1.6.6. domain_avp (string)
 
    Specification of the AVP which holds an optional application
    defined domain name, that specifies the domain to be used to
@@ -305,9 +329,9 @@ modparam("mediaproxy", "domain_avp", "$avp(s:mediaproxy_domain)")
 ...
      __________________________________________________________
 
-1.6. Exported Functions
+1.7. Exported Functions
 
-1.6.1. client_nat_test(type)
+1.7.1. client_nat_test(type)
 
    Tests if the client is behind NAT or not. The types of tests
    are specified by the type parameter which represents a sum of
@@ -336,7 +360,7 @@ if (client_nat_test("3")) {
 ...
      __________________________________________________________
 
-1.6.2. fix_contact()
+1.7.2. fix_contact()
 
    Will replace the IP:Port in the Contact field of the SIP
    message with the ones the SIP message was received from. For
@@ -357,7 +381,7 @@ if (client_nat_test("3")) {
 ...
      __________________________________________________________
 
-1.6.3. use_media_proxy()
+1.7.3. use_media_proxy()
 
    Will make a call to the proxy server and replace the IPs and
    ports in the SDP body with the ones returned by the proxy
@@ -393,7 +417,7 @@ if (method==INVITE) {
 ...
      __________________________________________________________
 
-1.6.4. end_media_session()
+1.7.4. end_media_session()
 
    Will call on the proxy server to end the media session for that
    call this is done at the end of the call to instruct the proxy
@@ -413,7 +437,7 @@ if (method==BYE) {
 ...
      __________________________________________________________
 
-1.7. Comparison with the nathelper module
+1.8. Comparison with the nathelper module
 
    After reading all this you may wonder what this module can
    offer you that the nathelper module (a similar nat traversal
@@ -456,7 +480,7 @@ if (method==BYE) {
    and easier to maintain.
      __________________________________________________________
 
-1.8. How to use sip_ping from the nathelper module
+1.9. How to use sip_ping from the nathelper module
 
    The nathelper module provides an option to ping with real SIP
    messages instead of just sending 4 zero bytes, which has the
