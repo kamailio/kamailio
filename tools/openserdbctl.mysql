@@ -110,8 +110,14 @@ minfo "Database $1 deleted"
 
 db_charset_test()
 {
-	CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | $AWK '{print $2}' | $SED -e 1d`
-	ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
+	if [ -n "$PW" ]; then
+		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | $AWK '{print $2}' | $SED -e 1d`
+		ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
+	else
+		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD | $AWK '{print $2}' | $SED -e 1d`
+		ALLCHARSETS=`echo "show character set" | $CMD | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
+	fi
+
 	while [ `echo "$ALLCHARSETS" | $GREP -icw $CURRCHARSET`  = "0" ]
 	do
 		mwarn "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
@@ -133,6 +139,8 @@ if [ $# -ne 1 ] ; then
 	merr "openser_create function takes one param"
 	exit 1
 fi
+
+minfo "test server charset"
 
 db_charset_test
 
