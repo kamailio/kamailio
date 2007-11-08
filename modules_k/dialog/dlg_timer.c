@@ -73,10 +73,10 @@ void destroy_dlg_timer(void)
 {
 	if (d_timer==0)
 		return;
-	
+
 	lock_destroy(d_timer->lock);
 	lock_dealloc(d_timer->lock);
-						
+
 	shm_free(d_timer);
 	d_timer = 0;
 }
