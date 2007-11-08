@@ -1172,8 +1172,6 @@ static inline int calculate_hooks(dlg_t* _d)
 {
    str* uri;
    struct sip_uri puri;
-   param_hooks_t hooks;
-   param_t* params;
 
    if (_d->route_set) {
       uri = &_d->route_set->nameaddr.uri;
@@ -1182,13 +1180,7 @@ static inline int calculate_hooks(dlg_t* _d)
          return -1;
       }
 
-      if (parse_params(&puri.params, CLASS_URI, &hooks, &params) < 0) {
-         LM_ERR( "Error while parsing parameters\n");
-         return -2;
-      }
-      free_params(params);
-
-      if (hooks.uri.lr) {
+      if (puri.lr.s) {
          if (_d->rem_target.s) _d->hooks.request_uri = &_d->rem_target;
          else _d->hooks.request_uri = &_d->rem_uri;
 	 _d->hooks.next_hop = &_d->route_set->nameaddr.uri;
