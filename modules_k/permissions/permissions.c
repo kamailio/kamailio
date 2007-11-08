@@ -704,7 +704,7 @@ static int mod_init(void)
 	}
 
 	if (init_trusted() != 0) {
-		LM_ERR("failed to initializing allow_trusted function\n");
+		LM_ERR("failed to initialize the allow_trusted function\n");
 		return -1;
 	}
 
@@ -714,7 +714,7 @@ static int mod_init(void)
 	}
 
 	if (init_addresses() != 0) {
-		LM_ERR("failed to initialize allow_address function\n");
+		LM_ERR("failed to initialize the allow_address function\n");
 		return -1;
 	}
 
