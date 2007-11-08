@@ -76,7 +76,7 @@
 		</para>
 		<para>
 		<emphasis>	
-		The default value is &defaultdb;.
+		The default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>

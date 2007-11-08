@@ -72,7 +72,7 @@ static db_func_t pdt_dbf;
 
 
 /** parameters */
-static char *db_url = "mysql://root@127.0.0.1/pdt";
+static char *db_url = DEFAULT_DB_URL;
 char *db_table = "pdt";
 char *sdomain_column = "sdomain";
 char *prefix_column  = "prefix";

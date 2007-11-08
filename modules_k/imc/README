@@ -107,7 +107,7 @@ Chapter 1. User's Guide
    The database url.
 
    The default value is
-   mysql://openser:openserrw@localhost/openser. 
+   "mysql://openser:openserrw@localhost/openser". 
 
    Example 1-1. Set db_url parameter
 ...
