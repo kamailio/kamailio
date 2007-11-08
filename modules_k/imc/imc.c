@@ -61,7 +61,7 @@ MODULE_VERSION
 
 db_con_t *imc_db = NULL;
 db_func_t imc_dbf;
-str db_url = {0, 0};
+str db_url = str_init(DEFAULT_DB_URL);
 
 char* rooms_table = "imc_rooms";
 char* members_table = "imc_members";
