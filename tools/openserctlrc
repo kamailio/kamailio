@@ -35,7 +35,7 @@
 # DBROOTUSER="root"
 
 # user name column
-#USERCOL="username"
+# USERCOL="username"
 
 
 # SQL definitions
@@ -43,16 +43,16 @@
 # in db/schema/entities.xml too.
 # FIXME
 
-#FOREVER="2020-05-28 21:32:15"
-#DEFAULT_ALIASES_EXPIRES=$FOREVER
-#DEFAULT_Q="1.0"
-#DEFAULT_CALLID="Default-Call-ID"
-#DEFAULT_CSEQ="13"
-#DEFAULT_LOCATION_EXPIRES=$FOREVER
+# FOREVER="2020-05-28 21:32:15"
+# DEFAULT_ALIASES_EXPIRES=$FOREVER
+# DEFAULT_Q="1.0"
+# DEFAULT_CALLID="Default-Call-ID"
+# DEFAULT_CSEQ="13"
+# DEFAULT_LOCATION_EXPIRES=$FOREVER
 
 
 # Program to calculate a message-digest fingerprint 
-#MD5="md5sum"
+# MD5="md5sum"
 
 # awk tool
 # AWK="awk"
@@ -70,27 +70,27 @@
 #
 
 # If to install tables for the modules in EXTRA_MODULES
-#INSTALL_EXTRA_TABLES=ask
+# INSTALL_EXTRA_TABLES=ask
 
 # If to install presence related tables
-#INSTALL_PRESENCE_TABLES=ask
+# INSTALL_PRESENCE_TABLES=ask
 
 # If to install SERWEB related tables
-#INSTALL_SERWEB_TABLES=ask
+# INSTALL_SERWEB_TABLES=ask
 
 # define what modules should be installed
 
 # openser standard modules
-#STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc
+# STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc
 #		   msilo alias_db uri_db speeddial avpops auth_db pdt"
 
 # openser extra modules
-#EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute"
+# EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute"
 
 
 ## type of aliases used: DB - database aliases; UL - usrloc aliases
 ## - default: none
-#ALIASES_TYPE="DB"
+# ALIASES_TYPE="DB"
 
 ## control engine: FIFO or UNIXSOCK
 ## - default FIFO
