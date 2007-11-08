@@ -263,8 +263,8 @@ modparam("mediaproxy", "natping_interval", 20)
 		<section>
 		<title><varname>signaling_ip_avp</varname> (string)</title>
 			<para>
-				The name of the AVP which holds the IP address from where the
-				SIP signaling originated. If this AVP is set it will be used
+				Specification of the AVP which holds the IP address from where
+				the SIP signaling originated. If this AVP is set it will be used
 				to get the signaling IP address, else the source IP address
 				from where the SIP message was received will be used.
 				This AVP is meant to be used in cases where there are more than
@@ -279,14 +279,14 @@ modparam("mediaproxy", "natping_interval", 20)
 			</para>
 			<para>
 				<emphasis>
-					Default value is <quote>s:signaling_ip</quote>.
+					Default value is <quote>$avp(s:signaling_ip)</quote>.
 				</emphasis>
 			</para>
 			<example>
 			<title>Setting <varname>signaling_ip_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")
+modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
 ...
 </programlisting>
 			</example>
@@ -294,23 +294,23 @@ modparam("mediaproxy", "signaling_ip_avp", "s:nat_ip")
 		<section>
 		<title><varname>domain_avp</varname> (string)</title>
 			<para>
-				The name of the AVP which holds an optional application defined
-				domain name, that specifies the domain to be used to select the
-				mediaproxies for the current call. If a domain name is written
-				to this AVP before calling use_media_proxy(), it will be used
-				to select the mediaproxies for the call, overwriting the normal
-				selection process based on the caller/callee domain.
+				Specification of the AVP which holds an optional application
+				defined domain name, that specifies the domain to be used to
+				select the mediaproxies for the current call. If a domain name
+				is written to this AVP before calling use_media_proxy(), it will
+				be used to select the mediaproxies for the call, overwriting the
+				normal selection process based on the caller/callee domain.
 			</para>
 			<para>
 				<emphasis>
-					Default value is <quote>s:mediaproxy_domain</quote>.
+					Default value is <quote>$avp(s:mediaproxy_domain)</quote>.
 				</emphasis>
 			</para>
 			<example>
 			<title>Setting <varname>domain_avp</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("mediaproxy", "domain_avp", "s:mediaproxy_domain")
+modparam("mediaproxy", "domain_avp", "$avp(s:mediaproxy_domain)")
 ...
 </programlisting>
 			</example>

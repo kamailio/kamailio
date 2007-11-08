@@ -28,7 +28,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../str.h"
-#include "../../usr_avp.h"
+#include "../../pvar.h"
 #include "../../error.h"
 #include "../../data_lump.h"
 #include "../../forward.h"
@@ -61,8 +61,8 @@
 
 MODULE_VERSION
 
-#define SIGNALING_IP_AVP_NAME  "s:signaling_ip"
-#define DOMAIN_AVP_NAME        "s:mediaproxy_domain"
+#define SIGNALING_IP_AVP_SPEC  "$avp(s:signaling_ip)"
+#define DOMAIN_AVP_SPEC        "$avp(s:mediaproxy_domain)"
 
 
 // Although `AF_LOCAL' is mandated by POSIX.1g, `AF_UNIX' is portable to
@@ -126,14 +126,14 @@ typedef struct {
     long timestamp;    // for checking if it was modified
 
     regex_t **clients; // the asymmetric clients regular expressions
-    int size;          // size of array above
-    int count;         // how many clients are in array above
+    int size;          // size of the array above
+    int count;         // how many clients are in the array above
 } AsymmetricClients;
 
 typedef struct AVP_Param {
-    str name;
-    int type;
-    int_str avp;
+    str spec;
+    int_str name;
+    unsigned short type;
 } AVP_Param;
 
 
@@ -156,10 +156,10 @@ static char *mediaproxySocket = "/var/run/proxydispatcher.sock";
 static int natpingInterval = 60; // 60 seconds
 
 /* The AVP where the caller signaling IP is stored (if defined) */
-static AVP_Param signaling_ip_avp = {{SIGNALING_IP_AVP_NAME, sizeof(SIGNALING_IP_AVP_NAME)-1}, 0, {0}};
+static AVP_Param signaling_ip_avp = {str_init(SIGNALING_IP_AVP_SPEC), {0}, 0};
 
 /* The AVP where the application-defined mediaproxy domain is stored */
-static AVP_Param domain_avp = {{DOMAIN_AVP_NAME, sizeof(DOMAIN_AVP_NAME)-1}, 0, {0}};
+static AVP_Param domain_avp = {str_init(DOMAIN_AVP_SPEC), {0}, 0};
 
 static usrloc_api_t userLocation;
 
@@ -210,8 +210,8 @@ static param_export_t parameters[] = {
     {"sip_asymmetrics",   STR_PARAM, &(sipAsymmetrics.file)},
     {"rtp_asymmetrics",   STR_PARAM, &(rtpAsymmetrics.file)},
     {"natping_interval",  INT_PARAM, &natpingInterval},
-    {"signaling_ip_avp",  STR_PARAM, &(signaling_ip_avp.name.s)},
-    {"domain_avp",        STR_PARAM, &(domain_avp.name.s)},
+    {"signaling_ip_avp",  STR_PARAM, &(signaling_ip_avp.spec.s)},
+    {"domain_avp",        STR_PARAM, &(domain_avp.spec.s)},
     {0, 0, 0}
 };
 
@@ -477,7 +477,7 @@ getSignalingIP(struct sip_msg* msg)
     int_str value;
 
     if (!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
-                          signaling_ip_avp.avp, &value, NULL) ||
+                          signaling_ip_avp.name, &value, NULL) ||
         value.s.s==NULL || value.s.len==0) {
 
         value.s.s = ip_addr2a(&msg->rcv.src_ip);
@@ -494,7 +494,7 @@ getMediaproxyDomain(struct sip_msg* msg)
     int_str value;
 
     if (!search_first_avp(domain_avp.type | AVP_VAL_STR,
-                          domain_avp.avp, &value, NULL) || value.s.s==NULL) {
+                          domain_avp.name, &value, NULL) || value.s.s==NULL) {
         value.s.len = 0;
     }
 
@@ -1529,26 +1529,35 @@ static int
 mod_init(void)
 {
     bind_usrloc_t ul_bind_usrloc;
+    pv_spec_t avp_spec;
 
     // initialize the signaling_ip_avp structure
-    if (signaling_ip_avp.name.s==NULL || *(signaling_ip_avp.name.s)==0) {
+    if (signaling_ip_avp.spec.s==NULL || *(signaling_ip_avp.spec.s)==0) {
         LM_WARN("missing/empty signaling_ip_avp parameter. will use default.\n");
-        signaling_ip_avp.name.s = SIGNALING_IP_AVP_NAME;
+        signaling_ip_avp.spec.s = SIGNALING_IP_AVP_SPEC;
     }
-    signaling_ip_avp.name.len = strlen(signaling_ip_avp.name.s);
-    if (parse_avp_spec(&(signaling_ip_avp.name), &(signaling_ip_avp.type), &(signaling_ip_avp.avp)) < 0) {
-        LM_CRIT("invalid signaling_ip_avp specification `%s'\n", signaling_ip_avp.name.s);
+    signaling_ip_avp.spec.len = strlen(signaling_ip_avp.spec.s);
+    if (pv_parse_spec(&(signaling_ip_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
+        LM_CRIT("invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
+        return -1;
+    }
+    if (pv_get_avp_name(0, &(avp_spec.pvp), &(signaling_ip_avp.name), &(signaling_ip_avp.type))!=0) {
+        LM_CRIT("invalid AVP specification for signaling_ip_avp: `%s'\n", signaling_ip_avp.spec.s);
         return -1;
     }
 
     // initialize the domain_avp structure
-    if (domain_avp.name.s==NULL || *(domain_avp.name.s)==0) {
+    if (domain_avp.spec.s==NULL || *(domain_avp.spec.s)==0) {
         LM_WARN("missing/empty domain_avp parameter. will use default.\n");
-        domain_avp.name.s = DOMAIN_AVP_NAME;
+        domain_avp.spec.s = DOMAIN_AVP_SPEC;
     }
-    domain_avp.name.len = strlen(domain_avp.name.s);
-    if (parse_avp_spec(&(domain_avp.name), &(domain_avp.type), &(domain_avp.avp)) < 0) {
-        LM_CRIT("invalid domain_avp specification `%s'\n", domain_avp.name.s);
+    domain_avp.spec.len = strlen(domain_avp.spec.s);
+    if (pv_parse_spec(&(domain_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
+        LM_CRIT("invalid AVP specification for domain_avp: `%s'\n", domain_avp.spec.s);
+        return -1;
+    }
+    if (pv_get_avp_name(0, &(avp_spec.pvp), &(domain_avp.name), &(domain_avp.type))!=0) {
+        LM_CRIT("invalid AVP specification for domain_avp: `%s'\n", domain_avp.spec.s);
         return -1;
     }
 
