@@ -38,12 +38,17 @@ fi
 #
 
 # If to install tables for the modules in EXTRA_MODULES
-INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
+if [ -z "$INSTALL_EXTRA_TABLES" ]; then
+	INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
+fi
 
-INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
+if [ -z "$INSTALL_PRESENCE_TABLES" ]; then
+	INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
+fi
 
-INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
-
+if [ -z "$INSTALL_SERWEB_TABLES" ]; then
+	INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
+fi
 
 # SQL definitions
 # If you change this definitions here, then you must change them
