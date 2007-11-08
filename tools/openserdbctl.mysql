@@ -48,6 +48,11 @@ if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
 fi
 
+# Uncomment this to set the database root password if you want to run this script
+# without any user prompt. This is unsafe, but useful e.g. for automatic testing.
+#PW=""
+
+
 CMD="mysql -h $DBHOST -u$DBROOTUSER "
 DUMP_CMD="mysqldump -h $DBHOST -u$DBROOTUSER -c -t "
 #################################################################
