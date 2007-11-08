@@ -177,7 +177,7 @@ modparam("auth", "realm_prefix", "sip.")
 1.3.6. rpid_avp (string)
 
    Full AVP specification for the AVP which stores the RPID
-   value. It used to transport the RPID value from authntication
+   value. It used to transport the RPID value from authentication
    backend modules (auth_db or auth_radius) or from script to the
    auth function append_rpid_hf and is_rpid_user_e164.
 
