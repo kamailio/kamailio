@@ -418,7 +418,6 @@ modparam("lcr","priority_column","priority")
 		<programlisting format="linespecific">
 ...
 modparam("lcr", "contact_avp", "$avp(i:711)")
-
 ...
 </programlisting>
 		</example>

@@ -356,7 +356,6 @@ modparam("lcr","priority_column","priority")
    Example 1-15. Setting contact_avp module parameter
 ...
 modparam("lcr", "contact_avp", "$avp(i:711)")
-
 ...
      _________________________________________________________
 
