@@ -61,7 +61,7 @@ CREATE TABLE xcap (
     source INTEGER NOT NULL,
     doc_uri VARCHAR(128) NOT NULL,
     port INTEGER NOT NULL,
-    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type)
+    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
 );
 
 CREATE INDEX source_idx ON xcap (source);
