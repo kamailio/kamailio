@@ -7,9 +7,13 @@ auto_gen=
 NAME=postgres.so
 
 
-# uncomment the following line if you what to skip
+# set CROSS_COMPILE to true if you want to skip
 # the autodetection
+# CROSS_COMPILE=true
+
+ifeq ($(CROSS_COMPILE),)
 PGCFG=$(shell which pg_config)
+endif
 
 ifneq ($(PGCFG),)
 
