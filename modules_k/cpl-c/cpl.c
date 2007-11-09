@@ -590,7 +590,9 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	/* for OUTGOING we need also the destination user for init. with him
 	 * the location set */
 	if ( ((unsigned long)str1)&CPL_RUN_OUTGOING ) {
-		/* build user initial location */
+		/* build user initial location -> get the destination user name */
+		if (get_dest_user( msg, &username, &domain)==-1)
+			goto error2;
 		if (build_user_AOR( &username, &domain, &loc, 1)!=0 )
 			goto error2;
 		if (add_location( &(cpl_intr->loc_set), &loc, 0, 10, 0/*no dup*/)==-1)
