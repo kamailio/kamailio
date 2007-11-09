@@ -13,38 +13,38 @@
 #===================================================================
 
 # path to the dbtext database
-if [ -z "$DBTEXT_PATH" ] ; then
-	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+if [ -z "$DB_PATH" ] ; then
+	DB_PATH="/usr/local/etc/openser/dbtext"
 fi
 
 #Set variables to dbtext's files ...
 
 if [ -z "$UL_FILE" ] ; then
-        UL_FILE=$DBTEXT_PATH/$UL_TABLE
+        UL_FILE=$DB_PATH/$UL_TABLE
 fi
 if [ -z "$DOMAIN_FILE" ] ; then
-        DOMAIN_FILE=$DBTEXT_PATH/$DOMAIN_TABLE
+        DOMAIN_FILE=$DB_PATH/$DOMAIN_TABLE
 fi
 if [ -z "$ALS_FILE" ] ; then
-        ALS_FILE=$DBTEXT_PATH/$ALS_TABLE
+        ALS_FILE=$DB_PATH/$ALS_TABLE
 fi
 if [ -z "$SUB_FILE" ] ; then
-        SUB_FILE=$DBTEXT_PATH/$SUB_TABLE
+        SUB_FILE=$DB_PATH/$SUB_TABLE
 fi
 if [ -z "$URI_FILE" ] ; then
-        URI_FILE=$DBTEXT_PATH/$URI_TABLE
+        URI_FILE=$DB_PATH/$URI_TABLE
 fi
 if [ -z "$ACL_FILE" ] ; then
-        ACL_FILE=$DBTEXT_PATH/$ACL_TABLE
+        ACL_FILE=$DB_PATH/$ACL_TABLE
 fi
 if [ -z "$LCR_FILE" ] ; then
-        LCR_FILE=$DBTEXT_PATH/$LCR_TABLE
+        LCR_FILE=$DB_PATH/$LCR_TABLE
 fi
 if [ -z "$GW_FILE" ] ; then
-        GW_FILE=$DBTEXT_PATH/$GW_TABLE
+        GW_FILE=$DB_PATH/$GW_TABLE
 fi
 if [ -z "$GW_GRP_FILE" ] ; then
-        GW_GRP_FILE=$DBTEXT_PATH/$GW_GRP_TABLE
+        GW_GRP_FILE=$DB_PATH/$GW_GRP_TABLE
 fi
 
 #===================================================================
