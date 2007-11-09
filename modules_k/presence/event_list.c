@@ -39,6 +39,8 @@
 
 #define MAX_EVNAME_SIZE 20
 
+int search_event_params(event_t* ev, event_t* searched_ev);
+
 event_t* shm_copy_event(event_t* e)
 {
 	event_t* ev= NULL;
@@ -283,47 +285,67 @@ pres_ev_t* search_event(event_t* event)
 {
 	pres_ev_t* pres_ev;
 	pres_ev= EvList->events;
-	param_t* ps, *p;
-	int found;
+
+	LM_DBG("start event= [%.*s]\n", event->text.len, event->text.s);
 
 	while(pres_ev)
 	{
 		if(pres_ev->evp->parsed== event->parsed)
 		{
-			if(event->params== NULL)
+			if(event->params== NULL && pres_ev->evp->params== NULL)
+			{
 				return pres_ev;
+			}
 	
 			/* search all parameters in event in ev */
-			ps= event->params;
-			while(ps)
-			{
-				p= pres_ev->evp->params;
-				found= 0;
-				while(p)
-				{
-					if(p->name.len== ps->name.len && 
-					strncmp(p->name.s,ps->name.s, ps->name.len)== 0)
-						if((p->body.s== 0 && ps->body.s== 0) ||
-						(p->body.len== ps->body.len && 
-						 strncmp(p->body.s,ps->body.s,ps->body.len)== 0))
-						{
-							found= 1;
-							break;
-						}
-					p= p->next;
-				}
-				if(found== 0)
-					return NULL;
-				ps= ps->next;
-			}
+			if(search_event_params(event, pres_ev->evp)< 0)
+				goto cont;
+			
+			/* search all parameters in ev in event */
+			if(search_event_params(pres_ev->evp, event)< 0)
+				goto cont;
+
 			return pres_ev;
 		}
-		pres_ev= pres_ev->next;
+cont:		pres_ev= pres_ev->next;
 	}
 	return NULL;
 
 }
 
+int search_event_params(event_t* ev, event_t* searched_ev)
+{
+	param_t* ps, *p;
+	int found;
+
+	ps= ev->params;
+
+	while(ps)
+	{
+		p= searched_ev->params;
+		found= 0;
+	
+		while(p)
+		{
+			if(p->name.len== ps->name.len && 
+				strncmp(p->name.s,ps->name.s, ps->name.len)== 0)
+				if((p->body.s== 0 && ps->body.s== 0) ||
+					(p->body.len== ps->body.len && 
+					strncmp(p->body.s,ps->body.s,ps->body.len)== 0))
+				{
+					found= 1;
+					break;
+				}
+				p= p->next;
+		}
+		if(found== 0)
+			return -1;
+		ps= ps->next;
+	}
+
+	return 1;
+
+}
 int get_event_list(str** ev_list)
 {	
 	pres_ev_t* ev= EvList->events;
