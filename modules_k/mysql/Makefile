@@ -6,9 +6,13 @@ include ../../Makefile.defs
 auto_gen=
 NAME=mysql.so
 
-# uncomment the following line if you what to skip
+# set CROSS_COMPILE to true if you want to skip
 # the autodetection
+# CROSS_COMPILE=true
+
+ifeq ($(CROSS_COMPILE),)
 MYSQLCFG=$(shell which mysql_config)
+endif
 
 ifneq ($(MYSQLCFG),)
 
