@@ -68,6 +68,8 @@ Script for maintaining OpenSER Berkeley DB tables
        $COMMAND swap      <db>  (installs db.new by db -> db.old; db.new -> db)
        $COMMAND append    <db> <datafile> (appends data to an existing db;output DB_PATH/db.new)
        $COMMAND newappend <db> <datafile> (appends data to a new instance of db; output DB_PATH/db.new)
+       $COMMAND export  <dump_dir> (exports table data to plain-txt files in dump_dir)
+       $COMMAND import  <dump_dir> (imports plain-txt table data and creates new db tables in db_path)
 EOF
 } #usage
 
@@ -106,12 +108,249 @@ openser_berkeley()  # parms: <op> <arg1> <arg2>
 			exit $?
 			;;
 
+		export)
+			shift
+			openser_export  $1 $DB_PATH
+			exit $?
+			;;
+
+		migrate)
+			shift
+			openser_migrate $1 $DB_PATH
+			exit $?
+			;;
+
+		import)
+			shift
+			openser_import  $1 $DB_PATH
+			exit $?
+			;;
+
 		*)
 			berkeley_usage
 			exit 1;
 			;;
 esac
 }
+
+
+
+##
+# EXPORT existing data to plain-txt files in DUMP_DIR
+# eg.  DB_PATH/version ---> DUMP_DIR/version.txt
+#
+# Export is used as part of a DB migration process to another 
+# major version of berkeley db.
+openser_export()  # parms: <DUMP_DIR> [DB_PATH]
+{
+	if [ $# -lt 2  ]; then
+		echo  "openser_dump parms: <DUMP_DIR> [DB_PATH]"
+		exit 1
+	fi
+	
+	# Assert: the DB_PATH directory should already exist
+	if [ ! -d $2 ] ; then
+		merr "BerkeleyDB directory does not exist at: [$2]"
+		exit 1
+	fi
+	
+	# Assert: DB_PATH directory should already contain table 'version'
+	if [ ! -f $2/version ] ; then
+		merr "BerkeleyDB directory does not have VERSION table at: [$2]"
+		exit 1
+	fi
+	
+	# Create dir at <DUMP_DIR> to store the exported data
+	if [ ! -d $1 ] ; then
+		minfo "creating DUMP_DIR at: [$1]"
+		mkdir -p $1
+	else
+		mdbg "Cleaning out DUMP_DIR to get ready for new data"
+		rm -rf $1/*
+	fi
+	
+	# DUMP_CMD will result in something like this:
+	#
+	#	VERSION=3
+	#	format=print
+	#	type=hash
+	#	h_nelem=2
+	#	db_pagesize=4096
+	#	HEADER=END
+	#	 METADATA_COLUMNS
+	#	 callid(str) method(str) from_tag(str) to_tag(str) sip_code(str) sip_reason(str) time(datetime)
+	#	 METADATA_KEY
+	#	 0
+	#	DATA=END
+	#
+	# However, we are only interested in the indented stuff between 
+	#  'HEADER=END' and 'DATA=END',
+	#  as everything else is DB instance specific. That is, we are interested in this part:
+	#
+	# METADATA_COLUMNS
+	# callid(str) method(str) from_tag(str) to_tag(str) sip_code(str) sip_reason(str) time(datetime)
+	# METADATA_KEY
+	# 0
+	#
+	# The following PERL filter will do this processing.
+	#
+	# perl -pe 's/^\w.*// ; s/^\s(.*)/$1/'
+
+	# Dump the STANDARD tables to plain-text files in DUMP_DIR
+	for TABLE in $STANDARD_TABLES; do
+	    if [ -f $2/$TABLE ] ; then
+		    mdbg "Exporting standard table: $TABLE"
+		    $DUMP_CMD -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
+		    
+		    # Check return code to make sure the export worked ok
+		    if [ $? -ne 0 ] ; then
+			merr "Export of standard table failed [$TABLE]"
+			# there was a problem, but it is not something
+			# we can handle here; We can deal with this at import
+			# time.
+		    fi
+	    else
+	    	    mwarn "Table not found: [$TABLE]"
+	    fi
+	done
+	
+	# Dump the PRESENCE tables to plain-text files in DUMP_DIR
+	for TABLE in $PRESENCE_TABLES; do
+	    if [ -f $2/$TABLE ] ; then
+		    mdbg "Exporting presence table: $TABLE"
+		    $DUMP_CMD -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
+		    if [ $? -ne 0 ] ; then
+			merr "Export of presence table failed [$TABLE]"
+		    fi
+	    else
+	    	    mwarn "Table not found: [$TABLE]"
+	    fi
+	done
+	
+	# Dump the EXTRA tables to plain-text files in DUMP_DIR
+	for TABLE in $EXTRA_TABLES; do
+	    if [ -f $2/$TABLE ] ; then
+		    mdbg "Exporting extra table: $TABLE"
+		    $DUMP_CMD -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
+		    if [ $? -ne 0 ] ; then
+			merr "Export of extra table failed [$TABLE]"
+		    fi
+	    else
+	    	    mwarn "Table not found: [$TABLE]"
+	    fi
+	done
+	
+	mdbg "All tables are now exported to DUMP_DIR: [$1]"
+	return 0
+
+}
+
+
+##
+# MIGRATE (schema)
+# Examine each plain-txt file in DUMP_DIR
+#  (Assumes that openser_export was already invoked)
+#
+# Migrate converts data from schema-old to schema-new in place.
+#
+# After this step is complete the IMPORT should be executed.
+openser_migrate()  # parms: <DUMP_DIR> [DB_PATH]
+{
+	merr "db_berkeley migrate not implemented"
+	exit 1
+}
+
+
+##
+# IMPORT existing plain-txt files from DUMP_DIR to DB_PATH
+# eg.  DUMP_DIR/version.txt  --> DB_PATH/version
+#
+# import is used as part of DB migrate to another major version of berkeley db.
+# this will over-write anything in DB_PATH
+openser_import()  # parms: <DUMP_DIR> [DB_PATH]
+{
+	if [ $# -lt 2  ]; then
+		echo  "openser_dump parms: <DUMP_DIR> [DB_PATH]"
+		exit 1
+	fi
+	
+	# Assert: DUMP_DIR (source dir) already exists
+	if [ ! -d $1 ] ; then
+		merr "Berkeley DUMP_DIR directory does not exist: [$1]"
+		exit 1;
+	fi
+	
+	# Assert: DUMP_DIR directory should already contain table 'version.txt'
+	if [ ! -f $1/version.txt ] ; then
+		merr "DUMP_DIR directory does not have VERSION.txt data at: [$1]"
+		exit 1
+	fi
+	
+	# Assert: destination dir exists [DB_PATH]
+	if [ ! -d $2 ] ; then
+		mdbg "Berkeley DB_PATH directory is being created: [$2]"
+		mkdir -p $2
+	else
+		# Wipe out the destination dir to make room for new data
+		mwarn "Berkeley DB_PATH directory is being purged at: [$2]"
+		rm -rf $2/*
+	fi
+	
+	# Creates STANDARD tables from plain-text files in DUMP_DIR
+	for TABLE in $STANDARD_TABLES; do
+	    if [ -f $1/$TABLE.txt ] ; then
+		    mdbg "Importing standard table: $TABLE"
+		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
+		    
+		    # Check return code to make sure the export worked ok
+		    if [ $? -ne 0 ] ; then
+			merr "Import of standard table failed [$TABLE.txt]"
+			merr "Create this missing table with bdb_recover."
+		    fi
+	    else
+	    	    merr "Import data not found for table: [$TABLE.txt]" 
+		    merr "Create this missing table with bdb_recover."
+	    fi
+	done
+	
+
+	# Creates PRESENCE tables from plain-text files in DUMP_DIR
+	for TABLE in $PRESENCE_TABLES; do
+	    if [ -f $1/$TABLE.txt ] ; then
+		    mdbg "Importing presence table: $TABLE"
+		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
+		    
+		    # Check return code to make sure the export worked ok
+		    if [ $? -ne 0 ] ; then
+			merr "Import of presence table failed [$TABLE.txt]"
+			merr "Create this missing table with bdb_recover."
+		    fi
+	    else
+		    mwarn "Import data not found for table: [$TABLE.txt]"
+	    fi
+	done
+
+	# Creates EXTRA tables from plain-text files in DUMP_DIR
+	for TABLE in $EXTRA_TABLES; do
+	    if [ -f $1/$TABLE.txt ] ; then
+		    mdbg "Importing extra table: $TABLE"
+		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
+		    
+		    # Check return code to make sure the export worked ok
+		    if [ $? -ne 0 ] ; then
+			merr "Import of extra table failed [$TABLE.txt]"
+			merr "Create this missing table with bdb_recover."
+		    fi
+	    else
+		    mwarn "Import data not found for table: [$TABLE.txt]"
+	    fi
+	done
+	
+	mdbg "All tables are now imported to DB_PATH: [$2]"
+	return 0
+
+}
+
 
 openser_swap()  # parms: <db> [DB_PATH]
 {
