@@ -2,6 +2,14 @@
 # creates a database with openserdbctl and deletes it again
 
 # Needs a mysql database, the root user password must be given
+# in the file 'dbrootpw'
+
+if [ ! -f dbrootpw ] ; then
+	echo "no root password, not run"
+	exit 0
+fi ;
+
+source dbrootpw
 
 tmp_name=""$RANDOM"_openserdb_tmp"
 
@@ -17,7 +25,7 @@ sed -i "s/# INSTALL_SERWEB_TABLES=ask/INSTALL_SERWEB_TABLES=yes/g" openserctlrc
 
 # set the mysql root password
 cp openserdbctl.mysql openserdbctl.mysql.bak
-sed -i "s/#PW=""/PW=""/g" openserdbctl.mysql
+sed -i "s/#PW=""/PW="$PW"/g" openserdbctl.mysql
 
 ./openserdbctl create $tmp_name > /dev/null
 ret=$?
