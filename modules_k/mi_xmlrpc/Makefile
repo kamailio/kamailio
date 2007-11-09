@@ -12,10 +12,21 @@ OLD_VERSION_THRESHOLD_UP=910           # 0.09.10
 OLD_VERSION_THRESHOLD_DOWN=901         # 0.09.10
 
 
-# get the version
-XMLRPC-C-CONFIG=$(shell which xmlrpc-c-config)
+# set CROSS_COMPILE to true if you want to skip
+# the autodetection
+# CROSS_COMPILE=true
 
+ifeq ($(CROSS_COMPILE),)
+XMLRPC-C-CONFIG=$(shell which xmlrpc-c-config)
+endif
+
+ifneq ($(XMLRPC-C-CONFIG),)
+# get the version
 XMLRPC_VER=$(shell $(XMLRPC-C-CONFIG) --version)
+else
+# try new version
+XMLRPC_VER=1.03.10
+endif
 
 XMLRPC_VERSION=$(shell echo $(XMLRPC_VER) | sed  "s/\.\([0-9]\)\./.0\1./g" | sed  "s/\.\([0-9]\)\$$/.0\1/g" | tr -d "." | sed -e "s/^0*//" )
 
@@ -37,8 +48,20 @@ $(warning			You are using an unsupported libxmlrpc-c3 \
 endif
 endif
 
+ifneq ($(XMLRPC-C-CONFIG),)
 DEFS+=$(shell $(XMLRPC-C-CONFIG) abyss-server --cflags)
 LIBS+=$(shell $(XMLRPC-C-CONFIG) abyss-server --libs)
+else
+DEFS+=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/xmlrpc-c \
+		-I$(SYSBASE)/include/xmlrpc-c
+LIBS+=-L$(SYSBASE)/lib  -L$(LOCALBASE)/lib -lxmlrpc -lxmlrpc_xmlparse \
+		-lxmlrpc_xmltok -lxmlrpc_abyss -lxmlrpc_abyss_server \
+		-lxmlrpc_client -lwwwinit -lwwwstream -lwwwxml \
+		-lwwwapp -lwwwcache -lwwwcore -lwwwdir -lwwwfile \
+		-lwwwftp -lwwwgopher -lwwwhtml -lwwwhttp \
+		-lwwwmime -lwwwmux -lwwwnews -lwwwtelnet \
+		-lwwwtrans -lwwwzip
+endif
 
 
 include ../../Makefile.modules
