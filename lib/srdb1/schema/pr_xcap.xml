@@ -89,6 +89,7 @@
         <colref linkend="username"/>
         <colref linkend="domain"/>
         <colref linkend="doc_type"/>
+        <colref linkend="doc_uri"/>
         <unique/>
     </index>
 
