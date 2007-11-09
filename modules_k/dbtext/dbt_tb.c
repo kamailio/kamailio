@@ -359,7 +359,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 		{
 			case DB_BLOB:
 			case DB_STR:
-				_drp->fields[_idx].type = DB_STR;
+				_drp->fields[_idx].type = _t;
 				// free if already exists
 				if(_drp->fields[_idx].val.str_val.s)
 					shm_free(_drp->fields[_idx].val.str_val.s);
@@ -377,12 +377,11 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			break;
 			
 			case DB_STRING:
-				_drp->fields[_idx].type = DB_STR;
 				/* free if already exists */
 				if(_drp->fields[_idx].val.str_val.s)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 
-				_drp->fields[_idx].type = DB_STR;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.str_val.len=strlen(_vp->val.string_val);
 				
 				_drp->fields[_idx].val.str_val.s = 
@@ -398,22 +397,22 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			break;
 			
 			case DB_DOUBLE:
-				_drp->fields[_idx].type = DB_DOUBLE;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.double_val = _vp->val.double_val;
 			break;
 			
 			case DB_INT:
-				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = _vp->val.int_val;
 			break;
 			
 			case DB_DATETIME:
-				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.time_val;
 			break;
 			
 			case DB_BITMAP:
-				_drp->fields[_idx].type = DB_INT;
+				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.int_val = (int)_vp->val.bitmap_val;
 			break;
 			

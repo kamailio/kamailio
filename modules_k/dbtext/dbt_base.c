@@ -355,7 +355,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		}
 		if(_v[i].type == DB_STRING)
 			_v[i].val.str_val.len = strlen(_v[i].val.string_val);
-		if(dbt_row_set_val(_drp, &(_v[i]), _v[i].type, j))
+		if(dbt_row_set_val(_drp, &(_v[i]), _tbc->colv[j]->type, j))
 		{
 			LM_DBG("cannot set v[%d] in c[%d]!\n", i, j);
 			goto clean;
@@ -543,7 +543,8 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 					goto error;
 				}
 				
-				if(dbt_row_update_val(_drp, &(_uv[i]), _uv[i].type, lres[i]))
+				if(dbt_row_update_val(_drp, &(_uv[i]),
+							_tbc->colv[lres[i]]->type, lres[i]))
 				{
 					LM_DBG("cannot set v[%d] in c[%d]!\n",
 							i, lres[i]);
