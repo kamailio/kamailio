@@ -3,101 +3,59 @@ PATH=$PATH:/usr/local/sbin
 # config vars
 
 # name of the database to be used by OpenSER
-if [ -z "$DBNAME" ]; then
-	DBNAME="openser"
-fi
+DBNAME=${DBNAME:-openser}
+
 # address of database server
-if [ -z "$DBHOST" ]; then
-	DBHOST="localhost"
-fi
+DBHOST=${DBHOST:-localhost}
+
 # user with full privileges over DBNAME database
-if [ -z "$DBRWUSER" ]; then
-	DBRWUSER="openser"
-fi
+DBRWUSER=${DBRWUSER:-openser}
+
 # password user with full privileges over DBNAME database
-if [ -z "$DBRWPW" ]; then
-	DBRWPW="openserrw"
-fi
+DBRWPW=${DBRWPW:-openserrw}
+
 # read-only user
-if [ -z "$DBROUSER" ]; then
-	DBROUSER="openserro"
-fi
+DBROUSER=${DBROUSER:-openserro}
+
 # password for read-only user
-if [ -z "$DBROPW" ]; then
-	DBROPW="openserro"
-fi
+DBROPW=${DBROPW:-openserro}
 
 # user name column
-if [ -z "$USERCOL" ]; then
-	USERCOL="username"
-fi
+USERCOL=${USERCOL:-username}
 
 # Describe what additional tables to install. Valid values for the variables
 # below are yes/no/ask. With ask it will interactively ask the user for the
 # answer, while yes/no allow for automated, unassisted installs.
-#
 
-# If to install tables for the modules in EXTRA_MODULES
-if [ -z "$INSTALL_EXTRA_TABLES" ]; then
-	INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
-fi
-
-if [ -z "$INSTALL_PRESENCE_TABLES" ]; then
-	INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
-fi
-
-if [ -z "$INSTALL_SERWEB_TABLES" ]; then
-	INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
-fi
+INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
+INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
+INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
 
 # SQL definitions
 # If you change this definitions here, then you must change them
 # in db/schema/entities.xml too.
 # FIXME
 
-if [ -z "$FOREVER" ] ; then
-	FOREVER="2020-05-28 21:32:15"
-fi
-if [ -z "$DEFAULT_ALIASES_EXPIRES" ] ; then
-	DEFAULT_ALIASES_EXPIRES=$FOREVER
-fi
-if [ -z "$DEFAULT" ] ; then
-	DEFAULT_Q="1.0"
-fi 
-if [ -z "$DEFAULT_CALLID" ] ; then
-	DEFAULT_CALLID="Default-Call-ID"
-fi
-if [ -z "$DEFAULT_CSEQ" ] ; then
-	DEFAULT_CSEQ="13"
-fi
-if [ -z "$DEFAULT_LOCATION_EXPIRES" ] ; then
-	DEFAULT_LOCATION_EXPIRES=$FOREVER
-fi
+FOREVER=${FOREVER:-2020-05-28 21:32:15}
+DEFAULT_ALIASES_EXPIRES=$FOREVER
+DEFAULT_Q=${DEFAULT_Q:-1.0}
+DEFAULT_CALLID=${DEFAULT_CALLID:-Default-Call-ID}
+DEFAULT_CSEQ=${DEFAULT_CSEQ:-13}
+DEFAULT_LOCATION_EXPIRES=$FOREVER
 
 
-# Program to calculate a message-digest fingerprint 
-if [ -z "$MD5" ]; then
-	MD5="md5sum"
-fi
-if [ -z "$AWK" ]; then
-	AWK="awk"
-fi
-if [ -z "$GREP" ]; then
-	GREP="egrep"
-fi
-if [ -z "$SED" ]; then
-	SED="sed"
-fi
+# Needed programs
+MD5=${MD5:-md5sum}
+AWK=${AWK:-awk}
+GREP=${GREP:-egrep}
+SED=${SED:-sed}
+
 
 # define what modules should be installed
-if [ -z "$STANDARD_MODULES" ] ; then
-	STANDARD_MODULES="standard acc lcr domain group permissions registrar
-			  usrloc msilo alias_db uri_db speeddial avpops auth_db pdt
-			  dialog dispatcher"
-fi
-if [ -z "$EXTRA_MODULES" ] ; then
-	EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute"
-fi
+STANDARD_MODULES=${STANDARD_MODULES:-standard acc lcr domain group permissions
+					registrar usrloc msilo alias_db uri_db speeddial avpops
+					auth_db pdt dialog dispatcher}
+EXTRA_MODULES=${EXTRA_MODULES:-imc cpl siptrace domainpolicy carrierroute}
 
 ############################################################
 
