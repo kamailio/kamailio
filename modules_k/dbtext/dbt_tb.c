@@ -137,25 +137,36 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 /**
  *
  */
-dbt_table_p dbt_table_new(char *_s, char *path, int _l)
+dbt_table_p dbt_table_new(str *_tbname, str *_dbname, char *path)
 {
 	struct stat s;
 	dbt_table_p dtp = NULL;
-	if(!_s || _l <= 0)
+	if(!_tbname || !_dbname || !path)
 		return NULL;
 	
 	dtp = (dbt_table_p)shm_malloc(sizeof(dbt_table_t));
 	if(!dtp)
 		goto done;
-	dtp->name.s = (char*)shm_malloc(_l*sizeof(char));
+	dtp->name.s = (char*)shm_malloc(_tbname->len*sizeof(char));
 	if(!dtp->name.s)
 	{
 		shm_free(dtp);
 		dtp = NULL;
 		goto done;
 	}
-	memcpy(dtp->name.s, _s, _l);
-	dtp->name.len = _l;
+	memcpy(dtp->name.s, _tbname->s, _tbname->len);
+	dtp->name.len = _tbname->len;
+	
+	dtp->dbname.s = (char*)shm_malloc(_dbname->len*sizeof(char));
+	if(!dtp->dbname.s)
+	{
+		shm_free(dtp->name.s);
+		shm_free(dtp);
+		dtp = NULL;
+		goto done;
+	}
+	memcpy(dtp->dbname.s, _dbname->s, _dbname->len);
+	dtp->dbname.len = _dbname->len;
 
 	dtp->rows = NULL;
 	dtp->cols = NULL;
@@ -234,6 +245,8 @@ int dbt_table_free(dbt_table_p _dtp)
 
 	if(_dtp->name.s)
 		shm_free(_dtp->name.s);
+	if(_dtp->dbname.s)
+		shm_free(_dtp->dbname.s);
 	
 	if(_dtp->rows && _dtp->nrrows>0)
 		dbt_table_free_rows(_dtp);
@@ -425,9 +438,11 @@ int dbt_table_check_row(dbt_table_p _dtp, dbt_row_p _drp)
 	
 	for(i=0; i<_dtp->nrcols; i++)
 	{
-		if(!_drp->fields[i].nul &&(_dtp->colv[i]->type!=_drp->fields[i].type))
+		if(!_drp->fields[i].nul 
+				&& dbt_is_neq_type(_dtp->colv[i]->type, _drp->fields[i].type))
 		{
-			LM_DBG("incompatible types - field %d\n",i);
+			LM_DBG("incompatible types - field %d [%d/%d]\n",i,
+					_dtp->colv[i]->type, _drp->fields[i].type);
 			return -1;
 		}
 		if(_dtp->colv[i]->flag & DBT_FLAG_NULL)

@@ -126,7 +126,7 @@ dbt_table_p dbt_load_file(str *tbn, str *dbn)
 	if(!fin)
 		return NULL;	
 	
-	dtp = dbt_table_new(tbn->s, path, tbn->len);
+	dtp = dbt_table_new(tbn, dbn, path);
 	if(!dtp)
 		goto done;
 	
@@ -501,7 +501,9 @@ int dbt_print_table(dbt_table_p _dtp, str *_dbn)
 	if(!_dbn || !_dbn->s || _dbn->len <= 0)
 	{
 		fout = stdout;
-		fprintf(fout, "\n Content of [%.*s]\n", _dtp->name.len, _dtp->name.s);
+		fprintf(fout, "\n Content of [%.*s::%.*s]\n",
+				_dtp->dbname.len, _dtp->dbname.s,
+				_dtp->name.len, _dtp->name.s);
 	}
 	else
 	{

@@ -68,7 +68,6 @@ int dbt_result_print(dbt_result_p _dres);
 int* dbt_get_refs(dbt_table_p, db_key_t*, int);
 int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v);
 dbt_row_p dbt_result_new_row(dbt_result_p _dres);
-int dbt_is_neq_type(db_type_t _t0, db_type_t _t1);
 
 #endif
 

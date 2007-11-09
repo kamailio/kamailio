@@ -55,19 +55,6 @@
  *   */
 extern int db_mode; /* Database usage mode: 0 = no cache, 1 = cache */
 
-/***
-typedef struct _dbt_val
-{
-	int null;
-	union
-	{
-		int int_val;
-		double double_val;
-		str str_val;
-	} val;
-} dbt_val_t, *dbt_val_p;
-***/
-
 typedef db_val_t dbt_val_t, *dbt_val_p;
 
 typedef struct _dbt_row
@@ -91,7 +78,9 @@ typedef struct _dbt_column
 
 typedef struct _dbt_table
 {
+	str dbname;
 	str name;
+	int hash;
 	int mark;
 	int flag;
 	int auto_col;
@@ -102,29 +91,21 @@ typedef struct _dbt_table
 	int nrrows;
 	dbt_row_p rows;
 	time_t mt;
+	struct _dbt_table *next;
+	struct _dbt_table *prev;
 } dbt_table_t, *dbt_table_p;
 
-typedef struct _tbl_cache
+typedef struct _dbt_tbl_cachel
 {
 	gen_lock_t sem;
 	dbt_table_p dtp;
-	struct _tbl_cache *prev;
-	struct _tbl_cache *next;	
-} tbl_cache_t, *tbl_cache_p;
-
-typedef struct _dbt_database
-{
-	str name;
-	tbl_cache_p tables;
-} dbt_db_t, *dbt_db_p;
+} dbt_tbl_cachel_t, *dbt_tbl_cachel_p;
 
 typedef struct _dbt_cache 
 {
-	gen_lock_t sem;
-	dbt_db_p dbp;
-	struct _dbt_cache *prev;
+	str name;
+	int flags;
 	struct _dbt_cache *next;
-	
 } dbt_cache_t, *dbt_cache_p;
 
 
@@ -136,24 +117,19 @@ int dbt_cache_print(int);
 dbt_cache_p dbt_cache_get_db(str*);
 int dbt_cache_check_db(str*);
 int dbt_cache_del_db(str*);
-tbl_cache_p dbt_db_get_table(dbt_cache_p, str*);
-#if 0
-int dbt_db_del_table(dbt_cache_p, str*);
-#endif
+dbt_table_p dbt_db_get_table(dbt_cache_p, str*);
+int dbt_release_table(dbt_cache_p, str*);
 
-int dbt_db_free(dbt_db_p);
 int dbt_cache_free(dbt_cache_p);
 
 dbt_column_p dbt_column_new(char*, int);
 dbt_row_p dbt_row_new(int);
-dbt_table_p dbt_table_new(char*, char*, int);
-tbl_cache_p tbl_cache_new();
+dbt_table_p dbt_table_new(str*, str*, char*);
 
 int dbt_row_free(dbt_table_p, dbt_row_p);
 int dbt_column_free(dbt_column_p);
 int dbt_table_free_rows(dbt_table_p);
 int dbt_table_free(dbt_table_p);
-int tbl_cache_free(tbl_cache_p);
 
 
 int dbt_row_set_val(dbt_row_p, dbt_val_p, int, int);
@@ -165,6 +141,7 @@ int dbt_table_update_flags(dbt_table_p, int, int, int);
 int dbt_check_mtime(str *, str *, time_t *);
 dbt_table_p dbt_load_file(str *, str *);
 int dbt_print_table(dbt_table_p, str *);
+int dbt_is_neq_type(db_type_t _t0, db_type_t _t1);
 
 #endif
 

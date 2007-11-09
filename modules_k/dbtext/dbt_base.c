@@ -170,8 +170,7 @@ int dbt_free_query(db_con_t* _h, db_res_t* _r)
 int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, 
 			db_key_t* _c, int _n, int _nc, db_key_t _o, db_res_t** _r)
 {
-	tbl_cache_p _tbc = NULL;
-	dbt_table_p _dtp = NULL;
+	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
 	dbt_result_p _dres = NULL;
 	
@@ -190,6 +189,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
+	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
@@ -197,39 +197,37 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		return -1;
 	}
 
-	lock_get(&_tbc->sem);
-	_dtp = _tbc->dtp;
 
-	if(!_dtp || _dtp->nrcols < _nc)
+	if(!_tbc || _tbc->nrcols < _nc)
 	{
 		LM_DBG("table not loaded!\n");
 		goto error;
 	}
 	if(_k)
 	{
-		lkey = dbt_get_refs(_dtp, _k, _n);
+		lkey = dbt_get_refs(_tbc, _k, _n);
 		if(!lkey)
 			goto error;
 	}
 	if(_c)
 	{
-		lres = dbt_get_refs(_dtp, _c, _nc);
+		lres = dbt_get_refs(_tbc, _c, _nc);
 		if(!lres)
 			goto error;
 	}
 
 	LM_DBG("new res with %d cols\n", _nc);
-	_dres = dbt_result_new(_dtp, lres, _nc);
+	_dres = dbt_result_new(_tbc, lres, _nc);
 	
 	if(!_dres)
 		goto error;
 	
-	_drp = _dtp->rows;
+	_drp = _tbc->rows;
 	while(_drp)
 	{
-		if(dbt_row_match(_dtp, _drp, lkey, _op, _v, _n))
+		if(dbt_row_match(_tbc, _drp, lkey, _op, _v, _n))
 		{
-			if(dbt_result_extract_fields(_dtp, _drp, lres, _dres))
+			if(dbt_result_extract_fields(_tbc, _drp, lres, _dres))
 			{
 				LM_DBG("failed to extract result fields!\n");
 				goto clean;
@@ -238,9 +236,11 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		_drp = _drp->next;
 	}
 
-	dbt_table_update_flags(_dtp, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
+	dbt_table_update_flags(_tbc, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
 	
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+
 
 #ifdef DBT_EXTRA_DEBUG
 	dbt_result_print(_dres);
@@ -256,7 +256,8 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	return dbt_get_result(_h, _r);
 
 error:
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
@@ -266,7 +267,8 @@ error:
 	return -1;
 
 clean:
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
@@ -292,8 +294,7 @@ int dbt_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
  */
 int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 {
-	tbl_cache_p _tbc = NULL;
-	dbt_table_p _dtp = NULL;
+	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
 	
 	str stbl;
@@ -317,6 +318,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
+	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
@@ -324,16 +326,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		return -1;
 	}
 
-	lock_get(&_tbc->sem);
-	
-	_dtp = _tbc->dtp;
-	if(!_dtp)
-	{
-		LM_DBG("table does not exist!\n");
-		goto error;
-	}
-	
-	if(_dtp->nrcols<_n)
+	if(_tbc->nrcols<_n)
 	{
 		LM_DBG("more values than columns!!\n");
 		goto error;
@@ -341,11 +334,11 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	
 	if(_k)
 	{
-		lkey = dbt_get_refs(_dtp, _k, _n);
+		lkey = dbt_get_refs(_tbc, _k, _n);
 		if(!lkey)
 			goto error;
 	}
-	_drp = dbt_row_new(_dtp->nrcols);
+	_drp = dbt_row_new(_tbc->nrcols);
 	if(!_drp)
 	{
 		LM_DBG("no shm memory for a new row!!\n");
@@ -355,7 +348,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	for(i=0; i<_n; i++)
 	{
 		j = (lkey)?lkey[i]:i;
-		if(dbt_is_neq_type(_dtp->colv[j]->type, _v[i].type))
+		if(dbt_is_neq_type(_tbc->colv[j]->type, _v[i].type))
 		{
 			LM_DBG("incompatible types v[%d] - c[%d]!\n", i, j);
 			goto clean;
@@ -370,17 +363,18 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		
 	}
 
-	if(dbt_table_add_row(_dtp, _drp))
+	if(dbt_table_add_row(_tbc, _drp))
 	{
 		LM_DBG("cannot insert the new row!!\n");
 		goto clean;
 	}
 
 #ifdef DBT_EXTRA_DEBUG
-	dbt_print_table(_dtp, NULL);
+	dbt_print_table(_tbc, NULL);
 #endif
 	
-	lock_release(&_tbc->sem);
+	/* unlock databse */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
 
 	if(lkey)
 		pkg_free(lkey);
@@ -390,19 +384,21 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
     return 0;
 	
 error:
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(lkey)
 		pkg_free(lkey);
 	LM_DBG("failed to insert row in table!\n");
     return -1;
 	
 clean:
-	lock_release(&_tbc->sem);
 	if(lkey)
 		pkg_free(lkey);
 	
 	if(_drp) // free row
-		dbt_row_free(_dtp, _drp);
+		dbt_row_free(_tbc, _drp);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
 	
 	LM_DBG("make clean!\n");
     return -1;
@@ -413,8 +409,7 @@ clean:
  */
 int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 {
-	tbl_cache_p _tbc = NULL;
-	dbt_table_p _dtp = NULL;
+	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL, _drp0 = NULL;
 	int *lkey = NULL;
 	str stbl;
@@ -429,6 +424,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
+	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
@@ -436,67 +432,60 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		return -1;
 	}
 
-	lock_get(&_tbc->sem);
-	_dtp = _tbc->dtp;
-
-	if(!_dtp)
-	{
-		LM_DBG("table does not exist!!\n");
-		goto error;
-	}
-	
 	if(!_k || !_v || _n<=0)
 	{
 #ifdef DBT_EXTRA_DEBUG
 		LM_ERR("delete all values\n");
 #endif
-		dbt_table_free_rows(_dtp);
-		lock_release(&_tbc->sem);
+		dbt_table_free_rows(_tbc);
+		/* unlock databse */
 		return 0;
 	}
 
-	lkey = dbt_get_refs(_dtp, _k, _n);
+	lkey = dbt_get_refs(_tbc, _k, _n);
 	if(!lkey)
 		goto error;
 	
-	_drp = _dtp->rows;
+	_drp = _tbc->rows;
 	while(_drp)
 	{
 		_drp0 = _drp->next;
-		if(dbt_row_match(_dtp, _drp, lkey, _o, _v, _n))
+		if(dbt_row_match(_tbc, _drp, lkey, _o, _v, _n))
 		{
 			// delete row
 			LM_DBG("deleting a row!\n");
 			if(_drp->prev)
 				(_drp->prev)->next = _drp->next;
 			else
-				_dtp->rows = _drp->next;
+				_tbc->rows = _drp->next;
 			if(_drp->next)
 				(_drp->next)->prev = _drp->prev;
-			_dtp->nrrows--;
+			_tbc->nrrows--;
 			// free row
-			dbt_row_free(_dtp, _drp);
+			dbt_row_free(_tbc, _drp);
 		}
 		_drp = _drp0;
 	}
 
-	dbt_table_update_flags(_dtp, DBT_TBFL_MODI, DBT_FL_SET, 1);
+	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
 #ifdef DBT_EXTRA_DEBUG
-	dbt_print_table(_dtp, NULL);
+	dbt_print_table(_tbc, NULL);
 #endif
 	
-	lock_release(&_tbc->sem);
-	
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+
 	if(lkey)
 		pkg_free(lkey);
 	
 	return 0;
 	
 error:
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+
 	LM_DBG("failed to delete from table!\n");
-    
 	return -1;
 }
 
@@ -506,8 +495,7 @@ error:
 int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
-	tbl_cache_p _tbc = NULL;
-	dbt_table_p _dtp = NULL;
+	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
 	int i;	
 	str stbl;
@@ -524,6 +512,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	stbl.s = (char*)CON_TABLE(_h);
 	stbl.len = strlen(CON_TABLE(_h));
 
+	/* lock database */
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
 	if(!_tbc)
 	{
@@ -531,32 +520,24 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		return -1;
 	}
 
-	lock_get(&_tbc->sem);
-	_dtp = _tbc->dtp;
-
-	if(!_dtp || _dtp->nrcols < _un)
-	{
-		LM_DBG("table not loaded or more values to update than columns!\n");
-		goto error;
-	}
 	if(_k)
 	{
-		lkey = dbt_get_refs(_dtp, _k, _n);
+		lkey = dbt_get_refs(_tbc, _k, _n);
 		if(!lkey)
 			goto error;
 	}
-	lres = dbt_get_refs(_dtp, _uk, _un);
+	lres = dbt_get_refs(_tbc, _uk, _un);
 	if(!lres)
 		goto error;
 	LM_DBG("---- \n");
-	_drp = _dtp->rows;
+	_drp = _tbc->rows;
 	while(_drp)
 	{
-		if(dbt_row_match(_dtp, _drp, lkey, _o, _v, _n))
+		if(dbt_row_match(_tbc, _drp, lkey, _o, _v, _n))
 		{ // update fields
 			for(i=0; i<_un; i++)
 			{
-				if(dbt_is_neq_type(_dtp->colv[lres[i]]->type, _uv[i].type))
+				if(dbt_is_neq_type(_tbc->colv[lres[i]]->type, _uv[i].type))
 				{
 					LM_DBG("incompatible types!\n");
 					goto error;
@@ -573,13 +554,14 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		_drp = _drp->next;
 	}
 
-	dbt_table_update_flags(_dtp, DBT_TBFL_MODI, DBT_FL_SET, 1);
+	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
 #ifdef DBT_EXTRA_DEBUG
-	dbt_print_table(_dtp, NULL);
+	dbt_print_table(_tbc, NULL);
 #endif
 	
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
 
 	if(lkey)
 		pkg_free(lkey);
@@ -589,7 +571,9 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
     return 0;
 
 error:
-	lock_release(&_tbc->sem);
+	/* unlock database */
+	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
