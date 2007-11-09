@@ -17,11 +17,11 @@ sed -i "s/# INSTALL_SERWEB_TABLES=ask/INSTALL_SERWEB_TABLES=yes/g" openserctlrc
 cp openserdbctl.mysql openserdbctl.mysql.bak
 sed -i "s/#PW=""/PW="$PW"/g" openserdbctl.mysql
 
-./openserdbctl create $tmp_name #> /dev/null
+./openserdbctl create $tmp_name > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./openserdbctl drop $tmp_name #> /dev/null
+	./openserdbctl drop $tmp_name > /dev/null
 	ret=$?
 fi ;
 
