@@ -1144,8 +1144,7 @@ lcr() {
 			get_next_id $GW_GRP_FILE
                         echo $get_next_id_next_id:$2:$1 >> $GW_GRP_FILE
                         chown_openser $GW_GRP_FILE
-                        #FIXME: lcr_reload command not supported yet
-                        #fifo_cmd lcr_reload
+                        fifo_cmd lcr_reload
                         ;;
 
                 rmgw_grp)
@@ -1157,8 +1156,7 @@ lcr() {
                         cat $GW_GRP_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_GRP_FILE.tmp
                         mv -f $GW_GRP_FILE.tmp $GW_GRP_FILE
                         chown_openser $GW_GRP_FILE
-                        #FIXME: lcr_reload command not supported yet
-                        #fifo_cmd lcr_reload
+                        fifo_cmd lcr_reload
                         ;;
 
                 addgw)
@@ -1202,8 +1200,7 @@ lcr() {
 			get_next_id $GW_FILE
                         echo $get_next_id_next_id:$GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX:$GW_DM >> $GW_FILE
                         chown_openser $GW_FILE
-                        #FIXME: lcr_reload command not supported yet
-                        #fifo_cmd lcr_reload
+                        fifo_cmd lcr_reload
                         ;;
 
                 rmgw)
@@ -1215,8 +1212,7 @@ lcr() {
                         cat $GW_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_FILE.tmp
                         mv -f $GW_FILE.tmp $GW_FILE
                         chown_openser $GW_FILE
-                        #FIXME: lcr_reload command not supported yet
-                        #fifo_cmd lcr_reload
+                        fifo_cmd lcr_reload
                         ;;
 
                 addroute)
@@ -1229,8 +1225,7 @@ lcr() {
 			get_next_id $LCR_FILE
                         echo $get_next_id_next_id:$1:$2:$3:$4 >> $LCR_FILE
                         chown_openser $LCR_FILE
-                        #FIXME: lcr_reload command not supported yet
-                        #fifo_cmd lcr_reload
+                        fifo_cmd lcr_reload
                         ;;
 
                 rmroute)
@@ -1243,8 +1238,7 @@ lcr() {
                         cat $LCR_FILE | $EGREP -v "^[0-9]+:$1:$2:$3:$4\$" > $LCR_FILE.tmp
                         mv -f $LCR_FILE.tmp $LCR_FILE
                         chown_openser $LCR_FILE
-                        #FIXME: lcr_reload command not supported yet
-                        #fifo_cmd lcr_reload
+                        fifo_cmd lcr_reload
                         ;;
                 *)
                         usage_lcr
