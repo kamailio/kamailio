@@ -333,11 +333,12 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 	char* s;
 	int len;
 	char* begin;
+	char* headers;
 	int off;
 	int ret;
 	int eflags;
 
-	begin=get_header(msg); /* msg->orig previously .. uri problems */
+	begin = headers = get_header(msg);
 	ret=-1; /* pessimist: we will not find any */
 	len=strlen(str2);
 	eflags=0; /* match ^ at the beginning of the string*/
@@ -367,8 +368,8 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 		}
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
-		/* maybe change eflags, not to match at string start anymore */
-		if ( *(begin-1)=='\n' || *(begin-1)=='\r')
+		/* is it still a string start */
+		if ( begin==headers || *(begin-1)=='\n' || *(begin-1)=='\r')
 			eflags&=~REG_NOTBOL;
 		else
 			eflags|=REG_NOTBOL;
@@ -400,7 +401,7 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 		return -1;
 	}
 
-	begin=body.s; /* msg->orig previously .. uri problems */
+	begin=body.s;
 	ret=-1; /* pessimist: we will not find any */
 	len=strlen(str2);
 	eflags=0; /* match ^ at the beginning of the string*/
@@ -430,8 +431,8 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 		}
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
-		/* maybe change eflags, not to match at string start anymore */
-		if ( *(begin-1)=='\n' || *(begin-1)=='\r')
+		/* is it still a string start */
+		if ( begin==body.s || *(begin-1)=='\n' || *(begin-1)=='\r')
 			eflags&=~REG_NOTBOL;
 		else
 			eflags|=REG_NOTBOL;
