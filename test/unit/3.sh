@@ -2,7 +2,7 @@
 # creates a mysql database with openserdbctl and deletes it again
 
 # Needs a mysql database, the root user password must be given
-# in the file 'dbrootpw'
+# in the file 'dbrootpw' in the test directory
 
 if [ ! -f dbrootpw ] ; then
 	echo "no root password, not run"
