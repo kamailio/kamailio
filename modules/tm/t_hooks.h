@@ -37,6 +37,7 @@
  * 2007-03-23   added TMCB_LOCAL_REQUEST_IN (andrei)
  * 2007-05-16   added TMCB_DESTROY (andrei)
  * 2007-05-24   fixed has_tran_tmcbs() & added TMCB_E2ECANCEL_IN (andrei)
+ * 2007-11-12   added TMCB_E2EACK_RETR_IN (andrei)
  */
 
 
@@ -74,12 +75,13 @@ struct cell;
 #define TMCB_DLG_N              14
 #define TMCB_DESTROY_N          15  /* called on transaction destroy */
 #define TMCB_E2ECANCEL_IN_N     16
+#define TMCB_E2EACK_RETR_IN_N   17
 #ifdef TMCB_ONSEND
-#define TMCB_REQUEST_SENT_N     17
-#define TMCB_RESPONSE_SENT_N    18
-#define TMCB_MAX_N              18
+#define TMCB_REQUEST_SENT_N     18
+#define TMCB_RESPONSE_SENT_N    19
+#define TMCB_MAX_N              19
 #else
-#define TMCB_MAX_N              16
+#define TMCB_MAX_N              17
 #endif
 
 
@@ -100,6 +102,7 @@ struct cell;
 #define TMCB_DLG              (1<<TMCB_DLG_N)
 #define TMCB_DESTROY          (1<<TMCB_DESTROY_N)
 #define TMCB_E2ECANCEL_IN     (1<<TMCB_E2ECANCEL_IN_N)
+#define TMCB_E2EACK_RETR_IN   (1<<TMCB_E2EACK_RETR_IN_N)
 #ifdef TMCB_ONSEND
 #define TMCB_REQUEST_SENT      (1<<TMCB_REQUEST_SENT_N)
 #define TMCB_RESPONSE_SENT     (1<<TMCB_RESPONSE_SENT_N)
@@ -219,6 +222,9 @@ struct cell;
  *   for the first ACK but it can be also called multiple times 
  *   quasi-simultaneously if multiple ACK copies arrive in parallel or if
  *   ACKs with different (never seen before) to-tags are received.
+ *
+ *   TMCB_E2EACK_RETR_IN -- like TMCB_E2EACK_IN, but matches retransmissions
+ *   and it's called for every retransmission (but not for the "first" ACK).
  *
  *  TMCB_E2ECANCEL_IN -- called when a CANCEL for the INVITE transaction
  *  for which the callback was registered arrives.

@@ -1477,7 +1477,8 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 		if ( unlikely(is_invite(t) && relayed_msg!=FAKED_REPLY
 		&& relayed_code>=200 && relayed_code < 300
-		&& has_tran_tmcbs( t, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN))) {
+		&& has_tran_tmcbs( t,
+				TMCB_RESPONSE_OUT|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))) {
 			totag_retr=update_totag_set(t, relayed_msg);
 		}
 	}; /* if relay ... */
@@ -1581,7 +1582,8 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		update_reply_stats( winning_code );
 		if (unlikely(is_invite(t) && winning_msg!=FAKED_REPLY
 		&& winning_code>=200 && winning_code <300
-		&& has_tran_tmcbs(t,TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) ))  {
+		&& has_tran_tmcbs(t,
+				TMCB_RESPONSE_OUT|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) ))  {
 			totag_retr=update_totag_set(t, winning_msg);
 		}
 	}

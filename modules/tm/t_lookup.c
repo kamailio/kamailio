@@ -903,7 +903,8 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 		if (unlikely( is_invite(p_cell) && p_msg->REPLY_STATUS>=200 
 			&& p_msg->REPLY_STATUS<300 
 			&& ((!is_local(p_cell) &&
-				has_tran_tmcbs(p_cell, TMCB_RESPONSE_OUT|TMCB_E2EACK_IN) )
+				has_tran_tmcbs(p_cell, 
+					TMCB_RESPONSE_OUT|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) )
 			|| (is_local(p_cell)&&has_tran_tmcbs(p_cell, TMCB_LOCAL_COMPLETED))
 		)) ) {
 			if (parse_headers(p_msg, HDR_TO_F, 0)==-1) {
@@ -1269,7 +1270,8 @@ int t_newtran( struct sip_msg* p_msg )
 
 	if (lret==-2) { /* was it an e2e ACK ? if so, trigger a callback */
 		/* no callbacks? complete quickly */
-		if (likely( !has_tran_tmcbs(t_ack,TMCB_E2EACK_IN) )) {
+		if (likely( !has_tran_tmcbs(t_ack, 
+						TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) )) {
 			UNLOCK_HASH(p_msg->hash_index);
 			return 1;
 		} 
@@ -1281,12 +1283,16 @@ int t_newtran( struct sip_msg* p_msg )
 		 * multiple ACK/200s received in parallel), that we do not
 		 * better waste time in locks  */
 		if (unmatched_totag(t_ack, p_msg)) {
-			run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg, 0,
-				-p_msg->REQ_METHOD );
+			if (likely (has_tran_tmcbs(t_ack, TMCB_E2EACK_IN)))
+				run_trans_callbacks( TMCB_E2EACK_IN , t_ack, p_msg, 0,
+										-p_msg->REQ_METHOD );
+		}else if (unlikely(has_tran_tmcbs(t_ack, TMCB_E2EACK_RETR_IN))){
+			run_trans_callbacks( TMCB_E2EACK_RETR_IN , t_ack, p_msg, 0,
+									-p_msg->REQ_METHOD );
 		}
 		UNREF(t_ack);
 		return 1;
-	} 
+	}
 
 
 	/* transaction not found, it's a new request (lret<0, lret!=-2);
