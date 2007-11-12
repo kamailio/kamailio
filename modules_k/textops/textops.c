@@ -345,8 +345,6 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 	while (begin<msg->buf+msg->len 
 				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
-		/* change eflags, not to match any more at string start */
-		eflags|=REG_NOTBOL;
 		if (pmatch.rm_so==-1){
 			LM_ERR("offset unknown\n");
 			return -1;
@@ -369,6 +367,11 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 		}
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
+		/* maybe change eflags, not to match at string start anymore */
+		if ( *(begin-1)=='\n' || *(begin-1)=='\r')
+			eflags&=~REG_NOTBOL;
+		else
+			eflags|=REG_NOTBOL;
 		ret=1;
 	} /* while found ... */
 	return ret;
@@ -405,8 +408,6 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 	while (begin<msg->buf+msg->len 
 				&& regexec((regex_t*) key, begin, 1, &pmatch, eflags)==0) {
 		off=begin-msg->buf;
-		/* change eflags, not to match any more at string start */
-		eflags|=REG_NOTBOL;
 		if (pmatch.rm_so==-1){
 			LM_ERR("offset unknown\n");
 			return -1;
@@ -429,6 +430,11 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 		}
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
+		/* maybe change eflags, not to match at string start anymore */
+		if ( *(begin-1)=='\n' || *(begin-1)=='\r')
+			eflags&=~REG_NOTBOL;
+		else
+			eflags|=REG_NOTBOL;
 		ret=1;
 	} /* while found ... */
 	return ret;
