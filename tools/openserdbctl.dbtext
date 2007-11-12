@@ -42,7 +42,7 @@ fi
 DB_PATH=$1
 
 minfo "DBTEXT ... erasing all files at: $DB_PATH"
-rm -f $DB_PATH/*
+rm -rf $DB_PATH
 }
 
 openser_create () # pars: <database name>
