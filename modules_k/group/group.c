@@ -138,6 +138,11 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 		return -1;
 	}
 
+	if (VAL_STR(vals).s==NULL || VAL_STR(vals).len==0 ) {
+		LM_DBG("no username part\n");
+		return -1;
+	}
+
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
 	VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
 

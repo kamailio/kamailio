@@ -110,7 +110,11 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 		user = cred->username.user;
 		domain = *GET_REALM(cred);
 	}
-		
+
+	if (user.s==NULL || user.len==0 ) {
+		LM_DBG("no username part\n");
+		return -1;
+	}
 
 	if (use_domain) {
 		user_name.len = user.len + domain.len + 1;

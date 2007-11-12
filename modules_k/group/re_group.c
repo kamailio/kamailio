@@ -143,6 +143,11 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 		goto error;
 	}
 
+	if (username.s==NULL || username.len==0 ) {
+		LM_DBG("no username part\n");
+		return -1;
+	}
+
 	if ( 4 + username.len + 1 + domain.len + 1 > MAX_URI_SIZE ) {
 		LM_ERR("URI to large!!\n");
 		goto error;
