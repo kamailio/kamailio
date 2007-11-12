@@ -334,20 +334,23 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	if(ps->code >= 300 )
 	{	/* if an error code and a stored dialog delete it and try to send 
 		   a subscription with type= INSERT_TYPE, else return*/	
-	/*must work on this!!! generates infinite requests */
+		
 		if(presentity)
 		{	
 			subs_info_t subs;
 			hentity->event= presentity->event;
 			delete_htable(presentity, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
-			
+		
 			memset(&subs, 0, sizeof(subs_info_t));
 			subs.pres_uri= hentity->pres_uri; 
 			subs.watcher_uri= hentity->watcher_uri;
 			subs.contact= &hentity->contact;
-			subs.expires= (hentity->desired_expires>0)?
-					hentity->desired_expires- (int)time(NULL)+ 10:-1;
+			if(hentity->expires- (int)time(NULL)<= 0)
+				subs.expires= 0;
+			else
+				subs.expires= (hentity->desired_expires>0)?
+					hentity->desired_expires- (int)time(NULL)+ 3:-1;
 			subs.flag= INSERT_TYPE;
 			subs.source_flag= flag;
 			subs.event= hentity->event;
