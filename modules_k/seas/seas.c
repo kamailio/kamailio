@@ -728,7 +728,7 @@ static int seas_child_init(int rank)
  */
 static int seas_exit(void)
 {
-   if(seas_listen_ip!=&(get_first_socket()->address))
+   if( seas_listen_ip!=NULL && seas_listen_ip!=&(get_first_socket()->address))
       pkg_free(seas_listen_ip);
    return 0;
 }
