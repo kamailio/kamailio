@@ -338,12 +338,12 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	do {
 		rd = get_data();
 	} while (rd == NULL);
-	if (index <= 0) {
+	if (index < 0) {
 		if (fallback_default) {
-			LM_NOTICE("invalid tree id %i specified, use default tree\n", (int)_tree);
+			LM_NOTICE("invalid tree id %i specified, use default tree\n", index);
 			index = rd->default_carrier_index;
 		} else {
-			LM_ERR("invalid tree id %i specified and fallback deactivated\n", (int)_tree);
+			LM_ERR("invalid tree id %i specified and fallback deactivated\n", index);
 			release_data(rd);
 			return -1;
 		}
