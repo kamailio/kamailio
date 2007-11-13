@@ -333,12 +333,11 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 	char* s;
 	int len;
 	char* begin;
-	char* headers;
 	int off;
 	int ret;
 	int eflags;
 
-	begin = headers = get_header(msg);
+	begin = get_header(msg);
 	ret=-1; /* pessimist: we will not find any */
 	len=strlen(str2);
 	eflags=0; /* match ^ at the beginning of the string*/
@@ -348,6 +347,10 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 		off=begin-msg->buf;
 		if (pmatch.rm_so==-1){
 			LM_ERR("offset unknown\n");
+			return -1;
+		}
+		if (pmatch.rm_so==pmatch.rm_eo){
+			LM_ERR("matched string is empty... invalid regexp?\n");
 			return -1;
 		}
 		if ((l=del_lump(msg, pmatch.rm_so+off,
@@ -369,7 +372,7 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
 		/* is it still a string start */
-		if ( begin==headers || *(begin-1)=='\n' || *(begin-1)=='\r')
+		if (*(begin-1)=='\n' || *(begin-1)=='\r')
 			eflags&=~REG_NOTBOL;
 		else
 			eflags|=REG_NOTBOL;
@@ -413,6 +416,10 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 			LM_ERR("offset unknown\n");
 			return -1;
 		}
+		if (pmatch.rm_so==pmatch.rm_eo){
+			LM_ERR("matched string is empty... invalid regexp?\n");
+			return -1;
+		}
 		if ((l=del_lump(msg, pmatch.rm_so+off,
 						pmatch.rm_eo-pmatch.rm_so, 0))==0) {
 			LM_ERR("del_lump failed\n");
@@ -432,7 +439,7 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
 		/* is it still a string start */
-		if ( begin==body.s || *(begin-1)=='\n' || *(begin-1)=='\r')
+		if (*(begin-1)=='\n' || *(begin-1)=='\r')
 			eflags&=~REG_NOTBOL;
 		else
 			eflags|=REG_NOTBOL;
