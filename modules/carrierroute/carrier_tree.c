@@ -37,12 +37,12 @@
  */
 
 #include "../../mem/shm_mem.h"
+#include "../../ut.h"
 #include "carrier_tree.h"
 #include "carrierroute.h"
 #include "route_tree.h"
 #include "route_rule.h"
 #include "load_data.h"
-#include <unistd.h>
 
 /**
  * points to the data loading function
@@ -95,8 +95,6 @@ int prepare_route_tree(void) {
 	struct rewrite_data * new_data = NULL;
 	int i;
 
-	//*global_data = NULL;
-
 	if ((new_data = shm_malloc(sizeof(struct rewrite_data))) == NULL) {
 		LM_ERR("out of shared memory\n");
 		return -1;
@@ -131,7 +129,7 @@ int prepare_route_tree(void) {
 		i = 0;
 		while (old_data->proc_cnt > 0) {
 			LM_ERR("data is still locked after %i seconds\n", i);
-			sleep(1);
+			sleep_us(i*1000000);
 			i++;
 		}
 		destroy_rewrite_data(old_data);
@@ -187,8 +185,7 @@ int find_tree(str tree){
 	tmp = *script_trees;
 
 	while (tmp) {
-		if (strncmp(tree.s, tmp->name.s,
-				(tmp->name.len>tree.len?tree.len:tmp->name.len)) == 0) {
+		if (str_strcmp(&tree, &tmp->name) == 0) {
 			/*
 			we return the number of the tree instead of the id, because the
 			user could choose the id randomly, this would lead to a not
