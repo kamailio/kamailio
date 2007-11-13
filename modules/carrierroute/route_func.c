@@ -688,8 +688,8 @@ static int carrier_rewrite_msg(int carrier, int domain,
 	} while (rd == NULL);
 
 	if (carrier >= rd->tree_num) {
-		LM_ERR("Domain too big. (We only have %d domains, you wanted %d.)\n",
-		    (rd->tree_num) - 1, domain);
+		LM_ERR("desired carrier doesn't exist. (We only have %d carriers, you wanted %d.)\n",
+		    (rd->tree_num) - 1, carrier);
 		ret = -1;
 		goto unlock_and_out;
 	}
