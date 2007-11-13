@@ -200,17 +200,18 @@ int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 		str_hdr->len += len;
 		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
 		str_hdr->len += CRLF_LEN;
-
-		if(is_body)
-		{	
-			strncpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
-			str_hdr->len += 14;
-			strncpy(str_hdr->s+str_hdr->len, event->content_type.s , event->content_type.len);
-			str_hdr->len += event->content_type.len;
-			strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
-			str_hdr->len += CRLF_LEN;
-		}
 	}
+	
+	if(is_body)
+	{	
+		strncpy(str_hdr->s+str_hdr->len,"Content-Type: ", 14);
+		str_hdr->len += 14;
+		strncpy(str_hdr->s+str_hdr->len, event->content_type.s , event->content_type.len);
+		str_hdr->len += event->content_type.len;
+		strncpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+		str_hdr->len += CRLF_LEN;
+	}
+	
 	if(str_hdr->len> ALLOC_SIZE)
 	{
 		LM_ERR("buffer size overflown\n");
@@ -1384,6 +1385,13 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	
 jump_over_body:
 
+	if(subs->expires== 0)
+	{
+		subs->status= TERMINATED_STATUS;
+		subs->reason.s= "timeout";
+		subs->reason.len= 7;
+	}
+
 	/* build extra headers */
 	if( build_str_hdr( subs, notify_body?1:0, &str_hdr)< 0 )
 	{
@@ -1760,11 +1768,4 @@ error:
 		xmlFreeDoc(doc);
 	return NULL;
 }
-
-
-
-
-	
-
-
 

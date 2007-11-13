@@ -310,12 +310,9 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 				*sent_reply= 1;
 			}
 		
-			subs->status= TERMINATED_STATUS;
-			subs->reason.s= "timeout";
-			subs->reason.len= 7;
 			if(notify(subs, NULL, NULL, 0)< 0)
 			{
-				LM_ERR("Could not send notify \n");
+				LM_ERR("Could not send notify\n");
 				goto error;
 			}
 			return 1;
@@ -573,14 +570,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	/* if dialog initiation Subscribe - get subscription state */
 	if(to_tag_gen)
 	{
-		if( subs.expires== 0 )
-		{
-			subs.status= TERMINATED_STATUS;
-			subs.reason.s= "timeout";
-			subs.reason.len= 7;
-			goto after_status;	
-		}	
-
 		if(!event->req_auth) 
 			subs.status = ACTIVE_STATUS;
 		else   
@@ -634,7 +623,6 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		}
 	}
 
-after_status:
 	/* check if correct status */
 	if(get_status_str(subs.status)== NULL)
 	{
@@ -642,7 +630,7 @@ after_status:
 		goto error;
 	}
 	
-	if( update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0 )
+	if(update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0)
 	{	
 		LM_ERR("in update_subscription\n");
 		goto error;
@@ -1237,7 +1225,7 @@ int handle_expired_subs(subs_t* s)
 	s->reason.len= 7;
 	s->expires= 0;
 
-	if(send_notify_request(s, NULL, NULL, 0)< 0)
+	if(send_notify_request(s, NULL, NULL, 1)< 0)
 	{
 		LM_ERR("send Notify not successful\n");
 		return -1;
