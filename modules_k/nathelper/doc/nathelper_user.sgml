@@ -590,8 +590,8 @@ force_rtp_proxy();
 				<listitem><para>
 				<emphasis>l</emphasis> - force <quote>lookup</quote>, that is,
 				only rewrite SDP when corresponding session is already exists 
-				in the RTP proxy. Only makes sense for SIP requests, replies 
-				are always processed in <quote>lookup</quote> mode.
+				in the RTP proxy. By default is on when the session is to be
+				completed (reply in non-swap or ACK in swap mode).
 				</para></listitem>
 				<listitem><para>
 				<emphasis>i</emphasis> - flags that message is received from 

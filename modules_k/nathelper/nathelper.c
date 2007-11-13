@@ -2448,8 +2448,21 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		LM_ERR("can't get From tag\n");
 		return -1;
 	}
+	/*  LOGIC
+	 *  ------
+	 *  1) NO SWAP (create on request, lookup on reply):
+	 *       req -> create = 1
+	 *       rpl -> create = 0
+	 *       if (forced_lookup) -> create = 0;
+	 *
+	 *  2) SWAP (create on reply, lookup on request):
+	 *       req -> create = 0
+	 *       rpl -> create = 1
+	 *       swap_tags
+	 *       if (forced_lookup) -> create = 0;
+	 */
 	if (flookup != 0) {
-		if (create == 0 || to_tag.len == 0)
+		if (to_tag.len == 0)
 			return -1;
 		create = 0;
 		if (swap == 0) {

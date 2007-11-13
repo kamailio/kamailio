@@ -477,8 +477,8 @@ force_rtp_proxy();
             doesn't support symmetric RTP.
           + l - force "lookup", that is, only rewrite SDP when
             corresponding session is already exists in the RTP
-            proxy. Only makes sense for SIP requests, replies are
-            always processed in "lookup" mode.
+            proxy. By default is on when the session is to be
+            completed (reply in non-swap or ACK in swap mode).
           + i - flags that message is received from UA in the LAN
             (internal network). Only makes sense when RTP proxy
             is running in the bridge mode.
