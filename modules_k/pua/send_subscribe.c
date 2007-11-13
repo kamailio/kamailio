@@ -346,11 +346,15 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.pres_uri= hentity->pres_uri; 
 			subs.watcher_uri= hentity->watcher_uri;
 			subs.contact= &hentity->contact;
-			if(hentity->expires- (int)time(NULL)<= 0)
+			
+			if(hentity->desired_expires== 0)
+				subs.expires= -1;
+			else
+			if((hentity->desired_expires- (int)time(NULL))<= 0)
 				subs.expires= 0;
 			else
-				subs.expires= (hentity->desired_expires>0)?
-					hentity->desired_expires- (int)time(NULL)+ 3:-1;
+				subs.expires= hentity->desired_expires- (int)time(NULL)+ 3;
+		
 			subs.flag= INSERT_TYPE;
 			subs.source_flag= flag;
 			subs.event= hentity->event;
