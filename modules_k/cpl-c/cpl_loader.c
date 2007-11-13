@@ -103,20 +103,20 @@ int load_file( char *filename, str *xml)
 	/* open the file for reading */
 	fd = open(filename,O_RDONLY);
 	if (fd==-1) {
-		LOG(L_ERR,"ERROR:cpl-c:load_file: cannot open file for reading:"
+		LM_ERR("cannot open file for reading:"
 			" %s\n",strerror(errno));
 		goto error;
 	}
 
 	/* get the file length */
 	if ( (xml->len=lseek(fd,0,SEEK_END))==-1) {
-		LOG(L_ERR,"ERROR:cpl-c:load_file: cannot get file length (lseek):"
+		LM_ERR("cannot get file length (lseek):"
 			" %s\n", strerror(errno));
 		goto error;
 	}
-	DBG("DEBUG:cpl-c:load_file: file size = %d\n",xml->len);
+	LM_DBG("file size = %d\n",xml->len);
 	if ( lseek(fd,0,SEEK_SET)==-1 ) {
-		LOG(L_ERR,"ERROR:cpl-c:load_file: cannot go to beginning (lseek):"
+		LM_ERR("cannot go to beginning (lseek):"
 			" %s\n",strerror(errno));
 		goto error;
 	}
@@ -124,7 +124,7 @@ int load_file( char *filename, str *xml)
 	/* get some memory */
 	xml->s = (char*)pkg_malloc( xml->len+1/*null terminated*/ );
 	if (!xml->s) {
-		LOG(L_ERR,"ERROR:cpl-c:load_file: no more free pkg memory\n");
+		LM_ERR("no more free pkg memory\n");
 		goto error;
 	}
 
@@ -134,7 +134,7 @@ int load_file( char *filename, str *xml)
 		n=read( fd, xml->s+offset, xml->len-offset);
 		if (n==-1) {
 			if (errno!=EINTR) {
-				LOG(L_ERR,"ERROR:cpl-c:load_file: read failed:"
+				LM_ERR("read failed:"
 					" %s\n", strerror(errno));
 				goto error;
 			}
@@ -144,7 +144,7 @@ int load_file( char *filename, str *xml)
 		}
 	}
 	if (xml->len!=offset) {
-		LOG(L_ERR,"ERROR:cpl-c:load_file: couldn't read all file!\n");
+		LM_ERR("couldn't read all file!\n");
 		goto error;
 	}
 	xml->s[xml->len] = 0;
@@ -170,7 +170,7 @@ void write_to_file( char *file, str *txt, int n )
 	/* open file for write */
 	fd = open( file, O_WRONLY|O_CREAT|O_TRUNC/*|O_NOFOLLOW*/, 0600 );
 	if (fd==-1) {
-		LOG(L_ERR,"ERROR:cpl-c:write_to_file: cannot open response file "
+		LM_ERR("cannot open response file "
 			"<%s>: %s\n", file, strerror(errno));
 		return;
 	}
@@ -182,7 +182,7 @@ again:
 			if (errno==EINTR) {
 				goto again;
 			} else {
-				LOG(L_ERR,"ERROR:cpl-c:write_logs_to_file: writev failed: "
+				LM_ERR("write_logs_to_file: writev failed: "
 					"%s\n", strerror(errno) );
 			}
 		}
@@ -219,7 +219,7 @@ struct mi_root* mi_cpl_load(struct mi_root *cmd_tree, void *param)
 	str val;
 	char *file;
 
-	DBG("DEBUG:cpl-c:mi_cpl_load: \"LOAD_CPL\" FIFO command received!\n");
+	LM_DBG("\"LOAD_CPL\" MI command received!\n");
 	cmd = &cmd_tree->node;
 
 	/* check user+host */
@@ -228,18 +228,18 @@ struct mi_root* mi_cpl_load(struct mi_root *cmd_tree, void *param)
 
 	val = cmd->kids->value;
 	if (parse_uri( val.s, val.len, &uri)!=0){
-		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_load: invalid sip URI [%.*s]\n",
+		LM_ERR("invalid sip URI [%.*s]\n",
 			val.len, val.s);
 		return init_mi_tree( 400, USRHOST_ERR_S, USRHOST_ERR_LEN );
 	}
-	DBG("DEBUG:cpl-c:mi_cpl_load: user@host=%.*s@%.*s\n",
+	LM_DBG("user@host=%.*s@%.*s\n",
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	/* second argument is the cpl file */
 	val = cmd->kids->next->value;
 	file = pkg_malloc(val.len+1);
 	if (file==NULL) {
-		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_load: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		return 0;
 	}
 	memcpy( file, val.s, val.len);
@@ -251,7 +251,7 @@ struct mi_root* mi_cpl_load(struct mi_root *cmd_tree, void *param)
 		pkg_free(file);
 		return init_mi_tree( 500, FILE_LOAD_ERR_S, FILE_LOAD_ERR_LEN );
 	}
-	DBG("DEBUG:cpl-c:mi_cpl_load: cpl file=%s loaded\n",file);
+	LM_DBG("cpl file=%s loaded\n",file);
 	pkg_free(file);
 
 	/* get the binary coding for the XML file */
@@ -287,7 +287,7 @@ struct mi_root * mi_cpl_remove(struct mi_root *cmd_tree, void *param)
 	struct sip_uri uri;
 	str user;
 
-	DBG("DEBUG:cpl-c:mi_cpl_remove: \"REMOVE_CPL\" FIFO command received!\n");
+	LM_DBG("\"REMOVE_CPL\" MI command received!\n");
 	cmd = &cmd_tree->node;
 
 	/* check if there is only one parameter*/
@@ -298,11 +298,11 @@ struct mi_root * mi_cpl_remove(struct mi_root *cmd_tree, void *param)
 
 	/* check user+host */
 	if (parse_uri( user.s, user.len, &uri)!=0){
-		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_remove: invalid SIP uri [%.*s]\n",
+		LM_ERR("invalid SIP uri [%.*s]\n",
 			user.len,user.s);
 		return init_mi_tree( 400, USRHOST_ERR_S, USRHOST_ERR_LEN );
 	}
-	DBG("DEBUG:mi_cpl_remove: user@host=%.*s@%.*s\n",
+	LM_DBG("user@host=%.*s@%.*s\n",
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	if (rmv_from_db( &uri.user, cpl_env.use_domain?&uri.host:0)!=1)
@@ -330,11 +330,11 @@ struct mi_root * mi_cpl_get(struct mi_root *cmd_tree, void *param)
 	/* check user+host */
 	user = cmd->kids->value;
 	if (parse_uri( user.s, user.len, &uri)!=0) {
-		LOG(L_ERR,"ERROR:cpl-c:mi_cpl_load: invalid user@host [%.*s]\n",
+		LM_ERR("invalid user@host [%.*s]\n",
 			user.len,user.s);
 		return init_mi_tree( 400, USRHOST_ERR_S, USRHOST_ERR_LEN );
 	}
-	DBG("DEBUG:mi_cpl_get: user@host=%.*s@%.*s\n",
+	LM_DBG("user@host=%.*s@%.*s\n",
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	/* get the script for this user */

@@ -496,15 +496,15 @@ static inline int get_dest_user(struct sip_msg *msg, str *username, str *domain)
 	struct sip_uri uri;
 
 	/*  get the user_name from new_uri/RURI/To */
-	DBG("DEBUG:cpl-c:get_dest_user: trying to get user from new_uri\n");
+	LM_DBG("trying to get user from new_uri\n");
 	if ( !msg->new_uri.s || parse_uri( msg->new_uri.s,msg->new_uri.len,&uri)<0
 	|| !uri.user.len )
 	{
-		DBG("DEBUG:cpl-c:get_dest_user: trying to get user from R_uri\n");
+		LM_DBG("trying to get user from R_uri\n");
 		if ( parse_uri( msg->first_line.u.request.uri.s,
 		msg->first_line.u.request.uri.len ,&uri)==-1 || !uri.user.len )
 		{
-			DBG("DEBUG:cpl-c:get_dest_user: trying to get user from To\n");
+			LM_DBG("trying to get user from To\n");
 			if ( (!msg->to&&((parse_headers(msg,HDR_TO_F,0)==-1)||!msg->to))||
 			parse_uri( get_to(msg)->uri.s, get_to(msg)->uri.len, &uri)<0
 			|| !uri.user.len)
@@ -528,7 +528,7 @@ static inline int get_orig_user(struct sip_msg *msg, str *username, str *domain)
 	
 	/* if it's outgoing -> get the user_name from From */
 	/* parsing from header */
-	DBG("DEBUG:cpl-c:get_orig_user: trying to get user from From\n");
+	LM_DBG("trying to get user from From\n");
 	if ( parse_from_header( msg )==-1 ) {
 		LM_ERR("unable to extract URI from FROM header\n");
 		return -1;
@@ -742,7 +742,7 @@ static inline int do_script_download(struct sip_msg *msg)
 	/* add a lump with content-type hdr */
 	if (add_lump_rpl( msg, CONTENT_TYPE_HDR, CONTENT_TYPE_HDR_LEN,
 	LUMP_RPL_HDR)==0) {
-		LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build hdr lump\n");
+		LM_ERR("cannot build hdr lump\n");
 		cpl_err = &intern_err;
 		goto error;
 	}
@@ -750,8 +750,7 @@ static inline int do_script_download(struct sip_msg *msg)
 	if (script.s!=0) {
 		/* user has a script -> add a body lump */
 		if ( add_lump_rpl( msg, script.s, script.len, LUMP_RPL_BODY)==0) {
-			LOG(L_ERR,"ERROR:cpl-c:do_script_download: cannot build "
-				"body lump\n");
+			LM_ERR("cannot build body lump\n");
 			cpl_err = &intern_err;
 			goto error;
 		}
@@ -800,16 +799,14 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		goto error;
 
 	/* check the mime type */
-	DBG("DEBUG:cpl_process_register: Content-Type mime found %u, %u\n",
+	LM_DBG("Content-Type mime found %u, %u\n",
 		mime>>16,mime&0x00ff);
 	if ( mime && mime==(TYPE_APPLICATION<<16)+SUBTYPE_CPLXML ) {
 		/* can be an upload or remove -> check for the content-purpose and
 		 * content-action headers */
-		DBG("DEBUG:cpl_process_register: carrying CPL -> look at "
-			"Content-Disposition\n");
+		LM_DBG("carrying CPL -> look at Content-Disposition\n");
 		if (parse_content_disposition( msg )!=0) {
-			LOG(L_ERR,"ERROR:cpl_process_register: Content-Disposition missing "
-				"or corrupted\n");
+			LM_ERR("Content-Disposition missing or corrupted\n");
 			goto error;
 		}
 		disp = get_content_disposition(msg);
@@ -817,7 +814,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 		/* check if the type of disposition is SCRIPT */
 		if (disp->type.len!=CPL_SCRIPT_LEN ||
 		strncasecmp(disp->type.s,CPL_SCRIPT,CPL_SCRIPT_LEN) ) {
-			LOG(L_ERR,"ERROR:cpl_process_register: bogus message - Content-Type"
+			LM_ERR("bogus message - Content-Type"
 				"says CPL_SCRIPT, but Content-Disposition something else\n");
 			goto error;
 		}
@@ -828,7 +825,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 				break;
 		}
 		if (param==0) {
-			LOG(L_ERR,"ERROR:cpl_process_register: bogus message - "
+			LM_ERR("bogus message - "
 				"Content-Disposition has no action param\n");
 			goto error;
 		}
@@ -846,7 +843,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 			if (do_script_action( msg, REMOVE_SCRIPT)==-1)
 				goto error;
 		} else {
-			LOG(L_ERR,"ERROR:cpl_process_register: unknown action <%.*s>\n",
+			LM_ERR("unknown action <%.*s>\n",
 				param->body.len,param->body.s);
 			goto error;
 		}
@@ -871,7 +868,7 @@ static int cpl_process_register(struct sip_msg* msg, int no_rpl)
 
 	/* looks if the REGISTER accepts cpl-xml or * */
 	while (*mimes) {
-		DBG("DEBUG: accept mime found %u, %u\n",
+		LM_DBG("accept mime found %u, %u\n",
 			(*mimes)>>16,(*mimes)&0x00ff);
 		if (*mimes==(TYPE_ALL<<16)+SUBTYPE_ALL ||
 		*mimes==(TYPE_APPLICATION<<16)+SUBTYPE_CPLXML )

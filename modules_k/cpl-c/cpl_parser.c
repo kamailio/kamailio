@@ -67,7 +67,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 #define check_overflow(_p_,_offset_,_end_,_error_) \
 	do{\
 		if ((_p_)+(_offset_)>=(_end_)) { \
-			LOG(L_ERR,"ERROR:cpl-c:%s:%d: overflow -> buffer to small\n",\
+			LM_ERR("%s:%d: overflow -> buffer to small\n",\
 				__FILE__,__LINE__);\
 			goto _error_;\
 		}\
@@ -116,7 +116,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 		/* remove all spaces from begin and end */\
 		trimlr( (_val_) );\
 		if ((_val_).len==0) {\
-			LOG(L_ERR,"ERROR:cpl_c:%s:%d: attribute <%s> has an "\
+			LM_ERR("%s:%d: attribute <%s> has an "\
 				"empty value\n",__FILE__,__LINE__,(_attr_name_));\
 			goto _error_;\
 		}\
@@ -162,7 +162,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 			c = hex2int(url[1]);
 			foo = hex2int(url[2]);
 			if (c==-1 || foo==-1) {
-				LOG(L_ERR, "ERROR:cpl_c:decode_mail_url: non-ASCII escaped "
+				LM_ERR("non-ASCII escaped "
 					"character in mail url [%.*s]\n", 3, url);
 				goto error;
 			}
@@ -180,7 +180,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 				switch (status) {
 					case EMAIL_TO:
 						if (*len==0) {
-							LOG(L_ERR,"ERROR:cpl_c:decode_mail_url: empty TO "
+							LM_ERR("empty TO "
 								"address found in MAIL node!\n");
 							goto error;
 						}
@@ -195,7 +195,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 			case '=':
 				switch (status) {
 					case EMAIL_HDR_NAME:
-						DBG("DEBUG:cpl_c:decode_mail_url: hdr [%.*s] found\n",
+						LM_DBG("hdr [%.*s] found\n",
 							hdr_len,buf);
 						if ( hdr_len==BODY_EMAILHDR_LEN &&
 						strncasecmp(buf,BODY_EMAILHDR_STR,hdr_len)==0 ) {
@@ -208,8 +208,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 							set_attr_type( p, SUBJECT_ATTR, p_end, error);
 							max_len = MAX_EMAIL_SUBJECT_SIZE;
 						} else {
-							DBG("DEBUG:cpl_c:decode_mail_url: unknown hdr ->"
-								" ignoring\n");
+							LM_DBG("unknown hdr -> ignoring\n");
 							status = EMAIL_UNKNOWN_HDR_BODY;
 							break;
 						}
@@ -238,7 +237,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 				switch (status) {
 					case EMAIL_TO:
 						if (*len==0) {
-							LOG(L_ERR,"ERROR:cpl_c:decode_mail_url: empty TO "
+							LM_ERR("empty TO "
 								"address found in MAIL node!\n");
 							goto error;
 						}
@@ -257,7 +256,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 						*(p++) = c;
 						if (*len==URL_MAILTO_LEN &&
 						!strncasecmp(p-(*len),URL_MAILTO_STR,(*len))) {
-							DBG("DEBUG:cpl_c:decode_mail_url: MAILTO: found at"
+							LM_DBG("MAILTO: found at"
 								" the beginning of TO -> removed\n");
 							p -= (*len);
 							*len = 0;
@@ -281,7 +280,7 @@ static inline char *decode_mail_url(char *p, char *p_end, char *url,
 
 	return p;
 parse_error:
-	LOG(L_ERR,"ERROR:cpl_c:decode_mail_url: unexpected char [%c] in state %d"
+	LM_ERR("unexpected char [%c] in state %d"
 		" in email url \n",*url,status);
 error:
 	return 0;
@@ -316,7 +315,7 @@ static inline int encode_address_attr(xmlNodePtr  node, char *node_ptr, char *bu
 				set_attr_type(p, SUBDOMAIN_OF_ATTR, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_address_attr: unknown attribute "
+				LM_ERR("unknown attribute "
 					"<%s>\n",attr->name);
 				goto error;
 		}
@@ -364,8 +363,8 @@ static inline int encode_address_switch_attr(xmlNodePtr node, char *node_ptr,
 				else if (!val.s[6])
 					append_short_attr(p, ORIGIN_VAL, buf_end, error);
 				else {
-					LOG(L_ERR,"ERROR:cpl_c:encode_address_switch_attr: unknown"
-					" value <%s> for FIELD attr\n",val.s);
+					LM_ERR("unknown"
+						" value <%s> for FIELD attr\n",val.s);
 					goto error;
 				};
 				break;
@@ -391,14 +390,12 @@ static inline int encode_address_switch_attr(xmlNodePtr node, char *node_ptr,
 						/*append_short_attr(p, ADDRESS_TYPE_VAL, buf_end,error);
 						break;*/  /* NOT YET SUPPORTED BY INTERPRETER */
 					default:
-						LOG(L_ERR,"ERROR:cpl_c:encode_address_switch_attr: "
-							"unknown value <%s> for SUBFIELD attr\n",val.s);
+						LM_ERR("unknown value <%s> for SUBFIELD attr\n",val.s);
 						goto error;
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_address_switch_attr: unknown"
-					" attribute <%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 	}
@@ -430,7 +427,7 @@ static inline int encode_lang_attr(xmlNodePtr  node, char *node_ptr, char *buf_e
 	FOR_ALL_ATTR(node,attr) {
 		/* there is only one attribute -> MATCHES */
 		if (attr->name[0]!='M' && attr->name[0]!='m') {
-			LOG(L_ERR,"ERROR:cpl_c:encode_lang_attr: unknown attribute "
+			LM_ERR("unknown attribute "
 				"<%s>\n",attr->name);
 			goto error;
 		}
@@ -456,7 +453,7 @@ static inline int encode_lang_attr(xmlNodePtr  node, char *node_ptr, char *buf_e
 					buf_end, error );
 			} else goto lang_error;
 			(*nr_attr)++;
-			/*DBG("----> language tag=%d; %d [%.*s]\n",*(p-1),
+			/*LM_DBG("----> language tag=%d; %d [%.*s]\n",*(p-1),
 				val.len,val.len,end-val.len);*/
 			val.s = end-val.len;
 			append_str_attr(p, val, buf_end, error);
@@ -467,8 +464,7 @@ static inline int encode_lang_attr(xmlNodePtr  node, char *node_ptr, char *buf_e
 
 	return p-p_orig;
 lang_error:
-	LOG(L_ERR,"ERROR:cpl-c:encode_lang_attr: bad value for language_tag <%s>\n",
-		val_bk);
+	LM_ERR("bad value for language_tag <%s>\n",val_bk);
 error:
 	return -1;
 }
@@ -504,8 +500,7 @@ static inline int encode_priority_attr(xmlNodePtr  node, char *node_ptr, char *b
 				set_attr_type(p, EQUAL_ATTR, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_priority_attr: unknown attribute "
-					"<%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 		/* attribute's encoded value */
@@ -557,8 +552,7 @@ static inline int encode_string_switch_attr(xmlNodePtr  node, char *node_ptr,
 		(*nr_attr)++;
 		/* there is only one attribute -> MATCHES */
 		if (attr->name[0]!='F' && attr->name[0]!='f') {
-			LOG(L_ERR,"ERROR:cpl_c:encode_string_switch_attr: unknown "
-				"attribute <%s>\n",attr->name);
+			LM_ERR("unknown attribute <%s>\n",attr->name);
 			goto error;
 		}
 		set_attr_type(p, FIELD_ATTR, buf_end, error);
@@ -578,7 +572,7 @@ static inline int encode_string_switch_attr(xmlNodePtr  node, char *node_ptr,
 				append_short_attr(p, DISPLAY_VAL, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_string_switch_attr: unknown "
+				LM_ERR("unknown "
 					"value <%s> for FIELD\n",attr->name);
 				goto error;
 		}
@@ -616,7 +610,7 @@ static inline int encode_string_attr(xmlNodePtr  node, char *node_ptr, char *buf
 				set_attr_type(p, CONTAINS_ATTR, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_string_attr: unknown "
+				LM_ERR("unknown "
 					"attribute <%s>\n",attr->name);
 				goto error;
 		}
@@ -666,8 +660,7 @@ static inline int encode_time_switch_attr(xmlNodePtr  node, char *node_ptr,
 				 * use it at all ;-) */
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_time_switch_attr: unknown "
-					"attribute <%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 	}
@@ -763,8 +756,7 @@ static inline int encode_time_attr(xmlNodePtr  node, char *node_ptr,
 				set_attr_type(p, BYWEEKNO_ATTR, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_time_attr: unknown "
-					"attribute <%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 		/* attribute's encoded value */
@@ -803,7 +795,7 @@ static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
 			/* this param will not be copied, since it has only one value ;-)*/
 			if ( val.len!=SOURCE_REG_STR_LEN ||
 			strncasecmp( val.s, SOURCE_REG_STR, val.len) ) {
-				LOG(L_ERR,"ERROR:cpl_c:encode_lookup_attr: unsupported value"
+				LM_ERR("unsupported value"
 					" <%.*s> in SOURCE param\n",val.len,val.s);
 				goto error;
 			}
@@ -815,16 +807,14 @@ static inline int encode_lookup_attr(xmlNodePtr  node, char *node_ptr,
 			else if ( val.len==2 && !strncasecmp(val.s,"no",2) )
 				append_short_attr(p, NO_VAL, buf_end, error);
 			else {
-				LOG(L_ERR,"ERROR:cpl_c:encode_lookup_attr: unknown value "
+				LM_ERR("unknown value "
 					"<%.*s> for attribute CLEAR\n",val.len,val.s);
 				goto error;
 			}
 		} else if ( !strcasecmp((const char*)attr->name,"timeout") ) {
-			LOG(L_WARN,"WARNING:cpl_c:encode_lookup_attr: unsupported param "
-				"TIMEOUT; skipping\n");
+			LM_WARN("unsupported param TIMEOUT; skipping\n");
 		} else {
-			LOG(L_ERR,"ERROR:cpl_c:encode_lookup_attr: unknown attribute "
-				"<%s>\n",attr->name);
+			LM_ERR("unknown attribute <%s>\n",attr->name);
 			goto error;
 		}
 	}
@@ -866,8 +856,7 @@ static inline int encode_location_attr(xmlNodePtr  node, char *node_ptr,
 				/* check if it's a valid SIP URL -> just call
 				 * parse uri function and see if returns error ;-) */
 				if (parse_uri( val.s, val.len, &uri)!=0) {
-					LOG(L_ERR,"ERROR:cpl-c:encrypt_location_attr: <%s> is "
-						"not a valid SIP URL\n",val.s);
+					LM_ERR("<%s> is not a valid SIP URL\n",val.s);
 					goto error;
 				}
 				val.len++; /*copy also the \0 */
@@ -893,16 +882,14 @@ static inline int encode_location_attr(xmlNodePtr  node, char *node_ptr,
 					append_short_attr(p, NO_VAL, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: unknown attribute "
-					"<%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 	}
 
 	return p-p_orig;
 prio_error:
-	LOG(L_ERR,"ERROR:cpl_c:encode_location_attr: invalid priority <%s>\n",
-		val.s);
+	LM_ERR("invalid priority <%s>\n",val.s);
 error:
 	return -1;
 }
@@ -934,8 +921,7 @@ static inline int encode_rmvloc_attr(xmlNodePtr  node, char *node_ptr, char *buf
 				/* check if it's a valid SIP URL -> just call
 				 * parse uri function and see if returns error ;-) */
 				if (parse_uri( val.s, val.len, &uri)!=0) {
-					LOG(L_ERR,"ERROR:cpl-c:encrypt_rmvloc_attr: <%s> is "
-						"not a valid SIP URL\n",val.s);
+					LM_ERR("<%s> is not a valid SIP URL\n",val.s);
 					goto error;
 				}
 				val.len++; /*copy also the \0 */
@@ -947,8 +933,7 @@ static inline int encode_rmvloc_attr(xmlNodePtr  node, char *node_ptr, char *buf
 				 * do the same ;-) */
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_rmvloc_attr: unknown attribute "
-					"<%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 	}
@@ -990,15 +975,15 @@ static inline int encode_proxy_attr(xmlNodePtr  node, char *node_ptr,
 				else if (val.s[0]=='n' || val.s[0]=='N')
 					append_short_attr(p, NO_VAL, buf_end, error);
 				else {
-					LOG(L_ERR,"ERROR:cpl_c:encode_proxy_attr: unknown value "
-					"<%s> for attribute RECURSE\n",val.s);
+					LM_ERR("unknown value "
+						"<%s> for attribute RECURSE\n",val.s);
 					goto error;
 				}
 				break;
 			case 'T': case 't':
 				set_attr_type(p, TIMEOUT_ATTR, buf_end, error);
 				if (str2int(&val,&nr)==-1) {
-					LOG(L_ERR,"ERROR:cpl_c:encode_proxy_attr: bad value <%.*s>"
+					LM_ERR("bad value <%.*s>"
 						" for attribute TIMEOUT\n",val.len,val.s);
 					goto error;
 				}
@@ -1017,14 +1002,13 @@ static inline int encode_proxy_attr(xmlNodePtr  node, char *node_ptr,
 						append_short_attr(p, FIRSTONLY_VAL, buf_end, error);
 						break;
 					default:
-						LOG(L_ERR,"ERROR:cpl_c:encode_proxy_attr: unknown "
+						LM_ERR("unknown "
 							"value <%s> for attribute ORDERING\n",val.s);
 						goto error;
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_proxy_attr: unknown attribute "
-					"<%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 	}
@@ -1079,21 +1063,18 @@ static inline int encode_reject_attr(xmlNodePtr  node, char *node_ptr, char *buf
 					!strncasecmp(val.s,REJECT_STR,val.len)) {
 						append_short_attr(p, REJECT_VAL, buf_end, error);
 					} else {
-						LOG(L_ERR,"ERROR:cpl_c:encode_priority_attr: bad "
-							"val. <%s> for STATUS\n",val.s);
+						LM_ERR("bad val. <%s> for STATUS\n",val.s);
 						goto error;
 					}
 				} else if (nr<400 || nr>700) {
-					LOG(L_ERR,"ERROR:cpl_c:encode_priority_attr: bad "
-						"code <%d> for STATUS\n",nr);
+					LM_ERR("bad code <%d> for STATUS\n",nr);
 					goto error;
 				} else {
 					append_short_attr(p, nr, buf_end, error);
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_priority_attr: unknown attribute "
-					"<%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 				goto error;
 		}
 	}
@@ -1131,13 +1112,11 @@ static inline int encode_redirect_attr(xmlNodePtr  node, char *node_ptr, char *b
 			else if (val.s[0]=='n' || val.s[0]=='N')
 				append_short_attr( p, NO_VAL, buf_end, error);
 			else {
-				LOG(L_ERR,"ERROR:cpl_c:encode_redirect_attr: bad "
-					"val. <%s> for PERMANENT\n",val.s);
+				LM_ERR("bad val. <%s> for PERMANENT\n",val.s);
 				goto error;
 			}
 		} else {
-			LOG(L_ERR,"ERROR:cpl_c:encode_redirect_attr: unknown attribute "
-				"<%s>\n",attr->name);
+			LM_ERR("unknown attribute <%s>\n",attr->name);
 			goto error;
 		}
 	}
@@ -1178,8 +1157,7 @@ static inline int encode_log_attr(xmlNodePtr  node, char *node_ptr, char *buf_en
 				set_attr_type(p, COMMENT_ATTR, buf_end, error);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:encode_log_attr: unknown attribute "
-					"<%s>\n",attr->name);
+				LM_ERR("unknown attribute <%s>\n",attr->name);
 					goto error;
 		}
 		/* be sure there is a \0 at the end of string */
@@ -1212,8 +1190,7 @@ static inline int encode_mail_attr(xmlNodePtr  node, char *node_ptr, char *buf_e
 	FOR_ALL_ATTR(node,attr) {
 		/* there is only one attribute -> URL */
 		if (attr->name[0]!='u' && attr->name[0]!='U') {
-			LOG(L_ERR,"ERROR:cpl_c:encode_node_attr: unknown attribute "
-					"<%s>\n",attr->name);
+			LM_ERR("unknown attribute <%s>\n",attr->name);
 			goto error;
 		}
 		p = decode_mail_url( p, buf_end,
@@ -1244,13 +1221,12 @@ static inline int encode_subaction_attr(xmlNodePtr  node, char *node_ptr,
 			/* get the value of the attribute */
 			get_attr_val( attr->name , val, error);
 			if ((list = append_to_list(list, node_ptr,val.s))==0) {
-				LOG(L_ERR,"ERROR:cpl_c:encode_subaction_attr: failed to add "
+				LM_ERR("failed to add "
 					"subaction into list -> pkg_malloc failed?\n");
 				goto error;
 			}
 		} else {
-			LOG(L_ERR,"ERROR:cpl_c:encode_subaction_attr: unknown attribute "
-				"<%s>\n",attr->name);
+			LM_ERR("unknown attribute <%s>\n",attr->name);
 			goto error;
 		}
 	}
@@ -1281,15 +1257,14 @@ static inline int encode_sub_attr(xmlNodePtr  node, char *node_ptr, char *buf_en
 		(*nr_attr)++;
 		/* there is only one attribute -> REF */
 		if ( strcasecmp("ref",(char*)attr->name)!=0 ) {
-			LOG(L_ERR,"ERROR:cpl_c:encode_sub_attr: unknown attribute "
-				"<%s>\n",attr->name);
+			LM_ERR("unknown attribute <%s>\n",attr->name);
 			goto error;
 		}
 		set_attr_type(p, REF_ATTR, buf_end, error);
 		/* get the value of the attribute */
 		get_attr_val( attr->name , val, error);
 		if ( (sub_ptr=search_the_list(list, val.s))==0 ) {
-			LOG(L_ERR,"ERROR:cpl_c:encode_sub_attr: unable to find declaration "
+			LM_ERR("unable to find declaration "
 				"of subaction <%s>\n",val.s);
 			goto error;
 		}
@@ -1471,8 +1446,7 @@ int encode_node( xmlNodePtr node, char *p, char *p_end)
 			}
 			break;
 		default:
-			LOG(L_ERR,"ERROR:cpl-c:encode_node: unknown node <%s>\n",
-				node->name);
+			LM_ERR("unknown node <%s>\n",node->name);
 			goto error;
 	}
 
@@ -1525,28 +1499,28 @@ int encodeCPL( str *xml, str *bin, str *log)
 	doc = xmlParseDoc( (unsigned char*)xml->s );
 	if (!doc) {
 		append_log( 1, ERR BAD_XML LF, ERR_LEN+BAD_XML_LEN+LF_LEN);
-		LOG(L_ERR,"ERROR:cpl:encodeCPL:" BAD_XML "\n");
+		LM_ERR( BAD_XML "\n");
 		goto error;
 	}
 
 	/* check the xml against dtd */
 	if (xmlValidateDtd(&cvp, doc, dtd)!=1) {
 		append_log( 1, ERR BAD_CPL LF, ERR_LEN+BAD_CPL_LEN+LF_LEN);
-		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: " BAD_CPL "\n");
+		LM_ERR( BAD_CPL "\n");
 		goto error;
 	}
 
 	cur = xmlDocGetRootElement(doc);
 	if (!cur) {
 		append_log( 1, ERR NULL_CPL LF, ERR_LEN+NULL_CPL_LEN+LF_LEN);
-		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: " NULL_CPL "\n");
+		LM_ERR( NULL_CPL "\n");
 		goto error;
 	}
 
 	bin->len = encode_node( cur, buf, buf+ENCONDING_BUFFER_SIZE);
 	if (bin->len<0) {
 		append_log( 1, ERR ENC_ERR LF, ERR_LEN+ENC_ERR_LEN+LF_LEN);
-		LOG(L_ERR,"ERROR:cpl-c:encodeCPL: " ENC_ERR "\n");
+		LM_ERR( ENC_ERR "\n");
 		goto error;
 	}
 
@@ -1571,7 +1545,7 @@ int init_CPL_parser( char* DTD_filename )
 {
 	dtd = xmlParseDTD( NULL, (unsigned char*)DTD_filename);
 	if (!dtd) {
-		LOG(L_ERR,"ERROR:cpl-c:init_CPL_parser: DTD not parsed successfully\n");
+		LM_ERR("DTD not parsed successfully\n");
 		return -1;
 	}
 	cvp.userData = (void *) stderr;

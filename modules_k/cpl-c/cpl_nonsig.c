@@ -108,17 +108,17 @@ static inline void write_log( struct cpl_cmd *cmd)
 	/* [create+]open the file */
 	fd = open( file, O_CREAT|O_APPEND|O_WRONLY, 0664);
 	if (fd==-1) {
-		LOG(L_ERR,"ERROR:cpl_c:write_log: cannot open file [%s] : %s\n",
+		LM_ERR("cannot open file [%s] : %s\n",
 			file, strerror(errno) );
 		return;
 	}
 	/* get the log */
-	DBG("DEBUG:cpl_c:write_log: logging into [%s]... \n",file);
+	LM_DBG("logging into [%s]... \n",file);
 	/* I'm really not interested in the return code for write ;-) */
 	while ( (ret=writev( fd, wr_vec, 5))==-1 ) {
 		if (errno==EINTR)
 			continue;
-		LOG(L_ERR,"ERROR:cpl_c:write_log: writing to log file [%s] : %s\n",
+		LM_ERR("writing to log file [%s] : %s\n",
 			file, strerror(errno) );
 	}
 	close (fd);
@@ -136,7 +136,7 @@ static inline void send_mail( struct cpl_cmd *cmd)
 	int i;
 
 	if (pipe(pfd) < 0) {
-		LOG(L_ERR,"ERROR:cpl_c:send_mail: pipe failed: %s\n",strerror(errno));
+		LM_ERR("pipe failed: %s\n",strerror(errno));
 		return;
 	}
 
@@ -144,14 +144,14 @@ static inline void send_mail( struct cpl_cmd *cmd)
 	 * rid of one more malloc + copy */
 	if (cmd->s3.len && cmd->s3.s) {
 		if ( (i=write( pfd[1], cmd->s3.s, cmd->s3.len ))!=cmd->s3.len ) {
-			LOG(L_ERR,"ERROR:cpl_c:send_mail: write returned error %s\n",
+			LM_ERR("write returned error %s\n",
 				strerror(errno));
 			goto error;
 		}
 	}
 
 	if ( (pid = fork()) < 0) {
-		LOG(L_ERR,"ERROR:cpl_c:send_mail: fork failed: %s\n",strerror(errno));
+		LM_ERR("fork failed: %s\n",strerror(errno));
 		goto error;
 	} else if (pid==0) {
 		/* child -> close all descriptors excepting pfd[0] */
@@ -169,7 +169,7 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		if (cmd->s2.s && cmd->s2.len) {
 			/* put the subject in this format : <"$subject"\0> */
 			if ( (argv[2]=(char*)pkg_malloc(1+cmd->s2.len+1+1))==0) {
-				LOG(L_ERR,"ERROR:cpl_c:send_mail: cannot get pkg memory\n");
+				LM_ERR("cannot get pkg memory\n");
 				goto child_exit;
 			}
 			argv[2][0] = '\"';
@@ -181,7 +181,7 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		}
 		/* put the TO in <$to\0> format*/
 		if ( (argv[3]=(char*)pkg_malloc(cmd->s1.len+1))==0) {
-			LOG(L_ERR,"ERROR:cpl_c:send_mail: cannot get pkg memory\n");
+			LM_ERR("cannot get pkg memory\n");
 			goto child_exit;
 		}
 		memcpy(argv[3],cmd->s1.s,cmd->s1.len);
@@ -197,12 +197,11 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		/* set an alarm -> sending the email shouldn't take more than 10 sec */
 		alarm(10);
 		/* run the external mailer */
-		DBG("DEBUG:cpl_c:send_mail: new forked process created -> "
+		LM_DBG("new forked process created -> "
 			"doing execv..\n");
 		execv("/usr/bin/mail",argv);
 		/* if we got here means execv exit with error :-( */
-		LOG(L_ERR,"ERROR:cpl_c:send_mail: execv failed! (%s)\n",
-			strerror(errno));
+		LM_ERR("execv failed! (%s)\n",strerror(errno));
 child_exit:
 		_exit(127);
 	}
@@ -228,8 +227,7 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 
 	/* this process will ignore SIGCHLD signal */
 	if (signal( SIGCHLD, SIG_IGN)==SIG_ERR) {
-		LOG(L_ERR,"ERROR:cpl_c:cpl_aux_process: cannot set to IGNORE "
-			"SIGCHLD signal\n");
+		LM_ERR("cannot set to IGNORE SIGCHLD signal\n");
 	}
 
 	/* set the path for logging */
@@ -244,10 +242,10 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 		len = read( cmd_out, &cmd, sizeof(struct cpl_cmd));
 		if (len!=sizeof(struct cpl_cmd)) {
 			if (len>=0) {
-				LOG(L_ERR,"ERROR:cpl_aux_processes: truncated message"
+				LM_ERR("truncated message"
 					" read from pipe! -> discarded\n");
 			} else if (errno!=EAGAIN) {
-				LOG(L_ERR,"ERROR:cpl_aux_process: pipe reading failed: "
+				LM_ERR("pipe reading failed: "
 					" : %s\n",strerror(errno));
 			}
 			sleep(1);
@@ -263,7 +261,7 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 				send_mail( &cmd );
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_aux_process: unknown command (%d) "
+				LM_ERR("unknown command (%d) "
 					"received! -> ignoring\n",cmd.code);
 		} /* end switch*/
 

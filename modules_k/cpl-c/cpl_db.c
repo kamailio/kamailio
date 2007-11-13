@@ -47,14 +47,14 @@ int cpl_db_bind(char* db_url, char *db_table)
 	str table_str; 
 
 	if (bind_dbmod(db_url, &cpl_dbf )) {
-		LOG(L_CRIT, "ERROR:cpl_db_bind: cannot bind to database module! "
+		LM_CRIT("cannot bind to database module! "
 		    "Did you forget to load a database module ?\n");
 		return -1;
 	}
 	
 	/* CPL module uses all database functions */
 	if (!DB_CAPABILITY(cpl_dbf, DB_CAP_ALL)) {
-		LOG(L_CRIT, "ERROR:cpl_db_bind: Database modules does not "
+		LM_CRIT("Database modules does not "
 		    "provide all functions needed by cpl-c module\n");
 		return -1;
 	}
@@ -67,12 +67,13 @@ int cpl_db_bind(char* db_url, char *db_table)
 
 	ver = table_version(&cpl_dbf, db_hdl, &table_str);
 	if (ver < 0) {
-		LOG(L_ERR, "ERROR:cpl_db_init: failed to query table version\n");
+		LM_CRIT("failed to query table version\n");
 		cpl_db_close();
 		return -1;
 	} else if (ver < TABLE_VERSION) {
-		LOG(L_ERR, "ERROR:cpl_db_init: Invalid table version "
-			"(use openser_mysql.sh reinstall)\n");
+		LM_ERR("Invalid table version (%d, required %d)"
+			"(use openser_mysql.sh reinstall)\n",
+			ver, TABLE_VERSION);
 		cpl_db_close();
 		return -1;
 	}
@@ -86,18 +87,17 @@ int cpl_db_bind(char* db_url, char *db_table)
 int cpl_db_init(char* db_url, char* db_table)
 {
 	if (cpl_dbf.init==0){
-		LOG(L_CRIT, "BUG: cpl_db_init: unbound database module\n");
+		LM_CRIT("BUG - unbound database module\n");
 		return -1;
 	}
 	db_hdl=cpl_dbf.init(db_url);
 	if (db_hdl==0){
-		LOG(L_CRIT,"ERROR:cpl_db_init: cannot initialize database "
-			"connection\n");
+		LM_CRIT("cannot initialize database connection\n");
 		return -1;
 	}
 
 	if (cpl_dbf.use_table(db_hdl, db_table)<0) {
-		LOG(L_CRIT,"ERROR:cpl_db_init: cannot select table \"%s\"\n",db_table);
+		LM_CRIT("cannot select table \"%s\"\n",db_table);
 		cpl_db_close();
 		return -1;
 	}
@@ -132,7 +132,7 @@ int get_user_script(str *username, str *domain, str *script, const char* key)
 	keys_cmp[1] = cpl_domain_col;
 	keys_ret[0] = key;
 
-	DBG("DEBUG:get_user_script: fetching script for user <%.*s>\n",
+	LM_DBG("fetching script for user <%.*s>\n",
 		username->len,username->s);
 	vals[0].type = DB_STR;
 	vals[0].nul  = 0;
@@ -147,28 +147,28 @@ int get_user_script(str *username, str *domain, str *script, const char* key)
 
 	if (cpl_dbf.query(db_hdl, keys_cmp, 0, vals, keys_ret, n, 1, NULL, &res)
 			< 0){
-		LOG(L_ERR,"ERROR:cpl-c:get_user_script: db_query failed\n");
+		LM_ERR("db_query failed\n");
 		goto error;
 	}
 
 	if (res->n==0) {
-		DBG("DEBUG:get_user_script: user <%.*s> not found in db -> probably "
+		LM_DBG("user <%.*s> not found in db -> probably "
 			"he has no script\n",username->len, username->s);
 		script->s = 0;
 		script->len = 0;
 	} else {
 		if (res->rows[0].values[0].nul) {
-			DBG("DEBUG:get_user_script: user <%.*s> has a NULL script\n",
+			LM_DBG("user <%.*s> has a NULL script\n",
 				username->len, username->s);
 			script->s = 0;
 			script->len = 0;
 		} else {
-			DBG("DEBUG:get_user_script: we got the script len=%d\n",
+			LM_DBG("we got the script len=%d\n",
 				res->rows[0].values[0].val.blob_val.len);
 			script->len = res->rows[0].values[0].val.blob_val.len;
 			script->s = shm_malloc( script->len );
 			if (!script->s) {
-				LOG(L_ERR,"ERROR:cpl-c:get_user_script: no free sh_mem\n");
+				LM_ERR("no free sh_mem\n");
 				goto error;
 			}
 			memcpy( script->s, res->rows[0].values[0].val.blob_val.s,
@@ -214,11 +214,11 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 		n++;
 	}
 	if (cpl_dbf.query(db_hdl, keys+2, 0, vals+2, keys+2, n, 1, NULL, &res)<0) {
-		LOG(L_ERR,"ERROR:cpl:write_to_db: db_query failed\n");
+		LM_ERR("db_query failed\n");
 		goto error;
 	}
 	if (res->n>1) {
-		LOG(L_ERR,"ERROR:cpl:write_to_db: Inconsistent CPL database:"
+		LM_ERR("Inconsistent CPL database:"
 			" %d records for user %.*s\n",res->n,username->len,username->s);
 		goto error;
 	}
@@ -239,17 +239,17 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 	n++;
 	/* insert or update ? */
 	if (res->n==0) {
-		DBG("DEBUG:cpl:write_to_db:No user %.*s in CPL database->insert\n",
+		LM_DBG("no user %.*s in CPL database->insert\n",
 			username->len,username->s);
 		if (cpl_dbf.insert(db_hdl, keys, vals, n) < 0) {
-			LOG(L_ERR,"ERROR:cpl:write_to_db: insert failed !\n");
+			LM_ERR("insert failed !\n");
 			goto error;
 		}
 	} else {
-		DBG("DEBUG:cpl:write_to_db:User %.*s already in CPL database ->"
+		LM_DBG("user %.*s already in CPL database ->"
 			" update\n",username->len,username->s);
 		if (cpl_dbf.update(db_hdl, keys+2, 0, vals+2, keys, vals, n-2, 2) < 0) {
-			LOG(L_ERR,"ERROR:cpl:write_to_db: update failed !\n");
+			LM_ERR("update failed !\n");
 			goto error;
 		}
 	}
@@ -288,7 +288,7 @@ int rmv_from_db(str *username, str *domain)
 	}
 
 	if (cpl_dbf.delete(db_hdl, keys, NULL, vals, n) < 0) {
-		LOG(L_ERR,"ERROR:cpl-c:rmv_from_db: error when deleting script for "
+		LM_ERR("failed to delete script for "
 			"user \"%.*s\"\n",username->len,username->s);
 		return -1;
 	}

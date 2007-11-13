@@ -51,7 +51,7 @@ void append_log( int nr, ...)
 
 
 	if ( nr_logs+nr>MAX_LOG_NR ) {
-		LOG(L_ERR,"ERROR:cpl-c:append_log: no more space fr logging\n");
+		LM_ERR("no more space for logging\n");
 		return;
 	}
 
@@ -86,7 +86,7 @@ void compile_logs( str *log)
 	/* get a buffer */
 	log->s = (char*)pkg_malloc(log->len);
 	if (log->s==0) {
-		LOG(L_ERR,"ERROR:cpl-c:compile_logs: no more pkg mem\n");
+		LM_ERR("no more pkg mem\n");
 		log->len = 0;
 		return;
 	}
