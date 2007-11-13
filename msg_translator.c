@@ -301,7 +301,7 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 	*returned_len=clen;
 	return buf;
 error_overflow:
-	LOG(L_ERR, "ERROR: warning_builder: buffer size exceeded\n");
+	LOG(L_NOTICE, "NOTICE: warning_builder: buffer size exceeded (probably too long URI)\n");
 	*returned_len=0;
 	return 0;
 }
