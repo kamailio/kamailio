@@ -906,14 +906,27 @@ domain register {
 +----+---------+-------------+--------+------+-------+---------------+
 | id | carrier | scan_prefix | domain | prob | strip | rewrite_host  |
 +----+---------+-------------+--------+------+-------+---------------+
-|  1 |       2 | 49          | 0      |  0.5 | 0     | host1.local   |
-|  2 |       2 | 49          | 0      |  0.5 | 0     | host2.local   |
-|  3 |       1 |             | 0      |    1 | 0     | default.local |
+| 1  |       1 | 49          | 0      |  0.5 | 0     | de-1.carrier1 |
+| 2  |       1 | 49          | 0      |  0.5 | 0     | de-2.carrier1 |
+| 3  |       1 |             | 0      |    1 | 0     | gw.carrier1   |
+| 5  |       1 | 49          | 1      |    1 | 0     | gw.carrier1   |
+| 6  |       2 | 49          | 0      |  0.5 | 0     | de-1.carrier2 |
+| 7  |       2 | 49          | 0      |  0.5 | 0     | de-2.carrier2 |
+| 8  |       2 |             | 0      |    1 | 0     | gw.carrier2   |
+| 9  |       2 | 49          | 1      |    1 | 0     | gw.carrier2   |
+| 10 |       3 | 49          | 0      |    1 | 0     | de-gw.default |
+| 11 |       3 |             | 0      |    1 | 0     | gw.default    |
 +----+---------+-------------+--------+------+-------+---------------+
 ...
 
-   This table contains two routes to two hosts for the "49"
-   prefix for the carrier 2, and a default route over carrier 1.
+   This table contains two routes to two gateways for the "49"
+   prefix, and a default route for other prefixes over carrier 2
+   and carrier 1. The gateways for the default carrier will be
+   used for functions that don't support the user specific
+   carrier lookup. The routing rules for carrier 1 and carrier 2
+   for the "49" prefix contains a additional rule with the domain
+   1, that can be used for example as fallback if the gateways in
+   domain 0 are not reachable.
 
    Example 1-33. Example database content - route_tree table
 ...
