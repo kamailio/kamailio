@@ -619,7 +619,15 @@ table_p bdblib_create_table(database_p _db, str *_s)
 		LM_ERR("FAILED to load METADATA COLS in table: %s.\n", tblname);
 		goto error;
 	}
-
+	
+	/*initialize columns default values from metadata*/
+	rc = load_metadata_defaults(tp);
+	if(rc!=0)
+	{
+		LM_ERR("FAILED to load METADATA DEFAULTS in table: %s.\n", tblname);
+		goto error;
+	}
+	
 	rc = load_metadata_keys(tp);
 	if(rc!=0)
 	{
@@ -937,6 +945,81 @@ int load_metadata_logflags(table_p _tp)
 	return 0;
 }
 
+int load_metadata_defaults(table_p _tp)
+{
+	int ret,n,len;
+	char dbuf[MAX_ROW_SIZE];
+	char *s = NULL;
+	char cv[64];
+	DB *db = NULL;
+	DBT key, data;
+	column_p col;
+	ret = n = len = 0;
+	
+	if(!_tp || !_tp->db)
+		return -1;
+	
+	db = _tp->db;
+	memset(&key, 0, sizeof(DBT));
+	memset(&data, 0, sizeof(DBT));
+	memset(dbuf, 0, MAX_ROW_SIZE);
+
+	key.data = METADATA_DEFAULTS;
+	key.size = strlen(METADATA_DEFAULTS);
+
+	/*memory for the result*/
+	data.data = dbuf;
+	data.ulen = MAX_ROW_SIZE;
+	data.flags = DB_DBT_USERMEM;
+	
+	if ((ret = db->get(db, NULL, &key, &data, 0)) != 0) 
+	{
+#ifdef BDB_EXTRA_DEBUG
+		LM_DBG("NO DEFAULTS ; SETTING ALL columns to NULL! \n" );
+#endif
+
+		/*no defaults in DB; make some up.*/
+		for(n=0; n<_tp->ncols; n++)
+		{
+			col = _tp->colp[n];
+			if( col ) 
+			{	/*set all columns default value to 'NULL' */
+				len = strlen("NULL");
+				col->dv.s = (char*)pkg_malloc(len * sizeof(char));
+				memcpy(col->dv.s, "NULL", len);
+				col->dv.len = len;
+			}
+		}
+		return 0;
+	}
+	
+	/* use the defaults provided*/
+	s = strtok(dbuf, DELIM);
+	while(s!=NULL && n< _tp->ncols) 
+	{	ret = sscanf(s,"%s", cv);
+		if(ret != 1) return -1;
+		col = _tp->colp[n];
+		if( col ) 
+		{	/*set column default*/
+			len = strlen(s);
+			col->dv.s = (char*)pkg_malloc(len * sizeof(char));
+			memcpy(col->dv.s, cv, len);
+			col->dv.len = len;
+#ifdef BDB_EXTRA_DEBUG
+		LM_DBG("COLUMN DEFAULT is %.*s for column[%.*s] \n"
+			, col->dv.len , ZSW(col->dv.s)
+			, col->name.len , ZSW(col->name.s)
+			);
+#endif
+
+		}
+		n++;
+		s=strtok(NULL, DELIM);
+	}
+	
+	return 0;
+}
+
 
 /*creates a composite key _k of length _klen from n values of _v;
   provide your own initialized memory for target _k and _klen;
@@ -1086,23 +1169,24 @@ int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v
 		}
 
 		/*
-		 NO KEY provided; append a 'NULL' value since i
-		 is considered a key according to our schema.
+		 NO KEY provided; use the column default value (dv)
+		     i.e _tp->colp[i]->dv
 		*/
 #ifdef BDB_EXTRA_DEBUG
-		LM_DBG("Missing KEY[%i]: %.*s.%.*s \n", i
+		LM_DBG("Missing KEY[%i]: %.*s.%.*s using default [%.*s] \n", i
 			, _tp->name.len , ZSW(_tp->name.s) 
 			, _tp->colp[i]->name.len, ZSW(_tp->colp[i]->name.s)
+			, _tp->colp[i]->dv.len , ZSW(_tp->colp[i]->dv.s)
 		   );
 #endif
-		len = strlen(cNULL);
+		len = _tp->colp[i]->dv.len;
 		sum += len;
 		if(sum > total)
 		{	LM_ERR("Destination buffer too short for subval %s\n",cNULL);
 			return -5;
 		}
 		
-		strncpy(p, cNULL, len);
+		strncpy(p, _tp->colp[i]->dv.s, len);
 		p += len;
 		*_klen = sum;
 		
@@ -1195,6 +1279,7 @@ int tbl_free(table_p _tp)
 	for(i=0;i<_tp->ncols;i++)
 	{	if(_tp->colp[i])
 		{	pkg_free(_tp->colp[i]->name.s);
+			pkg_free(_tp->colp[i]->dv.s);
 			pkg_free(_tp->colp[i]);
 		}
 	}

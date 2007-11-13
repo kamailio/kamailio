@@ -54,6 +54,7 @@
 #define METADATA_KEY "METADATA_KEY"
 #define METADATA_READONLY "METADATA_READONLY"
 #define METADATA_LOGFLAGS "METADATA_LOGFLAGS"
+#define METADATA_DEFAULTS "METADATA_DEFAULTS"
 
 /*journal logging flag masks */
 #define JLOG_NONE   0
@@ -79,6 +80,7 @@ typedef struct _row
 typedef struct _column
 {
 	str name;
+	str dv;     /* default value */
 	int type;
 	int flag;
 } column_t, *column_p;
@@ -142,6 +144,7 @@ int load_metadata_columns(table_p _tp);
 int load_metadata_keys(table_p _tp);
 int load_metadata_readonly(table_p _tp);
 int load_metadata_logflags(table_p _tp);
+int load_metadata_defaults(table_p _tp);
 
 int bdblib_valtochar(table_p _tp, int* _lres, char* _k, int* _klen, db_val_t* _v, int _n, int _ko);
 
