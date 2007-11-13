@@ -298,7 +298,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 	
 	# Creates STANDARD tables from plain-text files in DUMP_DIR
 	for TABLE in $STANDARD_TABLES; do
-	    if [ -f $1/$TABLE.txt ] ; then
+	    if [ -s $1/$TABLE.txt ] ; then
 		    mdbg "Importing standard table: $TABLE"
 		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
 		    
@@ -316,7 +316,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 
 	# Creates PRESENCE tables from plain-text files in DUMP_DIR
 	for TABLE in $PRESENCE_TABLES; do
-	    if [ -f $1/$TABLE.txt ] ; then
+	    if [ -s $1/$TABLE.txt ] ; then
 		    mdbg "Importing presence table: $TABLE"
 		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
 		    
@@ -332,7 +332,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 
 	# Creates EXTRA tables from plain-text files in DUMP_DIR
 	for TABLE in $EXTRA_TABLES; do
-	    if [ -f $1/$TABLE.txt ] ; then
+	    if [ -s $1/$TABLE.txt ] ; then
 		    mdbg "Importing extra table: $TABLE"
 		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
 		    
