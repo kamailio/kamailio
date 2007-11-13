@@ -331,8 +331,6 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	else
 		LM_NOTICE("tree %.*s has id %i\n", carrier_name.len, carrier_name.s, index);
 	
-	pkg_free(carrier_name.s);
-
 	ruser.s = msg->parsed_uri.user.s;
 	ruser.len = msg->parsed_uri.user.len;
 	ruri.s = msg->parsed_uri.user.s;
@@ -493,7 +491,7 @@ int rewrite_branches(struct sip_msg * msg, char * domain_param, char * hash) {
         */
 	unsigned int idx;
 
-        for( idx=0; (uri.s = get_branch(idx, &uri.len, &q, &dst_uri, NULL, NULL, &socket))!=0; idx++) {
+	for( idx=0; (uri.s = get_branch(idx, &uri.len, &q, &dst_uri, NULL, NULL, &socket))!=0; idx++) {
 		LM_DBG("got branch: uri: %.*s, dest uri: %.*s\n", uri.len, uri.s, dst_uri.len, dst_uri.s);
 		extract_localpart(&uri, &user);
 		extract_localpart(&uri, &old_uri);
