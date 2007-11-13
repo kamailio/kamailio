@@ -26,7 +26,7 @@
 #include "../../db/db.h"
 
 
-int cpl_db_bind(char* db_url);
+int cpl_db_bind(char* db_url, char* db_table);
 int cpl_db_init(char* db_url, char* db_table);
 void cpl_db_close();
 

@@ -318,7 +318,7 @@ static int cpl_init(void)
 	}
 
 	/* bind to the mysql module */
-	if (cpl_db_bind(DB_URL)<0) goto error;
+	if (cpl_db_bind(DB_URL,DB_TABLE)<0) goto error;
 
 	/* load TM API */
 	if (load_tm_api(&cpl_fct.tmb)!=0) {

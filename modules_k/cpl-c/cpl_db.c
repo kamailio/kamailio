@@ -41,21 +41,43 @@ char *cpl_xml_col  = "cpl_xml";
 char *cpl_bin_col  = "cpl_bin";
 
 
-int cpl_db_bind(char* db_url)
+int cpl_db_bind(char* db_url, char *db_table)
 {
+	int ver;
+	str table_str; 
+
 	if (bind_dbmod(db_url, &cpl_dbf )) {
 		LOG(L_CRIT, "ERROR:cpl_db_bind: cannot bind to database module! "
 		    "Did you forget to load a database module ?\n");
 		return -1;
 	}
 	
-	     /* CPL module uses all database functions */
+	/* CPL module uses all database functions */
 	if (!DB_CAPABILITY(cpl_dbf, DB_CAP_ALL)) {
 		LOG(L_CRIT, "ERROR:cpl_db_bind: Database modules does not "
 		    "provide all functions needed by cpl-c module\n");
 		return -1;
 	}
 
+	table_str.s = (char*)db_table;
+	table_str.len = strlen(table_str.s);
+
+	if ( cpl_db_init( db_url, db_table) )
+		return -1;
+
+	ver = table_version(&cpl_dbf, db_hdl, &table_str);
+	if (ver < 0) {
+		LOG(L_ERR, "ERROR:cpl_db_init: failed to query table version\n");
+		cpl_db_close();
+		return -1;
+	} else if (ver < TABLE_VERSION) {
+		LOG(L_ERR, "ERROR:cpl_db_init: Invalid table version "
+			"(use openser_mysql.sh reinstall)\n");
+		cpl_db_close();
+		return -1;
+	}
+
+	cpl_db_close();
 	return 0;
 }
 
@@ -71,35 +93,16 @@ int cpl_db_init(char* db_url, char* db_table)
 	if (db_hdl==0){
 		LOG(L_CRIT,"ERROR:cpl_db_init: cannot initialize database "
 			"connection\n");
-		goto error;
+		return -1;
 	}
+
 	if (cpl_dbf.use_table(db_hdl, db_table)<0) {
 		LOG(L_CRIT,"ERROR:cpl_db_init: cannot select table \"%s\"\n",db_table);
-		goto error;
-	}
-
-	int ver;
-	str table_str; 
-	table_str.s = (char*)db_table;
-	table_str.len = strlen(table_str.s);
-
-	ver = table_version(&cpl_dbf, db_hdl, &table_str);
-	if (ver < 0) {
-		LOG(L_ERR, "ERROR:cpl_db_init: failed to query table version\n");
-		goto error;
-	} else if (ver < TABLE_VERSION) {
-		LOG(L_ERR, "ERROR:cpl_db_init: Invalid table version "
-			"(use openser_mysql.sh reinstall)\n");
-		goto error;
+		cpl_db_close();
+		return -1;
 	}
 
 	return 0;
-error:
-	if (db_hdl){
-		cpl_dbf.close(db_hdl);
-		db_hdl=0;
-	}
-	return -1;
 }
 
 
