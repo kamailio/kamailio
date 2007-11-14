@@ -356,7 +356,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			if(hentity->desired_expires== 0)
 				subs.expires= -1;
 			else
-			if((hentity->desired_expires- (int)time(NULL))<= 0)
+			if(hentity->desired_expires< (int)time(NULL))
 				subs.expires= 0;
 			else
 				subs.expires= hentity->desired_expires- (int)time(NULL)+ 3;
