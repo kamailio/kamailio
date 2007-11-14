@@ -483,10 +483,11 @@ void destroy_rewrite_data(struct rewrite_data *data) {
 
 static int carrier_tree_fixup(struct rewrite_data * rd){
 	int i;
+	str tmp = str_init(default_tree);
 	rd->default_carrier_index = -1;
 	for(i=0; i<rd->tree_num; i++){
 		if(rd->carriers[i]){
-			if(strcmp(rd->carriers[i]->name.s, default_tree) == 0){
+			if(str_strcmp(&(rd->carriers[i]->name), &tmp) == 0){
 				rd->default_carrier_index = i;
 			}
 		}
