@@ -56,7 +56,7 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	str ctype;
 
 	str_hdr =(str*)pkg_malloc(sizeof(str));
-	if(!str_hdr)
+	if(str_hdr== NULL)
 	{
 		LM_ERR("no more memory\n");
 		return NULL;
@@ -66,8 +66,14 @@ str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 	str_hdr->s = buf;
 	str_hdr->len= 0;
 
-	memcpy(str_hdr->s ,"Event: ", 7);
-	str_hdr->len = 7;
+	memcpy(str_hdr->s ,"Max-Forwards: ", 14);
+	str_hdr->len = 14;
+	str_hdr->len+= sprintf(str_hdr->s+ str_hdr->len,"%d", MAX_FORWARD);
+	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+	str_hdr->len += CRLF_LEN;
+
+	memcpy(str_hdr->s+ str_hdr->len ,"Event: ", 7);
+	str_hdr->len+= 7;
 	memcpy(str_hdr->s+ str_hdr->len, ev->name.s, ev->name.len);
 	str_hdr->len+= ev->name.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
@@ -187,8 +193,15 @@ void publ_cback_func(struct cell *t, int type, struct tmcb_params *ps)
 				memset(&publ, 0, sizeof(publ_info_t));
 				publ.pres_uri= hentity->pres_uri; 
 				publ.body= hentity->body;
-				publ.expires= (hentity->desired_expires>0)?
-					hentity->desired_expires- (int)time(NULL)+ 10:-1;
+				
+				if(hentity->desired_expires== 0)
+					publ.expires= -1;
+				else
+				if(hentity->desired_expires<= (int)time(NULL))
+					publ.expires= 0;
+				else
+					publ.expires= hentity->desired_expires- (int)time(NULL)+ 3;
+
 				publ.source_flag|= hentity->flag;
 				publ.event|= hentity->event;
 				publ.content_type= hentity->content_type;	

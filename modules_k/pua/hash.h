@@ -53,6 +53,8 @@
 #define UPDATEDB_FLAG       1<<1
 #define INSERTDB_FLAG       1<<2
 
+#define MAX_FORWARD  70
+
 typedef struct ua_pres{
  
     /* common*/

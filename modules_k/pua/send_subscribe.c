@@ -80,8 +80,14 @@ str* subs_build_hdr(str* contact, int expires, int event, str* extra_headers)
 		goto error;
 	}
 
-	memcpy(str_hdr->s ,"Event: ", 7);
-	str_hdr->len = 7;
+	memcpy(str_hdr->s ,"Max-Forwards: ", 14);
+	str_hdr->len = 14;
+	str_hdr->len+= sprintf(str_hdr->s+ str_hdr->len,"%d", MAX_FORWARD);
+	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
+	str_hdr->len += CRLF_LEN;
+
+	memcpy(str_hdr->s+ str_hdr->len ,"Event: ", 7);
+	str_hdr->len+= 7;
 	memcpy(str_hdr->s+ str_hdr->len, ev->name.s, ev->name.len);
 	str_hdr->len+= ev->name.len;
 	memcpy(str_hdr->s+str_hdr->len, CRLF, CRLF_LEN);
