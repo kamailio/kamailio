@@ -52,18 +52,15 @@ static char useruri_buf[MAX_USERURI_SIZE];
 /**
  *
  */
-int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
+int sd_lookup(struct sip_msg* _msg, char* _index, char* _str2)
 {
+	int i;
 	str user_s, uid, did;
-	int nr_keys;
-	db_key_t db_keys[4];
-	db_val_t db_vals[4];
-	db_key_t db_cols[1];
-	db_res_t* db_res = NULL;
+	db_res_t* res = NULL;
+	db_rec_t* rec;
 
 	/* init */
-	nr_keys = 0;
-	db_cols[0]=new_uri_column;
+	i = (int)_index;
 
 	     /* Retrieve the owner of the record */
 	if (get_from_uid(&uid, _msg) < 0) {
@@ -77,18 +74,9 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		return -1;
 	}
 
-	db_keys[nr_keys]=uid_column;
-	db_vals[nr_keys].type = DB_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val = uid;
-	nr_keys++;
+	tables[i].lookup_num->match[0].v.lstr = uid;
+	tables[i].lookup_num->match[1].v.lstr = did;
 
-	db_keys[nr_keys]=dial_did_column;
-	db_vals[nr_keys].type = DB_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val = did;
-	nr_keys++;
-	
 	/* Get the called username */
 	if (parse_sip_msg_uri(_msg) < 0)
 	{
@@ -96,76 +84,60 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		goto err_badreq;
 	}
 	
-	db_keys[nr_keys]=dial_username_column;
-	db_vals[nr_keys].type = DB_STR;
-	db_vals[nr_keys].nul = 0;
-	db_vals[nr_keys].val.str_val = _msg->parsed_uri.user;
-	nr_keys++;
+	tables[i].lookup_num->match[2].v.lstr = _msg->parsed_uri.user;
 
-	DBG("speeddial:sd_lookup: Looking up (uid:%.*s,dial_username:%.*s,dial_did:%.*s)\n", uid.len, uid.s,
+	DBG("speeddial: Looking up (uid:%.*s,username:%.*s,did:%.*s)\n", uid.len, uid.s,
 	    _msg->parsed_uri.user.len, _msg->parsed_uri.user.s,
 	    did.len, did.s);
 	
-	db_funcs.use_table(db_handle, _table);
-	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
-		nr_keys, 1, NULL, &db_res) < 0)
-	{
-		LOG(L_ERR, "sd_lookup: Error querying database\n");
+	if (db_exec(&res, tables[i].lookup_num) < 0) {
+		ERR("speeddial: Error while executing database command\n");
 		goto err_server;
 	}
 
-	if (RES_ROW_N(db_res)<=0 || RES_ROWS(db_res)[0].values[0].nul != 0)
-	{
-		DBG("sd_lookup: no sip addres found for R-URI\n");
-		if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
-			DBG("sd_lookup: Error while freeing result of query\n");
+	if (res == NULL) {
+		DBG("speeddial: No SIP URI found for speeddial (num:%.*s, uid:%.*s, did:%.*s)\n",
+			_msg->parsed_uri.user.len,
+			_msg->parsed_uri.user.s,
+			uid.len, uid.s,
+			did.len, did.s);
 		return -1;
 	}
 
-	user_s.s = useruri_buf+4;
-	switch(RES_ROWS(db_res)[0].values[0].type)
-	{ 
-		case DB_STRING:
-			strcpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[0].val.string_val);
-			user_s.len = strlen(user_s.s);
-		break;
-		case DB_STR:
-			strncpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[0].val.str_val.s,
-				RES_ROWS(db_res)[0].values[0].val.str_val.len);
-			user_s.len = RES_ROWS(db_res)[0].values[0].val.str_val.len;
-			user_s.s[user_s.len] = '\0';
-		break;
-		case DB_BLOB:
-			strncpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[0].val.blob_val.s,
-				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
-			user_s.len = RES_ROWS(db_res)[0].values[0].val.blob_val.len;
-			user_s.s[user_s.len] = '\0';
-		break;
-		default:
-			LOG(L_ERR, "sd_lookup: Unknown type of DB new_uri column\n");
-			if (db_res != NULL && db_funcs.free_result(db_handle, db_res) < 0)
-			{
-				DBG("sd_lookup: Error while freeing result of query\n");
-			}
-			goto err_server;
+	user_s.s = useruri_buf + 4;
+	rec = db_first(res);
+	while(rec) {
+		if (rec->fld[0].flags & DB_NULL) goto skip;
+		strncpy(user_s.s, 
+				rec->fld[0].v.lstr.s,
+				rec->fld[0].v.lstr.len);
+		user_s.len = rec->fld[0].v.lstr.len;
+		user_s.s[user_s.len] = '\0';
+		goto out;
+
+	skip:
+		rec = db_next(res);
 	}
-	
+
+	if (rec == NULL) {
+		DBG("speeddial: No usable SIP URI found for (num:%.*s, uid:%.*s, did:%.*s)\n",
+			_msg->parsed_uri.user.len,
+			_msg->parsed_uri.user.s,
+			uid.len, uid.s,
+			did.len, did.s);
+		db_res_free(res);
+		return -1;
+	}
+
+ out:
 	/* check 'sip:' */
-	if(user_s.len<4 || strncmp(user_s.s, "sip:", 4))
-	{
+	if(user_s.len<4 || strncmp(user_s.s, "sip:", 4)) {
 		memcpy(useruri_buf, "sip:", 4);
 		user_s.s -= 4;
 		user_s.len += 4;
 	}
 
-	/**
-	 * Free the result because we don't need it anymore
-	 */
-	if (db_res!=NULL && db_funcs.free_result(db_handle, db_res) < 0)
-		DBG("sd_lookup: Error while freeing result of query\n");
+	db_res_free(res);
 
 	/* set the URI */
 	DBG("sd_lookup: URI of sd from R-URI [%s]\n", user_s.s);

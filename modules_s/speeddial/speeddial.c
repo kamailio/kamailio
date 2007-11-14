@@ -39,6 +39,7 @@
 #include "../../mem/mem.h"
 #include "../sl/sl.h"
 #include "sdlookup.h"
+#include "speeddial.h"
 
 MODULE_VERSION
 
@@ -54,6 +55,8 @@ static int child_init(int rank);
 /* Module initialization function prototype */
 static int mod_init(void);
 
+static int sd_lookup_fixup(void** param, int param_no);
+
 
 /* Module parameter variables */
 char* db_url           = DEFAULT_RODB_URL;
@@ -62,15 +65,18 @@ char* dial_username_column  = "dial_username";
 char* dial_did_column       = "dial_did";
 char* new_uri_column        = "new_uri";
 
-db_func_t db_funcs;      /* Database functions */
-db_con_t* db_handle=0;   /* Database connection handle */
+db_ctx_t* db=NULL;
+
+struct db_table_name* tables = NULL;
+unsigned int tables_no = 0;
+
 
 sl_api_t sl;
 
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"sd_lookup",         sd_lookup, 1, 0, REQUEST_ROUTE},
+	{"sd_lookup",         sd_lookup, 1, sd_lookup_fixup, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0}
 };
 
@@ -100,6 +106,44 @@ struct module_exports exports = {
 };
 
 
+static int build_db_cmds(void)
+{
+	int i;
+
+	db_fld_t match[] = {
+		{.name = uid_column,           .type = DB_STR},
+		{.name = dial_did_column,      .type = DB_STR},
+		{.name = dial_username_column, .type = DB_STR},
+		{.name = NULL}
+	};
+	
+	db_fld_t cols[] = {
+		{.name = new_uri_column, .type = DB_STR},
+		{.name = NULL}
+	};
+
+	for(i = 0; i < tables_no; i++) {
+		tables[i].lookup_num = db_cmd(DB_GET, db, tables[i].table, cols, match, NULL);
+		if (tables[i].lookup_num == NULL) {
+			ERR("speeddial: Error while preparing database commands\n");
+			goto error;
+		}
+	}
+
+	return 0;
+
+ error:
+	i--;
+	while(i >= 0) {
+		db_cmd_free(tables[i].lookup_num);
+		tables[i].lookup_num = NULL;
+		i--;
+	}
+	return -1;
+}
+
+
+
 /**
  *
  */
@@ -107,12 +151,21 @@ static int child_init(int rank)
 {
 	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main or tcp_main processes */
-	db_handle = db_funcs.init(db_url);
-	if (!db_handle)
-	{
-		LOG(L_ERR, "sd:init_child: Unable to connect database\n");
+
+	db = db_ctx("speeddial");
+	if (db == NULL) {
+		ERR("Error while initializing database layer\n");
 		return -1;
 	}
+
+	if (db_add_db(db, db_url) < 0) return -1;
+	if (db_connect(db) < 0) return -1;
+
+	if (build_db_cmds() < 0) {
+		pkg_free(tables);
+		return -1;
+	}
+
 	return 0;
 
 }
@@ -126,19 +179,6 @@ static int mod_init(void)
 	bind_sl_t bind_sl;
 
 	DBG("speeddial module - initializing\n");
-
-    /* Find a database module */
-	if (bind_dbmod(db_url, &db_funcs))
-	{
-		LOG(L_ERR, "sd:mod_init: Unable to bind database module\n");
-		return -1;
-	}
-	if (!DB_CAPABILITY(db_funcs, DB_CAP_QUERY))
-	{
-		LOG(L_ERR, "sd:mod_init: Database modules does not "
-			"provide all functions needed by SPEEDDIAL module\n");
-		return -1;
-	}
 
 	/**
 	 * We will need sl_send_reply from stateless
@@ -160,7 +200,32 @@ static int mod_init(void)
  */
 static void destroy(void)
 {
-	if (db_handle)
-		db_funcs.close(db_handle);
+	int i;
+
+	if (tables) {
+		for(i = 0; i < tables_no; i++) {
+			if (tables[i].lookup_num) db_cmd_free(tables[i].lookup_num);
+		}
+		pkg_free(tables);
+	}
 }
 
+
+static int sd_lookup_fixup(void** param, int param_no)
+{
+	struct db_table_name* ptr;
+
+	if (param_no == 1) {
+		ptr = pkg_realloc(tables, sizeof(struct db_table_name) * (tables_no + 1));
+		if (ptr == NULL) {
+			ERR("No memory left\n");
+			return -1;
+		}
+		ptr[tables_no].table = (char*)*param;
+		ptr[tables_no].lookup_num = NULL;
+		*param = (void*)tables_no;
+		tables_no++;
+		tables = ptr;
+	}
+	return 0;
+}

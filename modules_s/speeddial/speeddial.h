@@ -45,8 +45,15 @@ extern char* dial_username_column;
 extern char* dial_did_column;
 extern char* new_uri_column;
 
-extern db_func_t db_funcs;    /* Database functions */
-extern db_con_t* db_handle;   /* Database connection handle */
+extern db_ctx_t* db;
+
+struct db_table_name {
+	char* table;
+	db_cmd_t* lookup_num;
+};
+
+extern struct db_table_name* tables;
+extern unsigned int tables_no;
 
 extern sl_api_t sl;
 
