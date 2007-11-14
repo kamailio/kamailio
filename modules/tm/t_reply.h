@@ -44,6 +44,8 @@ extern int tm_blst_503;
 extern int tm_blst_503_default;  /* in s */
 extern int tm_blst_503_min;      /* in s */
 extern int tm_blst_503_max;      /* in s */
+extern unsigned int tm_blst_methods_add;
+extern unsigned int tm_blst_methods_lookup;
 
 /* reply processing status */
 enum rps {

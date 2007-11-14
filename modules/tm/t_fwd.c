@@ -690,7 +690,10 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		return -1; /* drop, try next branch */
 	}
 #ifdef USE_DST_BLACKLIST
-	if (use_dst_blacklist){
+	if (use_dst_blacklist
+		&& p_msg
+		&& (p_msg->REQ_METHOD & tm_blst_methods_lookup)
+	){
 		if (dst_is_blacklisted(&uac->request.dst, p_msg)){
 			su2ip_addr(&ip, &uac->request.dst.to);
 			DBG("t_send_branch: blacklisted destination: %s:%d (%d)\n",
