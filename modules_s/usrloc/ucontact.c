@@ -442,7 +442,8 @@ int st_expired_ucontact(ucontact_t* _c)
 	case CS_SYNC:
 	case CS_DIRTY:
 		     /* Remove from database here */
-		return 1;
+		if (db_skip_delete) return 0;
+		else return 1;
 	}
 
 	return 0; /* Makes gcc happy */

@@ -50,6 +50,7 @@
 #include "notify.h"
 #include "reg_avps.h"
 #include "reg_avps_db.h"
+#include "utime.h"
 #include "../../hashes.h"
 
 /* #define HASH_STRING_OPTIMIZE */
@@ -326,6 +327,7 @@ int preload_udomain(udomain_t* _d)
 	}
 
 	lock_udomain(_d);
+	get_act_time();
 
 	for(; rec != NULL; rec = db_next(res)) {
 		/* UID column must never be NULL */
@@ -341,6 +343,15 @@ int preload_udomain(udomain_t* _d)
 			LOG(L_CRIT, "ERROR: Bad contact for uid %.*s in table %.*s, skipping\n",
 				rec->fld[0].v.lstr.len, rec->fld[0].v.lstr.s,
 				_d->name->len, _d->name->s);
+			continue;
+		}
+
+		/* We only skip expired contacts if db_skip_delete is enabled. If
+		 * db_skip_delete is disabled then we must load expired contacts
+		 * in memory so that the timer can delete them later.
+		 */
+		if (db_skip_delete && (rec->fld[2].v.time < act_time)) {
+			DBG("preload_udomain: Skipping expired contact\n");
 			continue;
 		}
 
@@ -381,6 +392,8 @@ int preload_udomain(udomain_t* _d)
 		} else {
 			aor = rec->fld[10].v.lstr;
 		}
+
+		
 
 		if (get_urecord(_d, &rec->fld[0].v.lstr, &r) > 0) {
 			if (mem_insert_urecord(_d, &rec->fld[0].v.lstr, &r) < 0) {

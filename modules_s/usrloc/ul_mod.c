@@ -100,6 +100,7 @@ str db_url          = STR_STATIC_INIT(DEFAULT_DB_URL); /* Database URL */
 int timer_interval  = 60;             /* Timer interval in seconds */
 int db_mode         = 0;              /* Database sync scheme: 0-no db, 1-write through, 2-write back */
 int desc_time_order = 0;              /* By default do not enable timestamp ordering */
+int db_skip_delete  = 0;              /* Enable/disable contact deletion in database */
 
 
 db_ctx_t* db = NULL;
@@ -157,6 +158,7 @@ static param_export_t params[] = {
 	{"aor_column",        PARAM_STR, &aor_col        },
 	{"reg_avp_column",    PARAM_STRING, &avp_column  },	
 	{"reg_avp_flag",      PARAM_STRING, &reg_avp_flag_name },
+	{"db_skip_delete",    PARAM_INT, &db_skip_delete},
 	{0, 0, 0}
 };
 

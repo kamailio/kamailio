@@ -73,6 +73,7 @@ extern str db_url;
 extern int timer_interval;
 extern int db_mode;
 extern int desc_time_order;
+extern int db_skip_delete;
 
 extern db_ctx_t* db;
 extern db_cmd_t** del_rec;
