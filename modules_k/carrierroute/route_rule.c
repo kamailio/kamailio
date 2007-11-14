@@ -277,7 +277,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 					return -1;
 				}
 				rt->rules[rr->hash_index - 1] = rr;
-				LM_ERR("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
+				LM_NOTICE("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
 			}
 		}
 
@@ -290,7 +290,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 				} else {
 					rt->rules[i] = rr;
 					rr->hash_index = i + 1;
-					LM_ERR("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
+					LM_NOTICE("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
 					rr = rr->next;
 				}
 			} else {
