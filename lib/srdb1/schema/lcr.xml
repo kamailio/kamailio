@@ -31,6 +31,8 @@
         <name>prefix</name>
         <type>string</type>
         <size>16</size>
+		<null/>
+        <default><null/></default>
         <description>The Request-URI (destination) prefix.</description>
         <natural/>
     </column>
