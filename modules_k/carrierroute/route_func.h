@@ -146,24 +146,4 @@ int route_by_from(struct sip_msg * msg, char * domain_param, char * hash);
  */
 int prime_balance_by_from(struct sip_msg * msg, char * domain_param, char * hash);
 
-
-// this function is only needed for the 0700 functionality, and obselete
-// needs the add-rewrite-branches patch for the rewrite_branches function in core
-#ifdef SP_ROUTE2_0700
-/**
- * rewrites the request URI and all branches of msg by calculating a rule, using 
- * crc32 for hashing, only The request URI and the branch routes are used to 
- * determine tree node, respectively
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int rewrite_branches(struct sip_msg * msg, char * domain_param, char * unused);
-#endif
-
-
-
 #endif

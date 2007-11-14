@@ -635,28 +635,6 @@ modparam("carrierroute", "fallback_default", 1)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_rewrite_branches(string domain, hash_source)</function>
-	    </title>
-	    <para>
-		    Like cr_rewrite_uri, the difference is that cr_rewrite_branches rewrites
-		    all branches of the transaction. This function is not available at the moment.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
-		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
-		    </para>
-		</listitem>
-	    </itemizedlist>
-	</section>
-	<section>
-	    <title>
 		<function moreinfo="none">cr_prime_balance_uri (string domain, int hash_source)</function>
 	    </title>
 	    <para>

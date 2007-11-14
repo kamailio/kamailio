@@ -53,22 +53,19 @@ Henning Westerholt
               1.4.1. cr_rewrite_uri (string domain, int
                       hash_source)
 
-              1.4.2. cr_rewrite_branches(string domain,
+              1.4.2. cr_prime_balance_uri (string domain, int
                       hash_source)
 
-              1.4.3. cr_prime_balance_uri (string domain, int
+              1.4.3. cr_rewrite_by_to (string domain, int
                       hash_source)
 
-              1.4.4. cr_rewrite_by_to (string domain, int
+              1.4.4. cr_prime_balance_by_to (string domain, int
                       hash_source)
 
-              1.4.5. cr_prime_balance_by_to (string domain, int
-                      hash_source)
-
-              1.4.6. cr_user_rewrite_uri (string user, string
+              1.4.5. cr_user_rewrite_uri (string user, string
                       domain)
 
-              1.4.7. cr_tree_rewrite_uri (string tree, string
+              1.4.6. cr_tree_rewrite_uri (string tree, string
                       domain)
 
         1.5. MI Commands
@@ -575,23 +572,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.2. cr_rewrite_branches(string domain, hash_source)
-
-   Like cr_rewrite_uri, the difference is that
-   cr_rewrite_branches rewrites all branches of the transaction.
-   This function is not available at the moment.
-
-   Meaning of the parameters is as follows:
-
-     * domain - Name of the routing domain to be used.
-     * hash_source - The hash values of the destination set must
-       be a contiguous range starting at 1, limited by the
-       configuration parameter max_targets. Possible values for
-       hash_source are: call_id, from_uri, from_user, to_uri,
-       to_user.
-     _________________________________________________________
-
-1.4.3. cr_prime_balance_uri (string domain, int hash_source)
+1.4.2. cr_prime_balance_uri (string domain, int hash_source)
 
    Balances the request URI to the desination set given by domain
    in the default tree. The hash_source defines the parameter
@@ -608,7 +589,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.4. cr_rewrite_by_to (string domain, int hash_source)
+1.4.3. cr_rewrite_by_to (string domain, int hash_source)
 
    Like cr_rewrite_uri, except that the to URI is used for prefix
    matching instead the request URI. Return codes are the same as
@@ -624,7 +605,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.5. cr_prime_balance_by_to (string domain, int hash_source)
+1.4.4. cr_prime_balance_by_to (string domain, int hash_source)
 
    Like cr_prime_balance_uri, except that the to URI is used for
    prefix matching instead the request URI. Return codes are the
@@ -640,7 +621,7 @@ modparam("carrierroute", "fallback_default", 1)
        to_user.
      _________________________________________________________
 
-1.4.6. cr_user_rewrite_uri (string user, string domain)
+1.4.5. cr_user_rewrite_uri (string user, string domain)
 
    Rewrites the request URI, the given user is used to determine
    the carrier tree to be used. The domain identifies the routing
@@ -656,7 +637,7 @@ modparam("carrierroute", "fallback_default", 1)
      * domain - Name of the routing domain to be used.
      _________________________________________________________
 
-1.4.7. cr_tree_rewrite_uri (string tree, string domain)
+1.4.6. cr_tree_rewrite_uri (string tree, string domain)
 
    Uses the carrier tree specified by tree and uses the given
    domain. Uses the call id as hash source.

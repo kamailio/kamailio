@@ -93,11 +93,6 @@ static int rewrite_on_rule(struct route_tree_item *route_tree, str *dest,
 static int actually_rewrite(struct route_rule *rs, str *dest,
                             struct sip_msg *msg, str * user);
 
-// this helper function is only needed for the 0700 functionality
-#ifdef SP_ROUTE2_0700
-static int extract_localpart(str * uri, str * user);
-#endif
-
 static struct route_rule * get_rule_by_hash(struct route_tree_item * rt, int prob);
 
 /**
@@ -433,92 +428,6 @@ int prime_balance_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
 	my_hash_source = (enum hash_source)hash;
 	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
-
-// this function is only needed for the 0700 functionality, and obselete
-// needs the add-rewrite-branches patch for the rewrite_branches function in core
-#ifdef SP_ROUTE2_0700
-/**
- * rewrites the request URI and all branches of msg by calculating a rule, using
- * crc32 for hashing, only The request URI and the branch routes are used to
- * determine tree node, respectively
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int rewrite_branches(struct sip_msg * msg, char * domain_param, char * hash) {
-	struct rewrite_data * rd;
-	struct route_tree * rt;
-	str new_uri;
-	str uri;
-	str dst_uri;
-	str user;
-	str old_uri;
-	qvalue_t q;
-	struct socket_info * socket;
-	int ret;
-	int domain;
-	enum hash_source my_hash_source;
-
-	my_hash_source = (enum hash_source)hash;
-
-	domain = (int) domain_param;
-
-	do {
-		rd = get_data();
-	} while (rd == NULL);
-
-	if (domain >= rd->tree_num) {
-		LM_ERR("Domain too big. (We only have %d domains, you wanted %d.)\n",
-		    (rd->tree_num) - 1, domain);
-		ret = -1;
-		goto unlock_and_out;
-	}
-	if ((rt = get_route_tree_by_id(rd->carriers[rd->default_carrier_index], domain)) == NULL) {
-		LM_ERR("desired domain doesn't exist\n");
-		ret = -1;
-		goto unlock_and_out;
-	}
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-	/* 
-         * in 0.9.5 init_branch_operator set the branch_iterator to zero
-         * in 1.2 this function don't exist anymore, and the logic in dset was changed
-         * Set the new idx parameter (this should be the same as the old branch_iterator value) to zero
-        */
-	unsigned int idx;
-
-	for( idx=0; (uri.s = get_branch(idx, &uri.len, &q, &dst_uri, NULL, NULL, &socket))!=0; idx++) {
-		LM_DBG("got branch: uri: %.*s, dest uri: %.*s\n", uri.len, uri.s, dst_uri.len, dst_uri.s);
-		extract_localpart(&uri, &user);
-		extract_localpart(&uri, &old_uri);
-		if (rewrite_uri_recursor(rt->tree, &old_uri, &new_uri, msg, &user, my_hash_source, alg_crc32)
-		        != 0) {
-			LM_ERR("error during rewrite_uri_recursor");
-			release_data(rd);
-			ret = -1;
-			goto unlock_and_out;
-		}
-		if (rewrite_branch(idx, new_uri.s, new_uri.len, new_uri.s, new_uri.len, 0, NULL) < 0) {
-			LM_ERR("could not rewrite branch with %.*s len %i",
-			    new_uri.len, new_uri.s, new_uri.len);
-			ret = -1;
-			pkg_free(new_uri.s);
-			goto unlock_and_out;
-		}
-		pkg_free(new_uri.s);
-	}
-	ret = 1;
-
-unlock_and_out:
-	release_data(rd);
-	return ret;
-}
-#endif
-
 
 /**
  * Like determine_and_rewrite_uri, except the difference that the
@@ -897,35 +806,6 @@ static int actually_rewrite(struct route_rule *rs, str *dest, struct sip_msg *ms
 	*p = '\0';
 	return 0;
 }
-
-/**
- * extracts the localpart from an SIP URI (the part before \@)
- *
- * @param uri the URI from which the localpart shall be extracted
- * @param user the localpart of uri is written into user
- *
- * @return 0 on success, -1 on failure
- */
-// this helper function is only needed for the 0700 functionality
-#ifdef SP_ROUTE2_0700
-static int extract_localpart(str * uri, str * user) {
-	str c;
-	c.s = uri->s;
-	c.len = uri->len;
-	user->len = 0;
-	while (!isdigit(*c.s)) {
-		c.s++;
-		c.len--;
-	}
-	user->s = c.s;
-	while ((*c.s != '@') && (c.len > 0)) {
-		++user->len;
-		c.s++;
-		c.len--;
-	}
-	return 0;
-}
-#endif
 
 /**
  * searches for a rule int rt with hash_index prob - 1
