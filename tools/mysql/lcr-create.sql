@@ -23,7 +23,7 @@ CREATE TABLE gw_grp (
 INSERT INTO version (table_name, table_version) values ('lcr','2');
 CREATE TABLE lcr (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    prefix VARCHAR(16) NOT NULL,
+    prefix VARCHAR(16) DEFAULT NULL,
     from_uri VARCHAR(64) DEFAULT NULL,
     grp_id INT UNSIGNED NOT NULL,
     priority TINYINT UNSIGNED NOT NULL,

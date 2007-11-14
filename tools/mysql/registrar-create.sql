@@ -2,7 +2,7 @@ INSERT INTO version (table_name, table_version) values ('aliases','1004');
 CREATE TABLE aliases (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL DEFAULT '',
-    domain VARCHAR(64) NOT NULL DEFAULT '',
+    domain VARCHAR(64) DEFAULT NULL,
     contact VARCHAR(255) NOT NULL DEFAULT '',
     received VARCHAR(128) DEFAULT NULL,
     path VARCHAR(128) DEFAULT NULL,
