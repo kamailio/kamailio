@@ -38,6 +38,7 @@
 
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 
 #include "carrierroute.h"
 #include "route_rule.h"
@@ -350,7 +351,7 @@ struct route_rule * find_rule_by_host(struct route_tree_item * rt, str * host){
 	struct route_rule * rr;
 	rr = rt->rule_list;
 	while(rr){
-		if(strcmp(rr->host.s, host->s) == 0){
+		if(str_strcmp(&(rr->host), host) == 0){
 			return rr;
 		}
 		rr = rr->next;
