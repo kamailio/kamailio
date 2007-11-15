@@ -1078,6 +1078,7 @@ int my_cmd(db_cmd_t* cmd)
 
  error:
 	if (res) {
+		DB_SET_PAYLOAD(cmd, NULL);
 		db_drv_free(&res->gen);
 		if (res->query.s) pkg_free(res->query.s);
 		pkg_free(res);
