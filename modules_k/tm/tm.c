@@ -894,7 +894,7 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 	if (!t || t==T_UNDEFINED) {
 		/* no transaction yet */
 		if (route_type==FAILURE_ROUTE) {
-			LM_CRIT("undefined T\n");
+			LM_CRIT(" BUG - undefined T in failure route\n");
 			return -1;
 		}
 		return t_relay_to( p_msg, (struct proxy_l *)proxy, (int)(long)flags );
