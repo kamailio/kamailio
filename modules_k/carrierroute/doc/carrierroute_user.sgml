@@ -17,19 +17,23 @@
 	<para>
 		The module provides routing, balancing and blacklisting capabilities.
 		It reads routing entries from a database source or from a config file at OpenSER
-		startup. It can uses one routing tree, or if needed for every user a different
-		routing tree for number prefix based routing. It supports several route tree domains,
-		e.g. for failback routes. Based on the tree, the module decides which number
-		prefixes are forwarded to which gateway. It can also distribute the traffic by
-		ratio parameters. Furthermore, the requests can be distributed by a hash funcion 
-		to predictable destinations.
+		startup. It can uses one routing tree (for one carrier), or if needed for every user
+		a different routing tree (unique for each carrier) for number prefix based routing.
+		It supports several route tree domains,	e.g. for failback routes or different routing
+		rules for VoIP and PSTN targets. 
+	</para>
+	<para>
+		Based on the tree, the module decides which number prefixes are forwarded to which
+		gateway. It can also distribute the traffic by ratio parameters. Furthermore, the
+		requests can be distributed by a hash funcion to predictable destinations. The hash
+		source is configurable, two different hash functions are available.
 	</para>
 	<para>
 		This modules scales up to more than a million users, and is able to handle 
 		more than ten thousand routing table entries. It should be able to handle more, but 
 		this is untested at the moment. In load balancing scenarios the usage of the config
 		file mode is recommended, to avoid the additional complexity that the database driven
-		routing creates. 
+		routing creates.
 	</para>
 	<para>
 		Routing tables can be reloaded and edited (in config file mode) with the MI 
@@ -309,8 +313,8 @@ modparam("carrierroute", "comment_column", "comment")
     <section>
 	    <title><varname>carrier_table</varname> (string)</title>
 	    <para>
-		    The name of the table containing the existing Carriers, contains ids and
-		    corresponding names.
+		    The name of the table containing the existing carriers, consisting
+			of the ids and corresponding names.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -331,7 +335,7 @@ modparam("carrierroute", "carrier_table", "route_tree")
 	    <title><varname>rewrite_prefix_column</varname> (string)</title>
 	    <para>
 		    Name of column containing rewrite prefixes. Here you can define a rewrite
-		    prefix for the localpart of the SIP URI. Currently unused.
+		    prefix for the localpart of the SIP URI.
 	    </para>
 	    <para>
 		    <emphasis>
@@ -352,7 +356,7 @@ modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
 	    <title><varname>rewrite_suffix_column</varname> (string)</title>
 	    <para>
 		    Name of column containing rewrite suffixes. Here you can define a rewrite
-		    suffix for the localpart of the SIP URI. Currently unused.
+		    suffix for the localpart of the SIP URI.
 	    </para>
 	    <para>
 		    <emphasis>
