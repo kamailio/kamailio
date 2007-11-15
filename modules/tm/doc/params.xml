@@ -203,4 +203,61 @@ modparam("tm", "aggregate_challenges", 0)
 	</example>
     </section>
 
+    <section id="blst_methods_add">
+	<title><varname>blst_methods_add</varname> (unsigned integer)</title>
+	<para>
+		Bitmap of method types that trigger blacklisting on
+		transaction timeouts. (This setting has no
+		effect on blacklisting because of send failures.)
+	</para>
+	<para>
+		The following values are associated to the request methods:
+		INVITE=1, CANCEL=2, ACK=4 (not retransmitted, thus, never
+		times-out), BYE=8, INFO=16, REGISTER=32, SUBSCRIBE=64,
+		NOTIFY=126, OTHER=256 (all the unknown types).
+		Check parser/msg_parser.h for farther details.
+	</para>
+	<para>
+		Change the value carefully, because requests not having
+		provisional response (everything but INVITE) can easily
+		cause the next hop to be inserted into the blacklist
+		by mistake. For exmaple the next hop is a proxy, it is alive,
+		but waiting for the response of the UAS, and has higher
+		fr_timer value.
+	</para>
+	<para>
+		The default value is 1, only INVITEs trigger blacklisting
+	</para>
+	<example>
+	    <title>Set <varname>blst_methods_add</varname> parameter</title>
+	    <programlisting>
+...
+# INVITEs and REGISTERs trigger blacklisting
+modparam("tm", "blst_methods_add", 33)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+    <section id="blst_methods_lookup">
+	<title><varname>blst_methods_lookup</varname> (unsigned integer)</title>
+	<para>
+		Bitmap of method types that are looked-up in the blacklist
+		before statefull forwarding.
+		See also <varname>blst_methods_add</varname>
+	</para>
+	<para>
+		The default value is 4294967287, every method type except BYE.
+		(We try to deliver BYEs no matter what)
+	</para>
+	<example>
+	    <title>Set <varname>blst_methods_lookup</varname> parameter</title>
+	    <programlisting>
+...
+# lookup only INVITEs
+modparam("tm", "blst_methods_lookup", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
 </section>

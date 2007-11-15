@@ -151,6 +151,10 @@ static unsigned short resp_class_prio[]={
 			1000   /* 6xx, highest priority */
 };
 
+/* backlist only INVITE timeouts by default */
+unsigned int tm_blst_methods_add=METHOD_INVITE;
+/* look-up the blacklist for every method except BYE by default */
+unsigned int tm_blst_methods_lookup=~METHOD_BYE;
 
 
 /* we store the reply_route # in private memory which is

@@ -336,6 +336,8 @@ static param_export_t params[]={
 	{"aggregate_challenges", PARAM_INT, &tm_aggregate_auth                   },
 	{"default_code",        PARAM_INT, &default_code                         },
 	{"default_reason",      PARAM_STR, &default_reason                       },
+	{"blst_methods_add",    PARAM_INT, &tm_blst_methods_add                  },
+	{"blst_methods_lookup", PARAM_INT, &tm_blst_methods_lookup               },
 	{0,0,0}
 };
 
