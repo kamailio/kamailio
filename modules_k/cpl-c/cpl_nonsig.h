@@ -59,8 +59,7 @@ static inline void write_cpl_cmd(unsigned int code, str *s1, str *s2, str *s3)
 	cmd.s3 = *s3;
 
 	if (write( cpl_env.cmd_pipe[1], &cmd, sizeof(struct cpl_cmd) )==-1)
-		LOG(L_ERR,"ERROR:cpl_c:write_cpl_cmd: write ret: %s\n",
-			strerror(errno));
+		LM_ERR("write ret: %s\n",strerror(errno));
 }
 
 

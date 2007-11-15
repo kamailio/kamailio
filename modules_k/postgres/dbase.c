@@ -356,9 +356,10 @@ int pg_fetch_result(db_con_t* _con, db_res_t** _res, int nrows)
                 	case PGRES_BAD_RESPONSE:
                 	case PGRES_NONFATAL_ERROR:
                 	case PGRES_FATAL_ERROR:
-        			LOG(L_WARN, "PG[fetch_result]: %p Warning: probable invalid query\n", _con);
+        				LM_WARN("%p - probable invalid query\n", _con);
                 	default:
-        			LOG(L_WARN, "PG[fetch_result]: %p Warning: PQresultStatus(%s)\n", _con, PQresStatus(pqresult));
+        				LM_WARN("%p - PQresultStatus(%s)\n",
+							_con, PQresStatus(pqresult));
        				if (*_res) 
 					pg_free_result(*_res);
         			*_res = 0;

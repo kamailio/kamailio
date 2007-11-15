@@ -68,7 +68,7 @@ static str cpl_302_reason = str_init("Moved temporarily");
 #define check_overflow_by_ptr(_ptr_,_intr_,_error_) \
 	do {\
 		if ( (char*)(_ptr_)>(_intr_)->script.len+(_intr_)->script.s ) {\
-			LOG(L_ERR,"ERROR:cpl_c: overflow detected ip=%p ptr=%p in "\
+			LM_ERR("overflow detected ip=%p ptr=%p in "\
 			"func. %s, line %d\n",(_intr_)->ip,_ptr_,__FILE__,__LINE__);\
 			goto _error_; \
 		} \
@@ -78,7 +78,7 @@ static str cpl_302_reason = str_init("Moved temporarily");
 	do {\
 		if ( (char*)((_intr_)->ip+(_len_)) > \
 		(_intr_)->script.len+(_intr_)->script.s ) {\
-			LOG(L_ERR,"ERROR:cpl_c: overflow detected ip=%p offset=%d in "\
+			LM_ERR("overflow detected ip=%p offset=%d in "\
 			"func. %s, line %d\n",(_intr_)->ip,_len_,__FILE__,__LINE__);\
 			goto _error_; \
 		} \
@@ -98,7 +98,7 @@ static str cpl_302_reason = str_init("Moved temporarily");
 #define get_str_attr(_p_,_s_,_len_,_intr_,_error_,_FIXUP_) \
 	do{\
 		if ( ((int)(_len_))-(_FIXUP_)<=0 ) {\
-			LOG(L_ERR,"ERROR:cpl_c:%s:%d: attribute is an empty string\n",\
+			LM_ERR("%s:%d: attribute is an empty string\n",\
 				__FILE__,__LINE__);\
 			goto _error_; \
 		} else {\
@@ -117,7 +117,7 @@ struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
 
 	intr = (struct cpl_interpreter*)shm_malloc(sizeof(struct cpl_interpreter));
 	if (!intr) {
-		LOG(L_ERR,"ERROR:build_cpl_interpreter: no more free memory!\n");
+		LM_ERR("no more shm free memory!\n");
 		goto error;
 	}
 	memset( intr, 0, sizeof(struct cpl_interpreter));
@@ -131,7 +131,7 @@ struct cpl_interpreter* new_cpl_interpreter( struct sip_msg *msg, str *script)
 
 	/* check the beginning of the script */
 	if ( NODE_TYPE(intr->ip)!=CPL_NODE ) {
-		LOG(L_ERR,"ERROR:build_cpl_interpreter: first node is not CPL!!\n");
+		LM_ERR("first node is not CPL!!\n");
 		goto error;
 	}
 
@@ -193,14 +193,13 @@ static inline char *run_cpl_node( struct cpl_interpreter *intr )
 		NODE_TYPE(kid)==OUTGOING_NODE ) {
 			continue;
 		} else {
-			LOG(L_ERR,"ERROR:cpl_c:run_cpl_node: unknown child type (%d) "
+			LM_ERR("unknown child type (%d) "
 				"for CPL node!!\n",NODE_TYPE(kid));
 			return CPL_SCRIPT_ERROR;
 		}
 	}
 
-	DBG("DEBUG:cpl_c:run_cpl_node: CPL node has no %d subnode -> default\n",
-		start);
+	LM_DBG("CPL node has no %d subnode -> default\n", start);
 	return DEFAULT_ACTION;
 }
 
@@ -231,15 +230,14 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 		switch (attr_name) {
 			case CLEAR_ATTR:
 				if (n!=YES_VAL && n!=NO_VAL)
-					LOG(L_WARN,"WARNING:run_lookup: invalid value (%u) found"
+					LM_WARN("invalid value (%u) found"
 						" for param. CLEAR in LOOKUP node -> using "
 						"default (%u)!\n",n,clear);
 				else
 					clear = n;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_lookup: unknown attribute (%d) in "
-					"LOOKUP node\n",attr_name);
+				LM_ERR("unknown attribute (%d) in LOOKUP node\n",attr_name);
 				goto script_error;
 		}
 	}
@@ -259,7 +257,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 				failure_kid = kid;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_lookup: unknown output node type"
+				LM_ERR("unknown output node type"
 					" (%d) for LOOKUP node\n",NODE_TYPE(kid));
 				goto script_error;
 		}
@@ -274,11 +272,11 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 		i = cpl_fct.ulb.get_urecord( cpl_env.lu_domain, &intr->user, &r);
 		if (i < 0) {
 			/* failure */
-			LOG(L_ERR, "ERROR:run_lookup: Error while querying usrloc\n");
+			LM_ERR("failed to query usrloc\n");
 			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 		} else if (i > 0) {
 			/* not found */
-			DBG("DBG:cpl-c:run_lookup: '%.*s' Not found in usrloc\n",
+			LM_DBG("'%.*s' Not found in usrloc\n",
 				intr->user.len, intr->user.s);
 			cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 			kid = notfound_kid;
@@ -294,15 +292,14 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 					empty_location_set( &(intr->loc_set) );
 				/* start adding locations to set */
 				do {
-					DBG("DBG:cpl-c:run_lookup: adding <%.*s>q=%d\n",
+					LM_DBG("adding <%.*s>q=%d\n",
 						contact->c.len,contact->c.s,(int)(10*contact->q));
 					if (add_location( &(intr->loc_set), &contact->c, 
 					&contact->received, (int)(10*contact->q),
 					CPL_LOC_DUPL|
 						((contact->flags & cpl_fct.ulb.nat_flag)*CPL_LOC_NATED)
 					)==-1) {
-						LOG(L_ERR,"ERROR:cpl-c:run_lookup: unable to add "
-							"location to set :-(\n");
+						LM_ERR("unable to add location to set :-(\n");
 						cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
 						goto runtime_error;
 					}
@@ -351,7 +348,7 @@ static inline char *run_location( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)>1) {
-		LOG(L_ERR,"ERROR:run_location: LOCATION node suppose to have max "
+		LM_ERR("LOCATION node suppose to have max "
 			"one child, not %d!\n",NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -365,7 +362,7 @@ static inline char *run_location( struct cpl_interpreter *intr )
 				break;
 			case PRIORITY_ATTR:
 				if ( n>10)
-					LOG(L_WARN,"WARNING:run_location: invalid value (%u) found"
+					LM_WARN("invalid value (%u) found"
 						" for param. PRIORITY in LOCATION node -> using "
 						"default (%u)!\n",n,prio);
 				else
@@ -373,28 +370,28 @@ static inline char *run_location( struct cpl_interpreter *intr )
 				break;
 			case CLEAR_ATTR:
 				if (n!=YES_VAL && n!=NO_VAL)
-					LOG(L_WARN,"WARNING:run_location: invalid value (%u) found"
+					LM_WARN("invalid value (%u) found"
 						" for param. CLEAR in LOCATION node -> using "
 						"default (%u)!\n",n,clear);
 				else
 					clear = n;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_location: unknown attribute (%d) in "
+				LM_ERR("unknown attribute (%d) in "
 					"LOCATION node\n",attr_name);
 				goto script_error;
 		}
 	}
 
 	if (url.s==(char*)UNDEF_CHAR) {
-		LOG(L_ERR,"ERROR:run_location: param. URL missing in LOCATION node\n");
+		LM_ERR("param. URL missing in LOCATION node\n");
 		goto script_error;
 	}
 
 	if (clear)
 		empty_location_set( &(intr->loc_set) );
 	if (add_location( &(intr->loc_set), &url, 0, prio, 0/*no dup*/ )==-1) {
-		LOG(L_ERR,"ERROR:run_location: unable to add location to set :-(\n");
+		LM_ERR("unable to add location to set :-(\n");
 		goto runtime_error;
 	}
 	/* set the flag for modifying the location set */
@@ -423,8 +420,7 @@ static inline char *run_remove_location( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)>1) {
-		LOG(L_ERR,"ERROR:cpl_c:run_remove_location: REMOVE_LOCATION node "
-			"suppose to have max one child, not %d!\n",
+		LM_ERR("REMOVE_LOCATION node suppose to have max one child, not %d!\n",
 			NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -441,14 +437,14 @@ static inline char *run_remove_location( struct cpl_interpreter *intr )
 				get_str_attr( p, url.s, url.len, intr, script_error,1);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_remove_location: unknown attribute "
+				LM_ERR("unknown attribute "
 					"(%d) in REMOVE_LOCATION node\n",attr_name);
 				goto script_error;
 		}
 	}
 
 	if (url.s==(char*)UNDEF_CHAR) {
-		DBG("DEBUG:run_remove_location: remove all locs from loc_set\n");
+		LM_DBG("remove all locs from loc_set\n");
 		empty_location_set( &(intr->loc_set) );
 	} else {
 		remove_location( &(intr->loc_set), url.s, url.len );
@@ -475,7 +471,7 @@ static inline char *run_sub( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)!=0) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: SUB node doesn't suppose to have any "
+		LM_ERR("SUB node doesn't suppose to have any "
 			"sub-nodes. Found %d!\n",NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -483,15 +479,14 @@ static inline char *run_sub( struct cpl_interpreter *intr )
 	/* check the number of attr */
 	i = NR_OF_ATTR( intr->ip );
 	if (i!=1) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: incorrect nr. of attr. %d (<>1) in "
-			"SUB node\n",i);
+		LM_ERR("incorrect nr. of attr. %d (<>1) in SUB node\n",i);
 		goto script_error;
 	}
 	/* get attr's name */
 	p = ATTR_PTR(intr->ip);
 	get_basic_attr( p, attr_name, offset, intr, script_error);
 	if (attr_name!=REF_ATTR) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: invalid attr. %d (expected %d)in "
+		LM_ERR("invalid attr. %d (expected %d)in "
 			"SUB node\n", attr_name, REF_ATTR);
 		goto script_error;
 	}
@@ -499,19 +494,19 @@ static inline char *run_sub( struct cpl_interpreter *intr )
 	p = intr->ip - offset;
 	/* check the destination pointer -> are we still inside the buffer ;-) */
 	if (((char*)p)<intr->script.s) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: jump offset lower than the script "
+		LM_ERR("jump offset lower than the script "
 			"beginning -> underflow!\n");
 		goto script_error;
 	}
 	check_overflow_by_ptr( p+SIMPLE_NODE_SIZE(intr->ip), intr, script_error);
 	/* check to see if we hit a subaction node */
 	if ( NODE_TYPE(p)!=SUBACTION_NODE ) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: sub. jump hit a nonsubaction node!\n");
+		LM_ERR("sub. jump hit a nonsubaction node!\n");
 		goto script_error;
 	}
 	if ( NR_OF_ATTR(p)!=0 ) {
-		LOG(L_ERR,"ERROR:cpl_c:run_sub: invalid subaction node reached "
-		"(attrs=%d); expected (0)!\n",NR_OF_ATTR(p));
+		LM_ERR("invalid subaction node reached "
+			"(attrs=%d); expected (0)!\n",NR_OF_ATTR(p));
 		goto script_error;
 	}
 
@@ -538,7 +533,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)!=0) {
-		LOG(L_ERR,"ERROR:cpl_c:run_reject: REJECT node doesn't suppose to have "
+		LM_ERR("REJECT node doesn't suppose to have "
 			"any sub-nodes. Found %d!\n",NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -554,20 +549,18 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 				get_str_attr( p, reason.s, reason.len, intr, script_error,1);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:run_reject: unknown attribute "
+				LM_ERR("unknown attribute "
 					"(%d) in REJECT node\n",attr_name);
 				goto script_error;
 		}
 	}
 
 	if (status==UNDEF_CHAR) {
-		LOG(L_ERR,"ERROR:cpl_c:run_reject: mandatory attribute STATUS "
-			"not found\n");
+		LM_ERR("mandatory attribute STATUS not found\n");
 		goto script_error;
 	}
 	if (status<400 || status>=700) {
-		LOG(L_ERR,"ERROR:cpl_c:run_reject: bad attribute STATUS "
-			"(%d)\n",status);
+		LM_ERR("bad attribute STATUS (%d)\n",status);
 		goto script_error;
 	}
 
@@ -599,12 +592,10 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 	if ( !(intr->flags&CPL_IS_STATEFUL) && intr->flags&CPL_FORCE_STATEFUL) {
 		i = cpl_fct.tmb.t_newtran( intr->msg );
 		if (i<0) {
-			LOG(L_ERR,"ERROR:cpl-c:run_reject: failed to build new "
-				"transaction!\n");
+			LM_ERR("failed to build new transaction!\n");
 			goto runtime_error;
 		} else if (i==0) {
-			LOG(L_ERR,"ERROR:cpl-c:run_reject: processed INVITE is a "
-				"retransmission!\n");
+			LM_ERR(" processed INVITE is a retransmission!\n");
 			/* instead of generating an error is better just to break the
 			 * script by returning EO_SCRIPT */
 			return EO_SCRIPT;
@@ -622,7 +613,7 @@ static inline char *run_reject( struct cpl_interpreter *intr )
 	}
 
 	if ( i!=1 ) {
-		LOG(L_ERR,"ERROR:run_reject: unable to send reject reply!\n");
+		LM_ERR("unable to send reject reply!\n");
 		goto runtime_error;
 	}
 
@@ -653,7 +644,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)!=0) {
-		LOG(L_ERR,"ERROR:cpl-c:run_redirect: REDIRECT node doesn't suppose "
+		LM_ERR("REDIRECT node doesn't suppose "
 			"to have any sub-nodes. Found %d!\n",NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -664,14 +655,14 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 		switch (attr_name) {
 			case PERMANENT_ATTR:
 				if (n!=YES_VAL && n!=NO_VAL) {
-					LOG(L_ERR,"ERROR:cpl-c:run_redirect: unsupported value (%d)"
+					LM_ERR("unsupported value (%d)"
 						" in attribute PERMANENT for REDIRECT node",n);
 					goto script_error;
 				}
 				permanent = n;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_redirect: unknown attribute "
+				LM_ERR("unknown attribute "
 					"(%d) in REDIRECT node\n",attr_name);
 				goto script_error;
 		}
@@ -686,7 +677,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 
 	lump_str.s = pkg_malloc( lump_str.len );
 	if(!lump_str.s) {
-		LOG(L_ERR,"ERROR:cpl-c:run_redirect: out of pkg memory!\n");
+		LM_ERR("out of pkg memory!\n");
 		goto runtime_error;
 	}
 	cp = lump_str.s;
@@ -712,13 +703,11 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	if ( !(intr->flags&CPL_IS_STATEFUL) && intr->flags&CPL_FORCE_STATEFUL) {
 		i = cpl_fct.tmb.t_newtran( intr->msg );
 		if (i<0) {
-			LOG(L_ERR,"ERROR:cpl-c:run_redirect: failed to build new "
-				"transaction!\n");
+			LM_ERR("failed to build new transaction!\n");
 			pkg_free( lump_str.s );
 			goto runtime_error;
 		} else if (i==0) {
-			LOG(L_ERR,"ERROR:cpl-c:run_redirect: processed INVITE is a "
-				"retransmission!\n");
+			LM_ERR("processed INVITE is a retransmission!\n");
 			/* instead of generating an error is better just to break the
 			 * script by returning EO_SCRIPT */
 			pkg_free( lump_str.s );
@@ -730,7 +719,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	/* add the lump to the reply */
 	lump = add_lump_rpl( intr->msg, lump_str.s , lump_str.len , LUMP_RPL_HDR);
 	if(!lump) {
-		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to add lump_rpl! \n");
+		LM_ERR("unable to add lump_rpl! \n");
 		pkg_free( lump_str.s );
 		goto runtime_error;
 	}
@@ -757,8 +746,7 @@ static inline char *run_redirect( struct cpl_interpreter *intr )
 	free_lump_rpl( lump );
 
 	if (i!=1) {
-		LOG(L_ERR,"ERROR:cpl-c:run_redirect: unable to send "
-			"redirect reply!\n");
+		LM_ERR("unable to send redirect reply!\n");
 		goto runtime_error;
 	}
 
@@ -785,7 +773,7 @@ static inline char *run_log( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)>1) {
-		LOG(L_ERR,"ERROR:cpl_c:run_log: LOG node suppose to have max one child"
+		LM_ERR("LOG node suppose to have max one child"
 			", not %d!\n",NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -808,15 +796,14 @@ static inline char *run_log( struct cpl_interpreter *intr )
 				comment.len = n;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:run_log: unknown attribute "
+				LM_ERR("unknown attribute "
 					"(%d) in LOG node\n",attr_name);
 				goto script_error;
 		}
 	}
 
 	if (comment.len==0) {
-		LOG(L_NOTICE,"NOTICE:cpl_c:run_log: LOG node has no comment attr -> "
-			"skipping\n");
+		LM_NOTICE("LOG node has no comment attr -> skipping\n");
 		goto done;
 	}
 
@@ -824,7 +811,7 @@ static inline char *run_log( struct cpl_interpreter *intr )
 	/* duplicate the attrs in shm memory */
 	user.s = p = (char*)shm_malloc( user.len );
 	if (!user.s) {
-		LOG(L_ERR,"ERROR:cpl_c:run_log: no more shm memory!\n");
+		LM_ERR("no more shm memory!\n");
 		goto runtime_error;
 	}
 	/* copy the user name */
@@ -868,7 +855,7 @@ static inline char *run_mail( struct cpl_interpreter *intr )
 
 	/* sanity check */
 	if (NR_OF_KIDS(intr->ip)>1) {
-		LOG(L_ERR,"ERROR:cpl_c:run_mail: MAIL node suppose to have max one"
+		LM_ERR("MAIL node suppose to have max one"
 			" child, not %d!\n",NR_OF_KIDS(intr->ip));
 		goto script_error;
 	}
@@ -890,18 +877,17 @@ static inline char *run_mail( struct cpl_interpreter *intr )
 				body.len = n;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_mail: unknown attribute "
-					"(%d) in MAIL node\n",attr_name);
+				LM_ERR("unknown attribute (%d) in MAIL node\n",attr_name);
 				goto script_error;
 		}
 	}
 
 	if (to.len==0) {
-		LOG(L_ERR,"ERROR:cpl_c:run_mail: email has an empty TO hdr!\n");
+		LM_ERR("email has an empty TO hdr!\n");
 		goto script_error;
 	}
 	if (body.len==0 && subject.len==0) {
-		LOG(L_WARN,"WARNING:cpl_c:run_mail: I refuse to send email with no "
+		LM_WARN("I refuse to send email with no "
 			"body and no subject -> skipping...\n");
 		goto done;
 	}
@@ -909,7 +895,7 @@ static inline char *run_mail( struct cpl_interpreter *intr )
 	/* duplicate the attrs in shm memory */
 	p = (char*)shm_malloc( to.len + subject.len + body.len );
 	if (!p) {
-		LOG(L_ERR,"ERROR:cpl_c:run_mail: no more shm memory!\n");
+		LM_ERR("no more shm memory!\n");
 		goto runtime_error;
 	}
 	/* copy the TO */
@@ -1000,86 +986,85 @@ int cpl_run_script( struct cpl_interpreter *intr )
 		check_overflow_by_offset( SIMPLE_NODE_SIZE(intr->ip), intr, error);
 		switch ( NODE_TYPE(intr->ip) ) {
 			case CPL_NODE:
-				DBG("DEBUG:cpl_run_script: processing CPL node \n");
+				LM_DBG("processing CPL node \n");
 				new_ip = run_cpl_node( intr ); /*UPDATED&TESTED*/
 				break;
 			case ADDRESS_SWITCH_NODE:
-				DBG("DEBUG:cpl_run_script: processing address-switch node\n");
+				LM_DBG("processing address-switch node\n");
 				new_ip = run_address_switch( intr ); /*UPDATED&TESTED*/
 				break;
 			case STRING_SWITCH_NODE:
-				DBG("DEBUG:cpl_run_script: processing string-switch node\n");
+				LM_DBG("processing string-switch node\n");
 				new_ip = run_string_switch( intr ); /*UPDATED&TESTED*/
 				break;
 			case PRIORITY_SWITCH_NODE:
-				DBG("DEBUG:cpl_run_script: processing priority-switch node\n");
+				LM_DBG("processing priority-switch node\n");
 				new_ip = run_priority_switch( intr ); /*UPDATED&TESTED*/
 				break;
 			case TIME_SWITCH_NODE:
-				DBG("DEBUG:cpl_run_script: processing time-switch node\n");
+				LM_DBG("processing time-switch node\n");
 				new_ip = run_time_switch( intr ); /*UPDATED&TESTED*/
 				break;
 			case LANGUAGE_SWITCH_NODE:
-				DBG("DEBUG:cpl_run_script: processing language-switch node\n");
+				LM_DBG("processing language-switch node\n");
 				new_ip = run_language_switch( intr ); /*UPDATED&TESTED*/
 				break;
 			case LOOKUP_NODE:
-				DBG("DEBUG:cpl_run_script: processing lookup node\n");
+				LM_DBG("processing lookup node\n");
 				new_ip = run_lookup( intr ); /*UPDATED&TESTED*/
 				break;
 			case LOCATION_NODE:
-				DBG("DEBUG:cpl_run_script: processing location node\n");
+				LM_DBG("processing location node\n");
 				new_ip = run_location( intr ); /*UPDATED&TESTED*/
 				break;
 			case REMOVE_LOCATION_NODE:
-				DBG("DEBUG:cpl_run_script: processing remove_location node\n");
+				LM_DBG("processing remove_location node\n");
 				new_ip = run_remove_location( intr ); /*UPDATED&TESTED*/
 				break;
 			case PROXY_NODE:
-				DBG("DEBUG:cpl_run_script: processing proxy node\n");
+				LM_DBG("processing proxy node\n");
 				new_ip = run_proxy( intr );/*UPDATED&TESTED*/
 				break;
 			case REJECT_NODE:
-				DBG("DEBUG:cpl_run_script: processing reject node\n");
+				LM_DBG("processing reject node\n");
 				new_ip = run_reject( intr ); /*UPDATED&TESTED*/
 				break;
 			case REDIRECT_NODE:
-				DBG("DEBUG:cpl_run_script: processing redirect node\n");
+				LM_DBG("processing redirect node\n");
 				new_ip = run_redirect( intr ); /*UPDATED&TESTED*/
 				break;
 			case LOG_NODE:
-				DBG("DEBUG:cpl_run_script: processing log node\n");
+				LM_DBG("processing log node\n");
 				new_ip = run_log( intr ); /*UPDATED&TESTED*/
 				break;
 			case MAIL_NODE:
-				DBG("DEBUG:cpl_run_script: processing mail node\n");
+				LM_DBG("processing mail node\n");
 				new_ip = run_mail( intr ); /*UPDATED&TESTED*/
 				break;
 			case SUB_NODE:
-				DBG("DEBUG:cpl_run_script: processing sub node\n");
+				LM_DBG("processing sub node\n");
 				new_ip = run_sub( intr ); /*UPDATED&TESTED*/
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_run_script: unknown type node (%d)\n",
+				LM_ERR("unknown type node (%d)\n",
 					NODE_TYPE(intr->ip));
 				goto error;
 		}
 
 		if (new_ip==CPL_RUNTIME_ERROR) {
-			LOG(L_ERR,"ERROR:cpl_c:cpl_run_script: runtime error\n");
+			LM_ERR("runtime error\n");
 			return SCRIPT_RUN_ERROR;
 		} else if (new_ip==CPL_SCRIPT_ERROR) {
-			LOG(L_ERR,"ERROR:cpl_c:cpl_run_script: script error\n");
+			LM_ERR("script error\n");
 			return SCRIPT_FORMAT_ERROR;
 		} else if (new_ip==DEFAULT_ACTION) {
-			DBG("DEBUG:cpl_c:cpl_run_script: running default action\n");
+			LM_DBG("running default action\n");
 			return run_default(intr);
 		} else if (new_ip==EO_SCRIPT) {
-			DBG("DEBUG:cpl_c:cpl_run_script: script interpretation done!\n");
+			LM_DBG("script interpretation done!\n");
 			return SCRIPT_END;
 		} else if (new_ip==CPL_TO_CONTINUE) {
-			DBG("DEBUG:cpl_c:cpl_run_script: done for the moment; waiting "
-				"after signaling!\n");
+			LM_DBG("done for the moment; waiting after signaling!\n");
 			return SCRIPT_TO_BE_CONTINUED;
 		}
 		/* move to the new instruction */

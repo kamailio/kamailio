@@ -173,7 +173,7 @@ int do_read( int socket, rd_buf_t *p)
 
 	if (n==0)
 	{
-		LOG(L_INFO,"INFO:do_read (sock=%d): FIN received\n", socket);
+		LM_INFO("(sock=%d): FIN received\n", socket);
 		return CONN_CLOSED;
 	}
 	if ( n==-1 && errno!=EINTR && errno!=EAGAIN )
@@ -229,13 +229,13 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		read_fd_set = active_fd_set;
 		if (select (sockfd+1, &read_fd_set, NULL, NULL, &tv) < 0)
 		{
-			LOG(L_ERR, M_NAME":tcp_send_msg(): select function failed\n");
+			LM_ERR("select function failed\n");
 			return AAA_ERROR;
 		}
 /*
 		if (!FD_ISSET (sockfd, &read_fd_set))
 		{
-			LOG(L_ERR, M_NAME":tcp_send_rcv(): no response message received\n");
+			LM_ERR("no response message received\n");
 //			return AAA_ERROR;
 		}
 */
@@ -270,7 +270,7 @@ int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb,
 		if(m_id!=waited_id)
 		{
 			number_of_tries ++;
-			LOG(L_NOTICE, M_NAME": old message received\n");
+			LM_NOTICE("old message received\n");
 			continue;
 		}
 		goto next;

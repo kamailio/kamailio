@@ -44,7 +44,7 @@
 		if (!(_intr_)->_field_) {\
 			if (!(_intr_)->msg->_field_) { \
 				if (parse_headers((_intr_)->msg,_name_,0)==-1) {\
-					LOG(L_ERR,"ERROR:run_proxy: bad %llx hdr\n",_name_);\
+					LM_ERR("bad %llx hdr\n",_name_);\
 					goto runtime_error;\
 				} else if ( !(_intr_)->msg->_field_) {\
 					(_intr_)->_field_ = STR_NOT_FOUND;\
@@ -82,7 +82,7 @@ static inline int parse_q(str *q, unsigned int *prio)
 
 	return 0;
 error:
-	LOG(L_ERR,"ERROR:cpl-c:parse_q:bad q param <%.*s>\n",q->len,q->s);
+	LM_ERR("bad q param <%.*s>\n",q->len,q->s);
 	return -1;
 }
 
@@ -99,16 +99,14 @@ static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 	if (msg->contact==0) {
 		/* find and parse the Contact header */
 		if ((parse_headers(msg, HDR_CONTACT_F, 0)==-1) || (msg->contact==0)) {
-			LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: error parsing or "
-				"no Contact hdr found!\n");
+			LM_ERR("error parsing or no Contact hdr found!\n");
 			goto error;
 		}
 	}
 
 	/* extract from contact header the all the addresses */
 	if (parse_contact( msg->contact )!=0) {
-		LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: unable to parse "
-			"Contact hdr!\n");
+		LM_ERR("unable to parse Contact hdr!\n");
 		goto error;
 	}
 
@@ -129,8 +127,8 @@ static inline int add_contacts_to_loc_set(struct sip_msg* msg,
 			}
 			/* add the uri to location set */
 			if (add_location(loc_set,&contacts->uri,0,prio,CPL_LOC_DUPL)!=0) {
-				LOG(L_ERR,"ERROR:cpl-c:add_contacts_to_loc_set: unable to add "
-				"<%.*s>\n",contacts->uri.len,contacts->uri.s);
+				LM_ERR("unable to add <%.*s>\n",
+					contacts->uri.len,contacts->uri.s);
 			}
 		}
 	}
@@ -149,8 +147,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 	int rez;
 
 	if (intr==0) {
-		LOG(L_WARN,"WARNING:cpl-c:reply_callback: param=0 for callback %d,"
-			" transaction=%p \n",type,t);
+		LM_WARN("param=0 for callback %d, transaction=%p \n",type,t);
 		return;
 	}
 
@@ -159,9 +156,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		 * structure! it's the safest place to do that, since this callback
 		 * it's called only once per transaction for final codes (>=200) ;-) */
 		if (ps->code>=200) {
-			DBG("DEBUG:cpl-c:final_reply: code=%d  -------------->\n"
-				" --------------------------> final reply received\n",
-			ps->code);
+			LM_DBG("code=%d, final reply received\n", ps->code);
 			/* CPL interpretation done, call established -> destroy */
 			free_cpl_interpreter( intr );
 			/* set to zero the param callback*/
@@ -169,12 +164,11 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		}
 		return;
 	} else if (!type&TMCB_ON_FAILURE) {
-		LOG(L_ERR,"BUG:cpl-c:reply_callback: unknown type %d\n",type);
+		LM_ERR("unknown type %d\n",type);
 		goto exit;
 	}
 
-	DBG("DEBUG:cpl-c:negativ_reply: ------------------------------>\n"
-		" ---------------------------------> negativ reply received\n");
+	LM_DBG("negativ reply received\n");
 
 	intr->flags |= CPL_PROXY_DONE;
 	intr->msg = ps->req;
@@ -187,8 +181,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 
 	/* if it's a redirect-> do I have to added to the location set ? */
 	if (intr->proxy.recurse && (ps->code)/100==3) {
-		DBG("DEBUG:cpl-c:negativ_reply: recurse level %d processing..\n",
-				intr->proxy.recurse);
+		LM_DBG("recurse level %d processing..\n",intr->proxy.recurse);
 		intr->proxy.recurse--;
 		/* get the locations from the Contact */
 		add_contacts_to_loc_set( ps->rpl, &(intr->loc_set));
@@ -220,7 +213,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 	 * This applies only for SERIAL forking or if RECURSE is set */
 	if (intr->proxy.last_to_proxy) {
 		/* continue proxying */
-		DBG("DEBUG:cpl-c:failed_reply: resuming proxying....\n");
+		LM_DBG("resuming proxying....\n");
 		switch (intr->proxy.ordering) {
 			case PARALLEL_VAL:
 				/* I get here only if I got a 3xx and RECURSE in on ->
@@ -238,7 +231,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 				cpl_proxy_to_loc_set(intr->msg,&loc,intr->flags );
 				break;
 			default:
-				LOG(L_CRIT,"BUG:cpl_c:failed_reply: unexpected ordering found "
+				LM_CRIT("unexpected ordering found "
 					"when continuing proxying (%d)\n",intr->proxy.ordering);
 				goto exit;
 		}
@@ -246,7 +239,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 		return;
 	} else {
 		/* done with proxying.... -> process the final response */
-		DBG("DEBUG:cpl-c:failed_reply:final_reply: got a final %d\n",ps->code);
+		LM_DBG("final_reply: got a final %d\n",ps->code);
 		intr->ip = 0;
 		if (ps->code==486 || ps->code==600) {
 			/* busy response */
@@ -285,7 +278,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 			case SCRIPT_FORMAT_ERROR:
 				goto exit;
 			default:
-				LOG(L_CRIT,"BUG:cpl-c:failed_reply: improper result %d\n",
+				LM_CRIT("improper result %d\n",
 					rez);
 				goto exit;
 		}
@@ -325,8 +318,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 					is_val.n = n;
 					if ( add_avp( cpl_env.timer_avp_type,
 					cpl_env.timer_avp, is_val)<0) {
-						LOG(L_ERR,"ERROR:run_proxy: unable to set "
-							"timer AVP\n");
+						LM_ERR("unable to set timer AVP\n");
 						/* continue */
 					}
 				}
@@ -340,21 +332,21 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 						/* already set as default */
 						break;
 					default:
-						LOG(L_ERR,"ERROR:run_proxy: invalid value (%u) found"
+						LM_ERR("invalid value (%u) found"
 							" for attr. RECURSE in PROXY node!\n",n);
 						goto script_error;
 				}
 				break;
 			case ORDERING_ATTR:
 				if (n!=PARALLEL_VAL && n!=SEQUENTIAL_VAL && n!=FIRSTONLY_VAL){
-					LOG(L_ERR,"ERROR:run_proxy: invalid value (%u) found"
+					LM_ERR("invalid value (%u) found"
 						" for attr. ORDERING in PROXY node!\n",n);
 					goto script_error;
 				}
 				intr->proxy.ordering = n;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_proxy: unknown attribute (%d) in"
+				LM_ERR("unknown attribute (%d) in"
 					"PROXY node\n",attr_name);
 				goto script_error;
 		}
@@ -385,7 +377,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 				intr->proxy.default_ = kid;
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_proxy: unknown output node type"
+				LM_ERR("unknown output node type"
 					" (%d) for PROXY node\n",NODE_TYPE(kid));
 				goto script_error;
 		}
@@ -393,7 +385,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 
 	/* if the location set if empty, I will go directly on failure/default */
 	if (intr->loc_set==0) {
-		DBG("DEBUG:run_proxy: location set found empty -> going on "
+		LM_DBG("location set found empty -> going on "
 			"failure/default branch\n");
 			if (intr->proxy.failure)
 				return get_first_child(intr->proxy.failure);
@@ -414,7 +406,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		if (!intr->to) {
 			if (!intr->msg->to &&
 			(parse_headers(intr->msg,HDR_TO_F,0)==-1 || !intr->msg->to)) {
-				LOG(L_ERR,"ERROR:run_proxy: bad msg or missing TO header\n");
+				LM_ERR("bad msg or missing TO header\n");
 				goto runtime_error;
 			}
 			s = &(get_to(intr->msg)->uri);
@@ -472,12 +464,10 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		if ( !(intr->flags&CPL_IS_STATEFUL) ) {
 			i = cpl_fct.tmb.t_newtran( intr->msg );
 			if (i<0) {
-				LOG(L_ERR,"ERROR:cpl-c:run_proxy: failed to build new "
-					"transaction!\n");
+				LM_ERR("failed to build new transaction!\n");
 				goto runtime_error;
 			} else if (i==0) {
-				LOG(L_ERR,"ERROR:cpl-c:run_proxy: processed INVITE is a "
-					"retransmission!\n");
+				LM_ERR("processed INVITE is a retransmission!\n");
 				/* instead of generating an error is better just to break the
 				 * script by returning EO_SCRIPT */
 				return EO_SCRIPT;
@@ -489,8 +479,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 		 * some callback functions for replies  */
 		if (cpl_fct.tmb.register_tmcb(intr->msg,0,
 		TMCB_ON_FAILURE|TMCB_RESPONSE_OUT,reply_callback,(void*)intr) <= 0 ) {
-			LOG(L_ERR, "ERROR:cpl_c:run_proxy: failed to register "
-				"TMCB_RESPONSE_OUT callback\n");
+			LM_ERR("failed to register TMCB_RESPONSE_OUT callback\n");
 			goto runtime_error;
 		}
 	}
@@ -535,10 +524,7 @@ static inline char *run_proxy( struct cpl_interpreter *intr )
 script_error:
 	return CPL_SCRIPT_ERROR;
 mem_error:
-	LOG(L_ERR,"ERROR:run_proxy: no more free shm memory\n");
+	LM_ERR("no more free shm memory\n");
 runtime_error:
 	return CPL_RUNTIME_ERROR;
 }
-
-
-

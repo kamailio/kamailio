@@ -44,15 +44,14 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 	int bflags;
 
 	if (!*locs) {
-		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: empty loc set!!\n");
+		LM_ERR("empty loc set!!\n");
 		goto error;
 	}
 
 	/* if it's the first time when this sip_msg is proxied, use the first addr
 	 * in loc_set to rewrite the RURI */
 	if (!(flag&CPL_PROXY_DONE)) {
-		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Request-URI with "
-			"<%s>\n",(*locs)->addr.uri.s);
+		LM_DBG("rewriting Request-URI with <%s>\n",(*locs)->addr.uri.s);
 		/* build a new action for setting the URI */
 		act.type = SET_URI_T;
 		act.elem[0].type = STRING_ST;
@@ -60,12 +59,12 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 		act.next = 0;
 		/* push the action */
 		if (do_action(&act, msg) < 0) {
-			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action failed\n");
+			LM_ERR("do_action failed\n");
 			goto error;
 		}
 		/* build a new action for setting the DSTURI */
 		if((*locs)->addr.received.s && (*locs)->addr.received.len) {
-			DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: rewriting Destination URI "
+			LM_DBG("rewriting Destination URI "
 				"with <%s>\n",(*locs)->addr.received.s);
 			act.type = SET_DSTURI_T;
 			act.elem[0].type = STRING_ST;
@@ -73,8 +72,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 			act.next = 0;
 			/* push the action */
 			if (do_action(&act, msg) < 0) {
-				LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: do_action "
-					"failed\n");
+				LM_ERR("do_action failed\n");
 				goto error;
 			}
 		}
@@ -90,13 +88,11 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 	/* add the rest of the locations as branches */
 	while(*locs) {
 		bflags = ((*locs)->flags&CPL_LOC_NATED) ? cpl_fct.ulb.nat_flag : 0 ;
-		DBG("DEBUG:cpl_c:cpl_proxy_to_loc_set: appending branch "
-			"<%.*s>, flags %d\n",
+		LM_DBG("appending branch <%.*s>, flags %d\n",
 			(*locs)->addr.uri.len, (*locs)->addr.uri.s, bflags);
 		if(append_branch(msg, &(*locs)->addr.uri, &(*locs)->addr.received,0,
 		Q_UNSPECIFIED, bflags, 0)==-1){
-			LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: failed when "
-				"appending branch <%s>\n",(*locs)->addr.uri.s);
+			LM_ERR("failed when appending branch <%s>\n",(*locs)->addr.uri.s);
 			goto error;
 		}
 		/* free the location and point to the next one */
@@ -113,7 +109,7 @@ int cpl_proxy_to_loc_set( struct sip_msg *msg, struct location **locs,
 
 	/* do t_forward */
 	if (cpl_fct.tmb.t_relay(msg, 0, 0)==-1) {
-		LOG(L_ERR,"ERROR:cpl_c:cpl_proxy_to_loc_set: t_relay failed !\n");
+		LM_ERR("t_relay failed !\n");
 		goto error;
 	}
 

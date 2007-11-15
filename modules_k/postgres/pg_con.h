@@ -70,9 +70,6 @@ struct pg_con {
 #define CON_TIMESTAMP(db_con)  (((struct pg_con*)((db_con)->tail))->timestamp)
 #define CON_ID(db_con) 	       (((struct pg_con*)((db_con)->tail))->id)
 
-#define PLOG(f,s) LOG(L_ERR, "PG[%d] %s %s\n",__LINE__,f,s)
-#define DLOG(f,s) LOG(L_DBG, "PG[%d] %s %s\n",__LINE__,f,s)
-
 #define SQLURL_LEN 256
 
 /*

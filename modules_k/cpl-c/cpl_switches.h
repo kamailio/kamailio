@@ -57,29 +57,26 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 		switch (attr_name) {
 			case FIELD_ATTR:
 				if (field!=UNDEF_CHAR) {
-					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: multiple FIELD "
-						"attrs found\n");
+					LM_ERR("multiple FIELD attrs found\n");
 					goto script_error;
 				}
 				field = n;
 				break;
 			case SUBFIELD_ATTR:
 				if (subfield!=UNDEF_CHAR) {
-					LOG(L_ERR,"ERROR:cpl-c:run_address_switch: multiple SUBFIELD"
-						" attrs found\n");
+					LM_ERR("multiple SUBFIELD attrs found\n");
 					goto script_error;
 				}
 				subfield = n; break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:run_address_switch: unknown attribute "
+				LM_ERR("unknown attribute "
 					"(%d) in ADDRESS_SWITCH node\n",*p);
 				goto script_error;
 		}
 	}
 
 	if (field==UNDEF_CHAR) {
-		LOG(L_ERR,"ERROR:cpl_c:run_address_switch: mandatory param FIELD "
-			"no found\n");
+		LM_ERR("mandatory param FIELD no found\n");
 		goto script_error;
 	}
 
@@ -89,21 +86,20 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
 			case NOT_PRESENT_NODE:
-				DBG("DEBUG:run_address_switch: NOT_PRESENT node found ->"
+				LM_DBG("NOT_PRESENT node found ->"
 					"skipping (useless in this case)\n");
 				break;
 			case OTHERWISE_NODE :
 				if (i!=NR_OF_KIDS(intr->ip)-1) {
-					LOG(L_ERR,"ERROR:run_address_switch: OTHERWISE node "
-						"not found as the last sub-node!\n");
+					LM_ERR("OTHERWISE node not found as the last sub-node!\n");
 					goto script_error;
 				}
-				DBG("DEBUG:run_address_switch: matching on OTHERWISE node\n");
+				LM_DBG("matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case ADDRESS_NODE :
 				/* check the number of attributes */
 				if (NR_OF_ATTR(kid)!=1) {
-					LOG(L_ERR,"ERROR:run_address_switch: incorrect nr of attrs "
+					LM_ERR("incorrect nr of attrs "
 						"(%d) in ADDRESS node\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
@@ -112,13 +108,13 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 				get_basic_attr( p, attr_name, cpl_val.len, intr, script_error);
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR &&
 				attr_name!=SUBDOMAIN_OF_ATTR) {
-					LOG(L_ERR,"ERROR:run_address_switch: unknown attribute "
+					LM_ERR("unknown attribute "
 						"(%d) in ADDRESS node\n",attr_name);
 					goto script_error;
 				}
 				/* get attribute value */
 				get_str_attr( p, cpl_val.s, cpl_val.len, intr, script_error,1);
-				DBG("DEBUG:run_address_switch: testing ADDRESS branch "
+				LM_DBG("testing ADDRESS branch "
 					" attr_name=%d attr_val=[%.*s](%d)..\n",
 					attr_name,cpl_val.len,cpl_val.s,cpl_val.len);
 				/* extract the needed value from the message */
@@ -144,8 +140,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 								if (!intr->msg->to &&
 								(parse_headers(intr->msg,HDR_TO_F,0)==-1 ||
 								!intr->msg->to)) {
-									LOG(L_ERR,"ERROR:run_address_switch: bad "
-										"msg or missing TO header\n");
+									LM_ERR("bad msg or missing TO header\n");
 									goto runtime_error;
 								}
 								intr->to = &(get_to(intr->msg)->uri);
@@ -153,11 +148,11 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 							uri = intr->to;
 							break;
 						default:
-							LOG(L_ERR,"ERROR:run_address_switch: unknown "
+							LM_ERR("unknown "
 								"attribute (%d) in ADDRESS node\n",field);
 							goto script_error;
 					}
-					DBG("DEBUG:run_address_switch: extracted uri is <%.*s>\n",
+					LM_DBG("extracted uri is <%.*s>\n",
 						uri->len, uri->s);
 					switch (subfield) {
 						case UNDEF_CHAR:
@@ -191,12 +186,12 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 						case ADDRESS_TYPE_VAL:
 						case DISPLAY_VAL:
 						default:
-							LOG(L_ERR,"ERROR:run_address_switch: unsupported "
+							LM_ERR("unsupported "
 								"value attribute (%d) in ADDRESS node\n",
 								subfield);
 							goto script_error;
 					}
-					DBG("DEBUG:run_address_switch: extracted val. is <%.*s>\n",
+					LM_DBG("extracted val. is <%.*s>\n",
 						(msg_val==0)?0:msg_val->len, (msg_val==0)?0:msg_val->s);
 				}
 				/* does the value from script match the one from message? */
@@ -205,19 +200,18 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 						if ( (!msg_val && !cpl_val.s) ||
 						(msg_val && msg_val->len==cpl_val.len &&
 						strncasecmp(msg_val->s,cpl_val.s,cpl_val.len)==0)) {
-							DBG("DEBUG:run_address_switch: matching on "
-								"ADDRESS node (IS)\n");
+							LM_DBG("matching on ADDRESS node (IS)\n");
 							return get_first_child(kid);
 						}
 						break;
 					case CONTAINS_ATTR:
 						if (subfield!=DISPLAY_VAL) {
-							LOG(L_WARN,"WARNING:run_address_switch: operator "
+							LM_WARN("operator "
 							"CONTAINS applies only to DISPLAY -> ignored\n");
 						} else {
 							if ( msg_val && cpl_val.len<=msg_val->len &&
 							strcasestr_str(msg_val, &cpl_val)!=0 ) {
-								DBG("DEBUG:run_address_switch: matching on "
+								LM_DBG("matching on "
 									"ADDRESS node (CONTAINS)\n");
 								return get_first_child(kid);
 							}
@@ -230,7 +224,7 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 								if (k>=0 && (k==0 || msg_val->s[k-1]=='.') &&
 								!strncasecmp(cpl_val.s,msg_val->s+k,cpl_val.len)
 								) {
-									DBG("DEBUG:run_address_switch: matching on "
+									LM_DBG("matching on "
 										"ADDRESS node (SUBDOMAIN_OF)\n");
 									return get_first_child(kid);
 								}
@@ -239,21 +233,20 @@ static inline char *run_address_switch( struct cpl_interpreter *intr )
 								if (msg_val==0) break;
 								if (msg_val->len>=cpl_val.len && !strncasecmp(
 								cpl_val.s,msg_val->s,cpl_val.len)) {
-									DBG("DEBUG:run_address_switch: matching on "
+									LM_DBG("matching on "
 										"ADDRESS node (SUBDOMAIN_OF)\n");
 									return get_first_child(kid);
 								}
 								break;
 							default:
-								LOG(L_WARN,"WARNING:run_address_switch: operator"
-									" SUBDOMAIN_OF applies only to HOST or TEL "
-									"-> ignored\n");
+								LM_WARN("operator SUBDOMAIN_OF applies "
+									"only to HOST or TEL -> ignored\n");
 						}
 						break;
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_address_switch: unknown output node type "
+				LM_ERR("unknown output node type "
 					"(%d) for ADDRESS_SWITCH node\n",NODE_TYPE(kid));
 				goto script_error;
 		}
@@ -288,14 +281,14 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 
 	/* parse the attribute */
 	if (NR_OF_ATTR(intr->ip)!=1) {
-		LOG(L_ERR,"ERROR:cpl_c:run_string_switch: node should have 1 attr, not"
+		LM_ERR("node should have 1 attr, not"
 			" (%d)\n",NR_OF_ATTR(intr->ip));
 		goto script_error;
 	}
 	p=ATTR_PTR(intr->ip);
 	get_basic_attr( p, attr_name, field, intr, script_error);
 	if (attr_name!=FIELD_ATTR) {
-		LOG(L_ERR,"ERROR:cpl_c:run_string_switch: unknown param type (%d)"
+		LM_ERR("unknown param type (%d)"
 			" for STRING_SWITCH node\n",*p);
 		goto script_error;
 	}
@@ -306,24 +299,23 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 		switch ( NODE_TYPE(kid) ) {
 			case NOT_PRESENT_NODE:
 				if (not_present_node) {
-					LOG(L_ERR,"ERROR:run_string_switch: NOT_PRESENT node "
-						"found twice!\n");
+					LM_ERR("NOT_PRESENT node found twice!\n");
 					goto script_error;
 				}
 				not_present_node = kid;
 				break;
 			case OTHERWISE_NODE :
 				if (i!=NR_OF_KIDS(intr->ip)-1) {
-					LOG(L_ERR,"ERROR:run_string_switch: OTHERWISE node "
+					LM_ERR("OTHERWISE node "
 						"not found as the last sub-node!\n");
 					goto script_error;
 				}
-				DBG("DEBUG:run_string_switch: matching on OTHERWISE node\n");
+				LM_DBG("matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case STRING_NODE :
 				/* check the number of attributes */
 				if (NR_OF_ATTR(kid)!=1) {
-					LOG(L_ERR,"ERROR:run_string_switch: incorrect nr of attrs "
+					LM_ERR("incorrect nr of attrs "
 						"(%d) in STRING node (expected 1)\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
@@ -331,13 +323,13 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 				p = ATTR_PTR(kid);
 				get_basic_attr( p, attr_name, cpl_val.len, intr, script_error);
 				if (attr_name!=IS_ATTR && attr_name!=CONTAINS_ATTR ) {
-					LOG(L_ERR,"ERROR:run_string_switch: unknown attribute "
+					LM_ERR("unknown attribute "
 						"(%d) in STRING node\n",attr_name);
 					goto script_error;
 				}
 				/* get attribute value */
 				get_str_attr( p, cpl_val.s, cpl_val.len, intr, script_error,1);
-				DBG("DEBUG:run_string_switch: testing STRING branch "
+				LM_DBG("testing STRING branch "
 					"attr_name=%d attr_val=[%.*s](%d)..\n",
 					attr_name,cpl_val.len,cpl_val.s,cpl_val.len);
 				if (!msg_val.s) {
@@ -350,8 +342,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								if (!intr->msg->subject) {
 									if (parse_headers(intr->msg,
 									HDR_SUBJECT_F,0)==-1) {
-										LOG(L_ERR,"ERROR:run_string_switch: "
-										"bad SUBJECT header\n");
+										LM_ERR("bad SUBJECT header\n");
 										goto runtime_error;
 									} else if (!intr->msg->subject) {
 										/* hdr not present */
@@ -373,8 +364,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								if (!intr->msg->organization) {
 									if (parse_headers(intr->msg,
 									HDR_ORGANIZATION_F,0)==-1) {
-										LOG(L_ERR,"ERROR:run_string_switch: "
-										"bad ORGANIZATION hdr\n");
+										LM_ERR("bad ORGANIZATION hdr\n");
 										goto runtime_error;
 									} else if (!intr->msg->organization) {
 										/* hdr not present */
@@ -396,8 +386,7 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								if (!intr->msg->user_agent) {
 									if (parse_headers(intr->msg,
 									HDR_USERAGENT_F,0)==-1) {
-										LOG(L_ERR,"ERROR:run_string_switch: "
-										"bad USERAGENT hdr\n");
+										LM_ERR("bad USERAGENT hdr\n");
 										goto runtime_error;
 									} else if (!intr->msg->user_agent) {
 										/* hdr not present */
@@ -412,11 +401,11 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 								*(intr->user_agent));
 							break;
 						default:
-							LOG(L_ERR,"ERROR:run_string_switch: unknown "
+							LM_ERR("unknown "
 								"attribute (%d) in STRING node\n",field);
 							goto script_error;
 					}
-					DBG("DEBUG:run_string_switch: extracted msg string is "
+					LM_DBG("extracted msg string is "
 						"<%.*s>\n",msg_val.len, msg_val.s);
 				}
 				/* does the value from script match the one from message? */
@@ -425,23 +414,21 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 						if ( (!msg_val.s && !cpl_val.s) ||
 						(msg_val.len==cpl_val.len &&
 						strncasecmp(msg_val.s,cpl_val.s,cpl_val.len)==0)) {
-							DBG("DEBUG:run_string_switch: matching on "
-								"STRING node (IS)\n");
+							LM_DBG("matching on STRING node (IS)\n");
 							return get_first_child(kid);
 						}
 						break;
 					case CONTAINS_ATTR:
 						if (cpl_val.len<=msg_val.len &&
 						strcasestr_str(&msg_val, &cpl_val)!=0 ) {
-							DBG("DEBUG:run_string_switch: matching on "
-								"STRING node (CONTAINS)\n");
+							LM_DBG("matching on STRING node (CONTAINS)\n");
 							return get_first_child(kid);
 						}
 						break;
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_string_switch: unknown output node type "
+				LM_ERR("unknown output node type "
 					"(%d) for STRING_SWITCH node\n",NODE_TYPE(kid));
 				goto script_error;
 		}
@@ -450,11 +437,11 @@ static inline char *run_string_switch( struct cpl_interpreter *intr )
 	/* none of the branches of STRING_SWITCH matched -> go for default */
 	return DEFAULT_ACTION;
 not_present:
-	DBG("DEBUG:run_string_switch: required hdr not present in sip msg\n");
+	LM_DBG("required hdr not present in sip msg\n");
 	if (not_present_node)
 		return get_first_child(not_present_node);
 	/* look for the NOT_PRESENT node */
-	DBG("DEBUG:run_string_switch: searching for NOT_PRESENT sub-node..\n");
+	LM_DBG("searching for NOT_PRESENT sub-node..\n");
 	for(; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
@@ -496,19 +483,17 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 		switch ( NODE_TYPE(kid) ) {
 			case NOT_PRESENT_NODE:
 				if (not_present_node) {
-					LOG(L_ERR,"ERROR:run_priority_switch: NOT_PRESENT node "
-						"found twice!\n");
+					LM_ERR("NOT_PRESENT node found twice!\n");
 					goto script_error;
 				}
 				not_present_node = kid;
 				break;
 			case OTHERWISE_NODE :
 				if (i!=NR_OF_KIDS(intr->ip)-1) {
-					LOG(L_ERR,"ERROR:run_priority_switch: OTHERWISE node "
-						"not found as the last sub-node!\n");
+					LM_ERR("OTHERWISE node not found as the last sub-node!\n");
 					goto script_error;
 				}
-				DBG("DEBUG:run_priority_switch: matching on OTHERWISE node\n");
+				LM_DBG("matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case PRIORITY_NODE :
 				if (NR_OF_ATTR(kid)!=1)
@@ -518,7 +503,7 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 				get_basic_attr( p, attr_name, attr_val, intr, script_error);
 				if (attr_name!=LESS_ATTR && attr_name!=GREATER_ATTR &&
 				attr_name!=EQUAL_ATTR){
-					LOG(L_ERR,"ERROR:run_priority_switch: unknown attribute "
+					LM_ERR("unknown attribute "
 						"(%d) in PRIORITY node\n",attr_name);
 					goto script_error;
 				}
@@ -526,27 +511,27 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 				if (attr_val!=EMERGENCY_VAL && attr_val!=URGENT_VAL &&
 				attr_val!=NORMAL_VAL && attr_val!=NON_URGENT_VAL &&
 				attr_val!=UNKNOWN_PRIO_VAL) {
-					LOG(L_ERR,"ERROR:run_priority_switch: unknown encoded "
+					LM_ERR("unknown encoded "
 						"value (%d) for attribute (*d) in PRIORITY node\n",*p);
 					goto script_error;
 				}
 				if (attr_val==UNKNOWN_PRIO_VAL) {
 					if (attr_name!=EQUAL_ATTR) {
-						LOG(L_ERR,"ERROR:cpl_c:run_priority_switch:bad PRIORITY"
+						LM_ERR("bad PRIORITY"
 							" branch: attr=EQUAL doesn't match val=UNKNOWN\n");
 						goto script_error;
 					}
 					/* if the attr is UNKNOWN, its string value is present  */
 					get_basic_attr(p, n,cpl_val.len, intr, script_error);
 					if (n!=PRIOSTR_ATTR) {
-						LOG(L_ERR,"ERROR:run_priority_switch: expected PRIOSTR"
+						LM_ERR("expected PRIOSTR"
 							"(%d) attr, found (%d)\n",PRIOSTR_ATTR,n);
 						goto script_error;
 					}
 					get_str_attr(p, cpl_val.s, cpl_val.len,intr,script_error,1);
 				}
 
-				DBG("DEBUG:run_priority_switch: testing PRIORITY branch "
+				LM_DBG("testing PRIORITY branch "
 					"(attr=%d,val=%d) [%.*s](%d)..\n",
 					attr_name,attr_val,cpl_val.len,cpl_val.s,cpl_val.len);
 				if (!msg_val.s) {
@@ -555,12 +540,10 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 						if (!intr->msg->priority) {
 							if (parse_headers(intr->msg,HDR_PRIORITY_F,
 							0)==-1) {
-								LOG(L_ERR,"ERROR:run_priority_switch: bad "
-									"sip msg or PRIORITY header !\n");
+								LM_ERR("bad sip msg or PRIORITY header !\n");
 								goto runtime_error;
 							} else if (!intr->msg->priority) {
-								LOG(L_NOTICE,"NOTICE:run_priority_switch: "
-									"missing PRIORITY header -> using "
+								LM_NOTICE("missing PRIORITY header -> using "
 									"default value \"normal\"!\n");
 								intr->priority = &default_val;
 							} else {
@@ -589,16 +572,16 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 					} else {
 						msg_attr_val = UNKNOWN_PRIO_VAL;
 					}
-					DBG("DEBUG:run_priority_switch: extracted msg priority is "
+					LM_DBG("extracted msg priority is "
 						"<%.*s> decoded as [%d]\n",
 						msg_val.len,msg_val.s,msg_attr_val);
 				}
-				DBG("DEBUG:run_priority_switch: using msg string <%.*s>\n",
+				LM_DBG("using msg string <%.*s>\n",
 					msg_val.len, msg_val.s);
 				/* attr_val (from cpl) cannot be UNKNOWN - we already
 				 * check it -> check only for msg_attr_val for non-EQUAL op */
 				if (msg_attr_val==UNKNOWN_PRIO_VAL && attr_name!=EQUAL_ATTR) {
-					LOG(L_NOTICE,"NOTICE:run_priority_switch: UNKNOWN "
+					LM_NOTICE("UNKNOWN "
 						"value found in sip_msg when string a LESS/GREATER "
 						"cmp -> force the value to default \"normal\"\n");
 					msg_prio = NORMAL_VAL;
@@ -653,12 +636,11 @@ static inline char *run_priority_switch( struct cpl_interpreter *intr )
 						continue; /* for cycle for all kids */
 						break;
 				} /* end switch for attr_name */
-				DBG("DEBUG:run_priority_switch: matching current "
-					"PRIORITY node\n");
+				LM_DBG("matching current PRIORITY node\n");
 				return get_first_child(kid);
 				break;
 			default:
-				LOG(L_ERR,"ERROR:run_priority_switch: unknown output node type"
+				LM_ERR("unknown output node type"
 					" (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
 				goto script_error;
 		} /* end switch for NODE_TYPE */
@@ -676,9 +658,9 @@ script_error:
 
 inline static int set_TZ(char *tz_env)
 {
-	DBG("DEBUG:cpl-c:set_TZ: switching TZ as \"%s\"\n",tz_env);
+	LM_DBG("switching TZ as \"%s\"\n",tz_env);
 	if (putenv( tz_env )==-1) {
-		LOG(L_ERR,"ERROR:cpl-c:set_TZ: setenv failed -> unable to set TZ "
+		LM_ERR("setenv failed -> unable to set TZ "
 			" \"%s\"\n",tz_env);
 		return -1;
 	}
@@ -704,14 +686,14 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 	ac_tm_t att;
 	tmrec_t trt;
 
-	DBG("DEBUG:cpl-c:run_time_switch: checking recv. time stamp <%d>\n",
+	LM_DBG("checking recv. time stamp <%d>\n",
 		intr->recv_time);
 	switch (NR_OF_ATTR(intr->ip)) {
 		case 1:
 			p = ATTR_PTR(intr->ip);
 			get_basic_attr( p, attr_name, user_tz.len, intr, script_error);
 			if (attr_name!=TZID_ATTR) {
-				LOG(L_ERR,"ERROR:cpl-c:run_time_switch: bad attribute -> "
+				LM_ERR("bad attribute -> "
 					" expected=%d, found=%d\n",TZID_ATTR,attr_name);
 				goto script_error;
 			}
@@ -719,7 +701,7 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 		case 0:
 			break;
 		default:
-			LOG(L_ERR,"ERROR:cpl-c:run_time_switch: incorrect number of attr ->"
+			LM_ERR("incorrect number of attr ->"
 				" found=%d expected=(0,1)\n",NR_OF_ATTR(intr->ip));
 			goto script_error;
 	}
@@ -735,17 +717,16 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
 		switch ( NODE_TYPE(kid) ) {
 			case NOT_PRESENT_NODE:
-				DBG("DEBUG:cpl-c:run_time_switch: NOT_PRESENT node found ->"
+				LM_DBG("NOT_PRESENT node found ->"
 					"skipping (useless in this case)\n");
 				break;
 			case OTHERWISE_NODE :
 				if (i!=NR_OF_KIDS(intr->ip)-1) {
-					LOG(L_ERR,"ERROR:cpl-c:run_time_switch: OTHERWISE node "
+					LM_ERR("OTHERWISE node "
 						"not found as the last sub-node!\n");
 					goto script_error;
 				}
-				DBG("DEBUG:cpl-c:run_time_switch: matching on "
-					"OTHERWISE node\n");
+				LM_DBG("matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case TIME_NODE :
 				/* init structures */
@@ -762,7 +743,7 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 					get_basic_attr( p, attr_name, attr_len, intr, script_error);
 					get_str_attr( p, attr_str, attr_len, intr, script_error,1);
 					/* process the attribute */
-					DBG("DEBUG:cpl_c:run_time_node: attribute [%d] found :"
+					LM_DBG("attribute [%d] found :"
 						"[%s]\n",attr_name, attr_str);
 					switch (attr_name) {
 						case DTSTART_ATTR:
@@ -817,15 +798,14 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 								goto parse_err;
 							break;
 						default:
-							LOG(L_ERR,"ERROR:cpl_c:run_time_switch: "
-								"unsupported attribute [%d] found in TIME "
+							LM_ERR("unsupported attribute [%d] found in TIME "
 								"node\n",attr_name);
 							goto script_error;
 					} /* end attribute switch */
 				} /* end for*/
 				/* check the mandatory attributes */
 				if ( (flags&0x03)!=((1<<0)|(1<<1)) ) {
-					LOG(L_ERR,"ERROR:cpl_c:run_time_switch: attribute DTSTART"
+					LM_ERR("attribute DTSTART"
 						",DTEND,DURATION missing or multi-present\n");
 					goto script_error;
 				}
@@ -840,22 +820,20 @@ static inline char *run_time_switch( struct cpl_interpreter *intr )
 				/* let's see the result ;-) */
 				switch  (j) {
 					case 0:
-						DBG("DEBUG:run_time_switch: matching current "
-							"TIME node\n");
+						LM_DBG("matching current TIME node\n");
 						return get_first_child(kid);
 					case -1:
-						LOG(L_ERR,"ERROR:cpl_c:run_time_switch: check_tmrec "
+						LM_ERR("check_tmrec "
 							"ret. err. when testing time cond. !\n");
 						goto runtime_error;
 						break;
 					case 1:
-						DBG("DEBUG:cpl_c:run_time_switch: time cond. doesn't"
-							" match !\n");
+						LM_DBG("time cond. doesn't match !\n");
 						break;
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl-c:run_priority_switch: unknown output node"
+				LM_ERR("unknown output node"
 					" type (%d) for PRIORITY_SWITCH node\n",NODE_TYPE(kid));
 				goto script_error;
 		} /* end switch for NODE_TYPE */
@@ -873,7 +851,7 @@ runtime_error:
 	tmrec_free( &trt );
 	return CPL_RUNTIME_ERROR;
 parse_err:
-	LOG(L_ERR,"ERROR:cpl-c:run_priority_switch: error parsing attr [%d][%s]\n",
+	LM_ERR("error parsing attr [%d][%s]\n",
 		attr_name,attr_str?(char*)attr_str:"NULL");
 script_error:
 	if ( flags&(1<<7) )
@@ -933,8 +911,7 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 		while(c<end && (*c==' '||*c=='\t')) c++;
 		if (c==end || *c==',') {
 			/* do compare */
-			DBG("DEBUG:cpl-c:is_lang_tag_matching: testing range [%.*s]-[%.*s]"
-				" against tag [%.*s]-[%.*s]\n",
+			LM_DBG("testing range [%.*s]-[%.*s] against tag [%.*s]-[%.*s]\n",
 				tag.len,tag.s,subtag.len,subtag.s,
 				cpl_tag->len,cpl_tag->s,cpl_subtag->len,cpl_subtag->s);
 			/* language range of "*" is ignored for the purpose of matching*/
@@ -942,7 +919,6 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 				/* does the language tag matches ? */
 				if (tag.len==cpl_tag->len && !strncasecmp(tag.s,cpl_tag->s,
 				tag.len)) {
-					DBG("cucu bau \n");
 					/* if the subtag of the range is void -> matche */
 					if (subtag.len==0)
 						return 1;
@@ -962,7 +938,7 @@ inline static int is_lang_tag_matching(str *range,str *cpl_tag,str *cpl_subtag)
 no_matche:
 	return 0;
 error:
-	LOG(L_ERR,"ERROR:cpl-c:is_lang_tag_matching: parse error in Accept-"
+	LM_ERR("parse error in Accept-"
 		"Language body <%.*s> at char <%c>[%d] offset %ld!\n",
 		range->len,range->s,*c,*c,(long)(c-range->s));
 	return -1;
@@ -993,25 +969,24 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 		switch ( NODE_TYPE(kid) ) {
 			case NOT_PRESENT_NODE:
 				if (not_present_node) {
-					LOG(L_ERR,"ERROR:run_language_switch: NOT_PRESENT node "
-						"found twice!\n");
+					LM_ERR("NOT_PRESENT node found twice!\n");
 					goto script_error;
 				}
 				not_present_node = kid;
 				break;
 			case OTHERWISE_NODE :
 				if (i!=NR_OF_KIDS(intr->ip)-1) {
-					LOG(L_ERR,"ERROR:run_language_switch: OTHERWISE node "
+					LM_ERR("OTHERWISE node "
 						"not found as the last sub-node!\n");
 					goto script_error;
 				}
-				DBG("DEBUG:run_language_switch: matching on OTHERWISE node\n");
+				LM_DBG("matching on OTHERWISE node\n");
 				return get_first_child(kid);
 			case LANGUAGE_NODE :
 				/* check the number of attributes */
 				nr_attr = NR_OF_ATTR(kid);
 				if (nr_attr<1 || nr_attr>2) {
-					LOG(L_ERR,"ERROR:run_string_switch: incorrect nr of attrs "
+					LM_ERR("incorrect nr of attrs "
 						"(%d) in LANGUAGE node (1 or 2)\n",NR_OF_ATTR(kid));
 					goto script_error;
 				}
@@ -1024,14 +999,14 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 					get_str_attr( p, attr.s, attr.len, intr, script_error,0);
 					if (attr_name==MATCHES_TAG_ATTR ) {
 						lang_tag = attr;
-						DBG("DEBUG:cpl-c:run_language_string: language-tag is"
+						LM_DBG("language-tag is"
 							" [%.*s]\n",attr.len,attr.s);
 					}else if (attr_name==MATCHES_SUBTAG_ATTR) {
 						lang_subtag = attr;
-						DBG("DEBUG:cpl-c:run_language_string: language-subtag"
+						LM_DBG("language-subtag"
 							" is [%.*s]\n",attr.len,attr.s);
 					}else {
-						LOG(L_ERR,"ERROR:run_language_switch: unknown attribute"
+						LM_ERR("unknown attribute"
 						" (%d) in LANGUAGE node\n",attr_name);
 						goto script_error;
 					}
@@ -1047,8 +1022,7 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 						if (!intr->msg->accept_language) {
 							if (parse_headers(intr->msg,
 							HDR_ACCEPTLANGUAGE_F,0)==-1) {
-								LOG(L_ERR,"ERROR:run_language_switch: "
-									"bad ACCEPT_LANGUAGE header\n");
+								LM_ERR("bad ACCEPT_LANGUAGE header\n");
 								goto runtime_error;
 							} else if (!intr->msg->accept_language) {
 								/* hdr not present */
@@ -1061,15 +1035,14 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 					}
 				}
 				trim_len( msg_val.len,msg_val.s, *(intr->subject));
-				DBG("DEBUG:run_language_switch: extracted msg string is "
+				LM_DBG("extracted msg string is "
 					"<%.*s>\n",msg_val.len, msg_val.s);
 				
 				/* does the value from script match the one from message? */
 				if (msg_val.len && msg_val.s) {
 					j = is_lang_tag_matching(&msg_val,&lang_tag,&lang_subtag);
 					if (j==1) {
-						DBG("DEBUG:run_language_switch: matching on "
-							"LANGUAGE node\n");
+						LM_DBG("matching on LANGUAGE node\n");
 						return get_first_child(kid);
 					}else if (j==-1) {
 						goto runtime_error;
@@ -1077,7 +1050,7 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 				}
 				break;
 			default:
-				LOG(L_ERR,"ERROR:cpl_c:run_language_switch: unknown output "
+				LM_ERR("unknown output "
 					"node type (%d) for LANGUAGE_SWITCH node\n",
 					NODE_TYPE(kid));
 				goto script_error;
@@ -1086,11 +1059,11 @@ static inline char *run_language_switch( struct cpl_interpreter *intr )
 
 	return DEFAULT_ACTION;
 not_present:
-	DBG("DEBUG:run_string_switch: required hdr not present in sip msg\n");
+	LM_DBG("required hdr not present in sip msg\n");
 	if (not_present_node)
 		return get_first_child(not_present_node);
 	/* look for the NOT_PRESENT node */
-	DBG("DEBUG:run_string_switch: searching for NOT_PRESENT sub-node..\n");
+	LM_DBG("searching for NOT_PRESENT sub-node..\n");
 	for(; i<NR_OF_KIDS(intr->ip) ; i++ ) {
 		kid = intr->ip + KID_OFFSET(intr->ip,i);
 		check_overflow_by_ptr( kid+SIMPLE_NODE_SIZE(kid), intr, script_error);
@@ -1103,5 +1076,3 @@ runtime_error:
 script_error:
 	return CPL_SCRIPT_ERROR;
 }
-
-

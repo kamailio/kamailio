@@ -64,14 +64,14 @@ int write_to_file(char *filename, str *buf)
 
 	fd = open(filename,O_WRONLY|O_CREAT|O_TRUNC,0644);
 	if (!fd) {
-		LOG(L_ERR,"ERROR:cpl-c:write_to_file: cannot open file : %s\n",
+		LM_ERR("cannot open file : %s\n",
 			strerror(errno));
 		goto error;
 	}
 
 	while ( (ret=write( fd, buf->s, buf->len))!=buf->len) {
 		if ((ret==-1 && errno!=EINTR)|| ret!=-1) {
-			LOG(L_ERR,"ERROR:cpl-c:write_to_file:cannot write to file:"
+			LM_ERR("cannot write to file:"
 				"%s write_ret=%d\n",strerror(errno), ret );
 			goto error;
 		}

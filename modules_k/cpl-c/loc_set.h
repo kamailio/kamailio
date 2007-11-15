@@ -73,7 +73,7 @@ static inline int add_location(struct location **loc_set, str *uri,
 		loc = (struct location*)shm_malloc(
 			sizeof(struct location)+((flags&CPL_LOC_DUPL)?uri->len+1:0) );
 	if (!loc) {
-		LOG(L_ERR,"ERROR:add_location: no more free shm memory!\n");
+		LM_ERR("no more free shm memory!\n");
 		return -1;
 	}
 
@@ -140,7 +140,7 @@ static inline void remove_location(struct location **loc_set, char *uri_s,
 	}
 
 	if (loc) {
-		DBG("DEBUG:remove_location: removing from loc_set <%.*s>\n",
+		LM_DBG("removing from loc_set <%.*s>\n",
 			uri_len,uri_s);
 		if (prev_loc)
 			prev_loc->next=loc->next;
@@ -148,7 +148,7 @@ static inline void remove_location(struct location **loc_set, char *uri_s,
 			(*loc_set)=loc->next;
 		shm_free( loc );
 	} else {
-		DBG("DEBUG:remove_location: no matching in loc_set for <%.*s>\n",
+		LM_DBG("no matching in loc_set for <%.*s>\n",
 			uri_len,uri_s);
 	}
 }
@@ -165,7 +165,7 @@ static inline struct location *remove_first_location(struct location **loc_set)
 	loc = *loc_set;
 	*loc_set = (*loc_set)->next;
 	loc->next = 0;
-	DBG("DEBUG:remove_first_location: removing <%.*s>\n",
+	LM_DBG("removing <%.*s>\n",
 		loc->addr.uri.len,loc->addr.uri.s);
 
 	return loc;
@@ -189,7 +189,7 @@ static inline void empty_location_set(struct location **loc_set)
 static inline void print_location_set(struct location *loc_set)
 {
 	while (loc_set) {
-		DBG("DEBUG:cpl_c:print_loc_set: uri=<%s> received=<%s> q=%d\n",
+		LM_DBG("uri=<%s> received=<%s> q=%d\n",
 			loc_set->addr.uri.s, loc_set->addr.received.s,
 			loc_set->addr.priority);
 		loc_set=loc_set->next;

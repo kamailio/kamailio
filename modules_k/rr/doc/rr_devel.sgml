@@ -191,14 +191,14 @@ struct rr_binds my_rrb;
 ...
 /* load the RR API */
 if (load_rr_api( & my_rrb )!=0) {
-    LOG(L_ERR, "ERROR: can't load RR API\n");
+    LM_ERR("can't load RR API\n");
     goto error;
 }
 ...
 ...
 /* register a RR callback */
 if (my_rrb.register_rrcb(my_callback,0))!=0) {
-    LOG(L_ERR, "ERROR: can't register RR callback\n");
+    LM_ERR("can't register RR callback\n");
     goto error;
 }
 ...

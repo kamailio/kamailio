@@ -399,7 +399,7 @@ char*  AAAConvertAVPToString(AAA_AVP *avp, char *dest, unsigned int destLen)
 		//case AAA_AVP_INTEGER64_TYPE:
 		case AAA_AVP_TIME_TYPE:
 		default:
-			LOG(L_WARN,"WARNING:AAAConvertAVPToString: don't know how to print"
+			LM_WARN("don't know how to print"
 				" this data type [%d] -> tryng hexa\n",avp->type);
 		case AAA_AVP_DATA_TYPE:
 			for (i=0;i<avp->data.len&&l<destLen-1;i++)
