@@ -608,6 +608,35 @@ static inline int run_failure_handlers(struct cell *t)
 }
 
 
+static inline int is_3263_failure(struct cell *t)
+{
+	struct hdr_field *hdr; 
+	/* is is a DNS failover scenario? - according to RFC 3263
+	 * and RFC 3261, this means 503 reply with Retr-After hdr 
+	 * or timeout with no reply */
+	LM_DBG("dns-failover test: branch=%d, last_recv=%d, flags=%X\n",
+		picked_branch, t->uac[picked_branch].last_received,
+		t->uac[picked_branch].flags);
+
+	switch (t->uac[picked_branch].last_received) {
+		case 408:
+			return ((t->uac[picked_branch].flags&T_UAC_HAS_RECV_REPLY)==0);
+		case 503:
+			if (t->uac[picked_branch].reply==NULL ||
+			t->uac[picked_branch].reply==FAKED_REPLY)
+				return 0;
+			/* is the Retry-After header present (if present,
+			 * it should be already parsed) */
+			hdr = t->uac[picked_branch].reply->headers;
+			for( ; hdr ; hdr=hdr->next)
+				if (hdr->type==HDR_RETRY_AFTER_T)
+					return 1;
+			return 0;
+	}
+	return 0;
+}
+
+
 static inline int do_dns_failover(struct cell *t)
 {
 	static struct sip_msg faked_req;
@@ -665,9 +694,14 @@ static inline int t_pick_branch( struct cell *t, int *res_code)
 		/* there is still an unfinished UAC transaction; wait now! */
 		if ( t->uac[b].last_received<200 ) 
 			return -2;
-		/* replyes to cancel has max priority */
-		if ( (cancelled && t->uac[b].last_received==487) ||
-		(t->uac[b].last_received<lowest_s && (lowest_s!=487 || !cancelled))) {
+		/* replys to cancel has max priority
+		 * 503 has minimum priority */
+		if ( (lowest_b==-1) ||
+		(cancelled && t->uac[b].last_received==487) ||
+		( (lowest_s!=487 || !cancelled) && (
+			(lowest_s==503) || (t->uac[b].last_received!=503
+			&& t->uac[b].last_received<lowest_s)
+		))) {
 			lowest_b =b;
 			lowest_s = t->uac[b].last_received;
 		}
@@ -786,15 +820,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 
 		if ( !(Trans->flags&T_NO_DNS_FAILOVER_FLAG) &&
 		Trans->uac[picked_branch].proxy!=NULL ) {
-			/* is is a DNS failover scenario? - according to RFC 3263
-			 * this means 503 reply or timeout with no reply */
-			LM_DBG("dns-failover test: branch=%d, last_recv=%d, flags=%X\n",
-				picked_branch, Trans->uac[picked_branch].last_received,
-				Trans->uac[picked_branch].flags);
-			if ( Trans->uac[picked_branch].last_received==503 ||
-			(Trans->uac[picked_branch].last_received==408 && 
-			(Trans->uac[picked_branch].flags&T_UAC_HAS_RECV_REPLY)==0)
-			 ) {
+			/* is is a DNS failover scenario, according to RFC 3263 ? */
+			if (is_3263_failure(Trans)) {
 				LM_DBG("trying DNS-based failover\n");
 				/* do DNS failover -> add new branches */
 				if (do_dns_failover( Trans )!=0) {
@@ -1307,6 +1334,13 @@ int reply_received( struct sip_msg  *p_msg )
 	(is_local(t) && !no_autoack(t) && msg_status >= 200) )) {
 		if (send_ack(p_msg, t, branch)!=0)
 			LM_ERR("failed to send ACK (local=%s)\n", is_local(t)?"yes":"no");
+	}
+
+	/* if it is an 503, parse the RETRY-AFTER header - we need
+	 * it later */
+	if ( msg_status==503 && (t->flags&T_NO_DNS_FAILOVER_FLAG)==0 &&
+	parse_headers( p_msg, HDR_RETRY_AFTER_F, 0)==-1) {
+		LM_ERR("failed to parse reply (looking for Retry-After\n");
 	}
 
 	/* processing of on_reply block */
