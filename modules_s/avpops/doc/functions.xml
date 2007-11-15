@@ -321,6 +321,36 @@ avp_copy("$old","$new/gd");
 	    </programlisting>
 	</example>
     </section>
+    <section id="is_avp_set">
+	<title>
+	    <function>is_avp_set()</function>
+	</title>
+	<para>
+	    Check if any AVP with <emphasis>name</emphasis> is set.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>name</emphasis> - name of AVP to look for.
+		    Parameter syntax is:
+		    <itemizedlist>
+			<listitem><para><emphasis>
+			    name = ('s:'|'i:'|avp_name|avp_alias)
+			</emphasis></para></listitem>
+		    </itemizedlist>
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>is_avp_set</function> usage</title>
+	    <programlisting format="linespecific">
+...
+if(is_avp_set("i:678/g"))
+    log("AVP with integer id 678 exists\n");
+...
+	    </programlisting>
+	</example>
+    </section>
     <section id="avp_print">
 	<title>
 	    <function>avp_print()</function>

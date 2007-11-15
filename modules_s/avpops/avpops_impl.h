@@ -125,5 +125,8 @@ int ops_copy_avp( struct sip_msg* msg, struct fis_param* name1,
 
 int ops_print_avp();
 
+
+int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap);
+
 #endif
 
