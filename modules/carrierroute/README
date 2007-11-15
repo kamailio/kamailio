@@ -132,13 +132,18 @@ Chapter 1. User's Guide
    The module provides routing, balancing and blacklisting
    capabilities. It reads routing entries from a database source
    or from a config file at OpenSER startup. It can uses one
-   routing tree, or if needed for every user a different routing
-   tree for number prefix based routing. It supports several
-   route tree domains, e.g. for failback routes. Based on the
-   tree, the module decides which number prefixes are forwarded
-   to which gateway. It can also distribute the traffic by ratio
-   parameters. Furthermore, the requests can be distributed by a
-   hash funcion to predictable destinations.
+   routing tree (for one carrier), or if needed for every user a
+   different routing tree (unique for each carrier) for number
+   prefix based routing. It supports several route tree domains,
+   e.g. for failback routes or different routing rules for VoIP
+   and PSTN targets.
+
+   Based on the tree, the module decides which number prefixes
+   are forwarded to which gateway. It can also distribute the
+   traffic by ratio parameters. Furthermore, the requests can be
+   distributed by a hash funcion to predictable destinations. The
+   hash source is configurable, two different hash functions are
+   available.
 
    This modules scales up to more than a million users, and is
    able to handle more than ten thousand routing table entries.
@@ -347,8 +352,8 @@ modparam("carrierroute", "comment_column", "comment")
 
 1.3.11. carrier_table (string)
 
-   The name of the table containing the existing Carriers,
-   contains ids and corresponding names.
+   The name of the table containing the existing carriers,
+   consisting of the ids and corresponding names.
 
    Default value is "route_tree". 
 
@@ -363,7 +368,6 @@ modparam("carrierroute", "carrier_table", "route_tree")
 
    Name of column containing rewrite prefixes. Here you can
    define a rewrite prefix for the localpart of the SIP URI.
-   Currently unused.
 
    Default value is "rewrite_prefix". 
 
@@ -378,7 +382,6 @@ modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
 
    Name of column containing rewrite suffixes. Here you can
    define a rewrite suffix for the localpart of the SIP URI.
-   Currently unused.
 
    Default value is "rewrite_suffix". 
 
