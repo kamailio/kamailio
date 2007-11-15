@@ -40,6 +40,7 @@
 struct my_fld {
 	db_drv_t gen;
 
+	char* name;
 	my_bool is_null;
 	MYSQL_TIME time;
 	unsigned long length;

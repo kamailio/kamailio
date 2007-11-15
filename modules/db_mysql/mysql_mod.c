@@ -77,7 +77,7 @@ static cmd_export_t cmds[] = {
 	{"db_sql",         (cmd_function)my_cmd_sql, 0, 0, 0},
 	{"db_res",         (cmd_function)my_res,  0, 0, 0},
 	{"db_fld",         (cmd_function)my_fld,  0, 0, 0},
-	{"db_first",       (cmd_function)my_cmd_next, 0, 0, 0},
+	{"db_first",       (cmd_function)my_cmd_first, 0, 0, 0},
 	{"db_next",        (cmd_function)my_cmd_next,  0, 0, 0},
 	{0, 0, 0, 0, 0}
 };

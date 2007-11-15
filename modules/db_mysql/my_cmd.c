@@ -50,6 +50,14 @@
 
 #define STR_BUF_SIZE 256
 
+#ifdef MYSQL_FAKE_NULL
+#define FAKE_NULL_STRING "[~NULL~]"
+static str  FAKE_NULL_STR=STR_STATIC_INIT(FAKE_NULL_STRING);
+/* avoid warning: this decimal constant is unsigned only in ISO C90 :-) */
+#define FAKE_NULL_INT (-2147483647-1)
+#define STR_EQ(x,y) ((x.len==y.len) && (strncmp(x.s, y.s, x.len)==0))
+#endif
+
 enum {
 	STR_DELETE,
 	STR_INSERT,
@@ -74,10 +82,10 @@ enum {
 static str strings[] = {
 	STR_STATIC_INIT("delete from "),
 	STR_STATIC_INIT("insert into "),
-	STR_STATIC_INIT("UPDATE "),
+	STR_STATIC_INIT("update "),
 	STR_STATIC_INIT("select "),
 	STR_STATIC_INIT("replace "),
-	STR_STATIC_INIT(" SET "),
+	STR_STATIC_INIT(" set "),
 	STR_STATIC_INIT(" where "),
 	STR_STATIC_INIT(" is "),
 	STR_STATIC_INIT(" and "),
@@ -360,8 +368,10 @@ static inline int sb_add(struct string_buffer *sb, str *nstr)
 			ERR("not enough memory\n");
 			return -1;
 		}
-		memcpy(newp, sb->s, sb->len);
-		pkg_free(sb->s);
+		if (sb->s) {
+			memcpy(newp, sb->s, sb->len);
+			pkg_free(sb->s);
+		}
 		sb->s = newp;
 		sb->size = new_size;
 	}
@@ -433,7 +443,7 @@ static int build_update_query(str* query, db_cmd_t* cmd)
 		goto err;
 	}
 	query->s = sql_buf.s;
-
+	query->len = sql_buf.len;
 	return 0;
 
 err:
@@ -449,9 +459,33 @@ static inline void update_field(MYSQL_BIND *param, db_fld_t* fld)
 	
 	fp = DB_GET_PAYLOAD(fld);
 
+#ifndef MYSQL_FAKE_NULL
 	fp->is_null = fld->flags & DB_NULL;
 	if (fp->is_null) return;
-
+#else
+	if (fld->flags & DB_NULL) {
+		switch(fld->type) {
+		case DB_STR:
+		case DB_CSTR:
+			param->buffer = FAKE_NULL_STR.s;
+			fp->length = FAKE_NULL_STR.len;
+			break;
+		case DB_INT:
+			*(int*)param->buffer = FAKE_NULL_INT;
+			break;
+		case DB_BLOB:
+		case DB_DATETIME:
+		case DB_NONE:
+		case DB_FLOAT:
+		case DB_DOUBLE:
+		case DB_BITMAP:
+			/* we don't have fake null value for these types */
+			fp->is_null = DB_NULL;
+			break;
+		}
+		return;
+	}
+#endif
 	switch(fld->type) {
 	case DB_STR:
 		param->buffer = fld->v.lstr.s;
@@ -503,7 +537,7 @@ static inline int update_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* par
 {
 	int  my_idx, fld_idx;
 	int  count1, count2;
-
+	
 	/* Calculate the number of parameters */
 	for(count1 = 0; !DB_FLD_EMPTY(params1) && !DB_FLD_LAST(params1[count1]); count1++);
 	for(count2 = 0; !DB_FLD_EMPTY(params2) && !DB_FLD_LAST(params2[count2]); count2++);
@@ -560,6 +594,11 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 		switch(result[i].type) {
 		case DB_STR:
 			result[i].v.lstr.len = rp->length;
+#ifdef MYSQL_FAKE_NULL
+			if (STR_EQ(FAKE_NULL_STR,result[i].v.lstr)) {
+				result[i].flags |= DB_NULL;
+			}
+#endif
 			break;
 
 		case DB_BLOB:
@@ -568,8 +607,13 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 
 		case DB_CSTR:
 			result[i].v.cstr[rp->length] = '\0';
+#ifdef MYSQL_FAKE_NULL
+			if (strcmp(FAKE_NULL_STR.s,result[i].v.cstr)==0) {
+				result[i].flags |= DB_NULL;
+			}
+#endif
 			break;
-
+			
 		case DB_DATETIME:
 			memset(&t, '\0', sizeof(struct tm));
 			t.tm_sec = rp->time.second;
@@ -577,7 +621,7 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 			t.tm_hour = rp->time.hour;
 			t.tm_mday = rp->time.day;
 			t.tm_mon = rp->time.month - 1;
-			t.tm_year = rp->time.year - 1900;;
+			t.tm_year = rp->time.year - 1900;
 
 			/* Daylight saving information got lost in the database
 			 * so let timegm to guess it. This eliminates the bug when
@@ -592,8 +636,14 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 #endif /* HAVE_TIMEGM */
 			break;
 
-		case DB_NONE:
 		case DB_INT:
+#ifdef MYSQL_FAKE_NULL
+			if (FAKE_NULL_INT==result[i].v.int4) {
+				result[i].flags |= DB_NULL;
+			}
+			break;
+#endif
+		case DB_NONE:
 		case DB_FLOAT:
 		case DB_DOUBLE:
 		case DB_BITMAP:
@@ -601,7 +651,7 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 			break;
 		}
 	}
-
+	
 	return 0;
 }
 
@@ -642,6 +692,7 @@ int my_cmd_write(db_res_t* res, db_cmd_t* cmd)
 		return -1;
 	}
 
+	mcmd->next_flag = -1;
 	return 0;
 }
 
@@ -679,6 +730,7 @@ int my_cmd_read(db_res_t* res, db_cmd_t* cmd)
 		return -1;
 	}
 
+	mcmd->next_flag = -1;
 	return 0;
 }
 
@@ -714,6 +766,7 @@ int my_cmd_update(db_res_t* res, db_cmd_t* cmd)
 		return -1;
 	}
 
+	mcmd->next_flag = -1;
 	return 0;
 }
 
@@ -724,6 +777,7 @@ int my_cmd_sql(db_res_t* res, db_cmd_t* cmd)
 	int ret, myerr;
    
 	mcmd = DB_GET_PAYLOAD(cmd);
+	if (mcmd->st->param_count && update_params(mcmd->st, NULL, cmd->match) < 0) return -1;
 	ret = mysql_stmt_execute(mcmd->st);
 
 	/* If the connection to the server was lost then try to resubmit the query,
@@ -747,6 +801,7 @@ int my_cmd_sql(db_res_t* res, db_cmd_t* cmd)
 		return -1;
 	}
 
+	mcmd->next_flag = -1;
 	return 0;
 }
 
@@ -825,6 +880,11 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params2)
 	/* Calculate the number of parameters */
 	for(count1 = 0; !DB_FLD_EMPTY(params1) && !DB_FLD_LAST(params1[count1]); count1++);
 	for(count2 = 0; !DB_FLD_EMPTY(params2) && !DB_FLD_LAST(params2[count2]); count2++);
+	if (st->param_count != count1+ count2) {
+		ERR("MySQL param count do not match the given parameter arrays\n");
+		return -1;
+	}
+	
 
 	my_params = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * (count1+count2));
 	if (my_params == NULL) {
@@ -857,6 +917,98 @@ static int bind_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params2)
 	if (my_params) pkg_free(my_params);
 	return -1;
 }
+
+
+/*
+ * FIXME: This function will only work if we have one db connection
+ * in every context, otherwise it would initialize the result set
+ * from the first connection in the context.
+ */
+static int check_result_columns(db_cmd_t* cmd, struct my_cmd* payload)
+{
+	int i, n;
+	MYSQL_FIELD *fld;
+	MYSQL_RES *meta = 0;
+
+	meta = mysql_stmt_result_metadata(payload->st);
+	if (meta == NULL) {
+		ERR("Error while getting metadata of SQL query: %s\n",
+			mysql_stmt_error(payload->st));
+		goto error;
+	}
+	n = mysql_num_fields(meta);
+	if (cmd->result == NULL) {
+		/* The result set parameter of db_cmd function was empty, that
+		 * means the query is select * and we have to create the array
+		 * of result fields in the cmd structure manually.
+		 */
+                cmd->result = db_fld(n + 1);
+		cmd->result_count = n;
+		for(i = 0; i < cmd->result_count; i++) {
+			struct my_fld *f;
+			if (my_fld(cmd->result + i, cmd->table.s) < 0) goto error;
+			f = DB_GET_PAYLOAD(cmd->result + i);
+			fld = mysql_fetch_field_direct(meta, i);
+			f->name = pkg_malloc(strlen(fld->name)+1);
+			if (!f->name) goto error;
+			strcpy(f->name, fld->name);
+			cmd->result[i].name = f->name;
+		}
+	}
+	else {
+		if (cmd->result_count != n) {
+			BUG("number of fields do not correspond\n");
+			goto error;
+		}
+	}
+	/* Now iterate through all the columns in the result set and replace
+	 * any occurrence of DB_UNKNOWN type with the type of the column
+	 * retrieved from the database and if no column name was provided then
+         * update it from the database as well. 
+	 */
+	for(i = 0; i < cmd->result_count; i++) {
+		fld = mysql_fetch_field_direct(meta, i);
+		if (cmd->result[i].type != DB_NONE) continue;
+		switch(fld->type) {
+		case MYSQL_TYPE_TINY:
+		case MYSQL_TYPE_SHORT:
+		case MYSQL_TYPE_INT24:
+		case MYSQL_TYPE_LONG:
+			cmd->result[i].type = DB_INT;
+			break;
+
+		case MYSQL_TYPE_FLOAT:
+			cmd->result[i].type = DB_FLOAT;
+			break;
+
+		case MYSQL_TYPE_DOUBLE:
+			cmd->result[i].type = DB_DOUBLE;
+			break;
+
+		case MYSQL_TYPE_TIMESTAMP:
+		case MYSQL_TYPE_DATETIME:
+			cmd->result[i].type = DB_DATETIME;
+			break;
+
+		case MYSQL_TYPE_STRING:
+		case MYSQL_TYPE_VAR_STRING:
+			cmd->result[i].type = DB_STR;
+			break;
+
+		default:
+			ERR("Unsupported MySQL column type: %d, table: %s, column: %s\n",
+				fld->type, cmd->table.s, fld->name);
+			goto error;
+		}
+	}
+	mysql_free_result(meta);
+	return 0;
+error:
+	if (meta) mysql_free_result(meta);
+	return -1;
+}
+
+
 
 /* FIXME: Add support for DB_NONE, in this case the function should determine
  * the type of the column in the database and set the field type appropriately
@@ -910,7 +1062,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 			if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 			if (f->buf.s == NULL) {
 				ERR("No memory left\n");
-				return -1;
+				goto error;
 			}
 			result[i].buffer = f->buf.s;
 			fld[i].v.lstr.s = f->buf.s;
@@ -922,7 +1074,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 			if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 			if (f->buf.s == NULL) {
 				ERR("No memory left\n");
-				return -1;
+				goto error;
 			}
 			result[i].buffer = f->buf.s;
 			fld[i].v.cstr = f->buf.s;
@@ -934,7 +1086,7 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 			if (!f->buf.s) f->buf.s = pkg_malloc(STR_BUF_SIZE);
 			if (f->buf.s == NULL) {
 				ERR("No memory left\n");
-				return -1;
+				goto error;
 			}
 			result[i].buffer = f->buf.s;
 			fld[i].v.blob.s = f->buf.s;
@@ -970,6 +1122,7 @@ static int upload_query(db_cmd_t* cmd)
 	struct my_cmd* res;
 	struct my_con* mcon;
 	MYSQL_STMT* st;
+	int n;
 
 	res = DB_GET_PAYLOAD(cmd);
 
@@ -1002,6 +1155,7 @@ static int upload_query(db_cmd_t* cmd)
 		if (!DB_FLD_EMPTY(cmd->match)) {
 			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
 		}
+		if (check_result_columns(cmd, res) < 0) goto error;
 		if (bind_result(res->st, cmd->result) < 0) goto error;
 		break;
 
@@ -1019,7 +1173,14 @@ static int upload_query(db_cmd_t* cmd)
 		break;
 
 	case DB_SQL:
-		if (!DB_FLD_EMPTY(cmd->result)) {
+		if (!DB_FLD_EMPTY(cmd->match)) {
+			if (bind_params(res->st, NULL, cmd->match) < 0) goto error;
+		}
+
+		n = mysql_stmt_field_count(res->st);
+		/* create result fields and pass them to client */
+		if (n > 0) {
+			if (check_result_columns(cmd, res) < 0) goto error;
 			if (bind_result(res->st, cmd->result) < 0) goto error;
 		}
 		break;
@@ -1069,7 +1230,10 @@ int my_cmd(db_cmd_t* cmd)
 		break;
 
 	case DB_SQL:
-		break;
+		if (NULL == (res->query.s = (char*)pkg_malloc(cmd->table.len))) goto error;
+		memcpy(res->query.s,cmd->table.s, cmd->table.len);
+		res->query.len = cmd->table.len;
+        break;
 	}
 
 	DB_SET_PAYLOAD(cmd, res);
@@ -1086,18 +1250,53 @@ int my_cmd(db_cmd_t* cmd)
 	return -1;
 }
 
+
+int my_cmd_first(db_res_t* res) {
+	struct my_cmd* mcmd;
+
+	mcmd = DB_GET_PAYLOAD(res->cmd);
+	switch (mcmd->next_flag) {
+	case -2: /* table is empty */
+		return 1;
+	case 0:  /* cursor position is 0 */
+		return 0;
+	case 1:  /* next row */
+	case 2:  /* EOF */
+		ERR("my_cmd_first cannot reset cursor position. It's not supported for unbuffered mysql queries\n");
+		return -1;
+	default:
+		return my_cmd_next(res);
+	}
+}
+
+
 int my_cmd_next(db_res_t* res)
 {
 	int ret;
 	struct my_cmd* mcmd;
 
 	mcmd = DB_GET_PAYLOAD(res->cmd);
+	if (mcmd->next_flag == 2 || mcmd->next_flag == -2) return 1;
 	ret = mysql_stmt_fetch(mcmd->st);
 	
-	if (ret == MYSQL_NO_DATA) return 1;
-
-	if (ret != 0) {
-		ERR("Error in mysql_stmt_fetch: %s\n", mysql_stmt_error(mcmd->st));
+	if (ret == MYSQL_NO_DATA) {
+		mcmd->next_flag =  mcmd->next_flag<0?-2:2;
+		return 1;
+	}
+	if (ret == MYSQL_DATA_TRUNCATED) {
+		int i;
+		ERR("my_cmd_next: mysql_stmt_fetch, data truncated, fields: %d\n", res->cmd->result_count);
+		for (i = 0; i < res->cmd->result_count; i++) {
+			if (mcmd->st->bind[i].error /*&& mcmd->st->bind[i].buffer_length*/) {
+				ERR("truncation, bind %d, length: %lu, buffer_length: %lu\n", i, *(mcmd->st->bind[i].length), mcmd->st->bind[i].buffer_length);
+			}
+		}
+	}
+	if (mcmd->next_flag <= 0) {
+		mcmd->next_flag++;
+	}
+	if (ret != 0 && ret != MYSQL_DATA_TRUNCATED) {
+		ERR("Error in mysql_stmt_fetch (ret=%d): %s\n", ret, mysql_stmt_error(mcmd->st));
 		return -1;
 	}
 

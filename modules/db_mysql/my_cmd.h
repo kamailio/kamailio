@@ -37,6 +37,7 @@ struct my_cmd {
 	db_drv_t gen;
 
 	str query;
+	int next_flag;
 	MYSQL_STMT* st;
 };
 

@@ -37,6 +37,7 @@ static void my_fld_free(db_fld_t* fld, struct my_fld* payload)
 {
 	db_drv_free(&payload->gen);
 	if (payload->buf.s) pkg_free(payload->buf.s);
+	if (payload->name) pkg_free(payload->name);
 	pkg_free(payload);
 }
 
