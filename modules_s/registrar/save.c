@@ -712,3 +712,12 @@ int save_memory(struct sip_msg* _m, char* table, char* aor_filter)
 	mem_only = FL_MEM;
 	return save_real(_m, (udomain_t*)table, aor_filter, 1);
 }
+
+/*
+ * Update memory cache only and do not send reply back
+ */
+int save_mem_nr(struct sip_msg* msg, char* table, char* aor_filter)
+{
+	mem_only = FL_MEM;
+	return save_real(msg, (udomain_t*)table, aor_filter, 0);
+}

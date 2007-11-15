@@ -57,5 +57,9 @@ int save_noreply(struct sip_msg* _m, char* _t, char* aor_filter);
  */
 int save_memory(struct sip_msg* _m, char* _t, char* aor_filter);
 
+/*
+ * Update memory cache only and do not send reply back
+ */
+int save_mem_nr(struct sip_msg* msg, char* table, char* aor_filter);
 
 #endif /* SAVE_H */
