@@ -74,6 +74,9 @@ Chapter 1. User's Guide
    not allowed to exceed this max_limits - if it does, the header
    value will by decreased to "max_limit".
 
+   Note: This check is done when calling the
+   mf_process_maxfwd_header() header.
+
    The range of values stretches from 1 to 256, which is the
    maximum MAX-FORWARDS value allowed by RFC 3261.
 
