@@ -1117,6 +1117,15 @@ domain register {
 			be added to the subscriber table (or to the table and column that you specified
 			as modul parameter) to choose the actual carrier for the users.
 		</para>
+	<example>
+		<title>Necessary extensions for the user table</title>
+		<para>Suggested changes:</para>
+		<programlisting format="linespecific">
+...
+ALTER TABLE subscriber ADD cr_preferred_carrier int(10) default NULL; 
+...
+		</programlisting>
+	</example>
 		</section>
     </section>
 </chapter>
