@@ -128,7 +128,7 @@ db_berkeley:
 		if [ -f "$$FILE" ]; then \
 			if [  "$$FILE" != "$(ROOT)/scripts/db_berkeley/openser/version" ]; then \
 				tail -n 2 "$$FILE" >> "$(ROOT)/scripts/db_berkeley/openser/version" ; \
- 				head -n 8 "$$FILE" > /tmp/openser-db_berkeley.tmp ; \
+ 				head -n 10 "$$FILE" > /tmp/openser-db_berkeley.tmp ; \
 				cp /tmp/openser-db_berkeley.tmp "$$FILE" ; \
 			fi ; \
 		fi ; \
