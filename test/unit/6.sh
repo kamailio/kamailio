@@ -8,6 +8,5 @@ CFG=2.cfg
 ret=$?
 
 sleep 1
-killall -9 openser
 
 exit $ret
