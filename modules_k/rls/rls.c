@@ -493,7 +493,7 @@ int handle_expired_record(subs_t* s)
 
 void rlsubs_table_update(unsigned int ticks,void *param)
 {
-	int no_lock;
+	int no_lock= 0;
 
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
