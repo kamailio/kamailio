@@ -39,6 +39,9 @@
  */
 struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
 {
+	if (hash_table==NULL)
+		return init_mi_tree( 500, "Trusted-module not in use", 24 );
+
     if (reload_trusted_table () == 1) {
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
     } else {
