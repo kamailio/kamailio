@@ -70,7 +70,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	presentity_t* pres= NULL;
 	int n= 0;
 	int event_col, etag_col, user_col, domain_col;
-	event_t e;
+	event_t ev;
 	str user, domain, etag, event;
 	int n_result_cols= 0;
 	str pres_uri;
@@ -139,7 +139,8 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		event.s= (char*)row_vals[event_col].val.string_val;
 		event.len= strlen(event.s);
 		
-		size= sizeof(presentity_t)+ user.len+ domain.len+ etag.len; 
+		size= sizeof(presentity_t)+ (user.len+ domain.len+ etag.len)*
+			sizeof(char); 
 		pres= (presentity_t*)pkg_malloc(size);
 		if(pres== NULL)
 		{
@@ -163,10 +164,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		pres->etag.len= etag.len;
 		size+= etag.len;
 			
-		pres->event= contains_event(&event, &e);
+		pres->event= contains_event(&event, &ev);
 		if(pres->event== NULL)
 		{
 			LM_ERR("event not found\n");
+			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}	
 		p[i]= pres;
@@ -175,16 +177,19 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		if(uandd_to_uri(user, domain, &pres_uri)< 0)
 		{
 			LM_ERR("constructing uri\n");
+			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}
 
-		if(delete_phtable(&pres_uri, e.parsed)< 0)
+		if(delete_phtable(&pres_uri, ev.parsed)< 0)
 		{
 			LM_ERR("deleting from pres hash table\n");
 			pkg_free(pres_uri.s);
+			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}
 		pkg_free(pres_uri.s);
+		free_event_params(ev.params, PKG_MEM_TYPE);
 
 	}
 	pa_dbf.free_result(pa_db, result);

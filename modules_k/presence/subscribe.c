@@ -872,7 +872,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 			subs->contact.s, subs->contact.len);	
 
 	/*process record route and add it to a string*/
-	if (to_tag_gen && msg->record_route!=NULL)
+	if(*to_tag_gen && msg->record_route!=NULL)
 	{
 		rt = print_rr_body(msg->record_route, &rec_route, 0, 0);
 		if(rt != 0)
@@ -1651,12 +1651,14 @@ int restore_db_subs(void)
 			event= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 			if(event== NULL)
 			{
+				free_event_params(parsed_event.params, PKG_MEM_TYPE);
 				ERR_MEM(SHM_MEM_STR);
 			}
 			memset(event, 0, sizeof(pres_ev_t));
 			event->name.s= (char*)shm_malloc(ev_sname.len* sizeof(char));
 			if(event->name.s== NULL)
 			{
+				free_event_params(parsed_event.params, PKG_MEM_TYPE);
 				ERR_MEM(SHM_MEM_STR);
 			}
 			memcpy(event->name.s,ev_sname.s, ev_sname.len);
@@ -1666,11 +1668,15 @@ int restore_db_subs(void)
 			if(event->evp== NULL)
 			{
 				LM_ERR("ERROR copying event_t structure\n");
+				free_event_params(parsed_event.params, PKG_MEM_TYPE);
 				goto error;
 			}
 			event->next= EvList->events;
 			EvList->events= event;
 		}
+			
+		free_event_params(parsed_event.params, PKG_MEM_TYPE);
+
 		s.event= event;
 
 		s.event_id.s=(char*)row_vals[event_id_col].val.string_val;

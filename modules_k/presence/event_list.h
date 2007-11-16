@@ -113,6 +113,8 @@ int add_event(pres_ev_t* event);
 
 typedef int (*add_event_t)(pres_ev_t* event);
 
+void free_event_params(param_t* params, int mem_type);
+
 pres_ev_t* contains_event(str* name, event_t* parsed_event);
 
 typedef pres_ev_t* (*contains_event_t)(str* name, event_t* parsed_event);

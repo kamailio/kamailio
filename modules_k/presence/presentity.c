@@ -550,7 +550,7 @@ int pres_htable_restore(void)
 	int n_result_cols= 0;
 	int user_col, domain_col, event_col, expires_col;
 	int event;
-	event_t e;
+	event_t ev;
 
 	result_cols[user_col= n_result_cols++]= "username";
 	result_cols[domain_col= n_result_cols++]= "domain";
@@ -593,12 +593,14 @@ int pres_htable_restore(void)
 		ev_str.s= (char*)row_vals[event_col].val.string_val;
 		ev_str.len= strlen(ev_str.s);
 	
-		if(event_parser(ev_str.s, ev_str.len, &e)< 0)
+		if(event_parser(ev_str.s, ev_str.len, &ev)< 0)
 		{
 			LM_ERR("parsing event\n");
+			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}
-		event= e.parsed;
+		event= ev.parsed;
+		free_event_params(ev.params, PKG_MEM_TYPE);
 
 		if(uandd_to_uri(user, domain, &uri)< 0)
 		{

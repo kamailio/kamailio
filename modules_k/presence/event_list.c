@@ -92,20 +92,14 @@ error:
 
 void shm_free_event(event_t* ev)
 {
-	param_t* p1, *p2;
-
 	if(ev== NULL)
 		return;
 	
 	if(ev->text.s)
 		shm_free(ev->text.s);
-	p1= ev->params;
-	while(p1)
-	{
-		p2= p1;
-		p1= p1->next;
-		shm_free(p2);
-	}
+
+	free_event_params(ev->params, SHM_MEM_TYPE);
+
 	shm_free(ev);
 }
 
@@ -140,12 +134,14 @@ int add_event(pres_ev_t* event)
 		ev= (pres_ev_t*)shm_malloc(sizeof(pres_ev_t));
 		if(ev== NULL)
 		{
+			free_event_params(parsed_event.params, PKG_MEM_TYPE);
 			ERR_MEM(SHARE_MEM);
 		}
 		memset(ev, 0, sizeof(pres_ev_t));
 		ev->name.s= (char*)shm_malloc(event->name.len* sizeof(char));
 		if(ev->name.s== NULL)
 		{
+			free_event_params(parsed_event.params, PKG_MEM_TYPE);
 			ERR_MEM(SHARE_MEM);
 		}
 		memcpy(ev->name.s, event->name.s, event->name.len);
@@ -155,11 +151,14 @@ int add_event(pres_ev_t* event)
 		if(ev->evp== NULL)
 		{
 			LM_ERR("copying event_t structure\n");
+			free_event_params(parsed_event.params, PKG_MEM_TYPE);
 			goto error;
 		}
+		free_event_params(parsed_event.params, PKG_MEM_TYPE);
 	}
 	else
 	{
+		free_event_params(parsed_event.params, PKG_MEM_TYPE);
 		if(ev->content_type.s)
 		{
 			LM_DBG("Event already registered\n");
@@ -265,7 +264,7 @@ pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 {
 	event_t event;
 	pres_ev_t* e;
-
+	
 	memset(&event, 0, sizeof(event_t));
 	if(event_parser(sname->s, sname->len, &event)< 0)
 	{
@@ -274,12 +273,31 @@ pres_ev_t* contains_event(str* sname, event_t* parsed_event)
 	}
 	if(parsed_event)
 		*parsed_event= event;
-	
+	else
+	{
+		free_event_params(event.params, PKG_MEM_TYPE);
+	}
 	e= search_event(&event);
 
 	return e;
 }
+
+void free_event_params(param_t* params, int mem_type)
+{
+	param_t* t1, *t2;
+	t2= t1= params;
+
+	while(t1)
+	{
+		t2= t1->next;
+		if(mem_type == SHM_MEM_TYPE)
+			shm_free(t1);
+		else
+			pkg_free(t1);
+		t1= t2;
+	}
 	
+}
 
 pres_ev_t* search_event(event_t* event)
 {
