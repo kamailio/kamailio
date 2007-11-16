@@ -173,7 +173,6 @@ static int reset_gflag(struct sip_msg *bar, char *flag, char *foo)
 
 static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
 {
-	LM_DBG("-------mask %X , flags %X", (*gflags), ((unsigned int)(long)flag));
 	return ( (*gflags) & ((unsigned int)(long)flag)) ? 1 : -1;
 }
 
