@@ -408,14 +408,14 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 		         rr->local_suffix.len, rr->local_suffix.s,
 		         rr->comment.len, rr->comment.s);
 		if(!rr->status && rr->backup && rr->backup->rr){
-			addf_mi_node_child(msg->next, 0, 0, 0, "\t---> Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
+			addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
 		}
 		if(rr->backed_up){
 			rl = rr->backed_up;
 			i=0;
 			while(rl){
 				if(rl->rr){
-					addf_mi_node_child(msg->next, 0, 0, 0, "\t---> Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
+					addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
 			}
 				rl = rl->next;
 				i++;
