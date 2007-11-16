@@ -172,87 +172,43 @@ static inline int get_from_uri(struct sip_msg* _m, str* _u) {
  * the given _user is used to determine the routing tree.
  *
  * @param msg the current SIP message
- * @param _user the user to determine the route tree (Request-URI|from_uri|to_uri|avpname)
+ * @param _uri the URI to determine the route tree (string or pseudo-variable)
  * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
  */
-int user_route_uri(struct sip_msg * _msg, char * _user, char * _domain) {
-	user_param_t * hf_type;
-	struct hdr_field* h;
-	str uri, user, str_domain;
-	struct auth_body* c = 0;
-	struct usr_avp *avp;
+int user_route_uri(struct sip_msg * _msg, char * _uri, char * _domain) {
+	pv_elem_t *model;
+	str uri, user, str_domain, ruser, ruri;
 	struct sip_uri puri;
-	int_str val;
-	str ruser;
-	str ruri;
 	int carrier_id, domain, index;
-	hf_type = (user_param_t *)_user;
 	domain = (int)_domain;
 	struct rewrite_data * rd = NULL;
 	struct carrier_tree * ct = NULL;
-	// TODO it would be better to use the new introduced pv_parse and pv_print functions
-	// like in textops:append_to_reply_f and :it_list_fixup.
-	switch (hf_type->id) {
-		case REQ_URI: /* Request-URI */
-			if (get_request_uri(_msg, &uri) < 0) {
-				LM_ERR("Error while obtaining username from Request-URI\n");
-				return -1;
-			}
-			break;
-		case TO_URI: /* To */
-			if (get_to_uri(_msg, &uri) < 0) {
-				LM_ERR("Error while extracting To username\n");
-				return -2;
-			}
-			break;
-		case FROM_URI: /* From */
-			if (get_from_uri(_msg, &uri) < 0) {
-				LM_ERR("Error while extracting From username\n");
-				return -3;
-			}
-			break;
-		case CREDENTIALS: /* Credentials */
-			get_authorized_cred(_msg->authorization, &h);
-			if (!h) {
-				get_authorized_cred(_msg->proxy_auth, &h);
-				if (!h) {
-					LM_ERR("No authorized credentials found (error in scripts)\n");
-					return -1;
-				}
-			}
-			c = (auth_body_t*)(h->parsed);
-			break;
-		case AVP:
-			// changed API in 1.2, last argument is a pointer to the start of the AVP search
-			avp=search_first_avp(AVP_VAL_STR|hf_type->avp_flags, hf_type->avp_name, &val, 0);
-			// changed struct int_str, not more a pointer to a "str"
-			if (avp && (avp->flags&AVP_VAL_STR) && ((avp->flags&hf_type->avp_flags)==hf_type->avp_flags) && val.s.len && val.s.s) {
-				uri=val.s;
-			} else {
-				LM_ERR("No AVP found\n");
-				return -1;
-			}
-			break;
-		default:
-			LM_ERR("wrong parameter given\n");
-			return -1;
+
+	if (!_uri) {
+		LM_ERR("bad parameter\n");
+		return -1;
 	}
-	if (hf_type->id == CREDENTIALS) {
-		user = c->digest.username.user;
-		str_domain = c->digest.realm;
-	} else {
-		if (parse_uri(uri.s, uri.len, &puri) < 0) {
-			LM_ERR("Error while parsing URI\n");
-			return -5;
-		}
-		user = puri.user;
-		str_domain = puri.host;
-	}
+	
 	if (parse_sip_msg_uri(_msg) < 0) {
 		return -1;
 	}
+
+	/* Retrieve uri from parameter */
+	model = (pv_elem_t*)_uri;
+	if (pv_printf_s(_msg, model, &uri)<0)	{
+		LM_ERR("cannot print the format\n");
+		return -1;
+	}
+
+	if (parse_uri(uri.s, uri.len, &puri) < 0) {
+		LM_ERR("Error while parsing URI\n");
+		return -5;
+	}
+	user = puri.user;
+	str_domain = puri.host;
+
 	ruser.s = _msg->parsed_uri.user.s;
 	ruser.len = _msg->parsed_uri.user.len;
 	ruri.s = _msg->parsed_uri.user.s;
@@ -291,7 +247,7 @@ int user_route_uri(struct sip_msg * _msg, char * _user, char * _domain) {
  * the given _tree is the used routing tree
  *
  * @param msg the current SIP message
- * @param _tree the routing tree to be used
+ * @param _tree the routing tree to be used (string or pseudo-variable
  * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
@@ -304,9 +260,8 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 	str ruser;
 	str ruri;
 
-	/* Check parameters */
-	if (_tree == NULL) {
-		LM_ERR("error - bad parameters\n");
+	if (!_tree) {
+		LM_ERR("bad parameters\n");
 		return -1;
 	}
 
@@ -314,10 +269,10 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 		return -1;
 	}
 
-	/* Retrieve Carrier-Name from Parameter */
+	/* Retrieve carrier name from parameter */
 	model = (pv_elem_t*)_tree;
 	if (pv_printf_s(msg, model, &carrier_name)<0)	{
-		LM_ERR("error - cannot print the format\n");
+		LM_ERR("cannot print the format\n");
 		return -1;
 	}
 	if ((index = find_tree(carrier_name)) < 0)
@@ -658,7 +613,7 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 	}
 	if (uri->len == 0 || route_tree->nodes[*uri->s - '0'] == NULL) {
 		if (route_tree->rule_list == NULL) {
-			LM_ERR("empty rule list");
+			LM_ERR("URI or route tree nodes empty, empty rule list");
 			return 1;
 		} else {
 			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);

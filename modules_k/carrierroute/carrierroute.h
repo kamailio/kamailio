@@ -102,10 +102,4 @@ typedef enum {
 	AVP
 } param_type_t;
 
-typedef struct _group_check {
-	param_type_t id;
-	int avp_flags;
-	int_str avp_name;
-} user_param_t;
-
 #endif
