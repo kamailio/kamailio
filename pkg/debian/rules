@@ -39,7 +39,7 @@ EXCLUDED_MODULES=	jabber xmlrpc postgres cpl cpl-c
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main ser package or to some module package,
 # they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt db_ops lcr msilo
+EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt lcr msilo
 
 ### modules depending on mysql
 ##MYSQL_MODULES=mysql
