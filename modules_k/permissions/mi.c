@@ -42,7 +42,7 @@ struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
     if (reload_trusted_table () == 1) {
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
     } else {
-	return init_mi_tree( 400, "Trusted table reload failed", 26);
+	return init_mi_tree( 400, "Trusted table reload failed", 27);
     }
 }
 
@@ -55,7 +55,7 @@ struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 	struct mi_root* rpl_tree;
 
 	if (hash_table==NULL)
-		return init_mi_tree( 500, "Trusted-module not in use", 24 );
+		return init_mi_tree( 500, "Trusted-module not in use", 25);
 
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	if (rpl_tree==NULL) return 0;
@@ -78,7 +78,7 @@ struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
     if (reload_address_table () == 1) {
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
     } else {
-	return init_mi_tree( 400, "Address table reload failed", 36);
+	return init_mi_tree( 400, "Address table reload failed", 27);
     }
 }
 
@@ -143,10 +143,10 @@ struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
     /* look for base name */
     basenamep = &node->value;
     if (basenamep == NULL)
-	return init_mi_tree(404, "Basename is NULL", 17);
+	return init_mi_tree(404, "Basename is NULL", 16);
     allow_suffix_len = strlen(allow_suffix);
     if (basenamep->len + allow_suffix_len + 1 > MAX_FILE_LEN)
-	return init_mi_tree(404, "Basename is too long", 21);
+	return init_mi_tree(404, "Basename is too long", 20);
     memcpy(basename, basenamep->s, basenamep->len);
     memcpy(basename + basenamep->len, allow_suffix, allow_suffix_len);
     basename[basenamep->len + allow_suffix_len] = 0;
