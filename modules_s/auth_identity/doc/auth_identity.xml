@@ -74,7 +74,7 @@
 		<itemizedlist>
 			<listitem>
 				<para>
-					<emphasis>OpenSSL</emphasis> for cryptographic functions
+					<emphasis>OpenSSL</emphasis> (version 0.9.8 or higher) for cryptographic functions
 				</para>
 			</listitem>
 			<listitem>
@@ -83,6 +83,8 @@
 				</para>
 			</listitem>
 		</itemizedlist>
+		If you'd like to use <emphasis>TLS</emphasis> module too then use the
+		corresponding LIB line in auth_identity's Makefile
 		</para>
 	</section>
 
@@ -371,6 +373,26 @@ modparam("auth_identity","certificate_cache_limit",4096)
 				<programlisting>
 ...
 modparam("auth_identity","cainfo_path","/etc/ssl/certs/ca-certificates.crt")
+...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="accept_pem_certs">
+			<title><varname>accept_pem_certs</varname> ([0|1])</title>
+			<para>
+				Enables the acquired certificate processing if it is in PEM
+				format.
+			</para>
+			<para>
+				This parameter is optional. The default value is "0".
+			</para>
+			<example>
+				<title>Set <varname>accept_pem_certs</varname> parameter
+				</title>
+				<programlisting>
+...
+modparam("auth_identity","accept_pem_certs",1)
 ...
 				</programlisting>
 			</example>

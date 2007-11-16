@@ -75,16 +75,16 @@ static int get_contact_body(char *buf, unsigned int len, str *sout);
 int fromhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if ((!msg->from) && (parse_headers(msg, HDR_FROM_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:fromhdr_proc: Error while parsing FROM header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:fromhdr_proc: Error while parsing FROM header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->from) {
-		LOG(L_ERR, "AUTH_INDENTITY:fromhdr_proc: FROM header field is not found\n");
+		LOG(L_ERR, "AUTH_IDENTITY:fromhdr_proc: FROM header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
 	/* we must call parse_from_header explicitly */
 	if ((!(msg->from)->parsed) && (parse_from_header(msg) < 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:fromhdr_proc: Error while parsing FROM body\n");
+		LOG(L_ERR, "AUTH_IDENTITY:fromhdr_proc: Error while parsing FROM body\n");
 		return AUTH_ERROR;
 	}
 
@@ -101,15 +101,15 @@ int fromhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 static int tohdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if (!msg->to && (parse_headers(msg, HDR_TO_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:tohdr_proc: Error while parsing TO header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:tohdr_proc: Error while parsing TO header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->to) {
-		LOG(L_ERR, "AUTH_INDENTITY:tohdr_proc: TO header field is not found\n");
+		LOG(L_ERR, "AUTH_IDENTITY:tohdr_proc: TO header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
 	if (!msg->to->parsed) {
-		LOG(L_ERR, "AUTH_INDENTITY:tohdr_proc: TO is not parsed\n");
+		LOG(L_ERR, "AUTH_IDENTITY:tohdr_proc: TO is not parsed\n");
 		return AUTH_ERROR;
 	}
 
@@ -123,11 +123,11 @@ static int tohdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 int callidhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if (!msg->callid && (parse_headers(msg, HDR_CALLID_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:callidhdr_proc: error while parsing CALLID header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:callidhdr_proc: error while parsing CALLID header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->callid) {
-		LOG(L_ERR, "AUTH_INDENTITY:callidhdr_proc: CALLID header field is not found\n");
+		LOG(L_ERR, "AUTH_IDENTITY:callidhdr_proc: CALLID header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
 
@@ -141,15 +141,15 @@ int callidhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 int cseqhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if (!msg->cseq && (parse_headers(msg, HDR_CSEQ_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:cseqhdr_proc: Error while parsing CSEQ header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:cseqhdr_proc: Error while parsing CSEQ header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->cseq) {
-		LOG(L_ERR, "AUTH_INDENTITY:cseqhdr_proc: CSEQ header field is not found\n");
+		LOG(L_ERR, "AUTH_IDENTITY:cseqhdr_proc: CSEQ header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
 	if (!msg->cseq->parsed) {
-		LOG(L_ERR, "AUTH_INDENTITY:cseqhdr_proc: CSEQ is not parsed\n");
+		LOG(L_ERR, "AUTH_IDENTITY:cseqhdr_proc: CSEQ is not parsed\n");
 		return AUTH_ERROR;
 	}
 
@@ -165,16 +165,16 @@ int cseqhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 int datehdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if ((!msg->date) && (parse_headers(msg, HDR_DATE_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:datehdr_proc: Error while parsing DATE header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:datehdr_proc: Error while parsing DATE header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->date) {
-		LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY:datehdr_proc: DATE header field is not found\n");
+		LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY:datehdr_proc: DATE header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
 	/* we must call parse_date_header explicitly */
 	if ((!(msg->date)->parsed) && (parse_date_header(msg) < 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:datehdr_proc: Error while parsing DATE body\n");
+		LOG(L_ERR, "AUTH_IDENTITY:datehdr_proc: Error while parsing DATE body\n");
 		return AUTH_ERROR;
 	}
 
@@ -188,7 +188,7 @@ int datehdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 static int in_contacthdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if (!msg->contact && (parse_headers(msg, HDR_CONTACT_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:in_contacthdr_proc: Error while parsing CONTACT header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:in_contacthdr_proc: Error while parsing CONTACT header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->contact) {
@@ -196,7 +196,7 @@ static int in_contacthdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 	}
 	/* we must call parse_contact explicitly */
 	if (!msg->contact->parsed && (parse_contact(msg->contact) < 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:in_contacthdr_proc: Error while parsing CONTACT body\n");
+		LOG(L_ERR, "AUTH_IDENTITY:in_contacthdr_proc: Error while parsing CONTACT body\n");
 		return AUTH_ERROR;
 	}
 
@@ -222,7 +222,7 @@ static int out_contacthdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 	if ((uri2dst(&dst, msg, GET_NEXT_HOP(msg), PROTO_NONE) == 0)
 #endif
 		|| (dst.send_sock == 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:out_contacthdr_proc: Can't determinate destination socket\n");
+		LOG(L_ERR, "AUTH_IDENTITY:out_contacthdr_proc: Can't determinate destination socket\n");
 		return -1;
 	}
 
@@ -260,7 +260,7 @@ static int out_contacthdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 int identityhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if (!msg->identity && (parse_headers(msg, HDR_IDENTITY_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityhdr_proc: Error while parsing IDENTITY header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:identityhdr_proc: Error while parsing IDENTITY header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->identity) {
@@ -268,7 +268,7 @@ int identityhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 	}
 	/* we must call parse_identityinfo_header explicitly */
 	if ((!(msg->identity)->parsed) && (parse_identity_header(msg) < 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityhdr_proc: Error while parsing IDENTITY body\n");
+		LOG(L_ERR, "AUTH_IDENTITY:identityhdr_proc: Error while parsing IDENTITY body\n");
 		return AUTH_ERROR;
 	}
 
@@ -282,16 +282,16 @@ int identityhdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 int identityinfohdr_proc(str *sout, str *soutopt, struct sip_msg *msg)
 {
 	if (!msg->identity_info && (parse_headers(msg, HDR_IDENTITY_INFO_F, 0) == -1)) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityinfohdr_proc: Error while parsing IDENTITY-INFO header\n");
+		LOG(L_ERR, "AUTH_IDENTITY:identityinfohdr_proc: Error while parsing IDENTITY-INFO header\n");
 		return AUTH_ERROR;
 	}
 	if (!msg->identity_info) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityinfohdr_proc: IDENTITY-INFO header field is not found\n");
+		LOG(L_ERR, "AUTH_IDENTITY:identityinfohdr_proc: IDENTITY-INFO header field is not found\n");
 		return AUTH_NOTFOUND;
 	}
 	/* we must call parse_identityinfo_header explicitly */
 	if ((!(msg->identity_info)->parsed) && (parse_identityinfo_header(msg) < 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:identityinfohdr_proc: Error while parsing IDENTITY-INFO body\n");
+		LOG(L_ERR, "AUTH_IDENTITY:identityinfohdr_proc: Error while parsing IDENTITY-INFO body\n");
 		return AUTH_ERROR;
 	}
 
@@ -314,7 +314,7 @@ static int in_msgbody_proc(str *sout, str *soutopt, struct sip_msg *msg)
 		sout->len = 0;
 	} else {
 		if (!msg->content_length) {
-			LOG(L_ERR, "AUTH_INDENTITY:route_msgbody_proc: no Content-Length header found!\n");
+			LOG(L_ERR, "AUTH_IDENTITY:route_msgbody_proc: no Content-Length header found!\n");
 			return AUTH_ERROR;
 		}
 		sout->len = get_content_length(msg);
@@ -343,14 +343,14 @@ static int out_msgbody_proc(str *sout, str *soutopt, struct sip_msg *msg)
 	if ((uri2dst(&dst, msg, GET_NEXT_HOP(msg), PROTO_NONE) == 0)
 #endif
 		|| (dst.send_sock == 0)) {
-		LOG(L_ERR, "AUTH_INDENTITY:rtend_msgbody_proc: Can't determinate destination socket\n");
+		LOG(L_ERR, "AUTH_IDENTITY:rtend_msgbody_proc: Can't determinate destination socket\n");
 		return -1;
 	}
 
 	/* we save it to global variable too to be able to free it later */
 	sout->s = glb_msgbody = build_body(msg, &len, &err, &dst);
 	if (err) {
-		LOG(L_ERR, "AUTH_INDENTITY:rtend_msgbody_proc: Can't build body (%d)\n", err);
+		LOG(L_ERR, "AUTH_IDENTITY:rtend_msgbody_proc: Can't build body (%d)\n", err);
 		return -2;
 	}
 
@@ -467,7 +467,7 @@ int digeststr_asm(dynstr *sout, struct sip_msg *msg, str *sdate, int iflags)
 							return -8;
 					} else {
 						/* Date header must exist */
-						LOG(L_ERR, "AUTH_INDENTITY:digeststr_asm: DATE header is not found\n");
+						LOG(L_ERR, "AUTH_IDENTITY:digeststr_asm: DATE header is not found\n");
 						return -9;
 					}
 				}
@@ -501,13 +501,13 @@ int append_hf(struct sip_msg* msg, char *str1, enum _hdr_types_t type)
 	int len;
 
 	if (parse_headers(msg, HDR_EOH_F, 0) == -1) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_hf: Error while parsing message\n");
+		LOG(L_ERR, "AUTH_IDENTITY:append_hf: Error while parsing message\n");
 		return -1;
 	}
 
 	anchor = anchor_lump(msg, msg->unparsed - msg->buf, 0, type);
 	if (anchor == 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_hf: Can't get anchor\n");
+		LOG(L_ERR, "AUTH_IDENTITY:append_hf: Can't get anchor\n");
 		return -1;
 	}
 
@@ -515,14 +515,14 @@ int append_hf(struct sip_msg* msg, char *str1, enum _hdr_types_t type)
 
 	s = (char*)pkg_malloc(len);
 	if (!s) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_hf: No memory left\n");
+		LOG(L_ERR, "AUTH_IDENTITY:append_hf: No memory left\n");
 		return -1;
 	}
 
 	memcpy(s, str1, len);
 
 	if (insert_new_lump_before(anchor, s, len, type) == 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_hf: Can't insert lump\n");
+		LOG(L_ERR, "AUTH_IDENTITY:append_hf: Can't insert lump\n");
 		pkg_free(s);
 		return -1;
 	}
@@ -541,17 +541,17 @@ int append_date(str *sdate, int idatesize, time_t *tout, struct sip_msg *msg)
 
 
 	if ((tdate_now=time(0)) < 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_date: time error %s\n", strerror(errno));
+		LOG(L_ERR, "AUTH_IDENTITY:append_date: time error %s\n", strerror(errno));
 		return -1;
 	}
 	if (!(bd_time=gmtime(&tdate_now))) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_date: gmtime error\n");
+		LOG(L_ERR, "AUTH_IDENTITY:append_date: gmtime error\n");
 		return -2;
 	}
 
 	ilen=strftime(date_str, sizeof(date_str), AUTH_TIME_FORMAT, bd_time);
 	if (ilen > sizeof(date_hf) - strlen("Date: \r\n") || ilen==0) {
-		LOG(L_ERR, "AUTH_INDENTITY:append_date: unexpected time length\n");
+		LOG(L_ERR, "AUTH_IDENTITY:append_date: unexpected time length\n");
 		return -3;
 	}
 
@@ -708,7 +708,7 @@ static int get_contact_body(char *buf, unsigned int len, str *sout)
 			case HDR_CONTACT_T:
 				tmp=eat_lws_end(s, end);
 				if (tmp>=end) {
-					LOG(L_ERR, "AUTH_INDENTITY:get_contact_body: get_hdr_field: HF empty\n");
+					LOG(L_ERR, "AUTH_IDENTITY:get_contact_body: get_hdr_field: HF empty\n");
 					return AUTH_ERROR;
 				}
 				sout->s=tmp;
@@ -718,7 +718,7 @@ static int get_contact_body(char *buf, unsigned int len, str *sout)
 					if (match){
 						match++;
 					}else {
-						LOG(L_ERR, "AUTH_INDENTITY:get_contact_body: bad msg body\n");
+						LOG(L_ERR, "AUTH_IDENTITY:get_contact_body: bad msg body\n");
 						return AUTH_ERROR;
 					}
 					tmp=match;

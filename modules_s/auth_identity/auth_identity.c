@@ -84,6 +84,7 @@ RSA 	*glb_hmyprivkey=NULL;	/* private key of the authentication service */
 time_t	glb_imycertnotafter=0;
 
 int 	glb_authservice_disabled=0;
+int 	glb_acceptpem=0;
 
 dynstr	glb_sdgst={{0,0},0}; /* Digest string */
 dynstr	glb_sidentity={{0,0},0}; /* Identity message header */
@@ -132,6 +133,7 @@ static param_export_t glb_params[] = {
 	{"auth_validity_time",		PARAM_INT,    	&glb_iauthval},
 	{"msg_timeout", 			PARAM_INT, 		&glb_imsgtime},
 	{"cainfo_path", 			PARAM_STRING, 	&glb_scainfo},
+	{"accept_pem_certs", 		PARAM_INT,		&glb_acceptpem},
 	{0, 0, 0}
 };
 
@@ -336,34 +338,34 @@ static int mod_init(void)
   	 * Get my certificate
 	 */
 	if (!(hpemfile=fopen(glb_sservercertpath, "r"))) {
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: unable to open certificate '%s'\n", strerror(errno));
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: unable to open certificate '%s'\n", strerror(errno));
 		return -12;
 	}
 	if (!(pmycert=PEM_read_X509(hpemfile, NULL, NULL, NULL))) {
 		ERR_error_string_n(ERR_get_error(), serr, sizeof serr);
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: '%s'\n", serr);
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: '%s'\n", serr);
 		fclose(hpemfile);
 		return -13;
 	}
 	if (x509_get_notafter(&glb_imycertnotafter, pmycert)) {
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: Error getting certificate expiration date\n");
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Error getting certificate expiration date\n");
 		return -13;
 	}
 	if (x509_get_notbefore(&ttmp, pmycert)) {
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: Error getting certificate validity date\n");
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Error getting certificate validity date\n");
 		return -13;
 	}
 	if ((tnow=time(0)) < 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: time error %s\n", strerror(errno));
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: time error %s\n", strerror(errno));
 		return -13;
 	}
 	if (tnow < ttmp || tnow > glb_imycertnotafter) {
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: Date of certificate is invalid (%s)\n", glb_sservercertpath);
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: Date of certificate is invalid (%s)\n", glb_sservercertpath);
 		return -14;
 	}
 
 	if (fclose(hpemfile))
-		LOG(L_ERR, "AUTH_INDENTITY:mod_init: unable to close file\n");
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: unable to close file\n");
 	X509_free(pmycert);
 
 	/*
@@ -374,19 +376,19 @@ static int mod_init(void)
 	hpemfile=fopen(glb_sprivkeypath, "r");
 	if (!hpemfile)
 	{
-		LOG(L_ERR, "AUTH_INDENT:mod_init: unable to open private key '%s'\n", strerror(errno));
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: unable to open private key '%s'\n", strerror(errno));
 		return -12;
 	}
 	glb_hmyprivkey=PEM_read_RSAPrivateKey(hpemfile, NULL, NULL, NULL);
 	if (!glb_hmyprivkey)
 	{
 		ERR_error_string_n(ERR_get_error(), serr, sizeof serr);
-		LOG(L_ERR, "AUTH_INDENT:mod_init: '%s'\n", serr);
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: '%s'\n", serr);
 		fclose(hpemfile);
 		return -13;
 	}
 	if (fclose(hpemfile))
-		LOG(L_ERR, "AUTH_INDENT:mod_init: unable to close file\n");
+		LOG(L_ERR, "AUTH_IDENTITY:mod_init: unable to close file\n");
 
 	/* we encrypt the digest string hash to this buffer */
 	if (initdynstr(&glb_encedmsg, RSA_size(glb_hmyprivkey)))
@@ -425,30 +427,8 @@ static void mod_deinit(void)
 
 static int get_certificate(struct sip_msg* msg, char* srt1, char* str2)
 {
-	struct sip_uri tfrom_uri;
-	str suri, siinfodm;
-
-
-	if (fromhdr_proc(&suri, NULL, msg))
-		return -1;
-
-	if (parse_uri(suri.s, suri.len, &tfrom_uri)) {
-		LOG(L_ERR, "AUTH_INDENTITY:get_certificate: Error while parsing FROM URI\n");
-		return -2;
-	}
-
-	if (identityinfohdr_proc(&suri, &siinfodm, msg))
+	if (identityinfohdr_proc(&glb_tcert.surl, NULL, msg))
 		return -3;
-
-	/* Compares the domain portion of the URI in the From header field of the
-	 * request with the domain name that is the subject of the certificate
-	 * acquired from the Identity-Info header. These domains should be the same.
-	 * RFC 4474 [6] Step 2 */
-	if (tfrom_uri.host.len != siinfodm.len
-		|| strncasecmp(tfrom_uri.host.s, siinfodm.s, siinfodm.len)) {
-	   LOG(L_ERR, "AUTH_INDENTITY:get_certificate: Signer is not authoritative for the URI in the From header field\n");
-	   return -4;
-	}
 
 	/* we support rsa-sha1 only (alg.len==0 then we use rsa-sha1) */
 	if (get_identityinfo(msg)->alg.len
@@ -456,14 +436,10 @@ static int get_certificate(struct sip_msg* msg, char* srt1, char* str2)
 		    || strncasecmp("rsa-sha1",
 							get_identityinfo(msg)->alg.s,
 							get_identityinfo(msg)->alg.len ))) {
-		LOG(L_ERR, "AUTH_INDENTITY:get_certificate: Unsupported Identity-Info algorithm\n");
+		LOG(L_ERR, "AUTH_IDENTITY:get_certificate: Unsupported Identity-Info algorithm\n");
 		return -5;
 	}
 
-
-	/* we step over 'http' characters in the identity-info url */
-	glb_tcert.surl.s=suri.s+4;
-	glb_tcert.surl.len=suri.len-4;
 	/* this case ivalidbefore==0 singns that this certificate was downloaded */
 	glb_tcert.ivalidbefore=0;
 
@@ -472,13 +448,13 @@ static int get_certificate(struct sip_msg* msg, char* srt1, char* str2)
 		/* we did not found it in the table, so we've to download it */
 		/* we reset the PEM buffer */
 		glb_tcert.scertpem.len=0;
-		if (download_cer(&suri, glb_hcurl))
+		if (download_cer(&glb_tcert.surl, glb_hcurl))
 			return -6;
 		glb_certisdownloaded=1;
 	} else
 		glb_certisdownloaded=0;
 
-	if (retrieve_x509(&glb_pcertx509, &glb_tcert.scertpem))
+	if (retrieve_x509(&glb_pcertx509, &glb_tcert.scertpem, glb_acceptpem))
 		return -7;
 
 
@@ -504,7 +480,7 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 
 
 	if (!glb_pcertx509) {
-		LOG(L_ERR, "AUTH_INDENTITY:check_validity: Certificate uninitialized! (has vrfy_get_certificate been called?)\n");
+		LOG(L_ERR, "AUTH_IDENTITY:check_validity: Certificate uninitialized! (has vrfy_get_certificate been called?)\n");
 		return -1;
 	}
 
@@ -517,7 +493,7 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 
 		/* the length of identity value should be 172 octets long */
 		if (sidentity.len > sizeof(sencedsha)) {
-			LOG(L_ERR, "AUTH_INDENTITY:check_validity: Unexpected Identity length (%d)\n", sidentity.len);
+			LOG(L_ERR, "AUTH_IDENTITY:check_validity: Unexpected Identity length (%d)\n", sidentity.len);
 			iRet=-2;
 			break;
 		}
@@ -544,7 +520,7 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 			iRet=-3;
 			break;
 		} else
-			LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Identity OK\n");
+			LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Identity OK\n");
 #else
 		/* decrypt with public key retrieved from the downloaded certificate */
 		if (rsa_sha1_dec(sencedsha, iencedshalen,
@@ -556,17 +532,17 @@ static int check_validity(struct sip_msg* msg, char* srt1, char* str2)
 
 		/* check size */
 		if (ishalen != sizeof(sstrcrypted)) {
-			LOG(L_ERR, "AUTH_INDENTITY:check_validity: Unexpected decrypted hash length (%d != %d)\n", ishalen, SHA_DIGEST_LENGTH);
+			LOG(L_ERR, "AUTH_IDENTITY:check_validity: Unexpected decrypted hash length (%d != %d)\n", ishalen, SHA_DIGEST_LENGTH);
 			iRet=-4;
 			break;
 		}
 		/* compare */
 		if (memcmp(sstrcrypted, ssha, ishalen)) {
-			LOG(L_INFO, "AUTH_INDENTITY VERIFIER: Invalid Identity Header\n");
+			LOG(L_INFO, "AUTH_IDENTITY VERIFIER: comparing hashes failed -> Invalid Identity Header\n");
 			iRet=-6;
 			break;
 		} else
-			LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Identity OK\n");
+			LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Identity OK\n");
 #endif
 	} while (0);
 
@@ -595,50 +571,56 @@ static int check_date(struct sip_msg* msg, char* srt1, char* str2)
 	tmsg=_timegm(&get_date(msg)->date);
 #endif
 	if (tmsg < 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:check_date: timegm error\n");
+		LOG(L_ERR, "AUTH_IDENTITY:check_date: timegm error\n");
 		return -2;
 	}
 
 	if ((tnow=time(0)) < 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:check_date: time error %s\n", strerror(errno));
+		LOG(L_ERR, "AUTH_IDENTITY:check_date: time error %s\n", strerror(errno));
 		return -3;
 	}
 
 	if (tnow > tmsg + glb_iauthval) {
-		LOG(L_INFO, "AUTH_INDENTITY VERIFIER: Outdated date header value (%ld sec)\n", tnow - tmsg + glb_iauthval);
+		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: Outdated date header value (%ld sec)\n", tnow - tmsg + glb_iauthval);
 		return -4;
 	} else
-		LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Date header value OK\n");
+		LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Date header value OK\n");
 
 	return 1;
 }
 
 
 int check_certificate(struct sip_msg* msg, char* srt1, char* str2) {
-	str siinfodm;
+	struct sip_uri tfrom_uri;
+	str suri;
 
 	if (!glb_pcertx509) {
-		LOG(L_ERR, "AUTH_INDENTITY:check_certificate: Certificate uninitialized! (has vrfy_get_certificate been called?)\n");
+		LOG(L_ERR, "AUTH_IDENTITY:check_certificate: Certificate uninitialized! (has vrfy_get_certificate been called?)\n");
 		return -1;
 	}
 	/* this certificate was downloaded so we've to verify and add it to table */
 	if (glb_certisdownloaded) {
-		if (identityinfohdr_proc(NULL, &siinfodm, msg))
+		if (fromhdr_proc(&suri, NULL, msg))
+			return -1;
+
+		if (parse_uri(suri.s, suri.len, &tfrom_uri)) {
+			LOG(L_ERR, "AUTH_IDENTITY:get_certificate: Error while parsing FROM URI\n");
 			return -2;
+		}
 
 		if (verify_x509(glb_pcertx509, glb_cacerts))
 			return -3;
 
-		if (check_x509_subj(glb_pcertx509, &siinfodm))
-			return -6;
+		if (check_x509_subj(glb_pcertx509, &tfrom_uri.host))
+			return -4;
 
 		/* we retrieve expiration date from the certificate (it needs for
 		   certificate table garbage collector) */
 		if (x509_get_notafter(&glb_tcert.ivalidbefore, glb_pcertx509))
-			return -4;
+			return -5;
 
 		if (addcert2table(glb_tcert_table, &glb_tcert))
-			return -5;
+			return -6;
 	}
 	return 1;
 }
@@ -663,7 +645,7 @@ static int check_callid(struct sip_msg* msg, char* srt1, char* str2)
 		return -4;
 
 	if ((ivalidbefore=time(0)) < 0) {
-		LOG(L_ERR, "AUTH_INDENTITY:check_callid: time error %s\n", strerror(errno));
+		LOG(L_ERR, "AUTH_IDENTITY:check_callid: time error %s\n", strerror(errno));
 		return -5;
 	}
 
@@ -674,7 +656,7 @@ static int check_callid(struct sip_msg* msg, char* srt1, char* str2)
 				  ivalidbefore + glb_iauthval);
 	if (ires) {
 		if (ires==AUTH_FOUND)
-			LOG(L_INFO, "AUTH_INDENTITY VERIFIER: Call is replayed!\n");
+			LOG(L_INFO, "AUTH_IDENTITY VERIFIER: Call is replayed!\n");
 		return -6;
 	}
 
@@ -737,11 +719,11 @@ static int date_proc(struct sip_msg* msg, char* srt1, char* str2)
 			tmsg=_timegm(&get_date(msg)->date);
 #endif
 			if (tmsg < 0) {
-				LOG(L_ERR, "AUTH_INDENTITY:date_proc: timegm error\n");
+				LOG(L_ERR, "AUTH_IDENTITY:date_proc: timegm error\n");
 				return -3;
 			}
 			if ((tnow=time(NULL))<0) {
-				LOG(L_ERR, "AUTH_INDENTITY:date_proc: time error\n");
+				LOG(L_ERR, "AUTH_IDENTITY:date_proc: time error\n");
 				return -4;
 			}
 			/*
@@ -750,7 +732,7 @@ static int date_proc(struct sip_msg* msg, char* srt1, char* str2)
 			 * service then it should reject the message.
 			 */
 			if (tmsg + glb_imsgtime < tnow || tnow + glb_imsgtime < tmsg) {
-				LOG(L_INFO, "AUTH_INDENTITY AUTHORIZER: Date header overdue\n");
+				LOG(L_INFO, "AUTH_IDENTITY AUTHORIZER: Date header overdue\n");
 				return -6;
 			}
 			break;
@@ -765,7 +747,7 @@ static int date_proc(struct sip_msg* msg, char* srt1, char* str2)
 	 * RFC 4474 [6] Step 3
 	 */
 	if (glb_imycertnotafter < tmsg) {
-		LOG(L_INFO, "AUTH_INDENTITY AUTHORIZER: My certificate has been expired\n");
+		LOG(L_INFO, "AUTH_IDENTITY AUTHORIZER: My certificate has been expired\n");
 		return -8;
 	}
 
@@ -804,7 +786,7 @@ static int add_identity(struct sip_msg* msg, char* srt1, char* str2)
 				 * that function initializes the Date if that not exists
 				 * in the SIP message
 				 */
-				LOG(L_ERR, "AUTH_INDENTITY:add_identity: Date header is not found (has auth_date_proc been called?)\n");
+				LOG(L_ERR, "AUTH_IDENTITY:add_identity: Date header is not found (has auth_date_proc been called?)\n");
 				return -2;
 			}
 			/*  assemble the digest string and the DATE header is missing in the orignal message */

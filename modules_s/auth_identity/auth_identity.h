@@ -226,7 +226,7 @@ size_t curlmem_cb(void *ptr, size_t size, size_t nmemb, void *data);
 int download_cer(str *suri, CURL *hcurl);
 
 /* OpenSSL, Base64 functions */
-int retrieve_x509(X509 **pcert, str *scert);
+int retrieve_x509(X509 **pcert, str *scert, int bacceptpem);
 int check_x509_subj(X509 *pcert, str* sdom);
 int verify_x509(X509 *pcert, X509_STORE *pcacerts);
 int rsa_sha1_dec (char *sencedsha, int iencedshalen,

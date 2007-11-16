@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * Copyright (c) 2007 iptelorg GmbH
  *
@@ -89,15 +89,15 @@ int download_cer(str *suri, CURL *hcurl)
 
 		if ((iRes=curl_easy_perform(hcurl))!=0) {
 			LOG(L_ERR,
-				"AUTH_INDENTITY:download_cer: Error while downloading certificate '%s'\n",
+				"AUTH_IDENTITY:download_cer: Error while downloading certificate '%s'\n",
 				curl_easy_strerror(iRes));
 			iRet=-3;
 			break;
 		}
 
 		curl_easy_getinfo(hcurl,CURLINFO_RESPONSE_CODE,&lerr);
-		if (lerr/200 != 1) {
-			LOG(L_ERR, "AUTH_INDENTITY:download_cer: Bad HTTP response: %ld\n", lerr );
+		if (lerr/100 != 2) {
+			LOG(L_ERR, "AUTH_IDENTITY:download_cer: Bad HTTP response: %ld\n", lerr );
 			iRet=-4;
 		}
 	} while (0);

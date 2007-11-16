@@ -40,7 +40,7 @@
 
 
 
-int retrieve_x509(X509 **pcert, str *scert)
+int retrieve_x509(X509 **pcert, str *scert, int bacceptpem)
 {
 	BIO *bcer=NULL;
 	char serr[160];
@@ -48,22 +48,36 @@ int retrieve_x509(X509 **pcert, str *scert)
 
 
 	if (!(bcer=BIO_new(BIO_s_mem()))) {
-		LOG(L_ERR, "AUTH_INDENTITY:retrieve_x509: Unable to create BIO\n");
+		LOG(L_ERR, "AUTH_IDENTITY:retrieve_x509: Unable to create BIO\n");
 
 		return -1;
 	}
 
 	do {
 		if (BIO_write(bcer, scert->s, scert->len)!=scert->len) {
-			LOG(L_ERR, "AUTH_INDENTITY:retrieve_x509: Unable to write BIO\n");
+			LOG(L_ERR, "AUTH_IDENTITY:retrieve_x509: Unable to write BIO\n");
 			iRet=-2;
 			break;
 		}
 
-		if (!(*pcert = d2i_X509_bio(bcer, NULL))) {
-			ERR_error_string_n(ERR_get_error(), serr, sizeof(serr));
-			LOG(L_ERR, "AUTH_INDENTITY:retrieve_x509: Certificate %s\n", serr);
-			iRet=-3;
+		/* RFC 4474 only accepts certs in the DER form but it can not harm
+		 * to be a little bit more flexible and accept PEM as well. */
+		if (bacceptpem
+		    && scert->len > strlen("-----BEGIN CERTIFICATE-----")
+			&& !memcmp(scert->s,
+					  "-----BEGIN CERTIFICATE-----",
+					  strlen("-----BEGIN CERTIFICATE-----"))) {
+			if (!(*pcert = PEM_read_bio_X509(bcer, NULL, NULL, NULL))) {
+				ERR_error_string_n(ERR_get_error(), serr, sizeof(serr));
+				LOG(L_ERR, "AUTH_IDENTITY:retrieve_x509: PEM Certificate %s\n", serr);
+				iRet=-4;
+			}
+		} else {
+			if (!(*pcert = d2i_X509_bio(bcer, NULL))) {
+				ERR_error_string_n(ERR_get_error(), serr, sizeof(serr));
+				LOG(L_ERR, "AUTH_IDENTITY:retrieve_x509: DER Certificate %s\n", serr);
+				iRet=-3;
+			}
 		}
 	} while (0);
 
@@ -94,8 +108,8 @@ int check_x509_subj(X509 *pcert, str* sdom)
 				/* we've found one */
 				altptr = (char *)ASN1_STRING_data(actname->d.ia5);
 				if (sdom->len != strlen(altptr)
-								|| strncasecmp(altptr, sdom->s, sdom->len)) {
-					LOG(L_INFO, "AUTH_INDENTITY VERIFIER: subAltName of certificate doesn't match host name\n");
+					|| strncasecmp(altptr, sdom->s, sdom->len)) {
+					LOG(L_INFO, "AUTH_IDENTITY VERIFIER: subAltName of certificate doesn't match host name\n");
 					GENERAL_NAMES_free(altnames);
 					return -1;
 				} else {
@@ -113,7 +127,7 @@ int check_x509_subj(X509 *pcert, str* sdom)
 									scname,
 									sizeof (scname));
 	if (sdom->len != ilen || strncasecmp(scname, sdom->s, sdom->len)) {
-		LOG(L_INFO, "AUTH_INDENTITY VERIFIER: common name of certificate doesn't match host name\n");
+		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: common name of certificate doesn't match host name\n");
 		return -2;
 	}
 
@@ -127,19 +141,19 @@ int verify_x509(X509 *pcert, X509_STORE *pcacerts)
 
 
 	if (X509_STORE_CTX_init(&ca_ctx, pcacerts, pcert, NULL) != 1) {
-		LOG(L_ERR, "AUTH_INDENTITY:verify_x509: Unable to init X509 store ctx\n");
+		LOG(L_ERR, "AUTH_IDENTITY:verify_x509: Unable to init X509 store ctx\n");
 		return -1;
 	}
 
 	if (X509_verify_cert(&ca_ctx) != 1) {
 		strerr = (char *) X509_verify_cert_error_string(ca_ctx.error);
-		LOG(L_ERR, "AUTH_INDENTITY VERIFIER: Certificate verification error: %s\n", strerr);
+		LOG(L_ERR, "AUTH_IDENTITY VERIFIER: Certificate verification error: %s\n", strerr);
 		X509_STORE_CTX_cleanup(&ca_ctx);
 		return -2;
 	}
 	X509_STORE_CTX_cleanup(&ca_ctx);
 
-	LOG(AUTH_DBG_LEVEL, "AUTH_INDENTITY VERIFIER: Certificate is valid\n");
+	LOG(AUTH_DBG_LEVEL, "AUTH_IDENTITY VERIFIER: Certificate is valid\n");
 
 	return 0;
 }
@@ -167,7 +181,7 @@ int rsa_sha1_enc (dynstr *sdigeststr,
 				 (unsigned int*)&ires,
 			 	 hmyprivkey) != 1) {
 		ERR_error_string_n(ERR_get_error(), serr, sizeof serr);
-		LOG(L_ERR, "AUTH_INDENT:rsa_sha1_enc: '%s'\n", serr);
+		LOG(L_ERR, "AUTH_IDENTITY:rsa_sha1_enc: '%s'\n", serr);
 		return -2;
 	}
 #else
@@ -177,7 +191,7 @@ int rsa_sha1_enc (dynstr *sdigeststr,
 	if (ires<0)
 	{
 		ERR_error_string_n(ERR_get_error(), serr, sizeof serr);
-		LOG(L_ERR, "AUTH_INDENT:rsa_sha1_enc: '%s'\n", serr);
+		LOG(L_ERR, "AUTH_IDENTITY:rsa_sha1_enc: '%s'\n", serr);
 		return -1;
 	}
 #endif
@@ -200,7 +214,7 @@ int rsa_sha1_dec (char *sencedsha, int iencedshalen,
 	pkey=X509_get_pubkey(pcertx509);
 	if (pkey == NULL) {
 		lerr=ERR_get_error(); ERR_error_string_n(lerr, serr, sizeof(serr));
-		LOG(L_ERR, "AUTH_INDENTITY:decrypt_identity: Pubkey %s\n", serr);
+		LOG(L_ERR, "AUTH_IDENTITY:decrypt_identity: Pubkey %s\n", serr);
 		return -1;
 	}
 
@@ -209,23 +223,24 @@ int rsa_sha1_dec (char *sencedsha, int iencedshalen,
 	hpubkey = EVP_PKEY_get1_RSA(pkey);
 	EVP_PKEY_free(pkey);
 	if (hpubkey == NULL) {
-		LOG(L_ERR, "AUTH_INDENTITY:decrypt_identity: Error getting RSA key\n");
+		LOG(L_ERR, "AUTH_IDENTITY:decrypt_identity: Error getting RSA key\n");
 		return -2;
 	}
 
 #ifdef NEW_RSA_PROC
-	if (!RSA_verify(NID_sha1,
+	if (RSA_verify(NID_sha1,
 		 			(unsigned char*)ssha, sshasize,
 					(unsigned char*)sencedsha, iencedshalen,
-					hpubkey)) {
-		LOG(L_INFO, "AUTH_INDENTITY VERIFIER: Invalid Identity Header\n");
+					hpubkey) != 1) {
+		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: RSA verify returned: '%s'\n", ERR_error_string(ERR_get_error(), NULL));
+		LOG(L_INFO, "AUTH_IDENTITY VERIFIER: RSA verify failed -> Invalid Identity Header\n");
 		RSA_free(hpubkey);
 		return -5;
 	}
 #else
 	/* it is bigger than the output buffer */
 	if (RSA_size(hpubkey) > sshasize) {
-		LOG(L_ERR, "AUTH_INDENTITY:decrypt_identity: Unexpected Identity hash length (%d > %d)\n", RSA_size(hpubkey), sshasize);
+		LOG(L_ERR, "AUTH_IDENTITY:decrypt_identity: Unexpected Identity hash length (%d > %d)\n", RSA_size(hpubkey), sshasize);
 		RSA_free(hpubkey);
 		return -3;
 	}
@@ -236,7 +251,7 @@ int rsa_sha1_dec (char *sencedsha, int iencedshalen,
 								RSA_PKCS1_PADDING);
 	if (*ishalen<=0) {
 		lerr=ERR_get_error(); ERR_error_string_n(lerr, serr, sizeof(serr));
-		LOG(L_ERR, "AUTH_INDENTITY:decrypt_identity: RSA operation error %s\n", serr);
+		LOG(L_ERR, "AUTH_IDENTITY:decrypt_identity: RSA operation error %s\n", serr);
 		RSA_free(hpubkey);
 		return -4;
 	}
