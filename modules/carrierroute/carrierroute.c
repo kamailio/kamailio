@@ -52,7 +52,7 @@
 
 MODULE_VERSION
 
-char * db_url = NULL;
+char* db_url = DEFAULT_RODB_URL;
 char * db_table = "carrierroute";
 char * subscriber_table = "subscriber";
 char * carrier_table = "route_tree";
