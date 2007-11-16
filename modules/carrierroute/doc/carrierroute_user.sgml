@@ -621,7 +621,8 @@ modparam("carrierroute", "fallback_default", 1)
 			This function searches for the longest match for the Request URI at the
 			given domain in the default tree and rewrites the Request URI. 
 			Returns -1 if there is no data found or an empty rewrite host on the longest
-			match is found.
+			match is found. This function is only usable with requests that contains a
+			valid numerical request URI, e.g. INVITEs.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -632,7 +633,7 @@ modparam("carrierroute", "fallback_default", 1)
 		<listitem>
 		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
 		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri and to_user.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -643,8 +644,9 @@ modparam("carrierroute", "fallback_default", 1)
 	    </title>
 	    <para>
 			Balances the request URI to the desination set given by domain in the default tree. 
-			The hash_source defines the parameter which is passed to the hash function. 
-			Return codes are the same as for cr_rewrite_uri.
+			The hash_source defines the parameter which is passed to the hash function.
+			Return codes are the same as for cr_rewrite_uri. This function is only usable with
+			requests that contains a valid numerical request URI, e.g. INVITEs.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -655,7 +657,7 @@ modparam("carrierroute", "fallback_default", 1)
 		<listitem>
 		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
 		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    Possible values for hash_source are: from_user and to_user.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -666,7 +668,8 @@ modparam("carrierroute", "fallback_default", 1)
 	    </title>
 	    <para>
 		    Like cr_rewrite_uri, except that the to URI is used for prefix matching instead
-		    the request URI. Return codes are the same as for cr_rewrite_uri.
+		    the request URI. Return codes are the same as for cr_rewrite_uri. This function
+			is usable on requests that don't contain a valid request URI, like REGISTERs.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -677,7 +680,7 @@ modparam("carrierroute", "fallback_default", 1)
 		<listitem>
 		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
 		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri and to_user.
 		    </para>
 		</listitem>
 	    </itemizedlist>
@@ -687,9 +690,9 @@ modparam("carrierroute", "fallback_default", 1)
 		<function moreinfo="none">cr_prime_balance_by_to (string domain, int hash_source)</function>
 	    </title>
 	    <para>
-			Like cr_prime_balance_uri, except that the to URI is used for prefix 
-			matching instead the request URI. Return codes are the same as for
-			cr_rewrite_uri.
+			Like cr_prime_balance_uri, except that the to URI is used for prefix matching instead
+			the request URI. Return codes are the same as for cr_rewrite_uri. This function
+			is usable on requests that don't contain a valid request URI, like REGISTERs.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -700,17 +703,17 @@ modparam("carrierroute", "fallback_default", 1)
 		<listitem>
 		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
 		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri, to_user.
+		    Possible values for hash_source are: from_user and to_user.
 		    </para>
 		</listitem>
 	    </itemizedlist>
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_user_rewrite_uri (string user, string domain)</function>
+		<function moreinfo="none">cr_user_rewrite_uri (string uri, string domain)</function>
 	    </title>
 	    <para>
-			Rewrites the request URI, the given user is used to determine the
+			Rewrites the request URI, the given uri is used to determine the
 			carrier tree to be used. The domain identifies the routing domain
 			inside the carrier tree. This function cannot be used in the config file mode,
 			as it needs a mapping of the given user to a certain carrier.
@@ -718,9 +721,8 @@ modparam("carrierroute", "fallback_default", 1)
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
 		<listitem>
-		    <para><emphasis>user</emphasis> - Name of the user for the carrier tree lookup.
-				Additional to a string value the request URI, from URI, to URI or an AVP could
-				used to determine the actual username.
+		    <para><emphasis>uri</emphasis> - Name of the user for the carrier tree lookup.
+				Additional to a	string variable any pseudo-variable could be used as input.
 		    </para>
 		</listitem>
 		<listitem>
@@ -965,7 +967,7 @@ route {
 	}
 }
 
-failure_route(1) {
+failure_route[1] {
 	# In case of failure, send it to an alternative route:
 	if (t_check_status("408|5[0-9][0-9]")) {
 		#choose route domain 1 of the default carrier
@@ -978,7 +980,7 @@ failure_route(1) {
 	}
 }
 
-failure_route(2) {
+failure_route[2] {
 	# further processing
 }
 ...
@@ -1001,6 +1003,10 @@ failure_route(2) {
 		</para>
 		<para>
 			Use the "null" prefix to specify an empty prefix in the config file.
+			Please note that the prefix is matched against the request URI (or to URI),
+			if they did not contain a valid numerical URI, no match is possible. So
+			for loadbalancing purposes e.g. for your registrars, you should use an empty
+			prefix.
 		</para>
 		<programlisting format="linespecific">
 ...
@@ -1023,7 +1029,7 @@ domain proxy {
 }
 
 domain register {
-   prefix 49 {
+   prefix NULL {
      max_targets = 2
       target register1.localdomain {
          prob = 0.500000

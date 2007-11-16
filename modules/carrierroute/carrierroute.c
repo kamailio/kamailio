@@ -102,7 +102,6 @@ static int tree_route_fixup(void ** param, int param_no);
 
 /************* Declaration of Helper Functions *****************************/
 static enum hash_source hash_fixup(const char * domain);
-static int parse_avp_param(char *s, int *flags, int_str *name);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
@@ -225,50 +224,11 @@ static int route_fixup(void ** param, int param_no) {
 }
 
 static int user_route_fixup(void ** param, int param_no) {
-	int domain;
-	void* ptr;
-	user_param_t * gcp=NULL;
 	if (mode == SP_ROUTE_MODE_FILE) {
 		LM_ERR("command cr_user_rewrite_uri can't be used in file mode\n");
 		return -1;
 	}
-	if (param_no == 1) {
-		ptr = *param;
-
-		gcp = (user_param_t *)pkg_malloc(sizeof(user_param_t));
-		if (gcp == NULL) {
-			LM_ERR("out of private memory\n");
-			return -1;
-		}
-		memset(gcp, 0, sizeof(user_param_t));
-
-		if (!strcasecmp((char*)*param, "Request-URI")) {
-			gcp->id=REQ_URI;
-		} else if (!strcasecmp((char*)*param, "To")) {
-			gcp->id=TO_URI;
-		} else if (!strcasecmp((char*)*param, "From")) {
-			gcp->id=FROM_URI;
-		} else if (!strcasecmp((char*)*param, "Credentials")) {
-			gcp->id=CREDENTIALS;
-		} else {
-			if (parse_avp_param((char*)*param, &gcp->avp_flags, &gcp->avp_name)<0) {
-				LM_ERR("Unsupported Header Field identifier\n");
-				pkg_free(gcp);
-				return -1;
-			}
-			gcp->id=AVP;
-		}
-		*param=(void*)gcp;
-		if (gcp->id!=5) pkg_free(ptr);
-	} else if (param_no == 2) {
-		if ((domain = add_domain((char *)*param)) < 0) {
-			return -1;
-		}
-		LM_NOTICE("domain %s has id %i\n", (char *)*param, domain);
-		pkg_free(*param);
-		*param = (void *)domain;
-	}
-	return 0;
+	return tree_route_fixup(param, param_no);
 }
 
 static int tree_route_fixup(void ** param, int param_no) {
@@ -339,56 +299,4 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
 		    "to balance_uri().\n");
 		return shs_error;
 	}
-}
-
-static int parse_avp_param(char *s, int *flags, int_str *name) {
-	unsigned int uint;
-	int len = strlen(s);
-	str name_str;
-
-	if (s==0 || len==0)
-		return -1;
-
-	if (*(s+1)==':') {
-		if (*s=='i' || *s=='I')
-			*flags = 0;
-		else if (*s=='s' || *s=='S')
-			*flags = AVP_NAME_STR;
-		else {
-			LM_ERR("unknown value type <%c>\n",*s);
-			return -1;
-		}
-		s += 2;
-		len -= 2;
-		if (*s==0 || len<=0) {
-			LM_ERR("parse error\n");
-			return -1;
-		}
-	} else {
-		*flags = AVP_NAME_STR;
-	}
-	/* get the value */
-	name_str.s = s;
-	name_str.len = len;
-	if ((*flags&AVP_NAME_STR)==0) {
-		/* convert the value to integer */
-		if (str2int(&name_str, &uint)==-1) {
-			LM_ERR("value is not int as type says <%.*s>\n",
-				name_str.len, name_str.s);
-			return -1;
-		}
-		name->n = (int)uint;
-	} else { // changed struct int_str, not more a pointer to a "str"
-		name->s.s = pkg_malloc(name_str.len);
-		if (!name->s.s) {
-			LM_ERR("out of private memory\n");
-			pkg_free(name->s.s);
-			return -1;
-		}
-
-		memcpy(name->s.s, name_str.s, name_str.len);
-		name->s.len=name_str.len;
-	}
-
-	return 0;
 }

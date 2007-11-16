@@ -58,12 +58,12 @@ int route_uri(struct sip_msg * msg, char * domain_param, char * hash);
  * the given _user is used to determine the routing tree.
  *
  * @param msg the current SIP message
- * @param _user the user to determine the route tree (Request-URI|from_uri|to_uri|avpname)
+ * @param _uri the URI to determine the route tree (string or pseudo-variable)
  * @param _domain the requested routing domain
  *
  * @return 1 on success, -1 on failure
  */
-int user_route_uri(struct sip_msg * msg, char * _user, char * _domain);
+int user_route_uri(struct sip_msg * msg, char * _uri, char * _domain);
 
 /**
  * rewrites the request URI of msg by calculating a rule, using 
