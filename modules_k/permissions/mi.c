@@ -40,12 +40,12 @@
 struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
 {
 	if (hash_table==NULL)
-		return init_mi_tree( 500, "Trusted table caching is disabled", 33);
+		return init_mi_tree( 500, MI_SSTR("Trusted table caching is disabled"));
 
     if (reload_trusted_table () == 1) {
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
     } else {
-	return init_mi_tree( 400, "Trusted table reload failed", 27);
+	return init_mi_tree( 400, MI_SSTR("Trusted table reload failed"));
     }
 }
 
@@ -58,9 +58,9 @@ struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 	struct mi_root* rpl_tree;
 
 	if (hash_table==NULL)
-		return init_mi_tree( 500, "Trusted-module not in use", 25);
+		return init_mi_tree( 500, MI_SSTR("Trusted-module not in use"));
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
 	if (rpl_tree==NULL) return 0;
 
 	if(hash_table_mi_print(*hash_table, &rpl_tree->node)< 0) {
@@ -79,9 +79,9 @@ struct mi_root* mi_trusted_dump(struct mi_root *cmd_tree, void *param)
 struct mi_root* mi_address_reload(struct mi_root *cmd_tree, void *param)
 {
     if (reload_address_table () == 1) {
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	return init_mi_tree( 200, MI_SSTR(MI_OK));
     } else {
-	return init_mi_tree( 400, "Address table reload failed", 27);
+	return init_mi_tree( 400, MI_SSTR("Address table reload failed"));
     }
 }
 
@@ -93,7 +93,7 @@ struct mi_root* mi_address_dump(struct mi_root *cmd_tree, void *param)
 {
     struct mi_root* rpl_tree;
     
-    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
     if (rpl_tree==NULL) return 0;
     
     if(addr_hash_table_mi_print(*addr_hash_table, &rpl_tree->node) <  0) {
@@ -113,7 +113,7 @@ struct mi_root* mi_subnet_dump(struct mi_root *cmd_tree, void *param)
 {
     struct mi_root* rpl_tree;
     
-    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
     if (rpl_tree==NULL) return 0;
     
     if(subnet_table_mi_print(*subnet_table, &rpl_tree->node) <  0) {
@@ -141,15 +141,15 @@ struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
     node = cmd->node.kids;
     if (node == NULL || node->next == NULL || node->next->next == NULL ||
 	node->next->next->next != NULL)
-	return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	return init_mi_tree(400, MI_SSTR(MI_MISSING_PARM));
     
     /* look for base name */
     basenamep = &node->value;
     if (basenamep == NULL)
-	return init_mi_tree(404, "Basename is NULL", 16);
+	return init_mi_tree(404, MI_SSTR("Basename is NULL"));
     allow_suffix_len = strlen(allow_suffix);
     if (basenamep->len + allow_suffix_len + 1 > MAX_FILE_LEN)
-	return init_mi_tree(404, "Basename is too long", 20);
+	return init_mi_tree(404, MI_SSTR("Basename is too long"));
     memcpy(basename, basenamep->s, basenamep->len);
     memcpy(basename + basenamep->len, allow_suffix, allow_suffix_len);
     basename[basenamep->len + allow_suffix_len] = 0;
@@ -157,24 +157,24 @@ struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
     /* look for uri */
     urip = &node->next->value;
     if (urip == NULL)
-	return init_mi_tree(404, "URI is NULL", 11);
+	return init_mi_tree(404, MI_SSTR("URI is NULL"));
     if (urip->len > MAX_URI_SIZE)
-	return init_mi_tree(404, "URI is too long", 15);
+	return init_mi_tree(404, MI_SSTR("URI is too long"));
     memcpy(uri, urip->s, urip->len);
     uri[urip->len] = 0;
 
     /* look for contact */
     contactp = &node->next->next->value;
     if (contactp == NULL)
-	return init_mi_tree(404, "Contact is NULL", 15);
+	return init_mi_tree(404, MI_SSTR("Contact is NULL"));
     if (contactp->len > MAX_URI_SIZE)
-	return init_mi_tree(404, "Contact is too long", 19);
+	return init_mi_tree(404, MI_SSTR("Contact is too long"));
     memcpy(contact, contactp->s, contactp->len);
     contact[contactp->len] = 0;
 
     if (allow_test(basename, uri, contact) == 1) {
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
     } else {
-	return init_mi_tree(403, "Forbidden", 9);
+	return init_mi_tree(403, MI_SSTR("Forbidden"));
     }
 }
