@@ -31,6 +31,8 @@ ser \- very fast and configurable sip proxy
 .BI \-g " gid"
 ] [
 .BI \-P " pid\-file"
+] [
+.BI \-L " modules-dir"
 ]
 
 .SH DESCRIPTION
@@ -124,14 +126,18 @@ runs.
 .TP
 .BI \-g " gid"
 Changes the group id under which 
-.B ser 
+.B ser
 runs.
 .TP
 .BI \-P " pid\-file"
-Creates a file containing the pid of the main 
-.B ser 
+Creates a file containing the pid of the main
+.B ser
 process.
-
+.TP
+.BI \-L " modules\-dir"
+Specifies the directory where to look for
+.B ser
+modules (default: /usr/lib/ser/modules)
 
 .SH FILES
 .PD 0
