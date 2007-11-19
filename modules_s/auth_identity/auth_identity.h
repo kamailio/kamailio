@@ -73,6 +73,7 @@
 #define AUTH_MSG_VALIDITY_TIME 3600
 #define AUTH_MSG_TO_AUTH_VALIDITY_TIME 600
 
+#define BEGIN_PEM_CERT "-----BEGIN CERTIFICATE-----"
 
 enum msg_part {
 	DS_FROM = 1,
