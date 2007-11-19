@@ -708,6 +708,29 @@ modparam("carrierroute", "fallback_default", 1)
 		</listitem>
 	    </itemizedlist>
 	</section>
+		<section>
+	    <title>
+		<function moreinfo="none">cr_prime_balance_by_from (string domain, int hash_source)</function>
+	    </title>
+	    <para>
+			Like cr_prime_balance_uri, except that the from URI is used for prefix matching instead
+			the request URI. Return codes are the same as for cr_rewrite_uri. This function
+			is usable on requests that don't contain a valid request URI, like REGISTERs.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
+		    </para>
+		</listitem>
+		<listitem>
+		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
+		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
+		    Possible values for hash_source are: from_user and to_user.
+		    </para>
+		</listitem>
+	    </itemizedlist>
+	</section>
 	<section>
 	    <title>
 		<function moreinfo="none">cr_user_rewrite_uri (string uri, string domain)</function>
