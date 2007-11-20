@@ -393,7 +393,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					LM_ERR("deleting record from hash table\n");
 					goto error;
 				}
-				return 1;
+				goto done;
 			}
 
 			n_update_cols= 0;
@@ -412,7 +412,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				if(str_publ_nr.len== presentity->etag.len)
 				{
 					LM_ERR("wrong etag\n");
-					return -1;			
+					goto error;
 				}	
 				str_publ_nr.s= dot+1;
 				str_publ_nr.len--;
@@ -426,7 +426,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				if(etag.s == NULL)
 				{
 					LM_ERR("while generating etag\n");
-					return -1;
+					goto error;
 				}
 				etag.len=(strlen(etag.s));
 				
@@ -475,9 +475,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			if( publ_send200ok(msg, presentity->expires, cur_etag)< 0)
 			{
 				LM_ERR("sending 200OK reply\n");
-				if(etag.s)
-					pkg_free(etag.s);
-				return -1;
+				goto error;
 			}
 			*sent_reply= 1;
 			
@@ -486,7 +484,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			etag.s= NULL;
 			
 			if(!body)
-				return 0;
+				goto done;
 		
 			goto send_notify;
 		}  
@@ -513,6 +511,7 @@ send_notify:
 		goto error;
 	}
 
+done:
 	if(rules_doc)
 	{
 		if(rules_doc->s)
