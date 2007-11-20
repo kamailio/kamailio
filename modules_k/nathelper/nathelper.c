@@ -2465,7 +2465,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 		if (to_tag.len == 0)
 			return -1;
 		create = 0;
-		if (swap == 0) {
+		if (swap != 0) {
 			tmp = from_tag;
 			from_tag = to_tag;
 			to_tag = tmp;
