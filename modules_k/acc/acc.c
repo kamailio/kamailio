@@ -468,7 +468,7 @@ int init_acc_rad(char *rad_cfg, int srv_type)
 	INIT_AV(rh, rd_attrs, n, rd_vals, RV_STATIC_MAX, "acc", -1, -1);
 
 	if (srv_type != -1)
-		rd_vals[V_SIP_SESSION].v = srv_type;
+		rd_vals[RV_SIP_SESSION].v = srv_type;
 
 	return 0;
 }
