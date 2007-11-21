@@ -1102,7 +1102,7 @@ child_init(int rank)
 	struct rtpp_set  *rtpp_list;
 	struct rtpp_node *pnode;
 
-	if (rank<=0)
+	if (rank<=0 && rank!=PROC_TIMER)
 		return 0;
 
 	if(rtpp_set_list==NULL )
