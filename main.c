@@ -631,18 +631,18 @@ void handle_sigs()
 		case SIGCHLD:
 			while ((chld=waitpid( -1, &chld_status, WNOHANG ))>0) {
 				if (WIFEXITED(chld_status))
-					LOG(L_DEFAULT, "child process %d exited normally,"
+					LOG(L_ALERT, "child process %d exited normally,"
 							" status=%d\n", chld,
 							WEXITSTATUS(chld_status));
 				else if (WIFSIGNALED(chld_status)) {
-					LOG(L_DEFAULT, "child process %d exited by a signal"
+					LOG(L_ALERT, "child process %d exited by a signal"
 							" %d\n", chld, WTERMSIG(chld_status));
 #ifdef WCOREDUMP
 					LOG(L_ALERT, "core was %sgenerated\n",
 							 WCOREDUMP(chld_status) ?  "" : "not " );
 #endif
 				}else if (WIFSTOPPED(chld_status))
-					LOG(L_DEFAULT, "child process %d stopped by a"
+					LOG(L_ALERT, "child process %d stopped by a"
 								" signal %d\n", chld,
 								 WSTOPSIG(chld_status));
 			}
