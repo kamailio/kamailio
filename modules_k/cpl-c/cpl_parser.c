@@ -727,11 +727,11 @@ static inline int encode_time_attr(xmlNodePtr  node, char *node_ptr,
 					set_attr_type(p, BYSETPOS_ATTR, buf_end, error);
 				break;
 			case 'n': case 'N':
-				if (!attr->name[0])
+				if (!attr->name[7])
 					set_attr_type(p, BYMONTH_ATTR, buf_end, error);
-				else if (attr->name[0]=='D' || attr->name[0]=='d')
+				else if (attr->name[7]=='D' || attr->name[7]=='d')
 					set_attr_type(p, BYMONTHDAY_ATTR, buf_end, error);
-				else if (attr->name[0]=='e' || attr->name[0]=='E')
+				else if (attr->name[7]=='e' || attr->name[7]=='E')
 					set_attr_type(p, BYMINUTE_ATTR, buf_end, error);
 				break;
 			case 'd': case 'D':

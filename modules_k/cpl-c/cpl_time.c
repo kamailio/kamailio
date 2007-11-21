@@ -133,7 +133,6 @@ int ac_tm_fill(ac_tm_p _atp, struct tm* _tm)
 	_atp->yweek = ac_get_yweek(_tm);
 	_atp->ywday = ac_get_wday_yr(_tm);
 	_atp->mwday = ac_get_wday_mr(_tm);
-	DBG("---> fill = %s\n",asctime(&(_atp->t)) );
 	return 0;
 }
 
