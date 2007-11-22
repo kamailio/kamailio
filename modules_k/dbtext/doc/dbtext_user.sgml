@@ -279,9 +279,9 @@ modparam("dbtext", "db_mode", 1)
 		<title>Load the dbtext module</title>
 <programlisting format="linespecific">
 ...
-loadmodule "/path/to/ser/modules/dbtext.so"
+loadmodule "/path/to/openser/modules/dbtext.so"
 ...
-modparam("module_name", "database_URL", "/path/to/dbtext/database")
+modparam("module_name", "database_URL", "dbtext:///path/to/dbtext/database")
 ...
 </programlisting>
 		</example>
