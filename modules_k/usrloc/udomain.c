@@ -534,7 +534,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 		order = q_col.s;
 
 	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
-		LM_ERR("failed to use_table\n");
+		LM_ERR("failed to use table %.*s\n", _d->name->len, _d->name->s);
 		return 0;
 	}
 
@@ -545,7 +545,7 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		LM_DBG("aor not found in DB\n");
+		LM_DBG("aor %.*s not found in table %.*s\n",_aor->len, _aor->s, _d->name->len, _d->name->s);
 		ul_dbf.free_result(_c, res);
 		return 0;
 	}
