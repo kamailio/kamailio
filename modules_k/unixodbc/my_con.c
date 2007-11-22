@@ -71,18 +71,18 @@ char *build_conn_str(struct db_id* id, char *buf)
 		p += DSN_ATTR_LEN;
 		memcpy( p, id->database, ld);
 		p += ld;
-		*(p++) = ';';
 	}
 	if (lu) {
+		*(p++) = ';';
 		memcpy( p , UID_ATTR, UID_ATTR_LEN);
 		p += UID_ATTR_LEN;
 		memcpy( p, id->username, lu);
 		p += lu;
-		*(p++) = ';';
 	}
-	memcpy( p , PWD_ATTR, PWD_ATTR_LEN);
-	p += PWD_ATTR_LEN;
 	if (lp) {
+		*(p++) = ';';
+		memcpy( p , PWD_ATTR, PWD_ATTR_LEN);
+		p += PWD_ATTR_LEN;
 		memcpy( p, id->password, lp);
 		p += lp;
 	}
@@ -121,16 +121,34 @@ struct my_con* new_connection(struct db_id* id)
 
 	memset(ptr, 0, sizeof(struct my_con));
 	ptr->ref = 1;
-
-	SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &(ptr->env));
-	SQLSetEnvAttr(ptr->env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
-	SQLAllocHandle(SQL_HANDLE_DBC, ptr->env, &(ptr->dbc));
+	// allocate environment handle
+	ret = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &(ptr->env));
+	if ((ret != SQL_SUCCESS) && (ret != SQL_SUCCESS_WITH_INFO))
+	{
+		LM_ERR("could not alloc a SQL handle\n");
+		if (ptr) pkg_free(ptr);
+		return 0;
+	}
+	// set the environment
+	ret = SQLSetEnvAttr(ptr->env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
+	if ((ret != SQL_SUCCESS) && (ret != SQL_SUCCESS_WITH_INFO))
+	{
+		LM_ERR("could not set the environment\n");
+		goto err1;
+	}
+	// allocate connection handle
+	ret = SQLAllocHandle(SQL_HANDLE_DBC, ptr->env, &(ptr->dbc));
+	if ((ret != SQL_SUCCESS) && (ret != SQL_SUCCESS_WITH_INFO))
+	{
+		LM_ERR("could not alloc a connection handle %d\n", ret);
+		goto err1;
+	}
 
 	if (!build_conn_str(id, conn_str)) {
 		LM_ERR("failed to build connection string\n");
-		return 0;
+		goto err2;
 	}
-	ret = SQLDriverConnect(ptr->dbc, (void *)1, (SQLCHAR*)conn_str, SQL_NTS,
+	ret = SQLDriverConnect(ptr->dbc, NULL, (SQLCHAR*)conn_str, SQL_NTS,
 		outstr, sizeof(outstr), &outstrlen,
 		SQL_DRIVER_COMPLETE);
 	if (SQL_SUCCEEDED(ret))
@@ -146,7 +164,7 @@ struct my_con* new_connection(struct db_id* id)
 	{
 		LM_ERR("failed to connect\n");
 		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
-		goto err;
+		goto err2;
 	}
 
 	ptr->stmt_handle = NULL;
@@ -155,7 +173,14 @@ struct my_con* new_connection(struct db_id* id)
 	ptr->id = id;
 	return ptr;
 
-	err:
+err1:
+	SQLFreeHandle(SQL_HANDLE_ENV, &(ptr->env));
+	if (ptr) pkg_free(ptr);
+	return 0;
+
+err2:
+	SQLFreeHandle(SQL_HANDLE_ENV, &(ptr->env));
+	SQLFreeHandle(SQL_HANDLE_DBC, &(ptr->dbc));
 	if (ptr) pkg_free(ptr);
 	return 0;
 }
