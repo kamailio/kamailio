@@ -9,8 +9,8 @@ CREATE TABLE rls_presentity (
     updated INTEGER NOT NULL,
     auth_state INTEGER NOT NULL,
     reason VARCHAR(64) NOT NULL,
-    CONSTRAINT rls_presentity_idx UNIQUE (rlsubs_did, resource_uri),
-    CONSTRAINT updated_idx UNIQUE (updated)
+    CONSTRAINT rls_presentity_rls_presentity_idx UNIQUE (rlsubs_did, resource_uri),
+    CONSTRAINT rls_presentity_updated_idx UNIQUE (updated)
 );
 
 INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
@@ -36,6 +36,6 @@ CREATE TABLE rls_watchers (
     version INTEGER NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    CONSTRAINT rls_watcher_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
+    CONSTRAINT rls_watchers_rls_watcher_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
 );
 

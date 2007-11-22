@@ -10,7 +10,7 @@ CREATE TABLE acc (
     time TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE INDEX callid_idx ON acc (callid);
+CREATE INDEX acc_callid_idx ON acc (callid);
 
 INSERT INTO version (table_name, table_version) values ('missed_calls','3');
 CREATE TABLE missed_calls (
@@ -24,5 +24,5 @@ CREATE TABLE missed_calls (
     time TIMESTAMP WITHOUT TIME ZONE NOT NULL
 );
 
-CREATE INDEX callid_idx ON missed_calls (callid);
+CREATE INDEX missed_calls_callid_idx ON missed_calls (callid);
 

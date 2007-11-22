@@ -6,8 +6,8 @@ CREATE TABLE domainpolicy (
     att VARCHAR(255),
     val VARCHAR(128),
     comment VARCHAR(255) NOT NULL,
-    CONSTRAINT rav_idx UNIQUE (rule, att, val)
+    CONSTRAINT domainpolicy_rav_idx UNIQUE (rule, att, val)
 );
 
-CREATE INDEX rule_idx ON domainpolicy (rule);
+CREATE INDEX domainpolicy_rule_idx ON domainpolicy (rule);
 

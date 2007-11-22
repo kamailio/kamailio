@@ -9,6 +9,6 @@ CREATE TABLE speed_dial (
     fname VARCHAR(64) NOT NULL DEFAULT '',
     lname VARCHAR(64) NOT NULL DEFAULT '',
     description VARCHAR(64) NOT NULL DEFAULT '',
-    CONSTRAINT speed_dial_idx UNIQUE (username, domain, sd_domain, sd_username)
+    CONSTRAINT speed_dial_speed_dial_idx UNIQUE (username, domain, sd_domain, sd_username)
 );
 

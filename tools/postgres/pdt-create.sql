@@ -4,6 +4,6 @@ CREATE TABLE pdt (
     sdomain VARCHAR(128) NOT NULL,
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(128) NOT NULL DEFAULT '',
-    CONSTRAINT sdomain_prefix_idx UNIQUE (sdomain, prefix)
+    CONSTRAINT pdt_sdomain_prefix_idx UNIQUE (sdomain, prefix)
 );
 

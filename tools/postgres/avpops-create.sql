@@ -10,6 +10,6 @@ CREATE TABLE usr_preferences (
     last_modified TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01'
 );
 
-CREATE INDEX ua_idx ON usr_preferences (uuid, attribute);
-CREATE INDEX uda_idx ON usr_preferences (username, domain, attribute);
+CREATE INDEX usr_preferences_ua_idx ON usr_preferences (uuid, attribute);
+CREATE INDEX usr_preferences_uda_idx ON usr_preferences (username, domain, attribute);
 

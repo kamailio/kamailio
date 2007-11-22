@@ -4,10 +4,10 @@ CREATE TABLE active_sessions (
     name VARCHAR(32) NOT NULL DEFAULT '',
     val TEXT,
     changed VARCHAR(14) NOT NULL DEFAULT '',
-    CONSTRAINT sw_as_idx PRIMARY KEY sw_as_idx (name, sid)
+    CONSTRAINT active_sessions_sw_as_idx PRIMARY KEY sw_as_idx (name, sid)
 );
 
-CREATE INDEX changed ON active_sessions (changed);
+CREATE INDEX active_sessions_changed ON active_sessions (changed);
 
 INSERT INTO version (table_name, table_version) values ('pending','6');
 CREATE TABLE pending (
@@ -31,11 +31,11 @@ CREATE TABLE pending (
     allow_find VARCHAR(1) NOT NULL DEFAULT 0,
     timezone VARCHAR(64) DEFAULT NULL,
     rpid VARCHAR(64) DEFAULT NULL,
-    CONSTRAINT sw_user_id UNIQUE (username, domain),
-    CONSTRAINT phplib_id UNIQUE (phplib_id)
+    CONSTRAINT pending_sw_user_id UNIQUE (username, domain),
+    CONSTRAINT pending_phplib_id UNIQUE (phplib_id)
 );
 
-CREATE INDEX username_id ON pending (username);
+CREATE INDEX pending_username_id ON pending (username);
 
 INSERT INTO version (table_name, table_version) values ('phonebook','1');
 CREATE TABLE phonebook (
@@ -63,7 +63,7 @@ CREATE TABLE server_monitoring (
     param VARCHAR(32) NOT NULL DEFAULT '',
     value INTEGER NOT NULL DEFAULT 0,
     increment INTEGER NOT NULL DEFAULT 0,
-    CONSTRAINT sw_sm_idx PRIMARY KEY sw_sm_idx (id, param)
+    CONSTRAINT server_monitoring_sw_sm_idx PRIMARY KEY sw_sm_idx (id, param)
 );
 
 INSERT INTO version (table_name, table_version) values ('server_monitoring_agg','1');
@@ -89,6 +89,6 @@ CREATE TABLE admin_privileges (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     priv_name VARCHAR(64) NOT NULL DEFAULT '',
     priv_value VARCHAR(64) NOT NULL DEFAULT '',
-    CONSTRAINT sw_ap_idx PRIMARY KEY sw_ap_idx (username, priv_name, priv_value, domain)
+    CONSTRAINT admin_privileges_sw_ap_idx PRIMARY KEY sw_ap_idx (username, priv_name, priv_value, domain)
 );
 

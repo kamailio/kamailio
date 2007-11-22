@@ -12,5 +12,5 @@ CREATE TABLE silo (
     body BYTEA NOT NULL DEFAULT ''
 );
 
-CREATE INDEX account_idx ON silo (username, domain);
+CREATE INDEX silo_account_idx ON silo (username, domain);
 

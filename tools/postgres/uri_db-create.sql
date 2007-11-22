@@ -5,6 +5,6 @@ CREATE TABLE uri (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     uri_user VARCHAR(64) NOT NULL DEFAULT '',
     last_modified TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01',
-    CONSTRAINT account_idx UNIQUE (username, domain, uri_user)
+    CONSTRAINT uri_account_idx UNIQUE (username, domain, uri_user)
 );
 

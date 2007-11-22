@@ -18,5 +18,5 @@ CREATE TABLE location (
     methods INTEGER DEFAULT NULL
 );
 
-CREATE INDEX account_contact_idx ON location (username, domain, contact);
+CREATE INDEX location_account_contact_idx ON location (username, domain, contact);
 

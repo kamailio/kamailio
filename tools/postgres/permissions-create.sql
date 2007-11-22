@@ -7,7 +7,7 @@ CREATE TABLE trusted (
     tag VARCHAR(32)
 );
 
-CREATE INDEX peer_idx ON trusted (src_ip);
+CREATE INDEX trusted_peer_idx ON trusted (src_ip);
 
 INSERT INTO version (table_name, table_version) values ('address','3');
 CREATE TABLE address (

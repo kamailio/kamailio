@@ -18,5 +18,5 @@ CREATE TABLE aliases (
     methods INTEGER DEFAULT NULL
 );
 
-CREATE INDEX alias_idx ON aliases (username, domain, contact);
+CREATE INDEX aliases_alias_idx ON aliases (username, domain, contact);
 

@@ -12,8 +12,8 @@ CREATE TABLE subscriber (
     ha1b VARCHAR(64) NOT NULL DEFAULT '',
     timezone VARCHAR(64) DEFAULT NULL,
     rpid VARCHAR(64) DEFAULT NULL,
-    CONSTRAINT account_idx UNIQUE (username, domain)
+    CONSTRAINT subscriber_account_idx UNIQUE (username, domain)
 );
 
-CREATE INDEX username_idx ON subscriber (username);
+CREATE INDEX subscriber_username_idx ON subscriber (username);
 

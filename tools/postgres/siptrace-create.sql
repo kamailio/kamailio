@@ -13,8 +13,8 @@ CREATE TABLE sip_trace (
     direction VARCHAR(4) NOT NULL DEFAULT ''
 );
 
-CREATE INDEX traced_user_idx ON sip_trace (traced_user);
-CREATE INDEX date_idx ON sip_trace (date);
-CREATE INDEX fromip_idx ON sip_trace (fromip);
-CREATE INDEX callid_idx ON sip_trace (callid);
+CREATE INDEX sip_trace_traced_user_idx ON sip_trace (traced_user);
+CREATE INDEX sip_trace_date_idx ON sip_trace (date);
+CREATE INDEX sip_trace_fromip_idx ON sip_trace (fromip);
+CREATE INDEX sip_trace_callid_idx ON sip_trace (callid);
 

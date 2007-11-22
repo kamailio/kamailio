@@ -5,8 +5,8 @@ CREATE TABLE dbaliases (
     alias_domain VARCHAR(64) NOT NULL DEFAULT '',
     username VARCHAR(64) NOT NULL DEFAULT '',
     domain VARCHAR(64) NOT NULL DEFAULT '',
-    CONSTRAINT alias_idx UNIQUE (alias_username, alias_domain)
+    CONSTRAINT dbaliases_alias_idx UNIQUE (alias_username, alias_domain)
 );
 
-CREATE INDEX target_idx ON dbaliases (username, domain);
+CREATE INDEX dbaliases_target_idx ON dbaliases (username, domain);
 

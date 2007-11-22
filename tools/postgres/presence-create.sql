@@ -8,7 +8,7 @@ CREATE TABLE presentity (
     expires INTEGER NOT NULL,
     received_time INTEGER NOT NULL,
     body BYTEA NOT NULL,
-    CONSTRAINT presentity_idx UNIQUE (username, domain, event, etag)
+    CONSTRAINT presentity_presentity_idx UNIQUE (username, domain, event, etag)
 );
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','9');
@@ -34,7 +34,7 @@ CREATE TABLE active_watchers (
     version INTEGER NOT NULL DEFAULT 0,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    CONSTRAINT active_watchers_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
+    CONSTRAINT active_watchers_active_watchers_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
 );
 
 INSERT INTO version (table_name, table_version) values ('watchers','3');
@@ -47,7 +47,7 @@ CREATE TABLE watchers (
     status INTEGER NOT NULL,
     reason VARCHAR(64),
     inserted_time INTEGER NOT NULL,
-    CONSTRAINT watcher_idx UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
+    CONSTRAINT watchers_watcher_idx UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
 );
 
 INSERT INTO version (table_name, table_version) values ('xcap','3');
@@ -61,10 +61,10 @@ CREATE TABLE xcap (
     source INTEGER NOT NULL,
     doc_uri VARCHAR(128) NOT NULL,
     port INTEGER NOT NULL,
-    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
+    CONSTRAINT xcap_account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
 );
 
-CREATE INDEX source_idx ON xcap (source);
+CREATE INDEX xcap_source_idx ON xcap (source);
 
 INSERT INTO version (table_name, table_version) values ('pua','5');
 CREATE TABLE pua (

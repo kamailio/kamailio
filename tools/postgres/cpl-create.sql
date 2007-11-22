@@ -5,6 +5,6 @@ CREATE TABLE cpl (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     cpl_xml TEXT,
     cpl_bin TEXT,
-    CONSTRAINT account_idx UNIQUE (username, domain)
+    CONSTRAINT cpl_account_idx UNIQUE (username, domain)
 );
 
