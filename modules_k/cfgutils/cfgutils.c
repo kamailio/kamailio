@@ -249,7 +249,7 @@ static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 
 	if(msg==NULL || res==NULL)
 		return -1;
-	n = lrand48();
+	n = rand();
 
 	ch = int2str(n , &l);
 
