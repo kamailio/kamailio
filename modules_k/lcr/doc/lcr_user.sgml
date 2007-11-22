@@ -122,14 +122,14 @@
 		<para>
 		<emphasis>
 			Default value is 
-			<quote>mysql://openserro:openserro@localhost/openser</quote>.
+			<quote>&defaultrodb;</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Setting <varname>db_url</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","db_url","mysql://muser:pwd@localhost/openser")
+modparam("lcr","db_url","&exampledb;")
 ...
 </programlisting>
 		</example>

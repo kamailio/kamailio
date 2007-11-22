@@ -182,7 +182,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Setting db_url module parameter
 ...
-modparam("lcr","db_url","mysql://muser:pwd@localhost/openser")
+modparam("lcr","db_url","dbdriver://username:password@dbhost/dbname")
 ...
      _________________________________________________________
 

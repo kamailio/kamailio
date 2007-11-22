@@ -202,12 +202,13 @@ Chapter 1. User's Guide
 
    Url to the database containing the routing data.
 
-   Default value is "mysql://openser:heslo@localhost/openser". 
+   Default value is
+   "mysql://openserro:openserro@localhost/openser".
 
    Example 1-1. Set db_url parameter
 ...
-modparam("carrierroute", "db_url", "mysql://openser:heslo@localhost/ser
-")
+modparam("carrierroute", "db_url", "dbdriver://username:password@dbhost/
+dbname")
 ...
      _________________________________________________________
 
