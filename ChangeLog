@@ -1,3 +1,158 @@
+
+================================= Release 0.9.7 ==============================
+
+2007-10-10  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: - the cpu is no longer hard-wired to strongarm1100 on arm arch.
+	          (strongarm is still the default, but it can be overwritten by
+	          setting CPU in the environment or make command line)
+	        - libfl dependency removed (makes cross compiling easier)
+
+	  (patch provided by Raphael Coeffic <rco@iptel.org> )
+
+2007-10-10  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core:  backported fix: get_send_socket bug in some unlikely
+	         circumstances   (a socket of a diff. proto is forced and 
+	         find_si cannot fix it to a corresp. socket of the correct
+	         protocol)
+
+2007-01-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* tm: variable timer fix: variable timers (avps) won't be exteneded
+	      anymore in  some special situations. Tested with random generated
+	      timer values; minimal  perfromance impact. Performance maniacs
+	      can turn the new code off   modparam("tm", "var_timers", 0).
+	      Thanks to Bogdan Iancu  <bogdan@voice-system.ro> for the excelent
+	      bug report.
+
+2006-12-15  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: dst_uri buffer overflow check, discovered in openser (the fix
+	        is slightly different due to slight changes in the append_branch 
+	        function)
+	        Note: this is not such a big problem as it might sound, the
+	        only module using append_branch() with a non zero dst_uri is 
+	        registrar and in this case it sets dst_uri to the received address
+	        which is always < 1024 (so it's always safe).
+
+2006-12-13  Miklos Tirpak <miklos@iptel.org>
+
+	* permissions: must return failure if the trusted table cannot be loaded
+
+2006-12-13   Vaclav Kubart <vaclav.kubart@iptel.org>
+
+	* pa: used safe fixed version of hash function from HEAD
+
+2006-12-04  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core (build system): gcc 4.x minline-all-stringops removed from the
+	                       arm & alpha architectures  (not supported)
+
+2006-11-29  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: fix for free_rdata_list() which used to access the "next"
+	        pointer after freeing the current elements (ported from 
+	        Ottendorf).
+	        Credits & patch: Jan Andres <jan.andres@freenet-ag.de>
+
+2006-11-24  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* usrloc: usrloc hash fix ported from ser 0.10.99-dev60 (Ottendorf)
+
+2006-11-22  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core (locking): fastlock arm fix: arm early clobber added: according to
+	                 the swp instruction specification the address register
+	                 must be != from the other 2 .  Fix from openser, 
+	                 originally sent by Julien Blache <jblache@debian.org>)
+
+2006-10-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* pike: even more pike race avoidance/fixes, this time from me
+
+2006-10-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* pike: pike fixes from openser part2: "bug fixed - due bogus flag 
+	        testing, race between timer and ip tree could occurred" 
+	        (Bogdan Iancu's commit msg.)
+
+2006-10-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* pike: pike fixes ported from openser part1: changes made on the initial
+	        fork by Bogdan
+
+2006-10-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: - print warnings number if any
+
+2006-10-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* postgres: postgress sprintf fixes (thanks to 
+	            Elias Baixas <elias.baixas@voztele.com> for finding this bug)
+
+2006-09-05  Nils Ohlmeier <nils@iptel.org>
+
+	* rr: fixed wrong removal of a Route header in case of strict to loose 
+	      route conversion if the routes are stored in separate Route HFs.
+
+2006-08-28  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* tm: deadlock when t_relay-ing a message from the failure_route
+	      fixed  (e2e_cancel uses now t_reply_unsafe when called from the
+	      failure_route)
+
+2006-08-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* acc: fixed acc 'p' (user part of r-uri) and 'D' (domain part of r-uri)
+	       flags (they used parsed_uri without checking if it's still valid 
+	       or if the message is a reply)
+
+2006-08-25  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: fixed set_advertised_port
+
+2006-07-13  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: fixed possible memory leak when receiving bad responses for srv
+	        or naptr   requests (it can happen if more records are returned
+	        and the length of these   records is tweaked to exceed tha packet
+	        size)
+
+2006-06-13  Raphael Coeffic <rco@iptel.org>
+
+	* tm: 'fixed the fix' after andrei's directions.
+
+2006-06-12  Raphael Coeffic <rco@iptel.org>
+
+	* tm: added sems specific patch. This patch is present in the ser version
+	      shipped on iptel.org/drupal/sems.
+
+2006-04-05  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core (locking): early clobber fixes for ppc and alpha;
+	                  reverted x86* unlock to xchg (safe even on oostore x86
+	                  clones/ppros)
+
+2006-03-30  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* core: removed unused buggy code
+
+2006-03-19  Nils Ohlmeier <nils@iptel.org>
+
+	* auth_db: backported authname sanity check from head
+
+2006-03-15  Andrei Pelinescu-Onciul <andrei@iptel.org>
+
+	* Makefile, debian: added nodeb tar option: make tar nodeb=1  will build
+	                    a src.tar.gz without the debian dir (needed for debian
+	                    packaging); minor debian cleanups
+
+2006-03-03  Miklos Tirpak <miklos@iptel.org>
+
+	* postgres: bug corrected in postgres module: nul
+	            variable was unset in case of non-null value
+
 2006-03-03  Jan Janak <jan@iptel.org
 
 	* registrar: extern keyword was missing in declaration of

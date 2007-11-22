@@ -1,3 +1,9 @@
+ser (0.9.7-0.1) unstable; urgency=low
+
+  * new upstream release (bug fixes) 
+
+ -- Andrei Pelinescu-Onciul <andrei@iptel.org>  Thu, 22 Nov 2007 18:04:30 +0200
+
 ser (0.9.6-0.1) unstable; urgency=low
 
   * new upstream release (bug fixes) 

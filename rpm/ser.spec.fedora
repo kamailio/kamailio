@@ -11,11 +11,11 @@
 
 Summary:      SIP Express Router, very fast and flexible SIP Proxy
 Name:         ser
-Version:      0.9.5
+Version:      0.9.7
 Release:      fc2.0
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://iptel.org/ser/stable/%{name}-%{version}_src.tar.gz
+Source:       ftp://ftp.iptel.org/ser/%{ver}/%{name}-%{version}_src.tar.gz
 Source1:      ser.init
 URL:          http://iptel.org/ser
 Vendor:       FhG Fokus
@@ -226,6 +226,9 @@ fi
 
 
 %changelog
+
+* Thu Nov 22 2007 Andrei Pelinescu - Onciul <andrei@iptel.org>
+- changed vesion to 0.9.7 (new upstream release)
 
 * Thu Dec 15 2005 Andrei Pelinescu - Onciul <andrei@iptel.org>
 - changed vesion to 0.9.5 (new upstream release)

@@ -1,6 +1,6 @@
 PKG=IPTELser
 ARCH=sparc
-VERSION=0.9.5
+VERSION=0.9.7
 CATEGORY=application
 EMAIL=andrei@iptel.org
 NAME= ser or SIP Express Router is a very fast and flexible SIP proxy server
