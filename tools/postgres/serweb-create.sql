@@ -4,7 +4,7 @@ CREATE TABLE active_sessions (
     name VARCHAR(32) NOT NULL DEFAULT '',
     val TEXT,
     changed VARCHAR(14) NOT NULL DEFAULT '',
-    CONSTRAINT active_sessions_sw_as_idx PRIMARY KEY sw_as_idx (name, sid)
+    CONSTRAINT active_sessions_sw_as_idx PRIMARY KEY (name, sid)
 );
 
 CREATE INDEX active_sessions_changed ON active_sessions (changed);
@@ -63,7 +63,7 @@ CREATE TABLE server_monitoring (
     param VARCHAR(32) NOT NULL DEFAULT '',
     value INTEGER NOT NULL DEFAULT 0,
     increment INTEGER NOT NULL DEFAULT 0,
-    CONSTRAINT server_monitoring_sw_sm_idx PRIMARY KEY sw_sm_idx (id, param)
+    CONSTRAINT server_monitoring_sw_sm_idx PRIMARY KEY (id, param)
 );
 
 INSERT INTO version (table_name, table_version) values ('server_monitoring_agg','1');
@@ -89,6 +89,6 @@ CREATE TABLE admin_privileges (
     domain VARCHAR(64) NOT NULL DEFAULT '',
     priv_name VARCHAR(64) NOT NULL DEFAULT '',
     priv_value VARCHAR(64) NOT NULL DEFAULT '',
-    CONSTRAINT admin_privileges_sw_ap_idx PRIMARY KEY sw_ap_idx (username, priv_name, priv_value, domain)
+    CONSTRAINT admin_privileges_sw_ap_idx PRIMARY KEY (username, priv_name, priv_value, domain)
 );
 
