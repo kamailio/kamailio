@@ -81,6 +81,8 @@
  *  2007-08-27   split init_sock_opt into a lightweight init_sock_opt_accept() 
  *               used when accepting connections and init_sock_opt used for 
  *               connect/ new sockets (andrei)
+ *  2007-11-22  always add the connection & clear the coresponding flags before
+ *               io_watch_add-ing its fd - it's safer this way (andrei)
  */
 
 
@@ -1449,8 +1451,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			tcpconn->timeout=get_ticks_raw()+tcp_con_lifetime;
 			tcpconn_put(tcpconn);
 			/* must be after the de-ref*/
-			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			tcpconn->flags&=~F_CONN_REMOVED;
+			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
 							tcpconn, atomic_get(&tcpconn->refcnt));
 			break;
@@ -1587,8 +1589,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			tcpconn_add(tcpconn);
 			/* update the timeout*/
 			tcpconn->timeout=get_ticks_raw()+tcp_con_lifetime;
-			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			tcpconn->flags&=~F_CONN_REMOVED;
+			io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 			break;
 		default:
 			LOG(L_CRIT, "BUG: handle_ser_child: unknown cmd %d\n", cmd);
@@ -1735,9 +1737,9 @@ static inline int handle_new_connect(struct socket_info* si)
 	tcpconn=tcpconn_new(new_sock, &su, dst_su, si, si->proto, S_CONN_ACCEPT);
 	if (tcpconn){
 #ifdef TCP_PASS_NEW_CONNECTION_ON_DATA
-		io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
-		tcpconn->flags&=~F_CONN_REMOVED;
 		tcpconn_add(tcpconn);
+		tcpconn->flags&=~F_CONN_REMOVED;
+		io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn);
 #else
 		atomic_set(&tcpconn->refcnt, 1); /* safe, not yet available to the
 											outside world */

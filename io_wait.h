@@ -49,6 +49,8 @@
  *  2005-06-26  added kqueue (andrei)
  *  2005-07-01  added /dev/poll (andrei)
  *  2006-05-30  sigio 64 bit workarround enabled for kernels < 2.6.5 (andrei)
+ *  2007-11-22  when handle_io() is called in a loop check & stop if the fd was
+ *               removed inside handle_io() (andrei)
  */
 
 
@@ -253,6 +255,9 @@ again:
 
 /* generic io_watch_add function
  * returns 0 on success, -1 on error
+ * WARNING: handle_io() can be called immediately (from io_watch_add()) so
+ *  make sure that any dependent init. (e.g. data stuff) is made before
+ *  calling io_watch_add
  *
  * this version should be faster than pointers to poll_method specific
  * functions (it avoids functions calls, the overhead being only an extra
@@ -442,8 +447,8 @@ again_devpoll:
 		pf.fd=fd;
 		pf.events=POLLIN;
 check_io_again:
-		while( ((n=poll(&pf, 1, 0))>0) && (handle_io(e, idx)>0));
-		if (n==-1){
+		while(e->type && ((n=poll(&pf, 1, 0))>0) && (handle_io(e, idx)>0));
+		if (e->type && (n==-1)){
 			if (errno==EINTR) goto check_io_again;
 			LOG(L_ERR, "ERROR: io_watch_add: check_io poll: %s [%d]\n",
 						strerror(errno), errno);
@@ -633,6 +638,7 @@ inline static int io_wait_loop_poll(io_wait_h* h, int t, int repeat)
 {
 	int n, r;
 	int ret;
+	struct fd_map* fm;
 again:
 		ret=n=poll(h->fd_array, h->fd_no, t*1000);
 		if (n==-1){
@@ -656,8 +662,8 @@ again:
 					h->fd_array[r].events=0; /* clear the events */
 					continue;
 				}
-				while((handle_io(get_fd_map(h, h->fd_array[r].fd), r) > 0)
-						 && repeat);
+				fm=get_fd_map(h, h->fd_array[r].fd);
+				while(fm->type && (handle_io(fm, r) > 0) && repeat);
 			}
 		}
 error:
@@ -674,6 +680,7 @@ inline static int io_wait_loop_select(io_wait_h* h, int t, int repeat)
 	int n, ret;
 	struct timeval timeout;
 	int r;
+	struct fd_map* fm;
 	
 again:
 		sel_set=h->master_set;
@@ -690,8 +697,8 @@ again:
 		/* use poll fd array */
 		for(r=0; (r<h->max_fd_no) && n; r++){
 			if (FD_ISSET(h->fd_array[r].fd, &sel_set)){
-				while((handle_io(get_fd_map(h, h->fd_array[r].fd), r)>0)
-						&& repeat);
+				fm=get_fd_map(h, h->fd_array[r].fd);
+				while(fm->type && (handle_io(fm, r)>0) && repeat);
 				n--;
 			}
 		};
@@ -705,6 +712,7 @@ again:
 inline static int io_wait_loop_epoll(io_wait_h* h, int t, int repeat)
 {
 	int n, r;
+	struct fd_map* fm;
 	
 again:
 		n=epoll_wait(h->epfd, h->ep_array, h->fd_no, t*1000);
@@ -728,8 +736,8 @@ again:
 #endif
 		for (r=0; r<n; r++){
 			if (h->ep_array[r].events & (EPOLLIN|EPOLLERR|EPOLLHUP)){
-				while((handle_io((struct fd_map*)h->ep_array[r].data.ptr,-1)>0)
-					&& repeat);
+				fm=(struct fd_map*)h->ep_array[r].data.ptr;
+				while(fm->type && (handle_io(fm,-1)>0) && repeat);
 			}else{
 				LOG(L_ERR, "ERROR:io_wait_loop_epoll: unexpected event %x"
 							" on %d/%d, data=%p\n", h->ep_array[r].events,
@@ -748,6 +756,7 @@ inline static int io_wait_loop_kqueue(io_wait_h* h, int t, int repeat)
 {
 	int n, r;
 	struct timespec tspec;
+	struct fd_map* fm;
 	
 	tspec.tv_sec=t;
 	tspec.tv_nsec=0;
@@ -778,9 +787,10 @@ again:
 							"fd %d: %s [%ld]\n", h->kq_array[r].ident,
 							strerror(h->kq_array[r].data),
 							(long)h->kq_array[r].data);
-			}else /* READ/EOF */
-				while((handle_io((struct fd_map*)h->kq_array[r].udata, -1)>0)
-						&& repeat);
+			}else{ /* READ/EOF */
+				fm=(struct fd_map*)h->kq_array[r].udata;
+				while(fm->type && (handle_io(fm, -1)>0) && repeat);
+			}
 		}
 error:
 	return n;
@@ -913,6 +923,7 @@ inline static int io_wait_loop_devpoll(io_wait_h* h, int t, int repeat)
 	int n, r;
 	int ret;
 	struct dvpoll dpoll;
+	struct fd_map* fm;
 
 		dpoll.dp_timeout=t*1000;
 		dpoll.dp_nfds=h->fd_no;
@@ -934,8 +945,8 @@ again:
 							h->fd_array[r].fd, h->fd_array[r].revents);
 			}
 			/* POLLIN|POLLHUP just go through */
-			while((handle_io(get_fd_map(h, h->fd_array[r].fd), r) > 0) &&
-						repeat);
+			fm=get_fd_map(h, h->fd_array[r].fd);
+			while(fm->type && (handle_io(fm, r) > 0) && repeat);
 		}
 error:
 	return ret;
