@@ -3,6 +3,11 @@
 
 # Needs a default openser database setup for mysql
 
+if [ ! -e ../modules/mysql/mysql.so ] ; then
+	echo "mysql driver not found, not run"
+	exit 0
+fi ;
+
 CFG=2.cfg
 cp $CFG $CFG.bak
 
