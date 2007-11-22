@@ -434,8 +434,8 @@ again:
 	/* add socket to the list */
 	s_conn=s_conn_new(new_sock, cs, &from);
 	if (s_conn){
-		io_watch_add(&io_h, s_conn->fd, F_T_READ_STREAM, s_conn);
 		s_conn_add(s_conn);
+		io_watch_add(&io_h, s_conn->fd, F_T_READ_STREAM, s_conn);
 	}else{
 		LOG(L_ERR, "ERROR: io listen: handle_new_connect:"
 				" s_conn_new failed\n");
