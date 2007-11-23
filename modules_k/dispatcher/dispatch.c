@@ -471,9 +471,9 @@ int ds_load_db(void)
 	rows 	= RES_ROWS(res);
 	if(nr_rows == 0)
 	{
-		LM_WARN("no dispatching data in the db - module cannot run\n");
+		LM_WARN("no dispatching data in the db, use an empty destination set\n");
 		ds_dbf.free_result(ds_db_handle, res);
-		return 1;
+		return 0;
 	}
 
 	setn = 0;
