@@ -206,28 +206,14 @@ modparam("auth", "password_spec", "$avp(s:password)")
 	<section>
 		<title><varname>calculate_ha1</varname> (integer)</title>
 		<para>
-		This parameter tells server whether it should expect plaintext 
-		passwords in the database or HA1 string. If the parameter is set to 1 
-		then the server will assume that the column pointed to by 
-		<varname>password_column</varname> contains plaintext
-		passwords and it will calculate HA1 strings on the fly.
-		</para>
+		This parameter tells the server whether it should expect plaintext
+		passwords in the pseudo-variable or a pre-calculated HA1 string.
 		<para>
-		If the parameter is set to 0 then the server assumes that the database 
-		contains HA1 strings directly and will not calculate them. If username 
-		parameter of credentials contains also @domain (some user agents put 
-		domain in username parameter), then column pointed to by 
-		<varname>password_column_2</varname> parameter will be used
-		instead. This column should also contain HA1 strings but they should 
-		be calculated including the domain in the username parameter 
-		(as opposed to <varname>password_column</varname> which (when 
-		containing HA1 strings) should always contains HA1 strings calculated 
-		without domain in username.
-		</para>
-		<para>
-		This ensures that the authentication will always work when using 
-		pre-calculated HA1 string, not depending on the presence of the 
-		domain in username.
+		If the parameter is set to 1 then the server will assume that the
+		<quote>password_spec</quote> pseudo-variable contains plaintext passwords
+		and it will calculate HA1 strings on the fly. If the parameter is set to 0
+		then the server assumes the pseudo-variable contains the HA1 strings directly
+		and will not calculate them.
 		</para>
 		<para>
 		Default value of this parameter is 0.
@@ -235,7 +221,7 @@ modparam("auth", "password_spec", "$avp(s:password)")
 		<example>
 		<title><varname>calculate_ha1</varname> parameter usage</title>
 		<programlisting format="linespecific">
-modparam("auth_db", "calculate_ha1", 1)
+modparam("auth", "calculate_ha1", 1)
 </programlisting>
 		</example>
 	</section>
@@ -470,7 +456,8 @@ append_rpid_hf();  # Append Remote-Party-ID header field
 		<title>append_rpid_hf(prefix, suffix) usage</title>
 		<programlisting format="linespecific">
 ...
-append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");  # Append Remote-Party-ID header field
+# Append Remote-Party-ID header field
+append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...
 </programlisting>
 		</example>

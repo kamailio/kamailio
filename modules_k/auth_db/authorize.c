@@ -69,6 +69,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 
 	keys[0] = user_column.s;
 	keys[1] = domain_column.s;
+	/* should we calculate the HA1, and is it calculated with domain? */
 	col[0] = (_username->domain.len && !calc_ha1) ?
 		(pass_column_2.s) : (pass_column.s);
 

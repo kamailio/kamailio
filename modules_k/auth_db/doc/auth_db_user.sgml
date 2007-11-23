@@ -159,21 +159,28 @@ modparam("auth_db", "password_column_2", "ha1_2")
 	<section>
 		<title><varname>calculate_ha1</varname> (integer)</title>
 		<para>
-		This parameter tells server whether it should expect plaintext 
-		passwords in the pseudo-variable or HA1 string. If the parameter
-		is set to 1 then the server will assume that the value in the 
-		<varname>password_spec</varname> pseudo-variable contains plaintext
-		password and it will calculate HA1 strings on the fly.
+		This parameter tells the server whether it should use plaintext 
+		passwords or a pre-calculated HA1 string for authentification.
+		<para>
+		If the parameter is set to 1 and the username parameter of credentials contains
+		also <quote>@domain</quote> (some user agents append the domain to the username
+		parameter), then the server will use the HA1 values from the column specified in the
+		<quote>password_column_2</quote> parameter. If the username parameter doesn't contain
+		a domain, the server will use the HA1 values from the column given in the
+		<quote>password_column</quote>parameter.
+		<para>
+		If the parameter is set to 0 then the HA1 value will be calculated from the column
+		specified in the <quote>password_column</quote> parameter.
 		</para>
 		<para>
-		If the parameter is set to 0 then the server assumes that the value
-		in the <varname>password_spec</varname> pseudo-variable contains HA1
-		string directly and will not calculate it.
+		The <quote>password_column_2</quote>column contain also HA1 strings but they
+		should be calculated including the domain in the username parameter (as opposed to
+		password_column which (when containing HA1 strings) should always contains HA1
+		strings calculated without domain in username.
 		</para>
 		<para>
-		This ensures that the authentication will always work when using 
-		pre-calculated HA1 string, not depending on the presence of the 
-		domain in username.
+		This ensures that the authentication will always work when using pre-calculated
+		HA1 strings, not depending on the presence of the domain in username.
 		</para>
 		<para>
 		Default value of this parameter is 0.
@@ -181,7 +188,7 @@ modparam("auth_db", "password_column_2", "ha1_2")
 		<example>
 		<title><varname>calculate_ha1</varname> parameter usage</title>
 		<programlisting format="linespecific">
-modparam("auth", "calculate_ha1", 1)
+modparam("auth_db", "calculate_ha1", 1)
 </programlisting>
 		</example>
 	</section>
