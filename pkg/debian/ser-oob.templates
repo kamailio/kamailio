@@ -1,0 +1,89 @@
+Template: ser-oob/CFG_FILE
+Type: string
+Default: /etc/ser/ser-oob.cfg
+Description: SER config file name 
+ This option sets SER config file name in '/etc/default/ser' file, which is used by SER init
+ script to start SER.
+ .
+ It is recommended to use the default value '/etc/ser/ser-oob.cfg'.
+ .
+ If you do not want to modify this setting now you can modify it manually later,
+ or repeat this configuartion by running "dpkg-reconfigure ser-oob".
+ .
+ Note: this value you enter here will be automatically applied to '/etc/default/ser' file
+ each time the ser-oob package is upgraded (or installed without purging previous
+ installation).
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/config
+Type: boolean
+Default: false
+Description: Change config file now ?
+ You have now opportunity to modify basic configuration values in 'ser-oob.cfg'
+ config file for SER Sip Express Router, installed from 'ser-oob' package.
+ If you do not want to modify the config file now you can modify it manually later,
+ or repeat this configuartion by running "dpkg-reconfigure ser-oob".
+ .
+ Note: the values you enter here will be automatically applied to 'ser-oob.cfg' file
+ each time the ser-oob package is upgraded (or installed without purging previous
+ installation).
+
+Template: ser-oob/LISTEN
+Type: string
+Default: 1.2.3.4
+Description: List of IP addresses to listen on
+ List of all IP addresses SER will listen for SIP messages on. 
+ Multiple entries may be entered separated by commas.
+ Enter empty string to not set explicit listening address.
+ Please do not list private administrative address here (separate question for it will follow).
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/ADMINADDR
+Type: string
+Default: 192.168.1.1
+Description: Administrative IP address
+ Set the IP address of administrative interface (usually a private one). Ser will listen
+ on it and also it will be used to set outgoing socket for sending replication
+ to multicast address.
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/DBURL
+Type: string
+Default: mysql://ser:heslo@localhost/ser
+Description: address of database
+ Set the address of your database server which includes all provisioning
+ data. Example is "mysql://ser:heslo@localhost/ser".
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/AUTHSECRET
+Type: string
+Default: SomeSecretVerySecret
+Description: Synchronization secret for twin servers:
+ Local value used to generate secure nonces. Set it to a long random
+ string such as "alsdkhgla5sd7fkloKwr". Make sure that in hot/standby
+ setup the same secret is used on both machines.
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/RTTPPROXY
+Type: string
+Default: udp:localhost:1011
+Description: RTP proxy socket
+ Set address of RTP proxy. Example: "udp:localhost:1011".
+ Enter empty string to not set any RTP proxy address.
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/NATPING_INTERVAL
+Type: select
+Choices: 0, 15, !
+Default: 15
+Description: NAT ping interval
+ Set NAT ping interval.
+ .
+ Enter "!" to not modify this option.
+
