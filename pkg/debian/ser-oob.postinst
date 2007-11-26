@@ -141,7 +141,7 @@ fi
 db_get ser-oob/DBURL
 if test "$RET" != "!" ; then
   fn_config_replace $CONFIGFILE DBURL <<+++
-modparam("speeddial|auth_db|usrloc|acc_db|domain|uri_db|gflags|avp_db", "db_url", "$RET")
+modparam("speeddial|auth_db|usrloc|acc_db|domain|uri_db|gflags|avp_db|db_ops", "db_url", "$RET")
 +++
 fi
 
