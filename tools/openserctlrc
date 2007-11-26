@@ -78,7 +78,9 @@
 # If to install SERWEB related tables
 # INSTALL_SERWEB_TABLES=ask
 
-# define what modules should be installed
+# Define what module tables should be installed.
+# If you use the postgres database and want to change the installed tables, then you
+# must also adjust the GRANTs accordingly in the openserdbctl.postgres script.
 
 # openser standard modules
 # STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc

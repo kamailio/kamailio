@@ -151,13 +151,9 @@ if [ $? -ne 0 ] ; then
 	mwarn "Create user in database failed, perhaps they allready exist? Try to continue.."
 fi
 
-sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE version, acc, acc_id_seq, address, address_id_seq,
-		aliases, aliases_id_seq, dbaliases, dbaliases_id_seq, domain, domain_id_seq,
-		dispatcher, grp, grp_id_seq, gw, gw_id_seq, gw_grp, gw_grp_grp_id_seq, lcr,
-		lcr_id_seq, location, location_id_seq, missed_calls, missed_calls_id_seq, pdt, pdt_id_seq,
-		re_grp, re_grp_id_seq, silo, silo_id_seq, speed_dial, speed_dial_id_seq,
-		subscriber, subscriber_id_seq, trusted, trusted_id_seq, uri, uri_id_seq,
-		usr_preferences, usr_preferences_id_seq TO $DBRWUSER;
+# There is no easy way to grant select rights to all tables of a database in postgresl
+# so unfortunally its necessary to specify all tables here.
+sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;
 		GRANT SELECT ON TABLE version, acc, address, aliases, dbaliases, dispatcher, 
 		domain, grp, gw, gw_grp, lcr, location, missed_calls, pdt, re_grp, silo,
 		speed_dial, subscriber, trusted, uri, usr_preferences TO $DBROUSER;"
