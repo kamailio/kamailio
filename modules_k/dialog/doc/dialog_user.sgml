@@ -290,14 +290,14 @@ modparam("dialog", "dlg_match_mode", 0)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>NULL</quote> (disable DB support).
+			Default value is <quote>&defaultdb;</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "db_url", "mysql://user:passwb@localhost/database")
+modparam("dialog", "db_url", "&exampledb")
 ...
 </programlisting>
 		</example>
@@ -335,7 +335,7 @@ modparam("dialog", "db_url", "mysql://user:passwb@localhost/database")
 		<title>Set <varname>db_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "db_mode", "1")
+modparam("dialog", "db_mode", 1)
 ...
 </programlisting>
 		</example>

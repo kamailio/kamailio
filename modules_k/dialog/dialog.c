@@ -88,7 +88,7 @@ struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
 
 /* db stuff */
-static char * db_url = 0;
+static char* db_url = DEFAULT_DB_URL;
 static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 
