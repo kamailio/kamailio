@@ -25,6 +25,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,6 +36,7 @@
 #include <openssl/x509v3.h>
 
 #include "../../mem/mem.h"
+#include "../../parser/parse_uri.h"
 
 #include "auth_identity.h"
 
@@ -63,11 +65,11 @@ int retrieve_x509(X509 **pcert, str *scert, int bacceptpem)
 		/* RFC 4474 only accepts certs in the DER form but it can not harm
 		 * to be a little bit more flexible and accept PEM as well. */
 		if (bacceptpem
-		  	&& scert->len > strlen(BEGIN_PEM_CERT)
+		  	&& scert->len > BEGIN_PEM_CERT_LEN
 			&& memmem(scert->s,
 					  scert->len,
 					  BEGIN_PEM_CERT,
-					  strlen(BEGIN_PEM_CERT))) {
+					  BEGIN_PEM_CERT_LEN)) {
 			if (!(*pcert = PEM_read_bio_X509(bcer, NULL, NULL, NULL))) {
 				ERR_error_string_n(ERR_get_error(), serr, sizeof(serr));
 				LOG(L_ERR, "AUTH_IDENTITY:retrieve_x509: PEM Certificate %s\n", serr);
@@ -90,10 +92,12 @@ int retrieve_x509(X509 **pcert, str *scert, int bacceptpem)
 int check_x509_subj(X509 *pcert, str* sdom)
 {
 	STACK_OF(GENERAL_NAME) *altnames;
-	int ialts, i1, ilen;
+	int ialts, i1, ilen, altlen;
 	const GENERAL_NAME *actname;
 	char scname[AUTH_DOMAIN_LENGTH];
-	const char *altptr;
+	char *altptr;
+	struct sip_uri suri;
+	int ret = 0;
 
 
 	/* we're looking for subjectAltName for the first time */
@@ -105,22 +109,40 @@ int check_x509_subj(X509 *pcert, str* sdom)
 		for (i1=0; i1 < ialts; i1++) {
 			actname = sk_GENERAL_NAME_value(altnames, i1);
 
-			if (actname->type == GEN_DNS) {
+			if (actname->type == GEN_DNS || actname->type == GEN_URI) {
 				/* we've found one */
 				altptr = (char *)ASN1_STRING_data(actname->d.ia5);
-				if (sdom->len != strlen(altptr)
+				if (actname->type == GEN_URI) {
+					if (parse_uri(altptr, strlen(altptr), &suri) != 0) {
+						continue;
+					}
+					if (!(suri.type == SIP_URI_T || suri.type == SIPS_URI_T)) {
+						continue;
+					}
+					if (suri.user.len != 0 || suri.passwd.len != 0) {
+						continue;
+					}
+					altptr = suri.host.s;
+					altlen = suri.host.len;
+				} else {
+					altlen = strlen(altptr);
+				}
+				if (sdom->len != altlen 
 					|| strncasecmp(altptr, sdom->s, sdom->len)) {
 					LOG(L_INFO, "AUTH_IDENTITY VERIFIER: subAltName of certificate doesn't match host name\n");
-					GENERAL_NAMES_free(altnames);
-					return -1;
+					ret = -1;
 				} else {
-					GENERAL_NAMES_free(altnames);
-					return 0;
+					ret = 1;
+					break;
 				}
 			}
 		}
 		GENERAL_NAMES_free(altnames);
 	}
+
+	if (ret != 0) {
+		return ret == 1 ? 0 : ret;
+ 	}
 
 	/* certificate supplier host and certificate subject match check */
 	ilen=X509_NAME_get_text_by_NID (X509_get_subject_name (pcert),
