@@ -118,7 +118,8 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	dbt_cache_p _dcache=NULL;;
 	if(!_dbt_cachesem || !_dbt_cachedb)
 	{
-		LM_ERR("dbtext cache is not initialized!\n");
+		LM_ERR("dbtext cache is not initialized! Check if you loaded"
+				" dbtext before any other module that uses it\n");
 		return NULL;
 	}
 	if(!_s || !_s->s || _s->len<=0)
