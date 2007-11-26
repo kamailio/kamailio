@@ -165,6 +165,10 @@ echo "To change it's configuration use 'dpkg-reconfigure ser'"
 echo "***"
 echo ""
 
+echo "Setting ser to start automatically"
+/usr/sbin/update-rc.d ser defaults || true
+
+
 if [ -x "/etc/init.d/ser" ]; then
   if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
     invoke-rc.d ser restart || exit 0
