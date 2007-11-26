@@ -366,7 +366,8 @@ database_p bdblib_get_db(str *_s)
 
 	if( !_cachedb)
 	{
-		LM_ERR("_cachedb is not initialized!\n");
+		LM_ERR("db_berkeley cache is not initialized! Check if you loaded db_berkeley "
+			"before any other module that uses it.\n");
 		return NULL;
 	}
 
