@@ -4,6 +4,7 @@
 # needs the netcat utility to run
 
 CFG=12.cfg
+TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 
 which nc > /dev/null
 ret=$?
@@ -13,7 +14,7 @@ if [ ! $? -eq 0 ] ; then
 	exit 0
 fi ;
 
-../openser -f $CFG > /dev/null
+../openser -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1
@@ -41,8 +42,35 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 
+if [ "$ret" -eq 0 ] ; then
+	grep "from 127.0.0.1:33535, method: REGISTER, transport: UDP:127.0.0.1:5060, user agent: Twinkle/1.0"  $TMPFILE > /dev/null
+	ret=$?
+	if [ "$ret" -eq 0 ] ; then
+		grep "Getting identity from FROM URI" $TMPFILE > /dev/null
+		ret=$?
+		if [ "$ret" -eq 0 ] ; then
+			grep "My identity: sip:1000@127.0.0.1" $TMPFILE > /dev/null
+			ret=$?
+			if [ "$ret" -eq 0 ] ; then
+				grep "Contact header field present" $TMPFILE > /dev/null
+				ret=$?
+				if [ "$ret" -eq 0 ] ; then
+					grep "this is an registration" $TMPFILE > /dev/null
+					ret=$?
+					if [ "$ret" -eq 0 ] ; then
+						grep "this is an unregistration" $TMPFILE > /dev/null
+						ret=$?
+					fi ;
+				fi ;
+			fi ;
+		fi ;
+	fi ;
+fi ;
+echo $ret
+
 cd ../test
 
 killall -9 openser
+rm $TMPFILE
 
 exit $ret
