@@ -33,6 +33,7 @@
  *  2006-10-13  added tcp_req_states for STUN (vlada)
  *  2007-07-26  improved tcp connection hash function; increased aliases
  *               hash size (andrei)
+ *  2007-11-26  switched to local_timer (andrei)
  */
 
 
@@ -44,6 +45,7 @@
 #include "locking.h"
 #include "atomic_ops.h"
 #include "timer_ticks.h"
+#include "timer.h"
 
 /* maximum number of port aliases x search wildcard possibilities */
 #define TCP_CON_MAX_ALIASES (4*3) 
@@ -64,6 +66,7 @@
 /* tcp connection flags */
 #define F_CONN_NON_BLOCKING 1
 #define F_CONN_REMOVED      2 /* no longer  in "main" listen fd list */
+#define F_CONN_READER       4 /* handled by a tcp reader */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
@@ -132,6 +135,7 @@ struct tcp_connection{
 	int flags; /* connection related flags */
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
+	struct timer_ln timer;
 	unsigned int timeout;/* connection timeout, after this it will be removed*/
 	unsigned id_hash; /* hash index in the id_hash */
 	struct tcp_connection* id_next; /* next, prev in id hash table */

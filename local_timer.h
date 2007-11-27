@@ -37,6 +37,9 @@
 #ifndef _local_timer_h
 #define _local_timer_h
 
+#include "timer_ticks.h"
+#include "timer_funcs.h"
+
 
 struct local_timer {
 	/* private timer information */

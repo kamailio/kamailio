@@ -37,6 +37,7 @@
  * 2006-02-03  use tsend_stream instead of send_all (andrei)
  * 2006-10-13  added STUN support - state machine for TCP (vlada)
  * 2007-02-20  fixed timeout calc. bug (andrei)
+ * 2007-11-26  improved tcp timers: switched to local_timer (andrei)
  */
 
 #ifdef USE_TCP
@@ -61,6 +62,7 @@
 #include "globals.h"
 #include "receive.h"
 #include "timer.h"
+#include "local_timer.h"
 #include "ut.h"
 #ifdef CORE_TLS
 #include "tls/tls_server.h"
@@ -80,6 +82,8 @@ int is_msg_complete(struct tcp_req* r);
 
 #endif /* USE_STUN */
 
+#define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
+
 /* types used in io_wait* */
 enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
 
@@ -87,6 +91,8 @@ enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
 static struct tcp_connection* tcp_conn_lst=0;
 static io_wait_h io_w; /* io_wait handler*/
 static int tcpmain_sock=-1;
+
+static struct local_timer tcp_reader_ltimer;
 
 
 /* reads next available bytes
@@ -675,146 +681,25 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 }
 
 
-#ifdef DEBUG_TCP_RECEIVE
-/* old code known to work, kept arround for debuging */
-void tcp_receive_loop(int unix_sock)
+
+static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 {
-	struct tcp_connection* list; /* list with connections in use */
-	struct tcp_connection* con;
-	struct tcp_connection* c_next;
-	int n;
-	int nfds;
-	int s;
-	long resp;
-	fd_set master_set;
-	fd_set sel_set;
-	int maxfd;
-	struct timeval timeout;
-	ticks_t ticks;
+	struct tcp_connection *c;
 	
+	c=(struct tcp_connection*)data; 
+	/* or (struct tcp...*)(tl-offset(c->timer)) */
 	
-	/* init */
-	list=con=0;
-	FD_ZERO(&master_set);
-	FD_SET(unix_sock, &master_set);
-	maxfd=unix_sock;
-	
-	/* listen on the unix socket for the fd */
-	for(;;){
-			timeout.tv_sec=TCP_CHILD_SELECT_TIMEOUT;
-			timeout.tv_usec=0;
-			sel_set=master_set;
-			nfds=select(maxfd+1, &sel_set, 0 , 0 , &timeout);
-#ifdef EXTRA_DEBUG
-			for (n=0; n<maxfd; n++){
-				if (FD_ISSET(n, &sel_set)) 
-					DBG("tcp receive: FD %d is set\n", n);
-			}
-#endif
-			if (nfds<0){
-				if (errno==EINTR) continue; /* just a signal */
-				/* errors */
-				LOG(L_ERR, "ERROR: tcp_receive_loop: select:(%d) %s\n", errno,
-					strerror(errno));
-				continue;
-			}
-			if (FD_ISSET(unix_sock, &sel_set)){
-				nfds--;
-				/* a new conn from "main" */
-				n=receive_fd(unix_sock, &con, sizeof(con), &s, 0);
-				if (n<0){
-					if (errno == EWOULDBLOCK || errno == EAGAIN ||
-							errno == EINTR){
-						goto skip;
-					}else{
-						LOG(L_CRIT,"BUG: tcp_receive_loop: read_fd: %s\n",
-							strerror(errno));
-						abort(); /* big error*/
-					}
-				}
-				DBG("received n=%d con=%p, fd=%d\n", n, con, s);
-				if (n==0){
-					LOG(L_ERR, "WARNING: tcp_receive_loop: 0 bytes read\n");
-					goto skip;
-				}
-				if (con==0){
-					LOG(L_CRIT, "BUG: tcp_receive_loop: null pointer\n");
-					goto skip;
-				}
-				con->fd=s;
-				if (s==-1) {
-					LOG(L_ERR, "ERROR: tcp_receive_loop: read_fd:"
-									"no fd read\n");
-					resp=CONN_ERROR;
-					con->state=S_CONN_BAD;
-					release_tcpconn(con, resp, unix_sock);
-					goto skip;
-				}
-				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
-				FD_SET(s, &master_set);
-				if (maxfd<s) maxfd=s;
-				if (con==list){
-					LOG(L_CRIT, "BUG: tcp_receive_loop: duplicate"
-							" connection received: %p, id %d, fd %d, refcnt %d"
-							" state %d (n=%d)\n", con, con->id, con->fd,
-							atomic_get(&con->refcnt), con->state, n);
-					resp=CONN_ERROR;
-					release_tcpconn(con, resp, unix_sock);
-					goto skip; /* try to recover */
-				}
-				tcpconn_listadd(list, con, c_next, c_prev);
-			}
-skip:
-			ticks=get_ticks_raw();
-			for (con=list; con ; con=c_next){
-				c_next=con->c_next; /* safe for removing*/
-#ifdef EXTRA_DEBUG
-				DBG("tcp receive: list fd=%d, id=%d, timeout=%d, refcnt=%d\n",
-						con->fd, con->id, con->timeout,
-						atomic_get(&con->refcnt));
-#endif
-				if (con->state<0){
-					/* S_CONN_BAD or S_CONN_ERROR, remove it */
-					resp=CONN_ERROR;
-					FD_CLR(con->fd, &master_set);
-					tcpconn_listrm(list, con, c_next, c_prev);
-					con->state=S_CONN_BAD;
-					release_tcpconn(con, resp, unix_sock);
-					continue;
-				}
-				if (nfds && FD_ISSET(con->fd, &sel_set)){
-#ifdef EXTRA_DEBUG
-					DBG("tcp receive: match, fd:isset\n");
-#endif
-					nfds--;
-					resp=tcp_read_req(con);
-					
-					if (resp<0){
-						FD_CLR(con->fd, &master_set);
-						tcpconn_listrm(list, con, c_next, c_prev);
-						con->state=S_CONN_BAD;
-						release_tcpconn(con, resp, unix_sock);
-					}else{
-						/* update timeout */
-						con->timeout=ticks+TCP_CHILD_TIMEOUT;
-					}
-				}else{
-					/* timeout */
-					if ((s_ticks_t)(ticks-con->timeout)>=0){
-						/* expired, return to "tcp main" */
-						DBG("tcp_receive_loop: %p expired (%d, %d)\n",
-								con, con->timeout, ticks);
-						resp=CONN_RELEASE;
-						FD_CLR(con->fd, &master_set);
-						tcpconn_listrm(list, con, c_next, c_prev);
-						release_tcpconn(con, resp, unix_sock);
-					}
-				}
-			}
-		
+	if (likely(!(c->state<0) && TICKS_LT(t, c->timeout))){
+		/* timeout extended, exit */
+		return (ticks_t)(c->timeout - t);
 	}
+	/* if conn->state is ERROR or BAD => force timeout too */
+	io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING);
+	tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
+	release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
+	
+	return 0;
 }
-#else /* DEBUG_TCP_RECEIVE */
 
 
 
@@ -838,13 +723,14 @@ inline static int handle_io(struct fd_map* fm, int idx)
 	struct tcp_connection* con;
 	int s;
 	long resp;
+	ticks_t t;
 	
 	switch(fm->type){
 		case F_TCPMAIN:
 again:
 			ret=n=receive_fd(fm->fd, &con, sizeof(con), &s, 0);
 			DBG("received n=%d con=%p, fd=%d\n", n, con, s);
-			if (n<0){
+			if (unlikely(n<0)){
 				if (errno == EWOULDBLOCK || errno == EAGAIN){
 					ret=0;
 					break;
@@ -855,21 +741,21 @@ again:
 						abort(); /* big error*/
 				}
 			}
-			if (n==0){
+			if (unlikely(n==0)){
 				LOG(L_ERR, "WARNING: tcp_receive: handle_io: 0 bytes read\n");
 				goto error;
 			}
-			if (con==0){
+			if (unlikely(con==0)){
 					LOG(L_CRIT, "BUG: tcp_receive: handle_io null pointer\n");
 					goto error;
 			}
 			con->fd=s;
-			if (s==-1) {
+			if (unlikely(s==-1)) {
 				LOG(L_ERR, "ERROR: tcp_receive: handle_io: read_fd:"
 									"no fd read\n");
 				goto con_error;
 			}
-			if (con==tcp_conn_lst){
+			if (unlikely(con==tcp_conn_lst)){
 				LOG(L_CRIT, "BUG: tcp_receive: handle_io: duplicate"
 							" connection received: %p, id %d, fd %d, refcnt %d"
 							" state %d (n=%d)\n", con, con->id, con->fd,
@@ -882,21 +768,29 @@ again:
 			 * handle_io might decide to del. the new connection =>
 			 * must be in the list */
 			tcpconn_listadd(tcp_conn_lst, con, c_next, c_prev);
-			con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
-			if (io_watch_add(&io_w, s, F_TCPCONN, con)<0){
+			t=get_ticks_raw();
+			con->timeout=t+S_TO_TICKS(TCP_CHILD_TIMEOUT);
+			/* re-activate the timer */
+			con->timer.f=tcpconn_read_timeout;
+			timer_reinit(&con->timer);
+			local_timer_add(&tcp_reader_ltimer, &con->timer,
+								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
+			if (unlikely(io_watch_add(&io_w, s, F_TCPCONN, con))<0){
 				LOG(L_CRIT, "ERROR: tcp_receive: handle_io: failed to add"
 						" new socket to the fd list\n");
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
+				local_timer_del(&tcp_reader_ltimer, &con->timer);
 				goto con_error;
 			}
 			break;
 		case F_TCPCONN:
 			con=(struct tcp_connection*)fm->data;
 			resp=tcp_read_req(con, &ret);
-			if (resp<0){
+			if (unlikely(resp<0)){
 				ret=-1; /* some error occured */
 				io_watch_del(&io_w, con->fd, idx, IO_FD_CLOSING);
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
+				local_timer_del(&tcp_reader_ltimer, &con->timer);
 				con->state=S_CONN_BAD;
 				release_tcpconn(con, resp, tcpmain_sock);
 			}else{
@@ -925,35 +819,15 @@ error:
 
 
 
-/* releases expired connections and cleans up bad ones (state<0) */
-static inline void tcp_receive_timeout()
+inline static void tcp_reader_timer_run()
 {
-	struct tcp_connection* con;
-	struct tcp_connection* next;
 	ticks_t ticks;
+	static ticks_t prev_ticks=0;
 	
 	ticks=get_ticks_raw();
-	for (con=tcp_conn_lst; con; con=next){
-		next=con->c_next; /* safe for removing */
-		if (con->state<0){   /* kill bad connections */ 
-			/* S_CONN_BAD or S_CONN_ERROR, remove it */
-			/* fd will be closed in release_tcpconn */
-			io_watch_del(&io_w, con->fd, -1, IO_FD_CLOSING);
-			tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
-			con->state=S_CONN_BAD;
-			release_tcpconn(con, CONN_ERROR, tcpmain_sock);
-			continue;
-		}
-		if ((s_ticks_t)(ticks-con->timeout)>=0){
-			/* expired, return to "tcp main" */
-			DBG("tcp_receive_loop: %p expired (%d, %d)\n",
-					con, con->timeout, ticks);
-			/* fd will be closed in release_tcpconn */
-			io_watch_del(&io_w, con->fd, -1, IO_FD_CLOSING);
-			tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
-			release_tcpconn(con, CONN_RELEASE, tcpmain_sock);
-		}
-	}
+	if (unlikely((ticks-prev_ticks)<TCPCONN_TIMEOUT_MIN_RUN)) return;
+	prev_ticks=ticks;
+	local_timer_run(&tcp_reader_ltimer, ticks);
 }
 
 
@@ -964,6 +838,8 @@ void tcp_receive_loop(int unix_sock)
 	/* init */
 	tcpmain_sock=unix_sock; /* init com. socket */
 	if (init_io_wait(&io_w, get_max_open_fds(), tcp_poll_method)<0)
+		goto error;
+	if (init_local_timer(&tcp_reader_ltimer, get_ticks_raw())!=0)
 		goto error;
 	/* add the unix socket */
 	if (io_watch_add(&io_w, tcpmain_sock, F_TCPMAIN, 0)<0){
@@ -976,14 +852,14 @@ void tcp_receive_loop(int unix_sock)
 		case POLL_POLL:
 				while(1){
 					io_wait_loop_poll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
-					tcp_receive_timeout();
+					tcp_reader_timer_run();
 				}
 				break;
 #ifdef HAVE_SELECT
 		case POLL_SELECT:
 			while(1){
 				io_wait_loop_select(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
-				tcp_receive_timeout();
+				tcp_reader_timer_run();
 			}
 			break;
 #endif
@@ -991,7 +867,7 @@ void tcp_receive_loop(int unix_sock)
 		case POLL_SIGIO_RT:
 			while(1){
 				io_wait_loop_sigio_rt(&io_w, TCP_CHILD_SELECT_TIMEOUT);
-				tcp_receive_timeout();
+				tcp_reader_timer_run();
 			}
 			break;
 #endif
@@ -999,13 +875,13 @@ void tcp_receive_loop(int unix_sock)
 		case POLL_EPOLL_LT:
 			while(1){
 				io_wait_loop_epoll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
-				tcp_receive_timeout();
+				tcp_reader_timer_run();
 			}
 			break;
 		case POLL_EPOLL_ET:
 			while(1){
 				io_wait_loop_epoll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 1);
-				tcp_receive_timeout();
+				tcp_reader_timer_run();
 			}
 			break;
 #endif
@@ -1013,7 +889,7 @@ void tcp_receive_loop(int unix_sock)
 		case POLL_KQUEUE:
 			while(1){
 				io_wait_loop_kqueue(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
-				tcp_receive_timeout();
+				tcp_reader_timer_run();
 			}
 			break;
 #endif
@@ -1021,7 +897,7 @@ void tcp_receive_loop(int unix_sock)
 		case POLL_DEVPOLL:
 			while(1){
 				io_wait_loop_devpoll(&io_w, TCP_CHILD_SELECT_TIMEOUT, 0);
-				tcp_receive_timeout();
+				tcp_reader_timer_run();
 			}
 			break;
 #endif
@@ -1037,7 +913,7 @@ error:
 	exit(-1);
 }
 
-#endif /* DEBUG_TCP_RECEIVE */
+
 
 #ifdef USE_STUN
 int is_msg_complete(struct tcp_req* r)
