@@ -70,11 +70,11 @@ error:
 	{
 		for(j=0; j< i; j++)
 		{
-			if(htable[i].entries)
-				shm_free(htable[i].entries);
+			if(htable[j].entries)
+				shm_free(htable[j].entries);
 			else 
 				break;
-			lock_destroy(&htable[i].lock);
+			lock_destroy(&htable[j].lock);
 		}
 		shm_free(htable);
 	}
