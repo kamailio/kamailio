@@ -64,6 +64,7 @@
 #include "timer.h"
 #include "local_timer.h"
 #include "ut.h"
+#include "pt.h"
 #ifdef CORE_TLS
 #include "tls/tls_server.h"
 #else
@@ -671,6 +672,7 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 				c, state, c->fd, c->id);
 		DBG(" extra_data %p\n", c->extra_data);
 		/* release req & signal the parent */
+		c->reader_pid=0; /* reset it */
 		if (c->fd!=-1) close(c->fd);
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
 		response[0]=(long)c;
@@ -755,6 +757,7 @@ again:
 									"no fd read\n");
 				goto con_error;
 			}
+			con->reader_pid=my_pid();
 			if (unlikely(con==tcp_conn_lst)){
 				LOG(L_CRIT, "BUG: tcp_receive: handle_io: duplicate"
 							" connection received: %p, id %d, fd %d, refcnt %d"

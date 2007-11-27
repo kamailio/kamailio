@@ -84,6 +84,7 @@
  *  2007-11-22  always add the connection & clear the coresponding flags before
  *               io_watch_add-ing its fd - it's safer this way (andrei)
  *  2007-11-26  improved tcp timers: switched to local_timer (andrei)
+ *  2007-11-27  added send fd cache and reader fd reuse (andrei)
  */
 
 
@@ -175,6 +176,23 @@
 
 enum fd_types { F_NONE, F_SOCKINFO /* a tcp_listen fd */,
 				F_TCPCONN, F_TCPCHILD, F_PROC };
+
+
+#define TCP_FD_CACHE
+
+#ifdef TCP_FD_CACHE
+
+#define TCP_FD_CACHE_SIZE 8
+
+struct fd_cache_entry{
+	struct tcp_connection* con;
+	int id;
+	int fd;
+};
+
+
+static struct fd_cache_entry fd_cache[TCP_FD_CACHE_SIZE];
+#endif /* TCP_FD_CACHE */
 
 static int is_tcp_main=0;
 
@@ -971,6 +989,48 @@ error:
 
 
 
+#ifdef TCP_FD_CACHE
+
+static void tcp_fd_cache_init()
+{
+	int r;
+	for (r=0; r<TCP_FD_CACHE_SIZE; r++)
+		fd_cache[r].fd=-1;
+}
+
+
+inline static struct fd_cache_entry* tcp_fd_cache_get(struct tcp_connection *c)
+{
+	int h;
+	
+	h=c->id%TCP_FD_CACHE_SIZE;
+	if ((fd_cache[h].fd>0) && (fd_cache[h].id==c->id) && (fd_cache[h].con==c))
+		return &fd_cache[h];
+	return 0;
+}
+
+
+inline static void tcp_fd_cache_rm(struct fd_cache_entry* e)
+{
+	e->fd=-1;
+}
+
+
+inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
+{
+	int h;
+	
+	h=c->id%TCP_FD_CACHE_SIZE;
+	if (fd_cache[h].fd>0)
+		close(fd_cache[h].fd);
+	fd_cache[h].fd=fd;
+	fd_cache[h].id=c->id;
+	fd_cache[h].con=c;
+}
+
+#endif /* TCP_FD_CACHE */
+
+
 /* finds a tcpconn & sends on it
  * uses the dst members to, proto (TCP|TLS) and id and tries to send
  *  from the "from" address (if non null and id==0)
@@ -986,21 +1046,27 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	int fd;
 	long response[2];
 	int n;
+	int do_close_fd;
+#ifdef TCP_FD_CACHE
+	struct fd_cache_entry* fd_cache_e;
 	
+	fd_cache_e=0;
+#endif /* TCP_FD_CACHE */
+	do_close_fd=1; /* close the fd on exit */
 	port=su_getport(&dst->to);
-	if (port){
+	if (likely(port)){
 		su2ip_addr(&ip, &dst->to);
 		c=tcpconn_get(dst->id, &ip, port, from, tcp_con_lifetime); 
-	}else if (dst->id){
+	}else if (likely(dst->id)){
 		c=tcpconn_get(dst->id, 0, 0, 0, tcp_con_lifetime);
 	}else{
 		LOG(L_CRIT, "BUG: tcp_send called with null id & to\n");
 		return -1;
 	}
 	
-	if (dst->id){
-		if (c==0) {
-			if (port){
+	if (likely(dst->id)){
+		if (unlikely(c==0)) {
+			if (likely(port)){
 				/* try again w/o id */
 				c=tcpconn_get(0, &ip, port, from, tcp_con_lifetime);
 				goto no_id;
@@ -1012,10 +1078,10 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 		}else goto get_fd;
 	}
 no_id:
-		if (c==0){
+		if (unlikely(c==0)){
 			DBG("tcp_send: no open tcp connection found, opening new one\n");
 			/* create tcp connection */
-			if (from==0){
+			if (likely(from==0)){
 				/* check to see if we have to use a specific source addr. */
 				switch (dst->to.s.sa_family) {
 					case AF_INET:
@@ -1031,7 +1097,7 @@ no_id:
 						break;
 				}
 			}
-			if ((c=tcpconn_connect(&dst->to, from, dst->proto))==0){
+			if (unlikely((c=tcpconn_connect(&dst->to, from, dst->proto))==0)){
 				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
 				return -1;
 			}
@@ -1042,7 +1108,7 @@ no_id:
 			response[0]=(long)c;
 			response[1]=CONN_NEW;
 			n=send_fd(unix_tcp_sock, response, sizeof(response), c->s);
-			if (n<=0){
+			if (unlikely(n<=0)){
 				LOG(L_ERR, "BUG: tcp_send: failed send_fd: %s (%d)\n",
 						strerror(errno), errno);
 				n=-1;
@@ -1051,14 +1117,27 @@ no_id:
 			goto send_it;
 		}
 get_fd:
-			/* todo: see if this is not the same process holding
-			 *  c  and if so send directly on c->fd */
+		/* check if this is not the same reader process holding
+		 *  c  and if so send directly on c->fd */
+		if (c->reader_pid==my_pid()){
+			WARN("tcp_send: FIXME: send from reader (%d (%d)), reusing fd\n",
+					my_pid(), process_no);
+			fd=c->fd;
+			do_close_fd=0; /* don't close the fd on exit, it's in use */
+#ifdef TCP_FD_CACHE
+		}else if (likely((fd_cache_e=tcp_fd_cache_get(c))!=0)){
+			fd=fd_cache_e->fd;
+			do_close_fd=0;
+			WARN("tcp_send: FIXME: found fd in cache ( %d, %p, %d)\n",
+					fd, c, fd_cache_e->id);
+#endif /* TCP_FD_CACHE */
+		}else{
 			DBG("tcp_send: tcp connection found (%p), acquiring fd\n", c);
 			/* get the fd */
 			response[0]=(long)c;
 			response[1]=CONN_GET_FD;
 			n=send_all(unix_tcp_sock, response, sizeof(response));
-			if (n<=0){
+			if (unlikely(n<=0)){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(write):%s (%d)\n",
 						strerror(errno), errno);
 				n=-1;
@@ -1066,13 +1145,13 @@ get_fd:
 			}
 			DBG("tcp_send, c= %p, n=%d\n", c, n);
 			n=receive_fd(unix_tcp_sock, &tmp, sizeof(tmp), &fd, MSG_WAITALL);
-			if (n<=0){
+			if (unlikely(n<=0)){
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
 							" %s (%d)\n", strerror(errno), errno);
 				n=-1;
 				goto release_c;
 			}
-			if (c!=tmp){
+			if (unlikely(c!=tmp)){
 				LOG(L_CRIT, "BUG: tcp_send: get_fd: got different connection:"
 						"  %p (id= %d, refcnt=%d state=%d) != "
 						"  %p (n=%d)\n",
@@ -1083,7 +1162,7 @@ get_fd:
 				goto end;
 			}
 			DBG("tcp_send: after receive_fd: c= %p n=%d fd=%d\n",c, n, fd);
-		
+		}
 	
 	
 send_it:
@@ -1099,7 +1178,7 @@ send_it:
 	lock_release(&c->write_lock);
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
-	if (n<0){
+	if (unlikely(n<0)){
 		LOG(L_ERR, "ERROR: tcp_send: failed to send\n");
 		/* error on the connection , mark it as bad and set 0 timeout */
 		c->state=S_CONN_BAD;
@@ -1115,11 +1194,25 @@ send_it:
 		}
 		/* CONN_ERROR will auto-dec refcnt => we must not call tcpconn_put 
 		 * if it succeeds */
-		close(fd);
+#ifdef TCP_FD_CACHE
+		if (unlikely(fd_cache_e)){
+			LOG(L_ERR, "ERROR: tcp_send: error on cached fd, removing from the"
+					"cache (%d, %p, %d)\n", 
+					fd, fd_cache_e->con, fd_cache_e->id);
+			tcp_fd_cache_rm(fd_cache_e);
+			close(fd);
+		}else
+#endif /* TCP_FD_CACHE */
+		if (do_close_fd) close(fd);
 		return n; /* error return, no tcpconn_put */
 	}
 end:
-	close(fd);
+#ifdef TCP_FD_CACHE
+	if (unlikely(fd_cache_e==0)){
+		tcp_fd_cache_add(c, fd);
+	}else
+#endif /* TCP_FD_CACHE */
+	if (do_close_fd) close(fd);
 release_c:
 	tcpconn_put(c); /* release c (lock; dec refcnt; unlock) */
 	return n;
@@ -1248,6 +1341,9 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 			tls_close(tcpconn, fd);
 #endif
 		_tcpconn_free(tcpconn);
+#ifdef TCP_FD_CACHE
+		shutdown(fd, SHUT_RDWR);
+#endif /* TCP_FD_CACHE */
 		close(fd);
 		(*tcp_connections_no)--;
 	}else{
@@ -1958,6 +2054,9 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 						tls_close(c, fd);
 #endif /* USE_TLS */
 					_tcpconn_free(c);
+#ifdef TCP_FD_CACHE
+					shutdown(fd, SHUT_RDWR);
+#endif /* TCP_FD_CACHE */
 					close(fd);
 				}
 				(*tcp_connections_no)--; /* modified only in tcp_main
@@ -2024,6 +2123,9 @@ static inline void tcpconn_destroy_all()
 #endif
 				_tcpconn_rm(c);
 				if (fd>0) {
+#ifdef TCP_FD_CACHE
+					shutdown(fd, SHUT_RDWR);
+#endif /* TCP_FD_CACHE */
 					close(fd);
 				}
 				(*tcp_connections_no)--;
@@ -2058,6 +2160,15 @@ void tcp_main_loop()
 	if  (init_io_wait(&io_h, tcp_main_max_fd_no, tcp_poll_method)<0)
 		goto error;
 	/* init: start watching all the fds*/
+	
+	/* init local timer */
+	if (init_local_timer(&tcp_main_ltimer, get_ticks_raw())!=0){
+		LOG(L_ERR, "ERROR: init_tcp: failed to init local timer\n");
+		goto error;
+	}
+#ifdef TCP_FD_CACHE
+	tcp_fd_cache_init();
+#endif /* TCP_FD_CACHE */
 	
 	/* add all the sockets we listen on for connections */
 	for (si=tcp_listen; si; si=si->next){
@@ -2310,11 +2421,6 @@ int init_tcp()
 	}else{
 			LOG(L_INFO, "init_tcp: using %s io watch method (config)\n",
 					poll_method_name(tcp_poll_method));
-	}
-	
-	if (init_local_timer(&tcp_main_ltimer, get_ticks_raw())!=0){
-		LOG(L_ERR, "ERROR: init_tcp: failed to init local timer\n");
-		goto error;
 	}
 	
 	return 0;

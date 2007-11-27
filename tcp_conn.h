@@ -128,6 +128,7 @@ struct tcp_connection{
 	gen_lock_t write_lock;
 	int id; /* id (unique!) used to retrieve a specific connection when
 	           reply-ing*/
+	int reader_pid; /* pid of the active reader process */
 	struct receive_info rcv; /* src & dst ip, ports, proto a.s.o*/
 	struct tcp_req req; /* request data */
 	atomic_t refcnt;
