@@ -71,9 +71,8 @@ error:
 	{
 		for(j=0; j< i; j++)
 		{
-			if(htable[j].entries)
-				shm_free(htable[j].entries);
 			lock_destroy(&htable[j].lock);
+			shm_free(htable[j].entries);
 		}
 		shm_free(htable);
 	}
