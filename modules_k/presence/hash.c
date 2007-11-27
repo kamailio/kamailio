@@ -57,6 +57,7 @@ shtable_t new_shtable(int hash_size)
 		htable[i].entries= (subs_t*)shm_malloc(sizeof(subs_t));
 		if(htable[i].entries== NULL)
 		{
+			lock_destroy(&htable[i].lock);
 			ERR_MEM(SHARE_MEM);
 		}
 		memset(htable[i].entries, 0, sizeof(subs_t));
@@ -72,8 +73,6 @@ error:
 		{
 			if(htable[j].entries)
 				shm_free(htable[j].entries);
-			else 
-				break;
 			lock_destroy(&htable[j].lock);
 		}
 		shm_free(htable);
