@@ -43,7 +43,7 @@ if [ "$ret" -eq 0 ] ; then
 fi ;
 
 if [ "$ret" -eq 0 ] ; then
-	grep "from 127.0.0.1:33535, method: REGISTER, transport: UDP:127.0.0.1:5060, user agent: Twinkle/1.0"  $TMPFILE > /dev/null
+	grep "method: REGISTER, transport: UDP:127.0.0.1:5060, user agent: Twinkle/1.0"  $TMPFILE > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		grep "Getting identity from FROM URI" $TMPFILE > /dev/null
@@ -66,7 +66,6 @@ if [ "$ret" -eq 0 ] ; then
 		fi ;
 	fi ;
 fi ;
-echo $ret
 
 cd ../test
 
