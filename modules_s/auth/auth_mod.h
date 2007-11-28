@@ -29,6 +29,9 @@
  * History:
  * --------
  * 2003-04-28 rpid contributed by Juha Heinanen added (janakj)
+ * 2007-10-19 auth extra checks: longer nonces that include selected message
+ *            parts to protect against various reply attacks without keeping
+ *            state (andrei)
  */
 
 #ifndef AUTH_MOD_H
@@ -38,12 +41,15 @@
 #include "../sl/sl.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
 #include "../../parser/digest/digest.h"
+#include "nonce.h" /* auth_extra_checks & AUTH_CHECK flags */
 
 /*
  * Module parameters variables
  */
-extern str secret;            /* secret phrase used to generate nonce */
+extern str secret1;            /* secret phrase used to generate nonce */
+extern str secret2;            /* secret phrase used to generate nonce */
 extern int nonce_expire;      /* nonce expire interval */
+/* auth_extra_checks -> in nonce.h */
 extern int protect_contacts;  /* Enable/disable contact hashing in nonce */
 extern sl_api_t sl;
 extern avp_ident_t challenge_avpid;

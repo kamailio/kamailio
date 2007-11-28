@@ -26,6 +26,14 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *            ...
+ * 2007-10-19 auth extra checks: longer nonces that include selected message
+ *            parts to protect against various reply attacks without keeping
+ *            state (andrei)
+ */
 
 
 #include <time.h>
@@ -36,7 +44,13 @@
 #include "../../md5.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_from.h"
+#include "../../ip_addr.h"
 #include "nonce.h"
+
+
+int   auth_extra_checks = 0;      /* by default don't do any extra checks */
 
 
 /*
@@ -96,23 +110,92 @@ static inline int hex2integer(char* src)
 
 /*
  * Calculate nonce value
- * Nonce value consists of time in seconds since 1.1 1970 and
- * secret phrase
+ * Nonce value depends on the auth_extra_checks flags:
+ *  if auth_extra_checks==0 (no extra check set)
+ *    consists of time in seconds since 1.1 1970 and secret phrase:
+ *     <expire_time> MD5(<expire_time>, secret)
+ *  else
+ *    like above but with an extra MD5 on some fields selected by the
+ *     auth_extra_checks flags:
+ *      <expire_time> MD5(<expire_time>, secret1) MD5(<extra_checks>, secret2)
+ *
+ * Params:
+ *   nonce     - pointer to a buffer of *nonce_len. It must have enough
+ *               space to hold the nonce. MAX_NONCE_LEN should be always safe.
+ *   nonce_len - value - result parameter. Initially it contains the
+ *               nonce buffer length. If the length is too small, it will be
+ *               set to the needed length and the function will return 
+ *               error immediately.
+ *               After a succesfull call it will contain the size of nonce
+ *               written into the buffer, without the terminating 0.
+ *   expires   - time in seconds after which the nonce will be considered 
+ *               stale
+ *   secret1    - secret used for  the nonce expires integrity  check:
+ *                 MD5(<expire_time>,, secret1).
+ *   secret2    - secret used for integrity check of the message parts
+ *                 selected by auth_extra_checks (if any):
+ *                 MD5(<msg_parts(auth_extra_checks)>, secret2).
+ *   msg       - message for which the nonce is computed. If auth_extra_checks
+ *               is set, the MD5 of some fields of the message will be included
+ *               in the  generated nonce
+ * Returns:  0 on success and -1 on error
+ *
+ * WARNING: older versions used to 0-terminate the nonce. This is not the
+ *          case anymore.
+ *
  */
-void calc_nonce(char* nonce, int expires, str* secret, struct sip_msg* msg)
+int calc_nonce(char* nonce, int *nonce_len, int expires, str* secret1,
+				str* secret2, struct sip_msg* msg)
 {
 	MD5_CTX ctx;
 	unsigned char bin[16];
+	str* s;
+	int len;
 
+
+	if (*nonce_len < MAX_NONCE_LEN){
+		if (auth_extra_checks && msg){
+			*nonce_len=MAX_NONCE_LEN;
+			return -1;
+		}else if (*nonce_len < MIN_NONCE_LEN){
+			*nonce_len=MIN_NONCE_LEN;
+			return -1;
+		}
+	}
 	MD5Init(&ctx);
 	
 	integer2hex(nonce, expires);
 	MD5Update(&ctx, nonce, 8);
-
-	MD5Update(&ctx, secret->s, secret->len);
+	MD5Update(&ctx, secret1->s, secret1->len);
 	MD5Final(bin, &ctx);
 	string2hex(bin, 16, nonce + 8);
-	nonce[8 + 32] = '\0';
+	len=8 + 32;
+	
+	if (auth_extra_checks && msg){
+		MD5Init(&ctx);
+		if (auth_extra_checks & AUTH_CHECK_FULL_URI){
+			s=GET_RURI(msg);
+			MD5Update(&ctx, s->s, s->len);
+		}
+		if ((auth_extra_checks & AUTH_CHECK_CALLID) && 
+				! (parse_headers(msg, HDR_CALLID_F, 0)<0 || msg->callid==0)){
+			MD5Update(&ctx, msg->callid->body.s, msg->callid->body.len);
+		}
+		if ((auth_extra_checks & AUTH_CHECK_FROMTAG) &&
+				! (parse_headers(msg, HDR_FROM_F, 0)<0 || msg->from==0)){
+			MD5Update(&ctx, get_from(msg)->tag_value.s, 
+							get_from(msg)->tag_value.len);
+		}
+		if (auth_extra_checks & AUTH_CHECK_SRC_IP){
+			MD5Update(&ctx, msg->rcv.src_ip.u.addr, msg->rcv.src_ip.len);
+		}
+		MD5Update(&ctx, secret2->s, secret2->len);
+		MD5Final(bin, &ctx);
+		string2hex(bin, 16, nonce + len);
+		len+=32;
+	}
+	*nonce_len=len;
+	return 0;
 }
 
 
@@ -128,27 +211,48 @@ time_t get_nonce_expires(str* n)
 /*
  * Check, if the nonce received from client is
  * correct
+ * Returns:
+ *         0 - success (the nonce was not tampered with and if 
+ *             auth_extra_checks are enabled - the selected message fields
+ *             have not changes from the time the nonce was generated)
+ *         -1 - invalid nonce
+ *          1 - nonce length mismatch
+ *          2 - no match
+ *          3 - nonce expires ok, but the auth_extra checks failed
  */
-int check_nonce(str* nonce, str* secret, struct sip_msg* msg)
+int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg)
 {
 	int expires;
-	char non[NONCE_LEN + 1];
+	char non[MAX_NONCE_LEN];
+	int non_len;
 
 	if (nonce->s == 0) {
 		return -1;  /* Invalid nonce */
 	}
+	non_len=sizeof(non);
 
-	if (NONCE_LEN != nonce->len) {
+	if (get_cfg_nonce_len() != nonce->len) {
 		return 1; /* Lengths must be equal */
 	}
 
 	expires = get_nonce_expires(nonce);
-	calc_nonce(non, expires, secret, msg);
+	if (calc_nonce(non, &non_len, expires, secret1, secret2, msg)!=0){
+		ERR("auth: check_nonce: calc_nonce failed (len %d, needed %d)\n",
+				sizeof(non), non_len);
+		return -1;
+	}
 
 	DBG("auth:check_nonce: comparing [%.*s] and [%.*s]\n",
-	    nonce->len, ZSW(nonce->s), NONCE_LEN, non);
+	    nonce->len, ZSW(nonce->s), non_len, non);
 	
-	if (!memcmp(non, nonce->s, nonce->len)) {
+	if (!memcmp(non, nonce->s, MIN_NONCE_LEN)) {
+		if (auth_extra_checks){
+			if (non_len!=nonce->len)
+				return 2; /* someone truncated our nounce? */
+			if (memcmp(non+MIN_NONCE_LEN, nonce->s+MIN_NONCE_LEN, 
+							non_len-MIN_NONCE_LEN)!=0)
+				return 3; /* auth_extra_checks failed */
+		}
 		return 0;
 	}
 

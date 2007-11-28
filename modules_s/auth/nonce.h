@@ -35,23 +35,47 @@
 #include "../../str.h"
 #include <time.h>
 
+/* auth_extra_checks flags */
+
+#define AUTH_CHECK_FULL_URI 1
+#define AUTH_CHECK_CALLID   2
+#define AUTH_CHECK_FROMTAG  4
+#define AUTH_CHECK_SRC_IP   8
+
 
 /*
- * Length of nonce string in bytes
+ * Maximum length of nonce string in bytes
+ * nonce = TIMESTAMP[8 chars] MD5SUM(TIMESTAMP, SECRET1)[32 chars] \
+ *          MD5SUM(info(auth_extra_checks), SECRET2)[32 chars]
  */
-#define NONCE_LEN (8+32)
+#define MAX_NONCE_LEN (8+32+32)
+/*
+ * Minimum length of the nonce string
+ * nonce = TIMESTAMP[8 chars] MD5SUM(TIMESTAMP, SECRET1)[32 chars]
+ */
+#define MIN_NONCE_LEN (8+32)
+
+
+extern int auth_extra_checks;  /* by default don't do any extra checks */
+
+
+/*
+ * get the configured nonce len
+ */
+#define get_cfg_nonce_len() (auth_extra_checks?MAX_NONCE_LEN:MIN_NONCE_LEN)
 
 
 /*
  * Calculate nonce value
  */
-void calc_nonce(char* nonce, int expires, str* secret, struct sip_msg* msg);
+int calc_nonce(char* nonce, int* nonce_len, int expires, str* secret1,
+				str* secret2, struct sip_msg* msg);
 
 
 /*
  * Check nonce value received from UA
  */
-int check_nonce(str* nonce, str* secret, struct sip_msg* msg);
+int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg);
 
 
 /*

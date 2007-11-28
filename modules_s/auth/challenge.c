@@ -31,6 +31,9 @@
  * 2003-01-20 snprintf in build_auth_hf replaced with memcpy to avoid
  *            possible issues with too small buffer
  * 2003-01-26 consume_credentials no longer complains about ACK/CANCEL(jiri)
+ * 2007-10-19 auth extra checks: longer nonces that include selected message
+ *            parts to protect against various reply attacks without keeping
+ *            state (andrei)
  */
 
 #include "../../data_lump.h"
@@ -67,18 +70,21 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     char *p;
     str* hfn, hf;
     avp_value_t val;
+    int nonce_len;
+    int l;
     
     if (hftype == HDR_PROXYAUTH_T) {
 	hfn = &proxy_challenge_header;
     } else {
 	hfn = &www_challenge_header;
     }
-
+    
+    nonce_len=get_cfg_nonce_len();
     hf.len = hfn->len;
     hf.len += DIGEST_REALM_LEN
 	+ realm->len
 	+ DIGEST_NONCE_LEN
-	+ NONCE_LEN
+	+ nonce_len
 	+ 1 /* '"' */
 	+ ((stale) ? STALE_PARAM_LEN : 0)
 #ifdef _PRINT_MD5
@@ -100,8 +106,14 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN); p += DIGEST_REALM_LEN;
     memcpy(p, realm->s, realm->len); p += realm->len;
     memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN); p += DIGEST_NONCE_LEN;
-    calc_nonce(p, time(0) + nonce_expire, &secret, msg);
-    p += NONCE_LEN;
+    l=nonce_len;
+    if (calc_nonce(p, &l, time(0) + nonce_expire, &secret1, &secret2, msg)!=0){
+		ERR("build_challenge_hf: calc_nonce failed (len %d, needed %d)\n",
+				nonce_len, l);
+		pkg_free(hf.s);
+		return -1;
+	}
+    p += l;
     *p = '"'; p++;
     if (qop.qop_parsed != QOP_UNSPEC) {
 	memcpy(p, QOP_PARAM_START, QOP_PARAM_START_LEN);
@@ -119,6 +131,8 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     memcpy(p, DIGEST_MD5, DIGEST_MD5_LEN ); p += DIGEST_MD5_LEN;
 #endif
     memcpy(p, CRLF, CRLF_LEN); p += CRLF_LEN;
+	hf.len=(int)(p-hf.s); /* fix len, it might be smaller due to a smaller
+							 nonce */
     
     DBG("auth:build_challenge_hf: '%.*s'\n", hf.len, ZSW(hf.s));
 

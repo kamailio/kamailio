@@ -85,9 +85,16 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 		return BAD_CREDENTIALS;
 	}
 
-	if (check_nonce(&c->digest.nonce, &secret, msg) != 0) {
-		DBG("auth:pre_auth: Invalid nonce value received\n");
-		return NOT_AUTHENTICATED;
+	ret=check_nonce(&c->digest.nonce, &secret1, &secret2, msg);
+	if (ret!=0){
+		if (ret==3){
+			/* failed auth_extra_checks */
+			c->stale=1; /* we mark the nonce as stale 
+			 				(hack that makes our life much easier) */
+		}else{
+			DBG("auth:pre_auth: Invalid nonce value received\n");
+			return NOT_AUTHENTICATED;
+		}
 	}
 
 	return DO_AUTHENTICATION;
@@ -105,7 +112,7 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 
 	c = (auth_body_t*)((hdr)->parsed);
 
-	if (is_nonce_stale(&c->digest.nonce)) {
+	if (c->stale || is_nonce_stale(&c->digest.nonce)) {
 		if ((msg->REQ_METHOD == METHOD_ACK) || 
 		    (msg->REQ_METHOD == METHOD_CANCEL)) {
 			     /* Method is ACK or CANCEL, we must accept stale
@@ -115,7 +122,6 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 			      * to be canceled)
 			      */
 		} else {
-			DBG("auth:post_auth: Response is OK, but nonce is stale\n");
 			c->stale = 1;
 			res = NOT_AUTHENTICATED;
 		}

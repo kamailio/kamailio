@@ -33,6 +33,9 @@
  * 2003-03-16 flags export parameter added (janakj)
  * 2003-03-19 all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  * 2003-04-28 rpid contributed by Juha Heinanen added (janakj)
+ * 2007-10-19 auth extra checks: longer nonces that include selected message
+ *            parts to protect against various reply attacks without keeping
+ *            state (andrei)
  */
 
 
@@ -77,10 +80,13 @@ int consume_credentials(struct sip_msg* msg, char* s1, char* s2);
  */
 char* sec_param    = 0;     /* If the parameter was not used, the secret phrase will be auto-generated */
 int   nonce_expire = 300;   /* Nonce lifetime */
+/*int   auth_extra_checks = 0;  -- in nonce.c */
 int   protect_contacts = 0; /* Do not include contacts in nonce by default */
 
-str secret;
-char* sec_rand = 0;
+str secret1;
+str secret2;
+char* sec_rand1 = 0;
+char* sec_rand2 = 0;
 
 str challenge_attr = STR_STATIC_INIT("$digest_challenge");
 avp_ident_t challenge_avpid;
@@ -115,6 +121,7 @@ static param_export_t params[] = {
     {"proxy_challenge_header", PARAM_STR,    &proxy_challenge_header},
     {"www_challenge_header",   PARAM_STR,    &www_challenge_header  },
     {"qop",                    PARAM_STR,    &qop.qop_str           },
+    {"auth_extra_checks",      PARAM_INT,    &auth_extra_checks     },
     {0, 0, 0}
 };
 
@@ -143,20 +150,32 @@ static inline int generate_random_secret(void)
 {
     int i;
     
-    sec_rand = (char*)pkg_malloc(RAND_SECRET_LEN);
-    if (!sec_rand) {
+    sec_rand1 = (char*)pkg_malloc(RAND_SECRET_LEN);
+    sec_rand2 = (char*)pkg_malloc(RAND_SECRET_LEN);
+    if (!sec_rand1 || !sec_rand2) {
 	LOG(L_ERR, "auth:generate_random_secret: No memory left\n");
+	if (sec_rand1){
+		pkg_free(sec_rand1);
+		sec_rand1=0;
+	}
 	return -1;
     }
     
     /* srandom(time(0));  -- seeded by core */
     
     for(i = 0; i < RAND_SECRET_LEN; i++) {
-	sec_rand[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+	sec_rand1[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
     }
     
-    secret.s = sec_rand;
-    secret.len = RAND_SECRET_LEN;
+    secret1.s = sec_rand1;
+    secret1.len = RAND_SECRET_LEN;
+	
+    for(i = 0; i < RAND_SECRET_LEN; i++) {
+	sec_rand2[i] = 32 + (int)(95.0 * rand() / (RAND_MAX + 1.0));
+    }
+    
+    secret2.s = sec_rand2;
+    secret2.len = RAND_SECRET_LEN;
     
 	 /* DBG("Generated secret: '%.*s'\n", secret.len, secret.s); */
     
@@ -179,8 +198,19 @@ static int mod_init(void)
 	}
     } else {
 	     /* Otherwise use the parameter's value */
-	secret.s = sec_param;
-	secret.len = strlen(secret.s);
+	secret1.s = sec_param;
+	secret1.len = strlen(secret1.s);
+	if (auth_extra_checks){
+		/* divide the secret in half: one half for secret1 and one half for
+		 *  secret2 */
+		secret2.len=secret1.len/2;
+		secret1.len-=secret2.len;
+		secret2.s=secret1.s+secret1.len;
+		if (secret2.len<16){
+			WARN("auth: consider a longer secret when extra auth checks are"
+					" enabled (the config secret is divided in 2!)\n");
+		}
+	}
     }
     
     if ((!challenge_attr.s || challenge_attr.len == 0) ||
@@ -209,7 +239,8 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-    if (sec_rand) pkg_free(sec_rand);
+    if (sec_rand1) pkg_free(sec_rand1);
+    if (sec_rand2) pkg_free(sec_rand2);
 }
 
 
