@@ -543,6 +543,20 @@ void bdblib_log(int op, table_p _tp, char* _msg, int len)
 }
 
 /**
+ * The function is called to create a handle to a db table.
+ * 
+ * On startup, we do not create any of the db handles.
+ * Instead it is done on first-use (lazy-initialized) to only create handles to 
+ * files (db) that we require.
+ * 
+ * There is one db file per openser table (eg. acc), and they should exist
+ * in your DB_PATH (refer to openserctlrc) directory.
+ *
+ * This function does _not_ create the underlying binary db tables.
+ * Creating the tables MUST be manually performed before 
+ * openser startup by 'openserdbctl create'
+ *
+ * Function returns NULL on error, which will cause openser to exit.
  *
  */
 table_p bdblib_create_table(database_p _db, str *_s)
@@ -581,12 +595,12 @@ table_p bdblib_create_table(database_p _db, str *_s)
 	LM_DBG("CREATE TABLE = %s\n", tblname);
 #endif
 
-	flags = DB_CREATE | DB_THREAD;
+	flags = DB_THREAD;
 
 	if ((rc = bdb->open(bdb, NULL, tblname, NULL, DB_HASH, flags, 0664)) != 0)
 	{ 
 		_db->dbenv->err(_db->dbenv, rc, "DB->open: %s", tblname);
-		LM_ERR("bdb open: %s.\n",db_strerror(rc));
+		LM_ERR("bdb open failed: %s.\n",db_strerror(rc));
 		pkg_free(tp);
 		return NULL;
 	}
