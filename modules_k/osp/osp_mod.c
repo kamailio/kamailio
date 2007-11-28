@@ -174,7 +174,7 @@ static int ospInitMod(void)
 
     /* Load the RR API */
     if (load_rr_api(&osp_rr) != 0) {
-        LM_WARN("failed to load RR API\n");
+        LM_WARN("failed to load the RR API. Check if you load the rr module\n");
         LM_WARN("add_rr_param is required for reporting duration for OSP transactions\n");
         memset(&osp_rr, 0, sizeof(osp_rr));
     }
@@ -182,7 +182,7 @@ static int ospInitMod(void)
     /* Load the AUTH API */
     bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
     if ((bind_auth == NULL) || (bind_auth(&osp_auth) != 0)) {
-        LM_WARN("failed to load AUTH API\n");
+        LM_WARN("failed to load the AUTH API. Check if you load the auth module.\n");
         LM_WARN("rpid_avp & rpid_avp_type is required for calling number translation\n");
         memset(&osp_auth, 0, sizeof(osp_auth));
     }

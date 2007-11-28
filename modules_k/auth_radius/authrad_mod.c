@@ -154,7 +154,7 @@ static int mod_init(void)
 
 	bind_auth = (bind_auth_t)find_export("bind_auth", 0, 0);
 	if (!bind_auth) {
-		LM_ERR("unable to find bind_auth function\n");
+		LM_ERR("unable to find bind_auth function. Check if you load the auth module.\n");
 		return -1;
 	}
 
