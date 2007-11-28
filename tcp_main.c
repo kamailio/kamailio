@@ -85,6 +85,8 @@
  *               io_watch_add-ing its fd - it's safer this way (andrei)
  *  2007-11-26  improved tcp timers: switched to local_timer (andrei)
  *  2007-11-27  added send fd cache and reader fd reuse (andrei)
+ *  2007-11-28  added support for TCP_DEFER_ACCEPT, KEEPALIVE, KEEPINTVL,
+ *               KEEPCNT, QUICKACK, SYNCNT, LINGER2 (andrei)
  */
 
 
@@ -142,6 +144,7 @@
 #endif
 
 #include "tcp_info.h"
+#include "tcp_options.h"
 
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
@@ -177,8 +180,6 @@
 enum fd_types { F_NONE, F_SOCKINFO /* a tcp_listen fd */,
 				F_TCPCONN, F_TCPCHILD, F_PROC };
 
-
-#define TCP_FD_CACHE
 
 #ifdef TCP_FD_CACHE
 
@@ -270,6 +271,56 @@ int tcp_set_src_addr(struct ip_addr* ip)
 
 
 
+static inline int init_sock_keepalive(int s)
+{
+	int optval;
+	
+#ifdef HAVE_SO_KEEPALIVE
+	if (tcp_options.keepalive){
+		optval=1;
+		if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to enable"
+						" SO_KEEPALIVE: %s\n", strerror(errno));
+			return -1;
+		}
+	}
+#endif
+#ifdef HAVE_TCP_KEEPINTVL
+	if (tcp_options.keepintvl){
+		optval=tcp_options.keepintvl;
+		if (setsockopt(s, IPPROTO_TCP, TCP_KEEPINTVL, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to set"
+						" keepalive probes interval: %s\n", strerror(errno));
+		}
+	}
+#endif
+#ifdef HAVE_TCP_KEEPIDLE
+	if (tcp_options.keepidle){
+		optval=tcp_options.keepidle;
+		if (setsockopt(s, IPPROTO_TCP, TCP_KEEPIDLE, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to set"
+						" keepalive idle interval: %s\n", strerror(errno));
+		}
+	}
+#endif
+#ifdef HAVE_TCP_KEEPCNT
+	if (tcp_options.keepcnt){
+		optval=tcp_options.keepcnt;
+		if (setsockopt(s, IPPROTO_TCP, TCP_KEEPCNT, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_keepalive: failed to set"
+						" maximum keepalive count: %s\n", strerror(errno));
+		}
+	}
+#endif
+	return 0;
+}
+
+
+
 /* set all socket/fd options for new sockets (e.g. before connect): 
  *  disable nagle, tos lowdelay, reuseaddr, non-blocking
  *
@@ -303,6 +354,37 @@ static int init_sock_opt(int s)
 		/* continue, not critical */
 	}
 #endif /* !TCP_DONT_REUSEADDR */
+#ifdef HAVE_TCP_SYNCNT
+	if (tcp_options.syncnt){
+		optval=tcp_options.syncnt;
+		if (setsockopt(s, IPPROTO_TCP, TCP_SYNCNT, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_opt: failed to set"
+						" maximum SYN retr. count: %s\n", strerror(errno));
+		}
+	}
+#endif
+#ifdef HAVE_TCP_LINGER2
+	if (tcp_options.linger2){
+		optval=tcp_options.linger2;
+		if (setsockopt(s, IPPROTO_TCP, TCP_LINGER2, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_opt: failed to set"
+						" maximum LINGER2 timeout: %s\n", strerror(errno));
+		}
+	}
+#endif
+#ifdef HAVE_TCP_QUICKACK
+	if (tcp_options.delayed_ack){
+		optval=0; /* reset quick ack => delayed ack */
+		if (setsockopt(s, IPPROTO_TCP, TCP_QUICKACK, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: init_sock_opt: failed to reset"
+						" TCP_QUICKACK: %s\n", strerror(errno));
+		}
+	}
+#endif /* HAVE_TCP_QUICKACK */
+	init_sock_keepalive(s);
 	
 	/* non-blocking */
 	flags=fcntl(s, F_GETFL);
@@ -1130,7 +1212,8 @@ get_fd:
 			fd=c->fd;
 			do_close_fd=0; /* don't close the fd on exit, it's in use */
 #ifdef TCP_FD_CACHE
-		}else if (likely((fd_cache_e=tcp_fd_cache_get(c))!=0)){
+		}else if (likely(tcp_options.fd_cache && 
+							((fd_cache_e=tcp_fd_cache_get(c))!=0))){
 			fd=fd_cache_e->fd;
 			do_close_fd=0;
 			DBG("tcp_send: found fd in cache ( %d, %p, %d)\n",
@@ -1213,7 +1296,7 @@ send_it:
 	}
 end:
 #ifdef TCP_FD_CACHE
-	if (unlikely(fd_cache_e==0)){
+	if (unlikely((fd_cache_e==0) && tcp_options.fd_cache)){
 		tcp_fd_cache_add(c, fd);
 	}else
 #endif /* TCP_FD_CACHE */
@@ -1229,6 +1312,9 @@ int tcp_init(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
 	int optval;
+#ifdef HAVE_TCP_ACCEPT_FILTER
+	struct accept_filter_arg afa;
+#endif /* HAVE_TCP_ACCEPT_FILTER */
 #ifdef DISABLE_NAGLE
 	int flag;
 	struct protoent* pe;
@@ -1291,6 +1377,52 @@ int tcp_init(struct socket_info* sock_info)
 		LOG(L_WARN, "WARNING: tcp_init: setsockopt tos: %s\n", strerror(errno));
 		/* continue since this is not critical */
 	}
+#ifdef HAVE_TCP_DEFER_ACCEPT
+	/* linux only */
+	if (tcp_options.defer_accept){
+		optval=tcp_options.defer_accept;
+		if (setsockopt(sock_info->socket, IPPROTO_TCP, TCP_DEFER_ACCEPT,
+					(void*)&optval, sizeof(optval)) ==-1){
+			LOG(L_WARN, "WARNING: tcp_init: setsockopt TCP_DEFER_ACCEPT %s\n",
+						strerror(errno));
+		/* continue since this is not critical */
+		}
+	}
+#endif /* HAVE_TCP_DEFFER_ACCEPT */
+#ifdef HAVE_TCP_SYNCNT
+	if (tcp_options.syncnt){
+		optval=tcp_options.syncnt;
+		if (setsockopt(sock_info->socket, IPPROTO_TCP, TCP_SYNCNT, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: tcp_init: failed to set"
+						" maximum SYN retr. count: %s\n", strerror(errno));
+		}
+	}
+#endif
+#ifdef HAVE_TCP_ACCEPT_FILTER
+	/* freebsd */
+	if (tcp_options.defer_accept){
+		memset(&afa, 0, sizeof(afa));
+		strcpy(afa.af_name, "dataready");
+		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_ACCEPTFILTER,
+					(void*)&afal, sizeof(afa)) ==-1){
+			LOG(L_WARN, "WARNING: tcp_init: setsockopt SO_ACCEPTFILTER %s\n",
+						strerror(errno));
+		/* continue since this is not critical */
+		}
+	}
+#endif /* HAVE_TCP_ACCEPT_FILTER */
+#ifdef HAVE_TCP_LINGER2
+	if (tcp_options.linger2){
+		optval=tcp_options.linger2;
+		if (setsockopt(sock_info->socket, IPPROTO_TCP, TCP_LINGER2, &optval,
+						sizeof(optval))<0){
+			LOG(L_WARN, "WARNING: tcp_init: failed to set"
+						" maximum LINGER2 timeout: %s\n", strerror(errno));
+		}
+	}
+#endif
+	init_sock_keepalive(sock_info->socket);
 	if (bind(sock_info->socket, &addr->s, sockaddru_len(*addr))==-1){
 		LOG(L_ERR, "ERROR: tcp_init: bind(%x, %p, %d) on %s:%d : %s\n",
 				sock_info->socket,  &addr->s, 
@@ -1347,7 +1479,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 #endif
 		_tcpconn_free(tcpconn);
 #ifdef TCP_FD_CACHE
-		shutdown(fd, SHUT_RDWR);
+		if (likely(tcp_options.fd_cache)) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
 		close(fd);
 		(*tcp_connections_no)--;
@@ -2060,7 +2192,7 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 #endif /* USE_TLS */
 					_tcpconn_free(c);
 #ifdef TCP_FD_CACHE
-					shutdown(fd, SHUT_RDWR);
+					if (likely(tcp_options.fd_cache)) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
 					close(fd);
 				}
@@ -2129,7 +2261,7 @@ static inline void tcpconn_destroy_all()
 				_tcpconn_rm(c);
 				if (fd>0) {
 #ifdef TCP_FD_CACHE
-					shutdown(fd, SHUT_RDWR);
+					if (likely(tcp_options.fd_cache)) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
 					close(fd);
 				}
@@ -2172,7 +2304,7 @@ void tcp_main_loop()
 		goto error;
 	}
 #ifdef TCP_FD_CACHE
-	tcp_fd_cache_init();
+	if (tcp_options.fd_cache) tcp_fd_cache_init();
 #endif /* TCP_FD_CACHE */
 	
 	/* add all the sockets we listen on for connections */
@@ -2347,6 +2479,7 @@ int init_tcp()
 {
 	char* poll_err;
 	
+	tcp_options_check();
 	/* init lock */
 	tcpconn_lock=lock_alloc();
 	if (tcpconn_lock==0){

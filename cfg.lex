@@ -72,6 +72,8 @@
  *  2007-09-10  introduced phone2tel option which allows NOT to consider
  *              user=phone URIs as TEL URIs (jiri)
  *  2007-10-10  added DNS_SEARCH_FMATCH (mma)
+ *  2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
+ *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
 */
 
 
@@ -290,6 +292,15 @@ TCP_POLL_METHOD		"tcp_poll_method"
 TCP_MAX_CONNECTIONS	"tcp_max_connections"
 TCP_SOURCE_IPV4		"tcp_source_ipv4"
 TCP_SOURCE_IPV6		"tcp_source_ipv6"
+TCP_OPT_FD_CACHE	"tcp_fd_cache"
+TCP_OPT_DEFER_ACCEPT "tcp_defer_accept"
+TCP_OPT_DELAYED_ACK	"tcp_delayed_ack"
+TCP_OPT_SYNCNT		"tcp_syncnt"
+TCP_OPT_LINGER2		"tcp_linger2"
+TCP_OPT_KEEPALIVE	"tcp_keepalive"
+TCP_OPT_KEEPIDLE	"tcp_keepidle"
+TCP_OPT_KEEPINTVL	"tcp_keepintvl"
+TCP_OPT_KEEPCNT		"tcp_keepcnt"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
 TLSLOG			"tlslog"|"tls_log"
@@ -548,6 +559,24 @@ EAT_ABLE	[\ \t\b\r]
 									return TCP_SOURCE_IPV4; }
 <INITIAL>{TCP_SOURCE_IPV6}		{ count(); yylval.strval=yytext;
 									return TCP_SOURCE_IPV6; }
+<INITIAL>{TCP_OPT_FD_CACHE}		{ count(); yylval.strval=yytext;
+									return TCP_OPT_FD_CACHE; }
+<INITIAL>{TCP_OPT_DEFER_ACCEPT}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_DEFER_ACCEPT; }
+<INITIAL>{TCP_OPT_DELAYED_ACK}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_DELAYED_ACK; }
+<INITIAL>{TCP_OPT_SYNCNT}		{ count(); yylval.strval=yytext;
+									return TCP_OPT_SYNCNT; }
+<INITIAL>{TCP_OPT_LINGER2}		{ count(); yylval.strval=yytext;
+									return TCP_OPT_LINGER2; }
+<INITIAL>{TCP_OPT_KEEPALIVE}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_KEEPALIVE; }
+<INITIAL>{TCP_OPT_KEEPIDLE}		{ count(); yylval.strval=yytext;
+									return TCP_OPT_KEEPIDLE; }
+<INITIAL>{TCP_OPT_KEEPINTVL}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_KEEPINTVL; }
+<INITIAL>{TCP_OPT_KEEPCNT}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_KEEPCNT; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }

@@ -37,6 +37,7 @@
 #include "pt.h"
 #include "ut.h"
 #include "tcp_info.h"
+#include "tcp_options.h"
 #include "core_cmd.h"
 
 #ifdef USE_DNS_CACHE
@@ -470,12 +471,11 @@ all:
 			}
 		}
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "ddddddd",
+		rpc->struct_add(handle, "dddddd",
 			"pool  ", i,
 			"frags ", (unsigned int)frags,
 			"t. misses", (unsigned int)misses,
 			"mem   ", (unsigned int)mem,
-			"bitmap", (unsigned int)shm_block->pool[i].bitmap,
 			"missed", (unsigned int)shm_block->pool[i].missed,
 			"hits",   (unsigned int)shm_block->pool[i].hits
 		);
@@ -490,7 +490,7 @@ all:
 		main_b_frags+=shm_block->free_hash[r].no;
 	}
 	rpc->add(c, "{", &handle);
-	rpc->struct_add(handle, "dddddddddddddd",
+	rpc->struct_add(handle, "ddddddddddddd",
 		"max_frags      ", (unsigned int)max_frags,
 		"max_frags_pool ", max_frags_pool,
 		"max_frags_hash", max_frags_hash,
@@ -503,8 +503,7 @@ all:
 		"in_pools_frags ", (unsigned int)pool_frags,
 		"main_s_frags   ", (unsigned int)main_s_frags,
 		"main_b_frags   ", (unsigned int)main_b_frags,
-		"main_frags     ", (unsigned int)(main_b_frags+main_s_frags),
-		"main_bitmap    ", (unsigned int)shm_block->bitmap
+		"main_frags     ", (unsigned int)(main_b_frags+main_s_frags)
 	);
 }
 
@@ -546,6 +545,43 @@ static void core_tcpinfo(rpc_t* rpc, void* c)
 #endif
 }
 
+
+
+static const char* core_tcp_options_doc[] = {
+	"Returns active tcp options.",    /* Documentation string */
+	0                                 /* Method signature(s) */
+};
+
+static void core_tcp_options(rpc_t* rpc, void* c)
+{
+	void *handle;
+#ifdef USE_TCP
+	struct tcp_cfg_options t;
+
+	if (!tcp_disable){
+		tcp_options_get(&t);
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "ddddddddd",
+			"fd_cache",		t.fd_cache,
+			"defer_accept",	t.defer_accept,
+			"delayed_ack",	t.delayed_ack,
+			"syncnt",		t.syncnt,
+			"linger2",		t.linger2,
+			"keepalive",	t.keepalive,
+			"keepidle",		t.keepidle,
+			"keepintvl",	t.keepintvl,
+			"keepcnt",		t.keepcnt
+		);
+	}else{
+		rpc->fault(c, 500, "tcp support disabled");
+	}
+#else
+	rpc->fault(c, 500, "tcp support not compiled");
+#endif
+}
+
+
+
 /*
  * RPC Methods exported by this module
  */
@@ -564,7 +600,8 @@ rpc_export_t core_rpc_methods[] = {
 #if defined(SF_MALLOC) || defined(LL_MALLOC)
 	{"core.sfmalloc",          core_sfmalloc,          core_sfmalloc_doc,   0},
 #endif
-	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,          0	},
+	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,    0},
+	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
 	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},

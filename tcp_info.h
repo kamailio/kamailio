@@ -42,5 +42,4 @@ struct tcp_gen_info{
 
 void tcp_get_info(struct tcp_gen_info* ti);
 
-
 #endif

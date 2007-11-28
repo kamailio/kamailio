@@ -8,6 +8,13 @@ $Id$
 2.1.0 changes
 
 modules:
+ - auth      - added extra authentication checks support, to protect
+               against various reply attacks.
+             - params:
+                       - auth_extra_checks - flags specifying which extra
+                          message part/parts will be checked for change before
+                          allowing nonce reuse. See the auth module docs for
+                          for more information (modules/auth/README).
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
@@ -95,6 +102,8 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - tcp improvements (better tcp timers, send fd cache, special
+                options support)
              - dns naptr support (see dns_try_naptr and dns_<proto>_pref)
              - dns srv based load balancing support (see dns_srv_lb)
              - support for locking ser's pages in memory, pre-mapping
@@ -107,6 +116,37 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  tcp_fd_cache = yes | no (default yes) - if enabled FDs used for sending
+     will be cached inside the process calling tcp_send (performance increase
+     for sending over tcp at the cost of slightly slower connection closing and
+     extra FDs kept open)
+  tcp_defer_accept =  yes | no (default no) on freebsd  / number of seconds
+        before timeout on linux (default disabled) - tcp accepts will be 
+        delayed until some data is received (improves performance on proxies
+        with lots of opened tcp connections). See linux tcp(7) TCP_DEFER_ACCEPT
+        or freebsd ACCF_DATA(0). For now linux and freebsd only.
+        WARNING: the  linux TCP_DEFER_ACCEPT is buggy (<=2.6.23) and doesn't 
+         work exactly as expected (if no data is received it will retransmit 
+         syn acks for ~ 190 s, irrespective of the set timeout and then it will
+         silently drop the connection without sending a RST or FIN). Try to 
+         use it together with tcp_syncnt (this way the number of retrans.
+          SYNACKs can be limited => the timeout can be controlled in some way).
+  tcp_delayed_ack  = yes | no (default yes when supported) - initial ACK for
+        opened connections will be delayed and sent with the first data
+        segment (see linux tcp(7) TCP_QUICKACK). For now linux only.
+  tcp_syncnt = number of syn retr. (default not set) - number of SYN 
+        retransmissions before aborting a connect attempt (see linux tcp(7)
+        TCP_SYNCNT). Linux only.
+  tcp_linger2 = seconds (not set by default) - lifetime of orphaned sockets
+        in FIN_WAIT2 state (overrides tcp_fin_timeout on, see linux tcp(7) 
+        TCP_LINGER2). Linux only.
+  tcp_keepalive = yes | no (default yes) - enables keepalive for tcp.
+  tcp_keepidle  = seconds (not set by default) - time before starting to send
+         keepalives, if the connection is idle. Linux only.
+  tcp_keepintvl = seconds (not set by default) - time interval between 
+         keepalive probes, when the previous probe failed. Linux only.
+  tcp_keepcnt = number (not set by default) - number of keepalives sent before
+         dropping the connection. Linux only.
   pmtu_discovery = 0 | 1 (default 0) - set DF bit in outbound IP if enabled
   dns_srv_lb = yes | no (default no) - enable dns srv weight based load 
     balancing (see doc/dns.txt)

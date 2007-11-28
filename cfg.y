@@ -85,6 +85,8 @@
  * 2007-09-10  introduced phone2tel option which allows NOT to consider
  *             user=phone URIs as TEL URIs (jiri)
  * 2007-10-10  added DNS_SEARCH_FMATCH (mma)
+ * 2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
+ *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
 */
 
 %{
@@ -112,6 +114,7 @@
 #include "select.h"
 #include "flags.h"
 #include "tcp_init.h"
+#include "tcp_options.h"
 
 #include "config.h"
 #ifdef CORE_TLS
@@ -330,6 +333,15 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TCP_MAX_CONNECTIONS
 %token TCP_SOURCE_IPV4
 %token TCP_SOURCE_IPV6
+%token TCP_OPT_FD_CACHE
+%token TCP_OPT_DEFER_ACCEPT
+%token TCP_OPT_DELAYED_ACK
+%token TCP_OPT_SYNCNT
+%token TCP_OPT_LINGER2
+%token TCP_OPT_KEEPALIVE
+%token TCP_OPT_KEEPIDLE
+%token TCP_OPT_KEEPINTVL
+%token TCP_OPT_KEEPCNT
 %token DISABLE_TLS
 %token ENABLE_TLS
 %token TLSLOG
@@ -783,6 +795,78 @@ assign_stm:
 		pkg_free($3);
 	}
 	| TCP_SOURCE_IPV6 EQUAL error { yyerror("IPv6 address expected"); }
+	| TCP_OPT_FD_CACHE EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.fd_cache=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_FD_CACHE EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_DEFER_ACCEPT EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.defer_accept=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_DEFER_ACCEPT EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_DELAYED_ACK EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.delayed_ack=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_DELAYED_ACK EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_SYNCNT EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.syncnt=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_SYNCNT EQUAL error { yyerror("number expected"); }
+	| TCP_OPT_LINGER2 EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.linger2=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_LINGER2 EQUAL error { yyerror("number expected"); }
+	| TCP_OPT_KEEPALIVE EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.keepalive=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_KEEPALIVE EQUAL error { yyerror("boolean value expected");}
+	| TCP_OPT_KEEPIDLE EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.keepidle=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_KEEPIDLE EQUAL error { yyerror("number expected"); }
+	| TCP_OPT_KEEPINTVL EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.keepintvl=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_KEEPINTVL EQUAL error { yyerror("number expected"); }
+	| TCP_OPT_KEEPCNT EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.keepcnt=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_KEEPCNT EQUAL error { yyerror("number expected"); }
 	| DISABLE_TLS EQUAL NUMBER {
 		#ifdef USE_TLS
 			tls_disable=$3;
