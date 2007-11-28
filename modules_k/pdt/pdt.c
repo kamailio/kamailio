@@ -172,7 +172,7 @@ static int mod_init(void)
 		LM_ERR("invalid pdt char list\n");
 		return -1;
 	}
-	LM_ERR("pdt_char_list=%s \n",pdt_char_list.s);
+	LM_INFO("pdt_char_list=%s \n",pdt_char_list.s);
 
 	/* binding to mysql module */
 	if(bind_dbmod(db_url, &pdt_dbf))
