@@ -791,7 +791,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 	DBG("tcpconn_find: %d  port %d\n",id, port);
 	if (ip) print_ip("tcpconn_find: ip ", ip, "\n");
 #endif
-	if (id){
+	if (likely(id)){
 		hash=tcp_id_hash(id);
 		for (c=tcpconn_id_hash[hash]; c; c=c->id_next){
 #ifdef EXTRA_DEBUG
@@ -800,7 +800,7 @@ struct tcp_connection* _tcpconn_find(int id, struct ip_addr* ip, int port,
 #endif
 			if ((id==c->id)&&(c->state!=S_CONN_BAD)) return c;
 		}
-	}else if (ip){
+	}else if (likely(ip)){
 		hash=tcp_addr_hash(ip, port, l_ip, l_port);
 		is_local_ip_any=ip_addr_any(l_ip);
 		for (a=tcpconn_aliases_hash[hash]; a; a=a->next){
@@ -836,8 +836,8 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 	int local_port;
 	
 	local_port=0;
-	if (ip){
-		if (local_addr){
+	if (likely(ip)){
+		if (unlikely(local_addr)){
 			su2ip_addr(&local_ip, local_addr);
 			local_port=su_getport(local_addr);
 		}else{
@@ -847,9 +847,14 @@ struct tcp_connection* tcpconn_get(int id, struct ip_addr* ip, int port,
 	}
 	TCPCONN_LOCK;
 	c=_tcpconn_find(id, ip, port, &local_ip, local_port);
-	if (c){ 
+	if (likely(c)){ 
 			atomic_inc(&c->refcnt);
-			c->timeout=get_ticks_raw()+timeout;
+			/* update the timeout only if the connection is not handled
+			 * by a tcp reader (the tcp reader process uses c->timeout for 
+			 * its own internal timeout and c->timeout will be overwritten
+			 * anyway on return to tcp_main) */
+			if (likely(c->reader_pid==0))
+				c->timeout=get_ticks_raw()+timeout;
 	}
 	TCPCONN_UNLOCK;
 	return c;
@@ -875,7 +880,7 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 	
 	a=0;
 	is_local_ip_any=ip_addr_any(l_ip);
-	if (c){
+	if (likely(c)){
 		hash=tcp_addr_hash(&c->rcv.src_ip, port, l_ip, l_port);
 		/* search the aliases for an already existing one */
 		for (a=tcpconn_aliases_hash[hash], nxt=0; a; a=nxt){
@@ -887,7 +892,7 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 					  ip_addr_cmp(&a->parent->rcv.dst_ip, l_ip))
 					){
 				/* found */
-				if (a->parent!=c){
+				if (unlikely(a->parent!=c)){
 					if (flags & TCP_ALIAS_FORCE_ADD)
 						/* still have to walk the whole list to check if
 						 * the alias was not already added */
@@ -903,7 +908,7 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 				}else goto ok;
 			}
 		}
-		if (c->aliases>=TCP_CON_MAX_ALIASES) goto error_aliases;
+		if (unlikely(c->aliases>=TCP_CON_MAX_ALIASES)) goto error_aliases;
 		c->con_aliases[c->aliases].parent=c;
 		c->con_aliases[c->aliases].port=port;
 		c->con_aliases[c->aliases].hash=hash;
@@ -945,7 +950,7 @@ int tcpconn_add_alias(int id, int port, int proto)
 	TCPCONN_LOCK;
 	/* check if alias already exists */
 	c=_tcpconn_find(id, 0, 0, 0, 0);
-	if (c){
+	if (likely(c)){
 		ip_addr_mk_any(c->rcv.src_ip.af, &zero_ip);
 		
 		/* alias src_ip:port, 0, 0 */
@@ -959,7 +964,7 @@ int tcpconn_add_alias(int id, int port, int proto)
 		/* alias src_ip:port, local_ip, local_port */
 		ret=_tcpconn_add_alias_unsafe(c, port, &c->rcv.dst_ip, c->rcv.dst_port,
 										tcp_alias_flags);
-		if (ret<0) goto error;
+		if (unlikely(ret<0)) goto error;
 	}else goto error_not_found;
 	TCPCONN_UNLOCK;
 	return 0;
@@ -1021,7 +1026,7 @@ inline static void tcp_fd_cache_add(struct tcp_connection *c, int fd)
 	int h;
 	
 	h=c->id%TCP_FD_CACHE_SIZE;
-	if (fd_cache[h].fd>0)
+	if (likely(fd_cache[h].fd>0))
 		close(fd_cache[h].fd);
 	fd_cache[h].fd=fd;
 	fd_cache[h].id=c->id;
@@ -1120,7 +1125,7 @@ get_fd:
 		/* check if this is not the same reader process holding
 		 *  c  and if so send directly on c->fd */
 		if (c->reader_pid==my_pid()){
-			WARN("tcp_send: FIXME: send from reader (%d (%d)), reusing fd\n",
+			DBG("tcp_send: send from reader (%d (%d)), reusing fd\n",
 					my_pid(), process_no);
 			fd=c->fd;
 			do_close_fd=0; /* don't close the fd on exit, it's in use */
@@ -1128,7 +1133,7 @@ get_fd:
 		}else if (likely((fd_cache_e=tcp_fd_cache_get(c))!=0)){
 			fd=fd_cache_e->fd;
 			do_close_fd=0;
-			WARN("tcp_send: FIXME: found fd in cache ( %d, %p, %d)\n",
+			DBG("tcp_send: found fd in cache ( %d, %p, %d)\n",
 					fd, c, fd_cache_e->id);
 #endif /* TCP_FD_CACHE */
 		}else{
