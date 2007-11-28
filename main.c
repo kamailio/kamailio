@@ -136,6 +136,7 @@
 #ifdef USE_TCP
 #include "poll_types.h"
 #include "tcp_init.h"
+#include "tcp_options.h"
 #ifdef CORE_TLS
 #include "tls/tls_init.h"
 #define tls_has_init_si() 1
@@ -1248,6 +1249,10 @@ int main(int argc, char** argv)
 		"s:"
 #endif
 	;
+	
+#ifdef USE_TCP
+	init_tcp_options(); /* set the defaults before the config */
+#endif
 	/* look if there is a -h, e.g. -f -h construction won't catch it later */
 	opterr = 0;
 	while((c=getopt(argc,argv,options))!=-1) {
