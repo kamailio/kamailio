@@ -49,12 +49,12 @@ endif
 endif
 
 ifneq ($(XMLRPC-C-CONFIG),)
-DEFS+=$(shell $(XMLRPC-C-CONFIG) abyss-server --cflags)
-LIBS+=$(shell $(XMLRPC-C-CONFIG) abyss-server --libs)
+MY_DEFS=$(shell $(XMLRPC-C-CONFIG) abyss-server --cflags)
+MY_LIBS=$(shell $(XMLRPC-C-CONFIG) abyss-server --libs)
 else
-DEFS+=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/xmlrpc-c \
-		-I$(SYSBASE)/include/xmlrpc-c
-LIBS+=-L$(SYSBASE)/lib  -L$(LOCALBASE)/lib -lxmlrpc -lxmlrpc_xmlparse \
+MY_DEFS=-I$(LOCALBASE)/include -I$(LOCALBASE)/include/xmlrpc-c \
+		-I$(SYSBASE)/include/xmlrpc-c -D_UNIX
+MY_LIBS=-L$(SYSBASE)/lib  -L$(LOCALBASE)/lib -lxmlrpc -lxmlrpc_xmlparse \
 		-lxmlrpc_xmltok -lxmlrpc_abyss -lxmlrpc_abyss_server \
 		-lxmlrpc_client -lwwwinit -lwwwstream -lwwwxml \
 		-lwwwapp -lwwwcache -lwwwcore -lwwwdir -lwwwfile \
@@ -62,6 +62,21 @@ LIBS+=-L$(SYSBASE)/lib  -L$(LOCALBASE)/lib -lxmlrpc -lxmlrpc_xmlparse \
 		-lwwwmime -lwwwmux -lwwwnews -lwwwtelnet \
 		-lwwwtrans -lwwwzip
 endif
+
+ifeq ($(NEW),yes)
+	# remove the abyss library - we already have
+	# the code in the module
+	MY_DEFS+=-D_UNIX
+	MY_LIBS:=$(filter-out %xmlrpc_abyss %xmlrpc_server_abyss %pthread, $(MY_LIBS))
+else
+	# remove from compiling the code we have in the
+	# module for abyss server
+	exclude_files=$(wildcard abyss_*.c)
+endif
+
+
+DEFS+=$(MY_DEFS)
+LIBS+=$(MY_LIBS)
 
 
 include ../../Makefile.modules

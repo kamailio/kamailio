@@ -152,6 +152,10 @@ static void xmlrpc_sigchld( int sig )
 
 			break;
 		}
+		#ifndef XMLRPC_OLD_VERSION
+		else 
+			ServerHandleSigchld(pid);
+		#endif
 	}
 }
 
