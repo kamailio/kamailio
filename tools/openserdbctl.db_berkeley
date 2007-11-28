@@ -31,19 +31,11 @@ DELIM="|"
 BACKUP_CMD="tar czvf "
 RESTORE_CMD="tar xzvf "
 
-STANDARD_TABLES="version acc dbaliases lcr domain grp uri speed_dial gw pdt
-		   subscriber location re_grp trusted address missed_calls
-		   usr_preferences aliases gw_grp silo"
-
-EXTRA_TABLES="imc_members imc_rooms cpl sip_trace domainpolicy"
-
-PRESENCE_TABLES="presentity active_watchers watchers xcap pua rls_presentity rls_watchers"
-
 #berkeley db utility program that writes out db to plain text
-DUMP_CMD="db_dump -p "
+DUMP_CMD="db_dump"
 
 #berkeley db utility program that imports data from plain text file
-LOAD_CMD="db_load -T -t hash "
+LOAD_CMD="db_load"
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/openser"
@@ -200,7 +192,7 @@ openser_export()  # parms: <DUMP_DIR> [DB_PATH]
 	for TABLE in $STANDARD_TABLES; do
 	    if [ -f $2/$TABLE ] ; then
 		    mdbg "Exporting standard table: $TABLE"
-		    $DUMP_CMD -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
+		    $DUMP_CMD -p -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
 		    
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
@@ -218,7 +210,7 @@ openser_export()  # parms: <DUMP_DIR> [DB_PATH]
 	for TABLE in $PRESENCE_TABLES; do
 	    if [ -f $2/$TABLE ] ; then
 		    mdbg "Exporting presence table: $TABLE"
-		    $DUMP_CMD -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
+		    $DUMP_CMD -p -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
 		    if [ $? -ne 0 ] ; then
 			merr "Export of presence table failed [$TABLE]"
 		    fi
@@ -231,7 +223,7 @@ openser_export()  # parms: <DUMP_DIR> [DB_PATH]
 	for TABLE in $EXTRA_TABLES; do
 	    if [ -f $2/$TABLE ] ; then
 		    mdbg "Exporting extra table: $TABLE"
-		    $DUMP_CMD -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
+		    $DUMP_CMD -p -h $2 $TABLE  | perl -pe 's/^\w.*// ; s/^\s(.*)/$1/' > $1/$TABLE.txt
 		    if [ $? -ne 0 ] ; then
 			merr "Export of extra table failed [$TABLE]"
 		    fi
@@ -300,7 +292,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 	for TABLE in $STANDARD_TABLES; do
 	    if [ -s $1/$TABLE.txt ] ; then
 		    mdbg "Importing standard table: $TABLE"
-		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
+		    $LOAD_CMD -T -t hash -f $1/$TABLE.txt -h $2 $TABLE
 		    
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
@@ -318,7 +310,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 	for TABLE in $PRESENCE_TABLES; do
 	    if [ -s $1/$TABLE.txt ] ; then
 		    mdbg "Importing presence table: $TABLE"
-		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
+		    $LOAD_CMD -T -t hash -f $1/$TABLE.txt -h $2 $TABLE
 		    
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
@@ -334,7 +326,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 	for TABLE in $EXTRA_TABLES; do
 	    if [ -s $1/$TABLE.txt ] ; then
 		    mdbg "Importing extra table: $TABLE"
-		    $LOAD_CMD -f $1/$TABLE.txt -h $2 $TABLE
+		    $LOAD_CMD -T -t hash -f $1/$TABLE.txt -h $2 $TABLE
 		    
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
@@ -385,11 +377,11 @@ openser_append()  # parms: <db> <newdata> [DB_PATH]
 	fi
 	
 	cp $DB $DBNEW
-#  echo "$LOAD_CMD -f $2 -h $3 $1.new"
-	$LOAD_CMD -f $2 -h $3 $1.new
+# echo "$LOAD_CMD -T -t hash -f $2 -h $3 $1.new"
+	$LOAD_CMD -T -t hash -f $2 -h $3 $1.new
 	
-#  echo "db_load -r fileid -h $3 $1.new"
-  	db_load -r fileid -h $3 $1.new
+# echo "$LOAD_CMD -r fileid -h $3 $1.new"
+  	$LOAD_CMD -r fileid -h $3 $1.new
 }
 
 
@@ -415,7 +407,7 @@ openser_newappend()  # parms: <db> <newdata> [DB_PATH]
 	TMPENV=/tmp/sc-$$
 	openser_create $TMPENV
 	cd $OLDPWD
-	$LOAD_CMD -f $2 -h $TMPENV $1
+	$LOAD_CMD -T -t hash -f $2 -h $TMPENV $1
 	mv $TMPENV/$1 $DBNEW
 	rm -rf $TMPENV
 }
@@ -429,7 +421,7 @@ openser_cat()  # pars: <database name> <DB_PATH>
 		exit 1
 	fi
 	
-	$DUMP_CMD -h $2 $1
+	$DUMP_CMD -p -h $2 $1
 }
 
 openser_drop()  # pars:  <DB_PATH>
@@ -487,7 +479,7 @@ openser_create() # pars: <DB_PATH>
 	
 	for TABLE in $STANDARD_TABLES; do
 	    mdbg "Creating standard table: $TABLE"
-	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    $LOAD_CMD -T -t hash -f $DB_SCHEMA/$TABLE -h $1 $TABLE
 	    if [ $? -ne 0 ] ; then
 		merr "Creating standard tables failed!"
 		exit 1
@@ -519,7 +511,7 @@ presence_create() # pars: <DB_PATH>
 	
 	for TABLE in $PRESENCE_TABLES; do
 	    mdbg "Creating presence table: $TABLE"
-	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    $LOAD_CMD -T -t hash -f $DB_SCHEMA/$TABLE -h $1 $TABLE
 	    if [ $? -ne 0 ] ; then
 		merr "Creating presence tables failed!"
 		exit 1
@@ -552,7 +544,7 @@ extra_create() # pars: <DB_PATH>
 	
 	for TABLE in $EXTRA_TABLES; do
 	    mdbg "Creating extra table: $TABLE"
-	    $LOAD_CMD -f $DB_SCHEMA/$TABLE -h $1 $TABLE
+	    $LOAD_CMD -T -t hash -f $DB_SCHEMA/$TABLE -h $1 $TABLE
 	    if [ $? -ne 0 ] ; then
 		merr "Creating extra tables failed!"
 		exit 1
