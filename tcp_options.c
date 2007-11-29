@@ -56,6 +56,7 @@ void init_tcp_options()
 	if (tcp_options.option){\
 		WARN("tcp_options: tcp_" ##option \
 				"cannot be enabled (recompile needed)\n"); \
+		tcp_options.option=0; \
 	}
 
 
@@ -64,6 +65,7 @@ void init_tcp_options()
 	if (tcp_options.option){\
 		WARN("tcp_options: tcp_" ##option \
 				"cannot be enabled (no OS support)\n"); \
+		tcp_options.option=0; \
 	}
 
 

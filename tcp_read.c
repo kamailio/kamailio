@@ -718,7 +718,7 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
  */
-inline static int handle_io(struct fd_map* fm, int idx)
+inline static int handle_io(struct fd_map* fm, short events, int idx)
 {	
 	int ret;
 	int n;
@@ -778,7 +778,7 @@ again:
 			timer_reinit(&con->timer);
 			local_timer_add(&tcp_reader_ltimer, &con->timer,
 								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
-			if (unlikely(io_watch_add(&io_w, s, F_TCPCONN, con))<0){
+			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con))<0){
 				LOG(L_CRIT, "ERROR: tcp_receive: handle_io: failed to add"
 						" new socket to the fd list\n");
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
@@ -845,7 +845,7 @@ void tcp_receive_loop(int unix_sock)
 	if (init_local_timer(&tcp_reader_ltimer, get_ticks_raw())!=0)
 		goto error;
 	/* add the unix socket */
-	if (io_watch_add(&io_w, tcpmain_sock, F_TCPMAIN, 0)<0){
+	if (io_watch_add(&io_w, tcpmain_sock, POLLIN,  F_TCPMAIN, 0)<0){
 		LOG(L_CRIT, "ERROR: tcp_receive_loop: init: failed to add socket "
 							" to the fd list\n");
 		goto error;

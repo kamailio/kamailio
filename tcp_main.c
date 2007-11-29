@@ -1730,7 +1730,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			/* must be after the de-ref*/
 			tcpconn->flags&=~(F_CONN_REMOVED|F_CONN_READER);
 			if (unlikely(
-					io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn)<0)){
+					io_watch_add(&io_h, tcpconn->s, POLLIN,
+												F_TCPCONN, tcpconn)<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_tcp_child: failed to add"
 						" new socket to the fd list\n");
 				tcpconn->flags|=F_CONN_REMOVED;
@@ -1879,7 +1880,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 								tcp_con_lifetime, t);
 			tcpconn->flags&=~F_CONN_REMOVED;
 			if (unlikely(
-					io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn)<0)){
+					io_watch_add(&io_h, tcpconn->s, POLLIN,
+												F_TCPCONN, tcpconn)<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed to add"
 						" new socket to the fd list\n");
 				tcpconn->flags|=F_CONN_REMOVED;
@@ -2036,7 +2038,8 @@ static inline int handle_new_connect(struct socket_info* si)
 		local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, get_ticks_raw());
 		tcpconn->flags&=~F_CONN_REMOVED;
-		if (unlikely(io_watch_add(&io_h, tcpconn->s, F_TCPCONN, tcpconn)<0)){
+		if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLIN, 
+													F_TCPCONN, tcpconn)<0)){
 			LOG(L_CRIT, "ERROR: tcp_main: handle_new_connect: failed to add"
 						" new socket to the fd list\n");
 			tcpconn->flags|=F_CONN_REMOVED;
@@ -2128,7 +2131,7 @@ error:
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
  */
-inline static int handle_io(struct fd_map* fm, int idx)
+inline static int handle_io(struct fd_map* fm, short events, int idx)
 {	
 	int ret;
 	
@@ -2310,7 +2313,7 @@ void tcp_main_loop()
 	/* add all the sockets we listen on for connections */
 	for (si=tcp_listen; si; si=si->next){
 		if ((si->proto==PROTO_TCP) &&(si->socket!=-1)){
-			if (io_watch_add(&io_h, si->socket, F_SOCKINFO, si)<0){
+			if (io_watch_add(&io_h, si->socket, POLLIN, F_SOCKINFO, si)<0){
 				LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
 							"listen socket to the fd list\n");
 				goto error;
@@ -2323,7 +2326,7 @@ void tcp_main_loop()
 	if (!tls_disable && tls_loaded()){
 		for (si=tls_listen; si; si=si->next){
 			if ((si->proto==PROTO_TLS) && (si->socket!=-1)){
-				if (io_watch_add(&io_h, si->socket, F_SOCKINFO, si)<0){
+				if (io_watch_add(&io_h, si->socket, POLLIN, F_SOCKINFO, si)<0){
 					LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
 							"tls listen socket to the fd list\n");
 					goto error;
@@ -2339,7 +2342,7 @@ void tcp_main_loop()
 	 *  (get fd, new connection a.s.o) */
 	for (r=1; r<process_no; r++){
 		if (pt[r].unix_sock>0) /* we can't have 0, we never close it!*/
-			if (io_watch_add(&io_h, pt[r].unix_sock, F_PROC, &pt[r])<0){
+			if (io_watch_add(&io_h, pt[r].unix_sock, POLLIN,F_PROC, &pt[r])<0){
 					LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
 							"process %d unix socket to the fd list\n", r);
 					goto error;
@@ -2348,8 +2351,8 @@ void tcp_main_loop()
 	/* add all the unix sokets used for communication with the tcp childs */
 	for (r=0; r<tcp_children_no; r++){
 		if (tcp_children[r].unix_sock>0)/*we can't have 0, we never close it!*/
-			if (io_watch_add(&io_h, tcp_children[r].unix_sock, F_TCPCHILD,
-							&tcp_children[r]) <0){
+			if (io_watch_add(&io_h, tcp_children[r].unix_sock, POLLIN,
+									F_TCPCHILD, &tcp_children[r]) <0){
 				LOG(L_CRIT, "ERROR: tcp_main_loop: init: failed to add "
 						"tcp child %d unix socket to the fd list\n", r);
 				goto error;
