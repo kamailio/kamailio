@@ -42,7 +42,7 @@ DATA_DIR="/usr/local/share/openser"
 if [ -d "$DATA_DIR/db_berkeley/openser" ] ; then
 	DB_SCHEMA="$DATA_DIR/db_berkeley/openser"
 else
-	DB_SCHEMA="./berkeley/openser"
+	DB_SCHEMA="./db_berkeley/openser"
 fi
 
 # path to the db_berkeley database
@@ -460,7 +460,13 @@ openser_drop()  # pars:  <DB_PATH>
 		    rm -f $1/$TABLE
 		done
 	fi
-	
+
+	# delete db files and directory
+	rm -rf $1/__db.001
+	rm -rf $1/__db.002
+	rm -rf $1/__db.003
+	rm -rf $1/__db.004
+	rmdir $1
 }
 
 
@@ -485,7 +491,17 @@ openser_create() # pars: <DB_PATH>
 		exit 1
 	    fi
 	done
-	
+
+	get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
+	if [ "$ANSWER" = "y" ]; then
+		presence_create $1
+	fi
+
+	get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
+	if [ "$ANSWER" = "y" ]; then
+		extra_create $1
+	fi
+
 } # openser_create
 
 
