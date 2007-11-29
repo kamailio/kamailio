@@ -297,7 +297,7 @@ static inline char *run_lookup( struct cpl_interpreter *intr )
 					if (add_location( &(intr->loc_set), &contact->c, 
 					&contact->received, (int)(10*contact->q),
 					CPL_LOC_DUPL|
-						((contact->flags & cpl_fct.ulb.nat_flag)*CPL_LOC_NATED)
+						((contact->cflags&cpl_fct.ulb.nat_flag)?CPL_LOC_NATED:0)
 					)==-1) {
 						LM_ERR("unable to add location to set :-(\n");
 						cpl_fct.ulb.unlock_udomain( cpl_env.lu_domain, &intr->user );
