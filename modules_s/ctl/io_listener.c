@@ -253,7 +253,7 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 		}
 		DBG("io_listen_loop: adding socket %d, type %d, transport"
 					" %d (%s)\n", cs->fd, type, cs->transport, cs->name);
-		if (io_watch_add(&io_h, cs->fd, type, cs)<0){
+		if (io_watch_add(&io_h, cs->fd, POLLIN, type, cs)<0){
 			LOG(L_CRIT, "ERROR: io_listen_loop: init: failed to add"
 					"listen socket to the fd list\n");
 			goto error;
@@ -435,7 +435,7 @@ again:
 	s_conn=s_conn_new(new_sock, cs, &from);
 	if (s_conn){
 		s_conn_add(s_conn);
-		io_watch_add(&io_h, s_conn->fd, F_T_READ_STREAM, s_conn);
+		io_watch_add(&io_h, s_conn->fd, POLLIN, F_T_READ_STREAM, s_conn);
 	}else{
 		LOG(L_ERR, "ERROR: io listen: handle_new_connect:"
 				" s_conn_new failed\n");
@@ -693,7 +693,7 @@ error:
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
  */
-inline static int handle_io(struct fd_map* fm, int idx)
+inline static int handle_io(struct fd_map* fm, short events, int idx)
 {
 	int ret;
 	
