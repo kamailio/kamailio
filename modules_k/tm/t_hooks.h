@@ -137,7 +137,7 @@ struct cell;
  *  because it can be only dialog-wise matched, only the first
  *  transaction occurrence will be matched with spirals. If
  *  record-routing is not enabled, you will never receive the
- *  ACK and the callback will be never triggered.
+ *  ACK and the callback will never be triggered.
  *
  *
  *  TMCB_REQUEST_FWDED -- request is being forwarded out. It is 
@@ -154,7 +154,7 @@ struct cell;
 
 	the callback's param MUST be in shared memory and will
 	NOT be freed by TM; you must do it yourself from the
-	callback function id necessary.
+	callback function if necessary.
 */
 
 
