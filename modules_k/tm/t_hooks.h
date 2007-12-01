@@ -144,7 +144,7 @@ struct cell;
  *  called before a message is forwarded and it is your last
  *  chance to change its shape. 
  *
- *  TMCB_LOCAL COMPLETED -- final reply for localy initiated
+ *  TMCB_LOCAL_COMPLETED -- final reply for localy initiated
  *  transaction arrived. Message may be FAKED_REPLY.
  *
 
