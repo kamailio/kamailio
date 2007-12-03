@@ -261,7 +261,7 @@ int check_memory(struct modem *mdm, int flag)
 	} /* for */
 
 	if (out==0)
-		LM_ERR("modem does not respond after 10 reties! I give up :-(\n");
+		LM_ERR("modem does not respond after 10 retries, give up!\n");
 
 	return -1;
 }
