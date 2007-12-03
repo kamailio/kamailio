@@ -30,9 +30,9 @@
 
 OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone numbers.
 
- use OpenSER::Utils::PhoneNumber
+ use OpenSER::Utils::PhoneNumbers;
 
- my $phonenumber = new OpenSER::Utils::PhoneNumber(
+ my $phonenumbers = new OpenSER::Utils::PhoneNumbers(
       publicAccessPrefix => "0",
       internationalPrefix => "+",
       longDistancePrefix => "0",
@@ -41,8 +41,8 @@ OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone numbers.
       countryCode => "49"
     );
 					
- $canonical = canonicalForm("07612034567");
- $number    = dialNumber("+497612034567");
+ $canonical = $phonenumbers->canonicalForm("07612034567");
+ $number    = $phonenumbers->dialNumber("+497612034567");
 
 A telphone number starting with a plus sign and containing all dial prefixes 
 is in canonical form. This is usally not the number to dial at any location,

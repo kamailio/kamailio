@@ -496,9 +496,9 @@ OpenSER::AVP::destroy("foo");]]></screen>
       OpenSER::Utils::PhoneNumbers - Functions for canonical forms of phone
       numbers.
     </para>
-    <screen><![CDATA[use OpenSER::Utils::PhoneNumber
+    <screen><![CDATA[use OpenSER::Utils::PhoneNumbers;
 
-my $phonenumber = new OpenSER::Utils::PhoneNumber(
+my $phonenumbers = new OpenSER::Utils::PhoneNumbers(
      publicAccessPrefix => "0",
      internationalPrefix => "+",
      longDistancePrefix => "0",
@@ -507,8 +507,8 @@ my $phonenumber = new OpenSER::Utils::PhoneNumber(
      countryCode => "49"
    );
 
-$canonical = canonicalForm("07612034567");
-$number    = dialNumber("+497612034567");]]></screen>
+$canonical = $phonenumbers->canonicalForm("07612034567");
+$number    = $phonenumbers->dialNumber("+497612034567");]]></screen>
     <para>
       A telphone number starting with a plus sign and containing all dial
       prefixes is in canonical form. This is usally not the number to dial
