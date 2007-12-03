@@ -520,6 +520,10 @@ ldap://ldap_1/dc=example,dc=com?
           </varlistentry>
         </variablelist>
 
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+	</para>
+	
         <example>
           <title>Example Usage</title>
 
@@ -643,6 +647,10 @@ ldap_result("telephoneNumber/$avp(s:tel_number)");
           </varlistentry>
         </variablelist>
 
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+	</para>
+	
         <example>
           <title>Example Usage</title>
 
@@ -756,6 +764,10 @@ ldap_result("SIPIdentitySIPURI/$avp(i:10)", "/^[^@]+@(.+)$/\1/");
           </varlistentry>
         </variablelist>
 
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
+	
         <example>
           <title>Example Usage</title>
 
@@ -824,6 +836,10 @@ if (!ldap_result_check("sn/$ru", "/^sip:([^@]).*$/\1/"))
             </listitem>
           </varlistentry>
         </variablelist>
+
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
 
         <example>
           <title>Example Usage</title>
@@ -965,6 +981,10 @@ if (ldap_result_next())
             </listitem>
           </varlistentry>
         </variablelist>
+
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
 
         <example>
           <title>Example Usage</title>
