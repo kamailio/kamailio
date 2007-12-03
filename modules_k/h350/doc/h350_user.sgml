@@ -250,6 +250,11 @@ modparam("h350", "search_scope", "sub");
             </varlistentry>
         </variablelist>
 
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
+
+	
         <example>
             <title>Example Usage</title>
 
@@ -371,6 +376,10 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
                 </listitem>
             </varlistentry>
         </variablelist>
+
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
 
         <example>
             <title>Example Usage</title>
@@ -611,6 +620,11 @@ AVP value = argument / 1000
             </varlistentry>
         </variablelist>
 
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
+
+
         <example>
             <title>Example Usage</title>
 
@@ -755,6 +769,11 @@ $avp("s:sl_900") = 1
                 </listitem>
             </varlistentry>
         </variablelist>
+
+	<para>
+        This function can be used from REQUEST_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE, and ONREPLY_ROUTE.
+        </para>
+
 
         <example>
             <title>Example Usage</title>
