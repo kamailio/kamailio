@@ -4,7 +4,7 @@
 CFG=2.cfg
 
 # start
-../openser -c -f $CFG > /dev/null
+../openser -c -f $CFG > /dev/null 2>&1
 ret=$?
 
 sleep 1
