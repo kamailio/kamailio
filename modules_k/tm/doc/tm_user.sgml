@@ -994,9 +994,11 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - is true 
-			if the request belongs to a transaction; if so, it means that the 
-			request is a retransmision.
+			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - is the
+			request belongs to a transaction (it's a retransmision), the
+			function will standardly process the retransmission and will break
+			/stop the script. The function return false if the request is not
+			a retransmission.
 			</para>
 		</listitem>
 		<listitem>
