@@ -281,7 +281,7 @@ int record_route(struct sip_msg* _m, str *params)
 	}
 
 	if (enable_double_rr) {
-		l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+		l = anchor_lump(_m, _m->headers->name.s - _m->buf,0,HDR_RECORDROUTE_T);
 		l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 		if (!l || !l2) {
 			LM_ERR("failed to create an anchor\n");
@@ -299,7 +299,7 @@ int record_route(struct sip_msg* _m, str *params)
 		}
 	}
 	
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	l2 = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
 	if (!l || !l2) {
 		LM_ERR("failed to create an anchor\n");
@@ -426,7 +426,9 @@ static struct lump *get_rr_param_lump( struct lump** root)
 	for( crt=*root ; crt && !last ; crt=crt->next,(*root)=crt ) {
 		/* check on before list */
 		for( r=crt->before ; r ; r=r->before ) {
-			if ( r->type==HDR_RECORDROUTE_T )
+			/* we are looking for the the lump that adds the 
+			 * suffix of the RR header */
+			if ( r->type==HDR_RECORDROUTE_T && r->op==LUMP_ADD)
 				last = r;
 		}
 	}
