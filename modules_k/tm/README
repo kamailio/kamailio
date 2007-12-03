@@ -801,12 +801,12 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 1.4.11. t_check_trans()
 
    Returns true if the current request is associated to a
-   transaction. The relationship between the request ans
+   transaction. The relationship between the request and
    transaction is defined as follow:
 
-     * non-CANCEL/non-ACK requests - is the request belongs to a
-       transaction (it's a retransmision), the function will
-       standardly process the retransmission and will break /stop
+     * non-CANCEL/non-ACK requests - if the request belongs to a
+       transaction (it's a retransmision), the function will do a
+       standard processing of the retransmission and will break/stop
        the script. The function return false if the request is not
        a retransmission.
      * CANCEL request - true if the cancelled INVITE transaction

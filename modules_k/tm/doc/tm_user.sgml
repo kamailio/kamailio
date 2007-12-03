@@ -989,16 +989,16 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</title>
 		<para>
 		Returns true if the current request is associated to a transaction. 
-		The relationship between the request ans transaction is defined as 
+		The relationship between the request and transaction is defined as
 		follow:
 		</para>
 		<itemizedlist>
 		<listitem>
-			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - is the
+			<para><emphasis>non-CANCEL/non-ACK requests</emphasis> - if the
 			request belongs to a transaction (it's a retransmision), the
-			function will standardly process the retransmission and will break
-			/stop the script. The function return false if the request is not
-			a retransmission.
+			function will do a standard processing of the retransmission and
+			will break/stop the script. The function return false if the
+			request is not a retransmission.
 			</para>
 		</listitem>
 		<listitem>
