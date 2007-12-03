@@ -151,17 +151,19 @@ if [ $? -ne 0 ] ; then
 	mwarn "Create user in database failed, perhaps they allready exist? Try to continue.."
 fi
 
-# There is no easy way to grant select rights to all tables of a database in postgresl
-# so unfortunally its necessary to specify all tables here.
-sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;
-		GRANT SELECT ON TABLE version, acc, address, aliases, dbaliases, dispatcher, 
-		domain, grp, gw, gw_grp, lcr, location, missed_calls, pdt, re_grp, silo,
-		speed_dial, subscriber, trusted, uri, usr_preferences TO $DBROUSER;"
-
+sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;"
 if [ $? -ne 0 ] ; then
 	merr "Grant privileges to database failed!"
 	exit 1
 fi
+
+for TABLE in $STANDARD_TABLES; do
+    sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	if [ $? -ne 0 ] ; then
+		merr "Grant privileges to standard tables failed!"
+		exit 1
+	fi
+done
 
 if [ -e $DB_SCHEMA/extensions-create.sql ]
 then
@@ -215,17 +217,19 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
-sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE 	active_watchers, active_watchers_id_seq,
-		presentity, presentity_id_seq, watchers, watchers_id_seq, xcap,
-		xcap_id_seq, pua, pua_id_seq, rls_presentity, rls_presentity_id_seq,
-		rls_watchers, rls_watchers_id_seq TO $DBRWUSER;
-		GRANT SELECT ON TABLE active_watchers, presentity, watchers, xcap,
-		pua, rls_presentity, rls_watchers TO $DBROUSER;"
-
+sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;"
 if [ $? -ne 0 ] ; then
-	merr "Grant privileges to presences tables failed!"
+	merr "Grant privileges to database failed!"
 	exit 1
 fi
+
+for TABLE in $PRESENCE_TABLES; do
+    sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	if [ $? -ne 0 ] ; then
+		merr "Grant privileges to presence tables failed!"
+		exit 1
+	fi
+done
 
 minfo "Presence tables succesfully created."
 }  # end presence_create
@@ -249,17 +253,19 @@ for TABLE in $EXTRA_MODULES; do
     fi
 done
 
-sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE cpl, cpl_id_seq, imc_members,
-		imc_members_id_seq, imc_rooms, imc_rooms_id_seq, sip_trace, 
-		sip_trace_id_seq, domainpolicy, domainpolicy_id_seq
-		TO $DBRWUSER;
-		GRANT SELECT ON TABLE cpl, imc_members, imc_rooms, sip_trace,
-		domainpolicy, carrierroute TO $DBROUSER;"
-
+sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;"
 if [ $? -ne 0 ] ; then
-	merr "Grant privileges to extra tables failed!"
+	merr "Grant privileges to database failed!"
 	exit 1
 fi
+
+for TABLE in $EXTRA_TABLES; do
+    sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	if [ $? -ne 0 ] ; then
+		merr "Grant privileges to extra tables failed!"
+		exit 1
+	fi
+done
 
 minfo "Extra tables succesfully created."
 }  # end extra_create
@@ -323,10 +329,7 @@ if [ $? -ne 0 ] ; then
 	merr "Failed to create presence tables!"
 	exit 1
 fi
-
-sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE phonebook, phonebook_id_seq, pending,
-		pending_id_seq, active_sessions, server_monitoring, server_monitoring_agg,
-		usr_preferences_types, admin_privileges to $DBRWUSER; 
+sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;
 		GRANT SELECT ON TABLE phonebook, pending, active_sessions, server_monitoring,
 		server_monitoring_agg, usr_preferences_types, admin_privileges to $DBROUSER;" 
 
