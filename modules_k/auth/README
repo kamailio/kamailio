@@ -261,14 +261,19 @@ modparam("auth", "calculate_ha1", 1)
        From header field domain will be used.
        The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
-       When set to 1 then the server will put qop parameter in the
-       challenge. When set to 0 then the server will not put qop
-       parameter in the challenge. It is strongly recommended to
-       use qop parameter, however there are still some user agents
-       that cannot handle qop parameter properly so we made this
+       When set to 1 then the server will put a qop parameter in
+       the challenge. When set to 0 then the server will not put
+       the qop parameter in the challenge. It is recommended to
+       use the qop parameter, however there are still some user
+       agents that cannot handle qop properly so we made this
        optional. On the other hand there are still some user
-       agents that cannot handle request without qop parameter
+       agents that cannot handle request without a qop parameter
        too.
+       Enabling this parameter don't improve the security at the
+       moment, because the sequence number is not stored and
+       therefore could not be checked. Actually there is no
+       information kept by the module during the challenge and
+       response requests.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -301,14 +306,19 @@ if (www_authorize("siphub.net", "subscriber")) {
        as realm.
        The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
-       When set to 1 then the server will put qop parameter in the
-       challenge. When set to 0 then the server will not put qop
-       parameter in the challenge. It is strongly recommended to
-       use qop parameter, however there are still some user agents
-       that cannot handle qop parameter properly so we made this
+       When set to 1 then the server will put a qop parameter in
+       the challenge. When set to 0 then the server will not put
+       the qop parameter in the challenge. It is recommended to
+       use the qop parameter, however there are still some user
+       agents that cannot handle qop properly so we made this
        optional. On the other hand there are still some user
-       agents that cannot handle request without qop parameter
+       agents that cannot handle request without a qop parameter
        too.
+       Enabling this parameter don't improve the security at the
+       moment, because the sequence number is not stored and
+       therefore could not be checked. Actually there is no
+       information kept by the module during the challenge and
+       response requests.
 
    This function can be used from REQUEST_ROUTE.
 

@@ -264,12 +264,17 @@ modparam("auth", "calculate_ha1", 1)
 		<listitem>
 			<para><emphasis>qop</emphasis> - Value of this parameter can be 
 			either <quote>1</quote> or <quote>0</quote>. When set to 1 then 
-			the server will put qop parameter in the challenge. When set to 0 
-			then the server will not put qop parameter in the challenge. It 
-			is strongly recommended to use qop parameter, however there are 
-			still some user agents that cannot handle qop parameter properly 
-			so we made this optional. On the other hand there are still some 
-			user agents that cannot handle request without qop parameter too.
+			the server will put a qop parameter in the challenge. When set to 0
+			then the server will not put the qop parameter in the challenge. It
+			is recommended to use the qop parameter, however there are still some
+			user agents that cannot handle qop properly so we made this optional.
+			On the other hand there are still some user agents that cannot handle
+			request without a qop parameter too.
+			</para>
+			<para>Enabling this parameter don't improve the security at the moment,
+			because the sequence number is not stored and therefore could not be
+			checked. Actually there is no information kept by the module during
+			the challenge and response requests.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -321,12 +326,17 @@ if (www_authorize("siphub.net", "subscriber")) {
 		<listitem>
 			<para><emphasis>qop</emphasis> - Value of this parameter can be 
 			either <quote>1</quote> or <quote>0</quote>. When set to 1 then 
-			the server will put qop parameter in the challenge. When set to 0 
-			then the server will not put qop parameter in the challenge. It 
-			is strongly recommended to use qop parameter, however there are 
-			still some user agents that cannot handle qop parameter properly 
-			so we made this optional. On the other hand there are still some 
-			user agents that cannot handle request without qop parameter too.
+			the server will put a qop parameter in the challenge. When set to 0
+			then the server will not put the qop parameter in the challenge. It
+			is recommended to use the qop parameter, however there are still some
+			user agents that cannot handle qop properly so we made this optional.
+			On the other hand there are still some user agents that cannot handle
+			request without a qop parameter too.
+			</para>
+			<para>Enabling this parameter don't improve the security at the moment,
+			because the sequence number is not stored and therefore could not be
+			checked. Actually there is no information kept by the module during
+			the challenge and response requests.
 			</para>
 		</listitem>
 		</itemizedlist>
