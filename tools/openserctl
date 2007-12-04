@@ -1466,8 +1466,6 @@ openser_stop() {
 options_ping() {
 	myhost=`get_my_host`
 	require_ctlengine
-	# disable the replacements of tabs and newlines
-	unset IFS
 	CMD="t_uac_dlg OPTIONS \"$1\" \".\" \".\" \"From:daemon@$myhost"$'\r\n'"To:<$1>"$'\r\n'"Contact:daemon@$myhost"$'\r\n'"\""
 	RET=`$CTLCMD $CMD | head -1`
 	print_status $RET
