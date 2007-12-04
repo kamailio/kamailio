@@ -40,7 +40,8 @@ ANNOTATE({{}},
 		t_on_failure("MESSAGE");
 	}
 }})
-}})dnl ifdef GS_MESSAGEifdef({{GS_HELLOWORLD}},{{
+}})dnl ifdef GS_MESSAGE
+ifdef({{GS_HELLOWORLD}},{{
 ANNOTATE(
 {{t_relay() is a function exposed by the tm.so module and is
         perhaps one of the most important functions in any ser.cfg file.
@@ -57,7 +58,7 @@ PARA    See section 1 for more in-depth background information on
 	# overruling received parameters (i.e. for NATed user agents)
 	# UDP to TCP and vice versa works as well.
 }},
-{{	if (!t_relay()) {
+{{	if (!t_relay()) { 
 }})dnl
 ANNOTATE({{If t_relay() cannot send the SIP message then
         sl_reply_error() will send the error back to the SIP client to inform
@@ -69,5 +70,6 @@ PARA	If everything is ok, we are done and exit will end execution of ser.cfg
 	};
 	exit;
 }
+}})dnl
 }})dnl ifdef GS_HELLOWORLD
 changequote(`,')dnl

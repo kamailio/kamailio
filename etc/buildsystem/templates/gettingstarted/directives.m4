@@ -28,6 +28,13 @@ ANNOTATE({{Since we are running SER as a foreground process we must set the
 ANNOTATE({{}},
 {{# Log to the defined syslog facility}},
 {{log_facility=SYSLOG_FACILITY}})
+ifdef({{GS_XMLRPC}},
+{{ANNOTATE({{The new python-based control system, ser_ctl, will default try 
+	to contact SER on localhost. Thus, SER should listen to localhost 
+	as well.}},
+{{# Listen to localhost for ser_ctl}},
+{{listen=127.0.0.1}})
+}})dnl
 ANNOTATE({{The listen directive instructs SER to listen for SIP traffic on
         a specific IP address. Your server must physically listen on the IP
         address you enter here. If you omit this directive then SER will
