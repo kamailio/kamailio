@@ -52,7 +52,12 @@ ANNOTATE({{The textops module is a generix utility module that offers useful fun
 ANNOTATE({{}},
 {{# Load the sanity check module to do integrity checks on incoming messages.}},
 {{loadmodule "SER_LIB_DIR/sanity.so"}})
+ifdef({{OPTIONS_REPLY_TO_LOCAL}},
+{{ANNOTATE({{}},
+{{# Load the options module to reply to OPTIONS messages.}},
+{{loadmodule "SER_LIB_DIR/options.so"}})
 }})dnl
+}})dnl GS_HELLOWORLD
 ifdef({{USE_MYSQL_DB}},
 {{ANNOTATE({{}},
 {{# Load the mysql connector module.}},

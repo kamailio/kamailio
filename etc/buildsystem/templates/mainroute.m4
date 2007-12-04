@@ -25,6 +25,8 @@ PKG_INCLUDE(`natdetect')dnl
 
 PKG_INCLUDE(`register')dnl
 
+PKG_INCLUDE(`pre-authentication')dnl
+
 PKG_INCLUDE(`authentication')dnl
 
 PKG_INCLUDE(`typeprocessing')dnl

@@ -105,6 +105,9 @@ dnl Should we force that the authentication user and From is the same user? (and
 define(`REGISTER_CHECK_FROM_EQUALS_AUTH',`defined')dnl
 dnl Should we force that the authentication user and the From is the same user? (to prevent identity spoofing)
 define(`AUTH_CHECK_FROM_EQUALS_AUTH',`defined')dnl
+dnl *** options
+dnl Include reply to OPTIONS message
+define(`OPTIONS_REPLY_TO_LOCAL',`defined')dnl
 dnl
 dnl ====================================================================
 dnl **** DON'T CHANGE BELOW HERE UNLESS YOU KNOW WHAT YOU ARE DOING ****
