@@ -26,6 +26,11 @@
 #ifndef tcp_options_h
 #define tcp_options_h
 
+
+#ifndef NO_TCP_BUF_WRITE
+#define TCP_BUF_WRITE /* enabled buffered writing */
+#endif 
+
 #ifndef NO_TCP_FD_CACHE
 #define TCP_FD_CACHE /* enable fd caching */
 #endif
@@ -95,6 +100,12 @@
 struct tcp_cfg_options{
 	/* ser tcp options */
 	int fd_cache; /* on /off */
+	/* tcp buf. write options */
+	int tcp_buf_write; /* on / off */
+	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
+	unsigned int tcp_wq_max; /* maximum overall queued bytes */
+	unsigned int tcp_wq_timeout;      /* timeout for queue writes */
+
 	/* tcp socket options */
 	int defer_accept; /* on / off */
 	int delayed_ack; /* delay ack on connect */ 

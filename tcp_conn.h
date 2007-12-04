@@ -34,12 +34,15 @@
  *  2007-07-26  improved tcp connection hash function; increased aliases
  *               hash size (andrei)
  *  2007-11-26  switched to local_timer (andrei)
+ *  2007-11-30  buffered write support (andrei)
  */
 
 
 
 #ifndef _tcp_conn_h
 #define _tcp_conn_h
+
+#include "tcp_options.h"
 
 #include "ip_addr.h"
 #include "locking.h"
@@ -67,6 +70,7 @@
 #define F_CONN_NON_BLOCKING 1
 #define F_CONN_REMOVED      2 /* no longer  in "main" listen fd list */
 #define F_CONN_READER       4 /* handled by a tcp reader */
+#define F_CONN_WRITE_W      8 /* watched for write (main) */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
@@ -86,7 +90,7 @@ enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0,
 
 /* fd communication commands */
 enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
-					CONN_GET_FD, CONN_NEW };
+					CONN_GET_FD, CONN_NEW, CONN_QUEUED_WRITE };
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, NEW, ERROR only by writers */
 
@@ -121,6 +125,23 @@ struct tcp_conn_alias{
 };
 
 
+#ifdef TCP_BUF_WRITE
+	struct tcp_wbuffer{
+		struct tcp_wbuffer* next;
+		unsigned int b_size;
+		char buf[1];
+	};
+
+	struct tcp_wbuffer_queue{
+		struct tcp_wbuffer* first;
+		struct tcp_wbuffer* last;
+		unsigned int queued; /* total size */
+		unsigned int offset; /* offset in the first wbuffer were data
+								starts */
+		unsigned int last_used; /* how much of the last buffer is used */
+	};
+#endif
+
 
 struct tcp_connection{
 	int s; /*socket, used by "tcp main" */
@@ -137,7 +158,7 @@ struct tcp_connection{
 	enum tcp_conn_states state; /* connection state */
 	void* extra_data; /* extra data associated to the connection, 0 for tcp*/
 	struct timer_ln timer;
-	unsigned int timeout;/* connection timeout, after this it will be removed*/
+	ticks_t timeout;/* connection timeout, after this it will be removed*/
 	unsigned id_hash; /* hash index in the id_hash */
 	struct tcp_connection* id_next; /* next, prev in id hash table */
 	struct tcp_connection* id_prev;
@@ -145,6 +166,10 @@ struct tcp_connection{
 	struct tcp_connection* c_prev;
 	struct tcp_conn_alias con_aliases[TCP_CON_MAX_ALIASES];
 	int aliases; /* aliases number, at least 1 */
+#ifdef TCP_BUF_WRITE
+	ticks_t last_write; /* time when the last write took place */
+	struct tcp_wbuffer_queue wbuf_q;
+#endif
 };
 
 

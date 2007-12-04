@@ -532,10 +532,11 @@ static void core_tcpinfo(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_get_info(&ti);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "ddd",
+		rpc->struct_add(handle, "dddd",
 			"readers", ti.tcp_readers,
 			"max_connections", ti.tcp_max_connections,
-			"opened_connections", ti.tcp_connections_no
+			"opened_connections", ti.tcp_connections_no,
+			"write_queued_bytes", ti.tcp_write_queued
 		);
 	}else{
 		rpc->fault(c, 500, "tcp support disabled");
@@ -561,8 +562,13 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "ddddddddd",
+		rpc->struct_add(handle, "ddddddddddddd",
 			"fd_cache",		t.fd_cache,
+			"tcp_buf_write",	t.tcp_buf_write,
+			"tcpconn_wq_max",	t.tcpconn_wq_max,
+			"tcp_wq_max",	t.tcp_wq_max,
+			"tcp_wq_timeout",	TICKS_TO_S(t.tcp_wq_timeout),
+			
 			"defer_accept",	t.defer_accept,
 			"delayed_ack",	t.delayed_ack,
 			"syncnt",		t.syncnt,

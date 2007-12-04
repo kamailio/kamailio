@@ -120,6 +120,15 @@ new config variables:
      will be cached inside the process calling tcp_send (performance increase
      for sending over tcp at the cost of slightly slower connection closing and
      extra FDs kept open)
+  tcp_buf_write = yes | no (default no) - if enabled all the tcp  writes that 
+     would block / wait for connect to finish, will be queued and attempted
+     latter (see also tcp_conn_wq_max and tcp_wq_max).
+  tcp_conn_wq_max = bytes (default 32 K) - maximum bytes queued for write 
+     allowed per connection. Attempting to queue more bytes would result
+     in an error and in the connection being closed (too slow). If 
+     tcp_write_buf is not enabled, it has no effect.
+  tcp_wq_max = bytes (default 10 Mb) - maximum bytes queued for write allowed
+     globally. It has no effect if tcp_write_buf is not enabled.
   tcp_defer_accept =  yes | no (default no) on freebsd  / number of seconds
         before timeout on linux (default disabled) - tcp accepts will be 
         delayed until some data is received (improves performance on proxies

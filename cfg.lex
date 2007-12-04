@@ -293,6 +293,9 @@ TCP_MAX_CONNECTIONS	"tcp_max_connections"
 TCP_SOURCE_IPV4		"tcp_source_ipv4"
 TCP_SOURCE_IPV6		"tcp_source_ipv6"
 TCP_OPT_FD_CACHE	"tcp_fd_cache"
+TCP_OPT_BUF_WRITE	"tcp_buf_write"
+TCP_OPT_CONN_WQ_MAX	"tcp_conn_wq_max"
+TCP_OPT_WQ_MAX		"tcp_wq_max"
 TCP_OPT_DEFER_ACCEPT "tcp_defer_accept"
 TCP_OPT_DELAYED_ACK	"tcp_delayed_ack"
 TCP_OPT_SYNCNT		"tcp_syncnt"
@@ -561,6 +564,12 @@ EAT_ABLE	[\ \t\b\r]
 									return TCP_SOURCE_IPV6; }
 <INITIAL>{TCP_OPT_FD_CACHE}		{ count(); yylval.strval=yytext;
 									return TCP_OPT_FD_CACHE; }
+<INITIAL>{TCP_OPT_CONN_WQ_MAX}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_CONN_WQ_MAX; }
+<INITIAL>{TCP_OPT_WQ_MAX}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_WQ_MAX; }
+<INITIAL>{TCP_OPT_BUF_WRITE}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_BUF_WRITE; }
 <INITIAL>{TCP_OPT_DEFER_ACCEPT}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_DEFER_ACCEPT; }
 <INITIAL>{TCP_OPT_DELAYED_ACK}	{ count(); yylval.strval=yytext;

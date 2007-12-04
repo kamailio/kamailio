@@ -87,6 +87,7 @@
  *  2007-11-27  added send fd cache and reader fd reuse (andrei)
  *  2007-11-28  added support for TCP_DEFER_ACCEPT, KEEPALIVE, KEEPINTVL,
  *               KEEPCNT, QUICKACK, SYNCNT, LINGER2 (andrei)
+ *  2007-12-04  support for queueing write requests (andrei)
  */
 
 
@@ -145,6 +146,7 @@
 
 #include "tcp_info.h"
 #include "tcp_options.h"
+#include "ut.h"
 
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
@@ -176,6 +178,12 @@
 /* minimum interval local_timer_run() is allowed to run, in ticks */
 #define TCPCONN_TIMEOUT_MIN_RUN 1  /* once per tick */
 #define TCPCONN_WAIT_TIMEOUT 1 /* 1 tick */
+
+#ifdef TCP_BUF_WRITE
+#define TCP_WBUF_SIZE	1024 /* FIXME: after debugging switch to 16-32k */
+static unsigned int* tcp_total_wq=0;
+#endif
+
 
 enum fd_types { F_NONE, F_SOCKINFO /* a tcp_listen fd */,
 				F_TCPCONN, F_TCPCHILD, F_PROC };
@@ -542,6 +550,173 @@ end:
 
 
 
+inline static int _tcpconn_write_nb(int fd, struct tcp_connection* c,
+									char* buf, int len);
+
+
+#ifdef TCP_BUF_WRITE
+
+
+inline static int wbufq_add(struct  tcp_connection* c, char* data, 
+							unsigned int size)
+{
+	struct tcp_wbuffer_queue* q;
+	struct tcp_wbuffer* wb;
+	unsigned int last_free;
+	unsigned int wb_size;
+	unsigned int crt_size;
+	ticks_t t;
+	
+	q=&c->wbuf_q;
+	t=get_ticks_raw();
+	if (unlikely(	((q->queued+size)>tcp_options.tcpconn_wq_max) ||
+					((*tcp_total_wq+size)>tcp_options.tcp_wq_max) ||
+					(q->first &&
+					TICKS_GT(t, c->last_write+tcp_options.tcp_wq_timeout)) )){
+		LOG(L_ERR, "ERROR: wbufq_add(%d bytes): write queue full or timeout "
+					" (%d, total %d, last write %d s ago)\n",
+					size, q->queued, *tcp_total_wq,
+					TICKS_TO_S(t-c->last_write));
+		goto error;
+	}
+	
+	if (unlikely(q->last==0)){
+		wb_size=MAX_unsigned(TCP_WBUF_SIZE, size);
+		wb=shm_malloc(sizeof(*wb)+wb_size-1);
+		if (unlikely(wb==0))
+			goto error;
+		wb->b_size=wb_size;
+		wb->next=0;
+		q->last=wb;
+		q->first=wb;
+		q->last_used=0;
+		q->offset=0;
+		c->last_write=get_ticks_raw(); /* start with the crt. time */
+	}else{
+		wb=q->last;
+	}
+	
+	while(size){
+		last_free=wb->b_size-q->last_used;
+		if (last_free==0){
+			wb_size=MAX_unsigned(TCP_WBUF_SIZE, size);
+			wb=shm_malloc(sizeof(*wb)+wb_size-1);
+			if (unlikely(wb==0))
+				goto error;
+			wb->b_size=wb_size;
+			wb->next=0;
+			q->last->next=wb;
+			q->last=wb;
+			q->last_used=0;
+			last_free=wb->b_size;
+		}
+		crt_size=MIN_unsigned(last_free, size);
+		memcpy(wb->buf, data, crt_size);
+		q->last_used+=crt_size;
+		size-=crt_size;
+		data+=crt_size;
+		q->queued+=crt_size;
+		atomic_add_int((int*)tcp_total_wq, crt_size);
+	}
+	return 0;
+error:
+	return -1;
+}
+
+
+
+inline static void wbufq_destroy( struct  tcp_wbuffer_queue* q)
+{
+	struct tcp_wbuffer* wb;
+	struct tcp_wbuffer* next_wb;
+	int unqueued;
+	
+	unqueued=0;
+	if (likely(q->first)){
+		wb=q->first;
+		do{
+			next_wb=wb->next;
+			unqueued+=(wb==q->last)?q->last_used:wb->b_size;
+			if (wb==q->first)
+				unqueued-=q->offset;
+			shm_free(wb);
+			wb=next_wb;
+		}while(wb);
+	}
+	memset(q, 0, sizeof(*q));
+	atomic_add_int((int*)tcp_total_wq, -unqueued);
+}
+
+
+
+/* tries to empty the queue
+ * returns -1 on error, bytes written on success (>=0) 
+ * if the whole queue is emptied => sets *empty*/
+inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
+{
+	struct tcp_wbuffer_queue* q;
+	struct tcp_wbuffer* wb;
+	int n;
+	int ret;
+	int block_size;
+	ticks_t t;
+	char* buf;
+	
+	*empty=0;
+	ret=0;
+	t=get_ticks_raw();
+	lock_get(&c->write_lock);
+	q=&c->wbuf_q;
+	while(q->first){
+		block_size=((q->first==q->last)?q->last_used:q->first->b_size)-
+						q->offset;
+		buf=q->first->buf+q->offset;
+		n=_tcpconn_write_nb(fd, c, buf, block_size);
+		if (likely(n>0)){
+			ret+=n;
+			if (likely(n==block_size)){
+				wb=q->first;
+				q->first=q->first->next; 
+				shm_free(wb);
+				q->offset=0;
+				q->queued-=block_size;
+				atomic_add_int((int*)tcp_total_wq, -block_size);
+			}else{
+				q->offset+=n;
+				q->queued-=n;
+				atomic_add_int((int*)tcp_total_wq, -n);
+				break;
+			}
+			c->last_write=t;
+			c->state=S_CONN_OK;
+		}else{
+			if (n<0){
+				/* EINTR is handled inside _tcpconn_write_nb */
+				if (!(errno==EAGAIN || errno==EWOULDBLOCK)){
+					ret=-1;
+					LOG(L_ERR, "ERROR: wbuf_runq: %s [%d]\n",
+						strerror(errno), errno);
+				}
+			}
+			break;
+		}
+	}
+	if (likely(q->first==0)){
+		q->last=0;
+		q->last_used=0;
+		q->offset=0;
+		*empty=1;
+	}
+	if (unlikely(c->state==S_CONN_CONNECT && (ret>0)))
+			c->state=S_CONN_OK;
+	lock_release(&c->write_lock);
+	return ret;
+}
+
+#endif /* TCP_BUF_WRITE */
+
+
+
 #if 0
 /* blocking write even on non-blocking sockets 
  * if TCP_TIMEOUT will return with error */
@@ -687,6 +862,10 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 	socklen_t my_name_len;
 	struct tcp_connection* con;
 	struct ip_addr ip;
+	enum tcp_conn_states state;
+#ifdef TCP_BUF_WRITE
+	int n;
+#endif /* TCP_BUF_WRITE */
 
 	s=-1;
 	
@@ -710,11 +889,30 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 	if (from && bind(s, &from->s, sockaddru_len(*from)) != 0)
 		LOG(L_WARN, "WARNING: tcpconn_connect: binding to source address"
 					" failed: %s [%d]\n", strerror(errno), errno);
-
-	if (tcp_blocking_connect(s, &server->s, sockaddru_len(*server))<0){
-		LOG(L_ERR, "ERROR: tcpconn_connect: tcp_blocking_connect failed\n");
-		goto error;
+#ifdef TCP_BUF_WRITE
+	if (likely(tcp_options.tcp_buf_write)){
+again:
+		n=connect(s, &server->s, sockaddru_len(*server));
+		if (unlikely(n==-1)){
+			if (errno==EINTR) goto again;
+			if (errno!=EINPROGRESS && errno!=EALREADY){
+				LOG(L_ERR, "ERROR: tcpconn_connect: connect: (%d) %s\n",
+						errno, strerror(errno));
+				goto error;
+			}
+			state=S_CONN_CONNECT;
+		}
+	}else{
+#endif /* TCP_BUF_WRITE */
+		if (tcp_blocking_connect(s, &server->s, sockaddru_len(*server))<0){
+			LOG(L_ERR, "ERROR: tcpconn_connect: tcp_blocking_connect"
+						" failed\n");
+			goto error;
+		}
+		state=S_CONN_OK;
+#ifdef TCP_BUF_WRITE
 	}
+#endif /* TCP_BUF_WRITE */
 	if (from){
 		su2ip_addr(&ip, from);
 		if (!ip_addr_any(&ip))
@@ -746,7 +944,7 @@ skip:
 		else si=sendipv6_tcp;
 #endif
 	}
-	con=tcpconn_new(s, server, from, si,  type, S_CONN_CONNECT);
+	con=tcpconn_new(s, server, from, si,  type, state);
 	if (con==0){
 		LOG(L_ERR, "ERROR: tcp_connect: tcpconn_new failed, closing the "
 				 " socket\n");
@@ -818,6 +1016,10 @@ static inline void _tcpconn_detach(struct tcp_connection *c)
 
 static inline void _tcpconn_free(struct tcp_connection* c)
 {
+#ifdef TCP_BUF_WRITE
+	if (unlikely(c->wbuf_q.first))
+		wbufq_destroy(&c->wbuf_q);
+#endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
 	if (unlikely(c->type==PROTO_TLS)) tls_tcpconn_clean(c);
@@ -1134,6 +1336,9 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 	long response[2];
 	int n;
 	int do_close_fd;
+#ifdef TCP_BUF_WRITE
+	int enable_write_watch;
+#endif /* TCP_BUF_WRITE */
 #ifdef TCP_FD_CACHE
 	struct fd_cache_entry* fd_cache_e;
 	
@@ -1204,6 +1409,24 @@ no_id:
 			goto send_it;
 		}
 get_fd:
+#ifdef TCP_BUF_WRITE
+		/* if data is already queued, we don't need the fd any more */
+		if (unlikely(tcp_options.tcp_buf_write && c->wbuf_q.first)){
+			lock_get(&c->write_lock);
+				if (likely(c->wbuf_q.first)){
+					do_close_fd=0;
+					if (unlikely(wbufq_add(c, buf, len)<0)){
+						lock_release(&c->write_lock);
+						n=-1;
+						goto error;
+					}
+					n=len;
+					lock_release(&c->write_lock);
+					goto release_c;
+				}
+			lock_release(&c->write_lock);
+		}
+#endif /* TCP_BUF_WRITE */
 		/* check if this is not the same reader process holding
 		 *  c  and if so send directly on c->fd */
 		if (c->reader_pid==my_pid()){
@@ -1237,6 +1460,7 @@ get_fd:
 				LOG(L_ERR, "BUG: tcp_send: failed to get fd(receive_fd):"
 							" %s (%d)\n", strerror(errno), errno);
 				n=-1;
+				do_close_fd=0;
 				goto release_c;
 			}
 			if (unlikely(c!=tmp)){
@@ -1256,6 +1480,21 @@ get_fd:
 send_it:
 	DBG("tcp_send: sending...\n");
 	lock_get(&c->write_lock);
+#ifdef TCP_BUF_WRITE
+	if (likely(tcp_options.tcp_buf_write)){
+		if (c->wbuf_q.first){
+			if (unlikely(wbufq_add(c, buf, len)<0)){
+				lock_release(&c->write_lock);
+				n=-1;
+				goto error;
+			}
+			lock_release(&c->write_lock);
+			n=len;
+			goto end;
+		}
+		n=_tcpconn_write_nb(fd, c, buf, len);
+	}else{
+#endif /* TCP_BUF_WRITE */
 #ifdef USE_TLS
 	if (c->type==PROTO_TLS)
 		n=tls_blocking_write(c, fd, buf, len);
@@ -1263,10 +1502,39 @@ send_it:
 #endif
 		/* n=tcp_blocking_write(c, fd, buf, len); */
 		n=tsend_stream(fd, buf, len, tcp_send_timeout*1000); 
+#ifdef TCP_BUF_WRITE
+	}
+#endif /* TCP_BUF_WRITE */
 	lock_release(&c->write_lock);
 	DBG("tcp_send: after write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
 	if (unlikely(n<0)){
+#ifdef TCP_BUF_WRITE
+		if (tcp_options.tcp_buf_write && 
+				(errno==EAGAIN || errno==EWOULDBLOCK)){
+			lock_get(&c->write_lock);
+			enable_write_watch=(c->wbuf_q.first==0);
+			if (unlikely(wbufq_add(c, buf, len)<0)){
+				lock_release(&c->write_lock);
+				n=-1;
+				goto error;
+			}
+			lock_release(&c->write_lock);
+			n=len;
+			if (enable_write_watch){
+				response[0]=(long)c;
+				response[1]=CONN_QUEUED_WRITE;
+				if (send_all(unix_tcp_sock, response, sizeof(response))<=0){
+					LOG(L_ERR, "BUG: tcp_send: error return failed "
+							"(write):%s (%d)\n", strerror(errno), errno);
+					n=-1;
+					goto error;
+				}
+			}
+			goto end;
+		}
+error:
+#endif /* TCP_BUF_WRITE */
 		LOG(L_ERR, "ERROR: tcp_send: failed to send\n");
 		/* error on the connection , mark it as bad and set 0 timeout */
 		c->state=S_CONN_BAD;
@@ -1294,6 +1562,13 @@ send_it:
 		if (do_close_fd) close(fd);
 		return n; /* error return, no tcpconn_put */
 	}
+#ifdef TCP_BUF_WRITE
+	if (likely(tcp_options.tcp_buf_write)){
+		if (unlikely(c->state==S_CONN_CONNECT))
+			c->state=S_CONN_OK;
+		c->last_write=get_ticks_raw();
+	}
+#endif /* TCP_BUF_WRITE */
 end:
 #ifdef TCP_FD_CACHE
 	if (unlikely((fd_cache_e==0) && tcp_options.fd_cache)){
@@ -1465,23 +1740,40 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 	 *  (if the timer is already removed, nothing happens) */
 	if (likely(!(tcpconn->flags & F_CONN_READER)))
 		local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+#ifdef TCP_BUF_WRITE
+	if (unlikely((tcpconn->flags & F_CONN_WRITE_W) ||
+				!(tcpconn->flags & F_CONN_REMOVED))){
+		LOG(L_CRIT, "tcpconn_destroy: possible BUG: flags = %0x\n",
+					tcpconn->flags);
+	}
+	if (unlikely(tcpconn->wbuf_q.first)){
+		lock_get(&tcpconn->write_lock);
+			/* check again, while holding the lock */
+			if (likely(tcpconn->wbuf_q.first))
+				wbufq_destroy(&tcpconn->wbuf_q);
+		lock_release(&tcpconn->write_lock);
+	}
+#endif /* TCP_BUF_WRITE */
 	TCPCONN_LOCK; /*avoid races w/ tcp_send*/
 	if (likely(atomic_dec_and_test(&tcpconn->refcnt))){ 
 		_tcpconn_detach(tcpconn);
 		TCPCONN_UNLOCK;
-		DBG("tcpconn_destroy: destroying connection %p, flags %04x\n",
-				tcpconn, tcpconn->flags);
+		DBG("tcpconn_destroy: destroying connection %p (%d, %d) flags %04x\n",
+				tcpconn, tcpconn->id, tcpconn->s, tcpconn->flags);
 		fd=tcpconn->s;
 #ifdef USE_TLS
 		/*FIXME: lock ->writelock ? */
 		if (tcpconn->type==PROTO_TLS)
 			tls_close(tcpconn, fd);
 #endif
-		_tcpconn_free(tcpconn);
+		_tcpconn_free(tcpconn); /* destroys also the wbuf_q if still present*/
 #ifdef TCP_FD_CACHE
 		if (likely(tcp_options.fd_cache)) shutdown(fd, SHUT_RDWR);
 #endif /* TCP_FD_CACHE */
-		close(fd);
+		if (unlikely(close(fd)<0)){
+			LOG(L_ERR, "ERROR: tcpconn_destroy; close() failed: %s (%d)\n",
+					strerror(errno), errno);
+		}
 		(*tcp_connections_no)--;
 	}else{
 		TCPCONN_UNLOCK;
@@ -1627,6 +1919,13 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 						   p->unix_sock, (long)(p-&q->data[0]), p->retries,
 						   p->tcp_conn, p->tcp_conn->s, errno,
 						   strerror(errno));
+#ifdef TCP_BUF_WRITE
+				if (p->tcp_conn->flags & F_CONN_WRITE_W){
+					io_watch_del(&io_h, p->tcp_conn->s, -1, IO_FD_CLOSING);
+					p->tcp_conn->flags &=~F_CONN_WRITE_W;
+				}
+#endif
+				p->tcp_conn->flags &= ~F_CONN_READER;
 				tcpconn_destroy(p->tcp_conn);
 			}
 		}
@@ -1636,6 +1935,36 @@ inline static void send_fd_queue_run(struct tcp_send_fd_q* q)
 #else
 #define send_fd_queue_run(q)
 #endif
+
+
+/* non blocking write() on a tcpconnection, unsafe version (should be called
+ * while holding  c->write_lock). The fd should be non-blocking.
+ *  returns number of bytes written on success, -1 on error (and sets errno)
+ */
+inline static int _tcpconn_write_nb(int fd, struct tcp_connection* c,
+									char* buf, int len)
+{
+	int n;
+	
+again:
+#ifdef USE_TLS
+	if (unlikely(c->type==PROTO_TLS))
+		/* FIXME: tls_nonblocking_write !! */
+		n=tls_blocking_write(c, fd, buf, len);
+	else
+#endif /* USE_TLS */
+		n=send(fd, buf, len,
+#ifdef HAVE_MSG_NOSIGNAL
+					MSG_NOSIGNAL
+#else
+					0
+#endif /* HAVE_MSG_NOSIGNAL */
+			  );
+	if (unlikely(n<0)){
+		if (errno==EINTR) goto again;
+	}
+	return n;
+}
 
 
 
@@ -1654,6 +1983,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	long response[2];
 	int cmd;
 	int bytes;
+	int n;
 	ticks_t t;
 	
 	if (unlikely(tcp_c->unix_sock<=0)){
@@ -1715,6 +2045,12 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 		case CONN_RELEASE:
 			tcp_c->busy--;
 			if (unlikely(tcpconn->state==S_CONN_BAD)){ 
+#ifdef TCP_BUF_WRITE
+				if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
+					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+					tcpconn->flags &= ~F_CONN_WRITE_W;
+				}
+#endif /* TCP_BUF_WRITE */
 				tcpconn_destroy(tcpconn);
 				break;
 			}
@@ -1729,12 +2065,22 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 								tcp_con_lifetime, t);
 			/* must be after the de-ref*/
 			tcpconn->flags&=~(F_CONN_REMOVED|F_CONN_READER);
-			if (unlikely(
-					io_watch_add(&io_h, tcpconn->s, POLLIN,
-												F_TCPCONN, tcpconn)<0)){
+#ifdef TCP_BUF_WRITE
+			if (unlikely(tcpconn->flags & F_CONN_WRITE_W))
+				n=io_watch_chg(&io_h, tcpconn->s, POLLIN| POLLOUT, -1);
+			else
+#endif /* TCP_BUF_WRITE */
+				n=io_watch_add(&io_h, tcpconn->s, POLLIN, F_TCPCONN, tcpconn);
+			if (unlikely(n<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_tcp_child: failed to add"
 						" new socket to the fd list\n");
 				tcpconn->flags|=F_CONN_REMOVED;
+#ifdef TCP_BUF_WRITE
+				if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
+					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+					tcpconn->flags&=~F_CONN_WRITE_W;
+				}
+#endif /* TCP_BUF_WRITE */
 				tcpconn_destroy(tcpconn); /* closes also the fd */
 			}
 			DBG("handle_tcp_child: CONN_RELEASE  %p refcnt= %d\n", 
@@ -1749,6 +2095,12 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 				 if (tcpconn->s!=-1)
 					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 				*/
+#ifdef TCP_BUF_WRITE
+				if ((tcpconn->flags & F_CONN_WRITE_W) && (tcpconn->s!=-1)){
+					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+					tcpconn->flags&=~F_CONN_WRITE_W;
+				}
+#endif /* TCP_BUF_WRITE */
 				tcpconn_destroy(tcpconn); /* closes also the fd */
 				break;
 		default:
@@ -1785,6 +2137,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	int bytes;
 	int ret;
 	int fd;
+	int flags;
 	ticks_t t;
 	
 	ret=-1;
@@ -1844,10 +2197,15 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 	}
 	switch(cmd){
 		case CONN_ERROR:
-			if (!(tcpconn->flags & F_CONN_REMOVED) && (tcpconn->s!=-1)){
+			if ( (!(tcpconn->flags & F_CONN_REMOVED) ||
+					(tcpconn->flags & F_CONN_WRITE_W) ) && (tcpconn->s!=-1)){
 				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
 				tcpconn->flags|=F_CONN_REMOVED;
+				tcpconn->flags&=~F_CONN_WRITE_W;
 			}
+			LOG(L_ERR, "handle_ser_child: ERROR: received CON_ERROR for %p"
+					" (id %d), refcnt %d\n", 
+					tcpconn, tcpconn->id, atomic_get(&tcpconn->refcnt));
 			tcpconn_destroy(tcpconn); /* will close also the fd */
 			break;
 		case CONN_GET_FD:
@@ -1879,15 +2237,53 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
 			tcpconn->flags&=~F_CONN_REMOVED;
+			flags=POLLIN 
+#ifdef TCP_BUF_WRITE
+					/* not used for now, the connection is sent to tcp_main
+					 * before knowing if we can write on it or we should 
+					 * wait */
+					| (((int)!(tcpconn->flags & F_CONN_WRITE_W)-1) & POLLOUT)
+#endif /* TCP_BUF_WRITE */
+					;
 			if (unlikely(
-					io_watch_add(&io_h, tcpconn->s, POLLIN,
+					io_watch_add(&io_h, tcpconn->s, flags,
 												F_TCPCONN, tcpconn)<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed to add"
 						" new socket to the fd list\n");
 				tcpconn->flags|=F_CONN_REMOVED;
+				tcpconn->flags&=~F_CONN_WRITE_W;
 				tcpconn_destroy(tcpconn); /* closes also the fd */
 			}
 			break;
+#ifdef TCP_BUF_WRITE
+		case CONN_QUEUED_WRITE:
+			if (!(tcpconn->flags & F_CONN_WRITE_W)){
+				if (tcpconn->flags& F_CONN_REMOVED){
+					if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
+												F_TCPCONN, tcpconn)<0)){
+						LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed"
+								    " to enable write watch on socket\n");
+						tcpconn_destroy(tcpconn);
+						break;
+					}
+				}else{
+					if (unlikely(io_watch_chg(&io_h, tcpconn->s,
+												POLLIN|POLLOUT, -1)<0)){
+						LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed"
+								    " to change socket watch events\n");
+						io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+						tcpconn->flags|=F_CONN_REMOVED;
+						tcpconn_destroy(tcpconn);
+						break;
+					}
+				}
+				tcpconn->flags|=F_CONN_WRITE_W;
+			}else{
+				LOG(L_WARN, "tcp_main: hanlder_ser_child: connection %p"
+							" already watched for write\n", tcpconn);
+			}
+			break;
+#endif /* TCP_BUF_WRITE */
 		default:
 			LOG(L_CRIT, "BUG: handle_ser_child: unknown cmd %d\n", cmd);
 	}
@@ -2056,6 +2452,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		if(unlikely(send2child(tcpconn)<0)){
 			LOG(L_ERR,"ERROR: handle_new_connect: no children "
 					"available\n");
+			tcpconn->flags&=~F_CONN_READER;
 			tcpconn_destroy(tcpconn);
 		}
 #endif
@@ -2075,13 +2472,17 @@ static inline int handle_new_connect(struct socket_info* si)
  * params: tcpconn - pointer to the tcp_connection for which we have an io ev.
  *         fd_i    - index in the fd_array table (needed for delete)
  * returns:  handle_* return convention, but on success it always returns 0
- *           (because it's one-shot, after a succesfull execution the fd is
+ *           (because it's one-shot, after a succesful execution the fd is
  *            removed from tcp_main's watch fd list and passed to a child =>
  *            tcp_main is not interested in further io events that might be
  *            queued for this fd)
  */
-inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
+inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev, 
+										int fd_i)
 {
+#ifdef TCP_BUF_WRITE
+	int empty_q;
+#endif /* TCP_BUF_WRITE */
 	/*  is refcnt!=0 really necessary? 
 	 *  No, in fact it's a bug: I can have the following situation: a send only
 	 *   tcp connection used by n processes simultaneously => refcnt = n. In 
@@ -2101,17 +2502,55 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, int fd_i)
 #endif
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
-	DBG("handle_tcpconn_ev: data available on %p %d\n", tcpconn, tcpconn->s);
-	if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1)) goto error;
-	tcpconn->flags|=F_CONN_REMOVED|F_CONN_READER;
-	local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
-	tcpconn_ref(tcpconn); /* refcnt ++ */
-	if (unlikely(send2child(tcpconn)<0)){
-		LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
-		tcpconn_destroy(tcpconn);
+	DBG("handle_tcpconn_ev: ev (%0x) on %p %d\n", ev, tcpconn, tcpconn->s);
+#ifdef TCP_BUF_WRITE
+	if (unlikely((ev & POLLOUT) && (tcpconn->flags & F_CONN_WRITE_W))){
+		if (unlikely(wbufq_run(tcpconn->s, tcpconn, &empty_q)<0)){
+			io_watch_del(&io_h, tcpconn->s, fd_i, 0);
+			tcpconn->flags|=F_CONN_REMOVED;
+			tcpconn->flags&=~F_CONN_WRITE_W;
+			tcpconn_destroy(tcpconn);
+			goto error;
+		}
+		if (empty_q){
+			if (tcpconn->flags & F_CONN_REMOVED){
+				if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1))
+					goto error;
+			}else{
+				if (unlikely(io_watch_chg(&io_h, tcpconn->s,
+											POLLIN, fd_i)==-1))
+					goto error;
+			}
+		}
+	}
+	if (likely((ev & POLLIN) && !(tcpconn->flags & F_CONN_REMOVED))){
+		if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
+			if (unlikely(io_watch_chg(&io_h, tcpconn->s, POLLOUT, fd_i)==-1))
+				goto error;
+		}else
+#else
+	{
+#endif /* TCP_BUF_WRITE */
+			if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1))
+				goto error;
+		tcpconn->flags|=F_CONN_REMOVED|F_CONN_READER;
+		local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+		tcpconn_ref(tcpconn); /* refcnt ++ */
+		if (unlikely(send2child(tcpconn)<0)){
+			LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
+			tcpconn->flags&=~F_CONN_READER;
+#ifdef TCP_BUF_WRITE
+			if (tcpconn->flags & F_CONN_WRITE_W){
+				io_watch_del(&io_h, tcpconn->s, fd_i, 0);
+				tcpconn->flags&=~F_CONN_WRITE_W;
+			}
+#endif /* TCP_BUF_WRITE */
+			tcpconn_destroy(tcpconn);
+		}
 	}
 	return 0; /* we are not interested in possibly queued io events, 
-				 the fd was either passed to a child, or closed */
+				 the fd was either passed to a child, closed, or for writes,
+				 everything possible was already written */
 error:
 	return -1;
 }
@@ -2131,7 +2570,7 @@ error:
  *         >0 on successfull read from the fd (when there might be more io
  *            queued -- the receive buffer might still be non-empty)
  */
-inline static int handle_io(struct fd_map* fm, short events, int idx)
+inline static int handle_io(struct fd_map* fm, short ev, int idx)
 {	
 	int ret;
 	
@@ -2140,7 +2579,7 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 			ret=handle_new_connect((struct socket_info*)fm->data);
 			break;
 		case F_TCPCONN:
-			ret=handle_tcpconn_ev((struct tcp_connection*)fm->data, idx);
+			ret=handle_tcpconn_ev((struct tcp_connection*)fm->data, ev, idx);
 			break;
 		case F_TCPCHILD:
 			ret=handle_tcp_child((struct tcp_child*)fm->data, idx);
@@ -2185,9 +2624,16 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 				TCPCONN_UNLOCK; /* unlock as soon as possible */
 				fd=c->s;
 				if (likely(fd>0)){
-					if (likely(!(c->flags & F_CONN_REMOVED))){
+					if (likely(!(c->flags & F_CONN_REMOVED)
+#ifdef TCP_BUF_WRITE
+								|| (c->flags & F_CONN_WRITE_W)
+#endif /* TCP_BUF_WRITE */
+								)){
 						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
 						c->flags|=F_CONN_REMOVED;
+#ifdef TCP_BUF_WRITE
+						c->flags&=~F_CONN_WRITE_W;
+#endif /* TCP_BUF_WRITE */
 					}
 #ifdef USE_TLS
 					if (unlikely(c->type==PROTO_TLS ))
@@ -2250,9 +2696,16 @@ static inline void tcpconn_destroy_all()
 						local_timer_del(&tcp_main_ltimer, &c->timer);
 					/* else still in some reader */
 					fd=c->s;
-					if (fd>0 && !(c->flags & F_CONN_REMOVED)){
+					if (fd>0 && (!(c->flags & F_CONN_REMOVED)
+#ifdef TCP_BUF_WRITE
+								|| (c->flags & F_CONN_WRITE_W)
+#endif /* TCP_BUF_WRITE */
+								)){
 						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
 						c->flags|=F_CONN_REMOVED;
+#ifdef TCP_BUF_WRITE
+						c->flags&=~F_CONN_WRITE_W;
+#endif /* TCP_BUF_WRITE */
 					}
 				}else{
 					fd=-1;
@@ -2456,6 +2909,12 @@ void destroy_tcp()
 			shm_free(tcp_connections_no);
 			tcp_connections_no=0;
 		}
+#ifdef TCP_BUF_WRITE
+		if (tcp_total_wq){
+			shm_free(tcp_total_wq);
+			tcp_total_wq=0;
+		}
+#endif /* TCP_BUF_WRITE */
 		if (connection_id){
 			shm_free(connection_id);
 			connection_id=0;
@@ -2508,6 +2967,13 @@ int init_tcp()
 		goto error;
 	}
 	*connection_id=1;
+#ifdef TCP_BUF_WRITE
+	tcp_total_wq=shm_malloc(sizeof(*tcp_total_wq));
+	if (tcp_total_wq==0){
+		LOG(L_CRIT, "ERROR: init_tcp: could not alloc globals\n");
+		goto error;
+	}
+#endif /* TCP_BUF_WRITE */
 	/* alloc hashtables*/
 	tcpconn_aliases_hash=(struct tcp_conn_alias**)
 			shm_malloc(TCP_ALIAS_HASH_SIZE* sizeof(struct tcp_conn_alias*));
@@ -2675,6 +3141,11 @@ void tcp_get_info(struct tcp_gen_info *ti)
 	ti->tcp_readers=tcp_children_no;
 	ti->tcp_max_connections=tcp_max_connections;
 	ti->tcp_connections_no=*tcp_connections_no;
+#ifdef TCP_BUF_WRITE
+	ti->tcp_write_queued=*tcp_total_wq;
+#else
+	ti->tcp_write_queued=0;
+#endif /* TCP_BUF_WRITE */
 }
 
 #endif

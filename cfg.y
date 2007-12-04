@@ -334,6 +334,9 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TCP_SOURCE_IPV4
 %token TCP_SOURCE_IPV6
 %token TCP_OPT_FD_CACHE
+%token TCP_OPT_BUF_WRITE
+%token TCP_OPT_CONN_WQ_MAX
+%token TCP_OPT_WQ_MAX
 %token TCP_OPT_DEFER_ACCEPT
 %token TCP_OPT_DELAYED_ACK
 %token TCP_OPT_SYNCNT
@@ -803,6 +806,30 @@ assign_stm:
 		#endif
 	}
 	| TCP_OPT_FD_CACHE EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_BUF_WRITE EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.tcp_buf_write=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_BUF_WRITE EQUAL error { yyerror("boolean value expected"); }
+	| TCP_OPT_CONN_WQ_MAX EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.tcpconn_wq_max=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_CONN_WQ_MAX error { yyerror("boolean value expected"); }
+	| TCP_OPT_WQ_MAX EQUAL NUMBER {
+		#ifdef USE_TCP
+			tcp_options.tcp_wq_max=$3;
+		#else
+			warn("tcp support not compiled in");
+		#endif
+	}
+	| TCP_OPT_WQ_MAX error { yyerror("boolean value expected"); }
 	| TCP_OPT_DEFER_ACCEPT EQUAL NUMBER {
 		#ifdef USE_TCP
 			tcp_options.defer_accept=$3;

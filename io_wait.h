@@ -842,7 +842,6 @@ again_devpoll2:
 					h->poll_method);
 			goto error;
 	}
-	h->fd_no--;
 	return 0;
 error:
 	return -1;

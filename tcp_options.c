@@ -25,6 +25,8 @@
 
 #include "tcp_options.h"
 #include "dprint.h"
+#include "globals.h"
+#include "timer_ticks.h"
 
 
 struct tcp_cfg_options tcp_options;
@@ -33,7 +35,12 @@ struct tcp_cfg_options tcp_options;
 /* set defaults */
 void init_tcp_options()
 {
-
+#ifdef TCP_BUF_WRITE
+	tcp_options.tcp_buf_write=0;
+	tcp_options.tcpconn_wq_max=32*1024; /* 32 k */
+	tcp_options.tcp_wq_max=10*1024*1024; /* 10 MB */
+	tcp_options.tcp_wq_timeout=S_TO_TICKS(tcp_send_timeout);
+#endif
 #ifdef TCP_FD_CACHE
 	tcp_options.fd_cache=1;
 #endif
@@ -54,7 +61,7 @@ void init_tcp_options()
 
 #define W_OPT_NC(option) \
 	if (tcp_options.option){\
-		WARN("tcp_options: tcp_" ##option \
+		WARN("tcp_options: tcp_" #option \
 				"cannot be enabled (recompile needed)\n"); \
 		tcp_options.option=0; \
 	}
@@ -63,7 +70,7 @@ void init_tcp_options()
 
 #define W_OPT_NS(option) \
 	if (tcp_options.option){\
-		WARN("tcp_options: tcp_" ##option \
+		WARN("tcp_options: tcp_" #option \
 				"cannot be enabled (no OS support)\n"); \
 		tcp_options.option=0; \
 	}
@@ -75,6 +82,13 @@ void tcp_options_check()
 #ifndef TCP_FD_CACHE
 	W_OPT_NC(defer_accept);
 #endif
+
+#ifndef TCP_BUF_WRITE
+	W_OPT_NC(tcp_buf_write);
+	W_OPT_NC(tcpconn_wq_max);
+	W_OPT_NC(tcp_wq_max);
+	W_OPT_NC(tcp_wq_timeout);
+#endif /* TCP_BUF_WRITE */
 
 #if ! defined HAVE_TCP_DEFER_ACCEPT && ! defined HAVE_TCP_ACCEPT_FILTER
 	W_OPT_NS(defer_accept);
