@@ -348,7 +348,7 @@ int record_route_preset(struct sip_msg* _m, str* _data)
 		from = (struct to_body*)_m->from->parsed;
 	}
 	
-	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, 0);
+	l = anchor_lump(_m, _m->headers->name.s - _m->buf, 0, HDR_RECORDROUTE_T);
 	if (!l) {
 		LM_ERR("failed to create lump anchor\n");
 		return -3;
