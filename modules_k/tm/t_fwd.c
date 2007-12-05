@@ -347,6 +347,28 @@ static inline int update_uac_dst( struct sip_msg *request,
 }
 
 
+static inline unsigned int count_local_rr(struct sip_msg *req)
+{
+	unsigned int cnt = 0;
+	struct lump *r;
+
+	/* we look for the RR anchors only 
+	 * in the main list (no after or before) */
+	for( r=req->add_rm ; r ; r=r->next )
+		if ( r->type==HDR_RECORDROUTE_T && r->op==LUMP_NOP) {
+			if (r->after && r->after->op==LUMP_ADD_OPT) {
+				if (r->after->flags&LUMPFLAG_COND_TRUE) {
+					cnt++;
+				}
+			} else {
+				cnt++;
+			}
+		}
+
+	return cnt;
+}
+
+
 /* introduce a new uac to transaction; returns its branch id (>=0)
    or error (<0); it doesn't send a message yet -- a reply to it
    might interfere with the processes of adding multiple branches
@@ -419,6 +441,7 @@ static int add_uac( struct cell *t, struct sip_msg *request, str *uri,
 		request->first_line.u.request.method.len+1;
 	t->uac[branch].uri.len=request->new_uri.len;
 	t->uac[branch].br_flags = getb0flags();
+	t->uac[branch].added_rr = count_local_rr( request );
 	t->nr_of_outgoings++;
 
 	/* done! */

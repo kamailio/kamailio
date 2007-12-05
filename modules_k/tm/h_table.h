@@ -148,6 +148,8 @@ typedef struct ua_client
 	str              uri;
 	/* the path vector used for this branch */
 	str              path_vec;
+	/* number of RR headers that were locally added for this branch */
+	unsigned int     added_rr;
 	/* if we store a reply (branch picking), this is where it is */
 	struct sip_msg  *reply;
 	/* if we don't store, we at least want to know the status */
