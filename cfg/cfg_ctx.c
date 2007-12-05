@@ -151,7 +151,13 @@ error:
 	return -1;
 }
 
-/* sets the value of a variable without the need of commit */
+/* sets the value of a variable without the need of commit
+ *
+ * return value:
+ *   0: success
+ *  -1: error
+ *   1: variable has not been found
+ */
 int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			void *val, unsigned int val_type)
 {
@@ -175,7 +181,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 
 	/* look-up the group and the variable */
 	if (cfg_lookup_var(group_name, var_name, &group, &var))
-		return -1;
+		return 1;
 
 	/* check whether we have to convert the type */
 	if (convert_val(val_type, val, CFG_INPUT_TYPE(var), &v))
@@ -341,7 +347,13 @@ static int cfg_var_size(cfg_mapping_t *var)
 	}
 }
 
-/* sets the value of a variable but does not commit the change */
+/* sets the value of a variable but does not commit the change
+ *
+ * return value:
+ *   0: success
+ *  -1: error
+ *   1: variable has not been found
+ */
 int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			void *val, unsigned int val_type)
 {
@@ -367,7 +379,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 
 	/* look-up the group and the variable */
 	if (cfg_lookup_var(group_name, var_name, &group, &var))
-		return -1;
+		return 1;
 
 	/* check whether we have to convert the type */
 	if (convert_val(val_type, val, CFG_INPUT_TYPE(var), &v))
