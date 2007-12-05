@@ -37,6 +37,7 @@
 #include "../../mem/mem.h"
 #include "../../rpc.h" /* who & ls rpcs */
 #include "../../ut.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "ctrl_socks.h"
 #include "binrpc_run.h"
@@ -259,6 +260,10 @@ void io_listen_loop(int fd_no, struct ctrl_socket* cs_lst)
 			goto error;
 		}
 	}
+
+	/* initialize the config framework */
+	if (cfg_child_init()) goto error;
+
 	/* main loop */
 	switch(io_h.poll_method){
 		case POLL_POLL:
@@ -696,7 +701,10 @@ error:
 inline static int handle_io(struct fd_map* fm, short events, int idx)
 {
 	int ret;
-	
+
+	/* update the local config */
+	cfg_update();
+
 	switch(fm->type){
 		case F_T_CTRL_DGRAM:
 			ret=handle_ctrl_dgram((struct ctrl_socket*)fm->data);
