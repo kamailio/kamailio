@@ -62,7 +62,6 @@ int dlg_db_mode				=	DB_MODE_NONE;
 
 static db_con_t* dialog_db_handle    = 0; /* database connection handle */
 static db_func_t dialog_dbf;
-static time_t clock_time;
 
 
 
@@ -112,8 +111,6 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 {
 	int ver;
 	str table;
-
-	time(&clock_time);
 
 	/* Find a database module */
 	if (bind_dbmod(db_url, &dialog_dbf) < 0){
@@ -300,7 +297,11 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 
 		dlg->start_ts	= VAL_INT(values+7);
 		dlg->state 		= VAL_INT(values+8);
-		dlg->tl.timeout = VAL_INT(values+9) - clock_time;
+		dlg->tl.timeout = (unsigned int)(VAL_INT(values+9)) + get_ticks();
+		if (dlg->tl.timeout<=(unsigned int)time(0))
+			dlg->tl.timeout = 0;
+		else
+			dlg->tl.timeout -= (unsigned int)time(0);
 
 		/*restore the timer values */
 		insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
@@ -410,8 +411,8 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		VAL_INT(values+1)		= cell->h_id;
 		VAL_INT(values+9)		= cell->start_ts;
 		VAL_INT(values+10)		= cell->state;
-		VAL_INT(values+11)		= cell->tl.timeout - get_ticks() + 
-							(unsigned int)clock_time;
+		VAL_INT(values+11)		= (unsigned int)( (unsigned int)time(0) +
+				 cell->tl.timeout - get_ticks() );
 
 		SET_STR_VALUE(values+2, cell->callid);
 		SET_STR_VALUE(values+3, cell->from_uri);
@@ -461,8 +462,9 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 		VAL_INT(values)			= cell->h_entry;
 		VAL_INT(values+1)		= cell->h_id;
 		VAL_INT(values+10)		= cell->state;
-		VAL_INT(values+11)		= cell->tl.timeout - get_ticks() + 
-							(unsigned int)clock_time;
+		VAL_INT(values+11)		= (unsigned int)( (unsigned int)time(0) +
+				 cell->tl.timeout - get_ticks() );
+
 		SET_STR_VALUE(values+12, cell->cseq[DLG_CALLER_LEG]);
 		SET_STR_VALUE(values+13, cell->cseq[DLG_CALLEE_LEG]);
 
@@ -538,8 +540,8 @@ void dialog_update_db(unsigned int ticks, void * param)
 
 				VAL_INT(values+9)		= cell->start_ts;
 				VAL_INT(values+10)		= cell->state;
-				VAL_INT(values+11)		= cell->tl.timeout - get_ticks() +
-									(unsigned int)clock_time;
+				VAL_INT(values+11)	= (unsigned int)( (unsigned int)time(0) +
+					 cell->tl.timeout - get_ticks() );
 
 				SET_STR_VALUE(values+2, cell->callid);
 				SET_STR_VALUE(values+3, cell->from_uri);
@@ -584,8 +586,8 @@ void dialog_update_db(unsigned int ticks, void * param)
 				VAL_INT(values+1)		= cell->h_id;
 
 				VAL_INT(values+10)		= cell->state;
-				VAL_INT(values+11)		= cell->tl.timeout - get_ticks() +
-									(unsigned int)clock_time;
+				VAL_INT(values+11)	= (unsigned int)( (unsigned int)time(0) +
+					 cell->tl.timeout - get_ticks() );
 				SET_STR_VALUE(values+12, cell->cseq[0]);
 				SET_STR_VALUE(values+13, cell->cseq[DLG_CALLEE_LEG]);
 
