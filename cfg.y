@@ -117,6 +117,7 @@
 #include "tcp_options.h"
 
 #include "config.h"
+#include "cfg_core.h"
 #ifdef CORE_TLS
 #include "tls/tls_config.h"
 #endif
@@ -587,7 +588,7 @@ avpflag_spec:
 	}
 	;
 assign_stm:
-	DEBUG_V EQUAL NUMBER { debug=$3; }
+	DEBUG_V EQUAL NUMBER { default_core_cfg.debug=$3; }
 	| DEBUG_V EQUAL error  { yyerror("number  expected"); }
 	| FORK  EQUAL NUMBER { dont_fork= ! $3; }
 	| FORK  EQUAL error  { yyerror("boolean value expected"); }

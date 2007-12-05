@@ -159,7 +159,9 @@
 #include "rand/fastrand.h" /* seed */
 
 #include "stats.h"
+#include "cfg/cfg.h"
 #include "cfg/cfg_struct.h"
+#include "cfg_core.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -293,7 +295,6 @@ gen_lock_t* process_lock;		/* lock on the process table */
 int process_no = 0;				/* index of process in the pt */
 
 int sig_flag = 0;              /* last signal received */
-int debug = L_DEFAULT; /* print only msg. < L_WARN */
 int dont_fork = 0;
 int dont_daemonize = 0;
 int log_stderr = 0;
@@ -1292,7 +1293,7 @@ int main(int argc, char** argv)
 					break;
 			case 'd':
 					debug_flag = 1;
-					debug++;
+					default_core_cfg.debug++;
 					break;
 			case 'V':
 					printf("version: %s\n", version);
@@ -1387,7 +1388,7 @@ try_again:
 	init_named_flags();
 
 	yyin=cfg_stream;
-	debug_save = debug;
+	debug_save = default_core_cfg.debug;
 	if ((yyparse()!=0)||(cfg_errors)){
 		fprintf(stderr, "ERROR: bad config file (%d errors)\n", cfg_errors);
 		goto error;
@@ -1395,7 +1396,7 @@ try_again:
 	if (cfg_warnings){
 		fprintf(stderr, "%d config warnings\n", cfg_warnings);
 	}
-	if (debug_flag) debug = debug_save;
+	if (debug_flag) default_core_cfg.debug = debug_save;
 	print_rls();
 
 	/* options with higher priority than cfg file */
@@ -1668,6 +1669,13 @@ try_again:
 	
 	if (cfg_init() < 0) {
 		LOG(L_CRIT, "could not initialize configuration framework\n");
+		goto error;
+	}
+	/* declare the core cfg before the module configs */
+	if (cfg_declare("core", core_cfg_def, &default_core_cfg, cfg_size(core),
+			&core_cfg)
+	) {
+		LOG(L_CRIT, "could not declare the core configuration\n");
 		goto error;
 	}
 	
