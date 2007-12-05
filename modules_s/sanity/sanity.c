@@ -133,6 +133,20 @@ strl* parse_str_list(str* _string) {
 	return parsed_list;
 }
 
+/* free the elements of the linked str list */
+void free_str_list(strl *_list) {
+	strl *cur, *next;
+
+	if (_list != NULL) {
+		cur = _list;
+		while (cur != NULL) {
+			next = cur->next;
+			pkg_free(cur);
+			cur = next;
+		}
+	}
+}
+
 int parse_proxyrequire(struct hdr_field* _h) {
 	strl *pr_l;
 
@@ -605,6 +619,12 @@ int check_proxy_require(struct sip_msg* _msg) {
 #ifdef EXTRA_DEBUG
 		DBG("check_proxy_require passed\n");
 #endif
+		if (_msg->proxy_require->parsed) {
+			/* TODO we have to free it here, because it is not automatically
+			 * freed when the message freed. Lets hope nobody needs to access
+			 * this header again later on */
+			free_str_list(_msg->proxy_require->parsed);
+		}
 	}
 #ifdef EXTRA_DEBUG
 	else {
