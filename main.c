@@ -1160,6 +1160,7 @@ int main_loop()
 	/* main */
 	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 #ifdef USE_TCP
+	close_extra_socks(PROC_ATTENDANT, get_proc_no());
 	if(!tcp_disable){
 		/* main's tcp sockets are disabled by default from init_pt() */
 		unix_tcp_sock=-1;

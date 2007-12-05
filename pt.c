@@ -42,6 +42,7 @@
 #include "pt.h"
 #include "tcp_init.h"
 #include "sr_module.h"
+#include "socket_info.h"
 #include "rand/fastrand.h"
 
 #include <stdio.h>
@@ -184,6 +185,47 @@ int my_pid()
 
 
 
+/* close unneeded sockets */
+int close_extra_socks(int child_id, int proc_no)
+{
+#ifdef USE_TCP
+	int r;
+	struct socket_info* si;
+	
+	if (child_id!=PROC_TCP_MAIN){
+		for (r=0; r<proc_no; r++){
+			if (pt[r].unix_sock>=0){
+				/* we can't change the value in pt[] because it's
+				 * shared so we only close it */
+				close(pt[r].unix_sock);
+			}
+		}
+		/* close all listen sockets (needed only in tcp_main */
+		if (!tcp_disable){
+			for(si=tcp_listen; si; si=si->next){
+				close(si->socket);
+				/* safe to change since this is a per process copy */
+				si->socket=-1;
+			}
+#ifdef USE_TLS
+			if (!tls_disable){
+				for(si=tls_listen; si; si=si->next){
+					close(si->socket);
+					/* safe to change since this is a per process copy */
+					si->socket=-1;
+				}
+			}
+#endif /* USE_TLS */
+		}
+		/* we still need the udp sockets (for sending) so we don't close them
+		 * too */
+	}
+#endif /* USE_TCP */
+	return 0;
+}
+
+
+
 /**
  * Forks a new process.
  * @param child_id - rank, if equal to PROC_NOCHLDINIT init_child will not be
@@ -246,6 +288,10 @@ int fork_process(int child_id, char *desc, int make_sock)
 		/* child */
 		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
+		/* close tcp unix sockets if this is not tcp main */
+#ifdef USE_TCP
+		close_extra_socks(child_id, process_no);
+#endif /* USE_TCP */
 		srand(new_seed1);
 		fastrand_seed(rand());
 		srandom(new_seed2+time(0));
@@ -325,6 +371,7 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	int sockfd[2];
 	int reader_fd[2]; /* for comm. with the tcp children read  */
 	int ret;
+	int i;
 	unsigned int new_seed1;
 	unsigned int new_seed2;
 	
@@ -381,6 +428,17 @@ int fork_tcp_process(int child_id, char *desc, int r, int *reader_fd_1)
 	if (pid==0){
 		is_main=0; /* a forked process cannot be the "main" one */
 		process_no=child_process_no;
+		/* close unneeded unix sockets */
+		close_extra_socks(child_id, process_no);
+		/* same for unneeded tcp_children <-> tcp_main unix socks */
+		for (i=0; i<r; i++){
+			if (tcp_children[i].unix_sock>=0){
+				close(tcp_children[i].unix_sock);
+				/* tcp_children is per process, so it's safe to change
+				 * the unix_sock to -1 */
+				tcp_children[i].unix_sock=-1;
+			}
+		}
 		srand(new_seed1);
 		fastrand_seed(rand());
 		srandom(new_seed2+time(0));

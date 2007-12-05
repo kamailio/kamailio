@@ -73,6 +73,11 @@ int register_procs(int no);
 int get_max_open_fds();
 int register_fds(int no);
 
+
+int close_extra_socks(int proc_id, int proc_no);
+
+#define get_proc_no() ((process_count)?*process_count:0)
+
 /* return processes pid */
 int my_pid();
 
