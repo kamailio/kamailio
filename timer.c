@@ -60,6 +60,7 @@
 #endif
 #include "locking.h"
 #include "sched_yield.h"
+#include "cfg/cfg_struct.h"
 
 
 /* how often will the timer handler be called (in ticks) */
@@ -345,6 +346,9 @@ again:
 	sigaddset(&slow_timer_sset, SIGCHLD);
 	sigaddset(&slow_timer_sset, SIGALRM);
 #endif
+	/* initialize the config framework */
+	if (cfg_child_init()) goto error;
+
 	return 0;
 error:
 	return -1;
@@ -382,6 +386,9 @@ int arm_timer()
 				strerror(errno), errno);
 		return -1;
 	}
+	/* initialize the config framework */
+	if (cfg_child_init()) return -1;
+
 	return 0;
 }
 
@@ -915,6 +922,9 @@ void timer_main()
 	in_timer=1; /* mark this process as the fast timer */
 	while(1){
 		if (run_timer){
+			/* update the local cfg if needed */
+			cfg_update();
+
 			timer_handler();
 		}
 		pause();
@@ -1052,6 +1062,9 @@ void slow_timer_main()
 		continue;
 	}
 #endif
+		/* update the local cfg if needed */
+		cfg_update();
+		
 		LOCK_SLOW_TIMER_LIST();
 		while(*s_idx!=*t_idx){
 			i= *s_idx%SLOW_LISTS_NO;

@@ -147,6 +147,7 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "ut.h"
+#include "cfg/cfg_struct.h"
 
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
@@ -2573,6 +2574,9 @@ error:
 inline static int handle_io(struct fd_map* fm, short ev, int idx)
 {	
 	int ret;
+
+	/* update the local config */
+	cfg_update();
 	
 	switch(fm->type){
 		case F_SOCKINFO:
@@ -2811,7 +2815,11 @@ void tcp_main_loop()
 				goto error;
 			}
 	}
-	
+
+
+	/* initialize the cfg framework */
+	if (cfg_child_init()) goto error;
+
 	/* main loop */
 	switch(io_h.poll_method){
 		case POLL_POLL:

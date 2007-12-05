@@ -159,6 +159,7 @@
 #include "rand/fastrand.h" /* seed */
 
 #include "stats.h"
+#include "cfg/cfg_struct.h"
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -477,6 +478,7 @@ void cleanup(show_status)
 #ifdef USE_DST_BLACKLIST
 	destroy_dst_blacklist();
 #endif
+	cfg_destroy();
 #ifdef USE_TCP
 	destroy_tcp();
 #endif
@@ -1663,10 +1665,22 @@ try_again:
 	if (real_time&4)
 			set_rt_prio(rt_prio, rt_policy);
 
+	
+	if (cfg_init() < 0) {
+		LOG(L_CRIT, "could not initialize configuration framework\n");
+		goto error;
+	}
+	
 	if (init_modules() != 0) {
 		fprintf(stderr, "ERROR: error while initializing modules\n");
 		goto error;
 	}
+	
+	if (cfg_shmize() < 0) {
+		LOG(L_CRIT, "could not initialize shared configuration\n");
+		goto error;
+	}
+	
 	/* initialize process_table, add core process no. (calc_proc_no()) to the
 	 * processes registered from the modules*/
 	if (init_pt(calc_proc_no())==-1)

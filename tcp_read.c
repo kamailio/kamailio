@@ -65,6 +65,7 @@
 #include "local_timer.h"
 #include "ut.h"
 #include "pt.h"
+#include "cfg/cfg_struct.h"
 #ifdef CORE_TLS
 #include "tls/tls_server.h"
 #else
@@ -727,6 +728,9 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 	long resp;
 	ticks_t t;
 	
+	/* update the local config */
+	cfg_update();
+	
 	switch(fm->type){
 		case F_TCPMAIN:
 again:
@@ -850,6 +854,10 @@ void tcp_receive_loop(int unix_sock)
 							" to the fd list\n");
 		goto error;
 	}
+
+	/* initialize the config framework */
+	if (cfg_child_init()) goto error;
+
 	/* main loop */
 	switch(io_w.poll_method){
 		case POLL_POLL:
