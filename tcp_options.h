@@ -41,7 +41,7 @@
 #ifndef  NO_TCP_DEFER_ACCEPT
 #ifdef __OS_linux
 #define HAVE_TCP_DEFER_ACCEPT
-#elif define __OS_freebsd
+#elif defined __OS_freebsd
 #define HAVE_TCP_ACCEPT_FILTER
 #endif /* __OS_ */
 #endif /* NO_TCP_DEFER_ACCEPT */
