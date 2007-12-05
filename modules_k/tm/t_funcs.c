@@ -101,7 +101,7 @@ void tm_shutdown(void)
 	free_timer_table();
 	LM_DBG("removing semaphores\n");
 	lock_cleanup();
-	LM_DBG("destroying tmcb lists\n");
+	LM_DBG("destroying callback lists\n");
 	destroy_tmcb_lists();
 	LM_DBG("tm_shutdown : done\n");
 }

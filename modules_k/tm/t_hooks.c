@@ -50,7 +50,7 @@ int init_tmcb_lists(void)
 	req_in_tmcb_hl = (struct tmcb_head_list*)shm_malloc
 		( sizeof(struct tmcb_head_list) );
 	if (req_in_tmcb_hl==0) {
-		LM_CRIT("no more shared mem\n");
+		LM_CRIT("no more shared memory\n");
 		return -1;
 	}
 	req_in_tmcb_hl->first = 0;
@@ -91,7 +91,7 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 
 	/* build a new callback structure */
 	if (!(cbp=shm_malloc( sizeof( struct tm_callback)))) {
-		LM_ERR("no more share memory\n");
+		LM_ERR("no more shared memory\n");
 		return E_OUT_OF_MEM;
 	}
 
