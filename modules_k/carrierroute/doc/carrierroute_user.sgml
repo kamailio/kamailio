@@ -787,6 +787,13 @@ modparam("carrierroute", "fallback_default", 1)
 	    <title><function moreinfo="none">cr_reload_routes</function></title>
 	    <para>
 		This command reloads the routing data from the data source.
+		</para>
+		<para>
+		Important: When new domains have been added, a restart of the server must be
+		done, because the mapping of the ids used in the config script cannot be
+		updated at runtime at the moment. So a reload could result in a wrong routing
+		behaviour, because the ids used in the script could differ from the one used
+		internally from the server. Modifying of already existing domains is no problem.
 	    </para>
 	</section>
 	<section>
