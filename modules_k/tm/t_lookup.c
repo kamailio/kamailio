@@ -922,9 +922,9 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 		LM_DBG("end=%p\n",T);
 	} else {
 		if (T)
-			LM_DBG("T already found!\n");
+			LM_DBG("transaction already found!\n");
 		else
-			LM_DBG("T previously sought and not found\n");
+			LM_DBG("transaction previously sought and not found\n");
 	}
 
 	return T ? (T==T_UNDEFINED ? -1 : 1 ) : 0;
@@ -1032,7 +1032,7 @@ int t_newtran( struct sip_msg* p_msg )
 	int lret, my_err;
 
 	/* is T still up-to-date ? */
-	LM_DBG("T on entrance=%p\n",T);
+	LM_DBG("transaction on entrance=%p\n",T);
 
 	if ( T && T!=T_UNDEFINED  ) {
 		LM_ERR("transaction already in process %p\n", T );

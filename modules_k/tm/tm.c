@@ -637,7 +637,7 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 	t = get_t();
 	if ( t==0 || t==T_UNDEFINED ) {
 		LM_ERR("cannot check status for a reply which"
-				" has no T-state established\n");
+				" has no transaction-state established\n");
 		return -1;
 	}
 	backup = 0;
@@ -728,7 +728,7 @@ static int t_flush_flags(struct sip_msg* msg, char *foo, char *bar)
 	t = get_t();
 	if ( t==0 || t==T_UNDEFINED) {
 		LM_ERR("failed to flush flags for a message which has"
-				" no T-state established\n");
+				" no transaction-state established\n");
 		return -1;
 	}
 
@@ -817,8 +817,8 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 	}
 	t=get_t();
 	if ( t==0 || t==T_UNDEFINED ) {
-		LM_ERR("failed to send a t_reply to a message for which no T-state"
-				" has been established\n");
+		LM_ERR("failed to send a t_reply to a message for which no transaction-"
+				"state has been established\n");
 		return -1;
 	}
 	/* if called from reply_route, make sure that unsafe version
@@ -894,7 +894,7 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 	if (!t || t==T_UNDEFINED) {
 		/* no transaction yet */
 		if (route_type==FAILURE_ROUTE) {
-			LM_CRIT(" BUG - undefined T in failure route\n");
+			LM_CRIT(" BUG - undefined transaction in failure route\n");
 			return -1;
 		}
 		return t_relay_to( p_msg, (struct proxy_l *)proxy, (int)(long)flags );
