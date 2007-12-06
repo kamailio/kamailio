@@ -131,31 +131,31 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 		LM_ERR("invalid parameter\n");
 		return;
 	}
-	
-	if(ps->code != 200){
-		LM_DBG("receiving a non 200 reply\n");
+
+	if(ps->code < 200){
+		LM_DBG("receiving a provisional reply\n");
 		return;
 	}
-	
-	LM_DBG("receiving a 200 reply\n");
-		
+
+	LM_DBG("receiving a final reply %d\n",ps->code);
+
 	dlg = (struct dlg_cell *)(*(ps->param));
 	event = DLG_EVENT_REQBYE;
 	next_state_dlg(dlg, event, &old_state, &new_state, &unref);
 
-	
+
 	if(new_state == DLG_STATE_DELETED && old_state != DLG_STATE_DELETED){
 
 		LM_DBG("removing dialog with h_entry %u and h_id %u\n", 
 			dlg->h_entry, dlg->h_id);
-			
+
 		/* remove from timer */
 		remove_dlg_timer(&dlg->tl);
 
 		/* dialog terminated (BYE) */
 		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req);
 
-		LM_DBG("first 200 ok reply\n");
+		LM_DBG("first final reply\n");
 		/* derefering the dialog */
 		unref_dlg(dlg, unref+2);
 
@@ -164,7 +164,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 	if(new_state == DLG_STATE_DELETED && old_state == DLG_STATE_DELETED ){
 	
-		LM_DBG("second 200 ok reply\n");
+		LM_DBG("second final reply\n");
 		unref_dlg(dlg, 1);
 	}
 
