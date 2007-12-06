@@ -156,7 +156,7 @@ static inline int add_dlg_rr_param(struct sip_msg *req, unsigned int entry,
  *				   the proxies' own 
  */
 static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
-	unsigned int leg, str *tag)
+	struct cell* t, unsigned int leg, str *tag)
 {
 	unsigned int skip_recs;
 	str cseq;
@@ -195,7 +195,14 @@ static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		goto error0;
 	}
 
-	skip_recs = (leg==DLG_CALLER_LEG) ? 0: dlg->from_rr_nb;
+	if (leg==DLG_CALLER_LEG) {
+		skip_recs = 0;
+	} else {
+		/* was the 200 OK received or local generated */
+		skip_recs = dlg->from_rr_nb +
+			(t->relaied_reply_branch>=0)?
+				(t->uac[t->relaied_reply_branch].added_rr):0;
+	}
 
 	if(msg->record_route){
 		if( print_rr_body(msg->record_route, &rr_set, leg, 
@@ -208,10 +215,8 @@ static int populate_leg_info( struct dlg_cell *dlg, struct sip_msg *msg,
 		rr_set.len = 0;
 	}
 
-	if(leg==DLG_CALLER_LEG){
-		LM_DBG("skip_recs is %u\n", skip_recs+1);
-		dlg->from_rr_nb = skip_recs+1;
-	}
+	if(leg==DLG_CALLER_LEG)
+		dlg->from_rr_nb = skip_recs;
 
 	LM_DBG("route_set %.*s, contact %.*s, cseq %.*s and bind_addr %.*s\n",
 		rr_set.len, rr_set.s, contact.len, contact.s,
@@ -292,7 +297,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		}
 
 		/* save callee's tag, cseq, contact and record route*/
-		if (populate_leg_info( dlg, rpl, DLG_CALLEE_LEG, &tag) !=0) {
+		if (populate_leg_info( dlg, rpl, t, DLG_CALLEE_LEG, &tag) !=0) {
 			LM_ERR("could not add further info to the dialog\n");
 		}
 
@@ -391,7 +396,7 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 	}
 
 	/* save caller's tag, cseq, contact and record route*/
-	if (populate_leg_info(dlg, req, DLG_CALLER_LEG,
+	if (populate_leg_info(dlg, req, t, DLG_CALLER_LEG,
 	&(get_from(req)->tag_value)) !=0) {
 		LM_ERR("could not add further info to the dialog\n");
 		shm_free(dlg);
