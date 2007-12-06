@@ -15,8 +15,8 @@
 	<title>Overview</title>
 	<para>
 		The module implements a simplified database engine based on text
-		files. It can be used by &ser; DB interface instead of other database
-		module (like MySQL).
+		files. It can be used by &openser; DB interface instead of other
+		database module (like MySQL).
 	</para>
 	<para>
 		The module is meant for use in demos or small devices that do not
@@ -24,7 +24,18 @@
 		with large amount of data you may run quickly out of memory. Also, it
 		has not implemented all standard database facilities (like order by),
 		it includes minimal functionality to work properly (who knows ?!?)
-		with &ser;.
+		with &openser;.
+	</para>
+	<para>
+		NOTE: the timestamp is printed in an integer value from time_t
+		structure. If you use it in a system that cannot do this conversion,
+		it will fail (support for such situation is in to-do list).
+	</para>
+	<para>
+		NOTE: even when is in non-caching mode, the module does not write
+		back to hard drive after changes. In this mode, the module checks if
+		the corresponding file on disk has changed, and reloads it. The write
+		on disk happens at openser shut down.
 	</para>
 		<section>
 		<title>Design of dbtext engine</title>
@@ -35,7 +46,7 @@
 				<para>
 				a database is represented by a directory in the local file
 				system.
-				NOTE: when you use <emphasis>dbtext</emphasis> in &ser;,
+				NOTE: when you use <emphasis>dbtext</emphasis> in &openser;,
 				the	database URL for modules must be the path to the directory
 				where the table-files are located, prefixed by 
 				<quote>dbtext://</quote>, e.g., 
@@ -286,12 +297,12 @@ modparam("module_name", "database_URL", "dbtext:///path/to/dbtext/database")
 </programlisting>
 		</example>
 		<section>
-			<title>Using dbtext with basic &ser; configuration</title>
+			<title>Using dbtext with basic &openser; configuration</title>
 		<para>
 		Here are the definitions for most important table as well as a basic 
-		configuration file to use dbtext with &ser;. The table structures may 
-		change in time and you will have to adjust next examples. These are 
-		know to work with upcoming &ser; v0.9.0
+		configuration file to use dbtext with &openser;. The table structures
+		may change in time and you will have to adjust next examples. These are 
+		know to work with upcoming &openser; v0.9.x
 		</para>
 		<para>
 		You have to populate the table 'subscriber' by hand with user profiles 
