@@ -281,11 +281,11 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
      * 2 - DID_NONE - the match is done exclusivly based on SIP
        elements; no DID information is added in RR.
 
-   Default value is "1 (DID_ONLY)".
+   Default value is "0 (DID_ONLY)".
 
    Example 1-8. Set dlg_match_mode parameter
 ...
-modparam("dialog", "dlg_match_mode", 0)
+modparam("dialog", "dlg_match_mode", 1)
 ...
      __________________________________________________________
 
