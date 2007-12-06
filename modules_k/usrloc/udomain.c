@@ -113,17 +113,17 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 #ifdef STATISTICS
 	/* register the statistics */
 	if ( (name=build_stat_name(_n,"users"))==0 || register_stat("usrloc",
-	name, &(*_d)->users, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
+	name, &(*_d)->users, STAT_NO_RESET|STAT_SHM_NAME)!=0 ) {
 		LM_ERR("failed to add stat variable\n");
 		goto error2;
 	}
 	if ( (name=build_stat_name(_n,"contacts"))==0 || register_stat("usrloc",
-	name, &(*_d)->contacts, STAT_NO_RESET|STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
+	name, &(*_d)->contacts, STAT_NO_RESET|STAT_SHM_NAME)!=0 ) {
 		LM_ERR("failed to add stat variable\n");
 		goto error2;
 	}
 	if ( (name=build_stat_name(_n,"expires"))==0 || register_stat("usrloc",
-	name, &(*_d)->expires, STAT_NO_SYNC|STAT_SHM_NAME)!=0 ) {
+	name, &(*_d)->expires, STAT_SHM_NAME)!=0 ) {
 		LM_ERR("failed to add stat variable\n");
 		goto error2;
 	}
