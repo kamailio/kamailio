@@ -382,7 +382,11 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 
 				_drp->fields[_idx].type = _t;
-				_drp->fields[_idx].val.str_val.len=strlen(_vp->val.string_val);
+				if(_vp->type==DB_STR)
+					_drp->fields[_idx].val.str_val.len=_vp->val.str_val.len;
+				else
+					_drp->fields[_idx].val.str_val.len
+											=strlen(_vp->val.string_val);
 				
 				_drp->fields[_idx].val.str_val.s = 
 					(char*)shm_malloc(_drp->fields[_idx].val.str_val.len
