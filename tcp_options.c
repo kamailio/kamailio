@@ -62,7 +62,7 @@ void init_tcp_options()
 #define W_OPT_NC(option) \
 	if (tcp_options.option){\
 		WARN("tcp_options: tcp_" #option \
-				"cannot be enabled (recompile needed)\n"); \
+				" cannot be enabled (recompile needed)\n"); \
 		tcp_options.option=0; \
 	}
 
@@ -71,7 +71,7 @@ void init_tcp_options()
 #define W_OPT_NS(option) \
 	if (tcp_options.option){\
 		WARN("tcp_options: tcp_" #option \
-				"cannot be enabled (no OS support)\n"); \
+				" cannot be enabled (no OS support)\n"); \
 		tcp_options.option=0; \
 	}
 

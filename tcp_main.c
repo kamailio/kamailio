@@ -1675,19 +1675,6 @@ int tcp_init(struct socket_info* sock_info)
 		}
 	}
 #endif
-#ifdef HAVE_TCP_ACCEPT_FILTER
-	/* freebsd */
-	if (tcp_options.defer_accept){
-		memset(&afa, 0, sizeof(afa));
-		strcpy(afa.af_name, "dataready");
-		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_ACCEPTFILTER,
-					(void*)&afa, sizeof(afa)) ==-1){
-			LOG(L_WARN, "WARNING: tcp_init: setsockopt SO_ACCEPTFILTER %s\n",
-						strerror(errno));
-		/* continue since this is not critical */
-		}
-	}
-#endif /* HAVE_TCP_ACCEPT_FILTER */
 #ifdef HAVE_TCP_LINGER2
 	if (tcp_options.linger2){
 		optval=tcp_options.linger2;
@@ -1716,6 +1703,19 @@ int tcp_init(struct socket_info* sock_info)
 				strerror(errno));
 		goto error;
 	}
+#ifdef HAVE_TCP_ACCEPT_FILTER
+	/* freebsd */
+	if (tcp_options.defer_accept){
+		memset(&afa, 0, sizeof(afa));
+		strcpy(afa.af_name, "dataready");
+		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_ACCEPTFILTER,
+					(void*)&afa, sizeof(afa)) ==-1){
+			LOG(L_WARN, "WARNING: tcp_init: setsockopt SO_ACCEPTFILTER %s\n",
+						strerror(errno));
+		/* continue since this is not critical */
+		}
+	}
+#endif /* HAVE_TCP_ACCEPT_FILTER */
 	
 	return 0;
 error:
