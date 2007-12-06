@@ -244,7 +244,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		<title><varname>dlg_match_mode</varname> (integer)</title>
 		<para>
 		How the seqential requests should be matched against the known dialogs.
-		The modes are a conbination between matching based on a cookie (DID)
+		The modes are a combination between matching based on a cookie (DID)
 		stored as cookie in Record-Route header and the matching based on SIP 
 		elements (as in RFC3261).
 		</para>
@@ -258,8 +258,8 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 			</para></listitem>
 			<listitem><para>
 				<emphasis>1 - DID_FALLBACK</emphasis> - the match is first 
-				tried based on DID and if the not present, it will fallback 
-				to SIP matching;
+				tried based on DID and if not present, it will fallback to
+				SIP matching;
 			</para></listitem>
 			<listitem><para>
 				<emphasis>2 - DID_NONE</emphasis> - the match is done 
