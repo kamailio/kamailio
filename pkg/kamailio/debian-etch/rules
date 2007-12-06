@@ -120,12 +120,8 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CROUTE_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(BERKELEY_MOD_PATH)" cfg-target=/etc/openser/
 
-	# generate the db schemas
-	$(MAKE) dbschema
-
 	# generate the utils db_berkeley
 	$(MAKE) utils include_modules="db_berkeley"
-
 
 	touch build-stamp
 
