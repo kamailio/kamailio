@@ -117,7 +117,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set enable parameter
 ...
-modparam("benchmark", "enable", "1")
+modparam("benchmark", "enable", 1)
 ...
      __________________________________________________________
 
@@ -131,7 +131,7 @@ modparam("benchmark", "enable", "1")
 
    Example 1-2. Set granularity parameter
 ...
-modparam("benchmark", "granularity", "500")
+modparam("benchmark", "granularity", 500)
 ...
      __________________________________________________________
 
@@ -152,7 +152,7 @@ modparam("benchmark", "granularity", "500")
 
    Example 1-3. Set loglevel parameter
 ...
-modparam("benchmark", "loglevel", "4")
+modparam("benchmark", "loglevel", 4)
 ...
 
    This will set the logging level to L_DBG.

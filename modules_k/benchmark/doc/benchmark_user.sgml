@@ -69,8 +69,9 @@
 			</listitem>
 			<listitem>
 			<para>
-				0 - Enable per-timer enabling. Single timers are inactive by default and can be activated through the MI interface as soon
-				as that feature is implemented.
+				0 - Enable per-timer enabling. Single timers are inactive by default
+				and can be activated through the MI interface as soon as that feature is
+				implemented.
 			</para>
 			</listitem>
 			<listitem>
@@ -89,7 +90,7 @@
 		<title>Set <varname>enable</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("benchmark", "enable", "1")
+modparam("benchmark", "enable", 1)
 ...
 </programlisting>
 		</example>
@@ -111,7 +112,7 @@ modparam("benchmark", "enable", "1")
 		<title>Set <varname>granularity</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("benchmark", "granularity", "500")
+modparam("benchmark", "granularity", 500)
 ...
 </programlisting>
 		</example>
@@ -140,7 +141,7 @@ modparam("benchmark", "granularity", "500")
 		<title>Set <varname>loglevel</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("benchmark", "loglevel", "4")
+modparam("benchmark", "loglevel", 4)
 ...
 </programlisting>
 		</example>
