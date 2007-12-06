@@ -59,6 +59,7 @@
 #               use_futex=yes (default) (andrei)
 #  2007-05-26  changed darwin module link flags (instead of -bundle_loader ser
 #               -flat_namespace -undefined suppress) (andrei)
+#  2007-07-07  use isainfo -n to detect cpu type on solaris (andrei)
 #  2007-07-07  added HAVE_SCHED_SETSCHEDULER for linux (andrei)
 #  2007-07-18  added DNS_WATCHDOG_SUPPORT (Miklos)
 #  2007-07-30  added USE_DNS_CACHE_STATS and USE_DST_BLACKLIST_STATS (Gergo)
@@ -85,19 +86,25 @@ RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
 
 ifeq ($(OS),solaris)
+	GETARCH=isainfo -n
+ifeq ($(GETARCH),)
 	GETARCH=uname -p
+endif
 else
 	GETARCH=uname -m
 endif
 
-ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4u/sparc64/  \
+ARCH := $(shell $(GETARCH) |sed -e s/i.86/i386/ -e s/sun4[uv]/sparc64/  \
 			-e s/armv[3-5].*/arm/  -e s/armv6.*/arm6/ \
 			-e "s/Power Macintosh/ppc/" \
 			-e "s/cobalt/mips2/" \
-			-e s/amd64/x86_64/ )
+			-e s/amd64/x86_64/ -e s/sparcv9/sparc64/ )
 # fix sparc -> sparc64
 ifeq ($(ARCH),sparc)
 	ifeq ($(shell uname -m),sun4u)
+		ARCH := sparc64
+	endif
+	ifeq ($(shell uname -m),sun4v)
 		ARCH := sparc64
 	endif
 endif
@@ -670,7 +677,8 @@ ifeq	($(ARCH), x86_64)
 ifeq		($(CC_NAME), gcc)
 				DEFS+=-DCC_GCC_LIKE_ASM
 				#common stuff
-				CFLAGS=-g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+				CFLAGS=-m64 -g -O9 -funroll-loops  -Wcast-align $(PROFILE)
+				LDFLAGS+=-m64
 			#if gcc 4.0+
 ifeq			($(CC_SHORTVER), 4.x)
 					CPU ?= opteron
