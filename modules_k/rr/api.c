@@ -32,6 +32,7 @@
 #include "api.h"
 #include "rr_cb.h"
 
+extern int append_fromtag;
 
 int load_rr( struct rr_binds *rrb )
 {
@@ -40,6 +41,7 @@ int load_rr( struct rr_binds *rrb )
 	rrb->is_direction      = is_direction;
 	rrb->get_route_param   = get_route_param;
 	rrb->register_rrcb     = register_rrcb;
+	rrb->append_fromtag    = append_fromtag;
 
 	return 1;
 }

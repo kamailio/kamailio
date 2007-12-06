@@ -322,9 +322,17 @@ static int mod_init( void )
 	}
 
 	/* if detect_direction is enabled, load rr also */
-	if (detect_direction && load_rr_api(&rrb)!=0) {
-		LM_ERR("can't load RR API\n");
-		return -1;
+	if (detect_direction) {
+		if (load_rr_api(&rrb)!=0) {
+			LM_ERR("can't load RR API\n");
+			return -1;
+		}
+		/* we need the append_fromtag on in RR */
+		if (!rrb.append_fromtag) {
+			LM_ERR("'append_fromtag' RR param is not enabled!"
+				" - required by 'detect_direction'\n");
+			return -1;
+		}
 	}
 
 	/* listen for all incoming requests  */

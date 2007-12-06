@@ -44,6 +44,7 @@ struct rr_binds {
 	is_direction_t      is_direction;
 	get_route_param_t   get_route_param;
 	register_rrcb_t     register_rrcb;
+	int                 append_fromtag;
 };
 
 typedef  int (*load_rr_f)( struct rr_binds* );
