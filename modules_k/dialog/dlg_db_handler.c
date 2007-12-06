@@ -85,10 +85,20 @@ static db_func_t dialog_dbf;
 			VAL_NULL( (_vals)+(_index) ) = 0;\
 	}while(0);
 
-#define GET_STR_VALUE(_res, _values, _index)\
+#define GET_STR_VALUE(_res, _values, _index, _not_null, _unref)\
 	do{\
-		(_res).s = VAL_STR((_values)+ (_index)).s;\
-		(_res).len = strlen(VAL_STR((_values)+ (_index)).s);\
+		if (VAL_NULL((_values)+ (_index))) { \
+			if (_not_null) {\
+				if (_unref) unref_dlg(dlg,1);\
+				continue; \
+			} else { \
+				(_res).s = 0; \
+				(_res).len = 0; \
+			}\
+		} else { \
+			(_res).s = VAL_STR((_values)+ (_index)).s;\
+			(_res).len = strlen(VAL_STR((_values)+ (_index)).s);\
+		} \
 	}while(0);
 
 
@@ -265,11 +275,23 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 
 		values = ROW_VALUES(rows + i);
 
+		if (VAL_NULL(values) || VAL_NULL(values+1)) {
+			LM_ERR("columns %s or/and %s cannot be null -> skipping\n",
+				h_entry_column, h_id_column);
+			continue;
+		}
+
+		if (VAL_NULL(values+7) || VAL_NULL(values+8)) {
+			LM_ERR("columns %s or/and %s cannot be null -> skipping\n",
+				start_time_column, state_column);
+			continue;
+		}
+
 		/*restore the dialog info*/
-		GET_STR_VALUE(callid, values, 2);
-		GET_STR_VALUE(from_uri, values, 3);
-		GET_STR_VALUE(from_tag, values, 4);
-		GET_STR_VALUE(to_uri, values, 5);
+		GET_STR_VALUE(callid, values, 2, 1, 0);
+		GET_STR_VALUE(from_uri, values, 3, 1, 0);
+		GET_STR_VALUE(from_tag, values, 4, 1, 0);
+		GET_STR_VALUE(to_uri, values, 5, 1, 0);
 
 		if((dlg=build_new_dlg( &callid, &from_uri, &to_uri, &from_tag))==0){
 			LM_ERR("failed to build new dialog\n");
@@ -293,7 +315,7 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		d_table->entries[dlg->h_entry].next_id =
 			(next_id < dlg->h_id) ? dlg->h_id : next_id;
 
-		GET_STR_VALUE(to_tag, values, 6);
+		GET_STR_VALUE(to_tag, values, 6, 1, 1);
 
 		dlg->start_ts	= VAL_INT(values+7);
 		dlg->state 		= VAL_INT(values+8);
@@ -307,12 +329,12 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
 		LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
 
-		GET_STR_VALUE(cseq1, values, 10);
-		GET_STR_VALUE(cseq2, values, 11);
-		GET_STR_VALUE(rroute1, values, 12);
-		GET_STR_VALUE(rroute2, values, 13);
-		GET_STR_VALUE(contact1, values, 14);
-		GET_STR_VALUE(contact2, values, 15);
+		GET_STR_VALUE(cseq1, values, 10 , 1, 1);
+		GET_STR_VALUE(cseq2, values, 11 , 1, 1);
+		GET_STR_VALUE(rroute1, values, 12, 0, 0);
+		GET_STR_VALUE(rroute2, values, 13, 0, 0);
+		GET_STR_VALUE(contact1, values, 14, 1, 1);
+		GET_STR_VALUE(contact2, values, 15, 1, 1);
 
 		if ( (dlg_set_leg_info( dlg, &from_tag, &rroute1, &contact1,
 		&cseq1, DLG_CALLER_LEG)!=0) ||
