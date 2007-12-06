@@ -278,7 +278,7 @@ int mi_publ_rpl_cback( ua_pres_t* hentity, struct sip_msg* reply)
 	{
 		/* extract ETag and expires */
 		lexpire = ((exp_body_t*)reply->expires->parsed)->val;
-		LM_ERR("lexpire= %d\n", lexpire);
+		LM_DBG("lexpire= %d\n", lexpire);
 		
 		hdr = reply->headers;
 		found = 0;
