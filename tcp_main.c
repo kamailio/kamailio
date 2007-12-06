@@ -890,6 +890,7 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 	if (from && bind(s, &from->s, sockaddru_len(*from)) != 0)
 		LOG(L_WARN, "WARNING: tcpconn_connect: binding to source address"
 					" failed: %s [%d]\n", strerror(errno), errno);
+	state=S_CONN_OK;
 #ifdef TCP_BUF_WRITE
 	if (likely(tcp_options.tcp_buf_write)){
 again:
@@ -910,7 +911,6 @@ again:
 						" failed\n");
 			goto error;
 		}
-		state=S_CONN_OK;
 #ifdef TCP_BUF_WRITE
 	}
 #endif /* TCP_BUF_WRITE */
@@ -1681,7 +1681,7 @@ int tcp_init(struct socket_info* sock_info)
 		memset(&afa, 0, sizeof(afa));
 		strcpy(afa.af_name, "dataready");
 		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_ACCEPTFILTER,
-					(void*)&afal, sizeof(afa)) ==-1){
+					(void*)&afa, sizeof(afa)) ==-1){
 			LOG(L_WARN, "WARNING: tcp_init: setsockopt SO_ACCEPTFILTER %s\n",
 						strerror(errno));
 		/* continue since this is not critical */

@@ -153,7 +153,7 @@ struct cname_rdata {
 
 
 #ifdef HAVE_RESOLV_RES
-int match_search_list(const res_state res, char* name);
+int match_search_list(const struct __res_state* res, char* name);
 #endif
 struct rdata* get_record(char* name, int type, int flags);
 void free_rdata_list(struct rdata* head);

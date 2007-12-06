@@ -422,7 +422,7 @@ void free_rdata_list(struct rdata* head)
  * returns 1 if found
  *         0 if not found
  */
-int match_search_list(const res_state res, char* name) {
+int match_search_list(const struct __res_state* res, char* name) {
 	int i;
 	for (i=0; (i<MAXDNSRCH) && (res->dnsrch[i]); i++) {
 		if (strcasecmp(name, res->dnsrch[i])==0) 
