@@ -85,7 +85,7 @@ static int sipping_rpl_filter(struct sip_msg *rpl)
 	struct cseq_body* cseq_b;
 
 	/* first check number of vias -> must be only one */
-	if (rpl->via2!=0)
+	if (parse_headers( rpl, HDR_VIA2_F, 0 )==-1 || (rpl->via2!=0))
 		goto skip;
 
 	/* check the method -> we need CSeq header */
