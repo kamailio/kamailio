@@ -107,7 +107,7 @@ AAA_AVP*  AAACreateAVP(
 	AAA_AVPFlag flags,
 	AAAVendorId vendorId,
 	char   *data,
-	unsigned int length,
+	size_t length,
 	AVPDataStatus data_status)
 {
 	AAA_AVP *avp;
