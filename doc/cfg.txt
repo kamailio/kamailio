@@ -1,0 +1,240 @@
+# $Id$
+#
+# History:
+# --------
+# 2007-12-06:	Created by Miklos
+
+SER Configuration Framework
+
+1. Overview
+===============================================================================
+
+The configuration framework can be used by SER core and by the modules,
+to get and set internal variables on-the-fly, and eliminate SER restarts
+whenever it is possible.
+
+The core and the modules can declare configuration variables, and can
+retrieve the value of the variables at any time without performance
+overhead. The framework makes sure that the variables do not change
+during the SIP message processing, the child processes see a snapshot
+of the variables with constant values. The variable, that is changed by
+a cfg driver module, will be automatically replaced by the framework
+the next time a SIP message is started to be processed.
+  
+The drivers can change the values of all the variables by names with or
+without the need of commit. That means a kind of transaction support,
+the framework can keep track of the changes (per driver) until they
+are committed or rolled-back.
+
+2. Using the framework in a module
+===============================================================================
+
+Make sure that the run-time change of the variable cannot cause troubles.
+You can expect the variable change before a SIP message is processed,
+or before a timer fires, but it will never change during the function
+calls.
+
+1. Include the header file:
+
+#include "../../cfg/cfg.h"
+
+-------------------------------------------------------------------------------
+
+2. Define a structure that contains the variables, the structure name
+must begin with "cfg_group_" followed by the group name: (The group name
+is typically the module name, but a single module can register more than
+one groups as well.)
+
+struct cfg_group_foo {
+	int	i;
+	char	*ch;
+	str	s;
+	void	*p;
+};
+
+-------------------------------------------------------------------------------
+
+3. Set the default values:
+
+static struct cfg_group_foo default_cfg = {
+	-1,
+	"mystring",
+	{"interoperability", 16},
+	NULL,
+};
+
+-------------------------------------------------------------------------------
+
+4. Export the variables over the module interface if you wish:
+
+static param_export_t params[] = {
+	{"i",	PARAM_INT,	&default_cfg.i},
+	{"ch",	PARAM_STRING,	&default_cfg.ch},
+	{"s",	PARAM_STR,	&default_cfg.s},
+	{0, 0, 0}
+};
+
+-------------------------------------------------------------------------------
+
+5. Declare a void* handle that will be used to access the config group:
+
+static void	*cfg_handle = &default_cfg;
+
+-------------------------------------------------------------------------------
+
+6. Describe the structure you defined at step 2 for the framework:
+
+static cfg_def_t cfg_def[] = {
+	{"int", CFG_VAR_INT, -10, 10, 0, 0, "integer for testing"},
+	{"ch", CFG_VAR_STRING, 0, 0, 0, 0, "string for testing"},
+	{"s", CFG_VAR_STR, 0, 0, 0, 0, "str for testing"},
+	{"p", CFG_VAR_POINTER | CFG_INPUT_STRING, 0, 0, fixup_p, fixup_child_p, "pointer for testing"},
+	{0, 0, 0, 0, 0, 0, 0},
+};
+
+Each row consists of the following items:
+
+- name that will be used by the drivers to refer to the variable
+- flag indicating the variable and the input type, that is accepted
+  by the fixup function
+
+  Valid variable types are:
+	- CFG_VAR_INT		= int
+	- CFG_VAR_STRING	= char*
+	- CFG_VAR_STR		= str
+	- CFG_VAR_POINTER	= void*
+
+  Valid input types are:
+	- CFG_INPUT_INT		= int
+	- CFG_INPUT_STRING	= char*
+	- CFG_INPUT_STR		= str*
+
+- minimum value for integers (optional)
+- maximum value for integers (optional)
+- fixup function (optional) that is called when the variable is going to be
+  changed by a driver. The module still uses the old value until the change
+  is committed, and the next SIP message is started to be processed, however
+  the new, not-yet-committed values can be accessed by using the temporary
+  handle within the fixup function. String and str values are cloned to
+  shm memory by the framework. The callback type is:
+
+  typedef int (*cfg_on_change)(void *temp_handle, str *var_name, void **value);
+
+- per-child process callback function (optional) that is called by each child
+  process separately, after the new values have been committed, and the
+  child process is updating its local configuration. The old value will no
+  longer be used by the process. (Useful for fix-ups that cannot be done
+  in shm memory, for example regexp compilation.)
+
+  typedef void (*cfg_on_set_child)(str *var_name);
+
+- description of the variable
+
+-------------------------------------------------------------------------------
+
+7. Declare the configuration group in mod_init:
+
+static int mod_init(void)
+{
+	if (cfg_declare("foo", cfg_def, &default_cfg, cfg_size(foo),
+			 &cfg_handle)
+	) {
+		/* error */
+		return -1;
+	}
+	...
+}
+
+-------------------------------------------------------------------------------
+
+8. The variables can be accessed any time by the group name and handle:
+
+cfg_get(foo, cfg_handle, i)
+cfg_get(foo, cfg_handle, ch)
+cfg_get(foo, cfg_handle, s)
+cfg_get(foo, cfg_handle, p)
+
+
+3. Using the framework in the core
+===============================================================================
+
+There is basically no difference between the modules and the core, the core can
+register any number of groups just like a module. A group called "core" has
+been already registered, have a look at the cfg_core.* files.
+
+
+4. Drivers
+===============================================================================
+
+Drivers can change the values of the configuration variables run-time, they can
+implement RPC calls or database backend for example.
+The framework is multi-process safe, more drivers (or a single driver with
+multiple processes) can modify the configuration at the same time.
+
+1. Create a context for the driver
+
+#include "../../cfg/cfg_ctx.h"
+
+static cfg_ctx_t	*ctx = NULL;
+
+static void on_declare(str *group_name, cfg_def_t *definition)
+{
+	...
+}
+
+static int mod_init(void)
+{
+	ctx = cfg_register_ctx(on_declare);
+	if (!ctx) {
+		/* error */
+		return -1;
+	}
+	...
+}
+
+The callback function, on_declare(), is called every time a new configuration
+group is registered, so the driver has a chance to know which groups and
+variables are present, and can immediately modify them.
+
+-------------------------------------------------------------------------------
+
+2. Get the value of a variable by name:
+
+cfg_get_by_name()
+
+-------------------------------------------------------------------------------
+
+3. Set the value of a variable without the need of explicit commit:
+
+cfg_set_now()
+
+wrapper functions:
+
+cfg_set_now_int()
+cfg_set_now_string()
+
+-------------------------------------------------------------------------------
+
+4. Set the value of a variable, but does not commit the change:
+
+cfg_set_delayed()
+
+wrapper functions:
+
+cfg_set_delayed_int()
+cfg_set_delayed_string()
+
+More changes can be done, and committed at once.
+
+-------------------------------------------------------------------------------
+
+5. Commit or roll back the previously prepared changes:
+
+cfg_commit()
+cfg_rollback()
+
+-------------------------------------------------------------------------------
+
+6. Get the description of a variable:
+
+cfg_help()
