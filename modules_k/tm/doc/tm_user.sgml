@@ -170,7 +170,7 @@
 		Failover at transport level may be triggered by a failure of sending
 		out the request message. A failure occures if the coresponding 
 		interface was found for sending the request, if the TCP connection
-		was refused ot if a geenric internal error happend during send. There
+		was refused ot if a generic internal error happend during send. There
 		is no ICMP error report support.
 		</para>
 		<para>

@@ -270,7 +270,7 @@ Chapter 1. User's Guide
    Failover at transport level may be triggered by a failure of
    sending out the request message. A failure occures if the
    coresponding interface was found for sending the request, if
-   the TCP connection was refused ot if a geenric internal error
+   the TCP connection was refused ot if a generic internal error
    happend during send. There is no ICMP error report support.
 
    Failover at transaction level may be triggered when the
@@ -806,9 +806,9 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 
      * non-CANCEL/non-ACK requests - if the request belongs to a
        transaction (it's a retransmision), the function will do a
-       standard processing of the retransmission and will break/stop
-       the script. The function return false if the request is not
-       a retransmission.
+       standard processing of the retransmission and will
+       break/stop the script. The function return false if the
+       request is not a retransmission.
      * CANCEL request - true if the cancelled INVITE transaction
        exists.
      * ACK request - true if the ACK is a local end-to-end ACK for
