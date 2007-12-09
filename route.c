@@ -577,7 +577,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r)
 		if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
 		else return 0; /* Always fail */
 	} else if (rtype == NUMBER_ST) {
-		right = r->intval;
+		right = r->numval;
 	} else {
 		LOG(L_CRIT, "BUG: comp_num: Invalid right operand (%d)\n", rtype);
 		return E_BUG;
@@ -759,6 +759,7 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 	int_str val;
 	union exp_op num_val;
 	str tmp;
+	unsigned int uval;
 
 	if (spec->type & AVP_INDEX_ALL) {
 		avp = search_first_avp(spec->type & ~AVP_INDEX_ALL, spec->name, NULL, NULL);
@@ -777,11 +778,11 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 		break;
 
 	case BINOR_OP:
-		return (val.n | r->intval)!=0;
+		return (val.n | r->numval)!=0;
 		break;
 
 	case BINAND_OP:
-		return (val.n & r->intval)!=0;
+		return (val.n & r->numval)!=0;
 		break;
 	}
 
@@ -794,18 +795,20 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 			case STRING_ST:
 				tmp.s=r->string;
 				tmp.len=strlen(r->string);
-				if (str2int(&tmp, (unsigned int*)&num_val.intval)<0){
+				if (str2int(&tmp, &uval)<0){
 					LOG(L_ERR, "ERROR: comp_avp: cannot convert string value"
 								" to int (%s)\n", ZSW(r->string));
 					return -1;
 				}
+				num_val.numval=uval;
 				return comp_num(op, val.n, NUMBER_ST, &num_val);
 			case STR_ST:
-				if (str2int(&r->str, (unsigned int*)&num_val.intval)<0){
+				if (str2int(&r->str, &uval)<0){
 					LOG(L_ERR, "ERROR: comp_avp: cannot convert str value"
 								" to int (%.*s)\n", r->str.len, ZSW(r->str.s));
 					return -1;
 				}
+				num_val.numval=uval;
 				return comp_num(op, val.n, NUMBER_ST, &num_val);
 			default:
 				LOG(L_CRIT, "BUG: comp_avp: invalid type for numeric avp "
@@ -1064,7 +1067,7 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 		break;
 
 	case NUMBER_O:
-		ret=!(!e->r.intval); /* !! to transform it in {0,1} */
+		ret=!(!e->r.numval); /* !! to transform it in {0,1} */
 		break;
 
 	case ACTION_O:

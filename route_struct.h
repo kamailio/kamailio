@@ -101,15 +101,15 @@ enum { NOSUBTYPE=0, STRING_ST, NET_ST, NUMBER_ST, IP_ST, RE_ST, PROXY_ST,
 
 /* Expression operand */
 union exp_op {
-	struct expr* expr;
-	struct _str str;
-	char* string;
 	void* param;
-	int intval;
+	long numval; /* must have the same size as a void*/
+	struct expr* expr;
+	char* string;
 	avp_spec_t* attr;
 	select_t* select;
 	regex_t* re;
 	struct net* net;
+	struct _str str;
 };
 
 struct expr{

@@ -218,7 +218,7 @@ void print_expr(struct expr* exp)
 					print_actions((struct action*)exp->r.param);
 					break;
 			case NUMBER_ST:
-					DBG("%d",exp->r.intval);
+					DBG("%ld",exp->r.numval);
 					break;
 			case MYSELF_ST:
 					DBG("_myself_");
