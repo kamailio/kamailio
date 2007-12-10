@@ -14,16 +14,20 @@ Click-To-Dial
 <?php
 
 /* config values */
-$web_contact="sip:daemon@siphub.net";
-$fifo="/tmp/ser_fifo";
-$signature="web_test_0.0.0";
+$web_contact="sip:daemon@mydomain.net";
+$fifo="/tmp/openser_fifo";
+$signature="web_dialer_0.1.0";
 
 /* open reply fifo */
 $myfilename="webfifo_".rand();
 $mypath="/tmp/".$myfilename;
+$outbound_proxy=".";
+
+
+$caller = $_POST['caller'];
+$callee = $_POST['callee'];
 
 echo "Initiating your request...<p>";
-
 /* open fifo now */
 $fifo_handle=fopen( $fifo, "w" );
 if (!$fifo_handle) {
@@ -31,15 +35,21 @@ if (!$fifo_handle) {
 }
 
 /* construct FIFO command */
-$fifo_cmd=":t_uac:".$myfilename."\n".
-    "REFER\n".$caller."\n".
-    "p-version: ".$signature."\n".
-    "Contact: ".$web_contact."\n".
-    "Referred-By: ".$web_contact."\n".
-	"Refer-To: ".$callee."\n".
-    "\n". /* EoHeader */
-    ".\n\n"; /* EoFifoRequest */
 
+$fifo_cmd=":t_uac_dlg:".$myfilename."\n".
+    "REFER\n".
+     $caller."\n".
+	 $outbound_proxy."\n".
+	 ".\n".
+     "\"From: ".$web_contact."\r\n".
+     "To: ".$callee."\r\n".
+     "p-version: ".$signature."\r\n".
+    "Contact: ".$web_contact."\r\n".
+    "Referred-By: ".$web_contact."\r\n".
+	"Refer-To: ".$callee."\r\n".
+	"\"\n\n";
+	
+    
 /* create fifo for replies */
 system("mkfifo -m 666 ".$mypath );
 

@@ -14,13 +14,19 @@ Send IM Status
 <?php
 
 /* config values */
-$web_contact="sip:daemon@siphub.net";
-$fifo="/tmp/ser_fifo";
-$signature="web_test_0.0.0";
+$web_contact="sip:daemon@mydomain.net";
+$fifo="/tmp/openser_fifo";
+$signature="web_im_0.1.0";
 
 /* open reply fifo */
 $myfilename="webfifo_".rand();
 $mypath="/tmp/".$myfilename;
+$outbound_proxy=".";
+
+
+$sip_address = $_POST['sip_address'];
+$instant_message = $_POST['instant_message'];
+
 
 echo "Initiating your request...<p>";
 
@@ -32,13 +38,18 @@ if (!$fifo_handle) {
 
 /* construct FIFO command */
 $fifo_cmd=":t_uac_dlg:".$myfilename."\n".
-    "MESSAGE\n".$sip_address."\n.\n".
-	"From: sip:sender@foo.bar\n".
-	"To: ".$sip_address."\n".
-    "p-version: ".$signature."\n".
-    "Contact: ".$web_contact."\n".
-    "Content-Type: text/plain; charset=UTF-8\n.\n".
-    $instant_message."\n.\n";
+    "MESSAGE\n".
+    $sip_address."\n".
+	$outbound_proxy."\n".
+    ".\n".
+    "\"From: ".$web_contact."\r\n".
+	"To: ".$sip_address."\r\n".
+	"p-version: ".$signature."\r\n".
+    "Contact: ".$web_contact."\r\n".
+    "Content-Type: text/plain; charset=UTF-8\r\n".
+    "\"\n".
+    "\"".$instant_message."\"".
+  	"\n\n";  
 
 /* create fifo for replies */
 system("mkfifo -m 666 ".$mypath );
