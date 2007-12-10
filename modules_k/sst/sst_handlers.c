@@ -401,7 +401,7 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 	if (*param) {
 		LM_DBG("freeing the sst_info_t from dialog %p\n", did);
 		shm_free(*param);
-		*param = '\0';
+		*param = NULL;
 	}
 	return;
 }
