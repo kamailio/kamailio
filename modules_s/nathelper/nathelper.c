@@ -157,7 +157,7 @@
  *		taken to ensure that force_rtp_proxy() in request path matches
  *		force_rtp_proxy() in reply path, that is the same node is selected.
  *
- * 2006-06-10	select nathepler.rewrite_contact
+ * 2006-06-10	Select nathepler.rewrite_contact
  *		pingcontact function (tma)
  *
  * 2007-04-23	Do NAT pinging in the separate dedicated process. It provides much
@@ -165,8 +165,13 @@
  *
  * 2007-04-23	New function start_recording() allowing to start recording RTP
  *		session in the RTP proxy.
+ *
  * 2007-08-28	natping_crlf option was introduced (jiri)
- * 2007-09-12	added stateless sip natping (andrei)
+ *
+ * 2007-09-12	Added stateless sip natping (andrei)
+ *
+ * 2007-12-10	IP address in the session header is now updated along with
+ *		address(es) in media description (andrei).
  *
  */
 
@@ -1859,9 +1864,9 @@ static int
 force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 {
 	str body, body1, oldport, oldip, newport, newip, str1, str2, s;
-	str callid, from_tag, to_tag, tmp;
+	str callid, from_tag, to_tag, tmp, c1_oldip;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
-	int oidx, pf, pf1, force;
+	int oidx, pf, pf1, force, c1_pf;
 	unsigned int node_idx;
 	char opts[16];
 	char *cp, *cp1;
@@ -2062,6 +2067,19 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 		 */
 		c1p = find_sdp_line(v1p, m1p, 'c');
 		c1p_altered = 0;
+		c1_oldip.s = NULL;
+		c1_oldip.len = 0;
+		if (c1p != NULL) {
+			tmpstr1.s = c1p;
+			tmpstr1.len = v2p - tmpstr1.s; /* limit is session limit text */
+			if (extract_mediaip(&tmpstr1, &c1_oldip, &c1_pf) == -1) {
+				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+				    " extract media IP from the message\n");
+				/* Try to continue maybe the other IPs are ok */
+				c1_oldip.s = NULL;
+				c1_oldip.len = 0;
+			}
+		}
 		/* Have session. Iterate media descriptions in session */
 		m2p = m1p;
 		for (;;) {
@@ -2072,17 +2090,25 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 			/* c2p will point to per-media "c=" */
 			c2p = find_sdp_line(m1p, m2p, 'c');
 			/* Extract address and port */
-			tmpstr1.s = c2p ? c2p : c1p;
-			if (tmpstr1.s == NULL) {
+			if (c2p != NULL) {
+				tmpstr1.s = c2p;
+				tmpstr1.len = v2p - tmpstr1.s;/* limit is session limit text */
+				if (extract_mediaip(&tmpstr1, &oldip, &pf) == -1) {
+					LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
+					    " extract media IP from the message\n");
+					if (c1_oldip.s == NULL)
+						return -1;
+					/* Try to continue if we have the sess. header ip */
+					oldip = c1_oldip;
+					c2p = NULL;
+				}
+			} else if (c1_oldip.s != NULL) {
+				/* Use session header value */
+				oldip = c1_oldip;
+			} else {
 				/* No "c=" */
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
 				    " find media IP in the message\n");
-				return -1;
-			}
-			tmpstr1.len = v2p - tmpstr1.s; /* limit is session limit text */
-			if (extract_mediaip(&tmpstr1, &oldip, &pf) == -1) {
-				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
-				    " extract media IP from the message\n");
 				return -1;
 			}
 			tmpstr1.s = m1p;
@@ -2188,15 +2214,24 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 				return -1;
 			/*
 			 * Alter IP. Don't alter IP common for the session
-			 * more than once.
+			 * more than once, but always alter it even if the IP is present
+			 * also in the media description (for broken UAs that use the
+			 * fallback IP from the session header instead of the more specific
+			 * one from the media description).
 			 */
-			if (c2p != NULL || !c1p_altered) {
-				body1.s = c2p ? c2p : c1p;
+			if (c1_oldip.s != NULL && !c1p_altered){
+				body1.s = c1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_mediaip(msg, &body1, &c1_oldip, c1_pf,
+				    &newip, pf1, 0) == -1)
+					return -1;
+				c1p_altered = 1;
+			}
+			if (c2p != NULL && oldip.s != c1_oldip.s) {
+				body1.s = c2p;
 				body1.len = bodylimit - body1.s;
 				if (alter_mediaip(msg, &body1, &oldip, pf, &newip, pf1, 0) == -1)
 					return -1;
-				if (!c2p)
-					c1p_altered = 1;
 			}
 		} /* Iterate medias in session */
 	} /* Iterate sessions */
