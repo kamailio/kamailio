@@ -292,7 +292,7 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 
 			p = (rr_t*)ptr->parsed;
 			while(p) {
-				if (shm_duplicate_rr(&t, p) < 0) {
+				if (shm_duplicate_rr(&t, p, 1/*only first*/) < 0) {
 					LM_ERR("duplicating rr_t\n");
 					goto error;
 				}
@@ -466,7 +466,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 	int code;
 	str method, contact;
 
-	code = _m->first_line.u.reply.statuscode;	
+	code = _m->first_line.u.reply.statuscode;
 
 	     /* Dialog has been already confirmed, that means we received
 	      * a response to a request sent within the dialog. We will
@@ -488,24 +488,24 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 		return 1;
 	}
 
-	     /* Do nothing if not 2xx */
+	/* Do nothing if not 2xx */
 	if ((code < 200) || (code >= 300)) return 0;
-	
+
 	if (get_cseq_method(_m, &method) < 0) return -1;
 	if ((method.len == 6) && !memcmp("INVITE", method.s, 6)) {
-		     /* Get contact if any and update remote target */
+		/* Get contact if any and update remote target */
 		if (parse_headers(_m, HDR_CONTACT_F, 0) == -1) {
 			LM_ERR("failed to parse headers\n");
 			return -2;
 		}
 
-		     /* Try to extract contact URI */
+		/* Try to extract contact URI */
 		if (get_contact_uri(_m, &contact) < 0) return -3;
-		     /* If there is a contact URI */
+		/* If there is a contact URI */
 		if (contact.len) {
-			     /* Free old remote target if any */
+			/* Free old remote target if any */
 			if (_d->rem_target.s) shm_free(_d->rem_target.s);
-			     /* Duplicate new remote target */
+			/* Duplicate new remote target */
 			if (shm_str_dup(&_d->rem_target, &contact) < 0) return -4;
 		}
 	}
@@ -524,15 +524,15 @@ int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
 		return -1;
 	}
 
-	     /* The main dispatcher */
+	/* The main dispatcher */
 	switch(_d->state) {
-	case DLG_NEW:       
+	case DLG_NEW:
 		return dlg_new_resp_uac(_d, _m);
 
-	case DLG_EARLY:     
+	case DLG_EARLY:
 		return dlg_early_resp_uac(_d, _m);
 
-	case DLG_CONFIRMED: 
+	case DLG_CONFIRMED:
 		return dlg_confirmed_resp_uac(_d, _m);
 
 	case DLG_DESTROYED:

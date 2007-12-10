@@ -237,6 +237,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	/* copy'n'paste Route headers */
 	if (!is_local(Trans)) {
+		/* skip the Routes belonging to us */
 		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
 			 if (hdr->type==HDR_ROUTE_T)
 				*len+=hdr->len;
