@@ -180,6 +180,38 @@ done:
 }
 
 
+static inline struct hdr_field* extract_parsed_hdrs( char *buf, int len)
+{
+	char *p;
+	static struct sip_msg msg;
+	struct hdr_field  *hdr;
+
+	LM_DBG("----parsing the buf req - first line\n");
+	/* skip the first line - not interesting */
+	p = eat_line( buf, len);
+	if (p>=buf+len)
+		return 0;
+
+	memset( &msg, 0, sizeof(struct sip_msg) );
+	msg.buf = buf;
+	msg.len = len;
+	msg.unparsed = p;
+
+	/* as we need all Route headers, we need to parse all headers */
+	if (parse_headers( &msg, HDR_EOH_F, 0)==-1)
+		goto error;
+
+	hdr = msg.headers;
+	msg.headers = 0;
+
+	free_sip_msg( &msg );
+	return hdr;
+error:
+	free_sip_msg( &msg );
+	return 0;
+}
+
+
 /* Build a local request based on a previous request; the only
    customers of this function are local ACK and local CANCEL
  */
@@ -188,6 +220,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 {
 	char                *cancel_buf, *p, *via;
 	unsigned int         via_len;
+	struct hdr_field    *buf_hdrs;
 	struct hdr_field    *hdr;
 	struct sip_msg      *req;
 	char branch_buf[MAX_BRANCH_PARAM_LEN];
@@ -201,6 +234,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	from = Trans->from;
 	cseq_n = Trans->cseq_n;
 	to = *uas_to;
+	buf_hdrs = 0;
 
 	if (req && req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ)) {
 		if ( extract_hdrs( Trans->uac[branch].request.buffer.s,
@@ -226,8 +260,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	set_hostport(&hp, (is_local(Trans))?0:req);
 	via=via_builder(&via_len, Trans->uac[branch].request.dst.send_sock,
 		&branch_str, 0, Trans->uac[branch].request.dst.proto, &hp );
-	if (!via)
-	{
+	if (!via){
 		LM_ERR("no via header got from builder\n");
 		goto error;
 	}
@@ -235,14 +268,17 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	/*headers*/
 	*len+=from.len+Trans->callid.len+to.len+cseq_n.len+1+method_len+CRLF_LEN;
 
-	/* copy'n'paste Route headers */
-	if (!is_local(Trans)) {
-		/* skip the Routes belonging to us */
-		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
-			 if (hdr->type==HDR_ROUTE_T)
+	/* copy'n'paste Route headers that were sent out */
+	if (!is_local(Trans) && req && req->route) {
+		buf_hdrs = extract_parsed_hdrs(Trans->uac[branch].request.buffer.s,
+			Trans->uac[branch].request.buffer.len );
+		if (buf_hdrs==NULL) {
+			LM_ERR("failed to reparse the request buffer\n");
+			goto error01;
+		}
+		for ( hdr=buf_hdrs ; hdr ; hdr=hdr->next )
+			if (hdr->type==HDR_ROUTE_T)
 				*len+=hdr->len;
-		if (Trans->uac[branch].path_vec.len)
-			*len+=Trans->uac[branch].path_vec.len+ROUTE_PREFIX_LEN+CRLF_LEN;
 	}
 
 	/* User Agent */
@@ -256,7 +292,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	if (!cancel_buf)
 	{
 		LM_ERR("no more share memory\n");
-		goto error01;
+		goto error02;
 	}
 	p = cancel_buf;
 
@@ -279,20 +315,11 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	append_string( p, CRLF LOCAL_MAXFWD_HEADER,
 		CRLF_LEN+LOCAL_MAXFWD_HEADER_LEN );
 
-	if (!is_local(Trans))  {
-		/* Path */
-		if (Trans->uac[branch].path_vec.len) {
-			append_string(p, ROUTE_PREFIX, ROUTE_PREFIX_LEN);
-			append_string(p, Trans->uac[branch].path_vec.s,
-				Trans->uac[branch].path_vec.len);
-			append_string(p, CRLF, CRLF_LEN);
+	/* add Route hdrs (if any) */
+	for ( hdr=buf_hdrs ; hdr ; hdr=hdr->next )
+		if(hdr->type==HDR_ROUTE_T) {
+			append_string(p, hdr->name.s, hdr->len );
 		}
-		/* Route hdrs */
-		for ( hdr=req->headers ; hdr ; hdr=hdr->next )
-			if(hdr->type==HDR_ROUTE_T) {
-				append_string(p, hdr->name.s, hdr->len );
-			}
-	}
 
 	/* User Agent header, Content Length, EoM */
 	if (server_signature) {
@@ -307,6 +334,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 
 	pkg_free(via);
 	return cancel_buf;
+error02:
+	free_hdr_field_lst(buf_hdrs);
 error01:
 	pkg_free(via);
 error:
