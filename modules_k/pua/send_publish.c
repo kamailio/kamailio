@@ -553,7 +553,6 @@ send_publish:
 	if(result< 0)
 	{
 		LM_ERR("in t_request tm module function\n");
-		shm_free(cb_param);
 		goto error;
 	}
 
