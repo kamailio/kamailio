@@ -216,8 +216,7 @@ static int dbrow2avp(struct db_row *row, struct db_param *dbp, int_str attr,
 	/* added the avp */
 	db_flags |= AVP_IS_IN_DB;
 	/* set script flags */
-	if(dbp->a.type==AVPOPS_VAL_PVAR)
-		db_flags |= dbp->a.u.sval.pvp.pvn.u.isname.type&0xff00;
+	db_flags |= dbp->a.u.sval.pvp.pvn.u.isname.type&0xff00;
 	return add_avp( (unsigned short)db_flags, avp_attr, avp_val);
 }
 

@@ -193,7 +193,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 				goto error;
 			}
 		}
-		dbp->a.u.sval.pvp.pvn.u.isname.type |= flags<<8;
+		dbp->a.u.sval.pvp.pvn.u.isname.type |= (flags<<8)&0xff00;
 		dbp->a.type = AVPOPS_VAL_NONE;
 	} else {
 		s0.s = s; s0.len = strlen(s0.s);
