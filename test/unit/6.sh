@@ -1,5 +1,5 @@
 #!/bin/bash
-# checks a configuration with 'openser -c'
+# checks a configuration with 'openser -c' and 'openser -C'
 
 CFG=2.cfg
 
@@ -7,6 +7,9 @@ CFG=2.cfg
 ../openser -c -f $CFG > /dev/null 2>&1
 ret=$?
 
-sleep 1
+if [ "$ret" -eq 0 ] ; then
+	../openser -C -f $CFG > /dev/null 2>&1
+	ret=$?
+fi ;
 
 exit $ret
