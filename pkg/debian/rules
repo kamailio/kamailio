@@ -186,6 +186,8 @@ install: build
 	# install /etc/default/ser file
 	mkdir -p $(CURDIR)/debian/ser/etc/default
 	cp -f debian/ser.default $(CURDIR)/debian/ser/etc/default/ser
+	# install the *.sql files for ser_mysql.sh script
+	cp -f scripts/mysql/*.sql $(CURDIR)/debian/ser/usr/lib/ser/
 	# install advanced ser config file for ser-oob package
 	mkdir -p $(CURDIR)/debian/ser-oob/etc/ser
 	cp -f etc/ser-oob.cfg $(CURDIR)/debian/ser-oob/etc/ser/

@@ -1,3 +1,9 @@
+ser (2.1.0-0dev15) unstable; urgency=low
+
+  * Added installation of *.sql files for ser_mysql.sh script.
+
+ -- Pavel Kasparek <pavel@iptel.org>  Mon, 10 Dec 2007 12:53:46 +0100
+
 ser (2.1.0-0dev12) unstable; urgency=low
 
   * Updated Debian specification for cvs HEAD version.
