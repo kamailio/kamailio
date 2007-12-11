@@ -146,7 +146,6 @@ modparam("presence_xml", "force_active", 1)
 </programlisting>
 		</example>
 	</section>
-</section>
 	<section>
 		<title><varname>pidf_manipulation</varname> (int)</title>
 		<para>
@@ -213,7 +212,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 </programlisting>
 		</example>
 	</section>
-
+</section>
 <section>
 	<title>Exported Functions</title>
 	<para>
