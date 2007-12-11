@@ -883,6 +883,34 @@ inline static int w_t_replicate(struct sip_msg *p_msg, char *dst, char *flags)
 	return t_replicate( p_msg, (str*)dst, (int)(long)flags);
 }
 
+static inline int t_relay_inerr2scripterr()
+{
+	switch (ser_error) {
+		case E_BAD_URI:
+		case E_BAD_REQ:
+		case E_BAD_TO:
+		case E_INVALID_PARAMS:
+			/* bad message */
+			return -2;
+		case E_NO_DESTINATION:
+			/* no available destination */
+			return -3;
+		case E_BAD_ADDRESS:
+			/* bad destination */
+			return -4;
+		case E_IP_BLOCKED:
+			/* destination filtered */
+			return -5;
+		case E_NO_SOCKET:
+		case E_SEND:
+			/* send failed */
+			return -6;
+		default:
+			/* generic internal error */
+			return -1;
+	}
+}
+
 
 inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 {
@@ -897,7 +925,11 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 			LM_CRIT(" BUG - undefined transaction in failure route\n");
 			return -1;
 		}
-		return t_relay_to( p_msg, (struct proxy_l *)proxy, (int)(long)flags );
+		ret = t_relay_to( p_msg, (struct proxy_l *)proxy, (int)(long)flags );
+		if (ret<0) {
+			return t_relay_inerr2scripterr();
+		}
+		return ret;
 	} else {
 		/* transaction already created */
 
@@ -914,8 +946,10 @@ inline static int w_t_relay( struct sip_msg  *p_msg , char *proxy, char *flags)
 			t->flags|=T_NO_DNS_FAILOVER_FLAG;
 
 		ret = t_forward_nonack( t, p_msg, (struct proxy_l *)proxy);
-		if (ret<=0 )
+		if (ret<=0 ) {
 			LM_ERR("t_forward_nonack failed\n");
+			return t_relay_inerr2scripterr();
+		}
 		return ret;
 	}
 

@@ -603,6 +603,7 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* do not forward requests which were already cancelled*/
 	if (was_cancelled(t)) {
 		LM_ERR("discarding fwd for a cancelled transaction\n");
+		ser_error = E_NO_DESTINATION;
 		return -1;
 	}
 
@@ -666,10 +667,12 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	/* things went wrong ... no new branch has been fwd-ed at all */
 	if (added_branches==0) {
 		if (try_new==0) {
+			ser_error = E_NO_DESTINATION;
 			LM_ERR("no branch for forwarding\n");
 			return -1;
 		}
 		LM_ERR("failure to add branches\n");
+		ser_error = lowest_ret;
 		return lowest_ret;
 	}
 
