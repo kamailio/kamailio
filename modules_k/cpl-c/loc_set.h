@@ -108,7 +108,7 @@ static inline int add_location(struct location **loc_set, str *uri,
 	/* find the proper place for the new location */
 	foo = *loc_set;
 	bar = 0;
-	while(foo && foo->addr.priority<=prio) {
+	while(foo && foo->addr.priority>prio) {
 		bar = foo;
 		foo = foo->next;
 	}
