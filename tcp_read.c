@@ -779,7 +779,7 @@ again:
 			con->timeout=t+S_TO_TICKS(TCP_CHILD_TIMEOUT);
 			/* re-activate the timer */
 			con->timer.f=tcpconn_read_timeout;
-			timer_reinit(&con->timer);
+			local_timer_reinit(&con->timer);
 			local_timer_add(&tcp_reader_ltimer, &con->timer,
 								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
 			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con))<0){

@@ -48,6 +48,10 @@ struct local_timer {
 };
 
 
+#define local_timer_init(tl, fun, param, flgs) timer_init(tl, fun, param, flgs)
+
+#define local_timer_reinit(tl) timer_reinit((tl))
+
 int init_local_timer(struct local_timer *lt_handle, ticks_t crt_ticks);
 void destroy_local_timer(struct local_timer* lt_handle);
 

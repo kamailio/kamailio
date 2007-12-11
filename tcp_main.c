@@ -813,7 +813,7 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 	c->rcv.src_su=*su;
 	
 	atomic_set(&c->refcnt, 0);
-	timer_init(&c->timer, tcpconn_main_timeout, c, 0);
+	local_timer_init(&c->timer, tcpconn_main_timeout, c, 0);
 	su2ip_addr(&c->rcv.src_ip, su);
 	c->rcv.src_port=su_getport(su);
 	c->rcv.bind_address=ba;
@@ -1786,7 +1786,7 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 			/* re-activate the timer only if the connection is handled
 			 * by tcp_main (and not by a tcp reader)*/
 			tcpconn->timer.f=tcpconn_main_timeout;
-			timer_reinit(&tcpconn->timer);
+			local_timer_reinit(&tcpconn->timer);
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 									TCPCONN_WAIT_TIMEOUT, t);
 		}
@@ -2061,7 +2061,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			tcpconn_put(tcpconn);
 			/* re-activate the timer */
 			tcpconn->timer.f=tcpconn_main_timeout;
-			timer_reinit(&tcpconn->timer);
+			local_timer_reinit(&tcpconn->timer);
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
 			/* must be after the de-ref*/
@@ -2522,6 +2522,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 											POLLIN, fd_i)==-1))
 					goto error;
 			}
+			tcpconn->flags&=~F_CONN_WRITE_W;
 		}
 		ev&=~POLLOUT; /* clear POLLOUT */
 	}
