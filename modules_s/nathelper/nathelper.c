@@ -173,6 +173,9 @@
  * 2007-12-10	IP address in the session header is now updated along with
  *		address(es) in media description (andrei).
  *
+ *		force_rtp_proxy() now accepts zNNN parameter and passes it to the
+ *		RTP proxy.
+ *
  */
 
 #include "nhelpr_funcs.h"
@@ -236,6 +239,8 @@ MODULE_VERSION
 #define	SUP_CPROTOVER	20040107
 /* Required additional version of the RTP proxy command protocol */
 #define	REQ_CPROTOVER	"20050322"
+/* Additional version necessary for re-packetization support */
+#define	REP_CPROTOVER	"20071116"
 #define	CPORT		"22222"
 
 struct rtpp_head;
@@ -315,6 +320,7 @@ struct rtpp_node {
 	int			rn_disabled;	/* found unaccessible? */
 	unsigned		rn_weight;	/* for load balancing */
 	int			rn_recheck_ticks;
+	int			rn_rep_supported;
 	struct rtpp_node	*rn_next;
 };
 
@@ -1431,13 +1437,28 @@ gencookie()
 }
 
 static int
+rtpp_checkcap(struct rtpp_node *node, char *cap, int caplen)
+{
+	char *cp;
+	struct iovec vf[4] = {{NULL, 0}, {"VF", 2}, {" ", 1}, {NULL, 0}};
+
+	vf[3].iov_base = cap;
+	vf[3].iov_len = caplen;
+
+	cp = send_rtpp_command(node, vf, 4);
+	if (cp == NULL)
+		return -1;
+	if (cp[0] == 'E' || atoi(cp) != 1)
+		return 0;
+	return 1;
+}
+
+static int
 rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 {
-	int rtpp_ver;
+	int rtpp_ver, rval;
 	char *cp;
 	struct iovec v[2] = {{NULL, 0}, {"V", 1}};
-	struct iovec vf[4] = {{NULL, 0}, {"VF", 2}, {" ", 1},
-	    {REQ_CPROTOVER, 8}};
 
 	if (force == 0) {
 		if (isdisabled == 0)
@@ -1460,13 +1481,13 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 			    SUP_CPROTOVER, rtpp_ver);
 			break;
 		}
-		cp = send_rtpp_command(node, vf, 4);
-		if (cp == NULL) {
+		rval = rtpp_checkcap(node, REQ_CPROTOVER, sizeof(REQ_CPROTOVER) - 1);
+		if (rval == -1) {
 			LOG(L_WARN,"WARNING: rtpp_test: RTP proxy went down during "
 			    "version query\n");
 			break;
 		}
-		if (cp[0] == 'E' || atoi(cp) != 1) {
+		if (rval == 0) {
 			LOG(L_WARN, "WARNING: rtpp_test: of RTP proxy <%s>"
 			    "doesn't support required protocol version %s\n",
 			    node->rn_url, REQ_CPROTOVER);
@@ -1475,6 +1496,13 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		LOG(L_INFO, "rtpp_test: RTP proxy <%s> found, support for "
 		    "it %senabled\n",
 		    node->rn_url, force == 0 ? "re-" : "");
+		/* Check for optional capabilities */
+		rval = rtpp_checkcap(node, REP_CPROTOVER, sizeof(REP_CPROTOVER) - 1);
+		if (rval != -1) {
+			node->rn_rep_supported = rval;
+		} else {
+			node->rn_rep_supported = 0;
+		}
 		return 0;
 	} while(0);
 	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy <%s>"
@@ -1866,9 +1894,10 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 	str body, body1, oldport, oldip, newport, newip, str1, str2, s;
 	str callid, from_tag, to_tag, tmp, c1_oldip;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
-	int oidx, pf, pf1, force, c1_pf;
+	int oidx, pf, pf1, force, c1_pf, rep_oidx;
 	unsigned int node_idx;
 	char opts[16];
+	char rep_opts[16];
 	char *cp, *cp1;
 	char  *cpend, *next;
 	char **ap, *argv[10];
@@ -1917,6 +1946,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 	v[1].iov_base=opts;
 	asymmetric = flookup = force = real = 0;
 	oidx = 1;
+	rep_oidx = 0;
 	node_idx = -1;
 	for (i=0; i<str1.len; i++) {
 		switch (str1.s[i]) {
@@ -1970,7 +2000,15 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 			}
 			str2int(&s, &node_idx);
 			break;
-			
+
+		case 'z':
+		case 'Z':
+			rep_opts[rep_oidx++] = 'Z';
+			/* If there are any digits following Z copy them into the command */
+			for (; i < str1.len - 1 && isdigit(str1.s[i + 1]); i++)
+				rep_opts[rep_oidx++] = str1.s[i + 1];
+			break;
+
 		default:
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: unknown option `%c'\n", str1.s[i]);
 			return -1;
@@ -2152,6 +2190,16 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 				if (!node) {
 					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
 					return -1;
+				}
+				if (rep_oidx > 0) {
+					if (node->rn_rep_supported == 0) {
+						LOG(L_WARN, "WARNING: force_rtp_proxy2: "
+						    "re-packetization is requested but is not "
+						    "supported by the selected RTP proxy node\n");
+					} else {
+						memcpy((char *)v[1].iov_base + v[1].iov_len,
+						    rep_opts, rep_oidx);
+					}
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
 			} while (cp == NULL);
