@@ -302,6 +302,41 @@ int cfg_child_init(void)
 	return 0;
 }
 
+/* per-child process destroy function
+ * Should be called only when the child process exits,
+ * but SER continues running
+ *
+ * WARNING: this function call must be the very last action
+ * before the child process exits, because the local config
+ * is not available afterwards.
+ */
+void cfg_child_destroy(void)
+{
+	/* unref the local config */
+	if (cfg_local) {
+		CFG_UNREF(cfg_local);
+		cfg_local = NULL;
+	}
+
+	/* unref the per-process callback list */
+	if (atomic_dec_and_test(&cfg_child_cb->refcnt)) {
+		/* No more pocess refers to this callback.
+		Did this process block the deletion,
+		or is there any other process that has not
+		reached	prev_cb yet? */
+		CFG_LOCK();
+		if (*cfg_child_cb_first == cfg_child_cb) {
+			/* yes, this process was blocking the deletion */
+			*cfg_child_cb_first = cfg_child_cb->next;
+			CFG_UNLOCK();
+			shm_free(cfg_child_cb);
+		} else {
+			CFG_UNLOCK();
+		}
+	}
+	cfg_child_cb = NULL;
+}
+
 /* searches a variable definition by group and variable name */
 int cfg_lookup_var(str *gname, str *vname,
 			cfg_group_t **group, cfg_mapping_t **var)
