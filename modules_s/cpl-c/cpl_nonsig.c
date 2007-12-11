@@ -42,6 +42,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../cfg/cfg_struct.h"
 #include "cpl_nonsig.h"
 #include "CPL_tree.h"
 
@@ -258,6 +259,9 @@ void cpl_aux_process( int cmd_out, char *log_dir)
 			sleep(1);
 			continue;
 		}
+
+		/* update the local config */
+		cfg_update();
 
 		/* process the command*/
 		switch (cmd.code) {

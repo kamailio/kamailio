@@ -61,6 +61,7 @@
 #include "../../timer.h"
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
+#include "../../cfg/cfg_struct.h"
 #include "../tm/tm_load.h"
 
 #include "xjab_worker.h"
@@ -339,6 +340,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		tmv.tv_usec = 0;
 
 		ret = select(maxfd+1, &mset, NULL, NULL, &tmv);
+
+		/* update the local config */
+		cfg_update();
 		
 		// check the msg queue
 		xj_worker_check_qmsg(jwl, jcp);

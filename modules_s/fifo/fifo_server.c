@@ -94,6 +94,7 @@
 #include "../../sr_module.h"
 #include "../../pt.h"
 #include "../../rpc.h"
+#include "../../cfg/cfg_struct.h"
 #include "fifo_server.h"
 
 
@@ -770,7 +771,10 @@ static void fifo_server(FILE *fifo_stream)
 		}
 		     /* make command zero-terminated */
 		*file_sep = 0;
-		
+
+		/* update the local config */
+		cfg_update();
+
 		exp = find_rpc_export(context.method, 0);
 		if (!exp || !exp->function) {
 			DBG("Command %s not found\n", context.method);
@@ -945,6 +949,10 @@ int start_fifo_server(void)
     	signal(SIGPIPE, SIG_IGN);
 		INFO("fifo server up at %s...\n",
 		     fifo);
+
+		/* initialize the config framework */
+		if (cfg_child_init()) return -1;
+
 		fifo_server(fifo_stream); /* never returns */
 	}
 	     /* dad process */

@@ -64,6 +64,7 @@
 #include "../../parser/parse_content.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
+#include "../../cfg/cfg_struct.h"
 
 #include "../tm/tm_load.h"
 
@@ -352,16 +353,32 @@ static int child_init(int rank)
 										" pid\n");
 						return -1;
 					}
+
+					/* initialize the config framework */
+					if (cfg_child_init()) return -1;
+
 					xj_worker_process(jwl,jaddress,jport,i,db_con[i],
 							&jabber_dbf);
+
+					/* destroy the local config */
+					cfg_child_destroy();
+
 					exit(0);
 				}
 			}
 
 			mpid = getpid();
+
+			/* initialize the config framework */
+			if (cfg_child_init()) return -1;
+
 			while(1)
 			{
 				sleep(check_time);
+
+				/* update the local config */
+				cfg_update();
+
 				xjab_check_workers(mpid);
 			}
 		}
@@ -841,7 +858,15 @@ void xjab_check_workers(int mpid)
 					" worker's pid - w[%d]\n", i);
 				return;
 			}
+
+			/* initialize the config framework */
+			if (cfg_child_init()) return;
+
 			xj_worker_process(jwl,jaddress,jport,i,db_con[i], &jabber_dbf);
+
+			/* destroy the local config */
+			cfg_child_destroy();
+
 			exit(0);
 		}
 	}
