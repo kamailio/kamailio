@@ -176,6 +176,10 @@
  *		force_rtp_proxy() now accepts zNNN parameter and passes it to the
  *		RTP proxy.
  *
+ *		New functions rtpproxy_offer() and rtpproxy_answer() to allow
+ *		using RTP proxy in the cases when SDP offer is in 2xx and SDP
+ *		answer in ACK.
+ *
  */
 
 #include "nhelpr_funcs.h"
@@ -260,6 +264,7 @@ static int unforce_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int start_recording0_f(struct sip_msg *, char *, char *);
 static int start_recording1_f(struct sip_msg *, char *, char *);
+static int force_rtp_proxy(struct sip_msg *, char *, char *, int);
 static int force_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int force_rtp_proxy2_f(struct sip_msg *, char *, char *);
 static int fix_nated_register_f(struct sip_msg *, char *, char *);
@@ -267,6 +272,10 @@ static char *find_sdp_line(char *, char *, char);
 static char *find_next_sdp_line(char *, char *, char, char *);
 static int fixup_ping_contact(void **param, int param_no);
 static int ping_contact_f(struct sip_msg* msg, char* str1, char* str2);
+static int rtpproxy_answer1_f(struct sip_msg *, char *, char *);
+static int rtpproxy_answer2_f(struct sip_msg *, char *, char *);
+static int rtpproxy_offer1_f(struct sip_msg *, char *, char *);
+static int rtpproxy_offer2_f(struct sip_msg *, char *, char *);
 
 static int mod_init(void);
 static void mod_cleanup(void);
@@ -341,6 +350,12 @@ static cmd_export_t cmds[] = {
 	{"ping_contact",       ping_contact_f,         1, fixup_ping_contact,  REQUEST_ROUTE },
 	{"start_recording",    start_recording0_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"start_recording",    start_recording1_f,     1, fixup_var_str_1,   REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_offer",     rtpproxy_offer1_f,      0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_offer",     rtpproxy_offer1_f,      1, fixup_var_str_1,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_offer",     rtpproxy_offer2_f,      2, fixup_var_str_12,            REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_answer",    rtpproxy_answer1_f,     0, 0,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_answer",    rtpproxy_answer1_f,     1, fixup_var_str_1,             REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_answer",    rtpproxy_answer2_f,     2, fixup_var_str_12,            REQUEST_ROUTE | ONREPLY_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -1889,7 +1904,76 @@ find_next_sdp_line(char* p, char* plimit, char linechar, char* defptr)
 }
 
 static int
-force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
+rtpproxy_offer1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	char *cp;
+	fparam_t param2;
+
+	char newip[IP_ADDR_MAX_STR_SIZE];
+
+	cp = ip_addr2a(&msg->rcv.dst_ip);
+	strcpy(newip, cp);
+	param2.type = FPARAM_STRING;
+	param2.orig = param2.v.asciiz = newip;
+	return rtpproxy_offer2_f(msg, str1, (char*)&param2);
+}
+
+static int
+rtpproxy_offer2_f(struct sip_msg *msg, char *param1, char *param2)
+{
+
+	if (msg->first_line.type == SIP_REQUEST)
+		if (msg->first_line.u.request.method_value != METHOD_INVITE)
+			return -1;
+
+	return force_rtp_proxy(msg, param1, param2, 1);
+}
+
+static int
+rtpproxy_answer1_f(struct sip_msg *msg, char *str1, char *str2)
+{
+	char *cp;
+	fparam_t param2;
+
+	char newip[IP_ADDR_MAX_STR_SIZE];
+
+	cp = ip_addr2a(&msg->rcv.dst_ip);
+	strcpy(newip, cp);
+	param2.type = FPARAM_STRING;
+	param2.orig = param2.v.asciiz = newip;
+	return rtpproxy_answer2_f(msg, str1, (char*)&param2);
+}
+
+static int
+rtpproxy_answer2_f(struct sip_msg *msg, char *param1, char *param2)
+{
+
+	if (msg->first_line.type == SIP_REQUEST)
+		if (msg->first_line.u.request.method_value != METHOD_ACK)
+			return -1;
+
+	return force_rtp_proxy(msg, param1, param2, 0);
+}
+
+static int
+force_rtp_proxy2_f(struct sip_msg *msg, char *param1, char *param2)
+{
+	int offer;
+
+	if (msg->first_line.type == SIP_REQUEST &&
+	    msg->first_line.u.request.method_value == METHOD_INVITE) {
+		offer = 1;
+	} else if (msg->first_line.type == SIP_REPLY) {
+		offer = 0;
+	} else {
+		return -1;
+	}
+
+	return force_rtp_proxy(msg, param1, param2, offer);
+}
+
+static int
+force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 {
 	str body, body1, oldport, oldip, newport, newip, str1, str2, s;
 	str callid, from_tag, to_tag, tmp, c1_oldip;
@@ -1973,6 +2057,8 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 
 		case 'l':
 		case 'L':
+			if (offer == 0)
+				return -1;
 			flookup = 1;
 			break;
 
@@ -2015,13 +2101,10 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 		}
 	}
 
-	if (msg->first_line.type == SIP_REQUEST &&
-	    msg->first_line.u.request.method_value == METHOD_INVITE) {
+	if (offer != 0) {
 		create = 1;
-	} else if (msg->first_line.type == SIP_REPLY) {
-		create = 0;
 	} else {
-		return -1;
+		create = 0;
 	}
 	/* extract_body will also parse all the headers in the message as
 	 * a side effect => don't move get_callid/get_to_tag in front of it
@@ -2044,7 +2127,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* param1, char* param2)
 		return -1;
 	}
 	if (flookup != 0) {
-		if (create == 0 || to_tag.len == 0)
+		if (to_tag.len == 0)
 			return -1;
 		create = 0;
 		tmp = from_tag;
