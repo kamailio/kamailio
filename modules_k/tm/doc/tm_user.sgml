@@ -734,6 +734,33 @@ if (t_newtran()) {
 			</listitem>
 		</itemizedlist>
 		<para>
+		In case of error, the function returns the following codes:
+		</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>-1</emphasis> - generic internal error
+				</para>
+			</listitem>
+			<listitem>
+				<para><emphasis>-2</emphasis> - bad message (parsing errors)
+			</listitem>
+			<listitem>
+				<para><emphasis>-3</emphasis> - no destination available 
+				(no branches were added or request already cancelled)
+			</listitem>
+			<listitem>
+				<para><emphasis>-4</emphasis> - bad destination 
+				(unresolvable address)
+			</listitem>
+			<listitem>
+				<para><emphasis>-5</emphasis> - destination filtered 
+				(black listed)
+			</listitem>
+			<listitem>
+				<para><emphasis>-6</emphasis> - generic send failed
+			</listitem>
+		</itemizedlist>
+		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>

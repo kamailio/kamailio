@@ -638,6 +638,16 @@ if (t_newtran()) {
        first IP will be used. It disable the failover both at
        transaport and transaction level.
 
+   In case of error, the function returns the following codes:
+
+     * -1 - generic internal error
+     * -2 - bad message (parsing errors)
+     * -3 - no destination available (no branches were added or
+       request already cancelled)
+     * -4 - bad destination (unresolvable address)
+     * -5 - destination filtered (black listed)
+     * -6 - generic send failed
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1-19. t_relay usage
