@@ -63,7 +63,7 @@ static int backup_config();
 void conf_error(cfg_t *cfg, const char * fmt, va_list ap) {
 	// FIXME old logging system
 	// FIXME and don't seems to work reliable, produces strange error messages
-	LOG(L_ERR, (char *) fmt, ap);
+	LM_ERR( (char *) fmt, ap);
 }
 
 
