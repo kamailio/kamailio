@@ -618,7 +618,7 @@ static int set_if_valid_threshold(modparam_t type, void *val, char *varStr,
 		return -1;
 	}
 	
-	int new_threshold = (int) (int *)val;
+	int new_threshold = (int)(long)(int *)val;
 
 	if (new_threshold < -1) {
 		LM_ERR("%s called with an invalid threshold=%d!\n",

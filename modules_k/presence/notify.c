@@ -1439,7 +1439,7 @@ jump_over_body:
 	pkg_free(str_hdr->s);
 	pkg_free(str_hdr);
 	
-	if((int)n_body!= (int)notify_body)
+	if((int)(long)n_body!= (int)(long)notify_body)
 	{
 		if(notify_body!=NULL)
 		{
@@ -1466,7 +1466,7 @@ error:
 			pkg_free(str_hdr->s);
 		pkg_free(str_hdr);
 	}
-	if((int)n_body!= (int)notify_body)
+	if((int)(long)n_body!= (int)(long)notify_body)
 	{
 		if(notify_body!=NULL)
 		{

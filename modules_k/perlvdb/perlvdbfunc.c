@@ -136,7 +136,7 @@ db_con_t* perlvdb_db_init(const char* url) {
 		return NULL;
 	}
 	memset(res, 0, consize);
-	CON_TAIL(res) = (unsigned int)obj;
+	CON_TAIL(res) = (unsigned int)(unsigned long)obj;
 
 	return res;
 }

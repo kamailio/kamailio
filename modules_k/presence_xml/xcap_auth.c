@@ -277,7 +277,7 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 						if(domain!=NULL)
 						{
 							LM_DBG("Found except domain= %s\n- strlen(domain)= %d\n",
-									domain, strlen(domain));
+									domain, (int)strlen(domain));
 							if(strlen(domain)==subs->from_domain.len &&
 								(strncmp(domain,subs->from_domain.s , subs->from_domain.len)==0))	
 							{
