@@ -276,7 +276,7 @@ sendDirectoryDocument(TList *      const listP,
                 }
             }
                 
-            sprintf(z3, "%5llu %c", fi->size, u);
+            sprintf(z3, "%5llu %c", (long long unsigned int)fi->size, u);
             
             if (xmlrpc_streq(fi->name, ".."))
                 z4 = "";
@@ -441,8 +441,10 @@ sendBody(TSession *   const sessionP,
                     sprintf(z, "Content-type: %s" CRLF
                             "Content-range: bytes %llu-%llu/%llu" CRLF
                             "Content-length: %llu" CRLF
-                            CRLF, mediatype, start, end,
-                            filesize, end-start+1);
+                            CRLF, mediatype, (long long unsigned int)start,
+							(long long unsigned int)end,
+                            (long long unsigned int)filesize,
+							(long long unsigned int)(end-start+1));
 
                     ConnWrite(sessionP->conn, z, strlen(z));
 
@@ -508,7 +510,8 @@ ServerFileHandler(TSession * const r,
             break;
         }
         
-        sprintf(z, "bytes %llu-%llu/%llu", start, end, filesize);
+        sprintf(z, "bytes %llu-%llu/%llu", (long long unsigned int)start,
+			(long long unsigned int)end, (long long unsigned int)filesize);
 
         ResponseAddField(r, "Content-range", z);
         ResponseContentLength(r, end - start + 1);

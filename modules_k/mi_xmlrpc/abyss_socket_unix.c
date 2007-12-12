@@ -235,7 +235,7 @@ socketWrite(TSocket *             const socketP,
                         "Socket closed.\n");
             else
                 fprintf(stderr, "Abyss socket: sent %u bytes: '%.*s'\n",
-                        -rc, -rc, &buffer[len-bytesLeft]);
+                        (unsigned int)-rc, (int)-rc, &buffer[len-bytesLeft]);
         }
         if (rc <= 0)
             /* 0 means connection closed; < 0 means severe error */
