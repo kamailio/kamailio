@@ -28,7 +28,6 @@
 # 2007-02-28  DB migration added (bogdan)
 # 2007-05-21  Move SQL database definitions out of this script (henning)
 # 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
-#
 # 2007-06-11  Use a common control tool for database tasks, like the openserctl
 
 # path to the database schemas
@@ -48,8 +47,9 @@ if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
 fi
 
-# Uncomment this to set the database root password if you want to run this script
-# without any user prompt. This is unsafe, but useful e.g. for automatic testing.
+# Uncomment this to set the database root password if you want to run this 
+# script without any user prompt. This is unsafe, but useful e.g. for 
+# automatic testing.
 #PW=""
 
 
@@ -151,12 +151,12 @@ db_charset_test
 
 minfo "creating database $1 ..."
 
-# Users: ser is the regular user, serro only for reading
+# Users: openser is the regular user, openserro only for reading
 sql_query "" "create database $1 character set $CHARSET;
-	      GRANT ALL PRIVILEGES ON $1.* TO $DBRWUSER IDENTIFIED  BY '$DBRWPW';
-	      GRANT ALL PRIVILEGES ON $1.* TO ${DBRWUSER}@$DBHOST IDENTIFIED BY '$DBRWPW';
-	      GRANT SELECT ON $1.* TO $DBROUSER IDENTIFIED BY '$DBROPW';
-	      GRANT SELECT ON $1.* TO ${DBROUSER}@$DBHOST IDENTIFIED BY '$DBROPW';"
+	GRANT ALL PRIVILEGES ON $1.* TO $DBRWUSER IDENTIFIED  BY '$DBRWPW';
+	GRANT ALL PRIVILEGES ON $1.* TO ${DBRWUSER}@$DBHOST IDENTIFIED BY '$DBRWPW';
+	GRANT SELECT ON $1.* TO $DBROUSER IDENTIFIED BY '$DBROPW';
+	GRANT SELECT ON $1.* TO ${DBROUSER}@$DBHOST IDENTIFIED BY '$DBROPW';"
 
 
 if [ $? -ne 0 ] ; then
@@ -165,12 +165,12 @@ if [ $? -ne 0 ] ; then
 fi
 
 for TABLE in $STANDARD_MODULES; do
-    mdbg "Creating core table: $TABLE"
-    sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
-    if [ $? -ne 0 ] ; then
-	merr "Creating core tables failed!"
-	exit 1
-    fi
+	mdbg "Creating core table: $TABLE"
+	sql_query $1 < $DB_SCHEMA/$TABLE-create.sql
+	if [ $? -ne 0 ] ; then
+		merr "Creating core tables failed!"
+		exit 1
+	fi
 done
 
 minfo "Core OpenSER tables succesfully created."
@@ -180,8 +180,8 @@ then
 	minfo "Creating custom extensions tables"
 	sql_query $1 < $DB_SCHEMA/extensions-create.sql
 	if [ $? -ne 0 ] ; then
-	merr "Creating custom extensions tables failed!"
-	exit 1
+		merr "Creating custom extensions tables failed!"
+		exit 1
 	fi
 fi
 
@@ -192,11 +192,13 @@ fi
 
 get_answer $INSTALL_EXTRA_TABLES "Install tables for $EXTRA_MODULES? (y/n): "
 if [ "$ANSWER" = "y" ]; then
+	HAS_EXTRA="yes"
 	extra_create $1
 fi
 
 get_answer $INSTALL_SERWEB_TABLES "Install SERWEB related tables? (y/n): "
 if [ "$ANSWER" = "y" ]; then
+	HAS_SERWEB="yes"
 	serweb_create $1
 fi
 } # openser_create
@@ -348,7 +350,6 @@ minfo " -- Migrating $3 to $1.....OK"
 
 }
 
-# FIXME needs update for 1.3
 migrate_db () # 2 parameters (src_db, dst_db)
 {
 if [ $# -ne 2 ] ; then
@@ -360,78 +361,80 @@ dst_db=$2
 src_db=$1
 
 migrate_table ${dst_db}.acc \
-	"method,from_tag,to_tag,callid,sip_code,time" \
+	"id,method,from_tag,to_tag,callid,sip_code,sip_reason,time" \
 	${src_db}.acc \
-	"?sip_method,?fromtag,?totag,?sip_callid,?sip_status,?time"
+	"?id,?method,?from_tag,?to_tag,?callid,?sip_code,?sip_reason,?time"
 
 migrate_table ${dst_db}.missed_calls \
-	"method,from_tag,to_tag,callid,sip_code,time" \
+	"id,method,from_tag,to_tag,callid,sip_code,sip_reason,time" \
 	${src_db}.missed_calls \
-	"?sip_method,?fromtag,?totag,?sip_callid,?sip_status,?time"
+	"?id,?method,?from_tag,?to_tag,?callid,?sip_code,?sip_reason,?time"
 
 migrate_table ${dst_db}.aliases \
-	"username,domain,contact,expires,q,callid,cseq,last_modified,\
-		flags,user_agent" \
+	"id,username,domain,contact,expires,q,callid,cseq,last_modified,\
+		flags,cflags,user_agent" \
 	${src_db}.aliases \
-	"?username,?domain,?contact,?expires,?q,?callid,?cseq,?last_modified,\
-		?flags,?user_agent"
+	"?id,?username,?domain,?contact,?expires,?q,?callid,?cseq,?last_modified,\
+		?flags,?cflags,?user_agent"
 
 migrate_table ${dst_db}.dbaliases \
-	"alias_username,alias_domain,username,domain" \
+	"id,alias_username,alias_domain,username,domain" \
 	${src_db}.dbaliases \
-	"?alias_username,?alias_domain,?username,?domain"
+	"?id,?alias_username,?alias_domain,?username,?domain"
 
 migrate_table ${dst_db}.grp \
-	"username,domain,grp,last_modified" \
+	"id,username,domain,grp,last_modified" \
 	${src_db}.grp \
-	"?username,?domain,?grp,?last_modified"
+	"?id,?username,?domain,?grp,?last_modified"
 
 migrate_table ${dst_db}.re_grp \
-	"reg_exp,group_id" \
+	"id,reg_exp,group_id" \
 	${src_db}.re_grp \
-	"?reg_exp,?group_id"
+	"?id,?reg_exp,?group_id"
 
 migrate_table ${dst_db}.silo \
 	"id,src_addr,dst_addr,username,domain,inc_time,exp_time,snd_time,\
 		ctype,body" \
 	${src_db}.silo \
-	"?mid,?src_addr,?dst_addr,?username,?domain,?inc_time,?exp_time,?snd_time,\
+	"?id,?src_addr,?dst_addr,?username,?domain,?inc_time,?exp_time,?snd_time,\
 		?ctype,?body"
 
 migrate_table ${dst_db}.domain \
-	"domain,last_modified" \
+	"id,domain,last_modified" \
 	${src_db}.domain \
-	"?domain,?last_modified"
+	"?id,?domain,?last_modified"
 
 migrate_table ${dst_db}.uri \
-	"username,domain,uri_user,last_modified" \
+	"id,username,domain,uri_user,last_modified" \
 	${src_db}.uri \
-	"?username,?domain,?uri_user,?last_modified"
+	"?id,?username,?domain,?uri_user,?last_modified"
 
 migrate_table ${dst_db}.usr_preferences \
-	"uuid,username,domain,attribute,type,value,last_modified" \
+	"id,uuid,username,domain,attribute,type,value,last_modified" \
 	${src_db}.usr_preferences \
-	"?uuid,?username,?domain,?attribute,?type,?value,?modified"
+	"?id,?uuid,?username,?domain,?attribute,?type,?value,?last_modified"
 
 migrate_table ${dst_db}.trusted \
-	"src_ip,proto,from_pattern,tag" \
+	"id,src_ip,proto,from_pattern,tag" \
 	${src_db}.trusted \
-	"?src_ip,?proto,?from_pattern,?tag"
+	"?id,?src_ip,?proto,?from_pattern,?tag"
+
+migrate_table ${dst_db}.address \
+	"id,grp,ip_addr,mask,port" \
+	${src_db}.address \
+	"?id,?grp,?ip_addr,?mask,?port"
 
 migrate_table ${dst_db}.speed_dial \
 	"id,username,domain,sd_username,sd_domain,new_uri,\
 		fname,lname,description" \
 	${src_db}.speed_dial \
-	"?uuid,?username,?domain,?sd_username,?sd_domain,?new_uri,\
+	"?id,?username,?domain,?sd_username,?sd_domain,?new_uri,\
 		?fname,?lname,?description"
 
 migrate_table ${dst_db}.gw \
-	"gw_name,grp_id,ip_addr,port,uri_scheme,transport,strip,prefix" \
+	"id,gw_name,grp_id,ip_addr,port,uri_scheme,transport,strip,prefix" \
 	${src_db}.gw \
-	"?gw_name,?grp_id, INET_NTOA(((?ip_addr & 0x000000ff) << 24) + \
-	((?ip_addr & 0x0000ff00) << 8) + ((?ip_addr & 0x00ff0000) >> 8) + \
-	((?ip_addr & 0xff000000) >> 24)),?port,?uri_scheme,?transport,?strip,\
-	?prefix"
+	"?id,?gw_name,?grp_id,?ip_addr,?port,?uri_scheme,?transport,?strip,?prefix"
 
 migrate_table ${dst_db}.gw_grp \
 	"grp_id,grp_name" \
@@ -439,24 +442,24 @@ migrate_table ${dst_db}.gw_grp \
 	"?grp_id,?grp_name"
 
 migrate_table ${dst_db}.lcr \
-	"prefix,from_uri,grp_id,priority" \
+	"id,prefix,from_uri,grp_id,priority" \
 	${src_db}.lcr \
-	"?prefix,?from_uri,?grp_id,?priority"
+	"?id,?prefix,?from_uri,?grp_id,?priority"
 
 migrate_table ${dst_db}.pdt \
-	"sdomain,prefix,domain" \
+	"id,sdomain,prefix,domain" \
 	${src_db}.pdt \
-	"?sdomain,?prefix,?domain"
+	"?id,?sdomain,?prefix,?domain"
 
 if [ "$HAS_SERWEB" = "yes" ] ; then
 	# migrate subscribers with serweb support
 	migrate_table ${dst_db}.subscriber \
-		"username,domain,password,first_name,last_name,email_address,\
+		"id,username,domain,password,first_name,last_name,email_address,\
 		datetime_created,ha1,ha1b,timezone,rpid,phplib_id,phone,\
 		datetime_modified,confirmation,flag,sendnotification,\
 		greeting,allow_find" \
 		${src_db}.subscriber \
-		"?username,?domain,?password,?first_name,?last_name,?email_address,\
+		"?id,?username,?domain,?password,?first_name,?last_name,?email_address,\
 		?datetime_created,?ha1,?ha1b,?timezone,?rpid,?phplib_id,?phone,\
 		?datetime_modified,?confirmation,?flag,?sendnotification,\
 		?greeting,?allow_find"
@@ -506,18 +509,18 @@ if [ "$HAS_SERWEB" = "yes" ] ; then
 else
 	# migrate subscribers with no serweb support
 	migrate_table ${dst_db}.subscriber \
-		"username,domain,password,first_name,last_name,email_address,\
+		"id,username,domain,password,first_name,last_name,email_address,\
 		datetime_created,ha1,ha1b,timezone,rpid" \
 		${src_db}.subscriber \
-		"?username,?domain,?password,?first_name,?last_name,?email_address,\
+		"?id,?username,?domain,?password,?first_name,?last_name,?email_address,\
 		?datetime_created,?ha1,?ha1b,?timezone,?rpid"
 fi
 
 if [ "$HAS_EXTRA" = "yes" ] ; then
 	migrate_table ${dst_db}.cpl \
-		"username,domain,cpl_xml,cpl_bin" \
+		"id,username,domain,cpl_xml,cpl_bin" \
 		${src_db}.cpl \
-		"?username,?domain,?cpl_xml,?cpl_bin"
+		"?id,?username,?domain,?cpl_xml,?cpl_bin"
 
 	migrate_table ${dst_db}.siptrace \
 		"id,date,callid,traced_user,msg,method,status,fromip,toip,\
@@ -525,7 +528,18 @@ if [ "$HAS_EXTRA" = "yes" ] ; then
 		${src_db}.siptrace \
 		"?id,?date,?callid,?traced_user,?msg,?method,?status,?fromip,?toip,\
 		?fromtag,?direction"
+
+	migrate_table ${dst_db}.imc_rooms \
+		"id,name,domain,flag" \
+		${src_db}.imc_rooms \
+		"?id,?name,?domain,?flag"
+
+	migrate_table ${dst_db}.imc_members \
+		"id,username,domain,room,flag" \
+		${src_db}.im_members \
+		"?id,?username,?domain,?room,?flag"
 fi
+
 
 }  #end migrate_db()
 

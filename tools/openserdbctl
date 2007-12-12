@@ -159,31 +159,28 @@ openser_restore() #pars: <database name> <filename>
 
 
 case $1 in
-# FIXME needs update for 1.3
 	migrate)
 		if [ "$USED_DBENGINE" != "mysql" ] ; then
 			merr "$USED_DBENGINE don't support migrate operation"
 			exit 1
 		fi
-		merr "not implemented yet"
-#		if [ $# -ne 3 ] ; then
-#			merr "migrate requires 2 parameters: old and new database"
-#			exit 1
-#		fi
-#		# create new database
-#		minfo "Creating new Database $3...."
-#		NO_USER_INIT="yes"
-#		openser_create $3
-#		if [ "$?" -ne 0 ] ; then
-#			echo "migrate: creating new database failed"
-#			exit 1
-#		fi
-#		# migrate data
-#		minfo "Migrating data from $2 to $3...."
-#		migrate_db $2 $3
-#		minfo "Migration successfully completed."
-#		exit 0;
-		exit 1
+		if [ $# -ne 3 ] ; then
+			merr "migrate requires 2 parameters: old and new database"
+			exit 1
+		fi
+		# create new database
+		minfo "Creating new Database $3...."
+		NO_USER_INIT="yes"
+		openser_create $3
+		if [ "$?" -ne 0 ] ; then
+			echo "migrate: creating new database failed"
+			exit 1
+		fi
+		# migrate data
+		minfo "Migrating data from $2 to $3...."
+		migrate_db $2 $3
+		minfo "Migration successfully completed."
+		exit 0;
 		;;
 	copy)
 		# copy database to some other name
