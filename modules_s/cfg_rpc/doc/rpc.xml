@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="cfg_rpc.rpc" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <title>RPC Interface</title>
+
+    <para>
+	The module implements the following RPC interface commands:
+    </para>
+    <itemizedlist>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.set_now_int</emphasis> - Set the value of
+		a configuration variable and commit the change immediately.
+		The function accepts three parameters: group name, variable
+		name, integer value.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.set_now_string</emphasis> - Set the value of
+		a configuration variable and commit the change immediately.
+		The function accepts three parameters: group name, variable
+		name, string value.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.set_delayed_int</emphasis> - Prepare the change of
+		a configuration variable, but does not commit the new value yet.
+		The function accepts three parameters: group name, variable
+		name, integer value.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.set_delayed_string</emphasis> - Prepare the change of
+		a configuration variable, but does not commit the new value yet.
+		The function accepts three parameters: group name, variable
+		name, string value.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.commit</emphasis> - Commit the previously
+		prepared configuration changes. The function does not have
+		any parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.rollback</emphasis> - Drop the prepared
+		configuration changed. The function does not have any
+		parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.get</emphasis> - Get the value of
+		a configuration variable. The function accepts two parameters:
+		group name, variable name.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.help</emphasis> - Print the description of
+		a configuration variable. The function accepts two parameters:
+		group name, variable name.
+	    </para>
+	</listitem>
+    </itemizedlist>
+</section>
