@@ -8,7 +8,9 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=carrierroute.so
-LIBS=-lconfuse
+
+DEFS+=-I$(LOCALBASE)/include
+LIBS+=-L$(LOCALBASE)/lib -lconfuse
 
 include ../../Makefile.modules
 
