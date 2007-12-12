@@ -347,6 +347,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	unsigned int hash_code;
 	subs_t* s= NULL;
 
+	hash_code = 0;
 	version_str = int2str(subs->version, &len);
 	if(version_str ==NULL)
 	{

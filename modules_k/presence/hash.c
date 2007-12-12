@@ -41,6 +41,7 @@ shtable_t new_shtable(int hash_size)
 	shtable_t htable= NULL;
 	int i, j;
 
+	i = 0;
 	htable= (subs_entry_t*)shm_malloc(hash_size* sizeof(subs_entry_t));
 	if(htable== NULL)
 	{
@@ -297,6 +298,7 @@ phtable_t* new_phtable(void)
 	phtable_t* htable= NULL;
 	int i, j;
 
+	i = 0;
 	htable= (phtable_t*)shm_malloc(phtable_size* sizeof(phtable_t));
 	if(htable== NULL)
 	{
