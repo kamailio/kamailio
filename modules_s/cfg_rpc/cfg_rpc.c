@@ -206,6 +206,80 @@ static void rpc_help(rpc_t* rpc, void* c)
 	rpc->add(c, "s", ch);
 }
 
+static const char* rpc_list_doc[2] = {
+        "List the configuration variables",
+        0
+};
+
+static void rpc_list(rpc_t* rpc, void* c)
+{
+	void		*h;
+	str		gname;
+	cfg_def_t	*def;
+	int		i;
+
+	cfg_get_group_init(&h);
+	while(cfg_get_group_next(&h, &gname, &def))
+		for (i=0; def[i].name; i++)
+			rpc->printf(c, "%.*s: %s", gname.len, gname.s, def[i].name);
+}
+
+static const char* rpc_diff_doc[2] = {
+        "List the pending configuration changes that have not been committed yet",
+        0
+};
+
+static void rpc_diff(rpc_t* rpc, void* c)
+{
+	void		*h;
+	str		gname, vname;
+	void		*old_val, *new_val;
+	unsigned int	val_type;
+	void		*rpc_handle;
+
+
+	if (cfg_diff_init(ctx, &h)) {
+		rpc->fault(c, 400, "Failed to get the changes");
+		return;
+	}
+	while(cfg_diff_next(&h,
+			&gname, &vname,
+			&old_val, &new_val,
+			&val_type)
+	) {
+		rpc->add(c, "{", &rpc_handle);
+		rpc->struct_add(rpc_handle, "SS",
+				"group name", &gname,
+				"variable name", &vname);
+
+		switch (val_type) {
+		case CFG_VAR_INT:
+			rpc->struct_add(rpc_handle, "dd",
+					"old value", (int)(long)old_val,
+					"new value", (int)(long)new_val);
+			break;
+
+		case CFG_VAR_STRING:
+			rpc->struct_add(rpc_handle, "ss",
+					"old value", (char *)old_val,
+					"new value", (char *)new_val);
+			break;
+
+		case CFG_VAR_STR:
+			rpc->struct_add(rpc_handle, "SS",
+					"old value", (str *)old_val,
+					"new value", (str *)new_val);
+			break;
+
+		case CFG_VAR_POINTER:
+			/* cannot print out pointer value with struct_add() */
+			break;
+
+		}
+	}
+	cfg_diff_release(ctx);
+}
+
 static rpc_export_t rpc_calls[] = {
 	{"cfg.set_now_int",	rpc_set_now_int,	rpc_set_now_doc,	0},
 	{"cfg.set_now_string",	rpc_set_now_string,	rpc_set_now_doc,	0},
@@ -215,6 +289,8 @@ static rpc_export_t rpc_calls[] = {
 	{"cfg.rollback",	rpc_rollback,		rpc_rollback_doc,	0},
 	{"cfg.get",		rpc_get,		rpc_get_doc,		0},
 	{"cfg.help",		rpc_help,		rpc_help_doc,		0},
+	{"cfg.list",		rpc_list,		rpc_list_doc,		0},
+	{"cfg.diff",		rpc_diff,		rpc_diff_doc,		0},
 	{0, 0, 0, 0}
 };
 

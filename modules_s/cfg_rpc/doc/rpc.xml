@@ -70,5 +70,18 @@
 		group name, variable name.
 	    </para>
 	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.list</emphasis> - List the configuration
+		variables. The function does not have any parameters.
+	    </para>
+	</listitem>
+	<listitem>
+	    <para>
+		<emphasis>cfg_rpc.diff</emphasis> - List the pending
+		configuration changes that have not been committed yet.
+		The function does not have any parameters.
+	    </para>
+	</listitem>
     </itemizedlist>
 </section>
