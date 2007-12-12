@@ -292,7 +292,7 @@ struct bm_binds bmb;
 ...
 /* load the benchmarking API */
 if (load_bm_api( &bmb )!=0) {
-    LOG(L_ERR, "ERROR: can't load benchmark API\n");
+    LM_ERR("can't load benchmark API\n");
     goto error;
 }
 ...
