@@ -161,9 +161,9 @@
 		<value col="at.rich_t">string</value>
 		<value col="at.desc">creation time</value>
 		<value col="at.d_flags">33</value>
-		<value col="at.prior">0</value>
+		<value col="at.prior">65792</value>
 		<value col="at.order">0</value>
-		<value col="at.access">1</value>
+		<value col="at.access">21</value>
 	</row>
 	
 	<row vendor-controlled="1">

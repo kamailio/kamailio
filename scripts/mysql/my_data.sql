@@ -3,7 +3,7 @@ INSERT IGNORE INTO attr_types (name, raw_type, default_flags) VALUES ('uid', '2'
 DELETE FROM attr_types WHERE name='did';
 INSERT IGNORE INTO attr_types (name, raw_type, default_flags) VALUES ('did', '2', '1');
 DELETE FROM attr_types WHERE name='datetime_created';
-INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering, access) VALUES ('datetime_created', '2', 'string', 'creation time', '33', '0', '0', '1');
+INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering, access) VALUES ('datetime_created', '2', 'string', 'creation time', '33', '65792', '0', '21');
 DELETE FROM attr_types WHERE name='asserted_id';
 INSERT IGNORE INTO attr_types (name, raw_type, rich_type, description, default_flags, priority, ordering, access) VALUES ('asserted_id', '2', 'string', 'asserted identity', '33', '256', '200', '1');
 DELETE FROM attr_types WHERE name='fr_timer';
