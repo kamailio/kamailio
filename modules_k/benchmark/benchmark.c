@@ -274,7 +274,7 @@ int _bm_start_timer(unsigned int id)
 
 int bm_start_timer(struct sip_msg* _msg, char* timer, char *foobar)
 {
-	return _bm_start_timer((unsigned int)timer);
+	return _bm_start_timer((unsigned int)(unsigned long)timer);
 }
 
 
@@ -351,7 +351,7 @@ int _bm_log_timer(unsigned int id)
 
 int bm_log_timer(struct sip_msg* _msg, char* timer, char* mystr)
 {
-	return _bm_log_timer((unsigned int)timer);
+	return _bm_log_timer((unsigned int)(unsigned long)timer);
 }
 
 int _bm_register_timer(char *tname, int mode, unsigned int *id)
@@ -614,7 +614,7 @@ static inline int fixup_bm_timer(void** param, int param_no)
 			return E_UNSPEC;
 		}
 		pkg_free(*param);
-		*param = (void*)tid;
+		*param = (void*)(unsigned long)tid;
 	}
 	return 0;
 }
