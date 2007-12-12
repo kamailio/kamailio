@@ -32,10 +32,59 @@ BACKUP_CMD="tar czvf "
 RESTORE_CMD="tar xzvf "
 
 #berkeley db utility program that writes out db to plain text
-DUMP_CMD="db_dump"
+#small hack to autodetect the db dump command, debian prefix the version..
+
+which db_dump > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	DUMP_CMD="db_dump"
+fi ;
+
+which db4.4_dump > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	DUMP_CMD="db4.4_dump"
+fi ;
+
+which db4.5_dump > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	DUMP_CMD="db4.5_dump"
+fi ;
+
+which db4.6_dump > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	DUMP_CMD="db4.6_dump"
+fi ;
+
 
 #berkeley db utility program that imports data from plain text file
-LOAD_CMD="db_load"
+#small hack to autodetect the db load command, debian prefix the version..
+
+which db_load > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	LOAD_CMD="db_load"
+fi ;
+
+which db4.4_load > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	LOAD_CMD="db4.4_load"
+fi ;
+
+which db4.5_load > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	LOAD_CMD="db4.5_load"
+fi ;
+
+which db4.6_load > /dev/null
+ret=$?
+if [ $ret -eq 0 ] ; then
+	LOAD_CMD="db4.6_load"
+fi ;
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/openser"
