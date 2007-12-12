@@ -88,6 +88,7 @@
  *  2007-11-28  added support for TCP_DEFER_ACCEPT, KEEPALIVE, KEEPINTVL,
  *               KEEPCNT, QUICKACK, SYNCNT, LINGER2 (andrei)
  *  2007-12-04  support for queueing write requests (andrei)
+ *  2007-12-12  destroy connection asap on wbuf. timeout (andrei)
  */
 
 
@@ -558,7 +559,14 @@ inline static int _tcpconn_write_nb(int fd, struct tcp_connection* c,
 #ifdef TCP_BUF_WRITE
 
 
-inline static int wbufq_add(struct  tcp_connection* c, char* data, 
+/* unsafe version */
+#define _wbufq_empty(con) ((con)->wbuf_q.first==0)
+/* unsafe version */
+#define _wbufq_non_empty(con) ((con)->wbuf_q.first!=0)
+
+
+/* unsafe version, call while holding the connection write lock */
+inline static int _wbufq_add(struct  tcp_connection* c, char* data, 
 							unsigned int size)
 {
 	struct tcp_wbuffer_queue* q;
@@ -573,11 +581,11 @@ inline static int wbufq_add(struct  tcp_connection* c, char* data,
 	if (unlikely(	((q->queued+size)>tcp_options.tcpconn_wq_max) ||
 					((*tcp_total_wq+size)>tcp_options.tcp_wq_max) ||
 					(q->first &&
-					TICKS_GT(t, c->last_write+tcp_options.tcp_wq_timeout)) )){
+					TICKS_LT(q->wr_timeout, t)) )){
 		LOG(L_ERR, "ERROR: wbufq_add(%d bytes): write queue full or timeout "
 					" (%d, total %d, last write %d s ago)\n",
 					size, q->queued, *tcp_total_wq,
-					TICKS_TO_S(t-c->last_write));
+					TICKS_TO_S(t-q->wr_timeout-tcp_options.tcp_wq_timeout));
 		goto error;
 	}
 	
@@ -592,7 +600,7 @@ inline static int wbufq_add(struct  tcp_connection* c, char* data,
 		q->first=wb;
 		q->last_used=0;
 		q->offset=0;
-		c->last_write=get_ticks_raw(); /* start with the crt. time */
+		q->wr_timeout=get_ticks_raw()+tcp_options.tcp_wq_timeout;
 	}else{
 		wb=q->last;
 	}
@@ -626,7 +634,8 @@ error:
 
 
 
-inline static void wbufq_destroy( struct  tcp_wbuffer_queue* q)
+/* unsafe version, call while holding the connection write lock */
+inline static void _wbufq_destroy( struct  tcp_wbuffer_queue* q)
 {
 	struct tcp_wbuffer* wb;
 	struct tcp_wbuffer* next_wb;
@@ -650,7 +659,7 @@ inline static void wbufq_destroy( struct  tcp_wbuffer_queue* q)
 
 
 
-/* tries to empty the queue
+/* tries to empty the queue  (safe version, c->write_lock must not be hold)
  * returns -1 on error, bytes written on success (>=0) 
  * if the whole queue is emptied => sets *empty*/
 inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
@@ -688,7 +697,7 @@ inline static int wbufq_run(int fd, struct tcp_connection* c, int* empty)
 				atomic_add_int((int*)tcp_total_wq, -n);
 				break;
 			}
-			c->last_write=t;
+			q->wr_timeout=t+tcp_options.tcp_wq_timeout;
 			c->state=S_CONN_OK;
 		}else{
 			if (n<0){
@@ -1018,8 +1027,8 @@ static inline void _tcpconn_detach(struct tcp_connection *c)
 static inline void _tcpconn_free(struct tcp_connection* c)
 {
 #ifdef TCP_BUF_WRITE
-	if (unlikely(c->wbuf_q.first))
-		wbufq_destroy(&c->wbuf_q);
+	if (unlikely(_wbufq_non_empty(c)))
+		_wbufq_destroy(&c->wbuf_q);
 #endif
 	lock_destroy(&c->write_lock);
 #ifdef USE_TLS
@@ -1412,11 +1421,11 @@ no_id:
 get_fd:
 #ifdef TCP_BUF_WRITE
 		/* if data is already queued, we don't need the fd any more */
-		if (unlikely(tcp_options.tcp_buf_write && c->wbuf_q.first)){
+		if (unlikely(tcp_options.tcp_buf_write && _wbufq_non_empty(c))){
 			lock_get(&c->write_lock);
-				if (likely(c->wbuf_q.first)){
+				if (likely(_wbufq_non_empty(c))){
 					do_close_fd=0;
-					if (unlikely(wbufq_add(c, buf, len)<0)){
+					if (unlikely(_wbufq_add(c, buf, len)<0)){
 						lock_release(&c->write_lock);
 						n=-1;
 						goto error;
@@ -1483,8 +1492,8 @@ send_it:
 	lock_get(&c->write_lock);
 #ifdef TCP_BUF_WRITE
 	if (likely(tcp_options.tcp_buf_write)){
-		if (c->wbuf_q.first){
-			if (unlikely(wbufq_add(c, buf, len)<0)){
+		if (_wbufq_non_empty(c)){
+			if (unlikely(_wbufq_add(c, buf, len)<0)){
 				lock_release(&c->write_lock);
 				n=-1;
 				goto error;
@@ -1514,8 +1523,8 @@ send_it:
 		if (tcp_options.tcp_buf_write && 
 				(errno==EAGAIN || errno==EWOULDBLOCK)){
 			lock_get(&c->write_lock);
-			enable_write_watch=(c->wbuf_q.first==0);
-			if (unlikely(wbufq_add(c, buf, len)<0)){
+			enable_write_watch=_wbufq_empty(c);
+			if (unlikely(_wbufq_add(c, buf, len)<0)){
 				lock_release(&c->write_lock);
 				n=-1;
 				goto error;
@@ -1567,7 +1576,6 @@ error:
 	if (likely(tcp_options.tcp_buf_write)){
 		if (unlikely(c->state==S_CONN_CONNECT))
 			c->state=S_CONN_OK;
-		c->last_write=get_ticks_raw();
 	}
 #endif /* TCP_BUF_WRITE */
 end:
@@ -1747,11 +1755,11 @@ static void tcpconn_destroy(struct tcp_connection* tcpconn)
 		LOG(L_CRIT, "tcpconn_destroy: possible BUG: flags = %0x\n",
 					tcpconn->flags);
 	}
-	if (unlikely(tcpconn->wbuf_q.first)){
+	if (unlikely(_wbufq_non_empty(tcpconn))){
 		lock_get(&tcpconn->write_lock);
 			/* check again, while holding the lock */
-			if (likely(tcpconn->wbuf_q.first))
-				wbufq_destroy(&tcpconn->wbuf_q);
+			if (likely(_wbufq_non_empty(tcpconn)))
+				_wbufq_destroy(&tcpconn->wbuf_q);
 		lock_release(&tcpconn->write_lock);
 	}
 #endif /* TCP_BUF_WRITE */
@@ -1986,6 +1994,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 	int bytes;
 	int n;
 	ticks_t t;
+	ticks_t crt_timeout;
 	
 	if (unlikely(tcp_c->unix_sock<=0)){
 		/* (we can't have a fd==0, 0 is never closed )*/
@@ -2059,11 +2068,31 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			t=get_ticks_raw();
 			tcpconn->timeout=t+tcp_con_lifetime;
 			tcpconn_put(tcpconn);
+			crt_timeout=tcp_con_lifetime;
+#ifdef TCP_BUF_WRITE
+			if (unlikely(tcp_options.tcp_buf_write && 
+							_wbufq_non_empty(tcpconn) )){
+				if (unlikely(TICKS_LE(t, tcpconn->wbuf_q.wr_timeout))){
+					DBG("handle_tcp_child: wr. timeout on CONN_RELEASE for %p "
+							"refcnt= %d\n", tcpconn,
+							atomic_get(&tcpconn->refcnt));
+					/* timeout */
+					if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
+						io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+						tcpconn->flags&=~F_CONN_WRITE_W;
+					}
+					tcpconn_destroy(tcpconn); /* closes also the fd */
+					break;
+				}else{
+					crt_timeout=MIN_unsigned(tcp_con_lifetime,
+											tcpconn->wbuf_q.wr_timeout-t);
+				}
+			}
+#endif /* TCP_BUF_WRITE */
 			/* re-activate the timer */
 			tcpconn->timer.f=tcpconn_main_timeout;
 			local_timer_reinit(&tcpconn->timer);
-			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
-								tcp_con_lifetime, t);
+			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, crt_timeout, t);
 			/* must be after the de-ref*/
 			tcpconn->flags&=~(F_CONN_REMOVED|F_CONN_READER);
 #ifdef TCP_BUF_WRITE
@@ -2234,7 +2263,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			/* update the timeout*/
 			t=get_ticks_raw();
 			tcpconn->timeout=t+tcp_con_lifetime;
-			/* activate the timer (already properly init. in tcpconn_new() */
+			/* activate the timer (already properly init. in tcpconn_new())
+			 * no need for */
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
 			tcpconn->flags&=~F_CONN_REMOVED;
@@ -2279,6 +2309,20 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 					}
 				}
 				tcpconn->flags|=F_CONN_WRITE_W;
+				t=get_ticks_raw();
+				if (likely(!(tcpconn->flags & F_CONN_READER) && 
+					(TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)) &&
+						TICKS_LT(t, tcpconn->wbuf_q.wr_timeout) )){
+					/* _wbufq_nonempty() is guaranteed here */
+					/* update the timer */
+					local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+					local_timer_reinit(&tcpconn->timer);
+					local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
+										tcpconn->wbuf_q.wr_timeout-t, t);
+					DBG("tcp_main: handle_ser_child: CONN_QUEUED_WRITE; %p "
+							"timeout adjusted to %d s\n", tcpconn, 
+							TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
+				}
 			}else{
 				LOG(L_WARN, "tcp_main: hanlder_ser_child: connection %p"
 							" already watched for write\n", tcpconn);
@@ -2621,10 +2665,28 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	c=(struct tcp_connection*)data; 
 	/* or (struct tcp...*)(tl-offset(c->timer)) */
 	
+#ifdef TCP_BUF_WRITE
+	DBG( "tcp_main: entering timer for %p (ticks=%d, timeout=%d (%d s), "
+			"wr_timeout=%d (%d s)), write queue: %d bytes\n",
+			c, t, c->timeout, TICKS_TO_S(c->timeout-t),
+			c->wbuf_q.wr_timeout, TICKS_TO_S(c->wbuf_q.wr_timeout-t),
+			c->wbuf_q.queued);
+	
+	if (TICKS_LT(t, c->timeout) && 
+			(!tcp_options.tcp_buf_write | _wbufq_empty(c) |
+				TICKS_LT(t, c->wbuf_q.wr_timeout)) ){
+		if (unlikely(tcp_options.tcp_buf_write && _wbufq_non_empty(c)))
+			return (ticks_t)MIN_unsigned(c->timeout-t, c->wbuf_q.wr_timeout-t);
+		else
+			return (ticks_t)(c->timeout - t);
+	}
+#else /* ! TCP_BUF_WRITE */
 	if (TICKS_LT(t, c->timeout)){
 		/* timeout extended, exit */
 		return (ticks_t)(c->timeout - t);
 	}
+#endif /* TCP_BUF_WRITE */
+	DBG("tcp_main: timeout for %p\n", c);
 	if (likely(atomic_get(&c->refcnt)==0)){
 		TCPCONN_LOCK;
 			/* check again to avoid races with tcp_send() */

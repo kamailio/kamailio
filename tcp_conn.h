@@ -135,6 +135,7 @@ struct tcp_conn_alias{
 	struct tcp_wbuffer_queue{
 		struct tcp_wbuffer* first;
 		struct tcp_wbuffer* last;
+		ticks_t wr_timeout; /* write timeout*/
 		unsigned int queued; /* total size */
 		unsigned int offset; /* offset in the first wbuffer were data
 								starts */
@@ -167,7 +168,6 @@ struct tcp_connection{
 	struct tcp_conn_alias con_aliases[TCP_CON_MAX_ALIASES];
 	int aliases; /* aliases number, at least 1 */
 #ifdef TCP_BUF_WRITE
-	ticks_t last_write; /* time when the last write took place */
 	struct tcp_wbuffer_queue wbuf_q;
 #endif
 };
