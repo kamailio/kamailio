@@ -238,3 +238,69 @@ cfg_rollback()
 6. Get the description of a variable:
 
 cfg_help()
+
+
+5. Refreshing the configuration
+===============================================================================
+
+There is no need to refresh the configuration in the modules, the core takes
+care of it, unless the module forks a new process that runs in an endless
+loop. In this case, it is the task of the forked child process to periodically
+update its own local configuration the following way:
+
+
+#include "../../cfg/cfg_struct.h"
+
+void loop_forever(void)
+{
+	while(1) {
+		/* update the local config */
+		cfg_update();
+		...
+	}
+}
+
+int child_init(int rank)
+{
+	int	pid;
+
+	pid = fork_process(PROC_NOCHLDINIT, "foo", 1);
+	if (pid == 0) {
+		/* This is the child process */
+
+		/* initialize the config framework */
+		if (cfg_child_init()) return -1;
+
+		loop_forever(); /* never returns */
+	}
+	...
+}
+
+The local configuration must be destroyed only when the child process exits,
+but SER continues running, so the module keeps forking and destroying child
+processes runtime. Calling the configuration destroy function must be the
+very last action of the child process before it exists:
+
+int new_process(void)
+{
+	int	pid;
+
+	pid = fork();
+
+	if (pid == 0) {
+		/* This is the child process */
+
+		/* initialize the config framework */
+		if (cfg_child_init()) return -1;
+
+		loop_forever(); /* the function may return */
+
+		/* destroy the local config */
+		cfg_child_destroy();
+		exit(0);
+	}
+}
+
+Note, that the configuration should be refreshed even if the module does not
+declare any config variable, because other modules and the core may need the
+up-to-date config.
