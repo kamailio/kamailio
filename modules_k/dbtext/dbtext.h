@@ -39,11 +39,6 @@
 
 
 /*
- * Module parameters variables
- */
-extern int db_mode; /* Database usage mode: 0 = no cache, 1 = cache */
-
-/*
  * Initialize database connection
  */
 db_con_t* dbt_init(const char* _sqlurl);
