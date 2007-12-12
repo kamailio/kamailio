@@ -564,7 +564,7 @@ int xode_get_datasz(xode node)
 	
     if( node == NULL )
     {
-        return (int)NULL;	    
+        return (int)(long)NULL;	    
     }	    
     else if(xode_get_type(node) == XODE_TYPE_TAG) /* loop till we find a CDATA */
     {
@@ -575,7 +575,7 @@ int xode_get_datasz(xode node)
     }else{
         return node->data_sz;
     }
-    return (int)NULL;
+    return (int)(long)NULL;
 }
 
 int xode_get_type(xode node)
@@ -584,7 +584,7 @@ int xode_get_type(xode node)
     {
         return node->type;
     }
-    return (int)NULL;
+    return (int)(long)NULL;
 }
 
 int xode_has_children(xode node)
