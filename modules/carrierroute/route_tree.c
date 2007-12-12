@@ -109,7 +109,8 @@ struct route_tree_item * get_route_tree(const char * domain, struct carrier_tree
 
 static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 	int i;
-	LM_INFO("tree %.*s has %i trees\n", ct->name.len, ct->name.s, ct->tree_num);
+	LM_INFO("tree %.*s has %ld trees\n",
+			ct->name.len, ct->name.s, (long)ct->tree_num);
 	for (i=0; i<ct->tree_num; i++) {
 		if (ct->trees[i] == 0) {
 			ct->trees[i] = rt;

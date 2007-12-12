@@ -109,7 +109,7 @@ int route_uri(struct sip_msg* msg, char* domain_param, char* hash) {
 	int domain;
 	enum hash_source my_hash_source;
 
-	domain = (int)domain_param;
+	domain = (int)(long)domain_param;
 	my_hash_source = (enum hash_source)hash;
 	return determine_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
 }
@@ -130,7 +130,7 @@ int prime_balance_uri(struct sip_msg * msg, char * domain_param, char * hash) {
 	int domain;
 	enum hash_source my_hash_source;
 
-	domain = (int)domain_param;
+	domain = (int)(long)domain_param;
 	my_hash_source = (enum hash_source)hash;
 	return determine_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
@@ -182,7 +182,7 @@ int user_route_uri(struct sip_msg * _msg, char * _uri, char * _domain) {
 	str uri, user, str_domain, ruser, ruri;
 	struct sip_uri puri;
 	int carrier_id, domain, index;
-	domain = (int)_domain;
+	domain = (int)(long)_domain;
 	struct rewrite_data * rd = NULL;
 	struct carrier_tree * ct = NULL;
 
@@ -299,7 +299,8 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 		}
 	}
 	release_data(rd);
-	return carrier_rewrite_msg(index, (int)_domain, &ruri, msg, &ruser, shs_call_id, alg_crc32);
+	return carrier_rewrite_msg(index, (int)(long)_domain, &ruri, msg, &ruser,
+			shs_call_id, alg_crc32);
 }
 
 /**
@@ -317,7 +318,7 @@ int route_by_to(struct sip_msg* msg, char* domain_param, char* hash) {
 	int domain;
 	enum hash_source my_hash_source;
 
-	domain = (int)domain_param;
+	domain = (int)(long)domain_param;
 	my_hash_source = (enum hash_source)hash;
 	return determine_to_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
 }
@@ -338,7 +339,7 @@ int prime_balance_by_to(struct sip_msg* msg, char* domain_param, char* hash) {
 	int domain;
 	enum hash_source my_hash_source;
 
-	domain = (int)domain_param;
+	domain = (int)(long)domain_param;
 	my_hash_source = (enum hash_source)hash;
 	return determine_to_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
@@ -358,7 +359,7 @@ int route_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
 	int domain;
 	enum hash_source my_hash_source;
 
-	domain = (int)domain_param;
+	domain = (int)(long)domain_param;
 	my_hash_source = (enum hash_source)hash;
 	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
 }
@@ -379,7 +380,7 @@ int prime_balance_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
 	int domain;
 	enum hash_source my_hash_source;
 
-	domain = (int)domain_param;
+	domain = (int)(long)domain_param;
 	my_hash_source = (enum hash_source)hash;
 	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
 }
@@ -550,8 +551,8 @@ static int carrier_rewrite_msg(int carrier, int domain,
 	} while (rd == NULL);
 
 	if (carrier >= rd->tree_num) {
-		LM_ERR("desired carrier doesn't exist. (We only have %d carriers, you wanted %d.)\n",
-		    (rd->tree_num) - 1, carrier);
+		LM_ERR("desired carrier doesn't exist. (We only have %ld carriers, "
+			"you wanted %d.)\n", (long)(rd->tree_num) - 1, carrier);
 		ret = -1;
 		goto unlock_and_out;
 	}
