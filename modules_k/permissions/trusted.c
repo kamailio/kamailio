@@ -303,7 +303,7 @@ void clean_trusted(void)
  * Matches protocol string against the protocol of the request.  Returns 1 on
  * success and 0 on failure.
  */
-static inline int match_proto(char *proto_string, int proto_int)
+static inline int match_proto(const char *proto_string, int proto_int)
 {
 	if (strcasecmp(proto_string, "any") == 0) return 1;
 	
@@ -373,7 +373,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 	    val = ROW_VALUES(row + i);
 	    if ((ROW_N(row + i) == 3) &&
 		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
-		match_proto((char *)VAL_STRING(val), msg->rcv.proto) &&
+		match_proto(VAL_STRING(val), msg->rcv.proto) &&
 		(VAL_NULL(val + 1) ||
 		 ((VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1))) &&
 		(VAL_NULL(val + 2) ||
