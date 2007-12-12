@@ -883,7 +883,7 @@ inline static int w_t_replicate(struct sip_msg *p_msg, char *dst, char *flags)
 	return t_replicate( p_msg, (str*)dst, (int)(long)flags);
 }
 
-static inline int t_relay_inerr2scripterr()
+static inline int t_relay_inerr2scripterr(void)
 {
 	switch (ser_error) {
 		case E_BAD_URI:
