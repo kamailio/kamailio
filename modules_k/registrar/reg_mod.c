@@ -364,6 +364,7 @@ static int save_fixup(void** param, int param_no)
 	} else {
 		s.s = (char*)*param;
 		s.len = strlen(s.s);
+		flags = 0;
 		if ( (strno2int(&s, &flags )<0) || (flags>REG_SAVE_ALL_FL) ) {
 			LM_ERR("bad flags <%s>\n", (char *)(*param));
 			return E_CFG;

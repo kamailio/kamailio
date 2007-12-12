@@ -285,6 +285,7 @@ static int flag_fixup(void** param, int param_no)
 	if (param_no == 1) {
 		s.s = (char*)*param;
 		s.len = strlen(s.s);
+		flags = 0;
 		if ( strno2int(&s, &flags )<0 ) {
 			return -1;
 		}

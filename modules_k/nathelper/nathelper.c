@@ -762,6 +762,7 @@ static struct mi_root* mi_enable_rtp_proxy(struct mi_root* cmd_tree,
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
+	enable = 0;
 	if( strno2int( &node->value, &enable) <0)
 		goto error;
 
@@ -808,6 +809,7 @@ static struct mi_root* mi_enable_natping(struct mi_root* cmd_tree,
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
+	value = 0;
 	if( strno2int( &node->value, &value) <0)
 		goto error;
 
