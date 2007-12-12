@@ -72,8 +72,6 @@
    (index)+=4; \
 }while(0);
 
-/*#define LOG(leve,format, ...) LOG(leve,__VA_ARGS__)
-LOG(leve,"seas-%s:%s:"format,leve==4?"DBG":leve==3?"INF":leve==2?"NTC":leve==1?"WRN":leve==-1?"ERR":leve==-2?"CRT":leve==-3?"ALT":"UNK",__FUNCTION__,##__VA_ARGS__)*/
 
 
 extern char use_stats;

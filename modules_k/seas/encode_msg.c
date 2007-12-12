@@ -164,21 +164,21 @@ int encode_msg(struct sip_msg *msg,char *payload,int len)
    }
    memset(payload,0,len);
    ms=&msg->first_line;
-   if(ms->type == SIP_REQUEST)
-      request=1;
-   else 
-      if(ms->type == SIP_REPLY)
-	 request=0;
-      else{
-	 myerror="message is neither request nor response";
-	 goto error;
-      }
-   if(request)
-      for(h=0;h<32;j=(0x01<<h),h++)
-	 if(j & ms->u.request.method_value)
-	    break;
-   else
-      h=(unsigned short)(ms->u.reply.statuscode);
+	if(ms->type == SIP_REQUEST)
+		request=1;
+	else if(ms->type == SIP_REPLY)
+		request=0;
+	else{
+		myerror="message is neither request nor response";
+		goto error;
+	}
+	if(request) {
+		for(h=0;h<32;j=(0x01<<h),h++)
+			if(j & ms->u.request.method_value)
+				break;
+	} else {
+		h=(unsigned short)(ms->u.reply.statuscode);
+	}
    if(h==32){/*statuscode wont be 32...*/
       myerror="unknown message type\n";
       goto error;
