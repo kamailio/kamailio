@@ -7,8 +7,8 @@ DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 ALL_PACKAGES = openser openser-mysql-module openser-postgres-module \
 	openser-jabber-module openser-cpl-module openser-radius-modules \
 	openser-unixodbc-module openser-presence-modules openser-xmlrpc-module \
-	openser-perl-module openser-snmpstats-module openser-xmpp-module \
-	openser-carrierroute-module openser-berkeley-module
+	openser-perl-modules openser-snmpstats-module openser-xmpp-module \
+	openser-carrierroute-module openser-berkeley-module openser-ldap-modules
 
 DEBVERSION:=$(shell head -n 1 debian/changelog \
                     | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
@@ -46,7 +46,7 @@ PRESENCE_MODULES = presence presence_xml presence_mwi pua pua_bla pua_mi pua_usr
 # XMLRPC module
 XMLRPC_MODULES = mi_xmlrpc
 # Perl module
-PERL_MODULES = perl
+PERL_MODULES = perl perlvdb
 # SNMPstats module
 SNMPSTATS_MODULES = snmpstats
 # XMPP module
@@ -55,8 +55,10 @@ XMPP_MODULES = xmpp
 CROUTE_MODULES = carrierroute
 # Berkeley DB module
 BERKELEY_MODULES = db_berkeley
+# LDAP modules
+LDAP_MODULES = ldap h350
 
-ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES)
+ALL_MODULES = $(MYSQL_MODULES) $(POSTGRES_MODULES) $(UNIXODBC_MODULES) $(JABBER_MODULES) $(CPL_MODULES) $(RADIUS_MODULES) $(PRESENCE_MODULES) $(XMLRPC_MODULES) $(PERL_MODULES) $(SNMPSTATS_MODULES) $(XMPP_MODULES) $(CROUTE_MODULES) $(BERKELEY_MODULES) $(LDAP_MODULES)
 
 # modules not in the "main" package or unstable modules
 EXCLUDED_MODULES = $(ALL_MODULES) pa osp
@@ -75,6 +77,7 @@ SNMPSTATS_MOD_PATH=$(addprefix modules/, $(SNMPSTATS_MODULES))
 XMPP_MOD_PATH=$(addprefix modules/, $(XMPP_MODULES))
 CROUTE_MOD_PATH=$(addprefix modules/, $(CROUTE_MODULES))
 BERKELEY_MOD_PATH=$(addprefix modules/, $(BERKELEY_MODULES))
+LDAP_MOD_PATH=$(addprefix modules/, $(LDAP_MODULES))
 
 ifeq (cc, $(CC))
 	CC = gcc
@@ -119,9 +122,10 @@ build-stamp: patch-stamp configure-stamp
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(XMPP_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(CROUTE_MOD_PATH)" cfg-target=/etc/openser/
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(BERKELEY_MOD_PATH)" cfg-target=/etc/openser/
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) modules modules="$(LDAP_MOD_PATH)" cfg-target=/etc/openser/
 
 	# generate the utils db_berkeley
-	$(MAKE) utils include_modules="db_berkeley"
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) utils include_modules="db_berkeley"
 
 	touch build-stamp
 
@@ -224,13 +228,13 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-xmlrpc-module
 
-	# install only the perl module
+	# install only the perl modules
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PERL_MOD_PATH)"  \
-		basedir=$(CURDIR)/debian/openser-perl-module \
+		basedir=$(CURDIR)/debian/openser-perl-modules \
 		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/openser-perl-module \
+		cfg-prefix=$(CURDIR)/debian/openser-perl-modules \
 		cfg-target=/etc/openser/ \
-		doc-dir=share/doc/openser-perl-module
+		doc-dir=share/doc/openser-perl-modules
 
 	# install only the snmpstats module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(SNMPSTATS_MOD_PATH)"  \
@@ -264,6 +268,13 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-berkeley-module
 
+	# install only the ldap modules
+	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(LDAP_MOD_PATH)"  \
+		basedir=$(CURDIR)/debian/openser-ldap-modules \
+		prefix=/usr \
+		cfg-prefix=$(CURDIR)/debian/openser-ldap-modules \
+		cfg-target=/etc/openser/ \
+		doc-dir=share/doc/openser-ldap-modules
 
 	# the modules packages all ship an empty /usr/sbin directory, let's clean that up
 	for p in $(ALL_PACKAGES); \

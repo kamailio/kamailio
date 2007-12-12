@@ -1,8 +1,24 @@
 openser (1.3.0-svn1) unstable; urgency=low
 
+  [ Henning Westerholt ]
   * update changelog entry for svn trunk version
 
- -- Henning Westerholt <henning.westerholt@1und1.de>  Wed, 24 Oct 2007 17:31:36 +0200
+  [ Julien BLACHE ]
+  * debian/control:
+    + New packages: openser-carrierroute-module, openser-berkeley-module,
+      openser-ldap-modules.
+    + Rename openser-module-perl to openser-modules-perl and update the
+      description for the additional perlvdb module.
+    + Bump Standards-Version to 3.7.3 (no changes).
+    + Add Build-Dependencies on xsltproc, libconfuse-dev, libdb-dev and libldap2-dev.
+  * debian/rules:
+    + Build the perlvdb module and install it.
+    + Add the carrierroute, berkeley and ldap modules.
+    + Update list of presence modules.
+    + Build bdb utils.
+    + Install openser documentation.
+
+ -- Julien BLACHE <jblache@debian.org>  Wed, 12 Dec 2007 17:25:31 +0100
 
 openser (1.2.0-0) unstable; urgency=low
 
