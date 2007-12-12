@@ -279,6 +279,7 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 		goto end;
 
 	node = cmd_tree->node.kids;
+	h_entry = h_id = 0;
 
 	if (node==NULL || node->next==NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);

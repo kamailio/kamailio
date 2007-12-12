@@ -188,6 +188,7 @@ static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
+	flag = 0;
 	if( strno2int( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
@@ -213,6 +214,7 @@ static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
+	flag = 0;
 	if( strno2int( &node->value, &flag) <0)
 		goto error;
 	if (!flag) {
@@ -239,6 +241,7 @@ static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
+	flag = 0;
 	if( strno2int( &node->value, &flag) <0)
 		goto error_param;
 	if (!flag) {

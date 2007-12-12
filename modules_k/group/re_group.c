@@ -44,7 +44,7 @@ struct re_grp {
 static struct re_grp *re_list = 0;
 
 
-static int add_re(char *re, int gid)
+static int add_re(const char *re, int gid)
 {
 	struct re_grp *rg;
 
@@ -109,7 +109,7 @@ int load_re( str *table )
 			goto error1;
 		}
 
-		if ( add_re( (char*)row->values[0].val.string_val,
+		if ( add_re( row->values[0].val.string_val,
 		row->values[1].val.int_val)!=0 ) {
 			LM_ERR("failed to add row\n");
 			goto error1;
