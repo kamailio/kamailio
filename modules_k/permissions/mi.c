@@ -40,10 +40,10 @@
 struct mi_root* mi_trusted_reload(struct mi_root *cmd_tree, void *param)
 {
 	if (hash_table==NULL)
-		return init_mi_tree( 500, MI_SSTR("Trusted table caching is disabled"));
+		return init_mi_tree( 200, MI_SSTR(MI_OK));
 
     if (reload_trusted_table () == 1) {
-	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	return init_mi_tree( 200, MI_SSTR(MI_OK));
     } else {
 	return init_mi_tree( 400, MI_SSTR("Trusted table reload failed"));
     }
@@ -173,7 +173,7 @@ struct mi_root* mi_allow_uri(struct mi_root *cmd, void *param)
     contact[contactp->len] = 0;
 
     if (allow_test(basename, uri, contact) == 1) {
-	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+	return init_mi_tree(200, MI_SSTR(MI_OK));
     } else {
 	return init_mi_tree(403, MI_SSTR("Forbidden"));
     }
