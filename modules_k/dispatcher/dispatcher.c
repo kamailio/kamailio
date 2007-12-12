@@ -590,5 +590,5 @@ static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
  */
 static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 {
-	return ds_is_from_list(msg, (int)set);
+	return ds_is_from_list(msg, (int)(long)set);
 }

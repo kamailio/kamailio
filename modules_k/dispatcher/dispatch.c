@@ -1420,7 +1420,7 @@ static void ds_options_callback( struct cell *t, int type,
 	}
 	/* The param is a (void*) Pointer, so we need to dereference it and
 	 *  cast it to an int. */
-	group = (int)(*ps->param);
+	group = (int)(long)(*ps->param);
 	/* The SIP-URI is taken from the Transaction.
 	 * Remove the "To: " (s+4) and the trailing new-line (s - 4 (To: )
 	 * - 2 (\r\n)). */
@@ -1533,7 +1533,7 @@ void ds_check_timer(unsigned int ticks, void* param)
 							NULL,
 							&dialog,
 							ds_options_callback,
-							(void*)list->id) < 0) {
+							(void*)(long)list->id) < 0) {
 					LM_ERR("unable to execute dialog\n");
 				}
 			}

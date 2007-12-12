@@ -210,7 +210,7 @@ error:
 
 static int set_prob(struct sip_msg *bar, char *percent_par, char *foo) 
 {
-	*probability=(int) percent_par;
+	*probability=(int)(long)percent_par;
 	return 1;
 }
 	
