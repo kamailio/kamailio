@@ -145,7 +145,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 		 * but not when retrieving it in binary format.
 		 */
 		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s, 
-			(size_t*)&(VAL_BLOB(_v).len) );
+			(size_t*)(void*)&(VAL_BLOB(_v).len) );
 		VAL_TYPE(_v) = DB_BLOB;
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
