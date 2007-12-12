@@ -783,3 +783,113 @@ int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	*ch = var->def->descr;
 	return 0;
 }
+
+/* return the group name and the cfg structure definition,
+ * and moves the handle to the next group
+ * Return value:
+ *	0: no more group
+ *	1: group exists
+ */
+int cfg_get_group_next(void **h,
+			str *gname, cfg_def_t **def)
+{
+	cfg_group_t	*group;
+
+	group = (cfg_group_t *)(*h);
+	if (group == NULL) return 0;
+
+	gname->s = group->name;
+	gname->len = group->name_len;
+	(*def) = group->mapping->def;
+
+	(*h) = (void *)group->next;
+	return 1;
+}
+
+/* Initialize the handle for cfg_diff_next() */
+int cfg_diff_init(cfg_ctx_t *ctx,
+		void **h)
+{
+	if (!ctx) {
+		LOG(L_ERR, "ERROR: cfg_diff_init(): context is undefined\n");
+		return -1;
+	}
+
+	CFG_CTX_LOCK(ctx);
+	(*h) = (void *)ctx->changed_first;
+
+	return 0;
+}
+
+/* return the pending changes that have not been
+ * committed yet
+ */
+int cfg_diff_next(void **h,
+			str *gname, str *vname,
+			void **old_val, void **new_val,
+			unsigned int *val_type)
+{
+	cfg_changed_var_t	*changed;
+	void	*p;
+	static str	old_s, new_s;	/* we need the value even
+					after the function returns */
+	int		i;
+	char		*ch;
+
+	changed = (cfg_changed_var_t *)(*h);
+	if (changed == NULL) return 0;
+
+	gname->s = changed->group->name;
+	gname->len = changed->group->name_len;
+	vname->s = changed->var->def->name;
+	vname->len = changed->var->name_len;
+
+	/* use the module's handle to access the variable
+	It means that the variable is read from the local config
+	after forking */
+	p = *(changed->group->handle) + changed->var->offset;
+
+	switch (CFG_VAR_TYPE(changed->var)) {
+	case CFG_VAR_INT:
+		memcpy(&i, p, sizeof(int));
+		*old_val = (void *)(long)i;
+		memcpy(&i, changed->new_val, sizeof(int));
+		*new_val = (void *)(long)i;
+		break;
+
+	case CFG_VAR_STRING:
+		memcpy(&ch, p, sizeof(char *));
+		*old_val = (void *)ch;
+		memcpy(&ch, changed->new_val, sizeof(char *));
+		*new_val = (void *)ch;
+		break;
+
+	case CFG_VAR_STR:
+		memcpy(&old_s, p, sizeof(str));
+		*old_val = (void *)&old_s;
+		memcpy(&new_s, changed->new_val, sizeof(str));
+		*new_val = (void *)&new_s;
+		break;
+
+	case CFG_VAR_POINTER:
+		memcpy(old_val, &p, sizeof(void *));
+		memcpy(new_val, &changed->new_val, sizeof(void *));
+		break;
+
+	}
+	*val_type = CFG_VAR_TYPE(changed->var);
+
+	(*h) = (void *)changed->next;
+	return 1;
+}
+
+/* release the handle of cfg_diff_next() */
+void cfg_diff_release(cfg_ctx_t *ctx)
+{
+	if (!ctx) {
+		LOG(L_ERR, "ERROR: cfg_diff_release(): context is undefined\n");
+		return;
+	}
+
+	CFG_CTX_UNLOCK(ctx);
+}

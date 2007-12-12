@@ -239,6 +239,38 @@ cfg_rollback()
 
 cfg_help()
 
+-------------------------------------------------------------------------------
+
+7. Get the list of group definitions:
+
+void	*h;
+str	gname;
+cfg_def_t	*def;
+
+cfg_get_group_init(&h);
+while(cfg_get_group_next(&h, &gname, &def)) {
+	...
+}
+
+-------------------------------------------------------------------------------
+
+8. Get the list of pending changes that have not been committed yet:
+
+void		*h;
+str		gname, vname;
+void		*old_val, *new_val;
+unsigned int	val_type;
+
+if (cfg_diff_init(ctx, &h)) return -1;
+while(cfg_diff_next(&h,
+		&gname, &vname,
+		&old_val, &new_val,
+		&val_type)
+) {
+	...
+}
+cfg_diff_release(ctx);
+
 
 5. Refreshing the configuration
 ===============================================================================

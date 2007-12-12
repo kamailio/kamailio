@@ -106,5 +106,55 @@ int cfg_help(cfg_ctx_t *ctx, str *group_name, str *var_name,
 /* notify the drivers about the new config definition */
 void cfg_notify_drivers(char *group_name, cfg_def_t *def);
 
+/* initialize the handle for cfg_get_group_next() */
+#define cfg_get_group_init(handle) \
+	(*(handle)) = (void *)cfg_group
+
+/* returns the group name and the cfg structure definition,
+ * and moves the handle to the next group
+ * Return value:
+ *	0: no more group
+ *	1: group exists
+ *
+ * can be used as follows:
+ *
+ * void	*handle;
+ * cfg_get_group_init(&handle)
+ * while (cfg_get_group_next(&handle, &name, &def)) {
+ * 	...
+ * }
+ */
+int cfg_get_group_next(void **h,
+			str *gname, cfg_def_t **def);
+
+/* Initialize the handle for cfg_diff_next()
+ * WARNING: keeps the context lock held, do not forget
+ * to release it with cfg_diff_release()
+ */
+int cfg_diff_init(cfg_ctx_t *ctx,
+		void **h);
+
+/* return the pending changes that have not been
+ * committed yet
+ * can be used as follows:
+ *
+ * void *handle;
+ * if (cfg_diff_init(ctx, &handle)) return -1
+ * while (cfg_diff_next(&handle
+ *			&group_name, &var_name,
+ *			&old_val, &new_val
+ *			&val_type)
+ * ) {
+ *		...
+ * }
+ * cfg_diff_release(ctx);
+ */
+int cfg_diff_next(void **h,
+			str *gname, str *vname,
+			void **old_val, void **new_val,
+			unsigned int *val_type);
+
+/* destroy the handle of cfg_diff_next() */
+void cfg_diff_release(cfg_ctx_t *ctx);
 
 #endif /* _CFG_CTX_H */
