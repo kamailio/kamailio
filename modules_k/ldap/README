@@ -148,7 +148,7 @@ Chapter 1. User's Guide
    The ldap_search function (Section 1.5.1) performs an LDAP
    search operation. It expects an LDAP URL as input which
    includes the LDAP session name and search parameters. Section
-   Section 1.1.2 gives a quick overview on LDAP URLs.
+   1.1.2 provides a quick overview on LDAP URLs.
 
    The result of an LDAP search is stored internally and can be
    accessed with one of the ldap_result* functions. ldap_result
@@ -300,8 +300,8 @@ ldap://example_ldap/cn=admin,dc=example,dc=com
 
 ldap_server_url = "ldap://localhost"
 ldap_server_url = "ldap://ldap.example.com:7777"
-ldap_server_url = "ldap://ldap1.example.com, ldap://ldap2.example.com:80
-389"
+ldap_server_url = "ldap://ldap1.example.com,
+                   ldap://ldap2.example.com:80389"
 
    ldap_version (optional)
           Supported LDAP versions are 2 and 3.
@@ -435,8 +435,9 @@ ldap://sipaccounts/ou=sip,dc=example,dc=com??one?(cn=schlatter)
           (cn=$(avp(s:name))) and returning SIPIdentityUserName
           and SIPIdentityServiceLevel attributes
 
-ldap://ldap_1/dc=example,dc=com?SIPIdentityUserName,SIPIdentityServiceLe
-vel?sub?(cn=$(avp(s:name)))
+ldap://ldap_1/dc=example,dc=com?
+       SIPIdentityUserName,SIPIdentityServiceLevel?sub?(cn=$(avp(s:name)
+))
 
    Return Values:
 
@@ -452,6 +453,9 @@ vel?sub?(cn=$(avp(s:name)))
 
           + LDAP error (e.g. LDAP server unavailable), or
           + internal error
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, and ONREPLY_ROUTE.
 
    Example 1-10. Example Usage
 ...
@@ -535,6 +539,9 @@ regex_subst])
    -2 (FALSE)
           Internal error occurred
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, and ONREPLY_ROUTE.
+
    Example 1-11. Example Usage
 ...
 
@@ -606,6 +613,9 @@ regex_subst])
    -2 (FALSE)
           Internal error occurred
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, and ONREPLY_ROUTE.
+
    Example 1-12. Example Usage
 ...
 # ldap_search call
@@ -653,6 +663,9 @@ if (!ldap_result_check("sn/$ru", "/^sip:([^@]).*$/\1/"))
 
    -2 (FALSE)
           Internal error
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, and ONREPLY_ROUTE.
 
    Example 1-13. Example Usage
 ...
@@ -711,6 +724,9 @@ if (ldap_result_next())
    -1 (FALSE)
           Internal error
 
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+   BRANCH_ROUTE, and ONREPLY_ROUTE.
+
    Example 1-14. Example Usage
 ...
 if (!ldap_filter_url_encode("cn=$avp(s:name)", "$avp(s:name_esc)"))
@@ -721,8 +737,9 @@ if (!ldap_filter_url_encode("cn=$avp(s:name)", "$avp(s:name_esc)"))
 
 xlog("L_INFO", "encoded LDAP filter component: [$avp(s:name_esc)]\n");
 
-if (ldap_search("ldap://h350/ou=commObjects,dc=example,dc=com??sub?($avp
-(s:name_esc))"))
+if (ldap_search(
+     "ldap://h350/ou=commObjects,dc=example,dc=com??sub?($avp(s:name_esc
+))"))
     { ... }
 ...
      __________________________________________________________
@@ -780,8 +797,8 @@ static int mod_init(void)
      */
     if (load_ldap_api(&ldap_api) != 0)
     {
-        LOG(L_ERR, "ERROR:module_name:mod_init: Unable to load LDAP API
-- this module requires ldap module\n");
+        LM_ERR("Unable to load LDAP API - this module requires ldap modu
+le\n");
         return -1;
     }
 
@@ -1042,8 +1059,9 @@ typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
    input for OpenLDAP LDAP result API functions. LDAP and
    LDAPMessage structures are defined in OpenLDAP's ldap.h, which
    has to be included.
-typedef void (*get_last_ldap_result_t)(LDAP** _last_ldap_handle, LDAPMes
-sage** _last_ldap_result);
+typedef void (*get_last_ldap_result_t)
+             (LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result)
+;
 
    Function arguments:
 
@@ -1070,7 +1088,7 @@ char* sip_username = "test";
 scope = ldap_api.ldap_str2scope("sub");
 if (scope == -1)
 {
-    LOG(L_ERR, "ERROR: ldap_str2scope failed\n");
+    LM_ERR("ldap_str2scope failed\n");
     return -1;
 }
 
@@ -1078,18 +1096,18 @@ if (scope == -1)
  * perform LDAP search
  */
 
-if (ldap_api.ldap_params_search(&ld_result_count,
-                                "campus",
-                                "dc=example,dc=com",
-                                scope,
-                                NULL,
-                                "(&(objectClass=SIPIdentity)(SIPIdentity
-UserName=%s))",
-                                sip_username)
+if (ldap_api.ldap_params_search(
+       &ld_result_count,
+       "campus",
+       "dc=example,dc=com",
+       scope,
+       NULL,
+       "(&(objectClass=SIPIdentity)(SIPIdentityUserName=%s))",
+       sip_username)
      != 0)
 {
-                LOG(L_ERR, "ERROR: LDAP search failed\n");
-                return -1;
+    LM_ERR("LDAP search failed\n");
+    return -1;
 }
 
 /*
@@ -1097,7 +1115,7 @@ UserName=%s))",
  */
 if (ld_result_count < 1)
 {
-    LOG(L_ERR, "LDAP search returned no entry\n");
+    LM_ERR("LDAP search returned no entry\n");
     return 1;
 }
 
@@ -1112,14 +1130,14 @@ str res_password;
 rc = ldap_api.ldap_result_attr_vals(&ldap_pwd_attr_name, &attr_vals);
 if (rc < 0)
 {
-    LOG(L_ERR, "ERROR: ldap_result_attr_vals failed\n");
+    LM_ERR("ldap_result_attr_vals failed\n");
     ldap_api.ldap_value_free_len(attr_vals);
     return -1;
 }
 if (rc == 1)
 {
-    LOG(L_INFO, "No password attribute value found for [%s]\n", sip_user
-name);
+    LM_INFO("No password attribute value found for [%s]\n", sip_username
+);
     ldap_api.ldap_value_free_len(attr_vals);
     return 2;
 }
@@ -1129,8 +1147,7 @@ res_password.len = attr_vals[0]->bv_len;
 
 ldap_api.ldap_value_free_len(attr_vals);
 
-LOG(L_INFO, "Password for user [%s]: [%s]\n", sip_username, res_password
-.s);
+LM_INFO("Password for user [%s]: [%s]\n", sip_username, res_password.s);
 
 ...
 
