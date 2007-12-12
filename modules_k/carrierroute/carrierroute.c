@@ -212,7 +212,7 @@ static int route_fixup(void ** param, int param_no) {
 		}
 		LM_NOTICE("domain %s has id %i\n", (char *)*param, domain);
 		pkg_free(*param);
-		*param = (void *)domain;
+		*param = (void *)(long)domain;
 	} else if (param_no == 2) {
 		if ((my_hash_source = hash_fixup((char *)*param)) == shs_error) {
 			return -1;
@@ -256,7 +256,7 @@ static int tree_route_fixup(void ** param, int param_no) {
 		}
 		LM_NOTICE("domain %s has id %i\n", (char *)*param, domain);
 		pkg_free(*param);
-		*param = (void *)domain;
+		*param = (void *)(long)domain;
 	}
 	return 0;
 }

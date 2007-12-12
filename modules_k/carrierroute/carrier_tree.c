@@ -289,7 +289,9 @@ struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, str
 		return NULL;
 	}
 	rd->carriers[id]->index = id;
-	LM_INFO("created carrier tree: %s, with id %i and %i trees\n", rd->carriers[id]->name.s, rd->carriers[id]->id, rd->carriers[id]->tree_num);
+	LM_INFO("created carrier tree: %s, with id %i and %ld trees\n", 
+		rd->carriers[id]->name.s, rd->carriers[id]->id, 
+		(long)rd->carriers[id]->tree_num);
 	return rd->carriers[id];
 }
 
