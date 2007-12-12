@@ -72,7 +72,7 @@ fi
 ##### ------------------------------------------------ #####
 ### DBENGINE
 #
-DBENGINELOADED=0
+unset USED_DBENGINE
 if [ -z "$DBENGINE" ] ; then
 	merr "database engine not specified, please setup one in the config script"
 	exit 1
@@ -82,7 +82,7 @@ case $DBENGINE in
 	MYSQL|mysql|MySQL)
 		if [ -f "$MYLIBDIR/openserdbctl.mysql" ]; then
 			. "$MYLIBDIR/openserdbctl.mysql"
-			DBENGINELOADED=1
+			USED_DBENGINE="mysql"
 		else
 			merr "could not load the script in $MYLIBDIR/openserdbctl.mysql for database engine $DBENGINE"
 		fi
@@ -90,7 +90,7 @@ case $DBENGINE in
 	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
 		if [ -f "$MYLIBDIR/openserdbctl.pgsql" ]; then
 			. "$MYLIBDIR/openserdbctl.pgsql"
-			DBENGINELOADED=1
+			USED_DBENGINE="postgres"
 		else
 			merr "could not load the script in $MYLIBDIR/openserdbctl.pgsql for database engine $DBENGINE"
 		fi
@@ -98,28 +98,28 @@ case $DBENGINE in
 	DBTEXT|dbtext|textdb)
 		if [ -f "$MYLIBDIR/openserdbctl.dbtext" ]; then
 			. "$MYLIBDIR/openserdbctl.dbtext"
-			DBENGINELOADED=1
-			DBTEXT=1
+			USED_DBENGINE="dbtext"
+			DBNAME=$DB_PATH
 		else
 			merr "could not load the script in $MYLIBDIR/openserdbctl.dbtext for database engine $DBENGINE"
 		fi
 		;;
-	DB_BERKELEY|db_berkeley)
+	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
 		if [ -f "$MYLIBDIR/openserdbctl.db_berkeley" ]; then
 			. "$MYLIBDIR/openserdbctl.db_berkeley"
-			DBENGINELOADED=1
-			DBTEXT=1
+			USED_DBENGINE="berkeley"
+			DBNAME=$DB_PATH
 		else
 			merr "could not load the script in $MYLIBDIR/openserdbctl.db_berkeley for database engine $DBENGINE"
 		fi
 		;;
 esac
 
-if [ $DBENGINELOADED -eq 1 ] ; then
-	mdbg "database engine '$DBENGINE' loaded"
-else
+if [ -z "$USED_DBENGINE" ] ; then
 	merr "database engine not loaded - tried '$DBENGINE'"
 	exit 1
+else
+	mdbg "database engine '$USED_DBENGINE' loaded"
 fi
 
 
@@ -161,8 +161,8 @@ openser_restore() #pars: <database name> <filename>
 case $1 in
 # FIXME needs update for 1.3
 	migrate)
-		if [ "$DBTEXT" = "1" ] ; then
-			merr "DBTEXT don't support this operation"
+		if [ "$USED_DBENGINE" != "mysql" ] ; then
+			merr "$USED_DBENGINE don't support migrate operation"
 			exit 1
 		fi
 		merr "not implemented yet"
@@ -183,13 +183,12 @@ case $1 in
 #		migrate_db $2 $3
 #		minfo "Migration successfully completed."
 #		exit 0;
-		usage
 		exit 1
 		;;
 	copy)
 		# copy database to some other name
-		if [ "$DBTEXT" = "1" ] ; then
-			merr "DBTEXT don't support this operation"
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
 		shift
@@ -217,8 +216,8 @@ case $1 in
 		exit $ret
 		;;
 	backup)
-		if [ "$DBTEXT" = "1" ] ; then
-			merr "DBTEXT don't support this operation"
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
 		# backup current database
@@ -231,8 +230,8 @@ case $1 in
 		exit $?
 		;;
 	restore)
-		if [ "$DBTEXT" = "1" ] ; then
-			merr "DBTEXT don't support this operation"
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		fi
 		# restore database from a backup
@@ -249,19 +248,14 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
-			DB_PATH="$1"
 		fi
 
-		if [ "$DBTEXT" = "1" ] ; then
-			openser_create $DB_PATH
-		else
-			openser_create $DBNAME
-		fi
+		openser_create $DBNAME
 		exit $?
 		;;
 	serweb)
-		if [ "$DBTEXT" = "1" ] ; then
-			merr "DBTEXT don't support this operation"
+		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
+			merr "$USED_DBENGINE don't support this operation"
 			exit 1
 		else
 			serweb_create $DBNAME
@@ -269,19 +263,11 @@ case $1 in
 		exit $?
 		;;
 	presence)
-		if [ "$DBTEXT" = "1" ] ; then
-			presence_create $DB_PATH
-		else
-			presence_create $DBNAME
-		fi
+		presence_create $DBNAME
 		exit $?
 		;;
 	extra)
-		if [ "$DBTEXT" = "1" ] ; then
-			extra_create $DB_PATH
-		else
-			extra_create $DBNAME
-		fi
+		extra_create $DBNAME
 		exit $?
 		;;
 	drop)
@@ -290,14 +276,9 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
-			DB_PATH="$1"
 		fi
 
-		if [ "$DBTEXT" = "1" ] ; then
-			openser_drop $DB_PATH
-		else
-			openser_drop $DBNAME
-		fi
+		openser_drop $DBNAME
 		exit $?
 		;;
 	reinit)
@@ -306,22 +287,13 @@ case $1 in
 		shift
 		if [ $# -eq 1 ] ; then
 			DBNAME="$1"
-			DB_PATH="$1"
 		fi
-		if [ "$DBTEXT" = "1" ] ; then
-			openser_drop $DB_PATH
-		else
-			openser_drop $DBNAME
-		fi
+		openser_drop $DBNAME
 		ret=$?
 		if [ "$ret" -ne 0 ]; then
 			exit $ret
 		fi
-		if [ "$DBTEXT" = "1" ] ; then
-			openser_create $DB_PATH
-		else
-			openser_create $DBNAME
-		fi
+		openser_create $DBNAME
 		exit $?
 		;;
 	bdb|db_berkeley)
