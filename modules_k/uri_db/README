@@ -1,4 +1,3 @@
-
 uri_db Module
 
 Jan Janak
@@ -14,7 +13,7 @@ Bogdan-Andrei Iancu
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2005 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -61,14 +60,14 @@ Bogdan-Andrei Iancu
    1-11. check_to usage
    1-12. check_from usage
    1-13. does_uri_exist usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    Various checks related to SIP URI.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -77,7 +76,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * a OpenSER database module .
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -85,7 +84,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -93,114 +92,114 @@ Chapter 1. User's Guide
 
    URL of the database to be used.
 
-   If the db_url string is empty, the default database URL will
-   be used.
+   If the db_url string is empty, the default database URL will be
+   used.
 
-   Default value is "DEFAULT_RODB_URL". 
+   Default value is "DEFAULT_RODB_URL".
 
    Example 1-1. Set db_url parameter
 ...
-modparam("uri_db", "db_url", "mysql://username:password@localhost/opens
-er")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/opense
+r")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. uri_table (string)
 
    Table containing list of allowed URIs for each user.
 
-   Default value is "uri". 
+   Default value is "uri".
 
    Example 1-2. Set uri_table parameter
 ...
 modparam("uri_db", "uri_table", "uri")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. uri_user_column (string)
 
    Column holding usernames in the URI table.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1-3. Set uri_user_column parameter
 ...
 modparam("uri_db", "uri_user_column", "username")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. uri_domain_column (string)
 
    Column holding domain in the URI table.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1-4. Set uri_domain_column parameter
 ...
 modparam("uri_db", "uri_domain_column", "domain")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. uri_uriuser_column (string)
 
    Column holding URI username in the URI table.
 
-   Default value is "uri_user". 
+   Default value is "uri_user".
 
    Example 1-5. Set uri_uriuser_column parameter
 ...
 modparam("uri_db", "uri_uriuser_column", "uri_user")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. subscriber_table (string)
 
    Name of the subscriber table.
 
-   Default value is "subscriber". 
+   Default value is "subscriber".
 
    Example 1-6. Set subscriber_table parameter
 ...
 modparam("uri_db", "subscriber_table", "subscriber")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. subscriber_user_column (string)
 
    Column holding username in subscriber table.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1-7. Set subscriber_user_column parameter
 ...
 modparam("uri_db", "subscriber_user_column", "username")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.8. subscriber_domain_column (string)
 
    Column holding domains in the subscriber table.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1-8. Set subscriber_domain_column parameter
 ...
 modparam("uri_db", "subscriber_domain_column", "domain")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.9. use_uri_table (integer)
 
-   Specify if the "uri" table should be used for checkings
-   instead of "subscriber" table. A non-zero value means true.
+   Specify if the "uri" table should be used for checkings instead
+   of "subscriber" table. A non-zero value means true.
 
-   Default value is "0 (false)". 
+   Default value is "0 (false)".
 
    Example 1-9. Set use_uri_table parameter
 ...
 modparam("uri_db", "use_uri_table", 1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.10. use_domain (integer)
 
@@ -208,18 +207,17 @@ modparam("uri_db", "use_uri_table", 1)
    identify the users (along with username). This is useful in
    multi domain setups, a non-zero value means true.
 
-   This parameter is only evaluated for calls to
-   "does_uri_exist", all other functions checks the digest
-   username and realm against the given username, if the "uri"
-   table is used.
+   This parameter is only evaluated for calls to "does_uri_exist",
+   all other functions checks the digest username and realm
+   against the given username, if the "uri" table is used.
 
-   Default value is "0 (false)". 
+   Default value is "0 (false)".
 
    Example 1-10. Set use_domain parameter
 ...
 modparam("uri_db", "use_domain", 1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -236,12 +234,12 @@ if (check_to()) {
         ...
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. check_from()
 
-   Check From username against URI table (if use_uri_table is
-   set) or digest credentials (no DB backend required).
+   Check From username against URI table (if use_uri_table is set)
+   or digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -251,7 +249,7 @@ if (check_from()) {
         ...
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. does_uri_exist()
 
@@ -269,13 +267,13 @@ if (does_uri_exist()) {
         ...
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -289,8 +287,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

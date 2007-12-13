@@ -1,4 +1,3 @@
-
 postgres Module
 
 Greg Fausak
@@ -10,7 +9,7 @@ Edited by
 Greg Fausak
 
    Copyright © 2003 Greg Fausak
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -27,14 +26,14 @@ Greg Fausak
 
    2. Developer's Guide
    3. Frequently Asked Questions
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    Module description
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -43,7 +42,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -51,28 +50,28 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
    NONE
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
    NONE
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Installation & Running
 
    Notes about installation and running.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -86,8 +85,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

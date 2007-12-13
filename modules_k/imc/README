@@ -1,4 +1,3 @@
-
 imc Module
 
 Anca-Maria Vamanu
@@ -14,7 +13,7 @@ Edited by
 Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -60,27 +59,27 @@ Anca-Maria Vamanu
    1-5. Set imc_cmd_start_char parameter
    1-6. Usage of imc_manager() function
    1-7. List of commands
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    This module offers support for instant message conference. It
-   follows the architecture of IRC channels, you can send
-   commands embedded in MESSAGE body, because there are no SIP UA
-   clients which have GUI for IM conferencing.
+   follows the architecture of IRC channels, you can send commands
+   embedded in MESSAGE body, because there are no SIP UA clients
+   which have GUI for IM conferencing.
 
    You have to define an URI corresponding to im conferencing
    manager, where user can send commands to create a new
-   conference room. Once the conference room is created, users
-   can send commands directly to conferece's URI.
+   conference room. Once the conference room is created, users can
+   send commands directly to conferece's URI.
 
    To ease the integration in the configuration file, the
-   interpreter of the IMC commands are embeded in the module,
-   from configuration poin of view, there is only one function
-   which has to be executed for both messages and commands.
-     _________________________________________________________
+   interpreter of the IMC commands are embeded in the module, from
+   configuration poin of view, there is only one function which
+   has to be executed for both messages and commands.
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -90,7 +89,7 @@ Chapter 1. User's Guide
 
      * mysql.
      * tm.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -98,7 +97,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -107,71 +106,71 @@ Chapter 1. User's Guide
    The database url.
 
    The default value is
-   "mysql://openser:openserrw@localhost/openser". 
+   "mysql://openser:openserrw@localhost/openser".
 
    Example 1-1. Set db_url parameter
 ...
 modparam("imc", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. rooms_table (str)
 
    The name of the table storing IMC rooms.
 
-   The default value is "imc_rooms". 
+   The default value is "imc_rooms".
 
    Example 1-2. Set rooms_table parameter
 ...
 modparam("imc", "rooms_table", "rooms")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. members_table (str)
 
    The name of the table storing IMC members.
 
-   The default value is "imc_members". 
+   The default value is "imc_members".
 
    Example 1-3. Set members_table parameter
 ...
 modparam("imc", "rooms_table", "members")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. hash_size (integer)
 
    The power of 2 to get the size of the hash table used for
    storing members and rooms.
 
-   The default value is 4 (resultimg in hash size 16). 
+   The default value is 4 (resultimg in hash size 16).
 
    Example 1-4. Set hash_size parameter
 ...
 modparam("imc", "hash_size", 8)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. imc_cmd_start_char (str)
 
-   The character which indicates that the body of the message is
-   a command.
+   The character which indicates that the body of the message is a
+   command.
 
-   The default value is "#". 
+   The default value is "#".
 
    Example 1-5. Set imc_cmd_start_char parameter
 ...
 modparam("imc", "imc_cmd_start_char", "#")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
 1.4.1. imc_manager()
 
-   Handles Message method.It detects if the body of the message
-   is a conference command.If so it executes it, otherwise it
-   sends the message to all the members in the room.
+   Handles Message method.It detects if the body of the message is
+   a conference command.If so it executes it, otherwise it sends
+   the message to all the members in the room.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -183,7 +182,7 @@ if(is_method("MESSAGE)
         && (uri=~ "sip:chat-[0-9]+@" || (uri=~ "sip:chat-manager@")
     imc_manager();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Exported MI Functions
 
@@ -198,7 +197,7 @@ if(is_method("MESSAGE)
    MI FIFO Command Format:
                 :imc_list_rooms:_reply_fifo_file_
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.2. imc_list_members
 
@@ -214,21 +213,20 @@ if(is_method("MESSAGE)
                 :imc_list_members:_reply_fifo_file_
                 _room_
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.6. Exported Statistics
 
 1.6.1. active_rooms
 
    Number of active IM Conferencing rooms.
-     _________________________________________________________
+     __________________________________________________________
 
 1.7. IMC Commands
 
    A command is identified by the starting character. A command
-   must be written in one line. By default, the starting
-   character is '#'. You can change it via "imc_cmd_start_char"
-   parameter.
+   must be written in one line. By default, the starting character
+   is '#'. You can change it via "imc_cmd_start_char" parameter.
 
    Next picture presents the list of commands and their
    parameters.
@@ -301,25 +299,25 @@ if(is_method("MESSAGE)
   -list members in a room
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.8. Installation
 
-   Before running OpenSER with IMC, you have to setup the
-   database tables where the module will store the data. For
-   that, if the tables were not created by the installation
-   script or you choose to install everything by yourself you can
-   use the imc-create.sql SQL script in the database directories
-   in the openser/scripts folder as template. You can also find
-   the complete database documentation on the project webpage,
+   Before running OpenSER with IMC, you have to setup the database
+   tables where the module will store the data. For that, if the
+   tables were not created by the installation script or you
+   choose to install everything by yourself you can use the
+   imc-create.sql SQL script in the database directories in the
+   openser/scripts folder as template. You can also find the
+   complete database documentation on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -333,8 +331,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

@@ -1,4 +1,3 @@
-
 Enum Module
 
 Juha Heinanen
@@ -6,7 +5,7 @@ Juha Heinanen
 Otmar Lendl
 
    Copyright © 2002, 2003 Juha Heinanen
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -42,7 +41,7 @@ Otmar Lendl
    1-8. enum_query usage
    1-9. enum_fquery usage
    1-10. is_from_user_enum usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -59,8 +58,8 @@ Chapter 1. User's Guide
    is +35831234567, the domain name will be
    "7.6.5.4.3.2.1.3.8.5.3.e164.arpa.". i_enum_query operates in a
    similar fashion. The only difference is that it adds a label
-   (default "i") to branch off from the default, user-ENUM tree
-   to an infrastructure ENUM tree.
+   (default "i") to branch off from the default, user-ENUM tree to
+   an infrastructure ENUM tree.
 
    After forming the domain name, enum_query queries DNS for its
    NAPTR records. From the possible response enum_query chooses
@@ -75,9 +74,9 @@ Chapter 1. User's Guide
    current Request URI by applying regexp of the most preferred
    NAPTR record its user part and appends to the request new
    branches by applying regexp of each remaining NAPTR record to
-   the user part of the current Request URI. If a new URI is a
-   tel URI, enum_query appends to it as tel URI parameters the
-   value of tel_uri_params module parameter. Finally, enum_query
+   the user part of the current Request URI. If a new URI is a tel
+   URI, enum_query appends to it as tel URI parameters the value
+   of tel_uri_params module parameter. Finally, enum_query
    associates a q value with each new URI based on the <order,
    preference> of the corresponding NAPTR record.
 
@@ -96,10 +95,10 @@ Chapter 1. User's Guide
 
    Most of the time you want to route based on the RURI. On rare
    occasions you may wish to route based on the user part of the
-   "From:" tag, analogous to source based policy routing in the
-   ip world. The function enum_fquery mimics the behaviour of the
-   enum_query function except the user part of the "From:" is
-   used for the enum lookup instead of the user part of the RURI.
+   "From:" tag, analogous to source based policy routing in the ip
+   world. The function enum_fquery mimics the behaviour of the
+   enum_query function except the user part of the "From:" is used
+   for the enum lookup instead of the user part of the RURI.
    Obviously the user part of the RURI is still used in the naptr
    regexp.
 
@@ -109,15 +108,15 @@ Chapter 1. User's Guide
    Enum module also implements is_from_user_enum function. This
    function does an enum lookup on the from user and returns true
    if found, false otherwise.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
 
      * No dependencies.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -131,7 +130,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Setting domain_suffix module parameter
 modparam("enum", "domain_suffix", "e1234.arpa.")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. tel_uri_params (string)
 
@@ -140,26 +139,26 @@ modparam("enum", "domain_suffix", "e1234.arpa.")
 
    Note
 
-   Currently OpenSER does not support tel URIs. This means that
-   at present tel_uri_params is appended as URI parameters to
-   every URI.
+        Currently OpenSER does not support tel URIs. This means that at
+        present tel_uri_params is appended as URI parameters to every
+        URI.
 
    Default value is ""
 
    Example 1-2. Setting tel_uri_params module parameter
 modparam("enum", "tel_uri_params", ";npdi")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. i_enum_suffix (string)
 
-   The domain suffix to be used for i_enum_query() lookups. Can
-   be overridden by a parameter to i_enum_query.
+   The domain suffix to be used for i_enum_query() lookups. Can be
+   overridden by a parameter to i_enum_query.
 
    Default value is "e164.arpa."
 
    Example 1-3. Setting i_enum_suffix module parameter
 modparam("enum", "i_enum_suffix", "e1234.arpa.")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. branchlabel (string)
 
@@ -170,7 +169,7 @@ modparam("enum", "i_enum_suffix", "e1234.arpa.")
 
    Example 1-4. Setting brachlabel module parameter
 modparam("enum", "branchlabel", "i")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. bl_algorithm (string)
 
@@ -178,8 +177,8 @@ modparam("enum", "branchlabel", "i")
    use to select the position in the DNS tree where the
    infrastructure tree branches off the user ENUM tree.
 
-   If set to "cc", i_enum_query() will always inserts the label
-   at the country-code level. Examples: i.1.e164.arpa,
+   If set to "cc", i_enum_query() will always inserts the label at
+   the country-code level. Examples: i.1.e164.arpa,
    i.3.4.e164.arpa, i.2.5.3.e164.arpa
 
    If set to "txt", i_enum_query() will look for a TXT record at
@@ -188,14 +187,14 @@ modparam("enum", "branchlabel", "i")
 
    Example 1-5. Zone file example
 i.1.e164.arpa.                     IN TXT   "4"
-9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234
-5678 999"
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5
+678 999"
 
    If set to "ebl", i_enum_query() will look for an EBL (ENUM
    Branch Label) record at
    [branchlabel].[reverse-country-code].[i_enum_suffix]. See
-   http://www.ietf.org/internet-drafts/draft-lendl-enum-branch-lo
-   cation-record-00.txt for a description of that record and the
+   http://www.ietf.org/internet-drafts/draft-lendl-enum-branch-loc
+   ation-record-00.txt for a description of that record and the
    meaning of the fields. The RR type for the EBL has not been
    allocated yet. This version of the code uses 65300. See
    resolve.h.
@@ -204,17 +203,17 @@ i.1.e164.arpa.                     IN TXT   "4"
 i.1.e164.arpa.     TYPE65300  \# 14 (
                               04    ; position
                               01 69 ; separator
-                              04 65 31 36 34 04 61 72 70 61 00 ; e164.a
-rpa
+                              04 65 31 36 34 04 61 72 70 61 00 ; e164.ar
+pa
 ;                               )
-9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234
-5678 999"
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5
+678 999"
 
    Default value is "cc"
 
    Example 1-7. Setting the bl_algorithm module parameter
 modparam("enum", "bl_algorithm", "txt")
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -252,7 +251,7 @@ enum_query("e164.arpa.","voice");
 # or use instead
 enum_query("e164.arpa.","+sip+voice:sip");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. enum_fquery(["suffix"[,"service"]])
 
@@ -288,7 +287,7 @@ enum_fquery("e164.arpa.","voice");
 # or use instead
 enum_fquery("e164.arpa.","+sip+voice:sip");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. i_enum_query(["suffix"[,"service"]])
 
@@ -299,14 +298,14 @@ enum_fquery("e164.arpa.","+sip+voice:sip");
    where NAPTR records are looked for.
 
    See
-   ftp://ftp.rfc-editor.org/in-notes/internet-drafts/draft-haberl
-   er-carrier-enum-01.txt for the rationale behind this function.
-     _________________________________________________________
+   ftp://ftp.rfc-editor.org/in-notes/internet-drafts/draft-haberle
+   r-carrier-enum-01.txt for the rationale behind this function.
+     __________________________________________________________
 
 1.4.4. is_from_user_enum()
 
-   Checks if the user part of from URI is found in an enum
-   lookup. Returns 1 if yes and -1 if not.
+   Checks if the user part of from URI is found in an enum lookup.
+   Returns 1 if yes and -1 if not.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -316,13 +315,13 @@ if (is_from_user_enum()) {
         ....
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -336,8 +335,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

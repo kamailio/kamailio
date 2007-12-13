@@ -1,4 +1,3 @@
-
 mysql Module
 
 Daniel-Constantin Mierla
@@ -10,7 +9,7 @@ Edited by
 Daniel-Constantin Mierla
 
    Copyright © 2006 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -35,15 +34,15 @@ Daniel-Constantin Mierla
    List of Examples
    1-1. Set ping_interval parameter
    1-2. Set auto_reconnect parameter
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   This is a module which provides MySQL connectivity for
-   OpenSER. It implements the DB API defined in OpenSER.
-     _________________________________________________________
+   This is a module which provides MySQL connectivity for OpenSER.
+   It implements the DB API defined in OpenSER.
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -52,7 +51,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -61,60 +60,59 @@ Chapter 1. User's Guide
 
      * libmysqlclient-dev - the development libraries of
        mysql-client.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
 1.3.1. ping_interval (integer)
 
-   Time interval to send ping messages to MySQL server in order
-   to keep the connection open.
+   Time interval to send ping messages to MySQL server in order to
+   keep the connection open.
 
-   Default value is 300 (5min). 
+   Default value is 300 (5min).
 
    Example 1-1. Set ping_interval parameter
 ...
 modparam("mysql", "ping_interval", 600)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. auto_reconnect (integer)
 
    Configure the module to auto reconnect to MySQL server if the
    connection was lost.
 
-   Default value is 1 (1 - on / 0 - off). 
+   Default value is 1 (1 - on / 0 - off).
 
    Example 1-2. Set auto_reconnect parameter
 ...
 modparam("auto_reconnect", "auto_reconnect", 0)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
    No function exported to be used from configuration file.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Installation
 
-   Because it dependes on an external library, the mysql module
-   is not compiled and installed by default. You can use one of
-   the next options.
+   Because it dependes on an external library, the mysql module is
+   not compiled and installed by default. You can use one of the
+   next options.
 
      * - edit the "Makefile" and remove "mysql" from
-       "excluded_modules" list. Then follow the standard
-       procedure to install OpenSER: "make all; make install".
-     * - from command line use: 'make all
-       include_modules="mysql"; make install
-       include_modules="mysql"'.
-     _________________________________________________________
+       "excluded_modules" list. Then follow the standard procedure
+       to install OpenSER: "make all; make install".
+     * - from command line use: 'make all include_modules="mysql";
+       make install include_modules="mysql"'.
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -128,8 +126,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

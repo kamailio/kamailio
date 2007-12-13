@@ -1,4 +1,3 @@
-
 unixodbc Module
 
 Marco Lorrai
@@ -10,7 +9,7 @@ Edited by
 Marco Lorrai
 
    Copyright © 2005, 2006 Marco Lorrai
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -40,23 +39,22 @@ Marco Lorrai
    1-1. Set the "ping_interval" parameter
    1-2. Set the "auto_reconnect" parameter
    1-3. Set the "use_escape_common" parameter
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   This module allows to use the unixodbc package with OpenSER.
-   It have been tested with mysql and the odbc connector, but it
-   should work also with other database. The auth_db module
-   works.
+   This module allows to use the unixodbc package with OpenSER. It
+   have been tested with mysql and the odbc connector, but it
+   should work also with other database. The auth_db module works.
 
    For more information, see the http://www.unixodbc.org/ project
    web page.
 
    To see what DB engines can be used via unixodbc, look at
    http://www.unixodbc.org/drivers.html.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -65,7 +63,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -73,7 +71,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -81,49 +79,49 @@ Chapter 1. User's Guide
 
    Sets the ping time interval.
 
-   Default value is "300" seconds. 
+   Default value is "300" seconds.
 
    Example 1-1. Set the "ping_interval" parameter
 ...
 modparam("unixodbc", "ping_interval", 600)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. auto_reconnect (int)
 
    Turns on or off the auto_reconnect mode.
 
-   Default value is "1", this means it is enabled. 
+   Default value is "1", this means it is enabled.
 
    Example 1-2. Set the "auto_reconnect" parameter
 ...
 modparam("unixodbc", "auto_reconnect", 0)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. use_escape_common (int)
 
-   Escape values in query using internal escape_common()
-   function. It escapes single quote ''', double quote '"',
-   backslash '\', and NULL characters.
+   Escape values in query using internal escape_common() function.
+   It escapes single quote ''', double quote '"', backslash '\',
+   and NULL characters.
 
    You should enable this parameter if you know that the ODBC
    driver considers the above characters as special (for marking
    begin and end of a value, escape other characters ...). It
    prevents against SQL injection.
 
-   Default value is "0" (0 = disabled; 1 = enabled). 
+   Default value is "0" (0 = disabled; 1 = enabled).
 
    Example 1-3. Set the "use_escape_common" parameter
 ...
 modparam("unixodbc", "use_escape_common", 1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
    NONE
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Installation & Running
 
@@ -133,7 +131,7 @@ modparam("unixodbc", "use_escape_common", 1)
    program that implements the odbc standard, such iodbc), your
    database, and the right connector. Set the DSN in the odbc.ini
    file and the connector drivers in the odbcinst.ini file.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.2. Configuring & Running
 
@@ -166,13 +164,13 @@ shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
 
    The connector search the socket in /var/lib/mysql/mysql.sock
    and not in /tmp/mysql.sock
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module implements the OpenSER DB API, in order to be used
    by other modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -186,8 +184,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

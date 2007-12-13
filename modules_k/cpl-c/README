@@ -1,4 +1,3 @@
-
 cpl-c Module
 
 Bogdan-Andrei Iancu
@@ -10,7 +9,7 @@ Edited by
 Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -44,7 +43,7 @@ Bogdan-Andrei Iancu
 
               1.4.1. cpl_run_script(type,mode)
               1.4.2. cpl_process_register()
-              1.4.3. cpl_process_register_norpl() 
+              1.4.3. cpl_process_register_norpl()
 
         1.5. Exported MI Functions
 
@@ -79,16 +78,16 @@ Bogdan-Andrei Iancu
    1-17. cpl_run_script usage
    1-18. cpl_process_register usage
    1-19. cpl_process_register_norpl usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    cpl-c modules implements a CPL (Call Processing Language)
-   interpreter. Support for uploading/downloading/removing
-   scripts via SIP REGISTER method is present.
-     _________________________________________________________
+   interpreter. Support for uploading/downloading/removing scripts
+   via SIP REGISTER method is present.
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -97,16 +96,15 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * any DB module- a DB module for interfacing the DB
-       operations (modules like mysql, postgres, dbtext, etc) 
-     * TM (Transaction) module- used for proxying/forking
-       requests 
+       operations (modules like mysql, postgres, dbtext, etc)
+     * TM (Transaction) module- used for proxying/forking requests
      * SL (StateLess) module - used for sending stateless reply
        when responding to REGISTER request or for sending back
-       error responses 
+       error responses
      * USRLOC (User Location) module - used for implementing
-       lookup("registration") tag (adding into location set of
-       the users' contact) 
-     _________________________________________________________
+       lookup("registration") tag (adding into location set of the
+       users' contact)
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -115,8 +113,8 @@ Chapter 1. User's Guide
 
      * libxml2 and libxml2-devel - on some SO, these to packages
        are merged into libxml2. This library contains an engine
-       for XML parsing, DTD validation and DOM manipulation. 
-     _________________________________________________________
+       for XML parsing, DTD validation and DOM manipulation.
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -124,16 +122,16 @@ Chapter 1. User's Guide
 
    A SQL URL have to be given to the module for knowing where the
    database containing the table with CPL scripts is locates. If
-   required a user name and password can be specified for
-   allowing the module to connect to the database server.
+   required a user name and password can be specified for allowing
+   the module to connect to the database server.
 
-   This parameter is MANDATORY! 
+   This parameter is MANDATORY!
 
    Example 1-1. Set db_url parameter
 ...
 modparam("cpl-c","db_url","mysql://user:passwd@host/database")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. cpl_table (string)
 
@@ -142,64 +140,63 @@ modparam("cpl-c","db_url","mysql://user:passwd@host/database")
    "cpl_db" parameter. For more about the format of the CPL table
    please see modules/cpl-c/init.mysql.
 
-   This parameter is MANDATORY! 
+   This parameter is MANDATORY!
 
    Example 1-2. Set cpl_table parameter
 ...
 modparam("cpl-c","cpl_table","cpltable")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. username_column (string)
 
-   Indicates the name of the column used for storing the
-   username.
+   Indicates the name of the column used for storing the username.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1-3. Set username_column parameter
 ...
 modparam("cpl-c","username_column","username")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. domain_column (string)
 
    Indicates the name of the column used for storing the domain.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1-4. Set domain_column parameter
 ...
 modparam("cpl-c","domain_column","domain")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. cpl_xml_column (string)
 
    Indicates the name of the column used for storing the the XML
    version of the cpl script.
 
-   Default value is "cpl_xml". 
+   Default value is "cpl_xml".
 
    Example 1-5. Set cpl_xml_column parameter
 ...
 modparam("cpl-c","cpl_xml_column","cpl_xml")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. cpl_bin_column (string)
 
    Indicates the name of the column used for storing the the
    binary version of the cpl script (compiled version).
 
-   Default value is "cpl_bin". 
+   Default value is "cpl_bin".
 
    Example 1-6. Set cpl_bin_column parameter
 ...
 modparam("cpl-c","cpl_bin_column","cpl_bin")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. cpl_dtd_file (string)
 
@@ -208,13 +205,13 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
    absolute or relative (be careful the the path will be relative
    to the starting directory of OpenSER).
 
-   This parameter is MANDATORY! 
+   This parameter is MANDATORY!
 
    Example 1-7. Set cpl_dtd_file parameter
 ...
 modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.8. log_dir (string)
 
@@ -223,13 +220,13 @@ modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
    created (on demand) having the name username.log.
 
    If this parameter is absent, the logging will be disabled
-   without generating error on execution. 
+   without generating error on execution.
 
    Example 1-8. Set log_dir parameter
 ...
 modparam("cpl-c","log_dir","/var/log/openser/cpl")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.9. proxy_recurse (int)
 
@@ -240,54 +237,54 @@ modparam("cpl-c","log_dir","/var/log/openser/cpl")
    branch. The recurse feature can be disable by setting this
    parameter to 0
 
-   Default value of this parameter is 0. 
+   Default value of this parameter is 0.
 
    Example 1-9. Set proxy_recurse parameter
 ...
 modparam("cpl-c","proxy_recurse",2)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.10. proxy_route (int)
 
    Before doing proxy (forward), a script route can be executed.
-   All modifications made by that route will be reflected only
-   for the current branch.
+   All modifications made by that route will be reflected only for
+   the current branch.
 
-   Default value of this parameter is 0 (none). 
+   Default value of this parameter is 0 (none).
 
    Example 1-10. Set proxy_route parameter
 ...
 modparam("cpl-c","proxy_route",1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.11. case_sensitive (int)
 
-   Tells if the username matching should be perform case
-   sensitive or not. Set it to a non zero value to force a case
-   sensitive handling of usernames.
+   Tells if the username matching should be perform case sensitive
+   or not. Set it to a non zero value to force a case sensitive
+   handling of usernames.
 
-   Default value of this parameter is 0. 
+   Default value of this parameter is 0.
 
    Example 1-11. Set case_sensitive parameter
 ...
 modparam("cpl-c","case_sensitive",1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.12. realm_prefix (string)
 
-   Defines a prefix for the domain part which should be ignored
-   in handling users and scripts.
+   Defines a prefix for the domain part which should be ignored in
+   handling users and scripts.
 
-   Default value of this parameter is empty string. 
+   Default value of this parameter is empty string.
 
    Example 1-12. Set realm_prefix parameter
 ...
 modparam("cpl-c","realm_prefix","sip.")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.13. timer_avp (string)
 
@@ -298,13 +295,13 @@ modparam("cpl-c","realm_prefix","sip.")
    NOTE: take care and syncronize this value with the similar
    parameters in TM module.
 
-   Default value of this parameter is NULL. 
+   Default value of this parameter is NULL.
 
    Example 1-13. Set timer_avp parameter
 ...
 modparam("cpl-c","timer_avp","$avp(i:14)")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.14. lookup_domain (string)
 
@@ -315,41 +312,41 @@ modparam("cpl-c","timer_avp","$avp(i:14)")
    If set to empty string, the lookup node will be disabled - no
    user location will be performed.
 
-   Default value of this parameter is NULL. 
+   Default value of this parameter is NULL.
 
    Example 1-14. Set lookup_domain parameter
 ...
 modparam("cpl-c","lookup_domain","location")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.15. lookup_append_branches (int)
 
    Tells if the lookup tag should append branches (to do parallel
-   forking) if user_location lookup returns more than one
-   contact. Set it to a non zero value to enable parallel forking
-   for location lookup tag.
+   forking) if user_location lookup returns more than one contact.
+   Set it to a non zero value to enable parallel forking for
+   location lookup tag.
 
-   Default value of this parameter is 0. 
+   Default value of this parameter is 0.
 
    Example 1-15. Set lookup_append_branches parameter
 ...
 modparam("cpl-c","lookup_append_branches",1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.16. use_domain (integer)
 
    Indicates if the domain part of the URI should be used in user
    identification (otherwise only username part will be used).
 
-   Default value is "0 (disabled)". 
+   Default value is "0 (disabled)".
 
    Example 1-16. Set use_domain parameter
 ...
 modparam("cpl-c","use_domain",1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -359,18 +356,18 @@ modparam("cpl-c","use_domain",1)
    fetched from new_uri or requested uri or from To header -in
    this order- (for incoming execution) or from FROM header (for
    outgoing execution). Regarding the stateful/stateless message
-   processing, the function is very flexible, being able to run
-   in different modes (see below the"mode" parameter). Normally
-   this function will end script execution. There is no guaranty
-   that the CPL script interpretation ended when OpenSER script
-   ended also (for the same INVITE ;-)) - this can happen when
-   the CPL script does a PROXY and the script interpretation
-   pause after proxying and it will be resume when some reply is
-   received (this can happen in a different process of SER). If
-   the function returns to script, the SIP server should continue
-   with the normal behavior as if no script existed. When some
-   error is returned, the function itself haven't sent any SIP
-   error reply (this can be done from script).
+   processing, the function is very flexible, being able to run in
+   different modes (see below the"mode" parameter). Normally this
+   function will end script execution. There is no guaranty that
+   the CPL script interpretation ended when OpenSER script ended
+   also (for the same INVITE ;-)) - this can happen when the CPL
+   script does a PROXY and the script interpretation pause after
+   proxying and it will be resume when some reply is received
+   (this can happen in a different process of SER). If the
+   function returns to script, the SIP server should continue with
+   the normal behavior as if no script existed. When some error is
+   returned, the function itself haven't sent any SIP error reply
+   (this can be done from script).
 
    Meaning of the parameters is as follows:
 
@@ -382,30 +379,29 @@ modparam("cpl-c","use_domain",1)
      * mode - sets the interpreter mode as stateless/stateful
        behavior. The following modes are accepted:
           + IS_STATELESS - the current INVITE has no transaction
-            created yet. All replies (redirection or deny) will
-            be done is a stateless way. The execution will switch
-            to stateful only when proxy is done. So, if the
-            function returns, will be in stateless mode. 
+            created yet. All replies (redirection or deny) will be
+            done is a stateless way. The execution will switch to
+            stateful only when proxy is done. So, if the function
+            returns, will be in stateless mode.
           + IS_STATEFUL - the current INVITE has already a
             transaction associated. All signaling operations
-            (replies or proxy) will be done in stateful way.So,
-            if the function returns, will be in stateful mode. 
-          + FORCE_STATEFUL - the current INVITE has no
-            transaction created yet. All signaling operations
-            will be done is a stateful way (on signaling, the
-            transaction will be created from within the
-            interpreter). So, if the function returns, will be in
-            stateless mode. 
+            (replies or proxy) will be done in stateful way.So, if
+            the function returns, will be in stateful mode.
+          + FORCE_STATEFUL - the current INVITE has no transaction
+            created yet. All signaling operations will be done is
+            a stateful way (on signaling, the transaction will be
+            created from within the interpreter). So, if the
+            function returns, will be in stateless mode.
        HINT: is_stateful is very difficult to manage from the
        routing script (script processing can continue in stateful
        mode); is_stateless is the fastest and less resources
-       consumer (transaction is created only if proxying is
-       done), but there is minimal protection against
-       retransmissions (since replies are send stateless);
-       force_stateful is a good compromise - all signaling is
-       done stateful (retransmission protection) and in the same
-       time, if returning to script, it will be in stateless mode
-       (easy to continue the routing script execution)
+       consumer (transaction is created only if proxying is done),
+       but there is minimal protection against retransmissions
+       (since replies are send stateless); force_stateful is a
+       good compromise - all signaling is done stateful
+       (retransmission protection) and in the same time, if
+       returning to script, it will be in stateless mode (easy to
+       continue the routing script execution)
 
    This function can be used from REQUEST_ROUTE.
 
@@ -413,7 +409,7 @@ modparam("cpl-c","use_domain",1)
 ...
 cpl_run_script("incoming","force_stateful");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. cpl_process_register()
 
@@ -428,14 +424,13 @@ cpl_run_script("incoming","force_stateful");
    "Content-Disposition" header; id its value is
    "script;action=store", means it's an upload; if it's
    "script;action=remove", means it's a remove operation; other
-   values are considered to be errors. If no "Content-Type"
-   header is present, the function looks to "Accept" header and
-   if it contains the "*" or "application/cpl-xml" the request it
-   will be consider one for downloading CPL scripts. The
-   functions returns to script only if the the REGISTER is not
-   related to CPL. In other case, the function will send by
-   itself the necessary replies (stateless - using sl), including
-   for errors.
+   values are considered to be errors. If no "Content-Type" header
+   is present, the function looks to "Accept" header and if it
+   contains the "*" or "application/cpl-xml" the request it will
+   be consider one for downloading CPL scripts. The functions
+   returns to script only if the the REGISTER is not related to
+   CPL. In other case, the function will send by itself the
+   necessary replies (stateless - using sl), including for errors.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -445,7 +440,7 @@ if (method=="REGISTER") {
     cpl_process_register();
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. cpl_process_register_norpl()
 
@@ -458,7 +453,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. cpl_process_register_norpl usage 
+   Example 1-19. cpl_process_register_norpl usage
 ...
 if (method=="REGISTER") {
     cpl_process_register();
@@ -466,7 +461,7 @@ if (method=="REGISTER") {
     save("location");
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Exported MI Functions
 
@@ -487,13 +482,12 @@ if (method=="REGISTER") {
                  username
                  cpl_filename
                  _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.2. REMOVE_CPL
 
-   For the given user, removes the entire database record (XML
-   cpl and binary cpl); user with empty cpl scripts are not
-   accepted.
+   For the given user, removes the entire database record (XML cpl
+   and binary cpl); user with empty cpl scripts are not accepted.
 
    Name: REMOVE_CPL
 
@@ -505,7 +499,7 @@ if (method=="REGISTER") {
                  :REMOVE_CPL:_reply_fifo_file_
                  username
                  _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.3. GET_CPL
 
@@ -521,30 +515,30 @@ if (method=="REGISTER") {
                  :GET_CPL:_reply_fifo_file_
                  username
                  _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.6. Installation & Running
 
 1.6.1. Database setup
 
    Before running OpenSER with cpl-c, you have to setup the
-   database table where the module will store the CPL scripts.
-   For that, if the table was not created by the installation
-   script or you choose to install everything by yourself you can
-   use the cpc-create.sql SQL script in the database directories
-   in the openser/scripts folder as template. Database and table
-   name can be set with module parameters so they can be changed,
-   but the name of the columns must be as they are in the SQL
-   script. You can also find the complete database documentation
-   on the project webpage,
+   database table where the module will store the CPL scripts. For
+   that, if the table was not created by the installation script
+   or you choose to install everything by yourself you can use the
+   cpc-create.sql SQL script in the database directories in the
+   openser/scripts folder as template. Database and table name can
+   be set with module parameters so they can be changed, but the
+   name of the columns must be as they are in the SQL script. You
+   can also find the complete database documentation on the
+   project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -558,8 +552,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

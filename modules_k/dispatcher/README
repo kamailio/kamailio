@@ -514,8 +514,7 @@ ds_select_dst("1", "0");
 
 1.5.3. ds_reload
 
-   It reloads the groups and included destinations. Available only
-   when DB support configured.
+   It reloads the groups and included destinations.
 
    Name: ds_reload
 

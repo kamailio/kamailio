@@ -1,4 +1,3 @@
-
 ALIAS_DB Module
 
 Daniel-Constantin Mierla
@@ -10,7 +9,7 @@ Edited by
 Daniel-Constantin Mierla
 
    Copyright © 2005 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -47,7 +46,7 @@ Daniel-Constantin Mierla
    1-6. Set use_domain parameter
    1-7. Set domain_prefix parameter
    1-8. alias_db_lookup() usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -59,10 +58,10 @@ Chapter 1. User's Guide
    for search (no memory caching).
 
    Having no memory caching the speed of search can decrease but
-   the provisioning is easier. With very fast databases like
-   MySQL the speed penalty can be lowered. Also, the search can
-   be performed on different tables in the same script.
-     _________________________________________________________
+   the provisioning is easier. With very fast databases like MySQL
+   the speed penalty can be lowered. Also, the search can be
+   performed on different tables in the same script.
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -71,7 +70,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * database module (mysql, dbtext, ...).
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -79,7 +78,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -87,61 +86,61 @@ Chapter 1. User's Guide
 
    Database URL.
 
-   Default value is "DEFAULT_RODB_URL". 
+   Default value is "DEFAULT_RODB_URL".
 
    Example 1-1. Set db_url parameter
 ...
 modparam("alias_db", "db_url", "mysql://user:passwd@localhost/openser")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. user_column (str)
 
    Name of the column storing username.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1-2. Set user_column parameter
 ...
 modparam("alias_db", "user_column", "susername")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. domain_column (str)
 
    Name of the column storing user's domain.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1-3. Set domain_column parameter
 ...
 modparam("alias_db", "domain_column", "sdomain")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. alias_user_column (str)
 
    Name of the column storing alias username.
 
-   Default value is "alias_username". 
+   Default value is "alias_username".
 
    Example 1-4. Set alias_user_column parameter
 ...
 modparam("alias_db", "alias_user_column", "auser")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. alias_domain_column (str)
 
    Name of the column storing alias domain.
 
-   Default value is "alias_domain". 
+   Default value is "alias_domain".
 
    Example 1-5. Set alias_domain_column parameter
 ...
 modparam("alias_db", "alias_domain_column", "adomain")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. use_domain (int)
 
@@ -149,37 +148,37 @@ modparam("alias_db", "alias_domain_column", "adomain")
    searching for alias. If set to 0, the domain from R-URI is not
    used, if set to 1 the domain from R-URI is used.
 
-   Default value is "o". 
+   Default value is "o".
 
    Example 1-6. Set use_domain parameter
 ...
 modparam("alias_db", "use_domain", 1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. domain_prefix (str)
 
    Specifies the prefix to be stripped from the domain in R-URI
    before doing the search.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1-7. Set domain_prefix parameter
 ...
 modparam("alias_db", "domain_prefix", "sip.")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
 1.4.1. alias_db_lookup(table_name)
 
-   The function takes the R-URI and search to see whether it is
-   an alias or not. If it is an alias for a local user, the R-URI
-   is replaced with user's SIP uri.
+   The function takes the R-URI and search to see whether it is an
+   alias or not. If it is an alias for a local user, the R-URI is
+   replaced with user's SIP uri.
 
-   The function returns TRUE if R-URI is alias and it was
-   replaced by user's SIP uri.
+   The function returns TRUE if R-URI is alias and it was replaced
+   by user's SIP uri.
 
    Meaning of the parameters is as follows:
 
@@ -192,13 +191,13 @@ modparam("alias_db", "domain_prefix", "sip.")
 ...
 alias_db_lookup("dbaliases");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -212,8 +211,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

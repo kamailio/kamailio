@@ -1,4 +1,3 @@
-
 PUA Usrloc
 
 Anca-Maria Vamanu
@@ -10,7 +9,7 @@ Edited by
 Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -37,21 +36,21 @@ Anca-Maria Vamanu
    1-1. Set default_domain parameter
    1-2. Set presentity_prefix parameter
    1-3. pua_set_publish usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   The pua_usrloc is the connector between usrloc and pua
-   modules. It creates the environment to send PUBLISH requests
-   for user location records, on specific events (e.g., when new
-   record is added in usrloc, a PUBLISH with status open (online)
-   is issued; when expires, it sends closed (offline)).
+   The pua_usrloc is the connector between usrloc and pua modules.
+   It creates the environment to send PUBLISH requests for user
+   location records, on specific events (e.g., when new record is
+   added in usrloc, a PUBLISH with status open (online) is issued;
+   when expires, it sends closed (offline)).
 
    Using this module, phones which have no support for presence
    can be seen as online/offline.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -61,7 +60,7 @@ Chapter 1. User's Guide
 
      * usrloc.
      * pua.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -69,7 +68,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * libxml.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -78,26 +77,26 @@ Chapter 1. User's Guide
    The default domain to use when constructing the presentity uri
    if it is missing from recorded aor.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1-1. Set default_domain parameter
 ...
 modparam(pua_usrloc, "default_domain", "openser.org");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. entity_prefix (str)
 
    The prefix when construstructing entity attribute to be added
    to presence node in xml pidf. (ex: pres:user@domain ).
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1-2. Set presentity_prefix parameter
 ...
 modparam(pua_usrloc, "entity_prefix", "pres");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -112,13 +111,13 @@ modparam(pua_usrloc, "entity_prefix", "pres");
 if(is_method("REGISTER") && from_uri=~"john@openser.org")
         pua_set_publish();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -132,8 +131,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

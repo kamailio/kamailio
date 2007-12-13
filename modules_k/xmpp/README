@@ -1,4 +1,3 @@
-
 xmpp Module
 
 Andreea Spirea
@@ -10,7 +9,7 @@ Edited by
 Andreea Spirea
 
    Copyright © 2006 voice-system.ro
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -49,36 +48,34 @@ Andreea Spirea
    1-6. Set xmpp_port parameter
    1-7. Set xmpp_password parameter
    1-8. xmpp_send_message() usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    This modules is a gateway between Openser and a jabber server.
-   It enables the exchange of instant messages between SIP
-   clients and XMPP(jabber) clients.
+   It enables the exchange of instant messages between SIP clients
+   and XMPP(jabber) clients.
 
    The gateway has two modes to run:
 
-     * the component-mode - the gateway requires a standalone
-       XMPP server amd the 'xmpp' module acts as a XMPP component
+     * the component-mode - the gateway requires a standalone XMPP
+       server amd the 'xmpp' module acts as a XMPP component
      * the server-mode - the module acts itself as a XMPP server,
-       no requirement for another XMPP server in the system.
-       NOTE: this is limited implementation of a XMPP server, it
-       does not support SRV or TLS so far. This mode is in beta
-       stage for the moment.
+       no requirement for another XMPP server in the system. NOTE:
+       this is limited implementation of a XMPP server, it does
+       not support SRV or TLS so far. This mode is in beta stage
+       for the moment.
 
    In the component mode, you need a local XMPP server
    (recommended Jabberd2); the xmpp module will relay all your
-   connections to a tcp connection to the local jabber server.
-   The documentation and the source for a Jabber server are
-   located at the following link:
-   http://jabberd.jabberstudio.org/2/#download
+   connections to a tcp connection to the local jabber server. The
+   documentation and the source for a Jabber server are located at
+   the following link: http://jabberd.jabberstudio.org/2/#download
 
    After you have a running XMPP server, what you need to do is
-   set the following parameters in the Openser configuration
-   file:
+   set the following parameters in the Openser configuration file:
 
      * gateway_domain, xmpp_domain (which can be the same as
        gateway_domain) and xmpp_host, which are explained in the
@@ -92,7 +89,7 @@ Chapter 1. User's Guide
         if (avp_check("$rd", "eq/s:sip-xmpp.openser.org")) {
                 if (!t_newtran()) {
                         sl_reply_error();
-        ...........     
+        ...........
 
      * you can also change the jabber server password, which must
        be the same as the xmpp_password parameter.
@@ -104,10 +101,10 @@ Chapter 1. User's Guide
      * the jabber server is running on xmpp.openser.org;
      * the component is running on xmpp-sip.openser.org.
 
-   In the server mode, the xmpp module is a minimal jabber
-   server, thus you do not need to install another jabber server,
-   the gateway will connect to the jabber servers, where the
-   users you want to chat with have an account.
+   In the server mode, the xmpp module is a minimal jabber server,
+   thus you do not need to install another jabber server, the
+   gateway will connect to the jabber servers, where the users you
+   want to chat with have an account.
 
    If you want to change to server-mode, you have to change the
    "backend" parameter, as shown in the Exported Parameters
@@ -124,11 +121,11 @@ Chapter 1. User's Guide
 
    "sip:username<delim>jabber_server@gateway_domain"
 
-   From a jabber client's point of view, the destination will
-   look like:
+   From a jabber client's point of view, the destination will look
+   like:
 
    "sip_username<delim>openser_domain@xmpp_domain"
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -137,7 +134,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * requires 'tm' module.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -145,7 +142,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * libexpat1-devel - used for parsing/building XML.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -154,30 +151,30 @@ Chapter 1. User's Guide
    The mode you are using the module; it can be either component
    or server.
 
-   Default value is "component". 
+   Default value is "component".
 
    Example 1-1. Set backend parameter
 ...
  modparam("xmpp", "backend", "server");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. domain_separator (string)
 
    In the destination address we need an extra character as a
-   domain separator, apart from @. The address of the
-   XMPP(jabber) client looks like this:
+   domain separator, apart from @. The address of the XMPP(jabber)
+   client looks like this:
    "sip:username<domain_separator>jabber_server@gateway_domain".
    The address of a SIP client has the following pattern :
    "sip_username<domain_separator>openser_domain@xmpp_domain";
 
-   Default value is "*". 
+   Default value is "*".
 
    Example 1-2. Set domain_separator parameter
 ...
  modparam("xmpp", "domain_separator", "*");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. gateway_domain (string)
 
@@ -186,63 +183,63 @@ Chapter 1. User's Guide
    the XMPP(jabber) client, as seen by the SIP client:
    "sip:username<delim>jjabber_server@gateway_domain".
 
-   Default value is "sip-xmpp.openser.org". 
+   Default value is "sip-xmpp.openser.org".
 
    Example 1-3. Set gateway_domain parameter
 ...
  modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. xmpp_domain (string)
 
    The xmpp domain of the component or the server, depending on
    the mode we are in. It can be the same as the gateway_domain.
 
-   Default value is "sip-xmpp.openser.org". 
+   Default value is "sip-xmpp.openser.org".
 
    Example 1-4. Set xmpp_domain parameter
 ...
  modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. xmpp_host (string)
 
    The ip address or the name of the local jabber server, if the
-   backend is set to "component"; or the address to bind to in
-   the server mode.
+   backend is set to "component"; or the address to bind to in the
+   server mode.
 
-   Default value is "xmpp.openser.org". 
+   Default value is "xmpp.openser.org".
 
    Example 1-5. Set xmpp_host parameter
 ...
  modparam("xmpp", "xmpp_host", "xmpp.openser.org");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. xmpp_port (integer)
 
-   In the component mode, this is the port of the jabber router
-   we connect to. In the server mode, it is the transport address
-   to bind to.
+   In the component mode, this is the port of the jabber router we
+   connect to. In the server mode, it is the transport address to
+   bind to.
 
    Default value is "5347", if backend is set to "component" and
-   "5269", if backend is set to "server". 
+   "5269", if backend is set to "server".
 
    Example 1-6. Set xmpp_port parameter
 ...
  modparam("xmpp", "xmpp_port", "5269");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. xmpp_password (string)
 
    The password of the local jabber server.
 
    Default value is "secret"; if changed here, it must also be
-   changed in the c2s.xml, added by the jabber server. This is
-   how the default configuration for the jabberd2 looks like: 
+   changed in the c2s.xml, added by the jabber server. This is how
+   the default configuration for the jabberd2 looks like:
                         <router>
         ...............
         <!-- Username/password to authenticate as --&gt;
@@ -253,7 +250,7 @@ Chapter 1. User's Guide
 ...
  modparam("xmpp", "xmpp_password", "secret");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -266,16 +263,16 @@ Chapter 1. User's Guide
 ...
 xmpp_send_massage();
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Configuration
 
-                   Next is presented a sample configuration file
-   one can use to implement a standalone SIP-to-XMPP gateway. You
-   can run an instance of OpenSER on a separate machine or on
-   different port with the following config, and have the main
-   SIP server configured to forward all SIP requests for XMPP
-   world to it.
+
+   Next is presented a sample configuration file one can use to
+   implement a standalone SIP-to-XMPP gateway. You can run an
+   instance of OpenSER on a separate machine or on different port
+   with the following config, and have the main SIP server
+   configured to forward all SIP requests for XMPP world to it.
 ....
 #
 # $Id$
@@ -379,13 +376,13 @@ route{
 
 
 ....
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -399,8 +396,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

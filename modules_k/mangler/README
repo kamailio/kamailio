@@ -1,4 +1,3 @@
-
 mangler Module
 
 Gabriel Vasile
@@ -10,7 +9,7 @@ Edited by
 Gabriel Vasile
 
    Copyright © 2003 Fill in here
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -43,14 +42,14 @@ Gabriel Vasile
    1-4. encode_contact usage
    1-5. decode_contact usage
    1-6. decode_contact_header usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    This is a module to help with SDP mangling. Still in testing.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -59,7 +58,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -67,7 +66,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -76,14 +75,14 @@ Chapter 1. User's Guide
    First char of this parameter is used as separator for
    encoding/decoding Contact header.
 
-   Warning
+  Warning
 
-   First char of this field must be set to a value which is not
-   used inside username,password or other fields of contact.
-   Otherwise it is possible for the decoding step to fail/produce
-   wrong results.
+          First char of this field must be set to a value which is not
+          used inside username,password or other fields of contact.
+          Otherwise it is possible for the decoding step to fail/produce
+          wrong results.
 
-   Default value is "*". 
+   Default value is "*".
 
    Example 1-1. Set db_url parameter
 ...
@@ -92,7 +91,7 @@ modparam("mangler", "contact_flds_separator", "-")
 
    then an encoded uri might look
    sip:user-password-ip-port-protocol@PublicIP
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -121,12 +120,12 @@ modparam("mangler", "contact_flds_separator", "-")
 ...
 sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. sdp_mangle_port(offset)
 
-   Changes ports inside SDP package in lines describing media
-   like m=audio 13451.
+   Changes ports inside SDP package in lines describing media like
+   m=audio 13451.
 
    The function returns negative on error, or number of
    replacements + 1.
@@ -142,7 +141,7 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 ...
 sdp_mangle_port("-12000");
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. encode_contact(encoding_prefix)
 
@@ -156,18 +155,18 @@ sdp_mangle_port("-12000");
 
    Meaning of the parameters is as follows:
 
-     * encoding_prefix - Something to allow us to determine that
-       a contact is encoded publicip--a routable IP, most
-       probably you should put your external IP of your NAT box.
+     * encoding_prefix - Something to allow us to determine that a
+       contact is encoded publicip--a routable IP, most probably
+       you should put your external IP of your NAT box.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
    Example 1-4. encode_contact usage
 ...
-if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
-;
+if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
+
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.4. decode_contact()
 
@@ -187,7 +186,7 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
 ...
 if (uri =~ "^enc*") { decode_contact(); }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.5. decode_contact_header()
 
@@ -207,13 +206,13 @@ if (uri =~ "^enc*") { decode_contact(); }
 ...
 if (uri =~ "^enc*") { decode_contact_header(); }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -227,8 +226,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

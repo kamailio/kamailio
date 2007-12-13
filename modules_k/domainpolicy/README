@@ -1,4 +1,3 @@
-
 Domain Policy Module
 
 Otmar Lendl
@@ -13,7 +12,7 @@ Klaus Darilion
 
    Copyright © 2002, 2003, 2006 Juha Heinanen, Otmar Lendl, Klaus
    Darilion
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -67,7 +66,7 @@ Klaus Darilion
    1-12. Setting send_socket_avp parameter
    1-13. dp_can_connect usage
    1-14. dp_apply_policy usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -84,15 +83,15 @@ Chapter 1. User's Guide
    draft-lendl-domain-policy-ddds-02.
 
    This module requires a database. No caching is implemented.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
 
      * database -- Any database module
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -104,20 +103,19 @@ Chapter 1. User's Guide
    "mysql://openserro:openserro@localhost/openser"
 
    Example 1-1. Setting db_url parameter
-modparam("domainpolicy", "db_url", "postgresql://openserro:pass@db_host
-/openser")
-     _________________________________________________________
+modparam("domainpolicy", "db_url", "postgresql://openserro:pass@db_host/
+openser")
+     __________________________________________________________
 
 1.3.2. dp_table (string)
 
-   Name of table containing the local support domain policy
-   setup.
+   Name of table containing the local support domain policy setup.
 
    Default value is "domainpolicy".
 
    Example 1-2. Setting dp_table parameter
 modparam("domainpolicy", "dp_table", "supportedpolicies")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. dp_col_rule (string)
 
@@ -128,33 +126,32 @@ modparam("domainpolicy", "dp_table", "supportedpolicies")
 
    Example 1-3. Setting dp_col_rule parameter
 modparam("domainpolicy", "dp_col_rule", "rules")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.4. dp_col_type (string)
 
    Name of column containing the domain policy rule type. In the
-   case of federation names, this is "fed". For standard
-   referrals according to
-   draft-lendl-speermint-technical-policy-00, this is "std". For
-   direct domain lookups, this is "dom".
+   case of federation names, this is "fed". For standard referrals
+   according to draft-lendl-speermint-technical-policy-00, this is
+   "std". For direct domain lookups, this is "dom".
 
    Default value is "type".
 
    Example 1-4. Setting dp_col_rule parameter
 modparam("domainpolicy", "dp_col_type", "type")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.5. dp_col_att (string)
 
-   Name of column containing the AVP's name. If the rule stored
-   in this row triggers, than dp_can_connect() will add an AVP
-   with that name.
+   Name of column containing the AVP's name. If the rule stored in
+   this row triggers, than dp_can_connect() will add an AVP with
+   that name.
 
    Default value is "att".
 
    Example 1-5. Setting dp_col_att parameter
 modparam("domainpolicy", "dp_col_att", "attribute")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.6. dp_col_val (string)
 
@@ -165,7 +162,7 @@ modparam("domainpolicy", "dp_col_att", "attribute")
 
    Example 1-6. Setting dp_col_val parameter
 modparam("domainpolicy", "dp_col_val", "values")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.7. port_override_avp (string)
 
@@ -177,7 +174,7 @@ modparam("domainpolicy", "dp_col_val", "values")
    Example 1-7. Setting port_override_avp parameter
 # string named AVP
 modparam("domainpolicy", "port_override_avp", "portoverride")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.8. transport_override_avp (string)
 
@@ -188,7 +185,7 @@ modparam("domainpolicy", "port_override_avp", "portoverride")
    Example 1-8. Setting transport_override_avp parameter
 # string named AVP
 modparam("domainpolicy", "transport_override_avp", "transportoverride")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.9. domain_replacement_avp (string)
 
@@ -199,7 +196,7 @@ modparam("domainpolicy", "transport_override_avp", "transportoverride")
    Example 1-9. Setting domain_replacement_avp parameter
 # string named AVP
 modparam("domainpolicy", "domain_replacement_avp", "domainreplacement")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.10. domain_prefix_avp (string)
 
@@ -210,7 +207,7 @@ modparam("domainpolicy", "domain_replacement_avp", "domainreplacement")
    Example 1-10. Setting domain_prefix_avp parameter
 # string named AVP
 modparam("domainpolicy", "domain_prefix_avp", "domainprefix")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.11. domain_suffix_avp (string)
 
@@ -221,23 +218,22 @@ modparam("domainpolicy", "domain_prefix_avp", "domainprefix")
    Example 1-11. Setting domain_suffix_avp parameter
 # string named AVP
 modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.12. send_socket_avp (string)
 
-   Name of the AVP which contains a send_socket. The format of
-   the send socket (the payload of this AVP) must be in the
-   format [proto:]ip_address[:port]. The function dp_apply_policy
-   will look for this AVP and if defined, it will force the send
-   socket to its value (smilar to the force_send_socket core
-   function).
+   Name of the AVP which contains a send_socket. The format of the
+   send socket (the payload of this AVP) must be in the format
+   [proto:]ip_address[:port]. The function dp_apply_policy will
+   look for this AVP and if defined, it will force the send socket
+   to its value (smilar to the force_send_socket core function).
 
    Default value is "sendsocket".
 
    Example 1-12. Setting send_socket_avp parameter
 # string named AVP
 modparam("domainpolicy", "send_socket_avp", "sendsocket")
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -246,23 +242,22 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
    Checks the interconnection policy of the caller. It uses the
    domain in the request URI to perform the DP-DDDS algorithm
    according to draft-lendl-domain-policy-ddds-02 to retrieve the
-   domain's policy announcements. As of this version, only
-   records conforming to draft-lendl-speermint-federations-02 and
+   domain's policy announcements. As of this version, only records
+   conforming to draft-lendl-speermint-federations-02 and
    draft-lendl-speermint-technical-policy-00 are supported.
 
    Non-terminal NAPTR records will cause recursion to the
    replacement domain. dp_can_connect() will thus look for policy
    rules in the referenced domain. Furthermore, an AVP for
    "domainreplacement" (containing the new domain) will be added
-   to the call. This will redirect SRV/A record lookups to the
-   new domain.
+   to the call. This will redirect SRV/A record lookups to the new
+   domain.
 
    In order to simplify direct domain-based peerings all
    destination domains are treated as if they contain a top
-   priority "D2P+SIP:dom" rule with the domain itself as the
-   value of the rule. Thus any database row with type = 'dom' and
-   rule = 'example.com' will override any dynamic DNS-discovered
-   rules.
+   priority "D2P+SIP:dom" rule with the domain itself as the value
+   of the rule. Thus any database row with type = 'dom' and rule =
+   'example.com' will override any dynamic DNS-discovered rules.
 
    For NAPTRs with service-type "D2P+SIP:fed", the federation IDs
    (as extracted from the regexp field) are used to retrieve
@@ -324,21 +319,21 @@ switch(retcode) {
                 break;
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. dp_apply_policy()
 
    This function sets the destination URI according to the policy
-   returned from the dp_can_connect() function. Parameter
-   exchange between dp_can_connect() and dp_apply_policy() is
-   done via AVPs. The AVPs can be configured in the module's
-   parameter section.
+   returned from the dp_can_connect() function. Parameter exchange
+   between dp_can_connect() and dp_apply_policy() is done via
+   AVPs. The AVPs can be configured in the module's parameter
+   section.
 
    Note: The name of the AVPs must correspond with the names in
    the att column in the domainpolicy table.
 
-   Setting the following AVPs in dp_can_connect() (or by any
-   other means) cause the following actions in dp_apply_policy():
+   Setting the following AVPs in dp_can_connect() (or by any other
+   means) cause the following actions in dp_apply_policy():
 
      * port_override_avp: If this AVP is set, the port in the
        destination URI is set to this port. Setting an override
@@ -358,8 +353,8 @@ switch(retcode) {
      * domain_prefix_avp: If this AVP is set, the domain in the
        destination URI will be prefixed with this "subdomain".
        E.g. if the domain in the request URI is "example.com" and
-       the domain_prefix_avp contains "inbound", the domain in
-       the destinaton URI is set to "inbound.example.com".
+       the domain_prefix_avp contains "inbound", the domain in the
+       destinaton URI is set to "inbound.example.com".
 
      * domain_suffix_avp: If this AVP is set, the domain in the
        destination URI will have the content of the AVP appended
@@ -369,8 +364,8 @@ switch(retcode) {
        "example.com.myroot.com".
 
      * send_socket_avp: If this AVP is set, the sending socket
-       will be forced to the socket in the AVP. The payload
-       format of this AVP must be [proto:]ip_address[:port].
+       will be forced to the socket in the AVP. The payload format
+       of this AVP must be [proto:]ip_address[:port].
 
    If both prefix/suffix and domain replacements are used, then
    the replacement is performed first and the prefix/suffix are
@@ -384,16 +379,16 @@ if (dp_apply_policy()) {
         t_relay();
 }
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. FIFO Commands
-     _________________________________________________________
+     __________________________________________________________
 
 1.6. Usage Scenarios
 
    This section describes how this module can be use to implement
    selective VoIP peerings.
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.1. TLS Based Federation
 
@@ -401,10 +396,10 @@ if (dp_apply_policy()) {
    configured based on TLS and Domain Policies.
 
    Let's assume that an organization called "TLSFED.org" acts as
-   an umbrella for VoIP providers who want to peer with each
-   other but don't want to run open SIP proxies. TLSFED.org's
-   secretary acts as an X.509 Certification Authority that signs
-   the TLS keys of all member's SIP proxies. Each member should
+   an umbrella for VoIP providers who want to peer with each other
+   but don't want to run open SIP proxies. TLSFED.org's secretary
+   acts as an X.509 Certification Authority that signs the TLS
+   keys of all member's SIP proxies. Each member should
    automatically allow incoming calls from other members. On the
    other hand, the configuration for this federation must not
    interfere with a member's participation in other VoIP peering
@@ -415,9 +410,9 @@ if (dp_apply_policy()) {
      * Incoming SIP configuration
        Calls from other members are expected to use TLS and
        authenticate using a client-CERT. To implement this, we
-       cannot share a TCP/TLS port with other incoming
-       connection. Thus we need to use tls_server_domain[] to
-       dedicate a TCP port for this federation.
+       cannot share a TCP/TLS port with other incoming connection.
+       Thus we need to use tls_server_domain[] to dedicate a TCP
+       port for this federation.
 
 tls_server_domain[1.2.3.4:5066] {
  tls_certificate   = "/path/to/tlsfed/example-com.key"
@@ -428,13 +423,14 @@ tls_server_domain[1.2.3.4:5066] {
  tls_require_cleint_certificate = 1
 }
 
+
      * Outgoing SIP configuration
        Calls to other members also must use the proper client
-       cert. Therefore, a TLS client domain must be configured.
-       We use the federation name as TLS client domain
-       identifier. Therefore, the content of the
-       "tls_client_domain_avp" must be set to this identifier
-       (e.g. by putting it as rule into the domainpolicy table).
+       cert. Therefore, a TLS client domain must be configured. We
+       use the federation name as TLS client domain identifier.
+       Therefore, the content of the "tls_client_domain_avp" must
+       be set to this identifier (e.g. by putting it as rule into
+       the domainpolicy table).
 
 tls_client_domain["tlsfed"] {
  tls_certificate   = "/path/to/tlsfed/example-com.key"
@@ -444,7 +440,7 @@ tls_client_domain["tlsfed"] {
  tls_verify_server = 1
 }
 
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.2. SIP Hub based Federation
 
@@ -452,14 +448,14 @@ tls_client_domain["tlsfed"] {
    hub can be configured.
 
    Let's assume that an organization called "HUBFED.org" acts as
-   an umbrella for VoIP providers who want to peer with each
-   other but don't want to run open SIP proxies. Instead,
-   HUBFED.org operates a central SIP proxy which will relay calls
-   between all participating members. Each member thus only needs
-   to allow incoming calls from that central hub (which could be
-   done by firewalling). All this can be achieved by the
-   following configuration for a participating VoIP operation
-   called example.com:
+   an umbrella for VoIP providers who want to peer with each other
+   but don't want to run open SIP proxies. Instead, HUBFED.org
+   operates a central SIP proxy which will relay calls between all
+   participating members. Each member thus only needs to allow
+   incoming calls from that central hub (which could be done by
+   firewalling). All this can be achieved by the following
+   configuration for a participating VoIP operation called
+   example.com:
 
      * DNS configuration
        The destination network announces its membership in this
@@ -469,11 +465,11 @@ $ORIGIN destination.example.org
 @ IN NAPTR 10 50   "U"  "D2P+SIP:fed" (
                  "!^.*$!http://HUBFED.org/!" . )
 
+
      * Outgoing SIP configuration
-       Calls to other members need to be redirected to the
-       central proxy. The domainpolicy table just needs to list
-       the federation and link it to the central proxy's domain
-       name:
+       Calls to other members need to be redirected to the central
+       proxy. The domainpolicy table just needs to list the
+       federation and link it to the central proxy's domain name:
 
 mysql> select * from domainpolicy;
 +----+--------------------+------+-------------------+----------------+
@@ -481,7 +477,8 @@ mysql> select * from domainpolicy;
 +----+--------------------+------+-------------------+----------------+
 | 1  | http://HUBFED.org/ | fed  | domainreplacement | sip.HUBFED.org |
 +----+--------------------+------+-------------------+----------------+
-     _________________________________________________________
+
+     __________________________________________________________
 
 1.6.3. Walled Garden Federation
 
@@ -490,17 +487,16 @@ mysql> select * from domainpolicy;
    does not matter whether this network is build by means of
    IPsec, a private Layer 2 network, or by simple firewalling. We
    will use the 10.x network (for the walled garden net) and
-   "http://l3fed.org/" (as federation identifier) in this
-   example.
+   "http://l3fed.org/" (as federation identifier) in this example.
 
-   A member of this federation (e.g. example.com) can not
-   announce its SIP proxy's 10.x address in the standard SRV / A
-   records of his domain, as this address is only meaningful for
-   other members of this federation. In order to facilite
-   different IP address resolution paths within the federation
-   vs. outside the federation, all members of "http://l3fed.org/"
-   agree to prefix the destination domains with "l3fed" before
-   the SRV (or A) lookup.
+   A member of this federation (e.g. example.com) can not announce
+   its SIP proxy's 10.x address in the standard SRV / A records of
+   his domain, as this address is only meaningful for other
+   members of this federation. In order to facilite different IP
+   address resolution paths within the federation vs. outside the
+   federation, all members of "http://l3fed.org/" agree to prefix
+   the destination domains with "l3fed" before the SRV (or A)
+   lookup.
 
    Here is the configuration for example.com:
 
@@ -517,6 +513,7 @@ _sip._udp.l3fe IN SRV 10 10 5060 l3fedsip.example.com.
 publicsip      IN A   193.XXX.YYY.ZZZ
 l3fedsip       IN A   10.0.0.42
 
+
      * Outgoing SIP configuration
        The domainpolicy table just needs to link the federation
        identifier to the agreed apon prefix:
@@ -527,16 +524,17 @@ mysql> select * from domainpolicy;
 +----+-------------------+------+--------------+-------+
 | 1  | http://l3fed.org/ | fed  | domainprefix | l3fed |
 +----+-------------------+------+--------------+-------+
-     _________________________________________________________
+
+     __________________________________________________________
 
 1.7. Known Limitations
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module does not provide any API to use in other OpenSER
    modules.
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
@@ -550,8 +548,8 @@ Chapter 3. Frequently Asked Questions
 
    3.2. Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
+   First at all check if your question was already answered on one
+   of our mailing lists:
 
      * User Mailing List -
        http://openser.org/cgi-bin/mailman/listinfo/users

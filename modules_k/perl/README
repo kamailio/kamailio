@@ -1,4 +1,3 @@
-
 perl Module
 
 Bastian Friedrich
@@ -9,7 +8,7 @@ Edited by
 
 Bastian Friedrich
 
-   Copyright Â© 2007 Collax GmbH
+   Copyright © 2007 Collax GmbH
      __________________________________________________________
 
    Table of Contents
@@ -212,8 +211,8 @@ Chapter 1. User's Guide
    values similar to the output of
 PERLLDOPTS: perl -MExtUtils::Embed -e ldopts
 PERLCCOPTS: perl -MExtUtils::Embed -e ccopts
-TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ex
-tUtils/typemap"
+TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/Ext
+Utils/typemap"
 
    The exact position of your (precompiled!) perl libraries
    depends on the setup of your environment.
@@ -995,8 +994,8 @@ my @rows = $ldap-search("uid=andi","ou=people,ou=coreworks,ou=de");
    Procedural interface:
 use OpenSER::LDAPUtils::LDAPConnection;
 my @rows = $ldap->search(
-      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=co
-reworks,ou=de");
+      new OpenSER::LDAPUtils::LDAPConfig(), "uid=andi","ou=people,ou=cor
+eworks,ou=de");
 
    This perl module offers a somewhat simplified interface to the
    Net::LDAP functionality. It is intended for cases where just a
