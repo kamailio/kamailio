@@ -451,6 +451,19 @@ int load_bm( struct bm_binds *bmb)
 }
 
 
+static inline char * pkg_strndup( char* _p, int _len)
+{
+	char *s;
+
+	s = (char*)pkg_malloc(_len+1);
+	if (s==NULL)
+		return NULL;
+	memcpy(s,_p,_len);
+	s[_len] = 0;
+	return s;
+}
+
+
 /* MI functions */
 
 /*
@@ -468,18 +481,24 @@ struct mi_root* mi_bm_enable_global(struct mi_root *cmd, void *param)
 	if ((node == NULL) || (node->next != NULL))
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	p1 = strndup(node->value.s, node->value.len);
+	//p1 = strndup(node->value.s, node->value.len);
+	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	v1 = strtol(p1, &e1, 0);
 
-	if ((*e1 != '\0') || (*p1 == '\0'))
+	if ((*e1 != '\0') || (*p1 == '\0')) {
+		pkg_free(p1);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
 
-	if ((v1 < -1) || (v1 > 1))
+	if ((v1 < -1) || (v1 > 1)) {
+		pkg_free(p1);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+	}
 
 	bm_mycfg->enable_global = v1;
 
+	pkg_free(p1);
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
 
@@ -497,18 +516,20 @@ struct mi_root* mi_bm_enable_timer(struct mi_root *cmd, void *param)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	/* replace to pkg stuff - or get rid of */
-	p1 = strndup(node->value.s, node->value.len);
+	//p1 = strndup(node->value.s, node->value.len);
+	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	if(_bm_register_timer(p1, 0, &id)!=0)
 	{
-		free(p1);
+		pkg_free(p1);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 	}
-	p2 = strndup(node->next->value.s, node->next->value.len);
+	//p2 = strndup(node->next->value.s, node->next->value.len);
+	p2 = pkg_strndup(node->next->value.s, node->next->value.len);
 	v2 = strtol(p2, &e2, 0);
 	
-	free(p1);
-	free(p2);
+	pkg_free(p1);
+	pkg_free(p2);
 
 	if (*e2 != '\0' || *p2 == '\0')
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
@@ -534,11 +555,12 @@ struct mi_root* mi_bm_granularity(struct mi_root *cmd, void *param)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	/* replace to pkg stuff */
-	p1 = strndup(node->value.s, node->value.len);
+	//p1 = strndup(node->value.s, node->value.len);
+	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	v1 = strtol(p1, &e1, 0);
 
-	free(p1);
+	pkg_free(p1);
 
 	if ((*e1 != '\0') || (*p1 == '\0'))
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
@@ -564,11 +586,12 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
 	/* replace to pkg stuff */
-	p1 = strndup(node->value.s, node->value.len);
+	//p1 = strndup(node->value.s, node->value.len);
+	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	v1 = strtol(p1, &e1, 0);
 	
-	free(p1);
+	pkg_free(p1);
 
 	if ((*e1 != '\0') || (*p1 == '\0'))
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
