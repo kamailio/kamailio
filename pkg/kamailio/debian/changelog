@@ -10,7 +10,7 @@ openser (1.3.0-svn1) unstable; urgency=low
     + Rename openser-module-perl to openser-modules-perl and update the
       description for the additional perlvdb module.
     + Bump Standards-Version to 3.7.3 (no changes).
-    + Add Build-Dependencies on xsltproc, libconfuse-dev, libdb-dev and libldap2-dev.
+    + Add Build-Dependencies on xsltproc, libconfuse-dev, libdb-dev, libldap2-dev and libcurl4-gnutls-dev.
   * debian/rules:
     + Build the perlvdb module and install it.
     + Add the carrierroute, berkeley and ldap modules.
