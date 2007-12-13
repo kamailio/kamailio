@@ -193,17 +193,29 @@ static void rpc_help(rpc_t* rpc, void* c)
 {
 	str	group, var;
 	char	*ch;
+	unsigned int	input_type;
 
 	if (rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
 	if (cfg_help(ctx, &group, &var,
-			&ch)
+			&ch, &input_type)
 	) {
 		rpc->fault(c, 400, "Failed to get the variable description");
 		return;
 	}
 	rpc->add(c, "s", ch);
+
+	switch (input_type) {
+	case CFG_INPUT_INT:
+		rpc->printf(c, "(parameter type is integer)");
+		break;
+
+	case CFG_INPUT_STRING:
+	case CFG_INPUT_STR:
+		rpc->printf(c, "(parameter type is string)");
+		break;
+	}	
 }
 
 static const char* rpc_list_doc[2] = {
