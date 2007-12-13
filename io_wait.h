@@ -476,6 +476,7 @@ again_devpoll:
 		pf.fd=fd;
 		pf.events=events;
 check_io_again:
+		n=0;
 		while(e->type && ((n=poll(&pf, 1, 0))>0) && 
 				(handle_io(e, pf.revents, idx)>0) &&
 				(pf.revents & (e->events|POLLERR|POLLHUP)));
@@ -704,12 +705,16 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 	struct fd_map* e;
 	int add_events;
 	int del_events;
+#ifdef HAVE_DEVPOLL
+	struct pollfd pfd;
+#endif
 #ifdef HAVE_EPOLL
 	int n;
 	struct epoll_event ep_event;
-#endif
-#ifdef HAVE_DEVPOLL
-	struct pollfd pfd;
+	struct pollfd pf;
+	int check_io;
+	
+	check_io=0;
 #endif
 	
 	if (unlikely((fd<0) || (fd>=h->max_fd_no))){
@@ -760,6 +765,8 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 #ifdef HAVE_SIGIO_RT
 		case POLL_SIGIO_RT:
 			fd_array_chg(events);
+			/* no need for check_io, since SIGIO_RT listens by default for all
+			 * the events */
 			break;
 #endif
 #ifdef HAVE_EPOLL
@@ -789,6 +796,7 @@ again_epoll_et:
 							" failed: %s [%d]\n", strerror(errno), errno);
 					goto error;
 				}
+			check_io=1;
 			break;
 #endif
 #ifdef HAVE_KQUEUE
@@ -844,6 +852,24 @@ again_devpoll2:
 					h->poll_method);
 			goto error;
 	}
+#if defined (HAVE_EPOLL)
+	if (check_io){
+		/* handle possible pre-existing events, only for EPOLL_ET
+		 * (SIGIO_RT already listen for all the events) */
+		pf.fd=fd;
+		pf.events=add_events;
+check_io_again:
+		n=0;
+		while(e->type && ((n=poll(&pf, 1, 0))>0) && 
+				(handle_io(e, pf.revents, idx)>0) &&
+				(pf.revents & (e->events|POLLERR|POLLHUP)));
+		if (unlikely(e->type && (n==-1))){
+			if (errno==EINTR) goto check_io_again;
+			LOG(L_ERR, "ERROR: io_watch_chg: check_io poll: %s [%d]\n",
+						strerror(errno), errno);
+		}
+	}
+#endif /* HAVE_EPOLL */
 	return 0;
 error:
 	return -1;
