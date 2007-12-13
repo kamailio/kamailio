@@ -165,6 +165,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
 #ifndef __USE_BSD
 #define  __USE_BSD
 #endif
