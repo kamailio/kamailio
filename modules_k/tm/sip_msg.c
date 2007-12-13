@@ -293,6 +293,15 @@ static inline int clone_authorized_hooks(struct sip_msg* new,
 
 #define HOOK_NOT_SET(hook) (new_msg->hook == org_msg->hook)
 
+/* next macro should only be called if hook is already set */
+#define LINK_SIBLING_HEADER(_hook, _hdr) \
+	do { \
+		struct hdr_field *_itr; \
+		for (_itr=new_msg->_hook; _itr->sibling; _itr=_itr->sibling); \
+		_itr->sibling = _hdr; \
+	} while(0)
+
+
 struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 {
 	unsigned int      len;
@@ -533,6 +542,7 @@ do { \
 				}
 				else if ( !new_msg->via2 && new_msg->via1 )
 				{
+					LINK_SIBLING_HEADER(h_via1, new_hdr);
 					new_msg->h_via2 = new_hdr;
 					if ( new_msg->via1->next )
 						new_hdr->parsed = (void*)new_msg->via1->next;
@@ -544,6 +554,7 @@ do { \
 				}
 				else if ( new_msg->via2 && new_msg->via1 )
 				{
+					LINK_SIBLING_HEADER(h_via1, new_hdr);
 					new_hdr->parsed =  
 						via_body_cloner( new_msg->buf , org_msg->buf ,
 						(struct via_body*)hdr->parsed , &p);
@@ -625,6 +636,8 @@ do { \
 			case HDR_CONTACT_T:
 				if (HOOK_NOT_SET(contact)) {
 					new_msg->contact = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(contact, new_hdr);
 				}
 				break;
 			case HDR_MAXFORWARDS_T :
@@ -635,11 +648,15 @@ do { \
 			case HDR_ROUTE_T :
 				if (HOOK_NOT_SET(route)) {
 					new_msg->route = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(route, new_hdr);
 				}
 				break;
 			case HDR_RECORDROUTE_T :
 				if (HOOK_NOT_SET(record_route)) {
 					new_msg->record_route = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(record_route, new_hdr);
 				}
 				break;
 			case HDR_CONTENTTYPE_T :
@@ -657,6 +674,8 @@ do { \
 			case HDR_AUTHORIZATION_T :
 				if (HOOK_NOT_SET(authorization)) {
 					new_msg->authorization = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(authorization, new_hdr);
 				}
 				if (hdr->parsed) {
 					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
@@ -671,6 +690,8 @@ do { \
 			case HDR_PROXYAUTH_T :
 				if (HOOK_NOT_SET(proxy_auth)) {
 					new_msg->proxy_auth = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(proxy_auth, new_hdr);
 				}
 				if (hdr->parsed) {
 					new_hdr->parsed = auth_body_cloner(new_msg->buf ,
@@ -680,36 +701,50 @@ do { \
 			case HDR_SUPPORTED_T :
 				if (HOOK_NOT_SET(supported)) {
 					new_msg->supported = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(supported, new_hdr);
 				}
 				break;
 			case HDR_PROXYREQUIRE_T :
 				if (HOOK_NOT_SET(proxy_require)) {
 					new_msg->proxy_require = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(proxy_require, new_hdr);
 				}
 				break;
 			case HDR_UNSUPPORTED_T :
 				if (HOOK_NOT_SET(unsupported)) {
 					new_msg->unsupported = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(unsupported, new_hdr);
 				}
 				break;
 			case HDR_ALLOW_T :
 				if (HOOK_NOT_SET(allow)) {
 					new_msg->allow = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(allow, new_hdr);
 				}
 				break;
 			case HDR_EVENT_T:
 				if (HOOK_NOT_SET(event)) {
 					new_msg->event = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(event, new_hdr);
 				}
 				break;
 			case HDR_ACCEPT_T:
 				if (HOOK_NOT_SET(accept)) {
 					new_msg->accept = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(accept, new_hdr);
 				}
 				break;
 			case HDR_ACCEPTLANGUAGE_T:
 				if (HOOK_NOT_SET(accept_language)) {
 					new_msg->accept_language = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(accept_language, new_hdr);
 				}
 				break;
 			case HDR_ORGANIZATION_T:
@@ -735,6 +770,8 @@ do { \
 			case HDR_ACCEPTDISPOSITION_T:
 				if (HOOK_NOT_SET(accept_disposition)) {
 					new_msg->accept_disposition = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(accept_disposition, new_hdr);
 				}
 				break;
 			case HDR_CONTENTDISPOSITION_T:
@@ -745,6 +782,8 @@ do { \
 			case HDR_DIVERSION_T:
 				if (HOOK_NOT_SET(diversion)) {
 					new_msg->diversion = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(diversion, new_hdr);
 				}
 				break;
 			case HDR_RPID_T:
