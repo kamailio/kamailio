@@ -67,6 +67,7 @@ CREATE TABLE missed_calls (
 );
 
 CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
+CREATE INDEX mc_to_uid ON missed_calls (to_uid);
 
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,

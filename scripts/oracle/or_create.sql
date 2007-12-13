@@ -36,7 +36,7 @@ CREATE TABLE acc (
     KEY acc_to_uid (to_uid)
 );
 
-INSERT INTO version (table_name, table_version) values ('missed_calls','3');
+INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id INT NOT NULL,
     from_uid VARCHAR(64),
@@ -64,7 +64,8 @@ CREATE TABLE missed_calls (
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
     UNIQUE KEY mc_id_key (id),
-    KEY mc_cid_key (sip_callid)
+    KEY mc_cid_key (sip_callid),
+    KEY mc_to_uid (to_uid)
 );
 
 INSERT INTO version (table_name, table_version) values ('credentials','7');

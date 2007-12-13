@@ -23,7 +23,7 @@
 	    of a user. 
 	</db:para>
     </description>
-    <version>3</version>
+    <version>4</version>
 
     <column id="mc.id">
 	<name>id</name>
@@ -38,7 +38,7 @@
 	</description>
     </column>
 
-    <column>
+    <column id="mc.from_uid">
 	<name>from_uid</name>
 	<type>string</type>
 	<size>&id_len;</size>
@@ -50,7 +50,7 @@
 	    no uid assigned on the server).
 	</description>
     </column>
-    <column>
+    <column id="mc.to_uid">
 	<name>to_uid</name>
 	<type>string</type>
 	<size>&id_len;</size>
@@ -447,5 +447,10 @@
     <index role="serweb">
 	<name>mc_cid_key</name>
 	<colref linkend="mc.sip_callid"/>
+    </index>
+
+    <index role="serweb">
+	<name>mc_to_uid</name>
+	<colref linkend="mc.to_uid"/>
     </index>
 </table>
