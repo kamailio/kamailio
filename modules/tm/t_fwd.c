@@ -84,6 +84,7 @@
 #include "../../timer.h"
 #include "../../hash_func.h"
 #include "../../globals.h"
+#include "../../cfg_core.h"
 #include "../../mem/mem.h"
 #include "../../dset.h"
 #include "../../action.h"
@@ -690,7 +691,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 		return -1; /* drop, try next branch */
 	}
 #ifdef USE_DST_BLACKLIST
-	if (use_dst_blacklist
+	if (cfg_get(core, core_cfg, use_dst_blacklist)
 		&& p_msg
 		&& (p_msg->REQ_METHOD & tm_blst_methods_lookup)
 	){
@@ -737,7 +738,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 							ip_addr2a(&ip), su_getport(&uac->request.dst.to),
 							uac->request.dst.proto);
 #ifdef USE_DST_BLACKLIST
-		if (use_dst_blacklist)
+		if (cfg_get(core, core_cfg, use_dst_blacklist))
 			dst_blacklist_add(BLST_ERR_SEND, &uac->request.dst, p_msg);
 #endif
 #ifdef USE_DNS_FAILOVER

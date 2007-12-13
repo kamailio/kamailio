@@ -645,11 +645,11 @@ assign_stm:
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
 	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_del_nonexp=$3); }
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
-	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(use_dst_blacklist=$3); }
+	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.use_dst_blacklist=$3); }
 	| USE_DST_BLST error { yyerror("boolean value expected"); }
-	| DST_BLST_MEM EQUAL NUMBER   { IF_DST_BLACKLIST(blst_max_mem=$3); }
+	| DST_BLST_MEM EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3); }
 	| DST_BLST_MEM error { yyerror("boolean value expected"); }
-	| DST_BLST_TTL EQUAL NUMBER   { IF_DST_BLACKLIST(blst_timeout=$3); }
+	| DST_BLST_TTL EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.blst_timeout=$3); }
 	| DST_BLST_TTL error { yyerror("boolean value expected"); }
 	| DST_BLST_GC_INT EQUAL NUMBER { IF_DST_BLACKLIST(blst_timer_interval=$3);}
 	| DST_BLST_GC_INT error { yyerror("boolean value expected"); }

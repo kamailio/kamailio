@@ -455,7 +455,7 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 			(t->uac[r_buf->branch].last_received==0)){
 		/* no reply received */
 #ifdef USE_DST_BLACKLIST
-		if (use_dst_blacklist
+		if (cfg_get(core, core_cfg, use_dst_blacklist)
         		&& r_buf->my_T
 			&& r_buf->my_T->uas.request
 			&& (r_buf->my_T->uas.request->REQ_METHOD & tm_blst_methods_add)

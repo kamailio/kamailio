@@ -375,9 +375,6 @@ int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 int use_dns_cache=1; /* 1 if the cache is enabled, 0 otherwise */
 int use_dns_failover=0; /* 1 if failover is enabled, 0 otherwise */
 #endif
-#ifdef USE_DST_BLACKLIST
-int use_dst_blacklist=0; /* 1 if the blacklist is enabled */
-#endif
 
 int tos = IPTOS_LOWDELAY;
 int pmtu_discovery = 0;

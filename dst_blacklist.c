@@ -40,6 +40,7 @@
 
 #include "dst_blacklist.h"
 #include "globals.h"
+#include "cfg_core.h"
 #include "mem/shm_mem.h"
 #include "hashes.h"
 #include "locking.h"
@@ -71,7 +72,6 @@ struct dst_blst_entry{
 
 
 #define DST_BLST_HASH_SIZE		1024
-#define DEFAULT_BLST_MAX_MEM	250 /* 1 Kb FIXME (debugging)*/
 #define DEFAULT_BLST_TIMER_INTERVAL		60 /* 1 min */
 
 
@@ -126,9 +126,6 @@ struct dst_blst_lst_head{
 static struct timer_ln* blst_timer_h=0;
 
 static volatile unsigned int* blst_mem_used=0;
-unsigned int  blst_max_mem=DEFAULT_BLST_MAX_MEM; /* maximum memory used
-													for the blacklist entries*/
-unsigned int blst_timeout=DEFAULT_BLST_TIMEOUT;
 unsigned int blst_timer_interval=DEFAULT_BLST_TIMER_INTERVAL;
 struct dst_blst_lst_head* dst_blst_hash=0;
 
@@ -452,7 +449,7 @@ int init_dst_blacklist()
 		goto error;
 	}
 	/* fix options */
-	blst_max_mem<<=10; /* in Kb */ /* TODO: test with 0 */
+	default_core_cfg.blst_max_mem<<=10; /* in Kb */ /* TODO: test with 0 */
 	if (blst_timer_interval){
 		timer_init(blst_timer_h, blst_timer, 0 ,0); /* slow timer */
 		if (timer_add(blst_timer_h, S_TO_TICKS(blst_timer_interval))<0){
@@ -691,7 +688,8 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 			e->flags|=err_flags;
 			e->expire=now+timeout; /* update the timeout */
 		}else{
-			if (unlikely((*blst_mem_used+size)>=blst_max_mem)){
+			if (unlikely((*blst_mem_used+size) >=
+					cfg_get(core, core_cfg, blst_max_mem))){
 #ifdef USE_DST_BLACKLIST_STATS
 				dst_blacklist_stats[process_no].bkl_lru_cnt++;
 #endif
@@ -700,7 +698,8 @@ inline static int dst_blacklist_add_ip(unsigned char err_flags,
 				 * spend more then 250 ms*/
 				dst_blacklist_clean_expired(*blst_mem_used/16*14, 0,
 															MS_TO_TICKS(250));
-				if (unlikely(*blst_mem_used+size>=blst_max_mem)){
+				if (unlikely(*blst_mem_used+size >=
+						cfg_get(core, core_cfg, blst_max_mem))){
 					ret=-1;
 					goto error;
 				}
@@ -829,11 +828,11 @@ int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg)
 /* rpc functions */
 void dst_blst_mem_info(rpc_t* rpc, void* ctx)
 {
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(ctx, 500, "dst blacklist support disabled");
 		return;
 	}
-	rpc->add(ctx, "dd",  *blst_mem_used, blst_max_mem);
+	rpc->add(ctx, "dd",  *blst_mem_used, cfg_get(core, core_cfg, blst_max_mem));
 }
 
 
@@ -891,7 +890,7 @@ void dst_blst_stats_get(rpc_t* rpc, void* c)
 		NULL
 	};
 	
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(c, 500, "dst blacklist support disabled");
 		return;
 	}
@@ -934,7 +933,7 @@ void dst_blst_debug(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(ctx, 500, "dst blacklist support disabled");
 		return;
 	}
@@ -964,7 +963,7 @@ void dst_blst_hash_stats(rpc_t* rpc, void* ctx)
 
 	n=0;
 #endif
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(ctx, 500, "dst blacklist support disabled");
 		return;
 	}
@@ -989,7 +988,7 @@ void dst_blst_view(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	struct ip_addr ip;
 
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(ctx, 500, "dst blacklist support disabled");
 		return;
 	}
@@ -1046,7 +1045,7 @@ void dst_blst_flush(void)
 /* rpc wrapper function for dst_blst_flush() */
 void dst_blst_delete_all(rpc_t* rpc, void* ctx)
 {
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(ctx, 500, "dst blacklist support disabled");
 		return;
 	}
@@ -1061,7 +1060,7 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 	unsigned char err_flags;
 	struct ip_addr *ip_addr;
 
-	if (!use_dst_blacklist){
+	if (!cfg_get(core, core_cfg, use_dst_blacklist)){
 		rpc->fault(ctx, 500, "dst blacklist support disabled");
 		return;
 	}
@@ -1092,8 +1091,18 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 	}
 
 	if (dst_blacklist_add_ip(err_flags, proto, ip_addr, port, 
-											S_TO_TICKS(blst_timeout)))
+				    S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout))))
 		rpc->fault(ctx, 400, "Failed to add the entry to the blacklist");
+}
+
+/* KByte to Byte conversion */
+int blst_max_mem_fixup(void *handle, str *name, void **val)
+{
+	unsigned int	u;
+
+	u = ((unsigned int)(long)(*val))<<10;
+	(*val) = (void *)(long)u;
+	return 0;
 }
 
 #endif /* USE_DST_BLACKLIST */

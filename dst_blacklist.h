@@ -38,8 +38,10 @@
 #include "ip_addr.h"
 #include "parser/msg_parser.h"
 #include "timer_ticks.h"
+#include "cfg_core.h"
 
 #define DEFAULT_BLST_TIMEOUT		60  /* 1 min. */
+#define DEFAULT_BLST_MAX_MEM		250 /* 250 KB */
 
 /* flags: */
 #define BLST_IS_IPV6		1		/* set if the address is ipv6 */
@@ -89,7 +91,8 @@ int dst_blacklist_add_to(unsigned char err_flags, struct dest_info* si,
 
 /* adds a dst to the blacklist with default timeout */
 #define dst_blacklist_add(err_flags, si, msg) \
-	dst_blacklist_add_to((err_flags), (si), (msg), S_TO_TICKS(blst_timeout))
+	dst_blacklist_add_to((err_flags), (si), (msg), \
+		S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout)))
 
 int dst_is_blacklisted(struct dest_info* si, struct sip_msg* msg);
 /* delete an entry from the blacklist */
@@ -99,5 +102,8 @@ int dst_blacklist_del(struct dest_info* si, struct sip_msg* msg);
  * (which are marked with BLST_PERMANENT)
  */
 void dst_blst_flush(void);
+
+/* KByte to Byte conversion */
+int blst_max_mem_fixup(void *handle, str *name, void **val);
 
 #endif

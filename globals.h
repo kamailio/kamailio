@@ -222,10 +222,6 @@ extern struct t_dns_cache_stats* dns_cache_stats;
 #endif /* USE_DNS_CACHE_STATS */
 #endif
 #ifdef USE_DST_BLACKLIST
-extern int use_dst_blacklist; /* 1 if the blacklist is enabled */
-extern unsigned int  blst_max_mem; /* maximum memory used for the blacklist
-									  entries*/
-extern unsigned int blst_timeout; /* blacklist entry ttl */
 extern unsigned int blst_timer_interval; /*blacklist gc timer interval (in s)*/
 
 #ifdef USE_DST_BLACKLIST_STATS

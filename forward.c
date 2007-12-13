@@ -74,6 +74,7 @@
 #include "route.h"
 #include "dprint.h"
 #include "globals.h"
+#include "cfg_core.h"
 #include "data_lump.h"
 #include "ut.h"
 #include "mem/mem.h"
@@ -419,7 +420,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 #endif
 		}
 #ifdef USE_DST_BLACKLIST
-		if (use_dst_blacklist){
+		if (cfg_get(core, core_cfg, use_dst_blacklist)){
 			if (dst_is_blacklisted(send_info, msg)){
 				su2ip_addr(&ip, &send_info->to);
 				LOG(L_DBG, "DEBUG: blacklisted destination:%s:%d (%d)\n",
@@ -437,7 +438,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 		if (msg_send(send_info, buf, len)<0){
 			ret=ser_error=E_SEND;
 #ifdef USE_DST_BLACKLIST
-			if (use_dst_blacklist)
+			if (cfg_get(core, core_cfg, use_dst_blacklist))
 				dst_blacklist_add(BLST_ERR_SEND, send_info, msg);
 #endif
 #ifdef USE_DNS_FAILOVER

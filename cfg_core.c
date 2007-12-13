@@ -30,16 +30,30 @@
  */
 
 #include "dprint.h"
+#include "dst_blacklist.h"
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
 struct cfg_group_core default_core_cfg = {
-	L_DEFAULT /*  print only msg. < L_WARN */
+	L_DEFAULT, /*  print only msg. < L_WARN */
+#ifdef USE_DST_BLACKLIST
+	0, /* dst blacklist is disabled by default */
+	DEFAULT_BLST_TIMEOUT,
+	DEFAULT_BLST_MAX_MEM,
+#endif
 };
 
 void	*core_cfg = &default_core_cfg;
 
 cfg_def_t core_cfg_def[] = {
 	{"debug",	CFG_VAR_INT,	0, 0, 0, 0, "debug level"},
+#ifdef USE_DST_BLACKLIST
+	{"use_dst_blacklist",	CFG_VAR_INT,	0, 0, 0, 0,
+		"enable/disable destination blacklisting"},
+	{"dst_blacklist_expire",	CFG_VAR_INT,	0, 0, 0, 0,
+		"how much time (in s) a blacklisted destination is kept in the list"},
+	{"dst_blacklist_mem",	CFG_VAR_INT,	0, 0, blst_max_mem_fixup, 0,
+		"maximum shared memory amount (in KB) used for keeping the blacklisted destinations"},
+#endif
 	{0, 0, 0, 0, 0, 0}
 };

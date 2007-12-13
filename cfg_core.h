@@ -46,6 +46,12 @@ extern void	*core_cfg;
 
 struct cfg_group_core {
 	int	debug;
+#ifdef USE_DST_BLACKLIST
+	int	use_dst_blacklist; /* 1 if blacklist is enabled */
+	unsigned int	blst_timeout; /* blacklist entry ttl */
+	unsigned int	blst_max_mem; /* maximum memory used for the
+					blacklist entries */
+#endif
 };
 
 extern struct cfg_group_core default_core_cfg;
