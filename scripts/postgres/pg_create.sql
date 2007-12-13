@@ -38,7 +38,7 @@ CREATE INDEX acc_cid_key ON acc (sip_callid);
 CREATE INDEX acc_from_uid ON acc (from_uid);
 CREATE INDEX acc_to_uid ON acc (to_uid);
 
-INSERT INTO version (table_name, table_version) values ('missed_calls','3');
+INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id SERIAL NOT NULL,
     from_uid VARCHAR(64),
@@ -69,6 +69,7 @@ CREATE TABLE missed_calls (
 );
 
 CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
+CREATE INDEX mc_to_uid ON missed_calls (to_uid);
 
 INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
