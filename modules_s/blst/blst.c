@@ -34,6 +34,7 @@
 #include "../../compiler_opt.h"
 #include "../../ut.h"
 #include "../../globals.h"
+#include "../../cfg_core.h"
 
 
 MODULE_VERSION
@@ -85,7 +86,7 @@ static int blst_add_f(struct sip_msg* msg, char* to, char* foo)
 	int t;
 	struct dest_info src;
 	
-	if (likely(use_dst_blacklist)){
+	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 		t=0;
 		if (unlikely( to && (get_int_fparam(&t, msg, (fparam_t*)to)<0)))
 			return -1;
@@ -120,7 +121,7 @@ static int blst_add_retry_after_f(struct sip_msg* msg, char* min, char* max)
 	struct dest_info src;
 	struct hdr_field* hf;
 	
-	if (likely(use_dst_blacklist)){
+	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 		if (unlikely(get_int_fparam(&t_min, msg, (fparam_t*)min)<0)) return -1;
 		if (likely(max)){
 			if (unlikely(get_int_fparam(&t_max, msg, (fparam_t*)max)<0))
@@ -170,7 +171,7 @@ static int blst_del_f(struct sip_msg* msg, char* foo, char* bar)
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
 	
-	if (likely(use_dst_blacklist)){
+	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 	
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
@@ -195,7 +196,7 @@ static int blst_is_blacklisted_f(struct sip_msg* msg, char* foo, char* bar)
 #ifdef USE_DST_BLACKLIST
 	struct dest_info src;
 	
-	if (likely(use_dst_blacklist)){
+	if (likely(cfg_get(core, core_cfg, use_dst_blacklist))){
 		src.send_sock=0;
 		src.to=msg->rcv.src_su;
 		src.id=msg->rcv.proto_reserved1;
