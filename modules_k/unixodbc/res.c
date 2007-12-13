@@ -82,7 +82,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 		char ColumnName[80];
 		SQLRETURN ret;
 		SQLSMALLINT NameLength, DataType, DecimalDigits, Nullable;
-		SQLUINTEGER ColumnSize;
+		SQLULEN ColumnSize;
 
 		ret=SQLDescribeCol(CON_RESULT(_h), i + 1, (SQLCHAR *)ColumnName, 80,
 			&NameLength, &DataType, &ColumnSize, &DecimalDigits, &Nullable);
@@ -163,7 +163,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 	{
 		for(i=0; i < columns; i++)
 		{
-			SQLINTEGER indicator;
+			SQLLEN indicator;
 			ret = SQLGetData(CON_RESULT(_h), i+1, SQL_C_CHAR,
 				temp_row[i].s, STRN_LEN, &indicator);
 			if (SQL_SUCCEEDED(ret)) {
