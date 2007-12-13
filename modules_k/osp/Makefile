@@ -7,11 +7,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=osp.so
 DEFS+=-D_POSIX_THREADS
-
-LIBS=$(shell if [ -f $(SYSBASE)/local/lib/libosptk.a ]; then echo "-losptk" ; else echo "-losp" ; fi)
-LIBS+=-lssl -lcrypto -lpthread -lm
-
-
+LIBS=-losptk -lssl -lcrypto -lpthread -lm
 
 include ../../Makefile.modules
 
