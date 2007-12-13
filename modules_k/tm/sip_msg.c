@@ -540,7 +540,7 @@ do { \
 					if ( new_msg->via1->next )
 						new_msg->via2 = new_msg->via1->next;
 				}
-				else if ( !new_msg->via2 && new_msg->via1 )
+				else if ( !new_msg->via2 )
 				{
 					LINK_SIBLING_HEADER(h_via1, new_hdr);
 					new_msg->h_via2 = new_hdr;
@@ -552,7 +552,7 @@ do { \
 						new_hdr->parsed  = (void*)new_msg->via2;
 					}
 				}
-				else if ( new_msg->via2 && new_msg->via1 )
+				else
 				{
 					LINK_SIBLING_HEADER(h_via1, new_hdr);
 					new_hdr->parsed =  
