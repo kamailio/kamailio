@@ -29,7 +29,7 @@
 	    of a subscriber. 
 	</db:para>
     </description>
-    <version>3</version>
+    <version>4</version>
 
     <column id="acc.id">
 	<name>id</name>
@@ -44,7 +44,7 @@
 	</description>
     </column>
 
-    <column>
+    <column id="acc.from_uid">
 	<name>from_uid</name>
 	<type>string</type>
 	<size>&id_len;</size>
@@ -56,7 +56,7 @@
 	    no uid assigned on the server).
 	</description>
     </column>
-    <column>
+    <column id="acc.to_uid">
 	<name>to_uid</name>
 	<type>string</type>
 	<size>&id_len;</size>
@@ -453,5 +453,15 @@
     <index role="serweb">
 	<name>acc_cid_key</name>
 	<colref linkend="acc.sip_callid"/>
+    </index>
+    
+    <index role="serweb">
+	<name>acc_from_uid</name>
+	<colref linkend="acc.from_uid"/>
+    </index>
+    
+    <index role="serweb">
+	<name>acc_to_uid</name>
+	<colref linkend="acc.to_uid"/>
     </index>
 </table>

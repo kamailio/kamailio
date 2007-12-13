@@ -4,7 +4,7 @@ CREATE TABLE version (
     table_version INTEGER NOT NULL DEFAULT '0'
 );
 
-INSERT INTO version (table_name, table_version) values ('acc','3');
+INSERT INTO version (table_name, table_version) values ('acc','4');
 CREATE TABLE acc (
     id SERIAL NOT NULL,
     from_uid VARCHAR(64),
@@ -35,6 +35,8 @@ CREATE TABLE acc (
 );
 
 CREATE INDEX acc_cid_key ON acc (sip_callid);
+CREATE INDEX acc_from_uid ON acc (from_uid);
+CREATE INDEX acc_to_uid ON acc (to_uid);
 
 INSERT INTO version (table_name, table_version) values ('missed_calls','3');
 CREATE TABLE missed_calls (
