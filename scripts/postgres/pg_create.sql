@@ -34,6 +34,8 @@ CREATE TABLE acc (
 );
 
 CREATE INDEX acc_cid_key ON acc (sip_callid);
+CREATE INDEX acc_from_uid ON acc (from_uid);
+CREATE INDEX acc_to_uid ON acc (to_uid);
 
 CREATE TABLE missed_calls (
     id SERIAL NOT NULL,

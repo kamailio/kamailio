@@ -3,7 +3,7 @@ CREATE TABLE version (
     table_version INT UNSIGNED NOT NULL DEFAULT '0'
 );
 
-INSERT INTO version (table_name, table_version) values ('acc','3');
+INSERT INTO version (table_name, table_version) values ('acc','4');
 CREATE TABLE acc (
     id INT NOT NULL,
     from_uid VARCHAR(64),
@@ -31,7 +31,9 @@ CREATE TABLE acc (
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
     UNIQUE KEY acc_id_key (id),
-    KEY acc_cid_key (sip_callid)
+    KEY acc_cid_key (sip_callid),
+    KEY acc_from_uid (from_uid),
+    KEY acc_to_uid (to_uid)
 );
 
 INSERT INTO version (table_name, table_version) values ('missed_calls','3');
