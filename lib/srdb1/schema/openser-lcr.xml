@@ -10,6 +10,5 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>Least-cost Routing</name>
     <xi:include href="gw.xml"/>
-    <xi:include href="gw_grp.xml"/>
     <xi:include href="lcr.xml"/>
 </database>
