@@ -691,13 +691,15 @@ if (!next_gw()) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">from_gw([group-id])</function>
+		<function moreinfo="none">from_gw([pvar])</function>
 		</title>
 		<para>
-			Checks if request came from IP address of a gateway. If an
-			optional group-id is given, only gateways belonging to this
-			group are checked.  Sets or resets a message
-	flag depending on whether the gateway supports directed media.
+			Checks if request came from IP address of a
+			gateway.  IP address to be checked is either
+			taken from source IP address of the request or
+			(if present) from pseudo variable argument.
+			Sets or resets a message flag depending on
+			whether the gateway supports directed media. 
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -709,18 +711,42 @@ if (!next_gw()) {
 ...
 if (from_gw()) {
 	...
-	exit;
 };
 ...
 </programlisting>
 		</example>
 		<example>
-		<title><function>from_gw</function> usage with group-id</title>
+		<title><function>from_gw</function> usage with pseudo
+		variable argument</title>
 		<programlisting format="linespecific">
 ...
-if (from_gw("1")) {
+if (from_gw("$si")) {
 	...
-	exit;
+};
+...
+</programlisting>
+		</example>
+		</section>
+	<section>
+		<title>
+		<function moreinfo="none">from_gw_grp(group-id)</function>
+		</title>
+		<para>
+			Checks if request came from IP address of a
+			gateway that belongs to the given group.  Sets
+			or resets a message flag depending on whether
+			the gateway supports directed media. 
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
+		ONREPLY_ROUTE.
+		</para>
+		<example>
+		<title><function>from_gw_grp</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (from_gw_grp("1")) {
+	...
 };
 ...
 </programlisting>

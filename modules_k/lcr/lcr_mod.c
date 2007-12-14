@@ -58,6 +58,7 @@
 #include "../../mi/mi.h"
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
+#include "../../pvar.h"
 #include "mi.h"
 
 MODULE_VERSION
@@ -242,12 +243,18 @@ struct from_uri_regex from_uri_reg[MAX_NO_OF_LCRS];
 int load_gws(struct sip_msg* _m, char* _s1, char* _s2);
 int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
-int from_gw(struct sip_msg* _m, char* _s1, char* _s2);
+int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
+int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
 int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
 int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int load_contacts (struct sip_msg*, char*, char*);
 int next_contacts (struct sip_msg*, char*, char*);
+
+/*
+ * Fixup functions that are defined later
+ */
+static int pvar_fixup(void** param, int param_no);
 
 /*
  * Exported functions
@@ -259,9 +266,11 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"next_gw",       next_gw,       0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"from_gw",       from_gw,       0, 0, 0,
+	{"from_gw",       from_gw_0,       0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw",       from_gw_grp,   1, fixup_str2int, 0,
+	{"from_gw",       from_gw_1,       1, pvar_fixup, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw_grp",       from_gw_grp,   1, fixup_str2int, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"to_gw",         to_gw,         0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
@@ -1617,12 +1626,30 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 /*
  * Checks if request comes from a gateway
  */
-static int do_from_gw(struct sip_msg* _m, int grp_id)
+static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 {
     int i;
     unsigned int src_addr;
+    pv_value_t pv_val;
+    struct in_addr addr_struct;
 
-    src_addr = _m->rcv.src_ip.u.addr32[0];
+    if (addr_sp && (pv_get_spec_value(_m, addr_sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_INT) {
+	    src_addr = pv_val.ri;
+	} else if (pv_val.flags & PV_VAL_STR) {
+	    if (inet_aton(pv_val.rs.s, &addr_struct) == 0) {
+		LM_ERR("failed to convert IP address string to in_addr\n");
+		return -1;
+	    } else {
+		src_addr = addr_struct.s_addr;
+	    }
+	} else {
+	    LM_ERR("failed to convert IP address string to in_addr\n");
+	    return -1;
+	}
+    } else {
+	src_addr = _m->rcv.src_ip.u.addr32[0];
+    }
 
     for (i = 0; i < MAX_NO_OF_GWS; i++) {
 	if ((*gws)[i].ip_addr == 0) {
@@ -1643,24 +1670,32 @@ static int do_from_gw(struct sip_msg* _m, int grp_id)
 
 
 /*
- * Checks if request comes from a gateway, taking
- * into account the group id.
+ * Checks if request comes from a gateway, taking source address from request
+ * and taking into account the group id.
  */
-int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
+int from_gw_grp(struct sip_msg* _m, char* _grp_id, char* _s2)
 {
-    int grp_id;
-
-    grp_id = (int)(long)_s1;
-    return do_from_gw(_m, grp_id);
+    return do_from_gw(_m, (pv_spec_t *)0, (int)(long)_grp_id);
 }
 
+
 /*
- * Checks if request comes from a gateway, ignoring
- * the group id.
+ * Checks if request comes from a gateway, taking src_address from request
+ * and ignoring group id.
  */
-int from_gw(struct sip_msg* _m, char* _s1, char* _s2)
+int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    return do_from_gw(_m, -1);
+    return do_from_gw(_m, (pv_spec_t *)0, -1);
+}
+
+
+/*
+ * Checks if request comes from a gateway, taking source address from pw
+ * and ignoring group id.
+ */
+int from_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
+{
+    return do_from_gw(_m, (pv_spec_t *)_addr_sp, -1);
 }
 
 
@@ -2160,5 +2195,42 @@ static int fixstringloadgws(void **param, int param_count)
 	*param = (void*)model;
     }
 
+    return 0;
+}
+
+
+/*
+ * Convert pvar into parsed pseudo variable specification
+ */
+static int pvar_fixup(void** param, int param_no)
+{
+    pv_spec_t *sp;
+    str s;
+
+    if (param_no != 1) {
+	*param = (void *)0;
+	return 0;
+    }
+	
+    sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+    if (sp == 0) {
+	LM_ERR("no pkg memory left\n");
+	return -1;
+    }
+    s.s = (char*)*param; s.len = strlen(s.s);
+    if (pv_parse_spec(&s, sp) == 0) {
+	LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
+	pkg_free(sp);
+	return -1;
+    }
+
+    if (sp->type == PVT_NULL) {
+	LM_ERR("bad pseudo variable\n");
+	pkg_free(sp);
+	return -1;
+    }
+
+    *param = (void*)sp;
+    
     return 0;
 }
