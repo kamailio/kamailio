@@ -54,7 +54,7 @@
       in a semaphore set
    3) we allocate a semaphore set for hash_entries and
       try to use as many semaphores in it as OS allows;
-      we partition the the hash_entries by available
+      we partition the hash_entries by available
       semaphores which are shared  in each partition
    4) cells get always the same semaphore as its hash
       entry in which they live

@@ -20,7 +20,7 @@
 	</para>
 	<para>
 		The module does not implement any actions on blocking - it just simply
-		reports that the there is an high traffic from an IP; what to do, is
+		reports that there is a high traffic from an IP; what to do, is
 		the administator decision (via scripting).
 	</para>
 	</section>

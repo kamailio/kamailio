@@ -43,7 +43,7 @@
  *    (This is actually called when the SNMPStats module is initialized)
  *
  * 2) Whenever we receive a contact callback, handleContactCallbacks() will 
- *    quickly add the the contact information and operation type to the
+ *    quickly add the contact information and operation type to the
  *    interprocess buffer.  
  *
  * 3) When we receive an SNMP request for user/contact information, we consume

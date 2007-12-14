@@ -451,8 +451,8 @@ modparam("registrar", "sock_flag", 18)
 	<section>
 		<title><varname>sock_hdr_name</varname> (string)</title>
 		<para>
-		Header which contains a socket description (proto:IP:port) to overide
-		the the received socket info. The header will be read only if the
+		Header which contains a socket description (proto:IP:port) to override
+		the received socket info. The header will be read only if the
 		flag sock_flag is set.
 		</para>
 		<para>

@@ -538,7 +538,7 @@ OPENSER-SIP-SERVER-MIB DEFINITIONS ::= BEGIN
                   should read this object, then use the result as an index into
                   the openserSIPRegUserLookupTable.
                   
-                  This ensures that every row-set in the the 
+                  This ensures that every row-set in the 
                   openserSIPRegUserTable is unique, and each client request 
                   will have a unique index to use."
             ::= { openserSIPRegCfg 8 }

@@ -426,7 +426,7 @@ static struct lump *get_rr_param_lump( struct lump** root)
 	for( crt=*root ; crt && !last ; crt=crt->next,(*root)=crt ) {
 		/* check on before list */
 		for( r=crt->before ; r ; r=r->before ) {
-			/* we are looking for the the lump that adds the 
+			/* we are looking for the lump that adds the 
 			 * suffix of the RR header */
 			if ( r->type==HDR_RECORDROUTE_T && r->op==LUMP_ADD)
 				last = r;

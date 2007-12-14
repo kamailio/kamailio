@@ -145,7 +145,7 @@ static int openserSIPStatusCodesTable_row_copy(
  * the *_extract_index routine (Mostly auto-generated)
  *
  * This routine is called when a set request is received for an index that 
- * was not found in the table container. Here, we parse the oid in the the
+ * was not found in the table container. Here, we parse the oid in the
  * individual index components and copy those indexes to the context. Then 
  * we make sure the indexes for the new row are valid.
  *

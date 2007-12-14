@@ -137,7 +137,7 @@ static int openserSIPRegUserLookupTable_row_copy(
  *
  * This routine is called when a set request is received for an index
  * that was not found in the table container. Here, we parse the oid
- * in the the individual index components and copy those indexes to the
+ * in the individual index components and copy those indexes to the
  * context. Then we make sure the indexes for the new row are valid.
  *
  * It has been modified from its original form in that if the indexes are

@@ -762,7 +762,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 		/* check branch */
 		case 1:
 			if (route_type==FAILURE_ROUTE) {
-				/* use the the winning reply */
+				/* use the winning reply */
 				if ( (branch=t_get_picked_branch())<0 ) {
 					LM_CRIT("no picked branch (%d) for"
 						" a final response in MODE_ONFAILURE\n", branch);
@@ -776,7 +776,7 @@ inline static int t_local_replied(struct sip_msg* msg, char *type, char *bar)
 		/* check last */
 		case 2:
 			if (route_type==FAILURE_ROUTE) {
-				/* use the the winning reply */
+				/* use the winning reply */
 				if ( (branch=t_get_picked_branch())<0 ) {
 					LM_CRIT("no picked branch (%d) for"
 						" a final response in MODE_ONFAILURE\n", branch);

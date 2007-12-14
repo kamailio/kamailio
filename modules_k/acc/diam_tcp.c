@@ -232,7 +232,7 @@ int do_read( int socket, rd_buf_t *p)
 		{
 			if (p->buf==0)
 			{
-				/* I just finished reading the the first 4 bytes from msg */
+				/* I just finished reading the first 4 bytes from msg */
 				len = ntohl(p->first_4bytes)&0x00ffffff;
 				if (len<AAA_MSG_HDR_SIZE || len>MAX_AAA_MSG_SIZE)
 				{

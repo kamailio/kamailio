@@ -207,7 +207,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	/* dcm: for testing: avps should stay to parrent message
 	 * reset_avps(); */
 
-	/* add the callback the the transaction for LOCAL_COMPLETED event */
+	/* add the callback the transaction for LOCAL_COMPLETED event */
 	flags = TMCB_LOCAL_COMPLETED;
 	/* Add also TMCB_LOCAL_RESPONSE_OUT if provisional replies are desired */
 	if (pass_provisional_replies || pass_provisional(new_cell))

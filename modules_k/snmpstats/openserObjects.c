@@ -333,7 +333,7 @@ int handle_openserMsgQueueDepthAlarmStatus(netsnmp_mib_handler *handler,
 {
 
 	/* The MIB specifications say the scalar should be set to 'clear' if
-	 * everything is ok.  According the the X731AlarmStatus specification,
+	 * everything is ok.  According the X731AlarmStatus specification,
 	 * this means that no bits are toggled.  So we set the state to zero by
 	 * default */
 	unsigned int state = 0;
@@ -535,7 +535,7 @@ int handle_openserDialogLimitAlarmStatus(netsnmp_mib_handler *handler,
 		netsnmp_request_info         *requests)
 {
 	/* The MIB specifications say the scalar should be set to 'clear' if
-	 * everything is ok.  According the the X731AlarmStatus specification,
+	 * everything is ok.  According the X731AlarmStatus specification,
 	 * this means that no bits are toggled.  So we set the state to zero by
 	 * default */
 	unsigned int state = 0;
