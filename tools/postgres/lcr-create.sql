@@ -15,12 +15,6 @@ CREATE TABLE gw (
 
 CREATE INDEX gw_grp_id_idx ON gw (grp_id);
 
-INSERT INTO version (table_name, table_version) values ('gw_grp','1');
-CREATE TABLE gw_grp (
-    grp_id SERIAL PRIMARY KEY NOT NULL,
-    grp_name VARCHAR(64) NOT NULL
-);
-
 INSERT INTO version (table_name, table_version) values ('lcr','2');
 CREATE TABLE lcr (
     id SERIAL PRIMARY KEY NOT NULL,

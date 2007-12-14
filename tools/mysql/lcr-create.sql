@@ -14,12 +14,6 @@ CREATE TABLE gw (
     KEY grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
 
-INSERT INTO version (table_name, table_version) values ('gw_grp','1');
-CREATE TABLE gw_grp (
-    grp_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    grp_name VARCHAR(64) NOT NULL
-) ENGINE=MyISAM;
-
 INSERT INTO version (table_name, table_version) values ('lcr','2');
 CREATE TABLE lcr (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -31,4 +25,3 @@ CREATE TABLE lcr (
     KEY from_uri_idx (from_uri),
     KEY grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
-
