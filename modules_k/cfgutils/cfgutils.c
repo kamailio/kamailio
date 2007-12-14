@@ -52,7 +52,6 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../mi/mi.h"
-#include "../../ut.h"
 #include "../../mod_fix.h"
 #include <stdlib.h>
 
