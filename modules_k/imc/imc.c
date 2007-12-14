@@ -62,6 +62,7 @@ MODULE_VERSION
 db_con_t *imc_db = NULL;
 db_func_t imc_dbf;
 str db_url = str_init(DEFAULT_DB_URL);
+str outbound_proxy= {NULL, 0};
 
 char* rooms_table = "imc_rooms";
 char* members_table = "imc_members";
@@ -100,6 +101,7 @@ static param_export_t params[]={
 	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str},
 	{"rooms_table",			STR_PARAM, &rooms_table},
 	{"members_table",		STR_PARAM, &members_table},
+	{"outbound_proxy",		STR_PARAM, &outbound_proxy.s},
 	{0,0,0}
 };
 
@@ -348,6 +350,9 @@ static int mod_init(void)
 
 	if(imc_cmd_start_str == NULL)
 		imc_cmd_start_str = "#";
+
+	if(outbound_proxy.s!= NULL)
+		outbound_proxy.len= strlen(outbound_proxy.s);
 
 	/*  binding to mysql module */	
 	
