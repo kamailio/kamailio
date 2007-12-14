@@ -71,6 +71,8 @@
 #define F_CONN_REMOVED      2 /* no longer  in "main" listen fd list */
 #define F_CONN_READER       4 /* handled by a tcp reader */
 #define F_CONN_WRITE_W      8 /* watched for write (main) */
+#define F_CONN_HASHED      16 /* in tcp_main hash */
+#define F_CONN_FD_CLOSED   32 /* in tcp_main hash */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
@@ -177,7 +179,7 @@ struct tcp_connection{
 
 
 #define tcpconn_ref(c) atomic_inc(&((c)->refcnt))
-#define tcpconn_put(c) atomic_dec(&((c)->refcnt))
+#define tcpconn_put(c) atomic_dec_and_test(&((c)->refcnt))
 
 
 #define init_tcp_req( r) \
