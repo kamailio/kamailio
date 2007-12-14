@@ -1,20 +1,21 @@
---- Makefile.orig	Thu May 24 11:16:04 2007
-+++ Makefile	Sat May 26 19:52:17 2007
-@@ -47,10 +47,9 @@
+--- Makefile.orig	Thu Dec 13 18:49:12 2007
++++ Makefile	Thu Dec 13 21:49:54 2007
+@@ -48,11 +48,11 @@
  skip_modules?=
  
  # if not set on the cmd. line or the env, exclude this modules:
--exclude_modules?= 		jabber cpl-c mysql pa postgres osp unixodbc \
--						avp_radius auth_radius group_radius uri_radius xmpp \
--						presence pua pua_mi pua_usrloc \
--						mi_xmlrpc perl snmpstats
-+exclude_modules?= 		$(MYSQL) $(POSTGRESQL) $(SNMPSTATS) $(TLSOPS) $(UNIXODBC) \
-+					avp_radius auth_radius group_radius uri_radius \
-+					jabber osp mi_xmlrpc perl xmpp
+-exclude_modules?= jabber cpl-c mysql postgres osp unixodbc \
+-	avp_radius auth_radius group_radius uri_radius xmpp \
++exclude_modules?= 	$(MYSQL) $(POSTGRESQL) $(CPL) $(SNMPSTATS) $(TLSOPS) $(UNIXODBC) \
++	jabber osp avp_radius auth_radius group_radius uri_radius xmpp \
+ 	presence presence_xml presence_mwi pua pua_bla pua_mi \
+ 	pua_usrloc pua_xmpp rls mi_xmlrpc perl snmpstats perlvdb \
+-	ldap carrierroute h350 xcap_client db_berkeley seas
++	ldap carrierroute h350 xcap_client db_berkeley
  ifeq ($(TLS),)
  	exclude_modules+= tlsops
  endif
-@@ -343,21 +342,9 @@
+@@ -392,24 +392,11 @@
  		
  # note: on solaris 8 sed: ? or \(...\)* (a.s.o) do not work
  install-cfg: $(cfg-prefix)/$(cfg-dir)
@@ -31,13 +32,18 @@
 -				$(cfg-prefix)/$(cfg-dir)$(NAME).cfg; \
 -		fi
  		# radius dictionary
- 		$(INSTALL_TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.radius
--		$(INSTALL_CFG) etc/dictionary.radius $(cfg-prefix)/$(cfg-dir)
+-		$(INSTALL_TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.radius.sample
+-		$(INSTALL_CFG) etc/dictionary.radius \
+-			$(cfg-prefix)/$(cfg-dir)/dictionary.radius.sample
++		$(INSTALL_TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default
 +		$(INSTALL_CFG) etc/dictionary.radius $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default
+ 		if [ ! -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius ]; then \
+-			mv -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius.sample \
++			cp -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default \
+ 				$(cfg-prefix)/$(cfg-dir)/dictionary.radius; \
+ 		fi
  		# openserctl config
- 		$(INSTALL_TOUCH)   $(cfg-prefix)/$(cfg-dir)/openserctlrc.sample
- 		$(INSTALL_CFG) scripts/openserctlrc \
-@@ -391,7 +378,7 @@
+@@ -445,7 +432,7 @@
  		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
  		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/openserctl
  		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/openserctl
@@ -46,30 +52,27 @@
  		rm -fr /tmp/openserctl
  		sed -e "s#/usr/local/sbin#$(bin-target)#g" \
  			< scripts/openserctl.base > /tmp/openserctl.base
-@@ -456,7 +443,7 @@
- 			sed -e "s#PATH:/usr/local/sbin#PATH:$(bin-target)#g" \
- 				< scripts/mysqldb.sh > /tmp/$(NAME)_mysql.sh ; \
- 			$(INSTALL_TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)_mysql.sh ; \
--			$(INSTALL_BIN) /tmp/$(NAME)_mysql.sh  $(bin-prefix)/$(bin-dir) ; \
-+			$(BSD_INSTALL_SCRIPT) /tmp/$(NAME)_mysql.sh  $(bin-prefix)/$(bin-dir) ; \
- 			rm -fr /tmp/$(NAME)_mysql.sh ; \
- 		fi
- 		if [ "$(PGSQLON)" = "yes" ]; then \
-@@ -469,7 +456,7 @@
- 			sed -e "s#PATH:/usr/local/sbin#PATH:$(bin-target)#g" \
- 				< scripts/postgresqldb.sh > /tmp/$(NAME)_postgresql.sh ; \
- 			$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/$(NAME)_postgresql.sh ; \
--			$(INSTALL_BIN) /tmp/$(NAME)_postgresql.sh \
-+			$(BSD_INSTALL_SCRIPT) /tmp/$(NAME)_postgresql.sh \
- 				$(bin-prefix)/$(bin-dir) ; \
- 			rm -fr /tmp/$(NAME)_postgresql.sh ; \
- 		fi
-@@ -494,8 +481,6 @@
+@@ -492,10 +479,10 @@
+ 		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
+ 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/openserdbctl
+ 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/openserdbctl
+-		$(INSTALL_BIN) /tmp/openserdbctl $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) /tmp/openserdbctl $(bin-prefix)/$(bin-dir)
+ 		rm -fr /tmp/openserdbctl
+ 		$(INSTALL_TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)unix
+-		$(INSTALL_BIN) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
+ 		# install dbtext stuff
+ 		mkdir -p $(modules-prefix)/$(lib-dir)/openserctl ; \
+ 		sed -e "s#/usr/local/share/openser#$(data-target)#g" \
+@@ -624,9 +611,7 @@
  			if [ -f modules/"$$r"/README ]; then \
  				$(INSTALL_TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \
  				$(INSTALL_DOC)  modules/"$$r"/README  \
 -									$(doc-prefix)/$(doc-dir)/README ; \
 -				mv -f $(doc-prefix)/$(doc-dir)/README \
- 						$(doc-prefix)/$(doc-dir)/README."$$r" ; \
+-						$(doc-prefix)/$(doc-dir)/README."$$r" ; \
++					$(doc-prefix)/$(doc-dir)/README."$$r" ; \
  			fi ; \
  		fi ; \
+ 	done 
