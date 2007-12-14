@@ -429,7 +429,7 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
 		group = pv_val.ri;
 	    } else if (pv_val.flags & PV_VAL_STR) {
 		if (str2int(&(pv_val.rs), &group) == -1) {
-		    LM_ERR("failed to convert converting group string to int\n");
+		    LM_ERR("failed to convert group string to int\n");
 		    return -1;
 		}
 	    } else {
@@ -455,4 +455,33 @@ int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2)
 	return match_subnet_table(*subnet_table, group,
 				  _msg->rcv.src_ip.u.addr32[0],
 				  _msg->rcv.src_port);
+}
+
+
+/*
+ * Checks if source address/port is found in cached address or
+ * subnet table in any group. If yes, returns that group. If not returns -1.
+ * Port value 0 in cached address and group table matches any port.
+ */
+int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2) 
+{
+    int group;
+
+    LM_DBG("looking for <%x, %u> in address table\n",
+	   _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
+    group = find_group_in_addr_hash_table(*addr_hash_table,
+					  _msg->rcv.src_ip.u.addr32[0],
+					  _msg->rcv.src_port);
+    LM_DBG("Found <%d>\n", group);
+
+    if (group != -1) return group;
+
+    LM_DBG("looking for <%x, %u> in subnet table\n",
+	   _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
+    group = find_group_in_subnet_table(*subnet_table,
+				       _msg->rcv.src_ip.u.addr32[0],
+				      _msg->rcv.src_port);
+    LM_DBG("Found <%d>\n", group);
+    return group;
+    
 }

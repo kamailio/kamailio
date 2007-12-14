@@ -82,4 +82,12 @@ int allow_address(struct sip_msg* _msg, char* _addr, char* _port);
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2);
 
 
+/*
+ * Checks if source address/port is found in cached address or
+ * subnet table in any group. If yes, returns that group. If not returns -1.
+ * Port value 0 in cached address and group table matches any port.
+ */
+int allow_source_address_group(struct sip_msg* _msg, char* _str1, char* _str2);
+
+
 #endif /* ADDRESS_H */

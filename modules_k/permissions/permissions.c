@@ -147,6 +147,8 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_source_address", allow_source_address, 1, int_or_pvar_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_source_address_group", allow_source_address_group, 0, 0, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 

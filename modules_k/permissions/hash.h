@@ -147,7 +147,16 @@ int match_addr_hash_table(struct addr_list** table, unsigned int grp,
 
 
 /* 
- * Print addresses stoed in hash table
+ * Checks if an ip_addr/port entry exists in address hash table in any group.
+ * Port 0 in hash table matches any port.   Returns group of the first match
+ * or -1 if no match is found.
+ */
+int find_group_in_addr_hash_table(struct addr_list** table,
+				  unsigned int ip_addr, unsigned int port);
+
+
+/* 
+ * Print addresses stored in hash table
  */
 void addr_hash_table_print(struct addr_list** hash_table, FILE* reply_file);
 int addr_hash_table_mi_print(struct addr_list** hash_table,
@@ -187,6 +196,14 @@ struct subnet* new_subnet_table(void);
 int match_subnet_table(struct subnet* table, unsigned int group,
 		       unsigned int ip_addr, unsigned int port);
 
+
+/* 
+ * Checks if an entry exists in subnet table that matches given ip_addr,
+ * and port.  Port 0 in subnet table matches any port.  Returns group of
+ * the first match or -1 if no match is found.
+ */
+int find_group_in_subnet_table(struct subnet* table,
+			       unsigned int ip_addr, unsigned int port);
 
 /* 
  * Empty contents of subnet table

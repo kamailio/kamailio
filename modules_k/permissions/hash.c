@@ -391,6 +391,31 @@ int match_addr_hash_table(struct addr_list** table, unsigned int group,
 
 
 /* 
+ * Check if an ip_addr/port entry exists in hash table in any group.
+ * Returns first group in which ip_addr/port is found.
+ * Port 0 in hash table matches any port. 
+ */
+int find_group_in_addr_hash_table(struct addr_list** table,
+				  unsigned int ip_addr, unsigned int port)
+{
+	struct addr_list *np;
+	str addr_str;
+
+	addr_str.s = (char *)(&ip_addr);
+	addr_str.len = 4;
+
+	for (np = table[perm_hash(addr_str)]; np != NULL; np = np->next) {
+	    if ((np->ip_addr == ip_addr) &&
+		((np->port == 0) || (np->port == port))) {
+		return np->grp;
+	    }
+	}
+
+	return -1;
+}
+
+
+/* 
  * Print addresses stored in hash table 
  */
 int addr_hash_table_mi_print(struct addr_list** table, struct mi_node* rpl)
@@ -519,6 +544,31 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
 	if ((table[i].subnet == subnet) &&
 	    ((table[i].port == port) || (table[i].port == 0)))
 	    return 1;
+	i++;
+    }
+
+    return -1;
+}
+
+
+/* 
+ * Check if an entry exists in subnet table that matches given ip_addr,
+ * and port.  Port 0 in subnet table matches any port.  Return group of
+ * first match or -1 if no match is found.
+ */
+int find_group_in_subnet_table(struct subnet* table,
+			       unsigned int ip_addr, unsigned int port)
+{
+    unsigned int count, i, subnet;
+
+    count = table[PERM_MAX_SUBNETS].grp;
+
+    i = 0;
+    while (i < count) {
+	subnet = ip_addr << table[i].mask;
+	if ((table[i].subnet == subnet) &&
+	    ((table[i].port == port) || (table[i].port == 0)))
+	    return table[i].grp;
 	i++;
     }
 
