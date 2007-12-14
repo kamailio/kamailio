@@ -66,6 +66,9 @@ extern int _osp_redir_uri;
 extern char _osp_PRIVATE_KEY[];
 extern char _osp_LOCAL_CERTIFICATE[];
 extern char _osp_CA_CERTIFICATE[];
+extern char *_osp_snid_avp;
+extern int_str _osp_snid_avpname;
+extern unsigned short _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
 
 struct rr_binds osp_rr;
@@ -139,6 +142,7 @@ static param_export_t params[]={
     {"max_destinations",               INT_PARAM, &_osp_max_dests},
     {"use_rpid_for_calling_number",    INT_PARAM, &_osp_use_rpid},
     {"redirection_uri_format",         INT_PARAM, &_osp_redir_uri},
+    {"source_networkid_avp",           STR_PARAM, &_osp_snid_avp},
     {0,0,0} 
 };
 
@@ -226,6 +230,8 @@ static int ospInitChild(
 static int ospVerifyParameters(void)
 {
     int i;
+    pv_spec_t avp_spec;
+    str avp_str;
     int result = 0;
 
     /* Default location for the cert files is in the compile time variable CFG_DIR */
@@ -254,14 +260,12 @@ static int ospVerifyParameters(void)
 
     if (_osp_max_dests > OSP_DEF_DESTS || _osp_max_dests < 1) {
         _osp_max_dests = OSP_DEF_DESTS;    
-        LM_WARN("max_destinations is out of range, reset to %d\n", 
-            OSP_DEF_DESTS);
+        LM_WARN("max_destinations is out of range, reset to %d\n", OSP_DEF_DESTS); 
     }
 
     if (_osp_token_format < 0 || _osp_token_format > 2) {
         _osp_token_format = OSP_DEF_TOKEN;
-        LM_WARN("token_format is out of range, reset to %d\n", 
-            OSP_DEF_TOKEN);
+        LM_WARN("token_format is out of range, reset to %d\n", OSP_DEF_TOKEN);
     }
 
     _osp_sp_number = 0;
@@ -281,6 +285,22 @@ static int ospVerifyParameters(void)
     if (_osp_sp_number == 0) {
         LM_ERR("at least one service point uri must be configured\n");
         result = -1;
+    }
+
+    if (_osp_snid_avp && *_osp_snid_avp) {
+        avp_str.s = _osp_snid_avp;
+        avp_str.len = strlen(_osp_snid_avp);
+        if (pv_parse_spec(&avp_str, &avp_spec) == NULL ||
+            avp_spec.type != PVT_AVP ||
+            pv_get_avp_name(0, &(avp_spec.pvp), &_osp_snid_avpname, &_osp_snid_avptype) != 0)
+        {
+            LM_WARN("'%s' invalid AVP definition\n", _osp_snid_avp);
+            _osp_snid_avpname.n = 0;
+            _osp_snid_avptype = 0;
+        }
+    } else {
+        _osp_snid_avpname.n = 0;
+        _osp_snid_avptype = 0;
     }
 
     ospDumpParameters();
@@ -316,5 +336,12 @@ static void ospDumpParameters(void)
     LM_INFO("    use_rpid_for_calling_number '%d' ", _osp_use_rpid);
     LM_INFO("    redirection_uri_format '%d' ", _osp_redir_uri);
     LM_INFO("    max_destinations '%d'\n", _osp_max_dests);
+    if (_osp_snid_avpname.n == 0) {
+        LM_INFO("    source network ID disabled\n");
+    } else if (_osp_snid_avptype & AVP_NAME_STR) {
+        LM_INFO("    source network ID AVP name '%.*s'\n", _osp_snid_avpname.s.len, _osp_snid_avpname.s.s);
+    } else {
+        LM_INFO("    source network ID AVP ID '%d'\n", _osp_snid_avpname.n);
+    }
 }
 

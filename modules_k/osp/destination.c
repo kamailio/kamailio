@@ -59,8 +59,7 @@ osp_dest *ospInitDestination(
     dest->callidsize = sizeof(dest->callid);
     dest->tokensize = sizeof(dest->token);
 
-    LM_DBG("callidsize '%d' tokensize '%d'\n", 
-        dest->callidsize, dest->tokensize);
+    LM_DBG("callidsize '%d' tokensize '%d'\n", dest->callidsize, dest->tokensize);
 
     return dest;
 }
@@ -262,15 +261,10 @@ osp_dest *ospGetLastOrigDestination(void)
  */
 osp_dest *ospGetTermDestination(void)
 {
-    struct usr_avp *destavp = NULL;
     int_str destval;
     osp_dest *dest = NULL;
 
-    destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, NULL, 0);
-
-    if (destavp) {
-        get_avp_val(destavp, &destval);
-
+    if (search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, &destval, 0) != NULL) {
         /* OSP destination is wrapped in a string */
         dest = (osp_dest*)destval.s.s;
 
@@ -412,11 +406,7 @@ void ospDumpAllDestination(void)
         LM_DBG("there is not originate destination AVP\n");
     }
 
-    destavp = search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, NULL, 0);
-
-    if (destavp) {
-        get_avp_val(destavp, &destval);
-
+    if (search_first_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)OSP_TERMDEST_NAME, &destval, 0) != NULL) {
         /* OSP destination is wrapped in a string */
         dest = (osp_dest*)destval.s.s;
 

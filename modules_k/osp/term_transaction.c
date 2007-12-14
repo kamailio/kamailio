@@ -106,8 +106,7 @@ int ospValidateHeader (
     } else if (ospGetOspHeader(msg, token, &tokensize) != 0) {
         LM_ERR("failed to extract OSP authorization token\n");
     } else {
-        LM_INFO( 
-            "validate token for: "
+        LM_INFO( "validate token for: "
             "transaction_handle '%i' "
             "e164_source '%s' "
             "e164_dest '%s' "
@@ -160,8 +159,7 @@ int ospValidateHeader (
         ospSaveTermDestination(&dest);
 
         if ((errorcode == 0) && (authorized == 1)) {
-            LM_DBG( 
-                "call is authorized for %d seconds, call_id '%.*s' transaction_id '%llu'",
+            LM_DBG("call is authorized for %d seconds, call_id '%.*s' transaction_id '%llu'", 
                 timelimit,
                 dest.callidsize,
                 dest.callid,

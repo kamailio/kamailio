@@ -43,9 +43,11 @@
 extern char *_osp_device_ip;
 extern char *_osp_device_port;
 extern int _osp_max_dests;
+extern int _osp_redir_uri;
+extern int_str _osp_snid_avpname;
+extern unsigned short _osp_snid_avptype;
 extern OSPTPROVHANDLE _osp_provider;
 extern auth_api_t osp_auth;
-extern int _osp_redir_uri;
 
 const int OSP_FIRST_ROUTE = 1;
 const int OSP_NEXT_ROUTE = 0;
@@ -187,8 +189,7 @@ static int ospLoadRoutes(
         dest->transid = ospGetTransactionId(transaction);
         dest->authtime = authtime;
 
-        LM_INFO(
-            "get destination '%d': "
+        LM_INFO("get destination '%d': "
             "valid after '%s' "
             "valid until '%s' "
             "time limit '%i' seconds "
@@ -241,9 +242,12 @@ int ospRequestRouting(
 {
     int errorcode;
     time_t authtime;
-    char tmp[OSP_STRBUF_SIZE];
     char source[OSP_E164BUF_SIZE];
     char sourcedev[OSP_STRBUF_SIZE];
+    char src[OSP_STRBUF_SIZE];
+    struct usr_avp *snidavp = NULL;
+    int_str snidval;
+    char snid[OSP_STRBUF_SIZE];
     char destination[OSP_E164BUF_SIZE];
     unsigned int callidnumber = 1;
     OSPTCALLID *callids[callidnumber];
@@ -275,14 +279,25 @@ int ospRequestRouting(
         LM_ERR("failed to extract source address\n");
     } else {
         transid = ospGetTransactionId(transaction);
-        ospConvertAddress(sourcedev, tmp, sizeof(tmp));
 
-        LM_INFO(
-            "request auth and routing for: "
+        ospConvertAddress(sourcedev, src, sizeof(src));
+
+        if (_osp_snid_avpname.n != 0 &&
+            (snidavp = search_first_avp(_osp_snid_avptype, _osp_snid_avpname, &snidval, 0)) != NULL &&
+            snidavp->flags & AVP_VAL_STR && snidval.s.s && snidval.s.len) 
+        {
+            snprintf(snid, sizeof(snid), "%.*s", snidval.s.len, snidval.s.s);
+            OSPPTransactionSetNetworkIds(transaction, snid, "");
+        } else {
+            snid[0] = '\0';
+        }
+
+        LM_INFO("request auth and routing for: "
             "transaction_id '%llu' "
             "source '%s' "
             "source_port '%s' "
             "source_dev '%s' "
+            "source_networkid '%s' "
             "e164_source '%s' "
             "e164_dest '%s' "
             "call_id '%.*s' "
@@ -290,7 +305,8 @@ int ospRequestRouting(
             transid,
             _osp_device_ip,
             _osp_device_port,
-            tmp,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
+            src,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
+            snid,
             source,
             destination,
             callids[0]->ospmCallIdLen,
@@ -298,18 +314,11 @@ int ospRequestRouting(
             destcount
         );    
 
-/* Do not use network ID as port */
-#if 0
-        if (strlen(_osp_device_port) > 0) {
-            OSPPTransactionSetNetworkIds(transaction, _osp_device_port, "");
-        }
-#endif
-
         /* try to request authorization */
         errorcode = OSPPTransactionRequestAuthorisation(
             transaction,       /* transaction handle */
             _osp_device_ip,    /* from the configuration file */
-            tmp,               /* source of call, protocol specific, in OSP format */
+            src,               /* source of call, protocol specific, in OSP format */
             source,            /* calling number in nodotted e164 notation */
             OSPC_E164,         /* calling number format */
             destination,       /* called number */
@@ -331,7 +340,7 @@ int ospRequestRouting(
             /* Will record a unique cookie in the on-branch section */
             result = ospLoadRoutes(msg, transaction, destcount, _osp_device_ip, sourcedev, authtime);
         } else if ((errorcode == 0) && (destcount == 0)) {
-            LM_INFO("there is 0 osp routes, call_id '%.*s' transaction_id' %llu'\n",
+            LM_INFO("there is 0 osp route, call_id '%.*s' transaction_id' %llu'\n",
                 callids[0]->ospmCallIdLen,
                 callids[0]->ospmCallIdVal,
                 transid);
@@ -443,13 +452,10 @@ int ospCheckTranslation(
     char *ignore1, 
     char *ignore2)
 {
-    struct usr_avp *callingavp = NULL;
     int_str callingval;
     int result = MODULE_RETURNCODE_FALSE;
 
-    callingavp = search_first_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, NULL, 0);
-    if (callingavp != NULL) {
-        get_avp_val(callingavp, &callingval);
+    if (search_first_avp(AVP_NAME_STR, (int_str)OSP_CALLING_NAME, &callingval, 0) != NULL) {
         if (callingval.n == 0) {
             LM_DBG("the calling number does not been translated\n");
         } else {

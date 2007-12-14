@@ -604,8 +604,7 @@ void ospGetNextHop(
                         LM_DBG("it IS me, keep looking\n");
                     }
                 } else {
-                    LM_ERR( 
-                        "failed to parse route uri '%.*s'\n", 
+                    LM_ERR("failed to parse route uri '%.*s'\n",  
                         rt->nameaddr.uri.len, 
                         rt->nameaddr.uri.s);
                 }

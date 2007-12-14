@@ -46,6 +46,16 @@
 #define OSP_RELEASE_ORIG    0
 #define OSP_RELEASE_TERM    1
 
+/* The up case tags for the destinations may corrupt OSP cookies */
+#define OSP_COOKIE_TRANSID      't'
+#define OSP_COOKIE_TRANSIDUP    'T'
+#define OSP_COOKIE_SRCIP        's'
+#define OSP_COOKIE_SRCIPUP      'S'
+#define OSP_COOKIE_AUTHTIME     'a'
+#define OSP_COOKIE_AUTHTIMEUP   'A'
+#define OSP_COOKIE_DSTCOUNT     'c'
+#define OSP_COOKIE_DSTCOUNTUP   'C'
+
 extern char *_osp_device_ip;
 extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_NAME;
@@ -91,20 +101,27 @@ static void ospRecordTransaction(
         cookie.len = snprintf(
             buffer,
             sizeof(buffer),
-            ";%s=t%llu_s%s_T%d_c%d",
+            ";%s=%c%llu_%c%s_%c%d_%c%d",
             OSP_ORIG_COOKIE,
+            OSP_COOKIE_TRANSID,
             transid,
+            OSP_COOKIE_SRCIP,
             uac,
+            OSP_COOKIE_AUTHTIME,
             (unsigned int)authtime,
+            OSP_COOKIE_DSTCOUNT,
             destinationCount);
     } else {
         cookie.len = snprintf(
             buffer,
             sizeof(buffer),
-            ";%s=t%llu_s%s_T%d",
+            ";%s=%c%llu_%c%s_%c%d",
             OSP_TERM_COOKIE,
+            OSP_COOKIE_TRANSID,
             transid,
+            OSP_COOKIE_SRCIP,
             uac,
+            OSP_COOKIE_AUTHTIME,
             (unsigned int)authtime);
     }
 
@@ -215,16 +232,20 @@ static int ospReportUsageFromCookie(
             value= token + 1;
 
             switch (tag) {
-                case 't':
+                case OSP_COOKIE_TRANSID:
+                case OSP_COOKIE_TRANSIDUP:
                     transid = atoll(value);
                     break;
-                case 'T':
+                case OSP_COOKIE_AUTHTIME:
+                case OSP_COOKIE_AUTHTIMEUP:
                     authtime = atoi(value);
                     break;
-                case 's':
+                case OSP_COOKIE_SRCIP:
+                case OSP_COOKIE_SRCIPUP:
                     originator = value;
                     break;
-                case 'c':
+                case OSP_COOKIE_DSTCOUNT:
+                case OSP_COOKIE_DSTCOUNTUP:
                     destinationCount = (unsigned)atoi(value);
                     break;
                 default:
