@@ -353,8 +353,13 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		rc_avpair_free(received);
 		return 1;
 	} else {
-		LM_ERR("rc_auth failed\n");
-		goto err;
+#ifdef REJECT_RC
+                if (i == REJECT_RC) {
+                        LM_DBG("Failure\n");
+                        goto err;
+                }
+#endif 
+		LM_ERR("authorization failed\n");
 	}
 
  err:
