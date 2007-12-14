@@ -588,11 +588,13 @@ static int update_route_data(fifo_opt_t * opts) {
 	}
 	memset(rd, 0, sizeof(struct rewrite_data));
 	if (load_config(rd) < 0) {
+		LM_ERR("could not load config");
 		FIFO_ERR(E_LOADCONF);
 		return -1;
 	}
 
 	if (rule_fixup(rd) < 0) {
+		LM_ERR("could not fixup rules");
 		FIFO_ERR(E_RULEFIXUP);
 		return -1;
 	}
@@ -606,6 +608,7 @@ static int update_route_data(fifo_opt_t * opts) {
 		}
 		updated = 1;
 		if (rule_fixup(rd) < 0) {
+			LM_ERR("could not fixup rules after route appending");
 			FIFO_ERR(E_RULEFIXUP);
 			return -1;
 		}
@@ -625,16 +628,19 @@ static int update_route_data(fifo_opt_t * opts) {
 	}
 
 	if(!updated){
+		LM_ERR("no match for update found");
 		FIFO_ERR(E_NOUPDATE);
 		goto errout;
 	}
 
 	if (save_config(rd) < 0) {
+		LM_ERR("could not save config");
 		FIFO_ERR(E_SAVECONF);
 		goto errout;
 	}
 
 	if (prepare_route_tree() == -1) {
+		LM_ERR("could not prepare the route tree");
 		FIFO_ERR(E_LOADCONF);
 		goto errout;
 	}
@@ -855,6 +861,7 @@ error:
 
 /**
  * interpret the fifo errors, creates a mi tree
+ * @todo this is currently not evaluated for errors during update_route_data
  */
 struct mi_root* print_fifo_err(void) {
 	struct mi_root* rpl_tree;
