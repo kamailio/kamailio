@@ -90,7 +90,7 @@ int extract_aor(str* _uri, str* _a)
 
 	user_len = _a->len;
 
-	if (use_domain) {
+	if (reg_use_domain) {
 		if (user_len)
 			aor_buf[_a->len++] = '@';
 		/* strip prefix (if defined) */

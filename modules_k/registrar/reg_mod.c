@@ -118,7 +118,7 @@ char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
-int use_domain = 0;
+int reg_use_domain = 0;
 char* realm_pref    = "";   /* Realm prefix to be removed */
 str realm_prefix;
 
@@ -295,7 +295,7 @@ static int mod_init(void)
 	/*
 	 * Import use_domain parameter from usrloc
 	 */
-	use_domain = ul.use_domain;
+	reg_use_domain = ul.use_domain;
 
 	if (sock_hdr_name.s) {
 		sock_hdr_name.len = strlen(sock_hdr_name.s);
