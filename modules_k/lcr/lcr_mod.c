@@ -68,7 +68,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 5
+#define GW_TABLE_VERSION 6
 #define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
@@ -96,7 +96,7 @@ int reload_gws ( void );
 
 #define GRP_ID_COL "grp_id"
 
-#define DM_COL "dm"
+#define FLAGS_COL "flags"
 
 #define LCR_TABLE "lcr"
 
@@ -133,7 +133,7 @@ struct gw_info {
     unsigned int strip;
     char prefix[MAX_PREFIX_LEN];
     unsigned short prefix_len;
-    unsigned short dm; /* gw supports directed media */
+    unsigned int flags;
 };
 
 struct lcr_info {
@@ -177,7 +177,7 @@ str port_col         = str_init(PORT_COL);
 str uri_scheme_col   = str_init(URI_SCHEME_COL);
 str transport_col    = str_init(TRANSPORT_COL);
 str grp_id_col       = str_init(GRP_ID_COL);
-str dm_col           = str_init(DM_COL);
+str flags_col        = str_init(FLAGS_COL);
 str lcr_table        = str_init(LCR_TABLE);
 str strip_col        = str_init(STRIP_COL);
 str prefix_col       = str_init(PREFIX_COL);
@@ -194,9 +194,7 @@ static char *gw_uri_avp_param = NULL;
 static char *ruri_user_avp_param = NULL;
 static char *contact_avp_param = NULL;
 static char *rpid_avp_param = NULL;
-
-/* flags */
-unsigned int dm_flag = 1024;
+static char *flags_avp_param = NULL;
 
 /*
  * Other module types and variables
@@ -223,6 +221,8 @@ static int     contact_avp_type;
 static int_str contact_avp;
 static int     rpid_avp_type;
 static int_str rpid_avp;
+static int     flags_avp_type;
+static int_str flags_avp;
 
 struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
@@ -296,7 +296,7 @@ static param_export_t params[] = {
 	{"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
 	{"transport_column",         STR_PARAM, &transport_col.s },
 	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
-	{"dm_column",                STR_PARAM, &dm_col.s       },
+	{"flags_column",             STR_PARAM, &flags_col.s    },
 	{"lcr_table",                STR_PARAM, &lcr_table.s    },
 	{"strip_column",             STR_PARAM, &strip_col.s    },
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
@@ -307,9 +307,9 @@ static param_export_t params[] = {
 	{"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
 	{"contact_avp",              STR_PARAM, &contact_avp_param },
 	{"rpid_avp",                 STR_PARAM, &rpid_avp_param },
+	{"flags_avp",                STR_PARAM, &flags_avp_param },
 	{"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
 	{"fr_inv_timer_next",        INT_PARAM,	&fr_inv_timer_next },
-	{"dm_flag",                  INT_PARAM,	&dm_flag },
 	{0, 0, 0}
 };
 
@@ -557,10 +557,22 @@ static int mod_init(void)
 	LM_ERR("AVP rpid_avp has not been defined\n");
 	return -1;
     }
-    
-    /* Check dm_flag value */
-    if (dm_flag > 31) {
-	LM_ERR("Undefined or invalid dm_flag value <%u>\n", dm_flag);
+
+    if (flags_avp_param && *flags_avp_param) {
+	s.s = flags_avp_param; s.len = strlen(s.s);
+	if (pv_parse_spec(&s, &avp_spec)==0
+	    || avp_spec.type!=PVT_AVP) {
+	    LM_ERR("Malformed or non AVP definition <%s>\n", flags_avp_param);
+	    return -1;
+	}
+	
+	if(pv_get_avp_name(0, &(avp_spec.pvp), &flags_avp, &avp_flags)!=0) {
+	    LM_ERR("Invalid AVP definition <%s>\n", flags_avp_param);
+	    return -1;
+	}
+	flags_avp_type = avp_flags;
+    } else {
+	LM_ERR("AVP flags_avp has not been defined\n");
 	return -1;
     }
 
@@ -744,8 +756,8 @@ int load_from_uri_regex(void)
 int reload_gws ( void )
 {
     unsigned int i, port, strip, prefix_len, from_uri_len, grp_id, priority;
-    unsigned int dm;
     struct in_addr ip_addr;
+    unsigned int flags;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
@@ -764,7 +776,7 @@ int reload_gws ( void )
     /* FIXME: is this ok if we have different names for grp_id
        in the two tables? (ge vw lcr) */
     gw_cols[6] = grp_id_col.s;
-    gw_cols[7] = dm_col.s;
+    gw_cols[7] = flags_col.s;
 
     lcr_cols[0] = prefix_col.s;
     lcr_cols[1] = from_uri_col.s;
@@ -873,15 +885,9 @@ int reload_gws ( void )
 	}
 	if (!VAL_NULL(ROW_VALUES(row) + 7) &&
 	    (VAL_TYPE(ROW_VALUES(row) + 7) == DB_INT)) {
-	    dm = (unsigned int)VAL_INT(ROW_VALUES(row) + 7);
-	    if ((dm != 0) && (dm != 1)) {
-		LM_ERR("Invalid dm value <%u>\n", dm);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
-	    }
+	    flags = (unsigned int)VAL_INT(ROW_VALUES(row) + 7);
 	} else {
-	    LM_ERR("Attribute dm is NULL or non-int\n");
+	    LM_ERR("Attribute flags is NULL or non-int\n");
 	    lcr_dbf.free_result(dbh, res);
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -892,7 +898,7 @@ int reload_gws ( void )
 	    gws_2[i].grp_id = grp_id;
 	    gws_2[i].scheme = scheme;
 	    gws_2[i].transport = transport;
-	    gws_2[i].dm = dm;
+	    gws_2[i].flags = flags;
 	    gws_2[i].strip = strip;
 	    gws_2[i].prefix_len = prefix_len;
 	    if (prefix_len)
@@ -903,7 +909,7 @@ int reload_gws ( void )
 	    gws_1[i].grp_id = grp_id;
 	    gws_1[i].scheme = scheme;
 	    gws_1[i].transport = transport;
-	    gws_1[i].dm = dm;
+	    gws_1[i].flags = flags;
 	    gws_1[i].strip = strip;
 	    gws_1[i].prefix_len = prefix_len;
 	    if (prefix_len)
@@ -1084,8 +1090,8 @@ int mi_print_gws (struct mi_node* rpl)
 	if(attr == NULL)
 	    return -1;
 
-	p = int2str((unsigned long)(*gws)[i].dm, &len );
-	attr = add_mi_attr(node, MI_DUP_VALUE, "DM", 2, p, len);
+	p = int2str((unsigned long)(*gws)[i].flags, &len );
+	attr = add_mi_attr(node, MI_DUP_VALUE, "FLAGS", 5, p, len);
 	if(attr == NULL)
 	    return -1;
     }
@@ -1131,17 +1137,17 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
     char ruri[MAX_URI_SIZE];
     unsigned int i, j, k, index;
     unsigned int addr, port;
-    unsigned int strip, gw_index, duplicated_gw;
-    unsigned short dm;
+    unsigned int strip, gw_index, duplicated_gw, flags;
     uri_type scheme;
     uri_transport transport;
     struct ip_addr address;
     str addr_str, port_str;
-    char *at, *prefix, *strip_string;
+    char *at, *prefix, *strip_string, *flags_string;
     int_str val;
     struct mi matched_gws[MAX_NO_OF_GWS + 1];
     unsigned short prefix_len, priority;
-    int randomizer_start, randomizer_end, randomizer_flag, strip_len;
+    int randomizer_start, randomizer_end, randomizer_flag,
+	strip_len, flags_len;
     struct lcr_info lcr_rec;
 
     /* Find Request-URI user */
@@ -1334,27 +1340,23 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	port = (*gws)[index].port;
 	scheme = (*gws)[index].scheme;
 	transport = (*gws)[index].transport;
-	dm = (*gws)[index].dm;
+	flags = (*gws)[index].flags;
 	strip = (*gws)[index].strip;
 	if (strip > ruri_user.len) {
 	    LM_ERR("Strip count of gw is too large <%u>\n", strip);
 	    goto skip;
 	}
-	strip_string = int2str(strip, &strip_len);
 	prefix_len = (*gws)[index].prefix_len;
 	prefix = (*gws)[index].prefix;
-
-	if (6 + prefix_len + 1 + strip_len + 1 + 15 + 1 + 5 + 1 + 14 >
+	if (6 + prefix_len + 40 /* flags + strip */ + 1 + 15 + 1 + 5 + 1 + 14 >
 	    MAX_URI_SIZE) {
 	    LM_ERR("Request URI would be too long\n");
 	    goto skip;
 	}
 	at = (char *)&(ruri[0]);
-	if (dm == 0)
-	    *at = '0';
-	else
-	    *at = '1';
-	at = at + 1;
+	flags_string = int2str(flags, &flags_len);
+	memcpy(at, flags_string, flags_len);
+	at = at + flags_len;
 	if (scheme == SIP_URI_T) {
 	    memcpy(at, "sip:", 4); at = at + 4;
 	} else if (scheme == SIPS_URI_T) {
@@ -1371,9 +1373,9 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	 * For example: |3 means strip first 3 characters.
          */
 	*at = '|'; at = at + 1;
+	strip_string = int2str(strip, &strip_len);
 	memcpy(at, strip_string, strip_len);
 	at = at + strip_len;
-
 	*at = '@'; at = at + 1;
 	address.af = AF_INET;
 	address.len = 4;
@@ -1473,13 +1475,13 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     gu_avp = search_first_avp(gw_uri_avp_type, gw_uri_avp, &gw_uri_val, 0);
     if (!gu_avp) return -1;
 
-    /* Set dm_flag based on first char of gw_uri */
-    if (*(gw_uri_val.s.s) == '0')
-	resetflag(_m, dm_flag);
-    else 
-	setflag(_m, dm_flag);
-    gw_uri_val.s.s = gw_uri_val.s.s + 1;
-    gw_uri_val.s.len = gw_uri_val.s.len - 1;
+    /* Set flags_avp from integer at the beginning of of gw_uri */
+    val.n = (int)strtoul(gw_uri_val.s.s, &at, 0);
+    add_avp(flags_avp_type, flags_avp, val);
+    LM_DBG("Added flags_avp <%u>\n", (unsigned int)val.n);
+    
+    gw_uri_val.s.len = gw_uri_val.s.len - (at - gw_uri_val.s.s);
+    gw_uri_val.s.s = at;
 
     if (route_type == REQUEST_ROUTE) {
 
@@ -1632,6 +1634,7 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
     unsigned int src_addr;
     pv_value_t pv_val;
     struct in_addr addr_struct;
+    int_str val;
 
     if (addr_sp && (pv_get_spec_value(_m, addr_sp, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_INT) {
@@ -1657,14 +1660,15 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 	}
 	if ((*gws)[i].ip_addr == src_addr && 
 	    (grp_id < 0 || (*gws)[i].grp_id == grp_id)) {
-	    if ((*gws)[i].dm == 0)
-		resetflag(_m, dm_flag);
-	    else 
-		setflag(_m, dm_flag);
+	    LM_DBG("Request came from gw\n");
+	    val.n = (int)(*gws)[i].flags;
+	    add_avp(flags_avp_type, flags_avp, val);
+	    LM_DBG("Added flags_avp <%u>\n", (unsigned int)val.n);
 	    return 1;
 	}
     }
 
+    LM_DBG("Request did not come from gw\n");
     return -1;
 }
 

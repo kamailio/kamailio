@@ -280,21 +280,20 @@ modparam("lcr","grp_id_column","grp_id")
 
 
 <section>
-		<title><varname>dm_column</varname> (string)</title>
+		<title><varname>flags_column</varname> (string)</title>
 		<para>
-		Name of the column holding information on whether gateway
-		supports directed media.
+		Name of the column holding gateway specific flag values.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>dm</quote>.
+			Default value is <quote>flags</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>dm_column/varname> module parameter</title>
+		<title>Setting <varname>flags_column</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","dm_column","directed_media")
+modparam("lcr","flags_column","gw_flags")
 ...
 </programlisting>
 		</example>
@@ -560,22 +559,22 @@ modparam("lcr","fr_inv_timer_next",30)
 	</section>
 
 	<section>
-		<title><varname>dm_flag</varname> (integer)</title>
+		<title><varname>flags_avp</varname> (AVP string)</title>
 		<para>
-		Contains number of message flag that next_gw() function
-		sets or resets depending on whether selected gateway
-		supports directed media.
+		An AVP where successful next_gw and from_gw functions
+		store gateway's flags.
 		</para>
 		<para>
 		<emphasis>
-			There is no valid default value.
+			There is NO default value, thus this variable must
+			be defined in openser.cfg.
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>dm_flag</varname> module parameter</title>
+		<title>Setting <varname>flags_avp</varname> module parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr", "dm_flag", 25)
+modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
 </programlisting>
 		</example>
@@ -651,9 +650,7 @@ if (!load_gws("$avp(s:gateway_group)")) {
 		AVP.
 		</para>
 		<para>
-		As side effect, sets or resets a message flag depending
-	on whether gateway of first gw_uri_avp AVP supports directed
-	media.
+		As a side effect, stores gateway's flags to flags_avp.
 		</para>
 		<para>
 		Returns 1 on success and -1 if there were no gateways left or if an
@@ -698,8 +695,8 @@ if (!next_gw()) {
 			gateway.  IP address to be checked is either
 			taken from source IP address of the request or
 			(if present) from pseudo variable argument.
-			Sets or resets a message flag depending on
-			whether the gateway supports directed media. 
+			As a side effect, stores gateway's flags to
+			flags_avp.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -917,15 +914,6 @@ if (next_contacts()) {
 	</para>
 	</section>
 
-	<section>
-	<title>TODO</title>
-	<para>
-		Function load_gws() currently makes an SQL query for the matching
-		gateways.  In order to avoid the query, also lcr table should be
-		read into memory and the corresponding query should be rewritten in
-		C.
-	</para>
-	</section>
 </chapter>
 
 <!-- Keep this element at the end of the file

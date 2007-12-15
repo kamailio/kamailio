@@ -12,7 +12,7 @@
 
 <book>
 	<bookinfo>
-	<title>LCR(Least Cost Routing) Module</title>
+	<title>LCR (Least Cost Routing) Module</title>
 	<authorgroup>
 		<author>
 			<firstname>Juha</firstname>
@@ -26,7 +26,7 @@
 		</editor>
 	</authorgroup>
 	<copyright>
-		<year>2005</year>
+		<year>2005-2007</year>
 	 	<holder>Juha Heinanen</holder>
 	</copyright>
 	<revhistory>
