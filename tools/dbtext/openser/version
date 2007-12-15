@@ -13,8 +13,7 @@ dispatcher:1
 domain:1
 domainpolicy:2
 grp:2
-gw:5
-gw_grp:1
+gw:6
 imc_members:1
 imc_rooms:1
 lcr:2
