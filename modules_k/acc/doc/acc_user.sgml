@@ -37,10 +37,6 @@
 		information to be logged, please see the next chapter about extra
 		accouting - <xref linkend="ACC-extra-id">.
 	</para>
-	<para>If you use logging to syslog, you can use the core parameter
-		<emphasis>log_facility_acc</emphasis> to separate the accounting
-		related logging from the other OpenSER messages.
-	</para>
 	<para>
 		The fixed minimal accouting information is: 
 		<itemizedlist>
