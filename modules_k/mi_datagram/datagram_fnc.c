@@ -51,6 +51,10 @@
 #define SUN_LEN(sa)	 ( strlen((sa)->sun_path) + \
 					 (size_t)(((struct sockaddr_un*)0)->sun_path) )
 #endif
+/* AF_LOCAL is not defined on solaris */
+#if !defined(AF_LOCAL)
+#define AF_LOCAL AF_UNIX
+#endif
 
 int flags;
 static char *mi_buf = 0;
