@@ -1117,46 +1117,10 @@ lcr() {
                         let "lines=$lines-1"
                         tail -n $lines $LCR_FILE
 
-                        mecho "lcr gateway groups"
-                        lines=`wc -l $GW_GRP_FILE | cut -d " " -f 1`
-                        let "lines=$lines-1"
-                        tail -n $lines $GW_GRP_FILE
-
                         mecho "lcr gateways"
                         lines=`wc -l $GW_FILE | cut -d " " -f 1`
                         let "lines=$lines-1"
                         tail -n $lines $GW_FILE
-                        ;;
-
-                addgw_grp)
-                        shift
-                        if [ $# -lt 2 ] ; then
-                                merr "too few parameters"
-                                usage
-                                exit 1
-                        fi
-                        GRP_ID=$2
-                        cat $GW_GRP_FILE | $EGREP ^$GRP_ID: > /dev/null
-                        if [ $? -eq 0 ] ; then
-                                merr "error: group already present"
-                                exit 1
-                        fi
-			get_next_id $GW_GRP_FILE
-                        echo $get_next_id_next_id:$2:$1 >> $GW_GRP_FILE
-                        chown_openser $GW_GRP_FILE
-                        fifo_cmd lcr_reload
-                        ;;
-
-                rmgw_grp)
-                        shift
-                        if [ $# -ne 1 ] ; then
-                                echo missing grp_id to be removed
-                                exit 1
-                        fi
-                        cat $GW_GRP_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_GRP_FILE.tmp
-                        mv -f $GW_GRP_FILE.tmp $GW_GRP_FILE
-                        chown_openser $GW_GRP_FILE
-                        fifo_cmd lcr_reload
                         ;;
 
                 addgw)
@@ -1250,9 +1214,6 @@ lcr() {
 			mecho "lcr routes"
 			QUERY="select * FROM $LCR_TABLE ORDER BY $LCR_PREFIX_COLUMN; "
 			$DBROCMD "$QUERY"
-			mecho "lcr gateway groups"
-			QUERY="select * FROM $GW_GRP_TABLE ORDER BY $LCR_GRP_ID_COLUMN; "
-			$DBROCMD "$QUERY"
 			mecho "lcr gateways"
 			#QUERY="select * FROM $GW_TABLE ORDER BY grp_id; "
 			QUERY="select $LCR_GW_GWNAME_COLUMN, $LCR_GW_IP_COLUMN,\
@@ -1262,42 +1223,6 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		reload)
-			$CTLCMD lcr_reload
-			;;
-		addgw_grp)
-			shift
-			if [ $# -lt 1 ] ; then
-				merr "lcr - too few parameters"
-				usage_lcr
-				exit 1
-			fi
-			if [ $# -gt 1 ] ; then
-				GRP_ID=$2
-			else
-				GRP_ID=NULL
-			fi
-			QUERY="insert into $GW_GRP_TABLE \
-				($LCR_GRP_ID_COLUMN, $LCR_GRP_NAME_COLUMN) \
-				VALUES ($GRP_ID, '$1');"
-			$DBCMD "$QUERY"
-			if [ $? -ne 0 ] ; then
-				merr "lcr - SQL Error"
-				exit 1
-			fi
-			$CTLCMD lcr_reload
-			;;
-		rmgw_grp)
-			shift
-			if [ $# -ne 1 ] ; then
-				merr "missing grp_id to be removed"
-				exit 1
-			fi
-			QUERY="delete from $GW_GRP_TABLE where $LCR_GRP_ID_COLUMN=$1;"
-			$DBCMD "$QUERY"
-			if [ $? -ne 0 ] ; then
-				merr "lcr - SQL Error"
-				exit 1
-			fi
 			$CTLCMD lcr_reload
 			;;
 		addroute)

@@ -43,9 +43,6 @@ fi
 if [ -z "$GW_FILE" ] ; then
         GW_FILE=$DB_PATH/$GW_TABLE
 fi
-if [ -z "$GW_GRP_FILE" ] ; then
-        GW_GRP_FILE=$DB_PATH/$GW_GRP_TABLE
-fi
 
 #===================================================================
 

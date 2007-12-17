@@ -174,15 +174,6 @@ show routes, gateways and groups
 .B lcr reload
 reload lcr gateways
 .TP
-.B lcr addgw_grp <grp_name>
-add gateway group, autocreate grp_id
-.TP
-.B lcr addgw_grp <grp_name> <grp_id>
-add gateway group with grp_id
-.TP
-.B lcr rmgw_grp  <grp_id>
-delete the gw_grp
-.TP
 .B lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id>
 add a gateway
 .TP
@@ -214,8 +205,6 @@ e.g. transport '2' is identical to transport 'tcp'.
 scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls
 .br
 Examples:
-.br
-lcr addgw_grp usa 1
 .br
 lcr addgw level3 1.2.3.4 5080 sip tcp 1
 .br

@@ -204,13 +204,6 @@ LCR_GW_PROTO_COLUMN=transport
 LCR_GW_STRIP_COLUMN=strip
 LCR_GW_PREFIX_COLUMN=prefix
 
-# gw_grp table
-if [ -z "$GW_GRP_TABLE" ] ; then
-	GW_GRP_TABLE=gw_grp
-fi
-LCR_GRP_ID_COLUMN=grp_id
-LCR_GRP_NAME_COLUMN=grp_name
-
 # URI table
 if [ -z "$URI_TABLE" ] ; then
 	URI_TABLE=uri
