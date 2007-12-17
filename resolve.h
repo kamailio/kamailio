@@ -167,7 +167,7 @@ extern int dns_tls_pref;  /* tls transport preference (for naptr) */
 
 
 #define rev_resolvehost(ip)\
-					gethostbyaddr((char*)(ip)->u.addr, (ip)->len, (ip)->af);
+					gethostbyaddr((char*)(ip)->u.addr, (ip)->len, (ip)->af)
 
 
 

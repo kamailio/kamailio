@@ -914,18 +914,16 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 					/* 3: (slow) rev dns the address
 					* and compare with all the aliases
 					* !!??!! review: remove this? */
-					he=rev_resolvehost(ip);
-					if (he==0){
-						print_ip( "comp_ip: could not rev_resolve ip address:"
-									" ", ip, "\n");
-					ret=0;
-					}else{
+					if (unlikely((received_dns & DO_REV_DNS) && 
+							((he=rev_resolvehost(ip))!=0) )){
 						/*  compare with primary host name */
 						ret=comp_string(op, he->h_name, rtype, r);
 						/* compare with all the aliases */
 						for(h=he->h_aliases; (ret!=1) && (*h); h++){
 							ret=comp_string(op, *h, rtype, r);
 						}
+					}else{
+						ret=0;
 					}
 					break;
 				case DIFF_OP:
