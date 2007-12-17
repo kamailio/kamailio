@@ -156,6 +156,10 @@ Chapter 1. User's Guide
    by adding more information to be logged, please see the next
    chapter about extra accouting - Section 1.2.
 
+   If you use logging to syslog, you can use the core parameter
+   log_facility_acc to separate the accounting related logging
+   from the other OpenSER messages.
+
    The fixed minimal accouting information is:
 
      * Request Method name
