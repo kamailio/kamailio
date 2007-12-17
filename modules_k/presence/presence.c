@@ -221,7 +221,7 @@ static int mod_init(void)
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
 	
-	/* binding to mysql module  */
+	/* binding to database module  */
 	if (bind_dbmod(db_url.s, &pa_dbf))
 	{
 		LM_ERR("Database module not found\n");
@@ -239,10 +239,12 @@ static int mod_init(void)
 	pa_db = pa_dbf.init(db_url.s);
 	if (!pa_db)
 	{
-		LM_ERR("connecting database\n");
+		LM_ERR("connecting to database failed\n");
 		return -1;
 	}
-	// verify table version 
+	
+	/*verify table version */
+
 	_s.s = presentity_table;
 	_s.len = strlen(presentity_table);
 	 ver =  table_version(&pa_dbf, pa_db, &_s);

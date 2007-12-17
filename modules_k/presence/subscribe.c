@@ -304,7 +304,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 				if( send_2XX_reply(msg, 200, subs->expires, &subs->to_tag,
 							&subs->local_contact) <0)
 				{
-					LM_ERR("sending 202 OK reply\n");
+					LM_ERR("sending 200 OK reply\n");
 					goto error;
 				}
 				*sent_reply= 1;
@@ -394,7 +394,7 @@ int update_subscription(struct sip_msg* msg, subs_t* subs, int to_tag_gen,
 		if( send_2XX_reply(msg, 200, subs->expires, &subs->to_tag,
 					&subs->local_contact)<0)
 		{
-			LM_ERR("sending 202 OK reply\n");
+			LM_ERR("sending 200 OK reply\n");
 			goto error;
 		}		
 		*sent_reply= 1;
