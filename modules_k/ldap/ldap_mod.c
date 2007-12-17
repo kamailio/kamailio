@@ -246,7 +246,7 @@ static int mod_init(void)
 		LM_ERR("ldap_get_vendor_version failed\n");
 		return -2;
 	}
-	LM_ERR("%s\n", ldap_version);
+	LM_INFO("%s\n", ldap_version);
 
 	return 0;
 }
