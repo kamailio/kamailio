@@ -154,7 +154,7 @@ extern int dns_try_ipv6;
 
 
 #define rev_resolvehost(ip)\
-					gethostbyaddr((char*)(ip)->u.addr, (ip)->len, (ip)->af);
+					gethostbyaddr((char*)(ip)->u.addr, (ip)->len, (ip)->af)
 
 
 
