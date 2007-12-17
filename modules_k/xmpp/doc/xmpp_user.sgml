@@ -270,6 +270,31 @@
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>outbound_proxy</varname> (string)</title>
+		<para>
+		The SIP address used as next hop when sending the message. Very
+		useful when using OpenSER with a domain name not in DNS, or
+		when using a separate OpenSER instance for xmpp processing. If
+		not set, the message will be sent to the address in destination
+		URI.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp");
+...
+</programlisting>
+		</example>
+	</section>
+
+
 	</section>
 
 	<section>
@@ -286,7 +311,7 @@
 		<title><function>xmpp_send_message()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-xmpp_send_massage();
+xmpp_send_message();
 ...
 </programlisting>
 		</example>

@@ -126,6 +126,7 @@ char *xmpp_domain = "xmpp2sip.example.net";
 char *xmpp_host = "xmpp.example.com";
 int xmpp_port = 0;
 char *xmpp_password = "secret";
+str outbound_proxy= {0, 0};
 
 #define DEFAULT_COMPONENT_PORT 5347
 #define DEFAULT_SERVER_PORT 5269
@@ -149,13 +150,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{ "backend",		STR_PARAM, &backend },
+	{ "backend",			STR_PARAM, &backend },
 	{ "domain_separator",	STR_PARAM, &domain_sep_str },
-	{ "gateway_domain",	STR_PARAM, &gateway_domain },
-	{ "xmpp_domain",	STR_PARAM, &xmpp_domain },
-	{ "xmpp_host",		STR_PARAM, &xmpp_host },
-	{ "xmpp_port",		INT_PARAM, &xmpp_port },
-	{ "xmpp_password",	STR_PARAM, &xmpp_password },
+	{ "gateway_domain",		STR_PARAM, &gateway_domain },
+	{ "xmpp_domain",		STR_PARAM, &xmpp_domain },
+	{ "xmpp_host",			STR_PARAM, &xmpp_host },
+	{ "xmpp_port",			INT_PARAM, &xmpp_port },
+	{ "xmpp_password",		STR_PARAM, &xmpp_password },
+	{ "outbound_proxy",		STR_PARAM, &outbound_proxy.s},
 	{0, 0, 0}
 };
 
@@ -204,6 +206,9 @@ static int mod_init(void) {
 	/* fix up the domain separator -- we only need 1 char */
 	if (domain_sep_str && *domain_sep_str)
 		domain_separator = *domain_sep_str;
+
+	if(outbound_proxy.s)
+		outbound_proxy.len= strlen(outbound_proxy.s);
 
 	if(init_xmpp_cb_list()<0){
 		LM_ERR("failed to init callback list\n");
@@ -260,8 +265,17 @@ int xmpp_send_sip_msg(char *from, char *to, char *msg)
 	msgstr.s = msg;
 	msgstr.len = strlen(msg);
 
-	return tmb.t_request(&msg_type, 0, &tostr, &fromstr, &hdr, &msgstr,
-			0, 0, 0);
+	return tmb.t_request(
+			&msg_type,						/* Type of the message */
+			0,								/* Request-URI */
+			&tostr,							/* To */
+			&fromstr,						/* From */
+			&hdr,							/* Optional headers */
+			&msgstr,						/* Message body */
+	(outbound_proxy.s)?&outbound_proxy:NULL,/* Outbound proxy*/
+			0,								/* Callback function */
+			0								/* Callback parameter */
+			);
 }
 
 

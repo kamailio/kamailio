@@ -29,6 +29,7 @@ Andreea Spirea
               1.3.5. xmpp_host (string)
               1.3.6. xmpp_port (integer)
               1.3.7. xmpp_password (string)
+              1.3.8. outbound_proxy (string)
 
         1.4. Exported Functions
 
@@ -47,7 +48,8 @@ Andreea Spirea
    1-5. Set xmpp_host parameter
    1-6. Set xmpp_port parameter
    1-7. Set xmpp_password parameter
-   1-8. xmpp_send_message() usage
+   1-8. Set outbound_proxy parameter
+   1-9. xmpp_send_message() usage
      __________________________________________________________
 
 Chapter 1. User's Guide
@@ -252,6 +254,22 @@ Chapter 1. User's Guide
 ...
      __________________________________________________________
 
+1.3.8. outbound_proxy (string)
+
+   The SIP address used as next hop when sending the message. Very
+   useful when using OpenSER with a domain name not in DNS, or
+   when using a separate OpenSER instance for xmpp processing. If
+   not set, the message will be sent to the address in destination
+   URI.
+
+   Default value is NULL.
+
+   Example 1-8. Set outbound_proxy parameter
+...
+ modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp");
+...
+     __________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. xmpp_send_message()
@@ -259,7 +277,7 @@ Chapter 1. User's Guide
    Converts SIP messages to XMPP(jabber) messages, in order to be
    relayed to a XMPP(jabber) client.
 
-   Example 1-8. xmpp_send_message() usage
+   Example 1-9. xmpp_send_message() usage
 ...
 xmpp_send_massage();
 ...
