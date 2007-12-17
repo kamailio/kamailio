@@ -127,7 +127,7 @@ inline static int parse_auth_avp( char *avp_spec, pv_spec_t *avp, char *txt)
 {
 	str s;
 	s.s = avp_spec; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, avp)) {
+	if (pv_parse_spec(&s, avp)==NULL) {
 		LM_ERR("malformed or non AVP %s AVP definition\n",txt);
 		return -1;
 	}
