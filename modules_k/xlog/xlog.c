@@ -73,11 +73,11 @@ static pv_export_t mod_items[] = {
 
 
 static cmd_export_t cmds[]={
-	{"xlog",  xlog_1,  1, xdbg_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE |
+	{"xlog",  (cmd_function)xlog_1,  1, xdbg_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
-	{"xlog",  xlog_2,  2, xlog_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE |
+	{"xlog",  (cmd_function)xlog_2,  2, xlog_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE |
 		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
-	{"xdbg",  xdbg,    1, xdbg_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE | 
+	{"xdbg",  (cmd_function)xdbg,    1, xdbg_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE | 
 		ONREPLY_ROUTE | BRANCH_ROUTE | ERROR_ROUTE},
 	{0,0,0,0,0,0}
 };
