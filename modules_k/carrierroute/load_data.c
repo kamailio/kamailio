@@ -73,14 +73,15 @@ int bind_data_loader(const char * source, route_data_load_func_t * api){
 			LM_ERR("can't stat config file\n");
 			return -1;
 		}
-		if(!(fs.st_mode & S_IWOTH)){
-			if(!((fs.st_mode & S_IWGRP) && ((gid && (gid == fs.st_gid)) || (!gid && (fs.st_gid == getegid()))))){
-				if(!((fs.st_mode & S_IWUSR) && ((uid && (uid == fs.st_uid)) || (!uid && (fs.st_uid == geteuid()))))) {
-					LM_ERR("config file not writable\n");
-					return -1;
-				}
-			}
+		if(fs.st_mode & S_IWOTH){
+			LM_WARN("insecure file permissions, routing data is world writeable");
 		}
+		if( !( fs.st_mode & S_IWOTH) &&
+			!((fs.st_mode & S_IWGRP) && (fs.st_gid == getegid())) &&
+			!((fs.st_mode & S_IWUSR) && (fs.st_uid == geteuid())) ) {
+				LM_ERR("config file not writable\n");
+				return -1;
+			}
 		return 0;
 	}
 	LM_NOTICE("could bind configuration source <%s>", source);
