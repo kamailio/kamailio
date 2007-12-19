@@ -522,6 +522,8 @@ do { \
 		*/
 		new_hdr->parsed=0;
 
+		new_hdr->sibling=0;
+
 		switch (hdr->type)
 		{
 			case HDR_VIA_T:
