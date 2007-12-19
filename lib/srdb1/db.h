@@ -31,6 +31,21 @@
  *  2006-10-10  Added support for retrieving the last inserted ID (Carsten Bock, BASIS AudioNet GmbH)
  */
 
+/**
+ * \file db.h
+ * \brief Generic Database Interface
+ *
+ * This is a generic database interface for modules that need to utilize a
+ * database. The interface should be used by all modules that access database.
+ * The interface will be independent of the underlying database server.
+ * Notes:
+ * If possible, use the predefined macros if you need to access any structure
+ * attributes.
+ * For additional description, see the comments in the sources of mysql module.
+ *
+ * If you want to see more complicated examples of how the API could be used,
+ * take a look at the sources of the usrloc or auth modules.
+*/
 
 #ifndef DB_H
 #define DB_H
@@ -44,134 +59,274 @@
 #include "db_cap.h"
 
 
-/*
- * Specify table name that will be used for
- * subsequent operations
+/**
+ * \brief Specify table name that will be used for subsequent operations.
+ * 
+ * The function db_use_table takes a table name and stores it db_con_t structure.
+ * All subsequent operations (insert, delete, update, query) are performed on
+ * that table.
+ * \param _h database connection handle
+ * \param _t table name
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_use_table_f)(db_con_t* _h, const char* _t);
 
 
-/*
- * Initialize database connection and
- * obtain the connection handle
+/**
+ * \brief Initialize database connection and obtain the connection handle.
+ *
+ * This function initialize the database API and open a new database
+ * connection. This function must be called after bind_dbmod but before any
+ * other database API function is called.
+ * 
+ * The function takes one parameter, the parameter must contain the database
+ * connection URL. The URL is of the form 
+ * mysql://username:password@host:port/database where:
+ * 
+ * username: Username to use when logging into database (optional).
+ * password: password if it was set (optional)
+ * host:     Hosname or IP address of the host where database server lives (mandatory)
+ * port:     Port number of the server if the port differs from default value (optional)
+ * database: If the database server supports multiple databases, you must specify the
+ * name of the database (optional).
+ * \see bind_dbmod
+ * \param _sqlurl database connection URL
+ * \return returns a pointer to the db_con_t representing the connection if it was
+  successful, otherwise 0 is returned.
  */
 typedef db_con_t* (*db_init_f) (const char* _sqlurl);
 
 
-/*
- * Close a database connection and free
- * all memory used
+/**
+ * \brief Close a database connection and free all memory used.
+ *
+ * The function closes previously open connection and frees all previously 
+ * allocated memory. The function db_close must be the very last function called.
+ * \param _h db_con_t structure representing the database connection
  */
 typedef void (*db_close_f) (db_con_t* _h); 
 
 
-/*
- * Query table for specified rows
- * _h: structure representing database connection
- * _k: key names
- * _op: conditions
- * _v: values of the keys that must match
- * _c: column names to return
- * _n: nmber of key=values pairs to compare
- * _nc: number of columns to return
- * _o: order by the specified column
- * _r: Result will be stored in this variable
- *     NULL if there is no result
+/**
+ * \brief Query table for specified rows.
+ *
+ * This function implements the SELECT SQL directive.
+ * If _k and _v parameters are NULL and _n is zero, you will get the whole table.
+ *
+ * if _c is NULL and _nc is zero, you will get all table columns in the result.
+ * _r will point to a dynamically allocated structure, it is neccessary to call
+ * db_free_result function once you are finished with the result.
+ *
+ * If _op is 0, equal (=) will be used for all key-value pairs comparisons.
+ *
+ * Strings in the result are not duplicated, they will be discarded if you call
+ * db_free_result, make a copy yourself if you need to keep it after db_free_result.
+ *
+ * You must call db_free_result before you can call db_query again!
+ * \see db_free_result
+ *
+ * \param _h database connection handle
+ * \param _k array of column names that will be compared and their values must match
+ * \param _op array of operators to be used with key-value pairs
+ * \param _v array of values, columns specified in _k parameter must match these values
+ * \param _c array of column names that you are interested in
+ * \param _n number of key-value pairs to match in _k and _v parameters
+ * \param _nc number of columns in _c parameter
+ * \param _o order by statement for query
+ * \param _r address of variable where pointer to the result will be stored
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
-typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k, 
-			   db_op_t* _op, db_val_t* _v, 
-			   db_key_t* _c, int _n, int _nc,
-			   db_key_t _o, db_res_t** _r);
+typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
+			   db_op_t* _op, db_val_t* _v, db_key_t* _c,
+			   int _n, int _nc, db_key_t _o, db_res_t** _r);
 
-/*
- * Fetch number of rows from a result
- * _h structure representing database connection
- * _r db_res structure for the result
- * _n the number of rows that should be fetched
+
+/**
+ * \brief Fetch a number of rows from a result.
+ * 
+ * The function fetches a number of rows from a database result. If the number
+ * of wanted rows is zero, the function returns anything with a result of zero.
+ * \param _h structure representing database connection
+ * \param _r structure for the result
+ * \param _n the number of rows that should be fetched
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
 
 
-/*
- * Raw SQL query, database specific !
+/**
+ * \brief Raw SQL query.
+ *
+ * This function can be used to do database specific queries. Please
+ * use this function only if needed, as this creates portability issues
+ * for the different databases. Also keep in mind that you need to
+ * escape all external data sources that you use. You could use the
+ * escape_common and unescape_common functions in the core for this task.
+ * \see escape_common
+ * \see unescape_common
+ * \param _h structure representing database connection
+ * \param _s the SQL query
+ * \param _r structure for the result
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
 
 
-/*
- * Free a result allocated by db_query
- * _h: structure representing database connection
- * _r: db_res structure
+/**
+ * \brief Free a result allocated by db_query.
+ *
+ * This function frees all memory allocated previously in db_query. Its
+ * neccessary to call this function on a db_res_t structure if you don't need the
+ * structure anymore. You must call this function before you call db_query again!
+ * \param _h database connection handle
+ * \param _r pointer to db_res_t structure to destroy
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
 
 
-/*
- * Insert a row into specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
+/**
+ * \brief Insert a row into the specified table.
+ * 
+ * This function implements INSERT SQL directive, you can insert one or more
+ * rows in a table using this function.
+ * \param _h database connection handle
+ * \param _k array of keys (column names) 
+ * \param _v array of values for keys specified in _k parameter
+ * \param _n number of keys-value pairs int _k and _v parameters
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 
-/*
- * Delete a row from the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _n: number of key=value pairs
+/**
+ * \brief Delete a row from the specified table.
+ *
+ * This function implements DELETE SQL directive, it is possible to delete one or
+ * more rows from a table.
+ * If _k is NULL and _v is NULL and _n is zero, all rows are deleted, the
+ * resulting table will be empty.
+ * If _o is NULL, the equal operator "=" will be used for the comparison.
+ * 
+ * \param _h database connection handle
+ * \param _k array of keys (column names) that will be matched
+ * \param _o array of operators to be used with key-value pairs
+ * \param _v array of values that the row must match to be deleted
+ * \param _n number of keys-value parameters in _k and _v parameters
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
 
-/*
- * Update some rows in the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _uk: updated columns
- * _uv: updated values of the columns
- * _n: number of key=value pairs
- * _un: number of columns to update
+/**
+ * \brief Update some rows in the specified table.
+ *
+ * The function implements UPDATE SQL directive. It is possible to modify one
+ * or more rows in a table using this function.
+ * \param _h database connection handle
+ * \param _k array of keys (column names) that will be matched
+ * \param _o array of operators to be used with key-value pairs
+ * \param _v array of values that the row must match to be modified
+ * \param _uk array of keys (column names) that will be modified
+ * \param _uv new values for keys specified in _k parameter
+ * \param _n number of key-value pairs in _k and _v parameters
+ * \param _un number of key-value pairs in _uk and _uv parameters
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 			    db_key_t* _uk, db_val_t* _uv, int _n, int _un);
 
-/*
- * Insert a row and replace if one already exists.
- * handle: structure representing database connection
- * keys: key names
- * vals: values of the keys
- * n: number of key=value pairs
- */
+
+/**
+ * \brief Insert a row and replace if one already exists.
+ *
+ * The function implements the REPLACE SQL directive. It is possible to insert
+ * a row and replace if one already exists. The old row will be deleted before
+ * the insertion of the new data.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
+*/
 typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
-/*
- * Retrieve the last inserted ID in a table
- */
-typedef int (*db_last_inserted_id_f) (db_con_t* handle);
 
-/*
- * Insert a row into specified table, update on duplicate key
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
+/**
+ * \brief Retrieve the last inserted ID in a table.
+ *
+ * The function returns the value generated for an AUTO_INCREMENT column by the
+ * previous INSERT or UPDATE  statement. Use this function after you have 
+ * performed an INSERT statement into a table that contains an AUTO_INCREMENT
+ * field.
+ * \param _h structure representing database connection
+ * \return returns the ID as integer or returns 0 if the previous statement
+   does not use an AUTO_INCREMENT value.
+ */
+typedef int (*db_last_inserted_id_f) (db_con_t* _h);
+
+
+/**
+ * \brief Insert a row into specified table, update on duplicate key.
+ * 
+ * The function implements the INSERT ON DUPLICATE KEY UPDATE SQL directive.
+ * It is possible to insert a row and update if one already exists.
+ * The old row will not deleted before the insertion of the new data.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
  */
 typedef int (*db_insert_update_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
 
+/**
+ * \brief Bind database module functions
+ *
+ * This function is special, it's only purpose is to call find_export function in
+ * the core and find the addresses of all other database related functions. The 
+ * db_func_t callback given as parameter is updated with the found addresses.
+ *
+ * This function must be called before any other database API call!
+ * 
+ * The database URL is of the form "mysql://username:password@host:port/database" or
+ * "mysql" (database module name).
+ * In the case of a database connection URL, this function looks only at the first
+ * token (the database protocol). In the example above that would be "mysql":
+ * \see db_func_t
+ * \param mod database connection URL or a database module name
+ * \param dbf database module callbacks
+ * \return returns 0 if everything is OK, otherwise returns value < 0.
+ */
+int bind_dbmod(char* mod, db_func_t* dbf);
+
+
+/**
+ * \brief Get the version of a table.
+ * 
+ * Returns the version number of a given table from the version table.
+ * \param dbf database module callbacks
+ * \param con database connection handle
+ * \param table checked table
+ * \return the version number if present, 0 if no version data available, < 0 on error
+ */
+int table_version(db_func_t* dbf, db_con_t* con, const str* table);
+
+/**
+ * \brief Database module callbacks
+ * 
+ * This structure holds function pointer to all database functions. Before this
+ * structure can be used it must be initialized with bind_dbmod.
+ * \see bind_dbmod
+ */
 typedef struct db_func {
-	unsigned int     cap;           /* Capability vector of the database transport */
+	unsigned int      cap;           /* Capability vector of the database transport */
 	db_use_table_f    use_table;     /* Specify table name */
 	db_init_f         init;          /* Initialize database connection */
 	db_close_f        close;         /* Close database connection */
 	db_query_f        query;         /* query a table */
-	db_fetch_result_f fetch_result; /* fetch result */
+	db_fetch_result_f fetch_result;  /* fetch result */
 	db_raw_query_f    raw_query;     /* Raw query - SQL */
 	db_free_result_f  free_result;   /* Free a query result */
 	db_insert_f       insert;        /* Insert into table */
@@ -182,23 +337,6 @@ typedef struct db_func {
 	                                            in a table */
 	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
 } db_func_t;
-
-
-
-/*
- * Bind database module functions
- * returns TRUE if everything went OK
- * FALSE otherwise
- */
-int bind_dbmod(char* mod, db_func_t* dbf);
-
-
-/*
- * Get the version of the given table. If there is
- * no row for the table then the function returns
- * version 0. -1 is returned on error.
- */
-int table_version(db_func_t* dbf, db_con_t* con, const str* table);
 
 
 #endif /* DB_H */
