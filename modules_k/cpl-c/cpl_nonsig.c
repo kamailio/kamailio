@@ -42,7 +42,6 @@
 
 
 #define MAX_LOG_FILE_NAME      32
-#define MAX_FD                 32
 
 #define FILE_NAME_SUFIX        ".log"
 #define FILE_NAME_SUFIX_LEN    (sizeof(FILE_NAME_SUFIX)-1)
@@ -155,7 +154,8 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		goto error;
 	} else if (pid==0) {
 		/* child -> close all descriptors excepting pfd[0] */
-		for (i=3; i < MAX_FD; i++)
+		/* 32 is the maximum number of inherited open file descriptors */
+		for (i=3; i < 32; i++)
 			if (i!=pfd[0])
 				close(i);
 		if (pfd[0] != STDIN_FILENO) {
