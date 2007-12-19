@@ -282,6 +282,32 @@ typedef int (*db_insert_update_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int
 
 
 /**
+ * \brief Database module callbacks
+ * 
+ * This structure holds function pointer to all database functions. Before this
+ * structure can be used it must be initialized with bind_dbmod.
+ * \see bind_dbmod
+ */
+typedef struct db_func {
+	unsigned int      cap;           /* Capability vector of the database transport */
+	db_use_table_f    use_table;     /* Specify table name */
+	db_init_f         init;          /* Initialize database connection */
+	db_close_f        close;         /* Close database connection */
+	db_query_f        query;         /* query a table */
+	db_fetch_result_f fetch_result;  /* fetch result */
+	db_raw_query_f    raw_query;     /* Raw query - SQL */
+	db_free_result_f  free_result;   /* Free a query result */
+	db_insert_f       insert;        /* Insert into table */
+	db_delete_f       delete;        /* Delete from table */ 
+	db_update_f       update;        /* Update table */
+	db_replace_f      replace;       /* Replace row in a table */
+	db_last_inserted_id_f  last_inserted_id;  /* Retrieve the last inserted ID
+	                                            in a table */
+	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
+} db_func_t;
+
+
+/**
  * \brief Bind database module functions
  *
  * This function is special, it's only purpose is to call find_export function in
@@ -312,31 +338,5 @@ int bind_dbmod(char* mod, db_func_t* dbf);
  * \return the version number if present, 0 if no version data available, < 0 on error
  */
 int table_version(db_func_t* dbf, db_con_t* con, const str* table);
-
-/**
- * \brief Database module callbacks
- * 
- * This structure holds function pointer to all database functions. Before this
- * structure can be used it must be initialized with bind_dbmod.
- * \see bind_dbmod
- */
-typedef struct db_func {
-	unsigned int      cap;           /* Capability vector of the database transport */
-	db_use_table_f    use_table;     /* Specify table name */
-	db_init_f         init;          /* Initialize database connection */
-	db_close_f        close;         /* Close database connection */
-	db_query_f        query;         /* query a table */
-	db_fetch_result_f fetch_result;  /* fetch result */
-	db_raw_query_f    raw_query;     /* Raw query - SQL */
-	db_free_result_f  free_result;   /* Free a query result */
-	db_insert_f       insert;        /* Insert into table */
-	db_delete_f       delete;        /* Delete from table */ 
-	db_update_f       update;        /* Update table */
-	db_replace_f      replace;       /* Replace row in a table */
-	db_last_inserted_id_f  last_inserted_id;  /* Retrieve the last inserted ID
-	                                            in a table */
-	db_insert_update_f insert_update; /* Insert into table, update on duplicate key */ 
-} db_func_t;
-
 
 #endif /* DB_H */
