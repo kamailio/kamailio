@@ -81,20 +81,20 @@ static int *probability;
 
 static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
-		set_prob,  /* C function name */
+		(cmd_function)set_prob,  /* C function name */
 		1,          /* number of parameters */
 		fixup_prob, 0,         /* */
 		/* can be applied to original/failed requests and replies */
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
-	{"rand_reset_prob", reset_prob, 0, 0, 0,
+	{"rand_reset_prob", (cmd_function)reset_prob, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
-	{"rand_get_prob", get_prob, 0, 0, 0,
+	{"rand_get_prob", (cmd_function)get_prob, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"rand_event", rand_event, 0, 0, 0,
+	{"rand_event", (cmd_function)rand_event, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"sleep",    m_sleep,    1,      fixup_str2int, 0, 
+	{"sleep",    (cmd_function)m_sleep,    1,      fixup_str2int, 0, 
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"usleep",   m_usleep,   1,      fixup_str2int, 0,
+	{"usleep",   (cmd_function)m_usleep,   1,      fixup_str2int, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

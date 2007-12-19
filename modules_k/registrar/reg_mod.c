@@ -142,15 +142,15 @@ struct sl_binds slb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"save",         save,         1,    save_fixup, 0,
+	{"save",         (cmd_function)save,         1,    save_fixup, 0,
 			REQUEST_ROUTE },
-	{"save",         save,         2,    save_fixup, 0,
+	{"save",         (cmd_function)save,         2,    save_fixup, 0,
 			REQUEST_ROUTE },
-	{"lookup",       lookup,       1,  domain_fixup, 0,
+	{"lookup",       (cmd_function)lookup,       1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"registered",   registered,   1,  domain_fixup, 0,
+	{"registered",   (cmd_function)registered,   1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"add_sock_hdr", add_sock_hdr, 1,     str_fixup, 0,
+	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,     str_fixup, 0,
 			REQUEST_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };

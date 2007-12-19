@@ -80,13 +80,13 @@ static void mod_destroy(void);
 
 /* Exported functions */
 static cmd_export_t cmds[]={
-	{"uac_replace_from",  w_replace_from2,  2, fixup_replace_from2, 0,
+	{"uac_replace_from",  (cmd_function)w_replace_from2,  2, fixup_replace_from2, 0,
 			REQUEST_ROUTE },
-	{"uac_replace_from",  w_replace_from1,  1, fixup_replace_from1, 0,
+	{"uac_replace_from",  (cmd_function)w_replace_from1,  1, fixup_replace_from1, 0,
 			REQUEST_ROUTE },
-	{"uac_restore_from",  w_restore_from,   0,                  0, 0,
+	{"uac_restore_from",  (cmd_function)w_restore_from,   0,                  0, 0,
 			REQUEST_ROUTE },
-	{"uac_auth",          w_uac_auth,       0,                  0, 0,
+	{"uac_auth",          (cmd_function)w_uac_auth,       0,                  0, 0,
 			FAILURE_ROUTE },
 	{0,0,0,0,0,0}
 };

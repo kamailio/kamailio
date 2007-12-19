@@ -198,10 +198,10 @@ NatTest natTests[] = {
 };
 
 static cmd_export_t commands[] = {
-    {"fix_contact",       FixContact,      0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-    {"use_media_proxy",   UseMediaProxy,   0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-    {"end_media_session", EndMediaSession, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-    {"client_nat_test",   ClientNatTest,   1, fixup_str2int, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"fix_contact",       (cmd_function)FixContact,      0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+    {"use_media_proxy",   (cmd_function)UseMediaProxy,   0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"end_media_session", (cmd_function)EndMediaSession, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"client_nat_test",   (cmd_function)ClientNatTest,   1, fixup_str2int, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 

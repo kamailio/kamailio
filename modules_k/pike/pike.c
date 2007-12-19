@@ -68,7 +68,7 @@ struct list_link*       timer = 0;
 
 
 static cmd_export_t cmds[]={
-	{"pike_check_req",  pike_check_req,  0,  0, 0, REQUEST_ROUTE},
+	{"pike_check_req",  (cmd_function)pike_check_req,  0,  0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -81,7 +81,7 @@ static param_export_t params[]={
 
 
 static mi_export_t mi_cmds [] = {
-	{MI_PIKE_LIST,   mi_pike_list,   MI_NO_INPUT_FLAG,  0,  0 },
+	{MI_PIKE_LIST, mi_pike_list,   MI_NO_INPUT_FLAG,  0,  0 },
 	{0,0,0,0,0}
 };
 

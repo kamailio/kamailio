@@ -69,7 +69,7 @@ db_func_t adbf;  /* DB functions */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"alias_db_lookup", alias_db_lookup, 1, 0, 0,
+	{"alias_db_lookup", (cmd_function)alias_db_lookup, 1, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

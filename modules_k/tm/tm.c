@@ -135,43 +135,43 @@ stat_var *tm_trans_inuse;
 
 
 static cmd_export_t cmds[]={
-	{"t_newtran",            w_t_newtran,             0, 0,
+	{"t_newtran",            (cmd_function)w_t_newtran,             0, 0,
 			0, REQUEST_ROUTE},
-	{"t_reply",              w_t_reply,               2, fixup_t_send_reply,
+	{"t_reply",              (cmd_function)w_t_reply,               2, fixup_t_send_reply,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_release",            w_t_release,             0, 0,
+	{"t_release",            (cmd_function)w_t_release,             0, 0,
 			0, REQUEST_ROUTE},
-	{"t_replicate",          w_t_replicate,           1, fixup_t_replicate,
+	{"t_replicate",          (cmd_function)w_t_replicate,           1, fixup_t_replicate,
 			0, REQUEST_ROUTE},
-	{"t_replicate",          w_t_replicate,           2, fixup_t_replicate,
+	{"t_replicate",          (cmd_function)w_t_replicate,           2, fixup_t_replicate,
 			0, REQUEST_ROUTE},
-	{"t_relay",              w_t_relay,               0, 0,
+	{"t_relay",              (cmd_function)w_t_relay,               0, 0,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              w_t_relay,               1, fixup_t_relay1,
+	{"t_relay",              (cmd_function)w_t_relay,               1, fixup_t_relay1,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              w_t_relay,               2, fixup_t_relay2,
+	{"t_relay",              (cmd_function)w_t_relay,               2, fixup_t_relay2,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_on_failure",         w_t_on_negative,         1, fixup_str2int,
+	{"t_on_failure",         (cmd_function)w_t_on_negative,         1, fixup_str2int,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_on_reply",           w_t_on_reply,            1, fixup_str2int,
+	{"t_on_reply",           (cmd_function)w_t_on_reply,            1, fixup_str2int,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_on_branch",          w_t_on_branch,           1, fixup_str2int,
+	{"t_on_branch",          (cmd_function)w_t_on_branch,           1, fixup_str2int,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_check_status",       t_check_status,          1, fixup_str2regexp,
+	{"t_check_status",       (cmd_function)t_check_status,          1, fixup_str2regexp,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_write_req",         t_write_req,              2, fixup_t_write,
+	{"t_write_req",          (cmd_function)t_write_req,              2, fixup_t_write,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-	{"t_write_unix",        t_write_unix,             2, fixup_t_write,
+	{"t_write_unix",         (cmd_function)t_write_unix,             2, fixup_t_write,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-	{"t_flush_flags",       t_flush_flags,            0, 0,
+	{"t_flush_flags",        (cmd_function)t_flush_flags,            0, 0,
 			0, REQUEST_ROUTE | BRANCH_ROUTE  },
-	{"t_local_replied",     t_local_replied,          1, fixup_local_replied,
+	{"t_local_replied",      (cmd_function)t_local_replied,          1, fixup_local_replied,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_check_trans",       t_check_trans,            0, 0,
+	{"t_check_trans",        (cmd_function)t_check_trans,            0, 0,
 			0, REQUEST_ROUTE | BRANCH_ROUTE },
-	{"t_was_cancelled",     t_was_cancelled,          0, 0,
+	{"t_was_cancelled",      (cmd_function)t_was_cancelled,          0, 0,
 			0, FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"load_tm",             (cmd_function)load_tm,    0, 0,
+	{"load_tm",              (cmd_function)load_tm,    0, 0,
 			0, 0},
 	{0,0,0,0,0,0}
 };
@@ -454,7 +454,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->register_tmcb = register_tmcb;
 
 	/* relay function */
-	tmb->t_relay = w_t_relay;
+	tmb->t_relay = (cmd_function)w_t_relay;
 	/* reply functions */
 	tmb->t_reply = (treply_f)w_t_reply;
 	tmb->t_reply_with_body = t_reply_with_body;

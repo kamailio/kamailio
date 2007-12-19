@@ -176,10 +176,10 @@ int check_message_support(struct sip_msg* msg);
 static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
-	{"m_store",  m_store, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_store",  m_store, 1, fixup_msilo, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_dump",   m_dump,  0, 0, 0, REQUEST_ROUTE},
-	{"m_dump",   m_dump,  1, fixup_msilo, 0, REQUEST_ROUTE},
+	{"m_store",  (cmd_function)m_store, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store",  (cmd_function)m_store, 1, fixup_msilo, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_dump",   (cmd_function)m_dump,  0, 0, 0, REQUEST_ROUTE},
+	{"m_dump",   (cmd_function)m_dump,  1, fixup_msilo, 0, REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 

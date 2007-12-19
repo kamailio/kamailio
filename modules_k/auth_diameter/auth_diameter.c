@@ -76,11 +76,11 @@ rd_buf_t *rb;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"diameter_www_authorize",   diameter_www_authorize,   1, auth_fixup,
+	{"diameter_www_authorize",   (cmd_function)diameter_www_authorize,   1, auth_fixup,
 			0, REQUEST_ROUTE},
-	{"diameter_proxy_authorize", diameter_proxy_authorize, 1, auth_fixup,
+	{"diameter_proxy_authorize", (cmd_function)diameter_proxy_authorize, 1, auth_fixup,
 			0, REQUEST_ROUTE},
-	{"diameter_is_user_in",      diameter_is_user_in,      2, group_fixup,
+	{"diameter_is_user_in",      (cmd_function)diameter_is_user_in,      2, group_fixup,
 			0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

@@ -58,9 +58,9 @@ static int is_maxfwd_lt(struct sip_msg *msg, char *slimit, char *foo);
 static int mod_init(void);
 
 static cmd_export_t cmds[]={
-	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1,
+	{"mf_process_maxfwd_header", (cmd_function)w_process_maxfwd_header, 1,
 		fixup_maxfwd_header, 0, REQUEST_ROUTE},
-	{"is_maxfwd_lt", is_maxfwd_lt, 1,
+	{"is_maxfwd_lt", (cmd_function)is_maxfwd_lt, 1,
 		fixup_maxfwd_header, 0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0,0}
 };

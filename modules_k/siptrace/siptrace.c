@@ -110,7 +110,7 @@ register_slcb_t register_slcb_f=NULL;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"sip_trace", sip_trace, 0, 0, 0,
+	{"sip_trace", (cmd_function)sip_trace, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

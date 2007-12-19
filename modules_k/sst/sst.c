@@ -89,7 +89,7 @@ struct dlg_binds *dlg_binds = &dialog_st;
  * Script commands we export.
  */
 static cmd_export_t cmds[]={
-	{"sstCheckMin", sst_check_min, 1, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"sstCheckMin", (cmd_function)sst_check_min, 1, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE },
 	{0,0,0,0,0,0}
 };
 

@@ -163,18 +163,18 @@ static int free_acc_fixup(void** param, int param_no);
 
 
 static cmd_export_t cmds[] = {
-	{"acc_log_request", w_acc_log_request, 1, acc_fixup, free_acc_fixup,
+	{"acc_log_request", (cmd_function)w_acc_log_request, 1, acc_fixup, free_acc_fixup,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #ifdef SQL_ACC
-	{"acc_db_request",  w_acc_db_request,  2, acc_fixup, free_acc_fixup,
+	{"acc_db_request",  (cmd_function)w_acc_db_request,  2, acc_fixup, free_acc_fixup,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef RAD_ACC
-	{"acc_rad_request", w_acc_rad_request, 1, acc_fixup, free_acc_fixup,
+	{"acc_rad_request", (cmd_function)w_acc_rad_request, 1, acc_fixup, free_acc_fixup,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef DIAM_ACC
-	{"acc_diam_request",w_acc_diam_request,1, acc_fixup, free_acc_fixup,
+	{"acc_diam_request",(cmd_function)w_acc_diam_request,1, acc_fixup, free_acc_fixup,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 	{0, 0, 0, 0, 0, 0}

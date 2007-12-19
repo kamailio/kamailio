@@ -105,14 +105,14 @@ static enum hash_source hash_fixup(const char * domain);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
-	{"cr_rewrite_uri",           route_uri,             2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_balance_uri",     prime_balance_uri,     2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_rewrite_by_to",         route_by_to,           2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_balance_by_to",   prime_balance_by_to,   2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_rewrite_by_from",       route_by_from,         2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_prime_balance_by_from", prime_balance_by_from, 2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_user_rewrite_uri",      user_route_uri,        2, user_route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_tree_rewrite_uri",      tree_route_uri,        2, tree_route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_uri",           (cmd_function)route_uri,             2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_balance_uri",     (cmd_function)prime_balance_uri,     2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_by_to",         (cmd_function)route_by_to,           2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_balance_by_to",   (cmd_function)prime_balance_by_to,   2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_rewrite_by_from",       (cmd_function)route_by_from,         2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_balance_by_from", (cmd_function)prime_balance_by_from, 2, route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_user_rewrite_uri",      (cmd_function)user_route_uri,        2, user_route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_tree_rewrite_uri",      (cmd_function)tree_route_uri,        2, tree_route_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 

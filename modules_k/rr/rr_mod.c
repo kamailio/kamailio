@@ -84,22 +84,21 @@ static int w_is_direction(struct sip_msg *,char *, char *);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"loose_route",          loose_route,           0,     0, 0,
+	{"loose_route",          (cmd_function)loose_route,           0,     0, 0,
 			REQUEST_ROUTE},
-	{"record_route",         w_record_route,        0,     0, 0,
+	{"record_route",         (cmd_function)w_record_route,        0,     0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"record_route",         w_record_route,        1,     it_list_fixup, 0,
+	{"record_route",         (cmd_function)w_record_route,        1,     it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"record_route_preset",  w_record_route_preset, 1,     it_list_fixup, 0,
+	{"record_route_preset",  (cmd_function)w_record_route_preset, 1,     it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"add_rr_param",         w_add_rr_param,        1,     it_list_fixup, 0,
+	{"add_rr_param",         (cmd_function)w_add_rr_param,        1,     it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"check_route_param",    w_check_route_param,   1,     fixup_str2regexp, 0,
+	{"check_route_param",    (cmd_function)w_check_route_param,   1,     fixup_str2regexp, 0,
 			REQUEST_ROUTE},
-	{"is_direction",         w_is_direction,        1,     direction_fixup, 0,
+	{"is_direction",         (cmd_function)w_is_direction,        1,     direction_fixup, 0,
 			REQUEST_ROUTE},
-	{"load_rr",              (cmd_function)load_rr, 0,     0, 0,
-			0},
+	{"load_rr",              (cmd_function)load_rr, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
