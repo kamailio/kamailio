@@ -111,12 +111,13 @@ int reload_gws ( void );
 #define MAX_QUERY_SIZE 512
 #define MAX_NO_OF_GWS 32
 #define MAX_NO_OF_LCRS 256
-#define MAX_PREFIX_LEN 16
+#define MAX_PREFIX_LEN 256
 #define MAX_FROM_URI_LEN 256
 
 /* Default module parameter values */
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
+#define DEF_PREFIX_MODE 0
 
 /*
  * Type definitions
@@ -131,19 +132,24 @@ struct gw_info {
     uri_type scheme;
     uri_transport transport;
     unsigned int strip;
-    char prefix[MAX_PREFIX_LEN];
+    char prefix[MAX_PREFIX_LEN + 1];
     unsigned short prefix_len;
     unsigned int flags;
 };
 
 struct lcr_info {
-    char prefix[MAX_PREFIX_LEN];
+    char prefix[MAX_PREFIX_LEN + 1];
     unsigned short prefix_len;
     char from_uri[MAX_FROM_URI_LEN + 1];
     unsigned short from_uri_len;
     unsigned int grp_id;
     unsigned short priority;
     unsigned short end_record;
+};
+
+struct prefix_regex {
+	regex_t re;
+	short int valid;
 };
 
 struct from_uri_regex {
@@ -196,6 +202,9 @@ static char *contact_avp_param = NULL;
 static char *rpid_avp_param = NULL;
 static char *flags_avp_param = NULL;
 
+/* prefix mode */
+int prefix_mode_param = DEF_PREFIX_MODE;
+
 /*
  * Other module types and variables
  */
@@ -235,6 +244,7 @@ struct lcr_info *lcrs_2; /* Pointer to lcr table 2 */
 unsigned int *lcrs_ws_reload_counter;
 unsigned int reload_counter;
 
+struct prefix_regex prefix_reg[MAX_NO_OF_LCRS];
 struct from_uri_regex from_uri_reg[MAX_NO_OF_LCRS];
 
 /*
@@ -310,6 +320,7 @@ static param_export_t params[] = {
 	{"flags_avp",                STR_PARAM, &flags_avp_param },
 	{"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
 	{"fr_inv_timer_next",        INT_PARAM,	&fr_inv_timer_next },
+	{"prefix_mode",              INT_PARAM, &prefix_mode_param },
 	{0, 0, 0}
 };
 
@@ -647,7 +658,8 @@ static int mod_init(void)
 	goto err;
     }
     *lcrs_ws_reload_counter = reload_counter = 0;
-    
+   
+    memset(prefix_reg, 0, sizeof(struct prefix_regex) * MAX_NO_OF_LCRS);
     memset(from_uri_reg, 0, sizeof(struct from_uri_regex) * MAX_NO_OF_LCRS);
 
     /* First reload */
@@ -681,16 +693,23 @@ static int comp_lcrs(const void *m1, const void *m2)
     struct lcr_info lcr_record1 = (*lcrs)[mi1->route_index];
     struct lcr_info lcr_record2 = (*lcrs)[mi2->route_index];
 
-    /* Sort by prefix. */
-    if (lcr_record1.prefix_len > lcr_record2.prefix_len) {
-	result = 1;
-    }
-    else if (lcr_record1.prefix_len == lcr_record2.prefix_len) {
-	/* Sort by priority. */
-	if (lcr_record1.priority < lcr_record2.priority) {
+    if (prefix_mode_param == 0) {
+        /* Sort by prefix. */
+        if (lcr_record1.prefix_len > lcr_record2.prefix_len) {
 	    result = 1;
-	}
-	else if (lcr_record1.priority == lcr_record2.priority) {
+        } else if (lcr_record1.prefix_len == lcr_record2.prefix_len) {
+	    /* Sort by priority. */
+	    if (lcr_record1.priority < lcr_record2.priority) {
+	        result = 1;
+	    } else if (lcr_record1.priority == lcr_record2.priority) {
+	        /* Nothing to do. */
+	        result = 0;
+	    }
+        }
+    } else {
+        if (lcr_record1.priority < lcr_record2.priority) {
+	    result = 1;
+	} else if (lcr_record1.priority == lcr_record2.priority) {
 	    /* Nothing to do. */
 	    result = 0;
 	}
@@ -719,6 +738,34 @@ static int rand_lcrs(const void *m1, const void *m2)
 }
 
 /*
+ * regcomp each prefix.
+ */
+int load_prefix_regex(void)
+{
+    int i, status, result = 0;
+
+    for (i = 0; i < MAX_NO_OF_LCRS; i++) {
+	if ((*lcrs)[i].end_record != 0) {
+	    break;
+	}
+	if (prefix_reg[i].valid) {
+	    regfree(&(prefix_reg[i].re));
+	    prefix_reg[i].valid = 0;
+	}
+	memset(&(prefix_reg[i].re), 0, sizeof(regex_t));
+	if ((status=regcomp(&(prefix_reg[i].re),(*lcrs)[i].prefix,0))!=0){
+	    LM_ERR("bad prefix re <%s>, regcomp returned %d (check regex.h)\n",
+		(*lcrs)[i].prefix, status);
+	    result = -1;
+	    break;
+	}
+	prefix_reg[i].valid = 1;
+    }
+
+    return result;
+}
+
+/*
  * regcomp each from_uri.
  */
 int load_from_uri_regex(void)
@@ -735,7 +782,8 @@ int load_from_uri_regex(void)
 	}
 	memset(&(from_uri_reg[i].re), 0, sizeof(regex_t));
 	if ((status=regcomp(&(from_uri_reg[i].re),(*lcrs)[i].from_uri,0))!=0){
-	    LM_ERR("Bad from_uri re <%s>\n", (*lcrs)[i].from_uri);
+	    LM_ERR("Bad from_uri re <%s>, regcomp returned %d (check regex.h)\n",
+	    	(*lcrs)[i].from_uri, status);
 	    result = -1;
 	    break;
 	}
@@ -748,12 +796,34 @@ int load_from_uri_regex(void)
     return result;
 }
 
+int load_all_regex(void)
+{
+	int result =0;
+
+	if (prefix_mode_param != 0) {
+		result = load_prefix_regex();
+	}
+
+	if (result == 0) {
+		result = load_from_uri_regex();
+	} else {
+		LM_ERR("Unable to load prefix regex\n");
+	}
+
+	if (result == 0) {
+		reload_counter = *lcrs_ws_reload_counter;
+	} else {
+		LM_ERR("Unable to load from_uri regex\n");
+	}
+
+	return result;
+}
 
 /*
  * Reload gws to unused gw table and lcrs to unused lcr table, and, when done
  * make unused gw and lcr table the one in use.
  */
-int reload_gws ( void )
+int reload_gws(void)
 {
     unsigned int i, port, strip, prefix_len, from_uri_len, grp_id, priority;
     struct in_addr ip_addr;
@@ -1027,7 +1097,8 @@ int reload_gws ( void )
     }
 
     (*lcrs_ws_reload_counter)++;
-    if (0 != load_from_uri_regex()) {
+    if (0 != load_all_regex()) {
+    	
 	return -1;
     }
 
@@ -1035,7 +1106,7 @@ int reload_gws ( void )
 }
 
 
-int mi_print_gws (struct mi_node* rpl)
+int mi_print_gws(struct mi_node* rpl)
 {
     unsigned int i;
     struct mi_attr* attr;
@@ -1191,7 +1262,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
      * Check if the gws and lcrs were reloaded
      */
     if (reload_counter != *lcrs_ws_reload_counter) {
-	if (load_from_uri_regex() != 0) {
+	if (load_all_regex() != 0) {
 	    return -1;
 	}
     }
@@ -1211,8 +1282,12 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 	if (lcr_rec.end_record != 0) {
 	    break;
 	}
-	if ((lcr_rec.prefix_len <= ruri_user.len) &&
-	    (strncmp(lcr_rec.prefix, ruri_user.s, lcr_rec.prefix_len)==0)) {
+	if ( ((prefix_mode_param == 0) && (lcr_rec.prefix_len <= ruri_user.len) &&
+	      (strncmp(lcr_rec.prefix, ruri_user.s, lcr_rec.prefix_len)==0)) ||
+	     ( (prefix_mode_param != 0) && ( (lcr_rec.prefix_len == 0) ||
+					(prefix_reg[i].valid &&
+					 (regexec(&(prefix_reg[i].re), ruri_user.s, 0,
+						  (regmatch_t *)NULL, 0) == 0)) ) ) ) {
 	    /* 1. Prefix matching is done */
 	    if ((lcr_rec.from_uri_len == 0) ||
 		(from_uri_reg[i].valid &&

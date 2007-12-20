@@ -39,7 +39,10 @@
 	part of Request-URI and "From" URI match the prefix and From pattern
 	of the gateway.  Matching gateways are then ordered for forwarding
 	purpose (1) according to longest user part match, (2) according to
-	gateway's priority, and (3) randomly.
+	gateway's priority, and (3) randomly if prefix is not a regular
+	expression (prefix_mode set to 0) or (1) according to gateway's
+	priority and (2) randomly if prefix is a regular expression
+	(prefix_mode different than 0).
 	</para>
 	<para>
 	Each gateway belongs to a gateway group either alone or among other
@@ -64,10 +67,11 @@
 	</para>
 	<para>
 	Table lcr contains prefix of user part of Request-URI, From URI
-	pattern, gateway group id, and priority.  From URI pattern is a
-	regular expression.  Empty From URI pattern matches any From
-	URI.  Smaller priority value means higher priority (highest
-	priority value being 0).
+	pattern, gateway group id, and priority.  Prefix pattern can be a
+	string or a regular expression (see the prefix_mode parameter).
+	From URI pattern is a regular expression.  Empty From URI pattern
+	matches any From URI.  Smaller priority value means higher priority
+	(highest priority value being 0).
 	</para>
 	<para>
 	In addition to gw and lcr tables there is third table gw_grp that is
@@ -579,6 +583,30 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>prefix_mode</varname> (integer)</title>
+		<para>
+		Defines the prefix mode: string or regular expression.
+		When set to 0, the prefix mode is set to string and matching is implemented
+		as a simple string comparison. 
+		When set to a value different then 0, the prefix mode is set to regex and matching
+		is implemented as regular expression match.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>prefix_mode</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+/* Turning on the regex mode for prefix */
+modparam("lcr", "prefix_mode", 1)
+...
+</programlisting>
+                </example>
 	</section>
 
 	<section>

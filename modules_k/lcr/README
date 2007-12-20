@@ -43,23 +43,10 @@ Juha Heinanen
               1.3.20. fr_inv_timer (integer)
               1.3.21. fr_inv_timer_next (integer)
               1.3.22. flags_avp (AVP string)
-
-        1.4. Exported Functions
-
-              1.4.1. load_gws([group-id])
-              1.4.2. next_gw()
-              1.4.3. from_gw([pvar])
-              1.4.4. from_gw_grp(group-id)
-              1.4.5. to_gw([group-id])
-              1.4.6. load_contacts()
-              1.4.7. next_contacts()
-
-        1.5. Exported MI Commands
-
-              1.5.1. lcr_reload
-              1.5.2. lcr_dump
-
-        1.6. Known Limitations
+              1.3.23. prefix_mode (integer)
+              1.3.24. Exported Functions
+              1.3.25. Exported MI Commands
+              1.3.26. Known Limitations
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -87,19 +74,20 @@ Juha Heinanen
    1-20. Setting fr_inv_timer module parameter
    1-21. Setting fr_inv_timer_next module parameter
    1-22. Setting flags_avp module parameter
-   1-23. load_gws usage
-   1-24. load_gws usage with group-id
-   1-25. load_gws usage with pseudo-variables
-   1-26. next_gw usage from a route block
-   1-27. next_gw usage from a failure route block
-   1-28. from_gw usage
-   1-29. from_gw usage with pseudo variable argument
-   1-30. from_gw_grp usage
-   1-31. to_gw usage
-   1-32. to_gw usage with group-id
-   1-33. load_contacts usage
-   1-34. next_contacts usage from route block
-   1-35. next_contacts usage from failure route block
+   1-23. Setting prefix_mode module parameter
+   1-24. load_gws usage
+   1-25. load_gws usage with group-id
+   1-26. load_gws usage with pseudo-variables
+   1-27. next_gw usage from a route block
+   1-28. next_gw usage from a failure route block
+   1-29. from_gw usage
+   1-30. from_gw usage with pseudo variable argument
+   1-31. from_gw_grp usage
+   1-32. to_gw usage
+   1-33. to_gw usage with group-id
+   1-34. load_contacts usage
+   1-35. next_contacts usage from route block
+   1-36. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -122,7 +110,10 @@ Chapter 1. User's Guide
    prefix and From pattern of the gateway. Matching gateways are
    then ordered for forwarding purpose (1) according to longest
    user part match, (2) according to gateway's priority, and (3)
-   randomly.
+   randomly if prefix is not a regular expression (prefix_mode
+   set to 0) or (1) according to gateway's priority and (2)
+   randomly if prefix is a regular expression (prefix_mode
+   different than 0).
 
    Each gateway belongs to a gateway group either alone or among
    other gateways. All gateways in a group share the same
@@ -145,10 +136,11 @@ Chapter 1. User's Guide
    directed media (RFC 4145).
 
    Table lcr contains prefix of user part of Request-URI, From
-   URI pattern, gateway group id, and priority. From URI pattern
-   is a regular expression. Empty From URI pattern matches any
-   From URI. Smaller priority value means higher priority
-   (highest priority value being 0).
+   URI pattern, gateway group id, and priority. Prefix pattern
+   can be a string or a regular expression (see the prefix_mode
+   parameter). From URI pattern is a regular expression. Empty
+   From URI pattern matches any From URI. Smaller priority value
+   means higher priority (highest priority value being 0).
 
    In addition to gw and lcr tables there is third table gw_grp
    that is used to associate names with gateway group ids.
@@ -460,9 +452,26 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
      _________________________________________________________
 
-1.4. Exported Functions
+1.3.23. prefix_mode (integer)
 
-1.4.1. load_gws([group-id])
+   Defines the prefix mode: string or regular expression. When
+   set to 0, the prefix mode is set to string and matching is
+   implemented as a simple string comparison. When set to a value
+   different then 0, the prefix mode is set to regex and matching
+   is implemented as regular expression match.
+
+   Default value is 0. 
+
+   Example 1-23. Setting prefix_mode module parameter
+...
+/* Turning on the regex mode for prefix */
+modparam("lcr", "prefix_mode", 1)
+...
+     _________________________________________________________
+
+1.3.24. Exported Functions
+
+1.3.24.1. load_gws([group-id])
 
    Loads URI schemes, addresses, ports, and transports of
    gateways that match user part of Request-URI to gw_uri_avp
@@ -473,7 +482,7 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-23. load_gws usage
+   Example 1-24. load_gws usage
 ...
 if (!load_gws()) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -482,7 +491,7 @@ ays");
 };
 ...
 
-   Example 1-24. load_gws usage with group-id
+   Example 1-25. load_gws usage with group-id
 ...
 if (!load_gws("1")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -491,7 +500,7 @@ ays from group 1");
 };
 ...
 
-   Example 1-25. load_gws usage with pseudo-variables
+   Example 1-26. load_gws usage with pseudo-variables
 ...
 if (!load_gws("$avp(s:gateway_group)")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -501,7 +510,7 @@ ays from group 1");
 ...
      _________________________________________________________
 
-1.4.2. next_gw()
+1.3.24.2. next_gw()
 
    If called from a route block, replaces URI scheme, host, port,
    and transport of Request-URI by the values stored in first
@@ -524,7 +533,7 @@ ays from group 1");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-26. next_gw usage from a route block
+   Example 1-27. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -532,7 +541,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-27. next_gw usage from a failure route block 
+   Example 1-28. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -541,7 +550,7 @@ if (!next_gw()) {
 ...
      _________________________________________________________
 
-1.4.3. from_gw([pvar])
+1.3.24.3. from_gw([pvar])
 
    Checks if request came from IP address of a gateway. IP
    address to be checked is either taken from source IP address
@@ -551,14 +560,14 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-28. from_gw usage
+   Example 1-29. from_gw usage
 ...
 if (from_gw()) {
         ...
 };
 ...
 
-   Example 1-29. from_gw usage with pseudo variable argument
+   Example 1-30. from_gw usage with pseudo variable argument
 ...
 if (from_gw("$si")) {
         ...
@@ -566,7 +575,7 @@ if (from_gw("$si")) {
 ...
      _________________________________________________________
 
-1.4.4. from_gw_grp(group-id)
+1.3.24.4. from_gw_grp(group-id)
 
    Checks if request came from IP address of a gateway that
    belongs to the given group. Sets or resets a message flag
@@ -575,7 +584,7 @@ if (from_gw("$si")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-30. from_gw_grp usage
+   Example 1-31. from_gw_grp usage
 ...
 if (from_gw_grp("1")) {
         ...
@@ -583,7 +592,7 @@ if (from_gw_grp("1")) {
 ...
      _________________________________________________________
 
-1.4.5. to_gw([group-id])
+1.3.24.5. to_gw([group-id])
 
    Checks if in-dialog request goes to a gateway. If an optional
    group-id is given, only gateways belonging to this group are
@@ -591,7 +600,7 @@ if (from_gw_grp("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-31. to_gw usage
+   Example 1-32. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -599,7 +608,7 @@ if (to_gw()) {
 };
 ...
 
-   Example 1-32. to_gw usage with group-id
+   Example 1-33. to_gw usage with group-id
 ...
 if (to_gw("1")) {
         ...
@@ -608,7 +617,7 @@ if (to_gw("1")) {
 ...
      _________________________________________________________
 
-1.4.6. load_contacts()
+1.3.24.6. load_contacts()
 
    Loads contacts in destination set in increasing qvalue order
    as values of lcr_contact AVP. If all contacts in the
@@ -620,7 +629,7 @@ if (to_gw("1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-33. load_contacts usage
+   Example 1-34. load_contacts usage
 ...
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
@@ -630,7 +639,7 @@ cts");
 ...
      _________________________________________________________
 
-1.4.7. next_contacts()
+1.3.24.7. next_contacts()
 
    If called from a route block, replaces Request-URI with the
    first lcr_contact AVP value, adds the remaining lcr_contact
@@ -650,7 +659,7 @@ cts");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-34. next_contacts usage from route block 
+   Example 1-35. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
@@ -660,15 +669,15 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-35. next_contacts usage from failure route block 
+   Example 1-36. next_contacts usage from failure route block 
 if (next_contacts()) {
         t_relay();
 };
      _________________________________________________________
 
-1.5. Exported MI Commands
+1.3.25. Exported MI Commands
 
-1.5.1. lcr_reload
+1.3.25.1. lcr_reload
 
    Causes lcr module to re-read the contents of gateway table
    into memory.
@@ -682,7 +691,7 @@ if (next_contacts()) {
                 _empty_line_
      _________________________________________________________
 
-1.5.2. lcr_dump
+1.3.25.2. lcr_dump
 
    Causes lcr module to dump the contents of its in-memory
    gateway table.
@@ -696,7 +705,7 @@ if (next_contacts()) {
                 _empty_line_
      _________________________________________________________
 
-1.6. Known Limitations
+1.3.26. Known Limitations
 
    There is an unlikely race condition on lcr reload. If a
    process uses in memory gw table, which is reloaded at the same
