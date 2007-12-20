@@ -272,8 +272,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 				/* log the redirect */
 				req->new_uri =  scontacts[i]->uri;
 				//FIXME
-				char foo1, foo2, foo3, foo4;
-				rd_acc_fct( req, (char*)reason, acc_db_table, &foo1, &foo2, &foo3, &foo4);
+				rd_acc_fct( req, (char*)reason, acc_db_table, NULL, NULL, NULL, NULL);
 			}
 		}
 	}
