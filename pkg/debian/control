@@ -94,9 +94,9 @@ Description: Sip Express Router - package for "nice to have" installation
 
 Package: ser-ai1
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ser-oob, mysql-server, rttpproxy, mystun, sipsak, tcpdump, ngrep, iftop
+Depends: ${shlibs:Depends}, ${misc:Depends}, ser-oob, mysql-server, rtpproxy, mystun, sipsak, tcpdump, ngrep, iftop
 Suggests: ser-nth
 Description: Sip Express Router - package for "all in one" installation
  This is a meta-package for easy installation of complete server running ser - SIP Express
- Router, rttptoxy -  RTP relay, mystun - STUN server and mysql server.
+ Router, rtpproxy -  RTP relay, mystun - STUN server and mysql server.
 
