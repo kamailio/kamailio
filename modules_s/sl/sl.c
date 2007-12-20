@@ -188,8 +188,6 @@ static int w_sl_reply_error( struct sip_msg* msg, char* str, char* str2)
 
 static int fixup_sl_reply(void** param, int param_no)
 {
-	int ret;
-
 	if (param_no == 1) {
 		return fixup_var_int_12(param, 1);
 	} else if (param_no == 2) {
