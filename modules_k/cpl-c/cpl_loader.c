@@ -52,8 +52,6 @@
 
 
 extern db_con_t* db_hdl;
-extern struct cpl_enviroment cpl_env;
-
 
 #if 0
 /* debug function -> write into a file the content of a str struct. */
