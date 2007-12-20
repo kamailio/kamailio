@@ -71,9 +71,9 @@ Description: Synchronization secret for twin servers:
 
 Template: ser-oob/RTTPPROXY
 Type: string
-Default: udp:localhost:1011
-Description: RTP proxy socket
- Set address of RTP proxy. Example: "udp:localhost:1011".
+Default: udp:localhost:22222
+Description: RTP proxy control socket
+ Set address of RTP proxy control socket. Example: "udp:localhost:22222".
  Enter empty string to not set any RTP proxy address.
  .
  Enter "!" to not modify this option.
