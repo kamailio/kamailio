@@ -42,8 +42,8 @@
 
 extern int _osp_use_rpid;
 
-static void ospSkipPlus(char *e164);
-static int ospAppendHeader(struct sip_msg *msg, str *header); 
+static void ospSkipPlus(char* e164);
+static int ospAppendHeader(struct sip_msg* msg, str* header); 
 
 /* 
  * Copy str to buffer and check overflow 
@@ -52,8 +52,8 @@ static int ospAppendHeader(struct sip_msg *msg, str *header);
  * param buffersize Size of buffer
  */
 void ospCopyStrToBuffer(
-    str *source, 
-    char *buffer, 
+    str* source, 
+    char* buffer, 
     int buffersize)
 {
     int copybytes;
@@ -77,7 +77,7 @@ void ospCopyStrToBuffer(
  * param e164 E164 string
  */
 static void ospSkipPlus(
-    char *e164)
+    char* e164)
 {
     if (*e164 == '+') {
         strncpy(e164, e164 + 1, strlen(e164) - 1);
@@ -93,11 +93,11 @@ static void ospSkipPlus(
  * return 0 success, -1 failure
  */
 int ospGetFromUserpart(
-    struct sip_msg *msg, 
-    char *fromuser, 
+    struct sip_msg* msg, 
+    char* fromuser, 
     int buffersize)
 {
-    struct to_body *from;
+    struct to_body* from;
     struct sip_uri uri;
     int result = -1;
 
@@ -131,11 +131,11 @@ int ospGetFromUserpart(
  * return 0 success, -1 failure
  */
 int ospGetRpidUserpart(
-    struct sip_msg *msg, 
-    char *rpiduser, 
+    struct sip_msg* msg, 
+    char* rpiduser, 
     int buffersize)
 {
-    struct to_body *rpid;
+    struct to_body* rpid;
     struct sip_uri uri;
     int result = -1;
 
@@ -173,11 +173,11 @@ int ospGetRpidUserpart(
  * return 0 success, -1 failure
  */
 int ospGetToUserpart(
-    struct sip_msg *msg, 
-    char *touser, 
+    struct sip_msg* msg, 
+    char* touser, 
     int buffersize)
 {
-    struct to_body *to;
+    struct to_body* to;
     struct sip_uri uri;
     int result = -1;
 
@@ -211,8 +211,8 @@ int ospGetToUserpart(
  * return 0 success, -1 failure
  */
 int ospGetUriUserpart(
-    struct sip_msg *msg, 
-    char *uriuser, 
+    struct sip_msg* msg, 
+    char* uriuser, 
     int buffersize)
 {
     int result = -1;
@@ -237,11 +237,11 @@ int ospGetUriUserpart(
  * return 0 success, -1 failure
  */
 static int ospAppendHeader(
-    struct sip_msg *msg, 
-    str *header)
+    struct sip_msg* msg, 
+    str* header)
 {
-    char *s;
-    struct lump *anchor;
+    char* s;
+    struct lump* anchor;
     
     if((msg == 0) || (header == 0) || (header->s == 0) || (header->len <= 0)) {
         LM_ERR("bad parameters for appending header\n");
@@ -284,8 +284,8 @@ static int ospAppendHeader(
  * return 0 success, -1 failure
  */
 int ospAddOspHeader(
-    struct sip_msg *msg, 
-    unsigned char *token, 
+    struct sip_msg* msg, 
+    unsigned char* token, 
     unsigned int tokensize)
 {
     str headerval;
@@ -332,11 +332,11 @@ int ospAddOspHeader(
  * return 0 success, -1 failure
  */
 int ospGetOspHeader(
-    struct sip_msg *msg, 
-    unsigned char *token, 
-    unsigned int *tokensize)
+    struct sip_msg* msg, 
+    unsigned char* token, 
+    unsigned int* tokensize)
 {
-    struct hdr_field *hf;
+    struct hdr_field* hf;
     int errorcode;
     int result = -1;
 
@@ -368,12 +368,12 @@ int ospGetOspHeader(
  * return 0 success, -1 failure
  */
 int ospGetSourceAddress(
-    struct sip_msg *msg, 
-    char *sourceaddress, 
+    struct sip_msg* msg, 
+    char* sourceaddress, 
     int buffersize)
 {
-    struct hdr_field *hf;
-    struct via_body *via;
+    struct hdr_field* hf;
+    struct via_body* via;
     int result = -1;
 
     /* 
@@ -403,10 +403,10 @@ int ospGetSourceAddress(
  * return 0 success, -1 failure
  */
 int ospGetCallId(
-    struct sip_msg *msg, 
-    OSPTCALLID **callid)
+    struct sip_msg* msg, 
+    OSPTCALLID** callid)
 {
-    struct hdr_field *hf;
+    struct hdr_field* hf;
     int result = -1;
 
     hf = (struct hdr_field*)msg->callid;
@@ -432,12 +432,12 @@ int ospGetCallId(
  * return 0 success, -1 failure
  */
 int ospGetRouteParameters(
-    struct sip_msg *msg, 
-    char *routeparameters, 
+    struct sip_msg* msg, 
+    char* routeparameters, 
     int buffersize)
 {
-    struct hdr_field *hf;
-    rr_t *rt;
+    struct hdr_field* hf;
+    rr_t* rt;
     struct sip_uri uri;
     int result = -1;
 
@@ -485,14 +485,14 @@ int ospGetRouteParameters(
  * return 0 success, -1 failure
  */
 int ospRebuildDestionationUri(
-    str *newuri, 
-    char *called,
-    char *dest, 
-    char *port,
+    str* newuri, 
+    char* called,
+    char* dest, 
+    char* port,
     int format) 
 {
     static const str TRANS = {";transport=tcp", 14};
-    char *buffer;
+    char* buffer;
     int calledsize;
     int destsize;
     int portsize;
@@ -579,13 +579,13 @@ int ospRebuildDestionationUri(
  * param buffersize Size of nexthop
  */
 void ospGetNextHop(
-    struct sip_msg *msg, 
-    char *nexthop, 
+    struct sip_msg* msg, 
+    char* nexthop, 
     int buffersize)
 {
-    struct hdr_field *hf;
+    struct hdr_field* hf;
     struct sip_uri uri;
-    rr_t *rt;
+    rr_t* rt;
     int found = 0;
 
     for (hf = msg->headers; hf; hf = hf->next) {
