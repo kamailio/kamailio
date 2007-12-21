@@ -45,10 +45,9 @@ static inline int load_dlg_api( struct dlg_binds *dlgb )
 	load_dlg_f load_dlg;
 
 	/* import the DLG auto-loading function */
-	if ( !(load_dlg=(load_dlg_f)find_export("load_dlg", 0, 0))) {
-		LM_ERR("can't import load_dlg\n");
+	if ( !(load_dlg=(load_dlg_f)find_export("load_dlg", 0, 0)))
 		return -1;
-	}
+
 	/* let the auto-loading function load all DLG stuff */
 	if (load_dlg( dlgb )==-1)
 		return -1;
