@@ -31,6 +31,16 @@
 #define TCP_BUF_WRITE /* enabled buffered writing */
 #endif 
 
+#if !defined(NO_TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
+#define TCP_CONNECT_WAIT /* enable pending connects support */
+#endif
+
+#if defined(TCP_CONNECT_WAIT) && !defined(TCP_BUF_WRITE)
+/* check for impossible configuration: TCP_CONNECT_WAIT w/o TCP_BUF_WRITE */
+#warning "disabling TCP_CONNECT_WAIT because TCP_BUF_WRITE is not defined"
+#undef TCP_CONNECT_WAIT
+#endif
+
 #ifndef NO_TCP_FD_CACHE
 #define TCP_FD_CACHE /* enable fd caching */
 #endif
@@ -102,6 +112,7 @@ struct tcp_cfg_options{
 	int fd_cache; /* on /off */
 	/* tcp buf. write options */
 	int tcp_buf_write; /* on / off */
+	int tcp_connect_wait; /* on / off, depends on tcp_buf_write */
 	unsigned int tcpconn_wq_max; /* maximum queue len per connection */
 	unsigned int tcp_wq_max; /* maximum overall queued bytes */
 	unsigned int tcp_wq_timeout;      /* timeout for queue writes */

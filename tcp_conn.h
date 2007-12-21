@@ -72,7 +72,9 @@
 #define F_CONN_READER       4 /* handled by a tcp reader */
 #define F_CONN_WRITE_W      8 /* watched for write (main) */
 #define F_CONN_HASHED      16 /* in tcp_main hash */
-#define F_CONN_FD_CLOSED   32 /* in tcp_main hash */
+#define F_CONN_FD_CLOSED   32 /* fd was already closed */
+#define F_CONN_PENDING     64 /* pending connect  (fd not known yet in main) */
+#define F_CONN_MAIN_TIMER 128 /* timer active in the tcp_main process */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
@@ -87,12 +89,13 @@ enum tcp_req_states {	H_SKIP_EMPTY, H_SKIP, H_LF, H_LFCR,  H_BODY, H_STARTWS,
 
 enum tcp_conn_states { S_CONN_ERROR=-2, S_CONN_BAD=-1, S_CONN_OK=0, 
 						S_CONN_INIT, S_CONN_EOF, 
-						S_CONN_ACCEPT, S_CONN_CONNECT };
+						S_CONN_ACCEPT, S_CONN_CONNECT, S_CONN_PENDING };
 
 
 /* fd communication commands */
 enum conn_cmds { CONN_DESTROY=-3, CONN_ERROR=-2, CONN_EOF=-1, CONN_RELEASE, 
-					CONN_GET_FD, CONN_NEW, CONN_QUEUED_WRITE };
+					CONN_GET_FD, CONN_NEW, CONN_QUEUED_WRITE,
+					CONN_NEW_PENDING_WRITE, CONN_NEW_COMPLETE };
 /* CONN_RELEASE, EOF, ERROR, DESTROY can be used by "reader" processes
  * CONN_GET_FD, NEW, ERROR only by writers */
 

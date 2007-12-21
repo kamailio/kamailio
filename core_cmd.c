@@ -562,9 +562,10 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "ddddddddddddd",
+		rpc->struct_add(handle, "dddddddddddddd",
 			"fd_cache",		t.fd_cache,
 			"tcp_buf_write",	t.tcp_buf_write,
+			"tcp_connect_wait",	t.tcp_connect_wait,
 			"tcpconn_wq_max",	t.tcpconn_wq_max,
 			"tcp_wq_max",	t.tcp_wq_max,
 			"tcp_wq_timeout",	TICKS_TO_S(t.tcp_wq_timeout),

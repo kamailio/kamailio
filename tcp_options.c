@@ -40,7 +40,10 @@ void init_tcp_options()
 	tcp_options.tcpconn_wq_max=32*1024; /* 32 k */
 	tcp_options.tcp_wq_max=10*1024*1024; /* 10 MB */
 	tcp_options.tcp_wq_timeout=S_TO_TICKS(tcp_send_timeout);
-#endif
+#ifdef TCP_CONNECT_WAIT
+	tcp_options.tcp_connect_wait=1;
+#endif /* TCP_CONNECT_WAIT */
+#endif /* TCP_BUF_WRITE */
 #ifdef TCP_FD_CACHE
 	tcp_options.fd_cache=1;
 #endif
@@ -89,7 +92,16 @@ void tcp_options_check()
 	W_OPT_NC(tcp_wq_max);
 	W_OPT_NC(tcp_wq_timeout);
 #endif /* TCP_BUF_WRITE */
-
+#ifndef TCP_CONNECT_WAIT
+	W_OPT_NC(tcp_connect_wait);
+#endif /* TCP_CONNECT_WAIT */
+	
+	if (tcp_options.tcp_connect_wait && !tcp_options.tcp_buf_write){
+		WARN("tcp_options: tcp_connect_wait depends on tcp_buf_write, "
+				" disabling...\n");
+		tcp_options.tcp_connect_wait=0;
+	}
+	
 #if ! defined HAVE_TCP_DEFER_ACCEPT && ! defined HAVE_TCP_ACCEPT_FILTER
 	W_OPT_NS(defer_accept);
 #endif
