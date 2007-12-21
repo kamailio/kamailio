@@ -103,8 +103,7 @@ struct pg_con* pg_new_conn(struct db_id* id)
 		goto err;
 	}
 
-        ptr->pid = getpid();
-        ptr->connected = 1;
+	ptr->connected = 1;
 	ptr->timestamp = time(0);
 	ptr->id = id;
 

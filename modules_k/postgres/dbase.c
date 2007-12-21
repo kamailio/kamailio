@@ -76,8 +76,6 @@
 #include "dbase.h"
 #include "pg_con.h"
 
-long getpid();
-
 static char _s[SQL_BUF_LEN];
 
 static int submit_query(db_con_t* _con, const char* _s);

@@ -52,9 +52,6 @@ struct pg_con {
 	char *sqlurl;		/* the url we are connected to, all connection memory parents from this */
 	PGconn *con;		/* this is the postgres connection */
 	PGresult *res;		/* this is the current result */
-	FILE *fp;		/* debug file output */
-	long pid;		/* record pid of database opener in case one of */
-				/* the children try to close the database */
 	char**  row;		/* Actual row in the result */
 	time_t timestamp;	/* Timestamp of last query */
 
@@ -63,8 +60,6 @@ struct pg_con {
 #define CON_SQLURL(db_con)     (((struct pg_con*)((db_con)->tail))->sqlurl)
 #define CON_RESULT(db_con)     (((struct pg_con*)((db_con)->tail))->res)
 #define CON_CONNECTION(db_con) (((struct pg_con*)((db_con)->tail))->con)
-#define CON_FP(db_con)         (((struct pg_con*)((db_con)->tail))->fp)
-#define CON_PID(db_con)        (((struct pg_con*)((db_con)->tail))->pid)
 #define CON_CONNECTED(db_con)  (((struct pg_con*)((db_con)->tail))->connected)
 #define CON_ROW(db_con)	       (((struct pg_con*)((db_con)->tail))->row)
 #define CON_TIMESTAMP(db_con)  (((struct pg_con*)((db_con)->tail))->timestamp)
