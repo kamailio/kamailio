@@ -42,7 +42,7 @@ mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT I
 
 sipp -sn uas -bg -i localhost -m 1 -f 10 -p 5060 &> /dev/null
 
-../openser -f $CFG &> $TMPFILE
+../openser -w . -f $CFG &> $TMPFILE
 
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 

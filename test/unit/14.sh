@@ -31,7 +31,7 @@ cp $CFG $CFG.bak
 # setup config
 echo "modparam(\"carrierroute\", \"config_file\", \"`pwd`/../test/carrierroute.cfg\")" >> $CFG
 
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

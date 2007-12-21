@@ -33,7 +33,7 @@ fi ;
 # add an registrar entry to the db;
 mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
-../openser -f $CFG &> /dev/null
+../openser -w . -f $CFG &> /dev/null
 sipp -sn uas -bg -i localhost -m 10 -f 2 -p 5060 &> /dev/null
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 10 -f 2 -p 5061 &> /dev/null
 

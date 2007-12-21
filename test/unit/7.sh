@@ -26,7 +26,7 @@
 CFG=7.cfg
 
 # start
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

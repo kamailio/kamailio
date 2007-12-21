@@ -25,7 +25,7 @@ CFG=4.cfg
 echo -e "loadmodule \"../modules/mi_fifo/mi_fifo.so\"" > $CFG
 echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/openser_fifo\")" >> $CFG
 
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 cd ../scripts

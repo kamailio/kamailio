@@ -22,7 +22,7 @@
 CFG=2.cfg
 
 # start
-../openser -c -f $CFG > /dev/null 2>&1
+../openser -w -c -f $CFG > /dev/null 2>&1
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then

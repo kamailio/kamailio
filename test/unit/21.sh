@@ -41,7 +41,7 @@ fi;
 #username domain password email-adreess
 mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
 
-../openser -f $CFG &> /dev/null;
+../openser -w . -f $CFG &> /dev/null;
 sipp -s alice 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 1 -auth_uri alice@localhost -p 5061 -sf auth_test.xml -ap alice &> /dev/null;
 
 ret=$?

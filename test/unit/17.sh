@@ -46,7 +46,7 @@ sed -i "s/# INSTALL_SERWEB_TABLES=ask/INSTALL_SERWEB_TABLES=yes/g" openserctlrc
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	../openser -f ../test/$CFG > /dev/null	
+	../openser -w . -f ../test/$CFG > /dev/null	
 	ret=$?
 fi ;
 

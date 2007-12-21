@@ -32,7 +32,7 @@ if [ ! $? -eq 0 ] ; then
 	exit 0
 fi ;
 
-../openser -f $CFG &> $TMPFILE
+../openser -w . -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1

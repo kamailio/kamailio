@@ -31,7 +31,7 @@ if [ ! $ret -eq 0 ] ; then
 	exit 0
 fi ;
 
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

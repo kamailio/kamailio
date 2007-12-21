@@ -34,7 +34,7 @@ echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|grou
 
 
 # start
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

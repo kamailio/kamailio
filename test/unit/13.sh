@@ -45,7 +45,7 @@ $MYSQL "insert into openser.carrierroute (id, carrier, scan_prefix, domain, prob
 $MYSQL "insert into openser.carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('5','1','','0','0.1','0','host5.local');"
 $MYSQL "insert into openser.carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('6','2','','0','1','0','host6.local');"
 
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1

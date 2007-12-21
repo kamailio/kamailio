@@ -35,7 +35,7 @@ echo "loadmodule \"mysql/mysql.so\"" >> $CFG
 echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")" >> $CFG
 
 # start
-../openser -f $CFG > /dev/null
+../openser -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
