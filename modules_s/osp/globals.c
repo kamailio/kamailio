@@ -38,18 +38,18 @@
 #include "osp_mod.h"
 
 unsigned int _osp_sp_number;
-char *_osp_sp_uris[OSP_DEF_SPS];
+char* _osp_sp_uris[OSP_DEF_SPS];
 unsigned long _osp_sp_weights[OSP_DEF_SPS] = {
     OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
     OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
     OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT,
     OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT, OSP_DEF_WEIGHT
 };
-char *_osp_device_ip = NULL;
-char *_osp_device_port = NULL;
-unsigned char *_osp_private_key = NULL;
-unsigned char *_osp_local_certificate = NULL;
-unsigned char *_osp_ca_certificate = NULL;
+char* _osp_device_ip = NULL;
+char* _osp_device_port = NULL;
+unsigned char* _osp_private_key = NULL;
+unsigned char* _osp_local_certificate = NULL;
+unsigned char* _osp_ca_certificate = NULL;
 int _osp_crypto_hw = OSP_DEF_HW;
 int _osp_validate_callid = OSP_DEF_CALLID;
 int _osp_token_format = OSP_DEF_TOKEN;

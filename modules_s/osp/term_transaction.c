@@ -40,7 +40,7 @@
 #include "osptoolkit.h"
 #include "usage.h"
 
-extern char *_osp_device_ip;
+extern char* _osp_device_ip;
 extern int _osp_token_format;
 extern int _osp_validate_callid;
 extern OSPTPROVHANDLE _osp_provider;
@@ -53,9 +53,9 @@ extern OSPTPROVHANDLE _osp_provider;
  * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospCheckHeader(
-    struct sip_msg *msg, 
-    char *ignore1, 
-    char *ignore2)
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
 {
     unsigned char buffer[OSP_TOKENBUF_SIZE];
     unsigned int  buffersize = sizeof(buffer);
@@ -76,18 +76,18 @@ int ospCheckHeader(
  * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
  */
 int ospValidateHeader (
-    struct sip_msg *msg, 
-    char *ignore1, 
-    char *ignore2)
+    struct sip_msg* msg, 
+    char* ignore1, 
+    char* ignore2)
 {
     int errorcode; 
     OSPTTRANHANDLE transaction = -1;
     unsigned int authorized = 0;
     unsigned int timelimit = 0;
-    void *detaillog = NULL;
+    void* detaillog = NULL;
     unsigned int logsize = 0;
-    unsigned char *callidval = (unsigned char*)"";
-    OSPTCALLID *callid = NULL;
+    unsigned char* callidval = (unsigned char*)"";
+    OSPTCALLID* callid = NULL;
     unsigned callidsize = 0;
     unsigned char token[OSP_TOKENBUF_SIZE];
     unsigned int tokensize = sizeof(token);
@@ -164,7 +164,7 @@ int ospValidateHeader (
         dest.transid = ospGetTransactionId(transaction);
         dest.type = OSPC_DESTINATION;
         dest.authtime = time(NULL);
-        strcpy(dest.host, _osp_device_ip);
+        strncpy(dest.host, _osp_device_ip, sizeof(dest.host) - 1);
 
         ospSaveTermDestination(&dest);
 

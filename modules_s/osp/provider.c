@@ -39,11 +39,11 @@
 #include "provider.h"
 
 extern unsigned int _osp_sp_number;
-extern char *_osp_sp_uris[];
+extern char* _osp_sp_uris[];
 extern unsigned long _osp_sp_weights[];
-extern unsigned char *_osp_private_key;
-extern unsigned char *_osp_local_certificate;
-extern unsigned char *_osp_ca_certificate;
+extern unsigned char* _osp_private_key;
+extern unsigned char* _osp_local_certificate;
+extern unsigned char* _osp_ca_certificate;
 extern int _osp_ssl_lifetime;
 extern int _osp_persistence;
 extern int _osp_retry_delay;
@@ -61,7 +61,7 @@ int ospSetupProvider(void)
     OSPTPRIVATEKEY privatekey;
     OSPTCERT localcert;
     OSPTCERT cacert;
-    OSPTCERT *cacerts[1];
+    OSPTCERT* cacerts[1];
     int result;
 
     LOG(L_DBG, "osp: ospSetupProvider\n");
