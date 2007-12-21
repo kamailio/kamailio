@@ -71,7 +71,6 @@
 #include "../../mem/mem.h"
 #include "../../db/db.h"
 #include "../../db/db_ut.h"
-#include "../../db/db_res.h"
 #include "defs.h"
 #include "dbase.h"
 #include "pg_con.h"
@@ -122,72 +121,7 @@ int pg_use_table(db_con_t* _con, const char* _t)
 
 db_con_t *pg_init(const char* _url)
 {
-	struct db_id* id;
-	struct pg_con* _con;
-	db_con_t* _res;
-	int con_size = sizeof(db_con_t) + sizeof(struct pg_con*);
-
-	if (strlen(_url)>(SQLURL_LEN-1)) 
-	{
-		LM_ERR("ERROR sql url too long\n");
-		return 0;
-	}
-
-	/*
-	** this is the root memory for this database connection.
-	*/
-	_res = (db_con_t*)pkg_malloc(con_size);
-	if (!_res) {
-		LM_ERR("no more pkg memory for database connection(%i bytes)\n",
-				con_size);
-		return 0;
-	}
-	LM_DBG("%p=pkg_malloc(%d) for database connection\n", 
-			(db_con_t*)_res, con_size);
-	memset(_res, 0, con_size);
-
-	id = new_db_id(_url);
-	if (!id) {
-		LM_ERR("cannot parse URL '%s'\n", _url);
-		goto err;
-	}
-
-	/* Find the connection in the pool */
-	_con = (struct pg_con*)pool_get(id);
-	if (!_con) {
-		/* 
-		 * The LOG below exposes the username/password of the database connection
-		 * by default, it is commented.
-		 * LM_DBG("connection '%s' not found in pool\n", _url);
-		 *
-		 */
-		LM_DBG("connection %p not found in pool\n", id);
-		_con = pg_new_conn(id);
-		if (!_con) {
-			LM_ERR("pg_new_con failed to add connection to pool\n");
-			goto err;
-		}
-		pool_insert((struct pool_con*)_con);
-	} else {
-		/* 
-		 * The LOG below exposes the username/password of the database connection
-		 * by default, it is commented.
-		 * LM_DBG("connection '%s' found in pool\n", _url);
-		 *
-		 */
-		LM_DBG("connection %p found in pool\n", id);
-	}
-
-	_res->tail = (unsigned long)_con;
-	return _res;
-
-err:
-	if (id) free_db_id(id);
-	if (_res) {
-		LM_ERR("cleaning up: %p=pkg_free()\n", _res);
-		pkg_free(_res);
-	}
-	return 0;
+	return db_do_init(_url, (void*) pg_new_conn);
 }
 
 

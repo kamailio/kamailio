@@ -39,9 +39,7 @@
 #include <time.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_pool.h"
 #include "../../db/db_ut.h"
-#include "../../db/db_res.h"
 #include "val.h"
 #include "my_con.h"
 #include "res.h"
@@ -174,59 +172,7 @@ static int submit_query(db_con_t* _h, const char* _s)
  */
 db_con_t* db_init(const char* _url)
 {
-	struct db_id* id;
-	struct my_con* con;
-	db_con_t* res;
-
-	id = 0;
-	res = 0;
-
-	if (!_url)
-	{
-		LM_ERR("invalid parameter value\n");
-		return 0;
-	}
-
-	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct my_con*));
-	if (!res)
-	{
-		LM_ERR("no more pkg memory\n");
-		return 0;
-	}
-	memset(res, 0, sizeof(db_con_t) + sizeof(struct my_con*));
-
-	id = new_db_id(_url);
-	if (!id)
-	{
-		LM_ERR("failed to parse URL '%s'\n", _url);
-		goto err;
-	}
-
-/* Find the connection in the pool */
-	con = (struct my_con*)pool_get(id);
-	if (!con)
-	{
-		LM_DBG("Connection '%s' not found in pool\n", _url);
-/* Not in the pool yet */
-		con = new_connection(id);
-		if (!con)
-		{
-			goto err;
-		}
-		pool_insert((struct pool_con*)con);
-	}
-	else
-	{
-		LM_DBG("Connection '%s' found in pool\n", _url);
-	}
-
-	res->tail = (unsigned long)con;
-	return res;
-
-	err:
-	if (id) free_db_id(id);
-	if (res) pkg_free(res);
-	return 0;
+	return db_do_init(_url, (void*)new_connection);
 }
 
 /*
