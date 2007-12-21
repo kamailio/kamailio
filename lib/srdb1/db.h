@@ -330,7 +330,7 @@ int bind_dbmod(char* mod, db_func_t* dbf);
 
 /**
  * \brief Get the version of a table.
- * 
+ *
  * Returns the version number of a given table from the version table.
  * \param dbf database module callbacks
  * \param con database connection handle
@@ -338,5 +338,17 @@ int bind_dbmod(char* mod, db_func_t* dbf);
  * \return the version number if present, 0 if no version data available, < 0 on error
  */
 int table_version(db_func_t* dbf, db_con_t* con, const str* table);
+
+/**
+ * \brief Helper for db_init function.
+ *
+ * This helper method do the actual work for the database specific db_init
+ * functions.
+ * \param url database connection URL
+ * \param (*new_connection)() Pointer to the db specific connection creation method
+ * \return returns a pointer to the db_con_t representing the connection if it was
+   successful, otherwise 0 is returned.
+ */
+db_con_t* db_do_init(const char* url, void* (*new_connection)());
 
 #endif /* DB_H */

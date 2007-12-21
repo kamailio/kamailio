@@ -33,6 +33,8 @@
 #include "../str.h"
 #include "../ut.h"
 #include "db_cap.h"
+#include "db_id.h"
+#include "db_pool.h"
 #include "db.h"
 
 
@@ -222,4 +224,66 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 	ret = VAL_INT(ver);
 	dbf->free_result(connection, res);
 	return ret;
+}
+
+/*
+ * Initialize database module
+ * No function should be called before this
+ */
+db_con_t* db_do_init(const char* url, void* (*new_connection)())
+{
+	struct db_id* id;
+	void* con;
+	db_con_t* res;
+
+	int con_size = sizeof(db_con_t) + sizeof(void *);
+	id = 0;
+	res = 0;
+
+	if (!url) {
+		LM_ERR("invalid parameter value\n");
+		return 0;
+	}
+	if (strlen(url) > 255)
+	{
+		LM_ERR("SQL URL too long\n");
+		return 0;
+	}
+	
+	/* this is the root memory for this database connection. */
+	res = (db_con_t*)pkg_malloc(con_size);
+	if (!res) {
+		LM_ERR("no private memory left\n");
+		return 0;
+	}
+	memset(res, 0, con_size);
+
+	id = new_db_id(url);
+	if (!id) {
+		LM_ERR("cannot parse URL '%s'\n", url);
+		goto err;
+	}
+
+	/* Find the connection in the pool */
+	con = pool_get(id);
+	if (!con) {
+		LM_DBG("connection %p not found in pool\n", id);
+		/* Not in the pool yet */
+		con = new_connection(id);
+		if (!con) {
+			LM_ERR("could not add connection to the pool");
+			goto err;
+		}
+		pool_insert((struct pool_con*)con);
+	} else {
+		LM_DBG("connection %p found in pool\n", id);
+	}
+
+	res->tail = (unsigned long)con;
+	return res;
+
+ err:
+	if (id) free_db_id(id);
+	if (res) pkg_free(res);
+	return 0;
 }
