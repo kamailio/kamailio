@@ -344,8 +344,9 @@ inline static int io_watch_add(	io_wait_h* h,
 	e=get_fd_map(h, fd);
 	if (unlikely(e && (e->type!=0 /*F_NONE*/))){
 		LOG(L_ERR, "ERROR: io_watch_add: trying to overwrite entry %d"
-				" in the hash(%d, %d, %p) with (%d, %d, %p)\n",
-				fd, e->fd, e->type, e->data, fd, type, data);
+				" watched for %x in the hash(%d, %d, %p) with (%d, %d, %p)\n",
+				fd, events, e->fd, e->type, e->data, fd, type, data);
+		e=0;
 		goto error;
 	}
 	
@@ -442,6 +443,11 @@ again2:
 			}
 			if (unlikely( events & POLLOUT)){
 				if (unlikely(kq_ev_change(h, fd, EVFILT_WRITE, EV_ADD, e)==-1))
+				{
+					if (likely(events & POLLIN)){
+						kq_ev_change(h, fd, EVFILT_READ, EV_DELETE, 0);
+					}
+				}
 				goto error;
 			}
 			break;
@@ -554,8 +560,8 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 	}
 	if (unlikely(e->type==0 /*F_NONE*/)){
 		LOG(L_ERR, "ERROR: io_watch_del: trying to delete already erased"
-				" entry %d in the hash(%d, %d, %p) )\n",
-				fd, e->fd, e->type, e->data);
+				" entry %d in the hash(%d, %d, %p) flags %x)\n",
+				fd, e->fd, e->type, e->data, flags);
 		goto error;
 	}
 	events=e->events;

@@ -697,7 +697,10 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 		return (ticks_t)(c->timeout - t);
 	}
 	/* if conn->state is ERROR or BAD => force timeout too */
-	io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING);
+	if (unlikely(io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING)<0)){
+		LOG(L_ERR, "ERROR; tcpconn_read_timeout: io_watch_del failed for %p"
+					" id %d fd %d, state %d\n", c, c->id, c->fd, c->state);
+	}
 	tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
 	release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
 	
@@ -767,8 +770,14 @@ again:
 							" connection received: %p, id %d, fd %d, refcnt %d"
 							" state %d (n=%d)\n", con, con->id, con->fd,
 							atomic_get(&con->refcnt), con->state, n);
-				release_tcpconn(con, CONN_ERROR, tcpmain_sock);
+				goto con_error;
 				break; /* try to recover */
+			}
+			if (unlikely(con->state==S_CONN_BAD)){
+				LOG(L_WARN, "WARNING: tcp_receive: handle_io: received an"
+							" already bad connection: %p id %d refcnt %d\n",
+							con, con->id, atomic_get(&con->refcnt));
+				goto con_error;
 			}
 			/* must be before io_watch_add, io_watch_add might catch some
 			 * already existing events => might call handle_io and
@@ -783,8 +792,9 @@ again:
 			local_timer_add(&tcp_reader_ltimer, &con->timer,
 								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
 			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con))<0){
-				LOG(L_CRIT, "ERROR: tcp_receive: handle_io: failed to add"
-						" new socket to the fd list\n");
+				LOG(L_CRIT, "ERROR; tcpconn_receive: handle_io: io_watch_add "
+							"failed for %p id %d fd %d, state %d\n",
+							con, con->id, con->fd, con->state);
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 				local_timer_del(&tcp_reader_ltimer, &con->timer);
 				goto con_error;
@@ -792,10 +802,23 @@ again:
 			break;
 		case F_TCPCONN:
 			con=(struct tcp_connection*)fm->data;
+			if (unlikely(con->state==S_CONN_BAD)){
+				resp=CONN_ERROR;
+				LOG(L_WARN, "WARNING: tcp_receive: handle_io: F_TCPCONN"
+							" connection marked as bad: %p id %d refcnt %d\n",
+							con, con->id, atomic_get(&con->refcnt));
+				goto read_error;
+			}
 			resp=tcp_read_req(con, &ret);
 			if (unlikely(resp<0)){
+read_error:
 				ret=-1; /* some error occured */
-				io_watch_del(&io_w, con->fd, idx, IO_FD_CLOSING);
+				if (unlikely(io_watch_del(&io_w, con->fd, idx,
+											IO_FD_CLOSING) < 0)){
+				LOG(L_CRIT, "ERROR; tcpconn_receive: handle_io: io_watch_del "
+							"failed for %p id %d fd %d, state %d\n",
+							con, con->id, con->fd, con->state);
+				}
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 				local_timer_del(&tcp_reader_ltimer, &con->timer);
 				con->state=S_CONN_BAD;
@@ -818,7 +841,7 @@ again:
 	return ret;
 con_error:
 	con->state=S_CONN_BAD;
-	release_tcpconn(con, CONN_ERROR, fm->fd);
+	release_tcpconn(con, CONN_ERROR, tcpmain_sock);
 	return ret;
 error:
 	return -1;

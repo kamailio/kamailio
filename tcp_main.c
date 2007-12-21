@@ -1566,6 +1566,7 @@ no_id:
 										c, strerror(errno), errno);
 							goto conn_wait_error;
 						}
+						n=len;
 						goto end;
 					}
 					/* error: destroy it directly */
