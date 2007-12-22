@@ -140,6 +140,7 @@ static void get_as_str(struct eval_value *value, str *s) {
 			*s = value->u.s->s;
 			break;
 		default:
+			s->s = 0;
 			s->len = 0;
 			break;
 	}
