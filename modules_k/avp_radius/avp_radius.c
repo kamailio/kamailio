@@ -76,7 +76,7 @@ struct val vals[V_MAX];
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"avp_load_radius", load_avp_radius, 1, load_avp_fixup, 0,
+	{"avp_load_radius", (cmd_function)load_avp_radius, 1, load_avp_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };

@@ -62,7 +62,7 @@ static void mod_destroy(void);
  * Exported functions
  */
 static cmd_export_t cmds[]={
-	{"is_peer_verified", is_peer_verified,   0, 0, 0, 
+	{"is_peer_verified", (cmd_function)is_peer_verified,   0, 0, 0, 
 			REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };

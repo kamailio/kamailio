@@ -87,9 +87,9 @@ static int fixup_pua_xmpp(void** param, int param_no);
 
 static cmd_export_t cmds[]=
 {
-	{"pua_xmpp_notify",		 Notify2Xmpp,	0,		0,		  0, REQUEST_ROUTE},
-	{"pua_xmpp_req_winfo",   request_winfo,	2,  fixup_pua_xmpp, 0,REQUEST_ROUTE},
-	{     0,			       0,		    0, 0,		0,			   0	    }
+	{"pua_xmpp_notify", (cmd_function)Notify2Xmpp,	0,		0,		  0, REQUEST_ROUTE},
+	{"pua_xmpp_req_winfo", (cmd_function)request_winfo,	2,  fixup_pua_xmpp, 0,REQUEST_ROUTE},
+	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={

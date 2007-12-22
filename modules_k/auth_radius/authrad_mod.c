@@ -67,11 +67,11 @@ static int service_type = -1;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_www_authorize",   radius_www_authorize,   1, auth_fixup,
+	{"radius_www_authorize", (cmd_function)radius_www_authorize,   1, auth_fixup,
 			0, REQUEST_ROUTE},
-	{"radius_proxy_authorize", radius_proxy_authorize_1, 1, auth_fixup,
+	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_1, 1, auth_fixup,
 			0, REQUEST_ROUTE},
-	{"radius_proxy_authorize", radius_proxy_authorize_2, 2, auth_fixup,
+	{"radius_proxy_authorize", (cmd_function)radius_proxy_authorize_2, 2, auth_fixup,
 			0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
