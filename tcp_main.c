@@ -1596,7 +1596,7 @@ no_id:
 				 * desired either lock before the write or use 
 				 * _wbufq_insert(...) */
 				n=_tcpconn_write_nb(fd, c, buf, len);
-				if (unlikely(n<len)){
+				if (unlikely(n<(int)len)){
 					if ((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK){
 						DBG("tcp_send: pending write on new connection %p "
 								" (%d/%d bytes written)\n", c, n, len);
@@ -1789,7 +1789,7 @@ send_it:
 	
 	DBG("tcp_send: after real write: c= %p n=%d fd=%d\n",c, n, fd);
 	DBG("tcp_send: buf=\n%.*s\n", (int)len, buf);
-	if (unlikely(n<len)){
+	if (unlikely(n<(int)len)){
 #ifdef TCP_BUF_WRITE
 		if (tcp_options.tcp_buf_write && 
 				((n>=0) || errno==EAGAIN || errno==EWOULDBLOCK)){
