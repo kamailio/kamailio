@@ -1448,7 +1448,9 @@ int tcp_send(struct dest_info* dst, union sockaddr_union* from,
 #endif /* TCP_BUF_WRITE */
 #ifdef TCP_FD_CACHE
 	struct fd_cache_entry* fd_cache_e;
+	int use_fd_cache;
 	
+	use_fd_cache=tcp_options.fd_cache;
 	fd_cache_e=0;
 #endif /* TCP_FD_CACHE */
 	do_close_fd=1; /* close the fd on exit */
@@ -1650,7 +1652,11 @@ get_fd:
 			fd=c->fd;
 			do_close_fd=0; /* don't close the fd on exit, it's in use */
 #ifdef TCP_FD_CACHE
-		}else if (likely(tcp_options.fd_cache && 
+			use_fd_cache=0; /* don't cache: problems would arise due to the
+							   close() on cache eviction (if the fd is still 
+							   used). If it has to be cached then dup() _must_ 
+							   be used */
+		}else if (likely(use_fd_cache && 
 							((fd_cache_e=tcp_fd_cache_get(c))!=0))){
 			fd=fd_cache_e->fd;
 			do_close_fd=0;
@@ -1797,7 +1803,7 @@ error:
 #endif /* TCP_BUF_WRITE */
 end:
 #ifdef TCP_FD_CACHE
-	if (unlikely((fd_cache_e==0) && tcp_options.fd_cache)){
+	if (unlikely((fd_cache_e==0) && use_fd_cache)){
 		tcp_fd_cache_add(c, fd);
 	}else
 #endif /* TCP_FD_CACHE */
@@ -1815,8 +1821,6 @@ conn_wait_error:
 	 * tcp_main receives a CONN_ERROR it*/
 	c->state=S_CONN_BAD;
 	TCPCONN_LOCK;
-		/* FIXME: race: what if CONN_ERROR is sent by another tcp_send() to
-		 * tcp_main ? */
 		if (c->flags & F_CONN_HASHED){
 			/* if some other parallel tcp_send did send CONN_ERROR to
 			 * tcp_main, the connection might be already detached */

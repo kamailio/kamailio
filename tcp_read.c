@@ -674,7 +674,10 @@ void release_tcpconn(struct tcp_connection* c, long state, int unix_sock)
 		DBG(" extra_data %p\n", c->extra_data);
 		/* release req & signal the parent */
 		c->reader_pid=0; /* reset it */
-		if (c->fd!=-1) close(c->fd);
+		if (c->fd!=-1){
+			close(c->fd);
+			c->fd=-1;
+		}
 		/* errno==EINTR, EWOULDBLOCK a.s.o todo */
 		response[0]=(long)c;
 		response[1]=state;
@@ -698,8 +701,9 @@ static ticks_t tcpconn_read_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	}
 	/* if conn->state is ERROR or BAD => force timeout too */
 	if (unlikely(io_watch_del(&io_w, c->fd, -1, IO_FD_CLOSING)<0)){
-		LOG(L_ERR, "ERROR; tcpconn_read_timeout: io_watch_del failed for %p"
-					" id %d fd %d, state %d\n", c, c->id, c->fd, c->state);
+		LOG(L_ERR, "ERROR: tcpconn_read_timeout: io_watch_del failed for %p"
+					" id %d fd %d, state %d, flags %x, main fd %d\n",
+					c, c->id, c->fd, c->state, c->flags, c->s);
 	}
 	tcpconn_listrm(tcp_conn_lst, c, c_next, c_prev);
 	release_tcpconn(c, (c->state<0)?CONN_ERROR:CONN_RELEASE, tcpmain_sock);
@@ -791,10 +795,12 @@ again:
 			local_timer_reinit(&con->timer);
 			local_timer_add(&tcp_reader_ltimer, &con->timer,
 								S_TO_TICKS(TCP_CHILD_TIMEOUT), t);
-			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con))<0){
-				LOG(L_CRIT, "ERROR; tcpconn_receive: handle_io: io_watch_add "
-							"failed for %p id %d fd %d, state %d\n",
-							con, con->id, con->fd, con->state);
+			if (unlikely(io_watch_add(&io_w, s, POLLIN, F_TCPCONN, con)<0)){
+				LOG(L_CRIT, "ERROR: tcpconn_receive: handle_io: io_watch_add "
+							"failed for %p id %d fd %d, state %d, flags %x,"
+							" main fd %d, refcnt %d\n",
+							con, con->id, con->fd, con->state, con->flags,
+							con->s, atomic_get(&con->refcnt));
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 				local_timer_del(&tcp_reader_ltimer, &con->timer);
 				goto con_error;
@@ -815,13 +821,16 @@ read_error:
 				ret=-1; /* some error occured */
 				if (unlikely(io_watch_del(&io_w, con->fd, idx,
 											IO_FD_CLOSING) < 0)){
-				LOG(L_CRIT, "ERROR; tcpconn_receive: handle_io: io_watch_del "
-							"failed for %p id %d fd %d, state %d\n",
-							con, con->id, con->fd, con->state);
+					LOG(L_CRIT, "ERROR: tcpconn_receive: handle_io: "
+							"io_watch_del failed for %p id %d fd %d,"
+							" state %d, flags %x, main fd %d, refcnt %d\n",
+							con, con->id, con->fd, con->state,
+							con->flags, con->s, atomic_get(&con->refcnt));
 				}
 				tcpconn_listrm(tcp_conn_lst, con, c_next, c_prev);
 				local_timer_del(&tcp_reader_ltimer, &con->timer);
-				con->state=S_CONN_BAD;
+				if (unlikely(resp!=CONN_EOF))
+					con->state=S_CONN_BAD;
 				release_tcpconn(con, resp, tcpmain_sock);
 			}else{
 				/* update timeout */
