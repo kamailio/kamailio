@@ -40,6 +40,7 @@
 #include "../../mem/mem.h"
 #include "../../sr_module.h"
 #include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "domain.h"
 #include "mi.h"
 #include "hash.h"
@@ -51,7 +52,6 @@ static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
 static int mi_child_init(void);
-static int parameter_fixup(void** param, int param_no);
 
 MODULE_VERSION
 
@@ -92,7 +92,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"is_uri_host_local",   (cmd_function)is_uri_host_local,   0,  0, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_domain_local",     (cmd_function)w_is_domain_local,   1,  parameter_fixup, 0,
+	{"is_domain_local",     (cmd_function)w_is_domain_local,   1,  pvar_fixup, free_pvar_fixup,
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -242,36 +242,4 @@ static void destroy(void)
 		shm_free(hash_table_2);
 		hash_table_2 = 0;
 	}
-}
-
-
-/*
- * convert pvar parameter into parsed speudo variable specification
- */
-static int parameter_fixup(void **param, int param_no)
-{
-    pv_spec_t *sp;
-	str s;
-
-    if (*param && (param_no == 1)) {
-	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if (sp == 0) {
-	    LM_ERR("No pkg memory left for parameter\n");
-	    return -1;
-	}
-	s.s = (char*)*param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, sp) == 0) {
-	    LM_ERR("Parsing of pseudo variable %s failed!\n", (char*)*param);
-	    pkg_free(sp);
-	    return -1;
-	}
-	if (sp->type == PVT_NULL) {
-	    LM_ERR("Bad pseudo variable\n");
-	    pkg_free(sp);
-	    return -1;
-	}
-	*param = (void*)sp;
-    }
-
-    return 0;
 }

@@ -49,7 +49,6 @@ MODULE_VERSION
 
 
 static int uri_fixup(void** param, int param_no);
-static int pvar_fixup(void** param, int param_no);
 
 
 /*
@@ -62,7 +61,7 @@ static cmd_export_t cmds[] = {
 	{"uri_param",      (cmd_function)uri_param_2,    2, uri_fixup, 0, REQUEST_ROUTE},
 	{"add_uri_param",  (cmd_function)add_uri_param,  1, str_fixup, 0, REQUEST_ROUTE},
 	{"tel2sip",        (cmd_function)tel2sip,        0, 0,         0, REQUEST_ROUTE},
-	{"is_uri_user_e164", (cmd_function)is_uri_user_e164, 1, pvar_fixup, 0,
+	{"is_uri_user_e164", (cmd_function)is_uri_user_e164, 1, pvar_fixup, free_pvar_fixup,
 	 REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -106,39 +105,4 @@ static int uri_fixup(void** param, int param_no)
                return str_fixup(param, 1);
        }
        return 0;
-}
-
-/*
- * Convert pvar into parsed pseudo variable specification
- */
-static int pvar_fixup(void** param, int param_no)
-{
-    pv_spec_t *sp;
-	str s;
-
-    if (param_no == 1) { /* pseudo variable */
-
-	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if (sp == 0) {
-	    LM_ERR("no pkg memory left\n");
-	    return -1;
-	}
-
-	s.s = (char*)*param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, sp) == 0) {
-	    LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
-	    pkg_free(sp);
-	    return -1;
-	}
-
-	if (sp->type == PVT_NULL) {
-	    LM_ERR("bad pseudo variable\n");
-	    pkg_free(sp);
-	    return -1;
-	}
-
-	*param = (void*)sp;
-    }
-
-    return 0;
 }

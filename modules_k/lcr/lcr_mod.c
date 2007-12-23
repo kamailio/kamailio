@@ -59,6 +59,7 @@
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
 #include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "mi.h"
 
 MODULE_VERSION
@@ -261,10 +262,6 @@ int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int load_contacts (struct sip_msg*, char*, char*);
 int next_contacts (struct sip_msg*, char*, char*);
 
-/*
- * Fixup functions that are defined later
- */
-static int pvar_fixup(void** param, int param_no);
 
 /*
  * Exported functions
@@ -278,7 +275,7 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw",       (cmd_function)from_gw_0,       0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw",       (cmd_function)from_gw_1,       1, pvar_fixup, 0,
+	{"from_gw",       (cmd_function)from_gw_1,       1, pvar_fixup, free_pvar_fixup,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"from_gw_grp",   (cmd_function)from_gw_grp,   1, fixup_str2int, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
@@ -2274,42 +2271,5 @@ static int fixstringloadgws(void **param, int param_count)
 	*param = (void*)model;
     }
 
-    return 0;
-}
-
-
-/*
- * Convert pvar into parsed pseudo variable specification
- */
-static int pvar_fixup(void** param, int param_no)
-{
-    pv_spec_t *sp;
-    str s;
-
-    if (param_no != 1) {
-	*param = (void *)0;
-	return 0;
-    }
-	
-    sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-    if (sp == 0) {
-	LM_ERR("no pkg memory left\n");
-	return -1;
-    }
-    s.s = (char*)*param; s.len = strlen(s.s);
-    if (pv_parse_spec(&s, sp) == 0) {
-	LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
-	pkg_free(sp);
-	return -1;
-    }
-
-    if (sp->type == PVT_NULL) {
-	LM_ERR("bad pseudo variable\n");
-	pkg_free(sp);
-	return -1;
-    }
-
-    *param = (void*)sp;
-    
     return 0;
 }
