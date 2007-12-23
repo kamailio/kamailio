@@ -251,8 +251,9 @@ struct from_uri_regex from_uri_reg[MAX_NO_OF_LCRS];
 /*
  * Module functions that are defined later
  */
-int load_gws(struct sip_msg* _m, char* _s1, char* _s2);
-int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2);
+int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2);
+int load_gws_1(struct sip_msg* _m, char* _s1, char* _s2);
+int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2);
 int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
 int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
 int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
@@ -267,26 +268,28 @@ int next_contacts (struct sip_msg*, char*, char*);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_gws",      (cmd_function)load_gws,      0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_gws",      (cmd_function)load_gws_grp,  1, fixstringloadgws, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"next_gw",       (cmd_function)next_gw,       0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"from_gw",       (cmd_function)from_gw_0,       0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw",       (cmd_function)from_gw_1,       1, pvar_fixup, free_pvar_fixup,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw_grp",   (cmd_function)from_gw_grp,   1, fixup_str2int, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"to_gw",         (cmd_function)to_gw,         0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"to_gw",         (cmd_function)to_gw_grp,     1, fixup_str2int, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws", (cmd_function)load_gws_0, 0, 0, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws", (cmd_function)load_gws_1, 1, pvar_fixup, free_pvar_fixup,
+	 REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws_from_grp", (cmd_function)load_gws_from_grp, 1,
+	 fixstringloadgws, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"next_gw", (cmd_function)next_gw, 0, 0, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE},
+	{"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw", (cmd_function)from_gw_1, 1, pvar_fixup, free_pvar_fixup,
+	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw_grp", (cmd_function)from_gw_grp, 1, fixup_str2int, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"to_gw", (cmd_function)to_gw, 0, 0, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE},
+	{"to_gw", (cmd_function)to_gw_grp, 1, fixup_str2int, 0,
+	 REQUEST_ROUTE | FAILURE_ROUTE},
 	{"load_contacts", (cmd_function)load_contacts, 0, 0, 0,
-		REQUEST_ROUTE},
+	 REQUEST_ROUTE},
 	{"next_contacts", (cmd_function)next_contacts, 0, 0, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+	 REQUEST_ROUTE | FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -1198,7 +1201,7 @@ int mi_print_gws(struct mi_node* rpl)
 /*
  * Load info of matching GWs from database to gw_uri AVPs
  */
-static int do_load_gws(struct sip_msg* _m, int grp_id)
+static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 {
     str ruri_user, from_uri, value;
     char from_uri_str[MAX_FROM_URI_LEN + 1];
@@ -1225,27 +1228,32 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
     }
     ruri_user = _m->parsed_uri.user;
 
-   /* Look for Caller RPID or From URI */
-    if (search_first_avp(rpid_avp_type, rpid_avp, &val, 0) &&
-	val.s.s && val.s.len) {
-	/* Get URI user from RPID */
-	from_uri.len = val.s.len;
-	from_uri.s = val.s.s;
+    if (_from_uri) {
+	/* take caller uri from _from_uri argument */
+	from_uri = *_from_uri;
     } else {
-	/* Get URI from From URI */
-	if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
-	    LM_ERR("Error while parsing headers\n");
-	    return -1;
+	/* take caller uri from RPID or From URI */
+	if (search_first_avp(rpid_avp_type, rpid_avp, &val, 0) &&
+	    val.s.s && val.s.len) {
+	    /* Get URI user from RPID */
+	    from_uri.len = val.s.len;
+	    from_uri.s = val.s.s;
+	} else {
+	    /* Get URI from From URI */
+	    if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
+		LM_ERR("Error while parsing headers\n");
+		return -1;
+	    }
+	    if (!_m->from) {
+		LM_ERR("From header field not found\n");
+		return -1;
+	    }
+	    if ((!(_m->from)->parsed) && (parse_from_header(_m) < 0)) {
+		LM_ERR("Error while parsing From header\n");
+		return -1;
+	    }
+	    from_uri = get_from(_m)->uri;
 	}
-	if (!_m->from) {
-	    LM_ERR("From header field not found\n");
-	    return -1;
-	}
-	if ((!(_m->from)->parsed) && (parse_from_header(_m) < 0)) {
-	    LM_ERR("Error while parsing From header\n");
-	    return -1;
-	}
-	from_uri = get_from(_m)->uri;
     }
     if (from_uri.len <= MAX_FROM_URI_LEN) {
 	strncpy(from_uri_str, from_uri.s, from_uri.len);
@@ -1268,7 +1276,7 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
      * Let's match the gws:
      *  1. prefix matching
      *  2. from_uri matching
-     *  3. grp_id matching
+     *  3. _grp_id matching
      *
      * Note: A gateway must be in the list _only_ once.
      */
@@ -1296,8 +1304,8 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 			break;
 		    }
 		    if (lcr_rec.grp_id == (*gws)[j].grp_id &&
-			(grp_id < 0 || (*gws)[j].grp_id == grp_id)) {
-			/* 3. grp_id matching is done */
+			(_grp_id < 0 || (*gws)[j].grp_id == _grp_id)) {
+			/* 3. _grp_id matching is done */
 			for (k = 0; k < gw_index; k++) {
 			    if ((*gws)[j].ip_addr ==
 				(*gws)[matched_gws[k].gw_index].ip_addr) {
@@ -1492,9 +1500,10 @@ static int do_load_gws(struct sip_msg* _m, int grp_id)
 
 /*
  * Load info of matching GWs from database to gw_uri AVPs
- * taking into account the given group id.
+ * taking into account the given group id.  Caller URI is taken
+ * from request.
  */
-int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2)
+int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	str grp_s;
 	unsigned int grp_id;
@@ -1508,19 +1517,47 @@ int load_gws_grp(struct sip_msg* _m, char* _s1, char* _s2)
 	} else {
 		grp_id = ((pv_elem_p)_s1)->spec.pvp.pvn.u.isname.name.n;
 	}
-	if (grp_id > 0) return do_load_gws(_m, (int)grp_id);
+	if (grp_id > 0) return do_load_gws(_m, (str *)0, (int)grp_id);
 	else return -1;
 }
 
+
 /*
- * Load info of matching GWs from database to gw_uri AVPs
- * ignoring the group id.
+ * Load info of matching GWs from database to gw_uri AVPs.
+ * Caller URI is taken from request.
  */
-int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
+int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    return do_load_gws(_m, -1);
+    return do_load_gws(_m, (str *)0, -1);
 }
 
+
+/*
+ * Load info of matching GWs from database to gw_uri AVPs.
+ * Caller URI is taken from pseudo variable argument.
+ */
+int load_gws_1(struct sip_msg* _m, char* _sp, char* _s2)
+{
+    pv_spec_t *sp;
+    pv_value_t pv_val;
+    sp = (pv_spec_t *)_sp;
+
+    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		LM_DBG("missing from uri\n");
+		return -1;
+	    }
+ 	    return do_load_gws(_m, &(pv_val.rs), -1);
+	} else {
+	   LM_DBG("pseudo variable value is not string\n");
+	   return -1;
+	}
+    } else {
+	LM_DBG("cannot get pseudo variable value\n");
+	return -1;
+    }
+}
 
 
 /*

@@ -33,10 +33,9 @@
 		</itemizedlist>
 	</para>
 	<para>
-	Gateway selection is based on caller's RPID URI (if available in
-	caller's RPID AVP after authentication) or From URI and user part of
+	Gateway selection is based on caller's URI and user part of
 	Request-URI (telephone number).  A gateway matches a request if user
-	part of Request-URI and "From" URI match the prefix and From pattern
+	part of Request-URI and caller's URI match the prefix and From pattern
 	of the gateway.  Matching gateways are then ordered for forwarding
 	purpose (1) according to longest user part match, (2) according to
 	gateway's priority, and (3) randomly if prefix is not a regular
@@ -61,9 +60,9 @@
 	protocol values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
 	</para>
 	<para>
-	As a side effect of gateway selection, a message flag is set or reset
-	depending on whether selected gateway supports directed media
-	(RFC 4145).
+	As a side effect of gateway selection, gateway's flags (that may
+	contain information about capabilities of the gateway)
+	are stored into an AVP.
 	</para>
 	<para>
 	Table lcr contains prefix of user part of Request-URI, From URI
@@ -139,7 +138,7 @@ modparam("lcr","db_url","&exampledb;")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>gw_table</varname> (string)</title>
 		<para>
 		Name of the table holding the gateways definitions.
@@ -159,7 +158,7 @@ modparam("lcr","gw_table","gw")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>gw_name_column</varname> (string)</title>
 		<para>
 		Name of the column holding the gateway name.
@@ -179,7 +178,7 @@ modparam("lcr","gw_name_column","gw_name")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>ip_addr_column</varname> (string)</title>
 		<para>
 		Name of the column holding the IP address of the gateway.
@@ -199,7 +198,7 @@ modparam("lcr","ip_addr_column","ip_addr")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>port_column</varname> (string)</title>
 		<para>
 		Name of the column holding the port number of the gateway.
@@ -219,7 +218,7 @@ modparam("lcr","port_column","port")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>uri_scheme_column</varname> (string)</title>
 		<para>
 		Name of the column holding the uri scheme of the gateway.
@@ -240,7 +239,7 @@ modparam("lcr","uri_scheme_column","scheme")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>transport_column</varname> (string)</title>
 		<para>
 		Name of the column holding the transport type to be used for 
@@ -262,7 +261,7 @@ modparam("lcr","transport_column","transport")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>grp_id_column</varname> (string)</title>
 		<para>
 		Name of the column holding the group ID.
@@ -283,7 +282,7 @@ modparam("lcr","grp_id_column","grp_id")
 	</section>
 
 
-<section>
+	<section>
 		<title><varname>flags_column</varname> (string)</title>
 		<para>
 		Name of the column holding gateway specific flag values.
@@ -303,7 +302,7 @@ modparam("lcr","flags_column","gw_flags")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>lcr_table</varname> (string)</title>
 		<para>
 		Name of the table holding the LCR rules.
@@ -323,7 +322,7 @@ modparam("lcr","lcr_table","lcr")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>strip_column</varname> (string)</title>
 		<para>
 		Name of the column holding the number of digits to strip from the RURI before applying the prefix.
@@ -343,7 +342,7 @@ modparam("lcr","strip_column","strip")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>prefix_column</varname> (string)</title>
 		<para>
 		Name of the column holding the RURI(destination) prefix.
@@ -363,7 +362,7 @@ modparam("lcr","prefix_column","prefix")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>from_uri_column</varname> (string)</title>
 		<para>
 		Name of the column holding the FROM (source) URI.
@@ -383,7 +382,7 @@ modparam("lcr","from_uri_column","from_uri")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>priority_column</varname> (string)</title>
 		<para>
 		Name of the column holding the priority of the rule.
@@ -404,7 +403,7 @@ modparam("lcr","priority_column","priority")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>contact_avp</varname> (AVP string)</title>
 		<para>
 		Internal AVP that load_contacts function uses to store
@@ -426,7 +425,7 @@ modparam("lcr", "contact_avp", "$avp(i:711)")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>fr_inv_timer_avp</varname> (AVP string)</title>
 		<para>
 		An AVP that contains a final response timeout
@@ -449,7 +448,7 @@ modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>gw_uri_avp</varname> (AVP string)</title>
 		<para>
    Internal AVP that load_gws function uses to store information of
@@ -492,7 +491,7 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 		</example>
 	</section>
 
-<section>
+	<section>
 		<title><varname>ruri_user_avp</varname> (AVP string)</title>
 		<para>
    Internal AVP that next_gw function uses to store Request-URI user for
@@ -608,20 +607,22 @@ modparam("lcr", "prefix_mode", 1)
 </programlisting>
                 </example>
 	</section>
+	</section>
 
 	<section>
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">load_gws([group-id])</function>
+		<function moreinfo="none">load_gws([pvar])</function>
 		</title>
 		<para>
 		Loads URI schemes, addresses, ports, and transports of gateways
-		that match user part of Request-URI to gw_uri_avp AVPs (see Overview
-		section). If an optional group-id is specified, only gateways belonging
-		to this group are loaded.
-		The group may contain pseudo-variables that are replaced at runtime.
-		Returns 1 or -1 depending on success.
+		that match user part of Request-URI to gw_uri_avp AVPs
+		(see Overview section). If optional pseudo variable
+		argument is included, caller's URI is taken from it.
+		If pseudo variable argument is not included, caller's
+		URI is taken from rpid_avp AVP or, if rpid_avp value is
+		empty, from From URI. Returns 1 or -1 depending on success.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -630,30 +631,42 @@ modparam("lcr", "prefix_mode", 1)
 		<title><function>load_gws</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!load_gws()) {
+if (!load_gws("$var(caller_uri)")) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
 	exit;
 };
 ...
 </programlisting>
 		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">load_gws_from_grp(group-id)</function>
+		</title>
+		<para>
+		Loads URI schemes, addresses, ports, and transports of gateways
+		that match user part of Request-URI to gw_uri_avp AVPs
+		(see Overview section), but only gateways belonging to the
+		group given in group-id argument are loaded.  group-id
+		argument is
+		a string and may contain pseudo-variables that are
+		replaced at runtime. Returns 1 or -1 depending on success. 
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
 		<example>
-		<title><function>load_gws</function> usage with group-id</title>
+		<title><function>load_gws_from_grp</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (!load_gws("1")) {
+if (!load_gws_from_grp("1")) {
 	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
 	exit;
 };
 ...
-</programlisting>
-		</example>
-		<example>
-		<title><function>load_gws</function> usage with pseudo-variables</title>
-		<programlisting format="linespecific">
-...
-if (!load_gws("$avp(s:gateway_group)")) {
-	sl_send_reply("500", "Server Internal Error - Cannot load gateways from group 1");
+
+if (!load_gws_from_grp("$avp(s:gateway_group)")) {
+	sl_send_reply("500", "Server Internal Error - Cannot load gateways");
 	exit;
 };
 ...
