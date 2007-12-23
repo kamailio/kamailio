@@ -650,7 +650,9 @@ if (!load_gws("$var(caller_uri)")) {
 		group given in group-id argument are loaded.  group-id
 		argument is
 		a string and may contain pseudo-variables that are
-		replaced at runtime. Returns 1 or -1 depending on success. 
+		replaced at runtime.  Caller's
+		URI is taken from rpid_avp AVP or, if rpid_avp value is
+		empty, from From URI. Returns 1 or -1 depending on success. 
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
