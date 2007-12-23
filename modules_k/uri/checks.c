@@ -373,6 +373,10 @@ int is_uri_user_e164(struct sip_msg* _m, char* _sp, char* _s2)
 
     if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_STR) {
+	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		LM_DBG("missing uri\n");
+		return -1;
+	    }
 	    if (parse_uri(pv_val.rs.s, pv_val.rs.len, &puri) < 0) {
 		LM_ERR("parsing URI failed\n");
 		return -1;
