@@ -1383,6 +1383,7 @@ int tcpconn_add_alias(int id, int port, int proto)
 	struct tcp_connection* c;
 	int ret;
 	struct ip_addr zero_ip;
+	int r;
 	
 	/* fix the port */
 	port=port?port:((proto==PROTO_TLS)?SIPS_PORT:SIP_PORT);
@@ -1415,8 +1416,16 @@ error:
 	TCPCONN_UNLOCK;
 	switch(ret){
 		case -2:
-			LOG(L_ERR, "ERROR: tcpconn_add_alias: too many aliases"
-					" for connection %p (%d)\n", c, c->id);
+			LOG(L_ERR, "ERROR: tcpconn_add_alias: too many aliases (%d)"
+					" for connection %p (id %d) %s:%d <- %d\n",
+					c->aliases, c, c->id, ip_addr2a(&c->rcv.src_ip),
+					c->rcv.src_port, port);
+			for (r=0; r<c->aliases; r++){
+				LOG(L_ERR, "ERROR: tcpconn_add_alias: alias %d: for %p (%d)"
+						" %s:%d <-%d hash %x\n",  r, c, c->id, 
+						 ip_addr2a(&c->rcv.src_ip), c->rcv.src_port, 
+						c->con_aliases[r].port, c->con_aliases[r].hash);
+			}
 			break;
 		case -3:
 			LOG(L_ERR, "ERROR: tcpconn_add_alias: possible port"
@@ -2075,10 +2084,11 @@ inline static int tcpconn_chld_put(struct tcp_connection* tcpconn)
 				"flags %04x\n", tcpconn, tcpconn->id,
 				tcpconn->s, tcpconn->flags);
 		/* sanity checks */
+		membar_read_atomic_op(); /* make sure we see the current flags */
 		if (unlikely(!(tcpconn->flags & F_CONN_FD_CLOSED) || 
 					 !(tcpconn->flags & F_CONN_REMOVED) || 
 					(tcpconn->flags & 
-					 		(F_CONN_HASHED| F_CONN_WRITE_W)) )){
+					 	(F_CONN_HASHED|F_CONN_MAIN_TIMER| F_CONN_WRITE_W)) )){
 			LOG(L_CRIT, "BUG: tcpconn_chld_put: %p bad flags = %0x\n",
 					tcpconn, tcpconn->flags);
 			abort();
@@ -2131,25 +2141,41 @@ inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
  */
 inline static int tcpconn_put_destroy(struct tcp_connection* tcpconn)
 {
-	if (unlikely((tcpconn->flags & F_CONN_WRITE_W) ||
-				!(tcpconn->flags & F_CONN_REMOVED))){
+	if (unlikely((tcpconn->flags & 
+						(F_CONN_WRITE_W|F_CONN_HASHED|F_CONN_MAIN_TIMER)) ||
+				!(tcpconn->flags & F_CONN_REMOVED) )){
 		/* sanity check */
-		LOG(L_CRIT, "BUG: tcpconn_put_destroy: %p flags = %0x\n",
+		if (unlikely(tcpconn->flags & F_CONN_HASHED)){
+			LOG(L_CRIT, "BUG: tcpconn_destroy: called with hashed and/or"
+						"on timer connection (%p), flags = %0x\n",
+						tcpconn, tcpconn->flags);
+			/* try to continue */
+			if (likely(tcpconn->flags & F_CONN_MAIN_TIMER))
+				local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+			TCPCONN_LOCK;
+				_tcpconn_detach(tcpconn);
+			TCPCONN_UNLOCK;
+		}else{
+			LOG(L_CRIT, "BUG: tcpconn_put_destroy: %p flags = %0x\n",
 					tcpconn, tcpconn->flags);
-	}
-	if (unlikely(atomic_dec_and_test(&tcpconn->refcnt))){
-		tcpconn_destroy(tcpconn);
-		return 1;
-	}else{
-		tcpconn->state=S_CONN_BAD;
-		/* in case it's still in a reader timer */
-		tcpconn->timeout=get_ticks_raw();
-		/* fast close: close fds now */
-		if (likely(!(tcpconn->flags & F_CONN_FD_CLOSED))){
-			tcpconn_close_main_fd(tcpconn);
-			tcpconn->flags|=F_CONN_FD_CLOSED;
-			(*tcp_connections_no)--;
 		}
+	}
+	tcpconn->state=S_CONN_BAD;
+	/* in case it's still in a reader timer */
+	tcpconn->timeout=get_ticks_raw();
+	/* fast close: close fds now */
+	if (likely(!(tcpconn->flags & F_CONN_FD_CLOSED))){
+		tcpconn_close_main_fd(tcpconn);
+		tcpconn->flags|=F_CONN_FD_CLOSED;
+		(*tcp_connections_no)--;
+	}
+	/* all the flags / ops on the tcpconn must be done prior to decrementing
+	 * the refcnt. and at least a membar_write_atomic_op() mem. barrier or
+	 *  a mb_atomic_* op must * be used to make sure all the changed flags are
+	 *  written into memory prior to the new refcnt value */
+	if (unlikely(mb_atomic_dec_and_test(&tcpconn->refcnt))){
+		_tcpconn_free(tcpconn);
+		return 1;
 	}
 	return 0;
 }
