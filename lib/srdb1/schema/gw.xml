@@ -10,7 +10,7 @@
 
 <table id="gw" xmlns:db="http://docbook.org/ns/docbook">
     <name>gw</name>
-    <version>6</version>
+    <version>7</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table contains Least Cost Routing Gateway definitions for the LCR module.
@@ -74,16 +74,16 @@
         <name>strip</name>
         <type>unsigned char</type>
         <null/>
-        <description>The number of digits to strip from the RURI before applying the prefix.</description>
+        <description>The number of digits to strip from Request URI user part before inserting tag</description>
     </column>
 
     <column>
-        <name>prefix</name>
+        <name>tag</name>
         <type>string</type>
         <size>16</size>
         <null/>
         <default><null/></default>
-        <description>The R-URI(destination) prefix</description>
+        <description>Request URI user part tag</description>
     </column>
 
     <column>
