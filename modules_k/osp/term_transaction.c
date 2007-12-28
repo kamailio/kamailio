@@ -89,7 +89,7 @@ int ospValidateHeader (
 
     ospInitDestination(&dest);
 
-    if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction) != 0)) {
+    if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction) != OSPC_ERR_NO_ERROR)) {
         LM_ERR("failed to create a new OSP transaction handle (%d)\n", errorcode);
     } else if ((ospGetRpidUserpart(msg, dest.calling, sizeof(dest.calling)) != 0) && 
         (ospGetFromUserpart(msg, dest.calling, sizeof(dest.calling)) != 0))
@@ -158,7 +158,7 @@ int ospValidateHeader (
 
         ospSaveTermDestination(&dest);
 
-        if ((errorcode == 0) && (authorized == 1)) {
+        if ((errorcode == OSPC_ERR_NO_ERROR) && (authorized == 1)) {
             LM_DBG("call is authorized for %d seconds, call_id '%.*s' transaction_id '%llu'", 
                 timelimit,
                 dest.callidsize,

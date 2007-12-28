@@ -346,7 +346,7 @@ int ospGetOspHeader(
         if ((hf->type == HDR_OTHER_T) && (hf->name.len == OSP_HEADER_SIZE - 2)) {
             // possible hit
             if (strncasecmp(hf->name.s, OSP_TOKEN_HEADER, OSP_HEADER_SIZE) == 0) {
-                if ((errorcode = OSPPBase64Decode(hf->body.s, hf->body.len, token, tokensize)) == 0) {
+                if ((errorcode = OSPPBase64Decode(hf->body.s, hf->body.len, token, tokensize)) == OSPC_ERR_NO_ERROR) {
                     result = 0;
                 } else {
                     LM_ERR("failed to base64 decode token (%d)\n", errorcode);

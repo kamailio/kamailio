@@ -58,11 +58,11 @@ unsigned long long ospGetTransactionId(
 {
     OSPTTRANS* context = NULL;
     unsigned long long id = 0;
-    int errorcode = 0;
+    int errorcode = OSPC_ERR_NO_ERROR;
 
     context = OSPPTransactionGetContext(transaction, &errorcode);
 
-    if (errorcode == 0) {
+    if (errorcode == OSPC_ERR_NO_ERROR) {
         id = (unsigned long long)context->TransactionID;
     } else {
         LM_ERR("failed to extract transaction_id from transaction handle %d (%d)\n",
@@ -120,7 +120,7 @@ void ospReportUsageWrapper(
 
     OSPM_THRATTR_INIT(threadattr, errorcode);
 
-    OSPM_SETDETACHED_STATE(threadattr,errorcode);
+    OSPM_SETDETACHED_STATE(threadattr, errorcode);
 
     OSPM_CREATE_THREAD(threadid, &threadattr, ospReportUsageWork, usage, errorcode);
 
@@ -159,7 +159,7 @@ static OSPTTHREADRETURN ospReportUsageWork(
             usage->ospvReleaseSource,
             (unsigned char*)"", 0, 0, 0, 0, NULL, NULL);
 
-        if (errorcode == 0) {
+        if (errorcode == OSPC_ERR_NO_ERROR) {
             LM_DBG("reporte usage for '%llu'\n", 
                 ospGetTransactionId(usage->ospvTransaction));
             break;

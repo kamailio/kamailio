@@ -67,7 +67,7 @@ static int ospSetRpid(struct sip_msg* msg, osp_dest* dest);
  * param sourcedev Source device IP
  * param origcalled Original called number
  * param authtime Request authorization time
- * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ * return 0 success, -1 failure
  */
 static int ospLoadRoutes(
     OSPTTRANHANDLE transaction, 
@@ -83,14 +83,14 @@ static int ospLoadRoutes(
     osp_dest dests[OSP_DEF_DESTS];
     OSPE_DEST_PROT protocol;
     OSPE_DEST_OSP_ENABLED enabled;
-    int result = MODULE_RETURNCODE_TRUE;
+    int result = 0;
     
     for (count = 0; count < destcount; count++) {
         /* This is necessary becuase we will save destinations in reverse order */
         dest = ospInitDestination(&dests[count]);
 
         if (dest == NULL) {
-            result = MODULE_RETURNCODE_FALSE;
+            result = -1;
             break;
         }
 
@@ -138,17 +138,17 @@ static int ospLoadRoutes(
                 dest->token);
         }
         
-        if (errorcode != 0) {
+        if (errorcode != OSPC_ERR_NO_ERROR) {
             LM_ERR("failed to load routes (%d) expected '%d' current '%d'\n", 
                 errorcode, 
                 destcount, 
                 count);
-            result = MODULE_RETURNCODE_FALSE;
+            result = -1;
             break;
         }
 
         errorcode = OSPPTransactionGetDestProtocol(transaction, &protocol);
-        if (errorcode != 0) {
+        if (errorcode != OSPC_ERR_NO_ERROR) {
             /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
             LM_DBG("cannot get dest protocol (%d)\n", errorcode);
             protocol = OSPE_DEST_PROT_SIP;
@@ -168,7 +168,7 @@ static int ospLoadRoutes(
         }
 
         errorcode = OSPPTransactionIsDestOSPEnabled(transaction, &enabled);
-        if (errorcode != 0) {
+        if (errorcode != OSPC_ERR_NO_ERROR) {
             /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
             LM_DBG("cannot get dest OSP version (%d)\n", errorcode);
         } else if (enabled == OSPE_OSP_FALSE) {
@@ -178,7 +178,7 @@ static int ospLoadRoutes(
         }
 
         errorcode = OSPPTransactionGetDestNetworkId(transaction, dest->networkid);
-        if (errorcode != 0) {
+        if (errorcode != OSPC_ERR_NO_ERROR) {
             /* This does not mean an ERROR. The OSP server may not support OSP 2.1.1 */
             LM_DBG("cannot get dest network ID (%d)\n", errorcode);
             dest->networkid[0] = '\0';
@@ -220,7 +220,7 @@ static int ospLoadRoutes(
      * when we start searching avps the destinations
      * will be in order 
      */
-    if (result == MODULE_RETURNCODE_TRUE) {
+    if (result == 0) {
         for(count = destcount -1; count >= 0; count--) {
             ospSaveOrigDestination(&dests[count]);
         }
@@ -257,14 +257,13 @@ int ospRequestRouting(
     const char** preferred = NULL;
     unsigned int destcount;
     OSPTTRANHANDLE transaction = -1;
-    unsigned long long transid;
     int result = MODULE_RETURNCODE_FALSE;
 
     authtime = time(NULL);
 
     destcount = _osp_max_dests;
 
-    if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction)) != 0) {
+    if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction)) != OSPC_ERR_NO_ERROR) {
         LM_ERR("failed to create new OSP transaction (%d)\n", errorcode);
     } else if ((ospGetRpidUserpart(msg, source, sizeof(source)) != 0) &&
         (ospGetFromUserpart(msg, source, sizeof(source)) != 0)) 
@@ -279,13 +278,11 @@ int ospRequestRouting(
     } else if (ospGetSourceAddress(msg, sourcedev, sizeof(sourcedev)) != 0) {
         LM_ERR("failed to extract source address\n");
     } else {
-        transid = ospGetTransactionId(transaction);
-
         ospConvertAddress(sourcedev, src, sizeof(src));
 
-        if (_osp_snid_avpname.n != 0 &&
-            (snidavp = search_first_avp(_osp_snid_avptype, _osp_snid_avpname, &snidval, 0)) != NULL &&
-            snidavp->flags & AVP_VAL_STR && snidval.s.s && snidval.s.len) 
+        if ((_osp_snid_avpname.n != 0) &&
+            ((snidavp = search_first_avp(_osp_snid_avptype, _osp_snid_avpname, &snidval, 0)) != NULL) &&
+            (snidavp->flags & AVP_VAL_STR) && (snidval.s.s && snidval.s.len)) 
         {
             snprintf(snid, sizeof(snid), "%.*s", snidval.s.len, snidval.s.s);
             OSPPTransactionSetNetworkIds(transaction, snid, "");
@@ -294,7 +291,6 @@ int ospRequestRouting(
         }
 
         LM_INFO("request auth and routing for: "
-            "transaction_id '%llu' "
             "source '%s' "
             "source_port '%s' "
             "source_dev '%s' "
@@ -303,7 +299,6 @@ int ospRequestRouting(
             "e164_dest '%s' "
             "call_id '%.*s' "
             "dest_count '%i'\n",
-            transid,
             _osp_device_ip,
             _osp_device_port,
             src,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
@@ -332,27 +327,34 @@ int ospRequestRouting(
             &logsize,          /* size allocated for detaillog (next param) 0=no log */
             detaillog);        /* memory location for detaillog to be stored */
 
-        if ((errorcode == 0) && (destcount > 0)) {
-            LM_INFO("there are '%d' OSP routes, call_id '%.*s' transaction_id '%llu'\n",
+        if ((errorcode == OSPC_ERR_NO_ERROR) &&
+            (ospLoadRoutes(transaction, destcount, _osp_device_ip, sourcedev, destination, authtime) == 0))
+        {
+            LM_INFO("there are '%d' OSP routes, call_id '%.*s'\n",
                 destcount,
-                callids[0]->ospmCallIdLen, 
-                callids[0]->ospmCallIdVal,
-                transid);
-            /* Will record a unique cookie in the on-branch section */
-            result = ospLoadRoutes(transaction, destcount, _osp_device_ip, sourcedev, destination, authtime);
-        } else if ((errorcode == 0) && (destcount == 0)) {
-            LM_INFO("there is 0 osp route, call_id '%.*s' transaction_id' %llu'\n",
                 callids[0]->ospmCallIdLen,
-                callids[0]->ospmCallIdVal,
-                transid);
-            /* Must do manually since callback does not work for this case. Do not know why. */
-            ospRecordEvent(0, 503);
+                callids[0]->ospmCallIdVal);
+            result = MODULE_RETURNCODE_TRUE;
         } else {
-            LM_ERR("failed to request auth and routing (%i), call_id '%.*s 'transaction_id '%llu'\n",
+            LM_ERR("failed to request auth and routing (%i), call_id '%.*s\n",
                 errorcode,
                 callids[0]->ospmCallIdLen,
-                callids[0]->ospmCallIdVal,
-                transid);
+                callids[0]->ospmCallIdVal);
+            switch (errorcode) {
+                case OSPC_ERR_TRAN_ROUTE_BLOCKED:
+                    result = -403;
+                    break;
+                case OSPC_ERR_TRAN_ROUTE_NOT_FOUND:
+                    result = -404;
+                    break;
+                case OSPC_ERR_NO_ERROR:
+                    /* AuthRsp ok but ospLoadRoutes fails */
+                    result = -500;
+                    break;
+                default:
+                    result = MODULE_RETURNCODE_FALSE;
+                    break;
+            }
         }
     }
 

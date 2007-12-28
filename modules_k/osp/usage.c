@@ -336,7 +336,7 @@ static int ospReportUsageFromCookie(
 
     LM_DBG("built usage handle '%d' (%d)\n", transaction, errorcode);
 
-    if (errorcode == 0 && destinationCount > 0) {
+    if ((errorcode == OSPC_ERR_NO_ERROR) && (destinationCount > 0)) {
         errorcode = OSPPTransactionSetDestinationCount(
             transaction,
             destinationCount);
@@ -509,7 +509,7 @@ void ospReportOrigSetupUsage(void)
     int_str destval;
     OSPTTRANHANDLE transaction = -1;
     int lastcode = 0;
-    int errorcode = 0;
+    int errorcode;
 
     errorcode = OSPPTransactionNew(_osp_provider, &transaction);
 
@@ -567,7 +567,7 @@ void ospReportTermSetupUsage(void)
 {
     osp_dest* dest = NULL;
     OSPTTRANHANDLE transaction = -1;
-    int errorcode = 0;
+    int errorcode;
 
     if ((dest = ospGetTermDestination())) {
         if (dest->reported == 0) {
