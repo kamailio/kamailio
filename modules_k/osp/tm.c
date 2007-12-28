@@ -69,7 +69,10 @@ int ospInitTm(void)
  * param type
  * param ps
  */
-static void ospOnReq(struct cell* t, int type, struct tmcb_params* ps)
+static void ospOnReq(
+    struct cell* t, 
+    int type, 
+    struct tmcb_params* ps)
 {
     int tmcb_types;
 

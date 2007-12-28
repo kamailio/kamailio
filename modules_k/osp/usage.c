@@ -79,7 +79,7 @@ static int ospReportUsageFromCookie(struct sip_msg* msg, char* cooky, OSPTCALLID
  */
 static void ospRecordTransaction(
     struct sip_msg* msg, 
-    unsigned long long transid, 
+    unsigned long long transid,
     char* uac, 
     char* from, 
     char* to, 

@@ -102,8 +102,7 @@ static int ospSaveDestination(
  * return 0 success, -1 failure
  */
 int ospSaveOrigDestination(
-    osp_dest* dest
-    )
+    osp_dest* dest)
 {
     return ospSaveDestination(dest, &OSP_ORIGDEST_NAME);
 }
@@ -369,7 +368,8 @@ void ospRecordEvent(
  * Dump destination information
  * param dest Destination
  */
-void ospDumpDestination(osp_dest* dest)
+void ospDumpDestination(
+    osp_dest* dest)
 {
     LM_DBG("dest->host..........'%s'\n", dest->host);
     LM_DBG("dest->used..........'%d'\n", dest->used);
