@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('gw','6');
+INSERT INTO version (table_name, table_version) values ('gw','7');
 CREATE TABLE gw (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     gw_name VARCHAR(128) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE gw (
     uri_scheme TINYINT UNSIGNED,
     transport TINYINT UNSIGNED,
     strip TINYINT UNSIGNED,
-    prefix VARCHAR(16) DEFAULT NULL,
+    tag VARCHAR(16) DEFAULT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT 0,
     UNIQUE KEY gw_name_idx (gw_name),
     KEY grp_id_idx (grp_id)

@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('gw','6');
+INSERT INTO version (table_name, table_version) values ('gw','7');
 CREATE TABLE gw (
     id SERIAL PRIMARY KEY NOT NULL,
     gw_name VARCHAR(128) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE gw (
     uri_scheme SMALLINT,
     transport SMALLINT,
     strip SMALLINT,
-    prefix VARCHAR(16) DEFAULT NULL,
+    tag VARCHAR(16) DEFAULT NULL,
     flags INT NOT NULL DEFAULT 0,
     CONSTRAINT gw_gw_name_idx UNIQUE (gw_name)
 );
