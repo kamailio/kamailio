@@ -69,7 +69,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 6
+#define GW_TABLE_VERSION 7
 #define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
@@ -87,6 +87,8 @@ int reload_gws ( void );
 
 #define GW_NAME_COL "gw_name"
 
+#define GRP_ID_COL "grp_id"
+
 #define IP_ADDR_COL "ip_addr"
 
 #define PORT_COL "port"
@@ -95,13 +97,13 @@ int reload_gws ( void );
 
 #define TRANSPORT_COL "transport"
 
-#define GRP_ID_COL "grp_id"
+#define STRIP_COL "strip"
+
+#define TAG_COL "tag"
 
 #define FLAGS_COL "flags"
 
 #define LCR_TABLE "lcr"
-
-#define STRIP_COL "strip"
 
 #define PREFIX_COL "prefix"
 
@@ -113,6 +115,7 @@ int reload_gws ( void );
 #define MAX_NO_OF_GWS 32
 #define MAX_NO_OF_LCRS 256
 #define MAX_PREFIX_LEN 256
+#define MAX_TAG_LEN 16
 #define MAX_FROM_URI_LEN 256
 
 /* Default module parameter values */
@@ -133,8 +136,8 @@ struct gw_info {
     uri_type scheme;
     uri_transport transport;
     unsigned int strip;
-    char prefix[MAX_PREFIX_LEN + 1];
-    unsigned short prefix_len;
+    char tag[MAX_TAG_LEN + 1];
+    unsigned short tag_len;
     unsigned int flags;
 };
 
@@ -179,14 +182,15 @@ static db_func_t lcr_dbf;
 static str db_url    = str_init(DEFAULT_RODB_URL);
 str gw_table         = str_init(GW_TABLE);
 str gw_name_col      = str_init(GW_NAME_COL);
+str grp_id_col       = str_init(GRP_ID_COL);
 str ip_addr_col      = str_init(IP_ADDR_COL);
 str port_col         = str_init(PORT_COL);
 str uri_scheme_col   = str_init(URI_SCHEME_COL);
 str transport_col    = str_init(TRANSPORT_COL);
-str grp_id_col       = str_init(GRP_ID_COL);
+str strip_col        = str_init(STRIP_COL);
+str tag_col          = str_init(TAG_COL);
 str flags_col        = str_init(FLAGS_COL);
 str lcr_table        = str_init(LCR_TABLE);
-str strip_col        = str_init(STRIP_COL);
 str prefix_col       = str_init(PREFIX_COL);
 str from_uri_col     = str_init(FROM_URI_COL);
 str priority_col     = str_init(PRIORITY_COL);
@@ -301,14 +305,15 @@ static param_export_t params[] = {
 	{"db_url",                   STR_PARAM, &db_url.s       },
 	{"gw_table",                 STR_PARAM, &gw_table.s     },
 	{"gw_name_column",           STR_PARAM, &gw_name_col.s  },
+	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
 	{"ip_addr_column",           STR_PARAM, &ip_addr_col.s  },
 	{"port_column",              STR_PARAM, &port_col.s     },
 	{"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
 	{"transport_column",         STR_PARAM, &transport_col.s },
-	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
+	{"strip_column",             STR_PARAM, &strip_col.s    },
+	{"tag_column",               STR_PARAM, &tag_col.s      },
 	{"flags_column",             STR_PARAM, &flags_col.s    },
 	{"lcr_table",                STR_PARAM, &lcr_table.s    },
-	{"strip_column",             STR_PARAM, &strip_col.s    },
 	{"prefix_column",            STR_PARAM, &prefix_col.s   },
 	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
 	{"priority_column",          STR_PARAM, &priority_col.s },
@@ -464,16 +469,24 @@ static int mod_init(void)
     db_url.len = strlen(db_url.s);
     gw_table.len = strlen(gw_table.s);
     gw_name_col.len = strlen(gw_name_col.s);
+    grp_id_col.len = strlen(grp_id_col.s);
     ip_addr_col.len = strlen(ip_addr_col.s);
     port_col.len = strlen(port_col.s);
     uri_scheme_col.len = strlen(uri_scheme_col.s);
     transport_col.len = strlen(transport_col.s);
-    grp_id_col.len = strlen(grp_id_col.s);
-    lcr_table.len = strlen(lcr_table.s);
     strip_col.len = strlen(strip_col.s);
+    tag_col.len = strlen(tag_col.s);
+    flags_col.len = strlen(flags_col.s);
+    lcr_table.len = strlen(lcr_table.s);
     prefix_col.len = strlen(prefix_col.s);
     from_uri_col.len = strlen(from_uri_col.s);
     priority_col.len = strlen(priority_col.s);
+
+    /* Check value of prefix_mode */
+    if ((prefix_mode_param != 0) && (prefix_mode_param != 1)) {
+	LM_ERR("Invalid prefix_mode value <%d>\n", prefix_mode_param);
+	return -1;
+    }
 
     /* Process AVP params */
     if (fr_inv_timer_avp_param && *fr_inv_timer_avp_param) {
@@ -825,13 +838,14 @@ int load_all_regex(void)
  */
 int reload_gws(void)
 {
-    unsigned int i, port, strip, prefix_len, from_uri_len, grp_id, priority;
+    unsigned int i, port, strip, tag_len, prefix_len, from_uri_len,
+	grp_id, priority; 
     struct in_addr ip_addr;
     unsigned int flags;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
-    char *prefix, *from_uri;
+    char *tag, *prefix, *from_uri;
     db_res_t* res = NULL;
     db_row_t* row;
     db_key_t gw_cols[8];
@@ -842,7 +856,7 @@ int reload_gws(void)
     gw_cols[2] = uri_scheme_col.s;
     gw_cols[3] = transport_col.s;
     gw_cols[4] = strip_col.s;
-    gw_cols[5] = prefix_col.s;
+    gw_cols[5] = tag_col.s;
     /* FIXME: is this ok if we have different names for grp_id
        in the two tables? (ge vw lcr) */
     gw_cols[6] = grp_id_col.s;
@@ -936,13 +950,13 @@ int reload_gws(void)
 	    strip = (unsigned int)VAL_INT(ROW_VALUES(row) + 4);
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
-	    prefix_len = 0;
-	    prefix = (char *)0;
+	    tag_len = 0;
+	    tag = (char *)0;
 	} else {
-	    prefix = (char *)VAL_STRING(ROW_VALUES(row) + 5);
-	    prefix_len = strlen(prefix);
-	    if (prefix_len > MAX_PREFIX_LEN) {
-		LM_ERR("Too long gw prefix <%u>\n", prefix_len);
+	    tag = (char *)VAL_STRING(ROW_VALUES(row) + 5);
+	    tag_len = strlen(tag);
+	    if (tag_len > MAX_TAG_LEN) {
+		LM_ERR("Too long gw tag <%u>\n", tag_len);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
@@ -970,9 +984,9 @@ int reload_gws(void)
 	    gws_2[i].transport = transport;
 	    gws_2[i].flags = flags;
 	    gws_2[i].strip = strip;
-	    gws_2[i].prefix_len = prefix_len;
-	    if (prefix_len)
-		memcpy(&(gws_2[i].prefix[0]), prefix, prefix_len);
+	    gws_2[i].tag_len = tag_len;
+	    if (tag_len)
+		memcpy(&(gws_2[i].tag[0]), tag, tag_len);
 	} else {
 	    gws_1[i].ip_addr = (unsigned int)ip_addr.s_addr;
 	    gws_1[i].port = port;
@@ -981,9 +995,9 @@ int reload_gws(void)
 	    gws_1[i].transport = transport;
 	    gws_1[i].flags = flags;
 	    gws_1[i].strip = strip;
-	    gws_1[i].prefix_len = prefix_len;
-	    if (prefix_len)
-		memcpy(&(gws_1[i].prefix[0]), prefix, prefix_len);
+	    gws_1[i].tag_len = tag_len;
+	    if (tag_len)
+		memcpy(&(gws_1[i].tag[0]), tag, tag_len);
 	}
     }
 
@@ -1156,8 +1170,8 @@ int mi_print_gws(struct mi_node* rpl)
 	if(attr == NULL)
 	    return -1;
 
-	attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6,
-			   (*gws)[i].prefix, (*gws)[i].prefix_len );
+	attr = add_mi_attr(node, MI_DUP_VALUE, "TAG", 3,
+			   (*gws)[i].tag, (*gws)[i].tag_len );
 	if(attr == NULL)
 	    return -1;
 
@@ -1206,17 +1220,16 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
     str ruri_user, from_uri, value;
     char from_uri_str[MAX_FROM_URI_LEN + 1];
     char ruri[MAX_URI_SIZE];
-    unsigned int i, j, k, index;
-    unsigned int addr, port;
-    unsigned int strip, gw_index, duplicated_gw, flags;
+    unsigned int i, j, k, index, addr, port, strip, gw_index,
+	duplicated_gw, flags;
     uri_type scheme;
     uri_transport transport;
     struct ip_addr address;
     str addr_str, port_str;
-    char *at, *prefix, *strip_string, *flags_string;
+    char *at, *tag, *strip_string, *flags_string;
     int_str val;
     struct mi matched_gws[MAX_NO_OF_GWS + 1];
-    unsigned short prefix_len, priority;
+    unsigned short tag_len, prefix_len, priority;
     int randomizer_start, randomizer_end, randomizer_flag,
 	strip_len, flags_len;
     struct lcr_info lcr_rec;
@@ -1426,9 +1439,9 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 	    LM_ERR("Strip count of gw is too large <%u>\n", strip);
 	    goto skip;
 	}
-	prefix_len = (*gws)[index].prefix_len;
-	prefix = (*gws)[index].prefix;
-	if (6 + prefix_len + 40 /* flags + strip */ + 1 + 15 + 1 + 5 + 1 + 14 >
+	tag_len = (*gws)[index].tag_len;
+	tag = (*gws)[index].tag;
+	if (6 + tag_len + 40 /* flags + strip */ + 1 + 15 + 1 + 5 + 1 + 14 >
 	    MAX_URI_SIZE) {
 	    LM_ERR("Request URI would be too long\n");
 	    goto skip;
@@ -1446,8 +1459,8 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 		   (unsigned int)scheme);
 	    goto skip;
 	}
-	if (prefix_len) {
-	    memcpy(at, prefix, prefix_len); at = at + prefix_len;
+	if (tag_len) {
+	    memcpy(at, tag, tag_len); at = at + tag_len;
 	}
 	/* Add strip in this form |number.
 	 * For example: |3 means strip first 3 characters.

@@ -14,7 +14,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Least cost routing (LCR) module implements two related capabilities:
+		Least cost routing (LCR) module implements two vaguely
+	related capabilities: 
 	</para>
 	<para>
 		<itemizedlist>
@@ -26,55 +27,45 @@
 			</listitem>
 			<listitem>
 			<para>
-				sequential forwarding to contacts if they don't share the
-				the same qvalue (functions load_contacts and next_contacts).
+				sequential forwarding to contacts
+	according to their q value (functions load_contacts and
+	next_contacts).
 			</para>
 			</listitem>
 		</itemizedlist>
 	</para>
 	<para>
-	Gateway selection is based on caller's URI and user part of
-	Request-URI (telephone number).  A gateway matches a request if user
-	part of Request-URI and caller's URI match the prefix and From pattern
-	of the gateway.  Matching gateways are then ordered for forwarding
-	purpose (1) according to longest user part match, (2) according to
-	gateway's priority, and (3) randomly if prefix is not a regular
-	expression (prefix_mode set to 0) or (1) according to gateway's
-	priority and (2) randomly if prefix is a regular expression
-	(prefix_mode different than 0).
+	For the purpose of facilitating least cost routing of requests,
+	each gateway belongs to a gateway group and each gateway group
+	is associated with one or more &lt;prefix, from pattern, priority&gt;
+	tuples.  A gateway matches a request if	user part of Request URI
+	matches a prefix and caller's URI matches a from pattern in a
+	tuple that belongs to the group of the gateway.
 	</para>
 	<para>
-	Each gateway belongs to a gateway group either alone or among other
-	gateways.  All gateways in a group share the same priority.
+	Matching gateways are then ordered for forwarding
+	purpose (1) according to longest user part match, (2) according to 
+	tuple's priority, and (3) randomly (prefix_mode = 0) or (1)
+	according to gateway's priority and (2) randomly (prefix_mode =
+	1).  In prefix_mode 0, prefix is a string of characters and in
+	prefix_mode 1, prefix is a regular expression.  From pattern
+	is always a regular expression or empty.  Empty from pattern
+	matches anything. Smaller priority value means higher priority
+	(highest priority value being 0).
 	</para>
 	<para>
-	Gateway and routing information is kept in two tables: gw and lcr.
-	</para>
-	<para>
-	When a gateway is selected, the Request-URI user part is stripped by 
-	the number of digits specified in the strip parameter. Subsequently,
-	the Request-URI is rewritten with information from gw table:
-	URI scheme, prefix, IP address, port, and transport protocol.  Valid
-	URI scheme values are NULL = sip, 1 = sip and 2 = sips.  Prefix is
-	appended in front of Request-URI user part. Currently valid transport
+	When a gateway is selected, Request URI user part is stripped by 
+	the number of characters as specified by the gateways strip
+	count. Subsequently, Request URI is rewritten based on gateway's
+	URI scheme, tag, IP address, port, and transport protocol.  Valid
+	URI scheme values are NULL = sip, 1 = sip and 2 = sips.  Tag is
+	inserted in front of Request URI user part. Currently valid transport
 	protocol values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
 	</para>
 	<para>
 	As a side effect of gateway selection, gateway's flags (that may
 	contain information about capabilities of the gateway)
 	are stored into an AVP.
-	</para>
-	<para>
-	Table lcr contains prefix of user part of Request-URI, From URI
-	pattern, gateway group id, and priority.  Prefix pattern can be a
-	string or a regular expression (see the prefix_mode parameter).
-	From URI pattern is a regular expression.  Empty From URI pattern
-	matches any From URI.  Smaller priority value means higher priority
-	(highest priority value being 0).
-	</para>
-	<para>
-	In addition to gw and lcr tables there is third table gw_grp that is
-	used to associate names with gateway group ids.
 	</para>
 	</section>
 
@@ -179,6 +170,27 @@ modparam("lcr","gw_name_column","gw_name")
 	</section>
 
 	<section>
+		<title><varname>grp_id_column</varname> (string)</title>
+		<para>
+		Name of the column holding the group ID of gateway both
+		in gw and lcr tables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>grp_id</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>grp_id_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","grp_id_column","grp_id")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
 		<title><varname>ip_addr_column</varname> (string)</title>
 		<para>
 		Name of the column holding the IP address of the gateway.
@@ -262,25 +274,47 @@ modparam("lcr","transport_column","transport")
 	</section>
 
 	<section>
-		<title><varname>grp_id_column</varname> (string)</title>
+		<title><varname>strip_column</varname> (string)</title>
 		<para>
-		Name of the column holding the group ID.
+		Name of the column holding the number of characters
+		to be stripped from the front of Request URI user part
+		before inserting tag.
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>grp_id</quote>.
+			Default value is <quote>strip</quote>.
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>grp_id_column</varname> module parameter</title>
+		<title>Setting <varname>strip_column</varname> module 
+		parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("lcr","grp_id_column","grp_id")
+modparam("lcr","strip_column","strip_count")
 ...
 </programlisting>
 		</example>
 	</section>
 
+	<section>
+		<title><varname>tag_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway specific tag string.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>tag</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>tag_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","tag_column","gw_tag")
+...
+</programlisting>
+		</example>
+	</section>
 
 	<section>
 		<title><varname>flags_column</varname> (string)</title>
@@ -323,29 +357,10 @@ modparam("lcr","lcr_table","lcr")
 	</section>
 
 	<section>
-		<title><varname>strip_column</varname> (string)</title>
-		<para>
-		Name of the column holding the number of digits to strip from the RURI before applying the prefix.
-		</para>
-		<para>
-		<emphasis>
-			Default value is <quote>strip</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>strip_column</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","strip_column","strip")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>prefix_column</varname> (string)</title>
 		<para>
-		Name of the column holding the RURI(destination) prefix.
+		Name of the column holding prefix of Request URI user
+		part.
 		</para>
 		<para>
 		<emphasis>
@@ -587,10 +602,11 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 		<title><varname>prefix_mode</varname> (integer)</title>
 		<para>
 		Defines the prefix mode: string or regular expression.
-		When set to 0, the prefix mode is set to string and matching is implemented
-		as a simple string comparison. 
-		When set to a value different then 0, the prefix mode is set to regex and matching
-		is implemented as regular expression match.
+		When set to 0, the prefix mode is set to string and
+		matching is implemented as a simple string comparison. 
+		When set to 1, the prefix mode is
+		set to regex and matching is implemented as regular
+		expression match.
 		</para>
 		<para>
 		<emphasis>
@@ -616,8 +632,8 @@ modparam("lcr", "prefix_mode", 1)
 		<function moreinfo="none">load_gws([pvar])</function>
 		</title>
 		<para>
-		Loads URI schemes, addresses, ports, and transports of gateways
-		that match user part of Request-URI to gw_uri_avp AVPs
+		Loads URI schemes, addresses, ports, and transports of
+		matching gateways to gw_uri_avp AVPs
 		(see Overview section). If optional pseudo variable
 		argument is included, caller's URI is taken from it.
 		If pseudo variable argument is not included, caller's
@@ -644,8 +660,8 @@ if (!load_gws("$var(caller_uri)")) {
 		<function moreinfo="none">load_gws_from_grp(group-id)</function>
 		</title>
 		<para>
-		Loads URI schemes, addresses, ports, and transports of gateways
-		that match user part of Request-URI to gw_uri_avp AVPs
+		Loads URI schemes, addresses, ports, and transports of
+		matching gateways to gw_uri_avp AVPs
 		(see Overview section), but only gateways belonging to the
 		group given in group-id argument are loaded.  group-id
 		argument is

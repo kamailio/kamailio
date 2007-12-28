@@ -24,26 +24,27 @@ Juha Heinanen
               1.3.1. db_url (string)
               1.3.2. gw_table (string)
               1.3.3. gw_name_column (string)
-              1.3.4. ip_addr_column (string)
-              1.3.5. port_column (string)
-              1.3.6. uri_scheme_column (string)
-              1.3.7. transport_column (string)
-              1.3.8. grp_id_column (string)
-              1.3.9. flags_column (string)
-              1.3.10. lcr_table (string)
-              1.3.11. strip_column (string)
-              1.3.12. prefix_column (string)
-              1.3.13. from_uri_column (string)
-              1.3.14. priority_column (string)
-              1.3.15. contact_avp (AVP string)
-              1.3.16. fr_inv_timer_avp (AVP string)
-              1.3.17. gw_uri_avp (AVP string)
-              1.3.18. rpid_avp (AVP string)
-              1.3.19. ruri_user_avp (AVP string)
-              1.3.20. fr_inv_timer (integer)
-              1.3.21. fr_inv_timer_next (integer)
-              1.3.22. flags_avp (AVP string)
-              1.3.23. prefix_mode (integer)
+              1.3.4. grp_id_column (string)
+              1.3.5. ip_addr_column (string)
+              1.3.6. port_column (string)
+              1.3.7. uri_scheme_column (string)
+              1.3.8. transport_column (string)
+              1.3.9. strip_column (string)
+              1.3.10. tag_column (string)
+              1.3.11. flags_column (string)
+              1.3.12. lcr_table (string)
+              1.3.13. prefix_column (string)
+              1.3.14. from_uri_column (string)
+              1.3.15. priority_column (string)
+              1.3.16. contact_avp (AVP string)
+              1.3.17. fr_inv_timer_avp (AVP string)
+              1.3.18. gw_uri_avp (AVP string)
+              1.3.19. rpid_avp (AVP string)
+              1.3.20. ruri_user_avp (AVP string)
+              1.3.21. fr_inv_timer (integer)
+              1.3.22. fr_inv_timer_next (integer)
+              1.3.23. flags_avp (AVP string)
+              1.3.24. prefix_mode (integer)
 
         1.4. Exported Functions
 
@@ -70,93 +71,83 @@ Juha Heinanen
    1-1. Setting db_url module parameter
    1-2. Setting gw_table module parameter
    1-3. Setting gw_name_column module parameter
-   1-4. Setting ip_addr_column module parameter
-   1-5. Setting port_column module parameter
-   1-6. Setting uri_scheme_column module parameter
-   1-7. Setting transport_column module parameter
-   1-8. Setting grp_id_column module parameter
-   1-9. Setting flags_column module parameter
-   1-10. Setting lcr_table module parameter
-   1-11. Setting strip_column module parameter
-   1-12. Setting prefix_column module parameter
-   1-13. Setting from_uri_column module parameter
-   1-14. Setting priority_column module parameter
-   1-15. Setting contact_avp module parameter
-   1-16. Setting fr_inv_timer_avp module parameter
-   1-17. Setting gw_uri_avp module parameter
-   1-18. Setting rpid_avp module parameter
-   1-19. Setting ruri_user_avp module parameter
-   1-20. Setting fr_inv_timer module parameter
-   1-21. Setting fr_inv_timer_next module parameter
-   1-22. Setting flags_avp module parameter
-   1-23. Setting prefix_mode module parameter
-   1-24. load_gws usage
-   1-25. load_gws_from_grp usage
-   1-26. next_gw usage from a route block
-   1-27. next_gw usage from a failure route block
-   1-28. from_gw usage
-   1-29. from_gw usage with pseudo variable argument
-   1-30. from_gw_grp usage
-   1-31. to_gw usage
-   1-32. to_gw usage with group-id
-   1-33. load_contacts usage
-   1-34. next_contacts usage from route block
-   1-35. next_contacts usage from failure route block
+   1-4. Setting grp_id_column module parameter
+   1-5. Setting ip_addr_column module parameter
+   1-6. Setting port_column module parameter
+   1-7. Setting uri_scheme_column module parameter
+   1-8. Setting transport_column module parameter
+   1-9. Setting strip_column module parameter
+   1-10. Setting tag_column module parameter
+   1-11. Setting flags_column module parameter
+   1-12. Setting lcr_table module parameter
+   1-13. Setting prefix_column module parameter
+   1-14. Setting from_uri_column module parameter
+   1-15. Setting priority_column module parameter
+   1-16. Setting contact_avp module parameter
+   1-17. Setting fr_inv_timer_avp module parameter
+   1-18. Setting gw_uri_avp module parameter
+   1-19. Setting rpid_avp module parameter
+   1-20. Setting ruri_user_avp module parameter
+   1-21. Setting fr_inv_timer module parameter
+   1-22. Setting fr_inv_timer_next module parameter
+   1-23. Setting flags_avp module parameter
+   1-24. Setting prefix_mode module parameter
+   1-25. load_gws usage
+   1-26. load_gws_from_grp usage
+   1-27. next_gw usage from a route block
+   1-28. next_gw usage from a failure route block
+   1-29. from_gw usage
+   1-30. from_gw usage with pseudo variable argument
+   1-31. from_gw_grp usage
+   1-32. to_gw usage
+   1-33. to_gw usage with group-id
+   1-34. load_contacts usage
+   1-35. next_contacts usage from route block
+   1-36. next_contacts usage from failure route block
      _________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   Least cost routing (LCR) module implements two related
+   Least cost routing (LCR) module implements two vaguely related
    capabilities:
 
      * sequential forwarding of a request to one or more gateways
        (functions load_gws and next_gw)
-     * sequential forwarding to contacts if they don't share the
-       the same qvalue (functions load_contacts and
-       next_contacts).
+     * sequential forwarding to contacts according to their q
+       value (functions load_contacts and next_contacts).
 
-   Gateway selection is based on caller's URI and user part of
-   Request-URI (telephone number). A gateway matches a request if
-   user part of Request-URI and caller's URI match the prefix and
-   From pattern of the gateway. Matching gateways are then
-   ordered for forwarding purpose (1) according to longest user
-   part match, (2) according to gateway's priority, and (3)
-   randomly if prefix is not a regular expression (prefix_mode
-   set to 0) or (1) according to gateway's priority and (2)
-   randomly if prefix is a regular expression (prefix_mode
-   different than 0).
+   For the purpose of facilitating least cost routing of
+   requests, each gateway belongs to a gateway group and each
+   gateway group is associated with one or more <prefix, from
+   pattern, priority> tuples. A gateway matches a request if user
+   part of Request URI matches a prefix and caller's URI matches
+   a from pattern in a tuple that belongs to the group of the
+   gateway.
 
-   Each gateway belongs to a gateway group either alone or among
-   other gateways. All gateways in a group share the same
-   priority.
+   Matching gateways are then ordered for forwarding purpose (1)
+   according to longest user part match, (2) according to tuple's
+   priority, and (3) randomly (prefix_mode = 0) or (1) according
+   to gateway's priority and (2) randomly (prefix_mode = 1). In
+   prefix_mode 0, prefix is a string of characters and in
+   prefix_mode 1, prefix is a regular expression. From pattern is
+   always a regular expression or empty. Empty from pattern
+   matches anything. Smaller priority value means higher priority
+   (highest priority value being 0).
 
-   Gateway and routing information is kept in two tables: gw and
-   lcr.
-
-   When a gateway is selected, the Request-URI user part is
-   stripped by the number of digits specified in the strip
-   parameter. Subsequently, the Request-URI is rewritten with
-   information from gw table: URI scheme, prefix, IP address,
-   port, and transport protocol. Valid URI scheme values are NULL
-   = sip, 1 = sip and 2 = sips. Prefix is appended in front of
-   Request-URI user part. Currently valid transport protocol
-   values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
+   When a gateway is selected, Request URI user part is stripped
+   by the number of characters as specified by the gateways strip
+   count. Subsequently, Request URI is rewritten based on
+   gateway's URI scheme, tag, IP address, port, and transport
+   protocol. Valid URI scheme values are NULL = sip, 1 = sip and
+   2 = sips. Tag is inserted in front of Request URI user part.
+   Currently valid transport protocol values are NULL = none, 1 =
+   udp, 2 = tcp, and 3 = tls.
 
    As a side effect of gateway selection, gateway's flags (that
    may contain information about capabilities of the gateway) are
    stored into an AVP.
-
-   Table lcr contains prefix of user part of Request-URI, From
-   URI pattern, gateway group id, and priority. Prefix pattern
-   can be a string or a regular expression (see the prefix_mode
-   parameter). From URI pattern is a regular expression. Empty
-   From URI pattern matches any From URI. Smaller priority value
-   means higher priority (highest priority value being 0).
-
-   In addition to gw and lcr tables there is third table gw_grp
-   that is used to associate names with gateway group ids.
      _________________________________________________________
 
 1.2. Dependencies
@@ -216,141 +207,155 @@ modparam("lcr","gw_name_column","gw_name")
 ...
      _________________________________________________________
 
-1.3.4. ip_addr_column (string)
+1.3.4. grp_id_column (string)
+
+   Name of the column holding the group ID of gateway both in gw
+   and lcr tables.
+
+   Default value is "grp_id". 
+
+   Example 1-4. Setting grp_id_column module parameter
+...
+modparam("lcr","grp_id_column","grp_id")
+...
+     _________________________________________________________
+
+1.3.5. ip_addr_column (string)
 
    Name of the column holding the IP address of the gateway.
 
    Default value is "ip_addr". 
 
-   Example 1-4. Setting ip_addr_column module parameter
+   Example 1-5. Setting ip_addr_column module parameter
 ...
 modparam("lcr","ip_addr_column","ip_addr")
 ...
      _________________________________________________________
 
-1.3.5. port_column (string)
+1.3.6. port_column (string)
 
    Name of the column holding the port number of the gateway.
 
    Default value is "port". 
 
-   Example 1-5. Setting port_column module parameter
+   Example 1-6. Setting port_column module parameter
 ...
 modparam("lcr","port_column","port")
 ...
      _________________________________________________________
 
-1.3.6. uri_scheme_column (string)
+1.3.7. uri_scheme_column (string)
 
    Name of the column holding the uri scheme of the gateway.
 
    Default value is "uri_scheme". 
 
-   Example 1-6. Setting uri_scheme_column module parameter
+   Example 1-7. Setting uri_scheme_column module parameter
 ...
 modparam("lcr","uri_scheme_column","scheme")
 ...
      _________________________________________________________
 
-1.3.7. transport_column (string)
+1.3.8. transport_column (string)
 
    Name of the column holding the transport type to be used for
    the gateway.
 
    Default value is "transport". 
 
-   Example 1-7. Setting transport_column module parameter
+   Example 1-8. Setting transport_column module parameter
 ...
 modparam("lcr","transport_column","transport")
 ...
      _________________________________________________________
 
-1.3.8. grp_id_column (string)
+1.3.9. strip_column (string)
 
-   Name of the column holding the group ID.
+   Name of the column holding the number of characters to be
+   stripped from the front of Request URI user part before
+   inserting tag.
 
-   Default value is "grp_id". 
+   Default value is "strip". 
 
-   Example 1-8. Setting grp_id_column module parameter
+   Example 1-9. Setting strip_column module parameter
 ...
-modparam("lcr","grp_id_column","grp_id")
+modparam("lcr","strip_column","strip_count")
 ...
      _________________________________________________________
 
-1.3.9. flags_column (string)
+1.3.10. tag_column (string)
+
+   Name of the column holding gateway specific tag string.
+
+   Default value is "tag". 
+
+   Example 1-10. Setting tag_column module parameter
+...
+modparam("lcr","tag_column","gw_tag")
+...
+     _________________________________________________________
+
+1.3.11. flags_column (string)
 
    Name of the column holding gateway specific flag values.
 
    Default value is "flags". 
 
-   Example 1-9. Setting flags_column module parameter
+   Example 1-11. Setting flags_column module parameter
 ...
 modparam("lcr","flags_column","gw_flags")
 ...
      _________________________________________________________
 
-1.3.10. lcr_table (string)
+1.3.12. lcr_table (string)
 
    Name of the table holding the LCR rules.
 
    Default value is "lcr". 
 
-   Example 1-10. Setting lcr_table module parameter
+   Example 1-12. Setting lcr_table module parameter
 ...
 modparam("lcr","lcr_table","lcr")
 ...
      _________________________________________________________
 
-1.3.11. strip_column (string)
+1.3.13. prefix_column (string)
 
-   Name of the column holding the number of digits to strip from
-   the RURI before applying the prefix.
-
-   Default value is "strip". 
-
-   Example 1-11. Setting strip_column module parameter
-...
-modparam("lcr","strip_column","strip")
-...
-     _________________________________________________________
-
-1.3.12. prefix_column (string)
-
-   Name of the column holding the RURI(destination) prefix.
+   Name of the column holding prefix of Request URI user part.
 
    Default value is "prefix". 
 
-   Example 1-12. Setting prefix_column module parameter
+   Example 1-13. Setting prefix_column module parameter
 ...
 modparam("lcr","prefix_column","prefix")
 ...
      _________________________________________________________
 
-1.3.13. from_uri_column (string)
+1.3.14. from_uri_column (string)
 
    Name of the column holding the FROM (source) URI.
 
    Default value is "from_uri". 
 
-   Example 1-13. Setting from_uri_column module parameter
+   Example 1-14. Setting from_uri_column module parameter
 ...
 modparam("lcr","from_uri_column","from_uri")
 ...
      _________________________________________________________
 
-1.3.14. priority_column (string)
+1.3.15. priority_column (string)
 
    Name of the column holding the priority of the rule.
 
    Default value is "priority". 
 
-   Example 1-14. Setting priority_column module parameter 
+   Example 1-15. Setting priority_column module parameter 
 ...
 modparam("lcr","priority_column","priority")
 ...
      _________________________________________________________
 
-1.3.15. contact_avp (AVP string)
+1.3.16. contact_avp (AVP string)
 
    Internal AVP that load_contacts function uses to store
    contacts of the destination set.
@@ -358,13 +363,13 @@ modparam("lcr","priority_column","priority")
    There is NO default value, thus this variable must be defined
    in openser.cfg. 
 
-   Example 1-15. Setting contact_avp module parameter
+   Example 1-16. Setting contact_avp module parameter
 ...
 modparam("lcr", "contact_avp", "$avp(i:711)")
 ...
      _________________________________________________________
 
-1.3.16. fr_inv_timer_avp (AVP string)
+1.3.17. fr_inv_timer_avp (AVP string)
 
    An AVP that contains a final response timeout for INVITEs. Its
    value must be the same as that of the corresponding tm module
@@ -373,13 +378,13 @@ modparam("lcr", "contact_avp", "$avp(i:711)")
    There is NO default value, thus this variable must be defined
    in openser.cfg. 
 
-   Example 1-16. Setting fr_inv_timer_avp module parameter
+   Example 1-17. Setting fr_inv_timer_avp module parameter
 ...
 modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
 ...
      _________________________________________________________
 
-1.3.17. gw_uri_avp (AVP string)
+1.3.18. gw_uri_avp (AVP string)
 
    Internal AVP that load_gws function uses to store information
    of matching gateways.
@@ -387,26 +392,26 @@ modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
    There is NO default value, thus this variable must be defined
    in openser.cfg. 
 
-   Example 1-17. Setting gw_uri_avp module parameter
+   Example 1-18. Setting gw_uri_avp module parameter
 ...
 modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 ...
      _________________________________________________________
 
-1.3.18. rpid_avp (AVP string)
+1.3.19. rpid_avp (AVP string)
 
    An AVP that contains caller's RPID (if any).
 
    There is NO default value, thus this variable must be defined
    in openser.cfg. 
 
-   Example 1-18. Setting rpid_avp module parameter
+   Example 1-19. Setting rpid_avp module parameter
 ...
 modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 ...
      _________________________________________________________
 
-1.3.19. ruri_user_avp (AVP string)
+1.3.20. ruri_user_avp (AVP string)
 
    Internal AVP that next_gw function uses to store Request-URI
    user for subsequent next_gw calls.
@@ -414,26 +419,26 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
    There is NO default value, thus this variable must be defined
    in openser.cfg. 
 
-   Example 1-19. Setting ruri_user_avp module parameter
+   Example 1-20. Setting ruri_user_avp module parameter
 ...
 modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 ...
      _________________________________________________________
 
-1.3.20. fr_inv_timer (integer)
+1.3.21. fr_inv_timer (integer)
 
    Sets the value of the fist INVITE's Final Response timeout to
    be used during sequential forwarding:
 
    Default value is 90. 
 
-   Example 1-20. Setting fr_inv_timer module parameter
+   Example 1-21. Setting fr_inv_timer module parameter
 ...
 modparam("lcr","fr_inv_timer",90)
 ...
      _________________________________________________________
 
-1.3.21. fr_inv_timer_next (integer)
+1.3.22. fr_inv_timer_next (integer)
 
    Sets the value of the next INVITE's Final Response timeouts to
    be used during sequential forwarding:
@@ -445,13 +450,13 @@ modparam("lcr","fr_inv_timer",90)
 
    Default value is 30. 
 
-   Example 1-21. Setting fr_inv_timer_next module parameter
+   Example 1-22. Setting fr_inv_timer_next module parameter
 ...
 modparam("lcr","fr_inv_timer_next",30)
 ...
      _________________________________________________________
 
-1.3.22. flags_avp (AVP string)
+1.3.23. flags_avp (AVP string)
 
    An AVP where successful next_gw and from_gw functions store
    gateway's flags.
@@ -459,23 +464,23 @@ modparam("lcr","fr_inv_timer_next",30)
    There is NO default value, thus this variable must be defined
    in openser.cfg. 
 
-   Example 1-22. Setting flags_avp module parameter
+   Example 1-23. Setting flags_avp module parameter
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
      _________________________________________________________
 
-1.3.23. prefix_mode (integer)
+1.3.24. prefix_mode (integer)
 
    Defines the prefix mode: string or regular expression. When
    set to 0, the prefix mode is set to string and matching is
-   implemented as a simple string comparison. When set to a value
-   different then 0, the prefix mode is set to regex and matching
-   is implemented as regular expression match.
+   implemented as a simple string comparison. When set to 1, the
+   prefix mode is set to regex and matching is implemented as
+   regular expression match.
 
    Default value is 0. 
 
-   Example 1-23. Setting prefix_mode module parameter
+   Example 1-24. Setting prefix_mode module parameter
 ...
 /* Turning on the regex mode for prefix */
 modparam("lcr", "prefix_mode", 1)
@@ -487,16 +492,15 @@ modparam("lcr", "prefix_mode", 1)
 1.4.1. load_gws([pvar])
 
    Loads URI schemes, addresses, ports, and transports of
-   gateways that match user part of Request-URI to gw_uri_avp
-   AVPs (see Overview section). If optional pseudo variable
-   argument is included, caller's URI is taken from it. If pseudo
-   variable argument is not included, caller's URI is taken from
-   rpid_avp AVP or, if rpid_avp value is empty, from From URI.
-   Returns 1 or -1 depending on success.
+   matching gateways to gw_uri_avp AVPs (see Overview section).
+   If optional pseudo variable argument is included, caller's URI
+   is taken from it. If pseudo variable argument is not included,
+   caller's URI is taken from rpid_avp AVP or, if rpid_avp value
+   is empty, from From URI. Returns 1 or -1 depending on success.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-24. load_gws usage
+   Example 1-25. load_gws usage
 ...
 if (!load_gws("$var(caller_uri)")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -509,17 +513,16 @@ ays");
 1.4.2. load_gws_from_grp(group-id)
 
    Loads URI schemes, addresses, ports, and transports of
-   gateways that match user part of Request-URI to gw_uri_avp
-   AVPs (see Overview section), but only gateways belonging to
-   the group given in group-id argument are loaded. group-id
-   argument is a string and may contain pseudo-variables that are
-   replaced at runtime. Caller's URI is taken from rpid_avp AVP
-   or, if rpid_avp value is empty, from From URI. Returns 1 or -1
-   depending on success.
+   matching gateways to gw_uri_avp AVPs (see Overview section),
+   but only gateways belonging to the group given in group-id
+   argument are loaded. group-id argument is a string and may
+   contain pseudo-variables that are replaced at runtime.
+   Caller's URI is taken from rpid_avp AVP or, if rpid_avp value
+   is empty, from From URI. Returns 1 or -1 depending on success.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-25. load_gws_from_grp usage
+   Example 1-26. load_gws_from_grp usage
 ...
 if (!load_gws_from_grp("1")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatew
@@ -559,7 +562,7 @@ ays");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-26. next_gw usage from a route block
+   Example 1-27. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -567,7 +570,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1-27. next_gw usage from a failure route block 
+   Example 1-28. next_gw usage from a failure route block 
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -586,14 +589,14 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-28. from_gw usage
+   Example 1-29. from_gw usage
 ...
 if (from_gw()) {
         ...
 };
 ...
 
-   Example 1-29. from_gw usage with pseudo variable argument
+   Example 1-30. from_gw usage with pseudo variable argument
 ...
 if (from_gw("$si")) {
         ...
@@ -610,7 +613,7 @@ if (from_gw("$si")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1-30. from_gw_grp usage
+   Example 1-31. from_gw_grp usage
 ...
 if (from_gw_grp("1")) {
         ...
@@ -626,7 +629,7 @@ if (from_gw_grp("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-31. to_gw usage
+   Example 1-32. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -634,7 +637,7 @@ if (to_gw()) {
 };
 ...
 
-   Example 1-32. to_gw usage with group-id
+   Example 1-33. to_gw usage with group-id
 ...
 if (to_gw("1")) {
         ...
@@ -655,7 +658,7 @@ if (to_gw("1")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-33. load_contacts usage
+   Example 1-34. load_contacts usage
 ...
 if (!load_contacts()) {
         sl_send_reply("500", "Server Internal Error - Cannot load conta
@@ -685,7 +688,7 @@ cts");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-34. next_contacts usage from route block 
+   Example 1-35. next_contacts usage from route block 
 ...
 if (!next_contacts()) {
         sl_send_reply("500", "Server Internal Error");
@@ -695,7 +698,7 @@ if (!next_contacts()) {
 };
 ...
 
-   Example 1-35. next_contacts usage from failure route block 
+   Example 1-36. next_contacts usage from failure route block 
 if (next_contacts()) {
         t_relay();
 };
