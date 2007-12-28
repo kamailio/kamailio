@@ -1315,7 +1315,10 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 	unsigned hash;
 	struct tcp_conn_alias* a;
 	struct tcp_conn_alias* nxt;
+	struct tcp_connection* p;
 	int is_local_ip_any;
+	int i;
+	int r;
 	
 	a=0;
 	is_local_ip_any=ip_addr_any(l_ip);
@@ -1337,11 +1340,37 @@ inline static int _tcpconn_add_alias_unsafe(struct tcp_connection* c, int port,
 						 * the alias was not already added */
 						continue;
 					else if (flags & TCP_ALIAS_REPLACE){
-						/* remove the current one */
-						tcpconn_listrm(tcpconn_aliases_hash[hash],
-														a, next, prev);
-						a->next=0;
-						a->prev=0;
+						/* remove the alias =>
+						 * remove the current alias and all the following
+						 *  ones from the corresponding connection, shift the 
+						 *  connection aliases array and re-add the other 
+						 *  aliases (!= current one) */
+						p=a->parent;
+						for (i=0; (i<p->aliases) && (&(p->con_aliases[i])!=a);
+								i++);
+						if (unlikely(i==p->aliases)){
+							LOG(L_CRIT, "BUG: _tcpconn_add_alias_unsafe: "
+									" alias %p not found in con %p (id %d)\n",
+									a, p, p->id);
+							goto error_not_found;
+						}
+						for (r=i; r<p->aliases; r++){
+							tcpconn_listrm(
+								tcpconn_aliases_hash[p->con_aliases[r].hash],
+								&p->con_aliases[r], next, prev);
+						}
+						if (likely((i+1)<p->aliases)){
+							memmove(&p->con_aliases[i], &p->con_aliases[i+1],
+											(p->aliases-i-1)*
+												sizeof(p->con_aliases[0]));
+						}
+						p->aliases--;
+						/* re-add the remaining aliases */
+						for (r=i; r<p->aliases; r++){
+							tcpconn_listadd(
+								tcpconn_aliases_hash[p->con_aliases[r].hash], 
+								&p->con_aliases[r], next, prev);
+						}
 					}else
 						goto error_sec;
 				}else goto ok;
@@ -3218,12 +3247,13 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 #endif /* TCP_BUF_WRITE */
 	DBG("tcp_main: timeout for %p\n", c);
 	if (likely(c->flags & F_CONN_HASHED)){
-		c->flags&=~F_CONN_HASHED;
+		c->flags&=~(F_CONN_HASHED|F_CONN_MAIN_TIMER);
 		c->state=S_CONN_BAD;
 		TCPCONN_LOCK;
 			_tcpconn_detach(c);
 		TCPCONN_UNLOCK;
 	}else{
+		c->flags&=~F_CONN_MAIN_TIMER;
 		LOG(L_CRIT, "BUG: tcp_main: timer: called with unhashed connection %p"
 				"\n", c);
 		tcpconn_ref(c); /* ugly hack to try to go on */
