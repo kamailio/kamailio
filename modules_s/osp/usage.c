@@ -367,7 +367,7 @@ static int ospReportUsageFromCookie(
 
     LOG(L_DBG, "osp: built usage handle '%d' (%d)\n", transaction, errorcode);
 
-    if (errorcode == 0 && destinationCount > 0) {
+    if ((errorcode == OSPC_ERR_NO_ERROR) && (destinationCount > 0)) {
         errorcode = OSPPTransactionSetDestinationCount(
             transaction,
             destinationCount);
@@ -544,7 +544,7 @@ void ospReportOrigSetupUsage(void)
     struct search_state state;
     OSPTTRANHANDLE transaction = -1;
     int lastcode = 0;
-    int errorcode = 0;
+    int errorcode;
 
     LOG(L_DBG, "osp: ospReportOrigSetupUsage\n");
 
@@ -603,7 +603,7 @@ void ospReportTermSetupUsage(void)
 {
     osp_dest* dest = NULL;
     OSPTTRANHANDLE transaction = -1;
-    int errorcode = 0;
+    int errorcode;
 
     LOG(L_DBG, "osp: ospReportTermSetupUsage\n");
 
