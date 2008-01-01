@@ -169,8 +169,7 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2)
 	qvalue_t q;
 	struct sip_uri puri;
 
-	if ((route_type == REQUEST_ROUTE) || (route_type == BRANCH_ROUTE)
-			|| (route_type == FAILURE_ROUTE)) {
+	if ((route_type == REQUEST_ROUTE) || (route_type == BRANCH_ROUTE)) {
 		if (parse_sip_msg_uri(_msg) < 0) {
 			LM_ERR("Error while parsing R-URI\n");
 			return -1;
