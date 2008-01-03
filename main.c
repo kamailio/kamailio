@@ -476,6 +476,10 @@ void cleanup(show_status)
 #ifdef USE_DST_BLACKLIST
 	destroy_dst_blacklist();
 #endif
+	/* restore the original core configuration before the
+	 * config block is freed, otherwise even logging is unusable,
+	 * it can case segfault */
+	core_cfg = &default_core_cfg;
 	cfg_destroy();
 #ifdef USE_TCP
 	destroy_tcp();
