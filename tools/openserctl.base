@@ -202,7 +202,7 @@ LCR_GW_PORT_COLUMN=port
 LCR_GW_URIS_COLUMN=uri_scheme
 LCR_GW_PROTO_COLUMN=transport
 LCR_GW_STRIP_COLUMN=strip
-LCR_GW_PREFIX_COLUMN=prefix
+LCR_GW_PREFIX_COLUMN=tag
 
 # URI table
 if [ -z "$URI_TABLE" ] ; then
