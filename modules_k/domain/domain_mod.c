@@ -3,7 +3,7 @@
  *
  * Domain module
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2008 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -44,6 +44,7 @@
 #include "domain.h"
 #include "mi.h"
 #include "hash.h"
+#include "api.h"
 
 /*
  * Module management function prototypes
@@ -88,12 +89,13 @@ struct domain_list **hash_table_2 = 0;	/* Pointer to hash table 2 */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"is_from_local",       (cmd_function)is_from_local,       0,  0, 0,
-			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_uri_host_local",   (cmd_function)is_uri_host_local,   0,  0, 0,
-			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_domain_local",     (cmd_function)w_is_domain_local,   1,  pvar_fixup, free_pvar_fixup,
-			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"is_from_local", (cmd_function)is_from_local, 0, 0, 0,
+	 REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"is_uri_host_local", (cmd_function)is_uri_host_local, 0, 0, 0,
+	 REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
+	{"is_domain_local", (cmd_function)w_is_domain_local, 1, pvar_fixup,
+	 free_pvar_fixup, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 

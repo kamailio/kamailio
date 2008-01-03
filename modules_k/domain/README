@@ -6,7 +6,7 @@ Edited by
 
 Juha Heinanen
 
-   Copyright © 2002, 2003 Juha Heinanen
+   Copyright © 2002-2008 Juha Heinanen
      __________________________________________________________
 
    Table of Contents
@@ -35,6 +35,11 @@ Juha Heinanen
         1.6. Known Limitations
 
    2. Developer's Guide
+
+        2.1. Available Functions
+
+              2.1.1. is_domain_local(domain)
+
    3. Frequently Asked Questions
 
    List of Examples
@@ -237,8 +242,18 @@ if (is_domain_local("$avp(s:some_avp)")) {
 
 Chapter 2. Developer's Guide
 
-   The module does not provide any API to use in other OpenSER
-   modules.
+   The module provides is_domain_local API function for use by
+   other OpenSER modules.
+     __________________________________________________________
+
+2.1. Available Functions
+
+2.1.1. is_domain_local(domain)
+
+   Checks if domain given in str* parameter is local.
+
+   The function returns 1 if domain is local and -1 if domain is
+   not local or if an error occurred.
      __________________________________________________________
 
 Chapter 3. Frequently Asked Questions

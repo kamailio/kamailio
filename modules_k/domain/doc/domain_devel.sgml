@@ -11,8 +11,24 @@
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
-	The module does not provide any <acronym>API</acronym> to use in other &ser; modules.
+	The module provides is_domain_local <acronym>API</acronym>
+    function for use by other &ser; modules.
     </para>
+    <section>
+	<title>Available Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">is_domain_local(domain)</function>
+		</title>
+		<para>
+		Checks if domain given in str* parameter is local.
+		</para>
+		<para>
+		The function returns 1 if domain is local and -1 if
+		domain is not local or if an error occurred.
+		</para>
+	</section>
+    </section>
 </chapter>
 
 <!-- Keep this element at the end of the file

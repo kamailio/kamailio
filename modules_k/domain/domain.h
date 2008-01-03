@@ -40,6 +40,7 @@ int is_from_local(struct sip_msg* _msg, char* _s1, char* _s2);
  */
 int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
 
+
 /*
  * Check if domain given by parameter is local
  *
@@ -51,13 +52,13 @@ int is_uri_host_local(struct sip_msg* _msg, char* _s1, char* _s2);
  */
 int w_is_domain_local(struct sip_msg* _msg, char* _s1, char* _s2);
 
+int is_domain_local(str* domain);
+
 int domain_db_bind(char* db_url);
 int domain_db_init(char* db_url);
 void domain_db_close();
 int domain_db_ver(str* name);
 
 int reload_domain_table();
-
-
 
 #endif /* DOMAIN_H */
