@@ -49,7 +49,6 @@
 #define ALLOC_SIZE 3000
 #define MAX_FORWARD 70
 
-extern struct tm_binds tmb;
 c_back_param* shm_dup_cbparam(subs_t* , subs_t*);
 void free_cbparam(c_back_param* cb_param);
 

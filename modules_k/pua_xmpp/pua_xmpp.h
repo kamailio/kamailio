@@ -34,8 +34,6 @@
 #include "../xmpp/xmpp_api.h"
 
 
-extern struct tm_binds tmb;
-
 extern send_subscribe_t pua_send_subscribe;
 extern send_publish_t pua_send_publish;
 extern query_dialog_t pua_is_dialog;

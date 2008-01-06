@@ -33,7 +33,6 @@
 #include "registrar_cb.h"
 #include "pua_bla.h"
 
-extern int is_bla_aor;
 
 void bla_cb(ucontact_t* c, int type, void* param)
 {

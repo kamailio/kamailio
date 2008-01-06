@@ -32,6 +32,7 @@
 #include "../../db/db.h"
 #include "../sl/sl_api.h"
 #include "../presence/event_list.h"
+#include "../presence/presence.h"
 #include "../xcap_client/xcap_functions.h"
 
 typedef struct xcap_serv
@@ -50,8 +51,5 @@ extern int pidf_manipulation;
 extern int integrated_xcap_server;
 extern xcap_serv_t* xs_list;
 extern xcapGetNewDoc_t xcap_GetNewDoc;
-
-/* SL bind */
-extern struct sl_binds slb;
 
 #endif

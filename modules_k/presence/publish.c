@@ -44,12 +44,7 @@
 #include "publish.h"
 #include "presentity.h"
 
-extern db_con_t* pa_db;
-extern db_func_t pa_dbf;
 extern gen_lock_set_t* set;
-extern int counter ;
-extern int pid;
-extern int startup_time;
 
 static str pu_400a_rpl = str_init("Bad request");
 static str pu_400b_rpl = str_init("Invalid request");

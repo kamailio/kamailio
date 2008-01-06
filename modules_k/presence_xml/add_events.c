@@ -42,7 +42,6 @@
 #include "presence_xml.h"
 
 static str pu_415_rpl  = str_init("Unsupported media type");
-extern add_event_t pres_add_event;
 
 int xml_add_events(void)
 {

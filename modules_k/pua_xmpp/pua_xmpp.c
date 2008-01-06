@@ -81,8 +81,6 @@ xmlNodeGetNodeContentByName_t XMLNodeGetNodeContentByName;
 static int mod_init(void);
 static int child_init(int);
 
-int Notify2Xmpp(struct sip_msg* , char*, char*);
-void pres_Xmpp2Sip(char* xmpp_msg, int type, void *param);
 static int fixup_pua_xmpp(void** param, int param_no);
 
 static cmd_export_t cmds[]=

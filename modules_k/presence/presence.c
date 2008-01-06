@@ -94,8 +94,6 @@ struct sl_binds slb;
 static int mod_init(void);
 static int child_init(int);
 void destroy(void);
-int handle_publish(struct sip_msg*, char*, char*);
-int handle_subscribe(struct sip_msg*, char*, char*);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
 struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);

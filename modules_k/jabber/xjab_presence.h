@@ -60,7 +60,6 @@ xj_pres_cell xj_pres_cell_new(void);
 void xj_pres_cell_free(xj_pres_cell);
 void xj_pres_cell_free_all(xj_pres_cell);
 int xj_pres_cell_init(xj_pres_cell, str*, pa_callback_f, void*);
-int xj_pres_cell_init(xj_pres_cell, str*, pa_callback_f, void*);
 int xj_pres_cell_update(xj_pres_cell, pa_callback_f, void*);
 
 xj_pres_list xj_pres_list_init(void);

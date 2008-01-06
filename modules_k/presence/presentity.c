@@ -44,10 +44,6 @@
 #include "hash.h"
 #include "utils_func.h"
 
-extern int use_db;
-extern char* presentity_table;
-extern db_con_t* pa_db;
-extern db_func_t pa_dbf;
 
 static str pu_200_rpl  = str_init("OK");
 static str pu_412_rpl  = str_init("Conditional request failed");

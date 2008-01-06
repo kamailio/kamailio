@@ -64,9 +64,6 @@ str* constr_multipart_body(db_res_t* result,char** cid_array,
 
 dlg_t* rls_notify_dlg(subs_t* subs);
 
-int rls_send_notify(subs_t* subs, str* body, char* start_cid,
-		char* boudary_string);
-dlg_t* rls_notify_dlg(subs_t* subs);
 void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 

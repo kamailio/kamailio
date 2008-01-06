@@ -64,10 +64,7 @@ static int child_init(int);
 static void destroy(void);
 
 int pua_set_publish(struct sip_msg* , char*, char*);
-void ul_publish(ucontact_t* c, int type, void* param);
 
-send_publish_t pua_send_publish;
-send_subscribe_t pua_send_subscribe;
 
 static cmd_export_t cmds[]=
 {

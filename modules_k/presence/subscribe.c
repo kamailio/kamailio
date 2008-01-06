@@ -38,11 +38,10 @@
 #include "notify.h"
 #include "../pua/hash.h"
 
-int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret, str* reply_str);
-int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret, str* reply_str);
-int refresh_watcher(str* pres_uri, str* watcher_uri, str* event, 
-		int status, str* reason);
-
+int get_stored_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
+		str* reply_str);
+int get_database_info(struct sip_msg* msg, subs_t* subs, int* error_ret,
+		str* reply_str);
 int get_db_subs_auth(subs_t* subs, int* found);
 int insert_db_subs_auth(subs_t* subs);
 

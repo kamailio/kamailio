@@ -77,9 +77,6 @@ static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 
-int send_subscribe(subs_info_t*);
-int send_publish(publ_info_t*);
-
 int update_pua(ua_pres_t* p, unsigned int hash_code);
 ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
 ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
