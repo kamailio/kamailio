@@ -531,17 +531,22 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	
 	if(extract_sdialog_info(&subs, msg, max_expires, &to_tag_gen)< 0)
 	{
-		LM_ERR("while extracting dialog information\n");
+		LM_ERR("failed to extract dialog information\n");
 		goto error;
 	}
 
 	/* getting presentity uri from Request-URI if initial subscribe - or else from database*/
 	if(to_tag_gen)
 	{
+		if( parse_sip_msg_uri(msg)< 0)
+		{
+			LM_ERR("failed to parse R-URI\n");
+			return -1;
+		}
 		if(uandd_to_uri(msg->parsed_uri.user, msg->parsed_uri.host,
 					&subs.pres_uri)< 0)
 		{
-			LM_ERR("while constructing uri from user and domain\n");
+			LM_ERR("failed to construct uri from user and domain\n");
 			goto error;
 		}
 	}
