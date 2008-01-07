@@ -68,7 +68,7 @@ static int active_buffer=-1;
 
 #define ALLOC_SIZE(req_size) (((req_size/BUFFER_GRANULARITY)+1)*BUFFER_GRANULARITY)
 
-int allocate_buffer(int req_size) {
+static int allocate_buffer(int req_size) {
 	void *b;
 	int size=ALLOC_SIZE(req_size);
 	
