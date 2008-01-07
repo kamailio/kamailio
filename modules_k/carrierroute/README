@@ -173,6 +173,10 @@ Chapter 1. User's Guide
    flexibility and/or integration requirements that these modules
    don't handle properly. But for small installations it probably
    make more sense to use the lcr and dispatcher module.
+
+   If you want to use this module in failure routes, then you need
+   to call "append_branch()" after rewriting the request URI in
+   order to relay the message to the new target.
      __________________________________________________________
 
 1.2. Dependencies
@@ -182,7 +186,10 @@ Chapter 1. User's Guide
    The following module must be loaded before this module:
 
      * a database module, when a database is used as configuration
-       data source.
+       data source. Only SQL based databases are supported, as
+       this module needs the capability to issue raw queries. Its
+       not possible to use the dbtext or db_berkeley module at the
+       moment.
      __________________________________________________________
 
 1.2.2. External Libraries or Applications
