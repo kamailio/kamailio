@@ -37,11 +37,10 @@
 #include "../../db/db_val.h"
 #include "../../db/db_ut.h"
 #include "../../dprint.h"
-#include "defs.h"
 #include "pg_con.h"
 
 #include "../../mem/mem.h"
-#include "dbase.h"
+#include "db_val.h"
 
 #include <string.h>
 #include <time.h>
@@ -53,15 +52,14 @@
  * so the common db_str2val function from db_ut.h could not used.
  * If the _s is linked in the db_val result, it will be returned zero
  */
-int pg_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
+int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
 	static str dummy_string = {"", 0};
 
-#ifdef PARANOID
 	if (!_v) {
-		LM_ERR("db_val_t parameter cannot be NULL\n");
+		LM_ERR("invalid parameter value\n");
 	}
-#endif
+
 
 	if (!_s) {
 		memset(_v, 0, sizeof(db_val_t));
@@ -157,7 +155,7 @@ int pg_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
+int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len)
 {
 	int l, ret;
 	int pgret;
@@ -165,12 +163,11 @@ int val2str(db_con_t* _con, db_val_t* _v, char* _s, int* _len)
 	size_t tmp_len;
 	char* old_s;
 
-#ifdef PARANOID
 	if ((!_v) || (!_s) || (!_len) || (!*_len)) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-#endif
+
 	if (VAL_NULL(_v)) {
 		*_len = snprintf(_s, *_len, "NULL");
 		return 0;

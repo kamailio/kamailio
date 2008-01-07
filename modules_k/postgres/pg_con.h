@@ -69,11 +69,11 @@ struct pg_con {
  * Create a new connection structure,
  * open the PostgreSQL connection and set reference count to 1
  */
-struct pg_con* pg_new_conn(struct db_id* id);
+struct pg_con* db_postgres_new_connection(struct db_id* id);
 
 /*
  * Close the connection and release memory
  */
-void pg_free_conn(struct pg_con* con);
+void db_postgres_free_connection(struct pool_con* con);
 
 #endif /* PG_CON_H */

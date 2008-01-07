@@ -32,7 +32,7 @@
 /*
  * Fill the structure with data from database
  */
-int db_mysql_convert_result(db_con_t* _h, db_res_t* _r);
+int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r);
 
 
 /*
@@ -41,6 +41,6 @@ int db_mysql_convert_result(db_con_t* _h, db_res_t* _r);
 int db_mysql_free_dbresult(db_res_t* _r);
 
 
-int db_mysql_get_columns(db_con_t* _h, db_res_t* _r);
+int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r);
 
 #endif /* RES_H */

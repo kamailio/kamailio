@@ -43,7 +43,7 @@
 /*
  * Convert str to db value, does not copy strings
  */
-int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
+int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
 	static str dummy_string = {"", 0};
 
@@ -146,7 +146,7 @@ int str2val(db_type_t _t, db_val_t* _v, const char* _s, int _l)
 /*
  * Used when converting result from a query
  */
-int val2str(db_con_t* _c, db_val_t* _v, char* _s, int* _len)
+int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)
 {
 	int l;
 	char* old_s;

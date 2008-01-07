@@ -39,7 +39,8 @@
 /*
  * Convert a row from result into db API representation
  */
-int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengths)
+int convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* _r,
+		const unsigned long* lengths)
 {
 	int i;
 
@@ -58,7 +59,7 @@ int convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r, unsigned long* lengt
 	}
 	for(i = 0; i < RES_COL_N(_res); i++)
 	{
-		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
+		if (db_unixodbc_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			((CON_ROW(_h))[i]), lengths[i]) < 0)
 		{
 			LM_ERR("converting value failed\n");

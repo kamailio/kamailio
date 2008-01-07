@@ -77,14 +77,15 @@ struct my_con
  * Create a new connection structure,
  * open the UNIXODBC connection and set reference count to 1
  */
-struct my_con* new_connection(struct db_id* id);
+struct my_con* db_unixodbc_new_connection(struct db_id* id);
 
 /*
  * Close the connection and release memory
  */
-void free_connection(struct my_con* con);
+void db_unixodbc_free_connection(struct my_con* con);
 
-void extract_error(char *fn, SQLHANDLE handle, SQLSMALLINT type, char* stret);
+char *db_unixodbc_build_conn_str(const struct db_id* id, char *buf);
 
-char *build_conn_str(struct db_id* id, char *buf);
+void db_unixodbc_extract_error(const char *fn, const SQLHANDLE handle, const SQLSMALLINT type, char* stret);
+
 #endif  /* MY_CON_H */

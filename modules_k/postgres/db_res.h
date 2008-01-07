@@ -1,10 +1,8 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
+ * Copyright (C) 2007 1&1 Internet AG
  *
- * Copyright (C) 2003 August.Net Services, LLC
  *
  * This file is part of openser, a free SIP server.
  *
@@ -22,19 +20,26 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ---
- *
- * History
- * -------
- * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
+#ifndef DB_PG_RES_H
+#define DB_PG_RES_H
 
-#ifndef DEFS_H
-#define DEFS_H
+int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r);
 
-#define PARANOID
-#define SQL_BUF_LEN 65535
+int db_postgres_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r,
+	char **row_buf);
 
-#endif /* DEFS_H */
+int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r);
+
+int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start, int row_count);
+
+int db_postgres_free_rows(db_res_t* _r);
+
+int db_postgres_free_row(db_row_t* _r);
+
+int db_postgres_free_columns(db_res_t* _r);
+
+int db_postgres_free_result(db_res_t* _r);
+
+#endif

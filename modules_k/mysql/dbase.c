@@ -24,13 +24,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include <mysql/mysql.h>
 #include <mysql/errmsg.h>
 #include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../db/db_query.h"
 #include "../../db/db_ut.h"
 #include "val.h"
 #include "my_con.h"
@@ -40,15 +39,10 @@
 #include "dbase.h"
 
 
-#define SQL_BUF_LEN 65536
-
-static char sql_buf[SQL_BUF_LEN];
-
-
 /*
  * Send an SQL query to the server
  */
-static int db_mysql_submit_query(db_con_t* _h, const char* _s)
+static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 {	
 	time_t t;
 	int i, code;
@@ -113,26 +107,14 @@ db_con_t* db_mysql_init(const char* _url)
  */
 void db_mysql_close(db_con_t* _h)
 {
-	struct pool_con* con;
-
-	if (!_h) {
-		LM_ERR("invalid parameter value\n");
-		return;
-	}
-
-	con = (struct pool_con*)_h->tail;
-	if (pool_remove(con) == 1) {
-		db_mysql_free_connection((struct my_con*)con);
-	}
-
-	pkg_free(_h);
+	db_do_close(_h, db_mysql_free_connection);
 }
 
 
 /*
  * Retrieve result set
  */
-static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
+static int db_mysql_store_result(const db_con_t* _h, db_res_t** _r)
 {
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter value\n");
@@ -170,7 +152,7 @@ static int db_mysql_store_result(db_con_t* _h, db_res_t** _r)
 #if (MYSQL_VERSION_ID >= 40100)
 		while( mysql_next_result( CON_CONNECTION(_h) ) > 0 ) {
 			MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
-			mysql_free_result( res );
+			mysql_free_result(res);
 		}
 #endif
 		CON_RESULT(_h) = 0;
@@ -181,7 +163,7 @@ done:
 #if (MYSQL_VERSION_ID >= 40100)
 	while( mysql_next_result( CON_CONNECTION(_h) ) > 0 ) {
 		MYSQL_RES *res = mysql_store_result( CON_CONNECTION(_h) );
-		mysql_free_result( res );
+		mysql_free_result(res);
 	}
 #endif
 
@@ -220,64 +202,12 @@ int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
-	     db_val_t* _v, db_key_t* _c, int _n, int _nc,
-	     db_key_t _o, db_res_t** _r)
+int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+	     const db_key_t _o, db_res_t** _r)
 {
-	int off, ret;
-
-	if (!_h) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	if (!_c) {
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select * from %s ", CON_TABLE(_h));
-		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-		off = ret;
-	} else {
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select ");
-		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-		off = ret;
-
-		ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
-		if (ret < 0) return -1;
-		off += ret;
-
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %s ", CON_TABLE(_h));
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-	}
-	if (_n) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-
-		ret = db_print_where(_h, sql_buf + off,
-				SQL_BUF_LEN - off, _k, _op, _v, _n, val2str);
-		if (ret < 0) return -1;;
-		off += ret;
-	}
-	if (_o) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %s", _o);
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-	}
-	
-	*(sql_buf + off) = '\0';
-	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LM_ERR("error while submitting query\n");
-		return -2;
-	}
-
-	if(_r)
-		return db_mysql_store_result(_h, _r);
-
-	return 0;
-
- error:
-	LM_ERR("error in snprintf\n");
-	return -1;
+	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
+	db_mysql_val2str, db_mysql_submit_query, db_mysql_store_result);
 }
 
 /*
@@ -286,7 +216,7 @@ int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
  * _r: pointer to a structure representing the result
  * nrows: number of fetched rows
  */
-int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
+int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 {
 	int n;
 	int i;
@@ -384,21 +314,10 @@ int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows)
 /*
  * Execute a raw SQL query
  */
-int db_mysql_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
+int db_mysql_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r)
 {
-	if ((!_h) || (!_s)) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	if (db_mysql_submit_query(_h, _s) < 0) {
-		LM_ERR("error while submitting query\n");
-		return -2;
-	}
-
-	if(_r)
-	    return db_mysql_store_result(_h, _r);
-	return 0;
+	return db_do_raw_query(_h, _s, _r, db_mysql_submit_query,
+	db_mysql_store_result);
 }
 
 
@@ -409,43 +328,10 @@ int db_mysql_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
  * _v: values of the keys
  * _n: number of key=value pairs
  */
-int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
-	int off, ret;
-
-	if ((!_h) || (!_k) || (!_v) || (!_n)) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
-	if (ret < 0) return -1;
-	off += ret;
-
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-	off += ret;
-
-	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, val2str);
-	if (ret < 0) return -1;
-	off += ret;
-
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
-
-	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-	        LM_ERR("error while submitting query\n");
-		return -2;
-	}
-	return 0;
-
- error:
-	LM_ERR("error in snprintf\n");
-	return -1;
+	return db_do_insert(_h, _k, _v, _n, db_mysql_val2str,
+	db_mysql_submit_query);
 }
 
 
@@ -457,40 +343,11 @@ int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+	const db_val_t* _v, const int _n)
 {
-	int off, ret;
-
-	if (!_h) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	if (_n) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-
-		ret = db_print_where(_h, sql_buf + off,
-				SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
-		if (ret < 0) return -1;
-		off += ret;
-	}
-
-	*(sql_buf + off) = '\0';
-	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LM_ERR("error while submitting query\n");
-		return -2;
-	}
-	return 0;
-
- error:
-	LM_ERR("error in snprintf\n");
-	return -1;
+	return db_do_delete(_h, _k, _o, _v, _n, db_mysql_val2str,
+	db_mysql_submit_query);
 }
 
 
@@ -505,95 +362,29 @@ int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
+int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, 
+	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, 
+	const int _un)
 {
-	int off, ret;
-
-	if ((!_h) || (!_uk) || (!_uv) || (!_un)) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un, val2str);
-	if (ret < 0) return -1;
-	off += ret;
-
-	if (_n) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-
-		ret = db_print_where(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
-		if (ret < 0) return -1;
-		off += ret;
-
-		*(sql_buf + off) = '\0';
-	}
-
-	if (db_mysql_submit_query(_h, sql_buf) < 0) {
-		LM_ERR("error while submitting query\n");
-		return -2;
-	}
-	return 0;
-
- error:
-	LM_ERR("error in snprintf\n");
-	return -1;
+	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_mysql_val2str,
+	db_mysql_submit_query);
 }
 
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
+int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const 	int _n)
 {
-	int off, ret;
-
-	if (!handle || !keys || !vals) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "replace %s (", CON_TABLE(handle));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, keys, n);
-	if (ret < 0) return -1;
-	off += ret;
-
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-	off += ret;
-
-	ret = db_print_values(handle, sql_buf + off, SQL_BUF_LEN - off, vals, n, val2str);
-	if (ret < 0) return -1;
-	off += ret;
-
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
-
-	if (db_mysql_submit_query(handle, sql_buf) < 0) {
-	        LM_ERR("error while submitting query\n");
-		return -2;
-	}
-	return 0;
-
- error:
-	LM_ERR("error in snprintf\n");
-	return -1;
+	return db_do_replace(_h, _k, _v, _n, db_mysql_val2str,
+	db_mysql_submit_query);
 }
 
 
 /*
  * Returns the last inserted ID
  */
-int db_last_inserted_id(db_con_t* _h)
+int db_last_inserted_id(const db_con_t* _h)
 {
 	if (!_h) {
 		LM_ERR("invalid parameter value\n");
@@ -610,9 +401,11 @@ int db_last_inserted_id(db_con_t* _h)
   * _v: values of the keys
   * _n: number of key=value pairs
  */
- int db_insert_update(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+ int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n)
  {
 	int off, ret;
+	static char sql_buf[SQL_BUF_LEN];
  
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
 		LM_ERR("invalid parameter value\n");
@@ -630,17 +423,17 @@ int db_last_inserted_id(db_con_t* _h)
 	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
-	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, val2str);
+	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
 
 	*(sql_buf + off++) = ')';
 	
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " ON DUPLICATE KEY UPDATE ");
+	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " on duplicate key update ");
 	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 	off += ret;
 	
-	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n, val2str);
+	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _v, _n, db_mysql_val2str);
 	if (ret < 0) return -1;
 	off += ret;
 	
@@ -653,6 +446,16 @@ int db_last_inserted_id(db_con_t* _h)
 	return 0;
 
 error:
-	LM_ERR("error in snprintf\n");
- return -1;
+	LM_ERR("error while preparing insert_update operation\n");
+	return -1;
+}
+
+
+/*
+ * Store name of table that will be used by
+ * subsequent database functions
+ */
+int db_mysql_use_table(db_con_t* _h, const char* _t)
+{
+	return db_use_table(_h, _t);
 }

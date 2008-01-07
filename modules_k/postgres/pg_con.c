@@ -32,10 +32,10 @@
  * Create a new connection structure,
  * open the PostgreSQL connection and set reference count to 1
  */
-struct pg_con* pg_new_conn(struct db_id* id)
+struct pg_con* db_postgres_new_connection(struct db_id* id)
 {
 	struct pg_con* ptr;
-        char *ports;
+	char *ports;
 
 	LM_DBG("db_id = %p\n", id);
  
@@ -121,21 +121,25 @@ struct pg_con* pg_new_conn(struct db_id* id)
 /*
  * Close the connection and release memory
  */
-void pg_free_conn(struct pg_con* con)
+void db_postgres_free_connection(struct pool_con* con)
 {
 
 	if (!con) return;
-	if (con->res) {
-		LM_DBG("PQclear(%p)\n", con->res);
-		PQclear(con->res);
-		con->res = 0;
+
+	struct pg_con * _c;
+	_c = (struct pg_con*)con;
+
+	if (_c->res) {
+		LM_DBG("PQclear(%p)\n", _c->res);
+		PQclear(_c->res);
+		_c->res = 0;
 	}
-	if (con->id) free_db_id(con->id);
-	if (con->con) {
-		LM_DBG("PQfinish(%p)\n", con->con);
-		PQfinish(con->con);
-		con->con = 0;
+	if (_c->id) free_db_id(_c->id);
+	if (_c->con) {
+		LM_DBG("PQfinish(%p)\n", _c->con);
+		PQfinish(_c->con);
+		_c->con = 0;
 	}
-	LM_DBG("pkg_free(%p)\n", con);
-	pkg_free(con);
+	LM_DBG("pkg_free(%p)\n", _c);
+	pkg_free(_c);
 }

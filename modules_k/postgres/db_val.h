@@ -1,9 +1,8 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
- * Database connection related functions
+ * Copyright (C) 2007 1&1 Internet AG
  *
- * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,26 +19,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
+#ifndef DB_PG_VAL_H
+#define DB_PG_VAL_H
 
-#include <string.h>
-#include "../../db/db.h"
-#include "../../dprint.h"
-#include "../../mem/mem.h"
+int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
 
+int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len);
 
-/*
- * Store name of table that will be used by
- * subsequent database functions
- */
-int db_mysql_use_table(db_con_t* _h, const char* _t)
-{
-	if ((!_h) || (!_t)) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	CON_TABLE(_h) = _t;
-	return 0;
-}
+#endif

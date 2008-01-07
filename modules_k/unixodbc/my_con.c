@@ -44,7 +44,7 @@
 #define PWD_ATTR_LEN  (sizeof(PWD_ATTR)-1)
 
 
-char *build_conn_str(struct db_id* id, char *buf)
+char *db_unixodbc_build_conn_str(const struct db_id* id, char *buf)
 {
 	int len, ld, lu, lp;
 	char *p;
@@ -98,7 +98,7 @@ char *build_conn_str(struct db_id* id, char *buf)
  * Create a new connection structure,
  * open the UNIXODBC connection and set reference count to 1
  */
-struct my_con* new_connection(struct db_id* id)
+struct my_con* db_unixodbc_new_connection(struct db_id* id)
 {
 	SQLCHAR outstr[1024];
 	SQLSMALLINT outstrlen;
@@ -144,7 +144,7 @@ struct my_con* new_connection(struct db_id* id)
 		goto err1;
 	}
 
-	if (!build_conn_str(id, conn_str)) {
+	if (!db_unixodbc_build_conn_str(id, conn_str)) {
 		LM_ERR("failed to build connection string\n");
 		goto err2;
 	}
@@ -157,13 +157,13 @@ struct my_con* new_connection(struct db_id* id)
 		if (ret == SQL_SUCCESS_WITH_INFO)
 		{
 			LM_DBG("driver reported the following diagnostics\n");
-			extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
+			db_unixodbc_extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
 		}
 	}
 	else
 	{
 		LM_ERR("failed to connect\n");
-		extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
+		db_unixodbc_extract_error("SQLDriverConnect", ptr->dbc, SQL_HANDLE_DBC, NULL);
 		goto err2;
 	}
 
@@ -188,7 +188,7 @@ err2:
 /*
  * Close the connection and release memory
  */
-void free_connection(struct my_con* con)
+void db_unixodbc_free_connection(struct my_con* con)
 {
 	if (!con) return;
 	SQLFreeHandle(SQL_HANDLE_ENV, con->env);
@@ -198,11 +198,7 @@ void free_connection(struct my_con* con)
 }
 
 
-void extract_error(
-char *fn,
-SQLHANDLE handle,
-SQLSMALLINT type,
-char* stret)
+void db_unixodbc_extract_error(const char *fn, const SQLHANDLE handle, const SQLSMALLINT type, char* stret)
 {
 	SQLINTEGER   i = 0;
 	SQLINTEGER   native;

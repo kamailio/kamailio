@@ -40,54 +40,56 @@
 /*
  * Initialize database connection
  */
-db_con_t* db_init(const char* _sqlurl);
+db_con_t* db_unixodbc_init(const char* _sqlurl);
 
 /*
  * Close a database connection
  */
-void db_close(db_con_t* _h);
+void db_unixodbc_close(db_con_t* _h);
 
 /*
  * Free all memory allocated by get_result
  */
-int db_free_result(db_con_t* _h, db_res_t* _r);
+int db_unixodbc_free_result(const db_con_t* _h, db_res_t* _r);
 
 /*
  * Do a query
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
-db_key_t _o, db_res_t** _r);
+int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op, const db_val_t* _v,
+const db_key_t* _c, const int _n, const int _nc, const db_key_t _o, db_res_t** _r);
 
 /*
  * Raw SQL query
  */
-int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
+int db_unixodbc_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r);
 
 /*
  * Insert a row into table
  */
-int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
 
 /*
  * Delete a row from table
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+int db_unixodbc_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, const db_val_t* _v,
+const int _n);
 
 /*
  * Update a row in table
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+int db_unixodbc_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, const db_val_t* _v,
+const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un);
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
+int db_unixodbc_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* vals,
+const int n);
 
 /*
  * Store name of table that will be used by
  * subsequent database functions
  */
-int use_table(db_con_t* _h, const char* _t);
+int db_unixodbc_use_table(db_con_t* _h, const char* _t);
 
 #endif                                                      /* DBASE_H */

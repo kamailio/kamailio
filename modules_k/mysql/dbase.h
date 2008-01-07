@@ -55,54 +55,59 @@ int db_mysql_free_result(db_con_t* _h, db_res_t* _r);
 /*
  * Do a query
  */
-int db_mysql_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, db_key_t* _c, int _n, int _nc,
-	     db_key_t _o, db_res_t** _r);
+int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+	     const db_key_t _o, db_res_t** _r);
 
 
 /*
  * fetch rows from a result
  */
-int db_mysql_fetch_result(db_con_t* _h, db_res_t** _r, int nrows);
+int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
+
 
 /*
  * Raw SQL query
  */
-int db_mysql_raw_query(db_con_t* _h, char* _s, db_res_t** _r);
+int db_mysql_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r);
 
 
 /*
  * Insert a row into table
  */
-int db_mysql_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
 
 
 /*
  * Delete a row from table
  */
-int db_mysql_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const 
+	db_op_t* _o, const db_val_t* _v, const int _n);
 
 
 /*
  * Update a row in table
  */
-int db_mysql_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-	      db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
+	const int _un);
 
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_mysql_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
+int db_mysql_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* 	vals, const int n);
 
 /*
  * Returns the last inserted ID
  */
-int db_last_inserted_id(db_con_t* _h);
+int db_last_inserted_id(const db_con_t* _h);
 
 /*
  * Insert a row into table, update on duplicate key
  */
-int db_insert_update(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
+	const int _n);
 
 
 /*

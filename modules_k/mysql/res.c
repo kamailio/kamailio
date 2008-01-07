@@ -26,7 +26,6 @@
 #include <string.h>
 #include <mysql/mysql.h>
 #include "../../db/db_res.h"
-#include "../../db/db_col.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "row.h"
@@ -37,7 +36,7 @@
 /*
  * Get and convert columns from a result
  */
-int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
+int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
 	MYSQL_FIELD* fields;
@@ -114,7 +113,7 @@ int db_mysql_get_columns(db_con_t* _h, db_res_t* _r)
 /*
  * Convert rows from mysql to db API representation
  */
-static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
+static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
 	int n, i;
 
@@ -157,7 +156,7 @@ static inline int db_mysql_convert_rows(db_con_t* _h, db_res_t* _r)
 /*
  * Fill the structure with data from database
  */
-int db_mysql_convert_result(db_con_t* _h, db_res_t* _r)
+int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");

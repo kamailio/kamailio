@@ -33,7 +33,7 @@
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
-struct my_con* db_mysql_new_connection(struct db_id* id)
+struct my_con* db_mysql_new_connection(const struct db_id* id)
 {
 	struct my_con* ptr;
 
@@ -96,7 +96,7 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 
 
 	ptr->timestamp = time(0);
-	ptr->id = id;
+	ptr->id = (struct db_id*)id;
 	return ptr;
 
  err:
@@ -109,14 +109,18 @@ struct my_con* db_mysql_new_connection(struct db_id* id)
 /*
  * Close the connection and release memory
  */
-void db_mysql_free_connection(struct my_con* con)
+void db_mysql_free_connection(struct pool_con* con)
 {
 	if (!con) return;
-	if (con->res) mysql_free_result(con->res);
-	if (con->id) free_db_id(con->id);
-	if (con->con) {
-		mysql_close(con->con);
-		pkg_free(con->con);
+
+	struct my_con * _c;
+	_c = (struct my_con*) con;
+
+	if (_c->res) mysql_free_result(_c->res);
+	if (_c->id) free_db_id(_c->id);
+	if (_c->con) {
+		mysql_close(_c->con);
+		pkg_free(_c->con);
 	}
-	pkg_free(con);
+	pkg_free(_c);
 }

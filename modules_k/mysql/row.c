@@ -35,7 +35,7 @@
 /*
  * Convert a row from result into db API representation
  */
-int db_mysql_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
+int db_mysql_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
 	unsigned long* lengths;
 	int i;
@@ -55,7 +55,7 @@ int db_mysql_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	lengths = mysql_fetch_lengths(CON_RESULT(_h));
 
 	for(i = 0; i < RES_COL_N(_res); i++) {
-		if (str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
+		if (db_mysql_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]), 
 			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
 			LM_ERR("error while converting value\n");
 			db_free_row(_r);

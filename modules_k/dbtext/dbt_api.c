@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "../../db/db_res.h"
+#include "../../db/db.h"
 #include "../../str.h"
 #include "../../mem/mem.h"
 
@@ -77,17 +78,7 @@ int dbt_free_result(db_res_t* _r)
 
 int dbt_use_table(db_con_t* _h, const char* _t)
 {
-	if ((!_h) || (!_t))
-	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
-		return -1;
-	}
-	
-	CON_TABLE(_h) = _t;
-	
-	return 0;
+	return db_use_table(_h, _t);
 }
 
 

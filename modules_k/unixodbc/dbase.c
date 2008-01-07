@@ -33,27 +33,20 @@
  */
 
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
-#include "../../db/db_ut.h"
+#include "../../db/db_query.h"
 #include "val.h"
 #include "my_con.h"
 #include "res.h"
 #include "db_mod.h"
 #include "dbase.h"
 
-#define SQL_BUF_LEN 65536
-
-static char sql_buf[SQL_BUF_LEN];
 
 /*
  * Reconnect if connection is broken
  */
-static int reconnect(db_con_t* _h, const char* _s)
+static int reconnect(const db_con_t* _h, const char* _s)
 {
 	int ret = 0;
 	SQLCHAR outstr[1024];
@@ -66,7 +59,7 @@ static int reconnect(db_con_t* _h, const char* _s)
 	SQLDisconnect (CON_CONNECTION(_h));
 
 	/* Reconnect */
-	if (!build_conn_str(CON_ID(_h), conn_str)) {
+	if (!db_unixodbc_build_conn_str(CON_ID(_h), conn_str)) {
 		LM_ERR("failed to build connection string\n");
 		return ret;
 	}
@@ -76,7 +69,7 @@ static int reconnect(db_con_t* _h, const char* _s)
 			&outstrlen, SQL_DRIVER_COMPLETE);
 	if (!SQL_SUCCEEDED(ret)) {
 		LM_ERR("failed to connect\n");
-		extract_error("SQLDriverConnect", CON_CONNECTION(_h),
+		db_unixodbc_extract_error("SQLDriverConnect", CON_CONNECTION(_h),
 			SQL_HANDLE_DBC, NULL);
 		return ret;
 	}
@@ -85,7 +78,7 @@ static int reconnect(db_con_t* _h, const char* _s)
 			&CON_RESULT(_h));
 	if (!SQL_SUCCEEDED(ret)) {
 		LM_ERR("Statement allocation error %d\n", (int)(long)CON_CONNECTION(_h));
-		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,NULL);
+		db_unixodbc_extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,NULL);
 		return ret;
 	}
 
@@ -95,7 +88,7 @@ static int reconnect(db_con_t* _h, const char* _s)
 /*
  * Send an SQL query to the server
  */
-static int submit_query(db_con_t* _h, const char* _s)
+static int db_unixodbc_submit_query(const db_con_t* _h, const char* _s)
 {
 	int ret = 0;
 	SQLCHAR sqlstate[7];
@@ -112,7 +105,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 	{
 		LM_ERR("statement allocation error %d\n",
 				(int)(long)CON_CONNECTION(_h));
-		extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,
+		db_unixodbc_extract_error("SQLAllocStmt", CON_CONNECTION(_h), SQL_HANDLE_DBC,
 			(char*)sqlstate);
 		
 		/* Connection broken */
@@ -130,7 +123,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 	{
 		SQLCHAR sqlstate[7];
 		LM_ERR("rv=%d. Query= %s\n", ret, _s);
-		extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
+		db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
 			(char*)sqlstate);
 
 		/* Connection broken */
@@ -145,7 +138,7 @@ static int submit_query(db_con_t* _h, const char* _s)
 				if (!SQL_SUCCEEDED(ret)) {
 					LM_ERR("rv=%d. Query= %s\n",
 						ret, _s);
-					extract_error("SQLExecDirect", CON_RESULT(_h),
+					db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h),
 						SQL_HANDLE_STMT, (char*)sqlstate);
 					/* Close the cursor */
 					SQLCloseCursor(CON_RESULT(_h));
@@ -170,38 +163,24 @@ static int submit_query(db_con_t* _h, const char* _s)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_init(const char* _url)
+db_con_t* db_unixodbc_init(const char* _url)
 {
-	return db_do_init(_url, (void*)new_connection);
+	return db_do_init(_url, (void*)db_unixodbc_new_connection);
 }
 
 /*
  * Shut down database module
  * No function should be called after this
  */
-void db_close(db_con_t* _h)
+void db_unixodcb_close(db_con_t* _h)
 {
-	struct pool_con* con;
-
-	if (!_h)
-	{
-		LM_ERR("invalid parameter value\n");
-		return;
-	}
-
-	con = (struct pool_con*)_h->tail;
-	if (pool_remove(con) != 0)
-	{
-		free_connection((struct my_con*)con);
-	}
-
-	pkg_free(_h);
+	return db_do_close(_h, db_unixodbc_free_connection);
 }
 
 /*
  * Retrieve result set
  */
-static int store_result(db_con_t* _h, db_res_t** _r)
+static int db_unixodbc_store_result(const db_con_t* _h, db_res_t** _r)
 {
 	if ((!_h) || (!_r))
 	{
@@ -230,7 +209,7 @@ static int store_result(db_con_t* _h, db_res_t** _r)
 /*
  * Release a result set from memory
  */
-int db_free_result(db_con_t* _h, db_res_t* _r)
+int db_unixodbc_free_result(const db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
@@ -259,89 +238,21 @@ int db_free_result(db_con_t* _h, db_res_t* _r)
  * _nc: number of columns to return
  * _o: order by the specified column
  */
-int db_query(db_con_t* _h, db_key_t* _k, db_op_t* _op,
-db_val_t* _v, db_key_t* _c, int _n, int _nc,
-db_key_t _o, db_res_t** _r)
+int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+const db_key_t _o, db_res_t** _r)
 {
-	int off, ret;
-
-	if (!_h)
-	{
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	if (!_c)
-	{
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select * from %s ", CON_TABLE(_h));
-		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-		off = ret;
-	}
-	else
-	{
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select ");
-		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-		off = ret;
-
-		ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _c, _nc);
-		if (ret < 0) return -1;
-		off += ret;
-
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %s ", CON_TABLE(_h));
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-	}
-	if (_n)
-	{
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-
-		ret = db_print_where(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _op, _v, _n, val2str);
-		if (ret < 0) return -1;;
-		off += ret;
-	}
-	if (_o)
-	{
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %s", _o);
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-	}
-
-	*(sql_buf + off) = '\0';
-	if (submit_query(_h, sql_buf) < 0)
-	{
-		LM_ERR("submitting query failed\n");
-		return -2;
-	}
-
-	return store_result(_h, _r);
-
-	error:
-	LM_ERR("snprintf failed\n");
-	return -1;
+	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
+	db_unixodbc_val2str,  db_unixodbc_submit_query, db_unixodbc_store_result);
 }
 
 /*
  * Execute a raw SQL query
  */
-int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
+int db_unixodbc_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r)
 {
-	if ((!_h) || (!_s))
-	{
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	if (submit_query(_h, _s) < 0)
-	{
-		LM_ERR("submitting query failed\n");
-		return -2;
-	}
-
-	if(_r)
-		return store_result(_h, _r);
-	return 0;
+	return db_do_raw_query(_h, _s, _r, db_unixodbc_submit_query,
+	db_unixodbc_store_result);
 }
 
 /*
@@ -351,45 +262,10 @@ int db_raw_query(db_con_t* _h, char* _s, db_res_t** _r)
  * _v: values of the keys
  * _n: number of key=value pairs
  */
-int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
+int db_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
-	int off, ret;
-
-	if ((!_h) || (!_k) || (!_v) || (!_n))
-	{
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, _k, _n);
-	if (ret < 0) return -1;
-	off += ret;
-
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-	off += ret;
-
-	ret = db_print_values(_h, sql_buf + off, SQL_BUF_LEN - off, _v, _n, val2str);
-	if (ret < 0) return -1;
-	off += ret;
-
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
-
-	if (submit_query(_h, sql_buf) < 0)
-	{
-		LM_ERR("submitting query failed\n");
-		return -2;
-	}
-	return 0;
-
-	error:
-	LM_ERR("snprintf failed\n");
-	return -1;
+	return db_do_insert(_h, _k, _v, _n, db_unixodbc_val2str,
+	db_unixodbc_submit_query);
 }
 
 /*
@@ -400,42 +276,11 @@ int db_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
+int db_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+const db_val_t* _v, const int _n)
 {
-	int off, ret;
-
-	if (!_h)
-	{
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	if (_n)
-	{
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-
-		ret = db_print_where(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
-		if (ret < 0) return -1;
-		off += ret;
-	}
-
-	*(sql_buf + off) = '\0';
-	if (submit_query(_h, sql_buf) < 0)
-	{
-		LM_ERR("submitting query failed\n");
-		return -2;
-	}
-	return 0;
-
-	error:
-	LM_ERR("snprintf failed\n");
-	return -1;
+	return db_do_delete(_h, _k, _o, _v, _n, db_unixodbc_val2str,
+	db_unixodbc_submit_query);
 }
 
 /*
@@ -449,90 +294,27 @@ int db_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
  * _n: number of key=value pairs
  * _un: number of columns to update
  */
-int db_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-db_key_t* _uk, db_val_t* _uv, int _n, int _un)
+int db_unixodbc_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un)
 {
-	int off, ret;
-
-	if ((!_h) || (!_uk) || (!_uv) || (!_un))
-	{
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	ret = db_print_set(_h, sql_buf + off, SQL_BUF_LEN - off, _uk, _uv, _un, val2str);
-	if (ret < 0) return -1;
-	off += ret;
-
-	if (_n)
-	{
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " where ");
-		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-		off += ret;
-
-		ret = db_print_where(_h, sql_buf + off,
-				SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
-		if (ret < 0) return -1;
-		off += ret;
-	}
-	*(sql_buf + off) = '\0';
-
-	if (submit_query(_h, sql_buf) < 0)
-	{
-		LM_ERR("submitting query failed\n");
-		return -2;
-	}
-	return 0;
-
-	error:
-	LM_ERR("snprintf failed\n");
-	return -1;
+	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_unixodbc_val2str,
+	db_unixodbc_submit_query);
 }
 
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_replace(db_con_t* handle, db_key_t* keys, db_val_t* vals, int n)
+int db_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
-	int off, ret;
+	return db_do_replace(_h, _k, _v, _n, db_unixodbc_val2str,
+	db_unixodbc_submit_query);
+}
 
-	if (!handle || !keys || !vals)
-	{
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "replace %s (", CON_TABLE(handle));
-	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
-	off = ret;
-
-	ret = db_print_columns(sql_buf + off, SQL_BUF_LEN - off, keys, n);
-	if (ret < 0) return -1;
-	off += ret;
-
-	ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, ") values (");
-	if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
-	off += ret;
-
-	ret = db_print_values(handle, sql_buf + off, SQL_BUF_LEN - off, vals, n, val2str);
-	if (ret < 0) return -1;
-	off += ret;
-
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
-
-	if (submit_query(handle, sql_buf) < 0)
-	{
-		LM_ERR("submitting query failed\n");
-		return -2;
-	}
-	return 0;
-
-	error:
-	LM_ERR("snprintf failed\n");
-	return -1;
+/*
+ * Store name of table that will be used by
+ * subsequent database functions
+ */
+int db_unixodbc_use_table(db_con_t* _h, const char* _t)
+{
+	return db_use_table(_h, _t);
 }

@@ -33,7 +33,6 @@
 #include "../../dprint.h"
 #include "row.h"
 #include "../../db/db_res.h"
-#include "../../db/db_col.h"
 #include "my_con.h"
 #include "res.h"
 #include "list.h"
@@ -43,7 +42,7 @@
 /*
  * Get and convert columns from a result
  */
-static inline int get_columns(db_con_t* _h, db_res_t* _r)
+static inline int get_columns(const db_con_t* _h, db_res_t* _r)
 {
 	int i;
 	SQLSMALLINT n;										  //columns number
@@ -89,7 +88,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 		if(!SQL_SUCCEEDED(ret))
 		{
 			LM_ERR("SQLDescribeCol fallita: %d\n", ret);
-			extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT, 
+			db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT, 
 				NULL);
 		}
 		RES_NAMES(_r)[i]=ColumnName;
@@ -137,7 +136,7 @@ static inline int get_columns(db_con_t* _h, db_res_t* _r)
 /*
  * Convert rows from UNIXODBC to db API representation
  */
-static inline int convert_rows(db_con_t* _h, db_res_t* _r)
+static inline int convert_rows(const db_con_t* _h, db_res_t* _r)
 {
 	int row_n = 0, i = 0, ret = 0;
 	SQLSMALLINT columns;
@@ -231,7 +230,7 @@ static inline int convert_rows(db_con_t* _h, db_res_t* _r)
 /*
  * Fill the structure with data from database
  */
-int convert_result(db_con_t* _h, db_res_t* _r)
+int convert_result(const db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
