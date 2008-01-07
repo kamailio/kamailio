@@ -1221,12 +1221,13 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
     char from_uri_str[MAX_FROM_URI_LEN + 1];
     char ruri[MAX_URI_SIZE];
     unsigned int i, j, k, index, addr, port, strip, gw_index,
-	duplicated_gw, flags;
+	duplicated_gw, flags, have_rpid_avp;
     uri_type scheme;
     uri_transport transport;
     struct ip_addr address;
     str addr_str, port_str;
     char *at, *tag, *strip_string, *flags_string;
+    struct usr_avp *avp;
     int_str val;
     struct mi matched_gws[MAX_NO_OF_GWS + 1];
     unsigned short tag_len, prefix_len, priority;
@@ -1246,12 +1247,21 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 	from_uri = *_from_uri;
     } else {
 	/* take caller uri from RPID or From URI */
-	if (search_first_avp(rpid_avp_type, rpid_avp, &val, 0) &&
-	    val.s.s && val.s.len) {
-	    /* Get URI user from RPID */
-	    from_uri.len = val.s.len;
-	    from_uri.s = val.s.s;
-	} else {
+	have_rpid_avp = 0;
+	avp = search_first_avp(rpid_avp_type, rpid_avp, &val, 0);
+	if (avp != NULL) {
+	    /* Get URI user from RPID if not empty */
+	    if (avp->flags & AVP_VAL_STR) {
+		if (val.s.s && val.s.len) {
+		    from_uri = val.s;
+		    have_rpid_avp = 1;
+		}
+	    } else {
+		from_uri.s = int2str(val.n, &from_uri.len);
+		have_rpid_avp = 1;
+	    }
+	}
+	if (!have_rpid_avp) {
 	    /* Get URI from From URI */
 	    if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
 		LM_ERR("Error while parsing headers\n");
