@@ -874,36 +874,38 @@ int select_cseq_method(str* res, select_t* s, struct sip_msg* msg)
 	return 0;
 }
 
-static struct hdr_field* get_credentials(struct sip_msg* msg, select_t* s)
+int get_credentials(struct sip_msg* msg, select_t* s, struct hdr_field** hdr)
 {
 	int ret;
-	struct hdr_field* hdr;
 	str realm;
 	hdr_types_t hdr_type;
 
+	*hdr = NULL;
+
 	if (!msg) {
 		/* fix-up call check domain for fparam conversion */
-		int ret;
 		void * ptr;
 		char chr;
 		ptr=(void *)(s->params[1].v.s.s);
 		chr=s->params[1].v.s.s[s->params[1].v.s.len];
 		s->params[1].v.s.s[s->params[1].v.s.len]=0;
 		ret=fixup_var_str_12(&ptr,0);
-		s->params[1].v.s.s[s->params[1].v.s.len]=chr;
-		s->params[1].v.p=ptr;
-		s->params[1].type=SEL_PARAM_PTR;
-		return (void*)ret;
+		if (ret>=0) {
+			s->params[1].v.s.s[s->params[1].v.s.len]=chr;
+			s->params[1].v.p=ptr;
+			s->params[1].type=SEL_PARAM_PTR;
+		}
+		return ret;
 	}
 	
 
-	     /* Try to find credentials with corresponding realm
-	      * in the message, parse them and return pointer to
-	      * parsed structure
-	      */
+	/* Try to find credentials with corresponding realm
+	 * in the message, parse them and return pointer to
+	 * parsed structure
+	 */
 	if (s->params[1].type==SEL_PARAM_PTR) {
 		if (get_str_fparam(&realm, msg, s->params[1].v.p)<0)
-			return 0;
+			return -1;
 	} else {
 		realm = s->params[1].v.s;
 	}
@@ -919,23 +921,17 @@ static struct hdr_field* get_credentials(struct sip_msg* msg, select_t* s)
 
 	default:
 		BUG("Unexpected parameter value \"%d\"\n", s->params[0].v.i);
-		return 0;
+		return -1;
 	}
 
-	ret = find_credentials(msg, &realm, hdr_type, &hdr);
-	if (ret < 0) {
-		ERR("Error while looking for credentials\n");
-		return 0;
-	} else if (ret > 0) {
-		return 0;
-	}
-
-	return hdr;
+	ret = find_credentials(msg, &realm, hdr_type, hdr);
+	return ret;
 }
 
 
 int select_auth(str* res, select_t* s, struct sip_msg* msg)
 {
+	int ret;
 	struct hdr_field* hdr;
 
 	if (s->n != 2 && s->params[1].type != SEL_PARAM_STR
@@ -946,22 +942,21 @@ int select_auth(str* res, select_t* s, struct sip_msg* msg)
 		return -1;
 	}
 
-	hdr = get_credentials(msg, s);
-	if (!msg && !res) return (int)hdr;
-	if (!hdr) return -1;
+	ret = get_credentials(msg, s, &hdr);
+	if (!hdr) return ret;
 	RETURN0_res(hdr->body);
 }
 
 int select_auth_param(str* res, select_t* s, struct sip_msg* msg)
 {
+	int ret;
 	struct hdr_field* hdr;
 	dig_cred_t* cred;
 
 	if ((s->n != 3 && s->n != 4) || (s->params[s->n - 1].type != SEL_PARAM_DIV)) return -1;
 
-	hdr = get_credentials(msg, s);
-	if (!msg && !res) return (int)hdr;
-	if (!hdr) return 1;
+	ret = get_credentials(msg, s, &hdr);
+	if (!hdr) return ret;
 	cred = &((auth_body_t*)hdr->parsed)->digest;
 
 	switch(s->params[s->n - 1].v.i) {
