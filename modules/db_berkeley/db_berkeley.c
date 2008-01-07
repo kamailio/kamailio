@@ -134,11 +134,7 @@ static void destroy(void)
 
 int bdb_use_table(db_con_t* _h, const char* _t)
 {
-	if ((!_h) || (!_t))
-		return -1;
-	
-	CON_TABLE(_h) = _t;
-	return 0;
+	return db_use_table(_h, _t);
 }
 
 /*
