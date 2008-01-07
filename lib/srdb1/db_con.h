@@ -2,6 +2,7 @@
  * $Id$ 
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,25 +21,28 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+/**
+ * \file db/db_con.h
+ * \brief Type that represents a database connection
+ */
 
 #ifndef DB_CON_H
 #define DB_CON_H
 
 
-/*
- * This structure represents a database connection
- * and pointer to this structure is used as a connection
- * handle
+/**
+ * This structure represents a database connection, pointer to this structure
+ * are used as a connection handle from modules uses the db API.
  */
 typedef struct {
-	const char* table;     /* Default table to use */
-	unsigned long tail;    /* Variable length tail
-				* database module specific */    
+	const char* table;     /**< Default table that should be used              */
+	unsigned long tail;    /**< Variable length tail, database module specific */
 } db_con_t;
 
 
+/** Return the table of the connection handle */
 #define CON_TABLE(cn)      ((cn)->table)
+/** Return the tail of the connection handle */
 #define CON_TAIL(cn)       ((cn)->tail)
 
 

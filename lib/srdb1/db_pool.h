@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2005 iptel.org
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,6 +21,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * \file db/db_pool.h
+ * \brief Functions for managing a pool of database connections.
+ */
+
 #ifndef _DB_POOL_H
 #define _DB_POOL_H
 
@@ -27,7 +33,7 @@
 #include "db_con.h"
 
 
-/*
+/**
  * This is a stub that contains all attributes
  * that pool members must have, it is not really
  * used, real connection structures are created
@@ -36,28 +42,30 @@
  * attributes.
  */
 struct pool_con {
-	struct db_id* id;        /* Connection identifier */
-	unsigned int ref;        /* Reference count */
-	struct pool_con* next;   /* Next element in the pool */
+	struct db_id* id;        /**< Connection identifier */
+	unsigned int ref;        /**< Reference count */
+	struct pool_con* next;   /**< Next element in the pool */
 };
 
 
-/*
- * Search the pool for a connection with
- * the identifier equal to id, NULL is returned
- * when no connection is found
+/**
+ * Search the pool for a connection with the identifier equal to
+ * the id.
+ * \param id searched id
+ * \return the connection if it could be found, NULL otherwise
  */
-struct pool_con* pool_get(struct db_id* id);
+struct pool_con* pool_get(const struct db_id* id);
 
 
-/*
- * Insert a new connection into the pool
+/**
+ * Insert a new connection into the pool.
+ * \param con the inserted connection 
  */
 void pool_insert(struct pool_con* con);
 
 
-/*
- * Release connection from the pool, the function
+/**
+ * Release a connection from the pool, the function
  * would return 1 when if the connection is not
  * referenced anymore and thus can be closed and
  * deleted by the backend. The function returns
@@ -65,6 +73,8 @@ void pool_insert(struct pool_con* con);
  * because some other module is still using it.
  * The function returns -1 if the connection is
  * not in the pool.
+ * \param con connection that should be removed
+ * \return 1 if the connection can be freed, 0 if it can't be freed, -1 if not found
  */
 int pool_remove(struct pool_con* con);
 

@@ -2,6 +2,7 @@
  * $Id$ 
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,13 +21,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * \file db/db_key.h
+ * \brief Type that represents a database key.
+ */
 
 #ifndef DB_KEY_H
 #define DB_KEY_H
 
 
-/*
- * Type of a database key (column)
+/**
+ * This type represents a database key (column).
+ * Every time you need to specify a key value, this type should be used.
  */
 typedef const char* db_key_t;
 

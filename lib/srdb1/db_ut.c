@@ -2,7 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
- * Copyright (C) 2007 1und1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -21,33 +21,25 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * \file db/db_ut.c
+ * \brief Utility functions for database drivers.
+ *
+ * This utility methods are used from the database SQL driver to convert
+ * values and print SQL queries from the internal API representation.
+ */
 
 #include "db_ut.h"
-#include "db.h"
 
+#include "../mem/mem.h"
 #include "../dprint.h"
 #include <limits.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-
-/**
- * \file db_ut.c
- * \brief Utility functions that are needed from database drivers.
- *
- * Contains methods for datatype conversation in both directions 
- * and some SQL print functions.
- */
 
 
-/**
- * Convert a string to integer
- * \param _s source string
- * \param _v target value
- * \return -1 on error, 0 on success
- */
 inline int db_str2int(const char* _s, int* _v)
 {
 	long tmp;
@@ -163,16 +155,6 @@ inline int db_str2time(const char* _s, time_t* _v)
 }
 
 
-/**
- * Convert a time_t value to string
- * \param _v source value
- * \param _s target string
- * \param _l available length and target length
- * \return -1 on error, 0 on success
- * \todo This functions add quotes to the time value. This
- * should be done in the val2str function, as some databases
- * like db_berkeley don't need or like this at all.
- */
 inline int db_time2str(time_t _v, char* _s, int* _l)
 {
 	struct tm* t;
@@ -207,10 +189,9 @@ inline int db_time2str(time_t _v, char* _s, int* _l)
 /*
  * Print list of columns separated by comma
  */
-inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
+inline int db_print_columns(char* _b, const int _l, const db_key_t* _c, const int _n)
 {
-	int i, ret;
-	int len = 0;
+	int i, ret, len = 0;
 
 	if ((!_c) || (!_n) || (!_b) || (!_l)) {
 		LM_ERR("Invalid parameter value\n");
@@ -239,10 +220,10 @@ inline int db_print_columns(char* _b, int _l, db_key_t* _c, int _n)
 /*
  * Print values of SQL statement
  */
-int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n,
-		int (*val2str)() )
+int db_print_values(const db_con_t* _c, char* _b, const int _l, const db_val_t* _v,
+	const int _n, int (*val2str)(const db_con_t*, const db_val_t*, char*, int*))
 {
-	int i, res = 0, l;  
+	int i, l, len = 0;
 
 	if (!_c || !_b || !_l || !_v || !_n) {
 		LM_ERR("Invalid parameter value\n");
@@ -250,30 +231,29 @@ int db_print_values(db_con_t* _c, char* _b, int _l, db_val_t* _v, int _n,
 	}
 
 	for(i = 0; i < _n; i++) {
-		l = _l - res;
-		if ( (*val2str)(_c, _v + i, _b + res, &l) < 0) {
+		l = _l - len;
+		if ( (*val2str)(_c, _v + i, _b + len, &l) < 0) {
 			LM_ERR("Error while converting value to string\n");
 			return -1;
 		}
-		res += l;
+		len += l;
 		if (i != (_n - 1)) {
-			*(_b + res) = ',';
-			res++;
+			*(_b + len) = ',';
+			len++;
 		}
 	}
-	return res;
+	return len;
 }
 
 
 /*
  * Print where clause of SQL statement
  */
-int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o,
-		db_val_t* _v, int _n, int (*val2str)() )
+int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
+	const db_op_t* _o, const db_val_t* _v, const int _n, int (*val2str)
+	(const 	db_con_t*, const db_val_t*, char*, int*))
 {
-	int i;
-	int len = 0, ret;
-	int l;
+	int i, l, ret, len = 0;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
 		LM_ERR("Invalid parameter value\n");
@@ -310,12 +290,11 @@ int db_print_where(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_op_t* _o,
 /*
  * Print set clause of update SQL statement
  */
-int db_print_set(db_con_t* _c, char* _b, int _l, db_key_t* _k, db_val_t* _v,
-		int _n, int (*val2str)() )
+int db_print_set(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
+	const db_val_t* _v, const int _n, int (*val2str)(const db_con_t*,
+	const db_val_t*,char*, int*))
 {
-	int i;
-	int len = 0, ret;
-	int l;
+	int i, l, ret, len = 0;
 
 	if (!_c || !_b || !_l || !_k || !_v || !_n) {
 		LM_ERR("Invalid parameter value\n");

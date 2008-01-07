@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of ser, a free SIP server.
  *
@@ -32,7 +33,7 @@
  */
 
 /**
- * \file db.h
+ * \file db/db.h
  * \brief Generic Database Interface
  *
  * This is a generic database interface for modules that need to utilize a
@@ -45,7 +46,7 @@
  *
  * If you want to see more complicated examples of how the API could be used,
  * take a look at the sources of the usrloc or auth modules.
-*/
+ */
 
 #ifndef DB_H
 #define DB_H
@@ -57,6 +58,7 @@
 #include "db_row.h"
 #include "db_res.h"
 #include "db_cap.h"
+#include "db_con.h"
 
 
 /**
@@ -67,7 +69,7 @@
  * that table.
  * \param _h database connection handle
  * \param _t table name
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_use_table_f)(db_con_t* _h, const char* _t);
 
@@ -92,7 +94,7 @@ typedef int (*db_use_table_f)(db_con_t* _h, const char* _t);
  * \see bind_dbmod
  * \param _sqlurl database connection URL
  * \return returns a pointer to the db_con_t representing the connection if it was
-  successful, otherwise 0 is returned.
+ * successful, otherwise 0 is returned
  */
 typedef db_con_t* (*db_init_f) (const char* _sqlurl);
 
@@ -134,7 +136,7 @@ typedef void (*db_close_f) (db_con_t* _h);
  * \param _nc number of columns in _c parameter
  * \param _o order by statement for query
  * \param _r address of variable where pointer to the result will be stored
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
 			   db_op_t* _op, db_val_t* _v, db_key_t* _c,
@@ -149,7 +151,7 @@ typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
  * \param _h structure representing database connection
  * \param _r structure for the result
  * \param _n the number of rows that should be fetched
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
 
@@ -167,7 +169,7 @@ typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
  * \param _h structure representing database connection
  * \param _s the SQL query
  * \param _r structure for the result
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
 
@@ -180,7 +182,7 @@ typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
  * structure anymore. You must call this function before you call db_query again!
  * \param _h database connection handle
  * \param _r pointer to db_res_t structure to destroy
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
 
@@ -194,7 +196,7 @@ typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
  * \param _k array of keys (column names) 
  * \param _v array of values for keys specified in _k parameter
  * \param _n number of keys-value pairs int _k and _v parameters
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
@@ -213,7 +215,7 @@ typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
  * \param _o array of operators to be used with key-value pairs
  * \param _v array of values that the row must match to be deleted
  * \param _n number of keys-value parameters in _k and _v parameters
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
 
@@ -247,7 +249,7 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
  * \param _k key names
  * \param _v values of the keys
  * \param _n number of key=value pairs
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
 */
 typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
 
@@ -276,7 +278,7 @@ typedef int (*db_last_inserted_id_f) (db_con_t* _h);
  * \param _k key names
  * \param _v values of the keys
  * \param _n number of key=value pairs
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 typedef int (*db_insert_update_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
 
@@ -323,21 +325,10 @@ typedef struct db_func {
  * \see db_func_t
  * \param mod database connection URL or a database module name
  * \param dbf database module callbacks
- * \return returns 0 if everything is OK, otherwise returns value < 0.
+ * \return returns 0 if everything is OK, otherwise returns value < 0
  */
 int bind_dbmod(char* mod, db_func_t* dbf);
 
-
-/**
- * \brief Get the version of a table.
- *
- * Returns the version number of a given table from the version table.
- * \param dbf database module callbacks
- * \param con database connection handle
- * \param table checked table
- * \return the version number if present, 0 if no version data available, < 0 on error
- */
-int table_version(db_func_t* dbf, db_con_t* con, const str* table);
 
 /**
  * \brief Helper for db_init function.
@@ -350,5 +341,39 @@ int table_version(db_func_t* dbf, db_con_t* con, const str* table);
    successful, otherwise 0 is returned.
  */
 db_con_t* db_do_init(const char* url, void* (*new_connection)());
+
+/**
+ * \brief Helper for db_close function.
+ *
+ * This helper method does some work for the closing of a database 
+ * connection. No function should be called after this
+ * \param _h database connection handle
+ * \param (*free_connection) Pointer to the db specifc free_connection method
+ */
+void db_do_close(db_con_t* _h, void (*free_connection)());
+
+/**
+ * \brief Get the version of a table.
+ *
+ * Returns the version number of a given table from the version table.
+ * \param dbf database module callbacks
+ * \param con database connection handle
+ * \param table checked table
+ * \return the version number if present, 0 if no version data available, < 0 on error
+ */
+int table_version(db_func_t* dbf, db_con_t* con, const str* table);
+
+
+/**
+ * \brief Stores the name of table
+ *
+ * Stores the name of the table that will be used by subsequent database
+ * functions calls in a db_con_t structure.
+ * \param _h database connection handle
+ * \param _t stored name
+ * \return 0 if everything is ok, otherwise returns value < 0
+ */
+int db_use_table(db_con_t* _h, const char* _t);
+
 
 #endif /* DB_H */

@@ -2,7 +2,7 @@
  * $Id$ 
  *
  * Copyright (C) 2001-2003 FhG Fokus
- * Copyright (C) 2007 1und1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -19,6 +19,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/**
+ * \file db/db_row.c
+ * \brief Type that represents a row in a database.
+ *
+ * This file holds a type that represents a row in a database, some convenience
+ * macros and a function for memory managements.
  */
 
 #include "db_row.h"

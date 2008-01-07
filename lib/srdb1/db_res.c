@@ -2,7 +2,7 @@
  * $Id$ 
  *
  * Copyright (C) 2001-2003 FhG Fokus
- * Copyright (C) 2007 1und1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -19,6 +19,14 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/**
+ * \file db/db_res.c
+ * \brief Functions to manage result structures
+ *
+ * Provides some convenience macros and some memory management
+ * functions for result structures.
  */
 
 #include "db_res.h"
@@ -53,6 +61,22 @@ inline int db_free_rows(db_res_t* _r)
 		pkg_free(RES_ROWS(_r));
 		RES_ROWS(_r) = NULL;
 	}
+	return 0;
+}
+
+
+/*
+ * Release memory used by columns
+ */
+inline int db_free_columns(db_res_t* _r)
+{
+	if (!_r) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (RES_NAMES(_r)) pkg_free(RES_NAMES(_r));
+	if (RES_TYPES(_r)) pkg_free(RES_TYPES(_r));
 	return 0;
 }
 

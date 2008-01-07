@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2005 iptel.org
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,6 +21,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * \file db/db_pool.c
+ * \brief Functions for managing a pool of database connections.
+ */
+
 #include "../dprint.h"
 #include "db_pool.h"
 
@@ -33,7 +39,7 @@ static struct pool_con* db_pool = 0;
  * the identifier equal to id, NULL is returned
  * when no connection is found
  */
-struct pool_con* pool_get(struct db_id* id)
+struct pool_con* pool_get(const struct db_id* id)
 {
 	struct pool_con* ptr;
 

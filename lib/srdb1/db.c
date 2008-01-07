@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  * 
  * This file is part of openser, a free SIP server.
  *
@@ -26,6 +27,21 @@
   *  2006-10-10  Added support for retrieving the last inserted ID (Carsten Bock, BASIS AudioNet GmbH)
   */
 
+/**
+ * \file db/db.c
+ * \brief Generic Database Interface
+ *
+ * This is a generic database interface for modules that need to utilize a
+ * database. The interface should be used by all modules that access database.
+ * The interface will be independent of the underlying database server.
+ * Notes:
+ * If possible, use the predefined macros if you need to access any structure
+ * attributes.
+ * For additional description, see the comments in the sources of mysql module.
+ *
+ * If you want to see more complicated examples of how the API could be used,
+ * take a look at the sources of the usrloc or auth modules.
+ */
 
 #include "../dprint.h"
 #include "../sr_module.h"
@@ -36,7 +52,6 @@
 #include "db_id.h"
 #include "db_pool.h"
 #include "db.h"
-
 
 
 /* fills mydbf with the corresponding db module callbacks
@@ -165,6 +180,92 @@ int bind_dbmod(char* mod, db_func_t* mydbf)
 
 
 /*
+ * Initialize database module
+ * No function should be called before this
+ */
+db_con_t* db_do_init(const char* url, void* (*new_connection)())
+{
+	struct db_id* id;
+	void* con;
+	db_con_t* res;
+
+	int con_size = sizeof(db_con_t) + sizeof(void *);
+	id = 0;
+	res = 0;
+
+	if (!url || !new_connection) {
+		LM_ERR("invalid parameter value\n");
+		return 0;
+	}
+	if (strlen(url) > 255)
+	{
+		LM_ERR("SQL URL too long\n");
+		return 0;
+	}
+	
+	/* this is the root memory for this database connection. */
+	res = (db_con_t*)pkg_malloc(con_size);
+	if (!res) {
+		LM_ERR("no private memory left\n");
+		return 0;
+	}
+	memset(res, 0, con_size);
+
+	id = new_db_id(url);
+	if (!id) {
+		LM_ERR("cannot parse URL '%s'\n", url);
+		goto err;
+	}
+
+	/* Find the connection in the pool */
+	con = pool_get(id);
+	if (!con) {
+		LM_DBG("connection %p not found in pool\n", id);
+		/* Not in the pool yet */
+		con = new_connection(id);
+		if (!con) {
+			LM_ERR("could not add connection to the pool");
+			goto err;
+		}
+		pool_insert((struct pool_con*)con);
+	} else {
+		LM_DBG("connection %p found in pool\n", id);
+	}
+
+	res->tail = (unsigned long)con;
+	return res;
+
+ err:
+	if (id) free_db_id(id);
+	if (res) pkg_free(res);
+	return 0;
+}
+
+
+/*
+ * Shut down database module
+ * No function should be called after this
+ */
+void db_do_close(db_con_t* _h, void (*free_connection)())
+{
+	struct pool_con* con;
+
+	if (!_h) {
+		LM_ERR("invalid parameter value\n");
+		return;
+	}
+
+	con = (struct pool_con*)_h->tail;
+	if (pool_remove(con) == 1) {
+		free_connection(con);
+	}
+
+	pkg_free(_h);
+}
+
+
+
+/*
  * Get version of a table
  * If there is no row for the given table, return version 0
  */
@@ -226,64 +327,18 @@ int table_version(db_func_t* dbf, db_con_t* connection, const str* table)
 	return ret;
 }
 
+
 /*
- * Initialize database module
- * No function should be called before this
+ * Store name of table that will be used by
+ * subsequent database functions
  */
-db_con_t* db_do_init(const char* url, void* (*new_connection)())
+int db_use_table(db_con_t* _h, const char* _t)
 {
-	struct db_id* id;
-	void* con;
-	db_con_t* res;
-
-	int con_size = sizeof(db_con_t) + sizeof(void *);
-	id = 0;
-	res = 0;
-
-	if (!url) {
+	if ((!_h) || (!_t)) {
 		LM_ERR("invalid parameter value\n");
-		return 0;
-	}
-	if (strlen(url) > 255)
-	{
-		LM_ERR("SQL URL too long\n");
-		return 0;
-	}
-	
-	/* this is the root memory for this database connection. */
-	res = (db_con_t*)pkg_malloc(con_size);
-	if (!res) {
-		LM_ERR("no private memory left\n");
-		return 0;
-	}
-	memset(res, 0, con_size);
-
-	id = new_db_id(url);
-	if (!id) {
-		LM_ERR("cannot parse URL '%s'\n", url);
-		goto err;
+		return -1;
 	}
 
-	/* Find the connection in the pool */
-	con = pool_get(id);
-	if (!con) {
-		LM_DBG("connection %p not found in pool\n", id);
-		/* Not in the pool yet */
-		con = new_connection(id);
-		if (!con) {
-			LM_ERR("could not add connection to the pool");
-			goto err;
-		}
-		pool_insert((struct pool_con*)con);
-	} else {
-		LM_DBG("connection %p found in pool\n", id);
-	}
-
-	res->tail = (unsigned long)con;
-	return res;
-
- err:
-	if (id) free_db_id(id);
-	if (res) pkg_free(res);
+	CON_TABLE(_h) = _t;
 	return 0;
 }

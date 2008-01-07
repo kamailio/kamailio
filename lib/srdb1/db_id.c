@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2001-2005 iptel.org
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -18,6 +19,11 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/**
+ * \file db/db_id.c
+ * \brief Functions for parsing a database URL and work with db identifier.
  */
 
 #include "db_id.h"
@@ -239,7 +245,7 @@ struct db_id* new_db_id(const char* url)
 /*
  * Compare two connection identifiers
  */
-unsigned char cmp_db_id(struct db_id* id1, struct db_id* id2)
+unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2)
 {
 	if (!id1 || !id2) return 0;
 	if (id1->port != id2->port) return 0;

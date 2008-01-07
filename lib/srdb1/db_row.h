@@ -2,6 +2,7 @@
  * $Id$ 
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,6 +21,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * \file db/db_row.h
+ * \brief Type that represents a row in a database.
+ *
+ * This file holds a type that represents a row in a database, some convenience
+ * macros and a function for memory managements.
+ */
+
 
 #ifndef DB_ROW_H
 #define DB_ROW_H
@@ -27,20 +36,26 @@
 #include "db_val.h"
 
 
-/*
- * Structure holding result of query_table function (ie. table row)
+/**
+ * Structure holding the result of a query table function.
+ * It represents one row in a database table. In other words, the row is an
+ * array of db_val_t variables, where each db_val_t variable represents exactly
+ * one cell in the table.
  */
 typedef struct db_row {
-	db_val_t* values;  /* Columns in the row */
-	int n;             /* Number of columns in the row */
+	db_val_t* values;  /**< Columns in the row */
+	int n;             /**< Number of columns in the row */
 } db_row_t;
 
-
+/** Return the columns in the row */
 #define ROW_VALUES(rw) ((rw)->values)
+/** Return the number of rows */
 #define ROW_N(rw)      ((rw)->n)
 
-/*
+/**
  * Release memory used by row
+ * \param _r the row that should be released
+ * \return zero on success, negative on error
  */
 int db_free_row(db_row_t* _r);
 
