@@ -74,8 +74,10 @@ int select_level = 0;
 int w_parse_select(char**p, select_t* sel)
 {
 	str name;
+	char* select_name;
 	
 	if (**p=='@') (*p)++;
+	select_name=*p;
 	sel->n=0;
 	while (isalpha((unsigned char)*(*p))) {
 		if (sel->n > MAX_SELECT_PARAMS -2) {
@@ -132,12 +134,12 @@ int w_parse_select(char**p, select_t* sel)
 		(*p)++;
 	};
 	if (sel->n==0) {
-		ERR("parse_select: invalid select\n");
+		ERR("parse_select: invalid select '%s'\n", select_name);
 		goto error;
 	};
 	DBG("parse_select: end, total elements: %d, calling resolve_select\n", sel->n);
 	if (resolve_select(sel)<0) {
-		ERR("parse_select: error while resolve_select\n");
+		ERR("parse_select: error while resolve_select '%s'\n", select_name);
 		goto error;
 	}
 	return 0;
