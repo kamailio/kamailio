@@ -163,7 +163,7 @@ int perlvdb_use_table(db_con_t* h, const char* t) {
 
 void perlvdb_db_close(db_con_t* h) {
 	if (!h) {
-		LM_ERR("nvalid parameter value\n");
+		LM_ERR("invalid parameter value\n");
 		return;
 	}
 
