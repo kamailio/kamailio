@@ -250,6 +250,7 @@ static int tcp_proto_no=-1; /* tcp protocol number as returned by
 static io_wait_h io_h;
 
 static struct local_timer tcp_main_ltimer;
+static ticks_t tcp_main_prev_ticks;
 
 
 static ticks_t tcpconn_main_timeout(ticks_t , struct timer_ln* , void* );
@@ -3281,11 +3282,10 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 static inline void tcp_timer_run()
 {
 	ticks_t ticks;
-	static ticks_t prev_ticks=0;
 	
 	ticks=get_ticks_raw();
-	if (unlikely((ticks-prev_ticks)<TCPCONN_TIMEOUT_MIN_RUN)) return;
-	prev_ticks=ticks;
+	if (unlikely((ticks-tcp_main_prev_ticks)<TCPCONN_TIMEOUT_MIN_RUN)) return;
+	tcp_main_prev_ticks=ticks;
 	local_timer_run(&tcp_main_ltimer, ticks);
 }
 
@@ -3376,6 +3376,7 @@ void tcp_main_loop()
 	/* init: start watching all the fds*/
 	
 	/* init local timer */
+	tcp_main_prev_ticks=get_ticks_raw();
 	if (init_local_timer(&tcp_main_ltimer, get_ticks_raw())!=0){
 		LOG(L_ERR, "ERROR: init_tcp: failed to init local timer\n");
 		goto error;
