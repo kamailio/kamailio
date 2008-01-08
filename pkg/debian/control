@@ -2,7 +2,7 @@ Source: ser
 Section: net
 Priority: optional
 Maintainer: Andrei Pelinescu-Onciul <andrei@iptel.org>
-Build-Depends: debhelper (>= 4), libmysqlclient-dev | libmysqlclient15-dev | libmysqlclient14-dev | libmysqlclient12-dev, libexpat1-dev, libradius-ng-dev | libradiusclient-ng-dev | libradius1-dev, libxml2-dev, libpq-dev | postgresql-dev, libcurl3-dev, libssl-dev, libreadline5-dev
+Build-Depends: debhelper (>= 4), libmysqlclient-dev | libmysqlclient15-dev | libmysqlclient14-dev | libmysqlclient12-dev, libexpat1-dev, libradius-ng-dev | libradiusclient-ng-dev | libradius1-dev, libxml2-dev, libpq-dev | postgresql-dev, libcurl3-dev, libssl-dev, libreadline5-dev, bison, flex
 Standards-Version: 3.5.2
 
 Package: ser
