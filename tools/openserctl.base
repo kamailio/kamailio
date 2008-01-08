@@ -204,6 +204,28 @@ LCR_GW_PROTO_COLUMN=transport
 LCR_GW_STRIP_COLUMN=strip
 LCR_GW_PREFIX_COLUMN=tag
 
+# route_tree table
+if [ -z "$ROUTE_TREE_TABLE" ] ; then
+	ROUTE_TREE_TABLE=route_tree
+fi
+CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN=id
+CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN=carrier
+
+# carrierroute table
+if [ -z "$CARRIERROUTE_TABLE" ] ; then
+	CARRIERROUTE_TABLE=carrierroute
+fi
+CARRIERROUTE_CARRIERROUTE_PREFIX_COLUMN=id
+CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN=carrier
+CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN=scan_prefix
+CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN=domain
+CARRIERROUTE_CARRIERROUTE_PROB_COLUMN=prob
+CARRIERROUTE_CARRIERROUTE_STRIP_COLUMN=strip
+CARRIERROUTE_CARRIERROUTE_REWRITE_HOST_COLUMN=rewrite_host
+CARRIERROUTE_CARRIERROUTE_REWRITE_PREFIX_COLUMN=rewrite_prefix
+CARRIERROUTE_CARRIERROUTE_REWRITE_SUFFIX_COLUMN=rewrite_suffix
+CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN=comment
+
 # URI table
 if [ -z "$URI_TABLE" ] ; then
 	URI_TABLE=uri
@@ -298,31 +320,49 @@ cat <<EOF
    * Examples:  lcr addgw_grp usa 1                                  *
    *            lcr addgw level3 1.2.3.4 5080 sip tcp 1              *
    *            lcr addroute +1 '' 1 1                               *
- lcr show ....................................................................
+ lcr show .....................................................................
            ............. show routes, gateways and groups
- lcr reload ..................................................................
+ lcr reload ...................................................................
            ............. reload lcr gateways
- lcr addgw_grp <grp_name> ....................................................
+ lcr addgw_grp <grp_name> .....................................................
            .............. add gateway group, autocreate grp_id
- lcr addgw_grp <grp_name> <grp_id> ...........................................
+ lcr addgw_grp <grp_name> <grp_id> ............................................
            ............... add gateway group with grp_id
- lcr rmgw_grp  <grp_id> ......................................................
+ lcr rmgw_grp  <grp_id> .......................................................
            ............... delete the gw_grp
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> ...............
-           ............... add a gateway
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> ......
-           ............... add a gateway with prefix
  lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> <strip>
-           ............... add a gateway with prefix and strip
- lcr rmgw  <gw_name> .........................................................
+           ............... add a gateway with prefix and strip ................
+           ................(prefix and strip are optional arguments) ..........
+ lcr rmgw  <gw_name> ..........................................................
            ............... delete a gateway
- lcr addroute <prefix> <from> <grp_id> <prio> ................................
+ lcr addroute <prefix> <from> <grp_id> <prio> .................................
            .............. add a route ( use '' to match anything in <from> )
- lcr rmroute  <prefix> <from> <grp_id> <prio> ................................
+ lcr rmroute  <prefix> <from> <grp_id> <prio> .................................
            .............. delete a route
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_lcr"
+
+usage_cr() {
+	echo
+	mecho " -- command 'cr' - manage carrierroute tables"
+	echo
+cat <<EOF
+ cr show ........................................................ show tables
+ cr reload ...................................................... reload tables
+ cr addrt <routing_tree_id> <routing_tree> ...................... add a tree
+ cr rmrt  <routing_tree> ........................................ rm a tree
+ cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> .. add a carrier
+ cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
+               <prob> ........................................... add a carrier
+ cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
+               <prob> <strip> <rewrite_prefix> <rewrite_suffix> ...............
+               <comment> ........................................ add a carrier
+               (rewrite_prefix, rewrite_suffix, comment are optional arguments)
+ cr rmcarrier  <carrier> <scan_prefix> <domain> ................. rm a carrier
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_cr"
 
 usage_rpid() {
 	echo

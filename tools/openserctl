@@ -1334,6 +1334,164 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 
 #
 ##### ------------------------------------------------ #####
+### CARRIERROUTE management
+#
+cr() {
+	require_dbengine
+	require_ctlengine
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+		merr "carrierroute not supported in dbtext mode"
+		exit 1
+	else
+		case $1 in
+			show)
+				mecho "cr routing tree"
+				QUERY="select * FROM $ROUTE_TREE_TABLE ORDER BY $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN; "
+				$DBROCMD "$QUERY"
+				mecho "cr routes"
+				QUERY="select * FROM $CARRIERROUTE_TABLE ORDER BY \
+					$CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN,\
+					$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN,\
+					$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN,\
+					$CARRIERROUTE_CARRIERROUTE_PROB_COLUMN;"
+				$DBROCMD "$QUERY"
+				;;
+			reload)
+				$CTLCMD cr_reload_routes
+				;;
+
+			addrt)
+				shift
+					if [ $# -ne 2 ] ; then
+					merr "cr - missing route_tree"
+				exit 1
+				fi
+				QUERY="insert into $ROUTE_TREE_TABLE
+					( $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN, \
+					$CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN) \
+					VALUES ($1, '$2');"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "cr - SQL Error"
+					exit 1
+				fi
+				minfo "execute '$0 cr reload' to synchronize cache and database"
+				;;
+
+			rmrt)
+				shift
+				if [ $# -ne 1 ] ; then
+					merr "cr - missing route_tree to be removed"
+					exit 1
+				fi
+				QUERY="delete from $ROUTE_TREE_TABLE where $CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN='$1';"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "cr - SQL Error"
+					exit 1 
+				fi
+				minfo "execute '$0 cr reload' to synchronize cache and database"
+				;;
+
+			addcarrier)
+				shift
+				if [ $# -lt 4 ] ; then
+					merr "cr - too few parameters"
+					exit 1
+				fi
+				if [ $# -gt 4 ] ; then
+					PROB=$5
+					if [ $# -gt 5 ] ; then
+						STRIP=$6
+						if [ $# -gt 6 ] ; then
+							REWRITE_PREFIX=$7
+							if [ $# -gt 7 ] ; then
+								REWRITE_SUFFIX=$8
+								if [ $# -gt 8 ] ; then
+									COMMENT=$9
+								else
+									COMMENT=
+								fi
+							else
+								REWRITE_SUFFIX=
+								COMMENT=
+							fi
+						else
+							REWRITE_PREFIX=
+							REWRITE_SUFFIX=
+							COMMENT=
+						fi
+					else
+						STRIP=0
+						REWRITE_PREFIX=
+						REWRITE_SUFFIX=
+						COMMENT=
+					fi
+				else
+					PROB=1
+					STRIP=0
+					REWRITE_PREFIX=
+					REWRITE_SUFFIX=
+					COMMENT=
+				fi
+				CARRIER=$1
+				SCAN_PREFIX=$2
+				DOMAIN=$3
+				REWRITE_HOST=$4
+				#PROB=1
+				#STRIP=0
+				#REWRITE_PREFIX=
+				#REWRITE_SUFFIX=
+				#COMMENT=
+				QUERY="insert into $CARRIERROUTE_TABLE \
+					( $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_PROB_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_STRIP_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_REWRITE_HOST_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_REWRITE_PREFIX_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_REWRITE_SUFFIX_COLUMN, \
+					$CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN ) \
+					VALUES ($CARRIER, '$SCAN_PREFIX', $DOMAIN, $PROB, $STRIP, \
+					'$REWRITE_HOST', '$REWRITE_PREFIX', '$REWRITE_SUFFIX', '$COMMENT');"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "cr - SQL Error"
+					exit 1
+				fi
+				minfo "execute '$0 cr reload' to synchronize cache and database"
+				;;
+
+			rmcarrier)
+				shift
+				if [ $# -ne 3 ] ; then
+					merr "cr - too few parameters"
+					exit 1
+				fi
+				CARRIER=$1
+				SCAN_PREFIX=$2
+				DOMAIN=$3
+				QUERY="delete from $CARRIERROUTE_TABLE where $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN='$CARRIER' AND \
+					$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN=$SCAN_PREFIX AND \
+					$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN=$DOMAIN ;"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "cr - SQL Error"
+					exit 1
+				fi
+				minfo "execute '$0 cr reload' to synchronize cache and database"
+				;;
+
+			*)
+				usage_cr
+				exit 1
+		esac
+	fi
+}
+
+#
+##### ------------------------------------------------ #####
 ### openser_start
 #
 openser_start() {
@@ -2467,6 +2625,11 @@ case $1 in
 	lcr)
 		shift
 		lcr "$@"
+		;;
+
+	cr)
+		shift
+		cr "$@"
 		;;
 
 	mail|email)
