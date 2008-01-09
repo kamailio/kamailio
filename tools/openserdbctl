@@ -64,7 +64,7 @@ fi
 if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
 	. "$MYLIBDIR/openserdbctl.base"
 else
-	merr "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ..."
+	echo -e "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ...\n"
 	exit -1
 fi
 
