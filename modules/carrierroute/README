@@ -372,7 +372,7 @@ modparam("carrierroute", "carrier_table", "route_tree")
 
    Example 1-12. Set rewrite_prefix_column parameter
 ...
-modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
+modparam("carrierroute", "rewrite_prefix_column", "rewrite_prefix")
 ...
      __________________________________________________________
 

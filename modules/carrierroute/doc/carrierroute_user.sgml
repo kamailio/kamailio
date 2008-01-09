@@ -353,7 +353,7 @@ modparam("carrierroute", "carrier_table", "route_tree")
 		    <title>Set <varname>rewrite_prefix_column</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "rewrite_prefix_column", "rewrite_host")
+modparam("carrierroute", "rewrite_prefix_column", "rewrite_prefix")
 ...
 		    </programlisting>
 	    </example>
