@@ -1621,7 +1621,7 @@ no_id:
 				/* do connect and if src ip or port changed, update the 
 				 * aliases */
 				if (unlikely((fd=tcpconn_finish_connect(c, from))<0)){
-					LOG(L_ERR, "ERROR: tcp_send: tcpconn_finsish_connect(%p)"
+					LOG(L_ERR, "ERROR: tcp_send: tcpconn_finish_connect(%p)"
 							" failed\n", c);
 					goto conn_wait_error;
 				}
@@ -2775,6 +2775,20 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 							!(tcpconn->flags & F_CONN_HASHED) ))
 				break;
 			if (!(tcpconn->flags & F_CONN_WRITE_W)){
+				t=get_ticks_raw();
+				if (likely((tcpconn->flags & F_CONN_MAIN_TIMER) && 
+					(TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)) &&
+						TICKS_LT(t, tcpconn->wbuf_q.wr_timeout) )){
+					/* _wbufq_nonempty() is guaranteed here */
+					/* update the timer */
+					local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
+					local_timer_reinit(&tcpconn->timer);
+					local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
+										tcpconn->wbuf_q.wr_timeout-t, t);
+					DBG("tcp_main: handle_ser_child: CONN_QUEUED_WRITE; %p "
+							"timeout adjusted to %d s\n", tcpconn, 
+							TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
+				}
 				if (tcpconn->flags& F_CONN_REMOVED){
 					if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
 												F_TCPCONN, tcpconn)<0)){
@@ -2797,20 +2811,6 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 					}
 				}
 				tcpconn->flags|=F_CONN_WRITE_W;
-				t=get_ticks_raw();
-				if (likely((tcpconn->flags & F_CONN_MAIN_TIMER) && 
-					(TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)) &&
-						TICKS_LT(t, tcpconn->wbuf_q.wr_timeout) )){
-					/* _wbufq_nonempty() is guaranteed here */
-					/* update the timer */
-					local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
-					local_timer_reinit(&tcpconn->timer);
-					local_timer_add(&tcp_main_ltimer, &tcpconn->timer,
-										tcpconn->wbuf_q.wr_timeout-t, t);
-					DBG("tcp_main: handle_ser_child: CONN_QUEUED_WRITE; %p "
-							"timeout adjusted to %d s\n", tcpconn, 
-							TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
-				}
 			}else{
 				LOG(L_WARN, "tcp_main: hanlder_ser_child: connection %p"
 							" already watched for write\n", tcpconn);
@@ -3141,6 +3141,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 #endif /* TCP_BUF_WRITE */
 			if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1))
 				goto error;
+		DBG("tcp: DBG: sendig to child, events %x\n", ev);
 		tcpconn->flags|=F_CONN_REMOVED|F_CONN_READER;
 		local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
 		tcpconn->flags&=~F_CONN_MAIN_TIMER;
