@@ -2,29 +2,7 @@
 #
 # Script for adding and dropping OpenSER Postgres tables
 #
-# TO-DO: update_structures command for migriting to new
-#        table definitons
-#
-# 2003-01-21 changed SILO table definition, by dcm
-#
 # History:
-# 2003-03-12 added replication mark and state columns to location (nils)
-# 2003-03-05: Changed user to username, user is reserved word (janakj)
-# 2003-01-26 statistics table introduced (jiri)
-# 2003-01-25: Optimized keys of some core tables (janakj)
-# 2003-01-25: USER_ID changed to user everywhere (janakj)
-# 2003-01-24: Changed realm column of subscriber and pending
-#             tables to domain (janakj)
-# 2003-04-14  reinstall introduced (jiri)
-# 2004-07-05  new definition of table silo (dcm)
-# 2005-07-26  modify mysqldb.sh for postgres (darilion), known issues:
-#  -  int unsigned replaced by bigint
-#  -  postgresql creates some implicit indexes, thus some of the
-#     indexes are doubled
-#  -  msilo: blob replaced by text, is this fine?
-#  -  datetime types not sure
-# 2006-04-07  removed gen_ha1 dependency - use md5sum;
-#             separated the serweb from openser tables (bogdan)
 # 2006-05-16  added ability to specify MD5 from a configuration file
 #             FreeBSD does not have the md5sum function (norm)
 # 2006-07-14  Corrected syntax from MySQL to Postgres (norm)
@@ -72,7 +50,7 @@ if [ -z "$DBROOTUSER" ]; then
 	fi
 fi
 
-CMD="psql -h $DBHOST -U $DBROOTUSER "
+CMD="psql -q -h $DBHOST -U $DBROOTUSER "
 DUMP_CMD="pg_dump -h $DBHOST -U $DBROOTUSER -c"
 #################################################################
 
@@ -151,14 +129,14 @@ if [ $? -ne 0 ] ; then
 	mwarn "Create user in database failed, perhaps they allready exist? Try to continue.."
 fi
 
-sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;"
-if [ $? -ne 0 ] ; then
-	merr "Grant privileges to database failed!"
-	exit 1
-fi
-
 for TABLE in $STANDARD_TABLES; do
-    sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE $TABLE TO $DBRWUSER;"
+	sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	if [ $TABLE != "version" ] ; then
+		sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE "$TABLE"_id_seq TO $DBRWUSER;"
+    	sql_query "$1" "GRANT SELECT ON TABLE "$TABLE"_id_seq TO $DBROUSER;"
+	fi
+
 	if [ $? -ne 0 ] ; then
 		merr "Grant privileges to standard tables failed!"
 		exit 1
@@ -217,14 +195,11 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
-sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;"
-if [ $? -ne 0 ] ; then
-	merr "Grant privileges to database failed!"
-	exit 1
-fi
-
 for TABLE in $PRESENCE_TABLES; do
-    sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE $TABLE TO $DBRWUSER;"
+	sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE "$TABLE"_id_seq TO $DBRWUSER;"
+    sql_query "$1" "GRANT SELECT ON TABLE "$TABLE"_id_seq TO $DBROUSER;"
 	if [ $? -ne 0 ] ; then
 		merr "Grant privileges to presence tables failed!"
 		exit 1
@@ -253,14 +228,13 @@ for TABLE in $EXTRA_MODULES; do
     fi
 done
 
-sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;"
-if [ $? -ne 0 ] ; then
-	merr "Grant privileges to database failed!"
-	exit 1
-fi
-
 for TABLE in $EXTRA_TABLES; do
-    sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE $TABLE TO $DBRWUSER;"
+	sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	if [ $TABLE != "route_tree" ] ; then
+		sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE "$TABLE"_id_seq TO $DBRWUSER;"
+	    sql_query "$1" "GRANT SELECT ON TABLE "$TABLE"_id_seq TO $DBROUSER;"
+	fi
 	if [ $? -ne 0 ] ; then
 		merr "Grant privileges to extra tables failed!"
 		exit 1
@@ -329,14 +303,19 @@ if [ $? -ne 0 ] ; then
 	merr "Failed to create presence tables!"
 	exit 1
 fi
-sql_query "$1" "GRANT ALL PRIVILEGES ON DATABASE $1 TO $DBRWUSER;
-		GRANT SELECT ON TABLE phonebook, pending, active_sessions, server_monitoring,
-		server_monitoring_agg, usr_preferences_types, admin_privileges to $DBROUSER;" 
 
-if [ $? -ne 0 ] ; then
-	merr "Grant privileges to serweb tables failed!"
-	exit 1
-fi
+for TABLE in $SERWEB_TABLES; do
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE $TABLE TO $DBRWUSER;"
+	sql_query "$1" "GRANT SELECT ON TABLE $TABLE TO $DBROUSER;"
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE phonebook_id_seq TO $DBRWUSER;"
+	sql_query "$1" "GRANT SELECT ON TABLE phonebook_id_seq TO $DBROUSER;"
+	sql_query "$1" "GRANT ALL PRIVILEGES ON TABLE pending_id_seq TO $DBRWUSER;"
+	sql_query "$1" "GRANT SELECT ON TABLE pending_id_seq TO $DBROUSER;"
+	if [ $? -ne 0 ] ; then
+		merr "Grant privileges to serweb tables failed!"
+		exit 1
+	fi
+done
 
 if [ -z "$NO_USER_INIT" ] ; then
 	if [ -z "$SIP_DOMAIN" ] ; then

@@ -2,7 +2,6 @@
 #
 # Script for adding and dropping OpenSER DBTEXT tables
 #
-#
 # History:
 # 2007-02-14  Branch from mysqldb.sh script and adapt minimal capabilities(Cesc Santasusana)
 #

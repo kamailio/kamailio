@@ -2,21 +2,7 @@
 #
 # Script for adding and dropping OpenSER MySQL tables
 #
-# TO-DO: update_structures command for migriting to new
-#        table definitons
-#
-# 2003-01-21 changed SILO table definition, by dcm
-#
 # History:
-# 2003-03-12 added replication mark and state columns to location (nils)
-# 2003-03-05: Changed user to username, user is reserved word (janakj)
-# 2003-01-26 statistics table introduced (jiri)
-# 2003-01-25: Optimized keys of some core tables (janakj)
-# 2003-01-25: USER_ID changed to user everywhere (janakj)
-# 2003-01-24: Changed realm column of subscriber and pending
-#             tables to domain (janakj)
-# 2003-04-14  reinstall introduced (jiri)
-# 2004-07-05  new definition of table silo (dcm)
 # 2006-04-07  removed gen_ha1 dependency - use md5sum;
 #             separated the serweb from openser tables;
 #             fixed the reinstall functionality (bogdan)

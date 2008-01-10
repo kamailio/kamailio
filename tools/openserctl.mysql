@@ -33,7 +33,7 @@ fi
 # input: sql query, optional mysql command-line params
 mysql_query() {
 	# if password not yet queried, query it now
-	prompt_pw "MySql password for user '$DBRWUSER@$DBHOST'"
+	prompt_pw "MySQL password for user '$DBRWUSER@$DBHOST'"
 	$MYSQL $2 -h $DBHOST -u $DBRWUSER "-p$DBRWPW" -e "$1 ;" $DBNAME
 }
 

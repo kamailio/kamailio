@@ -30,18 +30,11 @@ if [ -z "$PGSQL" ] ; then
 	PGSQL="$TOOLPATH"
 fi
 
-##### ----------------------------------------------- #####
-### variables
-
-# type of sql tables
-if [ -z "$TABLE_TYPE" ]; then
-	TABLE_TYPE=""
-fi
 
 # input: sql query, optional pgsql command-line params
 pgsql_query() {
 	# if password not yet queried, query it now
-	prompt_pw "PgSql password for user '$DBRWUSER@$DBHOST'"
+	prompt_pw "PgSQL password for user '$DBRWUSER@$DBHOST'"
 	mecho "pgsql_query: $PGSQL $2 -A -q -t -P fieldsep='	' -h $DBHOST -U $DBRWUSER $DBNAME -c '$1'"
 	PGPASSWORD="$DBRWPW" $PGSQL $2 \
 		-A -q -t \
@@ -64,6 +57,5 @@ pgsql_ro_query() {
 
 DBCMD=pgsql_query
 DBROCMD=pgsql_ro_query
-#DBRAWPARAMS="-A -q -t -P fieldsep=\"	\""
 DBRAWPARAMS="-A -q -t"
 

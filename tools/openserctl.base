@@ -324,10 +324,8 @@ cat <<EOF
            ............. show routes, gateways and groups
  lcr reload ...................................................................
            ............. reload lcr gateways
- lcr addgw_grp <grp_name> .....................................................
-           .............. add gateway group, autocreate grp_id
  lcr addgw_grp <grp_name> <grp_id> ............................................
-           ............... add gateway group with grp_id
+           .............. add gateway group, autocreate grp_id if not present .
  lcr rmgw_grp  <grp_id> .......................................................
            ............... delete the gw_grp
  lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <prefix> <strip>
@@ -352,13 +350,11 @@ cat <<EOF
  cr reload ...................................................... reload tables
  cr addrt <routing_tree_id> <routing_tree> ...................... add a tree
  cr rmrt  <routing_tree> ........................................ rm a tree
- cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> .. add a carrier
- cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
-               <prob> ........................................... add a carrier
  cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
                <prob> <strip> <rewrite_prefix> <rewrite_suffix> ...............
                <comment> ........................................ add a carrier
-               (rewrite_prefix, rewrite_suffix, comment are optional arguments)
+               (strip, rewrite_prefix, rewrite_suffix and comment are optional
+                arguments) ....................................................
  cr rmcarrier  <carrier> <scan_prefix> <domain> ................. rm a carrier
 EOF
 }

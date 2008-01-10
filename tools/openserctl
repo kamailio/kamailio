@@ -7,9 +7,9 @@
 #===================================================================
 
 PATH=$PATH:/usr/local/sbin/
+TEST="false"
 
-
-### include resource files, if any
+### include config files
 if [ -f /etc/openser/openserctlrc ]; then
 	. /etc/openser/openserctlrc
 fi
@@ -19,23 +19,23 @@ fi
 if [ -f ~/.openserctlrc ]; then
 	. ~/.openserctlrc
 fi
+# for testing only, please don't enable this in production environments
+# as this introduce security risks
+if [ $TEST = "true" ]; then
+	if [ -f ./openserctlrc ]; then
+		. ./openserctlrc
+	fi
+fi
 
-##### ------------------------------------------------ #####
+
 ### force values for variables in this section
-#
-
 # you better set the variables in ~/.openserctlrc
-
-
 if [ -z "$ETCDIR" ] ; then
 	ETCDIR="/usr/local/etc/openser"
 fi
 
-##### ------------------------------------------------ #####
-### 
-#
 ### version for this script
-VERSION='1.2 - $Revision$'
+VERSION='$Revision$'
 
 if [ -z "$MYDIR" ] ; then
 	MYDIR=`dirname $0`
@@ -134,6 +134,7 @@ usage() {
 	fi
 	cat <<EOF
 $0 $VERSION
+
 Existing commands:
 EOF
 for f in $USAGE_FUNCTIONS

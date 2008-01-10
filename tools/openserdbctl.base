@@ -31,14 +31,17 @@ INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
 INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
 INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
 
-# Used by dbtext and db_berkeley to define tables to be created
+# Used by dbtext and db_berkeley to define tables to be created, used by
+# postgres to do the grants
 STANDARD_TABLES=${STANDARD_TABLES:-version acc dbaliases lcr domain grp
 		uri speed_dial gw pdt subscriber location re_grp trusted
 		address missed_calls usr_preferences aliases silo dialog
 		dispatcher}
-EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy}
+EXTRA_TABLES=${EXTRA_TABLES:-imc_members imc_rooms cpl sip_trace domainpolicy carrierroute route_tree}
 PRESENCE_TABLES=${PRESENCE_TABLES:-presentity active_watchers watchers xcap 
 		pua rls_presentity rls_watchers}
+SERWEB_TABLES=${SERWEB_TABLES:-phonebook pending active_sessions server_monitoring
+		server_monitoring_agg usr_preferences_types admin_privileges}
 
 # SQL definitions
 # If you change this definitions here, then you must change them
@@ -72,6 +75,8 @@ EXTRA_MODULES=${EXTRA_MODULES:-imc cpl siptrace domainpolicy carrierroute}
 usage() {
 COMMAND=`basename $0`
 cat <<EOF
+$0 $VERSION
+
 usage: $COMMAND create <db name or db_path, optional> .....(creates a new database)
        $COMMAND drop <db name or db_path, optional> .......(!entirely deletes tables!)
        $COMMAND reinit <db name or db_path, optional> .....(!entirely deletes and than re-creates tables!)
