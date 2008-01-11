@@ -66,11 +66,16 @@
  */
 #define CONSUME_NEXT_INT 1<<11
 
+/* accept all the following parameters
+ * without checking them
+ */
+#define CONSUME_ALL	1<<12
+
 /* next parameter is optional (use with CONSUME_NEXT_STR or CONSUME_NEXT_INT
  * resolution is accepted even if there is no other parameter
  * or the parameter is of wrong type
  */
-#define OPTIONAL         1<<12
+#define OPTIONAL         1<<13
 
 /* left function is noted to be called
  * rigth function continues in resolution
@@ -83,14 +88,14 @@
  * the only one parameter passed between nested calls
  * is the result str*
  */
-#define NESTED		1<<13
+#define NESTED		1<<14
 
 /* "fixup call" would be done, when the structure is resolved to this node
  * which means call with res and msg NULL
  *
  * if the fixup call return value <0, the select resolution will fail
  */
-#define FIXUP_CALL	1<<14
+#define FIXUP_CALL	1<<15
 
 /*
  * Selector call parameter
