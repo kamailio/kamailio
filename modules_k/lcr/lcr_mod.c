@@ -1038,7 +1038,7 @@ int reload_gws(void)
 	    prefix = (char *)VAL_STRING(ROW_VALUES(row));
 	    prefix_len = strlen(prefix);
 	    if (prefix_len > MAX_PREFIX_LEN) {
-		LM_ERR("Too long lcr prefix %u>\n", prefix_len);
+		LM_ERR("Too long lcr prefix <%u>\n", prefix_len);
 		lcr_dbf.free_result(dbh, res);
 		lcr_dbf.close(dbh);
 		return -1;
