@@ -208,6 +208,8 @@ SELECT_F(select_date)
 SELECT_F(select_identity)
 SELECT_F(select_identity_info)
 
+SELECT_F(select_cfg_var)
+
 static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("ruri"), select_ruri, 0}, /* not the same as request.uri because it is involved by new_uri */
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("request_uri"), select_ruri, 0},
@@ -394,6 +396,8 @@ static select_row_t select_core[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("date"), select_date, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("identity"), select_identity, 0},
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("identity_info"), select_identity_info, 0},
+
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("cfg_get"), select_cfg_var, CONSUME_ALL | FIXUP_CALL },
 
 	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
 };
