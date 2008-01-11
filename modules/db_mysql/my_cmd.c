@@ -71,6 +71,7 @@ enum {
 	STR_OR,
 	STR_ESC,
 	STR_OP_EQ,
+	STR_OP_NE,
 	STR_OP_LT,
 	STR_OP_GT,
 	STR_OP_LEQ,
@@ -92,6 +93,7 @@ static str strings[] = {
 	STR_STATIC_INIT(" or "),
 	STR_STATIC_INIT("?"),
 	STR_STATIC_INIT("="),
+	STR_STATIC_INIT("!="),
 	STR_STATIC_INIT("<"),
 	STR_STATIC_INIT(">"),
 	STR_STATIC_INIT("<="),
@@ -148,6 +150,7 @@ static int build_delete_query(str* query, db_cmd_t* cmd)
 
 			switch(fld[i].op) {
 			case DB_EQ:  query->len += strings[STR_OP_EQ].len; break;
+			case DB_NE:  query->len += strings[STR_OP_NE].len; break;
 			case DB_LT:  query->len += strings[STR_OP_LT].len; break;
 			case DB_GT:  query->len += strings[STR_OP_GT].len; break;
 			case DB_LEQ: query->len += strings[STR_OP_LEQ].len; break;
@@ -181,6 +184,7 @@ static int build_delete_query(str* query, db_cmd_t* cmd)
 
 			switch(fld[i].op) {
 			case DB_EQ:  APPEND_STR(p, strings[STR_OP_EQ]);  break;
+			case DB_NE:  APPEND_STR(p, strings[STR_OP_NE]);  break;
 			case DB_LT:  APPEND_STR(p, strings[STR_OP_LT]);  break;
 			case DB_GT:  APPEND_STR(p, strings[STR_OP_GT]);  break;
 			case DB_LEQ: APPEND_STR(p, strings[STR_OP_LEQ]); break;
@@ -230,6 +234,7 @@ static int build_select_query(str* query, db_cmd_t* cmd)
 
 			switch(fld[i].op) {
 			case DB_EQ:  query->len += strings[STR_OP_EQ].len; break;
+			case DB_NE:  query->len += strings[STR_OP_NE].len; break;
 			case DB_LT:  query->len += strings[STR_OP_LT].len; break;
 			case DB_GT:  query->len += strings[STR_OP_GT].len; break;
 			case DB_LEQ: query->len += strings[STR_OP_LEQ].len; break;
@@ -272,6 +277,7 @@ static int build_select_query(str* query, db_cmd_t* cmd)
 
 			switch(fld[i].op) {
 			case DB_EQ:  APPEND_STR(p, strings[STR_OP_EQ]);  break;
+			case DB_NE:  APPEND_STR(p, strings[STR_OP_NE]);  break;
 			case DB_LT:  APPEND_STR(p, strings[STR_OP_LT]);  break;
 			case DB_GT:  APPEND_STR(p, strings[STR_OP_GT]);  break;
 			case DB_LEQ: APPEND_STR(p, strings[STR_OP_LEQ]); break;
@@ -428,6 +434,7 @@ static int build_update_query(str* query, db_cmd_t* cmd)
 
 			switch(fld[i].op) {
 			case DB_EQ:  rv |= sb_add(&sql_buf, &strings[STR_OP_EQ]);  break;
+			case DB_NE:  rv |= sb_add(&sql_buf, &strings[STR_OP_NE]);  break;
 			case DB_LT:  rv |= sb_add(&sql_buf, &strings[STR_OP_LT]);  break;
 			case DB_GT:  rv |= sb_add(&sql_buf, &strings[STR_OP_GT]);  break;
 			case DB_LEQ: rv |= sb_add(&sql_buf, &strings[STR_OP_LEQ]); break;
