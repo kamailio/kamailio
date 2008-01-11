@@ -302,7 +302,7 @@ static void destroy(void)
 	* and then nuke it */
 	if (is_main && db) {
 		if (synchronize_all_udomains() != 0) {
-			LOG(L_ERR, "timer(): Error while flushing cache\n");
+			LOG(L_ERR, "destroy(): Error while flushing cache\n");
 		}
 		free_all_udomains();
 	}
