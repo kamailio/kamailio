@@ -619,15 +619,16 @@ again:
 							   because we always alloc BUF_SIZE+1 */
 			*req->parsed=0;
 #ifdef USE_STUN
-			if (req->state==H_STUN_END){
+			if (unlikely(req->state==H_STUN_END)){
 				/* stun request */
 				ret = stun_process_msg(req->start, req->parsed-req->start,
 									 &con->rcv);
 			}else
 #endif
-				ret = receive_msg(req->start, req->parsed-req->start, &con->rcv);
+				ret = receive_msg(req->start, req->parsed-req->start,
+									&con->rcv);
 				
-			if (ret < 0) {
+			if (unlikely(ret < 0)) {
 				*req->parsed=c;
 				resp=CONN_ERROR;
 				goto end_req;
@@ -660,7 +661,7 @@ again:
 		
 		
 	end_req:
-		if (bytes_read) *bytes_read=total_bytes;
+		if (likely(bytes_read)) *bytes_read=total_bytes;
 		return resp;
 }
 
@@ -784,6 +785,18 @@ again:
 							con, con->id, atomic_get(&con->refcnt));
 				goto con_error;
 			}
+			/* if we received the fd there is most likely data waiting to
+			 * be read => process it first to avoid extra sys calls */
+			resp=tcp_read_req(con, &n);
+			if (unlikely(resp<0)){
+				/* some error occured, but on the new fd, not on the tcp
+				 * main fd, so keep the ret value */
+				if (unlikely(resp!=CONN_EOF))
+					con->state=S_CONN_BAD;
+				release_tcpconn(con, resp, tcpmain_sock);
+				break;
+			}
+			
 			/* must be before io_watch_add, io_watch_add might catch some
 			 * already existing events => might call handle_io and
 			 * handle_io might decide to del. the new connection =>
