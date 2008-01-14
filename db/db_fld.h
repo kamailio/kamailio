@@ -58,9 +58,10 @@ extern char* db_fld_str[];
 
 enum db_fld_op {
 	DB_EQ = 0, /* The value of the field must be equal */
+	DB_NE,     /* The value of the filed must be not equal */
 	DB_LT,     /* The value of the field must be less than */
 	DB_GT,     /* The value of the field must be greater than */
-	DB_LEQ,    /* The value of the field must be let than or equal */
+	DB_LEQ,    /* The value of the field must be less than or equal */
 	DB_GEQ     /* The value of the field must be greater than or equal */
 };
 
