@@ -17,7 +17,7 @@ endif
 ifneq ($(MYSQLCFG),)
 
 	# use autodetection
-	DEFS += $(shell $(MYSQLCFG) --include)
+	DEFS += $(shell $(MYSQLCFG) --include | sed 's/\(-I.*\)\/mysql/\1/g' )
 	LIBS = $(shell $(MYSQLCFG) --libs)
 
 else
