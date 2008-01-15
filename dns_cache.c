@@ -2020,6 +2020,8 @@ struct hostent* dns_entry2he(struct dns_hash_entry* e)
 
 	rr_no=0;
 	now=get_ticks_raw();
+	/* if the entry has already expired use the time at the end of lifetime */
+	if (unlikely((s_ticks_t)(now-e->expire)>=0)) now=e->expire-1;
 	rr=dns_entry_get_rr(e, &rr_no, now);
 	for(i=0; rr && (i<DNS_HE_MAX_ADDR); i++,
 							rr=dns_entry_get_rr(e, &rr_no, now)){
@@ -2545,6 +2547,8 @@ int dns_a_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 		ret=-E_DNS_BAD_IP_ENTRY;
 	}
 	now=get_ticks_raw();
+	/* if the entry has already expired use the time at the end of lifetime */
+	if (unlikely((s_ticks_t)(now-(*e)->expire)>=0)) now=(*e)->expire-1;
 	rr=dns_entry_get_rr(*e, rr_no, now);
 	if (rr){
 		/* everything is ok now, we can try to "convert" the ip */
@@ -2590,6 +2594,8 @@ int dns_aaaa_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 		ret=-E_DNS_BAD_IP_ENTRY;
 	}
 	now=get_ticks_raw();
+	/* if the entry has already expired use the time at the end of lifetime */
+	if (unlikely((s_ticks_t)(now-(*e)->expire)>=0)) now=(*e)->expire-1;
 	rr=dns_entry_get_rr(*e, rr_no, now);
 	if (rr){
 		/* everything is ok now, we can try to "convert" the ip */
@@ -2700,6 +2706,8 @@ int dns_srv_resolve_nxt(struct dns_hash_entry** e,
 		ret=-E_DNS_BAD_SRV_ENTRY;
 	}
 	now=get_ticks_raw();
+	/* if the entry has already expired use the time at the end of lifetime */
+	if (unlikely((s_ticks_t)(now-(*e)->expire)>=0)) now=(*e)->expire-1;
 #ifdef DNS_SRV_LB
 	if (tried){
 		rr=dns_srv_get_nxt_rr(*e, tried, rr_no, now);
