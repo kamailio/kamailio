@@ -42,7 +42,6 @@
 
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include <getopt.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include "../../str.h"
@@ -71,6 +70,35 @@ static int update_route_data(fifo_opt_t * opts);
 static int update_route_data_recursor(struct route_tree_item * rt, char * act_domain, fifo_opt_t * opts);
 
 static struct mi_root* print_fifo_err(void);
+
+#ifdef __OS_solaris
+/******************************************************************************
+ * This is a replacement for strsep which is not portable (missing on
+ Solaris).
+ */
+ static char* strsep(char** str, const char* delims)
+ {
+     char* token;
+
+     if (*str==NULL) {
+         /* No more tokens */
+         return NULL;
+     }
+
+     token=*str;
+     while (**str!='\0') {
+         if (strchr(delims,**str)!=NULL) {
+             **str='\0';
+             (*str)++;
+             return token;
+         }
+         (*str)++;
+     }
+     /* There is no other token */
+     *str=NULL;
+     return token;
+ }
+#endif
 
 /**
  * reloads the routing data
