@@ -7,6 +7,9 @@
 #===================================================================
 
 PATH=$PATH:/usr/local/sbin/
+
+# for testing only, please don't enable this in production environments
+# as this introduce security risks
 TEST="false"
 
 ### include config files
@@ -19,8 +22,7 @@ fi
 if [ -f ~/.openserctlrc ]; then
 	. ~/.openserctlrc
 fi
-# for testing only, please don't enable this in production environments
-# as this introduce security risks
+
 if [ $TEST = "true" ]; then
 	if [ -f ./openserctlrc ]; then
 		. ./openserctlrc
