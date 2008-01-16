@@ -22,6 +22,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/**
+ * \class mysql/dbase.c
+ * \brief Implementation of core functions for the MySQL driver.
+ *
+ * This file contains the implementation of core functions for the MySQL
+ * database driver, for example to submit a query or fetch a result.
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <mysql/mysql.h>
@@ -39,8 +47,20 @@
 #include "dbase.h"
 
 
-/*
- * Send an SQL query to the server
+/**
+ * \brief Send a SQL query to the server.
+ *
+ * Send a SQL query to the database server. This methods tries to reconnect
+ * to the server if the connection is gone and the auto_reconnect parameter is
+ * enabled. It also issues a mysql_ping before the query to connect again after
+ * a long waiting period because for some older mysql versions the auto reconnect
+ * don't work sufficient. If auto_reconnect is enabled and the server supports it,
+ * then the mysql_ping is probably not necessary, but its safer to do it in this
+ * cases too.
+ *
+ * \param _h handle for the db
+ * \param _s executed query
+ * \return zero on success, negative value on failure
  */
 static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 {	
@@ -56,9 +76,14 @@ static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 		t = time(0);
 		if ((t - CON_TIMESTAMP(_h)) > ping_interval) {
 			if (mysql_ping(CON_CONNECTION(_h))) {
-				LM_DBG("mysql_ping failed\n");
+				LM_WARN("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
 			}
 		}
+		/*
+		 * We're doing later a query anyway that will reset the timout of the server,
+		 * so it makes sense to set the timestamp value to the actual time in order
+		 * to prevent unnecessary pings.
+		 */
 		CON_TIMESTAMP(_h) = t;
 	}
 
@@ -76,8 +101,8 @@ static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 	 * will most of the time stop at the second or sometimes at the third
 	 * iteration.
 	 */
-	for (i=0; i<(auto_reconnect ? 3 : 1); i++) {
-		if (mysql_query(CON_CONNECTION(_h), _s)==0) {
+	for (i=0; i < (auto_reconnect ? 3 : 1); i++) {
+		if (mysql_query(CON_CONNECTION(_h), _s) == 0) {
 			return 0;
 		}
 		code = mysql_errno(CON_CONNECTION(_h));
@@ -85,7 +110,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 			break;
 		}
 	}
-	LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
+	LM_ERR("driver error on query: %s\n", mysql_error(CON_CONNECTION(_h)));
 	return -2;
 }
 

@@ -21,12 +21,11 @@
  */
 
 #include "my_con.h"
+#include "db_mod.h"
 #include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
-#include <string.h>
-#include <time.h>
 
 
 /*
@@ -87,8 +86,11 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 		mysql_close(ptr->con);
 		goto err;
 	}
-	/* force reconnection */
-	ptr->con->reconnect = 1;
+	/* force reconnection if enabled */
+	if (auto_reconnect)
+		ptr->con->reconnect = 1;
+	else 
+		ptr->con->reconnect = 0;
 
 	LM_DBG("connection type is %s\n", mysql_get_host_info(ptr->con));
 	LM_DBG("protocol version is %d\n", mysql_get_proto_info(ptr->con));
