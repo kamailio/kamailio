@@ -83,7 +83,7 @@
 #define  SUBJECT_VAL                 0
 #define  ORGANIZATION_VAL            1
 #define  USER_AGENT_VAL              2
-#define  DISPALY_VAL                 3
+#define  DISPLAY_VAL                 3
 
 /* attributes and values for LANGUAGE node */
 #define  MATCHES_TAG_ATTR            0
