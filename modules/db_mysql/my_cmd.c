@@ -857,7 +857,7 @@ static int bind_mysql_params(MYSQL_STMT* st, db_fld_t* params1, db_fld_t* params
  * in every context, otherwise it would initialize the result set
  * from the first connection in the context.
  */
-static int check_result_columns(db_cmd_t* cmd, struct my_cmd* payload)
+static int check_result(db_cmd_t* cmd, struct my_cmd* payload)
 {
 	int i, n;
 	MYSQL_FIELD *fld;
@@ -950,7 +950,8 @@ error:
 
 
 /* FIXME: Add support for DB_NONE, in this case the function should determine
- * the type of the column in the database and set the field type appropriately
+ * the type of the column in the database and set the field type appropriately.
+ * This function must be called after check_result.
  */
 static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 {
@@ -960,6 +961,9 @@ static int bind_result(MYSQL_STMT* st, db_fld_t* fld)
 
 	/* Calculate the number of fields in the result */
 	for(n = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[n]); n++);
+	/* Return immediately if there are no fields in the result set */
+	if (n == 0) return 0;
+
 	result = (MYSQL_BIND*)pkg_malloc(sizeof(MYSQL_BIND) * n);
 	if (result == NULL) {
 		ERR("mysql: No memory left\n");
@@ -1101,7 +1105,7 @@ static int upload_cmd(db_cmd_t* cmd)
 	if (err) goto error;
 
 	if (cmd->type == DB_GET || cmd->type == DB_SQL) {
-		err = check_result_columns(cmd, res);
+		err = check_result(cmd, res);
 		if (err) goto error;
 		err = bind_result(res->st, cmd->result);
 		if (err) goto error;
