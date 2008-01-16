@@ -184,6 +184,11 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 		prev = tmp;
 		tmp = tmp->next;
 	}
+	/* rules with prob > 0 are sorted by hash_index */
+	while(tmp && (tmp->hash_index < shm_rr->hash_index)){
+		prev = tmp;
+		tmp = tmp->next;
+	}
 	if(prev){
 		shm_rr->next = prev->next;
 		prev->next = shm_rr;
