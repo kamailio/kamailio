@@ -28,13 +28,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include "my_uri.h"
+
 #include "../../dprint.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
 #include "../../db/db_gen.h"
-#include "my_uri.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 
 /* compare s1 & s2  with a function f (which should return 0 if ==);
@@ -259,7 +261,7 @@ int my_uri(db_uri_t* uri)
 
 	res = (struct my_uri*)pkg_malloc(sizeof(struct my_uri));
 	if (res == NULL) {
-		ERR("No memory left\n");
+		ERR("mysql: No memory left\n");
 		goto error;
 	}
 	memset(res, '\0', sizeof(struct my_uri));

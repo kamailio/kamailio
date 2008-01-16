@@ -40,14 +40,13 @@
  *  @ingroup DB-API
  */
 /** @{ */
-extern int ping_interval;
-extern int auto_reconnect;
-
+extern int my_ping_interval;
 extern unsigned int my_connect_to;
 extern unsigned int my_send_to;
 extern unsigned int my_recv_to;
-
 extern unsigned long my_client_ver;
+extern unsigned int my_retries;
+
 /** @} */
 
 #endif /* _MYSQL_MOD_H */

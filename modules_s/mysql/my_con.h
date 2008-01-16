@@ -40,14 +40,21 @@ enum my_flags {
 	MY_CONNECTED = 1
 };
 
-struct my_con {
+typedef struct my_con {
 	/* Generic part of the structure */
 	db_pool_entry_t gen;
 
 	MYSQL* con;
 	unsigned int flags;
-	time_t timestamp;
-};
+	
+	/* We keep the number of connection resets in this variable,
+	 * this variable is incremented each time the module performs
+	 * a re-connect on the connection. This is used by my_cmd
+	 * related functions to check if a pre-compiled command needs
+	 * to be uploaded to the server before executing it.
+	 */
+	unsigned int resets;
+} my_con_t;
 
 
 /*
@@ -55,5 +62,8 @@ struct my_con {
  * open the MySQL connection and set reference count to 1
  */
 int my_con(db_con_t* con);
+
+int my_con_connect(db_con_t* con);
+void my_con_disconnect(db_con_t* con);
 
 #endif /* _MY_CON_H */

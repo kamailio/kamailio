@@ -26,14 +26,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "my_con.h"
+
+#include "mysql_mod.h"
+#include "my_uri.h"
+
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+
 #include <string.h>
 #include <time.h>
-#include "mysql_mod.h"
-#include "my_uri.h"
-#include "my_con.h"
 
 
 /*
@@ -47,45 +50,34 @@ static void my_con_free(db_con_t* con, struct my_con* payload)
 	 * to it in the connection pool
 	 */
 	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
-
+	
 	db_pool_entry_free(&payload->gen);
 	if (payload->con) pkg_free(payload->con);
 	pkg_free(payload);
 }
 
 
-static int my_con_connect(db_con_t* con)
+int my_con_connect(db_con_t* con)
 {
 	struct my_con* mcon;
 	struct my_uri* muri;
-#if MYSQL_VERSION_ID >= 50013 
-	my_bool my_auto_reconnect;
-#endif
-
-
+	
 	mcon = DB_GET_PAYLOAD(con);
 	muri = DB_GET_PAYLOAD(con->uri);
-
+	
 	/* Do not reconnect already connected connections */
 	if (mcon->flags & MY_CONNECTED) return 0;
 
-	DBG("my_con_connect: Connecting to %.*s:%.*s\n",
+	DBG("mysql: Connecting to %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
-#if MYSQL_VERSION_ID >= 50013 
-	my_auto_reconnect = 1;
-	if (my_client_ver >= 50013) {
-		if (mysql_options(mcon->con, MYSQL_OPT_RECONNECT , 
-						  (char*)&my_auto_reconnect))
-			WARN("mysql: failed to set MYSQL_OPT_RECONNECT\n");
-	}
-#endif
 	if (my_connect_to) {
 		if (mysql_options(mcon->con, MYSQL_OPT_CONNECT_TIMEOUT, 
 						  (char*)&my_connect_to))
 			WARN("mysql: failed to set MYSQL_OPT_CONNECT_TIMEOUT\n");
 	}
+
 #if MYSQL_VERSION_ID >= 40101 
 	if ((my_client_ver >= 50025) || 
 		((my_client_ver >= 40122) && 
@@ -105,24 +97,29 @@ static int my_con_connect(db_con_t* con)
 	
 	if (!mysql_real_connect(mcon->con, muri->host, muri->username, 
 							muri->password, muri->database, muri->port, 0, 0)) {
-		LOG(L_ERR, "my_con_connect: %s\n", mysql_error(mcon->con));
+		LOG(L_ERR, "mysql: %s\n", mysql_error(mcon->con));
 		return -1;
 	}
 	
-	/* Enable reconnection explicitly */
-	mcon->con->reconnect = 1;
-	
-	DBG("my_con_connect: Connection type is %s\n", mysql_get_host_info(mcon->con));
-	DBG("my_con_connect: Protocol version is %d\n", mysql_get_proto_info(mcon->con));
-	DBG("my_con_connect: Server version is %s\n", mysql_get_server_info(mcon->con));
+	DBG("mysql: Connection type is %s\n", mysql_get_host_info(mcon->con));
+	DBG("mysql: Protocol version is %d\n", mysql_get_proto_info(mcon->con));
+	DBG("mysql: Server version is %s\n", mysql_get_server_info(mcon->con));
 
-	mcon->timestamp = time(0);
 	mcon->flags |= MY_CONNECTED;
+
+	/* Increase the variable that keeps track of number of connects performed
+	 * on this connection. The mysql module uses the variable to determine
+	 * when a pre-compiled command needs to be uploaded to the server again.
+	 * If the number in the my_con structure is large than the number kept
+	 * in my_cmd then it means that we have to upload the command to the server
+	 * again because the connection was reconnected meanwhile.
+	 */
+	mcon->resets++;
 	return 0;
 }
 
 
-static void my_con_disconnect(db_con_t* con)
+void my_con_disconnect(db_con_t* con)
 {
 	struct my_con* mcon;
 
@@ -130,7 +127,7 @@ static void my_con_disconnect(db_con_t* con)
 
 	if ((mcon->flags & MY_CONNECTED) == 0) return;
 
-	DBG("my_con_disconnect: Disconnecting from %.*s:%.*s\n",
+	DBG("mysql: Disconnecting from %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
@@ -149,7 +146,7 @@ int my_con(db_con_t* con)
 	 */
 	ptr = (struct my_con*)db_pool_get(con->uri);
 	if (ptr) {
-		DBG("my_con: Connection to %.*s:%.*s found in connection pool\n",
+		DBG("mysql: Connection to %.*s:%.*s found in connection pool\n",
 			con->uri->scheme.len, ZSW(con->uri->scheme.s),
 			con->uri->body.len, ZSW(con->uri->body.s));
 		goto found;
@@ -157,7 +154,7 @@ int my_con(db_con_t* con)
 
 	ptr = (struct my_con*)pkg_malloc(sizeof(struct my_con));
 	if (!ptr) {
-		LOG(L_ERR, "my_con: No memory left\n");
+		LOG(L_ERR, "mysql: No memory left\n");
 		goto error;
 	}
 	memset(ptr, '\0', sizeof(struct my_con));
@@ -165,19 +162,19 @@ int my_con(db_con_t* con)
 
 	ptr->con = (MYSQL*)pkg_malloc(sizeof(MYSQL));
 	if (!ptr->con) {
-		LOG(L_ERR, "my_con: No enough memory\n");
+		LOG(L_ERR, "mysql: No enough memory\n");
 		goto error;
 	}
 	mysql_init(ptr->con);
 
 	uri = DB_GET_PAYLOAD(con->uri);
-	DBG("my_con: Creating new connection to: %.*s:%.*s\n",
+	DBG("mysql: Creating new connection to: %.*s:%.*s\n",
 		con->uri->scheme.len, ZSW(con->uri->scheme.s),
 		con->uri->body.len, ZSW(con->uri->body.s));
 
 	/* Put the newly created mysql connection into the pool */
 	db_pool_put((struct db_pool_entry*)ptr);
-	DBG("my_con: Connection stored in connection pool\n");
+	DBG("mysql: Connection stored in connection pool\n");
 
  found:
 	/* Attach driver payload to the db_con structure and set connect and
