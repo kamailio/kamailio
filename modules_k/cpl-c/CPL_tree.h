@@ -72,7 +72,7 @@
 #define  HOST_VAL                    2
 #define  PORT_VAL                    3
 #define  TEL_VAL                     4
-#define  DISPLAY_VAL                 5
+#define  DISPLAY_VAL                 5    /*shared with STRING*/
 
 /* attributes and values for ADDRESS node */
 #define  IS_ATTR                     0    /*shared with STRING*/
@@ -83,7 +83,6 @@
 #define  SUBJECT_VAL                 0
 #define  ORGANIZATION_VAL            1
 #define  USER_AGENT_VAL              2
-#define  DISPLAY_VAL                 3
 
 /* attributes and values for LANGUAGE node */
 #define  MATCHES_TAG_ATTR            0
