@@ -98,7 +98,6 @@ struct dlg_entry
 	struct dlg_cell    *first;
 	struct dlg_cell    *last;
 	unsigned int        next_id;
-	gen_lock_set_t     *lock_set;
 	unsigned int       lock_idx;
 };
 
