@@ -37,20 +37,22 @@
  *  @{
  */
  
-#include "../../sr_module.h"
-#include "../../db/db.h"
+#include "mysql_mod.h"
+
 #include "my_uri.h"
 #include "my_con.h"
 #include "my_cmd.h"
 #include "my_fld.h"
 #include "my_res.h"
-#include "mysql_mod.h"
 
-int ping_interval = 5 * 60; /* Default is 5 minutes */
-int auto_reconnect = 1;     /* Default is enabled */
+#include "../../sr_module.h"
+#include "../../db/db.h"
+
+int my_ping_interval = 5 * 60; /* Default is 5 minutes */
 unsigned int my_connect_to = 2; /* 2 s by default */
 unsigned int my_send_to = 0; /*  enabled only for mysql >= 5.25  */
 unsigned int my_recv_to = 0; /* enabled only for mysql >= 5.25 */
+unsigned int my_retries = 1;    /* Number of retries when command fails */
 
 unsigned long my_client_ver = 0;
 
@@ -66,19 +68,19 @@ MODULE_VERSION
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_ctx",         (cmd_function)NULL,  0, 0, 0},
-	{"db_con",         (cmd_function)my_con,  0, 0, 0},
-	{"db_uri",         (cmd_function)my_uri,  0, 0, 0},
-	{"db_cmd",         (cmd_function)my_cmd,  0, 0, 0},
-	{"db_put",         (cmd_function)my_cmd_write, 0, 0, 0},
-	{"db_del",         (cmd_function)my_cmd_write, 0, 0, 0},
-	{"db_get",         (cmd_function)my_cmd_read, 0, 0, 0},
-	{"db_upd",         (cmd_function)my_cmd_update, 0, 0, 0},
-	{"db_sql",         (cmd_function)my_cmd_sql, 0, 0, 0},
-	{"db_res",         (cmd_function)my_res,  0, 0, 0},
-	{"db_fld",         (cmd_function)my_fld,  0, 0, 0},
-	{"db_first",       (cmd_function)my_cmd_first, 0, 0, 0},
-	{"db_next",        (cmd_function)my_cmd_next,  0, 0, 0},
+	{"db_ctx",   (cmd_function)NULL,  0, 0, 0},
+	{"db_con",   (cmd_function)my_con,  0, 0, 0},
+	{"db_uri",   (cmd_function)my_uri,  0, 0, 0},
+	{"db_cmd",   (cmd_function)my_cmd,  0, 0, 0},
+	{"db_put",   (cmd_function)my_cmd_exec, 0, 0, 0},
+	{"db_del",   (cmd_function)my_cmd_exec, 0, 0, 0},
+	{"db_get",   (cmd_function)my_cmd_exec, 0, 0, 0},
+	{"db_upd",   (cmd_function)my_cmd_exec, 0, 0, 0},
+	{"db_sql",   (cmd_function)my_cmd_exec, 0, 0, 0},
+	{"db_res",   (cmd_function)my_res,  0, 0, 0},
+	{"db_fld",   (cmd_function)my_fld,  0, 0, 0},
+	{"db_first", (cmd_function)my_cmd_first, 0, 0, 0},
+	{"db_next",  (cmd_function)my_cmd_next,  0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
@@ -87,11 +89,11 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"ping_interval", PARAM_INT, &ping_interval},
-	{"auto_reconnect", PARAM_INT, &auto_reconnect},
+	{"ping_interval",   PARAM_INT, &my_ping_interval},
 	{"connect_timeout", PARAM_INT, &my_connect_to},
-	{"send_timeout", PARAM_INT, &my_send_to},
+	{"send_timeout",    PARAM_INT, &my_send_to},
 	{"receive_timeout", PARAM_INT, &my_recv_to},
+	{"retries",         PARAM_INT, &my_retries},
 	{0, 0, 0}
 };
 

@@ -26,12 +26,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <mysql/mysql.h>
+#include "my_res.h"
+
+#include "my_cmd.h"
+
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../db/db_gen.h"
-#include "my_cmd.h"
-#include "my_res.h"
+
+#include <mysql/mysql.h>
 
 
 void my_res_free(db_res_t* res, struct my_res* payload)
@@ -41,7 +44,8 @@ void my_res_free(db_res_t* res, struct my_res* payload)
 	mcmd = DB_GET_PAYLOAD(res->cmd);
 
 	if (mcmd->st && mysql_stmt_free_result(mcmd->st)) {
-		ERR("Error while freeing MySQL result: %s\n", mysql_stmt_error(mcmd->st));
+		ERR("mysql: Error while freeing MySQL result: %d, %s\n", 
+			mysql_stmt_errno(mcmd->st), mysql_stmt_error(mcmd->st));
 	}
 
 	db_drv_free(&payload->gen);
@@ -60,7 +64,7 @@ int my_res(db_res_t* res)
 
 	mr = (struct my_res*)pkg_malloc(sizeof(struct my_res));
 	if (mr == NULL) {
-		ERR("No memory left\n");
+		ERR("mysql: No memory left\n");
 		return -1;
 	}
 	if (db_drv_init(&mr->gen, my_res_free) < 0) goto error;
