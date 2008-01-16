@@ -30,8 +30,8 @@
  * @{ 
  */
 
-#include <string.h>
 #include "db_gen.h"
+#include <string.h>
 
 int db_payload_idx = 0;
 

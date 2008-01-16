@@ -30,13 +30,16 @@
  * @{ 
  */
 
-#include <string.h>
-#include <stdlib.h>
+#include "db_drv.h"
+
+#include "db_gen.h"
+
 #include "../mem/mem.h"
 #include "../sr_module.h"
 #include "../ut.h"
-#include "db_gen.h"
-#include "db_drv.h"
+
+#include <string.h>
+#include <stdlib.h>
 
 
 int db_drv_init(db_drv_t* ptr, void* free_func)

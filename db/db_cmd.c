@@ -30,12 +30,14 @@
  * @{ 
  */
 
-#include <string.h>
-#include <stdarg.h>
+#include "db_cmd.h"
+
 #include "../dprint.h"
 #include "../mem/mem.h"
 #include "../ut.h"
-#include "db_cmd.h"
+
+#include <string.h>
+#include <stdarg.h>
 
 
 db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table, 

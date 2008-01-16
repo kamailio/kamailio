@@ -33,8 +33,9 @@
  * @{ 
  */
 
-#include "../str.h"
 #include "db_gen.h"
+#include "../str.h"
+
 
 #ifdef __cplusplus
 extern "C" {

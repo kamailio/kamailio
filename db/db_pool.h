@@ -33,10 +33,11 @@
  * @{ 
  */
 
-#include <sys/types.h>
 #include "db_drv.h"
-#include "../list.h"
 #include "db_uri.h"
+#include "../list.h"
+#include <sys/types.h>
+
 
 #ifdef __cplusplus
 extern "C" {

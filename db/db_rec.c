@@ -30,11 +30,14 @@
  * @{ 
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include "db_rec.h"
+
 #include "../dprint.h"
 #include "../mem/mem.h"
-#include "db_rec.h"
+
+#include <stdlib.h>
+#include <string.h>
+
 
 
 db_rec_t* db_rec(db_res_t* res, db_fld_t* fld)

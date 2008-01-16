@@ -30,10 +30,12 @@
  * @{ 
  */
 
-#include <string.h>
+#include "db_fld.h"
+
 #include "../mem/mem.h"
 #include "../dprint.h"
-#include "db_fld.h"
+
+#include <string.h>
 
 
 char* db_fld_str[] = {

@@ -33,11 +33,12 @@
  * @{ 
  */
 
-#include "../str.h"
-#include "../list.h"
 #include "db_drv.h"
 #include "db_gen.h"
 #include "db_con.h"
+
+#include "../str.h"
+#include "../list.h"
 
 #ifdef __cplusplus
 extern "C" {

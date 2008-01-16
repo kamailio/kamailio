@@ -30,10 +30,10 @@
  * @{ 
  */
 
-#include <string.h>
+#include "db_res.h"
 #include "../dprint.h"
 #include "../mem/mem.h"
-#include "db_res.h"
+#include <string.h>
 
 
 db_res_t* db_res(db_cmd_t* cmd)

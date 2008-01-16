@@ -35,14 +35,16 @@
  * @{
  */
 
+#include "db.h"
+
+#include "db_drv.h"
+
 #include "../dprint.h"
 #include "../sr_module.h"
 #include "../mem/mem.h"
 #include "../str.h"
 #include "../ut.h"
 #include "../list.h"
-#include "db_drv.h"
-#include "db.h"
 
 struct _db_root db_root = DBLIST_INITIALIZER(db_root);
 

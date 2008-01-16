@@ -30,11 +30,13 @@
  * @{ 
  */
 
-#include <string.h>
+#include "db_ctx.h"
+#include "db.h"
+
 #include "../dprint.h"
 #include "../mem/mem.h"
-#include "db.h"
-#include "db_ctx.h"
+
+#include <string.h>
 
 static struct db_ctx_data* db_ctx_data(str* module, db_drv_t* data)
 {

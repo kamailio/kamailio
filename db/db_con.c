@@ -30,11 +30,13 @@
  * @{ 
  */
 
-#include <string.h>
-#include <stdlib.h>
+#include "db_con.h"
+
 #include "../mem/mem.h"
 #include "../dprint.h"
-#include "db_con.h"
+
+#include <string.h>
+#include <stdlib.h>
 
 
 /*

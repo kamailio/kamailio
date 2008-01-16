@@ -30,10 +30,11 @@
  * @{ 
  */
 
+#include "db_pool.h"
+#include "../dprint.h"
 #include <unistd.h>
 #include <string.h>
-#include "../dprint.h"
-#include "db_pool.h"
+
 
 SLIST_HEAD(db_pool_head, db_pool_entry);
 

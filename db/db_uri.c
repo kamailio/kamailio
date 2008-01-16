@@ -30,11 +30,11 @@
  * @{ 
  */
 
-#include <string.h>
+#include "db_uri.h"
 #include "../dprint.h"
 #include "../mem/mem.h"
 #include "../ut.h"
-#include "db_uri.h"
+#include <string.h>
 
 
 /* compare s1 & s2  with a function f (which should return 0 if ==);
