@@ -75,13 +75,14 @@ dlg_t * build_dlg_t(struct dlg_cell * cell, int dir){
 	memset(td, 0, sizeof(dlg_t));
 
 	/*local sequence number*/
-	cseq = (dir == DLG_CALLER_LEG) ?	cell->cseq[DLG_CALLEE_LEG]:
+	cseq = (dir == DLG_CALLER_LEG) ?	cell->cseq[DLG_CALLER_LEG]:
 										cell->cseq[DLG_CALLEE_LEG];
 	if(str2int(&cseq, &loc_seq) != 0){
 		LM_ERR("invalid cseq\n");
 		goto error;
 	}
-	td->loc_seq.value = loc_seq+1;
+	/*we don not increase here the cseq as this will be done by TM*/
+	td->loc_seq.value = loc_seq;
 	td->loc_seq.is_set = 1;
 
 	/*route set*/
