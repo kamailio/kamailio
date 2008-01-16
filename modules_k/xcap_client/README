@@ -53,7 +53,8 @@ Chapter 1. User's Guide
    other modules. It fetches XCAP elements, either documents or
    part of them, by sending HTTP GET requests. It also offers
    support for conditional queries. It uses libcurl library as a
-   client-side HTTP transfer library.
+   client-side HTTP transfer library. It needs internet access to
+   download some namespace files.
 
    The module offers an xcap client interface with general
    functions that allow requesting for an specific element from an
