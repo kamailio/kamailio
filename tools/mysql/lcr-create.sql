@@ -25,3 +25,4 @@ CREATE TABLE lcr (
     KEY from_uri_idx (from_uri),
     KEY grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
+

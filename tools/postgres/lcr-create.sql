@@ -9,7 +9,7 @@ CREATE TABLE gw (
     transport SMALLINT,
     strip SMALLINT,
     tag VARCHAR(16) DEFAULT NULL,
-    flags INT NOT NULL DEFAULT 0,
+    flags INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT gw_gw_name_idx UNIQUE (gw_name)
 );
 
