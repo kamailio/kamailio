@@ -29,7 +29,7 @@ USERCOL=${USERCOL:-username}
 
 INSTALL_EXTRA_TABLES=${INSTALL_EXTRA_TABLES:-ask}
 INSTALL_PRESENCE_TABLES=${INSTALL_PRESENCE_TABLES:-ask}
-INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-ask}
+INSTALL_SERWEB_TABLES=${INSTALL_SERWEB_TABLES:-no}
 
 # Used by dbtext and db_berkeley to define tables to be created, used by
 # postgres to do the grants

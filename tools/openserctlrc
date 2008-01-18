@@ -1,13 +1,17 @@
 # $Id$
 #
-# openser control tool resource file
+# The OpenSER configuration file for the control tools.
 #
-# here you can set variables used in the openserctl and openserdbctl
+# Here you can set variables used in the openserctl and openserdbctl setup
+# scripts. Per default all variables here are commented out, the control tools
+# will use their internal default values.
 
 ## your SIP domain
 # SIP_DOMAIN=openser.org
 
 ## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT, by default none is loaded
+# If you want to setup a database with openserdbctl, you must at least specify
+# this parameter.
 # DBENGINE=MYSQL
 
 ## database host
@@ -69,13 +73,16 @@
 # for an answer, while yes/no allow for automated, unassisted installs.
 #
 
-# If to install tables for the modules in EXTRA_MODULES
+# If to install tables for the modules in the EXTRA_MODULES variable.
 # INSTALL_EXTRA_TABLES=ask
 
-# If to install presence related tables
+# If to install presence related tables.
 # INSTALL_PRESENCE_TABLES=ask
 
-# If to install SERWEB related tables
+# If to install SERWEB related tables.
+# When you don't know what purpose this tables have, don't change this.
+# If you choose to install this tables, you must also activate the HAS_SERWEB
+# variable, otherwise some setup script actions will not work.
 # INSTALL_SERWEB_TABLES=ask
 
 # Define what module tables should be installed.
