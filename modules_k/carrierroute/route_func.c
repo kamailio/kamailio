@@ -679,9 +679,14 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 			if ((prob = hash_func(msg, hash_source, route_tree->dice_max)) < 0) {
 				return -1;
 			}
-			/* This auto-magically takes the last rule if anything is broken.  */
+			/* This auto-magically takes the last rule if anything is broken.
+			 * Sometimes the hash result is zero. If the first rule is off
+			 * (has a probablility of zero) then it has also a dice_to of
+			 * zero and the message could not be routed at all if we use
+			 * '<' here. Thus the '<=' is necessary.
+			 */
 			for (rr = route_tree->rule_list;
-			        rr->next != NULL && rr->dice_to < prob;
+			        rr->next != NULL && rr->dice_to <= prob;
 		        rr = rr->next) {}
 			if (!rr->status) {
 				if (!rr->backup) {
