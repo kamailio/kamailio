@@ -43,8 +43,6 @@
 #include "pua_callback.h"
 #include "event_list.h"
 
-extern int default_expires;
-extern int min_expires;
 
 void print_subs(subs_info_t* subs)
 {

@@ -43,7 +43,6 @@
 #include "pua_callback.h"
 #include "event_list.h"
 
-extern struct tm_binds tmb;
 
 str* publ_build_hdr(int expires, pua_event_t* ev, str* content_type, str* etag,
 		str* extra_headers, int is_body)
