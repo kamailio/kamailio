@@ -785,8 +785,8 @@ getHeader(self, name)
     int namelen = strlen(name);
   INIT:
   PPCODE:
-	DBG("getHeader: searching '%s'\n", name);
-	
+	LM_DBG("searching '%s'\n", name);
+
 	if (!msg) {
 		LM_ERR("Invalid message reference\n");
 	} else {
@@ -1052,11 +1052,10 @@ rewrite_ruri(self, newruri)
 		RETVAL = -1;
 	} else {
 		if (getType(msg) != SIP_REQUEST) {
-			LM_ERR("rewrite_ruri: Not a Request. "
-				"RURI rewrite unavailable.\n");
+			LM_ERR("Not a Request. RURI rewrite unavailable.\n");
 			RETVAL = -1;
 		} else {
-			DBG("perl:rewrite_ruri: New R-URI is [%s]\n", newruri);
+			LM_DBG("New R-URI is [%s]\n", newruri);
 			RETVAL = rewrite_ruri(msg, newruri);
 		}
 	}
