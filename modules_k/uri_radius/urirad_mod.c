@@ -53,7 +53,8 @@ static int service_type = -1;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_does_uri_exist", radius_does_uri_exist, 0, 0, 0, REQUEST_ROUTE},
+	{"radius_does_uri_exist",   (cmd_function)radius_does_uri_exist,
+			0, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
