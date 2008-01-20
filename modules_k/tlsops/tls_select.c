@@ -421,7 +421,7 @@ int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
 	/* copy callback value as we modify it */
 	ind_local = param->pvn.u.isname.name.n;
 
-	DBG("DEBUG:tlsops:tlsops_comp: ind_local = %x", ind_local);
+	LM_DBG("ind_local = %x", ind_local);
 	if (ind_local & CERT_PEER) {
 		my = 0;
 		ind_local = ind_local ^ CERT_PEER;
@@ -480,7 +480,7 @@ int tlsops_comp(struct sip_msg *msg, pv_param_t *param,
 			case COMP_L:  elem = "LocalityName";            break;
 			default:      elem = "Unknown";                 break;
 			}
-			DBG("DEBUG:tlsops:tlsops_comp: element %s not found in "
+			LM_DBG("element %s not found in "
 				"certificate subject/issuer\n", elem);
 			goto err;
 		}

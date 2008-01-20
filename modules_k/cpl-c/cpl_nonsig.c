@@ -190,7 +190,7 @@ static inline void send_mail( struct cpl_cmd *cmd)
 		argv[4] = (char*)0;
 		/* just debug */
 		for(i=0;i<sizeof(argv)/sizeof(char*);i++)
-			DBG(" argv[%d] = %s\n",i,argv[i]);
+			LM_DBG("argv[%d] = %s\n",i,argv[i]);
 		/* once I copy localy all the data from shm mem -> free the shm */
 		shm_free( cmd->s1.s );
 

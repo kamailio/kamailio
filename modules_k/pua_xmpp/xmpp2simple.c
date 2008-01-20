@@ -280,7 +280,7 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 
 	if(show_cont)
 	{
-		DBG("PUA_XMPP: build_pidf: show_cont= %s\n", show_cont);		
+		LM_DBG("show_cont= %s\n", show_cont);
 		if(person_node== NULL)
 		{	
 			person_node= xmlNewChild(root_node, NULL, BAD_CAST "person",0 );

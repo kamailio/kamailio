@@ -91,8 +91,8 @@ int dispatch_actions(void)
    struct pollfd fds[1];
    struct timeval last,now;
 
-   /* now the process_no is set, I delete the pt (process_table) global var, because it confuses
-    * LOG() */
+   /* now the process_no is set, I delete the pt (process_table) global var,
+	* because it confuses LM_*() */
    pt=0;
    fd=my_as->u.as.action_fd;
    fds[0].fd=fd;
@@ -858,12 +858,12 @@ int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
 	do {
 		send_sock=get_send_socket(msg, to, proto);
 		if (send_sock==0){
-			LM_ERR( "ERROR:seas:forward_msg: cannot forward to af %d, "
+			LM_ERR( "cannot forward to af %d, "
 				"proto %d no corresponding listening socket\n",
 				to->s.sa_family, proto);
 			continue;
 		}
-		DBG("seas:sl_msg:Sending:\n%.*s.\n", (int)msg->len,msg->buf);
+		LM_DBG("Sending:\n%.*s.\n", (int)msg->len,msg->buf);
 		if (msg_send(send_sock, proto, to, 0, msg->buf,msg->len)<0){
 			LM_ERR("ERROR:seas:forward_msg: Error sending message !!\n");
 			continue;

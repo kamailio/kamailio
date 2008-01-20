@@ -145,8 +145,8 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
-	LOG(L_ERR, "%.*s", log_len, log_buf);
-	
+	LM_GEN1(L_ERR, "%.*s", log_len, log_buf);
+
 	return 1;
 }
 
@@ -165,7 +165,7 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
-	LOG((int)(long)lev, "%.*s", log_len, log_buf);
+	LM_GEN1((int)(long)lev, "%.*s", log_len, log_buf);
 
 	return 1;
 }
@@ -185,7 +185,7 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
-	DBG("%.*s", log_len, log_buf);
+	LM_GEN1(L_DBG, "%.*s", log_len, log_buf);
 
 	return 1;
 }
@@ -214,12 +214,12 @@ static int xlog_fixup(void** param, int param_no)
 		switch(((char*)(*param))[2])
 		{
 			case 'A': level = L_ALERT; break;
-	        case 'C': level = L_CRIT; break;
-    	    case 'E': level = L_ERR; break;
-        	case 'W': level = L_WARN; break;
-        	case 'N': level = L_NOTICE; break;
-        	case 'I': level = L_INFO; break;
-	        case 'D': level = L_DBG; break;
+			case 'C': level = L_CRIT; break;
+			case 'E': level = L_ERR; break;
+			case 'W': level = L_WARN; break;
+			case 'N': level = L_NOTICE; break;
+			case 'I': level = L_INFO; break;
+			case 'D': level = L_DBG; break;
 			default:
 				LM_ERR("unknown log level\n");
 				return E_UNSPEC;
@@ -231,8 +231,8 @@ static int xlog_fixup(void** param, int param_no)
 
 	if(param_no==2)
 		return xdbg_fixup(param, 1);
-	
-	return 0;			
+
+	return 0;
 }
 
 static int xdbg_fixup(void** param, int param_no)

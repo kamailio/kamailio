@@ -417,15 +417,15 @@ int restore_from( struct sip_msg *msg, int *is_from )
 	/* we should process only sequntial request, but since we are looking
 	 * for Route param, the test is not really required -bogdan */
 
-	DBG("DEBUG:uac:restore_from: getting '%.*s' Route param\n",
+	LM_DBG("getting '%.*s' Route param\n",
 		rr_param.len,rr_param.s);
 	/* is there something to restore ? */
 	if (uac_rrb.get_route_param( msg, &rr_param, &param_val)!=0) {
-		DBG("DEBUG:uac:restore_from: Route param '%.*s' not found\n",
+		LM_DBG("route param '%.*s' not found\n",
 			rr_param.len,rr_param.s);
 		goto failed;
 	}
-	DBG("DEBUG:uac:restore_from: Route param is '%.*s' (len=%d)\n",
+	LM_DBG("route param is '%.*s' (len=%d)\n",
 		param_val.len,param_val.s,param_val.len);
 
 	/* decode the parameter val to a URI */
@@ -475,7 +475,7 @@ int restore_from( struct sip_msg *msg, int *is_from )
 		}
 	}
 
-	DBG("DEBUG:uac:restore_from: decoded uris are: new=[%.*s] old=[%.*s]\n",
+	LM_DBG("decoded uris are: new=[%.*s] old=[%.*s]\n",
 		new_uri.len, new_uri.s, old_uri.len, old_uri.s);
 
 	/* duplicate the decoded value */
@@ -563,7 +563,7 @@ void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 	new_val.len = req->from->len;
 
 
-	DBG("DBG:uac::restore_from_reply: removing <%.*s>\n",
+	LM_DBG("removing <%.*s>\n",
 			rpl->from->len,rpl->from->name.s);
 	l = del_lump( rpl, rpl->from->name.s-rpl->buf, rpl->from->len, 0);
 	if (l==0) {
@@ -571,7 +571,7 @@ void restore_from_reply(struct cell* t, int type, struct tmcb_params *p)
 		return;
 	}
 
-	DBG("DBG:uac::restore_from_reply: inserting <%.*s>\n",
+	LM_DBG("inserting <%.*s>\n",
 			new_val.len,new_val.s);
 	if (insert_new_lump_after( l, new_val.s, new_val.len, 0)==0) {
 		LM_ERR("insert new lump failed\n");
@@ -610,7 +610,7 @@ void restore_to_reply(struct cell* t, int type, struct tmcb_params *p)
 	memcpy( new_val.s, req->to->name.s, req->to->len);
 	new_val.len = req->to->len;
 
-	DBG("DBG:uac::restore_to_reply: removing <%.*s>\n",
+	LM_DBG("removing <%.*s>\n",
 			rpl->to->len,rpl->to->name.s);
 	l = del_lump( rpl, rpl->to->name.s-rpl->buf, rpl->to->len, 0);
 	if (l==0) {
@@ -618,7 +618,7 @@ void restore_to_reply(struct cell* t, int type, struct tmcb_params *p)
 		return;
 	}
 
-	DBG("DBG:uac::restore_to_reply: inserting <%.*s>\n",
+	LM_DBG("inserting <%.*s>\n",
 		new_val.len, new_val.s);
 	if (insert_new_lump_after( l, new_val.s, new_val.len, 0)==0) {
 		LM_ERR("insert new lump failed\n");

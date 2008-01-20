@@ -324,7 +324,7 @@ int _bm_log_timer(unsigned int id)
 
 	if ((bm_mycfg->tindex[id]->calls % bm_mycfg->granularity) == 0)
 	{
-		LOG(bm_mycfg->loglevel, "benchmark (timer %s [%d]): %llu ["
+		LM_GEN1(bm_mycfg->loglevel, "benchmark (timer %s [%d]): %llu ["
 			" msgs/total/min/max/avg - LR:"
 			" %i/%lld/%lld/%lld/%f | GB: %lld/%lld/%lld/%lld/%f]\n",
 			bm_mycfg->tindex[id]->name,

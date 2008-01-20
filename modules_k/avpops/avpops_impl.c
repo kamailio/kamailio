@@ -804,7 +804,7 @@ int ops_delete_avp(struct sip_msg* msg, struct fis_param *ap)
 		}
 	}
 
-	DBG(" %d avps were removed\n",n);
+	LM_DBG("%d avps were removed\n",n);
 
 	return n?1:-1;
 }

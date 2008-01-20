@@ -790,7 +790,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 		goto error;
 	}
 	
-	DBG("PDT:pdt_mi_add: new prefix added %.*s-%.*s => %.*s\n",
+	LM_DBG("new prefix added %.*s-%.*s => %.*s\n",
 			sdomain.len, sdomain.s, sp.len, sp.s, sd.len, sd.s);
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 

@@ -60,7 +60,8 @@ int use_domain = 0;  /* By default we use domain */
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_is_user_in", radius_is_user_in, 2, hf_fixup, 0, REQUEST_ROUTE},
+	{"radius_is_user_in", (cmd_function)radius_is_user_in, 2, hf_fixup,
+			0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -96,7 +97,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	DBG("group_radius - initializing\n");
+	LM_DBG("group_radius - initializing\n");
 
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
