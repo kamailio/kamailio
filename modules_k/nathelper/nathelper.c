@@ -2850,6 +2850,10 @@ nh_timer(unsigned int ticks, void *timer_idx)
 	rval = ul.get_all_ucontacts(buf, cblen, (ping_nated_only?ul.nat_flag:0),
 		((unsigned int)(unsigned long)timer_idx)*natping_interval+iteration,
 		natping_processes*natping_interval);
+	if (rval<0) {
+		LM_ERR("failed to fetch contacts\n");
+		goto done;
+	}
 	if (rval > 0) {
 		if (buf != NULL)
 			pkg_free(buf);
