@@ -3,7 +3,7 @@
  *
  * Hash functions for cached domain table
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2008 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -53,6 +53,7 @@ int hash_table_install (struct domain_list **hash_table, char *domain)
 	np->domain.s = (char *) shm_malloc(np->domain.len);
 	if (np->domain.s == NULL) {
 		LM_ERR("Cannot allocate memory for domain string\n");
+	        shm_free(np);
 		return -1;
 	}
 	(void) strncpy(np->domain.s, domain, np->domain.len);
