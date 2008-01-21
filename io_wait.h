@@ -130,20 +130,33 @@ struct fd_map{
 
 /* handler structure */
 struct io_wait_handler{
+	enum poll_types poll_method;
+	int flags;
+	struct fd_map* fd_hash;
+	int fd_no; /*  current index used in fd_array and the passed size for 
+				   ep_array & kq_array*/
+	int max_fd_no; /* maximum fd no, is also the size of fd_array,
+						       fd_hash  and ep_array*/
+	/* common stuff for POLL, SIGIO_RT and SELECT
+	 * since poll support is always compiled => this will always be compiled */
+	struct pollfd* fd_array; /* used also by devpoll as devpoll array */
+	int crt_fd_array_idx; /*  crt idx for which handle_io is called
+							 (updated also by del -> internal optimization) */
+	/* end of common stuff */
 #ifdef HAVE_EPOLL
-	struct epoll_event* ep_array;
 	int epfd; /* epoll ctrl fd */
+	struct epoll_event* ep_array;
 #endif
 #ifdef HAVE_SIGIO_RT
 	sigset_t sset; /* signal mask for sigio & sigrtmin */
 	int signo;     /* real time signal used */
 #endif
 #ifdef HAVE_KQUEUE
+	int kq_fd;
 	struct kevent* kq_array;   /* used for the eventlist*/
 	struct kevent* kq_changes; /* used for the changelist */
 	size_t kq_nchanges;
 	size_t kq_changes_size; /* size of the changes array */
-	int kq_fd;
 #endif
 #ifdef HAVE_DEVPOLL
 	int dpoll_fd;
@@ -153,15 +166,6 @@ struct io_wait_handler{
 	fd_set master_wset; /* write set */
 	int max_fd_select; /* maximum select used fd */
 #endif
-	/* common stuff for POLL, SIGIO_RT and SELECT
-	 * since poll support is always compiled => this will always be compiled */
-	struct fd_map* fd_hash;
-	struct pollfd* fd_array;
-	int fd_no; /*  current index used in fd_array */
-	int max_fd_no; /* maximum fd no, is also the size of fd_array,
-						       fd_hash  and ep_array*/
-	enum poll_types poll_method;
-	int flags;
 };
 
 typedef struct io_wait_handler io_wait_h;
@@ -527,6 +531,8 @@ inline static int io_watch_del(io_wait_h* h, int fd, int idx, int flags)
 			if (likely(idx<h->fd_no)){ \
 				memmove(&h->fd_array[idx], &h->fd_array[idx+1], \
 					(h->fd_no-(idx+1))*sizeof(*(h->fd_array))); \
+				if ((idx<=h->crt_fd_array_idx) && (h->crt_fd_array_idx>=0)) \
+					h->crt_fd_array_idx--; \
 			} \
 	}while(0)
 	
@@ -858,6 +864,8 @@ error:
 #undef fix_fd_array
 }
 
+
+
 /* io_wait_loop_x style function 
  * wait for io using poll()
  * params: h      - io_wait handle
@@ -870,6 +878,7 @@ inline static int io_wait_loop_poll(io_wait_h* h, int t, int repeat)
 	int n, r;
 	int ret;
 	struct fd_map* fm;
+	
 again:
 		ret=n=poll(h->fd_array, h->fd_no, t*1000);
 		if (n==-1){
@@ -894,6 +903,7 @@ again:
 					h->fd_array[r].events=0; /* clear the events */
 					continue;
 				}
+				h->crt_fd_array_idx=r;
 				/* repeat handle_io if repeat, fd still watched (not deleted
 				 *  inside handle_io), handle_io returns that there's still
 				 *  IO and the fd is still watched for the triggering event */
@@ -901,6 +911,8 @@ again:
 						(handle_io(fm, h->fd_array[r].revents, r) > 0) &&
 						repeat && ((fm->events|POLLERR|POLLHUP) &
 													h->fd_array[r].revents));
+				r=h->crt_fd_array_idx; /* can change due to io_watch_del(fd) 
+										  array shifting */
 			}
 		}
 error:
@@ -935,16 +947,19 @@ again:
 			/* continue */
 		}
 		/* use poll fd array */
-		for(r=0; (r<h->max_fd_no) && n; r++){
+		for(r=0; (r<h->fd_no) && n; r++){
 			revents=0;
 			if (likely(FD_ISSET(h->fd_array[r].fd, &sel_rset)))
 				revents|=POLLIN;
 			if (unlikely(FD_ISSET(h->fd_array[r].fd, &sel_wset)))
 				revents|=POLLOUT;
-			if (likely(revents)){
+			if (unlikely(revents)){
+				h->crt_fd_array_idx=r;
 				fm=get_fd_map(h, h->fd_array[r].fd);
 				while(fm->type && (fm->events & revents) && 
 						(handle_io(fm, revents, r)>0) && repeat);
+				r=h->crt_fd_array_idx; /* can change due to io_watch_del(fd) 
+										  array shifting */
 				n--;
 			}
 		};
@@ -1056,7 +1071,7 @@ again:
 					while(fm->type && (fm->events & revents) && 
 							(handle_io(fm, revents, -1)>0) && repeat);
 				}
-			//}
+			/*} */
 		}
 error:
 	return n;
@@ -1088,7 +1103,6 @@ inline static int io_wait_loop_sigio_rt(io_wait_h* h, int t)
 				" is not properly set!\n");
 		goto error;
 	}
-
 again:
 	n=sigtimedwait(&h->sset, &siginfo, &ts);
 	if (unlikely(n==-1)){
