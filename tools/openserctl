@@ -1495,6 +1495,155 @@ cr() {
 
 #
 ##### ------------------------------------------------ #####
+### TRUSTED management
+#
+trusted() {
+	require_dbengine
+	require_ctlengine
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+		case $1 in
+			show)
+				lines=`wc -l $TRUSTED_FILE | cut -d " " -f 1`
+				let "lines=$lines-1"
+				tail -n $lines $TRUSTED_FILE
+				;;
+
+			dump)
+				$CTLCMD trusted_dump
+				;;
+
+			reload)
+                               $CTLCMD trusted_reload
+                               ;;
+
+			add)
+				shift
+				if [ $# -lt 2 ] ; then
+					merr "trusted - too few parameters"
+					exit 1
+				fi
+				SRC_IP=$1
+				PROTO=$2
+				case $PROTO in
+					any|udp|tcp|tls|sctp|none)
+						;;
+					*)
+						merr "unknown protocol"
+						exit 1
+				esac
+				if [ $# -gt 2 ] ; then
+					FROM_PATTERN=$3
+					if [ $# -gt 3 ] ; then
+						TAG=$4
+					else
+						TAG=
+					fi
+				else
+					FROM_PATTERN=
+					TAG=
+				fi
+				get_next_id $TRUSTED_FILE
+				echo $get_next_id_next_id:$SRC_IP:$PROTO:$FROM_PATTERN:$TAG >> $TRUSTED_FILE
+				chown_openser $GW_FILE
+				minfo "execute '$0 trusted reload' to synchronize cache and database"
+				;;
+
+			rm)
+				shift
+				if [ $# -lt 1 ] ; then
+					merr "trusted - missing IP to be removed"
+					exit 1
+				fi
+				SRC_IP=$1
+				cat $TRUSTED_FILE | $EGREP -v "^[0-9]+:$SRC_IP:" > $TRUSTED_FILE.tmp
+				mv -f $TRUSTED_FILE.tmp $TRUSTED_FILE
+				chown_openser $TRUSTED_FILE
+				minfo "execute '$0 trusted reload' to synchronize cache and database"
+				;;
+
+			*)
+				usage_trusted
+				exit 1
+		esac
+	else
+		case $1 in
+			show)
+				QUERY="select * FROM $TRUSTED_TABLE ; "
+				$DBROCMD "$QUERY"
+				;;
+
+			dump)
+				$CTLCMD trusted_dump
+				;;
+
+			reload)
+				$CTLCMD trusted_reload
+				;;
+
+			add)
+				shift
+				if [ $# -lt 2 ] ; then
+					merr "trusted - too few parameters"
+					exit 1
+				fi
+				SRC_IP=$1
+				PROTO=$2
+				case $PROTO in
+					any|udp|tcp|tls|sctp|none)
+						;;
+					*)
+						merr "unknown protocol"
+						exit 1
+				esac
+				if [ $# -gt 2 ] ; then
+					FROM_PATTERN=$3
+					if [ $# -gt 3 ] ; then
+						TAG=$4
+					else
+						TAG=
+					fi
+				else
+					FROM_PATTERN=
+					TAG=
+				fi
+				QUERY="insert into $TRUSTED_TABLE \
+					( $TRUSTED_SRC_IP_COLUMN, $TRUSTED_PROTO_COLUMN, \
+						$TRUSTED_FROM_PATTERN_COLUMN, $TRUSTED_TAG_COLUMN) \
+					VALUES ('$SRC_IP', '$PROTO', '$FROM_PATTERN', '$TAG');"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "trusted - SQL Error"
+					exit 1
+				fi
+				minfo "execute '$0 trusted reload' to synchronize cache and database"
+				;;
+
+			rm)
+				shift
+				if [ $# -lt 1 ] ; then
+					merr "trusted - missing IP to be removed"
+					exit 1
+				fi
+				SRC_IP=$1
+				QUERY="delete from $TRUSTED_TABLE where $TRUSTED_SRC_IP_COLUMN='$SRC_IP';"
+				$DBCMD "$QUERY"
+				if [ $? -ne 0 ] ; then
+					merr "trusted - SQL Error"
+					exit 1
+				fi
+				minfo "execute '$0 trusted reload' to synchronize cache and database"
+				;;
+
+			*)
+				usage_trusted
+				exit 1
+		esac
+	fi
+
+}
+
+#
+##### ------------------------------------------------ #####
 ### openser_start
 #
 openser_start() {
@@ -2633,6 +2782,11 @@ case $1 in
 	cr)
 		shift
 		cr "$@"
+		;;
+
+	trusted)
+		shift
+		trusted "$@"
 		;;
 
 	mail|email)

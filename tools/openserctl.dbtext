@@ -44,6 +44,10 @@ if [ -z "$GW_FILE" ] ; then
         GW_FILE=$DB_PATH/$GW_TABLE
 fi
 
+if [ -z "$TRUSTED_FILE" ] ; then
+	TRUSTED_FILE=$DB_PATH/$TRUSTED_TABLE
+fi
+
 #===================================================================
 
 get_next_id() {
