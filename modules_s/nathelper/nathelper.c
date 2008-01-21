@@ -714,16 +714,16 @@ get_contact_uri(struct sip_msg* _m, struct sip_uri *uri, contact_t** _c)
 	if ((parse_headers(_m, HDR_CONTACT_F, 0) == -1) || !_m->contact)
 		return -1;
 	if (!_m->contact->parsed && parse_contact(_m->contact) < 0) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		DBG("nathelper: Error while parsing Contact body\n");
 		return -1;
 	}
 	*_c = ((contact_body_t*)_m->contact->parsed)->contacts;
 	if (*_c == NULL) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact body\n");
+		DBG("nathelper: Error while parsing Contact body\n");
 		return -1;
 	}
 	if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-		LOG(L_ERR, "get_contact_uri: Error while parsing Contact URI\n");
+		DBG("nathelper: Error while parsing Contact URI\n");
 		return -1;
 	}
 	return 0;
