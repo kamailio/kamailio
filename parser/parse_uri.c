@@ -1180,38 +1180,38 @@ int parse_uri(char* buf, int len, struct sip_uri* uri)
 	return 0;
 	
 error_too_short:
-	LOG(L_ERR, "ERROR: parse_uri: uri too short: <%.*s> (%d)\n",
-			len, ZSW(buf), len);
+	DBG("parse_uri: uri too short: <%.*s> (%d)\n",
+		len, ZSW(buf), len);
 	goto error_exit;
 error_bad_char:
-	LOG(L_ERR, "ERROR: parse_uri: bad char '%c' in state %d"
-			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
-			len, ZSW(buf), len);
+	DBG("parse_uri: bad char '%c' in state %d"
+		" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
+		*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
+		len, ZSW(buf), len);
 	goto error_exit;
 error_bad_host:
-	LOG(L_ERR, "ERROR: parse_uri: bad host in uri (error at char %c in"
-			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
-			*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
-			len, ZSW(buf), len);
+	DBG("parse_uri: bad host in uri (error at char %c in"
+		" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
+		*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
+		len, ZSW(buf), len);
 	goto error_exit;
 error_bad_port:
-	LOG(L_ERR, "ERROR: parse_uri: bad port in uri (error at char %c in"
-			" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
-			*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
-			len, ZSW(buf), len);
+	DBG("parse_uri: bad port in uri (error at char %c in"
+		" state %d) parsed: <%.*s>(%d) /<%.*s> (%d)\n",
+		*p, state, (int)(p-buf), ZSW(buf), (int)(p-buf),
+		len, ZSW(buf), len);
 	goto error_exit;
 error_bad_uri:
-	LOG(L_ERR, "ERROR: parse_uri: bad uri,  state %d"
-			" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
-			 state, (int)(p-buf), ZSW(buf), (int)(p-buf), len,
-			 ZSW(buf), len);
+	DBG("parse_uri: bad uri,  state %d"
+		" parsed: <%.*s> (%d) / <%.*s> (%d)\n",
+		state, (int)(p-buf), ZSW(buf), (int)(p-buf), len,
+		ZSW(buf), len);
 	goto error_exit;
 error_headers:
-	LOG(L_ERR, "ERROR: parse_uri: bad uri headers: <%.*s>(%d)"
-			" / <%.*s>(%d)\n",
-			uri->headers.len, ZSW(uri->headers.s), uri->headers.len,
-			len, ZSW(buf), len);
+	DBG("parse_uri: bad uri headers: <%.*s>(%d)"
+		" / <%.*s>(%d)\n",
+		uri->headers.len, ZSW(uri->headers.s), uri->headers.len,
+		len, ZSW(buf), len);
 	goto error_exit;
 error_bug:
 	LOG(L_CRIT, "BUG: parse_uri: bad  state %d"
