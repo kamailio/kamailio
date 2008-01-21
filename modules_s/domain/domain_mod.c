@@ -526,7 +526,7 @@ static int lookup_domain(struct sip_msg* msg, char* flags, char* fp)
     track = 0;
     
     if (get_str_fparam(&domain, msg, (fparam_t*)fp) != 0) {
-		ERR("Cannot get domain name to lookup\n");
+		DBG("Cannot get domain name to lookup\n");
 		return -1;
     }
     
