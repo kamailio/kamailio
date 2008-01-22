@@ -46,13 +46,13 @@
  * API.
  */
 typedef enum {
-	DB_INT,        /**< represents an 32 bit integer number */
-	DB_DOUBLE,     /**< represents a floating point number  */
-	DB_STRING,     /**< represents a zero terminated string */
-	DB_STR,        /**< represents a string of 'str' type   */
-	DB_DATETIME,   /**< represents date and time            */
-	DB_BLOB,       /**< represents a large binary object    */
-	DB_BITMAP      /**< an one-dimensional array of flags   */
+	DB_INT,        /**< represents an 32 bit integer number      */
+	DB_DOUBLE,     /**< represents a floating point number       */
+	DB_STRING,     /**< represents a zero terminated const char* */
+	DB_STR,        /**< represents a string of 'str' type        */
+	DB_DATETIME,   /**< represents date and time                 */
+	DB_BLOB,       /**< represents a large binary object         */
+	DB_BITMAP      /**< an one-dimensional array of 32 flags     */
 } db_type_t;
 
 
@@ -71,9 +71,9 @@ typedef struct {
 		double        double_val; /**< double value               */
 		time_t        time_val;   /**< unix time_t value          */
 		const char*   string_val; /**< zero terminated string     */
-		str           str_val;    /**< str string value           */
+		str           str_val;    /**< str type string value      */
 		str           blob_val;   /**< binary object data         */
-		unsigned int  bitmap_val; /**< Bitmap data type, 32 flags */
+		unsigned int  bitmap_val; /**< Bitmap data type           */
 	} val;
 } db_val_t;
 

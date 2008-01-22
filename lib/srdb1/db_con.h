@@ -29,13 +29,15 @@
 #ifndef DB_CON_H
 #define DB_CON_H
 
+#include "../str.h"
+
 
 /**
  * This structure represents a database connection, pointer to this structure
  * are used as a connection handle from modules uses the db API.
  */
 typedef struct {
-	const char* table;     /**< Default table that should be used              */
+	const str* table;      /**< Default table that should be used              */
 	unsigned long tail;    /**< Variable length tail, database module specific */
 } db_con_t;
 

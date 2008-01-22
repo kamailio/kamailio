@@ -36,13 +36,14 @@
 #include "db_ut.h"
 #include "db_query.h"
 
+static str  sql_str;
 static char sql_buf[SQL_BUF_LEN];
 
-int db_do_query( const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+int db_do_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 	const db_key_t _o, db_res_t** _r, int (*val2str) (const db_con_t*,
 	const db_val_t*, char*, int* _len), int (*submit_query)(const db_con_t*,
-	const char*), int (*store_result)(const db_con_t*, db_res_t**))
+	const str*), int (*store_result)(const db_con_t* _h, db_res_t** _r))
 {
 	int off, ret;
 
@@ -52,7 +53,7 @@ int db_do_query( const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	}
 
 	if (!_c) {
-		ret = snprintf(sql_buf, SQL_BUF_LEN, "select * from %s ", CON_TABLE(_h));
+		ret = snprintf(sql_buf, SQL_BUF_LEN, "select * from %.*s ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 		off = ret;
 	} else {
@@ -64,7 +65,7 @@ int db_do_query( const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		if (ret < 0) return -1;
 		off += ret;
 
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %s ", CON_TABLE(_h));
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, "from %.*s ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 	}
@@ -79,13 +80,20 @@ int db_do_query( const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		off += ret;
 	}
 	if (_o) {
-		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %s", _o);
+		ret = snprintf(sql_buf + off, SQL_BUF_LEN - off, " order by %.*s", _o->len, _o->s);
 		if (ret < 0 || ret >= (SQL_BUF_LEN - off)) goto error;
 		off += ret;
 	}
-	
-	*(sql_buf + off) = '\0';
-	if (submit_query(_h, sql_buf) < 0) {
+	/*
+	 * Null-terminate the string for the postgres driver. Its query function
+	 * don't support a length parameter, so they need this for the correct
+	 * function of strlen. This zero is not included in the 'str' length.
+	 */
+	sql_buf[off + 1] = '\0';
+	sql_str.s = sql_buf;
+	sql_str.len = off;
+
+	if (submit_query(_h, &sql_str) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -97,7 +105,6 @@ int db_do_query( const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 			return tmp;
 		}
 	}
-
 	return 0;
 
 error:
@@ -106,8 +113,8 @@ error:
 }
 
 
-int db_do_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r, 
-	int (*submit_query)(const db_con_t* _h, const char* _c),
+int db_do_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r,
+	int (*submit_query)(const db_con_t* _h, const str* _c),
 	int (*store_result)(const db_con_t* _h, db_res_t** _r))
 {
 	if (!_h || !_s || !submit_query || !store_result) {
@@ -132,8 +139,8 @@ int db_do_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r,
 
 
 int db_do_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
-	const int _n, int (*val2str) (const db_con_t*, const db_val_t*, char*, int*), 
-	int (*submit_query)(const db_con_t* _h, const char* _c))
+	const int _n, int (*val2str) (const db_con_t*, const db_val_t*, char*, int*),
+	int (*submit_query)(const db_con_t* _h, const str* _c))
 {
 	int off, ret;
 
@@ -142,7 +149,7 @@ int db_do_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
@@ -158,10 +165,12 @@ int db_do_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	if (ret < 0) return -1;
 	off += ret;
 
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
+	sql_buf[off++] = ')';
+	sql_buf[off + 1] = '\0';
+	sql_str.s = sql_buf;
+	sql_str.len = off;
 
-	if (submit_query(_h, sql_buf) < 0) {
+	if (submit_query(_h, &sql_str) < 0) {
 	        LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -176,7 +185,7 @@ error:
 int db_do_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const int _n, int (*val2str) (const db_con_t*,
 	const db_val_t*, char*, int*), int (*submit_query)(const db_con_t* _h,
-	const char* _c))
+	const str* _c))
 {
 	int off, ret;
 
@@ -185,7 +194,7 @@ int db_do_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "delete from %s", CON_TABLE(_h));
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "delete from %.*s", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
@@ -199,9 +208,11 @@ int db_do_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		if (ret < 0) return -1;
 		off += ret;
 	}
+	sql_buf[off + 1] = '\0';
+	sql_str.s = sql_buf;
+	sql_str.len = off;
 
-	*(sql_buf + off) = '\0';
-	if (submit_query(_h, sql_buf) < 0) {
+	if (submit_query(_h, &sql_str) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -216,7 +227,7 @@ error:
 int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
 	const int _un, int (*val2str) (const db_con_t*, const db_val_t*, char*, int*),
-	int (*submit_query)(const db_con_t* _h, const char* _c))
+	int (*submit_query)(const db_con_t* _h, const str* _c))
 {
 	int off, ret;
 
@@ -225,7 +236,7 @@ int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "update %s set ", CON_TABLE(_h));
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "update %.*s set ", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
@@ -241,11 +252,12 @@ int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		ret = db_print_where(_h, sql_buf + off, SQL_BUF_LEN - off, _k, _o, _v, _n, val2str);
 		if (ret < 0) return -1;
 		off += ret;
-
-		*(sql_buf + off) = '\0';
 	}
+	sql_buf[off + 1] = '\0';
+	sql_str.s = sql_buf;
+	sql_str.len = off;
 
-	if (submit_query(_h, sql_buf) < 0) {
+	if (submit_query(_h, &sql_str) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -259,7 +271,7 @@ error:
 
 int db_do_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n, int (*val2str) (const db_con_t*, const db_val_t*, char*,
-	int*), int (*submit_query)(const db_con_t* _h, const char* _c))
+	int*), int (*submit_query)(const db_con_t* _h, const str* _c))
 {
 	int off, ret;
 
@@ -268,7 +280,7 @@ int db_do_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		return -1;
 	}
 
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "replace %s (", CON_TABLE(_h));
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "replace %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
@@ -285,10 +297,12 @@ int db_do_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	if (ret < 0) return -1;
 	off += ret;
 
-	*(sql_buf + off++) = ')';
-	*(sql_buf + off) = '\0';
+	sql_buf[off++] = ')';
+	sql_buf[off + 1] = '\0';
+	sql_str.s = sql_buf;
+	sql_str.len = off;
 
-	if (submit_query(_h, sql_buf) < 0) {
+	if (submit_query(_h, &sql_str) < 0) {
 	        LM_ERR("error while submitting query\n");
 		return -2;
 	}

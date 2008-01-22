@@ -200,11 +200,11 @@ inline int db_print_columns(char* _b, const int _l, const db_key_t* _c, const in
 
 	for(i = 0; i < _n; i++)	{
 		if (i == (_n - 1)) {
-			ret = snprintf(_b + len, _l - len, "%s ", _c[i]);
+			ret = snprintf(_b + len, _l - len, "%.*s ", _c[i]->len, _c[i]->s);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
 		} else {
-			ret = snprintf(_b + len, _l - len, "%s,", _c[i]);
+			ret = snprintf(_b + len, _l - len, "%.*s,", _c[i]->len, _c[i]->s);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
 		}
@@ -262,11 +262,11 @@ int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _
 
 	for(i = 0; i < _n; i++) {
 		if (_o) {
-			ret = snprintf(_b + len, _l - len, "%s%s", _k[i], _o[i]);
+			ret = snprintf(_b + len, _l - len, "%.*s%s", _k[i]->len, _k[i]->s, _o[i]);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
 		} else {
-			ret = snprintf(_b + len, _l - len, "%s=", _k[i]);
+			ret = snprintf(_b + len, _l - len, "%.*s=", _k[i]->len, _k[i]->s);
 			if (ret < 0 || ret >= (_l - len)) goto error;
 			len += ret;
 		}
@@ -302,7 +302,7 @@ int db_print_set(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
 	}
 
 	for(i = 0; i < _n; i++) {
-		ret = snprintf(_b + len, _l - len, "%s=", _k[i]);
+		ret = snprintf(_b + len, _l - len, "%.*s=", _k[i]->len, _k[i]->s);
 		if (ret < 0 || ret >= (_l - len)) goto error;
 		len += ret;
 

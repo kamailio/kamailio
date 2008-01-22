@@ -4,19 +4,14 @@
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
- * This file is part of ser, a free SIP server.
+ * This file is part of openser, a free SIP server.
  *
- * ser is free software; you can redistribute it and/or modify
+ * openser is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version
  *
- * For a license to use the ser software under conditions
- * other than those described here, or to purchase support for this
- * software, please contact iptel.org by e-mail at the following addresses:
- *    info@iptel.org
- *
- * ser is distributed in the hope that it will be useful,
+ * openser is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -24,12 +19,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-/*
- * History:
- * --------
- *  2004-06-06  removed db_* macros and global dbf (andrei)
- *  2006-10-10  Added support for retrieving the last inserted ID (Carsten Bock, BASIS AudioNet GmbH)
  */
 
 /**
@@ -71,8 +60,7 @@
  * \param _t table name
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_use_table_f)(db_con_t* _h, const char* _t);
-
+typedef int (*db_use_table_f)(db_con_t* _h, const str * _t);
 
 /**
  * \brief Initialize database connection and obtain the connection handle.
@@ -96,8 +84,7 @@ typedef int (*db_use_table_f)(db_con_t* _h, const char* _t);
  * \return returns a pointer to the db_con_t representing the connection if it was
  * successful, otherwise 0 is returned
  */
-typedef db_con_t* (*db_init_f) (const char* _sqlurl);
-
+typedef db_con_t* (*db_init_f) (const str* _sqlurl);
 
 /**
  * \brief Close a database connection and free all memory used.
@@ -138,10 +125,9 @@ typedef void (*db_close_f) (db_con_t* _h);
  * \param _r address of variable where pointer to the result will be stored
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
-			   db_op_t* _op, db_val_t* _v, db_key_t* _c,
-			   int _n, int _nc, db_key_t _o, db_res_t** _r);
-
+typedef int (*db_query_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
+				const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+				const db_key_t _o, db_res_t** _r);
 
 /**
  * \brief Fetch a number of rows from a result.
@@ -153,7 +139,7 @@ typedef int (*db_query_f) (db_con_t* _h, db_key_t* _k,
  * \param _n the number of rows that should be fetched
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
+typedef int (*db_fetch_result_f) (const db_con_t* _h, db_res_t** _r, const int _n);
 
 
 /**
@@ -171,7 +157,7 @@ typedef int (*db_fetch_result_f) (db_con_t* _h, db_res_t** _r, int _n);
  * \param _r structure for the result
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_raw_query_f) (db_con_t* _h, char* _s, db_res_t** _r);
+typedef int (*db_raw_query_f) (const db_con_t* _h, const str* _s, db_res_t** _r);
 
 
 /**
@@ -198,7 +184,8 @@ typedef int (*db_free_result_f) (db_con_t* _h, db_res_t* _r);
  * \param _n number of keys-value pairs int _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+typedef int (*db_insert_f) (const db_con_t* _h, const db_key_t* _k,
+				const db_val_t* _v, const int _n);
 
 
 /**
@@ -217,7 +204,8 @@ typedef int (*db_insert_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
  * \param _n number of keys-value parameters in _k and _v parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n);
+typedef int (*db_delete_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+				const db_val_t* _v, const int _n);
 
 
 /**
@@ -235,8 +223,9 @@ typedef int (*db_delete_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
  * \param _un number of key-value pairs in _uk and _uv parameters
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
-			    db_key_t* _uk, db_val_t* _uv, int _n, int _un);
+typedef int (*db_update_f) (const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+				const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv,
+				const int _n, const int _un);
 
 
 /**
@@ -251,7 +240,8 @@ typedef int (*db_update_f) (db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _
  * \param _n number of key=value pairs
  * \return returns 0 if everything is OK, otherwise returns value < 0
 */
-typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, int n);
+typedef int (*db_replace_f) (const db_con_t* handle, const db_key_t* keys,
+				const db_val_t* vals, const int n);
 
 
 /**
@@ -265,7 +255,7 @@ typedef int (*db_replace_f) (db_con_t* handle, db_key_t* keys, db_val_t* vals, i
  * \return returns the ID as integer or returns 0 if the previous statement
    does not use an AUTO_INCREMENT value.
  */
-typedef int (*db_last_inserted_id_f) (db_con_t* _h);
+typedef int (*db_last_inserted_id_f) (const db_con_t* _h);
 
 
 /**
@@ -280,7 +270,8 @@ typedef int (*db_last_inserted_id_f) (db_con_t* _h);
  * \param _n number of key=value pairs
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-typedef int (*db_insert_update_f) (db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n);
+typedef int (*db_insert_update_f) (const db_con_t* _h, const db_key_t* _k,
+				const db_val_t* _v, const int _n);
 
 
 /**
@@ -317,7 +308,7 @@ typedef struct db_func {
  * db_func_t callback given as parameter is updated with the found addresses.
  *
  * This function must be called before any other database API call!
- * 
+ *
  * The database URL is of the form "mysql://username:password@host:port/database" or
  * "mysql" (database module name).
  * In the case of a database connection URL, this function looks only at the first
@@ -327,7 +318,7 @@ typedef struct db_func {
  * \param dbf database module callbacks
  * \return returns 0 if everything is OK, otherwise returns value < 0
  */
-int bind_dbmod(char* mod, db_func_t* dbf);
+int db_bind_mod(const str* mod, db_func_t* dbf);
 
 
 /**
@@ -340,7 +331,8 @@ int bind_dbmod(char* mod, db_func_t* dbf);
  * \return returns a pointer to the db_con_t representing the connection if it was
    successful, otherwise 0 is returned.
  */
-db_con_t* db_do_init(const char* url, void* (*new_connection)());
+db_con_t* db_do_init(const str* url, void* (*new_connection)());
+
 
 /**
  * \brief Helper for db_close function.
@@ -352,6 +344,7 @@ db_con_t* db_do_init(const char* url, void* (*new_connection)());
  */
 void db_do_close(db_con_t* _h, void (*free_connection)());
 
+
 /**
  * \brief Get the version of a table.
  *
@@ -361,11 +354,11 @@ void db_do_close(db_con_t* _h, void (*free_connection)());
  * \param table checked table
  * \return the version number if present, 0 if no version data available, < 0 on error
  */
-int table_version(db_func_t* dbf, db_con_t* con, const str* table);
+int db_table_version(const db_func_t* dbf, db_con_t* con, const str* table);
 
 
 /**
- * \brief Stores the name of table
+ * \brief Stores the name of a table.
  *
  * Stores the name of the table that will be used by subsequent database
  * functions calls in a db_con_t structure.
@@ -373,7 +366,7 @@ int table_version(db_func_t* dbf, db_con_t* con, const str* table);
  * \param _t stored name
  * \return 0 if everything is ok, otherwise returns value < 0
  */
-int db_use_table(db_con_t* _h, const char* _t);
+int db_use_table(db_con_t* _h, const str* _t);
 
 
 #endif /* DB_H */

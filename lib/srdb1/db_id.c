@@ -34,7 +34,7 @@
 #include <string.h>
 
 
-/*
+/**
  * Duplicate a string
  */
 static int dupl_string(char** dst, const char* begin, const char* end)
@@ -52,13 +52,15 @@ static int dupl_string(char** dst, const char* begin, const char* end)
 }
 
 
-/*
+/**
  * Parse a database URL of form 
  * scheme://[username[:password]@]hostname[:port]/database
  *
- * Returns 0 if parsing was successful and -1 otherwise
+ * \param id that should be filled
+ * \param parsed url
+ * \return 0 if parsing was successful and -1 otherwise
  */
-static int parse_db_url(struct db_id* id, const char* url)
+static int parse_db_url(struct db_id* id, const str* url)
 {
 #define SHORTEST_DB_URL "s://a/b"
 #define SHORTEST_DB_URL_LEN (sizeof(SHORTEST_DB_URL) - 1)
@@ -81,33 +83,33 @@ static int parse_db_url(struct db_id* id, const char* url)
 
 	prev_token = 0;
 
-	if (!id || !url) {
+	if (!id || !url || !url->s) {
 		goto err;
 	}
 	
-	len = strlen(url);
+	len = url->len;
 	if (len < SHORTEST_DB_URL_LEN) {
 		goto err;
 	}
 	
-	     /* Initialize all attributes to 0 */
+	/* Initialize all attributes to 0 */
 	memset(id, 0, sizeof(struct db_id));
 	st = ST_SCHEME;
-	begin = url;
+	begin = url->s;
 
 	for(i = 0; i < len; i++) {
 		switch(st) {
 		case ST_SCHEME:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case ':':
 				st = ST_SLASH1;
-				if (dupl_string(&id->scheme, begin, url + i) < 0) goto err;
+				if (dupl_string(&id->scheme, begin, url->s + i) < 0) goto err;
 				break;
 			}
 			break;
 
 		case ST_SLASH1:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case '/':
 				st = ST_SLASH2;
 				break;
@@ -118,10 +120,10 @@ static int parse_db_url(struct db_id* id, const char* url)
 			break;
 
 		case ST_SLASH2:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case '/':
 				st = ST_USER_HOST;
-				begin = url + i + 1;
+				begin = url->s + i + 1;
 				break;
 				
 			default:
@@ -130,63 +132,63 @@ static int parse_db_url(struct db_id* id, const char* url)
 			break;
 
 		case ST_USER_HOST:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case '@':
 				st = ST_HOST;
-				if (dupl_string(&id->username, begin, url + i) < 0) goto err;
-				begin = url + i + 1;
+				if (dupl_string(&id->username, begin, url->s + i) < 0) goto err;
+				begin = url->s + i + 1;
 				break;
 
 			case ':':
 				st = ST_PASS_PORT;
-				if (dupl_string(&prev_token, begin, url + i) < 0) goto err;
-				begin = url + i + 1;
+				if (dupl_string(&prev_token, begin, url->s + i) < 0) goto err;
+				begin = url->s + i + 1;
 				break;
 
 			case '/':
-				if (dupl_string(&id->host, begin, url + i) < 0) goto err;
-				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
+				if (dupl_string(&id->host, begin, url->s + i) < 0) goto err;
+				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
 
 		case ST_PASS_PORT:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case '@':
 				st = ST_HOST;
 				id->username = prev_token;
-				if (dupl_string(&id->password, begin, url + i) < 0) goto err;
-				begin = url + i + 1;
+				if (dupl_string(&id->password, begin, url->s + i) < 0) goto err;
+				begin = url->s + i + 1;
 				break;
 
 			case '/':
 				id->host = prev_token;
-				id->port = str2s(begin, url + i - begin, 0);
-				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
+				id->port = str2s(begin, url->s + i - begin, 0);
+				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
 
 		case ST_HOST:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case ':':
 				st = ST_PORT;
-				if (dupl_string(&id->host, begin, url + i) < 0) goto err;
-				begin = url + i + 1;
+				if (dupl_string(&id->host, begin, url->s + i) < 0) goto err;
+				begin = url->s + i + 1;
 				break;
 
 			case '/':
-				if (dupl_string(&id->host, begin, url + i) < 0) goto err;
-				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
+				if (dupl_string(&id->host, begin, url->s + i) < 0) goto err;
+				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
 
 		case ST_PORT:
-			switch(url[i]) {
+			switch(url->s[i]) {
 			case '/':
-				id->port = str2s(begin, url + i - begin, 0);
-				if (dupl_string(&id->database, url + i + 1, url + len) < 0) goto err;
+				id->port = str2s(begin, url->s + i - begin, 0);
+				if (dupl_string(&id->database, url->s + i + 1, url->s + len) < 0) goto err;
 				return 0;
 			}
 			break;
@@ -213,11 +215,11 @@ static int parse_db_url(struct db_id* id, const char* url)
 /*
  * Create a new connection identifier
  */
-struct db_id* new_db_id(const char* url)
+struct db_id* new_db_id(const str* url)
 {
 	struct db_id* ptr;
 
-	if (!url) {
+	if (!url || !url->s) {
 		LM_ERR("invalid parameter\n");
 		return 0;
 	}
@@ -230,7 +232,7 @@ struct db_id* new_db_id(const char* url)
 	memset(ptr, 0, sizeof(struct db_id));
 
 	if (parse_db_url(ptr, url) < 0) {
-		LM_ERR("error while parsing database URL: %s\n", url);
+		LM_ERR("error while parsing database URL: '%.*s' \n", url->len, url->s);
 		goto err;
 	}
 
