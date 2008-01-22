@@ -34,9 +34,6 @@
 #include "bdb_res.h"
 
 
-/**
-* 
-*/
 int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 {
 	int col, len;
@@ -105,24 +102,40 @@ int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 		column_p cp = NULL;
 		cp = (_lres) ? _tp->colp[_lres[col]] : _tp->colp[col];
 		len = cp->name.len;
-		RES_NAMES(_res)[col] = pkg_malloc(len+1);
+
+		RES_NAMES(_res)[col] = (str*)pkg_malloc(sizeof(str));
+		if (! RES_NAMES(_res)[col]) {
+			LM_ERR("no private memory left\n");
+			pkg_free(RES_NAMES(_res));
+			pkg_free(RES_TYPES(_res));
+			// FIXME we should also free all previous allocated RES_NAMES[col]
+			return -5;
+		}
 		
 #ifdef BDB_EXTRA_DEBUG
 		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]\n"
-			, RES_NAMES(_res)[col], len+1, col);
+			, RES_NAMES(_res)[col], len, col);
 #endif
 
-		if (! RES_NAMES(_res)[col]) 
+		RES_NAMES(_res)[col]->s = (char*)pkg_malloc(len);
+		
+#ifdef BDB_EXTRA_DEBUG
+		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]->s\n"
+			, RES_NAMES(_res)[col]->s, len, col);
+#endif
+
+		if (! RES_NAMES(_res)[col]->s)
 		{
 			LM_ERR("Failed to allocate %d bytes to hold column name\n", len+1);
 			return -1;
 		}
 		
-		memset((char *)RES_NAMES(_res)[col], 0, len+1);
-		strncpy((char *)RES_NAMES(_res)[col], cp->name.s, len); 
+		memset((char *)RES_NAMES(_res)[col]->s, 0, len);
+		strncpy((char *)RES_NAMES(_res)[col]->s, cp->name.s, len);
+		RES_NAMES(_res)[col]->len = len;
 
-		LM_DBG("RES_NAMES(%p)[%d]=[%s]\n", RES_NAMES(_res)[col]
-			, col, RES_NAMES(_res)[col]);
+		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_res)[col]
+			, col, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s);
 
 		RES_TYPES(_res)[col] = cp->type;
 	}
@@ -136,7 +149,7 @@ int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
  */
 int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 {
-        int col, len, i, j;
+	int col, len, i, j;
 	char **row_buf, *s;
 	db_row_t* row = NULL;
 	col = len = i = j = 0;
@@ -275,8 +288,8 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 				break;
 			default:
 #ifdef BDB_EXTRA_DEBUG
-			LM_DBG("col[%d] Col[%s] Type[%d] Freeing row_buf[%p]\n", col
-				, RES_NAMES(_res)[col], RES_TYPES(_res)[col]
+			LM_DBG("col[%d] Col[%.*s] Type[%d] Freeing row_buf[%p]\n", col
+				, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s, RES_TYPES(_res)[col]
 				, (char*) row_buf[col]);
 			
 			LM_DBG("%p=pkg_free() row_buf[%d]\n", (char *)row_buf[col], col);
@@ -440,8 +453,8 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 		if (RES_TYPES(_res)[col] != DB_STRING) 
 		{
 #ifdef BDB_EXTRA_DEBUG
-			LM_DBG("[%d][%d] Col[%s] Type[%d] Freeing row_buf[%i]\n"
-				, _rx, col, RES_NAMES(_res)[col], RES_TYPES(_res)[col], col);
+			LM_DBG("[%d][%d] Col[%.*s] Type[%d] Freeing row_buf[%i]\n"
+				, _rx, col, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s, RES_TYPES(_res)[col], col);
 #endif
 			pkg_free((char *)row_buf[col]);
 		}
@@ -478,8 +491,8 @@ int* bdb_get_colmap(table_p _dtp, db_key_t* _k, int _n)
 	{
 		for(j=0; j<_dtp->ncols; j++)
 		{
-			if(strlen(_k[i])==_dtp->colp[j]->name.len
-			&& !strncasecmp(_k[i], _dtp->colp[j]->name.s,
+			if(_k[i]->len==_dtp->colp[j]->name.len
+			&& !strncasecmp(_k[i]->s, _dtp->colp[j]->name.s,
 						_dtp->colp[j]->name.len))
 			{
 				_lref[i] = j;
@@ -489,7 +502,7 @@ int* bdb_get_colmap(table_p _dtp, db_key_t* _k, int _n)
 		
 		if(i>=_dtp->ncols)
 		{
-			LM_DBG("ERROR column <%s> not found\n", _k[i]);
+			LM_DBG("ERROR column <%.*s> not found\n", _k[i]->len, _k[i]->s);
 			pkg_free(_lref);
 			return NULL;
 		}
@@ -592,13 +605,15 @@ int bdb_free_columns(db_res_t* _res)
 	for(col = 0; col < RES_COL_N(_res); col++) 
 	{
 #ifdef BDB_EXTRA_DEBUG
-		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%s'\n", _res
-			, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]);
 		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n", RES_NAMES(_res)[col], col);
-#endif
-		
+		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%s'\n", _res
+			, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]->s);
+		LM_DBG("%p=pkg_free() RES_NAMES[%d]->s\n", RES_NAMES(_res)[col]->s, col);
+#endif	
+	
+		pkg_free((char *)RES_NAMES(_res)[col]->s);
 		pkg_free((char *)RES_NAMES(_res)[col]);
-		RES_NAMES(_res)[col] = (char *)NULL;
+		RES_NAMES(_res)[col] = (str*)NULL;
 	}
 	
 	if (RES_NAMES(_res)) 
