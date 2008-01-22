@@ -272,12 +272,11 @@ int next_contacts (struct sip_msg*, char*, char*);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_gws", (cmd_function)load_gws_0, 0, 0, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE},
+	{"load_gws", (cmd_function)load_gws_0, 0, 0, 0, REQUEST_ROUTE},
 	{"load_gws", (cmd_function)load_gws_1, 1, pvar_fixup, free_pvar_fixup,
-	 REQUEST_ROUTE | FAILURE_ROUTE},
+	 REQUEST_ROUTE},
 	{"load_gws_from_grp", (cmd_function)load_gws_from_grp, 1,
-	 fixstringloadgws, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	 fixstringloadgws, 0, REQUEST_ROUTE},
 	{"next_gw", (cmd_function)next_gw, 0, 0, 0,
 	 REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
