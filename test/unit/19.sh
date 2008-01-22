@@ -1,5 +1,5 @@
 #!/bin/bash
-# check user lockup for proxy functionality with usrloc and registrar
+# check user lockup for proxy functionality with usrloc and registrar for mysql
 
 # Copyright (C) 2007 1&1 Internet AG
 #
