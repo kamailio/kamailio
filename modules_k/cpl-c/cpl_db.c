@@ -28,6 +28,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../db/db.h"
 #include "../../dprint.h"
+#include "../../str.h"
 #include "cpl_db.h"
 
 #define TABLE_VERSION 1
@@ -35,18 +36,18 @@
 static db_con_t* db_hdl=0;
 static db_func_t cpl_dbf;
 
-char *cpl_username_col = "username";
-char *cpl_domain_col = "domain";
-char *cpl_xml_col  = "cpl_xml";
-char *cpl_bin_col  = "cpl_bin";
+str cpl_username_col = str_init("username");
+str cpl_domain_col = str_init("domain");
+str cpl_xml_col  = str_init("cpl_xml");
+str cpl_bin_col  = str_init("cpl_bin");
 
 
-int cpl_db_bind(char* db_url, char *db_table)
+int cpl_db_bind(const str* db_url, const str *db_table)
 {
 	int ver;
 	str table_str; 
 
-	if (bind_dbmod(db_url, &cpl_dbf )) {
+	if (db_bind_mod(db_url, &cpl_dbf )) {
 		LM_CRIT("cannot bind to database module! "
 		    "Did you forget to load a database module ?\n");
 		return -1;
@@ -65,7 +66,7 @@ int cpl_db_bind(char* db_url, char *db_table)
 	if ( cpl_db_init( db_url, db_table) )
 		return -1;
 
-	ver = table_version(&cpl_dbf, db_hdl, &table_str);
+	ver = db_table_version(&cpl_dbf, db_hdl, &table_str);
 	if (ver < 0) {
 		LM_CRIT("failed to query table version\n");
 		cpl_db_close();
@@ -84,20 +85,22 @@ int cpl_db_bind(char* db_url, char *db_table)
 
 
 
-int cpl_db_init(char* db_url, char* db_table)
+int cpl_db_init(const str* db_url, const str* db_table)
 {
 	if (cpl_dbf.init==0){
 		LM_CRIT("BUG - unbound database module\n");
 		return -1;
 	}
+
 	db_hdl=cpl_dbf.init(db_url);
+	
 	if (db_hdl==0){
 		LM_CRIT("cannot initialize database connection\n");
 		return -1;
 	}
-
+	
 	if (cpl_dbf.use_table(db_hdl, db_table)<0) {
-		LM_CRIT("cannot select table \"%s\"\n",db_table);
+		LM_CRIT("cannot select table \"%.*s\"\n",db_table->len, db_table->s);
 		cpl_db_close();
 		return -1;
 	}
@@ -120,7 +123,7 @@ void cpl_db_close(void)
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *username, str *domain, str *script, const char* key)
+int get_user_script(str *username, str *domain, str *script, str* key)
 {
 	db_key_t   keys_cmp[2];
 	db_key_t   keys_ret[1];
@@ -128,8 +131,8 @@ int get_user_script(str *username, str *domain, str *script, const char* key)
 	db_res_t   *res = NULL;
 	int n;
 
-	keys_cmp[0] = cpl_username_col;
-	keys_cmp[1] = cpl_domain_col;
+	keys_cmp[0] = &cpl_username_col;
+	keys_cmp[1] = &cpl_domain_col;
 	keys_ret[0] = key;
 
 	LM_DBG("fetching script for user <%.*s>\n",
@@ -201,13 +204,13 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 	int n;
 
 	/* lets see if the user is already in database */
-	keys[2] = cpl_username_col;
+	keys[2] = &cpl_username_col;
 	vals[2].type = DB_STR;
 	vals[2].nul  = 0;
 	vals[2].val.str_val = *username;
 	n = 1;
 	if (domain) {
-		keys[3] = cpl_domain_col;
+		keys[3] = &cpl_domain_col;
 		vals[3].type = DB_STR;
 		vals[3].nul  = 0;
 		vals[3].val.str_val = *domain;
@@ -224,14 +227,14 @@ int write_to_db(str *username, str *domain, str *xml, str *bin)
 	}
 
 	/* cpl text */
-	keys[0] = cpl_xml_col;
+	keys[0] = &cpl_xml_col;
 	vals[0].type = DB_BLOB;
 	vals[0].nul  = 0;
 	vals[0].val.blob_val.s = xml->s;
 	vals[0].val.blob_val.len = xml->len;
 	n++;
 	/* cpl bin */
-	keys[1] = cpl_bin_col;
+	keys[1] = &cpl_bin_col;
 	vals[1].type = DB_BLOB;
 	vals[1].nul  = 0;
 	vals[1].val.blob_val.s = bin->s;
@@ -274,13 +277,13 @@ int rmv_from_db(str *username, str *domain)
 	int n;
 
 	/* username */
-	keys[0] = cpl_username_col;
+	keys[0] = &cpl_username_col;
 	vals[0].type = DB_STR;
 	vals[0].nul  = 0;
 	vals[0].val.str_val = *username;
 	n = 1;
 	if (domain) {
-		keys[1] = cpl_domain_col;
+		keys[1] = &cpl_domain_col;
 		vals[1].type = DB_STR;
 		vals[1].nul  = 0;
 		vals[1].val.str_val = *domain;

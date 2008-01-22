@@ -103,25 +103,25 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 	db_val_t query_vals[5];
 	int n_query_cols= 0;
 
-	query_cols[n_query_cols] = "presentity_uri";
+	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = pres_uri;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "event";
+	query_cols[n_query_cols] = &str_event_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = ev_stored_name;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "to_tag";
+	query_cols[n_query_cols] = &str_to_tag_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = to_tag;
 	n_query_cols++;
 	
-	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
 		LM_ERR("in use table sql operation\n");
 		return -1;
@@ -144,25 +144,25 @@ int update_subs_db(subs_t* subs, int type)
 	int n_update_cols= 0;
 	int n_query_cols = 0;
 
-	query_cols[n_query_cols] = "presentity_uri";
+	query_cols[n_query_cols] = &str_presentity_uri_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->pres_uri;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "watcher_username";
+	query_cols[n_query_cols] = &str_watcher_username_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "watcher_domain";
+	query_cols[n_query_cols] = &str_watcher_domain_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "event";
+	query_cols[n_query_cols] = &str_event_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->event->name;
@@ -170,25 +170,25 @@ int update_subs_db(subs_t* subs, int type)
 
 	if(subs->event_id.s)
 	{
-		query_cols[n_query_cols] = "event_id";
+		query_cols[n_query_cols] = &str_event_id_col;
 		query_vals[n_query_cols].type = DB_STR;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val = subs->event_id;
 		n_query_cols++;
 	}
-	query_cols[n_query_cols] = "callid";
+	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->callid;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "to_tag";
+	query_cols[n_query_cols] = &str_to_tag_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_tag;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "from_tag";
+	query_cols[n_query_cols] = &str_from_tag_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_tag;
@@ -196,13 +196,13 @@ int update_subs_db(subs_t* subs, int type)
 
 	if(type & REMOTE_TYPE)
 	{
-		update_keys[n_update_cols] = "expires";
+		update_keys[n_update_cols] = &str_expires_col;
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->expires + (int)time(NULL);
 		n_update_cols++;
 	
-		update_keys[n_update_cols] = "remote_cseq";
+		update_keys[n_update_cols] = &str_remote_cseq_col;
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->remote_cseq; 
@@ -210,32 +210,32 @@ int update_subs_db(subs_t* subs, int type)
 	}
 	else
 	{	
-		update_keys[n_update_cols] = "local_cseq";
+		update_keys[n_update_cols] = &str_local_cseq_col;
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->local_cseq+ 1;
 		n_update_cols++;
 	
-		update_keys[n_update_cols] = "version";
+		update_keys[n_update_cols] = &str_version_col;
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
 		update_vals[n_update_cols].val.int_val = subs->version+ 1; 
 		n_update_cols++;
 	}
 
-	update_keys[n_update_cols] = "status";
+	update_keys[n_update_cols] = &str_status_col;
 	update_vals[n_update_cols].type = DB_INT;
 	update_vals[n_update_cols].nul = 0;
 	update_vals[n_update_cols].val.int_val = subs->status;
 	n_update_cols++;
 
-	update_keys[n_update_cols] = "reason";
+	update_keys[n_update_cols] = &str_reason_col;
 	update_vals[n_update_cols].type = DB_STR;
 	update_vals[n_update_cols].nul = 0;
 	update_vals[n_update_cols].val.str_val = subs->reason;
 	n_update_cols++;
-
-	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
+	
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
 		LM_ERR("in use table sql operation\n");	
 		return -1;
@@ -422,20 +422,21 @@ void msg_watchers_clean(unsigned int ticks,void *param)
 
 	LM_DBG("cleaning pending subscriptions\n");
 	
-	db_keys[0] ="inserted_time";
+	db_keys[0] = &str_inserted_time_col;
 	db_ops[0] = OP_LT;
 	db_vals[0].type = DB_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL)- 24*3600 ;
 
-	db_keys[1] = "status";
+	db_keys[1] = &str_status_col;
 	db_ops [1] = OP_EQ;
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
 	db_vals[1].val.int_val = PENDING_STATUS;
+	
+	result_cols[0]= &str_id_col;
 
-	result_cols[0]= "id";
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 	{
 		LM_ERR("unsuccessful use table sql operation\n");
 		return ;
@@ -1055,37 +1056,37 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	str pres_uri, record_route;
 	str reason;
 
-	query_cols[n_query_cols] = "to_user";
+	query_cols[n_query_cols] = &str_to_user_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_user;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "to_domain";
+	query_cols[n_query_cols] = &str_to_domain_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_domain;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "watcher_username";
+	query_cols[n_query_cols] = &str_watcher_username_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "watcher_domain";
+	query_cols[n_query_cols] = &str_watcher_domain_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "event";
+	query_cols[n_query_cols] = &str_event_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "event_id";
+	query_cols[n_query_cols] = &str_event_id_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	if( subs->event_id.s != NULL)
@@ -1098,32 +1099,32 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	}
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "callid";
+	query_cols[n_query_cols] = &str_callid_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->callid;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "to_tag";
+	query_cols[n_query_cols] = &str_to_tag_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->to_tag;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "from_tag";
+	query_cols[n_query_cols] = &str_from_tag_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = subs->from_tag;
 	n_query_cols++;
 
-	result_cols[pres_uri_col=n_result_cols++] = "presentity_uri";
-	result_cols[remote_cseq_col=n_result_cols++] = "remote_cseq";
-	result_cols[local_cseq_col=n_result_cols++] = "local_cseq";
-	result_cols[status_col=n_result_cols++] = "status";
-	result_cols[reason_col=n_result_cols++] = "reason";
-	result_cols[record_route_col=n_result_cols++] = "record_route";
+	result_cols[pres_uri_col=n_result_cols++] = &str_presentity_uri_col;
+	result_cols[remote_cseq_col=n_result_cols++] = &str_remote_cseq_col;
+	result_cols[local_cseq_col=n_result_cols++] = &str_local_cseq_col;
+	result_cols[status_col=n_result_cols++] = &str_status_col;
+	result_cols[reason_col=n_result_cols++] = &str_reason_col;
+	result_cols[record_route_col=n_result_cols++] = &str_record_route_col;
 	
-	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
 		LM_ERR("unsuccessful use_table sql operation\n");
 		return -1;
@@ -1245,8 +1246,8 @@ void timer_db_update(unsigned int ticks,void *param)
 
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
-
-	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
+	
+	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
 		LM_ERR("sql use table failed\n");
 		return;
@@ -1276,140 +1277,140 @@ void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int n_query_cols= 0, n_update_cols= 0;
 	int n_query_update;
 
-	query_cols[pres_uri_col= n_query_cols] ="presentity_uri";
+	query_cols[pres_uri_col= n_query_cols] =&str_presentity_uri_col;
 	query_vals[pres_uri_col].type = DB_STR;
 	query_vals[pres_uri_col].nul = 0;
 	n_query_cols++;
 	
-	query_cols[callid_col= n_query_cols] ="callid";
+	query_cols[callid_col= n_query_cols] =&str_callid_col;
 	query_vals[callid_col].type = DB_STR;
 	query_vals[callid_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[totag_col= n_query_cols] ="to_tag";
+	query_cols[totag_col= n_query_cols] =&str_to_tag_col;
 	query_vals[totag_col].type = DB_STR;
 	query_vals[totag_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[fromtag_col= n_query_cols] ="from_tag";
+	query_cols[fromtag_col= n_query_cols] =&str_from_tag_col;
 	query_vals[fromtag_col].type = DB_STR;
 	query_vals[fromtag_col].nul = 0;
 	n_query_cols++;
 
 	n_query_update= n_query_cols;
 
-	query_cols[to_user_col= n_query_cols] ="to_user";
+	query_cols[to_user_col= n_query_cols] =&str_to_user_col;
 	query_vals[to_user_col].type = DB_STR;
 	query_vals[to_user_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[to_domain_col= n_query_cols] ="to_domain";
+	query_cols[to_domain_col= n_query_cols] =&str_to_domain_col;
 	query_vals[to_domain_col].type = DB_STR;
 	query_vals[to_domain_col].nul = 0;
 	n_query_cols++;
 	
-	query_cols[from_user_col= n_query_cols] ="watcher_username";
+	query_cols[from_user_col= n_query_cols] =&str_watcher_username_col;
 	query_vals[from_user_col].type = DB_STR;
 	query_vals[from_user_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[from_domain_col= n_query_cols] ="watcher_domain";
+	query_cols[from_domain_col= n_query_cols] =&str_watcher_domain_col;
 	query_vals[from_domain_col].type = DB_STR;
 	query_vals[from_domain_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[event_col= n_query_cols] ="event";
+	query_cols[event_col= n_query_cols] =&str_event_col;
 	query_vals[event_col].type = DB_STR;
 	query_vals[event_col].nul = 0;
 	n_query_cols++;	
 
-	query_cols[event_id_col= n_query_cols] ="event_id";
+	query_cols[event_id_col= n_query_cols] =&str_event_id_col;
 	query_vals[event_id_col].type = DB_STR;
 	query_vals[event_id_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[local_cseq_col= n_query_cols]="local_cseq";
+	query_cols[local_cseq_col= n_query_cols]=&str_local_cseq_col;
 	query_vals[local_cseq_col].type = DB_INT;
 	query_vals[local_cseq_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[remote_cseq_col= n_query_cols]="remote_cseq";
+	query_cols[remote_cseq_col= n_query_cols]=&str_remote_cseq_col;
 	query_vals[remote_cseq_col].type = DB_INT;
 	query_vals[remote_cseq_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[expires_col= n_query_cols] ="expires";
+	query_cols[expires_col= n_query_cols] =&str_expires_col;
 	query_vals[expires_col].type = DB_INT;
 	query_vals[expires_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[status_col= n_query_cols] ="status";
+	query_cols[status_col= n_query_cols] =&str_status_col;
 	query_vals[status_col].type = DB_INT;
 	query_vals[status_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[reason_col= n_query_cols] ="reason";
+	query_cols[reason_col= n_query_cols] =&str_reason_col;
 	query_vals[reason_col].type = DB_STR;
 	query_vals[reason_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[record_route_col= n_query_cols] ="record_route";
+	query_cols[record_route_col= n_query_cols] =&str_record_route_col;
 	query_vals[record_route_col].type = DB_STR;
 	query_vals[record_route_col].nul = 0;
 	n_query_cols++;
 	
-	query_cols[contact_col= n_query_cols] ="contact";
+	query_cols[contact_col= n_query_cols] =&str_contact_col;
 	query_vals[contact_col].type = DB_STR;
 	query_vals[contact_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[local_contact_col= n_query_cols] ="local_contact";
+	query_cols[local_contact_col= n_query_cols] =&str_local_contact_col;
 	query_vals[local_contact_col].type = DB_STR;
 	query_vals[local_contact_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[socket_info_col= n_query_cols] ="socket_info";
+	query_cols[socket_info_col= n_query_cols] =&str_socket_info_col;
 	query_vals[socket_info_col].type = DB_STR;
 	query_vals[socket_info_col].nul = 0;
 	n_query_cols++;
 
-	query_cols[version_col= n_query_cols]="version";
+	query_cols[version_col= n_query_cols]=&str_version_col;
 	query_vals[version_col].type = DB_INT;
 	query_vals[version_col].nul = 0;
 	n_query_cols++;
 
 	/* cols and values used for update */
-	update_cols[u_expires_col= n_update_cols]= "expires";
+	update_cols[u_expires_col= n_update_cols]= &str_expires_col;
 	update_vals[u_expires_col].type = DB_INT;
 	update_vals[u_expires_col].nul = 0;
 	n_update_cols++;
 
-	update_cols[u_status_col= n_update_cols]= "status";
+	update_cols[u_status_col= n_update_cols]= &str_status_col;
 	update_vals[u_status_col].type = DB_INT;
 	update_vals[u_status_col].nul = 0;
 	n_update_cols++;
 
-	update_cols[u_reason_col= n_update_cols]= "reason";
+	update_cols[u_reason_col= n_update_cols]= &str_reason_col;
 	update_vals[u_reason_col].type = DB_STR;
 	update_vals[u_reason_col].nul = 0;
 	n_update_cols++;
 
-	update_cols[u_remote_cseq_col= n_update_cols]= "remote_cseq";
+	update_cols[u_remote_cseq_col= n_update_cols]= &str_remote_cseq_col;
 	update_vals[u_remote_cseq_col].type = DB_INT;
 	update_vals[u_remote_cseq_col].nul = 0;
 	n_update_cols++;
 
-	update_cols[u_local_cseq_col= n_update_cols]= "local_cseq";
+	update_cols[u_local_cseq_col= n_update_cols]= &str_local_cseq_col;
 	update_vals[u_local_cseq_col].type = DB_INT;
 	update_vals[u_local_cseq_col].nul = 0;
 	n_update_cols++;
 	
-	update_cols[u_version_col= n_update_cols]= "version";
+	update_cols[u_version_col= n_update_cols]= &str_version_col;
 	update_vals[u_version_col].type = DB_INT;
 	update_vals[u_version_col].nul = 0;
 	n_update_cols++;
 
-	result_cols[0]= "expires";
+	result_cols[0]= &str_expires_col;
 
 	if(db== NULL)
 	{
@@ -1552,33 +1553,34 @@ int restore_db_subs(void)
 	unsigned int expires;
 	unsigned int hash_code;
 
-	result_cols[pres_uri_col=n_result_cols++]	="presentity_uri";		
-	result_cols[expires_col=n_result_cols++]="expires";
-	result_cols[event_col=n_result_cols++]	="event";
-	result_cols[event_id_col=n_result_cols++]="event_id";
-	result_cols[to_user_col=n_result_cols++]	="to_user";
-	result_cols[to_domain_col=n_result_cols++]	="to_domain";
-	result_cols[from_user_col=n_result_cols++]	="watcher_username";
-	result_cols[from_domain_col=n_result_cols++]="watcher_domain";
-	result_cols[callid_col=n_result_cols++] ="callid";
-	result_cols[totag_col=n_result_cols++]	="to_tag";
-	result_cols[fromtag_col=n_result_cols++]="from_tag";
-	result_cols[local_cseq_col= n_result_cols++]	="local_cseq";
-	result_cols[remote_cseq_col= n_result_cols++]	="remote_cseq";
-	result_cols[record_route_col= n_result_cols++]	="record_route";
-	result_cols[sockinfo_col= n_result_cols++]	="socket_info";
-	result_cols[contact_col= n_result_cols++]	="contact";
-	result_cols[local_contact_col= n_result_cols++]	="local_contact";
-	result_cols[version_col= n_result_cols++]	="version";
-	result_cols[status_col= n_result_cols++]	="status";
-	result_cols[reason_col= n_result_cols++]	="reason";
+	result_cols[pres_uri_col=n_result_cols++]	=&str_presentity_uri_col;
+	result_cols[expires_col=n_result_cols++]=&str_expires_col;
+	result_cols[event_col=n_result_cols++]	=&str_event_col;
+	result_cols[event_id_col=n_result_cols++]=&str_event_id_col;
+	result_cols[to_user_col=n_result_cols++]	=&str_to_user_col;
+	result_cols[to_domain_col=n_result_cols++]	=&str_to_domain_col;
+	result_cols[from_user_col=n_result_cols++]	=&str_watcher_username_col;
+	result_cols[from_domain_col=n_result_cols++]=&str_watcher_domain_col;
+	result_cols[callid_col=n_result_cols++] =&str_callid_col;
+	result_cols[totag_col=n_result_cols++]	=&str_to_tag_col;
+	result_cols[fromtag_col=n_result_cols++]=&str_from_tag_col;
+	result_cols[local_cseq_col= n_result_cols++]	=&str_local_cseq_col;
+	result_cols[remote_cseq_col= n_result_cols++]	=&str_remote_cseq_col;
+	result_cols[record_route_col= n_result_cols++]	=&str_record_route_col;
+	result_cols[sockinfo_col= n_result_cols++]	=&str_socket_info_col;
+	result_cols[contact_col= n_result_cols++]	=&str_contact_col;
+	result_cols[local_contact_col= n_result_cols++]	=&str_local_contact_col;
+	result_cols[version_col= n_result_cols++]	=&str_version_col;
+	result_cols[status_col= n_result_cols++]	=&str_status_col;
+	result_cols[reason_col= n_result_cols++]	=&str_reason_col;
 	
 	if(!pa_db)
 	{
 		LM_ERR("null database connection\n");
 		return -1;
 	}
-	if(pa_dbf.use_table(pa_db, active_watchers_table)< 0)
+
+	if(pa_dbf.use_table(pa_db, &active_watchers_table)< 0)
 	{
 		LM_ERR("in use table\n");
 		return -1;
@@ -1812,34 +1814,34 @@ int get_db_subs_auth(subs_t* subs, int* found)
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 
-	db_keys[n_query_cols] ="presentity_uri";
+	db_keys[n_query_cols] =&str_presentity_uri_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val= subs->pres_uri;
 	n_query_cols++;
 
-	db_keys[n_query_cols] ="watcher_username";
+	db_keys[n_query_cols] =&str_watcher_username_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 
-	db_keys[n_query_cols] ="watcher_domain";
+	db_keys[n_query_cols] =&str_watcher_domain_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 	
-	db_keys[n_query_cols] ="event";
+	db_keys[n_query_cols] =&str_event_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
 
-	result_cols[0] = "status";
-	result_cols[1] = "reason";
-
-	if(pa_dbf.use_table(pa_db, watchers_table)< 0)
+	result_cols[0] = &str_status_col;
+	result_cols[1] = &str_reason_col;
+	
+	if(pa_dbf.use_table(pa_db, &watchers_table)< 0)
 	{
 		LM_ERR("in use table\n");
 		return -1;
@@ -1898,37 +1900,37 @@ int insert_db_subs_auth(subs_t* subs)
 	db_val_t db_vals[10];
 	int n_query_cols= 0; 
 
-	db_keys[n_query_cols] ="presentity_uri";
+	db_keys[n_query_cols] =&str_presentity_uri_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val= subs->pres_uri;
 	n_query_cols++;
 
-	db_keys[n_query_cols] ="watcher_username";
+	db_keys[n_query_cols] =&str_watcher_username_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_user;
 	n_query_cols++;
 
-	db_keys[n_query_cols] ="watcher_domain";
+	db_keys[n_query_cols] =&str_watcher_domain_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->from_domain;
 	n_query_cols++;
 	
-	db_keys[n_query_cols] ="event";
+	db_keys[n_query_cols] =&str_event_col;
 	db_vals[n_query_cols].type = DB_STR;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.str_val = subs->event->name;
 	n_query_cols++;
 
-	db_keys[n_query_cols] ="status";
+	db_keys[n_query_cols] =&str_status_col;
 	db_vals[n_query_cols].type = DB_INT;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.int_val = subs->status;
 	n_query_cols++;
 								
-	db_keys[n_query_cols] = "inserted_time";
+	db_keys[n_query_cols] = &str_inserted_time_col;
 	db_vals[n_query_cols].type = DB_INT;
 	db_vals[n_query_cols].nul = 0;
 	db_vals[n_query_cols].val.int_val= (int)time(NULL);
@@ -1936,14 +1938,14 @@ int insert_db_subs_auth(subs_t* subs)
 	
 	if(subs->reason.s && subs->reason.len)
 	{
-		db_keys[n_query_cols] ="reason";
+		db_keys[n_query_cols] =&str_reason_col;
 		db_vals[n_query_cols].type = DB_STR;
 		db_vals[n_query_cols].nul = 0;
 		db_vals[n_query_cols].val.str_val = subs->reason;
 		n_query_cols++;	
 	}	
 	
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		return -1;

@@ -32,12 +32,12 @@
 #include "../../db/db_key.h"
 #include "../../db/db_op.h"
 #include "../../db/db_val.h"
-
+#include "../../str.h"
 
 /*
  * Initialize database connection
  */
-db_con_t* db_mysql_init(const char* _sqlurl);
+db_con_t* db_mysql_init(const str* _sqlurl);
 
 
 /*
@@ -69,7 +69,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
 /*
  * Raw SQL query
  */
-int db_mysql_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r);
+int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
 
 
 /*
@@ -114,7 +114,7 @@ int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_mysql_use_table(db_con_t* _h, const char* _t);
+int db_mysql_use_table(db_con_t* _h, const str* _t);
 
 
 #endif /* DBASE_H */

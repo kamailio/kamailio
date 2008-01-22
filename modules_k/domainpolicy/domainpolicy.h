@@ -57,10 +57,10 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2);
  */
 int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2);
 
-int domainpolicy_db_bind(char* db_url);
-int domainpolicy_db_init(char* db_url);
+int domainpolicy_db_bind(const str* db_url);
+int domainpolicy_db_init(const str* db_url);
 void domainpolicy_db_close();
-int domainpolicy_db_ver(char* db_url, str* name);
+int domainpolicy_db_ver(const str* db_url, const str* name);
 
 
 #endif /* DOMAINPOLICY_H */

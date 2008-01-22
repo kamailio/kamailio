@@ -71,7 +71,7 @@ MODULE_VERSION
 struct tm_binds tmb;
 struct rr_binds rrb;
 
-static int mod_init( void );
+static int mod_init(void);
 static void destroy(void);
 static int child_init(int rank);
 
@@ -143,18 +143,18 @@ int db_missed_flag = -1;
 static char *db_extra_str = 0;
 struct acc_extra *db_extra = 0;
 /* Database url */
-static char *db_url = 0;
+static str db_url = {NULL, 0};
 /* name of database tables */
-char *db_table_acc = "acc";
-char *db_table_mc = "missed_calls";
+str db_table_acc = str_init("acc");
+str db_table_mc = str_init("missed_calls");
 /* names of columns in tables acc/missed calls*/
-char* acc_method_col     = "method";
-char* acc_fromtag_col    = "from_tag";
-char* acc_totag_col      = "to_tag";
-char* acc_callid_col     = "callid";
-char* acc_sipcode_col    = "sip_code";
-char* acc_sipreason_col  = "sip_reason";
-char* acc_time_col       = "time";
+str acc_method_col     = str_init("method");
+str acc_fromtag_col    = str_init("from_tag");
+str acc_totag_col      = str_init("to_tag");
+str acc_callid_col     = str_init("callid");
+str acc_sipcode_col    = str_init("sip_code");
+str acc_sipreason_col  = str_init("sip_reason");
+str acc_time_col       = str_init("time");
 #endif
 
 /* ------------- fixup function --------------- */
@@ -214,16 +214,16 @@ static param_export_t params[] = {
 	{"db_flag",              INT_PARAM, &db_flag              },
 	{"db_missed_flag",       INT_PARAM, &db_missed_flag       },
 	{"db_extra",             STR_PARAM, &db_extra_str         },
-	{"db_url",               STR_PARAM, &db_url               },
-	{"db_table_acc",         STR_PARAM, &db_table_acc         },
-	{"db_table_missed_calls",STR_PARAM, &db_table_mc          },
-	{"acc_method_column",    STR_PARAM, &acc_method_col       },
-	{"acc_from_tag_column",  STR_PARAM, &acc_fromtag_col      },
-	{"acc_to_tag_column",    STR_PARAM, &acc_totag_col        },
-	{"acc_callid_column",    STR_PARAM, &acc_callid_col       },
-	{"acc_sip_code_column",  STR_PARAM, &acc_sipcode_col      },
-	{"acc_sip_reason_column",STR_PARAM, &acc_sipreason_col    },
-	{"acc_time_column",      STR_PARAM, &acc_time_col         },
+	{"db_url",               STR_PARAM, &db_url.s             },
+	{"db_table_acc",         STR_PARAM, &db_table_acc.s       },
+	{"db_table_missed_calls",STR_PARAM, &db_table_mc.s        },
+	{"acc_method_column",    STR_PARAM, &acc_method_col.s     },
+	{"acc_from_tag_column",  STR_PARAM, &acc_fromtag_col.s    },
+	{"acc_to_tag_column",    STR_PARAM, &acc_totag_col.s      },
+	{"acc_callid_column",    STR_PARAM, &acc_callid_col.s     },
+	{"acc_sip_code_column",  STR_PARAM, &acc_sipcode_col.s    },
+	{"acc_sip_reason_column",STR_PARAM, &acc_sipreason_col.s  },
+	{"acc_time_column",      STR_PARAM, &acc_time_col.s       },
 #endif
 	{0,0,0}
 };
@@ -283,7 +283,7 @@ static int acc_fixup(void** param, int param_no)
 #ifdef SQL_ACC
 	} else if (param_no == 2) {
 		/* only for db acc - the table name */
-		if (db_url==0) {
+		if (db_url.s==0) {
 			pkg_free(p);
 			*param = 0;
 		}
@@ -309,6 +309,18 @@ static int free_acc_fixup(void** param, int param_no)
 static int mod_init( void )
 {
 	LM_INFO("initializing...\n");
+
+	if (db_url.s)
+		db_url.len = strlen(db_url.s);
+	db_table_acc.len = strlen(db_table_acc.s);
+	db_table_mc.len = strlen(db_table_mc.s);
+	acc_method_col.len = strlen(acc_method_col.s);
+	acc_fromtag_col.len = strlen(acc_fromtag_col.s);
+	acc_totag_col.len = strlen(acc_totag_col.s);
+	acc_callid_col.len = strlen(acc_callid_col.s);
+	acc_sipcode_col.len = strlen(acc_sipcode_col.s);
+	acc_sipreason_col.len = strlen(acc_sipreason_col.s);
+	acc_time_col.len = strlen(acc_time_col.s);
 
 	/* ----------- GENERIC INIT SECTION  ----------- */
 
@@ -369,13 +381,13 @@ static int mod_init( void )
 	/* ------------ SQL INIT SECTION ----------- */
 
 #ifdef SQL_ACC
-	if (db_url && db_url[0]) {
+	if (db_url.s && db_url.len > 0) {
 		/* parse the extra string, if any */
 		if (db_extra_str && (db_extra=parse_acc_extra(db_extra_str))==0 ) {
 			LM_ERR("failed to parse db_extra param\n");
 			return -1;
 		}
-		if (acc_db_init(db_url)<0){
+		if (acc_db_init(&db_url)<0){
 			LM_ERR("failed...did you load a database module?\n");
 			return -1;
 		}
@@ -385,7 +397,6 @@ static int mod_init( void )
 		if (flag_idx2mask(&db_missed_flag)<0)
 			return -1;
 	} else {
-		db_url = 0;
 		db_flag = 0;
 		db_missed_flag = 0;
 	}
@@ -445,8 +456,11 @@ static int mod_init( void )
 static int child_init(int rank)
 {
 #ifdef SQL_ACC
-	if (db_url && acc_db_init_child(db_url)<0)
+	if(db_url.s && acc_db_init_child(&db_url)<0) {
+		LM_ERR("could not open database connection");
 		return -1;
+	}
+
 #endif
 
 	/* DIAMETER */

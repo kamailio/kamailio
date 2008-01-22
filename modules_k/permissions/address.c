@@ -75,16 +75,16 @@ int reload_address_table(void)
     int i;
     struct in_addr ip_addr;
 
-    cols[0] = grp_col;
-    cols[1] = ip_addr_col;
-    cols[2] = mask_col;
-    cols[3] = port_col;
+    cols[0] = &grp_col;
+    cols[1] = &ip_addr_col;
+    cols[2] = &mask_col;
+    cols[3] = &port_col;
 
-    if (perm_dbf.use_table(db_handle, address_table) < 0) {
+    if (perm_dbf.use_table(db_handle, &address_table) < 0) {
 	    LM_ERR("failed to use table\n");
 		return -1;
     }
-    
+
     if (perm_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 4, 0, &res) < 0) {
 	    LM_ERR("failed to query database\n");
 		return -1;
@@ -177,14 +177,13 @@ int reload_address_table(void)
 int init_addresses(void)
 {
     int ver;
-    str name;
 
-    if (!db_url) {
+    if (!db_url.s) {
 	LM_INFO("db_url parameter of permissions module not set, "
 	    "disabling allow_addr\n");
 	return 0;
     } else {
-	if (bind_dbmod(db_url, &perm_dbf) < 0) {
+	if (db_bind_mod(&db_url, &perm_dbf) < 0) {
 	    LM_ERR("load a database support module\n");
 	    return -1;
 	}
@@ -194,19 +193,17 @@ int init_addresses(void)
 	    return -1;
 	}
     }
-    
+
     addr_hash_table_1 = addr_hash_table_2 = 0;
     addr_hash_table = 0;
-
-    db_handle = perm_dbf.init(db_url);
+	
+    db_handle = perm_dbf.init(&db_url);
     if (!db_handle) {
 		LM_ERR("unable to connect database\n");
 		return -1;
     }
 
-    name.s = address_table;
-    name.len = strlen(address_table);
-    ver = table_version(&perm_dbf, db_handle, &name);
+    ver = db_table_version(&perm_dbf, db_handle, &address_table);
 
     if (ver < 0) {
 	LM_ERR("failed to query table version\n");
@@ -289,8 +286,8 @@ error:
  */
 int mi_init_addresses(void)
 {
-    if (!db_url || db_handle) return 0;
-    db_handle = perm_dbf.init(db_url);
+    if (!db_url.s || db_handle) return 0;
+    db_handle = perm_dbf.init(&db_url);
     if (!db_handle) {
 	LM_ERR("unable to connect database\n");
 	return -1;

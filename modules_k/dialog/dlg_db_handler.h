@@ -62,29 +62,29 @@
 #define DIALOG_TABLE_COL_NO 		18
 
 
-extern char* call_id_column; 
-extern char* from_uri_column;
-extern char* from_tag_column;
-extern char* to_uri_column;
-extern char* to_tag_column;
-extern char* h_id_column;
-extern char* h_entry_column;
-extern char* state_column;
-extern char* start_time_column;
-extern char* timeout_column;
-extern char* to_cseq_column;
-extern char* from_cseq_column;
-extern char* to_route_column;
-extern char* from_route_column;
-extern char* to_contact_column;
-extern char* from_contact_column;
-extern char* to_sock_column;
-extern char* from_sock_column;
-extern char* dialog_table_name;
+extern str call_id_column; 
+extern str from_uri_column;
+extern str from_tag_column;
+extern str to_uri_column;
+extern str to_tag_column;
+extern str h_id_column;
+extern str h_entry_column;
+extern str state_column;
+extern str start_time_column;
+extern str timeout_column;
+extern str to_cseq_column;
+extern str from_cseq_column;
+extern str to_route_column;
+extern str from_route_column;
+extern str to_contact_column;
+extern str from_contact_column;
+extern str to_sock_column;
+extern str from_sock_column;
+extern str dialog_table_name;
 extern int dlg_db_mode;
 
-int init_dlg_db(char *db_url, int dlg_hash_size, int db_update_period);
-int dlg_connect_db(char *db_url);
+int init_dlg_db(const str *db_url, int dlg_hash_size, int db_update_period);
+int dlg_connect_db(const str *db_url);
 void destroy_dlg_db();
 
 int remove_dialog_from_db(struct dlg_cell * cell);

@@ -64,6 +64,6 @@ int dbt_convert_rows(db_con_t* _h, db_res_t* _r);
 int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r);
 
 
-int dbt_use_table(db_con_t* _h, const char* _t);
+int dbt_use_table(db_con_t* _h, const str* _t);
 
 #endif

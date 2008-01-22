@@ -80,6 +80,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max)
 {
 	static char query_buf[512];
+	static str query_str;
+
 	struct socket_info *sock;
 	unsigned int dbflags;
 	db_res_t* res = NULL;
@@ -125,7 +127,9 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			LM_ERR("DB query too long\n");
 			return -1;
 		}
-		if ( ul_dbf.raw_query( ul_dbh, query_buf, &res)<0 ) {
+		query_str.s = query_buf;
+		query_str.len = i;
+		if ( ul_dbf.raw_query( ul_dbh, &query_str, &res)<0 ) {
 			LM_ERR("raw_query failed\n");
 			return -1;
 		}
@@ -437,13 +441,13 @@ int register_udomain(const char* _n, udomain_t** _d)
 	 * to use database
 	 */
 	if (db_mode != NO_DB) {
-		con = ul_dbf.init(db_url.s);
+		con = ul_dbf.init(&db_url);
 		if (!con) {
 			LM_ERR("failed to open database connection\n");
 			goto err;
 		}
 
-		ver = table_version(&ul_dbf, con, &s);
+		ver = db_table_version(&ul_dbf, con, &s);
 
 		if (ver < 0) {
 			LM_ERR("querying table version failed\n");

@@ -71,11 +71,11 @@
 
 
 /* modules param variables */
-static char *DB_URL        = 0;  /* database url */
-static char *DB_TABLE      = 0;  /* */
+static str db_url           = {NULL, 0}; /* database url */
+static str db_table        = {NULL, 0};  /* database table */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
-static char *timer_avp     = 0;  /* name of variable timer AVP */
+static str  timer_avp      = {NULL, 0};  /* name of variable timer AVP */
 
 
 struct cpl_enviroment    cpl_env = {
@@ -139,8 +139,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",         STR_PARAM, &DB_URL                            },
-	{"cpl_table",      STR_PARAM, &DB_TABLE                          },
+	{"db_url",         STR_PARAM, &db_url.s                          },
+	{"cpl_table",      STR_PARAM, &db_table.s                        },
 	{"cpl_dtd_file",   STR_PARAM, &dtd_file                          },
 	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
 	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route               },
@@ -149,7 +149,7 @@ static param_export_t params[] = {
 	{"realm_prefix",   STR_PARAM, &cpl_env.realm_prefix.s            },
 	{"lookup_domain",  STR_PARAM, &lookup_domain                     },
 	{"lookup_append_branches", INT_PARAM, &cpl_env.lu_append_branches},
-	{"timer_avp",      STR_PARAM, &timer_avp                         },
+	{"timer_avp",      STR_PARAM, &timer_avp.s                       },
 	{"username_column",STR_PARAM, &cpl_username_col                  },
 	{"domain_column",  STR_PARAM, &cpl_domain_col                    },
 	{"cpl_xml_column", STR_PARAM, &cpl_xml_col                       },
@@ -232,17 +232,20 @@ static int cpl_init(void)
 	int val;
 	pv_spec_t avp_spec;
 	unsigned short avp_type;
-	str stmp;
+
+	if (db_url.s) db_url.len = strlen(db_url.s);
+	if (db_table.s) db_table.len = strlen(db_table.s);
+	if (timer_avp.s) timer_avp.len = strlen(timer_avp.s);
 
 	LM_INFO("initializing...\n");
 
 	/* check the module params */
-	if (DB_URL==0) {
+	if (!db_url.s) {
 		LM_CRIT("mandatory parameter \"DB_URL\" found empty\n");
 		goto error;
 	}
 
-	if (DB_TABLE==0) {
+	if (!db_table.s) {
 		LM_CRIT("mandatory parameter \"DB_TABLE\" found empty\n");
 		goto error;
 	}
@@ -255,18 +258,17 @@ static int cpl_init(void)
 	}
 
 	/* fix the timer_avp name */
-	if (timer_avp && *timer_avp) {
-		stmp.s = timer_avp; stmp.len = strlen(stmp.s);
-		if (pv_parse_spec(&stmp, &avp_spec)==0
+	if (timer_avp.s && timer_avp.len > 0) {
+		if (pv_parse_spec(&timer_avp, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n", timer_avp);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n", timer_avp.len, timer_avp.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &cpl_env.timer_avp,
 							&avp_type)!=0)
 		{
-			LM_ERR("[%s]- invalid AVP definition\n", timer_avp);
+			LM_ERR("[%.*s]- invalid AVP definition\n", timer_avp.len, timer_avp.s);
 			return -1;
 		}
 		cpl_env.timer_avp_type = avp_type;
@@ -318,7 +320,7 @@ static int cpl_init(void)
 	}
 
 	/* bind to the mysql module */
-	if (cpl_db_bind(DB_URL,DB_TABLE)<0) goto error;
+	if (cpl_db_bind(&db_url, &db_table)<0) goto error;
 
 	/* load TM API */
 	if (load_tm_api(&cpl_fct.tmb)!=0) {
@@ -403,13 +405,13 @@ error:
 
 static int cpl_child_init(int rank)
 {
-	return cpl_db_init(DB_URL, DB_TABLE);
+	return cpl_db_init(&db_url, &db_table);
 }
 
 
 static int mi_child_init(void)
 {
-	return cpl_db_init(DB_URL, DB_TABLE);
+	return cpl_db_init(&db_url, &db_table);
 }
 
 
@@ -571,7 +573,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 
 	/* get the script for this user */
 	if (get_user_script(&username, cpl_env.use_domain?&domain:0,
-	&script, cpl_bin_col)==-1)
+	&script, &cpl_bin_col)==-1)
 		goto error0;
 
 	/* has the user a non-empty script? if not, return normally, allowing the
@@ -736,7 +738,7 @@ static inline int do_script_download(struct sip_msg *msg)
 
 	/* get the user's xml script from the database */
 	if (get_user_script( &username, cpl_env.use_domain?&domain:0,
-	&script, cpl_xml_col)==-1)
+	&script, &cpl_xml_col)==-1)
 		goto error;
 
 	/* add a lump with content-type hdr */
@@ -901,6 +903,3 @@ error:
 	/* I don't want to return to script execution, so I return 0 to do break */
 	return 0;
 }
-
-
-

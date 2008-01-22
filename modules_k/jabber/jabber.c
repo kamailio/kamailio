@@ -94,8 +94,8 @@ static db_func_t jabber_dbf;
 
 /** parameters */
 
-static char *db_url   = "mysql://root@127.0.0.1/sip_jab";
-char *db_table = "jusers";
+static str db_url   = str_init("mysql://root@127.0.0.1/sip_jab");
+static str db_table = str_init("jusers");
 char *registrar=NULL; /*"sip:registrar@example.org";*/
 
 int nrw = 2;
@@ -135,9 +135,9 @@ void destroy(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"jab_send_message",       (cmd_function)xj_send_message,       
+	{"jab_send_message",       (cmd_function)xj_send_message,
 			0, 0, 0, REQUEST_ROUTE},
-	{"jab_join_jconf",         (cmd_function)xj_join_jconf,         
+	{"jab_join_jconf",         (cmd_function)xj_join_jconf,
 			0, 0, 0, REQUEST_ROUTE},
 	{"jab_exit_jconf",         (cmd_function)xj_exit_jconf,
 			0, 0, 0, REQUEST_ROUTE},
@@ -145,7 +145,7 @@ static cmd_export_t cmds[] = {
 			0, 0, 0, REQUEST_ROUTE},
 	{"jab_go_offline",         (cmd_function)xj_go_offline,
 			0, 0, 0, REQUEST_ROUTE},
-	{"jab_register_watcher",   (cmd_function)xj_register_watcher,   
+	{"jab_register_watcher",   (cmd_function)xj_register_watcher,
 			XJ_NO_SCRIPT_F, 0, 0, 0            },
 	{"jab_unregister_watcher", (cmd_function)xj_unregister_watcher,
 			XJ_NO_SCRIPT_F, 0, 0, 0            },
@@ -159,7 +159,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters 
  */
 static param_export_t params[] = {
-	{"db_url",     STR_PARAM, &db_url    },
+	{"db_url",     STR_PARAM, &db_url.s  },
 	{"jaddress",   STR_PARAM, &jaddress  },
 	{"aliases",    STR_PARAM, &jaliases  },
 	{"proxy",      STR_PARAM, &proxy     },
@@ -201,6 +201,7 @@ static int mod_init(void)
 	load_ih_f load_ih;
 #endif
 	int  i;
+	db_url.len = strlen(db_url.s);
 
 	LM_INFO("initializing ...\n");
 	if(!jdomain)
@@ -210,7 +211,7 @@ static int mod_init(void)
 	}
 
 	/* import mysql functions */
-	if (bind_dbmod(db_url, &jabber_dbf)<0)
+	if (db_bind_mod(&db_url, &jabber_dbf)<0)
 	{
 		LM_ERR("database module not found\n");
 		return -1;
@@ -263,8 +264,8 @@ static int mod_init(void)
 	}
 	
 	for(i=0; i<nrw; i++)
-	{
-		db_con[i] = jabber_dbf.init(db_url);
+	{	
+		db_con[i] = jabber_dbf.init(&db_url);
 		if (!db_con[i])
 		{
 			LM_ERR("failed to connect to the database\n");
@@ -272,7 +273,7 @@ static int mod_init(void)
 		}
 		else
 		{
-			if (jabber_dbf.use_table(db_con[i], db_table) < 0) {
+			if (jabber_dbf.use_table(db_con[i], &db_table) < 0) {
 				LM_ERR("use_table failed\n");
 				return -1;
 			}

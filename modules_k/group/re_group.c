@@ -82,10 +82,10 @@ int load_re( str *table )
 	db_row_t* row;
 	int n;
 
-	cols[0] = re_exp_column.s;
-	cols[1] = re_gid_column.s;
+	cols[0] = &re_exp_column;
+	cols[1] = &re_gid_column;
 
-	if (group_dbf.use_table(group_dbh, table->s) < 0) {
+	if (group_dbf.use_table(group_dbh, table) < 0) {
 		LM_ERR("failed to set table <%s>\n", table->s);
 		goto error;
 	}

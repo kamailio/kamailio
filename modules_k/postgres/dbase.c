@@ -65,7 +65,6 @@
 #define MAXCOLUMNS	512
 
 #include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include "../../dprint.h"
 #include "../../mem/mem.h"
@@ -78,15 +77,6 @@
 #include "db_res.h"
 
 static int free_query(const db_con_t* _con);
-
-/*
- * Store name of table that will be used by
- * subsequent database functions
- */
-int db_postgres_use_table(db_con_t* _con, const char* _t)
-{
-	return db_use_table(_con, _t);
-}
 
 
 /*
@@ -103,7 +93,7 @@ int db_postgres_use_table(db_con_t* _con, const char* _t)
 **		pg_init must be called prior to any database functions.
 */
 
-db_con_t *db_postgres_init(const char* _url)
+db_con_t *db_postgres_init(const str* _url)
 {
 	return db_do_init(_url, (void*) db_postgres_new_connection);
 }
@@ -139,17 +129,15 @@ void db_postgres_close(db_con_t* _h)
 **		negative number upon failure
 */
 
-static int db_postgres_submit_query(const db_con_t* _con, const char* _s)
-{	
-	if(! _con)
+static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
+{
+	if(! _con || !_s || !_s->s)
 	{
 		LM_ERR("invalid parameter value\n");
 		return(-1);
 	}
 
-	/*
-	** this bit of nonsense in case our connection get screwed up 
-	*/
+	/* this bit of nonsense in case our connection get screwed up */
 	switch(PQstatus(CON_CONNECTION(_con)))
 	{
 		case CONNECTION_OK: 
@@ -166,29 +154,26 @@ static int db_postgres_submit_query(const db_con_t* _con, const char* _s)
 		case CONNECTION_SSL_STARTUP:
 		case CONNECTION_NEEDED:
 		default:
-			LM_ERR("%p PQstatus(%s) invalid: %s\n", _con,
-				PQerrorMessage(CON_CONNECTION(_con)), _s);
+			LM_ERR("%p PQstatus(%s) invalid: %.*s\n", _con,
+				PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
 			return -1;
 	}
 
-	/*
-	** free any previous query that is laying about
-	*/
+	/* free any previous query that is laying about */
 	if(CON_RESULT(_con))
 	{
 		free_query(_con);
 	}
 
-	/*
-	** exec the query
-	*/
-	if (PQsendQuery(CON_CONNECTION(_con), _s)) {
-		LM_DBG("%p PQsendQuery(%s)\n", _con, _s);
+	/* exec the query */
+	if (PQsendQuery(CON_CONNECTION(_con), _s->s)) {
+		LM_DBG("%p PQsendQuery(%.*s)\n", _con, _s->len, _s->s);
 	} else {
-		LM_ERR("%p PQsendQuery Error: %s Query: %s\n", _con,
-		PQerrorMessage(CON_CONNECTION(_con)), _s);
+		LM_ERR("%p PQsendQuery Error: %s Query: %.*s\n", _con,
+		PQerrorMessage(CON_CONNECTION(_con)), _s->len, _s->s);
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -199,8 +184,7 @@ static int db_postgres_submit_query(const db_con_t* _con, const char* _s)
  */
 int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nrows)
 {
-        int rows;
-
+	int rows;
 	PGresult *res = NULL;
 	ExecStatusType pqresult;
 
@@ -366,7 +350,7 @@ int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
 /*
  * Execute a raw SQL query
  */
-int db_postgres_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r)
+int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_postgres_submit_query,
 		db_postgres_store_result);
@@ -464,7 +448,17 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		const int _n)
 {
-	return db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
+	db_res_t* _r = NULL;
+
+	int tmp = db_do_insert(_h, _k, _v, _n, db_postgres_val2str, db_postgres_submit_query);
+	// finish the async query, otherwise the next query will not complete
+	if (db_postgres_store_result(_h, &_r) != 0)
+		LM_WARN("unexpected result returned");
+	
+	if (_r)
+		db_postgres_free_result(_r);
+
+	return tmp;
 }
 
 
@@ -479,8 +473,17 @@ int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _
 int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const int _n)
 {
-	return db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
+	db_res_t* _r = NULL;
+	int tmp = db_do_delete(_h, _k, _o, _v, _n, db_postgres_val2str,
 		db_postgres_submit_query);
+
+	if (db_postgres_store_result(_h, &_r) != 0)
+		LM_WARN("unexpected result returned");
+	
+	if (_r)
+		db_postgres_free_result(_r);
+
+	return tmp;
 }
 
 
@@ -499,6 +502,25 @@ int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
 		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
 		const int _un)
 {
-	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
+	db_res_t* _r = NULL;
+	int tmp = db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_postgres_val2str,
 		db_postgres_submit_query);
+
+	if (db_postgres_store_result(_h, &_r) != 0)
+		LM_WARN("unexpected result returned");
+	
+	if (_r)
+		db_postgres_free_result(_r);
+
+	return tmp;
+}
+
+
+/*
+ * Store name of table that will be used by
+ * subsequent database functions
+ */
+int db_postgres_use_table(db_con_t* _con, const str* _t)
+{
+	return db_use_table(_con, _t);
 }

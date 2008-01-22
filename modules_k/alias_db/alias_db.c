@@ -34,6 +34,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
+#include "../../ut.h"
 
 #include "alookup.h"
 
@@ -53,16 +54,13 @@ static int mod_init(void);
 
 
 /* Module parameter variables */
-char* db_url           = DEFAULT_RODB_URL;
-char* user_column      = "username";
-char* domain_column    = "domain";
-char* alias_user_column      = "alias_username";
-char* alias_domain_column    = "alias_domain";
-int   use_domain       = 0;
-char* domain_prefix    = NULL;
-
-str   dstrip_s;
-
+static str db_url       = str_init(DEFAULT_RODB_URL);
+str user_column         = str_init("username");
+str domain_column       = str_init("domain");
+str alias_user_column   = str_init("alias_username");
+str alias_domain_column = str_init("alias_domain");
+str domain_prefix       = {NULL, 0};
+int use_domain          = 0;
 
 db_con_t* db_handle;   /* Database connection handle */
 db_func_t adbf;  /* DB functions */
@@ -77,20 +75,20 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",           STR_PARAM, &db_url          },
-	{"user_column",      STR_PARAM, &user_column     },
-	{"domain_column",    STR_PARAM, &domain_column   },
-	{"alias_user_column",      STR_PARAM, &alias_user_column     },
-	{"alias_domain_column",    STR_PARAM, &alias_domain_column   },
+	{"db_url",           STR_PARAM, &db_url.s        },
+	{"user_column",      STR_PARAM, &user_column.s   },
+	{"domain_column",    STR_PARAM, &domain_column.s },
+	{"alias_user_column",      STR_PARAM, &alias_user_column.s   },
+	{"alias_domain_column",    STR_PARAM, &alias_domain_column.s },
 	{"use_domain",       INT_PARAM, &use_domain      },
-	{"domain_prefix",    STR_PARAM, &domain_prefix   },
+	{"domain_prefix",    STR_PARAM, &domain_prefix.s },
 	{0, 0, 0}
 };
 
 
 /* Module interface */
 struct module_exports exports = {
-	"alias_db", 
+	"alias_db",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,       /* Exported functions */
 	params,     /* Exported parameters */
@@ -110,7 +108,7 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	db_handle = adbf.init(db_url);
+	db_handle = adbf.init(&db_url);
 	if (!db_handle)
 	{
 		LM_ERR("unable to connect database\n");
@@ -127,30 +125,25 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	LM_INFO("initializing...\n");
+	db_url.len = strlen(db_url.s);
+	user_column.len = strlen(user_column.s);
+	domain_column.len = strlen(domain_column.s);
+	alias_domain_column.len = strlen(domain_column.s);
+	alias_user_column.len = strlen(alias_user_column.s);
+	if (domain_prefix.s)
+		domain_prefix.len = strlen(domain_prefix.s);
 
     /* Find a database module */
-	if (bind_dbmod(db_url, &adbf))
+	if (db_bind_mod(&db_url, &adbf))
 	{
 		LM_ERR("unable to bind database module\n");
 		return -1;
 	}
-	if (!DB_CAPABILITY( adbf, DB_CAP_QUERY))
+	if (!DB_CAPABILITY(adbf, DB_CAP_QUERY))
 	{
 		LM_CRIT("database modules does not "
 			"provide all functions needed by avpops module\n");
 		return -1;
-	}
-		
-
-	if(domain_prefix==NULL || strlen(domain_prefix)==0)
-	{
-		dstrip_s.s   = 0;
-		dstrip_s.len = 0;
-	}
-	else
-	{
-		dstrip_s.s   = domain_prefix;
-		dstrip_s.len = strlen(domain_prefix);
 	}
 
 	return 0;

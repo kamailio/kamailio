@@ -30,6 +30,7 @@
 
 #include "perlvdb.h"
 #include "perlvdbfunc.h"
+#include "../../str.h"
 
 /*
  * Simple conversion IV -> int
@@ -146,16 +147,16 @@ db_con_t* perlvdb_db_init(const char* url) {
  * Store name of table that will be used by
  * subsequent database functions
  */
-int perlvdb_use_table(db_con_t* h, const char* t) {
+int perlvdb_use_table(db_con_t* h, const str* t) {
 	SV *ret;
 	
-	if (!h || !t) {
+	if (!h || !t || !t->s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
 	ret = perlvdb_perlmethod(getobj(h), PERL_VDB_USETABLEMETHOD,
-			sv_2mortal(newSVpv(t, 0)), NULL, NULL, NULL);
+			sv_2mortal(newSVpv(t->s, t->len)), NULL, NULL, NULL);
 
 	return IV2int(ret);
 }
@@ -299,7 +300,7 @@ int perlvdb_db_query(db_con_t* h, db_key_t* k, db_op_t* op, db_val_t* v,
 	condarr = conds2perlarray(k, op, v, n);
 	retkeysarr = keys2perlarray(c, nc);
 
-	if (o) order = newSVpv(o, 0);
+	if (o) order = newSVpv(o->s, o->len);
 	else order = &PL_sv_undef;
 
 

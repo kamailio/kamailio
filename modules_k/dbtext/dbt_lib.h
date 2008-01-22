@@ -117,14 +117,14 @@ int dbt_cache_print(int);
 dbt_cache_p dbt_cache_get_db(str*);
 int dbt_cache_check_db(str*);
 int dbt_cache_del_db(str*);
-dbt_table_p dbt_db_get_table(dbt_cache_p, str*);
-int dbt_release_table(dbt_cache_p, str*);
+dbt_table_p dbt_db_get_table(dbt_cache_p, const str*);
+int dbt_release_table(dbt_cache_p, const str*);
 
 int dbt_cache_free(dbt_cache_p);
 
 dbt_column_p dbt_column_new(char*, int);
 dbt_row_p dbt_row_new(int);
-dbt_table_p dbt_table_new(str*, str*, char*);
+dbt_table_p dbt_table_new(const str*, const str*, const char*);
 
 int dbt_row_free(dbt_table_p, dbt_row_p);
 int dbt_column_free(dbt_column_p);
@@ -138,8 +138,8 @@ int dbt_table_add_row(dbt_table_p, dbt_row_p);
 int dbt_table_check_row(dbt_table_p, dbt_row_p);
 int dbt_table_update_flags(dbt_table_p, int, int, int);
 
-int dbt_check_mtime(str *, str *, time_t *);
-dbt_table_p dbt_load_file(str *, str *);
+int dbt_check_mtime(const str *, const str *, time_t *);
+dbt_table_p dbt_load_file(const str *, const str *);
 int dbt_print_table(dbt_table_p, str *);
 int dbt_is_neq_type(db_type_t _t0, db_type_t _t1);
 

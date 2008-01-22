@@ -127,10 +127,10 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 	db_key_t col[1];
 	db_res_t* res = NULL;
 
-	keys[0] = user_column.s;
-	keys[1] = group_column.s;
-	keys[2] = domain_column.s;
-	col[0] = group_column.s;
+	keys[0] = &user_column;
+	keys[1] = &group_column;
+	keys[2] = &domain_column;
+	col[0]  = &group_column;
 
 	if ( get_username_domain( _msg, (group_check_p)_hf, &(VAL_STR(vals)),
 	&(VAL_STR(vals+2)))!=0) {
@@ -148,7 +148,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 
 	VAL_STR(vals + 1) = *((str*)_grp);
 
-	if (group_dbf.use_table(group_dbh, table.s) < 0) {
+	if (group_dbf.use_table(group_dbh, &table) < 0) {
 		LM_ERR("failed to use_table\n");
 		return -5;
 	}
@@ -173,7 +173,7 @@ int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp)
 }
 
 
-int group_db_init(char* db_url)
+int group_db_init(const str* db_url)
 {
 	if (group_dbf.init==0){
 		LM_CRIT("null dbf \n");
@@ -190,9 +190,9 @@ error:
 }
 
 
-int group_db_bind(char* db_url)
+int group_db_bind(const str* db_url)
 {
-	if (bind_dbmod(db_url, &group_dbf)<0){
+	if (db_bind_mod(db_url, &group_dbf)<0){
 		LM_ERR("unable to bind to the database module\n");
 		return -1;
 	}
@@ -217,5 +217,5 @@ void group_db_close(void)
 
 int group_db_ver(str* name)
 {
-	return table_version( &group_dbf, group_dbh, name);
+	return db_table_version( &group_dbf, group_dbh, name);
 }

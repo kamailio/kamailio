@@ -52,33 +52,51 @@
 
 MODULE_VERSION
 
-char* db_url = DEFAULT_RODB_URL;
-char * db_table = "carrierroute";
-char * subscriber_table = "subscriber";
-char * carrier_table = "route_tree";
+str db_url = str_init(DEFAULT_RODB_URL);
+str db_table = str_init("carrierroute");
+str subscriber_table = str_init("subscriber");
+str carrier_table = str_init("route_tree");
 
-char * columns[COLUMN_NUM] = {
-                                 "id",
-                                 "carrier",
-                                 "scan_prefix",
-                                 "domain",
-                                 "prob",
-                                 "rewrite_host",
-                                 "strip",
-                                 "rewrite_prefix",
-                                 "rewrite_suffix",
-                                 "comment"
+static str id_col = str_init("id");
+static str carrier_col = str_init("carrier");
+static str scan_prefix_col = str_init("scan_prefix");
+static str domain_col = str_init("domain");
+static str prob_col = str_init("prob");
+static str rewrite_host_col = str_init("rewrite_host");
+static str strip_col = str_init("strip");
+static str rewrite_prefix_col = str_init("rewrite_prefix");
+static str rewrite_suffix_col = str_init("rewrite_suffix");
+static str comment_col = str_init("comment");
+static str username_col = str_init("username");
+static str cr_preferred_carrier_col = str_init("cr_preferred_carrier");
+static str subscriber_domain_col = str_init("domain");
+static str carrier_id_col = str_init("id");
+static str carrier_name_col = str_init("carrier");
+
+
+
+str * columns[COLUMN_NUM] = {
+                                 &id_col,
+                                 &carrier_col,
+                                 &scan_prefix_col,
+                                 &domain_col,
+                                 &prob_col,
+                                 &rewrite_host_col,
+                                 &strip_col,
+                                 &rewrite_prefix_col,
+                                 &rewrite_suffix_col,
+                                 &comment_col,
                              };
 
-char * subscriber_columns[SUBSCRIBER_COLUMN_NUM] = {
-            "username",
-            "domain",
-            "cr_preferred_carrier"
+str * subscriber_columns[SUBSCRIBER_COLUMN_NUM] = {
+            &username_col,
+            &domain_col,
+            &cr_preferred_carrier_col,
         };
 
-char * carrier_columns[CARRIER_COLUMN_NUM] = {
-            "id",
-            "carrier"
+str * carrier_columns[CARRIER_COLUMN_NUM] = {
+            &id_col,
+            &carrier_col,
         };
 
 char * config_source = "file";
@@ -117,25 +135,25 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]= {
-	{"db_url",                 STR_PARAM, &db_url },
-	{"db_table",               STR_PARAM, &db_table },
-	{"carrier_table",          STR_PARAM, &carrier_table },
-	{"subscriber_table",       STR_PARAM, &subscriber_table },
-	{"id_column",              STR_PARAM, &columns[COL_ID] },
-	{"carrier_column",         STR_PARAM, &columns[COL_CARRIER] },
-	{"scan_prefix_column",     STR_PARAM, &columns[COL_SCAN_PREFIX] },
-	{"domain_column",          STR_PARAM, &columns[COL_DOMAIN] },
-	{"prob_column",            STR_PARAM, &columns[COL_PROB] },
-	{"rewrite_host_column",    STR_PARAM, &columns[COL_REWRITE_HOST] },
-	{"strip_column",           STR_PARAM, &columns[COL_STRIP] },
-	{"rewrite_prefix_column",  STR_PARAM, &columns[COL_REWRITE_PREFIX] },
-	{"rewrite_suffix_column",  STR_PARAM, &columns[COL_REWRITE_SUFFIX] },
-	{"comment_column",         STR_PARAM, &columns[COL_COMMENT] },
-	{"subscriber_user_col",    STR_PARAM, &subscriber_columns[SUBSCRIBER_USERNAME_COL] },
-	{"subscriber_domain_col",  STR_PARAM, &subscriber_columns[SUBSCRIBER_DOMAIN_COL] },
-	{"subscriber_carrier_col", STR_PARAM, &subscriber_columns[SUBSCRIBER_CARRIER_COL] },
-	{"carrier_id_col",         STR_PARAM, &carrier_columns[CARRIER_ID_COL] },
-	{"carrier_name_col",       STR_PARAM, &carrier_columns[CARRIER_NAME_COL] },
+	{"db_url",                 STR_PARAM, &db_url.s },
+	{"db_table",               STR_PARAM, &db_table.s },
+	{"carrier_table",          STR_PARAM, &carrier_table.s },
+	{"subscriber_table",       STR_PARAM, &subscriber_table.s },
+	{"id_column",              STR_PARAM, &id_col.s },
+	{"carrier_column",         STR_PARAM, &carrier_col.s },
+	{"scan_prefix_column",     STR_PARAM, &scan_prefix_col.s },
+	{"domain_column",          STR_PARAM, &domain_col.s },
+	{"prob_column",            STR_PARAM, &prob_col.s },
+	{"rewrite_host_column",    STR_PARAM, &rewrite_host_col.s },
+	{"strip_column",           STR_PARAM, &strip_col.s },
+	{"rewrite_prefix_column",  STR_PARAM, &rewrite_prefix_col.s },
+	{"rewrite_suffix_column",  STR_PARAM, &rewrite_suffix_col.s },
+	{"comment_column",         STR_PARAM, &comment_col.s },
+	{"subscriber_user_col",    STR_PARAM, &username_col.s },
+	{"subscriber_domain_col",  STR_PARAM, &subscriber_domain_col.s },
+	{"subscriber_carrier_col", STR_PARAM, &cr_preferred_carrier_col.s },
+	{"carrier_id_col",         STR_PARAM, &carrier_id_col.s },
+	{"carrier_name_col",       STR_PARAM, &carrier_name_col.s },
 	{"config_source",          STR_PARAM, &config_source },
 	{"default_tree",           STR_PARAM, &default_tree },
 	{"config_file",            STR_PARAM, &config_file },
@@ -178,6 +196,27 @@ struct module_exports exports = {
  * @return 0 on success, -1 on failure
  */
 static int mod_init(void) {
+
+	db_url.len = strlen(db_url.s);
+	db_table.len = strlen(db_table.s);
+	carrier_table.len = strlen(carrier_table.s);
+	subscriber_table.len = strlen(subscriber_table.s);
+	id_col.len = strlen(id_col.s);
+	carrier_col.len = strlen(carrier_col.s);
+	scan_prefix_col.len = strlen(scan_prefix_col.s);
+	domain_col.len = strlen(domain_col.s);
+	prob_col.len = strlen(prob_col.s);
+	rewrite_host_col.len = strlen(rewrite_host_col.s);
+	strip_col.len = strlen(strip_col.s);
+	rewrite_prefix_col.len = strlen(rewrite_prefix_col.s);
+	rewrite_suffix_col.len = strlen(rewrite_suffix_col.s);
+	comment_col.len = strlen(comment_col.s);
+	username_col.len = strlen(username_col.s);
+	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
+	cr_preferred_carrier_col.len = strlen(cr_preferred_carrier_col.s);
+	carrier_id_col.len = strlen(carrier_id_col.s);
+	carrier_name_col.len = strlen(carrier_name_col.s);
+
 	if (init_route_data(config_source) < 0) {
 		LM_ERR("could not init route data\n");
 		return -1;

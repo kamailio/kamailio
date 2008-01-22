@@ -41,12 +41,12 @@
 int bdb_reload(char* _n);
 
 void bdb_check_reload(db_con_t* _con);
-int  bdb_use_table(db_con_t* _h, const char* _t);
+int  bdb_use_table(db_con_t* _h, const str* _t);
 
 /*
  * Initialize database connection
  */
-db_con_t* bdb_init(const char* _sqlurl);
+db_con_t* bdb_init(const str* _sqlurl);
 
 
 /*

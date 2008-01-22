@@ -67,12 +67,12 @@ int reload_trusted_table(void)
 
 	char *pattern, *tag;
 
-	cols[0] = source_col;
-	cols[1] = proto_col;
-	cols[2] = from_col;
-	cols[3] = tag_col;
+	cols[0] = &source_col;
+	cols[1] = &proto_col;
+	cols[2] = &from_col;
+	cols[3] = &tag_col;
 
-	if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
+	if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
 		LM_ERR("failed to use trusted table\n");
 		return -1;
 	}
@@ -148,15 +148,14 @@ int reload_trusted_table(void)
 int init_trusted(void)
 {
 	int ver;
-	str name;
 	/* Check if hash table needs to be loaded from trusted table */
 
-	if (!db_url) {
+	if (!db_url.s) {
 		LM_INFO("db_url parameter of permissions module not set, "
 			"disabling allow_trusted\n");
 		return 0;
 	} else {
-		if (bind_dbmod(db_url, &perm_dbf) < 0) {
+		if (db_bind_mod(&db_url, &perm_dbf) < 0) {
 			LM_ERR("load a database support module\n");
 			return -1;
 		}
@@ -171,15 +170,13 @@ int init_trusted(void)
 	hash_table = 0;
 
 	if (db_mode == ENABLE_CACHE) {
-		db_handle = perm_dbf.init(db_url);
+		db_handle = perm_dbf.init(&db_url);
 		if (!db_handle) {
 			LM_ERR("unable to connect database\n");
 			return -1;
 		}
 
-		name.s = trusted_table;
-		name.len = strlen(trusted_table);
-		ver = table_version(&perm_dbf, db_handle, &name);
+		ver = db_table_version(&perm_dbf, db_handle, &trusted_table);
 
 		if (ver < 0) {
 			LM_ERR("failed to query table version\n");
@@ -238,24 +235,21 @@ error:
  */
 int init_child_trusted(int rank)
 {
-	str name;
 	int ver;
 
-	if (!db_url) {
+	if (!db_url.s) {
 		return 0;
 	}
 	
 	/* Check if database is needed by child */
 	if (db_mode==DISABLE_CACHE && rank>0) {
-		db_handle = perm_dbf.init(db_url);
+		db_handle = perm_dbf.init(&db_url);
 		if (!db_handle) {
 			LM_ERR("unable to connect database\n");
 			return -1;
 		}
 
-		name.s = trusted_table;
-		name.len = strlen(trusted_table);
-		ver = table_version(&perm_dbf, db_handle, &name);
+		ver = db_table_version(&perm_dbf, db_handle, &trusted_table);
 
 		if (ver < 0) {
 			LM_ERR("failed to query table version\n");
@@ -278,8 +272,8 @@ int init_child_trusted(int rank)
  */
 int mi_init_trusted(void)
 {
-    if (!db_url || db_handle) return 0;
-    db_handle = perm_dbf.init(db_url);
+    if (!db_url.s || db_handle) return 0;
+    db_handle = perm_dbf.init(&db_url);
     if (!db_handle) {
 	LM_ERR("unable to connect database\n");
 	return -1;
@@ -423,19 +417,19 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 	db_key_t keys[1];
 	db_val_t vals[1];
 	db_key_t cols[3];
-
-	if (!db_url) {
+	
+	if (!db_url.s) {
 		LM_ERR("set db_mode parameter of permissions module first !\n");
 		return -1;
 	}
 
 	if (db_mode == DISABLE_CACHE) {
-		keys[0] = source_col;
-		cols[0] = proto_col;
-		cols[1] = from_col;
-		cols[2] = tag_col;
+		keys[0] = &source_col;
+		cols[0] = &proto_col;
+		cols[1] = &from_col;
+		cols[2] = &tag_col;
 
-		if (perm_dbf.use_table(db_handle, trusted_table) < 0) {
+		if (perm_dbf.use_table(db_handle, &trusted_table) < 0) {
 			LM_ERR("failed to use trusted table\n");
 			return -1;
 		}

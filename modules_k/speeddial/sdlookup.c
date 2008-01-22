@@ -69,7 +69,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
  */
 int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 {
-	str user_s;
+	str user_s, table_s;
 	int nr_keys;
 	struct sip_uri *puri;
 	struct sip_uri turi;
@@ -79,9 +79,16 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	db_res_t* db_res = NULL;
 	int printbuf_len;
 
+	if(!_table) {
+		LM_ERR("invalid parameter");
+		return -1;
+	}
+	table_s.s = _table;
+	table_s.len = strlen(_table);
+
 	/* init */
 	nr_keys = 0;
-	db_cols[0]=new_uri_column;
+	db_cols[0]=&new_uri_column;
 	
 	if(_owner)
 	{
@@ -108,7 +115,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		}
 	}
 		
-	db_keys[nr_keys]=user_column;
+	db_keys[nr_keys]=&user_column;
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = puri->user.s;
@@ -117,7 +124,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 
 	if(use_domain>=1)
 	{
-		db_keys[nr_keys]=domain_column;
+		db_keys[nr_keys]=&domain_column;
 		db_vals[nr_keys].type = DB_STR;
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val.s = puri->host.s;
@@ -139,7 +146,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		goto err_server;
 	}
 	
-	db_keys[nr_keys]=sd_user_column;
+	db_keys[nr_keys]=&sd_user_column;
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.user.s;
@@ -148,7 +155,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	
 	if(use_domain>=2)
 	{
-		db_keys[nr_keys]=sd_domain_column;
+		db_keys[nr_keys]=&sd_domain_column;
 		db_vals[nr_keys].type = DB_STR;
 		db_vals[nr_keys].nul = 0;
 		db_vals[nr_keys].val.str_val.s = _msg->parsed_uri.host.s;
@@ -164,7 +171,7 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 		}
 	}
 	
-	db_funcs.use_table(db_handle, _table);
+	db_funcs.use_table(db_handle, &table_s);
 	if(db_funcs.query(db_handle, db_keys, NULL, db_vals, db_cols,
 		nr_keys /*no keys*/, 1 /*no cols*/, NULL, &db_res)!=0)
 	{

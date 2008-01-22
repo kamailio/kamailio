@@ -48,10 +48,10 @@
 #define DS_PROBING_DST		2  /* checking destination */
 #define DS_RESET_FAIL_DST	4  /* Reset-Failure-Counter */
 
-extern char *ds_db_url;
-extern char *ds_table_name;
-extern char *ds_set_id_col;
-extern char *ds_dest_uri_col;
+extern str ds_db_url;
+extern str ds_table_name;
+extern str ds_set_id_col;
+extern str ds_dest_uri_col;
 
 typedef struct _ds_param
 {

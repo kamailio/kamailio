@@ -287,7 +287,7 @@ static int mod_init(void)
 
 	/* Shall we use database ? */
 	if (db_mode != NO_DB) { /* Yes */
-		if (bind_dbmod(db_url.s, &ul_dbf) < 0) { /* Find database module */
+		if (db_bind_mod(&db_url, &ul_dbf) < 0) { /* Find database module */
 			LM_ERR("failed to bind database module\n");
 			return -1;
 		}
@@ -340,7 +340,7 @@ static int child_init(int _rank)
 			break;
 	}
 
-	ul_dbh = ul_dbf.init(db_url.s); /* Get a new database connection */
+	ul_dbh = ul_dbf.init(&db_url); /* Get a new database connection */
 	if (!ul_dbh) {
 		LM_ERR("child(%d): failed to connect to database\n", _rank);
 		return -1;
@@ -370,7 +370,7 @@ static int mi_child_init(void)
 		return 0;
 
 	if (db_mode != NO_DB) {
-		ul_dbh = ul_dbf.init(db_url.s);
+		ul_dbh = ul_dbf.init(&db_url);
 		if (!ul_dbh) {
 			LM_ERR("failed to connect to database\n");
 			return -1;

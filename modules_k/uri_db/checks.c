@@ -88,15 +88,15 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	 * (which are different from digest username and it will still match)
 	 */
 	if (use_uri_table) {
-		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
+		if (uridb_dbf.use_table(db_handle, &uri_table) < 0) {
 			LM_ERR("Error while trying to use uri table\n");
 			return -7;
 		}
 
-		keys[0] = uri_user_col.s;
-		keys[1] = uri_domain_col.s;
-		keys[2] = uri_uriuser_col.s;
-		cols[0] = uri_user_col.s;
+		keys[0] = &uri_user_col;
+		keys[1] = &uri_domain_col;
+		keys[2] = &uri_uriuser_col;
+		cols[0] = &uri_user_col;
 
 		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
@@ -196,21 +196,21 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	if (use_uri_table) {
-		if (uridb_dbf.use_table(db_handle, uri_table.s) < 0) {
+		if (uridb_dbf.use_table(db_handle, &uri_table) < 0) {
 			LM_ERR("Error while trying to use uri table\n");
 			return -2;
 		}
-		keys[0] = uri_uriuser_col.s;
-		keys[1] = uri_domain_col.s;
-		cols[0] = uri_uriuser_col.s;
+		keys[0] = &uri_uriuser_col;
+		keys[1] = &uri_domain_col;
+		cols[0] = &uri_uriuser_col;
 	} else {
-		if (uridb_dbf.use_table(db_handle, subscriber_table.s) < 0) {
+		if (uridb_dbf.use_table(db_handle, &subscriber_table) < 0) {
 			LM_ERR("Error while trying to use subscriber table\n");
 			return -3;
 		}
-		keys[0] = subscriber_user_col.s;
-		keys[1] = subscriber_domain_col.s;
-		cols[0] = subscriber_user_col.s;
+		keys[0] = &subscriber_user_col;
+		keys[1] = &subscriber_domain_col;
+		cols[0] = &subscriber_user_col;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
@@ -237,12 +237,13 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 
 
 
-int uridb_db_init(char* db_url)
+int uridb_db_init(const str* db_url)
 {
 	if (uridb_dbf.init==0){
 		LM_CRIT("BUG: null dbf\n");
 		goto error;
 	}
+	
 	db_handle=uridb_dbf.init(db_url);
 	if (db_handle==0){
 		LM_ERR("unable to connect to the database\n");
@@ -255,9 +256,9 @@ error:
 
 
 
-int uridb_db_bind(char* db_url)
+int uridb_db_bind(const str* db_url)
 {
-	if (bind_dbmod(db_url, &uridb_dbf)<0){
+	if (db_bind_mod(db_url, &uridb_dbf)<0){
 		LM_ERR("unable to bind to the database module\n");
 		return -1;
 	}
@@ -280,21 +281,22 @@ void uridb_db_close(void)
 }
 
 
-int uridb_db_ver(char* db_url, str* name)
+int uridb_db_ver(const str* db_url, str* name)
 {
 	db_con_t* dbh;
 	int ver;
-
+	
 	if (uridb_dbf.init==0){
 		LM_CRIT("BUG: unbound database\n");
 		return -1;
 	}
+
 	dbh=uridb_dbf.init(db_url);
 	if (dbh==0){
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}
-	ver=table_version(&uridb_dbf, dbh, name);
+	ver=db_table_version(&uridb_dbf, dbh, name);
 	uridb_dbf.close(dbh);
 	return ver;
 }

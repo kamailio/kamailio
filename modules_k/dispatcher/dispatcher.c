@@ -63,9 +63,9 @@ char *dslistfile = CFG_DIR"dispatcher.list";
 int  ds_force_dst   = 0;
 int  ds_flags       = 0; 
 int  ds_use_default = 0; 
-char*  dst_avp_param     = NULL;
-char*  grp_avp_param     = NULL;
-char*  cnt_avp_param     = NULL;
+static str dst_avp_param = {NULL, 0};
+static str grp_avp_param = {NULL, 0};
+static str cnt_avp_param = {NULL, 0};
 int_str dst_avp_name;
 unsigned short dst_avp_type;
 int_str grp_avp_name;
@@ -80,10 +80,10 @@ str ds_ping_from   = {"sip:dispatcher@localhost", 24};
 static int ds_ping_interval = 0;
 
 /*db */
-char* ds_db_url		  = NULL;
-char* ds_set_id_col	  = DS_SET_ID_COL;
-char* ds_dest_uri_col = DS_DEST_URI_COL;
-char* ds_table_name   = DS_TABLE_NAME;
+str ds_db_url       = {NULL, 0};
+str ds_set_id_col   = str_init(DS_SET_ID_COL);
+str ds_dest_uri_col = str_init(DS_DEST_URI_COL);
+str ds_table_name   = str_init(DS_TABLE_NAME);
 
 
 /** module functions */
@@ -100,14 +100,14 @@ static int w_ds_mark_dst1(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list0(struct sip_msg*, char*, char*);
 static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
 
-void destroy(void);
+static void destroy(void);
 
 static int ds_fixup(void** param, int param_no);
 static int ds_warn_fixup(void** param, int param_no);
 
-struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
-struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
-struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
+static struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
+static struct mi_root* ds_mi_list(struct mi_root* cmd, void* param);
+static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
 static int mi_child_init(void);
 
 static cmd_export_t cmds[]={
@@ -125,19 +125,19 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={
 	{"list_file",       STR_PARAM, &dslistfile},
-	{"db_url",		    STR_PARAM, &ds_db_url},
-	{"table_name", 	    STR_PARAM, &ds_table_name},
-	{"setid_col",       STR_PARAM, &ds_set_id_col},
-	{"destination_col", STR_PARAM, &ds_dest_uri_col},
+	{"db_url",		    STR_PARAM, &ds_db_url.s},
+	{"table_name", 	    STR_PARAM, &ds_table_name.s},
+	{"setid_col",       STR_PARAM, &ds_set_id_col.s},
+	{"destination_col", STR_PARAM, &ds_dest_uri_col.s},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
-	{"dst_avp",         STR_PARAM, &dst_avp_param},
-	{"grp_avp",         STR_PARAM, &grp_avp_param},
-	{"cnt_avp",         STR_PARAM, &cnt_avp_param},
+	{"dst_avp",         STR_PARAM, &dst_avp_param.s},
+	{"grp_avp",         STR_PARAM, &grp_avp_param.s},
+	{"cnt_avp",         STR_PARAM, &cnt_avp_param.s},
 	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
-	{"ds_ping_method",     STR_PARAM, &ds_ping_method},
-	{"ds_ping_from",       STR_PARAM, &ds_ping_from},
+	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
+	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
 	{"ds_ping_interval",   INT_PARAM, &ds_ping_interval},
 	{0,0,0}
 };
@@ -172,14 +172,25 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
+	if (ds_db_url.s)
+		ds_db_url.len     = strlen(ds_db_url.s);
+	ds_table_name.len = strlen(ds_table_name.s);
+	if (dst_avp_param.s)
+	dst_avp_param.len = strlen(dst_avp_param.s);
+	if (grp_avp_param.s)
+	grp_avp_param.len = strlen(grp_avp_param.s);
+	if (cnt_avp_param.s)
+	cnt_avp_param.len = strlen(cnt_avp_param.s);	
+	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
+	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
+
 	pv_spec_t avp_spec;
-	str stmp;
 	LM_DBG("initializing ...\n");
 
 	if(init_data()!= 0)
 		return -1;
 
-	if(ds_db_url!= NULL)
+	if(ds_db_url.s)
 	{
 		if(init_ds_db()!= 0)
 		{
@@ -195,66 +206,60 @@ static int mod_init(void)
 		}
 	}
 	
-	if (dst_avp_param && *dst_avp_param)
+	if (dst_avp_param.s && dst_avp_param.len > 0)
 	{
-		stmp.s = dst_avp_param; stmp.len = strlen(stmp.s);
-		if (pv_parse_spec(&stmp, &avp_spec)==0
+		if (pv_parse_spec(&dst_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
 		{
-			LM_ERR("malformed or non AVP %s AVP definition\n", dst_avp_param);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n", dst_avp_param.len, dst_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &dst_avp_name, &dst_avp_type)!=0)
 		{
-			LM_ERR("[%s]- invalid AVP definition\n", dst_avp_param);
+			LM_ERR("[%.*s]- invalid AVP definition\n", dst_avp_param.len, dst_avp_param.s);
 			return -1;
 		}
 	} else {
 		dst_avp_name.n = 0;
 		dst_avp_type = 0;
 	}
-	if (grp_avp_param && *grp_avp_param)
+	if (grp_avp_param.s && grp_avp_param.len > 0)
 	{
-		stmp.s = grp_avp_param; stmp.len = strlen(stmp.s);
-		if (pv_parse_spec(&stmp, &avp_spec)==0
+		if (pv_parse_spec(&grp_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
 		{
-			LM_ERR("malformed or non AVP %s AVP definition\n", grp_avp_param);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n", grp_avp_param.len, grp_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &grp_avp_name, &grp_avp_type)!=0)
 		{
-			LM_ERR("[%s]- invalid AVP definition\n", grp_avp_param);
+			LM_ERR("[%.*s]- invalid AVP definition\n", grp_avp_param.len, grp_avp_param.s);
 			return -1;
 		}
 	} else {
 		grp_avp_name.n = 0;
 		grp_avp_type = 0;
 	}
-	if (cnt_avp_param && *cnt_avp_param)
+	if (cnt_avp_param.s && cnt_avp_param.len > 0)
 	{
-		stmp.s = cnt_avp_param; stmp.len = strlen(stmp.s);
-		if (pv_parse_spec(&stmp, &avp_spec)==0
+		if (pv_parse_spec(&cnt_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
 		{
-			LM_ERR("malformed or non AVP %s AVP definition\n", cnt_avp_param);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n", cnt_avp_param.len, cnt_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &cnt_avp_name, &cnt_avp_type)!=0)
 		{
-			LM_ERR("[%s]- invalid AVP definition\n", cnt_avp_param);
+			LM_ERR("[%.*s]- invalid AVP definition\n", cnt_avp_param.len, cnt_avp_param.s);
 			return -1;
 		}
 	} else {
 		cnt_avp_name.n = 0;
 		cnt_avp_type = 0;
 	}
-	
-	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
-	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 
 	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
 	if (ds_ping_interval > 0)
@@ -303,7 +308,7 @@ static int child_init(int rank)
 static int mi_child_init(void)
 {
 	
-	if(ds_db_url!= NULL)
+	if(ds_db_url.s)
 		return ds_connect_db();
 	return 0;
 
@@ -312,11 +317,11 @@ static int mi_child_init(void)
 /**
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	LM_DBG("destroying module ...\n");
 	ds_destroy_list();
-	if(ds_db_url)
+	if(ds_db_url.s)
 		ds_disconnect_db();
 }
 
@@ -468,7 +473,7 @@ static int ds_fixup(void** param, int param_no)
 
 static int ds_warn_fixup(void** param, int param_no)
 {
-	if(dst_avp_param==NULL || grp_avp_param == NULL || cnt_avp_param == NULL)
+	if(!dst_avp_param.s || !grp_avp_param.s || !cnt_avp_param.s)
 	{
 		LM_ERR("failover functions used, but AVPs paraamters required"
 				" are NULL -- feature disabled\n");
@@ -478,7 +483,7 @@ static int ds_warn_fixup(void** param, int param_no)
 
 /************************** MI STUFF ************************/
 
-struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
+static struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 {
 	str sp;
 	int ret;
@@ -489,7 +494,7 @@ struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 	sp = node->value;
-	if(sp.len<=0 || sp.s == NULL)
+	if(sp.len<=0 || !sp.s)
 	{
 		LM_ERR("bad state value\n");
 		return init_mi_tree( 500, "bad state value", 15);
@@ -539,7 +544,7 @@ struct mi_root* ds_mi_set(struct mi_root* cmd_tree, void* param)
 
 
 
-struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
+static struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_root* rpl_tree;
 
@@ -562,9 +567,9 @@ struct mi_root* ds_mi_list(struct mi_root* cmd_tree, void* param)
 #define MI_NOT_SUPPORTED		"DB mode not configured"
 #define MI_NOT_SUPPORTED_LEN 	(sizeof(MI_NOT_SUPPORTED)-1)
 
-struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
+static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 {
-	if(ds_db_url==NULL) {
+	if(!ds_db_url.s) {
 		if (ds_load_list(dslistfile)!=0)
 			return init_mi_tree(500, MI_ERR_RELOAD, MI_ERR_RELOAD_LEN);
 	} else {
@@ -575,19 +580,12 @@ struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param)
 }
 
 
-
-/**
- *
- */
 static int w_ds_is_from_list0(struct sip_msg *msg, char *str1, char *str2)
 {
 	return ds_is_from_list(msg, -1);
 }
 
 
-/**
- *
- */
 static int w_ds_is_from_list1(struct sip_msg *msg, char *set, char *str2)
 {
 	return ds_is_from_list(msg, (int)(long)set);

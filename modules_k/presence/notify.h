@@ -61,6 +61,34 @@ typedef struct wid_cback
 	subs_t* wi_subs;
 }c_back_param;
 
+extern str str_to_user_col;
+extern str str_username_col;
+extern str str_domain_col;
+extern str str_body_col;
+extern str str_to_domain_col;
+extern str str_watcher_username_col;
+extern str str_watcher_domain_col;
+extern str str_event_id_col;
+extern str str_event_col;
+extern str str_etag_col;
+extern str str_from_tag_col;
+extern str str_to_tag_col;
+extern str str_callid_col;
+extern str str_local_cseq_col;
+extern str str_remote_cseq_col;
+extern str str_record_route_col;
+extern str str_contact_col;
+extern str str_expires_col;
+extern str str_status_col;
+extern str str_reason_col;
+extern str str_socket_info_col;
+extern str str_local_contact_col;
+extern str str_version_col;
+extern str str_presentity_uri_col;
+extern str str_inserted_time_col;
+extern str str_received_time_col;
+extern str str_id_col;
+
 void PRINT_DLG(FILE* out, dlg_t* _d);
 
 void printf_subs(subs_t* subs);

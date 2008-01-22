@@ -56,18 +56,18 @@ MODULE_VERSION
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
-int pxml_add_xcap_server( modparam_t type, void* val);
-int shm_copy_xcap_list(void);
-void free_xs_list(xcap_serv_t* xs_list, int mem_type);
-int xcap_doc_updated(int doc_type, str xid, char* doc);
-int mi_child_init(void);
-struct mi_root* dum(struct mi_root* cmd, void* param);
+static int pxml_add_xcap_server( modparam_t type, void* val);
+static int shm_copy_xcap_list(void);
+static void free_xs_list(xcap_serv_t* xs_list, int mem_type);
+static int xcap_doc_updated(int doc_type, str xid, char* doc);
+static int mi_child_init(void);
+static struct mi_root* dum(struct mi_root* cmd, void* param);
 
 /** module variables ***/
 add_event_t pres_add_event;
 update_watchers_t pres_update_watchers;
 
-char* xcap_table="xcap";  
+str xcap_table= str_init("xcap");
 str db_url = {0, 0};
 int force_active= 0;
 int pidf_manipulation= 0;
@@ -87,7 +87,7 @@ xcapGetNewDoc_t xcap_GetNewDoc;
 
 static param_export_t params[]={
 	{ "db_url",					STR_PARAM,                          &db_url.s},
-	{ "xcap_table",				STR_PARAM,                        &xcap_table},
+	{ "xcap_table",				STR_PARAM,                      &xcap_table.s},
 	{ "force_active",			INT_PARAM,                     &force_active },
 	{ "pidf_manipulation",      INT_PARAM,                 &pidf_manipulation}, 
 	{ "integrated_xcap_server", INT_PARAM,            &integrated_xcap_server}, 
@@ -107,7 +107,7 @@ struct module_exports exports= {
 	 0,  						/* exported functions */
 	 params,					/* exported parameters */
 	 0,							/* exported statistics */
-	 mi_cmds,							/* exported MI functions */
+	 mi_cmds,					/* exported MI functions */
 	 0,							/* exported pseudo-variables */
 	 0,							/* extra processes */
 	 mod_init,					/* module initialization function */
@@ -121,16 +121,16 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	str _s;
 	int ver = 0;
 	bind_presence_t bind_presence;
 	presence_api_t pres;
 		
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(db_url.s),db_url.len, db_url.s);
+	xcap_table.len = xcap_table.s ? strlen(xcap_table.s) : 0;
 	
 	/* binding to mysql module  */
-	if (bind_dbmod(db_url.s, &pxml_dbf))
+	if (db_bind_mod(&db_url, &pxml_dbf))
 	{
 		LM_ERR("Database module not found\n");
 		return -1;
@@ -142,20 +142,18 @@ static int mod_init(void)
 		return -1;
 	}
 
-	pxml_db = pxml_dbf.init(db_url.s);
+	pxml_db = pxml_dbf.init(&db_url);
 	if (!pxml_db)
 	{
 		LM_ERR("while connecting to database\n");
 		return -1;
 	}
 
-	_s.s = xcap_table;
-	_s.len = strlen(xcap_table);
-	 ver =  table_version(&pxml_dbf, pxml_db, &_s);
+	ver = db_table_version(&pxml_dbf, pxml_db, &xcap_table);
 	if(ver!=S_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>, need v%d\n",
-				 ver, _s.s, S_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n",
+				 ver, xcap_table.len, xcap_table.s, S_TABLE_VERSION);
 		return -1;
 	}
 	/* load SL API */
@@ -235,23 +233,23 @@ static int mod_init(void)
 	return 0;
 }
 
-int mi_child_init(void)
-{
+static int mi_child_init(void)
+{	
 	if (pxml_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	pxml_db = pxml_dbf.init(db_url.s);
+	pxml_db = pxml_dbf.init(&db_url);
 	if (pxml_db== NULL)
 	{
 		LM_ERR("while connecting database\n");
 		return -1;
 	}
 		
-	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
+	if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
 	{
-		LM_ERR("in use_table sql operation\n");
+		LM_ERR("in use_table SQL operation\n");
 		return -1;
 	}
 	
@@ -269,14 +267,13 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	pxml_db = pxml_dbf.init(db_url.s);
+	pxml_db = pxml_dbf.init(&db_url);
 	if (pxml_db== NULL)
 	{
 		LM_ERR("child %d: ERROR while connecting database\n",rank);
 		return -1;
 	}
-		
-	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0)  
+	if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0)
 	{
 		LM_ERR("child %d: ERROR in use_table\n", rank);
 		return -1;
@@ -298,7 +295,7 @@ static void destroy(void)
 	return ;
 }
 
-int pxml_add_xcap_server( modparam_t type, void* val)
+static int pxml_add_xcap_server( modparam_t type, void* val)
 {
 	xcap_serv_t* xs;
 	int size;
@@ -361,7 +358,7 @@ error:
 	return -1;
 }
 
-int shm_copy_xcap_list(void)
+static int shm_copy_xcap_list(void)
 {
 	xcap_serv_t* xs, *shm_xs, *prev_xs;
 	int size;
@@ -407,7 +404,7 @@ error:
 	return -1;
 }
 
-void free_xs_list(xcap_serv_t* xsl, int mem_type)
+static void free_xs_list(xcap_serv_t* xsl, int mem_type)
 {
 	xcap_serv_t* xs, *prev_xs;
 
@@ -425,7 +422,7 @@ void free_xs_list(xcap_serv_t* xsl, int mem_type)
 	xsl= NULL;
 }
 
-int xcap_doc_updated(int doc_type, str xid, char* doc)
+static int xcap_doc_updated(int doc_type, str xid, char* doc)
 {
 	pres_ev_t ev;
 	str rules_doc;
@@ -446,7 +443,7 @@ int xcap_doc_updated(int doc_type, str xid, char* doc)
 
 }
 
-struct mi_root* dum(struct mi_root* cmd, void* param)
+static struct mi_root* dum(struct mi_root* cmd, void* param)
 {
 	return 0;
 }

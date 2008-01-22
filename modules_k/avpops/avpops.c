@@ -51,11 +51,16 @@
 MODULE_VERSION
 
 /* modules param variables */
-static char *DB_URL        = 0;  /* database url */
-static char *DB_TABLE      = 0;  /* table */
-static int  use_domain     = 0;  /* if domain should be use for avp matching */
-static char *db_columns[6] = {"uuid","attribute","value",
-                              "type","username","domain"};
+static str db_url          = {NULL, 0};  /* database url */
+static str db_table        = {NULL, 0};  /* table */
+static int use_domain      = 0;  /* if domain should be use for avp matching */
+static str uuid_col        = str_init("uuid");
+static str attribute_col   = str_init("attribute");
+static str value_col       = str_init("value");
+static str type_col        = str_init("type");
+static str username_col    = str_init("username");
+static str domain_col      = str_init("domain");
+static str* db_columns[6] = {&uuid_col, &attribute_col, &value_col, &type_col, &username_col, &domain_col};
 
 
 static int avpops_init(void);
@@ -125,16 +130,16 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &DB_URL         },
-	{"avp_url",           STR_PARAM, &DB_URL         },
-	{"avp_table",         STR_PARAM, &DB_TABLE       },
-	{"use_domain",        INT_PARAM, &use_domain     },
-	{"uuid_column",       STR_PARAM, &db_columns[0]  },
-	{"attribute_column",  STR_PARAM, &db_columns[1]  },
-	{"value_column",      STR_PARAM, &db_columns[2]  },
-	{"type_column",       STR_PARAM, &db_columns[3]  },
-	{"username_column",   STR_PARAM, &db_columns[4]  },
-	{"domain_column",     STR_PARAM, &db_columns[5]  },
+	{"db_url",            STR_PARAM, &db_url.s        },
+	{"avp_url",           STR_PARAM, &db_url.s        },
+	{"avp_table",         STR_PARAM, &db_table.s      },
+	{"use_domain",        INT_PARAM, &use_domain      },
+	{"uuid_column",       STR_PARAM, &uuid_col.s      },
+	{"attribute_column",  STR_PARAM, &attribute_col.s },
+	{"value_column",      STR_PARAM, &value_col.s     },
+	{"type_column",       STR_PARAM, &type_col.s      },
+	{"username_column",   STR_PARAM, &username_col.s  },
+	{"domain_column",     STR_PARAM, &domain_col.s    },
 	{"db_scheme",         STR_PARAM|USE_FUNC_PARAM, (void*)avp_add_db_scheme },
 	{0, 0, 0}
 };
@@ -160,21 +165,32 @@ static int avpops_init(void)
 {
 	LM_INFO("initializing...\n");
 
+	if (db_url.s)
+		db_url.len = strlen(db_url.s);
+	if (db_table.s)
+		db_table.len = strlen(db_table.s);
+	uuid_col.len = strlen(uuid_col.s);
+	attribute_col.len = strlen(attribute_col.s);
+	value_col.len = strlen(value_col.s);
+	type_col.len = strlen(type_col.s);
+	username_col.len = strlen(username_col.s);
+	domain_col.len = strlen(domain_col.s);
+
 	/* if DB_URL defined -> bind to a DB module */
-	if (DB_URL!=0)
+	if (db_url.s!=0)
 	{
 		/* check AVP_TABLE param */
-		if (DB_TABLE==0)
+		if (db_table.s==0)
 		{
 			LM_CRIT("\"AVP_DB\" present but \"AVP_TABLE\" found empty\n");
 			goto error;
 		}
 		/* bind to the DB module */
-		if (avpops_db_bind(DB_URL)<0)
+		if (avpops_db_bind(&db_url)<0)
 			goto error;
 	}
 
-	init_store_avps( db_columns );
+	init_store_avps(db_columns);
 
 	return 0;
 error:
@@ -185,13 +201,13 @@ error:
 static int avpops_child_init(int rank)
 {
 	/* init DB only if enabled */
-	if (DB_URL==0)
+	if (db_url.s==0)
 		return 0;
 	/* skip main process and TCP manager process */
 	if (rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0;
 	/* init DB connection */
-	return avpops_db_init(DB_URL, DB_TABLE, db_columns);
+	return avpops_db_init(&db_url, &db_table, db_columns);
 }
 
 
@@ -206,7 +222,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 
 	flags=0;
 	flags0=0;
-	if (DB_URL==0)
+	if (db_url.s==0)
 	{
 		LM_ERR("you have to config a db url for using avp_db_xxx functions\n");
 		return E_UNSPEC;
@@ -315,7 +331,7 @@ static int fixup_db_query_avp(void** param, int param_no)
 	pvname_list_t *anlist = NULL;
 	str s;
 
-	if (DB_URL==0)
+	if (db_url.s==0)
 	{
 		LM_ERR("you have to config a db url for using avp_db_query function\n");
 		return E_UNSPEC;

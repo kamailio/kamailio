@@ -37,18 +37,14 @@
 #include "flatstore.h"
 
 
-static int parse_flat_url(const char* url, const char** path)
+static int parse_flat_url(const str* url, str* path)
 {
-	int len;
-
-	if (!url || !path) {
+	if (!url || !url->s || !path) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-
-	len = strlen(url);
-	
-	*path = strchr(url, ':') + 1;
+	path->s = strchr(url->s, ':') + 1;
+	path->len = strlen(path->s);
 	return 0;
 }
 
@@ -58,19 +54,19 @@ static int parse_flat_url(const char* url, const char** path)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* flat_db_init(const char* url)
+db_con_t* flat_db_init(const str* url)
 {
 	db_con_t* res;
 
-	if (!url) {
+	if (!url || !url->s) {
 		LM_ERR("invalid parameter value\n");
 		return 0;
 	}
 
 	/* We do not know the name of the table (and the name of the corresponding
-	 * file) at this point, we will simply store the path taken from url 
+	 * file) at this point, we will simply store the path taken from the url 
 	 * parameter in the table variable, flat_use_table will then pick that 
-	 * value and open file
+	 * value and open the file
 	 */
 	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct flat_con*));
 	if (!res) {
@@ -79,7 +75,7 @@ db_con_t* flat_db_init(const char* url)
 	}
 	memset(res, 0, sizeof(db_con_t) + sizeof(struct flat_con*));
 
-	if (parse_flat_url(url, &res->table) < 0) {
+	if (parse_flat_url(url, (str*)res->table) < 0) {
 		pkg_free(res);
 		return 0;
 	}
@@ -92,16 +88,16 @@ db_con_t* flat_db_init(const char* url)
  * Store name of table that will be used by
  * subsequent database functions
  */
-int flat_use_table(db_con_t* h, const char* t)
+int flat_use_table(db_con_t* h, const str* t)
 {
 	struct flat_con* con;
 
-	if (!h || !t) {
+	if (!h || !t || !t->s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (CON_TABLE(h) != t) {
+	if (CON_TABLE(h)->s != t->s) {
 		if (CON_TAIL(h)) {
 			     /* Decrement the reference count
 			      * of the connection but do not remove
@@ -112,7 +108,7 @@ int flat_use_table(db_con_t* h, const char* t)
 
 		}
 
-		CON_TAIL(h) = (unsigned long)flat_get_connection((char*)CON_TABLE(h), (char*)t);
+		CON_TAIL(h) = (unsigned long)flat_get_connection((char*)CON_TABLE(h)->s, (char*)t->s);
 		if (!CON_TAIL(h)) {
 			return -1;
 		}

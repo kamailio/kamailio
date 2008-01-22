@@ -39,8 +39,8 @@
 
 static db_con_t  *db_hdl=0;     /* DB handler */
 static db_func_t avpops_dbf;    /* DB functions */
-static char      *def_table;    /* default DB table */
-static char      **db_columns;  /* array with names of DB columns */
+static str       def_table;    /* default DB table */
+static str      **db_columns;  /* array with names of DB columns */
 
 static db_key_t   keys_cmp[3]; /* array of keys and values used in selection */
 static db_val_t   vals_cmp[3]; /* statement as in "select" and "delete" */
@@ -49,9 +49,9 @@ static db_val_t   vals_cmp[3]; /* statement as in "select" and "delete" */
 static struct db_scheme  *db_scheme_list=0;
 
 
-int avpops_db_bind(char* db_url)
+int avpops_db_bind(const str* db_url)
 {
-	if (bind_dbmod(db_url, &avpops_dbf ))
+	if (db_bind_mod(db_url, &avpops_dbf ))
 	{
 		LM_CRIT("cannot bind to database module! "
 			"Did you load a database module ?\n");
@@ -70,8 +70,9 @@ int avpops_db_bind(char* db_url)
 }
 
 
-int avpops_db_init(char* db_url, char* db_table, char **db_cols)
+int avpops_db_init(const str* db_url, const str* db_table, str** db_cols)
 {
+	
 	db_hdl = avpops_dbf.init(db_url);
 	if (db_hdl==0)
 	{
@@ -80,10 +81,11 @@ int avpops_db_init(char* db_url, char* db_table, char **db_cols)
 	}
 	if (avpops_dbf.use_table(db_hdl, db_table)<0)
 	{
-		LM_ERR("cannot select table \"%s\"\n", db_table);
+		LM_ERR("cannot select table \"%.*s\"\n", db_table->len, db_table->s);
 		goto error;
 	}
-	def_table = db_table;
+	def_table.s = db_table->s;
+	def_table.len = db_table->len;
 	db_columns = db_cols;
 
 	return 0;
@@ -125,13 +127,14 @@ int avp_add_db_scheme( modparam_t type, void* val)
 
 	/* print scheme */
 	LM_DBG("new scheme <%s> added\n"
-		"\t\tuuid_col=<%s>\n\t\tusername_col=<%s>\n"
-		"\t\tdomain_col=<%s>\n\t\tvalue_col=<%s>\n"
-		"\t\tdb_flags=%d\n\t\ttable=<%s>\n",
+		"\t\tuuid_col=<%.*s>\n\t\tusername_col=<%.*s>\n"
+		"\t\tdomain_col=<%.*s>\n\t\tvalue_col=<%.*s>\n"
+		"\t\tdb_flags=%d\n\t\ttable=<%.*s>\n",
 		scheme->name,
-		scheme->uuid_col, scheme->username_col,
-		scheme->domain_col, scheme->value_col,
-		scheme->db_flags, scheme->table	);
+		scheme->uuid_col->len, scheme->uuid_col->s, scheme->username_col->len,
+		scheme->username_col->s, scheme->domain_col->len, scheme->domain_col->s,
+		scheme->value_col->len, scheme->value_col->s, scheme->db_flags,
+		scheme->table->len, scheme->table->s);
 
 	scheme->next = db_scheme_list;
 	db_scheme_list = scheme;
@@ -153,22 +156,21 @@ struct db_scheme *avp_get_db_scheme (char *name)
 }
 
 
-static inline int set_table( char *table, char *func)
+static inline int set_table( const str *table, char *func)
 {
 	static int default_set = 1;
-
-	if (table)
+	if (table->s)
 	{
 		if ( avpops_dbf.use_table( db_hdl, table)<0 )
 		{
-			LM_ERR("db-%s: cannot set table \"%s\"\n", func, table);
+			LM_ERR("db-%s: cannot set table \"%.*s\"\n", func, table->len, table->s);
 			return -1;
 		}
 		default_set = 0;
 	} else if (!default_set){
-		if ( avpops_dbf.use_table( db_hdl, def_table)<0 )
+		if ( avpops_dbf.use_table( db_hdl, &def_table)<0 )
 		{
-			LM_ERR("db-%s: cannot set table \"%s\"\n", func, def_table);
+			LM_ERR("db-%s: cannot set table \"%.*s\"\n", func, def_table.len, def_table.s);
 			return -1;
 		}
 		default_set = 1;
@@ -229,7 +231,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 
 
 db_res_t *db_load_avp( str *uuid, str *username, str *domain,
-							char *attr, char *table, struct db_scheme *scheme)
+							char *attr, const str *table, struct db_scheme *scheme)
 {
 	static db_key_t   keys_ret[3];
 	unsigned int      nr_keys_cmp;
@@ -272,10 +274,9 @@ void db_close_query( db_res_t *res )
 }
 
 
-int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table)
+int db_store_avp( db_key_t *keys, db_val_t *vals, int n, const str *table)
 {
 	int r;
-
 	if (set_table( table ,"store")!=0)
 		return -1;
 
@@ -291,7 +292,7 @@ int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table)
 
 
 int db_delete_avp( str *uuid, str *username, str *domain, char *attr,
-																char *table)
+															const str *table)
 {
 	unsigned int  nr_keys_cmp;
 
@@ -317,6 +318,7 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 	db_res_t* db_res = NULL;
 	int i, j;
 	pvname_list_t* crt;
+	static str query_str;
 	
 	if(query==NULL)
 	{
@@ -324,7 +326,10 @@ int db_query_avp(struct sip_msg *msg, char *query, pvname_list_t* dest)
 		return -1;
 	}
 	
-	if(avpops_dbf.raw_query(db_hdl, query, &db_res)!=0)
+	query_str.s = query;
+	query_str.len = strlen(query);
+	
+	if(avpops_dbf.raw_query(db_hdl, &query_str, &db_res)!=0)
 	{
 		LM_ERR("cannot do the query\n");
 		return -1;

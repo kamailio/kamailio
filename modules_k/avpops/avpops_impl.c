@@ -66,7 +66,7 @@ static str      empty={"",0};
 #define AVP_PRINTBUF_SIZE 1024
 static char printbuf[AVP_PRINTBUF_SIZE];
 
-void init_store_avps( char **db_columns)
+void init_store_avps(str **db_columns)
 {
 	/* unique user id */
 	store_keys[0] = db_columns[0]; /*uuid*/

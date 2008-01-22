@@ -47,27 +47,31 @@
 /*
  * Initialize database connection
  */
-db_con_t* dbt_init(const char* _sqlurl)
+db_con_t* dbt_init(const str* _sqlurl)
 {
 	db_con_t* _res;
 	str _s;
 	char dbt_path[DBT_PATH_LEN];
 	
-	if (!_sqlurl) 
+	if (!_sqlurl || !_sqlurl->s)
 	{
 #ifdef DBT_EXTRA_DEBUG
 		LM_ERR("invalid parameter value\n");
 #endif
 		return NULL;
 	}
-	_s.s = (char*)_sqlurl;
-	_s.len = strlen(_sqlurl);
+	_s.s = _sqlurl->s;
+	_s.len = _sqlurl->len;
 	if(_s.len <= DBT_ID_LEN || strncmp(_s.s, DBT_ID, DBT_ID_LEN)!=0)
 	{
 		LM_ERR("invalid database URL - should be:"
 			" <%s[/]path/to/directory>\n", DBT_ID);
 		return NULL;
 	}
+	/*
+	 * it would be possible to use the _sqlurl here, but the core API is
+	 * defined with a const str*, so this code would be not valid.
+	 */
 	_s.s   += DBT_ID_LEN;
 	_s.len -= DBT_ID_LEN;
 	if(_s.s[0]!='/')
@@ -175,7 +179,6 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	dbt_row_p _drp = NULL;
 	dbt_result_p _dres = NULL;
 	
-	str stbl;
 	int *lkey=NULL, *lres=NULL;
 	
 	if ((!_h) || (!_r) || !CON_TABLE(_h))
@@ -187,11 +190,9 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	}
 	*_r = NULL;
 	
-	stbl.s = (char*)CON_TABLE(_h);
-	stbl.len = strlen(CON_TABLE(_h));
 
 	/* lock database */
-	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
+	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
 		LM_DBG("table does not exist!\n");
@@ -240,7 +241,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	dbt_table_update_flags(_tbc, DBT_TBFL_ZERO, DBT_FL_IGN, 1);
 	
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 
 #ifdef DBT_EXTRA_DEBUG
@@ -258,18 +259,18 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 
 error:
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
 	LM_DBG("failed to query the table!\n");
-    
+
 	return -1;
 
 clean:
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(lkey)
 		pkg_free(lkey);
 	if(lres)
@@ -298,7 +299,6 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
 	
-	str stbl;
 	int *lkey=NULL, i, j;
 	
 	if (!_h || !CON_TABLE(_h))
@@ -316,11 +316,8 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		return -1;
 	}
 	
-	stbl.s = (char*)CON_TABLE(_h);
-	stbl.len = strlen(CON_TABLE(_h));
-
 	/* lock database */
-	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
+	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
 		LM_DBG("table does not exist!\n");
@@ -375,7 +372,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 #endif
 	
 	/* unlock databse */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
@@ -386,7 +383,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	
 error:
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(lkey)
 		pkg_free(lkey);
 	LM_DBG("failed to insert row in table!\n");
@@ -399,7 +396,7 @@ clean:
 	if(_drp) // free row
 		dbt_row_free(_tbc, _drp);
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	
 	LM_DBG("make clean!\n");
     return -1;
@@ -413,7 +410,6 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL, _drp0 = NULL;
 	int *lkey = NULL;
-	str stbl;
 
 	if (!_h || !CON_TABLE(_h))
 	{
@@ -422,14 +418,12 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 #endif
 		return -1;
 	}
-	stbl.s = (char*)CON_TABLE(_h);
-	stbl.len = strlen(CON_TABLE(_h));
 
 	/* lock database */
-	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
+	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
-		LM_DBG("failed to load table <%s>!\n", CON_TABLE(_h));
+		LM_DBG("failed to load table <%.*s>!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 		return -1;
 	}
 
@@ -475,7 +469,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 #endif
 	
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
@@ -484,7 +478,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	
 error:
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	LM_DBG("failed to delete from table!\n");
 	return -1;
@@ -498,8 +492,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 {
 	dbt_table_p _tbc = NULL;
 	dbt_row_p _drp = NULL;
-	int i;	
-	str stbl;
+	int i;
 	int *lkey=NULL, *lres=NULL;
 
 	if (!_h || !CON_TABLE(_h) || !_uk || !_uv || _un <= 0)
@@ -510,11 +503,8 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 		return -1;
 	}
 	
-	stbl.s = (char*)CON_TABLE(_h);
-	stbl.len = strlen(CON_TABLE(_h));
-
 	/* lock database */
-	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), &stbl);
+	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
 		LM_DBG("table does not exist!\n");
@@ -563,7 +553,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 #endif
 	
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
@@ -574,7 +564,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 
 error:
 	/* unlock database */
-	dbt_release_table(DBT_CON_CONNECTION(_h), &stbl);
+	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
@@ -582,7 +572,7 @@ error:
 		pkg_free(lres);
 	
 	LM_DBG("failed to update the table!\n");
-    
+
 	return -1;
 }
 

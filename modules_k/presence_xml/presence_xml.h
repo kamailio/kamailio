@@ -42,7 +42,7 @@ typedef struct xcap_serv
 	struct xcap_serv* next;
 }xcap_serv_t;
 
-extern char *xcap_table;  
+extern str xcap_table;
 extern add_event_t pres_add_event;
 extern db_con_t *pxml_db;
 extern db_func_t pxml_dbf;

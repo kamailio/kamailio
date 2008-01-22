@@ -40,7 +40,7 @@
 /*
  * Initialize database connection
  */
-db_con_t* db_unixodbc_init(const char* _sqlurl);
+db_con_t* db_unixodbc_init(const str* _sqlurl);
 
 /*
  * Close a database connection
@@ -61,7 +61,7 @@ const db_key_t* _c, const int _n, const int _nc, const db_key_t _o, db_res_t** _
 /*
  * Raw SQL query
  */
-int db_unixodbc_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r);
+int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
 
 /*
  * Insert a row into table
@@ -90,6 +90,6 @@ const int n);
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_unixodbc_use_table(db_con_t* _h, const char* _t);
+int db_unixodbc_use_table(db_con_t* _h, const str* _t);
 
 #endif                                                      /* DBASE_H */

@@ -47,9 +47,9 @@ extern db_con_t* pa_db;
 /* PRESENCE database */
 extern int use_db;
 extern str db_url;
-extern char *presentity_table;
-extern char *active_watchers_table;
-extern char *watchers_table; 
+extern str presentity_table;
+extern str active_watchers_table;
+extern str watchers_table; 
 
 extern int counter;
 extern int pid;

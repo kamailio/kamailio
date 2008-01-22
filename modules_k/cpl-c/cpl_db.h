@@ -26,14 +26,14 @@
 #include "../../db/db.h"
 
 
-int cpl_db_bind(char* db_url, char* db_table);
-int cpl_db_init(char* db_url, char* db_table);
+int cpl_db_bind(const str* db_url, const str* db_table);
+int cpl_db_init(const str* db_url, const str* db_table);
 void cpl_db_close();
 
-extern char *cpl_username_col;
-extern char *cpl_domain_col;
-extern char *cpl_xml_col;
-extern char *cpl_bin_col;
+extern str cpl_username_col;
+extern str cpl_domain_col;
+extern str cpl_xml_col;
+extern str cpl_bin_col;
 
 /* inserts into database a cpl script in XML format(xml) along with its binary
  * format (bin)
@@ -47,7 +47,7 @@ int write_to_db(str *username, str*domain, str *xml, str *bin);
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *username, str*domain, str *script, const char *key);
+int get_user_script(str *username, str*domain, str *script, str *key);
 
 
 /* delete from database the entire record for a given user - if a user has no

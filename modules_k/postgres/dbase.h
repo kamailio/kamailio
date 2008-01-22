@@ -44,7 +44,7 @@
 /**
  * Initialize database connection
  */
-db_con_t* db_postgres_init(const char* _url);
+db_con_t* db_postgres_init(const str* _url);
 
 /**
  * Close a database connection
@@ -73,7 +73,7 @@ int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
 /**
  * Raw SQL query
  */
-int db_postgres_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r);
+int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
 
 
 /**
@@ -107,6 +107,7 @@ int db_postgres_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_postgres_use_table(db_con_t* _h, const char* _t);
+int db_postgres_use_table(db_con_t* _h, const str* _t);
+
 
 #endif /* DBASE_H */

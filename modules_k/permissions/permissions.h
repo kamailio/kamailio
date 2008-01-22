@@ -3,7 +3,7 @@
  *
  * PERMISSIONS module
  *
- * Copyright (C) 2003 MiklÛs Tirp·k (mtirpak@sztaki.hu)
+ * Copyright (C) 2003 Mikl√≥s Tirp√°k (mtirpak@sztaki.hu)
  * Copyright (C) 2006 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
@@ -49,18 +49,18 @@ typedef struct rule_file {
  */
 #define MAX_RULE_FILES 64
 
-extern char* db_url;        /* Database URL */
-extern int db_mode;	    /* Database usage mode: 0=no cache, 1=cache */
-extern char* trusted_table; /* Name of trusted table */
-extern char* source_col;    /* Name of source address column */
-extern char* proto_col;     /* Name of protocol column */
-extern char* from_col;      /* Name of from pattern column */
-extern char* tag_col;       /* Name of tag column */
-extern char* address_table; /* Name of address table */
-extern char* grp_col;       /* Name of address group column */
-char* ip_addr_col;          /* Name of ip address column */
-char* mask_col;             /* Name of mask column */
-char* port_col;             /* Name of port column */
+extern str db_url;        /* Database URL */
+extern int db_mode;       /* Database usage mode: 0=no cache, 1=cache */
+extern str trusted_table; /* Name of trusted table */
+extern str source_col;    /* Name of source address column */
+extern str proto_col;     /* Name of protocol column */
+extern str from_col;      /* Name of from pattern column */
+extern str tag_col;       /* Name of tag column */
+extern str address_table; /* Name of address table */
+extern str grp_col;       /* Name of address group column */
+extern str ip_addr_col;   /* Name of ip address column */
+extern str mask_col;      /* Name of mask column */
+extern str port_col;      /* Name of port column */
 
 typedef struct int_or_pvar {
     unsigned int i;

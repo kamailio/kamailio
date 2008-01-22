@@ -85,25 +85,25 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	
 	CONSTR_RLSUBS_DID(subs, &rlsubs_did);
 
-	query_cols[0]= "rlsubs_did";
+	query_cols[0]= &str_rlsubs_did_col;
 	query_vals[0].type = DB_STR;
 	query_vals[0].nul = 0;
 	query_vals[0].val.str_val= rlsubs_did; 
 
-	result_cols[resource_uri_col= n_result_cols++]= "resource_uri";
-	result_cols[content_type_col= n_result_cols++]= "content_type";
-	result_cols[pres_state_col= n_result_cols++]= "presence_state";
-	result_cols[auth_state_col= n_result_cols++]= "auth_state";
-	result_cols[reason_col= n_result_cols++]= "reason";
+	result_cols[resource_uri_col= n_result_cols++]= &str_resource_uri_col;
+	result_cols[content_type_col= n_result_cols++]= &str_content_type_col;
+	result_cols[pres_state_col= n_result_cols++]= &str_presence_state_col;
+	result_cols[auth_state_col= n_result_cols++]= &str_auth_state_col;
+	result_cols[reason_col= n_result_cols++]= &str_reason_col;
 	
-	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
 	}
 
 	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
-					1, n_result_cols, "resource_uri", &result )< 0)
+					1, n_result_cols, &str_resource_uri_col, &result )< 0)
 	{
 		LM_ERR("in sql query\n");
 		goto error;
@@ -148,12 +148,12 @@ int send_full_notify(subs_t* subs, xmlNodePtr rl_node, int version, str* rl_uri,
 	}
 
 	/* update updated col in rlpres_table*/
-	update_cols[0]= "updated";
+	update_cols[0]= &str_updated_col;
 	update_vals[0].type = DB_INT;
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 	
-	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
@@ -819,18 +819,18 @@ void rls_notify_callback( struct cell *t, int type, struct tmcb_params *ps)
 		subs.from_tag= ((dialog_id_t*)(*ps->param))->from_tag;
 		subs.callid= ((dialog_id_t*)(*ps->param))->callid;
 
-		if (rls_dbf.use_table(rls_db, rlsubs_table) < 0) 
+		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0) 
 		{
 			LM_ERR("in use_table\n");
 			goto done;
 		}
 		
-		db_keys[0] ="to_tag";
+		db_keys[0] =&str_to_tag_col;
 		db_vals[0].type = DB_STR;
 		db_vals[0].nul = 0;
 		db_vals[0].val.str_val = subs.to_tag;
 
-		db_keys[1] ="callid";
+		db_keys[1] =&str_callid_col;
 		db_vals[1].type = DB_STR;
 		db_vals[1].nul = 0;
 		db_vals[1].val.str_val = subs.callid;

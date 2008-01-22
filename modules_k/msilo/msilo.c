@@ -79,16 +79,16 @@
 #define MAX_DEL_KEYS	1	
 #define NR_KEYS			10
 
-char *sc_mid      = "id";        /* 0 */
-char *sc_from     = "src_addr";  /* 1 */
-char *sc_to       = "dst_addr";  /* 2 */
-char *sc_uri_user = "username";  /* 3 */
-char *sc_uri_host = "domain";    /* 4 */
-char *sc_body     = "body";      /* 5 */
-char *sc_ctype    = "ctype";     /* 6 */
-char *sc_exp_time = "exp_time";  /* 7 */
-char *sc_inc_time = "inc_time";  /* 8 */
-char *sc_snd_time = "snd_time";  /* 9 */
+static str sc_mid      = str_init("id");        /* 0 */
+static str sc_from     = str_init("src_addr");  /* 1 */
+static str sc_to       = str_init("dst_addr");  /* 2 */
+static str sc_uri_user = str_init("username");  /* 3 */
+static str sc_uri_host = str_init("domain");    /* 4 */
+static str sc_body     = str_init("body");      /* 5 */
+static str sc_ctype    = str_init("ctype");     /* 6 */
+static str sc_exp_time = str_init("exp_time");  /* 7 */
+static str sc_inc_time = str_init("inc_time");  /* 8 */
+static str sc_snd_time = str_init("snd_time");  /* 9 */
 
 #define SET_STR_VAL(_str, _res, _r, _c)	\
 	if (RES_ROWS(_res)[_r].values[_c].nul == 0) \
@@ -129,25 +129,25 @@ struct tm_binds tmb;
 
 /** parameters */
 
-char *ms_db_url=DEFAULT_DB_URL;
-char *ms_db_table="silo";
-str  ms_registrar={NULL, 0}; /*"sip:registrar@example.org";*/
-str  ms_reminder={NULL, 0};
-str  ms_outbound_proxy={NULL, 0};
+static str ms_db_url = str_init(DEFAULT_DB_URL);
+static str ms_db_table = str_init("silo");
+str  ms_registrar = {NULL, 0}; /*"sip:registrar@example.org";*/
+str  ms_reminder = {NULL, 0};
+str  ms_outbound_proxy = {NULL, 0};
 
-int  ms_expire_time=259200;
-int  ms_check_time=60;
-int  ms_send_time=0;
-int  ms_clean_period=10;
-int  ms_use_contact=1;
+int  ms_expire_time = 259200;
+int  ms_check_time = 60;
+int  ms_send_time = 0;
+int  ms_clean_period = 10;
+int  ms_use_contact = 1;
 int  ms_add_date = 1;
 int  ms_max_messages = 0;
 
-char*    ms_snd_time_avp_param = 0;
-int_str  ms_snd_time_avp_name;
-unsigned short  ms_snd_time_avp_type;
+static str ms_snd_time_avp_param = {NULL, 0};
+int_str ms_snd_time_avp_name;
+unsigned short ms_snd_time_avp_type;
 
-str msg_type = { "MESSAGE", 7 };
+str msg_type = str_init("MESSAGE");
 
 str reg_addr;
 
@@ -185,29 +185,29 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{ "db_url",       STR_PARAM, &ms_db_url             },
-	{ "db_table",     STR_PARAM, &ms_db_table           },
-	{ "registrar",    STR_PARAM, &ms_registrar.s        },
-	{ "reminder",     STR_PARAM, &ms_reminder.s         },
-	{ "outbound_proxy",STR_PARAM, &ms_outbound_proxy.s  },
-	{ "expire_time",  INT_PARAM, &ms_expire_time        },
-	{ "check_time",   INT_PARAM, &ms_check_time         },
-	{ "send_time",    INT_PARAM, &ms_send_time          },
-	{ "clean_period", INT_PARAM, &ms_clean_period       },
-	{ "use_contact",  INT_PARAM, &ms_use_contact        },
-	{ "sc_mid",       STR_PARAM, &sc_mid                },
-	{ "sc_from",      STR_PARAM, &sc_from               },
-	{ "sc_to",        STR_PARAM, &sc_to                 },
-	{ "sc_uri_user",  STR_PARAM, &sc_uri_user           },
-	{ "sc_uri_host",  STR_PARAM, &sc_uri_host           },
-	{ "sc_body",      STR_PARAM, &sc_body               },
-	{ "sc_ctype",     STR_PARAM, &sc_ctype              },
-	{ "sc_exp_time",  STR_PARAM, &sc_exp_time           },
-	{ "sc_inc_time",  STR_PARAM, &sc_inc_time           },
-	{ "sc_snd_time",  STR_PARAM, &sc_snd_time           },
-	{ "snd_time_avp", STR_PARAM, &ms_snd_time_avp_param },
-	{ "add_date",     INT_PARAM, &ms_add_date           },
-	{ "max_messages", INT_PARAM, &ms_max_messages       },
+	{ "db_url",       STR_PARAM, &ms_db_url.s             },
+	{ "db_table",     STR_PARAM, &ms_db_table.s           },
+	{ "registrar",    STR_PARAM, &ms_registrar.s          },
+	{ "reminder",     STR_PARAM, &ms_reminder.s           },
+	{ "outbound_proxy",STR_PARAM, &ms_outbound_proxy.s    },
+	{ "expire_time",  INT_PARAM, &ms_expire_time          },
+	{ "check_time",   INT_PARAM, &ms_check_time           },
+	{ "send_time",    INT_PARAM, &ms_send_time            },
+	{ "clean_period", INT_PARAM, &ms_clean_period         },
+	{ "use_contact",  INT_PARAM, &ms_use_contact          },
+	{ "sc_mid",       STR_PARAM, &sc_mid.s                },
+	{ "sc_from",      STR_PARAM, &sc_from.s               },
+	{ "sc_to",        STR_PARAM, &sc_to.s                 },
+	{ "sc_uri_user",  STR_PARAM, &sc_uri_user.s           },
+	{ "sc_uri_host",  STR_PARAM, &sc_uri_host.s           },
+	{ "sc_body",      STR_PARAM, &sc_body.s               },
+	{ "sc_ctype",     STR_PARAM, &sc_ctype.s              },
+	{ "sc_exp_time",  STR_PARAM, &sc_exp_time.s           },
+	{ "sc_inc_time",  STR_PARAM, &sc_inc_time.s           },
+	{ "sc_snd_time",  STR_PARAM, &sc_snd_time.s           },
+	{ "snd_time_avp", STR_PARAM, &ms_snd_time_avp_param.s },
+	{ "add_date",     INT_PARAM, &ms_add_date             },
+	{ "max_messages", INT_PARAM, &ms_max_messages         },
 	{ 0,0,0 }
 };
 
@@ -256,13 +256,27 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
-	str _s;
 	int ver = 0;
+
+	ms_db_url.len = strlen (ms_db_url.s);
+	ms_db_table.len = strlen (ms_db_table.s);
+	sc_mid.len = strlen(sc_mid.s);
+	sc_from.len = strlen(sc_from.s);
+	sc_to.len = strlen(sc_to.s);
+	sc_uri_user.len = strlen(sc_uri_user.s);
+	sc_uri_host.len = strlen(sc_uri_host.s);
+	sc_body.len = strlen(sc_body.s);
+	sc_ctype.len = strlen(sc_ctype.s);
+	sc_exp_time.len = strlen(sc_exp_time.s);
+	sc_inc_time.len = strlen(sc_inc_time.s);
+	sc_snd_time.len = strlen(sc_snd_time.s);
+	if (ms_snd_time_avp_param.s)
+		ms_snd_time_avp_param.len = strlen(ms_snd_time_avp_param.s);
 
 	LM_DBG("initializing ...\n");
 
 	/* binding to mysql module  */
-	if (bind_dbmod(ms_db_url, &msilo_dbf))
+	if (db_bind_mod(&ms_db_url, &msilo_dbf))
 	{
 		LM_DBG("database module not found\n");
 		return -1;
@@ -274,39 +288,34 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (ms_snd_time_avp_param && *ms_snd_time_avp_param) {
-		_s.s = ms_snd_time_avp_param; _s.len = strlen(_s.s);
-		if (pv_parse_spec(&_s, &avp_spec)==0
+	if (ms_snd_time_avp_param.s && ms_snd_time_avp_param.len > 0) {
+		if (pv_parse_spec(&ms_snd_time_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n",
-					ms_snd_time_avp_param);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+					ms_snd_time_avp_param.len, ms_snd_time_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &ms_snd_time_avp_name,
 					&ms_snd_time_avp_type)!=0)
 		{
-			LM_ERR("[%s]- invalid AVP definition\n", ms_snd_time_avp_param);
+			LM_ERR("[%.*s]- invalid AVP definition\n", ms_snd_time_avp_param.len, ms_snd_time_avp_param.s);
 			return -1;
 		}
-	} else {
-		ms_snd_time_avp_name.n = 0;
-		ms_snd_time_avp_type = 0;
 	}
 
-	db_con = msilo_dbf.init(ms_db_url);
+	db_con = msilo_dbf.init(&ms_db_url);
 	if (!db_con)
 	{
 		LM_ERR("failed to connect to the database\n");
 		return -1;
 	}
-	_s.s = ms_db_table;
-	_s.len = strlen(ms_db_table);
-	ver =  table_version(&msilo_dbf, db_con, &_s);
+
+	ver = db_table_version(&msilo_dbf, db_con, &ms_db_table);
 	if(ver!=S_TABLE_VERSION)
 	{
-		LM_ERR("wrong version v%d for table <%s>,"
-				" need v%d\n", ver, ms_db_table, S_TABLE_VERSION);
+		LM_ERR("wrong version v%d for table <%.*s>,"
+				" need v%d\n", ver, ms_db_table.len, ms_db_table.s, S_TABLE_VERSION);
 		return -1;
 	}
 	if(db_con)
@@ -355,7 +364,7 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	db_con = msilo_dbf.init(ms_db_url);
+	db_con = msilo_dbf.init(&ms_db_url);
 	if (!db_con)
 	{
 		LM_ERR("child %d: failed to connect database\n", rank);
@@ -363,7 +372,7 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (msilo_dbf.use_table(db_con, ms_db_table) < 0) {
+		if (msilo_dbf.use_table(db_con, &ms_db_table) < 0) {
 			LM_ERR("child %d: failed in use_table\n", rank);
 			return -1;
 		}
@@ -505,7 +514,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		goto error;
 	}
 	
-	db_keys[nr_keys] = sc_uri_user;
+	db_keys[nr_keys] = &sc_uri_user;
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
@@ -514,7 +523,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	nr_keys++;
 
-	db_keys[nr_keys] = sc_uri_host;
+	db_keys[nr_keys] = &sc_uri_host;
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
@@ -523,14 +532,14 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	nr_keys++;
 
-	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
 		goto error;
 	}
 
 	if (ms_max_messages > 0) {
-	    db_cols[0] = sc_inc_time;
+	    db_cols[0] = &sc_inc_time;
 	    if (msilo_dbf.query(db_con, db_keys, 0, db_vals, db_cols,
 				2, 1, 0, &res) < 0 ) {
 			LM_ERR("failed to query the database\n");
@@ -546,7 +555,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	}
 
 	/* Set To key */
-	db_keys[nr_keys] = sc_to;
+	db_keys[nr_keys] = &sc_to;
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
@@ -582,7 +591,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		goto error;
 	}
 
-	db_keys[nr_keys] = sc_from;
+	db_keys[nr_keys] = &sc_from;
 	
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul = 0;
@@ -593,7 +602,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 
 	/* add the message's body in SQL query */
 	
-	db_keys[nr_keys] = sc_body;
+	db_keys[nr_keys] = &sc_body;
 	
 	db_vals[nr_keys].type = DB_BLOB;
 	db_vals[nr_keys].nul = 0;
@@ -610,7 +619,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		goto error;
 	}
 
-	db_keys[nr_keys]      = sc_ctype;
+	db_keys[nr_keys]      = &sc_ctype;
 	db_vals[nr_keys].type = DB_STR;
 	db_vals[nr_keys].nul  = 0;
 	db_vals[nr_keys].val.str_val.s   = "text/plain";
@@ -643,21 +652,21 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	val = (int)time(NULL);
 	
 	/* add expiration time */
-	db_keys[nr_keys] = sc_exp_time;
+	db_keys[nr_keys] = &sc_exp_time;
 	db_vals[nr_keys].type = DB_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = val+lexpire;
 	nr_keys++;
 
 	/* add incoming time */
-	db_keys[nr_keys] = sc_inc_time;
+	db_keys[nr_keys] = &sc_inc_time;
 	db_vals[nr_keys].type = DB_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = val;
 	nr_keys++;
 
 	/* add sending time */
-	db_keys[nr_keys] = sc_snd_time;
+	db_keys[nr_keys] = &sc_snd_time;
 	db_vals[nr_keys].type = DB_INT;
 	db_vals[nr_keys].nul = 0;
 	db_vals[nr_keys].val.int_val = 0;
@@ -772,21 +781,21 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	int printbuf_len;
 	
 	/* init */
-	ob_key = sc_mid;
+	ob_key = &sc_mid;
 
-	db_keys[0]=sc_uri_user;
-	db_keys[1]=sc_uri_host;
-	db_keys[2]=sc_snd_time;
+	db_keys[0]=&sc_uri_user;
+	db_keys[1]=&sc_uri_host;
+	db_keys[2]=&sc_snd_time;
 	db_ops[0]=OP_EQ;
 	db_ops[1]=OP_EQ;
 	db_ops[2]=OP_EQ;
 
-	db_cols[0]=sc_mid;
-	db_cols[1]=sc_from;
-	db_cols[2]=sc_to;
-	db_cols[3]=sc_body;
-	db_cols[4]=sc_ctype;
-	db_cols[5]=sc_inc_time;
+	db_cols[0]=&sc_mid;
+	db_cols[1]=&sc_from;
+	db_cols[2]=&sc_to;
+	db_cols[3]=&sc_body;
+	db_cols[4]=&sc_ctype;
+	db_cols[5]=&sc_inc_time;
 
 	
 	LM_DBG("------------ start ------------\n");
@@ -900,7 +909,7 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	db_vals[2].nul = 0;
 	db_vals[2].val.int_val = 0;
 	
-	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
 		goto error;
@@ -1008,7 +1017,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 				update_stat(ms_dumped_rmds, 1);
 #endif
 
-			db_keys[n] = sc_mid;
+			db_keys[n] = &sc_mid;
 			db_vals[n].type = DB_INT;
 			db_vals[n].nul = 0;
 			db_vals[n].val.int_val = p->msgid;
@@ -1048,7 +1057,7 @@ void m_clean_silo(unsigned int ticks, void *param)
 	if(ticks%(ms_check_time*ms_clean_period)<ms_check_time)
 	{
 		LM_DBG("cleaning expired messages\n");
-		db_keys[0] = sc_exp_time;
+		db_keys[0] = &sc_exp_time;
 		db_vals[0].type = DB_INT;
 		db_vals[0].nul = 0;
 		db_vals[0].val.int_val = (int)time(NULL);
@@ -1115,7 +1124,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	static char body_buf[1024];
 	str puri;
 	time_t ttime;
-
+	
 	str str_vals[4], hdr_str , body_str;
 	time_t stime;
 
@@ -1126,17 +1135,17 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	}
 	
 	/* init */
-	db_keys[0]=sc_snd_time;
-	db_keys[1]=sc_snd_time;
+	db_keys[0]=&sc_snd_time;
+	db_keys[1]=&sc_snd_time;
 	db_ops[0]=OP_NEQ;
 	db_ops[1]=OP_LEQ;
 
-	db_cols[0]=sc_mid;
-	db_cols[1]=sc_uri_user;
-	db_cols[2]=sc_uri_host;
-	db_cols[3]=sc_body;
-	db_cols[4]=sc_ctype;
-	db_cols[5]=sc_snd_time;
+	db_cols[0]=&sc_mid;
+	db_cols[1]=&sc_uri_user;
+	db_cols[2]=&sc_uri_host;
+	db_cols[3]=&sc_body;
+	db_cols[4]=&sc_ctype;
+	db_cols[5]=&sc_snd_time;
 
 	
 	LM_DBG("------------ start ------------\n");
@@ -1154,7 +1163,7 @@ void m_send_ontimer(unsigned int ticks, void *param)
 	ttime = time(NULL);
 	db_vals[1].val.int_val = (int)ttime;
 	
-	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
 		return;
@@ -1248,7 +1257,7 @@ int ms_reset_stime(int mid)
 	db_key_t db_cols[1];
 	db_val_t db_cvals[1];
 	
-	db_keys[0]=sc_mid;
+	db_keys[0]=&sc_mid;
 	db_ops[0]=OP_EQ;
 
 	db_vals[0].type = DB_INT;
@@ -1256,14 +1265,14 @@ int ms_reset_stime(int mid)
 	db_vals[0].val.int_val = mid;
 	
 
-	db_cols[0]=sc_snd_time;
+	db_cols[0]=&sc_snd_time;
 	db_cvals[0].type = DB_INT;
 	db_cvals[0].nul = 0;
 	db_cvals[0].val.int_val = 0;
 	
 	LM_DBG("updating send time for [%d]!\n", mid);
 	
-	if (msilo_dbf.use_table(db_con, ms_db_table) < 0)
+	if (msilo_dbf.use_table(db_con, &ms_db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
 		return -1;

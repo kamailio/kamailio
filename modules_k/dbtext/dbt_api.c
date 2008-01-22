@@ -29,9 +29,7 @@
 
 #include <string.h>
 
-#include "../../db/db_res.h"
 #include "../../db/db.h"
-#include "../../str.h"
 #include "../../mem/mem.h"
 
 #include "dbt_res.h"
@@ -76,7 +74,7 @@ int dbt_free_result(db_res_t* _r)
 }
 
 
-int dbt_use_table(db_con_t* _h, const char* _t)
+int dbt_use_table(db_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }
@@ -167,7 +165,7 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 	}
 	
 	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
-	if (!RES_NAMES(_r)) 
+	if (!RES_NAMES(_r))
 	{
 		LM_ERR("no pkg memory left\n");
 		return -3;
@@ -185,7 +183,8 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 
 	for(i = 0; i < n; i++) 
 	{
-		RES_NAMES(_r)[i] = DBT_CON_RESULT(_h)->colv[i].name.s;
+		// perhaps it would be better to allocate here new memory?
+		RES_NAMES(_r)[i] = &(DBT_CON_RESULT(_h)->colv[i].name);
 		switch( DBT_CON_RESULT(_h)->colv[i].type) 
 		{
 			case DB_STR:
@@ -334,5 +333,3 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 	}
 	return 0;
 }
-
-

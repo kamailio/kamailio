@@ -61,8 +61,8 @@ int HASH_SIZE= -1;
 extern int bind_pua(pua_api_t* api);
 int min_expires= 0;
 int default_expires=3600;
-str db_url = {0, 0};
-char* db_table= "pua";
+static str db_url = {0, 0};
+static str db_table= str_init("pua");
 int update_period= 100;
 int startup_time = 0;
 pua_event_t* pua_evlist= NULL;
@@ -71,20 +71,37 @@ pua_event_t* pua_evlist= NULL;
 db_con_t *pua_db = NULL;
 db_func_t pua_dbf;
 
+/* database colums */
+static str str_pres_uri_col = str_init("pres_uri");
+static str str_pres_id_col = str_init("pres_id");
+static str str_expires_col= str_init("expires");
+static str str_flag_col= str_init("flag");
+static str str_etag_col= str_init("etag");
+static str str_tuple_id_col= str_init("tuple_id");
+static str str_watcher_uri_col= str_init("watcher_uri");
+static str str_call_id_col= str_init("call_id");
+static str str_to_tag_col= str_init("to_tag");
+static str str_from_tag_col= str_init("from_tag");
+static str str_cseq_col= str_init("cseq");
+static str str_event_col= str_init("event");
+static str str_record_route_col= str_init("record_route");
+static str str_contact_col= str_init("contact");
+static str str_extra_headers_col= str_init("extra_headers");
+static str str_desired_expires_col= str_init("desired_expires");
+
 /* module functions */
 
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
 
-int update_pua(ua_pres_t* p, unsigned int hash_code);
-ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
-ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
+static int update_pua(ua_pres_t* p, unsigned int hash_code);
+static ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
+static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
-int db_store(void);
-int db_restore(void);
-void db_update(unsigned int ticks,void *param);
-void hashT_clean(unsigned int ticks,void *param);
+static int db_restore(void);
+static void db_update(unsigned int ticks,void *param);
+static void hashT_clean(unsigned int ticks,void *param);
 
 static cmd_export_t cmds[]=
 {
@@ -96,7 +113,7 @@ static cmd_export_t cmds[]=
 static param_export_t params[]={
 	{"hash_size" ,		 INT_PARAM, &HASH_SIZE			 },
 	{"db_url" ,			 STR_PARAM, &db_url.s			 },
-	{"db_table" ,		 STR_PARAM, &db_table			 },
+	{"db_table" ,		 STR_PARAM, &db_table.s			 },
 	{"min_expires",		 INT_PARAM, &min_expires		 },
 	{"default_expires",  INT_PARAM, &default_expires     },
 	{"update_period",	 INT_PARAM, &update_period	     },
@@ -124,7 +141,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	str _s;
 	int ver = 0;
 	
 	load_tm_f  load_tm;
@@ -153,9 +169,10 @@ static int mod_init(void)
 
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
+	db_table.len = db_table.s ? strlen(db_table.s) : 0;
 	
 	/* binding to mysql module  */
-	if (bind_dbmod(db_url.s, &pua_dbf))
+	if (db_bind_mod(&db_url, &pua_dbf))
 	{
 		LM_ERR("Database module not found\n");
 		return -1;
@@ -166,20 +183,18 @@ static int mod_init(void)
 		return -1;
 	}
 
-	pua_db = pua_dbf.init(db_url.s);
+	pua_db = pua_dbf.init(&db_url);
 	if (!pua_db)
 	{
 		LM_ERR("while connecting database\n");
 		return -1;
 	}
 	// verify table version 
-	_s.s = db_table;
-	_s.len = strlen(db_table);
-	 ver =  table_version(&pua_dbf, pua_db, &_s);
+	ver = db_table_version(&pua_dbf, pua_db, &db_table);
 	if(ver!=PUA_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, PUA_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>,"
+				" need v%d\n", ver, db_table.len, db_table.s, PUA_TABLE_VERSION);
 		return -1;
 	}
 
@@ -247,14 +262,14 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	pua_db = pua_dbf.init(db_url.s);
+	pua_db = pua_dbf.init(&db_url);
 	if (!pua_db)
 	{
 		LM_ERR("Child %d: connecting to database failed\n", rank);
 		return -1;
 	}
-		
-	if (pua_dbf.use_table(pua_db, db_table) < 0)  
+	
+	if (pua_dbf.use_table(pua_db, &db_table) < 0)
 	{
 		LM_ERR("child %d: Error in use_table pua\n", rank);
 		return -1;
@@ -285,7 +300,7 @@ static void destroy(void)
 	return ;
 }
 
-int db_restore(void)
+static int db_restore(void)
 {
 	ua_pres_t* p= NULL;
 	db_key_t result_cols[17]; 
@@ -303,30 +318,30 @@ int db_restore(void)
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col;
 	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
 
-	result_cols[puri_col=n_result_cols++]	="pres_uri";		
-	result_cols[pid_col=n_result_cols++]	="pres_id";	
-	result_cols[expires_col=n_result_cols++]="expires";
-	result_cols[flag_col=n_result_cols++]	="flag";
-	result_cols[etag_col=n_result_cols++]	="etag";
-	result_cols[tuple_col=n_result_cols++]	="tuple_id";
-	result_cols[watcher_col=n_result_cols++]="watcher_uri";
-	result_cols[callid_col=n_result_cols++] ="call_id";
-	result_cols[totag_col=n_result_cols++]	="to_tag";
-	result_cols[fromtag_col=n_result_cols++]="from_tag";
-	result_cols[cseq_col= n_result_cols++]	="cseq";
-	result_cols[event_col= n_result_cols++]	="event";
-	result_cols[record_route_col= n_result_cols++]	="record_route";
-	result_cols[contact_col= n_result_cols++]	="contact";
-	result_cols[extra_headers_col= n_result_cols++]	="extra_headers";
-	result_cols[desired_expires_col= n_result_cols++]	="desired_expires";
+	result_cols[puri_col=n_result_cols++]	= &str_pres_uri_col;
+	result_cols[pid_col=n_result_cols++]	= &str_pres_id_col;
+	result_cols[expires_col=n_result_cols++]= &str_expires_col;
+	result_cols[flag_col=n_result_cols++]	= &str_flag_col;
+	result_cols[etag_col=n_result_cols++]	= &str_etag_col;
+	result_cols[tuple_col=n_result_cols++]	= &str_tuple_id_col;
+	result_cols[watcher_col=n_result_cols++]= &str_watcher_uri_col;
+	result_cols[callid_col=n_result_cols++] = &str_call_id_col;
+	result_cols[totag_col=n_result_cols++]	= &str_to_tag_col;
+	result_cols[fromtag_col=n_result_cols++]= &str_from_tag_col;
+	result_cols[cseq_col= n_result_cols++]	= &str_cseq_col;
+	result_cols[event_col= n_result_cols++]	= &str_event_col;
+	result_cols[record_route_col= n_result_cols++]	= &str_record_route_col;
+	result_cols[contact_col= n_result_cols++]	= &str_contact_col;
+	result_cols[extra_headers_col= n_result_cols++]	= &str_extra_headers_col;
+	result_cols[desired_expires_col= n_result_cols++]	= &str_desired_expires_col;
 	
 	if(!pua_db)
 	{
 		LM_ERR("null database connection\n");
 		return -1;
 	}
-
-	if(pua_dbf.use_table(pua_db, db_table)< 0)
+	
+	if(pua_dbf.use_table(pua_db, &db_table)< 0)
 	{
 		LM_ERR("in use table\n");
 		return -1;
@@ -553,7 +568,7 @@ error:
 	return -1;
 }
 
-void hashT_clean(unsigned int ticks,void *param)
+static void hashT_clean(unsigned int ticks,void *param)
 {
 	int i;
 	time_t now;
@@ -679,10 +694,10 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 		}	
 		result= tmb.t_request_within
 				(&met,
-				str_hdr,                               
-				0,                           
-				td,					                  
-				subs_cback_func,				        
+				str_hdr,
+				0,
+				td,
+				subs_cback_func,
 				(void*)cb_param	
 				);
 		if(result< 0)
@@ -707,7 +722,7 @@ error:
 
 }
 
-void db_update(unsigned int ticks,void *param)
+static void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
 	db_key_t q_cols[19], result_cols[1];
@@ -726,113 +741,114 @@ void db_update(unsigned int ticks,void *param)
 		no_lock= 1;
 
 	/* cols and values used for insert */
-	q_cols[puri_col= n_query_cols] ="pres_uri";
+	q_cols[puri_col= n_query_cols] = &str_pres_uri_col;
 	q_vals[puri_col].type = DB_STR;
 	q_vals[puri_col].nul = 0;
 	n_query_cols++;
 	
-	q_cols[pid_col= n_query_cols] ="pres_id";	
+	q_cols[pid_col= n_query_cols] = &str_pres_id_col;	
 	q_vals[pid_col].type = DB_STR;
 	q_vals[pid_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[flag_col= n_query_cols] ="flag";
+	q_cols[flag_col= n_query_cols] = &str_flag_col;
 	q_vals[flag_col].type = DB_INT;
 	q_vals[flag_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[event_col= n_query_cols] ="event";
+	q_cols[event_col= n_query_cols] = &str_event_col;
 	q_vals[event_col].type = DB_INT;
 	q_vals[event_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[watcher_col= n_query_cols] ="watcher_uri";
+	q_cols[watcher_col= n_query_cols] = &str_watcher_uri_col;
 	q_vals[watcher_col].type = DB_STR;
 	q_vals[watcher_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[callid_col= n_query_cols] ="call_id";
+	q_cols[callid_col= n_query_cols] = &str_call_id_col;
 	q_vals[callid_col].type = DB_STR;
 	q_vals[callid_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[totag_col= n_query_cols] ="to_tag";
+	q_cols[totag_col= n_query_cols] = &str_to_tag_col;
 	q_vals[totag_col].type = DB_STR;
 	q_vals[totag_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[fromtag_col= n_query_cols] ="from_tag";
+	q_cols[fromtag_col= n_query_cols] = &str_from_tag_col;
 	q_vals[fromtag_col].type = DB_STR;
 	q_vals[fromtag_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[etag_col= n_query_cols] ="etag";
+	q_cols[etag_col= n_query_cols] = &str_etag_col;
 	q_vals[etag_col].type = DB_STR;
 	q_vals[etag_col].nul = 0;
 	n_query_cols++;	
 
-	q_cols[tuple_col= n_query_cols] ="tuple_id";
+	q_cols[tuple_col= n_query_cols] = &str_tuple_id_col;
 	q_vals[tuple_col].type = DB_STR;
 	q_vals[tuple_col].nul = 0;
 	n_query_cols++;
 	
-	q_cols[cseq_col= n_query_cols]="cseq";
+	q_cols[cseq_col= n_query_cols]= &str_cseq_col;
 	q_vals[cseq_col].type = DB_INT;
 	q_vals[cseq_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[expires_col= n_query_cols] ="expires";
+	q_cols[expires_col= n_query_cols] = &str_expires_col;
 	q_vals[expires_col].type = DB_INT;
 	q_vals[expires_col].nul = 0;
 	n_query_cols++;
 	
-	q_cols[desired_expires_col= n_query_cols] ="desired_expires";
+	q_cols[desired_expires_col= n_query_cols] = &str_desired_expires_col;
 	q_vals[desired_expires_col].type = DB_INT;
 	q_vals[desired_expires_col].nul = 0;
 	n_query_cols++;
 
-	q_cols[record_route_col= n_query_cols] ="record_route";
+	q_cols[record_route_col= n_query_cols] = &str_record_route_col;
 	q_vals[record_route_col].type = DB_STR;
 	q_vals[record_route_col].nul = 0;
 	n_query_cols++;
 	
-	q_cols[contact_col= n_query_cols] ="contact";
+	q_cols[contact_col= n_query_cols] = &str_contact_col;
 	q_vals[contact_col].type = DB_STR;
 	q_vals[contact_col].nul = 0;
 	n_query_cols++;
 
 	/* must keep this the last  column to be inserted */
-	q_cols[extra_headers_col= n_query_cols] ="extra_headers";
+	q_cols[extra_headers_col= n_query_cols] = &str_extra_headers_col;
 	q_vals[extra_headers_col].type = DB_STR;
 	q_vals[extra_headers_col].nul = 0;
 	n_query_cols++;
 
 
 	/* cols and values used for update */
-	db_cols[0]= "expires";
+	db_cols[0]= &str_expires_col;
 	db_vals[0].type = DB_INT;
 	db_vals[0].nul = 0;
 	
-	db_cols[1]= "cseq";
+	db_cols[1]= &str_cseq_col;
 	db_vals[1].type = DB_INT;
 	db_vals[1].nul = 0;
 						
-	db_cols[2]= "etag";
+	db_cols[2]= &str_etag_col;
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 
-	db_cols[3]= "desired_expires";
+	db_cols[3]= &str_desired_expires_col;
 	db_vals[3].type = DB_INT;
 	db_vals[3].nul = 0;
 	
-	result_cols[0]= "expires";
+	result_cols[0]= &str_expires_col;
 
 	if(pua_db== NULL)
 	{
 		LM_ERR("null database connection\n");
 		return;
 	}
-	if(pua_dbf.use_table(pua_db, db_table)< 0)
+
+	if(pua_dbf.use_table(pua_db, &db_table)< 0)
 	{
 		LM_ERR("in use table\n");
 		return ;
@@ -1001,7 +1017,7 @@ void db_update(unsigned int ticks,void *param)
 	return ;
 }	
 
-ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
+static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 {
 	publ_info_t publ;
 	ua_pres_t* cb_param= NULL;
@@ -1026,7 +1042,7 @@ ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 	return cb_param;
 }
 
-ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
+static ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
 {
 	subs_info_t subs;
 	ua_pres_t* cb_param= NULL;

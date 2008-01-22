@@ -56,8 +56,8 @@ int get_username_domain(struct sip_msg *msg, group_check_p gcp,
 int is_user_in(struct sip_msg* _msg, char* _hf, char* _grp);
 
 
-int group_db_init(char* db_url);
-int group_db_bind(char* db_url);
+int group_db_init(const str* db_url);
+int group_db_bind(const str* db_url);
 void group_db_close();
 int group_db_ver(str* name);
 

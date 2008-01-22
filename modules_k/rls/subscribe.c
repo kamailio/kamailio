@@ -1,7 +1,7 @@
 /*
  * $Id: subscribe.c 2230 2007-06-06 07:13:20Z anca_vamanu $
  *
- * rls module - resource list server 
+ * rls module - resource list server
  *
  * Copyright (C) 2007 Voice Sistem S.R.L.
  *
@@ -88,34 +88,34 @@ int get_resource_list(str* pres_uri, char** list)
 		return -1;
 	}
 	/* first search in database */
-	query_cols[n_query_cols] = "username";
+	query_cols[n_query_cols] = &str_username_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.user;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "domain";
+	query_cols[n_query_cols] = &str_domain_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = uri.host;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "doc_type";
+	query_cols[n_query_cols] = &str_doc_type_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= RESOURCE_LIST;
 	n_query_cols++;
 
-	if (rls_dbf.use_table(rls_db, rls_xcap_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rls_xcap_table) < 0)
 	{
-		LM_ERR("in use_table-[table]= %s\n", rls_xcap_table);
+		LM_ERR("in use_table-[table]= %.*s\n", rls_xcap_table.len, rls_xcap_table.s);
 		return -1;
 	}
 
-	result_cols[xcap_col= n_result_cols++] = "doc";
-	result_cols[etag_col= n_result_cols++]= "etag";
+	result_cols[xcap_col= n_result_cols++] = &str_doc_col;
+	result_cols[etag_col= n_result_cols++]= &str_etag_col;
 
-	if(rls_dbf.query(rls_db, query_cols, 0 , query_vals, result_cols, 
+	if(rls_dbf.query(rls_db, query_cols, 0 , query_vals, result_cols,
 				n_query_cols, n_result_cols, 0, &result)<0)
 	{
 		LM_ERR("while querying table xcap for [uri]=%.*s\n",

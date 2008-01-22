@@ -70,8 +70,9 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	int n_result_cols= 0;
 	str pres_uri;
 	str* rules_doc= NULL;
+	str db_table_s;
 
-	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		return ;
@@ -79,19 +80,20 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	
 	LM_DBG("cleaning expired presentity information\n");
 
-	db_keys[0] ="expires";
+	db_keys[0] = &str_expires_col;
 	db_ops[0] = OP_LT;
 	db_vals[0].type = DB_INT;
 	db_vals[0].nul = 0;
 	db_vals[0].val.int_val = (int)time(NULL);
 		
-	result_cols[user_col= n_result_cols++] = "username";
-	result_cols[domain_col=n_result_cols++] = "domain";
-	result_cols[etag_col=n_result_cols++] = "etag";
-	result_cols[event_col=n_result_cols++] = "event";
+	result_cols[user_col= n_result_cols++] = &str_username_col;
+	result_cols[domain_col=n_result_cols++] = &str_domain_col;
+	result_cols[etag_col=n_result_cols++] = &str_etag_col;
+	result_cols[event_col=n_result_cols++] = &str_event_col;
 
+	static str query_str = str_init("username");
 	if(pa_dbf.query(pa_db, db_keys, db_ops, db_vals, result_cols,
-						1, n_result_cols, "username", &result )< 0)
+						1, n_result_cols, &query_str, &result )< 0)
 	{
 		LM_ERR("querying database for expired messages\n");
 		if(result)
@@ -217,7 +219,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		rules_doc= NULL;
 	}
 
-	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+	if (pa_dbf.use_table(pa_db, &db_table_s) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;

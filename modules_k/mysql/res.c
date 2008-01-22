@@ -69,7 +69,18 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 
 	fields = mysql_fetch_fields(CON_RESULT(_h));
 	for(i = 0; i < n; i++) {
-		RES_NAMES(_r)[i] = fields[i].name;
+		RES_NAMES(_r)[i] = (str*)pkg_malloc(sizeof(str));
+		if (! RES_NAMES(_r)[i]) {
+			LM_ERR("no private memory left\n");
+			pkg_free(RES_NAMES(_r));
+			pkg_free(RES_TYPES(_r));
+			// FIXME we should also free all previous allocated RES_NAMES[i]
+			return -5;
+		}
+
+		RES_NAMES(_r)[i]->s = fields[i].name;
+		RES_NAMES(_r)[i]->len = strlen(fields[i].name);
+
 		switch(fields[i].type) {
 		case FIELD_TYPE_TINY:
 		case FIELD_TYPE_SHORT:

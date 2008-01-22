@@ -34,11 +34,11 @@
 
 /* Module parameters variables */
 
-extern char* user_column;     /* 'username' column name */
-extern char* domain_column;   /* 'domain' column name */
-extern char* sd_user_column;     /* 'sd_username' column name */
-extern char* sd_domain_column;   /* 'sd_domain' column name */
-extern char* new_uri_column;   /* 'new_uri' column name */
+extern str user_column;     /* 'username' column name */
+extern str domain_column;   /* 'domain' column name */
+extern str sd_user_column;     /* 'sd_username' column name */
+extern str sd_domain_column;   /* 'sd_domain' column name */
+extern str new_uri_column;   /* 'new_uri' column name */
 extern int   use_domain;      /* use or not the domain for sd lookup */
 extern str   dstrip_s;
 

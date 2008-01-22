@@ -151,7 +151,7 @@ struct module_exports exports = {
 static int child_init(int rank)
 {
 	if (db_url.len)
-		return uridb_db_init(db_url.s);
+		return uridb_db_init(&db_url);
 	else
 		return 0;
 }
@@ -184,14 +184,14 @@ static int mod_init(void)
 	subscriber_user_col.len = strlen(subscriber_user_col.s);
 	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
 
-	if (uridb_db_bind(db_url.s)) {
+	if (uridb_db_bind(&db_url)) {
 		LM_ERR("No database module found\n");
 		goto error;
 	}
 
 	if (use_uri_table) {
 		/* Check table version */
-		ver = uridb_db_ver(db_url.s, &uri_table);
+		ver = uridb_db_ver(&db_url, &uri_table);
 		if (ver < 0) {
 			LM_ERR("Error while querying table version\n");
 			goto error;
@@ -201,7 +201,7 @@ static int mod_init(void)
 		}
 	} else {
 		/* Check table version */
-		ver = uridb_db_ver(db_url.s, &subscriber_table);
+		ver = uridb_db_ver(&db_url, &subscriber_table);
 		if (ver < 0) {
 			LM_ERR("Error while querying table version\n");
 			goto error;

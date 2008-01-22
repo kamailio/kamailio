@@ -84,9 +84,8 @@ AV *keys2perlarray(db_key_t* keys, int n) {
 	AV *array = newAV();
 	SV *element;
 	int i;
-	
 	for (i = 0; i < n; i++) {
-		element = newSVpv(*(keys + i), 0);
+		element = newSVpv((keys[i])->s, (keys[i])->len); 
 		av_push(array, element);
 	}
 
@@ -116,8 +115,7 @@ inline SV *valdata(db_val_t* val) {
 
 		case DB_STR:
 			if (VAL_STR(val).len > 0)
-				data = newSVpv(VAL_STR(val).s,
-						VAL_STR(val).len);
+				data = newSVpv(VAL_STR(val).s, VAL_STR(val).len);
 			else
 				data = &PL_sv_undef;
 			break;
@@ -171,7 +169,7 @@ SV *pair2perlpair(db_key_t key, db_val_t* val) {
 
 	class = newSVpv(PERL_CLASS_PAIR, 0);
 
-	p_key  = newSVpv(key, strlen(key));
+	p_key  = newSVpv(key->s, key->len);
 	p_type = newSViv(val->type);
 	p_data = valdata(val);
 	
@@ -195,7 +193,7 @@ SV *cond2perlcond(db_key_t key, db_op_t op, db_val_t* val) {
 
 	class = newSVpv(PERL_CLASS_REQCOND, 0);
 
-	p_key  = newSVpv(key, strlen(key));
+	p_key  = newSVpv(key->s, key->len);
 	p_op   = newSVpv(op, strlen(op));
 	p_type = newSViv(val->type);
 	p_data = valdata(val);
@@ -284,7 +282,8 @@ int perlresult2dbres(SV *perlres, db_res_t **r) {
 		currentstring = SvPV(d1, len);
 		charbuf = pkg_malloc(len+1);
 		strncpy(charbuf, currentstring, len+1);
-		(*r)->col.names[i] = charbuf;
+		(*r)->col.names[i]->s = charbuf;
+		(*r)->col.names[i]->len = strlen(charbuf);
 
 		SvREFCNT_dec(d1);
 

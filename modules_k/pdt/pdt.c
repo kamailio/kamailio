@@ -52,6 +52,7 @@
 #include "../../locking.h"
 #include "../../action.h"
 #include "../../parser/parse_from.h"
+
 #include "domains.h"
 #include "pdtree.h"
 
@@ -72,11 +73,11 @@ static db_func_t pdt_dbf;
 
 
 /** parameters */
-static char *db_url = DEFAULT_DB_URL;
-char *db_table = "pdt";
-char *sdomain_column = "sdomain";
-char *prefix_column  = "prefix";
-char *domain_column  = "domain";
+static str db_url = str_init(DEFAULT_DB_URL);
+static str db_table = str_init("pdt");
+static str sdomain_column = str_init("sdomain");
+static str prefix_column  = str_init("prefix");
+static str domain_column  = str_init("domain");
 
 /** pstn prefix */
 str prefix = {"", 0};
@@ -95,7 +96,6 @@ static int  mod_init(void);
 static void mod_destroy(void);
 static int  child_init(void);
 static int  mod_child_init(int r);
-
 static int prefix2domain(struct sip_msg*, int mode, int sd_en);
 
 static struct mi_root* pdt_mi_reload(struct mi_root*, void* param);
@@ -103,8 +103,8 @@ static struct mi_root* pdt_mi_add(struct mi_root*, void* param);
 static struct mi_root* pdt_mi_delete(struct mi_root*, void* param);
 static struct mi_root* pdt_mi_list(struct mi_root*, void* param);
 
-int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
-int pdt_load_db();
+static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
+static int pdt_load_db();
 
 static cmd_export_t cmds[]={
 	{"prefix2domain", (cmd_function)w_prefix2domain,   0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
@@ -114,11 +114,11 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"db_url",         STR_PARAM, &db_url},
-	{"db_table",       STR_PARAM, &db_table},
-	{"sdomain_column", STR_PARAM, &sdomain_column},
-	{"prefix_column",  STR_PARAM, &prefix_column},
-	{"domain_column",  STR_PARAM, &domain_column},
+	{"db_url",         STR_PARAM, &db_url.s},
+	{"db_table",       STR_PARAM, &db_table.s},
+	{"sdomain_column", STR_PARAM, &sdomain_column.s},
+	{"prefix_column",  STR_PARAM, &prefix_column.s},
+	{"domain_column",  STR_PARAM, &domain_column.s},
 	{"prefix",         STR_PARAM, &prefix.s},
 	{"char_list",      STR_PARAM, &pdt_char_list.s},
 	{"hsize_2pow",     INT_PARAM, &hs_two_pow},
@@ -158,6 +158,13 @@ static int mod_init(void)
 {
 	LM_INFO("initializing...\n");
 
+	db_url.len = strlen(db_url.s);
+	db_table.len = strlen(db_table.s);
+	sdomain_column.len = strlen(sdomain_column.s);
+	prefix_column.len = strlen(prefix_column.s);
+	domain_column.len = strlen(domain_column.s);
+	prefix.len = strlen(prefix.s);
+
 	if(hs_two_pow<0)
 	{
 		LM_ERR("hash_size_two_pow must be positive and less than %d\n",
@@ -165,7 +172,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	prefix.len = strlen(prefix.s);
 	pdt_char_list.len = strlen(pdt_char_list.s);
 	if(pdt_char_list.len<=0)
 	{
@@ -175,7 +181,7 @@ static int mod_init(void)
 	LM_INFO("pdt_char_list=%s \n",pdt_char_list.s);
 
 	/* binding to mysql module */
-	if(bind_dbmod(db_url, &pdt_dbf))
+	if(db_bind_mod(&db_url, &pdt_dbf))
 	{
 		LM_ERR("database module not found\n");
 		return -1;
@@ -189,14 +195,14 @@ static int mod_init(void)
 	}
 
 	/* open a connection with the database */
-	db_con = pdt_dbf.init(db_url);
+	db_con = pdt_dbf.init(&db_url);
 	if(db_con==NULL)
 	{
 		LM_ERR("failed to connect to the database\n");        
 		return -1;
 	}
 	
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
+	if (pdt_dbf.use_table(db_con, &db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
 		goto error1;
@@ -266,14 +272,14 @@ error1:
 
 static int child_init(void)
 {
-	db_con = pdt_dbf.init(db_url);
+	db_con = pdt_dbf.init(&db_url);
 	if(db_con==NULL)
 	{
 		LM_ERR("failed to connect to database\n");
 		return -1;
 	}
 
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
+	if (pdt_dbf.use_table(db_con, &db_table) < 0)
 	{
 		LM_ERR("use_table failed\n");
 		return -1;
@@ -501,7 +507,7 @@ error:
 }
 
 /* change the uri according to translation of the prefix */
-int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
+static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 {
 	struct action act;
 	if(msg==NULL || d==NULL)
@@ -544,9 +550,9 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 	return 0;
 }
 
-int pdt_load_db(void)
+static int pdt_load_db(void)
 {
-	db_key_t db_cols[3] = {sdomain_column, prefix_column, domain_column};
+	db_key_t db_cols[3] = {&sdomain_column, &prefix_column, &domain_column};
 	str p, d, sdomain;
 	db_res_t* db_res = NULL;
 	int i, ret;
@@ -554,22 +560,21 @@ int pdt_load_db(void)
 	pdt_tree_t *_ptree_new = NULL; 
 	hash_list_t *old_hash = NULL; 
 	pdt_tree_t *old_tree = NULL; 
-	
-	
+
 	if(db_con==NULL)
 	{
 		LM_ERR("no db connection\n");
 		return -1;
 	}
 		
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
+	if (pdt_dbf.use_table(db_con, &db_table) < 0)
 	{
 		LM_ERR("failed to use_table\n");
 		return -1;
 	}
 	
 	if((ret=pdt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
-				0, 3, sdomain_column, &db_res))!=0
+				0, 3, &sdomain_column, &db_res))!=0
 			|| RES_ROW_N(db_res)<=0 )
 	{
 		pdt_dbf.free_result(db_con, db_res);
@@ -692,7 +697,7 @@ error:
  */
 struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 {
-	db_key_t db_keys[NR_KEYS] = {sdomain_column, prefix_column, domain_column};
+	db_key_t db_keys[NR_KEYS] = {&sdomain_column, &prefix_column, &domain_column};
 	db_val_t db_vals[NR_KEYS];
 	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
 	int i= 0;
@@ -814,7 +819,7 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 {
 	str sd, sdomain;
 	struct mi_node* node= NULL;
-	db_key_t db_keys[2] = {sdomain_column, domain_column};
+	db_key_t db_keys[2] = {&sdomain_column, &domain_column};
 	db_val_t db_vals[2];
 	db_op_t  db_ops[2] = {OP_EQ, OP_EQ};
 

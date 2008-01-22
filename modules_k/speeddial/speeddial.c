@@ -53,16 +53,16 @@ static int mod_init(void);
 static int fixup_sd(void** param, int param_no);
 
 /* Module parameter variables */
-char* db_url           = DEFAULT_RODB_URL;
-char* user_column      = "username";
-char* domain_column    = "domain";
-char* sd_user_column   = "sd_username";
-char* sd_domain_column = "sd_domain";
-char* new_uri_column   = "new_uri";
-int   use_domain       = 0;
-char* domain_prefix    = NULL;
+static str db_url    = str_init(DEFAULT_RODB_URL);
+str user_column      = str_init("username");
+str domain_column    = str_init("domain");
+str sd_user_column   = str_init("sd_username");
+str sd_domain_column = str_init("sd_domain");
+str new_uri_column   = str_init("new_uri");
+int use_domain       = 0;
+static str domain_prefix    = {NULL, 0};
 
-str   dstrip_s;
+str dstrip_s = {NULL, 0};
 
 
 db_func_t db_funcs;      /* Database functions */
@@ -79,14 +79,14 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",           STR_PARAM, &db_url          },
-	{"user_column",      STR_PARAM, &user_column     },
-	{"domain_column",    STR_PARAM, &domain_column   },
-	{"sd_user_column",   STR_PARAM, &sd_user_column     },
-	{"sd_domain_column", STR_PARAM, &sd_domain_column   },
-	{"new_uri_column",   STR_PARAM, &new_uri_column     },
-	{"use_domain",       INT_PARAM, &use_domain      },
-	{"domain_prefix",    STR_PARAM, &domain_prefix   },
+	{"db_url",           STR_PARAM, &db_url.s             },
+	{"user_column",      STR_PARAM, &user_column.s        },
+	{"domain_column",    STR_PARAM, &domain_column.s      },
+	{"sd_user_column",   STR_PARAM, &sd_user_column.s     },
+	{"sd_domain_column", STR_PARAM, &sd_domain_column.s   },
+	{"new_uri_column",   STR_PARAM, &new_uri_column.s     },
+	{"use_domain",       INT_PARAM, &use_domain           },
+	{"domain_prefix",    STR_PARAM, &domain_prefix.s      },
 	{0, 0, 0}
 };
 
@@ -113,7 +113,7 @@ struct module_exports exports = {
  */
 static int child_init(int rank)
 {
-	db_handle = db_funcs.init(db_url);
+	db_handle = db_funcs.init(&db_url);
 	if (!db_handle)
 	{
 		LM_ERR("failed to connect database\n");
@@ -131,8 +131,17 @@ static int mod_init(void)
 {
 	LM_DBG("initializing\n");
 
+	db_url.len = strlen(db_url.s);
+	user_column.len = strlen(user_column.s);
+	domain_column.len = strlen(domain_column.s);
+	sd_user_column.len = strlen(sd_user_column.s);
+	sd_domain_column.len  = strlen(sd_domain_column.s);
+	new_uri_column.len = strlen(new_uri_column.s);
+	if (domain_prefix.s)
+		domain_prefix.len = strlen(domain_prefix.s);
+
     /* Find a database module */
-	if (bind_dbmod(db_url, &db_funcs))
+	if (db_bind_mod(&db_url, &db_funcs))
 	{
 		LM_ERR("failed to bind database module\n");
 		return -1;
@@ -143,16 +152,9 @@ static int mod_init(void)
 			"provide all functions needed by SPEEDDIAL module\n");
 		return -1;
 	}
-	
-	if(domain_prefix==NULL || strlen(domain_prefix)==0)
-	{
-		dstrip_s.s   = 0;
-		dstrip_s.len = 0;
-	}
-	else
-	{
-		dstrip_s.s   = domain_prefix;
-		dstrip_s.len = strlen(domain_prefix);
+	if (domain_prefix.s && domain_prefix.len > 0) {
+		dstrip_s.s = domain_prefix.s;
+		dstrip_s.len = domain_prefix.len;
 	}
 
 	return 0;

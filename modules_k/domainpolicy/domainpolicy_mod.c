@@ -166,7 +166,7 @@ static int mod_init(void)
 	LM_INFO("check for DB module\n");
 
 	/* Check if database module has been loaded */
-	if (domainpolicy_db_bind(db_url.s)<0)  {
+	if (domainpolicy_db_bind(&db_url)<0)  {
 		LM_ERR("no database module loaded!"
 			" Please make sure that a DB module is loaded first\n");
 		return -1;
@@ -182,7 +182,7 @@ static int mod_init(void)
 	send_socket_avp.len           = strlen(send_socket_avp.s);
 
 	/* Check table version */
-	ver = domainpolicy_db_ver(db_url.s, &domainpolicy_table);
+	ver = domainpolicy_db_ver(&db_url, &domainpolicy_table);
 	if (ver < 0) {
 		LM_ERR("failed to query table version\n");
 		return -1;
@@ -270,7 +270,7 @@ static int child_init(int rank)
 
 	/* Check if database is needed by child */
 	if (rank > 0)  {
-		if (domainpolicy_db_init(db_url.s)<0) {
+		if (domainpolicy_db_init(&db_url)<0) {
 			LM_ERR("unable to connect to the database\n");
 			return -1;
 		}

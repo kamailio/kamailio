@@ -209,7 +209,7 @@ int dbt_cache_check_db(str *_s)
 /**
  *
  */
-int dbt_db_del_table(dbt_cache_p _dc, str *_s)
+int dbt_db_del_table(dbt_cache_p _dc, const str *_s)
 {
 	dbt_table_p _tbc = NULL;
 	int hash;
@@ -253,7 +253,7 @@ int dbt_db_del_table(dbt_cache_p _dc, str *_s)
 /**
  *
  */
-dbt_table_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
+dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 {
 	dbt_table_p _tbc = NULL;
 	int hash;
@@ -319,7 +319,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, str *_s)
 	return _tbc;
 }
 
-int dbt_release_table(dbt_cache_p _dc, str *_s)
+int dbt_release_table(dbt_cache_p _dc, const str *_s)
 {
 	int hash;
 	int hashidx;

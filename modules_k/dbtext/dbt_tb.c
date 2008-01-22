@@ -137,7 +137,7 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 /**
  *
  */
-dbt_table_p dbt_table_new(str *_tbname, str *_dbname, char *path)
+dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *path)
 {
 	struct stat s;
 	dbt_table_p dtp = NULL;

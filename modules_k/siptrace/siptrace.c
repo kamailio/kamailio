@@ -41,6 +41,7 @@
 #include "../../pvar.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_cb.h"
+#include "../../str.h"
 
 MODULE_VERSION
 
@@ -65,39 +66,38 @@ static void trace_sl_ack_in(unsigned int types, struct sip_msg* req,
 
 static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
-char* db_url       = DEFAULT_RODB_URL;
-
-char* siptrace_table     = "sip_trace";
-char* date_column        = "date";        /* 00 */
-char* callid_column      = "callid";      /* 01 */
-char* traced_user_column = "traced_user"; /* 02 */
-char* msg_column         = "msg";         /* 03 */
-char* method_column      = "method";      /* 04 */
-char* status_column      = "status";      /* 05 */
-char* fromip_column      = "fromip";      /* 06 */
-char* toip_column        = "toip";        /* 07 */
-char* fromtag_column     = "fromtag";     /* 08 */
-char* direction_column   = "direction";   /* 09 */
+static str db_url             = str_init(DEFAULT_RODB_URL);
+static str siptrace_table     = str_init("sip_trace");
+static str date_column        = str_init("date");        /* 00 */
+static str callid_column      = str_init("callid");      /* 01 */
+static str traced_user_column = str_init("traced_user"); /* 02 */
+static str msg_column         = str_init("msg");         /* 03 */
+static str method_column      = str_init("method");      /* 04 */
+static str status_column      = str_init("status");      /* 05 */
+static str fromip_column      = str_init("fromip");      /* 06 */
+static str toip_column        = str_init("toip");        /* 07 */
+static str fromtag_column     = str_init("fromtag");     /* 08 */
+static str direction_column   = str_init("direction");   /* 09 */
 
 #define NR_KEYS 10
 
-int   trace_flag    = -1;
-int   trace_on      = 0;
+int trace_flag = -1;
+int trace_on   = 0;
 
 str    dup_uri_str      = {0, 0};
 struct sip_uri *dup_uri = 0;
 
-int   *trace_on_flag = NULL;
+int *trace_on_flag = NULL;
 
-static unsigned short traced_user_avp_type;
+static unsigned short traced_user_avp_type = 0;
 static int_str traced_user_avp;
-char           *traced_user_avp_str = NULL;
+static str traced_user_avp_str = {NULL, 0};
 
-static unsigned short trace_table_avp_type;
+static unsigned short trace_table_avp_type = 0;
 static int_str trace_table_avp;
-char           *trace_table_avp_str = NULL;
+static str trace_table_avp_str = {NULL, 0};
 
-char* trace_local_ip = NULL;
+static str trace_local_ip = {NULL, 0};
 
 /** database connection */
 db_con_t *db_con = NULL;
@@ -120,24 +120,24 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",             STR_PARAM, &db_url         },
-	{"table",              STR_PARAM, &siptrace_table },
-	{"date_column",        STR_PARAM, &date_column    },
-	{"callid_column",      STR_PARAM, &callid_column  },
-	{"traced_user_column", STR_PARAM, &traced_user_column },
-	{"msg_column",         STR_PARAM, &msg_column         },
-	{"method_column",      STR_PARAM, &method_column      },
-	{"status_column",      STR_PARAM, &status_column      },
-	{"fromip_column",      STR_PARAM, &fromip_column      },
-	{"toip_column",        STR_PARAM, &toip_column        },
-	{"fromtag_column",     STR_PARAM, &fromtag_column     },
-	{"direction_column",   STR_PARAM, &direction_column   },
-	{"trace_flag",         INT_PARAM, &trace_flag         },
-	{"trace_on",           INT_PARAM, &trace_on           },
-	{"traced_user_avp",    STR_PARAM, &traced_user_avp_str},
-	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str},
-	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s      },
-	{"trace_local_ip",     STR_PARAM, &trace_local_ip     },
+	{"db_url",             STR_PARAM, &db_url.s             },
+	{"table",              STR_PARAM, &siptrace_table.s     },
+	{"date_column",        STR_PARAM, &date_column.s        },
+	{"callid_column",      STR_PARAM, &callid_column.s      },
+	{"traced_user_column", STR_PARAM, &traced_user_column.s },
+	{"msg_column",         STR_PARAM, &msg_column.s         },
+	{"method_column",      STR_PARAM, &method_column.s      },
+	{"status_column",      STR_PARAM, &status_column.s      },
+	{"fromip_column",      STR_PARAM, &fromip_column.s      },
+	{"toip_column",        STR_PARAM, &toip_column.s        },
+	{"fromtag_column",     STR_PARAM, &fromtag_column.s     },
+	{"direction_column",   STR_PARAM, &direction_column.s   },
+	{"trace_flag",         INT_PARAM, &trace_flag           },
+	{"trace_on",           INT_PARAM, &trace_on             },
+	{"traced_user_avp",    STR_PARAM, &traced_user_avp_str.s},
+	{"trace_table_avp",    STR_PARAM, &trace_table_avp_str.s},
+	{"duplicate_uri",      STR_PARAM, &dup_uri_str.s        },
+	{"trace_local_ip",     STR_PARAM, &trace_local_ip.s     },
 	{0, 0, 0}
 };
 
@@ -184,21 +184,35 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
-	str s;
+
+	db_url.len = strlen(db_url.s);
+	siptrace_table.len = strlen(siptrace_table.s);
+	date_column.len = strlen(date_column.s);
+	callid_column.len = strlen(callid_column.s);
+	traced_user_column.len = strlen(traced_user_column.s);
+	msg_column.len = strlen(msg_column.s);
+	method_column.len = strlen(method_column.s);
+	status_column.len = strlen(status_column.s);
+	fromip_column.len = strlen(fromip_column.s);
+	toip_column.len = strlen(toip_column.s);
+	fromtag_column.len = strlen(fromtag_column.s);
+	direction_column.len = strlen(direction_column.s);
+	if (traced_user_avp_str.s)
+		traced_user_avp_str.len = strlen(traced_user_avp_str.s);
+	if (trace_table_avp_str.s)
+		trace_table_avp_str.len = strlen(trace_table_avp_str.s);
+	if (dup_uri_str.s)
+		dup_uri_str.len = strlen(dup_uri_str.s);
+	if (trace_local_ip.s)
+		trace_local_ip.len = strlen(trace_local_ip.s);
 
 	LM_INFO("initializing...\n");
 	
-	if(siptrace_table==0 || strlen(siptrace_table)<=0)
-	{
-		LM_ERR("invalid table name\n");
-		return -1;
-	}
-
 	if (flag_idx2mask(&trace_flag)<0)
 		return -1;
 
 	/* Find a database module */
-	if (bind_dbmod(db_url, &db_funcs))
+	if (db_bind_mod(&db_url, &db_funcs))
 	{
 		LM_ERR("unable to bind database module\n");
 		return -1;
@@ -263,38 +277,36 @@ static int mod_init(void)
 		}
 	}
 
-	if(traced_user_avp_str && *traced_user_avp_str)
+	if(traced_user_avp_str.s && traced_user_avp_str.len > 0)
 	{
-		s.s = traced_user_avp_str; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
+		if (pv_parse_spec(&traced_user_avp_str, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n", traced_user_avp_str);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n", traced_user_avp_str.len, traced_user_avp_str.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &traced_user_avp,
 					&traced_user_avp_type)!=0)
 		{
-			LM_ERR("[%s] - invalid AVP definition\n", traced_user_avp_str);
+			LM_ERR("[%.*s] - invalid AVP definition\n", traced_user_avp_str.len, traced_user_avp_str.s);
 			return -1;
 		}
 	} else {
 		traced_user_avp.n = 0;
 		traced_user_avp_type = 0;
 	}
-	if(trace_table_avp_str && *trace_table_avp_str)
+	if(trace_table_avp_str.s && trace_table_avp_str.len > 0)
 	{
-		s.s = trace_table_avp_str; s.len = strlen(s.s);
-		if (pv_parse_spec(&s, &avp_spec)==0
+		if (pv_parse_spec(&trace_table_avp_str, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n", trace_table_avp_str);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n", trace_table_avp_str.len, trace_table_avp_str.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &avp_spec.pvp, &trace_table_avp,
 					&trace_table_avp_type)!=0)
 		{
-			LM_ERR("[%s] - invalid AVP definition\n", trace_table_avp_str);
+			LM_ERR("[%.*s] - invalid AVP definition\n", trace_table_avp_str.len, trace_table_avp_str.s);
 			return -1;
 		}
 	} else {
@@ -308,7 +320,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	db_con = db_funcs.init(db_url);
+	db_con = db_funcs.init(&db_url);
 	if (!db_con)
 	{
 		LM_ERR("unable to connect database\n");
@@ -343,13 +355,13 @@ static inline int siptrace_copy_proto(int proto, char *buf)
 	return 0;
 }
 
-static inline char* siptrace_get_table(void)
+static inline str* siptrace_get_table(void)
 {
-	int_str        avp_value;
+	static int_str         avp_value;
 	struct usr_avp *avp;
 
 	if(trace_table_avp.n==0)
-		return siptrace_table;
+		return &siptrace_table;
 
 	avp = NULL;
 	if(trace_table_avp.n!=0)
@@ -357,9 +369,9 @@ static inline char* siptrace_get_table(void)
 				&avp_value, 0);
 
 	if(avp==NULL || !is_avp_str_val(avp) || avp_value.s.len<=0)
-		return siptrace_table;
+		return &siptrace_table;
 
-	return avp_value.s.s;
+	return &avp_value.s;
 }
 
 static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
@@ -368,7 +380,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	db_val_t db_vals[NR_KEYS];
 	static char toip_buff[IP_ADDR_MAX_STR_SIZE+6];
 	static char fromip_buff[IP_ADDR_MAX_STR_SIZE+6];
-	int_str        avp_value;
+	int_str         avp_value;
 	struct usr_avp *avp;
 	
 	if(msg==NULL)
@@ -401,19 +413,19 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 		goto error;
 	}
 
-	db_keys[0] = msg_column;
+	db_keys[0] = &msg_column;
 	db_vals[0].type = DB_BLOB;
 	db_vals[0].nul = 0;
 	db_vals[0].val.blob_val.s = msg->buf;
 	db_vals[0].val.blob_val.len = msg->len;
 	
-	db_keys[1] = callid_column;
+	db_keys[1] = &callid_column;
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
-	db_keys[2] = method_column;
+	db_keys[2] = &method_column;
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 	if(msg->first_line.type==SIP_REQUEST)
@@ -425,7 +437,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 		db_vals[2].val.str_val.len = 0;
 	}
 		
-	db_keys[3] = status_column;
+	db_keys[3] = &status_column;
 	db_vals[3].type = DB_STR;
 	db_vals[3].nul = 0;
 	if(msg->first_line.type==SIP_REPLY)
@@ -437,7 +449,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 		db_vals[3].val.str_val.len = 0;
 	}
 		
-	db_keys[4] = fromip_column;
+	db_keys[4] = &fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
 	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
@@ -446,7 +458,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
 	db_vals[4].val.string_val = fromip_buff;
 	
-	db_keys[5] = toip_column;
+	db_keys[5] = &toip_column;
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
@@ -456,17 +468,17 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	strcat(toip_buff, int2str(msg->rcv.dst_port, NULL));
 	db_vals[5].val.string_val = toip_buff;
 	
-	db_keys[6] = date_column;
+	db_keys[6] = &date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
-	db_keys[7] = direction_column;
+	db_keys[7] = &direction_column;
 	db_vals[7].type = DB_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "in";
 	
-	db_keys[8] = fromtag_column;
+	db_keys[8] = &fromtag_column;
 	db_vals[8].type = DB_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
@@ -474,7 +486,7 @@ static int sip_trace(struct sip_msg *msg, char *s1, char *s2)
 	
 	db_funcs.use_table(db_con, siptrace_get_table());
 	
-	db_keys[9] = traced_user_column;
+	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
@@ -542,8 +554,8 @@ error:
 static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 {
 	struct sip_msg* msg;
-	int_str        avp_value;
-	struct usr_avp *avp;
+	int_str         avp_value;
+	struct usr_avp* avp;
 
 	if(t==NULL || ps==NULL)
 	{
@@ -654,7 +666,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	db_keys[0] = msg_column;
+	db_keys[0] = &msg_column;
 	db_vals[0].type = DB_BLOB;
 	db_vals[0].nul = 0;
 	sbuf = (str*)ps->extra1;
@@ -674,13 +686,13 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
-	db_keys[1] = callid_column;
+	db_keys[1] = &callid_column;
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
-	db_keys[2] = method_column;
+	db_keys[2] = &method_column;
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 	sbuf = (str*)ps->extra1;
@@ -693,7 +705,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[2].val.str_val.len = t->method.len;
 	}
 		
-	db_keys[3] = status_column;
+	db_keys[3] = &status_column;
 	db_vals[3].type = DB_STR;
 	db_vals[3].nul = 0;
 	db_vals[3].val.str_val.s = "";
@@ -702,16 +714,15 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	memset(&to_ip, 0, sizeof(struct ip_addr));
 	dst = (struct dest_info*)ps->extra2;
 
-	db_keys[4] = fromip_column;
+	db_keys[4] = &fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
-	if (trace_local_ip)
-		db_vals[4].val.string_val = trace_local_ip;
+	if (trace_local_ip.s && trace_local_ip.len > 0)
+		db_vals[4].val.string_val = trace_local_ip.s;
 	else {
 		if(dst==0 || dst->send_sock==0 || dst->send_sock->sock_str.s==0)
 		{
 			siptrace_copy_proto(msg->rcv.proto, fromip_buff);
-
 			strcat(fromip_buff, ip_addr2a(&msg->rcv.dst_ip));
 			strcat(fromip_buff,":");
 			strcat(fromip_buff, int2str(msg->rcv.dst_port, NULL));
@@ -722,7 +733,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		}
 	}
 	
-	db_keys[5] = toip_column;
+	db_keys[5] = &toip_column;
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	if(dst==0)
@@ -739,17 +750,17 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
-	db_keys[6] = date_column;
+	db_keys[6] = &date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
-	db_keys[7] = direction_column;
+	db_keys[7] = &direction_column;
 	db_vals[7].type = DB_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "out";
 	
-	db_keys[8] = fromtag_column;
+	db_keys[8] = &fromtag_column;
 	db_vals[8].type = DB_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
@@ -757,7 +768,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 	
 	db_funcs.use_table(db_con, siptrace_get_table());
 
-	db_keys[9] = traced_user_column;
+	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
@@ -792,7 +803,7 @@ static void trace_onreq_out(struct cell* t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
-	avp = search_next_avp( avp, &avp_value);
+	avp = search_next_avp(avp, &avp_value);
 	while(avp!=NULL)
 	{
 		db_vals[9].val.str_val.s = avp_value.s.s;
@@ -825,7 +836,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	int_str        avp_value;
 	struct usr_avp *avp;
 	char statusbuf[8];
-	
+
 	if(t==NULL || t->uas.request==0 || ps==NULL)
 	{
 		LM_DBG("no uas request, local transaction\n");
@@ -863,7 +874,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	db_keys[0] = msg_column;
+	db_keys[0] = &msg_column;
 	db_vals[0].type = DB_BLOB;
 	db_vals[0].nul = 0;
 	if(msg->len>0) {
@@ -881,25 +892,25 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
-	db_keys[1] = callid_column;
+	db_keys[1] = &callid_column;
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
-	db_keys[2] = method_column;
+	db_keys[2] = &method_column;
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = t->method.s;
 	db_vals[2].val.str_val.len = t->method.len;
 		
-	db_keys[3] = status_column;
+	db_keys[3] = &status_column;
 	db_vals[3].type = DB_STRING;
 	db_vals[3].nul = 0;
 	strcpy(statusbuf, int2str(ps->code, NULL));
 	db_vals[3].val.string_val = statusbuf;
 		
-	db_keys[4] = fromip_column;
+	db_keys[4] = &fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
 	siptrace_copy_proto(msg->rcv.proto, fromip_buff);
@@ -908,12 +919,12 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	strcat(fromip_buff, int2str(msg->rcv.src_port, NULL));
 	db_vals[4].val.string_val = fromip_buff;
 	
-	db_keys[5] = toip_column;
+	db_keys[5] = &toip_column;
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	// db_vals[5].val.string_val = ip_addr2a(&msg->rcv.dst_ip);;
-	if(trace_local_ip)
-		db_vals[5].val.string_val = trace_local_ip;
+	if(trace_local_ip.s && trace_local_ip.len > 0)
+		db_vals[5].val.string_val = trace_local_ip.s;
 	else {
 		siptrace_copy_proto(msg->rcv.proto, toip_buff);
 		strcat(toip_buff, ip_addr2a(&msg->rcv.dst_ip));
@@ -922,17 +933,17 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
-	db_keys[6] = date_column;
+	db_keys[6] = &date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
-	db_keys[7] = direction_column;
+	db_keys[7] = &direction_column;
 	db_vals[7].type = DB_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "in";
 	
-	db_keys[8] = fromtag_column;
+	db_keys[8] = &fromtag_column;
 	db_vals[8].type = DB_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
@@ -940,7 +951,7 @@ static void trace_onreply_in(struct cell* t, int type, struct tmcb_params *ps)
 	
 	db_funcs.use_table(db_con, siptrace_get_table());
 
-	db_keys[9] = traced_user_column;
+	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
@@ -1050,7 +1061,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	db_keys[0] = msg_column;
+	db_keys[0] = &msg_column;
 	db_vals[0].type = DB_BLOB;
 	db_vals[0].nul = 0;
 	sbuf = (str*)ps->extra1;
@@ -1089,24 +1100,24 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		goto error;
 	}
 
-	db_keys[1] = callid_column;
+	db_keys[1] = &callid_column;
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
-	db_keys[2] = method_column;
+	db_keys[2] = &method_column;
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = t->method.s;
 	db_vals[2].val.str_val.len = t->method.len;
 		
-	db_keys[4] = fromip_column;
+	db_keys[4] = &fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
 	
-	if(trace_local_ip)
-		db_vals[4].val.string_val = trace_local_ip;
+	if(trace_local_ip.s && trace_local_ip.len > 0)
+		db_vals[4].val.string_val = trace_local_ip.s;
 	else {
 		siptrace_copy_proto(msg->rcv.proto, fromip_buff);
 
@@ -1116,13 +1127,13 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[4].val.string_val = fromip_buff;
 	}
 	
-	db_keys[3] = status_column;
+	db_keys[3] = &status_column;
 	db_vals[3].type = DB_STRING;
 	db_vals[3].nul = 0;
 	strcpy(statusbuf, int2str(ps->code, NULL));
 	db_vals[3].val.string_val = statusbuf;
 		
-	db_keys[5] = toip_column;
+	db_keys[5] = &toip_column;
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	memset(&to_ip, 0, sizeof(struct ip_addr));
@@ -1141,17 +1152,17 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
-	db_keys[6] = date_column;
+	db_keys[6] = &date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
-	db_keys[7] = direction_column;
+	db_keys[7] = &direction_column;
 	db_vals[7].type = DB_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "out";
 	
-	db_keys[8] = fromtag_column;
+	db_keys[8] = &fromtag_column;
 	db_vals[8].type = DB_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
@@ -1159,7 +1170,7 @@ static void trace_onreply_out(struct cell* t, int type, struct tmcb_params *ps)
 	
 	db_funcs.use_table(db_con, siptrace_get_table());
 
-	db_keys[9] = traced_user_column;
+	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
@@ -1269,7 +1280,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		return;
 	}
 
-	db_keys[0] = msg_column;
+	db_keys[0] = &msg_column;
 	db_vals[0].type = DB_BLOB;
 	db_vals[0].nul = 0;
 	db_vals[0].val.blob_val.s   = (sl_param->buffer)?sl_param->buffer->s:"";
@@ -1282,23 +1293,23 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		goto error;
 	}
 
-	db_keys[1] = callid_column;
+	db_keys[1] = &callid_column;
 	db_vals[1].type = DB_STR;
 	db_vals[1].nul = 0;
 	db_vals[1].val.str_val.s = msg->callid->body.s;
 	db_vals[1].val.str_val.len = msg->callid->body.len;
 	
-	db_keys[2] = method_column;
+	db_keys[2] = &method_column;
 	db_vals[2].type = DB_STR;
 	db_vals[2].nul = 0;
 	db_vals[2].val.str_val.s = msg->first_line.u.request.method.s;
 	db_vals[2].val.str_val.len = msg->first_line.u.request.method.len;
 		
-	db_keys[4] = fromip_column;
+	db_keys[4] = &fromip_column;
 	db_vals[4].type = DB_STRING;
 	db_vals[4].nul = 0;
-	if(trace_local_ip)
-		db_vals[4].val.string_val = trace_local_ip;
+	if(trace_local_ip.s && trace_local_ip.len > 0)
+		db_vals[4].val.string_val = trace_local_ip.s;
 	else {
 		siptrace_copy_proto(msg->rcv.proto, fromip_buff);
 
@@ -1308,13 +1319,13 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		db_vals[4].val.string_val = fromip_buff;
 	}
 
-	db_keys[3] = status_column;
+	db_keys[3] = &status_column;
 	db_vals[3].type = DB_STRING;
 	db_vals[3].nul = 0;
 	strcpy(statusbuf, int2str(sl_param->code, NULL));
 	db_vals[3].val.string_val = statusbuf;
 		
-	db_keys[5] = toip_column;
+	db_keys[5] = &toip_column;
 	db_vals[5].type = DB_STRING;
 	db_vals[5].nul = 0;
 	memset(&to_ip, 0, sizeof(struct ip_addr));
@@ -1333,17 +1344,17 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 		db_vals[5].val.string_val = toip_buff;
 	}
 	
-	db_keys[6] = date_column;
+	db_keys[6] = &date_column;
 	db_vals[6].type = DB_DATETIME;
 	db_vals[6].nul = 0;
 	db_vals[6].val.time_val = time(NULL);
 	
-	db_keys[7] = direction_column;
+	db_keys[7] = &direction_column;
 	db_vals[7].type = DB_STRING;
 	db_vals[7].nul = 0;
 	db_vals[7].val.string_val = "out";
 	
-	db_keys[8] = fromtag_column;
+	db_keys[8] = &fromtag_column;
 	db_vals[8].type = DB_STR;
 	db_vals[8].nul = 0;
 	db_vals[8].val.str_val.s = get_from(msg)->tag_value.s;
@@ -1351,7 +1362,7 @@ static void trace_sl_onreply_out( unsigned int types, struct sip_msg* req,
 	
 	db_funcs.use_table(db_con, siptrace_get_table());
 
-	db_keys[9] = traced_user_column;
+	db_keys[9] = &traced_user_column;
 	db_vals[9].type = DB_STR;
 	db_vals[9].nul = 0;
 
@@ -1443,8 +1454,6 @@ static struct mi_root* sip_trace_mi(struct mi_root* cmd_tree, void* param )
 }
 
 
-
-
 static int trace_send_duplicate(char *buf, int len)
 {
 	union sockaddr_union* to;
@@ -1502,4 +1511,3 @@ static int trace_send_duplicate(char *buf, int len)
 
 	return ret;
 }
-

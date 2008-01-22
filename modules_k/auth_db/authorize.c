@@ -52,13 +52,14 @@ static str auth_500_err = str_init("Server Internal Error");
 
 
 static inline int get_ha1(struct username* _username, str* _domain,
-			  char* _table, char* _ha1, db_res_t** res)
+			  const str* _table, char* _ha1, db_res_t** res)
 {
 	struct aaa_avp *cred;
 	db_key_t keys[2];
 	db_val_t vals[2];
 	db_key_t *col;
 	str result;
+
 	int n, nc;
 
 	col = pkg_malloc(sizeof(*col) * (credentials_n + 1));
@@ -67,14 +68,14 @@ static inline int get_ha1(struct username* _username, str* _domain,
 		return -1;
 	}
 
-	keys[0] = user_column.s;
-	keys[1] = domain_column.s;
+	keys[0] = &user_column;
+	keys[1] = &domain_column;
 	/* should we calculate the HA1, and is it calculated with domain? */
 	col[0] = (_username->domain.len && !calc_ha1) ?
-		(pass_column_2.s) : (pass_column.s);
+		(&pass_column_2) : (&pass_column);
 
 	for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
-		col[1 + n] = cred->attr_name.s;
+		col[1 + n] = &cred->attr_name;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;
@@ -191,9 +192,9 @@ static int generate_avps(db_res_t* result)
 				ivalue.n);
 			break;
 		default:
-			LM_ERR("subscriber table column `%s' has unsuported type. "
+			LM_ERR("subscriber table column `%.*s' has unsuported type. "
 				"Only string/str or int columns are supported by"
-				"load_credentials.\n", result->col.names[i]);
+				"load_credentials.\n", result->col.names[i]->len, result->col.names[i]->s);
 			break;
 		}
 	}
@@ -206,15 +207,23 @@ static int generate_avps(db_res_t* result)
  * Authorize digest credentials
  */
 static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
-										char* _table, hdr_types_t _hftype)
+									char* _table, hdr_types_t _hftype)
 {
 	char ha1[256];
 	int res;
 	struct hdr_field* h;
 	auth_body_t* cred;
 	auth_result_t ret;
-	str domain;
+	str domain, table;
 	db_res_t* result = NULL;
+
+	if(!_table) {
+		LM_ERR("invalid parameter");
+		return -1;
+	}
+
+	table.s = _table;
+	table.len = strlen(_table);
 
 	if (_realm) {
 		if (pv_printf_s(_m, _realm, &domain)!=0) {
@@ -233,7 +242,7 @@ static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
 
 	cred = (auth_body_t*)h->parsed;
 
-	res = get_ha1(&cred->digest.username, &domain, _table, ha1, &result);
+	res = get_ha1(&cred->digest.username, &domain, &table, ha1, &result);
 	if (res < 0) {
 		/* Error while accessing the database */
 		if (slb.reply(_m, 500, &auth_500_err) == -1) {

@@ -144,20 +144,30 @@ int db_postgres_get_columns(const db_con_t* _con, db_res_t* _res)
 		 * NULL is returned if the column number is out of range.
 		 *
 		 */
-		len = strlen(PQfname(CON_RESULT(_con),col));
-		RES_NAMES(_res)[col] = pkg_malloc(len+1);
-		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]\n", RES_NAMES(_res)[col], 
-				len+1, col);
-
+		RES_NAMES(_res)[col] = (str*)pkg_malloc(sizeof(str));
 		if (! RES_NAMES(_res)[col]) {
-			LM_ERR("failed to allocate %d bytes to hold column name\n", len+1);
+			LM_ERR("no private memory left\n");
+			pkg_free(RES_NAMES(_res));
+			pkg_free(RES_TYPES(_res));
+			// FIXME we should also free all previous allocated RES_NAMES[col]
+			return -5;
+		}
+
+		len = strlen(PQfname(CON_RESULT(_con),col));
+		RES_NAMES(_res)[col]->s = pkg_malloc(len);
+		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]->s\n", RES_NAMES(_res)[col]->s, len, col);
+
+		if (! RES_NAMES(_res)[col]->s) {
+			LM_ERR("failed to allocate %d bytes to hold column name\n", len);
+			// FIXME we should also free all previous allocated memory here
 			return -1;
 		}
-		memset((char *)RES_NAMES(_res)[col], 0, len+1);
-		strncpy((char *)RES_NAMES(_res)[col], PQfname(CON_RESULT(_con),col), len); 
+		memset((char *)RES_NAMES(_res)[col]->s, 0, len);
+		strncpy((char *)RES_NAMES(_res)[col]->s, PQfname(CON_RESULT(_con),col), len);
+		RES_NAMES(_res)[col]->len = len;
 
-		LM_DBG("RES_NAMES(%p)[%d]=[%s]\n", RES_NAMES(_res)[col], col,
-				RES_NAMES(_res)[col]);
+		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_res)[col], col,
+				RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s);
 
 		/* PQftype: Returns the data type associated with the given column number.
 		 * The integer returned is the internal OID number of the type.
@@ -201,8 +211,9 @@ int db_postgres_get_columns(const db_con_t* _con, db_res_t* _res)
 			break;
 
 			default:
-				LM_WARN("unhandled data type column (%s) OID (%d), "
-						"defaulting to STRING\n", RES_NAMES(_res)[col], ft);
+				LM_WARN("unhandled data type column (%.*s) OID (%d), "
+						"defaulting to STRING\n", RES_NAMES(_res)[col]->len,
+						RES_NAMES(_res)[col]->s, ft);
 				RES_TYPES(_res)[col] = DB_STRING;
 			break;
 		}
@@ -383,8 +394,8 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 			LM_DBG("%p=pkg_malloc(%d) row_buf[%d]\n", row_buf[col], len, col);
 
 			strncpy(row_buf[col], s, len);
-			LM_DBG("[%d][%d] Column[%s]=[%s]\n",
-				row, col, RES_NAMES(_res)[col], row_buf[col]);
+			LM_DBG("[%d][%d] Column[%.*s]=[%s]\n",
+				row, col, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s, row_buf[col]);
 		}
 
 		/*
@@ -433,10 +444,10 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 				case DB_STR:
 					break;
 				default:
-					LM_DBG("[%d][%d] Col[%s] Type[%d] "
+					LM_DBG("[%d][%d] Col[%.*s] Type[%d] "
 						"Freeing row_buf[%p]\n", row, col,
-						RES_NAMES(_res)[col], RES_TYPES(_res)[col],
-						row_buf[col]);
+						RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s,
+						RES_TYPES(_res)[col], row_buf[col]);
 					LM_DBG("%p=pkg_free() row_buf[%d]\n",
 						(char *)row_buf[col], col);
 					pkg_free((char *)row_buf[col]);
@@ -476,7 +487,6 @@ int db_postgres_convert_row(const db_con_t* _con, db_res_t* _res, db_row_t* _row
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-
 
 	/* Allocate storage to hold the data type value converted from a string */
 	/* because PostgreSQL returns (most) data as strings */
@@ -614,11 +624,14 @@ int db_postgres_free_columns(db_res_t* _res)
 
 	/* Free memory previously allocated to save column names */
 	for(col = 0; col < RES_COL_N(_res); col++) {
-		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%s'\n", 
-				_res, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]);
-		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n",	RES_NAMES(_res)[col], col);
-		pkg_free((char *)RES_NAMES(_res)[col]);
-		RES_NAMES(_res)[col] = (char *)NULL;
+		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%.*s'\n", 
+				_res, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]->len,
+				RES_NAMES(_res)[col]->s);
+		LM_DBG("%p=pkg_free() RES_NAMES[%d]->s\n", RES_NAMES(_res)[col]->s, col);
+		pkg_free((char *)RES_NAMES(_res)[col]->s);
+		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n", RES_NAMES(_res)[col], col);
+		pkg_free((str *)RES_NAMES(_res)[col]);
+		RES_NAMES(_res)[col] = (str *)NULL;
 	}
  
 	if (RES_NAMES(_res)) {

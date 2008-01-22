@@ -34,36 +34,35 @@
 #include "../../ut.h"
 #include "../../timer.h"
 #include "../../db/db.h"
+#include "../../str.h"
 #include "../../socket_info.h"
 #include "dlg_hash.h"
 #include "dlg_db_handler.h"
 
 
-char* call_id_column		=	CALL_ID_COL;
-char* from_uri_column		=	FROM_URI_COL;
-char* from_tag_column		=	FROM_TAG_COL;
-char* to_uri_column			=	TO_URI_COL;
-char* to_tag_column			=	TO_TAG_COL;
-char* h_id_column			=	HASH_ID_COL;
-char* h_entry_column		=	HASH_ENTRY_COL;
-char* state_column			=	STATE_COL;
-char* start_time_column		=	START_TIME_COL;
-char* timeout_column		=	TIMEOUT_COL;
-char* to_cseq_column		=	TO_CSEQ_COL;
-char* from_cseq_column		=	FROM_CSEQ_COL;
-char* to_route_column		=	TO_ROUTE_COL;
-char* from_route_column		=	FROM_ROUTE_COL;
-char* to_contact_column		=	TO_CONTACT_COL;
-char* from_contact_column	=	FROM_CONTACT_COL;
-char* to_sock_column		=	TO_SOCK_COL;
-char* from_sock_column		=	FROM_SOCK_COL;
-char* dialog_table_name		=	DIALOG_TABLE_NAME;
+str call_id_column			=	str_init(CALL_ID_COL);
+str from_uri_column			=	str_init(FROM_URI_COL);
+str from_tag_column			=	str_init(FROM_TAG_COL);
+str to_uri_column			=	str_init(TO_URI_COL);
+str to_tag_column			=	str_init(TO_TAG_COL);
+str h_id_column				=	str_init(HASH_ID_COL);
+str h_entry_column			=	str_init(HASH_ENTRY_COL);
+str state_column			=	str_init(STATE_COL);
+str start_time_column		=	str_init(START_TIME_COL);
+str timeout_column			=	str_init(TIMEOUT_COL);
+str to_cseq_column			=	str_init(TO_CSEQ_COL);
+str from_cseq_column		=	str_init(FROM_CSEQ_COL);
+str to_route_column			=	str_init(TO_ROUTE_COL);
+str from_route_column		=	str_init(FROM_ROUTE_COL);
+str to_contact_column		=	str_init(TO_CONTACT_COL);
+str from_contact_column		=	str_init(FROM_CONTACT_COL);
+str to_sock_column			=	str_init(TO_SOCK_COL);
+str from_sock_column		=	str_init(FROM_SOCK_COL);
+str dialog_table_name		=	str_init(DIALOG_TABLE_NAME);
 int dlg_db_mode				=	DB_MODE_NONE;
 
 static db_con_t* dialog_db_handle    = 0; /* database connection handle */
 static db_func_t dialog_dbf;
-
-
 
 #define SET_STR_VALUE(_val, _str)\
 	do{\
@@ -105,7 +104,7 @@ static db_func_t dialog_dbf;
 static int load_dialog_info_from_db(int dlg_hash_size);
 
 
-int dlg_connect_db(char *db_url)
+int dlg_connect_db(const str *db_url)
 {
 	if (dialog_db_handle) {
 		LM_CRIT("BUG - db connection found already open\n");
@@ -117,13 +116,12 @@ int dlg_connect_db(char *db_url)
 }
 
 
-int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
+int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period)
 {
 	int ver;
-	str table;
 
 	/* Find a database module */
-	if (bind_dbmod(db_url, &dialog_dbf) < 0){
+	if (db_bind_mod(db_url, &dialog_dbf) < 0){
 		LM_ERR("Unable to bind to a database driver\n");
 		return -1;
 	}
@@ -133,9 +131,7 @@ int init_dlg_db( char *db_url, int dlg_hash_size , int db_update_period)
 		return -1;
 	}
 
-	table.s = dialog_table_name;
-	table.len = strlen(table.s);
-	ver = table_version(&dialog_dbf, dialog_db_handle, &table );
+	ver = db_table_version(&dialog_dbf, dialog_db_handle, &dialog_table_name);
 	if (ver < 0) {
 		LM_ERR("failed to query table version\n");
 		return -1;
@@ -183,7 +179,7 @@ static int use_dialog_table(void)
 		return -1;
 	}
 
-	if (dialog_dbf.use_table(dialog_db_handle, dialog_table_name) < 0) {
+	if (dialog_dbf.use_table(dialog_db_handle, &dialog_table_name) < 0) {
 		LM_ERR("Error in use_table\n");
 		return -1;
 	}
@@ -195,13 +191,13 @@ static int use_dialog_table(void)
 
 static int select_entire_dialog_table(db_res_t ** res)
 {
-	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	h_entry_column,
-			h_id_column,		call_id_column,		from_uri_column,
-			from_tag_column,	to_uri_column,		to_tag_column,
-			start_time_column,	state_column,		timeout_column,
-			from_cseq_column,	to_cseq_column,		from_route_column,
-			to_route_column, 	from_contact_column, to_contact_column,
-			from_sock_column,	to_sock_column};
+	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	&h_entry_column,
+			&h_id_column,		&call_id_column,	&from_uri_column,
+			&from_tag_column,	&to_uri_column,		&to_tag_column,
+			&start_time_column,	&state_column,		&timeout_column,
+			&from_cseq_column,	&to_cseq_column,	&from_route_column,
+			&to_route_column, 	&from_contact_column, &to_contact_column,
+			&from_sock_column,	&to_sock_column};
 
 	if(use_dialog_table() != 0){
 		return -1;
@@ -276,14 +272,14 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		values = ROW_VALUES(rows + i);
 
 		if (VAL_NULL(values) || VAL_NULL(values+1)) {
-			LM_ERR("columns %s or/and %s cannot be null -> skipping\n",
-				h_entry_column, h_id_column);
+			LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
+				h_entry_column.len, h_entry_column.s, h_id_column.len, h_id_column.s);
 			continue;
 		}
 
 		if (VAL_NULL(values+7) || VAL_NULL(values+8)) {
-			LM_ERR("columns %s or/and %s cannot be null -> skipping\n",
-				start_time_column, state_column);
+			LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
+				start_time_column.len, start_time_column.s, state_column.len, state_column.s);
 			continue;
 		}
 
@@ -301,7 +297,8 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		if(dlg->h_entry != VAL_INT(values)){
 			LM_ERR("inconsistent hash data in the dialog database: "
 				"you may have restarted openser using a different hash_size:"
-				"please erase %s database and restart\n", dialog_table_name);
+				"please erase %.*s database and restart\n", dialog_table_name.len,
+				dialog_table_name.s);
 			shm_free(dlg);
 			goto error;
 		}
@@ -367,7 +364,7 @@ error:
 int remove_dialog_from_db(struct dlg_cell * cell)
 {
 	db_val_t values[2];
-	db_key_t match_keys[2] = { h_entry_column, h_id_column};
+	db_key_t match_keys[2] = { &h_entry_column, &h_id_column};
 
 	/*if the dialog hasn 't been yet inserted in the database*/
 	LM_DBG("trying to remove a dialog, update_flag is %i\n", cell->flags);
@@ -401,13 +398,13 @@ int update_dialog_dbinfo(struct dlg_cell * cell)
 	struct dlg_entry entry;
 	db_val_t values[DIALOG_TABLE_COL_NO];
 
-	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = { h_entry_column,
-			h_id_column,        call_id_column,     from_uri_column,
-			from_tag_column,    to_uri_column,      to_tag_column,
-			from_sock_column,   to_sock_column,
-			start_time_column,  state_column,       timeout_column,
-			from_cseq_column,   to_cseq_column,     from_route_column,
-			to_route_column,    from_contact_column,to_contact_column};
+	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = { &h_entry_column,
+			&h_id_column,        &call_id_column,     &from_uri_column,
+			&from_tag_column,    &to_uri_column,      &to_tag_column,
+			&from_sock_column,   &to_sock_column,
+			&start_time_column,  &state_column,       &timeout_column,
+			&from_cseq_column,   &to_cseq_column,     &from_route_column,
+			&to_route_column,    &from_contact_column,&to_contact_column};
 
 	if(use_dialog_table()!=0)
 		return -1;
@@ -522,13 +519,13 @@ void dialog_update_db(unsigned int ticks, void * param)
 	struct dlg_entry entry;
 	struct dlg_cell  * cell; 
 	
-	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = {		h_entry_column,
-			h_id_column,		call_id_column,		from_uri_column,
-			from_tag_column,	to_uri_column,		to_tag_column,
-			from_sock_column,	to_sock_column,
-			start_time_column,	state_column,		timeout_column,
-			from_cseq_column,	to_cseq_column,		from_route_column,
-			to_route_column, 	from_contact_column, to_contact_column};
+	db_key_t insert_keys[DIALOG_TABLE_COL_NO] = {		&h_entry_column,
+			&h_id_column,		&call_id_column,		&from_uri_column,
+			&from_tag_column,	&to_uri_column,			&to_tag_column,
+			&from_sock_column,	&to_sock_column,
+			&start_time_column,	&state_column,			&timeout_column,
+			&from_cseq_column,	&to_cseq_column,		&from_route_column,
+			&to_route_column, 	&from_contact_column, 	&to_contact_column};
 
 	if(use_dialog_table()!=0)
 		return;

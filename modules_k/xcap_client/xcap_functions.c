@@ -334,57 +334,57 @@ char* xcapGetNewDoc(xcap_get_req_t req, str user, str domain)
 		goto done;
 	}
 	/* insert in xcap table*/
-	query_cols[n_query_cols] = "username";
+	query_cols[n_query_cols] = &str_username_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = user;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "domain";
+	query_cols[n_query_cols] = &str_domain_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = domain;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "doc_type";
+	query_cols[n_query_cols] = &str_doc_type_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= req.doc_sel.doc_type;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "doc";
+	query_cols[n_query_cols] = &str_doc_col;
 	query_vals[n_query_cols].type = DB_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val= doc;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "etag";
+	query_cols[n_query_cols] = &str_etag_col;
 	query_vals[n_query_cols].type = DB_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val= etag;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "source";
+	query_cols[n_query_cols] = &str_source_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= XCAP_CL_MOD;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "doc_uri";
+	query_cols[n_query_cols] = &str_doc_uri_col;
 	query_vals[n_query_cols].type = DB_STRING;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.string_val= path;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "port";
+	query_cols[n_query_cols] = &str_port_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= req.port;
 	n_query_cols++;
 
-	if (xcap_dbf.use_table(xcap_db, xcap_db_table) < 0) 
+	if (xcap_dbf.use_table(xcap_db, &xcap_db_table) < 0) 
 	{
-		LM_ERR("in use_table-[table]= %s\n", xcap_db_table);
+		LM_ERR("in use_table-[table]= %.*s\n", xcap_db_table.len, xcap_db_table.s);
 		goto done;
 	}
 	

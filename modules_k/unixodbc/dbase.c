@@ -46,7 +46,7 @@
 /*
  * Reconnect if connection is broken
  */
-static int reconnect(const db_con_t* _h, const char* _s)
+static int reconnect(const db_con_t* _h)
 {
 	int ret = 0;
 	SQLCHAR outstr[1024];
@@ -88,10 +88,15 @@ static int reconnect(const db_con_t* _h, const char* _s)
 /*
  * Send an SQL query to the server
  */
-static int db_unixodbc_submit_query(const db_con_t* _h, const char* _s)
+static int db_unixodbc_submit_query(const db_con_t* _h, const str* _s)
 {
 	int ret = 0;
 	SQLCHAR sqlstate[7];
+
+	if (!_h || !_s || !_s->s) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
 
 	/* first do some cleanup if required */
 	if(CON_RESULT(_h))
@@ -111,18 +116,18 @@ static int db_unixodbc_submit_query(const db_con_t* _h, const char* _s)
 		/* Connection broken */
 		if( !strncmp((char*)sqlstate,"08003",5) ||
 		!strncmp((char*)sqlstate,"08S01",5) ) {
-			ret = reconnect(_h, _s);
+			ret = reconnect(_h);
 			if( !SQL_SUCCEEDED(ret) ) return ret;
 		} else {
 			return ret;
 		}
 	}
 
-	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
+	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, _s->len);
 	if (!SQL_SUCCEEDED(ret))
 	{
 		SQLCHAR sqlstate[7];
-		LM_ERR("rv=%d. Query= %s\n", ret, _s);
+		LM_ERR("rv=%d. Query= %.*s\n", ret, _s->len, _s->s);
 		db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
 			(char*)sqlstate);
 
@@ -131,13 +136,12 @@ static int db_unixodbc_submit_query(const db_con_t* _h, const char* _s)
 		    !strncmp((char*)sqlstate,"08S01",5) 
 		    )
 		{
-			ret = reconnect(_h, _s);
+			ret = reconnect(_h);
 			if( SQL_SUCCEEDED(ret) ) {
 				/* Try again */
-				ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, SQL_NTS);
+				ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, _s->len);
 				if (!SQL_SUCCEEDED(ret)) {
-					LM_ERR("rv=%d. Query= %s\n",
-						ret, _s);
+					LM_ERR("rv=%d. Query= %.*s\n", ret, _s->len, _s->s);
 					db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h),
 						SQL_HANDLE_STMT, (char*)sqlstate);
 					/* Close the cursor */
@@ -163,7 +167,7 @@ static int db_unixodbc_submit_query(const db_con_t* _h, const char* _s)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_unixodbc_init(const char* _url)
+db_con_t* db_unixodbc_init(const str* _url)
 {
 	return db_do_init(_url, (void*)db_unixodbc_new_connection);
 }
@@ -249,7 +253,7 @@ const db_key_t _o, db_res_t** _r)
 /*
  * Execute a raw SQL query
  */
-int db_unixodbc_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r)
+int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_unixodbc_submit_query,
 	db_unixodbc_store_result);
@@ -314,7 +318,7 @@ int db_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_unixodbc_use_table(db_con_t* _h, const char* _t)
+int db_unixodbc_use_table(db_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }

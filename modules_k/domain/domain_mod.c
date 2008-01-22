@@ -152,11 +152,11 @@ static int mod_init(void)
 	domain_col.len = strlen(domain_col.s);
 
 	/* Check if database module has been loaded */
-	if (domain_db_bind(db_url.s)<0)  return -1;
+	if (domain_db_bind(&db_url)<0)  return -1;
 
 	/* Check if cache needs to be loaded from domain table */
 	if (db_mode != 0) {
-		if (domain_db_init(db_url.s)<0) return -1;
+		if (domain_db_init(&db_url)<0) return -1;
 		/* Check table version */
 		ver = domain_db_ver(&domain_table);
 		if (ver < 0) {
@@ -209,7 +209,7 @@ static int child_init(int rank)
 {
 	/* Check if database is needed by child */
 	if ( db_mode==0 && rank>0 ) {
-		if (domain_db_init(db_url.s)<0) {
+		if (domain_db_init(&db_url)<0) {
 			LM_ERR("Unable to connect to the database\n");
 			return -1;
 		}
@@ -220,7 +220,7 @@ static int child_init(int rank)
 
 static int mi_child_init(void)
 {
-	return domain_db_init(db_url.s);
+	return domain_db_init(&db_url);
 }
 
 

@@ -47,7 +47,7 @@
  *  0 - no change
  *  1 - changed
  */
-int dbt_check_mtime(str *tbn, str *dbn, time_t *mt)
+int dbt_check_mtime(const str *tbn, const str *dbn, time_t *mt)
 {
 	char path[512];
 	struct stat s;
@@ -87,7 +87,7 @@ int dbt_check_mtime(str *tbn, str *dbn, time_t *mt)
 /**
  *
  */
-dbt_table_p dbt_load_file(str *tbn, str *dbn)
+dbt_table_p dbt_load_file(const str *tbn, const str *dbn)
 {
 	FILE *fin=NULL;
 	char path[512], buf[4096];

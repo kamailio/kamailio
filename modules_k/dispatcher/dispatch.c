@@ -60,6 +60,7 @@
 #include "../tm/tm_load.h"
 #include "../../db/db.h"
 #include "../../db/db_res.h"
+#include "../../str.h"
 
 #include "dispatch.h"
 
@@ -359,16 +360,16 @@ error:
 
 int ds_connect_db(void)
 {
-	if(ds_db_url==0)
+	if(!ds_db_url.s)
 		return -1;
 
-	if (ds_db_handle) 
+	if (ds_db_handle)
 	{
 		LM_CRIT("BUG - db connection found already open\n");
 		return -1;
 	}
 
-	if ((ds_db_handle = ds_dbf.init(ds_db_url)) == 0){
+	if ((ds_db_handle = ds_dbf.init(&ds_db_url)) == 0){
 		
 			return -1;
 	}
@@ -377,7 +378,6 @@ int ds_connect_db(void)
 
 void ds_disconnect_db(void)
 {
-								
 	if(ds_db_handle)
 	{
 		ds_dbf.close(ds_db_handle);
@@ -388,18 +388,17 @@ void ds_disconnect_db(void)
 /*initialize and verify DB stuff*/
 int init_ds_db(void)
 {
-	str table;
 	int ver;
 	int ret;
 
-	if(ds_table_name == 0)
+	if(ds_table_name.s == 0)
 	{
 		LM_ERR("invalid database name\n");
 		return -1;
 	}
 	
 	/* Find a database module */
-	if (bind_dbmod(ds_db_url, &ds_dbf) < 0)
+	if (db_bind_mod(&ds_db_url, &ds_dbf) < 0)
 	{
 		LM_ERR("Unable to bind to a database driver\n");
 		return -1;
@@ -411,10 +410,7 @@ int init_ds_db(void)
 		return -1;
 	}
 	
-	table.s = ds_table_name;
-	table.len = strlen(table.s);
-
-	ver = table_version(&ds_dbf, ds_db_handle, &table );
+	ver = db_table_version(&ds_dbf, ds_db_handle, &ds_table_name);
 	if (ver < 0) 
 	{
 		LM_ERR("failed to query table version\n");
@@ -441,7 +437,8 @@ int ds_load_db(void)
 	db_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
-	db_key_t query_cols[2] = {ds_set_id_col, ds_dest_uri_col};
+	
+	db_key_t query_cols[2] = {&ds_set_id_col, &ds_dest_uri_col};
 	
 	if( (*crt_idx) != (*next_idx))
 	{
@@ -454,7 +451,7 @@ int ds_load_db(void)
 			return -1;
 	}
 
-	if (ds_dbf.use_table(ds_db_handle, ds_table_name) < 0)
+	if (ds_dbf.use_table(ds_db_handle, &ds_table_name) < 0)
 	{
 		LM_ERR("error in use_table\n");
 		return -1;
@@ -528,9 +525,7 @@ int ds_destroy_list(void)
 
 	return 0;
 }
-/**
- *
- */
+
 void destroy_list(int list_id)
 {
 	ds_set_p  sp = NULL;

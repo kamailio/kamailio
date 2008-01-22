@@ -328,11 +328,15 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	db_key_t result_cols[3];
 	int n_query_cols = 0;
 	db_res_t *result = 0;
-	db_row_t *row ;	
-	db_val_t *row_vals ;
-	str body ;
+	db_row_t *row;
+	db_val_t *row_vals;
+	str body;
 	str* doc= NULL;
 	int n_result_cols= 0, xcap_doc_col;
+	static str tmp1 = str_init("username");
+	static str tmp2 = str_init("domain");
+	static str tmp3 = str_init("doc_type");
+	static str tmp4 = str_init("doc");
 
 	if(force_active)
 	{
@@ -342,29 +346,29 @@ int get_rules_doc(str* user, str* domain, int type, str** rules_doc)
 	LM_DBG("[user]= %.*s\t[domain]= %.*s", 
 			user->len, user->s,	domain->len, domain->s);
 	/* first search in database */
-	query_cols[n_query_cols] = "username";
+	query_cols[n_query_cols] = &tmp1;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *user;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "domain";
+	query_cols[n_query_cols] = &tmp2;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = *domain;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "doc_type";
+	query_cols[n_query_cols] = &tmp3;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= type;
 	n_query_cols++;
 
-	result_cols[xcap_doc_col= n_result_cols++] = "doc";
-		
-	if (pxml_dbf.use_table(pxml_db, xcap_table) < 0) 
+	result_cols[xcap_doc_col= n_result_cols++] = &tmp4;
+	
+	if (pxml_dbf.use_table(pxml_db, &xcap_table) < 0) 
 	{
-		LM_ERR("in use_table-[table]= %s\n", xcap_table);
+		LM_ERR("in use_table-[table]= %.*s\n", xcap_table.len, xcap_table.s);
 		return -1;
 	}
 

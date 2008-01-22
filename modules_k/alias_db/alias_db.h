@@ -36,12 +36,12 @@
 
 /* Module parameters variables */
 
-extern char* user_column;     /* 'username' column name */
-extern char* domain_column;   /* 'domain' column name */
-extern char* alias_user_column;     /* 'alias_username' column name */
-extern char* alias_domain_column;   /* 'alias_domain' column name */
-extern int   use_domain;      /* use or not the domain for alias lookup */
-extern str   dstrip_s;
+extern str user_column;     /* 'username' column name */
+extern str domain_column;   /* 'domain' column name */
+extern str alias_user_column;     /* 'alias_username' column name */
+extern str alias_domain_column;   /* 'alias_domain' column name */
+extern str domain_prefix;
+extern int use_domain;      /* use or not the domain for alias lookup */
 
 extern db_con_t* db_handle;   /* Database connection handle */
 

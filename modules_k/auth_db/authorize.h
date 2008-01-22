@@ -29,8 +29,8 @@
 
 #include "../../parser/msg_parser.h"
 
-int auth_db_init(char* db_url);
-int auth_db_bind(char* db_url);
+int auth_db_init(const str* db_url);
+int auth_db_bind(const str* db_url);
 void auth_db_close();
 
 /*

@@ -69,12 +69,19 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
  */
 int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 {
-	str user_s;
-	db_key_t db_keys[2] = { alias_user_column, alias_domain_column };
+	str user_s, table_s;
+	db_key_t db_keys[2] = {&alias_user_column, &alias_domain_column};
 	db_val_t db_vals[2];
-	db_key_t db_cols[] = { user_column, domain_column };
+	db_key_t db_cols[] = {&user_column, &domain_column};
 	db_res_t* db_res = NULL;
 	
+	if(!_table) {
+		LM_ERR("invalid parameter");
+		return -1;
+	}
+	table_s.s = _table;
+	table_s.len = strlen(_table);	
+
 	if (parse_sip_msg_uri(_msg) < 0)
 		return -1;
 	
@@ -90,16 +97,16 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 		db_vals[1].val.str_val.s = _msg->parsed_uri.host.s;
 		db_vals[1].val.str_val.len = _msg->parsed_uri.host.len;
 	
-		if (dstrip_s.s!=NULL && dstrip_s.len>0
-			&& dstrip_s.len<_msg->parsed_uri.host.len
-			&& strncasecmp(_msg->parsed_uri.host.s,dstrip_s.s,dstrip_s.len)==0)
+		if (domain_prefix.s && domain_prefix.len>0
+			&& domain_prefix.len<_msg->parsed_uri.host.len
+			&& strncasecmp(_msg->parsed_uri.host.s,domain_prefix.s,domain_prefix.len)==0)
 		{
-			db_vals[1].val.str_val.s   += dstrip_s.len;
-			db_vals[1].val.str_val.len -= dstrip_s.len;
+			db_vals[1].val.str_val.s   += domain_prefix.len;
+			db_vals[1].val.str_val.len -= domain_prefix.len;
 		}
 	}
 	
-	adbf.use_table(db_handle, _table);
+	adbf.use_table(db_handle, &table_s);
 	if(adbf.query(db_handle, db_keys, NULL, db_vals, db_cols,
 		(use_domain)?2:1 /*no keys*/, 2 /*no cols*/, NULL, &db_res)!=0)
 	{
@@ -200,4 +207,3 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 err_server:
 	return -1;
 }
-

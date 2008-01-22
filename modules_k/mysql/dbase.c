@@ -62,12 +62,12 @@
  * \param _s executed query
  * \return zero on success, negative value on failure
  */
-static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
+static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
 {	
 	time_t t;
 	int i, code;
 
-	if ((!_h) || (!_s)) {
+	if (!_h || !_s || !_s->s) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
@@ -88,7 +88,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 	}
 
 	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)
-	 * DBG("submit_query(): %s\n", _s);
+	 * LM_DBG("submit_query(): %s\n", _s->len, _s->s);
 	 */
 
 	/* When a server connection is lost and a query is attempted, most of
@@ -102,7 +102,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
 	 * iteration.
 	 */
 	for (i=0; i < (auto_reconnect ? 3 : 1); i++) {
-		if (mysql_query(CON_CONNECTION(_h), _s) == 0) {
+		if (mysql_real_query(CON_CONNECTION(_h), _s->s, _s->len) == 0) {
 			return 0;
 		}
 		code = mysql_errno(CON_CONNECTION(_h));
@@ -120,7 +120,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const char* _s)
  * Initialize database module
  * No function should be called before this
  */
-db_con_t* db_mysql_init(const char* _url)
+db_con_t* db_mysql_init(const str* _url)
 {
 	return db_do_init(_url, (void *)db_mysql_new_connection);
 }
@@ -246,7 +246,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 	int n;
 	int i;
 
-	if (!_h || !_r || nrows<0) {
+	if (!_h || !_r || nrows < 0) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -339,7 +339,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 /*
  * Execute a raw SQL query
  */
-int db_mysql_raw_query(const db_con_t* _h, const char* _s, db_res_t** _r)
+int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_mysql_submit_query,
 	db_mysql_store_result);
@@ -399,7 +399,7 @@ int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const 	int _n)
+int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_replace(_h, _k, _v, _n, db_mysql_val2str,
 	db_mysql_submit_query);
@@ -430,6 +430,7 @@ int db_last_inserted_id(const db_con_t* _h)
 	const int _n)
  {
 	int off, ret;
+	static str  sql_str;
 	static char sql_buf[SQL_BUF_LEN];
  
 	if ((!_h) || (!_k) || (!_v) || (!_n)) {
@@ -437,7 +438,7 @@ int db_last_inserted_id(const db_con_t* _h)
 		return -1;
 	}
  
-	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %s (", CON_TABLE(_h));
+	ret = snprintf(sql_buf, SQL_BUF_LEN, "insert into %.*s (", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
 	if (ret < 0 || ret >= SQL_BUF_LEN) goto error;
 	off = ret;
 
@@ -462,9 +463,10 @@ int db_last_inserted_id(const db_con_t* _h)
 	if (ret < 0) return -1;
 	off += ret;
 	
-	*(sql_buf + off) = '\0';
+	sql_str.s = sql_buf;
+	sql_str.len = off;
  
-	if (db_mysql_submit_query(_h, sql_buf) < 0) {
+	if (db_mysql_submit_query(_h, &sql_str) < 0) {
 		LM_ERR("error while submitting query\n");
 		return -2;
 	}
@@ -480,7 +482,7 @@ error:
  * Store name of table that will be used by
  * subsequent database functions
  */
-int db_mysql_use_table(db_con_t* _h, const char* _t)
+int db_mysql_use_table(db_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }

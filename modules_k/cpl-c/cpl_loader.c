@@ -336,8 +336,9 @@ struct mi_root * mi_cpl_get(struct mi_root *cmd_tree, void *param)
 		uri.user.len,uri.user.s,uri.host.len,uri.host.s);
 
 	/* get the script for this user */
+	str query_str = str_init("cpl_xml");
 	if (get_user_script( &uri.user, cpl_env.use_domain?&uri.host:0,
-	&script, "cpl_xml")==-1)
+	&script, &query_str)==-1)
 		return init_mi_tree( 500, DB_GET_ERR_S, DB_GET_ERR_LEN );
 
 	/* write the response into response file - even if script is null */

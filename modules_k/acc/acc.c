@@ -276,22 +276,22 @@ static void acc_db_init_keys(void)
 	/* init the static db keys */
 	n = 0;
 	/* caution: keys need to be aligned to core format */
-	db_keys[n++] = acc_method_col;
-	db_keys[n++] = acc_fromtag_col;
-	db_keys[n++] = acc_totag_col;
-	db_keys[n++] = acc_callid_col;
-	db_keys[n++] = acc_sipcode_col;
-	db_keys[n++] = acc_sipreason_col;
-	db_keys[n++] = acc_time_col;
+	db_keys[n++] = &acc_method_col;
+	db_keys[n++] = &acc_fromtag_col;
+	db_keys[n++] = &acc_totag_col;
+	db_keys[n++] = &acc_callid_col;
+	db_keys[n++] = &acc_sipcode_col;
+	db_keys[n++] = &acc_sipreason_col;
+	db_keys[n++] = &acc_time_col;
 	time_idx = n-1;
 
 	/* init the extra db keys */
 	for(extra=db_extra; extra ; extra=extra->next)
-		db_keys[n++] = extra->name.s;
+		db_keys[n++] = &extra->name;
 
 	/* multi leg call columns */
 	for( extra=leg_info ; extra ; extra=extra->next)
-		db_keys[n++] = extra->name.s;
+		db_keys[n++] = &extra->name;
 
 	/* init the values */
 	for(i=0; i<n; i++) {
@@ -304,9 +304,9 @@ static void acc_db_init_keys(void)
 
 /* binds to the corresponding database module
  * returns 0 on success, -1 on error */
-int acc_db_init(char* db_url)
+int acc_db_init(const str* db_url)
 {
-	if (bind_dbmod(db_url, &acc_dbf)<0){
+	if (db_bind_mod(db_url, &acc_dbf)<0){
 		LM_ERR("bind_db failed\n");
 		return -1;
 	}
@@ -325,7 +325,7 @@ int acc_db_init(char* db_url)
 
 /* initialize the database connection
  * returns 0 on success, -1 on error */
-int acc_db_init_child(char *db_url)
+int acc_db_init_child(const str *db_url)
 {
 	db_handle=acc_dbf.init(db_url);
 	if (db_handle==0){
@@ -364,7 +364,7 @@ int acc_db_request( struct sip_msg *rq)
 	for( i++ ; i<m; i++)
 		VAL_STR(db_vals+i) = val_arr[i];
 
-	if (acc_dbf.use_table(db_handle, acc_env.text.s/*table*/) < 0) {
+	if (acc_dbf.use_table(db_handle, &acc_env.text/*table*/) < 0) {
 		LM_ERR("error in use_table\n");
 		return -1;
 	}

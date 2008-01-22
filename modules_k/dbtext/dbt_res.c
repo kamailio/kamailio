@@ -166,8 +166,8 @@ int* dbt_get_refs(dbt_table_p _dtp, db_key_t* _k, int _n)
 	{
 		for(j=0; j<_dtp->nrcols; j++)
 		{
-			if(strlen(_k[i])==_dtp->colv[j]->name.len
-				&& !strncasecmp(_k[i], _dtp->colv[j]->name.s,
+			if(_k[i]->len==_dtp->colv[j]->name.len
+				&& !strncasecmp(_k[i]->s, _dtp->colv[j]->name.s,
 						_dtp->colv[j]->name.len))
 			{
 				_lref[i] = j;
@@ -176,7 +176,7 @@ int* dbt_get_refs(dbt_table_p _dtp, db_key_t* _k, int _n)
 		}
 		if(j>=_dtp->nrcols)
 		{
-			LM_DBG("column <%s> not found\n", _k[i]);
+			LM_DBG("column <%.*s> not found\n", _k[i]->len, _k[i]->s);
 			pkg_free(_lref);
 			return NULL;
 		}

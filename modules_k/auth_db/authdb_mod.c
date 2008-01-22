@@ -91,7 +91,7 @@ struct sl_binds slb;
 /*
  * Module parameter variables
  */
-static char* db_url         = DEFAULT_RODB_URL;
+static str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str user_column             = {USER_COL, USER_COL_LEN};
 str domain_column           = {DOMAIN_COL, DOMAIN_COL_LEN};
 str pass_column             = {PASS_COL, PASS_COL_LEN};
@@ -123,7 +123,7 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url             },
+	{"db_url",            STR_PARAM, &db_url.s           },
 	{"user_column",       STR_PARAM, &user_column.s      },
 	{"domain_column",     STR_PARAM, &domain_column.s    },
 	{"password_column",   STR_PARAM, &pass_column.s      },
@@ -156,7 +156,7 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	auth_db_handle = auth_dbf.init(db_url);
+	auth_db_handle = auth_dbf.init(&db_url);
 	if (auth_db_handle == 0){
 		LM_ERR("unable to connect to the database\n");
 		return -1;
@@ -172,13 +172,14 @@ static int mod_init(void)
 
 	LM_INFO("initializing...\n");
 
+	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
 	pass_column.len = strlen(pass_column.s);
 	pass_column_2.len = strlen(pass_column.s);
 
 	/* Find a database module */
-	if (bind_dbmod(db_url, &auth_dbf) < 0){
+	if (db_bind_mod(&db_url, &auth_dbf) < 0){
 		LM_ERR("unable to bind to a database driver\n");
 		return -1;
 	}
@@ -252,12 +253,12 @@ static int auth_fixup(void** param, int param_no)
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
-		dbh = auth_dbf.init(db_url);
+		dbh = auth_dbf.init(&db_url);
 		if (!dbh) {
 			LM_ERR("unable to open database connection\n");
 			return -1;
 		}
-		ver = table_version(&auth_dbf, dbh, &name);
+		ver = db_table_version(&auth_dbf, dbh, &name);
 		auth_dbf.close(dbh);
 		if (ver < 0) {
 			LM_ERR("failed to query table version\n");

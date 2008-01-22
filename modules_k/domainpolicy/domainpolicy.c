@@ -196,9 +196,9 @@ static void stack_to_avp(struct avp_stack *stack) {
 
 /* helper db functions*/
 
-int domainpolicy_db_bind(char* db_url)
+int domainpolicy_db_bind(const str* db_url)
 {
-	if (bind_dbmod(db_url, &domainpolicy_dbf )) {
+	if (db_bind_mod(db_url, &domainpolicy_dbf )) {
 		LM_CRIT("cannot bind to database module! "
 		"Did you forget to load a database module ?\n");
 		return -1;
@@ -208,7 +208,7 @@ int domainpolicy_db_bind(char* db_url)
 
 
 
-int domainpolicy_db_init(char* db_url)
+int domainpolicy_db_init(const str* db_url)
 {
 	if (domainpolicy_dbf.init==0){
 		LM_CRIT("unbound database module\n");
@@ -235,7 +235,7 @@ void domainpolicy_db_close(void)
 
 
 
-int domainpolicy_db_ver(char* db_url, str* name)
+int domainpolicy_db_ver(const str* db_url, const str* name)
 {
 	int ver;
 	db_con_t* dbh;
@@ -249,7 +249,7 @@ int domainpolicy_db_ver(char* db_url, str* name)
 		LM_CRIT("null database handler\n");
 		return -1;
 	}
-	ver=table_version(&domainpolicy_dbf, dbh, name);
+	ver=db_table_version(&domainpolicy_dbf, dbh, name);
 	domainpolicy_dbf.close(dbh);
 	return ver;
 }
@@ -416,17 +416,17 @@ static int check_rule(str *rule, char *service, int service_len, struct avp_stac
     type = service + 8;
     type_len = service_len - 8;
 
-    if (domainpolicy_dbf.use_table(db_handle, domainpolicy_table.s) < 0) {
+    if (domainpolicy_dbf.use_table(db_handle, &domainpolicy_table) < 0) {
 	    LM_ERR("failed to domainpolicy table\n");
 	    return -1;
     }
 
-    keys[0]=domainpolicy_col_rule.s;
-    keys[1]=domainpolicy_col_type.s;
-    cols[0]=domainpolicy_col_rule.s;
-    cols[1]=domainpolicy_col_type.s;
-    cols[2]=domainpolicy_col_att.s;
-    cols[3]=domainpolicy_col_val.s;
+    keys[0]=&domainpolicy_col_rule;
+    keys[1]=&domainpolicy_col_type;
+    cols[0]=&domainpolicy_col_rule;
+    cols[1]=&domainpolicy_col_type;
+    cols[2]=&domainpolicy_col_att;
+    cols[3]=&domainpolicy_col_val;
 
     VAL_TYPE(&vals[0]) = DB_STR;
     VAL_NULL(&vals[0]) = 0;

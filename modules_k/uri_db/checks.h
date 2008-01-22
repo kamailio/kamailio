@@ -53,9 +53,9 @@ int check_from(struct sip_msg* _msg, char* _str1, char* _str2);
 int does_uri_exist(struct sip_msg* _msg, char* _table, char* _s2);
 
 
-int uridb_db_init(char* db_url);
-int uridb_db_bind(char* db_url);
+int uridb_db_init(const str* db_url);
+int uridb_db_bind(const str* db_url);
 void uridb_db_close();
-int uridb_db_ver(char* db_url, str* name);
+int uridb_db_ver(const str* db_url, str* name);
 
 #endif /* CHECKS_H */

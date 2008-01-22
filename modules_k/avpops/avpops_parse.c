@@ -287,15 +287,8 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			/* update scheme flags with AVP name type*/
 			dbp->scheme->db_flags|=dbp->a.opd&AVPOPS_VAL_STR?AVP_NAME_STR:0;
 		} else {
-			/* duplicate table as str NULL terminated */
-			dbp->table = (char*)pkg_malloc( tmp.len + 1 );
-			if (dbp->table==0)
-			{
-				LM_ERR("no more pkg mem\n");
-				goto error;;
-			}
-			memcpy( dbp->table, tmp.s, tmp.len);
-			dbp->table[tmp.len] = 0;
+			/* duplicate table as str */
+			pkg_str_dup(dbp->table, &tmp);
 		}
 	}
 
@@ -471,27 +464,27 @@ int parse_avp_db_scheme( char *s, struct db_scheme *scheme)
 		if ( foo.len==SCHEME_UUID_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_UUID_COL, foo.len) )
 		{
-			duplicate_str( scheme->uuid_col, bar, error);
+			duplicate_str( scheme->uuid_col->s, bar, error);
 		} else
 		if ( foo.len==SCHEME_USERNAME_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_USERNAME_COL, foo.len) )
 		{
-			duplicate_str( scheme->username_col, bar, error);
+			duplicate_str( scheme->username_col->s, bar, error);
 		} else
 		if ( foo.len==SCHEME_DOMAIN_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_DOMAIN_COL, foo.len) )
 		{
-			duplicate_str( scheme->domain_col, bar, error);
+			duplicate_str( scheme->domain_col->s, bar, error);
 		} else
 		if ( foo.len==SCHEME_VALUE_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_VALUE_COL, foo.len) )
 		{
-			duplicate_str( scheme->value_col, bar, error);
+			duplicate_str( scheme->value_col->s, bar, error);
 		} else
 		if ( foo.len==SCHEME_TABLE_LEN && 
 		!strncasecmp( foo.s, SCHEME_TABLE, foo.len) )
 		{
-			duplicate_str( scheme->table, bar, error);
+			duplicate_str( scheme->table->s, bar, error);
 		} else
 		if ( foo.len==SCHEME_VAL_TYPE_LEN && 
 		!strncasecmp( foo.s, SCHEME_VAL_TYPE, foo.len) )

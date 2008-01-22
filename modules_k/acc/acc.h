@@ -69,8 +69,8 @@ void acc_log_init();
 int  acc_log_request( struct sip_msg *req);
 
 #ifdef SQL_ACC
-int  acc_db_init(char* db_url);
-int  acc_db_init_child(char* db_url);
+int  acc_db_init(const str* db_url);
+int  acc_db_init_child(const str* db_url);
 void acc_db_close();
 int  acc_db_request( struct sip_msg *req);
 #endif

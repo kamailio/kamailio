@@ -248,35 +248,35 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		}
 	}
 
-	query_cols[n_query_cols] = "domain";
+	query_cols[n_query_cols] = &str_domain_col;
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->domain;
 	n_query_cols++;
 	
-	query_cols[n_query_cols] = "username";
+	query_cols[n_query_cols] = &str_username_col;
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->user;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "event";
+	query_cols[n_query_cols] = &str_event_col;
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->event->name;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "etag";
+	query_cols[n_query_cols] = &str_etag_col;
 	query_ops[n_query_cols] = OP_EQ;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val = presentity->etag;
 	n_query_cols++;
 
-	result_cols[0]= "expires"; 
+	result_cols[0]= &str_expires_col;
 
 	if(new_t) 
 	{
@@ -290,26 +290,26 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		}
 		
 		/* insert new record into database */	
-		query_cols[n_query_cols] = "expires";
+		query_cols[n_query_cols] = &str_expires_col;
 		query_vals[n_query_cols].type = DB_INT;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.int_val = presentity->expires+
 				(int)time(NULL);
 		n_query_cols++;
 
-		query_cols[n_query_cols] = "body";
+		query_cols[n_query_cols] = &str_body_col;
 		query_vals[n_query_cols].type = DB_BLOB;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val = *body;
 		n_query_cols++;
 		
-		query_cols[n_query_cols] = "received_time";
+		query_cols[n_query_cols] = &str_received_time_col;
 		query_vals[n_query_cols].type = DB_INT;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.int_val = presentity->received_time;
 		n_query_cols++;
-
-		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+		
+		if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 		{
 			LM_ERR("unsuccessful use_table\n");
 			goto error;
@@ -331,8 +331,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		goto send_notify;
 	}
 	else
-	{
-		if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+	{	
+		if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 		{
 			LM_ERR("unsuccessful sql use table\n");
 			goto error;
@@ -366,7 +366,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					goto error;
 				}
 				
-				if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+				if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 				{
 					LM_ERR("unsuccessful sql use table\n");
 					goto error;
@@ -428,7 +428,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				
 				cur_etag= etag;
 
-				update_keys[n_update_cols] = "etag";
+				update_keys[n_update_cols] = &str_etag_col;
 				update_vals[n_update_cols].type = DB_STR;
 				update_vals[n_update_cols].nul = 0;
 				update_vals[n_update_cols].val.str_val = etag;
@@ -438,14 +438,14 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			else
 				cur_etag= presentity->etag;
 			
-			update_keys[n_update_cols] = "expires";
+			update_keys[n_update_cols] = &str_expires_col;
 			update_vals[n_update_cols].type = DB_INT;
 			update_vals[n_update_cols].nul = 0;
 			update_vals[n_update_cols].val.int_val= presentity->expires +
 				(int)time(NULL);
 			n_update_cols++;
 
-			update_keys[n_update_cols] = "received_time";
+			update_keys[n_update_cols] = &str_received_time_col;
 			update_vals[n_update_cols].type = DB_INT;
 			update_vals[n_update_cols].nul = 0;
 			update_vals[n_update_cols].val.int_val= presentity->received_time;
@@ -453,7 +453,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 			if(body && body->s)
 			{
-				update_keys[n_update_cols] = "body";
+				update_keys[n_update_cols] = &str_body_col;
 				update_vals[n_update_cols].type = DB_BLOB;
 				update_vals[n_update_cols].nul = 0;
 				update_vals[n_update_cols].val.str_val = *body;
@@ -547,19 +547,19 @@ int pres_htable_restore(void)
 	int event;
 	event_t ev;
 
-	result_cols[user_col= n_result_cols++]= "username";
-	result_cols[domain_col= n_result_cols++]= "domain";
-	result_cols[event_col= n_result_cols++]= "event";
-	result_cols[expires_col= n_result_cols++]= "expires";
-
-	if (pa_dbf.use_table(pa_db, presentity_table) < 0) 
+	result_cols[user_col= n_result_cols++]= &str_username_col;
+	result_cols[domain_col= n_result_cols++]= &str_domain_col;
+	result_cols[event_col= n_result_cols++]= &str_event_col;
+	result_cols[expires_col= n_result_cols++]= &str_expires_col;
+	
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR("unsuccessful use table sql operation\n");
 		goto error;
 	}
-
+	static str query_str = str_init("username");
 	if (pa_dbf.query (pa_db, 0, 0, 0,result_cols,0, n_result_cols,
-				"username", &result) < 0)
+				&query_str, &result) < 0)
 	{
 		LM_ERR("querying presentity\n");
 		goto error;

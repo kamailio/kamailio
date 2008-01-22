@@ -33,6 +33,7 @@
 
 
 #include "../../str.h"
+#include "../../ut.h"
 #include "../../mem/mem.h"
 
 #include "../../sr_module.h"
@@ -132,7 +133,7 @@ static void destroy(void)
 	bdblib_destroy();
 }
 
-int bdb_use_table(db_con_t* _h, const char* _t)
+int bdb_use_table(db_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
 }
@@ -140,17 +141,19 @@ int bdb_use_table(db_con_t* _h, const char* _t)
 /*
  * Initialize database connection
  */
-db_con_t* bdb_init(const char* _sqlurl)
+db_con_t* bdb_init(const str* _sqlurl)
 {
 	db_con_t* _res;
 	str _s;
 	char bdb_path[BDB_PATH_LEN];
 	
-	if (!_sqlurl) 
-		return NULL;
+	if (!_sqlurl || !_sqlurl->s) {
+		LM_ERR("invalid parameter value\n");
+		return 0;
+	}
 	
-	_s.s = (char*)_sqlurl;
-	_s.len = strlen(_sqlurl);
+	_s.s = _sqlurl->s;
+	_s.len = _sqlurl->len;
 	if(_s.len <= BDB_ID_LEN || strncmp(_s.s, BDB_ID, BDB_ID_LEN)!=0)
 	{
 		LM_ERR("invalid database URL - should be:"
@@ -237,7 +240,6 @@ int bdb_reload(char* _n)
  */
 void bdb_check_reload(db_con_t* _con)
 {
-	
 	str s;
 	char* p;
 	int rc, len;
@@ -277,8 +279,8 @@ void bdb_check_reload(db_con_t* _con)
 	p++;
 	
 	/*get table name*/
-	s.s = (char*)CON_TABLE(_con);
-	s.len = strlen(CON_TABLE(_con));
+	s.s = CON_TABLE(_con)->s;
+	s.len = CON_TABLE(_con)->len;
 	len+=s.len;
 	
 	if((len>MAX_ROW_SIZE) || (s.len > MAX_TABLENAME_SIZE) )
@@ -345,7 +347,6 @@ int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	u_int32_t i, len, ret; 
 	int klen=MAX_ROW_SIZE;
 	int *lkey=NULL, *lres=NULL;
-	str s;
 	DBT key, data;
 	DB *db;
 	DBC *dbcp;
@@ -363,10 +364,7 @@ int bdb_query(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	if(auto_reload)
 		bdb_check_reload(_con);
 
-	s.s = (char*)CON_TABLE(_con);
-	s.len = strlen(CON_TABLE(_con));
-
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_con), &s);
+	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_con), (str*)CON_TABLE(_con));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -1;
@@ -629,7 +627,6 @@ int bdb_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	int *lkey=NULL;
 	DBT key, data;
 	DB *db;
-	str s;
 
 	i = j = ret = 0;
 	klen=MAX_ROW_SIZE;
@@ -647,10 +644,7 @@ int bdb_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		return -2;
 	}
 
-	s.s = (char*)CON_TABLE(_h);
-	s.len = strlen(CON_TABLE(_h));
-
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), &s);
+	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -3;
@@ -769,7 +763,6 @@ int bdb_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 	DBT key;
 	DB *db;
 	DBC *dbcp;
-	str s;
 
 	i = j = ret = 0;
 	klen=MAX_ROW_SIZE;
@@ -780,10 +773,7 @@ int bdb_delete(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n)
 	if ((!_h) || !CON_TABLE(_h))
 		return -1;
 
-	s.s = (char*)CON_TABLE(_h);
-	s.len = strlen(CON_TABLE(_h));
-
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), &s);
+	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -3;
@@ -901,17 +891,13 @@ int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, i
 	DB *db;
 	DBC *dbcp;
 	int *lkey=NULL;
-	str s;
 	
 	i = ret = 0;
 	
 	if ((!_h) || !CON_TABLE(_h))
 		return -1;
 
-	s.s = (char*)CON_TABLE(_h);
-	s.len = strlen(CON_TABLE(_h));
-
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), &s);
+	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_h), (str*)CON_TABLE(_h));
 	if(!_tbc)
 	{	LM_WARN("table does not exist!\n");
 		return -3;
@@ -1023,7 +1009,6 @@ error:
 int bdb_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	      db_key_t* _uk, db_val_t* _uv, int _n, int _un)
 {
-	str s;
 	char *c, *t;
 	int ret, i, qcol, len, sum;
 	int *lkey=NULL;
@@ -1039,11 +1024,8 @@ int bdb_update(db_con_t* _con, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	
 	if (!_con || !CON_TABLE(_con) || !_uk || !_uv || _un <= 0)
 		return -1;
-	
-	s.s = (char*)CON_TABLE(_con);
-	s.len = strlen(CON_TABLE(_con));
 
-	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_con), &s);
+	_tbc = bdblib_get_table(BDB_CON_CONNECTION(_con), (str*)CON_TABLE(_con));
 	if(!_tbc)
 	{	LM_ERR("table does not exist\n");
 		return -1;

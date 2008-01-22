@@ -66,9 +66,9 @@ db_func_t rls_dbf;
 /** modules variables */
 str server_address= {0, 0};
 int waitn_time= 10;
-char *rlsubs_table="rls_watchers";
-char *rlpres_table= "rls_presentity";
-char* rls_xcap_table= "xcap";
+str rlsubs_table= str_init("rls_watchers");
+str rlpres_table= str_init("rls_presentity");
+str rls_xcap_table= str_init("xcap");
 
 str db_url= {0, 0};
 int hash_size= 512;
@@ -115,6 +115,39 @@ struct tm_binds tmb;
 /* SL bind */
 struct sl_binds slb;
 
+str str_rlsubs_did_col = str_init("rlsubs_did");
+str str_resource_uri_col = str_init("resource_uri");
+str str_updated_col = str_init("updated");
+str str_auth_state_col = str_init("auth_state");
+str str_reason_col = str_init("reason");
+str str_content_type_col = str_init("content_type");
+str str_presence_state_col = str_init("presence_state");
+str str_expires_col = str_init("expires");
+str str_presentity_uri_col = str_init("presentity_uri");
+str str_event_col = str_init("event");
+str str_event_id_col = str_init("event_id");
+str str_to_user_col = str_init("to_user");
+str str_to_domain_col = str_init("to_domain");
+str str_watcher_username_col = str_init("watcher_username");
+str str_watcher_domain_col = str_init("watcher_domain");
+str str_callid_col = str_init("callid");
+str str_to_tag_col = str_init("to_tag");
+str str_from_tag_col = str_init("from_tag");
+str str_local_cseq_col = str_init("local_cseq");
+str str_remote_cseq_col = str_init("remote_cseq");
+str str_record_route_col = str_init("record_route");
+str str_socket_info_col = str_init("socket_info");
+str str_contact_col = str_init("contact");
+str str_local_contact_col = str_init("local_contact");
+str str_version_col = str_init("version");
+str str_status_col = str_init("status");
+str str_username_col = str_init("username");
+str str_domain_col = str_init("domain");
+str str_doc_type_col = str_init("doc_type");
+str str_etag_col = str_init("etag");
+str str_doc_col = str_init("str_doc_col");
+
+
 /** module functions */
 
 static int mod_init(void);
@@ -137,9 +170,9 @@ static cmd_export_t cmds[]=
 static param_export_t params[]={
 	{ "server_address",         STR_PARAM,   &server_address.s			     },
 	{ "db_url",					STR_PARAM,   &db_url.s					     },
-	{ "rlsubs_table",	        STR_PARAM,   &rlsubs_table				     },
-	{ "rlpres_table",			STR_PARAM,   &rlpres_table				     },
-	{ "xcap_table",		    	STR_PARAM,   &rls_xcap_table    		     },
+	{ "rlsubs_table",	        STR_PARAM,   &rlsubs_table.s			     },
+	{ "rlpres_table",			STR_PARAM,   &rlpres_table.s			     },
+	{ "xcap_table",		    	STR_PARAM,   &rls_xcap_table.s    		     },
 	{ "waitn_time",				INT_PARAM,   &waitn_time				     },
 	{ "clean_period",			INT_PARAM,   &clean_period				     },
 	{ "max_expires",			INT_PARAM,   &rls_max_expires			     },
@@ -173,7 +206,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	str _s;
 	int ver = 0;
 	bind_presence_t bind_presence;
 	presence_api_t pres;
@@ -187,14 +219,12 @@ static int mod_init(void)
 
 	LM_DBG("start\n");
 
-	if(server_address.s== NULL)
+	if(!server_address.s)
 	{
 		LM_DBG("server_address parameter not set in configuration file\n");
 	}	
-	if(server_address.s)
-		server_address.len= strlen(server_address.s);
 	else
-		server_address.len= 0;
+		server_address.len= strlen(server_address.s);
 	
 	if(xcap_root== NULL)
 	{
@@ -274,12 +304,15 @@ static int mod_init(void)
 		LM_ERR("importing functions from presence module\n");
 		return -1;
 	}
+
+	rlsubs_table.len= strlen(rlsubs_table.s);
+	rlpres_table.len= strlen(rlpres_table.s);
+	rls_xcap_table.len= strlen(rls_xcap_table.s);
 	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,
-			db_url.s);
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	
 	/* binding to mysql module  */
-	if (bind_dbmod(db_url.s, &rls_dbf))
+	if (db_bind_mod(&db_url, &rls_dbf))
 	{
 		LM_ERR("Database module not found\n");
 		return -1;
@@ -291,30 +324,27 @@ static int mod_init(void)
 		return -1;
 	}
 
-	rls_db = rls_dbf.init(db_url.s);
+	rls_db = rls_dbf.init(&db_url);
 	if (!rls_db)
 	{
 		LM_ERR("while connecting database\n");
 		return -1;
 	}
 	/* verify table version */
-	_s.s = rlsubs_table;
-	_s.len = strlen(rlsubs_table);
-	 ver =  table_version(&rls_dbf, rls_db, &_s);
+	 ver = db_table_version(&rls_dbf, rls_db, &rlsubs_table);
 	if(ver!=W_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, W_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>,"
+				" need v%d\n", ver, rlsubs_table.len, rlsubs_table.s,
+				W_TABLE_VERSION);
 		return -1;
 	}
 	
-	_s.s = rlpres_table;
-	_s.len = strlen(rlpres_table);
-	 ver =  table_version(&rls_dbf, rls_db, &_s);
+	ver = db_table_version(&rls_dbf, rls_db, &rlpres_table);
 	if(ver!=P_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>,"
-				" need v%d\n", ver, _s.s, P_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>,"
+				" need v%d\n", ver, rlpres_table.len, rlpres_table.s, P_TABLE_VERSION);
 		return -1;
 	}
 	if(hash_size<=1)
@@ -437,7 +467,7 @@ static int child_init(int rank)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	rls_db = rls_dbf.init(db_url.s);
+	rls_db = rls_dbf.init(&db_url);
 	if (!rls_db)
 	{
 		LM_ERR("child %d: Error while connecting database\n",
@@ -446,12 +476,12 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (rls_dbf.use_table(rls_db, rlsubs_table) < 0)  
+		if (rls_dbf.use_table(rls_db, &rlsubs_table) < 0)  
 		{
 			LM_ERR("child %d: Error in use_table rlsubs_table\n", rank);
 			return -1;
 		}
-		if (rls_dbf.use_table(rls_db, rlpres_table) < 0)  
+		if (rls_dbf.use_table(rls_db, &rlpres_table) < 0)  
 		{
 			LM_ERR("child %d: Error in use_table rlpres_table\n", rank);
 			return -1;
@@ -500,7 +530,7 @@ void rlsubs_table_update(unsigned int ticks,void *param)
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
 	
-	if(rls_dbf.use_table(rls_db, rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("sql use table failed\n");
 		return;
@@ -529,33 +559,33 @@ int rls_restore_db_subs(void)
 	unsigned int expires;
 	unsigned int hash_code;
 
-	result_cols[pres_uri_col=n_result_cols++]	="presentity_uri";		
-	result_cols[expires_col=n_result_cols++]="expires";
-	result_cols[event_col=n_result_cols++]	="event";
-	result_cols[event_id_col=n_result_cols++]="event_id";
-	result_cols[to_user_col=n_result_cols++]	="to_user";
-	result_cols[to_domain_col=n_result_cols++]	="to_domain";
-	result_cols[from_user_col=n_result_cols++]	="watcher_username";
-	result_cols[from_domain_col=n_result_cols++]="watcher_domain";
-	result_cols[callid_col=n_result_cols++] ="callid";
-	result_cols[totag_col=n_result_cols++]	="to_tag";
-	result_cols[fromtag_col=n_result_cols++]="from_tag";
-	result_cols[local_cseq_col= n_result_cols++]	="local_cseq";
-	result_cols[remote_cseq_col= n_result_cols++]	="remote_cseq";
-	result_cols[record_route_col= n_result_cols++]	="record_route";
-	result_cols[sockinfo_col= n_result_cols++]	="socket_info";
-	result_cols[contact_col= n_result_cols++]	="contact";
-	result_cols[local_contact_col= n_result_cols++]	="local_contact";
-	result_cols[version_col= n_result_cols++]	="version";
-	result_cols[status_col= n_result_cols++]	="status";
-	result_cols[reason_col= n_result_cols++]	="reason";
+	result_cols[pres_uri_col=n_result_cols++] = &str_presentity_uri_col;
+	result_cols[expires_col=n_result_cols++] = &str_expires_col;
+	result_cols[event_col=n_result_cols++] = &str_event_col;
+	result_cols[event_id_col=n_result_cols++] = &str_event_id_col;
+	result_cols[to_user_col=n_result_cols++] = &str_to_user_col;
+	result_cols[to_domain_col=n_result_cols++] = &str_to_domain_col;
+	result_cols[from_user_col=n_result_cols++] = &str_watcher_username_col;
+	result_cols[from_domain_col=n_result_cols++] = &str_watcher_domain_col;
+	result_cols[callid_col=n_result_cols++] = &str_callid_col;
+	result_cols[totag_col=n_result_cols++] = &str_to_tag_col;
+	result_cols[fromtag_col=n_result_cols++] = &str_from_tag_col;
+	result_cols[local_cseq_col= n_result_cols++] = &str_local_cseq_col;
+	result_cols[remote_cseq_col= n_result_cols++] = &str_remote_cseq_col;
+	result_cols[record_route_col= n_result_cols++] = &str_record_route_col;
+	result_cols[sockinfo_col= n_result_cols++] = &str_socket_info_col;
+	result_cols[contact_col= n_result_cols++] = &str_contact_col;
+	result_cols[local_contact_col= n_result_cols++] = &str_local_contact_col;
+	result_cols[version_col= n_result_cols++] = &str_version_col;
+	result_cols[status_col= n_result_cols++] = &str_status_col;
+	result_cols[reason_col= n_result_cols++] = &str_reason_col;
 	
 	if(!rls_db)
 	{
 		LM_ERR("null database connection\n");
 		return -1;
 	}
-	if(rls_dbf.use_table(rls_db, rlsubs_table)< 0)
+	if(rls_dbf.use_table(rls_db, &rlsubs_table)< 0)
 	{
 		LM_ERR("in use table\n");
 		return -1;

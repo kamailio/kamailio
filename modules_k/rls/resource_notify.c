@@ -304,25 +304,25 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 	
 	LM_DBG("body= %.*s\n", body.len, body.s);
 
-	query_cols[n_query_cols]= "rlsubs_did";
+	query_cols[n_query_cols]= &str_rlsubs_did_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= *res_id; 
 	n_query_cols++;
 	
-	query_cols[n_query_cols]= "resource_uri";
+	query_cols[n_query_cols]= &str_resource_uri_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= *dialog.pres_uri; 
 	n_query_cols++;
 
-	query_cols[n_query_cols]= "updated";
+	query_cols[n_query_cols]= &str_updated_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= UPDATED_TYPE; 
 	n_query_cols++;
 
-	query_cols[n_query_cols]= "auth_state";
+	query_cols[n_query_cols]= &str_auth_state_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= auth_flag; 
@@ -330,37 +330,37 @@ int rls_handle_notify(struct sip_msg* msg, char* c1, char* c2)
 
 	if(reason)
 	{
-		query_cols[n_query_cols]= "reason";
+		query_cols[n_query_cols]= &str_reason_col;
 		query_vals[n_query_cols].type = DB_STR;
 		query_vals[n_query_cols].nul = 0;
 		query_vals[n_query_cols].val.str_val= *reason;
 		n_query_cols++;
 	}
-	query_cols[n_query_cols]= "content_type";
+	query_cols[n_query_cols]= &str_content_type_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= content_type;
 	n_query_cols++;
 
-	query_cols[n_query_cols]= "presence_state";
+	query_cols[n_query_cols]= &str_presence_state_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.str_val= body;
 	n_query_cols++;
 	
-	query_cols[n_query_cols]= "expires";
+	query_cols[n_query_cols]= &str_expires_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= expires+ (int)time(NULL);
 	n_query_cols++;
 
-	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
 	}
 	/* query-> if not present insert // else update */
-	result_cols[0]= "updated";
+	result_cols[0]= &str_updated_col;
 
 	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
 					2, 1, 0, &result)< 0)
@@ -466,29 +466,29 @@ void timer_send_notify(unsigned int ticks,void *param)
 	subs_t* s, *dialog= NULL;
 	char* rl_uri= NULL;
 
-	query_cols[0]= "updated";
+	query_cols[0]= &str_updated_col;
 	query_vals[0].type = DB_INT;
 	query_vals[0].nul = 0;
 	query_vals[0].val.int_val= UPDATED_TYPE; 
 
-	result_cols[did_col= n_result_cols++]= "rlsubs_did";
-	result_cols[resource_uri_col= n_result_cols++]= "resource_uri";
-	result_cols[auth_state_col= n_result_cols++]= "auth_state";
-	result_cols[content_type_col= n_result_cols++]= "content_type";
-	result_cols[reason_col= n_result_cols++]= "reason";
-	result_cols[pres_state_col= n_result_cols++]= "presence_state";
+	result_cols[did_col= n_result_cols++]= &str_rlsubs_did_col;
+	result_cols[resource_uri_col= n_result_cols++]= &str_resource_uri_col;
+	result_cols[auth_state_col= n_result_cols++]= &str_auth_state_col;
+	result_cols[content_type_col= n_result_cols++]= &str_content_type_col;
+	result_cols[reason_col= n_result_cols++]= &str_reason_col;
+	result_cols[pres_state_col= n_result_cols++]= &str_presence_state_col;
 
 	/* query in alfabetical order after rlsusbs_did 
 	 * (resource list Subscribe dialog indentifier)*/
 
-	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto done;
 	}
 
 	if(rls_dbf.query(rls_db, query_cols, 0, query_vals, result_cols,
-					1, n_result_cols, "rlsubs_did", &result)< 0)
+					1, n_result_cols, &str_rlsubs_did_col, &result)< 0)
 	{
 		LM_ERR("in sql query\n");
 		goto done;
@@ -740,12 +740,12 @@ void timer_send_notify(unsigned int ticks,void *param)
 	}
 
 	/* update the rlpres table */
-	update_cols[0]= "updated";
+	update_cols[0]= &str_updated_col;
 	update_vals[0].type = DB_INT;
 	update_vals[0].nul = 0;
 	update_vals[0].val.int_val= NO_UPDATE_TYPE; 
 
-	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
@@ -785,13 +785,13 @@ void rls_presentity_clean(unsigned int ticks,void *param)
 	db_op_t query_ops[2];
 	db_val_t query_vals[2];
 
-	query_cols[0]= "expires";
+	query_cols[0]= &str_expires_col;
 	query_ops[0]= OP_LT;
 	query_vals[0].nul= 0;
 	query_vals[0].type= DB_INT;
 	query_vals[0].val.int_val= (int)time(NULL);
 
-	if (rls_dbf.use_table(rls_db, rlpres_table) < 0) 
+	if (rls_dbf.use_table(rls_db, &rlpres_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		return ;

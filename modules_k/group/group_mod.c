@@ -170,7 +170,7 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	return group_db_init(db_url.s);
+	return group_db_init(&db_url);
 }
 
 
@@ -192,11 +192,11 @@ static int mod_init(void)
 	re_gid_column.len = strlen(re_gid_column.s);
 
 	/* Find a database module */
-	if (group_db_bind(db_url.s)) {
+	if (group_db_bind(&db_url)) {
 		return -1;
 	}
 
-	if (group_db_init(db_url.s) < 0 ){
+	if (group_db_init(&db_url) < 0 ){
 		LM_ERR("unable to open database connection\n");
 		return -1;
 	}

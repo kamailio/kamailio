@@ -70,9 +70,9 @@ static int clean_period=100;
 /* database connection */
 db_con_t *pa_db = NULL;
 db_func_t pa_dbf;
-char *presentity_table="presentity";
-char *active_watchers_table = "active_watchers";
-char *watchers_table= "watchers";  
+str presentity_table= str_init("presentity");
+str active_watchers_table = str_init("active_watchers");
+str watchers_table= str_init("watchers");
 
 int use_db=1;
 str server_address= {0, 0};
@@ -93,12 +93,12 @@ struct sl_binds slb;
 
 static int mod_init(void);
 static int child_init(int);
-void destroy(void);
+static void destroy(void);
 int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
-struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
-int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
-int mi_child_init(void);
+static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
+static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
+static int mi_child_init(void);
 
 int counter =0;
 int pid = 0;
@@ -125,9 +125,9 @@ static cmd_export_t cmds[]=
 
 static param_export_t params[]={
 	{ "db_url",					STR_PARAM, &db_url.s},
-	{ "presentity_table",		STR_PARAM, &presentity_table},
-	{ "active_watchers_table", 	STR_PARAM, &active_watchers_table},
-	{ "watchers_table",			STR_PARAM, &watchers_table},
+	{ "presentity_table",		STR_PARAM, &presentity_table.s},
+	{ "active_watchers_table", 	STR_PARAM, &active_watchers_table.s},
+	{ "watchers_table",			STR_PARAM, &watchers_table.s},
 	{ "clean_period",			INT_PARAM, &clean_period },
 	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
 	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
@@ -166,7 +166,11 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	str _s;
+	db_url.len = db_url.s ? strlen(db_url.s) : 0;
+	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
+	presentity_table.len = strlen(presentity_table.s);
+	active_watchers_table.len = strlen(active_watchers_table.s);
+	watchers_table.len = strlen(watchers_table.s);
 	int ver = 0;
 
 	LM_NOTICE("initializing module ...\n");
@@ -215,12 +219,9 @@ static int mod_init(void)
 		LM_ERR("can't load tm functions\n");
 		return -1;
 	}
-
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
-	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len,db_url.s);
 	
 	/* binding to database module  */
-	if (bind_dbmod(db_url.s, &pa_dbf))
+	if (db_bind_mod(&db_url, &pa_dbf))
 	{
 		LM_ERR("Database module not found\n");
 		return -1;
@@ -234,7 +235,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	pa_db = pa_dbf.init(db_url.s);
+	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
 		LM_ERR("connecting to database failed\n");
@@ -243,33 +244,28 @@ static int mod_init(void)
 	
 	/*verify table version */
 
-	_s.s = presentity_table;
-	_s.len = strlen(presentity_table);
-	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	ver = db_table_version(&pa_dbf, pa_db, &presentity_table);
 	if(ver!=P_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>, need v%d\n", 
-				ver, _s.s, P_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n", 
+				ver, presentity_table.len, presentity_table.s , P_TABLE_VERSION);
 		return -1;
 	}
 	
-	_s.s = active_watchers_table;
-	_s.len = strlen(active_watchers_table);
-	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	ver = db_table_version(&pa_dbf, pa_db, &active_watchers_table);
 	if(ver!=ACTWATCH_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>, need v%d\n", 
-				ver, _s.s, ACTWATCH_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n", 
+				ver, active_watchers_table.len, active_watchers_table.s,
+				ACTWATCH_TABLE_VERSION);
 		return -1;
 	}
 
-	_s.s = watchers_table;
-	_s.len = strlen(watchers_table);
-	 ver =  table_version(&pa_dbf, pa_db, &_s);
+	ver = db_table_version(&pa_dbf, pa_db, &watchers_table);
 	if(ver!=S_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>, need v%d\n",
-				ver, _s.s, S_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n",
+				ver, watchers_table.len, watchers_table.s, S_TABLE_VERSION);
 		return -1;
 	}
 
@@ -352,25 +348,27 @@ static int child_init(int rank)
 		LM_CRIT("child_init: database not bound\n");
 		return -1;
 	}
-	pa_db = pa_dbf.init(db_url.s);
+	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
 		LM_ERR("child %d: unsuccessful connecting to database\n", rank);
 		return -1;
 	}
-		
-	if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
+	
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)  
 	{
 		LM_ERR( "child %d:unsuccessful use_table presentity_table\n", rank);
 		return -1;
 	}
-	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
+
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)  
 	{
 		LM_ERR( "child %d:unsuccessful use_table active_watchers_table\n",
 				rank);
 		return -1;
 	}
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
+
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0)  
 	{
 		LM_ERR( "child %d:unsuccessful use_table watchers_table\n", rank);
 		return -1;
@@ -381,7 +379,7 @@ static int child_init(int rank)
 	return 0;
 }
 
-int mi_child_init(void)
+static int mi_child_init(void)
 {
 	if(use_db== 0)
 		return 0;
@@ -391,24 +389,26 @@ int mi_child_init(void)
 		LM_CRIT("database not bound\n");
 		return -1;
 	}
-	pa_db = pa_dbf.init(db_url.s);
+	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
 		LM_ERR("connecting database\n");
 		return -1;
 	}
 	
-	if (pa_dbf.use_table(pa_db, presentity_table) < 0)  
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR( "unsuccessful use_table presentity_table\n");
 		return -1;
 	}
-	if (pa_dbf.use_table(pa_db, active_watchers_table) < 0)  
+
+	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0)
 	{
 		LM_ERR( "unsuccessful use_table active_watchers_table\n");
 		return -1;
 	}
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0)  
+
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0)
 	{
 		LM_ERR( "unsuccessful use_table watchers_table\n");
 		return -1;
@@ -422,7 +422,7 @@ int mi_child_init(void)
 /*
  * destroy function
  */
-void destroy(void)
+static void destroy(void)
 {
 	LM_NOTICE("destroy module ...\n");
 
@@ -469,7 +469,7 @@ static int fixup_presence(void** param, int param_no)
  *									  != 0 -> publish type //		   
  *		* */
 
-struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
+static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 {
 	struct mi_node* node= NULL;
 	str pres_uri, event;
@@ -559,7 +559,7 @@ struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 			goto error;
 		}
 
-	}                 
+	}
 	else     /* if a request to refresh Notified info */
 	{
 		if(query_db_notify(&pres_uri, ev, NULL)< 0)
@@ -615,34 +615,34 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	subs.auth_rules_doc= rules_doc;
 
 	/* update in watchers_table */
-	query_cols[n_query_cols]= "presentity_uri";
+	query_cols[n_query_cols]= &str_presentity_uri_col;
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	query_vals[n_query_cols].val.str_val= pres_uri;
 	n_query_cols++;
 
-	query_cols[n_query_cols]= "event";
+	query_cols[n_query_cols]= &str_event_col;
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	query_vals[n_query_cols].val.str_val= ev->name;
 	n_query_cols++;
 
-	result_cols[status_col= n_result_cols++]= "status";
-	result_cols[reason_col= n_result_cols++]= "reason";
-	result_cols[w_user_col= n_result_cols++]= "watcher_username";
-	result_cols[w_domain_col= n_result_cols++]= "watcher_domain";
+	result_cols[status_col= n_result_cols++]= &str_status_col;
+	result_cols[reason_col= n_result_cols++]= &str_reason_col;
+	result_cols[w_user_col= n_result_cols++]= &str_watcher_username_col;
+	result_cols[w_domain_col= n_result_cols++]= &str_watcher_domain_col;
 	
-	update_cols[u_status_col= n_update_cols]= "status";
+	update_cols[u_status_col= n_update_cols]= &str_status_col;
 	update_vals[u_status_col].nul= 0;
 	update_vals[u_status_col].type= DB_INT;
 	n_update_cols++;
 
-	update_cols[u_reason_col= n_update_cols]= "reason";
+	update_cols[u_reason_col= n_update_cols]= &str_reason_col;
 	update_vals[u_reason_col].nul= 0;
 	update_vals[u_reason_col].type= DB_STR;
 	n_update_cols++;
-
-	if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+	
+	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 	{
 		LM_ERR( "in use_table\n");
 		goto done;
@@ -663,12 +663,12 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		goto done;
 	}
 
-	query_cols[q_wuser_col=n_query_cols]= "watcher_username";
+	query_cols[q_wuser_col=n_query_cols]= &str_watcher_username_col;
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	n_query_cols++;
 
-	query_cols[q_wdomain_col=n_query_cols]= "watcher_domain";
+	query_cols[q_wdomain_col=n_query_cols]= &str_watcher_domain_col;
 	query_vals[n_query_cols].nul= 0;
 	query_vals[n_query_cols].type= DB_STR;
 	n_query_cols++;
@@ -718,7 +718,8 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 
 			update_vals[u_status_col].val.int_val= subs.status;
 			update_vals[u_reason_col].val.str_val= subs.reason;
-			if (pa_dbf.use_table(pa_db, watchers_table) < 0) 
+			
+			if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 			{
 				LM_ERR( "in use_table\n");
 				lock_release(&subs_htable[hash_code].lock);
@@ -770,7 +771,7 @@ done:
 	return err_ret;
 }
 
-int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
+static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array)
 {
 	subs_t* s, *ps, *cs;
 	int i= 0;

@@ -38,15 +38,16 @@
 #include "../../dset.h"
 #include "../../route.h"
 #include "../../pvar.h"
+#include "../../str.h"
 
 static db_con_t* db_handle=0;
 static db_func_t domain_dbf;
 
 /* helper db functions*/
 
-int domain_db_bind(char* db_url)
+int domain_db_bind(const str* db_url)
 {
-	if (bind_dbmod(db_url, &domain_dbf )) {
+	if (db_bind_mod(db_url, &domain_dbf )) {
 	        LM_ERR("Cannot bind to database module!");
 		return -1;
 	}
@@ -55,8 +56,8 @@ int domain_db_bind(char* db_url)
 
 
 
-int domain_db_init(char* db_url)
-{
+int domain_db_init(const str* db_url)
+{	
 	if (domain_dbf.init==0){
 		LM_ERR("Unbound database module\n");
 		goto error;
@@ -90,7 +91,7 @@ int domain_db_ver(str* name)
 		LM_ERR("Null database handler\n");
 		return -1;
 	}
-	ver=table_version(&domain_dbf, db_handle, name);
+	ver=db_table_version(&domain_dbf, db_handle, name);
 	return ver;
 }
 
@@ -107,10 +108,10 @@ int is_domain_local(str* _host)
 		db_key_t cols[1]; 
 		db_res_t* res = NULL;
 
-		keys[0]=domain_col.s;
-		cols[0]=domain_col.s;
+		keys[0] = &domain_col;
+		cols[0] = &domain_col;
 		
-		if (domain_dbf.use_table(db_handle, domain_table.s) < 0) {
+		if (domain_dbf.use_table(db_handle, &domain_table) < 0) {
 			LM_ERR("Error while trying to use domain table\n");
 			return -1;
 		}
@@ -237,16 +238,16 @@ int reload_domain_table ( void )
 	struct domain_list **new_hash_table;
 	int i;
 
-	cols[0] = domain_col.s;
+	cols[0] = &domain_col;
 
-	if (domain_dbf.use_table(db_handle, domain_table.s) < 0) {
+	if (domain_dbf.use_table(db_handle, &domain_table) < 0) {
 		LM_ERR("Error while trying to use domain table\n");
 		return -1;
 	}
 
 	VAL_TYPE(vals) = DB_STR;
 	VAL_NULL(vals) = 0;
-    
+
 	if (domain_dbf.query(db_handle, NULL, 0, NULL, cols, 0, 1, 0, &res) < 0) {
 		LM_ERR("Error while querying database\n");
 		return -1;

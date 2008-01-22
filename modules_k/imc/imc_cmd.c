@@ -993,8 +993,8 @@ int imc_handle_unknown(struct sip_msg* msg, imc_cmd_t *cmd, str *src, str *dst)
 
 	body.s   = imc_body_buf;
 	body.len = snprintf(body.s, IMC_BUF_SIZE,
-		"invalid command '%.*s' - send '%shelp' for details",
-		cmd->name.len, cmd->name.s, imc_cmd_start_str);
+		"invalid command '%.*s' - send ''%.*shelp' for details",
+		cmd->name.len, cmd->name.s, imc_cmd_start_str.len, imc_cmd_start_str.s);
 
 	if(body.len<=0)
 	{

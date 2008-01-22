@@ -262,10 +262,15 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, char* priority,
 	xj_jconf jcf = NULL;
 	char *p, buff[1024], recv_buff[4096];
 	int flags, nr, ltime = 0;
+
+	static str tmp1 = str_init("sip_id");
+	static str tmp2 = str_init("type");
+	static str tmp3 = str_init("jab_id");
+	static str tmp4 = str_init("jab_passwd");
 	
-	db_key_t keys[] = {"sip_id", "type"};
+	db_key_t keys[] = {&tmp1, &tmp2};
 	db_val_t vals[2];
-	db_key_t col[] = {"jab_id", "jab_passwd"};
+	db_key_t col[] = {&tmp3, &tmp4};
 	db_res_t* res = NULL;
 
 	vals[0].type=DB_STRING;

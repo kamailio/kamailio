@@ -40,6 +40,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../timer.h"
+#include "../../str.h"
 #include "../../mem/shm_mem.h"
 #include "../../db/db.h"
 #include "../../parser/parse_from.h"
@@ -61,15 +62,21 @@ MODULE_VERSION
 
 db_con_t *imc_db = NULL;
 db_func_t imc_dbf;
-str db_url = str_init(DEFAULT_DB_URL);
-str outbound_proxy= {NULL, 0};
+static str db_url  = str_init(DEFAULT_DB_URL);
+str outbound_proxy = {NULL, 0};
 
-char* rooms_table = "imc_rooms";
-char* members_table = "imc_members";
+static str rooms_table   = str_init("imc_rooms");
+static str members_table = str_init("imc_members");
+
+static str imc_col_username = str_init("username");
+static str imc_col_domain   = str_init("domain");
+static str imc_col_flag     = str_init("flag");
+static str imc_col_room     = str_init("room");
+static str imc_col_name     = str_init("name");
 
 imc_hentry_p _imc_htable = NULL;
 int imc_hash_size = 4;
-char *imc_cmd_start_str= IMC_CMD_START_STR;
+str imc_cmd_start_str = str_init(IMC_CMD_START_STR);
 char imc_cmd_start_char;
 
 /** module functions */
@@ -98,9 +105,9 @@ static cmd_export_t cmds[]={
 static param_export_t params[]={
 	{"db_url",				STR_PARAM, &db_url.s},
 	{"hash_size",			INT_PARAM, &imc_hash_size},
-	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str},
-	{"rooms_table",			STR_PARAM, &rooms_table},
-	{"members_table",		STR_PARAM, &members_table},
+	{"imc_cmd_start_char",	STR_PARAM, &imc_cmd_start_str.s},
+	{"rooms_table",			STR_PARAM, &rooms_table.s},
+	{"members_table",		STR_PARAM, &members_table.s},
 	{"outbound_proxy",		STR_PARAM, &outbound_proxy.s},
 	{0,0,0}
 };
@@ -163,20 +170,19 @@ int add_from_db(void)
 	imc_room_p room = NULL;
 	int er_ret = -1;
 	
-	rq_result_cols[0] ="name";		
-	rq_result_cols[1] ="domain";	
-	rq_result_cols[2] ="flag";
+	rq_result_cols[0] = &imc_col_name;
+	rq_result_cols[1] = &imc_col_domain;
+	rq_result_cols[2] = &imc_col_flag;
 
-	mq_result_cols[0] ="username";		
-	mq_result_cols[1] ="domain";
-	mq_result_cols[2] ="flag";
+	mq_result_cols[0] = &imc_col_username;
+	mq_result_cols[1] = &imc_col_domain;
+	mq_result_cols[2] = &imc_col_flag;
 
-	mquery_cols[0] = "room";
+	mquery_cols[0] = &imc_col_room;
 	mquery_vals[0].type = DB_STR;
 	mquery_vals[0].nul = 0;
-
-
-	if(imc_dbf.use_table(imc_db, rooms_table)< 0)
+	
+	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
 	{
 		LM_ERR("use_table failed\n");
 		return -1;
@@ -215,11 +221,11 @@ int add_from_db(void)
 		if(room == NULL)
 		{
 			LM_ERR("failed to add room\n ");
-			goto error;		
+			goto error;
 		}	
 	
 		/* add members */
-		if(imc_dbf.use_table(imc_db, members_table)< 0)
+		if(imc_dbf.use_table(imc_db, &members_table)< 0)
 		{
 			LM_ERR("use_table failed\n ");
 			goto error;
@@ -245,13 +251,13 @@ int add_from_db(void)
 			m_row = &m_res->rows[j];
 			m_row_vals = ROW_VALUES(m_row);
 			
-			name.s =m_row_vals[0].val.str_val.s;
+			name.s = m_row_vals[0].val.str_val.s;
 			name.len = strlen(name.s);
 			
-			domain.s = 	m_row_vals[1].val.str_val.s;
+			domain.s = m_row_vals[1].val.str_val.s;
 			domain.len = strlen(domain.s);
 			
-			flag = 	m_row_vals[2].val.int_val	;
+			flag = m_row_vals[2].val.int_val;
 			
 			LM_DBG("adding memeber: [name]=%.*s [domain]=%.*s"
 					" in [room]= %.*s\n",name.len, name.s, domain.len,domain.s,
@@ -261,7 +267,7 @@ int add_from_db(void)
 			if(member == NULL)
 			{
 				LM_ERR("failed to adding member\n ");
-				goto error;		
+				goto error;
 			}
 			imc_release_room(room);	
 		}
@@ -271,10 +277,9 @@ int add_from_db(void)
 			imc_dbf.free_result(imc_db, m_res);
 			m_res = NULL;
 		}
-
 	}
 
-	if(imc_dbf.use_table(imc_db, members_table)< 0)
+	if(imc_dbf.use_table(imc_db, &members_table)< 0)
 	{
 		LM_ERR("use table failed\n ");
 		goto error;
@@ -286,7 +291,7 @@ int add_from_db(void)
 		goto error;
 	}
 	
-	if(imc_dbf.use_table(imc_db, rooms_table)< 0)
+	if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
 	{
 		LM_ERR("use table failed\n ");
 		goto error;
@@ -312,7 +317,6 @@ int add_from_db(void)
 	return 0;
 
 error:
-
 	if(r_res)
 	{
 		imc_dbf.free_result(imc_db, r_res);
@@ -332,46 +336,42 @@ error:
 
 static int mod_init(void)
 {
+
 	LM_INFO("initializing ...\n");
 
-	if(imc_hash_size<=0)
+	if(imc_hash_size <= 0)
 	{
 		LM_ERR("invalid hash size\n");
 		return -1;
 	}
 
-	imc_hash_size = 1<<imc_hash_size;
+	imc_hash_size = 1 << imc_hash_size;
 
-	if(imc_htable_init()<0)
+	if(imc_htable_init() < 0)
 	{
 		LM_ERR("initializing hash table\n");
 		return -1;
 	}
 
-	if(imc_cmd_start_str == NULL)
-		imc_cmd_start_str = "#";
+	imc_cmd_start_str.len = strlen(imc_cmd_start_str.s);
 
-	if(outbound_proxy.s!= NULL)
-		outbound_proxy.len= strlen(outbound_proxy.s);
+	if(outbound_proxy.s)
+		outbound_proxy.len = strlen(outbound_proxy.s);
 
-	/*  binding to mysql module */	
-	
-	if(	db_url.s == NULL)
-	{
-		LM_ERR("no db url found\n");
-		return -1;
-	}
+	rooms_table.len = strlen(rooms_table.s);
+	members_table.len = strlen(members_table.s);
 
-	db_url.len = db_url.s ? strlen(db_url.s) : 0;
+	/*  binding to mysql module */
+	db_url.len = strlen(db_url.s);
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	
-	if (bind_dbmod(db_url.s, &imc_dbf))
+	if (db_bind_mod(&db_url, &imc_dbf))
 	{
 		LM_DBG("database module not found\n");
 		return -1;
 	}
 
-	imc_db = imc_dbf.init(db_url.s);
+	imc_db = imc_dbf.init(&db_url);
 	if (!imc_db)
 	{
 		LM_ERR("failed to connect to the database\n");
@@ -384,14 +384,13 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	/* incarcare TM API */
+	/* load TM API */
 	if (load_tm_api(&tmb)!=0) {
 		LM_ERR("unable to load tm api\n");
 		return -1;
 	}
 
-	if(imc_cmd_start_str)
-		imc_cmd_start_char = imc_cmd_start_str[0];
+	imc_cmd_start_char = imc_cmd_start_str.s[0];
 	
 	if(imc_db)
 		imc_dbf.close(imc_db);
@@ -404,13 +403,13 @@ static int mod_init(void)
  * child init
  */
 static int child_init(int rank)
-{
+{	
 	if (imc_dbf.init==0)
 	{
 		LM_ERR("database not bound\n");
 		return -1;
 	}
-	imc_db = imc_dbf.init(db_url.s);
+	imc_db = imc_dbf.init(&db_url);
 	if (!imc_db)
 	{
 		LM_ERR("child %d: Error while connecting database\n", rank);
@@ -418,14 +417,14 @@ static int child_init(int rank)
 	}
 	else
 	{
-		if (imc_dbf.use_table(imc_db, rooms_table) < 0)  
+		if (imc_dbf.use_table(imc_db, &rooms_table) < 0)
 		{
-			LM_ERR("child %d: Error in use_table %s\n", rank, rooms_table);
+			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, rooms_table.len, rooms_table.s);
 			return -1;
 		}
-		if (imc_dbf.use_table(imc_db, members_table) < 0)  
+		if (imc_dbf.use_table(imc_db, &members_table) < 0)
 		{
-			LM_ERR("child %d: Error in use_table %s\n", rank, members_table);
+			LM_ERR("child %d: Error in use_table '%.*s'\n", rank, members_table.len, members_table.s);
 			return -1;
 		}
 
@@ -604,38 +603,38 @@ void destroy(void)
 	db_val_t mq_vals[4];
 	db_key_t rq_cols[4];
 	db_val_t rq_vals[4];
-
+	
 	LM_DBG("destroy module ...\n");
 	
 	if(imc_db==NULL)
 		goto done;
 
-	mq_cols[0] ="username";
+	mq_cols[0] = &imc_col_username;
 	mq_vals[0].type = DB_STR;
 	mq_vals[0].nul = 0;
 			
-	mq_cols[1] ="domain";
+	mq_cols[1] = &imc_col_domain;
 	mq_vals[1].type = DB_STR;
 	mq_vals[1].nul = 0;
 	
-	mq_cols[2] ="flag";
+	mq_cols[2] = &imc_col_flag;
 	mq_vals[2].type = DB_INT;
 	mq_vals[2].nul = 0;
 
-	mq_cols[3] ="room";
+	mq_cols[3] = &imc_col_room;
 	mq_vals[3].type = DB_STR;
 	mq_vals[3].nul = 0;
 
 
-	rq_cols[0] ="name";
+	rq_cols[0] = &imc_col_name;
 	rq_vals[0].type = DB_STR;
 	rq_vals[0].nul = 0;
 		
-	rq_cols[1] ="domain";
+	rq_cols[1] = &imc_col_domain;
 	rq_vals[1].type = DB_STR;
 	rq_vals[1].nul = 0;
 
-	rq_cols[2] ="flag";
+	rq_cols[2] = &imc_col_flag;
 	rq_vals[2].type = DB_INT;
 	rq_vals[2].nul = 0;
 
@@ -649,7 +648,7 @@ void destroy(void)
 			rq_vals[1].val.str_val = irp->domain;
 			rq_vals[2].val.int_val = irp->flags;
 
-			if(imc_dbf.use_table(imc_db, rooms_table)< 0)
+			if(imc_dbf.use_table(imc_db, &rooms_table)< 0)
 			{
 				LM_ERR("use_table failed\n");
 				return;
@@ -669,7 +668,7 @@ void destroy(void)
 				mq_vals[2].val.int_val = member->flags;
 				mq_vals[3].val.str_val = irp->uri;
 
-				if(imc_dbf.use_table(imc_db, members_table)< 0)
+				if(imc_dbf.use_table(imc_db, &members_table)< 0)
 				{
 					LM_ERR("use_table failed\n");
 					return;
@@ -828,5 +827,3 @@ error:
 	free_mi_tree(rpl_tree);
 	return 0;
 }
-
-

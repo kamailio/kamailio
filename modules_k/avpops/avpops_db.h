@@ -41,29 +41,29 @@
 struct db_scheme
 {
 	char *name;
-	char *uuid_col;
-	char *username_col;
-	char *domain_col;
-	char *value_col;
-	char *table;
+	str *uuid_col;
+	str *username_col;
+	str *domain_col;
+	str *value_col;
+	str *table;
 	int  db_flags;
 	struct db_scheme *next;
 };
 
 
-int avpops_db_bind(char* db_url);
+int avpops_db_bind(const str* db_url);
 
-int avpops_db_init(char* db_url, char* db_table, char **db_columns);
+int avpops_db_init(const str* db_url, const str* db_table, str **db_columns);
 
 db_res_t *db_load_avp( str *uuid, str *username, str *domain,
-		char *attr, char *table, struct db_scheme *scheme);
+		char *attr, const str *table, struct db_scheme *scheme);
 
 void db_close_query( db_res_t *res );
 
-int db_store_avp( db_key_t *keys, db_val_t *vals, int n, char *table);
+int db_store_avp( db_key_t *keys, db_val_t *vals, int n, const str *table);
 
 int db_delete_avp( str *uuid, str *username, str *domain,
-		char *attr, char *table);
+		char *attr, const str *table);
 
 int db_query_avp(struct sip_msg* msg, char *query, pvname_list_t* dest);
 

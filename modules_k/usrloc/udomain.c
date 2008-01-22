@@ -338,23 +338,23 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	urecord_t* r;
 	ucontact_t* c;
 
-	columns[0] = user_col.s;
-	columns[1] = contact_col.s;
-	columns[2] = expires_col.s;
-	columns[3] = q_col.s;
-	columns[4] = callid_col.s;
-	columns[5] = cseq_col.s;
-	columns[6] = flags_col.s;
-	columns[7] = cflags_col.s;
-	columns[8] = user_agent_col.s;
-	columns[9] = received_col.s;
-	columns[10] = path_col.s;
-	columns[11] = sock_col.s;
-	columns[12] = methods_col.s;
-	columns[13] = last_mod_col.s;
-	columns[14] = domain_col.s;
+	columns[0] = &user_col;
+	columns[1] = &contact_col;
+	columns[2] = &expires_col;
+	columns[3] = &q_col;
+	columns[4] = &callid_col;
+	columns[5] = &cseq_col;
+	columns[6] = &flags_col;
+	columns[7] = &cflags_col;
+	columns[8] = &user_agent_col;
+	columns[9] = &received_col;
+	columns[10] = &path_col;
+	columns[11] = &sock_col;
+	columns[12] = &methods_col;
+	columns[13] = &last_mod_col;
+	columns[14] = &domain_col;
 
-	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
+	if (ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("sql use_table failed\n");
 		return -1;
 	}
@@ -493,11 +493,11 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 	urecord_t* r;
 	ucontact_t* c;
 
-	keys[0] = user_col.s;
+	keys[0] = &user_col;
 	vals[0].type = DB_STR;
 	vals[0].nul = 0;
 	if (use_domain) {
-		keys[1] = domain_col.s;
+		keys[1] = &domain_col;
 		vals[1].type = DB_STR;
 		vals[1].nul = 0;
 		domain = q_memchr(_aor->s, '@', _aor->len);
@@ -514,26 +514,26 @@ urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
 		vals[0].val.str_val = *_aor;
 	}
 
-	columns[0] = contact_col.s;
-	columns[1] = expires_col.s;
-	columns[2] = q_col.s;
-	columns[3] = callid_col.s;
-	columns[4] = cseq_col.s;
-	columns[5] = flags_col.s;
-	columns[6] = cflags_col.s;
-	columns[7] = user_agent_col.s;
-	columns[8] = received_col.s;
-	columns[9] = path_col.s;
-	columns[10] = sock_col.s;
-	columns[11] = methods_col.s;
-	columns[12] = last_mod_col.s;
+	columns[0] = &contact_col;
+	columns[1] = &expires_col;
+	columns[2] = &q_col;
+	columns[3] = &callid_col;
+	columns[4] = &cseq_col;
+	columns[5] = &flags_col;
+	columns[6] = &cflags_col;
+	columns[7] = &user_agent_col;
+	columns[8] = &received_col;
+	columns[9] = &path_col;
+	columns[10] = &sock_col;
+	columns[11] = &methods_col;
+	columns[12] = &last_mod_col;
 
 	if (desc_time_order)
-		order = last_mod_col.s;
+		order = &last_mod_col;
 	else
-		order = q_col.s;
+		order = &q_col;
 
-	if (ul_dbf.use_table(_c, _d->name->s) < 0) {
+	if (ul_dbf.use_table(_c, _d->name) < 0) {
 		LM_ERR("failed to use table %.*s\n", _d->name->len, _d->name->s);
 		return 0;
 	}
@@ -586,19 +586,19 @@ int db_timer_udomain(udomain_t* _d)
 	db_op_t  ops[2];
 	db_val_t vals[2];
 
-	keys[0] = expires_col.s;
+	keys[0] = &expires_col;
 	ops[0] = "<";
 	vals[0].type = DB_DATETIME;
 	vals[0].nul = 0;
 	vals[0].val.time_val = act_time + 1;
 
-	keys[1] = expires_col.s;
+	keys[1] = &expires_col;
 	ops[1] = "!=";
 	vals[1].type = DB_DATETIME;
 	vals[1].nul = 0;
 	vals[1].val.time_val = 0;
 
-	if (ul_dbf.use_table(ul_dbh, _d->name->s) < 0) {
+	if (ul_dbf.use_table(ul_dbh, _d->name) < 0) {
 		LM_ERR("use_table failed\n");
 		return -1;
 	}
@@ -619,14 +619,14 @@ int testdb_udomain(db_con_t* con, udomain_t* d)
 	db_val_t val[1];
 	db_res_t* res = NULL;
 
-	if (ul_dbf.use_table(con, d->name->s) < 0) {
+	if (ul_dbf.use_table(con, d->name) < 0) {
 		LM_ERR("failed to change table\n");
 		return -1;
 	}
 
-	key[0] = user_col.s;
+	key[0] = &user_col;
 
-	col[0] = user_col.s;
+	col[0] = &user_col;
 	VAL_TYPE(val) = DB_STRING;
 	VAL_NULL(val) = 0;
 	VAL_STRING(val) = "dummy_user";

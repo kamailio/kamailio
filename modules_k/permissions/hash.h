@@ -48,7 +48,7 @@ struct trusted_list {
 /*
  * Parse and init tag avp specification
  */
-int init_tag_avp(char *tag_avp_param);
+int init_tag_avp(str *tag_avp_param);
 
 
 /*

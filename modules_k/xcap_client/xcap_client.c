@@ -57,11 +57,22 @@ static int child_init(int);
 void destroy(void);
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
-char* xcap_db_table= "xcap";
+str xcap_db_table = str_init("xcap");
 str xcap_db_url = {0, 0};
 xcap_callback_t* xcapcb_list= NULL;
 int periodical_query= 1;
 unsigned int query_period= 100;
+
+str str_source_col = str_init("source");
+str str_path_col = str_init("path");
+str str_doc_col = str_init("doc");
+str str_etag_col = str_init("etag");
+str str_username_col = str_init("username");
+str str_domain_col = str_init("domain");
+str str_doc_type_col = str_init("doc_type");
+str str_doc_uri_col = str_init("doc_uri");
+str str_port_col = str_init("port");
+
 
 /* database connection */
 db_con_t *xcap_db = NULL;
@@ -71,7 +82,7 @@ void query_xcap_update(unsigned int ticks, void* param);
 
 static param_export_t params[]={
 	{ "db_url",					STR_PARAM,         &xcap_db_url.s    },
-	{ "xcap_table",				STR_PARAM,         &xcap_db_table    },
+	{ "xcap_table",				STR_PARAM,         &xcap_db_table.s  },
 	{ "periodical_query",		INT_PARAM,         &periodical_query },
 	{ "query_period",	       	INT_PARAM,         &query_period     },
 	{    0,                     0,                      0            }
@@ -110,15 +121,15 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	str _s;
 	int ver;
 
 	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
+	xcap_db_table.len = xcap_db_table.s ? strlen(xcap_db_table.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n",ZSW(xcap_db_url.s),xcap_db_url.len,
 			xcap_db_url.s);
 	
 	/* binding to mysql module  */
-	if (bind_dbmod(xcap_db_url.s, &xcap_dbf))
+	if (db_bind_mod(&xcap_db_url, &xcap_dbf))
 	{
 		LM_ERR("Database module not found\n");
 		return -1;
@@ -130,20 +141,18 @@ static int mod_init(void)
 		return -1;
 	}
 
-	xcap_db = xcap_dbf.init(xcap_db_url.s);
+	xcap_db = xcap_dbf.init(&xcap_db_url);
 	if (!xcap_db)
 	{
 		LM_ERR("while connecting to database\n");
 		return -1;
 	}
 
-	_s.s = xcap_db_table;
-	_s.len = strlen(xcap_db_table);
-	 ver =  table_version(&xcap_dbf, xcap_db, &_s);
+	ver = db_table_version(&xcap_dbf, xcap_db, &xcap_db_table);
 	if(ver!=XCAP_TABLE_VERSION)
 	{
-		LM_ERR("Wrong version v%d for table <%s>, need v%d\n",
-				 ver, _s.s, XCAP_TABLE_VERSION);
+		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n",
+				 ver, xcap_db_table.len, xcap_db_table.s, XCAP_TABLE_VERSION);
 		return -1;
 	}
 
@@ -182,36 +191,36 @@ void query_xcap_update(unsigned int ticks, void* param)
 	int i;
 
 	/* query the ones I have to handle */
-	query_cols[n_query_cols] = "source";
+	query_cols[n_query_cols] = &str_source_col;
 	query_vals[n_query_cols].type = DB_INT;
 	query_vals[n_query_cols].nul = 0;
 	query_vals[n_query_cols].val.int_val= XCAP_CL_MOD;
 	n_query_cols++;
 
-	query_cols[n_query_cols] = "path";
+	query_cols[n_query_cols] = &str_path_col;
 	query_vals[n_query_cols].type = DB_STR;
 	query_vals[n_query_cols].nul = 0;
 
-	update_cols[u_doc_col=n_update_cols] = "doc";
+	update_cols[u_doc_col=n_update_cols] = &str_doc_col;
 	update_vals[n_update_cols].type = DB_STRING;
 	update_vals[n_update_cols].nul = 0;
 	n_update_cols++;
 
-	update_cols[u_etag_col=n_update_cols] = "etag";
+	update_cols[u_etag_col=n_update_cols] = &str_etag_col;
 	update_vals[n_update_cols].type = DB_STRING;
 	update_vals[n_update_cols].nul = 0;
 	n_update_cols++;
 
-	result_cols[user_col= n_result_cols++]     = "username";
-	result_cols[domain_col=n_result_cols++]    = "domain";
-	result_cols[doc_type_col=n_result_cols++]  = "doc_type";
-	result_cols[etag_col=n_result_cols++]      = "etag";
-	result_cols[doc_uri_col= n_result_cols++]  = "doc_uri";
-	result_cols[port_col= n_result_cols++]     = "port";
+	result_cols[user_col= n_result_cols++]     = &str_username_col;
+	result_cols[domain_col=n_result_cols++]    = &str_domain_col;
+	result_cols[doc_type_col=n_result_cols++]  = &str_doc_type_col;
+	result_cols[etag_col=n_result_cols++]      = &str_etag_col;
+	result_cols[doc_uri_col= n_result_cols++]  = &str_doc_uri_col;
+	result_cols[port_col= n_result_cols++]     = &str_port_col;
 	
-	if (xcap_dbf.use_table(xcap_db, xcap_db_table) < 0) 
+	if (xcap_dbf.use_table(xcap_db, &xcap_db_table) < 0) 
 	{
-		LM_ERR("in use_table-[table]= %s\n", xcap_db_table);
+		LM_ERR("in use_table-[table]= %.*s\n", xcap_db_table.len, xcap_db_table.s);
 		goto error;
 	}
 

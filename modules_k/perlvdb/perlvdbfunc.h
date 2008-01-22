@@ -31,6 +31,7 @@
 #include "../../db/db_op.h"
 #include "../../db/db_con.h"
 #include "../../db/db_res.h"
+#include "../../str.h"
 
 
 /*
@@ -44,7 +45,7 @@ void perlvdb_db_close(db_con_t* h);
  * Store name of table that will be used by
  * subsequent database functions
  */
-int perlvdb_use_table(db_con_t* h, const char* t);
+int perlvdb_use_table(db_con_t* h, const str* t);
 
 int perlvdb_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n);
 int perlvdb_db_replace(db_con_t* h, db_key_t* k, db_val_t* v, int n);

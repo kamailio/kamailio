@@ -67,17 +67,14 @@ db_con_t * dbh = NULL;
  *
  * @return 0 means ok, -1 means an error occured
  */
-int check_table_version(db_func_t* dbf, db_con_t* dbh, char* table, const int version) {
-	str tmp;
-	tmp.s = table;
-	tmp.len = strlen(table);
+static int check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const int version) {
 
-	int ver = table_version(dbf, dbh, &tmp);
+	int ver = db_table_version(dbf, dbh, table);
 	if (ver < 0) {
-		LM_ERR("Error while querying version for table %.*s\n", tmp.len, tmp.s);
+		LM_ERR("Error while querying version for table %.*s\n", table->len, table->s);
 		return -1;
 	} else if (ver < version) {
-		LM_ERR("Invalid version for table %.*s found\n", tmp.len, tmp.s);
+		LM_ERR("Invalid version for table %.*s found\n", table->len, table->s);
 		return -1;
 	}
 	return 0;
@@ -89,20 +86,20 @@ int check_table_version(db_func_t* dbf, db_con_t* dbh, char* table, const int ve
  * @return 0 means ok, -1 means an error occured.
  */
 int db_init(void) {
-	if (db_url == NULL) {
+	if (!db_url.s) {
 		LM_ERR("You have to set the db_url module parameter.\n");
 		return -1;
 	}
-	if (bind_dbmod(db_url, &dbf) < 0) {
+	if (db_bind_mod(&db_url, &dbf) < 0) {
 		LM_ERR("Can't bind database module.\n");
 		return -1;
 	}
-	if((dbh = dbf.init(db_url)) == NULL){
+	if((dbh = dbf.init(&db_url)) == NULL){
 		LM_ERR("Can't connect to database.\n");
 		return -1;
 	}
-	if ( (check_table_version(&dbf, dbh, db_table, ROUTE_TABLE_VER) < 0) || 
-		(check_table_version(&dbf, dbh, carrier_table, CARRIER_TABLE_VER) < 0) ) {
+	if ( (check_table_version(&dbf, dbh, &db_table, ROUTE_TABLE_VER) < 0) ||
+		(check_table_version(&dbf, dbh, &carrier_table, CARRIER_TABLE_VER) < 0) ) {
 			LM_ERR("Error during table version check.\n");
 			return -1;
 	}
@@ -118,7 +115,7 @@ int db_child_init(void) {
 	if(dbh){
 		dbf.close(dbh);
 	}
-	if((dbh = dbf.init(db_url)) == NULL){
+	if((dbh = dbf.init(&db_url)) == NULL){
 		LM_ERR("Can't connect to database.\n");
 		return -1;
 	}
@@ -158,7 +155,7 @@ int load_user_carrier(str * user, str * domain) {
 	vals[1].nul = 0;
 	vals[1].val.str_val = *domain;
 
-	if (dbf.use_table(dbh, subscriber_table) < 0) {
+	if (dbf.use_table(dbh, &subscriber_table) < 0) {
 		LM_ERR("can't use table\n");
 	}
 
@@ -190,14 +187,15 @@ int load_user_carrier(str * user, str * domain) {
 int load_route_data(struct rewrite_data * rd) {
 	db_res_t * res = NULL;
 	db_row_t * row = NULL;
-	int i;
+	int i, ret;
 	int carrier_count = 0;
 	struct carrier * carriers = NULL, * tmp = NULL;
+	static str query_str;
 
 	if ((strlen("SELECT DISTINCT  FROM  WHERE = ")
-	                        + strlen(db_table)
-	                        + strlen(columns[COL_DOMAIN])
-	                        + strlen(columns[COL_CARRIER])
+	                        + db_table.len
+	                        + columns[COL_DOMAIN]->len
+	                        + columns[COL_CARRIER]->len
 	                        + 20) >  QUERY_LEN) {
 		LM_ERR("query too long\n");
 		return -1;
@@ -215,16 +213,24 @@ int load_route_data(struct rewrite_data * rd) {
 	memset(rd->carriers, 0, sizeof(struct carrier_tree *) * carrier_count);
 	rd->tree_num = carrier_count;
 
-	
 	tmp = carriers;
 	for (i=0; i<carrier_count; i++) {
 		memset(query, 0, QUERY_LEN);
-		snprintf(query, QUERY_LEN, "SELECT DISTINCT %s FROM %s WHERE %s=%i", columns[COL_DOMAIN], db_table, columns[COL_CARRIER], tmp->id);
-		if (dbf.raw_query(dbh, query, &res) < 0) {
+		ret = snprintf(query, QUERY_LEN, "SELECT DISTINCT %.*s FROM %.*s WHERE %.*s=%i",
+		columns[COL_DOMAIN]->len, columns[COL_DOMAIN]->s, db_table.len, db_table.s,
+		columns[COL_CARRIER]->len, columns[COL_CARRIER]->s, tmp->id);
+		if (ret < 0) {
+			LM_ERR("error in snprintf");
+			goto errout;
+		}
+		query_str.s = query;
+		query_str.len = ret;
+
+		if (dbf.raw_query(dbh, &query_str, &res) < 0) {
 			LM_ERR("Failed to query database.\n");
 			goto errout;
 		}
-		LM_INFO("add_carrier: name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));			
+		LM_INFO("add_carrier: name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
 		if (add_carrier_tree(tmp->name, tmp->id, rd, RES_ROW_N(res)) == NULL) {
 			LM_ERR("cant add carrier %s\n", tmp->name);
 			goto errout;
@@ -234,13 +240,12 @@ int load_route_data(struct rewrite_data * rd) {
 		res = NULL;
 	}
 
-	if (dbf.use_table(dbh, db_table) < 0) {
-		LM_ERR("Cannot set database table '%s'.\n",
-		    db_table);
+	if (dbf.use_table(dbh, &db_table) < 0) {
+		LM_ERR("Cannot set database table '%.*s'.\n", db_table.len, db_table.s);
 		return -1;
 	}
 
-	if (dbf.query(dbh, NULL, NULL, NULL, (const char **)columns, 0,
+	if (dbf.query(dbh, NULL, NULL, NULL, (db_key_t *)columns, 0,
 	              COLUMN_NUM, NULL, &res) < 0) {
 		LM_ERR("Failed to query database.\n");
 		return -1;
@@ -286,12 +291,12 @@ static int store_carriers(struct carrier ** start){
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
-	if (dbf.use_table(dbh, carrier_table) < 0) {
+	if (dbf.use_table(dbh, &carrier_table) < 0) {
 		LM_ERR("couldn't use table\n");
 		return -1;
 	}
 
-	if (dbf.query(dbh, 0, 0, 0, (const char **)carrier_columns, 0, CARRIER_COLUMN_NUM, 0, &res) < 0) {
+	if (dbf.query(dbh, 0, 0, 0, (db_key_t *)carrier_columns, 0, CARRIER_COLUMN_NUM, 0, &res) < 0) {
 		LM_ERR("couldn't query table\n");
 		return -1;
 	}

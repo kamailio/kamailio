@@ -79,13 +79,13 @@
 #define ROUTE_TABLE_VER 1
 #define CARRIER_TABLE_VER 1
 
-extern char * db_url;
-extern char * db_table;
-extern char * carrier_table;
-extern char * subscriber_table;
-extern char * subscriber_columns[];
-extern char * carrier_columns[];
-extern char * columns[];
+extern str db_url;
+extern str db_table;
+extern str carrier_table;
+extern str subscriber_table;
+extern str * subscriber_columns[];
+extern str * carrier_columns[];
+extern str * columns[];
 extern char * config_source;
 extern char * config_file;
 extern char * default_tree;

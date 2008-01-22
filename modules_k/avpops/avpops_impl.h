@@ -114,11 +114,11 @@ struct db_param
 {
 	struct fis_param a;        /* attribute */
 	str              sa;       /* attribute as str (for db queries) */
-	char             *table;   /* DB table/scheme name */
+	str              *table;   /* DB table/scheme name */
 	struct db_scheme *scheme;  /* DB scheme */
 };
 
-void init_store_avps(char **db_columns);
+void init_store_avps(str **db_columns);
 
 int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 								struct db_param *dbp, int use_domain);

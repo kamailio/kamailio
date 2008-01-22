@@ -64,19 +64,19 @@ extern int diameter_missed_flag;
 extern int db_flag;
 extern int db_missed_flag;
 
-extern char *db_table_acc;
-extern char *db_table_mc;
+extern str db_table_acc;
+extern str db_table_mc;
 
-extern char* acc_method_col;
-extern char* acc_fromuri_col;
-extern char* acc_fromtag_col;
-extern char* acc_touri_col;
-extern char* acc_totag_col;
-extern char* acc_callid_col;
-extern char* acc_cseqno_col;
-extern char* acc_sipcode_col;
-extern char* acc_sipreason_col;
-extern char* acc_time_col;
+extern str acc_method_col;
+extern str acc_fromuri_col;
+extern str acc_fromtag_col;
+extern str acc_touri_col;
+extern str acc_totag_col;
+extern str acc_callid_col;
+extern str acc_cseqno_col;
+extern str acc_sipcode_col;
+extern str acc_sipreason_col;
+extern str acc_time_col;
 #endif /* SQL_ACC */
 
 

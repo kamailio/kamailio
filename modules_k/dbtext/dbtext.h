@@ -41,7 +41,7 @@
 /*
  * Initialize database connection
  */
-db_con_t* dbt_init(const char* _sqlurl);
+db_con_t* dbt_init(const str* _sqlurl);
 
 
 /*

@@ -58,23 +58,23 @@ static char* deny_suffix = ".deny";
 
 
 /* for allow_trusted and allow_address function */
-char* db_url = 0;                  /* Don't connect to the database by default */
+str db_url = {NULL, 0};                    /* Don't connect to the database by default */
 
 /* for allow_trusted function */
-int db_mode = DISABLE_CACHE;	   /* Database usage mode: 0=no cache, 1=cache */
-char* trusted_table = "trusted";   /* Name of trusted table */
-char* source_col = "src_ip";       /* Name of source address column */
-char* proto_col = "proto";         /* Name of protocol column */
-char* from_col = "from_pattern";   /* Name of from pattern column */
-char* tag_col = "tag";             /* Name of tag column */
-char* tag_avp_param = 0;           /* Peer tag AVP spec */
+int db_mode = DISABLE_CACHE;               /* Database usage mode: 0=no cache, 1=cache */
+str trusted_table = str_init("trusted");   /* Name of trusted table */
+str source_col = str_init("src_ip");       /* Name of source address column */
+str proto_col = str_init("proto");         /* Name of protocol column */
+str from_col = str_init("from_pattern");   /* Name of from pattern column */
+str tag_col = str_init("tag");             /* Name of tag column */
+str tag_avp_param = {NULL, 0};             /* Peer tag AVP spec */
 
 /* for allow_address function */
-char* address_table = "address";   /* Name of address table */
-char* grp_col = "grp";             /* Name of address group column */
-char* ip_addr_col = "ip_addr";     /* Name of ip address column */
-char* mask_col = "mask";           /* Name of mask column */
-char* port_col = "port";           /* Name of port column */
+str address_table = str_init("address");   /* Name of address table */
+str grp_col = str_init("grp");             /* Name of address group column */
+str ip_addr_col = str_init("ip_addr");     /* Name of ip address column */
+str mask_col = str_init("mask");           /* Name of mask column */
+str port_col = str_init("port");           /* Name of port column */
 
 
 /*
@@ -159,19 +159,19 @@ static param_export_t params[] = {
 	{"check_all_branches", INT_PARAM, &check_all_branches},
 	{"allow_suffix",       STR_PARAM, &allow_suffix      },
 	{"deny_suffix",        STR_PARAM, &deny_suffix       },
-	{"db_url",             STR_PARAM, &db_url            },
+	{"db_url",             STR_PARAM, &db_url.s          },
 	{"db_mode",            INT_PARAM, &db_mode           },
-	{"trusted_table",      STR_PARAM, &trusted_table     },
-	{"source_col",         STR_PARAM, &source_col        },
-	{"proto_col",          STR_PARAM, &proto_col         },
-	{"from_col",           STR_PARAM, &from_col          },
-	{"tag_col",            STR_PARAM, &tag_col           },
-	{"peer_tag_avp",       STR_PARAM, &tag_avp_param     },
-	{"address_table",      STR_PARAM, &address_table     },
-	{"grp_col",            STR_PARAM, &grp_col           },
-	{"ip_addr_col",        STR_PARAM, &ip_addr_col       },
-	{"mask_col",           STR_PARAM, &mask_col          },
-	{"port_col",           STR_PARAM, &port_col          },
+	{"trusted_table",      STR_PARAM, &trusted_table.s   },
+	{"source_col",         STR_PARAM, &source_col.s      },
+	{"proto_col",          STR_PARAM, &proto_col.s       },
+	{"from_col",           STR_PARAM, &from_col.s        },
+	{"tag_col",            STR_PARAM, &tag_col.s         },
+	{"peer_tag_avp",       STR_PARAM, &tag_avp_param.s   },
+	{"address_table",      STR_PARAM, &address_table.s   },
+	{"grp_col",            STR_PARAM, &grp_col.s         },
+	{"ip_addr_col",        STR_PARAM, &ip_addr_col.s     },
+	{"mask_col",           STR_PARAM, &mask_col.s        },
+	{"port_col",           STR_PARAM, &port_col.s        },
 	{0, 0, 0}
 };
 
@@ -538,13 +538,12 @@ static int double_fixup(void** param, int param_no)
 	    strcat(buffer, allow_suffix);
 	    tmp = buffer; 
 	    ret = load_fixup(&tmp, 1);
-	    
+
 	    strcpy(buffer + param_len, deny_suffix);
 	    tmp = buffer;
 	    ret |= load_fixup(&tmp, 2);
-	    
+
 	    *param = tmp;
-	    
 	    pkg_free(buffer);
 
 	    return 0;
@@ -635,7 +634,7 @@ static int int_or_pvar_fixup(void** param, int param_no)
 	LM_ERR("no pkg memory left for int_or_pvar_t\n");
 	return -1;
     }
-    
+
     s.s = (char *)*param;
 
     if (*s.s == '$') {  /* pvar */
@@ -687,6 +686,21 @@ static int mod_init(void)
 {
 	LM_DBG("initializing...\n");
 
+	if (db_url.s)
+		db_url.len = strlen(db_url.s);
+	trusted_table.len = strlen(trusted_table.s);
+	source_col.len = strlen(source_col.s);
+	proto_col.len = strlen(proto_col.s);
+	from_col.len = strlen(from_col.s);
+	tag_col.len = strlen(tag_col.s);
+	if (tag_avp_param.s)
+		tag_avp_param.len = strlen(tag_avp_param.s);
+	address_table.len = strlen(address_table.s);
+	grp_col.len = strlen(grp_col.s);
+	ip_addr_col.len = strlen(ip_addr_col.s);
+	mask_col.len = strlen(mask_col.s);
+	port_col.len = strlen(port_col.s);
+
 	allow[0].filename = get_pathname(DEFAULT_ALLOW_FILE);
 	allow[0].rules = parse_config_file(allow[0].filename);
 	if (allow[0].rules) {
@@ -710,7 +724,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (init_tag_avp(tag_avp_param) < 0) {
+	if (init_tag_avp(&tag_avp_param) < 0) {
 		LM_ERR("failed to process peer_tag_avp AVP param\n");
 		return -1;
 	}

@@ -306,7 +306,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_mc_on(req)) {
-		env_set_text( db_table_mc, 0);
+		env_set_text(db_table_mc.s, 0);
 		acc_db_request( req );
 		flags_to_reset |= db_missed_flag;
 	}
@@ -371,7 +371,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
-		env_set_text( db_table_acc, 0);
+		env_set_text( db_table_acc.s, 0);
 		acc_db_request(req);
 	}
 #endif
@@ -409,7 +409,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
-		env_set_text( db_table_acc, 0);
+		env_set_text( db_table_acc.s, 0);
 		acc_db_request( ack );
 	}
 #endif

@@ -78,6 +78,15 @@ static inline int get_columns(const db_con_t* _h, db_res_t* _r)
 	RES_COL_N(_r) = n;
 	for(i = 0; i < n; i++)
 	{
+		RES_NAMES(_r)[i] = (str*)pkg_malloc(sizeof(str));
+		if (! RES_NAMES(_r)[i]) {
+			LM_ERR("no private memory left\n");
+			pkg_free(RES_NAMES(_r));
+			pkg_free(RES_TYPES(_r));
+			// FIXME we should also free all previous allocated RES_NAMES[i]
+			return -5;
+		}
+
 		char ColumnName[80];
 		SQLRETURN ret;
 		SQLSMALLINT NameLength, DataType, DecimalDigits, Nullable;
@@ -87,11 +96,14 @@ static inline int get_columns(const db_con_t* _h, db_res_t* _r)
 			&NameLength, &DataType, &ColumnSize, &DecimalDigits, &Nullable);
 		if(!SQL_SUCCEEDED(ret))
 		{
-			LM_ERR("SQLDescribeCol fallita: %d\n", ret);
-			db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT, 
+			LM_ERR("SQLDescribeCol failed: %d\n", ret);
+			db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h), SQL_HANDLE_STMT,
 				NULL);
+			// FIXME should we fail here completly?
 		}
-		RES_NAMES(_r)[i]=ColumnName;
+		RES_NAMES(_r)[i]->s = ColumnName;
+		RES_NAMES(_r)[i]->len = NameLength;
+
 		switch(DataType)
 		{
 			case SQL_SMALLINT:

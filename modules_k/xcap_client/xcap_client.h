@@ -34,7 +34,17 @@
 
 extern xcap_callback_t* xcapcb_list;
 extern str xcap_db_url;
-extern char* xcap_db_table;
+extern str xcap_db_table;
+
+extern str str_source_col;
+extern str str_path_col;
+extern str str_doc_col;
+extern str str_etag_col;
+extern str str_username_col;
+extern str str_domain_col;
+extern str str_doc_type_col;
+extern str str_doc_uri_col;
+extern str str_port_col;
 
 /* database connection */
 extern db_con_t *xcap_db;

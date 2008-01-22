@@ -70,7 +70,7 @@ static void mod_destroy(void);
 static int dlg_hash_size = 4096;
 static char* rr_param = "did";
 static int dlg_flag = -1;
-static char* timeout_spec = 0;
+static str timeout_spec = {NULL, 0};
 static int default_timeout = 60 * 60 * 12;  /* 12 hours */
 static int seq_match_mode = SEQ_MATCH_STRICT_ID;
 str dlg_extra_hdrs = {NULL,0};
@@ -88,7 +88,7 @@ struct rr_binds d_rrb;
 pv_spec_t timeout_avp;
 
 /* db stuff */
-static char* db_url = DEFAULT_DB_URL;
+static str db_url = str_init(DEFAULT_DB_URL);
 static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 
 
@@ -108,31 +108,31 @@ static param_export_t mod_params[]={
 	{ "hash_size",             INT_PARAM, &dlg_hash_size            },
 	{ "rr_param",              STR_PARAM, &rr_param                 },
 	{ "dlg_flag",              INT_PARAM, &dlg_flag                 },
-	{ "timeout_avp",           STR_PARAM, &timeout_spec             },
+	{ "timeout_avp",           STR_PARAM, &timeout_spec.s           },
 	{ "default_timeout",       INT_PARAM, &default_timeout          },
 	{ "dlg_extra_hdrs",        STR_PARAM, &dlg_extra_hdrs.s         },
 	{ "dlg_match_mode",        INT_PARAM, &seq_match_mode           },
-	{ "db_url",                STR_PARAM, &db_url                   },
+	{ "db_url",                STR_PARAM, &db_url.s                 },
 	{ "db_mode",               INT_PARAM, &dlg_db_mode              },
 	{ "table_name",            STR_PARAM, &dialog_table_name        },
-	{ "call_id_column",        STR_PARAM, &call_id_column           },
-	{ "from_uri_column",       STR_PARAM, &from_uri_column          },
-	{ "from_tag_column",       STR_PARAM, &from_tag_column          },
-	{ "to_uri_column",         STR_PARAM, &to_uri_column            },
-	{ "to_tag_column",         STR_PARAM, &to_tag_column            },
-	{ "h_id_column",           STR_PARAM, &h_id_column              },
-	{ "h_entry_column",        STR_PARAM, &h_entry_column           },
-	{ "state_column",          STR_PARAM, &state_column             },
-	{ "start_time_column",     STR_PARAM, &start_time_column        },
-	{ "timeout_column",        STR_PARAM, &timeout_column           },
-	{ "to_cseq_column",        STR_PARAM, &to_cseq_column           },
-	{ "from_cseq_column",      STR_PARAM, &from_cseq_column         },
-	{ "to_route_column",       STR_PARAM, &to_route_column          },
-	{ "from_route_column",     STR_PARAM, &from_route_column        },
-	{ "to_contact_column",     STR_PARAM, &to_contact_column        },
-	{ "from_contact_column",   STR_PARAM, &from_contact_column      },
-	{ "to_sock_column",        STR_PARAM, &to_sock_column           },
-	{ "from_sock_column",      STR_PARAM, &from_sock_column         },
+	{ "call_id_column",        STR_PARAM, &call_id_column.s         },
+	{ "from_uri_column",       STR_PARAM, &from_uri_column.s        },
+	{ "from_tag_column",       STR_PARAM, &from_tag_column.s        },
+	{ "to_uri_column",         STR_PARAM, &to_uri_column.s          },
+	{ "to_tag_column",         STR_PARAM, &to_tag_column.s          },
+	{ "h_id_column",           STR_PARAM, &h_id_column.s            },
+	{ "h_entry_column",        STR_PARAM, &h_entry_column.s         },
+	{ "state_column",          STR_PARAM, &state_column.s           },
+	{ "start_time_column",     STR_PARAM, &start_time_column.s      },
+	{ "timeout_column",        STR_PARAM, &timeout_column.s         },
+	{ "to_cseq_column",        STR_PARAM, &to_cseq_column.s         },
+	{ "from_cseq_column",      STR_PARAM, &from_cseq_column.s       },
+	{ "to_route_column",       STR_PARAM, &to_route_column.s        },
+	{ "from_route_column",     STR_PARAM, &from_route_column.s      },
+	{ "to_contact_column",     STR_PARAM, &to_contact_column.s      },
+	{ "from_contact_column",   STR_PARAM, &from_contact_column.s    },
+	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
+	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
 	{ 0,0,0 }
 };
@@ -215,7 +215,28 @@ static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
 static int mod_init(void)
 {
 	unsigned int n;
-	str stmp;
+	db_url.len = strlen(db_url.s);
+	if (timeout_spec.s)
+		timeout_spec.len = strlen(timeout_spec.s);
+	call_id_column.len = strlen(call_id_column.s);
+	from_uri_column.len = strlen(from_uri_column.s);
+	from_tag_column.len = strlen(from_tag_column.s);
+	to_uri_column.len = strlen(to_uri_column.s);
+	to_tag_column.len = strlen(to_tag_column.s);
+	h_id_column.len = strlen(h_id_column.s);
+	h_entry_column.len = strlen(h_entry_column.s);
+	state_column.len = strlen(state_column.s);
+	start_time_column.len = strlen(start_time_column.s);
+	timeout_column.len = strlen(timeout_column.s);
+	to_cseq_column.len = strlen(to_cseq_column.s);
+	from_cseq_column.len = strlen(from_cseq_column.s);
+	to_route_column.len = strlen(to_route_column.s);
+	from_route_column.len = strlen(from_route_column.s);
+	to_contact_column.len = strlen(to_contact_column.s);
+	from_contact_column.len = strlen(from_contact_column.s);
+	to_sock_column.len = strlen(to_sock_column.s);
+	from_sock_column.len = strlen(from_sock_column.s);
+	dialog_table_name.len = strlen(dialog_table_name.s);
 
 	LM_INFO("Dialog module - initializing\n");
 
@@ -236,12 +257,11 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if (timeout_spec) {
-		stmp.s = timeout_spec; stmp.len = strlen(stmp.s);
-		if ( pv_parse_spec(&stmp, &timeout_avp)==0 
+	if (timeout_spec.s) {
+		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0 
 				&& (timeout_avp.type!=PVT_AVP)){
 			LM_ERR("malformed or non AVP timeout "
-				"AVP definition in '%s'\n", timeout_spec);
+				"AVP definition in '%.*s'\n", timeout_spec.len, timeout_spec.s);
 			return -1;
 		}
 	}
@@ -298,7 +318,7 @@ static int mod_init(void)
 
 	/* init handlers */
 	init_dlg_handlers( rr_param, dlg_flag,
-		timeout_spec?&timeout_avp:0, default_timeout, seq_match_mode);
+		timeout_spec.s?&timeout_avp:0, default_timeout, seq_match_mode);
 
 	/* init timer */
 	if (init_dlg_timer(dlg_ontimeout)!=0) {
@@ -331,17 +351,17 @@ static int mod_init(void)
 
 	/*if a database should be used to store the dialogs' information*/
 	if (dlg_db_mode==DB_MODE_NONE) {
-		db_url = 0;
+		db_url.s = 0; db_url.len = 0;
 	} else {
-		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED){
+		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED) {
 			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		if ( db_url==0 || db_url[0]==0 ) {
+		if ( !db_url.s || db_url.len==0 ) {
 			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		return init_dlg_db( db_url, dlg_hash_size, db_update_period);
+		return init_dlg_db(&db_url, dlg_hash_size, db_update_period);
 	}
 
 	return 0;
@@ -353,7 +373,7 @@ static int child_init(int rank)
 	if ( (dlg_db_mode==DB_MODE_REALTIME && (rank>0 || rank==PROC_TIMER)) ||
 	(dlg_db_mode==DB_MODE_DELAYED && (rank==PROC_MAIN || rank==PROC_TIMER ||
 	rank>0) )){
-		if ( dlg_connect_db(db_url) ) {
+		if ( dlg_connect_db(&db_url) ) {
 			LM_ERR("failed to connect to database (rank=%d)\n",rank);
 			return -1;
 		}

@@ -179,24 +179,24 @@ static db_func_t lcr_dbf;
  */
 
 /* database */
-static str db_url    = str_init(DEFAULT_RODB_URL);
-str gw_table         = str_init(GW_TABLE);
-str gw_name_col      = str_init(GW_NAME_COL);
-str grp_id_col       = str_init(GRP_ID_COL);
-str ip_addr_col      = str_init(IP_ADDR_COL);
-str port_col         = str_init(PORT_COL);
-str uri_scheme_col   = str_init(URI_SCHEME_COL);
-str transport_col    = str_init(TRANSPORT_COL);
-str strip_col        = str_init(STRIP_COL);
-str tag_col          = str_init(TAG_COL);
-str flags_col        = str_init(FLAGS_COL);
-str lcr_table        = str_init(LCR_TABLE);
-str prefix_col       = str_init(PREFIX_COL);
-str from_uri_col     = str_init(FROM_URI_COL);
-str priority_col     = str_init(PRIORITY_COL);
+static str db_url           = str_init(DEFAULT_RODB_URL);
+static str gw_table         = str_init(GW_TABLE);
+static str gw_name_col      = str_init(GW_NAME_COL);
+static str grp_id_col       = str_init(GRP_ID_COL);
+static str ip_addr_col      = str_init(IP_ADDR_COL);
+static str port_col         = str_init(PORT_COL);
+static str uri_scheme_col   = str_init(URI_SCHEME_COL);
+static str transport_col    = str_init(TRANSPORT_COL);
+static str strip_col        = str_init(STRIP_COL);
+static str tag_col          = str_init(TAG_COL);
+static str flags_col        = str_init(FLAGS_COL);
+static str lcr_table        = str_init(LCR_TABLE);
+static str prefix_col       = str_init(PREFIX_COL);
+static str from_uri_col     = str_init(FROM_URI_COL);
+static str priority_col     = str_init(PRIORITY_COL);
 
 /* timer */
-int fr_inv_timer     = DEF_FR_INV_TIMER;
+int fr_inv_timer      = DEF_FR_INV_TIMER;
 int fr_inv_timer_next = DEF_FR_INV_TIMER_NEXT;
 
 /* avps */
@@ -255,17 +255,17 @@ struct from_uri_regex from_uri_reg[MAX_NO_OF_LCRS];
 /*
  * Module functions that are defined later
  */
-int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2);
-int load_gws_1(struct sip_msg* _m, char* _s1, char* _s2);
-int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2);
-int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
-int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
-int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
-int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
-int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
-int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
-int load_contacts (struct sip_msg*, char*, char*);
-int next_contacts (struct sip_msg*, char*, char*);
+static int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2);
+static int load_gws_1(struct sip_msg* _m, char* _s1, char* _s2);
+static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2);
+static int next_gw(struct sip_msg* _m, char* _s1, char* _s2);
+static int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2);
+static int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
+static int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
+static int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
+static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
+static int load_contacts (struct sip_msg*, char*, char*);
+static int next_contacts (struct sip_msg*, char*, char*);
 
 
 /*
@@ -358,8 +358,8 @@ struct module_exports exports = {
 };
 
 
-int lcr_db_init(char* db_url)
-{
+static int lcr_db_init(const str* db_url)
+{	
 	if (lcr_dbf.init==0){
 		LM_CRIT("Null lcr_dbf\n");
 		goto error;
@@ -376,9 +376,9 @@ error:
 
 
 
-int lcr_db_bind(char* db_url)
+static int lcr_db_bind(const str* db_url)
 {
-    if (bind_dbmod(db_url, &lcr_dbf)<0){
+    if (db_bind_mod(db_url, &lcr_dbf)<0){
 	LM_ERR("Unable to bind to the database module\n");
 	return -1;
     }
@@ -392,7 +392,7 @@ int lcr_db_bind(char* db_url)
 }
 
 
-void lcr_db_close(void)
+static void lcr_db_close(void)
 {
 	if (db_handle && lcr_dbf.close){
 		lcr_dbf.close(db_handle);
@@ -401,7 +401,7 @@ void lcr_db_close(void)
 }
 
 
-int lcr_db_ver(char* db_url, str* name)
+static int lcr_db_ver(const str* db_url, str* name)
 {
 	db_con_t* dbh;
 	int ver;
@@ -415,7 +415,7 @@ int lcr_db_ver(char* db_url, str* name)
 		LM_ERR("Unable to open database connection\n");
 		return -1;
 	}
-	ver=table_version(&lcr_dbf, dbh, name);
+	ver=db_table_version(&lcr_dbf, dbh, name);
 	lcr_dbf.close(dbh);
 	return ver;
 }
@@ -430,7 +430,7 @@ static int child_init(int rank)
     if (rank<1)
 	return 0;
 
-    if (lcr_db_init(db_url.s) < 0) {
+    if (lcr_db_init(&db_url) < 0) {
 	LM_ERR("Unable to connect to database\n");
 	return -1;
     }
@@ -441,7 +441,7 @@ static int child_init(int rank)
 
 static int mi_child_init(void)
 {
-	return lcr_db_init(db_url.s);
+	return lcr_db_init(&db_url);
 }
 
 
@@ -457,12 +457,6 @@ static int mod_init(void)
     unsigned short avp_flags;
 
     LM_DBG("Initializing\n");
-
-    /* Bind database */
-    if (lcr_db_bind(db_url.s)) {
-	LM_ERR("No database module found\n");
-	return -1;
-    }
 
     /* Update length of module variables */
     db_url.len = strlen(db_url.s);
@@ -480,6 +474,12 @@ static int mod_init(void)
     prefix_col.len = strlen(prefix_col.s);
     from_uri_col.len = strlen(from_uri_col.s);
     priority_col.len = strlen(priority_col.s);
+
+    /* Bind database */
+    if (lcr_db_bind(&db_url)) {
+	LM_ERR("No database module found\n");
+	return -1;
+    }
 
     /* Check value of prefix_mode */
     if ((prefix_mode_param != 0) && (prefix_mode_param != 1)) {
@@ -600,7 +600,7 @@ static int mod_init(void)
     }
 
     /* Check table version */
-    ver = lcr_db_ver(db_url.s, &gw_table);
+    ver = lcr_db_ver(&db_url, &gw_table);
     if (ver < 0) {
 	LM_ERR("Error while querying gw table version\n");
 	goto err;
@@ -610,7 +610,7 @@ static int mod_init(void)
     }		
 
     /* Check table version */
-    ver = lcr_db_ver(db_url.s, &lcr_table);
+    ver = lcr_db_ver(&db_url, &lcr_table);
     if (ver < 0) {
 	LM_ERR("Error while querying lcr table version\n");
 	goto err;
@@ -670,7 +670,7 @@ static int mod_init(void)
 	goto err;
     }
     *lcrs_ws_reload_counter = reload_counter = 0;
-   
+
     memset(prefix_reg, 0, sizeof(struct prefix_regex) * MAX_NO_OF_LCRS);
     memset(from_uri_reg, 0, sizeof(struct from_uri_regex) * MAX_NO_OF_LCRS);
 
@@ -745,14 +745,14 @@ static int rand_lcrs(const void *m1, const void *m2)
     } else if (mi1.randomizer == mi2.randomizer) {
 	result = 0;
     }
-    
+
     return result;
 }
 
 /*
  * regcomp each prefix.
  */
-int load_prefix_regex(void)
+static int load_prefix_regex(void)
 {
     int i, status, result = 0;
 
@@ -780,10 +780,10 @@ int load_prefix_regex(void)
 /*
  * regcomp each from_uri.
  */
-int load_from_uri_regex(void)
+static int load_from_uri_regex(void)
 {
     int i, status, result = 0;
-    
+
     for (i = 0; i < MAX_NO_OF_LCRS; i++) {
 	if ((*lcrs)[i].end_record != 0) {
 	    break;
@@ -808,7 +808,7 @@ int load_from_uri_regex(void)
     return result;
 }
 
-int load_all_regex(void)
+static int load_all_regex(void)
 {
 	int result =0;
 
@@ -838,7 +838,7 @@ int load_all_regex(void)
 int reload_gws(void)
 {
     unsigned int i, port, strip, tag_len, prefix_len, from_uri_len,
-	grp_id, priority; 
+    grp_id, priority;
     struct in_addr ip_addr;
     unsigned int flags;
     uri_type scheme;
@@ -850,35 +850,35 @@ int reload_gws(void)
     db_key_t gw_cols[8];
     db_key_t lcr_cols[4];
 
-    gw_cols[0] = ip_addr_col.s;
-    gw_cols[1] = port_col.s;
-    gw_cols[2] = uri_scheme_col.s;
-    gw_cols[3] = transport_col.s;
-    gw_cols[4] = strip_col.s;
-    gw_cols[5] = tag_col.s;
+    gw_cols[0] = &ip_addr_col;
+    gw_cols[1] = &port_col;
+    gw_cols[2] = &uri_scheme_col;
+    gw_cols[3] = &transport_col;
+    gw_cols[4] = &strip_col;
+    gw_cols[5] = &tag_col;
     /* FIXME: is this ok if we have different names for grp_id
        in the two tables? (ge vw lcr) */
-    gw_cols[6] = grp_id_col.s;
-    gw_cols[7] = flags_col.s;
+    gw_cols[6] = &grp_id_col;
+    gw_cols[7] = &flags_col;
 
-    lcr_cols[0] = prefix_col.s;
-    lcr_cols[1] = from_uri_col.s;
+    lcr_cols[0] = &prefix_col;
+    lcr_cols[1] = &from_uri_col;
     /* FIXME: is this ok if we have different names for grp_id
        in the two tables? (ge vw lcr) */
-    lcr_cols[2] = grp_id_col.s;
-    lcr_cols[3] = priority_col.s;
+    lcr_cols[2] = &grp_id_col;
+    lcr_cols[3] = &priority_col;
 
     if (lcr_dbf.init==0){
 	LM_CRIT("Unbound database\n");
 	return -1;
     }
-    dbh=lcr_dbf.init(db_url.s);
+    dbh=lcr_dbf.init(&db_url);
     if (dbh==0){
 	LM_ERR("Unable to open database connection\n");
 	return -1;
     }
 
-    if (lcr_dbf.use_table(dbh, gw_table.s) < 0) {
+    if (lcr_dbf.use_table(dbh, &gw_table) < 0) {
 	LM_ERR("Error while trying to use gw table\n");
 	return -1;
     }
@@ -895,7 +895,7 @@ int reload_gws(void)
 	    lcr_dbf.close(dbh);
 	    return -1;
     }
-    
+
     for (i = 0; i < RES_ROW_N(res); i++) {
 	row = RES_ROWS(res) + i;
 	if (!((VAL_TYPE(ROW_VALUES(row)) == DB_STRING) &&
@@ -1011,7 +1011,7 @@ int reload_gws(void)
     }
 
 
-    if (lcr_dbf.use_table(dbh, lcr_table.s) < 0) {
+    if (lcr_dbf.use_table(dbh, &lcr_table) < 0) {
 	LM_ERR("Error while trying to use lcr table\n");
 	return -1;
     }
@@ -1111,7 +1111,7 @@ int reload_gws(void)
 
     (*lcrs_ws_reload_counter)++;
     if (0 != load_all_regex()) {
-    	
+
 	return -1;
     }
 
@@ -1288,11 +1288,11 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
     /*
      * Check if the gws and lcrs were reloaded
      */
-    if (reload_counter != *lcrs_ws_reload_counter) {
-	if (load_all_regex() != 0) {
-	    return -1;
+	if (reload_counter != *lcrs_ws_reload_counter) {
+		if (load_all_regex() != 0) {
+		    return -1;
+		}
 	}
-    }
 
     /*
      * Let's match the gws:
@@ -1390,7 +1390,7 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
     }
     matched_gws[gw_index].route_index = -1;
     matched_gws[gw_index].gw_index = -1;
-    
+
     /*
      * Sort the gateways based on:
      *  1. prefix len
@@ -1432,7 +1432,7 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 	      randomizer_end - randomizer_start + 1,
 	      sizeof(struct mi), rand_lcrs);
     }
-    
+
     for (i = 0; i < MAX_NO_OF_GWS; i++) {
 	index = matched_gws[i].gw_index;
 	if (index == -1) {
@@ -1525,7 +1525,7 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
  * taking into account the given group id.  Caller URI is taken
  * from request.
  */
-int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
+static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
 {
 	str grp_s;
 	unsigned int grp_id;
@@ -1548,7 +1548,7 @@ int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
  * Load info of matching GWs from database to gw_uri AVPs.
  * Caller URI is taken from request.
  */
-int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2)
+static int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
     return do_load_gws(_m, (str *)0, -1);
 }
@@ -1558,7 +1558,7 @@ int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2)
  * Load info of matching GWs from database to gw_uri AVPs.
  * Caller URI is taken from pseudo variable argument.
  */
-int load_gws_1(struct sip_msg* _m, char* _sp, char* _s2)
+static int load_gws_1(struct sip_msg* _m, char* _sp, char* _s2)
 {
     pv_spec_t *sp;
     pv_value_t pv_val;
@@ -1593,7 +1593,7 @@ int load_gws_1(struct sip_msg* _m, char* _sp, char* _s2)
  * ruri_user AVP value saved earlier.
  * Returns 1 upon success and -1 upon failure.
  */
-int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
+static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
     int_str gw_uri_val, ruri_user_val, val;
     struct action act;
@@ -1610,7 +1610,7 @@ int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     val.n = (int)strtoul(gw_uri_val.s.s, &at, 0);
     add_avp(flags_avp_type, flags_avp, val);
     LM_DBG("Added flags_avp <%u>\n", (unsigned int)val.n);
-    
+
     gw_uri_val.s.len = gw_uri_val.s.len - (at - gw_uri_val.s.s);
     gw_uri_val.s.s = at;
 
@@ -1808,7 +1808,7 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
  * Checks if request comes from a gateway, taking source address from request
  * and taking into account the group id.
  */
-int from_gw_grp(struct sip_msg* _m, char* _grp_id, char* _s2)
+static int from_gw_grp(struct sip_msg* _m, char* _grp_id, char* _s2)
 {
     return do_from_gw(_m, (pv_spec_t *)0, (int)(long)_grp_id);
 }
@@ -1818,7 +1818,7 @@ int from_gw_grp(struct sip_msg* _m, char* _grp_id, char* _s2)
  * Checks if request comes from a gateway, taking src_address from request
  * and ignoring group id.
  */
-int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
+static int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
     return do_from_gw(_m, (pv_spec_t *)0, -1);
 }
@@ -1828,7 +1828,7 @@ int from_gw_0(struct sip_msg* _m, char* _s1, char* _s2)
  * Checks if request comes from a gateway, taking source address from pw
  * and ignoring group id.
  */
-int from_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
+static int from_gw_1(struct sip_msg* _m, char* _addr_sp, char* _s2)
 {
     return do_from_gw(_m, (pv_spec_t *)_addr_sp, -1);
 }
@@ -1853,7 +1853,7 @@ static int do_to_gw(struct sip_msg* _m, int grp_id)
     }
     memcpy(host, _m->parsed_uri.host.s, _m->parsed_uri.host.len);
     host[_m->parsed_uri.host.len] = 0;
-    
+
     if (!inet_aton(host, &addr)) {
 	return -1;
     }
@@ -1876,7 +1876,7 @@ static int do_to_gw(struct sip_msg* _m, int grp_id)
  * Checks if in-dialog request goes to gateway, taking
  * into account the group id.
  */
-int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
+static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
 {
     int grp_id;
 
@@ -1889,7 +1889,7 @@ int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
  * Checks if in-dialog request goes to gateway, ignoring
  * the group id.
  */
-int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
+static int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
     return do_to_gw(_m, -1);
 }
@@ -1908,7 +1908,7 @@ static inline void free_contact_list(struct contact *curr) {
 }
 
 /* Encode branch info from contact struct to str */
-inline int encode_branch_info(str *info, struct contact *con)
+static inline int encode_branch_info(str *info, struct contact *con)
 {
     char *at, *s;
     int len;
@@ -1956,7 +1956,7 @@ inline int encode_branch_info(str *info, struct contact *con)
 
 
 /* Encode branch info from str */
-inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
+static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
 			      struct socket_info **sock, unsigned int *flags)
 {
     str s, host;
@@ -2032,7 +2032,7 @@ inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
  * contact is the last one in its priority class.  Finally, removes
  * all branches from destination set.
  */
-int load_contacts(struct sip_msg* msg, char* key, char* value)
+static int load_contacts(struct sip_msg* msg, char* key, char* value)
 {
     str uri, dst_uri, path, branch_info, *ruri;
     qvalue_t q, ruri_q;
@@ -2152,7 +2152,7 @@ rest:
 
     /* Free contact list */
     free_contact_list(contacts);
-    
+
     return 1;
 }
 
@@ -2164,7 +2164,7 @@ rest:
  * contacts as branches.  If called from failure route block, adds all
  * contacts as branches.  Removes added contacts from "lcr_contact" AVP.
  */
-int next_contacts(struct sip_msg* msg, char* key, char* value)
+static int next_contacts(struct sip_msg* msg, char* key, char* value)
 {
     struct usr_avp *avp, *prev;
     int_str val;
@@ -2195,7 +2195,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	set_path_vector(msg, &path);
 	msg->force_send_socket = sock;
 	setb0flags(flags);
-	    
+
 	if (avp->flags & Q_FLAG) {
 	    destroy_avp(avp);
 	    /* Set fr_inv_timer */
@@ -2221,7 +2221,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 		destroy_avp(avp);
 		return -1;
 	    }
-	    
+
 	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
 		LM_ERR("Appending branch failed\n");
 		destroy_avp(avp);
@@ -2288,7 +2288,7 @@ int next_contacts(struct sip_msg* msg, char* key, char* value)
 	LM_ERR("Unsupported route type\n");
 	return -1;
     }
-    
+
     return 1;
 }
 

@@ -44,23 +44,21 @@ static int_str tag_avp;
 /*
  * Parse and set tag AVP specs
  */
-int init_tag_avp(char *tag_avp_param)
+int init_tag_avp(str *tag_avp_param)
 {
     pv_spec_t avp_spec;
     unsigned short avp_flags;
-	str s;
 
-    if (tag_avp_param && *tag_avp_param) {
-	s.s = tag_avp_param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
+    if (tag_avp_param->s && tag_avp_param->len > 0) {
+	if (pv_parse_spec(tag_avp_param, &avp_spec)==0
 	    || avp_spec.type != PVT_AVP) {
 	    LM_ERR("malformed or non "
-		"AVP %s peer_tag_avp definition\n", tag_avp_param);
+		"AVP %.*s peer_tag_avp definition\n", tag_avp_param->len, tag_avp_param->s);
 	    return -1;
 	}
 	if(pv_get_avp_name(0, &avp_spec.pvp, &tag_avp, &avp_flags)!=0) {
-	    LM_ERR("[%s]- invalid "
-		"peer_tag_avp AVP definition\n", tag_avp_param);
+	    LM_ERR("[%.*s]- invalid "
+		"peer_tag_avp AVP definition\n", tag_avp_param->len, tag_avp_param->s);
 	    return -1;
 	}
 	tag_avp_type = avp_flags;
