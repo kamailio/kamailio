@@ -20,9 +20,11 @@
 			  <name>id</name>
 			  <type>unsigned int</type>
 			  <size>&table_id_len;</size>
-			  <primary/>
-			  <default>0</default>
 			  <natural/>
+			  <autoincrement/>
+			  <primary/>
+			  <type db="postgres">SERIAL PRIMARY KEY</type>
+			  <type db="dbtext">int,auto</type>
 			  <description>unique ID</description>
 		  </column>
 		  
