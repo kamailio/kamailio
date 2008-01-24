@@ -159,7 +159,7 @@ struct db_scheme *avp_get_db_scheme (char *name)
 static inline int set_table( const str *table, char *func)
 {
 	static int default_set = 1;
-	if (table->s)
+	if (table && table->s)
 	{
 		if ( avpops_dbf.use_table( db_hdl, table)<0 )
 		{
