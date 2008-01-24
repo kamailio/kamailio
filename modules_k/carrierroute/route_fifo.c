@@ -103,7 +103,7 @@ static struct mi_root* print_fifo_err(void);
 /**
  * reloads the routing data
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 500 on failure
@@ -127,7 +127,7 @@ static int updated;
 /**
  * prints the routing data
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 400 or 500 on failure
@@ -181,7 +181,7 @@ error:
  * fifo command, can be used only in file mode
  * expect one mi node that contains the command
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 400 or 500 on failure
@@ -225,7 +225,7 @@ struct mi_root* replace_host (struct mi_root* cmd_tree, void *param) {
  * can be used only in file mode
  * expect one mi node that contains the command
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 400 or 500 on failure
@@ -269,7 +269,7 @@ struct mi_root* deactivate_host (struct mi_root* cmd_tree, void *param) {
  * can be used only in file mode
  * expect one mi node that contains the command
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 400 or 500 on failure
@@ -313,7 +313,7 @@ struct mi_root* activate_host (struct mi_root* cmd_tree, void *param) {
  * can be used only in file mode
  * expect one mi node that contains the command
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 400 or 500 on failure
@@ -357,7 +357,7 @@ struct mi_root* add_host (struct mi_root* cmd_tree, void *param) {
  * can be used only in file mode
  * expect one mi node that contains the command
  *
- * @param mi_root the fifo command tree
+ * @param cmd_tree the MI command tree
  * @param param the parameter
  *
  * @return code 200 on success, code 400 or 500 on failure
