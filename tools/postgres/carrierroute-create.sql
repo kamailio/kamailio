@@ -14,7 +14,7 @@ CREATE TABLE carrierroute (
 
 INSERT INTO version (table_name, table_version) values ('route_tree','1');
 CREATE TABLE route_tree (
-    id INTEGER PRIMARY KEY NOT NULL DEFAULT 0,
+    id SERIAL PRIMARY KEY NOT NULL,
     carrier VARCHAR(64) DEFAULT NULL
 );
 

@@ -1,1 +1,1 @@
-id(int) carrier(string,null) 
+id(int,auto) carrier(string,null) 
