@@ -158,7 +158,6 @@ struct db_scheme *avp_get_db_scheme (char *name)
 
 static inline int set_table( const str *table, char *func)
 {
-	static int default_set = 1;
 	if (table && table->s)
 	{
 		if ( avpops_dbf.use_table( db_hdl, table)<0 )
@@ -166,14 +165,12 @@ static inline int set_table( const str *table, char *func)
 			LM_ERR("db-%s: cannot set table \"%.*s\"\n", func, table->len, table->s);
 			return -1;
 		}
-		default_set = 0;
-	} else if (!default_set){
+	} else {
 		if ( avpops_dbf.use_table( db_hdl, &def_table)<0 )
 		{
 			LM_ERR("db-%s: cannot set table \"%.*s\"\n", func, def_table.len, def_table.s);
 			return -1;
 		}
-		default_set = 1;
 	}
 	return 0;
 }
