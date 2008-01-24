@@ -23,7 +23,7 @@
  */
 
 /**
- * @file route.h
+ * @file carrierroute/route.h
  *
  * @author: Jonas Appel <jonas dot appel at schlund dot de>
  *
