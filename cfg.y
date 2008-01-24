@@ -87,6 +87,7 @@
  * 2007-10-10  added DNS_SEARCH_FMATCH (mma)
  * 2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
+ * 2008-01-24  added cfg_var definition (Miklos)
 */
 
 %{
@@ -118,6 +119,7 @@
 
 #include "config.h"
 #include "cfg_core.h"
+#include "cfg/cfg.h"
 #ifdef CORE_TLS
 #include "tls/tls_config.h"
 #endif
@@ -380,6 +382,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TOS
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
+%token CFG_DESCRIPTION
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -1102,7 +1105,23 @@ assign_stm:
 	| STUN_ALLOW_STUN EQUAL error{ yyerror("number expected"); }
 	| STUN_ALLOW_FP EQUAL NUMBER { IF_STUN(stun_allow_fp=$3) ; }
 	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
+	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
+	;
+cfg_var:
+	ID DOT ID EQUAL NUMBER {
+		cfg_declare_int($1, $3, $5, NULL);
+	}
+	| ID DOT ID EQUAL STRING {
+		cfg_declare_str($1, $3, $5, NULL);
+	}
+	| ID DOT ID EQUAL NUMBER CFG_DESCRIPTION STRING {
+		cfg_declare_int($1, $3, $5, $7);
+	}
+	| ID DOT ID EQUAL STRING CFG_DESCRIPTION STRING {
+		cfg_declare_str($1, $3, $5, $7);
+	}
+	| ID DOT ID EQUAL error { yyerror("number or string expected"); }
 	;
 module_stm:
 	LOADMODULE STRING {

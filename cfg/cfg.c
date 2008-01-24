@@ -35,6 +35,7 @@
 #include "../mem/mem.h"
 #include "cfg_struct.h"
 #include "cfg_ctx.h"
+#include "cfg_script.h"
 #include "cfg.h"
 
 /* declares a new cfg group
@@ -44,7 +45,7 @@
 int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 			void **handle)
 {
-	int	i, num, size;
+	int	i, num, size, group_name_len;
 	cfg_mapping_t	*mapping = NULL;
 
 	/* check the number of the variables */
@@ -120,10 +121,11 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 		goto error;
 	}
 
+	group_name_len = strlen(group_name);
 	/* create a new group
 	I will allocate memory in shm mem for the variables later in a single block,
 	when we know the size of all the registered groups. */
-	if (cfg_new_group(group_name, num, mapping, values, size, handle))
+	if (!cfg_new_group(group_name, group_name_len, num, mapping, values, size, handle))
 		goto error;
 
 	/* The cfg variables are ready to use, let us set the handle
@@ -133,13 +135,11 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	*handle = values;
 
 	/* notify the drivers about the new config definition */
-	cfg_notify_drivers(group_name, def);
+	cfg_notify_drivers(group_name, group_name_len, def);
 
 	LOG(L_DBG, "DEBUG: register_cfg_def(): "
 		"new config group has been registered: '%s' (num=%d, size=%d)\n",
 		group_name, num, size);
-
-	/* TODO: inform the drivers about the new definition */
 
 	return 0;
 
@@ -149,4 +149,43 @@ error:
 			group_name);
 
 	return -1;
+}
+
+/* declares a single variable with integer type */
+int cfg_declare_int(char *group_name, char *var_name, int val, char *descr)
+{
+	cfg_script_var_t	*var;
+
+	if ((var = new_cfg_script_var(group_name, var_name, CFG_VAR_INT, descr)) == NULL)
+		return -1;
+
+	var->val.i = val;
+
+	return 0;
+}
+
+/* declares a single variable with str type */
+int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr)
+{
+	cfg_script_var_t	*var;
+	int	len;
+
+	if ((var = new_cfg_script_var(group_name, var_name, CFG_VAR_STR, descr)) == NULL)
+		return -1;
+
+	if (val) {
+		len = strlen(val);
+		var->val.s.s = (char *)pkg_malloc(sizeof(char) * (len + 1));
+		if (!var->val.s.s) {
+			LOG(L_ERR, "ERROR: cfg_declare_str(): not enough memory\n");
+			return -1;
+		}
+		memcpy(var->val.s.s, val, len + 1);
+		var->val.s.len = len;
+	} else {	
+		var->val.s.s = NULL;
+		var->val.s.len = 0;
+	}
+
+	return 0;
 }

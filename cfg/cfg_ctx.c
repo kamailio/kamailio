@@ -73,6 +73,10 @@ cfg_ctx_t *cfg_register_ctx(cfg_on_declare on_declare_cb)
 			group;
 			group = group->next
 		) {
+			/* dynamic groups are not ready, the callback
+			will be called later when the group is fixed-up */
+			if (group->dynamic) continue;
+
 			gname.s = group->name;
 			gname.len = group->name_len;
 			on_declare_cb(&gname, group->mapping->def);
@@ -98,13 +102,13 @@ void cfg_ctx_destroy(void)
 }
 
 /* notify the drivers about the new config definition */
-void cfg_notify_drivers(char *group_name, cfg_def_t *def)
+void cfg_notify_drivers(char *group_name, int group_name_len, cfg_def_t *def)
 {
 	cfg_ctx_t	*ctx;
 	str		gname;
 
 	gname.s = group_name;
-	gname.len = strlen(group_name);
+	gname.len = group_name_len;
 
 	for (	ctx = cfg_ctx_list;
 		ctx;
@@ -227,8 +231,10 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 
 		p = block->vars+group->offset+var->offset;
 	} else {
-		/* we are allowed to rewrite the value on-the-fly */
-		p = group->vars + var->offset;
+		/* we are allowed to rewrite the value on-the-fly
+		The handle either points to group->vars, or to the
+		shared memory block (dynamic group) */
+		p = *(group->handle) + var->offset;
 	}
 
 	/* set the new value */
@@ -277,6 +283,10 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		cfg_install_global(block, replaced, child_cb, child_cb);
 		CFG_WRITER_UNLOCK();
 	} else {
+		/* cfg_set() may be called more than once before forking */
+		if (old_string && (var->flag & cfg_var_shmized))
+			shm_free(old_string);
+
 		/* flag the variable because there is no need
 		to shmize it again */
 		var->flag |= cfg_var_shmized;

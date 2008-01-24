@@ -27,6 +27,8 @@
  * History
  * -------
  *  2007-12-03	Initial version (Miklos)
+ *  2008-01-24	dynamic groups are introduced in order to make
+ *		variable declaration possible in the script (Miklos)
  */
 
 #include <string.h>
@@ -36,6 +38,7 @@
 #include "../ut.h"
 #include "../locking.h"
 #include "cfg_ctx.h"
+#include "cfg_script.h"
 #include "cfg_struct.h"
 
 cfg_group_t	*cfg_group = NULL;	/* linked list of registered cfg groups */
@@ -58,38 +61,37 @@ cfg_child_cb_t	**cfg_child_cb_last = NULL;	/* last item of the above list */
 cfg_child_cb_t	*cfg_child_cb = NULL;	/* pointer to the previously executed cb */	
 
 /* creates a new cfg group, and adds it to the linked list */
-int cfg_new_group(char *name, int num, cfg_mapping_t *mapping,
+cfg_group_t *cfg_new_group(char *name, int name_len,
+		int num, cfg_mapping_t *mapping,
 		char *vars, int size, void **handle)
 {
 	cfg_group_t	*group;
-	int		len;
 
 	if (cfg_shmized) {
 		LOG(L_ERR, "ERROR: cfg_new_group(): too late config declaration\n");
-		return -1;
+		return NULL;
 	}
 
-	len = strlen(name);
-	group = (cfg_group_t *)pkg_malloc(sizeof(cfg_group_t)+len-1);
+	group = (cfg_group_t *)pkg_malloc(sizeof(cfg_group_t)+name_len-1);
 	if (!group) {
 		LOG(L_ERR, "ERROR: cfg_new_group(): not enough memory\n");
-		return -1;
+		return NULL;
 	}
-	memset(group, 0, sizeof(cfg_group_t)+len-1);
+	memset(group, 0, sizeof(cfg_group_t)+name_len-1);
 
 	group->num = num;
 	group->mapping = mapping;
 	group->vars = vars;
 	group->size = size;
 	group->handle = handle;
-	group->name_len = len;
-	memcpy(&group->name, name, len);
+	group->name_len = name_len;
+	memcpy(&group->name, name, name_len);
 
 	/* add the new group to the beginning of the list */
 	group->next = cfg_group;
 	cfg_group = group;
 
-	return 0;
+	return group;
 }
 
 /* clones a string to shared memory */
@@ -174,13 +176,26 @@ int cfg_shmize(void)
 		group;
 		group=group->next
 	) {
-		/* clone the strings to shm mem */
-		if (cfg_shmize_strings(group)) goto error;
+		if (group->dynamic == 0) {
+			/* clone the strings to shm mem */
+			if (cfg_shmize_strings(group)) goto error;
 
-		/* copy the values to the new block,
-		and update the module's handle */
-		memcpy(block->vars+group->offset, group->vars, group->size);
-		*(group->handle) = block->vars+group->offset;
+			/* copy the values to the new block,
+			and update the module's handle */
+			memcpy(block->vars+group->offset, group->vars, group->size);
+			*(group->handle) = block->vars+group->offset;
+		} else {
+			/* The group was declared with NULL values,
+			 * we have to fix it up.
+			 * The fixup function takes care about the values,
+			 * it fills up the block */
+			if (cfg_script_fixup(group, block->vars+group->offset)) goto error;
+			*(group->handle) = block->vars+group->offset;
+
+			/* notify the drivers about the new config definition */
+			cfg_notify_drivers(group->name, group->name_len,
+					group->mapping->def);
+		}
 	}
 
 	/* install the new config */
@@ -192,6 +207,48 @@ int cfg_shmize(void)
 error:
 	if (block) shm_free(block);
 	return -1;
+}
+
+/* deallocate the list of groups, and the shmized strings */
+static void cfg_destory_groups(unsigned char *block)
+{
+	cfg_group_t	*group, *group2;
+	cfg_mapping_t	*mapping;
+	cfg_def_t	*def;
+	void		*old_string;
+	int		i;
+
+	group = cfg_group;
+	while(group) {
+		mapping = group->mapping;
+		def = mapping ? mapping->def : NULL;
+
+		/* destory the shmized strings in the block */
+		if (block && def)
+			for (i=0; i<group->num; i++)
+				if (((CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STRING) ||
+				(CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR)) &&
+					mapping[i].flag & cfg_var_shmized) {
+
+						memcpy(	&old_string,
+							block + group->offset + mapping[i].offset,
+							sizeof(char *));
+						shm_free(old_string);
+				}
+
+		if (group->dynamic) {
+			/* the group was dynamically allocated */
+			cfg_script_destroy(group);
+		} else {
+			/* only the mapping was allocated, all the other
+			pointers are just set to static variables */
+			if (mapping) pkg_free(mapping);
+		}
+
+		group2 = group->next;
+		pkg_free(group);
+		group = group2;
+	}
 }
 
 /* initiate the cfg framework */
@@ -263,6 +320,9 @@ void cfg_destroy(void)
 {
 	/* free the contexts */
 	cfg_ctx_destroy();
+
+	/* free the list of groups */
+	cfg_destory_groups(cfg_global ? (*cfg_global)->vars : NULL);
 
 	if (cfg_child_cb_first) {
 		if (*cfg_child_cb_first) cfg_child_cb_free(*cfg_child_cb_first);

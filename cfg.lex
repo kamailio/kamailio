@@ -74,6 +74,7 @@
  *  2007-10-10  added DNS_SEARCH_FMATCH (mma)
  *  2007-11-28  added TCP_OPT_{FD_CACHE, DEFER_ACCEPT, DELAYED_ACK, SYNCNT,
  *              LINGER2, KEEPALIVE, KEEPIDLE, KEEPINTVL, KEEPCNT} (andrei)
+ *  2008-01-24  added CFG_DESCRIPTION used by cfg_var (Miklos)
 */
 
 
@@ -339,6 +340,8 @@ KILL_TIMEOUT	"exit_timeout"|"ser_kill_timeout"
 STUN_REFRESH_INTERVAL "stun_refresh_interval"
 STUN_ALLOW_STUN "stun_allow_stun"
 STUN_ALLOW_FP "stun_allow_fp"
+
+CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
 MODPARAM        modparam
@@ -642,6 +645,7 @@ EAT_ABLE	[\ \t\b\r]
 									return PMTU_DISCOVERY; }
 <INITIAL>{KILL_TIMEOUT}			{	count(); yylval.strval=yytext;
 									return KILL_TIMEOUT; }
+<INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 

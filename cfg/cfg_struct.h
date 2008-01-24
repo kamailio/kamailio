@@ -27,6 +27,8 @@
  * History
  * -------
  *  2007-12-03	Initial version (Miklos)
+ *  2008-01-24	dynamic groups are introduced in order to make
+ *		variable declaration possible in the script (Miklos)
  */
 
 #ifndef _CFG_STRUCT_H
@@ -69,6 +71,8 @@ typedef struct _cfg_group {
 					It is registered when the group is created,
 					and updated every time the block is replaced */
 
+	unsigned char	dynamic;	/* indicates whether the variables within the group
+					are dynamically	allocated or not */
 	struct _cfg_group	*next;
 	int		name_len;	
 	char		name[1];
@@ -134,7 +138,8 @@ int cfg_child_init(void);
 void cfg_child_destroy(void);
 
 /* creates a new cfg group, and adds it to the linked list */
-int cfg_new_group(char *name, int num, cfg_mapping_t *mapping,
+cfg_group_t *cfg_new_group(char *name, int name_len,
+		int num, cfg_mapping_t *mapping,
 		char *vars, int size, void **handle);
 
 /* copy the variables to shm mem */

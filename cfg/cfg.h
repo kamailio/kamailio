@@ -49,7 +49,7 @@
 typedef int (*cfg_on_change)(void *, str *, void **);
 typedef void (*cfg_on_set_child)(str *);
 
-/* strutrure to be used buy the module interface */
+/* strutrure to be used by the module interface */
 typedef struct _cfg_def {
 	char	*name;
 	unsigned int	type;
@@ -72,5 +72,11 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 
 #define cfg_get(gname, handle, var) \
 	((struct cfg_group_##gname *)handle)->var
+
+/* declares a single variable with integer type */
+int cfg_declare_int(char *group_name, char *var_name, int val, char *descr);
+
+/* declares a single variable with str type */
+int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr);
 
 #endif /* _CFG_H */
