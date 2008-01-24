@@ -614,7 +614,7 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 	}
 	if (uri->len == 0 || route_tree->nodes[*uri->s - '0'] == NULL) {
 		if (route_tree->rule_list == NULL) {
-			LM_ERR("URI or route tree nodes empty, empty rule list");
+			LM_INFO("URI or route tree nodes empty, empty rule list");
 			return 1;
 		} else {
 			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
@@ -631,7 +631,7 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 				if (route_tree->rule_list != NULL) {
 					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
 				} else {
-					LM_ERR("empty rule list");
+					LM_INFO("empty rule list");
 					return 1;
 				}
 			default:
