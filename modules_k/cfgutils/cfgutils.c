@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1und1 Internet AG
+ * Copyright (C) 2007 1&1 Internet AG
  * Copyright (C) 2007 BASIS AudioNet GmbH
  *
  *
@@ -28,7 +28,7 @@
  *  2007-04-20  rename to cfgutils, use pseudovariable for get_random_val
  *              add "rand_" prefix, add sleep and usleep functions
  *
- * cfgutils module: random probability functions for openser; 
+ * cfgutils module: random probability functions for openser;
  * it provide functions to make a decision in the script
  * of the server based on a probability function.
  * The benefit of this module is the value of the probability function
@@ -44,6 +44,8 @@
 #define FIFO_SET_PROB   "rand_set_prob"
 #define FIFO_RESET_PROB "rand_reset_prob"
 #define FIFO_GET_PROB   "rand_get_prob"
+#define FIFO_GET_HASH   "get_config_hash"
+#define FIFO_CHECK_HASH "check_config_hash"
 
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -53,6 +55,7 @@
 #include "../../mem/shm_mem.h"
 #include "../../mi/mi.h"
 #include "../../mod_fix.h"
+#include "../../md5utils.h"
 #include <stdlib.h>
 
 MODULE_VERSION
@@ -67,6 +70,8 @@ static int m_usleep(struct sip_msg*, char *, char *);
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param );
+static struct mi_root* mi_get_hash(struct mi_root* cmd, void* param );
+static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param );
 
 static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -78,6 +83,9 @@ static void mod_destroy(void);
 
 static int initial = 10;
 static int *probability;
+
+static char config_hash[MD5_LEN];
+static char* hash_file = "/etc/openser/openser.cfg";
 
 static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
@@ -101,13 +109,16 @@ static cmd_export_t cmds[]={
 
 static param_export_t params[]={ 
 	{"initial_probability", INT_PARAM, &initial},
-	{0,0,0} 
+	{"hash_file", STR_PARAM, &hash_file        },
+	{0,0,0}
 };
 
 static mi_export_t mi_cmds[] = {
 	{ FIFO_SET_PROB,   mi_set_prob,   0,                 0,  0 },
 	{ FIFO_RESET_PROB, mi_reset_prob, MI_NO_INPUT_FLAG,  0,  0 },
 	{ FIFO_GET_PROB,   mi_get_prob,   MI_NO_INPUT_FLAG,  0,  0 },
+	{ FIFO_GET_HASH,   mi_get_hash,   MI_NO_INPUT_FLAG,  0,  0 },
+	{ FIFO_CHECK_HASH, mi_check_hash, MI_NO_INPUT_FLAG,  0,  0 },
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -190,13 +201,64 @@ static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param )
 
 static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param )
 {
-
 	struct mi_root* rpl_tree= NULL;
 	struct mi_node* node= NULL;
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 	if(rpl_tree == NULL)
 		return 0;
 	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "actual probability: %u percent\n",(*probability));
+	if(node == NULL)
+		goto error;
+	
+	return rpl_tree;
+
+error:
+	free_mi_tree(rpl_tree);
+	return 0;
+}
+
+static struct mi_root* mi_get_hash(struct mi_root* cmd, void* param )
+{
+	struct mi_root* rpl_tree= NULL;
+	struct mi_node* node= NULL;
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+	if(rpl_tree == NULL)
+		return 0;
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%.*s\n", MD5_LEN, config_hash);
+	if(node == NULL)
+		goto error;
+	
+	return rpl_tree;
+
+error:
+	free_mi_tree(rpl_tree);
+	return 0;
+}
+
+static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param )
+{
+	struct mi_root* rpl_tree= NULL;
+	struct mi_node* node= NULL;
+	char tmp[MD5_LEN];
+	memset(tmp, 0, MD5_LEN);
+
+	if (MD5File(tmp, hash_file) != 0) {
+		LM_ERR("could not hash the config file");
+		rpl_tree = init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN );
+	}
+	
+	if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
+		rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+		if(rpl_tree == NULL)
+			return 0;
+		node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is identical to the stored one.\n");
+	} else {
+		rpl_tree = init_mi_tree( 400, "Error", 5 );
+		if(rpl_tree == NULL)
+			return 0;
+		node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is not identical to the stored one.\n");
+	}
+
 	if(node == NULL)
 		goto error;
 	
@@ -277,7 +339,14 @@ static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 
 static int mod_init(void)
 {
+	if (MD5File(config_hash, hash_file) != 0) {
+		LM_ERR("could not hash the config file");
+		return -1;
+	}
+	LM_DBG("config file hash is %.*s", MD5_LEN, config_hash);
+
 	probability=(int *) shm_malloc(sizeof(int));
+
 	if (!probability) {
 		LM_ERR("no shmem available\n");
 		return -1;

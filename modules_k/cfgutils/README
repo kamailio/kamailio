@@ -19,6 +19,7 @@ Carsten Bock
         1.3. Exported Parameters
 
               1.3.1. initial_probability (string)
+              1.3.2. hash_file (string)
 
         1.4. Exported Functions
 
@@ -34,6 +35,8 @@ Carsten Bock
               1.5.1. rand_set_prop
               1.5.2. rand_reset_prob
               1.5.3. rand_get_prob
+              1.5.4. check_config_hash
+              1.5.5. get_config_hash
 
         1.6. Exported pseudo-variables
 
@@ -44,21 +47,26 @@ Carsten Bock
 
    List of Examples
    1-1. initial_probability parameter usage
-   1-2. rand_event() usage
-   1-3. rand_set_prob() usage
-   1-4. rand_reset_prob() usage
-   1-5. rand_get_prob() usage
-   1-6. sleep usage
-   1-7. usleep usage
-   1-8. rand_set_prob usage
-   1-9. rand_reset_prob usage
-   1-10. rand_get_prob usage
-   1-11. RANDOM pseudo-variable usage
+   1-2. hash_file parameter usage
+   1-3. rand_event() usage
+   1-4. rand_set_prob() usage
+   1-5. rand_reset_prob() usage
+   1-6. rand_get_prob() usage
+   1-7. sleep usage
+   1-8. usleep usage
+   1-9. rand_set_prob usage
+   1-10. rand_reset_prob usage
+   1-11. rand_get_prob usage
+   1-12. check_config_hash usage
+   1-13. get_config_hash usage
+   1-14. RANDOM pseudo-variable usage
      __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
+
+   Useful functions for the server configuration.
 
    The cfgutils module can be used to introduce some randomness to
    the behaviour of the server. It provides some setup functions
@@ -90,6 +98,13 @@ Chapter 1. User's Guide
    The module provides as well some functions to delay the
    execution of the server. The functions "sleep" and "usleep"
    could be used to let the server wait a specific time interval.
+
+   It can also hash the config file used from the server with a
+   (weak) cryptographic hash function on startup. This value is
+   saved and can be later compared to the actual hash, to detect
+   modifications of this file after the server start. This
+   functions are available as the FIFO commands
+   "check_config_hash" and "get_config_hash".
      __________________________________________________________
 
 1.2. Dependencies
@@ -110,7 +125,19 @@ Chapter 1. User's Guide
 
    Example 1-1. initial_probability parameter usage
 
-modparam("cfgutils", "initial_probability", "15);
+modparam("cfgutils", "initial_probability", "15");
+     __________________________________________________________
+
+1.3.2. hash_file (string)
+
+   The config file name for that a hash value should be calculated
+   on startup.
+
+   Default value is "/etc/openser/openser.cfg".
+
+   Example 1-2. hash_file parameter usage
+
+modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
      __________________________________________________________
 
 1.4. Exported Functions
@@ -120,7 +147,7 @@ modparam("cfgutils", "initial_probability", "15);
    Return true or false, depending on a random value and a
    probability value.
 
-   Example 1-2. rand_event() usage
+   Example 1-3. rand_event() usage
 ...
 if (rand_event()) {
   append_to_reply("Retry-After: 120\n");
@@ -137,7 +164,7 @@ if (rand_event()) {
 
    "probability" can have a value from the range 0..99.
 
-   Example 1-3. rand_set_prob() usage
+   Example 1-4. rand_set_prob() usage
 ...
 rand_set_prob("4");
 ...
@@ -147,7 +174,7 @@ rand_set_prob("4");
 
    Reset the probability back to the inital value.
 
-   Example 1-4. rand_reset_prob() usage
+   Example 1-5. rand_reset_prob() usage
 ...
 rand_reset_prob();
 ...
@@ -158,7 +185,7 @@ rand_reset_prob();
    Return the current probability setting, e.g. for logging
    purposes.
 
-   Example 1-5. rand_get_prob() usage
+   Example 1-6. rand_get_prob() usage
 ...
 rand_get_prob();
      __________________________________________________________
@@ -174,7 +201,7 @@ rand_get_prob();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-6. sleep usage
+   Example 1-7. sleep usage
 ...
 sleep("1");
 ...
@@ -191,7 +218,7 @@ sleep("1");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-7. usleep usage
+   Example 1-8. usleep usage
 ...
 usleep("500");
 ...
@@ -206,10 +233,9 @@ usleep("500");
 
    The parameter value must be a number from 0 to 99.
 
-   Example 1-8. rand_set_prob usage
+   Example 1-9. rand_set_prob usage
 ...
 $ openserctl fifo rand_set_prob 10
-200 OK
 ...
      __________________________________________________________
 
@@ -219,10 +245,9 @@ $ openserctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1-9. rand_reset_prob usage
+   Example 1-10. rand_reset_prob usage
 ...
 $ openserctl fifo rand_reset_prob
-200 OK
 ...
      __________________________________________________________
 
@@ -232,11 +257,39 @@ $ openserctl fifo rand_reset_prob
 
    The function return the actual probability value.
 
-   Example 1-10. rand_get_prob usage
+   Example 1-11. rand_get_prob usage
 ...
 $ openserctl fifo get_prob
-200 OK
 The actual probability is 50 percent.
+...
+     __________________________________________________________
+
+1.5.4. check_config_hash
+
+   Check if the actual config file hash is identical to the stored
+   one.
+
+   The function returns 200 OK if the hash values are identical,
+   400 if there are not identical and 500 on errors. Additional a
+   short text message is printed.
+
+   Example 1-12. check_config_hash usage
+...
+$ openserctl fifo check_config_hash
+The actual config file hash is identical to the stored one.
+...
+     __________________________________________________________
+
+1.5.5. get_config_hash
+
+   Return the stored config file hash.
+
+   The function returns 200 OK and the hash value.
+
+   Example 1-13. get_config_hash usage
+...
+$ openserctl fifo get_config_hash
+1580a37104eb4de69ab9f31ce8d6e3e0
 ...
      __________________________________________________________
 
@@ -246,7 +299,7 @@ The actual probability is 50 percent.
 
    Returns a random value from the [0 - 2^31) range.
 
-   Example 1-11. RANDOM pseudo-variable usage
+   Example 1-14. RANDOM pseudo-variable usage
 ...
 if (get_random()) {
   $avp(i:10) = ($RANDOM / 16777216); # 2^24

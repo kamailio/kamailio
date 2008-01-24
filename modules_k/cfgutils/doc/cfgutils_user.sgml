@@ -10,9 +10,10 @@
 	</revhistory>
     </chapterinfo>
     <title>User's Guide</title>
-    
+
     <section>
 	<title>Overview</title>
+	<para>Useful functions for the server configuration.</para>
 	<para>
 	The cfgutils module can be used to introduce some randomness to
 	the behaviour of the server. It provides some setup functions
@@ -48,6 +49,13 @@
 	The module provides as well some functions to delay the execution of the
 	server. The functions <quote>sleep</quote> and <quote>usleep</quote> could
 	be used to let the server wait a specific time interval.
+	</para>
+	<para>It can also hash the config file used from the server with a (weak)
+	cryptographic hash function on startup. This value is saved and can be
+	later compared to the actual hash, to detect modifications of this file
+	after the server start. This functions are available as the FIFO commands
+	<quote>check_config_hash</quote> and <quote>get_config_hash</quote>.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>
@@ -76,7 +84,26 @@
 		<title><varname>initial_probability</varname> parameter usage</title>
 		<programlisting format="linespecific">
    
-modparam("cfgutils", "initial_probability", "15);
+modparam("cfgutils", "initial_probability", "15");
+   
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+		<title><varname>hash_file</varname> (string)</title>
+		<para>
+		The config file name for that a hash value should be calculated on startup.
+		</para>
+		<para>
+		Default value is 
+			<quote>/etc/openser/openser.cfg</quote>.
+		</para>
+		<example>
+		<title><varname>hash_file</varname> parameter usage</title>
+		<programlisting format="linespecific">
+   
+modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
    
 </programlisting>
 	    </example>
@@ -225,7 +252,6 @@ usleep("500");
 				<programlisting format="linespecific">
 ...
 $ openserctl fifo rand_set_prob 10
-200 OK
 ...
 </programlisting>
 			</example>
@@ -245,7 +271,6 @@ $ openserctl fifo rand_set_prob 10
 				<programlisting format="linespecific">
 ...
 $ openserctl fifo rand_reset_prob
-200 OK
 ...
 </programlisting>
 			</example>
@@ -263,8 +288,45 @@ $ openserctl fifo rand_reset_prob
 				<programlisting format="linespecific">
 ...
 $ openserctl fifo get_prob
-200 OK
 The actual probability is 50 percent.
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">check_config_hash</function></title>
+			<para>
+				Check if the actual config file hash is identical to the stored one.
+			</para>
+			<para>
+				The function returns 200 OK if the hash values are identical, 400 if
+				there are not identical and 500 on errors. Additional a short
+				text message is printed.
+			</para>
+			<example>
+				<title><function moreinfo="none">check_config_hash</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo check_config_hash
+The actual config file hash is identical to the stored one.
+...
+</programlisting>
+			</example>
+		</section>
+				<section>
+			<title><function moreinfo="none">get_config_hash</function></title>
+			<para>
+				Return the stored config file hash.
+			</para>
+			<para>
+				The function returns 200 OK and the hash value.
+			</para>
+			<example>
+				<title><function moreinfo="none">get_config_hash</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo get_config_hash
+1580a37104eb4de69ab9f31ce8d6e3e0
 ...
 </programlisting>
 			</example>
