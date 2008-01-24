@@ -80,7 +80,7 @@ if [ $# -ne 1 ] ; then
 fi
 
 # postgresql users are not dropped automatically
-sql_query "template1" "drop database $1; drop user \"$DBRWUSER\"; drop user \"$DBROUSER\";"
+sql_query "template1" "drop database \"$1\"; drop user \"$DBRWUSER\"; drop user \"$DBROUSER\";"
 
 if [ $? -ne 0 ] ; then
 	merr "Dropping database $1 failed!"
@@ -99,7 +99,7 @@ fi
 
 minfo "creating database $1 ..."
 
-sql_query "template1" "create database $1;"
+sql_query "template1" "create database \"$1\";"
 if [ $? -ne 0 ] ; then
 	merr "Creating database failed!"
 	exit 1
