@@ -50,13 +50,48 @@
 #include "nonce.h"
 
 
-int   auth_extra_checks = 0;      /* by default don't do any extra checks */
+int auth_checks_reg = 0;
+int auth_checks_ood = 0;
+int auth_checks_ind = 0;
 
 
-/*
- * Convert an integer to its hex representation,
- * destination array must be at least 8 bytes long,
- * this string is NOT zero terminated
+/** Select extra check configuration based on request type.
+ * This function determines which configuration variable for
+ * extra authentication checks is to be used based on the
+ * type of the request. It returns the value of auth_checks_reg
+ * for REGISTER requests, the value auth_checks_ind for requests
+ * that contain valid To tag and the value of auth_checks_ood
+ * otherwise.
+ */
+int get_auth_checks(struct sip_msg* msg)
+{
+	str tag;
+
+	if (msg == NULL) return 0;
+
+	if (msg->REQ_METHOD == METHOD_REGISTER) {
+		return auth_checks_reg;
+	}
+		
+	if (!msg->to && parse_headers(msg, HDR_TO_F, 0) == -1) {
+		DBG("auth: Error while parsing To header field\n");
+		return auth_checks_ood;
+	}
+	if (msg->to) {
+		tag = get_to(msg)->tag_value;
+		if (tag.s && tag.len > 0) return auth_checks_ind;
+	}
+	return auth_checks_ood;
+}
+
+
+/** Convert integer to its HEX representation.
+ * This function converts an integer number to
+ * its hexadecimal representation. The destination
+ * buffer must be at least 8 bytes long, the resulting
+ * string is NOT zero terminated.
+ * @param dst is the destination buffer, at least 8 characters long
+ * @param src is the integer number to be converted
  */
 static inline void integer2hex(char* dst, int src)
 {
@@ -108,57 +143,59 @@ static inline int hex2integer(char* src)
 }
 
 
-/*
- * Calculate nonce value
- * Nonce value depends on the auth_extra_checks flags:
- *  if auth_extra_checks==0 (no extra check set)
- *    consists of time in seconds since 1.1 1970 and secret phrase:
- *     <expire_time> MD5(<expire_time>, secret)
- *  else
- *    like above but with an extra MD5 on some fields selected by the
- *     auth_extra_checks flags:
- *      <expire_time> MD5(<expire_time>, secret1) MD5(<extra_checks>, secret2)
+/** Calculates the nonce string for RFC2617 digest authentication.
+ * This function creates the nonce string as it will be sent to the
+ * user agent in digest challenge. The format of the nonce string
+ * depends on the value of three module parameters, auth_checks_register,
+ * auth_checks_no_dlg, and auth_checks_in_dlg. These module parameters
+ * control the amount of information from the SIP requst that will be
+ * stored in the nonce string for verification purposes.
  *
- * Params:
- *   nonce     - pointer to a buffer of *nonce_len. It must have enough
- *               space to hold the nonce. MAX_NONCE_LEN should be always safe.
- *   nonce_len - value - result parameter. Initially it contains the
- *               nonce buffer length. If the length is too small, it will be
- *               set to the needed length and the function will return 
- *               error immediately.
- *               After a succesfull call it will contain the size of nonce
- *               written into the buffer, without the terminating 0.
- *   expires   - time in seconds after which the nonce will be considered 
- *               stale
- *   secret1    - secret used for  the nonce expires integrity  check:
- *                 MD5(<expire_time>,, secret1).
- *   secret2    - secret used for integrity check of the message parts
- *                 selected by auth_extra_checks (if any):
- *                 MD5(<msg_parts(auth_extra_checks)>, secret2).
- *   msg       - message for which the nonce is computed. If auth_extra_checks
- *               is set, the MD5 of some fields of the message will be included
- *               in the  generated nonce
- * Returns:  0 on success and -1 on error
- *
- * WARNING: older versions used to 0-terminate the nonce. This is not the
- *          case anymore.
- *
+ * If all three parameters contain zero then the nonce string consists
+ * of time in seconds since 1.1. 1970 and a secret phrase:
+ * <expire_time> MD5(<expire_time>, secret)
+ * If any of the parameters is not zero (some optional checks are enabled
+ * then the nonce string will also contain MD5 hash of selected parts
+ * of the SIP request:
+ * <expire_time> MD5(<expire_time>, secret1) MD5(<extra_checks>, secret2)
+ * @param nonce  Pointer to a buffer of *nonce_len. It must have enough
+ *               space to hold the nonce. MAX_NONCE_LEN should be always 
+ *               safe.
+ * @param nonce_len A value/result parameter. Initially it contains the
+ *                  nonce buffer length. If the length is too small, it 
+ *                  will be set to the needed length and the function will 
+ *                  return error immediately. After a succesfull call it will 
+ *                  contain the size of nonce written into the buffer, 
+ *                  without the terminating 0.
+ * @param cfg This is the value of one of the tree module parameters that
+ *            control which optional checks are enabled/disabled and which
+ *            parts of the message will be included in the nonce string.
+ * @param expires Time in seconds after which the nonce will be considered 
+ *                stale.
+ * @param secret1 A secret used for the nonce expires integrity check:
+ *                MD5(<expire_time>,, secret1).
+ * @param secret2 A secret used for integrity check of the message parts 
+ *                selected by auth_extra_checks (if any):
+ *                MD5(<msg_parts(auth_extra_checks)>, secret2).
+ * @param msg The message for which the nonce is computed. If auth_extra_checks
+ *            is set, the MD5 of some fields of the message will be included in 
+ *            the  generated nonce.
+ * @return 0 on success and -1 on error
  */
-int calc_nonce(char* nonce, int *nonce_len, int expires, str* secret1,
-				str* secret2, struct sip_msg* msg)
+int calc_nonce(char* nonce, int *nonce_len, int cfg, int expires, str* secret1,
+			   str* secret2, struct sip_msg* msg)
 {
 	MD5_CTX ctx;
 	unsigned char bin[16];
 	str* s;
 	int len;
 
-
-	if (*nonce_len < MAX_NONCE_LEN){
-		if (auth_extra_checks && msg){
-			*nonce_len=MAX_NONCE_LEN;
+	if (*nonce_len < MAX_NONCE_LEN) {
+		if (cfg && msg) {
+			*nonce_len = MAX_NONCE_LEN;
 			return -1;
-		}else if (*nonce_len < MIN_NONCE_LEN){
-			*nonce_len=MIN_NONCE_LEN;
+		} else if (*nonce_len < MIN_NONCE_LEN) {
+			*nonce_len = MIN_NONCE_LEN;
 			return -1;
 		}
 	}
@@ -169,38 +206,41 @@ int calc_nonce(char* nonce, int *nonce_len, int expires, str* secret1,
 	MD5Update(&ctx, secret1->s, secret1->len);
 	MD5Final(bin, &ctx);
 	string2hex(bin, 16, nonce + 8);
-	len=8 + 32;
+	len = 8 + 32;
 	
-	if (auth_extra_checks && msg){
+	if (cfg && msg) {
 		MD5Init(&ctx);
-		if (auth_extra_checks & AUTH_CHECK_FULL_URI){
-			s=GET_RURI(msg);
+		if (cfg & AUTH_CHECK_FULL_URI) {
+			s = GET_RURI(msg);
 			MD5Update(&ctx, s->s, s->len);
 		}
-		if ((auth_extra_checks & AUTH_CHECK_CALLID) && 
-				! (parse_headers(msg, HDR_CALLID_F, 0)<0 || msg->callid==0)){
+		if ((cfg & AUTH_CHECK_CALLID) && 
+			!(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == 0)) {
 			MD5Update(&ctx, msg->callid->body.s, msg->callid->body.len);
 		}
-		if ((auth_extra_checks & AUTH_CHECK_FROMTAG) &&
-				! (parse_headers(msg, HDR_FROM_F, 0)<0 || msg->from==0)){
+		if ((cfg & AUTH_CHECK_FROMTAG) &&
+			!(parse_headers(msg, HDR_FROM_F, 0) < 0 || msg->from == 0)) {
 			MD5Update(&ctx, get_from(msg)->tag_value.s, 
-							get_from(msg)->tag_value.len);
+					  get_from(msg)->tag_value.len);
 		}
-		if (auth_extra_checks & AUTH_CHECK_SRC_IP){
+		if (cfg & AUTH_CHECK_SRC_IP) {
 			MD5Update(&ctx, msg->rcv.src_ip.u.addr, msg->rcv.src_ip.len);
 		}
 		MD5Update(&ctx, secret2->s, secret2->len);
 		MD5Final(bin, &ctx);
 		string2hex(bin, 16, nonce + len);
-		len+=32;
+		len += 32;
 	}
-	*nonce_len=len;
+	*nonce_len = len;
 	return 0;
 }
 
 
-/*
- * Get expiry time from nonce string
+/** Returns the expire time of the nonce string.
+ * This function returns the absolute expire time
+ * extracted from the nonce string in the parameter.
+ * @param n is a valid nonce string.
+ * @return Absolute time when the nonce string expires.
  */
 time_t get_nonce_expires(str* n)
 {
@@ -208,11 +248,21 @@ time_t get_nonce_expires(str* n)
 }
 
 
-/*
- * Check, if the nonce received from client is
- * correct
- * Returns:
- *         0 - success (the nonce was not tampered with and if 
+/** Check whether the nonce returned by UA is valid.
+ * This function checks whether the nonce string returned by UA
+ * in digest response is valid. The function checks if the nonce
+ * string hasn't expired, it verifies the secret stored in the nonce
+ * string with the secret configured on the server. If any of the
+ * optional extra integrity checks are enabled then it also verifies
+ * whether the corresponding parts in the new SIP requests are same.
+ * @param nonce A nonce string to be verified.
+ * @param secret1 A secret used for the nonce expires integrity check:
+ *                MD5(<expire_time>,, secret1).
+ * @param secret2 A secret used for integrity check of the message parts 
+ *                selected by auth_extra_checks (if any):
+ *                MD5(<msg_parts(auth_extra_checks)>, secret2).
+ * @param msg The message which contains the nonce being verified. 
+ * @return 0 - success (the nonce was not tampered with and if 
  *             auth_extra_checks are enabled - the selected message fields
  *             have not changes from the time the nonce was generated)
  *         -1 - invalid nonce
@@ -222,23 +272,24 @@ time_t get_nonce_expires(str* n)
  */
 int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg)
 {
-	int expires;
+	int expires, non_len, cfg;
 	char non[MAX_NONCE_LEN];
-	int non_len;
+
+	cfg = get_auth_checks(msg);
 
 	if (nonce->s == 0) {
 		return -1;  /* Invalid nonce */
 	}
-	non_len=sizeof(non);
+	non_len = sizeof(non);
 
-	if (get_cfg_nonce_len() != nonce->len) {
+	if (get_nonce_len(cfg) != nonce->len) {
 		return 1; /* Lengths must be equal */
 	}
 
 	expires = get_nonce_expires(nonce);
-	if (calc_nonce(non, &non_len, expires, secret1, secret2, msg)!=0){
+	if (calc_nonce(non, &non_len, cfg, expires, secret1, secret2, msg) != 0) {
 		ERR("auth: check_nonce: calc_nonce failed (len %d, needed %d)\n",
-				sizeof(non), non_len);
+			sizeof(non), non_len);
 		return -1;
 	}
 
@@ -246,22 +297,25 @@ int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg)
 	    nonce->len, ZSW(nonce->s), non_len, non);
 	
 	if (!memcmp(non, nonce->s, MIN_NONCE_LEN)) {
-		if (auth_extra_checks){
-			if (non_len!=nonce->len)
+		if (cfg) {
+			if (non_len != nonce->len)
 				return 2; /* someone truncated our nounce? */
-			if (memcmp(non+MIN_NONCE_LEN, nonce->s+MIN_NONCE_LEN, 
-							non_len-MIN_NONCE_LEN)!=0)
+			if (memcmp(non + MIN_NONCE_LEN, nonce->s + MIN_NONCE_LEN, 
+					   non_len - MIN_NONCE_LEN) != 0)
 				return 3; /* auth_extra_checks failed */
 		}
 		return 0;
 	}
-
+	
 	return 2;
 }
 
 
-/*
- * Check if a nonce is stale
+/** Checks if nonce is stale.
+ * This function checks if a nonce given to it in the parameter is stale. 
+ * A nonce is stale if the expire time stored in the nonce is in the past.
+ * @param n a nonce to be checked.
+ * @return 1 the nonce is stale, 0 the nonce is not stale.
  */
 int is_nonce_stale(str* n) 
 {

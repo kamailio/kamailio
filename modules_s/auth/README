@@ -40,10 +40,21 @@ Parameters
    Revision History
    Revision $Revision$ $Date$
 
-auth_extra_checks (flags)
+auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg (flags)
 
-   If set to a non-zero value, extra authentication checks will be
-   enabled. The default value is 0 (old behaviour, no extra checks).
+   These three module parameters control which optional integrity checks
+   will be performed on the SIP message carrying digest response during
+   digest authentication. auth_check_register controls integrity checks to
+   be peformed on REGISTER messages, auth_checks_no_dlg controls which
+   optional integrity checks will be performed on SIP requests that have
+   no To header field or no To tag (in other words the requests either
+   establishing or outside dialogs). auth_checks_in_dlg controls which
+   integrity checks will be performed on SIP requests within dialogs, such
+   as BYE or re-INVITE. The default value for all three parameters is 0
+   (old behaviour, no extra checks). The set of integrity checks that can
+   be performed on REGISTERs is typically different from sets of integrity
+   checks that can be performed for other SIP request types, hence we have
+   three independent module parameters.
 
    Without the extra checks the nonce will protect only against expired
    values. Some reply attacks are still possible in the expire "window". A
@@ -62,23 +73,23 @@ auth_extra_checks (flags)
    is the same when an UA tries to reuse the nonce, thus protecting or
    severely limiting reply attacks.
 
-   The possible flag values for auth_extra_checks are: 1 for checking if
+   The possible flag values all three parameters are: 1 for checking if
    the message uri changed (uses the whole uri), 2 for checking the
    callid, 4 for the from tag and 8 for the source ip (see nonce.h). For
-   example setting auth_extra_checks to 6 would check if the callid or the
-   from tag changed from the message for which the original nonce was
-   generated (this would allow nonce reuse only within the same dialog and
-   for the expire time). Note that enabling the extra checks will limit
-   nonce caching by UAs, requiring extra challenges and roundtrips, but
-   will provide much better protection.
+   example setting auth_checks_register to 6 would check if the callid or
+   the from tag changed from the REGISTER message for which the original
+   nonce was generated (this would allow nonce reuse only within the same
+   UA and for the expire time). Note that enabling the extra checks will
+   limit nonce caching by UAs, requiring extra challenges and roundtrips,
+   but will provide much better protection.
 
    When the secret parameter is set and the extra checks are enabled, the
    first half of the secret will be used for the expire time MD5 and the
    other half for the extra checks MD5, so make sure you have a long
    secret (32 chars or longer are recommended).
 
-   Example 1. Setting the auth_extra_checks module parameter
-modparam("auth", "auth_extra_checks", 14) # callid | fromtag | srcip
+   Example 1. Setting the auth_checks_register module parameter
+modparam("auth", "auth_checks_register", 2) # callid
 
 secret (string)
 

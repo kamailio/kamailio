@@ -37,10 +37,10 @@
 
 /* auth_extra_checks flags */
 
-#define AUTH_CHECK_FULL_URI 1
-#define AUTH_CHECK_CALLID   2
-#define AUTH_CHECK_FROMTAG  4
-#define AUTH_CHECK_SRC_IP   8
+#define AUTH_CHECK_FULL_URI (1 << 0)
+#define AUTH_CHECK_CALLID   (1 << 1)
+#define AUTH_CHECK_FROMTAG  (1 << 2)
+#define AUTH_CHECK_SRC_IP   (1 << 3)
 
 
 /*
@@ -48,28 +48,35 @@
  * nonce = TIMESTAMP[8 chars] MD5SUM(TIMESTAMP, SECRET1)[32 chars] \
  *          MD5SUM(info(auth_extra_checks), SECRET2)[32 chars]
  */
-#define MAX_NONCE_LEN (8+32+32)
+#define MAX_NONCE_LEN (8 + 32 + 32)
 /*
  * Minimum length of the nonce string
  * nonce = TIMESTAMP[8 chars] MD5SUM(TIMESTAMP, SECRET1)[32 chars]
  */
-#define MIN_NONCE_LEN (8+32)
+#define MIN_NONCE_LEN (8 + 32)
+
+/* Extra authentication checks for REGISTER messages */
+extern int auth_checks_reg;
+/* Extra authentication checks for out-of-dialog requests */
+extern int auth_checks_ood;
+/* Extra authentication checks for in-dialog requests */
+extern int auth_checks_ind;
 
 
-extern int auth_extra_checks;  /* by default don't do any extra checks */
+int get_auth_checks(struct sip_msg* msg);
 
 
 /*
  * get the configured nonce len
  */
-#define get_cfg_nonce_len() (auth_extra_checks?MAX_NONCE_LEN:MIN_NONCE_LEN)
+#define get_nonce_len(cfg) ((cfg)?MAX_NONCE_LEN:MIN_NONCE_LEN)
 
 
 /*
  * Calculate nonce value
  */
-int calc_nonce(char* nonce, int* nonce_len, int expires, str* secret1,
-				str* secret2, struct sip_msg* msg);
+int calc_nonce(char* nonce, int* nonce_len, int cfg, int expires, str* secret1,
+			   str* secret2, struct sip_msg* msg);
 
 
 /*

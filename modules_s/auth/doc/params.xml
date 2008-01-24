@@ -14,11 +14,28 @@
 
     <title>Parameters</title>
     
-    <section id="auth.auth_extra_checks">
-	<title><varname>auth_extra_checks</varname> (flags)</title>
+    <section id="auth.auth_checks">
+	<title>
+	  <varname>auth_checks_register</varname>,
+	  <varname>auth_checks_no_dlg</varname>, and
+	  <varname>auth_checks_in_dlg</varname> (flags)
+	</title>
 	<para>
-	    If set to a non-zero value, extra authentication checks will be
-	    enabled. The default value is 0 (old behaviour, no extra checks).
+	    These three module parameters control which optional integrity
+        checks will be performed on the SIP message carrying digest response
+        during digest authentication. <varname>auth_check_register</varname>
+        controls integrity checks to be peformed on REGISTER messages,
+        <varname>auth_checks_no_dlg</varname> controls which optional
+        integrity checks will be performed on SIP requests that have no To
+        header field or no To tag (in other words the requests either
+        establishing or outside
+        dialogs). <varname>auth_checks_in_dlg</varname> controls which
+        integrity checks will be performed on SIP requests within dialogs,
+        such as BYE or re-INVITE. The default value for all three parameters
+        is 0 (old behaviour, no extra checks). The set of integrity checks
+        that can be performed on REGISTERs is typically different from sets of
+        integrity checks that can be performed for other SIP request types,
+        hence we have three independent module parameters.
 	</para>
 	<para>
 		Without the extra checks the nonce will protect only against expired
@@ -42,17 +59,16 @@
 		protecting or severely limiting reply attacks.
 	</para>
 	<para>
-		The possible flag values for <varname>auth_extra_checks</varname>
-		are: 1 for checking if the message uri changed (uses the whole
-		 uri), 2 for checking the callid, 4 for the from tag and 8 for the
-		 source ip (see nonce.h). For example setting 
-		 <varname>auth_extra_checks</varname> to 6 would check if the callid
-		 or the from tag changed from the message for which the original nonce
-		 was generated (this would allow nonce reuse only within the same 
-		 dialog and for the expire time).
-		Note that enabling the extra checks will limit nonce caching by UAs, 
-		requiring extra challenges and roundtrips, but will provide much better
-		protection.
+		The possible flag values all three parameters are: 1 for checking if
+		the message uri changed (uses the whole uri), 2 for checking the
+		callid, 4 for the from tag and 8 for the source ip (see nonce.h). For
+		example setting
+		 <varname>auth_checks_register</varname> to 6 would check if the
+		 callid or the from tag changed from the REGISTER message for which
+		 the original nonce was generated (this would allow nonce reuse only
+		 within the same UA and for the expire time).  Note that enabling
+		 the extra checks will limit nonce caching by UAs, requiring extra
+		 challenges and roundtrips, but will provide much better protection.
 	</para>
 	<para>
 		When the <varname>secret</varname> parameter is set and the extra
@@ -62,10 +78,10 @@
 		recommended).
 	</para>
 	<example>
-	    <title>Setting the <varname>auth_extra_checks</varname> module 
+	    <title>Setting the <varname>auth_checks_register</varname> module 
 				parameter</title>
 	    <programlisting>
-modparam("auth", "auth_extra_checks", 14) # callid | fromtag | srcip
+modparam("auth", "auth_checks_register", 2) # callid
 	    </programlisting>
 	</example>
     </section>

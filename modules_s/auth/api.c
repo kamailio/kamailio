@@ -85,7 +85,7 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 		return BAD_CREDENTIALS;
 	}
 
-	ret=check_nonce(&c->digest.nonce, &secret1, &secret2, msg);
+	ret = check_nonce(&c->digest.nonce, &secret1, &secret2, msg);
 	if (ret!=0){
 		if (ret==3){
 			/* failed auth_extra_checks */

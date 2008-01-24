@@ -121,7 +121,9 @@ static param_export_t params[] = {
     {"proxy_challenge_header", PARAM_STR,    &proxy_challenge_header},
     {"www_challenge_header",   PARAM_STR,    &www_challenge_header  },
     {"qop",                    PARAM_STR,    &qop.qop_str           },
-    {"auth_extra_checks",      PARAM_INT,    &auth_extra_checks     },
+	{"auth_checks_register",   PARAM_INT,    &auth_checks_reg       },
+	{"auth_checks_no_dlg",     PARAM_INT,    &auth_checks_ood       },
+	{"auth_checks_in_dlg",     PARAM_INT,    &auth_checks_ind       },
     {0, 0, 0}
 };
 
@@ -189,48 +191,49 @@ static int mod_init(void)
     
     DBG("auth module - initializing\n");
     
-	 /* If the parameter was not used */
+	/* If the parameter was not used */
     if (sec_param == 0) {
-	     /* Generate secret using random generator */
-	if (generate_random_secret() < 0) {
-	    LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
-	    return -3;
-	}
-    } else {
-	     /* Otherwise use the parameter's value */
-	secret1.s = sec_param;
-	secret1.len = strlen(secret1.s);
-	if (auth_extra_checks){
-		/* divide the secret in half: one half for secret1 and one half for
-		 *  secret2 */
-		secret2.len=secret1.len/2;
-		secret1.len-=secret2.len;
-		secret2.s=secret1.s+secret1.len;
-		if (secret2.len<16){
-			WARN("auth: consider a longer secret when extra auth checks are"
-					" enabled (the config secret is divided in 2!)\n");
+		/* Generate secret using random generator */
+		if (generate_random_secret() < 0) {
+			LOG(L_ERR, "auth:mod_init: Error while generating random secret\n");
+			return -3;
 		}
-	}
+    } else {
+		/* Otherwise use the parameter's value */
+		secret1.s = sec_param;
+		secret1.len = strlen(secret1.s);
+		
+		if (auth_checks_reg || auth_checks_ind || auth_checks_ood) {
+			/* divide the secret in half: one half for secret1 and one half for
+			 *  secret2 */
+			secret2.len = secret1.len/2;
+			secret1.len -= secret2.len;
+			secret2.s = secret1.s + secret1.len;
+			if (secret2.len < 16) {
+				WARN("auth: consider a longer secret when extra auth checks are"
+					 " enabled (the config secret is divided in 2!)\n");
+			}
+		}
     }
     
     if ((!challenge_attr.s || challenge_attr.len == 0) ||
-	challenge_attr.s[0] != '$'){
-	ERR("auth: Invalid value of challenge_attr module parameter\n");
-	return -1;
+		challenge_attr.s[0] != '$') {
+		ERR("auth: Invalid value of challenge_attr module parameter\n");
+		return -1;
     }
     
     attr.s = challenge_attr.s + 1;
     attr.len = challenge_attr.len - 1;
     
     if (parse_avp_ident(&attr, &challenge_avpid) < 0) {
-	ERR("auth: Error while parsing value of challenge_attr module parameter\n");
-	return -1;
+		ERR("auth: Error while parsing value of challenge_attr module parameter\n");
+		return -1;
     }
-
+	
     parse_qop(&qop);
     if (qop.qop_parsed == QOP_OTHER) {
-	ERR("auth: Unsupported qop parameter value\n");
-	return -1;
+		ERR("auth: Unsupported qop parameter value\n");
+		return -1;
     }
     
     return 0;
@@ -254,22 +257,22 @@ int consume_credentials(struct sip_msg* msg, char* s1, char* s2)
     
     get_authorized_cred(msg->authorization, &h);
     if (!h) {
-	get_authorized_cred(msg->proxy_auth, &h);
-	if (!h) { 
-	    if (msg->REQ_METHOD!=METHOD_ACK 
-		&& msg->REQ_METHOD!=METHOD_CANCEL) {
-		LOG(L_ERR, "auth:consume_credentials: No authorized "
-		    "credentials found (error in scripts)\n");
-	    }
-	    return -1;
-	}
+		get_authorized_cred(msg->proxy_auth, &h);
+		if (!h) { 
+			if (msg->REQ_METHOD != METHOD_ACK 
+				&& msg->REQ_METHOD != METHOD_CANCEL) {
+				LOG(L_ERR, "auth:consume_credentials: No authorized "
+					"credentials found (error in scripts)\n");
+			}
+			return -1;
+		}
     }
     
-    len=h->len;
+    len = h->len;
     
     if (del_lump(msg, h->name.s - msg->buf, len, 0) == 0) {
-	LOG(L_ERR, "auth:consume_credentials: Can't remove credentials\n");
-	return -1;
+		LOG(L_ERR, "auth:consume_credentials: Can't remove credentials\n");
+		return -1;
     }
     
     return 1;

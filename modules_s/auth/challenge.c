@@ -70,16 +70,18 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     char *p;
     str* hfn, hf;
     avp_value_t val;
-    int nonce_len;
-    int l;
+    int nonce_len, l, cfg;
     
     if (hftype == HDR_PROXYAUTH_T) {
-	hfn = &proxy_challenge_header;
+		hfn = &proxy_challenge_header;
     } else {
-	hfn = &www_challenge_header;
+		hfn = &www_challenge_header;
     }
     
-    nonce_len=get_cfg_nonce_len();
+	cfg = get_auth_checks(msg);
+
+    nonce_len = get_nonce_len(cfg);
+
     hf.len = hfn->len;
     hf.len += DIGEST_REALM_LEN
 	+ realm->len
@@ -93,13 +95,13 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
 	+CRLF_LEN;
     
     if (qop.qop_parsed != QOP_UNSPEC) {
-	hf.len += QOP_PARAM_START_LEN + qop.qop_str.len + QOP_PARAM_END_LEN;
+		hf.len += QOP_PARAM_START_LEN + qop.qop_str.len + QOP_PARAM_END_LEN;
     }
-
+	
     p = hf.s = pkg_malloc(hf.len);
     if (!hf.s) {
-	ERR("build_challenge_hf: No memory left\n");
-	return -1;
+		ERR("auth: No memory left\n");
+		return -1;
     }
     
     memcpy(p, hfn->s, hfn->len); p += hfn->len;
@@ -107,25 +109,25 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     memcpy(p, realm->s, realm->len); p += realm->len;
     memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN); p += DIGEST_NONCE_LEN;
     l=nonce_len;
-    if (calc_nonce(p, &l, time(0) + nonce_expire, &secret1, &secret2, msg)!=0){
-		ERR("build_challenge_hf: calc_nonce failed (len %d, needed %d)\n",
-				nonce_len, l);
+    if (calc_nonce(p, &l, cfg, time(0) + nonce_expire, &secret1, &secret2, msg) != 0) {
+		ERR("auth: calc_nonce failed (len %d, needed %d)\n",
+			nonce_len, l);
 		pkg_free(hf.s);
 		return -1;
 	}
     p += l;
     *p = '"'; p++;
     if (qop.qop_parsed != QOP_UNSPEC) {
-	memcpy(p, QOP_PARAM_START, QOP_PARAM_START_LEN);
-	p += QOP_PARAM_START_LEN;
-	memcpy(p, qop.qop_str.s, qop.qop_str.len);
-	p += qop.qop_str.len;
-	memcpy(p, QOP_PARAM_END, QOP_PARAM_END_LEN);
-	p += QOP_PARAM_END_LEN;
+		memcpy(p, QOP_PARAM_START, QOP_PARAM_START_LEN);
+		p += QOP_PARAM_START_LEN;
+		memcpy(p, qop.qop_str.s, qop.qop_str.len);
+		p += qop.qop_str.len;
+		memcpy(p, QOP_PARAM_END, QOP_PARAM_END_LEN);
+		p += QOP_PARAM_END_LEN;
     }
     if (stale) {
-	memcpy(p, STALE_PARAM, STALE_PARAM_LEN);
-	p += STALE_PARAM_LEN;
+		memcpy(p, STALE_PARAM, STALE_PARAM_LEN);
+		p += STALE_PARAM_LEN;
     }
 #ifdef _PRINT_MD5
     memcpy(p, DIGEST_MD5, DIGEST_MD5_LEN ); p += DIGEST_MD5_LEN;
@@ -134,15 +136,15 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
 	hf.len=(int)(p-hf.s); /* fix len, it might be smaller due to a smaller
 							 nonce */
     
-    DBG("auth:build_challenge_hf: '%.*s'\n", hf.len, ZSW(hf.s));
-
+    DBG("auth: '%.*s'\n", hf.len, ZSW(hf.s));
+	
     val.s = hf;
     if (add_avp(challenge_avpid.flags | AVP_VAL_STR, challenge_avpid.name, val) < 0) {
-	ERR("build_challenge_hf: Error while creating attribute\n");
-	pkg_free(hf.s);
-	return -1;
+		ERR("auth: Error while creating attribute\n");
+		pkg_free(hf.s);
+		return -1;
     }
 	pkg_free(hf.s);
-
+	
     return 0;
 }
