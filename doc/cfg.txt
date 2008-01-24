@@ -338,8 +338,12 @@ declare any config variable, because other modules and the core may need the
 up-to-date config.
 
 
-6. Accessing the configuration values in the script
+6. Configuration values in the script
 ===============================================================================
+
+New configuration values can be declared in the script, the syntax is:
+
+<group_name>.<var_name> = <value> [descr <description>]
 
 The values can be accessed via select calls:
 
