@@ -234,7 +234,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
               int status, int hash_index, int backup, int * backed_up, const char * comment) {
 	struct carrier_tree * ct = NULL;
 	struct route_tree_item * rt = NULL;
-	LM_NOTICE("adding prefix %s, prob %f\n", scan_prefix, prob);
+	LM_INFO("adding prefix %s, prob %f\n", scan_prefix, prob);
 
 	if ((ct = get_carrier_tree(carrier_id, rd)) == NULL) {
 		LM_ERR("could not retrieve carrier tree\n");

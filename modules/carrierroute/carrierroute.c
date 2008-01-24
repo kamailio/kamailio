@@ -249,7 +249,7 @@ static int route_fixup(void ** param, int param_no) {
 		if ((domain = add_domain((char *)*param)) < 0) {
 			return -1;
 		}
-		LM_NOTICE("domain %s has id %i\n", (char *)*param, domain);
+		LM_INFO("domain %s has id %i\n", (char *)*param, domain);
 		pkg_free(*param);
 		*param = (void *)(long)domain;
 	} else if (param_no == 2) {
@@ -293,7 +293,7 @@ static int tree_route_fixup(void ** param, int param_no) {
 			LM_ERR("could not add domain\n");
 			return -1;
 		}
-		LM_NOTICE("domain %s has id %i\n", (char *)*param, domain);
+		LM_INFO("domain %s has id %i\n", (char *)*param, domain);
 		pkg_free(*param);
 		*param = (void *)(long)domain;
 	}

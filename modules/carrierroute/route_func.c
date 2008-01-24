@@ -276,10 +276,10 @@ int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
 		return -1;
 	}
 	if ((index = find_tree(carrier_name)) < 0)
-		LM_NOTICE("could not find carrier %.*s\n",
+		LM_WARN("could not find carrier %.*s\n",
 				carrier_name.len, carrier_name.s);
 	else
-		LM_NOTICE("tree %.*s has id %i\n", carrier_name.len, carrier_name.s, index);
+		LM_DBG("tree %.*s has id %i\n", carrier_name.len, carrier_name.s, index);
 	
 	ruser.s = msg->parsed_uri.user.s;
 	ruser.len = msg->parsed_uri.user.len;
