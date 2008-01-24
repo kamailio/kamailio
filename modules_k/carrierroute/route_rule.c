@@ -163,7 +163,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 	shm_rr->backed_up = NULL;
 	t_bu = backed_up;
 	if(!backed_up){
-		LM_ERR("no backed up rules\n");
+		LM_INFO("no backed up rules\n");
 	}
 	while (t_bu && *t_bu != -1) {
 		if ((t_rl = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
@@ -214,7 +214,7 @@ int rule_fixup(struct rewrite_data * rd) {
 	for (i=0; i<rd->tree_num; i++) {
 		for (j=0; j<rd->carriers[i]->tree_num; j++) {
 			if (rd->carriers[i]->trees[j] && rd->carriers[i]->trees[j]->tree) {
-				LM_NOTICE("fixing tree %.*s\n", rd->carriers[i]->trees[j]->name.len, rd->carriers[i]->trees[j]->name.s);
+				LM_INFO("fixing tree %.*s\n", rd->carriers[i]->trees[j]->name.len, rd->carriers[i]->trees[j]->name.s);
 				if (rule_fixup_recursor(rd->carriers[i]->trees[j]->tree) < 0) {
 					return -1;
 				}
@@ -283,7 +283,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 					return -1;
 				}
 				rt->rules[rr->hash_index - 1] = rr;
-				LM_NOTICE("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
+				LM_INFO("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
 			}
 		}
 
@@ -296,7 +296,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 				} else {
 					rt->rules[i] = rr;
 					rr->hash_index = i + 1;
-					LM_NOTICE("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
+					LM_INFO("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
 					rr = rr->next;
 				}
 			} else {

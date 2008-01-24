@@ -82,12 +82,12 @@ struct route_tree_item * get_route_tree(const char * domain, struct carrier_tree
 	for (i=0; i<rd->tree_num; i++) {
 		if (rd->trees[i] && rd->trees[i]->name.s) {
 			if (strcmp(rd->trees[i]->name.s, domain) == 0) {
-				LM_NOTICE("found domain %s\n", rd->trees[i]->name.s);
+				LM_INFO("found domain %s\n", rd->trees[i]->name.s);
 				return rd->trees[i]->tree;
 			}
 		}
 	}
-	LM_NOTICE("domain %s not found, add it\n", domain);
+	LM_INFO("domain %s not found, add it\n", domain);
 	if ((id = add_domain(domain)) < 0) {
 		LM_ERR("could not add domain\n");
 		return NULL;
@@ -123,7 +123,7 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 
 struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id) {
 	int i;
-	LM_INFO("searching in carrier %.*s\n", ct->name.len, ct->name.s);
+	LM_DBG("searching in carrier %.*s\n", ct->name.len, ct->name.s);
 	for (i=0; i<ct->tree_num; i++) {
 		if (ct->trees[i]) {
 			LM_DBG("tree %.*s, domain %.*s : %i\n", ct->name.len, ct->name.s, ct->trees[i]->name.len, ct->trees[i]->name.s, ct->trees[i]->id);
