@@ -22,7 +22,7 @@
  */
 
 /**
- * \file db/db_id.c
+ * \file db/db_id.h
  * \brief Functions for parsing a database URL and works with db identifier.
  */
 
