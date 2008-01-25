@@ -87,10 +87,10 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	db_res_t* res = NULL;
 	db_row_t *row;
 	dlist_t *dom;
-	char *p;
+	char *p, *p1;
 	char now_s[25];
 	int now_len;
-	int port, proto, p_len;
+	int port, proto, p_len, p1_len;
 	str host;
 	int i;
 	void *cp;
@@ -153,7 +153,17 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			}
 			p_len = strlen(p);
 
-			needed = (int)(sizeof(p_len)+p_len+sizeof(sock)+sizeof(dbflags));
+			/* path */
+			p1 = (char*)VAL_STRING(ROW_VALUES(row)+4);
+			if (VAL_NULL(ROW_VALUES(row)+4) || p1==0 || p1[0]==0){
+				p1 = NULL;
+				p1_len = 0;
+			} else {
+				p1_len = strlen(p1);
+			}
+
+			needed = (int)(sizeof(p_len)+p_len+sizeof(sock)+sizeof(dbflags)+
+				sizeof(p1_len)+p1_len);
 			if (len < needed) {
 				shortage += needed ;
 				continue;
@@ -190,22 +200,14 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			cp = (char*)cp + sizeof(sock);
 			memcpy(cp, &dbflags, sizeof(dbflags));
 			cp = (char*)cp + sizeof(dbflags);
-			len -= needed;
-
-			/* path */
-			p = (char*)VAL_STRING(ROW_VALUES(row)+4);
-			if (VAL_NULL(ROW_VALUES(row)+4) || p==0 || p[0]==0){
-				p = NULL;
-				p_len = 0;
-			} else {
-				p_len = strlen(p);
-			}
 
 			/* write path */
-			memcpy(cp, &p_len, sizeof(p_len));
-			cp = (char*)cp + sizeof(p_len);
-			memcpy(cp, p, p_len);
-			cp = (char*)cp + p_len;
+			memcpy(cp, &p1_len, sizeof(p_len));
+			cp = (char*)cp + sizeof(p1_len);
+			memcpy(cp, p1, p1_len);
+			cp = (char*)cp + p1_len;
+
+			len -= needed;
 		} /* row cycle */
 
 		ul_dbf.free_result(ul_dbh, res);
