@@ -88,7 +88,10 @@ int db_do_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	 * Null-terminate the string for the postgres driver. Its query function
 	 * don't support a length parameter, so they need this for the correct
 	 * function of strlen. This zero is not included in the 'str' length.
+	 * We need to check the length here, otherwise we could overwrite the buffer
+	 * boundaries if off is equal to SQL_BUF_LEN.
 	 */
+	if (off + 1 >= SQL_BUF_LEN) goto error;
 	sql_buf[off + 1] = '\0';
 	sql_str.s = sql_buf;
 	sql_str.len = off;
@@ -165,6 +168,7 @@ int db_do_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	if (ret < 0) return -1;
 	off += ret;
 
+	if (off + 2 >= SQL_BUF_LEN) goto error;
 	sql_buf[off++] = ')';
 	sql_buf[off + 1] = '\0';
 	sql_str.s = sql_buf;
@@ -208,6 +212,7 @@ int db_do_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		if (ret < 0) return -1;
 		off += ret;
 	}
+	if (off + 1 >= SQL_BUF_LEN) goto error;
 	sql_buf[off + 1] = '\0';
 	sql_str.s = sql_buf;
 	sql_str.len = off;
@@ -253,6 +258,7 @@ int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		if (ret < 0) return -1;
 		off += ret;
 	}
+	if (off + 1 >= SQL_BUF_LEN) goto error;
 	sql_buf[off + 1] = '\0';
 	sql_str.s = sql_buf;
 	sql_str.len = off;
@@ -297,6 +303,7 @@ int db_do_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	if (ret < 0) return -1;
 	off += ret;
 
+	if (off + 2 >= SQL_BUF_LEN) goto error;
 	sql_buf[off++] = ')';
 	sql_buf[off + 1] = '\0';
 	sql_str.s = sql_buf;
