@@ -179,7 +179,7 @@ int w_acc_db_request(struct sip_msg *rq, char *comment, char *table)
 		return -1;
 	env_set_to( rq->to );
 	env_set_comment((struct acc_param*)comment);
-	env_set_text( table, 0);
+	env_set_text(table, strlen(table));
 	return acc_db_request(rq);
 }
 #endif
@@ -306,7 +306,7 @@ static inline void on_missed(struct cell *t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_mc_on(req)) {
-		env_set_text(db_table_mc.s, 0);
+		env_set_text(db_table_mc.s, db_table_mc.len);
 		acc_db_request( req );
 		flags_to_reset |= db_missed_flag;
 	}
@@ -371,7 +371,7 @@ static inline void acc_onreply( struct cell* t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
-		env_set_text( db_table_acc.s, 0);
+		env_set_text( db_table_acc.s, db_table_acc.len);
 		acc_db_request(req);
 	}
 #endif
@@ -409,7 +409,7 @@ static inline void acc_onack( struct cell* t, struct sip_msg *req,
 	}
 #ifdef SQL_ACC
 	if (is_db_acc_on(req)) {
-		env_set_text( db_table_acc.s, 0);
+		env_set_text( db_table_acc.s, db_table_acc.len);
 		acc_db_request( ack );
 	}
 #endif
