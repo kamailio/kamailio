@@ -342,7 +342,7 @@ ServerDirectoryHandler(TSession * const r,
     TPool pool;
     TDate date;
     const char * error;
-    uint16_t responseStatus;
+    uint16_t responseStatus=0;
     TDate dirdate;
     const char * imsHdr;
     

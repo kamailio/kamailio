@@ -892,7 +892,7 @@ createServer(xmlrpc_env *                      const envP,
     abyss_bool socketBound;
     unsigned int portNumber = 0;
     TOsSocket socketFd = 0;
-    const char * logFileName;
+    const char * logFileName=NULL;
 
     extractServerCreateParms(envP, parmsP, parmSize,
                              &socketBound, &portNumber, &socketFd,
