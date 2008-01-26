@@ -202,7 +202,7 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 			cp = (char*)cp + sizeof(dbflags);
 
 			/* write path */
-			memcpy(cp, &p1_len, sizeof(p_len));
+			memcpy(cp, &p1_len, sizeof(p1_len));
 			cp = (char*)cp + sizeof(p1_len);
 			memcpy(cp, p1, p1_len);
 			cp = (char*)cp + p1_len;
