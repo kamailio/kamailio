@@ -43,6 +43,8 @@ typedef struct _cfg_script_var {
 		str	s;
 		int	i;
 	} val;
+	int	min;
+	int	max;
 	struct _cfg_script_var	*next;
 	int	name_len;
 	char	*name;

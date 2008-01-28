@@ -1110,7 +1110,7 @@ assign_stm:
 	;
 cfg_var:
 	ID DOT ID EQUAL NUMBER {
-		if (cfg_declare_int($1, $3, $5, NULL)) {
+		if (cfg_declare_int($1, $3, $5, 0, 0, NULL)) {
 			yyerror("variable cannot be declared");
 		}
 	}
@@ -1120,7 +1120,7 @@ cfg_var:
 		}
 	}
 	| ID DOT ID EQUAL NUMBER CFG_DESCRIPTION STRING {
-		if (cfg_declare_int($1, $3, $5, $7)) {
+		if (cfg_declare_int($1, $3, $5, 0, 0, $7)) {
 			yyerror("variable cannot be declared");
 		}
 	}

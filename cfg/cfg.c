@@ -122,6 +122,14 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	}
 
 	group_name_len = strlen(group_name);
+	/* check for duplicates */
+	if (cfg_lookup_group(group_name, group_name_len)) {
+		LOG(L_ERR, "ERROR: register_cfg_def(): "
+			"configuration group has been already declared: %s\n",
+			group_name);
+		goto error;
+	}
+
 	/* create a new group
 	I will allocate memory in shm mem for the variables later in a single block,
 	when we know the size of all the registered groups. */
@@ -152,7 +160,8 @@ error:
 }
 
 /* declares a single variable with integer type */
-int cfg_declare_int(char *group_name, char *var_name, int val, char *descr)
+int cfg_declare_int(char *group_name, char *var_name,
+		int val, int min, int max, char *descr)
 {
 	cfg_script_var_t	*var;
 
@@ -160,6 +169,8 @@ int cfg_declare_int(char *group_name, char *var_name, int val, char *descr)
 		return -1;
 
 	var->val.i = val;
+	var->min = min;
+	var->max = max;
 
 	return 0;
 }

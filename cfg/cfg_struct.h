@@ -248,6 +248,9 @@ static inline void cfg_update_local(void)
 		if (unlikely(cfg_local != *cfg_global)) \
 			cfg_update_local(); \
 	} while(0)
+
+/* searches a group by name */
+cfg_group_t *cfg_lookup_group(char *name, int len);
 	
 /* searches a variable definition by group and variable name */
 int cfg_lookup_var(str *gname, str *vname,

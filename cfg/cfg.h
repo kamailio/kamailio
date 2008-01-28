@@ -76,7 +76,8 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 	((struct cfg_group_##gname *)handle)->var
 
 /* declares a single variable with integer type */
-int cfg_declare_int(char *group_name, char *var_name, int val, char *descr);
+int cfg_declare_int(char *group_name, char *var_name,
+		int val, int min, int max, char *descr);
 
 /* declares a single variable with str type */
 int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr);

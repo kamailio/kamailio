@@ -57,26 +57,32 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 	}
 
 	gname_len = strlen(gname);
+	vname_len = strlen(vname);
 	/* the group may have been already declared */
-	for (	group = cfg_group;
-		group;
-		group = group->next
-	) {
-		if ((group->name_len == gname_len) &&
-		(memcmp(group->name, gname, gname_len) == 0)) {
-			if (group->dynamic == 0) {
-				/* the group has been already declared by a module or by the core */
-				LOG(L_ERR, "ERROR: new_cfg_script_var(): "
-					"configuration group has been already declared: %s\n",
-					gname);
+	group = cfg_lookup_group(gname, gname_len);
+	if (group) {
+		if (group->dynamic == 0) {
+			/* the group has been already declared by a module or by the core */
+			LOG(L_ERR, "ERROR: new_cfg_script_var(): "
+				"configuration group has been already declared: %s\n",
+				gname);
+			return NULL;
+		}
+		/* the dynamic group is found */
+		/* verify that the variable does not exist */
+		for (	var = (cfg_script_var_t *)group->vars;
+			var;
+			var = var->next
+		) {
+			if ((var->name_len == vname_len) &&
+			(memcmp(var->name, vname, vname_len) == 0)) {
+				LOG(L_ERR, "ERROR: new_cfg_script_var(): variable already exists: %s.%s\n",
+						gname, vname);
 				return NULL;
 			}
-			/* the dynamic group is found */
-			break;
 		}
-	}
 
-	if (!group) {
+	} else {
 		/* create a new group with NULL values, we will fix it later,
 		when all the variables are known */
 		group = cfg_new_group(gname, gname_len,
@@ -85,21 +91,6 @@ cfg_script_var_t *new_cfg_script_var(char *gname, char *vname, unsigned int type
 					
 		if (!group) goto error;
 		group->dynamic = 1;
-	}
-
-	/* verify that the variable does not exist */
-	vname_len = strlen(vname);
-
-	for (	var = (cfg_script_var_t *)group->vars;
-		var;
-		var = var->next
-	) {
-		if ((var->name_len == vname_len) &&
-		(memcmp(var->name, vname, vname_len) == 0)) {
-			LOG(L_ERR, "ERROR: new_cfg_script_var(): variable already exists: %s.%s\n",
-					gname, vname);
-			return NULL;
-		}
 	}
 
 	switch (type) {
@@ -183,6 +174,8 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 		def[i].name = script_var->name;
 		def[i].type = script_var->type | (script_var->type << CFG_INPUT_SHIFT);
 		def[i].descr = script_var->descr;
+		def[i].min = script_var->min;
+		def[i].max = script_var->max;
 
 		mapping[i].def = &(def[i]);
 		mapping[i].name_len = script_var->name_len;
