@@ -38,62 +38,10 @@ static cfg_ctx_t	*ctx = NULL;
 
 MODULE_VERSION
 
-static void on_declare(str *gname, cfg_def_t *def)
-{
-	int	i;
-	void	*val;
-	unsigned int	val_type;
-	str	var;
-	str	v1 = STR_STATIC_INIT("-3");
-	str	v2 = STR_STATIC_INIT("-3");
-	
-	LOG(L_ERR, "cfg_rpc: === new group: %.*s\n",
-		gname->len, gname->s);
-		
-	for (i=0; def[i].name; i++) {
-		LOG(L_ERR, "cfg_rpc: === var[%d]:\n", i);
-		LOG(L_ERR, "cfg_rpc: ===   name=%s\n", def[i].name);
-		LOG(L_ERR, "cfg_rpc: ===   descr=%s\n", def[i].descr);
-
-		var.s = def[i].name;
-		var.len = strlen(var.s);
-		if (cfg_get_by_name(ctx, gname, &var,
-			&val, &val_type) == 0) {
-
-			switch (val_type) {
-			case CFG_VAR_INT:
-				LOG(L_ERR, "cfg_rpc: ===   val=%d\n",
-					(int)(long)val);
-				break;
-
-			case CFG_VAR_STRING:
-				LOG(L_ERR, "cfg_rpc: ===   val=%s\n",
-					(char *)val);
-				break;
-				
-			case CFG_VAR_STR:
-				LOG(L_ERR, "cfg_rpc: ===   val=%.*s\n",
-					((str*)val)->len, ((str*)val)->s);
-				break;
-				
-			case CFG_VAR_POINTER:
-				LOG(L_ERR, "cfg_rpc: ===   val=%p\n",
-					val);
-			}
-		}
-		
-		if (strcmp(var.s, "int")==0) {
-			cfg_set_now_str(ctx, gname, &var, &v1);
-		} else if (strcmp(var.s, "uint")==0) {
-			cfg_set_now_str(ctx, gname, &var, &v2);
-		}
-	}
-}
-
 /* module initialization function */
 static int mod_init(void)
 {
-	if (cfg_register_ctx(&ctx, on_declare)) {
+	if (cfg_register_ctx(&ctx, NULL)) {
 		LOG(L_ERR, "cfg_rpc: failed to register cfg context\n");
 		return -1;
 	}
