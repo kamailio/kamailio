@@ -72,7 +72,7 @@ typedef struct _cfg_ctx {
 
 /* creates a new config context that is an interface to the
  * cfg variables with write permission */
-cfg_ctx_t *cfg_register_ctx(cfg_on_declare on_declare_cb);
+int cfg_register_ctx(cfg_ctx_t **handle, cfg_on_declare on_declare_cb);
 
 /* free the memory allocated for the contexts */
 void cfg_ctx_destroy(void);

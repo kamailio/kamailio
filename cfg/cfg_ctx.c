@@ -44,7 +44,7 @@ static cfg_ctx_t	*cfg_ctx_list = NULL;
 /* creates a new config context that is an interface to the
  * cfg variables with write permission
  */
-cfg_ctx_t *cfg_register_ctx(cfg_on_declare on_declare_cb)
+int cfg_register_ctx(cfg_ctx_t **handle, cfg_on_declare on_declare_cb)
 {
 	cfg_ctx_t	*ctx;
 	cfg_group_t	*group;
@@ -56,20 +56,23 @@ cfg_ctx_t *cfg_register_ctx(cfg_on_declare on_declare_cb)
 	ctx = (cfg_ctx_t *)shm_malloc(sizeof(cfg_ctx_t));
 	if (!ctx) {
 		LOG(L_ERR, "ERROR: cfg_register_ctx(): not enough shm memory\n");
-		return NULL;
+		return -1;
 	}
 	memset(ctx, 0, sizeof(cfg_ctx_t));
 	if (lock_init(&ctx->lock) == 0) {
 		LOG(L_ERR, "ERROR: cfg_register_ctx(): failed to init lock\n");
 		shm_free(ctx);
-		return NULL;
+		return -1;
 	}
 
 	/* add the new ctx to the beginning of the list */
 	ctx->next = cfg_ctx_list;
 	cfg_ctx_list = ctx;
 
-	/* let the driver know about the already registered groups */
+	/* let the driver know about the already registered groups
+	 * The handle of the context must be set before calling the
+	 * on_declare callbacks. */
+	*handle = ctx;
 	if (on_declare_cb) {
 		ctx->on_declare_cb = on_declare_cb;
 
@@ -87,7 +90,7 @@ cfg_ctx_t *cfg_register_ctx(cfg_on_declare on_declare_cb)
 		}
 	}
 
-	return ctx;
+	return 0;
 }
 
 /* free the memory allocated for the contexts */

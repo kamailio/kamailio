@@ -184,8 +184,7 @@ static void on_declare(str *group_name, cfg_def_t *definition)
 
 static int mod_init(void)
 {
-	ctx = cfg_register_ctx(on_declare);
-	if (!ctx) {
+	if (cfg_register_ctx(&ctx, on_declare)) {
 		/* error */
 		return -1;
 	}
