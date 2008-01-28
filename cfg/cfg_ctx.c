@@ -30,9 +30,13 @@
  */
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "../ut.h"
 #include "cfg_struct.h"
 #include "cfg_ctx.h"
+
 
 /* linked list of all the registered cfg contexts */
 static cfg_ctx_t	*cfg_ctx_list = NULL;
@@ -118,33 +122,127 @@ void cfg_notify_drivers(char *group_name, int group_name_len, cfg_def_t *def)
 			ctx->on_declare_cb(&gname, def);
 }
 
-/* convert the value to the requested type
- * (only string->str is implemented currently) */
+/*
+ * Convert an str into signed integer
+ * this function should be moved to ../ut.h
+ */
+static int str2sint(str* _s, int* _r)
+{
+	int i;
+	int sign;
+
+	if (_s->len == 0) return -1;
+
+	*_r = 0;
+	sign = 1;
+	i = 0;
+	if (_s->s[0] == '+') {
+		i++;
+	} else if (_s->s[0] == '-') {
+		sign = -1;
+		i++;
+	}
+	for(; i < _s->len; i++) {
+		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
+			*_r *= 10;
+			*_r += _s->s[i] - '0';
+		} else {
+			return -1;
+		}
+	}
+	*_r *= sign;
+
+	return 0;
+}
+
+
+/* placeholder for a temporary string */
+static char	*temp_string = NULL;
+
+/* convert the value to the requested type */
 static int convert_val(unsigned int val_type, void *val,
 			unsigned int var_type, void **new_val)
 {
 	static str	s;
+	char		*end;
+	int		i;
+	static char	buf[INT2STR_MAX_LEN];
 
-	switch (val_type) {
-		case CFG_VAR_INT:
-			if (CFG_INPUT_MASK(var_type) != CFG_INPUT_INT)
-				goto error;
+	/* we have to convert from val_type to var_type */
+	switch (CFG_INPUT_MASK(var_type)) {
+	case CFG_INPUT_INT:
+		if (val_type == CFG_VAR_INT) {
 			*new_val = val;
 			break;
 
-		case CFG_VAR_STRING:
-			if (CFG_INPUT_MASK(var_type) == CFG_INPUT_STR) {
-				s.s = val;
-				s.len = strlen(s.s);
-				*new_val = (void *)&s;
-				break;
+		} else if (val_type == CFG_VAR_STRING) {
+			*new_val = (void *)(long)strtol((char *)val, &end, 10);
+			if (*end != '\0') {
+				LOG(L_ERR, "ERROR: convert_val(): "
+					"cannot convert string to integer '%s'\n",
+					s.s);
+				return -1;
 			}
-			if (CFG_INPUT_MASK(var_type) != CFG_INPUT_STRING)
-				goto error;
+			break;
+
+		} else if (val_type == CFG_VAR_STR) {
+			if (str2sint((str *)val, &i)) {
+				LOG(L_ERR, "ERROR: convert_val(): "
+					"cannot convert string to integer '%.*s'\n",
+					((str *)val)->len, ((str *)val)->s);
+				return -1;
+			}
+			*new_val = (void *)(long)i;
+			break;
+		}
+		goto error;
+
+	case CFG_INPUT_STRING:
+		if (val_type == CFG_VAR_INT) {
+			buf[snprintf(buf, sizeof(buf)-1, "%ld", (long)val)] = '\0';
+			*new_val = buf;
+			break;
+
+		} else if (val_type == CFG_VAR_STRING) {
 			*new_val = val;
 			break;
-		default:
-			goto error;
+
+		} else if (val_type == CFG_VAR_STR) {
+			/* the value may not be zero-terminated, thus,
+			a new variable has to be allocated with larger memory space */
+			if (temp_string) pkg_free(temp_string);
+			temp_string = (char *)pkg_malloc(sizeof(char) * (((str *)val)->len + 1));
+			if (!temp_string) {
+				LOG(L_ERR, "ERROR: convert_val(): not enough memory\n");
+				return -1;
+			}
+			memcpy(temp_string, ((str *)val)->s, ((str *)val)->len);
+			temp_string[((str *)val)->len] = '\0';
+			*new_val = (void *)temp_string;
+			break;
+
+		}
+		goto error;
+
+	case CFG_INPUT_STR:
+		if (val_type == CFG_VAR_INT) {
+			s.len = snprintf(buf, sizeof(buf)-1, "%ld", (long)val);
+			buf[s.len] = '\0';
+			s.s = buf;
+			*new_val = (void *)&s;
+			break;
+
+		} else if (val_type == CFG_VAR_STRING) {
+			s.s = (char *)val;
+			s.len = strlen(s.s);
+			*new_val = (void *)&s;
+			break;
+
+		} else if (val_type == CFG_VAR_STR) {
+			*new_val = val;
+			break;			
+		}
+		goto error;
 	}
 
 	return 0;
@@ -154,6 +252,14 @@ error:
 			val_type, CFG_INPUT_MASK(var_type));
 	return -1;
 }
+
+#define convert_val_cleanup() \
+	do { \
+		if (temp_string) { \
+			pkg_free(temp_string); \
+			temp_string = NULL; \
+		} \
+	} while(0)
 
 /* sets the value of a variable without the need of commit
  *
@@ -298,13 +404,22 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			group_name->len, group_name->s,
 			var_name->len, var_name->s,
 			(int)(long)val);
-	else
+
+	else if (val_type == CFG_VAR_STRING)
 		LOG(L_INFO, "INFO: cfg_set_now(): %.*s.%.*s "
 			"has been changed to \"%s\"\n",
 			group_name->len, group_name->s,
 			var_name->len, var_name->s,
 			(char *)val);
 
+	else /* str type */
+		LOG(L_INFO, "INFO: cfg_set_now(): %.*s.%.*s "
+			"has been changed to \"%.*s\"\n",
+			group_name->len, group_name->s,
+			var_name->len, var_name->s,
+			((str *)val)->len, ((str *)val)->s);
+
+	convert_val_cleanup();
 	return 0;
 
 error:
@@ -318,6 +433,7 @@ error0:
 			var_name->len, var_name->s);
 
 
+	convert_val_cleanup();
 	return -1;
 }
 
@@ -331,6 +447,12 @@ int cfg_set_now_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val)
 int cfg_set_now_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val)
 {
 	return cfg_set_now(ctx, group_name, var_name, (void *)val, CFG_VAR_STRING);
+}
+
+/* wrapper function for cfg_set_now */
+int cfg_set_now_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val)
+{
+	return cfg_set_now(ctx, group_name, var_name, (void *)val, CFG_VAR_STR);
 }
 
 /* returns the size of the variable */
@@ -512,7 +634,8 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			var_name->len, var_name->s,
 			(int)(long)val,
 			ctx);
-	else
+
+	else if (val_type == CFG_VAR_STRING)
 		LOG(L_INFO, "INFO: cfg_set_delayed(): %.*s.%.*s "
 			"is going to be changed to \"%s\" "
 			"[context=%p]\n",
@@ -521,6 +644,16 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			(char *)val,
 			ctx);
 
+	else /* str type */
+		LOG(L_INFO, "INFO: cfg_set_delayed(): %.*s.%.*s "
+			"is going to be changed to \"%.*s\" "
+			"[context=%p]\n",
+			group_name->len, group_name->s,
+			var_name->len, var_name->s,
+			((str *)val)->len, ((str *)val)->s,
+			ctx);
+
+	convert_val_cleanup();
 	return 0;
 
 error:
@@ -531,6 +664,7 @@ error0:
 			group_name->len, group_name->s,
 			var_name->len, var_name->s);
 
+	convert_val_cleanup();
 	return -1;
 }
 
@@ -544,6 +678,12 @@ int cfg_set_delayed_int(cfg_ctx_t *ctx, str *group_name, str *var_name, int val)
 int cfg_set_delayed_string(cfg_ctx_t *ctx, str *group_name, str *var_name, char *val)
 {
 	return cfg_set_delayed(ctx, group_name, var_name, (void *)val, CFG_VAR_STRING);
+}
+
+/* wrapper function for cfg_set_delayed */
+int cfg_set_delayed_str(cfg_ctx_t *ctx, str *group_name, str *var_name, str *val)
+{
+	return cfg_set_delayed(ctx, group_name, var_name, (void *)val, CFG_VAR_STR);
 }
 
 /* commits the previously prepared changes within the context */

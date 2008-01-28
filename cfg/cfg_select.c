@@ -28,6 +28,7 @@
  * -------
  *  2008-01-10	Initial version (Miklos)
  */
+#include <stdio.h>
 
 #include "../select.h"
 #include "../ut.h"
@@ -40,6 +41,7 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	cfg_mapping_t	*var;
 	void		*p;
 	int		i;
+	static char	buf[INT2STR_MAX_LEN];
 
 	if (msg == NULL) {
 		/* fixup call */
@@ -87,8 +89,9 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:
 		memcpy(&i, p, sizeof(int));
-		/* WARNING: int2str uses a static buffer */
-		res->s = int2str(i, &res->len);
+		res->len = snprintf(buf, sizeof(buf)-1, "%d", i);
+		buf[res->len] = '\0';
+		res->s = buf;
 		break;
 
 	case CFG_VAR_STRING:

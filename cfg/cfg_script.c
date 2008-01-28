@@ -35,6 +35,7 @@
 #include "../mem/mem.h"
 #include "../ut.h"
 #include "cfg_struct.h"
+#include "cfg.h"
 #include "cfg_script.h"
 
 /* allocates memory for a new config script variable
@@ -180,7 +181,7 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 	) {
 		/* there has been already memory allocated for the name */
 		def[i].name = script_var->name;
-		def[i].type = script_var->type | (script_var->type << 3);
+		def[i].type = script_var->type | (script_var->type << CFG_INPUT_SHIFT);
 		def[i].descr = script_var->descr;
 
 		mapping[i].def = &(def[i]);
