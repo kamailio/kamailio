@@ -15,7 +15,7 @@ Release:      %rel
 Packager:     Jan Janak <jan@iptel.org>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://ftp.iptel.org/pub/ser/%{ver}/src/%{name}-%{ver}-%{rel}_src.tar.gz
+Source:       http://ftp.iptel.org/pub/ser/%{ver}/src/%{name}-%{ver}-rc6-%{rel}_src.tar.gz
 Source2:      ser.init
 URL:          http://iptel.org/ser
 Vendor:       FhG FOKUS
@@ -66,10 +66,10 @@ The ser-jabber package contains a sip to jabber message translator.
 # membership and uri checking.
 
 %prep
-%setup -n %{name}-%{ver}-rc0
+%setup -n %{name}-%{ver}-rc6
 
 %build
-make all skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
+make all include_modules="tls" skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
 make modules modules="modules/%MYSQL_MODULES"  cfg-target=/%{_sysconfdir}/ser/
 make modules modules="modules/%JABBER_MODULES" cfg-target=/%{_sysconfdir}/ser/
 make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
@@ -78,7 +78,7 @@ make modules modules="%RADIUS_MOD_PATH"        cfg-target=/%{_sysconfdir}/ser/
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 
-make install skip_modules="%EXCLUDED_MODULES" \
+make install include_modules="tls" skip_modules="%EXCLUDED_MODULES" \
 		basedir=$RPM_BUILD_ROOT \
 		prefix=/usr \
 		cfg-prefix=$RPM_BUILD_ROOT \
@@ -216,6 +216,7 @@ fi
 %{_libdir}/ser/modules/speeddial.so
 %{_libdir}/ser/modules/textops.so
 %{_libdir}/ser/modules/timer.so
+%{_libdir}/ser/modules/tls.so
 %{_libdir}/ser/modules/tm.so
 %{_libdir}/ser/modules/uac.so
 %{_libdir}/ser/modules/uri.so
