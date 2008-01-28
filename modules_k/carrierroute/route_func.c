@@ -603,7 +603,6 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
                                 str * dest, struct sip_msg * msg, str * user,
                                 enum hash_source hash_source,
                                 enum hash_algorithm alg) {
-	int ret;
 	struct route_tree_item *re_tree;
 	str re_uri;
 
@@ -620,18 +619,18 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
 		}
 	} else {
+		/* no match, skip over one char of the uri and try again */
 		re_tree = route_tree->nodes[*uri->s - '0'];
 		re_uri.s = uri->s + 1;
 		re_uri.len = uri->len - 1;
-		ret = rewrite_uri_recursor(re_tree, &re_uri, dest, msg, user, hash_source, alg);
-		switch (ret) {
+		switch (rewrite_uri_recursor(re_tree, &re_uri, dest, msg, user, hash_source, alg)) {
 			case 0:
 				return 0;
 			case 1:
 				if (route_tree->rule_list != NULL) {
 					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
 				} else {
-					LM_INFO("empty rule list");
+					LM_INFO("empty rule list for URI %.*s", re_uri.len, re_uri.s);
 					return 1;
 				}
 			default:
