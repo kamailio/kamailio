@@ -627,14 +627,13 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1) {
 
 			if (update_cseqs(dlg, req, dir)!=0) {
-				LM_ERR("cseqs\n");
-				goto end;
+				LM_ERR("cseqs update failed\n");
+			} else {
+				dlg->flags |= DLG_FLAG_CHANGED;
+				if ( dlg_db_mode==DB_MODE_REALTIME )
+					update_dialog_dbinfo(dlg);
 			}
 
-			dlg->flags |= DLG_FLAG_CHANGED;
-			if ( dlg_db_mode==DB_MODE_REALTIME )
-				update_dialog_dbinfo(dlg);
-end:
 			/* within dialog request */
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
 
