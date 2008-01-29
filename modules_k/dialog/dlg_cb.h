@@ -39,14 +39,15 @@ typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 		dialog_cb f, void *param);
 
 
-#define DLGCB_CREATED      (1<<0)
-#define DLGCB_FAILED       (1<<1)
-#define DLGCB_CONFIRMED    (1<<2)
-#define DLGCB_REQ_WITHIN   (1<<3)
-#define DLGCB_TERMINATED   (1<<4)
-#define DLGCB_EXPIRED      (1<<5)
-#define DLGCB_EARLY        (1<<6)
-#define DLGCB_RESPONSE_FWDED (1<<7)
+#define DLGCB_CREATED         (1<<0)
+#define DLGCB_FAILED          (1<<1)
+#define DLGCB_CONFIRMED       (1<<2)
+#define DLGCB_REQ_WITHIN      (1<<3)
+#define DLGCB_TERMINATED      (1<<4)
+#define DLGCB_EXPIRED         (1<<5)
+#define DLGCB_EARLY           (1<<6)
+#define DLGCB_RESPONSE_FWDED  (1<<7)
+#define DLGCB_WITHIN_RESPONSE (1<<8)
 
 struct dlg_callback {
 	int types;

@@ -405,7 +405,20 @@ inline void unlink_unsafe_dlg(struct dlg_entry *d_entry,
 	return;
 }
 
-void unref_dlg(struct dlg_cell *dlg, int cnt)
+
+void ref_dlg(struct dlg_cell *dlg, unsigned int cnt)
+{
+	struct dlg_entry *d_entry;
+
+	d_entry = &(d_table->entries[dlg->h_entry]);
+
+	dlg_lock( d_table, d_entry);
+	ref_dlg_unsafe( dlg, cnt);
+	dlg_unlock( d_table, d_entry);
+}
+
+
+void unref_dlg(struct dlg_cell *dlg, unsigned int cnt)
 {
 	struct dlg_entry *d_entry;
 

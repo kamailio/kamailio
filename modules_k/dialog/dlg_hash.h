@@ -156,7 +156,9 @@ struct dlg_cell* get_dlg(str *callid, str *ftag, str *ttag, unsigned int *dir);
 
 void link_dlg(struct dlg_cell *dlg, int n);
 
-void unref_dlg(struct dlg_cell *dlg, int cnt);
+void unref_dlg(struct dlg_cell *dlg, unsigned int cnt);
+
+void ref_dlg(struct dlg_cell *dlg, unsigned int cnt);
 
 void next_state_dlg(struct dlg_cell *dlg, int event,
 		int *old_state, int *new_state, int *unref);

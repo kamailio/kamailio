@@ -340,6 +340,26 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 }
 
 
+static void dlg_seq_onreply(struct cell* t, int type,struct tmcb_params *param)
+{
+	struct dlg_cell *dlg;
+
+	dlg = (struct dlg_cell *)(*param->param);
+	if (shutdown_done || dlg==0)
+		return;
+
+	if (type==TMCB_RESPONSE_FWDED) {
+		run_dlg_callbacks(DLGCB_WITHIN_RESPONSE, dlg, param->rpl);
+		return;
+	}
+
+	/* unref the dialog as used from this callback */
+	if (type==TMCB_TRANS_DELETED)
+		unref_dlg(dlg,1);
+
+	return;
+}
+
 
 inline static int get_dlg_timeout(struct sip_msg *req)
 {
@@ -617,11 +637,24 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 end:
 			/* within dialog request */
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
+
+			if ( (dlg->cbs.types)&DLGCB_WITHIN_RESPONSE ) {
+				/* ref the dialog as registered into the transaction
+				 * callback; unref will be done when the transaction
+				 * will be destroied */
+				ref_dlg( dlg , 1);
+				/* register callback for the replies of this request */
+				if ( d_tmb.register_tmcb( req, 0, 
+				 TMCB_RESPONSE_FWDED|TMCB_TRANS_DELETED,
+				 dlg_seq_onreply, (void*)dlg)<0 ) {
+					LM_ERR("failed to register TMCB (2)\n");
+					unref_dlg( dlg , 1);
+				}
+			}
 		}
 	}
 
-	if(new_state == DLG_STATE_CONFIRMED	&& old_state == DLG_STATE_CONFIRMED_NA){
-
+	if(new_state==DLG_STATE_CONFIRMED && old_state==DLG_STATE_CONFIRMED_NA){
 		dlg->flags |= DLG_FLAG_CHANGED;
 		if(dlg_db_mode == DB_MODE_REALTIME)
 			update_dialog_dbinfo(dlg);
