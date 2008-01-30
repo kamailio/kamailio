@@ -248,7 +248,7 @@ int acc_log_request( struct sip_msg *rq)
 	*(p++) = '\n';
 	*(p++) = 0;
 
-	LM_GEN1(log_level, "%.*stimestamp=%lu%s",
+	LM_GEN2(log_facility, log_level, "%.*stimestamp=%lu%s",
 		acc_env.text.len, acc_env.text.s,(unsigned long) acc_env.ts, log_msg);
 
 	return 1;

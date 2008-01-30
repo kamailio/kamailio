@@ -515,6 +515,24 @@ modparam("acc", "log_level", 2)   # Set log_level to 2
 </programlisting>
 		</example>
 	</section>
+		<section>
+		<title><varname>log_facility</varname> (string)</title>
+		<para>
+		Log facility to which accounting messages are issued to syslog.
+		This allows to easily seperate the accounting specific logging
+		from the other log messages.
+		</para>
+		<para>
+		Default value is LOG_DAEMON.
+		</para>
+		<example>
+		<title>log_facility example</title>
+		<programlisting format="linespecific">
+modparam("acc", "log_facility", "LOG_DAEMON")
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title><varname>log_extra</varname> (string)</title>
 		<para>

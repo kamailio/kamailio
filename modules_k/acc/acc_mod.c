@@ -100,6 +100,9 @@ int log_flag = -1;
 int log_missed_flag = -1;
 /* noisiness level logging facilities are used */
 int log_level = L_NOTICE;
+/* log facility that is used */
+int log_facility = LOG_DAEMON;
+static char * log_facility_str = 0;
 /* log extra variables */
 static char *log_extra_str = 0;
 struct acc_extra *log_extra = 0;
@@ -193,6 +196,7 @@ static param_export_t params[] = {
 	{"log_flag",             INT_PARAM, &log_flag             },
 	{"log_missed_flag",      INT_PARAM, &log_missed_flag      },
 	{"log_level",            INT_PARAM, &log_level            },
+	{"log_facility",         STR_PARAM, &log_facility_str     },
 	{"log_extra",            STR_PARAM, &log_extra_str        },
 #ifdef RAD_ACC
 	{"radius_config",        STR_PARAM, &radius_config        },
@@ -321,6 +325,16 @@ static int mod_init( void )
 	acc_sipcode_col.len = strlen(acc_sipcode_col.s);
 	acc_sipreason_col.len = strlen(acc_sipreason_col.s);
 	acc_time_col.len = strlen(acc_time_col.s);
+
+	if (log_facility_str) {
+		int tmp = str2facility(log_facility_str);
+		if (tmp != -1)
+			log_facility = tmp;
+		else {
+			LM_ERR("invalid log facility configured");
+			return -1;
+		}
+	}
 
 	/* ----------- GENERIC INIT SECTION  ----------- */
 

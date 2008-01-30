@@ -56,30 +56,31 @@ Bogdan-Andrei Iancu
               1.5.7. log_flag (integer)
               1.5.8. log_missed_flag (integer)
               1.5.9. log_level (integer)
-              1.5.10. log_extra (string)
-              1.5.11. radius_config (string)
-              1.5.12. radius_flag (integer)
-              1.5.13. radius_missed_flag (integer)
-              1.5.14. service_type (integer)
-              1.5.15. radius_extra (string)
-              1.5.16. db_flag (integer)
-              1.5.17. db_missed_flag (integer)
-              1.5.18. db_table_acc (string)
-              1.5.19. db_table_missed_calls (string)
-              1.5.20. db_url (string)
-              1.5.21. acc_method_column (string)
-              1.5.22. acc_from_tag_column (string)
-              1.5.23. acc_to_tag_column (string)
-              1.5.24. acc_callid_column (string)
-              1.5.25. acc_sip_code_column (string)
-              1.5.26. acc_sip_reason_column (string)
-              1.5.27. acc_time_column (string)
-              1.5.28. db_extra (string)
-              1.5.29. diameter_flag (integer)
-              1.5.30. diameter_missed_flag (integer)
-              1.5.31. diameter_client_host (string)
-              1.5.32. diameter_client_port (int)
-              1.5.33. diameter_extra (string)
+              1.5.10. log_facility (string)
+              1.5.11. log_extra (string)
+              1.5.12. radius_config (string)
+              1.5.13. radius_flag (integer)
+              1.5.14. radius_missed_flag (integer)
+              1.5.15. service_type (integer)
+              1.5.16. radius_extra (string)
+              1.5.17. db_flag (integer)
+              1.5.18. db_missed_flag (integer)
+              1.5.19. db_table_acc (string)
+              1.5.20. db_table_missed_calls (string)
+              1.5.21. db_url (string)
+              1.5.22. acc_method_column (string)
+              1.5.23. acc_from_tag_column (string)
+              1.5.24. acc_to_tag_column (string)
+              1.5.25. acc_callid_column (string)
+              1.5.26. acc_sip_code_column (string)
+              1.5.27. acc_sip_reason_column (string)
+              1.5.28. acc_time_column (string)
+              1.5.29. db_extra (string)
+              1.5.30. diameter_flag (integer)
+              1.5.31. diameter_missed_flag (integer)
+              1.5.32. diameter_client_host (string)
+              1.5.33. diameter_client_port (int)
+              1.5.34. diameter_extra (string)
 
         1.6. Exported Functions
 
@@ -101,34 +102,35 @@ Bogdan-Andrei Iancu
    1-7. log_flag example
    1-8. log_missed_flag example
    1-9. log_level example
-   1-10. log_extra example
-   1-11. radius_config example
-   1-12. radius_flag example
-   1-13. radius_missed_flag example
-   1-14. service_type example
-   1-15. radius_extra example
-   1-16. db_flag example
-   1-17. db_missed_flag example
-   1-18. db_table_acc example
-   1-19. db_table_missed_calls example
-   1-20. db_url example
-   1-21. acc_method_column example
-   1-22. acc_from_tag_column example
-   1-23. acc_to_tag_column example
-   1-24. acc_callid_column example
-   1-25. acc_sip_code_column example
-   1-26. acc_sip_reason_column example
-   1-27. acc_time_column example
-   1-28. db_extra example
-   1-29. diameter_flag example
-   1-30. diameter_missed_flag example
-   1-31. diameter_client_host example
+   1-10. log_facility example
+   1-11. log_extra example
+   1-12. radius_config example
+   1-13. radius_flag example
+   1-14. radius_missed_flag example
+   1-15. service_type example
+   1-16. radius_extra example
+   1-17. db_flag example
+   1-18. db_missed_flag example
+   1-19. db_table_acc example
+   1-20. db_table_missed_calls example
+   1-21. db_url example
+   1-22. acc_method_column example
+   1-23. acc_from_tag_column example
+   1-24. acc_to_tag_column example
+   1-25. acc_callid_column example
+   1-26. acc_sip_code_column example
+   1-27. acc_sip_reason_column example
+   1-28. acc_time_column example
+   1-29. db_extra example
+   1-30. diameter_flag example
+   1-31. diameter_missed_flag example
    1-32. diameter_client_host example
-   1-33. diameter_extra example
-   1-34. acc_log_request usage
-   1-35. acc_db_request usage
-   1-36. acc_rad_request usage
-   1-37. acc_diam_request usage
+   1-33. diameter_client_host example
+   1-34. diameter_extra example
+   1-35. acc_log_request usage
+   1-36. acc_db_request usage
+   1-37. acc_rad_request usage
+   1-38. acc_diam_request usage
      __________________________________________________________
 
 Chapter 1. User's Guide
@@ -490,17 +492,29 @@ modparam("acc", "log_missed_flag", 3)
 modparam("acc", "log_level", 2)   # Set log_level to 2
      __________________________________________________________
 
-1.5.10. log_extra (string)
+1.5.10. log_facility (string)
+
+   Log facility to which accounting messages are issued to syslog.
+   This allows to easily seperate the accounting specific logging
+   from the other log messages.
+
+   Default value is LOG_DAEMON.
+
+   Example 1-10. log_facility example
+modparam("acc", "log_facility", "LOG_DAEMON")
+     __________________________________________________________
+
+1.5.11. log_extra (string)
 
    Extra values to be logged.
 
    Default value is NULL.
 
-   Example 1-10. log_extra example
+   Example 1-11. log_extra example
 modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
      __________________________________________________________
 
-1.5.11. radius_config (string)
+1.5.12. radius_config (string)
 
    This parameter is radius specific. Path to radius client
    configuration file, set the referred config file correctly and
@@ -515,245 +529,245 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
    Default value is "/usr/local/etc/radiusclient/radiusclient.conf
    ".
 
-   Example 1-11. radius_config example
+   Example 1-12. radius_config example
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")
      __________________________________________________________
 
-1.5.12. radius_flag (integer)
+1.5.13. radius_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    RADIUS specific.
 
    Default value is not-set (no flag).
 
-   Example 1-12. radius_flag example
+   Example 1-13. radius_flag example
 modparam("acc", "radius_flag", 2)
      __________________________________________________________
 
-1.5.13. radius_missed_flag (integer)
+1.5.14. radius_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    RADIUS specific.
 
    Default value is not-set (no flag).
 
-   Example 1-13. radius_missed_flag example
+   Example 1-14. radius_missed_flag example
 modparam("acc", "radius_missed_flag", 3)
      __________________________________________________________
 
-1.5.14. service_type (integer)
+1.5.15. service_type (integer)
 
    Radius service type used for accounting.
 
    Default value is 15 (SIP).
 
-   Example 1-14. service_type example
+   Example 1-15. service_type example
 modparam("acc", "service_type", 16)
      __________________________________________________________
 
-1.5.15. radius_extra (string)
+1.5.16. radius_extra (string)
 
    Extra values to be logged via RADIUS - RADIUS specific.
 
    Default value is NULL.
 
-   Example 1-15. radius_extra example
+   Example 1-16. radius_extra example
 modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
      __________________________________________________________
 
-1.5.16. db_flag (integer)
+1.5.17. db_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    database specific.
 
    Default value is not-set (no flag).
 
-   Example 1-16. db_flag example
+   Example 1-17. db_flag example
 modparam("acc", "db_flag", 2)
      __________________________________________________________
 
-1.5.17. db_missed_flag (integer)
+1.5.18. db_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    database specific.
 
    Default value is not-set (no flag).
 
-   Example 1-17. db_missed_flag example
+   Example 1-18. db_missed_flag example
 modparam("acc", "db_missed_flag", 3)
      __________________________________________________________
 
-1.5.18. db_table_acc (string)
+1.5.19. db_table_acc (string)
 
    Table name of accounting successfull calls -- database
    specific.
 
    Default value is "acc"
 
-   Example 1-18. db_table_acc example
+   Example 1-19. db_table_acc example
 modparam("acc", "db_table_acc", "myacc_table")
      __________________________________________________________
 
-1.5.19. db_table_missed_calls (string)
+1.5.20. db_table_missed_calls (string)
 
    Table name for accounting missed calls -- database specific.
 
    Default value is "missed_calls"
 
-   Example 1-19. db_table_missed_calls example
+   Example 1-20. db_table_missed_calls example
 modparam("acc", "db_table_missed_calls", "myMC_table")
      __________________________________________________________
 
-1.5.20. db_url (string)
+1.5.21. db_url (string)
 
    SQL address -- database specific. If is set to NULL or emty
    string, the SQL support is disabled.
 
    Default value is "NULL" (SQL disabled).
 
-   Example 1-20. db_url example
+   Example 1-21. db_url example
 modparam("acc", "db_url", "mysql://user:password@localhost/openser")
      __________________________________________________________
 
-1.5.21. acc_method_column (string)
+1.5.22. acc_method_column (string)
 
    Column name in accouting table to store the request's method
    name as string.
 
    Default value is "method".
 
-   Example 1-21. acc_method_column example
+   Example 1-22. acc_method_column example
 modparam("acc", "acc_method_column", "method")
      __________________________________________________________
 
-1.5.22. acc_from_tag_column (string)
+1.5.23. acc_from_tag_column (string)
 
    Column name in accouting table to store the From header TAG
    parameter.
 
    Default value is "from_tag".
 
-   Example 1-22. acc_from_tag_column example
+   Example 1-23. acc_from_tag_column example
 modparam("acc", "acc_from_tag_column", "from_tag")
      __________________________________________________________
 
-1.5.23. acc_to_tag_column (string)
+1.5.24. acc_to_tag_column (string)
 
    Column name in accouting table to store the To header TAG
    parameter.
 
    Default value is "to_tag".
 
-   Example 1-23. acc_to_tag_column example
+   Example 1-24. acc_to_tag_column example
 modparam("acc", "acc_to_tag_column", "to_tag")
      __________________________________________________________
 
-1.5.24. acc_callid_column (string)
+1.5.25. acc_callid_column (string)
 
    Column name in accouting table to store the request's Callid
    value.
 
    Default value is "callid".
 
-   Example 1-24. acc_callid_column example
+   Example 1-25. acc_callid_column example
 modparam("acc", "acc_callid_column", "callid")
      __________________________________________________________
 
-1.5.25. acc_sip_code_column (string)
+1.5.26. acc_sip_code_column (string)
 
    Column name in accouting table to store the final reply's
    numric code value in string format.
 
    Default value is "sip_code".
 
-   Example 1-25. acc_sip_code_column example
+   Example 1-26. acc_sip_code_column example
 modparam("acc", "acc_sip_code_column", "sip_code")
      __________________________________________________________
 
-1.5.26. acc_sip_reason_column (string)
+1.5.27. acc_sip_reason_column (string)
 
    Column name in accouting table to store the final reply's
    reason phrase value.
 
    Default value is "sip_reason".
 
-   Example 1-26. acc_sip_reason_column example
+   Example 1-27. acc_sip_reason_column example
 modparam("acc", "acc_sip_reason_column", "sip_reason")
      __________________________________________________________
 
-1.5.27. acc_time_column (string)
+1.5.28. acc_time_column (string)
 
    Column name in accouting table to store the time stamp of the
    transaction completion in date-time format.
 
    Default value is "time".
 
-   Example 1-27. acc_time_column example
+   Example 1-28. acc_time_column example
 modparam("acc", "acc_time_column", "time")
      __________________________________________________________
 
-1.5.28. db_extra (string)
+1.5.29. db_extra (string)
 
    Extra values to be logged into database - DB specific.
 
    Default value is NULL.
 
-   Example 1-28. db_extra example
+   Example 1-29. db_extra example
 modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)"
 )
      __________________________________________________________
 
-1.5.29. diameter_flag (integer)
+1.5.30. diameter_flag (integer)
 
    Request flag which needs to be set to account a transaction --
    DIAMETER specific.
 
    Default value is not-set (no flag).
 
-   Example 1-29. diameter_flag example
+   Example 1-30. diameter_flag example
 modparam("acc", "diameter_flag", 2)
      __________________________________________________________
 
-1.5.30. diameter_missed_flag (integer)
+1.5.31. diameter_missed_flag (integer)
 
    Request flag which needs to be set to account missed calls --
    DIAMETER specific.
 
    Default value is not-set (no flag).
 
-   Example 1-30. diameter_missed_flag example
+   Example 1-31. diameter_missed_flag example
 modparam("acc", "diameter_missed_flag", 3)
      __________________________________________________________
 
-1.5.31. diameter_client_host (string)
+1.5.32. diameter_client_host (string)
 
    Hostname of the machine where the DIAMETER Client is running --
    DIAMETER specific.
 
    Default value is "localhost".
 
-   Example 1-31. diameter_client_host example
+   Example 1-32. diameter_client_host example
 modparam("acc", "diameter_client_host", "3a_server.net")
      __________________________________________________________
 
-1.5.32. diameter_client_port (int)
+1.5.33. diameter_client_port (int)
 
    Port number where the Diameter Client is listening -- DIAMETER
    specific.
 
    Default value is 3000.
 
-   Example 1-32. diameter_client_host example
+   Example 1-33. diameter_client_host example
 modparam("acc", "diameter_client_port", 3000)
      __________________________________________________________
 
-1.5.33. diameter_extra (string)
+1.5.34. diameter_extra (string)
 
    Extra values to be logged via DIAMETER - DIAMETER specific.
 
    Default value is NULL.
 
-   Example 1-33. diameter_extra example
+   Example 1-34. diameter_extra example
 modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:e
 mail)")
      __________________________________________________________
@@ -774,7 +788,7 @@ mail)")
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-34. acc_log_request usage
+   Example 1-35. acc_log_request usage
 ...
 acc_log_request("Some comment");
 ...
@@ -793,7 +807,7 @@ acc_log_request("Some comment");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-35. acc_db_request usage
+   Example 1-36. acc_db_request usage
 ...
 acc_log_request("Some comment", "Some table");
 ...
@@ -810,7 +824,7 @@ acc_log_request("Some comment", "Some table");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-36. acc_rad_request usage
+   Example 1-37. acc_rad_request usage
 ...
 acc_rad_request("Some comment");
 ...
@@ -827,7 +841,7 @@ acc_rad_request("Some comment");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-37. acc_diam_request usage
+   Example 1-38. acc_diam_request usage
 ...
 acc_diam_request("Some comment");
 ...
