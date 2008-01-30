@@ -260,7 +260,7 @@ int cfg_lookup_var(str *gname, str *vname,
 cfg_block_t *cfg_clone_global(void);
 
 /* clones a string to shared memory */
-char *cfg_clone_str(str s);
+int cfg_clone_str(str *src, str *dst);
 
 /* installs a new global config
  *

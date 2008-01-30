@@ -96,7 +96,7 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 
 	case CFG_VAR_STRING:
 		memcpy(&res->s, p, sizeof(char *));
-		res->len = strlen(res->s);
+		res->len = (res->s) ? strlen(res->s) : 0;
 		break;
 
 	case CFG_VAR_STR:

@@ -94,20 +94,31 @@ cfg_group_t *cfg_new_group(char *name, int name_len,
 	return group;
 }
 
-/* clones a string to shared memory */
-char *cfg_clone_str(str s)
+/* clones a string to shared memory
+ * (src and dst can be the same)
+ */
+int cfg_clone_str(str *src, str *dst)
 {
 	char	*c;
 
-	c = (char *)shm_malloc(sizeof(char)*(s.len+1));
+	if (!src->s) {
+		dst->s = NULL;
+		dst->len = 0;
+		return 0;
+	}
+
+	c = (char *)shm_malloc(sizeof(char)*(src->len+1));
 	if (!c) {
 		LOG(L_ERR, "ERROR: cfg_clone_str(): not enough shm memory\n");
-		return NULL;
+		return -1;
 	}
-	memcpy(c, s.s, s.len);
-	c[s.len] = '\0';
+	memcpy(c, src->s, src->len);
+	c[src->len] = '\0';
 
-	return c;
+	dst->s = c;
+	dst->len = src->len;
+
+	return 0;
 }
 
 /* copies the strings to shared memory */
@@ -127,15 +138,17 @@ static int cfg_shmize_strings(cfg_group_t *group)
 
 		if (CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STRING) {
 			memcpy(&s.s, group->vars + mapping[i].offset, sizeof(char *));
+			if (!s.s) continue;
 			s.len = strlen(s.s);
 
 		} else if (CFG_VAR_TYPE(&mapping[i]) == CFG_VAR_STR) {
 			memcpy(&s, group->vars + mapping[i].offset, sizeof(str));
+			if (!s.s) continue;
 
 		} else {
 			continue;
 		}
-		if (!(s.s = cfg_clone_str(s))) return -1;
+		if (cfg_clone_str(&s, &s)) return -1;
 		memcpy(group->vars + mapping[i].offset, &s.s, sizeof(char *));
 		mapping[i].flag |= cfg_var_shmized;
 	}
@@ -233,7 +246,7 @@ static void cfg_destory_groups(unsigned char *block)
 						memcpy(	&old_string,
 							block + group->offset + mapping[i].offset,
 							sizeof(char *));
-						shm_free(old_string);
+						if (old_string) shm_free(old_string);
 				}
 
 		if (group->dynamic) {

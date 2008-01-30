@@ -194,8 +194,7 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 			offset = ROUND_POINTER(offset);
 			mapping[i].offset = offset;
 
-			if (!(s.s = cfg_clone_str(script_var->val.s))) goto error;
-			s.len = script_var->val.s.len;
+			if (cfg_clone_str(&(script_var->val.s), &s)) goto error;
 			memcpy(block + offset, &s, sizeof(str));
 			mapping[i].flag |= cfg_var_shmized;
 

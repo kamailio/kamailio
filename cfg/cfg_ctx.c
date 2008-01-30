@@ -145,16 +145,26 @@ static int convert_val(unsigned int val_type, void *val,
 			break;
 
 		} else if (val_type == CFG_VAR_STRING) {
+			if (!val || (((char *)val)[0] == '\0')) {
+				LOG(L_ERR, "ERROR: convert_val(): "
+					"cannot convert NULL string value to integer\n");
+				return -1;
+			}
 			*new_val = (void *)(long)strtol((char *)val, &end, 10);
 			if (*end != '\0') {
 				LOG(L_ERR, "ERROR: convert_val(): "
 					"cannot convert string to integer '%s'\n",
-					s.s);
+					(char *)val);
 				return -1;
 			}
 			break;
 
 		} else if (val_type == CFG_VAR_STR) {
+			if (!((str *)val)->len || !((str *)val)->s) {
+				LOG(L_ERR, "ERROR: convert_val(): "
+					"cannot convert NULL str value to integer\n");
+				return -1;
+			}
 			if (str2sint((str *)val, &i)) {
 				LOG(L_ERR, "ERROR: convert_val(): "
 					"cannot convert string to integer '%.*s'\n",
@@ -177,6 +187,10 @@ static int convert_val(unsigned int val_type, void *val,
 			break;
 
 		} else if (val_type == CFG_VAR_STR) {
+			if (!((str *)val)->s) {
+				*new_val = NULL;
+				break;
+			}
 			/* the value may not be zero-terminated, thus,
 			a new variable has to be allocated with larger memory space */
 			if (temp_string) pkg_free(temp_string);
@@ -203,7 +217,7 @@ static int convert_val(unsigned int val_type, void *val,
 
 		} else if (val_type == CFG_VAR_STRING) {
 			s.s = (char *)val;
-			s.len = strlen(s.s);
+			s.len = (s.s) ? strlen(s.s) : 0;
 			*new_val = (void *)&s;
 			break;
 
@@ -322,8 +336,8 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	case CFG_VAR_STRING:
 		/* clone the string to shm mem */
 		s.s = v;
-		s.len = strlen(v);
-		if (!(s.s = cfg_clone_str(s))) goto error;
+		s.len = (s.s) ? strlen(s.s) : 0;
+		if (cfg_clone_str(&s, &s)) goto error;
 		memcpy(&old_string, p, sizeof(char *));
 		memcpy(p, &s.s, sizeof(char *));
 		break;
@@ -331,7 +345,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	case CFG_VAR_STR:
 		/* clone the string to shm mem */
 		s = *(str *)v;
-		if (!(s.s = cfg_clone_str(s))) goto error;
+		if (cfg_clone_str(&s, &s)) goto error;
 		memcpy(&old_string, p, sizeof(char *));
 		memcpy(p, &s, sizeof(str));
 		break;
@@ -565,15 +579,15 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	case CFG_VAR_STRING:
 		/* clone the string to shm mem */
 		s.s = v;
-		s.len = strlen(v);
-		if (!(s.s = cfg_clone_str(s))) goto error;
+		s.len = (s.s) ? strlen(s.s) : 0;
+		if (cfg_clone_str(&s, &s)) goto error;
 		memcpy(changed->new_val, &s.s, sizeof(char *));
 		break;
 
 	case CFG_VAR_STR:
 		/* clone the string to shm mem */
 		s = *(str *)v;
-		if (!(s.s = cfg_clone_str(s))) goto error;
+		if (cfg_clone_str(&s, &s)) goto error;
 		memcpy(changed->new_val, &s, sizeof(str));
 		break;
 
@@ -710,14 +724,16 @@ int cfg_commit(cfg_ctx_t *ctx)
 		}
 	}
 
-	/* allocate memory for the replaced string array */
-	size = sizeof(char *)*(replaced_num + 1);
-	replaced = (char **)shm_malloc(size);
-	if (!replaced) {
-		LOG(L_ERR, "ERROR: cfg_commit(): not enough shm memory\n");
-		goto error;
+	if (replaced_num) {
+		/* allocate memory for the replaced string array */
+		size = sizeof(char *)*(replaced_num + 1);
+		replaced = (char **)shm_malloc(size);
+		if (!replaced) {
+			LOG(L_ERR, "ERROR: cfg_commit(): not enough shm memory\n");
+			goto error;
+		}
+		memset(replaced, 0 , size);
 	}
-	memset(replaced, 0 , size);
 
 	/* make sure that nobody else replaces the global config
 	while the new one is prepared */
@@ -742,7 +758,11 @@ int cfg_commit(cfg_ctx_t *ctx)
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
 		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
 			memcpy(&(replaced[replaced_num]), p, sizeof(char *));
-			replaced_num++;
+			if (replaced[replaced_num])
+				replaced_num++;
+			/* else do not increase replaced_num, because
+			the cfg_block_free() will stop at the first
+			NULL value */
 		}
 
 		memcpy(	p,
@@ -814,7 +834,7 @@ int cfg_rollback(cfg_ctx_t *ctx)
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
 		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
 			memcpy(&new_string, changed->new_val, sizeof(char *));
-			shm_free(new_string);
+			if (new_string) shm_free(new_string);
 		}
 		shm_free(changed);
 	}
