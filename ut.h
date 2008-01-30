@@ -514,6 +514,38 @@ static inline int str2int(str* _s, unsigned int* _r)
 	return 0;
 }
 
+/*
+ * Convert an str to signed integer
+ */
+static inline int str2sint(str* _s, int* _r)
+{
+	int i;
+	int sign;
+
+	if (_s->len == 0) return -1;
+
+	*_r = 0;
+	sign = 1;
+	i = 0;
+	if (_s->s[0] == '+') {
+		i++;
+	} else if (_s->s[0] == '-') {
+		sign = -1;
+		i++;
+	}
+	for(; i < _s->len; i++) {
+		if ((_s->s[i] >= '0') && (_s->s[i] <= '9')) {
+			*_r *= 10;
+			*_r += _s->s[i] - '0';
+		} else {
+			return -1;
+		}
+	}
+	*_r *= sign;
+
+	return 0;
+}
+
 /* converts a username into uid:gid,
  * returns -1 on error & 0 on success */
 int user2uid(int* uid, int* gid, char* user);
