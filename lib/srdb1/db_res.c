@@ -96,3 +96,20 @@ inline db_res_t* db_new_result(void)
 	memset(r, 0, sizeof(db_res_t));
 	return r;
 }
+
+/*
+ * Release memory used by a result structure
+ */
+inline int db_free_result(db_res_t* _r)
+{
+	if (!_r)
+	{
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+
+	db_free_columns(_r);
+	db_free_rows(_r);
+	pkg_free(_r);
+	return 0;
+}

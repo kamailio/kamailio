@@ -101,4 +101,10 @@ int db_free_columns(db_res_t* _r);
  */
 inline db_res_t* db_new_result(void);
 
+/**
+ * Release memory used by a result structure.
+ * \return zero on success, negative on errors
+ */
+int db_free_result(db_res_t* _r);
+
 #endif /* DB_RES_H */
