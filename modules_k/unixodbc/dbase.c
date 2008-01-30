@@ -4,6 +4,7 @@
  * UNIXODBC module core functions
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -200,7 +201,7 @@ static int db_unixodbc_store_result(const db_con_t* _h, db_res_t** _r)
 		return -2;
 	}
 
-	if (convert_result(_h, *_r) < 0)
+	if (db_unixodbc_convert_result(_h, *_r) < 0)
 	{
 		LM_ERR("failed to convert result\n");
 		pkg_free(*_r);
@@ -221,7 +222,7 @@ int db_unixodbc_free_result(const db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	if (free_result(_r) < 0)
+	if (db_free_result(_r) < 0)
 	{
 		LM_ERR("failed to free result structure\n");
 		return -1;

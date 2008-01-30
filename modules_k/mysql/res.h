@@ -4,6 +4,7 @@
  * MySQL module result related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -33,13 +34,6 @@
  * Fill the structure with data from database
  */
 int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r);
-
-
-/*
- * Release memory used by a result structure
- */
-int db_mysql_free_dbresult(db_res_t* _r);
-
 
 int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r);
 

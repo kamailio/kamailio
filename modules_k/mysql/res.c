@@ -4,6 +4,7 @@
  * MySQL module result related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -187,19 +188,3 @@ int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r)
 	return 0;
 }
 
-
-/*
- * Release memory used by a result structure
- */
-int db_mysql_free_dbresult(db_res_t* _r)
-{
-	if (!_r) {
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-
-	db_free_columns(_r);
-	db_free_rows(_r);
-	pkg_free(_r);
-	return 0;
-}

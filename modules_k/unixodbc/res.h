@@ -4,6 +4,7 @@
  * UNIXODBC module result related functions
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -34,16 +35,12 @@
 #include "../../db/db_con.h"
 
 
-/*
- * Fill the structure with data from database
+/**
+ * Fill the result structure with data from the database.
+ * \param _h database handle
+ * \param _r result structure
+ * \return zero on success, negative on errors
  */
-int convert_result(const db_con_t* _h, db_res_t* _r);
-
-
-/*
- * Release memory used by a result structure
- */
-int free_result(db_res_t* _r);
-
+int db_unixodbc_convert_result(const db_con_t* _h, db_res_t* _r);
 
 #endif /* RES_H */

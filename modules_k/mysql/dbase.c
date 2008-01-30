@@ -4,6 +4,7 @@
  * MySQL module core functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -160,7 +161,7 @@ static int db_mysql_store_result(const db_con_t* _h, db_res_t** _r)
 			goto done;
 		} else {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
-			db_mysql_free_dbresult(*_r);
+			db_free_result(*_r);
 			*_r = 0;
 			return -3;
 		}
@@ -206,7 +207,7 @@ int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
 	     return -1;
      }
 
-     if (db_mysql_free_dbresult(_r) < 0) {
+     if (db_free_result(_r) < 0) {
 	     LM_ERR("unable to free result structure\n");
 	     return -1;
      }
@@ -253,7 +254,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 
 	/* exit if the fetch count is zero */
 	if (nrows == 0) {
-		db_mysql_free_dbresult(*_r);
+		db_free_result(*_r);
 		*_r = 0;
 		return 0;
 	}
@@ -274,7 +275,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 				return 0;
 			} else {
 				LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
-				db_mysql_free_dbresult(*_r);
+				db_free_result(*_r);
 				*_r = 0;
 				return -3;
 			}

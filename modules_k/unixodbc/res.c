@@ -4,6 +4,7 @@
  * UNIXODBC module result related functions
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -42,10 +43,10 @@
 /*
  * Get and convert columns from a result
  */
-static inline int get_columns(const db_con_t* _h, db_res_t* _r)
+static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 {
 	int i;
-	SQLSMALLINT n;										  //columns number
+	SQLSMALLINT n; //columns number
 
 	if ((!_h) || (!_r))
 	{
@@ -148,7 +149,7 @@ static inline int get_columns(const db_con_t* _h, db_res_t* _r)
 /*
  * Convert rows from UNIXODBC to db API representation
  */
-static inline int convert_rows(const db_con_t* _h, db_res_t* _r)
+static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
 	int row_n = 0, i = 0, ret = 0;
 	SQLSMALLINT columns;
@@ -242,7 +243,7 @@ static inline int convert_rows(const db_con_t* _h, db_res_t* _r)
 /*
  * Fill the structure with data from database
  */
-int convert_result(const db_con_t* _h, db_res_t* _r)
+int db_unixodbc_convert_result(const db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
@@ -250,13 +251,13 @@ int convert_result(const db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	if (get_columns(_h, _r) < 0)
+	if (db_unixodbc_get_columns(_h, _r) < 0)
 	{
 		LM_ERR("getting column names failed\n");
 		return -2;
 	}
 
-	if (convert_rows(_h, _r) < 0)
+	if (db_unixodbc_convert_rows(_h, _r) < 0)
 	{
 		LM_ERR("converting rows failed\n");
 		db_free_columns(_r);
@@ -265,19 +266,3 @@ int convert_result(const db_con_t* _h, db_res_t* _r)
 	return 0;
 }
 
-/*
- * Release memory used by a result structure
- */
-int free_result(db_res_t* _r)
-{
-	if (!_r)
-	{
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-
-	db_free_columns(_r);
-	db_free_rows(_r);
-	pkg_free(_r);
-	return 0;
-}
