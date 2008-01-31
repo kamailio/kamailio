@@ -280,6 +280,16 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	if (convert_val(val_type, val, CFG_INPUT_TYPE(var), &v))
 		goto error0;
 	
+	if ((CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
+	&& (var->def->min || var->def->max)) {
+		/* perform a simple min-max check for integers */
+		if (((int)(long)v < var->def->min)
+		|| ((int)(long)v > var->def->max)) {
+			LOG(L_ERR, "ERROR: cfg_set_now(): integer value is out of range\n");
+			goto error0;
+		}
+	}
+
 	if (var->def->on_change_cb) {
 		/* Call the fixup function.
 		There is no need to set a temporary cfg handle,
@@ -291,14 +301,6 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			goto error0;
 		}
 
-	} else if ((CFG_VAR_TYPE(var) == CFG_VAR_INT) 
-	&& (var->def->min != var->def->max)) {
-		/* perform a simple min-max check for integers */
-		if (((int)(long)v < var->def->min)
-		|| ((int)(long)v > var->def->max)) {
-			LOG(L_ERR, "ERROR: cfg_set_now(): integer value is out of range\n");
-			goto error0;
-		}
 	}
 
 	if (cfg_shmized) {
@@ -500,6 +502,16 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	if (convert_val(val_type, val, CFG_INPUT_TYPE(var), &v))
 		goto error0;
 
+	if ((CFG_INPUT_TYPE(var) == CFG_INPUT_INT) 
+	&& (var->def->min || var->def->max)) {
+		/* perform a simple min-max check for integers */
+		if (((int)(long)v < var->def->min)
+		|| ((int)(long)v > var->def->max)) {
+			LOG(L_ERR, "ERROR: cfg_set_delayed(): integer value is out of range\n");
+			goto error;
+		}
+	}
+
 	/* the ctx must be locked while reading and writing
 	the list of changed variables */
 	CFG_CTX_LOCK(ctx);
@@ -548,14 +560,6 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		}
 		if (temp_handle_created) pkg_free(temp_handle);
 
-	} else if ((CFG_VAR_TYPE(var) == CFG_VAR_INT) 
-	&& (var->def->min != var->def->max)) {
-		/* perform a simple min-max check for integers */
-		if (((int)(long)v < var->def->min)
-		|| ((int)(long)v > var->def->max)) {
-			LOG(L_ERR, "ERROR: cfg_set_delayed(): integer value is out of range\n");
-			goto error;
-		}
 	}
 
 	/* everything went ok, we can add the new value to the list */
