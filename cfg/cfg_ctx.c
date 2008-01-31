@@ -508,7 +508,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		if (((int)(long)v < var->def->min)
 		|| ((int)(long)v > var->def->max)) {
 			LOG(L_ERR, "ERROR: cfg_set_delayed(): integer value is out of range\n");
-			goto error;
+			goto error0;
 		}
 	}
 
