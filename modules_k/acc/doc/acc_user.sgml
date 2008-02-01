@@ -122,6 +122,13 @@
 		http://www.open.com.au/radiator/</ulink>) servers have been 
 		reported to us.
 	</para>
+	<para>
+	NOTE: diameter support was developed for DISC (DIameter Server Client 
+	project at http://developer.berlios.de/projects/disc/). This project 
+	seems to be no longer maintained and DIAMETER specifications were updated
+	in the meantime. Thus, the DIAMETER part in the module is obsolete and 
+	needs rework to be usable with opendiameter or other DIAMETER servers.
+	</para>
 	<section>
 		<title>General Example</title>
 		<programlisting format="linespecific">

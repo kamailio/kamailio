@@ -18,6 +18,13 @@
 	DIAMETER server, namely DIameter Server Client (DISC).
 	</para>
 	<para>
+	NOTE: diameter support was developed for DISC (DIameter Server Client 
+	project at http://developer.berlios.de/projects/disc/). This project 
+	seems to be no longer maintained and DIAMETER specifications were updated
+	in the meantime. Thus, the module is obsolete and needs rework to be 
+	usable with opendiameter or other DIAMETER servers.
+	</para>
+	<para>
 	The digest authentication mechanism is presented in next figure.
 	</para>
 	<example>
