@@ -456,20 +456,18 @@ static int header_fixup(void** param, int param_no)
 
 static int lookup_user_fixup(void** param, int param_no)
 {
-    int ret;
-    
     if (param_no == 1) {
-	if ((ret = fix_param(FPARAM_AVP, param)) != 0) {
-	    ERR("lookup_user: Invalid parameter 1, attribute expected\n");
-	    return -1;
-	}
-	dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
-	if (!dm_get_did) {
-	    ERR("lookup_user: Could not find domain module\n");
-	    return -1;
-	}
-	return 0;
+		if (fix_param(FPARAM_AVP, param) != 0) {
+			ERR("lookup_user: Invalid parameter 1, attribute expected\n");
+			return -1;
+		}
+		dm_get_did = (domain_get_did_t)find_export("get_did", 0, 0);
+		if (!dm_get_did) {
+			ERR("lookup_user: Could not find domain module\n");
+			return -1;
+		}
+		return 0;
     } else {
-	return fixup_var_str_12(param, 2);
+		return fixup_var_str_12(param, 2);
     }
 }

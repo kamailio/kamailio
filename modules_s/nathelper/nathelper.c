@@ -2604,7 +2604,7 @@ fixup_ping_contact(void **param, int param_no)
 	if (param_no == 1) {
 		ret = fix_param(FPARAM_AVP, param);
 		if (ret <= 0) return ret;
-		return fix_param(FPARAM_STR, param);
+		if (fix_param(FPARAM_STR, param) != 0) return -1;
 	}
 	return 0;
 }

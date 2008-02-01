@@ -276,9 +276,9 @@ static int set_sattr(struct sip_msg* msg, char* p1, char* p2)
 static int avpid_fixup(void** param, int param_no)
 {
     if (param_no == 1) {
-	if (fix_param(FPARAM_AVP, param)==0) return 0;
-	ERR("Invalid AVP identifier: '%s'\n", (char*)*param);
-	return -1;
+		if (fix_param(FPARAM_AVP, param) == 0) return 0;
+		ERR("Invalid AVP identifier: '%s'\n", (char*)*param);
+		return -1;
     }
     return 0;
 }
@@ -334,10 +334,10 @@ static int del_attrs(struct sip_msg* msg, char* p1, char* p2)
 static int subst_attr_fixup(void** param, int param_no)
 {
     if (param_no == 1) {
-	return avpid_fixup(param, 1);
+		return avpid_fixup(param, 1);
     }
     if (param_no == 2) {
-	return fix_param(FPARAM_SUBST, param);
+		if (fix_param(FPARAM_SUBST, param) != 0) return -1;
     }
     return 0;
 }
@@ -410,47 +410,47 @@ static int fixup_part(void** param, int param_no)
     fparam_t* fp;
     
     static struct {
-	char* s;
-	int i;
+		char* s;
+		int i;
     } fixup_parse[] = {
-	{"", SET_URI_T},
-	{"prefix", PREFIX_T},
-	{"uri", SET_URI_T},
-	{"username", SET_USER_T},
-	{"user", SET_USER_T},
-	{"usernamepassword", SET_USERPASS_T},
-	{"userpass", SET_USERPASS_T},
-	{"domain", SET_HOST_T},
-	{"host", SET_HOST_T},
-	{"domainport", SET_HOSTPORT_T},
-	{"hostport", SET_HOSTPORT_T},
-	{"port", SET_PORT_T},
-	{"strip", STRIP_T},
-	{"strip_tail", STRIP_TAIL_T},
-	{0, 0}
+		{"", SET_URI_T},
+		{"prefix", PREFIX_T},
+		{"uri", SET_URI_T},
+		{"username", SET_USER_T},
+		{"user", SET_USER_T},
+		{"usernamepassword", SET_USERPASS_T},
+		{"userpass", SET_USERPASS_T},
+		{"domain", SET_HOST_T},
+		{"host", SET_HOST_T},
+		{"domainport", SET_HOSTPORT_T},
+		{"hostport", SET_HOSTPORT_T},
+		{"port", SET_PORT_T},
+		{"strip", STRIP_T},
+		{"strip_tail", STRIP_TAIL_T},
+		{0, 0}
     };
     
     if (param_no == 1) {
-	return avpid_fixup(param, 1);
+		return avpid_fixup(param, 1);
     } else if (param_no == 2) {
-	     /* Create fparam structure */
-	if (fix_param(FPARAM_STRING, param) < 0) return -1;
-	
-	     /* We will parse the string now and store the value
-	      * as int
-	      */
-	fp = (fparam_t*)*param;
-	fp->type = FPARAM_INT;
-	
-	for(i = 0; fixup_parse[i].s; i++) {
-	    if (!strcasecmp(fp->orig, fixup_parse[i].s)) {
-		fp->v.i = fixup_parse[i].i;
-		return 1;
-	    }
-	}
-	
-	ERR("Invalid parameter value: '%s'\n", fp->orig);
-	return -1;
+		/* Create fparam structure */
+		if (fix_param(FPARAM_STRING, param) != 0) return -1;
+		
+		/* We will parse the string now and store the value
+		 * as int
+		 */
+		fp = (fparam_t*)*param;
+		fp->type = FPARAM_INT;
+		
+		for(i = 0; fixup_parse[i].s; i++) {
+			if (!strcasecmp(fp->orig, fixup_parse[i].s)) {
+				fp->v.i = fixup_parse[i].i;
+				return 1;
+			}
+		}
+		
+		ERR("Invalid parameter value: '%s'\n", fp->orig);
+		return -1;
     }
     return 0;
 }
