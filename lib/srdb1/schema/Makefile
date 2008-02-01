@@ -53,6 +53,7 @@ all: mysql postgres dbtext db_berkeley docbook #oracle
 
 .PHONY: mysql mysql_clean
 mysql:
+	@set -e; \
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(ROOT)/scripts/mysql" \
@@ -66,6 +67,7 @@ mysql_clean:
 
 .PHONY: postgres postgres_clean
 postgres:
+	@set -e; \
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(ROOT)/scripts/postgres" \
@@ -79,6 +81,7 @@ postgres_clean:
 
 .PHONY: oracle oracle_clean
 oracle:
+	@set -e; \
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(ROOT)/scripts/oracle" \
@@ -92,6 +95,7 @@ oracle_clean:
 
 .PHONY: dbtext dbtext_clean
 dbtext:
+	@set -e; \
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(ROOT)/scripts/dbtext/openser" \
@@ -116,6 +120,7 @@ dbtext_clean:
 
 .PHONY: db_berkeley db_berkeley_clean
 db_berkeley:
+	@set -e; \
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(ROOT)/scripts/db_berkeley/openser" \
@@ -141,6 +146,7 @@ db_berkeley_clean:
 
 .PHONY: docbook docbook_clean
 docbook:
+	@set -e; \
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
 		--stringparam dir "$(ROOT)/doc/database" \
