@@ -19,6 +19,8 @@ Default: ser
 Description: User to run SER as
  Set the user which SER should run as. Default is 'ser' user.
  .
+ Note: if you want ser to be able to dump a core file in case of crash, you have to run it as root user.
+ .
  Enter "!" to not modify this option.
 
 Template: ser/GROUP
