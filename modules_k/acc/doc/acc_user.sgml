@@ -240,8 +240,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			There is only one SIP call but with 2 legs ( A to B and B to C). 
 			Accounting the legs of a call is required for proper billing of 
 			the calls (if C is a PSTN number and the call is billed, user B 
-			must pay for the call -as last party modifing the call 
-			destination-, and not A -as initiator of the call. Call 
+			must pay for the call - as last party modifing the call 
+			destination-, and not A - as initiator of the call. Call 
 			forwarding on server is only one example which shows the 
 			necessity of the having an accounting engine with multiple legs 
 			support.
@@ -266,7 +266,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			all the call-leg pairs will be added (based on found AVP sets).
 			</para>
 			<para>
-			By default, the multiple call-legs support is disable - it can be
+			By default, the multiple call-legs support is disabled - it can be
 			enabled just be setting the per-leg set of AVPs via the 
 			<varname>multi_leg_info</varname> module parameter.
 			</para>
@@ -275,7 +275,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<title>Logged data</title>
 			<para>
 			For each call, all the values of the AVP set (which defines a 
-			call-leg) will be looged. How the information will be actually
+			call-leg) will be logged. How the information will be actually
 			logged, depends of the data backend:
 			</para>
 			<itemizedlist>
@@ -286,7 +286,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				</listitem>
 				<listitem>
 				<para><emphasis>database</emphasis> -- each pair will be 
-				separatly logged (due DB data structure constraints); several
+				separately logged (due DB data structure constraints); several
 				records will be written, the difference between them being 
 				only the fields corresponding to the call-leg info.
 				</para>
