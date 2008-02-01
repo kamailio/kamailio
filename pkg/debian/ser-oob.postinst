@@ -177,6 +177,13 @@ modparam("nathelper", "natping_interval", $RET)
 +++
 fi
 
+db_get ser-oob/DBMODE
+if test "$RET" != "!" ; then
+  fn_config_replace $CONFIGFILE DBMODE <<+++
+modparam("usrloc", "db_mode", $RET)
++++
+fi
+
 fi # if changing config
 
 echo ""

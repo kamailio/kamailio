@@ -97,3 +97,22 @@ Description: NAT ping interval
  .
  Enter "!" to not modify this option.
 
+Template: ser-oob/DBMODE
+Type: select
+Choices: 0, 1, 2, !
+Default: 1
+Description: usrloc database mode
+ Set usrloc module db_mode option. Choices are: 0 -- memory cached,
+ 1 -- write thru, 2 -- delayed write.
+ .
+ 1 is generally safer than 2 ... 2 can help to survive peaks in load
+ however it creates delayed peaks that can impair request-processing
+ latency later (it would have to be re-redesigned more lock-free to
+ avoid it).
+ .
+ Enter "!" to not modify this option.
+
+Set address of RTP proxy control socket. Example: "udp:localhost:22222".
+ Enter empty string to not set any RTP proxy address.
+ .
+ Enter "!" to not modify this option.
