@@ -415,7 +415,7 @@ static int fixup_t_reply(void** param, int param_no)
 	if (param_no == 1) {
 		ret = fix_param(FPARAM_AVP, param);
 		if (ret <= 0) return ret;
-		return fix_param(FPARAM_INT, param);
+	    if (fix_param(FPARAM_INT, param) != 0) return -1;
 	} else if (param_no == 2) {
 	        return fixup_var_str_12(param, 2);
 	}
@@ -502,7 +502,8 @@ static int fixup_proto_hostport2proxy(void** param, int param_no) {
                 ret = fix_param(FPARAM_INT, param);
 		if (ret <= 0) return ret;
 	} */
-	return fix_param(FPARAM_STRING, param);
+	if (fix_param(FPARAM_STRING, param) != 0) return -1;
+	return 0;
 }
 
 
@@ -516,7 +517,8 @@ static int fixup_t_check_status(void** param, int param_no)
 	ret = fix_param(FPARAM_SELECT, param);
 	if (ret <= 0) return ret;
 
-	return fix_param(FPARAM_REGEX, param);
+	if (fix_param(FPARAM_REGEX, param) != 0) return -1;
+	return 0;
 }
 
 
