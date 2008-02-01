@@ -1979,7 +1979,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 	str callid, from_tag, to_tag, tmp, c1_oldip;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
 	int oidx, pf, pf1, force, c1_pf, rep_oidx;
-	unsigned int node_idx;
+	unsigned int node_idx, oldport_i;
 	char opts[16];
 	char rep_opts[16];
 	char *cp, *cp1;
@@ -2251,6 +2251,14 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 				opts[oidx] = '6';
 				oidx++;
 			}
+			str2int(&oldport, &oldport_i);
+			/*
+			 * Do not contact rtpproxy it if old port was 0 and we
+			 * have a SDP answer here. This means that particular
+			 * media stream has been rejected.
+			 */
+			if (offer == 0 && oldport_i == 0)
+				continue;
 			snprintf(medianum_buf, sizeof medianum_buf, "%d", medianum);
 			medianum_str.s = medianum_buf;
 			medianum_str.len = strlen(medianum_buf);
@@ -2337,12 +2345,22 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 					newip.len = strlen(newip.s);
 				}
 			}
-			newport.s = int2str(port, &newport.len); /* beware static buffer */
-			/* Alter port. */
-			body1.s = m1p;
-			body1.len = bodylimit - body1.s;
-			if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
-				return -1;
+			/*
+			 * Don't update port (leave it 0) if it's an SDP
+			 * offer (answer has been handled above), since
+			 * originating device apparently doesn't want to
+			 * receive any media streams yet and besides RTP
+			 * proxy doesn't have a valid port to sent this
+			 * stream to anyway.
+			 */
+			if (oldport_i != 0) {
+				newport.s = int2str(port, &newport.len); /* beware static buffer */
+				/* Alter port. */
+				body1.s = m1p;
+				body1.len = bodylimit - body1.s;
+				if (alter_mediaport(msg, &body1, &oldport, &newport, 0) == -1)
+					return -1;
+			}
 			/*
 			 * Alter IP. Don't alter IP common for the session
 			 * more than once, but always alter it even if the IP is present
