@@ -327,7 +327,7 @@ static int del_attr(struct sip_msg* msg, char* p1, char* p2)
 
 static int del_attrs(struct sip_msg* msg, char* p1, char* p2)
 {
-    return reset_avp_list((unsigned long)p1);
+    return (reset_avp_list((unsigned long)p1) == 0) ? 1 : -1;
 }
 			
 
