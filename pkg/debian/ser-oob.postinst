@@ -139,9 +139,20 @@ if test "$RET" != "!" ; then
 fi
 
 db_get ser-oob/DBURL
+DBURL="$RET"
 if test "$RET" != "!" ; then
   fn_config_replace $CONFIGFILE DBURL <<+++
 modparam("speeddial|auth_db|usrloc|acc_db|domain|uri_db|gflags|avp_db|db_ops", "db_url", "$RET")
++++
+fi
+
+db_get ser-oob/DBURLACC
+if test "$RET" = "" ; then
+  RET="$DBURL"
+fi    
+if test "$RET" != "!" ; then
+  fn_config_replace $CONFIGFILE DBURLACC <<+++
+modparam("acc_db", "db_url", "$RET")
 +++
 fi
 

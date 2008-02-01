@@ -59,6 +59,16 @@ Description: address of database
  .
  Enter "!" to not modify this option.
 
+Template: ser-oob/DBURLACC
+Type: string
+Default: mysql://ser:heslo@localhost/ser
+Description: address of database for accounting
+ Set the address of your database that will be used for acconting. Example is "mysql://ser:heslo@localhost/ser".
+ .
+ You can leave it blank to use the same db as for provisioning data.
+ .
+ Enter "!" to not modify this option.
+
 Template: ser-oob/AUTHSECRET
 Type: string
 Default: SomeSecretVerySecret
