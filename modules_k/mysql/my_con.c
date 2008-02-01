@@ -59,20 +59,11 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	mysql_init(ptr->con);
 
 	if (id->port) {
-		LM_DBG("opening MySQL connection: mysql://%s:%s@%s:%d/%s\n",
-		    ZSW(id->username),
-		    ZSW(id->password),
-		    ZSW(id->host),
-		    id->port,
-		    ZSW(id->database)
-		    );
+		LM_DBG("opening connection: mysql://xxxx:xxxx@%s:%d/%s\n", ZSW(id->host),
+			id->port, ZSW(id->database));
 	} else {
-		LM_DBG("opening MySQL connection: mysql://%s:%s@%s/%s\n",
-		    ZSW(id->username),
-		    ZSW(id->password),
-		    ZSW(id->host),
-		    ZSW(id->database)
-		    );
+		LM_DBG("opening connection: mysql://xxxx:xxxx@%s/%s\n", ZSW(id->host),
+			ZSW(id->database));
 	}
 
 	// set connect, read and write timeout, the value counts three times

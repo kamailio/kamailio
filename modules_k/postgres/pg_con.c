@@ -57,40 +57,12 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 
 	if (id->port) {
 		ports = int2str(id->port, 0);
-		/*
-		 * This LOG exposes the username/password of the connection.
-		 * By default, it is commented.
-		 *
-		LM_DBG("opening connection: postgres://%s:%s@%s:%d/%s\n",
-		    ZSW(id->username),
-		    ZSW(id->password),
-		    ZSW(id->host),
-		    id->port,
-		    ZSW(id->database)
-		    );
-		 */
-		LM_DBG("opening connection: postgres://xxxx:xxxx@%s:%d/%s\n",
-		    ZSW(id->host),
-		    id->port,
-		    ZSW(id->database)
-		    );
+		LM_DBG("opening connection: postgres://xxxx:xxxx@%s:%d/%s\n", ZSW(id->host),
+			id->port, ZSW(id->database));
 	} else {
 		ports = NULL;
-		/*
-		 * This LOG exposes the username/password of the connection.
-		 * By default, it is commented.
-		 *
-		LM_DBG("opening connection: postgres://%s:%s@%s/%s\n",
-		    ZSW(id->username),
-		    ZSW(id->password),
-		    ZSW(id->host),
-		    ZSW(id->database)
-		    );
-		 */
-		LM_DBG("opening connection: postgres://xxxx:xxxx@%s/%s\n",
-		    ZSW(id->host),
-		    ZSW(id->database)
-		    );
+		LM_DBG("opening connection: postgres://xxxx:xxxx@%s/%s\n", ZSW(id->host),
+			ZSW(id->database));
 	}
 
  	ptr->con = PQsetdbLogin(id->host, ports, NULL, NULL, id->database, id->username, id->password);

@@ -60,7 +60,7 @@ char *db_unixodbc_build_conn_str(const struct db_id* id, char *buf)
 		+ PWD_ATTR_LEN + lp + 1;
 
 	if ( len>=MAX_CONN_STR_LEN ){
-		LM_ERR("connection string too long!Increase MAX_CONN_STR_LEN"
+		LM_ERR("connection string too long! Increase MAX_CONN_STR_LEN"
 				" and recompile\n");
 		return 0;
 	}
@@ -89,7 +89,6 @@ char *db_unixodbc_build_conn_str(const struct db_id* id, char *buf)
 	*(p++) = ';';
 	*p = 0 ; /* make it null terminated */
 
-	LM_DBG("connection string is <%s>\n",buf);
 	return buf;
 }
 
@@ -148,6 +147,10 @@ struct my_con* db_unixodbc_new_connection(struct db_id* id)
 		LM_ERR("failed to build connection string\n");
 		goto err2;
 	}
+
+	LM_DBG("opening connection: unixodbc://xxxx:xxxx@%s/%s\n", ZSW(id->host),
+		ZSW(id->database));
+
 	ret = SQLDriverConnect(ptr->dbc, NULL, (SQLCHAR*)conn_str, SQL_NTS,
 		outstr, sizeof(outstr), &outstrlen,
 		SQL_DRIVER_COMPLETE);
