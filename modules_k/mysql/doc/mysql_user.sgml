@@ -59,7 +59,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is 300 (5min).
+			Default value is 300 (5 min).
 		</emphasis>
 		</para>
 		<example>
@@ -67,6 +67,33 @@
 		<programlisting format="linespecific">
 ...
 modparam("mysql", "ping_interval", 600)
+...
+</programlisting>
+		</example>
+	</section>
+		<section>
+		<title><varname>timeout_interval</varname> (integer)</title>
+		<para>
+		Time interval after that an connection attempt, read or write request
+		is aborted. The value counts three times, as several retries are done
+		from the driver before it gives up.
+		</para>
+		<para>
+		The read timeout parameter is ignored on driver versions prior to
+		<quote>5.1.12</quote>, <quote>5.0.25</quote> and <quote>4.1.22</quote>.
+		The write timeout parameter is ignored on version prior to <quote>5.1.12</quote>
+		and <quote>5.0.25</quote>, the <quote>4.1</quote> release don't support it at all.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 2 (6 sec).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>timeout_interval</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("mysql", "timeout_interval", 2)
 ...
 </programlisting>
 		</example>

@@ -30,7 +30,8 @@
 #ifndef DB_MOD_H
 #define DB_MOD_H
 
-extern int ping_interval;
-extern int auto_reconnect;
+extern unsigned int db_mysql_ping_interval;
+extern unsigned int db_mysql_timeout_interval;
+extern unsigned int db_mysql_auto_reconnect;
 
 #endif /* DB_MOD_H */

@@ -73,9 +73,9 @@ static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
 		return -1;
 	}
 
-	if (ping_interval) {
+	if (db_mysql_ping_interval) {
 		t = time(0);
-		if ((t - CON_TIMESTAMP(_h)) > ping_interval) {
+		if ((t - CON_TIMESTAMP(_h)) > db_mysql_ping_interval) {
 			if (mysql_ping(CON_CONNECTION(_h))) {
 				LM_WARN("driver error on ping: %s\n", mysql_error(CON_CONNECTION(_h)));
 			}
@@ -102,7 +102,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
 	 * will most of the time stop at the second or sometimes at the third
 	 * iteration.
 	 */
-	for (i=0; i < (auto_reconnect ? 3 : 1); i++) {
+	for (i=0; i < (db_mysql_auto_reconnect ? 3 : 1); i++) {
 		if (mysql_real_query(CON_CONNECTION(_h), _s->s, _s->len) == 0) {
 			return 0;
 		}

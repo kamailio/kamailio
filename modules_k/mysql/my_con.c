@@ -75,6 +75,11 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 		    );
 	}
 
+	// set connect, read and write timeout, the value counts three times
+	mysql_options(ptr->con, MYSQL_OPT_CONNECT_TIMEOUT, (const char *)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_READ_TIMEOUT, (const char *)&db_mysql_timeout_interval);
+	mysql_options(ptr->con, MYSQL_OPT_WRITE_TIMEOUT, (const char *)&db_mysql_timeout_interval);
+
 #if (MYSQL_VERSION_ID >= 40100)
 	if (!mysql_real_connect(ptr->con, id->host, id->username, id->password,
 				id->database, id->port, 0, CLIENT_MULTI_STATEMENTS)) {
@@ -87,7 +92,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 		goto err;
 	}
 	/* force reconnection if enabled */
-	if (auto_reconnect)
+	if (db_mysql_auto_reconnect)
 		ptr->con->reconnect = 1;
 	else 
 		ptr->con->reconnect = 0;
@@ -95,7 +100,6 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 	LM_DBG("connection type is %s\n", mysql_get_host_info(ptr->con));
 	LM_DBG("protocol version is %d\n", mysql_get_proto_info(ptr->con));
 	LM_DBG("server version is %s\n", mysql_get_server_info(ptr->con));
-
 
 	ptr->timestamp = time(0);
 	ptr->id = (struct db_id*)id;
