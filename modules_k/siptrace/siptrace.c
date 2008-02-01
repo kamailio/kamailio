@@ -1427,29 +1427,42 @@ error:
 static struct mi_root* sip_trace_mi(struct mi_root* cmd_tree, void* param )
 {
 	struct mi_node* node;
+	
+	struct mi_node *rpl; 
+	struct mi_root *rpl_tree ; 
 
 	node = cmd_tree->node.kids;
-	if(node == NULL)
-		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if(node == NULL) {
+		rpl_tree = init_mi_tree( 200, MI_SSTR(MI_OK));
+		if (rpl_tree == 0)
+			return 0;
+		rpl = &rpl_tree->node;
 
+		if (*trace_on_flag == 0 ) {
+			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("off"));
+		} else if (*trace_on_flag == 1) {
+			node = add_mi_node_child(rpl,0,0,0,MI_SSTR("on"));
+		}
+		return rpl_tree ;
+	}
 	if(trace_on_flag==NULL)
-		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
+		return init_mi_tree( 500, MI_SSTR(MI_INTERNAL_ERR));
 
 	if ( node->value.len==2 &&
 	(node->value.s[0]=='o'|| node->value.s[0]=='O') &&
 	(node->value.s[1]=='n'|| node->value.s[1]=='N'))
 	{
 		*trace_on_flag = 1;
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+		return init_mi_tree( 200, MI_SSTR(MI_OK));
 	} else if ( node->value.len==3 &&
 	(node->value.s[0]=='o'|| node->value.s[0]=='O') &&
 	(node->value.s[1]=='f'|| node->value.s[1]=='F') &&
 	(node->value.s[2]=='f'|| node->value.s[2]=='F'))
 	{
 		*trace_on_flag = 0;
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+		return init_mi_tree( 200, MI_SSTR(MI_OK));
 	} else {
-		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+		return init_mi_tree( 400, MI_SSTR(MI_BAD_PARM));
 	}
 }
 

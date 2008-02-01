@@ -292,18 +292,23 @@ sip_trace();
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>
-            <listitem><para>trace_mode : turns on/off SIP message tracing. Possible values are:</para>
-			      <itemizedlist>
-	                 <listitem><para> on </para></listitem> 
-			         <listitem><para> off </para></listitem>	
-				  </itemizedlist>
-			</listitem>	  
+			<listitem><para>trace_mode : turns on/off SIP message tracing.
+			Possible values are:</para>
+			<itemizedlist>
+				<listitem><para> on </para></listitem> 
+				<listitem><para> off </para></listitem>
+			</itemizedlist>
+			<para>The parameter is optional - if missing, the command will
+			return the status of the SIP message tracing (as string 
+			<quote>on</quote> or <quote>off</quote> ) without changing
+			anything.</para>
+			</listitem>
 		</itemizedlist>
 
- 		<para>
+		<para>
 		MI FIFO Command Format:
 		</para>
-        <programlisting  format="linespecific">
+		<programlisting  format="linespecific">
 		:sip_trace:_reply_fifo_file_
 		trace_mode
 		_empty_line_

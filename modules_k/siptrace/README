@@ -240,6 +240,9 @@ sip_trace();
        values are:
           + on
           + off
+       The parameter is optional - if missing, the command will
+       return the status of the SIP message tracing (as string
+       "on" or "off" ) without changing anything.
 
    MI FIFO Command Format:
                 :sip_trace:_reply_fifo_file_
