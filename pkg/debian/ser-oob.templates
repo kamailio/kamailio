@@ -111,8 +111,3 @@ Description: usrloc database mode
  avoid it).
  .
  Enter "!" to not modify this option.
-
-Set address of RTP proxy control socket. Example: "udp:localhost:22222".
- Enter empty string to not set any RTP proxy address.
- .
- Enter "!" to not modify this option.
