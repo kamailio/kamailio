@@ -948,7 +948,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 {
 	int tests;
 
-	if (get_int_fparam(&tests, msg, (fparam_t*) str1) < -1)
+	if (get_int_fparam(&tests, msg, (fparam_t*) str1) < 0)
 		return -1;
 
 	/* return true if any of the NAT-UAC tests holds */
@@ -1023,7 +1023,7 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 	char *buf;
 	struct lump* anchor;
 
-	if (get_int_fparam(&level, msg, (fparam_t*) str1) < -1)
+	if (get_int_fparam(&level, msg, (fparam_t*) str1) < 0)
 		return -1;
 	
 	if (extract_body(msg, &body) == -1) {

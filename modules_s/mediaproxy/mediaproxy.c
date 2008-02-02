@@ -1324,7 +1324,9 @@ ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
 {
     int tests, i;
 
-    tests = (int)(long)str1;
+	if (get_int_fparam(&tests, msg, (fparam_t*) str1) < 0) {
+		return -1;
+	}
 
     for (i=0; natTests[i].test!=NTNone; i++) {
         if ((tests & natTests[i].test)!=0 && natTests[i].proc(msg)) {
