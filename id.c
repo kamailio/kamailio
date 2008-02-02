@@ -140,14 +140,33 @@ int set_to_uid(str* uid)
 }
 
 
-/*
- * Get To UID
+/* Retrieves the UID of the callee. This function retrieves the UID (unique
+ * identifier) of the party being called. The function first searches the list
+ * of available attributes and if it finds an attribute with name "uid" then
+ * the value of the attribute is returned.  If no such attribute can be found
+ * then the function retrieves the username from To header field of REGISTER
+ * requests (because that is the party being registered), or the username from
+ * the Reqeuest-URI of other requests. The username is then used as the UID
+ * string identifying the callee. If no attribute with the UID was found and
+ * the function successfully retrieved the UID from the SIP message then, in
+ * addition to storing the result in the first parameter, the function will
+ * also create the attribute named "uid" which will contain the UID. The
+ * function is not reentrant because it uses an internal static buffer to
+ * store the result.  
+ * @param uid A pointer to ::str variable where the result will be stored, the
+ *            pointer in the variable will be updated to point to a static
+ *            buffer in the function.
+ * @param msg The SIP message being processed.
+ * @return 1 is returned when the attribute with UID exists and it is used, 0
+ *         is returned when the function retrieved the UID from the SIP
+ *         message and created the attribute, -1 is returned on error.
  */
 int get_to_uid(str* uid, struct sip_msg* msg)
 {
 	static char buf[MAX_URI_SIZE];
 	struct to_body* to;
 	struct sip_uri puri;
+	char* p;
 	int_str val, name;
 
 	name.s = uid_name;
@@ -155,25 +174,35 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 		*uid = val.s;
 		return 1;
 	} else {
-		if ((msg->to==0) && 
-				(parse_headers(msg, HDR_TO_F, 0)<0 || msg->to==0)) {
-			LOG(L_ERR, "get_to_uid: Error while parsing To URI: "
+		if (msg->first_line.type == METHOD_REGISTER) {
+			if ((msg->to==0) && 
+				(parse_headers(msg, HDR_TO_F, 0) < 0 || msg->to == 0)) {
+				DBG("get_to_uid: Error while parsing To URI: "
 					" to header bad or missing\n");
-			return -1;
+				return -1;
+			}
+			to = get_to(msg);
+			if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
+				DBG("get_to_uid: Error while parsing To URI\n");
+				return -1;
+			}
+			p = puri.user.s;
+			uid->len = puri.user.len;
+		} else {
+			if (!msg->parsed_uri_ok && (parse_sip_msg_uri(msg) < 0)) {
+				DBG("Error while parsing the Request-URI\n");
+				return -1;
+			}
+			p = msg->parsed_uri.user.s;
+			uid->len = msg->parsed_uri.user.len;
 		}
-		to = get_to(msg);
-		if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
-			LOG(L_ERR, "get_to_uid: Error while parsing To URI\n");
-			return -1;
-		}
-		
-		if (puri.user.len > MAX_URI_SIZE) {
-			LOG(L_ERR, "get_to_uid: Username too long\n");
+			
+		if (uid->len > MAX_URI_SIZE) {
+			DBG("get_to_uid: Username too long\n");
 			return -1;
 		}
 		memcpy(buf, puri.user.s, puri.user.len);
 		uid->s = buf;
-		uid->len = puri.user.len;
 		strlower(uid);
 
 		val.s = *uid;
