@@ -188,13 +188,13 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 
 	if (use_did) {
 	    if (msg->REQ_METHOD == METHOD_REGISTER) {
-		ret = get_to_did(&did, msg);
+			ret = get_to_did(&did, msg);
 	    } else {
-		ret = get_from_did(&did, msg);
+			ret = get_from_did(&did, msg);
 	    }
 	    if (ret == 0) {
-		did.s = DEFAULT_DID;
-		did.len = sizeof(DEFAULT_DID) - 1;
+			did.s = DEFAULT_DID;
+			did.len = sizeof(DEFAULT_DID) - 1;
 	    }
 	} else {
 	    did.len = 0;
