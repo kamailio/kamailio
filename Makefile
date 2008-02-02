@@ -66,7 +66,7 @@ doc_format?=html
 # but they have no dependencies (note that some of these interplay with external systems.
 # However, they don't have compile or link dependencies)
 module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum \
-				eval exec fifo flatstore gflags maxfwd mediaproxy \
+				exec fifo flatstore gflags maxfwd mediaproxy \
 				nathelper options pdt permissions pike print ratelimit \
 				registrar rr sanity sl textops timer tm uac unixsock uri \
 				usrloc xlog
@@ -84,7 +84,7 @@ module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum \
 # NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
 # group due to interdependencies
 module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db avp_radius \
-				db_ops domain lcr msilo mysql dialog pa postgres \
+				db_ops domain eval lcr msilo mysql dialog pa postgres \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
 # For mysql
