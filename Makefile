@@ -197,9 +197,9 @@ modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 
 # which utils need compilation (directory path) and which to install
 # (full path including file name)
-utils_compile=	utils/gen_ha1 utils/serunix utils/sercmd
-utils_install=	utils/gen_ha1/gen_ha1 utils/serunix/serunix \
-				scripts/sc scripts/mysql/ser_mysql.sh utils/sercmd/sercmd
+utils_compile=	utils/gen_ha1 utils/sercmd
+utils_install=	utils/gen_ha1/gen_ha1 \
+				scripts/mysql/ser_mysql.sh utils/sercmd/sercmd
 
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
@@ -393,7 +393,7 @@ modules-doc:
 .PHONY: install
 install: all mk-install-dirs install-cfg install-bin install-modules \
 	install-doc install-man install-utils
-		mv -f $(bin-prefix)/$(bin-dir)/sc $(bin-prefix)/$(bin-dir)/serctl #fix
+
 
 .PHONY: dbinstall
 dbinstall:
