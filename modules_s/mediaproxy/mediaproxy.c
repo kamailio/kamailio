@@ -466,9 +466,9 @@ getFromDomain(char** type, struct sip_msg* msg)
     static struct sip_uri puri;
     str uri, did;
 
-    if (get_from_did(&did, msg) == 0) {
-	*type = "local";
-	return did;
+    if (get_from_did(&did, msg) == 1) {
+		*type = "local";
+		return did;
     }
 
     *type = "remote";
