@@ -51,8 +51,26 @@ int get_from_uid(str* uid, struct sip_msg* msg);
 int set_to_uid(str* uid);
 
 
-/*
- * Ge To UID
+/** Retrieves the UID of the callee. This function retrieves the UID (unique
+ * identifier) of the party being called. The function first searches the list
+ * of available attributes and if it finds an attribute with name "uid" then
+ * the value of the attribute is returned.  If no such attribute can be found
+ * then the function retrieves the username from To header field of REGISTER
+ * requests (because that is the party being registered), or the username from
+ * the Reqeuest-URI of other requests. The username is then used as the UID
+ * string identifying the callee. If no attribute with the UID was found and
+ * the function successfully retrieved the UID from the SIP message then, in
+ * addition to storing the result in the first parameter, the function will
+ * also create the attribute named "uid" which will contain the UID. The
+ * function is not reentrant because it uses an internal static buffer to
+ * store the result.
+ * @param uid A pointer to ::str variable where the result will be stored, the
+ *            pointer in the variable will be updated to point to a static
+ *            buffer in the function.  
+ * @param msg The SIP message being processed.  
+ * @return 1 is returned when the attribute with UID exists and it is used, 0
+ *         is returned when the function retrieved the UID from the SIP
+ *         message and created the attribute, -1 is returned on error.
  */
 int get_to_uid(str* uid, struct sip_msg* msg);
 

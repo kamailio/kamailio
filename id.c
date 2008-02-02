@@ -140,14 +140,12 @@ int set_to_uid(str* uid)
 }
 
 
-/*
- * Get To UID
- */
 int get_to_uid(str* uid, struct sip_msg* msg)
 {
 	static char buf[MAX_URI_SIZE];
 	struct to_body* to;
 	struct sip_uri puri;
+	char* p;
 	int_str val, name;
 
 	name.s = uid_name;
@@ -155,25 +153,35 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 		*uid = val.s;
 		return 1;
 	} else {
-		if ((msg->to==0) && 
-				(parse_headers(msg, HDR_TO_F, 0)<0 || msg->to==0)) {
-			LOG(L_ERR, "get_to_uid: Error while parsing To URI: "
+		if (msg->first_line.type == METHOD_REGISTER) {
+			if ((msg->to==0) && 
+				(parse_headers(msg, HDR_TO_F, 0) < 0 || msg->to == 0)) {
+				DBG("get_to_uid: Error while parsing To URI: "
 					" to header bad or missing\n");
-			return -1;
+				return -1;
+			}
+			to = get_to(msg);
+			if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
+				DBG("get_to_uid: Error while parsing To URI\n");
+				return -1;
+			}
+			p = puri.user.s;
+			uid->len = puri.user.len;
+		} else {
+			if (!msg->parsed_uri_ok && (parse_sip_msg_uri(msg) < 0)) {
+				DBG("Error while parsing the Request-URI\n");
+				return -1;
+			}
+			p = msg->parsed_uri.user.s;
+			uid->len = msg->parsed_uri.user.len;
 		}
-		to = get_to(msg);
-		if (parse_uri(to->uri.s, to->uri.len, &puri) == -1) {
-			LOG(L_ERR, "get_to_uid: Error while parsing To URI\n");
-			return -1;
-		}
-		
-		if (puri.user.len > MAX_URI_SIZE) {
-			LOG(L_ERR, "get_to_uid: Username too long\n");
+			
+		if (uid->len > MAX_URI_SIZE) {
+			DBG("get_to_uid: Username too long\n");
 			return -1;
 		}
 		memcpy(buf, puri.user.s, puri.user.len);
 		uid->s = buf;
-		uid->len = puri.user.len;
 		strlower(uid);
 
 		val.s = *uid;
