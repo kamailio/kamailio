@@ -36,7 +36,7 @@
 #include <time.h>
 #include <mysql/mysql.h>
 
-enum my_flags {
+enum my_con_flags {
 	MY_CONNECTED = 1
 };
 

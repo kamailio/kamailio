@@ -57,11 +57,10 @@
 #ifdef MYSQL_FAKE_NULL
 
 #define FAKE_NULL_STRING "[~NULL~]"
-static str  FAKE_NULL_STR=STR_STATIC_INIT(FAKE_NULL_STRING);
+static str  FAKE_NULL_STR = STR_STATIC_INIT(FAKE_NULL_STRING);
 
 /* avoid warning: this decimal constant is unsigned only in ISO C90 :-) */
 #define FAKE_NULL_INT (-2147483647 - 1)
-#define STR_EQ(x,y) ((x.len == y.len) && (strncmp(x.s, y.s, x.len) == 0))
 #endif
 
 enum {
@@ -134,9 +133,9 @@ static void my_cmd_free(db_cmd_t* cmd, struct my_cmd* payload)
 }
 
 
-/**
- * Builds DELETE statement where cmd->match specify WHERE clause.
- * @param cmd SQL statement as a result of this function
+/** Builds a DELETE SQL statement.The function builds DELETE statement where
+ * cmd->match specify WHERE clause.  
+ * @param cmd SQL statement as a result of this function 
  * @param cmd input for statement creation
  */
 static int build_delete_cmd(str* sql_cmd, db_cmd_t* cmd)
@@ -702,18 +701,29 @@ static int exec_cmd_safe(db_cmd_t* cmd)
 
 		set_mysql_params(cmd);
 		err = mysql_stmt_execute(mcmd->st);
-		if (err == 0) return 0;
-		else {
-			/* Command execution failed, log a message and try to reconnect */
-			INFO("mysql: libmysql: %d, %s\n", mysql_stmt_errno(mcmd->st),
-				 mysql_stmt_error(mcmd->st));
-			INFO("mysql: Error while executing command on server, trying to reconnect\n");
-			my_con_disconnect(con);
-			if (my_con_connect(con)) {
-				INFO("mysql: Failed to reconnect server\n");
-			} else {
-				INFO("mysql: Successfully reconnected server\n");
+		if (err == 0) {
+			/* The command was executed successfully, now fetch all data
+			 * to the client if it was requested by the user */
+			if (mcmd->flags & MY_FETCH_ALL) {
+				err = mysql_stmt_store_result(mcmd->st);
+				if (err) {
+					INFO("mysql: Error while fetching data to client.\n");
+					goto error;
+				}
 			}
+			return 0;
+		}
+		
+	error:
+		/* Command execution failed, log a message and try to reconnect */
+		INFO("mysql: libmysql: %d, %s\n", mysql_stmt_errno(mcmd->st),
+			 mysql_stmt_error(mcmd->st));
+		INFO("mysql: Error while executing command on server, trying to reconnect\n");
+		my_con_disconnect(con);
+		if (my_con_connect(con)) {
+			INFO("mysql: Failed to reconnect server\n");
+		} else {
+			INFO("mysql: Successfully reconnected server\n");
 		}
 	}
 
@@ -1136,6 +1146,8 @@ int my_cmd(db_cmd_t* cmd)
 		goto error;
 	}
 	memset(res, '\0', sizeof(struct my_cmd));
+	/* Fetch all data to client at once by default */
+	res->flags |= MY_FETCH_ALL;
 	if (db_drv_init(&res->gen, my_cmd_free) < 0) goto error;
 
 	switch(cmd->type) {
@@ -1242,6 +1254,50 @@ int my_cmd_next(db_res_t* res)
 	}
 
 	res->cur_rec->fld = res->cmd->result;
+	return 0;
+}
+
+
+int my_getopt(db_cmd_t* cmd, char* optname, va_list ap)
+{
+	struct my_cmd* mcmd;
+	int* val;
+
+	mcmd = (struct my_cmd*)DB_GET_PAYLOAD(cmd);
+
+	if (!strcasecmp("fetch_all", optname)) {
+		val = va_arg(ap, int*);
+		if (val == NULL) {
+			BUG("mysql: NULL pointer passed to 'fetch_all' DB option\n");
+			goto error;
+		}
+		*val = mcmd->flags;
+	} else {
+		return 1;
+	}
+	return 0;
+
+ error:
+	return -1;
+}
+
+
+int my_setopt(db_cmd_t* cmd, char* optname, va_list ap)
+{
+	struct my_cmd* mcmd;
+	int* val;
+
+	mcmd = (struct my_cmd*)DB_GET_PAYLOAD(cmd);
+	if (!strcasecmp("fetch_all", optname)) {
+		val = va_arg(ap, int*);
+		if (val != 0) {
+			mcmd->flags |= MY_FETCH_ALL;
+		} else {
+			mcmd->flags &= ~MY_FETCH_ALL;
+		}
+	} else {
+		return 1;
+	}
 	return 0;
 }
 
