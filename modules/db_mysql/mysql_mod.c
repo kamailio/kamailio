@@ -68,19 +68,21 @@ MODULE_VERSION
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_ctx",   (cmd_function)NULL,  0, 0, 0},
-	{"db_con",   (cmd_function)my_con,  0, 0, 0},
-	{"db_uri",   (cmd_function)my_uri,  0, 0, 0},
-	{"db_cmd",   (cmd_function)my_cmd,  0, 0, 0},
-	{"db_put",   (cmd_function)my_cmd_exec, 0, 0, 0},
-	{"db_del",   (cmd_function)my_cmd_exec, 0, 0, 0},
-	{"db_get",   (cmd_function)my_cmd_exec, 0, 0, 0},
-	{"db_upd",   (cmd_function)my_cmd_exec, 0, 0, 0},
-	{"db_sql",   (cmd_function)my_cmd_exec, 0, 0, 0},
-	{"db_res",   (cmd_function)my_res,  0, 0, 0},
-	{"db_fld",   (cmd_function)my_fld,  0, 0, 0},
-	{"db_first", (cmd_function)my_cmd_first, 0, 0, 0},
-	{"db_next",  (cmd_function)my_cmd_next,  0, 0, 0},
+	{"db_ctx",    (cmd_function)NULL,         0, 0, 0},
+	{"db_con",    (cmd_function)my_con,       0, 0, 0},
+	{"db_uri",    (cmd_function)my_uri,       0, 0, 0},
+	{"db_cmd",    (cmd_function)my_cmd,       0, 0, 0},
+	{"db_put",    (cmd_function)my_cmd_exec,  0, 0, 0},
+	{"db_del",    (cmd_function)my_cmd_exec,  0, 0, 0},
+	{"db_get",    (cmd_function)my_cmd_exec,  0, 0, 0},
+	{"db_upd",    (cmd_function)my_cmd_exec,  0, 0, 0},
+	{"db_sql",    (cmd_function)my_cmd_exec,  0, 0, 0},
+	{"db_res",    (cmd_function)my_res,       0, 0, 0},
+	{"db_fld",    (cmd_function)my_fld,       0, 0, 0},
+	{"db_first",  (cmd_function)my_cmd_first, 0, 0, 0},
+	{"db_next",   (cmd_function)my_cmd_next,  0, 0, 0},
+	{"db_setopt", (cmd_function)my_setopt,    0, 0, 0},
+	{"db_getopt", (cmd_function)my_getopt,    0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
