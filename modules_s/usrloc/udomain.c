@@ -312,8 +312,11 @@ int preload_udomain(udomain_t* _d)
 
 	get_all = db_cmd(DB_GET, db, _d->name->s, columns, NULL, NULL);
 	if (get_all == NULL) {
-		ERR("Error while compiling DB_GET command\n");
+		ERR("usrloc: Error while compiling DB_GET command\n");
 		return -1;
+	}
+	if (db_setopt(get_all, "fetch_all", 0) < 0) {
+		ERR("usrloc: Error while disabling 'fetch_all' database option\n");
 	}
 
 	if (db_exec(&res, get_all) < 0) goto error;
