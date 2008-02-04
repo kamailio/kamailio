@@ -271,7 +271,7 @@ modparam("msilo", "send_time", 60)
 
    Example 1-9. Set the "clean_period" parameter
 ...
-modparam("msilo", "clean_period", "3")
+modparam("msilo", "clean_period", 3)
 ...
      __________________________________________________________
 
@@ -345,9 +345,9 @@ modparam("msilo", "sc_uri_user", "user")
    Default value is "domain".
 
    Example 1-15. Set the "sc_uri_host" parameter
-         ...
-         modparam("msilo", "sc_uri_host", "domain")
-         ...
+...
+modparam("msilo", "sc_uri_host", "domain")
+...
      __________________________________________________________
 
 1.3.16. sc_body (string)
@@ -357,9 +357,9 @@ modparam("msilo", "sc_uri_user", "user")
    Default value is "body".
 
    Example 1-16. Set the "sc_body" parameter
-        ...
-        modparam("msilo", "sc_body", "message_body")
-        ...
+...
+modparam("msilo", "sc_body", "message_body")
+...
      __________________________________________________________
 
 1.3.17. sc_ctype (string)
@@ -369,9 +369,9 @@ modparam("msilo", "sc_uri_user", "user")
    Default value is "ctype".
 
    Example 1-17. Set the "sc_ctype" parameter
-         ...
-         modparam("msilo", "sc_body", "content_type")
-         ...
+...
+modparam("msilo", "sc_ctype", "content_type")
+...
      __________________________________________________________
 
 1.3.18. sc_exp_time (string)
@@ -382,9 +382,9 @@ modparam("msilo", "sc_uri_user", "user")
    Default value is "exp_time".
 
    Example 1-18. Set the "sc_exp_time" parameter
-         ...
-         modparam("msilo", "sc_exp_time", "expire_time")
-         ...
+...
+modparam("msilo", "sc_exp_time", "expire_time")
+...
      __________________________________________________________
 
 1.3.19. sc_inc_time (string)
@@ -395,9 +395,9 @@ modparam("msilo", "sc_uri_user", "user")
    Default value is "inc_time".
 
    Example 1-19. Set the "sc_inc_time" parameter
-         ...
-         modparam("msilo", "sc_inc_time", "incoming_time")
-         ...
+...
+modparam("msilo", "sc_inc_time", "incoming_time")
+...
      __________________________________________________________
 
 1.3.20. sc_snd_time (string)
@@ -408,9 +408,9 @@ modparam("msilo", "sc_uri_user", "user")
    Default value is "snd_time".
 
    Example 1-20. Set the "sc_snd_time" parameter
-         ...
-         modparam("msilo", "sc_inc_time", "send_reminder_time")
-         ...
+...
+modparam("msilo", "sc_snd_time", "send_reminder_time")
+...
      __________________________________________________________
 
 1.3.21. snd_time_avp (str)
@@ -439,7 +439,7 @@ modparam("msilo", "snd_time_avp", "$avp(i:123)")
 
    Example 1-22. Set the "add_date" parameter
 ...
-modparam("msilo", "add_date", "0")
+modparam("msilo", "add_date", 0)
 ...
      __________________________________________________________
 
@@ -501,8 +501,8 @@ m_store("$tu");
 
    Example 1-25. m_dump usage
 ...
-m_store();
-m_store("$fu");
+m_dump();
+m_dump("$fu");
 ...
      __________________________________________________________
 

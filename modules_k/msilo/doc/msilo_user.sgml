@@ -269,7 +269,7 @@ modparam("msilo", "send_time", 60)
 		<title>Set the <quote>clean_period</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("msilo", "clean_period", "3")
+modparam("msilo", "clean_period", 3)
 ...
 </programlisting>
 		</example>
@@ -365,10 +365,10 @@ modparam("msilo", "sc_uri_user", "user")
 		<example>
 		<title>Set the <quote>sc_uri_host</quote> parameter</title>
          <programlisting format="linespecific">
-         ...
-         modparam("msilo", "sc_uri_host", "domain")
-         ...
-         </programlisting>
+...
+modparam("msilo", "sc_uri_host", "domain")
+...
+</programlisting>
 		</example>
     </section>
 	<section>
@@ -380,10 +380,10 @@ modparam("msilo", "sc_uri_user", "user")
         <example>
 		<title>Set the <quote>sc_body</quote> parameter</title>
         <programlisting format="linespecific">
-        ...
-        modparam("msilo", "sc_body", "message_body")
-        ...
-        </programlisting>
+...
+modparam("msilo", "sc_body", "message_body")
+...
+</programlisting>
 		</example>
     </section>
 	<section>
@@ -395,10 +395,10 @@ modparam("msilo", "sc_uri_user", "user")
         <example>
 		<title>Set the <quote>sc_ctype</quote> parameter</title>
         <programlisting format="linespecific">
-         ...
-         modparam("msilo", "sc_body", "content_type")
-         ...
-        </programlisting>
+...
+modparam("msilo", "sc_ctype", "content_type")
+...
+</programlisting>
 		</example>
     </section>
 	<section>
@@ -410,10 +410,10 @@ modparam("msilo", "sc_uri_user", "user")
         <example>
 		<title>Set the <quote>sc_exp_time</quote> parameter</title>
         <programlisting format="linespecific">
-         ...
-         modparam("msilo", "sc_exp_time", "expire_time")
-         ...
-        </programlisting>
+...
+modparam("msilo", "sc_exp_time", "expire_time")
+...
+</programlisting>
 		</example>
     </section>
 	<section>
@@ -425,10 +425,10 @@ modparam("msilo", "sc_uri_user", "user")
         <example>
 		<title>Set the <quote>sc_inc_time</quote> parameter</title>
         <programlisting format="linespecific">
-         ...
-         modparam("msilo", "sc_inc_time", "incoming_time")
-         ...
-        </programlisting>
+...
+modparam("msilo", "sc_inc_time", "incoming_time")
+...
+</programlisting>
 		</example>
     </section>
 	<section>
@@ -440,10 +440,10 @@ modparam("msilo", "sc_uri_user", "user")
         <example>
 		<title>Set the <quote>sc_snd_time</quote> parameter</title>
         <programlisting format="linespecific">
-         ...
-         modparam("msilo", "sc_inc_time", "send_reminder_time")
-         ...
-        </programlisting>
+...
+modparam("msilo", "sc_snd_time", "send_reminder_time")
+...
+</programlisting>
 		</example>
     </section>
 
@@ -486,7 +486,7 @@ modparam("msilo", "snd_time_avp", "$avp(i:123)")
 		<title>Set the <quote>add_date</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("msilo", "add_date", "0")
+modparam("msilo", "add_date", 0)
 ...
 </programlisting>
 		</example>
@@ -576,8 +576,8 @@ m_store("$tu");
 		<title><function>m_dump</function> usage</title>
 		<programlisting format="linespecific">
 ...
-m_store();
-m_store("$fu");
+m_dump();
+m_dump("$fu");
 ...
 </programlisting>
 		</example>
