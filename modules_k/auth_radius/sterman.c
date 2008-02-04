@@ -262,7 +262,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		goto err;
 	}
 
-	if (use_ruri_flag < 0 || !isflagset(_msg, use_ruri_flag)) {
+	if (use_ruri_flag < 0 || isflagset(_msg, use_ruri_flag) != 1) {
 		ruri = &_cred->uri;
 	} else {
 		ruri = GET_RURI(_msg);
