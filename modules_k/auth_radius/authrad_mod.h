@@ -37,6 +37,8 @@ extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;
 
+extern int use_ruri_flag;
+
 extern auth_api_t auth_api;
 
 #endif /* AUTHRAD_MOD_H */

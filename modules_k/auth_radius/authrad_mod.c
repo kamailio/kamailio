@@ -63,6 +63,8 @@ static int auth_fixup(void** param, int param_no); /* char* -> str* */
 static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
+int use_ruri_flag = -1;
+
 /*
  * Exported functions
  */
@@ -83,6 +85,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"radius_config",    STR_PARAM, &radius_config   },
 	{"service_type",     INT_PARAM, &service_type    },
+	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag   },
 	{0, 0, 0}
 };
 

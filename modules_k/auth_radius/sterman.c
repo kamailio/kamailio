@@ -203,6 +203,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	VALUE_PAIR *send, *received;
 	UINT4 service;
 	str method, user, user_name;
+	str *ruri;
 	int i;
 	
 	send = received = 0;
@@ -260,12 +261,18 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		LM_ERR("unable to add Digest-Nonce attribute\n");
 		goto err;
 	}
-	
-	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_URI].v, _cred->uri.s,
-	_cred->uri.len, 0)) {
+
+	if (use_ruri_flag < 0 || !isflagset(_msg, use_ruri_flag)) {
+		ruri = &_cred->uri;
+	} else {
+		ruri = GET_RURI(_msg);
+	}
+	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_URI].v, ruri->s,
+	ruri->len, 0)) {
 		LM_ERR("unable to add Digest-URI attribute\n");
 		goto err;
 	}
+
 	if (!rc_avpair_add(rh, &send, attrs[A_DIGEST_METHOD].v, method.s,
 	method.len, 0)) {
 		LM_ERR("unable to add Digest-Method attribute\n");
