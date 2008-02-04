@@ -43,7 +43,7 @@ modparam("auth_radius", "radius_config", "/etc/radiusclient.conf")
 	    Default value is "15".
 	</para>
 	<example>
-	    <title><varname>radius_config</varname> usage</title>
+	    <title><varname>service_type</varname> usage</title>
 	    <programlisting>
 modparam("auth_radius", "service_type", 15)
 	    </programlisting>
