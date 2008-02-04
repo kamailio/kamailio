@@ -132,7 +132,7 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 		*uid = val.s;
 		return 1;
 	} else {
-		if (msg->first_line.type == METHOD_REGISTER) {
+		if (msg->REQ_METHOD == METHOD_REGISTER) {
 			if ((msg->to==0) && 
 				(parse_headers(msg, HDR_TO_F, 0) < 0 || msg->to == 0)) {
 				DBG("get_to_uid: Error while parsing To URI: "
