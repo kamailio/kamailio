@@ -529,9 +529,12 @@ ds_select_dst("1", "0");
 1.6.1. Destination List File
 
    Each destination point must be on one line. First token is the
-   set id and next is destination address. The set id must be an
-   integer value. Destination address must be a valid SIP URI.
-   Empty lines or lines starting with "#" are ignored.
+   set id, followed by destination address. Optionally, the third
+   field can be flags value (1 - destination inactive, 2 -
+   destination in probing mod -- you can do bitwise OR to set both
+   flags). The set id must be an integer value. Destination
+   address must be a valid SIP URI. Empty lines or lines starting
+   with "#" are ignored.
 
    Example 1-17. dispatcher list file
 ...

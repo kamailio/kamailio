@@ -56,6 +56,7 @@ MODULE_VERSION
 
 #define DS_SET_ID_COL		"setid"
 #define DS_DEST_URI_COL		"destination"
+#define DS_FLAGS_COL		"flags"
 #define DS_TABLE_NAME 		"dispatcher"
 
 /** parameters */

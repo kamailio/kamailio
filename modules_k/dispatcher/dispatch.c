@@ -127,7 +127,7 @@ int init_data(void)
 	return 0;
 }
 
-int add_dest2list(int id, str uri, int list_idx, int * setn)
+int add_dest2list(int id, str uri, int flags, int list_idx, int * setn)
 {
 	ds_dest_p dp = NULL;
 	ds_set_p  sp = NULL;
@@ -188,6 +188,7 @@ int add_dest2list(int id, str uri, int list_idx, int * setn)
 	strncpy(dp->uri.s, uri.s, uri.len);
 	dp->uri.s[uri.len]='\0';
 	dp->uri.len = uri.len;
+	dp->flags = flags;
 
 	/* The Hostname needs to be \0 terminated for resolvehost, so we
 	 * make a copy here. */
@@ -271,7 +272,7 @@ int ds_load_list(char *lfile)
 {
 	char line[256], *p;
 	FILE *f = NULL;
-	int id, setn;
+	int id, setn, flags;
 	str uri;
 	
 	if( (*crt_idx) != (*next_idx)) {
@@ -293,7 +294,7 @@ int ds_load_list(char *lfile)
 		
 	}
 
-	id = setn = 0;
+	id = setn = flags = 0;
 
 	*next_idx = (*crt_idx + 1)%2;
 	destroy_list(*next_idx);
@@ -330,7 +331,24 @@ int ds_load_list(char *lfile)
 			p++;
 		uri.len = p-uri.s;
 
-		if(add_dest2list(id, uri, *next_idx, &setn) != 0)
+		/* eat all white spaces */
+		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
+			p++;
+		if(*p=='\0' || *p=='#')
+		{
+			/* no flags given */
+			goto next_line;
+		}
+
+		/* get flags */
+		flags = 0;
+		while(*p>='0' && *p<='9')
+		{
+			flags = flags*10+ (*p-'0');
+			p++;
+		}
+		
+		if(add_dest2list(id, uri, flags, *next_idx, &setn) != 0)
 			goto error;
 					
 		
@@ -433,6 +451,7 @@ int init_ds_db(void)
 int ds_load_db(void)
 {
 	int i, id, nr_rows, setn;
+	int flags;
 	str uri;
 	db_res_t * res;
 	db_val_t * values;
@@ -484,8 +503,9 @@ int ds_load_db(void)
 		id = VAL_INT(values);
 		uri.s = VAL_STR(values+1).s;
 		uri.len = strlen(uri.s);
+		flags = 0;
 
-		if(add_dest2list(id, uri, *next_idx, &setn) != 0)
+		if(add_dest2list(id, uri, flags, *next_idx, &setn) != 0)
 			goto err2;
 
 	}
