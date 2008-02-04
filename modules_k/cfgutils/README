@@ -8,7 +8,12 @@ Carsten Bock
 
    BASIS AudioNet GmbH
 
-   Copyright © 2007 1und1 Internet AG, BASIS AudioNet GmbH
+Elena-Ramona Modroiu
+
+   rosdev.ro
+
+   Copyright © 2007, 2008 1und1 Internet AG, BASIS AudioNet GmbH,
+   Elena-Ramona Modroiu
      __________________________________________________________
 
    Table of Contents
@@ -20,6 +25,7 @@ Carsten Bock
 
               1.3.1. initial_probability (string)
               1.3.2. hash_file (string)
+              1.3.3. shvset (string)
 
         1.4. Exported Functions
 
@@ -37,10 +43,13 @@ Carsten Bock
               1.5.3. rand_get_prob
               1.5.4. check_config_hash
               1.5.5. get_config_hash
+              1.5.6. shv_set
+              1.5.7. shv_get
 
         1.6. Exported pseudo-variables
 
               1.6.1. $RANDOM
+              1.6.2. $shv(name)
 
    2. Developer's Guide
    3. Frequently Asked Questions
@@ -48,34 +57,38 @@ Carsten Bock
    List of Examples
    1-1. initial_probability parameter usage
    1-2. hash_file parameter usage
-   1-3. rand_event() usage
-   1-4. rand_set_prob() usage
-   1-5. rand_reset_prob() usage
-   1-6. rand_get_prob() usage
-   1-7. sleep usage
-   1-8. usleep usage
-   1-9. rand_set_prob usage
-   1-10. rand_reset_prob usage
-   1-11. rand_get_prob usage
-   1-12. check_config_hash usage
-   1-13. get_config_hash usage
-   1-14. RANDOM pseudo-variable usage
+   1-3. shvset parameter usage
+   1-4. rand_event() usage
+   1-5. rand_set_prob() usage
+   1-6. rand_reset_prob() usage
+   1-7. rand_get_prob() usage
+   1-8. sleep usage
+   1-9. usleep usage
+   1-10. rand_set_prob usage
+   1-11. rand_reset_prob usage
+   1-12. rand_get_prob usage
+   1-13. check_config_hash usage
+   1-14. get_config_hash usage
+   1-15. shv_set usage
+   1-16. shv_get usage
+   1-17. RANDOM pseudo-variable usage
+   1-18. shv(name) pseudo-variable usage
      __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
-   Useful functions for the server configuration.
+   Useful extensions for the server configuration.
 
-   The cfgutils module can be used to introduce some randomness to
-   the behaviour of the server. It provides some setup functions
-   and the "rand_event" function. This function return either true
-   or false, depending on a random value and a specified
-   probability. E.g. if you set via fifo or script a probability
-   value of 5%, then 5% of all calls to rand_event will return
-   false. The pseudovariable "$RANDOM" could be used to introduce
-   random values e.g. into a SIP reply.
+   The cfgutils module can be used to introduce randomness to the
+   behaviour of the server. It provides setup functions and the
+   "rand_event" function. This function return either true or
+   false, depending on a random value and a specified probability.
+   E.g. if you set via fifo or script a probability value of 5%,
+   then 5% of all calls to rand_event will return false. The
+   pseudovariable "$RANDOM" could be used to introduce random
+   values e.g. into a SIP reply.
 
    The benefit of this module is the probability of the decision
    can be manipulated by external applications such as web
@@ -95,9 +108,9 @@ Chapter 1. User's Guide
    children, the random descision and the returned random value
    will repeat three times.
 
-   The module provides as well some functions to delay the
-   execution of the server. The functions "sleep" and "usleep"
-   could be used to let the server wait a specific time interval.
+   The module provides as well functions to delay the execution of
+   the server. The functions "sleep" and "usleep" could be used to
+   let the server wait a specific time interval.
 
    It can also hash the config file used from the server with a
    (weak) cryptographic hash function on startup. This value is
@@ -140,6 +153,29 @@ modparam("cfgutils", "initial_probability", "15");
 modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
      __________________________________________________________
 
+1.3.3. shvset (string)
+
+   Set the value of a shared variable ($shv(name)). The parameter
+   can be set many times.
+
+   The value of the parameter has the format: _name_ '=' _type_
+   ':' _value_
+
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "i": integer value
+          + "s": string value
+     * _value_: value to be set
+
+   Default value is "NULL".
+
+   Example 1-3. shvset parameter usage
+...
+modparam("cfgutils", "shvset", "debug=i:1")
+modparam("cfgutils", "shvset", "pstngw=s:sip:10.10.10.10")
+...
+     __________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. rand_event()
@@ -147,7 +183,7 @@ modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
    Return true or false, depending on a random value and a
    probability value.
 
-   Example 1-3. rand_event() usage
+   Example 1-4. rand_event() usage
 ...
 if (rand_event()) {
   append_to_reply("Retry-After: 120\n");
@@ -164,7 +200,7 @@ if (rand_event()) {
 
    "probability" can have a value from the range 0..99.
 
-   Example 1-4. rand_set_prob() usage
+   Example 1-5. rand_set_prob() usage
 ...
 rand_set_prob("4");
 ...
@@ -174,7 +210,7 @@ rand_set_prob("4");
 
    Reset the probability back to the inital value.
 
-   Example 1-5. rand_reset_prob() usage
+   Example 1-6. rand_reset_prob() usage
 ...
 rand_reset_prob();
 ...
@@ -185,7 +221,7 @@ rand_reset_prob();
    Return the current probability setting, e.g. for logging
    purposes.
 
-   Example 1-6. rand_get_prob() usage
+   Example 1-7. rand_get_prob() usage
 ...
 rand_get_prob();
      __________________________________________________________
@@ -201,7 +237,7 @@ rand_get_prob();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-7. sleep usage
+   Example 1-8. sleep usage
 ...
 sleep("1");
 ...
@@ -218,7 +254,7 @@ sleep("1");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-8. usleep usage
+   Example 1-9. usleep usage
 ...
 usleep("500");
 ...
@@ -233,7 +269,7 @@ usleep("500");
 
    The parameter value must be a number from 0 to 99.
 
-   Example 1-9. rand_set_prob usage
+   Example 1-10. rand_set_prob usage
 ...
 $ openserctl fifo rand_set_prob 10
 ...
@@ -245,7 +281,7 @@ $ openserctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1-10. rand_reset_prob usage
+   Example 1-11. rand_reset_prob usage
 ...
 $ openserctl fifo rand_reset_prob
 ...
@@ -257,7 +293,7 @@ $ openserctl fifo rand_reset_prob
 
    The function return the actual probability value.
 
-   Example 1-11. rand_get_prob usage
+   Example 1-12. rand_get_prob usage
 ...
 $ openserctl fifo get_prob
 The actual probability is 50 percent.
@@ -273,7 +309,7 @@ The actual probability is 50 percent.
    400 if there are not identical and 500 on errors. Additional a
    short text message is printed.
 
-   Example 1-12. check_config_hash usage
+   Example 1-13. check_config_hash usage
 ...
 $ openserctl fifo check_config_hash
 The actual config file hash is identical to the stored one.
@@ -286,10 +322,56 @@ The actual config file hash is identical to the stored one.
 
    The function returns 200 OK and the hash value.
 
-   Example 1-13. get_config_hash usage
+   Example 1-14. get_config_hash usage
 ...
 $ openserctl fifo get_config_hash
 1580a37104eb4de69ab9f31ce8d6e3e0
+...
+     __________________________________________________________
+
+1.5.6. shv_set
+
+   Set the value of a shared variable ($shv(name)).
+
+   Parameters:
+
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "int": integer value
+          + "str": string value
+     * _value_: value to be set
+
+   MI FIFO Command Format:
+                :shv_set:_reply_fifo_file_
+                _name_
+                _type_
+                _value_
+                _empty_line_
+
+   Example 1-15. shv_set usage
+...
+$ openserctl fifo shv_set debug int 0
+...
+     __________________________________________________________
+
+1.5.7. shv_get
+
+   Get the value of a shared variable ($shv(name)).
+
+   Parameters:
+
+     * _name_: shared variable name. If this parameter is missing,
+       all shared variables are returned.
+
+   MI FIFO Command Format:
+                :shv_get:_reply_fifo_file_
+                _name_
+                _empty_line_
+
+   Example 1-16. shv_get usage
+...
+$ openserctl fifo shv_get debug
+$ openserctl fifo shv_get
 ...
      __________________________________________________________
 
@@ -299,7 +381,7 @@ $ openserctl fifo get_config_hash
 
    Returns a random value from the [0 - 2^31) range.
 
-   Example 1-14. RANDOM pseudo-variable usage
+   Example 1-17. RANDOM pseudo-variable usage
 ...
 if (get_random()) {
   $avp(i:10) = ($RANDOM / 16777216); # 2^24
@@ -312,6 +394,25 @@ if (get_random()) {
 };
 # normal message processing follows
 
+     __________________________________________________________
+
+1.6.2. $shv(name)
+
+   It is a class of pseudo-variables stored in shared memory. The
+   value of $shv(name) is visible across all openser processes.
+   Each "shv" has single value and it is initialized to integer 0.
+   You can use "shvset" parameter to initialize the shared
+   variable. The module exports a set of MI functions to get/set
+   the value of shared variables.
+
+   Example 1-18. shv(name) pseudo-variable usage
+...
+modparam("cfgutils", "shvset", "debug=i:1")
+...
+if ($shv(debug) == 1) {
+        xlog("request: $rm from $fu to $ru\n");
+}
+...
      __________________________________________________________
 
 Chapter 2. Developer's Guide

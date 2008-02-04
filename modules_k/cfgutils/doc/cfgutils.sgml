@@ -28,11 +28,21 @@
 		<email>bock@basis-audionet.de</email>
 		</address>
 		</author>
+		<author>
+		<firstname>Elena-Ramona</firstname>
+		<surname>Modroiu</surname>
+		<affiliation><orgname>rosdev.ro</orgname></affiliation>
+		<address>
+		<email>ramona@rosdev.ro</email>
+		</address>
+		</author>
 	</authorgroup>
 	<copyright>
 		<year>2007</year>
+		<year>2008</year>
 		<holder>1und1 Internet AG</holder>
 		<holder>BASIS AudioNet GmbH</holder>
+		<holder>Elena-Ramona Modroiu</holder>
 	</copyright>
 	<revhistory>
 		<revision>

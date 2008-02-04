@@ -13,10 +13,10 @@
 
     <section>
 	<title>Overview</title>
-	<para>Useful functions for the server configuration.</para>
+	<para>Useful extensions for the server configuration.</para>
 	<para>
-	The cfgutils module can be used to introduce some randomness to
-	the behaviour of the server. It provides some setup functions
+	The cfgutils module can be used to introduce randomness to
+	the behaviour of the server. It provides setup functions
 	and the <quote>rand_event</quote> function. This function return either
 	true or false, depending on a random value and a specified probability.
 	E.g. if you set via fifo or script a probability value of 5%, then 5% of
@@ -46,7 +46,7 @@
 	descision and the returned random value will repeat three times.
 	</para>
 	<para>
-	The module provides as well some functions to delay the execution of the
+	The module provides as well functions to delay the execution of the
 	server. The functions <quote>sleep</quote> and <quote>usleep</quote> could
 	be used to let the server wait a specific time interval.
 	</para>
@@ -105,6 +105,42 @@ modparam("cfgutils", "initial_probability", "15");
    
 modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
    
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+		<title><varname>shvset</varname> (string)</title>
+		<para>
+		Set the value of a shared variable ($shv(name)). The parameter
+		can be set many times.
+		</para>
+		<para>
+		The value of the parameter has the format:
+		_name_ '=' _type_ ':' _value_
+		</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>i</quote>: integer value </para></listitem> 
+			         <listitem><para> <quote>s</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title><varname>shvset</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "shvset", "debug=i:1")
+modparam("cfgutils", "shvset", "pstngw=s:sip:10.10.10.10")
+...
 </programlisting>
 	    </example>
 	</section>
@@ -313,7 +349,7 @@ The actual config file hash is identical to the stored one.
 </programlisting>
 			</example>
 		</section>
-				<section>
+		<section>
 			<title><function moreinfo="none">get_config_hash</function></title>
 			<para>
 				Return the stored config file hash.
@@ -327,6 +363,71 @@ The actual config file hash is identical to the stored one.
 ...
 $ openserctl fifo get_config_hash
 1580a37104eb4de69ab9f31ce8d6e3e0
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">shv_set</function></title>
+			<para>
+				Set the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>int</quote>: integer value </para></listitem> 
+			         <listitem><para> <quote>str</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:shv_set:_reply_fifo_file_
+		_name_
+		_type_
+		_value_
+		_empty_line_
+		</programlisting>
+			<example>
+			<title><function moreinfo="none">shv_set</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo shv_set debug int 0
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">shv_get</function></title>
+			<para>
+				Get the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name. If this parameter
+			is missing, all shared variables are returned.</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:shv_get:_reply_fifo_file_
+		_name_
+		_empty_line_
+		</programlisting>
+			<example>
+			<title><function moreinfo="none">shv_get</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo shv_get debug
+$ openserctl fifo shv_get
 ...
 </programlisting>
 			</example>
@@ -356,6 +457,29 @@ if (get_random()) {
 };
 # normal message processing follows
    
+				 </programlisting>
+			</example>
+	</section>
+		<section>
+			<title><varname>$shv(name)</varname></title>
+			<para>
+				It is a class of pseudo-variables stored in shared memory. The
+				value of $shv(name) is visible across all openser processes.
+				Each <quote>shv</quote> has single value and it is initialized
+				to integer 0. You can use <quote>shvset</quote> parameter to
+				initialize the shared variable. The module exports a set of MI
+				functions to get/set the value of shared variables.
+			</para>
+			<example>
+				<title><function moreinfo="none">shv(name) pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("cfgutils", "shvset", "debug=i:1")
+...
+if ($shv(debug) == 1) {
+	xlog("request: $rm from $fu to $ru\n");
+}
+...
 				 </programlisting>
 			</example>
 	</section>
