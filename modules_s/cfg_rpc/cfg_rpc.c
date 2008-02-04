@@ -151,14 +151,19 @@ static void rpc_get(rpc_t* rpc, void* c)
 	str	group, var;
 	void	*val;
 	unsigned int	val_type;
+	int	ret;
 
 	if (rpc->scan(c, "SS", &group, &var) < 2)
 		return;
 
-	if (cfg_get_by_name(ctx, &group, &var,
-			&val, &val_type)
-	) {
+	ret = cfg_get_by_name(ctx, &group, &var,
+			&val, &val_type);
+	if (ret < 0) {
 		rpc->fault(c, 400, "Failed to get the variable");
+		return;
+		
+	} else if (ret > 0) {
+		rpc->fault(c, 400, "Variable exists, but it is not readable via RPC interface");
 		return;
 	}
 
