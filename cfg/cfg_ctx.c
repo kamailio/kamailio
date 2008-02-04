@@ -850,7 +850,12 @@ int cfg_rollback(cfg_ctx_t *ctx)
 	return 0;
 }
 
-/* returns the value of a variable */
+/* retrieves the value of a variable
+ * Return value:
+ *  0 - success
+ * -1 - error
+ *  1 - variable exists, but it is not readable
+ */
 int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			void **val, unsigned int *val_type)
 {
@@ -878,7 +883,7 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		/* The variable cannot be retrieved, because the fixup
 		function may have changed it, and it is better to return
 		an error than an incorrect value */
-		return -1;
+		return 1;
 	}
 
 	/* use the module's handle to access the variable
