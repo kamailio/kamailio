@@ -86,6 +86,93 @@
     <!-- Customers -->
     <xi:include href="customers.xml"/>
 
+	<verbatim db="mysql" id="func.active">
+	  <create>
+<![CDATA[
+drop function if exists active;
+create function active (flags int unsigned) returns bool DETERMINISTIC
+    return not flags&194;
+]]>
+	  </create>
+	  <destroy>
+drop function if exists active;
+	  </destroy>
+	</verbatim>
+
+	<verbatim db="mysql" id="func.canonical">
+	  <create>
+<![CDATA[
+drop function if exists canonical;
+create function canonical (flags int unsigned) returns bool DETERMINISTIC
+    return flags&4 and active(flags);
+]]>
+	  </create>
+	  <destroy>
+drop function if exists canonical;
+	  </destroy>
+	</verbatim>
+
+	<verbatim db="mysql" id="func.tostr">
+	  <create>
+<![CDATA[
+drop function if exists tostr;
+delimiter //
+create function tostr (flags int(10) unsigned) returns varchar(128)
+    DETERMINISTIC
+begin
+    declare tres varchar(128) default "";
+    if (flags&1) then 
+        set tres = concat(tres, " SER");
+    end if;
+    if (flags&2) then
+        set tres = concat(tres, " DISABLED");
+    end if;
+    if (flags&4) then
+        set tres = concat(tres, " CANON");
+    end if;
+    if (flags&8) then
+        set tres = concat(tres, " TO");
+    end if;
+    if (flags&16) then
+        set tres = concat(tres, " FROM");
+    end if;
+    if (flags&32) then
+        set tres = concat(tres, " SERWEB");
+    end if;
+    if (flags&64) then
+        set tres = concat(tres, " PENDING");
+    end if;
+    if (flags&128) then
+        set tres = concat(tres, " DELETED");
+    end if;
+    if (flags&256) then
+        set tres = concat(tres, " CALLER_DELETED");
+    end if;
+    if (flags&512) then
+        set tres = concat(tres, " CALLEE_DELETED");
+    end if;
+    if (flags&1024) then
+        set tres = concat(tres, " MULTIVALUE");
+    end if;
+    if (flags&2048) then
+        set tres = concat(tres, " FILLONREG");
+    end if;
+    if (flags&4096) then
+        set tres = concat(tres, " REQUIRED");
+    end if;
+    if (flags&8192) then
+        set tres = concat(tres, " DIR");
+    end if;
+    return ltrim(tres);
+end
+//
+delimiter ;
+]]>
+	  </create>
+	  <destroy>
+drop function if exists tostr;
+	  </destroy>
+    </verbatim>
 
     <!-- Include extra definitions if found, it is not
          an error if they are not present, although it

@@ -209,4 +209,48 @@
 	<name>did_idx</name>
 	<colref linkend="domain.did"/>
     </index>
+
+	<verbatim db="mysql" id="func.todomain">
+	  <create>
+<![CDATA[
+drop function if exists todomain;
+delimiter //
+create function todomain (pdid varchar(64)) returns varchar(128) 
+READS SQL DATA
+begin
+    declare tdomain varchar(128) default NULL;
+	select domain into tdomain from domain where did=pdid and 
+        canonical(flags) limit 1;
+	return tdomain;
+end
+//
+delimiter ;
+]]>
+	  </create>
+	  <destroy>
+drop function if exists todomain;
+	  </destroy>
+	</verbatim>
+
+	<verbatim db="mysql" id="func.todid">
+	  <create>
+<![CDATA[
+drop function if exists todid;
+delimiter //
+create function todid (pdomain varchar(128)) returns varchar(64) 
+READS SQL DATA
+begin
+    declare tdid varchar(64) default NULL;
+    select did into tdid from domain where domain=pdomain and 
+        active(flags) limit 1;
+	return tdid;
+end
+//
+delimiter ;
+]]>
+	  </create>
+	  <destroy>
+drop function if exists todid;
+	  </destroy>
+	</verbatim>
 </table>

@@ -65,4 +65,64 @@
 	<name>uri_uid</name>
 	<colref linkend="uri.uid"/>
     </index>
+
+	<verbatim db="mysql" id="func.touri">
+	  <create>
+<![CDATA[
+drop function if exists touri;
+delimiter //
+create function touri (puid varchar(64)) returns varchar(128) 
+READS SQL DATA
+begin
+    declare tscheme varchar(8) default NULL;
+	declare tuser varchar(64) default NULL;
+	declare tdid varchar(64) default NULL;
+	select scheme, username, did into tscheme, tuser, tdid 
+        from uri where uid=puid and canonical(flags) limit 1;
+	return concat(tscheme, ':', tuser, '@', todomain(tdid));
+end
+//
+delimiter ;
+]]>
+	  </create>
+	  <destroy>
+drop function if exists touri;
+	  </destroy>
+	</verbatim>
+
+	<verbatim db="mysql" id="func.touid">
+	  <create>
+<![CDATA[
+drop function if exists touid;
+delimiter //
+create function touid (puri varchar(128)) returns varchar(128) 
+READS SQL DATA
+begin
+    declare tscheme varchar(8) default "sip";
+	declare tuid varchar(128) default NULL;
+	declare i int default 0;
+	declare tdid varchar(128) default NULL;
+	set puri = lower(trim(puri));
+	set i = locate(':', puri);
+	if (i > 0) then
+   	    set tscheme = left(puri, i - 1);
+	    set puri = substr(puri FROM i + 1);
+	end if;
+	set i = locate('@', puri);
+	if (i > 0) then
+        set tdid = todid(substr(puri FROM i + 1));
+	    set puri = left(puri, i - 1);
+	end if;
+	select uid into tuid from uri where scheme=tscheme and
+        username=puri and did=tdid and active(flags);
+	return tuid;
+end
+//
+delimiter ;
+]]>
+	  </create>
+	  <destroy>
+	  </destroy>
+	</verbatim>
+
 </table>
