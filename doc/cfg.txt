@@ -85,7 +85,7 @@ static void	*cfg_handle = &default_cfg;
 6. Describe the structure you defined at step 2 for the framework:
 
 static cfg_def_t cfg_def[] = {
-	{"int", CFG_VAR_INT, -10, 10, 0, 0, "integer for testing"},
+	{"i", CFG_VAR_INT, -10, 10, 0, 0, "integer for testing"},
 	{"ch", CFG_VAR_STRING, 0, 0, 0, 0, "string for testing"},
 	{"s", CFG_VAR_STR, 0, 0, 0, 0, "str for testing"},
 	{"p", CFG_VAR_POINTER | CFG_INPUT_STRING, 0, 0, fixup_p, fixup_child_p, "pointer for testing"},
