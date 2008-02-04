@@ -43,6 +43,7 @@ extern struct val vals[];
 extern void *rh;
 
 extern int use_did;
+extern int use_ruri_flag;
 
 extern auth_api_t auth_api;
 

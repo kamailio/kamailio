@@ -50,4 +50,27 @@ modparam("auth_radius", "service_type", 15)
 	</example>
     </section>
 
+    <section id="auth_radius.use_ruri_flag">
+	<title><varname>use_ruri_flag</varname> (integer)</title>
+	<para>
+	    When this parameter is set to the value other than "-1" and the
+	    request being authenticated has flag with matching number set
+	    via setflag() function, use Request URI instead of uri parameter
+	    value from the Authorization / Proxy-Authorization header field
+	    to perform RADIUS authentication.  This is intended to provide
+	    workaround for misbehaving NAT / routers / ALGs that alter request
+	    in the transit, breaking authentication.  At the time of this
+	    writing, certain versions of Linksys WRT54GL are known to do that.
+	</para>
+	<para>
+	    Default value is "-1".
+	</para>
+	<example>
+	    <title><varname>use_ruri_flag</varname> usage</title>
+	    <programlisting>
+modparam("auth_radius", "use_ruri_flag", 22)
+	    </programlisting>
+	</example>
+    </section>
+
 </section>

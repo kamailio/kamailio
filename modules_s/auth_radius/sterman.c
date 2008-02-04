@@ -93,6 +93,7 @@ int radius_authorize_sterman(VALUE_PAIR** received, struct sip_msg* _msg, dig_cr
 	VALUE_PAIR *send;
 	UINT4 service, ser_service_type;
 	str method, user, user_name;
+	str *ruri;
 	int i;
 	
 	send = 0;
@@ -156,12 +157,18 @@ int radius_authorize_sterman(VALUE_PAIR** received, struct sip_msg* _msg, dig_cr
 		goto err;
 	}
 	
+	if (use_ruri_flag < 0 || !isflagset(_msg, use_ruri_flag)) {
+		ruri = &_cred->uri;
+	} else {
+		ruri = GET_RURI(_msg);
+	}
 	if (!rc_avpair_add(rh, &send, ATTRID(attrs[A_DIGEST_URI].v), 
-			   _cred->uri.s, _cred->uri.len, 
+			   ruri->s, ruri->len, 
 			   VENDOR(attrs[A_DIGEST_URI].v))) {
 		LOG(L_ERR, "sterman(): Unable to add Digest-URI attribute\n");
 		goto err;
 	}
+		
 	if (!rc_avpair_add(rh, &send, ATTRID(attrs[A_DIGEST_METHOD].v),
 			   method.s, method.len, 
 			   VENDOR(attrs[A_DIGEST_METHOD].v))) {

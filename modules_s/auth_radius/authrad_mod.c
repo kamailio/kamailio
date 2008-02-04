@@ -63,6 +63,7 @@ auth_api_t auth_api;
 static int mod_init(void);                        /* Module initialization function */
 
 int use_did = 1;
+int use_ruri_flag = -1;
 
 
 /*
@@ -91,6 +92,7 @@ static param_export_t params[] = {
 	{"radius_config",    PARAM_STRING, &radius_config },
 	{"service_type",     PARAM_INT,   &service_type   },
 	{"use_did",          PARAM_INT,   &use_did },
+	{"use_ruri_flag",    PARAM_INT,   &use_ruri_flag },
 	{0, 0, 0}
 };
 
