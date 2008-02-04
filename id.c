@@ -180,7 +180,7 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 			DBG("get_to_uid: Username too long\n");
 			return -1;
 		}
-		memcpy(buf, puri.user.s, puri.user.len);
+		memcpy(buf, p, uid->len);
 		uid->s = buf;
 		strlower(uid);
 
