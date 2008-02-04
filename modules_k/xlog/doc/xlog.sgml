@@ -19,11 +19,11 @@
 	    <author>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<affiliation><orgname>rosdev.ro</orgname></affiliation>
 		<address>
-		<email>ramona@voice-system.ro</email>
+		<email>ramona@rosdev.ro</email>
 		<otheraddr>
-		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		<ulink url="http://www.rosdev.ro">http://www.rosdev.ro</ulink>
 		</otheraddr>
 		</address>
 	    </author>
@@ -31,7 +31,7 @@
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
 		<address>
-		    <email>ramona@voice-system.ro</email>
+		    <email>ramona@rosdev.ro</email>
 		</address>
 	    </editor>
 	</authorgroup>
@@ -42,6 +42,10 @@
 	<copyright>
 	    <year>2005</year>
 	    <holder>&voicesystem;</holder>
+	</copyright>
+	<copyright>
+	    <year>2008</year>
+	    <holder>Elena-Ramona Modroiu</holder>
 	</copyright>
 	<revhistory>
 	    <revision>

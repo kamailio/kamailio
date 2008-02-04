@@ -65,6 +65,15 @@ int pv_parse_color_name(pv_spec_p sp, str *in);
 static int pv_get_color(struct sip_msg *msg, pv_param_t *param, 
 		pv_value_t *res);
 
+typedef struct _xl_level
+{
+	int type;
+	union {
+		long level;
+		pv_spec_t sp;
+	} v;
+} xl_level_t, *xl_level_p;
+
 static pv_export_t mod_items[] = {
 	{ {"C", sizeof("C")-1}, 101, pv_get_color, 0,
 		pv_parse_color_name, 0, 0, 0 },
@@ -155,8 +164,25 @@ static int xlog_1(struct sip_msg* msg, char* frm, char* str2)
 static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 {
 	int log_len;
+	long level;
+	xl_level_p xlp;
+	pv_value_t value;
 
-	if(!is_printable((int)(long)lev))
+	xlp = (xl_level_p)lev;
+	if(xlp->type==1)
+	{
+		if(pv_get_spec_value(msg, &xlp->v.sp, &value)!=0 
+			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
+		{
+			LM_ERR("invalid log level value [%d]\n", value.flags);
+			return -1;
+		}
+		level = (long)value.ri;
+	} else {
+		level = xlp->v.level;
+	}
+
+	if(!is_printable((int)level))
 		return 1;
 
 	log_len = buf_size;
@@ -165,7 +191,7 @@ static int xlog_2(struct sip_msg* msg, char* lev, char* frm)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
-	LM_GEN1((int)(long)lev, "%.*s", log_len, log_buf);
+	LM_GEN1((int)level, "%.*s", log_len, log_buf);
 
 	return 1;
 }
@@ -202,30 +228,52 @@ void destroy(void)
 
 static int xlog_fixup(void** param, int param_no)
 {
-	long level;
+	xl_level_p xlp;
+	str s;
 	
 	if(param_no==1)
 	{
-		if(*param==NULL || strlen((char*)(*param))<3)
+		s.s = (char*)(*param);
+		if(s.s==NULL || strlen(s.s)<2)
 		{
 			LM_ERR("wrong log level\n");
 			return E_UNSPEC;
 		}
-		switch(((char*)(*param))[2])
+
+		xlp = (xl_level_p)pkg_malloc(sizeof(xl_level_t));
+		if(xlp == NULL)
 		{
-			case 'A': level = L_ALERT; break;
-			case 'C': level = L_CRIT; break;
-			case 'E': level = L_ERR; break;
-			case 'W': level = L_WARN; break;
-			case 'N': level = L_NOTICE; break;
-			case 'I': level = L_INFO; break;
-			case 'D': level = L_DBG; break;
-			default:
-				LM_ERR("unknown log level\n");
+			LM_ERR("no more memory\n");
+			return E_UNSPEC;
+		}
+		memset(xlp, 0, sizeof(xl_level_t));
+		if(s.s[0]==PV_MARKER)
+		{
+			xlp->type = 1;
+			s.len = strlen(s.s);
+			if(pv_parse_spec(&s, &xlp->v.sp)==NULL)
+			{
+				LM_ERR("invalid level param\n");
 				return E_UNSPEC;
+			}
+		} else {
+			xlp->type = 0;
+			switch(((char*)(*param))[2])
+			{
+				case 'A': xlp->v.level = L_ALERT; break;
+				case 'C': xlp->v.level = L_CRIT; break;
+				case 'E': xlp->v.level = L_ERR; break;
+				case 'W': xlp->v.level = L_WARN; break;
+				case 'N': xlp->v.level = L_NOTICE; break;
+				case 'I': xlp->v.level = L_INFO; break;
+				case 'D': xlp->v.level = L_DBG; break;
+				default:
+					LM_ERR("unknown log level\n");
+					return E_UNSPEC;
+			}
 		}
 		pkg_free(*param);
-		*param = (void*)level;
+		*param = (void*)xlp;
 		return 0;
 	}
 

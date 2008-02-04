@@ -2,7 +2,7 @@ xlog Module
 
 Elena-Ramona Modroiu
 
-   voice-system.ro
+   rosdev.ro
 
 Edited by
 
@@ -11,6 +11,8 @@ Elena-Ramona Modroiu
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2005 voice-system.ro
+
+   Copyright © 2008 Elena-Ramona Modroiu
      __________________________________________________________
 
    Table of Contents
@@ -70,8 +72,7 @@ Chapter 1. User's Guide
        instead of %{[$avp_alias[index]}
 
    The full list of available pseudo-variables in OpenSER is
-   availabe at:
-   http://openser.org/docs/pseudo-variables-1.1.x.html
+   availabe at: http://openser.org/dokuwiki/
      __________________________________________________________
 
 1.3. Dependencies
@@ -127,14 +128,19 @@ modparam("xlog", "force_color", 0)
 
      * level - The level that will be used in LOG function. It can
        be:
-          + L_ALERT
-          + L_CRIT
-          + L_ERR
-          + L_WARN
-          + L_NOTICE
-          + L_INFO
-          + L_DBG
-       What really matters is the third letter of the value.
+          + L_ALERT - log level -3
+          + L_CRIT - log level -2
+          + L_ERR - log level -1
+          + L_WARN - log level 1
+          + L_NOTICE - log level 2
+          + L_INFO - log level 3
+          + L_DBG - log level 4
+          + $pv - any valid pseudo-variable, that has an integer
+            value. See above options for valid log levels.
+       If it is not a pseudo-variable, then What really matters is
+       the third letter of the value. If the log level is higher
+       than the "debug" global parameter, the message is not
+       printed to syslog.
        If this parameter is missing, the implicit log level is
        'L_ERR'.
      * format - The formatted string to be printed.
@@ -146,6 +152,11 @@ modparam("xlog", "force_color", 0)
 ...
 xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])
 >\n");
+...
+xlog("time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
+...
+$var(loglevel) = 2;
+xlog("$var(loglevel)", "time [$Tf] method <$rm> r-uri <$ru>\n");
 ...
      __________________________________________________________
 

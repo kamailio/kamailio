@@ -54,8 +54,8 @@
 	</itemizedlist>
 	<para>
 	The full list of available pseudo-variables in &ser; is availabe at:
-	<ulink url="http://openser.org/docs/pseudo-variables-1.1.x.html">
-	http://openser.org/docs/pseudo-variables-1.1.x.html</ulink>
+	<ulink url="http://openser.org/dokuwiki/">
+	http://openser.org/dokuwiki/</ulink>
 	</para>
 	</section>
 	<section>
@@ -146,42 +146,51 @@ modparam("xlog", "force_color", 0)
 			<itemizedlist>
 			<listitem>
 				<para>
-				L_ALERT
+				L_ALERT - log level -3
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_CRIT
+				L_CRIT - log level -2
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_ERR
+				L_ERR - log level -1
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_WARN
+				L_WARN - log level 1
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_NOTICE
+				L_NOTICE - log level 2
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_INFO
+				L_INFO - log level 3
 				</para>
 			</listitem>
 			<listitem>
 				<para>
-				L_DBG
+				L_DBG - log level 4
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				$pv - any valid pseudo-variable, that has an integer value.
+				See above options for valid log levels.
 				</para>
 			</listitem>
 			</itemizedlist>
 			<para>
-			What really matters is the third letter of the value.
+			If it is not a pseudo-variable, then What really matters is the
+			third letter of the value. If the log level is higher than the
+			<quote>debug</quote> global parameter, the message is not printed
+			to syslog.
 			</para>
 			<para>
 			If this parameter is missing, the implicit log level is 'L_ERR'.
@@ -200,6 +209,11 @@ modparam("xlog", "force_color", 0)
 		<programlisting format="linespecific">
 ...
 xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
+...
+xlog("time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
+...
+$var(loglevel) = 2;
+xlog("$var(loglevel)", "time [$Tf] method <$rm> r-uri <$ru>\n");
 ...
 </programlisting>
 		</example>
