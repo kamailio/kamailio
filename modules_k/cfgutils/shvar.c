@@ -235,9 +235,6 @@ int init_shvars(void)
 	pv_spec_list_t *pvi = 0;
 	pv_spec_list_t *pvi0 = 0;
 
-	if(sh_local_vars==0)
-		return -1;
-
 	if(shvar_init_locks()!=0)
 		return -1;
 
