@@ -250,7 +250,7 @@ endif
 
 # sanity checks
 ifneq ($(TLS),)
-	$(warning "make TLS option is obsoleted, try TLS_HOOKS or CORE_TLS")
+        $(warning "make TLS option is obsoleted, try TLS_HOOKS or CORE_TLS")
 endif
 
 # include the common rules
