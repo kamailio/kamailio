@@ -38,6 +38,8 @@
  * 2006-10-13  added STUN support - state machine for TCP (vlada)
  * 2007-02-20  fixed timeout calc. bug (andrei)
  * 2007-11-26  improved tcp timers: switched to local_timer (andrei)
+ * 2008-02-04  optimizations: handle POLLRDHUP (if supported), detect short
+ *              reads (sock. buffer empty) (andrei)
  */
 
 #ifdef USE_TCP
@@ -86,6 +88,10 @@ int is_msg_complete(struct tcp_req* r);
 
 #define TCPCONN_TIMEOUT_MIN_RUN  1 /* run the timers each new tick */
 
+#define RD_CONN_SHORT_READ	1
+#define RD_CONN_EOF		2
+#define RD_CONN_FORCE_EOF	65536
+
 /* types used in io_wait* */
 enum fd_types { F_NONE, F_TCPMAIN, F_TCPCONN };
 
@@ -99,11 +105,19 @@ static ticks_t tcp_reader_prev_ticks;
 
 
 /* reads next available bytes
+ *   c- tcp connection used for reading, tcp_read changes also c->state on
+ *      EOF and c->req.error on read error
+ *   * flags - value/result - used to signal a seen or "forced" EOF on the 
+ *     connection (when it is known that no more data will come after the 
+ *     current socket buffer is emptied )=> return/signal EOF on the first 
+ *     short read (=> don't use it on POLLPRI, as OOB data will cause short
+ *      reads even if there are still remaining bytes in the socket buffer)
  * return number of bytes read, 0 on EOF or -1 on error,
- * on EOF it also sets c->state to S_CONN_EOF
+ * on EOF it also sets c->state to S_CONN_EOF.
  * (to distinguish from reads that would block which could return 0)
+ * RD_CONN_SHORT_READ is also set in *flags for short reads.
  * sets also r->error */
-int tcp_read(struct tcp_connection *c)
+int tcp_read(struct tcp_connection *c, int* flags)
 {
 	int bytes_free, bytes_read;
 	struct tcp_req *r;
@@ -121,19 +135,26 @@ int tcp_read(struct tcp_connection *c)
 again:
 	bytes_read=read(fd, r->pos, bytes_free);
 
-	if(bytes_read==-1){
-		if (errno == EWOULDBLOCK || errno == EAGAIN){
-			return 0; /* nothing has been read */
-		}else if (errno == EINTR) goto again;
-		else{
-			LOG(L_ERR, "ERROR: tcp_read: error reading: %s\n",strerror(errno));
-			r->error=TCP_READ_ERROR;
-			return -1;
+	if (likely(bytes_read!=bytes_free)){
+		if(unlikely(bytes_read==-1)){
+			if (errno == EWOULDBLOCK || errno == EAGAIN){
+				bytes_read=0; /* nothing has been read */
+			}else if (errno == EINTR) goto again;
+			else{
+				LOG(L_ERR, "ERROR: tcp_read: error reading: %s (%d)\n",
+							strerror(errno), errno);
+				r->error=TCP_READ_ERROR;
+				return -1;
+			}
+		}else if (unlikely((bytes_read==0) || 
+					(*flags & RD_CONN_FORCE_EOF))){
+			c->state=S_CONN_EOF;
+			*flags|=RD_CONN_EOF;
+			DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
 		}
-	}else if (bytes_read==0){
-		c->state=S_CONN_EOF;
-		DBG("tcp_read: EOF on %p, FD %d\n", c, fd);
-	}
+		/* short read */
+		*flags|=RD_CONN_SHORT_READ;
+	} /* else normal full read */
 #ifdef EXTRA_DEBUG
 	DBG("tcp_read: read %d bytes:\n%.*s\n", bytes_read, bytes_read, r->pos);
 #endif
@@ -152,7 +173,7 @@ again:
  * when either r->body!=0 or r->state==H_BODY =>
  * all headers have been read. It should be called in a while loop.
  * returns < 0 if error or 0 if EOF */
-int tcp_read_headers(struct tcp_connection *c)
+int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 {
 	int bytes, remaining;
 	char *p;
@@ -206,15 +227,15 @@ int tcp_read_headers(struct tcp_connection *c)
 
 	r=&c->req;
 	/* if we still have some unparsed part, parse it first, don't do the read*/
-	if (r->parsed<r->pos){
+	if (unlikely(r->parsed<r->pos)){
 		bytes=0;
 	}else{
 #ifdef USE_TLS
-		if (c->type==PROTO_TLS)
-			bytes=tls_read(c);
+		if (unlikely(c->type==PROTO_TLS))
+			bytes=tls_read(c); /* FIXME: read_flags support */
 		else
 #endif
-			bytes=tcp_read(c);
+			bytes=tcp_read(c, read_flags);
 		if (bytes<=0) return bytes;
 	}
 	p=r->parsed;
@@ -511,7 +532,7 @@ skip:
 
 
 
-int tcp_read_req(struct tcp_connection* con, int* bytes_read)
+int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 {
 	int bytes;
 	int total_bytes;
@@ -538,8 +559,8 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read)
 #endif
 
 again:
-		if(req->error==TCP_REQ_OK){
-			bytes=tcp_read_headers(con);
+		if (likely(req->error==TCP_REQ_OK)){
+			bytes=tcp_read_headers(con, read_flags);
 #ifdef EXTRA_DEBUG
 						/* if timeout state=0; goto end__req; */
 			DBG("read= %d bytes, parsed=%d, state=%d, error=%d\n",
@@ -549,7 +570,7 @@ again:
 					*(req->parsed-1), (int)(req->parsed-req->start),
 					req->start);
 #endif
-			if (bytes==-1){
+			if (unlikely(bytes==-1)){
 				LOG(L_ERR, "ERROR: tcp_read_req: error reading \n");
 				resp=CONN_ERROR;
 				goto end_req;
@@ -560,14 +581,14 @@ again:
 			 * if req. is complete we might have a second unparsed
 			 * request after it, so postpone release_with_eof
 			 */
-			if ((con->state==S_CONN_EOF) && (req->complete==0)) {
+			if (unlikely((con->state==S_CONN_EOF) && (req->complete==0))) {
 				DBG( "tcp_read_req: EOF\n");
 				resp=CONN_EOF;
 				goto end_req;
 			}
 		
 		}
-		if (req->error!=TCP_REQ_OK){
+		if (unlikely(req->error!=TCP_REQ_OK)){
 			LOG(L_ERR,"ERROR: tcp_read_req: bad request, state=%d, error=%d "
 					  "buf:\n%.*s\nparsed:\n%.*s\n", req->state, req->error,
 					  (int)(req->pos-req->buf), req->buf,
@@ -577,7 +598,7 @@ again:
 			resp=CONN_ERROR;
 			goto end_req;
 		}
-		if (req->complete){
+		if (likely(req->complete)){
 #ifdef EXTRA_DEBUG
 			DBG("tcp_read_req: end of header part\n");
 			DBG("- received from: port %d\n", con->rcv.src_port);
@@ -585,7 +606,7 @@ again:
 			DBG("tcp_read_req: headers:\n%.*s.\n",
 					(int)(req->body-req->start), req->start);
 #endif
-			if (req->has_content_len){
+			if (likely(req->has_content_len)){
 				DBG("tcp_read_req: content-length= %d\n", req->content_len);
 #ifdef EXTRA_DEBUG
 				DBG("tcp_read_req: body:\n%.*s\n", req->content_len,req->body);
@@ -637,26 +658,28 @@ again:
 			
 			/* prepare for next request */
 			size=req->pos-req->parsed;
-			if (size) memmove(req->buf, req->parsed, size);
-#ifdef EXTRA_DEBUG
-			DBG("tcp_read_req: preparing for new request, kept %ld bytes\n",
-					size);
-#endif
-			req->pos=req->buf+size;
-			req->parsed=req->buf;
 			req->start=req->buf;
 			req->body=0;
 			req->error=TCP_REQ_OK;
 			req->state=H_SKIP_EMPTY;
 			req->complete=req->content_len=req->has_content_len=0;
 			req->bytes_to_go=0;
-			/* if we still have some unparsed bytes, try to  parse them too*/
-			if (size) goto again;
-			else if (con->state==S_CONN_EOF){
+			req->pos=req->buf+size;
+			
+			if (unlikely(size)){ 
+				memmove(req->buf, req->parsed, size);
+				req->parsed=req->buf; /* fix req->parsed after using it */
+#ifdef EXTRA_DEBUG
+				DBG("tcp_read_req: preparing for new request, kept %ld"
+						" bytes\n", size);
+#endif
+				/*if we still have some unparsed bytes, try to parse them too*/
+				goto again;
+			} else if (unlikely(con->state==S_CONN_EOF)){
 				DBG( "tcp_read_req: EOF after reading complete request\n");
 				resp=CONN_EOF;
 			}
-			
+			req->parsed=req->buf; /* fix req->parsed */
 		}
 		
 		
@@ -732,6 +755,7 @@ inline static int handle_io(struct fd_map* fm, short events, int idx)
 {	
 	int ret;
 	int n;
+	int read_flags;
 	struct tcp_connection* con;
 	int s;
 	long resp;
@@ -787,7 +811,10 @@ again:
 			}
 			/* if we received the fd there is most likely data waiting to
 			 * be read => process it first to avoid extra sys calls */
-			resp=tcp_read_req(con, &n);
+			read_flags=((con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)) && 
+						!(con->flags & F_CONN_OOB_DATA))? RD_CONN_FORCE_EOF
+						:0;
+			resp=tcp_read_req(con, &n, &read_flags);
 			if (unlikely(resp<0)){
 				/* some error occured, but on the new fd, not on the tcp
 				 * main fd, so keep the ret value */
@@ -829,7 +856,14 @@ again:
 							con, con->id, atomic_get(&con->refcnt));
 				goto read_error;
 			}
-			resp=tcp_read_req(con, &ret);
+#ifdef POLLRDHUP
+			read_flags=(((events & POLLRDHUP) | 
+							(con->flags & (F_CONN_EOF_SEEN|F_CONN_FORCE_EOF)))
+						&& !(events & POLLPRI))? RD_CONN_FORCE_EOF: 0;
+#else /* POLLRDHUP */
+			read_flags=0;
+#endif /* POLLRDHUP */
+			resp=tcp_read_req(con, &ret, &read_flags);
 			if (unlikely(resp<0)){
 read_error:
 				ret=-1; /* some error occured */
@@ -849,6 +883,10 @@ read_error:
 			}else{
 				/* update timeout */
 				con->timeout=get_ticks_raw()+S_TO_TICKS(TCP_CHILD_TIMEOUT);
+				/* ret= 0 (read the whole socket buffer) if short read & 
+				 *  !POLLPRI,  bytes read otherwise */
+				ret&=(((read_flags & RD_CONN_SHORT_READ) && 
+						!(events & POLLPRI)) - 1);
 			}
 			break;
 		case F_NONE:

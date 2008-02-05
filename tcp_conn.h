@@ -75,6 +75,10 @@
 #define F_CONN_FD_CLOSED   32 /* fd was already closed */
 #define F_CONN_PENDING     64 /* pending connect  (fd not known yet in main) */
 #define F_CONN_MAIN_TIMER 128 /* timer active in the tcp_main process */
+#define F_CONN_EOF_SEEN   256 /* FIN or RST have been received */
+#define F_CONN_FORCE_EOF  512 /* act as if an EOF was received */
+#define F_CONN_OOB_DATA  1024 /* out of band data on the connection */
+#define F_CONN_WR_ERROR  2048 /* write error on the fd */
 
 
 enum tcp_req_errors {	TCP_REQ_INIT, TCP_REQ_OK, TCP_READ_ERROR,
