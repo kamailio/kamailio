@@ -45,7 +45,6 @@ str cpl_bin_col  = str_init("cpl_bin");
 int cpl_db_bind(const str* db_url, const str *db_table)
 {
 	int ver;
-	str table_str; 
 
 	if (db_bind_mod(db_url, &cpl_dbf )) {
 		LM_CRIT("cannot bind to database module! "
@@ -60,13 +59,10 @@ int cpl_db_bind(const str* db_url, const str *db_table)
 		return -1;
 	}
 
-	table_str.s = (char*)db_table;
-	table_str.len = strlen(table_str.s);
-
 	if ( cpl_db_init( db_url, db_table) )
 		return -1;
 
-	ver = db_table_version(&cpl_dbf, db_hdl, &table_str);
+	ver = db_table_version(&cpl_dbf, db_hdl, db_table);
 	if (ver < 0) {
 		LM_CRIT("failed to query table version\n");
 		cpl_db_close();
