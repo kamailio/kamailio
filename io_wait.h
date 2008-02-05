@@ -43,6 +43,8 @@
  *  2007-11-22  when handle_io() is called in a loop check & stop if the fd was
  *               removed inside handle_io() (andrei)
  *  2007-11-29  support for write (POLLOUT); added io_watch_chg() (andrei)
+ *  2008-02-04  POLLRDHUP & EPOLLRDHUP support (automatically enabled if POLLIN
+ *               is set) (andrei)
  */
 
 
@@ -58,6 +60,11 @@
 #include <sys/socket.h> /* recv */
 #include <signal.h> /* sigprocmask, sigwait a.s.o */
 #endif
+
+#define _GNU_SOURCE  /* for POLLRDHUP on linux */
+#include <sys/poll.h>
+#include <fcntl.h>
+
 #ifdef HAVE_EPOLL
 #include <sys/epoll.h>
 #endif
@@ -77,8 +84,6 @@
 /* needed according to POSIX for select*/
 #include <sys/select.h>
 #endif
-#include <sys/poll.h>
-#include <fcntl.h>
 
 #include "dprint.h"
 
@@ -88,6 +93,14 @@
 #endif
 
 #include "compiler_opt.h"
+
+
+#ifdef HAVE_EPOLL
+/* fix defines for EPOLL */
+#if defined POLLRDHUP && ! defined EPOLLRDHUP
+#define EPOLLRDHUP POLLRDHUP  /* should work on all linuxes */
+#endif /* POLLRDHUP && EPOLLRDHUP */
+#endif /* HAVE_EPOLL */
 
 
 extern int _os_ver; /* os version number, needed to select bugs workarrounds */
@@ -360,6 +373,10 @@ inline static int io_watch_add(	io_wait_h* h,
 	}
 	switch(h->poll_method){ /* faster then pointer to functions */
 		case POLL_POLL:
+#ifdef POLLRDHUP
+			/* listen to POLLRDHUP by default (if POLLIN) */
+			events|=((int)!(events & POLLIN) - 1) & POLLRDHUP;
+#endif /* POLLRDHUP */
 			fd_array_setup(events);
 			set_fd_flags(O_NONBLOCK);
 			break;
@@ -409,8 +426,14 @@ inline static int io_watch_add(	io_wait_h* h,
 #endif
 #ifdef HAVE_EPOLL
 		case POLL_EPOLL_LT:
-			ep_event.events=(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
-							 (EPOLLOUT & ((int)!(events & POLLOUT)-1) );
+			ep_event.events=
+#ifdef POLLRDHUP
+						/* listen for EPOLLRDHUP too */
+						((EPOLLIN|EPOLLRDHUP) & ((int)!(events & POLLIN)-1) ) |
+#else /* POLLRDHUP */
+						(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
+#endif /* POLLRDHUP */
+						(EPOLLOUT & ((int)!(events & POLLOUT)-1) );
 			ep_event.data.ptr=e;
 again1:
 			n=epoll_ctl(h->epfd, EPOLL_CTL_ADD, fd, &ep_event);
@@ -423,9 +446,15 @@ again1:
 			break;
 		case POLL_EPOLL_ET:
 			set_fd_flags(O_NONBLOCK);
-			ep_event.events=(EPOLLIN & ((int)!(events & POLLIN)-1) )  |
-							 (EPOLLOUT & ((int)!(events & POLLOUT)-1) ) |
-							  EPOLLET;
+			ep_event.events=
+#ifdef POLLRDHUP
+						/* listen for EPOLLRDHUP too */
+						((EPOLLIN|EPOLLRDHUP) & ((int)!(events & POLLIN)-1) ) |
+#else /* POLLRDHUP */
+						(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
+#endif /* POLLRDHUP */
+						(EPOLLOUT & ((int)!(events & POLLOUT)-1) ) |
+						EPOLLET;
 			ep_event.data.ptr=e;
 again2:
 			n=epoll_ctl(h->epfd, EPOLL_CTL_ADD, fd, &ep_event);
@@ -754,6 +783,10 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 	e->events=events;
 	switch(h->poll_method){
 		case POLL_POLL:
+#ifdef POLLRDHUP
+			/* listen to POLLRDHUP by default (if POLLIN) */
+			events|=((int)!(events & POLLIN) - 1) & POLLRDHUP;
+#endif /* POLLRDHUP */
 			fd_array_chg(events);
 			break;
 #ifdef HAVE_SELECT
@@ -778,8 +811,14 @@ inline static int io_watch_chg(io_wait_h* h, int fd, short events, int idx )
 #endif
 #ifdef HAVE_EPOLL
 		case POLL_EPOLL_LT:
-				ep_event.events=(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
-								 (EPOLLOUT & ((int)!(events & POLLOUT)-1) );
+				ep_event.events=
+#ifdef POLLRDHUP
+						/* listen for EPOLLRDHUP too */
+						((EPOLLIN|EPOLLRDHUP) & ((int)!(events & POLLIN)-1) ) |
+#else /* POLLRDHUP */
+						(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
+#endif /* POLLRDHUP */
+						(EPOLLOUT & ((int)!(events & POLLOUT)-1) );
 				ep_event.data.ptr=e;
 again_epoll_lt:
 				n=epoll_ctl(h->epfd, EPOLL_CTL_MOD, fd, &ep_event);
@@ -791,9 +830,15 @@ again_epoll_lt:
 				}
 			break;
 		case POLL_EPOLL_ET:
-				ep_event.events=(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
-								 (EPOLLOUT & ((int)!(events & POLLOUT)-1) ) |
-								 EPOLLET;
+				ep_event.events=
+#ifdef POLLRDHUP
+						/* listen for EPOLLRDHUP too */
+						((EPOLLIN|EPOLLRDHUP) & ((int)!(events & POLLIN)-1) ) |
+#else /* POLLRDHUP */
+						(EPOLLIN & ((int)!(events & POLLIN)-1) ) |
+#endif /* POLLRDHUP */
+						(EPOLLOUT & ((int)!(events & POLLOUT)-1) ) |
+						EPOLLET;
 				ep_event.data.ptr=e;
 again_epoll_et:
 				n=epoll_ctl(h->epfd, EPOLL_CTL_MOD, fd, &ep_event);
@@ -1001,7 +1046,11 @@ again:
 						-1)) |
 					 (POLLOUT & (!(h->ep_array[r].events & EPOLLOUT)-1)) |
 					 (POLLERR & (!(h->ep_array[r].events & EPOLLERR)-1)) |
-					 (POLLHUP & (!(h->ep_array[r].events & EPOLLHUP)-1));
+					 (POLLHUP & (!(h->ep_array[r].events & EPOLLHUP)-1))
+#ifdef POLLRDHUP
+					| (POLLRDHUP & (!(h->ep_array[r].events & EPOLLRDHUP)-1))
+#endif
+					;
 			if (likely(revents)){
 				fm=(struct fd_map*)h->ep_array[r].data.ptr;
 				while(fm->type && ((fm->events|POLLERR|POLLHUP) & revents) && 
