@@ -318,7 +318,7 @@ modparam("group", "multiple_gid", 0)
 				<para>Credentials - Use digest credentials username.</para>
 				</listitem>
 				<listitem>
-				<para>$avp[avp_name|avp_alias] - Use the URI from the AVP
+				<para>$avp(name) - Use the URI from the AVP
 				specified by this pseudo-variable.</para>
 				</listitem>
 			</itemizedlist>
@@ -373,17 +373,15 @@ if (is_user_in("Request-URI", "ld")) {
 				and realm.</para>
 				</listitem>
 				<listitem>
-				<para>$avp[avp_name|avp_alias] - Use the URI from the AVP
+				<para>$avp(name) - Use the URI from the AVP
 				specified by this pseudo-variable.</para>
 				</listitem>
 			</itemizedlist>
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>AVP_ID</emphasis> - The matched group IDs are
-			returned as AVPs named <quote>AVP</quote>. It accepts a full AVP
-			specification: AVP, ID and NAME.
-			alias also</para>
+			<para><emphasis>AVP</emphasis> - $avp(name) - the matched group
+			IDs are returned in this AVP.</para>
 		</listitem>
 		</itemizedlist>
 		<para>
@@ -393,7 +391,7 @@ if (is_user_in("Request-URI", "ld")) {
 		<title><function>get_user_group</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if (get_user_group("Request-URI", "i:10")) {
+if (get_user_group("Request-URI", "$avp(i:10)")) {
     xgdb("User $ru belongs to $(avp(i:10)[*]) group(s)\n");
     ....
 };

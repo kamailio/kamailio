@@ -29,6 +29,7 @@
 
 #include "../../str.h"
 #include "../../mem/mem.h"
+#include "../../route_struct.h"
 #include "group_mod.h"
 #include "re_group.h"
 #include "group.h"
@@ -132,7 +133,8 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 	static char uri_buf[MAX_URI_SIZE];
 	str  username;
 	str  domain;
-	struct gid_spec *gs;
+	pv_spec_t *pvs;
+	pv_value_t val;
 	struct re_grp *rg;
 	regmatch_t pmatch;
 	char *c;
@@ -163,16 +165,20 @@ int get_user_group(struct sip_msg *req, char *user, char *avp)
 	*c = 0;
 
 	LM_DBG("getting groups for <%s>\n",uri_buf);
-	gs = (struct gid_spec*)avp;
+	pvs = (pv_spec_t*)avp;
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_INT|PV_TYPE_INT;
 
 	/* check against all re groups */
 	for( rg=re_list,n=0 ; rg ; rg=rg->next ) {
 		if (regexec( &rg->re, uri_buf, 1, &pmatch, 0)==0) {
 			LM_DBG("user matched to group %d!\n", rg->gid.n);
+
 			/* match -> add the gid as AVP */
-			if ( add_avp( (unsigned short)gs->avp_type, gs->avp_name,
-			rg->gid )!= 0 ) {
-				LM_ERR("failed to add avp\n");
+			val.ri = rg->gid.n;
+			if(pvs->setf(req, &pvs->pvp, (int)EQ_T, &val)<0)
+			{
+				LM_ERR("setting PV AVP failed\n");
 				goto error;
 			}
 			n++;

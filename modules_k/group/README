@@ -255,8 +255,8 @@ modparam("group", "multiple_gid", 0)
           + To - Use To username and (optionally) domain.
           + From - Use From username and (optionally) domain.
           + Credentials - Use digest credentials username.
-          + $avp[avp_name|avp_alias] - Use the URI from the AVP
-            specified by this pseudo-variable.
+          + $avp(name) - Use the URI from the AVP specified by
+            this pseudo-variable.
      * group - Name of the group to check.
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
@@ -284,17 +284,16 @@ if (is_user_in("Request-URI", "ld")) {
           + From - Use From URI
           + Credentials - Use digest credentials username and
             realm.
-          + $avp[avp_name|avp_alias] - Use the URI from the AVP
-            specified by this pseudo-variable.
-     * AVP_ID - The matched group IDs are returned as AVPs named
-       "AVP". It accepts a full AVP specification: AVP, ID and
-       NAME. alias also
+          + $avp(name) - Use the URI from the AVP specified by
+            this pseudo-variable.
+     * AVP - $avp(name) - the matched group IDs are returned in
+       this AVP.
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1-12. get_user_group usage
 ...
-if (get_user_group("Request-URI", "i:10")) {
+if (get_user_group("Request-URI", "$avp(i:10)")) {
     xgdb("User $ru belongs to $(avp(i:10)[*]) group(s)\n");
     ....
 };

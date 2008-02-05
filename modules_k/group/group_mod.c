@@ -313,7 +313,7 @@ static int hf_fixup(void** param, int param_no)
 
 static int get_gid_fixup(void** param, int param_no)
 {
-	struct gid_spec *gid;
+	pv_spec_t *sp;
 	void *ptr;
 	str  name;
 
@@ -324,17 +324,19 @@ static int get_gid_fixup(void** param, int param_no)
 	} else if (param_no == 2) {
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
-		gid = (struct gid_spec*)pkg_malloc(sizeof(struct gid_spec));
-		if (gid == NULL) {
+		sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
+		if (sp == NULL) {
 			LM_ERR("no more pkg memory\n");
 			return E_UNSPEC;
 		}
-		if ( parse_avp_spec( &name, &gid->avp_type, &gid->avp_name)!=0 ) {
+		if(pv_parse_spec(&name, sp)==NULL || sp->type!=PVT_AVP)
+		{
 			LM_ERR("bad AVP spec <%s>\n", name.s);
-			pkg_free( gid );
+			pv_spec_free(sp);
 			return E_UNSPEC;
 		}
-		*param = gid;
+
+		*param = sp;
 	}
 
 	return 0;

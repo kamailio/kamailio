@@ -28,14 +28,7 @@
 #define RE_GROUP_H
 
 #include "../../str.h"
-#include "../../usr_avp.h"
 #include "../../parser/msg_parser.h"
-
-typedef struct gid_spec {
-	int     avp_type;
-	int_str avp_name;
-} gid_spec_t;
-
 
 int load_re(str *table);
 
