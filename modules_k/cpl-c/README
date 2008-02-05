@@ -23,7 +23,7 @@ Bogdan-Andrei Iancu
         1.3. Exported Parameters
 
               1.3.1. db_url (string)
-              1.3.2. cpl_table (string)
+              1.3.2. db_table (string)
               1.3.3. username_column (string)
               1.3.4. domain_column (string)
               1.3.5. cpl_xml_column (string)
@@ -60,7 +60,7 @@ Bogdan-Andrei Iancu
 
    List of Examples
    1-1. Set db_url parameter
-   1-2. Set cpl_table parameter
+   1-2. Set db_table parameter
    1-3. Set username_column parameter
    1-4. Set domain_column parameter
    1-5. Set cpl_xml_column parameter
@@ -125,26 +125,26 @@ Chapter 1. User's Guide
    required a user name and password can be specified for allowing
    the module to connect to the database server.
 
-   This parameter is MANDATORY!
+   Default value is "mysql://openser:openserrw@localhost/openser".
 
    Example 1-1. Set db_url parameter
 ...
-modparam("cpl-c","db_url","mysql://user:passwd@host/database")
+modparam("cpl-c","db_url","dbdriver://username:password@dbhost/dbname")
 ...
      __________________________________________________________
 
-1.3.2. cpl_table (string)
+1.3.2. db_table (string)
 
    Indicates the name of the table that store the CPL scripts.
    This table must be locate into the database specified by
-   "cpl_db" parameter. For more about the format of the CPL table
-   please see modules/cpl-c/init.mysql.
+   "db_url" parameter. For more about the format of the CPL table
+   please see the modules/cpl-c/init.mysql file.
 
-   This parameter is MANDATORY!
+   Default value is "cpl".
 
-   Example 1-2. Set cpl_table parameter
+   Example 1-2. Set db_table parameter
 ...
-modparam("cpl-c","cpl_table","cpltable")
+modparam("cpl-c","cpl_table","cpl")
 ...
      __________________________________________________________
 
@@ -202,8 +202,8 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 
    Points to the DTD file describing the CPL grammar. The file
    name may include also the path to the file. This path can be
-   absolute or relative (be careful the the path will be relative
-   to the starting directory of OpenSER).
+   absolute or relative (be careful the path will be relative to
+   the starting directory of OpenSER).
 
    This parameter is MANDATORY!
 
@@ -428,9 +428,9 @@ cpl_run_script("incoming","force_stateful");
    is present, the function looks to "Accept" header and if it
    contains the "*" or "application/cpl-xml" the request it will
    be consider one for downloading CPL scripts. The functions
-   returns to script only if the the REGISTER is not related to
-   CPL. In other case, the function will send by itself the
-   necessary replies (stateless - using sl), including for errors.
+   returns to script only if the REGISTER is not related to CPL.
+   In other case, the function will send by itself the necessary
+   replies (stateless - using sl), including for errors.
 
    This function can be used from REQUEST_ROUTE.
 

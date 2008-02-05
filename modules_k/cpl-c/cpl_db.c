@@ -69,7 +69,7 @@ int cpl_db_bind(const str* db_url, const str *db_table)
 		return -1;
 	} else if (ver < TABLE_VERSION) {
 		LM_ERR("Invalid table version (%d, required %d)"
-			"(use openser_mysql.sh reinstall)\n",
+			"(use openserdbctl reinit)\n",
 			ver, TABLE_VERSION);
 		cpl_db_close();
 		return -1;

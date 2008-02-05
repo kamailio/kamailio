@@ -71,8 +71,8 @@
 
 
 /* modules param variables */
-static str db_url           = {NULL, 0}; /* database url */
-static str db_table        = {NULL, 0};  /* database table */
+static str db_url           = str_init(DEFAULT_DB_URL); /* database url */
+static str db_table        = str_init("cpl");  /* database table */
 static char *dtd_file      = 0;  /* name of the DTD file for CPL parser */
 static char *lookup_domain = 0;
 static str  timer_avp      = {NULL, 0};  /* name of variable timer AVP */
@@ -140,7 +140,7 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"db_url",         STR_PARAM, &db_url.s                          },
-	{"cpl_table",      STR_PARAM, &db_table.s                        },
+	{"db_table",       STR_PARAM, &db_table.s                        },
 	{"cpl_dtd_file",   STR_PARAM, &dtd_file                          },
 	{"proxy_recurse",  INT_PARAM, &cpl_env.proxy_recurse             },
 	{"proxy_route",    INT_PARAM, &cpl_env.proxy_route               },
@@ -233,22 +233,11 @@ static int cpl_init(void)
 	pv_spec_t avp_spec;
 	unsigned short avp_type;
 
-	if (db_url.s) db_url.len = strlen(db_url.s);
-	if (db_table.s) db_table.len = strlen(db_table.s);
+	db_url.len = strlen(db_url.s);
+	db_table.len = strlen(db_table.s);
 	if (timer_avp.s) timer_avp.len = strlen(timer_avp.s);
 
 	LM_INFO("initializing...\n");
-
-	/* check the module params */
-	if (!db_url.s) {
-		LM_CRIT("mandatory parameter \"DB_URL\" found empty\n");
-		goto error;
-	}
-
-	if (!db_table.s) {
-		LM_CRIT("mandatory parameter \"DB_TABLE\" found empty\n");
-		goto error;
-	}
 
 	if (cpl_env.proxy_recurse>MAX_PROXY_RECURSE) {
 		LM_CRIT("value of proxy_recurse param (%d) exceeds "

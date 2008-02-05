@@ -91,37 +91,37 @@
 				the module to connect to the database server.
 			</para>
 			<para>
-				<emphasis>
-					This parameter is MANDATORY!
-				</emphasis>
+			<emphasis>
+				Default value is <quote>&defaultdb;</quote>.
+			</emphasis>
 			</para>
 			<example>
 				<title>Set <varname>db_url</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","db_url","mysql://user:passwd@host/database")
+modparam("cpl-c","db_url","&exampledb;")
 ...
 </programlisting>
 			</example>
 		</section>
 		<section>
-			<title><varname>cpl_table</varname> (string)</title>
+			<title><varname>db_table</varname> (string)</title>
 			<para>
 				Indicates the name of the table that store the CPL scripts. 
 				This table must be locate into the database specified by 
-				"cpl_db" parameter. For more about the format of the CPL table 
-				please see modules/cpl-c/init.mysql.
+				<quote>db_url</quote> parameter. For more about the format of the CPL
+				table please see the modules/cpl-c/init.mysql file.
 			</para>
 			<para>
-				<emphasis>
-					This parameter is MANDATORY!
-				</emphasis>
+			<emphasis>
+				Default value is <quote>cpl</quote>.
+			</emphasis>
 			</para>
 			<example>
-				<title>Set <varname>cpl_table</varname> parameter</title>
+				<title>Set <varname>db_table</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","cpl_table","cpltable")
+modparam("cpl-c","cpl_table","cpl")
 ...
 </programlisting>
 			</example>
