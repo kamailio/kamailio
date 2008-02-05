@@ -70,13 +70,13 @@
 		in which the database resides.
 		</para>
 		<para>
-		Default value is
-			<quote>mysql://openserro:openserro@localhost/openser</quote>.
-		</para>
+		<emphasis>
+			Default value is <quote>&defaultrodb;</quote>.
+		</emphasis>
 		<example>
 		<title><varname>db_url</varname> parameter usage</title>
 		<programlisting format="linespecific">
-modparam("auth_db", "db_url", "mysql://foo:bar@foobar.org/openser")
+modparam("auth_db", "db_url", "&exampledb;")
 </programlisting>
 		</example>
 	</section>

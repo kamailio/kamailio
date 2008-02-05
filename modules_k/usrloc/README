@@ -419,8 +419,8 @@ modparam("usrloc", "timer_interval", 120)
 
    Example 1-19. Set db_url parameter
 ...
-modparam("usrloc", "db_url", "mysql://username:password@localhost/opense
-r")
+modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname
+")
 ...
      __________________________________________________________
 
