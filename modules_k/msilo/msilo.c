@@ -149,8 +149,6 @@ unsigned short ms_snd_time_avp_type;
 
 str msg_type = str_init("MESSAGE");
 
-str reg_addr;
-
 #define MSILO_PRINTBUF_SIZE 1024
 static char msilo_printbuf[MSILO_PRINTBUF_SIZE];
 
@@ -465,8 +463,8 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		}
 	}
 	
-	if(pto->uri.len == reg_addr.len && 
-			!strncasecmp(pto->uri.s, reg_addr.s, reg_addr.len))
+	if(pto->uri.len == ms_registrar.len && 
+			!strncasecmp(pto->uri.s, ms_registrar.s, ms_registrar.len))
 	{
 		LM_DBG("message to MSILO REGISTRAR!\n");
 		goto error;
@@ -584,8 +582,8 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	pfrom = (struct to_body*)msg->from->parsed;
 	LM_DBG("'From' header: <%.*s>\n", pfrom->uri.len, pfrom->uri.s);	
 	
-	if(reg_addr.s && pfrom->uri.len == reg_addr.len && 
-			!strncasecmp(pfrom->uri.s, reg_addr.s, reg_addr.len))
+	if(ms_registrar.s && pfrom->uri.len == ms_registrar.len && 
+			!strncasecmp(pfrom->uri.s, ms_registrar.s, ms_registrar.len))
 	{
 		LM_DBG("message from MSILO REGISTRAR!\n");
 		goto error;
@@ -695,15 +693,15 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	update_stat(ms_stored_msgs, 1);
 #endif
 
-	if(reg_addr.len <= 0
-			|| reg_addr.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1>=1024)
+	if(ms_registrar.len <= 0
+			|| ms_registrar.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1>=1024)
 		goto done;
 
 	LM_DBG("sending info message.\n");
 	strcpy(buf1, CONTACT_PREFIX);
-	strncat(buf1,reg_addr.s,reg_addr.len);
+	strncat(buf1, ms_registrar.s, ms_registrar.len);
 	strncat(buf1, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
-	str_hdr.len = CONTACT_PREFIX_LEN+reg_addr.len+CONTACT_SUFFIX_LEN;
+	str_hdr.len = CONTACT_PREFIX_LEN+ms_registrar.len+CONTACT_SUFFIX_LEN;
 	str_hdr.s = buf1;
 
 	strncpy(buf, "User [", 6);
@@ -745,7 +743,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	tmb.t_request(&msg_type,  /* Type of the message */
 			(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
 			&pfrom->uri,      /* To */
-			&reg_addr,        /* From */
+			&ms_registrar,    /* From */
 			&str_hdr,         /* Optional headers including CRLF */
 			&body,            /* Message body */
 			(ms_outbound_proxy.s)?&ms_outbound_proxy:0, /* outbound uri */
