@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <libgen.h>
+#include <malloc.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../trim.h"
@@ -683,10 +684,10 @@ static char* parse_file_val(token_t* token)
 	file = get_pathname(&val);
 	if (!file) return 0;
 	if (shm_asciiz_dup(&res, file) < 0) {
-		pkg_free(file);
+		free(file);
 		return 0;
 	}
-	pkg_free(file);
+	free(file);
 	return res;
 }
 
@@ -1000,7 +1001,7 @@ tls_cfg_t* tls_load_config(str* filename)
 	pstate.f = fopen(file, "r");
 	if (pstate.f == NULL) {
 		ERR("Unable to open TLS config file '%s'\n", file);
-		pkg_free(file);
+		free(file);
 		return 0;
 	}
 	pstate.file = basename(file);
@@ -1014,11 +1015,11 @@ tls_cfg_t* tls_load_config(str* filename)
 	if (parse_config() < 0) goto error;
 
 	fclose(pstate.f);
-	pkg_free(file);
+	free(file);
 	return pstate.cfg;
 
  error:
-	pkg_free(file);
+	free(file);
 	if (pstate.cfg) tls_free_cfg(pstate.cfg);
 	fclose(pstate.f);
 	return 0;
