@@ -29,8 +29,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define _GNU_SOURCE 1 /* Needed for strndup */
+
 #include <string.h>
+#include <libgen.h>
+#include <malloc.h>
 #include "../../mem/shm_mem.h"
+#include "../../globals.h"
 #include "tls_mod.h"
 #include "tls_util.h"
 
@@ -114,37 +119,52 @@ void collect_garbage(void)
 	lock_release(tls_cfg_lock);
 }
 
-
-/*
- * Get full path name of file, if the parameter does
- * not start with / then the value of CFG_DIR will
- * be used as prefix
- * The string returned by the function must be
- * freed using pkg_free
+/** Get full pathname of file. This function returns the full pathname of a
+ * file in parameter. If the parameter does not start with / then the pathname
+ * of the file will be relative to the pathname of the main SER configuration
+ * file.
+ * @param filename A pathname to be converted to absolute.
+ * @return A string containing absolute pathname, the string
+ *         must be freed with free.
  */
-char* get_pathname(str* filename)
+char* get_pathname(str* file)
 {
-	char* res;
+	char* buf, *dir, *res;
 	int len;
 
-	if (filename->s[0] == '/') {
-		res = pkg_malloc(filename->len + 1);
-		if (!res) {
-			ERR("No memory left\n");
-			return 0;
+	if (!file || !file->s || file->len <= 0 || !cfg_file) {
+		BUG("tls: Cannot get full pathname of file\n");
+		return NULL;
+	}
+
+	if (file->s[0] == '/') {
+		/* This is an absolute pathname, make a zero terminated
+		 * copy and use it as it is */
+		if ((res = strndup(file->s, file->len)) == NULL) {
+			ERR("tls: No memory left (strndup failed)\n");
 		}
-		memcpy(res, filename->s, filename->len);
-		res[filename->len] = '\0';
 	} else {
-		len = strlen(CFG_DIR) + filename->len;
-		res = pkg_malloc(len + 1);
-		if (!res) {
-			ERR("No memory left\n");
-			return 0;
+		/* This is not an absolute pathname, make it relative
+		 * to the location of the main SER configuration file
+		 */
+		/* Make a copy, function dirname may modify the string */
+		if ((buf = strdup(cfg_file)) == NULL) {
+			ERR("tls: No memory left (strdup failed)\n");
+			return NULL;
 		}
-		memcpy(res, CFG_DIR, sizeof(CFG_DIR) - 1);
-		memcpy(res + sizeof(CFG_DIR) - 1, filename->s, filename->len);
-		res[sizeof(CFG_DIR) - 1 + filename->len] = '\0';
+		dir = dirname(buf);
+
+		len = strlen(dir);
+		if ((res = malloc(len + 1 + file->len + 1)) == NULL) {
+			ERR("tls: No memory left (malloc failed)\n");
+			free(buf);
+			return NULL;
+		}
+		memcpy(res, dir, len);
+		res[len] = '/';
+		memcpy(res + len + 1, file->s, file->len);
+		res[len + 1 + file->len] = '\0';
+		free(buf);
 	}
 	return res;
 }
