@@ -128,7 +128,7 @@ static int mod_init(void)
 	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);
-	alias_domain_column.len = strlen(domain_column.s);
+	alias_domain_column.len = strlen(alias_domain_column.s);
 	alias_user_column.len = strlen(alias_user_column.s);
 	if (domain_prefix.s)
 		domain_prefix.len = strlen(domain_prefix.s);
