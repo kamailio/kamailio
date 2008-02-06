@@ -70,7 +70,6 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	int n_result_cols= 0;
 	str pres_uri;
 	str* rules_doc= NULL;
-	str db_table_s;
 
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 	{
@@ -219,7 +218,7 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 		rules_doc= NULL;
 	}
 
-	if (pa_dbf.use_table(pa_db, &db_table_s) < 0) 
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 	{
 		LM_ERR("in use_table\n");
 		goto error;
