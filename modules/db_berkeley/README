@@ -228,8 +228,8 @@ by default none is loaded
    Modify the OpenSER configuration file to use db_berkeley
    module. The database URL for modules must be the path to the
    directory where the Berkeley DB table-files are located,
-   prefixed by "db_berkeley://", e.g.,
-   "db_berkeley:///usr/local/etc/openser/db_berkeley".
+   prefixed by "berkeley://", e.g.,
+   "berkeley:///usr/local/etc/openser/db_berkeley".
 
    A couple other IMPORTANT things to consider are the 'db_mode'
    and the 'use_domain' modparams. The description of these
