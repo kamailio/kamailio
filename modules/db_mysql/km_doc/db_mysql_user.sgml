@@ -66,7 +66,7 @@
 		<title>Set <varname>ping_interval</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mysql", "ping_interval", 600)
+modparam("db_mysql", "ping_interval", 600)
 ...
 </programlisting>
 		</example>
@@ -93,7 +93,7 @@ modparam("mysql", "ping_interval", 600)
 		<title>Set <varname>timeout_interval</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mysql", "timeout_interval", 2)
+modparam("db_mysql", "timeout_interval", 2)
 ...
 </programlisting>
 		</example>
@@ -134,15 +134,15 @@ modparam("auto_reconnect", "auto_reconnect", 0)
 		<itemizedlist>
 			<listitem>
 			<para>
-			- edit the "Makefile" and remove "mysql" from "excluded_modules"
+			- edit the "Makefile" and remove "db_mysql" from "excluded_modules"
 			list. Then follow the standard procedure to install &ser;:
 			"make all; make install".
 			</para>
 			</listitem>
 			<listitem>
 			<para>
-			- from command line use: 'make all include_modules="mysql";
-			make install include_modules="mysql"'.
+			- from command line use: 'make all include_modules="db_mysql";
+			make install include_modules="db_mysql"'.
 			</para>
 			</listitem>
 		</itemizedlist>
@@ -151,6 +151,6 @@ modparam("auto_reconnect", "auto_reconnect", 0)
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: "mysql.sgml" "Book" "chapter")
+sgml-parent-document: "db_mysql.sgml" "Book" "chapter")
 End:
 -->
