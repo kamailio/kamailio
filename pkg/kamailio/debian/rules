@@ -30,11 +30,11 @@ include /usr/share/dpatch/dpatch.make
 TLS=
 
 # modules depending on mysql
-MYSQL_MODULES = mysql
+MYSQL_MODULES = db_mysql
 # modules depending on postgres
-POSTGRES_MODULES = postgres
+POSTGRES_MODULES = db_postgres
 # modules depending on unixODBC
-UNIXODBC_MODULES=unixodbc
+UNIXODBC_MODULES=db_unixodbc
 # jabber module
 JABBER_MODULES = jabber
 # cpl related modules
