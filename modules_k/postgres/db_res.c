@@ -53,6 +53,7 @@
 #include "pg_type.h"
 
 
+
 /**
  * Fill the result structure with data from the query
  */
@@ -70,7 +71,7 @@ int db_postgres_convert_result(const db_con_t* _con, db_res_t* _res)
 
 	if (db_postgres_convert_rows(_con, _res, 0, PQntuples(CON_RESULT(_con))) < 0) {
 		LM_ERR("failed to convert rows\n");
-		db_postgres_free_columns(_res);
+		db_free_columns(_res);
 		return -3;
 	}
 
@@ -82,7 +83,7 @@ int db_postgres_convert_result(const db_con_t* _con, db_res_t* _res)
  */
 int db_postgres_get_columns(const db_con_t* _con, db_res_t* _res)
 {
-	int cols, col, len;
+	int col, datatype;
 
 	if (!_con || !_res)  {
 		LM_ERR("invalid parameter value\n");
@@ -92,77 +93,42 @@ int db_postgres_get_columns(const db_con_t* _con, db_res_t* _res)
 	/* Get the number of rows (tuples) in the query result. */
 	RES_NUM_ROWS(_res) = PQntuples(CON_RESULT(_con));
 
-
 	/* Get the number of columns (fields) in each row of the query result. */
-	cols = PQnfields(CON_RESULT(_con));
+	RES_COL_N(_res) = PQnfields(CON_RESULT(_con));
 
-	if (!cols) {
-		LM_DBG("No columns returned from the query\n");
+	if (!RES_COL_N(_res)) {
+		LM_DBG("no columns returned from the query\n");
 		return -2;
 	} else {
-		LM_DBG("%d column(s) returned from the query\n", cols);
+		LM_DBG("%d columns returned from the query\n", RES_COL_N(_res));
 	}
 
-	/* Allocate storage to hold a pointer to each column name */
-        RES_NAMES(_res) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
-	LM_DBG("%p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res), 
-			(unsigned long)(sizeof(db_key_t) * cols));
-
-	if (!RES_NAMES(_res)) {
-		LM_ERR("failed to allocate %lu bytes in pkg memory for column"
-				"names\n", (unsigned long)(sizeof(db_key_t) * cols));
+	if (db_allocate_columns(_res, RES_COL_N(_res)) != 0) {
+		LM_ERR("could not allocate columns");
 		return -3;
 	}
 
-	/* Allocate storage to hold the type of each column */
-	RES_TYPES(_res) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
-	LM_DBG("%p=pkg_malloc(%lu) RES_TYPES\n", RES_TYPES(_res), 
-			(unsigned long)(sizeof(db_type_t) * cols));
-
-	if (!RES_TYPES(_res)) {
-		LM_ERR("failed to allocate %lu bytes in pkg memory for column"
-				"types\n", (unsigned long)(sizeof(db_type_t) * cols));
-		/* Free previously allocated storage that was to hold column names */
-		LM_DBG("%p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
-		pkg_free(RES_NAMES(_res));
-		return -4;
-	}
-
-	/* Save number of columns in the result structure */
-	RES_COL_N(_res) = cols;
-
 	/* For each column both the name and the OID number of the data type are saved. */
-	for(col = 0; col < cols; col++) {
-		int ft;
+	for(col = 0; col < RES_COL_N(_res); col++) {
 
 		RES_NAMES(_res)[col] = (str*)pkg_malloc(sizeof(str));
 		if (! RES_NAMES(_res)[col]) {
 			LM_ERR("no private memory left\n");
-			pkg_free(RES_NAMES(_res));
-			pkg_free(RES_TYPES(_res));
-			// FIXME we should also free all previous allocated RES_NAMES[col]
-			return -5;
+			db_free_columns(_res);
+			return -4;
 		}
-		/* The pointer that is here returned is part of the PGResult structure. */
-		len = strlen(PQfname(CON_RESULT(_con),col));
-		RES_NAMES(_res)[col]->s = pkg_malloc(len);
-		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]->s\n", RES_NAMES(_res)[col]->s, len, col);
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p", sizeof(str), col,
+				RES_NAMES(_res)[col]);
 
-		if (! RES_NAMES(_res)[col]->s) {
-			LM_ERR("failed to allocate %d bytes to hold column name\n", len);
-			// FIXME we should also free all previous allocated memory here
-			return -1;
-		}
-		/* copy the name, because it will freed when the PGResult is freed */
-		memset((char *)RES_NAMES(_res)[col]->s, 0, len);
-		strncpy((char *)RES_NAMES(_res)[col]->s, PQfname(CON_RESULT(_con),col), len);
-		RES_NAMES(_res)[col]->len = len;
+		/* The pointer that is here returned is part of the result structure. */
+		RES_NAMES(_res)[col]->s = PQfname(CON_RESULT(_con), col);
+		RES_NAMES(_res)[col]->len = strlen(PQfname(CON_RESULT(_con), col));
 
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_res)[col], col,
 				RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s);
 
 		/* get the datatype of the column */
-		switch(ft = PQftype(CON_RESULT(_con),col))
+		switch(datatype = PQftype(CON_RESULT(_con),col))
 		{
 			case INT2OID:
 			case INT4OID:
@@ -198,11 +164,11 @@ int db_postgres_get_columns(const db_con_t* _con, db_res_t* _res)
 			case VARBITOID:
 				RES_TYPES(_res)[col] = DB_BITMAP;
 			break;
-
+				
 			default:
-				LM_WARN("unhandled data type column (%.*s) OID (%d), "
-						"defaulting to STRING\n", RES_NAMES(_res)[col]->len,
-						RES_NAMES(_res)[col]->s, ft);
+				LM_WARN("unhandled data type column (%.*s) type id (%d), "
+						"use STRING as default\n", RES_NAMES(_res)[col]->len,
+						RES_NAMES(_res)[col]->s, datatype);
 				RES_TYPES(_res)[col] = DB_STRING;
 			break;
 		}
@@ -259,10 +225,9 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 	 */
 	len = sizeof(char *) * cols;
 	row_buf = (char **)pkg_malloc(len);
-	LM_DBG("%p=pkg_malloc(%d) row_buf %d pointers\n", row_buf, len, cols);
+	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", cols, len, row_buf);
 	if (!row_buf) {
-		LM_ERR("failed to allocate %d bytes in pkg memory for row buffer\n",
-				len);
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
 	memset(row_buf, 0, len);
@@ -270,11 +235,10 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 	/* Allocate a row structure for each row in the current fetch. */
 	len = sizeof(db_row_t) * row_count;
 	RES_ROWS(_res) = (db_row_t*)pkg_malloc(len);
-	LM_DBG("%p=pkg_malloc(%d) RES_ROWS %d rows\n", 
-			RES_ROWS(_res), len, row_count);
+	LM_DBG("allocate %d bytes for %d rows at %p\n", len, row_count, RES_ROWS(_res));
+
 	if (!RES_ROWS(_res)) {
-		LM_ERR("failed to allocate %d bytes in pkg memory, %d rows "
-			"for row structure\n", len, row_count);
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
 	memset(RES_ROWS(_res), 0, len);
@@ -294,12 +258,11 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 				len = strlen(s);
 				row_buf[col] = pkg_malloc(len+1);
 				if (!row_buf[col]) {
-					LM_ERR("failed to allocate %d bytes in pkg memory "
-						"for row_buf[%d]\n", len+1, col);
+					LM_ERR("no private memory left");
 					return -1;
 				}
 				memset(row_buf[col], 0, len+1);
-				LM_DBG("%p=pkg_malloc(%d) row_buf[%d]\n", row_buf[col], len, col);
+				LM_DBG("allocated %d bytes for row_buf[%d] at %p\n", len, col, row_buf[col]);
 
 				strncpy(row_buf[col], s, len);
 				LM_DBG("[%d][%d] Column[%.*s]=[%s]\n",
@@ -313,10 +276,10 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 			LM_ERR("failed to convert row #%d\n",  row);
 			RES_ROW_N(_res) = row - row_start;
 			for (col=0; col<cols; col++) {
-				LM_DBG("%p=pkg_free() row_buf[%d]\n",(char *)row_buf[col], col);
-				pkg_free((char *)row_buf[col]);	
+				LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
+				pkg_free(row_buf[col]);
 			}
-			LM_DBG("%p=pkg_free() row_buf\n", row_buf);
+			LM_DBG("freeing row buffer at %p\n", row_buf);
 			pkg_free(row_buf);
 			return -4;
 		}
@@ -349,9 +312,8 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 						"Freeing row_buf[%p]\n", row, col,
 						RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s,
 						RES_TYPES(_res)[col], row_buf[col]);
-					LM_DBG("%p=pkg_free() row_buf[%d]\n",
-						(char *)row_buf[col], col);
-					pkg_free((char *)row_buf[col]);
+					LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
+					pkg_free(row_buf[col]);
 			}
 			/*
 			 * The following housekeeping may not be technically required, but it
@@ -367,11 +329,12 @@ int db_postgres_convert_rows(const db_con_t* _con, db_res_t* _res, int row_start
 	fetch_count++;
 	}
 
-	LM_DBG("%p=pkg_free() row_buf\n", row_buf);
+	LM_DBG("freeing row buffer at %p\n", row_buf);
 	pkg_free(row_buf);
 	row_buf = NULL;
 	return 0;
 }
+
 
 /**
  * Convert a row from the result query into db API representation
@@ -392,13 +355,14 @@ int db_postgres_convert_row(const db_con_t* _con, db_res_t* _res, db_row_t* _row
 	 */
 	len = sizeof(db_val_t) * RES_COL_N(_res);
 	ROW_VALUES(_row) = (db_val_t*)pkg_malloc(len);
-	LM_DBG("%p=pkg_malloc(%d) ROW_VALUES for %d columns\n",
-		ROW_VALUES(_row), len, RES_COL_N(_res));
 
 	if (!ROW_VALUES(_row)) {
-		LM_ERR("No memory left\n");
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	LM_DBG("allocate %d bytes for row values at %p\n", sizeof(db_val_t) * RES_COL_N(_res),
+		ROW_VALUES(_row));
+	ROW_N(_row) = RES_COL_N(_res);
 	memset(ROW_VALUES(_row), 0, len);
 
 	/* Save the number of columns in the ROW structure */
@@ -406,163 +370,14 @@ int db_postgres_convert_row(const db_con_t* _con, db_res_t* _res, db_row_t* _row
 
 	/* For each column in the row */
 	for(col = 0; col < ROW_N(_row); col++) {
-		LM_DBG("col[%d]\n", col);
 		/* Convert the string representation into the value representation */
 		if (db_postgres_str2val(RES_TYPES(_res)[col], &(ROW_VALUES(_row)[col]),
 		row_buf[col], strlen(row_buf[col])) < 0) {
 			LM_ERR("failed to convert value\n");
-			LM_DBG("%p=pkg_free() _row\n", _row);
-			db_postgres_free_row(_row);
+			LM_DBG("free row at %pn", _row);
+			db_free_row(_row);
 			return -3;
 		}
 	}
 	return 0;
 }
-
-
-/**
- * Release memory used by rows
- */
-int db_postgres_free_rows(db_res_t* _res)
-{
-	int row;
-
-	if (!_res)  {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	LM_DBG("freeing %d rows\n", RES_ROW_N(_res));
-
-	for(row = 0; row < RES_ROW_N(_res); row++) {
-		LM_DBG("row[%d]=%p\n", row, &(RES_ROWS(_res)[row]));
-		db_postgres_free_row(&(RES_ROWS(_res)[row]));
-	}
-	RES_ROW_N(_res) = 0;
-
-	if (RES_ROWS(_res)) {
-		LM_DBG("%p=pkg_free() RES_ROWS\n", RES_ROWS(_res));
-		pkg_free(RES_ROWS(_res));
-		RES_ROWS(_res) = NULL;
-	}
-
-	return 0;
-}
-
-/**
- * Release memory used by row
- * This function loops over each column and calls pkg_free on
- * STRINGs, this is different 
- * from the mysql and unixodbc behaviour which skips this step. 
- * So we need an own implementation of this function here. 
- * This needs some investigation..
- */
-int db_postgres_free_row(db_row_t* _row)
-{
-	int	col;
-	db_val_t* _val;
-
-	if (!_row) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	/*
-	 * Loop thru each columm, then check to determine if the storage pointed to
-	 * by db_val_t structure must be freed. This is required for all data types
-	 * which use a pointer to a buffer like DB_STRING, DB_STR and DB_BLOB.
-	 * If this is not done, a memory leak will happen.
-	 */
-	for (col = 0; col < ROW_N(_row); col++) {
-		_val = &(ROW_VALUES(_row)[col]);
-		switch (VAL_TYPE(_val)) {
-			case DB_STRING:
-				LM_DBG("%p=pkg_free() VAL_STRING[%d]\n",
-					(char *)VAL_STRING(_val), col);
-				pkg_free((char *)(VAL_STRING(_val)));
-				VAL_STRING(_val) = (char *)NULL;
-				break;
-			case DB_STR:
-				LM_DBG("%p=pkg_free() VAL_STR[%d]\n",
-					(char *)(VAL_STR(_val).s), col);
-				pkg_free((char *)(VAL_STR(_val).s));
-				VAL_STR(_val).s = (char *)NULL;
-				break;
-			case DB_BLOB:
-				LM_DBG("%p=pkg_free() VAL_BLOB[%d]\n",
-					(char *)(VAL_BLOB(_val).s), col);
-				PQfreemem(VAL_BLOB(_val).s);
-				VAL_BLOB(_val).s = (char *)NULL;
-				break;
-			default:
-				break;
-		}
-	}
-
-	/* Free db_val_t structure. */
-	if (ROW_VALUES(_row)) {
-		LM_DBG("%p=pkg_free() ROW_VALUES\n", ROW_VALUES(_row));
-		pkg_free(ROW_VALUES(_row));
-		ROW_VALUES(_row) = NULL;
-	}
-	return 0;
-}
-
-/**
- * Release memory used by columns
- * The same applies as in pg_free_colum
- */
-int db_postgres_free_columns(db_res_t* _res)
-{
-	int col;
-
-	if (!_res) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	/* Free memory previously allocated to save column names */
-	for(col = 0; col < RES_COL_N(_res); col++) {
-		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%.*s'\n", 
-				_res, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]->len,
-				RES_NAMES(_res)[col]->s);
-		LM_DBG("%p=pkg_free() RES_NAMES[%d]->s\n", RES_NAMES(_res)[col]->s, col);
-		pkg_free((char *)RES_NAMES(_res)[col]->s);
-		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n", RES_NAMES(_res)[col], col);
-		pkg_free((str *)RES_NAMES(_res)[col]);
-		RES_NAMES(_res)[col] = (str *)NULL;
-	}
- 
-	if (RES_NAMES(_res)) {
-		LM_DBG("%p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
-		pkg_free(RES_NAMES(_res));
-		RES_NAMES(_res) = NULL;
-	}
-	if (RES_TYPES(_res)) {
-		LM_DBG("%p=pkg_free() RES_TYPES\n",	RES_TYPES(_res));
-		pkg_free(RES_TYPES(_res));
-		RES_TYPES(_res) = NULL;
-	}
-
-	return 0;
-}
-
-/**
- * Release memory used by the result structure
- */
-int db_postgres_free_result(db_res_t* _res)
-{
-	if (!_res) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	db_postgres_free_columns(_res);
-	db_postgres_free_rows(_res);
-
-	LM_DBG("%p=pkg_free() _res\n", _res);
-	pkg_free(_res);
-	_res = NULL;
-	return 0;
-}
-

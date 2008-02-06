@@ -6,6 +6,7 @@
  *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2006 Norman Brandinger
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -196,7 +197,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 	/* exit if the fetch count is zero */
 	if (nrows == 0) {
 		if (*_res)
-			db_postgres_free_result(*_res);
+			db_free_result(*_res);
 
         *_res = 0;
 		return 0;
@@ -240,14 +241,14 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 				LM_WARN("%p - PQresultStatus(%s)\n",
 					_con, PQresStatus(pqresult));
 				if (*_res) 
-					db_postgres_free_result(*_res);
+					db_free_result(*_res);
         		*_res = 0;
 				return 0;
 		}
 
 	} else {
 		if(RES_ROWS(*_res) != NULL) {
-			db_postgres_free_rows(*_res);
+			db_free_rows(*_res);
 		}
 		RES_ROW_N(*_res) = 0;
 	}
@@ -271,8 +272,8 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 
 	if (db_postgres_convert_rows(_con, *_res, RES_LAST_ROW(*_res), RES_ROW_N(*_res)) < 0) {
 		LM_ERR("failed to convert rows\n");
-		if (*_res) 
-			db_postgres_free_result(*_res);
+		if (*_res)
+			db_free_result(*_res);
 
 		*_res = 0;
 		return -3;
@@ -321,7 +322,7 @@ static int free_query(const db_con_t* _con)
 int db_postgres_free_query(db_con_t* _con, db_res_t* _r)
 {
 	free_query(_con);
-	if (_r) db_postgres_free_result(_r);
+	if (_r) db_free_result(_r);
 	_r = 0;
 
 	return 0;
@@ -410,7 +411,7 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			/* Successful completion of a command returning data (such as a SELECT or SHOW). */
 			if (db_postgres_convert_result(_con, *_r) < 0) {
 				LM_ERR("%p Error returned from convert_result()\n", _con);
-				if (*_r) db_postgres_free_result(*_r);
+				if (*_r) db_free_result(*_r);
 
         		*_r = 0;
 				rc = -4;
@@ -427,7 +428,7 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 		default:
 			LM_WARN("%p: %s\n", _con, PQresStatus(pqresult));
         	LM_WARN("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
-			if (*_r) db_postgres_free_result(*_r);
+			if (*_r) db_free_result(*_r);
 
 			*_r = 0;
 			rc = (int)pqresult;
@@ -456,7 +457,7 @@ int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _
 		LM_WARN("unexpected result returned");
 	
 	if (_r)
-		db_postgres_free_result(_r);
+		db_free_result(_r);
 
 	return tmp;
 }
@@ -481,7 +482,7 @@ int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
 		LM_WARN("unexpected result returned");
 	
 	if (_r)
-		db_postgres_free_result(_r);
+		db_free_result(_r);
 
 	return tmp;
 }
@@ -510,7 +511,7 @@ int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
 		LM_WARN("unexpected result returned");
 	
 	if (_r)
-		db_postgres_free_result(_r);
+		db_free_result(_r);
 
 	return tmp;
 }

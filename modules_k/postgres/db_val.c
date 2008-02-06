@@ -5,6 +5,7 @@
  * the mysql module, thus it's similarity.
  *
  * Copyright (C) 2003 August.Net Services, LLC
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -48,8 +49,7 @@
 
 /*
  * Convert a str to a db value, does not copy strings
- * The postgresql module uses a custom escape function for BLOBs,
- * so the common db_str2val function from db_ut.h could not used.
+ * The postgresql module uses a custom escape function for BLOBs.
  * If the _s is linked in the db_val result, it will be returned zero
  */
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
@@ -59,7 +59,6 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 	if (!_v) {
 		LM_ERR("invalid parameter value\n");
 	}
-
 
 	if (!_s) {
 		memset(_v, 0, sizeof(db_val_t));
@@ -114,13 +113,15 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		LM_DBG("converting STRING [%s]\n", _s);
 		VAL_STRING(_v) = _s;
 		VAL_TYPE(_v) = DB_STRING;
+		VAL_FREE(_v) = 1;
 		return 0;
 
 	case DB_STR:
-		LM_DBG("converting STR [%s]\n", _s);
+		LM_DBG("converting STR [%.*s]\n", _l, _s);
 		VAL_STR(_v).s = (char*)_s;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
+		VAL_FREE(_v) = 1;
 		_s = 0;
 		return 0;
 
@@ -136,15 +137,16 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		break;
 
 	case DB_BLOB:
-		LM_DBG("converting BLOB [%s]\n", _s);
-		/* PQunescapeBytea:  Converts a string representation of binary data 
-		 * into binary data — the reverse of PQescapeBytea.
-		 * This is needed when retrieving bytea data in text format, 
+		LM_DBG("converting BLOB [%.*s]\n", _l, _s);
+		/* PQunescapeBytea:  Converts a string representation of binary data
+		 * into binary data - the reverse of PQescapeBytea.
+		 * This is needed when retrieving bytea data in text format,
 		 * but not when retrieving it in binary format.
 		 */
 		VAL_BLOB(_v).s = (char*)PQunescapeBytea((unsigned char*)_s, 
 			(size_t*)(void*)&(VAL_BLOB(_v).len) );
 		VAL_TYPE(_v) = DB_BLOB;
+		VAL_FREE(_v) = 1;
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
 	}

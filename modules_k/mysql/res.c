@@ -39,7 +39,7 @@
  */
 int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 {
-	int n, i;
+	int col;
 	MYSQL_FIELD* fields;
 
 	if ((!_h) || (!_r)) {
@@ -47,76 +47,78 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	n = mysql_field_count(CON_CONNECTION(_h));
-	if (!n) {
-		LM_ERR("no columns\n");
+	RES_COL_N(_r) = mysql_field_count(CON_CONNECTION(_h));
+	if (!RES_COL_N(_r)) {
+		LM_ERR("no columns returned from the query\n");
 		return -2;
+	} else {
+		LM_DBG("%d columns returned from the query\n", RES_COL_N(_r));
 	}
 	
-    RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
-	if (!RES_NAMES(_r)) {
-		LM_ERR("no private memory left\n");
+	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
+		LM_ERR("could not allocate columns");
 		return -3;
 	}
 
-	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
-	if (!RES_TYPES(_r)) {
-		LM_ERR("no private memory left\n");
-		pkg_free(RES_NAMES(_r));
-		return -4;
-	}
-
-	RES_COL_N(_r) = n;
-
 	fields = mysql_fetch_fields(CON_RESULT(_h));
-	for(i = 0; i < n; i++) {
-		RES_NAMES(_r)[i] = (str*)pkg_malloc(sizeof(str));
-		if (! RES_NAMES(_r)[i]) {
+	for(col = 0; col < RES_COL_N(_r); col++) {
+		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
+		if (! RES_NAMES(_r)[col]) {
 			LM_ERR("no private memory left\n");
-			pkg_free(RES_NAMES(_r));
-			pkg_free(RES_TYPES(_r));
-			// FIXME we should also free all previous allocated RES_NAMES[i]
-			return -5;
+			db_free_columns(_r);
+			return -4;
 		}
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
+				RES_NAMES(_r)[col]);
 
-		RES_NAMES(_r)[i]->s = fields[i].name;
-		RES_NAMES(_r)[i]->len = strlen(fields[i].name);
+		/* The pointer that is here returned is part of the result structure. */
+		RES_NAMES(_r)[col]->s = fields[col].name;
+		RES_NAMES(_r)[col]->len = strlen(fields[col].name);
 
-		switch(fields[i].type) {
-		case FIELD_TYPE_TINY:
-		case FIELD_TYPE_SHORT:
-		case FIELD_TYPE_LONG:
-		case FIELD_TYPE_INT24:
-		case FIELD_TYPE_LONGLONG:
-		case FIELD_TYPE_DECIMAL:
-		case FIELD_TYPE_TIMESTAMP:
-			RES_TYPES(_r)[i] = DB_INT;
-			break;
+		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_r)[col], col,
+				RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s);
 
-		case FIELD_TYPE_FLOAT:
-		case FIELD_TYPE_DOUBLE:
-			RES_TYPES(_r)[i] = DB_DOUBLE;
-			break;
+		switch(fields[col].type) {
+			case MYSQL_TYPE_TINY:
+			case MYSQL_TYPE_SHORT:
+			case MYSQL_TYPE_LONG:
+			case MYSQL_TYPE_INT24:
+			case MYSQL_TYPE_LONGLONG:
+			case MYSQL_TYPE_DECIMAL:
+			case MYSQL_TYPE_NEWDECIMAL:
+			case MYSQL_TYPE_TIMESTAMP:
+				RES_TYPES(_r)[col] = DB_INT;
+				break;
 
-		case FIELD_TYPE_DATETIME:
-			RES_TYPES(_r)[i] = DB_DATETIME;
-			break;
+			case MYSQL_TYPE_FLOAT:
+			case MYSQL_TYPE_DOUBLE:
+				RES_TYPES(_r)[col] = DB_DOUBLE;
+				break;
 
-		case FIELD_TYPE_BLOB:
-		case FIELD_TYPE_TINY_BLOB:
-		case FIELD_TYPE_MEDIUM_BLOB:
-		case FIELD_TYPE_LONG_BLOB:
-			RES_TYPES(_r)[i] = DB_BLOB;
-			break;
+			case MYSQL_TYPE_DATETIME:
+				RES_TYPES(_r)[col] = DB_DATETIME;
+				break;
 
-		case FIELD_TYPE_SET:
-			RES_TYPES(_r)[i] = DB_BITMAP;
-			break;
+			case MYSQL_TYPE_BLOB:
+				RES_TYPES(_r)[col] = DB_BLOB;
+				break;
 
-		default:
-			RES_TYPES(_r)[i] = DB_STRING;
-			break;
-		}		
+			case FIELD_TYPE_SET:
+				RES_TYPES(_r)[col] = DB_BITMAP;
+				break;
+
+			case MYSQL_TYPE_STRING:
+			case MYSQL_TYPE_VAR_STRING:
+				RES_TYPES(_r)[col] = DB_STRING;
+				break;
+
+			default:
+				LM_WARN("unhandled data type column (%.*s) type id (%d), "
+						"use STRING as default\n", RES_NAMES(_r)[col]->len,
+						RES_NAMES(_r)[col]->s, fields[col].type);
+				RES_TYPES(_r)[col] = DB_STRING;
+				break;
+		}
 	}
 	return 0;
 }
@@ -127,36 +129,40 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
  */
 static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
-	int n, i;
+	int row, len;
 
 	if ((!_h) || (!_r)) {
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
-	n = mysql_num_rows(CON_RESULT(_h));
-	RES_ROW_N(_r) = n;
-	if (!n) {
+	RES_ROW_N(_r) = mysql_num_rows(CON_RESULT(_h));
+	if (!RES_ROW_N(_r)) {
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
-	RES_ROWS(_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
+
+	len = sizeof(db_row_t) * RES_ROW_N(_r);
+	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
 	if (!RES_ROWS(_r)) {
 		LM_ERR("no private memory left\n");
 		return -2;
 	}
+	LM_DBG("allocate %d bytes for rows at %p", len,
+			RES_ROWS(_r));
+	memset(RES_ROWS(_r), 0, len);
 
-	for(i = 0; i < n; i++) {
+	for(row = 0; row < RES_ROW_N(_r); row++) {
 		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
 		if (!CON_ROW(_h)) {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
-			RES_ROW_N(_r) = i;
+			RES_ROW_N(_r) = row;
 			db_free_rows(_r);
 			return -3;
 		}
-		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) {
-			LM_ERR("error while converting row #%d\n", i);
-			RES_ROW_N(_r) = i;
+		if (db_mysql_convert_row(_h, _r, &(RES_ROWS(_r)[row])) < 0) {
+			LM_ERR("error while converting row #%d\n", row);
+			RES_ROW_N(_r) = row;
 			db_free_rows(_r);
 			return -4;
 		}

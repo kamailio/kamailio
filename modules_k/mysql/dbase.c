@@ -89,7 +89,7 @@ static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
 	}
 
 	/* screws up the terminal when the query contains a BLOB :-( (by bogdan)
-	 * LM_DBG("submit_query(): %s\n", _s->len, _s->s);
+	 * LM_DBG("submit_query(): %.*s\n", _s->len, _s->s);
 	 */
 
 	/* When a server connection is lost and a query is attempted, most of
@@ -171,7 +171,7 @@ static int db_mysql_store_result(const db_con_t* _h, db_res_t** _r)
 		LM_ERR("error while converting result\n");
 		pkg_free(*_r);
 		*_r = 0;
-		/* all mem on openser API side is already freed by 
+		/* all mem on openser API side is already freed by
 		 * db_mysql_convert_result in case of error, but we also need
 		 * to free the mem from the mysql lib side */
 		mysql_free_result(CON_RESULT(_h));
@@ -305,7 +305,7 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 	if(n<=0)
 		return 0;
 
-	/* if the fetch count is less than the remaining rows to process		 */
+	/* if the fetch count is less than the remaining rows to process                 */
 	/* set the number of rows to process (during this call) equal to the fetch count */
 	if(nrows < n)
 		n = nrows;

@@ -4,6 +4,7 @@
  * UNIXODBC module
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -72,6 +73,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 	switch(_t)
 	{
 		case DB_INT:
+			LM_DBG("converting INT [%s]\n", _s);
 			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
 				LM_ERR("converting integer value from string failed\n");
@@ -85,6 +87,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			break;
 
 		case DB_BITMAP:
+			LM_DBG("converting BITMAP [%s]\n", _s);
 			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
 				LM_ERR("converting bitmap value from string failed\n");
@@ -98,6 +101,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			break;
 
 		case DB_DOUBLE:
+			LM_DBG("converting DOUBLE [%s]\n", _s);
 			if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0)
 			{
 				LM_ERR("converting double value from string failed\n");
@@ -111,17 +115,20 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			break;
 
 		case DB_STRING:
+			LM_DBG("converting STRING [%s]\n", _s);
 			VAL_STRING(_v) = _s;
 			VAL_TYPE(_v) = DB_STRING;
 			return 0;
 
 		case DB_STR:
+			LM_DBG("converting STR [%.*s]\n", _l, _s);
 			VAL_STR(_v).s = (char*)_s;
 			VAL_STR(_v).len = _l;
 			VAL_TYPE(_v) = DB_STR;
 			return 0;
 
 		case DB_DATETIME:
+			LM_DBG("converting DATETIME [%s]\n", _s);
 			if (db_str2time(_s, &VAL_TIME(_v)) < 0)
 			{
 				LM_ERR("converting datetime value from string failed\n");
@@ -135,6 +142,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			break;
 
 		case DB_BLOB:
+			LM_DBG("converting BLOB [%.*s]\n", _l, _s);
 			VAL_BLOB(_v).s = (char*)_s;
 			VAL_BLOB(_v).len = _l;
 			VAL_TYPE(_v) = DB_BLOB;

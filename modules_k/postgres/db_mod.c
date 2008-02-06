@@ -4,6 +4,7 @@
  * Postgres module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *

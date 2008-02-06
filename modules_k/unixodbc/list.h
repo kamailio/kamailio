@@ -4,6 +4,7 @@
  * UNIXODBC module
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -44,7 +45,7 @@ typedef struct list
 	int rownum;
 } list;
 
-int insert(list** start, list** link, int n, strn* value);
-void destroy(list* link);
+int db_unixodbc_list_insert(list** start, list** link, int n, strn* value);
+void db_unixodbc_list_destroy(list* link);
 
 #endif

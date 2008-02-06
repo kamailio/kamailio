@@ -4,6 +4,7 @@
  * UNIXODBC module interface
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *

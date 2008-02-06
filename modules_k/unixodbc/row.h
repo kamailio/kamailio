@@ -4,6 +4,7 @@
  * UNIXODBC module row related functions
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -38,7 +39,7 @@
 /*
  * Convert a row from result into db API representation
  */
-int convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* _r,
+int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* _r,
 		const unsigned long* lengths);
 
 #endif /* ROW_H */

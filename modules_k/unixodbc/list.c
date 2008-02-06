@@ -4,6 +4,7 @@
  * UNIXODBC module
  *
  * Copyright (C) 2005-2006 Marco Lorrai
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -33,7 +34,7 @@
 #include "../../mem/mem.h"
 #include "list.h"
 
-int insert(list** start, list** link, int n, strn* value)
+int db_unixodbc_list_insert(list** start, list** link, int n, strn* value)
 {
 	int i = 0;
 
@@ -132,7 +133,7 @@ int insert(list** start, list** link, int n, strn* value)
 }
 
 
-void destroy(list *start)
+void db_unixodbc_list_destroy(list *start)
 {
 	int i = 0;
 

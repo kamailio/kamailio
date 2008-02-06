@@ -5,6 +5,7 @@
  * the mysql module, thus it's similarity.
  *
  * Copyright (C) 2003 August.Net Services, LLC
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of openser, a free SIP server.
  *
@@ -22,12 +23,15 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ---
- *
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
  *
+ */
+
+/*
+ * OID definitions, copied from postgresql/catalog/pg_types.h.
+ * It would be probably more correct to use the definitions from there.
  */
 #define BOOLOID			16
 #define BYTEAOID		17
