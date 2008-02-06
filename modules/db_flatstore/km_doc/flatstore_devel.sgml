@@ -1,0 +1,22 @@
+<!-- Module Developer's Guide -->
+
+<chapter>
+	<chapterinfo>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</chapterinfo>
+	<title>Developer's Guide</title>
+	<para>
+	The module implements the DB <acronym>API</acronym>.
+	</para>
+</chapter>
+
+<!-- Keep this element at the end of the file
+Local Variables:
+sgml-parent-document: ("exec.sgml" "book" "chapter")
+End:
+-->
