@@ -56,6 +56,7 @@
 #include "../../mi/mi.h"
 #include "../../mod_fix.h"
 #include "../../md5utils.h"
+#include "../../globals.h"
 #include <stdlib.h>
 #include "shvar.h"
 
@@ -86,7 +87,7 @@ static int initial = 10;
 static int *probability;
 
 static char config_hash[MD5_LEN];
-static char* hash_file = "/etc/openser/openser.cfg";
+static char* hash_file = NULL;
 
 static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
@@ -346,11 +347,20 @@ static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 
 static int mod_init(void)
 {
+	if (!hash_file)
+		hash_file = cfg_file;
+
 	if (MD5File(config_hash, hash_file) != 0) {
 		LM_ERR("could not hash the config file");
 		return -1;
 	}
 	LM_DBG("config file hash is %.*s", MD5_LEN, config_hash);
+
+	if (initial > 100) {
+		LM_ERR("invalid probability <%d>\n", initial);
+		return -1;
+	}
+	LM_DBG("initial probability %d percent\n", initial);
 
 	probability=(int *) shm_malloc(sizeof(int));
 
@@ -359,11 +369,6 @@ static int mod_init(void)
 		return -1;
 	}
 	*probability = initial;
-	if (initial > 100) {
-		LM_ERR("invalid probability <%d>\n", initial);
-		return -1;
-	}
-	LM_DBG("initial probability %d percent\n", initial);
 
 	if(init_shvars()<0)
 	{
