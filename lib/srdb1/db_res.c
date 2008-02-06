@@ -51,13 +51,12 @@ inline int db_free_rows(db_res_t* _r)
 	LM_DBG("freeing %d rows\n", RES_ROW_N(_r));
 
 	for(i = 0; i < RES_ROW_N(_r); i++) {
-		LM_DBG("row[%d]=%p\n", i, &(RES_ROWS(_r)[i]));
 		db_free_row(&(RES_ROWS(_r)[i]));
 	}
 	RES_ROW_N(_r) = 0;
 
 	if (RES_ROWS(_r)) {
-		LM_DBG("%p=pkg_free() RES_ROWS\n", RES_ROWS(_r));
+		LM_DBG("freeing rows at %p\n", RES_ROWS(_r));
 		pkg_free(RES_ROWS(_r));
 		RES_ROWS(_r) = NULL;
 	}
@@ -70,16 +69,32 @@ inline int db_free_rows(db_res_t* _r)
  */
 inline int db_free_columns(db_res_t* _r)
 {
+	int col;
+
 	if (!_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-
-	if (RES_NAMES(_r)) pkg_free(RES_NAMES(_r));
-	if (RES_TYPES(_r)) pkg_free(RES_TYPES(_r));
+	LM_DBG("freeing %d columns\n", RES_COL_N(_r));
+	/* free memory previously allocated to save column names */
+	for(col = 0; col < RES_COL_N(_r); col++) {
+		LM_DBG("freeing RES_NAMES[%d] at %p\n", col, RES_NAMES(_r)[col]);
+		pkg_free((str *)RES_NAMES(_r)[col]);
+		RES_NAMES(_r)[col] = NULL;
+	}
+	/* free names and types */
+	if (RES_NAMES(_r)) {
+		LM_DBG("freeing result names at %p\n", RES_NAMES(_r));
+		pkg_free(RES_NAMES(_r));
+		RES_NAMES(_r) = NULL;
+	}
+	if (RES_TYPES(_r)) {
+		LM_DBG("freeing result types at %p\n", RES_TYPES(_r));
+		pkg_free(RES_TYPES(_r));
+		RES_TYPES(_r) = NULL;
+	}
 	return 0;
 }
-
 
 /*
  * Create a new result structure and initialize it
@@ -88,11 +103,11 @@ inline db_res_t* db_new_result(void)
 {
 	db_res_t* r = NULL;
 	r = (db_res_t*)pkg_malloc(sizeof(db_res_t));
-	//LM_DBG("%p=pkg_malloc(%lu) _res\n", _r, (unsigned long)sizeof(db_res_t));
 	if (!r) {
 		LM_ERR("no private memory left\n");
 		return 0;
 	}
+	LM_DBG("allocate %d bytes for result set at %p\n", sizeof(db_res_t), r);
 	memset(r, 0, sizeof(db_res_t));
 	return r;
 }
@@ -110,6 +125,34 @@ inline int db_free_result(db_res_t* _r)
 
 	db_free_columns(_r);
 	db_free_rows(_r);
+	LM_DBG("freeing result set at %p\n", _r);
 	pkg_free(_r);
+	_r = NULL;
+	return 0;
+}
+
+/*
+ * Allocate storage for column names and type in existing
+ * result structure.
+ */
+inline int db_allocate_columns(db_res_t* _r, const unsigned int cols)
+{
+	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * cols);
+	if (!RES_NAMES(_r)) {
+		LM_ERR("no private memory left\n");
+		return -1;
+	}
+	LM_DBG("allocate %d bytes for result names at %p\n", sizeof(db_key_t) * cols,
+		RES_NAMES(_r));
+
+	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
+	if (!RES_TYPES(_r)) {
+		LM_ERR("no private memory left\n");
+		pkg_free(RES_NAMES(_r));
+		return -1;
+	}
+	LM_DBG("allocate %d bytes for result types at %p\n", sizeof(db_type_t) * cols,
+		RES_TYPES(_r));
+
 	return 0;
 }

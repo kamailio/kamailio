@@ -31,6 +31,7 @@
 
 #include "db_row.h"
 
+#include <string.h>
 #include "../dprint.h"
 #include "../mem/mem.h"
 
@@ -39,11 +40,58 @@
  */
 inline int db_free_row(db_row_t* _r)
 {
+	int	col;
+	db_val_t* _val;
+
 	if (!_r) {
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
 
-	if (ROW_VALUES(_r)) pkg_free(ROW_VALUES(_r));
+	/*
+	 * Loop thru each columm, then check to determine if the storage pointed to
+	 * by db_val_t structure must be freed. This is required for all data types
+	 * which use a pointer to a buffer like DB_STRING, DB_STR and DB_BLOB and
+	 * the database module copied them during the assignment.
+	 * If this is not done, a memory leak will happen.
+	 * Don't try to free the static dummy string (as indicated from the NULL value),
+	 * as this is not valid.
+	 */
+	for (col = 0; col < ROW_N(_r); col++) {
+		_val = &(ROW_VALUES(_r)[col]);
+		switch (VAL_TYPE(_val)) {
+			case DB_STRING:
+				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
+					LM_DBG("free VAL_STRING[%d] '%s' at %p\n", col, (char *)VAL_STRING(_val),
+							(char *)VAL_STRING(_val));
+					pkg_free((char *)VAL_STRING(_val));
+					VAL_STRING(_val) = NULL;
+				}
+				break;
+			case DB_STR:
+				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
+					LM_DBG("free VAL_STR[%d] '%.*s' at %p\n", col, VAL_STR(_val).len,
+							VAL_STR(_val).s, VAL_STR(_val).s);
+					pkg_free(VAL_STR(_val).s);
+					VAL_STR(_val).s = NULL;
+				}
+				break;
+			case DB_BLOB:
+				if ( (!VAL_NULL(_val)) && VAL_FREE(_val)) {
+					LM_DBG("free VAL_BLOB[%d] at %p\n", col, VAL_BLOB(_val).s);
+					pkg_free(VAL_BLOB(_val).s);
+					VAL_BLOB(_val).s = NULL;
+				}
+				break;
+			default:
+				break;
+		}
+	}
+
+	if (ROW_VALUES(_r)) {
+		LM_DBG("freeing row values at %p\n", ROW_VALUES(_r));
+		pkg_free(ROW_VALUES(_r));
+		ROW_VALUES(_r) = NULL;
+	}
 	return 0;
 }

@@ -61,10 +61,19 @@ typedef enum {
  * recognized and converted by the database API. These datatypes are automaticaly
  * recognized, converted from internal database representation and stored in the
  * variable of corresponding type.
+ *
+ * Module that want to use this values needs to copy them to another memory
+ * location, because after the call to free_result there are not more available.
+ *
+ * If the structure holds a pointer to a string value that needs to be freed
+ * because the module allocated new memory for it then the free flag must
+ * be set to a non-zero value. A free flag of zero means that the string
+ * data must be freed internally by the database driver.
  */
 typedef struct {
-	db_type_t type; /** Type of the value                              */
-	int nul;        /** Means that the column in database has no value */
+	db_type_t type; /**< Type of the value                              */
+	int nul;		/**< Means that the column in database has no value */
+	int free;		/**< Means that the value should be freed */
 	/** Column value structure that holds the actual data in a union.  */
 	union {
 		int           int_val;    /**< integer value              */
@@ -95,6 +104,14 @@ typedef struct {
  * terminology).
  */
 #define VAL_NULL(dv)   ((dv)->nul)
+
+
+/**
+ * Use this macro if you need to set/ get the free flag. A non-zero flag means that
+ * the corresponding cell in the database contains data that must be freed from the
+ * DB API.
+ */
+#define VAL_FREE(dv)   ((dv)->free)
 
 
 /**

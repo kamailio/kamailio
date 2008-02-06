@@ -49,14 +49,17 @@ typedef struct db_row {
 
 /** Return the columns in the row */
 #define ROW_VALUES(rw) ((rw)->values)
-/** Return the number of rows */
+/** Return the number of colums */
 #define ROW_N(rw)      ((rw)->n)
 
 /**
- * Release memory used by row
- * \param _r the row that should be released
+ * Release memory used by a row. This method only frees values that are inside
+ * the row if the free flag of the specific value is set. Otherwise this
+ * storage must be released when the database specific result free function is
+ * called. Only string based values are freed if wanted, null values are skipped.
+ * \param _r row that should be released
  * \return zero on success, negative on error
  */
-int db_free_row(db_row_t* _r);
+inline int db_free_row(db_row_t* _r);
 
 #endif /* DB_ROW_H */
