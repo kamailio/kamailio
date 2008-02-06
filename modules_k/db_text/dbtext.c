@@ -74,7 +74,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {	
-	"dbtext",
+	"db_text",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,     /* Exported functions */
 	params,   /* Exported parameters */

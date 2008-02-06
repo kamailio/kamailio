@@ -4,7 +4,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=mysql.so
+NAME=db_mysql.so
 
 # set CROSS_COMPILE to true if you want to skip
 # the autodetection

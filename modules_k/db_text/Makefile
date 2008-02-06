@@ -10,7 +10,7 @@ DEFS+=-DDBT_EXTRA_DEBUG
  
 include ../../Makefile.defs
 auto_gen=
-NAME=dbtext.so
+NAME=db_text.so
 LIBS=
 
 include ../../Makefile.modules

@@ -47,7 +47,7 @@
 #define CFG_DIR "/tmp"
 #endif
 
-#define BDB_ID		"db_berkeley://"
+#define BDB_ID		"berkeley://"
 #define BDB_ID_LEN	(sizeof(BDB_ID)-1)
 #define BDB_PATH_LEN	256
 

@@ -69,7 +69,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {	
-	"unixodbc",
+	"db_unixodbc",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,     /*  module parameters */

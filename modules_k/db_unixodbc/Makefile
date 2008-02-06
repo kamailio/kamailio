@@ -4,7 +4,7 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=unixodbc.so
+NAME=db_unixodbc.so
 
 # sql.h locations (freebsd,openbsd  solaris)
 DEFS += -I$(LOCALBASE)/include

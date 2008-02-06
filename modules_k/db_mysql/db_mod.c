@@ -77,7 +77,7 @@ static param_export_t params[] = {
 
 
 struct module_exports exports = {	
-	"mysql",
+	"db_mysql",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
 	params,          /*  module parameters */

@@ -41,7 +41,7 @@
 #define CFG_DIR "/tmp"
 #endif
 
-#define DBT_ID		"dbtext://"
+#define DBT_ID		"text://"
 #define DBT_ID_LEN	(sizeof(DBT_ID)-1)
 #define DBT_PATH_LEN	256
 /*

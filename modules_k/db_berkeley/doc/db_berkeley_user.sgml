@@ -253,8 +253,8 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		<para>
 		Modify the OpenSER configuration file to use db_berkeley module. 
 		The database URL for modules must be the path to the directory where 
-		the Berkeley DB table-files are located, prefixed by "db_berkeley://", 
-		e.g., "db_berkeley:///usr/local/etc/openser/db_berkeley". 
+		the Berkeley DB table-files are located, prefixed by "berkeley://", 
+		e.g., "berkeley:///usr/local/etc/openser/db_berkeley". 
 		</para>
 		
 		<para>
