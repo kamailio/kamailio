@@ -146,7 +146,7 @@ openserctl fifo flat_rotate
 
    Example 1-1. Set "flush" parameter
 ...
-modparam("flatstore", "flush", 0)
+modparam("db_flatstore", "flush", 0)
 ...
      __________________________________________________________
 

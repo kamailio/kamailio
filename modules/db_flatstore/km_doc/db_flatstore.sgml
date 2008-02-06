@@ -1,9 +1,9 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 
-<!ENTITY user SYSTEM "flatstore_user.sgml">
-<!ENTITY devel SYSTEM "flatstore_devel.sgml">
-<!ENTITY faq SYSTEM "flatstore_faq.sgml">
+<!ENTITY user SYSTEM "db_flatstore_user.sgml">
+<!ENTITY devel SYSTEM "db_flatstore_devel.sgml">
+<!ENTITY faq SYSTEM "db_flatstore_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
