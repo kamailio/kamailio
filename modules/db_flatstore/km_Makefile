@@ -4,6 +4,6 @@
 
 include ../../Makefile.defs
 auto_gen=
-NAME=flatstore.so
+NAME=db_flatstore.so
 
 include ../../Makefile.modules
