@@ -1,9 +1,9 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 
-<!ENTITY user SYSTEM "mysql_user.sgml">
-<!ENTITY devel SYSTEM "mysql_devel.sgml">
-<!ENTITY faq SYSTEM "mysql_faq.sgml">
+<!ENTITY user SYSTEM "db_mysql_user.sgml">
+<!ENTITY devel SYSTEM "db_mysql_devel.sgml">
+<!ENTITY faq SYSTEM "db_mysql_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

@@ -183,7 +183,7 @@ suser:supasswd:xxx:alpha.org:xxx
 
    Example 1-4. Set db_mode parameter
 ...
-modparam("dbtext", "db_mode", 1)
+modparam("db_text", "db_mode", 1)
 ...
      __________________________________________________________
 
@@ -207,7 +207,7 @@ modparam("dbtext", "db_mode", 1)
 
    Example 1-5. Load the dbtext module
 ...
-loadmodule "/path/to/openser/modules/dbtext.so"
+loadmodule "/path/to/openser/modules/db_text.so"
 ...
 modparam("module_name", "database_URL", "dbtext:///path/to/dbtext/databa
 se")

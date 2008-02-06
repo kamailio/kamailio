@@ -258,7 +258,7 @@ suser:supasswd:xxx:alpha.org:xxx
 		<title>Set <varname>db_mode</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dbtext", "db_mode", 1)
+modparam("db_text", "db_mode", 1)
 ...
 </programlisting>
 		</example>
@@ -290,7 +290,7 @@ modparam("dbtext", "db_mode", 1)
 		<title>Load the dbtext module</title>
 <programlisting format="linespecific">
 ...
-loadmodule "/path/to/openser/modules/dbtext.so"
+loadmodule "/path/to/openser/modules/db_text.so"
 ...
 modparam("module_name", "database_URL", "dbtext:///path/to/dbtext/database")
 ...
@@ -350,6 +350,6 @@ aliases:6
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("dbtext.sgml" "Book" "chapter")
+sgml-parent-document: ("db_text.sgml" "Book" "chapter")
 End:
 -->

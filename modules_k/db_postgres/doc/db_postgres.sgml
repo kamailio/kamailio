@@ -1,12 +1,9 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
-<!ENTITY user SYSTEM "dbtext_user.sgml">
-<!ENTITY devel SYSTEM "dbtext_devel.sgml">
-<!ENTITY faq SYSTEM "dbtext_faq.sgml">
 
-<!ENTITY dbtextsercfg SYSTEM "dbtext.cfg">
-
-<!ENTITY developeremail "daniel@voice-system.ro">
+<!ENTITY user SYSTEM "db_postgres_user.sgml">
+<!ENTITY devel SYSTEM "db_postgres_devel.sgml">
+<!ENTITY faq SYSTEM "db_postgres_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -16,29 +13,28 @@
 
 <book>
     <bookinfo>
-	<title>DBTEXT Module</title>
+	<title>postgres Module</title>
 	<productname class="trade">&sername;</productname>
 	<authorgroup>
 	    <author>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<firstname>Greg</firstname>
+		<surname>Fausak</surname>
+		<affiliation><orgname>August.net</orgname></affiliation>
 		<address>
-		<email>&developeremail;</email>
+		    <email>greg@august.net</email>
 		</address>
 	    </author>
 	    <editor>
-		<firstname>Daniel-Constantin</firstname>
-		<surname>Mierla</surname>
+		<firstname>Greg</firstname>
+		<surname>Fausak</surname>
 		<address>
-		<email>&developeremail;</email>
+		    <email>greg@august.net</email>
 		</address>
 	    </editor>
 	</authorgroup>
 	<copyright>
 	    <year>2003</year>
-	    <year>2004</year>
-	    <holder>&fhg;</holder>
+	    <holder>Greg Fausak</holder>
 	</copyright>
 	<revhistory>
 	    <revision>
@@ -52,5 +48,5 @@
     &user;
     &devel;
     &faq;
-
+    
 </book>

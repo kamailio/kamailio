@@ -76,7 +76,7 @@
 		<title>Set the <quote>ping_interval</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("unixodbc", "ping_interval", 600)
+modparam("db_unixodbc", "ping_interval", 600)
 ...
 </programlisting>
 		</example>
@@ -96,7 +96,7 @@ modparam("unixodbc", "ping_interval", 600)
 		<title>Set the <quote>auto_reconnect</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("unixodbc", "auto_reconnect", 0)
+modparam("db_unixodbc", "auto_reconnect", 0)
 ...
 </programlisting>
 		</example>
@@ -124,7 +124,7 @@ modparam("unixodbc", "auto_reconnect", 0)
 		<title>Set the <quote>use_escape_common</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("unixodbc", "use_escape_common", 1)
+modparam("db_unixodbc", "use_escape_common", 1)
 ...
 </programlisting>
 		</example>
@@ -158,7 +158,7 @@ modparam("unixodbc", "use_escape_common", 1)
 	</para>
 	<programlisting format="linespecific">
 ....
-loadmodule "/usr/local/lib/openser/modules/unixodbc.so"
+loadmodule "/usr/local/lib/openser/modules/db_unixodbc.so"
 ....
 </programlisting>
 	<para>
@@ -204,6 +204,6 @@ shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("unixodbc.sgml" "Book" "chapter")
+sgml-parent-document: ("db_unixodbc.sgml" "Book" "chapter")
 End:
 -->

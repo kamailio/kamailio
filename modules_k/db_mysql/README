@@ -75,7 +75,7 @@ Chapter 1. User's Guide
 
    Example 1-1. Set ping_interval parameter
 ...
-modparam("mysql", "ping_interval", 600)
+modparam("db_mysql", "ping_interval", 600)
 ...
      __________________________________________________________
 
@@ -94,7 +94,7 @@ modparam("mysql", "ping_interval", 600)
 
    Example 1-2. Set timeout_interval parameter
 ...
-modparam("mysql", "timeout_interval", 2)
+modparam("db_mysql", "timeout_interval", 2)
 ...
      __________________________________________________________
 
@@ -122,11 +122,12 @@ modparam("auto_reconnect", "auto_reconnect", 0)
    not compiled and installed by default. You can use one of the
    next options.
 
-     * - edit the "Makefile" and remove "mysql" from
+     * - edit the "Makefile" and remove "db_mysql" from
        "excluded_modules" list. Then follow the standard procedure
        to install OpenSER: "make all; make install".
-     * - from command line use: 'make all include_modules="mysql";
-       make install include_modules="mysql"'.
+     * - from command line use: 'make all
+       include_modules="db_mysql"; make install
+       include_modules="db_mysql"'.
      __________________________________________________________
 
 Chapter 2. Developer's Guide

@@ -161,7 +161,7 @@ openserctl fifo flat_rotate
 		<title>Set <quote>flush</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("flatstore", "flush", 0)
+modparam("db_flatstore", "flush", 0)
 ...
 </programlisting>
 		</example>
@@ -201,6 +201,6 @@ modparam("flatstore", "flush", 0)
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("exec.sgml" "Book" "chapter")
+sgml-parent-document: ("db_flatstore.sgml" "Book" "chapter")
 End:
 -->

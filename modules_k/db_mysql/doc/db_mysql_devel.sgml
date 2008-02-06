@@ -17,6 +17,6 @@
 
 <!-- Keep this element at the end of the file
 Local Variables:
-sgml-parent-document: ("mysql.sgml" "book" "chapter")
+sgml-parent-document: ("db_mysql.sgml" "book" "chapter")
 End:
 -->
