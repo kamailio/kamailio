@@ -1,9 +1,9 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 
-<!ENTITY user SYSTEM "postgres_user.sgml">
-<!ENTITY devel SYSTEM "postgres_devel.sgml">
-<!ENTITY faq SYSTEM "postgres_faq.sgml">
+<!ENTITY user SYSTEM "db_postgres_user.sgml">
+<!ENTITY devel SYSTEM "db_postgres_devel.sgml">
+<!ENTITY faq SYSTEM "db_postgres_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
