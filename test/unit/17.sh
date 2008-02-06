@@ -30,7 +30,7 @@ tmp_name=""$RANDOM"_openserdb_tmp"
 
 echo "loadmodule \"../modules/db_berkeley/db_berkeley.so\"" >> $CFG
 cat 2.cfg >> $CFG
-echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt\", \"db_url\", \"db_berkeley://`pwd`/../scripts/$tmp_name\")" >> $CFG
+echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt\", \"db_url\", \"berkeley://`pwd`/../scripts/$tmp_name\")" >> $CFG
 
 cd ../scripts
 

@@ -21,7 +21,7 @@
 
 # Needs a default openser database setup for mysql
 
-if [ ! -e ../modules/mysql/mysql.so ] ; then
+if [ ! -e ../modules/db_mysql/db_mysql.so ] ; then
 	echo "mysql driver not found, not run"
 	exit 0
 fi ;
@@ -31,7 +31,7 @@ cp $CFG $CFG.bak
 
 touch dispatcher.list
 
-echo "loadmodule \"mysql/mysql.so\"" >> $CFG
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")" >> $CFG
 
 # start

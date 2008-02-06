@@ -32,7 +32,7 @@ if [ ! $ret -eq 0 ] ; then
 fi ;
 
 cp $CFG $CFG.tmp
-echo "loadmodule \"postgres/postgres.so\"" >> $CFG
+echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
 
 ../openser -w . -f $CFG > /dev/null

@@ -1,5 +1,5 @@
 #!/bin/bash
-# loads a carrierroute config for loadbalancing from database
+# loads a carrierroute config for loadbalancing from mysql database
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -29,7 +29,7 @@ fi ;
 cp $CFG $CFG.bak
 
 # setup config
-echo "loadmodule \"mysql/mysql.so\"" >> $CFG
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
