@@ -261,7 +261,7 @@ static int mod_init(void)
 		if ( pv_parse_spec(&timeout_spec, &timeout_avp)==0 
 				&& (timeout_avp.type!=PVT_AVP)){
 			LM_ERR("malformed or non AVP timeout "
-				"AVP definition in '%.*s'\n", timeout_spec.len, timeout_spec.s);
+				"AVP definition in '%.*s'\n", timeout_spec.len,timeout_spec.s);
 			return -1;
 		}
 	}

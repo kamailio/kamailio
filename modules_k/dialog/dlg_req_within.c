@@ -38,6 +38,7 @@
 #include "../../mi/tree.h"
 #include "dlg_hash.h"
 #include "dlg_req_within.h"
+#include "dlg_db_handler.h"
 
 
 #define MAX_FWD_HDR        "Max-Forwards: " MAX_FWD CRLF
@@ -163,9 +164,13 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 	}
 
-	if(new_state == DLG_STATE_DELETED && old_state == DLG_STATE_DELETED ){
-	
+	if(new_state == DLG_STATE_DELETED && old_state == DLG_STATE_DELETED ) {
+		/* trash the dialog from DB and memory */
 		LM_DBG("second final reply\n");
+		/* delete the dialog from DB */
+		if (dlg_db_mode)
+			remove_dialog_from_db(dlg);
+		/* force delete from mem */
 		unref_dlg(dlg, 1);
 	}
 
