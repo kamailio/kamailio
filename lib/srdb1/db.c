@@ -78,25 +78,30 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 		LM_ERR("SQL URL too long\n");
 		return 0;
 	}
+	// add the prefix
+	char * name = pkg_malloc(mod->len + 4);
+	char * prefix = "db_";
+	memcpy(name, prefix, 3);
+	memcpy(name+3, mod->s, mod->len);
+
 	/* for safety we initialize mydbf with 0 (this will cause
 	 *  a segfault immediately if someone tries to call a function
-	 *  from it without checking the return code from bind_dbmod -- andrei */
+	 *  from it without checking the return code from bind_dbmod */
 	memset((void*)mydbf, 0, sizeof(db_func_t));
 
-	p = strchr(mod->s, ':');
+	p = strchr(name, ':');
 	if (p) {
-		len = p - mod->s;
-		tmp = (char*)pkg_malloc(len + 1);
+		len = p - name;
+		tmp = (char*)pkg_malloc(len + 4);
 		if (!tmp) {
 			LM_ERR("no private memory left\n");
 			return -1;
 		}
-		memcpy(tmp, mod->s, len);
+		memcpy(tmp, name, len);
 		tmp[len] = '\0';
 	} else {
-		tmp = mod->s;
+		tmp = name;
 	}
-
 	dbf.cap = 0;
 
 	/* All modules must export db_use_table */
