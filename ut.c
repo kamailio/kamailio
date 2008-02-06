@@ -28,16 +28,17 @@
  *
  */
 
-
+#define _GNU_SOURCE 1 /* strndup in get_abs_pathname */
 #include <string.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
 #include <stdlib.h>
+#include <libgen.h>
 #include <time.h>
 #include "ut.h"
 #include "mem/mem.h"
-
+#include "globals.h"
 
 /* converts a username into uid:gid,
  * returns -1 on error & 0 on success */
@@ -135,10 +136,66 @@ char* as_asciiz(str* s)
 
     r = (char*)pkg_malloc(s->len + 1);
     if (!r) {
-	ERR("Out of memory\n");
-	return 0;
+		ERR("Out of memory\n");
+		return 0;
     }
     memcpy(r, s->s, s->len);
     r[s->len] = '\0';
     return r;
+}
+
+
+char* get_abs_pathname(str* base, str* file)
+{
+	str ser_cfg;
+	char* buf, *dir, *res;
+	int len;
+
+	if (base == NULL) {
+		ser_cfg.s = cfg_file;
+		ser_cfg.len = strlen(cfg_file);
+		base = &ser_cfg;
+	}
+
+	if (!base->s || base->len <= 0 || base->s[0] != '/') {
+		BUG("get_abs_pathname: Base file must be absolute pathname: "
+			"'%.*s'\n", STR_FMT(base));
+		return NULL;
+	}
+
+	if (!file || !file->s || file->len <= 0) {
+		BUG("get_abs_pathname: Invalid 'file' parameter\n");
+		return NULL;
+	}
+
+	if (file->s[0] == '/') {
+		/* This is an absolute pathname, make a zero terminated
+		 * copy and use it as it is */
+		if ((res = strndup(file->s, file->len)) == NULL) {
+			ERR("get_abs_pathname: No memory left (strndup failed)\n");
+		}
+	} else {
+		/* This is not an absolute pathname, make it relative
+		 * to the location of the base file
+		 */
+		/* Make a copy, function dirname may modify the string */
+		if ((buf = strndup(base->s, base->len)) == NULL) {
+			ERR("get_abs_pathname: No memory left (strdup failed)\n");
+			return NULL;
+		}
+		dir = dirname(buf);
+
+		len = strlen(dir);
+		if ((res = malloc(len + 1 + file->len + 1)) == NULL) {
+			ERR("get_abs_pathname: No memory left (malloc failed)\n");
+			free(buf);
+			return NULL;
+		}
+		memcpy(res, dir, len);
+		res[len] = '/';
+		memcpy(res + len + 1, file->s, file->len);
+		res[len + 1 + file->len] = '\0';
+		free(buf);
+	}
+	return res;
 }
