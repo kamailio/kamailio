@@ -43,7 +43,8 @@
  */
 
 
-#include "string.h"
+#include <string.h>
+#include <time.h>
 
 #include "../../trim.h"
 #include "../../pvar.h"
