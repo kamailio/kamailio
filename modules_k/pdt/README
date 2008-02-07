@@ -2,7 +2,7 @@ pdt Module
 
 Elena-Ramona Modroiu
 
-   voice-system.ro
+   rosdev.ro
 
 Edited by
 
@@ -11,6 +11,8 @@ Elena-Ramona Modroiu
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2004 voice-system.ro
+
+   Copyright © 2008 Elena-Ramona Modroiu
      __________________________________________________________
 
    Table of Contents
@@ -31,7 +33,8 @@ Elena-Ramona Modroiu
               1.3.5. domain_column (string)
               1.3.6. prefix (string)
               1.3.7. hsize_2pow (integer)
-              1.3.8. char_list (string)
+              1.3.8. fetch_rows (integer)
+              1.3.9. char_list (string)
 
         1.4. Exported Functions
 
@@ -60,8 +63,9 @@ Elena-Ramona Modroiu
    1-6. Set domain_column parameter
    1-7. Set prefix parameter
    1-8. Set hsize_2pow parameter
-   1-9. Set char_list parameter
-   1-10. prefix2domain usage
+   1-9. Set fetch_rows parameter
+   1-10. Set char_list parameter
+   1-11. prefix2domain usage
      __________________________________________________________
 
 Chapter 1. User's Guide
@@ -215,13 +219,25 @@ modparam("pdt", "hsize_2pow", 4)
 ...
      __________________________________________________________
 
-1.3.8. char_list (string)
+1.3.8. fetch_rows (integer)
+
+   Number of rows to be loaded in one step from database.
+
+   Default value is 1000.
+
+   Example 1-9. Set fetch_rows parameter
+...
+modparam("pdt", "fetch_rows", 4000)
+...
+     __________________________________________________________
+
+1.3.9. char_list (string)
 
    The list with characters allowed in prefix.
 
    Default value is "0123456789".
 
-   Example 1-9. Set char_list parameter
+   Example 1-10. Set char_list parameter
 ...
 modparam("pdt", "char_list", "0123456789*+")
 ...
@@ -266,7 +282,7 @@ modparam("pdt", "char_list", "0123456789*+")
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-10. prefix2domain usage
+   Example 1-11. prefix2domain usage
 ...
 prefix2domain("2", "2");
 ...
