@@ -9,7 +9,7 @@
 
 <table id="dispatcher" xmlns:db="http://docbook.org/ns/docbook">
     <name>dispatcher</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used by the dispatcher module. It contains the sets of destinations used for load balancing and dispatching. More information about the dispatcher module can be found at: &OPENSER_MOD_DOC;dispatcher.html
@@ -41,6 +41,14 @@
         <size>192</size>
         <description>Destination SIP address</description>
         <default/>
+    </column>
+
+    <column id="flags">
+        <name>flags</name>
+        <type>int</type>
+        <description>Flags of destination SIP address</description>
+        <default>0</default>
+        <natural/>
     </column>
 
     <column>
