@@ -65,6 +65,9 @@
 #include "dispatch.h"
 
 #define DS_TABLE_VERSION	1
+#define DS_TABLE_VERSION2	2
+
+static int _ds_table_version = DS_TABLE_VERSION;
 
 typedef struct _ds_dest
 {
@@ -406,7 +409,6 @@ void ds_disconnect_db(void)
 /*initialize and verify DB stuff*/
 int init_ds_db(void)
 {
-	int ver;
 	int ret;
 
 	if(ds_table_name.s == 0)
@@ -428,15 +430,16 @@ int init_ds_db(void)
 		return -1;
 	}
 	
-	ver = db_table_version(&ds_dbf, ds_db_handle, &ds_table_name);
-	if (ver < 0) 
+	_ds_table_version = db_table_version(&ds_dbf, ds_db_handle, &ds_table_name);
+	if (_ds_table_version < 0) 
 	{
 		LM_ERR("failed to query table version\n");
 		return -1;
-	} else if (ver != DS_TABLE_VERSION) {
-		LM_ERR("invalid table version (found %d , required %d)\n"
+	} else if (_ds_table_version != DS_TABLE_VERSION
+			&& _ds_table_version != DS_TABLE_VERSION2) {
+		LM_ERR("invalid table version (found %d , required %d or %d)\n"
 			"(use openser_mysql.sh reinstall)\n",
-			ver, DS_TABLE_VERSION );
+			_ds_table_version, DS_TABLE_VERSION, DS_TABLE_VERSION2 );
 		return -1;
 	}
 
@@ -452,13 +455,19 @@ int ds_load_db(void)
 {
 	int i, id, nr_rows, setn;
 	int flags;
+	int nrcols;
 	str uri;
 	db_res_t * res;
 	db_val_t * values;
 	db_row_t * rows;
 	
-	db_key_t query_cols[2] = {&ds_set_id_col, &ds_dest_uri_col};
+	db_key_t query_cols[3] = {&ds_set_id_col, &ds_dest_uri_col,
+								&ds_dest_flags_col};
 	
+	nrcols = 2;
+	if(_ds_table_version == DS_TABLE_VERSION2)
+		nrcols = 3;
+
 	if( (*crt_idx) != (*next_idx))
 	{
 		LM_WARN("load command already generated, aborting reload...\n");
@@ -477,7 +486,7 @@ int ds_load_db(void)
 	}
 
 	/*select the whole table and all the columns*/
-	if(ds_dbf.query(ds_db_handle,0,0,0,query_cols, 0, 2, 0, &res) < 0)
+	if(ds_dbf.query(ds_db_handle,0,0,0,query_cols,0,nrcols,0,&res) < 0)
 	{
 		LM_ERR("error while querying database\n");
 		return -1;
@@ -487,7 +496,7 @@ int ds_load_db(void)
 	rows 	= RES_ROWS(res);
 	if(nr_rows == 0)
 	{
-		LM_WARN("no dispatching data in the db, use an empty destination set\n");
+		LM_WARN("no dispatching data in the db -- empty destination set\n");
 		ds_dbf.free_result(ds_db_handle, res);
 		return 0;
 	}
@@ -504,6 +513,8 @@ int ds_load_db(void)
 		uri.s = VAL_STR(values+1).s;
 		uri.len = strlen(uri.s);
 		flags = 0;
+		if(nrcols==3)
+			flags = VAL_INT(values+2);
 
 		if(add_dest2list(id, uri, flags, *next_idx, &setn) != 0)
 			goto err2;

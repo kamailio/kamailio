@@ -52,6 +52,7 @@ extern str ds_db_url;
 extern str ds_table_name;
 extern str ds_set_id_col;
 extern str ds_dest_uri_col;
+extern str ds_dest_flags_col;
 
 typedef struct _ds_param
 {

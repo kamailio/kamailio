@@ -56,7 +56,7 @@ MODULE_VERSION
 
 #define DS_SET_ID_COL		"setid"
 #define DS_DEST_URI_COL		"destination"
-#define DS_FLAGS_COL		"flags"
+#define DS_DEST_FLAGS_COL	"flags"
 #define DS_TABLE_NAME 		"dispatcher"
 
 /** parameters */
@@ -81,10 +81,11 @@ str ds_ping_from   = {"sip:dispatcher@localhost", 24};
 static int ds_ping_interval = 0;
 
 /*db */
-str ds_db_url       = {NULL, 0};
-str ds_set_id_col   = str_init(DS_SET_ID_COL);
-str ds_dest_uri_col = str_init(DS_DEST_URI_COL);
-str ds_table_name   = str_init(DS_TABLE_NAME);
+str ds_db_url         = {NULL, 0};
+str ds_set_id_col     = str_init(DS_SET_ID_COL);
+str ds_dest_uri_col   = str_init(DS_DEST_URI_COL);
+str ds_dest_flags_col = str_init(DS_DEST_FLAGS_COL);
+str ds_table_name     = str_init(DS_TABLE_NAME);
 
 
 /** module functions */
@@ -130,6 +131,7 @@ static param_export_t params[]={
 	{"table_name", 	    STR_PARAM, &ds_table_name.s},
 	{"setid_col",       STR_PARAM, &ds_set_id_col.s},
 	{"destination_col", STR_PARAM, &ds_dest_uri_col.s},
+	{"flags_col",       STR_PARAM, &ds_dest_flags_col.s},
 	{"force_dst",       INT_PARAM, &ds_force_dst},
 	{"flags",           INT_PARAM, &ds_flags},
 	{"use_default",     INT_PARAM, &ds_use_default},
@@ -173,19 +175,17 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	if (ds_db_url.s)
-		ds_db_url.len     = strlen(ds_db_url.s);
-	ds_table_name.len = strlen(ds_table_name.s);
+	pv_spec_t avp_spec;
+
 	if (dst_avp_param.s)
-	dst_avp_param.len = strlen(dst_avp_param.s);
+		dst_avp_param.len = strlen(dst_avp_param.s);
 	if (grp_avp_param.s)
-	grp_avp_param.len = strlen(grp_avp_param.s);
+		grp_avp_param.len = strlen(grp_avp_param.s);
 	if (cnt_avp_param.s)
-	cnt_avp_param.len = strlen(cnt_avp_param.s);	
+		cnt_avp_param.len = strlen(cnt_avp_param.s);	
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 
-	pv_spec_t avp_spec;
 	LM_DBG("initializing ...\n");
 
 	if(init_data()!= 0)
@@ -193,6 +193,12 @@ static int mod_init(void)
 
 	if(ds_db_url.s)
 	{
+		ds_db_url.len     = strlen(ds_db_url.s);
+		ds_table_name.len = strlen(ds_table_name.s);
+		ds_set_id_col.len     = strlen(ds_set_id_col.s);
+		ds_dest_uri_col.len   = strlen(ds_dest_uri_col.s);
+		ds_dest_flags_col.len = strlen(ds_dest_flags_col.s);
+
 		if(init_ds_db()!= 0)
 		{
 			LM_ERR("could not initiate a connect to the database\n");
@@ -212,13 +218,15 @@ static int mod_init(void)
 		if (pv_parse_spec(&dst_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
 		{
-			LM_ERR("malformed or non AVP %.*s AVP definition\n", dst_avp_param.len, dst_avp_param.s);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+					dst_avp_param.len, dst_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &dst_avp_name, &dst_avp_type)!=0)
 		{
-			LM_ERR("[%.*s]- invalid AVP definition\n", dst_avp_param.len, dst_avp_param.s);
+			LM_ERR("[%.*s]- invalid AVP definition\n", dst_avp_param.len,
+					dst_avp_param.s);
 			return -1;
 		}
 	} else {
@@ -230,13 +238,15 @@ static int mod_init(void)
 		if (pv_parse_spec(&grp_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
 		{
-			LM_ERR("malformed or non AVP %.*s AVP definition\n", grp_avp_param.len, grp_avp_param.s);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+					grp_avp_param.len, grp_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &grp_avp_name, &grp_avp_type)!=0)
 		{
-			LM_ERR("[%.*s]- invalid AVP definition\n", grp_avp_param.len, grp_avp_param.s);
+			LM_ERR("[%.*s]- invalid AVP definition\n", grp_avp_param.len,
+					grp_avp_param.s);
 			return -1;
 		}
 	} else {
@@ -248,13 +258,15 @@ static int mod_init(void)
 		if (pv_parse_spec(&cnt_avp_param, &avp_spec)==0
 				|| avp_spec.type!=PVT_AVP)
 		{
-			LM_ERR("malformed or non AVP %.*s AVP definition\n", cnt_avp_param.len, cnt_avp_param.s);
+			LM_ERR("malformed or non AVP %.*s AVP definition\n",
+					cnt_avp_param.len, cnt_avp_param.s);
 			return -1;
 		}
 
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &cnt_avp_name, &cnt_avp_type)!=0)
 		{
-			LM_ERR("[%.*s]- invalid AVP definition\n", cnt_avp_param.len, cnt_avp_param.s);
+			LM_ERR("[%.*s]- invalid AVP definition\n", cnt_avp_param.len,
+					cnt_avp_param.s);
 			return -1;
 		}
 	} else {
