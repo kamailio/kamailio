@@ -2,6 +2,9 @@
 # dispatcher destination sets
 #
 
+# line format
+# setit(integer) destination(sip uri) flags (integer, optional)
+
 # proxies
 2 sip:127.0.0.1:5080
 2 sip:127.0.0.1:5082
