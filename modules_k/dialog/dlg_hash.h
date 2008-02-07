@@ -77,7 +77,7 @@ struct dlg_cell
 	unsigned int         h_entry;
 	unsigned int         state;
 	unsigned int         lifetime;
-	unsigned int         start_ts;
+	unsigned int         start_ts;    /* start time  (absolute UNIX ts)*/
 	unsigned int         flags;
 	unsigned int         from_rr_nb;
 	struct dlg_tl        tl;

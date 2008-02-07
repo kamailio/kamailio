@@ -302,7 +302,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		}
 
 		/* set start time */
-		dlg->start_ts = get_ticks();
+		dlg->start_ts = (unsigned int)(time(0));
 
 		/* save the settings to the database, 
 		 * if realtime saving mode configured- save dialog now
@@ -597,7 +597,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
 
 	CURR_DLG_ID = req->id;
-	CURR_DLG_LIFETIME = get_ticks()-dlg->start_ts;
+	CURR_DLG_LIFETIME = (unsigned int)(time(0))-dlg->start_ts;
 	CURR_DLG_STATUS = new_state;
 
 	/* run actions for the transition */
