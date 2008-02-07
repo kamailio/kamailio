@@ -55,9 +55,7 @@ db_con_t* dbt_init(const str* _sqlurl)
 	
 	if (!_sqlurl || !_sqlurl->s)
 	{
-#ifdef DBT_EXTRA_DEBUG
 		LM_ERR("invalid parameter value\n");
-#endif
 		return NULL;
 	}
 	_s.s = _sqlurl->s;
@@ -116,9 +114,7 @@ void dbt_close(db_con_t* _h)
 {
 	if (!_h) 
 	{
-#ifdef DBT_EXTRA_DEBUG
 		LM_ERR("invalid parameter value\n");
-#endif
 		return;
 	}
 	
@@ -137,9 +133,7 @@ int dbt_free_query(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
-#ifdef DBT_EXTRA_DEBUG
 		LM_ERR("invalid parameter value\n");
-#endif
 		return -1;
 	}
 
@@ -183,9 +177,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	
 	if ((!_h) || (!_r) || !CON_TABLE(_h))
 	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 	*_r = NULL;
@@ -195,14 +187,14 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
-		LM_DBG("table does not exist!\n");
+		LM_ERR("table does not exist!\n");
 		return -1;
 	}
 
 
 	if(!_tbc || _tbc->nrcols < _nc)
 	{
-		LM_DBG("table not loaded!\n");
+		LM_ERR("table not loaded!\n");
 		goto error;
 	}
 	if(_k)
@@ -231,7 +223,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 		{
 			if(dbt_result_extract_fields(_tbc, _drp, lres, _dres))
 			{
-				LM_DBG("failed to extract result fields!\n");
+				LM_ERR("failed to extract result fields!\n");
 				goto clean;
 			}
 		}
@@ -244,9 +236,7 @@ int dbt_query(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v,
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 
-#ifdef DBT_EXTRA_DEBUG
-	dbt_result_print(_dres);
-#endif
+	/* dbt_result_print(_dres); */
 	
 	DBT_CON_RESULT(_h) = _dres;
 	
@@ -264,7 +254,7 @@ error:
 		pkg_free(lkey);
 	if(lres)
 		pkg_free(lres);
-	LM_DBG("failed to query the table!\n");
+	LM_ERR("failed to query the table!\n");
 
 	return -1;
 
@@ -277,7 +267,6 @@ clean:
 		pkg_free(lres);
 	if(_dres)
 		dbt_result_free(_dres);
-	LM_DBG("make clean\n");
 
 	return -1;
 }
@@ -303,16 +292,12 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	
 	if (!_h || !CON_TABLE(_h))
 	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 	if(!_k || !_v || _n<=0)
 	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_DBG("no key-value to insert\n");
-#endif
+		LM_ERR("no key-value to insert\n");
 		return -1;
 	}
 	
@@ -320,13 +305,13 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
-		LM_DBG("table does not exist!\n");
+		LM_ERR("table does not exist!\n");
 		return -1;
 	}
 
 	if(_tbc->nrcols<_n)
 	{
-		LM_DBG("more values than columns!!\n");
+		LM_ERR("more values than columns!!\n");
 		goto error;
 	}
 	
@@ -339,7 +324,7 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 	_drp = dbt_row_new(_tbc->nrcols);
 	if(!_drp)
 	{
-		LM_DBG("no shm memory for a new row!!\n");
+		LM_ERR("no shm memory for a new row!!\n");
 		goto error;
 	}
 	
@@ -348,14 +333,14 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 		j = (lkey)?lkey[i]:i;
 		if(dbt_is_neq_type(_tbc->colv[j]->type, _v[i].type))
 		{
-			LM_DBG("incompatible types v[%d] - c[%d]!\n", i, j);
+			LM_ERR("incompatible types v[%d] - c[%d]!\n", i, j);
 			goto clean;
 		}
 		if(_v[i].type == DB_STRING)
 			_v[i].val.str_val.len = strlen(_v[i].val.string_val);
 		if(dbt_row_set_val(_drp, &(_v[i]), _tbc->colv[j]->type, j))
 		{
-			LM_DBG("cannot set v[%d] in c[%d]!\n", i, j);
+			LM_ERR("cannot set v[%d] in c[%d]!\n", i, j);
 			goto clean;
 		}
 		
@@ -363,21 +348,17 @@ int dbt_insert(db_con_t* _h, db_key_t* _k, db_val_t* _v, int _n)
 
 	if(dbt_table_add_row(_tbc, _drp))
 	{
-		LM_DBG("cannot insert the new row!!\n");
+		LM_ERR("cannot insert the new row!!\n");
 		goto clean;
 	}
 
-#ifdef DBT_EXTRA_DEBUG
-	dbt_print_table(_tbc, NULL);
-#endif
+	/* dbt_print_table(_tbc, NULL); */
 	
 	/* unlock databse */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
 	if(lkey)
 		pkg_free(lkey);
-
-	LM_DBG("done!\n");
 
     return 0;
 	
@@ -386,7 +367,7 @@ error:
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(lkey)
 		pkg_free(lkey);
-	LM_DBG("failed to insert row in table!\n");
+	LM_ERR("failed to insert row in table!\n");
     return -1;
 	
 clean:
@@ -398,7 +379,6 @@ clean:
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	
-	LM_DBG("make clean!\n");
     return -1;
 }
 
@@ -413,9 +393,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 
 	if (!_h || !CON_TABLE(_h))
 	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 
@@ -423,15 +401,14 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
-		LM_DBG("failed to load table <%.*s>!\n", CON_TABLE(_h)->len, CON_TABLE(_h)->s);
+		LM_ERR("failed to load table <%.*s>!\n", CON_TABLE(_h)->len,
+				CON_TABLE(_h)->s);
 		return -1;
 	}
 
 	if(!_k || !_v || _n<=0)
 	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("delete all values\n");
-#endif
+		LM_DBG("deleting all records\n");
 		dbt_table_free_rows(_tbc);
 		/* unlock databse */
 		return 0;
@@ -448,7 +425,6 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 		if(dbt_row_match(_tbc, _drp, lkey, _o, _v, _n))
 		{
 			// delete row
-			LM_DBG("deleting a row!\n");
 			if(_drp->prev)
 				(_drp->prev)->next = _drp->next;
 			else
@@ -464,9 +440,7 @@ int dbt_delete(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v, int _n)
 
 	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
-#ifdef DBT_EXTRA_DEBUG
-	dbt_print_table(_tbc, NULL);
-#endif
+	/* dbt_print_table(_tbc, NULL); */
 	
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
@@ -480,7 +454,7 @@ error:
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 
-	LM_DBG("failed to delete from table!\n");
+	LM_ERR("failed to delete from table!\n");
 	return -1;
 }
 
@@ -497,9 +471,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 
 	if (!_h || !CON_TABLE(_h) || !_uk || !_uv || _un <= 0)
 	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter value\n");
-#endif
+		LM_ERR("invalid parameters\n");
 		return -1;
 	}
 	
@@ -507,7 +479,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	_tbc = dbt_db_get_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
 	if(!_tbc)
 	{
-		LM_DBG("table does not exist!\n");
+		LM_ERR("table does not exist!\n");
 		return -1;
 	}
 
@@ -520,7 +492,6 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 	lres = dbt_get_refs(_tbc, _uk, _un);
 	if(!lres)
 		goto error;
-	LM_DBG("---- \n");
 	_drp = _tbc->rows;
 	while(_drp)
 	{
@@ -530,14 +501,14 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 			{
 				if(dbt_is_neq_type(_tbc->colv[lres[i]]->type, _uv[i].type))
 				{
-					LM_DBG("incompatible types!\n");
+					LM_ERR("incompatible types!\n");
 					goto error;
 				}
 				
 				if(dbt_row_update_val(_drp, &(_uv[i]),
 							_tbc->colv[lres[i]]->type, lres[i]))
 				{
-					LM_DBG("cannot set v[%d] in c[%d]!\n",
+					LM_ERR("cannot set v[%d] in c[%d]!\n",
 							i, lres[i]);
 					goto error;
 				}
@@ -548,9 +519,7 @@ int dbt_update(db_con_t* _h, db_key_t* _k, db_op_t* _o, db_val_t* _v,
 
 	dbt_table_update_flags(_tbc, DBT_TBFL_MODI, DBT_FL_SET, 1);
 	
-#ifdef DBT_EXTRA_DEBUG
-	dbt_print_table(_tbc, NULL);
-#endif
+	/* dbt_print_table(_tbc, NULL); */
 	
 	/* unlock database */
 	dbt_release_table(DBT_CON_CONNECTION(_h), CON_TABLE(_h));
@@ -571,7 +540,7 @@ error:
 	if(lres)
 		pkg_free(lres);
 	
-	LM_DBG("failed to update the table!\n");
+	LM_ERR("failed to update the table!\n");
 
 	return -1;
 }
