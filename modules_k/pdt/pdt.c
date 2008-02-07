@@ -62,6 +62,7 @@ MODULE_VERSION
 #define NR_KEYS			3
 
 int hs_two_pow = 4;
+int pdt_fetch_rows = 1000;
 
 /** structures containing prefix-domain pairs */
 hash_list_t **_dhash = NULL; 
@@ -122,6 +123,7 @@ static param_export_t params[]={
 	{"prefix",         STR_PARAM, &prefix.s},
 	{"char_list",      STR_PARAM, &pdt_char_list.s},
 	{"hsize_2pow",     INT_PARAM, &hs_two_pow},
+	{"fetch_rows",     INT_PARAM, &pdt_fetch_rows},
 	{0, 0, 0}
 };
 
@@ -171,6 +173,8 @@ static int mod_init(void)
 				MAX_HSIZE_TWO_POW);
 		return -1;
 	}
+	if(pdt_fetch_rows<=0)
+		pdt_fetch_rows = 1000;
 
 	pdt_char_list.len = strlen(pdt_char_list.s);
 	if(pdt_char_list.len<=0)
@@ -572,17 +576,6 @@ static int pdt_load_db(void)
 		LM_ERR("failed to use_table\n");
 		return -1;
 	}
-	
-	if((ret=pdt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
-				0, 3, &sdomain_column, &db_res))!=0
-			|| RES_ROW_N(db_res)<=0 )
-	{
-		pdt_dbf.free_result(db_con, db_res);
-		if( ret==0)
-			return 0;
-		else
-			return -1;
-	}
 
 	/* init the hash and tree in share memory */
 	if( (_dhash_new = init_hash_list(hs_two_pow)) == NULL)
@@ -591,45 +584,92 @@ static int pdt_load_db(void)
 		goto error;
 	}
 	
-	for(i=0; i<RES_ROW_N(db_res); i++)
-	{
-		/* check for NULL values ?!?! */
-		sdomain.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-		sdomain.len = strlen(sdomain.s);
-
-		p.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-		p.len = strlen(p.s);
-			
-		d.s = (char*)(RES_ROWS(db_res)[i].values[2].val.string_val);
-		d.len = strlen(d.s);
-
-		if(p.s==NULL || d.s==NULL || sdomain.s==NULL ||
-				p.len<=0 || d.len<=0 || sdomain.len<=0)
+	if (DB_CAPABILITY(pdt_dbf, DB_CAP_FETCH)) {
+		if(pdt_dbf.query(db_con,0,0,0,db_cols,0,3,&sdomain_column,0) < 0)
 		{
-			LM_ERR("Error - bad values in db\n");
-			continue;
+			LM_ERR("Error while querying db\n");
+			return -1;
 		}
+		if(pdt_dbf.fetch_result(db_con, &db_res, pdt_fetch_rows)<0)
+		{
+			LM_ERR("Error while fetching result\n");
+			if (db_res)
+				pdt_dbf.free_result(db_con, db_res);
+			goto error;
+		} else {
+			if(RES_ROW_N(db_res)==0)
+			{
+				free_hash_list(_dhash_new);
+				return 0;
+			}
+		}
+	} else {
+		if((ret=pdt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
+				0, 3, &sdomain_column, &db_res))!=0
+			|| RES_ROW_N(db_res)<=0 )
+		{
+			pdt_dbf.free_result(db_con, db_res);
+			if( ret==0)
+			{
+				free_hash_list(_dhash_new);
+				return 0;
+			} else {
+				goto error;
+			}
+		}
+	}
+
+	do {
+		for(i=0; i<RES_ROW_N(db_res); i++)
+		{
+			/* check for NULL values ?!?! */
+			sdomain.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
+			sdomain.len = strlen(sdomain.s);
+
+			p.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
+			p.len = strlen(p.s);
+			
+			d.s = (char*)(RES_ROWS(db_res)[i].values[2].val.string_val);
+			d.len = strlen(d.s);
+
+			if(p.s==NULL || d.s==NULL || sdomain.s==NULL ||
+					p.len<=0 || d.len<=0 || sdomain.len<=0)
+			{
+				LM_ERR("Error - bad values in db\n");
+				continue;
+			}
 		
-		if(pdt_check_pd(_dhash_new, &sdomain, &p, &d)==1)
-		{
-			LM_ERR("sdomain [%.*s]: prefix [%.*s] or domain <%.*s> "
-				"duplicated\n", sdomain.len, sdomain.s, p.len, p.s, d.len, d.s);
-			continue;
-		}
+			if(pdt_check_pd(_dhash_new, &sdomain, &p, &d)==1)
+			{
+				LM_ERR("sdomain [%.*s]: prefix [%.*s] or domain <%.*s> "
+					"duplicated\n", sdomain.len, sdomain.s, p.len, p.s,
+					d.len, d.s);
+				continue;
+			}
 
-		if(pdt_add_to_tree(&_ptree_new, &sdomain, &p, &d)<0)
-		{
-			LM_ERR("Error adding info to tree\n");
-			goto error;
-		}
+			if(pdt_add_to_tree(&_ptree_new, &sdomain, &p, &d)<0)
+			{
+				LM_ERR("Error adding info to tree\n");
+				goto error;
+			}
 			
-		if(pdt_add_to_hash(_dhash_new, &sdomain, &p, &d)!=0)
-		{
-			LM_ERR("Error adding info to hash\n");
-			goto error;
+			if(pdt_add_to_hash(_dhash_new, &sdomain, &p, &d)!=0)
+			{
+				LM_ERR("Error adding info to hash\n");
+				goto error;
+			}
+	 	}
+		if (DB_CAPABILITY(pdt_dbf, DB_CAP_FETCH)) {
+			if(pdt_dbf.fetch_result(db_con, &db_res, pdt_fetch_rows)<0) {
+				LM_ERR("Error while fetching!\n");
+				if (db_res)
+					pdt_dbf.free_result(db_con, db_res);
+				goto error;
+			}
+		} else {
+			break;
 		}
- 	}
-	
+	}  while(RES_ROW_N(db_res)>0);
 	pdt_dbf.free_result(db_con, db_res);
 
 
