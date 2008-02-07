@@ -36,12 +36,16 @@ echo "modparam(\"carrierroute\", \"db_url\", \"postgres://openserro:openserro@lo
 # setup database
 PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "insert into route_tree (id, carrier) values ('1', 'carrier1');
 insert into route_tree (id, carrier) values ('2', 'default');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('1','1','49','0','0.5','0','host1.local');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('2','1','49','0','0.5','0','host2.local');
+insert into route_tree (id, carrier) values ('3', 'premium');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('1','1','49','0','0.5','0','host1.local.domain');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('2','1','49','0','0.5','0','host2.local.domain');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('3','1','42','0','0.3','0','host3.local');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('4','1','42','0','0.7','0','host4.local');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('5','1','','0','0.1','0','host5.local');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('6','2','','0','1','0','host6.local');"
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('5','1','1','0','0.5','0','host1-ca.local:5060');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('6','1','1','0','0.5','0','host2-ca.local.domain:5060');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('10','1','','0','0.1','0','host5.local');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','0','1','0','host6');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','0','1','0','premium.host.local');"
 
 ../openser -w . -f $CFG > /dev/null
 ret=$?
@@ -59,16 +63,21 @@ fi ;
 
 if [ "$ret" -eq 0 ] ; then
 	tmp=`grep -v "Printing routing information:
-Printing tree for carrier carrier1 (1)
+Printing tree for carrier premium (3)
 Printing tree for domain 0
-        42: 70.140 %, 'host4.local': ON, '0', '', '', ''
-        42: 30.060 %, 'host3.local': ON, '0', '', '', ''
-        49: 50.000 %, 'host2.local': ON, '0', '', '', ''
-        49: 50.000 %, 'host1.local': ON, '0', '', '', ''
-      NULL: 100.000 %, 'host5.local': ON, '0', '', '', ''
+      NULL: 100.000 %, 'premium.host.local': ON, '0', '', '', ''
 Printing tree for carrier default (2)
 Printing tree for domain 0
-      NULL: 100.000 %, 'host6.local': ON, '0', '', '', ''" $TMPFILE`
+      NULL: 100.000 %, 'host6': ON, '0', '', '', ''
+Printing tree for carrier carrier1 (1)
+Printing tree for domain 0
+         1: 50.000 %, 'host2-ca.local.domain:5060': ON, '0', '', '', ''
+         1: 50.000 %, 'host1-ca.local:5060': ON, '0', '', '', ''
+        42: 70.140 %, 'host4.local': ON, '0', '', '', ''
+        42: 30.060 %, 'host3.local': ON, '0', '', '', ''
+        49: 50.000 %, 'host2.local.domain': ON, '0', '', '', ''
+        49: 50.000 %, 'host1.local.domain': ON, '0', '', '', ''
+      NULL: 100.000 %, 'host5.local': ON, '0', '', '', ''" $TMPFILE`
 	if [ "$tmp" = "" ] ; then
 		ret=0
 	else
@@ -81,8 +90,10 @@ killall -9 openser
 # cleanup database
 PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "delete from route_tree where id = 1;
 delete from route_tree where id = 2;
+delete from route_tree where id = 3;
 delete from carrierroute where carrier=1;
-delete from carrierroute where carrier=2;"
+delete from carrierroute where carrier=2;
+delete from carrierroute where carrier=3;"
 
 cd ../test
 
