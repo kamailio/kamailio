@@ -108,6 +108,7 @@
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
+#include <libgen.h>
 
 #include "config.h"
 #include "dprint.h"
@@ -893,6 +894,53 @@ error_port:
 }
 
 
+/** Update \c cfg_file variable to contain full pathname. The function updates
+ * the value of \c cfg_file global variable to contain full absolute pathname
+ * to the main configuration file of SER. The function uses CFG_FILE macro to
+ * determine the default path to the configuration file if the user did not
+ * specify one using the command line option. If \c cfg_file contains an
+ * absolute pathname then it is used unmodified, if it contains a relative
+ * pathanme than the value returned by \c getcwd function will be added at the
+ * beginning. This function must be run before SER changes its current working
+ * directory to / (in daemon mode).
+ * @return Zero on success, negative number
+ * on error.
+ */
+int fix_cfg_file(void)
+{
+	char* res = NULL;
+	size_t max_len, cwd_len, cfg_len;
+	
+	if (cfg_file == NULL) cfg_file = CFG_FILE;
+	if (cfg_file[0] == '/') return 0;
+	
+	/* cfg_file contains a relative pathname, get the current
+	 * working directory and add it at the beginning
+	 */
+	cfg_len = strlen(cfg_file);
+	
+	max_len = pathmax();
+	if ((res = malloc(max_len)) == NULL) goto error;
+	
+	if (getcwd(res, max_len) == NULL) goto error;
+	cwd_len = strlen(res);
+	
+	/* Make sure that the buffer is big enough */
+	if (cwd_len + 1 + cfg_len >= max_len) goto error;
+	
+	res[cwd_len] = '/';
+	memcpy(res + cwd_len + 1, cfg_file, cfg_len);
+	
+	res[cwd_len + 1 + cfg_len] = '\0'; /* Add terminating zero */
+	cfg_file = res;
+	return 0;
+	
+ error:
+	fprintf(stderr, "ERROR: Unable to fix cfg_file to contain full pathname\n");
+	if (res) free(res);
+	return -1;
+}
+
 
 /* main loop */
 int main_loop()
@@ -1350,8 +1398,9 @@ int main(int argc, char** argv)
 
 	if (init_routes()<0) goto error;
 	if (init_nonsip_hooks()<0) goto error;
-	/* fill missing arguments with the default values*/
-	if (cfg_file==0) cfg_file=CFG_FILE;
+
+	/* Fix the value of cfg_file variable.*/
+	if (fix_cfg_file() < 0) goto error;
 
 	/* load config file or die */
 	cfg_stream=fopen (cfg_file, "r");
