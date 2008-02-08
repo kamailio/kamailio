@@ -53,11 +53,6 @@ int bdb_convert_row( db_res_t* _res, char *bdb_result, int* _lres);
 int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx);
 int* bdb_get_colmap(table_p _tp, db_key_t* _k, int _n);
 
-int bdb_free_result(db_res_t* _res);
-int bdb_free_columns(db_res_t* _res);
-int bdb_free_rows(db_res_t* _res);
-int bdb_free_row(db_row_t* _row);
-
 int bdb_is_neq_type(db_type_t _t0, db_type_t _t1);
 int bdb_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r, int* lkey );
 int bdb_cmp_val(db_val_t* _vp, db_val_t* _v);

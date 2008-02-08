@@ -204,7 +204,7 @@ db_con_t* bdb_init(const str* _sqlurl)
 void bdb_close(db_con_t* _h)
 {
 	if(BDB_CON_RESULT(_h))
-		bdb_free_result(BDB_CON_RESULT(_h));
+		db_free_result(BDB_CON_RESULT(_h));
 	pkg_free(_h);
 }
 
@@ -319,7 +319,7 @@ void bdb_check_reload(db_con_t* _con)
 int bdb_free_query(db_con_t* _h, db_res_t* _r)
 {
 	if(_r)
-		bdb_free_result(_r);
+		db_free_result(_r);
 	if(_h)
 		BDB_CON_RESULT(_h) = NULL;
 	return 0;
@@ -597,7 +597,7 @@ error:
 	if(lres)
 		pkg_free(lres);
 	if(*_r) 
-		bdb_free_result(*_r);
+		db_free_result(*_r);
 	*_r = NULL;
 	
 	return ret;
@@ -979,7 +979,7 @@ int _bdb_delete_cursor(db_con_t* _h, db_key_t* _k, db_op_t* _op, db_val_t* _v, i
 		}
 		
 		memset(dbuf, 0, MAX_ROW_SIZE);
-		bdb_free_rows( _r);
+		db_free_rows( _r);
 	}
 	ret = 0;
 	
@@ -987,7 +987,7 @@ error:
 	if(dbcp)
 		dbcp->c_close(dbcp);
 	if(_r)
-		bdb_free_result(_r);
+		db_free_result(_r);
 	if(lkey)
 		pkg_free(lkey);
 	
