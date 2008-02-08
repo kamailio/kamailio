@@ -135,6 +135,7 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 	case DB_STRING:
 		VAL_STRING(_v) = _s;
 		VAL_TYPE(_v) = DB_STRING;
+		VAL_FREE(_v) = 1;
 		
 		if( strlen(_s)==4 && !strncasecmp(_s, "NULL", 4) )
 			VAL_NULL(_v) = 1;
@@ -145,6 +146,7 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 		VAL_STR(_v).s = (char*)_s;
 		VAL_STR(_v).len = _l;
 		VAL_TYPE(_v) = DB_STR;
+		VAL_FREE(_v) = 1;
 
 		if( strlen(_s)==4 && !strncasecmp(_s, "NULL", 4) )
 			VAL_NULL(_v) = 1;

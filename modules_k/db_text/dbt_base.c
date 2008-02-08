@@ -137,7 +137,7 @@ int dbt_free_query(db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	if(dbt_free_result(_r) < 0) 
+	if(db_free_result(_r) < 0) 
 	{
 		LM_ERR("unable to free result structure\n");
 		return -1;

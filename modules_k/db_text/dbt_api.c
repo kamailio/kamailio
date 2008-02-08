@@ -35,45 +35,6 @@
 #include "dbt_res.h"
 #include "dbt_api.h"
 
-/*
- * Release memory used by columns
- */
-int dbt_free_columns(db_res_t* _r)
-{
-	if (!_r) 
-	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter\n");
-#endif
-		return -1;
-	}
-	if (RES_NAMES(_r)) 
-		pkg_free(RES_NAMES(_r));
-	if (RES_TYPES(_r)) 
-		pkg_free(RES_TYPES(_r));
-	return 0;
-}
-
-
-/*
- * Release memory used by a result structure
- */
-int dbt_free_result(db_res_t* _r)
-{
-	if (!_r) 
-	{
-#ifdef DBT_EXTRA_DEBUG
-		LM_ERR("invalid parameter\n");
-#endif
-		return -1;
-	}
-	dbt_free_columns(_r);
-	db_free_rows(_r);
-	pkg_free(_r);
-	return 0;
-}
-
-
 int dbt_use_table(db_con_t* _h, const str* _t)
 {
 	return db_use_table(_h, _t);
@@ -85,10 +46,8 @@ int dbt_use_table(db_con_t* _h, const str* _t)
  */
 int dbt_convert_result(db_con_t* _h, db_res_t* _r)
 {
-	if ((!_h) || (!_r)) {
-#ifdef DBT_EXTRA_DEBUG
+	if (!_h || !_r) {
 		LM_ERR("invalid parameter\n");
-#endif
 		return -1;
 	}
 	if (dbt_get_columns(_h, _r) < 0) {
@@ -98,7 +57,7 @@ int dbt_convert_result(db_con_t* _h, db_res_t* _r)
 
 	if (dbt_convert_rows(_h, _r) < 0) {
 		LM_ERR("failed to convert rows\n");
-		dbt_free_columns(_r);
+		db_free_columns(_r);
 		return -3;
 	}
 	return 0;
@@ -110,11 +69,8 @@ int dbt_convert_result(db_con_t* _h, db_res_t* _r)
  */
 int dbt_get_result(db_con_t* _h, db_res_t** _r)
 {
-	if ((!_h) || (!_r)) 
-	{
-#ifdef DBT_EXTRA_DEBUG
+	if (!_h || !_r) {
 		LM_ERR("invalid parameter value\n");
-#endif
 		return -1;
 	}
 
@@ -128,7 +84,7 @@ int dbt_get_result(db_con_t* _h, db_res_t** _r)
 	*_r = db_new_result();
 	if (*_r == 0) 
 	{
-		LM_ERR("no pkg memory left\n");
+		LM_ERR("no private memory left\n");
 		return -2;
 	}
 
@@ -147,45 +103,41 @@ int dbt_get_result(db_con_t* _h, db_res_t** _r)
  */
 int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 {
-	int n, i;
+	int col;
 	
-	if ((!_h) || (!_r)) 
-	{
-#ifdef DBT_EXTRA_DEBUG
+	if (!_h || !_r) {
 		LM_ERR("invalid parameter\n");
-#endif
 		return -1;
 	}
 	
-	n = DBT_CON_RESULT(_h)->nrcols;
-	if (!n) 
-	{
+	RES_COL_N(_r) = DBT_CON_RESULT(_h)->nrcols;
+	if (!RES_COL_N(_r)) {
 		LM_ERR("no columns\n");
 		return -2;
 	}
-	
-	RES_NAMES(_r) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * n);
-	if (!RES_NAMES(_r))
-	{
-		LM_ERR("no pkg memory left\n");
+	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
+		LM_ERR("could not allocate columns");
 		return -3;
 	}
 
-	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * n);
-	if (!RES_TYPES(_r)) 
-	{
-		LM_ERR("no pkg memory left\n");
-		pkg_free(RES_NAMES(_r));
-		return -4;
-	}
+	for(col = 0; col < RES_COL_N(_r); col++) {
+		/* 
+		 * Its would be not necessary to allocate here new memory, because of
+		 * the internal structure of the db_text module. But we do this anyway
+		 * to stay confirm to the other database modules.
+		 */
+		RES_NAMES(_r)[col] = (str*)pkg_malloc(sizeof(str));
+		if (! RES_NAMES(_r)[col]) {
+			LM_ERR("no private memory left\n");
+			db_free_columns(_r);
+			return -4;
+		}
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p", sizeof(str), col,
+				RES_NAMES(_r)[col]);
+		RES_NAMES(_r)[col]->s = DBT_CON_RESULT(_h)->colv[col].name.s;
+		RES_NAMES(_r)[col]->len = DBT_CON_RESULT(_h)->colv[col].name.len;
 
-	RES_COL_N(_r) = n;
-
-	for(i = 0; i < n; i++) 
-	{
-		// perhaps it would be better to allocate here new memory?
-		RES_NAMES(_r)[i] = &(DBT_CON_RESULT(_h)->colv[i].name);
-		switch( DBT_CON_RESULT(_h)->colv[i].type) 
+		switch(DBT_CON_RESULT(_h)->colv[col].type)
 		{
 			case DB_STR:
 			case DB_STRING:
@@ -193,12 +145,15 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 			case DB_INT:
 			case DB_DATETIME:
 			case DB_DOUBLE:
-				RES_TYPES(_r)[i] = DBT_CON_RESULT(_h)->colv[i].type;
+				RES_TYPES(_r)[col] = DBT_CON_RESULT(_h)->colv[col].type;
 			break;
 			default:
-				RES_TYPES(_r)[i] = DB_STR;
+				LM_WARN("unhandled data type column (%.*s) type id (%d), "
+						"use STR as default\n", RES_NAMES(_r)[col]->len,
+						RES_NAMES(_r)[col]->s, DBT_CON_RESULT(_h)->colv[col].type);
+				RES_TYPES(_r)[col] = DB_STR;
 			break;
-		}		
+		}
 	}
 	return 0;
 }
@@ -208,48 +163,40 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
  */
 int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
 {
-	int n, i;
+	int col, len;
 	dbt_row_p _rp = NULL;
-	if ((!_h) || (!_r)) 
-	{
-#ifdef DBT_EXTRA_DEBUG
+	if (!_h || !_r) {
 		LM_ERR("invalid parameter\n");
-#endif
 		return -1;
 	}
-	n = DBT_CON_RESULT(_h)->nrrows;
-	RES_ROW_N(_r) = n;
-	if (!n) 
-	{
-		RES_ROWS(_r) = 0;
+	RES_ROW_N(_r) = DBT_CON_RESULT(_h)->nrrows;
+	if (!RES_ROW_N(_r)) {
 		return 0;
 	}
-	RES_ROWS(_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
-	if (!RES_ROWS(_r)) 
-	{
-		LM_ERR("no pkg memory left\n");
+	len = sizeof(db_row_t) * RES_ROW_N(_r);
+	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
+	if (!RES_ROWS(_r)) {
+		LM_ERR("no private memory left\n");
 		return -2;
 	}
-	i = 0;
+	LM_DBG("allocate %d bytes for %d rows at %p", len, RES_ROW_N(_r), RES_ROWS(_r));
+	col = 0;
 	_rp = DBT_CON_RESULT(_h)->rows;
-	while(_rp)
-	{
+	while(_rp) {
 		DBT_CON_ROW(_h) = _rp;
-		if (!DBT_CON_ROW(_h)) 
-		{
+		if (!DBT_CON_ROW(_h)) {
 			LM_ERR("failed to get current row\n");
-			RES_ROW_N(_r) = i;
+			RES_ROW_N(_r) = col;
 			db_free_rows(_r);
 			return -3;
 		}
-		if (dbt_convert_row(_h, _r, &(RES_ROWS(_r)[i])) < 0) 
-		{
-			LM_ERR("failed to convert row #%d\n", i);
-			RES_ROW_N(_r) = i;
+		if (dbt_convert_row(_h, _r, &(RES_ROWS(_r)[col])) < 0) {
+			LM_ERR("failed to convert row #%d\n", col);
+			RES_ROW_N(_r) = col;
 			db_free_rows(_r);
 			return -4;
 		}
-		i++;
+		col++;
 		_rp = _rp->next;
 	}
 	return 0;
@@ -260,25 +207,23 @@ int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
  */
 int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
-	int i;
-	if ((!_h) || (!_r) || (!_res)) 
-	{
-#ifdef DBT_EXTRA_DEBUG
+	int i, len;
+	if (!_h || !_r || !_res) {
 		LM_ERR("invalid parameter value\n");
-#endif
 		return -1;
 	}
 
-	ROW_VALUES(_r) = (db_val_t*)pkg_malloc(sizeof(db_val_t) * RES_COL_N(_res));
+	len = sizeof(db_val_t) * RES_COL_N(_res);
+	ROW_VALUES(_r) = (db_val_t*)pkg_malloc(len);
+	if (!ROW_VALUES(_r)) {
+		LM_ERR("no private memory left\n");
+		return -1;
+	}
+	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(_r));
 	ROW_N(_r) = RES_COL_N(_res);
-	if (!ROW_VALUES(_r)) 
-	{
-		LM_ERR("no pkg memory left\n");
-		return -1;
-	}
+	memset(ROW_VALUES(_r), 0, len);
 
-	for(i = 0; i < RES_COL_N(_res); i++) 
-	{
+	for(i = 0; i < RES_COL_N(_res); i++) {
 		(ROW_VALUES(_r)[i]).nul = DBT_CON_ROW(_h)->fields[i].nul;
 		switch(RES_TYPES(_res)[i])
 		{
