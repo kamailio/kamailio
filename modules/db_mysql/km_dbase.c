@@ -44,7 +44,7 @@
 #include "my_con.h"
 #include "res.h"
 #include "row.h"
-#include "db_mod.h"
+#include "db_mysql.h"
 #include "dbase.h"
 
 
