@@ -36,103 +36,50 @@
 
 int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 {
-	int col, len;
+	int col;
 
-	if (!_res) 
-	{
-		LM_ERR("db_res_t parameter cannot be NULL\n");
+	if (!_res) {
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
-	if (_nc < 0 ) 
-	{
+	if (_nc < 0 ) {
 		LM_ERR("_nc parameter cannot be negative \n");
 		return -1;
 	}
-
-        /* the number of rows (tuples) in the query result. */
+    /* the number of rows (tuples) in the query result. */
 	RES_NUM_ROWS(_res) = 1;
 
 	if (!_lres)
 		_nc = _tp->ncols;
 
-	/* Allocate storage to hold a pointer to each column name */
-	RES_NAMES(_res) = (db_key_t*)pkg_malloc(sizeof(db_key_t) * _nc);
-
-#ifdef BDB_EXTRA_DEBUG
-	LM_DBG("%p=pkg_malloc(%lu) RES_NAMES\n", RES_NAMES(_res)
-		, (unsigned long)(sizeof(db_key_t) * _nc));
-#endif
-
-	if (!RES_NAMES(_res)) 
-	{
-		LM_ERR("Failed to allocate %lu bytes for column names\n"
-			, (unsigned long)(sizeof(db_key_t) * _nc));
-		
-		return -3;
-	}
-
-	/* Allocate storage to hold the type of each column */
-	RES_TYPES(_res) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * _nc);
-
-#ifdef BDB_EXTRA_DEBUG
-	LM_DBG("%p=pkg_malloc(%lu) RES_TYPES\n", RES_TYPES(_res)
-		, (unsigned long)(sizeof(db_type_t) * _nc));
-#endif
-
-	if (!RES_TYPES(_res)) 
-	{
-		LM_ERR("Failed to allocate %lu bytes for column types\n"
-		, (unsigned long)(sizeof(db_type_t) * _nc));
-		
-		/* Free previously allocated storage that was to hold column names */
-		LM_DBG("%p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
-		pkg_free(RES_NAMES(_res));
-		return -4;
-	}
-
 	/* Save number of columns in the result structure */
 	RES_COL_N(_res) = _nc;
 
-	/* 
+	if (db_allocate_columns(_res, RES_COL_N(_res)) != 0) {
+		LM_ERR("could not allocate columns");
+		return -2;
+	}
+
+	/*
 	 * For each column both the name and the data type are saved.
 	 */
-	for(col = 0; col < _nc; col++) 
-	{
+	for(col = 0; col < RES_COL_N(_res); col++) {
 		column_p cp = NULL;
 		cp = (_lres) ? _tp->colp[_lres[col]] : _tp->colp[col];
-		len = cp->name.len;
 
 		RES_NAMES(_res)[col] = (str*)pkg_malloc(sizeof(str));
 		if (! RES_NAMES(_res)[col]) {
 			LM_ERR("no private memory left\n");
-			pkg_free(RES_NAMES(_res));
-			pkg_free(RES_TYPES(_res));
-			// FIXME we should also free all previous allocated RES_NAMES[col]
-			return -5;
+			db_free_columns(_res);
+			return -3;
 		}
-		
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]\n"
-			, RES_NAMES(_res)[col], len, col);
-#endif
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
+				RES_NAMES(_res)[col]);
 
-		RES_NAMES(_res)[col]->s = (char*)pkg_malloc(len);
-		
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("%p=pkg_malloc(%d) RES_NAMES[%d]->s\n"
-			, RES_NAMES(_res)[col]->s, len, col);
-#endif
-
-		if (! RES_NAMES(_res)[col]->s)
-		{
-			LM_ERR("Failed to allocate %d bytes to hold column name\n", len+1);
-			return -1;
-		}
-		
-		memset((char *)RES_NAMES(_res)[col]->s, 0, len);
-		strncpy((char *)RES_NAMES(_res)[col]->s, cp->name.s, len);
-		RES_NAMES(_res)[col]->len = len;
+		/* The pointer that is here returned is part of the result structure. */
+		RES_NAMES(_res)[col]->s = cp->name.s;
+		RES_NAMES(_res)[col]->len = cp->name.len;
 
 		LM_DBG("RES_NAMES(%p)[%d]=[%.*s]\n", RES_NAMES(_res)[col]
 			, col, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s);
@@ -154,20 +101,19 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	db_row_t* row = NULL;
 	col = len = i = j = 0;
 	
-	if (!_res)
-	{
-		LM_ERR("bdb_convert_row: db_res_t parameter cannot be NULL\n");
+	if (!_res) {
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
 	/* Allocate a single row structure */
-	len = sizeof(db_row_t); 
+	len = sizeof(db_row_t);
 	row = (db_row_t*)pkg_malloc(len);
-	if (!row)
-	{
-		LM_ERR("Failed to allocate %d bytes for row structure\n", len);
+	if (!row) {
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	LM_DBG("allocate %d bytes for row %p\n", len, row);
 	memset(row, 0, len);
 	RES_ROWS(_res) = row;
 	
@@ -177,16 +123,12 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	/* Allocate storage to hold the bdb result values */
 	len = sizeof(db_val_t) * RES_COL_N(_res);
 	ROW_VALUES(row) = (db_val_t*)pkg_malloc(len);
-    LM_DBG("%p=pkg_malloc(%d) ROW_VALUES for %d columns\n"
-		 , ROW_VALUES(row)
-		 , len
-		 , RES_COL_N(_res));
 
-	if (!ROW_VALUES(row)) 
-	{	
-		LM_ERR("bdb_convert_row: No memory left\n");
+	if (!ROW_VALUES(row)) {
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(row));
 	memset(ROW_VALUES(row), 0, len);
 
 	/* Save the number of columns in the ROW structure */
@@ -198,11 +140,11 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	 */
 	len = sizeof(char *) * RES_COL_N(_res);
 	row_buf = (char **)pkg_malloc(len);
-	if (!row_buf)
-	{
-		LM_ERR("Failed to allocate %d bytes for row buffer\n", len);
+	if (!row_buf) {
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_res), len, row_buf);
 	memset(row_buf, 0, len);
 
 	/*populate the row_buf with bdb_result*/
@@ -210,58 +152,49 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	s = strtok(bdb_result, DELIM);
 	while( s!=NULL)
 	{
-
-		if(_lres)
-		{	
+		if(_lres) {
 			/*only requested cols (_c was specified)*/
 			for(i=0; i<ROW_N(row); i++)
-			{	if (col == _lres[i])
-				{
+			{	if (col == _lres[i]) {
 					len = strlen(s);
 					row_buf[i] = pkg_malloc(len+1);
-					if (!row_buf[i])
-					{
-						LM_ERR("Failed to allocate %d bytes for row_buf[%d]\n", len+1, col);
+					if (!row_buf[i]) {
+						LM_ERR("no private memory left\n");
 						return -1;
 					}
+					LM_DBG("allocated %d bytes for row_buf[%d] at %p\n", len, i, row_buf[i]);
 					memset(row_buf[i], 0, len+1);
 					strncpy(row_buf[i], s, len);
 				}
 				
 			}
 		}
-		else 
-		{
+		else {
 			len = strlen(s);
 			row_buf[col] = pkg_malloc(len+1);
 			if (!row_buf[col]) {
-				LM_ERR("Failed to allocate %d bytes for row_buf[%d]\n", len+1, col);
+				LM_ERR("no private memory left\n");
 				return -1;
 			}
+				LM_DBG("allocated %d bytes for row_buf[%d] at %p\n", len, col, row_buf[col]);
 			memset(row_buf[col], 0, len+1);
 			strncpy(row_buf[col], s, len);
 		}
-
 		s = strtok(NULL, DELIM);
 		col++;
 	}
 
 	/*do the type conversion per col*/
-        for(col = 0; col < ROW_N(row); col++) 
-	{
+        for(col = 0; col < ROW_N(row); col++) {
 		/*skip the unrequested cols (as already specified)*/
 		if(!row_buf[col])  continue;
 
-		LM_DBG("col[%d]\n", col);
 		/* Convert the string representation into the value representation */
-		if (bdb_str2val(	RES_TYPES(_res)[col]
-				, &(ROW_VALUES(row)[col])
-				, row_buf[col]
-				, strlen(row_buf[col])) < 0) 
-		{
-			LM_ERR("Error while converting value\n");
-			LM_DBG("%p=pkg_free() _row\n", row);
-			bdb_free_row(row);
+		if (bdb_str2val(RES_TYPES(_res)[col], &(ROW_VALUES(row)[col])
+				, row_buf[col], strlen(row_buf[col])) < 0) {
+			LM_ERR("while converting value\n");
+			LM_DBG("freeing row at %p\n", row);
+			db_free_row(row);
 			return -3;
 		}
 	}
@@ -275,27 +208,22 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 	 *
 	 * Warning: when the converted row is no longer needed, the data types whose addresses
 	 * were saved in the db_val_t structure must be freed or a memory leak will happen.
-	 * This processing should happen in the bdb_free_row() subroutine.  The caller of
-	 * this routine should ensure that bdb_free_rows(), bdb_free_row() or bdb_free_result()
+	 * This processing should happen in the db_free_row() subroutine.  The caller of
+	 * this routine should ensure that db_free_rows(), db_free_row() or db_free_result()
 	 * is eventually called.
 	 */
-	for (col=0; col<RES_COL_N(_res); col++) 
-	{
+	for (col = 0; col < RES_COL_N(_res); col++) {
 		switch (RES_TYPES(_res)[col]) 
 		{
 			case DB_STRING:
 			case DB_STR:
 				break;
 			default:
-#ifdef BDB_EXTRA_DEBUG
 			LM_DBG("col[%d] Col[%.*s] Type[%d] Freeing row_buf[%p]\n", col
-				, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s, RES_TYPES(_res)[col]
-				, (char*) row_buf[col]);
-			
-			LM_DBG("%p=pkg_free() row_buf[%d]\n", (char *)row_buf[col], col);
-#endif
-
-			pkg_free((char *)row_buf[col]);
+				, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s,
+				  RES_TYPES(_res)[col], row_buf[col]);
+			LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
+			pkg_free(row_buf[col]);
 		}
 		/* The following housekeeping may not be technically required, but it is a good practice
 		 * to NULL pointer fields that are no longer valid.  Note that DB_STRING fields have not
@@ -306,8 +234,7 @@ int bdb_convert_row(db_res_t* _res, char *bdb_result, int* _lres)
 		 */
 		row_buf[col] = (char *)NULL;
 	}
-
-	LM_DBG("%p=pkg_free() row_buf\n", row_buf);
+	LM_DBG("freeing row buffer at %p\n", row_buf);
 	pkg_free(row_buf);
 	row_buf = NULL;
 
@@ -323,9 +250,8 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	db_row_t* row = NULL;
 	col = len = i = j = 0;
 	
-	if (!_res)
-	{
-		LM_ERR("db_res_t parameter cannot be NULL\n");
+	if (!_res) {
+		LM_ERR("invalid parameter");
 		return -1;
 	}
 	
@@ -335,12 +261,11 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	len = sizeof(db_val_t) * RES_COL_N(_res);
 	ROW_VALUES(row) = (db_val_t*)pkg_malloc(len);
 	
-	if (!ROW_VALUES(row)) 
-	{
-		LM_ERR("No private memory left\n");
+	if (!ROW_VALUES(row)) {
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
-	
+	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(row));
 	memset(ROW_VALUES(row), 0, len);
 	
 	/* Save the number of columns in the ROW structure */
@@ -352,40 +277,34 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	 */
 	len = sizeof(char *) * RES_COL_N(_res);
 	row_buf = (char **)pkg_malloc(len);
-	if (!row_buf) 
-	{
-		LM_ERR("Failed to allocate %d bytes for row buffer\n", len);
+	if (!row_buf) {
+		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_res), len, row_buf);
 	memset(row_buf, 0, len);
 	
 	/*populate the row_buf with bdb_result*/
 	/*bdb_result is memory from our callers stack so we copy here*/
 	s = strtok(bdb_result, DELIM);
 	while( s!=NULL)
-	{
-		
-		if(_lres)
-		{	
+	{	
+		if(_lres) {
 			/*only requested cols (_c was specified)*/
-			for(i=0; i<ROW_N(row); i++)
-			{	if (col == _lres[i])
-				{
+			for(i=0; i<ROW_N(row); i++) {
+				if (col == _lres[i]) {
 					len = strlen(s);
 					row_buf[i] = pkg_malloc(len+1);
-					if (!row_buf[i])
-					{
-						LM_ERR("Failed to allocate %d bytes for row_buf[%d]\n", len+1, col);
+					if (!row_buf[i]) {
+						LM_ERR("no private memory left\n");
 						return -1;
 					}
 					memset(row_buf[i], 0, len+1);
 					strncpy(row_buf[i], s, len);
 				}
-				
 			}
 		}
-		else 
-		{
+		else {
 			len = strlen(s);
 
 #ifdef BDB_EXTRA_DEBUG
@@ -393,22 +312,19 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 #endif
 
 			row_buf[col] = (char*)pkg_malloc(len+1);
-			if (!row_buf[col]) 
-			{
-				LM_ERR("Failed to allocate %d bytes for row_buf[%d]\n", len+1, col);
+			if (!row_buf[col]) {
+				LM_ERR("no private memory left\n");
 				return -1;
 			}
 			memset(row_buf[col], 0, len+1);
 			strncpy(row_buf[col], s, len);
 		}
-		
 		s = strtok(NULL, DELIM);
 		col++;
 	}
 	
 	/*do the type conversion per col*/
-	for(col = 0; col < ROW_N(row); col++) 
-	{
+	for(col = 0; col < ROW_N(row); col++) {
 #ifdef BDB_EXTRA_DEBUG
 		LM_DBG("tc 1: col[%i] == ", col );
 #endif
@@ -421,18 +337,13 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 #endif
 
 		/* Convert the string representation into the value representation */
-		if (bdb_str2val(	RES_TYPES(_res)[col]
-				, &(ROW_VALUES(row)[col])
-				, row_buf[col]
-				, strlen(row_buf[col])) < 0) 
-		{
-			LM_ERR("Error while converting value\n");
-			LM_DBG("%p=pkg_free() _row\n", row);
-			bdb_free_row(row);
+		if (bdb_str2val(RES_TYPES(_res)[col], &(ROW_VALUES(row)[col])
+				, row_buf[col], strlen(row_buf[col])) < 0) {
+			LM_ERR("while converting value\n");
+			LM_DBG("freeing row at %p\n", row);
+			db_free_row(row);
 			return -3;
 		}
-		
-		LM_DBG("col[%d] : %s\n", col, row_buf[col] );
 	}
 
 	/* pkg_free() must be done for the above allocations now that the row has been converted.
@@ -444,19 +355,17 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 	 *
 	 * Warning: when the converted row is no longer needed, the data types whose addresses
 	 * were saved in the db_val_t structure must be freed or a memory leak will happen.
-	 * This processing should happen in the bdb_free_row() subroutine.  The caller of
-	 * this routine should ensure that bdb_free_rows(), bdb_free_row() or bdb_free_result()
+	 * This processing should happen in the db_free_row() subroutine.  The caller of
+	 * this routine should ensure that db_free_rows(), db_free_row() or db_free_result()
 	 * is eventually called.
 	 */
-	for (col=0; col<RES_COL_N(_res); col++) 
-	{
-		if (RES_TYPES(_res)[col] != DB_STRING) 
-		{
-#ifdef BDB_EXTRA_DEBUG
-			LM_DBG("[%d][%d] Col[%.*s] Type[%d] Freeing row_buf[%i]\n"
-				, _rx, col, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s, RES_TYPES(_res)[col], col);
-#endif
-			pkg_free((char *)row_buf[col]);
+	for (col = 0; col < RES_COL_N(_res); col++) {
+		if (RES_TYPES(_res)[col] != DB_STRING) {
+			LM_DBG("col[%d] Col[%.*s] Type[%d] Freeing row_buf[%p]\n", col
+				, RES_NAMES(_res)[col]->len, RES_NAMES(_res)[col]->s,
+				  RES_TYPES(_res)[col], row_buf[col]);
+			LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
+			pkg_free(row_buf[col]);
 		}
 		/* The following housekeeping may not be technically required, but it is a good practice
 		 * to NULL pointer fields that are no longer valid.  Note that DB_STRING fields have not
@@ -467,8 +376,7 @@ int bdb_append_row(db_res_t* _res, char *bdb_result, int* _lres, int _rx)
 		 */
 		row_buf[col] = (char *)NULL;
 	}
-
-	LM_DBG("%p=pkg_free() row_buf\n", row_buf);
+	LM_DBG("freeing row buffer at %p\n", row_buf);
 	pkg_free(row_buf);
 	row_buf = NULL;
 	return 0;
@@ -489,151 +397,23 @@ int* bdb_get_colmap(table_p _dtp, db_key_t* _k, int _n)
 	
 	for(i=0; i < _n; i++)
 	{
-		for(j=0; j<_dtp->ncols; j++)
-		{
+		for(j=0; j<_dtp->ncols; j++) {
 			if(_k[i]->len==_dtp->colp[j]->name.len
 			&& !strncasecmp(_k[i]->s, _dtp->colp[j]->name.s,
-						_dtp->colp[j]->name.len))
-			{
+						_dtp->colp[j]->name.len)) {
 				_lref[i] = j;
 				break;
 			}
 		}
-		
-		if(i>=_dtp->ncols)
-		{
+		if(i>=_dtp->ncols) {
 			LM_DBG("ERROR column <%.*s> not found\n", _k[i]->len, _k[i]->s);
 			pkg_free(_lref);
 			return NULL;
 		}
-		
 	}
 	return _lref;
 }
 
-
-int bdb_free_result(db_res_t* _res)
-{
-	bdb_free_columns(_res);
-	bdb_free_rows(_res);
-	LM_DBG("%p=pkg_free() _res\n", _res);
-	pkg_free(_res);
-	_res = NULL;
-
-	return 0;
-}
-
-/**
- * Release memory used by rows
- */
-int bdb_free_rows(db_res_t* _res)
-{
-	int row;
-
-	LM_DBG("Freeing %d rows\n", RES_ROW_N(_res));
-
-	for(row = 0; row < RES_ROW_N(_res); row++) 
-	{
-		LM_DBG("Row[%d]=%p\n", row, &(RES_ROWS(_res)[row]));
-		bdb_free_row(&(RES_ROWS(_res)[row]));
-	}
-
-	RES_ROW_N(_res) = 0;
-
-	if (RES_ROWS(_res)) 
-	{
-		LM_DBG("%p=pkg_free() RES_ROWS\n", RES_ROWS(_res));
-		pkg_free(RES_ROWS(_res));
-		RES_ROWS(_res) = NULL;
-	}
-
-        return 0;
-}
-
-int bdb_free_row(db_row_t* _row)
-{
-	int	col;
-	db_val_t* _val;
-
-	/* 
-	 * Loop thru each columm, then check to determine if the storage 
-	 * pointed to by db_val_t structure must be freed.
-	 * This is required for DB_STRING.  If this is not done, 
-	 * a memory leak will happen.
-	 * DB_STR types also fall in this category, however, they are 
-	 * currently not being converted (or checked below).
-	 */
-	for (col = 0; col < ROW_N(_row); col++) 
-	{
-		_val = &(ROW_VALUES(_row)[col]);
-		switch (VAL_TYPE(_val)) 
-		{
-		case DB_STRING:
-			LM_DBG("%p=pkg_free() VAL_STRING[%d]\n", (char *)VAL_STRING(_val), col);
-			pkg_free((char *)(VAL_STRING(_val)));
-			VAL_STRING(_val) = (char *)NULL;
-			break;
-
-		case DB_STR:
-			LM_DBG("%p=pkg_free() VAL_STR[%d]\n", (char *)(VAL_STR(_val).s), col);
-			pkg_free((char *)(VAL_STR(_val).s));
-			VAL_STR(_val).s = (char *)NULL;
-			break;
-		default:
-			break;
-		}
-	}
-
-	/* Free db_val_t structure. */
-	if (ROW_VALUES(_row)) 
-	{
-		LM_DBG("%p=pkg_free() ROW_VALUES\n", ROW_VALUES(_row));
-		pkg_free(ROW_VALUES(_row));
-		ROW_VALUES(_row) = NULL;
-	}
-	return 0;
-}
-
-/**
- * Release memory used by columns
- */
-int bdb_free_columns(db_res_t* _res)
-{
-	int col;
-
-	/* Free memory previously allocated to save column names */
-	for(col = 0; col < RES_COL_N(_res); col++) 
-	{
-#ifdef BDB_EXTRA_DEBUG
-		LM_DBG("%p=pkg_free() RES_NAMES[%d]\n", RES_NAMES(_res)[col], col);
-		LM_DBG("Freeing RES_NAMES(%p)[%d] -> free(%p) '%s'\n", _res
-			, col, RES_NAMES(_res)[col], RES_NAMES(_res)[col]->s);
-		LM_DBG("%p=pkg_free() RES_NAMES[%d]->s\n", RES_NAMES(_res)[col]->s, col);
-#endif	
-	
-		pkg_free((char *)RES_NAMES(_res)[col]->s);
-		pkg_free((char *)RES_NAMES(_res)[col]);
-		RES_NAMES(_res)[col] = (str*)NULL;
-	}
-	
-	if (RES_NAMES(_res)) 
-	{
-		LM_DBG("%p=pkg_free() RES_NAMES\n", RES_NAMES(_res));
-		
-		pkg_free(RES_NAMES(_res));
-		RES_NAMES(_res) = NULL;
-	}
-	
-	if (RES_TYPES(_res)) 
-	{
-		LM_DBG("%p=pkg_free() RES_TYPES\n", RES_TYPES(_res));
-		
-		pkg_free(RES_TYPES(_res));
-		RES_TYPES(_res) = NULL;
-	}
-
-	return 0;
-}
 
 int bdb_is_neq_type(db_type_t _t0, db_type_t _t1)
 {
@@ -680,35 +460,29 @@ int bdb_row_match(db_key_t* _k, db_op_t* _op, db_val_t* _v, int _n, db_res_t* _r
 	
 	row = RES_ROWS(_r);
 	
-	for(i=0; i<_n; i++)
-	{
+	for(i=0; i<_n; i++) {
 		res = bdb_cmp_val(&(ROW_VALUES(row)[_lkey[i]]), &_v[i]);
 
-		if(!_op || !strcmp(_op[i], OP_EQ))
-		{
+		if(!_op || !strcmp(_op[i], OP_EQ)) {
 			if(res!=0)
 				return 0;
-		}else{
-		if(!strcmp(_op[i], OP_LT))
-		{
+		} else {
+		if(!strcmp(_op[i], OP_LT)) {
 			if(res!=-1)
 				return 0;
-		}else{
-		if(!strcmp(_op[i], OP_GT))
-		{
+		} else {
+		if(!strcmp(_op[i], OP_GT)) {
 			if(res!=1)
 				return 0;
-		}else{
-		if(!strcmp(_op[i], OP_LEQ))
-		{
+		} else {
+		if(!strcmp(_op[i], OP_LEQ)) {
 			if(res==1)
 				return 0;
-		}else{
-		if(!strcmp(_op[i], OP_GEQ))
-		{
+		} else {
+		if(!strcmp(_op[i], OP_GEQ)) {
 			if(res==-1)
 				return 0;
-		}else{
+		} else {
 			return res;
 		}}}}}
 	}
