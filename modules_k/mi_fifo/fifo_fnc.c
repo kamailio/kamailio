@@ -363,12 +363,12 @@ static inline struct mi_handler* build_async_handler( char *name, int len)
 
 #define mi_do_consume() \
 	do { \
-		LM_DBG("DEBUG:mi_fifo:mi_fifo_server: entered consume\n"); \
+		LM_DBG("entered consume\n"); \
 		/* consume the rest of the fifo request */ \
 		do { \
 			mi_read_line(mi_buf,MAX_MI_FIFO_BUFFER,fifo_stream,&line_len); \
 		} while(line_len>1); \
-		LM_DBG("DEBUG:mi_fifo:mi_fifo_server: **** done consume\n"); \
+		LM_DBG("**** done consume\n"); \
 	} while(0)
 
 
