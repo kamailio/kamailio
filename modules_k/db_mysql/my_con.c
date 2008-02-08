@@ -22,7 +22,7 @@
  */
 
 #include "my_con.h"
-#include "db_mod.h"
+#include "db_mysql.h"
 #include <mysql/mysql_version.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"

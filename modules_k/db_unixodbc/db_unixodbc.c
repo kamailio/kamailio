@@ -30,7 +30,7 @@
 
 #include "../../sr_module.h"
 #include "dbase.h"
-#include "db_mod.h"
+#include "db_unixodbc.h"
 
 int ping_interval = 5 * 60; /* Default is 5 minutes */
 int auto_reconnect = 1;     /* Default is enabled */

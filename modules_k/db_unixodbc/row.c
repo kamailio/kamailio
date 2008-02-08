@@ -33,9 +33,9 @@
 #include "../../mem/mem.h"
 #include "../../db/db_row.h"
 #include "../../db/db_ut.h"
-#include "my_con.h"
 #include "val.h"
 #include "row.h"
+#include "con.h"
 
 /*
  * Convert a row from result into db API representation

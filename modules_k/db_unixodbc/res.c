@@ -34,7 +34,7 @@
 #include "../../dprint.h"
 #include "row.h"
 #include "../../db/db_res.h"
-#include "my_con.h"
+#include "con.h"
 #include "res.h"
 #include "list.h"
 #include <stdlib.h>

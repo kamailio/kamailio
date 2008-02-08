@@ -31,7 +31,7 @@
 
 #include "../../sr_module.h"
 #include "dbase.h"
-#include "db_mod.h"
+#include "db_mysql.h"
 
 #include <mysql/mysql.h>
 

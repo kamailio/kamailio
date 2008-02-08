@@ -32,9 +32,9 @@
 #include "../../dprint.h"
 #include "../../strcommon.h"
 #include "../../db/db_ut.h"
-#include "db_mod.h"
+#include "db_unixodbc.h"
 #include "val.h"
-#include "my_con.h"
+#include "con.h"
 
 
 #include <string.h>

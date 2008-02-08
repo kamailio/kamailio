@@ -38,9 +38,9 @@
 #include "../../dprint.h"
 #include "../../db/db_query.h"
 #include "val.h"
-#include "my_con.h"
+#include "con.h"
 #include "res.h"
-#include "db_mod.h"
+#include "db_unixodbc.h"
 #include "dbase.h"
 
 
