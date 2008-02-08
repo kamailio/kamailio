@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-2003 FhG FOKUS
  * Copyright (C) 2004,2005 Free Software Foundation, Inc.
- * COpyright (C) 2005 iptelorg GmbH
+ * Copyright (C) 2005 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -119,52 +119,3 @@ void collect_garbage(void)
 	lock_release(tls_cfg_lock);
 }
 
-/** Get full pathname of file. This function returns the full pathname of a
- * file in parameter. If the parameter does not start with / then the pathname
- * of the file will be relative to the pathname of the main SER configuration
- * file.
- * @param filename A pathname to be converted to absolute.
- * @return A string containing absolute pathname, the string
- *         must be freed with free.
- */
-char* get_pathname(str* file)
-{
-	char* buf, *dir, *res;
-	int len;
-
-	if (!file || !file->s || file->len <= 0 || !cfg_file) {
-		BUG("tls: Cannot get full pathname of file\n");
-		return NULL;
-	}
-
-	if (file->s[0] == '/') {
-		/* This is an absolute pathname, make a zero terminated
-		 * copy and use it as it is */
-		if ((res = strndup(file->s, file->len)) == NULL) {
-			ERR("tls: No memory left (strndup failed)\n");
-		}
-	} else {
-		/* This is not an absolute pathname, make it relative
-		 * to the location of the main SER configuration file
-		 */
-		/* Make a copy, function dirname may modify the string */
-		if ((buf = strdup(cfg_file)) == NULL) {
-			ERR("tls: No memory left (strdup failed)\n");
-			return NULL;
-		}
-		dir = dirname(buf);
-
-		len = strlen(dir);
-		if ((res = malloc(len + 1 + file->len + 1)) == NULL) {
-			ERR("tls: No memory left (malloc failed)\n");
-			free(buf);
-			return NULL;
-		}
-		memcpy(res, dir, len);
-		res[len] = '/';
-		memcpy(res + len + 1, file->s, file->len);
-		res[len + 1 + file->len] = '\0';
-		free(buf);
-	}
-	return res;
-}
