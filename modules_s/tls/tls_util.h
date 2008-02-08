@@ -81,16 +81,4 @@ int shm_asciiz_dup(char** dest, char* val);
  */
 void collect_garbage(void);
 
-
-/** Get full pathname of file. This function returns the full pathname of a
- * file in parameter. If the parameter does not start with / then the pathname
- * of the file will be relative to the pathname of the main SER configuration
- * file.
- * @param filename A pathname to be converted to absolute.
- * @return A string containing absolute pathname, the string
- *         must be freed with free.
- */
-char* get_pathname(str* filename);
-
-
 #endif /* _TLS_UTIL_H */

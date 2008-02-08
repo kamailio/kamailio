@@ -51,12 +51,14 @@
 #include "../../timer_ticks.h"
 #include "../../timer.h" /* ticks_t */
 #include "../../tls_hooks.h"
+#include "../../ut.h"
 #include "tls_init.h"
 #include "tls_server.h"
 #include "tls_domain.h"
 #include "tls_select.h"
 #include "tls_config.h"
 #include "tls_rpc.h"
+#include "tls_util.h"
 #include "tls_mod.h"
 
 #ifndef TLS_HOOKS
@@ -168,7 +170,7 @@ int tls_send_timeout = 120;
 int tls_con_lifetime = 600; /* this value will be adjusted to ticks later */
 int tls_log = 3;
 int tls_session_cache = 0;
-str tls_session_id = STR_STATIC_INIT("ser-tls-0.9.0");
+str tls_session_id = STR_STATIC_INIT("ser-tls-2.1.0");
 str tls_cfg_file = STR_NULL;
 
 
@@ -261,6 +263,40 @@ static tls_cfg_t* tls_use_modparams(void)
 #endif
 
 
+static int fix_rel_pathnames(void)
+{
+	str tmp;
+  	
+	if (tls_cfg_file.s) {
+		tls_cfg_file.s = get_abs_pathname(NULL, &tls_cfg_file);
+		if (tls_cfg_file.s == NULL) return -1;
+		tls_cfg_file.len = strlen(tls_cfg_file.s);
+	}
+	
+	if (mod_params.pkey_file) {
+		tmp.s = mod_params.pkey_file;
+		tmp.len = strlen(tmp.s);
+		mod_params.pkey_file = get_abs_pathname(NULL, &tmp);
+		if (mod_params.pkey_file == NULL) return -1;
+	}
+	
+	if (mod_params.ca_file) {
+		tmp.s = mod_params.ca_file;
+		tmp.len = strlen(tmp.s);
+		mod_params.ca_file = get_abs_pathname(NULL, &tmp);
+		if (mod_params.ca_file == NULL) return -1;
+	}
+	
+	if (mod_params.cert_file) {
+		tmp.s = mod_params.cert_file;
+		tmp.len = strlen(tmp.s);
+		mod_params.cert_file = get_abs_pathname(NULL, &tmp);
+		if (mod_params.cert_file == NULL) return -1;
+	}
+	
+	return 0;
+}
+
 static int mod_init(void)
 {
 	int method;
@@ -277,6 +313,12 @@ static int mod_init(void)
 		return -1;
 	}
 	mod_params.method = method;
+
+	/* Update relative paths of files configured through modparams, relative
+	 * pathnames will be converted to absolute and the directory of the main
+	 * SER configuration file will be used as reference.
+	 */
+	if (fix_rel_pathnames() < 0) return -1;
 
 	tls_cfg = (tls_cfg_t**)shm_malloc(sizeof(tls_cfg_t*));
 	if (!tls_cfg) {
