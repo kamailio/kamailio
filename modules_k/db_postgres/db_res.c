@@ -181,7 +181,7 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 		int row_count)
 {
-	int row, cols, col;
+	int row, col;
 	char **row_buf, *s;
 	int len, fetch_count;
 
@@ -215,16 +215,13 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 	/* Save the number of rows in the current fetch */
 	RES_ROW_N(_r) = row_count;
 
-	/* Save the number of columns in the result query */
-	cols = RES_COL_N(_r);
-
 	/*
 	 * Allocate an array of pointers one per column. It that will be used to hold
 	 * the address of the string representation of each column.
 	 */
-	len = sizeof(char *) * cols;
+	len = sizeof(char *) * RES_COL_N(_r);
 	row_buf = (char **)pkg_malloc(len);
-	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", cols, len, row_buf);
+	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_r), len, row_buf);
 	if (!row_buf) {
 		LM_ERR("no private memory left\n");
 		return -1;
@@ -244,7 +241,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 
 	fetch_count = 0;
 	for(row = row_start; row < (row_start + row_count); row++) {
-		for(col = 0; col < cols; col++) {
+		for(col = 0; col < RES_COL_N(_r); col++) {
 				/*
 				 * The row data pointer returned by PQgetvalue points to storage
 				 * that is part of the PGresult structure. One should not modify
@@ -274,7 +271,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 		if(db_postgres_convert_row(_h, _r, &(RES_ROWS(_r)[fetch_count]), row_buf)<0){
 			LM_ERR("failed to convert row #%d\n",  row);
 			RES_ROW_N(_r) = row - row_start;
-			for (col=0; col<cols; col++) {
+			for (col = 0; col < RES_COL_N(_r); col++) {
 				LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
 				pkg_free(row_buf[col]);
 			}
@@ -301,7 +298,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 		 * that pg_free_rows(), pg_free_row() or pg_free_result() is eventually
 		 * called.
 		 */
-		for (col=0; col<cols; col++) {
+		for (col = 0; col < RES_COL_N(_r); col++) {
 			switch (RES_TYPES(_r)[col]) {
 				case DB_STRING:
 				case DB_STR:
@@ -359,8 +356,7 @@ int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
-	LM_DBG("allocate %d bytes for row values at %p\n", sizeof(db_val_t) * RES_COL_N(_r),
-		ROW_VALUES(_row));
+	LM_DBG("allocate %d bytes for row values at %p\n", len, ROW_VALUES(_row));
 	ROW_N(_row) = RES_COL_N(_r);
 	memset(ROW_VALUES(_row), 0, len);
 
