@@ -408,18 +408,17 @@ error:
 	return 0;
 }
 
+#define STR_MATCH(s1, s2)   ((s1).len==(s2).len && strncmp((s1).s, (s2).s, (s1).len)==0)
+
 int get_auid_flag(str auid)
 {
+	static str pres_rules = str_init("pres-rules");
+	static str rls_services = str_init("rls-services");
 
-	switch (auid.len)
-	{
-		case strlen("pres-rules"): if(strncmp(auid.s, "pres-rules",
-											strlen("pres-rules"))== 0)
-										return PRES_RULES;
+	if (STR_MATCH(auid, pres_rules))
+		return PRES_RULES;
+	else if (STR_MATCH(auid, rls_services))
+		return RESOURCE_LIST;
 
-		case strlen("rls-services"):if(strncmp(auid.s, "rls-services",
-											strlen("rls-services"))== 0)
-										return RESOURCE_LIST;
-	}
 	return -1;
 }
