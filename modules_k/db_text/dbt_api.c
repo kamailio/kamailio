@@ -42,66 +42,9 @@ int dbt_use_table(db_con_t* _h, const str* _t)
 
 
 /*
- * Fill the structure with data from database
- */
-int dbt_convert_result(db_con_t* _h, db_res_t* _r)
-{
-	if (!_h || !_r) {
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-	if (dbt_get_columns(_h, _r) < 0) {
-		LM_ERR("failed to get column names\n");
-		return -2;
-	}
-
-	if (dbt_convert_rows(_h, _r) < 0) {
-		LM_ERR("failed to convert rows\n");
-		db_free_columns(_r);
-		return -3;
-	}
-	return 0;
-}
-
-
-/*
- * Retrieve result set
- */
-int dbt_get_result(db_con_t* _h, db_res_t** _r)
-{
-	if (!_h || !_r) {
-		LM_ERR("invalid parameter value\n");
-		return -1;
-	}
-
-	if (!DBT_CON_RESULT(_h))
-	{
-		LM_ERR("failed to get result\n");
-		*_r = 0;
-		return -3;
-	}
-
-	*_r = db_new_result();
-	if (*_r == 0) 
-	{
-		LM_ERR("no private memory left\n");
-		return -2;
-	}
-
-	if (dbt_convert_result(_h, *_r) < 0) 
-	{
-		LM_ERR("failed to convert result\n");
-		pkg_free(*_r);
-		return -4;
-	}
-	
-	return 0;
-}
-
-/*
  * Get and convert columns from a result
  */
-int dbt_get_columns(db_con_t* _h, db_res_t* _r)
+static int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 {
 	int col;
 	
@@ -159,53 +102,9 @@ int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 }
 
 /*
- * Convert rows from internal to db API representation
- */
-int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
-{
-	int col, len;
-	dbt_row_p _rp = NULL;
-	if (!_h || !_r) {
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-	RES_ROW_N(_r) = DBT_CON_RESULT(_h)->nrrows;
-	if (!RES_ROW_N(_r)) {
-		return 0;
-	}
-	len = sizeof(db_row_t) * RES_ROW_N(_r);
-	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
-	if (!RES_ROWS(_r)) {
-		LM_ERR("no private memory left\n");
-		return -2;
-	}
-	LM_DBG("allocate %d bytes for %d rows at %p", len, RES_ROW_N(_r), RES_ROWS(_r));
-	col = 0;
-	_rp = DBT_CON_RESULT(_h)->rows;
-	while(_rp) {
-		DBT_CON_ROW(_h) = _rp;
-		if (!DBT_CON_ROW(_h)) {
-			LM_ERR("failed to get current row\n");
-			RES_ROW_N(_r) = col;
-			db_free_rows(_r);
-			return -3;
-		}
-		if (dbt_convert_row(_h, _r, &(RES_ROWS(_r)[col])) < 0) {
-			LM_ERR("failed to convert row #%d\n", col);
-			RES_ROW_N(_r) = col;
-			db_free_rows(_r);
-			return -4;
-		}
-		col++;
-		_rp = _rp->next;
-	}
-	return 0;
-}
-
-/*
  * Convert a row from result into db API representation
  */
-int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
+static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 {
 	int i, len;
 	if (!_h || !_r || !_res) {
@@ -276,5 +175,107 @@ int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 			break;
 		}
 	}
+	return 0;
+}
+
+
+/*
+ * Convert rows from internal to db API representation
+ */
+static int dbt_convert_rows(db_con_t* _h, db_res_t* _r)
+{
+	int col, len;
+	dbt_row_p _rp = NULL;
+	if (!_h || !_r) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	RES_ROW_N(_r) = DBT_CON_RESULT(_h)->nrrows;
+	if (!RES_ROW_N(_r)) {
+		return 0;
+	}
+	len = sizeof(db_row_t) * RES_ROW_N(_r);
+	RES_ROWS(_r) = (struct db_row*)pkg_malloc(len);
+	if (!RES_ROWS(_r)) {
+		LM_ERR("no private memory left\n");
+		return -2;
+	}
+	LM_DBG("allocate %d bytes for %d rows at %p", len, RES_ROW_N(_r), RES_ROWS(_r));
+	col = 0;
+	_rp = DBT_CON_RESULT(_h)->rows;
+	while(_rp) {
+		DBT_CON_ROW(_h) = _rp;
+		if (!DBT_CON_ROW(_h)) {
+			LM_ERR("failed to get current row\n");
+			RES_ROW_N(_r) = col;
+			db_free_rows(_r);
+			return -3;
+		}
+		if (dbt_convert_row(_h, _r, &(RES_ROWS(_r)[col])) < 0) {
+			LM_ERR("failed to convert row #%d\n", col);
+			RES_ROW_N(_r) = col;
+			db_free_rows(_r);
+			return -4;
+		}
+		col++;
+		_rp = _rp->next;
+	}
+	return 0;
+}
+
+
+/*
+ * Fill the structure with data from database
+ */
+static int dbt_convert_result(db_con_t* _h, db_res_t* _r)
+{
+	if (!_h || !_r) {
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	if (dbt_get_columns(_h, _r) < 0) {
+		LM_ERR("failed to get column names\n");
+		return -2;
+	}
+
+	if (dbt_convert_rows(_h, _r) < 0) {
+		LM_ERR("failed to convert rows\n");
+		db_free_columns(_r);
+		return -3;
+	}
+	return 0;
+}
+
+/*
+ * Retrieve result set
+ */
+int dbt_get_result(db_con_t* _h, db_res_t** _r)
+{
+	if (!_h || !_r) {
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	if (!DBT_CON_RESULT(_h))
+	{
+		LM_ERR("failed to get result\n");
+		*_r = 0;
+		return -3;
+	}
+
+	*_r = db_new_result();
+	if (*_r == 0) 
+	{
+		LM_ERR("no private memory left\n");
+		return -2;
+	}
+
+	if (dbt_convert_result(_h, *_r) < 0) 
+	{
+		LM_ERR("failed to convert result\n");
+		pkg_free(*_r);
+		return -4;
+	}
+	
 	return 0;
 }

@@ -41,21 +41,6 @@
  */
 int dbt_get_result(db_con_t* _h, db_res_t** _r);
 
-/*
- * Get and convert columns from a result
- */
-int dbt_get_columns(db_con_t* _h, db_res_t* _r);
-
-/*
- * Convert rows from mysql to db API representation
- */
-int dbt_convert_rows(db_con_t* _h, db_res_t* _r);
-
-/*
- * Convert a row from result into db API representation
- */
-int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r);
-
 int dbt_use_table(db_con_t* _h, const str* _t);
 
 #endif
