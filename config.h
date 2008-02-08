@@ -46,8 +46,8 @@
 
 #define CFG_FILE CFG_DIR "ser.cfg"
 
-#define TLS_PKEY_FILE CFG_DIR "cert.pem" 
-#define TLS_CERT_FILE CFG_DIR "cert.pem"
+#define TLS_PKEY_FILE "cert.pem" 
+#define TLS_CERT_FILE "cert.pem"
 #define TLS_CA_FILE 0 /* no CA list file by default */
 
 
