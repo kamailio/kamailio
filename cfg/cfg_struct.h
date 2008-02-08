@@ -262,6 +262,13 @@ cfg_block_t *cfg_clone_global(void);
 /* clones a string to shared memory */
 int cfg_clone_str(str *src, str *dst);
 
+/* append new callbacks to the end of the child callback list
+ *
+ * WARNING: the function is unsafe, either hold CFG_LOCK(),
+ * or call the function before forking
+ */
+void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last);
+
 /* installs a new global config
  *
  * replaced is an array of strings that must be freed together

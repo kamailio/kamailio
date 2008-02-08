@@ -385,28 +385,50 @@ int cfg_child_init(void)
  */
 void cfg_child_destroy(void)
 {
+	cfg_child_cb_t	*prev_cb;
+
 	/* unref the local config */
 	if (cfg_local) {
 		CFG_UNREF(cfg_local);
 		cfg_local = NULL;
 	}
 
-	/* unref the per-process callback list */
-	if (atomic_dec_and_test(&cfg_child_cb->refcnt)) {
-		/* No more pocess refers to this callback.
-		Did this process block the deletion,
-		or is there any other process that has not
-		reached	prev_cb yet? */
-		CFG_LOCK();
-		if (*cfg_child_cb_first == cfg_child_cb) {
-			/* yes, this process was blocking the deletion */
-			*cfg_child_cb_first = cfg_child_cb->next;
-			CFG_UNLOCK();
-			shm_free(cfg_child_cb);
+	if (!cfg_child_cb) return;
+
+	/* The lock must be held to make sure that the global config
+	is not replaced meantime, and the other child processes do not
+	leave the old value of *cfg_child_cb_last. Otherwise it could happen,
+	that all the other processes move their own cfg_child_cb pointer before
+	this process reaches *cfg_child_cb_last, though, it is very unlikely. */
+	CFG_LOCK();
+
+	/* go through the list and check whether there is any item that
+	has to be freed (similar to cfg_update_local(), but without executing
+	the callback functions) */
+	while (cfg_child_cb != *cfg_child_cb_last) {
+		prev_cb = cfg_child_cb;
+		cfg_child_cb = cfg_child_cb->next;
+		atomic_inc(&cfg_child_cb->refcnt);
+		if (atomic_dec_and_test(&prev_cb->refcnt)) {
+			/* No more pocess refers to this callback.
+			Did this process block the deletion,
+			or is there any other process that has not
+			reached	prev_cb yet? */
+			if (*cfg_child_cb_first == prev_cb) {
+				/* yes, this process was blocking the deletion */
+				*cfg_child_cb_first = cfg_child_cb;
+				shm_free(prev_cb);
+			}
 		} else {
-			CFG_UNLOCK();
+			/* no need to continue, because there is at least
+			one process that stays exactly at the same point
+			in the list, so it will free the items later */
+			break;
 		}
 	}
+	atomic_dec(&cfg_child_cb->refcnt);
+
+	CFG_UNLOCK();
 	cfg_child_cb = NULL;
 }
 
@@ -480,6 +502,18 @@ cfg_block_t *cfg_clone_global(void)
 	return block;
 }
 
+/* append new callbacks to the end of the child callback list
+ *
+ * WARNING: the function is unsafe, either hold CFG_LOCK(),
+ * or call the function before forking
+ */
+void cfg_install_child_cb(cfg_child_cb_t *cb_first, cfg_child_cb_t *cb_last)
+{
+	/* add the new callbacks to the end of the linked-list */
+	(*cfg_child_cb_last)->next = cb_first;
+	*cfg_child_cb_last = cb_last;
+}
+
 /* installs a new global config
  *
  * replaced is an array of strings that must be freed together
@@ -499,11 +533,8 @@ void cfg_install_global(cfg_block_t *block, char **replaced,
 	CFG_REF(block);
 	*cfg_global = block;
 
-	if (cb_first) {
-		/* add the new callbacks to the end of the linked-list */
-		(*cfg_child_cb_last)->next = cb_first;
-		*cfg_child_cb_last = cb_last;
-	}
+	if (cb_first)
+		cfg_install_child_cb(cb_first, cb_last);
 
 	CFG_UNLOCK();
 

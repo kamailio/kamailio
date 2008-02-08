@@ -303,16 +303,16 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 
 	}
 
-	if (cfg_shmized) {
-		if (var->def->on_set_child_cb) {
-			child_cb = cfg_child_cb_new(var_name,
-						var->def->on_set_child_cb);
-			if (!child_cb) {
-				LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
-				goto error0;
-			}
+	if (var->def->on_set_child_cb) {
+		child_cb = cfg_child_cb_new(var_name,
+					var->def->on_set_child_cb);
+		if (!child_cb) {
+			LOG(L_ERR, "ERROR: cfg_set_now(): not enough shm memory\n");
+			goto error0;
 		}
+	}
 
+	if (cfg_shmized) {
 		/* make sure that nobody else replaces the global config
 		while the new one is prepared */
 		CFG_WRITER_LOCK();
@@ -381,6 +381,11 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		/* flag the variable because there is no need
 		to shmize it again */
 		var->flag |= cfg_var_shmized;
+
+		/* the global config does not have to be replaced,
+		but the child callback has to be installed, otherwise the
+		child processes will miss the change */
+		cfg_install_child_cb(child_cb, child_cb);
 	}
 
 	if (val_type == CFG_VAR_INT)
