@@ -559,6 +559,10 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 			goto error;
 		}
 
+		pkg_free(rules_doc->s);
+		pkg_free(rules_doc);
+		rules_doc = NULL;
+
 	}
 	else     /* if a request to refresh Notified info */
 	{
