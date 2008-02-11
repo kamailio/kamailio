@@ -49,7 +49,10 @@ int shm_str_dup(char** dest, str* val)
 {
 	char* ret;
 
-	if (!val) return 0;
+	if (!val) {
+		*dest = NULL;
+		return 0;
+	}
 
 	ret = shm_malloc(val->len + 1);
 	if (!ret) {
@@ -73,7 +76,10 @@ int shm_asciiz_dup(char** dest, char* val)
 	char* ret;
 	int len;
 
-	if (!val) return 0;
+	if (!val) {
+		*dest = NULL;
+		return 0;
+	}
 
 	len = strlen(val);
 	ret = shm_malloc(len + 1);
