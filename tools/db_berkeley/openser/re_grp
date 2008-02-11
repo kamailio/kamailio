@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) reg_exp(str) group_id(str)
+id(int) reg_exp(str) group_id(int)
 METADATA_KEY
 2
 METADATA_READONLY

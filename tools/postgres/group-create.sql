@@ -12,7 +12,7 @@ INSERT INTO version (table_name, table_version) values ('re_grp','1');
 CREATE TABLE re_grp (
     id SERIAL PRIMARY KEY NOT NULL,
     reg_exp VARCHAR(128) NOT NULL DEFAULT '',
-    group_id VARCHAR(11) NOT NULL DEFAULT 0
+    group_id INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX re_grp_group_idx ON re_grp (group_id);
