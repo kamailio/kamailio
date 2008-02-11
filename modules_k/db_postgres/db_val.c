@@ -263,6 +263,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 
 	case DB_BLOB:
 		l = VAL_BLOB(_v).len;
+		/* this estimation is not always correct, thus we need to check later again */
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short for blob\n");
 			return -7;
@@ -273,6 +274,10 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 			if(tmp_s==NULL)
 			{
 				LM_ERR("PQescapeBytea failed\n");
+				return -7;
+			}
+			if (tmp_len > *_len) {
+				LM_ERR("escaped result too long\n");
 				return -7;
 			}
 			memcpy(_s, tmp_s, tmp_len);
