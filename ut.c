@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/utsname.h> /* uname() */
+#include <libgen.h>
 
 
 #include "ut.h"
