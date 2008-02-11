@@ -191,7 +191,7 @@ extern int rt_timer2_policy; /* "slow" timer, SCHED_OTHER */
 
 
 #ifdef USE_DNS_CACHE
-extern int use_dns_cache; /* 1 if the cache is enabled, 0 otherwise */
+extern int dns_cache_init; /* if 0, the DNS cache is not initialized at startup */
 extern unsigned int dns_timer_interval; /* gc timer interval in s */
 extern int dns_flags; /* default flags used for the  dns_*resolvehost
                     (compatibility wrappers) */
@@ -207,6 +207,7 @@ extern struct t_dns_cache_stats* dns_cache_stats;
 #endif /* USE_DNS_CACHE_STATS */
 #endif
 #ifdef USE_DST_BLACKLIST
+extern int dst_blacklist_init; /* if 0, the dst blacklist is not initialized at startup */
 extern unsigned int blst_timer_interval; /*blacklist gc timer interval (in s)*/
 
 #ifdef USE_DST_BLACKLIST_STATS

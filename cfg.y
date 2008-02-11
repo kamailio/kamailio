@@ -292,6 +292,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS_SERVERS_NO
 %token DNS_USE_SEARCH
 %token DNS_SEARCH_FMATCH
+%token DNS_CACHE_INIT
 %token DNS_USE_CACHE
 %token DNS_USE_FAILOVER
 %token DNS_CACHE_FLAGS
@@ -302,6 +303,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS_CACHE_GC_INT
 %token DNS_CACHE_DEL_NONEXP
 /*blacklist*/
+%token DST_BLST_INIT
 %token USE_DST_BLST
 %token DST_BLST_MEM
 %token DST_BLST_TTL
@@ -630,7 +632,9 @@ assign_stm:
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
 	| DNS_SEARCH_FMATCH EQUAL NUMBER   { default_core_cfg.dns_search_fmatch=$3; }
 	| DNS_SEARCH_FMATCH error { yyerror("boolean value expected"); }
-	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(use_dns_cache=$3); }
+	| DNS_CACHE_INIT EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_init=$3); }
+	| DNS_CACHE_INIT error { yyerror("boolean value expected"); }
+	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.use_dns_cache=$3); }
 	| DNS_USE_CACHE error { yyerror("boolean value expected"); }
 	| DNS_USE_FAILOVER EQUAL NUMBER   { IF_DNS_FAILOVER(default_core_cfg.use_dns_failover=$3);}
 	| DNS_USE_FAILOVER error { yyerror("boolean value expected"); }
@@ -648,6 +652,8 @@ assign_stm:
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
 	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_del_nonexp=$3); }
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
+	| DST_BLST_INIT EQUAL NUMBER   { IF_DST_BLACKLIST(dst_blacklist_init=$3); }
+	| DST_BLST_INIT error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.use_dst_blacklist=$3); }
 	| USE_DST_BLST error { yyerror("boolean value expected"); }
 	| DST_BLST_MEM EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.blst_max_mem=$3); }

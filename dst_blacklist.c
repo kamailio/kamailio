@@ -33,6 +33,7 @@
  *  2007-06-26  added hooks for search (andrei)
  *  2007-07-30  added dst_blacklist_del() and dst_blacklist_add_to()  (andrei)
  *  2007-07-30  dst blacklist measurements added (Gergo)
+ *  2008-02-11  dns_blacklist_init cfg parameter is introduced (Miklos)
  */
 
 
@@ -123,6 +124,7 @@ struct dst_blst_lst_head{
 #endif
 };
 
+int dst_blacklist_init=1; /* if 0, the dst blacklist is not initialized at startup */
 static struct timer_ln* blst_timer_h=0;
 
 static volatile unsigned int* blst_mem_used=0;
@@ -225,6 +227,12 @@ int register_blacklist_hook(struct blacklist_hook *h, int type)
 	struct blst_callbacks_lst* cb_lst;
 	struct blacklist_hook* tmp;
 	int new_max_hooks;
+
+	if (dst_blacklist_init==0) {
+		LOG(L_ERR, "register_blacklist_hook: blacklist is turned off, "
+			"the hook cannot be registered\n");
+		goto error;
+	}
 
 	switch(type){
 		case DST_BLACKLIST_ADD_CB:
@@ -339,6 +347,7 @@ void destroy_dst_blacklist()
 		blst_timer_h=0;
 	}
 #ifdef BLST_LOCK_PER_BUCKET
+	if (dst_blst_hash)
 		for(r=0; r<DST_BLST_HASH_SIZE; r++)
 			lock_destroy(&dst_blst_hash[r].lock);
 #elif defined BLST_LOCK_SET
@@ -389,6 +398,12 @@ int init_dst_blacklist()
 #ifdef BLST_LOCK_PER_BUCKET
 	int r;
 #endif
+
+	if (dst_blacklist_init==0) {
+		/* the dst blacklist is turned off */
+		default_core_cfg.use_dst_blacklist=0;
+		return 0;
+	}
 
 	ret=-1;
 #ifdef DST_BLACKLIST_HOOKS
@@ -468,6 +483,9 @@ error:
 #ifdef USE_DST_BLACKLIST_STATS
 int init_dst_blacklist_stats(int iproc_num)
 {
+	/* do not initialize the stats array if the dst blacklist will not be used */
+	if (dst_blacklist_init==0) return 0;
+
 	/* if it is already initialized */
 	if (dst_blacklist_stats)
 		shm_free(dst_blacklist_stats);
@@ -1093,6 +1111,20 @@ void dst_blst_add(rpc_t* rpc, void* ctx)
 	if (dst_blacklist_add_ip(err_flags, proto, ip_addr, port, 
 				    S_TO_TICKS(cfg_get(core, core_cfg, blst_timeout))))
 		rpc->fault(ctx, 400, "Failed to add the entry to the blacklist");
+}
+
+/* fixup function for use_dst_blacklist
+ * verifies that dst_blacklist_init is set to 1
+ */
+int use_dst_blacklist_fixup(void *handle, str *name, void **val)
+{
+	if ((int)(long)(*val) && !dst_blacklist_init) {
+		LOG(L_ERR, "ERROR: use_dst_blacklist_fixup(): "
+			"dst blacklist is turned off by dst_blacklist_init=0, "
+			"it cannot be enabled runtime.\n");
+		return -1;
+	}
+	return 0;
 }
 
 /* KByte to Byte conversion */

@@ -371,9 +371,6 @@ int reply_to_via=0;
 int mcast_loopback = 0;
 int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 #endif /* USE_MCAST */
-#ifdef USE_DNS_CACHE
-int use_dns_cache=1; /* 1 if the cache is enabled, 0 otherwise */
-#endif
 
 int tos = IPTOS_LOWDELAY;
 int pmtu_discovery = 0;
@@ -1652,12 +1649,10 @@ try_again:
 		goto error;
 	}
 #ifdef USE_DNS_CACHE
-	if (use_dns_cache && init_dns_cache()<0){
+	if (init_dns_cache()<0){
 		LOG(L_CRIT, "could not initialize the dns cache, exiting...\n");
 		goto error;
 	}
-	if (use_dns_cache==0)
-		default_core_cfg.use_dns_failover=0; /* cannot work w/o dns_cache support */
 #ifdef USE_DNS_CACHE_STATS
 	/* preinitializing before the nubmer of processes is determined */
 	if (init_dns_cache_stats(1)<0){

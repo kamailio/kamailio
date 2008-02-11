@@ -67,6 +67,7 @@ struct cfg_group_core default_core_cfg = {
 	0,  /* dns_reinit */
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
+	1,  /* use_dns_cache -- on by default */
 	0,  /* dns_cache_flags */
 	0,  /* use_dns_failover -- off by default */
 	0,  /* dns_srv_lb -- off by default */
@@ -84,7 +85,7 @@ cfg_def_t core_cfg_def[] = {
 	{"debug",	CFG_VAR_INT,	0, 0, 0, 0, "debug level"},
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
-	{"use_dst_blacklist",	CFG_VAR_INT,	0, 0, 0, 0,
+	{"use_dst_blacklist",	CFG_VAR_INT,	0, 1, use_dst_blacklist_fixup, 0,
 		"enable/disable destination blacklisting"},
 	{"dst_blacklist_expire",	CFG_VAR_INT,	0, 0, 0, 0,
 		"how much time (in s) a blacklisted destination is kept in the list"},
@@ -126,6 +127,8 @@ cfg_def_t core_cfg_def[] = {
 		"set to 1 in order to reinitialize the DNS resolver"},
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
+	{"use_dns_cache",	CFG_VAR_INT,	0, 1, use_dns_cache_fixup, 0,
+		"enable/disable the dns cache"},
 	{"dns_cache_flags",	CFG_VAR_INT,	0, 4, 0, fix_dns_flags,
 		"dns cache specific resolver flags "
 		"(1=ipv4 only, 2=ipv6 only, 4=prefer ipv6"},

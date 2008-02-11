@@ -197,6 +197,13 @@ new config variables:
   tcp_source_ipv6 = IPv6 address
     Set the given source IP for all outbound TCP connections.
     If setting the IP fails the TCP connection will use the default.
+  dns_cache_init = on | off (default on) - if off, the dns cache is not
+    initialized at startup and cannot be enabled runtime, that saves some
+    memory.
+  dst_blacklist_init = on | off (default on) - if off, the blacklist
+    is not initialized at startup and cannot be enabled runtime,
+    that saves some memory.
+
 
 
 2.0.0 changes

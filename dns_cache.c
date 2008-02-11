@@ -41,6 +41,7 @@
  *  2007-08-17  dns_cache_del_nonexp config option is introduced (Miklos)
  *  2008-02-04  DNS cache options are adapted for the configuration
  *		framework (Miklos)
+ *  2008-02-11  dns_cache_init cfg parameter is introduced (Miklos)
  */
 
 #ifdef USE_DNS_CACHE
@@ -87,7 +88,7 @@
 #define MAX_CNAME_CHAIN  10
 #define SPACE_FORMAT "    " /* format of view output */
 
-
+int dns_cache_init=1;	/* if 0, the DNS cache is not initialized at startup */
 static gen_lock_t* dns_hash_lock=0;
 static volatile unsigned int *dns_cache_mem_used=0; /* current mem. use */
 unsigned int dns_timer_interval=DEFAULT_DNS_TIMER_INTERVAL; /* in s */
@@ -299,10 +300,30 @@ void fix_dns_flags(str *name)
  */
 int use_dns_failover_fixup(void *handle, str *name, void **val)
 {
-	if ((int)(long)(*val) && !use_dns_cache) {
+	if ((int)(long)(*val) && !cfg_get(core, handle, use_dns_cache)) {
 		LOG(L_ERR, "ERROR: use_dns_failover_fixup(): "
 			"DNS cache is turned off, failover cannot be enabled. "
 			"(set use_dns_cache to 1)\n");
+		return -1;
+	}
+	return 0;
+}
+
+/* fixup function for use_dns_cache
+ * verifies that dns_cache_init is set to 1
+ */
+int use_dns_cache_fixup(void *handle, str *name, void **val)
+{
+	if ((int)(long)(*val) && !dns_cache_init) {
+		LOG(L_ERR, "ERROR: use_dns_cache_fixup(): "
+			"DNS cache is turned off by dns_cache_init=0, "
+			"it cannot be enabled runtime.\n");
+		return -1;
+	}
+	if (((int)(long)(*val)==0) && cfg_get(core, handle, use_dns_failover)) {
+		LOG(L_ERR, "ERROR: use_dns_failover_fixup(): "
+			"DNS failover depends on use_dns_cache, set use_dns_failover "
+			"to 0 before disabling the DNS cache\n");
 		return -1;
 	}
 	return 0;
@@ -322,6 +343,13 @@ int init_dns_cache()
 {
 	int r;
 	int ret;
+
+	if (dns_cache_init==0) {
+		/* the DNS cache is turned off */
+		default_core_cfg.use_dns_cache=0;
+		default_core_cfg.use_dns_failover=0;
+		return 0;
+	}
 
 	ret=0;
 	/* sanity check */
@@ -374,6 +402,8 @@ int init_dns_cache()
 
 	/* fix options */
 	default_core_cfg.dns_cache_max_mem<<=10; /* Kb */ /* TODO: test with 0 */
+	if (default_core_cfg.use_dns_cache==0)
+		default_core_cfg.use_dns_failover=0; /* cannot work w/o dns_cache support */
 	/* fix flags */
 	fix_dns_flags(NULL);
 
@@ -399,7 +429,11 @@ error:
 }
 
 #ifdef USE_DNS_CACHE_STATS
-int init_dns_cache_stats(int iproc_num) {
+int init_dns_cache_stats(int iproc_num)
+{
+	/* do not initialize the stats array if the DNS cache will not be used */
+	if (dns_cache_init==0) return 0;
+
 	/* if it is already initialized */
 	if (dns_cache_stats)
 		shm_free(dns_cache_stats);
@@ -2225,7 +2259,7 @@ struct hostent* dns_resolvehost(char* name)
 {
 	str host;
 
-	if ((use_dns_cache==0) || (dns_hash==0)){ /* not init yet */
+	if ((cfg_get(core, core_cfg, use_dns_cache)==0) || (dns_hash==0)){ /* not init yet */
 		return _resolvehost(name);
 	}
 	host.s=name;
@@ -2250,7 +2284,7 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
 	struct ip_addr ip;
 	int ret;
 
-	if ((use_dns_cache==0) || (dns_hash==0)){
+	if ((cfg_get(core, core_cfg, use_dns_cache==0)) || (dns_hash==0)){
 		/* not init or off => use normal, non-cached version */
 		return _sip_resolvehost(name, port, proto);
 	}
@@ -2282,7 +2316,7 @@ struct hostent* dns_srv_sip_resolvehost(str* name, unsigned short* port,
 	str srv_name;
 	char srv_proto;
 
-	if ((use_dns_cache==0) || (dns_hash==0)){
+	if ((cfg_get(core, core_cfg, use_dns_cache)==0) || (dns_hash==0)){
 		/* not init or off => use normal, non-cached version */
 		return _sip_resolvehost(name, port, proto);
 	}
@@ -3172,7 +3206,7 @@ int dns_get_server_state(void)
 /* rpc functions */
 void dns_cache_mem_info(rpc_t* rpc, void* ctx)
 {
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3186,7 +3220,7 @@ void dns_cache_debug(rpc_t* rpc, void* ctx)
 	struct dns_hash_entry* e;
 	ticks_t now;
 
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3255,7 +3289,7 @@ void dns_cache_stats_get(rpc_t* rpc, void* c)
 	};
 
 
-	if (!use_dns_cache) {
+	if (!cfg_get(core, core_cfg, use_dns_cache)) {
 		rpc->fault(c, 500, "dns cache support disabled");
 		return;
 	}
@@ -3300,7 +3334,7 @@ void dns_cache_debug_all(rpc_t* rpc, void* ctx)
 	int i;
 	ticks_t now;
 
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3380,7 +3414,7 @@ void dns_cache_view(rpc_t* rpc, void* ctx)
 	ticks_t now;
 	str s;
 
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3488,7 +3522,7 @@ void dns_cache_flush(void)
 /* deletes all the entries from the cache */
 void dns_cache_delete_all(rpc_t* rpc, void* ctx)
 {
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3637,7 +3671,7 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 	ip_addr = 0;
 	size = 0;
 
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3844,7 +3878,7 @@ static void dns_cache_delete_record(rpc_t* rpc, void* ctx, unsigned short type)
 	str name;
 	int err, h, found=0;
 
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3911,7 +3945,7 @@ void dns_set_server_state_rpc(rpc_t* rpc, void* ctx)
 {
 	int	state;
 
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
@@ -3923,7 +3957,7 @@ void dns_set_server_state_rpc(rpc_t* rpc, void* ctx)
 /* prints the DNS server state */
 void dns_get_server_state_rpc(rpc_t* rpc, void* ctx)
 {
-	if (!use_dns_cache){
+	if (!cfg_get(core, core_cfg, use_dns_cache)){
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}

@@ -55,6 +55,9 @@ Config Variables
  dst_blacklist_gc_interval = time in s (default 60 s) - how often the 
   garbage collection will run (eliminating old, expired entries).
 
+ dst_blacklist_init = on | off (default on) - if off, the blacklist
+  is not initialized at startup and cannot be enabled runtime,
+  that saves some memory.
 
 Compile Options
 

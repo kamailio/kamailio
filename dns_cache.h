@@ -180,6 +180,7 @@ const char* dns_strerror(int err);
 
 void fix_dns_flags(str *name);
 int use_dns_failover_fixup(void *handle, str *name, void **val);
+int use_dns_cache_fixup(void *handle, str *name, void **val);
 int dns_cache_max_mem_fixup(void *handle, str *name, void **val);
 int init_dns_cache();
 #ifdef USE_DNS_CACHE_STATS

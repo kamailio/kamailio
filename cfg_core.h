@@ -67,6 +67,7 @@ struct cfg_group_core {
 	int dns_reinit;
 	/* DNS cache */
 #ifdef USE_DNS_CACHE
+	int use_dns_cache;
 	int dns_cache_flags;
 	int use_dns_failover;
 	int dns_srv_lb;

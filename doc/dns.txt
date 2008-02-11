@@ -258,6 +258,9 @@ DNS Cache and Failover Config Variables
       ones. The last-recently used entries are deleted first.
       Default: no
 
+   dns_cache_init = on | off - if off, the dns cache is not initialized
+      at startup and cannot be enabled runtime, that saves some memory.
+      Default: on
 
 DNS Cache Compile Options
 

@@ -250,6 +250,7 @@ DNS_SERVERS_NO	dns_servers_no
 DNS_USE_SEARCH	dns_use_search_list
 DNS_SEARCH_FMATCH	dns_search_full_match
 /* dns cache */
+DNS_CACHE_INIT	dns_cache_init
 DNS_USE_CACHE	use_dns_cache
 DNS_USE_FAILOVER	use_dns_failover
 DNS_CACHE_FLAGS		dns_cache_flags
@@ -260,6 +261,7 @@ DNS_CACHE_MEM		dns_cache_mem
 DNS_CACHE_GC_INT	dns_cache_gc_interval
 DNS_CACHE_DEL_NONEXP	dns_cache_del_nonexp|dns_cache_delete_nonexpired
 /* blacklist */
+DST_BLST_INIT	dst_blacklist_init
 USE_DST_BLST		use_dst_blacklist
 DST_BLST_MEM		dst_blacklist_mem
 DST_BLST_TTL		dst_blacklist_expire|dst_blacklist_ttl
@@ -506,6 +508,8 @@ EAT_ABLE	[\ \t\b\r]
 								return DNS_USE_SEARCH; }
 <INITIAL>{DNS_SEARCH_FMATCH}	{ count(); yylval.strval=yytext;
 								return DNS_SEARCH_FMATCH; }
+<INITIAL>{DNS_CACHE_INIT}	{ count(); yylval.strval=yytext;
+								return DNS_CACHE_INIT; }
 <INITIAL>{DNS_USE_CACHE}	{ count(); yylval.strval=yytext;
 								return DNS_USE_CACHE; }
 <INITIAL>{DNS_USE_FAILOVER}	{ count(); yylval.strval=yytext;
@@ -524,6 +528,8 @@ EAT_ABLE	[\ \t\b\r]
 								return DNS_CACHE_GC_INT; }
 <INITIAL>{DNS_CACHE_DEL_NONEXP}	{ count(); yylval.strval=yytext;
 								return DNS_CACHE_DEL_NONEXP; }
+<INITIAL>{DST_BLST_INIT}	{ count(); yylval.strval=yytext;
+								return DST_BLST_INIT; }
 <INITIAL>{USE_DST_BLST}	{ count(); yylval.strval=yytext;
 								return USE_DST_BLST; }
 <INITIAL>{DST_BLST_MEM}	{ count(); yylval.strval=yytext;
