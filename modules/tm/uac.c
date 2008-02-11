@@ -77,6 +77,10 @@
 #include "callid.h"
 #include "uac.h"
 #include "t_stats.h"
+#ifdef USE_DNS_FAILOVER
+#include "../../dns_cache.h"
+#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#endif
 
 
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
@@ -217,7 +221,7 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 			uac_r->dialog->hooks.next_hop->s);
 	/* it's a new message, so we will take the default socket */
 #ifdef USE_DNS_FAILOVER
-	if (use_dns_failover){
+	if (cfg_get(core, core_cfg, use_dns_failover)){
 		dns_srv_handle_init(&dns_h);
 		if ((uri2dst(&dns_h, &dst, 0, uac_r->dialog->hooks.next_hop, PROTO_NONE)==0)
 				|| (dst.send_sock==0)){

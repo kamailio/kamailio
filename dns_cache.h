@@ -53,6 +53,11 @@
 #error "DNS WATCHDOG requires DNS CACHE support (define USE_DNS_CACHE)"
 #endif
 
+#define DEFAULT_DNS_NEG_CACHE_TTL 60 /* 1 min. */
+#define DEFAULT_DNS_CACHE_MIN_TTL 0 /* (disabled) */
+#define DEFAULT_DNS_CACHE_MAX_TTL ((unsigned int)(-1)) /* (maxint) */
+#define DEFAULT_DNS_MAX_MEM 500 /* 500 Kb */
+
 /* uncomment the define below for SRV weight based load balancing */
 #define DNS_SRV_LB
 
@@ -173,6 +178,9 @@ struct dns_srv_handle{
 
 const char* dns_strerror(int err);
 
+void fix_dns_flags(str *name);
+int use_dns_failover_fixup(void *handle, str *name, void **val);
+int dns_cache_max_mem_fixup(void *handle, str *name, void **val);
 int init_dns_cache();
 #ifdef USE_DNS_CACHE_STATS
 int init_dns_cache_stats(int iproc_num);

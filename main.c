@@ -374,7 +374,6 @@ int mcast_ttl = -1; /* if -1, don't touch it, use the default (usually 1) */
 #endif /* USE_MCAST */
 #ifdef USE_DNS_CACHE
 int use_dns_cache=1; /* 1 if the cache is enabled, 0 otherwise */
-int use_dns_failover=0; /* 1 if failover is enabled, 0 otherwise */
 #endif
 
 int tos = IPTOS_LOWDELAY;
@@ -1279,7 +1278,6 @@ int main(int argc, char** argv)
 	int rfd;
 	int debug_save, debug_flag;
 	int dont_fork_cnt;
-	int socket_types;
 
 	/*init*/
 	creator_pid = getpid();
@@ -1606,14 +1604,14 @@ try_again:
 			goto error;
 		}
 	}
-	if (fix_all_socket_lists(&socket_types)!=0){
+	if (fix_all_socket_lists()!=0){
 		fprintf(stderr,  "failed to initialize list addresses\n");
 		goto error;
 	}
-	if (dns_try_ipv6 && !(socket_types & SOCKET_T_IPV6)){
+	if (default_core_cfg.dns_try_ipv6 && !(socket_types & SOCKET_T_IPV6)){
 		/* if we are not listening on any ipv6 address => no point
 		 * to try to resovle ipv6 addresses */
-		dns_try_ipv6=0;
+		default_core_cfg.dns_try_ipv6=0;
 	}
 	/* print all the listen addresses */
 	printf("Listening on \n");
@@ -1660,7 +1658,7 @@ try_again:
 		goto error;
 	}
 	if (use_dns_cache==0)
-		use_dns_failover=0; /* cannot work w/o dns_cache support */
+		default_core_cfg.use_dns_failover=0; /* cannot work w/o dns_cache support */
 #ifdef USE_DNS_CACHE_STATS
 	/* preinitializing before the nubmer of processes is determined */
 	if (init_dns_cache_stats(1)<0){

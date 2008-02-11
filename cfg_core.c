@@ -27,19 +27,54 @@
  * History
  * -------
  *  2007-12-03	Initial version (Miklos)
+ *  2008-01-31  added DNS resolver parameters (Miklos)
  */
 
 #include "dprint.h"
+#ifdef USE_DST_BLACKLIST
 #include "dst_blacklist.h"
+#endif
+#include "resolve.h"
+#ifdef USE_DNS_CACHE
+#include "dns_cache.h"
+#endif
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
 struct cfg_group_core default_core_cfg = {
 	L_DEFAULT, /*  print only msg. < L_WARN */
 #ifdef USE_DST_BLACKLIST
+	/* blacklist */
 	0, /* dst blacklist is disabled by default */
 	DEFAULT_BLST_TIMEOUT,
 	DEFAULT_BLST_MAX_MEM,
+#endif
+	/* resolver */
+#ifdef USE_IPV6
+	1,  /* dns_try_ipv6 -- on by default */
+#else
+	0,  /* dns_try_ipv6 -- off, if no ipv6 support */
+#endif
+	0,  /* dns_try_naptr -- off by default */
+	3,  /* udp transport preference (for naptr) */
+	2,  /* tcp transport preference (for naptr) */
+	1,  /* tls transport preference (for naptr) */
+	-1, /* dns_retr_time */
+	-1, /* dns_retr_no */
+	-1, /* dns_servers_no */
+	1,  /* dns_search_list */
+	1,  /* dns_search_fmatch */
+	0,  /* dns_reinit */
+	/* DNS cache */
+#ifdef USE_DNS_CACHE
+	0,  /* dns_cache_flags */
+	0,  /* use_dns_failover -- off by default */
+	0,  /* dns_srv_lb -- off by default */
+	DEFAULT_DNS_NEG_CACHE_TTL, /* neg. cache ttl */
+	DEFAULT_DNS_CACHE_MIN_TTL, /* minimum ttl */
+	DEFAULT_DNS_CACHE_MAX_TTL, /* maximum ttl */
+	DEFAULT_DNS_MAX_MEM, /* dns_cache_max_mem */
+	0, /* dns_cache_del_nonexp -- delete only expired entries by default */
 #endif
 };
 
@@ -48,12 +83,72 @@ void	*core_cfg = &default_core_cfg;
 cfg_def_t core_cfg_def[] = {
 	{"debug",	CFG_VAR_INT,	0, 0, 0, 0, "debug level"},
 #ifdef USE_DST_BLACKLIST
+	/* blacklist */
 	{"use_dst_blacklist",	CFG_VAR_INT,	0, 0, 0, 0,
 		"enable/disable destination blacklisting"},
 	{"dst_blacklist_expire",	CFG_VAR_INT,	0, 0, 0, 0,
 		"how much time (in s) a blacklisted destination is kept in the list"},
 	{"dst_blacklist_mem",	CFG_VAR_INT,	0, 0, blst_max_mem_fixup, 0,
 		"maximum shared memory amount (in KB) used for keeping the blacklisted destinations"},
+#endif
+	/* resolver */
+#ifdef USE_DNS_CACHE
+	{"dns_try_ipv6",	CFG_VAR_INT,	0, 1, dns_try_ipv6_fixup, fix_dns_flags,
+#else
+	{"dns_try_ipv6",	CFG_VAR_INT,	0, 1, dns_try_ipv6_fixup, 0,
+#endif
+		"enable/disable IPv6 DNS lookups"},
+#ifdef USE_DNS_CACHE
+	{"dns_try_naptr",	CFG_VAR_INT,	0, 1, 0, fix_dns_flags,
+#else
+	{"dns_try_naptr",	CFG_VAR_INT,	0, 1, 0, 0,
+#endif
+		"enable/disable NAPTR DNS lookups"},
+	{"dns_udp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+		"udp protocol preference when doing NAPTR lookups"},
+	{"dns_tcp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+		"tcp protocol preference when doing NAPTR lookups"},
+	{"dns_tls_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+		"tls protocol preference when doing NAPTR lookups"},
+	{"dns_retr_time",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
+		"time in s before retrying a dns request"},
+	{"dns_retr_no",		CFG_VAR_INT,	0, 0, 0, resolv_reinit,
+		"number of dns retransmissions before giving up"},
+	{"dns_servers_no",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
+		"how many dns servers from the ones defined in "
+		"/etc/resolv.conf will be used"},
+	{"dns_use_search_list",	CFG_VAR_INT,	0, 1, 0, resolv_reinit,
+		"if set to 0, the search list in /etc/resolv.conf is ignored"},
+	{"dns_search_full_match",	CFG_VAR_INT,	0, 1, 0, 0,
+		"enable/disable domain name checks against the search list "
+		"in DNS answers"},
+	{"dns_reinit",		CFG_VAR_INT|CFG_INPUT_INT,	1, 1, dns_reinit_fixup, resolv_reinit,
+		"set to 1 in order to reinitialize the DNS resolver"},
+	/* DNS cache */
+#ifdef USE_DNS_CACHE
+	{"dns_cache_flags",	CFG_VAR_INT,	0, 4, 0, fix_dns_flags,
+		"dns cache specific resolver flags "
+		"(1=ipv4 only, 2=ipv6 only, 4=prefer ipv6"},
+	{"use_dns_failover",	CFG_VAR_INT,	0, 1, use_dns_failover_fixup, 0,
+		"enable/disable dns failover in case the destination "
+		"resolves to multiple ip addresses and/or multiple SRV records "
+		"(depends on use_dns_cache)"},
+	{"dns_srv_lb",		CFG_VAR_INT,	0, 1, 0, fix_dns_flags,
+		"enable/disable load balancing to different srv records "
+		"of the same priority based on the srv records weights "
+		"(depends on dns_failover)"},
+	{"dns_cache_negative_ttl",	CFG_VAR_INT,	0, 0, 0, 0,
+		"time to live for negative results (\"not found\") "
+		"in seconds. Use 0 to disable"},
+	{"dns_cache_min_ttl",	CFG_VAR_INT,	0, 0, 0, 0,
+		"minimum accepted time to live for a record, in seconds"},
+	{"dns_cache_max_ttl",	CFG_VAR_INT,	0, 0, 0, 0,
+		"maximum accepted time to live for a record, in seconds"},
+	{"dns_cache_mem",	CFG_VAR_INT,	0, 0, dns_cache_max_mem_fixup, 0,
+		"maximum memory used for the dns cache in Kb"},
+	{"dns_cache_del_nonexp",	CFG_VAR_INT,	0, 1, 0, 0,
+		"allow deletion of non-expired records from the cache when "
+		"there is no more space left for new ones"},
 #endif
 	{0, 0, 0, 0, 0, 0}
 };

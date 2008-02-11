@@ -59,10 +59,11 @@ struct socket_info* tls_listen;
 #define SOCKET_T_TCP  8
 #define SOCKET_T_TLS 16
 
+extern int socket_types;
 
 int add_listen_iface(char* name, unsigned short port, unsigned short proto,
 							enum si_flags flags);
-int fix_all_socket_lists(int* socket_types);
+int fix_all_socket_lists();
 void print_all_socket_lists();
 void print_aliases();
 

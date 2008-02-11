@@ -159,12 +159,6 @@ struct rdata* get_record(char* name, int type, int flags);
 void free_rdata_list(struct rdata* head);
 
 
-extern int dns_try_ipv6;
-extern int dns_try_naptr;
-extern int dns_udp_pref;  /* udp transport preference (for naptr) */
-extern int dns_tcp_pref;  /* tcp transport preference (for naptr) */
-extern int dns_tls_pref;  /* tls transport preference (for naptr) */
-
 
 #define rev_resolvehost(ip)\
 					gethostbyaddr((char*)(ip)->u.addr, (ip)->len, (ip)->af)
@@ -382,7 +376,7 @@ static inline struct hostent* _resolvehost(char* name)
 	/* ipv4 */
 	he=gethostbyname(name);
 #ifdef USE_IPV6
-	if(he==0 && dns_try_ipv6){
+	if(he==0 && cfg_get(core, core_cfg, dns_try_ipv6)){
 #ifndef DNS_IP_HACK
 skip_ipv4:
 #endif
@@ -407,8 +401,26 @@ skip_ipv4:
 }
 
 
-
 int resolv_init();
+
+/* callback/fixup functions executed by the configuration framework */
+void resolv_reinit(str *name);
+int dns_reinit_fixup(void *handle, str *name, void **val);
+int dns_try_ipv6_fixup(void *handle, str *name, void **val);
+void reinit_naptr_proto_prefs(str *name);
+
+#ifdef DNS_WATCHDOG_SUPPORT
+/* callback function that is called by the child processes
+ * when they reinitialize the resolver
+ *
+ * Note, that this callback is called by each chiled process separately!!!
+ * If the callback is registered after forking, only the child process
+ * that installs the hook will call the callback.
+ */
+typedef void (*on_resolv_reinit)(void);
+int register_resolv_reinit_cb(on_resolv_reinit cb);
+#endif
+
 
 int sip_hostport2su(union sockaddr_union* su, str* host, unsigned short port,
 						char* proto);

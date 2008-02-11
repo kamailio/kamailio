@@ -608,45 +608,45 @@ assign_stm:
 	| DNS EQUAL error { yyerror("boolean value expected"); }
 	| REV_DNS EQUAL NUMBER { received_dns|= ($3)?DO_REV_DNS:0; }
 	| REV_DNS EQUAL error { yyerror("boolean value expected"); }
-	| DNS_TRY_IPV6 EQUAL NUMBER   { dns_try_ipv6=$3; }
+	| DNS_TRY_IPV6 EQUAL NUMBER   { default_core_cfg.dns_try_ipv6=$3; }
 	| DNS_TRY_IPV6 error { yyerror("boolean value expected"); }
-	| DNS_TRY_NAPTR EQUAL NUMBER   { IF_NAPTR(dns_try_naptr=$3); }
+	| DNS_TRY_NAPTR EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_try_naptr=$3); }
 	| DNS_TRY_NAPTR error { yyerror("boolean value expected"); }
-	| DNS_SRV_LB EQUAL NUMBER   { IF_DNS_FAILOVER(dns_srv_lb=$3); }
+	| DNS_SRV_LB EQUAL NUMBER   { IF_DNS_FAILOVER(default_core_cfg.dns_srv_lb=$3); }
 	| DNS_SRV_LB error { yyerror("boolean value expected"); }
-	| DNS_UDP_PREF EQUAL NUMBER   { IF_NAPTR(dns_udp_pref=$3); }
+	| DNS_UDP_PREF EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_udp_pref=$3); }
 	| DNS_UDP_PREF error { yyerror("number expected"); }
-	| DNS_TCP_PREF EQUAL NUMBER   { IF_NAPTR(dns_tcp_pref=$3); }
+	| DNS_TCP_PREF EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_tcp_pref=$3); }
 	| DNS_TCP_PREF error { yyerror("number expected"); }
-	| DNS_TLS_PREF EQUAL NUMBER   { IF_NAPTR(dns_tls_pref=$3); }
+	| DNS_TLS_PREF EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_tls_pref=$3); }
 	| DNS_TLS_PREF error { yyerror("number expected"); }
-	| DNS_RETR_TIME EQUAL NUMBER   { dns_retr_time=$3; }
+	| DNS_RETR_TIME EQUAL NUMBER   { default_core_cfg.dns_retr_time=$3; }
 	| DNS_RETR_TIME error { yyerror("number expected"); }
-	| DNS_RETR_NO EQUAL NUMBER   { dns_retr_no=$3; }
+	| DNS_RETR_NO EQUAL NUMBER   { default_core_cfg.dns_retr_no=$3; }
 	| DNS_RETR_NO error { yyerror("number expected"); }
-	| DNS_SERVERS_NO EQUAL NUMBER   { dns_servers_no=$3; }
+	| DNS_SERVERS_NO EQUAL NUMBER   { default_core_cfg.dns_servers_no=$3; }
 	| DNS_SERVERS_NO error { yyerror("number expected"); }
-	| DNS_USE_SEARCH EQUAL NUMBER   { dns_search_list=$3; }
+	| DNS_USE_SEARCH EQUAL NUMBER   { default_core_cfg.dns_search_list=$3; }
 	| DNS_USE_SEARCH error { yyerror("boolean value expected"); }
-	| DNS_SEARCH_FMATCH EQUAL NUMBER   { dns_search_fmatch=$3; }
+	| DNS_SEARCH_FMATCH EQUAL NUMBER   { default_core_cfg.dns_search_fmatch=$3; }
 	| DNS_SEARCH_FMATCH error { yyerror("boolean value expected"); }
 	| DNS_USE_CACHE EQUAL NUMBER   { IF_DNS_CACHE(use_dns_cache=$3); }
 	| DNS_USE_CACHE error { yyerror("boolean value expected"); }
-	| DNS_USE_FAILOVER EQUAL NUMBER   { IF_DNS_FAILOVER(use_dns_failover=$3);}
+	| DNS_USE_FAILOVER EQUAL NUMBER   { IF_DNS_FAILOVER(default_core_cfg.use_dns_failover=$3);}
 	| DNS_USE_FAILOVER error { yyerror("boolean value expected"); }
-	| DNS_CACHE_FLAGS EQUAL NUMBER   { IF_DNS_CACHE(dns_flags=$3); }
+	| DNS_CACHE_FLAGS EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_flags=$3); }
 	| DNS_CACHE_FLAGS error { yyerror("boolean value expected"); }
-	| DNS_CACHE_NEG_TTL EQUAL NUMBER   { IF_DNS_CACHE(dns_neg_cache_ttl=$3); }
+	| DNS_CACHE_NEG_TTL EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_neg_cache_ttl=$3); }
 	| DNS_CACHE_NEG_TTL error { yyerror("boolean value expected"); }
-	| DNS_CACHE_MAX_TTL EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_max_ttl=$3); }
+	| DNS_CACHE_MAX_TTL EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_max_ttl=$3); }
 	| DNS_CACHE_MAX_TTL error { yyerror("boolean value expected"); }
-	| DNS_CACHE_MIN_TTL EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_min_ttl=$3); }
+	| DNS_CACHE_MIN_TTL EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_min_ttl=$3); }
 	| DNS_CACHE_MIN_TTL error { yyerror("boolean value expected"); }
-	| DNS_CACHE_MEM EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_max_mem=$3); }
+	| DNS_CACHE_MEM EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_max_mem=$3); }
 	| DNS_CACHE_MEM error { yyerror("boolean value expected"); }
 	| DNS_CACHE_GC_INT EQUAL NUMBER   { IF_DNS_CACHE(dns_timer_interval=$3); }
 	| DNS_CACHE_GC_INT error { yyerror("boolean value expected"); }
-	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(dns_cache_del_nonexp=$3); }
+	| DNS_CACHE_DEL_NONEXP EQUAL NUMBER   { IF_DNS_CACHE(default_core_cfg.dns_cache_del_nonexp=$3); }
 	| DNS_CACHE_DEL_NONEXP error { yyerror("boolean value expected"); }
 	| USE_DST_BLST EQUAL NUMBER   { IF_DST_BLACKLIST(default_core_cfg.use_dst_blacklist=$3); }
 	| USE_DST_BLST error { yyerror("boolean value expected"); }

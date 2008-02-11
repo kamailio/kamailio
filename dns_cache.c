@@ -39,6 +39,8 @@
  *		of the cache (Miklos)
  *  2007-07-30  DNS cache measurements added (Gergo)
  *  2007-08-17  dns_cache_del_nonexp config option is introduced (Miklos)
+ *  2008-02-04  DNS cache options are adapted for the configuration
+ *		framework (Miklos)
  */
 
 #ifdef USE_DNS_CACHE
@@ -48,6 +50,7 @@
 #endif
 
 #include "globals.h"
+#include "cfg_core.h"
 #include "dns_cache.h"
 #include "dns_wrappers.h"
 #include "compiler_opt.h"
@@ -79,10 +82,6 @@
 							   dns answer*/
 
 #define DNS_HASH_SIZE	1024 /* must be <= 65535 */
-#define DEFAULT_DNS_NEG_CACHE_TTL 60 /* 1 min. */
-#define DEFAULT_DNS_CACHE_MIN_TTL 0 /* (disabled) */
-#define DEFAULT_DNS_CACHE_MAX_TTL ((unsigned int)(-1)) /* (maxint) */
-#define DEFAULT_DNS_MAX_MEM 500 /* 500 Kb */
 #define DEFAULT_DNS_TIMER_INTERVAL 120  /* 2 min. */
 #define DNS_HE_MAX_ADDR 10  /* maxium addresses returne in a hostent struct */
 #define MAX_CNAME_CHAIN  10
@@ -91,16 +90,9 @@
 
 static gen_lock_t* dns_hash_lock=0;
 static volatile unsigned int *dns_cache_mem_used=0; /* current mem. use */
-unsigned int dns_cache_max_mem=DEFAULT_DNS_MAX_MEM; /* maximum memory used for
-													 the cached entries */
-unsigned int dns_neg_cache_ttl=DEFAULT_DNS_NEG_CACHE_TTL; /* neg. cache ttl */
-unsigned int dns_cache_max_ttl=DEFAULT_DNS_CACHE_MAX_TTL; /* maximum ttl */
-unsigned int dns_cache_min_ttl=DEFAULT_DNS_CACHE_MIN_TTL; /* minimum ttl */
 unsigned int dns_timer_interval=DEFAULT_DNS_TIMER_INTERVAL; /* in s */
 int dns_flags=0; /* default flags used for the  dns_*resolvehost
                     (compatibility wrappers) */
-int dns_srv_lb=0; /* off by default */
-int dns_cache_del_nonexp=0; /* delete only expired entries by default */
 
 #ifdef USE_DNS_CACHE_STATS
 struct t_dns_cache_stats* dns_cache_stats=0;
@@ -109,8 +101,12 @@ struct t_dns_cache_stats* dns_cache_stats=0;
 #define LOCK_DNS_HASH()		lock_get(dns_hash_lock)
 #define UNLOCK_DNS_HASH()	lock_release(dns_hash_lock)
 
-#define FIX_TTL(t)  (((t)<dns_cache_min_ttl)?dns_cache_min_ttl: \
-						(((t)>dns_cache_max_ttl)?dns_cache_max_ttl:(t)))
+#define FIX_TTL(t) \
+	(((t)<cfg_get(core, core_cfg, dns_cache_min_ttl))? \
+		cfg_get(core, core_cfg, dns_cache_min_ttl): \
+		(((t)>cfg_get(core, core_cfg, dns_cache_max_ttl))? \
+			cfg_get(core, core_cfg, dns_cache_max_ttl): \
+			(t)))
 
 
 struct dns_hash_head{
@@ -216,8 +212,8 @@ static ticks_t dns_timer(ticks_t ticks, struct timer_ln* tl, void* data)
 	if (atomic_get(dns_servers_up) == 0)
 		return (ticks_t)(-1);
 #endif
-	if (*dns_cache_mem_used>12*(dns_cache_max_mem/16)){ /* ~ 75% used */
-		dns_cache_free_mem(dns_cache_max_mem/2, 1);
+	if (*dns_cache_mem_used>12*(cfg_get(core, core_cfg, dns_cache_max_mem)/16)){ /* ~ 75% used */
+		dns_cache_free_mem(cfg_get(core, core_cfg, dns_cache_max_mem)/2, 1);
 	}else{
 		dns_cache_clean(-1, 1); /* all the table, only expired entries */
 		/* TODO: better strategy? */
@@ -265,7 +261,62 @@ void destroy_dns_cache()
 	}
 }
 
+/* set the value of dns_flags */
+void fix_dns_flags(str *name)
+{
+	/* restore the original value of dns_cache_flags first
+	 * (DNS_IPV4_ONLY may have been set only because dns_try_ipv6
+	 * was disabled, and the flag must be cleared when
+	 * dns_try_ipv6 is enabled) (Miklos)
+	 */
+	dns_flags = cfg_get(core, core_cfg, dns_cache_flags) & 7;
 
+	if (cfg_get(core, core_cfg, dns_try_ipv6)==0){
+		dns_flags|=DNS_IPV4_ONLY;
+	}
+	if (dns_flags & DNS_IPV4_ONLY){
+		dns_flags&=~(DNS_IPV6_ONLY|DNS_IPV6_FIRST);
+	}
+	if (cfg_get(core, core_cfg, dns_srv_lb)){
+#ifdef DNS_SRV_LB
+		dns_flags|=DNS_SRV_RR_LB;
+#else
+		LOG(L_WARN, "WARING: fix_dns_flags: SRV loadbalaning is set, but"
+					" support for it is not compiled -- ignoring\n");
+#endif
+	}
+	if (cfg_get(core, core_cfg, dns_try_naptr)) {
+#ifndef USE_NAPTR
+	LOG(L_WARN, "WARING: fix_dns_flags: NAPTR support is enabled, but"
+				" support for it is not compiled -- ignoring\n");
+#endif
+		dns_flags|=DNS_TRY_NAPTR;
+	}
+}
+
+/* fixup function for use_dns_failover
+ * verifies that use_dns_cache is set to 1
+ */
+int use_dns_failover_fixup(void *handle, str *name, void **val)
+{
+	if ((int)(long)(*val) && !use_dns_cache) {
+		LOG(L_ERR, "ERROR: use_dns_failover_fixup(): "
+			"DNS cache is turned off, failover cannot be enabled. "
+			"(set use_dns_cache to 1)\n");
+		return -1;
+	}
+	return 0;
+}
+
+/* KByte to Byte conversion */
+int dns_cache_max_mem_fixup(void *handle, str *name, void **val)
+{
+	unsigned int    u;
+
+	u = ((unsigned int)(long)(*val))<<10;
+	(*val) = (void *)(long)u;
+	return 0;
+}
 
 int init_dns_cache()
 {
@@ -322,29 +373,10 @@ int init_dns_cache()
 #endif
 
 	/* fix options */
-	dns_cache_max_mem<<=10; /* Kb */ /* TODO: test with 0 */
+	default_core_cfg.dns_cache_max_mem<<=10; /* Kb */ /* TODO: test with 0 */
 	/* fix flags */
-	if (dns_try_ipv6==0){
-		dns_flags|=DNS_IPV4_ONLY;
-	}
-	if (dns_flags & DNS_IPV4_ONLY){
-		dns_flags&=~(DNS_IPV6_ONLY|DNS_IPV6_FIRST);
-	}
-	if (dns_srv_lb){
-#ifdef DNS_SRV_LB
-		dns_flags|=DNS_SRV_RR_LB;
-#else
-		LOG(L_WARN, "WARING: dns_cache_init: SRV loadbalaning is set, but"
-					" support for it is not compiled -- ignoring\n");
-#endif
-	}
-	if (dns_try_naptr){
-#ifndef USE_NAPTR
-	LOG(L_WARN, "WARING: dns_cache_init: NAPTR support is enabled, but"
-				" support for it is not compiled -- ignoring\n");
-#endif
-		dns_flags|=DNS_TRY_NAPTR;
-	}
+	fix_dns_flags(NULL);
+
 	dns_timer_h=timer_alloc();
 	if (dns_timer_h==0){
 		ret=E_OUT_OF_MEM;
@@ -599,10 +631,8 @@ inline static int dns_cache_clean(unsigned int no, int expired_only)
 	if (!expired_only){
 		for(h=start; h!=(start+DNS_HASH_SIZE); h++){
 			clist_foreach_safe(&dns_hash[h%DNS_HASH_SIZE], e, t, next){
-				if  ((s_ticks_t)(now-e->expire)>=0){
-					_dns_hash_remove(e);
-					deleted++;
-				}
+				_dns_hash_remove(e);
+				deleted++;
 				n++;
 				if (n>=no) goto skip;
 			}
@@ -714,14 +744,15 @@ inline static int dns_cache_add(struct dns_hash_entry* e)
 
 	/* check space */
 	/* atomic_add_long(dns_cache_total_used, e->size); */
-	if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
+	if ((*dns_cache_mem_used+e->total_size)>=cfg_get(core, core_cfg, dns_cache_max_mem)){
 #ifdef USE_DNS_CACHE_STATS
 		dns_cache_stats[process_no].dc_lru_cnt++;
 #endif
 		LOG(L_WARN, "WARNING: dns_cache_add: cache full, trying to free...\n");
 		/* free ~ 12% of the cache */
-		dns_cache_free_mem(*dns_cache_mem_used/16*14, !dns_cache_del_nonexp);
-		if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
+		dns_cache_free_mem(*dns_cache_mem_used/16*14,
+					!cfg_get(core, core_cfg, dns_cache_del_nonexp));
+		if ((*dns_cache_mem_used+e->total_size)>=cfg_get(core, core_cfg, dns_cache_max_mem)){
 			LOG(L_ERR, "ERROR: dns_cache_add: max. cache mem size exceeded\n");
 			return -1;
 		}
@@ -753,16 +784,17 @@ inline static int dns_cache_add_unsafe(struct dns_hash_entry* e)
 
 	/* check space */
 	/* atomic_add_long(dns_cache_total_used, e->size); */
-	if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
+	if ((*dns_cache_mem_used+e->total_size)>=cfg_get(core, core_cfg, dns_cache_max_mem)){
 #ifdef USE_DNS_CACHE_STATS
 		dns_cache_stats[process_no].dc_lru_cnt++;
 #endif
 		LOG(L_WARN, "WARNING: dns_cache_add: cache full, trying to free...\n");
 		/* free ~ 12% of the cache */
 		UNLOCK_DNS_HASH();
-		dns_cache_free_mem(*dns_cache_mem_used/16*14, !dns_cache_del_nonexp);
+		dns_cache_free_mem(*dns_cache_mem_used/16*14,
+					!cfg_get(core, core_cfg, dns_cache_del_nonexp));
 		LOCK_DNS_HASH();
-		if ((*dns_cache_mem_used+e->total_size)>=dns_cache_max_mem){
+		if ((*dns_cache_mem_used+e->total_size)>=cfg_get(core, core_cfg, dns_cache_max_mem)){
 			LOG(L_ERR, "ERROR: dns_cache_add: max. cache mem size exceeded\n");
 			return -1;
 		}
@@ -1672,8 +1704,8 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 		l=dns_cache_mk_rd_entry2(records);
 #endif
 		free_rdata_list(records);
-	}else if (dns_neg_cache_ttl){
-		e=dns_cache_mk_bad_entry(name, type, dns_neg_cache_ttl, DNS_BAD_NAME);
+	}else if (cfg_get(core, core_cfg, dns_neg_cache_ttl)){
+		e=dns_cache_mk_bad_entry(name, type, cfg_get(core, core_cfg, dns_neg_cache_ttl), DNS_BAD_NAME);
 		atomic_set(&e->refcnt, 1); /* 1 because we return a ref. to it */
 		dns_cache_add(e); /* refcnt++ inside*/
 		goto end;
@@ -3144,7 +3176,7 @@ void dns_cache_mem_info(rpc_t* rpc, void* ctx)
 		rpc->fault(ctx, 500, "dns cache support disabled (see use_dns_cache)");
 		return;
 	}
-	rpc->add(ctx, "dd",  *dns_cache_mem_used, dns_cache_max_mem);
+	rpc->add(ctx, "dd",  *dns_cache_mem_used, cfg_get(core, core_cfg, dns_cache_max_mem));
 }
 
 

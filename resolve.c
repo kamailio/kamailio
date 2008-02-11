@@ -41,6 +41,8 @@
  *              new option dns_search_full_match (default on) controls
  *              whether rest of the name is matched against search list
  *              or blindly accepted (better performance but exploitable)
+ *  2008-01-31  resolver options use the configuration framework, and the
+ *		resolver is reinitialized when the options change (Miklos)
  */ 
 
 
@@ -57,6 +59,8 @@
 #include "ip_addr.h"
 #include "error.h"
 #include "globals.h" /* tcp_disable, tls_disable a.s.o */
+#include "cfg_core.h"
+#include "socket_info.h"
 
 #ifdef USE_DNS_CACHE
 #include "dns_cache.h"
@@ -68,28 +72,10 @@
 #define local_malloc pkg_malloc
 #define local_free   pkg_free
 
-#ifdef USE_IPV6
-int dns_try_ipv6=1; /* default on */
-#else
-int dns_try_ipv6=0; /* off, if no ipv6 support */
-#endif
-int dns_try_naptr=0;  /* off by default */
-
-int dns_udp_pref=3;  /* udp transport preference (for naptr) */
-int dns_tcp_pref=2;  /* tcp transport preference (for naptr) */
-int dns_tls_pref=1;  /* tls transport preference (for naptr) */
-
 #ifdef USE_NAPTR
 #define PROTO_LAST  PROTO_SCTP
 static int naptr_proto_pref[PROTO_LAST];
 #endif
-
-/* declared in globals.h */
-int dns_retr_time=-1;
-int dns_retr_no=-1;
-int dns_servers_no=-1;
-int dns_search_list=-1;
-int dns_search_fmatch=-1;
 
 #ifdef USE_NAPTR
 void init_naptr_proto_prefs()
@@ -99,14 +85,28 @@ void init_naptr_proto_prefs()
 		BUG("init_naptr_proto_prefs: array too small \n");
 		return;
 	}
-	naptr_proto_pref[PROTO_UDP]=dns_udp_pref;
-	naptr_proto_pref[PROTO_TCP]=dns_tcp_pref;
-	naptr_proto_pref[PROTO_TLS]=dns_tls_pref;
+	naptr_proto_pref[PROTO_UDP]=cfg_get(core, core_cfg, dns_udp_pref);
+	naptr_proto_pref[PROTO_TCP]=cfg_get(core, core_cfg, dns_tcp_pref);
+	naptr_proto_pref[PROTO_TLS]=cfg_get(core, core_cfg, dns_tls_pref);
 }
 
 #endif /* USE_NAPTR */
 
+#ifdef DNS_WATCHDOG_SUPPORT
+static on_resolv_reinit	on_resolv_reinit_cb = NULL;
 
+/* register the callback function */
+int register_resolv_reinit_cb(on_resolv_reinit cb)
+{
+	if (on_resolv_reinit_cb) {
+		LOG(L_ERR, "ERROR: register_resolv_reinit_cb(): "
+			"callback function has been already registered\n");
+		return -1;
+	}
+	on_resolv_reinit_cb = cb;
+	return 0;
+}
+#endif
 
 /* init. the resolver
  * params: retr_time  - time before retransmitting (must be >0)
@@ -122,30 +122,82 @@ void init_naptr_proto_prefs()
  * will be used. See also resolv.conf(5).
  * returns: 0 on success, -1 on error
  */
-int resolv_init()
+static int _resolv_init()
 {
 	res_init();
 #ifdef HAVE_RESOLV_RES
-	if (dns_retr_time>0)
-		_res.retrans=dns_retr_time;
-	if (dns_retr_no>0)
-		_res.retry=dns_retr_no;
-	if (dns_servers_no>=0)
-		_res.nscount=dns_servers_no;
-	if (dns_search_list==0)
+	if (cfg_get(core, core_cfg, dns_retr_time)>0)
+		_res.retrans=cfg_get(core, core_cfg, dns_retr_time);
+	if (cfg_get(core, core_cfg, dns_retr_no)>0)
+		_res.retry=cfg_get(core, core_cfg, dns_retr_no);
+	if (cfg_get(core, core_cfg, dns_servers_no)>=0)
+		_res.nscount=cfg_get(core, core_cfg, dns_servers_no);
+	if (cfg_get(core, core_cfg, dns_search_list)==0)
 		_res.options&=~(RES_DEFNAMES|RES_DNSRCH);
 #else
 #warning "no resolv timeout support"
-	LOG(L_WARN, "WARNING: resolv_init: no resolv options support - resolv"
+	LOG(L_WARN, "WARNING: _resolv_init: no resolv options support - resolv"
 			" options will be ignored\n");
 #endif
+	return 0;
+}
+
+/* wrapper function to initialize the resolver at startup */
+int resolv_init()
+{
+	_resolv_init();
+
 #ifdef USE_NAPTR
 	init_naptr_proto_prefs();
 #endif
 	return 0;
 }
 
+/* wrapper function to reinitialize the resolver
+ * This function must be called by each child process whenever
+ * a resolver option changes
+ */
+void resolv_reinit(str *name)
+{
+	_resolv_init();
 
+#ifdef DNS_WATCHDOG_SUPPORT
+	if (on_resolv_reinit_cb) on_resolv_reinit_cb();
+#endif
+	LOG(L_DBG, "DEBUG: resolv_reinit(): "
+		"DNS resolver has been reinitialized\n");
+}
+
+/* fixup function for dns_reinit variable
+ * (resets the variable to 0)
+ */
+int dns_reinit_fixup(void *handle, str *name, void **val)
+{
+	*val = (void *)(long)0;
+	return 0;
+}
+
+/* wrapper function to recalculate the naptr protocol preferences */
+void reinit_naptr_proto_prefs(str *name)
+{
+#ifdef USE_NAPTR
+	init_naptr_proto_prefs();
+#endif
+}
+
+/* fixup function for dns_try_ipv6
+ * verifies that SER really listens on an ipv6 interface
+ */
+int dns_try_ipv6_fixup(void *handle, str *name, void **val)
+{
+	if ((int)(long)(*val) && !(socket_types & SOCKET_T_IPV6)) {
+		LOG(L_ERR, "ERROR: dns_try_ipv6_fixup(): "
+			"SER does not listen on any ipv6 interface, "
+			"there is no point in resolving ipv6 addresses\n");
+		return -1;
+	}
+	return 0;
+}
 
  /*  skips over a domain name in a dns message
  *  (it can be  a sequence of labels ending in \0, a pointer or
@@ -459,7 +511,7 @@ struct rdata* get_record(char* name, int type, int flags)
 	int name_len;
 	struct rdata* fullname_rd;
 	
-	if (dns_search_list==0) {
+	if (cfg_get(core, core_cfg, dns_search_list)==0) {
 		search_list_used=0;
 		name_len=0;
 	} else {
@@ -574,7 +626,7 @@ again:
 			/* this is safe.... here was rec_name_len > name_len */
 			else if (rec_name[name_len]=='.') {
 #ifdef HAVE_RESOLV_RES
-				if ((dns_search_fmatch==0) ||
+				if ((cfg_get(core, core_cfg, dns_search_fmatch)==0) ||
 						(match_search_list(&_res, rec_name+name_len+1)!=0))
 #endif
 					fullname_rd=rd;
@@ -1221,7 +1273,7 @@ end:
 struct hostent* _sip_resolvehost(str* name, unsigned short* port, char* proto)
 {
 #ifdef USE_NAPTR
-	if (dns_try_naptr)
+	if (cfg_get(core, core_cfg, dns_try_naptr))
 		return naptr_sip_resolvehost(name, port, proto);
 #endif
 	return srv_sip_resolvehost(name, 0, port, proto, 0, 0);

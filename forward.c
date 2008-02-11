@@ -319,7 +319,7 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 
 	if(dst){
 #ifdef USE_DNS_FAILOVER
-		if (use_dns_failover){
+		if (cfg_get(core, core_cfg, use_dns_failover)){
 			dns_srv_handle_init(&dns_srv_h);
 			err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
 									&send_info->proto, dns_flags);
@@ -454,7 +454,8 @@ int forward_request(struct sip_msg* msg, str* dst, unsigned short port,
 			goto end;
 		}
 #ifdef USE_DNS_FAILOVER
-	}while(dst && use_dns_failover && dns_srv_handle_next(&dns_srv_h, err) && 
+	}while(dst && cfg_get(core, core_cfg, use_dns_failover) &&
+			dns_srv_handle_next(&dns_srv_h, err) && 
 			((err=dns_sip_resolve2su(&dns_srv_h, &send_info->to, dst, port,
 								  &send_info->proto, dns_flags))==0));
 	if ((err!=0) && (err!=-E_DNS_EOR)){
@@ -471,7 +472,7 @@ error:
 	STATS_TX_DROPS;
 end:
 #ifdef USE_DNS_FAILOVER
-	if (dst && use_dns_failover){
+	if (dst && cfg_get(core, core_cfg, use_dns_failover)){
 				dns_srv_handle_put(&dns_srv_h);
 	}
 #endif

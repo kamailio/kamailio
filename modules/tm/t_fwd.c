@@ -102,6 +102,7 @@
 #include "config.h"
 #ifdef USE_DNS_FAILOVER
 #include "../../dns_cache.h"
+#include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
 #endif
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
@@ -395,7 +396,7 @@ int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg,
 	int ret;
 	
 	ret=-1;
-	if (use_dns_failover && 
+	if (cfg_get(core, core_cfg, use_dns_failover) && 
 			!((t->flags & T_DONT_FORK) || uac_dont_fork(old_uac)) &&
 			dns_srv_handle_next(&old_uac->dns_h, 0)){
 			if (lock_replies){
@@ -674,7 +675,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 #ifdef USE_DNS_FAILOVER
 			/* if the destination resolves to more ips, add another
 			 *  branch/uac */
-			if (use_dns_failover){
+			if (cfg_get(core, core_cfg, use_dns_failover)){
 				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 				if (ret>=0){
 					su2ip_addr(&ip, &uac->request.dst.to);
@@ -709,7 +710,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 #ifdef USE_DNS_FAILOVER
 			/* if the destination resolves to more ips, add another
 			 *  branch/uac */
-			if (use_dns_failover){
+			if (cfg_get(core, core_cfg, use_dns_failover)){
 				ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 				if (ret>=0){
 					su2ip_addr(&ip, &uac->request.dst.to);
@@ -744,7 +745,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 #ifdef USE_DNS_FAILOVER
 		/* if the destination resolves to more ips, add another
 		 *  branch/uac */
-		if (use_dns_failover){
+		if (cfg_get(core, core_cfg, use_dns_failover)){
 			ret=add_uac_dns_fallback(t, p_msg, uac, lock_replies);
 			if (ret>=0){
 				/* success, return new branch */

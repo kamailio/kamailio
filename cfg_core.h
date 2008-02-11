@@ -47,10 +47,34 @@ extern void	*core_cfg;
 struct cfg_group_core {
 	int	debug;
 #ifdef USE_DST_BLACKLIST
+	/* blacklist */
 	int	use_dst_blacklist; /* 1 if blacklist is enabled */
 	unsigned int	blst_timeout; /* blacklist entry ttl */
 	unsigned int	blst_max_mem; /* maximum memory used for the
 					blacklist entries */
+#endif
+	/* resolver */
+	int dns_try_ipv6;
+	int dns_try_naptr;
+	int dns_udp_pref;
+	int dns_tcp_pref;
+	int dns_tls_pref;
+	int dns_retr_time;
+	int dns_retr_no;
+	int dns_servers_no;
+	int dns_search_list;
+	int dns_search_fmatch;
+	int dns_reinit;
+	/* DNS cache */
+#ifdef USE_DNS_CACHE
+	int dns_cache_flags;
+	int use_dns_failover;
+	int dns_srv_lb;
+	unsigned int dns_neg_cache_ttl;
+	unsigned int dns_cache_min_ttl;
+	unsigned int dns_cache_max_ttl;
+	unsigned int dns_cache_max_mem;
+	int dns_cache_del_nonexp;
 #endif
 };
 
