@@ -520,10 +520,9 @@ error:
 	return 0;
 }
 
+
 inline static void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 {
-	struct hdr_field *hdr;
-
 	if (faked_req->new_uri.s) {
 		pkg_free(faked_req->new_uri.s);
 		faked_req->new_uri.s = 0;
@@ -534,18 +533,7 @@ inline static void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 	del_notflaged_lumps( &(faked_req->body_lumps), LUMPFLAG_SHMEM );
 	del_nonshm_lump_rpl( &(faked_req->reply_lump) );
 
-	/* free header's parsed structures that were added by failure handlers */
-	for( hdr=faked_req->headers ; hdr ; hdr=hdr->next ) {
-		if ( hdr->parsed && hdr_allocs_parse(hdr) &&
-		(hdr->parsed<(void*)t->uas.request ||
-		hdr->parsed>=(void*)t->uas.end_request)) {
-			/* header parsed filed doesn't point inside uas.request memory
-			 * chunck -> it was added by failure funcs.-> free it as pkg */
-			LM_DBG("removing hdr->parsed %d\n",	hdr->type);
-			clean_hdr_field(hdr);
-			hdr->parsed = 0;
-		}
-	}
+	clean_msg_clone( faked_req, t->uas.request, t->uas.end_request);
 }
 
 

@@ -205,6 +205,10 @@ void run_trans_callbacks( int type , struct cell *trans,
 			cbp->callback( trans, type, &params );
 		}
 	}
+	/* message cleanup */
+	if (req->msg_flags&FL_SHM_CLONE)
+		clean_msg_clone( req, trans->uas.request, trans->uas.end_request);
+	/* env cleanup */
 	set_avp_list( backup );
 	params.extra1 = params.extra2 = 0;
 	set_t(trans_backup);
