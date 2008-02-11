@@ -701,7 +701,7 @@ static int mod_init(void)
 	mask_col.len = strlen(mask_col.s);
 	port_col.len = strlen(port_col.s);
 
-	allow[0].filename = get_pathname(DEFAULT_ALLOW_FILE);
+	allow[0].filename = get_pathname(default_allow_file);
 	allow[0].rules = parse_config_file(allow[0].filename);
 	if (allow[0].rules) {
 		LM_DBG("default allow file (%s) parsed\n", allow[0].filename);
@@ -710,7 +710,7 @@ static int mod_init(void)
 			allow[0].filename);
 	}
 
-	deny[0].filename = get_pathname(DEFAULT_DENY_FILE);
+	deny[0].filename = get_pathname(default_deny_file);
 	deny[0].rules = parse_config_file(deny[0].filename);
 	if (deny[0].rules) {
 		LM_DBG("default deny file (%s) parsed\n", deny[0].filename);
