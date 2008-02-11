@@ -28,7 +28,7 @@
 
 %.d: %.c $(ALLDEP)
 	@set -e; $(MKDEP) $(CFLAGS) $(INCLUDES) $(DEFS) $< \
-	|  sed 's#\(\($*D)\)\?$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
+	|  sed 's#\(\($(*D)\)\?$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
 	[ -s $@ ] || rm -f $@
 
 # use RPATH and SER_LIBS if needed (make install and the module depends
