@@ -105,7 +105,6 @@
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
-#include <libgen.h>
 
 #include "config.h"
 #include "dprint.h"
