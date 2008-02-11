@@ -680,6 +680,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	param_hooks_t     hooks;
 	int               l;
 	char*             s, fproxy_lr;
+	int		  first_rr;
 	str               route, next_hop, append, tmp_s, body, str_uri;
 
 	if(msg->first_line.type != SIP_REQUEST){
@@ -755,6 +756,8 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		record_route = 0;
 	}
 
+	first_rr = 1;
+
 	if( record_route ) {
 		if ( (tmp_s.s=find_not_quoted(&record_route->nameaddr.uri,';'))!=0 &&
 		tmp_s.s+1!=record_route->nameaddr.uri.s+
@@ -772,12 +775,13 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 			DBG("assemble_msg: record_route->nameaddr.uri: %.*s\n",
 				record_route->nameaddr.uri.len,record_route->nameaddr.uri.s);
 			if(fproxy_lr){
+				first_rr = 0;
 				DBG("assemble_msg: first proxy has loose routing.\n");
 				copy_route(s,route.len,record_route->nameaddr.uri.s,
 					record_route->nameaddr.uri.len);
 			}
 		}
-		for(p_hdr = p_hdr->next;p_hdr;p_hdr = p_hdr->next) {
+		for(;p_hdr;p_hdr = p_hdr->next) {
 			/* filter out non-RR hdr and empty hdrs */
 			if( (p_hdr->type!=HDR_RECORDROUTE_T) || p_hdr->body.len==0)
 				continue;
@@ -792,8 +796,11 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 				DBG("assemble_msg: record_route->nameaddr.uri: "
 				    "<%.*s>\n", record_route->nameaddr.uri.len,
 					record_route->nameaddr.uri.s);
-				copy_route(s,route.len,record_route->nameaddr.uri.s,
-					record_route->nameaddr.uri.len);
+				if (!first_rr) { 
+ 				  copy_route(s,route.len,record_route->nameaddr.uri.s,
+ 					     record_route->nameaddr.uri.len);
+ 				} 
+ 				first_rr=0;
 			}
 		}
 
