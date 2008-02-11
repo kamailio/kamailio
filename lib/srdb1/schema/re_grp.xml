@@ -37,7 +37,7 @@
 
     <column id="group_id">
         <name>group_id</name>
-        <type>string</type>
+        <type>int</type>
         <size>11</size>
         <default>0</default>
         <description>Group ID</description>
