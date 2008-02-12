@@ -177,7 +177,7 @@ db_con_t* db_unixodbc_init(const str* _url)
  * Shut down database module
  * No function should be called after this
  */
-void db_unixodcb_close(db_con_t* _h)
+void db_unixodbc_close(db_con_t* _h)
 {
 	return db_do_close(_h, db_unixodbc_free_connection);
 }
@@ -267,7 +267,7 @@ int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
  * _v: values of the keys
  * _n: number of key=value pairs
  */
-int db_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_insert(_h, _k, _v, _n, db_unixodbc_val2str,
 	db_unixodbc_submit_query);
@@ -281,7 +281,7 @@ int db_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const 
  * _v: values of the keys that must match
  * _n: number of key=value pairs
  */
-int db_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
+int db_unixodbc_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 const db_val_t* _v, const int _n)
 {
 	return db_do_delete(_h, _k, _o, _v, _n, db_unixodbc_val2str,
@@ -309,7 +309,7 @@ const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, cons
 /*
  * Just like insert, but replace the row if it exists
  */
-int db_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
+int db_unixodbc_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_replace(_h, _k, _v, _n, db_unixodbc_val2str,
 	db_unixodbc_submit_query);
