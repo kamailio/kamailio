@@ -557,12 +557,14 @@ static int carrier_rewrite_msg(int carrier, int domain,
 		goto unlock_and_out;
 	}
 	if ((rt = get_route_tree_by_id(rd->carriers[carrier], domain)) == NULL) {
-		LM_ERR("desired routing domain doesn't exist\n");
+		LM_ERR("desired routing domain doesn't exist, uri %.*s, carrier %d, domain %d\n",
+			user->len, user->s, carrier, domain);
 		ret = -1;
 		goto unlock_and_out;
 	}
 	if (rewrite_uri_recursor(rt->tree, uri, &dest, msg, user, hash_source, alg) != 0) {
-		LM_ERR("error during rewrite_uri_recursor");
+		LM_ERR("during rewrite_uri_recursor, uri %.*s, carrier %d, domain %d\n", user->len,
+			user->s, carrier, domain);
 		ret = -1;
 		goto unlock_and_out;
 	}
