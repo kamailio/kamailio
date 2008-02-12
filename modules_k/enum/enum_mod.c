@@ -46,12 +46,6 @@ static int mod_init(void);
 
 
 /*
- * Fixup functions
- */
-static int enum_fixup(void** param, int param_no);
-
-
-/*
  * Module parameter variables
  */
 char* domain_suffix = "e164.arpa.";
@@ -79,17 +73,17 @@ str i_bl_alg;
  */
 static cmd_export_t cmds[] = {
 	{"enum_query",        (cmd_function)enum_query_0,     0, 0,            0, REQUEST_ROUTE},
-	{"enum_query",        (cmd_function)enum_query_1,     1, str_fixup,    0, REQUEST_ROUTE},
-	{"enum_query",        (cmd_function)enum_query_2,     2, enum_fixup,   0, REQUEST_ROUTE},
+	{"enum_query",        (cmd_function)enum_query_1,     1, fixup_str_null, 0, REQUEST_ROUTE},
+	{"enum_query",        (cmd_function)enum_query_2,     2, fixup_str_str,  0, REQUEST_ROUTE},
 	{"enum_fquery",       (cmd_function)enum_fquery_0,    0, 0,            0, REQUEST_ROUTE},
-	{"enum_fquery",       (cmd_function)enum_fquery_1,    1, str_fixup,    0, REQUEST_ROUTE},
-	{"enum_fquery",       (cmd_function)enum_fquery_2,    2, enum_fixup,   0, REQUEST_ROUTE},
+	{"enum_fquery",       (cmd_function)enum_fquery_1,    1, fixup_str_null, 0, REQUEST_ROUTE},
+	{"enum_fquery",       (cmd_function)enum_fquery_2,    2, fixup_str_str,  0, REQUEST_ROUTE},
 	{"is_from_user_enum", (cmd_function)is_from_user_enum_0, 0, 0,         0, REQUEST_ROUTE},
-	{"is_from_user_enum", (cmd_function)is_from_user_enum_1, 1, str_fixup, 0, REQUEST_ROUTE},
-	{"is_from_user_enum", (cmd_function)is_from_user_enum_2, 2, enum_fixup,0, REQUEST_ROUTE},
+	{"is_from_user_enum", (cmd_function)is_from_user_enum_1, 1, fixup_str_null, 0, REQUEST_ROUTE},
+	{"is_from_user_enum", (cmd_function)is_from_user_enum_2, 2, fixup_str_str,  0, REQUEST_ROUTE},
 	{"i_enum_query",      (cmd_function)i_enum_query_0,   0, 0,            0, REQUEST_ROUTE},
-	{"i_enum_query",      (cmd_function)i_enum_query_1,   1, str_fixup,    0, REQUEST_ROUTE},
-	{"i_enum_query",      (cmd_function)i_enum_query_2,   2, enum_fixup,   0, REQUEST_ROUTE},
+	{"i_enum_query",      (cmd_function)i_enum_query_1,   1, fixup_str_null, 0, REQUEST_ROUTE},
+	{"i_enum_query",      (cmd_function)i_enum_query_2,   2, fixup_str_str,  0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -150,16 +144,3 @@ static int mod_init(void)
 	return 0;
 }
 
-
-/*
- * Convert both enum_query parameters to str* representation
- */
-static int enum_fixup(void** param, int param_no)
-{
-       if (param_no == 1) {
-               return str_fixup(param, 1);
-       } else if (param_no == 2) {
-               return str_fixup(param, 1);
-       }
-       return 0;
-}

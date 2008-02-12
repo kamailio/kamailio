@@ -152,7 +152,7 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
  */
 int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-    /* realm parameter is converted to str* in str_fixup */
+    /* realm parameter is converted in fixup */
     return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)0,
 		     HDR_PROXYAUTH_T);
 }

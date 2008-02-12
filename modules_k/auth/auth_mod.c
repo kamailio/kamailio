@@ -74,11 +74,6 @@ static int mod_init(void);
 static int challenge_fixup(void** param, int param_no);
 
 
-/*
- * Convert both parameters to str* representation
- */
-static int rpid_fixup(void** param, int param_no);
-
 static int auth_fixup(void** param, int param_no);
 
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2);
@@ -136,7 +131,8 @@ static cmd_export_t cmds[] = {
 			0, REQUEST_ROUTE},
 	{"append_rpid_hf",      (cmd_function)append_rpid_hf,          0, 0,
 			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"append_rpid_hf",      (cmd_function)append_rpid_hf_p,        2, rpid_fixup,
+	{"append_rpid_hf",      (cmd_function)append_rpid_hf_p,        2,
+			fixup_str_str,
 			0, REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"bind_auth",           (cmd_function)bind_auth, 0, 0,
 			0, 0},
@@ -438,19 +434,6 @@ static int challenge_fixup(void** param, int param_no)
 	return 0;
 }
 
-
-/*
- * Convert both parameters to str* representation
- */
-static int rpid_fixup(void** param, int param_no)
-{
-	if (param_no == 1) {
-		return str_fixup(param, 1);
-	} else if (param_no == 2) {
-		return str_fixup(param, 1);
-	}
-	return 0;
-}
 
 /*
  * Convert the char* parameters

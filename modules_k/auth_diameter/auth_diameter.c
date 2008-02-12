@@ -197,7 +197,7 @@ static int auth_fixup(void** param, int param_no)
  */
 int diameter_proxy_authorize(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-	/* realm parameter is converted to str* in str_fixup */
+	/* realm parameter is converted in fixup */
 	return authorize(_msg, (pv_elem_t*)_realm, HDR_PROXYAUTH_T);
 }
 

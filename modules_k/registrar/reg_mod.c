@@ -150,7 +150,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"registered",   (cmd_function)registered,   1,  domain_fixup, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,     str_fixup, 0,
+	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,fixup_str_null, 0,
 			REQUEST_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
