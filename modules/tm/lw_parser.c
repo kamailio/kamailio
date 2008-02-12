@@ -249,7 +249,6 @@ char *lw_next_line(char *buf, char *buf_end)
 	do {
 		while ((c < buf_end) && (*c != '\n')) c++;
 		if (c < buf_end) c++;
-		if ((c < buf_end) && (*c == '\r')) c++;
 
 	} while ((c < buf_end) &&
 		((*c == ' ') || (*c == '\t')));	/* next line begins with whitespace line folding */
