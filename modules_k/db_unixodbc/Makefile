@@ -11,6 +11,6 @@ DEFS += -I$(LOCALBASE)/include
 
 # libodbc locations on RH/Suse, Solaris /OpenBSD, FreeBSD
 # (Debian does the right thing and puts it in /usr/lib)
-LIBS= -L$(LOCALBASE)/lib -lodbc -lz
+LIBS= -L$(LOCALBASE)/lib -lodbc
 
 include ../../Makefile.modules
