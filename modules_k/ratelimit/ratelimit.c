@@ -358,7 +358,7 @@ static double last_err = 0.0;
 /* (*load_value) is expected to be in the 0.0 - 1.0 range
  * (expects rl_lock to be taken)
  */
-static void do_update_load()
+static void do_update_load(void)
 {
 	static char spcs[51];
 	int load;
@@ -398,7 +398,7 @@ static void do_update_load()
 	*/
 }
 
-static void update_cpu_load()
+static void update_cpu_load(void)
 {
 	if (get_cpuload(load_value)) 
 		return;
@@ -790,7 +790,7 @@ static int set_load_source(modparam_t type, void * val)
  * compiles regexes for parsing modparams and clears the pipes and queues
  * \return      0 on success
  */
-static int init_params()
+static int init_params(void)
 {
 	if (regcomp(&pipe_params_regex, "^([0-9]+):([^: ]+):([0-9]+)$", REG_EXTENDED|REG_ICASE) ||
 		regcomp(&queue_params_regex, "^([0-9]+):([^: ]+)$", REG_EXTENDED|REG_ICASE)) {
@@ -983,7 +983,6 @@ struct mi_root* mi_stats(struct mi_root* cmd_tree, void* param)
 	struct mi_root *rpl_tree;
 	struct mi_node *node=NULL, *rpl=NULL;
 	struct mi_attr* attr;
-	str algo;
 	char* p;
 	int i, len;
 
