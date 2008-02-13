@@ -66,7 +66,8 @@ enum db_fld_op {
 };
 
 enum db_flags {
-    DB_NULL = (1 << 0)
+    DB_NULL = (1 << 0),  /**< The field is NULL, i.e. no value was provided */
+	DB_NO_TZ = (1 << 1), /**< Inhibit time-zone shifts for timestamp fields */
 };
 
 typedef struct db_fld {
@@ -79,8 +80,8 @@ typedef struct db_fld {
 		float        flt;    /* float value */
 		double       dbl;    /* double value */
 		time_t       time;   /* unix time value */
-		char*  cstr;         /* NULL terminated string */
-                str          lstr;   /* String with known length */
+		char*        cstr;   /* NULL terminated string */
+		str          lstr;   /* String with known length */
 		str          blob;   /* Blob data */
 		unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */ 
 		long long    int8;   /* 8-byte integer */
