@@ -79,12 +79,6 @@
 # If to install presence related tables.
 # INSTALL_PRESENCE_TABLES=ask
 
-# If to install SERWEB related tables.
-# When you don't know what purpose this tables have, don't change this.
-# If you choose to install this tables, you must also activate the HAS_SERWEB
-# variable, otherwise some setup script actions will not work.
-# INSTALL_SERWEB_TABLES=ask
-
 # Define what module tables should be installed.
 # If you use the postgres database and want to change the installed tables, then you
 # must also adjust the GRANTs accordingly in the openserdbctl.postgres script.
@@ -114,9 +108,6 @@
 ## ACL names - if VERIFY_ACL is set, only the ACL names from below list
 ## are accepted
 # ACL_GROUPS="local ld int voicemail free-pstn"
-
-## presence of serweb tables - default "no"
-# HAS_SERWEB="yes"
 
 ## verbose - debug purposes - default '0'
 # VERBOSE=1

@@ -181,12 +181,6 @@ if [ "$ANSWER" = "y" ]; then
 	HAS_EXTRA="yes"
 	extra_create $1
 fi
-
-get_answer $INSTALL_SERWEB_TABLES "Install SERWEB related tables? (y/n): "
-if [ "$ANSWER" = "y" ]; then
-	HAS_SERWEB="yes"
-	serweb_create $1
-fi
 } # openser_create
 
 
@@ -236,72 +230,6 @@ for TABLE in $EXTRA_MODULES; do
 	done
 minfo "Extra tables succesfully created."
 }  # end extra_create
-
-
-serweb_create () # pars: <database name>
-{
-if [ $# -ne 1 ] ; then
-	merr "serweb_create function takes one param"
-	exit 1
-fi
-
-minfo "creating serweb tables into $1 ..."
-
-sql_query $1 < $DB_SCHEMA/serweb-create.sql 
-
-if [ $? -ne 0 ] ; then
-	merr "Failed to create serweb tables!"
-	exit 1
-fi
-
-sql_query $1 "ALTER TABLE subscriber
-    ADD COLUMN (
-    phplib_id varchar(32) NOT NULL default '',
-    phone varchar(15) NOT NULL default '',
-    datetime_modified datetime NOT NULL default '0000-00-00 00:00:00',
-    confirmation varchar(64) NOT NULL default '',
-    flag char(1) NOT NULL default 'o',
-    sendnotification varchar(50) NOT NULL default '',
-    greeting varchar(50) NOT NULL default '',
-    allow_find char(1) NOT NULL default '0'),
-    ADD UNIQUE KEY phplib_id (phplib_id);"
-
-if [ $? -ne 0 ] ; then
-	merr "Failed to alter subscriber table for serweb!"
-	exit 1
-fi
-
-if [ -z "$NO_USER_INIT" ] ; then
-	if [ -z "$SIP_DOMAIN" ] ; then
-		prompt_realm
-	fi
-	credentials
-	sql_query $1 "INSERT INTO subscriber 
-	($USERCOL, password, first_name, last_name, phone,
-	email_address, datetime_created, datetime_modified, confirmation,
-	flag, sendnotification, greeting, ha1, domain, ha1b, phplib_id )
-	VALUES ( 'admin', '$DBRWPW', 'Initial', 'Admin', '123',
-	'root@localhost', '2002-09-04 19:37:45', '0000-00-00 00:00:00',
-	'57DaSIPuCm52UNe54LF545750cfdL48OMZfroM53', 'o', '', '',
-	'$HA1', '$SIP_DOMAIN', '$HA1B',	'$PHPLIB_ID' );
-	INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-	VALUES ('admin', '$SIP_DOMAIN', 'is_admin', '1');
-	INSERT INTO admin_privileges ($USERCOL, domain, priv_name, priv_value)
-	VALUES ('admin', '$SIP_DOMAIN', 'change_privileges', '1');"
-
-	if [ $? -ne 0 ] ; then
-		merr "Failed to create serweb credentials tables!"
-		exit 1
-	fi
-	serweb_message
-fi
-
-
-minfo "SERWEB tables succesfully created."
-
-
-}  # end serweb_create
-
 
 
 migrate_table () # 4 paremeters (dst_table, dst_cols, src_table, src_cols)
@@ -437,70 +365,13 @@ migrate_table ${dst_db}.pdt \
 	${src_db}.pdt \
 	"?id,?sdomain,?prefix,?domain"
 
-if [ "$HAS_SERWEB" = "yes" ] ; then
-	# migrate subscribers with serweb support
-	migrate_table ${dst_db}.subscriber \
-		"id,username,domain,password,first_name,last_name,email_address,\
-		datetime_created,ha1,ha1b,timezone,rpid,phplib_id,phone,\
-		datetime_modified,confirmation,flag,sendnotification,\
-		greeting,allow_find" \
-		${src_db}.subscriber \
-		"?id,?username,?domain,?password,?first_name,?last_name,?email_address,\
-		?datetime_created,?ha1,?ha1b,?timezone,?rpid,?phplib_id,?phone,\
-		?datetime_modified,?confirmation,?flag,?sendnotification,\
-		?greeting,?allow_find"
-
-	migrate_table ${dst_db}.active_sessions \
-		"sid,name,val,changed" \
-		${src_db}.active_sessions \
-		"?sid,?name,?val,?changed"
-
-	migrate_table ${dst_db}.pending \
-		"username,domain,password,first_name,last_name,email_address,\
-		datetime_created,ha1,ha1b,timezone,rpid,phplib_id,phone,\
-		datetime_modified,confirmation,flag,sendnotification,\
-		greeting,allow_find" \
-		${src_db}.pending \
-		"?username,?domain,?password,?first_name,?last_name,?email_address,\
-		?datetime_created,?ha1,?ha1b,?timezone,?rpid,?phplib_id,?phone,\
-		?datetime_modified,?confirmation,?flag,?sendnotification,\
-		?greeting,?allow_find"
-
-	migrate_table ${dst_db}.phonebook \
-		"id,username,domain,fname,lname,sip_uri" \
-		${src_db}.phonebook \
-		"?id,?username,?domain,?fname,?lname,?sip_uri"
-
-	migrate_table ${dst_db}.server_monitoring \
-		"time,id,param,value,increment" \
-		${src_db}.server_monitoring \
-		"?time,?id,?param,?value,?increment"
-
-	migrate_table ${dst_db}.usr_preferences_type \
-		"att_name,att_rich_type,att_raw_type,att_type_spec,default_value" \
-		${src_db}.usr_preferences_type \
-		"?att_name,?att_rich_type,?att_raw_type,?att_type_spec,?default_value"
-
-	migrate_table ${dst_db}.server_monitoring_agg \
-		"param,s_value,s_increment,last_aggregated_increment,av,mv,ad,lv,\
-		min_val,max_val,min_inc,max_inc,lastupdate" \
-		${src_db}.server_monitoring_agg \
-		"?param,?s_value,?s_increment,?last_aggregated_increment,?av,?mv,\
-		?ad,?lv,?min_val,?max_val,?min_inc,?max_inc,?lastupdate"
-
-	migrate_table ${dst_db}.admin_privileges \
-		"username,domain,priv_name,priv_value" \
-		${src_db}.admin_privileges \
-		"?username,?domain,?priv_name,?priv_value"
-else
-	# migrate subscribers with no serweb support
-	migrate_table ${dst_db}.subscriber \
-		"id,username,domain,password,first_name,last_name,email_address,\
-		datetime_created,ha1,ha1b,timezone,rpid" \
-		${src_db}.subscriber \
-		"?id,?username,?domain,?password,?first_name,?last_name,?email_address,\
-		?datetime_created,?ha1,?ha1b,?timezone,?rpid"
-fi
+# migrate subscribers with no serweb support
+migrate_table ${dst_db}.subscriber \
+	"id,username,domain,password,first_name,last_name,email_address,\
+	datetime_created,ha1,ha1b,timezone,rpid" \
+	${src_db}.subscriber \
+	"?id,?username,?domain,?password,?first_name,?last_name,?email_address,\
+	?datetime_created,?ha1,?ha1b,?timezone,?rpid"
 
 if [ "$HAS_EXTRA" = "yes" ] ; then
 	migrate_table ${dst_db}.cpl \

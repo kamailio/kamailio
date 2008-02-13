@@ -237,15 +237,6 @@ case $1 in
 		openser_create $DBNAME
 		exit $?
 		;;
-	serweb)
-		if [ "$USED_DBENGINE" == "berkeley" -o "$USED_DBENGINE" == "dbtext" ] ; then
-			merr "$USED_DBENGINE don't support this operation"
-			exit 1
-		else
-			serweb_create $DBNAME
-		fi
-		exit $?
-		;;
 	presence)
 		presence_create $DBNAME
 		exit $?
