@@ -25,11 +25,12 @@ cd ../scripts
 
 # setup config file
 cp openserctlrc openserctlrc.bak
-sed -i "s/# SIP_DOMAIN=openser.org/SIP_DOMAIN=sip.localhost/g" openserctlrc
 sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" openserctlrc
 sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" openserctlrc
 sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" openserctlrc
-sed -i "s/# INSTALL_SERWEB_TABLES=ask/INSTALL_SERWEB_TABLES=yes/g" openserctlrc
+
+cp openserdbctl openserdbctl.bak
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserdbctl
 
 ./openserdbctl create $tmp_name > /dev/null
 ret=$?
@@ -41,6 +42,8 @@ fi ;
 
 # cleanup
 mv openserctlrc.bak openserctlrc
+mv openserdbctl.bak openserdbctl
+
 
 cd ../test
 exit $ret

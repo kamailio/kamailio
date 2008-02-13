@@ -35,11 +35,12 @@ cd ../scripts
 
 # setup config file
 cp openserctlrc openserctlrc.bak
-sed -i "s/# SIP_DOMAIN=openser.org/SIP_DOMAIN=sip.localhost/g" openserctlrc
 sed -i "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" openserctlrc
 sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" openserctlrc
 sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" openserctlrc
-sed -i "s/# INSTALL_SERWEB_TABLES=ask/INSTALL_SERWEB_TABLES=yes/g" openserctlrc
+
+cp openserdbctl openserdbctl.bak
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserdbctl
 
 # set the mysql root password
 cp openserdbctl.mysql openserdbctl.mysql.bak
@@ -55,7 +56,8 @@ fi ;
 
 # cleanup
 mv openserctlrc.bak openserctlrc
-cp openserdbctl.mysql.bak openserdbctl.mysql
+mv openserdbctl.mysql.bak openserdbctl.mysql
+mv openserdbctl.bak openserdbctl
 
 cd ../test
 exit $ret
