@@ -59,7 +59,7 @@ DEFAULT_LOCATION_EXPIRES=${DEFAULT_LOCATION_EXPIRES:-${FOREVER}}
 # Needed programs
 MD5=${MD5:-md5sum}
 AWK=${AWK:-awk}
-GREP=${GREP:-egrep}
+GREP=${GREP:-grep}
 SED=${SED:-sed}
 
 # define what modules should be installed
