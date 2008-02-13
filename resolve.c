@@ -130,8 +130,9 @@ static int _resolv_init()
 		_res.retrans=cfg_get(core, core_cfg, dns_retr_time);
 	if (cfg_get(core, core_cfg, dns_retr_no)>0)
 		_res.retry=cfg_get(core, core_cfg, dns_retr_no);
-	if (cfg_get(core, core_cfg, dns_servers_no)>=0)
-		_res.nscount=cfg_get(core, core_cfg, dns_servers_no);
+	if ((cfg_get(core, core_cfg, dns_servers_no)>=0)
+		&& (cfg_get(core, core_cfg, dns_servers_no)<_res.nscount))
+			_res.nscount=cfg_get(core, core_cfg, dns_servers_no);
 	if (cfg_get(core, core_cfg, dns_search_list)==0)
 		_res.options&=~(RES_DEFNAMES|RES_DNSRCH);
 #else
