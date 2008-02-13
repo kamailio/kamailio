@@ -1078,7 +1078,7 @@ error:
 struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node;
-	int pipe_no, algo_id, limit;
+	unsigned int pipe_no, algo_id, limit;
 	//str algo;
 
 	node = cmd_tree->node.kids;
@@ -1089,7 +1089,7 @@ struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 	node = node->next;
 	if ( !node->value.s || !node->value.len)
 		goto bad_syntax;
-	if (str_map_str(algo_names, &(node->value), &algo_id)) {
+	if (str_map_str(algo_names, &(node->value), (int*)&algo_id)) {
 		LM_ERR("unknown algorithm: '%.*s'\n", node->value.len, node->value.s);
 		goto bad_syntax;
 	}
@@ -1174,7 +1174,7 @@ error:
 struct mi_root* mi_set_queue(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node;
-	int queue_no, pipe_no;
+	unsigned int queue_no, pipe_no;
 	str method;
 
 	node = cmd_tree->node.kids;
