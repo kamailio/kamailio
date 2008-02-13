@@ -162,7 +162,7 @@ void resolv_reinit(str *name)
 	_resolv_init();
 
 #ifdef DNS_WATCHDOG_SUPPORT
-	if (on_resolv_reinit_cb) on_resolv_reinit_cb();
+	if (on_resolv_reinit_cb) on_resolv_reinit_cb(name);
 #endif
 	LOG(L_DBG, "DEBUG: resolv_reinit(): "
 		"DNS resolver has been reinitialized\n");

@@ -417,7 +417,7 @@ void reinit_naptr_proto_prefs(str *name);
  * If the callback is registered after forking, only the child process
  * that installs the hook will call the callback.
  */
-typedef void (*on_resolv_reinit)(void);
+typedef void (*on_resolv_reinit)(str*);
 int register_resolv_reinit_cb(on_resolv_reinit cb);
 #endif
 
