@@ -297,11 +297,6 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 
 	_tbc = dbt_load_file(_s, &(_dc->name));
 
-#ifdef DBT_EXTRA_DEBUG
-	LM_DBG("%.*s\n", _s->len, _s->s);
-	dbt_print_table(_tbc, NULL);
-#endif
-
 	if(!_tbc)
 	{
 		lock_release(&_dbt_cachetbl[hashidx].sem);

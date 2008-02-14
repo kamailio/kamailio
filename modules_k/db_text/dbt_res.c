@@ -176,7 +176,7 @@ int* dbt_get_refs(dbt_table_p _dtp, db_key_t* _k, int _n)
 		}
 		if(j>=_dtp->nrcols)
 		{
-			LM_DBG("column <%.*s> not found\n", _k[i]->len, _k[i]->s);
+			LM_ERR("column <%.*s> not found\n", _k[i]->len, _k[i]->s);
 			pkg_free(_lref);
 			return NULL;
 		}
@@ -316,7 +316,7 @@ clean:
 
 int dbt_result_print(dbt_result_p _dres)
 {
-#ifdef DBT_EXTRA_DEBUG
+#if 0
 	int i;
 	FILE *fout = stdout;
 	dbt_row_p rowp = NULL;
