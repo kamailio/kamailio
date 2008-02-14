@@ -399,13 +399,13 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"force_rtp_proxy",    (cmd_function)force_rtp_proxy2_f,     2, 0, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-	{"nat_uac_test",       (cmd_function)nat_uac_test_f,         1, fixup_str2int, 0,
+	{"nat_uac_test",       (cmd_function)nat_uac_test_f,         1, fixup_uint_null, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
 	{"fix_nated_register", (cmd_function)fix_nated_register_f,   0, fixup_fix_nated_register, 0,
 			REQUEST_ROUTE },
 	{"add_rcv_param",      (cmd_function)add_rcv_param_f,        0, 0, 0,
 			REQUEST_ROUTE },
-	{"add_rcv_param",      (cmd_function)add_rcv_param_f,        1, fixup_str2int, 0,
+	{"add_rcv_param",      (cmd_function)add_rcv_param_f,        1, fixup_uint_null, 0,
 			REQUEST_ROUTE },
 	{"start_recording",    (cmd_function)start_recording_f,      0, 0, 0,
 			REQUEST_ROUTE | ONREPLY_ROUTE },
@@ -709,7 +709,7 @@ fixup_fix_sdp(void** param, int param_no)
 
 	if (param_no==1) {
 		/* flags */
-		return fixup_str2int( param, param_no);
+		return fixup_uint_null( param, param_no);
 	}
 	/* new IP */
 	model=NULL;

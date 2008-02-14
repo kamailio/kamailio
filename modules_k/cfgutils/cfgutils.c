@@ -102,9 +102,9 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"rand_event", (cmd_function)rand_event, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"sleep",    (cmd_function)m_sleep,    1,      fixup_str2int, 0, 
+	{"sleep",    (cmd_function)m_sleep,    1,      fixup_uint_null, 0, 
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"usleep",   (cmd_function)m_usleep,   1,      fixup_str2int, 0,
+	{"usleep",   (cmd_function)m_usleep,   1,      fixup_uint_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
