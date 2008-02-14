@@ -79,6 +79,7 @@ static str db_table = str_init("pdt");
 static str sdomain_column = str_init("sdomain");
 static str prefix_column  = str_init("prefix");
 static str domain_column  = str_init("domain");
+static int pdt_check_domain  = 1;
 
 /** pstn prefix */
 str prefix = {"", 0};
@@ -124,6 +125,7 @@ static param_export_t params[]={
 	{"char_list",      STR_PARAM, &pdt_char_list.s},
 	{"hsize_2pow",     INT_PARAM, &hs_two_pow},
 	{"fetch_rows",     INT_PARAM, &pdt_fetch_rows},
+	{"check_domain",   INT_PARAM, &pdt_check_domain},
 	{0, 0, 0}
 };
 
@@ -639,7 +641,8 @@ static int pdt_load_db(void)
 				continue;
 			}
 		
-			if(pdt_check_pd(_dhash_new, &sdomain, &p, &d)==1)
+			if(pdt_check_domain!=0
+					&& pdt_check_pd(_dhash_new, &sdomain, &p, &d)==1)
 			{
 				LM_ERR("sdomain [%.*s]: prefix [%.*s] or domain <%.*s> "
 					"duplicated\n", sdomain.len, sdomain.s, p.len, p.s,
