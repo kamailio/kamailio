@@ -340,8 +340,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
    For the current request, a "503 - Server Unavailable" reply is
    sent back. The reply may or may not have a "Retry-After"
    header. If no parameter is given, there will be no
-   "Retry-After" header. If only the min parameter is given, the
-   reply will contain a "Retry-After: min" header. If both min
+   "Retry-After" header. If only the max parameter is given, the
+   reply will contain a "Retry-After: max" header. If both min
    and max params are given, the reply will contain a
    "Retry-After: random" header with random being a random value
    between the given min and max.
@@ -355,7 +355,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    Example 1-7. rl_drop usage
 ...
-        if (!rl_check()) {A
+        if (!rl_check()) {
                 # send back a "503 - Server Unavailable"
                 # with a "Retry-After: 5"
                 rl_drop("5");
