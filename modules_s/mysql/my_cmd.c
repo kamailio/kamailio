@@ -1261,11 +1261,31 @@ int my_cmd_next(db_res_t* res)
 int my_getopt(db_cmd_t* cmd, char* optname, va_list ap)
 {
 	struct my_cmd* mcmd;
+	long long* id;
 	int* val;
 
 	mcmd = (struct my_cmd*)DB_GET_PAYLOAD(cmd);
 
-	if (!strcasecmp("fetch_all", optname)) {
+	if (!strcasecmp("last_id", optname)) {
+		id = va_arg(ap, long long*);
+		if (id == NULL) {
+			BUG("mysql: NULL pointer passed to 'last_id' option\n");
+			goto error;
+		}
+
+		if (mcmd->st->last_errno != 0) {
+			BUG("mysql: Option 'last_id' called but previous command failed, "
+				"check your code\n");
+			return -1;
+		}
+
+		*id = mysql_stmt_insert_id(mcmd->st);
+		if ((*id) == 0) {
+			BUG("mysql: Option 'last_id' called but there is no auto-increment"
+				" column in table, SQL command: %.*s\n", STR_FMT(&mcmd->sql_cmd));
+			return -1;
+		}
+	} else if (!strcasecmp("fetch_all", optname)) {
 		val = va_arg(ap, int*);
 		if (val == NULL) {
 			BUG("mysql: NULL pointer passed to 'fetch_all' DB option\n");
