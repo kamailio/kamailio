@@ -1012,6 +1012,9 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 	if(rpl_tree == NULL)
 		return 0;
+	if(*_dhash==0)
+		return rpl_tree;
+
 	rpl = &rpl_tree->node;
 
 	lock_get(&(*_dhash)->hl_lock);
