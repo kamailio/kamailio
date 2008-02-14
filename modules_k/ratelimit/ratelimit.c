@@ -1078,7 +1078,7 @@ error:
 struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node;
-	unsigned int pipe_no, algo_id, limit;
+	unsigned int pipe_no = MAX_PIPES, algo_id, limit = 0;
 	//str algo;
 
 	node = cmd_tree->node.kids;
@@ -1174,7 +1174,7 @@ error:
 struct mi_root* mi_set_queue(struct mi_root* cmd_tree, void* param)
 {
 	struct mi_node *node;
-	unsigned int queue_no, pipe_no;
+	unsigned int queue_no = MAX_QUEUES, pipe_no = MAX_PIPES;
 	str method;
 
 	node = cmd_tree->node.kids;
