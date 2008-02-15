@@ -150,16 +150,6 @@
 
 #define HF_LEN(_hf) ((_hf)->len)
 
-/* should be request-uri matching used as a part of pre-3261 
- * transaction matching, as the standard wants us to do so
- * (and is reasonable to do so, to be able to distinguish
- * spirals)? turn only off for better interaction with 
- * devices that are broken and send different r-uri in
- * CANCEL/ACK than in original INVITE
- */
-int ruri_matching=1;
-int via1_matching=1;
-
 /* presumably matching transaction for an e2e ACK */
 static struct cell *t_ack;
 
@@ -503,8 +493,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				continue;
 			if (!EQ_LEN(from)) continue;
 			if (!EQ_LEN(to)) continue;
-			if (ruri_matching && !EQ_REQ_URI_LEN) continue;
-			if (via1_matching && !EQ_VIA_LEN(via1)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN) continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1)) continue;
 
 			/* length ok -- move on */
 			if (!EQ_STR(callid)) continue;
@@ -512,8 +502,8 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				get_cseq(p_msg)->number.len)!=0) continue;
 			if (!EQ_STR(from)) continue;
 			if (!EQ_STR(to)) continue;
-			if (ruri_matching && !EQ_REQ_URI_STR) continue;
-			if (via1_matching && !EQ_VIA_STR(via1)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR) continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1)) continue;
 			
 			if ((t_msg->REQ_METHOD==METHOD_CANCEL) &&
 				(p_msg->REQ_METHOD!=METHOD_CANCEL)){
@@ -564,10 +554,10 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 			 * more elements to match: r-uri and via; allow
 			 * mismatching r-uri as an config option for broken
 			 * UACs */
-			if (ruri_matching && !EQ_REQ_URI_LEN ) continue;
-			if (via1_matching && !EQ_VIA_LEN(via1)) continue;
-			if (ruri_matching && !EQ_REQ_URI_STR) continue;
-			if (via1_matching && !EQ_VIA_STR(via1)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN ) continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR) continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1)) continue;
 
 			/* wow -- we survived all the check! we matched! */
 			DBG("DEBUG: non-2xx ACK matched\n");
@@ -698,9 +688,9 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 		if (get_to(t_msg)->uri.len!=get_to(p_msg)->uri.len)
 			continue;
 #endif
-		if (ruri_matching && !EQ_REQ_URI_LEN)
+		if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN)
 			continue;
-		if (via1_matching && !EQ_VIA_LEN(via1))
+		if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1))
 			continue;
 
 		/* check the content now */
@@ -719,9 +709,9 @@ struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 					get_to(t_msg)->uri.len)!=0)
 			continue;
 #endif
-		if (ruri_matching && !EQ_REQ_URI_STR)
+		if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR)
 			continue;
-		if (via1_matching && !EQ_VIA_STR(via1))
+		if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1))
 			continue;
 
 		/* found */
@@ -982,7 +972,7 @@ int t_check( struct sip_msg* p_msg , int *param_branch )
 			   and we need all the WWW/Proxy Authenticate headers for
 			   401 & 407 replies
 			*/
-			if (tm_aggregate_auth && 
+			if (cfg_get(tm, tm_cfg, tm_aggregate_auth) && 
 					(p_msg->REPLY_STATUS==401 || p_msg->REPLY_STATUS==407)){
 				if (parse_headers(p_msg, HDR_EOH_F,0)==-1){
 					LOG(L_WARN, "WARNING: the reply cannot be "
@@ -1105,16 +1095,17 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			/* 1 = set, -1 = reset */
 			new_cell->flags|=T_AUTO_INV_100 & (!(v+1)-1);
 		else
-			new_cell->flags|=T_AUTO_INV_100 & ( !tm_auto_inv_100 -1);
+			new_cell->flags|=T_AUTO_INV_100 &
+					(!cfg_get(tm, tm_cfg, tm_auto_inv_100) -1);
 		lifetime=(ticks_t)get_msgid_val(user_inv_max_lifetime,
 												p_msg->id, int);
 		if (likely(lifetime==0))
-			lifetime=tm_max_inv_lifetime;
+			lifetime=cfg_get(tm, tm_cfg, tm_max_inv_lifetime);
 	}else{
 		lifetime=(ticks_t)get_msgid_val(user_noninv_max_lifetime, 
 											p_msg->id, int);
 		if (likely(lifetime==0))
-			lifetime=tm_max_noninv_lifetime;
+			lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
 	}
 	new_cell->on_negative=get_on_negative();
 	new_cell->on_reply=get_on_reply();
@@ -1128,7 +1119,7 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			DBG("init_new_t: FR__TIMER = %d s\n", timeout);
 			new_cell->fr_timeout=S_TO_TICKS((ticks_t)timeout);
 		}else{
-			new_cell->fr_timeout=fr_timeout;
+			new_cell->fr_timeout=cfg_get(tm, tm_cfg, fr_timeout);
 		}
 	}
 	if (likely(new_cell->fr_inv_timeout==0)){
@@ -1137,18 +1128,18 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 			new_cell->fr_inv_timeout=S_TO_TICKS((ticks_t)timeout);
 			new_cell->flags |= T_NOISY_CTIMER_FLAG;
 		}else{
-			new_cell->fr_inv_timeout=fr_inv_timeout;
+			new_cell->fr_inv_timeout=cfg_get(tm, tm_cfg, fr_inv_timeout);
 		}
 	}
 #ifdef TM_DIFF_RT_TIMEOUT
 	new_cell->rt_t1_timeout=(ticks_t)get_msgid_val(user_rt_t1_timeout,
 												p_msg->id, int);
 	if (likely(new_cell->rt_t1_timeout==0))
-		new_cell->rt_t1_timeout=rt_t1_timeout;
+		new_cell->rt_t1_timeout=cfg_get(tm, tm_cfg, rt_t1_timeout);
 	new_cell->rt_t2_timeout=(ticks_t)get_msgid_val(user_rt_t2_timeout,
 												p_msg->id, int);
 	if (likely(new_cell->rt_t2_timeout==0))
-		new_cell->rt_t2_timeout=rt_t2_timeout;
+		new_cell->rt_t2_timeout=cfg_get(tm, tm_cfg, rt_t2_timeout);
 #endif
 	new_cell->on_branch=get_on_branch();
 }

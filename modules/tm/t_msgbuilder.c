@@ -88,9 +88,6 @@
 		(_p)+=(_str).len;  \
  	} while(0);
 
-str ac_extra_hdrs = STR_STATIC_INIT("");
-int reparse_invite = 1;
-
 
 /* Build a local request based on a previous request; main
    customers of this function are local ACK and local CANCEL
@@ -355,9 +352,12 @@ char *build_local_reparse(struct cell *Trans,unsigned int branch,
 			default:
 				s = lw_next_line(s, invite_buf_end);
 
-				if (ac_extra_hdrs.len
-				&& (s1 + ac_extra_hdrs.len < invite_buf_end)
-				&& (strncasecmp(s1, ac_extra_hdrs.s, ac_extra_hdrs.len) == 0)) {
+				if (cfg_get(tm, tm_cfg, ac_extra_hdrs).len
+				&& (s1 + cfg_get(tm, tm_cfg, ac_extra_hdrs).len < invite_buf_end)
+				&& (strncasecmp(s1,
+						cfg_get(tm, tm_cfg, ac_extra_hdrs).s,
+						cfg_get(tm, tm_cfg, ac_extra_hdrs).len) == 0)
+				) {
 					append_mem_block(d, s1, s - s1);
 				} /* else skip this line */
 				break;

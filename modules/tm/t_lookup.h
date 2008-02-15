@@ -48,8 +48,6 @@
 #define T_NULL_CELL       ( (struct cell*) 0 )
 
 extern unsigned int     global_msg_id;
-extern int ruri_matching;
-extern int via1_matching;
 
 
 

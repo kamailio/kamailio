@@ -69,6 +69,7 @@
 #include "../../ip_addr.h"
 #include "../../socket_info.h"
 #include "../../compiler_opt.h"
+#include "config.h"
 #include "ut.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -86,11 +87,6 @@
 #define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
 
 static char from_tag[FROM_TAG_LEN + 1];
-
-char* uac_from = "sip:foo@foo.bar"; /* Module parameter */
-
-/* Enable/disable passing of provisional replies to FIFO applications */
-int pass_provisional_replies = 0;
 
 /*
  * Initialize UAC
@@ -259,23 +255,24 @@ static inline int t_uac_prepare(uac_req_t *uac_r,
 	}
 	if (uac_r->method->len==INVITE_LEN && memcmp(uac_r->method->s, INVITE, INVITE_LEN)==0){
 		new_cell->flags |= T_IS_INVITE_FLAG;
-		new_cell->flags|=T_AUTO_INV_100 & (!tm_auto_inv_100 -1);
-		lifetime=tm_max_inv_lifetime;
+		new_cell->flags|=T_AUTO_INV_100 &
+				(!cfg_get(tm, tm_cfg, tm_auto_inv_100) -1);
+		lifetime=cfg_get(tm, tm_cfg, tm_max_inv_lifetime);
 	}else
-		lifetime=tm_max_noninv_lifetime;
+		lifetime=cfg_get(tm, tm_cfg, tm_max_noninv_lifetime);
 	new_cell->flags |= T_IS_LOCAL_FLAG;
 	/* init timers hack, new_cell->fr_timer and new_cell->fr_inv_timer
 	 * must be set, or else the fr will happen immediately
 	 * we can't call init_new_t() because we don't have a sip msg
 	 * => we'll ignore t_set_fr() or avp timer value and will use directly the
 	 * module params fr_inv_timer and fr_timer -- andrei */
-	new_cell->fr_timeout=fr_timeout;
-	new_cell->fr_inv_timeout=fr_inv_timeout;
+	new_cell->fr_timeout=cfg_get(tm, tm_cfg, fr_timeout);
+	new_cell->fr_inv_timeout=cfg_get(tm, tm_cfg, fr_inv_timeout);
 	new_cell->end_of_life=get_ticks_raw()+lifetime;
 #ifdef TM_DIFF_RT_TIMEOUT
 	/* same as above for retransmission intervals */
-	new_cell->rt_t1_timeout=rt_t1_timeout;
-	new_cell->rt_t2_timeout=rt_t2_timeout;
+	new_cell->rt_t1_timeout=cfg_get(tm, tm_cfg, rt_t1_timeout);
+	new_cell->rt_t2_timeout=cfg_get(tm, tm_cfg, rt_t2_timeout);
 #endif
 
 	/* better reset avp list now - anyhow, it's useless from

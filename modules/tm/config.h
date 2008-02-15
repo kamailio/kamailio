@@ -41,6 +41,9 @@
 */
 #include "../../hash_func.h"
 
+#include "../../cfg/cfg.h"
+#include "../../str.h"
+
 /* maximum length of localy generated acknowledgment */
 #define MAX_ACK_LEN   1024
 
@@ -94,5 +97,39 @@
 
 /* FIFO substitution character */
 #define SUBST_CHAR '!'
+
+struct cfg_group_tm {
+	int	ruri_matching;
+	int	via1_matching;
+	unsigned int	fr_timeout;
+	unsigned int	fr_inv_timeout;
+	unsigned int	wait_timeout;
+	unsigned int	delete_timeout;
+	unsigned int	rt_t1_timeout;
+	unsigned int	rt_t2_timeout;
+	unsigned int	tm_max_inv_lifetime;
+	unsigned int	tm_max_noninv_lifetime;
+	int	noisy_ctimer;
+	int	tm_auto_inv_100;
+	int	tm_unix_tx_timeout;
+	int	restart_fr_on_each_reply;
+	int	pass_provisional_replies;
+	int	tm_aggregate_auth;
+	int	unmatched_cancel;
+	int	default_code;
+	char	*default_reason;
+	int	reparse_invite;
+	str	ac_extra_hdrs;
+	int	tm_blst_503;
+	int	tm_blst_503_default;
+	int	tm_blst_503_min;
+	int	tm_blst_503_max;
+	unsigned int	tm_blst_methods_add;
+	unsigned int	tm_blst_methods_lookup;
+};
+
+extern struct cfg_group_tm	default_tm_cfg;
+extern void	*tm_cfg;
+extern cfg_def_t	tm_cfg_def[];
 
 #endif

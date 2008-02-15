@@ -48,6 +48,7 @@
 
 #include "../../timer.h"
 #include "h_table.h"
+#include "config.h"
 
 /* try to do fast retransmissions (but fall back to slow timer for FR */
 #define TM_FAST_RETR_TIMER
@@ -57,12 +58,14 @@
 #define RT_T1_TIMEOUT(rb)	((rb)->my_T->rt_t1_timeout)
 #define RT_T2_TIMEOUT(rb)	((rb)->my_T->rt_t2_timeout)
 #else
-#define RT_T1_TIMEOUT(rb)	(rt_t1_timeout)
-#define RT_T2_TIMEOUT(rb)	(rt_t2_timeout)
+#define RT_T1_TIMEOUT(rb)	(cfg_get(tm, tm_cfg, rt_t1_timeout))
+#define RT_T2_TIMEOUT(rb)	(cfg_get(tm, tm_cfg, rt_t2_timeout))
 #endif
 
 #define TM_REQ_TIMEOUT(t) \
-	(is_invite(t)?tm_max_inv_lifetime:tm_max_noninv_lifetime)
+	(is_invite(t)? \
+		cfg_get(tm, tm_cfg, tm_max_inv_lifetime): \
+		cfg_get(tm, tm_cfg, tm_max_noninv_lifetime))
 
 
 extern struct msgid_var user_fr_timeout;
@@ -74,18 +77,9 @@ extern struct msgid_var user_rt_t2_timeout;
 extern struct msgid_var user_inv_max_lifetime;
 extern struct msgid_var user_noninv_max_lifetime;
 
-extern ticks_t fr_timeout;
-extern ticks_t fr_inv_timeout;
-extern ticks_t wait_timeout;
-extern ticks_t delete_timeout;
-extern ticks_t rt_t1_timeout;
-extern ticks_t rt_t2_timeout;
-
-extern ticks_t tm_max_inv_lifetime;
-extern ticks_t tm_max_noninv_lifetime;
-
 
 extern int tm_init_timers();
+int timer_fixup(void *handle, str *name, void **val);
 
 ticks_t wait_handler(ticks_t t, struct timer_ln *tl, void* data);
 ticks_t retr_buf_handler(ticks_t t, struct timer_ln *tl, void* data);

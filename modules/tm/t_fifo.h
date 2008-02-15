@@ -38,8 +38,6 @@
 #include "../../parser/msg_parser.h"
 #include "../../sr_module.h"
 
-extern int tm_unix_tx_timeout;
-
 int fixup_t_write( void** param, int param_no);
 
 int parse_tw_append( modparam_t type, void* val);

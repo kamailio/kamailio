@@ -84,6 +84,7 @@
  *              added w_t_relay_cancel() (Miklos)
  *  2007-06-05  added t_set_auto_inv_100() and auto_inv_100 (param);
  *               t_set_max_lifetime(), max_{non}inv_lifetime  (andrei)
+ *  2008-02-05	module config parameters use the configuration framework (Miklos)
  */
 
 
@@ -103,7 +104,9 @@
 #include "../../mem/mem.h"
 #include "../../route_struct.h"
 #include "../../route.h"
+#include "../../cfg/cfg.h"
 
+#include "config.h"
 #include "sip_msg.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -207,9 +210,6 @@ static char *fr_timer_param = 0 /*FR_TIMER_AVP*/;
 static char *fr_inv_timer_param = 0 /*FR_INV_TIMER_AVP*/;
 
 static rpc_export_t tm_rpc[];
-
-static int default_code = 500;
-static str default_reason = STR_STATIC_INIT("Server Internal Error");
 
 static int fixup_t_check_status(void** param, int param_no);
 
@@ -334,38 +334,37 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{"ruri_matching",       PARAM_INT, &ruri_matching                        },
-	{"via1_matching",       PARAM_INT, &via1_matching                        },
-	{"fr_timer",            PARAM_INT, &fr_timeout                           },
-	{"fr_inv_timer",        PARAM_INT, &fr_inv_timeout                       },
-	{"wt_timer",            PARAM_INT, &wait_timeout                         },
-	{"delete_timer",        PARAM_INT, &delete_timeout                       },
-	{"retr_timer1",         PARAM_INT, &rt_t1_timeout                        },
-	{"retr_timer2"  ,       PARAM_INT, &rt_t2_timeout                        },
-	{"max_inv_lifetime",    PARAM_INT, &tm_max_inv_lifetime                  },
-	{"max_noninv_lifetime", PARAM_INT, &tm_max_noninv_lifetime               },
-	{"noisy_ctimer",        PARAM_INT, &noisy_ctimer                         },
-	{"auto_inv_100",        PARAM_INT, &tm_auto_inv_100                      },
-	{"uac_from",            PARAM_STRING, &uac_from                          },
-	{"unix_tx_timeout",     PARAM_INT, &tm_unix_tx_timeout                   },
-	{"restart_fr_on_each_reply", PARAM_INT, &restart_fr_on_each_reply        },
+	{"ruri_matching",       PARAM_INT, &default_tm_cfg.ruri_matching         },
+	{"via1_matching",       PARAM_INT, &default_tm_cfg.via1_matching         },
+	{"fr_timer",            PARAM_INT, &default_tm_cfg.fr_timeout            },
+	{"fr_inv_timer",        PARAM_INT, &default_tm_cfg.fr_inv_timeout        },
+	{"wt_timer",            PARAM_INT, &default_tm_cfg.wait_timeout          },
+	{"delete_timer",        PARAM_INT, &default_tm_cfg.delete_timeout        },
+	{"retr_timer1",         PARAM_INT, &default_tm_cfg.rt_t1_timeout         },
+	{"retr_timer2"  ,       PARAM_INT, &default_tm_cfg.rt_t2_timeout         },
+	{"max_inv_lifetime",    PARAM_INT, &default_tm_cfg.tm_max_inv_lifetime   },
+	{"max_noninv_lifetime", PARAM_INT, &default_tm_cfg.tm_max_noninv_lifetime},
+	{"noisy_ctimer",        PARAM_INT, &default_tm_cfg.noisy_ctimer          },
+	{"auto_inv_100",        PARAM_INT, &default_tm_cfg.tm_auto_inv_100       },
+	{"unix_tx_timeout",     PARAM_INT, &default_tm_cfg.tm_unix_tx_timeout    },
+	{"restart_fr_on_each_reply", PARAM_INT, &default_tm_cfg.restart_fr_on_each_reply},
 	{"fr_timer_avp",        PARAM_STRING, &fr_timer_param                    },
 	{"fr_inv_timer_avp",    PARAM_STRING, &fr_inv_timer_param                },
 	{"tw_append",           PARAM_STRING|PARAM_USE_FUNC, 
 													(void*)parse_tw_append   },
-	{"pass_provisional_replies", PARAM_INT, &pass_provisional_replies        },
-	{"aggregate_challenges", PARAM_INT, &tm_aggregate_auth                   },
-	{"unmatched_cancel",    PARAM_INT, &unmatched_cancel                     },
-	{"default_code",        PARAM_INT, &default_code                         },
-	{"default_reason",      PARAM_STR, &default_reason                       },
-	{"reparse_invite",      PARAM_INT, &reparse_invite                       },
-	{"ac_extra_hdrs",       PARAM_STR, &ac_extra_hdrs                        },
-	{"blst_503",            PARAM_INT, &tm_blst_503                          },
-	{"blst_503_def_timeout",PARAM_INT, &tm_blst_503_default                  },
-	{"blst_503_min_timeout",PARAM_INT, &tm_blst_503_min                      },
-	{"blst_503_max_timeout",PARAM_INT, &tm_blst_503_max                      },
-	{"blst_methods_add",    PARAM_INT, &tm_blst_methods_add                  },
-	{"blst_methods_lookup", PARAM_INT, &tm_blst_methods_lookup               },
+	{"pass_provisional_replies", PARAM_INT, &default_tm_cfg.pass_provisional_replies},
+	{"aggregate_challenges", PARAM_INT, &default_tm_cfg.tm_aggregate_auth    },
+	{"unmatched_cancel",    PARAM_INT, &default_tm_cfg.unmatched_cancel      },
+	{"default_code",        PARAM_INT, &default_tm_cfg.default_code          },
+	{"default_reason",      PARAM_STRING, &default_tm_cfg.default_reason     },
+	{"reparse_invite",      PARAM_INT, &default_tm_cfg.reparse_invite        },
+	{"ac_extra_hdrs",       PARAM_STR, &default_tm_cfg.ac_extra_hdrs         },
+	{"blst_503",            PARAM_INT, &default_tm_cfg.tm_blst_503           },
+	{"blst_503_def_timeout",PARAM_INT, &default_tm_cfg.tm_blst_503_default   },
+	{"blst_503_min_timeout",PARAM_INT, &default_tm_cfg.tm_blst_503_min       },
+	{"blst_503_max_timeout",PARAM_INT, &default_tm_cfg.tm_blst_503_max       },
+	{"blst_methods_add",    PARAM_INT, &default_tm_cfg.tm_blst_methods_add   },
+	{"blst_methods_lookup", PARAM_INT, &default_tm_cfg.tm_blst_methods_lookup},
 	{0,0,0}
 };
 
@@ -554,6 +553,7 @@ static int mod_init(void)
 {
 	DBG( "TM - (sizeof cell=%ld, sip_msg=%ld) initializing...\n",
 			(long)sizeof(struct cell), (long)sizeof(struct sip_msg));
+
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
 	if (MAX_BRANCHES+1>31) {
@@ -580,9 +580,18 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: mod_init: select init failed\n");
 		return -1;
 	}
-	
+
+	/* the defult timer values must be fixed-up before
+	 * declaring the configuration (Miklos) */
 	if (tm_init_timers()==-1) {
 		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
+		return -1;
+	}
+
+	/* declare the configuration */
+	if (cfg_declare("tm", tm_cfg_def, &default_tm_cfg, cfg_size(tm),
+			 &tm_cfg)) {
+		LOG(L_ERR, "ERROR: mod_init: failed to declare the configuration\n");
 		return -1;
 	}
 
@@ -976,15 +985,15 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 	}
 
 	if (get_int_fparam(&code, msg, (fparam_t*)p1) < 0) {
-	    code = default_code;
+	    code = cfg_get(tm, tm_cfg, default_code);
 	}
 	
 	if (get_str_fparam(&reason, msg, (fparam_t*)p2) < 0) {
-	    reason = default_reason;
+		r = cfg_get(tm, tm_cfg, default_reason);
+	} else {
+		r = as_asciiz(&reason);
+		if (r == NULL) r = cfg_get(tm, tm_cfg, default_reason);
 	}
-	
-	r = as_asciiz(&reason);
-	if (r == NULL) r = default_reason.s;
 	
 	/* if called from reply_route, make sure that unsafe version
 	 * is called; we are already in a mutex and another mutex in
@@ -1001,7 +1010,7 @@ inline static int w_t_reply(struct sip_msg* msg, char* p1, char* p2)
 		ret = -1;
 	}
 
-	if (r) pkg_free(r);
+	if (r && (r != cfg_get(tm, tm_cfg, default_reason))) pkg_free(r);
 	return ret;
 }
 
@@ -1227,7 +1236,7 @@ inline static int w_t_relay_cancel( struct sip_msg  *p_msg ,
 		return 1;
 
 	/* it makes no sense to use this function without reparse_invite=1 */
-	if (!reparse_invite)
+	if (!cfg_get(tm, tm_cfg, reparse_invite))
 		LOG(L_WARN, "WARNING: t_relay_cancel is probably used with "
 			"wrong configuration, check the readme for details\n");
 

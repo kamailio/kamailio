@@ -44,8 +44,6 @@
 enum unmatched_cancel_t { UM_CANCEL_STATEFULL=0, UM_CANCEL_STATELESS,
 							UM_CANCEL_DROP };
 
-extern int unmatched_cancel;
-
 typedef int (*tfwd_f)(struct sip_msg* p_msg , struct proxy_l * proxy );
 typedef int (*taddblind_f)( /*struct cell *t */ );
 

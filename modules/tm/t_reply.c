@@ -116,6 +116,7 @@
 #endif
 
 #include "defs.h"
+#include "config.h"
 #include "h_table.h"
 #include "t_hooks.h"
 #include "t_funcs.h"
@@ -128,31 +129,6 @@
 #include "t_stats.h"
 #include "uac.h"
 
-
-/* restart fr timer on each provisional reply, default yes */
-int restart_fr_on_each_reply=1;
-/* if the final reponse is a 401 or a 407, aggregate all the 
- * authorization headers (challenges) (rfc3261 requires this to be on) */
-int tm_aggregate_auth=1;
-
-/* if 1 blacklist 503 sources, using tm_blst_503_min, tm_blst_503_max,
- * tm_blst_503_default and the Retry-After header in the 503 reply */
-int tm_blst_503=0;
-/* default 503 blacklist time (when no Retry-After header is present */
-#ifndef DEFAULT_BLST_TIMEOUT
-#define DEFAULT_BLST_TIMEOUT 60
-#endif
-int tm_blst_503_default=0; /* rfc conformant: do not blacklist if 
-							  no retry-after */
-/* minimum 503 blacklist time */
-int tm_blst_503_min=0; /* in s */
-/* maximum 503 blacklist time */
-int tm_blst_503_max=3600; /* in s */
-
-/* backlist only INVITE timeouts by default */
-unsigned int tm_blst_methods_add=METHOD_INVITE;
-/* look-up the blacklist for every method except BYE by default */
-unsigned int tm_blst_methods_lookup=~METHOD_BYE;
 
 /* are we processing original or shmemed request ? */
 enum route_mode rmode=MODE_REQUEST;
@@ -364,7 +340,7 @@ static char *build_ack(struct sip_msg* rpl,struct cell *trans,int branch,
 	to.s=rpl->to->name.s;
 	to.len=rpl->to->len;
 
-	if (reparse_invite) {
+	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* build the ACK from the INVITE which was sent out */
 		return build_local_reparse( trans, branch, ret_len,
 					ACK, ACK_LEN, &to );
@@ -1386,7 +1362,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 			} else {
 				to_tag=0;
 			}
-			if (tm_aggregate_auth && 
+			if (cfg_get(tm, tm_cfg, tm_aggregate_auth) && 
 						(relayed_code==401 || relayed_code==407) &&
 						(auth_reply_count(t, p_msg)>1)){
 				/* aggregate 401 & 407 www & proxy authenticate headers in
@@ -1422,7 +1398,7 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				buf=build_res_buf_from_sip_req(500, error_text(relayed_code),
 									to_tag, t->uas.request, &res_len, &bm);
 				relayed_code=500;
-			}else if (tm_aggregate_auth && 
+			}else if (cfg_get(tm, tm_cfg, tm_aggregate_auth) && 
 						(relayed_code==401 || relayed_code==407) &&
 						(auth_reply_count(t, p_msg)>1)){
 				/* aggregate 401 & 407 www & proxy authenticate headers in
@@ -1597,7 +1573,9 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	}
 	UNLOCK_REPLIES(t);
  
-        if (local_winner >= 0 && pass_provisional_replies && winning_code < 200) {
+        if (local_winner >= 0
+		&& cfg_get(tm, tm_cfg, pass_provisional_replies)
+		&& winning_code < 200) {
 			if (unlikely(!totag_retr && 
 							has_tran_tmcbs(t, TMCB_LOCAL_RESPONSE_OUT) )) {
                         run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0,
@@ -1810,8 +1788,11 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 #ifdef USE_DST_BLACKLIST
 		/* add temporary to the blacklist the source of a 503 reply */
-		if (tm_blst_503 && cfg_get(core, core_cfg, use_dst_blacklist) && (msg_status==503)){
-			blst_503_timeout=tm_blst_503_default;
+		if (cfg_get(tm, tm_cfg, tm_blst_503)
+			&& cfg_get(core, core_cfg, use_dst_blacklist)
+			&& (msg_status==503)
+		){
+			blst_503_timeout=cfg_get(tm, tm_cfg, tm_blst_503_default);
 			if ((parse_headers(p_msg, HDR_RETRY_AFTER_F, 0)==0) && 
 				(p_msg->parsed_flag & HDR_RETRY_AFTER_F)){
 				for (hf=p_msg->headers; hf; hf=hf->next)
@@ -1819,9 +1800,9 @@ int reply_received( struct sip_msg  *p_msg )
 						/* found */
 						blst_503_timeout=(unsigned)(unsigned long)hf->parsed;
 						blst_503_timeout=MAX_unsigned(blst_503_timeout, 
-															tm_blst_503_min);
+									cfg_get(tm, tm_cfg, tm_blst_503_min));
 						blst_503_timeout=MIN_unsigned(blst_503_timeout,
-															tm_blst_503_max);
+									cfg_get(tm, tm_cfg, tm_blst_503_max));
 						break;
 					}
 			}
@@ -1901,7 +1882,8 @@ int reply_received( struct sip_msg  *p_msg )
 		goto done;
 
 	/* update FR/RETR timers on provisional replies */
-	if (is_invite(t) && msg_status<200 && ( restart_fr_on_each_reply ||
+	if (is_invite(t) && msg_status<200 &&
+		( cfg_get(tm, tm_cfg, restart_fr_on_each_reply) ||
 				( (last_uac_status<msg_status) &&
 					((msg_status>=180) || (last_uac_status==0)) )
 			) ) { /* provisional now */

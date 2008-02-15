@@ -86,7 +86,6 @@ static int     fr_inv_timer_index = 0;
 
 int tm_error = 0; /* delayed tm error */
 
-int tm_auto_inv_100=1; /* automatically send 100 to an INVITE, default on*/
 struct msgid_var user_auto_inv_100;
 
 /* ----------------------------------------------------- */
@@ -171,7 +170,7 @@ void put_on_wait(  struct cell  *Trans  )
 		4.									WAIT timer executed,
 											transaction deleted
 	*/
-	if (timer_add(&Trans->wait_timer, wait_timeout)==0){
+	if (timer_add(&Trans->wait_timer, cfg_get(tm, tm_cfg, wait_timeout))==0){
 		/* sucess */
 		t_stats_wait();
 	}else{

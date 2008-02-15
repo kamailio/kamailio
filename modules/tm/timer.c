@@ -146,8 +146,6 @@
 
 
 
-int noisy_ctimer=1;
-
 struct msgid_var user_fr_timeout;
 struct msgid_var user_fr_inv_timeout;
 #ifdef TM_DIFF_RT_TIMEOUT
@@ -156,27 +154,6 @@ struct msgid_var user_rt_t2_timeout;
 #endif
 struct msgid_var user_inv_max_lifetime;
 struct msgid_var user_noninv_max_lifetime;
-
-/* default values of timeouts for all the timer list */
-
-ticks_t fr_timeout		=	FR_TIME_OUT;
-ticks_t fr_inv_timeout	=	INV_FR_TIME_OUT;
-ticks_t wait_timeout	=	WT_TIME_OUT;
-ticks_t delete_timeout	=	DEL_TIME_OUT;
-ticks_t rt_t1_timeout	=	RETR_T1;
-ticks_t rt_t2_timeout	=	RETR_T2;
-
-/* maximum time and invite or noninv transaction will live, from
- * the moment of creation (overrides larger fr/fr_inv timeouts,
- * extensions due to dns failover, fr_inv restart a.s.o)
- * Note: after this time the transaction will not be deleted
- *  immediately, but forced to go in the wait state or in wait for ack state 
- *  and then wait state, so it will still be alive for either wait_timeout in 
- *  the non-inv or "silent" inv. case and for fr_timeout + wait_timeout for an
- *  invite transaction (for which  we must wait for the neg. reply ack)
- */
-ticks_t tm_max_inv_lifetime		=	MAX_INV_LIFETIME;
-ticks_t tm_max_noninv_lifetime	=	MAX_NONINV_LIFETIME;
 
 
 /* internal use, val should be unsigned or positive
@@ -196,33 +173,33 @@ ticks_t tm_max_noninv_lifetime	=	MAX_NONINV_LIFETIME;
 /* fix timer values to ticks */
 int tm_init_timers()
 {
-	fr_timeout=MS_TO_TICKS(fr_timeout); 
-	fr_inv_timeout=MS_TO_TICKS(fr_inv_timeout);
-	wait_timeout=MS_TO_TICKS(wait_timeout);
-	delete_timeout=MS_TO_TICKS(delete_timeout);
-	rt_t1_timeout=MS_TO_TICKS(rt_t1_timeout);
-	rt_t2_timeout=MS_TO_TICKS(rt_t2_timeout);
-	tm_max_inv_lifetime=MS_TO_TICKS(tm_max_inv_lifetime);
-	tm_max_noninv_lifetime=MS_TO_TICKS(tm_max_noninv_lifetime);
+	default_tm_cfg.fr_timeout=MS_TO_TICKS(default_tm_cfg.fr_timeout); 
+	default_tm_cfg.fr_inv_timeout=MS_TO_TICKS(default_tm_cfg.fr_inv_timeout);
+	default_tm_cfg.wait_timeout=MS_TO_TICKS(default_tm_cfg.wait_timeout);
+	default_tm_cfg.delete_timeout=MS_TO_TICKS(default_tm_cfg.delete_timeout);
+	default_tm_cfg.rt_t1_timeout=MS_TO_TICKS(default_tm_cfg.rt_t1_timeout);
+	default_tm_cfg.rt_t2_timeout=MS_TO_TICKS(default_tm_cfg.rt_t2_timeout);
+	default_tm_cfg.tm_max_inv_lifetime=MS_TO_TICKS(default_tm_cfg.tm_max_inv_lifetime);
+	default_tm_cfg.tm_max_noninv_lifetime=MS_TO_TICKS(default_tm_cfg.tm_max_noninv_lifetime);
 	/* fix 0 values to 1 tick (minimum possible wait time ) */
-	if (fr_timeout==0) fr_timeout=1;
-	if (fr_inv_timeout==0) fr_inv_timeout=1;
-	if (wait_timeout==0) wait_timeout=1;
-	if (delete_timeout==0) delete_timeout=1;
-	if (rt_t2_timeout==0) rt_t2_timeout=1;
-	if (rt_t1_timeout==0) rt_t1_timeout=1;
-	if (tm_max_inv_lifetime==0) tm_max_inv_lifetime=1;
-	if (tm_max_noninv_lifetime==0) tm_max_noninv_lifetime=1;
+	if (default_tm_cfg.fr_timeout==0) default_tm_cfg.fr_timeout=1;
+	if (default_tm_cfg.fr_inv_timeout==0) default_tm_cfg.fr_inv_timeout=1;
+	if (default_tm_cfg.wait_timeout==0) default_tm_cfg.wait_timeout=1;
+	if (default_tm_cfg.delete_timeout==0) default_tm_cfg.delete_timeout=1;
+	if (default_tm_cfg.rt_t2_timeout==0) default_tm_cfg.rt_t2_timeout=1;
+	if (default_tm_cfg.rt_t1_timeout==0) default_tm_cfg.rt_t1_timeout=1;
+	if (default_tm_cfg.tm_max_inv_lifetime==0) default_tm_cfg.tm_max_inv_lifetime=1;
+	if (default_tm_cfg.tm_max_noninv_lifetime==0) default_tm_cfg.tm_max_noninv_lifetime=1;
 	
 	/* size fit checks */
-	SIZE_FIT_CHECK(fr_timeout, fr_timeout, "fr_timer");
-	SIZE_FIT_CHECK(fr_inv_timeout, fr_inv_timeout, "fr_inv_timer");
+	SIZE_FIT_CHECK(fr_timeout, default_tm_cfg.fr_timeout, "fr_timer");
+	SIZE_FIT_CHECK(fr_inv_timeout, default_tm_cfg.fr_inv_timeout, "fr_inv_timer");
 #ifdef TM_DIFF_RT_TIMEOUT
-	SIZE_FIT_CHECK(rt_t1_timeout, rt_t1_timeout, "retr_timer1");
-	SIZE_FIT_CHECK(rt_t2_timeout, rt_t2_timeout, "retr_timer2");
+	SIZE_FIT_CHECK(rt_t1_timeout, default_tm_cfg.rt_t1_timeout, "retr_timer1");
+	SIZE_FIT_CHECK(rt_t2_timeout, default_tm_cfg.rt_t2_timeout, "retr_timer2");
 #endif
-	SIZE_FIT_CHECK(end_of_life, tm_max_inv_lifetime, "max_inv_lifetime");
-	SIZE_FIT_CHECK(end_of_life, tm_max_noninv_lifetime, "max_noninv_lifetime");
+	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_inv_lifetime, "max_inv_lifetime");
+	SIZE_FIT_CHECK(end_of_life, default_tm_cfg.tm_max_noninv_lifetime, "max_noninv_lifetime");
 	
 	memset(&user_fr_timeout, 0, sizeof(user_fr_timeout));
 	memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
@@ -235,10 +212,48 @@ int tm_init_timers()
 	
 	DBG("tm: tm_init_timers: fr=%d fr_inv=%d wait=%d delete=%d t1=%d t2=%d"
 			" max_inv_lifetime=%d max_noninv_lifetime=%d\n",
-			fr_timeout, fr_inv_timeout, wait_timeout, delete_timeout,
-			rt_t1_timeout, rt_t2_timeout, tm_max_inv_lifetime,
-			tm_max_noninv_lifetime);
+			default_tm_cfg.fr_timeout, default_tm_cfg.fr_inv_timeout,
+			default_tm_cfg.wait_timeout, default_tm_cfg.delete_timeout,
+			default_tm_cfg.rt_t1_timeout, default_tm_cfg.rt_t2_timeout,
+			default_tm_cfg.tm_max_inv_lifetime, default_tm_cfg.tm_max_noninv_lifetime);
 	return 0;
+error:
+	return -1;
+}
+
+/* internal macro for timer_fixup()
+ * performs size fit check if the timer name matches
+ */
+#define IF_IS_TIMER_NAME(cell_member, cfg_name) \
+	if ((name->len == sizeof(cfg_name)-1) && \
+		(memcmp(name->s, cfg_name, sizeof(cfg_name)-1)==0)) { \
+			SIZE_FIT_CHECK(cell_member, t, cfg_name); \
+	}
+
+/* fixup function for the timer values
+ * (called by the configuration framework)
+ */
+int timer_fixup(void *handle, str *name, void **val)
+{
+	ticks_t	t;
+
+	t = MS_TO_TICKS((unsigned int)(long)(*val));
+	/* fix 0 values to 1 tick (minimum possible wait time ) */
+	if (t == 0) t = 1;
+
+	/* size fix checks */
+	IF_IS_TIMER_NAME(fr_timeout, "fr_timer")
+	else IF_IS_TIMER_NAME(fr_inv_timeout, "fr_inv_timer")
+#ifdef TM_DIFF_RT_TIMEOUT
+	else IF_IS_TIMER_NAME(rt_t1_timeout, "retr_timer1")
+	else IF_IS_TIMER_NAME(rt_t2_timeout, "retr_timer2")
+#endif
+	else IF_IS_TIMER_NAME(end_of_life, "max_inv_lifetime")
+	else IF_IS_TIMER_NAME(end_of_life, "max_noninv_lifetime")
+
+	*val = (void *)(long)t;
+	return 0;
+
 error:
 	return -1;
 }
@@ -264,7 +279,7 @@ inline static ticks_t  delete_cell( struct cell *p_cell, int unlock )
 				p_cell, p_cell->ref_count);
 		/* delay the delete */
 		/* TODO: change refcnts and delete on refcnt==0 */
-		return delete_timeout;
+		return cfg_get(tm, tm_cfg, delete_timeout);
 	} else {
 		if (unlock) UNLOCK_HASH(p_cell->hash_index);
 #ifdef EXTRA_DEBUG
@@ -422,7 +437,7 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 	   world */
 	silent=
 		/* don't go silent if disallowed globally ... */
-		noisy_ctimer==0
+		cfg_get(tm, tm_cfg, noisy_ctimer)==0
 		/* ... or for this particular transaction */
 		&& has_noisy_ctimer(t) == 0
 		/* not for UACs */
@@ -459,7 +474,7 @@ inline static void final_response_handler(	struct retr_buf* r_buf,
 		if (cfg_get(core, core_cfg, use_dst_blacklist)
         		&& r_buf->my_T
 			&& r_buf->my_T->uas.request
-			&& (r_buf->my_T->uas.request->REQ_METHOD & tm_blst_methods_add)
+			&& (r_buf->my_T->uas.request->REQ_METHOD & cfg_get(tm, tm_cfg, tm_blst_methods_add))
 		)
 			dst_blacklist_add( BLST_ERR_TIMEOUT, &r_buf->dst,
 						r_buf->my_T->uas.request);

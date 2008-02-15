@@ -112,8 +112,6 @@
 /* cancel hop by hop */
 #define E2E_CANCEL_HOP_BY_HOP
 
-int unmatched_cancel=UM_CANCEL_STATEFULL;
-
 static int goto_on_branch = 0, branch_route = 0;
 
 void t_on_branch( unsigned int go_to )
@@ -465,7 +463,7 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	*/
 
 	/* print */
-	if (reparse_invite) {
+	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* buffer is built localy from the INVITE which was sent out */
 		if (cancel_msg->add_rm || cancel_msg->body_lumps) {
 			LOG(L_WARN, "WARNING: e2e_cancel_branch: CANCEL is built locally, "
@@ -694,7 +692,7 @@ int t_send_branch( struct cell *t, int branch, struct sip_msg* p_msg ,
 #ifdef USE_DST_BLACKLIST
 	if (cfg_get(core, core_cfg, use_dst_blacklist)
 		&& p_msg
-		&& (p_msg->REQ_METHOD & tm_blst_methods_lookup)
+		&& (p_msg->REQ_METHOD & cfg_get(tm, tm_cfg, tm_blst_methods_lookup))
 	){
 		if (dst_is_blacklisted(&uac->request.dst, p_msg)){
 			su2ip_addr(&ip, &uac->request.dst.to);
@@ -942,7 +940,7 @@ int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy, int proto,
 	
 	t=0;
 	/* handle cancels for which no transaction was created yet */
-	if (unmatched_cancel==UM_CANCEL_STATEFULL){
+	if (cfg_get(tm, tm_cfg, unmatched_cancel)==UM_CANCEL_STATEFULL){
 		/* create cancel transaction */
 		new_tran=t_newtran(p_msg);
 		if (new_tran<=0 && new_tran!=E_SCRIPT){
@@ -979,7 +977,7 @@ int t_forward_cancel(struct sip_msg* p_msg , struct proxy_l * proxy, int proto,
 		ret=1;
 		goto end;
 	}else /* no coresponding INVITE transaction */
-	     if (unmatched_cancel==UM_CANCEL_DROP){
+	     if (cfg_get(tm, tm_cfg, unmatched_cancel)==UM_CANCEL_DROP){
 				DBG("t_forward_nonack: non matching cancel dropped\n");
 				ret=1; /* do nothing -> drop */
 				goto end;
