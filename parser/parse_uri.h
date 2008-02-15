@@ -48,5 +48,6 @@ int parse_sip_msg_uri(struct sip_msg* msg);
 int parse_orig_ruri(struct sip_msg* msg);
 int normalize_tel_user(char* res, str* src);
 void uri_type_to_str(uri_type type, str *s);
+void proto_type_to_str(unsigned short type, str *s);
 
 #endif /* PARSE_URI_H */

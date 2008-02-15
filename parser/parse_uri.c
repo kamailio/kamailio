@@ -1456,3 +1456,26 @@ inline void uri_type_to_str(uri_type type, str *s) {
 	}
 }
 
+static str	s_udp  = STR_STATIC_INIT("udp");
+static str	s_tcp  = STR_STATIC_INIT("tcp");
+static str	s_tls  = STR_STATIC_INIT("tls");
+static str	s_sctp = STR_STATIC_INIT("sctp");
+
+inline void proto_type_to_str(unsigned short type, str *s) {
+	switch (type) {
+	case PROTO_UDP:
+		*s = s_udp;
+		break;
+	case PROTO_TCP:
+		*s = s_tcp;
+		break;
+	case PROTO_TLS:
+		*s = s_tls;
+		break;
+	case PROTO_SCTP:
+		*s = s_sctp;
+		break;
+	default:
+		*s = s_null;
+	}
+}
