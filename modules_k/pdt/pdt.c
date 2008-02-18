@@ -249,8 +249,10 @@ static int mod_init(void)
 	pdt_dbf.close(db_con);
 	db_con = 0;
 
+#if 0
 	pdt_print_tree(*_ptree);
 	pdt_print_hash_list(*_dhash);
+#endif
 
 	/* success code */
 	return 0;
