@@ -1,6 +1,6 @@
 %define name    ser
 %define ver     2.0.0
-%define rel     1
+%define rel     rc6
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd
 %define MYSQL_MODULES		mysql
@@ -15,7 +15,7 @@ Release:      %rel
 Packager:     Jan Janak <jan@iptel.org>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://ftp.iptel.org/pub/ser/%{ver}/src/%{name}-%{ver}-rc6-%{rel}_src.tar.gz
+Source:       http://ftp.iptel.org/pub/ser/%{ver}/src/%{name}-%{ver}-%{rel}_src.tar.gz
 Source2:      ser.init
 URL:          http://iptel.org/ser
 Vendor:       FhG FOKUS
@@ -66,7 +66,7 @@ The ser-jabber package contains a sip to jabber message translator.
 # membership and uri checking.
 
 %prep
-%setup -n %{name}-%{ver}-rc6
+%setup -n %{name}-%{ver}-%{rel}
 
 %build
 make all include_modules="tls" skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
