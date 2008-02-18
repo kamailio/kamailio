@@ -821,8 +821,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
        request is not a retransmission.
      * CANCEL request - true if the cancelled INVITE transaction
        exists.
-     * ACK request - true if the ACK is a local end-to-end ACK for
-       an existent INVITE transaction.
+     * ACK request - true if the ACK is a local end-to-end ACK
+       corresponding to an previous INVITE transaction.
 
    This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
 

@@ -995,7 +995,7 @@ static inline int new_t(struct sip_msg *p_msg)
 		LM_ERR("uri invalid\n");
 		return E_BAD_REQ;
 	}
-			
+
 	/* add new transaction */
 	new_cell = build_cell( p_msg ) ;
 	if  ( !new_cell ){

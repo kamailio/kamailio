@@ -1035,7 +1035,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</listitem>
 		<listitem>
 			<para><emphasis>ACK request</emphasis> - true if the ACK is a
-			local end-to-end ACK for an existent INVITE transaction.
+			local end-to-end ACK corresponding to an previous INVITE
+			transaction.
 			</para>
 		</listitem>
 		</itemizedlist>
