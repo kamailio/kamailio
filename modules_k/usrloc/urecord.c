@@ -38,7 +38,6 @@
 #include "../../hash_func.h"
 #include "ul_mod.h"
 #include "utime.h"
-#include "notify.h"
 #include "ul_callback.h"
 
 
@@ -80,14 +79,7 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
  */
 void free_urecord(urecord_t* _r)
 {
-	notify_cb_t* watcher;
 	ucontact_t* ptr;
-
-	while(_r->watchers) {
-		watcher = _r->watchers;
-		_r->watchers = watcher->next;
-		shm_free(watcher);
-	}
 
 	while(_r->contacts) {
 		ptr = _r->contacts;
@@ -223,8 +215,6 @@ static inline int nodb_timer(urecord_t* _r)
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE))
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 
-			notify_watchers(_r, ptr, PRES_OFFLINE);
-
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
 				ptr->c.len, ZSW(ptr->c.s));
@@ -260,8 +250,6 @@ static inline int wt_timer(urecord_t* _r)
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 			}
-
-			notify_watchers(_r, ptr, PRES_OFFLINE);
 
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
@@ -302,8 +290,6 @@ static inline int wb_timer(urecord_t* _r)
 			if (exists_ulcb_type(UL_CONTACT_EXPIRE)) {
 				run_ul_callbacks( UL_CONTACT_EXPIRE, ptr);
 			}
-
-			notify_watchers(_r, ptr, PRES_OFFLINE);
 
 			LM_DBG("Binding '%.*s','%.*s' has expired\n",
 				ptr->aor->len, ZSW(ptr->aor->s),
@@ -432,9 +418,6 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 		return -1;
 	}
 
-	notify_watchers(_r, (*_c),
-		((*_c)->expires > 0) ? PRES_ONLINE : PRES_OFFLINE);
-
 	if (exists_ulcb_type(UL_CONTACT_INSERT)) {
 		run_ul_callbacks( UL_CONTACT_INSERT, *_c);
 	}
@@ -459,8 +442,6 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 	if (exists_ulcb_type(UL_CONTACT_DELETE)) {
 		run_ul_callbacks( UL_CONTACT_DELETE, _c);
 	}
-
-	notify_watchers(_r, _c, PRES_OFFLINE);
 
 	if (st_delete_ucontact(_c) > 0) {
 		if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {

@@ -36,7 +36,6 @@
 #include "../../str.h"
 #include "../../qvalue.h"
 #include "ucontact.h"
-#include "notify.h"
 
 
 struct hslot;
@@ -55,8 +54,6 @@ typedef struct urecord {
                                     * array we belong to */
 	struct urecord* prev;          /* Next item in the hash entry */
 	struct urecord* next;          /* Previous item in the hash entry */
-
-	struct notify_cb* watchers;    /* List of watchers */
 } urecord_t;
 
 

@@ -40,7 +40,6 @@
 #include "../../hash_func.h"
 #include "ul_mod.h"            /* usrloc module parameters */
 #include "utime.h"
-#include "notify.h"
 
 
 #ifdef STATISTICS
@@ -665,11 +664,9 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
  */
 void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 {
-	if (_r->watchers == 0) {
-		slot_rem(_r->slot, _r);
-		free_urecord(_r);
-		update_stat( _d->users, -1);
-	}
+	slot_rem(_r->slot, _r);
+	free_urecord(_r);
+	update_stat( _d->users, -1);
 }
 
 

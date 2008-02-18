@@ -55,8 +55,6 @@ typedef struct usrloc_api {
 
 	update_ucontact_t    update_ucontact;
 
-	register_watcher_t   register_watcher;
-	unregister_watcher_t unregister_watcher;
 	register_ulcb_t      register_ulcb;
 } usrloc_api_t;
 

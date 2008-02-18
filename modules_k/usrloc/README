@@ -94,8 +94,6 @@ Bogdan-Andrei Iancu
               2.1.13. ul_bind_ursloc( api )
               2.1.14. ul_register_ulcb(type ,callback, param)
               2.1.15. ul_get_num_users()
-              2.1.16. ul_register_watcher()
-              2.1.17. ul_unregister_watcher()
 
    3. Frequently Asked Questions
 
@@ -459,8 +457,7 @@ modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname
        slower due the high number of DB operation. For example NAT
        pinging is a killer since during each ping cycle all nated
        contact are loaded from the DB; The lack of memory caching
-       also disable the location watcher registration (in will not
-       work with PA module) and disable the statistics exports.
+       also disable the statistics exports.
 
    Warning
 
@@ -881,16 +878,6 @@ res, ua, sock)
 
    The function loops through all domains summing up the number of
    users.
-     __________________________________________________________
-
-2.1.16. ul_register_watcher()
-
-   Obsolete function - to be removed in the future.
-     __________________________________________________________
-
-2.1.17. ul_unregister_watcher()
-
-   Obsolete function - to be removed in the future.
      __________________________________________________________
 
 Chapter 3. Frequently Asked Questions

@@ -533,8 +533,7 @@ modparam("usrloc", "db_url", "&exampledb;")
 			level. The mode may be slower due the high number of DB operation.
 			For example NAT pinging is a killer since during each ping cycle
 			all nated contact are loaded from the DB; The lack of memory 
-			caching also disable the location watcher registration (in will
-			not work with PA module) and disable the statistics exports.
+			caching also disable the statistics exports.
 			</para>
 		</listitem>
 		</itemizedlist>

@@ -46,7 +46,6 @@
 #include "ucontact.h"        /* update_ucontact */
 #include "ul_mi.h"
 #include "ul_callback.h"
-#include "notify.h"
 #include "usrloc.h"
 
 MODULE_VERSION
@@ -150,8 +149,6 @@ static cmd_export_t cmds[] = {
 	{"ul_get_ucontact",       (cmd_function)get_ucontact,       1, 0, 0, 0},
 	{"ul_get_all_ucontacts",  (cmd_function)get_all_ucontacts,  1, 0, 0, 0},
 	{"ul_update_ucontact",    (cmd_function)update_ucontact,    1, 0, 0, 0},
-	{"ul_register_watcher",   (cmd_function)register_watcher,   1, 0, 0, 0},
-	{"ul_unregister_watcher", (cmd_function)unregister_watcher, 1, 0, 0, 0},
 	{"ul_bind_usrloc",        (cmd_function)bind_usrloc,        1, 0, 0, 0},
 	{"ul_register_ulcb",      (cmd_function)register_ulcb,      1, 0, 0, 0},
 	{"ul_get_num_users",      (cmd_function)get_number_of_users,1, 0, 0, 0},

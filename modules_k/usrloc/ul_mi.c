@@ -33,6 +33,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../qvalue.h"
+#include "../../ip_addr.h"
 #include "ul_mi.h"
 #include "dlist.h"
 #include "udomain.h"

@@ -61,8 +61,6 @@ int bind_usrloc(usrloc_api_t* api)
 	api->delete_ucontact    = delete_ucontact;
 	api->get_ucontact       = get_ucontact;
 	api->update_ucontact    = update_ucontact;
-	api->register_watcher   = register_watcher;
-	api->unregister_watcher = unregister_watcher;
 	api->register_ulcb      = register_ulcb;
 
 	api->use_domain = use_domain;

@@ -446,26 +446,6 @@
 		</para>
 	</section>
 
-	<section>
-		<title>
-		<function moreinfo="none">ul_register_watcher()
-			</function>
-		</title>
-		<para>
-		Obsolete function - to be removed in the future.
-		</para>
-	</section>
-
-	<section>
-		<title>
-		<function moreinfo="none">ul_unregister_watcher()
-			</function>
-		</title>
-		<para>
-		Obsolete function - to be removed in the future.
-		</para>
-	</section>
-
 	</section>
 
 </chapter>
