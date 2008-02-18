@@ -314,6 +314,7 @@ static int mod_init( void )
 {
 	LM_INFO("initializing...\n");
 
+#ifdef SQL_ACC
 	if (db_url.s)
 		db_url.len = strlen(db_url.s);
 	db_table_acc.len = strlen(db_table_acc.s);
@@ -325,6 +326,7 @@ static int mod_init( void )
 	acc_sipcode_col.len = strlen(acc_sipcode_col.s);
 	acc_sipreason_col.len = strlen(acc_sipreason_col.s);
 	acc_time_col.len = strlen(acc_time_col.s);
+#endif
 
 	if (log_facility_str) {
 		int tmp = str2facility(log_facility_str);
