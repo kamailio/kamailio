@@ -185,7 +185,7 @@ int cfg_script_fixup(cfg_group_t *group, unsigned char *block)
 			offset = ROUND_INT(offset);
 			mapping[i].offset = offset;
 
-			memcpy(block + offset, &script_var->val.i, sizeof(int));
+			*(int *)(block + offset) = script_var->val.i;
 
 			offset += sizeof(int);
 			break;

@@ -88,14 +88,14 @@ int select_cfg_var(str *res, select_t *s, struct sip_msg *msg)
 
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:
-		memcpy(&i, p, sizeof(int));
+		i = *(int *)p;
 		res->len = snprintf(buf, sizeof(buf)-1, "%d", i);
 		buf[res->len] = '\0';
 		res->s = buf;
 		break;
 
 	case CFG_VAR_STRING:
-		memcpy(&res->s, p, sizeof(char *));
+		res->s = *(char **)p;
 		res->len = (res->s) ? strlen(res->s) : 0;
 		break;
 

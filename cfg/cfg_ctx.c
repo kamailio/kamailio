@@ -262,7 +262,6 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	char		*old_string = NULL;
 	char		**replaced = NULL;
 	cfg_child_cb_t	*child_cb = NULL;
-	int		i;
 
 	/* verify the context even if we do not need it now
 	to make sure that a cfg driver has called the function
@@ -335,8 +334,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	/* set the new value */
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:
-		i = (int)(long)v;
-		memcpy(p, &i, sizeof(int));
+		*(int *)p = (int)(long)v;
 		break;
 
 	case CFG_VAR_STRING:
@@ -344,20 +342,20 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		s.s = v;
 		s.len = (s.s) ? strlen(s.s) : 0;
 		if (cfg_clone_str(&s, &s)) goto error;
-		memcpy(&old_string, p, sizeof(char *));
-		memcpy(p, &s.s, sizeof(char *));
+		old_string = *(char **)p;
+		*(char **)p = s.s;
 		break;
 
 	case CFG_VAR_STR:
 		/* clone the string to shm mem */
 		s = *(str *)v;
 		if (cfg_clone_str(&s, &s)) goto error;
-		memcpy(&old_string, p, sizeof(char *));
+		old_string = *(char **)p;
 		memcpy(p, &s, sizeof(str));
 		break;
 
 	case CFG_VAR_POINTER:
-		memcpy(p, &v, sizeof(void *));
+		*(void **)p = v;
 		break;
 
 	}
@@ -489,7 +487,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	char		*temp_handle;
 	int		temp_handle_created;
 	cfg_changed_var_t	*changed = NULL;
-	int		i, size;
+	int		size;
 	str		s;
 
 	if (!cfg_shmized)
@@ -585,8 +583,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	switch (CFG_VAR_TYPE(var)) {
 
 	case CFG_VAR_INT:
-		i = (int)(long)v;
-		memcpy(changed->new_val, &i, sizeof(int));
+		*(int *)changed->new_val = (int)(long)v;
 		break;
 
 	case CFG_VAR_STRING:
@@ -594,7 +591,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		s.s = v;
 		s.len = (s.s) ? strlen(s.s) : 0;
 		if (cfg_clone_str(&s, &s)) goto error;
-		memcpy(changed->new_val, &s.s, sizeof(char *));
+		*(char **)changed->new_val = s.s;
 		break;
 
 	case CFG_VAR_STR:
@@ -605,7 +602,7 @@ int cfg_set_delayed(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		break;
 
 	case CFG_VAR_POINTER:
-		memcpy(changed->new_val, &v, sizeof(void *));
+		*(void **)changed->new_val = v;
 		break;
 
 	}
@@ -770,7 +767,7 @@ int cfg_commit(cfg_ctx_t *ctx)
 
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
 		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
-			memcpy(&(replaced[replaced_num]), p, sizeof(char *));
+			replaced[replaced_num] = *(char **)p;
 			if (replaced[replaced_num])
 				replaced_num++;
 			/* else do not increase replaced_num, because
@@ -821,7 +818,6 @@ error0:
 int cfg_rollback(cfg_ctx_t *ctx)
 {
 	cfg_changed_var_t	*changed, *changed2;
-	char	*new_string;
 
 	if (!ctx) {
 		LOG(L_ERR, "ERROR: cfg_rollback(): context is undefined\n");
@@ -846,8 +842,8 @@ int cfg_rollback(cfg_ctx_t *ctx)
 
 		if ((CFG_VAR_TYPE(changed->var) == CFG_VAR_STRING)
 		|| (CFG_VAR_TYPE(changed->var) == CFG_VAR_STR)) {
-			memcpy(&new_string, changed->new_val, sizeof(char *));
-			if (new_string) shm_free(new_string);
+			if (*(char **)(changed->new_val))
+				shm_free(*(char **)(changed->new_val));
 		}
 		shm_free(changed);
 	}
@@ -873,8 +869,6 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 	void		*p;
 	static str	s;	/* we need the value even
 				after the function returns */
-	int		i;
-	char		*ch;
 
 	/* verify the context even if we do not need it now
 	to make sure that a cfg driver has called the function
@@ -902,13 +896,11 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 
 	switch (CFG_VAR_TYPE(var)) {
 	case CFG_VAR_INT:
-		memcpy(&i, p, sizeof(int));
-		*val = (void *)(long)i;
+		*val = (void *)(long)*(int *)p;
 		break;
 
 	case CFG_VAR_STRING:
-		memcpy(&ch, p, sizeof(char *));
-		*val = (void *)ch;
+		*val = (void *)*(char **)p;
 		break;
 
 	case CFG_VAR_STR:
@@ -917,7 +909,7 @@ int cfg_get_by_name(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		break;
 
 	case CFG_VAR_POINTER:
-		memcpy(val, &p, sizeof(void *));
+		*val = *(void **)p;
 		break;
 
 	}
@@ -999,8 +991,6 @@ int cfg_diff_next(void **h,
 	void	*p;
 	static str	old_s, new_s;	/* we need the value even
 					after the function returns */
-	int		i;
-	char		*ch;
 
 	changed = (cfg_changed_var_t *)(*h);
 	if (changed == NULL) return 0;
@@ -1017,17 +1007,13 @@ int cfg_diff_next(void **h,
 
 	switch (CFG_VAR_TYPE(changed->var)) {
 	case CFG_VAR_INT:
-		memcpy(&i, p, sizeof(int));
-		*old_val = (void *)(long)i;
-		memcpy(&i, changed->new_val, sizeof(int));
-		*new_val = (void *)(long)i;
+		*old_val = (void *)(long)*(int *)p;
+		*new_val = (void *)(long)*(int *)changed->new_val;
 		break;
 
 	case CFG_VAR_STRING:
-		memcpy(&ch, p, sizeof(char *));
-		*old_val = (void *)ch;
-		memcpy(&ch, changed->new_val, sizeof(char *));
-		*new_val = (void *)ch;
+		*old_val = (void *)*(char **)p;
+		*new_val = (void *)*(char **)changed->new_val;
 		break;
 
 	case CFG_VAR_STR:
@@ -1038,8 +1024,8 @@ int cfg_diff_next(void **h,
 		break;
 
 	case CFG_VAR_POINTER:
-		memcpy(old_val, &p, sizeof(void *));
-		memcpy(new_val, &changed->new_val, sizeof(void *));
+		*old_val = *(void **)p;
+		*new_val = *(void **)changed->new_val;
 		break;
 
 	}
