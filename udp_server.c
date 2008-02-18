@@ -505,6 +505,8 @@ int udp_rcv_loop()
 			continue;
 		}
 		
+		/* update the local config */
+		cfg_update();
 #ifdef USE_STUN
 			/* STUN support can be switched off even if it's compiled */
 			if (stun_allow_stun && (unsigned char)*buf == 0x00) {
@@ -514,8 +516,6 @@ int udp_rcv_loop()
 				}
 			} else
 #endif
-		/* update the local config */
-		cfg_update();
 		/* receive_msg must free buf too!*/
 		receive_msg(buf, len, &ri);
 		
