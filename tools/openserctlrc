@@ -81,11 +81,12 @@
 
 # Define what module tables should be installed.
 # If you use the postgres database and want to change the installed tables, then you
-# must also adjust the GRANTs accordingly in the openserdbctl.postgres script.
+# must also adjust the STANDARD_TABLES or EXTRA_TABLES variable accordingly in the
+# openserdbctl.base script.
 
 # openser standard modules
-# STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc
-#		   msilo alias_db uri_db speeddial avpops auth_db pdt"
+# STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc msilo
+#                   alias_db uri_db speeddial avpops auth_db pdt dialog dispatcher"
 
 # openser extra modules
 # EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute"
