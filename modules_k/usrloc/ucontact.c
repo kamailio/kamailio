@@ -233,28 +233,28 @@ void st_update_ucontact(ucontact_t* _c)
 {
 	switch(_c->state) {
 	case CS_NEW:
-		     /* Contact is new and is not in the database yet,
-		      * we remain in the same state here because the
-		      * contact must be inserted later in the timer
-		      */
+			 /* Contact is new and is not in the database yet,
+			  * we remain in the same state here because the
+			  * contact must be inserted later in the timer
+			  */
 		break;
 
 	case CS_SYNC:
-		     /* For db mode 2 a modified contact needs to be 
+			 /* For db mode 1 & 2 a modified contact needs to be 
 			  * updated also in the database, so transit into 
 			  * CS_DIRTY and let the timer to do the update 
-			  * again. For db mode 1 the db update is already
-			  * done and we don't have to change the state.
-		      */
-		if (db_mode == WRITE_BACK) {
+			  * again. For db mode 1 we try to update right
+			  * now and if fails, let the timer to do the job
+			  */
+		if (db_mode == WRITE_BACK || db_mode == WRITE_THROUGH) {
 			_c->state = CS_DIRTY;
 		}
 		break;
 
 	case CS_DIRTY:
-		     /* Modification of dirty contact results in
-		      * dirty contact again, don't change anything
-		      */
+			 /* Modification of dirty contact results in
+			  * dirty contact again, don't change anything
+			  */
 		break;
 	}
 }
@@ -777,6 +777,8 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_update_ucontact(_c) < 0) {
 			LM_ERR("failed to update database\n");
+		} else {
+			_c->state = CS_SYNC;
 		}
 	}
 	return 0;

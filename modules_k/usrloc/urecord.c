@@ -291,6 +291,7 @@ static inline int wt_timer(urecord_t* _r)
 static inline int wb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
+	cstate_t old_state;
 	int op;
 
 	ptr = _r->contacts;
@@ -318,12 +319,13 @@ static inline int wb_timer(urecord_t* _r)
 					LM_ERR("failed to delete contact from the database\n");
 				}
 			}
-			
+
 			mem_delete_ucontact(_r, t);
 		} else {
 			/* Determine the operation we have to do */
+			old_state = ptr->state;
 			op = st_flush_ucontact(ptr);
-			
+
 			switch(op) {
 			case 0: /* do nothing, contact is synchronized */
 				break;
@@ -331,12 +333,14 @@ static inline int wb_timer(urecord_t* _r)
 			case 1: /* insert */
 				if (db_insert_ucontact(ptr) < 0) {
 					LM_ERR("inserting contact into database failed\n");
+					ptr->state = old_state;
 				}
 				break;
 
 			case 2: /* update */
 				if (db_update_ucontact(ptr) < 0) {
 					LM_ERR("updating contact in db failed\n");
+					ptr->state = old_state;
 				}
 				break;
 			}
@@ -355,7 +359,9 @@ int timer_urecord(urecord_t* _r)
 	switch(db_mode) {
 	case NO_DB:         return nodb_timer(_r);
 	case WRITE_THROUGH: return wt_timer(_r);
-	case WRITE_BACK:    return wb_timer(_r);
+	/* use also the write_back timer routine to handle the failed
+	 * realtime inserts/updates */
+	case WRITE_BACK:    return wt_timer(_r); /*wb_timer(_r);*/
 	}
 
 	return 0; /* Makes gcc happy */
@@ -436,8 +442,9 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_insert_ucontact(*_c) < 0) {
 			LM_ERR("failed to insert in database\n");
+		} else {
+			(*_c)->state = CS_SYNC;
 		}
-		(*_c)->state = CS_SYNC;
 	}
 
 	return 0;
