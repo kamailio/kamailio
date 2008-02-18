@@ -103,27 +103,32 @@ size_t openserSIPRegUserTable_oid_len = OID_LENGTH(openserSIPRegUserTable_oid);
  * Returns 1 on success, and zero otherwise. */
 int registerForUSRLOCCallbacks(void)  
 {
-	register_ulcb_t register_user_callbacks = 
-		(register_ulcb_t)find_export("ul_register_ulcb", 1, 0);
+	bind_usrloc_t bind_usrloc;
+	usrloc_api_t ul;
 
-	if (!register_user_callbacks)
+	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
+	if (!bind_usrloc)
 	{
-		LM_INFO("failed to register for callbacks with the USRLOC module.");
-		LM_INFO("openserSIPContactTable and openserSIPUserTable will be"
-				" unavailable");
-		return 0;
+		LM_ERR("Can't find ul_bind_usrloc\n");
+		goto error;
+	}
+	if (bind_usrloc(&ul) < 0 || ul.register_ulcb == NULL)
+	{
+		LM_ERR("Can't bind usrloc\n");
+		goto error;
 	}
 
-	(*register_user_callbacks)(UL_CONTACT_INSERT, 
-			handleContactCallbacks, 
-			NULL);
+	ul.register_ulcb(UL_CONTACT_INSERT, handleContactCallbacks, NULL);
 	
-	(*register_user_callbacks)(UL_CONTACT_EXPIRE, 
-			handleContactCallbacks, 
-			NULL);
-
+	ul.register_ulcb(UL_CONTACT_EXPIRE, handleContactCallbacks, NULL);
 
 	return 1;
+
+error:
+	LM_INFO("failed to register for callbacks with the USRLOC module.");
+	LM_INFO("openserSIPContactTable and openserSIPUserTable will be"
+			" unavailable");
+	return 0;
 }
 
 
