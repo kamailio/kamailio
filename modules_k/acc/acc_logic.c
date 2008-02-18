@@ -213,12 +213,14 @@ int w_acc_diam_request(struct sip_msg *rq, char *comment, char *foo)
 void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 {
 	int tmcb_types;
+	int is_invite;
 
 	if ( ps->req && !skip_cancel(ps->req) &&
 	(is_acc_on(ps->req) || is_mc_on(ps->req)) ) {
 		/* do some parsing in advance */
 		if (acc_preparse_req(ps->req)<0)
 			return;
+		is_invite = (ps->req->REQ_METHOD==METHOD_INVITE)?1:0;
 		/* install additional handlers */
 		tmcb_types =
 			/* report on completed transactions */
@@ -228,13 +230,13 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			/* get incoming replies ready for processing */
 			TMCB_RESPONSE_IN |
 			/* report on missed calls */
-			((is_invite(t) && is_mc_on(ps->req))?TMCB_ON_FAILURE:0) ;
+			((is_invite && is_mc_on(ps->req))?TMCB_ON_FAILURE:0) ;
 		if (tmb.register_tmcb( 0, t, tmcb_types, tmcb_func, 0 )<=0) {
 			LM_ERR("cannot register additional callbacks\n");
 			return;
 		}
 		/* also, if that is INVITE, disallow silent t-drop */
-		if (ps->req->REQ_METHOD==METHOD_INVITE) {
+		if ( is_invite ) {
 			LM_DBG("noisy_timer set for accounting\n");
 			t->flags |= T_NOISY_CTIMER_FLAG;
 		}
