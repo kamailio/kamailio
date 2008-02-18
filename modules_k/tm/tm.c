@@ -157,7 +157,7 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_on_branch",          (cmd_function)w_t_on_branch,           1, fixup_uint_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_check_status",       (cmd_function)t_check_status,          1, fixup_str2regexp,
+	{"t_check_status",       (cmd_function)t_check_status,          1, fixup_regexp_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_write_req",          (cmd_function)t_write_req,              2, fixup_t_write,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },

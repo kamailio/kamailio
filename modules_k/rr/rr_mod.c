@@ -94,7 +94,7 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"add_rr_param",         (cmd_function)w_add_rr_param,        1,     it_list_fixup, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"check_route_param",    (cmd_function)w_check_route_param,   1,     fixup_str2regexp, 0,
+	{"check_route_param",    (cmd_function)w_check_route_param,   1,     fixup_regexp_null, fixup_free_regexp_null,
 			REQUEST_ROUTE},
 	{"is_direction",         (cmd_function)w_is_direction,        1,     direction_fixup, 0,
 			REQUEST_ROUTE},
