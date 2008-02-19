@@ -411,7 +411,7 @@ static int determine_to_and_rewrite_uri(struct sip_msg* msg, int domain,
 	}
 
 	if (!msg->to && ((parse_headers(msg, HDR_TO_T, 0) == -1) || !msg->to)) {
-		LM_ERR("validate_msg: Message has no To header\n");
+		LM_ERR("Message has no To header\n");
 		return -1;
 	}
 
@@ -615,13 +615,13 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 	}
 	if (uri->len == 0 || route_tree->nodes[*uri->s - '0'] == NULL) {
 		if (route_tree->rule_list == NULL) {
-			LM_INFO("URI or route tree nodes empty, empty rule list");
+			LM_INFO("URI or route tree nodes empty, empty rule list\n");
 			return 1;
 		} else {
 			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
 		}
 	} else {
-		/* no match, skip over one char of the uri and try again */
+		/* match, goto the next number of the uri and try again */
 		re_tree = route_tree->nodes[*uri->s - '0'];
 		re_uri.s = uri->s + 1;
 		re_uri.len = uri->len - 1;
@@ -632,7 +632,7 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
 				if (route_tree->rule_list != NULL) {
 					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
 				} else {
-					LM_INFO("empty rule list for URI %.*s", re_uri.len, re_uri.s);
+					LM_INFO("empty rule list for URI %.*s\n", uri->len - re_uri.len, uri->s);
 					return 1;
 				}
 			default:
