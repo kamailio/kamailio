@@ -329,8 +329,10 @@ inline static int io_watch_add(	io_wait_h* h,
 #ifdef HAVE_DEVPOLL
 	struct pollfd pfd;
 #endif
-#if defined(HAVE_SIGIO_RT)
+#if defined(HAVE_SIGIO_RT) || defined (HAVE_EPOLL)
 	int n;
+#endif
+#if defined(HAVE_SIGIO_RT)
 	int idx;
 	int check_io;
 	struct pollfd pf;
@@ -464,7 +466,6 @@ again2:
 					strerror(errno), errno);
 				goto error;
 			}
-			idx=-1;
 			break;
 #endif
 #ifdef HAVE_KQUEUE
