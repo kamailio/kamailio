@@ -51,6 +51,12 @@ static str pu_400b_rpl = str_init("Invalid request");
 static str pu_500_rpl  = str_init("Server Internal Error");
 static str pu_489_rpl  = str_init("Bad Event");
 
+struct p_modif
+{
+	presentity_t* p;
+	str uri;
+};
+
 void msg_presentity_clean(unsigned int ticks,void *param)
 {
 	db_key_t db_keys[2];
@@ -61,15 +67,15 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int i =0, size= 0;
-	presentity_t** p= NULL;
+	struct p_modif* p= NULL;
 	presentity_t* pres= NULL;
 	int n= 0;
 	int event_col, etag_col, user_col, domain_col;
 	event_t ev;
 	str user, domain, etag, event;
 	int n_result_cols= 0;
-	str pres_uri;
 	str* rules_doc= NULL;
+
 
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 	{
@@ -111,12 +117,12 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 
 	n= result->n;
 	
-	p= (presentity_t**)pkg_malloc(n* sizeof(presentity_t*));
+	p= (struct p_modif*)pkg_malloc(n* sizeof(struct p_modif));
 	if(p== NULL)
 	{
 		ERR_MEM(PKG_MEM_STR);	
 	}
-	memset(p, 0, n* sizeof(presentity_t*));
+	memset(p, 0, n* sizeof(struct p_modif));
 
 	for(i = 0; i< n; i++)
 	{	
@@ -167,24 +173,22 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}	
-		p[i]= pres;
-
-		/* delete from hash table */
-		if(uandd_to_uri(user, domain, &pres_uri)< 0)
+	
+		p[i].p= pres;
+		if(uandd_to_uri(user, domain, &p[i].uri)< 0)
 		{
 			LM_ERR("constructing uri\n");
 			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}
-
-		if(delete_phtable(&pres_uri, ev.parsed)< 0)
+		
+		/* delete from hash table */
+		if(delete_phtable(&p[i].uri, ev.parsed)< 0)
 		{
 			LM_ERR("deleting from pres hash table\n");
-			pkg_free(pres_uri.s);
 			free_event_params(ev.params, PKG_MEM_TYPE);
 			goto error;
 		}
-		pkg_free(pres_uri.s);
 		free_event_params(ev.params, PKG_MEM_TYPE);
 
 	}
@@ -194,17 +198,17 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	for(i= 0; i<n ; i++)
 	{
 		LM_DBG("found expired publish for [user]=%.*s  [domanin]=%.*s\n",
-			p[i]->user.len,p[i]->user.s, p[i]->domain.len, p[i]->domain.s);
+			p[i].p->user.len,p[i].p->user.s, p[i].p->domain.len, p[i].p->domain.s);
 		
 		rules_doc= NULL;
 		
-		if(p[i]->event->get_rules_doc && 
-		p[i]->event->get_rules_doc(&p[i]->user, &p[i]->domain, &rules_doc)< 0)
+		if(p[i].p->event->get_rules_doc && 
+		p[i].p->event->get_rules_doc(&p[i].p->user, &p[i].p->domain, &rules_doc)< 0)
 		{
 			LM_ERR("getting rules doc\n");
 			goto error;
 		}
-		if(publ_notify( p[i], NULL, &p[i]->etag, rules_doc)< 0)
+		if(publ_notify( p[i].p, p[i].uri, NULL, &p[i].p->etag, rules_doc)< 0)
 		{
 			LM_ERR("sending Notify request\n");
 			goto error;
@@ -229,8 +233,11 @@ void msg_presentity_clean(unsigned int ticks,void *param)
 	
 	for(i= 0; i< n; i++)
 	{
-		if(p[i])
-			pkg_free(p[i]);
+		if(p[i].p)
+			pkg_free(p[i].p);
+		if(p[i].uri.s)
+			pkg_free(p[i].uri.s);
+
 	}
 	pkg_free(p);
 
@@ -243,8 +250,11 @@ error:
 	{
 		for(i= 0; i< n; i++)
 		{
-			if(p[i])
-				pkg_free(p[i]);
+			
+			if(p[i].p)
+				pkg_free(p[i].p);
+			if(p[i].uri.s)
+				pkg_free(p[i].uri.s);
 			else
 				break;
 		}

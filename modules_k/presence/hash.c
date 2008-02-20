@@ -368,6 +368,7 @@ pres_entry_t* search_phtable(str* pres_uri,int event, unsigned int hash_code)
 {
 	pres_entry_t* p;
 
+	LM_DBG("pres_uri= %.*s\n", pres_uri->len,  pres_uri->s);
 	p= pres_htable[hash_code].entries->next;
 	while(p)
 	{

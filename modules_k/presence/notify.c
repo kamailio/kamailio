@@ -619,7 +619,7 @@ db_query:
 	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
 		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0) 
 	{
-		LM_ERR("querying presentity\n");
+		LM_ERR("failed to query %.*s table\n", presentity_table.len, presentity_table.s);
 		if(result)
 			pa_dbf.free_result(pa_db, result);
 		return NULL;
@@ -1204,19 +1204,12 @@ error:
 	
 }
 
-int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc)
+int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str* rules_doc)
 {
 	str* notify_body = NULL;
 	subs_t* subs_array= NULL, *s= NULL;
-	str pres_uri;
 	int ret_code= -1;
 
-	if(uandd_to_uri(p->user, p->domain, &pres_uri)< 0)
-	{
-		LM_ERR("constructing uri from user and domain\n");
-		return -1;
-	}
-	
 	subs_array= get_subs_dialog(&pres_uri, p->event , p->sender);
 	if(subs_array == NULL)
 	{
@@ -1263,7 +1256,6 @@ done:
 		}
 		pkg_free(notify_body);
 	}
-	pkg_free(pres_uri.s);	
 	return ret_code;
 }	
 

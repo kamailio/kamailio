@@ -235,6 +235,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	str etag= {0, 0};
 	str cur_etag= {0, 0};
 	str* rules_doc= NULL;
+	str pres_uri= {0, 0};
 
 	*sent_reply= 0;
 	if(presentity->event->req_auth)
@@ -247,6 +248,13 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			goto error;
 		}
 	}
+	
+	if(uandd_to_uri(presentity->user, presentity->domain, &pres_uri)< 0)
+	{
+		LM_ERR("constructing uri from user and domain\n");
+		goto error;
+	}
+
 
 	query_cols[n_query_cols] = &str_domain_col;
 	query_ops[n_query_cols] = OP_EQ;
@@ -281,9 +289,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	if(new_t) 
 	{
 		/* insert new record in hash_table */
-		
-		if(insert_phtable(&msg->first_line.u.request.uri, 
-					presentity->event->evp->parsed)< 0)
+	
+		if(insert_phtable(&pres_uri, presentity->event->evp->parsed)< 0)
 		{
 			LM_ERR("inserting record in hash table\n");
 			goto error;
@@ -360,7 +367,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					goto error;
 				}
 				*sent_reply= 1;
-				if( publ_notify( presentity, body, &presentity->etag, rules_doc)< 0 )
+				if( publ_notify( presentity, pres_uri, body, &presentity->etag, rules_doc)< 0 )
 				{
 					LM_ERR("while sending notify\n");
 					goto error;
@@ -383,8 +390,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 				/* delete from hash table */
 	
-				if(delete_phtable(&msg->first_line.u.request.uri,
-							presentity->event->evp->parsed)< 0)
+				if(delete_phtable(&pres_uri, presentity->event->evp->parsed)< 0)
 				{
 					LM_ERR("deleting record from hash table\n");
 					goto error;
@@ -501,7 +507,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 send_notify:
 			
 	/* send notify with presence information */
-	if (publ_notify(presentity, body, NULL, rules_doc)<0)
+	if (publ_notify(presentity, pres_uri, body, NULL, rules_doc)<0)
 	{
 		LM_ERR("while sending Notify requests to watchers\n");
 		goto error;
@@ -514,6 +520,8 @@ done:
 			pkg_free(rules_doc->s);
 		pkg_free(rules_doc);
 	}
+	if(pres_uri.s)
+		pkg_free(pres_uri.s);
 
 	return 0;
 
@@ -528,6 +536,9 @@ error:
 			pkg_free(rules_doc->s);
 		pkg_free(rules_doc);
 	}
+	if(pres_uri.s)
+		pkg_free(pres_uri.s);
+
 	return -1;
 
 }

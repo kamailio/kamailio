@@ -95,9 +95,10 @@ void printf_subs(subs_t* subs);
 
 int query_db_notify(str* pres_uri,pres_ev_t* event, subs_t* watcher_subs );
 
-int publ_notify(presentity_t* p, str* body, str* offline_etag, str* rules_doc);
+int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag,
+		str* rules_doc);
 
-int notify(subs_t* subs, subs_t* watcher_subs, str* n_body, int force_null_body);
+int notify(subs_t* subs, subs_t* watcher_subs, str* n_body,int force_null_body);
 
 int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		str* n_body,int force_null_body);
