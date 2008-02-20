@@ -24,6 +24,13 @@
 		</address>
 		</author>
 		<author>
+		<firstname>Bogdan Vasile</firstname>
+		<surname>Harjoc</surname>
+		<address>
+			<email>Bogdan.Vasile.Harjoc@fokus.fraunhofer.de</email>
+		</address>
+		</author>
+		<author>
 		<firstname>Hendrik</firstname>
 		<surname>Scholz</surname>
 		<address>
@@ -31,17 +38,24 @@
 		</address>
 		</author>
 		<editor>
-		<firstname>Hendrik</firstname>
-		<surname>Scholz</surname>
-		<address>
-			<email>hscholz@raisdorf.net</email>
-		</address>
-		</editor>
-		<editor>
 		<firstname>Ovidiu</firstname>
 		<surname>Sas</surname>
 		<address>
 			<email>osas@voipembedded.com</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Bogdan Vasile</firstname>
+		<surname>Harjoc</surname>
+		<address>
+			<email>Bogdan.Vasile.Harjoc@fokus.fraunhofer.de</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Hendrik</firstname>
+		<surname>Scholz</surname>
+		<address>
+			<email>hscholz@raisdorf.net</email>
 		</address>
 		</editor>
 	</authorgroup>
@@ -51,7 +65,7 @@
 	</copyright>
 	<copyright>
 		<year>2008</year>
-		<holder>Ovidiu Sas</holder>
+		<holder>VoIP Embedded Inc.</holder>
 	</copyright>
 	<revhistory>
 		<revision>
