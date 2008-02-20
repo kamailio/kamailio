@@ -916,7 +916,6 @@ struct tcp_connection* tcpconn_new(int sock, union sockaddr_union* su,
 		c->rcv.proto=PROTO_TCP;
 		c->timeout=get_ticks_raw()+tcp_con_lifetime;
 	}
-	c->flags|=F_CONN_REMOVED;
 	
 	return c;
 	
@@ -1600,7 +1599,6 @@ no_id:
 #if defined(TCP_CONNECT_WAIT) && defined(TCP_BUF_WRITE)
 			if (likely(tcp_options.tcp_connect_wait && 
 						tcp_options.tcp_buf_write )){
-				/* FIXME: flag for timer? + check again */
 				if (unlikely(*tcp_connections_no >= tcp_max_connections)){
 					LOG(L_ERR, "ERROR: tcp_send: maximum number of connections"
 								" exceeded (%d/%d)\n",
@@ -2123,9 +2121,8 @@ inline static int tcpconn_chld_put(struct tcp_connection* tcpconn)
 		/* sanity checks */
 		membar_read_atomic_op(); /* make sure we see the current flags */
 		if (unlikely(!(tcpconn->flags & F_CONN_FD_CLOSED) || 
-					 !(tcpconn->flags & F_CONN_REMOVED) || 
-					(tcpconn->flags & 
-					 	(F_CONN_HASHED|F_CONN_MAIN_TIMER| F_CONN_WRITE_W)) )){
+			(tcpconn->flags & 
+				(F_CONN_HASHED|F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WRITE_W)) )){
 			LOG(L_CRIT, "BUG: tcpconn_chld_put: %p bad flags = %0x\n",
 					tcpconn, tcpconn->flags);
 			abort();
@@ -2179,8 +2176,7 @@ inline static void tcpconn_destroy(struct tcp_connection* tcpconn)
 inline static int tcpconn_put_destroy(struct tcp_connection* tcpconn)
 {
 	if (unlikely((tcpconn->flags & 
-						(F_CONN_WRITE_W|F_CONN_HASHED|F_CONN_MAIN_TIMER)) ||
-				!(tcpconn->flags & F_CONN_REMOVED) )){
+			(F_CONN_WRITE_W|F_CONN_HASHED|F_CONN_MAIN_TIMER|F_CONN_READ_W)) )){
 		/* sanity check */
 		if (unlikely(tcpconn->flags & F_CONN_HASHED)){
 			LOG(L_CRIT, "BUG: tcpconn_destroy: called with hashed and/or"
@@ -2559,8 +2555,8 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			local_timer_reinit(&tcpconn->timer);
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, crt_timeout, t);
 			/* must be after the de-ref*/
-			tcpconn->flags|=F_CONN_MAIN_TIMER;
-			tcpconn->flags&=~(F_CONN_REMOVED|F_CONN_READER|F_CONN_OOB_DATA);
+			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W);
+			tcpconn->flags&=~(F_CONN_READER|F_CONN_OOB_DATA);
 #ifdef TCP_BUF_WRITE
 			if (unlikely(tcpconn->flags & F_CONN_WRITE_W))
 				n=io_watch_chg(&io_h, tcpconn->s, POLLIN| POLLOUT, -1);
@@ -2570,7 +2566,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			if (unlikely(n<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_tcp_child: failed to add"
 						" new socket to the fd list\n");
-				tcpconn->flags|=F_CONN_REMOVED;
+				tcpconn->flags&=~F_CONN_READ_W;
 #ifdef TCP_BUF_WRITE
 				if (unlikely(tcpconn->flags & F_CONN_WRITE_W)){
 					io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
@@ -2711,11 +2707,10 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			if ( tcpconn_try_unhash(tcpconn) )
 				tcpconn_put(tcpconn);
 #endif /* TCP_CONNECT_WAIT */
-			if ( (!(tcpconn->flags & F_CONN_REMOVED) ||
-					(tcpconn->flags & F_CONN_WRITE_W) ) && (tcpconn->s!=-1)){
+			if ( ((tcpconn->flags & (F_CONN_WRITE_W|F_CONN_READ_W)) ) &&
+					(tcpconn->s!=-1)){
 				io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
-				tcpconn->flags|=F_CONN_REMOVED;
-				tcpconn->flags&=~F_CONN_WRITE_W;
+				tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
 			}
 			tcpconn_put_destroy(tcpconn); /* dec refcnt & destroy on 0 */
 			break;
@@ -2750,8 +2745,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			 * no need for reinit */
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
-			tcpconn->flags|=F_CONN_MAIN_TIMER;
-			tcpconn->flags&=~(F_CONN_REMOVED|F_CONN_FD_CLOSED);
+			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W);
+			tcpconn->flags&=~F_CONN_FD_CLOSED;
 			flags=POLLIN 
 #ifdef TCP_BUF_WRITE
 					/* not used for now, the connection is sent to tcp_main
@@ -2765,8 +2760,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 												F_TCPCONN, tcpconn)<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed to add"
 						" new socket to the fd list\n");
-				tcpconn->flags|=F_CONN_REMOVED;
-				tcpconn->flags&=~F_CONN_WRITE_W;
+				tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
 				tcpconn_try_unhash(tcpconn); /*  unhash & dec refcnt */
 				tcpconn_put_destroy(tcpconn);
 			}
@@ -2796,7 +2790,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 							"timeout adjusted to %d s\n", tcpconn, 
 							TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
 				}
-				if (tcpconn->flags& F_CONN_REMOVED){
+				if (!(tcpconn->flags & F_CONN_READ_W)){
 					if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
 												F_TCPCONN, tcpconn)<0)){
 						LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed"
@@ -2811,7 +2805,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 						LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed"
 								    " to change socket watch events\n");
 						io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
-						tcpconn->flags|=F_CONN_REMOVED;
+						tcpconn->flags&=~F_CONN_READ_W;
 						if (tcpconn_try_unhash(tcpconn))
 							tcpconn_put_destroy(tcpconn);
 						break;
@@ -2831,7 +2825,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 				 * the connection is already in the hash with S_CONN_PENDING
 				 * state (added by tcp_send()) and refcnt at least 1 (for the
 				 *  hash)*/
-			tcpconn->flags&=~(F_CONN_PENDING|F_CONN_FD_CLOSED|F_CONN_REMOVED);
+			tcpconn->flags&=~(F_CONN_PENDING|F_CONN_FD_CLOSED);
 			if (unlikely((tcpconn->state==S_CONN_BAD) || (fd==-1))){
 				if (unlikely(fd==-1))
 					LOG(L_CRIT, "BUG: handle_ser_child: CONN_NEW_COMPLETE:"
@@ -2855,7 +2849,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			 * no need for reinit */
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
-			tcpconn->flags|=F_CONN_MAIN_TIMER;
+			tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W;
 			if (unlikely(cmd==CONN_NEW_COMPLETE)){
 				/* check if needs to be watched for write */
 				lock_get(&tcpconn->write_lock);
@@ -2875,8 +2869,7 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 												F_TCPCONN, tcpconn)<0)){
 				LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed to add"
 						" new socket to the fd list\n");
-				tcpconn->flags|=F_CONN_REMOVED;
-				tcpconn->flags&=~F_CONN_WRITE_W;
+				tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
 				tcpconn_try_unhash(tcpconn); /*  unhash & dec refcnt */
 				tcpconn_put_destroy(tcpconn);
 			}
@@ -3034,13 +3027,12 @@ static inline int handle_new_connect(struct socket_info* si)
 		/* activate the timer */
 		local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, get_ticks_raw());
-		tcpconn->flags|=F_CONN_MAIN_TIMER;
-		tcpconn->flags&=~F_CONN_REMOVED;
+		tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W);
 		if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLIN, 
 													F_TCPCONN, tcpconn)<0)){
 			LOG(L_CRIT, "ERROR: tcp_main: handle_new_connect: failed to add"
 						" new socket to the fd list\n");
-			tcpconn->flags|=F_CONN_REMOVED;
+			tcpconn->flags&=~F_CONN_READ_W;
 			if (tcpconn_try_unhash(tcpconn))
 				tcpconn_put_destroy(tcpconn);
 		}
@@ -3117,7 +3109,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 				LOG(L_ERR, "ERROR: handle_tcpconn_ev: io_watch_del(1) failed:"
 							" for %p, fd %d\n", tcpconn, tcpconn->s);
 			}
-			if (!(tcpconn->flags & F_CONN_REMOVED) && (ev & POLLIN)){
+			if ((tcpconn->flags & F_CONN_READ_W) && (ev & POLLIN)){
 				/* connection is watched for read and there is a read event
 				 * (unfortunately if we have POLLIN here we don't know if 
 				 * there's really any data in the read buffer or the POLLIN
@@ -3129,15 +3121,13 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 				 * conn.  to a a child only if needed (another syscall + at 
 				 * least 2 * syscalls in the reader + ...) */
 				if ((ioctl(tcpconn->s, FIONREAD, &bytes)>=0) && (bytes>0)){
-					tcpconn->flags&=~F_CONN_WRITE_W;
-					tcpconn->flags|=F_CONN_REMOVED;
+					tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
 					tcpconn->flags|=F_CONN_FORCE_EOF|F_CONN_WR_ERROR;
 					goto send_to_child;
 				}
 				/* if bytes==0 or ioctl failed, destroy the connection now */
 			}
-			tcpconn->flags&=~F_CONN_WRITE_W;
-			tcpconn->flags|=F_CONN_REMOVED;
+			tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
 			if (unlikely(!tcpconn_try_unhash(tcpconn))){
 				LOG(L_CRIT, "BUG: tcpconn_ev: unhashed connection %p\n",
 							tcpconn);
@@ -3146,7 +3136,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			goto error;
 		}
 		if (empty_q){
-			if (tcpconn->flags & F_CONN_REMOVED){
+			if (!(tcpconn->flags & F_CONN_READ_W)){
 				if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1)){
 					LOG(L_ERR, "ERROR: handle_tcpconn_ev: io_watch_del(2)"
 								" failed:" " for %p, fd %d\n",
@@ -3166,7 +3156,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 		}
 		ev&=~POLLOUT; /* clear POLLOUT */
 	}
-	if (likely(ev && !(tcpconn->flags & F_CONN_REMOVED))){
+	if (likely(ev && (tcpconn->flags & F_CONN_READ_W))){
 		/* if still some other IO event (POLLIN|POLLHUP|POLLERR) and
 		 * connection is still watched in tcp_main for reads, send it to a
 		 * child and stop watching it for input (but continue watching for
@@ -3199,9 +3189,9 @@ send_to_child:
 		tcpconn->flags|=((int)!(ev & (POLLHUP|POLLERR)) -1) & F_CONN_EOF_SEEN;
 #endif /* POLLRDHUP */
 		tcpconn->flags|= ((int)!(ev & POLLPRI) -1)  & F_CONN_OOB_DATA;
-		tcpconn->flags|=F_CONN_REMOVED|F_CONN_READER;
+		tcpconn->flags|=F_CONN_READER;
 		local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
-		tcpconn->flags&=~F_CONN_MAIN_TIMER;
+		tcpconn->flags&=~(F_CONN_MAIN_TIMER|F_CONN_READ_W);
 		tcpconn_ref(tcpconn); /* refcnt ++ */
 		if (unlikely(send2child(tcpconn)<0)){
 			LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
@@ -3323,16 +3313,9 @@ static ticks_t tcpconn_main_timeout(ticks_t t, struct timer_ln* tl, void* data)
 	}
 	fd=c->s;
 	if (likely(fd>0)){
-		if (likely(!(c->flags & F_CONN_REMOVED)
-#ifdef TCP_BUF_WRITE
-			|| (c->flags & F_CONN_WRITE_W)
-#endif /* TCP_BUF_WRITE */
-			)){
+		if (likely(c->flags & (F_CONN_READ_W|F_CONN_WRITE_W))){
 			io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
-			c->flags|=F_CONN_REMOVED;
-#ifdef TCP_BUF_WRITE
-			c->flags&=~F_CONN_WRITE_W;
-#endif /* TCP_BUF_WRITE */
+			c->flags&=~(F_CONN_READ_W|F_CONN_WRITE_W);
 		}
 	}
 	tcpconn_put_destroy(c);
@@ -3379,16 +3362,9 @@ static inline void tcpconn_destroy_all()
 						c->flags&=~F_CONN_MAIN_TIMER;
 					} /* else still in some reader */
 					fd=c->s;
-					if (fd>0 && (!(c->flags & F_CONN_REMOVED)
-#ifdef TCP_BUF_WRITE
-								|| (c->flags & F_CONN_WRITE_W)
-#endif /* TCP_BUF_WRITE */
-								)){
+					if (fd>0 && (c->flags & (F_CONN_READ_W|F_CONN_WRITE_W))){
 						io_watch_del(&io_h, fd, -1, IO_FD_CLOSING);
-						c->flags|=F_CONN_REMOVED;
-#ifdef TCP_BUF_WRITE
-						c->flags&=~F_CONN_WRITE_W;
-#endif /* TCP_BUF_WRITE */
+						c->flags&=~(F_CONN_READ_W|F_CONN_WRITE_W);
 					}
 				}else{
 					fd=-1;
