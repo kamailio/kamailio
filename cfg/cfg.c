@@ -200,3 +200,14 @@ int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr)
 
 	return 0;
 }
+
+/* returns the handle of a cfg group */
+void **cfg_get_handle(char *gname)
+{
+	cfg_group_t	*group;
+
+	group = cfg_lookup_group(gname, strlen(gname));
+	if (!group || group->dynamic) return NULL;
+
+	return group->handle;
+}

@@ -82,4 +82,7 @@ int cfg_declare_int(char *group_name, char *var_name,
 /* declares a single variable with str type */
 int cfg_declare_str(char *group_name, char *var_name, char *val, char *descr);
 
+/* returns the handle of a cfg group */
+void **cfg_get_handle(char *gname);
+
 #endif /* _CFG_H */
