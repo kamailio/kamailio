@@ -320,10 +320,17 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 		while the new one is prepared */
 		CFG_WRITER_LOCK();
 
-		/* clone the memory block, and prepare the modification */
-		if (!(block = cfg_clone_global())) goto error;
+		if (var->def->type & CFG_ATOMIC) {
+			/* atomic change is allowed, we can rewrite the value
+			directly in the global config */
+			p = (*cfg_global)->vars+group->offset+var->offset;
 
-		p = block->vars+group->offset+var->offset;
+		} else {
+			/* clone the memory block, and prepare the modification */
+			if (!(block = cfg_clone_global())) goto error;
+
+			p = block->vars+group->offset+var->offset;
+		}
 	} else {
 		/* we are allowed to rewrite the value on-the-fly
 		The handle either points to group->vars, or to the
@@ -373,7 +380,7 @@ int cfg_set_now(cfg_ctx_t *ctx, str *group_name, str *var_name,
 			replaced[1] = NULL;
 		}
 		/* replace the global config with the new one */
-		cfg_install_global(block, replaced, child_cb, child_cb);
+		if (block) cfg_install_global(block, replaced, child_cb, child_cb);
 		CFG_WRITER_UNLOCK();
 	} else {
 		/* cfg_set() may be called more than once before forking */

@@ -111,6 +111,21 @@ int cfg_declare(char *group_name, cfg_def_t *def, void *values, int def_size,
 					group_name, def[i].name);
 			goto error;
 		}
+
+		if (def[i].type & CFG_ATOMIC) {
+			if (CFG_VAR_MASK(def[i].type) != CFG_VAR_INT) {
+				LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: atomic change is allowed "
+						"only for integer types\n",
+						group_name, def[i].name);
+				goto error;
+			}
+			if (def[i].on_set_child_cb) {
+				LOG(L_ERR, "ERROR: register_cfg_def(): %s.%s: per-child process callback "
+						"does not work together with atomic change\n",
+						group_name, def[i].name);
+				goto error;
+			}
+		}
 	}
 
 	/* minor validation */

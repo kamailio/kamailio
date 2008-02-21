@@ -34,19 +34,25 @@
 
 #include "../str.h"
 
+/* variable type */
 #define CFG_VAR_INT		1U
 #define CFG_VAR_STRING		2U
 #define CFG_VAR_STR		3U
 #define CFG_VAR_POINTER		4U
 
+/* number of bits required for the variable type */
 #define CFG_INPUT_SHIFT		3
 
+/* input type */
 #define CFG_INPUT_INT		(CFG_VAR_INT << CFG_INPUT_SHIFT)
 #define CFG_INPUT_STRING	(CFG_VAR_STRING << CFG_INPUT_SHIFT)
 #define CFG_INPUT_STR		(CFG_VAR_STR << CFG_INPUT_SHIFT)
 
-#define CFG_VAR_MASK(x)		((x)&(CFG_INPUT_INT-1))
-#define CFG_INPUT_MASK(x)	((x)&(~(CFG_INPUT_INT-1)))
+#define CFG_VAR_MASK(x)		((x)&((1U<<CFG_INPUT_SHIFT)-1))
+#define CFG_INPUT_MASK(x)	((x)&((1U<<(2*CFG_INPUT_SHIFT))-(1U<<CFG_INPUT_SHIFT)))
+
+/* atomic change is allowed */
+#define CFG_ATOMIC		(1U<<(2*CFG_INPUT_SHIFT))
 
 typedef int (*cfg_on_change)(void *, str *, void **);
 typedef void (*cfg_on_set_child)(str *);

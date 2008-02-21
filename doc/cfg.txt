@@ -96,7 +96,7 @@ Each row consists of the following items:
 
 - name that will be used by the drivers to refer to the variable
 - flag indicating the variable and the input type, that is accepted
-  by the fixup function
+  by the fixup function, and additional optional settings
 
   Valid variable types are:
 	- CFG_VAR_INT		= int
@@ -108,6 +108,14 @@ Each row consists of the following items:
 	- CFG_INPUT_INT		= int
 	- CFG_INPUT_STRING	= char*
 	- CFG_INPUT_STR		= str*
+
+  Optional settings:
+	- CFG_ATOMIC		Indicates that atomic change is allowed:
+				the variable can be changed at any time,
+				there is no need to wait for the SIP
+				message processing to finish.
+				It can be used only with CFG_VAR_INT type,
+				and per-child process callback is not allowed
 
 - minimum value for integers (optional)
 - maximum value for integers (optional)
