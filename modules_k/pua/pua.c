@@ -96,7 +96,6 @@ static int child_init(int);
 static void destroy(void);
 
 static int update_pua(ua_pres_t* p, unsigned int hash_code);
-static ua_pres_t* build_upsubs_cbparam(ua_pres_t* pres);
 static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p);
 
 static int db_restore(void);
@@ -171,7 +170,7 @@ static int mod_init(void)
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(db_url.s), db_url.len, db_url.s);
 	db_table.len = db_table.s ? strlen(db_table.s) : 0;
 	
-	/* binding to mysql module  */
+	/* binding to database module  */
 	if (db_bind_mod(&db_url, &pua_dbf))
 	{
 		LM_ERR("Database module not found\n");
@@ -189,7 +188,7 @@ static int mod_init(void)
 		LM_ERR("while connecting database\n");
 		return -1;
 	}
-	// verify table version 
+	/* verify table version  */
 	ver = db_table_version(&pua_dbf, pua_db, &db_table);
 	if(ver!=PUA_TABLE_VERSION)
 	{
@@ -685,7 +684,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			pkg_free(td);
 			return -1;
 		}
-		cb_param= build_upsubs_cbparam(p);
+		cb_param= subs_cbparam_indlg(p, REQ_ME);
 		if(cb_param== NULL)
 		{
 			LM_ERR("while constructing subs callback param\n");
@@ -1039,34 +1038,6 @@ static ua_pres_t* build_uppubl_cbparam(ua_pres_t* p)
 		LM_ERR("constructing callback parameter\n");
 		return NULL;
 	}
-	return cb_param;
-}
-
-static ua_pres_t* build_upsubs_cbparam(ua_pres_t* p)
-{
-	subs_info_t subs;
-	ua_pres_t* cb_param= NULL;
-
-	memset(&subs, 0, sizeof(subs_info_t));
-
-	subs.pres_uri= p->pres_uri;
-	subs.id= p->id;
-	subs.watcher_uri= p->watcher_uri;
-	subs.contact= &p->contact;
-	subs.outbound_proxy= p->outbound_proxy;
-	subs.event= p->event;
-	subs.source_flag= p->flag;
-	subs.flag= UPDATE_TYPE;
-	subs.expires= (p->desired_expires== 0) ?-1:p->desired_expires- (int)time(NULL);
-	subs.extra_headers= p->extra_headers;
-
-	cb_param= subscribe_cbparam(&subs, REQ_ME);
-	if(cb_param== NULL)
-	{
-		LM_ERR("constructing callback parameter\n");
-		return NULL;
-	}
-
 	return cb_param;
 }
 

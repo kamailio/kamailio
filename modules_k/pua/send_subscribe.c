@@ -37,6 +37,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_expires.h"
+#include "../presence/hash.h"
 #include "hash.h"
 #include "pua.h"
 #include "send_subscribe.h"
@@ -243,6 +244,11 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		/* delete record from hash_table and call registered functions */
 		lock_get(&HashT->p_records[hash_code].lock);
 
+		if(hentity->call_id.s== NULL) /* if a new requets failed-> do nothing*/
+		{
+			LM_DBG("initial Subscribe request failed\n");
+			goto done;
+		}
 		presentity= get_dialog(hentity, hash_code);
 		if(presentity== NULL)
 		{
@@ -254,64 +260,82 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 
 		goto done;
 	}
+	
+	/*if initial request */
+
+	if(hentity->call_id.s== NULL)
+	{
+		if(ps->code>= 300)
+		{
+			LM_DBG("initial Subscribe request failed\n");
+			goto done;
+		}
+
+		if( msg->callid==NULL || msg->callid->body.s==NULL)
+		{
+			LM_ERR("cannot parse callid header\n");
+			goto done;
+		}		
+		
+		if (!msg->from || !msg->from->body.s)
+		{
+			LM_ERR("cannot find 'from' header!\n");
+			goto done;
+		}
+		if (msg->from->parsed == NULL)
+		{
+			if ( parse_from_header( msg )<0 ) 
+			{
+				LM_ERR("cannot parse From header\n");
+				goto done;
+			}
+		}
+		pfrom = (struct to_body*)msg->from->parsed;
+	
+		if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
+		{
+			LM_ERR("no from tag value present\n");
+			goto done;
+		}		
+		if( msg->to==NULL || msg->to->body.s==NULL)
+		{
+			LM_ERR("cannot parse TO header\n");
+			goto done;
+		}			
+		if(msg->to->parsed != NULL)
+		{
+			pto = (struct to_body*)msg->to->parsed;
+			LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
+		}
+		else
+		{
+			memset( &TO , 0, sizeof(TO) );
+			parse_to(msg->to->body.s,msg->to->body.s +
+				msg->to->body.len + 1, &TO);
+			if(TO.uri.len <= 0) 
+			{
+				LM_DBG("'To' header NOT parsed\n");
+				goto done;
+			}
+			pto = &TO;
+		}			
+		if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
+		{
+			LM_ERR("no from tag value present\n");
+			goto done;
+		}
+		hentity->call_id=  msg->callid->body;
+		hentity->to_tag= pto->tag_value;
+		hentity->from_tag= pfrom->tag_value;
+	
+	}
 
 	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
 	{
 		LM_ERR("when parsing headers\n");
 		goto done;
 	}
-	if( msg->callid==NULL || msg->callid->body.s==NULL)
-	{
-		LM_ERR("cannot parse callid header\n");
-		goto done;
-	}		
-	if (!msg->from || !msg->from->body.s)
-	{
-		LM_ERR("cannot find 'from' header!\n");
-		goto done;
-	}
-	if (msg->from->parsed == NULL)
-	{
-		if ( parse_from_header( msg )<0 ) 
-		{
-			LM_ERR("cannot parse From header\n");
-			goto done;
-		}
-	}
-	pfrom = (struct to_body*)msg->from->parsed;
-	
-	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
-	{
-		LM_ERR("no from tag value present\n");
-		goto done;
-	}	
-	if( msg->to==NULL || msg->to->body.s==NULL)
-	{
-		LM_ERR("cannot parse TO header\n");
-		goto done;
-	}		
-	if(msg->to->parsed != NULL)
-	{
-		pto = (struct to_body*)msg->to->parsed;
-		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
-	}
-	else
-	{
-		memset( &TO , 0, sizeof(TO) );
-		parse_to(msg->to->body.s,msg->to->body.s +
-				msg->to->body.len + 1, &TO);
-		if(TO.uri.len <= 0) 
-		{
-			LM_DBG("'To' header NOT parsed\n");
-			goto done;
-		}
-		pto = &TO;
-	}		
-	if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
-	{
-		LM_ERR("no from tag value present\n");
-		goto done;
-	}
+
 	/* extract the other necesary information for inserting a new record */		
 	if(ps->rpl->expires && msg->expires->body.len > 0)
 	{
@@ -323,13 +347,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		lexpire = ((exp_body_t*)msg->expires->parsed)->val;
 		LM_DBG("lexpire= %d\n", lexpire);
 	}		
-
-
-	/* complete the callback function with dialog information */
-	
-	hentity->call_id=  msg->callid->body;
-	hentity->to_tag= pto->tag_value;
-	hentity->from_tag= pfrom->tag_value;
 
 	lock_get(&HashT->p_records[hash_code].lock);
 
@@ -380,7 +397,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		goto done;
 	}
 	/*if a 2XX reply handle the two cases- an existing dialog and a new one*/
-
+	
 	if(presentity)
 	{		
 		if(lexpire== 0 )
@@ -609,10 +626,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 
 	if(subs->id.s)
 	{
-		hentity->id.s= (char*)hentity+ size;
-		memcpy(hentity->id.s, subs->id.s, subs->id.len);
-		hentity->id.len= subs->id.len;
-		size+= subs->id.len;
+		CONT_COPY(hentity, hentity->id, subs->id)
 	}
 	if(subs->extra_headers)
 	{
@@ -628,6 +642,93 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 	hentity->event= subs->event;
 	hentity->ua_flag= hentity->ua_flag;
 	hentity->cb_param= subs->cb_param;
+	return hentity;
+
+}	
+
+ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
+{	
+	ua_pres_t* hentity= NULL;
+	int size;
+
+	size= sizeof(ua_pres_t)+ 2*sizeof(str)+(subs->pres_uri->len+
+		subs->watcher_uri->len+ subs->contact.len+ subs->id.len+
+		subs->to_tag.len+ subs->call_id.len+ subs->from_tag.len+ 1)
+		*sizeof(char);
+	
+	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s )
+		size+= sizeof(str)+ subs->outbound_proxy->len* sizeof(char);
+
+	if(subs->extra_headers && subs->extra_headers->s)
+		size+= sizeof(str)+ subs->extra_headers->len* sizeof(char);
+
+	hentity= (ua_pres_t*)shm_malloc(size);
+	if(hentity== NULL)
+	{
+		LM_ERR("No more share memory\n");
+		return NULL;
+	}
+	memset(hentity, 0, size);
+
+	size= sizeof(ua_pres_t);
+
+	hentity->pres_uri = (str*)((char*)hentity + size);
+	size+= sizeof(str);
+
+	hentity->pres_uri->s = (char*)hentity+ size;
+	memcpy(hentity->pres_uri->s, subs->pres_uri->s ,
+		subs->pres_uri->len ) ;
+	hentity->pres_uri->len= subs->pres_uri->len;
+	size+= subs->pres_uri->len;
+
+	hentity->watcher_uri = (str*)((char*)hentity + size);
+	size+= sizeof(str);
+
+	hentity->watcher_uri->s = (char*)hentity+ size;
+	memcpy(hentity->watcher_uri->s, subs->watcher_uri->s ,
+		subs->watcher_uri->len ) ;
+	hentity->watcher_uri->len= subs->watcher_uri->len;
+	size+= subs->watcher_uri->len;
+
+	CONT_COPY(hentity, hentity->contact, subs->contact)
+
+	if(subs->outbound_proxy)
+	{
+		hentity->outbound_proxy= (str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->outbound_proxy->s= (char*)hentity+ size;
+		memcpy(hentity->outbound_proxy->s, subs->outbound_proxy->s, subs->outbound_proxy->len);
+		hentity->outbound_proxy->len= subs->outbound_proxy->len;
+		size+= subs->outbound_proxy->len;
+	}	
+
+	if(subs->id.s)
+	{
+		CONT_COPY(hentity, hentity->id, subs->id)
+	}
+	if(subs->extra_headers)
+	{
+		hentity->extra_headers= (str*)((char*)hentity+ size);
+		size+= sizeof(str);
+		hentity->extra_headers->s= (char*)hentity+ size;
+		memcpy(hentity->extra_headers->s, subs->extra_headers->s,
+				subs->extra_headers->len);
+		hentity->extra_headers->len= subs->extra_headers->len;
+		size+= subs->extra_headers->len;
+	}
+	/* copy dialog information */
+	
+	CONT_COPY(hentity, hentity->to_tag, subs->to_tag)
+	CONT_COPY(hentity, hentity->from_tag, subs->from_tag)
+	CONT_COPY(hentity, hentity->call_id, subs->call_id)
+
+	hentity->desired_expires= subs->desired_expires;
+	hentity->flag= subs->flag;
+	hentity->event= subs->event;
+	hentity->ua_flag= hentity->ua_flag;
+	hentity->cb_param= subs->cb_param;
+
+
 	return hentity;
 
 }	
@@ -780,16 +881,18 @@ insert:
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
-		lock_release(&HashT->p_records[hash_code].lock);
-		
-		hentity= subscribe_cbparam(subs, REQ_OTHER);
+				
+		hentity= subs_cbparam_indlg(presentity, REQ_OTHER);
 		if(hentity== NULL)
 		{
 			LM_ERR("while building callback param\n");
+			lock_release(&HashT->p_records[hash_code].lock);
 			ret= -1;
 			pkg_free(td);
 			goto done;
 		}
+		lock_release(&HashT->p_records[hash_code].lock);
+
 	//	hentity->flag= flag;
 		LM_DBG("event parameter: %d\n", hentity->event);	
 		result= tmb.t_request_within
