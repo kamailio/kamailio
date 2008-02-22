@@ -486,10 +486,11 @@ int delete_phtable(str* pres_uri, int event)
 
 int update_phtable(presentity_t* presentity, str pres_uri, str body)
 {
-	char* sphere;
+	char* sphere= NULL;
 	unsigned int hash_code;
 	pres_entry_t* p;
 	int ret= 0;
+	str* xcap_doc= NULL;
 
 	/* get new sphere */
 	sphere= extract_sphere(body);
@@ -512,7 +513,22 @@ int update_phtable(presentity_t* presentity, str pres_uri, str body)
 	}
 	
 	if(p->sphere)
-		shm_free(p->sphere);
+	{
+		if(strcmp(p->sphere, sphere)!= 0)
+		{
+			/* new sphere definition */
+			shm_free(p->sphere);
+		}
+		else
+		{
+			/* no change in sphere definition */
+			lock_release(&pres_htable[hash_code].lock);
+			pkg_free(sphere);
+			return 0;
+		}
+	
+	}
+
 
 	p->sphere= (char*)shm_malloc(strlen(sphere)*sizeof(char));
 	if(p->sphere== NULL)
@@ -524,8 +540,28 @@ int update_phtable(presentity_t* presentity, str pres_uri, str body)
 	strcpy(p->sphere, sphere);
 		
 	lock_release(&pres_htable[hash_code].lock);
-		
+
+	/* call for watchers status update */
+
+	if(presentity->event->get_rules_doc(&presentity->user, &presentity->domain,
+				&xcap_doc)< 0)
+	{
+		LM_ERR("failed to retreive xcap document\n");
+		ret= -1;
+		goto done;
+	}
+
+	update_watchers_status(pres_uri, presentity->event, xcap_doc);
+
+
 done:
+
+	if(xcap_doc)
+	{
+		if(xcap_doc->s)
+			pkg_free(xcap_doc->s);
+		pkg_free(xcap_doc);
+	}
 
 	if(sphere)
 		pkg_free(sphere);
