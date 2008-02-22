@@ -27,6 +27,7 @@
  */
 
 #include "../../str.h"
+#include "../tm/dlg.h"
 #include "subscribe.h"
 #include "presentity.h"
 

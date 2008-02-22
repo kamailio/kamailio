@@ -357,6 +357,8 @@ void destroy_phtable(void)
 		{
 			prev_p= p;
 			p= p->next;
+			if(prev_p->sphere)
+				shm_free(prev_p->sphere);
 			shm_free(prev_p);
 		}
 	}
@@ -380,7 +382,7 @@ pres_entry_t* search_phtable(str* pres_uri,int event, unsigned int hash_code)
 	return NULL;
 }
 
-int insert_phtable(str* pres_uri, int event)
+int insert_phtable(str* pres_uri, int event, char* sphere)
 {
 	unsigned int hash_code;
 	pres_entry_t* p= NULL;
@@ -398,6 +400,7 @@ int insert_phtable(str* pres_uri, int event)
 		return 0;
 	}
 	size= sizeof(pres_entry_t)+ pres_uri->len* sizeof(char);
+
 	p= (pres_entry_t*)shm_malloc(size);
 	if(p== NULL)
 	{
@@ -410,8 +413,20 @@ int insert_phtable(str* pres_uri, int event)
 	p->pres_uri.s= (char*)p+ size;
 	memcpy(p->pres_uri.s, pres_uri->s, pres_uri->len);
 	p->pres_uri.len= pres_uri->len;
-	 
+	
+	if(sphere)
+	{
+		p->sphere= (char*)shm_malloc(strlen(sphere)*sizeof(char));
+		if(p->sphere== NULL)
+		{
+			lock_release(&pres_htable[hash_code].lock);
+			ERR_MEM(SHARE_MEM);
+		}
+		strcpy(p->sphere, sphere);
+	}
+
 	p->event= event;
+	
 
 	p->next= pres_htable[hash_code].entries->next;
 	pres_htable[hash_code].entries->next= p;
@@ -459,9 +474,60 @@ int delete_phtable(str* pres_uri, int event)
 			return -1;
 		}
 		prev_p->next= p->next;
+		if(p->sphere)
+			shm_free(p->sphere);
+
 		shm_free(p);
 	}
 	lock_release(&pres_htable[hash_code].lock);
 
 	return 0;	
+}
+
+int update_phtable(presentity_t* presentity, str pres_uri, str body)
+{
+	char* sphere;
+	unsigned int hash_code;
+	pres_entry_t* p;
+	int ret= 0;
+
+	/* get new sphere */
+	sphere= extract_sphere(body);
+	if(sphere==NULL)
+	{
+		LM_DBG("no sphere defined in new body\n");
+		return 0;
+	}
+
+	/* search for record in hash table */
+	hash_code= core_hash(&pres_uri, NULL, phtable_size);
+	
+	lock_get(&pres_htable[hash_code].lock);
+
+	p= search_phtable(&pres_uri, presentity->event->evp->parsed, hash_code);
+	if(p== NULL)
+	{
+		lock_release(&pres_htable[hash_code].lock);
+		goto done;
+	}
+	
+	if(p->sphere)
+		shm_free(p->sphere);
+
+	p->sphere= (char*)shm_malloc(strlen(sphere)*sizeof(char));
+	if(p->sphere== NULL)
+	{
+		lock_release(&pres_htable[hash_code].lock);
+		ret= -1;
+		goto done;
+	}
+	strcpy(p->sphere, sphere);
+		
+	lock_release(&pres_htable[hash_code].lock);
+		
+done:
+
+	if(sphere)
+		pkg_free(sphere);
+	return ret;
 }

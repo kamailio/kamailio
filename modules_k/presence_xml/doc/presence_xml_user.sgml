@@ -19,8 +19,10 @@
 	3 events to it: presence, presence.winfo, dialog;sla. 
 	</para>
 	<para>
-	This module uses xcap_table with permission rules to deal with authorization rules 
-	for presence.
+	This module takes the xcap permission rule documents from xcap_table.
+
+	The presence permission rules are interpreted according to the specifications
+	in RFC 4745 and RFC 5025.
 	</para>
 	<para>
 	</section>

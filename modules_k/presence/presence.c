@@ -98,6 +98,7 @@ int stored_pres_info(struct sip_msg* msg, char* pres_uri, char* s);
 static int fixup_presence(void** param, int param_no);
 static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param);
 static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs_array);
+int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc);
 static int mi_child_init(void);
 
 int counter =0;
@@ -110,6 +111,7 @@ int max_expires= 3600;
 int shtable_size= 9;
 shtable_t subs_htable= NULL;
 int fallback2db= 0;
+int sphere_enable= 0;
 
 int phtable_size= 9;
 phtable_t* pres_htable;
@@ -137,6 +139,7 @@ static param_export_t params[]={
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
 	{ "fallback2db",            INT_PARAM, &fallback2db},
+	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
 	{0,0,0}
 };
 

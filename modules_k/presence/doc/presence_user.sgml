@@ -335,6 +335,29 @@ modparam("presence", "pres_htable_size", 11)
 	</programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>enable_sphere_check</varname> (int)</title>
+		<para>
+		This parameter is a flag that should be set if permission rules include
+		sphere checking.
+		The sphere information is expected to be present in the RPID body
+		published by the presentity. The flag is introduced as this check requires
+		extra processing that should be avoided if this feature is not supported
+		by the clients.
+		</para>
+		<para>
+		<emphasis>Default value is <quote>0 </quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>enable_sphere_check</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence", "enable_sphere_check", 1)
+...
+	</programlisting>
+		</example>
+	</section>
 
 
 </section>

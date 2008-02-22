@@ -66,6 +66,8 @@ static struct mi_root* dum(struct mi_root* cmd, void* param);
 /** module variables ***/
 add_event_t pres_add_event;
 update_watchers_t pres_update_watchers;
+pres_get_sphere_t pres_get_sphere;
+
 
 str xcap_table= str_init("xcap");
 str db_url = {0, 0};
@@ -96,7 +98,7 @@ static param_export_t params[]={
 };
 
 static mi_export_t mi_cmds[] = {
-	{ "dum",             dum,            0,  0,  mi_child_init},
+	{ "dum",             dum,          0,  0,  mi_child_init},
 	{  0,                0,            0,  0,        0      }
 };
 
@@ -174,7 +176,8 @@ static int mod_init(void)
 		LM_ERR("Can't bind module pua\n");
 		return -1;
 	}
-
+	
+	pres_get_sphere= pres.get_sphere;
 	pres_add_event= pres.add_event;
 	pres_update_watchers= pres.update_watchers_status;
 	if (pres_add_event == NULL || pres_update_watchers== NULL)

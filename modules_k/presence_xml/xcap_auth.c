@@ -3,7 +3,7 @@
  *
  * presence_xml module - 
  *
- * Copyright (C) 2006 Voice Sistem S.R.L.
+ * Copyright (C) 2007 Voice Sistem S.R.L.
  *
  * This file is part of openser, a free SIP server.
  *
@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <libxml/parser.h>
 
 #include "../../str.h"
@@ -145,12 +146,16 @@ int pres_watcher_allowed(subs_t* subs)
 xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 {
 	str w_uri= {0, 0};
-	char* id = NULL, *domain = NULL;
+	char* id = NULL, *domain = NULL, *time_cont= NULL;
 	int apply_rule = -1;
 	xmlNodePtr ruleset_node = NULL, node1= NULL, node2= NULL;
 	xmlNodePtr cond_node = NULL, except_node = NULL;
-	xmlNodePtr identity_node = NULL, validity_node =NULL, sphere_node = NULL;
+	xmlNodePtr identity_node = NULL, sphere_node = NULL;
 	xmlNodePtr iden_child;
+	xmlNodePtr validity_node, time_node;
+	time_t t_init, t_fin, t;
+	int valid= 0;
+
 
 	uandd_to_uri(subs->from_user, subs->from_domain, &w_uri);
 	if(w_uri.s == NULL)
@@ -185,9 +190,98 @@ xmlNodePtr get_rule_node(subs_t* subs, xmlDocPtr xcap_tree )
 		if(validity_node !=NULL)
 		{
 			LM_DBG("found validity tag\n");
+		
+			t= time(NULL);
+		
+			/* search all from-until pair */
+			for(time_node= validity_node->children; time_node;
+					time_node= time_node->next)
+			{
+				if(xmlStrcasecmp(time_node->name, (unsigned char*)"from")!= 0)
+				{
+					continue;
+				}
+				time_cont= (char*)xmlNodeGetContent(time_node);
+				t_init= xml_parse_dateTime(time_cont);
+				xmlFree(time_cont);
+				if(t_init< 0)
+				{
+					LM_ERR("failed to parse xml dateTime\n");
+					goto error;
+				}
+
+				if(t< t_init)
+				{
+					LM_DBG("the lower time limit is not respected\n");
+					continue;
+				}
+				
+				time_node= time_node->next;
+				while(1)
+				{
+					if(time_node== NULL)
+					{	
+						LM_ERR("bad formatted xml doc:until child not found in"
+								" validity pair\n");
+						goto error;
+					}
+					if( xmlStrcasecmp(time_node->name, 
+								(unsigned char*)"until")== 0)
+						break;
+					time_node= time_node->next;
+				}
+				
+				time_cont= (char*)xmlNodeGetContent(time_node);
+				t_fin= xml_parse_dateTime(time_cont);
+				xmlFree(time_cont);
+
+				if(t_fin< 0)
+				{
+					LM_ERR("failed to parse xml dateTime\n");
+					goto error;
+				}
+			
+				if(t <= t_fin)
+				{
+					LM_DBG("the rule is active at this time\n");
+					valid= 1;
+				}
+			
+			}
+		
+			if(!valid)
+			{
+				LM_DBG("the rule is not active at this time\n");
+				continue;
+			}
 
 		}	
+	
 		sphere_node = xmlNodeGetChildByName(cond_node, "sphere");
+		if(sphere_node!= NULL)
+		{
+			/* check to see if matches presentity current sphere */
+			/* ask presence for sphere information */
+			
+			char* sphere= pres_get_sphere(&subs->pres_uri);
+			if(sphere)
+			{
+				char* attr= (char*)xmlNodeGetContent(sphere_node);
+				if(xmlStrcasecmp((unsigned char*)attr, (unsigned char*)sphere)!= 0)
+				{
+					LM_DBG("sphere condition not respected\n");
+					pkg_free(sphere);
+					xmlFree(attr);
+					continue;
+				}
+				pkg_free(sphere);
+				xmlFree(attr);
+	
+			}
+				
+			/* if the user has not define a sphere -> 
+			 *						consider the condition true*/
+		}
 
 		identity_node = xmlNodeGetChildByName(cond_node, "identity");
 		if(identity_node == NULL)

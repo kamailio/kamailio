@@ -49,6 +49,8 @@ typedef struct presence_api {
 	/* function to extract dialog information from a
 	SUBSCRIBE message */
 	extract_sdialog_info_t extract_sdialog_info;
+	/* function to request sphere defition for a presentity */
+	pres_get_sphere_t get_sphere;
 
 }presence_api_t;
 ...
@@ -314,6 +316,24 @@ str* rules_doc);
 	sends a Notify to the watchers whose status has changes. (used by
 	presence_xml module when notified through an MI command of a change in
 	an xcap document).
+	</para>
+</section>
+
+<section>
+	<title>
+	<function moreinfo="none">get_sphere</function>
+	</title>
+	<para>
+		Field type:
+		<programlisting format="linespecific">
+...
+typedef char* (*pres_get_sphere_t)(str* pres_uri);
+...
+	</para>
+	<para>
+	This function searches for a sphere definition in the published information
+	if this has type RPID. If not found returns NULL. (the return value is
+	allocated in private memory and should be freed)
 	</para>
 </section>
 

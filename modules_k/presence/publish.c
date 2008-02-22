@@ -293,6 +293,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	int reply_code;
 	str reply_str;
 	int sent_reply= 0;
+	char* sphere= NULL;
 
 	reply_code= 500;
 	reply_str= pu_500_rpl;
@@ -435,6 +436,13 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 			goto error;
 		}
 		body.len= get_content_length( msg );
+
+		if(sphere_enable && event->evp->parsed & EVENT_PRESENCE &&
+				get_content_type(msg)== SUBTYPE_PIDFXML)
+		{
+			sphere= extract_sphere(body);			
+		}
+
 	}	
 	memset(&puri, 0, sizeof(struct sip_uri));
 	if(sender_uri)
@@ -485,7 +493,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	}
 
 	/* querry the database and update or insert */
-	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply) <0)
+	if(update_presentity(msg, presentity, &body, etag_gen, &sent_reply, sphere) <0)
 	{
 		LM_ERR("when updating presentity\n");
 		goto error;
@@ -497,6 +505,8 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);
+	if(sphere)
+		pkg_free(sphere);
 
 	return 1;
 
@@ -525,6 +535,8 @@ error:
 		pkg_free(etag.s);
 	if(sender)
 		pkg_free(sender);
+	if(sphere)
+		pkg_free(sphere);
 
 	return -1;
 

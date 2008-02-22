@@ -35,6 +35,7 @@ Anca-Maria Vamanu
               1.3.11. fallback2db (int)
               1.3.12. subs_htable_size (int)
               1.3.13. pres_htable_size (int)
+              1.3.14. enable_sphere_check (int)
 
         1.4. Exported Functions
 
@@ -61,6 +62,7 @@ Anca-Maria Vamanu
         2.10. contains_event
         2.11. get_event_list
         2.12. update_watchers_status
+        2.13. get_sphere
 
    3. Frequently Asked Questions
 
@@ -78,8 +80,9 @@ Anca-Maria Vamanu
    1-11. Set fallback2db parameter
    1-12. Set subs_htable_size parameter
    1-13. Set pres_htable_size parameter
-   1-14. handle_publish usage
-   1-15. handle_subscribe usage
+   1-14. Set enable_sphere_check parameter
+   1-15. handle_publish usage
+   1-16. handle_subscribe usage
    2-1. presence_api_t structure
      __________________________________________________________
 
@@ -303,6 +306,23 @@ modparam("presence", "pres_htable_size", 11)
 ...
      __________________________________________________________
 
+1.3.14. enable_sphere_check (int)
+
+   This parameter is a flag that should be set if permission rules
+   include sphere checking. The sphere information is expected to
+   be present in the RPID body published by the presentity. The
+   flag is introduced as this check requires extra processing that
+   should be avoided if this feature is not supported by the
+   clients.
+
+   Default value is "0 ".
+
+   Example 1-14. Set enable_sphere_check parameter
+...
+modparam("presence", "enable_sphere_check", 1)
+...
+     __________________________________________________________
+
 1.4. Exported Functions
 
 1.4.1. handle_publish(char* sender_uri)
@@ -328,7 +348,7 @@ modparam("presence", "pres_htable_size", 11)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1-14. handle_publish usage
+   Example 1-15. handle_publish usage
 ...
         if(is_method("PUBLISH"))
         {
@@ -357,7 +377,7 @@ modparam("presence", "pres_htable_size", 11)
 
    The module sends an appropriate stateless reply in all cases.
 
-   Example 1-15. handle_subscribe usage
+   Example 1-16. handle_subscribe usage
 ...
 if(method=="SUBSCRIBE")
     handle_subscribe();
@@ -441,6 +461,8 @@ typedef struct presence_api {
         /* function to extract dialog information from a
         SUBSCRIBE message */
         extract_sdialog_info_t extract_sdialog_info;
+        /* function to request sphere defition for a presentity */
+        pres_get_sphere_t get_sphere;
 
 }presence_api_t;
 ...
@@ -628,6 +650,19 @@ str* rules_doc);
    whose status has changes. (used by presence_xml module when
    notified through an MI command of a change in an xcap
    document).
+     __________________________________________________________
+
+2.13. get_sphere
+
+   Field type:
+...
+typedef char* (*pres_get_sphere_t)(str* pres_uri);
+...
+
+   This function searches for a sphere definition in the published
+   information if this has type RPID. If not found returns NULL.
+   (the return value is allocated in private memory and should be
+   freed)
      __________________________________________________________
 
 Chapter 3. Frequently Asked Questions

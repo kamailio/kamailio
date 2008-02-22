@@ -45,6 +45,8 @@
 #include "utils_func.h"
 
 
+xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
+													const char *ns);
 static str pu_200_rpl  = str_init("OK");
 static str pu_412_rpl  = str_init("Conditional request failed");
 
@@ -223,7 +225,7 @@ error:
 }
 
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
-		int new_t, int* sent_reply)
+		int new_t, int* sent_reply, char* sphere)
 {
 	db_key_t query_cols[11], update_keys[7], result_cols[5];
 	db_op_t  query_ops[11];
@@ -290,7 +292,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	{
 		/* insert new record in hash_table */
 	
-		if(insert_phtable(&pres_uri, presentity->event->evp->parsed)< 0)
+		if(insert_phtable(&pres_uri, presentity->event->evp->parsed, sphere)< 0)
 		{
 			LM_ERR("inserting record in hash table\n");
 			goto error;
@@ -464,6 +466,17 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 				update_vals[n_update_cols].nul = 0;
 				update_vals[n_update_cols].val.str_val = *body;
 				n_update_cols++;
+
+				/* updated stored sphere */
+				if(sphere_enable && 
+						presentity->event->evp->parsed== EVENT_PRESENCE)
+				{
+					if(update_phtable(presentity, pres_uri, *body)< 0)
+					{
+						LM_ERR("failed to update sphere for presentity\n");
+						goto error;
+					}
+				}
 			}
 
 			if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
@@ -547,22 +560,25 @@ int pres_htable_restore(void)
 {
 	/* query all records from presentity table and insert records 
 	 * in presentity table */
-	db_key_t result_cols[5];
+	db_key_t result_cols[6];
 	db_res_t *result= NULL;
 	db_row_t *row= NULL ;	
 	db_val_t *row_vals;
 	int  i;
-	str user, domain, ev_str, uri;
+	str user, domain, ev_str, uri, body;
 	int n_result_cols= 0;
-	int user_col, domain_col, event_col, expires_col;
+	int user_col, domain_col, event_col, expires_col, body_col;
 	int event;
 	event_t ev;
+	char* sphere= NULL;
 
 	result_cols[user_col= n_result_cols++]= &str_username_col;
 	result_cols[domain_col= n_result_cols++]= &str_domain_col;
 	result_cols[event_col= n_result_cols++]= &str_event_col;
 	result_cols[expires_col= n_result_cols++]= &str_expires_col;
-	
+	if(sphere_enable)
+		result_cols[body_col= n_result_cols++]= &str_body_col;
+
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0)
 	{
 		LM_ERR("unsuccessful use table sql operation\n");
@@ -591,14 +607,15 @@ int pres_htable_restore(void)
 
 		if(row_vals[expires_col].val.int_val< (int)time(NULL))
 			continue;
-
+		
+		sphere= NULL;
 		user.s= (char*)row_vals[user_col].val.string_val;
 		user.len= strlen(user.s);
 		domain.s= (char*)row_vals[domain_col].val.string_val;
 		domain.len= strlen(domain.s);
 		ev_str.s= (char*)row_vals[event_col].val.string_val;
 		ev_str.len= strlen(ev_str.s);
-	
+
 		if(event_parser(ev_str.s, ev_str.len, &ev)< 0)
 		{
 			LM_ERR("parsing event\n");
@@ -614,12 +631,24 @@ int pres_htable_restore(void)
 			goto error;
 		}
 		/* insert in hash_table*/
-		if(insert_phtable(&uri, event)< 0)
+	
+		if(sphere_enable && event== EVENT_PRESENCE )
+		{
+			body.s= (char*)row_vals[body_col].val.string_val;
+			body.len= strlen(body.s);
+			sphere= extract_sphere(body);
+		}
+
+		if(insert_phtable(&uri, event, sphere)< 0)
 		{
 			LM_ERR("inserting record in presentity hash table");
 			pkg_free(uri.s);
+			if(sphere)
+				pkg_free(sphere);
 			goto error;
 		}
+		if(sphere)
+			pkg_free(sphere);
 		pkg_free(uri.s);
 	}
 	pa_dbf.free_result(pa_db, result);
@@ -630,4 +659,191 @@ error:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
 	return -1;	
+}
+
+char* extract_sphere(str body)
+{
+
+	/* check for a rpid sphere element */
+	xmlDocPtr doc= NULL;
+	xmlNodePtr node;
+	char* cont, *sphere= NULL;
+	
+
+	doc= xmlParseMemory(body.s, body.len);
+	if(doc== NULL)
+	{
+		LM_ERR("failed to parse xml body\n");
+		return NULL;
+	}
+
+	node= xmlNodeGetNodeByName(doc->children, "sphere", "rpid");
+	if(node)
+	{
+		LM_DBG("found sphere definition\n");
+		cont= (char*)xmlNodeGetContent(node);
+		sphere= (char*)pkg_malloc(strlen(cont)*sizeof(char));
+		if(sphere== NULL)
+		{
+			xmlFree(cont);
+			ERR_MEM(PKG_MEM_STR);
+		}
+		xmlFree(cont);
+		strcpy(sphere, cont);
+	}
+	else
+		LM_DBG("didn't find sphere definition\n");
+
+error:
+	xmlFreeDoc(doc);
+
+	return sphere;
+}
+
+xmlNodePtr xmlNodeGetNodeByName(xmlNodePtr node, const char *name,
+													const char *ns)
+{
+	xmlNodePtr cur = node;
+	while (cur) {
+		xmlNodePtr match = NULL;
+		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0) {
+			if (!ns || (cur->ns && xmlStrcasecmp(cur->ns->prefix,
+							(unsigned char*)ns) == 0))
+				return cur;
+		}
+		match = xmlNodeGetNodeByName(cur->children, name, ns);
+		if (match)
+			return match;
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+char* get_sphere(str* pres_uri)
+{
+	unsigned int hash_code;
+	char* sphere= NULL;
+	pres_entry_t* p;
+	db_key_t query_cols[6];
+	db_val_t query_vals[6];
+	db_key_t result_cols[6];
+	db_res_t *result = NULL;
+	db_row_t *row= NULL ;	
+	db_val_t *row_vals;
+	int n_result_cols = 0;
+	int n_query_cols = 0;
+	struct sip_uri uri;
+	str body;
+
+	/* search in hash table*/
+	hash_code= core_hash(pres_uri, NULL, phtable_size);
+
+	lock_get(&pres_htable[hash_code].lock);
+
+	p= search_phtable(pres_uri, EVENT_PRESENCE, hash_code);
+
+	if(p)
+	{
+		if(p->sphere)
+		{
+			sphere= (char*)pkg_malloc(strlen(p->sphere)* sizeof(char));
+			if(sphere== NULL)
+			{
+				lock_release(&pres_htable[hash_code].lock);
+				ERR_MEM(PKG_MEM_STR);
+			}
+			strcpy(sphere, p->sphere);
+		}
+		lock_release(&pres_htable[hash_code].lock);
+		return sphere;
+	}
+	lock_release(&pres_htable[hash_code].lock);
+
+
+	/* if record not found and fallback2db query database*/
+	if(!fallback2db)
+	{
+		return NULL;
+	}
+
+	if(parse_uri(pres_uri->s, pres_uri->len, &uri)< 0)
+	{
+		LM_ERR("failed to parse presentity uri\n");
+		goto error;
+	}
+
+	query_cols[n_query_cols] = &str_domain_col;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = uri.host;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_username_col;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val = uri.user;
+	n_query_cols++;
+
+	query_cols[n_query_cols] = &str_event_col;
+	query_vals[n_query_cols].type = DB_STR;
+	query_vals[n_query_cols].nul = 0;
+	query_vals[n_query_cols].val.str_val.s= "presence";
+	query_vals[n_query_cols].val.str_val.len= 8;
+	n_query_cols++;
+
+	result_cols[n_result_cols++] = &str_body_col;
+	
+	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
+	{
+		LM_ERR("in use_table\n");
+		return NULL;
+	}
+
+	static str query_str = str_init("received_time");
+	if (pa_dbf.query (pa_db, query_cols, 0, query_vals,
+		 result_cols, n_query_cols, n_result_cols, &query_str ,  &result) < 0) 
+	{
+		LM_ERR("failed to query %.*s table\n", presentity_table.len, presentity_table.s);
+		if(result)
+			pa_dbf.free_result(pa_db, result);
+		return NULL;
+	}
+	
+	if(result== NULL)
+		return NULL;
+
+	if (result->n<=0 )
+	{
+		LM_DBG("no published record found in database\n");
+		pa_dbf.free_result(pa_db, result);
+		return NULL;
+	}
+
+	row = &result->rows[result->n-1];
+	row_vals = ROW_VALUES(row);
+	if(row_vals[0].val.string_val== NULL)
+	{
+		LM_ERR("NULL notify body record\n");
+		goto error;
+	}
+
+	body.s= (char*)row_vals[0].val.string_val;
+	body.len= strlen(body.s);
+	if(body.len== 0)
+	{
+		LM_ERR("Empty notify body record\n");
+		goto error;
+	}
+	
+	sphere= extract_sphere(body);
+
+	pa_dbf.free_result(pa_db, result);
+	return sphere;
+
+
+error:
+	if(result)
+		pa_dbf.free_result(pa_db, result);
+	return NULL;
+
 }

@@ -54,6 +54,7 @@ int bind_presence(presence_api_t* api)
 	api->mem_copy_subs= mem_copy_subs;
 	api->update_db_subs= update_db_subs;
 	api->extract_sdialog_info= extract_sdialog_info;
+	api->get_sphere= get_sphere;
 	return 0;
 }
 

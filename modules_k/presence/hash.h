@@ -31,7 +31,9 @@
 #define PS_HASH_H
 
 #include "../../lock_ops.h"
+//#include "presentity.h"
 
+struct presentity;
 #define REMOTE_TYPE   1<<1
 #define LOCAL_TYPE    1<<2
 
@@ -105,6 +107,7 @@ typedef struct pres_entry
 	str pres_uri;
 	int event;
 	int publ_count;
+	char* sphere;
 	struct pres_entry* next;
 }pres_entry_t;
 
@@ -118,7 +121,9 @@ phtable_t* new_phtable(void);
 
 pres_entry_t* search_phtable(str* pres_uri, int event, unsigned int hash_code);
 
-int insert_phtable(str* pres_uri, int event);
+int insert_phtable(str* pres_uri, int event, char* sphere);
+
+int update_phtable(struct presentity* presentity, str pres_uri, str body);
 
 int delete_phtable(str* pres_uri, int event);
 
