@@ -322,7 +322,7 @@ static int mod_init(void) {
 		return -1;
 	}
 
-	PERL_SYS_INIT3(&argc, &argv, &environ);
+	PERL_SYS_INIT3(NULL, NULL, &environ);
 
 	if ((my_perl = parser_init())) {
 		ret = 0;
