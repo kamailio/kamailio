@@ -2173,7 +2173,7 @@ static void warn(char* s)
 
 static void yyerror(char* s)
 {
-	LOG(L_CRIT, "parse error (%d,%d-%d): %s\n", line, startcolumn,
+	LOG(L_CRIT, "*** PARSE ERROR *** (%d,%d-%d): %s\n", line, startcolumn,
 			column, s);
 	cfg_errors++;
 }
