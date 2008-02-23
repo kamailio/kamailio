@@ -1626,7 +1626,7 @@ try_again:
 	}
 	if (config_check){
 		fprintf(stderr, "config file ok, exiting...\n");
-		goto error;
+		return 0;
 	}
 
 
