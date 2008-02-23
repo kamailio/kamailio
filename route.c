@@ -630,7 +630,8 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 			 * $test > 10
 			 * the right operator MUST be number to do the conversion
 			 */
-		str2int(left,&l);
+		if (str2int(left,&l) < 0)
+			goto error;
 		return comp_num(op, l, rtype, r);
 	} else {
 		LOG(L_CRIT, "BUG: comp_str: Bad type %d, "
