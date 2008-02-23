@@ -48,6 +48,7 @@ static int mod_init(void); /* Module initialization function */
  */
 static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
+int use_sip_uri_host = 0;
 
 /*
  * Exported functions
@@ -65,6 +66,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
 	{"radius_config", STR_PARAM, &radius_config},
 	{"service_type", INT_PARAM, &service_type},
+	{"use_sip_uri_host", INT_PARAM, &use_sip_uri_host},
 	{0, 0, 0}
 };
 
@@ -96,8 +98,9 @@ static int mod_init(void)
 	memset(vals, 0, sizeof(vals));
 	attrs[A_SERVICE_TYPE].n	= "Service-Type";
 	attrs[A_USER_NAME].n	= "User-Name";
+	attrs[A_SIP_URI_HOST].n	= "SIP-URI-Host";
+	attrs[A_SIP_AVP].n	= "SIP-AVP";
 	vals[V_CALL_CHECK].n	= "Call-Check";
-	attrs[A_SIP_AVP].n		= "SIP-AVP";
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LM_ERR("opening configuration file failed\n");

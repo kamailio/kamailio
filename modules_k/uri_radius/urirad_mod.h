@@ -31,6 +31,7 @@
 
 #include "../../radius.h"
 
+extern int use_sip_uri_host;
 extern struct attr attrs[];
 extern struct val vals[];
 extern void *rh;
