@@ -100,7 +100,7 @@ static int mod_init(void)
 
 	if(header_name.s == NULL )
 	{	
-		LM_ERR("default domain not found\n");
+		LM_ERR("header_name parameter not set\n");
 		return -1;
 	}
 	header_name.len= strlen(header_name.s);
