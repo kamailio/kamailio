@@ -454,7 +454,7 @@ modparam("carrierroute", "subscriber_table", "subscriber")
 		    <title>Set <varname>subscriber_user_col</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "susbscriber_user_col", "username")
+modparam("carrierroute", "subscriber_user_col", "username")
 ...
 		    </programlisting>
 	    </example>
