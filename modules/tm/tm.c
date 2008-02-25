@@ -194,8 +194,11 @@ inline static int w_t_on_reply(struct sip_msg* msg, char *go_to, char *foo );
 inline static int t_check_status(struct sip_msg* msg, char *match, char *foo);
 static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo);
 static int t_set_fr_all(struct sip_msg* msg, char* fr_inv, char* fr);
+static int w_t_reset_fr(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_set_retr(struct sip_msg* msg, char* retr_t1, char* retr_t2);
+static int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar);
 static int w_t_set_max_lifetime(struct sip_msg* msg, char* inv, char* noninv);
+static int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar);
 static int t_set_auto_inv_100(struct sip_msg* msg, char* on_off, char* foo);
 static int t_branch_timeout(struct sip_msg* msg, char*, char*);
 static int t_branch_replied(struct sip_msg* msg, char*, char*);
@@ -288,9 +291,15 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_fr",          t_set_fr_all,             2, fixup_var_int_12,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_reset_fr",        w_t_reset_fr,             0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_retr",        w_t_set_retr,               2, fixup_var_int_12,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_reset_retr",      w_t_reset_retr,           0, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_max_lifetime", w_t_set_max_lifetime,      2, fixup_var_int_12,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_reset_max_lifetime", w_t_reset_max_lifetime, 0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_set_auto_inv_100", t_set_auto_inv_100,       1, fixup_var_int_1,
 													  REQUEST_ROUTE},
@@ -1263,7 +1272,11 @@ static int t_set_fr_inv(struct sip_msg* msg, char* fr_inv, char* foo)
 	return t_set_fr_all(msg, fr_inv, (char*)0);
 }
 
-
+/* reset fr_timer and fr_inv_timer to the default values */
+static int w_t_reset_fr(struct sip_msg* msg, char* foo, char* bar)
+{
+	return t_reset_fr();
+}
 
 /* set retr. intervals per transaction; 0 means: use the default value */
 static int w_t_set_retr(struct sip_msg* msg, char* p1, char* p2)
@@ -1286,7 +1299,18 @@ static int w_t_set_retr(struct sip_msg* msg, char* p1, char* p2)
 #endif
 }
 
-
+/* reset retr. t1 and t2 to the default values */
+int w_t_reset_retr(struct sip_msg* msg, char* foo, char* bar)
+{
+#ifdef TM_DIFF_RT_TIMEOUT
+	return t_reset_retr();
+#else
+	ERR("w_t_reset_retr: support for changing retransmission intervals on "
+			"the fly not compiled in (re-compile tm with"
+			" -DTM_DIFF_RT_TIMEOUT)\n");
+	return -1;
+#endif
+}
 
 /* set maximum transaction lifetime for inv & noninv */
 static int w_t_set_max_lifetime(struct sip_msg* msg, char* p1, char* p2)
@@ -1302,7 +1326,11 @@ static int w_t_set_max_lifetime(struct sip_msg* msg, char* p1, char* p2)
 	return t_set_max_lifetime(msg, t1, t2);
 }
 
-
+/* reset maximum invite/non-invite lifetime to the default value */
+int w_t_reset_max_lifetime(struct sip_msg* msg, char* foo, char* bar)
+{
+	return t_reset_max_lifetime();
+}
 
 /* set automatically sending 100 replies on/off for the current or
  * next to be created transaction */

@@ -1542,6 +1542,25 @@ int t_set_fr(struct sip_msg* msg, unsigned int fr_inv_to, unsigned int fr_to)
 	return 1;
 }
 
+/* reset fr_timer and fr_inv_timer to the default values */
+int t_reset_fr()
+{
+	struct cell *t;
+
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variables */
+	if (!t || t==T_UNDEFINED ){
+		memset(&user_fr_inv_timeout, 0, sizeof(user_fr_inv_timeout));
+		memset(&user_fr_timeout, 0, sizeof(user_fr_timeout));
+	}else{
+		change_fr(t,
+			cfg_get(tm, tm_cfg, fr_inv_timeout),
+			cfg_get(tm, tm_cfg, fr_timeout)); /* change running uac timers */
+	}
+	return 1;
+}
 
 #ifdef TM_DIFF_RT_TIMEOUT
 
@@ -1583,6 +1602,27 @@ int t_set_retr(struct sip_msg* msg, unsigned int t1_to, unsigned int t2_to)
 		set_msgid_val(user_rt_t2_timeout, msg->id, int, (int)retr_t2);
 	}else{
 		change_retr(t, 1, retr_t1, retr_t2); /* change running uac timers */
+	}
+	return 1;
+}
+
+/* reset retr. t1 and t2 to the default values */
+int t_reset_retr()
+{
+	struct cell *t;
+
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variables */
+	if (!t || t==T_UNDEFINED ){
+		memset(&user_rt_t1_timeout, 0, sizeof(user_rt_t1_timeout));
+		memset(&user_rt_t2_timeout, 0, sizeof(user_rt_t2_timeout));
+	}else{
+		change_retr(t,
+			1,
+			cfg_get(tm, tm_cfg, rt_t1_timeout),
+			cfg_get(tm, tm_cfg, rt_t2_timeout)); /* change running uac timers */
 	}
 	return 1;
 }
@@ -1628,3 +1668,27 @@ int t_set_max_lifetime(struct sip_msg* msg,
 	}
 	return 1;
 }
+
+/* reset maximum invite/non-invite lifetime to the default value */
+int t_reset_max_lifetime()
+{
+	struct cell *t;
+
+	t=get_t();
+	/* in MODE_REPLY and MODE_ONFAILURE T will be set to current transaction;
+	 * in MODE_REQUEST T will be set only if the transaction was already
+	 * created; if not -> use the static variables */
+	if (!t || t==T_UNDEFINED ){
+		memset(&user_inv_max_lifetime, 0, sizeof(user_inv_max_lifetime));
+		memset(&user_noninv_max_lifetime, 0, sizeof(user_noninv_max_lifetime));
+	}else{
+		change_end_of_life(t,
+				1,
+				is_invite(t)?
+					cfg_get(tm, tm_cfg, tm_max_inv_lifetime):
+					cfg_get(tm, tm_cfg, tm_max_noninv_lifetime)
+				);
+	}
+	return 1;
+}
+
