@@ -437,7 +437,7 @@ modparam("carrierroute", "subscriber_table", "subscriber")
 
    Example 1-17. Set subscriber_user_col parameter
 ...
-modparam("carrierroute", "susbscriber_user_col", "username")
+modparam("carrierroute", "subscriber_user_col", "username")
 ...
      __________________________________________________________
 
