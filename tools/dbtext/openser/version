@@ -12,6 +12,7 @@ dialog:2
 dispatcher:2
 domain:1
 domainpolicy:2
+globalblacklist:1
 grp:2
 gw:7
 imc_members:1
@@ -36,6 +37,7 @@ speed_dial:2
 subscriber:6
 trusted:4
 uri:1
+userblacklist:1
 usr_preferences:2
 usr_preferences_types:1
 watchers:3

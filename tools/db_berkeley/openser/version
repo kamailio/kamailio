@@ -34,6 +34,8 @@ domain|
 domain|1
 domainpolicy|
 domainpolicy|2
+globalblacklist|
+globalblacklist|1
 grp|
 grp|2
 gw|
@@ -82,6 +84,8 @@ trusted|
 trusted|4
 uri|
 uri|1
+userblacklist|
+userblacklist|1
 usr_preferences|
 usr_preferences|2
 usr_preferences_types|

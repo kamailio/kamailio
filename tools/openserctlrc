@@ -89,7 +89,7 @@
 #                   alias_db uri_db speeddial avpops auth_db pdt dialog dispatcher"
 
 # openser extra modules
-# EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute"
+# EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute userblacklist"
 
 
 ## type of aliases used: DB - database aliases; UL - usrloc aliases
