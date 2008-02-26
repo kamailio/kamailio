@@ -253,6 +253,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		if(presentity== NULL)
 		{
 			LM_ERR("no record found in hash table\n");
+			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
 		delete_htable(presentity, hash_code);
