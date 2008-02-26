@@ -1409,15 +1409,18 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	UNLOCK_REPLIES( t );
 
-	     /* Set retransmission timer before the reply is sent out to avoid
-	      * race conditions
-	      */
-	if (reply_status == RPS_COMPLETED) {
-		set_final_timer(t);
-	}
-
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
+		/* Set retransmission timer before the reply is sent out to avoid
+		 * race conditions
+		 *
+		 * Call set_final_timer() only if we really send out the reply.
+		 * It can happen that the reply has been already sent from failure_route
+		 * or from a callback and the timer has been already started. (Miklos)
+		 */
+		if (reply_status == RPS_COMPLETED) {
+			set_final_timer(t);
+		}
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
 		DBG("DEBUG: reply relayed. buf=%p: %.15s..., shmem=%p: %.9s totag_retr=%d\n",
 			buf, buf, uas_rb->buffer, uas_rb->buffer, totag_retr );
