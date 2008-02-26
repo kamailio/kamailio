@@ -115,7 +115,7 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 	eol=rb->my_T->end_of_life;
 	rb->timer.data=(void*)(unsigned long)(2*retr); /* hack , next retr. int. */
 	rb->retr_expire=ticks+retr;
-	if (rb->t_active){
+	if (unlikely(rb->t_active)){
 		/* we could have set_fr_retr called in the same time (acceptable 
 		 * race), we rely on timer_add adding it only once */
 #ifdef TIMER_DEBUG
@@ -138,6 +138,13 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 		timeout=(((s_ticks_t)(eol-ticks))>0)?(eol-ticks):1; /* expire now */ 
 	}
 	atomic_cmpxchg_int((void*)&rb->fr_expire, 0, (int)(ticks+timeout));
+	if (unlikely(rb->flags & F_RB_DEL_TIMER)){
+		/* timer marked for deletion before we got a chance to add it
+		 * (e..g we got immediately a final reply before in another process)
+		 * => do nothing */
+		DBG("_set_fr_timer: too late, timer already marked for deletion\n");
+		return 0;
+	}
 #ifdef TIMER_DEBUG
 	ret=timer_add_safe(&(rb)->timer, (timeout<retr)?timeout:retr,
 							file, func, line);
@@ -145,6 +152,9 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 	ret=timer_add(&(rb)->timer, (timeout<retr)?timeout:retr);
 #endif
 	if (ret==0) rb->t_active=1;
+	membar_write_atomic_op(); /* make sure t_active will be commited to mem.
+								 before the transaction would be deref. by the
+								 current process */
 	return ret;
 }
 
@@ -153,6 +163,8 @@ inline static int _set_fr_retr(struct retr_buf* rb, ticks_t retr)
 /* stop the timers assoc. with a retr. buf. */
 #define stop_rb_timers(rb) \
 do{ \
+	membar_depends(); \
+	(rb)->flags|=F_RB_DEL_TIMER; /* timer should be deleted */ \
 	if ((rb)->t_active){ \
 		(rb)->t_active=0; \
 		timer_del(&(rb)->timer); \

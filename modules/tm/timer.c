@@ -526,12 +526,22 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 
 	rbuf=(struct  retr_buf*)
 			((void*)tl-(void*)(&((struct retr_buf*)0)->timer));
+	membar_depends(); /* to be on the safe side */
 	t=rbuf->my_T;
 	
 #ifdef TIMER_DEBUG
 	DBG("tm: timer retr_buf_handler @%d (%p -> %p -> %p)\n",
 			ticks, tl, rbuf, t);
 #endif
+	if (unlikely(rbuf->flags & F_RB_DEL_TIMER)){
+		/* timer marked for deletion */
+		rbuf->t_active=0; /* mark it as removed */
+		/* a membar is not really needed, in the very unlikely case that 
+		 * another process will see old t_active's value and will try to 
+		 * delete the timer again, but since timer_del it's safe in this cases
+		 * it will be a no-op */
+		return 0;
+	}
 	/* overflow safe check (should work ok for fr_intervals < max ticks_t/2) */
 	if ((s_ticks_t)(rbuf->fr_expire-ticks)<=0){
 		/* final response */
