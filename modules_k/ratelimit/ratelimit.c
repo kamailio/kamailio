@@ -194,6 +194,7 @@ static int child_init(int);
 static void timer(unsigned int, void *);
 static int w_rl_check_default(struct sip_msg*, char *, char *);
 static int w_rl_check_forced(struct sip_msg*, char *, char *);
+static int w_rl_check_forced_pipe(struct sip_msg*, char *, char *);
 static int w_rl_drop_default(struct sip_msg*, char *, char *);
 static int w_rl_drop_forced(struct sip_msg*, char *, char *);
 static int w_rl_drop(struct sip_msg*, char *, char *);
@@ -205,11 +206,12 @@ static int set_load_source(modparam_t, void *);
 void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"rl_check", (cmd_function)w_rl_check_default, 0, 0,               0, REQUEST_ROUTE},
-	{"rl_check", (cmd_function)w_rl_check_forced,  1, fixup_uint_null, 0, REQUEST_ROUTE},
-	{"rl_drop",  (cmd_function)w_rl_drop_default,  0, 0,               0, REQUEST_ROUTE},
-	{"rl_drop",  (cmd_function)w_rl_drop_forced,   1, fixup_uint_null, 0, REQUEST_ROUTE},
-	{"rl_drop",  (cmd_function)w_rl_drop,          2, fixup_uint_uint, 0, REQUEST_ROUTE},
+	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,               0,               REQUEST_ROUTE},
+	{"rl_check",      (cmd_function)w_rl_check_forced,      1, pvar_fixup,      free_pvar_fixup, REQUEST_ROUTE},
+	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_uint_null, 0,               REQUEST_ROUTE},
+	{"rl_drop",       (cmd_function)w_rl_drop_default,      0, 0,               0,               REQUEST_ROUTE},
+	{"rl_drop",       (cmd_function)w_rl_drop_forced,       1, fixup_uint_null, 0,               REQUEST_ROUTE},
+	{"rl_drop",       (cmd_function)w_rl_drop,              2, fixup_uint_uint, 0,               REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
@@ -751,6 +753,33 @@ out_release:
 
 static int w_rl_check_forced(struct sip_msg* msg, char *p1, char *p2)
 {
+	int pipe = -1;
+	pv_value_t pv_val;
+
+	if (p1 && (pv_get_spec_value(msg, (pv_spec_t *)p1, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_INT) {
+			pipe = pv_val.ri;
+			LM_DBG("pipe=%d\n", pipe);
+		} else if (pv_val.flags & PV_VAL_STR) {
+			if(str2int(&(pv_val.rs), &pipe) != 0) {
+				LM_ERR("Unable to get pipe from pv '%.*s'"
+					"=> defaulting to method type checking\n",
+					pv_val.rs.len, pv_val.rs.s);
+				pipe = -1;
+			}
+		} else {
+			LM_ERR("pv not a str or int => defaulting to method type checking\n");
+			pipe = -1;
+		}
+	} else {
+		LM_ERR("Unable to get pipe from pv:%p"
+			" => defaulting to method type checking\n", p1);
+		pipe = -1;
+	}
+	return rl_check(msg, pipe);
+}
+static int w_rl_check_forced_pipe(struct sip_msg* msg, char *p1, char *p2)
+{
 	int pipe;
 
 	if (p1) {
@@ -1100,7 +1129,7 @@ struct mi_root* mi_set_pipe(struct mi_root* cmd_tree, void* param)
 
 	LM_DBG("set_pipe: %d:%d:%d\n", pipe_no, algo_id, limit);
 
-	if (pipe_no < 0 || pipe_no >= MAX_PIPES) {
+	if (pipe_no >= MAX_PIPES) {
 		LM_ERR("wrong pipe_no: %d\n", pipe_no);
 		goto bad_syntax;
 	}
@@ -1199,7 +1228,7 @@ struct mi_root* mi_set_queue(struct mi_root* cmd_tree, void* param)
 	}
 
 	LOCK_GET(rl_lock);
-	if (queue_no < 0 || queue_no >= *nqueues) {
+	if (queue_no >= *nqueues) {
 		LM_ERR("MAX_QUEUES reached for queue: %d\n", queue_no);
 		goto error;
 	}

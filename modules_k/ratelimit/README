@@ -49,8 +49,9 @@ Hendrik Scholz
 
         1.7. Exported Functions
 
-              1.7.1. rl_check([pipe_no])
-              1.7.2. rl_drop([[min ], max])
+              1.7.1. rl_check([pvar])
+              1.7.2. rl_check_pipe([pipe_no])
+              1.7.3. rl_drop([[min ], max])
 
         1.8. Exported MI Functions
 
@@ -75,7 +76,8 @@ Hendrik Scholz
    1-4. Set reply_code parameter
    1-5. Set reply_reason parameter
    1-6. rl_check usage
-   1-7. rl_drop usage
+   1-7. rl_check_pipe usage
+   1-8. rl_drop usage
      _________________________________________________________
 
 Chapter 1. User's Guide
@@ -305,7 +307,54 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
 1.7. Exported Functions
 
-1.7.1. rl_check([pipe_no])
+1.7.1. rl_check([pvar])
+
+   Check the current request against the matched ratelimit
+   algorithm. If no parameter is provided, the queue will be
+   matched based on method type, and then the pipe will be
+   identified based on the matched queue. If a pipe number is
+   provided as a parameter, then the given pipe number will be
+   used for identifying the ratelimit algorithm. The pipe number
+   must be provided via a pseudo variabile. It is recommended to
+   provide the pipe number via an integer pseudovariabile.
+
+   The method will return an error code if the limit for the
+   matched algorithm is reached.
+
+   Meaning of the parameters is as follows:
+
+     * pvar - the pseudovariable holding the pipe id to be used
+       by ratelimit.
+
+   This function can be used from REQUEST_ROUTE.
+
+   Example 1-6. rl_check usage
+...
+        # perform queue/pipe match for current method
+        if (!rl_check()) {
+                rl_drop();
+                exit;
+        };
+...
+        # use pipe no 1 for the current method
+        # set int pvar to 1
+        $var(p) = 1;
+        if (!rl_check("$var(p)")) {
+                rl_drop();
+                exit;
+        };
+...
+        # use pipe no 1 for the current method
+        # set str pvar to 1
+        $var(p) = "1";
+        if (!rl_check("$var(p)") {
+                rl_drop();
+                exit;
+        };
+...
+     _________________________________________________________
+
+1.7.2. rl_check_pipe([pipe_no])
 
    Check the current request against the matched ratelimit
    algorithm. If no parameter is provided, the queue will be
@@ -323,23 +372,23 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-6. rl_check usage
+   Example 1-7. rl_check_pipe usage
 ...
         # perform queue/pipe match for current method
-        if (!rl_check()) {
+        if (!rl_check_pipe()) {
                 rl_drop();
                 exit;
         };
 ...
         # use pipe no 1 for the current method
-        if (!rl_check("1") {
+        if (!rl_check_pipe("1") {
                 rl_drop();
                 exit;
         };
 ...
      _________________________________________________________
 
-1.7.2. rl_drop([[min ], max])
+1.7.3. rl_drop([[min ], max])
 
    For the current request, a "503 - Server Unavailable" reply is
    sent back. The reply may or may not have a "Retry-After"
@@ -357,7 +406,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-7. rl_drop usage
+   Example 1-8. rl_drop usage
 ...
         if (!rl_check()) {
                 # send back a "503 - Server Unavailable"
