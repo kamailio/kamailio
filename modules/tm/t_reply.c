@@ -1469,15 +1469,18 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	UNLOCK_REPLIES( t );
 
-	     /* Set retransmission timer before the reply is sent out to avoid
-	      * race conditions
-	      */
-	if (reply_status == RPS_COMPLETED) {
-		set_final_timer(t);
-	}
-
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
+		/* Set retransmission timer before the reply is sent out to avoid
+		* race conditions
+		*
+		* Call set_final_timer() only if we really send out the reply.
+		* It can happen that the reply has been already sent from failure_route
+		* or from a callback and the timer has been already started. (Miklos)
+		*/
+		if (reply_status == RPS_COMPLETED) {
+			set_final_timer(t);
+		}
 		if (SEND_PR_BUFFER( uas_rb, buf, res_len )>=0){
 			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
 				run_trans_callbacks( TMCB_RESPONSE_OUT, t, t->uas.request,
