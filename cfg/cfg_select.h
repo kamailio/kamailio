@@ -32,6 +32,14 @@
 #ifndef _CFG_SELECT_H
 #define _CFG_SELECT_H
 
+#include "../select.h"
+
+/* free the list of not yet fixed selects */
+void cfg_free_selects();
+
+/* fix-up the select calls */
+int cfg_fixup_selects();
+
 int select_cfg_var(str *res, select_t *s, struct sip_msg *msg);
 
 #endif /* _CFG_SELECT_H */

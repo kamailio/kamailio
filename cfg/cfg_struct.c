@@ -39,6 +39,7 @@
 #include "../locking.h"
 #include "cfg_ctx.h"
 #include "cfg_script.h"
+#include "cfg_select.h"
 #include "cfg_struct.h"
 
 cfg_group_t	*cfg_group = NULL;	/* linked list of registered cfg groups */
@@ -210,6 +211,8 @@ int cfg_shmize(void)
 					group->mapping->def);
 		}
 	}
+	/* try to fixup the selects that failed to be fixed-up previously */
+	if (cfg_fixup_selects()) goto error;
 
 	/* install the new config */
 	cfg_install_global(block, NULL, NULL, NULL);
@@ -335,6 +338,9 @@ void cfg_destroy(void)
 	/* free the list of groups */
 	cfg_destory_groups(cfg_global ? (*cfg_global)->vars : NULL);
 
+	/* free the select list */
+	cfg_free_selects();
+
 	if (cfg_child_cb_first) {
 		if (*cfg_child_cb_first) cfg_child_cb_free(*cfg_child_cb_first);
 		shm_free(cfg_child_cb_first);
@@ -459,6 +465,8 @@ int cfg_lookup_var(str *gname, str *vname,
 	)
 		if ((g->name_len == gname->len)
 		&& (memcmp(g->name, gname->s, gname->len)==0)) {
+
+			if (!g->mapping) return -1; /* dynamic group is not ready */
 
 			for (	i = 0;
 				i < g->num;
