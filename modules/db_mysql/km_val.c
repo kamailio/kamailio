@@ -194,14 +194,13 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 		break;
 
 	case DB_STR:
-		l = VAL_STR(_v).len;
-		if (*_len < (l * 2 + 3)) {
+		if (*_len < (VAL_STR(_v).len * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
 			return -6;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
-			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STR(_v).s, l);
+			_s += mysql_real_escape_string(CON_CONNECTION(_c), _s, VAL_STR(_v).s, VAL_STR(_v).len);
 			*_s++ = '\'';
 			*_s = '\0';
 			*_len = _s - old_s;
