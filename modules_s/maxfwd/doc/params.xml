@@ -14,4 +14,15 @@
 
     <title>Parameters</title>
 
+    <section id="max_limit">
+        <title><varname>max_limit</varname> (integer)</title>
+	<para>
+	    Max.value of Max-forward, if received value is greater then value is decraesed to <emphasis>max_limit</emphasis>.
+	    Value of 0 disables this functionality.
+	</para>
+	<para>
+	    Default value is 16.
+	</para>
+    </section>
+																		    
 </section>

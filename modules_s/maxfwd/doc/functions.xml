@@ -14,9 +14,9 @@
 
     <title>Functions</title>
 
-    <section id="mf_process_maxfwd_header">
+    <section id="maxfwd_process">
 	<title>
-	    <function>mf_process_maxfwd_header(max_value)</function>
+	    <function>maxfwd_process(max_value)</function>
 	</title>
 	<para>
 	    If no Max-Forward header is present in the received request, a
@@ -42,16 +42,41 @@
 	    </listitem>
 	</itemizedlist>
 	<example>
-	    <title><function>mx_process_maxfwd_header</function> usage</title>
+	    <title><function>maxfwd_process</function> usage</title>
 	    <programlisting>
-...
 # initial sanity checks -- messages with
 # max_forwards==0, or excessively long requests
-if (!mf_process_maxfwd_header("10")) {
-    sl_send_reply("483","Too Many Hops");
-    break;
+if (!maxfwd_process(10)) {
+    sl_send_reply(483, "Too many hops");
+    drop;
 };
-...
+	    </programlisting>
+	</example>
+    </section>
+    <section id="maxfwd_at_least">
+	<title>
+	    <function>maxfwd_at_least(min_value)</function>
+	</title>
+	<para>
+	    Test is there is enough hops in Max-forward header, i.e. we know how many hops is required to reach target.
+	    Returns true if Max-Forward header is present in the received request and
+	    the value is greater than "min_value".
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+		    <emphasis>min_value</emphasis> - Min. number of required hops
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>maxfwd_at_least</function> usage</title>
+	    <programlisting>
+if (!maxfwd_at_least(3)) {
+    sl_send_reply(483, "Too many hops");
+    drop;
+};
 	    </programlisting>
 	</example>
     </section>

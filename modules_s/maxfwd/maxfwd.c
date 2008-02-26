@@ -1,8 +1,7 @@
 /*
  * $Id$
  *
- * MAXFWD module
- *
+ * maxfwd module
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -35,52 +34,62 @@
  *  2003-03-19  all mallocs/frees replaced w/ pkg_malloc/pkg_free (andrei)
  *  2004-08-15  max value of max-fwd header is configurable via max_limit
  *              module param (bogdan)
+ *  2008-02-26  support for cfg API (tma)
  */
-
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../ut.h"
-#include "../../mem/mem.h"
 #include "mf_funcs.h"
+#include "../../cfg/cfg.h"
 
 MODULE_VERSION
 
-static int max_limit = 16;
+#define MODULE_NAME "maxfwd"
 
-static int fixup_maxfwd_header(void** param, int param_no);
-static int w_process_maxfwd_header(struct sip_msg* msg,char* str,char* str2);
-static int w_process_maxfwd_lowlimit(struct sip_msg* msg,char* str,char* str2);
+struct cfg_group_maxfwd {
+	int max_limit;
+};
+
+static struct cfg_group_maxfwd default_maxfwd_cfg = {
+	max_limit:16
+};
+
+static void *maxfwd_cfg = &default_maxfwd_cfg;
+
+static cfg_def_t maxfwd_cfg_def[] = {
+        {"max_limit", CFG_VAR_INT, 0, 255, 0, 0, "Max. maxfwd limit"},
+        {0, 0, 0, 0, 0, 0}
+};
+				
+
+static int process_maxfwd_header(struct sip_msg* msg, char* str, char* str2);
+static int check_lowlimit(struct sip_msg* msg, char* str, char* str2);
 static int mod_init(void);
 
 static cmd_export_t cmds[]={
-	{"mf_process_maxfwd_header", w_process_maxfwd_header, 1,
-		fixup_maxfwd_header, REQUEST_ROUTE},
-	{"process_maxfwd", w_process_maxfwd_header, 1,
-		fixup_maxfwd_header, REQUEST_ROUTE},
-	{"mf_lowlimit", w_process_maxfwd_lowlimit, 1,
-		fixup_maxfwd_header, REQUEST_ROUTE},
+	{MODULE_NAME"_process", process_maxfwd_header, 1, fixup_var_int_1, REQUEST_ROUTE},
+	{MODULE_NAME"_at_least", check_lowlimit, 1, fixup_var_int_1, REQUEST_ROUTE},
+	/* backward compatability only */
+	{"mf_process_maxfwd_header", process_maxfwd_header, 1, fixup_var_int_1, REQUEST_ROUTE},
+	{"process_maxfwd", process_maxfwd_header, 1,
+		fixup_var_int_1, REQUEST_ROUTE},
+	{"mf_lowlimit", check_lowlimit, 1, fixup_var_int_1, REQUEST_ROUTE},
 	{0,0,0,0,0}
 };
 
 static param_export_t params[]={
-	{"max_limit",    PARAM_INT,  &max_limit},
+	{"max_limit",    PARAM_INT,  &default_maxfwd_cfg.max_limit},
 	{0,0,0}
 };
 
 
-
 #ifdef STATIC_MAXFWD
-struct module_exports maxfwd_exports = {
+struct module_exports MODULE_NAME##_exports = {
 #else
 struct module_exports exports= {
 #endif
-	"maxfwd",
+	MODULE_NAME,
 	cmds,
 	0,       /* RPC methods */
 	params,
@@ -93,93 +102,69 @@ struct module_exports exports= {
 
 
 
-static int mod_init(void)
-{
-	LOG(L_NOTICE, "Maxfwd module- initializing\n");
-	if ( max_limit>255 ) {
-		LOG(L_ERR,"ERROR:maxfwd:init: max limit (%d) to high (<255)\n",
-			max_limit);
-		return -1;
-	}
-	return 0;
+static int mod_init(void) {
+	DBG(MODULE_NAME": initializing\n");
+	/* declare the configuration */
+	if (cfg_declare(MODULE_NAME, maxfwd_cfg_def, &default_maxfwd_cfg, cfg_size(maxfwd), &maxfwd_cfg)) {
+		ERR(MODULE_NAME": mod_init: failed to declare the configuration\n");
+		return E_UNSPEC;
+	}								 	
+	return E_OK;
 }
 
-
-
-static int fixup_maxfwd_header(void** param, int param_no)
-{
-	unsigned long code;
-	int err;
-
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			if (code>255){
-				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
-					"number to big <%ld> (max=255)\n",code);
-				return E_UNSPEC;
-			}
-			if ( max_limit && code>max_limit) {
-				LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: "
-					"default value <%ld> bigger than max limit(%d)\n",
-					code, max_limit);
-				return E_UNSPEC;
-			}
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LOG(L_ERR, "ERROR:maxfwd:fixup_maxfwd_header: bad  number <%s>\n",
-					(char*)(*param));
-			return E_UNSPEC;
-		}
-	}
-	return 0;
-}
-
-
-
-
-static int w_process_maxfwd_header(struct sip_msg* msg, char* str1,char* str2)
-{
-	int val;
+static int process_maxfwd_header(struct sip_msg* msg, char* str1, char* str2) {
+	int val, tmp;
 	str mf_value;
+	int max_limit;
 
-	val=is_maxfwd_present(msg, &mf_value);
+	val = is_maxfwd_present(msg, &mf_value);
 	switch (val) {
 		case -1:
-			add_maxfwd_header( msg, (unsigned int)(unsigned long)str1 );
+			if (get_int_fparam(&tmp, msg, (fparam_t*) str1) < 0) return -1;
+			if (tmp < 0 || tmp > 255) {
+				ERR(MODULE_NAME": number (%d) beyond range <0,255>\n", tmp);
+				return -1;
+			}
+			if (tmp == 0) return 0;
+			max_limit = cfg_get(maxfwd, maxfwd_cfg, max_limit);
+			if ( max_limit && tmp > max_limit) {
+				ERR(MODULE_NAME": default value (%d) greater than max.limit (%d)\n", tmp, max_limit);
+				return -1;
+			}
+			add_maxfwd_header(msg, tmp);
 			break;
 		case -2:
 			break;
 		case 0:
 			return -1;
 		default:
-			if (max_limit && val>max_limit){
-				DBG("DBG:maxfwd:process_maxfwd_header: "
+			max_limit = cfg_get(maxfwd, maxfwd_cfg, max_limit);
+			if (max_limit && val > max_limit){
+				DBG(MODULE_NAME": process_maxfwd_header: "
 					"value %d decreased to %d\n", val, max_limit);
 				val = max_limit+1;
 			}
 			if ( decrement_maxfwd(msg, val, &mf_value)!=1 )
-				LOG( L_ERR,"ERROR:maxfwd:process_maxfwd_header: "
-					"decrement failed!\n");
+				ERR(MODULE_NAME": process_maxfwd_header: "
+					"decrement failed\n");
 	}
 	return 1;
 }
 
-/* check if the current Max Forwards value is below a certain threshold */
-static int w_process_maxfwd_lowlimit(struct sip_msg* msg, char* str1,char* str2)
-{
+/* check if the current Max Forwards value is below/above a certain threshold */
+static int check_lowlimit(struct sip_msg* msg, char* str1, char* str2) {
 	int val, lowlimit;
 	str mf_value;
 
-	val=is_maxfwd_present(msg, &mf_value);
-	lowlimit = (unsigned int) (unsigned long) str1;
-
-	DBG("maxfwd: lowlimit=%d current=%d\n", lowlimit, val);
-
-	if ((val >= 0) && (val < lowlimit))
-		return -1;	/* limit reached */
-	else
-		return 1;
+	val = is_maxfwd_present(msg, &mf_value);
+	switch (val) {
+		case -2: /* parsing error */
+			return -1;
+		case -1: /* header not present */
+			return 1;
+		default:
+			if (get_int_fparam(&lowlimit, msg, (fparam_t*) str1) < 0) return -1;
+			DBG(MODULE_NAME": check_low_limit(%d): current=%d\n", lowlimit, val);
+			return ((val >= 0) && (val < lowlimit))?-1:1;
+	}
 }
