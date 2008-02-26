@@ -98,7 +98,9 @@ static int mod_init(void)
 	memset(vals, 0, sizeof(vals));
 	attrs[A_SERVICE_TYPE].n	= "Service-Type";
 	attrs[A_USER_NAME].n	= "User-Name";
-	attrs[A_SIP_URI_HOST].n	= "SIP-URI-Host";
+	if (use_sip_uri_host) {
+	    attrs[A_SIP_URI_HOST].n	= "SIP-URI-Host";
+	}
 	attrs[A_SIP_AVP].n	= "SIP-AVP";
 	vals[V_CALL_CHECK].n	= "Call-Check";
 
