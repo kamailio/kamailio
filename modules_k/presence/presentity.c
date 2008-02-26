@@ -735,6 +735,10 @@ char* get_sphere(str* pres_uri)
 	struct sip_uri uri;
 	str body;
 
+
+	if(!enable_sphere)
+		return NULL;
+
 	/* search in hash table*/
 	hash_code= core_hash(pres_uri, NULL, phtable_size);
 
