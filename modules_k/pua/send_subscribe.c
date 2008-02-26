@@ -242,13 +242,15 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	if(msg== FAKED_REPLY)
 	{
 		/* delete record from hash_table and call registered functions */
-		lock_get(&HashT->p_records[hash_code].lock);
 
 		if(hentity->call_id.s== NULL) /* if a new requets failed-> do nothing*/
 		{
 			LM_DBG("initial Subscribe request failed\n");
 			goto done;
 		}
+		
+		lock_get(&HashT->p_records[hash_code].lock);
+		
 		presentity= get_dialog(hentity, hash_code);
 		if(presentity== NULL)
 		{
