@@ -567,7 +567,7 @@ int pres_htable_restore(void)
 	int  i;
 	str user, domain, ev_str, uri, body;
 	int n_result_cols= 0;
-	int user_col, domain_col, event_col, expires_col, body_col;
+	int user_col, domain_col, event_col, expires_col, body_col = 0;
 	int event;
 	event_t ev;
 	char* sphere= NULL;
@@ -736,7 +736,7 @@ char* get_sphere(str* pres_uri)
 	str body;
 
 
-	if(!enable_sphere)
+	if(!sphere_enable)
 		return NULL;
 
 	/* search in hash table*/
