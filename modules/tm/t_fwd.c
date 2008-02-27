@@ -533,9 +533,19 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	
 	/* determine which branches to cancel ... */
 	which_cancel( t_invite, &cancel_bm );
-	/* fix label -- it must be same for reply matching */
-	t_cancel->label=t_invite->label;
 #ifdef E2E_CANCEL_HOP_BY_HOP
+	/* we don't need to set t_cancel label to be the same as t_invite if
+	 * we do hop by hop cancel. The cancel transaction will have a different 
+	 * label, but this is not a problem since this transaction is only used to
+	 * send a reply back. The cancels sent upstream will be part of the invite
+	 * transaction (local_cancel retr. bufs) and they will be generated with
+	 * the same via as the invite.
+	 * Note however that setting t_cancel label the same as t_invite will work
+	 * too (the upstream cancel replies will properly match the t_invite
+	 * transaction and will not match the t_cancel because t_cancel will always
+	 * have 0 branches and we check for the branch number in 
+	 * t_reply_matching() ).
+	 */
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
 		if (cancel_bm & (1<<i)) {
 			/* it's safe to get the reply lock since e2e_cancel is
@@ -546,7 +556,12 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
 		}
-#else
+#else /* ! E2E_CANCEL_HOP_BY_HOP */
+	/* fix label -- it must be same for reply matching (the label is part of
+	 * the generated via branch for the cancels sent upstream and if it
+	 * would be different form the one in the INVITE the transactions would not
+	 * match */
+	t_cancel->label=t_invite->label;
 	t_cancel->nr_of_outgoings=t_invite->nr_of_outgoings;
 	/* ... and install CANCEL UACs */
 	for (i=0; i<t_invite->nr_of_outgoings; i++)
