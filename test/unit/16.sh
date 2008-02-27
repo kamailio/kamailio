@@ -30,7 +30,7 @@ CFG=2.cfg
 cp $CFG $CFG.bak
 
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
+echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 
 # start
