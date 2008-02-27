@@ -32,6 +32,7 @@ CFG=25.cfg
 
 MYSQL="mysql openser -u openser --password=openserrw -e"
 
+
 # add an registrar entry to the db;
 $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456789\",\"sip:123456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
@@ -40,6 +41,8 @@ $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values 
 $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456787\",\"sip:123456787@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
 $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456786\",\"sip:123456786@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+
+$MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456785\",\"sip:223456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
 
 # setup userblacklist, first some dummy data
@@ -54,6 +57,9 @@ $MYSQL "insert into userblacklist (username, domain, prefix, whitelist, comment)
 # and the global ones
 $MYSQL "insert into globalblacklist (prefix, whitelist, comment) values ('123456787','0','_test_');"
 $MYSQL "insert into globalblacklist (prefix, whitelist, comment) values ('123456','0','_test_');"
+$MYSQL "insert into globalblacklist (prefix, whitelist, comment) values ('1','1','_test_');"
+$MYSQL "insert into globalblacklist (prefix, whitelist, comment) values ('','0','_test_');"
+
 
 ../openser -w . -f $CFG &> /dev/null
 sleep 1
@@ -98,10 +104,20 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 if [ "$ret" -eq 1 ] ; then
-	ret=0
-else
-	ret=1
+	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
+	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+	ret=$?
 fi;
+
+$MYSQL "insert into globalblacklist (prefix, whitelist, comment) values ('2','1','_test_');"
+openserctl fifo reload_blacklist
+
+if [ "$ret" -eq 1 ] ; then
+	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
+	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+	ret=$?
+fi;
+
 
 # cleanup:
 killall -9 sipp > /dev/null 2>&1
