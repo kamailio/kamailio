@@ -79,13 +79,21 @@ if [ $# -ne 1 ] ; then
 	exit 1
 fi
 
-# postgresql users are not dropped automatically
-sql_query "template1" "drop database \"$1\"; drop user \"$DBRWUSER\"; drop user \"$DBROUSER\";"
-
+sql_query "template1" "drop database \"$1\";"
 if [ $? -ne 0 ] ; then
 	merr "Dropping database $1 failed!"
 	exit 1
 fi
+
+# postgresql users are not dropped automatically
+sql_query "template1" "drop user \"$DBRWUSER\"; drop user \"$DBROUSER\";"
+
+if [ $? -ne 0 ] ; then
+	mwarn "Could not drop $DBRWUSER or $DBROUSER users, try to continue.."
+else 
+	minfo "Database user deleted"
+fi
+
 minfo "Database $1 dropped"
 } #openser_drop
 
