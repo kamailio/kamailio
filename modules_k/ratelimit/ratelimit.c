@@ -207,7 +207,8 @@ void destroy(void);
 
 static cmd_export_t cmds[]={
 	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,               0,               REQUEST_ROUTE},
-	{"rl_check",      (cmd_function)w_rl_check_forced,      1, pvar_fixup,      free_pvar_fixup, REQUEST_ROUTE},
+	{"rl_check",      (cmd_function)w_rl_check_forced,      1, fixup_pvar_null,
+		fixup_free_pvar_null, REQUEST_ROUTE},
 	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_uint_null, 0,               REQUEST_ROUTE},
 	{"rl_drop",       (cmd_function)w_rl_drop_default,      0, 0,               0,               REQUEST_ROUTE},
 	{"rl_drop",       (cmd_function)w_rl_drop_forced,       1, fixup_uint_null, 0,               REQUEST_ROUTE},

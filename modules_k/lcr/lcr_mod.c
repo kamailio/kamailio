@@ -273,15 +273,15 @@ static int next_contacts (struct sip_msg*, char*, char*);
  */
 static cmd_export_t cmds[] = {
 	{"load_gws", (cmd_function)load_gws_0, 0, 0, 0, REQUEST_ROUTE},
-	{"load_gws", (cmd_function)load_gws_1, 1, pvar_fixup, free_pvar_fixup,
-	 REQUEST_ROUTE},
+	{"load_gws", (cmd_function)load_gws_1, 1, fixup_pvar_null,
+		fixup_free_pvar_null, REQUEST_ROUTE},
 	{"load_gws_from_grp", (cmd_function)load_gws_from_grp, 1,
 	 fixstringloadgws, 0, REQUEST_ROUTE},
 	{"next_gw", (cmd_function)next_gw, 0, 0, 0,
 	 REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
 	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw", (cmd_function)from_gw_1, 1, pvar_fixup, free_pvar_fixup,
+	{"from_gw", (cmd_function)from_gw_1,1,fixup_pvar_null,fixup_free_pvar_null,
 	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"from_gw_grp", (cmd_function)from_gw_grp, 1, fixup_uint_null, 0,
 	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},

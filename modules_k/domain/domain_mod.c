@@ -93,8 +93,8 @@ static cmd_export_t cmds[] = {
 	 REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
 	{"is_uri_host_local", (cmd_function)is_uri_host_local, 0, 0, 0,
 	 REQUEST_ROUTE|BRANCH_ROUTE|FAILURE_ROUTE},
-	{"is_domain_local", (cmd_function)w_is_domain_local, 1, pvar_fixup,
-	 free_pvar_fixup, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"is_domain_local", (cmd_function)w_is_domain_local, 1, fixup_pvar_null,
+	 fixup_free_pvar_null, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"bind_domain", (cmd_function)bind_domain, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
