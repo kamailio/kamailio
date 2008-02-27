@@ -6,17 +6,19 @@
 	<para>
 	The userblacklist module allows OpenSER to handle blacklists
 	on a per user basis. This information is stored in a database
-	table, which is queried to decide if the number is blacklisted
-	or not.
+	table, which is queried to decide if the number (more exactly,
+	the request URI user) is blacklisted or not.
 	</para>
 	<para>
 	An additional functionality that this module provides is the ability
 	to handle global blacklists. This lists are loaded on startup into
 	memory, thus providing a better performance then in the userblacklist
-	case. This global lists could also used to prevent the blacklisting
-	of important numbers, as whitelisting is also supported. This is useful
-	for example to prevent the customer from blocking emergency call number
-	or service hotlines.
+	case. This global blacklists are useful to only allow calls to certain 
+	international destinations, i.e. block all not whitelisted numbers.
+	They could also used to prevent the blacklisting of important	
+	numbers, as whitelisting is supported too. This is useful for example
+	to prevent the customer from blocking emergency call number or service
+	hotlines.
 	</para>
 	<para>
 	The module exports two functions, <emphasis>check_blacklist</emphasis>
