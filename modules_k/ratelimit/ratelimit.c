@@ -761,7 +761,7 @@ static int w_rl_check_forced(struct sip_msg* msg, char *p1, char *p2)
 			pipe = pv_val.ri;
 			LM_DBG("pipe=%d\n", pipe);
 		} else if (pv_val.flags & PV_VAL_STR) {
-			if(str2int(&(pv_val.rs), &pipe) != 0) {
+			if(str2int(&(pv_val.rs), (unsigned int*)&pipe) != 0) {
 				LM_ERR("Unable to get pipe from pv '%.*s'"
 					"=> defaulting to method type checking\n",
 					pv_val.rs.len, pv_val.rs.s);
