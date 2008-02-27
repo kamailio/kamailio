@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 
@@ -150,8 +144,3 @@ if (radius_is_user_in("Request-URI", "ld")) {
 	</section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("group_radius.sgml" "Book" "chapter")
-End:
--->

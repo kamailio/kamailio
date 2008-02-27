@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -847,8 +841,3 @@ add_sock_hdr("Sock-Info");
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("registrar.sgml" "Book" "chapter")
-End:
--->

@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1488 $</revnumber>
-		<date>$Date: 2007-03-13 14:05:13 +0200 (Thu, 13 March 2007) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -176,11 +170,4 @@ if(is_method("NOTIFY") && to_uri=~"bla_aor@openser.org")
 </section>		
 
 </chapter>
-
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("pua_bla.sgml" "Book" "chapter")
-End:
--->
-
 

@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
@@ -16,8 +10,3 @@
     </para>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("db_text.sgml" "book" "chapter")
-End:
--->

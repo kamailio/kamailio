@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>User's Guide</title>
 
@@ -1173,8 +1167,3 @@ ALTER TABLE subscriber ADD cr_preferred_carrier int(10) default NULL;
     </section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("module.sgml" "Book" "chapter")
-End:
--->

@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -270,8 +264,3 @@ if(uri=~"sip:[0-9]{2}@.*")
 	</section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("speeddial.sgml" "Book" "chapter")
-End:
--->

@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>Developer's Guide</title>
 		<section>
@@ -33,8 +27,3 @@
 		</section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("tm.sgml" "book" "chapter")
-End:
--->

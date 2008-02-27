@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -236,10 +230,4 @@ Content-Length: 1000
 
 
 </chapter>
-
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("mi_xmlrpc.sgml" "Book" "chapter")
-End:
--->
 

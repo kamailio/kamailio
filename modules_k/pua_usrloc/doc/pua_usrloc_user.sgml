@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -127,11 +121,4 @@ if(is_method("REGISTER") && from_uri=~"john@openser.org")
 </section>		
 
 </chapter>
-
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("pua_usrloc.sgml" "Book" "chapter")
-End:
--->
-
 

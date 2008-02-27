@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>User's Guide</title>
 
@@ -486,8 +480,3 @@ if ($shv(debug) == 1) {
 </section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("cfgutils.sgml" "Book" "chapter")
-End:
--->

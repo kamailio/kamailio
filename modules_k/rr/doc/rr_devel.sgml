@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>Developer's Guide</title>
 
@@ -208,8 +202,3 @@ if (my_rrb.register_rrcb(my_callback,0))!=0) {
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("rr.sgml" "book" "chapter")
-End:
--->

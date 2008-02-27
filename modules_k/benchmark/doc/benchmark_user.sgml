@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1.4 $</revnumber>
-		<date>$Date: 2007-04-11 14:40:39 +0200 (Mi, 11 Apr 2007) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -307,8 +301,3 @@ bm_log_timer("usrloc-lookup");
 	</section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("mangler.sgml" "Book" "chapter")
-End:
--->

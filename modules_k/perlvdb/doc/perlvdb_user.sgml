@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date: 2007-03-26 14:47:15 +0200 (Mo, 26 Mär 2007) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -89,8 +83,3 @@ modparam("acc", "db_url", "perlvdb:OpenSER::VDB::Adapter::AccountingSIPtrace")
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("perlvdb.sgml" "Book" "chapter")
-End:
--->

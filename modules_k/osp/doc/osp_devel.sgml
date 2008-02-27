@@ -2,19 +2,8 @@
 
 <chapter>
   <chapterinfo>
-    <revhistory>
-      <revision>
-        <revnumber>$Revision$</revnumber>
-        <date>$Date$</date>
-      </revision>
-    </revhistory>
   </chapterinfo>
   <title>Developer's Guide</title>
   <para>The functions of the OSP modules are not used by other OpenSER modules.</para>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("osp.sgml" "book" "chapter")
-End:
--->

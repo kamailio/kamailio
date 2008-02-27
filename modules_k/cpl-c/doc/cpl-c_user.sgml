@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-			<revnumber>$Revision$</revnumber>
-			<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 
@@ -699,8 +693,3 @@ if (method=="REGISTER") {
 	</section>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("cpl-c.sgml" "Book" "chapter")
-End:
--->

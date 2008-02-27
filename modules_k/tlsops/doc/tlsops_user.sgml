@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -355,8 +349,3 @@ xlog("L_INFO","==================== end TLS pseudo variables =================='
 	
 	
 	
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("tlsops.sgml" "Book" "chapter")
-End:
--->

@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 1294 $</revnumber>
-		<date>$Date: 2006-11-30 14:05:07 +0200 (Thu, 30 Nov 2006) $</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
@@ -16,8 +10,3 @@
  	
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("pua_xmpp.sgml" "book" "chapter")
-End:
--->

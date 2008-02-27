@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>Frequently Asked Questions</title>
 	<qandaset defaultlabel="number">
@@ -115,8 +109,3 @@
 	</qandaset>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("registrar.sgml" "Book" "chapter")
-End:
--->

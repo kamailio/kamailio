@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
@@ -276,8 +270,3 @@ typedef int (evs_process_body_t)(struct publ_info* publ,
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("pua.sgml" "book" "chapter")
-End:
--->

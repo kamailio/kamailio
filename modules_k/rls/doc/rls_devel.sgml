@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 2731 $</revnumber>
-		<date>$Date: 2007-09-10 15:56:47 +0300 (Mon, 10 Sep 2007) $</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
@@ -15,8 +9,3 @@
    </para>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("rls.sgml" "book" "chapter")
-End:
--->

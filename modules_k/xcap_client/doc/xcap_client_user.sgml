@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1953 $</revnumber>
-		<date>$Date: 2007-04-04 11:50:33 +0300 (Wed, 04 Apr 2007) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -206,10 +200,4 @@ _empty_line_
    	</section>
 
 </chapter>
-
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("xcap_client.sgml" "Book" "chapter")
-End:
--->
 

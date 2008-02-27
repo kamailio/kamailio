@@ -1,12 +1,5 @@
 <chapter id="devel">
     <chapterinfo>
-      <revhistory>
-        <revision>
-          <revnumber>$Revision$</revnumber>
-
-          <date>$Date$</date>
-        </revision>
-      </revhistory>
     </chapterinfo>
 
     <title>Developer's Guide</title>

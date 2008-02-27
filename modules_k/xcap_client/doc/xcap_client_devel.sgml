@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision: 1168 $</revnumber>
-		<date>$Date: 2006-10-13 15:21:23 +0300 (Fri, 13 Oct 2006) $</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>Developer's Guide</title>
 	<para>
@@ -177,8 +171,3 @@ typedef int (xcap_cb)(int doc_type, str xid, char* doc);
 	</section>	
 	</chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("xcap_client.sgml" "book" "chapter")
-End:
--->

@@ -2,12 +2,6 @@
 
 <chapter>
     <chapterinfo>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </chapterinfo>
     <title>Developer's Guide</title>
     <para>
@@ -50,8 +44,3 @@ static inline int add_diversion_helper(struct sip_msg* msg, str* s)
 </programlisting>
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("diversion.sgml" "book" "chapter")
-End:
--->

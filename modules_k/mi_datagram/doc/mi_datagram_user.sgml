@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1789 $</revnumber>
-		<date>$Date: 2007-05-04 14:30:48 +0300 (Thu, 05 Apr 2007) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 	<title>User's Guide</title>
 	
@@ -266,8 +260,3 @@ tm:\n
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: "mi_datagram.sgml" "Book" "chapter")
-End:
--->

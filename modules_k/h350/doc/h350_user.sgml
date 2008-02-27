@@ -814,8 +814,3 @@ exit;
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("ldap_h350.sgml" "Book" "chapter")
-End:
--->

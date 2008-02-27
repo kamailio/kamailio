@@ -2,12 +2,6 @@
 
 <chapter>
 	<chapterinfo>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision: 1 $</revnumber>
-		<date>$Date: 2007-04-30 11:50:33 +0300 (Mon, 30 Apr 2007) $</date>
-		</revision>
-	</revhistory>
 	</chapterinfo>
 
 	<title>User's Guide</title>
@@ -80,8 +74,3 @@
 
 </chapter>
 
-<!-- Keep this element at the end of the file
-Local Variables:
-sgml-parent-document: ("presence_mwi.sgml" "Book" "chapter")
-End:
--->
