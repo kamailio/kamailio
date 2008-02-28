@@ -113,6 +113,20 @@ modparam("pua_bla", "outbound_proxy", "sip:proxy@openser.org")
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>server_address</varname>(str)</title>
+		<para>
+		The IP address of the server.
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_bla", "server_address", "sip:160.34.23.12")
+...
+</programlisting>
+		</example>
+	</section>
 
 </section>	
 	

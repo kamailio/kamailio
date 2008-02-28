@@ -33,6 +33,7 @@
 #include "../pua/pua_bind.h"
 #include "../xmpp/xmpp_api.h"
 
+extern str server_address;
 
 extern send_subscribe_t pua_send_subscribe;
 extern send_publish_t pua_send_publish;

@@ -87,7 +87,7 @@ void bla_cb(ucontact_t* c, int type, void* param)
 
 	subs.source_flag= BLA_SUBSCRIBE;
 	subs.event= BLA_EVENT;
-	subs.contact= subs.watcher_uri;
+	subs.contact= &server_address;
 	
 	if(outbound_proxy.s && outbound_proxy.len)
 	{

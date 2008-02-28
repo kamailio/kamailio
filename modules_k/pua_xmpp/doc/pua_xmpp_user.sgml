@@ -55,17 +55,25 @@
 		</para>
 	</section>
 	</section>
+
 	<section>
 	<title>Exported Parameters</title>
-	<para>
-		<itemizedlist>
-			<listitem>
-			<para>
-				<emphasis>none</emphasis>.
-			</para>
-			</listitem>
-			</itemizedlist>
-	</para>
+		<section>
+		<title><varname>server_address</varname>(str)</title>
+		<para>
+		The IP address of the server. 
+		</para>
+		<example>
+		<title>Set <varname>server_address</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua_xmpp", "server_address", "160.23.23.10")
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+
 	<section>
 	<title>Exported Functions</title>
 	<para>

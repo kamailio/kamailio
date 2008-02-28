@@ -78,7 +78,7 @@ int request_winfo(struct sip_msg* msg, char* uri, char* expires)
 
 	subs.watcher_uri= &uri_str;
 
-	subs.contact= &uri_str;
+	subs.contact= &server_address;
 	
 	if(strncmp(expires, "0", 1 )== 0)
 	{

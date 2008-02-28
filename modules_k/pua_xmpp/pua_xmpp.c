@@ -75,6 +75,7 @@ xmlDocGetNodeByName_t XMLDocGetNodeByName;
 xmlNodeGetNodeByName_t XMLNodeGetNodeByName;
 xmlNodeGetNodeContentByName_t XMLNodeGetNodeContentByName;
 
+str server_address= {0, 0};
 
 /** module functions */
 
@@ -91,7 +92,8 @@ static cmd_export_t cmds[]=
 };
 
 static param_export_t params[]={
-	{0,0,0}
+	{"server_address",     STR_PARAM,	&server_address	},
+	{0,						0,				0			}
 };
 
 /** module exports */
@@ -120,6 +122,14 @@ static int mod_init(void)
 	bind_xmpp_t bind_xmpp;
 	bind_libxml_t bind_libxml;
 	libxml_api_t libxml_api;
+
+	/* check if compulsory parameter server_address is set */
+	if(server_address.s== NULL)
+	{
+		LM_ERR("compulsory 'server_address' parameter not set!");
+		return -1;
+	}
+	server_address.len= strlen(server_address.s);
 
 	/* import the TM auto-loading function */
 	if((load_tm=(load_tm_f)find_export("load_tm", 0, 0))==NULL)
