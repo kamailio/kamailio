@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -52,9 +52,11 @@ struct route_map ** script_routes = NULL;
 
 static void destroy_route_tree_item(struct route_tree_item *route_tree);
 
-void destroy_carrier_tree(struct carrier_tree * tree);
+static void destroy_failure_route_tree_item(struct failure_route_tree_item *route_tree_item);
 
 static struct route_tree_item * create_route_tree_item(void);
+
+static struct failure_route_tree_item * create_failure_route_tree_item(void);
 
 static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt);
 
@@ -69,21 +71,21 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt);
  * @param domain the domain name of desired routing tree
  * @param rd route data to be searched
  *
- * @return a pointer to the root node of the desired routing tree,
+ * @return a pointer to the desired routing tree,
  * NULL on failure
  */
-struct route_tree_item * get_route_tree(const char * domain, struct carrier_tree * rd) {
+struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd) {
 	int i, id;
 	struct route_tree * rt = NULL;
 	if (!rd) {
-		LM_ERR("NULL-pointer in parameter\n");
+		LM_ERR("NULL pointer in parameter\n");
 		return NULL;
 	}
 	for (i=0; i<rd->tree_num; i++) {
 		if (rd->trees[i] && rd->trees[i]->name.s) {
 			if (strcmp(rd->trees[i]->name.s, domain) == 0) {
 				LM_INFO("found domain %s\n", rd->trees[i]->name.s);
-				return rd->trees[i]->tree;
+				return rd->trees[i];
 			}
 		}
 	}
@@ -98,13 +100,16 @@ struct route_tree_item * get_route_tree(const char * domain, struct carrier_tree
 	if ((rt->tree = create_route_tree_item()) == NULL) {
 		return NULL;
 	}
+	if ((rt->failure_tree = create_failure_route_tree_item()) == NULL) {
+		return NULL;
+	}
 	if (add_route_tree(rd, rt) < 0) {
 		LM_ERR("couldn't add route tree\n");
 		destroy_route_tree(rt);
 		return NULL;
 	}
 	LM_INFO("created route tree: %s, %i\n", rt->name.s, rt->id);
-	return rt->tree;
+	return rt;
 }
 
 static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
@@ -123,7 +128,7 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 
 struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id) {
 	int i;
-	LM_DBG("searching in carrier %.*s\n", ct->name.len, ct->name.s);
+	LM_DBG("searching in carrier %.*s (id=%d)\n", ct->name.len, ct->name.s, ct->id);
 	for (i=0; i<ct->tree_num; i++) {
 		if (ct->trees[i]) {
 			LM_DBG("tree %.*s, domain %.*s : %i\n", ct->name.len, ct->name.s, ct->trees[i]->name.len, ct->trees[i]->name.s, ct->trees[i]->id);
@@ -150,6 +155,26 @@ static struct route_tree_item * create_route_tree_item(void) {
 		LM_ERR("out of shared memory while building route tree.\n");
 	} else {
 		memset(ret, 0, sizeof(struct route_tree_item));
+	}
+	return ret;
+}
+
+
+/**
+ * creates a routing tree node in shared memory and sets it up.
+ *
+ * @return a pointer to the newly allocated route tree item, NULL
+ * on error, in which case it LOGs an error message.
+ */
+static struct failure_route_tree_item * create_failure_route_tree_item(void) {
+	struct failure_route_tree_item *ret;
+	
+	ret = (struct failure_route_tree_item *)
+		shm_malloc(sizeof(struct failure_route_tree_item));
+	if (ret == NULL) {
+		LM_ERR("out of shared memory while building route tree.\n");
+	} else {
+		memset(ret, 0, sizeof(struct failure_route_tree_item));
 	}
 	return ret;
 }
@@ -219,10 +244,10 @@ struct route_tree * create_route_tree(const char * domain, int id) {
  * @see add_route()
  */
 int add_route_to_tree(struct route_tree_item * route_tree, const char * scan_prefix,
-                      const char * full_prefix, int max_targets, double prob,
-                      const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
-                      const char * rewrite_local_suffix, int status, int hash_index, 
-                      int backup, int * backed_up, const char * comment) {
+		const char * full_prefix, int max_targets, double prob,
+		const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
+		const char * rewrite_local_suffix, int status, int hash_index, 
+		int backup, int * backed_up, const char * comment) {
 	if (!scan_prefix || *scan_prefix == '\0') {
 		return add_route_rule(route_tree, full_prefix, max_targets, prob, rewrite_hostpart, strip,
 		                      rewrite_local_prefix, rewrite_local_suffix, status, hash_index,
@@ -242,6 +267,54 @@ int add_route_to_tree(struct route_tree_item * route_tree, const char * scan_pre
 		                         backup, backed_up, comment);
 	}
 }
+
+
+
+
+/**
+ * Adds the given failure route information to the failure route tree identified by
+ * route_tree. scan_prefix, host, reply_code, flags identifies the number for which
+ * the information is and the next_domain parameters defines where to continue
+ * routing in case of a match.
+ *
+ * Note that this is a recursive function. It strips off digits from the
+ * beginning of scan_prefix and calls itself.
+ *
+ * @param rt the current route tree node
+ * @param scan_prefix the prefix at the current position
+ * @param full_prefix the whole scan prefix
+ * @param host the hostname last tried
+ * @param reply_code the reply code 
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ * @param next_domain continue routing with this domain id
+ * @param comment a comment for the route rule
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * @see add_route()
+ */
+int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const char * scan_prefix,
+		const char * full_prefix, const char * host, const char * reply_code,
+		const int flags, const int mask, const int next_domain, const char * comment) {
+	if (!scan_prefix || *scan_prefix == '\0') {
+		return add_failure_route_rule(failure_tree, full_prefix, host, reply_code, flags, mask, next_domain, comment);
+	} else {
+		if (failure_tree->nodes[*scan_prefix - '0'] == NULL) {
+			failure_tree->nodes[*scan_prefix - '0']
+				= create_failure_route_tree_item();
+			if (failure_tree->nodes[*scan_prefix - '0'] == NULL) {
+				return -1;
+			}
+		}
+		return add_failure_route_to_tree(failure_tree->nodes[*scan_prefix - '0'],
+																		 scan_prefix + 1, full_prefix, host, reply_code,
+																		 flags, mask, next_domain, comment);
+	}
+}
+
+
+
 
 void destroy_route_map(void) {
 	struct route_map * tmp, *tmp2;
@@ -265,6 +338,7 @@ void destroy_route_map(void) {
  */
 void destroy_route_tree(struct route_tree *route_tree) {
 	destroy_route_tree_item(route_tree->tree);
+	destroy_failure_route_tree_item(route_tree->failure_tree);
 	shm_free(route_tree->name.s);
 	shm_free(route_tree);
 	return;
@@ -296,6 +370,36 @@ static void destroy_route_tree_item(struct route_tree_item *route_tree_item) {
 	while (rs != NULL) {
 		rs_tmp = rs->next;
 		destroy_route_rule(rs);
+		rs = rs_tmp;
+	}
+	shm_free(route_tree_item);
+	return;
+}
+
+
+/**
+ * Destroys failure_route_tree_item in shared memory by freing all its memory.
+ *
+ * @param failure_route_tree_item route tree node to be destroyed
+ */
+static void destroy_failure_route_tree_item(struct failure_route_tree_item *route_tree_item) {
+	int i;
+	struct failure_route_rule *rs;
+	struct failure_route_rule *rs_tmp;
+	
+	if (!route_tree_item) {
+		LM_ERR("NULL pointer in parameter\n");
+	}
+	
+	for (i = 0; i < 10; ++i) {
+		if (route_tree_item->nodes[i] != NULL) {
+			destroy_failure_route_tree_item(route_tree_item->nodes[i]);
+		}
+	}
+	rs = route_tree_item->rule_list;
+	while (rs != NULL) {
+		rs_tmp = rs->next;
+		destroy_failure_route_rule(rs);
 		rs = rs_tmp;
 	}
 	shm_free(route_tree_item);

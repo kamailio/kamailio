@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -39,111 +39,63 @@
 #define SP_ROUTE_ROUTE_FUNC_H
 
 #include "../../parser/msg_parser.h"
+#include "../../pvar.h"
+#include "../../prime_hash.h"
+#include "carrierroute.h"
 
 /**
- * rewrites the request URI of msg by calculating a rule, using 
- * crc32 for hashing. The request URI is used to determine tree node
+ * Loads user carrier from subscriber table and stores it in an AVP.
  *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
+ * @param _msg the current SIP message
+ * @param _user the user to determine the route tree
+ * @param _domain the domain to determine the route tree
+ * @param _dstavp the name of the AVP where to store the carrier tree id
  *
  * @return 1 on success, -1 on failure
  */
-int route_uri(struct sip_msg * msg, char * domain_param, char * hash);
+int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user,
+		pv_elem_t *_domain, struct multiparam_t *_dstavp);
+
 
 /**
- * rewrites the request URI of msg by calculating a rule, using 
- * crc32 for hashing. The request URI is used to determine tree node
- * the given _user is used to determine the routing tree.
+ * rewrites the request URI of msg after determining the
+ * new destination URI
  *
- * @param msg the current SIP message
- * @param _uri the URI to determine the route tree (string or pseudo-variable)
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
  * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _rewrite_user the localpart of the URI to be rewritten
+ * @param _hsrc the SIP header used for hashing
+ * @param _halg the algorithm used for hashing
+ * @param _dstavp the name of the destination AVP where the used host name is stored
  *
  * @return 1 on success, -1 on failure
  */
-int user_route_uri(struct sip_msg * msg, char * _uri, char * _domain);
+int cr_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
+		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+		pv_elem_t *_rewrite_user, enum hash_source hsrc,
+		enum hash_algorithm halg, struct multiparam_t *_dstavp);
+
 
 /**
- * rewrites the request URI of msg by calculating a rule, using 
- * crc32 for hashing. The request URI is used to determine tree node
- * the given _tree is the used routing tree
+ * Loads next domain from failure routing table and stores it in an AVP.
  *
- * @param msg the current SIP message
- * @param _tree the routing tree to be used
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
  * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _host the host name to be used for rule matching
+ * @param _reply_code the reply code to be used for rule matching
+ * @param _flags the flags to be used for rule matching (msg flags or integer)
+ * @param _dstavp the name of the destination AVP
  *
  * @return 1 on success, -1 on failure
  */
-int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain);
+int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
+		struct multiparam_t *_domain, pv_elem_t *_prefix_matching, pv_elem_t *_host,
+		pv_elem_t *_reply_code, struct multiparam_t *_flags, struct multiparam_t *_dstavp);
 
-/**
- * rewrites the request URI of msg by calculating a rule, using 
- * prime number algorithm for hashing, only from_user or to_user
- * are possible values for hash. The request URI is used to determine 
- * tree node
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int prime_balance_uri(struct sip_msg * msg, char * domain_param, char * hash);
 
-/**
- * rewrites the request URI of msg by calculating a rule, 
- * using crc32 for hashing. The to URI is used to determine
- * tree node
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int route_by_to(struct sip_msg * msg, char * domain_param, char * hash);
-
-/**
- * rewrites the request URI of msg by calculating a rule, using 
- * prime number algorithm for hashing, only from_user or to_user
- * are possible values for hash. The to URI is used to determine 
- * tree node
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int prime_balance_by_to(struct sip_msg * msg, char * domain_param, char * hash);
-
-/**
- * rewrites the request URI of msg by calculating a rule, 
- * using crc32 for hashing. The from URI is used to determine
- * tree node
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int route_by_from(struct sip_msg * msg, char * domain_param, char * hash);
-
-/**
- * rewrites the request URI of msg by calculating a rule, using 
- * prime number algorithm for hashing, only from_user or to_user
- * are possible values for hash. The from URI is used to determine 
- * tree node
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int prime_balance_by_from(struct sip_msg * msg, char * domain_param, char * hash);
 
 #endif

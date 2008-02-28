@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -47,9 +47,8 @@
 struct route_rule_p_list;
 
 /**
- * @struct route_rule Second stage of processing: Try to
- * map the end of the user part of the URI to a given
- * suffix. Then rewrite with given parameters.
+ * @struct route_rule Second stage of processing: Try to map the end of the
+ * user part of the URI to a given suffix. Then rewrite with given parameters.
  */
 struct route_rule {
 	int dice_to; /*!< prob * DICE_MAX */
@@ -68,6 +67,22 @@ struct route_rule {
 	struct route_rule * next; /*!< A pointer to the next route rule */
 };
 
+/**
+ * @struct failure_route_rule Second stage of processing: Try to map the end of
+ * the user part of the URI to a given suffix. Then rewrite with given
+ * parameters.
+ */
+struct failure_route_rule {
+	str host; /*!< The new target host for the request */
+	str comment; /*!< A comment for the route rule */
+	str prefix; /*!< The prefix for which the route ist valid */
+	str reply_code;  /*!< The reply code for which the route ist valid */
+	int next_domain;  /*!< The domain id where to continue routing */
+	int flags;  /*!< The flags for which the route ist valid */
+	int mask;  /*!< The mask for the flags field */
+	struct failure_route_rule * next; /*!< A pointer to the next route rule */
+};
+
 struct route_rule_p_list {
 	struct route_rule * rr;
 	int hash_index;
@@ -75,12 +90,11 @@ struct route_rule_p_list {
 };
 
 /**
- * @struct route_tree_item First stage of processing: The
- * actual route tree. Take one digit after another off the
- * user part of the uri until the pointer for the digit
- * is NULL.
- * Note: We can only handle digits right now, ie., no letters
- * or symbols. Seems okay since this is for PSTN routing.
+ * @struct route_tree_item First stage of processing: The actual route tree.
+ * Take one digit after another off the user part of the uri until the pointer
+ * for the digit is NULL.
+ * Note: We can only handle digits right now, ie., no letters or symbols.
+ * Seems okay since this is for PSTN routing.
  */
 struct route_tree_item {
 	struct route_tree_item * nodes[10]; /*!< The Array points to child nodes if present */
@@ -92,15 +106,28 @@ struct route_tree_item {
 };
 
 /**
- * @struct route_tree The head of each route tree
+ * @struct failure_route_tree_item First stage of processing: The actual route
+ * tree. Take one digit after another of the user part of the uri until the
+ * pointer for the digit is NULL.
+ * Note: We can only handle digits right now, ie., no letters or symbols.
+ * Seems okay since this is for PSTN routing.
+ */
+struct failure_route_tree_item {
+	struct failure_route_tree_item * nodes[10]; /*!< The Array points to child nodes if present */
+	struct failure_route_rule * rule_list; /*!< Each node MAY contain a failure rule list */
+};
+
+/**
+ * @struct route_tree The head of each route tree.
  */
 struct route_tree {
 	int id; /*!< the numerical id of the routing tree */
 	str name; /*!< the name of the routing tree */
 	struct route_tree_item * tree; /*!< the root node of the routing tree */
+	struct failure_route_tree_item * failure_tree; /*!< the root node of the failure routing tree */
 };
 
-/** @struct route_tree The struct for a carrier routing tree
+/** @struct carrier_tree The struct for a carrier routing tree.
  *
  */
 struct carrier_tree {
@@ -112,7 +139,7 @@ struct carrier_tree {
 };
 
 /**
- * @struct rewrite_data contains all routing trees
+ * @struct rewrite_data contains all routing trees.
  */
 struct rewrite_data {
 	struct carrier_tree ** carriers; /*!< array of carrier trees */
@@ -124,7 +151,7 @@ struct rewrite_data {
 
 /**
  * @struct route_map used to map routing domain names to numbers for
- * faster access
+ * faster access.
  */
 struct route_map {
 str name; /*!< name of the routing domain */
@@ -134,7 +161,7 @@ struct route_map * next; /*!< pointer to the next element */
 
 /**
  * @struct route_map used to map carrier tree names to numbers for
- * faster access
+ * faster access.
  */
 struct tree_map {
 str name; /*!< name of the carrier tree */

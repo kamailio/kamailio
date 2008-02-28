@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -55,591 +55,383 @@
 #include "carrierroute.h"
 
 
-enum hash_algorithm {
-    alg_crc32, /*!< hashing algorithm is CRC32 */
-    alg_prime /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
-};
 
-static int determine_and_rewrite_uri(struct sip_msg* msg, int domain,
-                                     enum hash_source hash,
-                                     enum hash_algorithm alg);
-
-static int determine_to_and_rewrite_uri(struct sip_msg* msg, int domain,
-                                        enum hash_source hash,
-                                        enum hash_algorithm alg);
-
-static int determine_from_and_rewrite_uri(struct sip_msg* msg, int domain,
-        enum hash_source hash,
-        enum hash_algorithm alg);
-
-static int rewrite_msg(int domain, str * uri, struct sip_msg * msg, str * user,
-                       enum hash_source hash_source, enum hash_algorithm alg);
-
-static int carrier_rewrite_msg(int carrier, int domain,
-                               str * uri, struct sip_msg * msg, str * user,
-                               enum hash_source hash_source,
-                               enum hash_algorithm alg);
-
-static int rewrite_uri_recursor(struct route_tree_item *route_tree, str *uri,
-                                str *dest, struct sip_msg *msg, str * user,
-                                enum hash_source hash_source,
-                                enum hash_algorithm alg);
-
-static int rewrite_on_rule(struct route_tree_item *route_tree, str *dest,
-                           struct sip_msg *msg, str * user,
-                           enum hash_source hash_source,
-                           enum hash_algorithm alg);
-
-static int actually_rewrite(struct route_rule *rs, str *dest,
-                            struct sip_msg *msg, str * user);
-
-static struct route_rule * get_rule_by_hash(struct route_tree_item * rt, int prob);
 
 /**
- * rewrites the request URI of msg by calculating a rule, using
- * crc32 for hashing. The request URI is used to determine tree node
+ * Loads user carrier from subscriber table and stores it in an AVP.
  *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
+ * @param _msg the current SIP message
+ * @param _user the user to determine the route tree
+ * @param _domain the domain to determine the route tree
+ * @param _dstavp the name of the AVP where to store the carrier tree id
  *
  * @return 1 on success, -1 on failure
  */
-int route_uri(struct sip_msg* msg, char* domain_param, char* hash) {
-	int domain;
-	enum hash_source my_hash_source;
-
-	domain = (int)(long)domain_param;
-	my_hash_source = (enum hash_source)hash;
-	return determine_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
-}
-
-/**
- * rewrites the request URI of msg by calculating a rule, using
- * prime number algorithm for hashing, only from_user or to_user
- * are possible values for hash. The request URI is used to determine
- * tree node
- *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-int prime_balance_uri(struct sip_msg * msg, char * domain_param, char * hash) {
-	int domain;
-	enum hash_source my_hash_source;
-
-	domain = (int)(long)domain_param;
-	my_hash_source = (enum hash_source)hash;
-	return determine_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
-}
-
-/*
- * Get To header field URI
- */
-static inline int get_to_uri(struct sip_msg* _m, str* _u) {
-	if (!_m->to && ((parse_headers(_m, HDR_TO_T, 0) == -1) || (!_m->to))) {
-		LM_ERR("Can't get To header field\n");
-		return -1;
-	}
-
-	_u->s = ((struct to_body*)_m->to->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->to->parsed)->uri.len;
-
-	return 0;
-}
-
-
-/*
- * Get From header field URI
- */
-static inline int get_from_uri(struct sip_msg* _m, str* _u) {
-	if (parse_from_header(_m) < 0) {
-		LM_ERR("Error while parsing From body\n");
-		return -1;
-	}
-
-	_u->s = ((struct to_body*)_m->from->parsed)->uri.s;
-	_u->len = ((struct to_body*)_m->from->parsed)->uri.len;
-
-	return 0;
-}
-
-/**
- * rewrites the request URI of msg by calculating a rule, using
- * crc32 for hashing. The request URI is used to determine tree node
- * the given _user is used to determine the routing tree.
- *
- * @param msg the current SIP message
- * @param _uri the URI to determine the route tree (string or pseudo-variable)
- * @param _domain the requested routing domain
- *
- * @return 1 on success, -1 on failure
- */
-int user_route_uri(struct sip_msg * _msg, char * _uri, char * _domain) {
-	pv_elem_t *model;
-	str uri, user, str_domain, ruser, ruri;
-	struct sip_uri puri;
-	int carrier_id, domain, index;
-	domain = (int)(long)_domain;
-	struct rewrite_data * rd = NULL;
-	struct carrier_tree * ct = NULL;
-
-	if (!_uri) {
-		LM_ERR("bad parameter\n");
-		return -1;
-	}
+int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_domain, struct multiparam_t *_dstavp) {
+	str user;
+	str domain;
+  int_str avp_val;
 	
-	if (parse_sip_msg_uri(_msg) < 0) {
-		return -1;
-	}
-
-	/* Retrieve uri from parameter */
-	model = (pv_elem_t*)_uri;
-	if (pv_printf_s(_msg, model, &uri)<0)	{
+	if (pv_printf_s(_msg, _user, &user)<0)	{
 		LM_ERR("cannot print the format\n");
 		return -1;
 	}
 
-	if (parse_uri(uri.s, uri.len, &puri) < 0) {
-		LM_ERR("Error while parsing URI\n");
-		return -5;
-	}
-	user = puri.user;
-	str_domain = puri.host;
-
-	ruser.s = _msg->parsed_uri.user.s;
-	ruser.len = _msg->parsed_uri.user.len;
-	ruri.s = _msg->parsed_uri.user.s;
-	ruri.len = _msg->parsed_uri.user.len;
-
-	do {
-		rd = get_data();
-	} while (rd == NULL);
-
-	if ((carrier_id = load_user_carrier(&user, &str_domain)) < 0) {
-		release_data(rd);
-		return -1;
-	} else if (carrier_id == 0) {
-		index = rd->default_carrier_index;
-	} else {
-		if ((ct = get_carrier_tree(carrier_id, rd)) == NULL) {
-			if (fallback_default) {
-				index = rd->default_carrier_index;
-			} else {
-				LM_ERR("desired routing tree with id %i doesn't exist\n",
-					carrier_id);
-				release_data(rd);
-				return -1;
-			}
-		} else {
-			index = ct->index;
-		}
-	}
-	release_data(rd);
-	return carrier_rewrite_msg(index, domain, &ruri, _msg, &ruser, shs_call_id, alg_crc32);
-}
-
-/**
- * rewrites the request URI of msg by calculating a rule, using
- * crc32 for hashing. The request URI is used to determine tree node
- * the given _tree is the used routing tree
- *
- * @param msg the current SIP message
- * @param _tree the routing tree to be used (string or pseudo-variable
- * @param _domain the requested routing domain
- *
- * @return 1 on success, -1 on failure
- */
-int tree_route_uri(struct sip_msg * msg, char * _tree, char * _domain) {
-	struct rewrite_data * rd = NULL;
-	pv_elem_t *model;
-	str carrier_name;
-	int index;
-	str ruser;
-	str ruri;
-
-	if (!_tree) {
-		LM_ERR("bad parameters\n");
-		return -1;
-	}
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-
-	/* Retrieve carrier name from parameter */
-	model = (pv_elem_t*)_tree;
-	if (pv_printf_s(msg, model, &carrier_name)<0)	{
+	if (pv_printf_s(_msg, _domain, &domain)<0)	{
 		LM_ERR("cannot print the format\n");
 		return -1;
 	}
-	if ((index = find_tree(carrier_name)) < 0)
-		LM_WARN("could not find carrier %.*s\n",
-				carrier_name.len, carrier_name.s);
-	else
-		LM_DBG("tree %.*s has id %i\n", carrier_name.len, carrier_name.s, index);
 	
-	ruser.s = msg->parsed_uri.user.s;
-	ruser.len = msg->parsed_uri.user.len;
-	ruri.s = msg->parsed_uri.user.s;
-	ruri.len = msg->parsed_uri.user.len;
-	do {
-		rd = get_data();
-	} while (rd == NULL);
-	if (index < 0) {
-		if (fallback_default) {
-			LM_NOTICE("invalid tree id %i specified, use default tree\n", index);
-			index = rd->default_carrier_index;
-		} else {
-			LM_ERR("invalid tree id %i specified and fallback deactivated\n", index);
-			release_data(rd);
+	/* get carrier id */
+	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
+		return -1;
+	}
+	else {
+		/* set avp ! */
+		if (add_avp(_dstavp->u.a.flags, _dstavp->u.a.name, avp_val)<0) {
+			LM_ERR("add AVP failed\n");
 			return -1;
 		}
 	}
-	release_data(rd);
-	return carrier_rewrite_msg(index, (int)(long)_domain, &ruri, msg, &ruser,
-			shs_call_id, alg_crc32);
+	return 1;
 }
 
+
+
+
 /**
- * rewrites the request URI of msg by calculating a rule,
- * using crc32 for hashing. The to URI is used to determine
- * tree node
+ * Get the carrier id from multiparam_t structure.
  *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
+ * @param mp carrier id as integer or AVP name of carrier
+ * @return carrier id on success, -1 otherwise
  *
- * @return 1 on success, -1 on failure
  */
-int route_by_to(struct sip_msg* msg, char* domain_param, char* hash) {
-	int domain;
-	enum hash_source my_hash_source;
+int mp2carrier_id(struct multiparam_t *mp) {
+	int carrier_id;
+	struct usr_avp *avp;
+	int_str avp_val;
 
-	domain = (int)(long)domain_param;
-	my_hash_source = (enum hash_source)hash;
-	return determine_to_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
+	switch (mp->type) {
+	case MP_INT:
+		return mp->u.n;
+		break;
+	case MP_AVP:
+    avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
+    if (!avp) {
+			LM_ERR("cannot find AVP '%.*s'\n", mp->u.a.name.s.len, mp->u.a.name.s.s);
+			return -1;
+		}
+		if ((avp->flags&AVP_VAL_STR)==0) {
+			return avp_val.n;
+		}
+		else {
+			carrier_id = find_tree(avp_val.s);
+			if (carrier_id < 0) {
+				LM_WARN("could not find carrier tree '%.*s'\n", avp_val.s.len, avp_val.s.s);
+				/* might be using fallback later... */
+			}
+			return carrier_id;
+		}
+		break;
+	default:
+		LM_ERR("invalid carrier type\n");
+		return -1;
+		break;
+	}
 }
 
+
+
+
 /**
- * rewrites the request URI of msg by calculating a rule, using
- * prime number algorithm for hashing, only from_user or to_user
- * are possible values for hash. The to URI is used to determine
- * tree node
+ * Get the domain id from multiparam_t structure.
  *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
+ * @param mp carrier id as integer or AVP name of carrier
+ * @return carrier id on success, -1 otherwise
  *
- * @return 1 on success, -1 on failure
  */
-int prime_balance_by_to(struct sip_msg* msg, char* domain_param, char* hash) {
-	int domain;
-	enum hash_source my_hash_source;
+int mp2domain_id(struct multiparam_t *mp) {
+	char tmps[256]; /* FIXME: use str */
+	int domain_id;
+	struct usr_avp *avp;
+	int_str avp_val;
 
-	domain = (int)(long)domain_param;
-	my_hash_source = (enum hash_source)hash;
-	return determine_to_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
+	switch (mp->type) {
+	case MP_INT:
+		return mp->u.n;
+		break;
+	case MP_AVP:
+    avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
+    if (!avp) {
+			LM_ERR("cannot find AVP '%.*s'\n", mp->u.a.name.s.len, mp->u.a.name.s.s);
+			return -1;
+		}
+		if ((avp->flags&AVP_VAL_STR)==0) {
+			return avp_val.n;
+		}
+		else {
+			/* FIXME: use str! */
+			if (avp_val.s.len > sizeof(tmps -1)) {
+				LM_ERR("domain too long\n");
+				return -1;
+			}
+			memcpy(tmps, avp_val.s.s, avp_val.s.len);
+			tmps[avp_val.s.len]=0;
+
+			domain_id = add_domain(tmps/*avp_val.s*/);
+			if (domain_id < 0) {
+				LM_ERR("could not find domain '%.*s'\n", avp_val.s.len, avp_val.s.s);
+				return -1;
+			}
+			return domain_id;
+		}
+		break;
+	default:
+		LM_ERR("invalid domain type\n");
+		return -1;
+		break;
+	}
 }
 
+
+
+
 /**
- * rewrites the request URI of msg by calculating a rule,
- * using crc32 for hashing. The from URI is used to determine
- * tree node
+ * Try to match the reply code rc to the reply code with wildcards.
  *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
+ * @param rcw reply code specifier with wildcards
+ * @param rc the current reply code
  *
- * @return 1 on success, -1 on failure
+ * @return 0 on match, -1 otherwise
  */
-int route_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
-	int domain;
-	enum hash_source my_hash_source;
-
-	domain = (int)(long)domain_param;
-	my_hash_source = (enum hash_source)hash;
-	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_crc32);
+static inline int reply_code_matcher(const str *rcw, const str *rc) {
+	int i;
+	
+	if (rcw->len==0) return 0;
+	
+	if (rcw->len != rc->len) return -1;
+	
+	for (i=0; i<rc->len; i++) {
+		if (rcw->s[i]!='.' && rcw->s[i]!=rc->s[i]) return -1;
+	}
+	
+	return 0;
 }
 
+
+
+
 /**
- * rewrites the request URI of msg by calculating a rule, using
- * prime number algorithm for hashing, only from_user or to_user
- * are possible values for hash. The from URI is used to determine
- * tree node
+ * writes the next_domain avp using the rule list of route_tree
  *
- * @param msg the current SIP message
- * @param domain_param the requested routing domain
- * @param hash the message header used for hashing
+ * @param route_tree the current failure routing tree node
+ * @param host last tried host
+ * @param reply_code the last reply code
+ * @param flags flags for the failure route rule
+ * @param dstavp the name of the AVP where to store the next domain
  *
- * @return 1 on success, -1 on failure
+ * @return 0 on success, -1 on failure
  */
-int prime_balance_by_from(struct sip_msg* msg, char* domain_param, char* hash) {
-	int domain;
-	enum hash_source my_hash_source;
-
-	domain = (int)(long)domain_param;
-	my_hash_source = (enum hash_source)hash;
-	return determine_from_and_rewrite_uri(msg, domain, my_hash_source, alg_prime);
+static int set_next_domain_on_rule(const struct failure_route_tree_item *failure_tree,
+		const str *host, const str *reply_code, const int flags,
+		const struct multiparam_t *dstavp) {
+	struct failure_route_rule * rr;
+	int_str avp_val;
+	
+	assert(failure_tree != NULL);
+	
+	for (rr = failure_tree->rule_list; rr != NULL; rr = rr->next) {
+		LM_DBG("Trying to find matching rule...\n");
+		LM_DBG("rr.flags=%d rr.mask=%d flags=%d\n", rr->flags, rr->mask, flags);
+		LM_DBG("rr.host.len=%d host.len=%d\n", rr->host.len, host->len);
+		LM_DBG("rr.host.s='%.*s' host.s='%.*s'\n", rr->host.len, rr->host.s, host->len, host->s);
+		LM_DBG("rr.reply_code.len=%d reply_code.len=%d\n", rr->reply_code.len, reply_code->len);
+		LM_DBG("rr.reply_code.s='%.*s' reply_code.s='%.*s'\n", rr->reply_code.len, rr->reply_code.s, reply_code->len, reply_code->s);
+		if (((rr->mask & flags) == rr->flags) &&
+				((rr->host.len == 0) || ((host->len == rr->host.len) && (strncmp(host->s, rr->host.s, host->len)==0))) &&
+				(reply_code_matcher(&(rr->reply_code), reply_code)==0)) {
+			avp_val.n = rr->next_domain;
+			if (add_avp(dstavp->u.a.flags, dstavp->u.a.name, avp_val)<0) {
+				LM_ERR("set AVP failed\n");
+				return -1;
+			}
+			
+			LM_INFO("next_domain is %d.\n", rr->next_domain);
+			return 0;
+		}
+	}
+	
+	return -1;
 }
+
+
+
 
 /**
- * Like determine_and_rewrite_uri, except the difference that the
- * to URI is used instead of the request URI
- *
- * @param msg the current SIP message
- * @param domain the requested routing domain
- * @param hash the SIP header used for hashing
- * @param alg the algorithm used for hashing
- *
- * @return 1 on success, -1 on failure
- *
- * @see determine_and_rewrite_uri()
- */
-static int determine_to_and_rewrite_uri(struct sip_msg* msg, int domain,
-                                        enum hash_source hash,
-                                        enum hash_algorithm alg) {
-	str user;
-	str to_user;
-	struct to_body * to;
-	struct sip_uri to_uri;
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-
-	if (!msg->to && ((parse_headers(msg, HDR_TO_T, 0) == -1) || !msg->to)) {
-		LM_ERR("Message has no To header\n");
-		return -1;
-	}
-
-	to = get_to(msg);
-
-	if (parse_uri(to->uri.s, to->uri.len, &to_uri) < 0) {
-		LM_ERR("Failed to parse To URI.\n");
-		return -1;
-	}
-	to_user.s = to_uri.user.s;
-	to_user.len = to_uri.user.len;
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-	user.s = msg->parsed_uri.user.s;
-	user.len = msg->parsed_uri.user.len;
-
-	return rewrite_msg(domain, &to_user, msg, &user, hash, alg);
-}
-
-/**
- * Like determine_and_rewrite_uri, except the difference that the
- * from URI is used instead of the request URI
- *
- * @param msg the current SIP message
- * @param domain the requested routing domain
- * @param hash the SIP header used for hashing
- * @param alg the algorithm used for hashing
- *
- * @return 1 on success, -1 on failure
- *
- * @see determine_and_rewrite_uri()
- */
-static int determine_from_and_rewrite_uri(struct sip_msg* msg, int domain,
-        enum hash_source hash,
-        enum hash_algorithm alg) {
-	str user;
-	str from_user;
-	struct to_body * from;
-	struct sip_uri from_uri;
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-
-	if (parse_from_header(msg) == -1) {
-		LM_ERR("validate_msg: Message has no From header\n");
-		return -1;
-	}
-
-	from = get_from(msg);
-
-	if (parse_uri(from->uri.s, from->uri.len, &from_uri) < 0) {
-		LM_ERR("Failed to parse From URI.\n");
-		return -1;
-	}
-	from_user.s = from_uri.user.s;
-	from_user.len = from_uri.user.len;
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-	user.s = msg->parsed_uri.user.s;
-	user.len = msg->parsed_uri.user.len;
-
-	return rewrite_msg(domain, &from_user, msg, &user, hash, alg);
-}
-
-/**
- * extracts the request URI from msg and passes it to rewrite_msg
- *
- * @param msg the current SIP message
- * @param domain the requested routing domain
- * @param hash the SIP header used for hashing
- * @param alg the algorithm used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-static int determine_and_rewrite_uri(struct sip_msg* msg, int domain,
-                                     enum hash_source hash,
-                                     enum hash_algorithm alg) {
-	str user;
-	str uri;
-
-	if (parse_sip_msg_uri(msg) < 0) {
-		return -1;
-	}
-	user.s = msg->parsed_uri.user.s;
-	user.len = msg->parsed_uri.user.len;
-	uri.s = msg->parsed_uri.user.s;
-	uri.len = msg->parsed_uri.user.len;
-
-	return rewrite_msg(domain, &uri, msg, &user, hash, alg);
-}
-
-static int rewrite_msg(int domain,
-                       str * uri, struct sip_msg * msg, str * user,
-                       enum hash_source hash_source,
-                       enum hash_algorithm alg) {
-	int index;
-	struct rewrite_data * rd;
-	do {
-		rd = get_data();
-	} while (rd == NULL);
-	index = rd->default_carrier_index;
-	release_data(rd);
-	return carrier_rewrite_msg(index, domain, uri, msg, user, hash_source, alg);
-}
-
-/**
- * rewrites the request URI of msg after determining the
- * new destination URI
- *
- * @param carrier the requested carrier
- * @param domain the requested routing domain
- * @param uri the URI to be rewritten
- * @param msg the current SIP message
- * @param user the localpart of the URI to be rewritten
- * @param hash_source the SIP header used for hashing
- * @param alg the algorithm used for hashing
- *
- * @return 1 on success, -1 on failure
- */
-static int carrier_rewrite_msg(int carrier, int domain,
-                               str * uri, struct sip_msg * msg, str * user,
-                               enum hash_source hash_source,
-                               enum hash_algorithm alg) {
-	struct rewrite_data *rd;
-	struct route_tree * rt;
-	struct action act;
-	str dest;
-	int ret;
-
-	do {
-		rd = get_data();
-	} while (rd == NULL);
-
-	if (carrier >= rd->tree_num) {
-		LM_ERR("desired carrier doesn't exist. (We only have %ld carriers, "
-			"you wanted %d.)\n", (long)(rd->tree_num) - 1, carrier);
-		ret = -1;
-		goto unlock_and_out;
-	}
-	if ((rt = get_route_tree_by_id(rd->carriers[carrier], domain)) == NULL) {
-		LM_ERR("desired routing domain doesn't exist, uri %.*s, carrier %d, domain %d\n",
-			user->len, user->s, carrier, domain);
-		ret = -1;
-		goto unlock_and_out;
-	}
-	if (rewrite_uri_recursor(rt->tree, uri, &dest, msg, user, hash_source, alg) != 0) {
-		LM_ERR("during rewrite_uri_recursor, uri %.*s, carrier %d, domain %d\n", user->len,
-			user->s, carrier, domain);
-		ret = -1;
-		goto unlock_and_out;
-	}
-
-	LM_INFO("uri %.*s was rewritten to %.*s\n", user->len, user->s, dest.len, dest.s);
-
-	act.type = SET_URI_T;
-	act.elem[0].type= STRING_ST;
-	act.elem[0].u.string = dest.s;
-	act.next = NULL;
-
-	ret = do_action(&act, msg);
-	if (ret < 0) {
-		LM_ERR("Error in do_action()\n");
-	}
-	pkg_free(dest.s);
-unlock_and_out:
-	release_data(rd);
-	return ret;
-}
-
-/**
- * traverses the routing tree until a matching rule is found
+ * traverses the failure routing tree until a matching rule is found.
  * The longest match is taken, so it is possible to define
- * route rules for a single number
+ * failure route rules for a single number
  *
  * @param route_tree the current routing tree node
  * @param uri the uri to be rewritten at the current position
- * @param dest the returned new destination URI
- * @param msg the sip message
- * @param user the localpart of the uri to be rewritten
- * @param hash_source the SIP header used for hashing
- * @param alg the algorithm used for hashing
+ * @param host last tried host
+ * @param reply_code the last reply code
+ * @param flags flags for the failure route rule
+ * @param dstavp the name of the AVP where to store the next domain
  *
  * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
-static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
-                                str * dest, struct sip_msg * msg, str * user,
-                                enum hash_source hash_source,
-                                enum hash_algorithm alg) {
-	struct route_tree_item *re_tree;
-	str re_uri;
-
+static int set_next_domain_recursor(const struct failure_route_tree_item *failure_tree,
+		const str *uri, const str *host, const str *reply_code, const int flags,
+		const struct multiparam_t *dstavp) {
+	int ret;
+	struct failure_route_tree_item *re_tree;
+	str re_uri = *uri;
+	
 	/* Skip over non-digits.  */
-	while (uri->len > 0 && !isdigit(*uri->s)) {
-		++uri->s;
-		--uri->len;
+	while (re_uri.len > 0 && !isdigit(*re_uri.s)) {
+		++re_uri.s;
+		--re_uri.len;
 	}
-	if (uri->len == 0 || route_tree->nodes[*uri->s - '0'] == NULL) {
-		if (route_tree->rule_list == NULL) {
-			LM_INFO("URI or route tree nodes empty, empty rule list\n");
+	if (re_uri.len == 0 || failure_tree->nodes[*re_uri.s - '0'] == NULL) {
+		if (failure_tree->rule_list == NULL) {
 			return 1;
 		} else {
-			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
+			return set_next_domain_on_rule(failure_tree, host, reply_code, flags, dstavp);
 		}
 	} else {
-		/* match, goto the next number of the uri and try again */
-		re_tree = route_tree->nodes[*uri->s - '0'];
-		re_uri.s = uri->s + 1;
-		re_uri.len = uri->len - 1;
-		switch (rewrite_uri_recursor(re_tree, &re_uri, dest, msg, user, hash_source, alg)) {
-			case 0:
-				return 0;
-			case 1:
-				if (route_tree->rule_list != NULL) {
-					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg);
-				} else {
-					LM_INFO("empty rule list for URI %.*s\n", uri->len - re_uri.len, uri->s);
-					return 1;
-				}
-			default:
-				return -1;
+		re_tree = failure_tree->nodes[*re_uri.s - '0'];
+		re_uri.s++;
+		re_uri.len--;
+		ret = set_next_domain_recursor(re_tree, &re_uri, host, reply_code, flags, dstavp);
+		switch (ret) {
+		case 0:
+			return 0;
+		case 1:
+			if (failure_tree->rule_list != NULL) {
+				return set_next_domain_on_rule(failure_tree, host, reply_code, flags, dstavp);
+			} else {
+				return 1;
+			}
+		default:
+			return -1;
 		}
 	}
 }
+
+
+
+
+/**
+ * searches for a rule int rt with hash_index prob - 1
+ * If the rule with the desired hash index is deactivated,
+ * the next working rule is used.
+ *
+ * @param rt the routing tree node to search for rule
+ * @param prob the hash index
+ *
+ * @return pointer to route rule on success, NULL on failure
+ */
+static struct route_rule * get_rule_by_hash(const struct route_tree_item * rt,
+		const int prob) {
+	struct route_rule * act_hash = NULL;
+
+	if (prob > rt->rule_num) {
+		LM_WARN("too large desired hash, taking highest\n");
+		act_hash = rt->rules[rt->rule_num - 1];
+	}
+	act_hash = rt->rules[prob - 1];
+
+	if (!act_hash->status) {
+		if (act_hash->backup && act_hash->backup->rr) {
+			act_hash = act_hash->backup->rr;
+		} else {
+			act_hash = NULL;
+		}
+	}
+	LM_INFO("desired hash was %i, return %i\n", prob, act_hash ? act_hash->hash_index : -1);
+	return act_hash;
+}
+
+
+
+
+/**
+ * does the work for rewrite_on_rule, writes the new URI into dest
+ *
+ * @param rs the route rule used for rewriting
+ * @param dest the returned new destination URI
+ * @param msg the sip message
+ * @param user the localpart of the uri to be rewritten
+ * @param dstavp the name of the destination AVP where the used host name is stored
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * @see rewrite_on_rule()
+ */
+static int actually_rewrite(const struct route_rule *rs, str *dest,
+		const struct sip_msg *msg, const str * user, struct multiparam_t *dstavp) {
+	size_t len;
+	char *p;
+  int_str avp_val;
+	int strip = 0;
+
+	strip = (rs->strip > user->len ? user->len : rs->strip);
+	strip = (strip < 0 ? 0 : strip);
+
+	len = rs->local_prefix.len + user->len + rs->local_suffix.len +
+	      AT_SIGN_LEN + rs->host.len - strip;
+	if (msg->parsed_uri.type == SIPS_URI_T) {
+		len += SIPS_URI_LEN;
+	} else {
+		len += SIP_URI_LEN;
+	}
+	dest->s = (char *)pkg_malloc(len + 1);
+	if (dest->s == NULL) {
+		LM_ERR("out of private memory.\n");
+		return -1;
+	}
+	dest->len = len;
+	p = dest->s;
+	if (msg->parsed_uri.type == SIPS_URI_T) {
+		memcpy(p, SIPS_URI, SIPS_URI_LEN);
+		p += SIPS_URI_LEN;
+	} else {
+		memcpy(p, SIP_URI, SIP_URI_LEN);
+		p += SIP_URI_LEN;
+	}
+	if (user->len) {
+		memcpy(p, rs->local_prefix.s, rs->local_prefix.len);
+		p += rs->local_prefix.len;
+		memcpy(p, user->s + strip, user->len - strip);
+		p += user->len - strip;
+		memcpy(p, rs->local_suffix.s, rs->local_suffix.len);
+		p += rs->local_suffix.len;
+		memcpy(p, AT_SIGN, AT_SIGN_LEN);
+		p += AT_SIGN_LEN;
+	}
+	if (rs->host.len == 0) {
+		*p = '\0';
+               pkg_free(dest->s);
+		return -1;
+	}
+	memcpy(p, rs->host.s, rs->host.len);
+	p += rs->host.len;
+	*p = '\0';
+
+	if (dstavp) {
+		avp_val.s = rs->host;
+		if (add_avp(AVP_VAL_STR | dstavp->u.a.flags, dstavp->u.a.name, avp_val)<0) {
+			LM_ERR("set AVP failed\n");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
+
 
 /**
  * writes the uri dest using the rule list of route_tree
@@ -650,13 +442,13 @@ static int rewrite_uri_recursor(struct route_tree_item * route_tree, str * uri,
  * @param user the localpart of the uri to be rewritten
  * @param hash_source the SIP header used for hashing
  * @param alg the algorithm used for hashing
+ * @param dstavp the name of the destination AVP where the used host name is stored
  *
  * @return 0 on success, -1 on failure
  */
-static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
-                           struct sip_msg * msg, str * user,
-                           enum hash_source hash_source,
-                           enum hash_algorithm alg) {
+static int rewrite_on_rule(const struct route_tree_item * route_tree, str * dest,
+		struct sip_msg * msg, const str * user, const enum hash_source hash_source,
+		const enum hash_algorithm alg, struct multiparam_t *dstavp) {
 	struct route_rule * rr;
 	int prob;
 
@@ -704,97 +496,289 @@ static int rewrite_on_rule(struct route_tree_item * route_tree, str * dest,
 			break;
 		default: return -1;
 	}
-	return actually_rewrite(rr, dest, msg, user);
+	return actually_rewrite(rr, dest, msg, user, dstavp);
 }
 
+
+
+
 /**
- * does the work for rewrite_on_rule, writes the new URI into dest
+ * traverses the routing tree until a matching rule is found
+ * The longest match is taken, so it is possible to define
+ * route rules for a single number
  *
- * @param rs the route rule used for rewriting
+ * @param route_tree the current routing tree node
+ * @param pm the user to be used for prefix matching
  * @param dest the returned new destination URI
  * @param msg the sip message
  * @param user the localpart of the uri to be rewritten
+ * @param hash_source the SIP header used for hashing
+ * @param alg the algorithm used for hashing
+ * @param dstavp the name of the destination AVP where the used host name is stored
  *
- * @return 0 on success, -1 on failure
- *
- * @see rewrite_on_rule()
+ * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
-static int actually_rewrite(struct route_rule *rs, str *dest, struct sip_msg *msg, str * user) {
-	size_t len;
-	char *p;
-	int strip = 0;
+static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
+		const str * pm, str * dest, struct sip_msg * msg, const str * user,
+		const enum hash_source hash_source, const enum hash_algorithm alg,
+		struct multiparam_t *dstavp) {
+	struct route_tree_item *re_tree;
+	str re_pm;
 
-	strip = (rs->strip > user->len ? user->len : rs->strip);
-	strip = (strip < 0 ? 0 : strip);
-
-	len = rs->local_prefix.len + user->len + rs->local_suffix.len +
-	      AT_SIGN_LEN + rs->host.len - strip;
-	if (msg->parsed_uri.type == SIPS_URI_T) {
-		len += SIPS_URI_LEN;
-	} else {
-		len += SIP_URI_LEN;
+	re_pm=*pm;
+	/* Skip over non-digits.  */
+	while (re_pm.len > 0 && !isdigit(*re_pm.s)) {
+		++re_pm.s;
+		--re_pm.len;
 	}
-	dest->s = (char *)pkg_malloc(len + 1);
-	if (dest->s == NULL) {
-		LM_ERR("out of private memory.\n");
-		return -1;
-	}
-	dest->len = len;
-	p = dest->s;
-	if (msg->parsed_uri.type == SIPS_URI_T) {
-		memcpy(p, SIPS_URI, SIPS_URI_LEN);
-		p += SIPS_URI_LEN;
-	} else {
-		memcpy(p, SIP_URI, SIP_URI_LEN);
-		p += SIP_URI_LEN;
-	}
-	if (user->len) {
-		memcpy(p, rs->local_prefix.s, rs->local_prefix.len);
-		p += rs->local_prefix.len;
-		memcpy(p, user->s + strip, user->len - strip);
-		p += user->len - strip;
-		memcpy(p, rs->local_suffix.s, rs->local_suffix.len);
-		p += rs->local_suffix.len;
-		memcpy(p, AT_SIGN, AT_SIGN_LEN);
-		p += AT_SIGN_LEN;
-	}
-	if (rs->host.len == 0) {
-		*p = '\0';
-               pkg_free(dest->s);
-		return -1;
-	}
-	memcpy(p, rs->host.s, rs->host.len);
-	p += rs->host.len;
-	*p = '\0';
-	return 0;
-}
-
-/**
- * searches for a rule int rt with hash_index prob - 1
- * If the rule with the desired hash index is deactivated,
- * the next working rule is used.
- *
- * @param rt the routing tree node to search for rule
- * @param prob the hash index
- *
- * @return pointer to route rule on success, NULL on failure
- */
-static struct route_rule * get_rule_by_hash(struct route_tree_item * rt, int prob) {
-	struct route_rule * act_hash = NULL;
-
-	if (prob > rt->rule_num) {
-		LM_WARN("too large desired hash, taking highest\n");
-		act_hash = rt->rules[rt->rule_num - 1];
-	}
-	act_hash = rt->rules[prob - 1];
-
-	if (!act_hash->status) {
-		if (act_hash->backup && act_hash->backup->rr) {
-			act_hash = act_hash->backup->rr;
+	if (re_pm.len == 0 || route_tree->nodes[*re_pm.s - '0'] == NULL) {
+		if (route_tree->rule_list == NULL) {
+			LM_INFO("URI or route tree nodes empty, empty rule list\n");
+			return 1;
 		} else {
-			act_hash = NULL;
+			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg, dstavp);
+		}
+	} else {
+		/* match, goto the next digit of the uri and try again */
+		re_tree = route_tree->nodes[*pm->s - '0'];
+		re_pm.s = re_pm.s + 1;
+		re_pm.len = re_pm.len - 1;
+		switch (rewrite_uri_recursor(re_tree, &re_pm, dest, msg, user, hash_source, alg, dstavp)) {
+			case 0:
+				return 0;
+			case 1:
+				if (route_tree->rule_list != NULL) {
+					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg, dstavp);
+				} else {
+					LM_INFO("empty rule list\n");
+					return 1;
+				}
+			default:
+				return -1;
 		}
 	}
-	LM_INFO("desired hash was %i, return %i\n", prob, act_hash ? act_hash->hash_index : -1);
-	return act_hash;
+}
+
+
+
+
+/**
+ * rewrites the request URI of msg after determining the
+ * new destination URI
+ *
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
+ * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _rewrite_user the localpart of the URI to be rewritten
+ * @param _hsrc the SIP header used for hashing
+ * @param _halg the algorithm used for hashing
+ * @param _dstavp the name of the destination AVP where the used host name is stored
+ *
+ * @return 1 on success, -1 on failure
+ */
+int cr_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
+		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		enum hash_algorithm _halg, struct multiparam_t *_dstavp) {
+	int carrier_id;
+	int domain_id;
+	str rewrite_user;
+	str prefix_matching;
+	struct rewrite_data * rd;
+	struct carrier_tree * ct;
+	struct route_tree * rt;
+	struct action act;
+	str dest;
+	int ret;
+
+	ret = -1;
+
+	carrier_id = mp2carrier_id(_carrier);
+	domain_id = mp2domain_id(_domain);
+	if (domain_id < 0) {
+		LM_ERR("invalid domain id %d\n", domain_id);
+		return -1;
+	}
+
+	if (pv_printf_s(_msg, _rewrite_user, &rewrite_user)<0)	{
+		LM_ERR("cannot print the format\n");
+		return -1;
+	}
+
+	if (pv_printf_s(_msg, _prefix_matching, &prefix_matching)<0)	{
+		LM_ERR("cannot print the format\n");
+		return -1;
+	}
+
+	do {
+		rd = get_data();
+	} while (rd == NULL);
+	
+	ct=NULL;
+	if (carrier_id < 0) {
+		if (fallback_default) {
+			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
+			ct = rd->carriers[rd->default_carrier_index];
+		}
+	} else if (carrier_id == 0) {
+		ct = rd->carriers[rd->default_carrier_index];
+	} else {
+		ct = get_carrier_tree(carrier_id, rd);
+		if (ct == NULL) {
+			if (fallback_default) {
+				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
+				ct = rd->carriers[rd->default_carrier_index];
+			}
+		}
+	}
+	if (ct == NULL) {
+		LM_ERR("cannot get carrier tree\n");
+		goto unlock_and_out;
+	}
+
+	rt = get_route_tree_by_id(ct, domain_id);
+	if (rt == NULL) {
+		LM_ERR("desired routing domain doesn't exist, prefix %.*s, carrier %d, domain %d\n",
+			prefix_matching.len, prefix_matching.s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	if (rewrite_uri_recursor(rt->tree, &prefix_matching, &dest, _msg, &rewrite_user, _hsrc, _halg, _dstavp) != 0) {
+		LM_ERR("during rewrite_uri_recursor, uri %.*s, carrier %d, domain %d\n", prefix_matching.len,
+			prefix_matching.s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	LM_INFO("uri %.*s was rewritten to %.*s\n", rewrite_user.len, rewrite_user.s, dest.len, dest.s);
+
+	act.type = SET_URI_T;
+	act.elem[0].type= STRING_ST;
+	act.elem[0].u.string = dest.s;
+	act.next = NULL;
+
+	ret = do_action(&act, _msg);
+	if (ret < 0) {
+		LM_ERR("Error in do_action()\n");
+	}
+	pkg_free(dest.s);
+
+unlock_and_out:
+	release_data(rd);
+	return ret;
+}
+
+
+
+
+/**
+ * Loads next domain from failure routing table and stores it in an AVP.
+ *
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
+ * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _host the host name to be used for rule matching
+ * @param _reply_code the reply code to be used for rule matching
+ * @param _flags the flags to be used for rule matching (msg flags or integer)
+ * @param _dstavp the name of the destination AVP
+ *
+ * @return 1 on success, -1 on failure
+ */
+int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
+		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+		pv_elem_t *_host, pv_elem_t *_reply_code, struct multiparam_t *_flags,
+		struct multiparam_t *_dstavp) {
+	int carrier_id;
+	int domain_id;
+	str prefix_matching;
+	str host;
+	str reply_code;
+	flag_t flags;
+	struct rewrite_data * rd;
+	struct carrier_tree * ct;
+	struct route_tree * rt;
+	int ret;
+
+	ret = -1;
+
+	carrier_id = mp2carrier_id(_carrier);
+	domain_id = mp2domain_id(_domain);
+	if (domain_id < 0) {
+		LM_ERR("invalid domain id %d\n", domain_id);
+		return -1;
+	}
+
+	if (pv_printf_s(_msg, _prefix_matching, &prefix_matching)<0)	{
+		LM_ERR("cannot print the format\n");
+		return -1;
+	}
+
+	if (pv_printf_s(_msg, _host, &host)<0)	{
+		LM_ERR("cannot print the format\n");
+		return -1;
+	}
+
+	if (pv_printf_s(_msg, _reply_code, &reply_code)<0)	{
+		LM_ERR("cannot print the format\n");
+		return -1;
+	}
+
+	switch (_flags->type) {
+	case MP_INT:
+		flags = _flags->u.n;
+		break;
+	case MP_FLAGS:
+		flags = _msg->flags;
+		break;
+	default:
+		LM_ERR("invalid flags parameter type\n");
+		return -1;
+		break;
+	}
+
+	do {
+		rd = get_data();
+	} while (rd == NULL);
+	
+	ct=NULL;
+	if (carrier_id < 0) {
+		if (fallback_default) {
+			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
+			ct = rd->carriers[rd->default_carrier_index];
+		}
+	} else if (carrier_id == 0) {
+		ct = rd->carriers[rd->default_carrier_index];
+	} else {
+		ct = get_carrier_tree(carrier_id, rd);
+		if (ct == NULL) {
+			if (fallback_default) {
+				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
+				ct = rd->carriers[rd->default_carrier_index];
+			}
+		}
+	}
+	if (ct == NULL) {
+		LM_ERR("cannot get carrier tree\n");
+		goto unlock_and_out;
+	}
+
+	rt = get_route_tree_by_id(ct, domain_id);
+	if (rt == NULL) {
+		LM_ERR("desired routing domain doesn't exist, prefix %.*s, carrier %d, domain %d\n",
+			prefix_matching.len, prefix_matching.s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+
+	if (set_next_domain_recursor(rt->failure_tree, &prefix_matching, &host, &reply_code, flags, _dstavp) != 0) {
+		LM_ERR("during set_next_domain_recursor, prefix '%.*s', carrier %d, domain %d\n", prefix_matching.len,
+			prefix_matching.s, carrier_id, domain_id);
+		goto unlock_and_out;
+	}
+	
+	ret = 1;
+	
+unlock_and_out:
+	release_data(rd);
+	return ret;
 }

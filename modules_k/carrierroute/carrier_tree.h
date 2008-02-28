@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -127,6 +127,29 @@ int add_route(struct rewrite_data * rd, int carrier_id,
               const char * comment);
 
 /**
+ * Adds the given failure route information to the failure route tree identified by
+ * domain. scan_prefix, host, reply_code and flags identifies the number for which
+ * the information is and the next_domain parameter defines where to continue routing
+ * in case of a match.
+ *
+ * @param rd the route data to which the route shall be added
+ * @param carrier_id the carrier id of the route to be added
+ * @param domain the routing domain of the new route
+ * @param scan_prefix the number prefix
+ * @param host the hostname last tried
+ * @param reply_code the reply code 
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ * @param next_domain continue routing with this domain
+ * @param comment a comment for the failure route rule
+ *
+ * @return 0 on success, -1 on error in which case it LOGs a message.
+ */
+int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * domain,
+											const char * scan_prefix, const char * host, const char * reply_code,
+											int flags, int mask, const char * next_domain, const char * comment);
+
+/**
  * Tries to add a tree to the tree map. If the given tree doesn't
  * exist, it is added. Otherwise, nothing happens.
  *
@@ -138,11 +161,11 @@ int add_route(struct rewrite_data * rd, int carrier_id,
 int add_tree(const char * tree, int carrier_id);
 
 /**
- * Searches for the internal ID for a Carrier-Name
+ * Searches for the ID for a Carrier-Name
  *
  * @param tree the carrier, we are looking for
  *
- * @return values: on succcess the internal id of for this carrier,
+ * @return values: on succcess the id of for this carrier,
  * -1 on failure
  */
 int find_tree(str tree);
@@ -174,19 +197,8 @@ struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, str
 struct carrier_tree * get_carrier_tree(int carrier_id, struct rewrite_data * rd);
 
 /**
- * returns the routing tree for the given domain, if domain's tree
- * doesnt exist, it will be created. If the trees are completely
- * filled and a not existing domain shall be added, an error is
- * returned
- *
- * @param domain the domain name of desired routing tree
- * @param rd route data to be searched
- *
- * @return a pointer to the root node of the desired routing tree,
- * NULL on failure
+ * Frees the routing data
  */
-struct route_tree_item * get_route_tree(const char * domain, struct carrier_tree * rd);
-
 void destroy_route_data();
 
 /**

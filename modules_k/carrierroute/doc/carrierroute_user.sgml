@@ -1,8 +1,6 @@
 <!-- Module User's Guide -->
 
 <chapter>
-    <chapterinfo>
-    </chapterinfo>
     <title>User's Guide</title>
 
     <section>
@@ -603,177 +601,421 @@ modparam("carrierroute", "fallback_default", 1)
 	    </example>
     </section>
 
+    <section>
+      <title><varname>db_failure_table</varname> (string)</title>
+			<para>
+        Name of the table where the failure routing data is stored.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>carrierfailureroute</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>db_failuretable</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "db_failuretable", "carrierfailureroute")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_id_column</varname> (string)</title>
+			<para>
+        Name of the column containing the id identifier.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>id</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_id_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_id_column", "id")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_carrier_column</varname> (string)</title>
+			<para>
+        Name of the column containing the carrier id.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>carrier</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_carrier_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_carrier_column", "carrier")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_scan_prefix_column</varname> (string)</title>
+			<para>
+        Name of column containing the scan prefixes. Scan prexies
+        define the matching portion of a phone number, e.g. we have the
+        scan prefixes 49721 and 49, the called number is 49721913740,
+        it matches 49721, because the longest match is taken. If no
+        prefix matches, the number is not failure routed. To prevent
+        this, an empty prefix value of NULL could be added.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>scan_prefix</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_scan_prefix_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_scan_prefix_column", "scan_prefix")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_domain_column</varname> (string)</title>
+			<para>
+        Name of column containing the rule domain. You can define
+        several routing domains to have different routing rules. Maybe
+        you use domain 0 for normal routing and domain 1 if domain 0
+        failed.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>domain</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_domain_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_domain_column", "domain")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_host_name_column</varname> (string)</title>
+			<para>
+        Name of the column containing the host name of the last routing
+        destination.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>host_name</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_host_name_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_host_name_column", "host_name")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_reply_code_column</varname> (string)</title>
+			<para>
+        Name of the column containing the reply code.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>reply_code</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_reply_code_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_reply_code_column", "reply_code")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_flags_column</varname> (string)</title>
+			<para>
+        Name of the column containing the flags.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>flags</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_flags_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_flags_column", "flags")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_mask_column</varname> (string)</title>
+			<para>
+        Name of the column containing the flags mask.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>mask</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_mask_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_mask_column", "mask")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_next_domain_column</varname> (string)</title>
+			<para>
+        Name of the column containing the next routing domain.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>next_domain</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_next_domain_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_next_domain_column", "next_domain")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
+    <section>
+      <title><varname>failure_comment_column</varname> (string)</title>
+			<para>
+        Name of the column containing an optional comment.
+	    </para>
+	    <para>
+		    <emphasis>
+          Default value is <quote>comment</quote>.
+		    </emphasis>
+	    </para>
+	    <example>
+        <title>Set <varname>failure_comment_column</varname> parameter</title>
+		    <programlisting format="linespecific">
+...
+modparam("carrierroute", "failure_comment_column", "comment")
+...
+		    </programlisting>
+	    </example>
+    </section>
+
 </section>
     <section>
 	<title>Exported Functions</title>
 	<para>
-		All functions needs a string value to specify a certain tree domain or tree.
-		Its further necessary to specify source of the hashing algorithm. If this parameter
-		is ommited like in the <emphasis>cr_user_rewrite_uri</emphasis> and 
-		<emphasis>cr_tree_rewrite_uri</emphasis> functions, a default hash source, the call id,
-		is choosen.
+    Previous versions of carriertree had some more function. All the
+    old semantics can be achieved by using the few new functions
+    like this:
 	</para>
+
+  <programlisting format="linespecific">
+cr_rewrite_uri(domain, hash_source)
+-> cr_route("default", domain, "$rU", "$rU", hash_source, "crc32")
+
+cr_prime_balance_uri(domain, hash_source)
+-> cr_route("default", domain, "$rU", "$rU", hash_source, "prime")
+
+cr_rewrite_by_to(domain, hash_source)
+-> cr_route("default", domain, "$tU", "$rU", hash_source, "crc32")
+
+cr_prime_balance_by_to(domain, hash_source)
+-> cr_route("default", domain, "$tU", "$rU", hash_source, "prime")
+
+cr_rewrite_by_from(domain, hash_source)
+-> cr_route("default", domain, "$fU", "$rU", hash_source, "crc32")
+
+cr_prime_balance_by_from(domain, hash_source)
+-> cr_route("default", domain, "$fU", "$rU", hash_source, "prime")
+
+cr_user_rewrite_uri(uri, domain)
+-> cr_load_user_carrier(user, domain, "$avp(tree_avp)")
+-> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id", "crc32")
+
+cr_tree_rewrite_uri(tree, domain)
+-> cr_route(tree, domain, "$rU", "$rU", "call_id", "crc32")
+  </programlisting>
 		
 	<section>
 	    <title>
-		<function moreinfo="none">cr_rewrite_uri (string domain, int hash_source)</function>
+		<function moreinfo="none">cr_load_user_carrier(user, domain, dstavp)</function>
 	    </title>
 	    <para>
-			This function searches for the longest match for the Request URI at the
-			given domain in the default tree and rewrites the Request URI. 
-			Returns -1 if there is no data found or an empty rewrite host on the longest
-			match is found. This function is only usable with requests that contains a
-			valid numerical request URI, e.g. INVITEs.
+      This function loads the carrier and stores it in an AVP.
+      It cannot be used in the config file mode, as it needs a mapping
+      of the given user to a certain carrier.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
-		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri and to_user.
-		    </para>
-		</listitem>
+        <listitem>
+          <para><emphasis>user</emphasis> - Name of the user for the carrier tree lookup.
+            Additional to a string any pseudo-variable could
+            be used as input.
+		      </para>
+        </listitem>
+        <listitem>
+          <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
+            Additional to a string any pseudo-variable could
+            be used as input.
+		      </para>
+        </listitem>
+	      <listitem>
+          <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the carrier id.
+		      </para>
+        </listitem>
 	    </itemizedlist>
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_prime_balance_uri (string domain, int hash_source)</function>
+		<function moreinfo="none">cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source, hash_algorithm, dstavp)</function>
 	    </title>
 	    <para>
-			Balances the request URI to the desination set given by domain in the default tree. 
-			The hash_source defines the parameter which is passed to the hash function.
-			Return codes are the same as for cr_rewrite_uri. This function is only usable with
-			requests that contains a valid numerical request URI, e.g. INVITEs.
+        This function searches for the longest match for the user given
+        in prefix_matching at the given domain in the given carrier tree.
+        The Request URI is rewritten using rewrite_user and the given
+        hash source and algorithm. Returns -1 if there is no data found
+        or an empty rewrite host on the longest match is found. Otherwise
+				the rewritten host is stored in the given AVP (if obmitted, the
+				host is not stored in an AVP).
+        This function is only usable with rewrite_user and prefix_matching
+        containing a valid numerical only string.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
-		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: from_user and to_user.
-		    </para>
-		</listitem>
+        <listitem>
+		      <para><emphasis>carrier</emphasis> - The routing tree to be used. Additional to a string
+            any pseudo-variable could be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
+            Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>prefix_matching</emphasis> - User name to be used for prefix matching
+            in the routing tree.
+            Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>rewrite_user</emphasis> - The user name to be used for applying the
+            rewriting rule. Usually this is the user part of the request
+            URI. Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>hash_source</emphasis> - The hash values of the destination set must
+            be a contiguous range starting at 1, limited by the
+            configuration parameter max_targets. Possible values for
+            hash_source are: call_id, from_uri, from_user, to_uri
+            and to_user.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>hash_algorithm</emphasis> - The hash algorithm to be used on hash_source.
+            Possible values for hash_algorithm are: crc32, prime.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the rewritten host.
+  		    </para>
+        </listitem>
 	    </itemizedlist>
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_rewrite_by_to (string domain, int hash_source)</function>
+		<function moreinfo="none">cr_load_next_domain(carrier, domain, prefix_matching, host, reply_code, flags, dstavp)</function>
 	    </title>
 	    <para>
-		    Like cr_rewrite_uri, except that the to URI is used for prefix matching instead
-		    the request URI. Return codes are the same as for cr_rewrite_uri. This function
-			is usable on requests that don't contain a valid request URI, like REGISTERs.
+        This function searches for the longest match for the user given
+        in prefix_matching at the given domain in the given carrier
+        failure tree. It tries to find a next domain matching the given
+        host, reply_code and flags. The matching is done in this order:
+        host, reply_code and then flags. The more wildcards in reply_code
+        and the more bits used in flags, the lower the priority.
+        Returns -1 if there is no data found or an empty next_domain on
+        the longest match is found. Otherwise the next domain is stored
+        in the given AVP.
+        This function is only usable with prefix_matching containing a
+        valid numerical only string.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
-		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: call_id, from_uri, from_user, to_uri and to_user.
-		    </para>
-		</listitem>
-	    </itemizedlist>
-	</section>
-	<section>
-	    <title>
-		<function moreinfo="none">cr_prime_balance_by_to (string domain, int hash_source)</function>
-	    </title>
-	    <para>
-			Like cr_prime_balance_uri, except that the to URI is used for prefix matching instead
-			the request URI. Return codes are the same as for cr_rewrite_uri. This function
-			is usable on requests that don't contain a valid request URI, like REGISTERs.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
-		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: from_user and to_user.
-		    </para>
-		</listitem>
-	    </itemizedlist>
-	</section>
-		<section>
-	    <title>
-		<function moreinfo="none">cr_prime_balance_by_from (string domain, int hash_source)</function>
-	    </title>
-	    <para>
-			Like cr_prime_balance_uri, except that the from URI is used for prefix matching instead
-			the request URI. Return codes are the same as for cr_rewrite_uri. This function
-			is usable on requests that don't contain a valid request URI, like REGISTERs.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>hash_source</emphasis> - The hash values of the destination set 
-		    must be a contiguous range starting at 1, limited by the configuration parameter max_targets.
-		    Possible values for hash_source are: from_user and to_user.
-		    </para>
-		</listitem>
-	    </itemizedlist>
-	</section>
-	<section>
-	    <title>
-		<function moreinfo="none">cr_user_rewrite_uri (string uri, string domain)</function>
-	    </title>
-	    <para>
-			Rewrites the request URI, the given uri is used to determine the
-			carrier tree to be used. The domain identifies the routing domain
-			inside the carrier tree. This function cannot be used in the config file mode,
-			as it needs a mapping of the given user to a certain carrier.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>uri</emphasis> - Name of the user for the carrier tree lookup.
-				Additional to a	string variable any pseudo-variable could be used as input.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
-	    </itemizedlist>
-	</section>
-	<section>
-	    <title>
-		<function moreinfo="none">cr_tree_rewrite_uri (string tree, string domain)</function>
-	    </title>
-	    <para>
-			Uses the carrier tree specified by tree and uses the given domain. 
-			Uses the call id as hash source.
-	    </para>
-	    <para>Meaning of the parameters is as follows:</para>
-	    <itemizedlist>
-		<listitem>
-		    <para><emphasis>tree</emphasis> - The routing tree to be used. Additional to a
-				string variable any pseudo-variable could be used as input.
-		    </para>
-		</listitem>
-		<listitem>
-		    <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
-		    </para>
-		</listitem>
+        <listitem>
+		      <para><emphasis>carrier</emphasis> - The routing tree to be used. Additional to a string
+            any pseudo-variable could be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
+            Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>prefix_matching</emphasis> - User name to be used for prefix matching
+            in the routing tree.
+            Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>host</emphasis> - The host name to be used for failure route rule
+            matching. Usually this is the last tried routing destination
+            stored in an avp by cr_route. Additional to a string any
+            pseudo-variable could be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>reply_code</emphasis> - The reply code to be used for failure route rule
+            matching. Additional to a string any pseudo-variable
+            could be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>flags</emphasis> - The flags to be used for failure route rule matching.
+            Additional to an integer the pseudo-variable $mf could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the next routing domain.
+  		    </para>
+        </listitem>
 	    </itemizedlist>
 	</section>
     </section>
@@ -982,13 +1224,14 @@ openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
     <section>
 	<title>Examples</title>
 	<example>
-		<title>Configuration example - OpenSER script</title>
+		<title>Configuration example - Routing to default tree</title>
 		<programlisting format="linespecific">
 ...
 route {
 	# route calls based on hash over callid
 	# choose route domain 0 of the default carrier
-	if(!cr_rewrite_uri("0", "call_id")){
+	
+	if(!cr_route("default", "0", "$rU", "$rU", "call_id", "crc32")){
 		sl_send_reply("403", "Not allowed");
 	} else {
 		# In case of failure, re-route the request
@@ -1002,7 +1245,7 @@ failure_route[1] {
 	# In case of failure, send it to an alternative route:
 	if (t_check_status("408|5[0-9][0-9]")) {
 		#choose route domain 1 of the default carrier
-		if(!cr_rewrite_uri("1", "call_id")){
+	if(!cr_route("default", "1", "$rU", "$rU", "call_id", "crc32")){
 			t_reply("403", "Not allowed");
 		} else {
 			t_on_failure("2");
@@ -1014,10 +1257,50 @@ failure_route[1] {
 failure_route[2] {
 	# further processing
 }
+
+		</programlisting>
+	</example>
+	
+	<example>
+		<title>Configuration example - Routing to user tree</title>
+		<programlisting format="linespecific">
+...
+route[1] {
+	cr_load_user_carrier("$fU", "$fd", "$avp(carrier)");
+
+	$avp(domain)="start";
+	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "crc32", "$avp(host)")) {
+		xlog("L_ERR", "cr_route failed\n");
+		exit;
+	}
+	t_on_failure("1");
+		if (!t_relay()) {
+			sl_reply_error();
+	};
+}
+
+failure_route[1] {
+	revert_uri();
+		if (!cr_load_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$avp(host)", "$T_reply_code", "$mf", "$avp(domain)")) {
+			xlog("L_ERR", "cr_load_next_domain failed\n");
+			exit;
+		}
+		if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "crc32", "$avp(host)")) {
+			xlog("L_ERR", "cr_route failed\n");
+			exit;
+		}
+		t_on_failure("1");
+		append_branch();
+		if (!t_relay()) {
+			xlog("L_ERR", "t_relay failed\n");
+			exit;
+		};
+}
 ...
 		</programlisting>
 	</example>
 
+			
 	<example>
 		<title>Configuration example - module configuration</title>
 		<para>
@@ -1111,14 +1394,16 @@ domain register {
 +----+---------+-------------+--------+------+-------+---------------+
 | 1  |       1 | 49          | 0      |  0.5 | 0     | de-1.carrier1 |
 | 2  |       1 | 49          | 0      |  0.5 | 0     | de-2.carrier1 |
-| 3  |       1 |             | 0      |    1 | 0     | gw.carrier1   |
-| 5  |       1 | 49          | 1      |    1 | 0     | gw.carrier1   |
-| 6  |       2 | 49          | 0      |  0.5 | 0     | de-1.carrier2 |
-| 7  |       2 | 49          | 0      |  0.5 | 0     | de-2.carrier2 |
-| 8  |       2 |             | 0      |    1 | 0     | gw.carrier2   |
-| 9  |       2 | 49          | 1      |    1 | 0     | gw.carrier2   |
-| 10 |       3 | 49          | 0      |    1 | 0     | de-gw.default |
-| 11 |       3 |             | 0      |    1 | 0     | gw.default    |
+| 3  |       1 |             | 0      |    1 | 0     | gw.carrier1-1 |
+| 5  |       1 | 49          | 1      |    1 | 0     | gw.carrier1-1 |
+| 6  |       1 |             | 2      |    1 | 0     | gw.carrier1-2 |
+| 7  |       1 |             | 3      |    1 | 0     | gw.carrier1-3 |
+| 8  |       2 | 49          | 0      |  0.5 | 0     | de-1.carrier2 |
+| 9  |       2 | 49          | 0      |  0.5 | 0     | de-2.carrier2 |
+| 10 |       2 |             | 0      |    1 | 0     | gw.carrier2   |
+| 11 |       2 | 49          | 1      |    1 | 0     | gw.carrier2   |
+| 12 |       3 | 49          | start  |    1 | 0     | de-gw.default |
+| 13 |       3 |             | start  |    1 | 0     | gw.default    |
 +----+---------+-------------+--------+------+-------+---------------+
 ...
 		</programlisting>
@@ -1130,8 +1415,61 @@ domain register {
 			support the user specific carrier lookup. The routing rules for carrier 1
 			and carrier 2 for the <quote>49</quote> prefix contains a additional rule
 			with the domain 1, that can be used for example as fallback if the gateways
-			in domain 0 are not reachable.
+			in domain 0 are not reachable. Two more fallback rules (domain 2 and 3) for 
+			carrier 1 are also supplied to support the functionality of the carrierfailureroute
+			table example that is provided in the next section. The usage of strings
+			for the domains is also possible, for example at carrier 3.
 		</para>
+	<example>
+		<title>Example database content - simple carrierfailureroute table</title>
+		<programlisting format="linespecific">
+...
++----+---------+--------+---------------+------------+-------------+
+| id | carrier | domain | host_name     | reply_code | next_domain |
++----+---------+--------+---------------+------------+-------------+
+|  1 |       1 | 0      | gw.carrier1-2 | ...        | 3           |
+|  2 |       1 | 0      | gw.carrier1-3 | ...        | 2           |
++----+---------+--------+---------------+------------+-------------+
+...
+</programlisting>
+	</example>
+		<para>
+			This table contains two failure routes for the <quote>gw.carrier1-1</quote> and
+			<quote>-2</quote> gateways. For any (failure) reply code the respective next
+			domain is choosen. After that no more failure routes are available, an error will
+			be returned from the <quote>cr_load_next_domain</quote> function. Not all table
+			colums are show here for brevity.
+		</para>
+
+	<example>
+		<title>Example database content - more complex carrierfailureroute table</title>
+		<programlisting format="linespecific">
+...
++----+---------+-----------+------------+--------+-----+-------------+
+| id | domain  | host_name | reply_code | flags | mask | next_domain |
++----+---------+-----------+------------+-------+------+-------------+
+|  1 |      99 |           | 408        |    16 |   16 |             |
+|  2 |      99 | gw1       | 404        |     0 |    0 | 100         |
+|  3 |      99 | gw2       | 50.        |     0 |    0 | 100         |
+|  4 |      99 |           | 404        |  2048 | 2112 | asterisk-1  |
++----+---------+-----------+------------+--------+-----+-------------+
+...
+</programlisting>
+	</example>
+		<para>
+			This table contains four failure routes that shows the usage of more
+			advanced features. The first route matches to a 408, and to some flag
+			for example that indicates that ringing has happened. If this flag is set,
+			there will be no further forwarding, because next_domain is empty. In the
+			second and third routes are certain gateway errors matched, if this errors
+			have occured, then the next domain will be choosen. The last route does
+			forwarding according some flags, e.g. the customer came from a certain carrier,
+			and has call-forwarding deactivated. In order to use the routing that is
+			specified above, a matching carrierroute table must be provided, that holds
+			domain entries for this routing rules. Not all table colums are show here for
+			brevity.
+		</para>
+
 	<example>
 		<title>Example database content - route_tree table</title>
 		<programlisting format="linespecific">

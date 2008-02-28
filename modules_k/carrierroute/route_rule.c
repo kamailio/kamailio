@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -71,10 +71,10 @@ static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr
  * @see add_route_to_tree()
  */
 int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-                   int max_targets, double prob, const char * rewrite_hostpart, int strip,
-                   const char * rewrite_local_prefix, const char * rewrite_local_suffix,
-                   int status, int hash_index, int backup, int * backed_up,
-                   const char * comment) {
+		int max_targets, double prob, const char * rewrite_hostpart, int strip,
+		const char * rewrite_local_prefix, const char * rewrite_local_suffix,
+		int status, int hash_index, int backup, int * backed_up, 
+		const char * comment) {
 	struct route_rule * shm_rr, * prev = NULL, * tmp = NULL;
 	struct route_rule_p_list * t_rl;
 	int * t_bu;
@@ -199,6 +199,143 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	return 0;
 }
+
+
+/**
+ * Compares priority of two failure route rules
+ *
+ * @param rr1 first failure rule
+ * @param rr2 second failure rule
+ *
+ * @return 0 if rr1 and rr2 have the same priority, -1 if rr1 has higher priority than rr2, 1 if rr1 has lower priority than rr2.
+ *
+ * @see add_failure_route_to_tree()
+ */
+int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2) {
+	int n1, n2, i;
+	
+	/* host has highest priority */
+	if ((rr1->host.len == 0) && (rr2->host.len > 0)) {
+		/* host1 is wildcard -> rr1 has lower priority */
+		return 1;
+	}
+	else if ((rr1->host.len > 0) && (rr2->host.len == 0)) {
+		/* host2 is wildcard -> rr1 has higher priority */
+		return -1;
+	}
+	else {
+		/* reply_code has second highest priority */
+		n1=0;
+		n2=0;
+		for (i=0; i<rr1->reply_code.len; i++) {
+			if (rr1->reply_code.s[i]=='.') n1++;
+		}
+		for (i=0; i<rr2->reply_code.len; i++) {
+			if (rr2->reply_code.s[i]=='.') n2++;
+		}
+		if (n1<n2) {
+			/* reply_code1 has fewer wildcards -> rr1 has higher priority */
+			return -1;
+		}
+		else if (n1>n2) {
+			/* reply_code1 has more wildcards -> rr1 has lower priority */
+			return 1;
+		}
+		else {
+			/* flags have lowest priority */
+			if (rr1->mask > rr2->mask) {
+				return -1;
+			}
+			else if (rr1->mask < rr2->mask) {
+				return 1;
+			}
+		}
+	}
+	
+	return 0;
+}
+
+
+/**
+ * Adds a failure route rule to rt
+ *
+ * @param rt the current route tree node
+ * @param full_prefix the whole scan prefix
+ * @param host the hostname last tried
+ * @param reply_code the reply code 
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ * @param next_domain continue routing with this domain
+ * @param comment a comment for the route rule
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * @see add_failure_route_to_tree()
+ */
+int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const char * prefix,
+		const char * host, const char * reply_code, int flags, int mask,
+		const int next_domain, const char * comment) {
+	struct failure_route_rule * shm_rr;
+	struct failure_route_rule * rr;
+	struct failure_route_rule * prev;
+	
+	if ((shm_rr = shm_malloc(sizeof(struct failure_route_rule))) == NULL) {
+		LM_ERR("out of shared memory\n");
+		return -1;
+	}
+	memset(shm_rr, 0, sizeof(struct failure_route_rule));
+	
+	if (host) {
+		if ((shm_rr->host.s = shm_malloc(strlen(host) + 1)) == NULL) {
+			goto mem_error;
+		}
+		strcpy(shm_rr->host.s, host);
+		shm_rr->host.len = strlen(host);
+	}
+	
+	if (reply_code) {
+		if ((shm_rr->reply_code.s = shm_malloc(strlen(reply_code) + 1)) == NULL) {
+			goto mem_error;
+		}
+		strcpy(shm_rr->reply_code.s, reply_code);
+		shm_rr->reply_code.len = strlen(reply_code);
+	}
+	
+	shm_rr->flags = flags;
+	shm_rr->mask = mask;
+	shm_rr->next_domain = next_domain;
+	
+	if (comment) {
+		if ((shm_rr->comment.s = shm_malloc(strlen(comment) + 1)) == NULL) {
+			goto mem_error;
+		}
+		strcpy(shm_rr->comment.s, comment);
+		shm_rr->comment.len = strlen(comment);
+	}
+	
+	/* before inserting into list, check priorities! */
+	rr=failure_tree->rule_list;
+	prev=NULL;
+	while ((rr != NULL) && (rule_prio_cmp(shm_rr, rr) > 0)) {
+		prev=rr;
+		rr=rr->next;
+	}
+	if(prev){
+		shm_rr->next = prev->next;
+		prev->next = shm_rr;
+	} else {
+		shm_rr->next = failure_tree->rule_list;
+		failure_tree->rule_list = shm_rr;
+	}
+	
+	return 0;
+
+mem_error:
+	LM_ERR("out of shared memory\n");
+	destroy_failure_route_rule(shm_rr);
+	return -1;
+}
+
 
 
 /**
@@ -477,6 +614,29 @@ void destroy_route_rule(struct route_rule * rr) {
 		t_rl = rr->backed_up->next;
 		shm_free(rr->backed_up);
 		rr->backed_up = t_rl;
+	}
+	shm_free(rr);
+	return;
+}
+
+
+/**
+ * Destroys failure route rule rr by freeing all its memory.
+ *
+ * @param rr route rule to be destroyed
+ */
+void destroy_failure_route_rule(struct failure_route_rule * rr) {
+	if (rr->host.s) {
+		shm_free(rr->host.s);
+	}
+	if (rr->comment.s) {
+		shm_free(rr->comment.s);
+	}
+	if (rr->prefix.s) {
+		shm_free(rr->prefix.s);
+	}
+	if (rr->reply_code.s) {
+		shm_free(rr->reply_code.s);
 	}
 	shm_free(rr);
 	return;

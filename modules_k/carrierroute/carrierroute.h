@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -40,6 +40,7 @@
 
 #include "../../str.h"
 #include "../../usr_avp.h"
+#include "../../pvar.h"
 
 #define SIP_URI "sip:"
 #define SIP_URI_LEN 4
@@ -64,6 +65,18 @@
 #define COL_REWRITE_SUFFIX 8
 #define COL_COMMENT        9
 
+#define FAILURE_COLUMN_NUM 10
+#define FCOL_ID             0
+#define FCOL_CARRIER        1
+#define FCOL_SCAN_PREFIX    2
+#define FCOL_DOMAIN         3
+#define FCOL_HOST_NAME      4
+#define FCOL_REPLY_CODE     5
+#define FCOL_FLAGS          6
+#define FCOL_MASK           7
+#define FCOL_NEXT_DOMAIN    8
+#define FCOL_COMMENT        9
+
 #define SUBSCRIBER_COLUMN_NUM 3
 #define SUBSCRIBER_USERNAME_COL 0
 #define SUBSCRIBER_DOMAIN_COL   1
@@ -81,11 +94,13 @@
 
 extern str db_url;
 extern str db_table;
+extern str db_failure_table;
 extern str carrier_table;
 extern str subscriber_table;
 extern str * subscriber_columns[];
 extern str * carrier_columns[];
 extern str * columns[];
+extern str * failure_columns[];
 extern char * config_source;
 extern char * config_file;
 extern char * default_tree;
@@ -94,12 +109,29 @@ extern int mode;
 extern int use_domain;
 extern int fallback_default;
 
-typedef enum {
-	REQ_URI,
-	FROM_URI,
-	TO_URI,
-	CREDENTIALS,
-	AVP
-} param_type_t;
+enum hash_algorithm {
+    alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
+    alg_prime, /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
+		alg_error
+};
+
+struct multiparam_t {
+	enum {
+		MP_INT,
+		MP_STR,
+		MP_AVP,
+		MP_PVE,
+		MP_FLAGS
+	} type;
+	union {
+		int n;
+		str s;
+		struct {
+			unsigned short flags;
+			int_str name;
+		} a;
+		pv_elem_t *p;
+	} u;
+};
 
 #endif

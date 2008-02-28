@@ -46,29 +46,28 @@ Henning Westerholt
               1.3.22. default_tree (string)
               1.3.23. use_domain (int)
               1.3.24. fallback_default (int)
+              1.3.25. db_failure_table (string)
+              1.3.26. failure_id_column (string)
+              1.3.27. failure_carrier_column (string)
+              1.3.28. failure_scan_prefix_column (string)
+              1.3.29. failure_domain_column (string)
+              1.3.30. failure_host_name_column (string)
+              1.3.31. failure_reply_code_column (string)
+              1.3.32. failure_flags_column (string)
+              1.3.33. failure_mask_column (string)
+              1.3.34. failure_next_domain_column (string)
+              1.3.35. failure_comment_column (string)
 
         1.4. Exported Functions
 
-              1.4.1. cr_rewrite_uri (string domain, int
-                      hash_source)
+              1.4.1. cr_load_user_carrier(user, domain, dstavp)
+              1.4.2. cr_route(carrier, domain, prefix_matching,
+                      rewrite_user, hash_source, hash_algorithm,
+                      dstavp)
 
-              1.4.2. cr_prime_balance_uri (string domain, int
-                      hash_source)
-
-              1.4.3. cr_rewrite_by_to (string domain, int
-                      hash_source)
-
-              1.4.4. cr_prime_balance_by_to (string domain, int
-                      hash_source)
-
-              1.4.5. cr_prime_balance_by_from (string domain, int
-                      hash_source)
-
-              1.4.6. cr_user_rewrite_uri (string uri, string
-                      domain)
-
-              1.4.7. cr_tree_rewrite_uri (string tree, string
-                      domain)
+              1.4.3. cr_load_next_domain(carrier, domain,
+                      prefix_matching, host, reply_code, flags,
+                      dstavp)
 
         1.5. MI Commands
 
@@ -85,8 +84,7 @@ Henning Westerholt
 
               1.7.1. Database setup
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
+   2. Frequently Asked Questions
 
    List of Examples
    1-1. Set db_url parameter
@@ -113,16 +111,34 @@ Henning Westerholt
    1-22. Set default_tree parameter
    1-23. Set use_domain parameter
    1-24. Set fallback_default parameter
-   1-25. cr_replace_host usage
-   1-26. cr_deactivate_host usage
-   1-27. cr_activate_host usage
-   1-28. cr_add_host usage
-   1-29. cr_delete_host usage
-   1-30. Configuration example - OpenSER script
-   1-31. Configuration example - module configuration
-   1-32. Example database content - carrierroute table
-   1-33. Example database content - route_tree table
-   1-34. Necessary extensions for the user table
+   1-25. Set db_failuretable parameter
+   1-26. Set failure_id_column parameter
+   1-27. Set failure_carrier_column parameter
+   1-28. Set failure_scan_prefix_column parameter
+   1-29. Set failure_domain_column parameter
+   1-30. Set failure_host_name_column parameter
+   1-31. Set failure_reply_code_column parameter
+   1-32. Set failure_flags_column parameter
+   1-33. Set failure_mask_column parameter
+   1-34. Set failure_next_domain_column parameter
+   1-35. Set failure_comment_column parameter
+   1-36. cr_replace_host usage
+   1-37. cr_deactivate_host usage
+   1-38. cr_activate_host usage
+   1-39. cr_add_host usage
+   1-40. cr_delete_host usage
+   1-41. Configuration example - Routing to default tree
+   1-42. Configuration example - Routing to user tree
+   1-43. Configuration example - module configuration
+   1-44. Example database content - carrierroute table
+   1-45. Example database content - simple carrierfailureroute
+          table
+
+   1-46. Example database content - more complex
+          carrierfailureroute table
+
+   1-47. Example database content - route_tree table
+   1-48. Necessary extensions for the user table
      __________________________________________________________
 
 Chapter 1. User's Guide
@@ -535,127 +551,266 @@ modparam("carrierroute", "fallback_default", 1)
 ...
      __________________________________________________________
 
+1.3.25. db_failure_table (string)
+
+   Name of the table where the failure routing data is stored.
+
+   Default value is "carrierfailureroute".
+
+   Example 1-25. Set db_failuretable parameter
+...
+modparam("carrierroute", "db_failuretable", "carrierfailureroute")
+...
+     __________________________________________________________
+
+1.3.26. failure_id_column (string)
+
+   Name of the column containing the id identifier.
+
+   Default value is "id".
+
+   Example 1-26. Set failure_id_column parameter
+...
+modparam("carrierroute", "failure_id_column", "id")
+...
+     __________________________________________________________
+
+1.3.27. failure_carrier_column (string)
+
+   Name of the column containing the carrier id.
+
+   Default value is "carrier".
+
+   Example 1-27. Set failure_carrier_column parameter
+...
+modparam("carrierroute", "failure_carrier_column", "carrier")
+...
+     __________________________________________________________
+
+1.3.28. failure_scan_prefix_column (string)
+
+   Name of column containing the scan prefixes. Scan prexies
+   define the matching portion of a phone number, e.g. we have the
+   scan prefixes 49721 and 49, the called number is 49721913740,
+   it matches 49721, because the longest match is taken. If no
+   prefix matches, the number is not failure routed. To prevent
+   this, an empty prefix value of NULL could be added.
+
+   Default value is "scan_prefix".
+
+   Example 1-28. Set failure_scan_prefix_column parameter
+...
+modparam("carrierroute", "failure_scan_prefix_column", "scan_prefix")
+...
+     __________________________________________________________
+
+1.3.29. failure_domain_column (string)
+
+   Name of column containing the rule domain. You can define
+   several routing domains to have different routing rules. Maybe
+   you use domain 0 for normal routing and domain 1 if domain 0
+   failed.
+
+   Default value is "domain".
+
+   Example 1-29. Set failure_domain_column parameter
+...
+modparam("carrierroute", "failure_domain_column", "domain")
+...
+     __________________________________________________________
+
+1.3.30. failure_host_name_column (string)
+
+   Name of the column containing the host name of the last routing
+   destination.
+
+   Default value is "host_name".
+
+   Example 1-30. Set failure_host_name_column parameter
+...
+modparam("carrierroute", "failure_host_name_column", "host_name")
+...
+     __________________________________________________________
+
+1.3.31. failure_reply_code_column (string)
+
+   Name of the column containing the reply code.
+
+   Default value is "reply_code".
+
+   Example 1-31. Set failure_reply_code_column parameter
+...
+modparam("carrierroute", "failure_reply_code_column", "reply_code")
+...
+     __________________________________________________________
+
+1.3.32. failure_flags_column (string)
+
+   Name of the column containing the flags.
+
+   Default value is "flags".
+
+   Example 1-32. Set failure_flags_column parameter
+...
+modparam("carrierroute", "failure_flags_column", "flags")
+...
+     __________________________________________________________
+
+1.3.33. failure_mask_column (string)
+
+   Name of the column containing the flags mask.
+
+   Default value is "mask".
+
+   Example 1-33. Set failure_mask_column parameter
+...
+modparam("carrierroute", "failure_mask_column", "mask")
+...
+     __________________________________________________________
+
+1.3.34. failure_next_domain_column (string)
+
+   Name of the column containing the next routing domain.
+
+   Default value is "next_domain".
+
+   Example 1-34. Set failure_next_domain_column parameter
+...
+modparam("carrierroute", "failure_next_domain_column", "next_domain")
+...
+     __________________________________________________________
+
+1.3.35. failure_comment_column (string)
+
+   Name of the column containing an optional comment.
+
+   Default value is "comment".
+
+   Example 1-35. Set failure_comment_column parameter
+...
+modparam("carrierroute", "failure_comment_column", "comment")
+...
+     __________________________________________________________
+
 1.4. Exported Functions
 
-   All functions needs a string value to specify a certain tree
-   domain or tree. Its further necessary to specify source of the
-   hashing algorithm. If this parameter is ommited like in the
-   cr_user_rewrite_uri and cr_tree_rewrite_uri functions, a
-   default hash source, the call id, is choosen.
+   Previous versions of carriertree had some more function. All
+   the old semantics can be achieved by using the few new
+   functions like this:
+cr_rewrite_uri(domain, hash_source)
+-> cr_route("default", domain, "$rU", "$rU", hash_source, "crc32")
+
+cr_prime_balance_uri(domain, hash_source)
+-> cr_route("default", domain, "$rU", "$rU", hash_source, "prime")
+
+cr_rewrite_by_to(domain, hash_source)
+-> cr_route("default", domain, "$tU", "$rU", hash_source, "crc32")
+
+cr_prime_balance_by_to(domain, hash_source)
+-> cr_route("default", domain, "$tU", "$rU", hash_source, "prime")
+
+cr_rewrite_by_from(domain, hash_source)
+-> cr_route("default", domain, "$fU", "$rU", hash_source, "crc32")
+
+cr_prime_balance_by_from(domain, hash_source)
+-> cr_route("default", domain, "$fU", "$rU", hash_source, "prime")
+
+cr_user_rewrite_uri(uri, domain)
+-> cr_load_user_carrier(user, domain, "$avp(tree_avp)")
+-> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id", "crc32")
+
+cr_tree_rewrite_uri(tree, domain)
+-> cr_route(tree, domain, "$rU", "$rU", "call_id", "crc32")
      __________________________________________________________
 
-1.4.1. cr_rewrite_uri (string domain, int hash_source)
+1.4.1. cr_load_user_carrier(user, domain, dstavp)
 
-   This function searches for the longest match for the Request
-   URI at the given domain in the default tree and rewrites the
-   Request URI. Returns -1 if there is no data found or an empty
-   rewrite host on the longest match is found. This function is
-   only usable with requests that contains a valid numerical
-   request URI, e.g. INVITEs.
+   This function loads the carrier and stores it in an AVP. It
+   cannot be used in the config file mode, as it needs a mapping
+   of the given user to a certain carrier.
 
    Meaning of the parameters is as follows:
 
-     * domain - Name of the routing domain to be used.
+     * user - Name of the user for the carrier tree lookup.
+       Additional to a string any pseudo-variable could be used as
+       input.
+     * domain - Name of the routing domain to be used. Additional
+       to a string any pseudo-variable could be used as input.
+     * dstavp - Name of the AVP where to store the carrier id.
+     __________________________________________________________
+
+1.4.2. cr_route(carrier, domain, prefix_matching, rewrite_user,
+hash_source, hash_algorithm, dstavp)
+
+   This function searches for the longest match for the user given
+   in prefix_matching at the given domain in the given carrier
+   tree. The Request URI is rewritten using rewrite_user and the
+   given hash source and algorithm. Returns -1 if there is no data
+   found or an empty rewrite host on the longest match is found.
+   Otherwise the rewritten host is stored in the given AVP (if
+   obmitted, the host is not stored in an AVP). This function is
+   only usable with rewrite_user and prefix_matching containing a
+   valid numerical only string.
+
+   Meaning of the parameters is as follows:
+
+     * carrier - The routing tree to be used. Additional to a
+       string any pseudo-variable could be used as input.
+     * domain - Name of the routing domain to be used. Additional
+       to a string any pseudo-variable could be used as input.
+     * prefix_matching - User name to be used for prefix matching
+       in the routing tree. Additional to a string any
+       pseudo-variable could be used as input.
+     * rewrite_user - The user name to be used for applying the
+       rewriting rule. Usually this is the user part of the
+       request URI. Additional to a string any pseudo-variable
+       could be used as input.
      * hash_source - The hash values of the destination set must
        be a contiguous range starting at 1, limited by the
        configuration parameter max_targets. Possible values for
        hash_source are: call_id, from_uri, from_user, to_uri and
        to_user.
+     * hash_algorithm - The hash algorithm to be used on
+       hash_source. Possible values for hash_algorithm are: crc32,
+       prime.
+     * dstavp - Name of the AVP where to store the rewritten host.
      __________________________________________________________
 
-1.4.2. cr_prime_balance_uri (string domain, int hash_source)
+1.4.3. cr_load_next_domain(carrier, domain, prefix_matching, host,
+reply_code, flags, dstavp)
 
-   Balances the request URI to the desination set given by domain
-   in the default tree. The hash_source defines the parameter
-   which is passed to the hash function. Return codes are the same
-   as for cr_rewrite_uri. This function is only usable with
-   requests that contains a valid numerical request URI, e.g.
-   INVITEs.
+   This function searches for the longest match for the user given
+   in prefix_matching at the given domain in the given carrier
+   failure tree. It tries to find a next domain matching the given
+   host, reply_code and flags. The matching is done in this order:
+   host, reply_code and then flags. The more wildcards in
+   reply_code and the more bits used in flags, the lower the
+   priority. Returns -1 if there is no data found or an empty
+   next_domain on the longest match is found. Otherwise the next
+   domain is stored in the given AVP. This function is only usable
+   with prefix_matching containing a valid numerical only string.
 
    Meaning of the parameters is as follows:
 
-     * domain - Name of the routing domain to be used.
-     * hash_source - The hash values of the destination set must
-       be a contiguous range starting at 1, limited by the
-       configuration parameter max_targets. Possible values for
-       hash_source are: from_user and to_user.
-     __________________________________________________________
-
-1.4.3. cr_rewrite_by_to (string domain, int hash_source)
-
-   Like cr_rewrite_uri, except that the to URI is used for prefix
-   matching instead the request URI. Return codes are the same as
-   for cr_rewrite_uri. This function is usable on requests that
-   don't contain a valid request URI, like REGISTERs.
-
-   Meaning of the parameters is as follows:
-
-     * domain - Name of the routing domain to be used.
-     * hash_source - The hash values of the destination set must
-       be a contiguous range starting at 1, limited by the
-       configuration parameter max_targets. Possible values for
-       hash_source are: call_id, from_uri, from_user, to_uri and
-       to_user.
-     __________________________________________________________
-
-1.4.4. cr_prime_balance_by_to (string domain, int hash_source)
-
-   Like cr_prime_balance_uri, except that the to URI is used for
-   prefix matching instead the request URI. Return codes are the
-   same as for cr_rewrite_uri. This function is usable on requests
-   that don't contain a valid request URI, like REGISTERs.
-
-   Meaning of the parameters is as follows:
-
-     * domain - Name of the routing domain to be used.
-     * hash_source - The hash values of the destination set must
-       be a contiguous range starting at 1, limited by the
-       configuration parameter max_targets. Possible values for
-       hash_source are: from_user and to_user.
-     __________________________________________________________
-
-1.4.5. cr_prime_balance_by_from (string domain, int hash_source)
-
-   Like cr_prime_balance_uri, except that the from URI is used for
-   prefix matching instead the request URI. Return codes are the
-   same as for cr_rewrite_uri. This function is usable on requests
-   that don't contain a valid request URI, like REGISTERs.
-
-   Meaning of the parameters is as follows:
-
-     * domain - Name of the routing domain to be used.
-     * hash_source - The hash values of the destination set must
-       be a contiguous range starting at 1, limited by the
-       configuration parameter max_targets. Possible values for
-       hash_source are: from_user and to_user.
-     __________________________________________________________
-
-1.4.6. cr_user_rewrite_uri (string uri, string domain)
-
-   Rewrites the request URI, the given uri is used to determine
-   the carrier tree to be used. The domain identifies the routing
-   domain inside the carrier tree. This function cannot be used in
-   the config file mode, as it needs a mapping of the given user
-   to a certain carrier.
-
-   Meaning of the parameters is as follows:
-
-     * uri - Name of the user for the carrier tree lookup.
-       Additional to a string variable any pseudo-variable could
-       be used as input.
-     * domain - Name of the routing domain to be used.
-     __________________________________________________________
-
-1.4.7. cr_tree_rewrite_uri (string tree, string domain)
-
-   Uses the carrier tree specified by tree and uses the given
-   domain. Uses the call id as hash source.
-
-   Meaning of the parameters is as follows:
-
-     * tree - The routing tree to be used. Additional to a string
-       variable any pseudo-variable could be used as input.
-     * domain - Name of the routing domain to be used.
+     * carrier - The routing tree to be used. Additional to a
+       string any pseudo-variable could be used as input.
+     * domain - Name of the routing domain to be used. Additional
+       to a string any pseudo-variable could be used as input.
+     * prefix_matching - User name to be used for prefix matching
+       in the routing tree. Additional to a string any
+       pseudo-variable could be used as input.
+     * host - The host name to be used for failure route rule
+       matching. Usually this is the last tried routing
+       destination stored in an avp by cr_route. Additional to a
+       string any pseudo-variable could be used as input.
+     * reply_code - The reply code to be used for failure route
+       rule matching. Additional to a string any pseudo-variable
+       could be used as input.
+     * flags - The flags to be used for failure route rule
+       matching. Additional to an integer the pseudo-variable $mf
+       could be used as input.
+     * dstavp - Name of the AVP where to store the next routing
+       domain.
      __________________________________________________________
 
 1.5. MI Commands
@@ -697,7 +852,7 @@ modparam("carrierroute", "fallback_default", 1)
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-25. cr_replace_host usage
+   Example 1-36. cr_replace_host usage
 ...
 openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
@@ -721,7 +876,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-26. cr_deactivate_host usage
+   Example 1-37. cr_deactivate_host usage
 ...
 openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -739,7 +894,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-27. cr_activate_host usage
+   Example 1-38. cr_activate_host usage
 ...
 openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -761,7 +916,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-28. cr_add_host usage
+   Example 1-39. cr_add_host usage
 ...
 openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -784,7 +939,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1-29. cr_delete_host usage
+   Example 1-40. cr_delete_host usage
 ...
 openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -792,12 +947,13 @@ openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
 1.6. Examples
 
-   Example 1-30. Configuration example - OpenSER script
+   Example 1-41. Configuration example - Routing to default tree
 ...
 route {
         # route calls based on hash over callid
         # choose route domain 0 of the default carrier
-        if(!cr_rewrite_uri("0", "call_id")){
+
+        if(!cr_route("default", "0", "$rU", "$rU", "call_id", "crc32")){
                 sl_send_reply("403", "Not allowed");
         } else {
                 # In case of failure, re-route the request
@@ -811,7 +967,7 @@ failure_route[1] {
         # In case of failure, send it to an alternative route:
         if (t_check_status("408|5[0-9][0-9]")) {
                 #choose route domain 1 of the default carrier
-                if(!cr_rewrite_uri("1", "call_id")){
+        if(!cr_route("default", "1", "$rU", "$rU", "call_id", "crc32")){
                         t_reply("403", "Not allowed");
                 } else {
                         t_on_failure("2");
@@ -823,9 +979,47 @@ failure_route[1] {
 failure_route[2] {
         # further processing
 }
+
+
+   Example 1-42. Configuration example - Routing to user tree
+...
+route[1] {
+        cr_load_user_carrier("$fU", "$fd", "$avp(carrier)");
+
+        $avp(domain)="start";
+        if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "ca
+ll_id", "crc32", "$avp(host)")) {
+                xlog("L_ERR", "cr_route failed\n");
+                exit;
+        }
+        t_on_failure("1");
+                if (!t_relay()) {
+                        sl_reply_error();
+        };
+}
+
+failure_route[1] {
+        revert_uri();
+                if (!cr_load_next_domain("$avp(carrier)", "$avp(domain)"
+, "$rU", "$avp(host)", "$T_reply_code", "$mf", "$avp(domain)")) {
+                        xlog("L_ERR", "cr_load_next_domain failed\n");
+                        exit;
+                }
+                if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$
+rU", "call_id", "crc32", "$avp(host)")) {
+                        xlog("L_ERR", "cr_route failed\n");
+                        exit;
+                }
+                t_on_failure("1");
+                append_branch();
+                if (!t_relay()) {
+                        xlog("L_ERR", "t_relay failed\n");
+                        exit;
+                };
+}
 ...
 
-   Example 1-31. Configuration example - module configuration
+   Example 1-43. Configuration example - module configuration
 
    The following config file specifies within the default carrier
    two domains, each with an prefix that contains two hosts. It is
@@ -903,21 +1097,23 @@ domain register {
    For a minimal configuration either use the config file given
    above, or insert some data into the tables of the module.
 
-   Example 1-32. Example database content - carrierroute table
+   Example 1-44. Example database content - carrierroute table
 ...
 +----+---------+-------------+--------+------+-------+---------------+
 | id | carrier | scan_prefix | domain | prob | strip | rewrite_host  |
 +----+---------+-------------+--------+------+-------+---------------+
 | 1  |       1 | 49          | 0      |  0.5 | 0     | de-1.carrier1 |
 | 2  |       1 | 49          | 0      |  0.5 | 0     | de-2.carrier1 |
-| 3  |       1 |             | 0      |    1 | 0     | gw.carrier1   |
-| 5  |       1 | 49          | 1      |    1 | 0     | gw.carrier1   |
-| 6  |       2 | 49          | 0      |  0.5 | 0     | de-1.carrier2 |
-| 7  |       2 | 49          | 0      |  0.5 | 0     | de-2.carrier2 |
-| 8  |       2 |             | 0      |    1 | 0     | gw.carrier2   |
-| 9  |       2 | 49          | 1      |    1 | 0     | gw.carrier2   |
-| 10 |       3 | 49          | 0      |    1 | 0     | de-gw.default |
-| 11 |       3 |             | 0      |    1 | 0     | gw.default    |
+| 3  |       1 |             | 0      |    1 | 0     | gw.carrier1-1 |
+| 5  |       1 | 49          | 1      |    1 | 0     | gw.carrier1-1 |
+| 6  |       1 |             | 2      |    1 | 0     | gw.carrier1-2 |
+| 7  |       1 |             | 3      |    1 | 0     | gw.carrier1-3 |
+| 8  |       2 | 49          | 0      |  0.5 | 0     | de-1.carrier2 |
+| 9  |       2 | 49          | 0      |  0.5 | 0     | de-2.carrier2 |
+| 10 |       2 |             | 0      |    1 | 0     | gw.carrier2   |
+| 11 |       2 | 49          | 1      |    1 | 0     | gw.carrier2   |
+| 12 |       3 | 49          | start  |    1 | 0     | de-gw.default |
+| 13 |       3 |             | start  |    1 | 0     | gw.default    |
 +----+---------+-------------+--------+------+-------+---------------+
 ...
 
@@ -928,9 +1124,58 @@ domain register {
    lookup. The routing rules for carrier 1 and carrier 2 for the
    "49" prefix contains a additional rule with the domain 1, that
    can be used for example as fallback if the gateways in domain 0
-   are not reachable.
+   are not reachable. Two more fallback rules (domain 2 and 3) for
+   carrier 1 are also supplied to support the functionality of the
+   carrierfailureroute table example that is provided in the next
+   section. The usage of strings for the domains is also possible,
+   for example at carrier 3.
 
-   Example 1-33. Example database content - route_tree table
+   Example 1-45. Example database content - simple
+   carrierfailureroute table
+...
++----+---------+--------+---------------+------------+-------------+
+| id | carrier | domain | host_name     | reply_code | next_domain |
++----+---------+--------+---------------+------------+-------------+
+|  1 |       1 | 0      | gw.carrier1-2 | ...        | 3           |
+|  2 |       1 | 0      | gw.carrier1-3 | ...        | 2           |
++----+---------+--------+---------------+------------+-------------+
+...
+
+   This table contains two failure routes for the "gw.carrier1-1"
+   and "-2" gateways. For any (failure) reply code the respective
+   next domain is choosen. After that no more failure routes are
+   available, an error will be returned from the
+   "cr_load_next_domain" function. Not all table colums are show
+   here for brevity.
+
+   Example 1-46. Example database content - more complex
+   carrierfailureroute table
+...
++----+---------+-----------+------------+--------+-----+-------------+
+| id | domain  | host_name | reply_code | flags | mask | next_domain |
++----+---------+-----------+------------+-------+------+-------------+
+|  1 |      99 |           | 408        |    16 |   16 |             |
+|  2 |      99 | gw1       | 404        |     0 |    0 | 100         |
+|  3 |      99 | gw2       | 50.        |     0 |    0 | 100         |
+|  4 |      99 |           | 404        |  2048 | 2112 | asterisk-1  |
++----+---------+-----------+------------+--------+-----+-------------+
+...
+
+   This table contains four failure routes that shows the usage of
+   more advanced features. The first route matches to a 408, and
+   to some flag for example that indicates that ringing has
+   happened. If this flag is set, there will be no further
+   forwarding, because next_domain is empty. In the second and
+   third routes are certain gateway errors matched, if this errors
+   have occured, then the next domain will be choosen. The last
+   route does forwarding according some flags, e.g. the customer
+   came from a certain carrier, and has call-forwarding
+   deactivated. In order to use the routing that is specified
+   above, a matching carrierroute table must be provided, that
+   holds domain entries for this routing rules. Not all table
+   colums are show here for brevity.
+
+   Example 1-47. Example database content - route_tree table
 ...
 +----+----------+
 | id | carrier  |
@@ -949,7 +1194,7 @@ domain register {
    that you specified as modul parameter) to choose the actual
    carrier for the users.
 
-   Example 1-34. Necessary extensions for the user table
+   Example 1-48. Necessary extensions for the user table
 
    Suggested changes:
 ...
@@ -957,23 +1202,17 @@ ALTER TABLE subscriber ADD cr_preferred_carrier int(10) default NULL;
 ...
      __________________________________________________________
 
-Chapter 2. Developer's Guide
+Chapter 2. Frequently Asked Questions
 
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
+   2.1. Where can I find more about OpenSER?
+   2.2. Where can I post a question about this module?
+   2.3. How can I report a bug?
 
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about OpenSER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
-
-   3.1. Where can I find more about OpenSER?
+   2.1. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.2. Where can I post a question about this module?
+   2.2. Where can I post a question about this module?
 
    First at all check if your question was already answered on one
    of our mailing lists:
@@ -990,7 +1229,7 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.3. How can I report a bug?
+   2.3. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.
