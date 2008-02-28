@@ -543,14 +543,13 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 	LOCK_HASH(p_msg->hash_index);
 
 	hash_bucket=&(get_tm_table()->entries[p_msg->hash_index]);
-	/* all the transactions from the entry are compared */
-	clist_foreach(hash_bucket, p_cell, next_c){
-		prefetch_loc_r(p_cell->next_c, 1);
-		t_msg = p_cell->uas.request;
-
-		if (!t_msg) continue; /* skip UAC transactions */
-
-		if (likely(!isACK)) {	
+	
+	if (likely(!isACK)) {	
+		/* all the transactions from the entry are compared */
+		clist_foreach(hash_bucket, p_cell, next_c){
+			prefetch_loc_r(p_cell->next_c, 1);
+			t_msg = p_cell->uas.request;
+			if (!t_msg) continue; /* skip UAC transactions */
 			/* for non-ACKs we want same method matching, we 
 			 * make an exception for pre-exisiting CANCELs because we
 			 * want to set *cancel */
@@ -564,17 +563,20 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				continue;
 			if (!EQ_LEN(from)) continue;
 			if (!EQ_LEN(to)) continue;
-			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN) continue;
-			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1)) continue;
-
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN) 
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1))
+				continue;
 			/* length ok -- move on */
 			if (!EQ_STR(callid)) continue;
 			if (memcmp(get_cseq(t_msg)->number.s, get_cseq(p_msg)->number.s,
 				get_cseq(p_msg)->number.len)!=0) continue;
 			if (!EQ_STR(from)) continue;
 			if (!EQ_STR(to)) continue;
-			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR) continue;
-			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1)) continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR)
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1))
+				continue;
 			
 			if ((t_msg->REQ_METHOD==METHOD_CANCEL) &&
 				(p_msg->REQ_METHOD!=METHOD_CANCEL)){
@@ -586,10 +588,15 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 			/* request matched ! */
 			DBG("DEBUG: non-ACK matched\n");
 			goto found;
-		} else { /* it's an ACK request*/
+		} /* synonym loop */
+	} else { /* it's an ACK request*/
+		/* all the transactions from the entry are compared */
+		clist_foreach(hash_bucket, p_cell, next_c){
+			prefetch_loc_r(p_cell->next_c, 1);
+			t_msg = p_cell->uas.request;
+			if (!t_msg) continue; /* skip UAC transactions */
 			/* ACK's relate only to INVITEs */
 			if (t_msg->REQ_METHOD!=METHOD_INVITE) continue;
-
 			/* From|To URI , CallID, CSeq # must be always there */
 			/* compare lengths now */
 			if (!EQ_LEN(callid)) continue;
@@ -606,7 +613,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 			if (!EQ_STR(from)) continue;
 			if (memcmp(get_to(t_msg)->uri.s, get_to(p_msg)->uri.s,
 				get_to(t_msg)->uri.len)!=0) continue;
-
+			
 			/* it is e2e ACK/200 */
 			if (p_cell->uas.status<300) {
 				/* all criteria for proxied ACK are ok */
@@ -625,22 +632,26 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 					goto found;
 				continue;
 			}
-
+			
 			/* it is not an e2e ACK/200 -- perhaps it is 
 			 * local negative case; in which case we will want
 			 * more elements to match: r-uri and via; allow
 			 * mismatching r-uri as an config option for broken
 			 * UACs */
-			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN ) continue;
-			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1)) continue;
-			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR) continue;
-			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1)) continue;
-
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_LEN )
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_LEN(via1))
+				continue;
+			if (cfg_get(tm, tm_cfg, ruri_matching) && !EQ_REQ_URI_STR)
+				continue;
+			if (cfg_get(tm, tm_cfg, via1_matching) && !EQ_VIA_STR(via1))
+				continue;
+			
 			/* wow -- we survived all the check! we matched! */
 			DBG("DEBUG: non-2xx ACK matched\n");
 			goto found;
-		} /* ACK */
-	} /* synonym loop */
+		} /* synonym loop */
+	} /* ACK */
 
 notfound:
 
