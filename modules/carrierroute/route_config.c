@@ -24,16 +24,7 @@
 
 /**
  * @file route_config.c
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief Functions for loading routing data from a
- * configuration file and save it to file respectively
- *
+ * @brief Functions for load and save routing data from a config file.
  */
 
 #include <confuse.h>
@@ -61,8 +52,7 @@ static int backup_config();
  * @param ap format arguments
  */
 void conf_error(cfg_t *cfg, const char * fmt, va_list ap) {
-	// FIXME old logging system
-	// FIXME and don't seems to work reliable, produces strange error messages
+	// FIXME this don't seems to work reliable, produces strange error messages
 	LM_GEN1(L_ERR, (char *) fmt, ap);
 }
 

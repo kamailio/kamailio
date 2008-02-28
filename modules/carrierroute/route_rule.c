@@ -24,16 +24,7 @@
 
 /**
  * @file route_rule.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mo May 21 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions to manage routing rule
- * data
- *
+ * @brief Contains the functions to manage routing rule data.
  */
 
 #include "../../mem/shm_mem.h"
@@ -93,9 +84,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	if (rewrite_hostpart) {
 		if ((shm_rr->host.s = shm_malloc(strlen(rewrite_hostpart) + 1)) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		strcpy(shm_rr->host.s, rewrite_hostpart);
 		shm_rr->host.len = strlen(rewrite_hostpart);
@@ -103,9 +92,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	if (prefix) {
 		if ((shm_rr->prefix.s = shm_malloc(strlen(prefix) + 1)) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		strcpy(shm_rr->prefix.s, prefix);
 		shm_rr->prefix.len = strlen(prefix);
@@ -115,9 +102,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	if (rewrite_local_prefix) {
 		if ((shm_rr->local_prefix.s = shm_malloc(strlen(rewrite_local_prefix) + 1)) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		strcpy(shm_rr->local_prefix.s, rewrite_local_prefix);
 		shm_rr->local_prefix.len = strlen(rewrite_local_prefix);
@@ -125,9 +110,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	if (rewrite_local_suffix) {
 		if ((shm_rr->local_suffix.s = shm_malloc(strlen(rewrite_local_suffix) + 1)) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		strcpy(shm_rr->local_suffix.s, rewrite_local_suffix);
 		shm_rr->local_suffix.len = strlen(rewrite_local_suffix);
@@ -135,9 +118,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 
 	if (comment) {
 		if ((shm_rr->comment.s = shm_malloc(strlen(comment) + 1)) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		strcpy(shm_rr->comment.s, comment);
 		shm_rr->comment.len = strlen(comment);
@@ -153,9 +134,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 	}
 	if (backup >= 0) {
 		if ((shm_rr->backup = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		memset(shm_rr->backup, 0, sizeof(struct route_rule_p_list));
 		shm_rr->backup->hash_index = backup;
@@ -167,9 +146,7 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 	}
 	while (t_bu && *t_bu != -1) {
 		if ((t_rl = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
-			LM_ERR("out of shared memory\n");
-			destroy_route_rule(shm_rr);
-			return -1;
+			goto mem_error;
 		}
 		memset(t_rl, 0, sizeof(struct route_rule_p_list));
 		t_rl->hash_index = *t_bu;
@@ -198,11 +175,16 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 	}
 
 	return 0;
+
+mem_error:
+	LM_ERR("out of shared memory\n");
+	destroy_route_rule(shm_rr);
+	return -1;
 }
 
 
 /**
- * Compares priority of two failure route rules
+ * Compares the priority of two failure route rules.
  *
  * @param rr1 first failure rule
  * @param rr2 second failure rule
@@ -227,17 +209,17 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
 		/* reply_code has second highest priority */
 		n1=0;
 		n2=0;
-		for (i=0; i<rr1->reply_code.len; i++) {
+		for (i=0; i < rr1->reply_code.len; i++) {
 			if (rr1->reply_code.s[i]=='.') n1++;
 		}
-		for (i=0; i<rr2->reply_code.len; i++) {
+		for (i=0; i < rr2->reply_code.len; i++) {
 			if (rr2->reply_code.s[i]=='.') n2++;
 		}
-		if (n1<n2) {
+		if (n1 < n2) {
 			/* reply_code1 has fewer wildcards -> rr1 has higher priority */
 			return -1;
 		}
-		else if (n1>n2) {
+		else if (n1 > n2) {
 			/* reply_code1 has more wildcards -> rr1 has lower priority */
 			return 1;
 		}
@@ -257,7 +239,7 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
 
 
 /**
- * Adds a failure route rule to rt
+ * Adds a failure route rule to rt.
  *
  * @param rt the current route tree node
  * @param full_prefix the whole scan prefix
@@ -398,7 +380,7 @@ static int rule_fixup_recursor(struct route_tree_item * rt) {
 			LM_ERR("number of rules(%i) differs from max_targets(%i), maybe your config is wrong?\n", rt->rule_num, rt->max_targets);
 			return -1;
 		}
-		if(rt->rules){
+		if(rt->rules) {
 			shm_free(rt->rules);
             rt->rules = NULL;
 		}
@@ -529,7 +511,7 @@ int add_backup_route(struct route_rule * rule, struct route_rule * backup){
 
 	if(rule->backed_up){
 		tmp = rule->backed_up;
-		while(tmp->next){
+		while(tmp->next) {
 			tmp = tmp->next;
 		}
 		tmp->next = backup->backed_up;
@@ -537,7 +519,7 @@ int add_backup_route(struct route_rule * rule, struct route_rule * backup){
 		rule->backed_up = NULL;
 	}
 	tmp = rule->backup->rr->backed_up;
-	while(tmp){
+	while(tmp) {
 		tmp->rr->backup->hash_index = rule->backup->hash_index;
 		tmp->rr->backup->rr = rule->backup->rr;
 		tmp = tmp->next;
@@ -548,12 +530,12 @@ int add_backup_route(struct route_rule * rule, struct route_rule * backup){
 
 int remove_backed_up(struct route_rule * rule){
 	struct route_rule_p_list * rl, * prev = NULL;
-	if(rule->backup){
-		if(rule->backup->rr){
+	if(rule->backup) {
+		if(rule->backup->rr) {
 			rl = rule->backup->rr->backed_up;
-			while(rl){
-				if(rl->hash_index == rule->hash_index){
-					if(prev){
+			while(rl) {
+				if(rl->hash_index == rule->hash_index) {
+					if(prev) {
 						prev->next = rl->next;
 					} else {
 						rule->backup->rr->backed_up = rl->next;

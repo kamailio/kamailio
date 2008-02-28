@@ -24,15 +24,7 @@
 
 /**
  * @file carrierroute.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions exported by the moduls
- *
+ * @brief Contains the functions exported by the module.
  */
 
 #ifndef SP_ROUTE_H
@@ -91,6 +83,7 @@
 
 #define ROUTE_TABLE_VER 1
 #define CARRIER_TABLE_VER 1
+#define FAILURE_TABLE_VER 1
 
 extern str db_url;
 extern str db_table;
@@ -110,9 +103,9 @@ extern int use_domain;
 extern int fallback_default;
 
 enum hash_algorithm {
-    alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
-    alg_prime, /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
-		alg_error
+	alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
+	alg_prime, /*!< hashing algorithm is (right 18 digits of hash_source % prime_number) % max_targets + 1 */
+	alg_error
 };
 
 struct multiparam_t {

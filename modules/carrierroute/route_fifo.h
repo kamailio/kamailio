@@ -46,15 +46,7 @@ extern int fifo_err;
 
 /**
  * @file route_fifo.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief Functions for modifying routing data vua fifo commands
- *
+ * @brief Functions for modifying routing data via fifo commands.
  */
 
 #ifndef SP_ROUTE_ROUTE_FIFO_H

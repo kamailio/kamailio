@@ -24,15 +24,7 @@
 
 /**
  * @file carrierroute/route.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mo May 21 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions to manage routing rule
- * data
+ * @brief Contains the functions to manage routing rule data.
  *
  */
 
@@ -154,9 +146,9 @@ struct rewrite_data {
  * faster access.
  */
 struct route_map {
-str name; /*!< name of the routing domain */
-int no; /*!< number of domain */
-struct route_map * next; /*!< pointer to the next element */
+	str name; /*!< name of the routing domain */
+	int no; /*!< number of domain */
+	struct route_map * next; /*!< pointer to the next element */
 };
 
 /**
@@ -164,10 +156,10 @@ struct route_map * next; /*!< pointer to the next element */
  * faster access.
  */
 struct tree_map {
-str name; /*!< name of the carrier tree */
-int id; /*!< id of the carrier tree */
-int no; /*!< number of carrier array index for rewrite_data.trees  */
-struct tree_map * next; /*!< pointer to the next element */
+	str name; /*!< name of the carrier tree */
+	int id; /*!< id of the carrier tree */
+	int no; /*!< number of carrier array index for rewrite_data.trees  */
+	struct tree_map * next; /*!< pointer to the next element */
 };
 
 

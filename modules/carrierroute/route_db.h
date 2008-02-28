@@ -24,15 +24,7 @@
 
 /**
  * @file route_db.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief Functions for loading routing data from a database
- *
+ * @brief Functions for loading routing data from a database.
  */
 
 #ifndef SP_ROUTE_ROUTE_DB_H

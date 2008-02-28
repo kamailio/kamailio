@@ -24,15 +24,7 @@
 
 /**
  * @file route_func.c
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief routing and balancing functions
- *
+ * @brief Routing and balancing functions.
  */
 
 #include <ctype.h>
@@ -53,8 +45,6 @@
 #include "../../dset.h"
 #include "../../prime_hash.h"
 #include "carrierroute.h"
-
-
 
 
 /**
@@ -97,8 +87,6 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
 }
 
 
-
-
 /**
  * Get the carrier id from multiparam_t structure.
  *
@@ -139,8 +127,6 @@ int mp2carrier_id(struct multiparam_t *mp) {
 		break;
 	}
 }
-
-
 
 
 /**
@@ -194,8 +180,6 @@ int mp2domain_id(struct multiparam_t *mp) {
 }
 
 
-
-
 /**
  * Try to match the reply code rc to the reply code with wildcards.
  *
@@ -219,8 +203,6 @@ static inline int reply_code_matcher(const str *rcw, const str *rc) {
 }
 
 
-
-
 /**
  * writes the next_domain avp using the rule list of route_tree
  *
@@ -241,6 +223,7 @@ static int set_next_domain_on_rule(const struct failure_route_tree_item *failure
 	assert(failure_tree != NULL);
 	
 	for (rr = failure_tree->rule_list; rr != NULL; rr = rr->next) {
+		/* FIXME remove some logging */
 		LM_DBG("Trying to find matching rule...\n");
 		LM_DBG("rr.flags=%d rr.mask=%d flags=%d\n", rr->flags, rr->mask, flags);
 		LM_DBG("rr.host.len=%d host.len=%d\n", rr->host.len, host->len);
@@ -263,8 +246,6 @@ static int set_next_domain_on_rule(const struct failure_route_tree_item *failure
 	
 	return -1;
 }
-
-
 
 
 /**
@@ -320,8 +301,6 @@ static int set_next_domain_recursor(const struct failure_route_tree_item *failur
 }
 
 
-
-
 /**
  * searches for a rule int rt with hash_index prob - 1
  * If the rule with the desired hash index is deactivated,
@@ -352,8 +331,6 @@ static struct route_rule * get_rule_by_hash(const struct route_tree_item * rt,
 	LM_INFO("desired hash was %i, return %i\n", prob, act_hash ? act_hash->hash_index : -1);
 	return act_hash;
 }
-
-
 
 
 /**
@@ -431,8 +408,6 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 }
 
 
-
-
 /**
  * writes the uri dest using the rule list of route_tree
  *
@@ -500,8 +475,6 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, str * dest
 }
 
 
-
-
 /**
  * traverses the routing tree until a matching rule is found
  * The longest match is taken, so it is possible to define
@@ -558,8 +531,6 @@ static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
 		}
 	}
 }
-
-
 
 
 /**
@@ -667,8 +638,6 @@ unlock_and_out:
 	release_data(rd);
 	return ret;
 }
-
-
 
 
 /**

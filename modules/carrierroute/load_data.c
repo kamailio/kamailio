@@ -24,15 +24,7 @@
 
 /**
  * @file load_data.c
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief API to bind a data loading function
- *
+ * @brief API to bind a data loading function.
  */
 #include <sys/types.h>
 #include <sys/stat.h>

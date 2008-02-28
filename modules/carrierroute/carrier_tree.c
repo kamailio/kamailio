@@ -24,16 +24,7 @@
 
 /**
  * @file carrier_tree.c
- *
-* @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mo May 21 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions to manage carrier
- * tree data
- *
+ * @brief Contains the functions to manage carrier tree data.
  */
 
 #include "../../mem/shm_mem.h"
@@ -275,6 +266,7 @@ int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * dom
 	int next_domain_id;
 	struct carrier_tree * ct = NULL;
 	struct route_tree * rt = NULL;
+	LM_INFO("adding prefix %s, reply code %s\n", scan_prefix, reply_code);
 		
 	if ((domain==NULL) || (scan_prefix == NULL) || (host ==NULL) || (reply_code == NULL) || (next_domain == NULL)) {
 		LM_ERR("NULL pointer in parameter\n");
