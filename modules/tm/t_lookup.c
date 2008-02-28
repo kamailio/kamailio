@@ -97,6 +97,8 @@
  * 2007-06-01  support for different retransmissions intervals per transaction;
  *             added maximum inv. and non-inv. transaction life time (andrei)
  * 2007-06-06  switched tm bucket list to a simpler and faster clist;
+ * 2008-02-28  try matching e2e acks in t_lookup() only for transactions
+ *               which have E2EACK callbacks registered (andrei)
  */
 
 #include "defs.h"
@@ -238,6 +240,37 @@ static inline int dlg_matching(struct cell *p_cell, struct sip_msg *ack )
 	return 1;
 }
 
+
+
+/* returns 2 if one of the save totags matches the totag in the current
+ * message (which should be an ACK) and 0 if not */
+static inline int totag_e2e_ack_matching(struct cell* p_cell, 
+												struct sip_msg *ack)
+{
+	struct totag_elem *i;
+	str *tag;
+	
+	tag=&get_to(ack)->tag_value;
+	/* no locking needed for reading/searching, see update_totag_set() */
+	for (i=p_cell->fwded_totags; i; i=i->next){
+		membar_depends(); /* make sure we don't see some old i content
+							(needed on CPUs like Alpha) */
+		if (i->tag.len==tag->len && memcmp(i->tag.s, tag->s, tag->len)==0) {
+			return 2;
+		}
+	}
+	return 0;
+}
+
+
+
+/* returns: 0 - no match
+ *          1 - full match to a local transaction
+ *          2 - full match to a proxied transaction
+ *          3 - partial match to a proxied transaction (totag not checked) =>
+ *          care must be taken not to falsely match an ACK for a negative
+ *          reply to a "fork" of the transaction
+ */
 static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg) 
 {
 	/* partial dialog matching -- no to-tag, only from-tag, 
@@ -249,8 +282,15 @@ static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg)
 	 * done now -- we ignore to-tags; the ACK simply belongs to
 	 * this UAS part of dialog, whatever to-tag it gained
 	 */
-	if (p_cell->relayed_reply_branch!=-2) {
-		return 2; /* e2e proxied ACK */
+	if (likely(p_cell->relayed_reply_branch!=-2)) {
+		if (likely(has_tran_tmcbs(p_cell, 
+							TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN)))
+			return totag_e2e_ack_matching(p_cell, p_msg); /* 2 or 0 */
+		else
+			LOG(L_WARN, "WARNING: ack_matching() attempted on"
+					" a transaction with no E2EACK callbacks => the results"
+					" are not completely reliable when forking is involved\n");
+		return 3; /* e2e proxied ACK partial match */
 	}
 	/* it's a local dialog -- we wish to verify to-tags too */
 	if (dlg_matching(p_cell, p_msg)) {
@@ -302,12 +342,12 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			enum request_method skip_method, int* cancel)
 {
 	struct cell *p_cell;
+	struct cell *e2e_ack_trans;
 	struct sip_msg  *t_msg;
 	struct via_body *via1;
 	int is_ack;
 	int dlg_parsed;
 	int ret = 0;
-	struct cell *e2e_ack_trans;
 	struct entry* hash_bucket;
 
 	*cancel=0;
@@ -344,35 +384,51 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		   ACK belongs, only the first one will match.
 		*/
 
-		/* dialog matching needs to be applied for ACK/200s */
-		if (unlikely(is_ack && p_cell->uas.status<300 && e2e_ack_trans==0)) {
-			/* make sure we have parsed all things we need for dialog
-			 * matching */
-			if (!dlg_parsed) {
-				dlg_parsed=1;
-				if (unlikley(!parse_dlg(p_msg))) {
-					LOG(L_ERR, "ERROR: matching_3261: dlg parsing failed\n");
-					return 0;
+		/* dialog matching needs to be applied for ACK/200s but only if
+		 * this is a local transaction or its a proxied transaction interested
+		 *  in e2e ACKs (has E2EACK* callbacks installed) */
+		if (unlikely(is_ack && p_cell->uas.status<300)) {
+			if (unlikely(has_tran_tmcbs(p_cell, 
+							TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) ||
+							(p_cell->relayed_reply_branch==-2)  )) {
+				/* make sure we have parsed all things we need for dialog
+				 * matching */
+				if (!dlg_parsed) {
+					dlg_parsed=1;
+					if (unlikely(!parse_dlg(p_msg))) {
+						LOG(L_INFO, "ERROR: matching_3261: dlg parsing "
+								"failed\n");
+						return 0;
+					}
 				}
-			}
-			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
-			if (unlikely(ret>0)) {
-				/* if ret==1 => fully matching e2e ack for local trans 
-				 * if ret==2 => partial matching e2e ack for proxied
-				 * transaction. However this could also be an ack for
-				 * a negative reply for a tranaction with the same callid,
-				 * cseq & fromtag (e.g. am invite forked prior to reaching the
-				 * proxy), since for e2e acks no totag matching is done
-				 */
-				if (unlikely(ret==1)) goto found;
-				e2e_ack_trans=p_cell;
-				/* no break, we want to continue looking in case we can find
-				 * a match for a negative reply */
+				ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
+				if (unlikely(ret>0)) {
+					/* if ret==1 => fully matching e2e ack for local trans 
+					 * if ret==2 => matching e2e ack for proxied  transaction.
+					 *  which is interested in it (E2EACK* callbacks)
+					 * if ret==3 => partial match => we should at least
+					 *  make sure the ACK is not for a negative reply
+					 *  (FIXME: ret==3 should never happen, it's a bug catch
+					 *    case)*/
+					if (unlikely(ret==1)) goto found;
+					if (unlikely(ret==3)){
+						if (e2e_ack_trans==0)
+							e2e_ack_trans=p_cell;
+						continue; /* maybe we get a better 
+													   match for a neg. 
+													   replied trans. */
+					}
+					e2e_ack_trans=p_cell;
+					goto e2eack_found;
+				}
+				/* this ACK is neither local "negative" one, nor a proxied
+				* end-2-end one, nor an end-2-end one for a UAS transaction
+				* -- we failed to match */
 				continue;
 			}
-			/* this ACK is neither local "negative" one, nor a proxied
-			 * end-2-end one, nor an end-2-end one for a UAS transaction
-			 * -- we failed to match */
+			/* not interested, it's an ack and a 2xx replied
+			  transaction but the transaction is not local and
+			  the transaction is not interested in e2eacks (no e2e callbacks)*/
 			continue;
 		}
 		/* now real tid matching occurs  for negative ACKs and any 
@@ -401,6 +457,7 @@ found:
 	 *  w/o totag => for a pre-forked invite it might match the wrong
 	 *  transaction) */
 	if (e2e_ack_trans) {
+e2eack_found:
 		*trans=e2e_ack_trans;
 		return 2;
 	}
@@ -413,7 +470,7 @@ found:
  *      negative - transaction wasn't found
  *			(-2 = possibly e2e ACK matched )
  *      positive - transaction found
- * It also sets *cancel if a there is already a cancel transaction
+ * It also sets *cancel if there is already a cancel transaction
  */
 
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
@@ -493,7 +550,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 
 		if (!t_msg) continue; /* skip UAC transactions */
 
-		if (!isACK) {	
+		if (likely(!isACK)) {	
 			/* for non-ACKs we want same method matching, we 
 			 * make an exception for pre-exisiting CANCELs because we
 			 * want to set *cancel */
@@ -551,10 +608,16 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked,
 				get_to(t_msg)->uri.len)!=0) continue;
 
 			/* it is e2e ACK/200 */
-			if (p_cell->uas.status<300 && e2e_ack_trans==0) {
+			if (p_cell->uas.status<300) {
 				/* all criteria for proxied ACK are ok */
-				if (p_cell->relayed_reply_branch!=-2) {
-					e2e_ack_trans=p_cell;
+				if (likely(p_cell->relayed_reply_branch!=-2)) {
+					if (unlikely(has_tran_tmcbs(p_cell, 
+									TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN))){
+						if (likely(totag_e2e_ack_matching(p_cell, p_msg)==2))
+							goto e2e_ack;
+						else if (e2e_ack_trans==0)
+							e2e_ack_trans=p_cell;
+					}
 					continue;
 				}
 				/* it's a local UAS transaction */
@@ -1201,7 +1264,7 @@ static inline int new_t(struct sip_msg *p_msg)
 	<0	on error
 
 	+1	if a request did not match a transaction
-		- it that was an ack, the calling function
+		- if that was an ack, the calling function
 		  shall forward statelessly
 		- otherwise it means, a new transaction was
 		  introduced and the calling function
