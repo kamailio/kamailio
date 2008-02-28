@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.1//EN" 
+	  "http://openser.org/pub/openser/dbschema/dtd/1.1/dbschema.dtd" [
+	  
+	  <!ENTITY % entities SYSTEM "entities.xml">
+	  %entities;
+	  
+	  ]>
+	  
+	  <table id="carrierfailureroute" xmlns:db="http://docbook.org/ns/docbook">
+		  <name>carrierfailureroute</name>
+		  <version>1</version>
+		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
+		  <description>
+			  <db:para>This table is used by the carrierroute module to provide failure routing capabilities. More information is available at: http://www.openser.org/docs/modules/devel/carrierroute.html
+			  </db:para>
+		  </description>
+		  
+		  <column id="id">
+			  <name>id</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <autoincrement/>
+			  <primary/>
+			  <type db="postgres">SERIAL PRIMARY KEY</type>
+			  <type db="dbtext">int,auto</type>
+			  <description>unique ID</description>
+		  </column>
+		  
+		  <column>
+			  <name>carrier</name>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the carrier id.</description>
+		  </column>
+		  
+		  <column>
+			  <name>domain</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>This column contains the route domain. Additional domains could be used for example as fallback.</description>
+		  </column>
+		  
+		  <column>
+			  <name>scan_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>This column contains the scan prefix, which define the matching portion of a phone number.</description>
+		  </column>
+		  
+		  <column>
+			  <name>host_name</name>
+			  <type>string</type>
+			  <size>&uri_len;</size>
+			  <default/>
+			  <description>This column contains the routing destination used for rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>reply_code</name>
+			  <type>string</type>
+			  <size>3</size>
+			  <default/>
+			  <description>This column contains the reply code used for rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>flags</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>This column contains the flags used for rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>mask</name>
+			  <type>unsigned int</type>
+			  <size>&flag_len;</size>
+			  <default>0</default>
+			  <description>This column contains the mask that is applied to the message flags before rule matching.</description>
+		  </column>
+		  
+		  <column>
+			  <name>next_domain</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>This column contains the route domain that should be used for the next routing attempt.</description>
+		  </column>
+		  
+		  <column>
+			  <name>comment</name>
+			  <type>string</type>
+			  <size>&hf_len;</size>
+			  <null/>
+			  <default><null/></default>
+			  <description>A comment for the route entry, useful for larger routing tables.</description>
+		  </column>
+	  </table>
