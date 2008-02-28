@@ -557,7 +557,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 			dlg = lookup_dlg( h_entry, h_id);
 			if (dlg==0) {
-				LM_WARN("unable to find dialog\n");
+				LM_WARN("unable to find dialog for %.*s\n",
+					req->first_line.u.request.method.len,
+					req->first_line.u.request.method.s);
 				return;
 			}
 
