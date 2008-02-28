@@ -56,6 +56,77 @@
 static unsigned int MAX_URL_LENGTH = 255;
 
 
+int db_check_api(db_func_t* dbf, char *mname)
+{
+	if(dbf==NULL)
+		return -1;
+
+	/* All modules must export db_use_table */
+	if (dbf->use_table == 0) {
+		LM_ERR("module %s does not export db_use_table function\n", mname);
+		goto error;
+	}
+
+	/* All modules must export db_init */
+	if (dbf->init == 0) {
+		LM_ERR("module %s does not export db_init function\n", mname);
+		goto error;
+	}
+
+	/* All modules must export db_close */
+	if (dbf->close == 0) {
+		LM_ERR("module %s does not export db_close function\n", mname);
+		goto error;
+	}
+
+	if (dbf->query) {
+		dbf->cap |= DB_CAP_QUERY;
+	}
+
+	if (dbf->fetch_result) {
+		dbf->cap |= DB_CAP_FETCH;
+	}
+
+	if (dbf->raw_query) {
+		dbf->cap |= DB_CAP_RAW_QUERY;
+	}
+
+	/* Free result must be exported if DB_CAP_QUERY or
+	 * DB_CAP_RAW_QUERY is set */
+	if ((dbf->cap & (DB_CAP_QUERY|DB_CAP_RAW_QUERY)) && (dbf->free_result==0)) {
+		LM_ERR("module %s supports queries but does not export free_result\n",
+				mname);
+		goto error;
+	}
+
+	if (dbf->insert) {
+		dbf->cap |= DB_CAP_INSERT;
+	}
+
+	if (dbf->delete) {
+		dbf->cap |= DB_CAP_DELETE;
+	}
+
+	if (dbf->update) {
+		dbf->cap |= DB_CAP_UPDATE;
+	}
+
+	if (dbf->replace) {
+		dbf->cap |= DB_CAP_REPLACE;
+	}
+
+	if (dbf->last_inserted_id) {
+		dbf->cap |= DB_CAP_LAST_INSERTED_ID;
+	}
+
+	if (dbf->insert_update) {
+		dbf->cap |= DB_CAP_INSERT_UPDATE;
+	}
+	return 0;
+error:
+	return -1;
+}
+
 /* fills mydbf with the corresponding db module callbacks
  * returns 0 on success, -1 on error
  * on error mydbf will contain only 0s */
@@ -64,6 +135,7 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 	char* tmp, *p;
 	int len;
 	db_func_t dbf;
+	db_bind_api_f dbind;
 
 	if (!mod || !mod->s) {
 		LM_CRIT("null database module name\n");
@@ -102,89 +174,50 @@ int db_bind_mod(const str* mod, db_func_t* mydbf)
 	} else {
 		tmp = name;
 	}
-	dbf.cap = 0;
 
-	/* All modules must export db_use_table */
-	dbf.use_table = (db_use_table_f)find_mod_export(tmp, "db_use_table", 2, 0);
-	if (dbf.use_table == 0) {
-		LM_ERR("module %s does not export db_use_table function\n", tmp);
-		goto err;
-	}
-
-	     /* All modules must export db_init */
-	dbf.init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
-	if (dbf.init == 0) {
-		LM_ERR("module %s does not export db_init function\n", tmp);
-		goto err;
-	}
-
-	     /* All modules must export db_close */
-	dbf.close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
-	if (dbf.close == 0) {
-		LM_ERR("module %s does not export db_close function\n", tmp);
-		goto err;
-	}
-
-	dbf.query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
-	if (dbf.query) {
-		dbf.cap |= DB_CAP_QUERY;
-	}
-
-	dbf.fetch_result = (db_fetch_result_f)find_mod_export(tmp,
+	dbind = (db_bind_api_f)find_mod_export(tmp, "db_bind_api", 0, 0);
+	if(dbind != NULL)
+	{
+		LM_DBG("using db bind api for %s\n", tmp);
+		if(dbind(&dbf)<0)
+		{
+			LM_ERR("db_bind_api returned error for module %s\n", tmp);
+			goto error;
+		}
+	} else {
+		memset(&dbf, 0, sizeof(db_func_t));
+		LM_DBG("using export interface to bind %s\n", tmp);
+		dbf.use_table = (db_use_table_f)find_mod_export(tmp,
+			"db_use_table", 2, 0);
+		dbf.init = (db_init_f)find_mod_export(tmp, "db_init", 1, 0);
+		dbf.close = (db_close_f)find_mod_export(tmp, "db_close", 2, 0);
+		dbf.query = (db_query_f)find_mod_export(tmp, "db_query", 2, 0);
+		dbf.fetch_result = (db_fetch_result_f)find_mod_export(tmp,
 			"db_fetch_result", 2, 0);
-	if (dbf.fetch_result) {
-		dbf.cap |= DB_CAP_FETCH;
+		dbf.raw_query = (db_raw_query_f)find_mod_export(tmp,
+			"db_raw_query", 2, 0);
+		dbf.free_result = (db_free_result_f)find_mod_export(tmp,
+			"db_free_result", 2, 0);
+		dbf.insert = (db_insert_f)find_mod_export(tmp, "db_insert", 2, 0);
+		dbf.delete = (db_delete_f)find_mod_export(tmp, "db_delete", 2, 0);
+		dbf.update = (db_update_f)find_mod_export(tmp, "db_update", 2, 0);
+		dbf.replace = (db_replace_f)find_mod_export(tmp, "db_replace", 2, 0);
+		dbf.last_inserted_id= (db_last_inserted_id_f)find_mod_export(tmp,
+			"db_last_inserted_id", 1, 0);
+		dbf.insert_update = (db_insert_update_f)find_mod_export(tmp,
+			"db_insert_update", 2, 0);
 	}
-
-	dbf.raw_query = (db_raw_query_f)find_mod_export(tmp, "db_raw_query", 2, 0);
-	if (dbf.raw_query) {
-		dbf.cap |= DB_CAP_RAW_QUERY;
-	}
-
-	/* Free result must be exported if DB_CAP_QUERY or DB_CAP_RAW_QUERY is set */
-	dbf.free_result = (db_free_result_f)find_mod_export(tmp, "db_free_result", 2, 0);
-	if ((dbf.cap & (DB_CAP_QUERY | DB_CAP_RAW_QUERY))
-	    && (dbf.free_result == 0)) {
-		LM_ERR("module %s supports queries but does not export free_result function\n", tmp);
-		goto err;
-	}
-
-	dbf.insert = (db_insert_f)find_mod_export(tmp, "db_insert", 2, 0);
-	if (dbf.insert) {
-		dbf.cap |= DB_CAP_INSERT;
-	}
-
-	dbf.delete = (db_delete_f)find_mod_export(tmp, "db_delete", 2, 0);
-	if (dbf.delete) {
-		dbf.cap |= DB_CAP_DELETE;
-	}
-
-	dbf.update = (db_update_f)find_mod_export(tmp, "db_update", 2, 0);
-	if (dbf.update) {
-		dbf.cap |= DB_CAP_UPDATE;
-	}
-
-	dbf.replace = (db_replace_f)find_mod_export(tmp, "db_replace", 2, 0);
-	if (dbf.replace) {
-		dbf.cap |= DB_CAP_REPLACE;
-	}
-
-	dbf.last_inserted_id= (db_last_inserted_id_f)find_mod_export(tmp, "db_last_inserted_id", 1, 0);
-	if (dbf.last_inserted_id) {
-		dbf.cap |= DB_CAP_LAST_INSERTED_ID;
-	}
-
-	dbf.insert_update = (db_insert_update_f)find_mod_export(tmp, "db_insert_update", 2, 0);
-	if (dbf.insert_update) {
-		dbf.cap |= DB_CAP_INSERT_UPDATE;
-	}
+	if(db_check_api(&dbf, tmp)!=0)
+		goto error;
 
 	*mydbf=dbf; /* copy */
-	if (tmp != mod->s) pkg_free(tmp);
+	if (tmp != mod->s)
+		pkg_free(tmp);
 	return 0;
 
- err:
-	if (tmp != mod->s) pkg_free(tmp);
+error:
+	if (tmp != mod->s)
+		pkg_free(tmp);
 	return -1;
 }
 

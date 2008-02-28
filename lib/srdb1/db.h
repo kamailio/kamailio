@@ -368,5 +368,16 @@ int db_table_version(const db_func_t* dbf, db_con_t* con, const str* table);
  */
 int db_use_table(db_con_t* _h, const str* _t);
 
+/**
+ * \brief Bind the DB API exported by a module.
+ *
+ * The function links the functions implemented by the module to the members
+ * of db_func_t structure
+ * \param dbb db_func_t structure representing the variable where to bind
+ * \return 0 if everything is ok, otherwise returns -1
+ */
+
+typedef int (*db_bind_api_f)(db_func_t *dbb);
+
 
 #endif /* DB_H */
