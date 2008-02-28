@@ -264,6 +264,12 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		goto done;
 	}
 	
+	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
+	{
+		LM_ERR("when parsing headers\n");
+		goto done;
+	}
+
 	/*if initial request */
 
 	if(hentity->call_id.s== NULL)
@@ -331,12 +337,6 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		hentity->to_tag= pto->tag_value;
 		hentity->from_tag= pfrom->tag_value;
 	
-	}
-
-	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
-	{
-		LM_ERR("when parsing headers\n");
-		goto done;
 	}
 
 	/* extract the other necesary information for inserting a new record */		
