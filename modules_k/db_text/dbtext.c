@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include "../../sr_module.h"
+#include "../../db/db.h"
 #include "dbtext.h"
 #include "dbt_lib.h"
 #include "dbt_api.h"
@@ -47,19 +48,13 @@ static void destroy(void);
  */
 int db_mode = 0;  /* Database usage mode: 0 = cache, 1 = no cache */
 
+int dbt_bind_api(db_func_t *dbb);
+
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",   (cmd_function)dbt_use_table,  2, 0, 0, 0},
-	{"db_init",        (cmd_function)dbt_init,       1, 0, 0, 0},
-	{"db_close",       (cmd_function)dbt_close,      2, 0, 0, 0},
-	{"db_query",       (cmd_function)dbt_query,      2, 0, 0, 0},
-	{"db_raw_query",   (cmd_function)dbt_raw_query,  2, 0, 0, 0},
-	{"db_free_result", (cmd_function)dbt_free_query, 2, 0, 0, 0},
-	{"db_insert",      (cmd_function)dbt_insert,     2, 0, 0, 0},
-	{"db_delete",      (cmd_function)dbt_delete,     2, 0, 0, 0},
-	{"db_update",      (cmd_function)dbt_update,     2, 0, 0, 0},
+	{"db_bind_api",    (cmd_function)dbt_bind_api,   0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -104,4 +99,26 @@ static void destroy(void)
 	dbt_cache_print(0);
 	dbt_cache_destroy();
 }
+
+
+
+int dbt_bind_api(db_func_t *dbb)
+{
+	if(dbb==NULL)
+		return -1;
+
+	memset(dbb, 0, sizeof(db_func_t));
+
+	dbb->use_table   = dbt_use_table;
+	dbb->init        = dbt_init;
+	dbb->close       = dbt_close;
+	dbb->query       = (db_query_f)dbt_query;
+	dbb->free_result = dbt_free_query;
+	dbb->insert      = (db_insert_f)dbt_insert;
+	dbb->delete      = (db_delete_f)dbt_delete; 
+	dbb->update      = (db_update_f)dbt_update;
+
+	return 0;
+}
+
 
