@@ -1,1 +1,0 @@
-id(int,auto) phplib_id(string) username(string) domain(string) password(string) firstname(string) lastname(string) phone(string) email_address(string) datetime_created(int) datetime_modified(int) confirmation(string) flag(string) sendnotification(string) greeting(string) ha1(string) ha1b(string) allow_find(string) timezone(string,null) rpid(string,null) 

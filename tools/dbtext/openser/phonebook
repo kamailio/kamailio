@@ -1,1 +1,0 @@
-id(int,auto) username(string) domain(string) fname(string) lname(string) sip_uri(string) 

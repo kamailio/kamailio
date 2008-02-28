@@ -1,9 +1,7 @@
 table_name(string) table_version(int) 
 acc:4
-active_sessions:1
 active_watchers:9
 address:3
-admin_privileges:1
 aliases:1004
 carrierroute:1
 cpl:1
@@ -21,16 +19,12 @@ lcr:2
 location:1004
 missed_calls:3
 pdt:1
-pending:6
-phonebook:1
 presentity:2
 pua:5
 re_grp:1
 rls_presentity:0
 rls_watchers:1
 route_tree:1
-server_monitoring:1
-server_monitoring_agg:1
 silo:5
 sip_trace:1
 speed_dial:2
@@ -39,6 +33,5 @@ trusted:4
 uri:1
 userblacklist:1
 usr_preferences:2
-usr_preferences_types:1
 watchers:3
 xcap:3
