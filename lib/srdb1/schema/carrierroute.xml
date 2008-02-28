@@ -37,19 +37,19 @@
 		  </column>
 		  
 		  <column>
-			  <name>scan_prefix</name>
-			  <type>string</type>
-			  <size>&user_len;</size>
-			  <default/>
-			  <description>This column contains the scan prefix, which define the matching portion of a phone number.</description>
-		  </column>
-		  
-		  <column>
 			  <name>domain</name>
 			  <type>string</type>
 			  <size>&user_len;</size>
 			  <default/>
 			  <description>This column contains the route domain. Additional domains could be used for example as fallback.</description>
+		  </column>
+		  
+		  <column>
+			  <name>scan_prefix</name>
+			  <type>string</type>
+			  <size>&user_len;</size>
+			  <default/>
+			  <description>This column contains the scan prefix, which define the matching portion of a phone number.</description>
 		  </column>
 		  
 		  <column>
