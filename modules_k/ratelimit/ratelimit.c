@@ -162,6 +162,8 @@ static queue_t queues[MAX_QUEUES];
 static int nqueues_mp = 0;
 static int * nqueues;
 
+static  str * rl_dbg_str = NULL;
+
 /* these only change in the mod_init() process -- no locking needed */
 static int timer_interval = RL_TIMER_INTERVAL;
 static int cfg_setpoint;        /* desired load, used when reading modparams */
@@ -235,6 +237,7 @@ struct mi_root* mi_get_queues(struct mi_root* cmd_tree, void* param);
 struct mi_root* mi_set_pid(struct mi_root* cmd_tree, void* param);
 struct mi_root* mi_get_pid(struct mi_root* cmd_tree, void* param);
 struct mi_root* mi_push_load(struct mi_root* cmd_tree, void* param);
+struct mi_root* mi_set_dbg(struct mi_root* cmd_tree, void* param);
 
 static mi_export_t mi_cmds [] = {
 	{"rl_stats",      mi_stats,      MI_NO_INPUT_FLAG, 0, 0},
@@ -245,6 +248,7 @@ static mi_export_t mi_cmds [] = {
 	{"rl_set_pid",    mi_set_pid,    0,                0, 0},
 	{"rl_get_pid",    mi_get_pid,    MI_NO_INPUT_FLAG, 0, 0},
 	{"rl_push_load",  mi_push_load,  0,                0, 0},
+	{"rl_set_dbg",    mi_set_dbg,    0,                0, 0},
 	{0,0,0,0,0}
 };
 
@@ -447,6 +451,7 @@ static int mod_init(void)
 	pid_setpoint	= shm_malloc(sizeof(double));
 	drop_rate       = shm_malloc(sizeof(int));
 	nqueues		= shm_malloc(sizeof(int));
+	rl_dbg_str	= shm_malloc(sizeof(str));
 
 	*load_value = 0.0;
 	*load_source = load_source_mp;
@@ -456,6 +461,8 @@ static int mod_init(void)
 	*pid_setpoint = 0.01 * (double)cfg_setpoint;
 	*drop_rate      = 0;
 	*nqueues = nqueues_mp;
+	rl_dbg_str->s = NULL;
+	rl_dbg_str->len = 0;
 
 	for (i=0; i<MAX_PIPES; i++) {
 		pipes[i].algo    = shm_malloc(sizeof(int));
@@ -539,6 +546,10 @@ void destroy(void)
 		shm_free(nqueues);
 		nqueues = NULL;
 	}
+	if (rl_dbg_str) {
+		shm_free(rl_dbg_str);
+		rl_dbg_str = NULL;
+	}
 
 	lock_destroy(rl_lock);
 	lock_dealloc((void *)rl_lock);
@@ -574,6 +585,7 @@ static int rl_drop(struct sip_msg * msg, unsigned int low, unsigned int high)
 
 			if (add_lump_rpl(msg, hdr.s, hdr.len, LUMP_RPL_HDR)==0) {
 				LM_ERR("Can't add header\n");
+				pkg_free(hdr.s);
 				return 0;
 			}
 
@@ -980,15 +992,31 @@ static int add_queue_params(modparam_t type, void * val)
 /* timer housekeeping, invoked each timer interval to reset counters */
 static void timer(unsigned int ticks, void *param)
 {
-	int i;
-
-	/* LM_DBG("invoked\n"); */
+	int i, len;
+	char *c, *p;
 
 	LOCK_GET(rl_lock);
 	switch (*load_source) {
 		case LOAD_SOURCE_CPU:
 			update_cpu_load();
 			break;
+	}
+
+	if (rl_dbg_str->s) {
+		c = p = rl_dbg_str->s;
+		memset(c, ' ', rl_dbg_str->len);
+		for (i=0; i<MAX_PIPES; i++) {
+			c = int2str(*pipes[i].counter, &len);
+			if (len < 4) {
+				memcpy( p + (5-len), c, len );
+			} else {
+				memset(p, '*', 5);
+				LM_WARN("Counter pipes[%d] to big: %d\n",
+					i, *pipes[i].counter);
+			}
+			p = p + 5;
+		}
+		LM_WARN("%.*s\n", rl_dbg_str->len, rl_dbg_str->s);
 	}
 
 	for (i=0; i<MAX_PIPES; i++) {
@@ -1341,6 +1369,40 @@ struct mi_root* mi_push_load(struct mi_root* cmd_tree, void* param)
 	LOCK_RELEASE(rl_lock);
 
 	do_update_load();
+
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+bad_syntax:
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+}
+
+struct mi_root* mi_set_dbg(struct mi_root* cmd_tree, void* param)
+{
+	struct mi_node *node;
+	unsigned int dbg_mode = 0;
+
+	node = cmd_tree->node.kids; 
+	if (node == NULL) return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if ( !node->value.s || !node->value.len || strno2int(&node->value,&dbg_mode)<0)
+		goto bad_syntax;
+
+	LOCK_GET(rl_lock);
+	if (dbg_mode) {
+		if (!rl_dbg_str->s) {
+			rl_dbg_str->len = (MAX_PIPES * 5 * sizeof(char));
+			rl_dbg_str->s = (char *)shm_malloc(rl_dbg_str->len);
+			if (!rl_dbg_str->s) {
+				rl_dbg_str->len = 0;
+				LM_ERR("out of shm memory: %d\n", rl_dbg_str->len);
+			}
+		}
+	} else {
+		if (rl_dbg_str->s) {
+			shm_free(rl_dbg_str->s);
+			rl_dbg_str->s = NULL;
+			rl_dbg_str->len = 0;
+		}
+	}
+	LOCK_RELEASE(rl_lock);
 
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 bad_syntax:
