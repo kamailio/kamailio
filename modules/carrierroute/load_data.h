@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.

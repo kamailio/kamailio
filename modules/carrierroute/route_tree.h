@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -31,8 +31,7 @@
  *
  * Copyright: 2007 1 & 1 Internet AG
  *
- * @brief contains the functions to manage routing tree
- * data in a digital tree
+ * @brief contains the functions to manage routing tree data in a digital tree.
  *
  */
 
@@ -48,7 +47,7 @@
  * prob gives the probability with which this rule applies if there are
  * more than one for a given prefix.
  *
- * Note that this is a recursive function. It strips off digits from the
+ * Note that this is a recursive function. It strips of digits from the
  * beginning of scan_prefix and calls itself.
  *
  * @param rt the current route tree node
@@ -74,10 +73,37 @@
  * @see add_route()
  */
 int add_route_to_tree(struct route_tree_item * rt, const char * scan_prefix,
-                             const char * full_prefix, int max_targets, double prob,
-                             const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
-                             const char * rewrite_local_suffix, int status, int hash_index,
-                             int backup, int * backed_up, const char * comment);
+		const char * full_prefix, int max_targets, double prob,
+		const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
+		const char * rewrite_local_suffix, int status, int hash_index,
+		int backup, int * backed_up, const char * comment);
+
+/**
+ * Adds the given failure route information to the failure route tree identified by
+ * route_tree. scan_prefix, host, reply_code, flags identifies the number for which
+ * the information is and the next_domain parameters defines where to continue
+ * routing in case of a match.
+ *
+ * Note that this is a recursive function. It strips of digits from the
+ * beginning of scan_prefix and calls itself.
+ *
+ * @param rt the current route tree node
+ * @param scan_prefix the prefix at the current position
+ * @param full_prefix the whole scan prefix
+ * @param host the hostname last tried
+ * @param reply_code the reply code 
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ * @param next_domain continue routing with this domain id
+ * @param comment a comment for the route rule
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * @see add_route()
+ */
+int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const char * scan_prefix,
+		const char * full_prefix, const char * host, const char * reply_code,
+		const int flags, const int mask, const int next_domain, const char * comment);
 
 /**
  * Create a new route tree root in shared memory and set it up.
@@ -102,6 +128,18 @@ struct route_tree * create_route_tree(const char * domain, int id);
  * -1 on failure
  */
 int add_domain(const char * domain);
+
+/**
+ * returns the routing tree for the given domain, if domain's tree doesn't
+ * exist, it will be created. If the trees are completely filled and a not
+ * existing domain shall be added, an error is returned.
+ *
+ * @param domain the domain name of desired routing tree
+ * @param rd route data to be searched
+ *
+ * @return a pointer to the desired routing tree, NULL on failure
+ */
+struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd);
 
 struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id);
 

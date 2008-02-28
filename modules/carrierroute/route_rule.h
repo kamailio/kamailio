@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -66,10 +66,30 @@
  * @see add_route_to_tree()
  */
 int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-                   int max_targets, double prob, const char * rewrite_hostpart, int strip,
-                   const char * rewrite_local_prefix, const char * rewrite_local_suffix,
-                   int status, int hash_index, int backup, int * backed_up,
-                   const char * comment);
+		int max_targets, double prob, const char * rewrite_hostpart, int strip,
+		const char * rewrite_local_prefix, const char * rewrite_local_suffix,
+		int status, int hash_index, int backup, int * backed_up,
+		const char * comment);
+
+/**
+ * Adds a failure route rule to rt
+ *
+ * @param rt the current route tree node
+ * @param full_prefix the whole scan prefix
+ * @param host the hostname last tried
+ * @param reply_code the reply code 
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ * @param next_domain continue routing with this domain id
+ * @param comment a comment for the route rule
+ *
+ * @return 0 on success, -1 on failure
+ *
+ * @see add_failure_route_to_tree()
+ */
+int add_failure_route_rule(struct failure_route_tree_item * failure_tree,
+		const char * prefix, const char * host, const char * reply_code,
+		int flags, int mask, const int next_domain, const char * comment);
 
 /**
  * Destroys route rule rr by freeing all its memory.
@@ -77,6 +97,13 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
  * @param rr route rule to be destroyed
  */
 void destroy_route_rule(struct route_rule * rr);
+
+/**
+ * Destroys failure route rule rr by freeing all its memory.
+ *
+ * @param rr route rule to be destroyed
+ */
+void destroy_failure_route_rule(struct failure_route_rule * rr);
 
 /**
  * Fixes the route rules by creating an array for accessing

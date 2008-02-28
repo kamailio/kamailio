@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -137,7 +137,7 @@ int load_user_carrier(str * user, str * domain) {
 	db_op_t op[2];
 	int id;
 	if (!user || (use_domain && !domain)) {
-		LM_ERR("NULL-pointer in parameter\n");
+		LM_ERR("NULL pointer in parameter\n");
 		return -1;
 	}
 
@@ -192,11 +192,9 @@ int load_route_data(struct rewrite_data * rd) {
 	struct carrier * carriers = NULL, * tmp = NULL;
 	static str query_str;
 
-	if ((strlen("SELECT DISTINCT  FROM  WHERE = ")
-	                        + db_table.len
-	                        + columns[COL_DOMAIN]->len
-	                        + columns[COL_CARRIER]->len
-	                        + 20) >  QUERY_LEN) {
+	if( (strlen("SELECT DISTINCT  FROM  WHERE = ")
+			+ db_table.len + columns[COL_DOMAIN]->len
+			+ columns[COL_CARRIER]->len + 20) >  QUERY_LEN) {
 		LM_ERR("query too long\n");
 		return -1;
 	}
@@ -230,14 +228,14 @@ int load_route_data(struct rewrite_data * rd) {
 			LM_ERR("Failed to query database.\n");
 			goto errout;
 		}
-		LM_INFO("add_carrier: name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
+		LM_INFO("name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
 		if (add_carrier_tree(tmp->name, tmp->id, rd, RES_ROW_N(res)) == NULL) {
-			LM_ERR("cant add carrier %s\n", tmp->name);
+			LM_ERR("can't add carrier %s\n", tmp->name);
 			goto errout;
 		}
-		tmp = tmp->next;
 		dbf.free_result(dbh, res);
 		res = NULL;
+		tmp = tmp->next;
 	}
 
 	if (dbf.use_table(dbh, &db_table) < 0) {
@@ -253,23 +251,52 @@ int load_route_data(struct rewrite_data * rd) {
 	for (i = 0; i < RES_ROW_N(res); ++i) {
 		row = &RES_ROWS(res)[i];
 		if (add_route(rd,
-		              row->values[COL_CARRIER].val.int_val,
-		              row->values[COL_DOMAIN].val.string_val,
-		              row->values[COL_SCAN_PREFIX].val.string_val,
-		              0,
-		              row->values[COL_PROB].val.double_val,
-		              row->values[COL_REWRITE_HOST].val.string_val,
-		              row->values[COL_STRIP].val.int_val,
-		              row->values[COL_REWRITE_PREFIX].val.string_val,
-		              row->values[COL_REWRITE_SUFFIX].val.string_val,
-		              1,
-		              0,
-		              -1,
-		              NULL,
-		              row->values[COL_COMMENT].val.string_val) == -1) {
+				row->values[COL_CARRIER].val.int_val,
+				row->values[COL_DOMAIN].val.string_val,
+				row->values[COL_SCAN_PREFIX].val.string_val,
+				0,
+				row->values[COL_PROB].val.double_val,
+				row->values[COL_REWRITE_HOST].val.string_val,
+				row->values[COL_STRIP].val.int_val,
+				row->values[COL_REWRITE_PREFIX].val.string_val,
+				row->values[COL_REWRITE_SUFFIX].val.string_val,
+				1,
+				0,
+				-1,
+				NULL,
+				row->values[COL_COMMENT].val.string_val) == -1) {
 			goto errout;
 		}
 	}
+	dbf.free_result(dbh, res);
+	res = NULL;
+	
+	if (dbf.use_table(dbh, &db_failure_table) < 0) {
+		LM_ERR("cannot set database table '%.*s'.\n",
+				db_failure_table.len, db_failure_table.s);
+		return -1;
+	}
+	if (dbf.query(dbh, NULL, NULL, NULL, (db_key_t *)failure_columns, 0,
+								FAILURE_COLUMN_NUM, NULL, &res) < 0) {
+		LM_ERR("failed to query database.\n");
+		return -1;
+	}
+	for (i = 0; i < RES_ROW_N(res); ++i) {
+		row = &RES_ROWS(res)[i];
+		if (add_failure_route(rd,
+				row->values[FCOL_CARRIER].val.int_val,
+				row->values[FCOL_DOMAIN].val.string_val,
+				row->values[FCOL_SCAN_PREFIX].val.string_val,
+				row->values[FCOL_HOST_NAME].val.string_val,
+				row->values[FCOL_REPLY_CODE].val.string_val,
+				row->values[FCOL_FLAGS].val.int_val,
+				row->values[FCOL_MASK].val.int_val,
+				row->values[FCOL_NEXT_DOMAIN].val.string_val,
+				row->values[FCOL_COMMENT].val.string_val) == -1) {
+			goto errout;
+		}
+	}
+
 	destroy_carriers(carriers);
 	dbf.free_result(dbh, res);
 	return 0;

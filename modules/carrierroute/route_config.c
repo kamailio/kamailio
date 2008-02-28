@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -379,7 +379,7 @@ static int backup_config(void) {
 		LM_ERR("Error closing destination file.\n");
 		goto errout;
 	}
-	LM_ERR("backup written to %s\n", backup_file);
+	LM_NOTICE("backup written to %s\n", backup_file);
 	pkg_free(backup_file);
 	return 0;
 errout:

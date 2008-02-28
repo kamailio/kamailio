@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2007 1&1 Internet AG
+ * Copyright (C) 2007-2008 1&1 Internet AG
  *
  *
  * This file is part of openser, a free SIP server.
@@ -59,11 +59,16 @@ struct rewrite_data ** global_data = NULL;
  */
 struct tree_map ** script_trees = NULL;
 
+/**
+ * holds the map between failure routing tree names and numbers
+ */
+struct tree_map ** script_failure_trees = NULL;
+
 static int carrier_tree_fixup(struct rewrite_data * rd);
 
 /**
- * initialises the routing data, i.e. it binds the data loader
- * initialises the global data pointer
+ * Initialises the routing data, i.e. it binds the data loader,
+ * initialises the global data pointer.
  *
  * @param source data source, can be db or file
  *
@@ -186,13 +191,7 @@ int find_tree(str tree){
 
 	while (tmp) {
 		if (str_strcmp(&tree, &tmp->name) == 0) {
-			/*
-			we return the number of the tree instead of the id, because the
-			user could choose the id randomly, this would lead to a not
-			optimal datastructure, e.g. for id=10000. So we're working 
-			internaly with this id instead of the id from the database.
-			*/
-			return tmp->no;
+			return tmp->id;
 		}
 		tmp = tmp->next;
 	}
@@ -228,12 +227,12 @@ int find_tree(str tree){
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct rewrite_data * rd, int carrier_id,
-              const char * domain, const char * scan_prefix, int max_targets,
-              double prob, const char * rewrite_hostpart, int strip,
-              const char * rewrite_local_prefix, const char * rewrite_local_suffix,
-              int status, int hash_index, int backup, int * backed_up, const char * comment) {
+		const char * domain, const char * scan_prefix, int max_targets,
+		double prob, const char * rewrite_hostpart, int strip,
+		const char * rewrite_local_prefix, const char * rewrite_local_suffix,
+		int status, int hash_index, int backup, int * backed_up, const char * comment) {
 	struct carrier_tree * ct = NULL;
-	struct route_tree_item * rt = NULL;
+	struct route_tree * rt = NULL;
 	LM_INFO("adding prefix %s, prob %f\n", scan_prefix, prob);
 
 	if ((ct = get_carrier_tree(carrier_id, rd)) == NULL) {
@@ -246,10 +245,67 @@ int add_route(struct rewrite_data * rd, int carrier_id,
 		return -1;
 	}
 	LM_INFO("found route, now adding\n");
-	return add_route_to_tree(rt, scan_prefix, scan_prefix, max_targets, prob, rewrite_hostpart,
+	return add_route_to_tree(rt->tree, scan_prefix, scan_prefix, max_targets, prob, rewrite_hostpart,
 	                         strip, rewrite_local_prefix, rewrite_local_suffix, status,
 	                         hash_index, backup, backed_up, comment);
 }
+
+/**
+ * Adds the given failure route information to the failure route tree identified by
+ * domain. scan_prefix, host, reply_code and flags identifies the number for which
+ * the information is and the next_domain parameter defines where to continue routing
+ * in case of a match.
+ *
+ * @param rd the route data to which the route shall be added
+ * @param carrier_id the carrier id of the route to be added
+ * @param domain the routing domain of the new route
+ * @param scan_prefix the number prefix
+ * @param host the hostname last tried
+ * @param reply_code the reply code 
+ * @param flags user defined flags
+ * @param mask for user defined flags
+ * @param next_domain continue routing with this domain
+ * @param comment a comment for the failure route rule
+ *
+ * @return 0 on success, -1 on error in which case it LOGs a message.
+ */
+int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * domain,
+		const char * scan_prefix, const char * host, const char * reply_code,
+		int flags, int mask, const char * next_domain, const char * comment) {
+	int next_domain_id;
+	struct carrier_tree * ct = NULL;
+	struct route_tree * rt = NULL;
+		
+	if ((domain==NULL) || (scan_prefix == NULL) || (host ==NULL) || (reply_code == NULL) || (next_domain == NULL)) {
+		LM_ERR("NULL pointer in parameter\n");
+		return -1;
+	}
+	
+	if (strlen(reply_code)!=3) {
+		LM_ERR("invalid reply_code '%s'!\n", reply_code);
+		return -1;
+	}
+	
+	if ((ct = get_carrier_tree(carrier_id, rd)) == NULL) {
+		LM_ERR("could not retrieve carrier tree\n");
+		return -1;
+	}
+	
+	if ((rt = get_route_tree(domain, ct)) == NULL) {
+		LM_ERR("could not retrieve route tree\n");
+		return -1;
+	}
+
+	if ((next_domain_id = add_domain(next_domain)) < 0) {
+		LM_ERR("add_domain failed\n");
+		return -1;
+	}
+	
+	LM_INFO("found failure route, now adding\n");
+	return add_failure_route_to_tree(rt->failure_tree, scan_prefix, scan_prefix, host, reply_code,
+			flags, mask, next_domain_id, comment);
+}
+
 
 /**
  * adds a carrier tree for the given carrier
@@ -264,7 +320,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
 struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, struct rewrite_data * rd, int trees) {
 	int i, id;
 	if (!rd) {
-		LM_ERR("NULL-pointer in parameter\n");
+		LM_ERR("NULL pointer in parameter\n");
 		return NULL;
 	}
 	LM_INFO("add carrier %s\n", carrier);
@@ -350,7 +406,7 @@ struct carrier_tree * create_carrier_tree(const char * tree, int carrier_id, int
 struct carrier_tree * get_carrier_tree(int carrier_id, struct rewrite_data * rd) {
 	int i;
 	if (!rd) {
-		LM_ERR("NULL-pointer in parameter\n");
+		LM_ERR("NULL pointer in parameter\n");
 		return NULL;
 	}
 	for (i=0; i<rd->tree_num; i++) {
@@ -439,7 +495,7 @@ void destroy_route_data(void){
  *
  * @param tree route data to be destroyed
  */
-void destroy_carrier_tree(struct carrier_tree * tree) {
+static void destroy_carrier_tree(struct carrier_tree * tree) {
 	int i;
 
 	if (tree == NULL) {
