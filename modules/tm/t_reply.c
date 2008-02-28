@@ -238,11 +238,9 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 		if (i->tag.len==tag->len
 				&& memcmp(i->tag.s, tag->s, tag->len)==0) {
 			DBG("DEBUG: totag for e2e ACK found: %d\n", i->acked);
-			/* to-tag recorded, and an ACK has been received for it */
-			if (i->acked) return 0;
-			/* to-tag recorded, but this ACK came for the first time */
-			i->acked=1;
-			return 1;
+			/* mark totag as acked and return 0 if this was the first ack
+			 * and 1 otherwise */
+			return atomic_get_and_set_int(&i->acked, 1);
 		}
 		i=i->next;
 	}
@@ -1567,25 +1565,25 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		}
 		t->uas.status = winning_code;
 		update_reply_stats( winning_code );
-		if (unlikely(is_invite(t) && winning_msg!=FAKED_REPLY
-		&& winning_code>=200 && winning_code <300
-		&& has_tran_tmcbs(t,
-				TMCB_RESPONSE_OUT|TMCB_E2EACK_IN|TMCB_E2EACK_RETR_IN) ))  {
-			totag_retr=update_totag_set(t, winning_msg);
+		if (unlikely(is_invite(t) && winning_msg!=FAKED_REPLY &&
+					 winning_code>=200 && winning_code <300 &&
+					 has_tran_tmcbs(t, TMCB_LOCAL_COMPLETED) ))  {
+				totag_retr=update_totag_set(t, winning_msg);
 		}
 	}
 	UNLOCK_REPLIES(t);
- 
-        if (local_winner >= 0
+		
+	if (local_winner >= 0
 		&& cfg_get(tm, tm_cfg, pass_provisional_replies)
 		&& winning_code < 200) {
-			if (unlikely(!totag_retr && 
-							has_tran_tmcbs(t, TMCB_LOCAL_RESPONSE_OUT) )) {
-                        run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0,
-                                winning_msg, winning_code);
-                }
-        }
- 
+			/* no retr. detection for provisional replies &
+			 * TMCB_LOCAL_RESPONSE_OUT */
+			if (unlikely(has_tran_tmcbs(t, TMCB_LOCAL_RESPONSE_OUT) )) {
+				run_trans_callbacks( TMCB_LOCAL_RESPONSE_OUT, t, 0, 
+										winning_msg, winning_code);
+			}
+	}
+	
 	if (local_winner>=0 && winning_code>=200 ) {
 		DBG("DEBUG: local transaction completed\n");
 		if (!totag_retr) {

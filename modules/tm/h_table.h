@@ -213,7 +213,7 @@ typedef struct ua_client
 struct totag_elem {
 	struct totag_elem *next;
 	str tag;
-	short acked;
+	volatile int acked;
 };
 
 
