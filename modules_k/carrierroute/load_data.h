@@ -24,15 +24,7 @@
 
 /**
  * @file load_data.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief API to bind a data loading function
- *
+ * @brief API to bind a data loading function.
  */
 
 #ifndef SP_ROUTE_LOAD_DATA_H

@@ -24,16 +24,7 @@
 
 /**
  * @file route_config.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief Functions for loading routing data from a
- * configuration file and save it to file respectively
- *
+ * @brief Functions for load and save routing data from a config file.
  */
 
 #ifndef SP_ROUTE_ROUTE_CONFIG_H

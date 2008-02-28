@@ -24,15 +24,7 @@
 
 /**
  * @file route_tree.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions to manage routing tree data in a digital tree.
- *
+ * @brief Contains the functions to manage routing tree data in a digital tree.
  */
 
 #ifndef SP_ROUTE_ROUTE_TREE_H

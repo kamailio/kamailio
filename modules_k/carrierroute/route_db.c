@@ -24,15 +24,7 @@
 
 /**
  * @file route_db.c
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief Functions for loading routing data from a database
- *
+ * @brief Functions for loading routing data from a database.
  */
 
 #include "../../dprint.h"
@@ -99,7 +91,8 @@ int db_init(void) {
 		return -1;
 	}
 	if ( (check_table_version(&dbf, dbh, &db_table, ROUTE_TABLE_VER) < 0) ||
-		(check_table_version(&dbf, dbh, &carrier_table, CARRIER_TABLE_VER) < 0) ) {
+		 (check_table_version(&dbf, dbh, &carrier_table, CARRIER_TABLE_VER) < 0) ||
+		 (check_table_version(&dbf, dbh, &db_failure_table, FAILURE_TABLE_VER) < 0) ) {
 			LM_ERR("Error during table version check.\n");
 			return -1;
 	}

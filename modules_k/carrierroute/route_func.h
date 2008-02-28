@@ -24,15 +24,7 @@
 
 /**
  * @file route_func.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief routing and balancing functions
- *
+ * @brief Routing and balancing functions.
  */
 
 #ifndef SP_ROUTE_ROUTE_FUNC_H

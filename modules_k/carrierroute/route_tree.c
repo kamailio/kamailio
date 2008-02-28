@@ -24,16 +24,7 @@
 
 /**
  * @file route_tree.c
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions to manage routing tree
- * data in a digital tree
- *
+ * @brief Contains the functions to manage routing tree data in a digital tree.
  */
 
 #include "../../mem/shm_mem.h"
@@ -42,7 +33,6 @@
 #include "route.h"
 #include "route_rule.h"
 #include "load_data.h"
-
 
 
 /**
@@ -59,7 +49,6 @@ static struct route_tree_item * create_route_tree_item(void);
 static struct failure_route_tree_item * create_failure_route_tree_item(void);
 
 static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt);
-
 
 
 /**
@@ -112,6 +101,7 @@ struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd
 	return rt;
 }
 
+
 static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 	int i;
 	LM_INFO("tree %.*s has %ld trees\n",
@@ -126,9 +116,10 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 	return -1;
 }
 
+
 struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id) {
 	int i;
-	LM_DBG("searching in carrier %.*s (id=%d)\n", ct->name.len, ct->name.s, ct->id);
+	LM_DBG("searching in carrier %.*s, id %d\n", ct->name.len, ct->name.s, ct->id);
 	for (i=0; i<ct->tree_num; i++) {
 		if (ct->trees[i]) {
 			LM_DBG("tree %.*s, domain %.*s : %i\n", ct->name.len, ct->name.s, ct->trees[i]->name.len, ct->trees[i]->name.s, ct->trees[i]->id);
@@ -139,6 +130,7 @@ struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id) {
 	}
 	return NULL;
 }
+
 
 /**
  * creates a routing tree node in shared memory and sets it up.
@@ -209,8 +201,6 @@ struct route_tree * create_route_tree(const char * domain, int id) {
 }
 
 
-
-
 /**
  * Adds the given route information to the route tree identified by
  * route_tree. scan_prefix identifies the number for which the information
@@ -269,8 +259,6 @@ int add_route_to_tree(struct route_tree_item * route_tree, const char * scan_pre
 }
 
 
-
-
 /**
  * Adds the given failure route information to the failure route tree identified by
  * route_tree. scan_prefix, host, reply_code, flags identifies the number for which
@@ -312,8 +300,6 @@ int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, con
 																		 flags, mask, next_domain, comment);
 	}
 }
-
-
 
 
 void destroy_route_map(void) {

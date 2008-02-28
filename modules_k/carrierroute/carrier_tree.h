@@ -24,16 +24,7 @@
 
 /**
  * @file carrier_tree.h
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mo May 21 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions to manage carrier
- * tree data
- *
+ * @brief Contains the functions to manage carrier tree data.
  */
 
 #ifndef SP_ROUTE_CARRIER_TREE_H

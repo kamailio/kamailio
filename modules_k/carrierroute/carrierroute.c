@@ -24,15 +24,7 @@
 
 /**
  * @file carrierroute.c
- *
- * @author: Jonas Appel <jonas dot appel at schlund dot de>
- *
- * @date Mi Jan 24 2007
- *
- * Copyright: 2007 1 & 1 Internet AG
- *
- * @brief contains the functions exported by the moduls
- *
+ * @brief Contains the functions exported by the module.
  */
 
 #include "../../sr_module.h"
@@ -85,7 +77,6 @@ static str failure_next_domain_col = str_init("next_domain");
 static str failure_comment_col = str_init("comment");
 
 
-
 str * columns[COLUMN_NUM] = {
                                  &id_col,
                                  &carrier_col,
@@ -133,6 +124,7 @@ int use_domain = 0;
 
 int fallback_default = 1;
 
+
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
 static int child_init(int);
@@ -142,8 +134,10 @@ static int route_fixup(void ** param, int param_no);
 static int load_user_carrier_fixup(void ** param, int param_no);
 static int load_next_domain_fixup(void ** param, int param_no);
 
+
 /************* Declaration of Helper Functions *****************************/
 static enum hash_source hash_fixup(const char * domain);
+
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
@@ -220,8 +214,6 @@ struct module_exports exports = {
 };
 
 
-
-
 /************* Helper Functions ********************************************/
 
 /**
@@ -243,8 +235,6 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
 	} else if (strcasecmp("to_user", my_hash_source) == 0) {
 		return shs_to_user;
 	} else {
-		LM_ERR("Invalid second parameter "
-		    "to balance_uri().\n");
 		return shs_error;
 	}
 }
@@ -263,13 +253,9 @@ static enum hash_algorithm alg_fixup(const char * my_algorithm) {
 	} else if (strcasecmp("prime", my_algorithm) == 0) {
 		return alg_prime;
 	} else {
-		LM_ERR("Invalid second parameter "
-		    "to balance_uri().\n");
 		return alg_error;
 	}
 }
-
-
 
 
 /************* Interface Functions *****************************************/
@@ -328,8 +314,6 @@ static int mod_init(void) {
 }
 
 
-
-
 /**
  * fixes the module functions' parameters with generic pseudo variable support.
  *
@@ -353,8 +337,6 @@ static int pv_fixup(void ** param) {
 
 	return 0;
 }
-
-
 
 
 /**
@@ -389,7 +371,7 @@ static int carrier_fixup(void ** param) {
 			pkg_free(mp);
 			return -1;
 		}
-		LM_INFO("carrier tree '%s' has id %i\n", (char *)*param, mp->u.n);
+		LM_INFO("carrier tree %s has id %i\n", (char *)*param, mp->u.n);
 		
 		pkg_free(*param);
 		*param = (void *)mp;
@@ -408,8 +390,6 @@ static int carrier_fixup(void ** param) {
 
 	return 0;
 }
-
-
 
 
 /**
@@ -444,8 +424,6 @@ static int domain_fixup(void ** param) {
 			pkg_free(mp);
 			return -1;
 		}
-		LM_INFO("domain '%s' has id %i\n", (char *)*param, mp->u.n);
-		
 		pkg_free(*param);
 		*param = (void *)mp;
 	}
@@ -463,8 +441,6 @@ static int domain_fixup(void ** param) {
 
 	return 0;
 }
-
-
 
 
 /**
@@ -511,8 +487,6 @@ static int flags_fixup(void ** param) {
 }
 
 
-
-
 /**
  * fixes the module functions' parameters in case of AVP names.
  *
@@ -551,8 +525,6 @@ static int avp_name_fixup(void ** param) {
 	
 	return 0;
 }
-
-
 
 
 /**
@@ -594,6 +566,7 @@ static int route_fixup(void ** param, int param_no) {
 	else if (param_no == 5) {
 		/* hash source */
 		if ((my_hash_source = hash_fixup((char *)*param)) == shs_error) {
+			LM_ERR("invalid hash source\n");
 			return -1;
 		}
 		pkg_free(*param);
@@ -602,6 +575,7 @@ static int route_fixup(void ** param, int param_no) {
 	else if (param_no == 6) {
 		/* algorithm */
 		if ((my_algorithm = alg_fixup((char *)*param)) == alg_error) {
+			LM_ERR("invalid algorithm\n");
 			return -1;
 		}
 		pkg_free(*param);
@@ -617,8 +591,6 @@ static int route_fixup(void ** param, int param_no) {
 
 	return 0;
 }
-
-
 
 
 /**
@@ -674,8 +646,6 @@ static int load_next_domain_fixup(void ** param, int param_no) {
 }
 
 
-
-
 static int load_user_carrier_fixup(void ** param, int param_no) {
 	if (mode == SP_ROUTE_MODE_FILE) {
 		LM_ERR("command cr_user_rewrite_uri can't be used in file mode\n");
@@ -702,15 +672,15 @@ static int load_user_carrier_fixup(void ** param, int param_no) {
 }
 
 
-
-
 static int child_init(int rank) {
 	return data_child_init();
 }
 
+
 static int mi_child_init(void) {
 	return data_child_init();
 }
+
 
 static void mod_destroy(void) {
 	destroy_route_data();
