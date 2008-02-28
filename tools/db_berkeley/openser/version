@@ -16,6 +16,8 @@ address|
 address|3
 aliases|
 aliases|1004
+carrierfailureroute|
+carrierfailureroute|1
 carrierroute|
 carrierroute|1
 cpl|
