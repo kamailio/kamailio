@@ -29,8 +29,6 @@
 #include "../../mem/mem.h"
 #include "../../ut.h"
 
-#include "../db_mysql/my_con.h"
-
 
 static db_con_t *dbc;
 static db_func_t dbf;
