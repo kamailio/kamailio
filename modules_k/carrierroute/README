@@ -1099,22 +1099,22 @@ domain register {
 
    Example 1-44. Example database content - carrierroute table
 ...
-+----+---------+-------------+--------+------+-------+---------------+
-| id | carrier | scan_prefix | domain | prob | strip | rewrite_host  |
-+----+---------+-------------+--------+------+-------+---------------+
-| 1  |       1 | 49          | 0      |  0.5 | 0     | de-1.carrier1 |
-| 2  |       1 | 49          | 0      |  0.5 | 0     | de-2.carrier1 |
-| 3  |       1 |             | 0      |    1 | 0     | gw.carrier1-1 |
-| 5  |       1 | 49          | 1      |    1 | 0     | gw.carrier1-1 |
-| 6  |       1 |             | 2      |    1 | 0     | gw.carrier1-2 |
-| 7  |       1 |             | 3      |    1 | 0     | gw.carrier1-3 |
-| 8  |       2 | 49          | 0      |  0.5 | 0     | de-1.carrier2 |
-| 9  |       2 | 49          | 0      |  0.5 | 0     | de-2.carrier2 |
-| 10 |       2 |             | 0      |    1 | 0     | gw.carrier2   |
-| 11 |       2 | 49          | 1      |    1 | 0     | gw.carrier2   |
-| 12 |       3 | 49          | start  |    1 | 0     | de-gw.default |
-| 13 |       3 |             | start  |    1 | 0     | gw.default    |
-+----+---------+-------------+--------+------+-------+---------------+
++----+---------+--------+-------------+------+-------+---------------+
+| id | carrier | domain |scan_prefix | prob | strip | rewrite_host   |
++----+---------+--------+-------------+------+-------+---------------+
+| 1  |       1 |      0 | 49          |  0.5 | 0     | de-1.carrier1 |
+| 2  |       1 |      0 | 49          |  0.5 | 0     | de-2.carrier1 |
+| 3  |       1 |      0 |             |    1 | 0     | gw.carrier1-1 |
+| 5  |       1 |      1 | 49          |    1 | 0     | gw.carrier1-1 |
+| 6  |       1 |      2 |             |    1 | 0     | gw.carrier1-2 |
+| 7  |       1 |      3 |             |    1 | 0     | gw.carrier1-3 |
+| 8  |       2 |      0 | 49          |  0.5 | 0     | de-1.carrier2 |
+| 9  |       2 |      0 | 49          |  0.5 | 0     | de-2.carrier2 |
+| 10 |       2 |      0 |             |    1 | 0     | gw.carrier2   |
+| 11 |       2 |      1 | 49          |    1 | 0     | gw.carrier2   |
+| 12 |       3 |  start | 49          |    1 | 0     | de-gw.default |
+| 13 |       3 |  start |             |    1 | 0     | gw.default    |
++----+---------+--------+-------------+------+-------+---------------+
 ...
 
    This table contains two routes to two gateways for the "49"
