@@ -1740,7 +1740,7 @@ rpid() {
                                 CLAUSE=""
                         fi
                         #12 is the rpid field
-                        cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,12
+                        cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,7
                         echo
                         ;;
                 add|rm)
@@ -1772,7 +1772,7 @@ rpid() {
                         fi
 
                         old_line=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
-                        pre_rpid=`echo $old_line | cut -s -d : -f 1-11`
+                        pre_rpid=`echo $old_line | cut -s -d : -f 1-6`
                         new_line=$pre_rpid:$RPID_VAL
                         cat $SUB_FILE | sed s/$old_line/$new_line/g >> $SUB_FILE.tmp
                         mv -f $SUB_FILE.tmp $SUB_FILE
@@ -1854,30 +1854,6 @@ WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND $REALM_COLUMN='$OSERDOMAIN';"
 			;;
 	esac
     fi
-}
-
-#
-##### ------------------------------------------------ #####
-### send email
-#
-send_email() {
-	require_dbengine
-
-	set_user $1
-	QUERY="select $EMAIL_COLUMN from $SUB_TABLE where \
-$SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
-	EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
-	if [ $? -ne 0 ] ; then
-		merr "mail - SQL query failed"
-		exit 1
-	fi
-	mecho "Write email to $1: $EA now ..."
-	mail -s "Message from $OSERDOMAIN SIP admin" $EA
-	if [ $? -eq 0 ] ; then
-		mecho "message sent"
-	else
-		merr "sending message failed"
-	fi
 }
 
 #
@@ -2113,7 +2089,7 @@ subscriber() {
 	
 	case $1 in
 		add)
-			if [ $# -ne 4 ] ; then
+			if [ $# -ne 3 ] ; then
 				usage_subscriber
 				exit 1
 			fi
@@ -2138,38 +2114,13 @@ subscriber() {
 			fi
 
 			QUERY="insert into $SUB_TABLE ($SUBSCRIBER_COLUMN,\
-				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN,\
-				$EMAIL_COLUMN,$SUB_CREATED_COLUMN) \
-				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$PASS','$3',\
-				now());";
+				$REALM_COLUMN,$HA1_COLUMN,$HA1B_COLUMN,$PASSWORD_COLUMN) \
+				values ('$OSERUSER','$OSERDOMAIN','$HA1','$HA1B','$PASS');";
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "introducing the new user '$1' to the database failed"
 			else
 				mecho "new user '$1' added"
-			fi
-			;;
-
-		mail|email)
-			if [ $# -ne 2 ] ; then
-				usage_subscriber
-				exit 1
-			fi
-			shift
-			set_user $1
-			QUERY="select $EMAIL_COLUMN from $SUB_TABLE where \
-$SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN'"
-			EA=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
-			if [ $? -ne 0 ] ; then
-				merr "mail - SQL query failed"
-				exit 1
-			fi
-			mecho "Write email to $1: $EA now ..."
-			mail -s "Message from $OSERDOMAIN SIP admin" $EA
-			if [ $? -eq 0 ] ; then
-				mecho "message sent"
-			else
-				merr "sending message failed"
 			fi
 			;;
 
@@ -2522,35 +2473,34 @@ tls_ca() {
 
 dbtext_add() {
 	if [ "$DBENGINE" = "DBTEXT" ] ; then
-                if [ $# -ne 4 ] ; then
-                        usage_subscriber
-                        exit 1
-                fi
-                shift
-                credentials $1 $2
-                is_user $1
-                if [ $? -eq 0 ] ; then
-                        merr "user already exists"
-                        exit 1
-                fi
+		if [ $# -ne 3 ] ; then
+			usage_subscriber
+			exit 1
+		fi
+		shift
+		credentials $1 $2
+		is_user $1
+		if [ $? -eq 0 ] ; then
+			merr "user already exists"
+			exit 1
+		fi
 
-                #Add to SUBSCRIBER file                 
+		#Add to SUBSCRIBER file                 
 		#id(int,auto) username(str) domain(str) password(str)
-		#first_name(str) last_name(str) email_address(str) datetime_created(int)
-		#ha1(str) ha1b(str) timezone(str,null) rpid(str,null)
+		#ha1(str) ha1b(str) rpid(str,null)
 		get_next_id $SUB_FILE
 		date_now=`date +%s`
-		line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$2: : :$3:$date_now:$HA1:$HA1B:0:"
+		line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$2::$HA1:$HA1B:"
 
-                echo $line >> $SUB_FILE
+		echo $line >> $SUB_FILE
 
-                #Add to URI file
-                #id(int,auto) username(str) domain(str) uri_user(str) last_modified(int)
+		#Add to URI file
+		#id(int,auto) username(str) domain(str) uri_user(str) last_modified(int)
 		get_next_id $URI_FILE
-                line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$OSERUSER:$date_now"
-                echo $line >> $URI_FILE
+		line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$OSERUSER:$date_now"
+		echo $line >> $URI_FILE
 
-                minfo "New user ($OSERUSER@$OSERDOMAIN) added to DBTEXT files"
+		minfo "New user ($OSERUSER@$OSERDOMAIN) added to DBTEXT files"
 	else
 		merr "dbtext_add: unknown command for DBENGINE=$DBENGINE"
 	fi
@@ -2572,22 +2522,21 @@ dbtext_passwd() {
                 fi
 
 		date_now=`date +%s`
-                line1=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
-                line1_keep1=`echo $line1 | cut -s -d : -f 1,2,3`
+		line1=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
+		line1_keep1=`echo $line1 | cut -s -d : -f 1,2,3`
 		#  4 - password(str)
-                line1_keep2=`echo $line1 | cut -s -d : -f 5,6,7`
-		#  8 - datetime_created(int)
-		#  9 - ha1(str)
-		# 10 - ha1b(str)
-                line1_keep3=`echo $line1 | cut -s -d : -f 11,12`
-                line2_update="$line1_keep1:$2:$line1_keep2:$date_now:$HA1:$HA1B:$line1_keep3"
-                cat $SUB_FILE | sed s/"$line1"/"$line2_update"/g >> $SUB_FILE.tmp
-                mv -f $SUB_FILE.tmp $SUB_FILE
-                minfo "Password change succeeded (DBTEXT)"
+		#  5 - ha1(str)
+		#  6 - ha1b(str)
+		line1_keep2=`echo $line1 | cut -s -d : -f 7`
+		line2_update="$line1_keep1:$2:$HA1:$HA1B:$line1_keep2"
+		cat $SUB_FILE | sed s/"$line1"/"$line2_update"/g >> $SUB_FILE.tmp
+		mv -f $SUB_FILE.tmp $SUB_FILE
+		minfo "Password change succeeded (DBTEXT)"
 	else
 		merr "dbtext_passwd: unknown command for DBENGINE=$DBENGINE"
 	fi
 }
+
 
 dbtext_rm() {
         if [ "$DBENGINE" = "DBTEXT" ] ; then
@@ -2625,57 +2574,32 @@ dbtext_rm() {
 
 dbtext_showdb() {
 	if [ "$DBENGINE" = "DBTEXT" ] ; then
-                shift
-                if [ $# -eq 1 ] ; then
-                        set_user $1
-                        is_user
-                        if [ $? -ne 0 ] ; then
-                                merr "nnon-existent user"
-                                exit 1;
-                        fi
-                        #The email field is number 7 ...
-                        echo -e "\n** In Subscriber Table: ** "
-                        cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | cut -s -d : -f 7
-                        echo -e "\n** In Location Table: ** "
-                        cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null\|auto"/""/g | tr " " ":"
-                        cat $UL_FILE | $EGREP "^$OSERUSER:($OSERDOMAIN)?\B?:" 
-                else
-                        usr_loc=`cat $UL_FILE | cut -s -d : -f 2 | tr '\n' '|' | sed s/'|\$'/''/g`
-                        if [ "$usr_loc" = "" ]; then
+		shift
+		if [ $# -eq 1 ] ; then
+			set_user $1
+			is_user
+			if [ $? -ne 0 ] ; then
+				merr "nnon-existent user"
+				exit 1;
+			fi
+			echo -e "\n** In Location Table: ** "
+			cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null\|auto"/""/g | tr " " ":"
+			cat $UL_FILE | $EGREP "^$OSERUSER:($OSERDOMAIN)?\B?:" 
+		else
+			usr_loc=`cat $UL_FILE | cut -s -d : -f 2 | tr '\n' '|' | sed s/'|\$'/''/g`
+			if [ "$usr_loc" = "" ]; then
 				echo -e "\n** No subscribers currently registered: ** "
 			else
-                                echo -e "\n** Subscribers (username and email) currently registered: ** " 
-                                cat $SUB_FILE | $EGREP $usr_loc | cut -s -d : -f 2,8
-                                echo -e "\n** Deatailed location data available on disk (username, domain, contact, callid): ** " 
-                                cat $UL_FILE | $EGREP $usr_loc | cut -s -d : -f 1,2,3,8
-                        fi
-                fi
-                minfo "Note: Due to usage of cache, server's list may differ from DB list."
+				echo -e "\n** Subscribers currently registered: ** " 
+				cat $SUB_FILE | $EGREP $usr_loc | cut -s -d : -f 2
+				echo -e "\n** Detailed location data available on disk (username, domain, contact, callid): ** " 
+				cat $UL_FILE | $EGREP $usr_loc | cut -s -d : -f 1,2,3,8
+			fi
+		fi
+		minfo "Note: Due to usage of cache, server's list may differ from DB list."
 	else
 		merr "dbtext_showdb: unknown command for DBENGINE=$DBENGINE"
 	fi
-}
-
-dbtext_mail() {
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-                if [ $# -ne 2 ] ; then
-			merr "wrong parameters"
-			usage_subscriber
-                        exit 1
-                fi
-                shift
-                set_user $1
-                EA=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | cut -s -d : -f 7 | $LAST_LINE`
-                minfo "Write email to $1: $EA now ..."
-                mail -s "Message from $OSERDOMAIN SIP admin" $EA
-                if [ $? -eq 0 ] ; then
-                        minfo "message sent"
-                else
-                        mwarn "sending message failed"
-                fi
-	else
-                merr "dbtext_mail: unknown command for DBENGINE=$DBENGINE"
-        fi
 }
 
 #
@@ -2775,18 +2699,6 @@ case $1 in
 	trusted)
 		shift
 		trusted "$@"
-		;;
-
-	mail|email)
-	    if [ "$DBENGINE" = "DBTEXT" ] ; then
-		dbtext_mail "$@"
-	    else
-		if [ $# -ne 2 ] ; then
-			usage_subscriber
-			exit 1
-		fi
-		send_email $1
-	    fi
 		;;
 
 	monitor|console|moni|con)

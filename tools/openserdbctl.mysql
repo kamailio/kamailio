@@ -367,11 +367,9 @@ migrate_table ${dst_db}.pdt \
 
 # migrate subscribers with no serweb support
 migrate_table ${dst_db}.subscriber \
-	"id,username,domain,password,first_name,last_name,email_address,\
-	datetime_created,ha1,ha1b,timezone,rpid" \
+	"id,username,domain,password,ha1,ha1b,rpid" \
 	${src_db}.subscriber \
-	"?id,?username,?domain,?password,?first_name,?last_name,?email_address,\
-	?datetime_created,?ha1,?ha1b,?timezone,?rpid"
+	"?id,?username,?domain,?password,?ha1,?ha1b,?rpid"
 
 if [ "$HAS_EXTRA" = "yes" ] ; then
 	migrate_table ${dst_db}.cpl \

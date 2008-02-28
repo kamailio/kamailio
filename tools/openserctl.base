@@ -146,9 +146,6 @@ HA1B_COLUMN=HA1B
 PASSWORD_COLUMN=password
 RPID_COLUMN=rpid
 SUBSCRIBER_COLUMN='username'
-EMAIL_COLUMN=email_address
-SUB_CREATED_COLUMN=datetime_created
-SUB_MODIFIED_COLUMN=datetime_modified
 PHP_LIB_COLUMN=phplib_id
 
 if [ -z "$STORE_PLAINTEXT_PW" ] ; then
@@ -383,13 +380,12 @@ USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_rpid"
 
 usage_subscriber() {
 	echo
-	mecho " -- command 'add|mail|passwd|rm' - manage subscribers"
+	mecho " -- command 'add|passwd|rm' - manage subscribers"
 	echo
 cat <<EOF
- add <username> <password> <email> .. add a new subscriber (*)
+ add <username> <password> .......... add a new subscriber (*)
  passwd <username> <passwd> ......... change user's password (*)
  rm <username> ...................... delete a user (*)
- mail <username> .................... send an email to a user
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_subscriber"
