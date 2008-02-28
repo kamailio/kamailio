@@ -54,34 +54,11 @@
     </column>
 
     <column>
-        <name>first_name</name>
-        <type>string</type>
-        <size>&user_len;</size>
-        <default/>
-        <description>First name</description>
-    </column>
-
-    <column>
-        <name>last_name</name>
-        <type>string</type>
-        <size>&user_len;</size>
-        <default/>
-        <description>Last name</description>
-    </column>
-
-    <column>
         <name>email_address</name>
         <type>string</type>
         <size>&user_len;</size>
         <default/>
         <description>Email address</description>
-    </column>
-
-    <column>
-        <name>datetime_created</name>
-        <type>datetime</type>
-        <default>&DEFAULT_DATETIME;</default>
-        <description>Date and time when this record was created</description>
     </column>
 
     <column>
@@ -98,15 +75,6 @@
         <size>&domain_len;</size>
         <default/>
         <description>md5(username@domain:realm:password)</description>
-    </column>
-
-    <column>
-        <name>timezone</name>
-        <type>string</type>
-        <size>&domain_len;</size>
-        <null/>
-        <default><null/></default>
-        <description>User's time zone</description>
     </column>
 
     <column>
