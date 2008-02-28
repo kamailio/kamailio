@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) carrier(int) scan_prefix(str) domain(str) prob(double) strip(int) rewrite_host(str) rewrite_prefix(str) rewrite_suffix(str) comment(str)
+id(int) carrier(int) domain(str) scan_prefix(str) prob(double) strip(int) rewrite_host(str) rewrite_prefix(str) rewrite_suffix(str) comment(str)
 METADATA_KEY
 1 
 METADATA_READONLY
