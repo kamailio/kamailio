@@ -323,7 +323,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	clist_foreach(hash_bucket, p_cell, next_c){
 		prefetch_loc_r(p_cell->next_c, 1);
 		t_msg=p_cell->uas.request;
-		if (!t_msg) continue;  /* don't try matching UAC transactions */
+		if (unlikely(!t_msg)) continue;/*don't try matching UAC transactions */
 		/* we want to set *cancel for transaction for which there is
 		 * already a canceled transaction (e.g. re-ordered INV-CANCEL, or
 		 *  INV blocked in dns lookup); we don't care about ACKs */
@@ -345,20 +345,30 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		*/
 
 		/* dialog matching needs to be applied for ACK/200s */
-		if (is_ack && p_cell->uas.status<300 && e2e_ack_trans==0) {
+		if (unlikely(is_ack && p_cell->uas.status<300 && e2e_ack_trans==0)) {
 			/* make sure we have parsed all things we need for dialog
 			 * matching */
 			if (!dlg_parsed) {
 				dlg_parsed=1;
-				if (!parse_dlg(p_msg)) {
+				if (unlikley(!parse_dlg(p_msg))) {
 					LOG(L_ERR, "ERROR: matching_3261: dlg parsing failed\n");
 					return 0;
 				}
 			}
 			ret=ack_matching(p_cell /* t w/invite */, p_msg /* ack */);
-			if (ret>0) {
+			if (unlikely(ret>0)) {
+				/* if ret==1 => fully matching e2e ack for local trans 
+				 * if ret==2 => partial matching e2e ack for proxied
+				 * transaction. However this could also be an ack for
+				 * a negative reply for a tranaction with the same callid,
+				 * cseq & fromtag (e.g. am invite forked prior to reaching the
+				 * proxy), since for e2e acks no totag matching is done
+				 */
+				if (unlikely(ret==1)) goto found;
 				e2e_ack_trans=p_cell;
-				break;
+				/* no break, we want to continue looking in case we can find
+				 * a match for a negative reply */
+				continue;
 			}
 			/* this ACK is neither local "negative" one, nor a proxied
 			 * end-2-end one, nor an end-2-end one for a UAS transaction
@@ -376,6 +386,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			}
 			if (skip_method & t_msg->REQ_METHOD) continue;
 		}
+found:
 		prefetch_w(p_cell); /* great chance of modifiying it */
 		/* all matched -- we found the transaction ! */
 		DBG("DEBUG: RFC3261 transaction matched, tid=%.*s\n",
@@ -385,10 +396,13 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 	}
 	/* :-( ... we didn't find any */
 	
-	/* just check if it we found an e2e ACK previously */
+	/* just check if it we found an e2e ACK previously
+	 * (Note: this is not very reliable, since we match e2e proxy ACKs
+	 *  w/o totag => for a pre-forked invite it might match the wrong
+	 *  transaction) */
 	if (e2e_ack_trans) {
 		*trans=e2e_ack_trans;
-		return ret;
+		return 2;
 	}
 	DBG("DEBUG: RFC3261 transaction matching failed\n");
 	return 0;
