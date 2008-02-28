@@ -85,6 +85,7 @@
  *  2007-06-05  added t_set_auto_inv_100() and auto_inv_100 (param);
  *               t_set_max_lifetime(), max_{non}inv_lifetime  (andrei)
  *  2008-02-05	module config parameters use the configuration framework (Miklos)
+ *  2008-02-29  added t_grep_status(code) (andrei)
  */
 
 
@@ -205,6 +206,7 @@ static int t_branch_replied(struct sip_msg* msg, char*, char*);
 static int t_any_timeout(struct sip_msg* msg, char*, char*);
 static int t_any_replied(struct sip_msg* msg, char*, char*);
 static int t_is_canceled(struct sip_msg* msg, char*, char*);
+static int t_grep_status(struct sip_msg* msg, char*, char*);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -311,6 +313,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_is_canceled",     t_is_canceled,            0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
@@ -356,12 +360,14 @@ static param_export_t params[]={
 	{"noisy_ctimer",        PARAM_INT, &default_tm_cfg.noisy_ctimer          },
 	{"auto_inv_100",        PARAM_INT, &default_tm_cfg.tm_auto_inv_100       },
 	{"unix_tx_timeout",     PARAM_INT, &default_tm_cfg.tm_unix_tx_timeout    },
-	{"restart_fr_on_each_reply", PARAM_INT, &default_tm_cfg.restart_fr_on_each_reply},
+	{"restart_fr_on_each_reply", PARAM_INT,
+									&default_tm_cfg.restart_fr_on_each_reply},
 	{"fr_timer_avp",        PARAM_STRING, &fr_timer_param                    },
 	{"fr_inv_timer_avp",    PARAM_STRING, &fr_inv_timer_param                },
 	{"tw_append",           PARAM_STRING|PARAM_USE_FUNC, 
 													(void*)parse_tw_append   },
-	{"pass_provisional_replies", PARAM_INT, &default_tm_cfg.pass_provisional_replies},
+	{"pass_provisional_replies", PARAM_INT, 
+									&default_tm_cfg.pass_provisional_replies },
 	{"aggregate_challenges", PARAM_INT, &default_tm_cfg.tm_aggregate_auth    },
 	{"unmatched_cancel",    PARAM_INT, &default_tm_cfg.unmatched_cancel      },
 	{"default_code",        PARAM_INT, &default_tm_cfg.default_code          },
@@ -1439,6 +1445,33 @@ int t_any_replied(struct sip_msg* msg, char* foo, char* bar)
 	}else{
 		for (r=0; r<t->nr_of_outgoings; r++){
 			if (t->uac[r].request.flags & F_RB_REPLIED)
+				return 1;
+		}
+	}
+	return -1;
+}
+
+
+
+/* script function, returns: 1 if any of the branches received the
+ *  reply code "status" */
+int t_grep_status(struct sip_msg* msg, char* status, char* bar)
+{
+	struct cell *t;
+	int r;
+	int code;
+	
+    if (get_int_fparam(&code, msg, (fparam_t*)status) < 0) return -1;
+	if (t_check( msg , 0 )==-1) return -1;
+	t=get_t();
+	if ((t==0) || (t==T_UNDEFINED)){
+		LOG(L_ERR, "ERROR: t_any_replied: cannot check a message "
+			"for which no T-state has been established\n");
+		return -1;
+	}else{
+		for (r=0; r<t->nr_of_outgoings; r++){
+			if ((t->uac[r].last_received==code)  && 
+					(t->uac[r].request.flags & F_RB_REPLIED))
 				return 1;
 		}
 	}

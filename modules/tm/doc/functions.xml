@@ -572,7 +572,29 @@ onreply_route[0]{
 } 
 	    </programlisting>
 	</example>
-	</section>
+</section>
+
+<section id="t_grep_status">
+	<title>
+	    <function>t_grep_status("code")</function>
+	</title>
+	<para>
+		Returns true if "code" is the the final reply received (or locally
+		 generated) in at least one of the current transactions branches.
+	</para>
+	<example>
+	    <title><function>t_grep_status</function> usage</title>
+	    <programlisting>
+...
+onreply_route[0]{ 
+	if (t_grep_status("486")){
+		/* force a 486 reply, even if this is not the winning branch */
+		t_reply("486", "Busy");
+	}
+} 
+	    </programlisting>
+	</example>
+</section>
 
 <section id="t_is_canceled">
 	<title>
