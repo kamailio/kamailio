@@ -87,12 +87,22 @@ unixsock_openser_monitor() {
 			mecho "[cycle #: $attempt; if constant make sure server lives]"
 			unixsock_cmd version
 			unixsock_cmd uptime
+
 			mecho "Transaction Statistics"
-			unixsock_cmd t_stats
+			unixsock_cmd get_statistics UAS_transactions
+			unixsock_cmd get_statistics UAC_transactions
+			unixsock_cmd get_statistics inuse_transactions
+
 			mecho "Stateless Server Statistics"
-			unixsock_cmd sl_stats
+			unixsock_cmd get_statistics sent_replies
+			unixsock_cmd get_statistics sent_err_replies
+			unixsock_cmd get_statistics received_ACKs
+
 			mecho "UsrLoc Stats"
-			unixsock_cmd ul_stats
+			unixsock_cmd get_statistics registered_users
+			unixsock_cmd get_statistics location-users
+			unixsock_cmd get_statistics location-contacts
+			unixsock_cmd get_statistics location-expires
 
 			if [ $loops -ne $attempt ] ; then
 				sleep $WATCH_PERIOD
