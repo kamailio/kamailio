@@ -107,12 +107,12 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt) {
 	LM_INFO("tree %.*s has %ld trees\n",
 			ct->name.len, ct->name.s, (long)ct->tree_num);
 	for (i=0; i<ct->tree_num; i++) {
+		LM_DBG("tree %p", ct->trees[i]);
 		if (ct->trees[i] == 0) {
 			ct->trees[i] = rt;
 			return 0;
 		}
 	}
-	LM_ERR("can't add route trees via command line\n");
 	return -1;
 }
 
