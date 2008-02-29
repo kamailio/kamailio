@@ -1,8 +1,7 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "userblacklist_user.sgml">
-<!ENTITY devel SYSTEM "userblacklist_devel.sgml">
-<!ENTITY faq SYSTEM "userblacklist_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -39,6 +38,5 @@
 	</bookinfo>
 	<toc></toc>
 	&user;
-	&devel;
 	&faq;
 </book>

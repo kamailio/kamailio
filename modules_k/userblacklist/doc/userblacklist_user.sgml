@@ -187,3 +187,69 @@ openserctl fifo reload_blacklist
 	    </example>
 	</section>
 </section>
+    <section>
+	<title>Installation & Running</title>
+	<section>
+		<title>Database setup</title>
+		<para>
+			Before running &ser; with userblacklist, you have to setup the database 
+			table where the module will read the blacklist data. For that, if 
+			the table was not created by the installation script or you choose
+			to install everything by yourself you can use the userblacklist-create.sql
+			<acronym>SQL</acronym> script in the database directories in the 
+			openser/scripts folder as template. 
+			Database and table name can be set with module parameters so they 
+			can be changed, but the name of the columns must be as they are 
+			in the <acronym>SQL</acronym> script.
+			You can also find the complete database documentation on the
+			project webpage, &openserdbdocs;.
+		</para>
+
+	<example>
+		<title>Example database content - globalblacklist table</title>
+		<programlisting format="linespecific">
+...
++----+-----------+-----------+
+| id | prefix    | whitelist |
++----+-----------+-----------+
+|  1 |           |         0 |
+|  2 | 1         |         1 |
+|  3 | 123456    |         0 |
+|  4 | 123455787 |         0 |
++----+-----------+-----------+
+...
+		</programlisting>
+	</example>
+	<para>
+		This table will setup a global blacklist for all numbers, only allowing calls
+		starting with <quote>1</quote>. Numbers that starting with <quote>123456</quote>
+		and <quote>123455787</quote> are also blacklisted, because the longest prefix
+		will be matched.
+	</para>
+
+	<example>
+		<title>Example database content - userblacklist table</title>
+		<programlisting format="linespecific">
+...
++----+----------------+-------------+-----------+-----------+
+| id | username       | domain      | prefix    | whitelist |
++----+----------------+-------------+-----------+-----------+
+| 23 | 49721123456788 |             | 1234      |         0 |
+| 22 | 49721123456788 |             | 123456788 |         1 |
+| 21 | 49721123456789 |             | 12345     |         0 |
+| 20 | 494675231      |             | 499034133 |         1 |
+| 19 | 494675231      | test        | 499034132 |         0 |
+| 18 | 494675453      | test.domain | 49901     |         0 |
+| 17 | 494675454      |             | 49900     |         0 |
++----+----------------+-------------+-----------+-----------+
+...
+		</programlisting>
+	</example>
+	<para>
+		This table will setup user specific blacklists for certain usernames. For example
+		for user <quote>49721123456788</quote> the prefix <quote>1234</quote> will be not
+		allowed, but the number <quote>123456788</quote> is allowed. Additionally a domain
+		could be specified that is used for username matching if the <quote>use_domain</quote>
+		parameter is set.
+	</para>
+</section>
