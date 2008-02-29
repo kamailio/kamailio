@@ -21,11 +21,11 @@
 		source is configurable, two different hash functions are available.
 	</para>
 	<para>
-		This modules scales up to more than a million users, and is able to handle 
-		more than ten thousand routing table entries. It should be able to handle more, but 
-		this is untested at the moment. In load balancing scenarios the usage of the config
-		file mode is recommended, to avoid the additional complexity that the database driven
-		routing creates.
+		This modules scales up to more than a few million users, and is able to handle
+		more than several hundert thousand routing table entries. It should be able to handle
+		more, but this is not that much tested at the moment. In load balancing scenarios the
+		usage of the config file mode is recommended, to avoid the additional complexity that
+		the database driven routing creates.
 	</para>
 	<para>
 		Routing tables can be reloaded and edited (in config file mode) with the MI 
@@ -49,8 +49,9 @@
 	</para>
 	<para>
 		If you want to use this module in failure routes, then you need to call
-		<quote>append_branch()</quote> after rewriting the request URI in order
-		to relay the message to the new target.
+		<quote>append_branch()</quote> after rewriting the request URI in order to
+		relay the message to the new target. Its also supportes the usage of database
+		derived failure routing descisions with the carrierfailureroute table.
 	</para>
     </section>
     <section>
@@ -903,7 +904,7 @@ cr_tree_rewrite_uri(tree, domain)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source, hash_algorithm, dstavp)</function>
+		<function moreinfo="none">cr_route(carrier, domain, prefix_matching, rewrite_user, hash_source, dstavp)</function>
 	    </title>
 	    <para>
         This function searches for the longest match for the user given
@@ -914,7 +915,8 @@ cr_tree_rewrite_uri(tree, domain)
 				the rewritten host is stored in the given AVP (if obmitted, the
 				host is not stored in an AVP).
         This function is only usable with rewrite_user and prefix_matching
-        containing a valid numerical only string.
+        containing a valid numerical only string. It uses the standard crc32 algorithm
+		to calculate the hash values.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>
@@ -952,16 +954,71 @@ cr_tree_rewrite_uri(tree, domain)
   		    </para>
         </listitem>
         <listitem>
-		      <para><emphasis>hash_algorithm</emphasis> - The hash algorithm to be used on hash_source.
-            Possible values for hash_algorithm are: crc32, prime.
-  		    </para>
-        </listitem>
-        <listitem>
 		      <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the rewritten host.
+			This parameter is optional.
   		    </para>
         </listitem>
 	    </itemizedlist>
 	</section>
+		<section>
+	    <title>
+		<function moreinfo="none">cr_prime_route(carrier, domain, prefix_matching, rewrite_user, hash_source, dstavp)</function>
+	    </title>
+	    <para>
+        This function searches for the longest match for the user given
+        in prefix_matching at the given domain in the given carrier tree.
+        The Request URI is rewritten using rewrite_user and the given
+        hash source and algorithm. Returns -1 if there is no data found
+        or an empty rewrite host on the longest match is found. Otherwise
+				the rewritten host is stored in the given AVP (if obmitted, the
+				host is not stored in an AVP).
+        This function is only usable with rewrite_user and prefix_matching
+        containing a valid numerical only string. It uses the prime hash algorithm
+		to calculate the hash values.
+	    </para>
+	    <para>Meaning of the parameters is as follows:</para>
+	    <itemizedlist>
+        <listitem>
+		      <para><emphasis>carrier</emphasis> - The routing tree to be used. Additional to a string
+            any pseudo-variable could be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>domain</emphasis> - Name of the routing domain to be used.
+            Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>prefix_matching</emphasis> - User name to be used for prefix matching
+            in the routing tree.
+            Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>rewrite_user</emphasis> - The user name to be used for applying the
+            rewriting rule. Usually this is the user part of the request
+            URI. Additional to a string any pseudo-variable could
+            be used as input.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>hash_source</emphasis> - The hash values of the destination set must
+            be a contiguous range starting at 1, limited by the
+            configuration parameter max_targets. Possible values for
+            hash_source are: call_id, from_uri, from_user, to_uri
+            and to_user.
+  		    </para>
+        </listitem>
+        <listitem>
+		      <para><emphasis>dstavp</emphasis> - Name of the AVP where to store the rewritten host.
+			This parameter is optional.
+  		    </para>
+        </listitem>
+	    </itemizedlist>
+	</section>
+
 	<section>
 	    <title>
 		<function moreinfo="none">cr_next_domain(carrier, domain, prefix_matching, host, reply_code, flags, dstavp)</function>
@@ -1445,6 +1502,11 @@ domain register {
 			domain is choosen. After that no more failure routes are available, an error will
 			be returned from the <quote>cr_next_domain</quote> function. Not all table
 			colums are show here for brevity.
+		</para>
+		<para>
+			For each failure route domain and carrier that is added to the carrierfailureroute
+			table there must be at least one corresponding entry in the carrierroute table,
+			otherwise the module will not load the routing data.
 		</para>
 
 	<example>
