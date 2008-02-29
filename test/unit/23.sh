@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-CFG=14.cfg
+CFG=13.cfg
 
 if [ ! -e ../modules/carrierroute/carrierroute.so ] ; then
 	echo "carrierroute not found, not run"
