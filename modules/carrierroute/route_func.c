@@ -543,12 +543,12 @@ static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
  * @param _prefix_matching the user to be used for prefix matching
  * @param _rewrite_user the localpart of the URI to be rewritten
  * @param _hsrc the SIP header used for hashing
- * @param _halg the algorithm used for hashing
+ * @param _halg the hash algorithm used for hashing
  * @param _dstavp the name of the destination AVP where the used host name is stored
  *
  * @return 1 on success, -1 on failure
  */
-int cr_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
+int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
 		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
 		enum hash_algorithm _halg, struct multiparam_t *_dstavp) {
@@ -639,6 +639,55 @@ unlock_and_out:
 	return ret;
 }
 
+/**
+ * rewrites the request URI of msg after determining the
+ * new destination URI with the crc32 hash algorithm.
+ *
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
+ * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _rewrite_user the localpart of the URI to be rewritten
+ * @param _hsrc the SIP header used for hashing
+ * @param _dstavp the name of the destination AVP where the used host name is stored
+ *
+ * @return 1 on success, -1 on failure
+ */
+int cr_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
+		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		struct multiparam_t *_dstavp)
+{
+	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, _hsrc, alg_crc32, _dstavp);
+}
+
+
+/**
+ * rewrites the request URI of msg after determining the
+ * new destination URI with the prime hash algorithm.
+ *
+ * @param _msg the current SIP message
+ * @param _carrier the requested carrier
+ * @param _domain the requested routing domain
+ * @param _prefix_matching the user to be used for prefix matching
+ * @param _rewrite_user the localpart of the URI to be rewritten
+ * @param _hsrc the SIP header used for hashing
+ * @param _dstavp the name of the destination AVP where the used host name is stored
+ *
+ * @return 1 on success, -1 on failure
+ */
+int cr_prime_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
+		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		struct multiparam_t *_dstavp)
+{
+	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
+		_rewrite_user, _hsrc, alg_prime, _dstavp);
+}
+
+
+
 
 /**
  * Loads next domain from failure routing table and stores it in an AVP.
@@ -649,15 +698,13 @@ unlock_and_out:
  * @param _prefix_matching the user to be used for prefix matching
  * @param _host the host name to be used for rule matching
  * @param _reply_code the reply code to be used for rule matching
- * @param _flags the flags to be used for rule matching (msg flags or integer)
  * @param _dstavp the name of the destination AVP
  *
  * @return 1 on success, -1 on failure
  */
 int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_host, pv_elem_t *_reply_code, struct multiparam_t *_flags,
-		struct multiparam_t *_dstavp) {
+		pv_elem_t *_host, pv_elem_t *_reply_code, struct multiparam_t *_dstavp) {
 	int carrier_id;
 	int domain_id;
 	str prefix_matching;
@@ -693,18 +740,7 @@ int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		return -1;
 	}
 
-	switch (_flags->type) {
-	case MP_INT:
-		flags = _flags->u.n;
-		break;
-	case MP_FLAGS:
-		flags = _msg->flags;
-		break;
-	default:
-		LM_ERR("invalid flags parameter type\n");
-		return -1;
-		break;
-	}
+	flags = _msg->flags;
 
 	do {
 		rd = get_data();

@@ -141,10 +141,12 @@ static enum hash_source hash_fixup(const char * domain);
 
 /************* Module Exports **********************************************/
 static cmd_export_t cmds[]={
-	{"cr_load_user_carrier",     (cmd_function)cr_load_user_carrier,  3, load_user_carrier_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_user_carrier",          (cmd_function)cr_load_user_carrier,  3, load_user_carrier_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_route",                 (cmd_function)cr_route,              5, route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{"cr_route",                 (cmd_function)cr_route,              6, route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_route",                 (cmd_function)cr_route,              7, route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"cr_load_next_domain",      (cmd_function)cr_load_next_domain,   7, load_next_domain_fixup,  0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_route",           (cmd_function)cr_route,              5, route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_prime_route",           (cmd_function)cr_route,              6, route_fixup,             0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{"cr_next_domain",           (cmd_function)cr_load_next_domain,   6, load_next_domain_fixup,  0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -236,24 +238,6 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
 		return shs_to_user;
 	} else {
 		return shs_error;
-	}
-}
-
-
-/**
- * Fixes the algorithm source to enum values
- *
- * @param my_algorithm the algorithm as string
- *
- * @return the enum value on success, -1 on failure
- */
-static enum hash_algorithm alg_fixup(const char * my_algorithm) {
-	if (strcasecmp("crc32", my_algorithm) == 0) {
-		return alg_crc32;
-	} else if (strcasecmp("prime", my_algorithm) == 0) {
-		return alg_prime;
-	} else {
-		return alg_error;
 	}
 }
 
@@ -444,50 +428,6 @@ static int domain_fixup(void ** param) {
 
 
 /**
- * fixes the module functions' parameters in case of flags.
- *
- * @param param the parameter
- *
- * @return 0 on success, -1 on failure
- */
-static int flags_fixup(void ** param) {
-	pv_spec_t avp_spec;
-	str s;
-	struct multiparam_t *mp;
-	unsigned int flags;
-
-	s.s = (char*)(*param);
-	s.len = strlen(s.s);
-	if (s.len <= 0) return -1;
-	
-	mp = (struct multiparam_t *)pkg_malloc(sizeof(struct multiparam_t));
-	if (mp == NULL) {
-		LM_ERR("no more private memory\n");
-		return -1;
-	}
-	memset(mp, 0, sizeof(struct multiparam_t));
-	
-	if (pv_parse_spec(&s, &avp_spec)==0 || avp_spec.type!=PVT_FLAGS) {
-		/* must be an integer */
-		mp->type=MP_INT;
-		if (str2int(&s, &flags) != 0) {
-			LM_ERR("Invalid flags parameter '%s'\n", (char*)(*param));
-			pkg_free(mp);
-			return -1;
-		}
-		mp->u.n = (int)flags;
-	}
-	else {
-		mp->type=MP_FLAGS;
-	}
-	
-	*param = (void*)mp;
-	
-	return 0;
-}
-
-
-/**
  * fixes the module functions' parameters in case of AVP names.
  *
  * @param param the parameter
@@ -539,7 +479,6 @@ static int avp_name_fixup(void ** param) {
  */
 static int route_fixup(void ** param, int param_no) {
 	enum hash_source my_hash_source;
-	enum hash_algorithm my_algorithm;
 
 	if (param_no == 1) {
 		/* carrier */
@@ -573,15 +512,6 @@ static int route_fixup(void ** param, int param_no) {
 		*param = (void *)my_hash_source;
 	}
 	else if (param_no == 6) {
-		/* algorithm */
-		if ((my_algorithm = alg_fixup((char *)*param)) == alg_error) {
-			LM_ERR("invalid algorithm\n");
-			return -1;
-		}
-		pkg_free(*param);
-		*param = (void *)my_algorithm;
-	}
-	else if (param_no == 7) {
 		/* destination avp name */
 		if (avp_name_fixup(param) < 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
@@ -628,13 +558,6 @@ static int load_next_domain_fixup(void ** param, int param_no) {
 		}
 	}
 	else if (param_no == 6) {
-		/* flags */
-		if (flags_fixup(param) < 0) {
-			LM_ERR("cannot fixup parameter %d\n", param_no);
-			return -1;
-		}
-	}
-	else if (param_no == 7) {
 		/* destination avp name */
 		if (avp_name_fixup(param) < 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);

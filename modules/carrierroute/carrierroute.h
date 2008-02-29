@@ -114,7 +114,6 @@ struct multiparam_t {
 		MP_STR,
 		MP_AVP,
 		MP_PVE,
-		MP_FLAGS
 	} type;
 	union {
 		int n;
