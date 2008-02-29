@@ -477,7 +477,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if (db_conn(&db_url) != 0) return -1;
+	if (db_init(&db_url, &db_table) != 0) return -1;
 	if (dt_init(&dt_root) != 0) return -1;
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
@@ -488,7 +488,7 @@ static int child_init(int rank)
 
 static int mi_child_init(void)
 {
-	if (db_conn(&db_url) != 0) return -1;
+	if (db_init(&db_url, &db_table) != 0) return -1;
 	if (dt_init(&dt_root) != 0) return -1;
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
