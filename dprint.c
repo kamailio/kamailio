@@ -82,3 +82,17 @@ int str2facility(char *s)
 	}
 	return -1;
 }
+
+/* fixup function for log_facility cfg parameter */
+int log_facility_fixup(void *handle, str *name, void **val)
+{
+	int	i;
+
+	if ((i = str2facility((char *)*val)) == -1) {
+		LOG(L_ERR, "log_facility_fixup: invalid log facility: %s\n",
+			(char *)*val);
+		return -1;
+	}
+	*val = (void *)(long)i;
+	return 0;
+}

@@ -603,7 +603,7 @@ assign_stm:
 		if ( (i_tmp=str2facility($3))==-1)
 			yyerror("bad facility (see syslog(3) man page)");
 		if (!config_check)
-			log_facility=i_tmp;
+			default_core_cfg.log_facility=i_tmp;
 	}
 	| LOGFACILITY EQUAL error { yyerror("ID expected"); }
 	| DNS EQUAL NUMBER   { received_dns|= ($3)?DO_DNS:0; }

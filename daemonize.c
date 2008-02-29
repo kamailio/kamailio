@@ -71,6 +71,7 @@
 #include "globals.h"
 #include "dprint.h"
 #include "signals.h"
+#include "cfg/cfg.h"
 
 
 #define MAX_FD 32 /* maximum number of inherited open file descriptors,
@@ -209,7 +210,7 @@ int daemonize(char*  name)
 	}
 	
 	if (log_stderr==0)
-		openlog(name, LOG_PID|LOG_CONS, log_facility);
+		openlog(name, LOG_PID|LOG_CONS, cfg_get(core, core_cfg, log_facility));
 		/* LOG_CONS, LOG_PERRROR ? */
 
 	return  0;

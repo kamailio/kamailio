@@ -43,6 +43,7 @@
 
 struct cfg_group_core default_core_cfg = {
 	L_DEFAULT, /*  print only msg. < L_WARN */
+	LOG_DAEMON,	/* log_facility -- see syslog(3) */
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	0, /* dst blacklist is disabled by default */
@@ -82,7 +83,10 @@ struct cfg_group_core default_core_cfg = {
 void	*core_cfg = &default_core_cfg;
 
 cfg_def_t core_cfg_def[] = {
-	{"debug",	CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0, "debug level"},
+	{"debug",		CFG_VAR_INT|CFG_ATOMIC,	0, 0, 0, 0,
+		"debug level"},
+	{"log_facility",	CFG_VAR_INT|CFG_INPUT_STRING,	0, 0, log_facility_fixup, 0,
+		"syslog facility, see \"man 3 syslog\""},
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	{"use_dst_blacklist",	CFG_VAR_INT,	0, 1, use_dst_blacklist_fixup, 0,

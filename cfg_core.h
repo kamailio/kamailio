@@ -46,6 +46,7 @@ extern void	*core_cfg;
 
 struct cfg_group_core {
 	int	debug;
+	int	log_facility;
 #ifdef USE_DST_BLACKLIST
 	/* blacklist */
 	int	use_dst_blacklist; /* 1 if blacklist is enabled */

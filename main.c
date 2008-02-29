@@ -299,8 +299,6 @@ int dont_fork = 0;
 int dont_daemonize = 0;
 int log_stderr = 0;
 pid_t creator_pid = (pid_t) -1;
-/* log facility (see syslog(3)) */
-int log_facility = LOG_DAEMON;
 int config_check = 0;
 /* check if reply first via host==us */
 int check_via =  0;

@@ -46,7 +46,6 @@
 /* vars:*/
 
 extern int log_stderr;
-extern int log_facility;
 extern volatile int dprint_crit; /* protection against "simultaneous"
 									printing from signal handlers */
 
@@ -68,6 +67,7 @@ extern volatile int dprint_crit; /* protection against "simultaneous"
 void dprint (char* format, ...);
 
 int str2facility(char *s);
+int log_facility_fixup(void *handle, str *name, void **val);
 
 /* C >= 99 has __func__, older gcc versions have __FUNCTION__ */
 #if __STDC_VERSION__ < 199901L
@@ -103,7 +103,8 @@ int str2facility(char *s);
 					if (log_stderr){ \
 						dprint (__VA_ARGS__); \
 					}else{ \
-						syslog(DPRINT_LEV|log_facility,  __VA_ARGS__); \
+						syslog(DPRINT_LEV|cfg_get(core, core_cfg, log_facility), \
+							__VA_ARGS__); \
 					}\
 					DPRINT_CRIT_EXIT; \
 				} \
@@ -116,7 +117,8 @@ int str2facility(char *s);
 					if (log_stderr){ \
 						dprint (fmt, ## args); \
 					}else{ \
-						syslog(DPRINT_LEV|log_facility, fmt, ## args); \
+						syslog(DPRINT_LEV|cfg_get(core, core_cfg, log_facility), \
+							fmt, ## args); \
 					}\
 					DPRINT_CRIT_EXIT; \
 				} \
@@ -145,25 +147,32 @@ int str2facility(char *s);
 					else { \
 						switch(lev){ \
 							case L_CRIT: \
-								syslog(LOG_CRIT|log_facility, __VA_ARGS__); \
+								syslog(LOG_CRIT|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__); \
 								break; \
 							case L_ALERT: \
-								syslog(LOG_ALERT|log_facility, __VA_ARGS__); \
+								syslog(LOG_ALERT|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__); \
 								break; \
 							case L_ERR: \
-								syslog(LOG_ERR|log_facility, __VA_ARGS__); \
+								syslog(LOG_ERR|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__); \
 								break; \
 							case L_WARN: \
-								syslog(LOG_WARNING|log_facility, __VA_ARGS__);\
+								syslog(LOG_WARNING|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__);\
 								break; \
 							case L_NOTICE: \
-								syslog(LOG_NOTICE|log_facility, __VA_ARGS__); \
+								syslog(LOG_NOTICE|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__); \
 								break; \
 							case L_INFO: \
-								syslog(LOG_INFO|log_facility, __VA_ARGS__); \
+								syslog(LOG_INFO|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__); \
 								break; \
 							case L_DBG: \
-								syslog(LOG_DEBUG|log_facility, __VA_ARGS__); \
+								syslog(LOG_DEBUG|cfg_get(core, core_cfg, log_facility), \
+									__VA_ARGS__); \
 								break; \
 						} \
 					} \
@@ -179,25 +188,32 @@ int str2facility(char *s);
 					else { \
 						switch(lev){ \
 							case L_CRIT: \
-								syslog(LOG_CRIT|log_facility, fmt, ##args); \
+								syslog(LOG_CRIT|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args); \
 								break; \
 							case L_ALERT: \
-								syslog(LOG_ALERT|log_facility, fmt, ##args); \
+								syslog(LOG_ALERT|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args); \
 								break; \
 							case L_ERR: \
-								syslog(LOG_ERR|log_facility, fmt, ##args); \
+								syslog(LOG_ERR|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args); \
 								break; \
 							case L_WARN: \
-								syslog(LOG_WARNING|log_facility, fmt, ##args);\
+								syslog(LOG_WARNING|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args);\
 								break; \
 							case L_NOTICE: \
-								syslog(LOG_NOTICE|log_facility, fmt, ##args); \
+								syslog(LOG_NOTICE|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args); \
 								break; \
 							case L_INFO: \
-								syslog(LOG_INFO|log_facility, fmt, ##args); \
+								syslog(LOG_INFO|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args); \
 								break; \
 							case L_DBG: \
-								syslog(LOG_DEBUG|log_facility, fmt, ##args); \
+								syslog(LOG_DEBUG|cfg_get(core, core_cfg, log_facility), \
+									fmt, ##args); \
 								break; \
 						} \
 					} \
