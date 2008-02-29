@@ -36,6 +36,7 @@
  *  2005-01-07  removed find_module-overloading problems, added
  *               find_export_record
  *  2006-02-07  added fix_flag (andrei)
+ *  2008-02-29  store all the reponse callbacks in their own array (andrei)
  */
 
 
@@ -87,6 +88,10 @@ struct sr_module* modules=0;
 #ifdef STATIC_SL
 	extern struct module_exports* sl_exports();
 #endif
+
+
+int mod_response_cbk_no=0;
+response_function* mod_response_cbks=0;
 
 
 /* initializes statically built (compiled in) modules*/
@@ -455,6 +460,10 @@ void destroy_modules()
 		t=foo;
 	}
 	modules=0;
+	if (mod_response_cbks){
+		pkg_free(mod_response_cbks);
+		mod_response_cbks=0;
+	}
 }
 
 #ifdef NO_REVERSE_INIT
@@ -474,6 +483,21 @@ int init_modules(void)
 							" module %s\n", t->exports->name);
 				return -1;
 			}
+		if ( t->exports && t->exports->response_f)
+			mod_response_cbk_no++;
+	}
+	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
+									sizeof(response_function));
+	if (mod_response_cbks==0){
+		LOG(L_ERR, "init_modules(): memory allocation failure"
+					" for %d response_f callbacks\n", mod_response_cbk_no);
+		return -1;
+	}
+	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next){
+		if (t->exports && t->exports->response_f){
+			mod_response_cbks[i]=t->exports->response_f;
+			i++;
+		}
 	}
 	return 0;
 }
@@ -591,6 +615,26 @@ static int init_mod( struct sr_module* m )
  */
 int init_modules(void)
 {
+	struct sr_module* t;
+	int i;
+	
+	for(t = modules; t; t = t->next)
+		if ( t->exports && t->exports->response_f)
+			mod_response_cbk_no++;
+	mod_response_cbks=pkg_malloc(mod_response_cbk_no * 
+									sizeof(response_function));
+	if (mod_response_cbks==0){
+		LOG(L_ERR, "init_modules(): memory allocation failure"
+					" for %d response_f callbacks\n", mod_response_cbk_no);
+		return -1;
+	}
+	for (t=modules, i=0; t && (i<mod_response_cbk_no); t=t->next){
+		if (t->exports && t->exports->response_f){
+			mod_response_cbks[i]=t->exports->response_f;
+			i++;
+		}
+	}
+	
 	return init_mod(modules);
 }
 

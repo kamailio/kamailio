@@ -556,7 +556,7 @@ int forward_reply(struct sip_msg* msg)
 	char* new_buf;
 	struct dest_info dst;
 	unsigned int new_len;
-	struct sr_module *mod;
+	int r;
 #ifdef USE_TCP
 	char* s;
 	int len;
@@ -575,15 +575,10 @@ int forward_reply(struct sip_msg* msg)
 			goto error;
 		}
 	}
-	/* quick hack, slower for multiple modules*/
-	for (mod=modules;mod;mod=mod->next){
-		if ((mod->exports) && (mod->exports->response_f)){
-			DBG("forward_reply: found module %s, passing reply to it\n",
-					mod->exports->name);
-			if (mod->exports->response_f(msg)==0) goto skip;
-		}
-	}
-
+	
+	/* check modules response_f functions */
+	for (r=0; r<mod_response_cbk_no; r++)
+		if (mod_response_cbks[r](msg)==0) goto skip;
 	/* we have to forward the reply stateless, so we need second via -bogdan*/
 	if (parse_headers( msg, HDR_VIA2_F, 0 )==-1 
 		|| (msg->via2==0) || (msg->via2->error!=PARSE_OK))
