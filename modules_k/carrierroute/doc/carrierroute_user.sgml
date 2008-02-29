@@ -67,6 +67,12 @@
 				issue raw queries. Its not possible to use the dbtext or db_berkeley module at the moment.
 			</para>
 		    </listitem>
+			<listitem>
+			<para>
+				The <emphasis>tm module</emphasis>, when you want to use the $T_reply_code pseudo-variable in
+				the <quote>cr_next_domain</quote> function.
+			</para>
+			</listitem>
 	    	</itemizedlist>
 	    </para>
 	</section>
@@ -859,7 +865,7 @@ cr_prime_balance_by_from(domain, hash_source)
 -> cr_route("default", domain, "$fU", "$rU", hash_source, "prime")
 
 cr_user_rewrite_uri(uri, domain)
--> cr_load_user_carrier(user, domain, "$avp(tree_avp)")
+-> cr_user_carrier(user, domain, "$avp(tree_avp)")
 -> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id", "crc32")
 
 cr_tree_rewrite_uri(tree, domain)
@@ -868,7 +874,7 @@ cr_tree_rewrite_uri(tree, domain)
 		
 	<section>
 	    <title>
-		<function moreinfo="none">cr_load_user_carrier(user, domain, dstavp)</function>
+		<function moreinfo="none">cr_user_carrier(user, domain, dstavp)</function>
 	    </title>
 	    <para>
       This function loads the carrier and stores it in an AVP.
@@ -958,7 +964,7 @@ cr_tree_rewrite_uri(tree, domain)
 	</section>
 	<section>
 	    <title>
-		<function moreinfo="none">cr_load_next_domain(carrier, domain, prefix_matching, host, reply_code, flags, dstavp)</function>
+		<function moreinfo="none">cr_next_domain(carrier, domain, prefix_matching, host, reply_code, flags, dstavp)</function>
 	    </title>
 	    <para>
         This function searches for the longest match for the user given
@@ -1266,7 +1272,7 @@ failure_route[2] {
 		<programlisting format="linespecific">
 ...
 route[1] {
-	cr_load_user_carrier("$fU", "$fd", "$avp(carrier)");
+	cr_user_carrier("$fU", "$fd", "$avp(carrier)");
 
 	$avp(domain)="start";
 	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "crc32", "$avp(host)")) {
@@ -1281,20 +1287,20 @@ route[1] {
 
 failure_route[1] {
 	revert_uri();
-		if (!cr_load_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$avp(host)", "$T_reply_code", "$mf", "$avp(domain)")) {
-			xlog("L_ERR", "cr_load_next_domain failed\n");
-			exit;
-		}
-		if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "crc32", "$avp(host)")) {
-			xlog("L_ERR", "cr_route failed\n");
-			exit;
-		}
-		t_on_failure("1");
-		append_branch();
-		if (!t_relay()) {
-			xlog("L_ERR", "t_relay failed\n");
-			exit;
-		};
+	if (!cr_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$avp(host)", "$T_reply_code", "$mf", "$avp(domain)")) {
+		xlog("L_ERR", "cr_next_domain failed\n");
+		exit;
+	}
+	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "crc32", "$avp(host)")) {
+		xlog("L_ERR", "cr_route failed\n");
+		exit;
+	}
+	t_on_failure("1");
+	append_branch();
+	if (!t_relay()) {
+		xlog("L_ERR", "t_relay failed\n");
+		exit;
+	};
 }
 ...
 		</programlisting>
@@ -1437,7 +1443,7 @@ domain register {
 			This table contains two failure routes for the <quote>gw.carrier1-1</quote> and
 			<quote>-2</quote> gateways. For any (failure) reply code the respective next
 			domain is choosen. After that no more failure routes are available, an error will
-			be returned from the <quote>cr_load_next_domain</quote> function. Not all table
+			be returned from the <quote>cr_next_domain</quote> function. Not all table
 			colums are show here for brevity.
 		</para>
 
