@@ -3,7 +3,6 @@
 
 <!ENTITY user SYSTEM "presence_user.sgml">
 <!ENTITY devel SYSTEM "presence_devel.sgml">
-<!ENTITY faq SYSTEM "presence_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -50,7 +49,6 @@
     
     &user;
     &devel;
-    &faq;
     
 </book>
 

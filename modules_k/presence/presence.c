@@ -81,9 +81,6 @@ evlist_t* EvList= NULL;
 /* to tag prefix */
 char* to_tag_pref = "10";
 
-/* the avp storing the To tag for replies */
-int reply_tag_avp_id = 25;
-
 /* TM bind */
 struct tm_binds tmb;
 /* SL bind */
@@ -132,7 +129,6 @@ static param_export_t params[]={
 	{ "watchers_table",			STR_PARAM, &watchers_table.s},
 	{ "clean_period",			INT_PARAM, &clean_period },
 	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
-	{ "totag_avpid",			INT_PARAM, &reply_tag_avp_id },
 	{ "expires_offset",			INT_PARAM, &expires_offset },
 	{ "max_expires",			INT_PARAM, &max_expires },
 	{ "server_address",         STR_PARAM, &server_address.s},

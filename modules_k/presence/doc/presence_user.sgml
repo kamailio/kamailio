@@ -1,8 +1,6 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	<chapterinfo>
-	</chapterinfo>
 	<title>User's Guide</title>
 	
 	<section>
@@ -196,26 +194,6 @@ modparam("presence", "to_tag_pref", 'pres')
 	</programlisting>
 		</example>
 	</section>
-
-	<section>
-		<title><varname>totag_avpid</varname> (int)</title>
-		<para>
-		The id of the avp variable used for storing to_tag value.
-		</para>
-		<para>
-		<emphasis>Default value is <quote>25</quote>.
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>totag_avpid</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("presence", "totag_avpid", 35)
-...
-	</programlisting>
-		</example>
-	</section>
-
 
 	<section>
 		<title><varname>expires_offset</varname> (int)</title>
