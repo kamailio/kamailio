@@ -566,7 +566,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
 				return;
 			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
-				LM_WARN("tight matching failed\n");
+				LM_WARN("tight matching failed for %.*s\n",
+					req->first_line.u.request.method.len,
+					req->first_line.u.request.method.s);
 				return;
 			}
 		}
