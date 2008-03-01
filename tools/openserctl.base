@@ -273,6 +273,16 @@ TRUSTED_PROTO_COLUMN=proto
 TRUSTED_FROM_PATTERN_COLUMN=from_pattern
 TRUSTED_TAG_COLUMN=tag
 
+# dispatcher tables  
+if [ -z "$DISPATCHER_TABLE" ] ; then
+	DISPATCHER_TABLE=dispatcher
+fi
+DISPATCHER_ID_COLUMN=id
+DISPATCHER_SETID_COLUMN=setid
+DISPATCHER_DESTINATION_COLUMN=destination
+DISPATCHER_FLAGS_COLUMN=flags
+DISPATCHER_DESCRIPTION_COLUMN=description
+
 #
 ##### ------------------------------------------------ #####
 ### usage functions
@@ -352,16 +362,17 @@ usage_cr() {
 	mecho " -- command 'cr' - manage carrierroute tables"
 	echo
 cat <<EOF
- cr show ........................................................ show tables
- cr reload ...................................................... reload tables
- cr addrt <routing_tree_id> <routing_tree> ...................... add a tree
- cr rmrt  <routing_tree> ........................................ rm a tree
+ cr show ....................................................... show tables
+ cr reload ..................................................... reload tables
+ cr dump ....................................................... show in memory tables
+ cr addrt <routing_tree_id> <routing_tree> ..................... add a tree
+ cr rmrt  <routing_tree> ....................................... rm a tree
  cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
                <prob> <strip> <rewrite_prefix> <rewrite_suffix> ...............
-               <comment> ........................................ add a carrier
+               <comment> ....................................... add a carrier
                (strip, rewrite_prefix, rewrite_suffix and comment are optional
-                arguments) ....................................................
- cr rmcarrier  <carrier> <scan_prefix> <domain> ................. rm a carrier
+                arguments) ...................................................
+ cr rmcarrier  <carrier> <scan_prefix> <domain> ................ rm a carrier
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_cr"
@@ -405,6 +416,24 @@ cat <<EOF
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_trusted"
+
+usage_dispatcher() {
+	echo
+	mecho " -- command 'dispatcher' - manage dispatcher"
+	echo
+cat <<EOF
+   * Examples:  dispatcher addgw 1 sip:1.2.3.1:5050 1 'outbound gateway'
+   *            dispatcher addgw 2 sip:1.2.3.4:5050 3 ''
+   *            dispatcher rmgw 4
+ dispatcher show ..................... show dispatcher gateways
+ dispatcher reload ................... reload dispatcher gateways
+ dispatcher dump ..................... show in memory dispatcher gateways
+ dispatcher addgw <id> <destination> <flags> <description>
+            .......................... add gateway
+ dispatcher rmgw <id> ................ delete gateway
+EOF
+}
+USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"
 
 ##### ----------------------------------------------- #####
 #### Common functions

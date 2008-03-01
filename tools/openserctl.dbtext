@@ -43,9 +43,11 @@ fi
 if [ -z "$GW_FILE" ] ; then
         GW_FILE=$DB_PATH/$GW_TABLE
 fi
-
 if [ -z "$TRUSTED_FILE" ] ; then
 	TRUSTED_FILE=$DB_PATH/$TRUSTED_TABLE
+fi
+if [ -z "$DISPATCHER_FILE" ] ; then
+	DISPATCHER_FILE=$DB_PATH/$DISPATCHER_TABLE
 fi
 
 #===================================================================

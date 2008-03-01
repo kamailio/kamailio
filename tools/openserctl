@@ -1018,7 +1018,7 @@ domain() {
                 show)
                         # QUERY="select * FROM $DOMAIN_TABLE ; "
                         # sql_ro_query "$QUERY"
-                        fifo_cmd domain_dump
+                        $CTLCMD domain_dump
                         ;;
                 add)
                         shift
@@ -1033,7 +1033,7 @@ domain() {
                         minfo "Domain $1 saved into DBTEXT database"
 			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
                         #FIXME: domain_reload command not supported yet
-                        #fifo_cmd domain_reload
+                        #$CTLCMD domain_reload
                         ;;
                 rm)
                         shift
@@ -1046,7 +1046,7 @@ domain() {
                         minfo "Domain $1 removed from DBTEXT database"
 			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
                         #FIXME: domain_reload command not supported yet
-                        #fifo_cmd domain_reload
+                        #$CTLCMD domain_reload
                         ;;
                 *)
                         usage_domain
@@ -1167,7 +1167,7 @@ lcr() {
 			get_next_id $GW_FILE
                         echo $get_next_id_next_id:$GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX:$GW_DM >> $GW_FILE
                         chown_openser $GW_FILE
-                        fifo_cmd lcr_reload
+                        $CTLCMD lcr_reload
                         ;;
 
                 rmgw)
@@ -1179,7 +1179,7 @@ lcr() {
                         cat $GW_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_FILE.tmp
                         mv -f $GW_FILE.tmp $GW_FILE
                         chown_openser $GW_FILE
-                        fifo_cmd lcr_reload
+                        $CTLCMD lcr_reload
                         ;;
 
                 addroute)
@@ -1192,7 +1192,7 @@ lcr() {
 			get_next_id $LCR_FILE
                         echo $get_next_id_next_id:$1:$2:$3:$4 >> $LCR_FILE
                         chown_openser $LCR_FILE
-                        fifo_cmd lcr_reload
+                        $CTLCMD lcr_reload
                         ;;
 
                 rmroute)
@@ -1205,7 +1205,7 @@ lcr() {
                         cat $LCR_FILE | $EGREP -v "^[0-9]+:$1:$2:$3:$4\$" > $LCR_FILE.tmp
                         mv -f $LCR_FILE.tmp $LCR_FILE
                         chown_openser $LCR_FILE
-                        fifo_cmd lcr_reload
+                        $CTLCMD lcr_reload
                         ;;
                 *)
                         usage_lcr
@@ -1361,6 +1361,10 @@ cr() {
 				;;
 			reload)
 				$CTLCMD cr_reload_routes
+				;;
+
+			dump)
+				$CTLCMD cr_dump
 				;;
 
 			addrt)
@@ -1640,6 +1644,142 @@ trusted() {
 		esac
 	fi
 
+}
+
+#
+##### ------------------------------------------------ #####
+### DISPATCHER management
+#
+dispatcher() {
+	require_dbengine
+	require_ctlengine 
+
+	if [ "$DBENGINE" = "DBTEXT" ] ; then
+		case $1 in
+			show)
+				lines=`wc -l $DISPATCHER_FILE | cut -d " " -f 1`
+				let "lines=$lines-1"
+				tail -n $lines $DISPATCHER_FILE
+				;;
+
+			addgw)
+				shift
+				if [ $# -ne 4 ] ; then
+					merr "too few parameters"
+					usage_dispatcher
+					exit 1
+				fi
+
+				if [ $# -gt 3 ] ; then
+					DISPATCHER_DESCRIPTION=$4
+				else
+					DISPATCHER_DESCRIPTION=""
+				fi 
+
+				DISPATCHER_SETID=$1
+				DISPATCHER_DESTINATION=$2
+				DISPATCHER_FLAGS=$3
+
+				get_next_id $DISPATCHER_FILE
+				echo $get_next_id_next_id:$DISPATCHER_SETID:$DISPATCHER_DESTINATION:$DISPATCHER_FLAGS:$DISPATCHER_DESCRIPTION >> $DISPATCHER_FILE
+				chown_openser $DISPATCHER_FILE
+				$CTLCMD ds_reload
+				;;
+
+			rmgw)
+				shift
+				if [ $# -ne 1 ] ; then
+					merr "missing gateway id to be removed"
+					exit 1
+				fi
+				cat $DISPATCHER_FILE | $EGREP -v "^[0-9]+:$1:" > $DISPATCHER_FILE.tmp
+				mv -f $DISPATCHER_FILE.tmp $DISPATCHER_FILE
+				chown_openser $DISPATCHER_FILE
+				$CTLCMD ds_reload
+				;;
+
+			reload)
+				$CTLCMD ds_reload
+				;;
+
+			dump)
+				$CTLCMD ds_list
+				;;
+
+			*)
+				usage_dispatcher
+				exit 1
+
+		esac
+	else
+
+		case $1 in
+			show)
+				mecho "dispatcher gateways"
+				QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_ID_COLUMN; "
+				$DBROCMD "$QUERY"
+				;;
+			addgw)
+				shift
+				if [ $# -ne 4 ] ; then
+					merr "too few parameters"
+					usage_dispatcher
+					exit 1
+				fi
+
+				if [ $# -gt 3 ] ; then
+					DISPATCHER_DESCRIPTION=$4
+				else
+					DISPATCHER_DESCRIPTION=""
+				fi 
+
+				DISPATCHER_SETID=$1
+				DISPATCHER_DESTINATION=$2
+				DISPATCHER_FLAGS=$3
+
+				QUERY="insert into $DISPATCHER_TABLE \
+					( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
+					VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,'$DISPATCHER_DESCRIPTION');"
+				$DBCMD "$QUERY"
+
+				if [ $? -ne 0 ] ; then
+					merr "dispatcher - SQL Error"
+					exit 1
+				fi
+
+				$CTLCMD ds_reload
+				;;
+			rmgw)
+				shift
+				if [ $# -ne 1 ] ; then
+					merr "missing gateway id to be removed"
+					exit 1
+				fi
+
+				QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_ID_COLUMN='$1';"
+				$DBCMD "$QUERY"
+
+				if [ $? -ne 0 ] ; then
+					merr "dispatcher - SQL Error"
+					exit 1
+				fi
+
+				$CTLCMD ds_reload
+				;;
+			reload)
+				$CTLCMD ds_reload
+				;;
+
+			dump)
+				$CTLCMD ds_list
+				;;
+
+			*)
+				usage_dispatcher
+				exit 1
+
+		esac
+	fi
 }
 
 #
@@ -2699,6 +2839,11 @@ case $1 in
 	trusted)
 		shift
 		trusted "$@"
+		;;
+
+	dispatcher)
+		shift
+		dispatcher "$@"
 		;;
 
 	monitor|console|moni|con)
