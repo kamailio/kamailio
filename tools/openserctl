@@ -1664,7 +1664,7 @@ dispatcher() {
 
 			addgw)
 				shift
-				if [ $# -ne 4 ] ; then
+				if [ $# -lt 3 ] ; then
 					merr "too few parameters"
 					usage_dispatcher
 					exit 1
@@ -1721,7 +1721,7 @@ dispatcher() {
 				;;
 			addgw)
 				shift
-				if [ $# -ne 4 ] ; then
+				if [ $# -lt 3 ] ; then
 					merr "too few parameters"
 					usage_dispatcher
 					exit 1
