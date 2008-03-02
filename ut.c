@@ -28,7 +28,6 @@
  *
  */
 
-#define _GNU_SOURCE 1 /* strndup in get_abs_pathname */
 #include <string.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -232,18 +231,22 @@ char* get_abs_pathname(str* base, str* file)
 	if (file->s[0] == '/') {
 		/* This is an absolute pathname, make a zero terminated
 		 * copy and use it as it is */
-		if ((res = strndup(file->s, file->len)) == NULL) {
-			ERR("get_abs_pathname: No memory left (strndup failed)\n");
+		if ((res = malloc(file->len+1)) == NULL) {
+			ERR("get_abs_pathname: No memory left (malloc failed)\n");
 		}
+		memcpy(res, file->s, file->len);
+		res[file->len]=0;
 	} else {
 		/* This is not an absolute pathname, make it relative
 		 * to the location of the base file
 		 */
 		/* Make a copy, function dirname may modify the string */
-		if ((buf = strndup(base->s, base->len)) == NULL) {
-			ERR("get_abs_pathname: No memory left (strdup failed)\n");
+		if ((buf = malloc(base->len+1)) == NULL) {
+			ERR("get_abs_pathname: No memory left (malloc failed)\n");
 			return NULL;
 		}
+		memcpy(buf, base->s, base->len);
+		buf[base->len]=0;
 		dir = dirname(buf);
 		
 		len = strlen(dir);
