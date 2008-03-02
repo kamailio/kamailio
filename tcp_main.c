@@ -3101,6 +3101,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 	/* pass it to child, so remove it from the io watch list  and the local
 	 *  timer */
 #ifdef TCP_BUF_WRITE
+	empty_q=0; /* warning fix */
 	if (unlikely((ev & (POLLOUT|POLLERR|POLLHUP)) &&
 					(tcpconn->flags & F_CONN_WRITE_W))){
 		if (unlikely((ev & (POLLERR|POLLHUP)) || 
