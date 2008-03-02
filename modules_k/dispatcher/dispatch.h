@@ -73,6 +73,8 @@ extern unsigned short grp_avp_type;
 extern int_str cnt_avp_name;
 extern unsigned short cnt_avp_type;
 
+extern pv_elem_t * hash_param_model;
+
 /* Structure containing pointers to TM-functions */
 struct tm_binds tmb;
 extern str ds_ping_method;

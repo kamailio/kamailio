@@ -67,12 +67,16 @@ int  ds_use_default = 0;
 static str dst_avp_param = {NULL, 0};
 static str grp_avp_param = {NULL, 0};
 static str cnt_avp_param = {NULL, 0};
+str hash_pvar_param = {NULL, 0};
+
 int_str dst_avp_name;
 unsigned short dst_avp_type;
 int_str grp_avp_name;
 unsigned short grp_avp_type;
 int_str cnt_avp_name;
 unsigned short cnt_avp_type;
+
+pv_elem_t * hash_model_param = NULL;
 
 int probing_threshhold = 3; /* number of failed requests, before a destination
 							   is taken into probing */
@@ -138,6 +142,7 @@ static param_export_t params[]={
 	{"dst_avp",         STR_PARAM, &dst_avp_param.s},
 	{"grp_avp",         STR_PARAM, &grp_avp_param.s},
 	{"cnt_avp",         STR_PARAM, &cnt_avp_param.s},
+	{"hash_pvar",       STR_PARAM, &hash_pvar_param.s},
 	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
 	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
 	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
@@ -183,6 +188,8 @@ static int mod_init(void)
 		grp_avp_param.len = strlen(grp_avp_param.s);
 	if (cnt_avp_param.s)
 		cnt_avp_param.len = strlen(cnt_avp_param.s);	
+	if (hash_pvar_param.s)
+		hash_pvar_param.len = strlen(hash_pvar_param.s);	
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 
@@ -272,6 +279,16 @@ static int mod_init(void)
 	} else {
 		cnt_avp_name.n = 0;
 		cnt_avp_type = 0;
+	}
+
+	if (hash_pvar_param.s && *hash_pvar_param.s) {
+		if(pv_parse_format(&hash_pvar_param, &hash_param_model) < 0
+				|| hash_param_model==NULL) {
+			LM_ERR("malformed PV string: %s\n", hash_pvar_param.s);
+			return -1;
+		}		
+	} else {
+		hash_param_model = NULL;
 	}
 
 	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */

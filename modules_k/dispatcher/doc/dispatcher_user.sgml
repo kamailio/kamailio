@@ -330,6 +330,39 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
  	</section>
  	<section>
+ 		<title><varname>hash_pvar</varname> (str)</title>
+ 		<para>
+ 		String with PVs used for the hashing algorithm 7.
+ 		</para>
+		<note>
+ 		<para>
+		You must set this parameter if you want do hashing over custom message
+		parts.
+ 		</para>
+		</note>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>null</quote> - disabled.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Use $avp(i:273) for hashing:</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "hash_pvar", "$avp(i:273)")
+ ...
+ </programlisting>
+ 		</example>
+ 		<example>
+ 		<title>Use combination of PVs for hashing:</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
+ 	<section>
  		<title><varname>ds_ping_method</varname> (string)</title>
  		<para>
  		With this Method you can define, with which method you want to probe the failed gateways.
@@ -471,6 +504,12 @@ modparam("dispatcher", "force_dst", 1)
 			<listitem>
 				<para>
 				<quote>6</quote> - random (using rand()).
+				</para>
+			</listitem>
+			<listitem>
+				<para>
+				<quote>7</quote> - hash over the content of PVs string.
+				Note: This works only when the parameter hash_pvar is set.
 				</para>
 			</listitem>
 			<listitem>

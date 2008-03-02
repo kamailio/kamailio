@@ -890,6 +890,35 @@ int ds_hash_authusername(struct sip_msg *msg, unsigned int *hash)
 	return 0;
 }
 
+
+int ds_hash_pvar(struct sip_msg *msg, unsigned int *hash)
+{
+	/* The String to create the hash */
+	str hash_str = {0, 0};
+	
+	if(msg==NULL || hash == NULL || hash_param_model == NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+	if (pv_printf_s(msg, hash_param_model, &hash_str)<0) {
+		LM_ERR("error - cannot print the format\n");
+		return -1;
+	}
+
+	/* Remove empty spaces */
+	trim(&hash_str);
+	if (hash_str.len <= 0) {
+		LM_ERR("String is empty!\n");
+		return -1;
+	}
+	LM_DBG("Hashing %.*s!\n", hash_str.len, hash_str.s);
+
+	*hash = ds_get_hash(&hash_str, NULL);
+	
+	return 0;
+}
+
 static inline int ds_get_index(int group, ds_set_p *index)
 {
 	ds_set_p si = NULL;
@@ -1061,6 +1090,13 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 		case 6:
 			hash = rand() % idx->nr;
 		break;
+		case 7:
+			if (ds_hash_pvar(msg, &hash)!=0)
+			{
+				LM_ERR("can't get PV hash\n");
+				return -1;
+			}
+		break;		
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n", alg);
 			hash = 0;
