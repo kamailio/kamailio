@@ -33,7 +33,6 @@
 
 #include <string.h>
 #include <libgen.h>
-#include <malloc.h>
 #include "../../mem/shm_mem.h"
 #include "../../globals.h"
 #include "tls_mod.h"
