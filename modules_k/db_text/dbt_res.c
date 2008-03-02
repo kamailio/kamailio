@@ -277,7 +277,7 @@ int dbt_result_extract_fields(dbt_table_p _dtp, dbt_row_p _drp,
 						(_drp->fields[n].val.str_val.len+1));
 				if(!_rp->fields[i].val.str_val.s)
 					goto clean;
-				strncpy(_rp->fields[i].val.str_val.s,
+				memcpy(_rp->fields[i].val.str_val.s,
 						_drp->fields[n].val.str_val.s,
 						_rp->fields[i].val.str_val.len);
 				_rp->fields[i].val.str_val.s[_rp->fields[i].val.str_val.len]=0;
