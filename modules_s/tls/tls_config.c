@@ -32,7 +32,6 @@
 
 #include <stdio.h>
 #include <libgen.h>
-#include <malloc.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 #include "../../trim.h"
