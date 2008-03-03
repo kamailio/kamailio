@@ -108,7 +108,6 @@ static int w_ds_is_from_list1(struct sip_msg*, char*, char*);
 
 static void destroy(void);
 
-static int ds_fixup(void** param, int param_no);
 static int ds_warn_fixup(void** param, int param_no);
 
 static struct mi_root* ds_mi_set(struct mi_root* cmd, void* param);
@@ -117,8 +116,8 @@ static struct mi_root* ds_mi_reload(struct mi_root* cmd_tree, void* param);
 static int mi_child_init(void);
 
 static cmd_export_t cmds[]={
-	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2, ds_fixup, 0, REQUEST_ROUTE},
-	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2, ds_fixup, 0, REQUEST_ROUTE},
+	{"ds_select_dst",    (cmd_function)w_ds_select_dst,    2, fixup_igp_igp, 0, REQUEST_ROUTE},
+	{"ds_select_domain", (cmd_function)w_ds_select_domain, 2, fixup_igp_igp, 0, REQUEST_ROUTE},
 	{"ds_next_dst",      (cmd_function)w_ds_next_dst,      0, ds_warn_fixup, 0, FAILURE_ROUTE},
 	{"ds_next_domain",   (cmd_function)w_ds_next_domain,   0, ds_warn_fixup, 0, FAILURE_ROUTE},
 	{"ds_mark_dst",      (cmd_function)w_ds_mark_dst0,     0, ds_warn_fixup, 0, FAILURE_ROUTE},
@@ -355,24 +354,6 @@ static void destroy(void)
 		ds_disconnect_db();
 }
 
-static inline int ds_get_ivalue(struct sip_msg* msg, ds_param_p dp, int *val)
-{
-	pv_value_t value;
-	if(dp->type==0) {
-		*val = dp->v.id;
-		return 0;
-	}
-	
-	if(pv_get_spec_value(msg, &dp->v.sp, &value)!=0 
-			|| value.flags&PV_VAL_NULL || !(value.flags&PV_VAL_INT))
-	{
-		LM_ERR("no AVP found (error in scripts)\n");
-		return -1;
-	}
-	*val = value.ri;
-	return 0;
-}
-
 /**
  *
  */
@@ -382,12 +363,12 @@ static int w_ds_select_dst(struct sip_msg* msg, char* set, char* alg)
 	
 	if(msg==NULL)
 		return -1;
-	if(ds_get_ivalue(msg, (ds_param_p)set, &s)!=0)
+	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
 	{
 		LM_ERR("no dst set value\n");
 		return -1;
 	}
-	if(ds_get_ivalue(msg, (ds_param_p)alg, &a)!=0)
+	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
 	{
 		LM_ERR("no alg value\n");
 		return -1;
@@ -405,12 +386,12 @@ static int w_ds_select_domain(struct sip_msg* msg, char* set, char* alg)
 	if(msg==NULL)
 		return -1;
 
-	if(ds_get_ivalue(msg, (ds_param_p)set, &s)!=0)
+	if(fixup_get_ivalue(msg, (gparam_p)set, &s)!=0)
 	{
 		LM_ERR("no dst set value\n");
 		return -1;
 	}
-	if(ds_get_ivalue(msg, (ds_param_p)alg, &a)!=0)
+	if(fixup_get_ivalue(msg, (gparam_p)alg, &a)!=0)
 	{
 		LM_ERR("no alg value\n");
 		return -1;
@@ -454,51 +435,6 @@ static int w_ds_mark_dst1(struct sip_msg *msg, char *str1, char *str2)
 		return ds_mark_dst(msg, 2);
 	else
 		return ds_mark_dst(msg, 1);
-}
-
-/**
- *
- */
-static int ds_fixup(void** param, int param_no)
-{
-	int err;
-	str s;
-	ds_param_p dsp;
-	
-	if(param_no==1 || param_no==2)
-	{
-		dsp = (ds_param_p)pkg_malloc(sizeof(ds_param_t));
-		if(dsp == NULL)
-		{
-			LM_ERR("no more memory\n");
-			return E_UNSPEC;
-		}
-		memset(dsp, 0, sizeof(ds_param_t));
-		if(((char*)(*param))[0]=='$')
-		{
-			dsp->type = 1;
-			s.s = (char*)*param; s.len = strlen(s.s);
-			if(pv_parse_spec(&s, &dsp->v.sp)==NULL
-				|| dsp->v.sp.type!=PVT_AVP)
-			{
-				LM_ERR("Unsupported User Field identifier\n");
-				return E_UNSPEC;
-			}
-		} else {
-			dsp->type = 0;
-			dsp->v.id = str2s(*param, strlen(*param), &err);
-			if (err == 0)
-			{
-				pkg_free(*param);
-			} else {
-				LM_ERR("Bad number <%s>\n",
-				    (char*)(*param));
-				return E_UNSPEC;
-			}
-		}
-		*param = (void*)dsp;
-	}
-	return 0;
 }
 
 static int ds_warn_fixup(void** param, int param_no)

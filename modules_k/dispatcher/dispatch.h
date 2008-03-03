@@ -54,15 +54,6 @@ extern str ds_set_id_col;
 extern str ds_dest_uri_col;
 extern str ds_dest_flags_col;
 
-typedef struct _ds_param
-{
-	int type;
-	union {
-		int id;
-		pv_spec_t sp;
-	} v;
-} ds_param_t, *ds_param_p;
-
 extern int ds_flags; 
 extern int ds_use_default;
 
