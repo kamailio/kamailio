@@ -637,7 +637,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 		</title>
 		<para>
 		This MI function will enable/disable a WARNING debug log exposing the
-		internel counters for each pipe (usefull in monitoring the ratelimit internals).
+		internal counters for each pipe (useful in monitoring the ratelimit internals).
 		</para>
 		<para>
 		Name: <emphasis>rl_set_dbg</emphasis>
@@ -664,7 +664,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
 	<title>Known limitations</title>
 	<para>
 	The pipes and queues are stored as static vectors, so no more than
-	MAX_PIPES/MAX_QUEUES can be added without recompiles.
+	MAX_PIPES/MAX_QUEUES can be added without recompilation.
 	<itemizedlist>
 		<listitem><para>
 		<emphasis>MAX_PIPES</emphasis> - 16
