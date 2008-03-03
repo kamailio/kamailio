@@ -39,11 +39,25 @@ $MYSQL "insert into route_tree (id, carrier) values ('1', 'default');"
 $MYSQL "insert into route_tree (id, carrier) values ('2', 'carrier1');"
 $MYSQL "insert into route_tree (id, carrier) values ('3', 'carrier2');"
 
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('1','1','0','49','0.5','0','127.0.0.1:7000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('2','1','0','49','0.5','0','127.0.0.1:8000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('3','2','0','49','1','0','127.0.0.1:9000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('4','3','0','49','1','0','127.0.0.1:10000');"
-$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('5','3','test','49','1','0','127.0.0.1:10000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host)
+values ('1','1','0','49','0.5','0','127.0.0.1:7000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host)
+values ('2','1','0','49','0.5','0','127.0.0.1:8000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host)
+values ('3','2','0','49','1','0','127.0.0.1:9000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host)
+values ('4','3','0','49','1','0','127.0.0.1:10000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host)
+values ('5','3','fallback','49','1','0','127.0.0.1:10000');"
+$MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host)
+values ('6','3','2','49','1','0','127.0.0.1:10000');"
+
+$MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
+flags, mask, next_domain) values ('1', '3', '0', '49', '127.0.0.1:10000', '5..', '', '', 'fallback');"
+$MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
+flags, mask, next_domain) values ('2', '3', 'fallback', '49', '127.0.0.1:10000', '483', '', '', '2');"
+$MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
+flags, mask, next_domain) values ('3', '3', 'fallback', '49', '127.0.0.1:9000', '4..', '', '', '2');"
 
 $MYSQL "alter table subscriber add cr_preferred_carrier int(10) default NULL;"
 
@@ -77,6 +91,26 @@ if [ "$ret" -eq 0 ] ; then
 	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
 	ret=$?
 fi;
+
+killall -9 sipp
+if [ "$ret" -eq 0 ] ; then
+	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
+	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
+	ret=$?
+fi;
+
+$MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
+flags, mask, next_domain) values ('4', '3', 'fallback', '49', '127.0.0.1:10000', '4..', '', '', '4');"
+$MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
+flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000', '486', '', '', '2');"
+
+if [ ! "$ret" -eq 0 ] ; then
+	openserctl fifo cr_reload_routes
+	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
+	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
+	ret=$?
+fi;
+
 
 killall -9 openser
 killall -9 sipp

@@ -18,7 +18,7 @@
    </send>
    <recv response="407" auth="true">
    </recv>
-   
+
    <send retrans="500">
       <![CDATA[
       REGISTER sip:localhost:5059 SIP/2.0

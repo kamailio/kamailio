@@ -27,7 +27,7 @@ if [ ! $? -eq 0 ] ; then
 	echo "sipp not found, not run"
 	exit 0
 fi ;
-                
+
 CFG="20.cfg"
 TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 
