@@ -27,9 +27,9 @@
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFS) -c $< -o $@
 
 %.d: %.c $(ALLDEP)
-	@set -e; $(MKDEP) $(CFLAGS) $(INCLUDES) $(DEFS) $< \
-	|  sed 's#\(\($(*D)/\)\{0,1\}$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
-	[ -s $@ ] || rm -f $@
+	$(MKDEP) $(CFLAGS) $(INCLUDES) $(DEFS) $< \
+	    |  sed 's#\(\($(*D)/\)\{0,1\}$(*F)\)\.o[ :]*#$*.o $@ : #g' > $@; \
+	    test -s $@ || { rm -f $@; false; }
 
 # use RPATH and SER_LIBS if needed (make install and the module depends
 # on some ser libs)
