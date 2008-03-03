@@ -276,11 +276,13 @@ static int set_next_domain_recursor(const struct failure_route_tree_item *failur
 	}
 	if (re_uri.len == 0 || failure_tree->nodes[*re_uri.s - '0'] == NULL) {
 		if (failure_tree->rule_list == NULL) {
+			LM_INFO("URI or route tree nodes empty, empty rule list\n");
 			return 1;
 		} else {
 			return set_next_domain_on_rule(failure_tree, host, reply_code, flags, dstavp);
 		}
 	} else {
+		/* match, goto the next digit of the uri and try again */
 		re_tree = failure_tree->nodes[*re_uri.s - '0'];
 		re_uri.s++;
 		re_uri.len--;
@@ -292,6 +294,8 @@ static int set_next_domain_recursor(const struct failure_route_tree_item *failur
 			if (failure_tree->rule_list != NULL) {
 				return set_next_domain_on_rule(failure_tree, host, reply_code, flags, dstavp);
 			} else {
+					LM_INFO("empty rule list for host [%.*s]%.*s\n", re_uri.len, re_uri.s,
+						host->len, host->s);
 				return 1;
 			}
 		default:
