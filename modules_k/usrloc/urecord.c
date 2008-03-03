@@ -344,10 +344,10 @@ int timer_urecord(urecord_t* _r)
 {
 	switch(db_mode) {
 	case NO_DB:         return nodb_timer(_r);
-	case WRITE_THROUGH: return wt_timer(_r);
+	case WRITE_THROUGH: return wb_timer(_r);
 	/* use also the write_back timer routine to handle the failed
 	 * realtime inserts/updates */
-	case WRITE_BACK:    return wt_timer(_r); /*wb_timer(_r);*/
+	case WRITE_BACK:    return wb_timer(_r); /*wt_timer(_r);*/
 	}
 
 	return 0; /* Makes gcc happy */
