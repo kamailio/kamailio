@@ -1332,7 +1332,8 @@ route[1] {
 	cr_user_carrier("$fU", "$fd", "$avp(carrier)");
 
 	$avp(domain)="start";
-	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "$avp(host)")) {
+	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id",
+			"$avp(host)")) {
 		xlog("L_ERR", "cr_route failed\n");
 		exit;
 	}
@@ -1344,11 +1345,13 @@ route[1] {
 
 failure_route[1] {
 	revert_uri();
-	if (!cr_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$avp(host)", "$T_reply_code", "$avp(domain)")) {
+	if (!cr_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$avp(host)",
+			"$T_reply_code", "$avp(domain)")) {
 		xlog("L_ERR", "cr_next_domain failed\n");
 		exit;
 	}
-	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id", "$avp(host)")) {
+	if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "call_id",
+			"$avp(host)")) {
 		xlog("L_ERR", "cr_route failed\n");
 		exit;
 	}
