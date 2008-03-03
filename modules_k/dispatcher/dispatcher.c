@@ -76,7 +76,7 @@ unsigned short grp_avp_type;
 int_str cnt_avp_name;
 unsigned short cnt_avp_type;
 
-pv_elem_t * hash_model_param = NULL;
+pv_elem_t * hash_param_model = NULL;
 
 int probing_threshhold = 3; /* number of failed requests, before a destination
 							   is taken into probing */
