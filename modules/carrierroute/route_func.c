@@ -523,7 +523,8 @@ static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
 				if (route_tree->rule_list != NULL) {
 					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg, dstavp);
 				} else {
-					LM_INFO("empty rule list\n");
+					LM_INFO("empty rule list for prefix [%.*s]%.*s\n", user->len - re_pm.len,
+						user->s, re_pm.len, re_pm.s);
 					return 1;
 				}
 			default:
