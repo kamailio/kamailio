@@ -1034,7 +1034,8 @@ route[1] {
 
         $avp(domain)="start";
         if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "ca
-ll_id", "$avp(host)")) {
+ll_id",
+                        "$avp(host)")) {
                 xlog("L_ERR", "cr_route failed\n");
                 exit;
         }
@@ -1047,12 +1048,14 @@ ll_id", "$avp(host)")) {
 failure_route[1] {
         revert_uri();
         if (!cr_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$av
-p(host)", "$T_reply_code", "$avp(domain)")) {
+p(host)",
+                        "$T_reply_code", "$avp(domain)")) {
                 xlog("L_ERR", "cr_next_domain failed\n");
                 exit;
         }
         if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "ca
-ll_id", "$avp(host)")) {
+ll_id",
+                        "$avp(host)")) {
                 xlog("L_ERR", "cr_route failed\n");
                 exit;
         }
