@@ -121,4 +121,3 @@ int dbt_bind_api(db_func_t *dbb)
 	return 0;
 }
 
-
