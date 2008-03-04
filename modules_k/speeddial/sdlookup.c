@@ -31,6 +31,7 @@
 #include "../../action.h"
 #include "../../config.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
 #include "../../parser/parse_from.h"
 #include "../../db/db.h"
@@ -40,9 +41,6 @@
 
 #define MAX_USERURI_SIZE	256
 static char useruri_buf[MAX_USERURI_SIZE];
-
-#define SD_PRINTBUF_SIZE 1024
-static char sd_printbuf[SD_PRINTBUF_SIZE];
 
 /**
  * Rewrite Request-URI
@@ -69,7 +67,7 @@ static inline int rewrite_ruri(struct sip_msg* _m, char* _s)
  */
 int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 {
-	str user_s, table_s;
+	str user_s, table_s, uri_s;
 	int nr_keys;
 	struct sip_uri *puri;
 	struct sip_uri turi;
@@ -77,14 +75,12 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	db_val_t db_vals[4];
 	db_key_t db_cols[1];
 	db_res_t* db_res = NULL;
-	int printbuf_len;
 
-	if(!_table) {
-		LM_ERR("invalid parameter");
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+	{
+		LM_ERR("invalid table parameter");
 		return -1;
 	}
-	table_s.s = _table;
-	table_s.len = strlen(_table);
 
 	/* init */
 	nr_keys = 0;
@@ -93,18 +89,17 @@ int sd_lookup(struct sip_msg* _msg, char* _table, char* _owner)
 	if(_owner)
 	{
 		memset(&turi, 0, sizeof(struct sip_uri));
-		printbuf_len = SD_PRINTBUF_SIZE-1;
-		if(pv_printf(_msg, (pv_elem_t*)_owner, sd_printbuf, &printbuf_len)<0)
+		if(fixup_get_svalue(_msg, (gparam_p)_owner, &uri_s)!=0)
 		{
-			LM_ERR("failed to print the format\n");
+			LM_ERR("invalid owner uri parameter");
 			return -1;
 		}
-		if(parse_uri(sd_printbuf, printbuf_len, &turi)!=0)
+		if(parse_uri(uri_s.s, uri_s.len, &turi)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
 			goto err_server;
 		}
-		LM_DBG("using user id [%.*s]\n", printbuf_len, sd_printbuf);
+		LM_DBG("using user id [%.*s]\n", uri_s.len, uri_s.s);
 		puri = &turi;
 	} else {
 		/* take username@domain from From header */

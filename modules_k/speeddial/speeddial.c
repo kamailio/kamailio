@@ -32,7 +32,7 @@
 #include "../../dprint.h"
 #include "../../error.h"
 #include "../../mem/mem.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 
 #include "sdlookup.h"
 
@@ -49,8 +49,6 @@ static int child_init(int rank);
 
 /* Module initialization function prototype */
 static int mod_init(void);
-
-static int fixup_sd(void** param, int param_no);
 
 /* Module parameter variables */
 static str db_url    = str_init(DEFAULT_RODB_URL);
@@ -71,8 +69,10 @@ db_con_t* db_handle=0;   /* Database connection handle */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"sd_lookup", (cmd_function)sd_lookup, 1, 0, 0, REQUEST_ROUTE},
-	{"sd_lookup", (cmd_function)sd_lookup, 2, fixup_sd, 0, REQUEST_ROUTE},
+	{"sd_lookup", (cmd_function)sd_lookup, 1, fixup_spve_null, 0,
+		REQUEST_ROUTE},
+	{"sd_lookup", (cmd_function)sd_lookup, 2, fixup_spve_spve, 0,
+		REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -168,29 +168,5 @@ static void destroy(void)
 {
 	if (db_handle)
 		db_funcs.close(db_handle);
-}
-
-static int fixup_sd(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-
-	if(param_no==1)
-		return 0;
-
-	if(*param)
-	{
-		s.s = (char*)(*param); s.len = strlen(s.s);
-		if(pv_parse_format(&s, &model)<0)
-		{
-			LM_ERR("wrong format[%s]\n",(char*)(*param));
-			return E_UNSPEC;
-		}
-			
-		*param = (void*)model;
-		return 0;
-	}
-	LM_ERR("null format\n");
-	return E_UNSPEC;
 }
 
