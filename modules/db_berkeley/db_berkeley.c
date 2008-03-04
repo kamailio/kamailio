@@ -38,6 +38,7 @@
 
 #include "../../sr_module.h"
 #include "../../db/db_res.h"
+#include "../../db/db.h"
 #include "db_berkeley.h"
 #include "bdb_lib.h"
 #include "bdb_res.h"
@@ -63,18 +64,13 @@ int journal_roll_interval = 0;
 static int mod_init(void);
 static void destroy(void);
 
+int bdb_bind_api(db_func_t *dbb);
+
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",   (cmd_function)bdb_use_table,  2, 0, 0, 0},
-	{"db_init",        (cmd_function)bdb_init,       1, 0, 0, 0},
-	{"db_close",       (cmd_function)bdb_close,      2, 0, 0, 0},
-	{"db_query",       (cmd_function)bdb_query,      2, 0, 0, 0},
-	{"db_free_result", (cmd_function)bdb_free_query, 2, 0, 0, 0},
-	{"db_insert",     (cmd_function)bdb_insert,      2, 0, 0, 0},
-	{"db_delete",     (cmd_function)bdb_delete,      2, 0, 0, 0},
-	{"db_update",     (cmd_function)bdb_update,      2, 0, 0, 0},
+	{"db_bind_api",    (cmd_function)bdb_bind_api,   0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -131,6 +127,25 @@ static int mod_init(void)
 static void destroy(void)
 {
 	bdblib_destroy();
+}
+
+int dbt_bind_api(db_func_t *dbb)
+{
+	if(dbb==NULL)
+		return -1;
+
+	memset(dbb, 0, sizeof(db_func_t));
+
+	dbb->use_table   = bdb_use_table;
+	dbb->init        = bdb_init;
+	dbb->close       = bdb_close;
+	dbb->query       = (db_query_f)bdb_query;
+	dbb->free_result = bdb_free_query;
+	dbb->insert      = (db_insert_f)bdb_insert;
+	dbb->delete      = (db_delete_f)bdb_delete; 
+	dbb->update      = (db_update_f)bdb_update;
+
+	return 0;
 }
 
 int bdb_use_table(db_con_t* _h, const str* _t)
