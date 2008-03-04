@@ -113,7 +113,7 @@ int dbt_bind_api(db_func_t *dbb)
 	dbb->init        = dbt_init;
 	dbb->close       = dbt_close;
 	dbb->query       = (db_query_f)dbt_query;
-	dbb->free_result = dbt_free_query;
+	dbb->free_result = dbt_free_result;
 	dbb->insert      = (db_insert_f)dbt_insert;
 	dbb->delete      = (db_delete_f)dbt_delete; 
 	dbb->update      = (db_update_f)dbt_update;

@@ -129,7 +129,7 @@ void dbt_close(db_con_t* _h)
 /*
  * Free all memory allocated by get_result
  */
-int dbt_free_query(db_con_t* _h, db_res_t* _r)
+int dbt_free_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{
