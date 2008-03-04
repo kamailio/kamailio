@@ -61,7 +61,7 @@ Carsten Bock
               1.5.2. ds_list
               1.5.3. ds_reload
 
-        1.6. Installation & Running
+        1.6. Installation and Running
 
               1.6.1. Destination List File
               1.6.2. OpenSER config file
@@ -565,7 +565,7 @@ ds_select_dst("1", "0");
                 ":ds_reload:\n."
      __________________________________________________________
 
-1.6. Installation & Running
+1.6. Installation and Running
 
 1.6.1. Destination List File
 
