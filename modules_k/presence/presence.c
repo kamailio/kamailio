@@ -764,13 +764,13 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		s= s->next;
 	}
 	
-	free_subs_list(subs_array, PKG_MEM_TYPE);
+	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
 	return 0;
 
 done:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
-	free_subs_list(subs_array, PKG_MEM_TYPE);
+	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
 	return err_ret;
 }
 

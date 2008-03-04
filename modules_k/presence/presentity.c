@@ -682,14 +682,19 @@ char* extract_sphere(str body)
 	{
 		LM_DBG("found sphere definition\n");
 		cont= (char*)xmlNodeGetContent(node);
-		sphere= (char*)pkg_malloc(strlen(cont)*sizeof(char));
+		if(cont== NULL)
+		{
+			LM_ERR("failed to extract sphere node content\n");
+			goto error;
+		}
+		sphere= (char*)pkg_malloc((strlen(cont)+ 1)*sizeof(char));
 		if(sphere== NULL)
 		{
 			xmlFree(cont);
 			ERR_MEM(PKG_MEM_STR);
 		}
-		xmlFree(cont);
 		strcpy(sphere, cont);
+		xmlFree(cont);
 	}
 	else
 		LM_DBG("didn't find sphere definition\n");
@@ -842,8 +847,8 @@ char* get_sphere(str* pres_uri)
 	sphere= extract_sphere(body);
 
 	pa_dbf.free_result(pa_db, result);
-	return sphere;
 
+	return sphere;
 
 error:
 	if(result)

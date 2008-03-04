@@ -91,7 +91,8 @@ void destroy_shtable(shtable_t htable, int hash_size)
 	for(i= 0; i< hash_size; i++)
 	{
 		lock_destroy(&htable[i].lock);
-		free_subs_list(htable[i].entries, SHM_MEM_TYPE);
+		free_subs_list(htable[i].entries->next, SHM_MEM_TYPE, 1);
+		shm_free(htable[i].entries);
 	}
 	shm_free(htable);
 	htable= NULL;
@@ -181,11 +182,72 @@ error:
 	return NULL;
 }
 
+
+subs_t* mem_copy_subs_noc(subs_t* s)
+{
+	int size;
+	subs_t* dest;
+
+	size= sizeof(subs_t)+ (s->pres_uri.len+ s->to_user.len
+		+ s->to_domain.len+ s->from_user.len+ s->from_domain.len+ s->callid.len
+		+ s->to_tag.len+ s->from_tag.len+s->sockinfo_str.len+s->event_id.len
+		+ s->local_contact.len + s->record_route.len+
+		+ s->reason.len+ 1)*sizeof(char);
+
+	dest= (subs_t*)shm_malloc(size);
+	if(dest== NULL)
+	{
+		ERR_MEM(SHARE_MEM);
+	}
+	memset(dest, 0, size);
+	size= sizeof(subs_t);
+
+	CONT_COPY(dest, dest->pres_uri, s->pres_uri)
+	CONT_COPY(dest, dest->to_user, s->to_user)
+	CONT_COPY(dest, dest->to_domain, s->to_domain)
+	CONT_COPY(dest, dest->from_user, s->from_user)
+	CONT_COPY(dest, dest->from_domain, s->from_domain)
+	CONT_COPY(dest, dest->to_tag, s->to_tag)
+	CONT_COPY(dest, dest->from_tag, s->from_tag)
+	CONT_COPY(dest, dest->callid, s->callid)
+	CONT_COPY(dest, dest->sockinfo_str, s->sockinfo_str)
+	CONT_COPY(dest, dest->local_contact, s->local_contact)
+	CONT_COPY(dest, dest->record_route, s->record_route)
+	if(s->event_id.s)
+		CONT_COPY(dest, dest->event_id, s->event_id)
+	if(s->reason.s)
+		CONT_COPY(dest, dest->reason, s->reason)
+
+	dest->event= s->event;
+	dest->local_cseq= s->local_cseq;
+	dest->remote_cseq= s->remote_cseq;
+	dest->status= s->status;
+	dest->version= s->version;
+	dest->send_on_cback= s->send_on_cback;
+	dest->expires= s->expires;
+	dest->db_flag= s->db_flag;
+
+	dest->contact.s= (char*)shm_malloc(s->contact.len* sizeof(char));
+	if(dest->contact.s== NULL)
+	{
+		ERR_MEM(SHARE_MEM);
+	}
+	memcpy(dest->contact.s, s->contact.s, s->contact.len);
+	dest->contact.len= s->contact.len;
+
+	return dest;
+
+error:
+	if(dest)
+			shm_free(dest);
+	return NULL;
+}
+
 int insert_shtable(shtable_t htable,unsigned int hash_code, subs_t* subs)
 {
 	subs_t* new_rec= NULL;
-		
-	new_rec= mem_copy_subs(subs, SHM_MEM_TYPE);
+
+	new_rec= mem_copy_subs_noc(subs);
 	if(new_rec== NULL)
 	{
 		LM_ERR("copying in share memory a subs_t structure\n");
@@ -228,6 +290,7 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
 		{
 			found= s->local_cseq;
 			ps->next= s->next;
+			shm_free(s->contact.s);
 			shm_free(s);
 			break;
 		}
@@ -238,7 +301,7 @@ int delete_shtable(shtable_t htable,unsigned int hash_code,str to_tag)
 	return found;
 }
 
-void free_subs_list(subs_t* s_array, int mem_type)
+void free_subs_list(subs_t* s_array, int mem_type, int ic)
 {
 	subs_t* s;
 
@@ -247,9 +310,17 @@ void free_subs_list(subs_t* s_array, int mem_type)
 		s= s_array;
 		s_array= s_array->next;
 		if(mem_type & PKG_MEM_TYPE)
+		{
+			if(ic)
+				pkg_free(s->contact.s);
 			pkg_free(s);
+		}
 		else
+		{
+			if(ic)
+				shm_free(s->contact.s);
 			shm_free(s);
+		}
 	}
 	
 }
@@ -281,6 +352,21 @@ int update_shtable(shtable_t htable,unsigned int hash_code,
 		s->local_cseq++;	
 		s->version= subs->version+ 1;
 	}
+	
+	if(strncmp(s->contact.s, subs->contact.s, subs->contact.len))
+	{
+		shm_free(s->contact.s);
+		s->contact.s= (char*)shm_malloc(subs->contact.len* sizeof(char));
+		if(s->contact.s== NULL)
+		{
+			lock_release(&htable[hash_code].lock);
+			LM_ERR("no more shared memory\n");
+			return -1;
+		}
+		memcpy(s->contact.s, subs->contact.s, subs->contact.len);
+		s->contact.len= subs->contact.len;
+	}
+
 	s->status= subs->status;
 	s->event= subs->event;
 	subs->db_flag= s->db_flag;
@@ -416,7 +502,7 @@ int insert_phtable(str* pres_uri, int event, char* sphere)
 	
 	if(sphere)
 	{
-		p->sphere= (char*)shm_malloc(strlen(sphere)*sizeof(char));
+		p->sphere= (char*)shm_malloc((strlen(sphere)+ 1)*sizeof(char));
 		if(p->sphere== NULL)
 		{
 			lock_release(&pres_htable[hash_code].lock);
@@ -530,7 +616,7 @@ int update_phtable(presentity_t* presentity, str pres_uri, str body)
 	}
 
 
-	p->sphere= (char*)shm_malloc(strlen(sphere)*sizeof(char));
+	p->sphere= (char*)shm_malloc((strlen(sphere)+ 1)*sizeof(char));
 	if(p->sphere== NULL)
 	{
 		lock_release(&pres_htable[hash_code].lock);

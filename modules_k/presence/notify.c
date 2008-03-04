@@ -1199,7 +1199,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 	return s_array;
 
 error:
-	free_subs_list(s_array, PKG_MEM_TYPE);
+	free_subs_list(s_array, PKG_MEM_TYPE, 0);
 	return NULL;
 	
 }
@@ -1243,7 +1243,7 @@ int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str
 	ret_code= 0;
 
 done:
-	free_subs_list(subs_array, PKG_MEM_TYPE);
+	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
 	
 	if(notify_body!=NULL)
 	{
@@ -1299,7 +1299,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	ret_code= 1;
 
 done:
-	free_subs_list(subs_array, PKG_MEM_TYPE);
+	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
 	if(notify_body!=NULL)
 	{
 		if(notify_body->s)

@@ -77,7 +77,7 @@ int update_shtable(shtable_t htable, unsigned int hash_code, struct subscription
 
 struct subscription* mem_copy_subs(struct subscription* s, int mem_type);
 
-void free_subs_list(struct subscription* s_array, int mem_type);
+void free_subs_list(struct subscription* s_array, int mem_type, int ic);
 
 void destroy_shtable(shtable_t htable, int hash_size);
 
