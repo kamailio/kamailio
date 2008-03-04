@@ -182,9 +182,9 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	size+= td->rem_uri.len;
 
 	td->rem_target.s = (char*)td+ size;
-	memcpy(td->rem_target.s, presentity->pres_uri->s,
-			presentity->pres_uri->len) ;
-	td->rem_target.len = presentity->pres_uri->len;
+	memcpy(td->rem_target.s, presentity->remote_contact.s,
+			presentity->remote_contact.len) ;
+	td->rem_target.len = presentity->remote_contact.len;
 	size+= td->rem_target.len;
 	
 	if(presentity->record_route.s && presentity->record_route.len)
@@ -217,6 +217,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	int flag ;
 	str record_route= {0, 0};
 	int rt;
+	str contact;
 
 	if( ps->param== NULL || *ps->param== NULL )
 	{
@@ -400,7 +401,15 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		goto done;
 	}
 	/*if a 2XX reply handle the two cases- an existing dialog and a new one*/
-	
+
+	/* extract the contact */
+	if(msg->contact== NULL || msg->contact->body.s== NULL)
+	{
+		LM_ERR("no contact header found in 200 OK reply");
+			goto error;
+	}
+	contact= msg->contact->body;
+
 	if(presentity)
 	{		
 		if(lexpire== 0 )
@@ -411,7 +420,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			goto done;
 		}
 		LM_DBG("*** Update expires\n");
-		update_htable(presentity, hentity->desired_expires, lexpire, NULL, hash_code);
+		update_htable(presentity, hentity->desired_expires, lexpire, NULL,
+				hash_code, &contact);
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
 	}
@@ -508,6 +518,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		pkg_free(record_route.s);
 	}
 
+	
 	presentity->contact.s= (char*)presentity + size;
 	memcpy(presentity->contact.s, hentity->contact.s, hentity->contact.len);
 	presentity->contact.len= hentity->contact.len;
@@ -532,6 +543,15 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		presentity->extra_headers->len= hentity->extra_headers->len; 
 		size+= hentity->extra_headers->len;
 	}
+
+	/* write the remote contact filed */
+	presentity->remote_contact.s= (char*)shm_malloc(contact.len* sizeof(char));
+	if(presentity->remote_contact.s== NULL)
+	{
+		ERR_MEM(SHARE_MEM);
+	}
+	memcpy(presentity->remote_contact.s, contact.s, contact.len);
+	presentity->remote_contact.len= contact.len;
 
 	presentity->event|= hentity->event;
 	presentity->flag= hentity->flag;

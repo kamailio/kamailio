@@ -87,6 +87,7 @@ typedef struct ua_pres{
 	str* extra_headers;
 	str record_route;
 	str contact;
+	str remote_contact;
 
 	/*?? should this be long? */
 }ua_pres_t;
@@ -108,7 +109,7 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code);
 void insert_htable(ua_pres_t* presentity );
 
 void update_htable(ua_pres_t* presentity,time_t desired_expires,
-		int expires, str* etag, unsigned int hash_code);
+		int expires, str* etag, unsigned int hash_code, str* contact);
 
 void delete_htable(ua_pres_t* presentity, unsigned int hash_code);
 
@@ -151,5 +152,6 @@ static inline int get_event_flag(str* event)
     return -1;
 }	
 
+int update_contact(struct sip_msg* msg, char* str1, char* str2);
 
 #endif

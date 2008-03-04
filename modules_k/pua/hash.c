@@ -31,6 +31,8 @@
 #include "../../mem/shm_mem.h"
 #include "../../dprint.h"
 #include "../../hash_func.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_from.h"
 #include "hash.h" 
 #include "pua.h"
 #include "send_publish.h"
@@ -164,7 +166,7 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 }
 
 void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
-		str* etag, unsigned int hash_code)
+		str* etag, unsigned int hash_code, str* contact)
 {
 	if(etag)
 	{	
@@ -183,6 +185,23 @@ void update_htable(ua_pres_t* p, time_t desired_expires, int expires,
 	if(p->watcher_uri)
 		p->cseq ++;
 
+	if(contact)
+	{
+		if(!(p->remote_contact.len== contact->len && 
+				strncmp(p->remote_contact.s, contact->s, contact->len)==0))
+		{
+			/* update remote contact */
+			shm_free(p->remote_contact.s);
+			p->remote_contact.s= (char*)shm_malloc(contact->len* sizeof(char));
+			if(p->remote_contact.s== NULL)
+			{
+				LM_ERR("no more shared memory\n");
+				return;
+			}
+			memcpy(p->remote_contact.s, contact->s, contact->len);
+			p->remote_contact.len= contact->len;
+		}
+	}
 }
 /* insert in front; so when searching the most recent result is returned*/
 void insert_htable(ua_pres_t* presentity)
@@ -230,6 +249,10 @@ void delete_htable(ua_pres_t* presentity, unsigned int hash_code)
 	
 	if(p->etag.s)
 		shm_free(p->etag.s);
+	else
+		if(p->remote_contact.s)
+			shm_free(p->remote_contact.s);
+
 	shm_free(p);
 	p= NULL;
 
@@ -250,6 +273,10 @@ void destroy_htable(void)
 			p->next=q->next;
 			if(q->etag.s)
 				shm_free(q->etag.s);
+			else
+				if(q->remote_contact.s)
+					shm_free(q->remote_contact.s);
+
 			shm_free(q);
 			q= NULL;
 		}
@@ -360,6 +387,127 @@ int is_dialog(ua_pres_t* dialog)
 	lock_release(&HashT->p_records[hash_code].lock);
 	
 	return ret_code;
+
+}
+
+int update_contact(struct sip_msg* msg, char* str1, char* str2)
+{
+	ua_pres_t* p, hentity;
+	str contact;
+	struct to_body *pto= NULL, TO, *pfrom = NULL;
+	unsigned int hash_code;
+
+	if ( parse_headers(msg,HDR_EOH_F, 0)==-1 )
+	{
+		LM_ERR("when parsing headers\n");
+		return -1;
+	}
+
+	/* find the record */
+	if( msg->callid==NULL || msg->callid->body.s==NULL)
+	{
+		LM_ERR("cannot parse callid header\n");
+		return -1;
+	}		
+	
+	if (!msg->from || !msg->from->body.s)
+	{
+		LM_ERR("cannot find 'from' header!\n");
+		return -1;
+	}
+	if (msg->from->parsed == NULL)
+	{
+		if ( parse_from_header( msg )<0 ) 
+		{
+			LM_ERR("cannot parse From header\n");
+			return -1;
+		}
+	}
+	
+	pfrom = (struct to_body*)msg->from->parsed;
+	
+	if( pfrom->tag_value.s ==NULL || pfrom->tag_value.len == 0)
+	{
+		LM_ERR("no from tag value present\n");
+		return -1;
+	}		
+	
+	if( msg->to==NULL || msg->to->body.s==NULL)
+	{
+		LM_ERR("cannot parse TO header\n");
+		return -1;
+	}			
+	
+	if(msg->to->parsed != NULL)
+	{
+		pto = (struct to_body*)msg->to->parsed;
+		LM_DBG("'To' header ALREADY PARSED: <%.*s>\n",pto->uri.len,pto->uri.s);
+	}
+	else
+	{
+		memset( &TO , 0, sizeof(TO) );
+		parse_to(msg->to->body.s,msg->to->body.s +
+			msg->to->body.len + 1, &TO);
+		if(TO.uri.len <= 0) 
+		{
+			LM_DBG("'To' header NOT parsed\n");
+			return -1;
+		}
+		pto = &TO;
+	}			
+	if( pto->tag_value.s ==NULL || pto->tag_value.len == 0)
+	{
+		LM_ERR("no from tag value present\n");
+		return -1;
+	}
+	hentity.watcher_uri= &pto->uri;
+	hentity.pres_uri= &pfrom->uri; 
+	hentity.call_id=  msg->callid->body;
+	hentity.to_tag= pto->tag_value;
+	hentity.from_tag= pfrom->tag_value;
+	
+	hash_code= core_hash(hentity.pres_uri,hentity.watcher_uri,
+				HASH_SIZE);
+
+	/* extract the contact */
+	if(msg->contact== NULL || msg->contact->body.s== NULL)
+	{
+		LM_ERR("no contact header found in 200 OK reply");
+		return -1;
+	}
+	contact= msg->contact->body;
+
+	lock_get(&HashT->p_records[hash_code].lock);
+
+	p= get_dialog(&hentity, hash_code);
+	if(p== NULL)
+	{
+		lock_release(&HashT->p_records[hash_code].lock);
+		LM_ERR("no record for the dialog found in hash table\n");
+		return -1;
+	}
+
+	shm_free(p->remote_contact.s);
+
+	if(!(p->remote_contact.len== contact.len && 
+				strncmp(p->remote_contact.s, contact.s, contact.len)==0))
+	{
+		/* update remote contact */
+		shm_free(p->remote_contact.s);
+		p->remote_contact.s= (char*)shm_malloc(contact.len* sizeof(char));
+		if(p->remote_contact.s== NULL)
+		{
+			LM_ERR("no more shared memory\n");
+			lock_release(&HashT->p_records[hash_code].lock);
+			return -1;
+		}
+		memcpy(p->remote_contact.s, contact.s, contact.len);
+		p->remote_contact.len= contact.len;
+	}
+
+	lock_release(&HashT->p_records[hash_code].lock);
+
+	return 1;
 
 }
 

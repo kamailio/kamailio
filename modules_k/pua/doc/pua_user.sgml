@@ -180,10 +180,50 @@ modparam("pua", "update_period", 100)
 
 <section>
 	<title>Exported Functions</title>
-	<para>
-	No function exported to be used in configuration script.
-	</para>
+		
+	<section>
+		<title>
+		<function moreinfo="none">pua_update_contact()</function>
+		</title>
+		<para>
+		The remote target can be updated by the Contact of a subsequent in
+		dialog request. In the PUA watcher case (sending a SUBSCRIBE messages),
+		this means that the remote target for the following Subscribe messages
+		can be updated at any time by the contact of a Notify message. 
+		If this function is called on request route on receiving a Notify
+		message, it will try to update the stored remote target.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<para>
+		<emphasis>Return code:</emphasis>
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis> 1 - if success</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis> -1 - if error</emphasis>.
+			</para>
+			</listitem>
+		</itemizedlist>
+		</para>
+	
+		<example>
+		<title><function>pua_update_contact</function> usage</title>
+		<programlisting format="linespecific">
+...
+if(method=="NOTIFY")
+    pua_update_contact();
+...
+</programlisting>
+		</example>
+	</section>
 </section>
+
 
 <section>
 	<title>Installation</title>
