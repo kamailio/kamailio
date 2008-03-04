@@ -49,7 +49,8 @@ Elena-Ramona Modroiu
         1.6. Exported pseudo-variables
 
               1.6.1. $RANDOM
-              1.6.2. $shv(name)
+              1.6.2. $time(name)
+              1.6.3. $shv(name)
 
    List of Examples
    1-1. initial_probability parameter usage
@@ -69,7 +70,8 @@ Elena-Ramona Modroiu
    1-15. shv_set usage
    1-16. shv_get usage
    1-17. RANDOM pseudo-variable usage
-   1-18. shv(name) pseudo-variable usage
+   1-18. time(name) pseudo-variable usage
+   1-19. shv(name) pseudo-variable usage
      __________________________________________________________
 
 Chapter 1. User's Guide
@@ -394,7 +396,32 @@ if (get_random()) {
 
      __________________________________________________________
 
-1.6.2. $shv(name)
+1.6.2. $time(name)
+
+   The PV provides access to broken-down time attributes.
+
+   The "name" can be:
+
+     * sec - return seconds (int 0-59)
+     * min - return minutes (int 0-59)
+     * hour - return hours (int 0-23)
+     * mday - return the day of month (int 0-59)
+     * mon - return the month (int 1-12)
+     * year - return the year (int, e.g., 2008)
+     * wday - return the day of week (int, 1=Sunday - 7=Saturday)
+     * yday - return the day of year (int, 1-366)
+     * isdst - return daylight saving time status (int, 0 - DST
+       off, >0 DST on)
+
+   Example 1-18. time(name) pseudo-variable usage
+...
+if ($time(year) == 2008) {
+        xlog("request: $rm from $fu to $ru in year 2008\n");
+}
+...
+     __________________________________________________________
+
+1.6.3. $shv(name)
 
    It is a class of pseudo-variables stored in shared memory. The
    value of $shv(name) is visible across all openser processes.
@@ -403,7 +430,7 @@ if (get_random()) {
    variable. The module exports a set of MI functions to get/set
    the value of shared variables.
 
-   Example 1-18. shv(name) pseudo-variable usage
+   Example 1-19. shv(name) pseudo-variable usage
 ...
 modparam("cfgutils", "shvset", "debug=i:1")
 ...

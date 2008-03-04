@@ -453,7 +453,55 @@ if (get_random()) {
 				 </programlisting>
 			</example>
 	</section>
-		<section>
+	<section>
+			<title><varname>$time(name)</varname></title>
+			<para>
+			The PV provides access to broken-down time attributes.
+			</para>
+			<para>
+			The <quote>name</quote> can be:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>sec</emphasis> - return seconds (int 0-59)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>min</emphasis> - return minutes (int 0-59)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>hour</emphasis> - return hours (int 0-23)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>mday</emphasis> - return the day of month (int 0-59)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>mon</emphasis> - return the month (int 1-12)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>year</emphasis> - return the year (int, e.g., 2008)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>wday</emphasis> - return the day of week (int, 1=Sunday - 7=Saturday)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>yday</emphasis> - return the day of year (int, 1-366)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>isdst</emphasis> - return daylight saving time status (int, 0 - DST off, >0 DST on)</para>
+				</listitem>	  
+			</itemizedlist>
+			<example>
+				<title><function moreinfo="none">time(name) pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+if ($time(year) == 2008) {
+	xlog("request: $rm from $fu to $ru in year 2008\n");
+}
+...
+				 </programlisting>
+			</example>
+	</section>
+	<section>
 			<title><varname>$shv(name)</varname></title>
 			<para>
 				It is a class of pseudo-variables stored in shared memory. The

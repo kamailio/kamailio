@@ -132,6 +132,8 @@ static pv_export_t mod_items[] = {
 		0, 0, 0, 0 },
 	{ {"shv", (sizeof("shv")-1)}, 1001, pv_get_shvar,
 		pv_set_shvar, pv_parse_shvar_name, 0, 0, 0},
+	{ {"time", (sizeof("time")-1)}, 1002, pv_get_time,
+		0, pv_parse_time_name, 0, 0, 0},
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
@@ -389,3 +391,4 @@ static void mod_destroy(void)
 	shvar_destroy_locks();
 	destroy_shvars();
 }
+
