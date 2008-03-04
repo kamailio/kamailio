@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "uac_redirect_user.sgml">
-<!ENTITY devel SYSTEM "uac_redirect_devel.sgml">
-<!ENTITY faq SYSTEM "uac_redirect_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general SER documentation entities -->
 <!ENTITY % serentities SYSTEM "../../../doc/entities.sgml">
@@ -46,7 +45,6 @@
 	<toc></toc>
 
 	&user;
-	&devel;
 	&faq;
 
 </book>

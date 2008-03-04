@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "xmpp_user.sgml">
-<!ENTITY devel SYSTEM "xmpp_devel.sgml">
-<!ENTITY faq SYSTEM "xmpp_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 <!ENTITY cfg SYSTEM "openser-xmpp.cfg">
 
 <!-- Include general documentation entities -->
@@ -48,7 +47,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &faq;
     
 </book>

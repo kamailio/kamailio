@@ -1,7 +1,6 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "snmpstats_user.sgml">
-<!ENTITY devel SYSTEM "snmpstats_devel.sgml">
 <!ENTITY faq SYSTEM "snmpstats_faq.sgml">
 
 <!-- Include general OpenSER documentation entities -->
@@ -45,7 +44,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 	
 </book>

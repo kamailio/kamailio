@@ -2,7 +2,6 @@
 
 
 <!ENTITY user SYSTEM "mi_datagram_user.sgml">
-<!ENTITY devel SYSTEM "mi_datagram_devel.sgml">
 <!ENTITY faq SYSTEM "mi_datagram_faq.sgml">
 
 <!-- Include general documentation entities -->
@@ -49,7 +48,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 	
 </book>

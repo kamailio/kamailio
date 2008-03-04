@@ -1,7 +1,7 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 <!ENTITY user SYSTEM "seas_user.sgml">
 <!ENTITY devel SYSTEM "seas_devel.sgml">
-<!ENTITY faq SYSTEM "seas_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
 %docentities;
 ]>

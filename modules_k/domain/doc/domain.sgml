@@ -2,7 +2,7 @@
 
 <!ENTITY user SYSTEM "domain_user.sgml">
 <!ENTITY devel SYSTEM "domain_devel.sgml">
-<!ENTITY faq SYSTEM "domain_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

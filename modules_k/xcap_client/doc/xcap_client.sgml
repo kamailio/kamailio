@@ -3,7 +3,7 @@
 
 <!ENTITY user SYSTEM "xcap_client_user.sgml">
 <!ENTITY devel SYSTEM "xcap_client_devel.sgml">
-<!ENTITY faq SYSTEM "xcap_client_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

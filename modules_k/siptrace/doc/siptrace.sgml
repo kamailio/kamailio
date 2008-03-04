@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "siptrace_user.sgml">
-<!ENTITY devel SYSTEM "siptrace_devel.sgml">
-<!ENTITY faq SYSTEM "siptrace_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!ENTITY siptracecfg SYSTEM "siptrace.cfg">
 
@@ -51,7 +50,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &faq;
     
 </book>

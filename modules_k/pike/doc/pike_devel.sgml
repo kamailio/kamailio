@@ -1,8 +1,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-    <chapterinfo>
-    </chapterinfo>
+    
     <title>Developer's Guide</title>
     <para>
 	One single tree (for both IPv4 and IPv6) is used. Each node contains a byte, the &ip;

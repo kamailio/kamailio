@@ -3,7 +3,7 @@
 
 <!ENTITY user SYSTEM "diversion_user.sgml">
 <!ENTITY devel SYSTEM "diversion_devel.sgml">
-<!ENTITY faq SYSTEM "diversion_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

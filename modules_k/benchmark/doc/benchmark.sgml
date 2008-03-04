@@ -3,7 +3,7 @@
 
 <!ENTITY user SYSTEM "benchmark_user.sgml">
 <!ENTITY devel SYSTEM "benchmark_devel.sgml">
-<!ENTITY faq SYSTEM "benchmark_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

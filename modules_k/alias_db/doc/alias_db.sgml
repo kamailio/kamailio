@@ -1,8 +1,7 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "alias_db_user.sgml">
-<!ENTITY devel SYSTEM "alias_db_devel.sgml">
-<!ENTITY faq SYSTEM "alias_db_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!ENTITY aliasdbsql SYSTEM "alias_db.sql">
 
@@ -49,7 +48,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &faq;
 
 </book>

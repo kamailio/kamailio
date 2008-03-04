@@ -1,8 +1,7 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "auth_db_user.sgml">
-<!ENTITY devel SYSTEM "auth_db_devel.sgml">
-<!ENTITY faq SYSTEM "auth_db_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -56,7 +55,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 
 </book>

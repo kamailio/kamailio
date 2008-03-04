@@ -2,7 +2,6 @@
 
 
 <!ENTITY user SYSTEM "perl_user.sgml">
-<!ENTITY devel SYSTEM "perl_devel.sgml">
 <!ENTITY pod SYSTEM "perl_pod.sgml">
 <!ENTITY samples SYSTEM "perl_samples.sgml">
 <!ENTITY faq SYSTEM "perl_faq.sgml">
@@ -48,7 +47,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &pod;
     &samples;
     &faq;

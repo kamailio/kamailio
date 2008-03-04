@@ -2,7 +2,6 @@
 
 
 <!ENTITY user SYSTEM "tlsops_user.sgml">
-<!ENTITY devel SYSTEM "tlsops_devel.sgml">
 <!ENTITY faq SYSTEM "tlsops_faq.sgml">
 
 <!-- Include general documentation entities -->
@@ -46,7 +45,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 	
 </book>

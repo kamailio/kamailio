@@ -2,7 +2,7 @@
 
 <!ENTITY user SYSTEM "db_text_user.sgml">
 <!ENTITY devel SYSTEM "db_text_devel.sgml">
-<!ENTITY faq SYSTEM "db_text_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!ENTITY dbtextsercfg SYSTEM "db_text.cfg">
 

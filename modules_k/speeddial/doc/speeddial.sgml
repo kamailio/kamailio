@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "speeddial_user.sgml">
-<!ENTITY devel SYSTEM "speeddial_devel.sgml">
-<!ENTITY faq SYSTEM "speeddial_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!ENTITY speeddialsql SYSTEM "speeddial.sql">
 <!ENTITY speeddialcfg SYSTEM "speeddial.cfg">
@@ -52,7 +51,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &faq;
     
 </book>

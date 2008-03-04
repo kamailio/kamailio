@@ -1,4 +1,3 @@
-
 ratelimit Module
 
 Ovidiu Sas
@@ -18,7 +17,7 @@ Hendrik Scholz
    Copyright © 2006 Freenet Cityline GmbH
 
    Copyright © 2008 VoIP Embedded Inc.
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -63,11 +62,9 @@ Hendrik Scholz
               1.8.6. rl_set_pid
               1.8.7. rl_get_pid
               1.8.8. rl_push_load
+              1.8.9. rl_set_dbg
 
         1.9. Known limitations
-
-   2. Developer's Guide
-   3. Frequently Asked Questions
 
    List of Examples
    1-1. Set timer_interval parameter
@@ -78,31 +75,30 @@ Hendrik Scholz
    1-6. rl_check usage
    1-7. rl_check_pipe usage
    1-8. rl_drop usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    This module implements rate limiting for SIP requests. In
-   contrast to the PIKE module this limits the flow based on a
-   per SIP request type basis and not per source IP. The MI
-   interface can be used to change tunables while running
-   OpenSER.
+   contrast to the PIKE module this limits the flow based on a per
+   SIP request type basis and not per source IP. The MI interface
+   can be used to change tunables while running OpenSER.
 
    The module implements the pipe/queue policy from BSD's ipfw
-   manual, with some simplifications. In principle, each
-   specified method is associated with its own queue and a number
-   of queues are connected to a certain pipe (see the queue and
-   pipe params).
-     _________________________________________________________
+   manual, with some simplifications. In principle, each specified
+   method is associated with its own queue and a number of queues
+   are connected to a certain pipe (see the queue and pipe
+   params).
+     __________________________________________________________
 
 1.2. Use Cases
 
    Limiting the rate messages are processed on a system directly
    influences the load. The ratelimit module can be used to
-   protect a single host or to protect an OpenSER cluster when
-   run on the dispatching box in front.
+   protect a single host or to protect an OpenSER cluster when run
+   on the dispatching box in front.
 
    A sample configuration snippet might look like this:
 ...
@@ -117,16 +113,16 @@ Chapter 1. User's Guide
    Upon every incoming request listed above rl_check is invoked.
    It returns an OK code if the current per request load is below
    the configured threshold. If the load is exceeded the function
-   returns an error and an administrator can discard requests
-   with a stateless response.
-     _________________________________________________________
+   returns an error and an administrator can discard requests with
+   a stateless response.
+     __________________________________________________________
 
 1.3. Static Rate Limiting Algorithms
 
-   The ratelimit module supports two different statc algorithms
-   to be used by rl_check to determine whether a message should
-   be blocked or not.
-     _________________________________________________________
+   The ratelimit module supports two different statc algorithms to
+   be used by rl_check to determine whether a message should be
+   blocked or not.
+     __________________________________________________________
 
 1.3.1. Tail Drop Algorithm (TAILDROP)
 
@@ -141,9 +137,9 @@ Chapter 1. User's Guide
    the first requests (i.e. REGISTERs) would make it through.
    Following messages (i.e. RE-REGISTERs) will all hit the SIP
    proxy at the same time when a common Expire timer expired.
-   Other requests will be retransmissed after given time, the
-   same on all devices with the same firmware/by the same vendor.
-     _________________________________________________________
+   Other requests will be retransmissed after given time, the same
+   on all devices with the same firmware/by the same vendor.
+     __________________________________________________________
 
 1.3.2. Random Early Detection Algorithm (RED)
 
@@ -154,28 +150,26 @@ Chapter 1. User's Guide
    will return errors to the OpenSER routing engine every n'th
    packet trying to evenly spread the measured load of the last
    timer interval onto the current interval. As a negative side
-   effect OpenSER might drop messages although the limit might
-   not be reached within the interval. Decrease the timer
-   interval if you encounter this.
-     _________________________________________________________
+   effect OpenSER might drop messages although the limit might not
+   be reached within the interval. Decrease the timer interval if
+   you encounter this.
+     __________________________________________________________
 
 1.4. Dynamic Rate Limiting Algorithms
 
    When running openser on different machines, one has to adjust
-   the drop rates for the static algorithms to maintain a sub
-   100% load average or packets start getting dropped in the
-   network stack. While this is not in itself difficult, it isn't
-   neither accurate nor trivial: another server taking a notable
-   fraction of the cpu time will require re-tuning the
-   parameters.
+   the drop rates for the static algorithms to maintain a sub 100%
+   load average or packets start getting dropped in the network
+   stack. While this is not in itself difficult, it isn't neither
+   accurate nor trivial: another server taking a notable fraction
+   of the cpu time will require re-tuning the parameters.
 
-   While tuning the drop rates from the outside based on a
-   certain factor is possible, having the algorithm run inside
-   ratelimit permits tuning the rates based on internal server
-   parameters and is somewhat more flexible (or it will be when
-   support for external load factors - as opposed to cpu load -
-   is added).
-     _________________________________________________________
+   While tuning the drop rates from the outside based on a certain
+   factor is possible, having the algorithm run inside ratelimit
+   permits tuning the rates based on internal server parameters
+   and is somewhat more flexible (or it will be when support for
+   external load factors - as opposed to cpu load - is added).
+     __________________________________________________________
 
 1.4.1. Feedback Algorithm (FEEDBACK)
 
@@ -187,15 +181,15 @@ Chapter 1. User's Guide
    As reading the cpu load average is relatively expensive
    (opening /proc/stat, parsing it, etc), this only happens once
    every timer_interval seconds and consequently the FEEDBACK
-   value is only at these intervals recomputed. This in turn
-   makes it difficult for the drop rate to adjust quickly. Worst
-   case scenarios are request rates going up/down instantly by
+   value is only at these intervals recomputed. This in turn makes
+   it difficult for the drop rate to adjust quickly. Worst case
+   scenarios are request rates going up/down instantly by
    thousands - it takes up to 20 seconds for the controller to
    adapt to the new request rate.
 
    Generally though, as real life request rates drift by less,
    adapting should happen much faster.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Dependencies
 
@@ -204,7 +198,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * No dependencies on other OpenSER modules.
-     _________________________________________________________
+     __________________________________________________________
 
 1.5.2. External Libraries or Applications
 
@@ -212,7 +206,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.6. Exported Parameters
 
@@ -225,25 +219,25 @@ Chapter 1. User's Guide
    IMPORTANT: A too small value may lead to performance penalties
    due to timer process overloading.
 
-   Default value is 10. 
+   Default value is 10.
 
    Example 1-1. Set timer_interval parameter
 ...
 modparam("ratelimit", "timer_interval", 5)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.2. queue (integer:string)
 
-   The format of the queue parameter is "pipe_no:method". For
-   each defined method, the algorithm defined by pipe number
-   "pipe_no" will be used.
+   The format of the queue parameter is "pipe_no:method". For each
+   defined method, the algorithm defined by pipe number "pipe_no"
+   will be used.
 
    To specify a queue that accepts all methods, use * instead of
-   METHOD. As queues are matched against request methods, you
-   will usually want to have this as the last queue added or
-   other queues with specific methods will never match. At this
-   time, glob or regexp patterns are not supported.
+   METHOD. As queues are matched against request methods, you will
+   usually want to have this as the last queue added or other
+   queues with specific methods will never match. At this time,
+   glob or regexp patterns are not supported.
 
    Example 1-2. Set queue parameter
 ...
@@ -254,7 +248,7 @@ modparam("ratelimit", "queue", "0:REGISTER")
 modparam("ratelimit", "queue", "3:INVITE")
 modparam("ratelimit", "queue", "2:*")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.3. pipe (integer:string:integer)
 
@@ -279,31 +273,31 @@ modparam("ratelimit", "pipe", "1:RED:100")
 modparam("ratelimit", "pipe", "2:TAILDROP:50")
 modparam("ratelimit", "pipe", "3:FEEDBACK:80")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.4. reply_code (integer)
 
    The code of the reply sent by OpenSER while limiting.
 
-   Default value is 503. 
+   Default value is 503.
 
    Example 1-4. Set reply_code parameter
 ...
 modparam("ratelimit", "reply_code", 505)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.6.5. reply_reason (string)
 
    The reason of the reply sent by OpenSER while limiting.
 
-   Default value is "Server Unavailable". 
+   Default value is "Server Unavailable".
 
    Example 1-5. Set reply_reason parameter
 ...
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.7. Exported Functions
 
@@ -323,8 +317,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
 
    Meaning of the parameters is as follows:
 
-     * pvar - the pseudovariable holding the pipe id to be used
-       by ratelimit.
+     * pvar - the pseudovariable holding the pipe id to be used by
+       ratelimit.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -352,7 +346,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 exit;
         };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.7.2. rl_check_pipe([pipe_no])
 
@@ -386,7 +380,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 exit;
         };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.7.3. rl_drop([[min ], max])
 
@@ -394,10 +388,10 @@ modparam("ratelimit", "reply_reason", "Limiting")
    sent back. The reply may or may not have a "Retry-After"
    header. If no parameter is given, there will be no
    "Retry-After" header. If only the max parameter is given, the
-   reply will contain a "Retry-After: max" header. If both min
-   and max params are given, the reply will contain a
-   "Retry-After: random" header with random being a random value
-   between the given min and max.
+   reply will contain a "Retry-After: max" header. If both min and
+   max params are given, the reply will contain a "Retry-After:
+   random" header with random being a random value between the
+   given min and max.
 
    Meaning of the parameters is as follows:
 
@@ -415,7 +409,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 exit;
         };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.8. Exported MI Functions
 
@@ -430,7 +424,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_stats:_reply_fifo_file_
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.2. rl_set_pipe
 
@@ -451,7 +445,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 RED
                 10
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.3. rl_get_pipes
 
@@ -464,7 +458,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_get_pipes:_reply_fifo_file_
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.4. rl_set_queue
 
@@ -484,7 +478,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 INVITE
                 2
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.5. rl_get_queues
 
@@ -497,7 +491,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_get_queues:_reply_fifo_file_
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.6. rl_set_pid
 
@@ -517,7 +511,7 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 0.5
                 0.5
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.7. rl_get_pid
 
@@ -530,14 +524,14 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_get_pid:_reply_fifo_file_
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
 
 1.8.8. rl_push_load
 
    Force the value of the load parameter. This methos is usefull
    for testing the Feedback algorithm.
 
-   Name: rl_subscribe
+   Name: rl_push_load
 
    Parameters:
 
@@ -545,54 +539,33 @@ modparam("ratelimit", "reply_reason", "Limiting")
        0.0 and smaller then 1.0).
 
    MI FIFO Command Format:
-                :subscribe_limit:_reply_fifo_file_
+                :rl_push_load:_reply_fifo_file_
                 0.85
                 _empty_line_
-     _________________________________________________________
+     __________________________________________________________
+
+1.8.9. rl_set_dbg
+
+   This MI function will enable/disable a WARNING debug log
+   exposing the internal counters for each pipe (useful in
+   monitoring the ratelimit internals).
+
+   Name: rl_set_dbg
+
+   Parameters:
+
+     * dbg - the debug value (0 means disable and 1 means enable).
+
+   MI FIFO Command Format:
+                :rl_set_dbg:_reply_fifo_file_
+                1
+                _empty_line_
+     __________________________________________________________
 
 1.9. Known limitations
 
    The pipes and queues are stored as static vectors, so no more
-   than MAX_PIPES/MAX_QUEUES can be added without recompiles.
+   than MAX_PIPES/MAX_QUEUES can be added without recompilation.
 
      * MAX_PIPES - 16
      * MAX_QUEUES - 10
-     _________________________________________________________
-
-Chapter 2. Developer's Guide
-
-   The module does not provide any API to use in other OpenSER
-   modules.
-     _________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about OpenSER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
-
-   3.1. Where can I find more about OpenSER?
-
-   Take a look at http://openser.org/.
-
-   3.2. Where can I post a question about this module?
-
-   First at all check if your question was already answered on
-   one of our mailing lists:
-
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
-
-   E-mails regarding any stable OpenSER release should be sent to
-   <users@openser.org> and e-mails regarding development versions
-   should be sent to <devel@openser.org>.
-
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
-
-   3.3. How can I report a bug?
-
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.

@@ -3,7 +3,7 @@
 
 <!ENTITY user SYSTEM "usrloc_user.sgml">
 <!ENTITY devel SYSTEM "usrloc_devel.sgml">
-<!ENTITY faq SYSTEM "usrloc_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

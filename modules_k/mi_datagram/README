@@ -38,8 +38,7 @@ Andreea-Ancuta Onofrei
         1.5. Exported Functions
         1.6. Example
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
+   2. Frequently Asked Questions
 
    List of Examples
    1-1. Set socket_name parameter
@@ -204,39 +203,33 @@ dialog:\n
 tm:\n
      __________________________________________________________
 
-Chapter 2. Developer's Guide
+Chapter 2. Frequently Asked Questions
 
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Both UNIX and UDP type of socket can be created
+   2.1. Both UNIX and UDP type of socket can be created
           simultaneusly?
 
-   3.2. Is there a limit in the datagram request's size?
-   3.3. Where can I find more about OpenSER?
-   3.4. Where can I post a question about this module?
-   3.5. How can I report a bug?
+   2.2. Is there a limit in the datagram request's size?
+   2.3. Where can I find more about OpenSER?
+   2.4. Where can I post a question about this module?
+   2.5. How can I report a bug?
 
-   3.1. Both UNIX and UDP type of socket can be created
+   2.1. Both UNIX and UDP type of socket can be created
    simultaneusly?
 
    This version supports only one kind of socket at a time. If
    there are more than one value set for socket_name the last one
    will take effect.
 
-   3.2. Is there a limit in the datagram request's size?
+   2.2. Is there a limit in the datagram request's size?
 
    The maximum length of a datagram request or reply is 65457
    bytes.
 
-   3.3. Where can I find more about OpenSER?
+   2.3. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.4. Where can I post a question about this module?
+   2.4. Where can I post a question about this module?
 
    First at all check if your question was already answered on one
    of our mailing lists:
@@ -253,7 +246,7 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.5. How can I report a bug?
+   2.5. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.

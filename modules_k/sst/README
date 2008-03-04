@@ -39,9 +39,6 @@ Ron Winacott
 
         1.7. Installation & Running
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
-
    List of Examples
    1-1. Session timer call flow
    1-2. Set enable_stats parameter
@@ -329,48 +326,3 @@ route {
 1.7. Installation & Running
 
    just load the module and remember to set the timeout_avp value.
-     __________________________________________________________
-
-Chapter 2. Developer's Guide
-
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about SIP Session Timer?
-   3.2. Where can I find more about OpenSER?
-   3.3. Where can I post a question about this module?
-   3.4. How can I report a bug?
-
-   3.1. Where can I find more about SIP Session Timer?
-
-   Take a look at The RFC4028. A good source for RFCs is
-   http://www.rfc-archive.org/getrfc.php?rfc=4028.
-
-   3.2. Where can I find more about OpenSER?
-
-   Take a look at http://openser.org/.
-
-   3.3. Where can I post a question about this module?
-
-   First at all check if your question was already answered on one
-   of our mailing lists:
-
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
-
-   E-mails regarding any stable OpenSER release should be sent to
-   <users@openser.org> and e-mails regarding development versions
-   should be sent to <devel@openser.org>.
-
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
-
-   3.4. How can I report a bug?
-
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.

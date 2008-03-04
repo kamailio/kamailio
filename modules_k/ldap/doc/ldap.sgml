@@ -2,7 +2,7 @@
 
 <!ENTITY user SYSTEM "ldap_user.sgml">
 <!ENTITY devel SYSTEM "ldap_devel.sgml">
-<!ENTITY faq SYSTEM "ldap_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 <!ENTITY biblio SYSTEM "ldap_biblio.sgml">
 
 <!-- Include general documentation entities -->

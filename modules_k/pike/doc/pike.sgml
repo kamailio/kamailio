@@ -3,7 +3,7 @@
 
 <!ENTITY user SYSTEM "pike_user.sgml">
 <!ENTITY devel SYSTEM "pike_devel.sgml">
-<!ENTITY faq SYSTEM "pike_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">

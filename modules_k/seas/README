@@ -43,8 +43,6 @@ Elias Baixas
               2.2.1. The SEAS protocol
               2.2.2. General codification of a header
 
-   3. Frequently Asked Questions
-
    List of Figures
    1-1. SipServlet UML diagram
    2-1. Overview of Seas Event Dispatcher process operation
@@ -1444,41 +1442,3 @@ Chapter 2. Developer's Guide
    JAIN SIP Stack by passing it a Seas Incoming Response with a
    flag called Faked Reply, and a Response code number 408
    (Request Timeout).
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about OpenSER?
-   3.2. Where can I find more about WeSIP?
-   3.3. Where can I post a question about this module?
-   3.4. How can I report a bug?
-
-   3.1. Where can I find more about OpenSER?
-
-   Take a look at http://openser.org/
-
-   3.2. Where can I find more about WeSIP?
-
-   Take a look at http://www.wesip.eu/
-
-   3.3. Where can I post a question about this module?
-
-   First at all check if your question was already answered on one
-   of our mailing lists:
-
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
-
-   E-mails regarding any stable OpenSER release should be sent to
-   <users@openser.org> and e-mails regarding development versions
-   should be sent to <devel@openser.org>.
-
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
-
-   3.4. How can I report a bug?
-
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.

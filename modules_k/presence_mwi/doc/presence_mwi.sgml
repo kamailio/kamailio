@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "presence_mwi_user.sgml">
-<!ENTITY devel SYSTEM "presence_mwi_devel.sgml">
-<!ENTITY faq SYSTEM "presence_mwi_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 <!ENTITY sql SYSTEM "presence_mwi.sql">
 
 <!-- Include general documentation entities -->
@@ -42,7 +41,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &faq;
     
 </book>

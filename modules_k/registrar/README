@@ -63,8 +63,7 @@ Bogdan-Andre Iancu
               1.5.4. accepted_regs
               1.5.5. rejected_regs
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
+   2. Frequently Asked Questions
 
    List of Examples
    1-1. Set default_expires parameter
@@ -386,8 +385,8 @@ modparam("registrar", "sock_flag", 18)
 1.3.15. sock_hdr_name (string)
 
    Header which contains a socket description (proto:IP:port) to
-   overide the the received socket info. The header will be read
-   only if the flag sock_flag is set.
+   override the received socket info. The header will be read only
+   if the flag sock_flag is set.
 
    This make sens only in multiple replicated servers scenarios.
 
@@ -631,47 +630,41 @@ add_sock_hdr("Sock-Info");
    Number of rejected registrations.
      __________________________________________________________
 
-Chapter 2. Developer's Guide
+Chapter 2. Frequently Asked Questions
 
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. What happend with the old "nat_flag" module parameter?
-   3.2. What happend with the old "use_domain" module parameter?
-   3.3. What happend with the old "save_noreply" and "save_memory"
+   2.1. What happend with the old "nat_flag" module parameter?
+   2.2. What happend with the old "use_domain" module parameter?
+   2.3. What happend with the old "save_noreply" and "save_memory"
           functions?
 
-   3.4. Where can I find more about OpenSER?
-   3.5. Where can I post a question about this module?
-   3.6. How can I report a bug?
-   3.7. What happened to the desc_time_order parameter?
+   2.4. Where can I find more about OpenSER?
+   2.5. Where can I post a question about this module?
+   2.6. How can I report a bug?
+   2.7. What happened to the desc_time_order parameter?
 
-   3.1. What happend with the old "nat_flag" module parameter?
+   2.1. What happend with the old "nat_flag" module parameter?
 
    In was removed, as the module internally loads this value from
    the "USRLOC' module (see the "nat_bflag" USRLOC parameter). '"
 
-   3.2. What happend with the old "use_domain" module parameter?
+   2.2. What happend with the old "use_domain" module parameter?
 
    In was removed, as the module internally loads this option from
    the "USRLOC' module. This was done in order to simplify the
    configuration. '"
 
-   3.3. What happend with the old "save_noreply" and "save_memory"
+   2.3. What happend with the old "save_noreply" and "save_memory"
    functions?
 
    There functions were merged into the new "save(domain,flags)'
    functions. If a reply should be sent or if the DB should be
    updated also is controlled via the flags. '"
 
-   3.4. Where can I find more about OpenSER?
+   2.4. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.5. Where can I post a question about this module?
+   2.5. Where can I post a question about this module?
 
    First at all check if your question was already answered on one
    of our mailing lists:
@@ -688,12 +681,12 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.6. How can I report a bug?
+   2.6. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.
 
-   3.7. What happened to the desc_time_order parameter?
+   2.7. What happened to the desc_time_order parameter?
 
    It was removed, as its functionality was mmigrate into usrloc
    module, were there is a parameter with the same name.

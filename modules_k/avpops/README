@@ -53,9 +53,6 @@ Ramona-Elena Modroiu
               1.5.13. is_avp_set(name)
               1.5.14. avp_print()
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
-
    List of Examples
    1-1. AVP naming examples
    1-2. Set avp_url parameter
@@ -716,43 +713,3 @@ if(is_avp_set("$avp(i:678)"))
 ...
 avp_print();
 ...
-     __________________________________________________________
-
-Chapter 2. Developer's Guide
-
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more documentation about this module?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
-
-   3.1. Where can I find more documentation about this module?
-
-   An up-to-date tutorial providing more information (detailed
-   explanations and commneted examples) can be found on Voice
-   Sistem documentation web page at
-   http://voice-system.ro/docs/avpops .
-
-   3.2. Where can I post a question about this module?
-
-   Sent an email to <team@openser.org> or, if you want to keep the
-   mail private, send it to <ramona@voice-system.ro>.
-
-   Remember: first at all, check if your question was already
-   answered on one of OpenSER mailing lists:
-
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
-
-   3.3. How can I report a bug?
-
-   Accumulate as much as possible information (OpenSER version,
-   openser -V output, your OS (uname -a), OpenSER logs, network
-   dumps, core dump files, configuration file) and send a mail to
-   <team@openser.org>.

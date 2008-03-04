@@ -3,7 +3,7 @@
 
 <!ENTITY user SYSTEM "pua_xmpp_user.sgml">
 <!ENTITY devel SYSTEM "pua_xmpp_devel.sgml">
-<!ENTITY faq SYSTEM "pua_xmpp_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 <!ENTITY sql SYSTEM "pua_xmpp.sql">
 
 <!-- Include general documentation entities -->

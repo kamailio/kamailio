@@ -1,7 +1,6 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "dispatcher_user.sgml">
-<!ENTITY devel SYSTEM "dispatcher_devel.sgml">
 <!ENTITY faq SYSTEM "dispatcher_faq.sgml">
 
 <!ENTITY dispatcherlist SYSTEM "dispatcher.list">
@@ -60,7 +59,6 @@
     <toc></toc>
     
     &user;
-    &devel;
     &faq;
 
 </book>

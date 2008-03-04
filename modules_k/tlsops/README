@@ -53,8 +53,7 @@ Klaus Darilion
 
         1.6. Debug TLS connections
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
+   2. Frequently Asked Questions
 
    List of Examples
    1-1. is_peer_verified usage
@@ -369,33 +368,27 @@ xlog("L_INFO","==================== end TLS pseudo variables ===========
 ======='\n");
      __________________________________________________________
 
-Chapter 2. Developer's Guide
+Chapter 2. Frequently Asked Questions
 
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. What is the difference between the TLS directory and the
+   2.1. What is the difference between the TLS directory and the
           TLSOPS module directory?
 
-   3.2. Where can I find more about OpenSER?
-   3.3. Where can I post a question about this module?
-   3.4. How can I report a bug?
+   2.2. Where can I find more about OpenSER?
+   2.3. Where can I post a question about this module?
+   2.4. How can I report a bug?
 
-   3.1. What is the difference between the TLS directory and the
+   2.1. What is the difference between the TLS directory and the
    TLSOPS module directory?
 
    The code in the TLS directory implements the TLS transport
    layer. The TLSOPS module implements TLS related functions which
    can be used in the routing script.
 
-   3.2. Where can I find more about OpenSER?
+   2.2. Where can I find more about OpenSER?
 
    Take a look at http://openser.org/.
 
-   3.3. Where can I post a question about this module?
+   2.3. Where can I post a question about this module?
 
    First at all check if your question was already answered on one
    of our mailing lists:
@@ -412,7 +405,7 @@ Chapter 3. Frequently Asked Questions
    If you want to keep the mail private, send it to
    <team@openser.org>.
 
-   3.4. How can I report a bug?
+   2.4. How can I report a bug?
 
    Please follow the guidelines provided at:
    http://sourceforge.net/tracker/?group_id=139143.

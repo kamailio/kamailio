@@ -1,8 +1,7 @@
 <!-- Module Developer's Guide -->
 
 <chapter>
-    <chapterinfo>
-    </chapterinfo>
+    
     <title>Developer's Guide</title>
     <para>
 	According to the specification new Diversion header field should be inserted as the topmost

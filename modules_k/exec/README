@@ -33,9 +33,6 @@ Jan Janak
 
         1.5. Known Issues
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
-
    List of Examples
    1-1. Set "setvars" parameter
    1-2. Set "time_to_kill" parameter
@@ -202,42 +199,3 @@ exec_avp("echo TEST", "$avp(s:test)");
    stop blocking SIP server. (There is kill.c but it is not used
    along with the current mechanisms based on popen. Besides that
    kill.c is ugly).
-     __________________________________________________________
-
-Chapter 2. Developer's Guide
-
-   The module does not provide any API to use in other OpenSER
-   modules.
-     __________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about OpenSER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
-
-   3.1. Where can I find more about OpenSER?
-
-   Take a look at http://openser.org/.
-
-   3.2. Where can I post a question about this module?
-
-   First at all check if your question was already answered on one
-   of our mailing lists:
-
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
-
-   E-mails regarding any stable OpenSER release should be sent to
-   <users@openser.org> and e-mails regarding development versions
-   should be sent to <devel@openser.org>.
-
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
-
-   3.3. How can I report a bug?
-
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.

@@ -1,7 +1,6 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "acc_user.sgml">
-<!ENTITY devel SYSTEM "acc_devel.sgml">
 <!ENTITY faq SYSTEM "acc_faq.sgml">
 
 <!-- Include general documentation entities -->
@@ -60,7 +59,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 
 </book>

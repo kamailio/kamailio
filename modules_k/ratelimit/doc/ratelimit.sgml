@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "ratelimit_user.sgml">
-<!ENTITY devel SYSTEM "ratelimit_devel.sgml">
-<!ENTITY faq SYSTEM "ratelimit_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -77,7 +76,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 	
 </book>

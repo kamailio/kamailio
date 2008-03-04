@@ -1,4 +1,3 @@
-
 AUTH_DIAMETER Module
 
 Elena-Ramona Modroiu
@@ -10,7 +9,7 @@ Edited by
 Elena-Ramona Modroiu
 
    Copyright © 2003, 2004 FhG FOKUS
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
    1. User's Guide
@@ -35,9 +34,6 @@ Elena-Ramona Modroiu
 
         1.5. Installation & Running
 
-   2. Developer's Guide
-   3. Frequently Asked Questions
-
    List of Examples
    1-1. Digest Authentication
    1-2. Set diameter_client_host parameter
@@ -46,7 +42,7 @@ Elena-Ramona Modroiu
    1-5. diameter_www_authorize usage
    1-6. diameter_proxy_authorize usage
    1-7. diameter_is_user_in usage
-     _________________________________________________________
+     __________________________________________________________
 
 Chapter 1. User's Guide
 
@@ -93,7 +89,7 @@ Chapter 1. User's Guide
                                   Result-Code=2001
 
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.2. Dependencies
 
@@ -102,7 +98,7 @@ Chapter 1. User's Guide
    The following modules must be loaded before this module:
 
      * sl - used to send stateless replies.
-     _________________________________________________________
+     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
@@ -110,7 +106,7 @@ Chapter 1. User's Guide
    before running OpenSER with this module loaded:
 
      * None.
-     _________________________________________________________
+     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -118,48 +114,48 @@ Chapter 1. User's Guide
 
    Hostname of the machine where the DIAMETER Client is running.
 
-   Default value is "localhost". 
+   Default value is "localhost".
 
    Example 1-2. Set diameter_client_host parameter
 ...
 modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.2. diameter_client_port (int)
 
    Port number where the DIAMETER Client is listening.
 
-   Default value is "3000". 
+   Default value is "3000".
 
    Example 1-3. Set diameter_client_port parameter
 ...
 modparam("auth_diameter", "diameter_client_port", 3000)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.3.3. use_domain (int)
 
    Specifies whether the domain name part of URI is used when
    checking the user's privileges.
 
-   Default value is "0 (0==false and 1==true )". 
+   Default value is "0 (0==false and 1==true )".
 
    Example 1-4. Set use_domain parameter
 ...
 modparam("auth_diameter", "use_domain", 1)
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4. Exported Functions
 
 1.4.1. diameter_www_authorize(realm)
 
-   SIP Server checks for authorization having a DIAMETER server
-   in backend. If no credentials are provided inside the SIP
-   request then a challenge is sent back to UAC. If the
-   credentials don't match the ones computed by DISC then "403
-   Forbidden" is sent back.
+   SIP Server checks for authorization having a DIAMETER server in
+   backend. If no credentials are provided inside the SIP request
+   then a challenge is sent back to UAC. If the credentials don't
+   match the ones computed by DISC then "403 Forbidden" is sent
+   back.
 
    Negative codes may be interpreted as follows:
 
@@ -181,7 +177,7 @@ if(!diameter_www_authorize("siphub.net"))
         exit;
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.2. diameter_proxy_authorize(realm)
 
@@ -206,7 +202,7 @@ if(!diameter_proxy_authorize("siphub.net"))
         exit;
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.4.3. diameter_is_user_in(who, group)
 
@@ -229,47 +225,8 @@ if(!diameter_is_user_in("From", "voicemail"))
         exit;
 };
 ...
-     _________________________________________________________
+     __________________________________________________________
 
 1.5. Installation & Running
 
    Notes about installation and running.
-     _________________________________________________________
-
-Chapter 2. Developer's Guide
-
-   The module does not provide any API to use in other OpenSER
-   modules.
-     _________________________________________________________
-
-Chapter 3. Frequently Asked Questions
-
-   3.1. Where can I find more about OpenSER?
-   3.2. Where can I post a question about this module?
-   3.3. How can I report a bug?
-
-   3.1. Where can I find more about OpenSER?
-
-   Take a look at http://openser.org/.
-
-   3.2. Where can I post a question about this module?
-
-   First at all check if your question was already answered on
-   one of our mailing lists:
-
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
-
-   E-mails regarding any stable OpenSER release should be sent to
-   <users@openser.org> and e-mails regarding development versions
-   should be sent to <devel@openser.org>.
-
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
-
-   3.3. How can I report a bug?
-
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.

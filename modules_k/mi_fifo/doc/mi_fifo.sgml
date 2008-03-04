@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "mi_fifo_user.sgml">
-<!ENTITY devel SYSTEM "mi_fifo_devel.sgml">
-<!ENTITY faq SYSTEM "mi_fifo_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -49,7 +48,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 	
 </book>

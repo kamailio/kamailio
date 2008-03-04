@@ -1,8 +1,7 @@
 <!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!ENTITY user SYSTEM "h350_user.sgml">
-<!ENTITY devel SYSTEM "h350_devel.sgml">
-<!ENTITY faq SYSTEM "h350_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 <!ENTITY biblio SYSTEM "h350_biblio.sgml">
 
 <!-- Include general documentation entities -->
@@ -37,9 +36,7 @@
         <toc></toc>
 
         &user;
-        &devel;
         &faq;
-		&biblio;
+	&biblio;
 
 </book>
-

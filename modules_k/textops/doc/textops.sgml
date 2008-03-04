@@ -2,8 +2,7 @@
 
 
 <!ENTITY user SYSTEM "textops_user.sgml">
-<!ENTITY devel SYSTEM "textops_devel.sgml">
-<!ENTITY faq SYSTEM "textops_faq.sgml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
 
 <!-- Include general documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
@@ -53,7 +52,6 @@
 	<toc></toc>
 	
 	&user;
-	&devel;
 	&faq;
 	
 </book>
