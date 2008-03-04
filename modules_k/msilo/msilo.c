@@ -62,7 +62,7 @@
 #include "../../parser/parse_methods.h"
 #include "../../resolve.h"
 #include "../../usr_avp.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 
 #include "../tm/tm_load.h"
 
@@ -149,9 +149,6 @@ unsigned short ms_snd_time_avp_type;
 
 str msg_type = str_init("MESSAGE");
 
-#define MSILO_PRINTBUF_SIZE 1024
-static char msilo_printbuf[MSILO_PRINTBUF_SIZE];
-
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
@@ -160,8 +157,6 @@ static int m_store(struct sip_msg*, char*, char*);
 static int m_dump(struct sip_msg*, char*, char*);
 
 void destroy(void);
-
-static int fixup_msilo(void** param, int param_no);
 
 void m_clean_silo(unsigned int ticks, void *);
 void m_send_ontimer(unsigned int ticks, void *);
@@ -175,9 +170,11 @@ static void m_tm_callback( struct cell *t, int type, struct tmcb_params *ps);
 
 static cmd_export_t cmds[]={
 	{"m_store",  (cmd_function)m_store, 0, 0, 0, REQUEST_ROUTE | FAILURE_ROUTE},
-	{"m_store",  (cmd_function)m_store, 1, fixup_msilo, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+	{"m_store",  (cmd_function)m_store, 1, fixup_spve_null, 0,
+		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"m_dump",   (cmd_function)m_dump,  0, 0, 0, REQUEST_ROUTE},
-	{"m_dump",   (cmd_function)m_dump,  1, fixup_msilo, 0, REQUEST_ROUTE},
+	{"m_dump",   (cmd_function)m_dump,  1, fixup_spve_null, 0,
+		REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -297,7 +294,8 @@ static int mod_init(void)
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &ms_snd_time_avp_name,
 					&ms_snd_time_avp_type)!=0)
 		{
-			LM_ERR("[%.*s]- invalid AVP definition\n", ms_snd_time_avp_param.len, ms_snd_time_avp_param.s);
+			LM_ERR("[%.*s]- invalid AVP definition\n",
+					ms_snd_time_avp_param.len, ms_snd_time_avp_param.s);
 			return -1;
 		}
 	}
@@ -313,7 +311,8 @@ static int mod_init(void)
 	if(ver!=S_TABLE_VERSION)
 	{
 		LM_ERR("wrong version v%d for table <%.*s>,"
-				" need v%d\n", ver, ms_db_table.len, ms_db_table.s, S_TABLE_VERSION);
+				" need v%d\n", ver, ms_db_table.len, ms_db_table.s,
+				S_TABLE_VERSION);
 		return -1;
 	}
 	if(db_con)
@@ -392,7 +391,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	str body, str_hdr, ctaddr;
 	struct to_body to, *pto, *pfrom;
 	struct sip_uri puri;
-	str duri;
+	str duri, owner_s;
 	db_key_t db_keys[NR_KEYS-1];
 	db_val_t db_vals[NR_KEYS-1];
 	db_key_t db_cols[1]; 
@@ -403,7 +402,6 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	static char buf[512];
 	static char buf1[1024];
 	int mime;
-	int printbuf_len;
 
 	int_str        avp_value;
 	struct usr_avp *avp;
@@ -474,18 +472,17 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	memset(&puri, 0, sizeof(struct sip_uri));
 	if(owner)
 	{
-		printbuf_len = MSILO_PRINTBUF_SIZE-1;
-		if(pv_printf(msg, (pv_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
+		if(fixup_get_svalue(msg, (gparam_p)owner, &owner_s)!=0)
 		{
-			LM_ERR("cannot print the format\n");
+			LM_ERR("invalid owner uri parameter");
 			return -1;
 		}
-		if(parse_uri(msilo_printbuf, printbuf_len, &puri)!=0)
+		if(parse_uri(owner_s.s, owner_s.len, &puri)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			LM_DBG("using user id [%.*s]\n", printbuf_len, msilo_printbuf);
+			LM_DBG("using user id [%.*s]\n", owner_s.len, owner_s.s);
 		}
 	} else { /* get it from R-URI */
 		if(msg->new_uri.len <= 0)
@@ -773,10 +770,10 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	static char hdr_buf[1024];
 	static char body_buf[1024];
 	struct sip_uri puri;
+	str owner_s;
 
 	str str_vals[4], hdr_str , body_str;
 	time_t rtime;
-	int printbuf_len;
 	
 	/* init */
 	ob_key = &sc_mid;
@@ -865,19 +862,17 @@ static int m_dump(struct sip_msg* msg, char* owner, char* str2)
 	memset(&puri, 0, sizeof(struct sip_uri));
 	if(owner)
 	{
-		printbuf_len = MSILO_PRINTBUF_SIZE-1;
-		if(pv_printf(msg, (pv_elem_t*)owner, msilo_printbuf, &printbuf_len)<0)
+		if(fixup_get_svalue(msg, (gparam_p)owner, &owner_s)!=0)
 		{
-			LM_ERR("cannot print the format\n");
+			LM_ERR("invalid owner uri parameter");
 			return -1;
 		}
-		if(parse_uri(msilo_printbuf, printbuf_len, &puri)!=0)
+		if(parse_uri(owner_s.s, owner_s.len, &puri)!=0)
 		{
 			LM_ERR("bad owner SIP address!\n");
 			goto error;
 		} else {
-			LM_DBG("using user id [%.*s]\n", printbuf_len,
-					msilo_printbuf);
+			LM_DBG("using user id [%.*s]\n", owner_s.len, owner_s.s);
 		}
 	} else { /* get it from  To URI */
 		if(parse_uri(pto->uri.s, pto->uri.len, &puri)!=0)
@@ -1367,25 +1362,5 @@ int check_message_support(struct sip_msg* msg)
 	if(allow_hdr==0)
 		return 0;
 	return -1;
-}
-
-static int fixup_msilo(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-	if(*param)
-	{
-		s.s = (char*)(*param); s.len =  strlen(s.s);
-		if(pv_parse_format(&s, &model)<0)
-		{
-			LM_ERR("wrong format[%s]\n", (char*)(*param));
-			return E_UNSPEC;
-		}
-			
-		*param = (void*)model;
-		return 0;
-	}
-	LM_ERR("null format\n");
-	return E_UNSPEC;
 }
 
