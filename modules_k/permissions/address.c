@@ -39,7 +39,7 @@
 #include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../ut.h"
 
 #define TABLE_VERSION 3
@@ -315,32 +315,15 @@ void clean_addresses(void)
  */
 int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    int_or_pvar_t *i_or_p;
-    pv_value_t pv_val;
+	int a = 0;
 
-    i_or_p = (int_or_pvar_t *)_addr_group;
-
-    if (i_or_p->pvar) {
-	if (pv_get_spec_value(_msg, i_or_p->pvar, &pv_val) == 0) {
-	    if (pv_val.flags & PV_VAL_INT) {
-		addr_group = pv_val.ri;
-	    } else if (pv_val.flags & PV_VAL_STR) {
-		if (str2int(&(pv_val.rs), &addr_group) == -1) {
-			LM_ERR("failed to convert group string to int\n");
-		    return -1;
-		}
-	    } else {
-		LM_ERR("failed to convert group string to int\n");
+	if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &a)!=0)
+	{
+		LM_ERR("cannot get group value\n");
 		return -1;
-	    }
-	} else {
-	    LM_ERR("cannot get pseudo variable value\n");
-	    return -1;
 	}
-    } else {
-	addr_group = i_or_p->i;
-    }
 
+	addr_group = a;
     LM_DBG("set addr_group to <%u>\n", addr_group);
 
     return 1;
@@ -414,32 +397,13 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
  */
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    int_or_pvar_t *i_or_p;
-    pv_value_t pv_val;
-    unsigned int group;
+    int group = 0;
 
-    i_or_p = (int_or_pvar_t *)_addr_group;
-
-    if (i_or_p->pvar) {
-	if (pv_get_spec_value(_msg, i_or_p->pvar, &pv_val) == 0) {
-	    if (pv_val.flags & PV_VAL_INT) {
-		group = pv_val.ri;
-	    } else if (pv_val.flags & PV_VAL_STR) {
-		if (str2int(&(pv_val.rs), &group) == -1) {
-		    LM_ERR("failed to convert group string to int\n");
-		    return -1;
-		}
-	    } else {
-		LM_ERR("failed to convert group string to int\n");
+	if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &group)!=0)
+	{
+		LM_ERR("cannot get group value\n");
 		return -1;
-	    }
-	} else {
-	    LM_ERR("cannot get pseudo variable value\n");
-	    return -1;
 	}
-    } else {
-	group = i_or_p->i;
-    }
 
     LM_DBG("looking for <%u, %x, %u>\n",
 	group, _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);

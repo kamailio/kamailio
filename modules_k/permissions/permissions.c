@@ -40,7 +40,7 @@
 #include "../../str.h"
 #include "../../dset.h"
 #include "../../globals.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../ut.h"
 
 MODULE_VERSION
@@ -100,11 +100,6 @@ static int single_fixup(void** param, int param_no);
  */
 static int address_fixup(void** param, int param_no);
 
-/*
- * Convert int or pvar parameter into int_or_pvar struct
- */
-static int int_or_pvar_fixup(void** param, int param_no);
-
 
 /*
  * Parse pseudo variable parameter
@@ -141,11 +136,11 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_uri",      (cmd_function)allow_uri, 2, double_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"set_address_group", (cmd_function)set_address_group, 1, int_or_pvar_fixup, 0,
+	{"set_address_group", (cmd_function)set_address_group, 1, fixup_igp_null, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_address",  (cmd_function)allow_address, 2, address_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_source_address", (cmd_function)allow_source_address, 1, int_or_pvar_fixup, 0,
+	{"allow_source_address", (cmd_function)allow_source_address, 1, fixup_igp_null, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_source_address_group", (cmd_function)allow_source_address_group, 0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
@@ -615,67 +610,6 @@ static int address_fixup(void** param, int param_no)
     *param = (void *)0;
 
     return 0;
-}
-
-
-/*
- * Convert int or pvar parameter into int_or_pvar struct
- */
-static int int_or_pvar_fixup(void** param, int param_no)
-{
-    str s;
-    str str_param;
-    int_or_pvar_t *res;
-
-    if (param_no != 1) return 0;
-
-    res = (int_or_pvar_t *)pkg_malloc(sizeof(int_or_pvar_t));
-    if (res == 0) {
-	LM_ERR("no pkg memory left for int_or_pvar_t\n");
-	return -1;
-    }
-
-    s.s = (char *)*param;
-
-    if (*s.s == '$') {  /* pvar */
-	res->pvar = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if (res->pvar == 0) {
-	    LM_ERR("no pkg memory left for pv_spec_t\n");
-	    pkg_free(res);
-	    return -1;
-	}
-	s.len = strlen(s.s);
-	if (pv_parse_spec(&s, res->pvar) == 0) {
-	    LM_ERR("failed to parse pseudo variable %s failed!\n", (char*)*param);
-	    pkg_free(res->pvar);
-	    pkg_free(res);
-	    return -1;
-	}
-
-	if (res->pvar->type == PVT_NULL) {
-	    LM_ERR("bad pseudo variable\n");
-	    pkg_free(res->pvar);
-	    pkg_free(res);
-	    return -1;
-	}
-
-	*param = (void*)res;
-
-	return 0;
-    }
-
-    /* int */
-    str_param.s = s.s;
-    str_param.len = strlen(s.s);
-    if (str2int(&str_param, &(res->i)) == 1) {
-	LM_ERR("bad integer <%s>\n", s.s);
-	pkg_free(res);
-	return -1;
-    } else {
-	res->pvar = (pv_spec_t *)0;
-	*param = (void *)res;
-	return 0;
-    }
 }
 
 
