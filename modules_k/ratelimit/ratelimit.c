@@ -308,7 +308,7 @@ static int str_cpy(str * dest, str * src)
 	dest->len = src->len;
 	dest->s = shm_malloc(src->len);
 	if (! dest->s) {
-		LM_ERR("Unable to allocate memory for str: '%.*s'\n", src->len, src->s);
+		LM_ERR("oom: '%.*s'\n", src->len, src->s);
 		return -1;
 	}
 	memcpy(dest->s, src->s, src->len);
@@ -443,15 +443,51 @@ static int mod_init(void)
 		return -1;
 	}
 
-	load_value      = shm_malloc(sizeof(double));
-	load_source	= shm_malloc(sizeof(int));
-	pid_kp          = shm_malloc(sizeof(double));
-	pid_ki          = shm_malloc(sizeof(double));
-	pid_kd          = shm_malloc(sizeof(double));
-	pid_setpoint	= shm_malloc(sizeof(double));
-	drop_rate       = shm_malloc(sizeof(int));
-	nqueues		= shm_malloc(sizeof(int));
-	rl_dbg_str	= shm_malloc(sizeof(str));
+	load_value = shm_malloc(sizeof(double));
+	if (load_value==NULL) {
+		LM_ERR("oom for load_value\n");
+		return -1;
+	}
+	load_source = shm_malloc(sizeof(int));
+	if (load_source==NULL) {
+		LM_ERR("oom for load_source\n");
+		return -1;
+	}
+	pid_kp = shm_malloc(sizeof(double));
+	if (pid_kp==NULL) {
+		LM_ERR("oom for pid_kp\n");
+		return -1;
+	}
+	pid_ki = shm_malloc(sizeof(double));
+	if (pid_ki==NULL) {
+		LM_ERR("oom for pid_ki\n");
+		return -1;
+	}
+	pid_kd = shm_malloc(sizeof(double));
+	if (pid_kd==NULL) {
+		LM_ERR("oom for pid_kd\n");
+		return -1;
+	}
+	pid_setpoint = shm_malloc(sizeof(double));
+	if (pid_setpoint==NULL) {
+		LM_ERR("oom for pid_setpoint\n");
+		return -1;
+	}
+	drop_rate = shm_malloc(sizeof(int));
+	if (drop_rate==NULL) {
+		LM_ERR("oom for drop_rate\n");
+		return -1;
+	}
+	nqueues = shm_malloc(sizeof(int));
+	if (nqueues==NULL) {
+		LM_ERR("oom for nqueues\n");
+		return -1;
+	}
+	rl_dbg_str = shm_malloc(sizeof(str));
+	if (rl_dbg_str==NULL) {
+		LM_ERR("oom for rl_dbg_str\n");
+		return -1;
+	}
 
 	*load_value = 0.0;
 	*load_source = load_source_mp;
@@ -466,9 +502,25 @@ static int mod_init(void)
 
 	for (i=0; i<MAX_PIPES; i++) {
 		pipes[i].algo    = shm_malloc(sizeof(int));
+		if (pipes[i].algo==NULL) {
+			LM_ERR("oom for pipes[%d].algo\n", i);
+			return -1;
+		}
 		pipes[i].limit   = shm_malloc(sizeof(int));
+		if (pipes[i].limit==NULL) {
+			LM_ERR("oom for pipes[%d].limit\n", i);
+			return -1;
+		}
 		pipes[i].load    = shm_malloc(sizeof(int));
+		if (pipes[i].load==NULL) {
+			LM_ERR("oom for pipes[%d].load\n", i);
+			return -1;
+		}
 		pipes[i].counter = shm_malloc(sizeof(int));
+		if (pipes[i].counter==NULL) {
+			LM_ERR("oom for pipes[%d].counter\n", i);
+			return -1;
+		}
 		*pipes[i].algo    = pipes[i].algo_mp;
 		*pipes[i].limit   = pipes[i].limit_mp;
 		*pipes[i].load    = 0;
@@ -477,11 +529,19 @@ static int mod_init(void)
 
 	for (i=0; i<*nqueues; i++) {
 		queues[i].pipe   = shm_malloc(sizeof(int));
+		if (queues[i].pipe==NULL) {
+			LM_ERR("oom for queues[%d].pipe\n", i);
+			return -1;
+		}
 		queues[i].method = shm_malloc(sizeof(str));
+		if (queues[i].method==NULL) {
+			LM_ERR("oom for queues[%d].method\n", i);
+			return -1;
+		}
 
 		*queues[i].pipe   = queues[i].pipe_mp;
 		if(str_cpy(queues[i].method, &queues[i].method_mp)) {
-			LM_ERR("out of memory\n");
+			LM_ERR("oom str_cpy(queues[%d].method\n", i);
 			return -1;
 		}
 	}
@@ -1392,7 +1452,7 @@ struct mi_root* mi_set_dbg(struct mi_root* cmd_tree, void* param)
 			rl_dbg_str->s = (char *)shm_malloc(rl_dbg_str->len);
 			if (!rl_dbg_str->s) {
 				rl_dbg_str->len = 0;
-				LM_ERR("out of shm memory: %d\n", rl_dbg_str->len);
+				LM_ERR("oom: %d\n", rl_dbg_str->len);
 			}
 		}
 	} else {
