@@ -568,10 +568,22 @@ void destroy(void)
 	regfree(&queue_params_regex);
 
 	for (i=0;  i<MAX_PIPES; i++) {
-		shm_free(pipes[i].load);
-		shm_free(pipes[i].counter);
-		shm_free(pipes[i].limit);
-		shm_free(pipes[i].algo);
+		if (pipes[i].algo) {
+			shm_free(pipes[i].algo);
+			pipes[i].algo = NULL;
+		}
+		if (pipes[i].load) {
+			shm_free(pipes[i].load);
+			pipes[i].load = NULL;
+		}
+		if (pipes[i].counter) {
+			shm_free(pipes[i].counter);
+			pipes[i].counter = NULL;
+		}
+		if (pipes[i].limit) {
+			shm_free(pipes[i].limit);
+			pipes[i].limit = NULL;
+		}
 	}
 
 	if (load_value) {
@@ -611,8 +623,10 @@ void destroy(void)
 		rl_dbg_str = NULL;
 	}
 
-	lock_destroy(rl_lock);
-	lock_dealloc((void *)rl_lock);
+	if (rl_lock) {
+		lock_destroy(rl_lock);
+		lock_dealloc((void *)rl_lock);
+	}
 }
 
 
