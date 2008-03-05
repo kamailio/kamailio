@@ -308,7 +308,7 @@ static int free_query(const db_con_t* _con)
 }
 
 /*
-** db_free_query	free the query and free the result memory
+** db_free_result	free the query and free the result memory
 **
 **	Arguments :
 **		db_con_t *	as previously supplied by pg_init()
@@ -319,7 +319,7 @@ static int free_query(const db_con_t* _con)
 **		negative number upon failure
 */
 
-int db_postgres_free_query(db_con_t* _con, db_res_t* _r)
+int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
 {
 	free_query(_con);
 	if (_r) db_free_result(_r);

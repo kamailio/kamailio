@@ -61,7 +61,7 @@ int db_postgres_store_result(const db_con_t* _h, db_res_t** _r);
 /**
  * Free all memory allocated by get_result
  */
-int db_postgres_free_query(db_con_t* _h, db_res_t* _r);
+int db_postgres_free_result(db_con_t* _h, db_res_t* _r);
 
 
 /**
