@@ -38,6 +38,7 @@ typedef struct subs_info
 	str* pres_uri;
 	str* watcher_uri;
 	str* contact;
+	str* remote_target;
 	str* outbound_proxy;
 	int event;
 	str* extra_headers;

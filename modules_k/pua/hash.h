@@ -32,6 +32,7 @@
 #include "../../str.h"
 #include "../../lock_ops.h"
 #include "../../dprint.h"
+#include "../../parser/msg_parser.h"
 
 #define PRESENCE_EVENT      1<<0
 #define PWINFO_EVENT        1<<1

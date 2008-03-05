@@ -118,7 +118,7 @@ modparam("pua_bla", "outbound_proxy", "sip:proxy@openser.org")
 
    Example 1-4. Set server_address parameter
 ...
-modparam("pua_bla", "server_address", "sip:160.34.23.12")
+modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 ...
      __________________________________________________________
 

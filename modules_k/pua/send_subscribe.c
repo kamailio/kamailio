@@ -387,6 +387,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			subs.outbound_proxy= hentity->outbound_proxy;
 			subs.extra_headers= hentity->extra_headers;
 			subs.cb_param= hentity->cb_param;
+		
 			if(send_subscribe(&subs)< 0)
 			{
 				LM_ERR("when trying to send SUBSCRIBE\n");
@@ -838,7 +839,7 @@ insert:
 
 		result= tmb.t_request
 			(&met,						  /* Type of the message */
-			subs->pres_uri,				  /* Request-URI */
+		subs->remote_target?subs->remote_target:subs->pres_uri,/* Request-URI*/
 			subs->pres_uri,				  /* To */
 			subs->watcher_uri,			  /* From */
 			str_hdr,					  /* Optional headers including CRLF */

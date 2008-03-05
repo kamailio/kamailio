@@ -31,6 +31,8 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../usrloc/usrloc.h"
+#include "../../parser/msg_parser.h"
+#include "../../parser/parse_from.h"
 #include "pua_bla.h"
 #include "registrar_cb.h"
 
@@ -43,6 +45,7 @@ str default_domain= {NULL, 0};
 str header_name= {0, 0};
 str outbound_proxy= {0, 0};
 int is_bla_aor= 0;
+str reg_from_uri= {0, 0};
 static int mod_init(void);
 static int child_init(int);
 static void destroy(void);
@@ -220,7 +223,27 @@ static void destroy(void)
 int bla_set_flag(struct sip_msg* msg , char* s1, char* s2)
 {
 	LM_DBG("mark as bla aor\n");
+	
 	is_bla_aor= 1;
+	
+	if( parse_headers(msg,HDR_EOH_F, 0)==-1 )
+	{
+		LM_ERR("parsing headers\n");
+		return -1;
+	}
+	
+
+	if (msg->from->parsed == NULL)
+	{
+		if ( parse_from_header( msg )<0 ) 
+		{
+			LM_DBG("cannot parse From header\n");
+			return -1;
+		}
+	}
+
+	reg_from_uri= ((struct to_body*)(msg->from->parsed))->uri;
+
 	return 1;
 }	
 

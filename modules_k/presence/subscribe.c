@@ -539,16 +539,19 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	/* getting presentity uri from Request-URI if initial subscribe - or else from database*/
 	if(to_tag_gen)
 	{
-		if( parse_sip_msg_uri(msg)< 0)
+		if(parsed_event->parsed!= EVENT_DIALOG)
 		{
-			LM_ERR("failed to parse R-URI\n");
-			return -1;
-		}
-		if(uandd_to_uri(msg->parsed_uri.user, msg->parsed_uri.host,
+			if( parse_sip_msg_uri(msg)< 0)
+			{
+				LM_ERR("failed to parse R-URI\n");
+				return -1;
+			}
+			if(uandd_to_uri(msg->parsed_uri.user, msg->parsed_uri.host,
 					&subs.pres_uri)< 0)
-		{
-			LM_ERR("failed to construct uri from user and domain\n");
-			goto error;
+			{
+				LM_ERR("failed to construct uri from user and domain\n");
+				goto error;
+			}
 		}
 	}
 	else
@@ -648,7 +651,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	if(reason.s)
 		pkg_free(reason.s);
 	
-	if(subs.pres_uri.s)
+	if(parsed_event->parsed!= EVENT_DIALOG && subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
 	
 	if((!server_address.s) || (server_address.len== 0))
@@ -680,7 +683,7 @@ error:
 		}
 	}
 
-	if(subs.pres_uri.s)
+	if(parsed_event->parsed!= EVENT_DIALOG &&subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
 	
 	if(subs.auth_rules_doc)
@@ -812,6 +815,10 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 		subs->from_domain = uri.host;
 	}
 
+	if(subs->event->evp->parsed== EVENT_DIALOG)
+	{
+		subs->pres_uri= pfrom->uri;
+	}
 
 	/*generate to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
@@ -957,7 +964,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	{
 		lock_get(&subs_htable[i].lock);
 		s= search_shtable(subs_htable, subs->callid,subs->to_tag,subs->from_tag, i);
-		if(s)
+		if(s && s->event->evp->parsed!= EVENT_DIALOG)
 		{
 			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
 			if(pres_uri.s== NULL)
@@ -986,7 +993,10 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 found_rec:
 	
 	LM_DBG("Record found in hash_table\n");
-	subs->pres_uri= pres_uri;
+	
+	if(s->event->evp->parsed!= EVENT_DIALOG)
+		subs->pres_uri= pres_uri;
+	
 	subs->status= s->status;
 	if(s->reason.s && s->reason.len)
 	{	
@@ -1182,17 +1192,20 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 
 	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	
-	pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
-	pres_uri.len= strlen(pres_uri.s);
-	subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len* sizeof(char));
-	if(subs->pres_uri.s== NULL)
+	if(subs->event->evp->parsed!= EVENT_DIALOG)
 	{
-		if(subs->reason.s)
-			pkg_free(subs->reason.s);
-		ERR_MEM(PKG_MEM_STR);
+		pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
+		pres_uri.len= strlen(pres_uri.s);
+		subs->pres_uri.s= (char*)pkg_malloc(pres_uri.len* sizeof(char));
+		if(subs->pres_uri.s== NULL)
+		{	
+			if(subs->reason.s)
+				pkg_free(subs->reason.s);
+			ERR_MEM(PKG_MEM_STR);
+		}
+		memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
+		subs->pres_uri.len= pres_uri.len;
 	}
-	memcpy(subs->pres_uri.s, pres_uri.s, pres_uri.len);
-	subs->pres_uri.len= pres_uri.len;
 
 	record_route.s= (char*)row_vals[record_route_col].val.string_val;
 	if(record_route.s)
@@ -1206,7 +1219,6 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 		memcpy(subs->record_route.s, record_route.s, record_route.len);
 		subs->record_route.len= record_route.len;
 	}
-
 
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;

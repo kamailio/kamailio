@@ -123,6 +123,10 @@ typedef struct subs_info
   str* watcher_uri;    /*  the watcher uri */
   str* contact;        /*  the uri that will be used in
                            Contact header*/  
+  str* remote_target;  /*  the uri that will be used as R-URI
+                           for the Subscribe message(not compulsory;
+                           if not set the value of the pres_uri field
+                           is used) */
   str* outbound_proxy; /*  the outbound_proxy to use when sending the 
                            Subscribe request*/
   int event;           /*  the event flag; supported value: 
