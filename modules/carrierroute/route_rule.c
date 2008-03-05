@@ -39,10 +39,11 @@ static int rule_fixup_recursor(struct route_tree_item * rt);
 static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr);
 
 /**
- * Adds a route rule to rt
+ * Adds a route rule to rt. prefix, rewrite_hostpart, rewrite_local_prefix,
+ * rewrite_local_suffix, and comment must not contain NULL pointers.
  *
  * @param rt the current route tree node
- * @param full_prefix the whole scan prefix
+ * @param prefix the whole scan prefix
  * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
@@ -61,11 +62,11 @@ static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr
  *
  * @see add_route_to_tree()
  */
-int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-		int max_targets, double prob, const char * rewrite_hostpart, int strip,
-		const char * rewrite_local_prefix, const char * rewrite_local_suffix,
+int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
+		int max_targets, double prob, const str * rewrite_hostpart, int strip,
+		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
 		int status, int hash_index, int backup, int * backed_up, 
-		const char * comment) {
+		const str * comment) {
 	struct route_rule * shm_rr, * prev = NULL, * tmp = NULL;
 	struct route_rule_p_list * t_rl;
 	int * t_bu;
@@ -82,46 +83,26 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
 	}
 	memset(shm_rr, 0, sizeof(struct route_rule));
 
-	if (rewrite_hostpart) {
-		if ((shm_rr->host.s = shm_malloc(strlen(rewrite_hostpart) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->host.s, rewrite_hostpart);
-		shm_rr->host.len = strlen(rewrite_hostpart);
+	if (shm_str_dup(&shm_rr->host, rewrite_hostpart) != 0) {
+		goto mem_error;
 	}
 
-	if (prefix) {
-		if ((shm_rr->prefix.s = shm_malloc(strlen(prefix) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->prefix.s, prefix);
-		shm_rr->prefix.len = strlen(prefix);
-	}
+	if (shm_str_dup(&shm_rr->prefix, prefix) != 0) {
+		goto mem_error;
+ 	}
 
 	shm_rr->strip = strip;
 
-	if (rewrite_local_prefix) {
-		if ((shm_rr->local_prefix.s = shm_malloc(strlen(rewrite_local_prefix) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->local_prefix.s, rewrite_local_prefix);
-		shm_rr->local_prefix.len = strlen(rewrite_local_prefix);
+	if (shm_str_dup(&shm_rr->local_prefix, rewrite_local_prefix) != 0) {
+		goto mem_error;
 	}
 
-	if (rewrite_local_suffix) {
-		if ((shm_rr->local_suffix.s = shm_malloc(strlen(rewrite_local_suffix) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->local_suffix.s, rewrite_local_suffix);
-		shm_rr->local_suffix.len = strlen(rewrite_local_suffix);
+	if (shm_str_dup(&shm_rr->local_suffix, rewrite_local_suffix) != 0) {
+		goto mem_error;
 	}
 
-	if (comment) {
-		if ((shm_rr->comment.s = shm_malloc(strlen(comment) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->comment.s, comment);
-		shm_rr->comment.len = strlen(comment);
+	if (shm_str_dup(&shm_rr->comment, comment) != 0) {
+		goto mem_error;
 	}
 
 	shm_rr->status = status;
@@ -239,7 +220,8 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
 
 
 /**
- * Adds a failure route rule to rt.
+ * Adds a failure route rule to rt. prefix, host, reply_code, and comment
+ * must not contain NULL pointers.
  *
  * @param rt the current route tree node
  * @param full_prefix the whole scan prefix
@@ -254,9 +236,9 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
  *
  * @see add_failure_route_to_tree()
  */
-int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const char * prefix,
-		const char * host, const char * reply_code, int flags, int mask,
-		const int next_domain, const char * comment) {
+int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const str * prefix,
+		const str * host, const str * reply_code, int flags, int mask,
+		const int next_domain, const str * comment) {
 	struct failure_route_rule * shm_rr;
 	struct failure_route_rule * rr;
 	struct failure_route_rule * prev;
@@ -267,32 +249,20 @@ int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const 
 	}
 	memset(shm_rr, 0, sizeof(struct failure_route_rule));
 	
-	if (host) {
-		if ((shm_rr->host.s = shm_malloc(strlen(host) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->host.s, host);
-		shm_rr->host.len = strlen(host);
+	if (shm_str_dup(&shm_rr->host, host) != 0) {
+		goto mem_error;
 	}
 	
-	if (reply_code) {
-		if ((shm_rr->reply_code.s = shm_malloc(strlen(reply_code) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->reply_code.s, reply_code);
-		shm_rr->reply_code.len = strlen(reply_code);
+	if (shm_str_dup(&shm_rr->reply_code, reply_code) != 0) {
+		goto mem_error;
 	}
 	
 	shm_rr->flags = flags;
 	shm_rr->mask = mask;
 	shm_rr->next_domain = next_domain;
 	
-	if (comment) {
-		if ((shm_rr->comment.s = shm_malloc(strlen(comment) + 1)) == NULL) {
-			goto mem_error;
-		}
-		strcpy(shm_rr->comment.s, comment);
-		shm_rr->comment.len = strlen(comment);
+	if (shm_str_dup(&shm_rr->comment, comment) != 0) {
+		goto mem_error;
 	}
 	
 	/* before inserting into list, check priorities! */

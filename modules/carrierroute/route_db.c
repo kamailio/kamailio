@@ -184,6 +184,16 @@ int load_route_data(struct rewrite_data * rd) {
 	int carrier_count = 0;
 	struct carrier * carriers = NULL, * tmp = NULL;
 	static str query_str;
+	str tmp_carrier;
+	str tmp_domain;
+	str tmp_scan_prefix;
+	str tmp_rewrite_host;
+	str tmp_rewrite_prefix;
+	str tmp_rewrite_suffix;
+	str tmp_host_name;
+	str tmp_reply_code;
+	str tmp_next_domain;
+	str tmp_comment;
 
 	if( (strlen("SELECT DISTINCT  FROM  WHERE = ")
 			+ db_table.len + columns[COL_DOMAIN]->len
@@ -222,7 +232,9 @@ int load_route_data(struct rewrite_data * rd) {
 			goto errout;
 		}
 		LM_INFO("name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
-		if (add_carrier_tree(tmp->name, tmp->id, rd, RES_ROW_N(res)) == NULL) {
+		tmp_carrier.s=tmp->name;
+		tmp_carrier.len=strlen(tmp_carrier.s);
+		if (add_carrier_tree(&tmp_carrier, tmp->id, rd, RES_ROW_N(res)) == NULL) {
 			LM_ERR("can't add carrier %s\n", tmp->name);
 			goto errout;
 		}
@@ -243,21 +255,39 @@ int load_route_data(struct rewrite_data * rd) {
 	}
 	for (i = 0; i < RES_ROW_N(res); ++i) {
 		row = &RES_ROWS(res)[i];
+		tmp_domain.s=(char *)row->values[COL_DOMAIN].val.string_val;
+		tmp_scan_prefix.s=(char *)row->values[COL_SCAN_PREFIX].val.string_val;
+		tmp_rewrite_host.s=(char *)row->values[COL_REWRITE_HOST].val.string_val;
+		tmp_rewrite_prefix.s=(char *)row->values[COL_REWRITE_PREFIX].val.string_val;
+		tmp_rewrite_suffix.s=(char *)row->values[COL_REWRITE_SUFFIX].val.string_val;
+		tmp_comment.s=(char *)row->values[COL_COMMENT].val.string_val;
+		if (tmp_domain.s==NULL) tmp_domain.s="";
+		if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
+		if (tmp_rewrite_host.s==NULL) tmp_rewrite_host.s="";
+		if (tmp_rewrite_prefix.s==NULL) tmp_rewrite_prefix.s="";
+		if (tmp_rewrite_suffix.s==NULL) tmp_rewrite_suffix.s="";
+		if (tmp_comment.s==NULL) tmp_comment.s="";
+		tmp_domain.len=strlen(tmp_domain.s);
+		tmp_scan_prefix.len=strlen(tmp_scan_prefix.s);
+		tmp_rewrite_host.len=strlen(tmp_rewrite_host.s);
+		tmp_rewrite_prefix.len=strlen(tmp_rewrite_prefix.s);
+		tmp_rewrite_suffix.len=strlen(tmp_rewrite_suffix.s);
+		tmp_comment.len=strlen(tmp_comment.s);
 		if (add_route(rd,
 				row->values[COL_CARRIER].val.int_val,
-				row->values[COL_DOMAIN].val.string_val,
-				row->values[COL_SCAN_PREFIX].val.string_val,
+				&tmp_domain,
+				&tmp_scan_prefix,
 				0,
 				row->values[COL_PROB].val.double_val,
-				row->values[COL_REWRITE_HOST].val.string_val,
+				&tmp_rewrite_host,
 				row->values[COL_STRIP].val.int_val,
-				row->values[COL_REWRITE_PREFIX].val.string_val,
-				row->values[COL_REWRITE_SUFFIX].val.string_val,
+				&tmp_rewrite_prefix,
+				&tmp_rewrite_suffix,
 				1,
 				0,
 				-1,
 				NULL,
-				row->values[COL_COMMENT].val.string_val) == -1) {
+				&tmp_comment) == -1) {
 			goto errout;
 		}
 	}
@@ -276,16 +306,34 @@ int load_route_data(struct rewrite_data * rd) {
 	}
 	for (i = 0; i < RES_ROW_N(res); ++i) {
 		row = &RES_ROWS(res)[i];
+		tmp_domain.s=(char *)row->values[FCOL_DOMAIN].val.string_val;
+		tmp_scan_prefix.s=(char *)row->values[FCOL_SCAN_PREFIX].val.string_val;
+		tmp_host_name.s=(char *)row->values[FCOL_HOST_NAME].val.string_val;
+		tmp_reply_code.s=(char *)row->values[FCOL_REPLY_CODE].val.string_val;
+		tmp_next_domain.s=(char *)row->values[FCOL_NEXT_DOMAIN].val.string_val;
+		tmp_comment.s=(char *)row->values[FCOL_COMMENT].val.string_val;
+		if (tmp_domain.s==NULL) tmp_domain.s="";
+		if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
+		if (tmp_host_name.s==NULL) tmp_host_name.s="";
+		if (tmp_reply_code.s==NULL) tmp_reply_code.s="";
+		if (tmp_next_domain.s==NULL) tmp_next_domain.s="";
+		if (tmp_comment.s==NULL) tmp_comment.s="";
+		tmp_domain.len=strlen(tmp_domain.s);
+		tmp_scan_prefix.len=strlen(tmp_scan_prefix.s);
+		tmp_host_name.len=strlen(tmp_host_name.s);
+		tmp_reply_code.len=strlen(tmp_reply_code.s);
+		tmp_next_domain.len=strlen(tmp_next_domain.s);
+		tmp_comment.len=strlen(tmp_comment.s);
 		if (add_failure_route(rd,
 				row->values[FCOL_CARRIER].val.int_val,
-				row->values[FCOL_DOMAIN].val.string_val,
-				row->values[FCOL_SCAN_PREFIX].val.string_val,
-				row->values[FCOL_HOST_NAME].val.string_val,
-				row->values[FCOL_REPLY_CODE].val.string_val,
+				&tmp_domain,
+				&tmp_scan_prefix,
+				&tmp_host_name,
+				&tmp_reply_code,
 				row->values[FCOL_FLAGS].val.int_val,
 				row->values[FCOL_MASK].val.int_val,
-				row->values[FCOL_NEXT_DOMAIN].val.string_val,
-				row->values[FCOL_COMMENT].val.string_val) == -1) {
+				&tmp_next_domain,
+				&tmp_comment) == -1) {
 			goto errout;
 		}
 	}

@@ -29,6 +29,7 @@
 
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
+#include "../../ut.h"
 #include "carrierroute.h"
 #include "route.h"
 #include "route_rule.h"
@@ -63,7 +64,7 @@ static int add_route_tree(struct carrier_tree * ct, struct route_tree * rt);
  * @return a pointer to the desired routing tree,
  * NULL on failure
  */
-struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd) {
+struct route_tree * get_route_tree(const str * domain, struct carrier_tree * rd) {
 	int i, id;
 	struct route_tree * rt = NULL;
 	if (!rd) {
@@ -72,13 +73,13 @@ struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd
 	}
 	for (i=0; i<rd->tree_num; i++) {
 		if (rd->trees[i] && rd->trees[i]->name.s) {
-			if (strcmp(rd->trees[i]->name.s, domain) == 0) {
-				LM_INFO("found domain %s\n", rd->trees[i]->name.s);
+			if (str_strcmp(&rd->trees[i]->name, domain) == 0) {
+				LM_INFO("found domain %.*s\n", rd->trees[i]->name.len, rd->trees[i]->name.s);
 				return rd->trees[i];
 			}
 		}
 	}
-	LM_INFO("domain %s not found, add it\n", domain);
+	LM_INFO("domain %.*s not found, add it\n", domain->len, domain->s);
 	if ((id = add_domain(domain)) < 0) {
 		LM_ERR("could not add domain\n");
 		return NULL;
@@ -97,7 +98,7 @@ struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd
 		destroy_route_tree(rt);
 		return NULL;
 	}
-	LM_INFO("created route tree: %s, %i\n", rt->name.s, rt->id);
+	LM_INFO("created route tree: %.*s, %i\n", rt->name.len, rt->name.s, rt->id);
 	return rt;
 }
 
@@ -181,21 +182,18 @@ static struct failure_route_tree_item * create_failure_route_tree_item(void) {
  * @return a pointer to the newly allocated route tree or NULL on
  * error, in which case it LOGs an error message.
  */
-struct route_tree * create_route_tree(const char * domain, int id) {
+struct route_tree * create_route_tree(const str * domain, int id) {
 	struct route_tree * tmp;
 	if ((tmp = shm_malloc(sizeof(struct route_tree))) == NULL) {
 		LM_ERR("out of shared memory\n");
 		return NULL;
 	}
 	memset(tmp, 0, sizeof(struct route_tree));
-	if ((tmp->name.s = shm_malloc(strlen(domain) + 1)) == NULL) {
-		LM_ERR("out of shared memory\n");
+	if (shm_str_dup(&tmp->name, domain)!=0) {
+		LM_ERR("cannot duplicate string\n");
 		shm_free(tmp);
 		return NULL;
 	}
-	memset(tmp->name.s, 0, strlen(domain) + 1);
-	strcpy(tmp->name.s, domain);
-	tmp->name.len = strlen(domain);
 	tmp->id = id;
 	return tmp;
 }
@@ -233,25 +231,29 @@ struct route_tree * create_route_tree(const char * domain, int id) {
  *
  * @see add_route()
  */
-int add_route_to_tree(struct route_tree_item * route_tree, const char * scan_prefix,
-		const char * full_prefix, int max_targets, double prob,
-		const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
-		const char * rewrite_local_suffix, int status, int hash_index, 
-		int backup, int * backed_up, const char * comment) {
-	if (!scan_prefix || *scan_prefix == '\0') {
+int add_route_to_tree(struct route_tree_item * route_tree, const str * scan_prefix,
+		const str * full_prefix, int max_targets, double prob,
+		const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
+		const str * rewrite_local_suffix, int status, int hash_index, 
+		int backup, int * backed_up, const str * comment) {
+	str next_prefix;
+
+	if (scan_prefix->len == 0) {
 		return add_route_rule(route_tree, full_prefix, max_targets, prob, rewrite_hostpart, strip,
 		                      rewrite_local_prefix, rewrite_local_suffix, status, hash_index,
 		                      backup, backed_up, comment);
 	} else {
-		if (route_tree->nodes[*scan_prefix - '0'] == NULL) {
-			route_tree->nodes[*scan_prefix - '0']
+		if (route_tree->nodes[*scan_prefix->s - '0'] == NULL) {
+			route_tree->nodes[*scan_prefix->s - '0']
 			= create_route_tree_item();
-			if (route_tree->nodes[*scan_prefix - '0'] == NULL) {
+			if (route_tree->nodes[*scan_prefix->s - '0'] == NULL) {
 				return -1;
 			}
 		}
-		return add_route_to_tree(route_tree->nodes[*scan_prefix - '0'],
-		                         scan_prefix + 1, full_prefix, max_targets, prob,
+		next_prefix.s = scan_prefix->s + 1;
+		next_prefix.len = scan_prefix->len - 1;
+		return add_route_to_tree(route_tree->nodes[*scan_prefix->s - '0'],
+		                         &next_prefix, full_prefix, max_targets, prob,
 		                         rewrite_hostpart, strip, rewrite_local_prefix,
 		                         rewrite_local_suffix, status, hash_index,
 		                         backup, backed_up, comment);
@@ -282,21 +284,25 @@ int add_route_to_tree(struct route_tree_item * route_tree, const char * scan_pre
  *
  * @see add_route()
  */
-int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const char * scan_prefix,
-		const char * full_prefix, const char * host, const char * reply_code,
-		const int flags, const int mask, const int next_domain, const char * comment) {
-	if (!scan_prefix || *scan_prefix == '\0') {
+int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const str * scan_prefix,
+		const str * full_prefix, const str * host, const str * reply_code,
+		const int flags, const int mask, const int next_domain, const str * comment) {
+	str next_prefix;
+
+	if (!scan_prefix || !scan_prefix->s || *scan_prefix->s == '\0') {
 		return add_failure_route_rule(failure_tree, full_prefix, host, reply_code, flags, mask, next_domain, comment);
 	} else {
-		if (failure_tree->nodes[*scan_prefix - '0'] == NULL) {
-			failure_tree->nodes[*scan_prefix - '0']
+		if (failure_tree->nodes[*scan_prefix->s - '0'] == NULL) {
+			failure_tree->nodes[*scan_prefix->s - '0']
 				= create_failure_route_tree_item();
-			if (failure_tree->nodes[*scan_prefix - '0'] == NULL) {
+			if (failure_tree->nodes[*scan_prefix->s - '0'] == NULL) {
 				return -1;
 			}
 		}
-		return add_failure_route_to_tree(failure_tree->nodes[*scan_prefix - '0'],
-																		 scan_prefix + 1, full_prefix, host, reply_code,
+		next_prefix.s = scan_prefix->s + 1;
+		next_prefix.len = scan_prefix->len - 1;
+		return add_failure_route_to_tree(failure_tree->nodes[*scan_prefix->s - '0'],
+																		 &next_prefix, full_prefix, host, reply_code,
 																		 flags, mask, next_domain, comment);
 	}
 }
@@ -402,7 +408,7 @@ static void destroy_failure_route_tree_item(struct failure_route_tree_item *rout
  * @return values: on succcess the numerical index of the given domain,
  * -1 on failure
  */
-int add_domain(const char * domain) {
+int add_domain(const str * domain) {
 	struct route_map * tmp, * prev = NULL;
 	int id = 0;
 	if (!script_routes) {
@@ -416,7 +422,7 @@ int add_domain(const char * domain) {
 	tmp = *script_routes;
 
 	while (tmp) {
-		if (strcmp(tmp->name.s, domain) == 0) {
+		if (str_strcmp(&tmp->name, domain) == 0) {
 			return tmp->no;
 		}
 		id = tmp->no + 1;
@@ -428,19 +434,17 @@ int add_domain(const char * domain) {
 		return -1;
 	}
 	memset(tmp, 0, sizeof(struct route_map));
-	if ((tmp->name.s = shm_malloc(strlen(domain) + 1)) == NULL) {
-		LM_ERR("out of shared memory\n");
+	if (shm_str_dup(&tmp->name, domain) != 0) {
+		LM_ERR("cannot duplicate string\n");
 		shm_free(tmp);
 		return -1;
 	}
-	strcpy(tmp->name.s, domain);
-	tmp->name.len = strlen(tmp->name.s);
 	tmp->no = id;
 	if (!prev) {
 		*script_routes = tmp;
 	} else {
 		prev->next = tmp;
 	}
-	LM_INFO("domain %s has id %i\n", domain, id);
+	LM_INFO("domain %.*s has id %i\n", domain->len, domain->s, id);
 	return id;
 }

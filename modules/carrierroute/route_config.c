@@ -30,6 +30,7 @@
 #include <confuse.h>
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
+#include "../../ut.h"
 #include "route_config.h"
 #include "route.h"
 #include "carrierroute.h"
@@ -71,10 +72,13 @@ int load_config(struct rewrite_data * rd) {
 	cfg_t * cfg = NULL;
 	int n, m, o, i, j, k,l;
 	cfg_t * d, * p, * t;
-	const char * domain = NULL, * prefix = NULL;
+	str domain;
+	str prefix;
 	double prob;
-	const char * rewrite_prefix = NULL, * rewrite_suffix = NULL,
-	                              * rewrite_host = NULL, * comment = NULL;
+	str rewrite_prefix;
+	str rewrite_suffix;
+	str rewrite_host;
+	str comment;
 	int backed_up_size = 0;
 	int * backed_up = NULL;
 	int backup = 0;
@@ -92,7 +96,7 @@ int load_config(struct rewrite_data * rd) {
 
 	rd->tree_num = 1;
 	n = cfg_size(cfg, "domain");
-	if (add_carrier_tree(default_tree, 1, rd, n) == NULL) {
+	if (add_carrier_tree(&default_tree, 1, rd, n) == NULL) {
 		LM_ERR("couldn't add carrier tree\n");
 		return -1;
 	}
@@ -100,31 +104,45 @@ int load_config(struct rewrite_data * rd) {
 	memset(rd->carriers[0]->trees, 0, sizeof(struct route_tree *) * n);
 	for (i = 0; i < n; i++) {
 		d = cfg_getnsec(cfg, "domain", i);
-		domain = cfg_title(d);
+		domain.s = (char *)cfg_title(d);
+		if (domain.s==NULL) domain.s="";
+		domain.len = strlen(domain.s);
 		m = cfg_size(d, "prefix");
-		LM_INFO("loading domain %s\n", domain);
+		LM_INFO("loading domain %.*s\n", domain.len, domain.s);
 		for (j = 0; j < m; j++) {
 			p = cfg_getnsec(d, "prefix", j);
-			prefix = cfg_title(p);
-			if (strcasecmp(prefix, SP_EMPTY_PREFIX) == 0) {
-				prefix = NULL;
+			prefix.s = (char *)cfg_title(p);
+			if (prefix.s==NULL) prefix.s="";
+			prefix.len = strlen(prefix.s);
+			if (str_strcasecmp(&prefix, &SP_EMPTY_PREFIX) == 0) {
+				prefix.s = "";
+				prefix.len = 0;
 			}
-			LM_INFO("loading prefix %s\n", prefix);
+			LM_INFO("loading prefix %.*s\n", prefix.len, prefix.s);
 			max_targets = cfg_getint(p, "max_targets");
 			o = cfg_size(p, "target");
 			for (k = 0; k < o; k++) {
 				t = cfg_getnsec(p, "target", k);
-				rewrite_host = cfg_title(t);
-				if (strcasecmp(rewrite_host, SP_EMPTY_PREFIX) == 0) {
-					rewrite_host = 0;
+				rewrite_host.s = (char *)cfg_title(t);
+				if (rewrite_host.s==NULL) rewrite_host.s="";
+				rewrite_host.len = strlen(rewrite_host.s);
+				if (str_strcasecmp(&rewrite_host, &SP_EMPTY_PREFIX) == 0) {
+					rewrite_host.s = "";
+					rewrite_host.len = 0;
 				}
-				LM_INFO("loading target %s\n", rewrite_host);
+				LM_INFO("loading target %.*s\n", rewrite_host.len, rewrite_host.s);
 				prob = cfg_getfloat(t, "prob");
 				strip = cfg_getint(t, "strip");
-				rewrite_prefix = cfg_getstr(t, "rewrite_prefix");
-				rewrite_suffix = cfg_getstr(t, "rewrite_suffix");
+				rewrite_prefix.s = (char *)cfg_getstr(t, "rewrite_prefix");
+				if (rewrite_prefix.s==NULL) rewrite_prefix.s="";
+				rewrite_prefix.len = strlen(rewrite_prefix.s);
+				rewrite_suffix.s = (char *)cfg_getstr(t, "rewrite_suffix");
+				if (rewrite_suffix.s==NULL) rewrite_suffix.s="";
+				rewrite_suffix.len = strlen(rewrite_suffix.s);
 				hash_index = cfg_getint(t, "hash_index");
-				comment = cfg_getstr(t, "comment");
+				comment.s = (char *)cfg_getstr(t, "comment");
+				if (comment.s==NULL) comment.s="";
+				comment.len = strlen(comment.s);
 				status = cfg_getint(t, "status");
 				if ((backed_up_size = cfg_size(t, "backed_up")) > 0) {
 					if ((backed_up = pkg_malloc(sizeof(int) * (backed_up_size + 1))) == NULL) {
@@ -137,11 +155,11 @@ int load_config(struct rewrite_data * rd) {
 					backed_up[backed_up_size] = -1;
 				}
 				backup = cfg_getint(t, "backup");
-				LM_INFO("adding route for prefix %s, to host %s, prob %f, backed up: %i, backup: %i\n",
-				    prefix, rewrite_host, prob, backed_up_size, backup);
-				if (add_route(rd, 1, domain, prefix, max_targets, prob, rewrite_host,
-				              strip, rewrite_prefix, rewrite_suffix, status,
-				              hash_index, backup, backed_up, comment) < 0) {
+				LM_INFO("adding route for prefix %.*s, to host %.*s, prob %f, backed up: %i, backup: %i\n",
+				    prefix.len, prefix.s, rewrite_host.len, rewrite_host.s, prob, backed_up_size, backup);
+				if (add_route(rd, 1, &domain, &prefix, max_targets, prob, &rewrite_host,
+				              strip, &rewrite_prefix, &rewrite_suffix, status,
+				              hash_index, backup, backed_up, &comment) < 0) {
 					LM_INFO("Error while adding route\n");
 					if (backed_up) {
 						pkg_free(backed_up);
@@ -236,7 +254,7 @@ int save_config(struct rewrite_data * rd) {
 	i = 0;
 	if (rd->tree_num>=1) {
 		for (j=0; j< rd->carriers[i]->tree_num; j++) {
-			fprintf(outfile, "domain %s {\n", rd->carriers[i]->trees[j]->name.s);
+			fprintf(outfile, "domain %.*s {\n", rd->carriers[i]->trees[j]->name.len, rd->carriers[i]->trees[j]->name.s);
 			if (save_route_data_recursor(rd->carriers[i]->trees[j]->tree, outfile) < 0) {
 				goto errout;
 			}
@@ -264,12 +282,17 @@ static int save_route_data_recursor(struct route_tree_item * rt, FILE * outfile)
 	int i;
 	struct route_rule * rr;
 	struct route_rule_p_list * rl;
+	str *tmp_str;
+	str null_str = str_init("NULL");
+
 	if (rt->rule_list) {
 		rr = rt->rule_list;
-		fprintf(outfile, "\tprefix %s {\n", rr->prefix.len ? rr->prefix.s : "NULL");
+		tmp_str = (rr->prefix.len ? &rr->prefix : &null_str);
+		fprintf(outfile, "\tprefix %.*s {\n", tmp_str->len, tmp_str->s);
 		fprintf(outfile, "\t\tmax_targets = %i\n\n", rt->max_targets);
 		while (rr) {
-			fprintf(outfile, "\t\ttarget %s {\n", rr->host.len ? rr->host.s : "NULL");
+			tmp_str = (rr->host.len ? &rr->host : &null_str);
+			fprintf(outfile, "\t\ttarget %.*s {\n", tmp_str->len, tmp_str->s);
 			fprintf(outfile, "\t\t\tprob = %f\n", rr->orig_prob);
 			fprintf(outfile, "\t\t\thash_index = %i\n", rr->hash_index);
 			fprintf(outfile, "\t\t\tstatus = %i\n", rr->status);
@@ -277,10 +300,10 @@ static int save_route_data_recursor(struct route_tree_item * rt, FILE * outfile)
 				fprintf(outfile, "\t\t\tstrip = \"%i\"\n", rr->strip);
 			}
 			if (rr->local_prefix.len) {
-				fprintf(outfile, "\t\t\trewrite_prefix = \"%s\"\n", rr->local_prefix.s);
+				fprintf(outfile, "\t\t\trewrite_prefix = \"%.*s\"\n", rr->local_prefix.len, rr->local_prefix.s);
 			}
 			if (rr->local_suffix.len) {
-				fprintf(outfile, "\t\t\trewrite_suffix: \"%s\"\n", rr->local_suffix.s);
+				fprintf(outfile, "\t\t\trewrite_suffix: \"%.*s\"\n", rr->local_suffix.len, rr->local_suffix.s);
 			}
 			if (rr->backup) {
 				fprintf(outfile, "\t\t\tbackup = %i\n", rr->backup->hash_index);
@@ -300,7 +323,7 @@ static int save_route_data_recursor(struct route_tree_item * rt, FILE * outfile)
 				fprintf(outfile, "}\n");
 			}
 			if (rr->comment.len) {
-				fprintf(outfile, "\t\t\tcomment = \"%s\"\n", rr->comment.s);
+				fprintf(outfile, "\t\t\tcomment = \"%.*s\"\n", rr->comment.len, rr->comment.s);
 			}
 			fprintf(outfile, "\t\t}\n");
 			rr = rr->next;

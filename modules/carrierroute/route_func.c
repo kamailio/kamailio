@@ -137,7 +137,6 @@ int mp2carrier_id(struct multiparam_t *mp) {
  *
  */
 int mp2domain_id(struct multiparam_t *mp) {
-	char tmps[256]; /* FIXME: use str */
 	int domain_id;
 	struct usr_avp *avp;
 	int_str avp_val;
@@ -156,15 +155,7 @@ int mp2domain_id(struct multiparam_t *mp) {
 			return avp_val.n;
 		}
 		else {
-			/* FIXME: use str! */
-			if (avp_val.s.len > sizeof(tmps -1)) {
-				LM_ERR("domain too long\n");
-				return -1;
-			}
-			memcpy(tmps, avp_val.s.s, avp_val.s.len);
-			tmps[avp_val.s.len]=0;
-
-			domain_id = add_domain(tmps/*avp_val.s*/);
+			domain_id = add_domain(&avp_val.s);
 			if (domain_id < 0) {
 				LM_ERR("could not find domain '%.*s'\n", avp_val.s.len, avp_val.s.s);
 				return -1;
@@ -231,7 +222,7 @@ static int set_next_domain_on_rule(const struct failure_route_tree_item *failure
 		LM_DBG("rr.reply_code.len=%d reply_code.len=%d\n", rr->reply_code.len, reply_code->len);
 		LM_DBG("rr.reply_code.s='%.*s' reply_code.s='%.*s'\n", rr->reply_code.len, rr->reply_code.s, reply_code->len, reply_code->s);
 		if (((rr->mask & flags) == rr->flags) &&
-				((rr->host.len == 0) || ((host->len == rr->host.len) && (strncmp(host->s, rr->host.s, host->len)==0))) &&
+				((rr->host.len == 0) || (str_strcmp(host, &rr->host)==0)) &&
 				(reply_code_matcher(&(rr->reply_code), reply_code)==0)) {
 			avp_val.n = rr->next_domain;
 			if (add_avp(dstavp->u.a.flags, dstavp->u.a.name, avp_val)<0) {
@@ -393,7 +384,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	}
 	if (rs->host.len == 0) {
 		*p = '\0';
-               pkg_free(dest->s);
+		pkg_free(dest->s);
 		return -1;
 	}
 	memcpy(p, rs->host.s, rs->host.len);

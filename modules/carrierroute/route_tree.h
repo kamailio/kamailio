@@ -64,11 +64,11 @@
  *
  * @see add_route()
  */
-int add_route_to_tree(struct route_tree_item * rt, const char * scan_prefix,
-		const char * full_prefix, int max_targets, double prob,
-		const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
-		const char * rewrite_local_suffix, int status, int hash_index,
-		int backup, int * backed_up, const char * comment);
+int add_route_to_tree(struct route_tree_item * rt, const str * scan_prefix,
+		const str * full_prefix, int max_targets, double prob,
+		const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
+		const str * rewrite_local_suffix, int status, int hash_index,
+		int backup, int * backed_up, const str * comment);
 
 /**
  * Adds the given failure route information to the failure route tree identified by
@@ -93,9 +93,9 @@ int add_route_to_tree(struct route_tree_item * rt, const char * scan_prefix,
  *
  * @see add_route()
  */
-int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const char * scan_prefix,
-		const char * full_prefix, const char * host, const char * reply_code,
-		const int flags, const int mask, const int next_domain, const char * comment);
+int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const str * scan_prefix,
+		const str * full_prefix, const str * host, const str * reply_code,
+		const int flags, const int mask, const int next_domain, const str * comment);
 
 /**
  * Create a new route tree root in shared memory and set it up.
@@ -106,7 +106,7 @@ int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, con
  * @return a pointer to the newly allocated route tree or NULL on
  * error, in which case it LOGs an error message.
  */
-struct route_tree * create_route_tree(const char * domain, int id);
+struct route_tree * create_route_tree(const str * domain, int id);
 
 
 
@@ -119,7 +119,7 @@ struct route_tree * create_route_tree(const char * domain, int id);
  * @return values: on succcess the numerical index of the given domain,
  * -1 on failure
  */
-int add_domain(const char * domain);
+int add_domain(const str * domain);
 
 /**
  * returns the routing tree for the given domain, if domain's tree doesn't
@@ -131,7 +131,7 @@ int add_domain(const char * domain);
  *
  * @return a pointer to the desired routing tree, NULL on failure
  */
-struct route_tree * get_route_tree(const char * domain, struct carrier_tree * rd);
+struct route_tree * get_route_tree(const str * domain, struct carrier_tree * rd);
 
 struct route_tree * get_route_tree_by_id(struct carrier_tree * ct, int id);
 

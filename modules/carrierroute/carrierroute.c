@@ -117,7 +117,8 @@ str * failure_columns[FAILURE_COLUMN_NUM] = {
 char * config_source = "file";
 char * config_file = CFG_DIR"carrierroute.conf";
 
-char * default_tree = "default";
+str default_tree = str_init("default");
+const str SP_EMPTY_PREFIX = str_init("null");
 
 int mode = 0;
 int use_domain = 0;
@@ -281,6 +282,7 @@ static int mod_init(void) {
 	failure_mask_col.len = strlen(failure_mask_col.s);
 	failure_next_domain_col.len = strlen(failure_next_domain_col.s);
 	failure_comment_col.len = strlen(failure_comment_col.s);
+	default_tree.len = strlen(default_tree.s);
 
 	if (init_route_data(config_source) < 0) {
 		LM_ERR("could not init route data\n");
@@ -309,12 +311,12 @@ static int pv_fixup(void ** param) {
 	pv_elem_t *model;
 	str s;
 
-	s.s = (char*)(*param);
+	s.s = (char *)(*param);
 	s.len = strlen(s.s);
 	if (s.len <= 0) return -1;
 	/* Check the format */
 	if(pv_parse_format(&s, &model)<0) {
-		LM_ERR("pv_parse_format failed for '%s'\n", (char*)(*param));
+		LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
 		return -1;
 	}
 	*param = (void*)model;
@@ -343,7 +345,7 @@ static int carrier_fixup(void ** param) {
 	}
 	memset(mp, 0, sizeof(struct multiparam_t));
 	
-	s.s = (char*)(*param);
+	s.s = (char *)(*param);
 	s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
 		/* This is a name */
@@ -351,7 +353,7 @@ static int carrier_fixup(void ** param) {
 		
 		/* get carrier id */
 		if ((mp->u.n = find_tree(s)) < 0) {
-			LM_ERR("could not find carrier tree '%s'\n", (char*)(*param));
+			LM_ERR("could not find carrier tree '%s'\n", (char *)(*param));
 			pkg_free(mp);
 			return -1;
 		}
@@ -364,7 +366,7 @@ static int carrier_fixup(void ** param) {
 		/* This is an AVP - could be an id or name */
 		mp->type=MP_AVP;
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
-			LM_ERR("Invalid AVP definition <%s>\n", (char*)(*param));
+			LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
 			pkg_free(mp);
 			return -1;
 		}
@@ -396,14 +398,14 @@ static int domain_fixup(void ** param) {
 	}
 	memset(mp, 0, sizeof(struct multiparam_t));
 	
-	s.s = (char*)(*param);
+	s.s = (char *)(*param);
 	s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
 		/* This is a name */
 		mp->type=MP_INT;
 		
 		/* get domain id */
-		if ((mp->u.n = add_domain((char *)*param)) < 0) {
+		if ((mp->u.n = add_domain(&s)) < 0) {
 			LM_ERR("could not add domain\n");
 			pkg_free(mp);
 			return -1;
@@ -415,7 +417,7 @@ static int domain_fixup(void ** param) {
 		/* This is an AVP - could be an id or name */
 		mp->type=MP_AVP;
 		if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
-			LM_ERR("Invalid AVP definition <%s>\n", (char*)(*param));
+			LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
 			pkg_free(mp);
 			return -1;
 		}
@@ -439,11 +441,11 @@ static int avp_name_fixup(void ** param) {
 	struct multiparam_t *mp;
 	str s;
 
-	s.s = (char*)(*param);
+	s.s = (char *)(*param);
 	s.len = strlen(s.s);
 	if (s.len <= 0) return -1;
 	if (pv_parse_spec(&s, &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
-		LM_ERR("Malformed or non AVP definition <%s>\n", (char*)(*param));
+		LM_ERR("Malformed or non AVP definition <%s>\n", (char *)(*param));
 		return -1;
 	}
 	
@@ -456,7 +458,7 @@ static int avp_name_fixup(void ** param) {
 	
 	mp->type=MP_AVP;
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
-		LM_ERR("Invalid AVP definition <%s>\n", (char*)(*param));
+		LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
 		pkg_free(mp);
 		return -1;
 	}

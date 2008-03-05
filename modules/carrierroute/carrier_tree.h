@@ -81,7 +81,7 @@ void release_data(struct rewrite_data *data);
  * @return a pointer to the newly allocated route tree or NULL on
  * error, in which case it LOGs an error message.
  */
-struct carrier_tree * create_carrier_tree(const char * tree, int carrier_id, int id, int trees);
+struct carrier_tree * create_carrier_tree(const str * tree, int carrier_id, int id, int trees);
 
 /**
  * Adds the given route information to the route tree identified by
@@ -112,10 +112,10 @@ struct carrier_tree * create_carrier_tree(const char * tree, int carrier_id, int
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct rewrite_data * rd, int carrier_id,
-              const char * domain, const char * scan_prefix, int max_targets,
-              double prob, const char * rewrite_hostpart, int strip, const char * rewrite_local_prefix,
-              const char * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
-              const char * comment);
+              const str * domain, const str * scan_prefix, int max_targets,
+              double prob, const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
+              const str * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
+              const str * comment);
 
 /**
  * Adds the given failure route information to the failure route tree identified by
@@ -136,9 +136,9 @@ int add_route(struct rewrite_data * rd, int carrier_id,
  *
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
-int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * domain,
-											const char * scan_prefix, const char * host, const char * reply_code,
-											int flags, int mask, const char * next_domain, const char * comment);
+int add_failure_route(struct rewrite_data * rd, int carrier_id, const str * domain,
+											const str * scan_prefix, const str * host, const str * reply_code,
+											int flags, int mask, const str * next_domain, const str * comment);
 
 /**
  * Tries to add a tree to the tree map. If the given tree doesn't
@@ -149,7 +149,7 @@ int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * dom
  * @return values: on succcess the numerical index of the given tree,
  * -1 on failure
  */
-int add_tree(const char * tree, int carrier_id);
+int add_tree(const str * tree, int carrier_id);
 
 /**
  * Searches for the ID for a Carrier-Name
@@ -171,7 +171,7 @@ int find_tree(str tree);
  * @return a pointer to the root node of the desired routing tree,
  * NULL on failure
  */
-struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, struct rewrite_data * rd, int trees);
+struct carrier_tree * add_carrier_tree(const str * carrier, int carrier_id, struct rewrite_data * rd, int trees);
 
 /**
  * returns the routing tree for the given domain, if domain's tree

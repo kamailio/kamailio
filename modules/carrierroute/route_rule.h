@@ -56,11 +56,11 @@
  *
  * @see add_route_to_tree()
  */
-int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
-		int max_targets, double prob, const char * rewrite_hostpart, int strip,
-		const char * rewrite_local_prefix, const char * rewrite_local_suffix,
+int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
+		int max_targets, double prob, const str * rewrite_hostpart, int strip,
+		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
 		int status, int hash_index, int backup, int * backed_up,
-		const char * comment);
+		const str * comment);
 
 /**
  * Adds a failure route rule to rt
@@ -79,8 +79,8 @@ int add_route_rule(struct route_tree_item * route_tree, const char * prefix,
  * @see add_failure_route_to_tree()
  */
 int add_failure_route_rule(struct failure_route_tree_item * failure_tree,
-		const char * prefix, const char * host, const char * reply_code,
-		int flags, int mask, const int next_domain, const char * comment);
+		const str * prefix, const str * host, const str * reply_code,
+		int flags, int mask, const int next_domain, const str * comment);
 
 /**
  * Destroys route rule rr by freeing all its memory.

@@ -41,8 +41,6 @@
 #define AT_SIGN "@"
 #define AT_SIGN_LEN 1
 
-#define SP_EMPTY_PREFIX "null"
-
 #define DICE_MAX 1000
 
 #define COLUMN_NUM 10
@@ -96,7 +94,9 @@ extern str * columns[];
 extern str * failure_columns[];
 extern char * config_source;
 extern char * config_file;
-extern char * default_tree;
+extern str default_tree;
+
+extern const str SP_EMPTY_PREFIX;
 
 extern int mode;
 extern int use_domain;

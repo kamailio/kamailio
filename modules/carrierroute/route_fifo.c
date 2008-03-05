@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "../../str.h"
+#include "../../ut.h"
 
 /**
  * @var defines the option set for the different fifo commands
@@ -55,42 +56,34 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 
 static struct mi_root* print_replace_help(void);
 
-static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[]);
+static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]);
 
 static int update_route_data(fifo_opt_t * opts);
 
-static int update_route_data_recursor(struct route_tree_item * rt, char * act_domain, fifo_opt_t * opts);
+static int update_route_data_recursor(struct route_tree_item * rt, str * act_domain, fifo_opt_t * opts);
 
 static struct mi_root* print_fifo_err(void);
 
-#ifdef __OS_solaris
-/******************************************************************************
- * This is a replacement for strsep which is not portable (missing on
- Solaris).
- */
- static char* strsep(char** str, const char* delims)
- {
-     char* token;
 
-     if (*str==NULL) {
-         /* No more tokens */
-         return NULL;
-     }
-
-     token=*str;
-     while (**str!='\0') {
-         if (strchr(delims,**str)!=NULL) {
-             **str='\0';
-             (*str)++;
-             return token;
-         }
-         (*str)++;
-     }
-     /* There is no other token */
-     *str=NULL;
-     return token;
- }
-#endif
+static int str_toklen(str * str, const char * delims)
+{
+	int len;
+	
+	if ((str==NULL) || (str->s==NULL)) {
+		/* No more tokens */
+		return -1;
+	}
+	
+	len=0;
+	while (len<str->len) {
+		if (strchr(delims,str->s[len])!=NULL) {
+			return len;
+		}
+		len++;
+	}
+	
+	return len;
+}
 
 /**
  * reloads the routing data
@@ -126,6 +119,8 @@ static int updated;
  */
 struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 	struct rewrite_data * rd;
+	str *tmp_str;
+	str empty_str = str_init("<empty>");
 
 	if((rd = get_data ()) == NULL) {
 		LM_ERR("error during retrieve data\n");
@@ -145,12 +140,14 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 	int i, j;
  	for (i = 0; i < rd->tree_num; i++) {
  		if (rd->carriers[i]) {
-			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for carrier %s (%i)\n", rd->carriers[i] ? rd->carriers[i]->name.s : "<empty>", rd->carriers[i] ? rd->carriers[i]->id : 0);
+			tmp_str = (rd->carriers[i] ? &rd->carriers[i]->name : &empty_str);
+			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for carrier %.*s (%i)\n", tmp_str->len, tmp_str->s, rd->carriers[i] ? rd->carriers[i]->id : 0);
 			if(node == NULL)
 				goto error;
  			for (j=0; j<rd->carriers[i]->tree_num; j++) {
  				if (rd->carriers[i]->trees[j] && rd->carriers[i]->trees[j]->tree) {
-					node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for domain %s\n", rd->carriers[i]->trees[j] ? rd->carriers[i]->trees[j]->name.s : "<empty>");
+					tmp_str = (rd->carriers[i]->trees[j] ? &rd->carriers[i]->trees[j]->name : &empty_str);
+					node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for domain %.*s\n", tmp_str->len, tmp_str->s);
 					if(node == NULL)
 						goto error;
  					dump_tree_recursor (&rpl_tree->node, rd->carriers[i]->trees[j]->tree, "");
@@ -194,11 +191,10 @@ struct mi_root* replace_host (struct mi_root* cmd_tree, void *param) {
 
 	
 	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
+	if (node->value.s==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_REPLACE])) <  0) {
+	if((ret = get_fifo_opts(&node->value, &options, opt_settings[OPT_REPLACE])) <  0) {
 		return print_fifo_err();
 	}
 
@@ -238,11 +234,10 @@ struct mi_root* deactivate_host (struct mi_root* cmd_tree, void *param) {
 
 	
 	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
+	if (node->value.s==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_DEACTIVATE])) <  0) {
+	if((ret = get_fifo_opts(&node->value, &options, opt_settings[OPT_DEACTIVATE])) <  0) {
 		return print_fifo_err();
 	}
 
@@ -282,11 +277,10 @@ struct mi_root* activate_host (struct mi_root* cmd_tree, void *param) {
 
 	
 	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
+	if (node->value.s==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_ACTIVATE])) <  0) {
+	if((ret = get_fifo_opts(&node->value, &options, opt_settings[OPT_ACTIVATE])) <  0) {
 		return print_fifo_err();
 	}
 
@@ -321,16 +315,11 @@ struct mi_root* add_host (struct mi_root* cmd_tree, void *param) {
 	}
 
 	node = cmd_tree->node.kids;
-	if (node==NULL || node->next!=NULL)
+	if (node==NULL || node->next!=NULL || node->value.s==NULL) {
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	}
 
-	
-	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
-		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
-
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_ADD])) <  0) {
+	if((ret = get_fifo_opts(&node->value, &options, opt_settings[OPT_ADD])) <  0) {
 		return print_fifo_err();
 	}
 
@@ -370,11 +359,10 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
 
 	
 	/* look for command */
-	char* buf = node->value.s;
-	if (buf==NULL)
+	if (node->value.s==NULL)
 		return init_mi_tree(400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	if((ret = get_fifo_opts(buf, &options, opt_settings[OPT_REMOVE])) <  0) {
+	if((ret = get_fifo_opts(&node->value, &options, opt_settings[OPT_REMOVE])) <  0) {
 		return print_fifo_err();
 	}
 
@@ -455,26 +443,31 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
  *
  * @see dump_fifo()
  */
-static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
+static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 	int opt_argc = 0;
-	char * opt_argv[20];
+	str opt_argv[20];
 	int i, op = -1;
 	unsigned int used_opts = 0;
+	int toklen;
 
 	memset(opt_argv, 0, sizeof(opt_argv));
 	memset(opts, 0, sizeof(fifo_opt_t));
 	opts->prob = -1;
 
-	while((opt_argv[opt_argc] = strsep(&buf, " \t\r\n")) != NULL && opt_argc < 20) {
-		LM_DBG("found arg[%i]: %s\n", opt_argc, opt_argv[opt_argc]);
+	while((toklen = str_toklen(buf, " \t\r\n")) >=0 && opt_argc < 20) {
+		buf->s[toklen] = '\0'; /* insert zero termination, since strtod might be used later on it */
+		opt_argv[opt_argc].len = toklen;
+		opt_argv[opt_argc].s = buf->s;
+		buf->s += toklen + 1;
+		buf->len -= toklen + 1;
+		LM_DBG("found arg[%i]: %.*s\n", opt_argc, opt_argv[opt_argc].len, opt_argv[opt_argc].s);
 		opt_argc++;
 	}
-	opt_argv[opt_argc] = NULL;
-
-	for(i=0; i<opt_argc; i++) {
-		if(opt_argv[i] && strlen(opt_argv[i]) >= 1) {
-			switch(*opt_argv[i]) {
-					case '-': switch(*(opt_argv[i] + 1)) {
+	for (i=0; i<opt_argc; i++) {
+		LM_DBG("token %.*s", opt_argv[i].len, opt_argv[i].s);
+		if (opt_argv[i].len >= 1) {
+			switch(*opt_argv[i].s) {
+					case '-': switch(opt_argv[i].s[1]) {
 							case OPT_DOMAIN_CHR:
 							op = OPT_DOMAIN;
 							used_opts |= O_DOMAIN;
@@ -512,57 +505,51 @@ static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[]) 
 							return -1;
 							default: {
 								FIFO_ERR(E_WRONGOPT);
-								LM_DBG("Unknown option: %s\n", opt_argv[i]);
+								LM_DBG("Unknown option: %.*s\n", opt_argv[i].len, opt_argv[i].s);
 								return -1;
 							}
 					}
 					break;
 					default: switch(op) {
 							case OPT_DOMAIN:
-							opts->domain.s = opt_argv[i];
-							opts->domain.len = strlen(opt_argv[i]);
+							opts->domain = opt_argv[i];
 							op = -1;
 							break;
 							case OPT_PREFIX:
-							if (strcasecmp(opt_argv[i], SP_EMPTY_PREFIX) == 0) {
+							if (str_strcasecmp(&opt_argv[i], &SP_EMPTY_PREFIX) == 0) {
 								opts->prefix.s = NULL;
 								opts->prefix.len = 0;
 							} else {
-								opts->prefix.s = opt_argv[i];
-								opts->prefix.len = strlen(opt_argv[i]);
+								opts->prefix = opt_argv[i];
 							}
 							op = -1;
 							break;
 							case OPT_HOST:
-							opts->host.s = opt_argv[i];
-							opts->host.len = strlen(opt_argv[i]);
+							opts->host = opt_argv[i];
 							op = -1;
 							break;
 							case OPT_NEW_TARGET:
-							opts->new_host.s = opt_argv[i];
-							opts->new_host.len = strlen(opt_argv[i]);
+							opts->new_host = opt_argv[i];
 							op = -1;
 							break;
 							case OPT_PROB:
-							opts->prob = strtod(opt_argv[i], NULL);
+							opts->prob = strtod(opt_argv[i].s, NULL); /* we can use str.s since we zero terminated it earlier */
 							op = -1;
 							break;
 							case OPT_R_PREFIX:
-							opts->rewrite_prefix.s = opt_argv[i];
-							opts->rewrite_prefix.len = strlen(opt_argv[i]);
+							opts->rewrite_prefix = opt_argv[i];
 							op = -1;
 							break;
 							case OPT_STRIP:
-							opts->strip = atoi(opt_argv[i]);
+							str2sint(&opt_argv[i], &opts->strip);
 							op = -1;
 							break;
 							case OPT_R_SUFFIX:
-							opts->rewrite_suffix.s = opt_argv[i];
-							opts->rewrite_suffix.len = strlen(opt_argv[i]);
+							opts->rewrite_suffix = opt_argv[i];
 							op = -1;
 							break;
 							case OPT_HASH_INDEX:
-							opts->hash_index = atoi(opt_argv[i]);
+							str2sint(&opt_argv[i], &opts->hash_index);
 							op = -1;
 							break;
 							default: {
@@ -601,6 +588,12 @@ static int get_fifo_opts(char * buf, fifo_opt_t * opts, unsigned int opt_set[]) 
 static int update_route_data(fifo_opt_t * opts) {
 	struct rewrite_data * rd;
 	int i,j;
+	str tmp_domain;
+	str tmp_prefix;
+	str tmp_host;
+	str tmp_rewrite_prefix;
+	str tmp_rewrite_suffix;
+	str tmp_comment = str_init("");
 
 	if ((rd = shm_malloc(sizeof(struct rewrite_data))) == NULL) {
 		LM_ERR("out of shared memory\n");
@@ -621,9 +614,35 @@ static int update_route_data(fifo_opt_t * opts) {
 	updated = 0;
 
 	if (opts->cmd == OPT_ADD) {
-		if (add_route(rd, 1, opts->domain.s, opts->prefix.s, 0, opts->prob,
-		              opts->host.s, opts->strip, opts->rewrite_prefix.s, opts->rewrite_suffix.s,
-		              opts->status, opts->hash_index, -1, NULL, NULL) < 0) {
+		tmp_domain=opts->domain;
+		tmp_prefix=opts->prefix;
+		tmp_host=opts->host;
+		tmp_rewrite_prefix=opts->rewrite_prefix;
+		tmp_rewrite_suffix=opts->rewrite_suffix;
+		if (tmp_domain.s==NULL) {
+			tmp_domain.s="";
+			tmp_domain.len=0;
+		}
+		if (tmp_prefix.s==NULL) {
+			tmp_prefix.s="";
+			tmp_prefix.len=0;
+		}
+		if (tmp_host.s==NULL) {
+			tmp_host.s="";
+			tmp_host.len=0;
+		}
+		if (tmp_rewrite_prefix.s==NULL) {
+			tmp_rewrite_prefix.s="";
+			tmp_rewrite_prefix.len=0;
+		}
+		if (tmp_rewrite_suffix.s==NULL) {
+			tmp_rewrite_suffix.s="";
+			tmp_rewrite_suffix.len=0;
+		}
+
+		if (add_route(rd, 1, &tmp_domain, &tmp_prefix, 0, opts->prob,
+		              &tmp_host, opts->strip, &tmp_rewrite_prefix, &tmp_rewrite_suffix,
+		              opts->status, opts->hash_index, -1, NULL, &tmp_comment) < 0) {
 			goto errout;
 		}
 		updated = 1;
@@ -638,7 +657,7 @@ static int update_route_data(fifo_opt_t * opts) {
 			if(rd->carriers[i]){
 			for (j=0; j<rd->carriers[i]->tree_num; j++) {
 				if (rd->carriers[i]->trees[j] && rd->carriers[i]->trees[j]->tree) {
-					if (update_route_data_recursor(rd->carriers[i]->trees[j]->tree, rd->carriers[i]->trees[j]->name.s, opts) < 0) {
+					if (update_route_data_recursor(rd->carriers[i]->trees[j]->tree, &rd->carriers[i]->trees[j]->name, opts) < 0) {
 						goto errout;
 					}
 				}
@@ -685,14 +704,14 @@ errout:
  *
  * @return 0 on success, -1 on failure
  */
-static int update_route_data_recursor(struct route_tree_item * rt, char * act_domain, fifo_opt_t * opts) {
+static int update_route_data_recursor(struct route_tree_item * rt, str * act_domain, fifo_opt_t * opts) {
 	int i, hash = 0;
 	struct route_rule * rr, * prev = NULL, * tmp, * backup;
 	if (rt->rule_list) {
 		rr = rt->rule_list;
 		while (rr) {
 			if ((!opts->domain.len || (strncmp(opts->domain.s, OPT_STAR, strlen(OPT_STAR)) == 0)
-			        || ((strncmp(opts->domain.s, act_domain, opts->domain.len) == 0) && (opts->domain.len == strlen(act_domain))))
+			        || ((opts->domain.len == act_domain->len) && (strncmp(opts->domain.s, act_domain->s, opts->domain.len) == 0)))
 			        && ((!opts->prefix.len && !rr->prefix.len) || (strncmp(opts->prefix.s, OPT_STAR, strlen(OPT_STAR)) == 0)
 			            || (rr->prefix.len == opts->prefix.len && (strncmp(opts->prefix.s, rr->prefix.s, opts->prefix.len) == 0)))
 			        && ((!opts->host.len && !rr->host.s) || (strncmp(opts->host.s, OPT_STAR, strlen(OPT_STAR)) == 0)
@@ -700,7 +719,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 			        && ((opts->prob < 0) || (opts->prob == rr->prob))) {
 				switch (opts->cmd) {
 					case OPT_REPLACE:
-						LM_INFO("replace host %s with %s\n", rr->host.s, opts->new_host.s);
+						LM_INFO("replace host %.*s with %.*s\n", rr->host.len, rr->host.s, opts->new_host.len, opts->new_host.s);
 						if (rr->host.s) {
 							shm_free(rr->host.s);
 						}
@@ -728,7 +747,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 							return -1;
 						}
 						if (opts->new_host.len > 0) {
-							LM_INFO("deactivating host %s\n", rr->host.s);
+							LM_INFO("deactivating host %.*s\n", rr->host.len, rr->host.s);
 							if (opts->new_host.len == 1 && opts->new_host.s[0] == 'a') {
 								if ((backup = find_auto_backup(rt, rr)) == NULL) {
 									LM_ERR("didn't find auto backup route\n");
@@ -770,7 +789,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 						updated = 1;
 						break;
 					case OPT_ACTIVATE:
-						LM_INFO("activating host %s\n", rr->host.s);
+						LM_INFO("activating host %.*s\n", rr->host.len, rr->host.s);
 						if (remove_backed_up(rr) < 0) {
 							LM_ERR("could not reset backup hosts\n");
 							FIFO_ERR(E_RESET);
@@ -782,7 +801,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, char * act_do
 						updated = 1;
 						break;
 					case OPT_REMOVE:
-						LM_INFO("removing host %s\n", rr->host.s);
+						LM_INFO("removing host %.*s\n", rr->host.len, rr->host.s);
 						if (rr->backed_up){
 							LM_ERR("cannot remove host %.*s which is backup for other hosts\n", rr->host.len, rr->host.s);
 							FIFO_ERR(E_DELBACKUP);
