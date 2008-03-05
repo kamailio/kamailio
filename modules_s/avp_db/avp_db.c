@@ -257,7 +257,7 @@ static int load_uri_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* fp
 	static str default_did = STR_STATIC_INIT(DEFAULT_DID);
 
 	if (get_str_fparam(&uri, msg, (fparam_t*)fp) != 0) {
-		ERR("Unable to get URI\n");
+		DBG("Unable to get URI from load_uri_attrs parameters\n");
 		return -1;
 	}
 
@@ -300,7 +300,7 @@ static int load_user_attrs(struct sip_msg* msg, unsigned long flags, fparam_t* f
     db_res_t* res;
 
 	if (get_str_fparam(&load_user_attrs_cmd->match[0].v.lstr, msg, (fparam_t*)fp) < 0) {
-		ERR("Unable to get UID\n");
+		DBG("Unable to get UID from load_user_attrs parameter\n");
 		return -1;
 	}
 
