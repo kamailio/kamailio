@@ -5,9 +5,7 @@ all:
 				echo "run test `basename $$FILE .sh`:" `head "$$FILE" -n 2 | tail -n 1 | cut -c 3-` ; \
 				./$$FILE ; \
 				ret=$$? ; \
-					if [ "$$ret" -eq 0 ] ; then \
-						echo "success" ; \
-					else \
+					if [ ! "$$ret" -eq 0 ] ; then \
 						echo "failed" ; \
 					fi ; \
 			fi ; \
