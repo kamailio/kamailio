@@ -46,7 +46,9 @@ Chapter 1. User's Guide
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
 
-     * None.
+     * PostgreSQL library - e.g., libpq5.
+     * PostgreSQL devel library - to compile the module (e.g.,
+       libpq-dev).
      __________________________________________________________
 
 1.3. Exported Parameters

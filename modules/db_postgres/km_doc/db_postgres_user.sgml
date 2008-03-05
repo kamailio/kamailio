@@ -31,7 +31,13 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>None</emphasis>.
+				<emphasis>PostgreSQL library</emphasis> - e.g., libpq5.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>PostgreSQL devel library</emphasis> - to compile
+				the module (e.g., libpq-dev).
 			</para>
 			</listitem>
 			</itemizedlist>
