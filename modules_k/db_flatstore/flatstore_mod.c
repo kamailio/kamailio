@@ -29,6 +29,7 @@
 
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
+#include "../../db/db.h"
 #include "flatstore.h"
 #include "flat_mi.h"
 #include "flatstore_mod.h"
@@ -41,6 +42,7 @@ static int mod_init(void);
 
 static void mod_destroy(void);
 
+int db_flat_bind_api(db_func_t *dbb);
 
 /*
  * Process number used in filenames
@@ -71,13 +73,9 @@ time_t local_timestamp;
  * Flatstore database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",   (cmd_function)flat_use_table, 2, 0, 0, 0},
-	{"db_init",        (cmd_function)flat_db_init,   1, 0, 0, 0},
-	{"db_close",       (cmd_function)flat_db_close,  2, 0, 0, 0},
-	{"db_insert",      (cmd_function)flat_db_insert, 2, 0, 0, 0},
+	{"db_bind_api",    (cmd_function)db_flat_bind_api,      0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
-
 
 /*
  * Exported parameters
@@ -147,3 +145,19 @@ static int child_init(int rank)
 	}
 	return 0;
 }
+
+int db_flat_bind_api(db_func_t *dbb)
+{
+	if(dbb==NULL)
+		return -1;
+
+	memset(dbb, 0, sizeof(db_func_t));
+
+	dbb->use_table        = flat_use_table;
+	dbb->init             = flat_db_init;
+	dbb->close            = flat_db_close;
+	dbb->insert           = flat_db_insert;
+
+	return 0;
+}
+
