@@ -218,13 +218,13 @@ int find_tree(str tree){
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct rewrite_data * rd, int carrier_id,
-		const char * domain, const char * scan_prefix, int max_targets,
-		double prob, const char * rewrite_hostpart, int strip,
-		const char * rewrite_local_prefix, const char * rewrite_local_suffix,
-		int status, int hash_index, int backup, int * backed_up, const char * comment) {
+		const str * domain, const str * scan_prefix, int max_targets,
+		double prob, const str * rewrite_hostpart, int strip,
+		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
+		int status, int hash_index, int backup, int * backed_up, const str * comment) {
 	struct carrier_tree * ct = NULL;
 	struct route_tree * rt = NULL;
-	LM_INFO("adding prefix %s, prob %f\n", scan_prefix, prob);
+	LM_INFO("adding prefix %.*s, prob %f\n", scan_prefix->len, scan_prefix->s, prob);
 
 	if ((ct = get_carrier_tree(carrier_id, rd)) == NULL) {
 		LM_ERR("could not retrieve carrier tree\n");
@@ -260,21 +260,16 @@ int add_route(struct rewrite_data * rd, int carrier_id,
  *
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
-int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * domain,
-		const char * scan_prefix, const char * host, const char * reply_code,
-		int flags, int mask, const char * next_domain, const char * comment) {
+int add_failure_route(struct rewrite_data * rd, int carrier_id, const str * domain,
+		const str * scan_prefix, const str * host, const str * reply_code,
+		int flags, int mask, const str * next_domain, const str * comment) {
 	int next_domain_id;
 	struct carrier_tree * ct = NULL;
 	struct route_tree * rt = NULL;
-	LM_INFO("adding prefix %s, reply code %s\n", scan_prefix, reply_code);
+	LM_INFO("adding prefix %.*s, reply code %.*s\n", scan_prefix->len, scan_prefix->s, reply_code->len, reply_code->s);
 		
-	if ((domain==NULL) || (scan_prefix == NULL) || (host ==NULL) || (reply_code == NULL) || (next_domain == NULL)) {
-		LM_ERR("NULL pointer in parameter\n");
-		return -1;
-	}
-	
-	if (strlen(reply_code)!=3) {
-		LM_ERR("invalid reply_code '%s'!\n", reply_code);
+	if (reply_code->len!=3) {
+		LM_ERR("invalid reply_code '%.*s'!\n", reply_code->len, reply_code->s);
 		return -1;
 	}
 	
@@ -309,22 +304,22 @@ int add_failure_route(struct rewrite_data * rd, int carrier_id, const char * dom
  * @return a pointer to the root node of the desired routing tree,
  * NULL on failure
  */
-struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, struct rewrite_data * rd, int trees) {
+struct carrier_tree * add_carrier_tree(const str * carrier, int carrier_id, struct rewrite_data * rd, int trees) {
 	int i, id;
 	if (!rd) {
 		LM_ERR("NULL pointer in parameter\n");
 		return NULL;
 	}
-	LM_INFO("add carrier %s\n", carrier);
+	LM_INFO("add carrier %.*s\n", carrier->len, carrier->s);
 	for (i=0; i<rd->tree_num; i++) {
 		if (rd->carriers[i]) {
 			if (rd->carriers[i]->id == carrier_id) {
-				LM_INFO("found carrier %i: %s\n", rd->carriers[i]->id, rd->carriers[i]->name.s);
+				LM_INFO("found carrier %i: %.*s\n", rd->carriers[i]->id, rd->carriers[i]->name.len, rd->carriers[i]->name.s);
 				return rd->carriers[i];
 			}
 		}
 	}
-	LM_INFO("carrier %s not found, add it\n", carrier);
+	LM_INFO("carrier %.*s not found, add it\n", carrier->len, carrier->s);
 	if ((id = add_tree(carrier, carrier_id)) < 0) {
 		LM_ERR("could not add tree\n");
 		return NULL;
@@ -337,8 +332,8 @@ struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, str
 		return NULL;
 	}
 	rd->carriers[id]->index = id;
-	LM_INFO("created carrier tree: %s, with id %i and %ld trees\n", 
-		rd->carriers[id]->name.s, rd->carriers[id]->id, 
+	LM_INFO("created carrier tree: %.*s, with id %i and %ld trees\n", 
+		rd->carriers[id]->name.len, rd->carriers[id]->name.s, rd->carriers[id]->id, 
 		(long)rd->carriers[id]->tree_num);
 	return rd->carriers[id];
 }
@@ -352,21 +347,18 @@ struct carrier_tree * add_carrier_tree(const char * carrier, int carrier_id, str
  * @return a pointer to the newly allocated route tree or NULL on
  * error, in which case it LOGs an error message.
  */
-struct carrier_tree * create_carrier_tree(const char * tree, int carrier_id, int id, int trees) {
+struct carrier_tree * create_carrier_tree(const str * tree, int carrier_id, int id, int trees) {
 	struct carrier_tree * tmp;
 	if ((tmp = shm_malloc(sizeof(struct carrier_tree))) == NULL) {
 		LM_ERR("out of shared memory\n");
 		return NULL;
 	}
 	memset(tmp, 0, sizeof(struct carrier_tree));
-	if ((tmp->name.s = shm_malloc(strlen(tree) + 1)) == NULL) {
-		LM_ERR("out of shared memory\n");
+	if (shm_str_dup(&tmp->name, tree)!=0) {
+		LM_ERR("cannot duplicate string\n");
 		shm_free(tmp);
 		return NULL;
 	}
-	memset(tmp->name.s, 0, strlen(tree) + 1);
-	strcpy(tmp->name.s, tree);
-	tmp->name.len = strlen(tree);
 	tmp->id = carrier_id;
 	tmp->index = id;
 	tmp->tree_num = trees;
@@ -418,7 +410,7 @@ struct carrier_tree * get_carrier_tree(int carrier_id, struct rewrite_data * rd)
  * @return values: on succcess the numerical index of the given tree,
  * -1 on failure
  */
-int add_tree(const char * tree, int carrier_id) {
+int add_tree(const str * tree, int carrier_id) {
 	struct tree_map * tmp, * prev = NULL;
 	int id = 0;
 	if (!script_trees) {
@@ -443,13 +435,11 @@ int add_tree(const char * tree, int carrier_id) {
 		return -1;
 	}
 	memset(tmp, 0, sizeof(struct tree_map));
-	if ((tmp->name.s = shm_malloc(strlen(tree) + 1)) == NULL) {
-		LM_ERR("out of shared memory\n");
+	if (shm_str_dup(&tmp->name, tree)!=0) {
+		LM_ERR("cannot duplicate string\n");
 		shm_free(tmp);
 		return -1;
 	}
-	strcpy(tmp->name.s, tree);
-	tmp->name.len = strlen(tmp->name.s);
 	tmp->no = id;
 	tmp->id = carrier_id;
 	if (!prev) {
@@ -457,7 +447,7 @@ int add_tree(const char * tree, int carrier_id) {
 	} else {
 		prev->next = tmp;
 	}
-	LM_INFO("tree %s has internal id %i\n", tree, id);
+	LM_INFO("tree %.*s has internal id %i\n", tree->len, tree->s, id);
 	return id;
 }
 
@@ -534,8 +524,7 @@ void destroy_rewrite_data(struct rewrite_data *data) {
 static int carrier_tree_fixup(struct rewrite_data * rd){
 	int i;
 	str tmp;
-	tmp.s = default_tree;
-	tmp.len = strlen(default_tree);
+	tmp = default_tree;
 	rd->default_carrier_index = -1;
 	for(i=0; i<rd->tree_num; i++){
 		if(rd->carriers[i]){
