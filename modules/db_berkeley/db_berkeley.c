@@ -129,7 +129,7 @@ static void destroy(void)
 	bdblib_destroy();
 }
 
-int dbt_bind_api(db_func_t *dbb)
+int bdb_bind_api(db_func_t *dbb)
 {
 	if(dbb==NULL)
 		return -1;
