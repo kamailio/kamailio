@@ -284,7 +284,7 @@ modparam("carrierroute", "carrier_column", "carrier")
    scan prefixes 49721 and 49, the called number is 49721913740,
    it matches 49721, because the longest match is taken. If no
    prefix matches, the number is not routed. To prevent this, an
-   empty prefix value of NULL could be added.
+   empty prefix value of "" could be added.
 
    Default value is "scan_prefix".
 
@@ -603,7 +603,7 @@ modparam("carrierroute", "failure_carrier_column", "carrier")
    scan prefixes 49721 and 49, the called number is 49721913740,
    it matches 49721, because the longest match is taken. If no
    prefix matches, the number is not failure routed. To prevent
-   this, an empty prefix value of NULL could be added.
+   this, an empty prefix value of "" could be added.
 
    Default value is "scan_prefix".
 
@@ -736,7 +736,9 @@ cr_tree_rewrite_uri(tree, domain)
 
    This function loads the carrier and stores it in an AVP. It
    cannot be used in the config file mode, as it needs a mapping
-   of the given user to a certain carrier.
+   of the given user to a certain carrier. This mapping must be
+   available in the table that is specified in the
+   "subscriber_table" variable.
 
    Meaning of the parameters is as follows:
 
@@ -1028,12 +1030,12 @@ failure_route[2] {
    Example 1-42. Configuration example - Routing to user tree
 ...
 route[1] {
-        cr_user_carrier("$fU", "$fd", "$avp(carrier)");
+        cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
 
-        $avp(domain)="start";
-        if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "ca
-ll_id",
-                        "$avp(host)")) {
+        # just an example domain
+        $avp(s:domain)="start";
+        if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
+                        "call_id", "$avp(s:host)")) {
                 xlog("L_ERR", "cr_route failed\n");
                 exit;
         }
@@ -1045,15 +1047,14 @@ ll_id",
 
 failure_route[1] {
         revert_uri();
-        if (!cr_next_domain("$avp(carrier)", "$avp(domain)", "$rU", "$av
-p(host)",
-                        "$T_reply_code", "$avp(domain)")) {
+        if (!cr_next_domain("$avp(s:carrier)", "$avp(s:domain)", "$rU",
+                        "$avp(s:host)", "$T_reply_code", "$avp(s:domain)
+")) {
                 xlog("L_ERR", "cr_next_domain failed\n");
                 exit;
         }
-        if (!cr_route("$avp(carrier)", "$avp(domain)", "$rU", "$rU", "ca
-ll_id",
-                        "$avp(host)")) {
+        if (!cr_route("$avp(s:carrier)", "$avp(s:domain)", "$rU", "$rU",
+                        "call_id", "$avp(s:host)")) {
                 xlog("L_ERR", "cr_route failed\n");
                 exit;
         }
