@@ -143,7 +143,8 @@ void flat_db_close(db_con_t* h)
  * v: values of the keys
  * n: number of key=value pairs
  */
-int flat_db_insert(db_con_t* h, db_key_t* k, db_val_t* v, int n)
+int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
+		const int n)
 {
 	FILE* f;
 	int i;
