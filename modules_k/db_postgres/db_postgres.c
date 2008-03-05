@@ -31,9 +31,12 @@
 #include <stdio.h>
 #include "../../sr_module.h"
 #include "../../db/db_con.h"
+#include "../../db/db.h"
 #include "dbase.h"
 
 MODULE_VERSION
+
+int db_postgres_bind_api(db_func_t *dbb);
 
 static int mod_init(void);
 
@@ -42,16 +45,7 @@ static int mod_init(void);
  */
 
 static cmd_export_t cmds[]={
-	{"db_use_table",    (cmd_function)db_postgres_use_table,    2, 0, 0, 0},
-	{"db_init",         (cmd_function)db_postgres_init,         1, 0, 0, 0},
-	{"db_close",        (cmd_function)db_postgres_close,        2, 0, 0, 0},
-	{"db_query",        (cmd_function)db_postgres_query,        2, 0, 0, 0},
-	{"db_fetch_result", (cmd_function)db_postgres_fetch_result, 2, 0, 0, 0},
-	{"db_raw_query",    (cmd_function)db_postgres_raw_query,    2, 0, 0, 0},
-	{"db_free_result",  (cmd_function)db_postgres_free_query,   2, 0, 0, 0},
-	{"db_insert",       (cmd_function)db_postgres_insert,       2, 0, 0, 0},
-	{"db_delete",       (cmd_function)db_postgres_delete,       2, 0, 0, 0},
-	{"db_update",       (cmd_function)db_postgres_update,       2, 0, 0, 0},
+	{"db_bind_api",     (cmd_function)db_postgres_bind_api,     0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
 
@@ -76,6 +70,27 @@ struct module_exports exports = {
 static int mod_init(void)
 {
 	LM_INFO("initializing...\n");
+	return 0;
+}
+
+int db_postgres_bind_api(db_func_t *dbb)
+{
+	if(dbb==NULL)
+		return -1;
+
+	memset(dbb, 0, sizeof(db_func_t));
+
+	dbb->use_table        = db_postgres_use_table;
+	dbb->init             = db_postgres_init;
+	dbb->close            = db_postgres_close;
+	dbb->query            = db_postgres_query;
+	dbb->fetch_result     = db_postgres_fetch_result;
+	dbb->raw_query        = db_postgres_raw_query;
+	dbb->free_result      = db_postgres_free_query;
+	dbb->insert           = db_postgres_insert;
+	dbb->delete           = db_postgres_delete; 
+	dbb->update           = db_postgres_update;
+
 	return 0;
 }
 
