@@ -214,7 +214,7 @@ static int db_unixodbc_store_result(const db_con_t* _h, db_res_t** _r)
 /*
  * Release a result set from memory
  */
-int db_unixodbc_free_result(const db_con_t* _h, db_res_t* _r)
+int db_unixodbc_free_result(db_con_t* _h, db_res_t* _r)
 {
 	if ((!_h) || (!_r))
 	{

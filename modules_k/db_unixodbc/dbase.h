@@ -51,7 +51,7 @@ void db_unixodbc_close(db_con_t* _h);
 /*
  * Free all memory allocated by get_result
  */
-int db_unixodbc_free_result(const db_con_t* _h, db_res_t* _r);
+int db_unixodbc_free_result(db_con_t* _h, db_res_t* _r);
 
 /*
  * Do a query

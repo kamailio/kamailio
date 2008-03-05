@@ -29,6 +29,7 @@
  */
 
 #include "../../sr_module.h"
+#include "../../db/db.h"
 #include "dbase.h"
 #include "db_unixodbc.h"
 
@@ -38,21 +39,13 @@ int use_escape_common = 0;  /* Enable common escaping */
 
 MODULE_VERSION
 
+int db_unixodbc_bind_api(db_func_t *dbb);
 
 /*
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
-	{"db_use_table",   (cmd_function)db_unixodbc_use_table,      2, 0, 0, 0},
-	{"db_init",        (cmd_function)db_unixodbc_init,        1, 0, 0, 0},
-	{"db_close",       (cmd_function)db_unixodbc_close,       2, 0, 0, 0},
-	{"db_query",       (cmd_function)db_unixodbc_query,       2, 0, 0, 0},
-	{"db_raw_query",   (cmd_function)db_unixodbc_raw_query,   2, 0, 0, 0},
-	{"db_free_result", (cmd_function)db_unixodbc_free_result, 2, 0, 0, 0},
-	{"db_insert",      (cmd_function)db_unixodbc_insert,      2, 0, 0, 0},
-	{"db_delete",      (cmd_function)db_unixodbc_delete,      2, 0, 0, 0},
-	{"db_update",      (cmd_function)db_unixodbc_update,      2, 0, 0, 0},
-	{"db_replace",     (cmd_function)db_unixodbc_replace,     2, 0, 0, 0},
+	{"db_bind_api",    (cmd_function)db_unixodbc_bind_api,    0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -82,4 +75,25 @@ struct module_exports exports = {
 	0,          /* destroy function */
 	0           /* per-child init function */
 };
+
+int db_unixodbc_bind_api(db_func_t *dbb)
+{
+	if(dbb==NULL)
+		return -1;
+
+	memset(dbb, 0, sizeof(db_func_t));
+
+	dbb->use_table        = db_unixodbc_use_table;
+	dbb->init             = db_unixodbc_init;
+	dbb->close            = db_unixodbc_close;
+	dbb->query            = db_unixodbc_query;
+	dbb->raw_query        = db_unixodbc_raw_query;
+	dbb->free_result      = db_unixodbc_free_result;
+	dbb->insert           = db_unixodbc_insert;
+	dbb->delete           = db_unixodbc_delete; 
+	dbb->update           = db_unixodbc_update;
+	dbb->replace          = db_unixodbc_replace;
+
+	return 0;
+}
 
