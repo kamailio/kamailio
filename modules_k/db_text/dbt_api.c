@@ -144,7 +144,7 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STRING;
-				VAL_FREE(&(ROW_VALUES(_r)[i])) = 1;
+				VAL_FREE(&(ROW_VALUES(_r)[i])) = 0;
 			break;
 
 			case DB_STR:
@@ -153,7 +153,7 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_STR;
-				VAL_FREE(&(ROW_VALUES(_r)[i])) = 1;
+				VAL_FREE(&(ROW_VALUES(_r)[i])) = 0;
 			break;
 
 			case DB_DATETIME:
@@ -168,7 +168,7 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 				VAL_STR(&(ROW_VALUES(_r)[i])).len =
 						DBT_CON_ROW(_h)->fields[i].val.str_val.len;
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_BLOB;
-				VAL_FREE(&(ROW_VALUES(_r)[i])) = 1;
+				VAL_FREE(&(ROW_VALUES(_r)[i])) = 0;
 			break;
 
 			case DB_BITMAP:
