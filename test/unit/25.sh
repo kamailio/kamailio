@@ -1,5 +1,5 @@
 #!/bin/bash
-# loads a userblacklist config from mysql database
+# loads a userblacklist config from mysql database and test some lists
 
 # Copyright (C) 2007 1&1 Internet AG
 #
