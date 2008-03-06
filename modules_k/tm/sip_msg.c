@@ -447,6 +447,9 @@ do { \
 	/* sip msg structure */
 	memcpy( new_msg , org_msg , sizeof(struct sip_msg) );
 
+	/* avoid copying pointer to un-clonned structures */
+	new_msg->sdp = 0;
+
 	new_msg->msg_flags |= FL_SHM_CLONE;
 	p += ROUND4(sizeof(struct sip_msg));
 	new_msg->add_rm = 0;
