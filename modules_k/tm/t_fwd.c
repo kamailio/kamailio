@@ -601,8 +601,8 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	}
 
 	/* do not forward requests which were already cancelled*/
-	if (was_cancelled(t)) {
-		LM_ERR("discarding fwd for a cancelled transaction\n");
+	if (was_cancelled(t) || no_new_branches(t)) {
+		LM_ERR("discarding fwd for a cancelled/6xx transaction\n");
 		ser_error = E_NO_DESTINATION;
 		return -1;
 	}

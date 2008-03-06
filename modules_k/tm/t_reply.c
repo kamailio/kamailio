@@ -784,6 +784,8 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			/* this is a winner and close all branches */
 			which_cancel( Trans, cancel_bitmap );
 			picked_branch=branch;
+			/* no more new branches should be added to this transaction */
+			Trans->flags |= T_NO_NEW_BRANCHES_FLAG;
 		} else {
 			/* if all_final return lowest */
 			picked_branch = t_pick_branch( Trans, &picked_code);

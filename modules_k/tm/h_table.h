@@ -187,6 +187,8 @@ struct totag_elem {
 #define T_PASS_PROVISIONAL_FLAG (1<<6)
 /* do auto DNS failover  */
 #define T_NO_DNS_FAILOVER_FLAG  (1<<7)
+/* transaction must not create new branches  */
+#define T_NO_NEW_BRANCHES_FLAG  (1<<7)
 
 /* transaction UAC's flags */
 /* is the UAC pending for CANCEL ?  */
@@ -333,6 +335,7 @@ struct s_table
 #define is_hopbyhop_cancel(_t_)  ((_t_)->flags&T_HOPBYHOP_CANCEL_FLAG)
 #define no_autoack(_t_)          ((_t_)->flags&T_NO_AUTOACK_FLAG)
 #define pass_provisional(_t_)    ((_t_)->flags&T_PASS_PROVISIONAL_FLAG)
+#define no_new_branches(_t_)     ((_t_)->flags&T_NO_NEW_BRANCHES_FLAG)
 
 
 extern int syn_branch;
