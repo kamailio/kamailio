@@ -271,7 +271,10 @@ int db_print_where(const db_con_t* _c, char* _b, const int _l, const db_key_t* _
 			len += ret;
 		}
 		l = _l - len;
-		(*val2str)(_c, &(_v[i]), _b + len, &l);
+		if ( (*val2str)(_c, &(_v[i]), _b + len, &l) < 0) {
+			LM_ERR("Error while converting value to string\n");
+			return -1;
+		}
 		len += l;
 		if (i != (_n - 1)) {
 			ret = snprintf(_b + len, _l - len, " AND ");
@@ -307,7 +310,10 @@ int db_print_set(const db_con_t* _c, char* _b, const int _l, const db_key_t* _k,
 		len += ret;
 
 		l = _l - len;
-		(*val2str)(_c, &(_v[i]), _b + len, &l);
+		if ( (*val2str)(_c, &(_v[i]), _b + len, &l) < 0) {
+			LM_ERR("Error while converting value to string\n");
+			return -1;
+		}
 		len += l;
 		if (i != (_n - 1)) {
 			if ((_l - len) >= 1) {
