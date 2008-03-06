@@ -132,7 +132,8 @@ static cmd_export_t cmds[]={
 	{"search_append",    (cmd_function)search_append_f,   2, fixup_regexp_none,
 			fixup_free_regexp_none,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"search_append_body", (cmd_function)search_append_body_f,   2, fixup_regexp_none,
+	{"search_append_body", (cmd_function)search_append_body_f,   2,
+			fixup_regexp_none,
 			fixup_free_regexp_none, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
 	{"replace",          (cmd_function)replace_f,         2, fixup_regexp_none,
@@ -831,22 +832,25 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	struct hdr_field *hf;
 	struct lump* l;
 	int cnt;
+	gparam_p gp;
 
+	gp = (gparam_p)str_hf;
 	cnt=0;
+
 	/* we need to be sure we have seen all HFs */
 	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
 		/* for well known header names str_hf->s will be set to NULL 
 		   during parsing of openser.cfg and str_hf->len contains 
 		   the header type */
-		if(((str*)str_hf)->s==NULL)
+		if(gp->type==GPARAM_TYPE_INT)
 		{
-			if (((str*)str_hf)->len!=hf->type)
+			if (gp->v.ival!=hf->type)
 				continue;
 		} else {
-			if (hf->name.len!=((str*)str_hf)->len)
+			if (hf->name.len!=gp->v.sval.len)
 				continue;
-			if (strncasecmp(hf->name.s, ((str*)str_hf)->s, hf->name.len)!=0)
+			if (strncasecmp(hf->name.s, gp->v.sval.s, hf->name.len)!=0)
 				continue;
 		}
 		l=del_lump(msg, hf->name.s-msg->buf, hf->len, 0);
@@ -862,18 +866,21 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {
 	struct hdr_field *hf;
+	gparam_p gp;
+
+	gp = (gparam_p)str_hf;
 
 	/* we need to be sure we have seen all HFs */
 	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
-		if(((str*)str_hf)->s==NULL)
+		if(gp->type==GPARAM_TYPE_INT)
 		{
-			if (((str*)str_hf)->len!=hf->type)
+			if (gp->v.ival!=hf->type)
 				continue;
 		} else {
-			if (hf->name.len!=((str*)str_hf)->len)
+			if (hf->name.len!=gp->v.sval.len)
 				continue;
-			if (strncasecmp(hf->name.s,((str*)str_hf)->s,hf->name.len)!=0)
+			if (strncasecmp(hf->name.s,gp->v.sval.s,hf->name.len)!=0)
 				continue;
 		}
 		return 1;
@@ -971,7 +978,7 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 /* add str1 to end of header or str1.r-uri.str2 */
 
 static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
-		gparam_p gp, int mode, str *hfs)
+		gparam_p hfval, int mode, gparam_p hfanc)
 {
 	struct lump* anchor;
 	struct hdr_field *hf;
@@ -985,16 +992,16 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	}
 	
 	hf = 0;
-	if(hfs!=NULL) {
+	if(hfanc!=NULL) {
 		for (hf=msg->headers; hf; hf=hf->next) {
-			if((str*)hfs->s==NULL)
+			if(hfanc->type==GPARAM_TYPE_INT)
 			{
-				if (((str*)hfs)->len!=hf->type)
-				continue;
-			} else {
-				if (hf->name.len!=((str*)hfs)->len)
+				if (hfanc->v.ival!=hf->type)
 					continue;
-				if (strncasecmp(hf->name.s,((str*)hfs)->s,hf->name.len)!=0)
+			} else {
+				if (hf->name.len!=hfanc->v.sval.len)
+					continue;
+				if (strncasecmp(hf->name.s,hfanc->v.sval.s,hf->name.len)!=0)
 					continue;
 			}
 			break;
@@ -1023,8 +1030,8 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	if(str1) {
 		s0 = *str1;
 	} else {
-		if(gp) {
-			if(fixup_get_svalue(msg, gp, &s0)!=0)
+		if(hfval) {
+			if(fixup_get_svalue(msg, hfval, &s0)!=0)
 			{
 				LM_ERR("cannot print the format\n");
 				return -1;
@@ -1066,7 +1073,7 @@ static int append_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 static int append_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
 	return add_hf_helper(msg, 0, 0, (gparam_p)str1, 0,
-			(str*)str2);
+			(gparam_p)str2);
 }
 
 static int insert_hf_1(struct sip_msg *msg, char *str1, char *str2 )
@@ -1077,7 +1084,7 @@ static int insert_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 static int insert_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
 	return add_hf_helper(msg, 0, 0, (gparam_p)str1, 1, 
-			(str*)str2);
+			(gparam_p)str2);
 }
 
 static int append_urihf(struct sip_msg *msg, char *str1, char *str2)
@@ -1120,51 +1127,56 @@ static int is_method_f(struct sip_msg *msg, char *meth, char *str2 )
  */
 static int hname_fixup(void** param, int param_no)
 {
-	str* s;
 	char c;
 	struct hdr_field hdr;
-
-	s = (str*)pkg_malloc(sizeof(str));
-	if (!s) {
-		LM_ERR("no pkg memory left\n");
+	gparam_p gp = NULL;
+	
+	gp = (gparam_p)pkg_malloc(sizeof(gparam_t));
+	if(gp == NULL)
+	{
+		LM_ERR("no more memory\n");
 		return E_UNSPEC;
 	}
+	memset(gp, 0, sizeof(gparam_t));
 
-	s->s = (char*)*param;
-	s->len = strlen(s->s);
-	if(s->len==0)
+	gp->v.sval.s = (char*)*param;
+	gp->v.sval.len = strlen(gp->v.sval.s);
+	if(gp->v.sval.len==0)
 	{
 		LM_ERR("empty header name parameter\n");
-		pkg_free(s);
+		pkg_free(gp);
 		return E_UNSPEC;
 	}
 	
-	c = s->s[s->len];
-	s->s[s->len] = ':';
-	s->len++;
+	c = gp->v.sval.s[gp->v.sval.len];
+	gp->v.sval.s[gp->v.sval.len] = ':';
+	gp->v.sval.len++;
 	
-	if (parse_hname2(s->s, s->s + ((s->len<4)?4:s->len), &hdr)==0)
+	if (parse_hname2(gp->v.sval.s, gp->v.sval.s
+				+ ((gp->v.sval.len<4)?4:gp->v.sval.len), &hdr)==0)
 	{
 		LM_ERR("error parsing header name\n");
-		pkg_free(s);
+		pkg_free(gp);
 		return E_UNSPEC;
 	}
 	
-	s->len--;
-	s->s[s->len] = c;
+	gp->v.sval.len--;
+	gp->v.sval.s[gp->v.sval.len] = c;
 
 	if (hdr.type!=HDR_OTHER_T && hdr.type!=HDR_ERROR_T)
 	{
 		LM_INFO("using hdr type (%d) instead of <%.*s>\n",
-				hdr.type, s->len, s->s);
-		pkg_free(s->s);
-		s->s = NULL;
-		s->len = hdr.type;
+				hdr.type, gp->v.sval.len, gp->v.sval.s);
+		pkg_free(gp->v.sval.s);
+		gp->v.sval.s = NULL;
+		gp->v.ival = hdr.type;
+		gp->type = GPARAM_TYPE_INT;
 	} else {
-		LM_INFO("using hdr type name <%.*s>\n", s->len, s->s);
+		gp->type = GPARAM_TYPE_STR;
+		LM_INFO("using hdr type name <%.*s>\n", gp->v.sval.len, gp->v.sval.s);
 	}
 	
-	*param = (void*)s;
+	*param = (void*)gp;
 	return 0;
 }
 
@@ -1172,8 +1184,8 @@ static int free_hname_fixup(void** param, int param_no)
 {
 	if(*param)
 	{
-		if(((str*)(*param))->s)
-			pkg_free(((str*)(*param))->s);
+		if(((gparam_p)(*param))->type==GPARAM_TYPE_STR)
+			pkg_free(((gparam_p)(*param))->v.sval.s);
 		pkg_free(*param);
 		*param = 0;
 	}
