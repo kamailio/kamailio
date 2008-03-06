@@ -116,7 +116,6 @@ static int hname_fixup(void** param, int param_no);
 static int free_hname_fixup(void** param, int param_no);
 static int fixup_method(void** param, int param_no);
 static int add_header_fixup(void** param, int param_no);
-static int it_list_fixup(void** param, int param_no);
 static int fixup_body_type(void** param, int param_no);
 static int fixup_privacy(void** param, int param_no);
 
@@ -148,7 +147,7 @@ static cmd_export_t cmds[]={
 	{"replace_body_all", (cmd_function)replace_body_all_f,2, fixup_regexp_none,
 			fixup_free_regexp_none,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"append_to_reply",  (cmd_function)append_to_reply_f, 1, it_list_fixup, 0,
+	{"append_to_reply",  (cmd_function)append_to_reply_f, 1, fixup_spve_null, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|ERROR_ROUTE},
 	{"append_hf",        (cmd_function)append_hf_1,       1, add_header_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
@@ -945,7 +944,6 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 {
-	pv_elem_t *model;
 	str s0;
 
 	if(key==NULL)
@@ -954,8 +952,7 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 		return -1;
 	}
 
-	model = (pv_elem_t*)key;
-	if (pv_printf_s(msg, model, &s0)<0)
+	if(fixup_get_svalue(msg, (gparam_p)key, &s0)!=0)
 	{
 		LM_ERR("cannot print the format\n");
 		return -1;
@@ -974,7 +971,7 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 /* add str1 to end of header or str1.r-uri.str2 */
 
 static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
-		pv_elem_t *model, int mode, str *hfs)
+		gparam_p gp, int mode, str *hfs)
 {
 	struct lump* anchor;
 	struct hdr_field *hf;
@@ -1026,8 +1023,8 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 	if(str1) {
 		s0 = *str1;
 	} else {
-		if(model) {
-			if (pv_printf_s(msg, model, &s0)<0)
+		if(gp) {
+			if(fixup_get_svalue(msg, gp, &s0)!=0)
 			{
 				LM_ERR("cannot print the format\n");
 				return -1;
@@ -1063,23 +1060,23 @@ static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 
 static int append_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 0, 0);
+	return add_hf_helper(msg, 0, 0, (gparam_p)str1, 0, 0);
 }
 
 static int append_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 0,
+	return add_hf_helper(msg, 0, 0, (gparam_p)str1, 0,
 			(str*)str2);
 }
 
 static int insert_hf_1(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 1, 0);
+	return add_hf_helper(msg, 0, 0, (gparam_p)str1, 1, 0);
 }
 
 static int insert_hf_2(struct sip_msg *msg, char *str1, char *str2 )
 {
-	return add_hf_helper(msg, 0, 0, (pv_elem_t*)str1, 1, 
+	return add_hf_helper(msg, 0, 0, (gparam_p)str1, 1, 
 			(str*)str2);
 }
 
@@ -1278,32 +1275,11 @@ static int fixup_privacy(void** param, int param_no)
     return 0;
 }
 
-/*
- * Convert char* parameter to pv_elem parameter
- */
-static int it_list_fixup(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-	if(*param)
-	{
-		s.s = (char*)(*param); s.len = strlen(s.s);
-		if(pv_parse_format(&s, &model)<0)
-		{
-			LM_ERR("wrong format[%s]\n",
-				(char*)(*param));
-			return E_UNSPEC;
-		}
-		*param = (void*)model;
-	}
-	return 0;
-}
-
 static int add_header_fixup(void** param, int param_no)
 {
 	if(param_no==1)
 	{
-		return it_list_fixup(param, param_no);
+		return fixup_spve_null(param, param_no);
 	} else if(param_no==2) {
 		return hname_fixup(param, param_no);
 	} else {
