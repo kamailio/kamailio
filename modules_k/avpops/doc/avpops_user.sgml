@@ -546,7 +546,7 @@ avp_db_query("delete from subscriber");
 			<para>
 			The function has been removed from 'avpops' module. Same
 			functionality can be achived directly in configuration script
-			via assignement operator.
+			via assignment operator.
 			</para>
 			<example>
 				<title><function>avp_write</function> migration</title>
