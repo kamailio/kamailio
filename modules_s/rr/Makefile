@@ -9,5 +9,7 @@ include ../../Makefile.defs
 auto_gen=
 NAME=rr.so
 LIBS=
+SERLIBPATH=../../lib
+SER_LIBS=$(SERLIBPATH)/cds/ser_cds
 
 include ../../Makefile.modules
