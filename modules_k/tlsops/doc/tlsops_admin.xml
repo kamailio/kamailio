@@ -219,7 +219,7 @@ if (is_peer_verified()) {
 		<title>$tls_[peer|my]_san_ip</title>
 			<para>
 			<emphasis>$tls_[peer|my]_san_ip</emphasis> - ip address in the 
-			<quote>subject alternative name<quote> extension.
+			<quote>subject alternative name</quote> extension.
 			String type.
 			</para>
 	</section>
