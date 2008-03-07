@@ -732,7 +732,7 @@ my @rows = $ldap->search(
         <para>
           <variablelist>
             <varlistentry>
-              <term><anchor id="ID-08e27c41a71d449b64a8b443ae34bdb2">conf</term>
+				<term><anchor id="ID-08e27c41a71d449b64a8b443ae34bdb2"/>conf</term>
               <listitem>
                 <para>
 		  configuration object, used to find host,port,suffix and
@@ -741,7 +741,7 @@ my @rows = $ldap->search(
               </listitem>
             </varlistentry>
             <varlistentry>
-              <term><anchor id="ID-e6b91204102eda9679a64633dadda9cb">filter</term>
+				<term><anchor id="ID-e6b91204102eda9679a64633dadda9cb"/>filter</term>
               <listitem>
                 <para>
 		  ldap search filter, eg '(mail=some@domain)'
@@ -749,7 +749,7 @@ my @rows = $ldap->search(
               </listitem>
             </varlistentry>
             <varlistentry>
-              <term><anchor id="ID-1067b3f87b6da6a8f5e87238609c1802">base</term>
+				<term><anchor id="ID-1067b3f87b6da6a8f5e87238609c1802"/>base</term>
               <listitem>
                 <para>
 		  search base for this query. If undef use default suffix,
@@ -758,7 +758,7 @@ my @rows = $ldap->search(
               </listitem>
             </varlistentry>
             <varlistentry>
-              <term><anchor id="ID-1c7c9132da5e8bb2a9c24aec3df86e47">requested_attributes</term>
+				<term><anchor id="ID-1c7c9132da5e8bb2a9c24aec3df86e47"/>requested_attributes</term>
               <listitem>
                 <para>
 		  retrieve the given attributes instead of the dn from the
