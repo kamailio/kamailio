@@ -1230,6 +1230,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 		</listitem>
 		<listitem>
 		    <para><emphasis>-s</emphasis> - an optional strip value</para>
+		</listitem>
 	    </itemizedlist>
 		<para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
@@ -1273,6 +1274,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 		</listitem>
 		<listitem>
 		    <para><emphasis>-s</emphasis> - an optional strip value</para>
+		</listitem>
 	    </itemizedlist>
 	    <para>Use the "null" prefix to specify an empty prefix.</para>
 	    <example>
@@ -1433,7 +1435,7 @@ domain register {
     </section>
 
     <section>
-	<title>Installation & Running</title>
+	<title>Installation and Running</title>
 	<section>
 		<title>Database setup</title>
 		<para>
