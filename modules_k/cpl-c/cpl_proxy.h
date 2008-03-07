@@ -211,7 +211,7 @@ static void reply_callback( struct cell* t, int type, struct tmcb_params* ps)
 
 	/* the current proxying failed -> do I have another location to try ?
 	 * This applies only for SERIAL forking or if RECURSE is set */
-	if (intr->proxy.last_to_proxy) {
+	if (intr->proxy.last_to_proxy && !(no_new_branches(t)) ) {
 		/* continue proxying */
 		LM_DBG("resuming proxying....\n");
 		switch (intr->proxy.ordering) {
