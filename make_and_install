@@ -1,0 +1,153 @@
+#!/bin/bash
+
+if [ "$1" == "" ]; then
+  echo "Usage:"
+  echo "$0 [clean|compile|install|nccompile|ncinstall] \"standard|standard-dep|mysql|radius|presence|stable|experimental\" [ignore|stop] [installpath]"
+  echo " "
+  echo "  The first parameter specifies what to do: 'clean' up source tree, 'compile', or compile and 'install'.."
+  echo "  The 'nccompile' and 'ncinstall' do the same as compile and install respectively, but withou"
+  echo "  cleaning the source tree first (this will make make_and_install_output.txt easier to scan for"
+  echo "  errors and takes less time after you have compiled once)."
+  echo " "
+  echo "  The second parameter controls which modules to include. It may list several group names"
+  echo "  separated by space (see INSTALL). If you don't know what to include, use \"standard\" (default) "
+  echo "  or \"standard mysql\" (if you want mysql storage support)."
+  echo " "
+  echo "  ignore|stop(default) specifies whether to stop after found errors or ignore and just install."
+  echo "  If you have errors in a module with dependencies, it will allow you to install the remaining"
+  echo "  modules. This switch is only relevant for install and ncinstall."
+  echo " "
+  echo "  If installpath is not supplied, ser will be installed created in /usr/local and sub-directories."
+  echo " "
+  echo "  Groups and installpath will be stored and reused the next time you use make_and_install unless"
+  echo "  you specify explicitly groups and installpath on the command line."
+  echo " "
+  echo "  Examples:"
+  echo "   $0 compile"
+  echo "     will compile the standard modules without external dependencies."
+  echo "    If the make_and_install_config_* files exist, groups and installpath specified there will be used."
+  echo " "
+  echo "   $0 install \"standard mysql\" stop /tmp/ser"
+  echo "    will compile and install all mysql and standard modules without external dependencies to /tmp/ser"
+  echo "    and stop and not install if there are errors."
+  echo "    make_and_install_config_* files will be created to save the groups and installpath."
+  echo " "
+  echo "   $0 ncinstall \"standard standard-dep\" ignore"
+  echo "    will compile without cleaning first (i.e. skip already made files and modules). All"
+  echo "    modules without (standard) and with (standard-dep) dependencies will be included, but"
+  echo "    if a module won't compile due to lack of installed dependencies, SER will still be installed"
+  echo "    to default directory (/usr/local)."
+  echo "    make_and_install_config_* files will be created to save the groups and installpath."
+  echo " "
+  echo "   $0 clean"
+  echo "    will default clean ALL modules (not only standard). Specify groups to clean only those."
+  echo "    If the make_and_install_config_groups file exists, groups specified there will be used."
+  exit
+fi
+
+action="$1"
+groups="$2"
+whenerrors="$3"
+installpath="$4"
+
+# source the saved config
+if [ "$groups" == "" ]; then
+  echo "Attempting to load groups and install path from files..."
+  echo "  To reset, either specify groups to include and installation path on command line or"
+  echo "  do: rm make_and_install_config_*"
+  echo " "
+  if [ -f ./make_and_install_config_groups ]; then
+    groups="`cat ./make_and_install_config_groups`"
+    echo "    Loaded groups..."
+  fi
+  if [ -f ./make_and_install_config_installpath ]; then
+    installpath="`cat ./make_and_install_config_installpath`"
+    echo "    Loaded installpath..."
+  fi
+fi
+
+if [ "$whenerrors" == "" ]; then
+  whenerrors="stop"
+fi
+if [ "$installpath" == "" ]; then
+  installpath="/usr/local"
+fi
+if [ "$groups" == "" ]; then
+  if [ "$action" == "clean" ]; then
+    groups="standard standard-dep stable experimental"
+  else
+    groups="standard"
+  fi
+fi
+clean="yes"
+if [ "$action" == "clean" ]; then
+  echo "The source tree will be cleaned."
+elif [ "$action" == "compile" ]; then
+  echo "SER core and groups $groups will be compiled."
+elif [ "$action" == "nccompile" ]; then
+  echo "SER core and groups $groups will be compiled without cleaning source tree."
+  clean="no"
+  action="compile"
+elif [ "$action" == "install" ]; then
+  echo "SER core and groups $groups will be compiled and installed to $installpath."
+elif [ "$action" == "ncinstall" ]; then
+  echo "SER core and groups $groups will be compiled and installed to $installpath without cleaning source tree."
+  clean="no"
+  action="install"
+else
+  echo "No such action, please specify clean, compile, or install."
+  exit
+fi
+echo " "
+if [ "$action" == "clean" ]; then
+    echo "----------------------"
+    echo "Cleaning up the SER source tree for $groups... "
+    echo "----------------------"
+    make group_include="$groups" prefix=$installpath proper > /dev/null 2>&1
+    rm -f make_and_install_output.txt
+    rm -f make_and_install_config_*
+    exit
+fi
+
+# save config
+rm -f ./make_and_install_config*
+echo "$groups" > ./make_and_install_config_groups
+echo "$installpath" > ./make_and_install_config_installpath
+
+echo " YOU WILL FIND THE OUTPUT IN make_and_install_output.txt IN THE CURRENT DIRECTORY"
+echo "----------------------"
+if [ "$clean" == "yes" ]; then
+    echo "Cleaning up the source tree... "
+    echo "----------------------"
+    
+    make group_include="$groups" prefix=$installpath proper > /dev/null 2>&1
+    echo "----------------------"
+fi
+echo "Making ser and all modules in the groups \"$groups\". This may take some time..."
+echo "----------------------"
+echo "COMPILING......"
+rm -f ./make_and_install_output.txt
+make group_include="$groups" prefix=$installpath all > ./make_and_install_output.txt  2>&1
+echo "----------------------"
+count=`egrep "error |Error |error:" ./make_and_install_output.txt | wc -l | awk '{print $1}'`
+if [ $count -ne 0 ]; then
+    echo "FOUND ERRORS!"
+    echo "  You may want to run the same $0 command again but use 'nccompile'."
+    echo "  The output file will then be simpler to read."
+    echo "  See make_and_install_output.txt for full output, search for 'error'."
+    if [ "$whenerrors" == "ignore" ]; then
+	echo " "
+	echo "Error ignore switch was specified, moving on despite errors..."
+    else
+	exit
+    fi
+fi
+if [ "$action" == "compile" ]; then
+    echo "'compile' was used; skipping installation."
+    exit
+fi
+
+echo "----------------------"
+echo "Installing SER and all modules to $installpath"
+echo "----------------------"
+make group_include="$groups" prefix=$installpath install >> ./make_and_install_output.txt 2>&1
