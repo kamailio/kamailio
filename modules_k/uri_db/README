@@ -27,15 +27,12 @@ Bogdan-Andrei Iancu
         1.3. Exported Parameters
 
               1.3.1. db_url (string)
-              1.3.2. uri_table (string)
-              1.3.3. uri_user_column (string)
-              1.3.4. uri_domain_column (string)
-              1.3.5. uri_uriuser_column (string)
-              1.3.6. subscriber_table (string)
-              1.3.7. subscriber_user_column (string)
-              1.3.8. subscriber_domain_column (string)
-              1.3.9. use_uri_table (integer)
-              1.3.10. use_domain (integer)
+              1.3.2. db_table (string)
+              1.3.3. user_column (string)
+              1.3.4. domain_column (string)
+              1.3.5. uriuser_column (string)
+              1.3.6. use_uri_table (integer)
+              1.3.7. use_domain (integer)
 
         1.4. Exported Functions
 
@@ -45,18 +42,15 @@ Bogdan-Andrei Iancu
 
    List of Examples
    1-1. Set db_url parameter
-   1-2. Set uri_table parameter
-   1-3. Set uri_user_column parameter
-   1-4. Set uri_domain_column parameter
-   1-5. Set uri_uriuser_column parameter
-   1-6. Set subscriber_table parameter
-   1-7. Set subscriber_user_column parameter
-   1-8. Set subscriber_domain_column parameter
-   1-9. Set use_uri_table parameter
-   1-10. Set use_domain parameter
-   1-11. check_to usage
-   1-12. check_from usage
-   1-13. does_uri_exist usage
+   1-2. Set db_table parameter
+   1-3. Set user_column parameter
+   1-4. Set domain_column parameter
+   1-5. Set uriuser_column parameter
+   1-6. Set use_uri_table parameter
+   1-7. Set use_domain parameter
+   1-8. check_to usage
+   1-9. check_from usage
+   1-10. does_uri_exist usage
      __________________________________________________________
 
 Chapter 1. User's Guide
@@ -101,104 +95,70 @@ r")
 ...
      __________________________________________________________
 
-1.3.2. uri_table (string)
+1.3.2. db_table (string)
 
-   Table containing list of allowed URIs for each user.
-
-   Default value is "uri".
-
-   Example 1-2. Set uri_table parameter
-...
-modparam("uri_db", "uri_table", "uri")
-...
-     __________________________________________________________
-
-1.3.3. uri_user_column (string)
-
-   Column holding usernames in the URI table.
-
-   Default value is "username".
-
-   Example 1-3. Set uri_user_column parameter
-...
-modparam("uri_db", "uri_user_column", "username")
-...
-     __________________________________________________________
-
-1.3.4. uri_domain_column (string)
-
-   Column holding domain in the URI table.
-
-   Default value is "domain".
-
-   Example 1-4. Set uri_domain_column parameter
-...
-modparam("uri_db", "uri_domain_column", "domain")
-...
-     __________________________________________________________
-
-1.3.5. uri_uriuser_column (string)
-
-   Column holding URI username in the URI table.
-
-   Default value is "uri_user".
-
-   Example 1-5. Set uri_uriuser_column parameter
-...
-modparam("uri_db", "uri_uriuser_column", "uri_user")
-...
-     __________________________________________________________
-
-1.3.6. subscriber_table (string)
-
-   Name of the subscriber table.
+   The dbtable that should be used. Its possible to use the
+   "subscriber" and "uri" table.
 
    Default value is "subscriber".
 
-   Example 1-6. Set subscriber_table parameter
+   Example 1-2. Set db_table parameter
 ...
-modparam("uri_db", "subscriber_table", "subscriber")
+modparam("uri_db", "db_table", "susbscriber")
 ...
      __________________________________________________________
 
-1.3.7. subscriber_user_column (string)
+1.3.3. user_column (string)
 
-   Column holding username in subscriber table.
+   Column holding usernames in the table.
 
    Default value is "username".
 
-   Example 1-7. Set subscriber_user_column parameter
+   Example 1-3. Set user_column parameter
 ...
-modparam("uri_db", "subscriber_user_column", "username")
+modparam("uri_db", "user_column", "username")
 ...
      __________________________________________________________
 
-1.3.8. subscriber_domain_column (string)
+1.3.4. domain_column (string)
 
-   Column holding domains in the subscriber table.
+   Column holding domain in the table.
 
    Default value is "domain".
 
-   Example 1-8. Set subscriber_domain_column parameter
+   Example 1-4. Set domain_column parameter
 ...
-modparam("uri_db", "subscriber_domain_column", "domain")
+modparam("uri_db", "domain_column", "domain")
 ...
      __________________________________________________________
 
-1.3.9. use_uri_table (integer)
+1.3.5. uriuser_column (string)
+
+   Column holding URI username in the table. This colum is only
+   available in the uri table.
+
+   Default value is "uri_user".
+
+   Example 1-5. Set uriuser_column parameter
+...
+modparam("uri_db", "uriuser_column", "uri_user")
+...
+     __________________________________________________________
+
+1.3.6. use_uri_table (integer)
 
    Specify if the "uri" table should be used for checkings instead
    of "subscriber" table. A non-zero value means true.
 
    Default value is "0 (false)".
 
-   Example 1-9. Set use_uri_table parameter
+   Example 1-6. Set use_uri_table parameter
 ...
 modparam("uri_db", "use_uri_table", 1)
 ...
      __________________________________________________________
 
-1.3.10. use_domain (integer)
+1.3.7. use_domain (integer)
 
    Specify if the domain part of the URI should be used to
    identify the users (along with username). This is useful in
@@ -210,7 +170,7 @@ modparam("uri_db", "use_uri_table", 1)
 
    Default value is "0 (false)".
 
-   Example 1-10. Set use_domain parameter
+   Example 1-7. Set use_domain parameter
 ...
 modparam("uri_db", "use_domain", 1)
 ...
@@ -225,7 +185,7 @@ modparam("uri_db", "use_domain", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-11. check_to usage
+   Example 1-8. check_to usage
 ...
 if (check_to()) {
         ...
@@ -240,7 +200,7 @@ if (check_to()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-12. check_from usage
+   Example 1-9. check_from usage
 ...
 if (check_from()) {
         ...
@@ -258,7 +218,7 @@ if (check_from()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-13. does_uri_exist usage
+   Example 1-10. does_uri_exist usage
 ...
 if (does_uri_exist()) {
         ...

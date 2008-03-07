@@ -88,15 +88,15 @@ static inline int check_username(struct sip_msg* _m, struct sip_uri *_uri)
 	 * (which are different from digest username and it will still match)
 	 */
 	if (use_uri_table) {
-		if (uridb_dbf.use_table(db_handle, &uri_table) < 0) {
+		if (uridb_dbf.use_table(db_handle, &db_table) < 0) {
 			LM_ERR("Error while trying to use uri table\n");
 			return -7;
 		}
 
-		keys[0] = &uri_user_col;
-		keys[1] = &uri_domain_col;
-		keys[2] = &uri_uriuser_col;
-		cols[0] = &uri_user_col;
+		keys[0] = &uridb_user_col;
+		keys[1] = &uridb_domain_col;
+		keys[2] = &uridb_uriuser_col;
+		cols[0] = &uridb_user_col;
 
 		VAL_TYPE(vals) = VAL_TYPE(vals + 1) = VAL_TYPE(vals + 2) = DB_STR;
 		VAL_NULL(vals) = VAL_NULL(vals + 1) = VAL_NULL(vals + 2) = 0;
@@ -196,21 +196,21 @@ int does_uri_exist(struct sip_msg* _msg, char* _s1, char* _s2)
 	}
 
 	if (use_uri_table) {
-		if (uridb_dbf.use_table(db_handle, &uri_table) < 0) {
+		if (uridb_dbf.use_table(db_handle, &db_table) < 0) {
 			LM_ERR("Error while trying to use uri table\n");
 			return -2;
 		}
-		keys[0] = &uri_uriuser_col;
-		keys[1] = &uri_domain_col;
-		cols[0] = &uri_uriuser_col;
+		keys[0] = &uridb_uriuser_col;
+		keys[1] = &uridb_domain_col;
+		cols[0] = &uridb_uriuser_col;
 	} else {
-		if (uridb_dbf.use_table(db_handle, &subscriber_table) < 0) {
+		if (uridb_dbf.use_table(db_handle, &db_table) < 0) {
 			LM_ERR("Error while trying to use subscriber table\n");
 			return -3;
 		}
-		keys[0] = &subscriber_user_col;
-		keys[1] = &subscriber_domain_col;
-		cols[0] = &subscriber_user_col;
+		keys[0] = &uridb_user_col;
+		keys[1] = &uridb_domain_col;
+		cols[0] = &uridb_user_col;
 	}
 
 	VAL_TYPE(vals) = VAL_TYPE(vals + 1) = DB_STR;

@@ -36,14 +36,11 @@
 /*
  * Module parameters variables
  */
-extern str uri_table;                 /* Name of URI table */
-extern str uri_user_col;              /* Name of username column in URI table */
-extern str uri_domain_col;            /* Name of domain column in URI table */
-extern str uri_uriuser_col;           /* Name of uri_user column in URI table */
-extern str subscriber_table;          /* Name of subscriber table */
-extern str subscriber_user_col;       /* Name of user column in subscriber table */
-extern str subscriber_domain_col;     /* Name of domain column in subscriber table */
-extern int use_uri_table;             /* Whether or not should be uri table used */
-extern int use_domain;                /* Should does_uri_exist honor the domain part ? */
+extern str db_table;                  /**< Name of URI table */
+extern str uridb_user_col;            /**< Name of username column in URI table */
+extern str uridb_domain_col;          /**< Name of domain column in URI table */
+extern str uridb_uriuser_col;         /**< Name of uri_user column in URI table */
+extern int use_uri_table;             /**< Whether or not should be uri table used */
+extern int use_domain;                /**< Should does_uri_exist honor the domain part ? */
 
 #endif /* URI_MOD_H */

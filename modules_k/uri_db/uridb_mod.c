@@ -78,32 +78,24 @@ static int mod_init(void);       /* Module initialization function */
  * Module parameter variables
  */
 static str db_url         = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-/* Name of URI table */
-str uri_table             = {URI_TABLE, URI_TABLE_LEN};
-/* Name of username column in URI table */
-str uri_user_col          = {USER_COL, USER_COL_LEN};
-/* Name of domain column in URI table */
-str uri_domain_col        = {DOMAIN_COL, DOMAIN_COL_LEN};
-/* Name of uri_user column in URI table */
-str uri_uriuser_col       = {URI_USER_COL, URI_USER_COL_LEN};
-/* Name of subscriber table */
+str db_table              = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN};
+str uridb_user_col        = {USER_COL, USER_COL_LEN};
+str uridb_domain_col      = {DOMAIN_COL, DOMAIN_COL_LEN};
+str uridb_uriuser_col     = {URI_USER_COL, URI_USER_COL_LEN};
 str subscriber_table      = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN};
-/* Name of user column in subscriber table */
-str subscriber_user_col   = {USER_COL, USER_COL_LEN};
-/* Name of domain column in subscriber table */
-str subscriber_domain_col = {DOMAIN_COL, DOMAIN_COL_LEN};
 
 int use_uri_table = 0;     /* Should uri table be used */
 int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
 
 static int fixup_exist(void** param, int param_no);
+
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"check_to",       (cmd_function)check_to,       0, 0, 0,           REQUEST_ROUTE},
-	{"check_from",     (cmd_function)check_from,     0, 0, 0,           REQUEST_ROUTE},
-	{"does_uri_exist", (cmd_function)does_uri_exist, 0, fixup_exist, 0, REQUEST_ROUTE},
+	{"check_to",       (cmd_function)check_to,       0, 0, 0, REQUEST_ROUTE},
+	{"check_from",     (cmd_function)check_from,     0, 0, 0, REQUEST_ROUTE},
+	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -113,13 +105,10 @@ static cmd_export_t cmds[] = {
  */
 static param_export_t params[] = {
 	{"db_url",                   STR_PARAM, &db_url.s               },
-	{"uri_table",                STR_PARAM, &uri_table.s            },
-	{"uri_user_column",          STR_PARAM, &uri_user_col.s         },
-	{"uri_domain_column",        STR_PARAM, &uri_domain_col.s       },
-	{"uri_uriuser_column",       STR_PARAM, &uri_uriuser_col.s      },
-	{"subscriber_table",         STR_PARAM, &subscriber_table.s     },
-	{"subscriber_user_column",   STR_PARAM, &subscriber_user_col.s  },
-	{"subscriber_domain_column", STR_PARAM, &subscriber_domain_col.s},
+	{"db_table",                 STR_PARAM, &db_table.s             },
+	{"user_column",              STR_PARAM, &uridb_user_col.s       },
+	{"domain_column",            STR_PARAM, &uridb_domain_col.s     },
+	{"uriuser_column",           STR_PARAM, &uridb_uriuser_col.s    },
 	{"use_uri_table",            INT_PARAM, &use_uri_table          },
 	{"use_domain",               INT_PARAM, &use_domain             },
 	{0, 0, 0}
@@ -145,7 +134,7 @@ struct module_exports exports = {
 };
 
 
-/*
+/**
  * Module initialization function callee in each child separately
  */
 static int child_init(int rank)
@@ -157,7 +146,7 @@ static int child_init(int rank)
 }
 
 
-/*
+/**
  * Module initialization function that is called before the main process forks
  */
 static int mod_init(void)
@@ -167,22 +156,19 @@ static int mod_init(void)
 	LM_DBG("uri_db - initializing\n");
 
 	db_url.len = strlen(db_url.s);
-	if (db_url.len == 0 ) {
+	if (db_url.len == 0) {
 		if (use_uri_table) {
-            LM_ERR("configuration error - no database URL, "
-                   "but use_uri_table is set!\n");
+			LM_ERR("configuration error - no database URL, "
+				"but use_uri_table is set!\n");
 			goto error;
 		}
 		return 0;
 	}
 
-	uri_table.len = strlen(uri_table.s);
-	uri_user_col.len = strlen(uri_user_col.s);
-	uri_domain_col.len = strlen(uri_domain_col.s);
-	uri_uriuser_col.len = strlen(uri_uriuser_col.s);
-	subscriber_table.len = strlen(subscriber_table.s);
-	subscriber_user_col.len = strlen(subscriber_user_col.s);
-	subscriber_domain_col.len = strlen(subscriber_domain_col.s);
+	db_table.len = strlen(db_table.s);
+	uridb_user_col.len = strlen(uridb_user_col.s);
+	uridb_domain_col.len = strlen(uridb_domain_col.s);
+	uridb_uriuser_col.len = strlen(uridb_uriuser_col.s);
 
 	if (uridb_db_bind(&db_url)) {
 		LM_ERR("No database module found\n");
@@ -191,7 +177,7 @@ static int mod_init(void)
 
 	if (use_uri_table) {
 		/* Check table version */
-		ver = uridb_db_ver(&db_url, &uri_table);
+		ver = uridb_db_ver(&db_url, &db_table);
 		if (ver < 0) {
 			LM_ERR("Error while querying table version\n");
 			goto error;
@@ -201,7 +187,7 @@ static int mod_init(void)
 		}
 	} else {
 		/* Check table version */
-		ver = uridb_db_ver(&db_url, &subscriber_table);
+		ver = uridb_db_ver(&db_url, &db_table);
 		if (ver < 0) {
 			LM_ERR("Error while querying table version\n");
 			goto error;
@@ -226,7 +212,7 @@ static void destroy(void)
 static int fixup_exist(void** param, int param_no)
 {
 	if (db_url.len == 0) {
-        LM_ERR("configuration error - does_uri_exist() called with no database URL!\n");
+		LM_ERR("configuration error - does_uri_exist() called with no database URL!\n");
 		return E_CFG;
 	}
 	return 0;
