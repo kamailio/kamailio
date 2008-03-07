@@ -2,11 +2,13 @@ AVPops Module
 
 Ramona-Elena Modroiu
 
-   voice-system.ro
+   <ramona@rosdev.ro>
 
 Edited by
 
 Ramona-Elena Modroiu
+
+   <ramona@rosdev.ro>
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
@@ -678,6 +680,10 @@ avp_print();
 ...
 
 Chapter 2. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    2.1.
 

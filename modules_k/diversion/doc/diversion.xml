@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY user SYSTEM "diversion_admin.xml">
+<!ENTITY admin SYSTEM "diversion_admin.xml">
 <!ENTITY devel SYSTEM "diversion_devel.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
@@ -47,7 +47,7 @@
     </bookinfo>
     <toc></toc>
     
-    &user;
+    &admin;
     &devel;
     &faq;
     

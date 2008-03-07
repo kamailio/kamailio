@@ -6,6 +6,8 @@ Anca-Maria Vamanu
 
 Daniel-Constantin Mierla
 
+   <miconda@gmail.com>
+
 Stefan Popescu
 
 Edited by
@@ -317,6 +319,10 @@ if(is_method("MESSAGE)
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
 Chapter 2. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    2.1.
 

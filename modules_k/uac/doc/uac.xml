@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY user SYSTEM "uac_admin.xml">
+<!ENTITY admin SYSTEM "uac_admin.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!-- Include general SER documentation entities -->
@@ -20,17 +20,12 @@
 		<author>
 			<firstname>Ramona-Elena</firstname>
 			<surname>Modroiu</surname>
-			<affiliation><orgname>Voice System</orgname></affiliation>
-			<address>
-				<email>ramona@voice-system.ro</email>
-			</address>
+				<email>ramona@rosdev.ro</email>
 		</author>
 		<editor>
 			<firstname>Ramona-Elena</firstname>
 			<surname>Modroiu</surname>
-			<address>
-				<email>ramona@voice-system.ro</email>
-			</address>
+				<email>ramona@rosdev.ro</email>
 		</editor>
 	</authorgroup>
 	<copyright>
@@ -46,7 +41,7 @@
 	</bookinfo>
 	<toc></toc>
 
-	&user;
+	&admin;
 	&faq;
 
 </book>

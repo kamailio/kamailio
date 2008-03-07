@@ -2,9 +2,13 @@ ALIAS_DB Module
 
 Daniel-Constantin Mierla
 
+   <miconda@gmail.com>
+
 Edited by
 
 Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
 
    Copyright © 2005 voice-system.ro
    Revision History
@@ -181,6 +185,10 @@ alias_db_lookup("dbaliases");
 ...
 
 Chapter 2. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    2.1.
 

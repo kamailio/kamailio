@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<!ENTITY user SYSTEM "h350_admin.xml">
+<!ENTITY admin SYSTEM "h350_admin.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 <!ENTITY biblio SYSTEM "h350_biblio.xml">
 
@@ -37,7 +37,7 @@
         </bookinfo>
         <toc></toc>
 
-        &user;
+        &admin;
         &faq;
 	&biblio;
 

@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY user SYSTEM "speeddial_admin.xml">
+<!ENTITY admin SYSTEM "speeddial_admin.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!ENTITY speeddialsql SYSTEM "speeddial.sql">
@@ -23,20 +23,17 @@
 	    <author>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<email>ramona@rosdev.ro</email>
 		<address>
-		<email>ramona@voice-system.ro</email>
 		<otheraddr>
-		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		<ulink url="http://www.rosdev.ro">http://www.rosdev.ro</ulink>
 		</otheraddr>
 		</address>
 	    </author>
 	    <editor>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<address>
-		    <email>ramona@voice-system.ro</email>
-		</address>
+		    <email>ramona@rosdev.ro</email>
 	    </editor>
 	</authorgroup>
 	<copyright>
@@ -52,7 +49,7 @@
     </bookinfo>
     <toc></toc>
     
-    &user;
+    &admin;
     &faq;
     
 </book>

@@ -3,10 +3,13 @@ pdt Module
 Elena-Ramona Modroiu
 
    rosdev.ro
+   <ramona@rosdev.ro>
 
 Edited by
 
 Elena-Ramona Modroiu
+
+   <ramona@rosdev.ro>
 
    Copyright © 2003 FhG FOKUS
 
@@ -405,6 +408,10 @@ prefix2domain();
    pdt_fifo_list.sh).
 
 Chapter 2. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    2.1.
 

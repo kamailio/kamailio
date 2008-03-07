@@ -2,9 +2,13 @@ SipTrace Module
 
 Daniel-Constantin Mierla
 
+   <miconda@gmail.com>
+
 Edited by
 
 Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
 
    Copyright © 2006 voice-system.ro
    Revision History
@@ -251,6 +255,10 @@ sip_trace();
    set the flag, use sip_trace().
 
 Chapter 2. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    2.1.
 

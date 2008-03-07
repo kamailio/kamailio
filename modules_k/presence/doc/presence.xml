@@ -3,7 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY user SYSTEM "presence_admin.xml">
+<!ENTITY admin SYSTEM "presence_admin.xml">
 <!ENTITY devel SYSTEM "presence_devel.xml">
 
 <!-- Include general documentation entities -->
@@ -49,7 +49,7 @@
   </bookinfo>
     <toc></toc>
     
-    &user;
+    &admin;
     &devel;
     
 </book>

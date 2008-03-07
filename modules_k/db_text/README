@@ -2,9 +2,13 @@ DBTEXT Module
 
 Daniel-Constantin Mierla
 
+   <miconda@gmail.com>
+
 Edited by
 
 Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
 
    Copyright © 2003, 2004 FhG FOKUS
    Revision History
@@ -390,6 +394,10 @@ Chapter 2. Developer's Guide
    by OpenSER DB interface.
 
 Chapter 3. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    3.1.
 

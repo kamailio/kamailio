@@ -3,14 +3,19 @@ textops Module
 Andrei Pelinescu-Onciul
 
    FhG FOKUS
+   <pelinescu-onciul@fokus.fraunhofer.de>
 
 Edited by
 
 Andrei Pelinescu-Onciul
 
+   <pelinescu-onciul@fokus.fraunhofer.de>
+
 Edited by
 
 Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
 
    Copyright © 2003 FhG FOKUS
    Revision History
@@ -646,6 +651,10 @@ if(is_privacy("id"))
    OpenSER script.
 
 Chapter 2. Frequently Asked Questions
+
+   Revision History
+   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
+                           13 Jun 2005) $
 
    2.1.
 
