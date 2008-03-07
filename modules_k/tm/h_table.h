@@ -188,7 +188,7 @@ struct totag_elem {
 /* do auto DNS failover  */
 #define T_NO_DNS_FAILOVER_FLAG  (1<<7)
 /* transaction must not create new branches  */
-#define T_NO_NEW_BRANCHES_FLAG  (1<<7)
+#define T_NO_NEW_BRANCHES_FLAG  (1<<8)
 
 /* transaction UAC's flags */
 /* is the UAC pending for CANCEL ?  */
