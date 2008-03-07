@@ -9,9 +9,13 @@ Edited by
 Will Quan
 
    Copyright © 2007 Cisco Systems
+   Revision History
+   Revision $Revision: 846 $ $Date: 2006-05-22 09:15:40 -0500
+                             (Mon, 22 May 2006) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -41,18 +45,20 @@ Will Quan
         1.13. DB Recovery : bdb_recover
         1.14. Known Limitations
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set auto_reload parameter
-   1-2. Set log_enable parameter
-   1-3. Set journal_roll_interval parameter
-   1-4. METADATA_COLUMNS
-   1-5. contents of version table
-   1-6. METADATA_COLUMNS
-   1-7. METADATA_KEYS
-   1-8. METADATA_LOGFLAGS
-   1-9. openserdbctl
-   1-10. bdb_recover usage
-     __________________________________________________________
+
+   1.1. Set auto_reload parameter
+   1.2. Set log_enable parameter
+   1.3. Set journal_roll_interval parameter
+   1.4. METADATA_COLUMNS
+   1.5. contents of version table
+   1.6. METADATA_COLUMNS
+   1.7. METADATA_KEYS
+   1.8. METADATA_LOGFLAGS
+   1.9. openserdbctl
+   1.10. bdb_recover usage
 
 Chapter 1. User's Guide
 
@@ -60,24 +66,19 @@ Chapter 1. User's Guide
 
    This is a module which integrates the Berkeley DB into OpenSER.
    It implements the DB API defined in OpenSER.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * Berkeley Berkeley DB 4.6 - an embedded database.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -90,11 +91,10 @@ Chapter 1. User's Guide
 
    Default value is 0 (1 - on / 0 - off).
 
-   Example 1-1. Set auto_reload parameter
+   Example 1.1. Set auto_reload parameter
 ...
 modparam("db_berkeley", "auto_reload", 1)
 ...
-     __________________________________________________________
 
 1.3.2. log_enable (integer)
 
@@ -111,11 +111,10 @@ modparam("db_berkeley", "auto_reload", 1)
 
    Default value is 0 (1 - on / 0 - off).
 
-   Example 1-2. Set log_enable parameter
+   Example 1.2. Set log_enable parameter
 ...
 modparam("db_berkeley", "log_enable", 1)
 ...
-     __________________________________________________________
 
 1.3.3. journal_roll_interval (integer seconds)
 
@@ -125,16 +124,14 @@ modparam("db_berkeley", "log_enable", 1)
 
    Default value is 0 (off).
 
-   Example 1-3. Set journal_roll_interval parameter
+   Example 1.3. Set journal_roll_interval parameter
 ...
 modparam("db_berkeley", "journal_roll_interval", 3600)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
    No function exported to be used from configuration file.
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
@@ -153,7 +150,6 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    table provide the tablename as the arguement (eg subscriber);
    to reload all tables provide the db_path to the db files. The
    path can be found in openserctlrc DB_PATH variable.
-     __________________________________________________________
 
 1.6. Installation and Running
 
@@ -170,7 +166,6 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    Because the module dependes on an external library, the
    db_berkeley module is not compiled and installed by default.
    You can use one of the next options.
-
      * edit the "Makefile" and remove "db_berkeley" from
        "excluded_modules" list. Then follow the standard procedure
        to install OpenSER: "make all; make install".
@@ -252,7 +247,6 @@ by default none is loaded
    (w.o domain) in order to find a result to that particular
    subscriber query. The main point is 'use_domain' can not be
    changed once the db_berkeley is setup.
-     __________________________________________________________
 
 1.7. Database Schema and Metadata
 
@@ -269,7 +263,7 @@ by default none is loaded
    record delimiter within the Berkeley DB implementation and must
    not be present in any DB field.
 
-   Example 1-4. METADATA_COLUMNS
+   Example 1.4. METADATA_COLUMNS
 METADATA_COLUMNS
 table_name(str) table_version(int)
 METADATA_KEY
@@ -291,7 +285,7 @@ METADATA_KEY
    the 'db_berkeley.sh dump version' command. It shows contents of
    table 'version' in plain text.
 
-   Example 1-5. contents of version table
+   Example 1.5. contents of version table
 VERSION=3
 format=print
 type=hash
@@ -341,7 +335,6 @@ HEADER=END
  usr_preferences|
  usr_preferences|2
 DATA=END
-     __________________________________________________________
 
 1.8. METADATA_COLUMNS (required)
 
@@ -349,21 +342,19 @@ DATA=END
    Each is space delimited. Here is an example of the data taken
    from table subscriber :
 
-   Example 1-6. METADATA_COLUMNS
+   Example 1.6. METADATA_COLUMNS
 METADATA_COLUMNS
 username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(st
 r) last_name(str) email_address(str) datetime_created(datetime) timezone
 (str) rpid(str)
 
    Related (hardcoded) limitations:
-
      * maximum of 32 columns per table.
      * maximum tablename size is 64.
      * maximum data length is 2048
 
    Currently supporting these five types: str, datetime, int,
    double, string.
-     __________________________________________________________
 
 1.9. METADATA_KEYS (required)
 
@@ -372,14 +363,13 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
    is an example taken from table subscriber that brings up a good
    point:
 
-   Example 1-7. METADATA_KEYS
+   Example 1.7. METADATA_KEYS
  METADATA_KEY
  0 1
 
    The point is that both the username and domain name are require
    as the key to this record. Thus, usrloc modparam use_domain = 1
    must be set for this to work.
-     __________________________________________________________
 
 1.10. METADATA_READONLY (optional)
 
@@ -388,7 +378,6 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
    as read-write (loads metadata) and then if this is set=1, it
    will close and reopen as read only (ro). I found this useful
    because readonly has impacts on the internal db locking etc.
-     __________________________________________________________
 
 1.11. METADATA_LOGFLAGS (optional)
 
@@ -397,7 +386,7 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
    value is taken as 0. Here are the masks so far (taken from
    bdb_lib.h):
 
-   Example 1-8. METADATA_LOGFLAGS
+   Example 1.8. METADATA_LOGFLAGS
 #define JLOG_NONE 0
 #define JLOG_INSERT 1
 #define JLOG_DELETE 2
@@ -408,7 +397,6 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
    This means that if you want to journal INSERTS to local file
    and syslog the value should be set to 1+16=17. Or if you do not
    want to journal at all, set this to 0.
-     __________________________________________________________
 
 1.12. DB Maintaince Script : openserdbctl
 
@@ -417,7 +405,7 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
    correctly in openserctlrc. Note Unsupported commands are-
    backup, restore, migrate, copy, serweb.
 
-   Example 1-9. openserdbctl
+   Example 1.9. openserdbctl
 usage: openserdbctl create
        openserdbctl presence
        openserdbctl extra
@@ -433,7 +421,6 @@ b.new -> db)
 tance of db; output DB_PATH/db.new)
        openserdbctl bdb newappend db datafile (appends data to a new ins
 tance of db; output DB_PATH/db.new)
-     __________________________________________________________
 
 1.13. DB Recovery : bdb_recover
 
@@ -459,7 +446,7 @@ tance of db; output DB_PATH/db.new)
    The following illustrates the four operations available to the
    administrator.
 
-   Example 1-10. bdb_recover usage
+   Example 1.10. bdb_recover usage
 usage: ./bdb_recover -s schemadir [-h home] [-c tablename]
         This will create a brand new DB file with metadata.
 
@@ -487,7 +474,6 @@ possible
 
    Important note- A corrupted DB file must be moved out of the
    way before bdb_recover is executed.
-     __________________________________________________________
 
 1.14. Known Limitations
 
@@ -495,3 +481,36 @@ possible
    sequence) mechanism. Consequently, this version does not
    support surragate keys in dbschema. These are the id columns in
    the tables.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
