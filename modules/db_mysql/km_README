@@ -2,16 +2,18 @@ mysql Module
 
 Daniel-Constantin Mierla
 
-   voice-system.ro
-
 Edited by
 
 Daniel-Constantin Mierla
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -29,11 +31,13 @@ Daniel-Constantin Mierla
         1.4. Exported Functions
         1.5. Installation
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set ping_interval parameter
-   1-2. Set timeout_interval parameter
-   1-3. Set auto_reconnect parameter
-     __________________________________________________________
+
+   1.1. Set ping_interval parameter
+   1.2. Set timeout_interval parameter
+   1.3. Set auto_reconnect parameter
 
 Chapter 1. User's Guide
 
@@ -41,25 +45,20 @@ Chapter 1. User's Guide
 
    This is a module which provides MySQL connectivity for OpenSER.
    It implements the DB API defined in OpenSER.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * libmysqlclient-dev - the development libraries of
        mysql-client.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -70,11 +69,10 @@ Chapter 1. User's Guide
 
    Default value is 300 (5 min).
 
-   Example 1-1. Set ping_interval parameter
+   Example 1.1. Set ping_interval parameter
 ...
 modparam("db_mysql", "ping_interval", 600)
 ...
-     __________________________________________________________
 
 1.3.2. timeout_interval (integer)
 
@@ -89,11 +87,10 @@ modparam("db_mysql", "ping_interval", 600)
 
    Default value is 2 (6 sec).
 
-   Example 1-2. Set timeout_interval parameter
+   Example 1.2. Set timeout_interval parameter
 ...
 modparam("db_mysql", "timeout_interval", 2)
 ...
-     __________________________________________________________
 
 1.3.3. auto_reconnect (integer)
 
@@ -102,26 +99,56 @@ modparam("db_mysql", "timeout_interval", 2)
 
    Default value is 1 (1 - on / 0 - off).
 
-   Example 1-3. Set auto_reconnect parameter
+   Example 1.3. Set auto_reconnect parameter
 ...
 modparam("auto_reconnect", "auto_reconnect", 0)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
    No function exported to be used from configuration file.
-     __________________________________________________________
 
 1.5. Installation
 
    Because it dependes on an external library, the mysql module is
    not compiled and installed by default. You can use one of the
    next options.
-
      * - edit the "Makefile" and remove "db_mysql" from
        "excluded_modules" list. Then follow the standard procedure
        to install OpenSER: "make all; make install".
      * - from command line use: 'make all
        include_modules="db_mysql"; make install
        include_modules="db_mysql"'.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
