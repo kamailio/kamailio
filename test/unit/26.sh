@@ -77,14 +77,12 @@ if [ "$ret" -eq 0 ] ; then
 	sipp -sn uac -s 49721123456787 127.0.0.1:5060 -i 127.0.0.1 -m 20 -p 5061 &> /dev/null
 	ret=$?
 fi;
-killall -9 sipp
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -sn uas -bg -i localhost -m 10 -p 9000 &> /dev/null
 	sipp -sn uac -s 49721123456786 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
 	ret=$?
 fi;
-killall -9 sipp
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -sn uas -bg -i localhost -m 10 -p 10000 &> /dev/null
@@ -92,7 +90,6 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi;
 
-killall -9 sipp
 if [ "$ret" -eq 0 ] ; then
 	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null

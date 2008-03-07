@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
-<scenario name="register_client">
+<scenario name="invite_client">
   <send retrans="500">
       <![CDATA[
 
-      REGISTER sip:localhost:5059 SIP/2.0
+      INVITE sip:alice@localhost:5059 SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: <sip:alice@localhost>;tag=[call_number]
       To: <sip:alice@localhost>
       Call-ID: [call_id]
-      CSeq: 1 REGISTER
+      CSeq: 1 INVITE
       Contact: sip:alice@[local_ip]:[local_port]
       Max-Forwards: 5
       Expires: 1800
@@ -21,12 +21,13 @@
 
    <send retrans="500">
       <![CDATA[
-      REGISTER sip:localhost:5059 SIP/2.0
+
+      INVITE sip:alice@localhost:5059 SIP/2.0
       Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
       From: <sip:alice@localhost>;tag=[call_number]
       To: <sip:alice@localhost>
       Call-ID: [call_id]
-      CSeq: 2 REGISTER
+      CSeq: 2 INVITE
       Contact: sip:alice@[local_ip]:[local_port]
       [authentication username=alice password=alice realm=localhost];
       Max-Forwards: 5

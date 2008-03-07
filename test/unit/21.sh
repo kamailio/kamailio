@@ -1,5 +1,5 @@
 #!/bin/bash
-# tests the authentification via auth_db
+# tests the authentification via auth_db and uri_db
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -30,26 +30,29 @@ fi ;
 
 CFG=21.cfg
 
-#insert a test user into log db
-if [ ! -e $SIPP ] ; then 
-	echo "404 - sipp not found"
-	exit 0
-fi;
+MYSQL="mysql openser -u openser --password=openserrw -e"
 
 # add an registrar entry to the db;
-
-#username domain password email-adreess
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
+$MYSQL "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
 
 ../openser -w . -f $CFG &> /dev/null;
-sipp -s alice 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 1 -auth_uri alice@localhost -p 5061 -sf auth_test.xml -ap alice &> /dev/null;
-
 ret=$?
+sleep 1
+
+if [ "$ret" -eq 0 ] ; then
+	sipp -s alice 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 1 -auth_uri alice@localhost -p 5061 -sf reg_auth.xml -ap alice &> /dev/null;
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ] ; then
+	sipp -s alice 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 1 -auth_uri alice@localhost -p 5061 -sf inv_auth.xml -ap alice &> /dev/null;
+	ret=$?
+fi;
+
 
 #cleanup:
 killall -9 openser &> /dev/null;
-
-mysql  --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"
-
+killall -9 sipp &> /dev/null;
+$MYSQL "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"
 
 exit $ret;
