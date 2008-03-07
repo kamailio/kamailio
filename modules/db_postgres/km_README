@@ -9,9 +9,13 @@ Edited by
 Greg Fausak
 
    Copyright © 2003 Greg Fausak
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -22,45 +26,72 @@ Greg Fausak
 
         1.3. Exported Parameters
         1.4. Exported Functions
-        1.5. Installation & Running
-     __________________________________________________________
+        1.5. Installation and Running
+
+   2. Frequently Asked Questions
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    Module description
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * PostgreSQL library - e.g., libpq5.
      * PostgreSQL devel library - to compile the module (e.g.,
        libpq-dev).
-     __________________________________________________________
 
 1.3. Exported Parameters
 
    NONE
-     __________________________________________________________
 
 1.4. Exported Functions
 
    NONE
-     __________________________________________________________
 
-1.5. Installation & Running
+1.5. Installation and Running
 
    Notes about installation and running.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
