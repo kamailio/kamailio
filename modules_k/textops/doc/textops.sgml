@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY user SYSTEM "textops_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>textops Module</title>
+	<productname class="trade">&sername;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<affiliation><orgname>&fhg;</orgname></affiliation>
+		<address>
+			<email>pelinescu-onciul@fokus.fraunhofer.de</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Andrei</firstname>
+		<surname>Pelinescu-Onciul</surname>
+		<address>
+			<email>pelinescu-onciul@fokus.fraunhofer.de</email>
+		</address>
+		</editor>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<address>
+			<email>miconda@gmail.com</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2003</year>
+		<holder>&fhg;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&user;
+	&faq;
+	
+</book>
