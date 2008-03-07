@@ -3,23 +3,33 @@ Auth_db Module
 Jan Janak
 
    FhG Fokus
+   <jan@iptel.org>
 
 Jakob Schlyter
+
+   <jakob@schlyter.se>
 
 Bogdan-Andrei Iancu
 
    voice-system.ro
+   <bogdan@voice-system.ro>
 
 Edited by
 
 Jan Janak
 
+   <jan@iptel.org>
+
    Copyright © 2002, 2003 FhG FOKUS
 
    Copyright © 2005 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -44,18 +54,20 @@ Jan Janak
               1.4.1. www_authorize(realm, table)
               1.4.2. proxy_authorize(realm, table)
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. db_url parameter usage
-   1-2. user_column parameter usage
-   1-3. domain_column parameter usage
-   1-4. password_column parameter usage
-   1-5. password_column_2 parameter usage
-   1-6. calculate_ha1 parameter usage
-   1-7. use_domain parameter usage
-   1-8. load_credentials parameter usage
-   1-9. www_authorize usage
-   1-10. proxy_authorize usage
-     __________________________________________________________
+
+   1.1. db_url parameter usage
+   1.2. user_column parameter usage
+   1.3. domain_column parameter usage
+   1.4. password_column parameter usage
+   1.5. password_column_2 parameter usage
+   1.6. calculate_ha1 parameter usage
+   1.7. use_domain parameter usage
+   1.8. load_credentials parameter usage
+   1.9. www_authorize usage
+   1.10. proxy_authorize usage
 
 Chapter 1. User's Guide
 
@@ -68,7 +80,6 @@ Chapter 1. User's Guide
    want to use database to store authentication information like
    subscriber usernames and passwords. If you want to use radius
    authentication, then use auth_radius instead.
-     __________________________________________________________
 
 1.2. Dependencies
 
@@ -76,19 +87,15 @@ Chapter 1. User's Guide
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
-
      * auth -- Generic authentication functions
      * database -- Any database module (currently mysql, postgres,
        dbtext)
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * none
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -104,10 +111,9 @@ Chapter 1. User's Guide
    Default value is
    "mysql://openserro:openserro@localhost/openser".
 
-   Example 1-1. db_url parameter usage
+   Example 1.1. db_url parameter usage
 modparam("auth_db", "db_url", "dbdriver://username:password@dbhost/dbnam
 e")
-     __________________________________________________________
 
 1.3.2. user_column (string)
 
@@ -117,9 +123,8 @@ e")
 
    Default value is "username".
 
-   Example 1-2. user_column parameter usage
+   Example 1.2. user_column parameter usage
 modparam("auth_db", "user_column", "user")
-     __________________________________________________________
 
 1.3.3. domain_column (string)
 
@@ -129,9 +134,8 @@ modparam("auth_db", "user_column", "user")
 
    Default value is "domain".
 
-   Example 1-3. domain_column parameter usage
+   Example 1.3. domain_column parameter usage
 modparam("auth_db", "domain_column", "domain")
-     __________________________________________________________
 
 1.3.4. password_column (string)
 
@@ -144,9 +148,8 @@ modparam("auth_db", "domain_column", "domain")
 
    Default value is "ha1".
 
-   Example 1-4. password_column parameter usage
+   Example 1.4. password_column parameter usage
 modparam("auth_db", "password_column", "password")
-     __________________________________________________________
 
 1.3.5. password_column_2 (string)
 
@@ -158,9 +161,8 @@ modparam("auth_db", "password_column", "password")
 
    Default value of the parameter is ha1b.
 
-   Example 1-5. password_column_2 parameter usage
+   Example 1.5. password_column_2 parameter usage
 modparam("auth_db", "password_column_2", "ha1_2")
-     __________________________________________________________
 
 1.3.6. calculate_ha1 (integer)
 
@@ -191,9 +193,8 @@ modparam("auth_db", "password_column_2", "ha1_2")
 
    Default value of this parameter is 0.
 
-   Example 1-6. calculate_ha1 parameter usage
+   Example 1.6. calculate_ha1 parameter usage
 modparam("auth_db", "calculate_ha1", 1)
-     __________________________________________________________
 
 1.3.7. use_domain (integer)
 
@@ -207,9 +208,8 @@ modparam("auth_db", "calculate_ha1", 1)
 
    Default value is "0 (false)".
 
-   Example 1-7. use_domain parameter usage
+   Example 1.7. use_domain parameter usage
 modparam("auth_db", "use_domain", 1)
-     __________________________________________________________
 
 1.3.8. load_credentials (string)
 
@@ -220,7 +220,6 @@ modparam("auth_db", "use_domain", 1)
    name as the column name.
 
    Parameter syntax:
-
      * load_credentials = credential (';' credential)*
      * credential = (avp_specification '=' column_name) |
        (column_name)
@@ -229,15 +228,14 @@ modparam("auth_db", "use_domain", 1)
 
    Default value of this parameter is "rpid".
 
-   Example 1-8. load_credentials parameter usage
+   Example 1.8. load_credentials parameter usage
 # load rpid column into $avp(i:13) and email_address column
 # into $avp(s:email_address)
 modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. www_authorize(realm, table)
+1.4.1.  www_authorize(realm, table)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will
@@ -248,7 +246,6 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
    which will challenge the user again.
 
    Negative codes may be interpreted as follows:
-
      * -5 (generic error) - some generic error occurred and no
        reply was sent out;
      * -4 (no credentials) - credentials were not found in
@@ -258,7 +255,6 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
      * -1 (invalid user) - authentication user does not exist.
 
    Meaning of the parameters is as follows:
-
      * realm - Realm is a opaque string that the user agent should
        present to the user so he can decide what username and
        password to use. Usually this is domain of the host the
@@ -274,15 +270,14 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-9. www_authorize usage
+   Example 1.9. www_authorize usage
 ...
 if (www_authorize("siphub.net", "subscriber")) {
         www_challenge("siphub.net", "1");
 };
 ...
-     __________________________________________________________
 
-1.4.2. proxy_authorize(realm, table)
+1.4.2.  proxy_authorize(realm, table)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will
@@ -293,7 +288,6 @@ if (www_authorize("siphub.net", "subscriber")) {
    which will challenge the user again.
 
    Negative codes may be interpreted as follows:
-
      * -5 (generic error) - some generic error occurred and no
        reply was sent out;
      * -4 (no credentials) - credentials were not found in
@@ -303,7 +297,6 @@ if (www_authorize("siphub.net", "subscriber")) {
      * -1 (invalid user) - authentication user does not exist.
 
    Meaning of the parameters is as follows:
-
      * realm - Realm is a opaque string that the user agent should
        present to the user so he can decide what username and
        password to use. Usually this is domain of the host the
@@ -317,9 +310,42 @@ if (www_authorize("siphub.net", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-10. proxy_authorize usage
+   Example 1.10. proxy_authorize usage
 ...
 if (!proxy_authorize("", "subscriber)) {
         proxy_challenge("", "1");  # Realm will be autogenerated
 };
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

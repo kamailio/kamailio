@@ -12,14 +12,20 @@ Edited by
 
 Jiri Kuthan
 
+Edited by
+
 Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2005 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -105,40 +111,42 @@ Bogdan-Andrei Iancu
 
               2.1.1. load_tm(*import_structure)
 
+   3. Frequently Asked Questions
+
    List of Examples
-   1-1. Set fr_timer parameter
-   1-2. Set fr_inv_timer parameter
-   1-3. Set wt_timer parameter
-   1-4. Set delete_timer parameter
-   1-5. Set T1_timer parameter
-   1-6. Set T2_timer parameter
-   1-7. Set noisy_ctimer parameter
-   1-8. Set ruri_matching parameter
-   1-9. Set via1_matching parameter
-   1-10. Set unix_tx_timeout parameter
-   1-11. Set restart_fr_on_each_reply parameter
-   1-12. Set fr_timer_avp parameter
-   1-13. Set fr_inv_timer_avp parameter
-   1-14. Set tw_append parameter
-   1-15. Set pass_provisional_replies parameter
-   1-16. Set syn_branch parameter
-   1-17. Set onreply_avp_mode parameter
-   1-18. t_newtran usage
-   1-19. t_relay usage
-   1-20. t_relay usage
-   1-21. t_reply usage
-   1-22. t_replicate usage
-   1-23. t_release usage
-   1-24. t_check_status usage
-   1-25. t_flush_flags usage
-   1-26. t_local_replied usage
-   1-27. t_write_fifo/unix usage
-   1-28. t_check_trans usage
-   1-29. t_was_cancelled usage
-   1-30. t_on_failure usage
-   1-31. t_on_reply usage
-   1-32. t_on_branch usage
-     __________________________________________________________
+
+   1.1. Set fr_timer parameter
+   1.2. Set fr_inv_timer parameter
+   1.3. Set wt_timer parameter
+   1.4. Set delete_timer parameter
+   1.5. Set T1_timer parameter
+   1.6. Set T2_timer parameter
+   1.7. Set noisy_ctimer parameter
+   1.8. Set ruri_matching parameter
+   1.9. Set via1_matching parameter
+   1.10. Set unix_tx_timeout parameter
+   1.11. Set restart_fr_on_each_reply parameter
+   1.12. Set fr_timer_avp parameter
+   1.13. Set fr_inv_timer_avp parameter
+   1.14. Set tw_append parameter
+   1.15. Set pass_provisional_replies parameter
+   1.16. Set syn_branch parameter
+   1.17. Set onreply_avp_mode parameter
+   1.18. t_newtran usage
+   1.19. t_relay usage
+   1.20. t_relay usage
+   1.21. t_reply usage
+   1.22. t_replicate usage
+   1.23. t_release usage
+   1.24. t_check_status usage
+   1.25. t_flush_flags usage
+   1.26. t_local_replied usage
+   1.27. t_write_fifo/unix usage
+   1.28. t_check_trans usage
+   1.29. t_was_cancelled usage
+   1.30. t_on_failure usage
+   1.31. t_on_reply usage
+   1.32. t_on_branch usage
 
 Chapter 1. User's Guide
 
@@ -176,7 +184,7 @@ Chapter 1. User's Guide
    whereas its TM clone is being forwarded.
 
    TM is quite big and uneasy to program--lot of mutexes, shared
-   memory access, malloc & free, timers--you really need to be
+   memory access, malloc and free, timers--you really need to be
    careful when you do anything. To simplify TM programming, there
    is the instrument of callbacks. The callback mechanisms allow
    programmers to register their functions to specific event. See
@@ -189,7 +197,6 @@ Chapter 1. User's Guide
    retransmissions , FR timeouts, forking, etc. See t_uac
    prototype in uac.h for more details. Who wants to see the
    transaction result may register for a callback.
-     __________________________________________________________
 
 1.1.1. Per-Branch flags
 
@@ -199,7 +206,6 @@ Chapter 1. User's Guide
    branch.
 
    There are several types of flags in OpenSER :
-
      * message/transaction flags - they are visible everywhere in
        the transaction (in all routes and in all sequential
        replies/request).
@@ -222,15 +228,14 @@ Chapter 1. User's Guide
    flags will not be visible in the other branch (in routes
    executing replies from the other branch).
 
-   For how to define branch flags and use via script, see Section
-   1.4.15 and the setbflag(), resetbflag() and isbflagset() script
-   functions.
+   For how to define branch flags and use via script, see
+   Section 1.4.15, " t_on_branch(branch_route) " and the
+   setbflag(), resetbflag() and isbflagset() script functions.
 
    Also, modules may set branch flags before transaction creation
    (for the moment this feature is not available in script). The
    REGISTRAR module was the first to use this type of flags. The
    NAT flag is pushed in branch flags instead in message flags
-     __________________________________________________________
 
 1.1.2. Timer-Based Failover
 
@@ -242,7 +247,6 @@ Chapter 1. User's Guide
    call to the voicemail.
 
    There are two timers in OpenSER :
-
      * fr_timer - this timer is used when no response was received
        yet. If there is no response after fr_timer seconds the
        timer triggers (and failure route will be executed if
@@ -257,7 +261,6 @@ Chapter 1. User's Guide
    provisional response after 3 seconds, but you want to ring for
    60 seconds. Thuse, set the fr_timer to 3 and fr_inv_timer to
    60.
-     __________________________________________________________
 
 1.1.3. DNS Failover
 
@@ -286,24 +289,19 @@ Chapter 1. User's Guide
    failover is globally disabled (see the core parameter
    disable_dns_failover) or when the relay flag (per transaction)
    is set (see the t_relay() function).
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -314,11 +312,10 @@ Chapter 1. User's Guide
 
    Default value is 30 seconds.
 
-   Example 1-1. Set fr_timer parameter
+   Example 1.1. Set fr_timer parameter
 ...
 modparam("tm", "fr_timer", 10)
 ...
-     __________________________________________________________
 
 1.3.2. fr_inv_timer (integer)
 
@@ -330,11 +327,10 @@ modparam("tm", "fr_timer", 10)
 
    Default value is 120 seconds.
 
-   Example 1-2. Set fr_inv_timer parameter
+   Example 1.2. Set fr_inv_timer parameter
 ...
 modparam("tm", "fr_inv_timer", 200)
 ...
-     __________________________________________________________
 
 1.3.3. wt_timer (integer)
 
@@ -352,11 +348,10 @@ modparam("tm", "fr_inv_timer", 200)
 
    Default value is 5 seconds.
 
-   Example 1-3. Set wt_timer parameter
+   Example 1.3. Set wt_timer parameter
 ...
 modparam("tm", "wt_timer", 10)
 ...
-     __________________________________________________________
 
 1.3.4. delete_timer (integer)
 
@@ -365,11 +360,10 @@ modparam("tm", "wt_timer", 10)
 
    Default value is 2 seconds.
 
-   Example 1-4. Set delete_timer parameter
+   Example 1.4. Set delete_timer parameter
 ...
 modparam("tm", "delete_timer", 5)
 ...
-     __________________________________________________________
 
 1.3.5. T1_timer (integer)
 
@@ -377,11 +371,10 @@ modparam("tm", "delete_timer", 5)
 
    Default value is 500 milliseconds.
 
-   Example 1-5. Set T1_timer parameter
+   Example 1.5. Set T1_timer parameter
 ...
 modparam("tm", "T1_timer", 700)
 ...
-     __________________________________________________________
 
 1.3.6. T2_timer (integer)
 
@@ -389,11 +382,10 @@ modparam("tm", "T1_timer", 700)
 
    Default value is 4000 milliseconds.
 
-   Example 1-6. Set T2_timer parameter
+   Example 1.6. Set T2_timer parameter
 ...
 modparam("tm", "T2_timer", 8000)
 ...
-     __________________________________________________________
 
 1.3.7. noisy_ctimer (integer)
 
@@ -406,11 +398,10 @@ modparam("tm", "T2_timer", 8000)
 
    Default value is 0 (false).
 
-   Example 1-7. Set noisy_ctimer parameter
+   Example 1.7. Set noisy_ctimer parameter
 ...
 modparam("tm", "noisy_ctimer", 1)
 ...
-     __________________________________________________________
 
 1.3.8. ruri_matching (integer)
 
@@ -421,11 +412,10 @@ modparam("tm", "noisy_ctimer", 1)
 
    Default value is 1 (true).
 
-   Example 1-8. Set ruri_matching parameter
+   Example 1.8. Set ruri_matching parameter
 ...
 modparam("tm", "ruri_matching", 0)
 ...
-     __________________________________________________________
 
 1.3.9. via1_matching (integer)
 
@@ -437,11 +427,10 @@ modparam("tm", "ruri_matching", 0)
 
    Default value is 1 (true).
 
-   Example 1-9. Set via1_matching parameter
+   Example 1.9. Set via1_matching parameter
 ...
 modparam("tm", "via1_matching", 0)
 ...
-     __________________________________________________________
 
 1.3.10. unix_tx_timeout (integer)
 
@@ -450,11 +439,10 @@ modparam("tm", "via1_matching", 0)
 
    Default value is 2 seconds.
 
-   Example 1-10. Set unix_tx_timeout parameter
+   Example 1.10. Set unix_tx_timeout parameter
 ...
 modparam("tm", "unix_tx_timeout", 5)
 ...
-     __________________________________________________________
 
 1.3.11. restart_fr_on_each_reply (integer)
 
@@ -465,11 +453,10 @@ modparam("tm", "unix_tx_timeout", 5)
 
    Default value is 1 (true).
 
-   Example 1-11. Set restart_fr_on_each_reply parameter
+   Example 1.11. Set restart_fr_on_each_reply parameter
 ...
 modparam("tm", "restart_fr_on_each_reply", 0)
 ...
-     __________________________________________________________
 
 1.3.12. fr_timer_avp (string)
 
@@ -482,11 +469,10 @@ modparam("tm", "restart_fr_on_each_reply", 0)
 
    Default value is "NULL" (feature disabled).
 
-   Example 1-12. Set fr_timer_avp parameter
+   Example 1.12. Set fr_timer_avp parameter
 ...
 modparam("tm", "fr_timer_avp", "$avp(i:24)")
 ...
-     __________________________________________________________
 
 1.3.13. fr_inv_timer_avp (string)
 
@@ -499,11 +485,10 @@ modparam("tm", "fr_timer_avp", "$avp(i:24)")
 
    Default value is "NULL" (feature disabled).
 
-   Example 1-13. Set fr_inv_timer_avp parameter
+   Example 1.13. Set fr_inv_timer_avp parameter
 ...
 modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 ...
-     __________________________________________________________
 
 1.3.14. tw_append (string)
 
@@ -513,7 +498,6 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
    Default value is null string.
 
    Syntax of the parameter is:
-
      * tw_append = append_name':' element (';'element)*
      * element = ( [name '='] pseudo_variable)
 
@@ -526,12 +510,11 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
    accept name; the body it will be printed all the time at the
    end, disregarding its position in the definition string.
 
-   Example 1-14. Set tw_append parameter
+   Example 1.14. Set tw_append parameter
 ...
 modparam("tm", "tw_append",
    "test: ua=$hdr(User-Agent) ;avp=$avp(i:10);$rb;time=$Ts")
 ...
-     __________________________________________________________
 
 1.3.15. pass_provisional_replies (integer)
 
@@ -540,11 +523,10 @@ modparam("tm", "tw_append",
 
    Default value is 0.
 
-   Example 1-15. Set pass_provisional_replies parameter
+   Example 1.15. Set pass_provisional_replies parameter
 ...
 modparam("tm", "pass_provisional_replies", 1)
 ...
-     __________________________________________________________
 
 1.3.16. syn_branch (integer)
 
@@ -553,16 +535,14 @@ modparam("tm", "pass_provisional_replies", 1)
 
    Default value is 1 (use synonym branches).
 
-   Example 1-16. Set syn_branch parameter
+   Example 1.16. Set syn_branch parameter
 ...
 modparam("tm", "syn_branch", 0)
 ...
-     __________________________________________________________
 
 1.3.17. onreply_avp_mode (integer)
 
    Describes how the AVPs should be handled in reply route:
-
      * 0 - the AVPs will be per message only; they will not
        interfere with the AVPS stored in transaction; initially
        there will be an empty list and at the end of the route,
@@ -578,37 +558,35 @@ modparam("tm", "syn_branch", 0)
 
    Default value is 0.
 
-   Example 1-17. Set onreply_avp_mode parameter
+   Example 1.17. Set onreply_avp_mode parameter
 ...
 modparam("tm", "onreply_avp_mode", 1)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. t_newtran()
+1.4.1.  t_newtran()
 
    Creates a new transaction, returns a negative value on error.
    This is the only way a script can add a new transaction in an
    atomic way. Typically, it is used to deploy a UAS.
 
-   Warning
+Warning
 
-           NOTE that the changes on the request that are made after this
-           function call will not be saved into transaction!!!
+   NOTE that the changes on the request that are made after this
+   function call will not be saved into transaction!!!
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. t_newtran usage
+   Example 1.18. t_newtran usage
 ...
 if (t_newtran()) {
         log("UAS logic");
         t_reply("999","hello");
 } else sl_reply_error();
 ...
-     __________________________________________________________
 
-1.4.2. t_relay([flags])
+1.4.2.  t_relay([flags])
 
    Relay a message statefully to destination indicated in current
    URI. (If the original URI was rewritten by UsrLoc, RR,
@@ -623,7 +601,6 @@ if (t_newtran()) {
    The function may take as parameter an optional set of flags for
    controlling the internal behaviour. The flags may be given in
    decimal or hexa format; supported flags are:
-
      * 0x01 - do not generate an 100 trying provisional reply when
        building the transaction. By default one is generated.
        Useful if you already pushed an stateless 100 reply from
@@ -637,7 +614,6 @@ if (t_newtran()) {
        transaport and transaction level.
 
    In case of error, the function returns the following codes:
-
      * -1 - generic internal error
      * -2 - bad message (parsing errors)
      * -3 - no destination available (no branches were added or
@@ -648,16 +624,15 @@ if (t_newtran()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-19. t_relay usage
+   Example 1.19. t_relay usage
 ...
 if (!t_relay()) {
     sl_reply_error();
     exit;
 }
 ...
-     __________________________________________________________
 
-1.4.3. t_relay(proto:host:port,[flags])
+1.4.3.  t_relay(proto:host:port,[flags])
 
    Relay a message statefully to a fixed destination. The
    destination is specified as "[proto:]host[:port]".
@@ -668,33 +643,30 @@ if (!t_relay()) {
 
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-20. t_relay usage
+   Example 1.20. t_relay usage
 ...
 t_relay("tcp:192.168.1.10:5060");
 t_relay("mydomain.com:5070","0x1");
 t_relay("udp:mydomain.com");
 ...
-     __________________________________________________________
 
-1.4.4. t_reply(code, reason_phrase)
+1.4.4.  t_reply(code, reason_phrase)
 
    Sends a stateful reply after a transaction has been
    established. See t_newtran for usage.
 
    Meaning of the parameters is as follows:
-
      * code - Reply code number.
      * reason_phrase - Reason string.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-21. t_reply usage
+   Example 1.21. t_reply usage
 ...
 t_reply("404", "Not found");
 ...
-     __________________________________________________________
 
-1.4.5. t_replicate(URI,[flags])
+1.4.5.  t_replicate(URI,[flags])
 
    Replicates a request to another destination. No information due
    the replicated request (like reply code) will be forwarded to
@@ -711,32 +683,29 @@ t_reply("404", "Not found");
 
    This functions can be used from REQUEST_ROUTE.
 
-   Example 1-22. t_replicate usage
+   Example 1.22. t_replicate usage
 ...
 t_replicate("sip:1.2.3.4:5060");
 t_replicate("sip:1.2.3.4:5060;transport=tcp");
 t_replicate("sip:1.2.3.4","0x4");
 ...
-     __________________________________________________________
 
-1.4.6. t_release()
+1.4.6.  t_release()
 
    Remove transaction from memory (it will be first put on a wait
    timer to absorb delayed messages).
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-23. t_release usage
+   Example 1.23. t_release usage
 ...
 t_release();
 ...
-     __________________________________________________________
 
-1.4.7. t_check_status(re)
+1.4.7.  t_check_status(re)
 
    Returns true if the regualr expresion "re" match the reply code
    of the response message as follows:
-
      * in routing block - the code of the last sent reply.
      * in on_reply block - the code of the current received reply.
      * in on_failure block - the code of the selected negative
@@ -745,15 +714,14 @@ t_release();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE .
 
-   Example 1-24. t_check_status usage
+   Example 1.24. t_check_status usage
 ...
 if (t_check_status("(487)|(408)")) {
     log("487 or 408 negative reply\n");
 }
 ...
-     __________________________________________________________
 
-1.4.8. t_flush_flags()
+1.4.8.  t_flush_flags()
 
    Flush the flags from current request into the already created
    transaction. It make sens only in routing block if the
@@ -762,13 +730,12 @@ if (t_check_status("(487)|(408)")) {
 
    This function can be used from REQUEST_ROUTE and BRANCH_ROUTE .
 
-   Example 1-25. t_flush_flags usage
+   Example 1.25. t_flush_flags usage
 ...
 t_flush_flags();
 ...
-     __________________________________________________________
 
-1.4.9. t_local_replied(reply)
+1.4.9.  t_local_replied(reply)
 
    Returns true if all or last (depending of the parameter)
    reply(es) were local generated (and not received).
@@ -778,15 +745,14 @@ t_flush_flags();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    FAILURE_ROUTE and ONREPLY_ROUTE.
 
-   Example 1-26. t_local_replied usage
+   Example 1.26. t_local_replied usage
 ...
 if (t_local_replied("all")) {
         log ("no reply received\n");
 }
 ...
-     __________________________________________________________
 
-1.4.10. t_write_fifo(info,fifo) t_write_unix(info,sock)
+1.4.10.  t_write_fifo(info,fifo) t_write_unix(info,sock)
 
    Write via FIFO file or UNIX socket a lot of information
    regarding the request. Which information should be written may
@@ -795,7 +761,7 @@ if (t_local_replied("all")) {
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE
    and BRANCH_ROUTE.
 
-   Example 1-27. t_write_fifo/unix usage
+   Example 1.27. t_write_fifo/unix usage
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
 modparam("tm","tw_append","append2:body=msg[body]")
@@ -804,14 +770,12 @@ t_write_fifo("voicemail/append1","/tmp/appx_fifo");
 ...
 t_write_unix("logger/append2","/var/run/logger.sock");
 ...
-     __________________________________________________________
 
-1.4.11. t_check_trans()
+1.4.11.  t_check_trans()
 
    Returns true if the current request is associated to a
    transaction. The relationship between the request and
    transaction is defined as follow:
-
      * non-CANCEL/non-ACK requests - if the request belongs to a
        transaction (it's a retransmision), the function will do a
        standard processing of the retransmission and will
@@ -824,7 +788,7 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 
    This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
 
-   Example 1-28. t_check_trans usage
+   Example 1.28. t_check_trans usage
 ...
 if ( is_method("CANCEL") ) {
         if ( t_check_trans() )
@@ -832,24 +796,22 @@ if ( is_method("CANCEL") ) {
         exit;
 }
 ...
-     __________________________________________________________
 
-1.4.12. t_was_cancelled()
+1.4.12.  t_was_cancelled()
 
    Retuns true if called for an INVITE transaction that was
    explicitly cancelled by UAC side via a CANCEL request.
 
    This function can be used from ONREPLY_ROUTE, FAILURE_ROUTE.
 
-   Example 1-29. t_was_cancelled usage
+   Example 1.29. t_was_cancelled usage
 ...
 if (t_was_cancelled()) {
     log("transaction was cancelled by UAC\n");
 }
 ...
-     __________________________________________________________
 
-1.4.13. t_on_failure(failure_route)
+1.4.13.  t_on_failure(failure_route)
 
    Sets reply routing block, to which control is passed after a
    transaction completed with a negative result but before sending
@@ -871,13 +833,12 @@ if (t_was_cancelled()) {
    value of the winning branch.
 
    Meaning of the parameters is as follows:
-
      * failure_route - Reply route block to be called.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1-30. t_on_failure usage
+   Example 1.30. t_on_failure usage
 ...
 route {
         t_on_failure("1");
@@ -890,9 +851,8 @@ failure_route[1] {
         t_relay();
 }
 ...
-     __________________________________________________________
 
-1.4.14. t_on_reply(reply_route)
+1.4.14.  t_on_reply(reply_route)
 
    Sets reply routing block, to which control is passed each time
    a reply (provisional or final) for the transaction is received.
@@ -914,13 +874,12 @@ failure_route[1] {
    further.
 
    Meaning of the parameters is as follows:
-
      * reply_route - Reply route block to be called.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1-31. t_on_reply usage
+   Example 1.31. t_on_reply usage
 ...
 route {
         t_on_reply("1");
@@ -936,9 +895,8 @@ onreply_route[1] {
         }
 }
 ...
-     __________________________________________________________
 
-1.4.15. t_on_branch(branch_route)
+1.4.15.  t_on_branch(branch_route)
 
    Sets a branch route to be execute separately for each branch of
    the transaction before being sent out - changes in that route
@@ -957,13 +915,12 @@ onreply_route[1] {
    be forwarded further.
 
    Meaning of the parameters is as follows:
-
      * branch_route - Branch route block to be called.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1-32. t_on_branch usage
+   Example 1.32. t_on_branch usage
 ...
 route {
         t_on_branch("1");
@@ -980,19 +937,16 @@ branch_route[1] {
         }
 }
 ...
-     __________________________________________________________
 
 1.5. Exported pseudo-variables
 
    Exported pseudo-variables are listed in the next sections.
-     __________________________________________________________
 
 1.5.1. $T_branch_idx
 
    $T_branch_idx - the index (starting with 1 for the first
    branch) of the branch for which is executed the branch_route[].
    If used outside of branch_route[] block, the value is '0'.
-     __________________________________________________________
 
 1.5.2. $T_reply_code
 
@@ -1001,16 +955,14 @@ branch_route[1] {
    reply_route will be the current processed reply; in
    failure_route will be the negative winning reply. In case of
    no-reply or error, '0' value is returned.
-     __________________________________________________________
 
 1.6. Exported MI Functions
 
-1.6.1. t_uac_dlg
+1.6.1.  t_uac_dlg
 
    Generates and sends a local SIP request.
 
    Parameters:
-
      * method - request method
      * RURI - request SIP URI
      * NEXT HOP - next hop SIP URI (OBP); use "." if no value.
@@ -1021,34 +973,28 @@ branch_route[1] {
      * body - (optional, may not be present) request body (if
        present, requires the "Content-Type" and "Content-length"
        headers)
-     __________________________________________________________
 
-1.6.2. t_uac_cancel
+1.6.2.  t_uac_cancel
 
    Generates and sends a CANCEL for an existing local SIP request.
 
    Parameters:
-
      * callid - callid of the INVITE request to be cancelled.
      * cseq - cseq of the INVITE request to be cancelled.
-     __________________________________________________________
 
-1.6.3. t_hash
+1.6.3.  t_hash
 
    Gets information about the load of TM internal hash table.
 
    Parameters:
-
      * none
-     __________________________________________________________
 
-1.6.4. t_reply
+1.6.4.  t_reply
 
    Generates and sends a reply for an existing inbound SIP
    transaction.
 
    Parameters:
-
      * code - reply code
      * reason - reason phrase.
      * trans_id - transaction identifier (has the hash_entry:label
@@ -1059,89 +1005,108 @@ branch_route[1] {
      * body - (optional, may not be present) reply body (if
        present, requires the "Content-Type" and "Content-length"
        headers)
-     __________________________________________________________
 
 1.7. Exported statistics
 
    Exported statistics are listed in the next sections.
-     __________________________________________________________
 
 1.7.1. received_replies
 
    Total number of total replies received by TM module - can be
    resetted.
-     __________________________________________________________
 
 1.7.2. relayed_replies
 
    Total number of replied received and relayed by TM module - can
    be resetted.
-     __________________________________________________________
 
 1.7.3. local_replies
 
    Total number of replied local generated by TM module - can be
    resetted.
-     __________________________________________________________
 
 1.7.4. UAS_transactions
 
    Total number of transaction created by received requests - can
    be resetted.
-     __________________________________________________________
 
 1.7.5. UAC_transactions
 
    Total number of transaction created by local generated requests
    - can be resetted.
-     __________________________________________________________
 
 1.7.6. 2xx_transactions
 
    Total number of transaction completed with 2xx replies - can be
    resetted.
-     __________________________________________________________
 
 1.7.7. 3xx_transactions
 
    Total number of transaction completed with 3xx replies - can be
    resetted.
-     __________________________________________________________
 
 1.7.8. 4xx_transactions
 
    Total number of transaction completed with 4xx replies - can be
    resetted.
-     __________________________________________________________
 
 1.7.9. 5xx_transactions
 
    Total number of transaction completed with 5xx replies - can be
    resetted.
-     __________________________________________________________
 
 1.7.10. 6xx_transactions
 
    Total number of transaction completed with 6xx replies - can be
    resetted.
-     __________________________________________________________
 
 1.7.11. inuse_transactions
 
    Number of transaction existing in memeory at current time - can
    not be resetted.
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
 2.1. Functions
 
-2.1.1. load_tm(*import_structure)
+2.1.1.  load_tm(*import_structure)
 
    For programmatic use only--import the TM API. See the cpl-c,
    acc or jabber modules to see how it works.
 
    Meaning of the parameters is as follows:
-
      * import_structure - Pointer to the import structure - see
        "struct tm_binds" in modules/tm/tm_load.h
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

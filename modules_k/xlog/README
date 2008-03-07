@@ -13,9 +13,13 @@ Elena-Ramona Modroiu
    Copyright © 2005 voice-system.ro
 
    Copyright © 2008 Elena-Ramona Modroiu
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -35,12 +39,14 @@ Elena-Ramona Modroiu
               1.5.1. xlog([level,] format)
               1.5.2. xdbg(format)
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set buf_size parameter
-   1-2. Set force_color parameter
-   1-3. xlog usage
-   1-4. xdbg usage
-     __________________________________________________________
+
+   1.1. Set buf_size parameter
+   1.2. Set force_color parameter
+   1.3. xlog usage
+   1.4. xdbg usage
 
 Chapter 1. User's Guide
 
@@ -49,9 +55,8 @@ Chapter 1. User's Guide
    This module provides the possibility to print user formatted
    log or debug messages from OpenSER scripts, similar to printf
    function but now a specifier is replaced with a part of the SIP
-   request or other variables from system. Section 1.2 shows what
-   can be printed out.
-     __________________________________________________________
+   request or other variables from system. Section 1.2,
+   "Implemented Specifiers" shows what can be printed out.
 
 1.2. Implemented Specifiers
 
@@ -60,7 +65,6 @@ Chapter 1. User's Guide
    (e.g., avpops in the function avp_printf())
 
    The most important changes are:
-
      * - '%' has been replaced by '$'
      * - to print a header, use now $hdr(header_name[index])
        instead of %{header_name[index]}
@@ -70,24 +74,19 @@ Chapter 1. User's Guide
 
    The full list of available pseudo-variables in OpenSER is
    availabe at: http://openser.org/dokuwiki/
-     __________________________________________________________
 
 1.3. Dependencies
 
 1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.4. Exported Parameters
 
@@ -97,11 +96,10 @@ Chapter 1. User's Guide
 
    Default value is 4096.
 
-   Example 1-1. Set buf_size parameter
+   Example 1.1. Set buf_size parameter
 ...
 modparam("xlog", "buf_size", 8192)
 ...
-     __________________________________________________________
 
 1.4.2. force_color (integer)
 
@@ -109,20 +107,18 @@ modparam("xlog", "buf_size", 8192)
 
    Default value is 0.
 
-   Example 1-2. Set force_color parameter
+   Example 1.2. Set force_color parameter
 ...
 modparam("xlog", "force_color", 0)
 ...
-     __________________________________________________________
 
 1.5. Exported Functions
 
-1.5.1. xlog([level,] format)
+1.5.1.  xlog([level,] format)
 
    Print a formated message using LOG function.
 
    Meaning of the parameters is as follows:
-
      * level - The level that will be used in LOG function. It can
        be:
           + L_ALERT - log level -3
@@ -145,30 +141,61 @@ modparam("xlog", "force_color", 0)
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1-3. xlog usage
+   Example 1.3. xlog usage
 ...
-xlog("L_ERR", "time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])
->\n");
+xlog("L_ERR", "time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1])
+)\n");
 ...
-xlog("time [$Tf] method <$rm> r-uri <$ru> 2nd via <$hdr(via[1])>\n");
+xlog("time [$Tf] method ($rm) r-uri ($ru) 2nd via ($hdr(via[1]))\n");
 ...
 $var(loglevel) = 2;
-xlog("$var(loglevel)", "time [$Tf] method <$rm> r-uri <$ru>\n");
+xlog("$var(loglevel)", "time [$Tf] method ($rm) r-uri ($ru)\n");
 ...
-     __________________________________________________________
 
-1.5.2. xdbg(format)
+1.5.2.  xdbg(format)
 
    Print a formatted message using DBG function.
 
    Meaning of the parameters is as follows:
-
      * format - The formatted string to be printed.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1-4. xdbg usage
+   Example 1.4. xdbg usage
 ...
-xdbg("time $Cbx[$Tf]$Cxx method <$rm> r-uri <$ru>\n");
+xdbg("time $Cbx[$Tf]$Cxx method ($rm) r-uri ($ru)\n");
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

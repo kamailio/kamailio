@@ -8,12 +8,18 @@ Edited by
 
 Andrei Pelinescu-Onciul
 
+Edited by
+
 Daniel-Constantin Mierla
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -55,33 +61,35 @@ Daniel-Constantin Mierla
 
         1.4. Known Limitations
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. search usage
-   1-2. search_body usage
-   1-3. search_append usage
-   1-4. search_append_body usage
-   1-5. replace usage
-   1-6. replace_body usage
-   1-7. replace_all usage
-   1-8. replace_body_all usage
-   1-9. subst usage
-   1-10. subst_uri usage
-   1-11. subst usage
-   1-12. subst_body usage
-   1-13. filter_body usage
-   1-14. append_to_reply usage
-   1-15. append_hf usage
-   1-16. append_hf usage
-   1-17. insert_hf usage
-   1-18. insert_hf usage
-   1-19. append_urihf usage
-   1-20. is_present_hf usage
-   1-21. append_time usage
-   1-22. is_method usage
-   1-23. remove_hf usage
-   1-24. has_body usage
-   1-25. is_privacy usage
-     __________________________________________________________
+
+   1.1. search usage
+   1.2. search_body usage
+   1.3. search_append usage
+   1.4. search_append_body usage
+   1.5. replace usage
+   1.6. replace_body usage
+   1.7. replace_all usage
+   1.8. replace_body_all usage
+   1.9. subst usage
+   1.10. subst_uri usage
+   1.11. subst usage
+   1.12. subst_body usage
+   1.13. filter_body usage
+   1.14. append_to_reply usage
+   1.15. append_hf usage
+   1.16. append_hf usage
+   1.17. insert_hf usage
+   1.18. insert_hf usage
+   1.19. append_urihf usage
+   1.20. is_present_hf usage
+   1.21. append_time usage
+   1.22. is_method usage
+   1.23. remove_hf usage
+   1.24. has_body usage
+   1.25. is_privacy usage
 
 Chapter 1. User's Guide
 
@@ -93,7 +101,6 @@ Chapter 1. User's Guide
    manipulate the message at text level, e.g., regular expression
    search and replace, Perl-like substitutions, checks for method
    type, header presence, insert of new header and date, etc.
-     __________________________________________________________
 
 1.1.1. Known Limitations
 
@@ -102,178 +109,156 @@ Chapter 1. User's Guide
    header field:
 From: medabeda
  <sip:medameda@foo.bar>;tag=1234
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Functions
 
-1.3.1. search(re)
+1.3.1.  search(re)
 
    Searches for the re in the message.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-1. search usage
+   Example 1.1. search usage
 ...
 if ( search("[Ss][Ii][Pp]") ) { /*....*/ };
 ...
-     __________________________________________________________
 
-1.3.2. search_body(re)
+1.3.2.  search_body(re)
 
    Searches for the re in the body of the message.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-2. search_body usage
+   Example 1.2. search_body usage
 ...
 if ( search_body("[Ss][Ii][Pp]") ) { /*....*/ };
 ...
-     __________________________________________________________
 
-1.3.3. search_append(re, txt)
+1.3.3.  search_append(re, txt)
 
    Searches for the first match of re and appends txt after it.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
      * txt - String to be appended.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-3. search_append usage
+   Example 1.3. search_append usage
 ...
 search_append("[Oo]pen[Ss]er", " SIP Proxy");
 ...
-     __________________________________________________________
 
-1.3.4. search_append_body(re, txt)
+1.3.4.  search_append_body(re, txt)
 
    Searches for the first match of re in the body of the message
    and appends txt after it.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
      * txt - String to be appended.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-4. search_append_body usage
+   Example 1.4. search_append_body usage
 ...
 search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 ...
-     __________________________________________________________
 
-1.3.5. replace(re, txt)
+1.3.5.  replace(re, txt)
 
    Replaces the first occurrence of re with txt.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
      * txt - String.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-5. replace usage
+   Example 1.5. replace usage
 ...
 replace("openser", "OpenSER SIP Proxy");
 ...
-     __________________________________________________________
 
-1.3.6. replace_body(re, txt)
+1.3.6.  replace_body(re, txt)
 
    Replaces the first occurrence of re in the body of the message
    with txt.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
      * txt - String.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-6. replace_body usage
+   Example 1.6. replace_body usage
 ...
 replace_body("openser", "OpenSER SIP Proxy");
 ...
-     __________________________________________________________
 
-1.3.7. replace_all(re, txt)
+1.3.7.  replace_all(re, txt)
 
    Replaces all occurrence of re with txt.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
      * txt - String.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-7. replace_all usage
+   Example 1.7. replace_all usage
 ...
 replace_all("openser", "OpenSER SIP Proxy");
 ...
-     __________________________________________________________
 
-1.3.8. replace_body_all(re, txt)
+1.3.8.  replace_body_all(re, txt)
 
    Replaces all occurrence of re in the body of the message with
    txt.
 
    Meaning of the parameters is as follows:
-
      * re - Regular expression.
      * txt - String.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-8. replace_body_all usage
+   Example 1.8. replace_body_all usage
 ...
 replace_body_all("openser", "OpenSER SIP Proxy");
 ...
-     __________________________________________________________
 
-1.3.9. subst('/re/repl/flags')
+1.3.9.  subst('/re/repl/flags')
 
    Replaces re with repl (sed or perl like).
 
    Meaning of the parameters is as follows:
-
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
@@ -285,7 +270,7 @@ replace_body_all("openser", "OpenSER SIP Proxy");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-9. subst usage
+   Example 1.9. subst usage
 ...
 # replace the uri in to: with the message uri (just an example)
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
@@ -296,15 +281,13 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\
 2/ig') ) {};
 
 ...
-     __________________________________________________________
 
-1.3.10. subst_uri('/re/repl/flags')
+1.3.10.  subst_uri('/re/repl/flags')
 
    Runs the re substitution on the message uri (like subst but
    works only on the uri)
 
    Meaning of the parameters is as follows:
-
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
@@ -316,7 +299,7 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-10. subst_uri usage
+   Example 1.10. subst_uri usage
 ...
 # adds 3463 prefix to numeric uris, and save the original uri (\0 match)
 # as a parameter: orig_uri (just an example)
@@ -329,15 +312,13 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\
 0/i')){$
 
 ...
-     __________________________________________________________
 
-1.3.11. subst_user('/re/repl/flags')
+1.3.11.  subst_user('/re/repl/flags')
 
    Runs the re substitution on the message uri (like subst_uri but
    works only on the user portion of the uri)
 
    Meaning of the parameters is as follows:
-
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
@@ -349,7 +330,7 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-11. subst usage
+   Example 1.11. subst usage
 ...
 # adds 3463 prefix to uris ending with 3642 (just an example)
 if (subst_user('/3642$/36423463/')){$
@@ -359,15 +340,13 @@ if (subst_user('/3642$/36423463/')){$
 if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 ...
-     __________________________________________________________
 
-1.3.12. subst_body('/re/repl/flags')
+1.3.12.  subst_body('/re/repl/flags')
 
    Replaces re with repl (sed or perl like) in the body of the
    message.
 
    Meaning of the parameters is as follows:
-
      * '/re/repl/flags' - sed like regular expression. flags can
        be a combination of i (case insensitive), g (global) or s
        (match newline don't treat it as end of line).
@@ -379,26 +358,24 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-12. subst_body usage
+   Example 1.12. subst_body usage
 ...
 if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 
 ...
-     __________________________________________________________
 
-1.3.13. filter_body(content_type)
+1.3.13.  filter_body(content_type)
 
    Filters multipart body by leaving out all other body parts
    except the first body part of given type.
 
    Meaning of the parameters is as follows:
-
      * content_type - Content type to be left in the body.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-13. filter_body usage
+   Example 1.13. filter_body usage
 ...
 if (has_body("multipart/mixed")) {
     if (filter_body("application/sdp") {
@@ -409,32 +386,28 @@ if (has_body("multipart/mixed")) {
     }
 }
 ...
-     __________________________________________________________
 
-1.3.14. append_to_reply(txt)
+1.3.14.  append_to_reply(txt)
 
    Append txt as header to the reply.
 
    Meaning of the parameters is as follows:
-
      * txt - String which may contains pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ERROR_ROUTE.
 
-   Example 1-14. append_to_reply usage
+   Example 1.14. append_to_reply usage
 ...
 append_to_reply("Foo: bar\r\n");
 append_to_reply("Foo: $rm at $Ts\r\n");
 ...
-     __________________________________________________________
 
-1.3.15. append_hf(txt)
+1.3.15.  append_hf(txt)
 
    Appends 'txt' as header after the last header field.
 
    Meaning of the parameters is as follows:
-
      * txt - Header field to be appended. The value can contain
        pseudo-variables which will be replaced at run time.
 
@@ -447,19 +420,17 @@ append_to_reply("Foo: $rm at $Ts\r\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-15. append_hf usage
+   Example 1.15. append_hf usage
 ...
 append_hf("P-hint: VOICEMAIL\r\n");
 append_hf("From-username: $fU\r\n");
 ...
-     __________________________________________________________
 
-1.3.16. append_hf(txt, hdr)
+1.3.16.  append_hf(txt, hdr)
 
    Appends 'txt' as header after first 'hdr' header field.
 
    Meaning of the parameters is as follows:
-
      * txt - Header field to be appended. The value can contain
        pseudo-variables which will be replaced at run time.
      * hdr - Header name after which the 'txt' is appended.
@@ -467,38 +438,34 @@ append_hf("From-username: $fU\r\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-16. append_hf usage
+   Example 1.16. append_hf usage
 ...
 append_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 append_hf("From-username: $fU\r\n", "Call-ID");
 ...
-     __________________________________________________________
 
-1.3.17. insert_hf(txt)
+1.3.17.  insert_hf(txt)
 
    Inserts 'txt' as header before the first header field.
 
    Meaning of the parameters is as follows:
-
      * txt - Header field to be inserted. The value can contain
        pseudo-variables which will be replaced at run time.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-17. insert_hf usage
+   Example 1.17. insert_hf usage
 ...
 insert_hf("P-hint: VOICEMAIL\r\n");
 insert_hf("To-username: $tU\r\n");
 ...
-     __________________________________________________________
 
-1.3.18. insert_hf(txt, hdr)
+1.3.18.  insert_hf(txt, hdr)
 
    Inserts 'txt' as header before first 'hdr' header field.
 
    Meaning of the parameters is as follows:
-
      * txt - Header field to be inserted. The value can contain
        pseudo-variables which will be replaced at run time.
      * hdr - Header name before which the 'txt' is inserted.
@@ -506,60 +473,54 @@ insert_hf("To-username: $tU\r\n");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-18. insert_hf usage
+   Example 1.18. insert_hf usage
 ...
 insert_hf("P-hint: VOICEMAIL\r\n", "Call-ID");
 insert_hf("To-username: $tU\r\n", "Call-ID");
 ...
-     __________________________________________________________
 
-1.3.19. append_urihf(prefix, suffix)
+1.3.19.  append_urihf(prefix, suffix)
 
    Append header field name with original Request-URI in middle.
 
    Meaning of the parameters is as follows:
-
      * prefix - string (usually at least header field name).
      * suffix - string (usually at least line terminator).
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-19. append_urihf usage
+   Example 1.19. append_urihf usage
 ...
 append_urihf("CC-Diversion: ", "\r\n");
 ...
-     __________________________________________________________
 
-1.3.20. is_present_hf(hf_name)
+1.3.20.  is_present_hf(hf_name)
 
    Return true if a header field is present in message.
 
-   Note
+Note
 
-        The function is also able to distinguish the compact names. For
-        exmaple "From" will match with "f"
+   The function is also able to distinguish the compact names. For
+   exmaple "From" will match with "f"
 
    Meaning of the parameters is as follows:
-
      * hf_name - Header field name.(long or compact form)
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-20. is_present_hf usage
+   Example 1.20. is_present_hf usage
 ...
 if (is_present_hf("From")) log(1, "From HF Present");
 ...
-     __________________________________________________________
 
-1.3.21. append_time()
+1.3.21.  append_time()
 
    Adds a time header to the reply of the request. You must use it
    before functions that are likely to send a reply, e.g., save()
    from 'registrar' module. Header format is: "Date: %a, %d %b %Y
    %H:%M:%S GMT", with the legend:
-
      * %a abbreviated week of day name (locale)
      * %d day of month as decimal number
      * %b abbreviated month name (locale)
@@ -573,13 +534,12 @@ if (is_present_hf("From")) log(1, "From HF Present");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-21. append_time usage
+   Example 1.21. append_time usage
 ...
 append_time();
 ...
-     __________________________________________________________
 
-1.3.22. is_method(name)
+1.3.22.  is_method(name)
 
    Check if the method of the message matches the name. If name is
    a known method (invite, cancel, ack, bye, options, info,
@@ -599,13 +559,12 @@ append_time();
    field from CSeq header.
 
    Meaning of the parameters is as follows:
-
      * name - SIP method name
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, and BRANCH_ROUTE.
 
-   Example 1-22. is_method usage
+   Example 1.22. is_method usage
 ...
 if(is_method("INVITE"))
 {
@@ -616,31 +575,28 @@ if(is_method("OPTION|UPDATE"))
     # process OPTIONs and UPDATEs here
 }
 ...
-     __________________________________________________________
 
-1.3.23. remove_hf(hname)
+1.3.23.  remove_hf(hname)
 
    Remove from message all headers with name "hname"
 
    Returns true if at least one header is found and removed.
 
    Meaning of the parameters is as follows:
-
      * hname - header name to be removed.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1-23. remove_hf usage
+   Example 1.23. remove_hf usage
 ...
 if(remove_hf("User-Agent"))
 {
     # User Agent header removed
 }
 ...
-     __________________________________________________________
 
-1.3.24. has_body(), has_body(mime)
+1.3.24.  has_body(), has_body(mime)
 
    The function returns true if the SIP message has a body
    attached. The checked includes also the "Content-Lenght" header
@@ -650,23 +606,21 @@ if(remove_hf("User-Agent"))
    against the "Content-Type" header.
 
    Meaning of the parameters is as follows:
-
      * mime - mime to be checked against the "Content-Type"
        header. If not present or 0, this check will be disabled.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1-24. has_body usage
+   Example 1.24. has_body usage
 ...
 if(has_body("application/sdp"))
 {
     # do interesting stuff here
 }
 ...
-     __________________________________________________________
 
-1.3.25. is_privacy(privacy_type)
+1.3.25.  is_privacy(privacy_type)
 
    The function returns true if the SIP message has a Privacy
    header field that includes the given privacy_type among its
@@ -677,17 +631,49 @@ if(has_body("application/sdp"))
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
 
-   Example 1-25. is_privacy usage
+   Example 1.25. is_privacy usage
 ...
 if(is_privacy("id"))
 {
     # do interesting stuff here
 }
 ...
-     __________________________________________________________
 
 1.4. Known Limitations
 
    Search functions are applied to the original request, i.e.,
    they ignore all changes resulting from message processing in
    OpenSER script.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

@@ -9,9 +9,13 @@ Edited by
 Elena-Ramona Modroiu
 
    Copyright © 2003, 2004 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -32,17 +36,19 @@ Elena-Ramona Modroiu
               1.4.2. diameter_proxy_authorize(realm)
               1.4.3. diameter_is_user_in(who, group)
 
-        1.5. Installation & Running
+        1.5. Installation and Running
+
+   2. Frequently Asked Questions
 
    List of Examples
-   1-1. Digest Authentication
-   1-2. Set diameter_client_host parameter
-   1-3. Set diameter_client_port parameter
-   1-4. Set use_domain parameter
-   1-5. diameter_www_authorize usage
-   1-6. diameter_proxy_authorize usage
-   1-7. diameter_is_user_in usage
-     __________________________________________________________
+
+   1.1. Digest Authentication
+   1.2. Set diameter_client_host parameter
+   1.3. Set diameter_client_port parameter
+   1.4. Set use_domain parameter
+   1.5. diameter_www_authorize usage
+   1.6. diameter_proxy_authorize usage
+   1.7. diameter_is_user_in usage
 
 Chapter 1. User's Guide
 
@@ -61,7 +67,7 @@ Chapter 1. User's Guide
    The digest authentication mechanism is presented in next
    figure.
 
-   Example 1-1. Digest Authentication
+   Example 1.1. Digest Authentication
 ...
         a) First phase of Digest Authentication for SIP:
 
@@ -89,24 +95,19 @@ Chapter 1. User's Guide
                                   Result-Code=2001
 
 ...
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * sl - used to send stateless replies.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -116,11 +117,10 @@ Chapter 1. User's Guide
 
    Default value is "localhost".
 
-   Example 1-2. Set diameter_client_host parameter
+   Example 1.2. Set diameter_client_host parameter
 ...
 modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 ...
-     __________________________________________________________
 
 1.3.2. diameter_client_port (int)
 
@@ -128,11 +128,10 @@ modparam("auth_diameter", "diameter_client_host", "10.10.10.10")
 
    Default value is "3000".
 
-   Example 1-3. Set diameter_client_port parameter
+   Example 1.3. Set diameter_client_port parameter
 ...
 modparam("auth_diameter", "diameter_client_port", 3000)
 ...
-     __________________________________________________________
 
 1.3.3. use_domain (int)
 
@@ -141,15 +140,14 @@ modparam("auth_diameter", "diameter_client_port", 3000)
 
    Default value is "0 (0==false and 1==true )".
 
-   Example 1-4. Set use_domain parameter
+   Example 1.4. Set use_domain parameter
 ...
 modparam("auth_diameter", "use_domain", 1)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. diameter_www_authorize(realm)
+1.4.1.  diameter_www_authorize(realm)
 
    SIP Server checks for authorization having a DIAMETER server in
    backend. If no credentials are provided inside the SIP request
@@ -158,28 +156,25 @@ modparam("auth_diameter", "use_domain", 1)
    back.
 
    Negative codes may be interpreted as follows:
-
      * -5 (generic error) - some generic error occurred and no
        reply was sent out;
      * -3 (stale nonce) - stale nonce;
 
    Meaning of the parameters is as follows:
-
      * realm - the realm to be use for authentication and
        authorization. The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-5. diameter_www_authorize usage
+   Example 1.5. diameter_www_authorize usage
 ...
 if(!diameter_www_authorize("siphub.net"))
 { /* user is not authorized */
         exit;
 };
 ...
-     __________________________________________________________
 
-1.4.2. diameter_proxy_authorize(realm)
+1.4.2.  diameter_proxy_authorize(realm)
 
    SIP Proxy checks for authorization having a DIAMETER server in
    backend. If no credentials are provided inside the SIP request
@@ -189,27 +184,24 @@ if(!diameter_www_authorize("siphub.net"))
    function.
 
    Meaning of the parameters is as follows:
-
      * realm - the realm to be use for authentication and
        authorization. The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-6. diameter_proxy_authorize usage
+   Example 1.6. diameter_proxy_authorize usage
 ...
 if(!diameter_proxy_authorize("siphub.net"))
 { /* user is not authorized */
         exit;
 };
 ...
-     __________________________________________________________
 
-1.4.3. diameter_is_user_in(who, group)
+1.4.3.  diameter_is_user_in(who, group)
 
    The method performs group membership checking with DISC.
 
    Meaning of the parameters is as follows:
-
      * who - what header to be used to get the SIP URI that is
        wanted to be checked being member in a certain group. It
        can be: "Request-URI", "From", "To" or "Credentials".
@@ -218,15 +210,47 @@ if(!diameter_proxy_authorize("siphub.net"))
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-7. diameter_is_user_in usage
+   Example 1.7. diameter_is_user_in usage
 ...
 if(!diameter_is_user_in("From", "voicemail"))
 { /* user is not authorized */
         exit;
 };
 ...
-     __________________________________________________________
 
-1.5. Installation & Running
+1.5. Installation and Running
 
    Notes about installation and running.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

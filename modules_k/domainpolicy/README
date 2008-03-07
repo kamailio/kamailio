@@ -2,19 +2,33 @@ Domain Policy Module
 
 Otmar Lendl
 
+   <otmar.lendl@enum.at>
+
 Klaus Darilion
+
+   <klaus.darilion@enum.at>
 
 Edited by
 
 Otmar Lendl
 
+   <otmar.lendl@enum.at>
+
+Edited by
+
 Klaus Darilion
+
+   <klaus.darilion@enum.at>
 
    Copyright © 2002, 2003, 2006 Juha Heinanen, Otmar Lendl, Klaus
    Darilion
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -48,22 +62,24 @@ Klaus Darilion
 
         1.7. Known Limitations
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Setting db_url parameter
-   1-2. Setting dp_table parameter
-   1-3. Setting dp_col_rule parameter
-   1-4. Setting dp_col_rule parameter
-   1-5. Setting dp_col_att parameter
-   1-6. Setting dp_col_val parameter
-   1-7. Setting port_override_avp parameter
-   1-8. Setting transport_override_avp parameter
-   1-9. Setting domain_replacement_avp parameter
-   1-10. Setting domain_prefix_avp parameter
-   1-11. Setting domain_suffix_avp parameter
-   1-12. Setting send_socket_avp parameter
-   1-13. dp_can_connect usage
-   1-14. dp_apply_policy usage
-     __________________________________________________________
+
+   1.1. Setting db_url parameter
+   1.2. Setting dp_table parameter
+   1.3. Setting dp_col_rule parameter
+   1.4. Setting dp_col_rule parameter
+   1.5. Setting dp_col_att parameter
+   1.6. Setting dp_col_val parameter
+   1.7. Setting port_override_avp parameter
+   1.8. Setting transport_override_avp parameter
+   1.9. Setting domain_replacement_avp parameter
+   1.10. Setting domain_prefix_avp parameter
+   1.11. Setting domain_suffix_avp parameter
+   1.12. Setting send_socket_avp parameter
+   1.13. dp_can_connect usage
+   1.14. dp_apply_policy usage
 
 Chapter 1. User's Guide
 
@@ -80,15 +96,12 @@ Chapter 1. User's Guide
    draft-lendl-domain-policy-ddds-02.
 
    This module requires a database. No caching is implemented.
-     __________________________________________________________
 
 1.2. Dependencies
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
-
      * database -- Any database module
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -99,10 +112,9 @@ Chapter 1. User's Guide
    Default value is
    "mysql://openserro:openserro@localhost/openser"
 
-   Example 1-1. Setting db_url parameter
+   Example 1.1. Setting db_url parameter
 modparam("domainpolicy", "db_url", "postgresql://openserro:pass@db_host/
 openser")
-     __________________________________________________________
 
 1.3.2. dp_table (string)
 
@@ -110,9 +122,8 @@ openser")
 
    Default value is "domainpolicy".
 
-   Example 1-2. Setting dp_table parameter
+   Example 1.2. Setting dp_table parameter
 modparam("domainpolicy", "dp_table", "supportedpolicies")
-     __________________________________________________________
 
 1.3.3. dp_col_rule (string)
 
@@ -121,9 +132,8 @@ modparam("domainpolicy", "dp_table", "supportedpolicies")
 
    Default value is "rule".
 
-   Example 1-3. Setting dp_col_rule parameter
+   Example 1.3. Setting dp_col_rule parameter
 modparam("domainpolicy", "dp_col_rule", "rules")
-     __________________________________________________________
 
 1.3.4. dp_col_type (string)
 
@@ -134,9 +144,8 @@ modparam("domainpolicy", "dp_col_rule", "rules")
 
    Default value is "type".
 
-   Example 1-4. Setting dp_col_rule parameter
+   Example 1.4. Setting dp_col_rule parameter
 modparam("domainpolicy", "dp_col_type", "type")
-     __________________________________________________________
 
 1.3.5. dp_col_att (string)
 
@@ -146,9 +155,8 @@ modparam("domainpolicy", "dp_col_type", "type")
 
    Default value is "att".
 
-   Example 1-5. Setting dp_col_att parameter
+   Example 1.5. Setting dp_col_att parameter
 modparam("domainpolicy", "dp_col_att", "attribute")
-     __________________________________________________________
 
 1.3.6. dp_col_val (string)
 
@@ -157,9 +165,8 @@ modparam("domainpolicy", "dp_col_att", "attribute")
 
    Default value is "val".
 
-   Example 1-6. Setting dp_col_val parameter
+   Example 1.6. Setting dp_col_val parameter
 modparam("domainpolicy", "dp_col_val", "values")
-     __________________________________________________________
 
 1.3.7. port_override_avp (string)
 
@@ -168,10 +175,9 @@ modparam("domainpolicy", "dp_col_val", "values")
 
    Default value is "portoverride".
 
-   Example 1-7. Setting port_override_avp parameter
+   Example 1.7. Setting port_override_avp parameter
 # string named AVP
 modparam("domainpolicy", "port_override_avp", "portoverride")
-     __________________________________________________________
 
 1.3.8. transport_override_avp (string)
 
@@ -179,10 +185,9 @@ modparam("domainpolicy", "port_override_avp", "portoverride")
 
    Default value is "transportoverride".
 
-   Example 1-8. Setting transport_override_avp parameter
+   Example 1.8. Setting transport_override_avp parameter
 # string named AVP
 modparam("domainpolicy", "transport_override_avp", "transportoverride")
-     __________________________________________________________
 
 1.3.9. domain_replacement_avp (string)
 
@@ -190,10 +195,9 @@ modparam("domainpolicy", "transport_override_avp", "transportoverride")
 
    Default value is "domainreplacement".
 
-   Example 1-9. Setting domain_replacement_avp parameter
+   Example 1.9. Setting domain_replacement_avp parameter
 # string named AVP
 modparam("domainpolicy", "domain_replacement_avp", "domainreplacement")
-     __________________________________________________________
 
 1.3.10. domain_prefix_avp (string)
 
@@ -201,10 +205,9 @@ modparam("domainpolicy", "domain_replacement_avp", "domainreplacement")
 
    Default value is "domainprefix".
 
-   Example 1-10. Setting domain_prefix_avp parameter
+   Example 1.10. Setting domain_prefix_avp parameter
 # string named AVP
 modparam("domainpolicy", "domain_prefix_avp", "domainprefix")
-     __________________________________________________________
 
 1.3.11. domain_suffix_avp (string)
 
@@ -212,10 +215,9 @@ modparam("domainpolicy", "domain_prefix_avp", "domainprefix")
 
    Default value is "domainsuffix".
 
-   Example 1-11. Setting domain_suffix_avp parameter
+   Example 1.11. Setting domain_suffix_avp parameter
 # string named AVP
 modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
-     __________________________________________________________
 
 1.3.12. send_socket_avp (string)
 
@@ -227,10 +229,9 @@ modparam("domainpolicy", "domain_suffix_avp", "domainsuffix")
 
    Default value is "sendsocket".
 
-   Example 1-12. Setting send_socket_avp parameter
+   Example 1.12. Setting send_socket_avp parameter
 # string named AVP
 modparam("domainpolicy", "send_socket_avp", "sendsocket")
-     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -282,7 +283,6 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
    Thus, the AVP's value is always string based.
 
    dp_can_connect returns:
-
      * -2: on errors during the evaluation. (DNS, DB, ...)
      * -1: D2P+SIP records were found, but the policy is not
        fullfillable.
@@ -292,7 +292,7 @@ modparam("domainpolicy", "send_socket_avp", "sendsocket")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-13. dp_can_connect usage
+   Example 1.13. dp_can_connect usage
 ...
 dp_can_connect();
 switch(retcode) {
@@ -316,7 +316,6 @@ switch(retcode) {
                 break;
 }
 ...
-     __________________________________________________________
 
 1.4.2. dp_apply_policy()
 
@@ -331,7 +330,6 @@ switch(retcode) {
 
    Setting the following AVPs in dp_can_connect() (or by any other
    means) cause the following actions in dp_apply_policy():
-
      * port_override_avp: If this AVP is set, the port in the
        destination URI is set to this port. Setting an override
        port disables NAPTR and SRV lookups according to RFC 3263.
@@ -370,22 +368,19 @@ switch(retcode) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-14. dp_apply_policy usage
+   Example 1.14. dp_apply_policy usage
 ...
 if (dp_apply_policy()) {
         t_relay();
 }
 ...
-     __________________________________________________________
 
 1.5. FIFO Commands
-     __________________________________________________________
 
 1.6. Usage Scenarios
 
    This section describes how this module can be use to implement
    selective VoIP peerings.
-     __________________________________________________________
 
 1.6.1. TLS Based Federation
 
@@ -403,7 +398,6 @@ if (dp_apply_policy()) {
    fabrics. All this can be achieved by the following
    configuration for a participating VoIP operation called
    example.com:
-
      * Incoming SIP configuration
        Calls from other members are expected to use TLS and
        authenticate using a client-CERT. To implement this, we
@@ -437,8 +431,6 @@ tls_client_domain["tlsfed"] {
  tls_verify_server = 1
 }
 
-     __________________________________________________________
-
 1.6.2. SIP Hub based Federation
 
    This example shows how a peering fabric based on a central SIP
@@ -453,7 +445,6 @@ tls_client_domain["tlsfed"] {
    firewalling). All this can be achieved by the following
    configuration for a participating VoIP operation called
    example.com:
-
      * DNS configuration
        The destination network announces its membership in this
        federation.
@@ -475,7 +466,6 @@ mysql> select * from domainpolicy;
 | 1  | http://HUBFED.org/ | fed  | domainreplacement | sip.HUBFED.org |
 +----+--------------------+------+-------------------+----------------+
 
-     __________________________________________________________
 
 1.6.3. Walled Garden Federation
 
@@ -496,7 +486,6 @@ mysql> select * from domainpolicy;
    lookup.
 
    Here is the configuration for example.com:
-
      * DNS configuration
        The destination network announces its membership in this
        federation.
@@ -522,6 +511,38 @@ mysql> select * from domainpolicy;
 | 1  | http://l3fed.org/ | fed  | domainprefix | l3fed |
 +----+-------------------+------+--------------+-------+
 
-     __________________________________________________________
 
 1.7. Known Limitations
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

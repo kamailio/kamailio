@@ -13,9 +13,13 @@ Edited by
 Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -49,16 +53,18 @@ Anca-Maria Vamanu
         1.7. IMC Commands
         1.8. Installation
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set db_url parameter
-   1-2. Set rooms_table parameter
-   1-3. Set members_table parameter
-   1-4. Set hash_size parameter
-   1-5. Set imc_cmd_start_char parameter
-   1-6. Set outbound_proxy parameter
-   1-7. Usage of imc_manager() function
-   1-8. List of commands
-     __________________________________________________________
+
+   1.1. Set db_url parameter
+   1.2. Set rooms_table parameter
+   1.3. Set members_table parameter
+   1.4. Set hash_size parameter
+   1.5. Set imc_cmd_start_char parameter
+   1.6. Set outbound_proxy parameter
+   1.7. Usage of imc_manager() function
+   1.8. List of commands
 
 Chapter 1. User's Guide
 
@@ -78,25 +84,20 @@ Chapter 1. User's Guide
    interpreter of the IMC commands are embeded in the module, from
    configuration poin of view, there is only one function which
    has to be executed for both messages and commands.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * mysql.
      * tm.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -107,11 +108,10 @@ Chapter 1. User's Guide
    The default value is
    "mysql://openser:openserrw@localhost/openser".
 
-   Example 1-1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("imc", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
-     __________________________________________________________
 
 1.3.2. rooms_table (str)
 
@@ -119,11 +119,10 @@ modparam("imc", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    The default value is "imc_rooms".
 
-   Example 1-2. Set rooms_table parameter
+   Example 1.2. Set rooms_table parameter
 ...
 modparam("imc", "rooms_table", "rooms")
 ...
-     __________________________________________________________
 
 1.3.3. members_table (str)
 
@@ -131,11 +130,10 @@ modparam("imc", "rooms_table", "rooms")
 
    The default value is "imc_members".
 
-   Example 1-3. Set members_table parameter
+   Example 1.3. Set members_table parameter
 ...
 modparam("imc", "rooms_table", "members")
 ...
-     __________________________________________________________
 
 1.3.4. hash_size (integer)
 
@@ -144,11 +142,10 @@ modparam("imc", "rooms_table", "members")
 
    The default value is 4 (resultimg in hash size 16).
 
-   Example 1-4. Set hash_size parameter
+   Example 1.4. Set hash_size parameter
 ...
 modparam("imc", "hash_size", 8)
 ...
-     __________________________________________________________
 
 1.3.5. imc_cmd_start_char (str)
 
@@ -157,11 +154,10 @@ modparam("imc", "hash_size", 8)
 
    The default value is "#".
 
-   Example 1-5. Set imc_cmd_start_char parameter
+   Example 1.5. Set imc_cmd_start_char parameter
 ...
 modparam("imc", "imc_cmd_start_char", "#")
 ...
-     __________________________________________________________
 
 1.3.6. outbound_proxy (str)
 
@@ -173,15 +169,14 @@ modparam("imc", "imc_cmd_start_char", "#")
 
    Default value is NULL.
 
-   Example 1-6. Set outbound_proxy parameter
+   Example 1.6. Set outbound_proxy parameter
 ...
 modparam("imc", "outbound_proxy", "sip:openser.org;transport=tcp")
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. imc_manager()
+1.4.1.  imc_manager()
 
    Handles Message method.It detects if the body of the message is
    a conference command.If so it executes it, otherwise it sends
@@ -189,7 +184,7 @@ modparam("imc", "outbound_proxy", "sip:openser.org;transport=tcp")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-7. Usage of imc_manager() function
+   Example 1.7. Usage of imc_manager() function
 ...
 # the rooms will be named chat-xyz to avoid overlapping
 # with usernames
@@ -197,11 +192,10 @@ if(is_method("MESSAGE)
         && (uri=~ "sip:chat-[0-9]+@" || (uri=~ "sip:chat-manager@")
     imc_manager();
 ...
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
-1.5.1. imc_list_rooms
+1.5.1.  imc_list_rooms
 
    Lists of the IM Conferencing rooms.
 
@@ -212,30 +206,26 @@ if(is_method("MESSAGE)
    MI FIFO Command Format:
                 :imc_list_rooms:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.5.2. imc_list_members
+1.5.2.  imc_list_members
 
    Listing of the members in IM Conferencing rooms.
 
    Name: imc_list_members
 
    Parameters:
-
      * _room_ : the room for which you want to list the members
 
    MI FIFO Command Format:
                 :imc_list_members:_reply_fifo_file_
                 _room_
                 _empty_line_
-     __________________________________________________________
 
 1.6. Exported Statistics
 
-1.6.1. active_rooms
+1.6.1.  active_rooms
 
    Number of active IM Conferencing rooms.
-     __________________________________________________________
 
 1.7. IMC Commands
 
@@ -246,7 +236,7 @@ if(is_method("MESSAGE)
    Next picture presents the list of commands and their
    parameters.
 
-   Example 1-8. List of commands
+   Example 1.8. List of commands
 ...
 
 1.create
@@ -314,7 +304,6 @@ if(is_method("MESSAGE)
   -list members in a room
 
 ...
-     __________________________________________________________
 
 1.8. Installation
 
@@ -326,3 +315,36 @@ if(is_method("MESSAGE)
    openser/scripts folder as template. You can also find the
    complete database documentation on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

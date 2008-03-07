@@ -15,6 +15,7 @@ Elias Baixas
      __________________________________________________________
 
    Table of Contents
+
    1. The Sip Express Application Server User's Guide
 
         1.1. Application Servers
@@ -43,31 +44,34 @@ Elias Baixas
               2.2.1. The SEAS protocol
               2.2.2. General codification of a header
 
+   3. Frequently Asked Questions
+
    List of Figures
-   1-1. SipServlet UML diagram
-   2-1. Overview of Seas Event Dispatcher process operation
-   2-2. SIP Messages and control flow within SER
-   2-3. General codification of a SIP header in SEAS protocol
-   2-4. Example of a from header SEAS-protocol codification
-   2-5. SEAS-codification of a SIP URI (byte meanings are shown)
-   2-6. Example of a SEAS SIP URI codification
-   2-7. SEAS codification of From and To headers
-   2-8. SEAS codification of a Contact header
-   2-9. SEAS codification of a Route Header
-   2-10. SEAS codification of Authentication/Authorization headers
-   2-11. SEAS codification of a SIP First Line
-   2-12. SEAS Headers Index section overview
-   2-13. SEAS SIP-Message codification
-   2-14. Different kinds of SEAS codified Events and Actions
+
+   1.1. SipServlet UML diagram
+   2.1. Overview of Seas Event Dispatcher process operation
+   2.2. SIP Messages and control flow within SER
+   2.3. General codification of a SIP header in SEAS protocol
+   2.4. Example of a from header SEAS-protocol codification
+   2.5. SEAS-codification of a SIP URI (byte meanings are shown)
+   2.6. Example of a SEAS SIP URI codification
+   2.7. SEAS codification of From and To headers
+   2.8. SEAS codification of a Contact header
+   2.9. SEAS codification of a Route Header
+   2.10. SEAS codification of Authentication/Authorization headers
+   2.11. SEAS codification of a SIP First Line
+   2.12. SEAS Headers Index section overview
+   2.13. SEAS SIP-Message codification
+   2.14. Different kinds of SEAS codified Events and Actions
 
    List of Examples
-   1-1. Set listen_sockets parameter
-   1-2. as_relay_t usage
-   1-3. Typical example of an HttpServlet
-   1-4. Typical Sip Servlet Example
-   1-5. Server
-   1-6. Service
-     __________________________________________________________
+
+   1.1. Set listen_sockets parameter
+   1.2. as_relay_t usage
+   1.3. Typical example of an HttpServlet
+   1.4. Typical Sip Servlet Example
+   1.5. Server
+   1.6. Service
 
 Chapter 1. The Sip Express Application Server User's Guide
 
@@ -124,7 +128,6 @@ Chapter 1. The Sip Express Application Server User's Guide
 
    This version of SEAS works with VozTelecom's WeSIP Application
    Server. This Application Server is a SipServlet JAVA Container.
-     __________________________________________________________
 
 1.1.2. Application Servers
 
@@ -141,7 +144,6 @@ Chapter 1. The Sip Express Application Server User's Guide
    server hasn't already connected to the module, the function
    returns a negative value, otherwise (the Application Server is
    connected), the message is relaied to it.
-     __________________________________________________________
 
 1.1.3. Dependencies
 
@@ -149,7 +151,6 @@ Chapter 1. The Sip Express Application Server User's Guide
 
    SEAS module relies on the Transaction Module (TM module) for
    operation.
-     __________________________________________________________
 
 1.1.3.2. External Applications
 
@@ -159,7 +160,6 @@ Chapter 1. The Sip Express Application Server User's Guide
    At the moment, the only Application Server that works with SEAS
    is WeSIP Application Server, which can be downloaded from
    www.wesip.eu, and used freely for non-comercial purposes.
-     __________________________________________________________
 
 1.1.4. Exported Parameters
 
@@ -175,11 +175,10 @@ Chapter 1. The Sip Express Application Server User's Guide
    IP which OpenSER is using, and opens the ports 5080 and 5081 to
    listen for Application Servers.
 
-   Example 1-1. Set listen_sockets parameter
+   Example 1.1. Set listen_sockets parameter
 ...
 modparam("seas", "listen_sockets","127.0.0.1:5080")
 ...
-     __________________________________________________________
 
 1.1.5. Exported Functions
 
@@ -193,14 +192,13 @@ modparam("seas", "listen_sockets","127.0.0.1:5080")
 
    This function can be used within REQUEST_ROUTE.
 
-   Example 1-2. as_relay_t usage
+   Example 1.2. as_relay_t usage
 ...
 if (!as_relay_t("app_server_1")) {
 log("Error sending to app server");
 t_reply("500","App Server not connected");
 }
 ...
-     __________________________________________________________
 
 1.1.5.1.1. Return value
 
@@ -214,7 +212,6 @@ t_reply("500","App Server not connected");
    parameter passed to as_relay_t() is not connected to OpenSER,
    the function returns 0, so that the script can continue
    processing the request.
-     __________________________________________________________
 
 1.2. WeSIP Application Server
 
@@ -222,7 +219,6 @@ t_reply("500","App Server not connected");
    SEAS is WeSIP. You can download a copy from www.wesip.eu.
 
    WeSIP is a converged Sip/Http Servlet Container.
-     __________________________________________________________
 
 1.2.1. The Servlet programming paradigm: Sip/Http Servlets
 
@@ -256,8 +252,7 @@ t_reply("500","App Server not connected");
 
    This is how a typical HttpServlet looks like:
 
-   Example 1-3. Typical example of an HttpServlet
-
+   Example 1.3. Typical example of an HttpServlet
 public final class Hello extends HttpServlet {
 protected void doGet(HttpServletRequest request,HttpServletResponse resp
 onse)
@@ -317,8 +312,7 @@ writer.println("</html>");
 
    This is the appearance a typical SipServlet:
 
-   Example 1-4. Typical Sip Servlet Example
-
+   Example 1.4. Typical Sip Servlet Example
 public class ProxyServlet extends SipServlet {
     protected void doInvite(SipServletRequest req) throws
 ServletException, IOException
@@ -359,9 +353,9 @@ ServletException, IOException
    having to worry about the underlying protocol specifics (SIP or
    HTTP).
 
-   Figure 1-1. SipServlet UML diagram
+   Figure 1.1. SipServlet UML diagram
+   SipServlet UML diagram
 
-   [image024.png]
    The Servlet programming language is JAVA, which offers a wide
    spectrum of programming API's dealing with all kinds of
    techniques, tools and resources, which also are available
@@ -374,7 +368,6 @@ ServletException, IOException
    deployment, and also provides a reliable and secure framework
    of service execution (the JAVA sandbox and the Application
    Server execution environment).
-     __________________________________________________________
 
 1.2.1.1. Converged Http/Sip Servlet Containers
 
@@ -430,7 +423,6 @@ ServletException, IOException
    Web-Browser being SIP-aware nor needing even a SIP phone: the
    server could handle all the logic so the user who clicked could
    receive a call from the server's SIP network.
-     __________________________________________________________
 
 1.2.2. Configuring WeSIP to work with SEAS
 
@@ -443,9 +435,6 @@ ServletException, IOException
    package should be suitable for most of the deployment
    configurations.
 
-   >
-     __________________________________________________________
-
 1.2.2.1. Server
 
    The topmost element in the XML configuration file is the
@@ -454,15 +443,11 @@ ServletException, IOException
    will listen for the shutdown command, and the latter is the
    magic word that will make the server shutdown.
 
-   Example 1-5. Server
-
+   Example 1.5. Server
 <Server port="8005" shutdown="SHUTDOWN" >
 
    if you send the magic word "SHUTDOWN" to the port 8005 of the
    localhost, the server will stop cleanly.
-
-   >
-     __________________________________________________________
 
 1.2.2.2. Service
 
@@ -471,7 +456,7 @@ ServletException, IOException
    the service. This attribute is not very relevant, you can call
    it whatever you like.
 
-   Example 1-6. Service
+   Example 1.6. Service
 
    <Service name="WeSIP-Standalone">
 
@@ -484,16 +469,13 @@ ServletException, IOException
    HTTP connectors, the classname must be
    "org.apache.catalina.connector.http.HttpConnector" and for SIP
    connectors "com.voztele.sipservlet.connector.SipConnector".
-     __________________________________________________________
 
 1.2.2.3. Connector
 
    The SIP Connector uses 4 attributes:
-
 className="com.voztele.sipservlet.connector.SipConnector"
 
    specifies the classname of the connector.
-
 minProcessors="5"
 
    specifies the minimum number of SIPprocessor instances (and
@@ -501,12 +483,10 @@ minProcessors="5"
    processors should allow more load to be processed. This is the
    minimum number of instances, even if they are spare and not
    working.
-
 maxProcessors="10"
 
    specifies the maximum number of SIP processors used (a negative
    value specifies that there is no limit).
-
 addresses="localhost:5060"
 
    Specifies the SIP address and port in which the Application
@@ -518,19 +498,18 @@ addresses="localhost:5060"
 
 Warning
 
-           this attribute MUST match one of the listening points declared
-           within OpenSER in the "listen" parameters.
+   this attribute MUST match one of the listening points declared
+   within OpenSER in the "listen" parameters.
 
-           For example in openser.cfg:
-        listen = tcp:localhost:5060
-        listen = udp:localhost:5060
+   For example in openser.cfg:
+listen = tcp:localhost:5060
+listen = udp:localhost:5060
 
    Within the SIP Connector element there must be an
    ExtraProperties element, containing nestes Property elements.
    Each property element specifies a parameter for the SIP Stack.
    Each property is specified by a key and a value. The most
    significant keys are:
-
      * com.voztele.javax.sip.SER_ADDRESS
        This specifies the IP and port in which the OpenSER is
        listening for Application Servers to connect and
@@ -538,28 +517,24 @@ Warning
        OpenSER is listening for Application Servers to connect and
        register.
 
- Warning
-
-            This needs to match the listen_sockets seas module parameter
-            within the OpenSER configuration file. Ie.:
-         modparam("seas", "listen_sockets","127.0.0.1:5080")
-
+Warning
+       This needs to match the listen_sockets seas module
+       parameter within the OpenSER configuration file. Ie.:
+modparam("seas", "listen_sockets","127.0.0.1:5080")
      * javax.sip.STACK_NAME
        Specifies the name identifying this instance of the
        Application Server.
 
 Warning
-
-           This is the name you will set in the OpenSER configuration
-           script when you invoke the WeSIP Application Server, by calling
-           the as_relay_t function. This is the name you pass as the
-           parameter of the function. If you have different WeSIP
-           instances all connecting to the same OpenSER, they must each
-           one have a different STACK_NAME", and within OpenSER you can
-           call each of them by invoking as_relay_t() with a different
-           name. Example:
-        <Property key="javax.sip.STACK_NAME" value="app_server_one" />
-
+       This is the name you will set in the OpenSER configuration
+       script when you invoke the WeSIP Application Server, by
+       calling the as_relay_t function. This is the name you pass
+       as the parameter of the function. If you have different
+       WeSIP instances all connecting to the same OpenSER, they
+       must each one have a different STACK_NAME", and within
+       OpenSER you can call each of them by invoking as_relay_t()
+       with a different name. Example:
+<Property key="javax.sip.STACK_NAME" value="app_server_one" />
      * com.voztele.javax.sip.THREAD_POOL_SIZE (integer)
        Specifies the number of threads there must be in the pool
        to process incoming SIP messages. If unspecificed, the
@@ -581,9 +556,6 @@ route{
         }
 }
 
-   >
-     __________________________________________________________
-
 1.2.2.4. Engine
 
    The Engine must also be nested within the Server element, along
@@ -599,7 +571,6 @@ route{
 
    Within the Engine, there can be one or more Hosts, each one
    specified within a "Host" element nested in the engine.
-     __________________________________________________________
 
 1.2.2.5. Mapper
 
@@ -613,7 +584,6 @@ route{
    be "SIP/2.0". The HTTP mapper's classname must be
    "org.apache.catalina.core.StandardEngineMapper" and the
    protocol attribute "HTTP/1.1"
-     __________________________________________________________
 
 1.2.2.6. Realm
 
@@ -628,7 +598,6 @@ route{
    A "pathname" attribute can be specified to tell the Realm which
    file contains the usernames, passwords and roles. If not
    specified, it is "conf/wesip-users.xml"
-     __________________________________________________________
 
 1.2.2.7. Host
 
@@ -659,7 +628,6 @@ route{
    .war) so they can automatically be deployed. This parameter
    should be set to "true". The "className" used for the Host
    _must_be_ "com.voztele.sipservlet.core.ConvergedHost"
-     __________________________________________________________
 
 1.2.2.8. Mapper
 
@@ -669,7 +637,6 @@ route{
    "SIP/2.0" protocol and
    "org.apache.catalina.core.HttpHostMapper" for the "HTTP/1.1"
    protocol. (2 mappers must be nested inside the Host).
-     __________________________________________________________
 
 1.2.3. Configuration Examples
 
@@ -686,9 +653,6 @@ route{
    your call-routing logic and Application Server on the same
    OpenSER, having one script handle all the logic, and then
    invoking the App Server at any point.
-
-   >
-     __________________________________________________________
 
 1.2.3.1. Openser.cfg in standalone
 
@@ -753,7 +717,6 @@ route[1] {
                        t_reply("500","Application Server error");
                }
 }
-     __________________________________________________________
 
 1.2.3.2. Openser.cfg working as WeSIP front-end
 
@@ -786,7 +749,6 @@ route{
                 }
 
 }
-     __________________________________________________________
 
 1.2.3.3. Server.xml
 
@@ -832,7 +794,6 @@ r" protocol="HTTP/1.1"/>
   </Engine>
 </Service>
 </Server>
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
@@ -879,16 +840,14 @@ Chapter 2. Developer's Guide
    processes can push events for it. The following picture, shows
    the internals of the SEAS Event dispatcher process:
 
-   Figure 2-1. Overview of Seas Event Dispatcher process operation
+   Figure 2.1. Overview of Seas Event Dispatcher process operation
+   Overview of Seas Event Dispatcher process operation
 
-   [image056.gif]
    Within the SER server, the flowing of SIP Messages and control
    flow, is depicted in the following diagram:
 
-   Figure 2-2. SIP Messages and control flow within SER
-
-   [image058.gif]
-     __________________________________________________________
+   Figure 2.2. SIP Messages and control flow within SER
+   SIP Messages and control flow within SER
 
 2.2. SEAS Protocol
 
@@ -906,7 +865,6 @@ Chapter 2. Developer's Guide
    SIP-transaction machinery. The goal of the SEAS protocol is to
    keep all this information that has been already extracted at
    OpenSER, so that it can be reused at the Application Server.
-     __________________________________________________________
 
 2.2.1. The SEAS protocol
 
@@ -1047,7 +1005,6 @@ Chapter 2. Developer's Guide
    each one of the parameter names and values. This is the
    codification of the From header. All the other headers have a
    similar codification.
-     __________________________________________________________
 
 2.2.2. General codification of a header
 
@@ -1059,16 +1016,14 @@ Chapter 2. Developer's Guide
    and another byte giving the length of the entire header
    (including name and value).
 
-   Figure 2-3. General codification of a SIP header in SEAS
+   Figure 2.3. General codification of a SIP header in SEAS
    protocol
+   General codification of a SIP header in SEAS protocol
 
-   [image100.gif]
    For example:
 
-   Figure 2-4. Example of a from header SEAS-protocol codification
-
-   [image101.gif]
-     __________________________________________________________
+   Figure 2.4. Example of a from header SEAS-protocol codification
+   Example of a from header SEAS-protocol codification
 
 2.2.2.1. Codification of a generic URI
 
@@ -1079,17 +1034,16 @@ Chapter 2. Developer's Guide
 
    The codification of any URI is as follows:
 
-   Figure 2-5. SEAS-codification of a SIP URI (byte meanings are
+   Figure 2.5. SEAS-codification of a SIP URI (byte meanings are
    shown)
-
-   [image102.gif]
+   SEAS-codification of a SIP URI (byte meanings are shown)
 
    What follows is an example of a SIP URI codification with the
    SEAS protocol.
 
-   Figure 2-6. Example of a SEAS SIP URI codification
+   Figure 2.6. Example of a SEAS SIP URI codification
+   Example of a SEAS SIP URI codification
 
-   [image103.gif]
    The first byte in the encoded-URI structure, gives the index
    where the URI starts, counting from the beginning of the SIP
    header where it appears. The next two bytes are flags
@@ -1119,7 +1073,6 @@ Chapter 2. Developer's Guide
    field, as the ttl parameter can appear before the transport
    parameter. So the parameter pointers must have 2 bytes:
    pointer+length.
-     __________________________________________________________
 
 2.2.2.2. Codification of To and From headers
 
@@ -1127,10 +1080,8 @@ Chapter 2. Developer's Guide
    codification structure has been used to describe both. The
    structure is depicted in the drawing:
 
-   Figure 2-7. SEAS codification of From and To headers
-
-   [image104.gif]
-     __________________________________________________________
+   Figure 2.7. SEAS codification of From and To headers
+   SEAS codification of From and To headers
 
 2.2.2.3. Codification of Contact
 
@@ -1144,10 +1095,8 @@ Chapter 2. Developer's Guide
    beginning telling how much Contact codifications are present.
    The code is depicted in the following drawing:
 
-   Figure 2-8. SEAS codification of a Contact header
-
-   [image105.gif]
-     __________________________________________________________
+   Figure 2.8. SEAS codification of a Contact header
+   SEAS codification of a Contact header
 
 2.2.2.4. Codification of Route and Record Route headers
 
@@ -1157,10 +1106,8 @@ Chapter 2. Developer's Guide
    commas. In this case, both kinds of headers follow the same
    structure, defined as follows:
 
-   Figure 2-9. SEAS codification of a Route Header
-
-   [image106.gif]
-     __________________________________________________________
+   Figure 2.9. SEAS codification of a Route Header
+   SEAS codification of a Route Header
 
 2.2.2.5. Codification of Accept and Content-Type headers
 
@@ -1176,7 +1123,6 @@ Chapter 2. Developer's Guide
    Thus the Accept header has a leading byte giving the number of
    mime type/subtype integers present, while the Content-Type only
    uses 4 bytes (a 32-bit integer) giving the type/subtype.
-     __________________________________________________________
 
 2.2.2.6. Codification of Authorization headers
 
@@ -1187,17 +1133,15 @@ Chapter 2. Developer's Guide
    them can be codified using the same schema, which is as
    follows:
 
-   Figure 2-10. SEAS codification of Authentication/Authorization
+   Figure 2.10. SEAS codification of Authentication/Authorization
    headers
-
-   [image107.gif]
+   SEAS codification of Authentication/Authorization headers
 
    For each field present, there are 2 bytes, one pointing the
    place where it starts, the next giving how long this field is.
    The URI is a special case, and is composed of 1 byte telling
    how long is the URI structure, and then the encoded URI
    structure.
-     __________________________________________________________
 
 2.2.2.7. Codification of Allow headers
 
@@ -1206,7 +1150,6 @@ Chapter 2. Developer's Guide
    are codified into a 32-bit integer, each of its bits signals a
    different kind of header. The Allow header is codified copying
    that integer into the payload of the header.
-     __________________________________________________________
 
 2.2.2.8. Codification of Content-Disposition headers
 
@@ -1217,13 +1160,11 @@ Chapter 2. Developer's Guide
    the parameter name starts, and 1 byte pointing to where the
    parameter value starts. From these two values, the parameter
    name and value lengths can be inferred.
-     __________________________________________________________
 
 2.2.2.9. Codification of Content-Length header
 
    The content length header is codified as a 4-byte unsigned
    integer, in network byte order.
-     __________________________________________________________
 
 2.2.2.10. Codification of Cseq header
 
@@ -1234,7 +1175,6 @@ Chapter 2. Developer's Guide
    next two bytes are the header based pointer to the beginning of
    the Cseq number and its length, and two more bytes pointing to
    the beginning of the method name and its length.
-     __________________________________________________________
 
 2.2.2.11. Codification of Expires header
 
@@ -1244,7 +1184,6 @@ Chapter 2. Developer's Guide
    expires). Then follows 1 byte pointing to the beginning of the
    header value (the expires value as a string) and a byte giving
    the length of the value.
-     __________________________________________________________
 
 2.2.2.12. Codification of a SIP message
 
@@ -1261,9 +1200,8 @@ Chapter 2. Developer's Guide
    its value is smaller than 100, then it is a request, and the
    integer represents the method of the request being transported.
 
-   Figure 2-11. SEAS codification of a SIP First Line
-
-   [image108.gif]
+   Figure 2.11. SEAS codification of a SIP First Line
+   SEAS codification of a SIP First Line
 
    The next two bytes are an unsigned integer which is a pointer
    to where the actual SIP message starts, beginning from the
@@ -1307,7 +1245,6 @@ Chapter 2. Developer's Guide
    the SIP message. After this byte, goes a section, called the
    Message Headers Index, which gives quick access to each of the
    headers and their codifications present in the message.
-     __________________________________________________________
 
 2.2.2.12.2. The headers index section
 
@@ -1361,15 +1298,14 @@ Chapter 2. Developer's Guide
    the two-byte unsigned integer that follows each of the header
    identifiers.
 
-   Figure 2-12. SEAS Headers Index section overview
+   Figure 2.12. SEAS Headers Index section overview
+   SEAS Headers Index section overview
 
-   [image109.gif]
    So a SIP message codified by the SEAS protocol, has the
    following layout:
 
-   Figure 2-13. SEAS SIP-Message codification
-
-   [image110.gif]
+   Figure 2.13. SEAS SIP-Message codification
+   SEAS SIP-Message codification
 
    SIP Messages are a fundamental part of the protocol, but they
    are not the only one. Transaction play a very important role in
@@ -1433,12 +1369,44 @@ Chapter 2. Developer's Guide
    transaction. This way, JAIN can correlate its own identifiers
    with the identifiers used within SER.
 
-   Figure 2-14. Different kinds of SEAS codified Events and
+   Figure 2.14. Different kinds of SEAS codified Events and
    Actions
-
-   [image111.gif]
+   Different kinds of SEAS codified Events and Actions
 
    In case there is a Transaction Timeout, it is notified to the
    JAIN SIP Stack by passing it a Seas Incoming Response with a
    flag called Faked Reply, and a Response code number 408
    (Request Timeout).
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

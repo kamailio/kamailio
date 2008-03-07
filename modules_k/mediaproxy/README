@@ -2,14 +2,22 @@ Mediaproxy Module
 
 Dan Pascu
 
+   <dan@ag-projects.com>
+
 Edited by
 
 Dan Pascu
 
+   <dan@ag-projects.com>
+
    Copyright © 2004 Dan Pascu
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -40,20 +48,22 @@ Dan Pascu
         1.8. Comparison with the nathelper module
         1.9. How to use sip_ping from the nathelper module
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Setting mediaproxy_socket parameter
-   1-2. Setting sip_asymmetrics parameter
-   1-3. Setting rtp_asymmetrics parameter
-   1-4. Setting natping_interval parameter
-   1-5. Setting signaling_ip_avp parameter
-   1-6. Setting domain_avp parameter
-   1-7. client_nat_test usage
-   1-8. fix_contact usage
-   1-9. use_media_proxy usage
-   1-10. Using mediaproxies from a specific domain
-   1-11. end_media_session usage
-   1-12. Pinging example configuration
-     __________________________________________________________
+
+   1.1. Setting mediaproxy_socket parameter
+   1.2. Setting sip_asymmetrics parameter
+   1.3. Setting rtp_asymmetrics parameter
+   1.4. Setting natping_interval parameter
+   1.5. Setting signaling_ip_avp parameter
+   1.6. Setting domain_avp parameter
+   1.7. client_nat_test usage
+   1.8. fix_contact usage
+   1.9. use_media_proxy usage
+   1.10. Using mediaproxies from a specific domain
+   1.11. end_media_session usage
+   1.12. Pinging example configuration
 
 Chapter 1. User's Guide
 
@@ -64,7 +74,6 @@ Chapter 1. User's Guide
    clients. This means that there will be no need to configure
    anything in particular on the NAT box to allow these clients to
    work behind NAT when using the mediaproxy module.
-     __________________________________________________________
 
 1.2. Principle of operation
 
@@ -76,7 +85,6 @@ Chapter 1. User's Guide
 
    To achieve this, mediaproxy is actually composed by 2
    components:
-
      * the OpenSER mediaproxy module itself
      * an external proxy server called OpenSER MediaProxy
        (available from http://mediaproxy.ag-projects.com/ )
@@ -113,7 +121,6 @@ Chapter 1. User's Guide
    know where to connect and then after they did so, the proxy
    learns the addresses they came from and can forward packets
    between them.
-     __________________________________________________________
 
 1.3. Types of SIP clients
 
@@ -180,7 +187,6 @@ Chapter 1. User's Guide
    module is to accept to be configured to use a so called
    outbound proxy and this proxy must be the one running with the
    mediaproxy module loaded.
-     __________________________________________________________
 
 1.4. Features
 
@@ -198,26 +204,21 @@ Chapter 1. User's Guide
      * handle asymmetric clients properly. They can even work
        behind NAT if a proper port forwarding is done for them on
        the NAT box.
-     __________________________________________________________
 
 1.5. Dependencies
 
 1.5.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * usrloc module - this is required if pinging of contacts
        behind NAT is enabled. In this case the nat_bflag must also
        be defined on the ursloc module.
-     __________________________________________________________
 
 1.5.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.6. Exported parameters
 
@@ -228,12 +229,11 @@ Chapter 1. User's Guide
 
    Default value is "/var/run/proxydispatcher.sock".
 
-   Example 1-1. Setting mediaproxy_socket parameter
+   Example 1.1. Setting mediaproxy_socket parameter
 ...
 modparam("mediaproxy", "mediaproxy_socket", "/var/run/proxydispatcher.so
 ck")
 ...
-     __________________________________________________________
 
 1.6.2. sip_asymmetrics (string)
 
@@ -245,12 +245,11 @@ ck")
 
    Default value is "/etc/openser/sip-asymmetric-clients".
 
-   Example 1-2. Setting sip_asymmetrics parameter
+   Example 1.2. Setting sip_asymmetrics parameter
 ...
 modparam("mediaproxy", "sip_asymmetrics", "/etc/openser/sip-asymmetrics-
 clients")
 ...
-     __________________________________________________________
 
 1.6.3. rtp_asymmetrics (string)
 
@@ -262,12 +261,11 @@ clients")
 
    Default value is "/etc/openser/rtp-asymmetric-clients".
 
-   Example 1-3. Setting rtp_asymmetrics parameter
+   Example 1.3. Setting rtp_asymmetrics parameter
 ...
 modparam("mediaproxy", "rtp_asymmetrics", "/etc/openser/rtp-asymmetrics-
 clients")
 ...
-     __________________________________________________________
 
 1.6.4. natping_interval (integer)
 
@@ -278,11 +276,10 @@ clients")
 
    Default value is 60.
 
-   Example 1-4. Setting natping_interval parameter
+   Example 1.4. Setting natping_interval parameter
 ...
 modparam("mediaproxy", "natping_interval", 20)
 ...
-     __________________________________________________________
 
 1.6.5. signaling_ip_avp (string)
 
@@ -302,11 +299,10 @@ modparam("mediaproxy", "natping_interval", 20)
 
    Default value is "$avp(s:signaling_ip)".
 
-   Example 1-5. Setting signaling_ip_avp parameter
+   Example 1.5. Setting signaling_ip_avp parameter
 ...
 modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
 ...
-     __________________________________________________________
 
 1.6.6. domain_avp (string)
 
@@ -320,15 +316,14 @@ modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
 
    Default value is "$avp(s:mediaproxy_domain)".
 
-   Example 1-6. Setting domain_avp parameter
+   Example 1.6. Setting domain_avp parameter
 ...
 modparam("mediaproxy", "domain_avp", "$avp(s:mediaproxy_domain)")
 ...
-     __________________________________________________________
 
 1.7. Exported Functions
 
-1.7.1. client_nat_test(type)
+1.7.1.  client_nat_test(type)
 
    Tests if the client is behind NAT or not. The types of tests
    are specified by the type parameter which represents a sum of
@@ -349,15 +344,14 @@ modparam("mediaproxy", "domain_avp", "$avp(s:mediaproxy_domain)")
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-7. client_nat_test usage
+   Example 1.7. client_nat_test usage
 ...
 if (client_nat_test("3")) {
     .....
 }
 ...
-     __________________________________________________________
 
-1.7.2. fix_contact()
+1.7.2.  fix_contact()
 
    Will replace the IP:Port in the Contact field of the SIP
    message with the ones the SIP message was received from. For
@@ -370,15 +364,14 @@ if (client_nat_test("3")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-8. fix_contact usage
+   Example 1.8. fix_contact usage
 ...
 if (client_nat_test("3")) {
     fix_contact();
 }
 ...
-     __________________________________________________________
 
-1.7.3. use_media_proxy()
+1.7.3.  use_media_proxy()
 
    Will make a call to the proxy server and replace the IPs and
    ports in the SDP body with the ones returned by the proxy
@@ -398,23 +391,22 @@ if (client_nat_test("3")) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-9. use_media_proxy usage
+   Example 1.9. use_media_proxy usage
 ...
 if (method==INVITE) {
     use_media_proxy();
 }
 ...
 
-   Example 1-10. Using mediaproxies from a specific domain
+   Example 1.10. Using mediaproxies from a specific domain
 ...
 if (method==INVITE) {
     $avp(s:mediaproxy_domain) = "example.com";
     use_media_proxy();
 }
 ...
-     __________________________________________________________
 
-1.7.4. end_media_session()
+1.7.4.  end_media_session()
 
    Will call on the proxy server to end the media session for that
    call this is done at the end of the call to instruct the proxy
@@ -426,13 +418,12 @@ if (method==INVITE) {
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1-11. end_media_session usage
+   Example 1.11. end_media_session usage
 ...
 if (method==BYE) {
     end_media_session();
 }
 ...
-     __________________________________________________________
 
 1.8. Comparison with the nathelper module
 
@@ -475,7 +466,6 @@ if (method==BYE) {
 
    Another advantage of this is that openser.cfg becomes simpler
    and easier to maintain.
-     __________________________________________________________
 
 1.9. How to use sip_ping from the nathelper module
 
@@ -486,7 +476,7 @@ if (method==BYE) {
    from the inside won't close the pinholes (the 4 zero byte ping
    doesn't have a reply from inside the NAT).
 
-   Example 1-12. Pinging example configuration
+   Example 1.12. Pinging example configuration
 ...
 loadmodule "/lib/openser/modules/mediaproxy.so"
 loadmodule "/lib/openser/modules/nathelper.so"
@@ -509,3 +499,36 @@ if (method=="REGISTER") {
     }
 }
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

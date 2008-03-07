@@ -1,0 +1,183 @@
+<!-- Auth_radius Module User's Guide -->
+
+<chapter>
+	
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+	avp_radius module allows loading of user's attributes into AVPs from
+	Radius. User's name and domain can be based on From URI, Request
+	URI, or authenticated credentials.
+	</para>
+	<para>
+	The module assumes that Radius returns the AVPs as values of reply
+	attribute SIP-AVP. Its value must be a string of form:
+	<itemizedlist>
+		<listitem><para><emphasis>
+		value = SIP_AVP_NAME SIP_AVP_VALUE
+		</emphasis></para></listitem>
+		<listitem><para><emphasis>
+		SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+		</emphasis></para></listitem>
+		<listitem><para><emphasis>
+		SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
+		</emphasis></para></listitem>
+	</itemizedlist>
+	</para>
+	<example>
+	<title><quote>SIP-AVP</quote> RADIUS AVP exmaples</title>
+		<programlisting format="linespecific">
+....
+"email:joe@yahoo.com"
+    -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
+"#14:joe@yahoo.com"
+    -> ID AVP (14) with STRING VALUE (joe@yahoo.com)
+"age#28"
+    -> STRING NAME AVP (age) with INTEGER VALUE (28)
+"#14#28"
+    -> ID AVP (14) with INTEGER VALUE (28)
+....
+</programlisting>
+	</example>
+	<para>
+	For AVP with STRING NAME, the module prefixes each attribute name as 
+	returned from Radius by string <quote>caller_</quote> or 
+	<quote>callee_</quote> depending if caller's or callee's attributes 
+	are loaded.
+	</para>
+	</section>
+
+	<section>
+	<title>Dependencies</title>
+		<section>
+		<title>&ser; Modules</title>
+			<para>
+			The module depends on the following modules (in the other words 
+			the listed modules must be loaded before this module):
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>none</emphasis></para>
+				</listitem>
+			</itemizedlist>
+			</para>
+		</section>
+		<section>
+			<title>External Libraries or Applications</title>
+			<para>
+			The following libraries or applications must be installed 
+			before compilling &ser; with this module loaded:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>radiusclient-ng</emphasis> 0.5.0 or higher -- 
+				library and development files. See <ulink 
+				url='http://developer.berlios.de/projects/radiusclient-ng/'>
+				http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
+				</para>
+				</listitem>
+			</itemizedlist>
+		</section>
+	</section>
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>radius_config</varname> (string)</title>
+		<para>
+		This is the location of the configuration file of radius client 
+		libraries.
+		</para>
+		<para>
+		Default value is 
+			<quote>/usr/local/etc/radiusclient-ng/radiusclient.conf</quote>.
+		</para>
+		<example>
+		<title><varname>radius_config</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>caller_service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type radius attribute to be
+		used, when caller's attributes are loaded.
+		</para>
+		<para>
+		Default value is dictionary value of <quote>SIP-Caller-AVPs</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>caller_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("avp_radius", "caller_service_type", 18)
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>callee_service_type</varname> (integer)</title>
+		<para>
+		This is the value of the Service-Type radius attribute to be
+		used, when callee's attributes are loaded.
+		</para>
+		<para>
+		Default value is dictionary value of <quote>SIP-Callee-AVPs</quote>
+		Service-Type.
+		</para>
+		<example>
+		<title><varname>callee_service_type</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("avp_radius", "callee_service_type", 19)
+</programlisting>
+		</example>
+	</section>
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title><function moreinfo="none">avp_load_radius(user)</function></title>
+		<para>
+		The functions loads user's attributes from radius and stores them
+		into AVPs.  Parameter <quote>user</quote> is used to indicate,
+		whose attributes are loaded.  Possible values are:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>caller</emphasis> - attributes belong to the user
+			of the From URI are loaded</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>callee</emphasis> - attributes belong to the user
+			of the Request URI are loaded</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>digest</emphasis> - attributes belong to the
+			authenticated user are loaded</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		AVP name returned from Radius is prefixed by string
+		<quote>caller_</quote>, if avp_load_radius parameter is
+		<quote>caller</quote> or <quote>digest</quote>, and by
+		<quote>callee_</quote>, if parameter is <quote>callee</quote>.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">avp_load_radius()</function> usage</title>
+		<programlisting format="linespecific">
+...
+avp_load_radius("callee");
+...
+</programlisting>
+		</example>
+	</section>
+
+	</section>
+</chapter>
+

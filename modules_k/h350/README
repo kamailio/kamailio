@@ -3,11 +3,15 @@ H350 Module
 Christian Schlatter
 
    University of North Carolina
+   <cs@unc.edu>
 
    Copyright © 2007 University of North Carolina
+   Revision History
+   Revision 0.1 05-17-2007
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -34,22 +38,23 @@ Christian Schlatter
               1.4.3. h350_result_call_preferences(avp_name_prefix)
               1.4.4. h350_result_service_level(avp_name_prefix)
 
+   2. Frequently Asked Questions
    Resources
 
    List of Examples
-   1-1. Example H.350 commObject storing SIP account data
-   1-2. ldap_session parameter usage
-   1-3. base_dn parameter usage
-   1-4. search_scope parameter usage
-   1-5. Example Usage
-   1-6. Example Usage
-   1-7. Example H.350 callPreferenceURI simple call forwarding
+
+   1.1. Example H.350 commObject storing SIP account data
+   1.2. ldap_session parameter usage
+   1.3. base_dn parameter usage
+   1.4. search_scope parameter usage
+   1.5. Example Usage
+   1.6. Example Usage
+   1.7. Example H.350 callPreferenceURI simple call forwarding
           rules
 
-   1-8. Example Usage
-   1-9. Example SIPIdentityServiceLevel values and resulting AVPs
-   1-10. Example Usage
-     __________________________________________________________
+   1.8. Example Usage
+   1.9. Example SIPIdentityServiceLevel values and resulting AVPs
+   1.10. Example Usage
 
 Chapter 1. User's Guide
 
@@ -80,14 +85,13 @@ Chapter 1. User's Guide
    allows a script writer to implement H.350 based SIP digest
    authentication, call forwarding, SIP URI alias to AOR
    rewriting, and service level parsing.
-     __________________________________________________________
 
 1.1.1. Example H.350 commObject LDAP Entry
 
    The following example shows a typical H.350 commObject LDAP
    entry storing SIP account data.
 
-   Example 1-1. Example H.350 commObject storing SIP account data
+   Example 1.1. Example H.350 commObject storing SIP account data
 Attribute Name                Attribute Value(s)
 --------------                -----------------
 
@@ -133,7 +137,6 @@ objectClass                   top
                               commObject
                               SIPIdentity
                               callPreferenceURIObject
-     __________________________________________________________
 
 1.2. Dependencies
 
@@ -141,18 +144,14 @@ objectClass                   top
 
    The module depends on the following modules (the listed modules
    must be loaded before this module):
-
      * LDAP
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * OpenLDAP library (libldap), libldap header files
        (libldap-dev) are needed for compilation
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -163,9 +162,8 @@ objectClass                   top
 
    Default value: ""
 
-   Example 1-2. ldap_session parameter usage
+   Example 1.2. ldap_session parameter usage
 modparam("h350", "ldap_session", "h350");
-     __________________________________________________________
 
 1.3.2. base_dn (string)
 
@@ -175,9 +173,8 @@ modparam("h350", "ldap_session", "h350");
 
    Default value: ""
 
-   Example 1-3. base_dn parameter usage
+   Example 1.3. base_dn parameter usage
 modparam("h350", "base_dn", "ou=h350,dc=example,dc=com");
-     __________________________________________________________
 
 1.3.3. search_scope (string)
 
@@ -186,9 +183,8 @@ modparam("h350", "base_dn", "ou=h350,dc=example,dc=com");
 
    Default value: "one"
 
-   Example 1-4. search_scope parameter usage
+   Example 1.4. search_scope parameter usage
 modparam("h350", "search_scope", "sub");
-     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -233,7 +229,7 @@ modparam("h350", "search_scope", "sub");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1-5. Example Usage
+   Example 1.5. Example Usage
 #
 # H.350 lookup for callee
 #
@@ -253,7 +249,6 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
 }
 
 # now h350_result* or ldap_result* functions can be used
-     __________________________________________________________
 
 1.4.2. h350_auth_lookup(auth_username,
 "username_avp_spec/pwd_avp_spec")
@@ -307,7 +302,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1-6. Example Usage
+   Example 1.6. Example Usage
 # -- auth params --
 modparam("auth", "username_spec", "$avp(s:auth_user)")
 modparam("auth", "password_spec", "$avp(s:auth_pwd)")
@@ -393,7 +388,6 @@ route[1]
     xlog("L_INFO", "$rm request successfully authenticated");
     return(1);
 }
-     __________________________________________________________
 
 1.4.3. h350_result_call_preferences(avp_name_prefix)
 
@@ -416,8 +410,9 @@ route[1]
    is a string indicating the time in milliseconds after which the
    call forwarding should occur.
 
-   Example 1-7. Example H.350 callPreferenceURI simple call
+   Example 1.7. Example H.350 callPreferenceURI simple call
    forwarding rules
+
 # Example 1:
 # forward to sip:voicemail@example.com on no answer after 15 seconds:
 
@@ -499,7 +494,7 @@ AVP value = argument / 1000
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1-8. Example Usage
+   Example 1.8. Example Usage
 #
 # H.350 lookup for callee
 #
@@ -542,7 +537,6 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
     t_relay();
     exit;
 }
-     __________________________________________________________
 
 1.4.4. h350_result_service_level(avp_name_prefix)
 
@@ -559,7 +553,7 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
    SIPIdentityServiceLevel attribute value, and an integer value
    of 1.
 
-   Example 1-9. Example SIPIdentityServiceLevel values and
+   Example 1.9. Example SIPIdentityServiceLevel values and
    resulting AVPs
 SIPIdentityServiceLevel: longdistance
 SIPIdentityServiceLevel: international
@@ -601,7 +595,7 @@ $avp("s:sl_900") = 1
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, and ONREPLY_ROUTE.
 
-   Example 1-10. Example Usage
+   Example 1.10. Example Usage
 #
 # H.350 SIP digest authentication for caller
 #
@@ -630,21 +624,53 @@ else {
     sl_send_reply("403", "Forbidden");
 }
 exit;
-     __________________________________________________________
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
 
 Resources
 
    [H.350] Directory Services Architecture for Multimedia
-   Conferencing, August 2003, ITU-T.
+   Conferencing. August 2003. ITU-T.
 
-   [H.350.4] Directory services architecture for SIP, August 2003,
+   [H.350.4] Directory services architecture for SIP. August 2003.
    ITU-T.
 
    [H.350.6] Directory services architecture for call forwarding
-   and preferences, March 2004, ITU-T.
+   and preferences. March 2004. ITU-T.
 
-   [ViDe-H.350-Cookbook] ViDe H.350 Cookbook, 2005, ViDe.
+   [ViDe-H.350-Cookbook] ViDe H.350 Cookbook. 2005. ViDe.
 
    [RFC4510] Lightweight Directory Access Protocol (LDAP):
-   Technical Specification Road Map, June 2006, Internet
+   Technical Specification Road Map. June 2006. Internet
    Engineering Task Force.

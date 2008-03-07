@@ -2,16 +2,18 @@ SipTrace Module
 
 Daniel-Constantin Mierla
 
-   voice-system.ro
-
 Edited by
 
 Daniel-Constantin Mierla
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -42,17 +44,19 @@ Daniel-Constantin Mierla
         1.6. Database setup
         1.7. Known issues
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set db_url parameter
-   1-2. Set sip_trace parameter
-   1-3. Set trace_flag parameter
-   1-4. Set trace_on parameter
-   1-5. Set trace_on parameter
-   1-6. Set trace_on parameter
-   1-7. Set duplicate_uri parameter
-   1-8. Set trace_local_ip parameter
-   1-9. sip_trace() usage
-     __________________________________________________________
+
+   1.1. Set db_url parameter
+   1.2. Set sip_trace parameter
+   1.3. Set trace_flag parameter
+   1.4. Set trace_on parameter
+   1.5. Set trace_on parameter
+   1.6. Set trace_on parameter
+   1.7. Set duplicate_uri parameter
+   1.8. Set trace_local_ip parameter
+   1.9. sip_trace() usage
 
 Chapter 1. User's Guide
 
@@ -62,7 +66,6 @@ Chapter 1. User's Guide
    database.
 
    There are two ways of storing information.
-
      * by calling explicitely the sip_trace() method in OpenSER
        configuration file. In this case the original message is
        processed.
@@ -77,26 +80,21 @@ Chapter 1. User's Guide
    openserctl fifo sip_trace on
 
    openserctl fifo sip_trace off
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * database module - mysql, postrgress, dbtext, unixodbc...
      * tm and sl modules - optional, only if you want to trace
        messages forwarded by these modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -106,11 +104,10 @@ Chapter 1. User's Guide
 
    Default value is "".
 
-   Example 1-1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("siptrace", "db_url", "mysql://user:passwd@host/dbname")
 ...
-     __________________________________________________________
 
 1.3.2. table (str)
 
@@ -118,11 +115,10 @@ modparam("siptrace", "db_url", "mysql://user:passwd@host/dbname")
 
    Default value is "sip_trace".
 
-   Example 1-2. Set sip_trace parameter
+   Example 1.2. Set sip_trace parameter
 ...
 modparam("siptrace", "table", "strace")
 ...
-     __________________________________________________________
 
 1.3.3. trace_flag (integer)
 
@@ -130,11 +126,10 @@ modparam("siptrace", "table", "strace")
 
    Default value is "0".
 
-   Example 1-3. Set trace_flag parameter
+   Example 1.3. Set trace_flag parameter
 ...
 modparam("siptrace", "trace_flag", 22)
 ...
-     __________________________________________________________
 
 1.3.4. trace_on (integer)
 
@@ -142,11 +137,10 @@ modparam("siptrace", "trace_flag", 22)
 
    Default value is "0".
 
-   Example 1-4. Set trace_on parameter
+   Example 1.4. Set trace_on parameter
 ...
 modparam("siptrace", "trace_on", 1)
 ...
-     __________________________________________________________
 
 1.3.5. traced_user_avp (str)
 
@@ -158,12 +152,11 @@ modparam("siptrace", "trace_on", 1)
 
    Default value is "NULL" (feature disabled).
 
-   Example 1-5. Set trace_on parameter
+   Example 1.5. Set trace_on parameter
 ...
 modparam("siptrace", "traced_user_avp", "$avp(i:123)")
 modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 ...
-     __________________________________________________________
 
 1.3.6. trace_table_avp (str)
 
@@ -175,12 +168,11 @@ modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 
    Default value is "NULL" (feature disabled).
 
-   Example 1-6. Set trace_on parameter
+   Example 1.6. Set trace_on parameter
 ...
 modparam("siptrace", "trace_table_avp", "$avp(i:345)")
 modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 ...
-     __________________________________________________________
 
 1.3.7. duplicate_uri (str)
 
@@ -189,11 +181,10 @@ modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
 
    Default value is "NULL".
 
-   Example 1-7. Set duplicate_uri parameter
+   Example 1.7. Set duplicate_uri parameter
 ...
 modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 ...
-     __________________________________________________________
 
 1.3.8. trace_local_ip (str)
 
@@ -203,15 +194,14 @@ modparam("siptrace", "duplicate_uri", "sip:10.1.1.1:5888")
 
    Default value is "NULL".
 
-   Example 1-8. Set trace_local_ip parameter
+   Example 1.8. Set trace_local_ip parameter
 ...
 modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. sip_trace()
+1.4.1.  sip_trace()
 
    Store current processed SIP message in database. It is stored
    in the form prior applying chages made to it.
@@ -219,20 +209,18 @@ modparam("siptrace", "trace_local_ip", "10.1.1.1:5064")
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE.
 
-   Example 1-9. sip_trace() usage
+   Example 1.9. sip_trace() usage
 ...
 sip_trace();
 ...
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
-1.5.1. sip_trace
+1.5.1.  sip_trace
 
    Name: sip_trace
 
    Parameters:
-
      * trace_mode : turns on/off SIP message tracing. Possible
        values are:
           + on
@@ -245,7 +233,6 @@ sip_trace();
                 :sip_trace:_reply_fifo_file_
                 trace_mode
                 _empty_line_
-     __________________________________________________________
 
 1.6. Database setup
 
@@ -257,9 +244,41 @@ sip_trace();
    the openser/scripts folder as template. You can also find the
    complete database documentation on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
-     __________________________________________________________
 
 1.7. Known issues
 
    Stateless forwarded messages (forward()) are not logged if you
    set the flag, use sip_trace().
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

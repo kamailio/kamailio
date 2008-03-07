@@ -9,9 +9,13 @@ Edited by
 Bogdan-Andrei Iancu
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2006-04-14 14:00:10 +0300
+                             (Fri, 14 Apr 2006) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -83,37 +87,37 @@ Bogdan-Andrei Iancu
    3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set enable_stats parameter
-   1-2. Set hash_size parameter
-   1-3. Set rr_param parameter
-   1-4. Set dlg_flag parameter
-   1-5. Set timeout_avp parameter
-   1-6. Set default_timeout parameter
-   1-7. Set dlf_extra_hdrs parameter
-   1-8. Set dlg_match_mode parameter
-   1-9. Set db_url parameter
-   1-10. Set db_mode parameter
-   1-11. Set db_update_period parameter
-   1-12. Set table_name parameter
-   1-13. Set callid_column parameter
-   1-14. Set from_uri_column parameter
-   1-15. Set from_tag_column parameter
-   1-16. Set to_uri_column parameter
-   1-17. Set to_tag_column parameter
-   1-18. Set caller_cseq_column parameter
-   1-19. Set callee_cseq_column parameter
-   1-20. Set caller_route_column parameter
-   1-21. Set to_route_column parameter
-   1-22. Set caller_contact_column parameter
-   1-23. Set callee_contact_column parameter
-   1-24. Set caller_sock_column parameter
-   1-25. Set callee_sock_column parameter
-   1-26. Set h_id_column parameter
-   1-27. Set h_entry_column parameter
-   1-28. Set state_column parameter
-   1-29. Set start_time_column parameter
-   1-30. Set timeout_column parameter
-     __________________________________________________________
+
+   1.1. Set enable_stats parameter
+   1.2. Set hash_size parameter
+   1.3. Set rr_param parameter
+   1.4. Set dlg_flag parameter
+   1.5. Set timeout_avp parameter
+   1.6. Set default_timeout parameter
+   1.7. Set dlf_extra_hdrs parameter
+   1.8. Set dlg_match_mode parameter
+   1.9. Set db_url parameter
+   1.10. Set db_mode parameter
+   1.11. Set db_update_period parameter
+   1.12. Set table_name parameter
+   1.13. Set callid_column parameter
+   1.14. Set from_uri_column parameter
+   1.15. Set from_tag_column parameter
+   1.16. Set to_uri_column parameter
+   1.17. Set to_tag_column parameter
+   1.18. Set caller_cseq_column parameter
+   1.19. Set callee_cseq_column parameter
+   1.20. Set caller_route_column parameter
+   1.21. Set to_route_column parameter
+   1.22. Set caller_contact_column parameter
+   1.23. Set callee_contact_column parameter
+   1.24. Set caller_sock_column parameter
+   1.25. Set callee_sock_column parameter
+   1.26. Set h_id_column parameter
+   1.27. Set h_entry_column parameter
+   1.28. Set state_column parameter
+   1.29. Set start_time_column parameter
+   1.30. Set timeout_column parameter
 
 Chapter 1. User's Guide
 
@@ -128,38 +132,33 @@ Chapter 1. User's Guide
    The module, via an internal API, also provide the foundation to
    build on top of it more complex dialog-based functionalities
    via other OpenSER modules.
-     __________________________________________________________
 
 1.2. How it works
 
    To create the dialog associated to an initial request, the flag
-   "dlg_flag" (Section 1.4.4) must be set before creating the
-   corresponding transaction.
+   "dlg_flag" (Section 1.4.4, "dlg_flag (integer)") must be set
+   before creating the corresponding transaction.
 
    The dialog is automatically destroyed when a "BYE" is received.
    In case of no "BYE", the dialog lifetime is controlled via the
-   default timeout (see "default_timeout" - Section 1.4.6) and
-   custom timeout (see "timeout_avp" - Section 1.4.5). The dialog
-   timeout is reset each time a sequential request passes.
-     __________________________________________________________
+   default timeout (see "default_timeout" - Section 1.4.6,
+   "default_timeout (integer)") and custom timeout (see
+   "timeout_avp" - Section 1.4.5, "timeout_avp (string)"). The
+   dialog timeout is reset each time a sequential request passes.
 
 1.3. Dependencies
 
 1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * TM - Transaction module
      * RR - Record-Route module
-     __________________________________________________________
 
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.4. Exported Parameters
 
@@ -172,11 +171,10 @@ Chapter 1. User's Guide
 
    Default value is "1 (enabled)".
 
-   Example 1-1. Set enable_stats parameter
+   Example 1.1. Set enable_stats parameter
 ...
 modparam("dialog", "enable_stats", 0)
 ...
-     __________________________________________________________
 
 1.4.2. hash_size (integer)
 
@@ -192,11 +190,10 @@ modparam("dialog", "enable_stats", 0)
 
    Default value is "4096".
 
-   Example 1-2. Set hash_size parameter
+   Example 1.2. Set hash_size parameter
 ...
 modparam("dialog", "hash_size", 1024)
 ...
-     __________________________________________________________
 
 1.4.3. rr_param (string)
 
@@ -206,11 +203,10 @@ modparam("dialog", "hash_size", 1024)
 
    Default value is "did".
 
-   Example 1-3. Set rr_param parameter
+   Example 1.3. Set rr_param parameter
 ...
 modparam("dialog", "rr_param", "xyz")
 ...
-     __________________________________________________________
 
 1.4.4. dlg_flag (integer)
 
@@ -219,11 +215,10 @@ modparam("dialog", "rr_param", "xyz")
 
    Default value is "none".
 
-   Example 1-4. Set dlg_flag parameter
+   Example 1.4. Set dlg_flag parameter
 ...
 modparam("dialog", "dlg_flag", 4)
 ...
-     __________________________________________________________
 
 1.4.5. timeout_avp (string)
 
@@ -233,11 +228,10 @@ modparam("dialog", "dlg_flag", 4)
 
    Default value is "none".
 
-   Example 1-5. Set timeout_avp parameter
+   Example 1.5. Set timeout_avp parameter
 ...
 modparam("dialog", "timeout_avp", "$avp(i:10)")
 ...
-     __________________________________________________________
 
 1.4.6. default_timeout (integer)
 
@@ -246,11 +240,10 @@ modparam("dialog", "timeout_avp", "$avp(i:10)")
 
    Default value is "43200 (12 hours)".
 
-   Example 1-6. Set default_timeout parameter
+   Example 1.6. Set default_timeout parameter
 ...
 modparam("dialog", "default_timeout", 21600)
 ...
-     __________________________________________________________
 
 1.4.7. dlg_extra_hdrs (string)
 
@@ -260,11 +253,10 @@ modparam("dialog", "default_timeout", 21600)
 
    Default value is "NULL".
 
-   Example 1-7. Set dlf_extra_hdrs parameter
+   Example 1.7. Set dlf_extra_hdrs parameter
 ...
 modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 ...
-     __________________________________________________________
 
 1.4.8. dlg_match_mode (integer)
 
@@ -274,7 +266,6 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
    matching based on SIP elements (as in RFC3261).
 
    The supported modes are:
-
      * 0 - DID_ONLY - the match is done exclusivly based on DID;
      * 1 - DID_FALLBACK - the match is first tried based on DID
        and if not present, it will fallback to SIP matching;
@@ -283,11 +274,10 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 
    Default value is "0 (DID_ONLY)".
 
-   Example 1-8. Set dlg_match_mode parameter
+   Example 1.8. Set dlg_match_mode parameter
 ...
 modparam("dialog", "dlg_match_mode", 1)
 ...
-     __________________________________________________________
 
 1.4.9. db_url (string)
 
@@ -296,12 +286,11 @@ modparam("dialog", "dlg_match_mode", 1)
 
    Default value is "mysql://openser:openserrw@localhost/openser".
 
-   Example 1-9. Set db_url parameter
+   Example 1.9. Set db_url parameter
 ...
 modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname
 ")
 ...
-     __________________________________________________________
 
 1.4.10. db_mode (integer)
 
@@ -309,7 +298,6 @@ modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname
    memory.
 
    The supported modes are:
-
      * 0 - NO_DB - the memory content is not flushed into DB;
      * 1 - REALTIME - any dialog information changes will be
        reflected into the database immediatly.
@@ -318,11 +306,10 @@ modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname
 
    Default value is "0".
 
-   Example 1-10. Set db_mode parameter
+   Example 1.10. Set db_mode parameter
 ...
 modparam("dialog", "db_mode", 1)
 ...
-     __________________________________________________________
 
 1.4.11. db_update_period (integer)
 
@@ -333,11 +320,10 @@ modparam("dialog", "db_mode", 1)
 
    Default value is "60".
 
-   Example 1-11. Set db_update_period parameter
+   Example 1.11. Set db_update_period parameter
 ...
 modparam("dialog", "db_update_period", "120")
 ...
-     __________________________________________________________
 
 1.4.12. table_name (string)
 
@@ -346,11 +332,10 @@ modparam("dialog", "db_update_period", "120")
 
    Default value is "dialog".
 
-   Example 1-12. Set table_name parameter
+   Example 1.12. Set table_name parameter
 ...
 modparam("dialog", "table_name", "my_dialog")
 ...
-     __________________________________________________________
 
 1.4.13. callid_column (string)
 
@@ -358,11 +343,10 @@ modparam("dialog", "table_name", "my_dialog")
 
    Default value is "callid".
 
-   Example 1-13. Set callid_column parameter
+   Example 1.13. Set callid_column parameter
 ...
 modparam("dialog", "callid_column", "callid_c_name")
 ...
-     __________________________________________________________
 
 1.4.14. from_uri_column (string)
 
@@ -371,11 +355,10 @@ modparam("dialog", "callid_column", "callid_c_name")
 
    Default value is "from_uri".
 
-   Example 1-14. Set from_uri_column parameter
+   Example 1.14. Set from_uri_column parameter
 ...
 modparam("dialog", "from_uri_column", "from_uri_c_name")
 ...
-     __________________________________________________________
 
 1.4.15. from_tag_column (string)
 
@@ -384,11 +367,10 @@ modparam("dialog", "from_uri_column", "from_uri_c_name")
 
    Default value is "from_tag".
 
-   Example 1-15. Set from_tag_column parameter
+   Example 1.15. Set from_tag_column parameter
 ...
 modparam("dialog", "from_tag_column", "from_tag_c_name")
 ...
-     __________________________________________________________
 
 1.4.16. to_uri_column (string)
 
@@ -397,11 +379,10 @@ modparam("dialog", "from_tag_column", "from_tag_c_name")
 
    Default value is "to_uri".
 
-   Example 1-16. Set to_uri_column parameter
+   Example 1.16. Set to_uri_column parameter
 ...
 modparam("dialog", "to_uri_column", "to_uri_c_name")
 ...
-     __________________________________________________________
 
 1.4.17. to_tag_column (string)
 
@@ -410,11 +391,10 @@ modparam("dialog", "to_uri_column", "to_uri_c_name")
 
    Default value is "to_tag".
 
-   Example 1-17. Set to_tag_column parameter
+   Example 1.17. Set to_tag_column parameter
 ...
 modparam("dialog", "to_tag_column", "to_tag_c_name")
 ...
-     __________________________________________________________
 
 1.4.18. caller_cseq_column (string)
 
@@ -423,11 +403,10 @@ modparam("dialog", "to_tag_column", "to_tag_c_name")
 
    Default value is "caller_cseq".
 
-   Example 1-18. Set caller_cseq_column parameter
+   Example 1.18. Set caller_cseq_column parameter
 ...
 modparam("dialog", "caller_cseq_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.19. callee_cseq_column (string)
 
@@ -436,11 +415,10 @@ modparam("dialog", "caller_cseq_column", "column_name")
 
    Default value is "callee_cseq".
 
-   Example 1-19. Set callee_cseq_column parameter
+   Example 1.19. Set callee_cseq_column parameter
 ...
 modparam("dialog", "callee_cseq_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.20. caller_route_column (string)
 
@@ -449,11 +427,10 @@ modparam("dialog", "callee_cseq_column", "column_name")
 
    Default value is "caller_route_set".
 
-   Example 1-20. Set caller_route_column parameter
+   Example 1.20. Set caller_route_column parameter
 ...
 modparam("dialog", "caller_route_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.21. callee_route_column (string)
 
@@ -462,11 +439,10 @@ modparam("dialog", "caller_route_column", "column_name")
 
    Default value is "callee_route_set".
 
-   Example 1-21. Set to_route_column parameter
+   Example 1.21. Set to_route_column parameter
 ...
 modparam("dialog", "to_route_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.22. caller_contact_column (string)
 
@@ -475,11 +451,10 @@ modparam("dialog", "to_route_column", "column_name")
 
    Default value is "from_contact".
 
-   Example 1-22. Set caller_contact_column parameter
+   Example 1.22. Set caller_contact_column parameter
 ...
 modparam("dialog", "caller_contact_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.23. callee_contact_column (string)
 
@@ -488,11 +463,10 @@ modparam("dialog", "caller_contact_column", "column_name")
 
    Default value is "callee_contact".
 
-   Example 1-23. Set callee_contact_column parameter
+   Example 1.23. Set callee_contact_column parameter
 ...
 modparam("dialog", "callee_contact_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.24. caller_sock_column (string)
 
@@ -501,11 +475,10 @@ modparam("dialog", "callee_contact_column", "column_name")
 
    Default value is "caller_sock".
 
-   Example 1-24. Set caller_sock_column parameter
+   Example 1.24. Set caller_sock_column parameter
 ...
 modparam("dialog", "caller_sock_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.25. callee_sock_column (string)
 
@@ -514,11 +487,10 @@ modparam("dialog", "caller_sock_column", "column_name")
 
    Default value is "callee_contact".
 
-   Example 1-25. Set callee_sock_column parameter
+   Example 1.25. Set callee_sock_column parameter
 ...
 modparam("dialog", "callee_sock_column", "column_name")
 ...
-     __________________________________________________________
 
 1.4.26. h_id_column (string)
 
@@ -527,11 +499,10 @@ modparam("dialog", "callee_sock_column", "column_name")
 
    Default value is "hash_id".
 
-   Example 1-26. Set h_id_column parameter
+   Example 1.26. Set h_id_column parameter
 ...
 modparam("dialog", "h_id_column", "hash_id_c_name")
 ...
-     __________________________________________________________
 
 1.4.27. h_entry_column (string)
 
@@ -540,11 +511,10 @@ modparam("dialog", "h_id_column", "hash_id_c_name")
 
    Default value is "hash_entry".
 
-   Example 1-27. Set h_entry_column parameter
+   Example 1.27. Set h_entry_column parameter
 ...
 modparam("dialog", "h_entry_column", "h_entry_c_name")
 ...
-     __________________________________________________________
 
 1.4.28. state_column (string)
 
@@ -553,11 +523,10 @@ modparam("dialog", "h_entry_column", "h_entry_c_name")
 
    Default value is "state".
 
-   Example 1-28. Set state_column parameter
+   Example 1.28. Set state_column parameter
 ...
 modparam("dialog", "state_column", "state_c_name")
 ...
-     __________________________________________________________
 
 1.4.29. start_time_column (string)
 
@@ -566,11 +535,10 @@ modparam("dialog", "state_column", "state_c_name")
 
    Default value is "start_time".
 
-   Example 1-29. Set start_time_column parameter
+   Example 1.29. Set start_time_column parameter
 ...
 modparam("dialog", "start_time_column", "start_time_c_name")
 ...
-     __________________________________________________________
 
 1.4.30. timeout_column (string)
 
@@ -579,16 +547,14 @@ modparam("dialog", "start_time_column", "start_time_c_name")
 
    Default value is "timeout".
 
-   Example 1-30. Set timeout_column parameter
+   Example 1.30. Set timeout_column parameter
 ...
 modparam("dialog", "timeout_column", "timeout_c_name")
 ...
-     __________________________________________________________
 
 1.5. Exported Functions
 
    There are no exported functions that could be used in scripts.
-     __________________________________________________________
 
 1.6. Exported statistics
 
@@ -596,28 +562,23 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
    Returns the number of current active dialogs (may be confirmed
    or not).
-     __________________________________________________________
 
 1.6.2. early_dialogs
 
    Returns the number of early dialogs.
-     __________________________________________________________
 
 1.6.3. processed_dialogs
 
    Returns the total number of processed dialogs (terminated,
    expired or active) from the startup.
-     __________________________________________________________
 
 1.6.4. expired_dialogs
 
    Returns the total number of expired dialogs from the startup.
-     __________________________________________________________
 
 1.6.5. failed_dialogs
 
    Returns the number of failed dialogs.
-     __________________________________________________________
 
 1.7. Exported MI Functions
 
@@ -632,7 +593,6 @@ modparam("dialog", "timeout_column", "timeout_c_name")
    MI FIFO Command Format:
                 :dlg_list:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
 1.7.2. dlg_end_dlg
 
@@ -641,7 +601,6 @@ modparam("dialog", "timeout_column", "timeout_c_name")
    Name: dlg_end_dlg
 
    Parameters:
-
      * h_entry - hash entry of the dialog in the internal dialog
        table
      * h_id - hash id of the dialog on the hash entry
@@ -656,7 +615,6 @@ modparam("dialog", "timeout_column", "timeout_c_name")
                 342
                 56
                 _empty_line_
-     __________________________________________________________
 
 1.8. Exported pseudo-variables
 
@@ -664,7 +622,6 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
    Returns the number of current active dialogs (may be confirmed
    or not).
-     __________________________________________________________
 
 1.8.2. $DLG_status
 
@@ -673,12 +630,10 @@ modparam("dialog", "timeout_column", "timeout_c_name")
    sequential requests, after doing loose_route().
 
    Value may be:
-
      * NULL - Dialog not found.
      * 3 - Confirmed by a final reply but no ACK received yet.
      * 4 - Confirmed by a final reply and ACK received.
      * 5 - Dialog ended.
-     __________________________________________________________
 
 1.8.3. $DLG_lifetime
 
@@ -689,18 +644,16 @@ modparam("dialog", "timeout_column", "timeout_c_name")
    loose_route().
 
    NULL will be returned if there is no dialog for the request.
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
 2.1. Available Functions
 
-2.1.1. register_dlgcb (dialog, type, cb, param)
+2.1.1.  register_dlgcb (dialog, type, cb, param)
 
    Register a new callback to the dialog.
 
    Meaning of the parameters is as follows:
-
      * struct dlg_cell* dlg - dialog to register callback to. If
        maybe NULL only for DLG_CREATED callback type, which is not
        a per dialog type.
@@ -724,43 +677,44 @@ Chapter 2. Developer's Guide
        sip_msg* msg, void** param);"
      * void *param - parameter to be passed to the callback
        function.
-     __________________________________________________________
 
 Chapter 3. Frequently Asked Questions
 
-   3.1. What happend with "use_tight_match" parameter?
-   3.2. Where can I find more about OpenSER?
-   3.3. Where can I post a question about this module?
-   3.4. How can I report a bug?
+   3.1.
 
-   3.1. What happend with "use_tight_match" parameter?
+       What happend with "use_tight_match" parameter?
 
-   The parameter was removed with version 1.3 as the option of
-   tight matching became mandatory and not configurable. Now, the
-   tight matching is done all the time (when using DID matching).
+       The parameter was removed with version 1.3 as the option of
+       tight matching became mandatory and not configurable. Now, the
+       tight matching is done all the time (when using DID matching).
 
-   3.2. Where can I find more about OpenSER?
+   3.2.
 
-   Take a look at http://openser.org/.
+       Where can I find more about OpenSER?
 
-   3.3. Where can I post a question about this module?
+       Take a look at http://openser.org/.
 
-   First at all check if your question was already answered on one
-   of our mailing lists:
+   3.3.
 
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
+       Where can I post a question about this module?
 
-   E-mails regarding any stable OpenSER release should be sent to
-   <users@openser.org> and e-mails regarding development versions
-   should be sent to <devel@openser.org>.
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
 
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
 
-   3.4. How can I report a bug?
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
 
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.
+   3.4.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

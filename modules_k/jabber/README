@@ -2,16 +2,18 @@ jabber Module
 
 Daniel-Constantin Mierla
 
-   voice-system.ro
-
 Edited by
 
 Daniel-Constantin Mierla
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -50,27 +52,29 @@ Daniel-Constantin Mierla
               1.6.4. jab_go_online()
               1.6.5. jab_go_offline()
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set db_url parameter
-   1-2. Set jaddress parameter
-   1-3. Set jport parameter
-   1-4. Set jdomain parameter
-   1-5. Set jdomain parameter
-   1-6. Set proxy parameter
-   1-7. Set registrar parameter
-   1-8. Set workers parameter
-   1-9. Set max_jobs parameter
-   1-10. Set cache_time parameter
-   1-11. Set delay_time parameter
-   1-12. Set sleep_time parameter
-   1-13. Set check_time parameter
-   1-14. Set priority parameter
-   1-15. jab_send_message() usage
-   1-16. jab_join_jconf() usage
-   1-17. jab_exit_jconf() usage
-   1-18. jab_go_online() usage
-   1-19. jab_go_offline() usage
-     __________________________________________________________
+
+   1.1. Set db_url parameter
+   1.2. Set jaddress parameter
+   1.3. Set jport parameter
+   1.4. Set jdomain parameter
+   1.5. Set jdomain parameter
+   1.6. Set proxy parameter
+   1.7. Set registrar parameter
+   1.8. Set workers parameter
+   1.9. Set max_jobs parameter
+   1.10. Set cache_time parameter
+   1.11. Set delay_time parameter
+   1.12. Set sleep_time parameter
+   1.13. Set check_time parameter
+   1.14. Set priority parameter
+   1.15. jab_send_message() usage
+   1.16. jab_join_jconf() usage
+   1.17. jab_exit_jconf() usage
+   1.18. jab_go_online() usage
+   1.19. jab_go_offline() usage
 
 Chapter 1. User's Guide
 
@@ -83,7 +87,6 @@ Chapter 1. User's Guide
    Expat is a common XML library and is the fastest available for
    Linux/Unix, the second over all, after msxml library. It is
    integrated in most of well known Linux distributions.
-     __________________________________________________________
 
 1.1.1. New Features
 
@@ -101,15 +104,14 @@ Chapter 1. User's Guide
        messages.
      * Gateways detection -- Ability to see whether an IM gateway
        is up or down.
-     __________________________________________________________
 
 1.2. Admin's Guide
 
-   Note
+Note
 
-        A more complete guide about SIMPLE2Jabber gateway can be found
-        at http://openser.org/. The part below will be removed soon,
-        only the manual from web will be updated.
+   A more complete guide about SIMPLE2Jabber gateway can be found
+   at http://openser.org/. The part below will be removed soon,
+   only the manual from web will be updated.
 
    The Jabber server setup is not a subject of this guide. Check
    http://www.jabber.org for that.
@@ -119,7 +121,6 @@ Chapter 1. User's Guide
    subdirectory of the module.
 
    Main steps of using the Jabber gateway:
-
      * Create the MySQL database.
      * Setup the local Jabber server.
      * Set the module parameter values in cfg file of OpenSER,
@@ -135,7 +136,6 @@ Chapter 1. User's Guide
    and how local Jabber server is setup.
 
    Next is presented a use case. Prologue:
-
      * OpenSER is running on "server.org".
      * Local Jabber server is running on "jabsrv.server.org".
      * Jabber network alias (first part of "jdomain") is
@@ -169,7 +169,6 @@ Chapter 1. User's Guide
    "jab_send_message").
 
    The special messages are for:
-
      * Registering to Jabber server (go online in Jabber
        network)--here must be called "jab_go_online" method.
      * Leaving the Jabber network (go offline in Jabber
@@ -180,7 +179,6 @@ Chapter 1. User's Guide
        "jab_exit_jconf".
 
    The destination address must follow the following patterns:
-
      * For Jabber network:
        "username<delim>jabber_server@jabber_alias".
      * For Jabber conference:
@@ -191,10 +189,9 @@ Chapter 1. User's Guide
        msn_server can be "msn.com" or "hotmail.com".
      * For YAHOO network: "yahoo_username@yahoo_alias".
 
-   Note
+Note
 
-        "jabber_alias" is the first part of "jdomain".
-     __________________________________________________________
+   "jabber_alias" is the first part of "jdomain".
 
 1.3. User's Guide
 
@@ -216,36 +213,31 @@ Chapter 1. User's Guide
    For someone who is in Yahoo network the destination must be:
    user@yahoo_alias
 
-   Note
+Note
 
-        The OpenSER administrator have to set the Jabber transports for
-        each IM network in order to be able to send messages to those
-        networks. The alias of each IM network can be found out from
-        OpenSER admin.
+   The OpenSER administrator have to set the Jabber transports for
+   each IM network in order to be able to send messages to those
+   networks. The alias of each IM network can be found out from
+   OpenSER admin.
 
-        You cannot send messages from your SIP client to your
-        associated Jabber account--is something like sending messages
-        to yourself.
-     __________________________________________________________
+   You cannot send messages from your SIP client to your
+   associated Jabber account--is something like sending messages
+   to yourself.
 
 1.4. Dependencies
 
 1.4.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * A database module.
      * pa (Optionally) - Presence Agent.
      * tm - Transaction Manager.
-     __________________________________________________________
 
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * Expat library.
-     __________________________________________________________
 
 1.5. Exported Parameters
 
@@ -255,11 +247,10 @@ Chapter 1. User's Guide
 
    Default value is "mysql://root@127.0.0.1/sip_jab".
 
-   Example 1-1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("jabber", "db_url", "mysql://username:password@host/sip_jab")
 ...
-     __________________________________________________________
 
 1.5.2. jaddress (string)
 
@@ -268,11 +259,10 @@ modparam("jabber", "db_url", "mysql://username:password@host/sip_jab")
 
    Default value is "127.0.0.1".
 
-   Example 1-2. Set jaddress parameter
+   Example 1.2. Set jaddress parameter
 ...
 modparam("jabber", "jaddress", "1.2.3.4")
 ...
-     __________________________________________________________
 
 1.5.3. jport (integer)
 
@@ -280,11 +270,10 @@ modparam("jabber", "jaddress", "1.2.3.4")
 
    Default value is "5222".
 
-   Example 1-3. Set jport parameter
+   Example 1.3. Set jport parameter
 ...
 modparam("jabber", "jport", 1234)
 ...
-     __________________________________________________________
 
 1.5.4. jdomain (string)
 
@@ -300,11 +289,10 @@ modparam("jabber", "jport", 1234)
 
    Default value is none.
 
-   Example 1-4. Set jdomain parameter
+   Example 1.4. Set jdomain parameter
 ...
 modparam("jabber", "jdomain", "jabber.sipserver.com=*")
 ...
-     __________________________________________________________
 
 1.5.5. aliases (string)
 
@@ -326,11 +314,10 @@ modparam("jabber", "jdomain", "jabber.sipserver.com=*")
 
    Default value is none.
 
-   Example 1-5. Set jdomain parameter
+   Example 1.5. Set jdomain parameter
 ...
 modparam("jabber", "aliases", "1;msn.x.com=%")
 ...
-     __________________________________________________________
 
 1.5.6. proxy (string)
 
@@ -344,11 +331,10 @@ modparam("jabber", "aliases", "1;msn.x.com=%")
 
    Default value is none.
 
-   Example 1-6. Set proxy parameter
+   Example 1.6. Set proxy parameter
 ...
 modparam("jabber", "proxy", "10.0.0.1:5060 sipserver.com:5060")
 ...
-     __________________________________________________________
 
 1.5.7. registrar (string)
 
@@ -357,11 +343,10 @@ modparam("jabber", "proxy", "10.0.0.1:5060 sipserver.com:5060")
 
    Default value is "jabber_gateway@127.0.0.1".
 
-   Example 1-7. Set registrar parameter
+   Example 1.7. Set registrar parameter
 ...
 modparam("jabber", "registrar", "jabber_gateway@127.0.0.1")
 ...
-     __________________________________________________________
 
 1.5.8. workers (integer)
 
@@ -369,11 +354,10 @@ modparam("jabber", "registrar", "jabber_gateway@127.0.0.1")
 
    Default value is 2.
 
-   Example 1-8. Set workers parameter
+   Example 1.8. Set workers parameter
 ...
 modparam("jabber", "workers", 2)
 ...
-     __________________________________________________________
 
 1.5.9. max_jobs (integer)
 
@@ -381,11 +365,10 @@ modparam("jabber", "workers", 2)
 
    Default value is 10.
 
-   Example 1-9. Set max_jobs parameter
+   Example 1.9. Set max_jobs parameter
 ...
 modparam("jabber", "max_jobs", 10)
 ...
-     __________________________________________________________
 
 1.5.10. cache_time (integer)
 
@@ -393,11 +376,10 @@ modparam("jabber", "max_jobs", 10)
 
    Default value is 600.
 
-   Example 1-10. Set cache_time parameter
+   Example 1.10. Set cache_time parameter
 ...
 modparam("jabber", "cache_time", 600)
 ...
-     __________________________________________________________
 
 1.5.11. delay_time (integer)
 
@@ -405,11 +387,10 @@ modparam("jabber", "cache_time", 600)
 
    Default value is 90 seconds.
 
-   Example 1-11. Set delay_time parameter
+   Example 1.11. Set delay_time parameter
 ...
 modparam("jabber", "delay_time", 90)
 ...
-     __________________________________________________________
 
 1.5.12. sleep_time (integer)
 
@@ -417,11 +398,10 @@ modparam("jabber", "delay_time", 90)
 
    Default value is 20 seconds.
 
-   Example 1-12. Set sleep_time parameter
+   Example 1.12. Set sleep_time parameter
 ...
 modparam("jabber", "sleep_time", 20)
 ...
-     __________________________________________________________
 
 1.5.13. check_time (integer)
 
@@ -430,11 +410,10 @@ modparam("jabber", "sleep_time", 20)
 
    Default value is 20 seconds.
 
-   Example 1-13. Set check_time parameter
+   Example 1.13. Set check_time parameter
 ...
 modparam("jabber", "check_time", 20)
 ...
-     __________________________________________________________
 
 1.5.14. priority (str)
 
@@ -442,28 +421,26 @@ modparam("jabber", "check_time", 20)
 
    Default value is "9".
 
-   Example 1-14. Set priority parameter
+   Example 1.14. Set priority parameter
 ...
 modparam("jabber", "priority", "3")
 ...
-     __________________________________________________________
 
 1.6. Exported Functions
 
-1.6.1. jab_send_message()
+1.6.1.  jab_send_message()
 
    Converts SIP MESSAGE message to a Jabber message and sends it
    to Jabber server.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-15. jab_send_message() usage
+   Example 1.15. jab_send_message() usage
 ...
 jab_send_message();
 ...
-     __________________________________________________________
 
-1.6.2. jab_join_jconf()
+1.6.2.  jab_join_jconf()
 
    Join a Jabber conference--the nickname, room name and
    conference server address should be included in To header as:
@@ -472,13 +449,12 @@ jab_send_message();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-16. jab_join_jconf() usage
+   Example 1.16. jab_join_jconf() usage
 ...
 jab_join_jconf();
 ...
-     __________________________________________________________
 
-1.6.3. jab_exit_jconf()
+1.6.3.  jab_exit_jconf()
 
    Leave a Jabber conference--the nickname, room name and
    conference server address should be included in To header as:
@@ -486,33 +462,64 @@ jab_join_jconf();
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-17. jab_exit_jconf() usage
+   Example 1.17. jab_exit_jconf() usage
 ...
 jab_exit_jconf();
 ...
-     __________________________________________________________
 
-1.6.4. jab_go_online()
+1.6.4.  jab_go_online()
 
    Register to the Jabber server with associated Jabber ID of the
    SIP user.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. jab_go_online() usage
+   Example 1.18. jab_go_online() usage
 ...
 jab_go_online();
 ...
-     __________________________________________________________
 
-1.6.5. jab_go_offline()
+1.6.5.  jab_go_offline()
 
    Log off from Jabber server the associated Jabber ID of the SIP
    user.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. jab_go_offline() usage
+   Example 1.19. jab_go_offline() usage
 ...
 jab_go_offline();
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

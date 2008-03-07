@@ -9,9 +9,13 @@ Edited by
 Anca-Maria Vamanu
 
    Copyright © 2007 voice-system.ro
+   Revision History
+   Revision $Revision: 1294 $ $Date: 2007-03-13 14:05:07 +0200
+                              (Thu, 13 March 2007) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -32,14 +36,16 @@ Anca-Maria Vamanu
               1.4.1. bla_set_flag
               1.4.2. bla_handle_notify
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set default_domain parameter
-   1-2. Set header_name parameter
-   1-3. Set outbound_proxy parameter
-   1-4. Set server_address parameter
-   1-5. bla_set_flag usage
-   1-6. bla_handle_notify usage
-     __________________________________________________________
+
+   1.1. Set default_domain parameter
+   1.2. Set header_name parameter
+   1.3. Set outbound_proxy parameter
+   1.4. Set server_address parameter
+   1.5. bla_set_flag usage
+   1.6. bla_handle_notify usage
 
 Chapter 1. User's Guide
 
@@ -48,26 +54,21 @@ Chapter 1. User's Guide
    The pua_bla module enables Bridged Line Appearances support
    according to the specifications in
    draft-anil-sipping-bla-03.txt.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * usrloc.
      * pua.
      * presence.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * libxml.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -78,11 +79,10 @@ Chapter 1. User's Guide
 
    Default value is "NULL".
 
-   Example 1-1. Set default_domain parameter
+   Example 1.1. Set default_domain parameter
 ...
 modparam("pua_bla", "default_domain", "openser.org")
 ...
-     __________________________________________________________
 
 1.3.2. header_name(str)
 
@@ -93,11 +93,10 @@ modparam("pua_bla", "default_domain", "openser.org")
 
    Default value is "NULL".
 
-   Example 1-2. Set header_name parameter
+   Example 1.2. Set header_name parameter
 ...
 modparam("pua_bla", "header_name", "Sender")
 ...
-     __________________________________________________________
 
 1.3.3. outbound_proxy(str)
 
@@ -106,45 +105,42 @@ modparam("pua_bla", "header_name", "Sender")
 
    Default value is "NULL".
 
-   Example 1-3. Set outbound_proxy parameter
+   Example 1.3. Set outbound_proxy parameter
 ...
 modparam("pua_bla", "outbound_proxy", "sip:proxy@openser.org")
 ...
-     __________________________________________________________
 
 1.3.4. server_address(str)
 
    The IP address of the server.
 
-   Example 1-4. Set server_address parameter
+   Example 1.4. Set server_address parameter
 ...
 modparam("pua_bla", "server_address", "sip:bla@160.34.23.12")
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. bla_set_flag
+1.4.1.  bla_set_flag
 
    The function is used to mark REGISTER requests made to a BLA
    AOR. The modules subscribes to the registered contacts for
    dialog;sla event.
 
-   Example 1-5. bla_set_flag usage
+   Example 1.5. bla_set_flag usage
 ...
 if(is_method("REGISTER") && to_uri=~"bla_aor@openser.org")
         bla_set_flag();
 ...
-     __________________________________________________________
 
-1.4.2. bla_handle_notify
+1.4.2.  bla_handle_notify
 
    The function handles Notify requests sent from phones on the
    same BLA to the server. The message is transformed in Publish
    request and passed to presence module for further handling. in
    case of a successful processing a 2xx reply should be sent.
 
-   Example 1-6. bla_handle_notify usage
+   Example 1.6. bla_handle_notify usage
 ...
 if(is_method("NOTIFY") && to_uri=~"bla_aor@openser.org")
 {
@@ -152,3 +148,36 @@ if(is_method("NOTIFY") && to_uri=~"bla_aor@openser.org")
                         t_reply("200", "OK");
 }
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

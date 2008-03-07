@@ -9,9 +9,13 @@ Edited by
 Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -51,31 +55,33 @@ Bogdan-Andrei Iancu
               1.5.2. REMOVE_CPL
               1.5.3. GET_CPL
 
-        1.6. Installation & Running
+        1.6. Installation and Running
 
               1.6.1. Database setup
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set db_url parameter
-   1-2. Set db_table parameter
-   1-3. Set username_column parameter
-   1-4. Set domain_column parameter
-   1-5. Set cpl_xml_column parameter
-   1-6. Set cpl_bin_column parameter
-   1-7. Set cpl_dtd_file parameter
-   1-8. Set log_dir parameter
-   1-9. Set proxy_recurse parameter
-   1-10. Set proxy_route parameter
-   1-11. Set case_sensitive parameter
-   1-12. Set realm_prefix parameter
-   1-13. Set timer_avp parameter
-   1-14. Set lookup_domain parameter
-   1-15. Set lookup_append_branches parameter
-   1-16. Set use_domain parameter
-   1-17. cpl_run_script usage
-   1-18. cpl_process_register usage
-   1-19. cpl_process_register_norpl usage
-     __________________________________________________________
+
+   1.1. Set db_url parameter
+   1.2. Set db_table parameter
+   1.3. Set username_column parameter
+   1.4. Set domain_column parameter
+   1.5. Set cpl_xml_column parameter
+   1.6. Set cpl_bin_column parameter
+   1.7. Set cpl_dtd_file parameter
+   1.8. Set log_dir parameter
+   1.9. Set proxy_recurse parameter
+   1.10. Set proxy_route parameter
+   1.11. Set case_sensitive parameter
+   1.12. Set realm_prefix parameter
+   1.13. Set timer_avp parameter
+   1.14. Set lookup_domain parameter
+   1.15. Set lookup_append_branches parameter
+   1.16. Set use_domain parameter
+   1.17. cpl_run_script usage
+   1.18. cpl_process_register usage
+   1.19. cpl_process_register_norpl usage
 
 Chapter 1. User's Guide
 
@@ -84,14 +90,12 @@ Chapter 1. User's Guide
    cpl-c modules implements a CPL (Call Processing Language)
    interpreter. Support for uploading/downloading/removing scripts
    via SIP REGISTER method is present.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * any DB module- a DB module for interfacing the DB
        operations (modules like mysql, postgres, dbtext, etc)
      * TM (Transaction) module- used for proxying/forking requests
@@ -101,17 +105,14 @@ Chapter 1. User's Guide
      * USRLOC (User Location) module - used for implementing
        lookup("registration") tag (adding into location set of the
        users' contact)
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * libxml2 and libxml2-devel - on some SO, these to packages
        are merged into libxml2. This library contains an engine
        for XML parsing, DTD validation and DOM manipulation.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -124,11 +125,10 @@ Chapter 1. User's Guide
 
    Default value is "mysql://openser:openserrw@localhost/openser".
 
-   Example 1-1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("cpl-c","db_url","dbdriver://username:password@dbhost/dbname")
 ...
-     __________________________________________________________
 
 1.3.2. db_table (string)
 
@@ -139,11 +139,10 @@ modparam("cpl-c","db_url","dbdriver://username:password@dbhost/dbname")
 
    Default value is "cpl".
 
-   Example 1-2. Set db_table parameter
+   Example 1.2. Set db_table parameter
 ...
 modparam("cpl-c","cpl_table","cpl")
 ...
-     __________________________________________________________
 
 1.3.3. username_column (string)
 
@@ -151,11 +150,10 @@ modparam("cpl-c","cpl_table","cpl")
 
    Default value is "username".
 
-   Example 1-3. Set username_column parameter
+   Example 1.3. Set username_column parameter
 ...
 modparam("cpl-c","username_column","username")
 ...
-     __________________________________________________________
 
 1.3.4. domain_column (string)
 
@@ -163,11 +161,10 @@ modparam("cpl-c","username_column","username")
 
    Default value is "domain".
 
-   Example 1-4. Set domain_column parameter
+   Example 1.4. Set domain_column parameter
 ...
 modparam("cpl-c","domain_column","domain")
 ...
-     __________________________________________________________
 
 1.3.5. cpl_xml_column (string)
 
@@ -176,11 +173,10 @@ modparam("cpl-c","domain_column","domain")
 
    Default value is "cpl_xml".
 
-   Example 1-5. Set cpl_xml_column parameter
+   Example 1.5. Set cpl_xml_column parameter
 ...
 modparam("cpl-c","cpl_xml_column","cpl_xml")
 ...
-     __________________________________________________________
 
 1.3.6. cpl_bin_column (string)
 
@@ -189,11 +185,10 @@ modparam("cpl-c","cpl_xml_column","cpl_xml")
 
    Default value is "cpl_bin".
 
-   Example 1-6. Set cpl_bin_column parameter
+   Example 1.6. Set cpl_bin_column parameter
 ...
 modparam("cpl-c","cpl_bin_column","cpl_bin")
 ...
-     __________________________________________________________
 
 1.3.7. cpl_dtd_file (string)
 
@@ -204,11 +199,10 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 
    This parameter is MANDATORY!
 
-   Example 1-7. Set cpl_dtd_file parameter
+   Example 1.7. Set cpl_dtd_file parameter
 ...
 modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 ...
-     __________________________________________________________
 
 1.3.8. log_dir (string)
 
@@ -219,11 +213,10 @@ modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
    If this parameter is absent, the logging will be disabled
    without generating error on execution.
 
-   Example 1-8. Set log_dir parameter
+   Example 1.8. Set log_dir parameter
 ...
 modparam("cpl-c","log_dir","/var/log/openser/cpl")
 ...
-     __________________________________________________________
 
 1.3.9. proxy_recurse (int)
 
@@ -236,11 +229,10 @@ modparam("cpl-c","log_dir","/var/log/openser/cpl")
 
    Default value of this parameter is 0.
 
-   Example 1-9. Set proxy_recurse parameter
+   Example 1.9. Set proxy_recurse parameter
 ...
 modparam("cpl-c","proxy_recurse",2)
 ...
-     __________________________________________________________
 
 1.3.10. proxy_route (int)
 
@@ -250,11 +242,10 @@ modparam("cpl-c","proxy_recurse",2)
 
    Default value of this parameter is 0 (none).
 
-   Example 1-10. Set proxy_route parameter
+   Example 1.10. Set proxy_route parameter
 ...
 modparam("cpl-c","proxy_route",1)
 ...
-     __________________________________________________________
 
 1.3.11. case_sensitive (int)
 
@@ -264,11 +255,10 @@ modparam("cpl-c","proxy_route",1)
 
    Default value of this parameter is 0.
 
-   Example 1-11. Set case_sensitive parameter
+   Example 1.11. Set case_sensitive parameter
 ...
 modparam("cpl-c","case_sensitive",1)
 ...
-     __________________________________________________________
 
 1.3.12. realm_prefix (string)
 
@@ -277,11 +267,10 @@ modparam("cpl-c","case_sensitive",1)
 
    Default value of this parameter is empty string.
 
-   Example 1-12. Set realm_prefix parameter
+   Example 1.12. Set realm_prefix parameter
 ...
 modparam("cpl-c","realm_prefix","sip.")
 ...
-     __________________________________________________________
 
 1.3.13. timer_avp (string)
 
@@ -294,11 +283,10 @@ modparam("cpl-c","realm_prefix","sip.")
 
    Default value of this parameter is NULL.
 
-   Example 1-13. Set timer_avp parameter
+   Example 1.13. Set timer_avp parameter
 ...
 modparam("cpl-c","timer_avp","$avp(i:14)")
 ...
-     __________________________________________________________
 
 1.3.14. lookup_domain (string)
 
@@ -311,11 +299,10 @@ modparam("cpl-c","timer_avp","$avp(i:14)")
 
    Default value of this parameter is NULL.
 
-   Example 1-14. Set lookup_domain parameter
+   Example 1.14. Set lookup_domain parameter
 ...
 modparam("cpl-c","lookup_domain","location")
 ...
-     __________________________________________________________
 
 1.3.15. lookup_append_branches (int)
 
@@ -326,11 +313,10 @@ modparam("cpl-c","lookup_domain","location")
 
    Default value of this parameter is 0.
 
-   Example 1-15. Set lookup_append_branches parameter
+   Example 1.15. Set lookup_append_branches parameter
 ...
 modparam("cpl-c","lookup_append_branches",1)
 ...
-     __________________________________________________________
 
 1.3.16. use_domain (integer)
 
@@ -339,15 +325,14 @@ modparam("cpl-c","lookup_append_branches",1)
 
    Default value is "0 (disabled)".
 
-   Example 1-16. Set use_domain parameter
+   Example 1.16. Set use_domain parameter
 ...
 modparam("cpl-c","use_domain",1)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. cpl_run_script(type,mode)
+1.4.1.  cpl_run_script(type,mode)
 
    Starts the execution of the CPL script. The user name is
    fetched from new_uri or requested uri or from To header -in
@@ -367,7 +352,6 @@ modparam("cpl-c","use_domain",1)
    (this can be done from script).
 
    Meaning of the parameters is as follows:
-
      * type - which part of the script should be run; set it to
        "incoming" for having the incoming part of script executed
        (when an INVITE is received) or to "outgoing" for running
@@ -402,13 +386,12 @@ modparam("cpl-c","use_domain",1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-17. cpl_run_script usage
+   Example 1.17. cpl_run_script usage
 ...
 cpl_run_script("incoming","force_stateful");
 ...
-     __________________________________________________________
 
-1.4.2. cpl_process_register()
+1.4.2.  cpl_process_register()
 
    This function MUST be called only for REGISTER requests. It
    checks if the current REGISTER request is related or not with
@@ -431,15 +414,14 @@ cpl_run_script("incoming","force_stateful");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-18. cpl_process_register usage
+   Example 1.18. cpl_process_register usage
 ...
 if (method=="REGISTER") {
     cpl_process_register();
 }
 ...
-     __________________________________________________________
 
-1.4.3. cpl_process_register_norpl()
+1.4.3.  cpl_process_register_norpl()
 
    Same as "cpl_process_register" without internally generating
    the reply. All information (script) is appended to the reply
@@ -450,7 +432,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. cpl_process_register_norpl usage
+   Example 1.19. cpl_process_register_norpl usage
 ...
 if (method=="REGISTER") {
     cpl_process_register();
@@ -458,11 +440,10 @@ if (method=="REGISTER") {
     save("location");
 }
 ...
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
-1.5.1. LOAD_CPL
+1.5.1.  LOAD_CPL
 
    For the given user, loads the XML cpl file, compiles it into
    binary format and stores both format into database.
@@ -470,7 +451,6 @@ if (method=="REGISTER") {
    Name: LOAD_CPL
 
    Parameters:
-
      * username : name of the user
      * cpl_filename: file name
 
@@ -479,9 +459,8 @@ if (method=="REGISTER") {
                  username
                  cpl_filename
                  _empty_line_
-     __________________________________________________________
 
-1.5.2. REMOVE_CPL
+1.5.2.  REMOVE_CPL
 
    For the given user, removes the entire database record (XML cpl
    and binary cpl); user with empty cpl scripts are not accepted.
@@ -489,32 +468,28 @@ if (method=="REGISTER") {
    Name: REMOVE_CPL
 
    Parameters:
-
      * username : name of the user
 
    MI FIFO Command format:
                  :REMOVE_CPL:_reply_fifo_file_
                  username
                  _empty_line_
-     __________________________________________________________
 
-1.5.3. GET_CPL
+1.5.3.  GET_CPL
 
    For the given user, returns the CPL script in XML format.
 
    Name: GET_CPL
 
    Parameters:
-
      * username : name of the user
 
    MI FIFO Command format:
                  :GET_CPL:_reply_fifo_file_
                  username
                  _empty_line_
-     __________________________________________________________
 
-1.6. Installation & Running
+1.6. Installation and Running
 
 1.6.1. Database setup
 
@@ -529,3 +504,36 @@ if (method=="REGISTER") {
    can also find the complete database documentation on the
    project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

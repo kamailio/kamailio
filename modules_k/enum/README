@@ -2,12 +2,20 @@ Enum Module
 
 Juha Heinanen
 
+   <jh@song.fi>
+
 Otmar Lendl
 
+   <lendl@nic.at>
+
    Copyright © 2002, 2003 Juha Heinanen
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -27,18 +35,20 @@ Otmar Lendl
               1.4.3. i_enum_query(["suffix"[,"service"]])
               1.4.4. is_from_user_enum()
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Setting domain_suffix module parameter
-   1-2. Setting tel_uri_params module parameter
-   1-3. Setting i_enum_suffix module parameter
-   1-4. Setting brachlabel module parameter
-   1-5. Zone file example
-   1-6. Zone file example
-   1-7. Setting the bl_algorithm module parameter
-   1-8. enum_query usage
-   1-9. enum_fquery usage
-   1-10. is_from_user_enum usage
-     __________________________________________________________
+
+   1.1. Setting domain_suffix module parameter
+   1.2. Setting tel_uri_params module parameter
+   1.3. Setting i_enum_suffix module parameter
+   1.4. Setting brachlabel module parameter
+   1.5. Zone file example
+   1.6. Zone file example
+   1.7. Setting the bl_algorithm module parameter
+   1.8. enum_query usage
+   1.9. enum_fquery usage
+   1.10. is_from_user_enum usage
 
 Chapter 1. User's Guide
 
@@ -105,15 +115,12 @@ Chapter 1. User's Guide
    Enum module also implements is_from_user_enum function. This
    function does an enum lookup on the from user and returns true
    if found, false otherwise.
-     __________________________________________________________
 
 1.2. Dependencies
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
-
      * No dependencies.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -125,26 +132,24 @@ Chapter 1. User's Guide
 
    Default value is "e164.arpa."
 
-   Example 1-1. Setting domain_suffix module parameter
+   Example 1.1. Setting domain_suffix module parameter
 modparam("enum", "domain_suffix", "e1234.arpa.")
-     __________________________________________________________
 
 1.3.2. tel_uri_params (string)
 
    A string whose contents is appended to each new tel URI in the
    request as tel URI parameters.
 
-   Note
+Note
 
-        Currently OpenSER does not support tel URIs. This means that at
-        present tel_uri_params is appended as URI parameters to every
-        URI.
+   Currently OpenSER does not support tel URIs. This means that at
+   present tel_uri_params is appended as URI parameters to every
+   URI.
 
    Default value is ""
 
-   Example 1-2. Setting tel_uri_params module parameter
+   Example 1.2. Setting tel_uri_params module parameter
 modparam("enum", "tel_uri_params", ";npdi")
-     __________________________________________________________
 
 1.3.3. i_enum_suffix (string)
 
@@ -153,9 +158,8 @@ modparam("enum", "tel_uri_params", ";npdi")
 
    Default value is "e164.arpa."
 
-   Example 1-3. Setting i_enum_suffix module parameter
+   Example 1.3. Setting i_enum_suffix module parameter
 modparam("enum", "i_enum_suffix", "e1234.arpa.")
-     __________________________________________________________
 
 1.3.4. branchlabel (string)
 
@@ -164,9 +168,8 @@ modparam("enum", "i_enum_suffix", "e1234.arpa.")
 
    Default value is ""i""
 
-   Example 1-4. Setting brachlabel module parameter
+   Example 1.4. Setting brachlabel module parameter
 modparam("enum", "branchlabel", "i")
-     __________________________________________________________
 
 1.3.5. bl_algorithm (string)
 
@@ -182,7 +185,7 @@ modparam("enum", "branchlabel", "i")
    [branchlabel].[reverse-country-code].[i_enum_suffix] to
    indicate after how many digits the label should in inserted.
 
-   Example 1-5. Zone file example
+   Example 1.5. Zone file example
 i.1.e164.arpa.                     IN TXT   "4"
 9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5
 678 999"
@@ -196,7 +199,7 @@ i.1.e164.arpa.                     IN TXT   "4"
    allocated yet. This version of the code uses 65300. See
    resolve.h.
 
-   Example 1-6. Zone file example
+   Example 1.6. Zone file example
 i.1.e164.arpa.     TYPE65300  \# 14 (
                               04    ; position
                               01 69 ; separator
@@ -208,26 +211,24 @@ pa
 
    Default value is "cc"
 
-   Example 1-7. Setting the bl_algorithm module parameter
+   Example 1.7. Setting the bl_algorithm module parameter
 modparam("enum", "bl_algorithm", "txt")
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. enum_query(["suffix"[,"service"]])
+1.4.1.  enum_query(["suffix"[,"service"]])
 
    The function performs an enum query and rewrites the
-   Request-URI with the result of the query. See Section 1.1> for
-   more information.
+   Request-URI with the result of the query. See Section 1.1,
+   "Overview" for more information.
 
    Meaning of the parameters is as follows:
-
      * suffix - Suffix to be appended to the domain name.
      * service - Service string to be used in the service field.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-8. enum_query usage
+   Example 1.8. enum_query usage
 ...
 # search for "e2u+sip" in freenum.org
 enum_query("freenum.org.");
@@ -248,22 +249,20 @@ enum_query("e164.arpa.","voice");
 # or use instead
 enum_query("e164.arpa.","+sip+voice:sip");
 ...
-     __________________________________________________________
 
-1.4.2. enum_fquery(["suffix"[,"service"]])
+1.4.2.  enum_fquery(["suffix"[,"service"]])
 
    The function performs an enum query on the user part of the
    From: tag and rewrites the Request-URI with the result of the
-   query. See Section 1.1> for more information.
+   query. See Section 1.1, "Overview" for more information.
 
    Meaning of the parameters is as follows:
-
      * suffix - Suffix to be appended to the domain name.
      * service - Service string to be used in the service field.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-9. enum_fquery usage
+   Example 1.9. enum_fquery usage
 ...
 # search for "e2u+sip" in freenum.org
 enum_fquery("freenum.org.");
@@ -284,9 +283,8 @@ enum_fquery("e164.arpa.","voice");
 # or use instead
 enum_fquery("e164.arpa.","+sip+voice:sip");
 ...
-     __________________________________________________________
 
-1.4.3. i_enum_query(["suffix"[,"service"]])
+1.4.3.  i_enum_query(["suffix"[,"service"]])
 
    The function performs an enum query and rewrites the
    Request-URI with the result of the query. This the
@@ -297,7 +295,6 @@ enum_fquery("e164.arpa.","+sip+voice:sip");
    See
    ftp://ftp.rfc-editor.org/in-notes/internet-drafts/draft-haberle
    r-carrier-enum-01.txt for the rationale behind this function.
-     __________________________________________________________
 
 1.4.4. is_from_user_enum()
 
@@ -306,9 +303,42 @@ enum_fquery("e164.arpa.","+sip+voice:sip");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-10. is_from_user_enum usage
+   Example 1.10. is_from_user_enum usage
 ...
 if (is_from_user_enum()) {
         ....
 };
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

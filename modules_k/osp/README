@@ -10,10 +10,18 @@ Edited by
 
 Di-Shi Sun
 
+   TransNexus, Inc.
+
+   <support@transnexus.com>
+
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -50,34 +58,35 @@ Di-Shi Sun
               1.4.8. reportospusage()
 
    2. Developer's Guide
+   3. Frequently Asked Questions
 
    List of Examples
-   1-1. Setting the OSP servers
-   1-2. Setting the device IP address
-   1-3. Setting the token format
-   1-4. Set authorization files
-   1-5. Setting the OSP server weights
-   1-6. Setting the device port
-   1-7. Setting the hardware support
-   1-8. Setting the ssl lifetime
-   1-9. Setting the persistence
-   1-10. Setting the retry delay
-   1-11. Setting the retry limit
-   1-12. Setting the timeout
-   1-13. Setting the number of destination
-   1-14. Instructing the module to validate call id
-   1-15. Instructing the module to use calling number in
+
+   1.1. Setting the OSP servers
+   1.2. Setting the device IP address
+   1.3. Setting the token format
+   1.4. Set authorization files
+   1.5. Setting the OSP server weights
+   1.6. Setting the device port
+   1.7. Setting the hardware support
+   1.8. Setting the ssl lifetime
+   1.9. Setting the persistence
+   1.10. Setting the retry delay
+   1.11. Setting the retry limit
+   1.12. Setting the timeout
+   1.13. Setting the number of destination
+   1.14. Instructing the module to validate call id
+   1.15. Instructing the module to use calling number in
           Remote-Party-ID
 
-   1-16. checkospheader usage
-   1-17. validateospheader usage
-   1-18. requestosprouting usage
-   1-19. checkosproute usage
-   1-20. prepareosproute usage
-   1-21. checkcallingtranslation usage
-   1-22. prepareallosproute usage
-   1-23. reportospusage usage
-     __________________________________________________________
+   1.16. checkospheader usage
+   1.17. validateospheader usage
+   1.18. requestosprouting usage
+   1.19. checkosproute usage
+   1.20. prepareosproute usage
+   1.21. checkcallingtranslation usage
+   1.22. prepareallosproute usage
+   1.23. reportospusage usage
 
 Chapter 1. User's Guide
 
@@ -86,18 +95,15 @@ Chapter 1. User's Guide
    The OSP module enables OpenSER to support secure, multi-lateral
    peering using the OSP standard defined by ETSI (TS 101 321
    V4.1.1). This module will enable your OpenSER to:
-
      * Send a peering authorization request to a peering server.
      * Validate a digitally signed peering authorization token
        received in a SIP INVITE message.
      * Report usage information to a peering server.
-     __________________________________________________________
 
 1.2. Dependencies
 
    The OSP module depends on the following modules which must be
    loaded before the OSP module.
-
      * sl -- stateless replier
      * tm -- stateful processing
      * rr -- Record-Route/Route operation
@@ -109,7 +115,6 @@ Chapter 1. User's Guide
        instructions on building OpenSER with the OSP Toolkit, see
        http://www.transnexus.com/White%20Papers/Multi-Lateral_Peer
        ing_with_OpenSER_V1.1.1pdf
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -121,7 +126,6 @@ Chapter 1. User's Guide
    Others are required only if there are more than one peering
    servers. Each peering server address takes the form of a
    standard URL, and consists of up to four components:
-
      * An optional indication of the protocol to be used for
        communicating with the peering server. Both HTTP and HTTP
        secured with SSL/TLS are supported and are indicated by
@@ -139,10 +143,9 @@ Chapter 1. User's Guide
        server. This component is not optional and must be
        included.
 
-   Example 1-1. Setting the OSP servers
+   Example 1.1. Setting the OSP servers
 modparam("osp","sp1_uri","http://osptestserver.transnexus.com:1080/osp")
 modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
-     __________________________________________________________
 
 1.3.2. device_ip
 
@@ -151,9 +154,8 @@ modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
    request message (as SourceAlternate type=transport). The IP
    address must be in brackets as shown in the example below.
 
-   Example 1-2. Setting the device IP address
+   Example 1.2. Setting the device IP address
 modparam("osp","device_ip","[1.1.1.1]")
-     __________________________________________________________
 
 1.3.3. token_format
 
@@ -174,9 +176,8 @@ modparam("osp","device_ip","[1.1.1.1]")
    2 - Validate both signed and unsigned tokens are allowed. Calls
    with valid tokens are allowed.
 
-   Example 1-3. Setting the token format
+   Example 1.3. Setting the token format
 modparam("osp","token_format",2)
-     __________________________________________________________
 
 1.3.4. private_key, local_certificate, ca_certificates
 
@@ -191,7 +192,7 @@ modparam("osp","token_format",2)
    copied to the expected file location or the parameters below
    may be changed.
 
-   Example 1-4. Set authorization files
+   Example 1.4. Set authorization files
 
    If the default CFG_DIR value was used at compile time, the
    files will be loaded from:
@@ -199,7 +200,6 @@ modparam("osp","private_key","/usr/local/etc/openser/pkey.pem")
 modparam("osp","local_certificate","/usr/local/etc/openser/localcert.pem
 ")
 modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
-     __________________________________________________________
 
 1.3.5. sp1_weight, sp2_weight, ..., sp16_weight
 
@@ -214,9 +214,8 @@ modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
    a non-zero sp_weight to the back-up server. The default values
    for sp1_weight and sp2_weight are 1000.
 
-   Example 1-5. Setting the OSP server weights
+   Example 1.5. Setting the OSP server weights
 modparam("osp","sp1_weight",1000)
-     __________________________________________________________
 
 1.3.6. device_port
 
@@ -230,9 +229,8 @@ modparam("osp","sp1_weight",1000)
    policies based on different SIP proxies. This parameter has not
    been implemented yet.
 
-   Example 1-6. Setting the device port
+   Example 1.6. Setting the device port
 modparam("osp","device_port","5060")
-     __________________________________________________________
 
 1.3.7. enable_crypto_hardware_support
 
@@ -242,9 +240,8 @@ modparam("osp","device_port","5060")
    present). If crypto hardware is used, the value should be set
    to 1.
 
-   Example 1-7. Setting the hardware support
+   Example 1.7. Setting the hardware support
 modparam("osp","enable_crypto_hardware_support",0)
-     __________________________________________________________
 
 1.3.8. ssl_lifetime
 
@@ -255,9 +252,8 @@ modparam("osp","enable_crypto_hardware_support",0)
    when this time limit expires. This is an optional field with
    default value is 200 seconds.
 
-   Example 1-8. Setting the ssl lifetime
+   Example 1.8. Setting the ssl lifetime
 modparam("osp","ssl_lifetime",200)
-     __________________________________________________________
 
 1.3.9. persistence
 
@@ -267,9 +263,8 @@ modparam("osp","ssl_lifetime",200)
    maintain the connection for this time period in anticipation of
    future communication exchanges to the same peering server.
 
-   Example 1-9. Setting the persistence
+   Example 1.9. Setting the persistence
 modparam("osp","persistence",1000)
-     __________________________________________________________
 
 1.3.10. retry_delay
 
@@ -280,9 +275,8 @@ modparam("osp","persistence",1000)
    attempts. This is an optional field with default value is 1
    second.
 
-   Example 1-10. Setting the retry delay
+   Example 1.10. Setting the retry delay
 modparam("osp","retry_delay",1)
-     __________________________________________________________
 
 1.3.11. retry_limit
 
@@ -295,9 +289,8 @@ modparam("osp","retry_delay",1)
    result in a total of two connection attempts to every peering
    server. The default value is 2.
 
-   Example 1-11. Setting the retry limit
+   Example 1.11. Setting the retry limit
 modparam("osp","retry_limit",2)
-     __________________________________________________________
 
 1.3.12. timeout
 
@@ -307,9 +300,8 @@ modparam("osp","retry_limit",2)
    connection is aborted and the OSP Module attempts to contact
    the next peering server. The default value is 10 seconds.
 
-   Example 1-12. Setting the timeout
+   Example 1.12. Setting the timeout
 modparam("osp","timeout",10)
-     __________________________________________________________
 
 1.3.13. max_destinations
 
@@ -317,9 +309,8 @@ modparam("osp","timeout",10)
    number of destinations that OpenSER requests the peering server
    to return in a peering response. The default value is 5.
 
-   Example 1-13. Setting the number of destination
+   Example 1.13. Setting the number of destination
 modparam("osp","max_destinations",5)
-     __________________________________________________________
 
 1.3.14. validate_call_id
 
@@ -331,9 +322,8 @@ modparam("osp","max_destinations",5)
    to 0, the OSP Module will not validate the call id in the
    peering token. The default value is 1.
 
-   Example 1-14. Instructing the module to validate call id
+   Example 1.14. Instructing the module to validate call id
 modparam("osp","validate_call_id",1)
-     __________________________________________________________
 
 1.3.15. use_rpid_for_calling_number
 
@@ -345,10 +335,9 @@ modparam("osp","validate_call_id",1)
    is set to 0, the OSP Module will use the calling number in the
    From header of the INVITE message. The default value is 1.
 
-   Example 1-15. Instructing the module to use calling number in
+   Example 1.15. Instructing the module to use calling number in
    Remote-Party-ID
 modparam("osp","use_rpid_calling_number",1)
-     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -359,7 +348,7 @@ modparam("osp","use_rpid_calling_number",1)
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-16. checkospheader usage
+   Example 1.16. checkospheader usage
 ...
 if (checkospheader()) {
   log(1,"OSP header field found.\n");
@@ -367,7 +356,6 @@ if (checkospheader()) {
   log(1,"no OSP header field present\n");
 };
 ...
-     __________________________________________________________
 
 1.4.2. validateospheader()
 
@@ -379,7 +367,7 @@ if (checkospheader()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-17. validateospheader usage
+   Example 1.17. validateospheader usage
 ...
 if (validateospheader()) {
   log(1,"valid OSP header found\n");
@@ -387,7 +375,6 @@ if (validateospheader()) {
   log(1,"OSP header not found, invalid or expired\n");
 };
 ...
-     __________________________________________________________
 
 1.4.3. requestosprouting()
 
@@ -409,7 +396,7 @@ if (validateospheader()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-18. requestosprouting usage
+   Example 1.18. requestosprouting usage
 ...
 if (requestosprouting()) {
   log(1,"successfully queried OSP server, now relaying call\n");
@@ -417,7 +404,6 @@ if (requestosprouting()) {
   log(1,"Authorization request was rejected from OSP server\n");
 };
 ...
-     __________________________________________________________
 
 1.4.4. checkosproute()
 
@@ -426,7 +412,7 @@ if (requestosprouting()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-19. checkosproute usage
+   Example 1.19. checkosproute usage
 ...
 if (checkosproute()) {
   log(1,"There is at least one route for the call\n");
@@ -434,7 +420,6 @@ if (checkosproute()) {
   log(1,"There is not any route for the call\n");
 };
 ...
-     __________________________________________________________
 
 1.4.5. prepareosproute()
 
@@ -450,7 +435,7 @@ if (checkosproute()) {
 
    This function can be used from BRANCH_ROUTE.
 
-   Example 1-20. prepareosproute usage
+   Example 1.20. prepareosproute usage
 ...
 if (prepareosproute()) {
   log(1,"successfully prepared the route, now relaying call\n");
@@ -458,7 +443,6 @@ if (prepareosproute()) {
   log(1,"could not prepare the route, there is not route\n");
 };
 ...
-     __________________________________________________________
 
 1.4.6. checkcallingtranslation()
 
@@ -473,7 +457,7 @@ if (prepareosproute()) {
 
    This function can be used from BRANCH_ROUTE.
 
-   Example 1-21. checkcallingtranslation usage
+   Example 1.21. checkcallingtranslation usage
 ...
 if (checkcallingtranslation()) {
   # Remove the Remote_Party-ID from the received message
@@ -484,7 +468,6 @@ if (checkcallingtranslation()) {
   append_rpid_hf();
 }
 ...
-     __________________________________________________________
 
 1.4.7. prepareallosproute()
 
@@ -496,7 +479,7 @@ if (checkcallingtranslation()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-22. prepareallosproute usage
+   Example 1.22. prepareallosproute usage
 ...
 if (prepareallosproute()) {
   log(1,"Routes are prepared, now either forking or redirecting the call
@@ -505,7 +488,6 @@ if (prepareallosproute()) {
   log(1,"Could not prepare the routes. No destination available\n");
 };
 ...
-     __________________________________________________________
 
 1.4.8. reportospusage()
 
@@ -519,13 +501,12 @@ if (prepareallosproute()) {
    message.
 
    Meaning of the parameter is as follows:
-
      * "0" - Source device releases the call.
      * "1" - Destination device releases the call.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-23. reportospusage usage
+   Example 1.23. reportospusage usage
 ...
 if (is_direction("downstream")) {
   log(1,"This BYE message is from SOURCE\n");
@@ -539,9 +520,41 @@ if (is_direction("downstream")) {
   }
 }
 ...
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The functions of the OSP modules are not used by other OpenSER
    modules.
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

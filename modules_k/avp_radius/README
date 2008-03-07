@@ -2,14 +2,22 @@ avp_radius Module
 
 Juha Heinanen
 
+   <jh@tutpro.com>
+
 Edited by
 
 Daniel-Constantin Mierla
 
+   <miconda@gmail.com>
+
    Copyright © 2004 Juha Heinanen
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -28,13 +36,15 @@ Daniel-Constantin Mierla
 
               1.4.1. avp_load_radius(user)
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. "SIP-AVP" RADIUS AVP exmaples
-   1-2. radius_config parameter usage
-   1-3. caller_service_type parameter usage
-   1-4. callee_service_type parameter usage
-   1-5. avp_load_radius() usage
-     __________________________________________________________
+
+   1.1. "SIP-AVP" RADIUS AVP exmaples
+   1.2. radius_config parameter usage
+   1.3. caller_service_type parameter usage
+   1.4. callee_service_type parameter usage
+   1.5. avp_load_radius() usage
 
 Chapter 1. User's Guide
 
@@ -46,12 +56,11 @@ Chapter 1. User's Guide
 
    The module assumes that Radius returns the AVPs as values of
    reply attribute SIP-AVP. Its value must be a string of form:
-
      * value = SIP_AVP_NAME SIP_AVP_VALUE
      * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
      * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 
-   Example 1-1. "SIP-AVP" RADIUS AVP exmaples
+   Example 1.1. "SIP-AVP" RADIUS AVP exmaples
 ....
 "email:joe@yahoo.com"
     -> STRING NAME AVP (email) with STRING VALUE (joe@yahoo.com)
@@ -66,7 +75,6 @@ Chapter 1. User's Guide
    For AVP with STRING NAME, the module prefixes each attribute
    name as returned from Radius by string "caller_" or "callee_"
    depending if caller's or callee's attributes are loaded.
-     __________________________________________________________
 
 1.2. Dependencies
 
@@ -74,19 +82,15 @@ Chapter 1. User's Guide
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
-
      * none
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before compilling OpenSER with this module loaded:
-
      * radiusclient-ng 0.5.0 or higher -- library and development
        files. See
        http://developer.berlios.de/projects/radiusclient-ng/.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -98,9 +102,8 @@ Chapter 1. User's Guide
    Default value is
    "/usr/local/etc/radiusclient-ng/radiusclient.conf".
 
-   Example 1-2. radius_config parameter usage
+   Example 1.2. radius_config parameter usage
 modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
-     __________________________________________________________
 
 1.3.2. caller_service_type (integer)
 
@@ -110,9 +113,8 @@ modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
    Default value is dictionary value of "SIP-Caller-AVPs"
    Service-Type.
 
-   Example 1-3. caller_service_type parameter usage
+   Example 1.3. caller_service_type parameter usage
 modparam("avp_radius", "caller_service_type", 18)
-     __________________________________________________________
 
 1.3.3. callee_service_type (integer)
 
@@ -122,9 +124,8 @@ modparam("avp_radius", "caller_service_type", 18)
    Default value is dictionary value of "SIP-Callee-AVPs"
    Service-Type.
 
-   Example 1-4. callee_service_type parameter usage
+   Example 1.4. callee_service_type parameter usage
 modparam("avp_radius", "callee_service_type", 19)
-     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -133,7 +134,6 @@ modparam("avp_radius", "callee_service_type", 19)
    The functions loads user's attributes from radius and stores
    them into AVPs. Parameter "user" is used to indicate, whose
    attributes are loaded. Possible values are:
-
      * caller - attributes belong to the user of the From URI are
        loaded
      * callee - attributes belong to the user of the Request URI
@@ -147,7 +147,40 @@ modparam("avp_radius", "callee_service_type", 19)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-5. avp_load_radius() usage
+   Example 1.5. avp_load_radius() usage
 ...
 avp_load_radius("callee");
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

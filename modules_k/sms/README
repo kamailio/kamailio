@@ -9,9 +9,13 @@ Edited by
 Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -42,19 +46,20 @@ Bogdan-Andrei Iancu
               1.4.2. sms_send_msg()
 
    2. Developer's Guide
+   3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set modems parameter
-   1-2. Set networks parameter
-   1-3. Set links parameter
-   1-4. Set default_net parameter
-   1-5. Set max_sms_parts parameter
-   1-6. Set domain_str parameter
-   1-7. Set use_contact parameter
-   1-8. Set sms_report_type parameter
-   1-9. sms_send_msg_to_net usage
-   1-10. sms_send_msg usage
-     __________________________________________________________
+
+   1.1. Set modems parameter
+   1.2. Set networks parameter
+   1.3. Set links parameter
+   1.4. Set default_net parameter
+   1.5. Set max_sms_parts parameter
+   1.6. Set domain_str parameter
+   1.7. Set use_contact parameter
+   1.8. Set sms_report_type parameter
+   1.9. sms_send_msg_to_net usage
+   1.10. sms_send_msg usage
 
 Chapter 1. User's Guide
 
@@ -72,7 +77,6 @@ Chapter 1. User's Guide
    message or because of an internal modem malfunction are
    reported back to the SIP user via a SIP message containing
    explanations regarding the error.
-     __________________________________________________________
 
 1.1.1. Hardware Requirements
 
@@ -82,7 +86,6 @@ Chapter 1. User's Guide
    dedicated one (as the ones provided by FALCOM) or can be a GSM
    telephone that has an internal modem (as the latest mobile
    phones from NOKIA and ERICSSON).
-     __________________________________________________________
 
 1.1.2. Numbering Plan
 
@@ -95,7 +98,6 @@ Chapter 1. User's Guide
    consider. Also, the gateway will advertise in this format the
    username in Contact headers (in SIP replies and requests) and
    in From headers (in SIP requests).
-     __________________________________________________________
 
 1.1.3. Address Mapping
 
@@ -116,24 +118,19 @@ Chapter 1. User's Guide
    received having this header (all of it or truncated at the
    end), the header will be left out (it will not be in the SIP
    message).
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * tm - Transaction Manager.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -146,7 +143,6 @@ list_of_params   = modem_param *( ";" modem_param )
 modem_param       = name "=" value
 
    The following parameters can be used:
-
      * d=device (mandatory) - Device associated with modem
        (/dev/ttyS0, /dev/modem, etc.).
      * p=pin (optional) - SIM PIN - default is NULL.
@@ -163,12 +159,11 @@ modem_param       = name "=" value
 
    No default value, the parameter is mandatory.
 
-   Example 1-1. Set modems parameter
+   Example 1.1. Set modems parameter
 ...
 modparam("sms", "modems", "Nokia [d=/dev/ttyS1;b=9600;m=new;l=30] ")
 modparam("sms", "modems", "Nokia[d=/dev/ttyS1];Siemens[d=/dev/ttyS2]")
 ...
-     __________________________________________________________
 
 1.3.2. networks (string)
 
@@ -179,7 +174,6 @@ list_of_params = set_param *( ";" set_param )
 set_param         = name "=" value
 
    The following parameters can be used:
-
      * m=msx_sms_per_call (optional) - Maximum number of SMS send
        / received from that net in one modem loop. Default is 10.
        This parameter was introduced to avoid starvation.
@@ -191,11 +185,10 @@ set_param         = name "=" value
 
    No default value, the parameter is mandatory.
 
-   Example 1-2. Set networks parameter
+   Example 1.2. Set networks parameter
 ...
 modparam("sms", "networks", "D1 [m=10] ;d2[ m=20]")
 ...
-     __________________________________________________________
 
 1.3.3. links (string)
 
@@ -206,7 +199,7 @@ list_of_networks = network *( ";" network )
 
    No default value, the parameter is mandatory.
 
-   Example 1-3. Set links parameter
+   Example 1.3. Set links parameter
 ...
 modparam("sms", "links", "NOKIA[D1;d2]")
 ...
@@ -216,19 +209,18 @@ modparam("sms", "links", "NOKIA[D1;d2]")
    modem will not sleep before starting the next loop ! Shortly,
    if messages are waiting to be sent, the modem will not go in
    sleep.
-     __________________________________________________________
 
 1.3.4. default_net (string)
 
    The default network to use. If no one specified, the first
    defined network is used. This parameter is useful only if the
-   "sms_send_msg" exported function is used (see Section 1.4).
+   "sms_send_msg" exported function is used (see Section 1.4,
+   "Exported Functions").
 
-   Example 1-4. Set default_net parameter
+   Example 1.4. Set default_net parameter
 ...
 modparam("sms", "default_net", "D1")
 ...
-     __________________________________________________________
 
 1.3.5. max_sms_parts (integer)
 
@@ -239,11 +231,10 @@ modparam("sms", "default_net", "D1")
 
    Default value is 4.
 
-   Example 1-5. Set max_sms_parts parameter
+   Example 1.5. Set max_sms_parts parameter
 ...
 modparam("sms", "max_sms_parts", 10)
 ...
-     __________________________________________________________
 
 1.3.6. domain (string)
 
@@ -255,11 +246,10 @@ modparam("sms", "max_sms_parts", 10)
 
    Default is the name of the machine the gateway is running on.
 
-   Example 1-6. Set domain_str parameter
+   Example 1.6. Set domain_str parameter
 ...
 modparam("sms", "domain_str", "foo.bar")
 ...
-     __________________________________________________________
 
 1.3.7. use_contact (integer)
 
@@ -269,11 +259,10 @@ modparam("sms", "domain_str", "foo.bar")
 
    Default is 0 (no).
 
-   Example 1-7. Set use_contact parameter
+   Example 1.7. Set use_contact parameter
 ...
 modparam("sms", "use_contact", 1)
 ...
-     __________________________________________________________
 
 1.3.8. sms_report_type (integer)
 
@@ -282,7 +271,6 @@ modparam("sms", "use_contact", 1)
    send back to SIP user a SIP message containing the text (or
    part of it) that couldn't be send. Two report mechanisms are
    implemented:
-
      * 1 - the reports are delivered by the GSM device as SMS
        reports (so far supported only by Nokia modems);
      * 2 - the reports are delivered as async. CDS responses
@@ -290,15 +278,14 @@ modparam("sms", "use_contact", 1)
 
    Default is 0 (no report).
 
-   Example 1-8. Set sms_report_type parameter
+   Example 1.8. Set sms_report_type parameter
 ...
 modparam("sms", "sms_report_type", 1)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. sms_send_msg_to_net(network_name)
+1.4.1.  sms_send_msg_to_net(network_name)
 
    Put the SIP msg in the specified network queue. The function
    return error if the number encapsulated into SIP message is
@@ -306,12 +293,11 @@ modparam("sms", "sms_report_type", 1)
    internal failures.
 
    Meaning of the parameters is as follows:
-
      * network_name - Name of network.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-9. sms_send_msg_to_net usage
+   Example 1.9. sms_send_msg_to_net usage
 ...
 if (sms_send_msg_to_net("D1"))
 {
@@ -329,16 +315,15 @@ if (sms_send_msg_to_net("D1"))
         exit;
 };
 ...
-     __________________________________________________________
 
-1.4.2. sms_send_msg()
+1.4.2.  sms_send_msg()
 
    The same as the previous one, but use the default network
    queue.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-10. sms_send_msg usage
+   Example 1.10. sms_send_msg usage
 ...
 if (sms_send_msg_to_net())
 {
@@ -356,10 +341,42 @@ if (sms_send_msg_to_net())
         exit;
 };
 ...
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    Each modem forks its own process for sending /fetching SMS.
    Communication and queuing between OpenSER working processes and
    modem processes is done with pipes.
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

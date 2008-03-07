@@ -8,12 +8,18 @@ Edited by
 
 Lavinia-Andreea Andrei
 
+Edited by
+
 Juha Heinanen
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -33,13 +39,15 @@ Juha Heinanen
         1.5. Exported Functions
         1.6. Example
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set port parameter
-   1-2. Set log_file parameter
-   1-3. Set reply_option parameter
-   1-4. Set reply_option parameter
-   1-5. XMLRPC request
-     __________________________________________________________
+
+   1.1. Set port parameter
+   1.2. Set log_file parameter
+   1.3. Set reply_option parameter
+   1.4. Set reply_option parameter
+   1.5. XMLRPC request
 
 Chapter 1. User's Guide
 
@@ -66,30 +74,24 @@ Chapter 1. User's Guide
    this limitation mi_xmlrpc module implements a hack that coverts
    each LFLF sequence in received XML-RPC strings to CRLF
    sequence.
-     __________________________________________________________
 
 1.2. To-do
 
    Features to be added in the future:
-
      * possibility to select the listening IP address
      * multiple ports per IP address
-     __________________________________________________________
 
 1.3. Dependencies
 
 1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * libxml.
      * libxmlrpc-c3 version 0.9.10.
      * libxmlrpc-c3-dev version 0.9.10.
@@ -100,7 +102,6 @@ Chapter 1. User's Guide
    Otherwise you need to install the library and devel headers
    from the sources. In both cases, keep in mind to use the 0.9.10
    version!!.
-     __________________________________________________________
 
 1.4. Exported Parameters
 
@@ -112,11 +113,10 @@ Chapter 1. User's Guide
    The default value is 8080. Ports lower than 1024 are not
    accepted.
 
-   Example 1-1. Set port parameter
+   Example 1.1. Set port parameter
 ...
 modparam("mi_xmlrpc", "port", 8000)
 ...
-     __________________________________________________________
 
 1.4.2. log_file(string)
 
@@ -125,11 +125,10 @@ modparam("mi_xmlrpc", "port", 8000)
 
    The default values NONE (no logging).
 
-   Example 1-2. Set log_file parameter
+   Example 1.2. Set log_file parameter
 ...
 modparam("mi_xmlrpc", "log_file", "/var/log/abyss.log")
 ...
-     __________________________________________________________
 
 1.4.3. reply_option (integer)
 
@@ -145,11 +144,10 @@ modparam("mi_xmlrpc", "log_file", "/var/log/abyss.log")
 
    The default option is a string built response (0).
 
-   Example 1-3. Set reply_option parameter
+   Example 1.3. Set reply_option parameter
 ...
 modparam("mi_xmlrpc", "reply_option", 0)
 ...
-     __________________________________________________________
 
 1.4.4. buffer_size (integer)
 
@@ -159,23 +157,23 @@ modparam("mi_xmlrpc", "reply_option", 0)
 
    The default value is 8192.
 
-   Example 1-4. Set reply_option parameter
+   Example 1.4. Set reply_option parameter
 ...
 modparam("mi_xmlrpc", "buffer_size", 8192)
 ...
-     __________________________________________________________
 
 1.5. Exported Functions
 
    No function exported to be used from configuration file.
-     __________________________________________________________
 
 1.6. Example
 
    This is an example showing the xmlrpc format for the
    "get_statistics dialog: tm:" MI commad: response.
 
-   Example 1-5. XMLRPC request
+   Example 1.5. XMLRPC request
+
+
 POST /RPC2 HTTP/1.0
 Host: 127.0.0.1
 Connection: close
@@ -195,3 +193,38 @@ Content-Length: 1000
        </param>
   </params>
 </methodCall>
+
+
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

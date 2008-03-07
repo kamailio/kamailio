@@ -13,9 +13,13 @@ Elena-Ramona Modroiu
    Copyright © 2004 voice-system.ro
 
    Copyright © 2008 Elena-Ramona Modroiu
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -40,6 +44,7 @@ Elena-Ramona Modroiu
         1.4. Exported Functions
 
               1.4.1. prefix2domain(rewrite_mode, multidomain_mode)
+
               1.4.2. prefix2domain(rewrite_mode)
               1.4.3. prefix2domain()
 
@@ -50,22 +55,24 @@ Elena-Ramona Modroiu
               1.5.3. pdt_list
               1.5.4. pdt_reload
 
-        1.6. Installation & Running
+        1.6. Installation and Running
+
+   2. Frequently Asked Questions
 
    List of Examples
-   1-1. prefix-domain translation
-   1-2. Set db_url parameter
-   1-3. Set db_table parameter
-   1-4. Set sdomain_column parameter
-   1-5. Set prefix_column parameter
-   1-6. Set domain_column parameter
-   1-7. Set prefix parameter
-   1-8. Set hsize_2pow parameter
-   1-9. Set fetch_rows parameter
-   1-10. Set char_list parameter
-   1-11. Set check_domain parameter
-   1-12. prefix2domain usage
-     __________________________________________________________
+
+   1.1. prefix-domain translation
+   1.2. Set db_url parameter
+   1.3. Set db_table parameter
+   1.4. Set sdomain_column parameter
+   1.5. Set prefix_column parameter
+   1.6. Set domain_column parameter
+   1.7. Set prefix parameter
+   1.8. Set hsize_2pow parameter
+   1.9. Set fetch_rows parameter
+   1.10. Set char_list parameter
+   1.11. Set check_domain parameter
+   1.12. prefix2domain usage
 
 Chapter 1. User's Guide
 
@@ -87,7 +94,7 @@ Chapter 1. User's Guide
 
    <userid><:password>@<domain[:port]>...
 
-   Example 1-1. prefix-domain translation
+   Example 1.1. prefix-domain translation
 prefix=123, domain(FROM)=siphub.org
 
 entry in database:
@@ -103,30 +110,24 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
    not be used to look up the domain (the classic example, 00 used
    for international calls, then follows the country prefix). For
    more information on this, see 'prefix' parameter.
-
      * A sample config file and the MySQL script to create the
        database needed by PDT are located in './doc/'.
      * Sample shell scripts to manage prefix-domain pairs are also
        located in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
        pdt_fifo_list.sh).
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * A OpenSER database module (e.g., mysql, dbtext).
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -136,11 +137,10 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 
    Default value is "mysql://openser:openserrw@localhost/openser".
 
-   Example 1-2. Set db_url parameter
+   Example 1.2. Set db_url parameter
 ...
 modparam("pdt", "db_url", "dbdriver://username:password@dbhost/dbname")
 ...
-     __________________________________________________________
 
 1.3.2. db_table (string)
 
@@ -148,11 +148,10 @@ modparam("pdt", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    Default value is "pdt".
 
-   Example 1-3. Set db_table parameter
+   Example 1.3. Set db_table parameter
 ...
 modparam("pdt", "db_table", "pdt")
 ...
-     __________________________________________________________
 
 1.3.3. sdomain_column (string)
 
@@ -160,11 +159,10 @@ modparam("pdt", "db_table", "pdt")
 
    Default value is "sdomain".
 
-   Example 1-4. Set sdomain_column parameter
+   Example 1.4. Set sdomain_column parameter
 ...
 modparam("pdt", "domain_column", "source_domain")
 ...
-     __________________________________________________________
 
 1.3.4. prefix_column (string)
 
@@ -172,11 +170,10 @@ modparam("pdt", "domain_column", "source_domain")
 
    Default value is "prefix".
 
-   Example 1-5. Set prefix_column parameter
+   Example 1.5. Set prefix_column parameter
 ...
 modparam("pdt", "prefix_column", "prefix")
 ...
-     __________________________________________________________
 
 1.3.5. domain_column (string)
 
@@ -184,11 +181,10 @@ modparam("pdt", "prefix_column", "prefix")
 
    Default value is "domain".
 
-   Example 1-6. Set domain_column parameter
+   Example 1.6. Set domain_column parameter
 ...
 modparam("pdt", "domain_column", "hostname")
 ...
-     __________________________________________________________
 
 1.3.6. prefix (string)
 
@@ -200,11 +196,10 @@ modparam("pdt", "domain_column", "hostname")
 
    Default value is NULL.
 
-   Example 1-7. Set prefix parameter
+   Example 1.7. Set prefix parameter
 ...
 modparam("pdt", "prefix", "00")
 ...
-     __________________________________________________________
 
 1.3.7. hsize_2pow (integer)
 
@@ -212,11 +207,10 @@ modparam("pdt", "prefix", "00")
 
    Default value is 4.
 
-   Example 1-8. Set hsize_2pow parameter
+   Example 1.8. Set hsize_2pow parameter
 ...
 modparam("pdt", "hsize_2pow", 4)
 ...
-     __________________________________________________________
 
 1.3.8. fetch_rows (integer)
 
@@ -224,11 +218,10 @@ modparam("pdt", "hsize_2pow", 4)
 
    Default value is 1000.
 
-   Example 1-9. Set fetch_rows parameter
+   Example 1.9. Set fetch_rows parameter
 ...
 modparam("pdt", "fetch_rows", 4000)
 ...
-     __________________________________________________________
 
 1.3.9. char_list (string)
 
@@ -236,11 +229,10 @@ modparam("pdt", "fetch_rows", 4000)
 
    Default value is "0123456789".
 
-   Example 1-10. Set char_list parameter
+   Example 1.10. Set char_list parameter
 ...
 modparam("pdt", "char_list", "0123456789*+")
 ...
-     __________________________________________________________
 
 1.3.10. check_domain (integer)
 
@@ -249,15 +241,14 @@ modparam("pdt", "char_list", "0123456789*+")
 
    Default value is 1.
 
-   Example 1-11. Set check_domain parameter
+   Example 1.11. Set check_domain parameter
 ...
 modparam("pdt", "check_domain", 0)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. prefix2domain(rewrite_mode, multidomain_mode)
+1.4.1.  prefix2domain(rewrite_mode, multidomain_mode)
 
    Build a new URI if it is necessary. Returns 1 when the
    translation was made or there was nothing to translate (user
@@ -284,7 +275,6 @@ modparam("pdt", "check_domain", 0)
 
    The "multidomain_mode" parameter specifies the kind of
    multidomain support to use. There are three possible values:
-
      * 0 : Translation of URI regardless of source domain.
      * 1 : Translation of URI using as source domain the domain in
        From-URI.
@@ -294,13 +284,12 @@ modparam("pdt", "check_domain", 0)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-12. prefix2domain usage
+   Example 1.12. prefix2domain usage
 ...
 prefix2domain("2", "2");
 ...
-     __________________________________________________________
 
-1.4.2. prefix2domain(rewrite_mode)
+1.4.2.  prefix2domain(rewrite_mode)
 
    The same as prefix2domain(rewrite_mode, "0"), that is without
    multidomain support, translation of URI being done regardless
@@ -308,15 +297,13 @@ prefix2domain("2", "2");
 ...
 prefix2domain("2");
 ...
-     __________________________________________________________
 
-1.4.3. prefix2domain()
+1.4.3.  prefix2domain()
 
    The same as prefix2domain("0", "0").
 ...
 prefix2domain();
 ...
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
@@ -325,16 +312,14 @@ prefix2domain();
    FIFO commands. All changes made via these commands are applied
    to database, while the database is loaded only at OpenSER start
    up time.
-     __________________________________________________________
 
-1.5.1. pdt_add
+1.5.1.  pdt_add
 
    Adds a new sdomain-prefix-domain entry.
 
    Name: pdt_add
 
    Parameters:
-
      * _sdomain_ : source domain
      * _prefix_: prefix
      * _domain_: domain corresponding to a pair of source domain
@@ -346,16 +331,14 @@ prefix2domain();
                 _prefix_
                 _domain_
                 _empty_line_
-     __________________________________________________________
 
-1.5.2. pdt_delete
+1.5.2.  pdt_delete
 
    Removes a sdomain-prefix-domain entry.
 
    Name: pdt_delete
 
    Parameters:
-
      * _sdomain_ : a source domain
      * _domain_: a domain associated via a prefix with the source
        domain
@@ -365,16 +348,14 @@ prefix2domain();
                 _sdomain_
                 _domain_
                 _empty_line_
-     __________________________________________________________
 
-1.5.3. pdt_list
+1.5.3.  pdt_list
 
    Produces a listing of the entries prefixes/domains/sdomains.
 
    Name: pdt_list
 
    Parameters:
-
      * _sdomain_ : a source domain value.
      * _prefix_ : a prefix value
      * _domain_: a domain value
@@ -392,7 +373,6 @@ prefix2domain();
                 _empty_line_
 
    Examples:
-
      * "pdt_list siph 2 ." : Lists the entries where sdomain is
        starting with 'siph', prefix is starting with '2' and
        domain is anything
@@ -402,27 +382,57 @@ prefix2domain();
      * "pdt_list . 2 open" : Lists the entries where sdomain is
        anything, prefix starts with '2' and domain starts with
        'open'.
-     __________________________________________________________
 
-1.5.4. pdt_reload
+1.5.4.  pdt_reload
 
    Reload all sdomain-prefix-domain records from database.
 
    Name: pdt_reload
 
    Parameters:
-
      * none
 
    MI FIFO Command Format:
                 :pdt_reload:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.6. Installation & Running
+1.6. Installation and Running
 
    Make sure you have created the table needed by this module.
 
    Example shell scripts for MI FIFO commands are placed in
    './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
    pdt_fifo_list.sh).
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

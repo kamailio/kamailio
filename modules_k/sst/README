@@ -9,9 +9,13 @@ Edited by
 Ron Winacott
 
    Copyright © 2006 SOMA Networks, Inc.
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -37,17 +41,19 @@ Ron Winacott
 
               1.6.1. expired_sst
 
-        1.7. Installation & Running
+        1.7. Installation and Running
+
+   2. Frequently Asked Questions
 
    List of Examples
-   1-1. Session timer call flow
-   1-2. Set enable_stats parameter
-   1-3. Set min_se parameter
-   1-4. Set timeout_avp parameter
-   1-5. Set reject_to_small parameter
-   1-6. Set sst_flag parameter
-   1-7. sstCheckMin usage
-     __________________________________________________________
+
+   1.1. Session timer call flow
+   1.2. Set enable_stats parameter
+   1.3. Set min_se parameter
+   1.4. Set timeout_avp parameter
+   1.5. Set reject_to_small parameter
+   1.6. Set sst_flag parameter
+   1.7. sstCheckMin usage
 
 Chapter 1. User's Guide
 
@@ -62,7 +68,6 @@ Chapter 1. User's Guide
    value and reply to any request with a "422 - Session Timer Too
    Small" if the value is too small for your OpenSER
    configuration.
-     __________________________________________________________
 
 1.2. How it works
 
@@ -91,7 +96,7 @@ Chapter 1. User's Guide
 
    The following was taken from the RFC as a call flow example:
 
-   Example 1-1. Session timer call flow
+   Example 1.1. Session timer call flow
 +-------+    +-------+       +-------+
 | UAC-1 |    | PROXY |       | UAC-2 |
 +-------+    +-------+       +-------+
@@ -130,25 +135,20 @@ Chapter 1. User's Guide
     |            |-------------->|
     |            |               |
  ...
-     __________________________________________________________
 
 1.3. Dependencies
 
 1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * dialog - dialog module and its decencies. (tm)
      * sl - stateless module.
-     __________________________________________________________
 
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.4. Exported Parameters
 
@@ -161,11 +161,10 @@ Chapter 1. User's Guide
 
    Default value is "1" (enabled).
 
-   Example 1-2. Set enable_stats parameter
+   Example 1.2. Set enable_stats parameter
 ...
 modparam("sst", "enable_stats", 0)
 ...
-     __________________________________________________________
 
 1.4.2. min_se (integer)
 
@@ -179,11 +178,10 @@ modparam("sst", "enable_stats", 0)
 
    Default value is "1800" seconds.
 
-   Example 1-3. Set min_se parameter
+   Example 1.3. Set min_se parameter
 ...
 modparam("sst", "min_se", 2400)
 ...
-     __________________________________________________________
 
 1.4.3. timeout_avp (string)
 
@@ -196,13 +194,12 @@ modparam("sst", "min_se", 2400)
 
    Default value is "NULL!" it is not set by default.
 
-   Example 1-4. Set timeout_avp parameter
+   Example 1.4. Set timeout_avp parameter
 ...
 modparam("dialog", "timeout_avp", "$avp(i:10)")
 # Set the sst modules timeout_avp to be the same value
 modparam("sst", "timeout_avp", "$avp(i:10)")
 ...
-     __________________________________________________________
 
 1.4.4. reject_to_small (integer)
 
@@ -219,11 +216,10 @@ modparam("sst", "timeout_avp", "$avp(i:10)")
 
    Default value is "1" (true/on).
 
-   Example 1-5. Set reject_to_small parameter
+   Example 1.5. Set reject_to_small parameter
 ...
 modparam("sst", "reject_to_small", 0)
 ...
-     __________________________________________________________
 
 1.4.5. sst_flag (integer)
 
@@ -242,7 +238,7 @@ modparam("sst", "reject_to_small", 0)
 
    Default value is "Not set!".
 
-   Example 1-6. Set sst_flag parameter
+   Example 1.6. Set sst_flag parameter
 ...
 modparam("dialog", "dlg_flag", 5)
 modparam("sst", "sst_flag", 6)
@@ -255,11 +251,10 @@ route {
   }
   ...
 }
-     __________________________________________________________
 
 1.5. Exported Functions
 
-1.5.1. sstCheckMin(send_reply_flag)
+1.5.1.  sstCheckMin(send_reply_flag)
 
    Check the current Session-Expires / MIN-SE values against the
    sst_min_se parameter value. If the Session-Expires or MIN_SE
@@ -272,11 +267,11 @@ route {
    MIN-SE: header with the sst min_se parameter value set.
 
    Meaning of the parameters is as follows:
-
      * min_allowed - The value to compare the MIN_SE header value
        to.
 
-   Example 1-7. sstCheckMin usage
+   Example 1.7. sstCheckMin usage
+
 ...
 modparam("dialog", "timeout_avp", "$avp(i:4242)")
 modparam("dialog", "dlg_flag", 5)
@@ -314,15 +309,46 @@ route {
   }
 }
 ...
-     __________________________________________________________
 
 1.6. Exported Statistics
 
 1.6.1. expired_sst
 
    Number of dialogs which got expired session timer.
-     __________________________________________________________
 
-1.7. Installation & Running
+1.7. Installation and Running
 
    just load the module and remember to set the timeout_avp value.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

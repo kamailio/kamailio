@@ -6,16 +6,24 @@ Edited by
 
 Miklos Tirpak
 
+Edited by
+
 Bogdan-Andrei Iancu
+
+Edited by
 
 Juha Heinanen
 
    Copyright © 2003 Miklos Tirpak
 
    Copyright © 2006 Juha Heinanen
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -75,37 +83,39 @@ Juha Heinanen
               1.5.5. trusted_dump
               1.5.6. allow_uri
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set default_allow_file parameter
-   1-2. Set default_deny_file parameter
-   1-3. Set check_all_branches parameter
-   1-4. Set allow_suffix parameter
-   1-5. Set deny_suffix parameter
-   1-6. Set db_url parameter
-   1-7. Set address_table parameter
-   1-8. Set grp_col parameter
-   1-9. Set ip_addr_col parameter
-   1-10. Set mask_col parameter
-   1-11. Set port_col parameter
-   1-12. Set db_mode parameter
-   1-13. Set trusted_table parameter
-   1-14. Set source_col parameter
-   1-15. Set proto_col parameter
-   1-16. Set from_col parameter
-   1-17. Set tag_col parameter
-   1-18. Set peer_tag_avp parameter
-   1-19. allow_routing usage
-   1-20. allow_routing(basename) usage
-   1-21. allow_routing(allow_file, deny_file) usage
-   1-22. allow_register(basename) usage
-   1-23. allow_register(allow_file, deny_file) usage
-   1-24. allow_uri(basename, pseudo-variable) usage
-   1-25. set_address_group(group_id) usage
-   1-26. allow_address(ip_addr_pv, port_pv) usage
-   1-27. allow_source_address(group_id) usage
-   1-28. allow_source_address_group() usage
-   1-29. allow_trusted() usage
-     __________________________________________________________
+
+   1.1. Set default_allow_file parameter
+   1.2. Set default_deny_file parameter
+   1.3. Set check_all_branches parameter
+   1.4. Set allow_suffix parameter
+   1.5. Set deny_suffix parameter
+   1.6. Set db_url parameter
+   1.7. Set address_table parameter
+   1.8. Set grp_col parameter
+   1.9. Set ip_addr_col parameter
+   1.10. Set mask_col parameter
+   1.11. Set port_col parameter
+   1.12. Set db_mode parameter
+   1.13. Set trusted_table parameter
+   1.14. Set source_col parameter
+   1.15. Set proto_col parameter
+   1.16. Set from_col parameter
+   1.17. Set tag_col parameter
+   1.18. Set peer_tag_avp parameter
+   1.19. allow_routing usage
+   1.20. allow_routing(basename) usage
+   1.21. allow_routing(allow_file, deny_file) usage
+   1.22. allow_register(basename) usage
+   1.23. allow_register(allow_file, deny_file) usage
+   1.24. allow_uri(basename, pseudo-variable) usage
+   1.25. set_address_group(group_id) usage
+   1.26. allow_address(ip_addr_pv, port_pv) usage
+   1.27. allow_source_address(group_id) usage
+   1.28. allow_source_address_group() usage
+   1.29. allow_trusted() usage
 
 Chapter 1. User's Guide
 
@@ -127,7 +137,6 @@ Chapter 1. User's Guide
    them fails, the forwarding will fail.
 
    The matching algorithm is as follows, first match wins:
-
      * Create a set of pairs of form (From, R-URI of branch 1),
        (From, R-URI of branch 2), etc.
      * Routing will be allowed when all pairs match an entry in
@@ -143,7 +152,6 @@ Chapter 1. User's Guide
    From header field and Request-URIs are always compared with
    regular expressions! For the syntax see the sample file:
    config/permissions.allow.
-     __________________________________________________________
 
 1.1.2. Registration Permissions
 
@@ -163,8 +171,8 @@ Chapter 1. User's Guide
 
    Function for registration checking is called allow_register and
    the algorithm is very similar to the algorithm described in
-   Section 1.1.1. The only difference is in the way how pairs are
-   created.
+   Section 1.1.1, "Call Routing". The only difference is in the
+   way how pairs are created.
 
    Instead of From header field the function uses To header field
    because To header field in REGISTER messages contains the URI
@@ -174,9 +182,8 @@ Chapter 1. User's Guide
    Thus, pairs used in matching will look like this: (To, Contact
    1), (To, Contact 2), (To, Contact 3), and so on..
 
-   The algorithm of matching is same as described in Section
-   1.1.1.
-     __________________________________________________________
+   The algorithm of matching is same as described in
+   Section 1.1.1, "Call Routing".
 
 1.1.3. URI Permissions
 
@@ -189,7 +196,6 @@ Chapter 1. User's Guide
    When allow_uri function is called, it tries to find a rule that
    matches selected fields of the message. The matching algorithm
    is as follows, first match wins:
-
      * Create a pair <From URI, URI stored in pseudo-variable>.
      * Request will be allowed when the pair matches an entry in
        the allow file.
@@ -204,7 +210,6 @@ Chapter 1. User's Guide
    From URI and URI stored in pseudo-variable are always compared
    with regular expressions! For the syntax see the sample file:
    config/permissions.allow.
-     __________________________________________________________
 
 1.1.4. Address Permissions
 
@@ -221,7 +226,6 @@ Chapter 1. User's Guide
    argument to allow_source_address function or assigned
    separately for subsequent allow_address function calls using
    set_address_group function.
-     __________________________________________________________
 
 1.1.5. Trusted Requests
 
@@ -233,7 +237,6 @@ Chapter 1. User's Guide
    <source address, transport protocol, regular expression>.
 
    A requests is accepted if there exists a rule, where
-
      * source address is equal to source address of request,
      * transport protocol is either "any" or equal to transport
        protocol of request, and
@@ -247,24 +250,19 @@ Chapter 1. User's Guide
    determines if rules are cached into memory for faster matching
    or if database is consulted for each invocation of
    allow_trusted function call.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -276,11 +274,10 @@ Chapter 1. User's Guide
 
    Default value is "permissions.allow".
 
-   Example 1-1. Set default_allow_file parameter
+   Example 1.1. Set default_allow_file parameter
 ...
 modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 ...
-     __________________________________________________________
 
 1.3.2. default_deny_file (string)
 
@@ -291,11 +288,10 @@ modparam("permissions", "default_allow_file", "/etc/permissions.allow")
 
    Default value is "permissions.deny".
 
-   Example 1-2. Set default_deny_file parameter
+   Example 1.2. Set default_deny_file parameter
 ...
 modparam("permissions", "default_deny_file", "/etc/permissions.deny")
 ...
-     __________________________________________________________
 
 1.3.3. check_all_branches (integer)
 
@@ -303,18 +299,17 @@ modparam("permissions", "default_deny_file", "/etc/permissions.deny")
    all branches (default). If disabled then only Request-URI of
    the first branch will be checked.
 
-   Warning
+Warning
 
-           Do not disable this parameter unless you really know what you
-           are doing.
+   Do not disable this parameter unless you really know what you
+   are doing.
 
    Default value is 1.
 
-   Example 1-3. Set check_all_branches parameter
+   Example 1.3. Set check_all_branches parameter
 ...
 modparam("permissions", "check_all_branches", 0)
 ...
-     __________________________________________________________
 
 1.3.4. allow_suffix (string)
 
@@ -322,17 +317,16 @@ modparam("permissions", "check_all_branches", 0)
    allow file when version with one parameter of either
    allow_routing or allow_register is used.
 
-   Note
+Note
 
-        Including leading dot.
+   Including leading dot.
 
    Default value is ".allow".
 
-   Example 1-4. Set allow_suffix parameter
+   Example 1.4. Set allow_suffix parameter
 ...
 modparam("permissions", "allow_suffix", ".allow")
 ...
-     __________________________________________________________
 
 1.3.5. deny_suffix (string)
 
@@ -340,17 +334,16 @@ modparam("permissions", "allow_suffix", ".allow")
    deny file when version with one parameter of either
    allow_routing or allow_register is used.
 
-   Note
+Note
 
-        Including leading dot.
+   Including leading dot.
 
    Default value is ".deny".
 
-   Example 1-5. Set deny_suffix parameter
+   Example 1.5. Set deny_suffix parameter
 ...
 modparam("permissions", "deny_suffix", ".deny")
 ...
-     __________________________________________________________
 
 1.3.6. db_url (string)
 
@@ -359,12 +352,11 @@ modparam("permissions", "deny_suffix", ".deny")
 
    Default value is "NULL".
 
-   Example 1-6. Set db_url parameter
+   Example 1.6. Set db_url parameter
 ...
 modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser"
 )
 ...
-     __________________________________________________________
 
 1.3.7. address_table (string)
 
@@ -373,11 +365,10 @@ modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser"
 
    Default value is "address".
 
-   Example 1-7. Set address_table parameter
+   Example 1.7. Set address_table parameter
 ...
 modparam("permissions", "address_table", "addr")
 ...
-     __________________________________________________________
 
 1.3.8. grp_col (string)
 
@@ -386,11 +377,10 @@ modparam("permissions", "address_table", "addr")
 
    Default value is "grp".
 
-   Example 1-8. Set grp_col parameter
+   Example 1.8. Set grp_col parameter
 ...
 modparam("permissions", "grp_col", "group_id")
 ...
-     __________________________________________________________
 
 1.3.9. ip_addr_col (string)
 
@@ -399,11 +389,10 @@ modparam("permissions", "grp_col", "group_id")
 
    Default value is "ip_addr".
 
-   Example 1-9. Set ip_addr_col parameter
+   Example 1.9. Set ip_addr_col parameter
 ...
 modparam("permissions", "ip_addr_col", "ip_address")
 ...
-     __________________________________________________________
 
 1.3.10. mask_col (string)
 
@@ -412,11 +401,10 @@ modparam("permissions", "ip_addr_col", "ip_address")
 
    Default value is "mask".
 
-   Example 1-10. Set mask_col parameter
+   Example 1.10. Set mask_col parameter
 ...
 modparam("permissions", "mask_col", "subnet_length")
 ...
-     __________________________________________________________
 
 1.3.11. port_col (string)
 
@@ -425,11 +413,10 @@ modparam("permissions", "mask_col", "subnet_length")
 
    Default value is "port".
 
-   Example 1-11. Set port_col parameter
+   Example 1.11. Set port_col parameter
 ...
 modparam("permissions", "port_col", "prt")
 ...
-     __________________________________________________________
 
 1.3.12. db_mode (integer)
 
@@ -438,11 +425,10 @@ modparam("permissions", "port_col", "prt")
 
    Default value is 0 (non-caching).
 
-   Example 1-12. Set db_mode parameter
+   Example 1.12. Set db_mode parameter
 ...
 modparam("permissions", "db_mode", 1)
 ...
-     __________________________________________________________
 
 1.3.13. trusted_table (string)
 
@@ -451,11 +437,10 @@ modparam("permissions", "db_mode", 1)
 
    Default value is "trusted".
 
-   Example 1-13. Set trusted_table parameter
+   Example 1.13. Set trusted_table parameter
 ...
 modparam("permissions", "trusted_table", "pbx")
 ...
-     __________________________________________________________
 
 1.3.14. source_col (string)
 
@@ -464,11 +449,10 @@ modparam("permissions", "trusted_table", "pbx")
 
    Default value is "src_ip".
 
-   Example 1-14. Set source_col parameter
+   Example 1.14. Set source_col parameter
 ...
 modparam("permissions", "source_col", "source_ip_address")
 ...
-     __________________________________________________________
 
 1.3.15. proto_col (string)
 
@@ -480,11 +464,10 @@ modparam("permissions", "source_col", "source_ip_address")
 
    Default value is "proto".
 
-   Example 1-15. Set proto_col parameter
+   Example 1.15. Set proto_col parameter
 ...
 modparam("permissions", "proto_col", "transport")
 ...
-     __________________________________________________________
 
 1.3.16. from_col (string)
 
@@ -493,11 +476,10 @@ modparam("permissions", "proto_col", "transport")
 
    Default value is "from_pattern".
 
-   Example 1-16. Set from_col parameter
+   Example 1.16. Set from_col parameter
 ...
 modparam("permissions", "from_col", "regexp")
 ...
-     __________________________________________________________
 
 1.3.17. tag_col (string)
 
@@ -507,11 +489,10 @@ modparam("permissions", "from_col", "regexp")
 
    Default value is "tag".
 
-   Example 1-17. Set tag_col parameter
+   Example 1.17. Set tag_col parameter
 ...
 modparam("permissions", "tag_col", "peer_tag")
 ...
-     __________________________________________________________
 
 1.3.18. peer_tag_avp (AVP string)
 
@@ -521,39 +502,37 @@ modparam("permissions", "tag_col", "peer_tag")
 
    Default value is "undefined".
 
-   Example 1-18. Set peer_tag_avp parameter
+   Example 1.18. Set peer_tag_avp parameter
 ...
 modparam("permissions", "peer_tag_avp", "$avp(i:707)")
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. allow_routing()
+1.4.1.  allow_routing()
 
-   Returns true if all pairs constructed as described in Section
-   1.1.1 have appropriate permissions according to the
-   configuration files. This function uses default configuration
-   files specified in default_allow_file and default_deny_file.
+   Returns true if all pairs constructed as described in
+   Section 1.1.1, "Call Routing" have appropriate permissions
+   according to the configuration files. This function uses
+   default configuration files specified in default_allow_file and
+   default_deny_file.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-19. allow_routing usage
+   Example 1.19. allow_routing usage
 ...
 if (allow_routing()) {
         t_relay();
 };
 ...
-     __________________________________________________________
 
-1.4.2. allow_routing(basename)
+1.4.2.  allow_routing(basename)
 
-   Returns true if all pairs constructed as described in Section
-   1.1.1 have appropriate permissions according to the
-   configuration files given as parameters.
+   Returns true if all pairs constructed as described in
+   Section 1.1.1, "Call Routing" have appropriate permissions
+   according to the configuration files given as parameters.
 
    Meaning of the parameters is as follows:
-
      * basename - Basename from which allow and deny filenames
        will be created by appending contents of allow_suffix and
        deny_suffix parameters.
@@ -563,22 +542,20 @@ if (allow_routing()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-20. allow_routing(basename) usage
+   Example 1.20. allow_routing(basename) usage
 ...
 if (allow_routing("basename")) {
         t_relay();
 };
 ...
-     __________________________________________________________
 
-1.4.3. allow_routing(allow_file,deny_file)
+1.4.3.  allow_routing(allow_file,deny_file)
 
-   Returns true if all pairs constructed as described in Section
-   1.1.1 have appropriate permissions according to the
-   configuration files given as parameters.
+   Returns true if all pairs constructed as described in
+   Section 1.1.1, "Call Routing" have appropriate permissions
+   according to the configuration files given as parameters.
 
    Meaning of the parameters is as follows:
-
      * allow_file - File containing allow rules.
        If the parameter doesn't contain full pathname then the
        function expects the file to be located in the same
@@ -590,22 +567,21 @@ if (allow_routing("basename")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-21. allow_routing(allow_file, deny_file) usage
+   Example 1.21. allow_routing(allow_file, deny_file) usage
 ...
 if (allow_routing("rules.allow", "rules.deny")) {
         t_relay();
 };
 ...
-     __________________________________________________________
 
-1.4.4. allow_register(basename)
+1.4.4.  allow_register(basename)
 
    The function returns true if all pairs constructed as described
-   in Section 1.1.2 have appropriate permissions according to the
-   configuration files given as parameters.
+   in Section 1.1.2, "Registration Permissions" have appropriate
+   permissions according to the configuration files given as
+   parameters.
 
    Meaning of the parameters is as follows:
-
      * basename - Basename from which allow and deny filenames
        will be created by appending contents of allow_suffix and
        deny_suffix parameters.
@@ -615,7 +591,7 @@ if (allow_routing("rules.allow", "rules.deny")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-22. allow_register(basename) usage
+   Example 1.22. allow_register(basename) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register")) {
@@ -626,16 +602,15 @@ if (method=="REGISTER") {
         };
 };
 ...
-     __________________________________________________________
 
-1.4.5. allow_register(allow_file, deny_file)
+1.4.5.  allow_register(allow_file, deny_file)
 
    The function returns true if all pairs constructed as described
-   in Section 1.1.2 have appropriate permissions according to the
-   configuration files given as parameters.
+   in Section 1.1.2, "Registration Permissions" have appropriate
+   permissions according to the configuration files given as
+   parameters.
 
    Meaning of the parameters is as follows:
-
      * allow_file - File containing allow rules.
        If the parameter doesn't contain full pathname then the
        function expects the file to be located in the same
@@ -647,7 +622,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-23. allow_register(allow_file, deny_file) usage
+   Example 1.23. allow_register(allow_file, deny_file) usage
 ...
 if (method=="REGISTER") {
         if (allow_register("register.allow", "register.deny")) {
@@ -658,16 +633,15 @@ if (method=="REGISTER") {
         };
 };
 ...
-     __________________________________________________________
 
-1.4.6. allow_uri(basename, pseudo-variable)
+1.4.6.  allow_uri(basename, pseudo-variable)
 
-   Returns true if the pair constructed as described in Section
-   1.1.3 have appropriate permissions according to the
-   configuration files specified by the parameter.
+   Returns true if the pair constructed as described in
+   Section 1.1.3, "URI Permissions" have appropriate permissions
+   according to the configuration files specified by the
+   parameter.
 
    Meaning of the parameter is as follows:
-
      * basename - Basename from which allow and deny filenames
        will be created by appending contents of allow_suffix and
        deny_suffix parameters.
@@ -678,7 +652,7 @@ if (method=="REGISTER") {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-24. allow_uri(basename, pseudo-variable) usage
+   Example 1.24. allow_uri(basename, pseudo-variable) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -688,9 +662,8 @@ i:705)
         t_relay();
 };
 ...
-     __________________________________________________________
 
-1.4.7. set_address_group(group_id)
+1.4.7.  set_address_group(group_id)
 
    Sets address group to be used in subsequent allow_address
    function calls to an unsigned integer value given as argument.
@@ -698,7 +671,7 @@ i:705)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-25. set_address_group(group_id) usage
+   Example 1.25. set_address_group(group_id) usage
 ...
 
 // Set address group identifier to 1.
@@ -706,9 +679,8 @@ set_address_group("1");
 // Set address group identifier to value of pseudo variable i:100.
 set_address_group("$avp(i:100)");
 ...
-     __________________________________________________________
 
-1.4.8. allow_address(ip_addr_pv, port_pv)
+1.4.8.  allow_address(ip_addr_pv, port_pv)
 
    Returns true if IP address and port given as values of pseudo
    variable arguments and belonging to an earlier assigned address
@@ -718,7 +690,7 @@ set_address_group("$avp(i:100)");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-26. allow_address(ip_addr_pv, port_pv) usage
+   Example 1.26. allow_address(ip_addr_pv, port_pv) usage
 ...
 
 // Check source address/port of request
@@ -730,16 +702,15 @@ if (!allow_address("$avp(i:704)", "$avp(i:705)") {
         sl_send_reply("403", "Forbidden");
 };
 ...
-     __________________________________________________________
 
-1.4.9. allow_source_address(group_id)
+1.4.9.  allow_source_address(group_id)
 
    Equal to set_address_group(group_id); allow_address("$si",
    "$sp"), but faster.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-27. allow_source_address(group_id) usage
+   Example 1.27. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -747,9 +718,8 @@ if (!allow_source_address("0")) {
         sl_send_reply("403", "Forbidden");
 };
 ...
-     __________________________________________________________
 
-1.4.10. allow_source_address_group()
+1.4.10.  allow_source_address_group()
 
    Checks if source address/port is found in cached address or
    subnet table in any group. If yes, returns that group. If not
@@ -758,7 +728,7 @@ if (!allow_source_address("0")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-28. allow_source_address_group() usage
+   Example 1.28. allow_source_address_group() usage
 ...
 
 $var(group) = allow_source_address_group();
@@ -766,30 +736,28 @@ if ($var(group) != -1) {
    # do something with $var(group)
 };
 ...
-     __________________________________________________________
 
-1.4.11. allow_trusted()
+1.4.11.  allow_trusted()
 
    Checks based on request's source address, transport protocol,
    and From URI if request can be trusted without authentication.
-   Returns 1 if a match is found as described in Section 1.1.5 and
-   -1 otherwise. If a match is found and peer_tag_avp has been
-   defined, adds a non-NULL tag column value of the matching peer
-   to AVP peer_tag_avp.
+   Returns 1 if a match is found as described in Section 1.1.5,
+   "Trusted Requests" and -1 otherwise. If a match is found and
+   peer_tag_avp has been defined, adds a non-NULL tag column value
+   of the matching peer to AVP peer_tag_avp.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-29. allow_trusted() usage
+   Example 1.29. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();
 };
 ...
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
-1.5.1. address_reload
+1.5.1.  address_reload
 
    Causes permissions module to re-read the contents of address
    database table into cache memory. In cache memory the entries
@@ -798,49 +766,76 @@ if (allow_trusted()) {
    mask field (32 or smaller).
 
    Parameters: none
-     __________________________________________________________
 
-1.5.2. address_dump
+1.5.2.  address_dump
 
    Causes permissions module to dump contents of cache memory
    address table.
 
    Parameters: none
-     __________________________________________________________
 
-1.5.3. subnet_dump
+1.5.3.  subnet_dump
 
    Causes permissions module to dump contents of cache memory
    subnet table.
 
    Parameters: none
-     __________________________________________________________
 
-1.5.4. trusted_reload
+1.5.4.  trusted_reload
 
    Causes permissions module to re-read the contents of trusted
    table into cache memory.
 
    Parameters: none
-     __________________________________________________________
 
-1.5.5. trusted_dump
+1.5.5.  trusted_dump
 
    Causes permissions module to dump contents of trusted table
    from cache memory.
 
    Parameters: none
-     __________________________________________________________
 
-1.5.6. allow_uri
+1.5.6.  allow_uri
 
    Tests if (URI, Contact) pair is allowed according to allow/deny
    files. The files must already have been loaded by OpenSER.
 
    Parameters:
-
      * basename - Basename from which allow and deny filenames
        will be created by appending contents of allow_suffix and
        deny_suffix parameters.
      * URI - URI to be tested
      * Contact - Contact to be tested
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

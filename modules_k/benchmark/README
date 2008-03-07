@@ -6,8 +6,6 @@ Bastian Friedrich
 
 Daniel-Constantin Mierla
 
-   Voice System SRL
-
 Edited by
 
 Bastian Friedrich
@@ -15,9 +13,13 @@ Bastian Friedrich
    Copyright © 2007 Collax GmbH
 
    Copyright © 2007 Voice System SRL
+   Revision History
+   Revision $Revision: 1.1.1.1 $ $Date: 2007-04-11 14:40:39 +0200
+                                 (Mi, 11 Apr 2007) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -53,18 +55,21 @@ Bastian Friedrich
               2.1.1. bm_register(name, mode, id)
               2.1.2. bm_start(id)
               2.1.3. bm_log(id)
-              2.1.4. Benchmark API Example
+
+        2.2. Benchmark API Example
+
+   3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set enable parameter
-   1-2. Set granularity parameter
-   1-3. Set loglevel parameter
-   1-4. bm_start_timer usage
-   1-5. bm_log_timer usage
-   1-6. Enabling a timer
-   1-7. benchmark usage
-   2-1. Using the benchmark module's API from another module
-     __________________________________________________________
+
+   1.1. Set enable parameter
+   1.2. Set granularity parameter
+   1.3. Set loglevel parameter
+   1.4. bm_start_timer usage
+   1.5. bm_log_timer usage
+   1.6. Enabling a timer
+   1.7. benchmark usage
+   2.1. Using the benchmark module's API from another module
 
 Chapter 1. User's Guide
 
@@ -79,24 +84,19 @@ Chapter 1. User's Guide
    stored and logged via OpenSER's logging facility. Please note
    that all durations are given as microseconds (don't confuse
    with milliseconds!).
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -104,7 +104,6 @@ Chapter 1. User's Guide
 
    Even when the module is loaded, benchmarking is not enabled per
    default. This variable may have three different values:
-
      * -1 - Globally disable benchmarking
      * 0 - Enable per-timer enabling. Single timers are inactive
        by default and can be activated through the MI interface as
@@ -113,11 +112,10 @@ Chapter 1. User's Guide
 
    Default value is "0".
 
-   Example 1-1. Set enable parameter
+   Example 1.1. Set enable parameter
 ...
 modparam("benchmark", "enable", 1)
 ...
-     __________________________________________________________
 
 1.3.2. granularity (int)
 
@@ -127,17 +125,15 @@ modparam("benchmark", "enable", 1)
 
    Default value is "100".
 
-   Example 1-2. Set granularity parameter
+   Example 1.2. Set granularity parameter
 ...
 modparam("benchmark", "granularity", 500)
 ...
-     __________________________________________________________
 
 1.3.3. loglevel (int)
 
    Set the log level for the benchmark logs. These levels should
    be used:
-
      * -3 - L_ALERT
      * -2 - L_CRIT
      * -1 - L_ERR
@@ -148,32 +144,29 @@ modparam("benchmark", "granularity", 500)
 
    Default value is "3" (L_INFO).
 
-   Example 1-3. Set loglevel parameter
+   Example 1.3. Set loglevel parameter
 ...
 modparam("benchmark", "loglevel", 4)
 ...
 
    This will set the logging level to L_DBG.
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. bm_start_timer(name)
+1.4.1.  bm_start_timer(name)
 
    Start timer "name". A later call to "bm_log_timer()" logs this
    timer..
 
-   Example 1-4. bm_start_timer usage
+   Example 1.4. bm_start_timer usage
 ...
 bm_start_timer("test");
 ...
-     __________________________________________________________
 
-1.4.2. bm_log_timer(name)
+1.4.2.  bm_log_timer(name)
 
    This function logs the timer with the given ID. The following
    data are logged:
-
      * Last msgs is the number of calls in the last logging
        interval. This equals the granularity variable.
 
@@ -198,11 +191,10 @@ bm_start_timer("test");
 
      * Global avg possibly the most interesting value.
 
-   Example 1-5. bm_log_timer usage
+   Example 1.5. bm_log_timer usage
 ...
 bm_log_timer("test");
 ...
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
@@ -210,41 +202,36 @@ bm_log_timer("test");
 
    Enables/disables the module. Parameter may be -1, 0 or 1. See
    discription of "enable" parameter.
-     __________________________________________________________
 
 1.5.2. bm_enable_timer
 
    Enable or disable a single timer. The following example enables
    timer "test" (the second parameter must be 0 to disable):
 
-   Example 1-6. Enabling a timer
+   Example 1.6. Enabling a timer
 ...
 openserctl fifo bm_enable_timer test 1
 ...
-     __________________________________________________________
 
 1.5.3. bm_granularity
 
    Modifies the benchmarking granularity. See "granularity"
    variable.
-     __________________________________________________________
 
 1.5.4. bm_loglevel
 
    Modifies the module log level. See "loglevel" variable.
-     __________________________________________________________
 
 1.6. Example of usage
 
    Measure the duration of user location lookup.
 
-   Example 1-7. benchmark usage
+   Example 1.7. benchmark usage
 ...
 bm_start_timer("usrloc-lookup");
 lookup("location");
 bm_log_timer("usrloc-lookup");
 ...
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
@@ -254,33 +241,29 @@ Chapter 2. Developer's Guide
 
    Please note that this module is intended mainly for developers.
    It should be used with caution in production environments.
-     __________________________________________________________
 
 2.1. Available Functions
 
-2.1.1. bm_register(name, mode, id)
+2.1.1.  bm_register(name, mode, id)
 
    This function register a new timer and/or returns the internal
    ID associated with the timer. mode controls the creation of new
    timer if not found. id is to be used by start and log timer
    functions.
-     __________________________________________________________
 
-2.1.2. bm_start(id)
+2.1.2.  bm_start(id)
 
    This function equals the user-exported function bm_start_timer.
    The id is passed as an integer, though.
-     __________________________________________________________
 
-2.1.3. bm_log(id)
+2.1.3.  bm_log(id)
 
    This function equals the user-exported function bm_log_timer.
    The id is passed as an integer, though.
-     __________________________________________________________
 
-2.1.4. Benchmark API Example
+2.2. Benchmark API Example
 
-   Example 2-1. Using the benchmark module's API from another
+   Example 2.1. Using the benchmark module's API from another
    module
 ...
 #include "../benchmark/benchmark.h"
@@ -301,3 +284,36 @@ bmb.bm_start(id);
 do_something();
 bmb.bm_log(id);
 ...
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

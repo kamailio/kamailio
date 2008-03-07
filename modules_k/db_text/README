@@ -2,16 +2,18 @@ DBTEXT Module
 
 Daniel-Constantin Mierla
 
-   voice-system.ro
-
 Edited by
 
 Daniel-Constantin Mierla
 
    Copyright © 2003, 2004 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -30,23 +32,24 @@ Daniel-Constantin Mierla
               1.3.1. db_mode (integer)
 
         1.4. Exported Functions
-        1.5. Installation & Running
+        1.5. Installation and Running
 
               1.5.1. Using dbtext with basic OpenSER configuration
 
    2. Developer's Guide
+   3. Frequently Asked Questions
 
    List of Examples
-   1-1. Sample of a dbtext table
-   1-2. Minimal OpenSER location dbtext table definition
-   1-3. Minimal OpenSER subscriber dbtext table example
-   1-4. Set db_mode parameter
-   1-5. Load the dbtext module
-   1-6. Definition of 'subscriber' table (one line)
-   1-7. Definition of 'location' and 'aliases' tables (one line)
-   1-8. Definition of 'version' table and sample records
-   1-9. Configuration file
-     __________________________________________________________
+
+   1.1. Sample of a dbtext table
+   1.2. Minimal OpenSER location dbtext table definition
+   1.3. Minimal OpenSER subscriber dbtext table example
+   1.4. Set db_mode parameter
+   1.5. Load the dbtext module
+   1.6. Definition of 'subscriber' table (one line)
+   1.7. Definition of 'location' and 'aliases' tables (one line)
+   1.8. Definition of 'version' table and sample records
+   1.9. Configuration file
 
 Chapter 1. User's Guide
 
@@ -72,12 +75,10 @@ Chapter 1. User's Guide
    write back to hard drive after changes. In this mode, the
    module checks if the corresponding file on disk has changed,
    and reloads it. The write on disk happens at openser shut down.
-     __________________________________________________________
 
 1.1.1. Design of dbtext engine
 
    The dbtext database system architecture:
-
      * a database is represented by a directory in the local file
        system. NOTE: when you use dbtext in OpenSER, the database
        URL for modules must be the path to the directory where the
@@ -89,13 +90,11 @@ Chapter 1. User's Guide
        directory.
      * a table is represented by a text file inside database
        directory.
-     __________________________________________________________
 
 1.1.2. Internal format of a dbtext table
 
    First line is the definition of the columns. Each column must
    be declared as follows:
-
      * the name of column must not include white spaces.
      * the format of a column definition is: name(type,attr).
      * between two column definitions must be a white space, e.g.,
@@ -120,7 +119,7 @@ Chapter 1. User's Guide
        "\t", ":".
      * 0 -- the zero value must be escaped too.
 
-   Example 1-1. Sample of a dbtext table
+   Example 1.1. Sample of a dbtext table
 ...
 id(int,auto) name(str) flag(double) desc(str,null)
 1:nick:0.34:a\tgood\: friend
@@ -128,17 +127,16 @@ id(int,auto) name(str) flag(double) desc(str,null)
 3:bob:2.50:
 ...
 
-   Example 1-2. Minimal OpenSER location dbtext table definition
+   Example 1.2. Minimal OpenSER location dbtext table definition
 ...
 username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
 ...
 
-   Example 1-3. Minimal OpenSER subscriber dbtext table example
+   Example 1.3. Minimal OpenSER subscriber dbtext table example
 ...
 username(str) password(str) ha1(str) domain(str) ha1b(str)
 suser:supasswd:xxx:alpha.org:xxx
 ...
-     __________________________________________________________
 
 1.1.3. Existing limitations
 
@@ -146,29 +144,23 @@ suser:supasswd:xxx:alpha.org:xxx
    default values. All such values specified in the database
    template are ignored. So its advisable to specify all data for
    a column at insertion operations.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER modules
 
    The next modules must be loaded before this module:
-
      * none.
-     __________________________________________________________
 
 1.2.2. External libraries or applications
 
    The next libraries or applications must be installed before
    running OpenSER with this module:
-
      * none.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
    None.
-     __________________________________________________________
 
 1.3.1. db_mode (integer)
 
@@ -180,18 +172,16 @@ suser:supasswd:xxx:alpha.org:xxx
 
    Default value is "0".
 
-   Example 1-4. Set db_mode parameter
+   Example 1.4. Set db_mode parameter
 ...
 modparam("db_text", "db_mode", 1)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
    None.
-     __________________________________________________________
 
-1.5. Installation & Running
+1.5. Installation and Running
 
    Compile the module and load it instead of mysql or other DB
    modules.
@@ -204,14 +194,13 @@ modparam("db_text", "db_mode", 1)
    database path. So, either you provide an absolute path to
    database directory or a relative one to "CFG_DIR" directory.
 
-   Example 1-5. Load the dbtext module
+   Example 1.5. Load the dbtext module
 ...
 loadmodule "/path/to/openser/modules/db_text.so"
 ...
 modparam("module_name", "database_URL", "text:///path/to/dbtext/database
 ")
 ...
-     __________________________________________________________
 
 1.5.1. Using dbtext with basic OpenSER configuration
 
@@ -225,7 +214,7 @@ modparam("module_name", "database_URL", "text:///path/to/dbtext/database
    configuration file, the table files must be placed in the
    '/tmp/serdb' directory.
 
-   Example 1-6. Definition of 'subscriber' table (one line)
+   Example 1.6. Definition of 'subscriber' table (one line)
 ...
 username(str) domain(str) password(str) first_name(str) last_name(str) p
 hone(str) email_address(str) datetime_created(int) datetime_modified(int
@@ -234,7 +223,7 @@ r) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,null
 )
 ...
 
-   Example 1-7. Definition of 'location' and 'aliases' tables (one
+   Example 1.7. Definition of 'location' and 'aliases' tables (one
    line)
 ...
 username(str) domain(str,null) contact(str,null) received(str) expires(i
@@ -242,7 +231,7 @@ nt,null) q(double,null) callid(str,null) cseq(int,null) last_modified(st
 r) flags(int) user_agent(str) socket(str)
 ...
 
-   Example 1-8. Definition of 'version' table and sample records
+   Example 1.8. Definition of 'version' table and sample records
 ...
 table_name(str) table_version(int)
 subscriber:3
@@ -250,7 +239,7 @@ location:6
 aliases:6
 ...
 
-   Example 1-9. Configuration file
+   Example 1.9. Configuration file
 ...
 #
 # $Id$
@@ -394,9 +383,41 @@ route[1]
 
 
 ...
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    Once you have the module loaded, you can use the API specified
    by OpenSER DB interface.
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

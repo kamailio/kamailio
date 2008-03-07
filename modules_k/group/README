@@ -9,9 +9,13 @@ Edited by
 Jan Janak
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -42,20 +46,22 @@ Jan Janak
               1.4.1. is_user_in(URI, group)
               1.4.2. get_user_group(URI, AVP)
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set db_url parameter
-   1-2. Set table parameter
-   1-3. Set user_column parameter
-   1-4. Set domain_column parameter
-   1-5. Set group_column parameter
-   1-6. Set use_domain parameter
-   1-7. Set re_table parameter
-   1-8. Set reg_exp_column parameter
-   1-9. Set re_gid_column parameter
-   1-10. Set multiple_gid parameter
-   1-11. is_user_in usage
-   1-12. get_user_group usage
-     __________________________________________________________
+
+   1.1. Set db_url parameter
+   1.2. Set table parameter
+   1.3. Set user_column parameter
+   1.4. Set domain_column parameter
+   1.5. Set group_column parameter
+   1.6. Set use_domain parameter
+   1.7. Set re_table parameter
+   1.8. Set reg_exp_column parameter
+   1.9. Set re_gid_column parameter
+   1.10. Set multiple_gid parameter
+   1.11. is_user_in usage
+   1.12. get_user_group usage
 
 Chapter 1. User's Guide
 
@@ -63,7 +69,6 @@ Chapter 1. User's Guide
 
    This module provides functionalities for different methods of
    group membership checking.
-     __________________________________________________________
 
 1.1.1. Strict membership checking
 
@@ -73,7 +78,6 @@ Chapter 1. User's Guide
 
    There is no DB caching support, each check involving a DB
    query.
-     __________________________________________________________
 
 1.1.2. Regular Expression based checking
 
@@ -85,24 +89,19 @@ Chapter 1. User's Guide
    Due performance reasons (regular expression evaluation), DB
    cache support is available: the table content is loaded into
    memory at startup and all regular expressions are compiled.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * A database module, like mysql, postgres or dbtext
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -113,11 +112,10 @@ Chapter 1. User's Guide
    Default value is
    "mysql://openserro:openserro@localhost/openser".
 
-   Example 1-1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("group", "db_url", "mysql://username:password@dbhost/openser")
 ...
-     __________________________________________________________
 
 1.3.2. table (string)
 
@@ -126,11 +124,10 @@ modparam("group", "db_url", "mysql://username:password@dbhost/openser")
 
    Default value is "grp".
 
-   Example 1-2. Set table parameter
+   Example 1.2. Set table parameter
 ...
 modparam("group", "table", "grp_table")
 ...
-     __________________________________________________________
 
 1.3.3. user_column (string)
 
@@ -138,11 +135,10 @@ modparam("group", "table", "grp_table")
 
    Default value is "username".
 
-   Example 1-3. Set user_column parameter
+   Example 1.3. Set user_column parameter
 ...
 modparam("group", "user_column", "user")
 ...
-     __________________________________________________________
 
 1.3.4. domain_column (string)
 
@@ -150,11 +146,10 @@ modparam("group", "user_column", "user")
 
    Default value is "domain".
 
-   Example 1-4. Set domain_column parameter
+   Example 1.4. Set domain_column parameter
 ...
 modparam("group", "domain_column", "realm")
 ...
-     __________________________________________________________
 
 1.3.5. group_column (string)
 
@@ -162,11 +157,10 @@ modparam("group", "domain_column", "realm")
 
    Default value is "grp".
 
-   Example 1-5. Set group_column parameter
+   Example 1.5. Set group_column parameter
 ...
 modparam("group", "group_column", "grp")
 ...
-     __________________________________________________________
 
 1.3.6. use_domain (integer)
 
@@ -176,11 +170,10 @@ modparam("group", "group_column", "grp")
 
    Default value is 0 (no).
 
-   Example 1-6. Set use_domain parameter
+   Example 1.6. Set use_domain parameter
 ...
 modparam("group", "use_domain", 1)
 ...
-     __________________________________________________________
 
 1.3.7. re_table (string)
 
@@ -190,11 +183,10 @@ modparam("group", "use_domain", 1)
 
    Default value is "NULL".
 
-   Example 1-7. Set re_table parameter
+   Example 1.7. Set re_table parameter
 ...
 modparam("group", "re_table", "re_grp")
 ...
-     __________________________________________________________
 
 1.3.8. re_exp_column (string)
 
@@ -203,11 +195,10 @@ modparam("group", "re_table", "re_grp")
 
    Default value is "reg_exp".
 
-   Example 1-8. Set reg_exp_column parameter
+   Example 1.8. Set reg_exp_column parameter
 ...
 modparam("group", "reg_exp_column", "re")
 ...
-     __________________________________________________________
 
 1.3.9. re_gid_column (string)
 
@@ -215,11 +206,10 @@ modparam("group", "reg_exp_column", "re")
 
    Default value is "group_id".
 
-   Example 1-9. Set re_gid_column parameter
+   Example 1.9. Set re_gid_column parameter
 ...
 modparam("group", "re_gid_column", "grp_id")
 ...
-     __________________________________________________________
 
 1.3.10. multiple_gid (integer)
 
@@ -229,22 +219,20 @@ modparam("group", "re_gid_column", "grp_id")
 
    Default value is "1".
 
-   Example 1-10. Set multiple_gid parameter
+   Example 1.10. Set multiple_gid parameter
 ...
 modparam("group", "multiple_gid", 0)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. is_user_in(URI, group)
+1.4.1.  is_user_in(URI, group)
 
    This function is to be used for script group membership. The
    function returns true if username in the given URI is member of
    the given group and false if not.
 
    Meaning of the parameters is as follows:
-
      * URI - URI whose username and optionally domain to be used,
        this can be one of:
           + Request-URI - Use Request-URI username and
@@ -258,15 +246,14 @@ modparam("group", "multiple_gid", 0)
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-11. is_user_in usage
+   Example 1.11. is_user_in usage
 ...
 if (is_user_in("Request-URI", "ld")) {
         ...
 };
 ...
-     __________________________________________________________
 
-1.4.2. get_user_group(URI, AVP)
+1.4.2.  get_user_group(URI, AVP)
 
    This function is to be used for regular expression based group
    membership. The function returns true if username in the given
@@ -274,7 +261,6 @@ if (is_user_in("Request-URI", "ld")) {
    as AVPs.
 
    Meaning of the parameters is as follows:
-
      * URI - URI to be matched against the regular expressions:
           + Request-URI - Use Request-URI
           + To - Use To URI.
@@ -288,10 +274,43 @@ if (is_user_in("Request-URI", "ld")) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1-12. get_user_group usage
+   Example 1.12. get_user_group usage
 ...
 if (get_user_group("Request-URI", "$avp(i:10)")) {
     xgdb("User $ru belongs to $(avp(i:10)[*]) group(s)\n");
     ....
 };
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

@@ -10,16 +10,24 @@ Edited by
 
 Ovidiu Sas
 
+Edited by
+
 Bogdan Vasile Harjoc
+
+Edited by
 
 Hendrik Scholz
 
    Copyright © 2006 Freenet Cityline GmbH
 
    Copyright © 2008 VoIP Embedded Inc.
+   Revision History
+   Revision $Revision: 3839 $ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -66,16 +74,18 @@ Hendrik Scholz
 
         1.9. Known limitations
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set timer_interval parameter
-   1-2. Set queue parameter
-   1-3. Set pipe parameter
-   1-4. Set reply_code parameter
-   1-5. Set reply_reason parameter
-   1-6. rl_check usage
-   1-7. rl_check_pipe usage
-   1-8. rl_drop usage
-     __________________________________________________________
+
+   1.1. Set timer_interval parameter
+   1.2. Set queue parameter
+   1.3. Set pipe parameter
+   1.4. Set reply_code parameter
+   1.5. Set reply_reason parameter
+   1.6. rl_check usage
+   1.7. rl_check_pipe usage
+   1.8. rl_drop usage
 
 Chapter 1. User's Guide
 
@@ -91,7 +101,6 @@ Chapter 1. User's Guide
    method is associated with its own queue and a number of queues
    are connected to a certain pipe (see the queue and pipe
    params).
-     __________________________________________________________
 
 1.2. Use Cases
 
@@ -115,14 +124,12 @@ Chapter 1. User's Guide
    the configured threshold. If the load is exceeded the function
    returns an error and an administrator can discard requests with
    a stateless response.
-     __________________________________________________________
 
 1.3. Static Rate Limiting Algorithms
 
    The ratelimit module supports two different statc algorithms to
    be used by rl_check to determine whether a message should be
    blocked or not.
-     __________________________________________________________
 
 1.3.1. Tail Drop Algorithm (TAILDROP)
 
@@ -139,7 +146,6 @@ Chapter 1. User's Guide
    proxy at the same time when a common Expire timer expired.
    Other requests will be retransmissed after given time, the same
    on all devices with the same firmware/by the same vendor.
-     __________________________________________________________
 
 1.3.2. Random Early Detection Algorithm (RED)
 
@@ -153,7 +159,6 @@ Chapter 1. User's Guide
    effect OpenSER might drop messages although the limit might not
    be reached within the interval. Decrease the timer interval if
    you encounter this.
-     __________________________________________________________
 
 1.4. Dynamic Rate Limiting Algorithms
 
@@ -169,7 +174,6 @@ Chapter 1. User's Guide
    permits tuning the rates based on internal server parameters
    and is somewhat more flexible (or it will be when support for
    external load factors - as opposed to cpu load - is added).
-     __________________________________________________________
 
 1.4.1. Feedback Algorithm (FEEDBACK)
 
@@ -189,24 +193,19 @@ Chapter 1. User's Guide
 
    Generally though, as real life request rates drift by less,
    adapting should happen much faster.
-     __________________________________________________________
 
 1.5. Dependencies
 
 1.5.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.5.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.6. Exported Parameters
 
@@ -221,11 +220,10 @@ Chapter 1. User's Guide
 
    Default value is 10.
 
-   Example 1-1. Set timer_interval parameter
+   Example 1.1. Set timer_interval parameter
 ...
 modparam("ratelimit", "timer_interval", 5)
 ...
-     __________________________________________________________
 
 1.6.2. queue (integer:string)
 
@@ -239,7 +237,7 @@ modparam("ratelimit", "timer_interval", 5)
    queues with specific methods will never match. At this time,
    glob or regexp patterns are not supported.
 
-   Example 1-2. Set queue parameter
+   Example 1.2. Set queue parameter
 ...
 # assign pipe no 0 to method REGISTER
 # assign pipe no 3 to method INVITE
@@ -248,7 +246,6 @@ modparam("ratelimit", "queue", "0:REGISTER")
 modparam("ratelimit", "queue", "3:INVITE")
 modparam("ratelimit", "queue", "2:*")
 ...
-     __________________________________________________________
 
 1.6.3. pipe (integer:string:integer)
 
@@ -262,7 +259,7 @@ modparam("ratelimit", "queue", "2:*")
    for TAILDROP or RED, limit means packets/sec, whereas with the
    FEEDBACK algorithm, it means [CPU] load factor).
 
-   Example 1-3. Set pipe parameter
+   Example 1.3. Set pipe parameter
 ...
 # define pipe 0 with a limit of 200 pkts/sec using TAILDROP algorithm
 # define pipe 1 with a limit of 100 pkts/sec using RED algorithm
@@ -273,7 +270,6 @@ modparam("ratelimit", "pipe", "1:RED:100")
 modparam("ratelimit", "pipe", "2:TAILDROP:50")
 modparam("ratelimit", "pipe", "3:FEEDBACK:80")
 ...
-     __________________________________________________________
 
 1.6.4. reply_code (integer)
 
@@ -281,11 +277,10 @@ modparam("ratelimit", "pipe", "3:FEEDBACK:80")
 
    Default value is 503.
 
-   Example 1-4. Set reply_code parameter
+   Example 1.4. Set reply_code parameter
 ...
 modparam("ratelimit", "reply_code", 505)
 ...
-     __________________________________________________________
 
 1.6.5. reply_reason (string)
 
@@ -293,15 +288,14 @@ modparam("ratelimit", "reply_code", 505)
 
    Default value is "Server Unavailable".
 
-   Example 1-5. Set reply_reason parameter
+   Example 1.5. Set reply_reason parameter
 ...
 modparam("ratelimit", "reply_reason", "Limiting")
 ...
-     __________________________________________________________
 
 1.7. Exported Functions
 
-1.7.1. rl_check([pvar])
+1.7.1.  rl_check([pvar])
 
    Check the current request against the matched ratelimit
    algorithm. If no parameter is provided, the queue will be
@@ -316,13 +310,12 @@ modparam("ratelimit", "reply_reason", "Limiting")
    matched algorithm is reached.
 
    Meaning of the parameters is as follows:
-
      * pvar - the pseudovariable holding the pipe id to be used by
        ratelimit.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-6. rl_check usage
+   Example 1.6. rl_check usage
 ...
         # perform queue/pipe match for current method
         if (!rl_check()) {
@@ -346,9 +339,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 exit;
         };
 ...
-     __________________________________________________________
 
-1.7.2. rl_check_pipe([pipe_no])
+1.7.2.  rl_check_pipe([pipe_no])
 
    Check the current request against the matched ratelimit
    algorithm. If no parameter is provided, the queue will be
@@ -361,12 +353,11 @@ modparam("ratelimit", "reply_reason", "Limiting")
    matched algorithm is reached.
 
    Meaning of the parameters is as follows:
-
      * pipe_no - the pipe id to be used by ratelimit.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-7. rl_check_pipe usage
+   Example 1.7. rl_check_pipe usage
 ...
         # perform queue/pipe match for current method
         if (!rl_check_pipe()) {
@@ -380,9 +371,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 exit;
         };
 ...
-     __________________________________________________________
 
-1.7.3. rl_drop([[min ], max])
+1.7.3.  rl_drop([[min ], max])
 
    For the current request, a "503 - Server Unavailable" reply is
    sent back. The reply may or may not have a "Retry-After"
@@ -394,13 +384,12 @@ modparam("ratelimit", "reply_reason", "Limiting")
    given min and max.
 
    Meaning of the parameters is as follows:
-
      * min - the minimum value of "Retry-After" header.
-       max - the maximum value of "Retry-After" header.
+     * max - the maximum value of "Retry-After" header.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-8. rl_drop usage
+   Example 1.8. rl_drop usage
 ...
         if (!rl_check()) {
                 # send back a "503 - Server Unavailable"
@@ -409,11 +398,10 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 exit;
         };
 ...
-     __________________________________________________________
 
 1.8. Exported MI Functions
 
-1.8.1. rl_stats
+1.8.1.  rl_stats
 
    Lists the parameters and variabiles in the ratelimit module.
 
@@ -424,16 +412,14 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_stats:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.8.2. rl_set_pipe
+1.8.2.  rl_set_pipe
 
    Sets the pipe parameters for the given pipe id.
 
    Name: rl_set_pipe
 
    Parameters:
-
      * pipe_id - pipe id.
      * pipe_algorithm - the algorithm assigned to the given pipe
        id.
@@ -445,9 +431,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 RED
                 10
                 _empty_line_
-     __________________________________________________________
 
-1.8.3. rl_get_pipes
+1.8.3.  rl_get_pipes
 
    Gets the list of in use pipes.
 
@@ -458,16 +443,14 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_get_pipes:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.8.4. rl_set_queue
+1.8.4.  rl_set_queue
 
    Sets the queue parameters for the given queue id.
 
    Name: rl_set_queue
 
    Parameters:
-
      * queue_id - queue id.
      * queue_method - the method assigned to the given queue id.
      * pipe_id - the pipe id assigned to the given queue id.
@@ -478,9 +461,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 INVITE
                 2
                 _empty_line_
-     __________________________________________________________
 
-1.8.5. rl_get_queues
+1.8.5.  rl_get_queues
 
    Gets the list of in use queues.
 
@@ -491,16 +473,14 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_get_queues:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.8.6. rl_set_pid
+1.8.6.  rl_set_pid
 
    Sets the PID Controller parameters for the Feedback Algorithm.
 
    Name: rl_set_pid
 
    Parameters:
-
      * ki - the integral parameter.
      * kp - the proportional parameter.
      * kd - the derivative parameter.
@@ -511,9 +491,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 0.5
                 0.5
                 _empty_line_
-     __________________________________________________________
 
-1.8.7. rl_get_pid
+1.8.7.  rl_get_pid
 
    Gets the list of in use PID Controller parameters.
 
@@ -524,9 +503,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
    MI FIFO Command Format:
                 :rl_get_pid:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.8.8. rl_push_load
+1.8.8.  rl_push_load
 
    Force the value of the load parameter. This methos is usefull
    for testing the Feedback algorithm.
@@ -534,7 +512,6 @@ modparam("ratelimit", "reply_reason", "Limiting")
    Name: rl_push_load
 
    Parameters:
-
      * load - the forced value of load (it must be greater then
        0.0 and smaller then 1.0).
 
@@ -542,9 +519,8 @@ modparam("ratelimit", "reply_reason", "Limiting")
                 :rl_push_load:_reply_fifo_file_
                 0.85
                 _empty_line_
-     __________________________________________________________
 
-1.8.9. rl_set_dbg
+1.8.9.  rl_set_dbg
 
    This MI function will enable/disable a WARNING debug log
    exposing the internal counters for each pipe (useful in
@@ -553,19 +529,49 @@ modparam("ratelimit", "reply_reason", "Limiting")
    Name: rl_set_dbg
 
    Parameters:
-
      * dbg - the debug value (0 means disable and 1 means enable).
 
    MI FIFO Command Format:
                 :rl_set_dbg:_reply_fifo_file_
                 1
                 _empty_line_
-     __________________________________________________________
 
 1.9. Known limitations
 
    The pipes and queues are stored as static vectors, so no more
    than MAX_PIPES/MAX_QUEUES can be added without recompilation.
-
      * MAX_PIPES - 16
      * MAX_QUEUES - 10
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

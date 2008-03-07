@@ -9,9 +9,13 @@ Edited by
 Bogdan Iancu
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -41,11 +45,13 @@ Bogdan Iancu
               1.5.8. sent_err_replies
               1.5.9. received_ACKs
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. enable_stats example
-   1-2. sl_send_reply usage
-   1-3. sl_reply_error usage
-     __________________________________________________________
+
+   1.1. enable_stats example
+   1.2. sl_send_reply usage
+   1.3. sl_reply_error usage
 
 Chapter 1. User's Guide
 
@@ -77,24 +83,19 @@ Chapter 1. User's Guide
    the current to-tag, which will be mirrored in ACK. OpenSER will
    not see its signature and forward the ACK downstream. Caused
    harm is not bad--just a useless ACK is forwarded.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -109,13 +110,12 @@ Chapter 1. User's Guide
 
    Default value is 1 (enabled).
 
-   Example 1-1. enable_stats example
+   Example 1.1. enable_stats example
 modparam("sl", "enable_stats", 0)
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. sl_send_reply(code, reason)
+1.4.1.  sl_send_reply(code, reason)
 
    For the current request, a reply is sent back having the given
    code and text reason. The reply is sent stateless, totally
@@ -124,21 +124,19 @@ modparam("sl", "enable_stats", 0)
    can contain pseudo-variables that are replaced at runtime.
 
    Meaning of the parameters is as follows:
-
      * code - Return code.
      * reason - Reason phrase.
 
    This function can be used from REQUEST_ROUTE, ERROR_ROUTE.
 
-   Example 1-2. sl_send_reply usage
+   Example 1.2. sl_send_reply usage
 ...
 sl_send_reply("404", "Not found");
 ...
 sl_reply("$err.rcode", "$err.rreason");
 ...
-     __________________________________________________________
 
-1.4.2. sl_reply_error()
+1.4.2.  sl_reply_error()
 
    Sends back an error reply describing the nature of the last
    internal error. Usually this function should be used after a
@@ -146,54 +144,78 @@ sl_reply("$err.rcode", "$err.rreason");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-3. sl_reply_error usage
+   Example 1.3. sl_reply_error usage
 ...
 sl_reply_error();
 ...
-     __________________________________________________________
 
 1.5. Exported Statistics
 
 1.5.1. 1xx_replies
 
    The number of 1xx_replies.
-     __________________________________________________________
 
 1.5.2. 2xx_replies
 
    The number of 2xx_replies.
-     __________________________________________________________
 
 1.5.3. 3xx_replies
 
    The number of 3xx_replies.
-     __________________________________________________________
 
 1.5.4. 4xx_replies
 
    The number of 4xx_replies.
-     __________________________________________________________
 
 1.5.5. 5xx_replies
 
    The number of 5xx_replies.
-     __________________________________________________________
 
 1.5.6. 6xx_replies
 
    The number of 6xx_replies.
-     __________________________________________________________
 
 1.5.7. sent_replies
 
    The number of sent_replies.
-     __________________________________________________________
 
 1.5.8. sent_err_replies
 
    The number of sent_err_replies.
-     __________________________________________________________
 
 1.5.9. received_ACKs
 
    The number of received_ACKs.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

@@ -1,0 +1,529 @@
+<!-- cfgutils Module User's Guide -->
+
+<chapter>
+    
+    <title>User's Guide</title>
+
+    <section>
+	<title>Overview</title>
+	<para>Useful extensions for the server configuration.</para>
+	<para>
+	The cfgutils module can be used to introduce randomness to
+	the behaviour of the server. It provides setup functions
+	and the <quote>rand_event</quote> function. This function return either
+	true or false, depending on a random value and a specified probability.
+	E.g. if you set via fifo or script a probability value of 5%, then 5% of
+	all calls to rand_event will return false.
+	The pseudovariable <quote>$RANDOM</quote> could be used to introduce 
+	random values e.g. into a SIP reply.
+	</para>
+	<para>
+	The benefit of this module is the probability of the decision
+	can be manipulated by external applications such as web interface
+	or command line tools. The probability must be specified as 
+	percent value, ranging from 0 to 100.
+	</para>
+	<para>
+	The module exports commands to FIFO server that can be used to change
+	the global settings via FIFO interface. The FIFO commands are:
+	<quote>set_prob</quote>, <quote>reset_prob</quote> and
+	<quote>get_prob</quote>.
+	</para>
+	<para>
+	This module can be used for simple load-shedding, e.g. reply 5% of
+	the Invites with a 503 error and a adequate random Retry-After value.
+	</para>
+	<para>
+	Due the openser architecture the module uses only one seed for all the
+	children, that means if you have for example three children, the random
+	descision and the returned random value will repeat three times.
+	</para>
+	<para>
+	The module provides as well functions to delay the execution of the
+	server. The functions <quote>sleep</quote> and <quote>usleep</quote> could
+	be used to let the server wait a specific time interval.
+	</para>
+	<para>It can also hash the config file used from the server with a (weak)
+	cryptographic hash function on startup. This value is saved and can be
+	later compared to the actual hash, to detect modifications of this file
+	after the server start. This functions are available as the FIFO commands
+	<quote>check_config_hash</quote> and <quote>get_config_hash</quote>.
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<para>
+	    The module depends on the following modules (in the other words the
+		listed modules must be loaded before this module):
+	    <itemizedlist>
+		<listitem>
+		    <para><emphasis>none</emphasis></para>
+		</listitem>
+	    </itemizedlist>
+	</para>
+    </section>
+    <section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>initial_probability</varname> (string)</title>
+		<para>
+		The initial value of the probability.
+		</para>
+		<para>
+		Default value is 
+			<quote>10</quote>.
+		</para>
+		<example>
+		<title><varname>initial_probability</varname> parameter usage</title>
+		<programlisting format="linespecific">
+   
+modparam("cfgutils", "initial_probability", "15");
+   
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+		<title><varname>hash_file</varname> (string)</title>
+		<para>
+		The config file name for that a hash value should be calculated on startup.
+		</para>
+		<para>
+		The default value is equal the config file that is used from the server,
+		for example <quote>/etc/openser/openser.cfg</quote>.
+		</para>
+		<example>
+		<title><varname>hash_file</varname> parameter usage</title>
+		<programlisting format="linespecific">
+   
+modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
+   
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+		<title><varname>shvset</varname> (string)</title>
+		<para>
+		Set the value of a shared variable ($shv(name)). The parameter
+		can be set many times.
+		</para>
+		<para>
+		The value of the parameter has the format:
+		_name_ '=' _type_ ':' _value_
+		</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>i</quote>: integer value </para></listitem> 
+			         <listitem><para> <quote>s</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title><varname>shvset</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "shvset", "debug=i:1")
+modparam("cfgutils", "shvset", "pstngw=s:sip:10.10.10.10")
+...
+</programlisting>
+	    </example>
+	</section>
+</section>
+
+    <section>
+	<title>Exported Functions</title>
+	<section>
+		<title><function moreinfo="none">rand_event()</function></title>
+		<para>
+			Return true or false, depending on a random value and a
+			probability value.
+		</para>
+		<example>
+			<title><function moreinfo="none">rand_event()</function> usage</title>
+			<programlisting format="linespecific">
+...
+if (rand_event()) {
+  append_to_reply("Retry-After: 120\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section>
+	    <title><function moreinfo="none">rand_set_prob(probabiltiy)</function></title>
+	    <para>
+		Set the <quote>probability</quote> of the decision.
+	    </para>
+	    <para>
+		<quote>probability</quote> can have a value from the range 0..99.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_set_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_set_prob("4");
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">rand_reset_prob()</function></title>
+	    <para>
+		Reset the probability back to the inital value.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_reset_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_reset_prob();
+...
+</programlisting>
+	    </example>
+	</section>
+
+	<section>
+	    <title><function moreinfo="none">rand_get_prob()</function></title>
+	    <para>
+		Return the current probability setting, e.g. for logging purposes.
+	    </para>
+	    <example>
+		<title><function moreinfo="none">rand_get_prob()</function> usage</title>
+		<programlisting format="linespecific">
+...
+rand_get_prob();
+   
+</programlisting>
+	    </example>
+	</section>
+	<section>
+		<title>
+			<function moreinfo="none">sleep(time)</function>
+		</title>
+		<para>
+			Waits "time" seconds.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>time</emphasis> - Time to wait in seconds.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>sleep</function> usage</title>
+			<programlisting format="linespecific">
+...
+sleep("1");
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title>
+			<function moreinfo="none">usleep(time)</function>
+		</title>
+		<para>
+			Waits "time" milli-seconds.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+			<listitem>
+				<para><emphasis>time</emphasis> - Time to wait in milli-seconds.
+				</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>usleep</function> usage</title>
+			<programlisting format="linespecific">
+...
+usleep("500");
+...
+			</programlisting>
+		</example>
+	</section>
+</section>
+	<section>
+		<title><acronym>MI</acronym> Commands</title>
+		<section>
+			<title><function moreinfo="none">rand_set_prop</function></title>
+			<para>
+				Set the probability value to the given parameter.
+				The parameter should be a percent value.
+			</para>
+			<para>
+				The parameter value must be a number from 0 to 99.
+			</para>
+			<example>
+				<title><function moreinfo="none">rand_set_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo rand_set_prob 10
+...
+</programlisting>
+			</example>
+			
+		</section>
+		<section>
+			<title><function moreinfo="none">rand_reset_prob</function></title>
+			<para>
+				Reset the probability value to the inital start value.
+			</para>
+			<para>
+				This command don't need a parameter.
+			</para>
+			<example>
+				<title>
+					<function moreinfo="none">rand_reset_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo rand_reset_prob
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">rand_get_prob</function></title>
+			<para>
+				Return the actual probability setting.
+			</para>
+			<para>
+				The function return the actual probability value.
+			</para>
+			<example>
+				<title><function moreinfo="none">rand_get_prob</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo get_prob
+The actual probability is 50 percent.
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">check_config_hash</function></title>
+			<para>
+				Check if the actual config file hash is identical to the stored one.
+			</para>
+			<para>
+				The function returns 200 OK if the hash values are identical, 400 if
+				there are not identical and 500 on errors. Additional a short
+				text message is printed.
+			</para>
+			<example>
+				<title><function moreinfo="none">check_config_hash</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo check_config_hash
+The actual config file hash is identical to the stored one.
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">get_config_hash</function></title>
+			<para>
+				Return the stored config file hash.
+			</para>
+			<para>
+				The function returns 200 OK and the hash value.
+			</para>
+			<example>
+				<title><function moreinfo="none">get_config_hash</function> usage</title>
+				<programlisting format="linespecific">
+...
+$ openserctl fifo get_config_hash
+1580a37104eb4de69ab9f31ce8d6e3e0
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">shv_set</function></title>
+			<para>
+				Set the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>int</quote>: integer value </para></listitem> 
+			         <listitem><para> <quote>str</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:shv_set:_reply_fifo_file_
+		_name_
+		_type_
+		_value_
+		_empty_line_
+		</programlisting>
+			<example>
+			<title><function moreinfo="none">shv_set</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo shv_set debug int 0
+...
+</programlisting>
+			</example>
+		</section>
+		<section>
+			<title><function moreinfo="none">shv_get</function></title>
+			<para>
+				Get the value of a shared variable ($shv(name)).
+			</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name. If this parameter
+			is missing, all shared variables are returned.</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:shv_get:_reply_fifo_file_
+		_name_
+		_empty_line_
+		</programlisting>
+			<example>
+			<title><function moreinfo="none">shv_get</function> usage</title>
+			<programlisting format="linespecific">
+...
+$ openserctl fifo shv_get debug
+$ openserctl fifo shv_get
+...
+</programlisting>
+			</example>
+		</section>
+</section>
+	
+<section>
+	<title>Exported pseudo-variables</title>
+		
+		<section>
+			<title><varname>$RANDOM</varname></title>
+			<para>
+				Returns a random value from the [0 - 2^31) range.
+			</para>
+			<example>
+				<title><function moreinfo="none">RANDOM pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+if (get_random()) {
+  $avp(i:10) = ($RANDOM / 16777216); # 2^24
+  if ($avp(i:10) &lt; 10) {
+     $avp(i:10) = 10;
+  }
+  append_to_reply("Retry-After: $avp(i:10)\n");
+  sl_send_reply("503", "Try later");
+  exit;
+};
+# normal message processing follows
+   
+				 </programlisting>
+			</example>
+	</section>
+	<section>
+			<title><varname>$time(name)</varname></title>
+			<para>
+			The PV provides access to broken-down time attributes.
+			</para>
+			<para>
+			The <quote>name</quote> can be:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>sec</emphasis> - return seconds (int 0-59)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>min</emphasis> - return minutes (int 0-59)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>hour</emphasis> - return hours (int 0-23)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>mday</emphasis> - return the day of month (int 0-59)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>mon</emphasis> - return the month (int 1-12)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>year</emphasis> - return the year (int, e.g., 2008)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>wday</emphasis> - return the day of week (int, 1=Sunday - 7=Saturday)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>yday</emphasis> - return the day of year (int, 1-366)</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>isdst</emphasis> - return daylight saving time status (int, 0 - DST off, >0 DST on)</para>
+				</listitem>	  
+			</itemizedlist>
+			<example>
+				<title><function moreinfo="none">time(name) pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+if ($time(year) == 2008) {
+	xlog("request: $rm from $fu to $ru in year 2008\n");
+}
+...
+				 </programlisting>
+			</example>
+	</section>
+	<section>
+			<title><varname>$shv(name)</varname></title>
+			<para>
+				It is a class of pseudo-variables stored in shared memory. The
+				value of $shv(name) is visible across all openser processes.
+				Each <quote>shv</quote> has single value and it is initialized
+				to integer 0. You can use <quote>shvset</quote> parameter to
+				initialize the shared variable. The module exports a set of MI
+				functions to get/set the value of shared variables.
+			</para>
+			<example>
+				<title><function moreinfo="none">shv(name) pseudo-variable</function> usage</title>
+				<programlisting format="linespecific">
+...
+modparam("cfgutils", "shvset", "debug=i:1")
+...
+if ($shv(debug) == 1) {
+	xlog("request: $rm from $fu to $ru\n");
+}
+...
+				 </programlisting>
+			</example>
+	</section>
+</section>
+</chapter>
+

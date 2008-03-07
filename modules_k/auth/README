@@ -3,25 +3,34 @@ Auth Module
 Jan Janak
 
    FhG Fokus
+   <jan@iptel.org>
 
 Juha Heinanen
 
    Song Networks
+   <jh@song.fi>
 
 Bogdan-Andrei Iancu
 
    voice-system.ro
+   <bogdan@voice-system.ro>
 
 Edited by
 
 Jan Janak
 
+   <jan@iptel.org>
+
    Copyright © 2002, 2003 FhG FOKUS
 
    Copyright © 2005 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -53,25 +62,27 @@ Jan Janak
               1.4.7. pv_www_authorize(realm)
               1.4.8. pv_proxy_authorize(realm)
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. secret parameter example
-   1-2. nonce_expire parameter example
-   1-3. rpid_prefix parameter example
-   1-4. rpid_suffix parameter example
-   1-5. realm_prefix parameter example
-   1-6. rpid_avp parameter example
-   1-7. username_spec parameter usage
-   1-8. password_spec parameter usage
-   1-9. calculate_ha1 parameter usage
-   1-10. www_challenge usage
-   1-11. proxy_challenge usage
-   1-12. consume_credentials example
-   1-13. is_rpid_user_e164 usage
-   1-14. append_rpid_hf usage
-   1-15. append_rpid_hf(prefix, suffix) usage
-   1-16. pv_www_authorize usage
-   1-17. pv_proxy_authorize usage
-     __________________________________________________________
+
+   1.1. secret parameter example
+   1.2. nonce_expire parameter example
+   1.3. rpid_prefix parameter example
+   1.4. rpid_suffix parameter example
+   1.5. realm_prefix parameter example
+   1.6. rpid_avp parameter example
+   1.7. username_spec parameter usage
+   1.8. password_spec parameter usage
+   1.9. calculate_ha1 parameter usage
+   1.10. www_challenge usage
+   1.11. proxy_challenge usage
+   1.12. consume_credentials example
+   1.13. is_rpid_user_e164 usage
+   1.14. append_rpid_hf usage
+   1.15. append_rpid_hf(prefix, suffix) usage
+   1.16. pv_www_authorize usage
+   1.17. pv_proxy_authorize usage
 
 Chapter 1. User's Guide
 
@@ -81,7 +92,6 @@ Chapter 1. User's Guide
    by other authentication related modules. Also, it can perform
    authentication taking username and password from
    pseudo-variables.
-     __________________________________________________________
 
 1.2. Dependencies
 
@@ -89,17 +99,13 @@ Chapter 1. User's Guide
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
-
      * sl -- Stateless replies
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * none
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -118,9 +124,8 @@ Chapter 1. User's Guide
    to stay with the default. Any clients should send the reply to
    the server that issued the request.
 
-   Example 1-1. secret parameter example
+   Example 1.1. secret parameter example
 modparam("auth", "secret", "johndoessecretphrase")
-     __________________________________________________________
 
 1.3.2. nonce_expire (integer)
 
@@ -135,9 +140,8 @@ modparam("auth", "secret", "johndoessecretphrase")
 
    The value is in seconds and default value is 300 seconds.
 
-   Example 1-2. nonce_expire parameter example
+   Example 1.2. nonce_expire parameter example
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
-     __________________________________________________________
 
 1.3.3. rpid_prefix (string)
 
@@ -146,9 +150,8 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 
    Default value is "".
 
-   Example 1-3. rpid_prefix parameter example
+   Example 1.3. rpid_prefix parameter example
 modparam("auth", "rpid_prefix", "Whatever <")
-     __________________________________________________________
 
 1.3.4. rpid_suffix (string)
 
@@ -158,9 +161,8 @@ modparam("auth", "rpid_prefix", "Whatever <")
    Default value is
    ";party=calling;id-type=subscriber;screen=yes".
 
-   Example 1-4. rpid_suffix parameter example
+   Example 1.4. rpid_suffix parameter example
 modparam("auth", "rpid_suffix", "@1.2.3.4>")
-     __________________________________________________________
 
 1.3.5. realm_prefix (string)
 
@@ -174,9 +176,8 @@ modparam("auth", "rpid_suffix", "@1.2.3.4>")
 
    Default value is empty string.
 
-   Example 1-5. realm_prefix parameter example
+   Example 1.5. realm_prefix parameter example
 modparam("auth", "realm_prefix", "sip.")
-     __________________________________________________________
 
 1.3.6. rpid_avp (string)
 
@@ -190,9 +191,8 @@ modparam("auth", "realm_prefix", "sip.")
 
    Default value is "$avp(s:rpid)".
 
-   Example 1-6. rpid_avp parameter example
+   Example 1.6. rpid_avp parameter example
 modparam("auth", "rpid_avp", "$avp(i:13)")
-     __________________________________________________________
 
 1.3.7. username_spec (string)
 
@@ -200,9 +200,8 @@ modparam("auth", "rpid_avp", "$avp(i:13)")
 
    Default value is "NULL".
 
-   Example 1-7. username_spec parameter usage
+   Example 1.7. username_spec parameter usage
 modparam("auth", "username_spec", "$var(username)")
-     __________________________________________________________
 
 1.3.8. password_spec (string)
 
@@ -210,9 +209,8 @@ modparam("auth", "username_spec", "$var(username)")
 
    Default value is "NULL".
 
-   Example 1-8. password_spec parameter usage
+   Example 1.8. password_spec parameter usage
 modparam("auth", "password_spec", "$avp(s:password)")
-     __________________________________________________________
 
 1.3.9. calculate_ha1 (integer)
 
@@ -229,13 +227,12 @@ modparam("auth", "password_spec", "$avp(s:password)")
 
    Default value of this parameter is 0.
 
-   Example 1-9. calculate_ha1 parameter usage
+   Example 1.9. calculate_ha1 parameter usage
 modparam("auth", "calculate_ha1", 1)
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. www_challenge(realm, qop)
+1.4.1.  www_challenge(realm, qop)
 
    The function challenges a user agent. It will generate a
    WWW-Authorize header field containing a digest challenge, it
@@ -246,7 +243,6 @@ modparam("auth", "calculate_ha1", 1)
    regarding digest authentication see RFC2617.
 
    Meaning of the parameters is as follows:
-
      * realm - Realm is a opaque string that the user agent should
        present to the user so he can decide what username and
        password to use. Usually this is domain of the host the
@@ -274,15 +270,14 @@ modparam("auth", "calculate_ha1", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-10. www_challenge usage
+   Example 1.10. www_challenge usage
 ...
 if (www_authorize("siphub.net", "subscriber")) {
         www_challenge("siphub.net", "1");
 };
 ...
-     __________________________________________________________
 
-1.4.2. proxy_challenge(realm, qop)
+1.4.2.  proxy_challenge(realm, qop)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it
@@ -293,7 +288,6 @@ if (www_authorize("siphub.net", "subscriber")) {
    regarding digest authentication see RFC2617.
 
    Meaning of the parameters is as follows:
-
      * realm - Realm is a opaque string that the user agent should
        present to the user so he can decide what username and
        password to use. Usually this is domain of the host the
@@ -319,15 +313,14 @@ if (www_authorize("siphub.net", "subscriber")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-11. proxy_challenge usage
+   Example 1.11. proxy_challenge usage
 ...
 if (!proxy_authorize("", "subscriber)) {
         proxy_challenge("", "1");  # Realm will be autogenerated
 };
 ...
-     __________________________________________________________
 
-1.4.3. consume_credentials()
+1.4.3.  consume_credentials()
 
    This function removes previously authorized credentials from
    the message being processed by the server. That means that the
@@ -339,15 +332,14 @@ if (!proxy_authorize("", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-12. consume_credentials example
+   Example 1.12. consume_credentials example
 ...
 if (www_authorize("", "subscriber)) {
     consume_credentials();
 };
 ...
-     __________________________________________________________
 
-1.4.4. is_rpid_user_e164()
+1.4.4.  is_rpid_user_e164()
 
    The function checks if the SIP URI received from the database
    or radius server and will potentially be used in
@@ -358,15 +350,14 @@ if (www_authorize("", "subscriber)) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-13. is_rpid_user_e164 usage
+   Example 1.13. is_rpid_user_e164 usage
 ...
 if (is_rpid_user_e164()) {
     # do something here
 };
 ...
-     __________________________________________________________
 
-1.4.5. append_rpid_hf()
+1.4.5.  append_rpid_hf()
 
    Appends to the message a Remote-Party-ID header that contains
    header 'Remote-Party-ID: ' followed by the saved value of the
@@ -377,22 +368,20 @@ if (is_rpid_user_e164()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-14. append_rpid_hf usage
+   Example 1.14. append_rpid_hf usage
 ...
 append_rpid_hf();  # Append Remote-Party-ID header field
 ...
-     __________________________________________________________
 
-1.4.6. append_rpid_hf(prefix, suffix)
+1.4.6.  append_rpid_hf(prefix, suffix)
 
-   This function is the same as Section 1.4.5. The only difference
-   is that it accepts two parameters--prefix and suffix to be
-   added to Remote-Party-ID header field. This function ignores
-   rpid_prefix and rpid_suffix parameters, instead of that allows
-   to set them in every call.
+   This function is the same as Section 1.4.5, "
+   append_rpid_hf()". The only difference is that it accepts two
+   parameters--prefix and suffix to be added to Remote-Party-ID
+   header field. This function ignores rpid_prefix and rpid_suffix
+   parameters, instead of that allows to set them in every call.
 
    Meaning of the parameters is as follows:
-
      * prefix - Prefix of the Remote-Party-ID URI. The string will
        be added at the begining of body of the header field, just
        before the URI.
@@ -403,14 +392,13 @@ append_rpid_hf();  # Append Remote-Party-ID header field
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
 
-   Example 1-15. append_rpid_hf(prefix, suffix) usage
+   Example 1.15. append_rpid_hf(prefix, suffix) usage
 ...
 # Append Remote-Party-ID header field
 append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...
-     __________________________________________________________
 
-1.4.7. pv_www_authorize(realm)
+1.4.7.  pv_www_authorize(realm)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will
@@ -421,7 +409,6 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
    which will challenge the user again.
 
    Negative codes may be interpreted as follows:
-
      * -5 (generic error) - some generic error occurred and no
        reply was sent out;
      * -4 (no credentials) - credentials were not found in
@@ -431,7 +418,6 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
      * -1 (invalid user) - authentication user does not exist.
 
    Meaning of the parameters is as follows:
-
      * realm - Realm is a opaque string that the user agent should
        present to the user so he can decide what username and
        password to use. Usually this is domain of the host the
@@ -445,7 +431,7 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-16. pv_www_authorize usage
+   Example 1.16. pv_www_authorize usage
 ...
 $var(username)="abc";
 $avp(s:password)="xyz";
@@ -453,9 +439,8 @@ if (pv_www_authorize("openser.org")) {
         www_challenge("openser.org", "1");
 };
 ...
-     __________________________________________________________
 
-1.4.8. pv_proxy_authorize(realm)
+1.4.8.  pv_proxy_authorize(realm)
 
    The function verifies credentials according to RFC2617. If the
    credentials are verified successfully then the function will
@@ -467,7 +452,6 @@ if (pv_www_authorize("openser.org")) {
    negative return codes, see the above function.
 
    Meaning of the parameters is as follows:
-
      * realm - Realm is a opaque string that the user agent should
        present to the user so he can decide what username and
        password to use. Usually this is domain of the host the
@@ -479,7 +463,7 @@ if (pv_www_authorize("openser.org")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-17. pv_proxy_authorize usage
+   Example 1.17. pv_proxy_authorize usage
 ...
 $var(username)="abc";
 $avp(s:password)="xyz";
@@ -487,3 +471,36 @@ if (!pv_proxy_authorize("")) {
         proxy_challenge("", "1");  # Realm will be autogenerated
 };
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

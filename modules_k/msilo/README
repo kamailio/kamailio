@@ -2,16 +2,18 @@ MSILO Module
 
 Daniel-Constantin Mierla
 
-   voice-system.ro
-
 Edited by
 
 Daniel-Constantin Mierla
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -59,38 +61,40 @@ Daniel-Constantin Mierla
               1.5.4. dumped_reminders
               1.5.5. failed_reminders
 
-        1.6. Installation & Running
+        1.6. Installation and Running
 
               1.6.1. OpenSER config file
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set the "db_url" parameter
-   1-2. Set the "db_table" parameter
-   1-3. Set the "registrar" parameter
-   1-4. Set the "reminder" parameter
-   1-5. Set the "outbound_proxy" parameter
-   1-6. Set the "expire_time" parameter
-   1-7. Set the "check_time" parameter
-   1-8. Set the "send_time" parameter
-   1-9. Set the "clean_period" parameter
-   1-10. Set the "use_contact" parameter
-   1-11. Set the "sc_mid" parameter
-   1-12. Set the "sc_from" parameter
-   1-13. Set the "sc_to" parameter
-   1-14. Set the "sc_uri_user" parameter
-   1-15. Set the "sc_uri_host" parameter
-   1-16. Set the "sc_body" parameter
-   1-17. Set the "sc_ctype" parameter
-   1-18. Set the "sc_exp_time" parameter
-   1-19. Set the "sc_inc_time" parameter
-   1-20. Set the "sc_snd_time" parameter
-   1-21. Set the "snd_time_avp" parameter
-   1-22. Set the "add_date" parameter
-   1-23. Set the "max_messages" parameter
-   1-24. m_store usage
-   1-25. m_dump usage
-   1-26. OpenSER config script - sample msilo usage
-     __________________________________________________________
+
+   1.1. Set the "db_url" parameter
+   1.2. Set the "db_table" parameter
+   1.3. Set the "registrar" parameter
+   1.4. Set the "reminder" parameter
+   1.5. Set the "outbound_proxy" parameter
+   1.6. Set the "expire_time" parameter
+   1.7. Set the "check_time" parameter
+   1.8. Set the "send_time" parameter
+   1.9. Set the "clean_period" parameter
+   1.10. Set the "use_contact" parameter
+   1.11. Set the "sc_mid" parameter
+   1.12. Set the "sc_from" parameter
+   1.13. Set the "sc_to" parameter
+   1.14. Set the "sc_uri_user" parameter
+   1.15. Set the "sc_uri_host" parameter
+   1.16. Set the "sc_body" parameter
+   1.17. Set the "sc_ctype" parameter
+   1.18. Set the "sc_exp_time" parameter
+   1.19. Set the "sc_inc_time" parameter
+   1.20. Set the "sc_snd_time" parameter
+   1.21. Set the "snd_time_avp" parameter
+   1.22. Set the "add_date" parameter
+   1.23. Set the "max_messages" parameter
+   1.24. m_store usage
+   1.25. m_dump usage
+   1.26. OpenSER config script - sample msilo usage
 
 Chapter 1. User's Guide
 
@@ -121,27 +125,22 @@ Chapter 1. User's Guide
    Agent to have no support for MESSAGE request. In this case it
    should be used the "failure_route" to store the undelivered
    requests.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER modules
 
    The following modules must be loaded before this module:
-
      * database module - mysql, dbtext or other module that
        implements the "db" interface and provides support for
        storing/receiving data to/from a database system.
      * TM--transaction module--is used to send SIP requests.
-     __________________________________________________________
 
 1.2.2. External libraries or applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module:
-
      * none.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -151,11 +150,10 @@ Chapter 1. User's Guide
 
    Default value is "mysql://openser:openserrw@localhost/openser".
 
-   Example 1-1. Set the "db_url" parameter
+   Example 1.1. Set the "db_url" parameter
 ...
 modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 ...
-     __________________________________________________________
 
 1.3.2. db_table (string)
 
@@ -163,11 +161,10 @@ modparam("msilo", "db_url", "mysql://user:passwd@host.com/dbname")
 
    Default value is "silo".
 
-   Example 1-2. Set the "db_table" parameter
+   Example 1.2. Set the "db_table" parameter
 ...
 modparam("msilo", "db_table", "silo")
 ...
-     __________________________________________________________
 
 1.3.3. registrar (string)
 
@@ -180,11 +177,10 @@ modparam("msilo", "db_table", "silo")
 
    Default value is "NULL".
 
-   Example 1-3. Set the "registrar" parameter
+   Example 1.3. Set the "registrar" parameter
 ...
 modparam("msilo", "registrar", "sip:registrar@example.org")
 ...
-     __________________________________________________________
 
 1.3.4. reminder (string)
 
@@ -193,11 +189,10 @@ modparam("msilo", "registrar", "sip:registrar@example.org")
 
    Default value is "NULL".
 
-   Example 1-4. Set the "reminder" parameter
+   Example 1.4. Set the "reminder" parameter
 ...
 modparam("msilo", "reminder", "sip:registrar@example.org")
 ...
-     __________________________________________________________
 
 1.3.5. outbound_proxy (string)
 
@@ -209,11 +204,10 @@ modparam("msilo", "reminder", "sip:registrar@example.org")
 
    Default value is "NULL".
 
-   Example 1-5. Set the "outbound_proxy" parameter
+   Example 1.5. Set the "outbound_proxy" parameter
 ...
 modparam("msilo", "outbound_proxy", "sip:openser.org;transport=tcp")
 ...
-     __________________________________________________________
 
 1.3.6. expire_time (int)
 
@@ -222,11 +216,10 @@ modparam("msilo", "outbound_proxy", "sip:openser.org;transport=tcp")
 
    Default value is "259200 (72 hours = 3 days)".
 
-   Example 1-6. Set the "expire_time" parameter
+   Example 1.6. Set the "expire_time" parameter
 ...
 modparam("msilo", "expire_time", 36000)
 ...
-     __________________________________________________________
 
 1.3.7. check_time (int)
 
@@ -237,11 +230,10 @@ modparam("msilo", "expire_time", 36000)
 
    Default value is "30".
 
-   Example 1-7. Set the "check_time" parameter
+   Example 1.7. Set the "check_time" parameter
 ...
 modparam("msilo", "check_time", 10)
 ...
-     __________________________________________________________
 
 1.3.8. send_time (int)
 
@@ -253,11 +245,10 @@ modparam("msilo", "check_time", 10)
 
    Default value is "0".
 
-   Example 1-8. Set the "send_time" parameter
+   Example 1.8. Set the "send_time" parameter
 ...
 modparam("msilo", "send_time", 60)
 ...
-     __________________________________________________________
 
 1.3.9. clean_period (int)
 
@@ -266,11 +257,10 @@ modparam("msilo", "send_time", 60)
 
    Default value is "5".
 
-   Example 1-9. Set the "clean_period" parameter
+   Example 1.9. Set the "clean_period" parameter
 ...
 modparam("msilo", "clean_period", 3)
 ...
-     __________________________________________________________
 
 1.3.10. use_contact (int)
 
@@ -279,11 +269,10 @@ modparam("msilo", "clean_period", 3)
 
    Default value is "1 (0 = off, 1 = on)".
 
-   Example 1-10. Set the "use_contact" parameter
+   Example 1.10. Set the "use_contact" parameter
 ...
 modparam("msilo", "use_contact", 0)
 ...
-     __________________________________________________________
 
 1.3.11. sc_mid (string)
 
@@ -291,11 +280,10 @@ modparam("msilo", "use_contact", 0)
 
    Default value is "mid".
 
-   Example 1-11. Set the "sc_mid" parameter
+   Example 1.11. Set the "sc_mid" parameter
 ...
 modparam("msilo", "sc_mid", "other_mid")
 ...
-     __________________________________________________________
 
 1.3.12. sc_from (string)
 
@@ -304,11 +292,10 @@ modparam("msilo", "sc_mid", "other_mid")
 
    Default value is "src_addr".
 
-   Example 1-12. Set the "sc_from" parameter
+   Example 1.12. Set the "sc_from" parameter
 ...
 modparam("msilo", "sc_from", "source_address")
 ...
-     __________________________________________________________
 
 1.3.13. sc_to (string)
 
@@ -317,11 +304,10 @@ modparam("msilo", "sc_from", "source_address")
 
    Default value is "dst_addr".
 
-   Example 1-13. Set the "sc_to" parameter
+   Example 1.13. Set the "sc_to" parameter
 ...
 modparam("msilo", "sc_to", "destination_address")
 ...
-     __________________________________________________________
 
 1.3.14. sc_uri_user (string)
 
@@ -329,11 +315,10 @@ modparam("msilo", "sc_to", "destination_address")
 
    Default value is "username".
 
-   Example 1-14. Set the "sc_uri_user" parameter
+   Example 1.14. Set the "sc_uri_user" parameter
 ...
 modparam("msilo", "sc_uri_user", "user")
 ...
-     __________________________________________________________
 
 1.3.15. sc_uri_host (string)
 
@@ -341,11 +326,10 @@ modparam("msilo", "sc_uri_user", "user")
 
    Default value is "domain".
 
-   Example 1-15. Set the "sc_uri_host" parameter
+   Example 1.15. Set the "sc_uri_host" parameter
 ...
 modparam("msilo", "sc_uri_host", "domain")
 ...
-     __________________________________________________________
 
 1.3.16. sc_body (string)
 
@@ -353,11 +337,10 @@ modparam("msilo", "sc_uri_host", "domain")
 
    Default value is "body".
 
-   Example 1-16. Set the "sc_body" parameter
+   Example 1.16. Set the "sc_body" parameter
 ...
 modparam("msilo", "sc_body", "message_body")
 ...
-     __________________________________________________________
 
 1.3.17. sc_ctype (string)
 
@@ -365,11 +348,10 @@ modparam("msilo", "sc_body", "message_body")
 
    Default value is "ctype".
 
-   Example 1-17. Set the "sc_ctype" parameter
+   Example 1.17. Set the "sc_ctype" parameter
 ...
 modparam("msilo", "sc_ctype", "content_type")
 ...
-     __________________________________________________________
 
 1.3.18. sc_exp_time (string)
 
@@ -378,11 +360,10 @@ modparam("msilo", "sc_ctype", "content_type")
 
    Default value is "exp_time".
 
-   Example 1-18. Set the "sc_exp_time" parameter
+   Example 1.18. Set the "sc_exp_time" parameter
 ...
 modparam("msilo", "sc_exp_time", "expire_time")
 ...
-     __________________________________________________________
 
 1.3.19. sc_inc_time (string)
 
@@ -391,11 +372,10 @@ modparam("msilo", "sc_exp_time", "expire_time")
 
    Default value is "inc_time".
 
-   Example 1-19. Set the "sc_inc_time" parameter
+   Example 1.19. Set the "sc_inc_time" parameter
 ...
 modparam("msilo", "sc_inc_time", "incoming_time")
 ...
-     __________________________________________________________
 
 1.3.20. sc_snd_time (string)
 
@@ -404,11 +384,10 @@ modparam("msilo", "sc_inc_time", "incoming_time")
 
    Default value is "snd_time".
 
-   Example 1-20. Set the "sc_snd_time" parameter
+   Example 1.20. Set the "sc_snd_time" parameter
 ...
 modparam("msilo", "sc_snd_time", "send_reminder_time")
 ...
-     __________________________________________________________
 
 1.3.21. snd_time_avp (str)
 
@@ -422,11 +401,10 @@ modparam("msilo", "sc_snd_time", "send_reminder_time")
 
    Default value is "null".
 
-   Example 1-21. Set the "snd_time_avp" parameter
+   Example 1.21. Set the "snd_time_avp" parameter
 ...
 modparam("msilo", "snd_time_avp", "$avp(i:123)")
 ...
-     __________________________________________________________
 
 1.3.22. add_date (int)
 
@@ -434,11 +412,10 @@ modparam("msilo", "snd_time_avp", "$avp(i:123)")
 
    Default value is "1" (1==on/0==off).
 
-   Example 1-22. Set the "add_date" parameter
+   Example 1.22. Set the "add_date" parameter
 ...
 modparam("msilo", "add_date", 0)
 ...
-     __________________________________________________________
 
 1.3.23. max_messages (int)
 
@@ -447,11 +424,10 @@ modparam("msilo", "add_date", 0)
 
    Default value is 0.
 
-   Example 1-23. Set the "max_messages" parameter
+   Example 1.23. Set the "max_messages" parameter
 ...
 modparam("msilo", "max_messages", 0)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
@@ -466,7 +442,6 @@ modparam("msilo", "max_messages", 0)
    UA.
 
    Meaning of the parameters is as follows:
-
      * owner - is a string that must contain a SIP URI in whose
        inbox the message will be stored. It can have any pseudo
        variable. If "owner" is missing, the SIP address is taken
@@ -474,12 +449,11 @@ modparam("msilo", "max_messages", 0)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-24. m_store usage
+   Example 1.24. m_store usage
 ...
 m_store();
 m_store("$tu");
 ...
-     __________________________________________________________
 
 1.4.2. m_dump([owner])
 
@@ -489,54 +463,47 @@ m_store("$tu");
    header has a value greater than zero.
 
    Meaning of the parameters is as follows:
-
      * owner - is a string that must contain a SIP URI whose inbox
        will be dumped. It can have any pseudo variable. If "owner"
        is missing, the SIP address is taken from To URI.
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-25. m_dump usage
+   Example 1.25. m_dump usage
 ...
 m_dump();
 m_dump("$fu");
 ...
-     __________________________________________________________
 
 1.5. Exported Statistics
 
 1.5.1. stored_messages
 
    The number of messages stored by msilo.
-     __________________________________________________________
 
 1.5.2. dumped_messages
 
    The number of dumped messages.
-     __________________________________________________________
 
 1.5.3. failed_messages
 
    The number of failed dumped messages.
-     __________________________________________________________
 
 1.5.4. dumped_reminders
 
    The number of dumped reminder messages.
-     __________________________________________________________
 
 1.5.5. failed_reminders
 
    The number of failed reminder messages.
-     __________________________________________________________
 
-1.6. Installation & Running
+1.6. Installation and Running
 
 1.6.1. OpenSER config file
 
    Next picture displays a sample usage of msilo.
 
-   Example 1-26. OpenSER config script - sample msilo usage
+   Example 1.26. OpenSER config script - sample msilo usage
 ...
 # $Id$
 #
@@ -688,3 +655,36 @@ failure_route[1] {
 
 
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

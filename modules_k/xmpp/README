@@ -2,16 +2,20 @@ xmpp Module
 
 Andreea Spirea
 
-   voice-system.ro
+Daniel-Constantin Mierla
 
 Edited by
 
 Andreea Spirea
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -37,17 +41,19 @@ Andreea Spirea
 
         1.5. Configuration
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set backend parameter
-   1-2. Set domain_separator parameter
-   1-3. Set gateway_domain parameter
-   1-4. Set xmpp_domain parameter
-   1-5. Set xmpp_host parameter
-   1-6. Set xmpp_port parameter
-   1-7. Set xmpp_password parameter
-   1-8. Set outbound_proxy parameter
-   1-9. xmpp_send_message() usage
-     __________________________________________________________
+
+   1.1. Set backend parameter
+   1.2. Set domain_separator parameter
+   1.3. Set gateway_domain parameter
+   1.4. Set xmpp_domain parameter
+   1.5. Set xmpp_host parameter
+   1.6. Set xmpp_port parameter
+   1.7. Set xmpp_password parameter
+   1.8. Set outbound_proxy parameter
+   1.9. xmpp_send_message() usage
 
 Chapter 1. User's Guide
 
@@ -58,7 +64,6 @@ Chapter 1. User's Guide
    and XMPP(jabber) clients.
 
    The gateway has two modes to run:
-
      * the component-mode - the gateway requires a standalone XMPP
        server amd the 'xmpp' module acts as a XMPP component
      * the server-mode - the module acts itself as a XMPP server,
@@ -75,7 +80,6 @@ Chapter 1. User's Guide
 
    After you have a running XMPP server, what you need to do is
    set the following parameters in the Openser configuration file:
-
      * gateway_domain, xmpp_domain (which can be the same as
        gateway_domain) and xmpp_host, which are explained in the
        Exported Parameters section;
@@ -94,7 +98,6 @@ Chapter 1. User's Guide
        be the same as the xmpp_password parameter.
 
    A use case, for the component-mode, would look like this:
-
      * Openser is running on sip-server.openser.org;
      * the gateway is running on sip-xmpp.openser.org;
      * the jabber server is running on xmpp.openser.org;
@@ -110,7 +113,6 @@ Chapter 1. User's Guide
    section, from component to server.
 
    A use case, for the server-mode, would look like this:
-
      * Openser is running on sip-server.openser.org;
      * the gateway is running on sip-xmpp.openser.org;
      * the "XMPP server" is running on xmpp-sip.openser.org.
@@ -124,24 +126,19 @@ Chapter 1. User's Guide
    like:
 
    "sip_username<delim>openser_domain@xmpp_domain"
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * requires 'tm' module.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * libexpat1-devel - used for parsing/building XML.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -152,11 +149,10 @@ Chapter 1. User's Guide
 
    Default value is "component".
 
-   Example 1-1. Set backend parameter
+   Example 1.1. Set backend parameter
 ...
  modparam("xmpp", "backend", "server");
 ...
-     __________________________________________________________
 
 1.3.2. domain_separator (string)
 
@@ -169,11 +165,10 @@ Chapter 1. User's Guide
 
    Default value is "*".
 
-   Example 1-2. Set domain_separator parameter
+   Example 1.2. Set domain_separator parameter
 ...
  modparam("xmpp", "domain_separator", "*");
 ...
-     __________________________________________________________
 
 1.3.3. gateway_domain (string)
 
@@ -184,11 +179,10 @@ Chapter 1. User's Guide
 
    Default value is "sip-xmpp.openser.org".
 
-   Example 1-3. Set gateway_domain parameter
+   Example 1.3. Set gateway_domain parameter
 ...
  modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org");
 ...
-     __________________________________________________________
 
 1.3.4. xmpp_domain (string)
 
@@ -197,11 +191,10 @@ Chapter 1. User's Guide
 
    Default value is "sip-xmpp.openser.org".
 
-   Example 1-4. Set xmpp_domain parameter
+   Example 1.4. Set xmpp_domain parameter
 ...
  modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org");
 ...
-     __________________________________________________________
 
 1.3.5. xmpp_host (string)
 
@@ -211,11 +204,10 @@ Chapter 1. User's Guide
 
    Default value is "xmpp.openser.org".
 
-   Example 1-5. Set xmpp_host parameter
+   Example 1.5. Set xmpp_host parameter
 ...
  modparam("xmpp", "xmpp_host", "xmpp.openser.org");
 ...
-     __________________________________________________________
 
 1.3.6. xmpp_port (integer)
 
@@ -226,11 +218,10 @@ Chapter 1. User's Guide
    Default value is "5347", if backend is set to "component" and
    "5269", if backend is set to "server".
 
-   Example 1-6. Set xmpp_port parameter
+   Example 1.6. Set xmpp_port parameter
 ...
  modparam("xmpp", "xmpp_port", "5269");
 ...
-     __________________________________________________________
 
 1.3.7. xmpp_password (string)
 
@@ -245,11 +236,10 @@ Chapter 1. User's Guide
     <user>jabberd</user>;          <!-- default: jabberd -->;
     <pass>secret</pass>;           <!-- default: secret -->;
 
-   Example 1-7. Set xmpp_password parameter
+   Example 1.7. Set xmpp_password parameter
 ...
  modparam("xmpp", "xmpp_password", "secret");
 ...
-     __________________________________________________________
 
 1.3.8. outbound_proxy (string)
 
@@ -261,27 +251,24 @@ Chapter 1. User's Guide
 
    Default value is NULL.
 
-   Example 1-8. Set outbound_proxy parameter
+   Example 1.8. Set outbound_proxy parameter
 ...
  modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp");
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. xmpp_send_message()
+1.4.1.  xmpp_send_message()
 
    Converts SIP messages to XMPP(jabber) messages, in order to be
    relayed to a XMPP(jabber) client.
 
-   Example 1-9. xmpp_send_message() usage
+   Example 1.9. xmpp_send_message() usage
 ...
 xmpp_send_message();
 ...
-     __________________________________________________________
 
 1.5. Configuration
-
 
    Next is presented a sample configuration file one can use to
    implement a standalone SIP-to-XMPP gateway. You can run an
@@ -391,3 +378,36 @@ route{
 
 
 ....
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

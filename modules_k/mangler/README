@@ -9,9 +9,13 @@ Edited by
 Gabriel Vasile
 
    Copyright © 2003 Fill in here
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -32,38 +36,35 @@ Gabriel Vasile
               1.4.4. decode_contact()
               1.4.5. decode_contact_header()
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set db_url parameter
-   1-2. sdp_mangle_ip usage
-   1-3. sdp_mangle_port usage
-   1-4. encode_contact usage
-   1-5. decode_contact usage
-   1-6. decode_contact_header usage
-     __________________________________________________________
+
+   1.1. Set db_url parameter
+   1.2. sdp_mangle_ip usage
+   1.3. sdp_mangle_port usage
+   1.4. encode_contact usage
+   1.5. decode_contact usage
+   1.6. decode_contact_header usage
 
 Chapter 1. User's Guide
 
 1.1. Overview
 
    This is a module to help with SDP mangling. Still in testing.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -72,27 +73,26 @@ Chapter 1. User's Guide
    First char of this parameter is used as separator for
    encoding/decoding Contact header.
 
-  Warning
+Warning
 
-          First char of this field must be set to a value which is not
-          used inside username,password or other fields of contact.
-          Otherwise it is possible for the decoding step to fail/produce
-          wrong results.
+   First char of this field must be set to a value which is not
+   used inside username,password or other fields of contact.
+   Otherwise it is possible for the decoding step to fail/produce
+   wrong results.
 
    Default value is "*".
 
-   Example 1-1. Set db_url parameter
+   Example 1.1. Set db_url parameter
 ...
 modparam("mangler", "contact_flds_separator", "-")
 ...
 
    then an encoded uri might look
    sip:user-password-ip-port-protocol@PublicIP
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. sdp_mangle_ip(pattern, newip)
+1.4.1.  sdp_mangle_ip(pattern, newip)
 
    Changes IP addresses inside SDP package in lines describing
    connections like c=IN IP4 Currently in only changes IP4
@@ -102,7 +102,6 @@ modparam("mangler", "contact_flds_separator", "-")
    replacements + 1.
 
    Meaning of the parameters is as follows:
-
      * pattern - A pair ip/mask used to match IP's located inside
        SDP package in lines c=IN IP4 ip. This lines will only be
        mangled if located IP is in the network described by this
@@ -113,13 +112,12 @@ modparam("mangler", "contact_flds_separator", "-")
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1-2. sdp_mangle_ip usage
+   Example 1.2. sdp_mangle_ip usage
 ...
 sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 ...
-     __________________________________________________________
 
-1.4.2. sdp_mangle_port(offset)
+1.4.2.  sdp_mangle_port(offset)
 
    Changes ports inside SDP package in lines describing media like
    m=audio 13451.
@@ -128,19 +126,17 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
    replacements + 1.
 
    Meaning of the parameters is as follows:
-
      * offset - A string representing an integer which will be
        added/subtracted from the located port.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1-3. sdp_mangle_port usage
+   Example 1.3. sdp_mangle_port usage
 ...
 sdp_mangle_port("-12000");
 ...
-     __________________________________________________________
 
-1.4.3. encode_contact(encoding_prefix)
+1.4.3.  encode_contact(encoding_prefix)
 
    This function will encode uri-s inside Contact header in the
    following manner
@@ -151,21 +147,19 @@ sdp_mangle_port("-12000");
    The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
-
      * encoding_prefix - Something to allow us to determine that a
        contact is encoded publicip--a routable IP, most probably
        you should put your external IP of your NAT box.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1-4. encode_contact usage
+   Example 1.4. encode_contact usage
 ...
 if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 
 ...
-     __________________________________________________________
 
-1.4.4. decode_contact()
+1.4.4.  decode_contact()
 
    This function will decode the URI in first line in packets
    which come with encoded URI in the following manner
@@ -179,13 +173,12 @@ if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-5. decode_contact usage
+   Example 1.5. decode_contact usage
 ...
 if (uri =~ "^enc*") { decode_contact(); }
 ...
-     __________________________________________________________
 
-1.4.5. decode_contact_header()
+1.4.5.  decode_contact_header()
 
    This function will decode URIs inside Contact header in the
    following manner
@@ -199,7 +192,40 @@ if (uri =~ "^enc*") { decode_contact(); }
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
-   Example 1-6. decode_contact_header usage
+   Example 1.6. decode_contact_header usage
 ...
 if (uri =~ "^enc*") { decode_contact_header(); }
 ...
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

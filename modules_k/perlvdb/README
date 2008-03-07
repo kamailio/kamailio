@@ -9,9 +9,13 @@ Edited by
 Bastian Friedrich
 
    Copyright © 2007 Collax GmbH
+   Revision History
+   Revision $Revision: 3839 $ $Date: 2007-03-21 09:53:33 +0100
+                              (Mi, 21 MÃ¤r 2007) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -40,7 +44,8 @@ Bastian Friedrich
               2.4.1. Function parameters
 
         2.5. VTabs
-     __________________________________________________________
+
+   3. Frequently Asked Questions
 
 Chapter 1. User's Guide
 
@@ -68,35 +73,28 @@ race")
    the perlvdb module which will in turn use the Perl class
    OpenSER::VDB::Adapter::AccountingSIPtrace to relay the database
    requests.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * perl -- Perl module
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None (Besides the ones mentioned in the perl module
        documentation).
-     __________________________________________________________
 
 1.3. Exported Parameters
 
    None.
-     __________________________________________________________
 
 1.4. Exported Functions
 
    None.
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
@@ -104,7 +102,6 @@ Chapter 2. Developer's Guide
 
    OpenSER uses a database API for requests of numerous different
    types of data. Four primary operations are supported:
-
      * query
      * insert
      * update
@@ -112,7 +109,6 @@ Chapter 2. Developer's Guide
 
    This module relays these database requests to user implemented
    Perl functions.
-     __________________________________________________________
 
 2.2. Base class OpenSER::VDB
 
@@ -135,7 +131,6 @@ Chapter 2. Developer's Guide
    relational structured parameters into pure Perl function
    arguments, and add a virtual table (VTab) to provide the
    relaying to an underlying technology.
-     __________________________________________________________
 
 2.3. Data types
 
@@ -143,7 +138,6 @@ Chapter 2. Developer's Guide
    the used datatypes will briefly be explained. The OpenSER Perl
    library includes some data types that have to be used in this
    module:
-     __________________________________________________________
 
 2.3.1. OpenSER::VDB::Value
 
@@ -154,7 +148,6 @@ my $val = new OpenSER::VDB::Value(DB_STRING, "foobar");
 
    Value objects contain the type() and data() methods to get or
    set the type and data attributes.
-     __________________________________________________________
 
 2.3.2. OpenSER::VDB::Pair
 
@@ -166,7 +159,6 @@ my $pair = new OpenSER::VDB::Pair("foo", DB_STRING, "bar");
    where foo is the key and bar is the value. Additonally to the
    methods of the Value class, it contains a key() method to get
    or set the key attribute.
-     __________________________________________________________
 
 2.3.3. OpenSER::VDB::ReqCond
 
@@ -179,7 +171,6 @@ my $cond = new OpenSER::VDB::ReqCond("foo", ">", DB_INT, 5);
    value to compare. Additonally to the methods of the Pair class,
    it contains an op() method to get or set the operator
    attribute.
-     __________________________________________________________
 
 2.3.4. OpenSER::VDB::Column
 
@@ -193,7 +184,6 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
 
    The class contains the methods type() and name() to get or set
    the type and name arrays.
-     __________________________________________________________
 
 2.3.5. OpenSER::VDB::Result
 
@@ -201,7 +191,6 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    schema (class Column) and an array of rows, where each row is
    an array of Values. The object methods coldefs() and rows() may
    be used to get and set the object attributes.
-     __________________________________________________________
 
 2.4. Adapters
 
@@ -218,7 +207,6 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    module which is to be used with the adapter. While modules such
    as alias_db only require a query function, others -- such as
    siptrace -- depend on inserts only.
-     __________________________________________________________
 
 2.4.1. Function parameters
 
@@ -244,7 +232,6 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    (which rows to select), an array of strings (which column names
    to return) and a single string by which column to sort. It
    should return an object of type OpenSER::VDB::Result.
-     __________________________________________________________
 
 2.5. VTabs
 
@@ -258,7 +245,6 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
 
    The standard Adapter/VTab pattern lets the user choose between
    three options on how to implement VTabs:
-
      * Single function. When a function is used as a virtual
        table, it is passed the operation name (insert, replace,
        update, query, delete) as its first parameter. The function
@@ -277,3 +263,36 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
        replace, update, delete and/or query. These functions will
        be called in a method context (first parameter is a
        reference to the object).
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

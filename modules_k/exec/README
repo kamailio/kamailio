@@ -9,9 +9,13 @@ Edited by
 Jan Janak
 
    Copyright © 2003 FhG FOKUS
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -33,13 +37,15 @@ Jan Janak
 
         1.5. Known Issues
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set "setvars" parameter
-   1-2. Set "time_to_kill" parameter
-   1-3. exec_dset usage
-   1-4. exec_msg usage
-   1-5. exec_avp usage
-     __________________________________________________________
+
+   1.1. Set "setvars" parameter
+   1.2. Set "time_to_kill" parameter
+   1.3. exec_dset usage
+   1.4. exec_msg usage
+   1.5. exec_avp usage
 
 Chapter 1. User's Guide
 
@@ -50,7 +56,6 @@ Chapter 1. User's Guide
    command string is passed to shell using "popen" command.
    OpenSER passes additionally lot of information about request in
    environment variables:
-
      * SIP_HF_<hf_name> contains value of each header field in
        request. If a header field occurred multiple times, values
        are concatenated and comma-separated. <hf_name> is in
@@ -67,24 +72,19 @@ Chapter 1. User's Guide
        original).
      * SIP_USER is userpart of current request URI.
      * SIP_OUSER is userpart of original request URI.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -95,35 +95,32 @@ Chapter 1. User's Guide
 
    Default value is 1.
 
-   Example 1-1. Set "setvars" parameter
+   Example 1.1. Set "setvars" parameter
 ...
 modparam("exec", "setvars", 1)
 ...
-     __________________________________________________________
 
-1.3.2. time_to_kill (integer)
+1.3.2.  time_to_kill (integer)
 
    Specifies the longest time a program is allowed to execute. If
    the time is exceeded, the program is killed.
 
    Default value is 0.
 
-   Example 1-2. Set "time_to_kill" parameter
+   Example 1.2. Set "time_to_kill" parameter
 ...
 modparam("exec", "time_to_kill", 20)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. exec_dset(command)
+1.4.1.  exec_dset(command)
 
    Executes an external command. Current URI is passed to the
    command as parameter. Output of the command is considered URI
    set (separated by lines).
 
    Meaning of the parameters is as follows:
-
      * command - Command to be executed. It can include pseudo-
        variabes;
 
@@ -133,14 +130,13 @@ modparam("exec", "time_to_kill", 20)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-3. exec_dset usage
+   Example 1.3. exec_dset usage
 ...
 exec_dset("echo TEST > /tmp/test.txt");
 exec_dset("echo TEST > /tmp/$rU.txt");
 ...
-     __________________________________________________________
 
-1.4.2. exec_msg(command)
+1.4.2.  exec_msg(command)
 
    Executes an external command. The whole message is passed to it
    in input, no command-line parameters are added, output of the
@@ -150,7 +146,6 @@ exec_dset("echo TEST > /tmp/$rU.txt");
    for information on usage.
 
    Meaning of the parameters is as follows:
-
      * command - Command to be executed. It can include
        pseudo-variables.
 
@@ -160,21 +155,19 @@ exec_dset("echo TEST > /tmp/$rU.txt");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-4. exec_msg usage
+   Example 1.4. exec_msg usage
 ...
 exec_dset("echo TEST > /tmp/test.txt");
 exec_dset("echo TEST > /tmp/$rU.txt");
 ...
-     __________________________________________________________
 
-1.4.3. exec_avp(command [, avplist])
+1.4.3.  exec_avp(command [, avplist])
 
    Executes an external command. Each line from output of the
    command is saved in an AVP from 'avplist'. If 'avplist' is
    missing, the AVP are named 1, 2, 3, ...
 
    Meaning of the parameters is as follows:
-
      * command - Command to be executed. It can include pseudo-
        variabes;
      * avplist - comma separated list with AVP names to store the
@@ -186,12 +179,11 @@ exec_dset("echo TEST > /tmp/$rU.txt");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1-5. exec_avp usage
+   Example 1.5. exec_avp usage
 ...
 exec_avp("echo TEST");
 exec_avp("echo TEST", "$avp(s:test)");
 ...
-     __________________________________________________________
 
 1.5. Known Issues
 
@@ -199,3 +191,36 @@ exec_avp("echo TEST", "$avp(s:test)");
    stop blocking SIP server. (There is kill.c but it is not used
    along with the current mechanisms based on popen. Besides that
    kill.c is ugly).
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

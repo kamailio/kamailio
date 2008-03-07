@@ -1,0 +1,110 @@
+<!-- Module FAQ -->
+
+<chapter>
+	
+	<title>Frequently Asked Questions</title>
+	<qandaset defaultlabel="number">
+
+	<qandaentry>
+		<question>
+		<para>What happend with the old <quote>nat_flag</quote> module parameter?</para>
+		</question>
+		<answer>
+		<para>
+			In was removed, as the module internally loads this value from the
+			<quote>USRLOC</quote> module (see the <quote>nat_bflag</quote>
+			USRLOC parameter).
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>What happend with the old <quote>use_domain</quote> module parameter?</para>
+		</question>
+		<answer>
+		<para>
+			In was removed, as the module internally loads this option from the
+			<quote>USRLOC</quote> module. This was done in order to simplify the
+			configuration.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>What happend with the old <quote>save_noreply</quote> and <quote>save_memory</quote> functions?</para>
+		</question>
+		<answer>
+		<para>
+			There functions were merged into the new 
+			<quote>save(domain,flags)</quote> functions. If a reply should be
+			sent or if the DB should be updated also is controlled via the
+			flags.
+		</para>
+		</answer>
+	</qandaentry>
+
+	<qandaentry>
+		<question>
+		<para>Where can I find more about OpenSER?</para>
+		</question>
+		<answer>
+		<para>
+			Take a look at &serhomelink;.
+		</para>
+		</answer>
+	</qandaentry>
+	<qandaentry>
+		<question>
+		<para>Where can I post a question about this module?</para>
+		</question>
+		<answer>
+		<para>
+			First at all check if your question was already answered on one of
+			our mailing lists: 
+		</para>
+		<itemizedlist>
+			<listitem>
+			<para>User Mailing List - &seruserslink;</para>
+			</listitem>
+			<listitem>
+			<para>Developer Mailing List - &serdevlink;</para>
+			</listitem>
+		</itemizedlist>
+		<para>
+			E-mails regarding any stable &ser; release should be sent to 
+			&serusersmail; and e-mails regarding development versions
+			should be sent to &serdevmail;.
+		</para>
+		<para>
+			If you want to keep the mail private, send it to 
+			&serhelpmail;.
+		</para>
+		</answer>
+	</qandaentry>
+	<qandaentry>
+		<question>
+		<para>How can I report a bug?</para>
+		</question>
+		<answer>
+		<para>
+			Please follow the guidelines provided at:
+			&serbugslink;.
+		</para>
+		</answer>
+	</qandaentry>
+	<qandaentry>
+		<question>
+		<para>What happened to the desc_time_order parameter?</para>
+		</question>
+		<answer>
+		<para>
+			It was removed, as its functionality was mmigrate into usrloc
+			module, were there is a parameter with the same name.
+		</para>
+		</answer>
+	</qandaentry>
+	</qandaset>
+</chapter>
+

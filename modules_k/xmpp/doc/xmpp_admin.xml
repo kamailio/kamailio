@@ -1,0 +1,330 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>User's Guide</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>	This modules is a gateway between Openser and a jabber server. It enables the exchange of instant messages between
+		SIP clients and XMPP(jabber) clients. </para>
+	<para>	The gateway has two modes to run:</para>
+
+	<itemizedlist>
+		<listitem>
+			<para>	<emphasis role='bold'>the component-mode</emphasis> - the gateway requires a standalone XMPP server amd the 'xmpp' module acts as
+			a XMPP component </para>
+		</listitem>
+		<listitem>
+			<para>	<emphasis role='bold'>the server-mode</emphasis> - the module acts itself as a XMPP server, no requirement for another XMPP server in the system. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. This mode is in beta stage for the moment.</para>
+		</listitem>
+	</itemizedlist>
+	<para>	In the component mode, you need a local XMPP server (recommended Jabberd2); the xmpp module will relay all your connections to a tcp connection to the local jabber server. The documentation and the source for a Jabber server are located at the following link:
+<ulink url="http://jabberd.jabberstudio.org/2/#download">http://jabberd.jabberstudio.org/2/#download</ulink>	</para>
+	<para> After you have a running XMPP server, what you need to do is set the following parameters in the Openser configuration file:</para>
+	<itemizedlist>
+		<listitem>
+			<para>gateway_domain, xmpp_domain (which can be the same as gateway_domain) and xmpp_host, which are explained in the Exported Parameters section;
+			</para>
+		</listitem>
+		<listitem>
+			<para>listen = your ip;</para>
+		</listitem> 
+		<listitem>
+			<para>alias=openser domain and 
+	alias=gateway domain;</para>
+		</listitem>
+		<listitem>
+			<para>in the following section of the configuration file, change to your gateway domain:</para>
+		</listitem>	
+	</itemizedlist>
+	<programlisting format="linespecific"> <emphasis>	<![CDATA[ ### ---8<--- cut here ---8<--- ###
+	if (avp_check("$rd", "eq/s:sip-xmpp.openser.org")) {
+		if (!t_newtran()) {
+			sl_reply_error();
+	...........]]>	</emphasis> </programlisting> 	
+	<itemizedlist>
+		<listitem>
+			<para>you can also change the jabber server password, which must be the same as the xmpp_password parameter.</para>
+		</listitem>
+	</itemizedlist>
+	<para>	A use case, for the component-mode, would look like this:</para>
+	<itemizedlist>
+		<listitem>
+			<para>Openser is running on sip-server.openser.org;</para>
+		</listitem>
+		<listitem>
+			<para>the gateway is running on sip-xmpp.openser.org;</para>
+		</listitem>	
+		<listitem>
+			<para>the jabber server is running on xmpp.openser.org;</para>
+		</listitem>	
+		<listitem>
+			<para>the component is running on xmpp-sip.openser.org.</para>
+		</listitem>	
+	</itemizedlist>
+	<para>
+		In the server mode, the xmpp module is a minimal jabber server, thus you do not need to install another jabber server, the gateway will connect to the jabber servers, where the users you want to chat with have an account. </para>
+	<para>If you want to change to server-mode, you have to change the "backend" parameter, as shown in the Exported Parameters section, from component to server.</para>
+	<para>	A use case, for the server-mode, would look like this: </para>
+	<itemizedlist>
+		<listitem>
+			<para>Openser is running on sip-server.openser.org; </para>
+		</listitem>
+		<listitem>
+			<para>the gateway is running on sip-xmpp.openser.org;</para>
+		</listitem>	
+		<listitem>
+			<para>the "XMPP server" is running on xmpp-sip.openser.org.</para>
+		</listitem>
+	</itemizedlist>	
+	<para>In both cases, the destination address must have the same pattern:</para>
+	<para>	<quote>sip:username<![CDATA[<]]>delim<![CDATA[>]]>jabber_server@gateway_domain</quote> </para>
+	<para>	From a jabber client's point of view, the destination will look like:</para>
+	<para>	<quote>sip_username<![CDATA[<]]>delim<![CDATA[>]]>openser_domain@xmpp_domain</quote>	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&ser; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>requires 'tm' module</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&ser; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libexpat1-devel</emphasis> - used for parsing/building XML.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+	<section>
+	<title>Exported Parameters</title>
+	<section>
+		<title><varname>backend(string)</varname></title>
+		<para>
+		The mode you are using the module; it can be either component or server.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "component".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>backend</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "backend", "server");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>domain_separator</varname> (string)</title>
+		<para>
+			In the destination address we need an extra character as a domain separator, apart from @.
+			The address of the XMPP(jabber) client looks like this:
+				"sip:username<![CDATA[<]]>domain_separator<![CDATA[>]]>jabber_server@gateway_domain".
+			The address of a SIP client has the following pattern :
+			"sip_username<![CDATA[<]]>domain_separator<![CDATA[>]]>openser_domain@xmpp_domain";
+
+		</para>
+		<para>
+		<emphasis>
+			Default value is "*".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>domain_separator</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "domain_separator", "*");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>gateway_domain</varname> (string)</title>
+		<para>
+		 The domain of the gateway, which must resolve. It must be the same with the gateway_domain from the destination address of the
+		 XMPP(jabber) client, as seen by the SIP client:
+			"sip:username<![CDATA[<]]>delim<![CDATA[>]]>jjabber_server@gateway_domain".
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sip-xmpp.openser.org".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>gateway_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xmpp_domain</varname> (string)</title>
+		<para>
+			The xmpp domain of the component or the server, depending on the mode we are in. It can be the same as the gateway_domain.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "sip-xmpp.openser.org".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_domain</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xmpp_host</varname> (string)</title>
+		<para>
+			 The ip address or the name of the local jabber server, if the backend is set to "component"; or the address to bind to in the server mode.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "xmpp.openser.org".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_host</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_host", "xmpp.openser.org");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>xmpp_port</varname> (integer)</title>
+		<para>
+			In the component mode, this is the port of the jabber router we connect to. In the server mode, it is the transport address to bind to.	 
+		</para>
+		<para>
+		<emphasis>
+			Default value is "5347", if backend is set to "component" and "5269", if backend is set to "server".
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_port</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_port", "5269");
+...
+</programlisting>
+		</example>
+	</section>
+
+<section>
+		<title><varname>xmpp_password</varname> (string)</title>
+		<para>	The password of the local jabber server. 	</para>
+		<para>
+			<emphasis>
+				Default value is "secret"; if changed here, it must also be changed in the c2s.xml, added by the jabber server. This is how the default configuration for the jabberd2 looks like:
+			</emphasis>
+			<programlisting format="linespecific">
+		<![CDATA[	<router>
+	............... 
+	<!-- Username/password to authenticate as --&gt;
+    <user>jabberd</user>;          <!-- default: jabberd -->;
+    <pass>secret</pass>;           <!-- default: secret -->;	]]>
+			</programlisting>
+		</para>
+		<example>
+		<title>Set <varname>xmpp_password</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "xmpp_password", "secret");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>outbound_proxy</varname> (string)</title>
+		<para>
+		The SIP address used as next hop when sending the message. Very
+		useful when using OpenSER with a domain name not in DNS, or
+		when using a separate OpenSER instance for xmpp processing. If
+		not set, the message will be sent to the address in destination
+		URI.
+		</para>
+		<para>
+		<emphasis>
+		Default value is NULL.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+ modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp");
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	<section>
+		<title>
+		<function moreinfo="none">xmpp_send_message()</function>
+		</title>
+		<para>
+		Converts SIP messages to XMPP(jabber) messages, in order to be relayed to a XMPP(jabber) client.
+		</para>
+		
+		<example>
+		<title><function>xmpp_send_message()</function> usage</title>
+		<programlisting format="linespecific">
+...
+xmpp_send_message();
+...
+</programlisting>
+		</example>
+	</section>
+	</section>
+	<section>
+	<title>Configuration</title>
+		<para>
+		Next is presented a sample configuration file one can use to implement a
+		standalone SIP-to-XMPP gateway. You can run an instance of OpenSER on a
+		separate machine or on different port with the following config, and have
+		the main SIP server configured to forward all SIP requests for XMPP world
+		to it.
+		</para>
+		<programlisting format="linespecific">
+....
+&cfg;
+....
+</programlisting>
+
+	</section>
+</chapter>
+

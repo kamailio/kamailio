@@ -9,9 +9,13 @@ Edited by
 Bogdan-Andrei Iancu
 
    Copyright © 2005 Voice Sistem
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -38,18 +42,20 @@ Bogdan-Andrei Iancu
 
         1.6. Script Example
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. Set default_filter module parameter
-   1-2. Set deny_filter module parameter
-   1-3. Set accept_filter module parameter
-   1-4. Set acc_function parameter
-   1-5. Set acc_db_table parameter
-   1-6. set_deny_filter usage
-   1-7. set_accept_filter usage
-   1-8. get_redirects usage
-   1-9. get_redirects usage
-   1-10. Redirection script example
-     __________________________________________________________
+
+   1.1. Set default_filter module parameter
+   1.2. Set deny_filter module parameter
+   1.3. Set accept_filter module parameter
+   1.4. Set acc_function parameter
+   1.5. Set acc_db_table parameter
+   1.6. set_deny_filter usage
+   1.7. set_accept_filter usage
+   1.8. get_redirects usage
+   1.9. get_redirects usage
+   1.10. Redirection script example
 
 Chapter 1. User's Guide
 
@@ -65,7 +71,6 @@ Chapter 1. User's Guide
 
    The module provide a powerful mechanism for selecting and
    filtering the contacts to be used for the new redirect:
-
      * number based - limits like the number of total contacts to
        be used or the maximum number of contacts per branch to be
        selected.
@@ -76,7 +81,6 @@ Chapter 1. User's Guide
    When selecting from a 3xx branch the contacts to be used, the
    contacts will be ordered and prioritized based on the "q"
    value.
-     __________________________________________________________
 
 1.2. Accounting
 
@@ -88,7 +92,6 @@ Chapter 1. User's Guide
    (all are supported). The information to be logged will be the
    same as the normal logged information directly via ACC module,
    but with following differences:
-
      * reason phrase - which will be dynamically set by the
        redirection function;
      * outgoing URI - which will be the redirect URI.
@@ -102,26 +105,21 @@ Chapter 1. User's Guide
    For example, if a call is redirected to three new contacts, the
    module will log three additional records corresponding to each
    redirect URI.
-     __________________________________________________________
 
 1.3. Dependencies
 
 1.3.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * TM - Transaction Module, for accessing replies.
      * ACC - Accounting Module, but only if the logging feature is
        used.
-     __________________________________________________________
 
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None
-     __________________________________________________________
 
 1.4. Exported Parameters
 
@@ -132,11 +130,10 @@ Chapter 1. User's Guide
 
    The default value is "accept".
 
-   Example 1-1. Set default_filter module parameter
+   Example 1.1. Set default_filter module parameter
 ...
 modparam("uac_redirect","default_filter","deny")
 ...
-     __________________________________________________________
 
 1.4.2. deny_filter (string)
 
@@ -152,11 +149,10 @@ modparam("uac_redirect","default_filter","deny")
 
    This parameter is optional, it's default value being NULL.
 
-   Example 1-2. Set deny_filter module parameter
+   Example 1.2. Set deny_filter module parameter
 ...
 modparam("uac_redirect","deny_filter",".*@siphub\.net")
 ...
-     __________________________________________________________
 
 1.4.3. accept_filter (string)
 
@@ -172,11 +168,10 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
 
    This parameter is optional, it's default value being NULL.
 
-   Example 1-3. Set accept_filter module parameter
+   Example 1.3. Set accept_filter module parameter
 ...
 modparam("uac_redirect","accept_filter",".*@siphub\.net")
 ...
-     __________________________________________________________
 
 1.4.4. acc_function (string)
 
@@ -186,7 +181,6 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
    set_accept_filter() scripting function.
 
    Its values my be:
-
      * acc_log_request
      * acc_db_request
      * acc_rad_request
@@ -194,11 +188,10 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
 
    The default value is "acc_log_request".
 
-   Example 1-4. Set acc_function parameter
+   Example 1.4. Set acc_function parameter
 ...
 modparam("uac_redirect","acc_function","acc_db_request")
 ...
-     __________________________________________________________
 
 1.4.5. acc_db_table (string)
 
@@ -210,15 +203,14 @@ modparam("uac_redirect","acc_function","acc_db_request")
 
    The default value is "acc".
 
-   Example 1-5. Set acc_db_table parameter
+   Example 1.5. Set acc_db_table parameter
 ...
 modparam("uac_redirect","acc_db_table","acc_redirect")
 ...
-     __________________________________________________________
 
 1.5. Exported Functions
 
-1.5.1. set_deny_filter(filter,flags)
+1.5.1.  set_deny_filter(filter,flags)
 
    Sets additional deny filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it
@@ -226,7 +218,6 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 
    Default or previous added deny filter may be reset depending of
    the flag parameter value:
-
      * reset_all - reset both default and previous added deny
        filters;
      * reset_default - reset only the default deny filter;
@@ -235,14 +226,13 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1-6. set_deny_filter usage
+   Example 1.6. set_deny_filter usage
 ...
 set_deny_filter(".*@domain2.net","reset_all");
 set_deny_filter(".*@domain1.net","");
 ...
-     __________________________________________________________
 
-1.5.2. set_accept_filter(filter,flags)
+1.5.2.  set_accept_filter(filter,flags)
 
    Sets additional accept filters. Maximum 6 may be combined. This
    additional filter will apply only to the current message - it
@@ -250,7 +240,6 @@ set_deny_filter(".*@domain1.net","");
 
    Default or previous added deny filter may be reset depending of
    the flag parameter value:
-
      * reset_all - reset both default and previous added accept
        filters;
      * reset_default - reset only the default accept filter;
@@ -259,14 +248,13 @@ set_deny_filter(".*@domain1.net","");
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1-7. set_accept_filter usage
+   Example 1.7. set_accept_filter usage
 ...
 set_accept_filter(".*@domain2.net","reset_added");
 set_accept_filter(".*@domain1.net","");
 ...
-     __________________________________________________________
 
-1.5.3. get_redirects(max)
+1.5.3.  get_redirects(max)
 
    The function may be called only from failure routes. It will
    extract the contacts from all 3xx branches and append them as
@@ -275,7 +263,6 @@ set_accept_filter(".*@domain1.net","");
 
    How many contacts (in total and per branch) are selected
    depends of the max parameter values. Its syntax is:
-
      * max = max_total [":" max_branch]
      * max_total = number of total contacts to be selected
      * max_branch = number of contacts per branch to be selected
@@ -290,7 +277,7 @@ set_accept_filter(".*@domain1.net","");
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1-8. get_redirects usage
+   Example 1.8. get_redirects usage
 ...
 # max 2 contacts per branch, but no overall limit
 get_redirects("*:2");
@@ -301,9 +288,8 @@ get_redirects("6:*");
 # no restrictions
 get_redirects("*");
 ...
-     __________________________________________________________
 
-1.5.4. get_redirects(max,reason)
+1.5.4.  get_redirects(max,reason)
 
    The function has same functionality as get_redirects(max)
    function, but it will produce accounting records.
@@ -315,15 +301,14 @@ get_redirects("*");
 
    This function can be used from FAILURE_ROUTE.
 
-   Example 1-9. get_redirects usage
+   Example 1.9. get_redirects usage
 ...
 get_redirects("4:1","Redirected");
 ...
-     __________________________________________________________
 
 1.6. Script Example
 
-   Example 1-10. Redirection script example
+   Example 1.10. Redirection script example
 loadmodule "modules/sl/sl.so"
 loadmodule "modules/usrloc/usrloc.so"
 loadmodule "modules/registrar/registrar.so"
@@ -366,3 +351,36 @@ failure_route[2] {
         get_redirects("6:2","redirect");
         t_relay();
 }
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

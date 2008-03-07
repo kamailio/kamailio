@@ -9,9 +9,13 @@ Edited by
 Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -44,19 +48,21 @@ Anca-Maria Vamanu
         2.5. register_puacb
         2.6. add_event
 
+   3. Frequently Asked Questions
+
    List of Examples
-   1-1. Set hash_size parameter
-   1-2. Set db_url parameter
-   1-3. Set db_table parameter
-   1-4. Set min_expires parameter
-   1-5. Set default_expires parameter
-   1-6. Set update_period parameter
-   1-7. pua_update_contact usage
-   2-1. pua_api structure
-   2-2. pua_is_dialog usage example
-   2-3. register_puacb usage example
-   2-4. add_event usage example
-     __________________________________________________________
+
+   1.1. Set hash_size parameter
+   1.2. Set db_url parameter
+   1.3. Set db_table parameter
+   1.4. Set min_expires parameter
+   1.5. Set default_expires parameter
+   1.6. Set update_period parameter
+   1.7. pua_update_contact usage
+   2.1. pua_api structure
+   2.2. pua_is_dialog usage example
+   2.3. register_puacb usage example
+   2.4. add_event usage example
 
 Chapter 1. User's Guide
 
@@ -79,25 +85,20 @@ Chapter 1. User's Guide
 
    The module use cache to store presentity list and writes to
    database on timer to be able to recover upon restart.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * a database modules.
      * tm.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * libxml.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -108,11 +109,10 @@ Chapter 1. User's Guide
 
    Default value is "4".
 
-   Example 1-1. Set hash_size parameter
+   Example 1.1. Set hash_size parameter
 ...
 modparam("pua", "hash_size", 9)
 ...
-     __________________________________________________________
 
 1.3.2. db_url (str)
 
@@ -120,12 +120,11 @@ modparam("pua", "hash_size", 9)
 
    Default value is "NULL".
 
-   Example 1-2. Set db_url parameter
+   Example 1.2. Set db_url parameter
 ...
 modparam("pua", "db_url"
                 "mysql://openser:openserrw@192.168.2.132/openser")
 ...
-     __________________________________________________________
 
 1.3.3. db_table (str)
 
@@ -133,11 +132,10 @@ modparam("pua", "db_url"
 
    Default value is "pua".
 
-   Example 1-3. Set db_table parameter
+   Example 1.3. Set db_table parameter
 ...
 modparam("pua", "db_table", "pua")
 ...
-     __________________________________________________________
 
 1.3.4. min_expires (int)
 
@@ -145,11 +143,10 @@ modparam("pua", "db_table", "pua")
 
    Default value is "0".
 
-   Example 1-4. Set min_expires parameter
+   Example 1.4. Set min_expires parameter
 ...
 modparam("pua", "min_expires", 0)
 ...
-     __________________________________________________________
 
 1.3.5. default_expires (int)
 
@@ -158,11 +155,10 @@ modparam("pua", "min_expires", 0)
 
    Default value is "3600".
 
-   Example 1-5. Set default_expires parameter
+   Example 1.5. Set default_expires parameter
 ...
 modparam("pua", "default_expires", 3600)
 ...
-     __________________________________________________________
 
 1.3.6. update_period (int)
 
@@ -172,15 +168,14 @@ modparam("pua", "default_expires", 3600)
 
    Default value is "30".
 
-   Example 1-6. Set update_period parameter
+   Example 1.6. Set update_period parameter
 ...
 modparam("pua", "update_period", 100)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. pua_update_contact()
+1.4.1.  pua_update_contact()
 
    The remote target can be updated by the Contact of a subsequent
    in dialog request. In the PUA watcher case (sending a SUBSCRIBE
@@ -193,16 +188,14 @@ modparam("pua", "update_period", 100)
    This function can be used from REQUEST_ROUTE.
 
    Return code:
-
      * 1 - if success.
      * -1 - if error.
 
-   Example 1-7. pua_update_contact usage
+   Example 1.7. pua_update_contact usage
 ...
 if(method=="NOTIFY")
     pua_update_contact();
 ...
-     __________________________________________________________
 
 1.5. Installation
 
@@ -212,20 +205,18 @@ if(method=="NOTIFY")
    folder. You can also find the complete database documentation
    on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module provides the following functions that can be used in
    other OpenSER modules.
-     __________________________________________________________
 
-2.1. bind_pua(pua_api_t* api)
+2.1.  bind_pua(pua_api_t* api)
 
    This function binds the pua modules and fills the structure
    with the two exported function.
 
-   Example 2-1. pua_api structure
+   Example 2.1. pua_api structure
 ...
 typedef struct pua_api {
         send_subscribe_t send_subscribe;
@@ -235,9 +226,8 @@ typedef struct pua_api {
         add_pua_event_t add_event;
 } pua_api_t;
 ...
-     __________________________________________________________
 
-2.2. send_publish
+2.2.  send_publish
 
    Field type:
 ...
@@ -286,9 +276,8 @@ typedef struct publ_info
 ...
 typedef int (publrpl_cb_t)(struct sip_msg* reply, void*  extra_param);
 ...
-     __________________________________________________________
 
-2.3. send_subscribe
+2.3.  send_subscribe
 
    Field type:
 ...
@@ -326,9 +315,8 @@ typedef struct subs_info
                            XMPP_INITIAL_SUBS */
 }subs_info_t;
 ...
-     __________________________________________________________
 
-2.4. is_dialog
+2.4.  is_dialog
 
    Field type:
 ...
@@ -338,17 +326,16 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
    This function checks is the parameter corresponds to a stored
    Subscribe initiated dialog.
 
-   Example 2-2. pua_is_dialog usage example
+   Example 2.2. pua_is_dialog usage example
 ...
-        if(pua_is_dialog(dialog)< 0)
+        if(pua_is_dialog(dialog) < 0)
         {
                 LM_ERR("querying dialog\n");
                 goto error;
         }
 ...
-     __________________________________________________________
 
-2.5. register_puacb
+2.5.  register_puacb
 
    Field type:
 ...
@@ -364,17 +351,16 @@ typedef int (*register_puacb_t)(int types, pua_cb f, void* param );
    structure for that request and the first line of the reply
    message.
 
-   Example 2-3. register_puacb usage example
+   Example 2.3. register_puacb usage example
 ...
-        if(pua.register_puacb(XMPP_SUBSCRIBE, Sipreply2Xmpp, NULL)< 0)
+        if(pua.register_puacb(XMPP_SUBSCRIBE, Sipreply2Xmpp, NULL) & 0)
         {
                 LM_ERR("Could not register callback\n");
                 return -1;
         }
 ...
-     __________________________________________________________
 
-2.6. add_event
+2.6.  add_event
 
    Field type:
 ...
@@ -410,13 +396,46 @@ typedef int (evs_process_body_t)(struct publ_info* publ,
               be given as a parameter;
 ...
 
-   Example 2-4. add_event usage example
+   Example 2.4. add_event usage example
 ...
         if(pua.add_event((PRESENCE_EVENT, "presence", "application/pidf+
 xml",
-                                pres_process_body)< 0)
+                                pres_process_body) & 0)
         {
                 LM_ERR("Could not register new event\n");
                 return -1;
         }
 ...
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

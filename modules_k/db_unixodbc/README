@@ -9,9 +9,13 @@ Edited by
 Marco Lorrai
 
    Copyright © 2005, 2006 Marco Lorrai
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -27,18 +31,19 @@ Marco Lorrai
               1.3.3. use_escape_common (int)
 
         1.4. Exported Functions
-        1.5. Installation & Running
+        1.5. Installation and Running
 
               1.5.1. Installing
-              1.5.2. Configuring & Running
+              1.5.2. Configuring and Running
 
    2. Developer's Guide
+   3. Frequently Asked Questions
 
    List of Examples
-   1-1. Set the "ping_interval" parameter
-   1-2. Set the "auto_reconnect" parameter
-   1-3. Set the "use_escape_common" parameter
-     __________________________________________________________
+
+   1.1. Set the "ping_interval" parameter
+   1.2. Set the "auto_reconnect" parameter
+   1.3. Set the "use_escape_common" parameter
 
 Chapter 1. User's Guide
 
@@ -53,24 +58,19 @@ Chapter 1. User's Guide
 
    To see what DB engines can be used via unixodbc, look at
    http://www.unixodbc.org/drivers.html.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * No dependencies on other OpenSER modules.
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * None.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -80,11 +80,10 @@ Chapter 1. User's Guide
 
    Default value is "300" seconds.
 
-   Example 1-1. Set the "ping_interval" parameter
+   Example 1.1. Set the "ping_interval" parameter
 ...
 modparam("db_unixodbc", "ping_interval", 600)
 ...
-     __________________________________________________________
 
 1.3.2. auto_reconnect (int)
 
@@ -92,11 +91,10 @@ modparam("db_unixodbc", "ping_interval", 600)
 
    Default value is "1", this means it is enabled.
 
-   Example 1-2. Set the "auto_reconnect" parameter
+   Example 1.2. Set the "auto_reconnect" parameter
 ...
 modparam("db_unixodbc", "auto_reconnect", 0)
 ...
-     __________________________________________________________
 
 1.3.3. use_escape_common (int)
 
@@ -111,18 +109,16 @@ modparam("db_unixodbc", "auto_reconnect", 0)
 
    Default value is "0" (0 = disabled; 1 = enabled).
 
-   Example 1-3. Set the "use_escape_common" parameter
+   Example 1.3. Set the "use_escape_common" parameter
 ...
 modparam("db_unixodbc", "use_escape_common", 1)
 ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
    NONE
-     __________________________________________________________
 
-1.5. Installation & Running
+1.5. Installation and Running
 
 1.5.1. Installing
 
@@ -130,9 +126,8 @@ modparam("db_unixodbc", "use_escape_common", 1)
    program that implements the odbc standard, such iodbc), your
    database, and the right connector. Set the DSN in the odbc.ini
    file and the connector drivers in the odbcinst.ini file.
-     __________________________________________________________
 
-1.5.2. Configuring & Running
+1.5.2. Configuring and Running
 
    In the openser.conf file, add the line:
 ....
@@ -163,9 +158,41 @@ shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
 
    The connector search the socket in /var/lib/mysql/mysql.sock
    and not in /tmp/mysql.sock
-     __________________________________________________________
 
 Chapter 2. Developer's Guide
 
    The module implements the OpenSER DB API, in order to be used
    by other modules.
+
+Chapter 3. Frequently Asked Questions
+
+   3.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   3.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   3.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

@@ -2,20 +2,26 @@ DISPATCHER Module
 
 Daniel-Constantin Mierla
 
-   voice-system.ro
-
 Edited by
 
 Daniel-Constantin Mierla
 
+Edited by
+
 Carsten Bock
+
+   BASIS AudioNet GmbH
 
    Copyright © 2004 FhG FOKUS
 
    Copyright © 2005 Voice-System.RO
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -69,28 +75,28 @@ Carsten Bock
    2. Frequently Asked Questions
 
    List of Examples
-   1-1. Set the "list_file" parameter
-   1-2. Set "db_url" parameter
-   1-3. Set "table_name" parameter
-   1-4. Set "setid_col" parameter
-   1-5. Set "destination_col" parameter
-   1-6. Set "flags_col" parameter
-   1-7. Set the "force_dst" parameter
-   1-8. Set the "flags" parameter
-   1-9. Set the "use_default" parameter
-   1-10. Set the "dst_avp" parameter
-   1-11. Set the "grp_avp" parameter
-   1-12. Set the "cnt_avp" parameter
-   1-13. Use $avp(i:273) for hashing:
-   1-14. Use combination of PVs for hashing:
-   1-15. Set the "ds_ping_method" parameter
-   1-16. Set the "ds_ping_from" parameter
-   1-17. Set the "ds_ping_interval" parameter
-   1-18. Set the "ds_probing_threshhold" parameter
-   1-19. ds_select_dst usage
-   1-20. dispatcher list file
-   1-21. OpenSER config script - sample dispatcher usage
-     __________________________________________________________
+
+   1.1. Set the "list_file" parameter
+   1.2. Set "db_url" parameter
+   1.3. Set "table_name" parameter
+   1.4. Set "setid_col" parameter
+   1.5. Set "destination_col" parameter
+   1.6. Set "flags_col" parameter
+   1.7. Set the "force_dst" parameter
+   1.8. Set the "flags" parameter
+   1.9. Set the "use_default" parameter
+   1.10. Set the "dst_avp" parameter
+   1.11. Set the "grp_avp" parameter
+   1.12. Set the "cnt_avp" parameter
+   1.13. Use $avp(i:273) for hashing:
+   1.14. Use combination of PVs for hashing:
+   1.15. Set the "ds_ping_method" parameter
+   1.16. Set the "ds_ping_from" parameter
+   1.17. Set the "ds_ping_interval" parameter
+   1.18. Set the "ds_probing_threshhold" parameter
+   1.19. ds_select_dst usage
+   1.20. dispatcher list file
+   1.21. OpenSER config script - sample dispatcher usage
 
 Chapter 1. User's Guide
 
@@ -103,24 +109,19 @@ Chapter 1. User's Guide
 
    The module can be used as a stateless load balancer, having no
    guarantee of fair distribution.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER modules
 
    The following modules must be loaded before this module:
-
      * TM - only if active recovery of failed hosts is required.
-     __________________________________________________________
 
 1.2.2. External libraries or applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module:
-
      * none.
-     __________________________________________________________
 
 1.3. Exported Parameters
 
@@ -131,11 +132,10 @@ Chapter 1. User's Guide
    Default value is "/etc/openser/dispatcher.list" or
    "/usr/local/etc/openser/dispatcher.list".
 
-   Example 1-1. Set the "list_file" parameter
+   Example 1.1. Set the "list_file" parameter
 ...
 modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
 ...
-     __________________________________________________________
 
 1.3.2. db_url (string)
 
@@ -144,12 +144,11 @@ modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
 
    Default value is "NULL" (disable DB support).
 
-   Example 1-2. Set "db_url" parameter
+   Example 1.2. Set "db_url" parameter
 ...
 modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database
 ")
 ...
-     __________________________________________________________
 
 1.3.3. table_name (string)
 
@@ -158,11 +157,10 @@ modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database
 
    Default value is "dispatcher".
 
-   Example 1-3. Set "table_name" parameter
+   Example 1.3. Set "table_name" parameter
 ...
 modparam("dispatcher", "table_name", "my_dispatcher")
 ...
-     __________________________________________________________
 
 1.3.4. setid_col (string)
 
@@ -171,11 +169,10 @@ modparam("dispatcher", "table_name", "my_dispatcher")
 
    Default value is "setid".
 
-   Example 1-4. Set "setid_col" parameter
+   Example 1.4. Set "setid_col" parameter
 ...
 modparam("dispatcher", "setid_col", "groupid")
 ...
-     __________________________________________________________
 
 1.3.5. destination_col (string)
 
@@ -184,11 +181,10 @@ modparam("dispatcher", "setid_col", "groupid")
 
    Default value is "destination".
 
-   Example 1-5. Set "destination_col" parameter
+   Example 1.5. Set "destination_col" parameter
 ...
 modparam("dispatcher", "destination_col", "uri")
 ...
-     __________________________________________________________
 
 1.3.6. flags_col (string)
 
@@ -197,11 +193,10 @@ modparam("dispatcher", "destination_col", "uri")
 
    Default value is "flags".
 
-   Example 1-6. Set "flags_col" parameter
+   Example 1.6. Set "flags_col" parameter
 ...
 modparam("dispatcher", "flags_col", "dstflags")
 ...
-     __________________________________________________________
 
 1.3.7. force_dst (int)
 
@@ -210,11 +205,10 @@ modparam("dispatcher", "flags_col", "dstflags")
 
    Default value is "0".
 
-   Example 1-7. Set the "force_dst" parameter
+   Example 1.7. Set the "force_dst" parameter
 ...
 modparam("dispatcher", "force_dst", 1)
 ...
-     __________________________________________________________
 
 1.3.8. flags (int)
 
@@ -232,11 +226,10 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "0".
 
-   Example 1-8. Set the "flags" parameter
+   Example 1.8. Set the "flags" parameter
  ...
  modparam("dispatcher", "flags", 3)
  ...
-     __________________________________________________________
 
 1.3.9. use_default (int)
 
@@ -247,11 +240,10 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "0".
 
-   Example 1-9. Set the "use_default" parameter
+   Example 1.9. Set the "use_default" parameter
  ...
  modparam("dispatcher", "use_default", 1)
  ...
-     __________________________________________________________
 
 1.3.10. dst_avp (str)
 
@@ -263,76 +255,72 @@ modparam("dispatcher", "force_dst", 1)
    destination set will be added in the avp list to be able to
    implement serial forking.
 
-   Note
+Note
 
-        You must set this parameter if you want do do load balancing
-        fail over.
+   You must set this parameter if you want do do load balancing
+   fail over.
 
    Default value is "null" - don't add AVPs.
 
-   Example 1-10. Set the "dst_avp" parameter
+   Example 1.10. Set the "dst_avp" parameter
  ...
  modparam("dispatcher", "dst_avp", "$avp(i:271)")
  ...
-     __________________________________________________________
 
 1.3.11. grp_avp (str)
 
    The name of the avp storing the group id of the destination
    set. Good to have it for later usage or checks.
 
-   Note
+Note
 
-        You must set this parameter if you want do do load balancing
-        fail over.
+   You must set this parameter if you want do do load balancing
+   fail over.
 
    Default value is "null" - don't add AVP.
 
-   Example 1-11. Set the "grp_avp" parameter
+   Example 1.11. Set the "grp_avp" parameter
  ...
  modparam("dispatcher", "grp_avp", "$avp(i:272)")
  ...
-     __________________________________________________________
 
 1.3.12. cnt_avp (str)
 
    The name of the avp storing the number of destination addresses
    kept in dst_avp avps.
 
-   Note
+Note
 
-        You must set this parameter if you want do do load balancing
-        fail over.
+   You must set this parameter if you want do do load balancing
+   fail over.
 
    Default value is "null" - don't add AVP.
 
-   Example 1-12. Set the "cnt_avp" parameter
+   Example 1.12. Set the "cnt_avp" parameter
  ...
  modparam("dispatcher", "cnt_avp", "$avp(i:273)")
  ...
-     __________________________________________________________
 
 1.3.13. hash_pvar (str)
 
    String with PVs used for the hashing algorithm 7.
 
-   Note
+Note
 
-        You must set this parameter if you want do hashing over custom
-        message parts.
+   You must set this parameter if you want do hashing over custom
+   message parts.
 
    Default value is "null" - disabled.
 
-   Example 1-13. Use $avp(i:273) for hashing:
+   Example 1.13. Use $avp(i:273) for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "$avp(i:273)")
  ...
 
-   Example 1-14. Use combination of PVs for hashing:
+   Example 1.14. Use combination of PVs for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
-     __________________________________________________________
 
 1.3.14. ds_ping_method (string)
 
@@ -342,11 +330,10 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "OPTIONS".
 
-   Example 1-15. Set the "ds_ping_method" parameter
+   Example 1.15. Set the "ds_ping_method" parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
-     __________________________________________________________
 
 1.3.15. ds_ping_from (string)
 
@@ -357,11 +344,10 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "sip:dispatcher@localhost".
 
-   Example 1-16. Set the "ds_ping_from" parameter
+   Example 1.16. Set the "ds_ping_from" parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
-     __________________________________________________________
 
 1.3.16. ds_ping_interval (int)
 
@@ -372,11 +358,10 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "10".
 
-   Example 1-17. Set the "ds_ping_interval" parameter
+   Example 1.17. Set the "ds_ping_interval" parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
-     __________________________________________________________
 
 1.3.17. ds_probing_threshhold (int)
 
@@ -387,20 +372,18 @@ modparam("dispatcher", "force_dst", 1)
 
    Default value is "3".
 
-   Example 1-18. Set the "ds_probing_threshhold" parameter
+   Example 1.18. Set the "ds_probing_threshhold" parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
-     __________________________________________________________
 
 1.4. Exported Functions
 
-1.4.1. ds_select_dst(set, alg)
+1.4.1.  ds_select_dst(set, alg)
 
    The method selects a destination from addresses set.
 
    Meaning of the parameters is as follows:
-
      * set - the id of the set from where to pick up destination
        address. It is the first column in destination list file.
      * alg - the algorithm used to select the destination address.
@@ -425,13 +408,12 @@ modparam("dispatcher", "force_dst", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1-19. ds_select_dst usage
+   Example 1.19. ds_select_dst usage
 ...
 ds_select_dst("1", "0");
 ...
-     __________________________________________________________
 
-1.4.2. ds_select_domain(set, alg)
+1.4.2.  ds_select_domain(set, alg)
 
    The method selects a destination from addresses set and
    rewrites the host and port from R-URI. The parameters have same
@@ -443,25 +425,22 @@ ds_select_dst("1", "0");
    forking to all possible destinations.
 
    This function can be used from REQUEST_ROUTE.
-     __________________________________________________________
 
-1.4.3. ds_next_dst()
+1.4.3.  ds_next_dst()
 
    Takes the next destination address from the AVPs with id
    'dst_avp_id' and sets the dst_uri (outbound proxy address).
 
    This function can be used from FAILURE_ROUTE.
-     __________________________________________________________
 
-1.4.4. ds_next_domain()
+1.4.4.  ds_next_domain()
 
    Takes the next destination address from the AVPs with id
    'dst_avp_id' and sets the domain part of the request uri.
 
    This function can be used from FAILURE_ROUTE.
-     __________________________________________________________
 
-1.4.5. ds_mark_dst()
+1.4.5.  ds_mark_dst()
 
    Mark the last used address from destination set as inactive, in
    order to be ingnored in the future. In this way it can be
@@ -470,9 +449,8 @@ ds_select_dst("1", "0");
    'ds_select_dst' and 'ds_select_domain'.
 
    This function can be used from FAILURE_ROUTE.
-     __________________________________________________________
 
-1.4.6. ds_mark_dst("s")
+1.4.6.  ds_mark_dst("s")
 
    Mark the last used address from destination set as inactive
    ("i"/"I"/"0"), active ("a"/"A"/"1") or probing ("p"/"P"/"2").
@@ -482,7 +460,6 @@ ds_select_dst("1", "0");
    'ds_select_domain'.
 
    possible parameters:
-
      * "i", "I" or "0" - the last destination should be set to
        inactive and will be ignored in future requests.
      * "a", "A" or "1" - the last destination should be set to
@@ -493,18 +470,16 @@ ds_select_dst("1", "0");
        probing.
 
    This function can be used from FAILURE_ROUTE.
-     __________________________________________________________
 
-1.4.7. ds_is_from_list()
+1.4.7.  ds_is_from_list()
 
    This function returns true, if the current request comes from a
    host from the dispatcher-list; otherwise false.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
-     __________________________________________________________
 
-1.4.8. ds_is_from_list("group")
+1.4.8.  ds_is_from_list("group")
 
    This function returns true, if the current request comes from a
    host in the given group of the dispatcher-list; otherwise
@@ -512,11 +487,10 @@ ds_select_dst("1", "0");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
-     __________________________________________________________
 
 1.5. Exported MI Functions
 
-1.5.1. ds_set_state
+1.5.1.  ds_set_state
 
    Sets the status for a destination address (can be use to mark
    the destination as active or inactive).
@@ -524,7 +498,6 @@ ds_select_dst("1", "0");
    Name: ds_set_state
 
    Parameters:
-
      * _state_ : state of the destination address
           + "a": active
           + "i": inactive
@@ -538,9 +511,8 @@ ds_select_dst("1", "0");
                 _group_
                 _address_
                 _empty_line_
-     __________________________________________________________
 
-1.5.2. ds_list
+1.5.2.  ds_list
 
    It lists the groups and included destinations.
 
@@ -551,9 +523,8 @@ ds_select_dst("1", "0");
    MI FIFO Command Format:
                 :ds_list:_reply_fifo_file_
                 _empty_line_
-     __________________________________________________________
 
-1.5.3. ds_reload
+1.5.3.  ds_reload
 
    It reloads the groups and included destinations.
 
@@ -563,7 +534,6 @@ ds_select_dst("1", "0");
 
    MI DATAGRAM Command Format:
                 ":ds_reload:\n."
-     __________________________________________________________
 
 1.6. Installation and Running
 
@@ -577,7 +547,7 @@ ds_select_dst("1", "0");
    address must be a valid SIP URI. Empty lines or lines starting
    with "#" are ignored.
 
-   Example 1-20. dispatcher list file
+   Example 1.20. dispatcher list file
 ...
 # $Id$
 # dispatcher destination sets
@@ -596,13 +566,12 @@ ds_select_dst("1", "0");
 1 sip:127.0.0.1:7074
 
 ...
-     __________________________________________________________
 
 1.6.2. OpenSER config file
 
    Next picture displays a sample usage of dispatcher.
 
-   Example 1-21. OpenSER config script - sample dispatcher usage
+   Example 1.21. OpenSER config script - sample dispatcher usage
 ...
 # $Id$
 # sample config file for dispatcher module
@@ -648,51 +617,53 @@ route{
 }
 
 ...
-     __________________________________________________________
 
 Chapter 2. Frequently Asked Questions
 
-   2.1. Does dispatcher provide a fair distribution?
-   2.2. Is dispatcher dialog stateful?
-   2.3. Where can I find more about OpenSER?
-   2.4. Where can I post a question about this module?
-   2.5. How can I report a bug?
+   2.1.
 
-   2.1. Does dispatcher provide a fair distribution?
+       Does dispatcher provide a fair distribution?
 
-   There is no guarantee of that. You should do some measurements
-   to decide what distribution algorithm fits better in your
-   environment.
+       There is no guarantee of that. You should do some measurements
+       to decide what distribution algorithm fits better in your
+       environment.
 
-   2.2. Is dispatcher dialog stateful?
+   2.2.
 
-   No. Dispatcher is stateless, although some distribution
-   algorithms are designed to select same destination for
-   subsequent requests of the same dialog (e.g., hashing the
-   call-id).
+       Is dispatcher dialog stateful?
 
-   2.3. Where can I find more about OpenSER?
+       No. Dispatcher is stateless, although some distribution
+       algorithms are designed to select same destination for
+       subsequent requests of the same dialog (e.g., hashing the
+       call-id).
 
-   Take a look at http://openser.org/.
+   2.3.
 
-   2.4. Where can I post a question about this module?
+       Where can I find more about OpenSER?
 
-   First at all check if your question was already answered on one
-   of our mailing lists:
+       Take a look at http://openser.org/.
 
-     * User Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://openser.org/cgi-bin/mailman/listinfo/devel
+   2.4.
 
-   E-mails regarding any stable version should be sent to
-   <users@openser.org> and e-mail regarding development versions
-   or CVS snapshots should be send to <devel@openser.org>.
+       Where can I post a question about this module?
 
-   If you want to keep the mail private, send it to
-   <team@openser.org>.
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
 
-   2.5. How can I report a bug?
+       E-mails regarding any stable version should be sent to
+       <users@openser.org> and e-mail regarding development versions
+       or CVS snapshots should be send to <devel@openser.org>.
 
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.5.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143

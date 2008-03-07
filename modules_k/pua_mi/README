@@ -8,12 +8,18 @@ Edited by
 
 Anca-Maria Vamanu
 
+Edited by
+
 Juha Heinanen
 
    Copyright © 2006 voice-system.ro
+   Revision History
+   Revision $Revision$ $Date: 2008-03-04 15:15:47 +0200
+                              (Tue, 04 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
+
    1. User's Guide
 
         1.1. Overview
@@ -30,9 +36,11 @@ Juha Heinanen
 
         1.6. pua_subscribe
 
+   2. Frequently Asked Questions
+
    List of Examples
-   1-1. pua_publish FIFO example
-     __________________________________________________________
+
+   1.1. pua_publish FIFO example
 
 Chapter 1. User's Guide
 
@@ -48,42 +56,34 @@ Chapter 1. User's Guide
    active subscribers ...). Also, this module allows non-SIP
    speaking applications to subscribe presence information kept in
    a SIP presence server.
-     __________________________________________________________
 
 1.2. Dependencies
 
 1.2.1. OpenSER Modules
 
    The following modules must be loaded before this module:
-
      * pua
-     __________________________________________________________
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-
      * none
-     __________________________________________________________
 
 1.3. Exported Parameters
 
      * none
-     __________________________________________________________
 
 1.4. Exported Functions
 
    The module does not export functions to be used in
    configuration script.
-     __________________________________________________________
 
 1.5. Exported MI functions
 
-1.5.1. pua_publish
+1.5.1.  pua_publish
 
    Command parameters:
-
      * presentity_uri - e.g. sip:system@openser.org
      * expires - Relative expires time in seconds (e.g. 3600).
      * event package - Event package that is target of published
@@ -96,8 +96,9 @@ Chapter 1. User's Guide
        information or missing if no published information. It has
        to be a single line for FIFO transport.
 
-   Example 1-1. pua_publish FIFO example
+   Example 1.1. pua_publish FIFO example
 ...
+
 :pua_publish:fifo_test_reply
 sip:system@openser.org
 3600
@@ -111,14 +112,46 @@ ystem@openser.org'><tuple id='0x81475a0'><status><basic>open</basic></st
 atus></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away
 </rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presenc
 e>
-     __________________________________________________________
 
-1.6. pua_subscribe
+
+1.6.  pua_subscribe
 
    Command parameters:
-
      * presentity_uri - e.g. sip:presentity@openser.org
      * watcher_uri - e.g. sip:watcher@openser.org
      * event package
      * expires - Relative time in seconds for the desired validity
        of the subscription.
+
+Chapter 2. Frequently Asked Questions
+
+   2.1.
+
+       Where can I find more about OpenSER?
+
+       Take a look at http://openser.org/.
+
+   2.2.
+
+       Where can I post a question about this module?
+
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://openser.org/cgi-bin/mailman/listinfo/devel
+
+       E-mails regarding any stable OpenSER release should be sent to
+       <users@openser.org> and e-mails regarding development versions
+       should be sent to <devel@openser.org>.
+
+       If you want to keep the mail private, send it to
+       <team@openser.org>.
+
+   2.3.
+
+       How can I report a bug?
+
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.
