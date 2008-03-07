@@ -1,12 +1,14 @@
-<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 
-<!ENTITY user SYSTEM "db_flatstore_user.sgml">
-<!ENTITY devel SYSTEM "db_flatstore_devel.sgml">
-<!ENTITY faq SYSTEM "../../../doc/module_faq.sgml">
+<!ENTITY user SYSTEM "db_flatstore_admin.xml">
+<!ENTITY devel SYSTEM "db_flatstore_devel.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!-- Include general documentation entities -->
-<!ENTITY % docentities SYSTEM "../../../doc/entities.sgml">
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
 %docentities;
 
 ]>
@@ -39,8 +41,8 @@
 	</copyright>
 	<revhistory>
 		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
+		<revnumber>$Revision: 3839 $</revnumber>
+		<date>$Date: 2008-03-04 15:15:47 +0200 (Tue, 04 Mar 2008) $</date>
 		</revision>
 	</revhistory>
 	</bookinfo>
