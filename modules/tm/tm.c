@@ -380,6 +380,7 @@ static param_export_t params[]={
 	{"blst_503_max_timeout",PARAM_INT, &default_tm_cfg.tm_blst_503_max       },
 	{"blst_methods_add",    PARAM_INT, &default_tm_cfg.tm_blst_methods_add   },
 	{"blst_methods_lookup", PARAM_INT, &default_tm_cfg.tm_blst_methods_lookup},
+	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{0,0,0}
 };
 
@@ -596,10 +597,18 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* the defult timer values must be fixed-up before
+	/* the default timer values must be fixed-up before
 	 * declaring the configuration (Miklos) */
 	if (tm_init_timers()==-1) {
 		LOG(L_ERR, "ERROR: mod_init: timer init failed\n");
+		return -1;
+	}
+	
+	/* the cancel branch flags must be fixed before declaring the 
+	 * configuration */
+	if (cancel_b_flags_get(&default_tm_cfg.cancel_b_flags, 
+							default_tm_cfg.cancel_b_flags)<0){
+		LOG(L_ERR, "ERROR: mod_init: bad cancel branch method\n");
 		return -1;
 	}
 

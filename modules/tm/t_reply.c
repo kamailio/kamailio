@@ -1748,7 +1748,7 @@ int reply_received( struct sip_msg  *p_msg )
 				 * if BUSY or set just exit, a cancel will be (or was) sent 
 				 * shortly on this branch */
 				DBG("tm: reply_received: branch CANCEL created\n");
-				cancel_branch(t, branch, F_CANCEL_B_FORCE);
+				cancel_branch(t, branch, F_CANCEL_B_FORCE_C);
 			}
 			goto done; /* nothing to do */
 		}

@@ -64,8 +64,13 @@
 								 haven't received any response (>=100). It
 								 assumes the REPLY_LOCK is not held (if it is
 								 => deadlock) */
-#define F_CANCEL_B_FORCE 4 /* will send a cancel even if no reply was received;
-							  F_CANCEL_B_FAKE_REPLY will be ignored */
+#define F_CANCEL_B_FORCE_C 4 /* will send a cancel even if no reply was 
+								received; F_CANCEL_B_FAKE_REPLY will be 
+								ignored */
+#define F_CANCEL_B_FORCE_RETR 8  /* will not stop request retr. on a branch
+									if no provisional response was received;
+									F_CANCEL_B_FORCE_C, F_CANCEL_B_FAKE_REPLY
+									and F_CANCE_B_KILL take precedence */
 
 
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
@@ -106,5 +111,7 @@ inline short static should_cancel_branch( struct cell *t, int b, int noreply )
 
 const char* rpc_cancel_doc[2];
 void rpc_cancel(rpc_t* rpc, void* c);
+int cancel_b_flags_fixup(void* handle, str* name, void** val);
+int cancel_b_flags_get(unsigned int* f, int m);
 
 #endif

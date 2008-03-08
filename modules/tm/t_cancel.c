@@ -38,6 +38,7 @@
  *             (it can be disabled with reparse_invite=0) (Miklos)
  * 2007-06-04  cancel_branch() can operate in lockless mode (with a lockless
  *              should_cancel()) (andrei)
+ * 2008-03-07  cancel_branch() takes a new flag: F_CANCEL_B_FORCE_RETR (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
@@ -118,9 +119,13 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
  *                      to all branches that haven't received any response
  *                      (>=100). It assumes the REPLY_LOCK is not held
  *                      (if it is => deadlock)
- *                  F_CANCEL_B_FORCE - will send a cancel (and create the 
+ *                  F_CANCEL_B_FORCE_C - will send a cancel (and create the 
  *                       corresp. local cancel rb) even if no reply was 
  *                       received; F_CANCEL_B_FAKE_REPLY will be ignored.
+ *                  F_CANCEL_B_FORCE_RETR - don't stop retransmission if no 
+ *                       reply was received on the branch; incompatible
+ *                       with F_CANCEL_B_FAKE_REPLY, F_CANCEL_B_FORCE_C and
+ *                       F_CANCEL_B_KILL (all of them take precedence) a
  *                  default: stop only the retransmissions for the branch
  *                      and leave it to timeout if it doesn't receive any
  *                      response to the CANCEL
@@ -128,7 +133,7 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
  *          1 - branch still active  (fr_timer)
  *         -1 - error
  * WARNING:
- *          - F_CANCEL_KILL_B should be used only if the transaction is killed
+ *          - F_CANCEL_B_KILL should be used only if the transaction is killed
  *            explicitly afterwards (since it might kill all the timers
  *            the transaction won't be able to "kill" itself => if not
  *            explicitly "put_on_wait" it might live forever)
@@ -162,7 +167,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 		stop_rb_timers( irb );
 		ret=0;
 		if ((t->uac[branch].last_received < 100) &&
-				!(flags & F_CANCEL_B_FORCE)) {
+				!(flags & F_CANCEL_B_FORCE_C)) {
 			DBG("DEBUG: cancel_branch: no response ever received: "
 			    "giving up on cancel\n");
 			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
@@ -178,25 +183,28 @@ int cancel_branch( struct cell *t, int branch, int flags )
 			return ret;
 		}
 	}else{
-		stop_rb_retr(irb); /* stop retransmissions */
-		if ((t->uac[branch].last_received < 100) &&
-				!(flags & F_CANCEL_B_FORCE)) {
-			/* no response received => don't send a cancel on this branch,
-			 *  just drop it */
-			/* remove BUSY_BUFFER -- mark cancel buffer as not used */
-			atomic_set_long((void*)&crb->buffer, 0);
-			if (flags & F_CANCEL_B_FAKE_REPLY){
-				stop_rb_timers( irb ); /* stop even the fr timer */
-				LOCK_REPLIES(t);
-				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm) == 
-										RPS_ERROR){
-					return -1;
+		if (t->uac[branch].last_received < 100){
+			if (!(flags & F_CANCEL_B_FORCE_C)) {
+				/* no response received => don't send a cancel on this branch,
+				 *  just drop it */
+				if (!(flags & F_CANCEL_B_FORCE_RETR))
+					stop_rb_retr(irb); /* stop retransmissions */
+				/* remove BUSY_BUFFER -- mark cancel buffer as not used */
+				atomic_set_long((void*)&crb->buffer, 0);
+				if (flags & F_CANCEL_B_FAKE_REPLY){
+					stop_rb_timers( irb ); /* stop even the fr timer */
+					LOCK_REPLIES(t);
+					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm) == 
+											RPS_ERROR){
+						return -1;
+					}
+					return 0; /* should be inactive after the 487 */
 				}
-				return 0; /* should be inactive after the 487 */
+				/* do nothing, just wait for the final timeout */
+				return 1;
 			}
-			/* do nothing, just wait for the final timeout */
-			return 1;
 		}
+		stop_rb_retr(irb); /* stop retransmissions */
 	}
 
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
@@ -305,3 +313,50 @@ void rpc_cancel(rpc_t* rpc, void* c)
 	}
 	rpc->add(c, "ds", j, "branches remaining (waiting for timeout)");
 }
+
+
+
+/* returns <0 on error */
+int cancel_b_flags_get(unsigned int* f, int m)
+{
+	int ret;
+	
+	ret=0;
+	switch(m){
+		case 1:
+			*f=F_CANCEL_B_FORCE_RETR;
+			break;
+		case 0:
+			*f=F_CANCEL_B_FAKE_REPLY;
+			break;
+		case 2:
+			*f=F_CANCEL_B_FORCE_C;
+			break;
+		default:
+			*f=F_CANCEL_B_FAKE_REPLY;
+			ret=-1;
+	}
+	return ret;
+}
+
+
+
+/* fixup function for the default cancel branch method/flags
+ * (called by the configuration framework) */
+int cancel_b_flags_fixup(void* handle, str* name, void** val)
+{
+	unsigned int m,f;
+	int ret;
+	
+	m=(unsigned int)(long)(*val);
+	ret=cancel_b_flags_get(&f, m);
+	if (ret<0)
+		ERR("cancel_b_flags_fixup: invalid value for %.*s; %d\n",
+				name->len, name->s, m);
+	*val=(void*)(long)f;
+	return ret;
+}
+
+
+
+

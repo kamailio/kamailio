@@ -552,7 +552,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			 * called with the cancel as the "current" transaction so
 			 * at most t_cancel REPLY_LOCK is held in this process =>
 			 * no deadlock possibility */
-			ret=cancel_branch(t_invite, i, F_CANCEL_B_FAKE_REPLY);
+			ret=cancel_branch(t_invite, i, cfg_get(tm,tm_cfg, cancel_b_flags));
 			if (ret<0) cancel_bm &= ~(1<<i);
 			if (ret<lowest_error) lowest_error=ret;
 		}
@@ -597,14 +597,19 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 			} else {
 				/* No provisional response received, stop
 				 * retransmission timers */
-				stop_rb_retr(&t_invite->uac[i].request);
+				if (!(cfg_get(tm, tm_cfg, cancel_b_flags) & 
+							F_CANCEL_B_FORCE_RETR))
+					stop_rb_retr(&t_invite->uac[i].request);
 				/* no need to stop fr, it will be stoped by relay_reply
 				 * put_on_wait -- andrei */
 				/* Generate faked reply */
-				LOCK_REPLIES(t_invite);
-				if (relay_reply(t_invite, FAKED_REPLY, i, 487, &tmp_bm) == 
-						RPS_ERROR) {
-					lowest_error = -1;
+				if (cfg_get(tm, tm_cfg, cancel_b_flags) &
+						F_CANCEL_B_FAKE_REPLY){
+					LOCK_REPLIES(t_invite);
+					if (relay_reply(t_invite, FAKED_REPLY, i, 487, &tmp_bm) == 
+							RPS_ERROR) {
+						lowest_error = -1;
+					}
 				}
 			}
 		}

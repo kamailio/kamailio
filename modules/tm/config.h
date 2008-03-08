@@ -126,6 +126,7 @@ struct cfg_group_tm {
 	int	tm_blst_503_max;
 	unsigned int	tm_blst_methods_add;
 	unsigned int	tm_blst_methods_lookup;
+	unsigned int	cancel_b_flags;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;

@@ -33,6 +33,7 @@
 #include "../../parser/msg_parser.h" /* method types */
 #include "timer.h"
 #include "t_fwd.h"
+#include "t_cancel.h" /* cancel_b_flags_fixup() */
 #include "config.h"
 
 struct cfg_group_tm	default_tm_cfg = {
@@ -86,6 +87,7 @@ struct cfg_group_tm	default_tm_cfg = {
 			 * timeouts by default */
 	~METHOD_BYE,	/* tm_blst_methods_lookup -- look-up the blacklist
 			 * for every method except BYE by default */
+	0	/* cancel_b_method used for e2e and 6xx cancels*/
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -166,5 +168,8 @@ cfg_def_t	tm_cfg_def[] = {
 	{"blst_methods_lookup",	CFG_VAR_INT,	0, 0, 0, 0,
 		"Bitmap of method types that are looked-up in the blacklist "
 		"before statefull forwarding"},
+	{"cancel_b_method",	CFG_VAR_INT,	0, 2, cancel_b_flags_fixup, 0,
+		"How to cancel branches on which no replies were received: 0 - fake"
+		" reply, 1 - retransmitting the request, 2 - send cancel"},
 	{0, 0, 0, 0, 0, 0}
 };
