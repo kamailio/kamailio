@@ -472,9 +472,11 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 	int i;
 	int lowest_error;
 	int ret;
+	int active_cancel_uacs;
 
 	cancel_bm=0;
 	lowest_error=0;
+	active_cancel_uacs=0;
 
 	/* first check if there are any branches */
 	if (t_invite->nr_of_outgoings==0){
@@ -514,6 +516,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 				if (start_retr( &t_cancel->uac[i].request )!=0)
 					LOG(L_CRIT, "BUG: e2e_cancel: failed to start retr."
 							" for %p\n", &t_cancel->uac[i].request);
+				else
+					active_cancel_uacs++;
 			} else {
 				/* No provisional response received, stop
 				 * retransmission timers */
@@ -552,6 +556,8 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		 * is called (we are already hold the reply mutex for the cancel
 		 * transaction).
 		 */
+		if (active_cancel_uacs) 
+			t_cancel->flags|=T_ACTIVE_CANCEL_UACS;
 		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
 			t_reply_unsafe( t_cancel, cancel_msg, 200, CANCELING );
 		else

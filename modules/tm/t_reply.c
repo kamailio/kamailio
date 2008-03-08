@@ -455,7 +455,10 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					trans->uas.request, FAKED_REPLY, code);
 		}
 
-		cleanup_uac_timers( trans );
+		/* hack: don't stop uac retr  for e2e cancels */
+		if (!(trans->flags & T_ACTIVE_CANCEL_UACS)){
+			cleanup_uac_timers( trans );
+		}
 		if (is_invite(trans)) 
 			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
 		set_final_timer(  trans );
