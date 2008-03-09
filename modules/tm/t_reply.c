@@ -78,6 +78,8 @@
  *              replace a 503 final relayed reply by a 500 (andrei)
  * 2006-10-16  aggregate all the authorization headers/challenges when
  *               the final response is 401 or 407 (andrei)
+ * 2008-03-09  special handling for T_ACTIVE_E2E _CANCEL transactions: make 
+ *             sure they  wait for replies on all branches (andrei)
  *
  */
 
@@ -455,13 +457,13 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 					trans->uas.request, FAKED_REPLY, code);
 		}
 
-		/* hack: don't stop uac retr  for e2e cancels */
-		if (!(trans->flags & T_ACTIVE_CANCEL_UACS)){
+		/* hack: don't stop uac retr & don't put on wait  for e2e cancels */
+		if (!(trans->flags & T_ACTIVE_E2E_CANCEL)){
 			cleanup_uac_timers( trans );
+			if (is_invite(trans)) 
+				cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
+			set_final_timer(  trans );
 		}
-		if (is_invite(trans)) 
-			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
-		set_final_timer(  trans );
 	}
 
 	/* send it out */
@@ -864,6 +866,35 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 			Trans->uac[branch].last_received=new_code;
 			*should_relay=branch;
 			return RPS_PUSHED_AFTER_COMPLETION;
+		}
+		/* special e2e cancel handling (e2e cancels are immediately replied
+		 * with t_reply() but they still should wait for all the open "fwd" 
+		 * branches to complete */
+		if (Trans->flags & T_ACTIVE_E2E_CANCEL){
+			/* it's an internally t_replied() e2e cancel that still
+			 * has some open branches => never store or relay the reply but:
+			 * - if the reply is for an already replied branch drop it
+			 * - if no more open branches => complete
+			 */
+		/* if final response at this branch drop */
+			if (Trans->uac[branch].last_received>=200)
+				goto discard;
+			Trans->uac[branch].last_received=new_code;
+			/* if all_final return lowest (works even for 2xx)*/
+			picked_branch=t_pick_branch(branch,new_code, Trans, &picked_code);
+			if (picked_branch==-2) /* branches still open */
+				goto discard;
+			else if (picked_branch==-1){ /* error */
+				LOG(L_ERR, "ERROR: t_should_relay_response (e2e cancel active)"
+							": lowest=-1\n");
+				goto error;
+			}
+			/* no more pending branches
+			 * (this is an already replied e2ecancel => no callbacks or
+			 *  failure route) */
+			*should_store=0;
+			*should_relay=-1;
+			return RPS_COMPLETED;
 		}
 		/* except the exception above, too late  messages will
 		   be discarded */
@@ -1412,18 +1443,22 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 
 	UNLOCK_REPLIES( t );
 
+	/* Call set_final_timer() only if we really send out the reply.
+	 * It can happen that the reply has been already sent from failure_route
+	 * or from a callback and the timer has been already started. (Miklos)
+	 * Unfortunately we can have an RPS_COMPLETED  reply with
+	 * no set_final_timer() called (e.g. the new E2E CANCEL case). Calling 
+	 * set_final_timer() multiple times shouldn't cause any problem (andrei)
+	 */
+	if (reply_status == RPS_COMPLETED) {
+		set_final_timer(t);
+	}
 	/* send it now (from the private buffer) */
 	if (relay >= 0) {
 		/* Set retransmission timer before the reply is sent out to avoid
 		 * race conditions
 		 *
-		 * Call set_final_timer() only if we really send out the reply.
-		 * It can happen that the reply has been already sent from failure_route
-		 * or from a callback and the timer has been already started. (Miklos)
 		 */
-		if (reply_status == RPS_COMPLETED) {
-			set_final_timer(t);
-		}
 		SEND_PR_BUFFER( uas_rb, buf, res_len );
 		DBG("DEBUG: reply relayed. buf=%p: %.15s..., shmem=%p: %.9s totag_retr=%d\n",
 			buf, buf, uas_rb->buffer, uas_rb->buffer, totag_retr );

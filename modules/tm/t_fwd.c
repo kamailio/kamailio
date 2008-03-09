@@ -557,7 +557,7 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		 * transaction).
 		 */
 		if (active_cancel_uacs) 
-			t_cancel->flags|=T_ACTIVE_CANCEL_UACS;
+			t_cancel->flags|=T_ACTIVE_E2E_CANCEL;
 		if ((rmode==MODE_ONFAILURE) && (t_cancel==get_t()))
 			t_reply_unsafe( t_cancel, cancel_msg, 200, CANCELING );
 		else

@@ -200,7 +200,7 @@ struct totag_elem {
 #define T_IN_AGONY (1<<5) /* set if waiting to die (delete timer)
                              TODO: replace it with del on unref */
 
-#define T_ACTIVE_CANCEL_UACS (1<<6) /* used for cancel transactions */
+#define T_ACTIVE_E2E_CANCEL (1<<6) /* used for cancel transactions */
 
 #define T_DONT_FORK   (T_CANCELED|T_6xx)
 
