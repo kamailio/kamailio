@@ -32,9 +32,6 @@
  * 2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  * 2004-02-13  timer_link.payload removed (bogdan)
  * 2006-10-10  cancel_uacs  & cancel_branch take more options now (andrei)
- * 2007-03-08  e2e_cancel handles non replied branches in 3 different ways,
- *              selectable by the tm cancel_b_method parameter: fake reply,
- *              retransmit request and send cancel on branch (andrei)
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
