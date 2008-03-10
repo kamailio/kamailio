@@ -235,11 +235,6 @@ void acc_onreq( struct cell* t, int type, struct tmcb_params *ps )
 			LM_ERR("cannot register additional callbacks\n");
 			return;
 		}
-		/* also, if that is INVITE, disallow silent t-drop */
-		if ( is_invite ) {
-			LM_DBG("noisy_timer set for accounting\n");
-			t->flags |= T_NOISY_CTIMER_FLAG;
-		}
 		/* if required, determine request direction */
 		if( detect_direction && !rrb.is_direction(ps->req,RR_FLOW_UPSTREAM) ) {
 			LM_DBG("detected an UPSTREAM req -> flaging it\n");

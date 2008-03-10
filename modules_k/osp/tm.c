@@ -97,12 +97,6 @@ static void ospOnReq(
        LM_ERR("TM callbacks are required for reporting call setup usage\n");
         return;
     }
-
-    /* Also, if that is INVITE, disallow silent t-drop */
-    if (ps->req->REQ_METHOD == METHOD_INVITE) {
-        LM_DBG("noisy_timer set for accounting\n");
-        t->flags |= T_NOISY_CTIMER_FLAG;
-    }
 }
 
 /*

@@ -593,11 +593,6 @@ static void trace_onreq_in(struct cell* t, int type, struct tmcb_params *ps)
 		return;
 	}
 
-	if (msg->REQ_METHOD==METHOD_INVITE)
-	{
-		LM_DBG("noisy_timer set for tracing\n");
-		t->flags |= T_NOISY_CTIMER_FLAG;
-	}
 	if(tmb.register_tmcb( 0, t, TMCB_REQUEST_BUILT, trace_onreq_out, 0) <=0)
 	{
 		LM_ERR("can't register trace_onreq_out\n");
