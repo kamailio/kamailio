@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2005 Voice Sistem
    Revision History
-   Revision $Revision$ $Date: 2008-03-07 21:52:29 +0200
-                              (Fri, 07 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
+                              (Sat, 08 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -42,8 +42,6 @@ Ramona-Elena Modroiu
               1.4.2. uac_replace_from(uri)
               1.4.3. uac_restore_from()
               1.4.4. uac_auth()
-
-   2. Frequently Asked Questions
 
    List of Examples
 
@@ -250,40 +248,3 @@ uac_restore_from();
 ...
 uac_auth();
 ...
-
-Chapter 2. Frequently Asked Questions
-
-   Revision History
-   Revision $Revision$ $Date: 2005-06-13 19:47:24 +0300 (Mon,
-                           13 Jun 2005) $
-
-   2.1.
-
-       Where can I find more about OpenSER?
-
-       Take a look at http://openser.org/.
-
-   2.2.
-
-       Where can I post a question about this module?
-
-       First at all check if your question was already answered on one
-       of our mailing lists:
-         * User Mailing List -
-           http://openser.org/cgi-bin/mailman/listinfo/users
-         * Developer Mailing List -
-           http://openser.org/cgi-bin/mailman/listinfo/devel
-
-       E-mails regarding any stable OpenSER release should be sent to
-       <users@openser.org> and e-mails regarding development versions
-       should be sent to <devel@openser.org>.
-
-       If you want to keep the mail private, send it to
-       <team@openser.org>.
-
-   2.3.
-
-       How can I report a bug?
-
-       Please follow the guidelines provided at:
-       http://sourceforge.net/tracker/?group_id=139143.
