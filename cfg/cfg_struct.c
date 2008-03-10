@@ -482,7 +482,7 @@ int cfg_lookup_var(str *gname, str *vname,
 			break;
 		}
 
-	LOG(L_ERR, "ERROR: cfg_lookup_var(): variable not found: %.*s.%.*s\n",
+	LOG(L_DBG, "DEBUG: cfg_lookup_var(): variable not found: %.*s.%.*s\n",
 			gname->len, gname->s,
 			vname->len, vname->s);
 	return -1;
