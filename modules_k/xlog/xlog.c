@@ -398,13 +398,13 @@ static int pv_get_color(struct sip_msg *msg, pv_param_t *param,
 	static char color[COL_BUF];
 	char* p;
 	char* end;
+	str s;
 
 	if(log_stderr==0 && force_color==0)
 	{
-		res->rs.s = "";
-		res->rs.len = 0;
-		res->flags = PV_VAL_STR;
-		return 0;
+		s.s = "";
+		s.len = 0;
+		return pv_get_strval(msg, param, res, &s);
 	}
 
 	p = color;
@@ -499,10 +499,9 @@ static int pv_get_color(struct sip_msg *msg, pv_param_t *param,
 	/* end */
 	append_sstring(p, end, "m");
 
-	res->rs.s = color;
-	res->rs.len = p-color;
-	res->flags = PV_VAL_STR;
-	return 0;
+	s.s = color;
+	s.len = p-color;
+	return pv_get_strval(msg, param, res, &s);
 
 error:
 	return -1;
