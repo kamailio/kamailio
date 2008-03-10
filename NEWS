@@ -18,7 +18,9 @@ modules:
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
- - tm        - support for adding a 503 reply source to the blacklist for
+ - tm        - method for canceling unreplied branches can now be selected
+               using the new cancel_b_method tm parameter.
+             - support for adding a 503 reply source to the blacklist for
                the time specified in the Retry-After header (see the new tm
                parameters blst_503, blst_503_def_timeout, blst_503_min_timeout
                and blst_503_max_timeout).
@@ -50,6 +52,17 @@ modules:
              - behaviour when receiving a CANCEL which doesn't match any 
                transaction can be selected using the unmatched_cancel param.
              - params: 
+                        - cancel_b_method - selects one of the three methods
+                          for dealing with unreplied branches when the 
+                          transaction must be canceled. The possible values
+                          are 0 (default and old behaviour) for stopping 
+                          request retransmission on the branch and act as if 
+                          the branch was immediately replied with a 487,
+                          1 for continuing to retransmit the request until an
+                          answer is received or the timeout kicks in and
+                          2 for stopping the request retransmission and sending
+                          CANCEL on the branch (not rfc conforming).
+                          For more information see tm docs.
                         - blst_503 - if set and if the blacklist is used
                           (use_dst_blacklist=1), add the source of a 503 reply
                           to the blacklist
@@ -92,6 +105,10 @@ modules:
                            received bogus CANCEL will create a new transaction 
                            that will live by default 30s).
              - functions:
+                        - t_grep_status("code") -- returns true if any branch
+                          received code as the final reply (or if no final 
+                          reply was yet received, but a "code" provisional 
+                          reply).
                         - t_set_auto_inv_100(on/off) - switch automatically
                           sending 100 replies to INVITEs on/off on a per
                           transaction basis. It overrides the tm param.
@@ -102,6 +119,8 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - most of the config variables can now be changed on the fly,
+               without ser restart  (migration work in progress)
              - tcp improvements (better tcp timers, send fd cache, special
                 options support)
              - dns naptr support (see dns_try_naptr and dns_<proto>_pref)

@@ -427,4 +427,54 @@ modparam("tm", "blst_methods_lookup", 1)
 	    </programlisting>
 	</example>
     </section>
+
+    <section id="cancel_b_method">
+	<title><varname>cancel_b_method</varname> (integer)</title>
+	<para>
+		Method used when attempting to CANCEL an unreplied transaction branch
+		(a branch where no reply greater the 99 was received).
+		The possible values are 0, 1, and 2.
+	</para>
+	<para>
+		<emphasis>0</emphasis> will immediately stop the request (INVITE) 
+		retrasmission on the branch and it will behave as if the branch was 
+		immediately replied with a 487 (a fake internal 487 reply). The 
+		advantage is the unreplied branches will be terminated immediately.
+		However it introduces a race risk with a possible slightly delayed
+		 2xx reply. In this case we could have an UA receiving a 2xx after a
+		 487. Moreover this risk is greatly amplified by packet loss
+		(e.g. if an 180 is lost the branch will look as unreplied and
+		 a CANCEL will silently drop the branch, but a 2xx can still come at
+		 a later time).
+	</para>
+	<para>
+		<emphasis>1</emphasis> will keep retransmitting the request on 
+		unreplied branches. If a provisional answer is later received a CANCEL
+		will be immediately sent back (attempting to quickly trigger a 487). 
+		This approach is race free and avoids the 2xx after 487 problem, but
+		 it's more resource intensive: faced with a branch towards and UA that
+		 doesn't answer, a CANCEL attempt will keep the transaction alive for
+		 the whole timeout interval (<varname>fr_timer</varname>).
+	</para>
+	<para>
+		<emphasis>2</emphasis> will send and retransmit CANCEL even on 
+		unreplied branches, stopping the request retransmissions. This has the
+		same advantages as <emphasis>1</emphasis> and also avoids the extra 
+		roundtrip in the case of the provisional reply, but it's not RFC 3261 
+		conforming (the RFC allows sending CANCELs only on pending branches).
+	</para>
+	<para>
+		The default value is 0 (the same behaviour as ser versions
+		less then 2.1).
+	</para>
+	<example>
+	    <title>Set <varname>cancel_b_method</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "cancel_b_method", 1)
+...
+	    </programlisting>
+	</example>
+    </section>
+
 </section>
