@@ -106,6 +106,7 @@
 #include "../../route_struct.h"
 #include "../../route.h"
 #include "../../cfg/cfg.h"
+#include "../../globals.h"
 
 #include "config.h"
 #include "sip_msg.h"
@@ -381,6 +382,7 @@ static param_export_t params[]={
 	{"blst_methods_add",    PARAM_INT, &default_tm_cfg.tm_blst_methods_add   },
 	{"blst_methods_lookup", PARAM_INT, &default_tm_cfg.tm_blst_methods_lookup},
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
+	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
 	{0,0,0}
 };
 
@@ -611,6 +613,14 @@ static int mod_init(void)
 		LOG(L_ERR, "ERROR: mod_init: bad cancel branch method\n");
 		return -1;
 	}
+
+#ifdef USE_DNS_FAILOVER
+	if (default_tm_cfg.reparse_on_dns_failover && mhomed) {
+		LOG(L_WARN, "WARNING: mod_init: "
+			"reparse_on_dns_failover is enabled on a "
+			"multihomed host -- check the readme of tm module!\n");
+	}
+#endif
 
 	/* declare the configuration */
 	if (cfg_declare("tm", tm_cfg_def, &default_tm_cfg, cfg_size(tm),

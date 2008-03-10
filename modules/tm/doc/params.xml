@@ -477,4 +477,42 @@ modparam("tm", "cancel_b_method", 1)
 	</example>
     </section>
 
+    <section id="reparse_on_dns_failover">
+	<title><varname>reparse_on_dns_failover</varname> (integer)</title>
+	<para>
+		If set to 1, the SIP message after a DNS failover is constructed
+		from the outgoing message buffer of the failed branch instead of
+		from the received request.
+	</para>
+	<para>
+		It must be set if multiple branches are installed, the SIP message is
+		modified differently in them, and at least one of them can result
+		in DNS failover. If the parameter is not set the per-branch modifications
+		are lost after the failover.
+	</para>
+	<para>
+		Note: If the parameter is set, branch route block and TMCB_REQUEST_FWDED
+		callback are not called in case of the failover.
+	</para>
+	<para>
+		Disadvantage: only the via header is replaced in the message buffer, so
+		the outgoing socket address is not corrected in any other part of the message.
+		It is dangerous on multihomed hosts: when the new SIP request after
+		the DNS failover is sent via different interface than the first request,
+		the message can contain incorrect ip address in the Record-Route header
+		for instance.
+	</para>
+	<para>
+		Default value is 1.
+	</para>
+	<example>
+	    <title>Set <varname>reparse_on_dns_failover</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "reparse_on_dns_failover", 0)
+...
+	    </programlisting>
+       </example>
+    </section>
+
 </section>

@@ -72,6 +72,11 @@
  *              t_relay_cancel() introduced -- can be used to relay CANCELs
  *              at the beginning of the script. (Miklos)
  * 2007-06-04  running transaction are canceled hop by hop (andrei)
+ *  2007-08-37  In case of DNS failover the new SIP message is constructed
+ *              from the message buffer of the failed branch instead of
+ *              applying the lumps again, because the per-branch lumps are not saved,
+ *              thus, are not available. Set reparse_on_dns_failover to 0 to
+ *              revert the change. (Miklos)
  */
 
 #include "defs.h"
@@ -103,6 +108,8 @@
 #ifdef USE_DNS_FAILOVER
 #include "../../dns_cache.h"
 #include "../../cfg_core.h" /* cfg_get(core, core_cfg, use_dns_failover) */
+#include "../../msg_translator.h"
+#include "lw_parser.h"
 #endif
 #ifdef USE_DST_BLACKLIST
 #include "../../dst_blacklist.h"
@@ -234,6 +241,82 @@ error01:
  error00:
 	return shbuf;
 }
+
+#ifdef USE_DNS_FAILOVER
+/* Similar to print_uac_request(), but this function uses the outgoing message buffer of
+   the failed branch to construt the new message in case of DNS failover.
+
+   WARNING: only the first VIA header is replaced in the buffer, the rest
+   of the message is untuched, thus, the send socket is corrected only in the VIA HF.
+*/
+static char *print_uac_request_from_buf( struct cell *t, struct sip_msg *i_req,
+	int branch, str *uri, unsigned int *len, struct dest_info* dst,
+	char *buf, short buf_len)
+{
+	char *shbuf;
+	str branch_str;
+	char *via, *old_via_begin, *old_via_end;
+	unsigned int via_len;
+
+	shbuf=0;
+
+	/* ... we calculate branch ... */	
+	if (!t_calc_branch(t, branch, i_req->add_to_branch_s,
+			&i_req->add_to_branch_len ))
+	{
+		LOG(L_ERR, "ERROR: print_uac_request_from_buf: branch computation failed\n");
+		goto error00;
+	}
+	branch_str.s = i_req->add_to_branch_s;
+	branch_str.len = i_req->add_to_branch_len;
+
+	/* find the beginning of the first via header in the buffer */
+	old_via_begin = lw_find_via(buf, buf+buf_len);
+	if (!old_via_begin) {
+		LOG(L_ERR, "ERROR: print_uac_request_from_buf: beginning of via header not found\n");
+		goto error00;
+	}
+	/* find the end of the first via header in the buffer */
+	old_via_end = lw_next_line(old_via_begin, buf+buf_len);
+	if (!old_via_end) {
+		LOG(L_ERR, "ERROR: print_uac_request_from_buf: end of via header not found\n");
+		goto error00;
+	}
+
+	/* create the new VIA HF */
+	via = create_via_hf(&via_len, i_req, dst, &branch_str);
+	if (!via) {
+		LOG(L_ERR, "ERROR: print_uac_request_from_buf: via building failed\n");
+		goto error00;
+	}
+
+	/* allocate memory for the new buffer */
+	*len = buf_len + via_len - (old_via_end - old_via_begin);
+	shbuf=(char *)shm_malloc(*len);
+	if (!shbuf) {
+		ser_error=E_OUT_OF_MEM;
+		LOG(L_ERR, "ERROR: print_uac_request_from_buf: no shmem\n");
+		goto error01;
+	}
+
+	/* construct the new buffer */
+	memcpy(shbuf, buf, old_via_begin-buf);
+	memcpy(shbuf+(old_via_begin-buf), via, via_len);
+	memcpy(shbuf+(old_via_begin-buf)+via_len, old_via_end, (buf+buf_len)-old_via_end);
+
+#ifdef DBG_MSG_QA
+	if (shbuf[*len-1]==0) {
+		LOG(L_ERR, "ERROR: print_uac_request_from_buf: sanity check failed\n");
+		abort();
+	}
+#endif
+
+error01:
+	pkg_free(via);
+error00:
+	return shbuf;
+}
+#endif
 
 /* introduce a new uac, which is blind -- it only creates the
    data structures and starts FR timer, but that's it; it does
@@ -375,6 +458,76 @@ error:
 
 
 #ifdef USE_DNS_FAILOVER
+/* Similar to add_uac(), but this function uses the outgoing message buffer of
+   the failed branch to construt the new message in case of DNS failover.
+*/
+static int add_uac_from_buf( struct cell *t, struct sip_msg *request, str *uri, int proto,
+			char *buf, short buf_len)
+{
+
+	int ret;
+	unsigned short branch;
+	char *shbuf;
+	unsigned int len;
+
+	branch=t->nr_of_outgoings;
+	if (branch==MAX_BRANCHES) {
+		LOG(L_ERR, "ERROR: add_uac_from_buf: maximum number of branches exceeded\n");
+		ret=ser_error=E_TOO_MANY_BRANCHES;
+		goto error;
+	}
+
+	/* check existing buffer -- rewriting should never occur */
+	if (t->uac[branch].request.buffer) {
+		LOG(L_CRIT, "ERROR: add_uac_from_buf: buffer rewrite attempt\n");
+		ret=ser_error=E_BUG;
+		goto error;
+	}
+
+	if (uri2dst(&t->uac[branch].dns_h, &t->uac[branch].request.dst,
+				request, uri, proto) == 0)
+	{
+		ret=ser_error=E_BAD_ADDRESS;
+		goto error;
+	}
+	
+	/* check if send_sock is ok */
+	if (t->uac[branch].request.dst.send_sock==0) {
+		LOG(L_ERR, "ERROR: add_uac_from_buf: can't fwd to af %d, proto %d "
+			" (no corresponding listening socket)\n",
+			t->uac[branch].request.dst.to.s.sa_family, 
+			t->uac[branch].request.dst.proto );
+		ret=ser_error=E_NO_SOCKET;
+		goto error;
+	}
+
+	/* now message printing starts ... */
+	shbuf=print_uac_request_from_buf( t, request, branch, uri, 
+							&len, &t->uac[branch].request.dst,
+							buf, buf_len);
+	if (!shbuf) {
+		ret=ser_error=E_OUT_OF_MEM;
+		goto error;
+	}
+
+	/* things went well, move ahead and install new buffer! */
+	t->uac[branch].request.buffer=shbuf;
+	t->uac[branch].request.buffer_len=len;
+	t->uac[branch].uri.s=t->uac[branch].request.buffer+
+		request->first_line.u.request.method.len+1;
+	t->uac[branch].uri.len=uri->len;
+	membar_write(); /* to allow lockless ops (e.g. which_cancel()) we want
+					   to be sure everything above is fully written before
+					   updating branches no. */
+	t->nr_of_outgoings=(branch+1);
+
+	/* done! */
+	ret=branch;
+		
+error:
+	return ret;
+}
+
 /* introduce a new uac to transaction, based on old_uac and a possible
  *  new ip address (if the dns name resolves to more ips). If no more
  *   ips are found => returns -1.
@@ -420,12 +573,23 @@ int add_uac_dns_fallback( struct cell *t, struct sip_msg* msg,
 			/* copy the dns handle into the new uac */
 			dns_srv_handle_cpy(&t->uac[t->nr_of_outgoings].dns_h,
 								&old_uac->dns_h);
-			/* add_uac will use dns_h => next_hop will be ignored.
-			 * Unfortunately we can't reuse the old buffer, the branch id
-			 *  must be changed and the send_socket might be different =>
-			 *  re-create the whole uac */
-			ret=add_uac(t,  msg, &old_uac->uri, 0, 0, 
+
+			if (cfg_get(tm, tm_cfg, reparse_on_dns_failover))
+				/* Reuse the old buffer and only replace the via header.
+				 * The drowback is that the send_socket is not corrected
+				 * in the rest of the message, only in the VIA HF (Miklos) */
+				ret=add_uac_from_buf(t,  msg, &old_uac->uri, 
+							old_uac->request.dst.proto,
+							old_uac->request.buffer,
+							old_uac->request.buffer_len);
+			else
+				/* add_uac will use dns_h => next_hop will be ignored.
+				 * Unfortunately we can't reuse the old buffer, the branch id
+				 *  must be changed and the send_socket might be different =>
+				 *  re-create the whole uac */
+				ret=add_uac(t,  msg, &old_uac->uri, 0, 0, 
 							old_uac->request.dst.proto);
+
 			if (ret<0){
 				/* failed, delete the copied dns_h */
 				dns_srv_handle_put(&t->uac[t->nr_of_outgoings].dns_h);
@@ -1098,4 +1262,17 @@ int t_replicate(struct sip_msg *p_msg,  struct proxy_l *proxy, int proto )
 		introduce delete lumps for all the header fields above
 	*/
 	return t_relay_to(p_msg, proxy, proto, 1 /* replicate */);
+}
+
+/* fixup function for reparse_on_dns_failover modparam */
+int reparse_on_dns_failover_fixup(void *handle, str *name, void **val)
+{
+#ifdef USE_DNS_FAILOVER
+	if ((int)(long)(*val) && mhomed) {
+		LOG(L_WARN, "WARNING: reparse_on_dns_failover_fixup:"
+		"reparse_on_dns_failover is enabled on a "
+		"multihomed host -- check the readme of tm module!\n");
+	}
+#endif
+	return 0;
 }

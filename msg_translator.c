@@ -59,6 +59,8 @@
  * 2006-04-20  build_req_from_sip_req, via_builder and lump_* functions
  *              use now struct dest_info; lumps & via comp param support
  *              (rfc3486) (andrei)
+ * 2007-08-31  id_builder() and via_builder() are grouped into one function:
+ *             create_via_hf() -- tm module needs them as well (Miklos)
  *
  */
 /* Via special params:
@@ -1427,20 +1429,8 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	struct lump* anchor;
 	struct lump* via_insert_param;
 	str branch;
-	str extra_params;
-	struct hostport hp;
 
-#ifdef USE_TCP
-	char* id_buf;
-	unsigned int id_len;
-
-
-	id_buf=0;
-	id_len=0;
-#endif
 	via_insert_param=0;
-	extra_params.len=0;
-	extra_params.s=0;
 	uri_len=0;
 	buf=msg->buf;
 	len=msg->len;
@@ -1451,25 +1441,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 	rport_buf=0;
 	line_buf=0;
 
-#ifdef USE_TCP
-	/* add id if tcp */
-	if (msg->rcv.proto==PROTO_TCP
-#ifdef USE_TLS
-			|| msg->rcv.proto==PROTO_TLS
-#endif
-			){
-		if  ((id_buf=id_builder(msg, &id_len))==0){
-			LOG(L_ERR, "ERROR: build_req_buf_from_sip_req:"
-							" id_builder failed\n");
-			goto error00; /* we don't need to free anything,
-			                 nothing alloc'ed yet*/
-		}
-		DBG("build_req_from_req: id added: <%.*s>, rcv proto=%d\n",
-				(int)id_len, id_buf, msg->rcv.proto);
-		extra_params.s=id_buf;
-		extra_params.len=id_len;
-	}
-#endif
 	     /* Calculate message body difference and adjust
 	      * Content-Length
 	      */
@@ -1480,11 +1451,11 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 		goto error00;
 	}
 
+	/* create a the via header */
 	branch.s=msg->add_to_branch_s;
 	branch.len=msg->add_to_branch_len;
-	set_hostport(&hp, msg);
-	line_buf = via_builder( &via_len, send_info, &branch,
-							extra_params.len?&extra_params:0, &hp);
+
+	line_buf = create_via_hf( &via_len, msg, send_info, &branch);
 	if (!line_buf){
 		LOG(L_ERR,"ERROR: build_req_buf_from_sip_req: no via received!\n");
 		goto error00;
@@ -1615,11 +1586,6 @@ char * build_req_buf_from_sip_req( struct sip_msg* msg,
 #endif
 
 	*returned_len=new_len;
-	/* cleanup */
-#ifdef USE_TCP
-	if (id_buf) pkg_free(id_buf); /* it's not in a lump => we don't need it
-									 anymore */
-#endif
 	return new_buf;
 
 error01:
@@ -1629,9 +1595,6 @@ error02:
 error03:
 	if (rport_buf) pkg_free(rport_buf);
 error00:
-#ifdef USE_TCP
-	if (id_buf) pkg_free(id_buf);
-#endif
 	*returned_len=0;
 	return 0;
 }
@@ -2187,6 +2150,60 @@ char* via_builder( unsigned int *len,
 
 	*len = via_len;
 	return line_buf;
+}
+
+/* creates a via header honoring the protocol of the incomming socket
+ * msg is an optional parameter */
+char* create_via_hf( unsigned int *len,
+	struct sip_msg *msg,
+	struct dest_info* send_info /* where to send the reply */,
+	str* branch)
+{
+	char* via;
+	str extra_params;
+	struct hostport hp;
+#ifdef USE_TCP
+	char* id_buf;
+	unsigned int id_len;
+
+
+	id_buf=0;
+	id_len=0;
+#endif
+	extra_params.len=0;
+	extra_params.s=0;
+
+
+#ifdef USE_TCP
+	/* add id if tcp */
+	if (msg
+	&& ((msg->rcv.proto==PROTO_TCP)
+#ifdef USE_TLS
+			|| (msg->rcv.proto==PROTO_TLS)
+#endif
+			)){
+		if  ((id_buf=id_builder(msg, &id_len))==0){
+			LOG(L_ERR, "ERROR: create_via_hf:"
+							" id_builder failed\n");
+			return 0; /* we don't need to free anything,
+			                 nothing alloc'ed yet*/
+		}
+		DBG("create_via_hf: id added: <%.*s>, rcv proto=%d\n",
+				(int)id_len, id_buf, msg->rcv.proto);
+		extra_params.s=id_buf;
+		extra_params.len=id_len;
+	}
+#endif
+
+	set_hostport(&hp, msg);
+	via = via_builder( len, send_info, branch,
+							extra_params.len?&extra_params:0, &hp);
+
+#ifdef USE_TCP
+	/* we do not need id_buf any more, the id is already in the new via header */
+	if (id_buf) pkg_free(id_buf);
+#endif
+	return via;
 }
 
 /* builds a char* buffer from message headers without body

@@ -43,4 +43,9 @@ char *lw_get_hf_name(char *begin, char *end,
 /* returns a pointer to the next line */
 char *lw_next_line(char *buf, char *buf_end);
 
+#ifdef USE_DNS_FAILOVER
+/* returns the pointer to the first VIA header */
+char *lw_find_via(char *buf, char *buf_end);
+#endif
+
 #endif /* _LW_PARSER_H */
