@@ -133,7 +133,6 @@ fi
 db_get ser-oob/ADMINADDR
 if test "$RET" != "!" ; then
   echo "listen=udp:$RET" | fn_config_replace $CONFIGFILE LISTEN_ADMIN
-+++
 fi
 
 db_get ser-oob/SENDADDR
