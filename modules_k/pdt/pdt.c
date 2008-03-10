@@ -51,6 +51,7 @@
 #include "../../ut.h"
 #include "../../locking.h"
 #include "../../action.h"
+#include "../../mod_fix.h"
 #include "../../parser/parse_from.h"
 
 #include "domains.h"
@@ -109,9 +110,12 @@ static int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode);
 static int pdt_load_db();
 
 static cmd_export_t cmds[]={
-	{"prefix2domain", (cmd_function)w_prefix2domain,   0, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"prefix2domain", (cmd_function)w_prefix2domain_1, 1, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"prefix2domain", (cmd_function)w_prefix2domain_2, 2, 0, 0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain,   0, 0,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain_1, 1, fixup_igp_null,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"prefix2domain", (cmd_function)w_prefix2domain_2, 2, fixup_igp_igp,
+		0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -343,32 +347,43 @@ static int w_prefix2domain(struct sip_msg* msg, char* str1, char* str2)
 
 static int w_prefix2domain_1(struct sip_msg* msg, char* mode, char* str2)
 {
-	if(mode!=NULL && *mode=='1')
-		return prefix2domain(msg, 1, 0);
-	else if(mode!=NULL && *mode=='2')
-			return prefix2domain(msg, 2, 0);
-	else return prefix2domain(msg, 0, 0);
+	int m;
+
+	if(fixup_get_ivalue(msg, (gparam_p)mode, &m)!=0)
+	{
+		LM_ERR("no mode value\n");
+		return -1;
+	}
+
+	if(m!=1 && m!=2)
+		m = 0;
+
+	return prefix2domain(msg, m, 0);
 }
 
-static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sd_en)
+static int w_prefix2domain_2(struct sip_msg* msg, char* mode, char* sdm)
 {
-	int tmp=0;
-	
-	if((sd_en==NULL) || ((sd_en!=NULL) && (*sd_en!='0') && (*sd_en!='1')
-				&& (*sd_en!='2')))
+	int m, s;
+
+	if(fixup_get_ivalue(msg, (gparam_p)mode, &m)!=0)
+	{
+		LM_ERR("no mode value\n");
 		return -1;
-	
-    if (*sd_en=='1')
-		tmp = 1;
-    if (*sd_en=='2')
-		tmp = 2;
-	
-		
-	if(mode!=NULL && *mode=='1')
-		return prefix2domain(msg, 1, tmp);
-	else if(mode!=NULL && *mode=='2')
-			return prefix2domain(msg, 2, tmp);
-	else return prefix2domain(msg, 0, tmp);
+	}
+
+	if(m!=1 && m!=2)
+		m = 0;
+
+	if(fixup_get_ivalue(msg, (gparam_p)sdm, &s)!=0)
+	{
+		LM_ERR("no multi-domain mode value\n");
+		return -1;
+	}
+
+	if(s!=1 && s!=2)
+		s = 0;
+
+	return prefix2domain(msg, m, s);
 }
 
 /* change the r-uri if it is a PSTN format */

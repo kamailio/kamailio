@@ -268,26 +268,30 @@ modparam("pdt", "check_domain", 0)
    the database entries where sdomain has the value "*".
 
    The "rewrite_mode" parameter specifies whether to strip or not
-   the prefix from user part. If the parameter is missing or it
-   has the value "0", then the prefix is removed along with the
-   leading prefix. If the value is "1", only the leading prefix is
-   removed. If the values is "2" the user part of the URI is not
-   changed.
+   the prefix from user part. The possible values are:
+     * 0: the prefix is removed along with the leading prefix.
+     * 1: only the leading prefix is removed.
+     * 2: the user part of the URI is not changed.
+     * $PV : any PV holding one of the above values.
 
    The "multidomain_mode" parameter specifies the kind of
-   multidomain support to use. There are three possible values:
+   multidomain support to use. The possible values are:
      * 0 : Translation of URI regardless of source domain.
      * 1 : Translation of URI using as source domain the domain in
        From-URI.
      * 2 : Translation of URI using as source domain the domain in
        From-URI. In case there is no entry for the required
        sdomain, it tries the translation using "*" as sdomain.
+     * $PV : any PV holding one of the above values.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.12. prefix2domain usage
 ...
 prefix2domain("2", "2");
+...
+$var(a) = 1;
+prefix2domain("$var(a)", "2");
 ...
 
 1.4.2.  prefix2domain(rewrite_mode)
