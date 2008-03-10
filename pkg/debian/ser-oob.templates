@@ -36,16 +36,26 @@ Description: List of IP addresses to listen on
  List of all IP addresses SER will listen for SIP messages on. 
  Multiple entries may be entered separated by commas.
  Enter empty string to not set explicit listening address.
+ The order is important - SER will use the first address as the default address when it
+ doesn't know what socket to choose.
  Please do not list private administrative address here (separate question for it will follow).
  .
  Enter "!" to not modify this option.
 
 Template: ser-oob/ADMINADDR
 Type: string
-Default: 192.168.1.1
+Default: 192.168.0.1
 Description: Administrative IP address
- Set the IP address of administrative interface (usually a private one). Ser will listen
- on it and also it will be used to set outgoing socket for sending replication
+ Set the IP address of administrative interface (usually a private one), on which
+ Ser will also listen.
+ .
+ Enter "!" to not modify this option.
+
+Template: ser-oob/SENDADDR
+Type: string
+Default: 192.168.1.1
+Description: IP address used for sending replication
+ Set sources IP address that Ser will use for sending REGISTERs replication
  to multicast address.
  .
  Enter "!" to not modify this option.
