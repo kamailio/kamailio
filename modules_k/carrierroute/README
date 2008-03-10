@@ -14,8 +14,8 @@ Henning Westerholt
 
    Copyright © 2007 1&1 Internet AG
    Revision History
-   Revision $Revision: 3898 $ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision: 3898 $ $Date: 2008-03-08 00:03:56 +0100
+                              (Sa, 08 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -1151,7 +1151,7 @@ domain register {
 |  2 |      99 | gw1       | 404        |     0 |    0 | 100         |
 |  3 |      99 | gw2       | 50.        |     0 |    0 | 100         |
 |  4 |      99 |           | 404        |  2048 | 2112 | asterisk-1  |
-+----+---------+-----------+------------+--------+-----+-------------+
++----+---------+-----------+------------+-------+------+-------------+
 ...
 
    This table contains four failure routes that shows the usage of
