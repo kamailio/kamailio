@@ -608,21 +608,9 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
-	int l = 0;
-	char *ch = NULL;
-
-	if(msg==NULL || res==NULL)
+	if(msg==NULL)
 		return -1;
-	
-	ch = int2str(_bm_last_time_diff, &l);
-
-	res->rs.s = ch;
-	res->rs.len = l;
-
-	res->ri = _bm_last_time_diff;
-	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
-
-	return 0;
+	return pv_get_sintval(msg, param, res, _bm_last_time_diff);
 }
 
 

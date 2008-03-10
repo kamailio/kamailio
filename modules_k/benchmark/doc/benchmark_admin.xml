@@ -246,6 +246,22 @@ bm_log_timer("test");
 	</section>
 
 	<section>
+		<title>Exported pseudo-variables</title>
+		<para>
+		Exported pseudo-variables are listed in the next sections.
+		</para>
+		<section>
+		<title>$BM_time_diff</title>
+			<para>
+			<emphasis>$BM_time_diff</emphasis> - the time difference
+			elapsed between calls of bm_start_timer(name) and
+			bm_log_timer(name). The value is 0 if no bm_log_timer()
+			was called.
+			</para>
+		</section>
+	</section>
+
+	<section>
 		<title>Exported MI Functions</title>
 		<section>
 			<title><function moreinfo="none">bm_enable_global</function></title>

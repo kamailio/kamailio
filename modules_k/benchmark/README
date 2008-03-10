@@ -3,12 +3,17 @@ Benchmark Module
 Bastian Friedrich
 
    Collax GmbH
+   <bastian.friedrich@collax.com>
 
 Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
 
 Edited by
 
 Bastian Friedrich
+
+   <bastian.friedrich@collax.com>
 
    Copyright © 2007 Collax GmbH
 
@@ -39,14 +44,18 @@ Bastian Friedrich
               1.4.1. bm_start_timer(name)
               1.4.2. bm_log_timer(name)
 
-        1.5. Exported MI Functions
+        1.5. Exported pseudo-variables
 
-              1.5.1. bm_enable_global
-              1.5.2. bm_enable_timer
-              1.5.3. bm_granularity
-              1.5.4. bm_loglevel
+              1.5.1. $BM_time_diff
 
-        1.6. Example of usage
+        1.6. Exported MI Functions
+
+              1.6.1. bm_enable_global
+              1.6.2. bm_enable_timer
+              1.6.3. bm_granularity
+              1.6.4. bm_loglevel
+
+        1.7. Example of usage
 
    2. Developer's Guide
 
@@ -194,14 +203,24 @@ bm_start_timer("test");
 bm_log_timer("test");
 ...
 
-1.5. Exported MI Functions
+1.5. Exported pseudo-variables
 
-1.5.1. bm_enable_global
+   Exported pseudo-variables are listed in the next sections.
+
+1.5.1. $BM_time_diff
+
+   $BM_time_diff - the time difference elapsed between calls of
+   bm_start_timer(name) and bm_log_timer(name). The value is 0 if
+   no bm_log_timer() was called.
+
+1.6. Exported MI Functions
+
+1.6.1. bm_enable_global
 
    Enables/disables the module. Parameter may be -1, 0 or 1. See
    discription of "enable" parameter.
 
-1.5.2. bm_enable_timer
+1.6.2. bm_enable_timer
 
    Enable or disable a single timer. The following example enables
    timer "test" (the second parameter must be 0 to disable):
@@ -211,16 +230,16 @@ bm_log_timer("test");
 openserctl fifo bm_enable_timer test 1
 ...
 
-1.5.3. bm_granularity
+1.6.3. bm_granularity
 
    Modifies the benchmarking granularity. See "granularity"
    variable.
 
-1.5.4. bm_loglevel
+1.6.4. bm_loglevel
 
    Modifies the module log level. See "loglevel" variable.
 
-1.6. Example of usage
+1.7. Example of usage
 
    Measure the duration of user location lookup.
 
