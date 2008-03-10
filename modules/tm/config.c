@@ -87,7 +87,8 @@ struct cfg_group_tm	default_tm_cfg = {
 			 * timeouts by default */
 	~METHOD_BYE,	/* tm_blst_methods_lookup -- look-up the blacklist
 			 * for every method except BYE by default */
-	0	/* cancel_b_method used for e2e and 6xx cancels*/
+	0,	/* cancel_b_method used for e2e and 6xx cancels*/
+	1,	/* reparse_on_dns_failover */
 };
 
 void	*tm_cfg = &default_tm_cfg;
@@ -171,5 +172,9 @@ cfg_def_t	tm_cfg_def[] = {
 	{"cancel_b_method",	CFG_VAR_INT,	0, 2, cancel_b_flags_fixup, 0,
 		"How to cancel branches on which no replies were received: 0 - fake"
 		" reply, 1 - retransmitting the request, 2 - send cancel"},
+	{"reparse_on_dns_failover",	CFG_VAR_INT,	0, 1, reparse_on_dns_failover_fixup, 0,
+		"if set to 1, the SIP message after a DNS failover is "
+		"constructed from the outgoing message buffer of the failed "
+		"branch instead of from the received request"},
 	{0, 0, 0, 0, 0, 0}
 };

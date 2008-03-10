@@ -127,6 +127,7 @@ struct cfg_group_tm {
 	unsigned int	tm_blst_methods_add;
 	unsigned int	tm_blst_methods_lookup;
 	unsigned int	cancel_b_flags;
+	int	reparse_on_dns_failover;
 };
 
 extern struct cfg_group_tm	default_tm_cfg;
