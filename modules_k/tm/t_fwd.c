@@ -291,17 +291,14 @@ int add_blind_uac(void)  /*struct cell *t*/
 		LM_ERR("maximum number of branches exceeded\n");
 		return -1;
 	}
-	/* make sure it will be replied */
-	t->flags |= T_NOISY_CTIMER_FLAG;
+
 	t->nr_of_outgoings++;
 	/* start FR timer -- protocol set by default to PROTO_NONE,
-       which means retransmission timer will not be started
-    */
+	   which means retransmission timer will not be started */
 	start_retr(&t->uac[branch].request);
 	/* we are on a timer -- don't need to put on wait on script
-	   clean-up	
-	*/
-	set_kr(REQ_FWDED); 
+	   clean-up */
+	set_kr(REQ_FWDED);
 
 	return 1; /* success */
 }

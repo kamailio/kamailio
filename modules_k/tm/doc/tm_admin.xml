@@ -357,31 +357,6 @@ modparam("tm", "T2_timer", 8000)
 	</section>
 
 	<section>
-		<title><varname>noisy_ctimer</varname> (integer)</title>
-		<para>
-		If set, on FR timer INVITE transactions will be explicitly canceled 
-		if possible, silently dropped otherwise. Preferably, it is turned off 
-		to allow very long ringing. This behavior is overridden if a request 
-		is forked, or some functionality explicitly turned it off for a 
-		transaction (like acc does to avoid unaccounted transactions due to 
-		expired timer).
-		</para>
-		<para>
-		<emphasis>
-			Default value is 0 (false).
-		</emphasis>
-		</para>
-		<example>
-		<title>Set <varname>noisy_ctimer</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("tm", "noisy_ctimer", 1)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>ruri_matching</varname> (integer)</title>
 		<para>
 		Should be request-uri matching used as a part of pre-3261 transaction

@@ -194,8 +194,6 @@ static param_export_t params[]={
 		&(timer_id2timeout[RT_T1_TO_1])},
 	{"T2_timer",                  INT_PARAM,
 		&(timer_id2timeout[RT_T2])},
-	{"noisy_ctimer",              INT_PARAM,
-		&noisy_ctimer},
 	{"unix_tx_timeout",           INT_PARAM,
 		&tm_unix_tx_timeout},
 	{"restart_fr_on_each_reply",  INT_PARAM,

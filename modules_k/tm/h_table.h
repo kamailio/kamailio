@@ -176,8 +176,6 @@ struct totag_elem {
 #define T_IS_LOCAL_FLAG         (1<<1)
 /* set to one if you want to disallow silent transaction
    dropping when C timer hits */
-#define T_NOISY_CTIMER_FLAG     (1<<2)
-/* set if a CANCEL was received for the transaction */
 #define T_WAS_CANCELLED_FLAG    (1<<3)
 /* transaction was cancelled hopbyhop */
 #define T_HOPBYHOP_CANCEL_FLAG  (1<<4)
@@ -330,7 +328,6 @@ struct s_table
 
 #define is_invite(_t_)           ((_t_)->flags&T_IS_INVITE_FLAG)
 #define is_local(_t_)            ((_t_)->flags&T_IS_LOCAL_FLAG)
-#define has_noisy_ctimer(_t_)    ((_t_)->flags&T_NOISY_CTIMER_FLAG)
 #define was_cancelled(_t_)       ((_t_)->flags&T_WAS_CANCELLED_FLAG)
 #define is_hopbyhop_cancel(_t_)  ((_t_)->flags&T_HOPBYHOP_CANCEL_FLAG)
 #define no_autoack(_t_)          ((_t_)->flags&T_NO_AUTOACK_FLAG)

@@ -122,7 +122,6 @@ static struct timer detached_timer; /* just to have a value to compare with*/
 #define is_in_timer_list2(_tl) ( (_tl)->timer_list &&  \
 									((_tl)->timer_list!=DETACHED_LIST) )
 
-int noisy_ctimer=0;
 
 
 int timer_group[NR_OF_TIMER_LISTS] =
@@ -316,7 +315,6 @@ inline static void retransmission_handler( struct timer_link *retr_tl )
 
 inline static void final_response_handler( struct timer_link *fr_tl )
 {
-	int silent;
 	struct retr_buf* r_buf;
 	struct cell *t;
 
@@ -363,35 +361,6 @@ inline static void final_response_handler( struct timer_link *fr_tl )
 
 	/* lock reply processing to determine how to proceed reliably */
 	LOCK_REPLIES( t );
-	/* now it can be only a request retransmission buffer;
-	   try if you can simply discard the local transaction 
-	   state without compellingly removing it from the
-	   world */
-	silent=
-		/* not for UACs */
-		!is_local(t)
-		/* invites only */
-		&& is_invite(t)
-		/* parallel forking does not allow silent state discarding */
-		&& t->nr_of_outgoings==1
-		/* on_negativ reply handler not installed -- serial forking 
-		 * could occur otherwise */
-		&& t->on_negative==0
-		/* the same for FAILURE callbacks */
-		&& !has_tran_tmcbs( t, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE) 
-		/* something received -- we will not be silent on error */
-		&& t->uac[r_buf->branch].last_received>0
-		/* don't go silent if disallowed globally ... */
-		&& noisy_ctimer==0
-		/* ... or for this particular transaction */
-		&& has_noisy_ctimer(t)==0;
-	if (silent) {
-		UNLOCK_REPLIES(t);
-		LM_DBG("transaction silently dropped (%p)\n",t);
-		put_on_wait( t );
-		return;
-	}
-
 	LM_DBG("stop retr. and send CANCEL (%p)\n", t);
 	fake_reply(t, r_buf->branch, 408 );
 
