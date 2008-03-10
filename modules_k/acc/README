@@ -186,7 +186,7 @@ Chapter 1. User's Guide
      * All flags related to accouting need to be set in request
        processing route - only the "missed-call" flag may be
        toggeled from other types of routes.
-     * There is no session/dialog accounting (yet)-- OpenSER
+     * There is no session/dialog accounting (yet) -- OpenSER
        maintains no sessions. If one needs to correlate INVITEs
        with BYEs for generating proper CDRs for example for
        purpose of billing, then it is better done in the entity

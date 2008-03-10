@@ -76,8 +76,8 @@
 		</listitem>
 		<listitem>
 			<para>
-			There is no session/dialog accounting (yet)-- &ser; maintains no 
-			sessions. If one needs to correlate INVITEs with BYEs for 
+			There is no session/dialog accounting (yet) -- &openser; maintains
+			no sessions. If one needs to correlate INVITEs with BYEs for 
 			generating proper CDRs for example for purpose of billing, then 
 			it is better done in the entity which collects accounting 
 			information.
@@ -177,8 +177,8 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				</emphasis></para></listitem>
 			</itemizedlist>
 			<para>
-			The full list of supported pseudo-variables in &ser; is availabe 
-			at: 
+			The full list of supported pseudo-variables in &openser; is
+			availabe at: 
 			<ulink url="http://openser.org/dokuwiki/doku.php/pseudovariables:devel">
 			http://openser.org/dokuwiki/doku.php/pseudovariables:devel</ulink>
 			</para>
@@ -310,7 +310,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 	<section>
 		<title>Dependencies</title>
 		<section>
-			<title>&ser; Modules</title>
+			<title>&openser; Modules</title>
 			<para>
 			The module depends on the following modules (in the other words 
 			the listed modules must be loaded before this module):
@@ -334,7 +334,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			<title>External Libraries or Applications</title>
 			<para>
 			The following libraries or applications must be installed 
-			before running &ser; with this module loaded:
+			before running &openser; with this module loaded:
 			</para>
 			<itemizedlist>
 				<listitem>
