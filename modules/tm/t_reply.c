@@ -85,6 +85,7 @@
  * 2007-05-28: build_ack() constructs the ACK from the
  *             outgoing INVITE instead of the incomming one.
  *             (it can be disabled with reparse_invite=0) (Miklos)
+ * 2008-03-12  use cancel_b_method on 6xx (andrei)
  *
  */
 
@@ -1845,10 +1846,9 @@ int reply_received( struct sip_msg  *p_msg )
 			 * that the transaction is local */
 			put_on_wait(t);
 		}else if (cancel_bitmap){
-			/* cancel everything, even non-INVITEs (e.g in case of 6xx), wait
-			 * for the cancel replies if a provisional response was received
-			 *  or generate a fake reply if not */
-			cancel_uacs(t, cancel_bitmap, F_CANCEL_B_FAKE_REPLY);
+			/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
+			 * cancel_b_method for canceling unreplied branches */
+			cancel_uacs(t, cancel_bitmap, cfg_get(tm,tm_cfg, cancel_b_flags));
 		}
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
@@ -1868,10 +1868,9 @@ int reply_received( struct sip_msg  *p_msg )
 			 * retransmissions comes before retransmission timer is set.*/
 			/* set_final_timer(t) */
 		}else if (cancel_bitmap){
-			/* cancel everything, even non-INVITEs (e.g in case of 6xx), wait
-			 * for the cancel replies if a provisional response was received
-			 *  or generate a fake reply if not */
-			cancel_uacs(t, cancel_bitmap, F_CANCEL_B_FAKE_REPLY);
+			/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
+			 * cancel_b_method for canceling unreplied branches */
+			cancel_uacs(t, cancel_bitmap, cfg_get(tm,tm_cfg, cancel_b_flags));
 		}
 	}
 	uac->request.flags|=F_RB_REPLIED;
