@@ -349,7 +349,7 @@ modparam("dialog", "db_mode", 1)
 		<title>Set <varname>db_update_period</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dialog", "db_update_period", "120")
+modparam("dialog", "db_update_period", 120)
 ...
 </programlisting>
 		</example>

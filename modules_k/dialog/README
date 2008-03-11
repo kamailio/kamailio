@@ -322,7 +322,7 @@ modparam("dialog", "db_mode", 1)
 
    Example 1.11. Set db_update_period parameter
 ...
-modparam("dialog", "db_update_period", "120")
+modparam("dialog", "db_update_period", 120)
 ...
 
 1.4.12. table_name (string)
