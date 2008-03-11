@@ -14,8 +14,8 @@ Henning Westerholt
 
    Copyright � 2007 1&1 Internet AG
    Revision History
-   Revision $Revision: 3898 $ $Date: 2008-03-08 00:03:56 +0100
-                              (Sa, 08 Mär 2008) $
+   Revision $Revision: 3912 $ $Date: 2008-03-10 16:13:24 +0100
+                              (Mo, 10 Mär 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -1089,7 +1089,7 @@ domain register {
    Example 1.44. Example database content - carrierroute table
 ...
 +----+---------+--------+-------------+------+-------+---------------+
-| id | carrier | domain |scan_prefix | prob | strip | rewrite_host   |
+| id | carrier | domain |scan_prefix  | prob | strip | rewrite_host  |
 +----+---------+--------+-------------+------+-------+---------------+
 | 1  |       1 |      0 | 49          |  0.5 | 0     | de-1.carrier1 |
 | 2  |       1 |      0 | 49          |  0.5 | 0     | de-2.carrier1 |

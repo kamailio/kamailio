@@ -1460,7 +1460,7 @@ domain register {
 		<programlisting format="linespecific">
 ...
 +----+---------+--------+-------------+------+-------+---------------+
-| id | carrier | domain |scan_prefix | prob | strip | rewrite_host   |
+| id | carrier | domain |scan_prefix  | prob | strip | rewrite_host  |
 +----+---------+--------+-------------+------+-------+---------------+
 | 1  |       1 |      0 | 49          |  0.5 | 0     | de-1.carrier1 |
 | 2  |       1 |      0 | 49          |  0.5 | 0     | de-2.carrier1 |
