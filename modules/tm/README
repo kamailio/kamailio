@@ -368,7 +368,8 @@ cancel_b_method (integer)
    have an UA receiving a 2xx after a 487. Moreover this risk is greatly
    amplified by packet loss (e.g. if an 180 is lost the branch will look
    as unreplied and a CANCEL will silently drop the branch, but a 2xx can
-   still come at a later time).
+   still come at a later time). This is the behaviour for ser versions
+   older then 2.1.
 
    1 will keep retransmitting the request on unreplied branches. If a
    provisional answer is later received a CANCEL will be immediately sent
@@ -384,8 +385,7 @@ cancel_b_method (integer)
    it's not RFC 3261 conforming (the RFC allows sending CANCELs only on
    pending branches).
 
-   The default value is 0 (the same behaviour as ser versions less then
-   2.1).
+   The default value is 1.
 
    Example 18. Set cancel_b_method parameter
 ...

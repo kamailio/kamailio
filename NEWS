@@ -55,11 +55,12 @@ modules:
                         - cancel_b_method - selects one of the three methods
                           for dealing with unreplied branches when the 
                           transaction must be canceled. The possible values
-                          are 0 (default and old behaviour) for stopping 
-                          request retransmission on the branch and act as if 
+                          are 0 (old behaviour) for stopping request 
+                          retransmission on the branch and act as if 
                           the branch was immediately replied with a 487,
                           1 for continuing to retransmit the request until an
-                          answer is received or the timeout kicks in and
+                          answer is received or the timeout kicks in (default)
+                          and
                           2 for stopping the request retransmission and sending
                           CANCEL on the branch (not rfc conforming).
                           For more information see tm docs.
