@@ -176,6 +176,25 @@ modparam("pua", "update_period", 100)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>outbound_proxy</varname> (str)</title>
+		<para>
+		SIP URI of outbound proxy to be used when sending
+		PUBLISH requests.
+		</para>
+		<para>
+		<emphasis>By default, no outbound proxy has been defined.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>outbound_proxy</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pua", "outbound_proxy", "sip:outbound.example.com")
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 <section>

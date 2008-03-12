@@ -548,7 +548,7 @@ send_publish:
 			publ->pres_uri,					/* From */
 			str_hdr,						/* Optional headers */
 			body,							/* Message body */
-			0,								/* Outbound proxy*/
+			&outbound_proxy,						/* Outbound proxy*/
 			publ_cback_func,				/* Callback function */
 			(void*)cb_param					/* Callback parameter */
 			);

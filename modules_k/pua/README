@@ -32,6 +32,7 @@ Anca-Maria Vamanu
               1.3.4. min_expires (int)
               1.3.5. default_expires (int)
               1.3.6. update_period (int)
+              1.3.7. outbound_proxy (str)
 
         1.4. Exported Functions
 
@@ -56,7 +57,8 @@ Anca-Maria Vamanu
    1.4. Set min_expires parameter
    1.5. Set default_expires parameter
    1.6. Set update_period parameter
-   1.7. pua_update_contact usage
+   1.7. Set outbound_proxy parameter
+   1.8. pua_update_contact usage
    2.1. pua_api structure
    2.2. pua_is_dialog usage example
    2.3. register_puacb usage example
@@ -171,6 +173,18 @@ modparam("pua", "default_expires", 3600)
 modparam("pua", "update_period", 100)
 ...
 
+1.3.7. outbound_proxy (str)
+
+   SIP URI of outbound proxy to be used when sending PUBLISH
+   requests.
+
+   By default, no outbound proxy has been defined.
+
+   Example 1.7. Set outbound_proxy parameter
+...
+modparam("pua", "outbound_proxy", "sip:outbound.example.com")
+...
+
 1.4. Exported Functions
 
 1.4.1.  pua_update_contact()
@@ -189,7 +203,7 @@ modparam("pua", "update_period", 100)
      * 1 - if success.
      * -1 - if error.
 
-   Example 1.7. pua_update_contact usage
+   Example 1.8. pua_update_contact usage
 ...
 if(method=="NOTIFY")
     pua_update_contact();

@@ -64,6 +64,7 @@ int default_expires=3600;
 static str db_url = {0, 0};
 static str db_table= str_init("pua");
 int update_period= 100;
+str outbound_proxy = {0, 0};
 int startup_time = 0;
 pua_event_t* pua_evlist= NULL;
 
@@ -117,6 +118,7 @@ static param_export_t params[]={
 	{"min_expires",		 INT_PARAM, &min_expires		 },
 	{"default_expires",  INT_PARAM, &default_expires     },
 	{"update_period",	 INT_PARAM, &update_period	     },
+	{"outbound_proxy",	 STR_PARAM, &outbound_proxy.s	     },
 	{0,							 0,			0            }
 };
 
@@ -248,7 +250,7 @@ static int mod_init(void)
 		pua_dbf.close(pua_db);
 	pua_db = NULL;
 
-	
+	outbound_proxy.len = outbound_proxy.s ? strlen(outbound_proxy.s) : 0;
 
 	return 0;
 }
