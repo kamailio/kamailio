@@ -487,7 +487,11 @@ do { \
 			translate_pointer( new_msg->buf , org_msg->buf ,
 			org_msg->first_line.u.request.version.s );
 		uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_orig_ruri);
-		uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_uri);
+		if (org_msg->new_uri.s && org_msg->new_uri.len)
+			uri_trans(new_msg->new_uri.s, org_msg->new_uri.s,
+											&new_msg->parsed_uri);
+		else
+			uri_trans(new_msg->buf, org_msg->buf, &new_msg->parsed_uri);
 	}
 	else if ( org_msg->first_line.type==SIP_REPLY )
 	{
