@@ -107,7 +107,8 @@ inline db_res_t* db_new_result(void)
 		LM_ERR("no private memory left\n");
 		return 0;
 	}
-	LM_DBG("allocate %d bytes for result set at %p\n", sizeof(db_res_t), r);
+	LM_DBG("allocate %d bytes for result set at %p\n",
+		(int)sizeof(db_res_t), r);
 	memset(r, 0, sizeof(db_res_t));
 	return r;
 }
@@ -142,7 +143,8 @@ inline int db_allocate_columns(db_res_t* _r, const unsigned int cols)
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
-	LM_DBG("allocate %d bytes for result names at %p\n", sizeof(db_key_t) * cols,
+	LM_DBG("allocate %d bytes for result names at %p\n",
+		(int)(sizeof(db_key_t) * cols),
 		RES_NAMES(_r));
 
 	RES_TYPES(_r) = (db_type_t*)pkg_malloc(sizeof(db_type_t) * cols);
@@ -151,7 +153,8 @@ inline int db_allocate_columns(db_res_t* _r, const unsigned int cols)
 		pkg_free(RES_NAMES(_r));
 		return -1;
 	}
-	LM_DBG("allocate %d bytes for result types at %p\n", sizeof(db_type_t) * cols,
+	LM_DBG("allocate %d bytes for result types at %p\n",
+		(int)(sizeof(db_type_t) * cols),
 		RES_TYPES(_r));
 
 	return 0;
