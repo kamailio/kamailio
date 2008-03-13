@@ -232,7 +232,7 @@ static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type
 	unsigned short flags;
 
 	VALUE_PAIR* send, *received, *vp;
-	UINT4 service;
+	uint32_t service;
 	struct sip_uri puri;
 	
 	send = received = 0;

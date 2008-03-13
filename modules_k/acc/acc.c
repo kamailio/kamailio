@@ -396,7 +396,7 @@ int acc_db_request( struct sip_msg *rq)
 /************ RADIUS & DIAMETER helper functions **************/
 #if defined(RAD_ACC) || defined (DIAM_ACC)
 #ifndef UINT4
-#define UINT4 unsigned int
+#define UINT4 uint32_t
 #endif
 inline static UINT4 phrase2code(str *phrase)
 {

@@ -53,7 +53,7 @@ int radius_is_user_in(struct sip_msg* _m, char* _hf, char* _group)
 	str *grp, user_name, user, domain;
 	dig_cred_t* cred = 0;
 	int hf_type;
-	UINT4 service;
+	uint32_t service;
 	VALUE_PAIR *send, *received;
 	static char msg[4096];
 	struct hdr_field* h;

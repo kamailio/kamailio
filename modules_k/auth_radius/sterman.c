@@ -201,7 +201,7 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 {
 	static char msg[4096];
 	VALUE_PAIR *send, *received;
-	UINT4 service;
+	uint32_t service;
 	str method, user, user_name;
 	str *ruri;
 	int i;

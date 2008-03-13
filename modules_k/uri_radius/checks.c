@@ -150,7 +150,7 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 {
     static char msg[4096];
     VALUE_PAIR *send, *received;
-    UINT4 service;
+    uint32_t service;
     char* at, *uri = 0;
     int res;
 
