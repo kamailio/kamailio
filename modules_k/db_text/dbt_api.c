@@ -75,7 +75,8 @@ static int dbt_get_columns(db_con_t* _h, db_res_t* _r)
 			db_free_columns(_r);
 			return -4;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p", sizeof(str), col,
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p",
+				(int)sizeof(str), col,
 				RES_NAMES(_r)[col]);
 		RES_NAMES(_r)[col]->s = DBT_CON_RESULT(_h)->colv[col].name.s;
 		RES_NAMES(_r)[col]->len = DBT_CON_RESULT(_h)->colv[col].name.len;
