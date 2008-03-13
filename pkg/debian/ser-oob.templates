@@ -55,7 +55,7 @@ Template: ser-oob/SENDADDR
 Type: string
 Default: 192.168.1.1
 Description: IP address used for sending replication
- Set sources IP address that Ser will use for sending REGISTERs replication
+ Set source IP address that Ser will use for sending REGISTERs replication
  to multicast address.
  .
  Enter "!" to not modify this option.
