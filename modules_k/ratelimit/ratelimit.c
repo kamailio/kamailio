@@ -680,8 +680,8 @@ static int w_rl_drop(struct sip_msg* msg, char *p1, char *p2)
 {
 	unsigned int low, high;
 
-	low = (unsigned int)p1;
-	high = (unsigned int)p2;
+	low = (unsigned int)(unsigned long)p1;
+	high = (unsigned int)(unsigned long)p2;
 
 	if (high < low) {
 		return rl_drop(msg, low, low);
@@ -695,7 +695,7 @@ static int w_rl_drop_forced(struct sip_msg* msg, char *p1, char *p2)
 	unsigned int i;
 
 	if (p1) {
-		i = (unsigned int)p1;
+		i = (unsigned int)(unsigned long)p1;
 		LM_DBG("send retry in %d s\n", i);
 	} else {
 		i = 5;
@@ -870,7 +870,7 @@ static int w_rl_check_forced_pipe(struct sip_msg* msg, char *p1, char *p2)
 	int pipe;
 
 	if (p1) {
-		pipe = (int)(unsigned int)p1;
+		pipe = (int)(unsigned int)(unsigned long)p1;
 		LM_DBG("trying pipe %d\n", pipe);
 	} else {
 		pipe = -1;
