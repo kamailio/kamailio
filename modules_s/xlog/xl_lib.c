@@ -967,6 +967,20 @@ if (0){
 	return xl_get_null(msg, res, hp, hi, hf);
 }
 
+/* print special characters, like \r, \n, \t,... */
+static int xl_get_special(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
+{
+	static char	c;
+
+	if(msg==NULL || res==NULL)
+		return -1;
+
+	c = (char)hi;
+	res->s = &c;
+	res->len = 1;
+	return 0;
+}
+
 int xl_parse_format(char *s, xl_elog_p *el)
 {
 	char *p, c;
@@ -1001,11 +1015,40 @@ int xl_parse_format(char *s, xl_elog_p *el)
 			e0->next = e;
 
 		e->text.s = p;
-		while(*p && *p!='%')
+		while(*p && *p!='%' && *p!='\\')
 			p++;
 		e->text.len = p - e->text.s;
 		if(*p == '\0')
 			break;
+
+		if (*p == '\\') {
+			p++;
+			switch(*p)
+			{
+				case '\\':
+					e->itf = xl_get_special;
+					e->hindex = '\\';
+					break;
+				case 'r':
+					e->itf = xl_get_special;
+					e->hindex = '\r';
+					break;
+				case 'n':
+					e->itf = xl_get_special;
+					e->hindex = '\n';
+					break;
+				case 't':
+					e->itf = xl_get_special;
+					e->hindex = '\t';
+					break;
+				default:
+					/* not a special character, it will be just
+					written to the result as it is */
+					e->itf = xl_get_special;
+					e->hindex = *p;
+			}
+			goto cont;
+		}
 
 		p++;
 		switch(*p)
@@ -1477,6 +1520,7 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				e->itf = xl_get_null;
 		}
 
+cont:
 		if(*p == '\0')
 			break;
 		p++;
