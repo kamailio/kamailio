@@ -208,6 +208,7 @@ static int t_any_timeout(struct sip_msg* msg, char*, char*);
 static int t_any_replied(struct sip_msg* msg, char*, char*);
 static int t_is_canceled(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
+static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -316,6 +317,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_grep_status",     t_grep_status,            1, fixup_var_int_1, 
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
+	{"t_drop_replies",    w_t_drop_replies,         0, 0,
+			FAILURE_ROUTE},
+
 
 	/* not applicable from the script */
 	{"register_tmcb",      (cmd_function)register_tmcb,     NO_SCRIPT,   0, 0},
@@ -1132,6 +1136,9 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 		}
 		if (t_forward_nonack(t, p_msg, proxy, PROTO_NONE)<=0 ) {
 			LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
+			/* let us save the error code, we might need it later
+			when the failure_route has finished (Miklos) */
+			tm_error=ser_error;
 			return -1;
 		}
 		return 1;
@@ -1250,6 +1257,9 @@ inline static int w_t_relay( struct sip_msg  *p_msg ,
 		}
 		if (t_forward_nonack(t, p_msg, ( struct proxy_l *) 0, PROTO_NONE)<=0) {
 			LOG(L_ERR, "ERROR: w_t_relay (failure mode): forwarding failed\n");
+			/* let us save the error code, we might need it later
+			when the failure_route has finished (Miklos) */
+			tm_error=ser_error;
 			return -1;
 		}
 		return 1;
@@ -1497,7 +1507,13 @@ int t_grep_status(struct sip_msg* msg, char* status, char* bar)
 	return -1;
 }
 
-
+/* drop all the existing replies in failure_route to make sure
+ * that none of them is picked up again */
+static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar)
+{
+	t_drop_replies();
+	return 1;
+}
 
 static rpc_export_t tm_rpc[] = {
 	{"tm.cancel", rpc_cancel,   rpc_cancel_doc,   0},

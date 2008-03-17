@@ -204,5 +204,6 @@ int t_relay_to( struct sip_msg  *p_msg ,
 	struct proxy_l *proxy, int proto, int replicate ) ;
 
 int kill_transaction( struct cell *trans, int error );
+int kill_transaction_unsafe( struct cell *trans, int error );
 #endif
 

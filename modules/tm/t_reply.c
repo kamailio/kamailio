@@ -85,6 +85,7 @@
  * 2007-05-28: build_ack() constructs the ACK from the
  *             outgoing INVITE instead of the incomming one.
  *             (it can be disabled with reparse_invite=0) (Miklos)
+ * 2007-09-03: drop_replies() has been introduced (Miklos)
  * 2008-03-12  use cancel_b_method on 6xx (andrei)
  *
  */
@@ -870,6 +871,9 @@ int t_pick_branch(int inc_branch, int inc_code, struct cell *t, int *res_code)
 }
 
 
+/* flag indicating whether it is requested
+ * to drop the already saved replies or not */
+static unsigned char drop_replies;
 
 /* This is the neurological point of reply processing -- called
  * from within a REPLY_LOCK, t_should_relay_response decides
@@ -892,6 +896,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int new_branch;
 	int inv_through;
 	int extra_flags;
+	int i;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -977,6 +982,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		Trans->flags&=~T_6xx; /* clear the 6xx flag , we want to 
 								 allow new branches from the failure route */
 
+		drop_replies = 0;
 		/* run ON_FAILURE handlers ( route and callbacks) */
 		if (unlikely(has_tran_tmcbs( Trans, TMCB_ON_FAILURE_RO|TMCB_ON_FAILURE)
 						|| Trans->on_negative )) {
@@ -987,6 +993,21 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 						 	FL_REPLIED:0);
 			run_failure_handlers( Trans, Trans->uac[picked_branch].reply,
 									picked_code, extra_flags);
+			if (unlikely(drop_replies)) {
+				/* drop all the replies that we have already saved */
+				for (i=0; i<branch_cnt; i++) {
+					if (Trans->uac[i].reply &&
+					(Trans->uac[i].reply != FAKED_REPLY) &&
+					(Trans->uac[i].reply->msg_flags & FL_SHM_CLONE))
+						/* we have to drop the reply which is already in shm mem */
+						sip_msg_free(Trans->uac[i].reply);
+
+					Trans->uac[i].reply = 0;
+				}
+				/* make sure that the selected reply is not relayed even if
+				there is not any new branch added -- should not happen */
+				picked_branch = -1;
+			}
 		}
 
 		/* now reset it; after the failure logic, the reply may
@@ -1014,18 +1035,46 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		if (branch_cnt<Trans->nr_of_outgoings){
 			/* the new branches might be already "finished" => we
 			 * must use t_pick_branch again */
-			new_branch=t_pick_branch(branch, new_code, Trans, &picked_code);
+			new_branch=t_pick_branch((drop_replies==0)?
+							branch :
+							-1, /* make sure we do not pick
+								the current branch */
+						new_code,
+						Trans,
+						&picked_code);
+
 			if (new_branch<0){
-				if (new_branch==-2) { /* branches open yet */
-					*should_store=1;
-					*should_relay=-1;
-					return RPS_STORE;
+				if (likely(drop_replies==0)) {
+					if (new_branch==-2) { /* branches open yet */
+						*should_store=1;
+						*should_relay=-1;
+						return RPS_STORE;
+					}
+					/* error, use the old picked_branch */
+				} else {
+					if (new_branch==-2) { /* branches open yet */
+						/* we are not allowed to relay the reply */
+						*should_store=0;
+						*should_relay=-1;
+						return RPS_DISCARDED;
+					} else {
+						/* There are no open branches,
+						and all the newly created branches failed
+						as well. We are not allowed to send back
+						the previously picked-up branch, thus,
+						let us reply with an error instead. */
+						goto branches_failed;
+					}
 				}
-				/* error, use the old picked_branch */
 			}else{
 				/* found a new_branch */
 				picked_branch=new_branch;
 			}
+		} else if (unlikely(drop_replies)) {
+			/* Either the script writer did not add new branches
+			after calling t_drop_replies(), or tm was unable
+			to add the new branches to the transaction. */
+			goto branches_failed;
 		}
 
 		/* really no more pending branches -- return lowest code */
@@ -1057,6 +1106,20 @@ discard:
 	*should_store=0;
 	*should_relay=-1;
 	return RPS_DISCARDED;
+
+branches_failed:
+	*should_store=0;
+	*should_relay=-1;
+	/* We have hopefully set tm_error in failure_route when
+	the branches failed. If not, reply with E_UNSPEC */
+	if ((kill_transaction_unsafe(Trans,
+				    tm_error ? tm_error : E_UNSPEC)
+				    ) <=0 ){
+		LOG(L_ERR, "ERROR: t_should_relay_response: "
+			"reply generation failed\n");
+	}
+	
+	return RPS_COMPLETED;
 }
 
 /* Retransmits the last sent inbound reply.
@@ -1986,6 +2049,18 @@ error:
 	return -1;
 }
 
+/* drops all the replies to make sure
+ * that none of them is picked up again
+ */
+void t_drop_replies(void)
+{
+	/* It is too risky to free the replies that are in shm mem
+	at the middle of failure_route block, because other functions might
+	need them as well. And it can also happen that the current reply is not yet
+	in shm mem, we are just going to clone it. So better to set a flag
+	and check it after failure_route has ended. (Miklos) */
+	drop_replies = 1;
+}
 
 #if 0
 static int send_reply(struct cell *trans, unsigned int code, str* text, str* body, str* headers, str* to_tag)

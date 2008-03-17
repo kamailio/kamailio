@@ -207,6 +207,34 @@ int kill_transaction( struct cell *trans, int error )
 	}
 }
 
+/* unsafe version of kill_transaction() that works
+ * in failure route 
+ * WARNING: assumes that the reply lock is held!
+ */
+int kill_transaction_unsafe( struct cell *trans, int error )
+{
+	char err_buffer[128];
+	int sip_err;
+	int reply_ret;
+	int ret;
+
+	/*  we reply statefully and enter WAIT state since error might
+		have occurred in middle of forking and we do not
+		want to put the forking burden on upstream client;
+		however, it may fail too due to lack of memory */
+
+	ret=err2reason_phrase(error, &sip_err,
+		err_buffer, sizeof(err_buffer), "TM" );
+	if (ret>0) {
+		reply_ret=t_reply_unsafe( trans, trans->uas.request, 
+			sip_err, err_buffer);
+		/* t_release_transaction( T ); */
+		return reply_ret;
+	} else {
+		LOG(L_ERR, "ERROR: kill_transaction_unsafe: err2reason failed\n");
+		return -1;
+	}
+}
 
 
 /* WARNING: doesn't work from failure route (deadlock, uses t_reply => tries

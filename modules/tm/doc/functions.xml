@@ -653,4 +653,34 @@ if (method == CANCEL) {
 	</example>
     </section>
 
+    <section id="t_drop_replies">
+	<title>
+	    <function>t_drop_replies()</function>
+	</title>
+	<para>
+		Drops all the previously received replies in failure_route
+		block to make sure that none of them is picked up again.
+		Works only if a new branch is added to the transaction,
+		or it is explicitly replied in the script!
+	</para>
+	<example>
+	    <title><function>t_drop_replies()</function> usage</title>
+	    <programlisting>
+...
+failure_route[0]{ 
+	if (t_check_status("5[0-9][0-9]")){
+		# I do not like the 5xx responses,
+		# so I give another chance to "foobar.com",
+		# and I drop all the replies to make sure that
+		# they are not forwarded to the caller.
+		t_drop_replies();
+		
+		rewritehostport("foobar.com");
+		append_branch();
+		t_relay();
+	}
+} 
+	    </programlisting>
+	</example>
+    </section>
 </section>

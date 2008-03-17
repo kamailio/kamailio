@@ -1444,8 +1444,8 @@ int t_unref( struct sip_msg* p_msg  )
 					" earlier for %p: %d (hex %x)\n",T, kr, kr);
 			t_release_transaction(T);
 		}
-		tm_error=0; /* clear it */
 	}
+	tm_error=0; /* clear it */
 	UNREF( T );
 	set_t(T_UNDEFINED);
 	return 1;
