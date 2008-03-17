@@ -511,7 +511,30 @@ modparam("tm", "cancel_b_method", 1)
 modparam("tm", "reparse_on_dns_failover", 0)
 ...
 	    </programlisting>
-       </example>
+	</example>
+    </section>
+
+    <section id="on_sl_reply">
+	<title><varname>on_sl_reply</varname> (string)</title>
+	<para>
+		Sets reply route block, to which control is passed when a
+		reply is received that has no associated transaction.
+		The reply is passed to the core for stateless forwarding after
+		the route block execution unless it returns 0.
+	</para>
+	<example>
+	    <title>Set <varname>on_sl_reply</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "on_sl_reply", "stateless_replies")
+...
+
+onreply_route["stateless_replies"] {
+	# do not allow stateless replies to be forwarded
+	return 0;
+}
+	    </programlisting>
+	</example>
     </section>
 
 </section>

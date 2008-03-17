@@ -147,6 +147,8 @@ char *tm_tag_suffix;
 static int goto_on_negative=0;
 /* where to go on receipt of reply */
 static int goto_on_reply=0;
+/* where to go on receipt of reply without transaction context */
+int goto_on_sl_reply=0;
 
 
 /* responses priority (used by t_pick_branch)
@@ -1712,10 +1714,11 @@ int reply_received( struct sip_msg  *p_msg )
 
 	/* make sure we know the associated transaction ... */
 	if (t_check( p_msg  , &branch )==-1)
-		return 1;
+		goto trans_not_found;
 	/*... if there is none, tell the core router to fwd statelessly */
 	t=get_t();
-	if ( (t==0)||(t==T_UNDEFINED)) return 1;
+	if ( (t==0)||(t==T_UNDEFINED))
+		goto trans_not_found;
 
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;
@@ -1960,6 +1963,18 @@ done:
 	   simply do nothing; that will make the other party to
 	   retransmit; hopefuly, we'll then be better off */
 	return 0;
+
+trans_not_found:
+	/* transaction context was not found */
+	if (goto_on_sl_reply) {
+		/* the script writer has a chance to decide whether to
+		forward the reply or not */
+		init_run_actions_ctx(&ra_ctx);
+		return run_actions(&ra_ctx, onreply_rt.rlist[goto_on_sl_reply], p_msg);
+	} else {
+		/* let the core forward the reply */
+		return 1;
+	}
 }
 
 

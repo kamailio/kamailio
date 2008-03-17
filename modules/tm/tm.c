@@ -135,7 +135,7 @@ static int fixup_on_failure(void** param, int param_no);
 static int fixup_on_reply(void** param, int param_no);
 static int fixup_on_branch(void** param, int param_no);
 static int fixup_t_reply(void** param, int param_no);
-
+static int fixup_on_sl_reply(modparam_t type, void* val);
 
 /* init functions */
 static int mod_init(void);
@@ -387,6 +387,7 @@ static param_export_t params[]={
 	{"blst_methods_lookup", PARAM_INT, &default_tm_cfg.tm_blst_methods_lookup},
 	{"cancel_b_method",     PARAM_INT, &default_tm_cfg.cancel_b_flags},
 	{"reparse_on_dns_failover", PARAM_INT, &default_tm_cfg.reparse_on_dns_failover},
+	{"on_sl_reply",         PARAM_STRING|PARAM_USE_FUNC, fixup_on_sl_reply   },
 	{0,0,0}
 };
 
@@ -468,6 +469,20 @@ static int fixup_on_branch(void** param, int param_no)
 	if (param_no==1){
 		return fixup_routes("t_on_branch", &branch_rt, param);
 	}
+	return 0;
+}
+
+static int fixup_on_sl_reply(modparam_t type, void* val)
+{
+	if ((type & PARAM_STRING) == 0) {
+		LOG(L_ERR, "ERROR: tm: fixup_on_sl_reply: not a string parameter\n");
+		return -1;
+	}
+
+	if (fixup_routes("on_sl_reply", &onreply_rt, &val))
+		return -1;
+
+	goto_on_sl_reply = (int)(long)val;
 	return 0;
 }
 
