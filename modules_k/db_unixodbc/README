@@ -10,13 +10,13 @@ Marco Lorrai
 
    Copyright © 2005, 2006 Marco Lorrai
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -36,7 +36,7 @@ Marco Lorrai
               1.5.1. Installing
               1.5.2. Configuring and Running
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -44,7 +44,7 @@ Marco Lorrai
    1.2. Set the "auto_reconnect" parameter
    1.3. Set the "use_escape_common" parameter
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -158,7 +158,7 @@ shell>safe_mysqld --user=mysql --socket=/var/lib/mysql/mysql.sock
    The connector search the socket in /var/lib/mysql/mysql.sock
    and not in /tmp/mysql.sock
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module implements the OpenSER DB API, in order to be used
    by other modules.

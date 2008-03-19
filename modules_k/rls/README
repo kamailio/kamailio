@@ -16,7 +16,7 @@ Anca-Maria Vamanu
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -46,7 +46,7 @@ Anca-Maria Vamanu
 
         1.5. Installation
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -65,7 +65,7 @@ Anca-Maria Vamanu
    1.13. rls_handle_subscribe usage
    1.14. rls_handle_notify usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -318,7 +318,7 @@ if(method=="NOTIFY")
    documentation on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module provides no functions to be used in other OpenSER
    modules.

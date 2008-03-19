@@ -10,13 +10,13 @@ Bogdan-Andrei Iancu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. How it works
@@ -78,7 +78,7 @@ Bogdan-Andrei Iancu
               1.8.2. $DLG_status
               1.8.3. $DLG_lifetime
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Available Functions
 
@@ -119,7 +119,7 @@ Bogdan-Andrei Iancu
    1.29. Set start_time_column parameter
    1.30. Set timeout_column parameter
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -645,7 +645,7 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
    NULL will be returned if there is no dialog for the request.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
 2.1. Available Functions
 

@@ -15,6 +15,10 @@ Bogdan-Andrei Iancu
    voice-system.ro
    <bogdan@voice-system.ro>
 
+Daniel-Constantin Mierla
+
+   <miconda@gmail.com>
+
 Edited by
 
 Jan Janak
@@ -31,7 +35,7 @@ Jan Janak
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -82,7 +86,7 @@ Jan Janak
    1.16. pv_www_authorize usage
    1.17. pv_proxy_authorize usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

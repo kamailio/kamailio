@@ -2,7 +2,7 @@
 
 <chapter>
     
-    <title>Developer's Guide</title>
+    <title>&develguide;</title>
 	<para>
 	The module exports no function to be used in other &openser; modules.
 	</para>

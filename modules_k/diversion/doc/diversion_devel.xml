@@ -2,7 +2,7 @@
 
 <chapter>
     
-    <title>Developer's Guide</title>
+    <title>&develguide;</title>
     <para>
 	According to the specification new Diversion header field should be inserted as the topmost
 	Diversion header field in the message, that means before any other existing Diversion header

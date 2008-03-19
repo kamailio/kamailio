@@ -10,13 +10,13 @@ Bastian Friedrich
 
    Copyright © 2007 Collax GmbH
    Revision History
-   Revision $Revision: 3898 $ $Date: 2007-03-21 09:53:33 +0100
+   Revision $Revision: 3939 $ $Date: 2007-03-21 09:53:33 +0100
                               (Mi, 21 MÃ¤r 2007) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -27,7 +27,7 @@ Bastian Friedrich
         1.3. Exported Parameters
         1.4. Exported Functions
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Introduction
         2.2. Base class OpenSER::VDB
@@ -45,7 +45,7 @@ Bastian Friedrich
 
         2.5. VTabs
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -94,7 +94,7 @@ race")
 
    None.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
 2.1. Introduction
 

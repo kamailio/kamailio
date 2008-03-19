@@ -2,7 +2,7 @@
 
 <chapter>
     
-    <title>Developer's Guide</title>
+    <title>&develguide;</title>
     <para>
 	Once you have the module loaded, you can use the API specified by &openser; DB
 	interface.

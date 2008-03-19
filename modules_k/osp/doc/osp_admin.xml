@@ -2,7 +2,7 @@
 
 <chapter>
   
-  <title>User's Guide</title>
+  <title>&adminguide;</title>
   <section>
     <title>Overview</title>
     <para>The OSP module enables OpenSER to support secure, multi-lateral peering using the OSP standard defined by ETSI (TS 101 321 V4.1.1). This module will enable your OpenSER to:</para>

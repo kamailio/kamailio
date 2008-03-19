@@ -18,7 +18,7 @@ Daniel-Constantin Mierla
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -44,7 +44,7 @@ Daniel-Constantin Mierla
    1.4. callee_service_type parameter usage
    1.5. avp_load_radius() usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

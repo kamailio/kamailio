@@ -36,7 +36,7 @@ Elias Baixas
               1.2.2. Configuring WeSIP to work with SEAS
               1.2.3. Configuration Examples
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Internals
         2.2. SEAS Protocol
@@ -793,7 +793,7 @@ r" protocol="HTTP/1.1"/>
 </Service>
 </Server>
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
 2.1. Internals
 

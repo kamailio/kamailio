@@ -16,13 +16,13 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -66,7 +66,7 @@ Anca-Maria Vamanu
    1.7. Usage of imc_manager() function
    1.8. List of commands
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

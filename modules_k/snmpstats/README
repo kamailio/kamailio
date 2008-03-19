@@ -11,13 +11,13 @@ Jeffrey Magder
 
    Copyright © 2006 SOMA Networks, Inc.
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
 
@@ -70,7 +70,7 @@ Jeffrey Magder
    1.6. Setting the snmpgetPath parameter
    1.7. Setting the snmpCommunity parameter
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

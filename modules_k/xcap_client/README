@@ -16,7 +16,7 @@ Anca-Maria Vamanu
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -36,7 +36,7 @@ Anca-Maria Vamanu
 
               1.5.1. refreshXcapDoc
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. bind_xcap_api(xcap_api_t* api)
         2.2. get_elem
@@ -50,7 +50,7 @@ Anca-Maria Vamanu
    1.4. Set query_period parameter
    2.1. xcap_api structure
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -172,7 +172,7 @@ modparam("xcap_client", "query_period", 50)
 _empty_line_
 ...
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module exports a number of functions that allow selecting
    and retrieving an element from an xcap server and also

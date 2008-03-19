@@ -10,13 +10,13 @@ Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
 
@@ -45,7 +45,7 @@ Bogdan-Andrei Iancu
               1.4.1. sms_send_msg_to_net(network_name)
               1.4.2. sms_send_msg()
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -60,7 +60,7 @@ Bogdan-Andrei Iancu
    1.9. sms_send_msg_to_net usage
    1.10. sms_send_msg usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -341,7 +341,7 @@ if (sms_send_msg_to_net())
 };
 ...
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    Each modem forks its own process for sending /fetching SMS.
    Communication and queuing between OpenSER working processes and

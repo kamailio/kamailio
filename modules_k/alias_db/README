@@ -18,7 +18,7 @@ Daniel-Constantin Mierla
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -51,7 +51,7 @@ Daniel-Constantin Mierla
    1.7. Set domain_prefix parameter
    1.8. alias_db_lookup() usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

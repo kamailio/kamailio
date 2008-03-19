@@ -12,13 +12,13 @@ Ramona-Elena Modroiu
 
    Copyright © 2005 Voice Sistem
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -57,7 +57,7 @@ Ramona-Elena Modroiu
    1.10. uac_restore_from usage
    1.11. uac_auth usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

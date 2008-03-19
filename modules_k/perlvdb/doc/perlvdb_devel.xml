@@ -2,7 +2,7 @@
 
 <chapter>
 	
-	<title>Developer's Guide</title>
+	<title>&develguide;</title>
 	<section><title>Introduction</title>
 		<para>
 		OpenSER uses a database API for requests of numerous different

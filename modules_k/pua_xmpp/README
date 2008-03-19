@@ -16,7 +16,7 @@ Anca-Maria Vamanu
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -36,7 +36,7 @@ Anca-Maria Vamanu
 
         1.5. Filtering
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -44,7 +44,7 @@ Anca-Maria Vamanu
    1.2. Notify2Xmpp usage
    1.3. xmpp_send_winfo usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -138,7 +138,7 @@ esence")
    the value set for the xmpp module parameter named
    'gateway_domain'.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module provides no function to be used in other OpenSER
    modules.

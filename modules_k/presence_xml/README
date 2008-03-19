@@ -16,7 +16,7 @@ Anca-Maria Vamanu
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -36,7 +36,7 @@ Anca-Maria Vamanu
         1.4. Exported Functions
         1.5. Installation
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -47,7 +47,7 @@ Anca-Maria Vamanu
    1.5. Set integrated_xcap_server parameter
    1.6. Set xcap_server parameter
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -186,7 +186,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
    on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module exports no function to be used in other OpenSER
    modules.

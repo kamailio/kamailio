@@ -12,13 +12,13 @@ Daniel-Constantin Mierla
 
    Copyright © 2003, 2004 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
 
@@ -40,7 +40,7 @@ Daniel-Constantin Mierla
 
               1.5.1. Using dbtext with basic OpenSER configuration
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -54,7 +54,7 @@ Daniel-Constantin Mierla
    1.8. Definition of 'version' table and sample records
    1.9. Configuration file
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -387,7 +387,7 @@ route[1]
 
 ...
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    Once you have the module loaded, you can use the API specified
    by OpenSER DB interface.

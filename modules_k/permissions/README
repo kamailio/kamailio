@@ -18,13 +18,13 @@ Juha Heinanen
 
    Copyright © 2006 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
 
@@ -115,7 +115,7 @@ Juha Heinanen
    1.28. allow_source_address_group() usage
    1.29. allow_trusted() usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

@@ -25,7 +25,7 @@ Bastian Friedrich
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -57,7 +57,7 @@ Bastian Friedrich
 
         1.7. Example of usage
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Available Functions
 
@@ -78,7 +78,7 @@ Bastian Friedrich
    1.7. benchmark usage
    2.1. Using the benchmark module's API from another module
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -250,7 +250,7 @@ lookup("location");
 bm_log_timer("usrloc-lookup");
 ...
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The benchmark module provides an internal API to be used by
    other OpenSER modules. The available functions are identical to

@@ -2,7 +2,7 @@
 
 <chapter>
 	
-	<title>User's Guide</title>
+	<title>&adminguide;</title>
 	
 	<section>
 	<title>Overview</title>
@@ -251,7 +251,7 @@
 	</note>
 	</section>
 	<section>
-	<title>User's Guide</title>
+	<title>&adminguide;</title>
 	<para>
 		The user must activate his Jabber account associated with his &sip; id. For each other
 		&im; network on which he wants to send messages, he must set an account for that &im;

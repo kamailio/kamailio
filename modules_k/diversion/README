@@ -10,13 +10,13 @@ Jan Janak
 
    Copyright © 2004 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -34,14 +34,14 @@ Jan Janak
 
         1.5. Diversion Example
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
    1.1. suffix usage
    1.2. add_diversion usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -131,7 +131,7 @@ Diversion: <sip:bob@sip.org>;reason=user-busy
 Contact: <sip:mark@1.2.3.4>
 Content-Length: 0
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    According to the specification new Diversion header field
    should be inserted as the topmost Diversion header field in the

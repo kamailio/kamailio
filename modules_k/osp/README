@@ -16,13 +16,13 @@ Di-Shi Sun
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -57,7 +57,7 @@ Di-Shi Sun
               1.4.7. prepareallosproute()
               1.4.8. reportospusage()
 
-   2. Developer's Guide
+   2. Developer Guide
 
    List of Examples
 
@@ -87,7 +87,7 @@ Di-Shi Sun
    1.22. prepareallosproute usage
    1.23. reportospusage usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -520,7 +520,7 @@ if (is_direction("downstream")) {
 }
 ...
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The functions of the OSP modules are not used by other OpenSER
    modules.

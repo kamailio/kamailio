@@ -10,13 +10,13 @@ Ron Winacott
 
    Copyright © 2006 SOMA Networks, Inc.
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. How it works
@@ -53,7 +53,7 @@ Ron Winacott
    1.6. Set sst_flag parameter
    1.7. sstCheckMin usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 

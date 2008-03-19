@@ -20,13 +20,13 @@ Bogdan-Andrei Iancu
 
    Copyright © 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dialog support
@@ -51,7 +51,7 @@ Bogdan-Andrei Iancu
               1.5.5. check_route_param(re)
               1.5.6. is_direction(dir)
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Available Functions
 
@@ -78,7 +78,7 @@ Bogdan-Andrei Iancu
    1.11. check_route_param usage
    2.1. Loading RR module's API from another module
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -348,7 +348,7 @@ if (is_direction("upstream")) {
 }
 ...
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The RR module provides an internal API to be used by other
    OpenSER modules. The API offers support for SIP dialog based

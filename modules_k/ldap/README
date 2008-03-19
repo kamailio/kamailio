@@ -12,7 +12,7 @@ Christian Schlatter
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
 
@@ -52,7 +52,7 @@ Christian Schlatter
 
               1.6.1. Compiling the Module
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Overview
         2.2. API Functions
@@ -95,7 +95,7 @@ Christian Schlatter
    2.1. Example code fragment to load LDAP module API
    2.2. Example LDAP module API function call
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -752,7 +752,7 @@ if (ldap_search(
 
    .
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
 2.1. Overview
 

@@ -18,7 +18,7 @@ Juha Heinanen
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -42,7 +42,7 @@ Juha Heinanen
 
         1.6. Known Limitations
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. Available Functions
 
@@ -58,7 +58,7 @@ Juha Heinanen
    1.6. is_uri_host_local usage
    1.7. is_domain_local usage
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -232,7 +232,7 @@ if (is_domain_local("$avp(s:some_avp)")) {
    through FIFO, the second reload will delete the original table
    still in use by the process.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module provides is_domain_local API function for use by
    other OpenSER modules.

@@ -10,13 +10,13 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -51,7 +51,7 @@ Anca-Maria Vamanu
 
         1.6. Installation
 
-   2. Developer's Guide
+   2. Developer Guide
 
         2.1. bind_presence(presence_api_t* api)
         2.2. add_event
@@ -86,7 +86,7 @@ Anca-Maria Vamanu
    1.15. handle_subscribe usage
    2.1. presence_api_t structure
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
@@ -389,7 +389,7 @@ if(method=="SUBSCRIBE")
    webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
-Chapter 2. Developer's Guide
+Chapter 2. Developer Guide
 
    The module provides the following functions that can be used in
    other OpenSER modules.

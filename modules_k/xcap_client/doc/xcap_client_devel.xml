@@ -2,7 +2,7 @@
 
 <chapter>
     
-    <title>Developer's Guide</title>
+    <title>&develguide;</title>
 	<para>
 		The module exports a number of functions that allow selecting 
 		and retrieving an element from an xcap server and also registering

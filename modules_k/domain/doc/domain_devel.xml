@@ -2,7 +2,7 @@
 
 <chapter>
     
-    <title>Developer's Guide</title>
+    <title>&develguide;</title>
     <para>
 	The module provides is_domain_local <acronym>API</acronym>
     function for use by other &openser; modules.
