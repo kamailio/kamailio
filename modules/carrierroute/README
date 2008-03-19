@@ -20,7 +20,7 @@ Henning Westerholt
 
    Table of Contents
 
-   1. User's Guide
+   1. Admin Guide
 
         1.1. Overview
         1.2. Dependencies
@@ -150,7 +150,7 @@ Henning Westerholt
    1.47. Example database content - route_tree table
    1.48. Necessary extensions for the user table
 
-Chapter 1. User's Guide
+Chapter 1. Admin Guide
 
 1.1. Overview
 
