@@ -4,7 +4,7 @@
     <title>Developer's Guide</title>
     <para>
 		The module provides the following functions that can be used
-		in other &ser; modules.
+		in other &openser; modules.
    </para>
  		<section>
 				<title>

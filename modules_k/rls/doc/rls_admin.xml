@@ -42,7 +42,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>

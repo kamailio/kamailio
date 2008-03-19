@@ -17,7 +17,7 @@
 	<section>
 	<title>Dependencies</title>
 		<section>
-			<title>&ser; Modules</title>
+			<title>&openser; Modules</title>
 			<para>
 			The module depends on the following modules (in the other words 
 			the listed modules must be loaded before this module):
@@ -32,7 +32,7 @@
 			<title>External Libraries or Applications</title>
 			<para>
 			The following libraries or applications must be installed 
-			before compilling &ser; with this module loaded:
+			before compilling &openser; with this module loaded:
 			</para>
 			<itemizedlist>
 				<listitem>

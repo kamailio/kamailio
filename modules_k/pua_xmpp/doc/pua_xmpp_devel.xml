@@ -4,7 +4,7 @@
     
     <title>Developer's Guide</title>
     <para>
-		The module provides no function to be used in other &ser; modules.
+		The module provides no function to be used in other &openser; modules.
    </para>
  	
 </chapter>

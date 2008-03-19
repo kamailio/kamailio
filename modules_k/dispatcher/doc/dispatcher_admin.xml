@@ -20,7 +20,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; modules</title>
+		<title>&openser; modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -36,7 +36,7 @@
 		<title>External libraries or applications</title>
 		<para>
 		The following libraries or applications must be installed before
-		running &ser; with this module:
+		running &openser; with this module:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -746,12 +746,12 @@ ds_select_dst("1", "0");
 		</section>
 	
 		<section>
-		<title>&ser; config file</title>
+		<title>&openser; config file</title>
 		<para>
 		Next picture displays a sample usage of dispatcher.
 		</para>
 		<example>
-		<title>&ser; config script - sample dispatcher usage</title>
+		<title>&openser; config script - sample dispatcher usage</title>
 		<programlisting format="linespecific">
 ...
 &dispatchercfg;

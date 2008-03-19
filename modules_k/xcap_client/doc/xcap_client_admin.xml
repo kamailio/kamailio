@@ -37,9 +37,9 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 		<para>
-			The modules is not dependent of any &ser; module.
+			The modules is not dependent of any &openser; module.
 		</para>
 	</section>
 
@@ -47,7 +47,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		&openser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -109,7 +109,7 @@ modparam("xcap_client", "xcap_table", "xcaps")
 		A flag to disable periodical query as an update method for
 		the documents the module is responsible for. It could be
 		disabled when the xcap server is capable to send the exported
-		MI command when a change occurs or when another module in &ser;
+		MI command when a change occurs or when another module in &openser;
 		handles updates.
 		</para>
 		<para>

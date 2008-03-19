@@ -7,7 +7,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This modules provides offline message storage for the &sername;. It 
+		This modules provides offline message storage for the &opensername;. It 
 		stores received messages for an offline user and sends them when the 
 		user becomes online.
 	</para>
@@ -27,7 +27,7 @@
 		one of the module's parameters.
 	</para>
 	<para>
-		Every time when a user registers with &ser;, the module is looking in 
+		Every time when a user registers with &openser;, the module is looking in 
 		database for offline messages intended for that user. All of them will 
 		be sent to contact address provided in REGISTER request.
 	</para>
@@ -40,7 +40,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; modules</title>
+		<title>&openser; modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -65,7 +65,7 @@
 		<title>External libraries or applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &ser; with this module:
+		running &openser; with this module:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -614,12 +614,12 @@ m_dump("$fu");
 	<section>
 	<title>Installation and Running</title>
 		<section>
-		<title>&ser; config file</title>
+		<title>&openser; config file</title>
 		<para>
 		Next picture displays a sample usage of msilo.
 		</para>
 		<example>
-		<title>&ser; config script - sample msilo usage</title>
+		<title>&openser; config script - sample msilo usage</title>
 		<programlisting format="linespecific">
 ...
 &msilocfg;

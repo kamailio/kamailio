@@ -4,7 +4,7 @@
     
     <title>Developer's Guide</title>
     <para>
-	Once you have the module loaded, you can use the API specified by &ser; DB
+	Once you have the module loaded, you can use the API specified by &openser; DB
 	interface.
     </para>
 </chapter>

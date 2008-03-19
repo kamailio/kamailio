@@ -8,7 +8,7 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		UAC REDIRECT - User Agent Client redirection - module enhance &ser;
+		UAC REDIRECT - User Agent Client redirection - module enhance &openser;
 		with the functionality of being able to handle (interpret, filter,
 		log and follow) redirect responses ( 3xx replies class).
 		</para>
@@ -83,7 +83,7 @@
 	<section>
 		<title>Dependencies</title>
 		<section>
-			<title>&ser; Modules</title>
+			<title>&openser; Modules</title>
 			<para>
 			The following modules must be loaded before this module:
 			<itemizedlist>
@@ -106,7 +106,7 @@
 			<title>External Libraries or Applications</title>
 			<para>
 				The following libraries or applications must be installed 
-				before running &ser; with this module loaded:
+				before running &openser; with this module loaded:
 				<itemizedlist>
 				<listitem>
 				<para>

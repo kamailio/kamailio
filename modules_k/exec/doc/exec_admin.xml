@@ -7,9 +7,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Exec module allows to start an external command from a &ser; script. 
+		Exec module allows to start an external command from a &openser; script. 
 		The commands may be any valid shell commands--the command string is 
-		passed to shell using <quote>popen</quote> command. &ser; passes 
+		passed to shell using <quote>popen</quote> command. &openser; passes 
 		additionally lot of information about request in environment
 		variables:
 	</para>
@@ -68,13 +68,13 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 		<para>
 		The following  modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &ser; modules</emphasis>.
+				<emphasis>No dependencies on other &openser; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -84,7 +84,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		&openser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

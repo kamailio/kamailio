@@ -5,7 +5,7 @@
     <title>Developer's Guide</title>
     <para>
 	The module provides is_domain_local <acronym>API</acronym>
-    function for use by other &ser; modules.
+    function for use by other &openser; modules.
     </para>
     <section>
 	<title>Available Functions</title>

@@ -27,7 +27,7 @@
 		<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -49,7 +49,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		&openser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -363,7 +363,7 @@ if(is_method("MESSAGE)
 	<section>
 	<title>Installation</title>
 		<para>
-		Before running &ser; with IMC, you have to setup the database 
+		Before running &openser; with IMC, you have to setup the database 
 		tables where the module will store the data. For that, if the 
 		tables were not created by the installation script or you choose
 		to install everything by yourself you can use the imc-create.sql

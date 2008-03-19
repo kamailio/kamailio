@@ -7,7 +7,7 @@
 	<section>
 	<title>Overview</title>
 		<para>
-			Mediaproxy is an &ser; module that is designed to allow automatic 
+			Mediaproxy is an &openser; module that is designed to allow automatic 
 			NAT traversal for the majority of existing SIP clients. This means 
 			that there will be no need to configure anything in particular on 
 			the NAT box to allow these clients to work behind NAT when using 
@@ -27,10 +27,10 @@
 			To achieve this, mediaproxy is actually composed by 2 components:
 			<itemizedlist>
 				<listitem><para>
-					the &ser; mediaproxy module itself
+					the &openser; mediaproxy module itself
 				</para></listitem>
 				<listitem><para>
-					an external proxy server called &ser; MediaProxy 
+					an external proxy server called &openser; MediaProxy 
 					(available from http://mediaproxy.ag-projects.com/ )
 				</para></listitem>
 			</itemizedlist>
@@ -45,7 +45,7 @@
 			a remote host. Moreover it is possible for a single module to 
 			control multiple proxy servers running on multiple geographically 
 			distributed hosts. To find out more about the architecture 
-			of &ser; MediaProxy please read the documentation that comes with it.
+			of &openser; MediaProxy please read the documentation that comes with it.
 		</para>
 		<para>
 			To be able to act as a proxy between the 2 talking parties, the 
@@ -166,7 +166,7 @@
 	<section>
 	<title>Dependencies</title>
 		<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 			<para>
 				The following modules must be loaded before this module:
 				<itemizedlist>
@@ -182,7 +182,7 @@
 		<title>External Libraries or Applications</title>
 			<para>
 				The following libraries or applications must be installed before
-				running &ser; with this module loaded:
+				running &openser; with this module loaded:
 				<itemizedlist>
 					<listitem><para>
 						<emphasis>None</emphasis>.
@@ -358,7 +358,7 @@ modparam("mediaproxy", "domain_avp", "$avp(s:mediaproxy_domain)")
 					by RFC1918) in the Contact field of the SIP message.
 				</para></listitem>
 				<listitem><para>
-					2 - tests if client has contacted &ser; from an address 
+					2 - tests if client has contacted &openser; from an address 
 					that is different from the one in the Via field.
 				</para></listitem>
 				<listitem><para>
@@ -516,19 +516,19 @@ if (method==BYE) {
 			and also offer redundancy to keep the service running even if some of the
 			mediaproxies go offline. Mediaproxy is able to detect the dead proxies and
 			redistribute the calls among the other mediaproxies that are available.
-			(More details about this can be found in the &ser; MediaProxy documentation.)
+			(More details about this can be found in the &openser; MediaProxy documentation.)
 		</para>
 		<para>
 			Another important difference is that mediaproxy tries to move the complex
-			logic of decision from the &ser; configuration file to the module and the
+			logic of decision from the &openser; configuration file to the module and the
 			proxy servers themselves. This is why there are very few functions in this
 			module that take any parameters. Instead, control is achieved by modifying
 			resources outside of openser.cfg. This includes for example specifying the
 			mediaproxy servers using DNS SRV records, or declaring asymmetric clients
 			in external files that are automatically re-read as soon as they change.
-			This allows &ser; to run without interruption or restarts. If one wants to
-			change &ser;'s behavior, instead of changing openser.cfg and restarting &ser;, one
-			will change these external resources and &ser; will adapt it's behavior on the
+			This allows &openser; to run without interruption or restarts. If one wants to
+			change &openser;'s behavior, instead of changing openser.cfg and restarting &openser;, one
+			will change these external resources and &openser; will adapt it's behavior on the
 			fly without any need for restart.
 		</para>
 		<para>

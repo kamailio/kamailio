@@ -173,7 +173,7 @@ id(int,auto) name(str) flag(double) desc(str,null)
 </programlisting>
 		</example>
 		<example>
-		<title>Minimal &ser; location dbtext table definition</title>
+		<title>Minimal &openser; location dbtext table definition</title>
 <programlisting format="linespecific">
 ...
 username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
@@ -181,7 +181,7 @@ username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
 </programlisting>
 		</example>
 		<example>
-		<title>Minimal &ser; subscriber dbtext table example</title>
+		<title>Minimal &openser; subscriber dbtext table example</title>
 <programlisting format="linespecific">
 ...
 username(str) password(str) ha1(str) domain(str) ha1b(str)
@@ -202,7 +202,7 @@ suser:supasswd:xxx:alpha.org:xxx
 	<section>
 	<title>Dependencies</title>
 		<section>
-			<title>&ser; modules</title>
+			<title>&openser; modules</title>
 		<para>
 			The next modules must be loaded before this module:
 			<itemizedlist>
@@ -218,7 +218,7 @@ suser:supasswd:xxx:alpha.org:xxx
 			<title>External libraries or applications</title>
 		<para>
 			The next libraries or applications must be installed before running
-			&ser; with this module:
+			&openser; with this module:
 			<itemizedlist>
 			<listitem>
 				<para>
@@ -269,7 +269,7 @@ modparam("db_text", "db_mode", 1)
 		Compile the module and load it instead of mysql or other DB modules.
 		</para>
 		<para>
-		REMINDER: when you use <emphasis>dbtext</emphasis> in &ser;,
+		REMINDER: when you use <emphasis>dbtext</emphasis> in &openser;,
 		the	database URL for modules must be the path to the directory
 		where the table-files are located, prefixed by
 		<quote>dbtext://</quote>, e.g., 

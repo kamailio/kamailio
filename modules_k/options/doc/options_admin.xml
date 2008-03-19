@@ -24,7 +24,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -40,7 +40,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		&openser; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -81,7 +81,7 @@ modparam("options", "accept", "application/*")
 		<title><varname>accept_encoding</varname> (string)</title>
 		<para>
 			This parameter is the content of the Accept-Encoding header field.
-			Please do not change the default value because &ser; 
+			Please do not change the default value because &openser; 
 			does not support any encodings yet.
 		</para>
 		<para>
@@ -125,7 +125,7 @@ modparam("options", "accept_language", "de")
 		<title><varname>support</varname> (string)</title>
 		<para>
 			This parameter is the content of the Support header field.
-			Please do not change the default value, because &ser; currently 
+			Please do not change the default value, because &openser; currently 
 			does not support any of the SIP extensions registered at the IANA.
 		</para>
 		<para>

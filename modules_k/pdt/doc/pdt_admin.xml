@@ -66,13 +66,13 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
     <section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&ser; Modules</title>
+	    <title>&openser; Modules</title>
 	    <para>
 		The following modules must be loaded before this module:
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>A &ser; database module (e.g., mysql,
+			    <emphasis>A &openser; database module (e.g., mysql,
 				dbtext)</emphasis>.
 			</para>
 		    </listitem>
@@ -83,7 +83,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 	    <title>External Libraries or Applications</title>
 	    <para>
 		The following libraries or applications must be installed before running
-		&ser; with this module loaded:
+		&openser; with this module loaded:
 	    	<itemizedlist>
 		    <listitem>
 			<para>
@@ -417,7 +417,7 @@ prefix2domain();
 		The modules uses only the cache to look up domains. If you want to
 		add or delete a new prefix-domain pair you have to use MI FIFO commands.
 		All changes made via these commands are applied to database, while the database
-		is loaded only at &ser; start up time.
+		is loaded only at &openser; start up time.
 		</para>
 
 	<section>

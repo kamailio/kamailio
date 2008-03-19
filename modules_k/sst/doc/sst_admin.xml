@@ -100,7 +100,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&ser; Modules</title>
+		<title>&openser; Modules</title>
 		
 		<para>The following modules must be loaded
 		before this module:
@@ -122,7 +122,7 @@
 	<title>External Libraries or Applications</title>
 	<para>
 	The following libraries or applications must be installed before running
-	&ser; with this module loaded:
+	&openser; with this module loaded:
 		<itemizedlist>
 		<listitem>
 		<para>
