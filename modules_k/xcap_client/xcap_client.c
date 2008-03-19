@@ -125,8 +125,6 @@ static int mod_init(void)
 
 	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
 	xcap_db_table.len = xcap_db_table.s ? strlen(xcap_db_table.s) : 0;
-	LM_DBG("db_url=%s/%d/%p\n",ZSW(xcap_db_url.s),xcap_db_url.len,
-			xcap_db_url.s);
 	
 	/* binding to mysql module  */
 	if (db_bind_mod(&xcap_db_url, &xcap_dbf))
