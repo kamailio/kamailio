@@ -540,10 +540,17 @@ static int mod_init(void)
 		}
 
 		*queues[i].pipe   = queues[i].pipe_mp;
+		if (queues[i].method_mp.s == NULL) {
+			LM_ERR("unexpected NULL method for queues[%d].method_mp\n", i);
+			return -1;
+		}
 		if(str_cpy(queues[i].method, &queues[i].method_mp)) {
 			LM_ERR("oom str_cpy(queues[%d].method\n", i);
 			return -1;
 		}
+		pkg_free(queues[i].method_mp.s);
+		queues[i].method_mp.s = NULL;
+		queues[i].method_mp.len = 0;
 	}
 
 	rl_drop_reason.len = strlen(rl_drop_reason.s);
@@ -583,6 +590,22 @@ void destroy(void)
 		if (pipes[i].limit) {
 			shm_free(pipes[i].limit);
 			pipes[i].limit = NULL;
+		}
+	}
+
+	for (i=0; i<*nqueues; i++) {
+		if (queues[i].pipe) {
+			shm_free(queues[i].pipe);
+			queues[i].pipe = NULL;
+		}
+		if (queues[i].method) {
+			if (queues[i].method->s) {
+				shm_free(queues[i].method->s);
+				queues[i].method->s = NULL;
+				queues[i].method->len = 0;
+			}
+			shm_free(queues[i].method);
+			queues[i].method = NULL;
 		}
 	}
 
