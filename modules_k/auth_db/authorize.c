@@ -42,7 +42,7 @@
 #include "../../parser/hf.h"
 #include "../../parser/parser_f.h"
 #include "../../usr_avp.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../mem/mem.h"
 #include "aaa_avps.h"
 #include "authdb_mod.h"
@@ -206,7 +206,7 @@ static int generate_avps(db_res_t* result)
 /*
  * Authorize digest credentials
  */
-static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
+static inline int authorize(struct sip_msg* _m, gparam_p _realm,
 									char* _table, hdr_types_t _hftype)
 {
 	char ha1[256];
@@ -218,22 +218,21 @@ static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
 	db_res_t* result = NULL;
 
 	if(!_table) {
-		LM_ERR("invalid parameter");
+		LM_ERR("invalid table parameter\n");
 		return -1;
 	}
 
 	table.s = _table;
 	table.len = strlen(_table);
 
-	if (_realm) {
-		if (pv_printf_s(_m, _realm, &domain)!=0) {
-			LM_ERR("pv_printf_s failed\n");
-			return AUTH_ERROR;
-		}
-	} else {
-		domain.len = 0;
-		domain.s = 0;
+	if(fixup_get_svalue(_m, _realm, &domain)!=0)
+	{
+		LM_ERR("invalid realm parameter\n");
+		return AUTH_ERROR;
 	}
+
+	if (domain.len==0)
+		domain.s = 0;
 
 	ret = auth_api.pre_auth(_m, &domain, _hftype, &h);
 
@@ -276,7 +275,7 @@ static inline int authorize(struct sip_msg* _m, pv_elem_t* _realm,
  */
 int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return authorize(_m, (pv_elem_t*)_realm, _table, HDR_PROXYAUTH_T);
+	return authorize(_m, (gparam_p)_realm, _table, HDR_PROXYAUTH_T);
 }
 
 
@@ -285,5 +284,5 @@ int proxy_authorize(struct sip_msg* _m, char* _realm, char* _table)
  */
 int www_authorize(struct sip_msg* _m, char* _realm, char* _table)
 {
-	return authorize(_m, (pv_elem_t*)_realm, _table, HDR_AUTHORIZATION_T);
+	return authorize(_m, (gparam_p)_realm, _table, HDR_AUTHORIZATION_T);
 }

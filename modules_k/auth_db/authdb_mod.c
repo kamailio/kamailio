@@ -40,7 +40,7 @@
 #include "../../db/db.h"
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../mem/mem.h"
 #include "../auth/api.h"
 #include "../sl/sl_api.h"
@@ -231,24 +231,12 @@ static void destroy(void)
  */
 static int auth_fixup(void** param, int param_no)
 {
-	pv_elem_t *model;
 	db_con_t* dbh;
-	str s;
 	int ver;
 	str name;
 
 	if (param_no == 1) {
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-			model = 0;
-		} else {
-			s.len = strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) {
-				LM_ERR("pv_parse_format failed\n");
-				return E_OUT_OF_MEM;
-			}
-		}
-		*param = (void*)model;
+		return fixup_spve_null(param, 1);
 	} else if (param_no == 2) {
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
