@@ -35,6 +35,7 @@
 #include "../../pvar.h"
 #include "../../str.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 #include "auth_mod.h"
 #include "common.h"
 #include "challenge.h"
@@ -130,7 +131,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 /*
  * Create and send a challenge
  */
-static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
+static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 						int _code, char* _message, char* _challenge_msg)
 {
 	int auth_hf_len;
@@ -156,7 +157,15 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 
 	if (h) cred = (auth_body_t*)(h->parsed);
 
-	if (_realm == 0) {
+	if(fixup_get_svalue(_msg, _realm, &realm)!=0)
+	{
+		LM_ERR("invalid realm parameter");
+		if (send_resp(_msg, 500, &auth_500_err, 0, 0)==-1)
+			return -1;
+		else
+			return 0;
+	}
+	if (realm.len == 0) {
 		if (get_realm(_msg, hftype, &uri) < 0) {
 			LM_ERR("failed to extract URI\n");
 			if (send_resp(_msg, 400, &auth_400_err, 0, 0) == -1) {
@@ -168,14 +177,6 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
 
 		realm = uri->host;
 		strip_realm(&realm);
-	} else {
-		if(pv_printf_s(_msg, _realm, &realm)!=0) {
-			LM_ERR("pv_printf_s failed\n");
-			if (send_resp(_msg, 500, &auth_500_err, 0, 0)==-1)
-				return -1;
-			else
-				return 0;
-		}
 	}
 
 	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), &realm, 
@@ -203,7 +204,7 @@ static inline int challenge(struct sip_msg* _msg, pv_elem_t* _realm, int _qop,
  */
 int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, (pv_elem_t*)_realm, (int)(long)_qop, 401,
+	return challenge(_msg, (gparam_p)_realm, (int)(long)_qop, 401,
 			MESSAGE_401, WWW_AUTH_CHALLENGE);
 }
 
@@ -213,7 +214,7 @@ int www_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
  */
 int proxy_challenge(struct sip_msg* _msg, char* _realm, char* _qop)
 {
-	return challenge(_msg, (pv_elem_t*)_realm, (int)(long)_qop, 407,
+	return challenge(_msg, (gparam_p)_realm, (int)(long)_qop, 407,
 			MESSAGE_407, PROXY_AUTH_CHALLENGE);
 }
 

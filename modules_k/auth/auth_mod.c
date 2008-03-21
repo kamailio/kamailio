@@ -70,12 +70,6 @@ static void destroy(void);
  */
 static int mod_init(void);
 
-
-static int challenge_fixup(void** param, int param_no);
-
-
-static int auth_fixup(void** param, int param_no);
-
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2);
 int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2);
 
@@ -117,14 +111,14 @@ static pv_spec_t passwd_spec;
  * Exported functions 
  */
 static cmd_export_t cmds[] = {
-	{"www_challenge",       (cmd_function)www_challenge,           2, challenge_fixup,
-			0, REQUEST_ROUTE},
-	{"proxy_challenge",     (cmd_function)proxy_challenge,         2, challenge_fixup,
-			0, REQUEST_ROUTE},
-	{"pv_www_authorize",    (cmd_function)pv_www_authorize,        1, auth_fixup,
-			0, REQUEST_ROUTE},
-	{"pv_proxy_authorize",  (cmd_function)pv_proxy_authorize,      1, auth_fixup,
-			0, REQUEST_ROUTE},
+	{"www_challenge",       (cmd_function)www_challenge,           2,
+		fixup_spve_uint, 0, REQUEST_ROUTE},
+	{"proxy_challenge",     (cmd_function)proxy_challenge,         2,
+		fixup_spve_uint, 0, REQUEST_ROUTE},
+	{"pv_www_authorize",    (cmd_function)pv_www_authorize,        1,
+		fixup_spve_null, 0, REQUEST_ROUTE},
+	{"pv_proxy_authorize",  (cmd_function)pv_proxy_authorize,      1,
+		fixup_spve_null, 0, REQUEST_ROUTE},
 	{"consume_credentials", (cmd_function)consume_credentials,     0, 0,
 			0, REQUEST_ROUTE},
 	{"is_rpid_user_e164",   (cmd_function)is_rpid_user_e164,       0, 0,
@@ -339,7 +333,7 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 	return 0;
 }
 
-static inline int pv_authorize(struct sip_msg* msg, pv_elem_t* realm,
+static inline int pv_authorize(struct sip_msg* msg, gparam_p realm,
 										hdr_types_t hftype)
 {
 	static char ha1[256];
@@ -349,15 +343,14 @@ static inline int pv_authorize(struct sip_msg* msg, pv_elem_t* realm,
 	auth_result_t ret;
 	str domain;
 
-	if (realm) {
-		if (pv_printf_s(msg, realm, &domain)!=0) {
-			LM_ERR("pv_printf_s failed\n");
-			return AUTH_ERROR;
-		}
-	} else {
-		domain.len = 0;
-		domain.s = 0;
+	if(fixup_get_svalue(msg, realm, &domain)!=0)
+	{
+		LM_ERR("invalid realm parameter\n");
+		return -1;
 	}
+
+	if (domain.len==0)
+		domain.s = 0;
 
 	ret = pre_auth(msg, &domain, hftype, &h);
 
@@ -390,72 +383,12 @@ static inline int pv_authorize(struct sip_msg* msg, pv_elem_t* realm,
 
 int pv_proxy_authorize(struct sip_msg* msg, char* realm, char* str2)
 {
-	return pv_authorize(msg, (pv_elem_t*)realm, HDR_PROXYAUTH_T);
+	return pv_authorize(msg, (gparam_p)realm, HDR_PROXYAUTH_T);
 }
 
 
 int pv_www_authorize(struct sip_msg* msg, char* realm, char* str2)
 {
-	return pv_authorize(msg, (pv_elem_t*)realm, HDR_AUTHORIZATION_T);
+	return pv_authorize(msg, (gparam_p)realm, HDR_AUTHORIZATION_T);
 }
 
-
-static int challenge_fixup(void** param, int param_no)
-{
-	pv_elem_t *model;
-	unsigned long qop;
-	int err;
-	str s;
-	
-	if (param_no == 1) {
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-			model = 0;
-		} else {
-			s.len = strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) {
-				LM_ERR("pv_parse_format failed\n");
-				return E_OUT_OF_MEM;
-			}
-		}
-		*param = (void*)model;
-	} else if (param_no == 2) {
-		qop = str2s(*param, strlen(*param), &err);
-		
-		if (err == 0) {
-			pkg_free(*param);
-			*param=(void*)qop;
-		} else {
-			LM_ERR("bad number <%s>\n", (char*)(*param));
-			return E_UNSPEC;
-		}
-	}
-
-	return 0;
-}
-
-
-/*
- * Convert the char* parameters
- */
-static int auth_fixup(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-
-	if (param_no == 1) {
-		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-			model = 0;
-		} else {
-			s.len =  strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) {
-				LM_ERR("pv_parse_format failed\n");
-				return E_OUT_OF_MEM;
-			}
-		}
-		*param = (void*)model;
-	}
-
-	return 0;
-}
