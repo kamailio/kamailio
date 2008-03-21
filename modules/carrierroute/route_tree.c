@@ -200,6 +200,50 @@ struct route_tree * create_route_tree(const str * domain, int id) {
 
 
 /**
+ * Try to find a matching route_flags struct in rt and return it, add it if not found.
+ *
+ * @param rt the current route tree node
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ *
+ * @return the route_flags struct on success, NULL on failure.
+ *
+ */
+struct route_flags * add_route_flags(struct route_tree_item * route_tree, const flag_t flags, const flag_t mask)
+{
+	struct route_flags *shm_rf;
+	struct route_flags *prev_rf = NULL;
+	struct route_flags *tmp_rf = NULL;
+
+	/* search for matching route_flags struct */
+	for (tmp_rf=route_tree->flag_list; tmp_rf!=NULL; tmp_rf=tmp_rf->next) {
+		if ((tmp_rf->flags == flags) && (tmp_rf->mask == mask)) return tmp_rf;
+	}
+
+	/* not found, insert one */
+	for (tmp_rf=route_tree->flag_list; tmp_rf!=NULL; tmp_rf=tmp_rf->next) {
+		if (tmp_rf->mask < mask) break;
+		prev_rf=tmp_rf;
+	}
+
+	if ((shm_rf = shm_malloc(sizeof(struct route_flags))) == NULL) {
+		LM_ERR("out of shared memory\n");
+		return NULL;
+	}
+	memset(shm_rf, 0, sizeof(struct route_flags));
+
+	shm_rf->flags=flags;
+	shm_rf->mask=mask;
+	shm_rf->next=tmp_rf;
+	
+	if (prev_rf) prev_rf->next = shm_rf;
+	else route_tree->flag_list = shm_rf;
+
+	return shm_rf;
+}
+
+
+/**
  * Adds the given route information to the route tree identified by
  * route_tree. scan_prefix identifies the number for which the information
  * is and the rewrite_* parameters define what to do in case of a match.
@@ -211,6 +255,8 @@ struct route_tree * create_route_tree(const str * domain, int id) {
  *
  * @param rt the current route tree node
  * @param scan_prefix the prefix at the current position
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
  * @param full_prefix the whole scan prefix
  * @param max_targets the number of targets
  * @param prob the weight of the rule
@@ -232,14 +278,20 @@ struct route_tree * create_route_tree(const str * domain, int id) {
  * @see add_route()
  */
 int add_route_to_tree(struct route_tree_item * route_tree, const str * scan_prefix,
-		const str * full_prefix, int max_targets, double prob,
+		flag_t flags, flag_t mask, const str * full_prefix, int max_targets, double prob,
 		const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
 		const str * rewrite_local_suffix, int status, int hash_index, 
 		int backup, int * backed_up, const str * comment) {
 	str next_prefix;
+	struct route_flags *rf;
 
 	if (scan_prefix->len == 0) {
-		return add_route_rule(route_tree, full_prefix, max_targets, prob, rewrite_hostpart, strip,
+		rf = add_route_flags(route_tree, flags, mask);
+		if (rf==NULL) {
+			LM_ERR("cannot add route_flags struct to route_tree\n");
+			return -1;
+		}
+		return add_route_rule(rf, full_prefix, max_targets, prob, rewrite_hostpart, strip,
 		                      rewrite_local_prefix, rewrite_local_suffix, status, hash_index,
 		                      backup, backed_up, comment);
 	} else {
@@ -253,7 +305,7 @@ int add_route_to_tree(struct route_tree_item * route_tree, const str * scan_pref
 		next_prefix.s = scan_prefix->s + 1;
 		next_prefix.len = scan_prefix->len - 1;
 		return add_route_to_tree(route_tree->nodes[*scan_prefix->s - '0'],
-		                         &next_prefix, full_prefix, max_targets, prob,
+		                         &next_prefix, flags, mask, full_prefix, max_targets, prob,
 		                         rewrite_hostpart, strip, rewrite_local_prefix,
 		                         rewrite_local_suffix, status, hash_index,
 		                         backup, backed_up, comment);
@@ -286,7 +338,7 @@ int add_route_to_tree(struct route_tree_item * route_tree, const str * scan_pref
  */
 int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const str * scan_prefix,
 		const str * full_prefix, const str * host, const str * reply_code,
-		const int flags, const int mask, const int next_domain, const str * comment) {
+		const flag_t flags, const flag_t mask, const int next_domain, const str * comment) {
 	str next_prefix;
 
 	if (!scan_prefix || !scan_prefix->s || *scan_prefix->s == '\0') {
@@ -337,14 +389,35 @@ void destroy_route_tree(struct route_tree *route_tree) {
 }
 
 /**
+ * Destroys route_flags in shared memory by freing all its memory.
+ *
+ * @param route_flags route_flags struct to be destroyed
+ */
+static void destroy_route_flags(struct route_flags *rf) {
+	struct route_rule *rs;
+	struct route_rule *rs_tmp;
+
+	if (rf->rules) {
+		shm_free(rf->rules);
+	}
+	rs = rf->rule_list;
+	while (rs != NULL) {
+		rs_tmp = rs->next;
+		destroy_route_rule(rs);
+		rs = rs_tmp;
+	}
+	shm_free(rf);
+}
+
+/**
  * Destroys route_tree_item in shared memory by freing all its memory.
  *
  * @param route_tree_item route tree node to be destroyed
  */
 static void destroy_route_tree_item(struct route_tree_item *route_tree_item) {
 	int i;
-	struct route_rule *rs;
-	struct route_rule *rs_tmp;
+	struct route_flags *rf;
+	struct route_flags *rf_tmp;
 
 	if (!route_tree_item) {
 		LM_ERR("NULL pointer in parameter\n");
@@ -355,17 +428,13 @@ static void destroy_route_tree_item(struct route_tree_item *route_tree_item) {
 			destroy_route_tree_item(route_tree_item->nodes[i]);
 		}
 	}
-	if (route_tree_item->rules) {
-		shm_free(route_tree_item->rules);
+
+	rf=route_tree_item->flag_list;
+	while (rf!=NULL) {
+		rf_tmp = rf->next;
+		destroy_route_flags(rf);
+		rf = rf_tmp;
 	}
-	rs = route_tree_item->rule_list;
-	while (rs != NULL) {
-		rs_tmp = rs->next;
-		destroy_route_rule(rs);
-		rs = rs_tmp;
-	}
-	shm_free(route_tree_item);
-	return;
 }
 
 

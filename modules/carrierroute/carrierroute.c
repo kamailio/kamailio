@@ -52,8 +52,10 @@ str carrier_table = str_init("route_tree");
 
 static str id_col = str_init("id");
 static str carrier_col = str_init("carrier");
-static str scan_prefix_col = str_init("scan_prefix");
 static str domain_col = str_init("domain");
+static str scan_prefix_col = str_init("scan_prefix");
+static str flags_col = str_init("flags");
+static str mask_col = str_init("mask");
 static str prob_col = str_init("prob");
 static str rewrite_host_col = str_init("rewrite_host");
 static str strip_col = str_init("strip");
@@ -67,8 +69,8 @@ static str carrier_id_col = str_init("id");
 static str carrier_name_col = str_init("carrier");
 static str failure_id_col = str_init("id");
 static str failure_carrier_col = str_init("carrier");
-static str failure_scan_prefix_col = str_init("scan_prefix");
 static str failure_domain_col = str_init("domain");
+static str failure_scan_prefix_col = str_init("scan_prefix");
 static str failure_host_name_col = str_init("host_name");
 static str failure_reply_code_col = str_init("reply_code");
 static str failure_flags_col = str_init("flags");
@@ -80,8 +82,10 @@ static str failure_comment_col = str_init("comment");
 str * columns[COLUMN_NUM] = {
                                  &id_col,
                                  &carrier_col,
-                                 &scan_prefix_col,
                                  &domain_col,
+                                 &scan_prefix_col,
+																 &flags_col,
+																 &mask_col,
                                  &prob_col,
                                  &rewrite_host_col,
                                  &strip_col,
@@ -104,8 +108,8 @@ str * carrier_columns[CARRIER_COLUMN_NUM] = {
 str * failure_columns[FAILURE_COLUMN_NUM] = {
 	&failure_id_col,
 	&failure_carrier_col,
-	&failure_scan_prefix_col,
 	&failure_domain_col,
+	&failure_scan_prefix_col,
 	&failure_host_name_col,
 	&failure_reply_code_col,
 	&failure_flags_col,
@@ -152,41 +156,43 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]= {
-	{"db_url",                 STR_PARAM, &db_url.s },
-	{"db_table",               STR_PARAM, &db_table.s },
-	{"db_failure_table",       STR_PARAM, &db_failure_table.s },
-	{"carrier_table",          STR_PARAM, &carrier_table.s },
-	{"subscriber_table",       STR_PARAM, &subscriber_table.s },
-	{"id_column",              STR_PARAM, &id_col.s },
-	{"carrier_column",         STR_PARAM, &carrier_col.s },
-	{"scan_prefix_column",     STR_PARAM, &scan_prefix_col.s },
-	{"domain_column",          STR_PARAM, &domain_col.s },
-	{"prob_column",            STR_PARAM, &prob_col.s },
-	{"rewrite_host_column",    STR_PARAM, &rewrite_host_col.s },
-	{"strip_column",           STR_PARAM, &strip_col.s },
-	{"rewrite_prefix_column",  STR_PARAM, &rewrite_prefix_col.s },
-	{"rewrite_suffix_column",  STR_PARAM, &rewrite_suffix_col.s },
-	{"comment_column",         STR_PARAM, &comment_col.s },
+	{"db_url",                     STR_PARAM, &db_url.s },
+	{"db_table",                   STR_PARAM, &db_table.s },
+	{"db_failure_table",           STR_PARAM, &db_failure_table.s },
+	{"carrier_table",              STR_PARAM, &carrier_table.s },
+	{"subscriber_table",           STR_PARAM, &subscriber_table.s },
+	{"id_column",                  STR_PARAM, &id_col.s },
+	{"carrier_column",             STR_PARAM, &carrier_col.s },
+	{"domain_column",              STR_PARAM, &domain_col.s },
+	{"scan_prefix_column",         STR_PARAM, &scan_prefix_col.s },
+	{"flags_column",               STR_PARAM, &flags_col.s },
+	{"mask_column",                STR_PARAM, &mask_col.s },
+	{"prob_column",                STR_PARAM, &prob_col.s },
+	{"rewrite_host_column",        STR_PARAM, &rewrite_host_col.s },
+	{"strip_column",               STR_PARAM, &strip_col.s },
+	{"rewrite_prefix_column",      STR_PARAM, &rewrite_prefix_col.s },
+	{"rewrite_suffix_column",      STR_PARAM, &rewrite_suffix_col.s },
+	{"comment_column",             STR_PARAM, &comment_col.s },
 	{"failure_id_column",          STR_PARAM, &failure_id_col.s },
 	{"failure_carrier_column",     STR_PARAM, &failure_carrier_col.s },
-	{"failure_scan_prefix_column", STR_PARAM, &failure_scan_prefix_col.s },
 	{"failure_domain_column",      STR_PARAM, &failure_domain_col.s },
+	{"failure_scan_prefix_column", STR_PARAM, &failure_scan_prefix_col.s },
 	{"failure_host_name_column",   STR_PARAM, &failure_host_name_col.s },
 	{"failure_reply_code_column",  STR_PARAM, &failure_reply_code_col.s },
 	{"failure_flags_column",       STR_PARAM, &failure_flags_col.s },
 	{"failure_mask_column",        STR_PARAM, &failure_mask_col.s },
 	{"failure_next_domain_column", STR_PARAM, &failure_next_domain_col.s },
 	{"failure_comment_column",     STR_PARAM, &failure_comment_col.s },
-	{"subscriber_user_col",    STR_PARAM, &username_col.s },
-	{"subscriber_domain_col",  STR_PARAM, &subscriber_domain_col.s },
-	{"subscriber_carrier_col", STR_PARAM, &cr_preferred_carrier_col.s },
-	{"carrier_id_col",         STR_PARAM, &carrier_id_col.s },
-	{"carrier_name_col",       STR_PARAM, &carrier_name_col.s },
-	{"config_source",          STR_PARAM, &config_source },
-	{"default_tree",           STR_PARAM, &default_tree },
-	{"config_file",            STR_PARAM, &config_file },
-	{"use_domain",             INT_PARAM, &use_domain },
-	{"fallback_default",       INT_PARAM, &fallback_default },
+	{"subscriber_user_col",        STR_PARAM, &username_col.s },
+	{"subscriber_domain_col",      STR_PARAM, &subscriber_domain_col.s },
+	{"subscriber_carrier_col",     STR_PARAM, &cr_preferred_carrier_col.s },
+	{"carrier_id_col",             STR_PARAM, &carrier_id_col.s },
+	{"carrier_name_col",           STR_PARAM, &carrier_name_col.s },
+	{"config_source",              STR_PARAM, &config_source },
+	{"default_tree",               STR_PARAM, &default_tree },
+	{"config_file",                STR_PARAM, &config_file },
+	{"use_domain",                 INT_PARAM, &use_domain },
+	{"fallback_default",           INT_PARAM, &fallback_default },
 	{0,0,0}
 };
 
@@ -259,8 +265,10 @@ static int mod_init(void) {
 	subscriber_table.len = strlen(subscriber_table.s);
 	id_col.len = strlen(id_col.s);
 	carrier_col.len = strlen(carrier_col.s);
-	scan_prefix_col.len = strlen(scan_prefix_col.s);
 	domain_col.len = strlen(domain_col.s);
+	scan_prefix_col.len = strlen(scan_prefix_col.s);
+	flags_col.len = strlen(flags_col.s);
+	mask_col.len = strlen(mask_col.s);
 	prob_col.len = strlen(prob_col.s);
 	rewrite_host_col.len = strlen(rewrite_host_col.s);
 	strip_col.len = strlen(strip_col.s);
@@ -274,8 +282,8 @@ static int mod_init(void) {
 	carrier_name_col.len = strlen(carrier_name_col.s);
 	failure_id_col.len = strlen(failure_id_col.s);
 	failure_carrier_col.len = strlen(failure_carrier_col.s);
-	failure_scan_prefix_col.len = strlen(failure_scan_prefix_col.s);
 	failure_domain_col.len = strlen(failure_domain_col.s);
+	failure_scan_prefix_col.len = strlen(failure_scan_prefix_col.s);
 	failure_host_name_col.len = strlen(failure_host_name_col.s);
 	failure_reply_code_col.len = strlen(failure_reply_code_col.s);
 	failure_flags_col.len = strlen(failure_flags_col.s);

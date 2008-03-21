@@ -43,23 +43,25 @@
 
 #define DICE_MAX 1000
 
-#define COLUMN_NUM 10
+#define COLUMN_NUM 12
 #define COL_ID             0
 #define COL_CARRIER        1
-#define COL_SCAN_PREFIX    2
-#define COL_DOMAIN         3
-#define COL_PROB           4
-#define COL_REWRITE_HOST   5
-#define COL_STRIP          6
-#define COL_REWRITE_PREFIX 7
-#define COL_REWRITE_SUFFIX 8
-#define COL_COMMENT        9
+#define COL_DOMAIN         2
+#define COL_SCAN_PREFIX    3
+#define COL_FLAGS          4
+#define COL_MASK           5
+#define COL_PROB           6
+#define COL_REWRITE_HOST   7
+#define COL_STRIP          8
+#define COL_REWRITE_PREFIX 9
+#define COL_REWRITE_SUFFIX 10
+#define COL_COMMENT        11
 
 #define FAILURE_COLUMN_NUM 10
 #define FCOL_ID             0
 #define FCOL_CARRIER        1
-#define FCOL_SCAN_PREFIX    2
-#define FCOL_DOMAIN         3
+#define FCOL_DOMAIN         2
+#define FCOL_SCAN_PREFIX    3
 #define FCOL_HOST_NAME      4
 #define FCOL_REPLY_CODE     5
 #define FCOL_FLAGS          6
@@ -79,7 +81,7 @@
 #define SP_ROUTE_MODE_DB 1
 #define SP_ROUTE_MODE_FILE 2
 
-#define ROUTE_TABLE_VER 1
+#define ROUTE_TABLE_VER 2
 #define CARRIER_TABLE_VER 1
 #define FAILURE_TABLE_VER 1
 

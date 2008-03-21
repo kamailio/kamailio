@@ -200,6 +200,8 @@ int find_tree(str tree){
  * @param carrier_id the carrier id of the route to be added
  * @param domain the routing domain of the new route
  * @param scan_prefix the number prefix
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
  * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
@@ -218,7 +220,7 @@ int find_tree(str tree){
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct rewrite_data * rd, int carrier_id,
-		const str * domain, const str * scan_prefix, int max_targets,
+		const str * domain, const str * scan_prefix, flag_t flags, flag_t mask, int max_targets,
 		double prob, const str * rewrite_hostpart, int strip,
 		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
 		int status, int hash_index, int backup, int * backed_up, const str * comment) {
@@ -236,7 +238,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
 		return -1;
 	}
 	LM_INFO("found route, now adding\n");
-	return add_route_to_tree(rt->tree, scan_prefix, scan_prefix, max_targets, prob, rewrite_hostpart,
+	return add_route_to_tree(rt->tree, scan_prefix, flags, mask, scan_prefix, max_targets, prob, rewrite_hostpart,
 	                         strip, rewrite_local_prefix, rewrite_local_suffix, status,
 	                         hash_index, backup, backed_up, comment);
 }
@@ -262,7 +264,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
  */
 int add_failure_route(struct rewrite_data * rd, int carrier_id, const str * domain,
 		const str * scan_prefix, const str * host, const str * reply_code,
-		int flags, int mask, const str * next_domain, const str * comment) {
+		flag_t flags, flag_t mask, const str * next_domain, const str * comment) {
 	int next_domain_id;
 	struct carrier_tree * ct = NULL;
 	struct route_tree * rt = NULL;

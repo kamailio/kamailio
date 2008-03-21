@@ -35,6 +35,7 @@
 
 #include "../../str.h"
 #include "../../locking.h"
+#include "../../flags.h"
 
 struct route_rule_p_list;
 
@@ -70,8 +71,8 @@ struct failure_route_rule {
 	str prefix; /*!< The prefix for which the route ist valid */
 	str reply_code;  /*!< The reply code for which the route ist valid */
 	int next_domain;  /*!< The domain id where to continue routing */
-	int flags;  /*!< The flags for which the route ist valid */
-	int mask;  /*!< The mask for the flags field */
+	flag_t flags;  /*!< The flags for which the route ist valid */
+	flag_t mask;  /*!< The mask for the flags field */
 	struct failure_route_rule * next; /*!< A pointer to the next route rule */
 };
 
@@ -79,6 +80,20 @@ struct route_rule_p_list {
 	struct route_rule * rr;
 	int hash_index;
 	struct route_rule_p_list * next;
+};
+
+/**
+ * @struct route_flags Use route rules only if message flags match stored mask/flags.
+ */
+struct route_flags {
+	flag_t flags;  /*!< The flags for which the route ist valid */
+	flag_t mask;  /*!< The mask for the flags field */
+	struct route_rule * rule_list; /*!< Each node MAY contain a rule list */
+	struct route_rule ** rules; /*!< The array points to the rules in order of hash indices */
+	int rule_num; /*!< The number of rules */
+	int dice_max; /*!< The DICE_MAX value for the rule set, calculated by rule_fixup */
+	int max_targets; /*!< upper edge of hashing via prime number algorithm, must be eqal to @var rule_num */
+	struct route_flags * next; /*!< A pointer to the next route flags struct */
 };
 
 /**
@@ -90,11 +105,7 @@ struct route_rule_p_list {
  */
 struct route_tree_item {
 	struct route_tree_item * nodes[10]; /*!< The Array points to child nodes if present */
-	struct route_rule * rule_list; /*!< Each node MAY contain a rule list */
-	struct route_rule ** rules; /*!< The array points to the rules in order of hash indices */
-	int rule_num; /*!< The number of rules */
-	int dice_max; /*!< The DICE_MAX value for the rule set, calculated by rule_fixup */
-	int max_targets; /*!< upper edge of hashing via prime number algorithm, must be eqal to @var rule_num */
+	struct route_flags *flag_list;
 };
 
 /**
