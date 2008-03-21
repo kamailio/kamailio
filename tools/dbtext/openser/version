@@ -4,7 +4,7 @@ active_watchers:9
 address:3
 aliases:1004
 carrierfailureroute:1
-carrierroute:1
+carrierroute:2
 cpl:1
 dbaliases:1
 dialog:2

@@ -1,9 +1,11 @@
-INSERT INTO version (table_name, table_version) values ('carrierroute','1');
+INSERT INTO version (table_name, table_version) values ('carrierroute','2');
 CREATE TABLE carrierroute (
     id SERIAL PRIMARY KEY NOT NULL,
     carrier INTEGER NOT NULL DEFAULT 0,
     domain VARCHAR(64) NOT NULL DEFAULT '',
     scan_prefix VARCHAR(64) NOT NULL DEFAULT '',
+    flags INTEGER NOT NULL DEFAULT 0,
+    mask INTEGER NOT NULL DEFAULT 0,
     prob REAL NOT NULL DEFAULT 0,
     strip INTEGER NOT NULL DEFAULT 0,
     rewrite_host VARCHAR(128) NOT NULL DEFAULT '',
