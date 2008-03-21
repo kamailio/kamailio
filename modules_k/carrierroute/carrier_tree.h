@@ -94,6 +94,8 @@ struct carrier_tree * create_carrier_tree(const str * tree, int carrier_id, int 
  * @param carrier_id the carrier id of the route to be added
  * @param domain the routing domain of the new route
  * @param scan_prefix the number prefix
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
  * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param strip the number of digits to be stripped off userpart before prepending prefix
@@ -112,7 +114,7 @@ struct carrier_tree * create_carrier_tree(const str * tree, int carrier_id, int 
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct rewrite_data * rd, int carrier_id,
-              const str * domain, const str * scan_prefix, int max_targets,
+              const str * domain, const str * scan_prefix, flag_t flags, flag_t mask, int max_targets,
               double prob, const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
               const str * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
               const str * comment);
@@ -138,7 +140,7 @@ int add_route(struct rewrite_data * rd, int carrier_id,
  */
 int add_failure_route(struct rewrite_data * rd, int carrier_id, const str * domain,
 											const str * scan_prefix, const str * host, const str * reply_code,
-											int flags, int mask, const str * next_domain, const str * comment);
+											flag_t flags, flag_t mask, const str * next_domain, const str * comment);
 
 /**
  * Tries to add a tree to the tree map. If the given tree doesn't

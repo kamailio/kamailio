@@ -33,9 +33,9 @@
 #include "route.h"
 
 /**
- * Adds a route rule to rt
+ * Adds a route rule to rf
  *
- * @param rt the current route tree node
+ * @param rf the current route_flags struct
  * @param full_prefix the whole scan prefix
  * @param max_targets the number of targets
  * @param prob the weight of the rule
@@ -56,7 +56,7 @@
  *
  * @see add_route_to_tree()
  */
-int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
+int add_route_rule(struct route_flags *rf, const str * prefix,
 		int max_targets, double prob, const str * rewrite_hostpart, int strip,
 		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
 		int status, int hash_index, int backup, int * backed_up,
@@ -80,7 +80,7 @@ int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
  */
 int add_failure_route_rule(struct failure_route_tree_item * failure_tree,
 		const str * prefix, const str * host, const str * reply_code,
-		int flags, int mask, const int next_domain, const str * comment);
+		flag_t flags, flag_t mask, const int next_domain, const str * comment);
 
 /**
  * Destroys route rule rr by freeing all its memory.
@@ -106,14 +106,14 @@ void destroy_failure_route_rule(struct failure_route_rule * rr);
  */
 int rule_fixup(struct rewrite_data * rd);
 
-struct route_rule * find_rule_by_hash(struct route_tree_item * rt, int hash);
+struct route_rule * find_rule_by_hash(struct route_flags * rf, int hash);
 
-struct route_rule * find_rule_by_host(struct route_tree_item * rt, str * host);
+struct route_rule * find_rule_by_host(struct route_flags * rf, str * host);
 
 int add_backup_route(struct route_rule * rule, struct route_rule * backup);
 
 int remove_backed_up(struct route_rule * rule);
 
-struct route_rule * find_auto_backup(struct route_tree_item * rt, struct route_rule * rule);
+struct route_rule * find_auto_backup(struct route_flags * rf, struct route_rule * rule);
 
 #endif

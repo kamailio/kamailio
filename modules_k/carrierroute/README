@@ -14,7 +14,7 @@ Henning Westerholt
 
    Copyright © 2007 1&1 Internet AG
    Revision History
-   Revision $Revision: 3912 $ $Date: 2008-03-10 17:13:24 +0200
+   Revision $Revision: 3912 $ $Date: 2008-03-10 08:13:24 -0700
                               (Mon, 10 Mar 2008) $
      __________________________________________________________
 
@@ -36,35 +36,37 @@ Henning Westerholt
               1.3.4. carrier_column (string)
               1.3.5. scan_prefix_column (string)
               1.3.6. domain_column (string)
-              1.3.7. prob_column (string)
-              1.3.8. rewrite_host_column (string)
-              1.3.9. strip_column (string)
-              1.3.10. comment_column (string)
-              1.3.11. carrier_table (string)
-              1.3.12. rewrite_prefix_column (string)
-              1.3.13. rewrite_suffix_column (string)
-              1.3.14. carrier_id_col (string)
-              1.3.15. carrier_name_col (string)
-              1.3.16. subscriber_table (string)
-              1.3.17. subscriber_user_col (string)
-              1.3.18. subscriber_domain_col (string)
-              1.3.19. subscriber_carrier_col (string)
-              1.3.20. config_source (string)
-              1.3.21. config_file (string)
-              1.3.22. default_tree (string)
-              1.3.23. use_domain (int)
-              1.3.24. fallback_default (int)
-              1.3.25. db_failure_table (string)
-              1.3.26. failure_id_column (string)
-              1.3.27. failure_carrier_column (string)
-              1.3.28. failure_scan_prefix_column (string)
-              1.3.29. failure_domain_column (string)
-              1.3.30. failure_host_name_column (string)
-              1.3.31. failure_reply_code_column (string)
-              1.3.32. failure_flags_column (string)
-              1.3.33. failure_mask_column (string)
-              1.3.34. failure_next_domain_column (string)
-              1.3.35. failure_comment_column (string)
+              1.3.7. flags_column (string)
+              1.3.8. mask_column (string)
+              1.3.9. prob_column (string)
+              1.3.10. rewrite_host_column (string)
+              1.3.11. strip_column (string)
+              1.3.12. comment_column (string)
+              1.3.13. carrier_table (string)
+              1.3.14. rewrite_prefix_column (string)
+              1.3.15. rewrite_suffix_column (string)
+              1.3.16. carrier_id_col (string)
+              1.3.17. carrier_name_col (string)
+              1.3.18. subscriber_table (string)
+              1.3.19. subscriber_user_col (string)
+              1.3.20. subscriber_domain_col (string)
+              1.3.21. subscriber_carrier_col (string)
+              1.3.22. config_source (string)
+              1.3.23. config_file (string)
+              1.3.24. default_tree (string)
+              1.3.25. use_domain (int)
+              1.3.26. fallback_default (int)
+              1.3.27. db_failure_table (string)
+              1.3.28. failure_id_column (string)
+              1.3.29. failure_carrier_column (string)
+              1.3.30. failure_scan_prefix_column (string)
+              1.3.31. failure_domain_column (string)
+              1.3.32. failure_host_name_column (string)
+              1.3.33. failure_reply_code_column (string)
+              1.3.34. failure_flags_column (string)
+              1.3.35. failure_mask_column (string)
+              1.3.36. failure_next_domain_column (string)
+              1.3.37. failure_comment_column (string)
 
         1.4. Exported Functions
 
@@ -77,8 +79,7 @@ Henning Westerholt
                       dstavp)
 
               1.4.4. cr_next_domain(carrier, domain,
-                      prefix_matching, host, reply_code, flags,
-                      dstavp)
+                      prefix_matching, host, reply_code, dstavp)
 
         1.5. MI Commands
 
@@ -103,52 +104,54 @@ Henning Westerholt
    1.4. Set carrier_column parameter
    1.5. Set scan_prefix_column parameter
    1.6. Set domain_column parameter
-   1.7. Set prob_column parameter
-   1.8. Set rewrite_host_column parameter
-   1.9. Set strip_column parameter
-   1.10. Set comment_column parameter
-   1.11. Set carrier_table parameter
-   1.12. Set rewrite_prefix_column parameter
-   1.13. Set rewrite_suffix_column parameter
-   1.14. Set id_col parameter
-   1.15. Set carrier_name_col parameter
-   1.16. Set subscriber_table parameter
-   1.17. Set subscriber_user_col parameter
-   1.18. Set subscriber_domain_col parameter
-   1.19. Set subscriber_carrier_col parameter
-   1.20. Set config_source parameter
-   1.21. Set config_file parameter
-   1.22. Set default_tree parameter
-   1.23. Set use_domain parameter
-   1.24. Set fallback_default parameter
-   1.25. Set db_failuretable parameter
-   1.26. Set failure_id_column parameter
-   1.27. Set failure_carrier_column parameter
-   1.28. Set failure_scan_prefix_column parameter
-   1.29. Set failure_domain_column parameter
-   1.30. Set failure_host_name_column parameter
-   1.31. Set failure_reply_code_column parameter
-   1.32. Set failure_flags_column parameter
-   1.33. Set failure_mask_column parameter
-   1.34. Set failure_next_domain_column parameter
-   1.35. Set failure_comment_column parameter
-   1.36. cr_replace_host usage
-   1.37. cr_deactivate_host usage
-   1.38. cr_activate_host usage
-   1.39. cr_add_host usage
-   1.40. cr_delete_host usage
-   1.41. Configuration example - Routing to default tree
-   1.42. Configuration example - Routing to user tree
-   1.43. Configuration example - module configuration
-   1.44. Example database content - carrierroute table
-   1.45. Example database content - simple carrierfailureroute
+   1.7. Set flags_column parameter
+   1.8. Set mask_column parameter
+   1.9. Set prob_column parameter
+   1.10. Set rewrite_host_column parameter
+   1.11. Set strip_column parameter
+   1.12. Set comment_column parameter
+   1.13. Set carrier_table parameter
+   1.14. Set rewrite_prefix_column parameter
+   1.15. Set rewrite_suffix_column parameter
+   1.16. Set id_col parameter
+   1.17. Set carrier_name_col parameter
+   1.18. Set subscriber_table parameter
+   1.19. Set subscriber_user_col parameter
+   1.20. Set subscriber_domain_col parameter
+   1.21. Set subscriber_carrier_col parameter
+   1.22. Set config_source parameter
+   1.23. Set config_file parameter
+   1.24. Set default_tree parameter
+   1.25. Set use_domain parameter
+   1.26. Set fallback_default parameter
+   1.27. Set db_failuretable parameter
+   1.28. Set failure_id_column parameter
+   1.29. Set failure_carrier_column parameter
+   1.30. Set failure_scan_prefix_column parameter
+   1.31. Set failure_domain_column parameter
+   1.32. Set failure_host_name_column parameter
+   1.33. Set failure_reply_code_column parameter
+   1.34. Set failure_flags_column parameter
+   1.35. Set failure_mask_column parameter
+   1.36. Set failure_next_domain_column parameter
+   1.37. Set failure_comment_column parameter
+   1.38. cr_replace_host usage
+   1.39. cr_deactivate_host usage
+   1.40. cr_activate_host usage
+   1.41. cr_add_host usage
+   1.42. cr_delete_host usage
+   1.43. Configuration example - Routing to default tree
+   1.44. Configuration example - Routing to user tree
+   1.45. Configuration example - module configuration
+   1.46. Example database content - carrierroute table
+   1.47. Example database content - simple carrierfailureroute
           table
 
-   1.46. Example database content - more complex
+   1.48. Example database content - more complex
           carrierfailureroute table
 
-   1.47. Example database content - route_tree table
-   1.48. Necessary extensions for the user table
+   1.49. Example database content - route_tree table
+   1.50. Necessary extensions for the user table
 
 Chapter 1. Admin Guide
 
@@ -302,7 +305,29 @@ modparam("carrierroute", "scan_prefix_column", "scan_prefix")
 modparam("carrierroute", "domain_column", "domain")
 ...
 
-1.3.7. prob_column (string)
+1.3.7. flags_column (string)
+
+   Name of the column containing the flags.
+
+   Default value is "flags".
+
+   Example 1.7. Set flags_column parameter
+...
+modparam("carrierroute", "flags_column", "flags")
+...
+
+1.3.8. mask_column (string)
+
+   Name of the column containing the flags mask.
+
+   Default value is "mask".
+
+   Example 1.8. Set mask_column parameter
+...
+modparam("carrierroute", "mask_column", "mask")
+...
+
+1.3.9. prob_column (string)
 
    Name of column containing probability. The probability value is
    used to distribute the traffic between several gateways. Let's
@@ -320,12 +345,12 @@ modparam("carrierroute", "domain_column", "domain")
 
    Default value is "prob".
 
-   Example 1.7. Set prob_column parameter
+   Example 1.9. Set prob_column parameter
 ...
 modparam("carrierroute", "prob_column", "prob")
 ...
 
-1.3.8. rewrite_host_column (string)
+1.3.10. rewrite_host_column (string)
 
    Name of column containing rewrite host value. An empty field
    represents a blacklist entry, anything else is put as domain
@@ -333,12 +358,12 @@ modparam("carrierroute", "prob_column", "prob")
 
    Default value is "rewrite_host".
 
-   Example 1.8. Set rewrite_host_column parameter
+   Example 1.10. Set rewrite_host_column parameter
 ...
 modparam("carrierroute", "rewrite_host_column", "rewrite_host")
 ...
 
-1.3.9. strip_column (string)
+1.3.11. strip_column (string)
 
    Name of the column containing the number of digits to be
    stripped of the userpart of an URI before prepending
@@ -346,12 +371,12 @@ modparam("carrierroute", "rewrite_host_column", "rewrite_host")
 
    Default value is "strip".
 
-   Example 1.9. Set strip_column parameter
+   Example 1.11. Set strip_column parameter
 ...
 modparam("carrierroute", "strip_column", "strip")
 ...
 
-1.3.10. comment_column (string)
+1.3.12. comment_column (string)
 
    Name of the column containing an optional comment (useful in
    large routing tables) The comment is also displayed by the fifo
@@ -359,169 +384,169 @@ modparam("carrierroute", "strip_column", "strip")
 
    Default value is "comment".
 
-   Example 1.10. Set comment_column parameter
+   Example 1.12. Set comment_column parameter
 ...
 modparam("carrierroute", "comment_column", "comment")
 ...
 
-1.3.11. carrier_table (string)
+1.3.13. carrier_table (string)
 
    The name of the table containing the existing carriers,
    consisting of the ids and corresponding names.
 
    Default value is "route_tree".
 
-   Example 1.11. Set carrier_table parameter
+   Example 1.13. Set carrier_table parameter
 ...
 modparam("carrierroute", "carrier_table", "route_tree")
 ...
 
-1.3.12. rewrite_prefix_column (string)
+1.3.14. rewrite_prefix_column (string)
 
    Name of column containing rewrite prefixes. Here you can define
    a rewrite prefix for the localpart of the SIP URI.
 
    Default value is "rewrite_prefix".
 
-   Example 1.12. Set rewrite_prefix_column parameter
+   Example 1.14. Set rewrite_prefix_column parameter
 ...
 modparam("carrierroute", "rewrite_prefix_column", "rewrite_prefix")
 ...
 
-1.3.13. rewrite_suffix_column (string)
+1.3.15. rewrite_suffix_column (string)
 
    Name of column containing rewrite suffixes. Here you can define
    a rewrite suffix for the localpart of the SIP URI.
 
    Default value is "rewrite_suffix".
 
-   Example 1.13. Set rewrite_suffix_column parameter
+   Example 1.15. Set rewrite_suffix_column parameter
                             ...
                             modparam("carrierroute", "rewrite_suffix_col
 umn", "rewrite_suffix")
                             ...
 
-1.3.14. carrier_id_col (string)
+1.3.16. carrier_id_col (string)
 
    The name of the column in the carrier table containing the
    carrier id.
 
    Default value is "id".
 
-   Example 1.14. Set id_col parameter
+   Example 1.16. Set id_col parameter
 ...
 modparam("carrierroute", "carrier_id_col", "id")
 ...
 
-1.3.15. carrier_name_col (string)
+1.3.17. carrier_name_col (string)
 
    The name of the column in the carrier table containing the
    carrier name.
 
    Default value is "carrier".
 
-   Example 1.15. Set carrier_name_col parameter
+   Example 1.17. Set carrier_name_col parameter
 ...
 modparam("carrierroute", "carrier_name_col", "carrier")
 ...
 
-1.3.16. subscriber_table (string)
+1.3.18. subscriber_table (string)
 
    The name of the table containing the subscribers
 
    Default value is "subscriber".
 
-   Example 1.16. Set subscriber_table parameter
+   Example 1.18. Set subscriber_table parameter
 ...
 modparam("carrierroute", "subscriber_table", "subscriber")
 ...
 
-1.3.17. subscriber_user_col (string)
+1.3.19. subscriber_user_col (string)
 
    The name of the column in the subscriber table containing the
    usernames.
 
    Default value is "username".
 
-   Example 1.17. Set subscriber_user_col parameter
+   Example 1.19. Set subscriber_user_col parameter
 ...
 modparam("carrierroute", "subscriber_user_col", "username")
 ...
 
-1.3.18. subscriber_domain_col (string)
+1.3.20. subscriber_domain_col (string)
 
    The name of the column in the subscriber table containing the
    domain of the subscriber.
 
    Default value is "domain".
 
-   Example 1.18. Set subscriber_domain_col parameter
+   Example 1.20. Set subscriber_domain_col parameter
 ...
 modparam("carrierroute", "subscriber_domain_col", "domain")
 ...
 
-1.3.19. subscriber_carrier_col (string)
+1.3.21. subscriber_carrier_col (string)
 
    The name of the column in the subscriber table containing the
    carrier id of the subscriber.
 
    Default value is "cr_preferred_carrier".
 
-   Example 1.19. Set subscriber_carrier_col parameter
+   Example 1.21. Set subscriber_carrier_col parameter
 ...
 modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier
 ")
 ...
 
-1.3.20. config_source (string)
+1.3.22. config_source (string)
 
    Specifies whether the module loads its config data from a file
    or from a database. Possible values are file or db.
 
    Default value is "file".
 
-   Example 1.20. Set config_source parameter
+   Example 1.22. Set config_source parameter
 ...
 modparam("carrierroute", "config_source", "file")
 ...
 
-1.3.21. config_file (string)
+1.3.23. config_file (string)
 
    Specifies the path to the config file.
 
    Default value is "/etc/openser/carrierroute.conf".
 
-   Example 1.21. Set config_file parameter
+   Example 1.23. Set config_file parameter
 ...
 modparam("carrierroute", "config_file", "/etc/openser/carrierroute.conf"
 )
 ...
 
-1.3.22. default_tree (string)
+1.3.24. default_tree (string)
 
    The name of the carrier tree used per default (if the current
    subscriber has no preferred tree)
 
    Default value is "default".
 
-   Example 1.22. Set default_tree parameter
+   Example 1.24. Set default_tree parameter
 ...
 modparam("carrierroute", "default_tree", "default")
 ...
 
-1.3.23. use_domain (int)
+1.3.25. use_domain (int)
 
    When using tree lookup per user, this parameter specifies
    whether to use the domain part for user matching or not.
 
    Default value is "0".
 
-   Example 1.23. Set use_domain parameter
+   Example 1.25. Set use_domain parameter
 ...
 modparam("carrierroute", "use_domain", 0)
 ...
 
-1.3.24. fallback_default (int)
+1.3.26. fallback_default (int)
 
    This parameter defines the behaviour when using user-based tree
    lookup. If the user has a non-existing tree set and
@@ -530,45 +555,45 @@ modparam("carrierroute", "use_domain", 0)
 
    Default value is "1".
 
-   Example 1.24. Set fallback_default parameter
+   Example 1.26. Set fallback_default parameter
 ...
 modparam("carrierroute", "fallback_default", 1)
 ...
 
-1.3.25. db_failure_table (string)
+1.3.27. db_failure_table (string)
 
    Name of the table where the failure routing data is stored.
 
    Default value is "carrierfailureroute".
 
-   Example 1.25. Set db_failuretable parameter
+   Example 1.27. Set db_failuretable parameter
 ...
 modparam("carrierroute", "db_failuretable", "carrierfailureroute")
 ...
 
-1.3.26. failure_id_column (string)
+1.3.28. failure_id_column (string)
 
    Name of the column containing the id identifier.
 
    Default value is "id".
 
-   Example 1.26. Set failure_id_column parameter
+   Example 1.28. Set failure_id_column parameter
 ...
 modparam("carrierroute", "failure_id_column", "id")
 ...
 
-1.3.27. failure_carrier_column (string)
+1.3.29. failure_carrier_column (string)
 
    Name of the column containing the carrier id.
 
    Default value is "carrier".
 
-   Example 1.27. Set failure_carrier_column parameter
+   Example 1.29. Set failure_carrier_column parameter
 ...
 modparam("carrierroute", "failure_carrier_column", "carrier")
 ...
 
-1.3.28. failure_scan_prefix_column (string)
+1.3.30. failure_scan_prefix_column (string)
 
    Name of column containing the scan prefixes. Scan prexies
    define the matching portion of a phone number, e.g. we have the
@@ -579,12 +604,12 @@ modparam("carrierroute", "failure_carrier_column", "carrier")
 
    Default value is "scan_prefix".
 
-   Example 1.28. Set failure_scan_prefix_column parameter
+   Example 1.30. Set failure_scan_prefix_column parameter
 ...
 modparam("carrierroute", "failure_scan_prefix_column", "scan_prefix")
 ...
 
-1.3.29. failure_domain_column (string)
+1.3.31. failure_domain_column (string)
 
    Name of column containing the rule domain. You can define
    several routing domains to have different routing rules. Maybe
@@ -593,74 +618,74 @@ modparam("carrierroute", "failure_scan_prefix_column", "scan_prefix")
 
    Default value is "domain".
 
-   Example 1.29. Set failure_domain_column parameter
+   Example 1.31. Set failure_domain_column parameter
 ...
 modparam("carrierroute", "failure_domain_column", "domain")
 ...
 
-1.3.30. failure_host_name_column (string)
+1.3.32. failure_host_name_column (string)
 
    Name of the column containing the host name of the last routing
    destination.
 
    Default value is "host_name".
 
-   Example 1.30. Set failure_host_name_column parameter
+   Example 1.32. Set failure_host_name_column parameter
 ...
 modparam("carrierroute", "failure_host_name_column", "host_name")
 ...
 
-1.3.31. failure_reply_code_column (string)
+1.3.33. failure_reply_code_column (string)
 
    Name of the column containing the reply code.
 
    Default value is "reply_code".
 
-   Example 1.31. Set failure_reply_code_column parameter
+   Example 1.33. Set failure_reply_code_column parameter
 ...
 modparam("carrierroute", "failure_reply_code_column", "reply_code")
 ...
 
-1.3.32. failure_flags_column (string)
+1.3.34. failure_flags_column (string)
 
    Name of the column containing the flags.
 
    Default value is "flags".
 
-   Example 1.32. Set failure_flags_column parameter
+   Example 1.34. Set failure_flags_column parameter
 ...
 modparam("carrierroute", "failure_flags_column", "flags")
 ...
 
-1.3.33. failure_mask_column (string)
+1.3.35. failure_mask_column (string)
 
    Name of the column containing the flags mask.
 
    Default value is "mask".
 
-   Example 1.33. Set failure_mask_column parameter
+   Example 1.35. Set failure_mask_column parameter
 ...
 modparam("carrierroute", "failure_mask_column", "mask")
 ...
 
-1.3.34. failure_next_domain_column (string)
+1.3.36. failure_next_domain_column (string)
 
    Name of the column containing the next routing domain.
 
    Default value is "next_domain".
 
-   Example 1.34. Set failure_next_domain_column parameter
+   Example 1.36. Set failure_next_domain_column parameter
 ...
 modparam("carrierroute", "failure_next_domain_column", "next_domain")
 ...
 
-1.3.35. failure_comment_column (string)
+1.3.37. failure_comment_column (string)
 
    Name of the column containing an optional comment.
 
    Default value is "comment".
 
-   Example 1.35. Set failure_comment_column parameter
+   Example 1.37. Set failure_comment_column parameter
 ...
 modparam("carrierroute", "failure_comment_column", "comment")
 ...
@@ -780,14 +805,14 @@ rewrite_user, hash_source, dstavp)
        This parameter is optional.
 
 1.4.4.  cr_next_domain(carrier, domain, prefix_matching, host,
-reply_code, flags, dstavp)
+reply_code, dstavp)
 
    This function searches for the longest match for the user given
    in prefix_matching at the given domain in the given carrier
    failure tree. It tries to find a next domain matching the given
-   host, reply_code and flags. The matching is done in this order:
-   host, reply_code and then flags. The more wildcards in
-   reply_code and the more bits used in flags, the lower the
+   host, reply_code and the message flags. The matching is done in
+   this order: host, reply_code and then flags. The more wildcards
+   in reply_code and the more bits used in flags, the lower the
    priority. Returns -1 if there is no data found or an empty
    next_domain on the longest match is found. Otherwise the next
    domain is stored in the given AVP. This function is only usable
@@ -807,9 +832,6 @@ reply_code, flags, dstavp)
        string any pseudo-variable could be used as input.
      * reply_code - The reply code to be used for failure route
        rule matching. Additional to a string any pseudo-variable
-       could be used as input.
-     * flags - The flags to be used for failure route rule
-       matching. Additional to an integer the pseudo-variable $mf
        could be used as input.
      * dstavp - Name of the AVP where to store the next routing
        domain.
@@ -849,7 +871,7 @@ reply_code, flags, dstavp)
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.36. cr_replace_host usage
+   Example 1.38. cr_replace_host usage
 ...
 openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
@@ -871,7 +893,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.37. cr_deactivate_host usage
+   Example 1.39. cr_deactivate_host usage
 ...
 openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -887,7 +909,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.38. cr_activate_host usage
+   Example 1.40. cr_activate_host usage
 ...
 openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -907,7 +929,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.39. cr_add_host usage
+   Example 1.41. cr_add_host usage
 ...
 openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -928,14 +950,14 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.40. cr_delete_host usage
+   Example 1.42. cr_delete_host usage
 ...
 openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
 1.6. Examples
 
-   Example 1.41. Configuration example - Routing to default tree
+   Example 1.43. Configuration example - Routing to default tree
 ...
 route {
         # route calls based on hash over callid
@@ -969,7 +991,7 @@ failure_route[2] {
 }
 
 
-   Example 1.42. Configuration example - Routing to user tree
+   Example 1.44. Configuration example - Routing to user tree
 ...
 route[1] {
         cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
@@ -1009,7 +1031,7 @@ failure_route[1] {
 }
 ...
 
-   Example 1.43. Configuration example - module configuration
+   Example 1.45. Configuration example - module configuration
 
    The following config file specifies within the default carrier
    two domains, each with an prefix that contains two hosts. It is
@@ -1082,31 +1104,35 @@ domain register {
    SQL script. You can also find the complete database
    documentation on the project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
+   The flags and mask columns have the same function as in the
+   carrierfailureroute table. A zero value in the flags and mask
+   column means that any message flags will match this rule.
 
    For a minimal configuration either use the config file given
    above, or insert some data into the tables of the module.
 
-   Example 1.44. Example database content - carrierroute table
+   Example 1.46. Example database content - carrierroute table
 ...
-+----+---------+--------+-------------+------+-------+---------------+
-| id | carrier | domain |scan_prefix  | prob | strip | rewrite_host  |
-+----+---------+--------+-------------+------+-------+---------------+
-| 1  |       1 |      0 | 49          |  0.5 | 0     | de-1.carrier1 |
-| 2  |       1 |      0 | 49          |  0.5 | 0     | de-2.carrier1 |
-| 3  |       1 |      0 |             |    1 | 0     | gw.carrier1-1 |
-| 5  |       1 |      1 | 49          |    1 | 0     | gw.carrier1-1 |
-| 6  |       1 |      2 |             |    1 | 0     | gw.carrier1-2 |
-| 7  |       1 |      3 |             |    1 | 0     | gw.carrier1-3 |
-| 8  |       2 |      0 | 49          |  0.5 | 0     | de-1.carrier2 |
-| 9  |       2 |      0 | 49          |  0.5 | 0     | de-2.carrier2 |
-| 10 |       2 |      0 |             |    1 | 0     | gw.carrier2   |
-| 11 |       2 |      1 | 49          |    1 | 0     | gw.carrier2   |
-| 12 |       3 |  start | 49          |    1 | 0     | de-gw.default |
-| 13 |       3 |  start |             |    1 | 0     | gw.default    |
-+----+---------+--------+-------------+------+-------+---------------+
++----+---------+--------+-------------+-------+------+---------------+
+| id | carrier | domain | scan_prefix | flags | prob | rewrite_host  |
++----+---------+--------+-------------+-------+------+---------------+
+| 1  |       1 |      0 | 49          |     0 |  0.5 | de-1.carrier1 |
+| 2  |       1 |      0 | 49          |     0 |  0.5 | de-2.carrier1 |
+| 3  |       1 |      0 | 49          |    16 |    1 | de-3.carrier1 |
+| 4  |       1 |      0 |             |     0 |    1 | gw.carrier1-1 |
+| 5  |       1 |      1 | 49          |     0 |    1 | gw.carrier1-1 |
+| 6  |       1 |      2 |             |     0 |    1 | gw.carrier1-2 |
+| 7  |       1 |      3 |             |     0 |    1 | gw.carrier1-3 |
+| 8  |       2 |      0 | 49          |     0 |  0.5 | de-1.carrier2 |
+| 9  |       2 |      0 | 49          |     0 |  0.5 | de-2.carrier2 |
+| 10 |       2 |      0 |             |     0 |    1 | gw.carrier2   |
+| 11 |       2 |      1 | 49          |     0 |    1 | gw.carrier2   |
+| 12 |       3 |  start | 49          |     0 |    1 | de-gw.default |
+| 13 |       3 |  start |             |     0 |    1 | gw.default    |
++----+---------+--------+-------------+-------+------+---------------+
 ...
 
-   This table contains two routes to two gateways for the "49"
+   This table contains three routes to two gateways for the "49"
    prefix, and a default route for other prefixes over carrier 2
    and carrier 1. The gateways for the default carrier will be
    used for functions that don't support the user specific carrier
@@ -1119,7 +1145,12 @@ domain register {
    section. The usage of strings for the domains is also possible,
    for example at carrier 3.
 
-   Example 1.45. Example database content - simple
+   This table provides also a "carrier1" routing rule for the "49"
+   prefix, that is only choosen if some message flags are set. If
+   this flags are not set, the other two rules are used. The
+   "strip", "mask" and "comment" colums are omitted for brevity.
+
+   Example 1.47. Example database content - simple
    carrierfailureroute table
 ...
 +----+---------+--------+---------------+------------+-------------+
@@ -1141,7 +1172,7 @@ domain register {
    corresponding entry in the carrierroute table, otherwise the
    module will not load the routing data.
 
-   Example 1.46. Example database content - more complex
+   Example 1.48. Example database content - more complex
    carrierfailureroute table
 ...
 +----+---------+-----------+------------+--------+-----+-------------+
@@ -1168,7 +1199,7 @@ domain register {
    holds domain entries for this routing rules. Not all table
    colums are show here for brevity.
 
-   Example 1.47. Example database content - route_tree table
+   Example 1.49. Example database content - route_tree table
 ...
 +----+----------+
 | id | carrier  |
@@ -1187,7 +1218,7 @@ domain register {
    that you specified as modul parameter) to choose the actual
    carrier for the users.
 
-   Example 1.48. Necessary extensions for the user table
+   Example 1.50. Necessary extensions for the user table
 
    Suggested changes:
 ...

@@ -206,7 +206,7 @@ static inline int reply_code_matcher(const str *rcw, const str *rc) {
  * @return 0 on success, -1 on failure
  */
 static int set_next_domain_on_rule(const struct failure_route_tree_item *failure_tree,
-		const str *host, const str *reply_code, const int flags,
+		const str *host, const str *reply_code, const flag_t flags,
 		const struct multiparam_t *dstavp) {
 	struct failure_route_rule * rr;
 	int_str avp_val;
@@ -254,7 +254,7 @@ static int set_next_domain_on_rule(const struct failure_route_tree_item *failure
  * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
 static int set_next_domain_recursor(const struct failure_route_tree_item *failure_tree,
-		const str *uri, const str *host, const str *reply_code, const int flags,
+		const str *uri, const str *host, const str *reply_code, const flag_t flags,
 		const struct multiparam_t *dstavp) {
 	int ret;
 	struct failure_route_tree_item *re_tree;
@@ -301,20 +301,20 @@ static int set_next_domain_recursor(const struct failure_route_tree_item *failur
  * If the rule with the desired hash index is deactivated,
  * the next working rule is used.
  *
- * @param rt the routing tree node to search for rule
+ * @param rf the route_flags node to search for rule
  * @param prob the hash index
  *
  * @return pointer to route rule on success, NULL on failure
  */
-static struct route_rule * get_rule_by_hash(const struct route_tree_item * rt,
+static struct route_rule * get_rule_by_hash(const struct route_flags * rf,
 		const int prob) {
 	struct route_rule * act_hash = NULL;
 
-	if (prob > rt->rule_num) {
+	if (prob > rf->rule_num) {
 		LM_WARN("too large desired hash, taking highest\n");
-		act_hash = rt->rules[rt->rule_num - 1];
+		act_hash = rf->rules[rf->rule_num - 1];
 	}
-	act_hash = rt->rules[prob - 1];
+	act_hash = rf->rules[prob - 1];
 
 	if (!act_hash->status) {
 		if (act_hash->backup && act_hash->backup->rr) {
@@ -407,6 +407,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
  * writes the uri dest using the rule list of route_tree
  *
  * @param route_tree the current routing tree node
+ * @param flags user defined flags
  * @param dest the returned new destination URI
  * @param msg the sip message
  * @param user the localpart of the uri to be rewritten
@@ -414,32 +415,47 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
  * @param alg the algorithm used for hashing
  * @param dstavp the name of the destination AVP where the used host name is stored
  *
- * @return 0 on success, -1 on failure
+ * @return 0 on success, -1 on failure, 1 on empty rule list
  */
-static int rewrite_on_rule(const struct route_tree_item * route_tree, str * dest,
+static int rewrite_on_rule(const struct route_tree_item * route_tree, flag_t flags, str * dest,
 		struct sip_msg * msg, const str * user, const enum hash_source hash_source,
 		const enum hash_algorithm alg, struct multiparam_t *dstavp) {
+	struct route_flags * rf;
 	struct route_rule * rr;
 	int prob;
 
 	assert(route_tree != NULL);
-	assert(route_tree->rule_list != NULL);
+	assert(route_tree->flag_list != NULL);
+
+	for (rf = route_tree->flag_list; rf != NULL; rf = rf->next) {
+		if ((flags&rf->mask) == rf->flags) break;
+	}
+
+	if (rf==NULL) {
+		LM_INFO("did not find a match for flags %d\n", flags);
+		return -1;
+	}
+
+	if (rf->rule_list == NULL) {
+		LM_INFO("empty rule list\n");
+		return 1;
+	}
 
 	switch (alg) {
 		case alg_prime:
-			if ((prob = prime_hash_func(msg, hash_source, route_tree->max_targets)) < 0) {
+			if ((prob = prime_hash_func(msg, hash_source, rf->max_targets)) < 0) {
 				return -1;
 			}
-			if ((rr = get_rule_by_hash(route_tree, prob)) == NULL) {
+			if ((rr = get_rule_by_hash(rf, prob)) == NULL) {
 				LM_CRIT("no route found\n");
 				return -1;
 			}
 			break;
 		case alg_crc32:
-			if(route_tree->dice_max == 0){
+			if(rf->dice_max == 0){
 				return -1;
 			}
-			if ((prob = hash_func(msg, hash_source, route_tree->dice_max)) < 0) {
+			if ((prob = hash_func(msg, hash_source, rf->dice_max)) < 0) {
 				return -1;
 			}
 			/* This auto-magically takes the last rule if anything is broken.
@@ -448,7 +464,7 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, str * dest
 			 * zero and the message could not be routed at all if we use
 			 * '<' here. Thus the '<=' is necessary.
 			 */
-			for (rr = route_tree->rule_list;
+			for (rr = rf->rule_list;
 			        rr->next != NULL && rr->dice_to <= prob;
 		        rr = rr->next) {}
 			if (!rr->status) {
@@ -477,6 +493,7 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, str * dest
  *
  * @param route_tree the current routing tree node
  * @param pm the user to be used for prefix matching
+ * @param flags user defined flags
  * @param dest the returned new destination URI
  * @param msg the sip message
  * @param user the localpart of the uri to be rewritten
@@ -487,7 +504,7 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, str * dest
  * @return 0 on success, -1 on failure, 1 on no more matching child node and no rule list
  */
 static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
-		const str * pm, str * dest, struct sip_msg * msg, const str * user,
+		const str * pm, flag_t flags, str * dest, struct sip_msg * msg, const str * user,
 		const enum hash_source hash_source, const enum hash_algorithm alg,
 		struct multiparam_t *dstavp) {
 	struct route_tree_item *re_tree;
@@ -500,25 +517,25 @@ static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
 		--re_pm.len;
 	}
 	if (re_pm.len == 0 || route_tree->nodes[*re_pm.s - '0'] == NULL) {
-		if (route_tree->rule_list == NULL) {
-			LM_INFO("URI or route tree nodes empty, empty rule list\n");
+		if (route_tree->flag_list == NULL) {
+			LM_INFO("URI or route tree nodes empty, empty flag list\n");
 			return 1;
 		} else {
-			return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg, dstavp);
+			return rewrite_on_rule(route_tree, flags, dest, msg, user, hash_source, alg, dstavp);
 		}
 	} else {
 		/* match, goto the next digit of the uri and try again */
 		re_tree = route_tree->nodes[*pm->s - '0'];
 		re_pm.s = re_pm.s + 1;
 		re_pm.len = re_pm.len - 1;
-		switch (rewrite_uri_recursor(re_tree, &re_pm, dest, msg, user, hash_source, alg, dstavp)) {
+		switch (rewrite_uri_recursor(re_tree, &re_pm, flags, dest, msg, user, hash_source, alg, dstavp)) {
 			case 0:
 				return 0;
 			case 1:
-				if (route_tree->rule_list != NULL) {
-					return rewrite_on_rule(route_tree, dest, msg, user, hash_source, alg, dstavp);
+				if (route_tree->flag_list != NULL) {
+					return rewrite_on_rule(route_tree, flags, dest, msg, user, hash_source, alg, dstavp);
 				} else {
-					LM_INFO("empty rule list for prefix [%.*s]%.*s\n", user->len - re_pm.len,
+					LM_INFO("empty flag list for prefix [%.*s]%.*s\n", user->len - re_pm.len,
 						user->s, re_pm.len, re_pm.s);
 					return 1;
 				}
@@ -552,6 +569,7 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 	int domain_id;
 	str rewrite_user;
 	str prefix_matching;
+	flag_t flags;
 	struct rewrite_data * rd;
 	struct carrier_tree * ct;
 	struct route_tree * rt;
@@ -577,6 +595,8 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		LM_ERR("cannot print the format\n");
 		return -1;
 	}
+
+	flags = _msg->flags;
 
 	do {
 		rd = get_data();
@@ -611,7 +631,7 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		goto unlock_and_out;
 	}
 
-	if (rewrite_uri_recursor(rt->tree, &prefix_matching, &dest, _msg, &rewrite_user, _hsrc, _halg, _dstavp) != 0) {
+	if (rewrite_uri_recursor(rt->tree, &prefix_matching, flags, &dest, _msg, &rewrite_user, _hsrc, _halg, _dstavp) != 0) {
 		LM_ERR("during rewrite_uri_recursor, uri %.*s, carrier %d, domain %d\n", prefix_matching.len,
 			prefix_matching.s, carrier_id, domain_id);
 		goto unlock_and_out;

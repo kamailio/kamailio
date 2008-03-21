@@ -36,13 +36,13 @@
 
 static int rule_fixup_recursor(struct route_tree_item * rt);
 
-static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr);
+static int fixup_rule_backup(struct route_flags * rf, struct route_rule * rr);
 
 /**
- * Adds a route rule to rt. prefix, rewrite_hostpart, rewrite_local_prefix,
+ * Adds a route rule to rf. prefix, rewrite_hostpart, rewrite_local_prefix,
  * rewrite_local_suffix, and comment must not contain NULL pointers.
  *
- * @param rt the current route tree node
+ * @param rf the current route_flags struct
  * @param prefix the whole scan prefix
  * @param max_targets the number of targets
  * @param prob the weight of the rule
@@ -62,7 +62,7 @@ static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr
  *
  * @see add_route_to_tree()
  */
-int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
+int add_route_rule(struct route_flags *rf, const str * prefix,
 		int max_targets, double prob, const str * rewrite_hostpart, int strip,
 		const str * rewrite_local_prefix, const str * rewrite_local_suffix,
 		int status, int hash_index, int backup, int * backed_up, 
@@ -72,9 +72,9 @@ int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
 	int * t_bu;
 
 	if (max_targets) {
-		route_tree->max_targets = max_targets;
+		rf->max_targets = max_targets;
 	} else {
-		route_tree->max_targets++;
+		rf->max_targets++;
 	}
 
 	if ((shm_rr = shm_malloc(sizeof(struct route_rule))) == NULL) {
@@ -137,7 +137,7 @@ int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
 	}
 
 	/* rules with a probability of zero are always at the beginning of the list */
-	tmp = route_tree->rule_list;
+	tmp = rf->rule_list;
 	while(tmp && tmp->prob == 0){
 		prev = tmp;
 		tmp = tmp->next;
@@ -151,8 +151,8 @@ int add_route_rule(struct route_tree_item * route_tree, const str * prefix,
 		shm_rr->next = prev->next;
 		prev->next = shm_rr;
 	} else {
-		shm_rr->next = route_tree->rule_list;
-		route_tree->rule_list = shm_rr;
+		shm_rr->next = rf->rule_list;
+		rf->rule_list = shm_rr;
 	}
 
 	return 0;
@@ -237,7 +237,7 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
  * @see add_failure_route_to_tree()
  */
 int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const str * prefix,
-		const str * host, const str * reply_code, int flags, int mask,
+		const str * host, const str * reply_code, flag_t flags, flag_t mask,
 		const int next_domain, const str * comment) {
 	struct failure_route_rule * shm_rr;
 	struct failure_route_rule * rr;
@@ -328,97 +328,104 @@ int rule_fixup(struct rewrite_data * rd) {
  */
 static int rule_fixup_recursor(struct route_tree_item * rt) {
 	struct route_rule * rr;
+	struct route_flags * rf;
 	int i;
 	int ret = 0;
-	int p_dice = 0;
-	if (rt->rule_list) {
-		rr = rt->rule_list;
-		rt->rule_num = 0;
-		while (rr) {
-			rt->rule_num++;
-			rt->dice_max += rr->prob * DICE_MAX;
-			rr = rr->next;
-		}
-		rr = rt->rule_list;
-		while (rr) {
-			rr->dice_to = (rr->prob * DICE_MAX) + p_dice;
-			p_dice = rr->dice_to;
-			rr = rr->next;
-		}
+	int p_dice;
 
-		if (rt->rule_num != rt->max_targets) {
-			LM_ERR("number of rules(%i) differs from max_targets(%i), maybe your config is wrong?\n", rt->rule_num, rt->max_targets);
-			return -1;
-		}
-		if(rt->rules) {
-			shm_free(rt->rules);
-            rt->rules = NULL;
-		}
-		if ((rt->rules = shm_malloc(sizeof(struct route_rule *) * rt->rule_num)) == NULL) {
-			LM_ERR("out of shared memory\n");
-			return -1;
-		}
-		memset(rt->rules, 0, sizeof(struct route_rule *) * rt->rule_num);
-		for (rr = rt->rule_list; rr; rr = rr->next) {
-			if (rr->hash_index) {
-				if (rr->hash_index > rt->rule_num) {
-					LM_ERR("too large hash index %i, max is %i\n", rr->hash_index, rt->rule_num);
-					shm_free(rt->rules);
-					return -1;
-				}
-				if (rt->rules[rr->hash_index - 1]) {
-					LM_ERR("duplicate hash index %i\n", rr->hash_index);
-					shm_free(rt->rules);
-					return -1;
-				}
-				rt->rules[rr->hash_index - 1] = rr;
-				LM_INFO("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
-			}
-		}
-
-		rr = rt->rule_list;
-		i=0;
-		while (rr && i < rt->rule_num) {
-			if (!rr->hash_index) {
-				if (rt->rules[i]) {
-					i++;
-				} else {
-					rt->rules[i] = rr;
-					rr->hash_index = i + 1;
-					LM_INFO("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
-					rr = rr->next;
-				}
-			} else {
+	for (rf=rt->flag_list; rf!=NULL; rf=rf->next) {
+		p_dice = 0;
+		if (rf->rule_list) {
+			rr = rf->rule_list;
+			rf->rule_num = 0;
+			while (rr) {
+				rf->rule_num++;
+				rf->dice_max += rr->prob * DICE_MAX;
 				rr = rr->next;
 			}
-		}
-		if (rr) {
-			LM_ERR("Could not populate rules: rr: %p\n", rr);
-			return -1;
-		}
-		for(i=0; i<rt->rule_num; i++){
-			ret += fixup_rule_backup(rt, rt->rules[i]);
+			rr = rf->rule_list;
+			while (rr) {
+				rr->dice_to = (rr->prob * DICE_MAX) + p_dice;
+				p_dice = rr->dice_to;
+				rr = rr->next;
+			}
+			
+			if (rf->rule_num != rf->max_targets) {
+				LM_ERR("number of rules(%i) differs from max_targets(%i), maybe your config is wrong?\n", rf->rule_num, rf->max_targets);
+				return -1;
+			}
+			if(rf->rules) {
+				shm_free(rf->rules);
+				rf->rules = NULL;
+			}
+			if ((rf->rules = shm_malloc(sizeof(struct route_rule *) * rf->rule_num)) == NULL) {
+				LM_ERR("out of shared memory\n");
+				return -1;
+			}
+			memset(rf->rules, 0, sizeof(struct route_rule *) * rf->rule_num);
+			for (rr = rf->rule_list; rr; rr = rr->next) {
+				if (rr->hash_index) {
+					if (rr->hash_index > rf->rule_num) {
+						LM_ERR("too large hash index %i, max is %i\n", rr->hash_index, rf->rule_num);
+						shm_free(rf->rules);
+						return -1;
+					}
+					if (rf->rules[rr->hash_index - 1]) {
+						LM_ERR("duplicate hash index %i\n", rr->hash_index);
+						shm_free(rf->rules);
+						return -1;
+					}
+					rf->rules[rr->hash_index - 1] = rr;
+					LM_INFO("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
+				}
+			}
+			
+			rr = rf->rule_list;
+			i=0;
+			while (rr && i < rf->rule_num) {
+				if (!rr->hash_index) {
+					if (rf->rules[i]) {
+						i++;
+					} else {
+						rf->rules[i] = rr;
+						rr->hash_index = i + 1;
+						LM_INFO("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
+						rr = rr->next;
+					}
+				} else {
+					rr = rr->next;
+				}
+			}
+			if (rr) {
+				LM_ERR("Could not populate rules: rr: %p\n", rr);
+				return -1;
+			}
+			for(i=0; i<rf->rule_num; i++){
+				ret += fixup_rule_backup(rf, rf->rules[i]);
+			}
 		}
 	}
+
 	for (i=0; i<10; i++) {
 		if (rt->nodes[i]) {
 			ret += rule_fixup_recursor(rt->nodes[i]);
 		}
 	}
+
 	return ret;
 }
 
-static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr){
+static int fixup_rule_backup(struct route_flags * rf, struct route_rule * rr){
 	struct route_rule_p_list * rl;
 	if(!rr->status && rr->backup){
-		if((rr->backup->rr = find_rule_by_hash(rt, rr->backup->hash_index)) == NULL){
+		if((rr->backup->rr = find_rule_by_hash(rf, rr->backup->hash_index)) == NULL){
 			LM_ERR("didn't find backup route\n");
 			return -1;
 		}
 	}
 	rl = rr->backed_up;
 	while(rl){
-		if((rl->rr = find_rule_by_hash(rt, rl->hash_index)) == NULL){
+		if((rl->rr = find_rule_by_hash(rf, rl->hash_index)) == NULL){
 			LM_ERR("didn't find backed up route\n");
 			return -1;
 		}
@@ -428,9 +435,9 @@ static int fixup_rule_backup(struct route_tree_item * rt, struct route_rule * rr
 }
 
 
-struct route_rule * find_rule_by_hash(struct route_tree_item * rt, int hash){
+struct route_rule * find_rule_by_hash(struct route_flags * rf, int hash){
 	struct route_rule * rr;
-	rr = rt->rule_list;
+	rr = rf->rule_list;
 	while(rr){
 		if(rr->hash_index == hash){
 			return rr;
@@ -441,9 +448,9 @@ struct route_rule * find_rule_by_hash(struct route_tree_item * rt, int hash){
 }
 
 
-struct route_rule * find_rule_by_host(struct route_tree_item * rt, str * host){
+struct route_rule * find_rule_by_host(struct route_flags * rf, str * host){
 	struct route_rule * rr;
-	rr = rt->rule_list;
+	rr = rf->rule_list;
 	while(rr){
 		if(str_strcmp(&(rr->host), host) == 0){
 			return rr;
@@ -525,9 +532,9 @@ int remove_backed_up(struct route_rule * rule){
 }
 
 
-struct route_rule * find_auto_backup(struct route_tree_item * rt, struct route_rule * rule){
+struct route_rule * find_auto_backup(struct route_flags * rf, struct route_rule * rule){
 	struct route_rule * rr;
-	rr = rt->rule_list;
+	rr = rf->rule_list;
 	while(rr){
 		if(!rr->backed_up && (rr->hash_index != rule->hash_index) && rr->status){
 			return rr;

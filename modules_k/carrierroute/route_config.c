@@ -157,7 +157,7 @@ int load_config(struct rewrite_data * rd) {
 				backup = cfg_getint(t, "backup");
 				LM_INFO("adding route for prefix %.*s, to host %.*s, prob %f, backed up: %i, backup: %i\n",
 				    prefix.len, prefix.s, rewrite_host.len, rewrite_host.s, prob, backed_up_size, backup);
-				if (add_route(rd, 1, &domain, &prefix, max_targets, prob, &rewrite_host,
+				if (add_route(rd, 1, &domain, &prefix, 0, 0, max_targets, prob, &rewrite_host,
 				              strip, &rewrite_prefix, &rewrite_suffix, status,
 				              hash_index, backup, backed_up, &comment) < 0) {
 					LM_INFO("Error while adding route\n");
@@ -285,11 +285,12 @@ static int save_route_data_recursor(struct route_tree_item * rt, FILE * outfile)
 	str *tmp_str;
 	str null_str = str_init("NULL");
 
-	if (rt->rule_list) {
-		rr = rt->rule_list;
+	/* no support for flag lists in route config */
+	if (rt->flag_list && rt->flag_list->rule_list) {
+		rr = rt->flag_list->rule_list;
 		tmp_str = (rr->prefix.len ? &rr->prefix : &null_str);
 		fprintf(outfile, "\tprefix %.*s {\n", tmp_str->len, tmp_str->s);
-		fprintf(outfile, "\t\tmax_targets = %i\n\n", rt->max_targets);
+		fprintf(outfile, "\t\tmax_targets = %i\n\n", rt->flag_list->max_targets);
 		while (rr) {
 			tmp_str = (rr->host.len ? &rr->host : &null_str);
 			fprintf(outfile, "\t\ttarget %.*s {\n", tmp_str->len, tmp_str->s);

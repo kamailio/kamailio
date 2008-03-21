@@ -389,6 +389,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 	char s[256];
 	char *p;
 	int i;
+	struct route_flags *rf;
 	struct route_rule *rr;
 	struct route_rule_p_list * rl;
 	double prob;
@@ -403,30 +404,32 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 		}
 	}
 	*p = '\0';
-	for (rr = tree->rule_list; rr != NULL; rr = rr->next) {
-		if(tree->dice_max){
-			prob = (double)(rr->prob * DICE_MAX)/(double)tree->dice_max;
-		} else {
-			prob = rr->prob;
-		}
-		addf_mi_node_child(msg->next, 0, 0, 0, "%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'\n",
-		         strlen(prefix) > 0 ? prefix : "NULL", prob * 100, rr->host.len, rr->host.s,
-		         (rr->status ? "ON" : "OFF"), rr->strip,
-		         rr->local_prefix.len, rr->local_prefix.s,
-		         rr->local_suffix.len, rr->local_suffix.s,
-		         rr->comment.len, rr->comment.s);
-		if(!rr->status && rr->backup && rr->backup->rr){
-			addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
-		}
-		if(rr->backed_up){
-			rl = rr->backed_up;
-			i=0;
-			while(rl){
-				if(rl->rr){
-					addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
+	for (rf = tree->flag_list; rf != NULL; rf = rf->next) {
+		for (rr = rf->rule_list; rr != NULL; rr = rr->next) {
+			if(rf->dice_max){
+				prob = (double)(rr->prob * DICE_MAX)/(double)rf->dice_max;
+			} else {
+				prob = rr->prob;
 			}
-				rl = rl->next;
-				i++;
+			addf_mi_node_child(msg->next, 0, 0, 0, "%10s: %0.3f %%, '%.*s': %s, '%i', '%.*s', '%.*s', '%.*s'\n",
+												 strlen(prefix) > 0 ? prefix : "NULL", prob * 100, rr->host.len, rr->host.s,
+												 (rr->status ? "ON" : "OFF"), rr->strip,
+												 rr->local_prefix.len, rr->local_prefix.s,
+												 rr->local_suffix.len, rr->local_suffix.s,
+												 rr->comment.len, rr->comment.s);
+			if(!rr->status && rr->backup && rr->backup->rr){
+				addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backed up by: %.*s\n", rr->backup->rr->host.len, rr->backup->rr->host.s);
+			}
+			if(rr->backed_up){
+				rl = rr->backed_up;
+				i=0;
+				while(rl){
+					if(rl->rr){
+						addf_mi_node_child(msg->next, 0, 0, 0, "            Rule is backup for: %.*s", rl->rr->host.len, rl->rr->host.s);
+					}
+					rl = rl->next;
+					i++;
+				}
 			}
 		}
 	}
@@ -640,7 +643,7 @@ static int update_route_data(fifo_opt_t * opts) {
 			tmp_rewrite_suffix.len=0;
 		}
 
-		if (add_route(rd, 1, &tmp_domain, &tmp_prefix, 0, opts->prob,
+		if (add_route(rd, 1, &tmp_domain, &tmp_prefix, 0, 0, 0, opts->prob,
 		              &tmp_host, opts->strip, &tmp_rewrite_prefix, &tmp_rewrite_suffix,
 		              opts->status, opts->hash_index, -1, NULL, &tmp_comment) < 0) {
 			goto errout;
@@ -707,8 +710,11 @@ errout:
 static int update_route_data_recursor(struct route_tree_item * rt, str * act_domain, fifo_opt_t * opts) {
 	int i, hash = 0;
 	struct route_rule * rr, * prev = NULL, * tmp, * backup;
-	if (rt->rule_list) {
-		rr = rt->rule_list;
+	struct route_flags *rf;
+
+	if (rt->flag_list && rt->flag_list->rule_list) {
+		rf = rt->flag_list;
+		rr = rf->rule_list;
 		while (rr) {
 			if ((!opts->domain.len || (strncmp(opts->domain.s, OPT_STAR, strlen(OPT_STAR)) == 0)
 			        || ((opts->domain.len == act_domain->len) && (strncmp(opts->domain.s, act_domain->s, opts->domain.len) == 0)))
@@ -749,7 +755,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, str * act_dom
 						if (opts->new_host.len > 0) {
 							LM_INFO("deactivating host %.*s\n", rr->host.len, rr->host.s);
 							if (opts->new_host.len == 1 && opts->new_host.s[0] == 'a') {
-								if ((backup = find_auto_backup(rt, rr)) == NULL) {
+								if ((backup = find_auto_backup(rf, rr)) == NULL) {
 									LM_ERR("didn't find auto backup route\n");
 									FIFO_ERR(E_NOAUTOBACKUP);
 									return -1;
@@ -758,13 +764,13 @@ static int update_route_data_recursor(struct route_tree_item * rt, str * act_dom
 								errno = 0;
 								hash = strtol(opts->new_host.s, NULL, 10);
 								if (errno == EINVAL || errno == ERANGE) {
-									if ((backup = find_rule_by_hash(rt, hash)) == NULL) {
+									if ((backup = find_rule_by_hash(rf, hash)) == NULL) {
 										LM_ERR("didn't find given backup route (hash %i)\n", hash);
 										FIFO_ERR(E_NOHASHBACKUP);
 										return -1;
 									}
 								} else {
-									if ((backup = find_rule_by_host(rt, &opts->new_host)) == NULL) {
+									if ((backup = find_rule_by_host(rf, &opts->new_host)) == NULL) {
 										LM_ERR("didn't find given backup route (host %.*s)\n", opts->new_host.len, opts->new_host.s);
 										FIFO_ERR(E_NOHOSTBACKUP);
 										return -1;
@@ -820,13 +826,13 @@ static int update_route_data_recursor(struct route_tree_item * rt, str * act_dom
 							prev = rr;
 							rr = rr->next;
 						} else {
-							rt->rule_list = rr->next;
+							rf->rule_list = rr->next;
 							tmp = rr;
-							rr = rt->rule_list;
+							rr = rf->rule_list;
 							destroy_route_rule(tmp);
 						}
-						rt->rule_num--;
-						rt->max_targets--;
+						rf->rule_num--;
+						rf->max_targets--;
 						updated = 1;
 						break;
 					default:

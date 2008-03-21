@@ -277,6 +277,8 @@ int load_route_data(struct rewrite_data * rd) {
 				row->values[COL_CARRIER].val.int_val,
 				&tmp_domain,
 				&tmp_scan_prefix,
+				row->values[COL_FLAGS].val.int_val,
+				row->values[COL_MASK].val.int_val,
 				0,
 				row->values[COL_PROB].val.double_val,
 				&tmp_rewrite_host,

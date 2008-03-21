@@ -44,6 +44,8 @@
  *
  * @param rt the current route tree node
  * @param scan_prefix the prefix at the current position
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
  * @param full_prefix the whole scan prefix
  * @param max_targets the number of targets
  * @param prob the weight of the rule
@@ -65,7 +67,7 @@
  * @see add_route()
  */
 int add_route_to_tree(struct route_tree_item * rt, const str * scan_prefix,
-		const str * full_prefix, int max_targets, double prob,
+		flag_t flags, flag_t mask, const str * full_prefix, int max_targets, double prob,
 		const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
 		const str * rewrite_local_suffix, int status, int hash_index,
 		int backup, int * backed_up, const str * comment);
@@ -95,7 +97,7 @@ int add_route_to_tree(struct route_tree_item * rt, const str * scan_prefix,
  */
 int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, const str * scan_prefix,
 		const str * full_prefix, const str * host, const str * reply_code,
-		const int flags, const int mask, const int next_domain, const str * comment);
+		const flag_t flags, const flag_t mask, const int next_domain, const str * comment);
 
 /**
  * Create a new route tree root in shared memory and set it up.
