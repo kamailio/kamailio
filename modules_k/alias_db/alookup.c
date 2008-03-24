@@ -34,6 +34,7 @@
 #include "../../ut.h"
 #include "../../parser/parse_uri.h"
 #include "../../db/db.h"
+#include "../../mod_fix.h"
 
 #include "alias_db.h"
 #include "alookup.h"
@@ -75,12 +76,11 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	db_key_t db_cols[] = {&user_column, &domain_column};
 	db_res_t* db_res = NULL;
 	
-	if(!_table) {
-		LM_ERR("invalid parameter");
+	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
+	{
+		LM_ERR("invalid table parameter\n");
 		return -1;
 	}
-	table_s.s = _table;
-	table_s.len = strlen(_table);	
 
 	if (parse_sip_msg_uri(_msg) < 0)
 		return -1;
@@ -99,7 +99,8 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	
 		if (domain_prefix.s && domain_prefix.len>0
 			&& domain_prefix.len<_msg->parsed_uri.host.len
-			&& strncasecmp(_msg->parsed_uri.host.s,domain_prefix.s,domain_prefix.len)==0)
+			&& strncasecmp(_msg->parsed_uri.host.s,domain_prefix.s,
+				domain_prefix.len)==0)
 		{
 			db_vals[1].val.str_val.s   += domain_prefix.len;
 			db_vals[1].val.str_val.len -= domain_prefix.len;

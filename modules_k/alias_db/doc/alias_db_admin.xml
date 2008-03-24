@@ -214,7 +214,7 @@ modparam("alias_db", "domain_prefix", "sip.")
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>table_name</emphasis> - the name of the table
-			where to search for alias.
+				where to search for alias. It can include pseudo-variables.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -226,6 +226,7 @@ modparam("alias_db", "domain_prefix", "sip.")
 		<programlisting format="linespecific">
 ...
 alias_db_lookup("dbaliases");
+alias_db_lookup("dba_$(rU{s.substr,0,1})");
 ...
 </programlisting>
 		</example>

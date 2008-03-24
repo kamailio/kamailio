@@ -173,11 +173,12 @@ modparam("alias_db", "domain_prefix", "sip.")
 
    Meaning of the parameters is as follows:
      * table_name - the name of the table where to search for
-       alias.
+       alias. It can include pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.8. alias_db_lookup() usage
 ...
 alias_db_lookup("dbaliases");
+alias_db_lookup("dba_$(rU{s.substr,0,1})");
 ...

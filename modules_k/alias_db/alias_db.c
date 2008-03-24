@@ -35,6 +35,7 @@
 #include "../../error.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 
 #include "alookup.h"
 
@@ -67,7 +68,7 @@ db_func_t adbf;  /* DB functions */
 
 /* Exported functions */
 static cmd_export_t cmds[] = {
-	{"alias_db_lookup", (cmd_function)alias_db_lookup, 1, 0, 0,
+	{"alias_db_lookup", (cmd_function)alias_db_lookup, 1, fixup_spve_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -75,13 +76,13 @@ static cmd_export_t cmds[] = {
 
 /* Exported parameters */
 static param_export_t params[] = {
-	{"db_url",           STR_PARAM, &db_url.s        },
-	{"user_column",      STR_PARAM, &user_column.s   },
-	{"domain_column",    STR_PARAM, &domain_column.s },
-	{"alias_user_column",      STR_PARAM, &alias_user_column.s   },
-	{"alias_domain_column",    STR_PARAM, &alias_domain_column.s },
-	{"use_domain",       INT_PARAM, &use_domain      },
-	{"domain_prefix",    STR_PARAM, &domain_prefix.s },
+	{"db_url",              STR_PARAM, &db_url.s        },
+	{"user_column",         STR_PARAM, &user_column.s   },
+	{"domain_column",       STR_PARAM, &domain_column.s },
+	{"alias_user_column",   STR_PARAM, &alias_user_column.s   },
+	{"alias_domain_column", STR_PARAM, &alias_domain_column.s },
+	{"use_domain",          INT_PARAM, &use_domain      },
+	{"domain_prefix",       STR_PARAM, &domain_prefix.s },
 	{0, 0, 0}
 };
 
