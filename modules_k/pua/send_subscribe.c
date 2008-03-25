@@ -259,9 +259,9 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 			lock_release(&HashT->p_records[hash_code].lock);
 			goto done;
 		}
+
 		delete_htable(presentity, hash_code);
 		lock_release(&HashT->p_records[hash_code].lock);
-
 		goto done;
 	}
 	
@@ -407,7 +407,8 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
 	{
 		LM_ERR("no contact header found in 200 OK reply");
-			goto error;
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto error;
 	}
 	contact= msg->contact->body;
 
@@ -426,6 +427,7 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto done;
 	}
+
 	lock_release(&HashT->p_records[hash_code].lock);
 
 	/* if a new dialog -> insert */
@@ -862,14 +864,14 @@ insert:
 		{
 			if(subs->expires< 0)
 			{
-				LM_DBG("Found previous request for unlimited subscribe-"
-						" do not send subscribe\n");
+		//		LM_DBG("Found previous request for unlimited subscribe-"
+		//				" do not send subscribe\n");
 				if (subs->event & PWINFO_EVENT)
 				{	
 					presentity->watcher_count++;
 				}
-				lock_release(&HashT->p_records[hash_code].lock);
-				goto done;
+		//		lock_release(&HashT->p_records[hash_code].lock);
+		//		goto done;
 			}
 		
 			if(subs->event & PWINFO_EVENT)
