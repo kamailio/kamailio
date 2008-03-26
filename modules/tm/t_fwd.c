@@ -115,6 +115,9 @@
 #include "../../dst_blacklist.h"
 #endif
 #include "../../select_buf.h" /* reset_static_buffer() */
+#ifdef POSTPONE_MSG_CLONING
+#include "../../atomic_ops.h" /* membar_depends() */
+#endif
 
 /* cancel hop by hop */
 #define E2E_CANCEL_HOP_BY_HOP
@@ -177,6 +180,11 @@ static char *print_uac_request( struct cell *t, struct sip_msg *i_req,
 		uri_backed_up=1;
 	}
 
+#ifdef POSTPONE_MSG_CLONING
+	/* lumps can be set outside of the lock, make sure that we read
+	 * the up-to-date values */
+	membar_depends();
+#endif
 	add_rm_backup = i_req->add_rm;
 	body_lumps_backup = i_req->body_lumps;
 	i_req->add_rm = dup_lump_list(i_req->add_rm);
@@ -629,6 +637,11 @@ int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 	/* print */
 	if (cfg_get(tm, tm_cfg, reparse_invite)) {
 		/* buffer is built localy from the INVITE which was sent out */
+#ifdef POSTPONE_MSG_CLONING
+		/* lumps can be set outside of the lock, make sure that we read
+		 * the up-to-date values */
+		membar_depends();
+#endif
 		if (cancel_msg->add_rm || cancel_msg->body_lumps) {
 			LOG(L_WARN, "WARNING: e2e_cancel_branch: CANCEL is built locally, "
 			"thus lumps are not applied to the message!\n");
@@ -1021,6 +1034,15 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	   is in additional branches (which may be continuously refilled
 	*/
 	if (first_branch==0) {
+#ifdef POSTPONE_MSG_CLONING
+		/* update the shmem-ized msg with the lumps */
+		if ((rmode == MODE_REQUEST) &&
+			save_msg_lumps(t->uas.request, p_msg)) {
+				LOG(L_ERR, "ERROR: t_forward_nonack: "
+					"failed to save the message lumps\n");
+				return -1;
+			}
+#endif
 		try_new=1;
 		branch_ret=add_uac( t, p_msg, GET_RURI(p_msg), GET_NEXT_HOP(p_msg),
 							proxy, proto );

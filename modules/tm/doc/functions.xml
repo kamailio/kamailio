@@ -683,4 +683,55 @@ failure_route[0]{
 	    </programlisting>
 	</example>
     </section>
+
+    <section id="t_save_lumps">
+	<title>
+	    <function>t_save_lumps()</function>
+	</title>
+	<para>
+		Forces the modifications of the processed SIP message
+		to be saved in shared memory before t_relay() is called.
+		The new branches which are created in failure_route will
+		contain the same modifications, and any other modification
+		after t_save_lumps() will be lost.
+	</para>
+	<para>
+		Note that t_relay() automatically saves the modifications
+		when it is called the first time, there is no need for
+		t_save_lumps() unless message changes between t_save_lumps()
+		and t_relay() must not be propagated to failure_route.
+	</para>
+	<para>
+		The transaction must be created by t_newtran() before
+		calling t_save_lumps().
+	</para>
+	<example>
+	    <title><function>t_save_lumps()</function> usage</title>
+	    <programlisting>
+route {
+	...
+	t_newtran();
+	append_hf("hf1: my first header\r\n");
+	...
+	t_save_lumps();
+	append_hf("hf2: my second header\r\n");
+	...
+	t_on_failure("1");
+	t_relay();
+}
+
+failure_route[1] {
+	append_branch();
+	append_hf("hf3: my third header\r\n");
+	#
+	# This branch contains hf1 and hf3, but does
+	# not contain hf2 header.
+	# hf2 would be also present here without
+	# t_save_lumps().
+	...
+	t_relay();
+}
+	    </programlisting>
+	</example>
+    </section>
 </section>

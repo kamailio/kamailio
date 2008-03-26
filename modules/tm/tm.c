@@ -209,6 +209,7 @@ static int t_any_replied(struct sip_msg* msg, char*, char*);
 static int t_is_canceled(struct sip_msg* msg, char*, char*);
 static int t_grep_status(struct sip_msg* msg, char*, char*);
 static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar);
+static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar);
 
 
 /* by default the fr timers avps are not set, so that the avps won't be
@@ -319,6 +320,8 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
 	{"t_drop_replies",    w_t_drop_replies,         0, 0,
 			FAILURE_ROUTE},
+	{"t_save_lumps",      w_t_save_lumps,           0, 0,
+			REQUEST_ROUTE},
 
 
 	/* not applicable from the script */
@@ -582,6 +585,10 @@ static int script_init( struct sip_msg *foo, void *bar)
 	/* set request mode so that multiple-mode actions know
 	 * how to behave */
 	rmode=MODE_REQUEST;
+
+#ifdef POSTPONE_MSG_CLONING
+	lumps_are_cloned = 0;
+#endif
 	return 1;
 }
 
@@ -1448,8 +1455,6 @@ int t_is_canceled(struct sip_msg* msg, char* foo, char* bar)
 	return ret;
 }
 
-
-
 /* script function, returns: 1 if any of the branches did timeout, -1 if not */
 int t_any_timeout(struct sip_msg* msg, char* foo, char* bar)
 {
@@ -1528,6 +1533,31 @@ static int w_t_drop_replies(struct sip_msg* msg, char* foo, char* bar)
 {
 	t_drop_replies();
 	return 1;
+}
+
+/* save the message lumps after t_newtran() but before t_relay() */
+static int w_t_save_lumps(struct sip_msg* msg, char* foo, char* bar)
+{
+#ifdef POSTPONE_MSG_CLONING
+	struct cell *t;
+
+	t=get_t();
+	if (!t || t==T_UNDEFINED) {
+		LOG(L_ERR, "ERROR: w_t_save_lumps: transaction has not been created yet\n");
+		return -1;
+	}
+
+	if (save_msg_lumps(t->uas.request, msg)) {
+		LOG(L_ERR, "ERROR: w_t_save_lumps: "
+			"failed to save the message lumps\n");
+		return -1;
+	}
+	return 1;
+#else
+	LOG(L_ERR, "ERROR: w_t_save_lumps: POSTPONE_MSG_CLONING is not defined,"
+			" thus, the functionality is not supported\n");
+	return -1;
+#endif
 }
 
 static rpc_export_t tm_rpc[] = {

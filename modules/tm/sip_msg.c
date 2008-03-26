@@ -49,6 +49,9 @@
  *  2006-04-20  via->comp is also translated (andrei)
  *  2006-10-16  HDR_{PROXY,WWW}_AUTHENTICATE_T cloned (andrei)
  *  2007-01-26  HDR_DATE_T, HDR_IDENTITY_T, HDR_IDENTITY_INFO_T added (gergo)
+ *  2007-09-05  A separate memory block is allocated for the lumps
+ *              in case of requests in order to allow cloning them
+ *              later than the SIP msg. (Miklos)
  */
 
 #include "defs.h"
@@ -62,6 +65,11 @@
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
 #include "../../parser/digest/digest.h"
+
+#ifdef POSTPONE_MSG_CLONING
+#include "../../atomic_ops.h"
+#include "fix_lumps.h"
+#endif
 
 
 /* rounds to the first 4 byte multiple on 32 bit archs
@@ -84,8 +92,91 @@
 			(_ptr)+=ROUND4((_old)->len);}\
 	}
 
+/* length of the data lump structures */
+#define LUMP_LIST_LEN(len, list) \
+do { \
+        struct lump* tmp, *chain; \
+	chain = (list); \
+	while (chain) \
+	{ \
+		(len) += lump_len(chain); \
+		tmp = chain->before; \
+		while ( tmp ) \
+		{ \
+			(len) += lump_len( tmp ); \
+			tmp = tmp->before; \
+		} \
+		tmp = chain->after; \
+		while ( tmp ) \
+		{ \
+			(len) += lump_len( tmp ); \
+			tmp = tmp->after; \
+		} \
+		chain = chain->next; \
+	} \
+} while(0);
 
+/* length of the reply lump structure */
+#define RPL_LUMP_LIST_LEN(len, list) \
+do { \
+	struct lump_rpl* rpl_lump; \
+	for(rpl_lump=(list);rpl_lump;rpl_lump=rpl_lump->next) \
+		(len)+=ROUND4(sizeof(struct lump_rpl))+ROUND4(rpl_lump->text.len); \
+} while(0);
 
+/* clones data lumps */
+#define CLONE_LUMP_LIST(anchor, list, _ptr) \
+do { \
+	struct lump* lump_tmp, *l; \
+	struct lump** lump_anchor2, **a; \
+	a = (anchor); \
+	l = (list); \
+	while (l) \
+	{ \
+		lump_clone( (*a) , l , (_ptr) ); \
+		/*before list*/ \
+		lump_tmp = l->before; \
+		lump_anchor2 = &((*a)->before); \
+		while ( lump_tmp ) \
+		{ \
+			lump_clone( (*lump_anchor2) , lump_tmp , (_ptr) ); \
+			lump_anchor2 = &((*lump_anchor2)->before); \
+			lump_tmp = lump_tmp->before; \
+		} \
+		/*after list*/ \
+		lump_tmp = l->after; \
+		lump_anchor2 = &((*a)->after); \
+		while ( lump_tmp ) \
+		{ \
+			lump_clone( (*lump_anchor2) , lump_tmp , (_ptr) ); \
+			lump_anchor2 = &((*lump_anchor2)->after); \
+			lump_tmp = lump_tmp->after; \
+		} \
+		a = &((*a)->next); \
+		l = l->next; \
+	} \
+} while(0)
+
+/* clones reply lumps */
+#define CLONE_RPL_LUMP_LIST(anchor, list, _ptr) \
+do { \
+	struct lump_rpl* rpl_lump; \
+	struct lump_rpl** rpl_lump_anchor; \
+	rpl_lump_anchor = (anchor); \
+	for(rpl_lump=(list);rpl_lump;rpl_lump=rpl_lump->next) \
+	{ \
+		*(rpl_lump_anchor)=(struct lump_rpl*)(_ptr); \
+		(_ptr)+=ROUND4(sizeof( struct lump_rpl )); \
+		(*rpl_lump_anchor)->flags = LUMP_RPL_SHMEM | \
+			(rpl_lump->flags&(~(LUMP_RPL_NODUP|LUMP_RPL_NOFREE))); \
+		(*rpl_lump_anchor)->text.len = rpl_lump->text.len; \
+		(*rpl_lump_anchor)->text.s=(_ptr); \
+		(_ptr)+=ROUND4(rpl_lump->text.len); \
+		memcpy((*rpl_lump_anchor)->text.s,rpl_lump->text.s,rpl_lump->text.len); \
+		(*rpl_lump_anchor)->next=0; \
+		rpl_lump_anchor = &((*rpl_lump_anchor)->next); \
+	} \
+} while (0)
 
 inline struct via_body* via_body_cloner( char* new_buf,
 					char *org_buf, struct via_body *param_org_via, char **p)
@@ -295,7 +386,6 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 	struct via_param  *prm;
 	struct to_param   *to_prm,*new_to_prm;
 	struct sip_msg    *new_msg;
-	struct lump_rpl   *rpl_lump, **rpl_lump_anchor;
 	char              *p;
 
 	/*computing the length of entire sip_msg structure*/
@@ -401,36 +491,18 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 		}/*switch*/
 	}/*for all headers*/
 
-	/* length of the data lump structures */
-#define LUMP_LIST_LEN(len, list) \
-do { \
-        struct lump* tmp, *chain; \
-	chain = (list); \
-	while (chain) \
-	{ \
-		(len) += lump_len(chain); \
-		tmp = chain->before; \
-		while ( tmp ) \
-		{ \
-			(len) += lump_len( tmp ); \
-			tmp = tmp->before; \
-		} \
-		tmp = chain->after; \
-		while ( tmp ) \
-		{ \
-			(len) += lump_len( tmp ); \
-			tmp = tmp->after; \
-		} \
-		chain = chain->next; \
-	} \
-} while(0);
+#ifdef POSTPONE_MSG_CLONING
+	/* take care of the lumps only for replies if the msg cloning is postponed */
+	if (org_msg->first_line.type==SIP_REPLY) {
+#endif
+		/* calculate the length of the data and reply lump structures */
+		LUMP_LIST_LEN(len, org_msg->add_rm);
+		LUMP_LIST_LEN(len, org_msg->body_lumps);
+		RPL_LUMP_LIST_LEN(len, org_msg->reply_lump);
 
-	LUMP_LIST_LEN(len, org_msg->add_rm);
-	LUMP_LIST_LEN(len, org_msg->body_lumps);
-
-	/*length of reply lump structures*/
-	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
-			len+=ROUND4(sizeof(struct lump_rpl))+ROUND4(rpl_lump->text.len);
+#ifdef POSTPONE_MSG_CLONING
+	}
+#endif
 
 	p=(char *)shm_malloc(len);
 	if (!p)
@@ -450,6 +522,7 @@ do { \
 	p += ROUND4(sizeof(struct sip_msg));
 	new_msg->add_rm = 0;
 	new_msg->body_lumps = 0;
+	new_msg->reply_lump = 0;
 	/* new_uri */
 	if (org_msg->new_uri.s && org_msg->new_uri.len)
 	{
@@ -816,57 +889,18 @@ do { \
 		new_msg->last_header = last_hdr;
 	}
 
-	/* cloning data lump */
-#define CLONE_LUMP_LIST(anchor, list) \
-do { \
-	struct lump* lump_tmp, *l; \
-	struct lump** lump_anchor2, **a; \
-	a = (anchor); \
-	l = (list); \
-	while (l) \
-	{ \
-		lump_clone( (*a) , l , p ); \
-		/*before list*/ \
-		lump_tmp = l->before; \
-		lump_anchor2 = &((*a)->before); \
-		while ( lump_tmp ) \
-		{ \
-			lump_clone( (*lump_anchor2) , lump_tmp , p ); \
-			lump_anchor2 = &((*lump_anchor2)->before); \
-			lump_tmp = lump_tmp->before; \
-		} \
-		/*after list*/ \
-		lump_tmp = l->after; \
-		lump_anchor2 = &((*a)->after); \
-		while ( lump_tmp ) \
-		{ \
-			lump_clone( (*lump_anchor2) , lump_tmp , p ); \
-			lump_anchor2 = &((*lump_anchor2)->after); \
-			lump_tmp = lump_tmp->after; \
-		} \
-		a = &((*a)->next); \
-		l = l->next; \
-	} \
-} while(0)
+#ifdef POSTPONE_MSG_CLONING
+	/* take care of the lumps only for replies if the msg cloning is postponed */
+	if (org_msg->first_line.type==SIP_REPLY) {
+#endif
+		/*cloning data and reply lump structures*/
+		CLONE_LUMP_LIST(&(new_msg->add_rm), org_msg->add_rm, p);
+		CLONE_LUMP_LIST(&(new_msg->body_lumps), org_msg->body_lumps, p);
+		CLONE_RPL_LUMP_LIST(&(new_msg->reply_lump), org_msg->reply_lump, p);
 
-	CLONE_LUMP_LIST(&(new_msg->add_rm), org_msg->add_rm);
-	CLONE_LUMP_LIST(&(new_msg->body_lumps), org_msg->body_lumps);
-
-	/*cloning reply lump structures*/
-	rpl_lump_anchor = &(new_msg->reply_lump);
-	for(rpl_lump=org_msg->reply_lump;rpl_lump;rpl_lump=rpl_lump->next)
-	{
-		*(rpl_lump_anchor)=(struct lump_rpl*)p;
-		p+=ROUND4(sizeof( struct lump_rpl ));
-		(*rpl_lump_anchor)->flags = LUMP_RPL_SHMEM |
-			(rpl_lump->flags&(~(LUMP_RPL_NODUP|LUMP_RPL_NOFREE)));
-		(*rpl_lump_anchor)->text.len = rpl_lump->text.len;
-		(*rpl_lump_anchor)->text.s=p;
-		p+=ROUND4(rpl_lump->text.len);
-		memcpy((*rpl_lump_anchor)->text.s,rpl_lump->text.s,rpl_lump->text.len);
-		(*rpl_lump_anchor)->next=0;
-		rpl_lump_anchor = &((*rpl_lump_anchor)->next);
+#ifdef POSTPONE_MSG_CLONING
 	}
+#endif
 
 	if (clone_authorized_hooks(new_msg, org_msg) < 0) {
 		shm_free(new_msg);
@@ -875,3 +909,93 @@ do { \
 
 	return new_msg;
 }
+
+#ifdef POSTPONE_MSG_CLONING
+/* indicates wheter we have already cloned the msg lumps or not */
+unsigned char lumps_are_cloned = 0;
+
+/* clones the data and reply lumps from pkg_msg to shm_msg
+ * A new memory block is allocated for the lumps which is linked
+ * to shm_msg
+ *
+ * Note: the new memory block is linked to shm_msg->add_rm if
+ * at least one data lump is set, else it is linked to shm_msg->body_lumps
+ * if at least one body lump is set, otherwise it is linked to
+ * shm_msg->reply_lump
+ */
+static int msg_lump_cloner( struct sip_msg *shm_msg, struct sip_msg *pkg_msg)
+{
+	unsigned int	len;
+	char		*p;
+	struct lump	*add_rm, *body_lumps;
+	struct lump_rpl	*reply_lump;
+
+	/* calculate the length of the lumps */
+	len = 0;
+	LUMP_LIST_LEN(len, pkg_msg->add_rm);
+	LUMP_LIST_LEN(len, pkg_msg->body_lumps);
+	RPL_LUMP_LIST_LEN(len, pkg_msg->reply_lump);
+
+	if (!len)
+		return 0; /* nothing to do */
+
+	p=(char *)shm_malloc(len);
+	if (!p)
+	{
+		LOG(L_ERR, "ERROR: msg_lump_cloner: cannot allocate memory\n" );
+		return -1;
+	}
+
+	/* clone the lumps
+	 *
+	 * Better not to modify the lump structures of shm_msg directly
+	 * because no lock is held while they are read. We have to prepare
+	 * the lumps in separate lists, and fush the cache
+	 * with membar_write() before linking the lists to shm_msg.
+	 */
+	add_rm = body_lumps = 0;
+	reply_lump = 0;
+
+	CLONE_LUMP_LIST(&add_rm, pkg_msg->add_rm, p);
+	CLONE_LUMP_LIST(&body_lumps, pkg_msg->body_lumps, p);
+	CLONE_RPL_LUMP_LIST(&reply_lump, pkg_msg->reply_lump, p);
+	membar_write();
+
+	shm_msg->add_rm = add_rm;
+	shm_msg->body_lumps = body_lumps;
+	shm_msg->reply_lump = reply_lump;
+
+	return 0;	
+}
+
+/* wrapper function for msg_lump_cloner() with some additional sanity checks */
+int save_msg_lumps( struct sip_msg *shm_msg, struct sip_msg *pkg_msg)
+{
+	/* make sure that we do not clone the lumps twice */
+	if (lumps_are_cloned) {
+		LOG(L_DBG, "DEBUG: save_msg_lumps: lumps have been already cloned\n" );
+		return 0;
+	}
+	/* sanity checks */
+	if (unlikely(!shm_msg || ((shm_msg->msg_flags & FL_SHM_CLONE)==0))) {
+		LOG(L_ERR, "ERROR: save_msg_lumps: BUG, there is no shmem-ized message"
+			" (shm_msg=%p)\n", shm_msg);
+		return -1;
+	}
+	if (unlikely(shm_msg->first_line.type!=SIP_REQUEST)) {
+		LOG(L_ERR, "ERROR: save_msg_lumps: BUG, the function should be called only for requests\n" );
+		return -1;
+	}
+
+	/* needless to clone the lumps for ACK, they will not be used again */
+	if (shm_msg->REQ_METHOD == METHOD_ACK)
+		return 0;
+
+	/* clean possible previous added vias/clen header or else they would 
+	 * get propagated in the failure routes */
+	free_via_clen_lump(&pkg_msg->add_rm);
+
+	lumps_are_cloned = 1;
+	return msg_lump_cloner(shm_msg, pkg_msg);
+}
+#endif /* POSTPONE_MSG_CLONING */
