@@ -128,9 +128,11 @@ static avp_list_t* select_list(avp_flags_t flags)
 		} else {
 			return crt_list[IDX_FROM_DOMAIN];
 		}
+	} else if (flags & AVP_CLASS_GLOBAL) {
+		return *crt_glist;
 	}
 
-	return *crt_glist;
+	return NULL;
 }
 
 inline static avp_id_t compute_ID( str *name )
@@ -256,7 +258,8 @@ int add_avp(avp_flags_t flags, avp_name_t name, avp_value_t val)
 	      */
 	if ((flags & AVP_CLASS_ALL) == 0) flags |= AVP_CLASS_URI;
 	if ((flags & AVP_TRACK_ALL) == 0) flags |= AVP_TRACK_FROM;
-	list = select_list(flags);
+	if (!(list = select_list(flags)))
+		return -1;
 
 	if (flags & AVP_CLASS_URI) avp_class = AVP_CLASS_URI;
 	else if (flags & AVP_CLASS_USER) avp_class = AVP_CLASS_USER;
@@ -352,7 +355,10 @@ inline void get_avp_val(avp_t *avp, avp_value_t *val)
 /* Return the current list of user attributes */
 avp_list_t get_avp_list(avp_flags_t flags)
 {
-	return *select_list(flags);
+	avp_list_t *list;
+
+	list = select_list(flags);
+	return (list ? *list : NULL);
 }
 
 
@@ -447,7 +453,8 @@ avp_t *search_avp (avp_ident_t ident, avp_value_t* val, struct search_state* sta
 		}
 	}
 
-	list = select_list(ident.flags);
+	if (!(list = select_list(ident.flags)))
+		return NULL;
 
 	state->flags = ident.flags;
 	state->avp = *list;
@@ -470,6 +477,7 @@ avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
 {
 	int matched;
 	avp_t* avp;
+	avp_list_t *list;
 
 	if (s == 0) {
 		LOG(L_ERR, "search_next:avp: Invalid parameter value\n");
@@ -502,17 +510,19 @@ avp_t *search_next_avp(struct search_state* s, avp_value_t *val )
 
 		if (s->flags & AVP_CLASS_URI) {
 			s->flags &= ~AVP_CLASS_URI;
-			s->avp = *select_list(s->flags);
+			list = select_list(s->flags);
 		} else if (s->flags & AVP_CLASS_USER) {
 			s->flags &= ~AVP_CLASS_USER;
-			s->avp = *select_list(s->flags);
+			list = select_list(s->flags);
 		} else if (s->flags & AVP_CLASS_DOMAIN) {
 			s->flags &= ~AVP_CLASS_DOMAIN;
-			s->avp = *select_list(s->flags);
+			list = select_list(s->flags);
 		} else {
 			s->flags &= ~AVP_CLASS_GLOBAL;
 			return 0;
 		}
+		if (!list) return 0;
+		s->avp = *list;
 	}
 
 	return 0;
