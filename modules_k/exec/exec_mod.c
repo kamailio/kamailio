@@ -34,7 +34,7 @@
 #include "../../str.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
-#include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../parser/parse_uri.h"
 
 #include "exec.h"
@@ -51,7 +51,6 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo);
 inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo);
 inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl);
 
-static int it_list_fixup(void** param, int param_no);
 static int exec_avp_fixup(void** param, int param_no);
 
 inline static void exec_shutdown(void);
@@ -60,9 +59,9 @@ inline static void exec_shutdown(void);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"exec_dset", (cmd_function)w_exec_dset, 1, it_list_fixup,  0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"exec_msg",  (cmd_function)w_exec_msg,  1, it_list_fixup,  0, REQUEST_ROUTE|FAILURE_ROUTE},
-	{"exec_avp",  (cmd_function)w_exec_avp,  1, it_list_fixup,  0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_dset", (cmd_function)w_exec_dset, 1, fixup_spve_null,  0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_msg",  (cmd_function)w_exec_msg,  1, fixup_spve_null,  0, REQUEST_ROUTE|FAILURE_ROUTE},
+	{"exec_avp",  (cmd_function)w_exec_avp,  1, fixup_spve_null,  0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{"exec_avp",  (cmd_function)w_exec_avp,  2, exec_avp_fixup, 0, REQUEST_ROUTE|FAILURE_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -116,7 +115,6 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	environment_t *backup;
 	int ret;
 	str command;
-	pv_elem_t *model;
 	
 	if(msg==0 || cmd==0)
 		return -1;
@@ -135,10 +133,9 @@ inline static int w_exec_dset(struct sip_msg* msg, char* cmd, char* foo)
 	else
 		uri=&msg->first_line.u.request.uri;
 	
-	model = (pv_elem_t*)cmd;
-	if(pv_printf_s(msg, model, &command)<0)
+	if(fixup_get_svalue(msg, (gparam_p)cmd, &command)!=0)
 	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("invalid command parameter");
 		return -1;
 	}
 	
@@ -156,11 +153,7 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 {
 	environment_t *backup;
 	int ret;
-#define EXEC_MSG_PRINTBUF_SIZE   1024
-	static char exec_msg_printbuf[EXEC_MSG_PRINTBUF_SIZE];
-	int printbuf_len;
-	pv_elem_t *model;
-	char *cp;
+	str command;
 	
 	if(msg==0 || cmd==0)
 		return -1;
@@ -174,22 +167,15 @@ inline static int w_exec_msg(struct sip_msg* msg, char* cmd, char* foo)
 		}
 	}
 	
-	model = (pv_elem_t*)cmd;
-	if(model->next==0 && model->spec.getf==0) {
-		cp = model->text.s;
-	} else {
-		printbuf_len = EXEC_MSG_PRINTBUF_SIZE-1;
-		if(pv_printf(msg, model, exec_msg_printbuf, &printbuf_len)<0)
-		{
-			LM_ERR("cannot print the format\n");
-			return -1;
-		}
-		cp = exec_msg_printbuf;
+	if(fixup_get_svalue(msg, (gparam_p)cmd, &command)!=0)
+	{
+		LM_ERR("invalid command parameter");
+		return -1;
 	}
 	
-	LM_DBG("executing [%s]\n", cp);
+	LM_DBG("executing [%s]\n", command.s);
 	
-	ret=exec_msg(msg, cp);
+	ret=exec_msg(msg, command.s);
 	if (setvars) {
 		unset_env(backup);
 	}
@@ -201,7 +187,6 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 	environment_t *backup;
 	int ret;
 	str command;
-	pv_elem_t *model;
 	
 	if(msg==0 || cmd==0)
 		return -1;
@@ -215,10 +200,9 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 		}
 	}
 
-	model = (pv_elem_t*)cmd;
-	if(pv_printf_s(msg, model, &command)<0)
+	if(fixup_get_svalue(msg, (gparam_p)cmd, &command)!=0)
 	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("invalid command parameter");
 		return -1;
 	}
 	
@@ -231,35 +215,8 @@ inline static int w_exec_avp(struct sip_msg* msg, char* cmd, char* avpl)
 	return ret;
 }
 
-/*
- * Convert char* parameter to pv_elem parameter
- */
-static int it_list_fixup(void** param, int param_no)
-{
-	pv_elem_t *model;
-	str s;
-	if(param_no==1)
-	{
-		if(*param)
-		{
-			s.s = (char*)(*param); s.len = strlen(s.s);
-			if(pv_parse_format(&s, &model)<0)
-			{
-				LM_ERR("wrong format[%s]\n", (char*)(*param));
-				return E_UNSPEC;
-			}
-			*param = (void*)model;
-		}
-	} else {
-		LM_ERR("wrong format[%s]\n", (char*)(*param));
-		return E_UNSPEC;
-	}
-	return 0;
-}
-
 static int exec_avp_fixup(void** param, int param_no)
 {
-	pv_elem_t *model = NULL;
 	pvname_list_t *anlist = NULL;
 	str s;
 
@@ -271,15 +228,7 @@ static int exec_avp_fixup(void** param, int param_no)
 			LM_ERR("null format in P%d\n", param_no);
 			return E_UNSPEC;
 		}
-		s.len =  strlen(s.s);
-		if(pv_parse_format(&s, &model)<0)
-		{
-			LM_ERR("wrong format[%s]\n", s.s);
-			return E_UNSPEC;
-		}
-			
-		*param = (void*)model;
-		return 0;
+		return fixup_spve_null(param, 1);
 	} else if(param_no==2) {
 		if(s.s==NULL)
 		{
