@@ -51,19 +51,24 @@ fifo_cmd()
 		exit 1
 	fi
 	name=openser_receiver_$$
-	path=/tmp/$name
+	path=$CHROOT_DIR/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
 		merr "Error opening OpenSER's FIFO $OSER_FIFO"
 		merr "Make sure you have the line 'modparam(\"mi_fifo\", \"fifo_name\", \"$OSER_FIFO\")' in your config"
 		merr "and also have loaded the mi_fifo module."
+		if [ ! -z $CHROOT_DIR ]; then
+			merr "[chrooted environment] Check that $OSER_FIFO is symlinked to ${CHROOT_DIR}${OSER_FIFO}"
+		fi
 		exit 2
 	fi
-	mkfifo $path
-	if [ $? -ne 0 ] ; then
-		merr "error opening read fifo $path"
-		exit 3
+	if ! test -p $path; then
+		mkfifo $path
+		if [ $? -ne 0 ] ; then
+			merr "error opening read fifo $path"
+			exit 3
+		fi
+		chmod a+w $path
 	fi
-	chmod a+w $path
 
 	# construct the command now
 	CMD=":$1:$name\n";
@@ -95,19 +100,21 @@ CTLCMD=fifo_cmd
 
 fifo_openser_monitor() {
 	name=openser_receiver_$$
-	path=/tmp/$name
+	path=$CHROOT_DIR/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
 		merr "Error opening OpenSER's FIFO $OSER_FIFO"
 		merr "Make sure you have the line 'modparam(\"mi_fifo\", \"fifo_name\", \"$OSER_FIFO\")' in your config"
 		merr "and also have loaded the mi_fifo module."
 		exit 1
 	fi
-	mkfifo $path
-	if [ $? -ne 0 ] ; then
-		merr "monitor - error opening read fifo $path"
-		exit 1
+	if ! test -p $path; then
+		mkfifo $path
+		if [ $? -ne 0 ] ; then
+			merr "monitor - error opening read fifo $path"
+			exit 1
+		fi
+		chmod a+w $path
 	fi
-	chmod a+w $path
 	trap "rm $path;  clear; echo monitor ^C-ed; exit 1" 2
 	attempt=0
 	if [ "$2" = "" ]; then
