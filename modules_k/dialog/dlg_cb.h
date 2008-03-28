@@ -31,12 +31,18 @@
 
 struct dlg_cell;
 
+struct dlg_cb_params {
+	struct sip_msg* msg;
+	void **param;
+};
+
 /* callback function prototype */
-typedef void (dialog_cb) (struct dlg_cell* dlg, int type, struct sip_msg* msg,
-		void** param);
+typedef void (dialog_cb) (struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
+/* function to free the callback param */
+typedef void (param_free_cb) (void *param);
 /* register callback function prototype */
 typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
-		dialog_cb f, void *param);
+		dialog_cb f, void *param, param_free_cb ff);
 
 
 #define DLGCB_CREATED         (1<<0)
@@ -53,6 +59,7 @@ struct dlg_callback {
 	int types;
 	dialog_cb* callback;
 	void *param;
+	param_free_cb* callback_param_free;
 	struct dlg_callback* next;
 };
 
@@ -68,7 +75,7 @@ void destroy_dlg_callbacks();
 
 void destroy_dlg_callbacks_list(struct dlg_callback *cb);
 
-int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param);
+int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param, param_free_cb ff);
 
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);
 

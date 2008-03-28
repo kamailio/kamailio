@@ -39,7 +39,7 @@
  * The static (opening) callback function for all dialog creations
  */
 void sst_dialog_created_CB(struct dlg_cell *did, int type, 
-		struct sip_msg* msg, void** param);
+		struct dlg_cb_params * params);
 
 /**
  * The script function

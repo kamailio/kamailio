@@ -32,6 +32,9 @@
 
 static struct dlg_head_cbl* create_cbs = 0;
 
+static struct dlg_cb_params params = {NULL, NULL};
+
+
 int init_dlg_callbacks(void)
 {
 	create_cbs = (struct dlg_head_cbl*)shm_malloc(sizeof(struct dlg_head_cbl));
@@ -52,7 +55,10 @@ void destroy_dlg_callbacks_list(struct dlg_callback *cb)
 	while(cb) {
 		cb_t = cb;
 		cb = cb->next;
-		/* FIXME - what about parameters ? */
+		if (cb_t->callback_param_free && cb_t->param) {
+			cb_t->callback_param_free(cb_t->param);
+			cb_t->param = NULL;
+		}
 		shm_free(cb_t);
 	}
 }
@@ -69,7 +75,7 @@ void destroy_dlg_callbacks(void)
 }
 
 
-int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param )
+int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param, param_free_cb ff )
 {
 	struct dlg_callback *cb;
 
@@ -94,6 +100,7 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param )
 	cb->types = types;
 	cb->callback = f;
 	cb->param = param;
+	cb->callback_param_free = ff;
 
 	if ( types&DLGCB_CREATED ) {
 		cb->next = create_cbs->first;
@@ -116,9 +123,12 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 	if (create_cbs->first==0)
 		return;
 
+	params.msg = msg;
+
 	for ( cb=create_cbs->first; cb; cb=cb->next)  {
 		LM_DBG("dialog=%p\n",dlg);
-		cb->callback( dlg, DLGCB_CREATED, msg, &cb->param );
+		params.param = &cb->param;
+		cb->callback( dlg, DLGCB_CREATED, &params );
 	}
 	return;
 }
@@ -128,13 +138,16 @@ void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg)
 {
 	struct dlg_callback *cb;
 
+	params.msg = msg;
+
 	if (dlg->cbs.first==0 || ((dlg->cbs.types)&type)==0 )
 		return;
 
 	for ( cb=dlg->cbs.first; cb; cb=cb->next)  {
 		if ( (cb->types)&type ) {
 			LM_DBG("dialog=%p, type=%d\n", dlg, type);
-			cb->callback( dlg, type, msg, &cb->param );
+			params.param = &cb->param;
+			cb->callback( dlg, type, &params );
 		}
 	}
 	return;

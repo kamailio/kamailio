@@ -135,14 +135,14 @@ typedef struct sst_msg_info_st {
  */
 #ifdef USE_CONFIRM_CALLBACK
 static void sst_dialog_confirmed_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param);
+		struct dlg_cb_params * params);
 #endif /* USE_CONFIRM_CALLBACK */
 static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param);
+		struct dlg_cb_params * params);
 static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param);
+		struct dlg_cb_params * params);
 static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param);
+		struct dlg_cb_params * params);
 static int send_response(struct sip_msg *request, int code, str *reason,
 		char *header, int header_len);
 static int append_header(struct sip_msg *msg, const char *header);
@@ -245,10 +245,11 @@ void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se,
  *                anything to this callback in the dialog module.
  */
 void sst_dialog_created_CB(struct dlg_cell *did, int type,
-		struct sip_msg* msg, void** param)
+		struct dlg_cb_params * params)
 {
 	sst_info_t *info = NULL;
 	sst_msg_info_t minfo;
+	struct sip_msg* msg = params->msg;
 
 	memset(&minfo, 0, sizeof(sst_msg_info_t));
 	/*
@@ -359,8 +360,10 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
  * Play time. Please ignore this call.
  */
 static void sst_dialog_confirmed_CB(struct dlg_cell *did, int type,
-		struct sip_msg* msg, void** param)
+		struct dlg_cb_params * params)
 {
+	struct sip_msg* msg = params->msg;
+
 	LM_DBG("confirmed dialog CB %p\n", did);
 	DLOGMSG(msg);
 }
@@ -378,7 +381,7 @@ static void sst_dialog_confirmed_CB(struct dlg_cell *did, int type,
  * @param param - Not used
  */
 static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param)
+		struct dlg_cb_params * params)
 {
 	switch (type) {
 		case DLGCB_FAILED:
@@ -398,10 +401,10 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 	/*
 	 * Free the param sst_info_t memory
 	 */
-	if (*param) {
+	if (*(params->param)) {
 		LM_DBG("freeing the sst_info_t from dialog %p\n", did);
-		shm_free(*param);
-		*param = NULL;
+		shm_free(*(params->param));
+		*(params->param) = NULL;
 	}
 	return;
 }
@@ -424,10 +427,11 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
  * @param param - The sst information
  */
 static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param)
+		struct dlg_cb_params * params)
 {
-	sst_info_t *info = (sst_info_t *)*param;
+	sst_info_t *info = (sst_info_t *)*(params->param);
 	sst_msg_info_t minfo = {0,0,0,0};
+	struct sip_msg* msg = params->msg;
 
 	if (msg->first_line.type == SIP_REQUEST) {
 		if ((msg->first_line.u.request.method_value == METHOD_INVITE ||
@@ -492,8 +496,10 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
  * @param param - The sst information
  */
 static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
-		struct sip_msg* msg, void** param) 
+		struct dlg_cb_params * params) 
 {
+	struct sip_msg* msg = params->msg;
+
 	/*
 	 * This test to see if the message is a response sould ALWAYS be
 	 * true. This callback should not get called for requests. But
@@ -501,7 +507,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 	 */
 	if (msg->first_line.type == SIP_REPLY) {
 		sst_msg_info_t minfo = {0,0,0,0};
-		sst_info_t *info = (sst_info_t *)*param;
+		sst_info_t *info = (sst_info_t *)*(params->param);
 
 		LM_DBG("Dialog seen REPLY %d %.*s\n", 
 				msg->first_line.u.reply.statuscode,
@@ -966,18 +972,18 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 #ifdef USE_CONFIRM_CALLBACK
 	LM_DBG("Adding callback DLGCB_CONFIRMED\n");
 	dlg_binds->register_dlgcb(did,
-			DLGCB_CONFIRMED, sst_dialog_confirmed_CB, info);
+			DLGCB_CONFIRMED, sst_dialog_confirmed_CB, info, NULL);
 #endif /* USE_CONFIRM_CALLBACK */
 
 	LM_DBG("Adding callback "
 			"DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED\n");
 	dlg_binds->register_dlgcb(did,
 			DLGCB_FAILED|DLGCB_TERMINATED|DLGCB_EXPIRED,
-			sst_dialog_terminate_CB, info);
+			sst_dialog_terminate_CB, (void *)info, NULL);
 	LM_DBG("Adding callback DLGCB_REQ_WITHIN\n");
 	/* This is for the reINVITE/UPDATE requests */
 	dlg_binds->register_dlgcb(did, DLGCB_REQ_WITHIN,
-			sst_dialog_request_within_CB, info);
+			sst_dialog_request_within_CB, info, NULL);
 	/* 
 	 * This is for the final configuration of who will do SST for
 	 * us. In the DLGCB_CONFIRMED callback the message is
@@ -986,5 +992,5 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 	 */
 	LM_DBG("Adding callback DLGCB_RESPONSE_FWDED\n");
 	dlg_binds->register_dlgcb(did, DLGCB_RESPONSE_FWDED,
-			sst_dialog_response_fwded_CB, info);
+			sst_dialog_response_fwded_CB, info, NULL);
 }

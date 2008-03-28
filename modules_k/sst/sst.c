@@ -190,7 +190,7 @@ static int mod_init(void)
 	}
 
 	/* Load dialog hooks */
-	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL);
+	dialog_st.register_dlgcb(NULL, DLGCB_CREATED, sst_dialog_created_CB, NULL, NULL);
 
 	/*
 	 * We are GOOD-TO-GO.

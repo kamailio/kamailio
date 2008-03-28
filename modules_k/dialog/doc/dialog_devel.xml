@@ -8,7 +8,7 @@
 
 	<section>
 		<title>
-		<function moreinfo="none">register_dlgcb (dialog, type, cb, param)</function>
+		<function moreinfo="none">register_dlgcb (dialog, type, cb, param, free_param_cb)</function>
 		</title>
 		<para>
 		Register a new callback to the dialog.
@@ -62,15 +62,21 @@
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>dialog_cb f</emphasis> - callback function to be 
+			<para><emphasis>dialog_cb cb</emphasis> - callback function to be 
 			called. Prototype is: <quote>void (dialog_cb) 
-			(struct dlg_cell* dlg, int type, struct sip_msg* msg, 
-			void** param);</quote>
+			(struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
+			</quote>
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>void *param</emphasis> - parameter to be passed to
 			the callback function.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>param_free callback_param_free</emphasis> - 
+			callback function to be called to free the param.
+			Prototype is: <quote>void (param_free_cb) (void *param);</quote>
 			</para>
 		</listitem>
 
