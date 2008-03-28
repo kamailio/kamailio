@@ -58,11 +58,11 @@
 		    </listitem>
 		</itemizedlist>
 		<para>
-		    E-mails regarding any stable version should be sent to &serusersmail; and e-mail
-		    regarding development versions or CVS snapshots should be send to &serdevmail;.
+		    E-mails regarding any stable version should be sent to &openserusersmail; and e-mail
+		    regarding development versions or CVS snapshots should be send to &openserdevmail;.
 		</para>
 		<para>
-		    If you want to keep the mail private, send it to &serhelpmail;.
+		    If you want to keep the mail private, send it to &openserhelpmail;.
 		</para>
 	    </answer>
 	</qandaentry>

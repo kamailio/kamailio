@@ -18,7 +18,7 @@ Bogdan-Andre Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
+   Revision $Revision$ $Date: 2008-03-19 22:40:18 +0200
                               (Wed, 19 Mar 2008) $
      __________________________________________________________
 
@@ -641,11 +641,11 @@ Chapter 2. Frequently Asked Questions
            http://openser.org/cgi-bin/mailman/listinfo/devel
 
        E-mails regarding any stable OpenSER release should be sent to
-       <users@openser.org> and e-mails regarding development versions
-       should be sent to <devel@openser.org>.
+       <users@lists.openser.org> and e-mails regarding development
+       versions should be sent to <devel@lists.openser.org>.
 
        If you want to keep the mail private, send it to
-       <team@openser.org>.
+       <team@lists.openser.org>.
 
    2.6.
 

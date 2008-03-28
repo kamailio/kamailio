@@ -59,12 +59,12 @@
 		</itemizedlist>
 		<para>
 			E-mails regarding any stable &openser; release should be sent to 
-			&serusersmail; and e-mails regarding development versions
-			should be sent to &serdevmail;.
+			&openserusersmail; and e-mails regarding development versions
+			should be sent to &openserdevmail;.
 		</para>
 		<para>
 			If you want to keep the mail private, send it to 
-			&serhelpmail;.
+			&openserhelpmail;.
 		</para>
 	    </answer>
 	</qandaentry>
