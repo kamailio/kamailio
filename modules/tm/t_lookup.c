@@ -87,7 +87,9 @@
  * 2006-11-10  a valid msg->hash_index is now marked by FL_HASH_INDEX in 
  *              msg_flags
  *             t_lookupOriginalT computes the hash_index by itself  if 
-*               needed (andrei)
+ *              needed (andrei)
+ * 2008-03-31  message flags are updated in shared memory even if they are set
+ *             after t_newtran() (Miklos)
  */
 
 #include "defs.h"
@@ -1159,6 +1161,13 @@ int t_newtran( struct sip_msg* p_msg )
 		/* ERROR message moved to w_t_newtran */
 		DBG("DEBUG: t_newtran: "
 			"transaction already in process %p\n", T );
+
+		/* t_newtran() has been already called, and the script
+		might changed the flags after it, so we must update the flags
+		in shm memory -- Miklos */
+		if (T->uas.request)
+			T->uas.request->flags = p_msg->flags;
+
 		return E_SCRIPT;
 	}
 
