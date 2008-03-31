@@ -33,6 +33,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#ifdef EXTRA_DEBUG
+#include <assert.h>
+#endif
 #include "../../sr_module.h"
 #include "../../error.h"
 #include "../../lump_struct.h"
@@ -84,7 +87,7 @@ static xl_parse_format_f* xl_parse=NULL;
 static xl_elog_free_all_f* xl_free=NULL;
 static xl_get_nulstr_f* xl_getnul=NULL;
 
-
+static int mod_init();
 static int set_iattr(struct sip_msg* msg, char* p1, char* p2);
 static int set_sattr(struct sip_msg* msg, char* p1, char* p2);
 static int print_attr(struct sip_msg* msg, char* p1, char* p2);
@@ -169,9 +172,9 @@ static param_export_t params[] = {
 struct module_exports exports = {
     "avp",
     cmds,       /* Exported commands */
-    0,		/* RPC */
+    0,          /* RPC */
     params,     /* Exported parameters */
-    0,       	/* module initialization function */
+    mod_init,          /* module initialization function */
     0,          /* response function*/
     0,          /* destroy function */
     0,          /* oncancel function */
@@ -1578,4 +1581,78 @@ static int avpgroup_fixup(void** param, int param_no)
 	return 1;
     }
     return 0;
+}
+
+
+
+static int select_attr_fixup(str* res, select_t* s, struct sip_msg* msg)
+{
+	avp_ident_t *avp_ident;
+
+#define SEL_PARAM_IDX	1
+
+	if (! msg) { /* fixup call */
+		str attr_name;
+		
+		if (s->params[SEL_PARAM_IDX].type != SEL_PARAM_STR) {
+			ERR("attribute name expected.\n");
+			return -1;
+		}
+
+		attr_name = s->params[SEL_PARAM_IDX].v.s;
+		DEBUG("fix up for attribute '%.*s'\n", STR_FMT(&attr_name));
+
+		if (! (avp_ident = pkg_malloc(sizeof(avp_ident_t)))) {
+			ERR("out of mem; requested: %zd.\n", sizeof(avp_ident_t));
+			return -1;
+		}
+		memset(avp_ident, 0, sizeof(avp_ident_t));
+
+		/* skip leading `$' */
+		if ((1 < attr_name.len) && (attr_name.s[0] == '$')) {
+			attr_name.len --;
+			attr_name.s ++;
+		}
+		if (parse_avp_ident(&attr_name, avp_ident) < 0) {
+			ERR("failed to parse attribute name: `%.*s'.\n", STR_FMT(&attr_name));
+			pkg_free(avp_ident);
+		}
+		s->params[SEL_PARAM_IDX].v.p = avp_ident;
+		s->params[SEL_PARAM_IDX].type = SEL_PARAM_PTR;
+	} else { /* run time call */
+		avp_t *ret;
+		avp_value_t val;
+
+#ifdef EXTRA_DEBUG
+		assert(s->params[SEL_PARAM_IDX].type == SEL_PARAM_PTR);
+#endif
+		avp_ident = s->params[SEL_PARAM_IDX].v.p;
+		ret = search_first_avp(avp_ident->flags, avp_ident->name, &val, NULL);
+		if (ret && ret->flags & AVP_VAL_STR)
+			*res = val.s;
+	}
+
+	return 0;
+
+#undef SEL_PARAM_IDX
+}
+
+SELECT_F(select_any_nameaddr)
+ABSTRACT_F(select_attr);
+
+select_row_t sel_declaration[] = {
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("avp"), select_attr, SEL_PARAM_EXPECTED},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("attr"), select_attr, SEL_PARAM_EXPECTED},
+	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("attribute"), select_attr, SEL_PARAM_EXPECTED},
+	{ select_attr, SEL_PARAM_STR, STR_NULL, select_attr_fixup, FIXUP_CALL | CONSUME_NEXT_STR},
+
+	{ select_attr_fixup, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED},
+
+	{ NULL, SEL_PARAM_INT, STR_NULL, NULL, 0}
+};
+
+static int mod_init()
+{
+	DBG("%s - initializing\n", exports.name);
+	return register_select_table(sel_declaration);
 }
