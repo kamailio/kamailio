@@ -350,6 +350,12 @@ static cmd_export_t cmds[]={
 	{"t_unref",            (cmd_function)t_unref,           NO_SCRIPT,   0, 0},
 	{"run_failure_handlers", (cmd_function)run_failure_handlers, NO_SCRIPT,   0, 0},
 	{"cancel_uacs",        (cmd_function)cancel_uacs,       NO_SCRIPT,   0, 0},
+	{"cancel_all_uacs",    (cmd_function)cancel_all_uacs,        NO_SCRIPT,   0, 0},
+#ifdef WITH_AS_SUPPORT
+	{"ack_local_uac",      (cmd_function)ack_local_uac,     NO_SCRIPT,   0, 0},
+	{"t_get_canceled_ident",   (cmd_function)t_get_canceled_ident,  NO_SCRIPT,
+			0, 0},
+#endif
 	{0,0,0,0,0}
 };
 

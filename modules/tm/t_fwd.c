@@ -119,9 +119,6 @@
 #include "../../atomic_ops.h" /* membar_depends() */
 #endif
 
-/* cancel hop by hop */
-#define E2E_CANCEL_HOP_BY_HOP
-
 static int goto_on_branch = 0, branch_route = 0;
 
 void t_on_branch( unsigned int go_to )

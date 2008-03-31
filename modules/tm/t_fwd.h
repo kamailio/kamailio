@@ -41,6 +41,9 @@
 #include "../../proxy.h"
 #include "h_table.h"
 
+/* cancel hop by hop */
+#define E2E_CANCEL_HOP_BY_HOP
+
 enum unmatched_cancel_t { UM_CANCEL_STATEFULL=0, UM_CANCEL_STATELESS,
 							UM_CANCEL_DROP };
 

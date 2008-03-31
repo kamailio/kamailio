@@ -190,6 +190,11 @@ int load_tm( struct tm_binds *tmb)
 		LOG( L_ERR, LOAD_ERROR "'cancel_uacs' not found\n");
 		return -1;
 	}
+	if (! (tmb->cancel_all_uacs=(cancel_all_uacs_f)find_export(
+			"cancel_all_uacs", NO_SCRIPT, 0))) {
+		LOG( L_ERR, LOAD_ERROR "'cancel_all_uacs' not found\n");
+		return -1;
+	}
 
 	tmb->prepare_request_within = prepare_req_within;
 	tmb->send_prepared_request = send_prepared_request;
@@ -198,6 +203,18 @@ int load_tm( struct tm_binds *tmb)
 #ifdef DIALOG_CALLBACKS
 	tmb->register_new_dlg_cb=register_new_dlg_cb;
 	tmb->register_dlg_tmcb=register_dlg_tmcb;
+#endif
+#ifdef WITH_AS_SUPPORT
+	if (! (tmb->ack_local_uac=(ack_local_uac_f)find_export("ack_local_uac",
+			NO_SCRIPT, 0))) {
+		LOG( L_ERR, LOAD_ERROR "'ack_uac' not found\n");
+		return -1;
+	}
+	if (! (tmb->t_get_canceled_ident=(t_get_canceled_ident_f)find_export(
+			"t_get_canceled_ident", NO_SCRIPT, 0))) {
+		LOG( L_ERR, LOAD_ERROR "'t_get_canceled_ident' not found\n");
+		return -1;
+	}
 #endif
 	return 1;
 }

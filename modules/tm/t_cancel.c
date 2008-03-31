@@ -45,6 +45,9 @@
  */
 
 #include <stdio.h> /* for FILE* in fifo_uac_cancel */
+#ifdef EXTRA_DEBUG
+#include <assert.h>
+#endif /* EXTRA_DEBUG */
 
 #include "defs.h"
 #include "config.h"
@@ -106,6 +109,40 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 	return ret;
 }
 
+int cancel_all_uacs(struct cell *trans, int how)
+{
+	branch_bm_t cancel_bm;
+	int i,j;
+
+#ifdef EXTRA_DEBUG
+	assert(trans);
+#endif
+	DBG("Canceling T@%p [%u:%u]\n", trans, trans->hash_index, trans->label);
+	
+	cancel_bm=0;
+	which_cancel(trans, &cancel_bm);
+	 /* tell tm to cancel the call */
+	i=cancel_uacs(trans, cancel_bm, how);
+	
+	if (how & F_CANCEL_UNREF)
+#ifndef TM_DEL_UNREF
+	/* in case of 'too many' _buggy_ invocations, the ref count (a uint) might 
+	 * actually wrap around, possibly leaving the T leaking. */
+#warning "use of F_CANCEL_UNREF flag is unsafe without defining TM_DEL_UNREF"
+#endif
+		UNREF(trans);
+
+	/* count the still active branches */
+	if (! how) {
+		j=0;
+		while(i){
+			j++;
+			i&=i-1;
+		}
+		return j;
+	}
+	return 0;
+}
 
 
 /* should be called directly only if one of the condition bellow is true:

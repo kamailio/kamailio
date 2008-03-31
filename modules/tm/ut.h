@@ -297,21 +297,19 @@ inline static struct dest_info *uri2dst(struct dest_info* dst,
 				return dst; /* found a good one */
 			}
 		}while(dns_srv_handle_next(dns_h, err));
-		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for \"%.*s\" "
-					"af %d\n", host->len, ZSW(host->s), dst->to.s.sa_family);
+		ERR("no corresponding socket for \"%.*s\" af %d\n", host->len, 
+				ZSW(host->s), dst->to.s.sa_family);
 		/* try to continue */
 		return dst;
 	}
 #endif
 	if (sip_hostport2su(&dst->to, host, parsed_uri.port_no, &dst->proto)!=0){
-		LOG(L_ERR, "ERROR: uri2dst: failed to resolve \"%.*s\"\n",
-					host->len, ZSW(host->s));
+		ERR("failed to resolve \"%.*s\"\n", host->len, ZSW(host->s));
 		return 0;
 	}
 	dst->send_sock = get_send_socket(msg, &dst->to, dst->proto);
 	if (dst->send_sock==0) {
-		LOG(L_ERR, "ERROR: uri2sock: no corresponding socket for af %d\n", 
-					dst->to.s.sa_family);
+		ERR("no corresponding socket for af %d\n", dst->to.s.sa_family);
 		/* ser_error = E_NO_SOCKET;*/
 		/* try to continue */
 	}

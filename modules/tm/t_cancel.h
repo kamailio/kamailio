@@ -71,14 +71,17 @@
 									if no provisional response was received;
 									F_CANCEL_B_FORCE_C, F_CANCEL_B_FAKE_REPLY
 									and F_CANCE_B_KILL take precedence */
+#define F_CANCEL_UNREF 16 /* unref the trans after canceling */
 
 
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );
 int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags );
+int cancel_all_uacs(struct cell *trans, int how);
 int cancel_branch( struct cell *t, int branch, int flags );
 
 typedef int(*cancel_uacs_f)( struct cell *t, branch_bm_t cancel_bm,
 								int flags );
+typedef int (*cancel_all_uacs_f)(struct cell *trans, int how);
 
 
 

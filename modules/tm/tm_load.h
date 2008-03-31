@@ -108,6 +108,7 @@ struct tm_binds {
 	tunref_f           t_unref;
 	run_failure_handlers_f run_failure_handlers;
 	cancel_uacs_f      cancel_uacs;
+	cancel_all_uacs_f  cancel_all_uacs;
 	prepare_request_within_f  prepare_request_within;
 	send_prepared_request_f   send_prepared_request;
 	enum route_mode*   route_mode;
@@ -118,6 +119,13 @@ struct tm_binds {
 	void* reserved1; /* make sure the structure has the same size even
 	                    if no dlg callbacks are used/defined*/
 	void* reserved2;
+#endif
+#ifdef WITH_AS_SUPPORT
+	ack_local_uac_f           ack_local_uac;
+	t_get_canceled_ident_f    t_get_canceled_ident;
+#else
+	void* reserved3;
+	void* reserved4;
 #endif
 };
 
