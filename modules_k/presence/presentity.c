@@ -678,6 +678,10 @@ char* extract_sphere(str body)
 	}
 
 	node= xmlNodeGetNodeByName(doc->children, "sphere", "rpid");
+	
+	if(node== NULL)
+		node= xmlNodeGetNodeByName(doc->children, "sphere", "r");
+
 	if(node)
 	{
 		LM_DBG("found sphere definition\n");

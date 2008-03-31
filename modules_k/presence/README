@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
    enabled if the db_url parameter is not set to any value.
 
    The server follows the specifications in: RFC3265, RFC3856,
-   RFC3857, RFC3858.
+   RFC3857, RFC3858, RFC 3903.
 
 1.2. Dependencies
 

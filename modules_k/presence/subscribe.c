@@ -1273,11 +1273,10 @@ void timer_db_update(unsigned int ticks,void *param)
 void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 	int htable_size, int no_lock, handle_expired_func_t handle_expired_func)
 {	
-	db_key_t query_cols[22], update_cols[7], result_cols[6];
+	db_key_t query_cols[22], update_cols[7];
 	db_val_t query_vals[22], update_vals[7];
 	db_op_t update_ops[1];
 	subs_t* del_s;
-
 	int pres_uri_col, to_user_col, to_domain_col, from_user_col, from_domain_col,
 		callid_col, totag_col, fromtag_col, event_col,status_col, event_id_col, 
 		local_cseq_col, remote_cseq_col, expires_col, record_route_col, 
@@ -1422,7 +1421,6 @@ void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 	update_vals[u_version_col].nul = 0;
 	n_update_cols++;
 
-	result_cols[0]= &str_expires_col;
 
 	if(db== NULL)
 	{

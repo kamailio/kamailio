@@ -115,22 +115,22 @@ phtable_t* pres_htable;
 
 static cmd_export_t cmds[]=
 {
-	{"handle_publish", (cmd_function)handle_publish,	     0,	   0,         0, REQUEST_ROUTE},
-	{"handle_publish", (cmd_function)handle_publish,	     1,fixup_presence,0, REQUEST_ROUTE},
-	{"handle_subscribe", (cmd_function)handle_subscribe,	 0,	   0,         0, REQUEST_ROUTE},
-	{"bind_presence", (cmd_function)bind_presence, 1,    0,         0,    0         },
-	{0,						0,				     0,	   0,         0,    0	      }	 
+	{"handle_publish",  (cmd_function)handle_publish,  0,    0,         0, REQUEST_ROUTE},
+	{"handle_publish",  (cmd_function)handle_publish,  1,fixup_presence,0, REQUEST_ROUTE},
+	{"handle_subscribe",(cmd_function)handle_subscribe,0,     0,        0, REQUEST_ROUTE},
+	{"bind_presence", (cmd_function)bind_presence,     1,     0,        0,  0},
+	{0,                     0,                         0,     0,        0,  0}
 };
 
 static param_export_t params[]={
-	{ "db_url",					STR_PARAM, &db_url.s},
-	{ "presentity_table",		STR_PARAM, &presentity_table.s},
-	{ "active_watchers_table", 	STR_PARAM, &active_watchers_table.s},
-	{ "watchers_table",			STR_PARAM, &watchers_table.s},
-	{ "clean_period",			INT_PARAM, &clean_period },
-	{ "to_tag_pref",			STR_PARAM, &to_tag_pref },
-	{ "expires_offset",			INT_PARAM, &expires_offset },
-	{ "max_expires",			INT_PARAM, &max_expires },
+	{ "db_url",                 STR_PARAM, &db_url.s},
+	{ "presentity_table",       STR_PARAM, &presentity_table.s},
+	{ "active_watchers_table",  STR_PARAM, &active_watchers_table.s},
+	{ "watchers_table",         STR_PARAM, &watchers_table.s},
+	{ "clean_period",           INT_PARAM, &clean_period },
+	{ "to_tag_pref",            STR_PARAM, &to_tag_pref },
+	{ "expires_offset",         INT_PARAM, &expires_offset },
+	{ "max_expires",            INT_PARAM, &max_expires },
 	{ "server_address",         STR_PARAM, &server_address.s},
 	{ "subs_htable_size",       INT_PARAM, &shtable_size},
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
@@ -273,7 +273,7 @@ static int mod_init(void)
 	{
 		LM_ERR("initializing event list\n");
 		return -1;
-	}	
+	}
 
 	if(clean_period<=0)
 	{
@@ -314,7 +314,7 @@ static int mod_init(void)
 		LM_ERR("filling in presentity hash table from database\n");
 		return -1;
 	}
-	
+
 	startup_time = (int) time(NULL);
 	
 	register_timer(msg_presentity_clean, 0, clean_period);
@@ -326,7 +326,7 @@ static int mod_init(void)
 	if(pa_db)
 		pa_dbf.close(pa_db);
 	pa_db = NULL;
-	
+
 	return 0;
 }
 
@@ -336,7 +336,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	LM_NOTICE("init_child [%d]  pid [%d]\n", rank, getpid());
-	
+
 	pid = my_pid();
 	
 	if(use_db== 0)
@@ -548,7 +548,7 @@ static struct mi_root* mi_refreshWatchers(struct mi_root* cmd, void* param)
 		result= ev->get_rules_doc(&uri.user,&uri.host,&rules_doc);
 		if(result< 0 || rules_doc==NULL || rules_doc->s== NULL)
 		{
-			LM_ERR( "getting rules doc\n");
+			LM_ERR( "no rules doc found for the user\n");
 			goto error;
 		}
 	
@@ -585,23 +585,112 @@ error:
 	return 0;
 }
 
+
+int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
+        db_val_t* query_vals, int n_query_cols, subs_t** subs_array)
+{
+	db_key_t update_cols[5];
+	db_val_t update_vals[5];
+	int n_update_cols= 0;
+	int u_status_col, u_reason_col, q_wuser_col, q_wdomain_col;
+	int status;
+	query_cols[q_wuser_col=n_query_cols]= &str_watcher_username_col;
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	n_query_cols++;
+
+	query_cols[q_wdomain_col=n_query_cols]= &str_watcher_domain_col;
+	query_vals[n_query_cols].nul= 0;
+	query_vals[n_query_cols].type= DB_STR;
+	n_query_cols++;
+
+	update_cols[u_status_col= n_update_cols]= &str_status_col;
+	update_vals[u_status_col].nul= 0;
+	update_vals[u_status_col].type= DB_INT;
+	n_update_cols++;
+
+	update_cols[u_reason_col= n_update_cols]= &str_reason_col;
+	update_vals[u_reason_col].nul= 0;
+	update_vals[u_reason_col].type= DB_STR;
+	n_update_cols++;
+
+	status= subs.status;
+	if(subs.event->get_auth_status(&subs)< 0)
+	{
+		LM_ERR( "getting status from rules document\n");
+		return -1;
+	}
+	LM_DBG("subs.status= %d\n", subs.status);
+	if(get_status_str(subs.status)== NULL)
+	{
+		LM_ERR("wrong status: %d\n", subs.status);
+		return -1;
+	}
+
+	if(subs.status!= status || reason.len!= subs.reason.len ||
+		(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
+											  reason.len)))
+	{
+		/* update in watchers_table */
+		query_vals[q_wuser_col].val.str_val= subs.from_user; 
+		query_vals[q_wdomain_col].val.str_val= subs.from_domain; 
+
+		update_vals[u_status_col].val.int_val= subs.status;
+		update_vals[u_reason_col].val.str_val= subs.reason;
+		
+		if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
+		{
+			LM_ERR( "in use_table\n");
+			return -1;
+		}
+
+		if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
+					update_vals, n_query_cols, n_update_cols)< 0)
+		{
+			LM_ERR( "in sql update\n");
+			return -1;
+		}
+		/* save in the list all affected dialogs */
+		/* if status switches to terminated -> delete dialog */
+		if(update_pw_dialogs(&subs, subs.db_flag, subs_array)< 0)
+		{
+			LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
+				" [presentity]=%.*s\n",	subs.from_user.len, subs.from_user.s,
+				subs.from_domain.len, subs.from_domain.s, subs.pres_uri.len,
+				subs.pres_uri.s);
+			return -1;
+		}
+	}
+    return 0;
+}
+
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 {
 	subs_t subs;
-	db_key_t query_cols[6], result_cols[5], update_cols[5];
-	db_val_t query_vals[6], update_vals[5];
-	int n_update_cols= 0, n_result_cols= 0, n_query_cols = 0;
+	db_key_t query_cols[6], result_cols[5];
+	db_val_t query_vals[6];
+	int n_result_cols= 0, n_query_cols = 0;
 	db_res_t* result= NULL;
-	db_row_t *row ;	
+	db_row_t *row;
 	db_val_t *row_vals ;
 	int i;
-	str w_user, w_domain, reason;
+	str w_user, w_domain, reason= {0, 0};
 	unsigned int status;
 	int status_col, w_user_col, w_domain_col, reason_col;
-	int u_status_col, u_reason_col, q_wuser_col, q_wdomain_col;
 	subs_t* subs_array= NULL,* s;
 	unsigned int hash_code;
 	int err_ret= -1;
+	int n= 0;
+
+	typedef struct ws
+	{
+		int status;
+		str reason;
+		str w_user;
+		str w_domain;
+	}ws_t;
+	ws_t* ws_list= NULL;
+
 
 	if(ev->content_type.s== NULL)
 	{
@@ -634,17 +723,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	result_cols[reason_col= n_result_cols++]= &str_reason_col;
 	result_cols[w_user_col= n_result_cols++]= &str_watcher_username_col;
 	result_cols[w_domain_col= n_result_cols++]= &str_watcher_domain_col;
-	
-	update_cols[u_status_col= n_update_cols]= &str_status_col;
-	update_vals[u_status_col].nul= 0;
-	update_vals[u_status_col].type= DB_INT;
-	n_update_cols++;
 
-	update_cols[u_reason_col= n_update_cols]= &str_reason_col;
-	update_vals[u_reason_col].nul= 0;
-	update_vals[u_reason_col].type= DB_STR;
-	n_update_cols++;
-	
 	if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
 	{
 		LM_ERR( "in use_table\n");
@@ -666,19 +745,105 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		goto done;
 	}
 
-	query_cols[q_wuser_col=n_query_cols]= &str_watcher_username_col;
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	n_query_cols++;
-
-	query_cols[q_wdomain_col=n_query_cols]= &str_watcher_domain_col;
-	query_vals[n_query_cols].nul= 0;
-	query_vals[n_query_cols].type= DB_STR;
-	n_query_cols++;
-
 	hash_code= core_hash(&pres_uri, &ev->name, shtable_size);
-	lock_get(&subs_htable[hash_code].lock);
+	subs.db_flag= hash_code;
 
+    /*must do a copy as sphere_check requires database queries */
+	if(sphere_enable)
+	{
+        n= result->n;
+		ws_list= (ws_t*)pkg_malloc(n * sizeof(ws_t));
+		if(ws_list== NULL)
+		{
+			LM_ERR("No more memory memory\n");
+			goto done;
+		}
+		memset(ws_list, 0, n * sizeof(ws_t));
+
+		for(i= 0; i< result->n ; i++)
+		{
+			row= &result->rows[i];
+			row_vals = ROW_VALUES(row);
+
+			status= row_vals[status_col].val.int_val;
+	
+			reason.s= (char*)row_vals[reason_col].val.string_val;
+			reason.len= reason.s?strlen(reason.s):0;
+
+			w_user.s= (char*)row_vals[w_user_col].val.string_val;
+			w_user.len= strlen(w_user.s);
+
+			w_domain.s= (char*)row_vals[w_domain_col].val.string_val;
+			w_domain.len= strlen(w_domain.s);
+
+			if(reason.len)
+			{
+				ws_list[i].reason.s = (char*)pkg_malloc(reason.len* sizeof(char));
+				if(ws_list[i].reason.s== NULL)
+				{  
+					LM_ERR("No more memory memory\n");
+					goto done;
+				}
+				memcpy(ws_list[i].reason.s, reason.s, reason.len);
+				ws_list[i].reason.len= reason.len;
+			}
+			else
+				ws_list[i].reason.s= NULL;
+            
+			ws_list[i].w_user.s = (char*)pkg_malloc(w_user.len* sizeof(char));
+			if(ws_list[i].w_user.s== NULL)
+			{
+				LM_ERR("No more memory memory\n");
+				goto done;
+
+			}
+			memcpy(ws_list[i].w_user.s, w_user.s, w_user.len);
+			ws_list[i].w_user.len= w_user.len;
+		
+			 ws_list[i].w_domain.s = (char*)pkg_malloc(w_domain.len* sizeof(char));
+			if(ws_list[i].w_domain.s== NULL)
+			{
+				LM_ERR("No more memory memory\n");
+				goto done;
+			}
+			memcpy(ws_list[i].w_domain.s, w_domain.s, w_domain.len);
+			ws_list[i].w_domain.len= w_domain.len;
+			
+			ws_list[i].status= status;
+		}
+
+		pa_dbf.free_result(pa_db, result);
+		result= NULL;
+
+		for(i=0; i< n; i++)
+		{
+			subs.from_user = ws_list[i].w_user;
+			subs.from_domain = ws_list[i].w_domain;
+			subs.status = ws_list[i].status;
+			memset(&subs.reason, 0, sizeof(str));
+
+			if( pres_update_status(subs, reason, query_cols, query_vals,
+					n_query_cols, &subs_array)< 0)
+			{
+				LM_ERR("failed to update watcher status\n");
+				goto done;
+			}
+
+		}
+        
+		for(i=0; i< n; i++)
+		{
+			pkg_free(ws_list[i].w_user.s);
+			pkg_free(ws_list[i].w_domain.s);
+			if(ws_list[i].reason.s)
+				pkg_free(ws_list[i].reason.s);
+		}
+		ws_list= NULL;
+
+		goto send_notify;
+
+	}
+	
 	for(i = 0; i< result->n; i++)
 	{
 		row= &result->rows[i];
@@ -697,61 +862,21 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 
 		subs.from_user= w_user;
 		subs.from_domain= w_domain;
+		subs.status= status;
 		memset(&subs.reason, 0, sizeof(str));
-		if(ev->get_auth_status(&subs)< 0)
+
+		if( pres_update_status(subs,reason, query_cols, query_vals,
+					n_query_cols, &subs_array)< 0)
 		{
-			LM_ERR( "getting status from rules document\n");
-			lock_release(&subs_htable[hash_code].lock);
+			LM_ERR("failed to update watcher status\n");
 			goto done;
 		}
-		LM_DBG("subs.status= %d\n", subs.status);
-		if(get_status_str(subs.status)== NULL)
-		{
-			LM_ERR("wrong status: %d\n", subs.status);
-			lock_release(&subs_htable[hash_code].lock);
-			goto done;
-		}
-		if(subs.status!= status || reason.len!= subs.reason.len ||
-			(reason.s && subs.reason.s && strncmp(reason.s, subs.reason.s,
-												  reason.len)))
-		{
-			/* update in watchers_table */
-			query_vals[q_wuser_col].val.str_val= w_user; 
-			query_vals[q_wdomain_col].val.str_val= w_domain; 
-
-			update_vals[u_status_col].val.int_val= subs.status;
-			update_vals[u_reason_col].val.str_val= subs.reason;
-			
-			if (pa_dbf.use_table(pa_db, &watchers_table) < 0) 
-			{
-				LM_ERR( "in use_table\n");
-				lock_release(&subs_htable[hash_code].lock);
-				goto done;
-			}
-
-			if(pa_dbf.update(pa_db, query_cols, 0, query_vals, update_cols,
-						update_vals, n_query_cols, n_update_cols)< 0)
-			{
-				LM_ERR( "in sql update\n");
-				lock_release(&subs_htable[hash_code].lock);
-				goto done;
-			}
-			/* save in the list all affected dialogs */
-			/* if status switches to terminated -> delete dialog */
-			if(update_pw_dialogs(&subs, hash_code, &subs_array)< 0)
-			{
-				LM_ERR( "extracting dialogs from [watcher]=%.*s@%.*s to"
-					" [presentity]=%.*s\n",	w_user.len, w_user.s, w_domain.len,
-					w_domain.s, pres_uri.len, pres_uri.s);
-				lock_release(&subs_htable[hash_code].lock);
-				goto done;
-			}
-		 }
-			
-	}
-	lock_release(&subs_htable[hash_code].lock);
+}
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
+
+send_notify:
+
 	s= subs_array;
 
 	while(s)
@@ -763,7 +888,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		}
 		s= s->next;
 	}
-	
+
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
 	return 0;
 
@@ -771,6 +896,20 @@ done:
 	if(result)
 		pa_dbf.free_result(pa_db, result);
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
+	if(ws_list)
+	{
+		for(i= 0; i< n; i++)
+		{
+			if(ws_list[i].w_user.s)
+				pkg_free(ws_list[i].w_user.s);
+			else
+				break;
+			if(ws_list[i].w_domain.s)
+				pkg_free(ws_list[i].w_domain.s);
+			if(ws_list[i].reason.s)
+				pkg_free(ws_list[i].reason.s);
+		}
+	}
 	return err_ret;
 }
 
@@ -779,7 +918,9 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 	subs_t* s, *ps, *cs;
 	int i= 0;
 
-	ps= subs_htable[hash_code].entries;
+	lock_get(&subs_htable[hash_code].lock);
+	
+    ps= subs_htable[hash_code].entries;
 	
 	while(ps && ps->next)
 	{
@@ -801,7 +942,8 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			if(cs== NULL)
 			{
 				LM_ERR( "copying subs_t stucture\n");
-				return -1;
+                lock_release(&subs_htable[hash_code].lock);
+                return -1;
 			}
 			cs->expires-= (int)time(NULL);
 			cs->next= (*subs_array);
@@ -820,7 +962,9 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 		else
 			ps= ps->next;
 	}
-	LM_DBG("found %d matching dialogs\n", i);
-
-	return 0;
+	
+    LM_DBG("found %d matching dialogs\n", i);
+    lock_release(&subs_htable[hash_code].lock);
+	
+    return 0;
 }

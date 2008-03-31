@@ -958,7 +958,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	result_cols[from_domain_col=n_result_cols++]  =   &str_watcher_domain_col;
 	result_cols[event_id_col=n_result_cols++]     =   &str_event_id_col;
 	result_cols[from_tag_col=n_result_cols++]     =   &str_from_tag_col;
-	result_cols[to_tag_col=n_result_cols++]       =   &str_to_tag_col;	
+	result_cols[to_tag_col=n_result_cols++]       =   &str_to_tag_col;
 	result_cols[callid_col=n_result_cols++]       =   &str_callid_col;
 	result_cols[cseq_col=n_result_cols++]         =   &str_local_cseq_col;
 	result_cols[record_route_col=n_result_cols++] =   &str_record_route_col;
@@ -1006,7 +1006,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 
 		s.pres_uri= *pres_uri;
 		s.to_user.s= (char*)row_vals[to_user_col].val.string_val;
-		s.to_user.len= 	strlen(s.to_user.s);
+		s.to_user.len= strlen(s.to_user.s);
 		
 		s.to_domain.s= (char*)row_vals[to_domain_col].val.string_val;
 		s.to_domain.len= strlen(s.to_domain.s);
@@ -1059,7 +1059,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		}
 		s_new->next= (*s_array);
 		(*s_array)= s_new;
-		printf_subs(s_new);	
+		printf_subs(s_new);
 		inc++;
 		
 	}
@@ -1335,7 +1335,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
     /* getting the status of the subscription */
 
 	if(force_null_body)
-	{	
+	{
 		goto jump_over_body;
 	}
 
@@ -1398,9 +1398,9 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 						xmlFree(notify_body->s);
 						pkg_free(notify_body);
 						notify_body= final_body;
-					}	
-				}	
-			}		
+					}
+				}
+			}
 		}
 	}
 	
