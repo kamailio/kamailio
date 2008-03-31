@@ -254,7 +254,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 		goto err1;
 	}
 
-	pkg_free(dialog_info);
+	free_tm_dlg(dialog_info);
 	pkg_free(str_hdr.s);
 
 	LM_DBG("bye sent to %s\n", (dir==0)?"caller":"callee");

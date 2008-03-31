@@ -37,7 +37,8 @@ struct dlg_cb_params {
 };
 
 /* callback function prototype */
-typedef void (dialog_cb) (struct dlg_cell* dlg, int type, struct dlg_cb_params * params);
+typedef void (dialog_cb) (struct dlg_cell* dlg, int type, 
+		struct dlg_cb_params * params);
 /* function to free the callback param */
 typedef void (param_free_cb) (void *param);
 /* register callback function prototype */
