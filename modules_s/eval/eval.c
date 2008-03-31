@@ -1826,7 +1826,7 @@ static int eval_while_fixup(void **param, int param_no) {
 			return E_CFG;
 		}
 		pkg_free(*param);
-		*param=(void*) (unsigned int) n;
+		*param=(void*) (intptr_t) n;
 	}
 	return 0;
 }
@@ -1853,17 +1853,17 @@ static int eval_while_func(struct sip_msg *msg, char *route_no, char *param2) {
 		pivot = find_stack_item(idx);
 		if (!pivot) break;
 		if (get_as_bool(&pivot->value) <= 0) break;
-		if ((int)route_no >= main_rt.idx) {
-			BUG("invalid routing table number #%d of %d\n", (int) route_no, main_rt.idx);
+		if ((intptr_t)route_no >= main_rt.idx) {
+			BUG("invalid routing table number #%d of %d\n", (int)(intptr_t) route_no, main_rt.idx);
 			return -1;
 		}
-		if (!main_rt.rlist[(int) route_no]) {
-			WARN(MODULE_NAME": route not declared (hash:%d)\n", (int) route_no);
+		if (!main_rt.rlist[(intptr_t) route_no]) {
+			WARN(MODULE_NAME": route not declared (hash:%d)\n", (int)(intptr_t) route_no);
 			return -1;
 		}
 		/* exec the routing script */
 		init_run_actions_ctx(&ra_ctx);
-		ret = run_actions(&ra_ctx, main_rt.rlist[(int) route_no], msg);
+		ret = run_actions(&ra_ctx, main_rt.rlist[(intptr_t) route_no], msg);
 		if (ret <= 0) break;
 	}
 	return ret;
@@ -1886,17 +1886,17 @@ static int eval_while_stack_func(struct sip_msg *msg, char *route_no, char *para
 	}
 	ret = -1;
 	while ((count >= 0 && stack_no > count) || (count < 0 && stack_no < -count)) {
-		if ((int)route_no >= main_rt.idx) {
-			BUG("invalid routing table number #%d of %d\n", (int) route_no, main_rt.idx);
+		if ((intptr_t)route_no >= main_rt.idx) {
+			BUG("invalid routing table number #%d of %d\n", (int)(intptr_t) route_no, main_rt.idx);
 			return -1;
 		}
-		if (!main_rt.rlist[(int) route_no]) {
-			WARN(MODULE_NAME": route not declared (hash:%d)\n", (int) route_no);
+		if (!main_rt.rlist[(intptr_t) route_no]) {
+			WARN(MODULE_NAME": route not declared (hash:%d)\n", (int)(intptr_t) route_no);
 			return -1;
 		}
 		/* exec the routing script */
 		init_run_actions_ctx(&ra_ctx);
-		ret = run_actions(&ra_ctx, main_rt.rlist[(int) route_no], msg);
+		ret = run_actions(&ra_ctx, main_rt.rlist[(intptr_t) route_no], msg);
 		if (ret <= 0) break;
 	}
 	return ret;
