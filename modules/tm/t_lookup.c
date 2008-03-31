@@ -99,6 +99,8 @@
  * 2007-06-06  switched tm bucket list to a simpler and faster clist;
  * 2008-02-28  try matching e2e acks in t_lookup() only for transactions
  *               which have E2EACK callbacks registered (andrei)
+ * 2008-03-31  message flags are updated in shared memory even if they are set
+ *             after t_newtran() (Miklos)
  */
 
 #include "defs.h"
@@ -1297,6 +1299,13 @@ int t_newtran( struct sip_msg* p_msg )
 		/* ERROR message moved to w_t_newtran */
 		DBG("DEBUG: t_newtran: "
 			"transaction already in process %p\n", T );
+
+		/* t_newtran() has been already called, and the script
+		might changed the flags after it, so we must update the flags
+		in shm memory -- Miklos */
+		if (T->uas.request)
+			T->uas.request->flags = p_msg->flags;
+
 		return E_SCRIPT;
 	}
 
