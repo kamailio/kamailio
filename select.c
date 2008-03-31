@@ -134,12 +134,12 @@ int w_parse_select(char**p, select_t* sel)
 		(*p)++;
 	};
 	if (sel->n==0) {
-		ERR("parse_select: invalid select '%.*s'\n", *p - select_name, select_name);
+		ERR("parse_select: invalid select '%.*s'\n", (int)(*p - select_name), select_name);
 		goto error;
 	};
 	DBG("parse_select: end, total elements: %d, calling resolve_select\n", sel->n);
 	if (resolve_select(sel)<0) {
-		ERR("parse_select: error while resolve_select '%.*s'\n", *p - select_name, select_name);
+		ERR("parse_select: error while resolve_select '%.*s'\n", (int)(*p - select_name), select_name);
 		goto error;
 	}
 	return 0;

@@ -103,7 +103,8 @@ typedef struct _str str;
  * more details.
  */
 #define STR_FMT(_pstr_)	\
-  ((_pstr_) ? (_pstr_)->len : 0), ((_pstr_) ? (_pstr_)->s : "")
+  ((_pstr_ != (str *)0) ? (_pstr_)->len : 0), \
+  ((_pstr_ != (str *)0) ? (_pstr_)->s : "")
 
 
 /** Compares two ::str strings.
