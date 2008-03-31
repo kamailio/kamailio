@@ -89,7 +89,7 @@ static db_func_t dialog_dbf;
 		if (VAL_NULL((_values)+ (_index))) { \
 			if (_not_null) {\
 				if (_unref) unref_dlg(dlg,1);\
-				continue; \
+				goto next_dialog; \
 			} else { \
 				(_res).s = 0; \
 				(_res).len = 0; \
@@ -273,13 +273,15 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 
 		if (VAL_NULL(values) || VAL_NULL(values+1)) {
 			LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
-				h_entry_column.len, h_entry_column.s, h_id_column.len, h_id_column.s);
+				h_entry_column.len, h_entry_column.s,
+				h_id_column.len, h_id_column.s);
 			continue;
 		}
 
 		if (VAL_NULL(values+7) || VAL_NULL(values+8)) {
 			LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
-				start_time_column.len, start_time_column.s, state_column.len, state_column.s);
+				start_time_column.len, start_time_column.s,
+				state_column.len, state_column.s);
 			continue;
 		}
 
@@ -297,8 +299,8 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 		if(dlg->h_entry != VAL_INT(values)){
 			LM_ERR("inconsistent hash data in the dialog database: "
 				"you may have restarted openser using a different hash_size:"
-				"please erase %.*s database and restart\n", dialog_table_name.len,
-				dialog_table_name.s);
+				"please erase %.*s database and restart\n", 
+				dialog_table_name.len, dialog_table_name.s);
 			shm_free(dlg);
 			goto error;
 		}
@@ -347,6 +349,8 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 	
 		dlg->lifetime = 0;
 		dlg->flags = 0;
+next_dialog:
+		;
 	}
 
 end:
