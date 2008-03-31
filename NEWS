@@ -136,6 +136,9 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  loadpath = <modules path> - directory where to load the modules from (-L
+     equivalent); modules can be loaded simply by specifying their name
+     (loadmodule "maxfwd")
   tcp_fd_cache = yes | no (default yes) - if enabled FDs used for sending
      will be cached inside the process calling tcp_send (performance increase
      for sending over tcp at the cost of slightly slower connection closing and

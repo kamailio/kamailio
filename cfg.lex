@@ -346,6 +346,7 @@ STUN_ALLOW_FP "stun_allow_fp"
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
+LOADPATH	loadpath
 MODPARAM        modparam
 
 /* values */
@@ -653,6 +654,7 @@ EAT_ABLE	[\ \t\b\r]
 									return KILL_TIMEOUT; }
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
+<INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
 <INITIAL>{MODPARAM}     { count(); yylval.strval=yytext; return MODPARAM; }
 
 <INITIAL>{STUN_REFRESH_INTERVAL} { count(); yylval.strval=yytext; return STUN_REFRESH_INTERVAL;}

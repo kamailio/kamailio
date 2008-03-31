@@ -321,6 +321,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token SERVER_SIGNATURE
 %token REPLY_TO_VIA
 %token LOADMODULE
+%token LOADPATH
 %token MODPARAM
 %token MAXBUFFER
 %token USER
@@ -1145,6 +1146,12 @@ module_stm:
 			}
 	}
 	| LOADMODULE error	{ yyerror("string expected"); }
+	| LOADPATH STRING {
+		DBG("loading modules under %s\n", $2);
+		printf("loading modules under %s\n", $2);
+		mods_dir = $2;
+	}
+	| LOADPATH error	{ yyerror("string expected"); }
 	| MODPARAM LPAREN STRING COMMA STRING COMMA STRING RPAREN {
 		if (set_mod_param_regex($3, $5, PARAM_STRING, $7) != 0) {
 			 yyerror("Can't set module parameter");
