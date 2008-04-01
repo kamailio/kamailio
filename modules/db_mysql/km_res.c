@@ -87,34 +87,40 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 			case MYSQL_TYPE_DECIMAL:
 			case MYSQL_TYPE_NEWDECIMAL:
 			case MYSQL_TYPE_TIMESTAMP:
+				LM_DBG("use DB_INT result type");
 				RES_TYPES(_r)[col] = DB_INT;
 				break;
 
 			case MYSQL_TYPE_FLOAT:
 			case MYSQL_TYPE_DOUBLE:
+				LM_DBG("use DB_DOUBLE result type");
 				RES_TYPES(_r)[col] = DB_DOUBLE;
 				break;
 
 			case MYSQL_TYPE_DATETIME:
+				LM_DBG("use DB_DATETIME result type");
 				RES_TYPES(_r)[col] = DB_DATETIME;
 				break;
 
 			case MYSQL_TYPE_BLOB:
+				LM_DBG("use DB_BLOB result type");
 				RES_TYPES(_r)[col] = DB_BLOB;
 				break;
 
 			case FIELD_TYPE_SET:
+				LM_DBG("use DB_BITMAP result type");
 				RES_TYPES(_r)[col] = DB_BITMAP;
 				break;
 
 			case MYSQL_TYPE_STRING:
 			case MYSQL_TYPE_VAR_STRING:
+				LM_DBG("use DB_STRING result type");
 				RES_TYPES(_r)[col] = DB_STRING;
 				break;
 
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use STRING as default\n", RES_NAMES(_r)[col]->len,
+						"use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, fields[col].type);
 				RES_TYPES(_r)[col] = DB_STRING;
 				break;
