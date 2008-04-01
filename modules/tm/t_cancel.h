@@ -42,6 +42,7 @@
 #include "../../rpc.h"
 #include "../../atomic_ops.h"
 #include "defs.h"
+#include "h_table.h"
 
 
 /* a buffer is empty but cannot be used by anyone else;
