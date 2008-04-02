@@ -31,6 +31,7 @@
 #include "../../parser/msg_parser.h"
 
 typedef int (*item_func_t) (struct sip_msg*, str*, str*, int, int);
+typedef void (*item_free_t) (str*);
 
 typedef struct _xl_elog
 {
@@ -39,6 +40,7 @@ typedef struct _xl_elog
 	int hindex;
 	int hflags;
 	item_func_t itf;
+	item_free_t free_f;
 	struct _xl_elog *next;
 } xl_elog_t, *xl_elog_p;
 

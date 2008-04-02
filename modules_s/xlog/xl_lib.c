@@ -929,6 +929,12 @@ static int xl_get_select(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 	return i;
 }
 
+static void xl_free_select(str *hp)
+{
+	if (hp && hp->s)
+		free_select((select_t*)hp->s);
+}
+
 static int xl_get_avp(struct sip_msg *msg, str *res, str *hp, int hi, int hf)
 {
 	int_str name, val;
@@ -1507,6 +1513,7 @@ int xl_parse_format(char *s, xl_elog_p *el)
 				}
 				e->itf = xl_get_select;
 				e->hparam.s = (char*)sel;
+				e->free_f = xl_free_select;
 				p--;
 				break;
 			case '%':
@@ -1624,6 +1631,8 @@ int xl_elog_free_all(xl_elog_p log)
 	{
 		t = log;
 		log = log->next;
+		if (t->free_f)
+			(*t->free_f)(&(t->hparam));
 		pkg_free(t);
 	}
 	return 0;
