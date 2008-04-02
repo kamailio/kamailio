@@ -1,6 +1,6 @@
 %define name    ser
 %define ver     2.0.0
-%define rel     rc6
+%define rel     rc7
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd
 %define MYSQL_MODULES		mysql
@@ -225,9 +225,7 @@ fi
 %{_libdir}/ser/modules/xlog.so
 
 %{_sbindir}/ser
-%{_sbindir}/serctl
 %{_sbindir}/sercmd
-%{_sbindir}/serunix
 
 %{_sbindir}/gen_ha1
 
