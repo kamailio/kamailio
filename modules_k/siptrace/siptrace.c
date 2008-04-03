@@ -68,7 +68,7 @@ static struct mi_root* sip_trace_mi(struct mi_root* cmd, void* param );
 
 static str db_url             = str_init(DEFAULT_RODB_URL);
 static str siptrace_table     = str_init("sip_trace");
-static str date_column        = str_init("date");        /* 00 */
+static str date_column        = str_init("time_stamp");  /* 00 */
 static str callid_column      = str_init("callid");      /* 01 */
 static str traced_user_column = str_init("traced_user"); /* 02 */
 static str msg_column         = str_init("msg");         /* 03 */

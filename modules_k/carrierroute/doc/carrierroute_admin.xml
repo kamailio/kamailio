@@ -343,14 +343,14 @@ modparam("carrierroute", "strip_column", "strip")
 	    </para>
 	    <para>
 		    <emphasis>
-			    Default value is <quote>comment</quote>.
+			    Default value is <quote>description</quote>.
 		    </emphasis>
 	    </para>
 	    <example>
 		    <title>Set <varname>comment_column</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "comment_column", "comment")
+modparam("carrierroute", "comment_column", "description")
 ...
 		    </programlisting>
 	    </example>
@@ -864,14 +864,14 @@ modparam("carrierroute", "failure_next_domain_column", "next_domain")
 	    </para>
 	    <para>
 		    <emphasis>
-          Default value is <quote>comment</quote>.
+          Default value is <quote>description</quote>.
 		    </emphasis>
 	    </para>
 	    <example>
         <title>Set <varname>failure_comment_column</varname> parameter</title>
 		    <programlisting format="linespecific">
 ...
-modparam("carrierroute", "failure_comment_column", "comment")
+modparam("carrierroute", "failure_comment_column", "description")
 ...
 		    </programlisting>
 	    </example>

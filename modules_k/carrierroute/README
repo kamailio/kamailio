@@ -382,11 +382,11 @@ modparam("carrierroute", "strip_column", "strip")
    large routing tables) The comment is also displayed by the fifo
    cmd "cr_dump_routes".
 
-   Default value is "comment".
+   Default value is "description".
 
    Example 1.12. Set comment_column parameter
 ...
-modparam("carrierroute", "comment_column", "comment")
+modparam("carrierroute", "comment_column", "description")
 ...
 
 1.3.13. carrier_table (string)
@@ -683,11 +683,11 @@ modparam("carrierroute", "failure_next_domain_column", "next_domain")
 
    Name of the column containing an optional comment.
 
-   Default value is "comment".
+   Default value is "description".
 
    Example 1.37. Set failure_comment_column parameter
 ...
-modparam("carrierroute", "failure_comment_column", "comment")
+modparam("carrierroute", "failure_comment_column", "description")
 ...
 
 1.4. Exported Functions
