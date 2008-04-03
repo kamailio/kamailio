@@ -60,7 +60,7 @@
     </column>
 
     <column>
-        <name>comment</name>
+        <name>description</name>
         <type>string</type>
         <size>&rule_len;</size>
         <description>Comment about the rule</description>

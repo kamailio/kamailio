@@ -93,7 +93,7 @@
 		  </column>
 		  
 		  <column>
-			  <name>comment</name>
+			  <name>description</name>
 			  <type>string</type>
 			  <size>&hf_len;</size>
 			  <null/>

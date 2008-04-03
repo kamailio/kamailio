@@ -9,7 +9,7 @@
 
 <table id="sip_trace" xmlns:db="http://docbook.org/ns/docbook">
     <name>sip_trace</name>
-    <version>1</version>
+    <version>2</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
         <db:para>This table is used to store incoming/outgoing SIP messages in database. More informations can be found in the siptrace module documentation at: &OPENSER_MOD_DOC;siptrace.html.
@@ -27,8 +27,8 @@
         <description>unique ID</description>
     </column>
 
-    <column id="date">
-        <name>date</name>
+    <column id="time_stamp">
+        <name>time_stamp</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
         <description>Recording date</description>
@@ -112,7 +112,7 @@
 
     <index>
         <name>date_idx</name>
-        <colref linkend="date"/>
+        <colref linkend="time_stamp"/>
     </index>
 
     <index>

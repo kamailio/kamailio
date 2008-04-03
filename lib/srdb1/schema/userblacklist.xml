@@ -60,7 +60,7 @@
     </column>
 
      <column>
-        <name>comment</name>
+        <name>description</name>
         <type>string</type>
         <size>&user_len;</size>
         <default/>
