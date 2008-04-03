@@ -1,1 +1,1 @@
-id(int,auto) prefix(string) whitelist(int) comment(string) 
+id(int,auto) prefix(string) whitelist(int) description(string) 

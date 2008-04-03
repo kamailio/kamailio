@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) prefix(str) whitelist(int) comment(str)
+id(int) prefix(str) whitelist(int) description(str)
 METADATA_KEY
 
 METADATA_READONLY

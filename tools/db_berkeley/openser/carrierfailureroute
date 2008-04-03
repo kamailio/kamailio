@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) carrier(int) domain(str) scan_prefix(str) host_name(str) reply_code(str) flags(int) mask(int) next_domain(str) comment(str)
+id(int) carrier(int) domain(str) scan_prefix(str) host_name(str) reply_code(str) flags(int) mask(int) next_domain(str) description(str)
 METADATA_KEY
 1 
 METADATA_READONLY

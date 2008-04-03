@@ -5,7 +5,7 @@ CREATE TABLE domainpolicy (
     type VARCHAR(255) NOT NULL,
     att VARCHAR(255),
     val VARCHAR(128),
-    comment VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
     CONSTRAINT domainpolicy_rav_idx UNIQUE (rule, att, val)
 );
 

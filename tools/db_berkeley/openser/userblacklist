@@ -1,5 +1,5 @@
 METADATA_COLUMNS
-id(int) username(str) domain(str) prefix(str) whitelist(int) comment(str)
+id(int) username(str) domain(str) prefix(str) whitelist(int) description(str)
 METADATA_KEY
 
 METADATA_READONLY

@@ -1,7 +1,7 @@
-INSERT INTO version (table_name, table_version) values ('sip_trace','1');
+INSERT INTO version (table_name, table_version) values ('sip_trace','2');
 CREATE TABLE sip_trace (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    date DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
+    time_stamp DATETIME NOT NULL DEFAULT '1900-01-01 00:00:01',
     callid VARCHAR(255) NOT NULL DEFAULT '',
     traced_user VARCHAR(128) NOT NULL DEFAULT '',
     msg TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE sip_trace (
     fromtag VARCHAR(64) NOT NULL DEFAULT '',
     direction VARCHAR(4) NOT NULL DEFAULT '',
     KEY traced_user_idx (traced_user),
-    KEY date_idx (date),
+    KEY date_idx (time_stamp),
     KEY fromip_idx (fromip),
     KEY callid_idx (callid)
 ) ENGINE=MyISAM;

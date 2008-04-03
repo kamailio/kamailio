@@ -11,7 +11,7 @@ CREATE TABLE carrierroute (
     rewrite_host VARCHAR(128) NOT NULL DEFAULT '',
     rewrite_prefix VARCHAR(64) NOT NULL DEFAULT '',
     rewrite_suffix VARCHAR(64) NOT NULL DEFAULT '',
-    comment VARCHAR(255) DEFAULT NULL
+    description VARCHAR(255) DEFAULT NULL
 );
 
 INSERT INTO version (table_name, table_version) values ('carrierfailureroute','1');
@@ -25,7 +25,7 @@ CREATE TABLE carrierfailureroute (
     flags INTEGER NOT NULL DEFAULT 0,
     mask INTEGER NOT NULL DEFAULT 0,
     next_domain VARCHAR(64) NOT NULL DEFAULT '',
-    comment VARCHAR(255) DEFAULT NULL
+    description VARCHAR(255) DEFAULT NULL
 );
 
 INSERT INTO version (table_name, table_version) values ('route_tree','1');
