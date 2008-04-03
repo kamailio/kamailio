@@ -61,7 +61,7 @@ static str rewrite_host_col = str_init("rewrite_host");
 static str strip_col = str_init("strip");
 static str rewrite_prefix_col = str_init("rewrite_prefix");
 static str rewrite_suffix_col = str_init("rewrite_suffix");
-static str comment_col = str_init("comment");
+static str comment_col = str_init("description");
 static str username_col = str_init("username");
 static str cr_preferred_carrier_col = str_init("cr_preferred_carrier");
 static str subscriber_domain_col = str_init("domain");
@@ -76,7 +76,7 @@ static str failure_reply_code_col = str_init("reply_code");
 static str failure_flags_col = str_init("flags");
 static str failure_mask_col = str_init("mask");
 static str failure_next_domain_col = str_init("next_domain");
-static str failure_comment_col = str_init("comment");
+static str failure_comment_col = str_init("description");
 
 
 str * columns[COLUMN_NUM] = {
