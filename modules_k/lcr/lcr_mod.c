@@ -76,7 +76,6 @@ MODULE_VERSION
 #define Q_FLAG      (1<<2)
 
 static void destroy(void);       /* Module destroy function */
-static int child_init(int rank); /* Per-child initialization function */
 static int mi_child_init(void);
 static int mod_init(void);       /* Module initialization function */
 static int fixstringloadgws(void **param, int param_count);
@@ -354,7 +353,7 @@ struct module_exports exports = {
 	mod_init,  /* module initialization function */
 	0,         /* response function */
 	destroy,   /* destroy function */
-	child_init /* child initialization function */
+	0          /* child initialization function */
 };
 
 
@@ -418,24 +417,6 @@ static int lcr_db_ver(const str* db_url, str* name)
 	ver=db_table_version(&lcr_dbf, dbh, name);
 	lcr_dbf.close(dbh);
 	return ver;
-}
-
-
-/*
- * Module initialization function callee in each child separately
- */
-static int child_init(int rank)
-{
-    /* don't do anything for non-worker process */
-    if (rank<1)
-	return 0;
-
-    if (lcr_db_init(&db_url) < 0) {
-	LM_ERR("Unable to connect to database\n");
-	return -1;
-    }
-
-    return 0;
 }
 
 
