@@ -359,7 +359,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	}
 
 #ifdef EXTRA_DEBUG
-	LM_ERR("load start time [%d]\n", (int)time(NULL));
+	LM_NOTICE("load start time [%d]\n", (int)time(NULL));
 #endif
 
 	if (DB_CAPABILITY(ul_dbf, DB_CAP_FETCH)) {
@@ -462,7 +462,7 @@ int preload_udomain(db_con_t* _c, udomain_t* _d)
 	ul_dbf.free_result(_c, res);
 
 #ifdef EXTRA_DEBUG
-	LM_ERR("load end time [%d]\n", (int)time(NULL));
+	LM_NOTICE("load end time [%d]\n", (int)time(NULL));
 #endif
 
 	return 0;
