@@ -392,7 +392,7 @@ $ACL_GROUP_COLUMN,$ACL_MODIFIED_COLUMN,$ACL_DOMAIN_COLUMN ) values \
 
 			QUERY="delete from $ACL_TABLE where \
 $ACL_TABLE.$ACL_USER_COLUMN='$OSERUSER' AND $ACL_DOMAIN_COLUMN='$OSERDOMAIN' \
-$CLAUSE"
+$CLAUSE;"
 			$DBCMD "$QUERY"
 
 			$0 acl show "$2"
@@ -2315,13 +2315,13 @@ WHERE $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 
 			# destroy db-aliases
 			QUERY="delete from $DA_TABLE where $DA_USER_COLUMN='$OSERUSER' \
-and $DA_DOMAIN_COLUMN='$OSERDOMAIN'"
+and $DA_DOMAIN_COLUMN='$OSERDOMAIN';"
 			$DBCMD "$QUERY"
 
 
 			# destroy the user now
 			QUERY="delete from $SUB_TABLE where $SUBSCRIBER_COLUMN='$OSERUSER' \
-and $REALM_COLUMN='$OSERDOMAIN'"
+and $REALM_COLUMN='$OSERDOMAIN';"
 			$DBCMD "$QUERY"
 
 			# and also all his contacts
