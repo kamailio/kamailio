@@ -175,6 +175,11 @@ int register_select_table(select_row_t *table);
  */
 int parse_select (char** p, select_t** s);
 
+/**
+ * Frees the select obtained with parse_select().
+ */
+void free_select(select_t *s);
+
 /*
  * Select parser, result is stored in SHARED memory
  * 
