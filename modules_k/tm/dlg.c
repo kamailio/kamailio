@@ -23,6 +23,8 @@
  * -------
  * 2003-03-29 Created by janakj
  * 2003-07-08 added wrapper to calculate_hooks, needed by b2bua (dcm)
+ * 2008-04-04 added support for local and remote dispaly name in TM dialogs
+ *            (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
  */
 
 
@@ -176,6 +178,27 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 		return -2;
 	}
 	
+	return 0;
+}
+
+
+/*
+ * Store display names into a dialog
+ */
+
+int dlg_add_extra(dlg_t* _d, str* _ldname, str* _rdname)
+{
+	if(!_d || !_ldname || !_rdname)
+	{
+		LM_ERR("Invalid parameters\n");
+		return -1;
+	}
+
+ 	/* Make a copy of local Display Name */
+	if(shm_str_dup(&_d->loc_dname, _ldname) < 0) return -2;
+	/* Make a copy of remote Display Name */
+	if(shm_str_dup(&_d->rem_dname, _rdname) < 0) return -3;
+
 	return 0;
 }
 
@@ -873,7 +896,7 @@ char* print_routeset(char* buf, dlg_t* _d)
  */
 void free_dlg(dlg_t* _d)
 {
-        if (!_d) return;
+	if (!_d) return;
 
 	if (_d->id.call_id.s) shm_free(_d->id.call_id.s);
 	if (_d->id.rem_tag.s) shm_free(_d->id.rem_tag.s);
@@ -883,7 +906,10 @@ void free_dlg(dlg_t* _d)
 	if (_d->rem_uri.s) shm_free(_d->rem_uri.s);
 	if (_d->rem_target.s) shm_free(_d->rem_target.s);
 
-	     /* Free all routes in the route set */
+	if (_d->loc_dname.s) shm_free(_d->loc_dname.s);
+	if (_d->rem_dname.s) shm_free(_d->rem_dname.s);
+
+	/* Free all routes in the route set */
 	shm_free_rr(&_d->route_set);
 	shm_free(_d);
 }
@@ -895,16 +921,22 @@ void free_dlg(dlg_t* _d)
 void print_dlg(FILE* out, dlg_t* _d)
 {
 	fprintf(out, "====dlg_t===\n");
-	fprintf(out, "id.call_id    : '%.*s'\n", _d->id.call_id.len, _d->id.call_id.s);
-	fprintf(out, "id.rem_tag    : '%.*s'\n", _d->id.rem_tag.len, _d->id.rem_tag.s);
-	fprintf(out, "id.loc_tag    : '%.*s'\n", _d->id.loc_tag.len, _d->id.loc_tag.s);
+	fprintf(out, "id.call_id    : '%.*s'\n",
+			_d->id.call_id.len, _d->id.call_id.s);
+	fprintf(out, "id.rem_tag    : '%.*s'\n",
+			_d->id.rem_tag.len, _d->id.rem_tag.s);
+	fprintf(out, "id.loc_tag    : '%.*s'\n",
+			_d->id.loc_tag.len, _d->id.loc_tag.s);
 	fprintf(out, "loc_seq.value : %d\n", _d->loc_seq.value);
 	fprintf(out, "loc_seq.is_set: %s\n", _d->loc_seq.is_set ? "YES" : "NO");
 	fprintf(out, "rem_seq.value : %d\n", _d->rem_seq.value);
 	fprintf(out, "rem_seq.is_set: %s\n", _d->rem_seq.is_set ? "YES" : "NO");
-	fprintf(out, "loc_uri       : '%.*s'\n", _d->loc_uri.len, _d->loc_uri.s);
-	fprintf(out, "rem_uri       : '%.*s'\n", _d->rem_uri.len, _d->rem_uri.s);
-	fprintf(out, "rem_target    : '%.*s'\n", _d->rem_target.len, _d->rem_target.s);
+	fprintf(out, "loc_uri       : '%.*s'\n",_d->loc_uri.len, _d->loc_uri.s);
+	fprintf(out, "rem_uri       : '%.*s'\n",_d->rem_uri.len, _d->rem_uri.s);
+	fprintf(out, "loc_dname     : '%.*s'\n",_d->loc_dname.len,_d->loc_dname.s);
+	fprintf(out, "rem_dname     : '%.*s'\n",_d->rem_dname.len,_d->rem_dname.s);
+	fprintf(out, "rem_target    : '%.*s'\n",
+			_d->rem_target.len,_d->rem_target.s);
 	fprintf(out, "state         : ");
 	switch(_d->state) {
 	case DLG_NEW:       fprintf(out, "DLG_NEW\n");       break;
@@ -914,13 +946,17 @@ void print_dlg(FILE* out, dlg_t* _d)
 	}
 	print_rr(out, _d->route_set);
 	if (_d->hooks.request_uri) 
-		fprintf(out, "hooks.request_uri: '%.*s'\n", _d->hooks.request_uri->len, _d->hooks.request_uri->s);
+		fprintf(out, "hooks.request_uri: '%.*s'\n",
+			_d->hooks.request_uri->len, _d->hooks.request_uri->s);
 	if (_d->hooks.next_hop) 
-		fprintf(out, "hooks.next_hop   : '%.*s'\n", _d->hooks.next_hop->len, _d->hooks.next_hop->s);
+		fprintf(out, "hooks.next_hop   : '%.*s'\n",
+			_d->hooks.next_hop->len, _d->hooks.next_hop->s);
 	if (_d->hooks.first_route) 
-		fprintf(out, "hooks.first_route: '%.*s'\n", _d->hooks.first_route->len, _d->hooks.first_route->nameaddr.name.s);
+		fprintf(out, "hooks.first_route: '%.*s'\n",
+			_d->hooks.first_route->len,_d->hooks.first_route->nameaddr.name.s);
 	if (_d->hooks.last_route)
-		fprintf(out, "hooks.last_route : '%.*s'\n", _d->hooks.last_route->len, _d->hooks.last_route->s);
+		fprintf(out, "hooks.last_route : '%.*s'\n",
+			_d->hooks.last_route->len, _d->hooks.last_route->s);
 	
 	fprintf(out, "====dlg_t====\n");
 }

@@ -26,7 +26,9 @@
  * 2005-05-30  light version of tm_load() - no find_export() (bogdan)
  * 2007-01-25  t_forward_nonack removed as it merged into t_relay,
  *             t_replicate completely removed (bogdan)
-*
+ * 2008-04-04  added support for local and remote dispaly name in TM dialogs
+ *             (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
+ *
  */
 
 
@@ -59,6 +61,7 @@ struct tm_binds {
 	reqout_t         t_request_outside;
 	req_t            t_request;
 	new_dlg_uac_f      new_dlg_uac;
+	dlg_add_extra_f    dlg_add_extra;
 	dlg_response_uac_f dlg_response_uac;
 	new_dlg_uas_f      new_dlg_uas;
 	dlg_request_uas_f  dlg_request_uas;

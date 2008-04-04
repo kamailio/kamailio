@@ -46,6 +46,8 @@
  *  2007-01-25  t_forward_nonack removed as it merged into t_relay,
  *              t_replicate also accepts flags for controlling DNS failover
  *              (bogdan)
+ *  2008-04-04  added support for local and remote dispaly name in TM dialogs
+ *              (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
  */
 
 
@@ -476,6 +478,7 @@ int load_tm( struct tm_binds *tmb)
 	tmb->t_request_outside = req_outside;
 	tmb->t_request = request;
 	tmb->new_dlg_uac = new_dlg_uac;
+	tmb->dlg_add_extra = dlg_add_extra;
 	tmb->dlg_response_uac = dlg_response_uac;
 	tmb->new_dlg_uas = new_dlg_uas;
 	tmb->dlg_request_uas = dlg_request_uas;

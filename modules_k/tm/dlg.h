@@ -21,6 +21,8 @@
  * History:
  * -------
  * 2003-03-29 Created by janakj
+ * 2008-04-04 added support for local and remote dispaly name in TM dialogs
+ *            (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
  */
 
 #ifndef DLG_H
@@ -91,6 +93,8 @@ typedef struct dlg {
 	str loc_uri;            /* Local URI */
 	str rem_uri;            /* Remote URI */
 	str rem_target;         /* Remote target URI */
+	str loc_dname;			/* Local Display Name */
+	str rem_dname;			/* Remote Display Name */
 	unsigned int T_flags;   /* Flags to be passed to transaction */
 	dlg_state_t state;      /* State of the dialog */
 	rr_t* route_set;        /* Route set */
@@ -108,6 +112,11 @@ typedef struct dlg {
 int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
 typedef int (*new_dlg_uac_f)(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d);
 
+/*
+ * Function which adds Display Names to an existing dialog
+ */
+int dlg_add_extra(dlg_t* _d, str* _ldname, str* _rdname);
+typedef int (*dlg_add_extra_f)(dlg_t* _d, str* _ldname, str* _rdname);
 
 /*
  * A response arrived, update dialog
