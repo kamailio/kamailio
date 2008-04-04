@@ -21,7 +21,8 @@
  *
  * History:
  * --------
- *  2006-04-14  initial version (bogdan)
+ * 2006-04-14  initial version (bogdan)
+ * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
  */
 
 
@@ -32,7 +33,7 @@
 
 static struct dlg_head_cbl* create_cbs = 0;
 
-static struct dlg_cb_params params = {NULL, NULL};
+static struct dlg_cb_params params = {NULL, DLG_DIR_NONE, NULL};
 
 
 int init_dlg_callbacks(void)
@@ -75,7 +76,8 @@ void destroy_dlg_callbacks(void)
 }
 
 
-int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f, void *param, param_free_cb ff )
+int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f,
+										void *param, param_free_cb ff )
 {
 	struct dlg_callback *cb;
 
@@ -124,6 +126,10 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 		return;
 
 	params.msg = msg;
+	/* initial request goes DOWNSTREAM all the time */
+	params.direction = DLG_DIR_DOWNSTREAM;
+	/* avoid garbage due static structure */
+	params.param = NULL;
 
 	for ( cb=create_cbs->first; cb; cb=cb->next)  {
 		LM_DBG("dialog=%p\n",dlg);
@@ -134,11 +140,13 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 }
 
 
-void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg)
+void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg,
+															unsigned int dir)
 {
 	struct dlg_callback *cb;
 
 	params.msg = msg;
+	params.direction = dir;
 
 	if (dlg->cbs.first==0 || ((dlg->cbs.types)&type)==0 )
 		return;

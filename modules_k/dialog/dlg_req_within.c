@@ -22,6 +22,7 @@
  * History:
  * --------
  * 2007-07-10  initial version (ancuta)
+ * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
 */
 
 #include <stdlib.h>
@@ -155,7 +156,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 		remove_dlg_timer(&dlg->tl);
 
 		/* dialog terminated (BYE) */
-		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req);
+		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req, DLG_DIR_NONE);
 
 		LM_DBG("first final reply\n");
 		/* derefering the dialog */

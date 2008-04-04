@@ -21,7 +21,8 @@
  *
  * History:
  * --------
- *  2006-04-11  initial version (bogdan)
+ * 2006-04-11  initial version (bogdan)
+ * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
  */
 
 #ifndef _DIALOG_DLG_CB_H_
@@ -33,6 +34,7 @@ struct dlg_cell;
 
 struct dlg_cb_params {
 	struct sip_msg* msg;
+	unsigned int direction;
 	void **param;
 };
 
@@ -80,7 +82,8 @@ int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param, p
 
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);
 
-void run_dlg_callbacks( int type , struct dlg_cell *dlg, struct sip_msg *msg);
+void run_dlg_callbacks( int type , struct dlg_cell *dlg, struct sip_msg *msg,
+		unsigned int dir);
 
 
 #endif

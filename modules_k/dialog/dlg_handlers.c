@@ -40,6 +40,7 @@
  *             anyways.. ;) ; based on a patch from 
  *             Tavis Paquette <tavis@galaxytelecom.net> 
  *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
+ * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
  */
 
 
@@ -258,7 +259,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 	if (type==TMCB_RESPONSE_FWDED) {
 		/* The state does not change, but the msg is mutable in this callback*/
-		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl);
+		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl, DLG_DIR_UPSTREAM);
 		return;
 	}
 
@@ -274,7 +275,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
 
 	if (new_state==DLG_STATE_EARLY) {
-		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl);
+		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl, DLG_DIR_UPSTREAM);
 		if (old_state!=DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, 1);
 		return;
@@ -315,7 +316,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		insert_dlg_timer( &dlg->tl, dlg->lifetime );
 
 		/* dialog confirmed */
-		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl);
+		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl, DLG_DIR_UPSTREAM);
 
 		if (old_state==DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
@@ -327,7 +328,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	if ( old_state!=DLG_STATE_DELETED && new_state==DLG_STATE_DELETED ) {
 		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
-		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl);
+		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl, DLG_DIR_UPSTREAM);
 		/* do unref */
 		if (unref)
 			unref_dlg(dlg,unref);
@@ -336,12 +337,12 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
-
 	return;
 }
 
 
-static void dlg_seq_onreply(struct cell* t, int type,struct tmcb_params *param)
+static void dlg_seq_up_onreply(struct cell* t, int type,
+													struct tmcb_params *param)
 {
 	struct dlg_cell *dlg;
 
@@ -350,7 +351,32 @@ static void dlg_seq_onreply(struct cell* t, int type,struct tmcb_params *param)
 		return;
 
 	if (type==TMCB_RESPONSE_FWDED) {
-		run_dlg_callbacks(DLGCB_WITHIN_RESPONSE, dlg, param->rpl);
+		run_dlg_callbacks(DLGCB_WITHIN_RESPONSE, dlg, param->rpl,
+			DLG_DIR_UPSTREAM);
+		return;
+	}
+
+	/* unref the dialog as used from this callback */
+	if (type==TMCB_TRANS_DELETED)
+		unref_dlg(dlg,1);
+
+	return;
+}
+
+
+
+static void dlg_seq_down_onreply(struct cell* t, int type,
+													struct tmcb_params *param)
+{
+	struct dlg_cell *dlg;
+
+	dlg = (struct dlg_cell *)(*param->param);
+	if (shutdown_done || dlg==0)
+		return;
+
+	if (type==TMCB_RESPONSE_FWDED) {
+		run_dlg_callbacks(DLGCB_WITHIN_RESPONSE, dlg, param->rpl,
+			DLG_DIR_DOWNSTREAM);
 		return;
 	}
 
@@ -550,7 +576,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			if (seq_match_mode==SEQ_MATCH_STRICT_ID )
 				return;
 		} else {
-			LM_DBG("route param is '%.*s' (len=%d)\n",val.len, val.s, val.len);
+			LM_DBG("route param is '%.*s' (len=%d)\n",val.len,val.s,val.len);
 
 			if ( parse_dlg_rr_param( val.s, val.s+val.len, &h_entry, &h_id)<0 )
 				return;
@@ -612,7 +638,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		/* remove from timer */
 		remove_dlg_timer(&dlg->tl);
 		/* dialog terminated (BYE) */
-		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req);
+		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req, dir);
 
 		/* delete the dialog from DB */
 		if (dlg_db_mode)
@@ -640,7 +666,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			}
 
 			/* within dialog request */
-			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req);
+			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir);
 
 			if ( (dlg->cbs.types)&DLGCB_WITHIN_RESPONSE ) {
 				/* ref the dialog as registered into the transaction
@@ -650,7 +676,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				/* register callback for the replies of this request */
 				if ( d_tmb.register_tmcb( req, 0, 
 				 TMCB_RESPONSE_FWDED|TMCB_TRANS_DELETED,
-				 dlg_seq_onreply, (void*)dlg)<0 ) {
+				 (dir==DLG_DIR_UPSTREAM)?
+				     dlg_seq_down_onreply:dlg_seq_up_onreply,
+				 (void*)dlg)<0 ) {
 					LM_ERR("failed to register TMCB (2)\n");
 					unref_dlg( dlg , 1);
 				}
@@ -689,7 +717,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 		LM_DBG("dlg %p timeout at %d\n", dlg, tl->timeout);
 
 		/* dialog timeout */
-		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0);
+		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0, DLG_DIR_NONE);
 
 		/* delete the dialog from DB */
 		if (dlg_db_mode)
