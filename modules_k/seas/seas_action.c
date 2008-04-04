@@ -17,6 +17,12 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * History:
+ * -------
+ * 2008-04-04 added support for local and remote dispaly name in TM dialogs
+ *            (by Andrei Pisau <andrei at voice-system dot ro> )
+ *
  */
 
 #include <unistd.h>
@@ -963,6 +969,13 @@ int ac_uac_req(as_p the_as,char *action,int len)
       LM_ERR("Error while creating new dialog\n");
       goto error;
    }
+   if(seas_f.tmb.dlg_add_extra(my_dlg,&(fb->display),&(tb->display)) < 0 ) {
+      as_action_fail_resp(uac_id,SE_UAC,
+         "Error adding the display names to the new dialog",0);
+      LM_ERR("failed to add display names to the new dialog\n");
+      goto error;
+   }
+
    if(tb->tag_value.s && tb->tag_value.len)
       shm_str_dup(&my_dlg->id.rem_tag,&tb->tag_value);
    /**Awful hack: to be able to set our own CSeq, from_tag and call-ID we have
