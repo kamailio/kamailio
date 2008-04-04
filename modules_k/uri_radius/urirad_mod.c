@@ -54,8 +54,11 @@ int use_sip_uri_host = 0;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"radius_does_uri_exist",   (cmd_function)radius_does_uri_exist,
-			0, 0, 0, REQUEST_ROUTE},
+	{"radius_does_uri_exist", (cmd_function)radius_does_uri_exist,
+	 0, 0, 0, REQUEST_ROUTE},
+	{"radius_does_uri_user_exist",
+	 (cmd_function)radius_does_uri_user_exist,
+	 0, 0, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 

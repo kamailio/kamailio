@@ -143,8 +143,8 @@ static int generate_avps(VALUE_PAIR* received)
 
 
 /*
- * Check from Radius if request URI belongs to a local user.
- * User-Name is user@host of request Uri and Service-Type is Call-Check.
+ * Check from Radius if Request URI belongs to a local user.
+ * If so, loads AVPs based on reply items returned from Radius.
  */
 int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 {
@@ -227,16 +227,71 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	} else {
 	    LM_ERR("failure\n");
 	}
-	rc_avpair_free(send);
-	rc_avpair_free(received);
-	if (uri) pkg_free(uri);
-	return -1;
 #else
 	LM_DBG("failure\n");
+#endif
 	rc_avpair_free(send);
 	rc_avpair_free(received);
 	if (uri) pkg_free(uri);
 	return -1;
+    }
+}
+
+
+/*
+ * Check from Radius if Request URI user belongs to a local user.
+ * If so, loads AVPs based on reply items returned from Radius.
+ */
+int radius_does_uri_user_exist(struct sip_msg* _m, char* _s1, char* _s2)
+{
+    static char msg[4096];
+    VALUE_PAIR *send, *received;
+    UINT4 service;
+    int res;
+    
+    send = received = 0;
+    
+    if (parse_sip_msg_uri(_m) < 0) {
+	LM_ERR("error while parsing Request URI\n");
+	return -1;
+    }
+
+    if (_m->parsed_uri.user.len == 0) {
+	return -1;
+    }
+
+    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
+		       _m->parsed_uri.user.s, _m->parsed_uri.user.len, 0)) {
+	LM_ERR("error adding User-Name\n");
+	rc_avpair_free(send);
+	return -1;
+    }
+    
+    service = vals[V_CALL_CHECK].v;
+    if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
+	LM_ERR("error adding service type\n");
+	rc_avpair_free(send);
+	return -1;
+    }
+	
+    if ((res = rc_auth(rh, 0, send, &received, msg)) == OK_RC) {
+	LM_DBG("success\n");
+	rc_avpair_free(send);
+	generate_avps(received);
+	rc_avpair_free(received);
+	return 1;
+    } else {
+#ifdef REJECT_RC
+	if (res == REJECT_RC) {
+	    LM_DBG("rejected\n");
+	} else {
+	    LM_ERR("failure\n");
+	}
+#else
+	LM_DBG("failure\n");
 #endif
+	rc_avpair_free(send);
+	rc_avpair_free(received);
+	return -1;
     }
 }
