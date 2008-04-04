@@ -668,7 +668,8 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			/* within dialog request */
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir);
 
-			if ( (dlg->cbs.types)&DLGCB_WITHIN_RESPONSE ) {
+			if ( (event!=DLG_EVENT_REQACK) &&
+			(dlg->cbs.types)&DLGCB_WITHIN_RESPONSE ) {
 				/* ref the dialog as registered into the transaction
 				 * callback; unref will be done when the transaction
 				 * will be destroied */
