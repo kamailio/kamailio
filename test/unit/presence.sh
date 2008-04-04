@@ -1,5 +1,5 @@
 #!/bin/bash
-# tests the authentification via auth_db and uri_db
+# test publish and subscribe for presence
 
 # Copyright (C) 2008 Voice System
 #
