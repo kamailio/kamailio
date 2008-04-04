@@ -38,6 +38,9 @@
 #ifdef USE_DNS_CACHE
 #include "dns_cache.h"
 #endif
+#if defined PKG_MALLOC || defined SHM_MEM
+#include "pt.h"
+#endif
 #include "cfg/cfg.h"
 #include "cfg_core.h"
 
@@ -77,6 +80,12 @@ struct cfg_group_core default_core_cfg = {
 	DEFAULT_DNS_CACHE_MAX_TTL, /* maximum ttl */
 	DEFAULT_DNS_MAX_MEM, /* dns_cache_max_mem */
 	0, /* dns_cache_del_nonexp -- delete only expired entries by default */
+#endif
+#ifdef PKG_MALLOC
+	0, /* mem_dump_pkg */
+#endif
+#ifdef SHM_MEM
+	0, /* mem_dump_shm */
 #endif
 };
 
@@ -156,6 +165,14 @@ cfg_def_t core_cfg_def[] = {
 	{"dns_cache_del_nonexp",	CFG_VAR_INT,	0, 1, 0, 0,
 		"allow deletion of non-expired records from the cache when "
 		"there is no more space left for new ones"},
+#endif
+#ifdef PKG_MALLOC
+	{"mem_dump_pkg",	CFG_VAR_INT,	0, 0, 0, mem_dump_pkg_cb,
+		"dump process memory status, parameter: pid_number"},
+#endif
+#ifdef SHM_MEM
+	{"mem_dump_shm",	CFG_VAR_INT,	0, 0, mem_dump_shm_fixup, 0,
+		"dump shared memory status"},
 #endif
 	{0, 0, 0, 0, 0, 0}
 };

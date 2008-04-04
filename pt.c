@@ -44,6 +44,15 @@
 #include "sr_module.h"
 #include "socket_info.h"
 #include "rand/fastrand.h"
+#ifdef PKG_MALLOC
+#include "mem/mem.h"
+#endif
+#ifdef SHM_MEM
+#include "mem/shm_mem.h"
+#endif
+#if defined PKG_MALLOC || defined SHM_MEM
+#include "cfg_core.h"
+#endif
 
 #include <stdio.h>
 #include <time.h> /* time(), used to initialize random numbers */
@@ -504,5 +513,53 @@ error:
 	if (reader_fd[1]!=-1) close(reader_fd[1]);
 end:
 	return ret;
+}
+#endif
+
+#ifdef PKG_MALLOC
+/* Dumps pkg memory status.
+ * Per-child process callback that is called
+ * when mem_dump_pkg cfg var is changed.
+ */
+void mem_dump_pkg_cb(str *name)
+{
+	int	old_memlog;
+
+	if (cfg_get(core, core_cfg, mem_dump_pkg) == my_pid()) {
+		/* set memlog to ALERT level to force
+		printing the log messages */
+		old_memlog = memlog;
+		memlog = L_ALERT;
+
+		LOG(memlog, "Memory status (pkg) of process %d:\n", my_pid());
+		pkg_status();
+
+		memlog = old_memlog;
+	}
+}
+#endif
+
+#ifdef SHM_MEM
+/* Dumps shm memory status.
+ * fixup function that is called
+ * when mem_dump_shm cfg var is set.
+ */
+int mem_dump_shm_fixup(void *handle, str *name, void **val)
+{
+	int	old_memlog;
+
+	if ((long)(void*)(*val)) {
+		/* set memlog to ALERT level to force
+		printing the log messages */
+		old_memlog = memlog;
+		memlog = L_ALERT;
+
+		LOG(memlog, "Memory status (shm)\n");
+		shm_status();
+
+		memlog = old_memlog;
+		*val = (void*)(long)0;
+	}
+	return 0;
 }
 #endif

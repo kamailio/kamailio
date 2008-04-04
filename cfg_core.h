@@ -78,6 +78,12 @@ struct cfg_group_core {
 	unsigned int dns_cache_max_mem;
 	int dns_cache_del_nonexp;
 #endif
+#ifdef PKG_MALLOC
+	int mem_dump_pkg;
+#endif
+#ifdef SHM_MEM
+	int mem_dump_shm;
+#endif
 };
 
 extern struct cfg_group_core default_core_cfg;
