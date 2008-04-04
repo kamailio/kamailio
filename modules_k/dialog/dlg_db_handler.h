@@ -1,5 +1,5 @@
 /*
- * $Id: dlg_db_handler.h 2108 2007-04-30 20:29:36Z bogdan_iancu $
+ * $Id$
  *
  * Copyright (C) 2007 Voice System SRL
  *
