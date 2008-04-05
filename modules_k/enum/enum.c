@@ -3,7 +3,7 @@
  *
  * Enum and E164 related functions
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2008 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -35,6 +35,7 @@
 #include "../../qvalue.h"
 #include "enum_mod.h"
 #include "../../regexp.h"
+#include "../../pvar.h"
 
 /*
  * Input: E.164 number w/o leading +
@@ -919,26 +920,28 @@ int i_enum_query_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 
 /*
- * Call enum_fquery_2 with module parameter suffix and default service.
+ * Call enum_pv_query_3 with pv arg, module parameter suffix,
+ * and default service.
  */
-int enum_fquery_0(struct sip_msg* _msg, char* _str1, char* _str2)
+int enum_pv_query_1(struct sip_msg* _msg, char* _sp)
 {
-	return enum_fquery_2(_msg, (char *)(&suffix), (char *)(&service));
+    return enum_pv_query_3(_msg, _sp, (char *)(&suffix), (char *)(&service));
 }
 
 /*
- * Call enum_fquery_2 with given suffix and default service.
+ * Call enum_pv_query_3 with pv and suffix args and default service.
  */
-int enum_fquery_1(struct sip_msg* _msg, char* _suffix, char* _str2)
+int enum_pv_query_2(struct sip_msg* _msg, char* _sp, char* _suffix)
 {
-	return enum_fquery_2(_msg, _suffix, (char *)(&service));
+    return enum_pv_query_3(_msg, _sp, _suffix, (char *)(&service));
 }
 
 /*
  * See documentation in README file.
  */
 
-int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
+int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
+		    char* _service)
 {
 	char *user_s;
 	int user_len, i, j, first;
@@ -946,22 +949,24 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
 	char uri[MAX_URI_SIZE];
 	char new_uri[MAX_URI_SIZE];
 	unsigned int priority, curr_prio;
-	struct sip_uri *furi;
 	qvalue_t q;
 	char tostring[17];
 	struct rdata* head;
 	struct rdata* l;
 	struct naptr_rdata* naptr;
-
 	str pattern, replacement, result, new_result;
-
 	str *suffix, *service;
-
 	char string[17];
+	pv_spec_t *sp;
+	pv_value_t pv_val;
+
+	sp = (pv_spec_t *)_sp;
+	suffix = (str*)_suffix;
+	service = (str*)_service;
 
 	/*
-	** all of this to pick up the 'to' string
-	*/
+	 *  Get R-URI user to tostring
+	 */
 	if (parse_sip_msg_uri(_msg) < 0) {
 		LM_ERR("R-URI parsing failed\n");
 		return -1;
@@ -977,35 +982,31 @@ int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service)
 
 	memcpy(&(tostring[0]), user_s, user_len);
 	tostring[user_len] = (char)0;
+
 	/*
-	** to here
-	*/
-
-	if (parse_from_header(_msg) < 0) {
-	    LM_ERR("Failed to parse From header\n");
-	    return -1;
-	}
-	
-	if(_msg->from==NULL || get_from(_msg)==NULL) {
-	    LM_DBG("No From header\n");
-	    return -1;
-	}
-
-	if ((furi = parse_from_uri(_msg)) == NULL) {
-	    LM_ERR("Failed to parse From URI\n");
-	    return -1;
-	}
-
-	suffix = (str*)_suffix;
-	service = (str*)_service;
-
-	if (is_e164(&(furi->user)) == -1) {
-		LM_ERR(" From URI user is not an E164 number\n");
+	 * Get E.164 number from pseudo variable
+         */
+	if (sp && (pv_get_spec_value(_msg, sp, &pv_val) == 0)) {
+	    if (pv_val.flags & PV_VAL_STR) {
+		if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		    LM_DBG("Missing E.164 number\n");
+		    return -1;
+		}
+	    } else {
+		LM_DBG("Pseudo variable value is not string\n");
 		return -1;
 	}
+	} else {
+	    LM_DBG("Cannot get pseudo variable value\n");
+	    return -1;
+	}
+	if (is_e164(&(pv_val.rs)) == -1) {
+	    LM_ERR("pseudo variable does not contain an E164 number\n");
+	    return -1;
+	}
 
-	user_s = furi->user.s;
-	user_len = furi->user.len;
+	user_s = pv_val.rs.s;
+	user_len = pv_val.rs.len;
 
 	memcpy(&(string[0]), user_s, user_len);
 	string[user_len] = (char)0;

@@ -3,7 +3,7 @@
  *
  * Header file for Enum and E164 related functions
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2008 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -46,9 +46,10 @@ int is_from_user_enum_2(struct sip_msg* _msg, char* _suffix, char* _service);
  * that is, make the ruri based on the from number
  * this is like source ip policy routing
  */
-int enum_fquery_0(struct sip_msg* _msg, char* _str1, char* _str2);
-int enum_fquery_1(struct sip_msg* _msg, char* _suffix, char* _str2);
-int enum_fquery_2(struct sip_msg* _msg, char* _suffix, char* _service);
+int enum_pv_query_1(struct sip_msg* _msg, char* _sp);
+int enum_pv_query_2(struct sip_msg* _msg, char* _sp, char* _suffix);
+int enum_pv_query_3(struct sip_msg* _msg, char* _sp, char* _suffix,
+		    char* _service);
 
 /*
  * Make enum query and if query succeeds, replace current uri with the

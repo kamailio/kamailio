@@ -63,13 +63,12 @@
 	</para>
 	<para>
 		Most of the time you want to route based on the RURI.  On rare occasions
-		you may wish to route based on the user part of the <quote>From:</quote> tag,
-		analogous to source based policy routing in the ip world. The function
-		<function moreinfo="none">enum_fquery</function> mimics the behaviour
+		you may wish to route based on something else. The function
+		<function moreinfo="none">enum_pv_query</function> mimics the behavior
 		of the <function moreinfo="none">enum_query</function> function except the
-		user part of the <quote>From:</quote> is used for the enum lookup instead of the user
+		E.164 number in its pseudo variable argument is used for the enum lookup instead of the user
 		part of the RURI.  Obviously the user part of the RURI is still used in the
-		naptr regexp.
+		NAPTR regexp.
 	</para>
 	<para>
 		Enum query returns 1 if the current Request URI was replaced 
@@ -189,7 +188,7 @@ modparam("enum", "branchlabel", "i")
                 <title>Zone file example</title>
                 <programlisting format="linespecific">
 i.1.e164.arpa.                     IN TXT   "4"
-9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5678 999"
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "NAPTR content for  +1 234 5678 999"
 </programlisting>
                 </example>
                 </para>
@@ -206,7 +205,7 @@ i.1.e164.arpa.     TYPE65300  \# 14 (
                               01 69 ; separator
                               04 65 31 36 34 04 61 72 70 61 00 ; e164.arpa
 ;                               )
-9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "naptr content for  +1 234 5678 999"
+9.9.9.8.7.6.5.i.4.3.2.1.e164.arpa. IN NAPTR "NAPTR content for  +1 234 5678 999"
 </programlisting>
                 </example>
                 </para>
@@ -280,16 +279,22 @@ enum_query("e164.arpa.","+sip+voice:sip");
 
 	<section>
 		<title>
-		<function moreinfo="none">enum_fquery(["suffix"[,"service"]])</function>
+		<function moreinfo="none">enum_pv_query("pvar"[,"suffix"[,"service"]])</function>
 		</title>
 		<para>
-		The function performs an enum query
-		on the user part of the From: tag and rewrites the Request-URI with 
+		The function performs an enum query on E.164 number stored
+		in its pseudo variable argument and rewrites the Request-URI with 
 		the result of the query. See <xref linkend="sec-overview"/> for more 
 		information.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
+		<listitem>
+			<para><emphasis>pvar</emphasis> - Pseudo
+		variable that holds an E.164 number on which enum
+		query is performed.
+			</para>
+		</listitem>
 		<listitem>
 			<para><emphasis>suffix</emphasis> - Suffix to be appended to the 
 			domain name.
@@ -305,27 +310,27 @@ enum_query("e164.arpa.","+sip+voice:sip");
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
-		<title><function moreinfo="none">enum_fquery</function> usage</title>
+		<title><function moreinfo="none">enum_pv_query</function> usage</title>
 		<programlisting format="linespecific">
 ...
 # search for "e2u+sip" in freenum.org 
-enum_fquery("freenum.org.");
+enum_pv_query("$avp(i:100)", "freenum.org.");
 ...
 # search for "e2u+sip" in default tree (configured as parameter)
-enum_fquery();
+enum_pv_query("$fU");
 ...
 # search for "e2u+voice:sip" in e164.arpa
-enum_fquery("e164.arpa.","voice");
+enum_pv_query("$avp(i:100)","e164.arpa.","voice");
 ...
 # search for service type "sip" or "voice:sip" or "video:sip"
 # note the '+' sign in front of the second parameter
-enum_fquery("e164.arpa.","+sip+voice:sip+video:sip");
+enum_pv_query("$fU","e164.arpa.","+sip+voice:sip+video:sip");
 ...
 # quering for service sip and voice:sip
-enum_fquery("e164.arpa.");
-enum_fquery("e164.arpa.","voice");
+enum_pv_query("$avp(i:100)","e164.arpa.");
+enum_pv_query("$avp(i:100)","e164.arpa.","voice");
 # or use instead
-enum_fquery("e164.arpa.","+sip+voice:sip");
+enum_pv_query("$avp(i:100)","e164.arpa.","+sip+voice:sip");
 ...
 </programlisting>
 		</example>

@@ -3,7 +3,7 @@
  *
  * Enum module
  *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2002-2008 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -72,18 +72,28 @@ str i_bl_alg;
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"enum_query",        (cmd_function)enum_query_0,     0, 0,            0, REQUEST_ROUTE},
-	{"enum_query",        (cmd_function)enum_query_1,     1, fixup_str_null, 0, REQUEST_ROUTE},
-	{"enum_query",        (cmd_function)enum_query_2,     2, fixup_str_str,  0, REQUEST_ROUTE},
-	{"enum_fquery",       (cmd_function)enum_fquery_0,    0, 0,            0, REQUEST_ROUTE},
-	{"enum_fquery",       (cmd_function)enum_fquery_1,    1, fixup_str_null, 0, REQUEST_ROUTE},
-	{"enum_fquery",       (cmd_function)enum_fquery_2,    2, fixup_str_str,  0, REQUEST_ROUTE},
-	{"is_from_user_enum", (cmd_function)is_from_user_enum_0, 0, 0,         0, REQUEST_ROUTE},
-	{"is_from_user_enum", (cmd_function)is_from_user_enum_1, 1, fixup_str_null, 0, REQUEST_ROUTE},
-	{"is_from_user_enum", (cmd_function)is_from_user_enum_2, 2, fixup_str_str,  0, REQUEST_ROUTE},
-	{"i_enum_query",      (cmd_function)i_enum_query_0,   0, 0,            0, REQUEST_ROUTE},
-	{"i_enum_query",      (cmd_function)i_enum_query_1,   1, fixup_str_null, 0, REQUEST_ROUTE},
-	{"i_enum_query",      (cmd_function)i_enum_query_2,   2, fixup_str_str,  0, REQUEST_ROUTE},
+	{"enum_query", (cmd_function)enum_query_0, 0, 0, 0, REQUEST_ROUTE},
+	{"enum_query", (cmd_function)enum_query_1, 1, fixup_str_null,
+	 fixup_free_str_null, REQUEST_ROUTE},
+	{"enum_query", (cmd_function)enum_query_2, 2, fixup_str_str, 
+	 fixup_free_str_str, REQUEST_ROUTE},
+	{"enum_pv_query", (cmd_function)enum_pv_query_1, 1, fixup_pvar_null,
+	 fixup_free_pvar_null, REQUEST_ROUTE},
+	{"enum_pv_query", (cmd_function)enum_pv_query_2, 2, fixup_pvar_str,
+	 fixup_free_pvar_str, REQUEST_ROUTE},
+	{"enum_pv_query", (cmd_function)enum_pv_query_3, 3,
+	 fixup_pvar_str_str, fixup_free_pvar_str_str, REQUEST_ROUTE},
+	{"is_from_user_enum", (cmd_function)is_from_user_enum_0, 0, 0, 0,
+	 REQUEST_ROUTE},
+	{"is_from_user_enum", (cmd_function)is_from_user_enum_1, 1,
+	 fixup_str_null, fixup_free_str_null, REQUEST_ROUTE},
+	{"is_from_user_enum", (cmd_function)is_from_user_enum_2, 2,
+	 fixup_str_str, fixup_free_str_str, REQUEST_ROUTE},
+	{"i_enum_query", (cmd_function)i_enum_query_0, 0, 0, 0, REQUEST_ROUTE},
+	{"i_enum_query", (cmd_function)i_enum_query_1, 1, fixup_str_null, 0,
+	 REQUEST_ROUTE},
+	{"i_enum_query", (cmd_function)i_enum_query_2, 2, fixup_str_str, 0,
+	 REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
