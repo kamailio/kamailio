@@ -300,8 +300,6 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 
 	if (node->next) {
 		node = node->next;
-		if (node!=NULL)
-			return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 		if (node->value.len && node->value.s)
 			mi_extra_hdrs = node->value;
 	}
