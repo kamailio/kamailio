@@ -365,7 +365,7 @@ tar:
 .PHONY: bin
 bin:
 	mkdir -p tmp/ser/usr/local
-	$(MAKE) install basedir=tmp/ser prefix=/usr/local 
+	$(MAKE) install basedir=tmp/ser 
 	$(TAR) -C tmp/ser/ -zcf ../$(NAME)-$(RELEASE)_$(OS)_$(ARCH).tar.gz .
 	rm -rf tmp/ser
 
