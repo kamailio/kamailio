@@ -2,7 +2,7 @@
 #
 # Startup script for OpenSER
 #
-# chkconfig: 345 85 15
+# chkconfig: - 85 15
 # description: OpenSER is a fast SIP Proxy.
 #
 # processname: openser
@@ -13,8 +13,6 @@
 # Provides: openser
 # Required-Start: $local_fs $network $named
 # Should-Start: mysqld postgresql
-# Default-Start: 3 4 5
-# Default-Stop: 0 1 2 6
 # Short-Description: start, stop Open SIP express router
 # Description: OpenSER or OPEN SIP Express Router is a very fast and flexible
 # 	SIP (RFC3261) proxy server.
