@@ -1,0 +1,12 @@
+create sequence seq_%DBROOTUSER%
+minvalue 1
+maxvalue 9999999999999999999999999999
+start with 1
+increment by 1
+cache 20;
+
+create or replace procedure auto_id(fld out number) is
+begin
+  SELECT seq_%DBROOTUSER%.NEXTVAL INTO fld FROM dual;
+end auto_id;
+/

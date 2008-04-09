@@ -12,7 +12,7 @@
 ## chrooted directory
 # $CHROOT_DIR="/path/to/chrooted/directory"
 
-## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT, by default none is loaded
+## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, or DBTEXT, by default none is loaded
 # If you want to setup a database with openserdbctl, you must at least specify
 # this parameter.
 # DBENGINE=MYSQL
@@ -20,7 +20,7 @@
 ## database host
 # DBHOST=localhost
 
-## database name
+## database name (for ORACLE this is TNS name)
 # DBNAME=openser
 
 # database path used by dbtext or db_berkeley
@@ -38,7 +38,7 @@
 ## password for database read only user
 # DBROPW=openserro
 
-## database super user
+## database super user (for ORACLE this is 'scheme-creator' user)
 # DBROOTUSER="root"
 
 # user name column

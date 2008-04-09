@@ -81,6 +81,12 @@ case $DBENGINE in
 			DBENGINELOADED=1
 		fi
 		;;
+	ORACLE|oracle|Oracle)
+		if [ -f "$MYLIBDIR/openserctl.oracle" ]; then
+			. "$MYLIBDIR/openserctl.oracle"
+			DBENGINELOADED=1
+		fi
+		;;
 
 	DBTEXT|dbtext)
 		if [ -f "$MYLIBDIR/openserctl.dbtext" ]; then

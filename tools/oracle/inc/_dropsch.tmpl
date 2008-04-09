@@ -1,0 +1,15 @@
+--DROP USER %DBROUSER% CASCADE;
+--DROP USER %DBRWUSER% CASCADE;
+
+BEGIN
+  FOR cur IN (SELECT 'DROP TABLE '||table_name||' CASCADE CONSTRAINTS PURGE'
+      stmt from all_tables where owner=UPPER('%DBROOTUSER%')) LOOP
+    EXECUTE IMMEDIATE cur.stmt;
+  END LOOP;
+
+  FOR cur IN (SELECT 'DROP '||object_type||' '||object_name
+      stmt from all_objects where owner=UPPER('%DBROOTUSER%')) LOOP
+    EXECUTE IMMEDIATE cur.stmt;
+  END LOOP;
+END;
+/

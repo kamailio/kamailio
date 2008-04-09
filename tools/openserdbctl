@@ -82,6 +82,14 @@ case $DBENGINE in
 			merr "could not load the script in $MYLIBDIR/openserdbctl.pgsql for database engine $DBENGINE"
 		fi
 		;;
+	ORACLE|oracle|Oracle)
+		if [ -f "$MYLIBDIR/openserdbctl.oracle" ]; then
+			. "$MYLIBDIR/openserdbctl.oracle"
+			USED_DBENGINE="oracle"
+		else
+			merr "could not load the script in $MYLIBDIR/openserdbctl.oracle for database engine $DBENGINE"
+		fi
+		;;
 	DBTEXT|dbtext|textdb)
 		if [ -f "$MYLIBDIR/openserdbctl.dbtext" ]; then
 			. "$MYLIBDIR/openserdbctl.dbtext"
@@ -117,7 +125,9 @@ openser_dump()  # pars: <database name>
 		merr "openser_dump function takes two param"
 		exit 1
 	fi
-	if [ "$PW" = "" ] ; then
+	if [ "$USED_DBENGINE" == "oracle" ]; then
+		oracle_dump $1 $2
+	elif [ "$PW" = "" ] ; then
 		$DUMP_CMD $1 > $2
 	else
 		$DUMP_CMD "-p$PW" $1 > $2
@@ -136,7 +146,11 @@ openser_restore() #pars: <database name> <filename>
 		merr "openser_restore function takes two params"
 		exit 1
 	fi
-	sql_query $1 < $2
+	if [ "$USED_DBENGINE" == "oracle" ]; then
+		oracle_restore $1 $2
+	else
+		sql_query $1 < $2
+	fi
 	if [ "$?" -ne 0 ]; then
 			merr "db restore failed"
 			exit 1

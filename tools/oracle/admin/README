@@ -1,0 +1,2 @@
+replace '%DBROOTUSER%' to user (scheme) name and '%DBROOTPW%' to password in
+_create_as_sys_tmpl, and tell Oracle administrator to execute it :)
