@@ -51,7 +51,7 @@
     </column>
 
     <index>
-        <name>userblacklist_idx</name>
+        <name>globalblacklist_idx</name>
         <colref linkend="prefix"/>
     </index>
 </table>
