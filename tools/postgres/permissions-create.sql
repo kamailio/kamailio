@@ -12,9 +12,9 @@ CREATE INDEX trusted_peer_idx ON trusted (src_ip);
 INSERT INTO version (table_name, table_version) values ('address','3');
 CREATE TABLE address (
     id SERIAL PRIMARY KEY NOT NULL,
-    grp SMALLINT NOT NULL DEFAULT 0,
+    grp SMALLINT DEFAULT 0 NOT NULL,
     ip_addr VARCHAR(15) NOT NULL,
-    mask SMALLINT NOT NULL DEFAULT 32,
-    port SMALLINT NOT NULL DEFAULT 0
+    mask SMALLINT DEFAULT 32 NOT NULL,
+    port SMALLINT DEFAULT 0 NOT NULL
 );
 

@@ -1,16 +1,16 @@
 INSERT INTO version (table_name, table_version) values ('sip_trace','2');
 CREATE TABLE sip_trace (
     id SERIAL PRIMARY KEY NOT NULL,
-    time_stamp TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '1900-01-01 00:00:01',
-    callid VARCHAR(255) NOT NULL DEFAULT '',
-    traced_user VARCHAR(128) NOT NULL DEFAULT '',
+    time_stamp TIMESTAMP WITHOUT TIME ZONE DEFAULT '1900-01-01 00:00:01' NOT NULL,
+    callid VARCHAR(255) DEFAULT '' NOT NULL,
+    traced_user VARCHAR(128) DEFAULT '' NOT NULL,
     msg TEXT NOT NULL,
-    method VARCHAR(50) NOT NULL DEFAULT '',
-    status VARCHAR(128) NOT NULL DEFAULT '',
-    fromip VARCHAR(50) NOT NULL DEFAULT '',
-    toip VARCHAR(50) NOT NULL DEFAULT '',
-    fromtag VARCHAR(64) NOT NULL DEFAULT '',
-    direction VARCHAR(4) NOT NULL DEFAULT ''
+    method VARCHAR(50) DEFAULT '' NOT NULL,
+    status VARCHAR(128) DEFAULT '' NOT NULL,
+    fromip VARCHAR(50) DEFAULT '' NOT NULL,
+    toip VARCHAR(50) DEFAULT '' NOT NULL,
+    fromtag VARCHAR(64) DEFAULT '' NOT NULL,
+    direction VARCHAR(4) DEFAULT '' NOT NULL
 );
 
 CREATE INDEX sip_trace_traced_user_idx ON sip_trace (traced_user);

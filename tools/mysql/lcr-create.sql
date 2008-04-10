@@ -9,7 +9,7 @@ CREATE TABLE gw (
     transport TINYINT UNSIGNED,
     strip TINYINT UNSIGNED,
     tag VARCHAR(16) DEFAULT NULL,
-    flags INT UNSIGNED NOT NULL DEFAULT 0,
+    flags INT UNSIGNED DEFAULT 0 NOT NULL,
     UNIQUE KEY gw_name_idx (gw_name),
     KEY grp_id_idx (grp_id)
 ) ENGINE=MyISAM;
