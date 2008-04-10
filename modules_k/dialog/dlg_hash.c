@@ -354,7 +354,7 @@ struct dlg_cell* get_dlg( str *callid, str *ftag, str *ttag, unsigned int *dir)
 	if ((dlg = internal_get_dlg(core_hash(callid, ftag->len?ftag:0,
 			d_table->size), callid, ftag, ttag, dir)) == 0 &&
 			(dlg = internal_get_dlg(core_hash(callid, ttag->len
-			?ttag:0, d_table->size), callid, ttag, ftag, dir)) == 0) {
+			?ttag:0, d_table->size), callid, ftag, ttag, dir)) == 0) {
 		LM_DBG("no dialog callid='%.*s' found\n", callid->len, callid->s);
 		return 0;
 	}

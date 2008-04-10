@@ -195,17 +195,17 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 			if (ftag->len == ttag->len) {
 				if (strncmp(dlg->tag[DLG_CALLEE_LEG].s,ftag->s,ftag->len)==0 &&
 				strncmp(dlg->tag[DLG_CALLER_LEG].s,ttag->s,ttag->len)==0) {
-					*dir = DLG_DIR_DOWNSTREAM;
+					*dir = DLG_DIR_UPSTREAM;
 				} else 
 				if (strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)==0 &&
 				strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)==0) {
-					*dir = DLG_DIR_UPSTREAM;
+					*dir = DLG_DIR_DOWNSTREAM;
 				} else return 0;
 			} else {
 				if (strncmp(dlg->tag[DLG_CALLEE_LEG].s,ftag->s,ftag->len)!=0 ||
 				strncmp(dlg->tag[DLG_CALLER_LEG].s,ttag->s,ttag->len)!=0)
 					return 0;
-				*dir = DLG_DIR_DOWNSTREAM;
+				*dir = DLG_DIR_UPSTREAM;
 			}
 		} else if (dlg->tag[DLG_CALLER_LEG].len==ftag->len &&
 		dlg->tag[DLG_CALLEE_LEG].len==ttag->len) {
@@ -213,7 +213,7 @@ static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 			strncmp(dlg->tag[DLG_CALLER_LEG].s,ftag->s,ftag->len)!=0 ||
 			strncmp(dlg->tag[DLG_CALLEE_LEG].s,ttag->s,ttag->len)!=0)
 				return 0;
-			*dir = DLG_DIR_UPSTREAM;
+			*dir = DLG_DIR_DOWNSTREAM;
 		} else
 			return 0;
 	}
