@@ -21,7 +21,6 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>

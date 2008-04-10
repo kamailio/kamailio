@@ -23,7 +23,6 @@
 			  <natural/>
 			  <autoincrement/>
 			  <primary/>
-			  <type db="postgres">SERIAL PRIMARY KEY</type>
 			  <type db="dbtext">int,auto</type>
 			  <description>unique ID</description>
 		  </column>

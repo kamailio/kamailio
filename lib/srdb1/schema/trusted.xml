@@ -6,8 +6,6 @@
 %entities;
 
 ]>
-<!--KEY Key1 (src_ip),
-    PRIMARY KEY (id)-->
 
 <table id="trusted" xmlns:db="http://docbook.org/ns/docbook">
     <name>trusted</name>
@@ -24,7 +22,6 @@
         <size>&table_id_len;</size>
         <autoincrement/>
         <primary/>
-        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type>
         <description>unique ID</description>
     </column>

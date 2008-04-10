@@ -21,7 +21,6 @@
         <size>&table_id_len;</size> <!-- use a value from entities.xml -->
         <primary/><!-- primary key -->
         <autoincrement/><!-- auto increment the id -->
-        <type db="postgres">SERIAL PRIMARY KEY</type>
         <type db="dbtext">int,auto</type> <!-- this don't work for dbtext at the moment, so we specify the raw "SQL" code -->
         <description>unique ID</description>
     </column>
