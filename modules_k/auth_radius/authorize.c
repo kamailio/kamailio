@@ -152,9 +152,9 @@ static inline int authorize(struct sip_msg* _msg, pv_elem_t* _realm,
  */
 int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
 {
-    /* realm parameter is converted in fixup */
-    return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)0,
-		     HDR_PROXYAUTH_T);
+	/* realm parameter is converted in fixup */
+	return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)0,
+		HDR_PROXYAUTH_T);
 }
 
 
@@ -162,10 +162,10 @@ int radius_proxy_authorize_1(struct sip_msg* _msg, char* _realm, char* _s2)
  * Authorize using Proxy-Authorize header field (URI user parameter given)
  */
 int radius_proxy_authorize_2(struct sip_msg* _msg, char* _realm,
-			     char* _uri_user)
+														char* _uri_user)
 {
-    return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)_uri_user,
-		     HDR_PROXYAUTH_T);
+	return authorize(_msg, (pv_elem_t*)_realm, (pv_spec_t *)_uri_user,
+		HDR_PROXYAUTH_T);
 }
 
 

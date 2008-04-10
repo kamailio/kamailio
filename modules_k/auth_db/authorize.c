@@ -266,7 +266,7 @@ static inline int authorize(struct sip_msg* _m, gparam_p _realm,
 	}
 
 	auth_dbf.free_result(auth_db_handle, result);
-	return AUTH_ERROR;
+	return INVALID_PASSWORD;
 }
 
 
