@@ -15,6 +15,6 @@ CREATE TABLE globalblacklist (
     prefix VARCHAR(64) NOT NULL DEFAULT '',
     whitelist INT(1) UNSIGNED NOT NULL DEFAULT 0,
     description VARCHAR(64) NOT NULL DEFAULT '',
-    KEY userblacklist_idx (prefix)
+    KEY globalblacklist_idx (prefix)
 ) ENGINE=MyISAM;
 

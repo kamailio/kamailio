@@ -18,5 +18,5 @@ CREATE TABLE globalblacklist (
     description VARCHAR(64) NOT NULL DEFAULT ''
 );
 
-CREATE INDEX globalblacklist_userblacklist_idx ON globalblacklist (prefix);
+CREATE INDEX globalblacklist_globalblacklist_idx ON globalblacklist (prefix);
 
