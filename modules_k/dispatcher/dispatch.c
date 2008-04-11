@@ -1390,27 +1390,45 @@ int ds_print_list(FILE *fout)
 /* Checks, if the request (sip_msg *_m) comes from a host in a group
  * (group-id or -1 for all groups)
  */
-int ds_is_from_list(struct sip_msg *_m, int group) {
-    
+int ds_is_from_list(struct sip_msg *_m, int group)
+{
+	pv_value_t val;
 	ds_set_p list;
 	int j;
 
+	memset(&val, 0, sizeof(pv_value_t));
+	val.flags = PV_VAL_INT|PV_TYPE_INT;
+
 	for(list = _ds_list; list!= NULL; list= list->next)
 	{
-		if ((group == -1) || (group == list->id)) 
+		// LM_ERR("list id: %d (n: %d)\n", list->id, list->nr);
+		if ((group == -1) || (group == list->id))
 		{
 			for(j=0; j<list->nr; j++)
 			{
-				if (ip_addr_cmp(&_m->rcv.src_ip,
- 							&list->dlist[j].ip_address)
-  					&& (_m->rcv.src_port == list->dlist[j].port)) {
-  				return 1;
-  				}
- 			}
+				// LM_ERR("port no: %d (%d)\n", list->dlist[j].port, j);
+				if (ip_addr_cmp(&_m->rcv.src_ip, &list->dlist[j].ip_address)
+						&& (list->dlist[j].port==0
+						|| _m->rcv.src_port == list->dlist[j].port))
+				{
+					if(group==-1 && ds_setid_pvname.s!=0)
+					{
+						val.ri = list->id;
+						if(ds_setid_pv.setf(_m, &ds_setid_pv.pvp,
+								(int)EQ_T, &val)<0)
+						{
+							LM_ERR("setting PV failed\n");
+							return -2;
+						}
+					}
+					return 1;
+				}
+			}
 		}
 	}
 	return -1;
 }
+
 
 int ds_print_mi_list(struct mi_node* rpl)
 {

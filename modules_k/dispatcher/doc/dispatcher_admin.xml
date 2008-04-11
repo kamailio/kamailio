@@ -362,6 +362,27 @@ modparam("dispatcher", "force_dst", 1)
  		</example>
  	</section>
  	<section>
+ 		<title><varname>setid_pvar</varname> (str)</title>
+ 		<para>
+		The name of the PV where to store the set ID (group ID) when calling
+		ds_is_from_list() with no parameter.
+ 		</para>
+ 		<para>
+ 		<emphasis>
+ 			Default value is <quote>null</quote> - don't set PV.
+ 		</emphasis>
+ 		</para>
+ 		<example>
+ 		<title>Set the <quote>setid_pvar</quote> parameter</title>
+ <programlisting format="linespecific">
+ ...
+ modparam("dispatcher", "setid_pvar", "$var(setid)")
+ ...
+ </programlisting>
+ 		</example>
+ 	</section>
+
+ 	<section>
  		<title><varname>ds_ping_method</varname> (string)</title>
  		<para>
  		With this Method you can define, with which method you want to probe the failed gateways.

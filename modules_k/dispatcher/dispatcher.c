@@ -91,6 +91,8 @@ str ds_dest_uri_col   = str_init(DS_DEST_URI_COL);
 str ds_dest_flags_col = str_init(DS_DEST_FLAGS_COL);
 str ds_table_name     = str_init(DS_TABLE_NAME);
 
+str ds_setid_pvname   = {NULL, 0};
+pv_spec_t ds_setid_pv;
 
 /** module functions */
 static int mod_init(void);
@@ -142,6 +144,7 @@ static param_export_t params[]={
 	{"grp_avp",         STR_PARAM, &grp_avp_param.s},
 	{"cnt_avp",         STR_PARAM, &cnt_avp_param.s},
 	{"hash_pvar",       STR_PARAM, &hash_pvar_param.s},
+	{"setid_pvname",    STR_PARAM, &ds_setid_pvname.s},
 	{"ds_probing_threshhold", INT_PARAM, &probing_threshhold},
 	{"ds_ping_method",     STR_PARAM, &ds_ping_method.s},
 	{"ds_ping_from",       STR_PARAM, &ds_ping_from.s},
@@ -188,7 +191,9 @@ static int mod_init(void)
 	if (cnt_avp_param.s)
 		cnt_avp_param.len = strlen(cnt_avp_param.s);	
 	if (hash_pvar_param.s)
-		hash_pvar_param.len = strlen(hash_pvar_param.s);	
+		hash_pvar_param.len = strlen(hash_pvar_param.s);
+	if (ds_setid_pvname.s)
+		ds_setid_pvname.len = strlen(ds_setid_pvname.s);
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 
@@ -289,7 +294,16 @@ static int mod_init(void)
 	} else {
 		hash_param_model = NULL;
 	}
-
+	
+	if(ds_setid_pvname.s!=0)
+	{
+		if(pv_parse_spec(&ds_setid_pvname, &ds_setid_pv)==NULL
+				|| !pv_is_w(&ds_setid_pv))
+		{
+			LM_ERR("[%s]- invalid setid_pvname\n", ds_setid_pvname.s);
+			return -1;
+		}
+	}
 	/* Only, if the Probing-Timer is enabled the TM-API needs to be loaded: */
 	if (ds_ping_interval > 0)
 	{
