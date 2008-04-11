@@ -209,9 +209,6 @@ install: build
 		cfg-target=/etc/openser/ \
 		doc-dir=share/doc/openser-radius-modules
 
-	mkdir -p $(CURDIR)/debian/openser-radius-modules/etc/openser/
-	mv $(CURDIR)/debian/openser/etc/openser/dictionary.radius $(CURDIR)/debian/openser-radius-modules/etc/openser/
-
 	# install only the presence modules
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(PRESENCE_MOD_PATH)"  \
 		basedir=$(CURDIR)/debian/openser-presence-modules \
