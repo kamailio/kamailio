@@ -12,5 +12,9 @@ DEFS+=-DSER
 INCLUDES= -I$(CURDIR)/.. -I$(CURDIR)/../..
 LIBS=
 
+ifeq ($(OS), darwin)
+	LIB_LDFLAGS+= -flat_namespace -undefined suppress
+endif
+
 include ../../Makefile.libs
 
