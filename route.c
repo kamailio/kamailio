@@ -44,6 +44,8 @@
  *  2005-12-19  select framework (mma)
  *  2006-01-30  removed rec. protection from eval_expr (andrei)
  *  2006-02-06  added named route tables (andrei)
+ *  2008-04-14  (expr1 != expr2) is evaluated true if at least one of
+ *		the expressions does not exist (Miklos)
  */
 
 
@@ -575,7 +577,7 @@ inline static int comp_num(int op, long left, int rtype, union exp_op* r)
 	if (rtype == AVP_ST) {
 		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && !(avp->flags & AVP_VAL_STR)) right = val.n;
-		else return 0; /* Always fail */
+		else return (op == DIFF_OP);
 	} else if (rtype == NUMBER_ST) {
 		right = r->numval;
 	} else {
@@ -615,10 +617,10 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 	if (rtype == AVP_ST) {
 		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && (avp->flags & AVP_VAL_STR)) right = &val.s;
-		else return 0;
+		else return (op == DIFF_OP);
 	} else if (rtype == SELECT_ST) {
 		ret = run_select(&v, r->select, msg);
-		if (ret > 0) return 0;       /* Not found */
+		if (ret > 0) return (op == DIFF_OP); /* Not found */
 		else if (ret < 0) goto error; /* Error */
 		right = &v;
 	} else if ((op == MATCH_OP && rtype == RE_ST)) {
@@ -713,7 +715,7 @@ inline static int comp_string(int op, char* left, int rtype, union exp_op* r)
 	if (rtype == AVP_ST) {
 		avp = search_avp_by_index(r->attr->type, r->attr->name, &val, r->attr->index);
 		if (avp && (avp->flags & AVP_VAL_STR)) right = val.s.s;
-		else return 0; /* Always fail */
+		else return (op == DIFF_OP);
 	} else if (rtype == STRING_ST) {
 		right = r->str.s;
 	}
@@ -767,7 +769,7 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 		return (avp!=0);
 	}
 	avp = search_avp_by_index(spec->type, spec->name, &val, spec->index);
-	if (!avp) return 0;
+	if (!avp) return (op == DIFF_OP);
 
 	switch(op) {
 	case NO_OP:
@@ -830,7 +832,7 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 
 	ret = run_select(&val, sel, msg);
 	if (ret < 0) return -1;
-	if (ret > 0) return 0;
+	if (ret > 0) return (op == DIFF_OP);
 
 	switch(op) {
 	case NO_OP: return (val.len>0);
