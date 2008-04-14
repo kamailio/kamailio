@@ -213,14 +213,15 @@ static int set_next_domain_on_rule(const struct failure_route_tree_item *failure
 	
 	assert(failure_tree != NULL);
 	
+	LM_DBG("searching for matching routing rules");
 	for (rr = failure_tree->rule_list; rr != NULL; rr = rr->next) {
-		/* FIXME remove some logging */
-		LM_DBG("Trying to find matching rule...\n");
+		/*
 		LM_DBG("rr.flags=%d rr.mask=%d flags=%d\n", rr->flags, rr->mask, flags);
 		LM_DBG("rr.host.len=%d host.len=%d\n", rr->host.len, host->len);
 		LM_DBG("rr.host.s='%.*s' host.s='%.*s'\n", rr->host.len, rr->host.s, host->len, host->s);
 		LM_DBG("rr.reply_code.len=%d reply_code.len=%d\n", rr->reply_code.len, reply_code->len);
 		LM_DBG("rr.reply_code.s='%.*s' reply_code.s='%.*s'\n", rr->reply_code.len, rr->reply_code.s, reply_code->len, reply_code->s);
+		*/
 		if (((rr->mask & flags) == rr->flags) &&
 				((rr->host.len == 0) || (str_strcmp(host, &rr->host)==0)) &&
 				(reply_code_matcher(&(rr->reply_code), reply_code)==0)) {
@@ -426,8 +427,10 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, flag_t fla
 
 	assert(route_tree != NULL);
 	assert(route_tree->flag_list != NULL);
-
+	
+	LM_DBG("searching for matching routing rules");
 	for (rf = route_tree->flag_list; rf != NULL; rf = rf->next) {
+		/* LM_DBG("actual flags %i, searched flags %i, mask %i and match %i", rf->flags, flags, rf->mask, flags&rf->mask); */
 		if ((flags&rf->mask) == rf->flags) break;
 	}
 

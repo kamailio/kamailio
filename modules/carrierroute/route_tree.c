@@ -98,7 +98,7 @@ struct route_tree * get_route_tree(const str * domain, struct carrier_tree * rd)
 		destroy_route_tree(rt);
 		return NULL;
 	}
-	LM_INFO("created route tree: %.*s, %i\n", rt->name.len, rt->name.s, rt->id);
+	LM_INFO("created route tree: %.*s, with id %i\n", rt->name.len, rt->name.s, rt->id);
 	return rt;
 }
 
