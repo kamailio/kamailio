@@ -138,6 +138,10 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  server_id = number - A configurable unique server id that can be used to
+                       discriminate server instances within a cluster of
+                       servers when all other information, such as IP adddresses
+                       are same.
   loadpath = <modules path> - directory where to load the modules from (-L
      equivalent); modules can be loaded simply by specifying their name
      (loadmodule "maxfwd")

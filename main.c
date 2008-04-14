@@ -339,6 +339,8 @@ int sock_uid= -1;
 int sock_gid= -1;
 int sock_mode= S_IRUSR| S_IWUSR| S_IRGRP| S_IWGRP; /* rw-rw---- */
 
+int server_id = 0; /* Configurable unique ID of the server */
+
 /* more config stuff */
 int disable_core_dump=0; /* by default enabled */
 int open_files_limit=-1; /* don't touch it by default */

@@ -56,6 +56,8 @@ extern char* pid_file;
 extern char* pgid_file;
 extern int own_pgid; /* whether or not we have our own pgid (and it's ok to use kill(0, sig) */
 
+extern int server_id; /* A unique ID of the SIP server */
+
 extern struct socket_info* bind_address; /* pointer to the crt. proc.
 											listening address */
 extern struct socket_info* sendipv4; /* ipv4 socket to use when msg.

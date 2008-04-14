@@ -386,6 +386,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token PMTU_DISCOVERY
 %token KILL_TIMEOUT
 %token CFG_DESCRIPTION
+%token SERVER_ID
 
 %token FLAGS_DECL
 %token AVPFLAGS_DECL
@@ -1112,6 +1113,7 @@ assign_stm:
 	| STUN_ALLOW_STUN EQUAL error{ yyerror("number expected"); }
 	| STUN_ALLOW_FP EQUAL NUMBER { IF_STUN(stun_allow_fp=$3) ; }
 	| STUN_ALLOW_FP EQUAL error{ yyerror("number expected"); }
+    | SERVER_ID EQUAL NUMBER { server_id=$3; }
 	| cfg_var
 	| error EQUAL { yyerror("unknown config variable"); }
 	;

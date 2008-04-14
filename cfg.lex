@@ -343,6 +343,8 @@ STUN_REFRESH_INTERVAL "stun_refresh_interval"
 STUN_ALLOW_STUN "stun_allow_stun"
 STUN_ALLOW_FP "stun_allow_fp"
 
+SERVER_ID     "server_id"
+
 CFG_DESCRIPTION		"description"|"descr"|"desc"
 
 LOADMODULE	loadmodule
@@ -652,6 +654,7 @@ EAT_ABLE	[\ \t\b\r]
 									return PMTU_DISCOVERY; }
 <INITIAL>{KILL_TIMEOUT}			{	count(); yylval.strval=yytext;
 									return KILL_TIMEOUT; }
+<INITIAL>{SERVER_ID}  { count(); yylval.strval=yytext; return SERVER_ID;}
 <INITIAL>{CFG_DESCRIPTION}	{ count(); yylval.strval=yytext; return CFG_DESCRIPTION; }
 <INITIAL>{LOADMODULE}	{ count(); yylval.strval=yytext; return LOADMODULE; }
 <INITIAL>{LOADPATH}		{ count(); yylval.strval=yytext; return LOADPATH; }
