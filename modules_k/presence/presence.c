@@ -383,6 +383,9 @@ static int mi_child_init(void)
 	if(use_db== 0)
 		return 0;
 
+
+
+
 	if (pa_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
@@ -664,6 +667,51 @@ int pres_update_status(subs_t subs, str reason, db_key_t* query_cols,
     return 0;
 }
 
+int pres_db_delete_status(subs_t* s)
+{
+    int n_query_cols= 0;
+    db_key_t query_cols[5];
+    db_val_t query_vals[5];
+
+    if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
+    {
+        LM_ERR("sql use table failed\n");
+        return -1;
+    }
+
+    query_cols[n_query_cols]= &str_event_col;
+    query_vals[n_query_cols].nul= 0;
+    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].val.str_val= s->event->name ;
+    n_query_cols++;
+
+    query_cols[n_query_cols]= &str_presentity_uri_col;
+    query_vals[n_query_cols].nul= 0;
+    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].val.str_val= s->pres_uri;
+    n_query_cols++;
+
+    query_cols[n_query_cols]= &str_watcher_username_col;
+    query_vals[n_query_cols].nul= 0;
+    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].val.str_val= s->from_user;
+    n_query_cols++;
+
+    query_cols[n_query_cols]= &str_watcher_domain_col;
+    query_vals[n_query_cols].nul= 0;
+    query_vals[n_query_cols].type= DB_STR;
+    query_vals[n_query_cols].val.str_val= s->from_domain;
+    n_query_cols++;
+
+    if(pa_dbf.delete(pa_db, query_cols, 0, query_vals, n_query_cols)< 0)
+    {
+        LM_ERR("sql delete failed\n");
+        return -1;
+    }
+    return 0;
+
+}
+
 int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 {
 	subs_t subs;
@@ -755,7 +803,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		ws_list= (ws_t*)pkg_malloc(n * sizeof(ws_t));
 		if(ws_list== NULL)
 		{
-			LM_ERR("No more memory memory\n");
+			LM_ERR("No more private memory\n");
 			goto done;
 		}
 		memset(ws_list, 0, n * sizeof(ws_t));
@@ -781,7 +829,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 				ws_list[i].reason.s = (char*)pkg_malloc(reason.len* sizeof(char));
 				if(ws_list[i].reason.s== NULL)
 				{  
-					LM_ERR("No more memory memory\n");
+					LM_ERR("No more private memory\n");
 					goto done;
 				}
 				memcpy(ws_list[i].reason.s, reason.s, reason.len);
@@ -793,7 +841,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			ws_list[i].w_user.s = (char*)pkg_malloc(w_user.len* sizeof(char));
 			if(ws_list[i].w_user.s== NULL)
 			{
-				LM_ERR("No more memory memory\n");
+				LM_ERR("No more private memory\n");
 				goto done;
 
 			}
@@ -803,7 +851,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 			 ws_list[i].w_domain.s = (char*)pkg_malloc(w_domain.len* sizeof(char));
 			if(ws_list[i].w_domain.s== NULL)
 			{
-				LM_ERR("No more memory memory\n");
+				LM_ERR("No more private memory\n");
 				goto done;
 			}
 			memcpy(ws_list[i].w_domain.s, w_domain.s, w_domain.len);
@@ -886,7 +934,19 @@ send_notify:
 			LM_ERR( "sending Notify request\n");
 			goto done;
 		}
-		s= s->next;
+
+        /* delete from database also */
+        if(s->status== TERMINATED_STATUS)
+        {
+            if(pres_db_delete_status(s)<0)
+            {
+                err_ret= -1;
+                LM_ERR("failed to delete terminated dialog from database\n");
+                goto done;
+            }
+        }
+
+        s= s->next;
 	}
 
 	free_subs_list(subs_array, PKG_MEM_TYPE, 0);
@@ -952,15 +1012,16 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			{
 				cs->expires= 0;
 				ps->next= s->next;
-				shm_free(s);
+				shm_free(s->contact.s);
+                shm_free(s);
 			}
 			else
-				ps= ps->next;
+				ps= s;
 
 			printf_subs(cs);
 		}
 		else
-			ps= ps->next;
+			ps= s;
 	}
 	
     LM_DBG("found %d matching dialogs\n", i);

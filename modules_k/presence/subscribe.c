@@ -130,7 +130,7 @@ int delete_db_subs(str pres_uri, str ev_stored_name, str to_tag)
 	if(pa_dbf.delete(pa_db, query_cols, 0, query_vals,
 				n_query_cols)< 0 )
 	{
-		LM_ERR("cleaning unsubscribed messages\n");
+		LM_ERR("sql delete failed\n");
 		return -1;
 	}
 
