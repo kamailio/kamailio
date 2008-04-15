@@ -66,6 +66,7 @@
  * o: outbound_ruri
  * p: source_ip
  * r: from_tag
+ * s: server_id
  * t: sip_to
  * u: digest_username
  * x: request_timestamp
@@ -81,7 +82,7 @@
  * X: response_timestamp
  */
 
-#define ALL_LOG_FMT "acdfgimnoprtuxDFIMPRSTUX"
+#define ALL_LOG_FMT "acdfgimnoprstuxDFIMPRSTUX"
 #define ALL_LOG_FMT_LEN (sizeof(ALL_LOG_FMT) - 1)
 
 #define A_SEPARATOR ", " /* must be shorter than ACC! */
@@ -127,6 +128,7 @@
 #define A_RESTIMESTAMP "response_timestamp"
 #define A_SRCIP        "src_ip"
 #define A_SRCPORT      "src_port"
+#define A_SERVERID     "server_id"
 
 MODULE_VERSION
 
@@ -179,7 +181,7 @@ static param_export_t params[] = {
 	{"log_missed_flag",	PARAM_STRING|PARAM_USE_FUNC, fix_log_missed_flag},
 	{"log_level",		PARAM_INT, &log_level           },
 	{"log_fmt",		PARAM_STRING, &log_fmt          },
-        {"attrs",               PARAM_STRING, &attrs            },
+	{"attrs",               PARAM_STRING, &attrs            },
 	{0, 0, 0}
 };
 
@@ -408,10 +410,10 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 {
 	static char flags_buf[INT2STR_MAX_LEN], tm_buf[TM_BUF_LEN],
 		rqtm_buf[TM_BUF_LEN], srcip_buf[IP_ADDR_MAX_STR_SIZE],
-		srcport_buf[INT2STR_MAX_LEN];
+		srcport_buf[INT2STR_MAX_LEN], serverid_buf[INT2STR_MAX_LEN];
 	int cnt, tl, al;
 	struct to_body* from, *pto;
-	static str mycode, flags, tm_s, rqtm_s, src_ip, src_port, from_uid, to_uid;
+	static str mycode, flags, tm_s, rqtm_s, src_ip, src_port, from_uid, to_uid, server_id_str;
 	str *cr, *at;
 	struct cseq_body *cseq;
 	char* p;
@@ -504,6 +506,14 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 				val_arr[cnt] = &na;
 			}
 			ATR(FROMTAG);
+			break;
+
+		case 's': /* server_id */
+			p = int2str(server_id, &server_id_str.len);
+			memcpy(serverid_buf, p, server_id_str.len);
+			server_id_str.s = serverid_buf;
+			val_arr[cnt] = &server_id_str;
+			ATR(SERVERID);
 			break;
 
 		case 't': /* sip_to */
