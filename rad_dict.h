@@ -101,6 +101,7 @@ typedef enum rad_attr {
 	A_SER_DOMAIN,
 	A_SER_URI_USER,
 	A_SER_URI_SCHEME,
+	A_SER_SERVER_ID,
 
 	     /* CISCO Vendor Specific Attributes */
 	A_CISCO_AVPAIR,
