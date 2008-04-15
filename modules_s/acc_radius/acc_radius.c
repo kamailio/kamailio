@@ -75,6 +75,7 @@
  * o: outbound_ruri
  * p: source_ip
  * r: from_tag
+ * s: server_id
  * t: sip_to
  * u: digest_username
  * x: request_timestamp
@@ -91,7 +92,7 @@
  */
 
 
-#define ALL_LOG_FMT "acdfgimnoprtuxDFIMPRSTUX"
+#define ALL_LOG_FMT "acdfgimnoprstuxDFIMPRSTUX"
 #define ALL_LOG_FMT_LEN (sizeof(ALL_LOG_FMT) - 1)
 
 MODULE_VERSION
@@ -537,6 +538,12 @@ static int fmt2rad(char *fmt,
 					val = pto->tag_value;
 				}
 			}
+			break;
+
+		case 's': /* server_id */
+			attr = &attrs[A_SER_SERVER_ID];
+			val.s = (char*)&server_id;
+			val.len = sizeof(int);
 			break;
 
 		case 't': /* sip_to */
@@ -1039,6 +1046,7 @@ static int mod_init(void)
 	attrs[A_SER_FROM_DID].n              = "SER-From-DID";
 	attrs[A_SER_TO_UID].n                = "SER-To-UID";
 	attrs[A_SER_RESPONSE_TIMESTAMP].n    = "SER-Response-Timestamp";
+	attrs[A_SER_SERVER_ID].n             = "SER-Server-ID";
 
 	vals[V_START].n			     = "Start";
 	vals[V_STOP].n			     = "Stop";
