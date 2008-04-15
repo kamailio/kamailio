@@ -23,6 +23,10 @@
  * --------
  * 2006-04-14  initial version (bogdan)
  * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
+ * 2008-04-14  DLGCB_CREATED may be registered before the module 
+ *              initialization (bogdan)
+ * 2008-04-15  added new type of callback to be triggered when dialogs are 
+ *              loaded from DB (bogdan)
  */
 
 
@@ -31,21 +35,34 @@
 #include "dlg_hash.h"
 #include "dlg_cb.h"
 
+
 static struct dlg_head_cbl* create_cbs = 0;
+
+static struct dlg_head_cbl* load_cbs = 0;
 
 static struct dlg_cb_params params = {NULL, DLG_DIR_NONE, NULL};
 
 
-int init_dlg_callbacks(void)
+#define POINTER_CLOSED_MARKER  ((void *)(-1))
+
+
+static void run_load_callback(struct dlg_callback *cb);
+
+
+
+static struct dlg_head_cbl* init_dlg_callback(void)
 {
-	create_cbs = (struct dlg_head_cbl*)shm_malloc(sizeof(struct dlg_head_cbl));
-	if (create_cbs==0) {
+	struct dlg_head_cbl *new_cbs;
+
+	new_cbs = (struct dlg_head_cbl*)shm_malloc(sizeof(struct dlg_head_cbl));
+	if (new_cbs==0) {
 		LM_ERR("no more shm mem\n");
-		return -1;
+		return 0;
 	}
-	create_cbs->first = 0;
-	create_cbs->types = 0;
-	return 0;
+	new_cbs->first = 0;
+	new_cbs->types = 0;
+
+	return new_cbs;
 }
 
 
@@ -65,14 +82,22 @@ void destroy_dlg_callbacks_list(struct dlg_callback *cb)
 }
 
 
-void destroy_dlg_callbacks(void)
+void destroy_dlg_callbacks(unsigned int types)
 {
-	if (create_cbs==0)
-		return;
-
-	destroy_dlg_callbacks_list(create_cbs->first);
-	shm_free(create_cbs);
-	create_cbs = 0;
+	if (types&DLGCB_CREATED) {
+		if (create_cbs && create_cbs!=POINTER_CLOSED_MARKER) {
+			destroy_dlg_callbacks_list(create_cbs->first);
+			shm_free(create_cbs);
+			create_cbs = POINTER_CLOSED_MARKER;
+		}
+	}
+	if (types&DLGCB_LOADED) {
+		if (load_cbs && load_cbs!=POINTER_CLOSED_MARKER) {
+			destroy_dlg_callbacks_list(load_cbs->first);
+			shm_free(load_cbs);
+			load_cbs = POINTER_CLOSED_MARKER;
+		}
+	}
 }
 
 
@@ -81,7 +106,12 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f,
 {
 	struct dlg_callback *cb;
 
-	if ( types&DLGCB_CREATED ) {
+	if ( types&DLGCB_LOADED ) {
+		if (types!=DLGCB_LOADED) {
+			LM_CRIT("DLGCB_LOADED type must be register alone!\n");
+			return -1;
+		}
+	} else if ( types&DLGCB_CREATED ) {
 		if (types!=DLGCB_CREATED) {
 			LM_CRIT("DLGCB_CREATED type must be register alone!\n");
 			return -1;
@@ -104,10 +134,38 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f,
 	cb->param = param;
 	cb->callback_param_free = ff;
 
-	if ( types&DLGCB_CREATED ) {
+	if ( types==DLGCB_CREATED ) {
+		if (load_cbs==POINTER_CLOSED_MARKER) {
+			LM_CRIT("DLGCB_CREATED type registered after shutdown!?!\n");
+			goto error;
+		}
+		if (create_cbs==0) {
+			/* not initialized yet */
+			if ( (create_cbs=init_dlg_callback())==NULL ) {
+				LM_ERR("no more shm mem\n");
+				goto error;
+			}
+		}
 		cb->next = create_cbs->first;
 		create_cbs->first = cb;
 		create_cbs->types |= types;
+	} else if (types==DLGCB_LOADED) {
+		if (load_cbs==POINTER_CLOSED_MARKER) {
+			/* run the callback on the spot */
+			run_load_callback(cb);
+			destroy_dlg_callbacks_list(cb);
+			return 0;
+		}
+		if (load_cbs==0) {
+			/* not initialized yet */
+			if ( (load_cbs=init_dlg_callback())==NULL ) {
+				LM_ERR("no more shm mem\n");
+				goto error;
+			}
+		}
+		cb->next = load_cbs->first;
+		load_cbs->first = cb;
+		load_cbs->types |= types;
 	} else {
 		cb->next = dlg->cbs.first;
 		dlg->cbs.first = cb;
@@ -115,6 +173,38 @@ int register_dlgcb(struct dlg_cell *dlg, int types, dialog_cb f,
 	}
 
 	return 0;
+error:
+	shm_free(cb);
+	return -1;
+}
+
+
+static void run_load_callback(struct dlg_callback *cb)
+{
+	struct dlg_cell *dlg;
+	unsigned int i;
+
+	params.msg = NULL;
+	params.direction = DLG_DIR_NONE;
+	params.param = &cb->param;
+
+	for( i=0 ; i<d_table->size ; i++ ) {
+		for( dlg=d_table->entries[i].first ; dlg ; dlg=dlg->next )
+			cb->callback( dlg, DLGCB_LOADED, &params );
+	}
+
+	return;
+}
+
+
+void run_load_callbacks( void )
+{
+	struct dlg_callback *cb;
+
+	for ( cb=load_cbs->first; cb; cb=cb->next )
+		run_load_callback( cb );
+
+	return;
 }
 
 

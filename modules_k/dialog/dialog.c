@@ -32,6 +32,8 @@
  *  2007-05-15 added saving dialogs' information to database (ancuta)
  *  2007-07-04 added saving dialog cseq, contact, record route 
  *              and bind_addresses(sock_info) for caller and callee (ancuta)
+ *  2008-04-14 added new type of callback to be triggered when dialogs are 
+ *              loaded from DB (bogdan)
  */
 
 
@@ -90,8 +92,6 @@ pv_spec_t timeout_avp;
 /* db stuff */
 static str db_url = str_init(DEFAULT_DB_URL);
 static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
-
-
 
 static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
@@ -215,9 +215,13 @@ static int pv_get_dlg_count(struct sip_msg *msg, pv_param_t *param,
 static int mod_init(void)
 {
 	unsigned int n;
-	db_url.len = strlen(db_url.s);
+
+	LM_INFO("Dialog module - initializing\n");
+
 	if (timeout_spec.s)
 		timeout_spec.len = strlen(timeout_spec.s);
+
+	db_url.len = strlen(db_url.s);
 	call_id_column.len = strlen(call_id_column.s);
 	from_uri_column.len = strlen(from_uri_column.s);
 	from_tag_column.len = strlen(from_tag_column.s);
@@ -237,8 +241,6 @@ static int mod_init(void)
 	to_sock_column.len = strlen(to_sock_column.s);
 	from_sock_column.len = strlen(from_sock_column.s);
 	dialog_table_name.len = strlen(dialog_table_name.s);
-
-	LM_INFO("Dialog module - initializing\n");
 
 	/* param checkings */
 	if (dlg_flag==-1) {
@@ -326,12 +328,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* init callbacks */
-	if (init_dlg_callbacks()!=0) {
-		LM_ERR("cannot init callbacks\n");
-		return -1;
-	}
-
 	/* initialized the hash table */
 	for( n=0 ; n<(8*sizeof(n)) ; n++) {
 		if (dlg_hash_size==(1<<n))
@@ -349,7 +345,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/*if a database should be used to store the dialogs' information*/
+	/* if a database should be used to store the dialogs' information */
 	if (dlg_db_mode==DB_MODE_NONE) {
 		db_url.s = 0; db_url.len = 0;
 	} else {
@@ -361,8 +357,14 @@ static int mod_init(void)
 			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		return init_dlg_db(&db_url, dlg_hash_size, db_update_period);
+		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period)!=0) {
+			LM_ERR("failed to initialize the DB support\n");
+			return -1;
+		}
+		run_load_callbacks();
 	}
+
+	destroy_dlg_callbacks( DLGCB_LOADED );
 
 	return 0;
 }
@@ -393,7 +395,7 @@ static void mod_destroy(void)
 	/* no DB interaction from now on */
 	dlg_db_mode = DB_MODE_NONE;
 	destroy_dlg_table();
-	destroy_dlg_callbacks();
+	destroy_dlg_callbacks( DLGCB_CREATED|DLGCB_LOADED );
 	destroy_dlg_handlers();
 }
 

@@ -23,6 +23,8 @@
  * --------
  * 2006-04-11  initial version (bogdan)
  * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
+ * 2008-04-14  added new type of callback to be triggered when dialogs are 
+ *              loaded from DB (bogdan)
  */
 
 #ifndef _DIALOG_DLG_CB_H_
@@ -48,15 +50,16 @@ typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 		dialog_cb f, void *param, param_free_cb ff);
 
 
-#define DLGCB_CREATED         (1<<0)
-#define DLGCB_FAILED          (1<<1)
-#define DLGCB_CONFIRMED       (1<<2)
-#define DLGCB_REQ_WITHIN      (1<<3)
-#define DLGCB_TERMINATED      (1<<4)
-#define DLGCB_EXPIRED         (1<<5)
-#define DLGCB_EARLY           (1<<6)
-#define DLGCB_RESPONSE_FWDED  (1<<7)
-#define DLGCB_WITHIN_RESPONSE (1<<8)
+#define DLGCB_LOADED          (1<<0)
+#define DLGCB_CREATED         (1<<1)
+#define DLGCB_FAILED          (1<<2)
+#define DLGCB_CONFIRMED       (1<<3)
+#define DLGCB_REQ_WITHIN      (1<<4)
+#define DLGCB_TERMINATED      (1<<5)
+#define DLGCB_EXPIRED         (1<<6)
+#define DLGCB_EARLY           (1<<7)
+#define DLGCB_RESPONSE_FWDED  (1<<8)
+#define DLGCB_WITHIN_RESPONSE (1<<9)
 
 struct dlg_callback {
 	int types;
@@ -72,9 +75,8 @@ struct dlg_head_cbl {
 	int types;
 };
 
-int init_dlg_callbacks();
 
-void destroy_dlg_callbacks();
+void destroy_dlg_callbacks(unsigned int type);
 
 void destroy_dlg_callbacks_list(struct dlg_callback *cb);
 
@@ -84,6 +86,8 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);
 
 void run_dlg_callbacks( int type , struct dlg_cell *dlg, struct sip_msg *msg,
 		unsigned int dir);
+
+void run_load_callbacks( void );
 
 
 #endif
