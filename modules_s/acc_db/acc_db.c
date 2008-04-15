@@ -82,7 +82,7 @@
  * X: response_timestamp
  */
 
-#define ALL_LOG_FMT "acdfgimnoprtuxDFIMPRSTUX"
+#define ALL_LOG_FMT "acdfgimnoprstuxDFIMPRSTUX"
 #define ALL_LOG_FMT_LEN (sizeof(ALL_LOG_FMT) - 1)
 
 /* Default column names */
@@ -110,6 +110,7 @@
 #define A_RESTIMESTAMP "response_timestamp"
 #define A_SRCIP        "src_ip"
 #define A_SRCPORT      "src_port"
+#define A_SERVER_ID    "server_id"
 
 MODULE_VERSION
 
@@ -160,6 +161,7 @@ static str touid_col = STR_STATIC_INIT(A_TOUID);
 static str restimestamp_col = STR_STATIC_INIT(A_RESTIMESTAMP);
 static str src_ip_col = STR_STATIC_INIT(A_SRCIP);
 static str src_port_col = STR_STATIC_INIT(A_SRCPORT);
+static str server_id_col = STR_STATIC_INIT(A_SERVER_ID);
 
 static db_ctx_t* acc_db = NULL;
 static db_fld_t fld[sizeof(ALL_LOG_FMT) - 1];
@@ -223,6 +225,7 @@ static param_export_t params[] = {
 	{"restimestamp_column", PARAM_STR, &restimestamp_col },
 	{"src_ip_column",       PARAM_STR, &src_ip_col },
 	{"src_port_column",     PARAM_STR, &src_port_col },
+	{"server_id_column",    PARAM_STR, &server_id_col},
 	{0, 0, 0}
 };
 
@@ -521,6 +524,10 @@ static int init_data(char* fmt)
 			fld[i].type = DB_DATETIME;
 			fld[i].name = restimestamp_col.s;
 			break;
+
+		case 's': /* server_id */
+			fld[i].type = DB_INT;
+			fld[i].name = server_id_col.s;
 		}
 
 		fmt++;
@@ -679,6 +686,10 @@ static int fmt2strar(char *fmt,             /* what would you like to account ? 
 			cr = cred_realm(rq);
 			if (cr) params[cnt].v.lstr = *cr;
 			else params[cnt].flags |= DB_NULL;
+			break;
+
+		case 's': /* server_id */
+			params[cnt].v.int4 = server_id;
 			break;
 
 		case 'S': /* sip_status */
