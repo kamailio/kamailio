@@ -43,12 +43,12 @@
 #include "globals.h"
 /* struct socket_info is defined in ip_addr.h */
 
-struct socket_info* udp_listen;
+extern struct socket_info* udp_listen;
 #ifdef USE_TCP
-struct socket_info* tcp_listen;
+extern struct socket_info* tcp_listen;
 #endif
 #ifdef USE_TLS
-struct socket_info* tls_listen;
+extern struct socket_info* tls_listen;
 #endif
 
 

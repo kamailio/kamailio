@@ -66,7 +66,7 @@ struct tls_hooks{
 };
 
 
-struct tls_hooks tls_hook;
+extern struct tls_hooks tls_hook;
 
 #ifdef __SUNPRO_C
 	#define tls_hook_call(name, ret_not_set, ...) \
