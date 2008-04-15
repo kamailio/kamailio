@@ -171,7 +171,7 @@ extern str default_global_address;
 extern str default_global_port;
 
 /* how much time to allow for shutdown, before killing everything */
-int ser_kill_timeout;
+extern int ser_kill_timeout;
 
 /* core dump and file limits */
 extern int disable_core_dump;
@@ -185,19 +185,22 @@ extern int dns_search_list;
 #ifdef USE_DNS_CACHE
 extern int use_dns_cache; /* 1 if the cache is enabled, 0 otherwise */
 extern int use_dns_failover; /* 1 if failover is enabled, 0 otherwise */
-unsigned int dns_cache_max_mem; /* maximum memory used for the cached entries*/
-unsigned int dns_neg_cache_ttl; /* neg. cache ttl */
-unsigned int dns_cache_max_ttl; /* maximum ttl */
-unsigned int dns_cache_min_ttl; /* minimum ttl */
-unsigned int dns_timer_interval; /* gc timer interval in s */
-int dns_flags; /* default flags used for the  dns_*resolvehost 
+extern unsigned int dns_cache_max_mem; /* maximum memory used for the 
+										  cached entries*/
+extern unsigned int dns_neg_cache_ttl; /* neg. cache ttl */
+extern unsigned int dns_cache_max_ttl; /* maximum ttl */
+extern unsigned int dns_cache_min_ttl; /* minimum ttl */
+extern unsigned int dns_timer_interval; /* gc timer interval in s */
+extern int dns_flags; /* default flags used for the  dns_*resolvehost 
                     (compatibility wrappers) */
 #endif
 #ifdef USE_DST_BLACKLIST
 extern int use_dst_blacklist; /* 1 if the blacklist is enabled */
-unsigned int  blst_max_mem; /* maximum memory used for the blacklist entries*/
-unsigned int blst_timeout; /* blacklist entry ttl */
-unsigned int blst_timer_interval; /* blacklist gc timer interval (in s)*/
+extern unsigned int  blst_max_mem; /* maximum memory used for the blacklist
+									  entries*/
+extern unsigned int blst_timeout; /* blacklist entry ttl */
+extern unsigned int blst_timer_interval; /* blacklist gc timer interval 
+											(in s)*/
 #endif
 
 #endif
