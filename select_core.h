@@ -194,6 +194,7 @@ SELECT_F(select_sip_if_match)
 
 SELECT_F(select_sys)
 SELECT_F(select_sys_pid)
+SELECT_F(select_sys_server_id)
 SELECT_F(select_sys_unique)
 SELECT_F(select_sys_now)
 SELECT_F(select_sys_now_fmt)
@@ -384,6 +385,7 @@ static select_row_t select_core[] = {
 	{ select_sys_now, SEL_PARAM_STR, STR_STATIC_INIT("local"), select_sys_now_fmt, OPTIONAL | CONSUME_NEXT_STR | DIVERSION | SEL_NOW_LOCAL},
 	{ select_sys_now, SEL_PARAM_STR, STR_STATIC_INIT("gmt"), select_sys_now_fmt, OPTIONAL | CONSUME_NEXT_STR | DIVERSION | SEL_NOW_GMT},
 	{ select_sys_now, SEL_PARAM_STR, STR_STATIC_INIT("utc"), select_sys_now_fmt, OPTIONAL | CONSUME_NEXT_STR | DIVERSION | SEL_NOW_GMT},
+	{ select_sys, SEL_PARAM_STR, STR_STATIC_INIT("server_id"), select_sys_server_id, 0},
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("branch"), select_branch, SEL_PARAM_EXPECTED},
 	{ select_branch, SEL_PARAM_STR, STR_STATIC_INIT("count"), select_branch_count, 0},
