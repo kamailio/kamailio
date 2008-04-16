@@ -12,138 +12,147 @@
     <version>9</version>
 
     <description>
-	Location table contains contacts registered by users. This table
-	implement the user location database. It maps UID to a set of contacts
-	registered by the user represented by the UID.
+	  Location table contains contacts registered by users. This table
+	  implement the user location database. It maps UID to a set of contacts
+	  registered by the user represented by the UID.
     </description>
     <column id="location.uid">
-	<name>uid</name>
-	<name db="oracle">uuid</name>
-	<type>string</type>
-	<size>&id_len;</size>
-	<description>
+	  <name>uid</name>
+	  <name db="oracle">uuid</name>
+	  <type>string</type>
+	  <size>&id_len;</size>
+	  <description>
 	    UID (Unique user ID) of the user who owns the contact.
-	</description>
+	  </description>
     </column>
-
+	
     <column id="location.aor">
-	<name>aor</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-	<description>
-           Address of record.
-	</description>
+	  <name>aor</name>
+	  <type>string</type>
+	  <size>&uri_len;</size>
+	  <description>
+        Address of record.
+	  </description>
     </column>
-
-
+	
+	
     <column id="location.contact">
-	<name>contact</name>
-	<type>string</type>
-	<size>&uri_len;</size>
-	<description>
+	  <name>contact</name>
+	  <type>string</type>
+	  <size>&uri_len;</size>
+	  <description>
 	    The SIP URI from Contact header field of REGISTER message.
-	</description>
+	  </description>
     </column>
-
+	
+	<column id="server_id">
+	  <name>server_id</name>
+	  <type>int</type>
+	  <default>0</default>
+	  <description>
+		The ID of the SIP server instance responsible for the contact.
+	  </description>
+	</column>
+	   
     <column>
-	<name>received</name>
-	<type>string</type>
-        <null/>
-	<size>&uri_len;</size>
-	<description>
-	    URI containing the source IP, source port, destination IP,
-	    destination port, and transport protocol of the packet containing
-	    the REGISTER request that created the contact. This is mainly used
-	    for NAT traversal. The format of this column is
+	  <name>received</name>
+	  <type>string</type>
+      <null/>
+	  <size>&uri_len;</size>
+	  <description>
+	    URI containing the source IP, source port, destination IP, destination
+	    port, and transport protocol of the packet containing the REGISTER
+	    request that created the contact. This is mainly used for NAT
+	    traversal. The format of this column is
 	    sip:&lt;src_ip&gt;:&lt;src_port&gt;;dstip=&lt;dst_ip&gt;;dstport=&lt;dst_port&gt;.
-	</description>
+	  </description>
     </column>
-
+	
 	<column id="location.expires">
-	<name>expires</name>
-	<type>datetime</type>
-	<default>1970-01-01 00:00:00</default>
-	<description>
+	  <name>expires</name>
+	  <type>datetime</type>
+	  <default>1970-01-01 00:00:00</default>
+	  <description>
 	    Expiry date and time of the contact. In UTC.
-	</description>
+	  </description>
     </column>
-
+	
     <column>
-	<name>q</name>
-	<type>float</type>
-	<default>1.0</default>
-	<description>
-	    Preference of the contact among all contacts with the same UID.
-	    See RFC3261 for more details. The format of this value is floating
-	    point number in a range from 0 to 1.0. Value of -1.0 has a special
-	    meaning, it means that the user agent provided no q parameter and
-	    the proxy server should use implementation specific value.
-	</description>
+	  <name>q</name>
+	  <type>float</type>
+	  <default>1.0</default>
+	  <description>
+	    Preference of the contact among all contacts with the same UID.  See
+	    RFC3261 for more details. The format of this value is floating point
+	    number in a range from 0 to 1.0. Value of -1.0 has a special meaning,
+	    it means that the user agent provided no q parameter and the proxy
+	    server should use implementation specific value.
+	  </description>
     </column>
-
+	
     <column>
-	<name>callid</name>
-	<type>string</type>
-	<null/>
-	<size>&uri_len;</size>
-	<description>
-	    The value of the Call-ID header field from the REGISTER message
-	    that created the contact.
-	</description>
+	  <name>callid</name>
+	  <type>string</type>
+	  <null/>
+	  <size>&uri_len;</size>
+	  <description>
+	    The value of the Call-ID header field from the REGISTER message that
+	    created the contact.
+	  </description>
     </column>
-
+	
     <column>
-	<name>cseq</name>
-	<type>unsigned int</type>
-	<null/>
-	<description>
+	  <name>cseq</name>
+	  <type>unsigned int</type>
+	  <null/>
+	  <description>
 	    CSeq number from the REGISTER message that created the contact.
-	</description>
+	  </description>
     </column>
-
+	
     <column>
-	<name>flags</name>
-	<type>unsigned int</type>
-	<default>0</default>
-	<description>
+	  <name>flags</name>
+	  <type>unsigned int</type>
+	  <default>0</default>
+	  <description>
 	    Various flags from the SER configuration script.
-	</description>
+	  </description>
     </column>
-
+	
     <column>
-	<name>user_agent</name>
-	<type>string</type>
-	<size>64</size>
-	<null/>
-	<description>
+	  <name>user_agent</name>
+	  <type>string</type>
+	  <size>64</size>
+	  <null/>
+	  <description>
 	    The user agent string from the REGISTER message that created the
 	    contact. This is the identification of the user agent that is
 	    registering the contact.
-	</description>
+	  </description>
     </column>
-
+	
     <column>
-	<name>instance</name>
-	<type>string</type>
-        <null/>
-	<size>&uri_len;</size>
-	<description>
+	  <name>instance</name>
+	  <type>string</type>
+      <null/>
+	  <size>&uri_len;</size>
+	  <description>
 	    The value of sip.instance parameter from the REGISTER request.
-	</description>
+	  </description>
     </column>
-
+	
     <index>
-	<name>location_key</name>
-	<unique/>
-	<colref linkend="location.uid"/>
-	<colref linkend="location.contact"/>
+	  <name>location_key</name>
+	  <unique/>
+	  <colref linkend="location.uid"/>
+	  <colref linkend="location.contact"/>
     </index>
     <index>
-	<name>location_contact</name>
-	<colref linkend="location.contact"/>
+	  <name>location_contact</name>
+	  <colref linkend="location.contact"/>
     </index>
 	<index>
-	<name>location_expires</name>
-	<colref linkend="location.expires"/>
+	  <name>location_expires</name>
+	  <colref linkend="location.expires"/>
     </index>
 </table>

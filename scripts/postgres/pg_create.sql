@@ -7,6 +7,7 @@ CREATE TABLE version (
 INSERT INTO version (table_name, table_version) values ('acc','4');
 CREATE TABLE acc (
     id SERIAL NOT NULL,
+    server_id INTEGER NOT NULL DEFAULT '0',
     from_uid VARCHAR(64),
     to_uid VARCHAR(64),
     to_did VARCHAR(64),
@@ -31,7 +32,7 @@ CREATE TABLE acc (
     response_timestamp TIMESTAMP NOT NULL,
     flags INTEGER NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    CONSTRAINT acc_id_key UNIQUE (id)
+    CONSTRAINT acc_id_key UNIQUE (server_id, id)
 );
 
 CREATE INDEX acc_cid_key ON acc (sip_callid);
@@ -41,6 +42,7 @@ CREATE INDEX acc_to_uid ON acc (to_uid);
 INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id SERIAL NOT NULL,
+    server_id INTEGER NOT NULL DEFAULT '0',
     from_uid VARCHAR(64),
     to_uid VARCHAR(64),
     to_did VARCHAR(64),
@@ -65,7 +67,7 @@ CREATE TABLE missed_calls (
     response_timestamp TIMESTAMP NOT NULL,
     flags INTEGER NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    CONSTRAINT mc_id_key UNIQUE (id)
+    CONSTRAINT mc_id_key UNIQUE (server_id, id)
 );
 
 CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
@@ -175,6 +177,7 @@ CREATE TABLE location (
     uid VARCHAR(64) NOT NULL,
     aor VARCHAR(255) NOT NULL,
     contact VARCHAR(255) NOT NULL,
+    server_id INTEGER NOT NULL DEFAULT '0',
     received VARCHAR(255),
     expires TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00',
     q REAL NOT NULL DEFAULT '1.0',

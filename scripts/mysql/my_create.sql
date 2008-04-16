@@ -6,6 +6,7 @@ CREATE TABLE version (
 INSERT INTO version (table_name, table_version) values ('acc','4');
 CREATE TABLE acc (
     id INT AUTO_INCREMENT NOT NULL,
+    server_id INT NOT NULL DEFAULT '0',
     from_uid VARCHAR(64),
     to_uid VARCHAR(64),
     to_did VARCHAR(64),
@@ -30,7 +31,7 @@ CREATE TABLE acc (
     response_timestamp DATETIME NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    UNIQUE KEY acc_id_key (id),
+    UNIQUE KEY acc_id_key (server_id, id),
     KEY acc_cid_key (sip_callid),
     KEY acc_from_uid (from_uid),
     KEY acc_to_uid (to_uid)
@@ -39,6 +40,7 @@ CREATE TABLE acc (
 INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id INT AUTO_INCREMENT NOT NULL,
+    server_id INT NOT NULL DEFAULT '0',
     from_uid VARCHAR(64),
     to_uid VARCHAR(64),
     to_did VARCHAR(64),
@@ -63,7 +65,7 @@ CREATE TABLE missed_calls (
     response_timestamp DATETIME NOT NULL,
     flags INT UNSIGNED NOT NULL DEFAULT '0',
     attrs VARCHAR(255),
-    UNIQUE KEY mc_id_key (id),
+    UNIQUE KEY mc_id_key (server_id, id),
     KEY mc_cid_key (sip_callid),
     KEY mc_to_uid (to_uid)
 );
@@ -168,6 +170,7 @@ CREATE TABLE location (
     uid VARCHAR(64) NOT NULL,
     aor VARCHAR(255) NOT NULL,
     contact VARCHAR(255) NOT NULL,
+    server_id INT NOT NULL DEFAULT '0',
     received VARCHAR(255),
     expires DATETIME NOT NULL DEFAULT '1970-01-01 00:00:00',
     q FLOAT NOT NULL DEFAULT '1.0',
