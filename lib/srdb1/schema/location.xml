@@ -75,6 +75,7 @@
         <name>expires</name>
         <type>datetime</type>
         <default>&DEFAULT_ALIASES_EXPIRES;</default>
+        <default db="oracle">to_date('&DEFAULT_ALIASES_EXPIRES;','yyyy-mm-dd hh24:mi:ss')</default>
         <description>Date and time when this entry expires.</description>
     </column>
 
@@ -106,6 +107,7 @@
         <name>last_modified</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
         <description>Date and time when this entry was last modified.</description>
     </column>
 

@@ -23,7 +23,6 @@ DBTEXT_XSL = $(STYLESHEETS)/dbtext.xsl
 # Stylesheet used to generate berkeley database schema
 DB_BERKELEY_XSL = $(STYLESHEETS)/db_berkeley.xsl
 
-
 # Stylesheet used to generate oracle database schema
 ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 
@@ -50,7 +49,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley docbook #oracle
+all: mysql postgres dbtext db_berkeley docbook oracle
 
 .PHONY: mysql mysql_clean
 mysql:

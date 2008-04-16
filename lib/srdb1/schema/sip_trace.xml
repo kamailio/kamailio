@@ -30,6 +30,7 @@
         <name>time_stamp</name>
         <type>datetime</type>
         <default>&DEFAULT_DATETIME;</default>
+        <default db="oracle">to_date('&DEFAULT_DATETIME;','yyyy-mm-dd hh24:mi:ss')</default>
         <description>Recording date</description>
     </column>
 
