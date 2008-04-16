@@ -68,13 +68,17 @@ FOR cur IN (SELECT TABLE_NAME FROM all_tables WHERE owner=UPPER(P_OWNER)) LOOP
       L_QUERY := L_QUERY || ' || '', '' || ';
     END IF;
 
-    IF COLUMN_REC.DATA_TYPE = 'VARCHAR2' OR COLUMN_REC.DATA_TYPE = 'CHAR' THEN
+    IF COLUMN_REC.DATA_TYPE = 'VARCHAR2' OR COLUMN_REC.DATA_TYPE = 'CHAR' 
+	OR COLUMN_REC.DATA_TYPE = 'CLOB' THEN
       L_QUERY := L_QUERY || 'NVL2(' || COLUMN_REC.COLUMN_NAME || ', '''''''' ||
       REPLACE(' || COLUMN_REC.COLUMN_NAME || ', '''''''', '''''''''''') || '''''''', ''NULL'')';
     ELSIF COLUMN_REC.DATA_TYPE = 'DATE' THEN
       L_QUERY := L_QUERY || 'NVL2(' || COLUMN_REC.COLUMN_NAME || ', ''TO_DATE('''''' ||
       TO_CHAR(' || COLUMN_REC.COLUMN_NAME || ', ''yyyy-mm-dd hh24:mi:ss'') ||
       '''''', ''''yyyy-mm-dd hh24:mi:ss'''')'', ''NULL'')';
+    ELSIF COLUMN_REC.DATA_TYPE = 'BLOB' THEN
+      L_QUERY := L_QUERY || 'NVL2(' || COLUMN_REC.COLUMN_NAME || 
+      ', ''UNSUPPORTED:NON EMPTY BLOB'', ''NULL'')';
     ELSE
       L_QUERY := L_QUERY || 'NVL(TO_CHAR(' || COLUMN_REC.COLUMN_NAME || '), ''NULL'')';
     END IF;
