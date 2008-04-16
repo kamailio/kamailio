@@ -124,6 +124,13 @@ echo "Package ser-oob postinstall script: MODIFYING config file $CONFIGFILE."
 echo "Creating backup copy as $BACKUP"
 cp -f $CONFIGFILE $BACKUP
 
+db_get ser-oob/SERVERID
+if test "$RET" != "!" ; then
+  fn_config_replace $CONFIGFILE SERVERID <<+++
+server_id=$RET
++++
+fi
+
 db_get ser-oob/LISTEN
 if test "$RET" != "!" ; then
   echo "$RET"|sed 's/,/\n/g'|awk '{print "listen=\"" $1 "\""}' | \

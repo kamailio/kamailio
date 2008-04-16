@@ -29,6 +29,15 @@ Description: Change config file now ?
  each time the ser-oob package is upgraded (or installed without purging previous
  installation).
 
+Template: ser-oob/SERVERID
+Type: integer
+Default: 1
+Description: Unique identifier of the SER server
+ This is the unique identifier of the SER server. You only have to change this option
+ if you are setting up a cluster of SER servers. In that case each SER server within
+ the cluster must have its own unique number. Leave this option untouched if you are
+ setting up a single SER server only.
+
 Template: ser-oob/LISTEN
 Type: string
 Default: 1.2.3.4
