@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../globals.h"
 #include "dlist.h"
 #include "utime.h"
 #include "ul_mod.h"
@@ -56,7 +57,7 @@ static inline void rpc_find_domain(str* _name, udomain_t** _d)
 	}
 }
 
-static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f)
+static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue_t _q, int _f, int sid)
 {
 	urecord_t* r;
 	ucontact_t* c = 0;
@@ -103,7 +104,8 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 			return -5;
 		}
 	} else {
-		if (insert_ucontact(r, &aor, _c, _e + act_time, _q, &cid, 42, _f, &c, &ua, 0, 0, 0) < 0) {
+		if (insert_ucontact(r, &aor, _c, _e + act_time, _q, &cid, 42, _f, &c, &ua, 0, 0, 0,
+							sid == -1 ? server_id : sid) < 0) {
 			LOG(L_ERR, "rpc_add_contact(): Error while inserting contact\n");
 			release_urecord(r);
 			return -6;
@@ -286,7 +288,7 @@ static const char* rpc_add_contact_doc[2] = {
 static void rpc_add_contact(rpc_t* rpc, void* c)
 {
 	udomain_t* d;
-	int expires, flags;
+	int expires, flags, sid;
 	double q;
 	qvalue_t qval;
 	
@@ -294,12 +296,13 @@ static void rpc_add_contact(rpc_t* rpc, void* c)
 	
 	if (rpc->scan(c, "SSSdfd", &table, &uid, &contact, &expires, &q, &flags) < 6) return;
 	qval = double2q(q);
-	
+	if (rpc->scan(c, "d", &sid) < 1) sid = -1;
+
 	rpc_find_domain(&table, &d);
 	if (d) {
 		lock_udomain(d);
 		
-		if (add_contact(d, &uid, &contact, expires, qval, flags) < 0) {
+		if (add_contact(d, &uid, &contact, expires, qval, flags, sid) < 0) {
 			unlock_udomain(d);
 			ERR("Error while adding contact ('%.*s','%.*s') in table '%.*s'\n",
 				uid.len, ZSW(uid.s), contact.len, ZSW(contact.s), table.len, ZSW(table.s));

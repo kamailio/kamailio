@@ -80,6 +80,7 @@ str reply_code_attr = STR_STATIC_INIT("$code");
 str reply_reason_attr = STR_STATIC_INIT("$reason");
 str contact_attr = STR_STATIC_INIT("$contact");
 str aor_attr = STR_STATIC_INIT("$aor");
+str server_id_attr = STR_STATIC_INIT("$server_id");
 
 avp_ident_t avpid_code, avpid_reason, avpid_contact;
 
@@ -131,13 +132,14 @@ static param_export_t params[] = {
 
 	{"min_expires",       PARAM_INT, &min_expires    },
 	{"max_expires",       PARAM_INT, &max_expires    },
-        {"received_param",    PARAM_STR, &rcv_param      },
+	{"received_param",    PARAM_STR, &rcv_param      },
 	{"max_contacts",      PARAM_INT, &max_contacts   },
 	{"received_to_uri",   PARAM_INT, &received_to_uri},
 	{"reply_code_attr",   PARAM_STR, &reply_code_attr},
 	{"reply_reason_attr", PARAM_STR, &reply_reason_attr},
 	{"contact_attr",      PARAM_STR, &contact_attr},
 	{"aor_attr",          PARAM_STR, &aor_attr},
+	{"server_id_attr",    PARAM_STR, &server_id_attr},
 	{0, 0, 0}
 };
 
@@ -263,7 +265,6 @@ static int fix_load_nat_flag( modparam_t type, void* val)
 {
 	return fix_flag(type, val, "registrar", "load_nat_flag", &load_nat_flag);
 }
-
 
 
 /*

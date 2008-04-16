@@ -49,6 +49,7 @@ extern float def_q;
 extern int received_to_uri; /*copy received to uri, don't add it to dst_uri*/
 extern str rcv_param;
 extern str aor_attr;
+extern str server_id_attr;
 extern int max_contacts;
 
 extern usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */

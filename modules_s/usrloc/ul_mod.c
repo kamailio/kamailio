@@ -71,6 +71,7 @@ MODULE_VERSION
 #define RECEIVED_COL   "received"
 #define INSTANCE_COL   "instance"
 #define AOR_COL        "aor"
+#define SERVER_ID_COL  "server_id"
 
 static int mod_init(void);                          /* Module initialization function */
 static void destroy(void);                          /* Module destroy function */
@@ -95,6 +96,7 @@ str user_agent_col  = STR_STATIC_INIT(USER_AGENT_COL); /* Name of column contain
 str received_col    = STR_STATIC_INIT(RECEIVED_COL);   /* Name of column containing transport info of REGISTER */
 str instance_col    = STR_STATIC_INIT(INSTANCE_COL);   /* Name of column containing sip-instance parameter */
 str aor_col         = STR_STATIC_INIT(AOR_COL);        /* Name of column containing address of record */
+str server_id_col   = STR_STATIC_INIT(SERVER_ID_COL);  /* Name of column containing server id */
 str db_url          = STR_STATIC_INIT(DEFAULT_DB_URL); /* Database URL */
 
 int timer_interval  = 60;             /* Timer interval in seconds */
@@ -224,6 +226,7 @@ static int build_db_cmds(void)
 		{.name = received_col.s,   .type = DB_STR},
 		{.name = instance_col.s,   .type = DB_STR},
 		{.name = aor_col.s,        .type = DB_STR},
+		{.name = server_id_col.s,  .type = DB_INT},
 		{.name = avp_column,       .type = DB_STR}, /* Must be the last element in the array */
 		{.name = NULL},
 	};

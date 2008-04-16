@@ -43,6 +43,7 @@
 #include "../../dprint.h"
 #include "../../db/db.h"
 #include "../../ip_addr.h"
+#include "../../globals.h"
 #include "ul_mod.h"
 #include "ul_callback.h"
 #include "reg_avps.h"
@@ -54,9 +55,9 @@
  * Create a new contact structure
  */
 int new_ucontact(str* _dom, str* _uid, str* aor, str* _contact, time_t _e, qvalue_t _q,
-		 str* _callid, int _cseq, unsigned int _flags, 
-		 ucontact_t** _c, str* _ua, str* _recv, struct socket_info* sock,
-		 str* _inst)
+				 str* _callid, int _cseq, unsigned int _flags, 
+				 ucontact_t** _c, str* _ua, str* _recv, struct socket_info* sock,
+				 str* _inst, int sid)
 {
 	*_c = (ucontact_t*)shm_malloc(sizeof(ucontact_t));
 	if (!(*_c)) {
@@ -129,6 +130,7 @@ int new_ucontact(str* _dom, str* _uid, str* aor, str* _contact, time_t _e, qvalu
 		(*_c)->instance.len = 0;
 	}
 
+	(*_c)->server_id = sid;
 	(*_c)->cseq = _cseq;
 	(*_c)->state = CS_NEW;
 	(*_c)->flags = _flags;
@@ -206,6 +208,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "instance  : '%.*s'\n", _c->instance.len, ZSW(_c->instance.s));
 	fprintf(_f, "State     : %s\n", st);
 	fprintf(_f, "Flags     : %u\n", _c->flags);
+	fprintf(_f, "server_id : %d\n", _c->server_id);
 	fprintf(_f, "Sock      : %p\n", _c->sock);
 	fprintf(_f, "next      : %p\n", _c->next);
 	fprintf(_f, "prev      : %p\n", _c->prev);
@@ -531,12 +534,14 @@ int db_store_ucontact(ucontact_t* _c)
 	ins_contact[cur_cmd]->vals[10].v.lstr.s = _c->aor.s;
 	ins_contact[cur_cmd]->vals[10].v.lstr.len = MIN(_c->aor.len, 255);
 
+	ins_contact[cur_cmd]->vals[11].v.int4 = _c->server_id;
+
 	if (use_reg_avps()) {
 		if (serialize_avps(_c->avps, &avps) < 0) {
 			ERR("Error while serializing AVPs\n");
 			return -1;
 		}
-		ins_contact[cur_cmd]->vals[11].v.lstr = avps;
+		ins_contact[cur_cmd]->vals[12].v.lstr = avps;
 	}
 
 	     /* FIXME */
@@ -576,8 +581,8 @@ int db_delete_ucontact(ucontact_t* _c)
  * Update ucontact with new values
  */
 int update_ucontact(ucontact_t* _c, str* _u, str* aor, time_t _e, qvalue_t _q, str* _cid, int _cs,
-		    unsigned int _set, unsigned int _res, str* _ua, str* _recv,
-		    struct socket_info* sock, str* _inst)
+					unsigned int _set, unsigned int _res, str* _ua, str* _recv,
+					struct socket_info* sock, str* _inst, int sid)
 {
 	/* run callbacks for UPDATE event */
 	if (exists_ulcb_type(UL_CONTACT_UPDATE)) {

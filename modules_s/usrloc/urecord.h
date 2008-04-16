@@ -89,7 +89,7 @@ void print_urecord(FILE* _f, urecord_t* _r);
  */
 int mem_insert_ucontact(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-			struct socket_info* sock, str* _inst);
+						struct socket_info* sock, str* _inst, int sid);
 
 
 
@@ -127,11 +127,11 @@ void release_urecord(urecord_t* _r);
  * into urecord with additional replication argument
  */
 typedef int (*insert_ucontact_t)(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
-				 unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-				 struct socket_info* sock, str* _inst);
+								 unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
+								 struct socket_info* sock, str* _inst, int sid);
 int insert_ucontact(urecord_t* _r, str* aor, str* _c, time_t _e, qvalue_t _q, str* _cid, int _cs, 
 			unsigned int _flags, struct ucontact** _con, str *_ua, str* _recv,
-			struct socket_info* sock, str* _inst);
+					struct socket_info* sock, str* _inst, int sid);
 
 /*
  * Delete ucontact from urecord

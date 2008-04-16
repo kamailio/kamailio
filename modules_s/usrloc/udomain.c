@@ -294,6 +294,7 @@ int preload_udomain(udomain_t* _d)
 		{.name = received_col.s,   .type = DB_STR},
 		{.name = instance_col.s,   .type = DB_STR},
 		{.name = aor_col.s,        .type = DB_STR},
+		{.name = server_id_col.s,  .type = DB_INT},
 		{.name = avp_column,       .type = DB_STR}, /* Must be the last element in the array */
 		{.name = NULL}
 	};
@@ -306,7 +307,7 @@ int preload_udomain(udomain_t* _d)
 	str callid, ua, instance, aor;
 	str* receivedp;
 	qvalue_t q;
-
+	unsigned int flags;
 	urecord_t* r;
 	ucontact_t* c;
 
@@ -396,8 +397,6 @@ int preload_udomain(udomain_t* _d)
 			aor = rec->fld[10].v.lstr;
 		}
 
-		
-
 		if (get_urecord(_d, &rec->fld[0].v.lstr, &r) > 0) {
 			if (mem_insert_urecord(_d, &rec->fld[0].v.lstr, &r) < 0) {
 				LOG(L_ERR, "preload_udomain(): Can't create a record\n");
@@ -405,16 +404,27 @@ int preload_udomain(udomain_t* _d)
 				goto error;
 			}
 		}
-		
+
+		flags = rec->fld[6].v.bitmap;
+		if (rec->fld[11].v.int4 != server_id) {
+			/* FIXME: this should not be hardcoded here this way */
+			/* This is a records from another SIP server instance, mark
+			 * it as in memory only because the other SIP server is responsible
+			 * for updating the record in database
+			 */
+			flags |= FL_MEM;
+		}
+
 		if (mem_insert_ucontact(r, &aor, &rec->fld[1].v.lstr, rec->fld[2].v.int4, 
-								q, &callid, rec->fld[5].v.int4, rec->fld[6].v.bitmap, &c, &ua, receivedp, sock, &instance) < 0) {
+								q, &callid, rec->fld[5].v.int4, flags, &c, &ua, receivedp, 
+								sock, &instance, rec->fld[11].v.int4) < 0) {
 			LOG(L_ERR, "preload_udomain(): Error while inserting contact\n");
 			unlock_udomain(_d);
 			goto error;
 		}
 
-		if (use_reg_avps() && ((rec->fld[11].flags & DB_NULL) != DB_NULL)) {
-			c->avps = deserialize_avps(&rec->fld[11].v.lstr);
+		if (use_reg_avps() && ((rec->fld[12].flags & DB_NULL) != DB_NULL)) {
+			c->avps = deserialize_avps(&rec->fld[12].v.lstr);
 				
 		}
 

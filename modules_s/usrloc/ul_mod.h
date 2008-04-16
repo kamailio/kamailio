@@ -69,6 +69,7 @@ extern str user_agent_col;
 extern str received_col;
 extern str instance_col;
 extern str aor_col;
+extern str server_id_col;
 extern str db_url;
 extern int timer_interval;
 extern int db_mode;

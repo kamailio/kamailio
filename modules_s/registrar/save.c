@@ -45,6 +45,7 @@
 #include "../usrloc/usrloc.h"
 #include "../../qvalue.h"
 #include "../../id.h"
+#include "../../globals.h"
 #include "common.h"
 #include "sip_msg.h"
 #include "rerrno.h"
@@ -260,16 +261,15 @@ static int create_rcv_uri(str** uri, struct sip_msg* m)
  * and insert all contacts from the message that have expires
  * > 0
  */
-static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t* _d, str* _u, str *ua, str* aor_filter)
+static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t* _d, str* _u, str *ua, str* aor_filter, int sid)
 {
 	urecord_t* r = 0;
 	ucontact_t* c;
-	int e, cseq;
+	int e, cseq, num;
 	qvalue_t q;
 	str callid;
 	unsigned int flags;
 	str *recv, *inst;
-	int num;
 
 	if (isflagset(_m, save_nat_flag) == 1) flags = FL_NAT;
 	else flags = FL_NONE;
@@ -338,7 +338,7 @@ static inline int insert(struct sip_msg* _m, str* aor, contact_t* _c, udomain_t*
 		}
 
 		if (ul.insert_ucontact(r, aor, &_c->uri, e, q, &callid, cseq, flags, &c, ua, recv, 
-				       _m->rcv.bind_address, inst) < 0) {
+							   _m->rcv.bind_address, inst, sid) < 0) {
 			rerrno = R_UL_INS_C;
 			LOG(L_ERR, "insert(): Error while inserting contact\n");
 			ul.delete_urecord(_d, _u);
@@ -414,7 +414,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c)
  * 3) If contact in usrloc exists and expires
  *    == 0, delete contact
  */
-static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t* _c, str* _ua, str* aor_filter)
+static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t* _c, str* _ua, str* aor_filter, int sid)
 {
 	ucontact_t* c, *c2;
 	str callid;
@@ -490,7 +490,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 						       nated | mem_only,
 						       &c2, _ua, recv, 
 						       _m->rcv.bind_address,
-							   inst) < 0) {
+									   inst, sid) < 0) {
 					rerrno = R_UL_INS_C;
 					LOG(L_ERR, "update(): Error while inserting contact\n");
 					return -4;
@@ -542,7 +542,7 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 
 				set = nated | mem_only;
 				reset = ~(nated | mem_only) & (FL_NAT | FL_MEM);
-				if (ul.update_ucontact(c, &_c->uri, aor, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst) < 0) {
+				if (ul.update_ucontact(c, &_c->uri, aor, e, q, &callid, cseq, set, reset, _ua, recv, _m->rcv.bind_address, inst, sid) < 0) {
 					rerrno = R_UL_UPD_C;
 					LOG(L_ERR, "update(): Error while updating contact\n");
 					return -8;
@@ -556,13 +556,32 @@ static inline int update(struct sip_msg* _m, urecord_t* _r, str* aor, contact_t*
 }
 
 
+static int get_server_id(void)
+{
+	int_str name, val;
+	int sid;
+	
+
+	name.s.s = server_id_attr.s + 1; /* Skip the 1st char which is $ */
+	name.s.len = server_id_attr.len - 1;
+	if (search_first_avp(AVP_TRACK_FROM | AVP_NAME_STR, name, &val, 0)) {
+		if (str2sint(&val.s, &sid) == 0) return sid;
+	}
+
+	/* No server_id attribute found or the attribute doesn't have
+	 * meaningful value, return the server id of this SER server
+	 */
+	return server_id;
+}
+
+
 /* 
  * This function will process request that
  * contained some contact header fields
  */
 static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str* _u, str* _ua, str* aor_filter)
 {
-	int res;
+	int res, sid;
 	urecord_t* r;
 	str* aor;
 	int_str name, val;
@@ -575,6 +594,8 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	    aor = &get_to(_m)->uri;
 	}
 
+	sid = get_server_id();
+
 	ul.lock_udomain(_d);
 	res = ul.get_urecord(_d, _u, &r);
 	if (res < 0) {
@@ -585,7 +606,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 	}
 
 	if (res == 0) { /* Contacts found */
-		if (update(_m, r, aor, _c, _ua, aor_filter) < 0) {
+		if (update(_m, r, aor, _c, _ua, aor_filter, sid) < 0) {
 			LOG(L_ERR, "contacts(): Error while updating record\n");
 			build_contact(r->contacts, aor_filter);
 			ul.release_urecord(r);
@@ -595,7 +616,7 @@ static inline int contacts(struct sip_msg* _m, contact_t* _c, udomain_t* _d, str
 		build_contact(r->contacts, aor_filter);
 		ul.release_urecord(r);
 	} else {
-		if (insert(_m, aor, _c, _d, _u, _ua, aor_filter) < 0) {
+		if (insert(_m, aor, _c, _d, _u, _ua, aor_filter, sid) < 0) {
 			LOG(L_ERR, "contacts(): Error while inserting record\n");
 			ul.unlock_udomain(_d);
 			return -4;
