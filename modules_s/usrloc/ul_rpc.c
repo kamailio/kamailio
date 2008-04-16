@@ -98,7 +98,8 @@ static inline int add_contact(udomain_t* _d, str* _u, str* _c, time_t _e, qvalue
 	ua.len = strlen(ua.s);
 	
 	if (c) {
-		if (update_ucontact(c, &aor, _c, _e + act_time, _q, &cid, 42, _f, FL_NONE, &ua, 0, 0, 0) < 0) {
+		if (update_ucontact(c, &aor, _c, _e + act_time, _q, &cid, 42, _f, FL_NONE, &ua, 0, 0, 0, 
+				    sid == -1 ? server_id : sid) < 0) {
 			LOG(L_ERR, "rpc_add_contact(): Error while updating contact\n");
 			release_urecord(r);
 			return -5;
