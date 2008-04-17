@@ -80,30 +80,30 @@ static str failure_comment_col = str_init("description");
 
 
 str * columns[COLUMN_NUM] = {
-                                 &id_col,
-                                 &carrier_col,
-                                 &domain_col,
-                                 &scan_prefix_col,
-																 &flags_col,
-																 &mask_col,
-                                 &prob_col,
-                                 &rewrite_host_col,
-                                 &strip_col,
-                                 &rewrite_prefix_col,
-                                 &rewrite_suffix_col,
-                                 &comment_col,
-                             };
+	&id_col,
+	&carrier_col,
+	&domain_col,
+	&scan_prefix_col,
+	&flags_col,
+	&mask_col,
+	&prob_col,
+	&rewrite_host_col,
+	&strip_col,
+	&rewrite_prefix_col,
+	&rewrite_suffix_col,
+	&comment_col,
+};
 
 str * subscriber_columns[SUBSCRIBER_COLUMN_NUM] = {
-            &username_col,
-            &domain_col,
-            &cr_preferred_carrier_col,
-        };
+	&username_col,
+	&domain_col,
+	&cr_preferred_carrier_col,
+};
 
 str * carrier_columns[CARRIER_COLUMN_NUM] = {
-            &id_col,
-            &carrier_col,
-        };
+	&id_col,
+	&carrier_col,
+};
 
 str * failure_columns[FAILURE_COLUMN_NUM] = {
 	&failure_id_col,
