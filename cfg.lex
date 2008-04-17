@@ -152,6 +152,7 @@ ISAVPFLAGSET	isavpflagset
 AVPFLAGS_DECL	avpflags
 SET_HOST		"rewritehost"|"sethost"|"seth"
 SET_HOSTPORT	"rewritehostport"|"sethostport"|"sethp"
+SET_HOSTPORTTRANS	"rewritehostporttrans"|"sethostporttrans"|"sethpt"
 SET_USER		"rewriteuser"|"setuser"|"setu"
 SET_USERPASS	"rewriteuserpass"|"setuserpass"|"setup"
 SET_PORT		"rewriteport"|"setport"|"setp"
@@ -435,6 +436,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{EXEC}	{ count(); yylval.strval=yytext; return EXEC; }
 <INITIAL>{SET_HOST}	{ count(); yylval.strval=yytext; return SET_HOST; }
 <INITIAL>{SET_HOSTPORT}	{ count(); yylval.strval=yytext; return SET_HOSTPORT; }
+<INITIAL>{SET_HOSTPORTTRANS}	{ count(); yylval.strval=yytext; return SET_HOSTPORTTRANS; }
 <INITIAL>{SET_USER}	{ count(); yylval.strval=yytext; return SET_USER; }
 <INITIAL>{SET_USERPASS}	{ count(); yylval.strval=yytext; return SET_USERPASS; }
 <INITIAL>{SET_PORT}	{ count(); yylval.strval=yytext; return SET_PORT; }

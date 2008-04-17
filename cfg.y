@@ -224,6 +224,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token EXEC
 %token SET_HOST
 %token SET_HOSTPORT
+%token SET_HOSTPORTTRANS
 %token PREFIX
 %token STRIP
 %token STRIP_TAIL
@@ -2058,6 +2059,9 @@ cmd:
 	| SET_HOSTPORT LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORT_T, 1, STRING_ST, $3); }
 	| SET_HOSTPORT error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_HOSTPORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
+	| SET_HOSTPORTTRANS LPAREN STRING RPAREN { $$=mk_action(SET_HOSTPORTTRANS_T, 1, STRING_ST, $3); }
+	| SET_HOSTPORTTRANS error { $$=0; yyerror("missing '(' or ')' ?"); }
+	| SET_HOSTPORTTRANS LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
 	| SET_PORT LPAREN STRING RPAREN { $$=mk_action(SET_PORT_T, 1, STRING_ST, $3); }
 	| SET_PORT error { $$=0; yyerror("missing '(' or ')' ?"); }
 	| SET_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }

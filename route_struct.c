@@ -331,6 +331,9 @@ void print_action(struct action* t)
 		case SET_HOSTPORT_T:
 			DBG("sethostport(");
 			break;
+		case SET_HOSTPORTTRANS_T:
+			DBG("sethostporttrans(");
+			break;
 		case SET_USER_T:
 			DBG("setuser(");
 			break;

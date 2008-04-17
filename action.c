@@ -462,6 +462,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 			break;
 		case SET_HOST_T:
 		case SET_HOSTPORT_T:
+		case SET_HOSTPORTTRANS_T:
 		case SET_USER_T:
 		case SET_USERPASS_T:
 		case SET_PORT_T:
@@ -503,18 +504,22 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					ret=1;
 					break;
 				}
-				if (msg->new_uri.s) {
-					tmp=msg->new_uri.s;
-					len=msg->new_uri.len;
-				}else{
-					tmp=msg->first_line.u.request.uri.s;
-					len=msg->first_line.u.request.uri.len;
-				}
-				if (parse_uri(tmp, len, &uri)<0){
-					LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
-								" packet\n", tmp);
-					ret=E_UNSPEC;
-					break;
+				if (msg->parsed_uri_ok==0) {
+					if (msg->new_uri.s) {
+						tmp=msg->new_uri.s;
+						len=msg->new_uri.len;
+					}else{
+						tmp=msg->first_line.u.request.uri.s;
+						len=msg->first_line.u.request.uri.len;
+					}
+					if (parse_uri(tmp, len, &uri)<0){
+						LOG(L_ERR, "ERROR: do_action: bad uri <%s>, dropping"
+									" packet\n", tmp);
+						ret=E_UNSPEC;
+						break;
+					}
+				} else {
+					uri=msg->parsed_uri;
 				}
 
 				new_uri=pkg_malloc(MAX_URI_SIZE);
@@ -593,7 +598,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					if(crt+1>end) goto error_uri;
 					*crt='@'; crt++;
 				}
-				if ((a->type==SET_HOST_T) ||(a->type==SET_HOSTPORT_T)) {
+				if ((a->type==SET_HOST_T)
+						|| (a->type==SET_HOSTPORT_T)
+						|| (a->type==SET_HOSTPORTTRANS_T)) {
 					tmp=a->val[0].u.string;
 					if (tmp) len = strlen(tmp);
 					else len=0;
@@ -606,7 +613,9 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* port */
-				if (a->type==SET_HOSTPORT_T) tmp=0;
+				if ((a->type==SET_HOSTPORT_T)
+						|| (a->type==SET_HOSTPORTTRANS_T))
+					tmp=0;
 				else if (a->type==SET_PORT_T) {
 					tmp=a->val[0].u.string;
 					if (tmp) len = strlen(tmp);
@@ -621,11 +630,31 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 					memcpy(crt,tmp,len);crt+=len;
 				}
 				/* params */
-				tmp=uri.params.s;
-				if (tmp){
-					len=uri.params.len; if(crt+len+1>end) goto error_uri;
-					*crt=';'; crt++;
-					memcpy(crt,tmp,len);crt+=len;
+				if ((a->type==SET_HOSTPORTTRANS_T) && uri.transport.s) {
+					/* bypass the transport parameter */
+					if (uri.params.s < uri.transport.s) {
+						/* there are parameters before transport */
+						len = uri.transport.s - uri.params.s - 1;
+							/* ignore the ';' at the end */
+						if (crt+len+1>end) goto error_uri;
+						*crt=';'; crt++;
+						memcpy(crt,uri.params.s,len);crt+=len;
+					}
+					len = (uri.params.s + uri.params.len) -
+						(uri.transport.s + uri.transport.len);
+					if (len > 0) {
+						/* there are parameters after transport */
+						if (crt+len>end) goto error_uri;
+						tmp = uri.transport.s + uri.transport.len;
+						memcpy(crt,tmp,len);crt+=len;
+					}
+				} else {
+					tmp=uri.params.s;
+					if (tmp){
+						len=uri.params.len; if(crt+len+1>end) goto error_uri;
+						*crt=';'; crt++;
+						memcpy(crt,tmp,len);crt+=len;
+					}
 				}
 				/* headers */
 				tmp=uri.headers.s;
