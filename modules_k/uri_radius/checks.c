@@ -1,5 +1,4 @@
-/* checks.c v 0.1 2003/1/20
- *
+/* 
  * Radius based checks
  *
  * Copyright (C) 2002-2008 Juha Heinanen
@@ -23,6 +22,7 @@
  * History:
  * -------
  * 2003-03-11: Code cleanup (janakj)
+ * 2008-04-17: Added functions that accept pvar arguments (juhe)
  */
 
 
@@ -35,6 +35,7 @@
 #include "../../ut.h"
 #include "checks.h"
 #include "urirad_mod.h"
+#include "../../pvar.h"
 
 
 /* Extract from SIP-AVP value flags/name/value of an AVP */
@@ -143,10 +144,11 @@ static int generate_avps(VALUE_PAIR* received)
 
 
 /*
- * Check from Radius if Request URI belongs to a local user.
+ * Check from Radius if URI, whose user an host parts are given as
+ * arguments, exists.
  * If so, loads AVPs based on reply items returned from Radius.
  */
-int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
+int radius_does_uri_user_host_exist(str user, str host)
 {
     static char msg[4096];
     VALUE_PAIR *send, *received;
@@ -156,27 +158,21 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 
     send = received = 0;
 
-    if (parse_sip_msg_uri(_m) < 0) {
-	LM_ERR("parsing URI failed\n");
-	return -1;
-    }
-
     if (!use_sip_uri_host) {
 
 	/* Send userpart@hostpart of Request-URI in A_USER_NAME attr */
-	uri = (char*)pkg_malloc(_m->parsed_uri.user.len +
-				_m->parsed_uri.host.len + 2);
+	uri = (char*)pkg_malloc(user.len + host.len + 2);
 	if (!uri) {
 	    LM_ERR("no more pkg memory\n");
 	    return -1;
 	}
 	at = uri;
-	memcpy(at, _m->parsed_uri.user.s, _m->parsed_uri.user.len);
-	at += _m->parsed_uri.user.len;
+	memcpy(at, user.s, user.len);
+	at += user.len;
 	*at = '@';
 	at++;
-	memcpy(at , _m->parsed_uri.host.s, _m->parsed_uri.host.len);
-	at += _m->parsed_uri.host.len;
+	memcpy(at , host.s, host.len);
+	at += host.len;
 	*at = '\0';
 	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, uri, -1, 0)) {
 	    LM_ERR("adding User-Name failed\n");
@@ -190,15 +186,13 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	/* Send userpart of Request-URI in A_USER_NAME attribute and
 	   hostpart in A_SIP_URI_HOST attribute */
 	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
-			   _m->parsed_uri.user.s, _m->parsed_uri.user.len,
-			   0)) {
+			   user.s, user.len, 0)) {
 	    LM_ERR("adding User-Name failed\n");
 	    rc_avpair_free(send);
 	    return -1;
 	}
 	if (!rc_avpair_add(rh, &send, attrs[A_SIP_URI_HOST].v,
-			   _m->parsed_uri.host.s, _m->parsed_uri.host.len,
-			   0)) {
+			   host.s, host.len, 0)) {
 	    LM_ERR("adding SIP-URI-Host failed\n");
 	    rc_avpair_free(send);
 	    return -1;
@@ -239,10 +233,63 @@ int radius_does_uri_exist(struct sip_msg* _m, char* _s1, char* _s2)
 
 
 /*
- * Check from Radius if Request URI user belongs to a local user.
+ * Check from Radius if Request URI belongs to a local user.
  * If so, loads AVPs based on reply items returned from Radius.
  */
-int radius_does_uri_user_exist(struct sip_msg* _m, char* _s1, char* _s2)
+int radius_does_uri_exist_0(struct sip_msg* _m, char* _s1, char* _s2)
+{
+
+    if (parse_sip_msg_uri(_m) < 0) {
+	LM_ERR("parsing URI failed\n");
+	return -1;
+    }
+
+    return radius_does_uri_user_host_exist(_m->parsed_uri.user,
+					   _m->parsed_uri.host);
+}
+
+
+/*
+ * Check from Radius if URI giving in pvar argument belongs to a local user.
+ * If so, loads AVPs based on reply items returned from Radius.
+ */
+int radius_does_uri_exist_1(struct sip_msg* _m, char* _sp, char* _s2)
+{
+    pv_spec_t *sp;
+    pv_value_t pv_val;
+    struct sip_uri parsed_uri;
+
+    sp = (pv_spec_t *)_sp;
+
+    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		LM_ERR("pvar argument is empty\n");
+		return -1;
+	    }
+	} else {
+	    LM_ERR("pvar value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("cannot get pvar value\n");
+	return -1;
+    }
+
+    if (parse_uri(pv_val.rs.s, pv_val.rs.len, &parsed_uri) < 0) {
+	LM_ERR("parsing of URI in pvar failed\n");
+	return -1;
+    }
+
+    return radius_does_uri_user_host_exist(parsed_uri.user, parsed_uri.host);
+}
+
+
+/*
+ * Check from Radius if URI user given as argument belongs to a local user.
+ * If so, loads AVPs based on reply items returned from Radius.
+ */
+int radius_does_uri_user_exist(str user)
 {
     static char msg[4096];
     VALUE_PAIR *send, *received;
@@ -251,17 +298,7 @@ int radius_does_uri_user_exist(struct sip_msg* _m, char* _s1, char* _s2)
     
     send = received = 0;
     
-    if (parse_sip_msg_uri(_m) < 0) {
-	LM_ERR("error while parsing Request URI\n");
-	return -1;
-    }
-
-    if (_m->parsed_uri.user.len == 0) {
-	return -1;
-    }
-
-    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
-		       _m->parsed_uri.user.s, _m->parsed_uri.user.len, 0)) {
+    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user.s, user.len, 0)) {
 	LM_ERR("error adding User-Name\n");
 	rc_avpair_free(send);
 	return -1;
@@ -295,3 +332,51 @@ int radius_does_uri_user_exist(struct sip_msg* _m, char* _s1, char* _s2)
 	return -1;
     }
 }
+
+
+/*
+ * Check from Radius if Request URI user belongs to a local user.
+ * If so, loads AVPs based on reply items returned from Radius.
+ */
+int radius_does_uri_user_exist_0(struct sip_msg* _m, char* _s1, char* _s2)
+{
+
+    if (parse_sip_msg_uri(_m) < 0) {
+	LM_ERR("parsing URI failed\n");
+	return -1;
+    }
+
+    return radius_does_uri_user_exist(_m->parsed_uri.user);
+}
+
+
+/*
+ * Check from Radius if URI user giving in pvar argument belongs
+ * to a local user. If so, loads AVPs based on reply items returned
+ * from Radius. 
+ */
+int radius_does_uri_user_exist_1(struct sip_msg* _m, char* _sp, char* _s2)
+{
+    pv_spec_t *sp;
+    pv_value_t pv_val;
+
+    sp = (pv_spec_t *)_sp;
+
+    if (sp && (pv_get_spec_value(_m, sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    if (pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		LM_ERR("pvar argument is empty\n");
+		return -1;
+	    }
+	} else {
+	    LM_ERR("pvar value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("cannot get pvar value\n");
+	return -1;
+    }
+
+    return radius_does_uri_user_exist(pv_val.rs);
+}
+

@@ -112,10 +112,11 @@ modparam("uri_radius", "use_sip_uri_host", 1)
 	<title>Exported Functions</title>
 	<section>
 		<title>
-		<function moreinfo="none">radius_does_uri_exist()</function>
+		<function moreinfo="none">radius_does_uri_exist([pvar])</function>
 		</title>
 		<para>
-		Checks from Radius if user@host in Request-&uri; belongs
+		Checks from Radius if user@host in Request-&uri; or in
+		URI stored in pseudo variable argument belongs
 		to a local user. Can be used to decide if 404 or 480 should
 		be returned after lookup has failed.   If yes, loads AVP
 		based on SIP-AVP reply items returned from Radius.  Each
@@ -150,11 +151,12 @@ if (radius_does_uri_exist()) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">radius_does_uri_user_exist()</function>
+		<function moreinfo="none">radius_does_uri_user_exist([pvar])</function>
 		</title>
 		<para>
 		Similar to radius_does_uri_exist, but check is done
-		based only on Request-URI user part, which should thus
+		based only on Request-URI user part or user stored in
+		pseudo variable argument.  User should thus
 		be unique among all users, such as an E.164 number.
 		</para>
 		<para>

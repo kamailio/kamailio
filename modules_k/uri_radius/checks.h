@@ -33,13 +33,28 @@
  * Check from Radius if Request URI belongs to a local user.
  * If so, loads AVPs based on reply items returned from Radius.
  */
-int radius_does_uri_exist(struct sip_msg* _msg,  char* _str1, char* _str2);
+int radius_does_uri_exist_0(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+/*
+ * Check from Radius if URI giving in pvar argument belongs to a local user.
+ * If so, loads AVPs based on reply items returned from Radius.
+ */
+int radius_does_uri_exist_1(struct sip_msg* _m, char* _sp, char* _s2);
 
 
 /*
  * Check from Radius if Request URI user belongs to a local user.
  * If so, loads AVPs based on reply items returned from Radius.
  */
-int radius_does_uri_user_exist(struct sip_msg* _m, char* _s1, char* _s2);
+int radius_does_uri_user_exist_0(struct sip_msg* _m, char* _s1, char* _s2);
+
+
+/*
+ * Check from Radius if URI user giving in pvar argument belongs
+ * to a local user. If so, loads AVPs based on reply items returned
+ * from Radius. 
+ */
+int radius_does_uri_user_exist_1(struct sip_msg* _m, char* _sp, char* _s2);
 
 #endif /* CHECKS_H */
