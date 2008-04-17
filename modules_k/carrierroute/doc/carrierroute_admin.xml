@@ -888,29 +888,29 @@ modparam("carrierroute", "failure_comment_column", "description")
 
   <programlisting format="linespecific">
 cr_rewrite_uri(domain, hash_source)
--> cr_route("default", domain, "$rU", "$rU", hash_source, "crc32")
+-> cr_route("default", domain, "$rU", "$rU", hash_source)
 
 cr_prime_balance_uri(domain, hash_source)
--> cr_route("default", domain, "$rU", "$rU", hash_source, "prime")
+-> cr_prime_route("default", domain, "$rU", "$rU", hash_source)
 
 cr_rewrite_by_to(domain, hash_source)
--> cr_route("default", domain, "$tU", "$rU", hash_source, "crc32")
+-> cr_route("default", domain, "$tU", "$rU", hash_source)
 
 cr_prime_balance_by_to(domain, hash_source)
--> cr_route("default", domain, "$tU", "$rU", hash_source, "prime")
+-> cr_prime_route("default", domain, "$tU", "$rU", hash_source)
 
 cr_rewrite_by_from(domain, hash_source)
--> cr_route("default", domain, "$fU", "$rU", hash_source, "crc32")
+-> cr_route("default", domain, "$fU", "$rU", hash_source)
 
 cr_prime_balance_by_from(domain, hash_source)
--> cr_route("default", domain, "$fU", "$rU", hash_source, "prime")
+-> cr_prime_route("default", domain, "$fU", "$rU", hash_source)
 
 cr_user_rewrite_uri(uri, domain)
 -> cr_user_carrier(user, domain, "$avp(tree_avp)")
--> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id", "crc32")
+-> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id")
 
 cr_tree_rewrite_uri(tree, domain)
--> cr_route(tree, domain, "$rU", "$rU", "call_id", "crc32")
+-> cr_route(tree, domain, "$rU", "$rU", "call_id")
   </programlisting>
 		
 	<section>

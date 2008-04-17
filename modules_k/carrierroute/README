@@ -14,8 +14,8 @@ Henning Westerholt
 
    Copyright © 2007 1&1 Internet AG
    Revision History
-   Revision $Revision: 3912 $ $Date: 2008-03-10 17:13:24 +0200
-                              (Mon, 10 Mar 2008) $
+   Revision $Revision: 3912 $ $Date: 2008-03-10 16:13:24 +0100
+                              (Mo, 10 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -696,29 +696,29 @@ modparam("carrierroute", "failure_comment_column", "description")
    the old semantics can be achieved by using the few new
    functions like this:
 cr_rewrite_uri(domain, hash_source)
--> cr_route("default", domain, "$rU", "$rU", hash_source, "crc32")
+-> cr_route("default", domain, "$rU", "$rU", hash_source)
 
 cr_prime_balance_uri(domain, hash_source)
--> cr_route("default", domain, "$rU", "$rU", hash_source, "prime")
+-> cr_prime_route("default", domain, "$rU", "$rU", hash_source)
 
 cr_rewrite_by_to(domain, hash_source)
--> cr_route("default", domain, "$tU", "$rU", hash_source, "crc32")
+-> cr_route("default", domain, "$tU", "$rU", hash_source)
 
 cr_prime_balance_by_to(domain, hash_source)
--> cr_route("default", domain, "$tU", "$rU", hash_source, "prime")
+-> cr_prime_route("default", domain, "$tU", "$rU", hash_source)
 
 cr_rewrite_by_from(domain, hash_source)
--> cr_route("default", domain, "$fU", "$rU", hash_source, "crc32")
+-> cr_route("default", domain, "$fU", "$rU", hash_source)
 
 cr_prime_balance_by_from(domain, hash_source)
--> cr_route("default", domain, "$fU", "$rU", hash_source, "prime")
+-> cr_prime_route("default", domain, "$fU", "$rU", hash_source)
 
 cr_user_rewrite_uri(uri, domain)
 -> cr_user_carrier(user, domain, "$avp(tree_avp)")
--> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id", "crc32")
+-> cr_route("$avp(tree_avp)", domain, "$rU", "$rU", "call_id")
 
 cr_tree_rewrite_uri(tree, domain)
--> cr_route(tree, domain, "$rU", "$rU", "call_id", "crc32")
+-> cr_route(tree, domain, "$rU", "$rU", "call_id")
 
 1.4.1.  cr_user_carrier(user, domain, dstavp)
 
