@@ -448,6 +448,14 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 			mv -f $(cfg_prefix)/$(cfg_dir)ser.cfg.sample \
 				$(cfg_prefix)/$(cfg_dir)ser.cfg; \
 		fi
+		sed -e "s#/usr/.*lib/ser/modules/#$(modules_target)#g" \
+			< etc/ser-oob.cfg > $(cfg_prefix)/$(cfg_dir)ser-oob.cfg.sample
+		chmod 644 $(cfg_prefix)/$(cfg_dir)ser-oob.cfg.sample
+		if [ -z "${skip_cfg_install}" -a \
+				! -f $(cfg_prefix)/$(cfg_dir)ser-oob.cfg ]; then \
+			mv -f $(cfg_prefix)/$(cfg_dir)ser-oob.cfg.sample \
+				$(cfg_prefix)/$(cfg_dir)ser-oob.cfg; \
+		fi
 		# radius dictionary
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser 
 		$(INSTALL_CFG) etc/dictionary.ser $(cfg_prefix)/$(cfg_dir)
