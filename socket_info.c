@@ -188,7 +188,6 @@ static struct socket_info** get_sock_info_list(unsigned short proto)
 }
 
 
-
 /* checks if the proto: host:port is one of the address we listen on
  * and returns the corresponding socket_info structure.
  * if port==0, the  port number is ignored
@@ -271,6 +270,48 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 									si->address_str.len)==0)
 				)
 				goto found;
+		}
+	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
+not_found:
+	return 0;
+found:
+	return si;
+}
+
+/* checks if the proto:port is one of the ports we listen on
+ * and returns the corresponding socket_info structure.
+ * if proto==0 (PROTO_NONE) the protocol is ignored
+ * returns  0 if not found
+ */
+struct socket_info* grep_sock_info_by_port(unsigned short port, 
+											unsigned short proto)
+{
+	struct socket_info* si;
+	struct socket_info** list;
+	unsigned short c_proto;
+
+	if (!port) {
+		goto not_found;
+	}
+	c_proto=proto?proto:PROTO_UDP;
+	do{
+		/* get the proper sock_list */
+		if (c_proto==PROTO_NONE)
+			list=&udp_listen;
+		else
+			list=get_sock_info_list(c_proto);
+	
+		if (list==0){
+			LOG(L_WARN, "WARNING: grep_sock_info_by_port: "
+						"unknown proto %d\n", c_proto);
+			goto not_found; /* false */
+		}
+		for (si=*list; si; si=si->next){
+			DBG("grep_sock_info_by_port - checking if port %d matches port %d\n", 
+					si->port_no, port);
+			if (si->port_no==port) {
+				goto found;
+			}
 		}
 	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
 not_found:

@@ -69,6 +69,8 @@ void print_aliases();
 
 struct socket_info* grep_sock_info(str* host, unsigned short port,
 										unsigned short proto);
+struct socket_info* grep_sock_info_by_port(unsigned short port,
+											unsigned short proto);
 struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 												unsigned short proto);
 
