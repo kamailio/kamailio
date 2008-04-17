@@ -112,6 +112,8 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 {
 	LM_DBG("destroing dialog %p\n",dlg);
 
+	remove_dlg_timer(&dlg->tl);
+
 	run_dlg_callbacks( DLGCB_DESTROYED , dlg, 0, DLG_DIR_NONE);
 
 	if (dlg->cbs.first)
