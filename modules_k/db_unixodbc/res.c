@@ -108,12 +108,14 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_BIGINT:
 			case SQL_DECIMAL:
 			case SQL_NUMERIC:
+				LM_DBG("use DB_INT result type");
 				RES_TYPES(_r)[col] = DB_INT;
 				break;
 
 			case SQL_REAL:
 			case SQL_FLOAT:
 			case SQL_DOUBLE:
+				LM_DBG("use DB_DOUBLE result type");
 				RES_TYPES(_r)[col] = DB_DOUBLE;
 				break;
 
@@ -123,6 +125,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_TIMESTAMP:
 			case SQL_TYPE_DATE:
 			case SQL_TYPE_TIME:
+				LM_DBG("use DB_DATETIME result type");
 				RES_TYPES(_r)[col] = DB_DATETIME;
 				break;
 
@@ -130,6 +133,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_VARBINARY:
 			case SQL_LONGVARBINARY:
 			case SQL_BIT:
+				LM_DBG("use DB_BLOB result type");
 				RES_TYPES(_r)[col] = DB_BLOB;
 				break;
 
@@ -139,7 +143,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 				/*
 				 * FIXME add missing datatypes, then this warning could be used
 				 * LM_WARN("unhandled data type column (%.*s) type id (%d), "
-				 * "use STRING as default\n", RES_NAMES(_r)[col]->len,
+				 * "use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
 				 * RES_NAMES(_r)[col]->s, datatype);
 				*/
 				break;

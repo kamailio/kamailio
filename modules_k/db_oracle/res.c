@@ -129,12 +129,14 @@ static int get_columns(ora_con_t* con, db_res_t* _r, OCIStmt* _c, dmap_t* _d)
 		switch (dtype) {
 		case SQLT_UIN:		/* unsigned integer */
 set_bitmap:
+			LM_DBG("use DB_BITMAP type");
 			RES_TYPES(_r)[i] = DB_BITMAP;
 			len = sizeof(VAL_BITMAP((db_val_t*)NULL));
 			break;
 
 		case SQLT_INT:		/* (ORANET TYPE) integer */
 set_int:
+			LM_DBG("use DB_INT result type");
 			RES_TYPES(_r)[i] = DB_INT;
 			len = sizeof(VAL_INT((db_val_t*)NULL));
 			break;
@@ -166,6 +168,7 @@ set_int:
 		case SQLT_IBFLOAT:	/* binary float canonical */
 		case SQLT_IBDOUBLE:	/* binary double canonical */
 		case SQLT_PDN:		/* (ORANET TYPE) Packed Decimal Numeric */
+			LM_DBG("use DB_DOUBLE result type");
 			RES_TYPES(_r)[i] = DB_DOUBLE;
 			len = sizeof(VAL_DOUBLE((db_val_t*)NULL));
 			dtype = SQLT_FLT;
@@ -181,6 +184,7 @@ set_int:
 		case SQLT_TIMESTAMP_LTZ:/* TIMESTAMP WITH LOCAL TZ */
 //		case SQLT_INTERVAL_YM:	/* INTERVAL YEAR TO MONTH */
 //		case SQLT_INTERVAL_DS:	/* INTERVAL DAY TO SECOND */
+			LM_DBG("use DB_DATETIME result type");
 			RES_TYPES(_r)[i] = DB_DATETIME;
 			len = sizeof(OCIDate);
 			dtype = SQLT_ODT;
@@ -192,6 +196,7 @@ set_int:
 //		case SQLT_CFILEE:	/* character file lob */
 //		case SQLT_BIN:		/* binary data(DTYBIN) */
 //		case SQLT_LBI:		/* long binary */
+			LM_DBG("use DB_BLOB result type");
 			RES_TYPES(_r)[i] = DB_BLOB;
 			goto dyn_str;
 
@@ -202,6 +207,7 @@ set_int:
 		case SQLT_AFC:		/* Ansi fixed char */
 		case SQLT_AVC:		/* Ansi Var char */
 //		case SQLT_RID:		/* rowid */
+			LM_DBG("use DB_STR result type");
 			RES_TYPES(_r)[i] = DB_STR;
 dyn_str:
 			dtype = SQLT_CHR;
@@ -210,8 +216,10 @@ dyn_str:
 				(dvoid**)(dvoid*)&len, NULL, OCI_ATTR_DATA_SIZE,
 				con->errhp);
 			if (status != OCI_SUCCESS) goto ora_err;
-			if (len >= 4000)
+			if (len >= 4000) {
+				LM_DBG("use DB_BLOB result type");
 				RES_TYPES(_r)[i] = DB_BLOB;
+			}
 			++len;
 			break;
 

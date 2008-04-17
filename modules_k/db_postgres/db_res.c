@@ -132,18 +132,21 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			case INT2OID:
 			case INT4OID:
 			case INT8OID:
+				LM_DBG("use DB_INT result type");
 				RES_TYPES(_r)[col] = DB_INT;
 			break;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
 			case NUMERICOID:
+				LM_DBG("use DB_DOUBLE result type");
 				RES_TYPES(_r)[col] = DB_DOUBLE;
 			break;
 
 			case DATEOID:
 			case TIMESTAMPOID:
 			case TIMESTAMPTZOID:
+				LM_DBG("use DB_DATETIME result type");
 				RES_TYPES(_r)[col] = DB_DATETIME;
 			break;
 
@@ -152,21 +155,24 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			case VARCHAROID:
 			case BPCHAROID:
 			case TEXTOID:
+				LM_DBG("use DB_STRING result type");
 				RES_TYPES(_r)[col] = DB_STRING;
 			break;
 
 			case BYTEAOID:
+				LM_DBG("use DB_BLOB result type");
 				RES_TYPES(_r)[col] = DB_BLOB;
 			break;
 
 			case BITOID:
 			case VARBITOID:
+				LM_DBG("use DB_BITMAP result type");
 				RES_TYPES(_r)[col] = DB_BITMAP;
 			break;
 				
 			default:
 				LM_WARN("unhandled data type column (%.*s) type id (%d), "
-						"use STRING as default\n", RES_NAMES(_r)[col]->len,
+						"use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
 						RES_NAMES(_r)[col]->s, datatype);
 				RES_TYPES(_r)[col] = DB_STRING;
 			break;
