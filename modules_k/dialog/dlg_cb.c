@@ -201,8 +201,10 @@ void run_load_callbacks( void )
 {
 	struct dlg_callback *cb;
 
-	for ( cb=load_cbs->first; cb; cb=cb->next )
-		run_load_callback( cb );
+	if (load_cbs && load_cbs!=POINTER_CLOSED_MARKER) {
+		for ( cb=load_cbs->first; cb; cb=cb->next )
+			run_load_callback( cb );
+	}
 
 	return;
 }
