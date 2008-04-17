@@ -62,6 +62,7 @@ struct socket_info* get_send_socket(struct sip_msg* msg,
 									union sockaddr_union* su, int proto);
 struct socket_info* get_out_socket(union sockaddr_union* to, int proto);
 int check_self(str* host, unsigned short port, unsigned short proto);
+int check_self_port(unsigned short port, unsigned short proto);
 int forward_request( struct sip_msg* msg, str* dst,  unsigned short port,
 						struct dest_info* send_info);
 int update_sock_struct_from_via( union sockaddr_union* to,
