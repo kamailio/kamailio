@@ -30,6 +30,8 @@
  * 2007-07-06  added flags, cseq, contact, route_set and bind_addr 
  *             to struct dlg_cell in order to store these information into db
  *             (ancuta)
+ * 2008-04-17  added new dialog flag to avoid state tranzitions from DELETED to
+ *             CONFIRMED_NA due delayed "200 OK" (bogdan)
  */
 
 
@@ -58,6 +60,7 @@
 
 #define DLG_FLAG_NEW           (1<<0)
 #define DLG_FLAG_CHANGED       (1<<1)
+#define DLG_FLAG_HASBYE        (1<<2)
 
 #define DLG_CALLER_LEG         0
 #define DLG_CALLEE_LEG         1

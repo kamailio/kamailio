@@ -38,6 +38,8 @@
  *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
  * 2008-04-17  added new type of callback to be triggered when dialogs are 
  *              detroyed (freed from memeory) (bogdan)
+ * 2008-04-17  added new dialog flag to avoid state tranzitions from DELETED to
+ *             CONFIRMED_NA due delayed "200 OK" (bogdan)
  */
 
 #include <stdlib.h>
@@ -488,6 +490,11 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 		case DLG_EVENT_RPL2xx:
 			switch (dlg->state) {
 				case DLG_STATE_DELETED:
+					if (dlg->flags&DLG_FLAG_HASBYE) {
+						LM_CRIT("bogus event %d in state %d (with BYE)\n",
+							event,dlg->state);
+						break;
+					}
 					ref_dlg_unsafe(dlg,1);
 				case DLG_STATE_UNCONFIRMED:
 				case DLG_STATE_EARLY:
@@ -515,6 +522,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 			switch (dlg->state) {
 				case DLG_STATE_CONFIRMED_NA:
 				case DLG_STATE_CONFIRMED:
+					dlg->flags |= DLG_FLAG_HASBYE;
 					dlg->state = DLG_STATE_DELETED;
 					*unref = 1;
 					break;
