@@ -1,5 +1,5 @@
 #!/bin/bash
-# tests simple cpl-c script operatons with mysql
+# tests simple cpl-c script operatons with postgres
 
 # Copyright (C) 2008 1&1 Internet AG
 #
