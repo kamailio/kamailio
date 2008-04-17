@@ -528,7 +528,7 @@ static int rewrite_uri_recursor(const struct route_tree_item * route_tree,
 		}
 	} else {
 		/* match, goto the next digit of the uri and try again */
-		re_tree = route_tree->nodes[*pm->s - '0'];
+		re_tree = route_tree->nodes[*re_pm.s - '0'];
 		re_pm.s = re_pm.s + 1;
 		re_pm.len = re_pm.len - 1;
 		switch (rewrite_uri_recursor(re_tree, &re_pm, flags, dest, msg, user, hash_source, alg, dstavp)) {
