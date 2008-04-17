@@ -36,8 +36,8 @@
  *             anyways.. ;) ; based on a patch from 
  *             Tavis Paquette <tavis@galaxytelecom.net> 
  *             and Peter Baer <pbaer@galaxytelecom.net>  (bogdan)
- * 2008-04-17  added new type of callback to be triggered when dialogs are 
- *              detroyed (freed from memeory) (bogdan)
+ * 2008-04-17  added new type of callback to be triggered right before the
+ *              dialog is destroyed (deleted from memory) (bogdan)
  * 2008-04-17  added new dialog flag to avoid state tranzitions from DELETED to
  *             CONFIRMED_NA due delayed "200 OK" (bogdan)
  */
@@ -114,7 +114,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	remove_dlg_timer(&dlg->tl);
 
-	run_dlg_callbacks( DLGCB_DESTROYED , dlg, 0, DLG_DIR_NONE);
+	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE);
 
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);

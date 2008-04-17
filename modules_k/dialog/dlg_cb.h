@@ -25,8 +25,8 @@
  * 2008-04-04  added direction reporting in dlg callbacks (bogdan)
  * 2008-04-14  added new type of callback to be triggered when dialogs are 
  *              loaded from DB (bogdan)
- * 2008-04-17  added new type of callback to be triggered when dialogs are 
- *              detroyed (freed from memeory) (bogdan)
+ * 2008-04-17  added new type of callback to be triggered right before the
+ *              dialog is destroyed (deleted from memory) (bogdan)
  */
 
 #ifndef _DIALOG_DLG_CB_H_
@@ -62,7 +62,7 @@ typedef int (*register_dlgcb_f)(struct dlg_cell* dlg, int cb_types,
 #define DLGCB_EARLY           (1<<7)
 #define DLGCB_RESPONSE_FWDED  (1<<8)
 #define DLGCB_WITHIN_RESPONSE (1<<9)
-#define DLGCB_DESTROYED       (1<<10)
+#define DLGCB_DESTROY         (1<<10)
 
 struct dlg_callback {
 	int types;
