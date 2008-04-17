@@ -20,8 +20,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -705,7 +705,7 @@ if (t_check_status("(487)|(408)")) {
 
    Flush the flags from current request into the already created
    transaction. It make sens only in routing block if the
-   trnasaction was created via t_newtran() and the flags have been
+   transaction was created via t_newtran() and the flags have been
    altered since.
 
    This function can be used from REQUEST_ROUTE and BRANCH_ROUTE .

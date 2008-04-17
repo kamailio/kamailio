@@ -913,7 +913,7 @@ if (t_check_status("(487)|(408)")) {
 		</title>
 		<para>
 		Flush the flags from current request into the already created 
-		transaction. It make sens only in routing block if the trnasaction was
+		transaction. It make sens only in routing block if the transaction was
 		created via t_newtran() and the flags have been altered since.
 		</para>
 		<para>
