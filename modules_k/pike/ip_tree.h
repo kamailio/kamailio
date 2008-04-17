@@ -25,6 +25,8 @@
  *              on darwin (andrei)
  *  2004-11-05  adaptiv init lock (bogdan)
  *  2005-06-02  flags added to ip_node structure (bogdan)
+ *  2008-04-17  the leaf nodes memorize (via flags) if they are in RED state
+ *               (detected) or not -> better logging and MI (bogdan)
  */
 
 #ifndef _IP_TREE_H
@@ -36,9 +38,10 @@
 #include "timer.h"
 
 
-#define NEW_NODE   (1<<0)
-#define RED_NODE   (1<<1)
-#define NO_UPDATE  (1<<2)
+#define NEW_NODE    (1<<0)
+#define RED_NODE    (1<<1)
+#define NEWRED_NODE (1<<2)
+#define NO_UPDATE   (1<<3)
 
 #define MAX_IP_BRANCHES 256
 
@@ -49,6 +52,7 @@
 #define NODE_EXPIRED_FLAG  (1<<0)
 #define NODE_INTIMER_FLAG  (1<<1)
 #define NODE_IPLEAF_FLAG   (1<<2)
+#define NODE_ISRED_FLAG    (1<<3)
 
 struct ip_node
 {
@@ -91,6 +95,7 @@ int    is_red_leaf(struct ip_node *node);
 void lock_tree_branch(unsigned char b);
 void unlock_tree_branch(unsigned char b);
 struct ip_node* get_tree_branch(unsigned char b);
+int is_node_hot_leaf(struct ip_node *node);
 
 
 

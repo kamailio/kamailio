@@ -25,6 +25,10 @@
  *               major changes (andrei)
  *  2005-05-02  flags field added to node stucture -better sync between timer
  *              and worker processes; some races eliminated (bogdan)
+ *  2008-04-17  new parameter to control the module's log regarding the
+ *               blocking/unblocking of IPs (bogdan)
+ *  2008-04-17  the leaf nodes memorize (via flags) if they are in RED state
+ *               (detected) or not -> better logging and MI (bogdan)
  */
 
 
@@ -49,6 +53,7 @@
 extern gen_lock_t*       timer_lock;
 extern struct list_link* timer;
 extern int               timeout;
+extern int               pike_log_level;
 
 
 
@@ -146,7 +151,11 @@ int pike_check_req(struct sip_msg *msg, char *foo, char *bar)
 	/*print_tree( 0 );*/ /* debug */
 
 	if (flags&RED_NODE) {
-		LM_WARN("too many hits on %s !!\n", ip_addr2a( ip ) );
+		if (flags&NEWRED_NODE) {
+			LM_GEN1( pike_log_level,
+				"PIKE - BLOCKing ip %s, node=%p\n",ip_addr2a(ip),node);
+			return -2;
+		}
 		return -1;
 	}
 	return 1;
@@ -256,13 +265,17 @@ void clean_routine(unsigned int ticks , void *param)
 
 
 
-void refresh_node( struct ip_node *node)
+static inline void refresh_node( struct ip_node *node)
 {
 	for( ; node ; node=node->next ) {
 		node->hits[PREV_POS] = node->hits[CURR_POS];
 		node->hits[CURR_POS] = 0;
 		node->leaf_hits[PREV_POS] = node->leaf_hits[CURR_POS];
 		node->leaf_hits[CURR_POS] = 0;
+		if ( node->flags&NODE_ISRED_FLAG && !is_node_hot_leaf(node) ) {
+			node->flags &= ~(NODE_ISRED_FLAG);
+			LM_GEN1( pike_log_level,"PIKE - UNBLOCKing node %p\n",node);
+		}
 		if (node->kids)
 			refresh_node( node->kids );
 	}

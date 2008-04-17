@@ -27,6 +27,8 @@
  *  2003-03-11  converted to the new locking interface: locking.h --
  *               major changes (andrei)
  *  2003-03-16  flags export parameter added (janakj)
+ *  2008-04-17  new parameter to control the module's log regarding the
+ *               blocking/unblocking of IPs (bogdan)
  */
 
 
@@ -61,6 +63,7 @@ static int pike_exit(void);
 static int time_unit = 2;
 static int max_reqs  = 30;
 int timeout   = 120;
+int pike_log_level = L_WARN;
 
 /* global variables */
 gen_lock_t*             timer_lock=0;
@@ -68,7 +71,7 @@ struct list_link*       timer = 0;
 
 
 static cmd_export_t cmds[]={
-	{"pike_check_req",  (cmd_function)pike_check_req,  0,  0, 0, REQUEST_ROUTE},
+	{"pike_check_req", (cmd_function)pike_check_req,  0,  0, 0, REQUEST_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -76,6 +79,7 @@ static param_export_t params[]={
 	{"sampling_time_unit",    INT_PARAM,  &time_unit},
 	{"reqs_density_per_unit", INT_PARAM,  &max_reqs},
 	{"remove_latency",        INT_PARAM,  &timeout},
+	{"pike_log_level",        INT_PARAM, &pike_log_level},
 	{0,0,0}
 };
 

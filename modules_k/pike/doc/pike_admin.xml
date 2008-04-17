@@ -118,7 +118,29 @@ modparam("pike", "remove_latency", 130)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>pike_log_level</varname> (integer)</title>
+		<para>
+		Log level to be used by module to auto report the blocking (only first
+		time) and unblocking of IPs detected as source of floods.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 1 (L_WARN).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>remove_latency</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("pike", "remove_latency", 130)
+...
+</programlisting>
+		</example>
 	</section>
+	</section>
+
+
 	<section>
 	<title>Exported Functions</title>
 	<section>
@@ -130,8 +152,31 @@ modparam("pike", "remove_latency", 130)
 		the IP was exceeding the blocking limit.
 		</para>
 		<para>
-		IMPORTANT: in case of internal error, the function returns true to
-		avoid reporting the current processed IP as blocked.
+		Return codes:
+		<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>1 (true)</emphasis> - IP is not to be blocked or 
+				internal error occured.
+			</para>
+			<warning>
+			IMPORTANT: in case of internal error, the function returns true to
+			avoid reporting the current processed IP as blocked.
+			</warning>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>-1 (false)</emphasis> - IP is source of
+				flooding, being previously detected
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>-2 (false)</emphasis> - IP is detected as a new 
+				source of flooding - first time detection
+			</para>
+			</listitem>
+		</itemizedlist>
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -163,13 +208,13 @@ if (!pike_check_req()) { exit; };
  		<para>
 		MI FIFO Command Format:
 		</para>
-        <programlisting  format="linespecific">
+		<programlisting  format="linespecific">
 		:pike_list:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
-    </section>
-    </section>
+	</section>
+	</section>
 
-	
+
 </chapter>
 

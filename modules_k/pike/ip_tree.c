@@ -22,6 +22,8 @@
  * History:
  * --------
  *  2004-11-05: adaptiv init lock (bogdan)
+ *  2008-04-17  the leaf nodes memorize (via flags) if they are in RED state
+ *               (detected) or not -> better logging and MI (bogdan)
  */
 
 
@@ -256,6 +258,12 @@ struct ip_node *split_node(struct ip_node* dad, unsigned char byte)
 	(( (1<<(8*sizeof(_x)-1))-1 )|( (1<<(8*sizeof(_x)-1)) ))
 
 
+int is_node_hot_leaf(struct ip_node *node)
+{
+	return is_hot_leaf(node);
+}
+
+
 /* mark with one more hit the given IP address - */
 struct ip_node* mark_node(unsigned char *ip,int ip_len,
 							struct ip_node **father,unsigned char *flag)
@@ -292,8 +300,15 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 		/* increment it, but be careful not to overflow the value */
 		if(node->leaf_hits[CURR_POS]<MAX_TYPE_VAL(node->leaf_hits[CURR_POS])-1)
 			node->leaf_hits[CURR_POS]++;
-		if ( is_hot_leaf(node) )
+		/* becoming red node? */
+		if ( (node->flags&NODE_ISRED_FLAG)==0 ) {
+			if (is_hot_leaf(node) ) {
+				*flag |= RED_NODE|NEWRED_NODE;
+				node->flags |= NODE_ISRED_FLAG;
+			}
+		} else {
 			*flag |= RED_NODE;
+		}
 	} else if (byte_pos==0) {
 		/* we hit an empty branch in the IP tree */
 		assert(node==0);
