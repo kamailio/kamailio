@@ -128,6 +128,11 @@ static inline int is_myself(str* _host, unsigned short _port)
     if (ret == 0 && dm_get_did) {
 	ret = dm_get_did(&did, _host);
 	if (ret < 0) return 0;
+	else if (ret > 0) {
+	    /* as the domain module does not know anything about ports
+	       lets check if the port matches any of our listening ports */
+	    ret = check_self_port(_port ? _port : SIP_PORT, 0);
+	}
     }
 
     return ret;
