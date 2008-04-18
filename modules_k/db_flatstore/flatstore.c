@@ -57,6 +57,7 @@ static int parse_flat_url(const str* url, str* path)
 db_con_t* flat_db_init(const str* url)
 {
 	db_con_t* res;
+	str* path;
 
 	if (!url || !url->s) {
 		LM_ERR("invalid parameter value\n");
@@ -68,17 +69,22 @@ db_con_t* flat_db_init(const str* url)
 	 * parameter in the table variable, flat_use_table will then pick that 
 	 * value and open the file
 	 */
-	res = pkg_malloc(sizeof(db_con_t) + sizeof(struct flat_con*));
+	/* as the table (path) is a substring of the received str, we need to 
+	 * allocate a separate str struct for it -bogdan
+	 */
+	res = pkg_malloc(sizeof(db_con_t)+sizeof(struct flat_con*)+sizeof(str));
 	if (!res) {
 		LM_ERR("no pkg memory left\n");
 		return 0;
 	}
-	memset(res, 0, sizeof(db_con_t) + sizeof(struct flat_con*));
+	memset(res, 0, sizeof(db_con_t) + sizeof(struct flat_con*) + sizeof(str));
+	path = (str*)(((char*)res) + sizeof(db_con_t) + sizeof(struct flat_con*));
 
-	if (parse_flat_url(url, (str*)res->table) < 0) {
+	if (parse_flat_url(url, path) < 0) {
 		pkg_free(res);
 		return 0;
 	}
+	res->table = path;
 
 	return res;
 }
@@ -99,16 +105,16 @@ int flat_use_table(db_con_t* h, const str* t)
 
 	if (CON_TABLE(h)->s != t->s) {
 		if (CON_TAIL(h)) {
-			     /* Decrement the reference count
-			      * of the connection but do not remove
-			      * it from the connection pool
-			      */
+			/* Decrement the reference count
+			 * of the connection but do not remove
+			 * it from the connection pool
+			 */
 			con = (struct flat_con*)CON_TAIL(h);
 			con->ref--;
-
 		}
 
-		CON_TAIL(h) = (unsigned long)flat_get_connection((char*)CON_TABLE(h)->s, (char*)t->s);
+		CON_TAIL(h) = (unsigned long)
+			flat_get_connection((char*)CON_TABLE(h)->s, (char*)t->s);
 		if (!CON_TAIL(h)) {
 			return -1;
 		}
