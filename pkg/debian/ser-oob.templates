@@ -42,7 +42,7 @@ Description: Unique identifier of the SER server
 
 Template: ser-oob/LISTEN
 Type: string
-Default: 1.2.3.4
+Default: 127.0.0.1
 Description: List of IP addresses to listen on
  List of all IP addresses SER will listen for SIP messages on. 
  Multiple entries may be entered separated by commas.
@@ -55,7 +55,7 @@ Description: List of IP addresses to listen on
 
 Template: ser-oob/ADMINADDR
 Type: string
-Default: 192.168.0.1
+Default: 127.0.0.1
 Description: Administrative IP address
  Set the IP address of administrative interface (usually a private one), on which
  Ser will also listen.
@@ -64,7 +64,7 @@ Description: Administrative IP address
 
 Template: ser-oob/SENDADDR
 Type: string
-Default: 192.168.1.1
+Default: 127.0.0.1
 Description: IP address used for sending replication
  Set source IP address that Ser will use for sending REGISTERs replication
  to multicast address.
@@ -73,7 +73,7 @@ Description: IP address used for sending replication
 
 Template: ser-oob/DBURL
 Type: string
-Default: mysql://ser:heslo@localhost/ser
+Default: mysql://ser:heslo@127.0.0.1/ser
 Description: address of database
  Set the address of your database server which includes all provisioning
  data. Example is "mysql://ser:heslo@localhost/ser".
@@ -82,7 +82,7 @@ Description: address of database
 
 Template: ser-oob/DBURLACC
 Type: string
-Default: mysql://ser:heslo@localhost/ser
+Default: mysql://ser:heslo@127.0.0.1/ser
 Description: address of database for accounting
  Set the address of your database that will be used for acconting. Example is "mysql://ser:heslo@localhost/ser".
  .
@@ -102,7 +102,7 @@ Description: Synchronization secret for twin servers:
 
 Template: ser-oob/RTTPPROXY
 Type: string
-Default: udp:localhost:22222
+Default: udp:127.0.0.1:22222
 Description: RTP proxy control socket
  Set address of RTP proxy control socket. Example: "udp:localhost:22222".
  Enter empty string to not set any RTP proxy address.
