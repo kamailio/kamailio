@@ -13,7 +13,7 @@ create table RLS_PRESENTITY
 );
 alter table RLS_PRESENTITY add constraint PK_RLS_PRESENTITY primary key (ID);
 alter table RLS_PRESENTITY add constraint RLS_PRESENTITY_IDX unique (RLSUBS_DID,RESOURCE_URI);
-alter table RLS_PRESENTITY add constraint RLS_PRESENTITY_UPDATED_IDX unique (UPDATED);
+create index RLS_PRESENTITY_UPDATED_IDX ON RLS_PRESENTITY (UPDATED);
 create or replace trigger rls_presentity_tr
 before insert on rls_presentity FOR EACH ROW
 BEGIN
