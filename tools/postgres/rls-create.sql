@@ -10,7 +10,7 @@ CREATE TABLE rls_presentity (
     auth_state INTEGER NOT NULL,
     reason VARCHAR(64) NOT NULL,
     CONSTRAINT rls_presentity_rls_presentity_idx UNIQUE (rlsubs_did, resource_uri),
-    CONSTRAINT rls_presentity_updated_idx UNIQUE (updated)
+    CONSTRAINT rls_presentity_updated_idx (updated)
 );
 
 INSERT INTO version (table_name, table_version) values ('rls_watchers','1');

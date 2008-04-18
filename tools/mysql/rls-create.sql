@@ -10,7 +10,7 @@ CREATE TABLE rls_presentity (
     auth_state INT(11) NOT NULL,
     reason VARCHAR(64) NOT NULL,
     UNIQUE KEY rls_presentity_idx (rlsubs_did, resource_uri),
-    UNIQUE KEY updated_idx (updated)
+    KEY updated_idx (updated)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
