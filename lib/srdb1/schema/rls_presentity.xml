@@ -91,7 +91,6 @@
     <index>
         <name>updated_idx</name>
         <colref linkend="updated"/>
-        <unique/>
     </index>
 
 </table>
