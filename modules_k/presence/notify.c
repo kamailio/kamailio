@@ -436,12 +436,13 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		}
 	}
 
-	hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
+	hash_code= core_hash(&subs->pres_uri, &subs->event->wipeer->name,
+            shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 
 	s= subs_htable[hash_code].entries;
 
-	while(s->next)
+    while(s->next)
 	{
 		s= s->next;
 
@@ -457,7 +458,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 			continue;
 		}
 
-		if(s->event== subs->event->wipeer && 
+        if(s->event== subs->event->wipeer &&
 			s->pres_uri.len== subs->pres_uri.len &&
 			strncmp(s->pres_uri.s, subs->pres_uri.s,subs->pres_uri.len)== 0)
 		{
