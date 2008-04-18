@@ -133,8 +133,8 @@ int  mi_init_datagram_server(sockaddr_dtgram *addr, unsigned int socket_domain,
 			break;
 
 	case AF_INET:
-			if (bind(socks->rx_sock, (struct sockaddr*)&addr->udp_addr.sin,
-						sizeof(addr->udp_addr))	< 0) {
+			if (bind(socks->rx_sock, &addr->udp_addr.s,
+			sockaddru_len(addr->udp_addr))< 0) {
 				LM_ERR("bind: %s\n", strerror(errno));
 				goto err_rx;
 			}
