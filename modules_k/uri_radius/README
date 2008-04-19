@@ -120,6 +120,9 @@ modparam("uri_radius", "use_sip_uri_host", 1)
      * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
      * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 
+   Returns 1 if Radius returns Access-Accept, -1 if Radius returns
+   Access-Reject, and -2 in case of internal error.
+
    This function can be used from REQUEST_ROUTE.
 
    Example 1.4. radius_does_uri_exist usage

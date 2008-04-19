@@ -215,19 +215,21 @@ int radius_does_uri_user_host_exist(str user, str host)
 	if (uri) pkg_free(uri);
 	return 1;
     } else {
-#ifdef REJECT_RC
-	if (res == REJECT_RC) {
-	    LM_DBG("rejected\n");
-	} else {
-	    LM_ERR("failure\n");
-	}
-#else
-	LM_DBG("failure\n");
-#endif
 	rc_avpair_free(send);
 	rc_avpair_free(received);
 	if (uri) pkg_free(uri);
+#ifdef REJECT_RC
+	if (res == REJECT_RC) {
+	    LM_DBG("rejected\n");
+	    return -1;
+	} else {
+	    LM_ERR("failure\n");
+	    return -2;
+	}
+#else
+	LM_DBG("failure\n");
 	return -1;
+#endif
     }
 }
 
@@ -318,18 +320,20 @@ int radius_does_uri_user_exist(str user)
 	rc_avpair_free(received);
 	return 1;
     } else {
+	rc_avpair_free(send);
+	rc_avpair_free(received);
 #ifdef REJECT_RC
 	if (res == REJECT_RC) {
 	    LM_DBG("rejected\n");
+	    return -1;
 	} else {
 	    LM_ERR("failure\n");
+	    return -2;
 	}
 #else
 	LM_DBG("failure\n");
-#endif
-	rc_avpair_free(send);
-	rc_avpair_free(received);
 	return -1;
+#endif
     }
 }
 

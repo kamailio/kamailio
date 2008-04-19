@@ -136,6 +136,11 @@ modparam("uri_radius", "use_sip_uri_host", 1)
 		</itemizedlist>
 		</para>
 		<para>
+		Returns 1 if Radius returns Access-Accept, -1 if Radius
+		returns Access-Reject, and -2 in case of internal
+		error.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
