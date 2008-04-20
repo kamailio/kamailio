@@ -343,11 +343,6 @@ struct ip_node* mark_node(unsigned char *ip,int ip_len,
 }
 
 
-int is_red_leaf(struct ip_node *node)
-{
-	return is_hot_leaf( node );
-}
-
 
 /* remove and destroy a IP node along with its subtree */
 void remove_node(struct ip_node *node)

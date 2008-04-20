@@ -90,12 +90,11 @@ void   destroy_ip_tree();
 struct ip_node* mark_node( unsigned char *ip, int ip_len,
 			struct ip_node **father, unsigned char *flag);
 void   remove_node(struct ip_node *node);
-int    is_red_leaf(struct ip_node *node);
+int is_node_hot_leaf(struct ip_node *node);
 
 void lock_tree_branch(unsigned char b);
 void unlock_tree_branch(unsigned char b);
 struct ip_node* get_tree_branch(unsigned char b);
-int is_node_hot_leaf(struct ip_node *node);
 
 
 

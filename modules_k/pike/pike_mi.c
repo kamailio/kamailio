@@ -75,8 +75,8 @@ static void print_red_ips( struct ip_node *ip, int level, struct mi_node *node)
 	}
 	ip_stack[level] = ip;
 
-	/* is leaf node and is it marked red? */
-	if ( ip->flags&NODE_IPLEAF_FLAG && is_red_leaf(ip) )
+	/* is the node marked red? */
+	if ( ip->flags&NODE_ISRED_FLAG)
 		print_ip_stack(level+1,node);
 
 	/* go through all kids */
