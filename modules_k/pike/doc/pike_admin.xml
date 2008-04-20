@@ -130,10 +130,10 @@ modparam("pike", "remove_latency", 130)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>remove_latency</varname> parameter</title>
+		<title>Set <varname>pike_log_level</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pike", "remove_latency", 130)
+modparam("pike", "pike_log_level", -1)
 ...
 </programlisting>
 		</example>
