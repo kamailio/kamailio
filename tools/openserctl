@@ -1722,7 +1722,7 @@ dispatcher() {
 		case $1 in
 			show)
 				mecho "dispatcher gateways"
-				QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_ID_COLUMN; "
+				QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_SETID_COLUMN; "
 				$DBROCMD "$QUERY"
 				;;
 			addgw)

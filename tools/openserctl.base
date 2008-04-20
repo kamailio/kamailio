@@ -428,7 +428,7 @@ cat <<EOF
  dispatcher show ..................... show dispatcher gateways
  dispatcher reload ................... reload dispatcher gateways
  dispatcher dump ..................... show in memory dispatcher gateways
- dispatcher addgw <id> <destination> <flags> <description>
+ dispatcher addgw <setid> <destination> <flags> <description>
             .......................... add gateway
  dispatcher rmgw <id> ................ delete gateway
 EOF
