@@ -154,11 +154,11 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			case CHAROID:
 			case VARCHAROID:
 			case BPCHAROID:
-			case TEXTOID:
 				LM_DBG("use DB_STRING result type");
 				RES_TYPES(_r)[col] = DB_STRING;
 			break;
 
+			case TEXTOID:
 			case BYTEAOID:
 				LM_DBG("use DB_BLOB result type");
 				RES_TYPES(_r)[col] = DB_BLOB;

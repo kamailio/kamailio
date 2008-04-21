@@ -129,23 +129,29 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 				RES_TYPES(_r)[col] = DB_DATETIME;
 				break;
 
+			case SQL_CHAR:
+			case SQL_VARCHAR:
+			case SQL_WCHAR:
+			case SQL_WVARCHAR:
+				LM_DBG("use DB_STRING result type");
+				RES_TYPES(_r)[col] = DB_STRING;
+				break;
+
 			case SQL_BINARY:
 			case SQL_VARBINARY:
 			case SQL_LONGVARBINARY:
 			case SQL_BIT:
+			case SQL_LONGVARCHAR:
+			case SQL_WLONGVARCHAR:
 				LM_DBG("use DB_BLOB result type");
 				RES_TYPES(_r)[col] = DB_BLOB;
 				break;
 
 			default:
-				/* default to string */
+				LM_WARN("unhandled data type column (%.*s) type id (%d), "
+						"use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
+						RES_NAMES(_r)[col]->s, datatype);
 				RES_TYPES(_r)[col] = DB_STRING;
-				/*
-				 * FIXME add missing datatypes, then this warning could be used
-				 * LM_WARN("unhandled data type column (%.*s) type id (%d), "
-				 * "use DB_STRING as default\n", RES_NAMES(_r)[col]->len,
-				 * RES_NAMES(_r)[col]->s, datatype);
-				*/
 				break;
 		}
 	}
