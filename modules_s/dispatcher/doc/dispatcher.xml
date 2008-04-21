@@ -40,10 +40,14 @@
 	    The module can be used as a stateless load balancer, having no
 	    guarantee of fair distribution.
 	</para>
+	<para>
+		The dispatcher module offers reloads on the fly using sercmd.
+	</para>
     </section>
 
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
+	<xi:include href="fifo.xml"/>
 
     <section id="dispatcher.install_run">
 	<title>Installation And Running</title>
