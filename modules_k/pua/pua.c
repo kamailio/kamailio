@@ -546,12 +546,9 @@ static int db_restore(void)
 		print_ua_pres(p);
 		insert_htable(p);
 	}
-
-	if(res)
-	{
-		pua_dbf.free_result(pua_db, res);
-		res = NULL;
-	}
+		
+	pua_dbf.free_result(pua_db, res);
+	res = NULL;
 	
 	if(pua_dbf.delete(pua_db, 0, 0 , 0, 0) < 0)
 	{

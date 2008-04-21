@@ -404,7 +404,7 @@ done:
 		goto error;
 	}	
 
-	return 0;
+	return 1;
 
 error:
 	return -1;

@@ -233,18 +233,18 @@ modparam("rls", "max_expires", 10800)
 	<section>
 		<title><varname>hash_size</varname> (int)</title>
 		<para>
-		The dimension of the hash table to be used to store subscription to a
-		list. 
+        The dimension of the hash table used to store subscription to a list.
+        This parameter will be used as the power of 2 when computing table size.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>512</quote>.
+		<emphasis>Default value is <quote>9 (512)</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>hash_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("rls", "hash_size", 512)
+modparam("rls", "hash_size", 11)
 ...
 		</programlisting>
 		</example>

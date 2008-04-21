@@ -859,24 +859,28 @@ insert:
 	}
 	else
 	{
-		/* tackle the case in which the desired_expires== 0 and subs->expires< 0*/
+        /*
 		if(presentity->desired_expires== 0)
 		{
+            
 			if(subs->expires< 0)
 			{
-		//		LM_DBG("Found previous request for unlimited subscribe-"
-		//				" do not send subscribe\n");
+			    LM_DBG("Found previous request for unlimited subscribe-"
+						" do not send subscribe\n");
+            
 				if (subs->event & PWINFO_EVENT)
 				{	
 					presentity->watcher_count++;
 				}
-		//		lock_release(&HashT->p_records[hash_code].lock);
-		//		goto done;
+				lock_release(&HashT->p_records[hash_code].lock);
+			    goto done;
+            
 			}
+        
 		
 			if(subs->event & PWINFO_EVENT)
 			{	
-				if(subs->expires== 0) /* request for unsubscribe*/
+				if(subs->expires== 0)
 				{
 					presentity->watcher_count--;
 					if(	presentity->watcher_count> 0)
@@ -887,7 +891,7 @@ insert:
 				}
 				else
 				{
-					presentity->watcher_count--;
+					presentity->watcher_count++;
 					if(presentity->watcher_count> 1)
 					{
 						lock_release(&HashT->p_records[hash_code].lock);
@@ -897,6 +901,7 @@ insert:
 			}	
 			
 		}	
+        */
 
 		dlg_t* td= NULL;
 		td= pua_build_dlg_t(presentity);

@@ -274,7 +274,8 @@ modparam("presence", "fallback2db", 1)
 		<title><varname>subs_htable_size</varname> (int)</title>
 		<para>
 		The size of the hash table to store subscription dialogs.
-		</para>
+        This parameter will be used as the power of 2 when computing table size.
+        </para>
 		<para>
 		<emphasis>Default value is <quote>9 (512)</quote>.
 		</emphasis>
@@ -292,7 +293,8 @@ modparam("presence", "subs_htable_size", 11)
 	<section>
 		<title><varname>pres_htable_size</varname> (int)</title>
 		<para>
-		The size of the hash table to store publish records.
+        The size of the hash table to store publish records.
+        This parameter will be used as the power of 2 when computing table size.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>9 (512)</quote>.

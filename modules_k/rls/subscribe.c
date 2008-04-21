@@ -619,7 +619,7 @@ found_support:
 	if(subs.record_route.s)
 		pkg_free(subs.record_route.s);
 	xmlFreeDoc(doc);
-	return 0;
+	return 1;
 
 bad_event:
 	if(reply_489(msg)< 0)

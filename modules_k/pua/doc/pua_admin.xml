@@ -69,16 +69,17 @@
 		<para>
 		The size of the hash table used for storing Subscribe and 
 		Publish information. 
-		</para>
+        This parameter will be used as the power of 2 when computing table size.
+        </para>
 		<para>
-		<emphasis>Default value is <quote>4</quote>.	
+		<emphasis>Default value is <quote>9</quote>.	
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>hash_size</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pua", "hash_size", 9)
+modparam("pua", "hash_size", 11)
 ...
 </programlisting>
 		</example>
