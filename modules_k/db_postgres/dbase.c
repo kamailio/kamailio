@@ -74,8 +74,8 @@
 #include "../../db/db_query.h"
 #include "dbase.h"
 #include "pg_con.h"
-#include "db_val.h"
-#include "db_res.h"
+#include "val.h"
+#include "res.h"
 
 static int free_query(const db_con_t* _con);
 

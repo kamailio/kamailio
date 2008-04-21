@@ -47,8 +47,8 @@
 #include "../../db/db_con.h"
 #include "../../dprint.h"
 #include "../../mem/mem.h"
-#include "db_res.h"
-#include "db_val.h"
+#include "res.h"
+#include "val.h"
 #include "pg_con.h"
 #include "pg_type.h"
 
