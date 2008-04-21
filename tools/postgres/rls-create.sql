@@ -9,9 +9,10 @@ CREATE TABLE rls_presentity (
     updated INTEGER NOT NULL,
     auth_state INTEGER NOT NULL,
     reason VARCHAR(64) NOT NULL,
-    CONSTRAINT rls_presentity_rls_presentity_idx UNIQUE (rlsubs_did, resource_uri),
-    CONSTRAINT rls_presentity_updated_idx (updated)
+    CONSTRAINT rls_presentity_rls_presentity_idx UNIQUE (rlsubs_did, resource_uri)
 );
+
+CREATE INDEX rls_presentity_updated_idx ON rls_presentity (updated);
 
 INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
 CREATE TABLE rls_watchers (
