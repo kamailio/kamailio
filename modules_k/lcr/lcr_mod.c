@@ -1628,6 +1628,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	at = at + (strip_char - gw_uri_val.s.s);
 	strip = strtol(strip_char + 1, &endptr, 10);
 	if (endptr != at_char) {
+	    pkg_free(new_ruri.s);
 	    LM_ERR("Non-digit char between | and @ chars in gw URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
@@ -1698,6 +1699,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	at = at + (strip_char - gw_uri_val.s.s);
 	strip = strtol(strip_char + 1, &endptr, 10);
 	if (endptr != at_char) {
+	    pkg_free(new_ruri.s);
 	    LM_ERR("Non-digit char between | and @ chars in gw URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
