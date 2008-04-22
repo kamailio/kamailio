@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
    enabled if the db_url parameter is not set to any value.
 
    The server follows the specifications in: RFC3265, RFC3856,
-   RFC3857, RFC3858, RFC 3903.
+   RFC3857, RFC3858.
 
 1.2. Dependencies
 
@@ -258,7 +258,9 @@ modparam("presence", "fallback2db", 1)
 
 1.3.11. subs_htable_size (int)
 
-   The size of the hash table to store subscription dialogs.
+   The size of the hash table to store subscription dialogs. This
+   parameter will be used as the power of 2 when computing table
+   size.
 
    Default value is "9 (512)".
 
@@ -269,7 +271,9 @@ modparam("presence", "subs_htable_size", 11)
 
 1.3.12. pres_htable_size (int)
 
-   The size of the hash table to store publish records.
+   The size of the hash table to store publish records. This
+   parameter will be used as the power of 2 when computing table
+   size.
 
    Default value is "9 (512)".
 

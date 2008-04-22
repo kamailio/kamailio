@@ -203,14 +203,15 @@ modparam("rls", "max_expires", 10800)
 
 1.3.8. hash_size (int)
 
-   The dimension of the hash table to be used to store
-   subscription to a list.
+   The dimension of the hash table used to store subscription to a
+   list. This parameter will be used as the power of 2 when
+   computing table size.
 
-   Default value is "512".
+   Default value is "9 (512)".
 
    Example 1.8. Set hash_size parameter
 ...
-modparam("rls", "hash_size", 512)
+modparam("rls", "hash_size", 11)
 ...
 
 1.3.9. xcap_root (str)
