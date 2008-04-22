@@ -112,6 +112,7 @@ int sphere_enable= 0;
 
 int phtable_size= 9;
 phtable_t* pres_htable;
+int log_notify= 0;
 
 static cmd_export_t cmds[]=
 {
@@ -136,7 +137,8 @@ static param_export_t params[]={
 	{ "pres_htable_size",       INT_PARAM, &phtable_size},
 	{ "fallback2db",            INT_PARAM, &fallback2db},
 	{ "enable_sphere_check",    INT_PARAM, &sphere_enable},
-	{0,0,0}
+    { "log_notify",             INT_PARAM, &log_notify},
+    {0,0,0}
 };
 
 static mi_export_t mi_cmds[] = {
