@@ -195,6 +195,8 @@ install: build
 	# install advanced ser config file for ser-oob package
 	mkdir -p $(CURDIR)/debian/ser-oob/etc/ser
 	cp -f etc/ser-oob.cfg $(CURDIR)/debian/ser-oob/etc/ser/
+	# and remove it from main ser package
+	rm -f $(CURDIR)/debian/ser/etc/ser/ser-oob.cfg
 	#dh_movefiles
 
 
