@@ -46,6 +46,8 @@
  *  2006-02-06  added named route tables (andrei)
  *  2008-04-14  (expr1 != expr2) is evaluated true if at least one of
  *		the expressions does not exist (Miklos)
+ *  2008-04-23  errors are treated as false during expression evaluation
+ *  		unless the operator is DIFF_OP (Miklos)
  */
 
 
@@ -620,8 +622,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 		else return (op == DIFF_OP);
 	} else if (rtype == SELECT_ST) {
 		ret = run_select(&v, r->select, msg);
-		if (ret > 0) return (op == DIFF_OP); /* Not found */
-		else if (ret < 0) goto error; /* Error */
+		if (ret != 0) return (op == DIFF_OP); /* Not found or error */
 		right = &v;
 	} else if ((op == MATCH_OP && rtype == RE_ST)) {
 	} else if (op != MATCH_OP && rtype == STRING_ST) {
@@ -698,7 +699,7 @@ inline static int comp_str(int op, str* left, int rtype, union exp_op* r, struct
 	return ret;
 
 error:
-	return -1;
+	return (op == DIFF_OP) ? 1 : -1;
 }
 
 
@@ -799,26 +800,28 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 				tmp.s=r->string;
 				tmp.len=strlen(r->string);
 				if (str2int(&tmp, &uval)<0){
-					LOG(L_ERR, "ERROR: comp_avp: cannot convert string value"
+					LOG(L_WARN, "WARNING: comp_avp: cannot convert string value"
 								" to int (%s)\n", ZSW(r->string));
-					return -1;
+					goto error;
 				}
 				num_val.numval=uval;
 				return comp_num(op, val.n, NUMBER_ST, &num_val);
 			case STR_ST:
 				if (str2int(&r->str, &uval)<0){
-					LOG(L_ERR, "ERROR: comp_avp: cannot convert str value"
+					LOG(L_WARN, "WARNING: comp_avp: cannot convert str value"
 								" to int (%.*s)\n", r->str.len, ZSW(r->str.s));
-					return -1;
+					goto error;
 				}
 				num_val.numval=uval;
 				return comp_num(op, val.n, NUMBER_ST, &num_val);
 			default:
 				LOG(L_CRIT, "BUG: comp_avp: invalid type for numeric avp "
 							"comparison (%d)\n", rtype);
-				return -1;
+				goto error;
 		}
 	}
+error:
+	return (op == DIFF_OP) ? 1 : -1;
 }
 
 /*
@@ -831,8 +834,7 @@ inline static int comp_select(int op, select_t* sel, int rtype, union exp_op* r,
 	char empty_str=0;
 
 	ret = run_select(&val, sel, msg);
-	if (ret < 0) return -1;
-	if (ret > 0) return (op == DIFF_OP);
+	if (ret != 0) return (op == DIFF_OP);
 
 	switch(op) {
 	case NO_OP: return (val.len>0);
@@ -860,7 +862,7 @@ inline static int check_self_op(int op, str* s, unsigned short p)
 		case EQUAL_OP:
 			break;
 		case DIFF_OP:
-			if (ret>=0) ret=!ret;
+			ret=(ret > 0) ? 0 : 1;
 			break;
 		default:
 			LOG(L_CRIT, "BUG: check_self_op: invalid operator %d\n", op);
@@ -930,8 +932,7 @@ inline static int comp_ip(int op, struct ip_addr* ip, int rtype, union exp_op* r
 					}
 					break;
 				case DIFF_OP:
-					ret=comp_ip(EQUAL_OP, ip, rtype, r);
-					if (ret>=0) ret=!ret;
+					ret=(comp_ip(EQUAL_OP, ip, rtype, r) > 0) ? 0 : 1;
 					break;
 				default:
 					goto error_op;
@@ -1165,12 +1166,12 @@ inline static int eval_elem(struct run_act_ctx* h, struct expr* e,
 	}
 	return ret;
 error:
-	return -1;
+	return (e->op == DIFF_OP) ? 1 : -1;
 }
 
 
 
-/* ret= 0/1 (true/false) ,  -1 on error */
+/* ret= 1/0 (true/false) ,  -1 on error (evaluates as false)*/
 int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg)
 {
 	int ret;
@@ -1182,19 +1183,18 @@ int eval_expr(struct run_act_ctx* h, struct expr* e, struct sip_msg* msg)
 			case LOGAND_OP:
 				ret=eval_expr(h, e->l.expr, msg);
 				/* if error or false stop evaluating the rest */
-				if (ret!=1) break;
+				if (ret <= 0) break;
 				ret=eval_expr(h, e->r.expr, msg); /*ret1 is 1*/
 				break;
 			case LOGOR_OP:
 				ret=eval_expr(h, e->l.expr, msg);
-				/* if true or error stop evaluating the rest */
-				if (ret!=0) break;
+				/* if true stop evaluating the rest */
+				if (ret > 0) break;
 				ret=eval_expr(h, e->r.expr, msg); /* ret1 is 0 */
 				break;
 			case NOT_OP:
 				ret=eval_expr(h, e->l.expr, msg);
-				if (ret<0) break;
-				ret= ! ret;
+				ret=(ret > 0) ? 0 : 1;
 				break;
 			default:
 				LOG(L_CRIT, "BUG: eval_expr: unknown op %d\n", e->op);
