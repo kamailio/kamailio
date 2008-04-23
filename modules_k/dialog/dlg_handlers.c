@@ -351,7 +351,7 @@ static void dlg_seq_up_onreply(struct cell* t, int type,
 		return;
 
 	if (type==TMCB_RESPONSE_FWDED) {
-		run_dlg_callbacks(DLGCB_WITHIN_RESPONSE, dlg, param->rpl,
+		run_dlg_callbacks(DLGCB_RESPONSE_WITHIN, dlg, param->rpl,
 			DLG_DIR_UPSTREAM);
 		return;
 	}
@@ -375,7 +375,7 @@ static void dlg_seq_down_onreply(struct cell* t, int type,
 		return;
 
 	if (type==TMCB_RESPONSE_FWDED) {
-		run_dlg_callbacks(DLGCB_WITHIN_RESPONSE, dlg, param->rpl,
+		run_dlg_callbacks(DLGCB_RESPONSE_WITHIN, dlg, param->rpl,
 			DLG_DIR_DOWNSTREAM);
 		return;
 	}
@@ -669,7 +669,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir);
 
 			if ( (event!=DLG_EVENT_REQACK) &&
-			(dlg->cbs.types)&DLGCB_WITHIN_RESPONSE ) {
+			(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
 				/* ref the dialog as registered into the transaction
 				 * callback; unref will be done when the transaction
 				 * will be destroied */
