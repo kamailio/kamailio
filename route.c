@@ -814,6 +814,8 @@ inline static int comp_avp(int op, avp_spec_t* spec, int rtype, union exp_op* r,
 				}
 				num_val.numval=uval;
 				return comp_num(op, val.n, NUMBER_ST, &num_val);
+			case AVP_ST:
+				return comp_num(op, val.n, rtype, r);
 			default:
 				LOG(L_CRIT, "BUG: comp_avp: invalid type for numeric avp "
 							"comparison (%d)\n", rtype);

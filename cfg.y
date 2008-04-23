@@ -1587,6 +1587,7 @@ exp_elem:
 	| attr_id_val intop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
 	| attr_id_val binop NUMBER	{$$=mk_elem( $2, AVP_O, (void*)$1, NUMBER_ST, (void*)$3); }
 	| attr_id_val strop attr_id_val {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
+	| attr_id_val intop attr_id_val {$$=mk_elem( $2, AVP_O, (void*)$1, AVP_ST, (void*)$3); }
 
 	| select_id                 { $$=mk_elem( NO_OP, SELECT_O, $1, 0, 0); }
 	| select_id strop STRING    { $$=mk_elem( $2, SELECT_O, $1, STRING_ST, $3); }
