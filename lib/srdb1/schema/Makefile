@@ -99,17 +99,18 @@ dbtext:
 		--stringparam db "dbtext" \
 		$(DBTEXT_XSL) openser-"$$FILE".xml ; \
 	done
+	TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 	# small hack to create the version table entries, this is here easier as with XSL
 	for FILE in  $(wildcard $(ROOT)/scripts/dbtext/openser/*) ; do \
 		if [ -f "$$FILE" ]; then \
 			if [  "$$FILE" != "$(ROOT)/scripts/dbtext/openser/version" ]; then \
 				tail -n 1 "$$FILE" >> "$(ROOT)/scripts/dbtext/openser/version" ; \
- 				head -n 1 "$$FILE" > /tmp/openser-dbtext.tmp ; \
-				cp /tmp/openser-dbtext.tmp "$$FILE" ; \
+ 				head -n 1 "$$FILE" > $TMPFILE ; \
+				cp $TMPFILE "$$FILE" ; \
 			fi ; \
 		fi ; \
 	done ; \
-	rm -f /tmp/openser-dbtext.tmp
+	rm -f $TMPFILE
 
 dbtext_clean:
 	-@rm -f $(ROOT)/scripts/dbtext/openser/*
@@ -123,17 +124,18 @@ db_berkeley:
 		--stringparam db "db_berkeley" \
 		$(DB_BERKELEY_XSL) openser-"$$FILE".xml ; \
 	done
+	TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 	# small hack to create the version table entries, this is here easier as with XSL
 	for FILE in  $(wildcard $(ROOT)/scripts/db_berkeley/openser/*) ; do \
 		if [ -f "$$FILE" ]; then \
 			if [  "$$FILE" != "$(ROOT)/scripts/db_berkeley/openser/version" ]; then \
 				tail -n 2 "$$FILE" >> "$(ROOT)/scripts/db_berkeley/openser/version" ; \
- 				head -n 10 "$$FILE" > /tmp/openser-db_berkeley.tmp ; \
-				cp /tmp/openser-db_berkeley.tmp "$$FILE" ; \
+ 				head -n 10 "$$FILE" > $TMPFILE ; \
+				cp $TMPFILE "$$FILE" ; \
 			fi ; \
 		fi ; \
 	done ; \
-	rm -f /tmp/openser-db_berkeley.tmp
+	rm -f $TMPFILE
 
 db_berkeley_clean:
 	-@rm -f $(ROOT)/scripts/db_berkeley/openser/*
