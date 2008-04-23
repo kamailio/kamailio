@@ -566,6 +566,7 @@ static int subst_user_f(struct sip_msg* msg, char*  subst, char* ignored)
 	act.val[0].u.string = result->s;
 	init_run_actions_ctx(&ra_ctx);
 	rval = do_action(&ra_ctx, &act, msg);
+	if (result->s) pkg_free(result->s); /* SET_USER_T doesn't consume s */
 	pkg_free(result);
 	return rval;
 }
