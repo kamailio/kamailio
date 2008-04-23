@@ -1457,10 +1457,9 @@ jump_over_body:
 		goto error;	
 	}
 
-    LM_INFO("NOTIFY to [%.*s] from [%.*s] / event [%.*s] send via [%.*s]\n",
-        td->rem_uri.len, td->rem_uri.s, td->loc_uri.len, td->loc_uri.s,
-        subs->event->name.len, subs->event->name.s,td->hooks.next_hop->len,
-        td->hooks.next_hop->s);
+	LM_INFO("NOTIFY %.*s via %.*s on behalf of %.*s for event %.*s\n",
+		td->rem_uri.len, td->rem_uri.s, td->hooks.next_hop->len, td->hooks.next_hop->s,
+		td->loc_uri.len, td->loc_uri.s, subs->event->name.len, subs->event->name.s);
 
 	free_tm_dlg(td);
 	
