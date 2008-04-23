@@ -5,16 +5,18 @@ CREATE TABLE userblacklist (
     domain VARCHAR(64) DEFAULT '' NOT NULL,
     prefix VARCHAR(64) DEFAULT '' NOT NULL,
     whitelist INT(1) UNSIGNED DEFAULT 0 NOT NULL,
-    description VARCHAR(64) DEFAULT '' NOT NULL,
-    KEY userblacklist_idx (username, domain, prefix)
+    description VARCHAR(64) DEFAULT '' NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX userblacklist_idx ON userblacklist (username, domain, prefix);
 
 INSERT INTO version (table_name, table_version) values ('globalblacklist','1');
 CREATE TABLE globalblacklist (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     prefix VARCHAR(64) DEFAULT '' NOT NULL,
     whitelist INT(1) UNSIGNED DEFAULT 0 NOT NULL,
-    description VARCHAR(64) DEFAULT '' NOT NULL,
-    KEY globalblacklist_idx (prefix)
+    description VARCHAR(64) DEFAULT '' NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX globalblacklist_idx ON globalblacklist (prefix);
 

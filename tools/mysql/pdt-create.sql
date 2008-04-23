@@ -4,6 +4,6 @@ CREATE TABLE pdt (
     sdomain VARCHAR(128) NOT NULL,
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(128) DEFAULT '' NOT NULL,
-    UNIQUE KEY sdomain_prefix_idx (sdomain, prefix)
+    CONSTRAINT sdomain_prefix_idx UNIQUE (sdomain, prefix)
 ) ENGINE=MyISAM;
 

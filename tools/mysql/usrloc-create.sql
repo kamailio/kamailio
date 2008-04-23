@@ -15,7 +15,8 @@ CREATE TABLE location (
     cflags INT(11) DEFAULT 0 NOT NULL,
     user_agent VARCHAR(255) DEFAULT '' NOT NULL,
     socket VARCHAR(64) DEFAULT NULL,
-    methods INT(11) DEFAULT NULL,
-    KEY account_contact_idx (username, domain, contact)
+    methods INT(11) DEFAULT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX account_contact_idx ON location (username, domain, contact);
 

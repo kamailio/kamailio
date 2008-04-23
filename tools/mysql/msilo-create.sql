@@ -9,7 +9,8 @@ CREATE TABLE silo (
     exp_time INT DEFAULT 0 NOT NULL,
     snd_time INT DEFAULT 0 NOT NULL,
     ctype VARCHAR(32) DEFAULT 'text/plain' NOT NULL,
-    body BLOB DEFAULT '' NOT NULL,
-    KEY account_idx (username, domain)
+    body BLOB DEFAULT '' NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX account_idx ON silo (username, domain);
 

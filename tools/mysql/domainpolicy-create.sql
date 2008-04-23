@@ -6,7 +6,8 @@ CREATE TABLE domainpolicy (
     att VARCHAR(255),
     val VARCHAR(128),
     description VARCHAR(255) NOT NULL,
-    UNIQUE KEY rav_idx (rule, att, val),
-    KEY rule_idx (rule)
+    CONSTRAINT rav_idx UNIQUE (rule, att, val)
 ) ENGINE=MyISAM;
+
+CREATE INDEX rule_idx ON domainpolicy (rule);
 

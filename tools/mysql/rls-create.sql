@@ -9,9 +9,10 @@ CREATE TABLE rls_presentity (
     updated INT(11) NOT NULL,
     auth_state INT(11) NOT NULL,
     reason VARCHAR(64) NOT NULL,
-    UNIQUE KEY rls_presentity_idx (rlsubs_did, resource_uri),
-    KEY updated_idx (updated)
+    CONSTRAINT rls_presentity_idx UNIQUE (rlsubs_did, resource_uri)
 ) ENGINE=MyISAM;
+
+CREATE INDEX updated_idx ON rls_presentity (updated);
 
 INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
 CREATE TABLE rls_watchers (
@@ -36,6 +37,6 @@ CREATE TABLE rls_watchers (
     version INT(11) DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    UNIQUE KEY rls_watcher_idx (presentity_uri, callid, to_tag, from_tag)
+    CONSTRAINT rls_watcher_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 

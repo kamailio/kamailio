@@ -10,9 +10,10 @@ CREATE TABLE gw (
     strip TINYINT UNSIGNED,
     tag VARCHAR(16) DEFAULT NULL,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
-    UNIQUE KEY gw_name_idx (gw_name),
-    KEY grp_id_idx (grp_id)
+    CONSTRAINT gw_name_idx UNIQUE (gw_name)
 ) ENGINE=MyISAM;
+
+CREATE INDEX grp_id_idx ON gw (grp_id);
 
 INSERT INTO version (table_name, table_version) values ('lcr','2');
 CREATE TABLE lcr (
@@ -20,9 +21,10 @@ CREATE TABLE lcr (
     prefix VARCHAR(16) DEFAULT NULL,
     from_uri VARCHAR(64) DEFAULT NULL,
     grp_id INT UNSIGNED NOT NULL,
-    priority TINYINT UNSIGNED NOT NULL,
-    KEY prefix_idx (prefix),
-    KEY from_uri_idx (from_uri),
-    KEY grp_id_idx (grp_id)
+    priority TINYINT UNSIGNED NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX prefix_idx ON lcr (prefix);
+CREATE INDEX from_uri_idx ON lcr (from_uri);
+CREATE INDEX grp_id_idx ON lcr (grp_id);
 

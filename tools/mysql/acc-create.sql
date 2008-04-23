@@ -7,9 +7,10 @@ CREATE TABLE acc (
     callid VARCHAR(64) DEFAULT '' NOT NULL,
     sip_code VARCHAR(3) DEFAULT '' NOT NULL,
     sip_reason VARCHAR(32) DEFAULT '' NOT NULL,
-    time DATETIME NOT NULL,
-    KEY callid_idx (callid)
+    time DATETIME NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX callid_idx ON acc (callid);
 
 INSERT INTO version (table_name, table_version) values ('missed_calls','3');
 CREATE TABLE missed_calls (
@@ -20,7 +21,8 @@ CREATE TABLE missed_calls (
     callid VARCHAR(64) DEFAULT '' NOT NULL,
     sip_code VARCHAR(3) DEFAULT '' NOT NULL,
     sip_reason VARCHAR(32) DEFAULT '' NOT NULL,
-    time DATETIME NOT NULL,
-    KEY callid_idx (callid)
+    time DATETIME NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX callid_idx ON missed_calls (callid);
 

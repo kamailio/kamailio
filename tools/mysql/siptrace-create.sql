@@ -10,10 +10,11 @@ CREATE TABLE sip_trace (
     fromip VARCHAR(50) DEFAULT '' NOT NULL,
     toip VARCHAR(50) DEFAULT '' NOT NULL,
     fromtag VARCHAR(64) DEFAULT '' NOT NULL,
-    direction VARCHAR(4) DEFAULT '' NOT NULL,
-    KEY traced_user_idx (traced_user),
-    KEY date_idx (time_stamp),
-    KEY fromip_idx (fromip),
-    KEY callid_idx (callid)
+    direction VARCHAR(4) DEFAULT '' NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX traced_user_idx ON sip_trace (traced_user);
+CREATE INDEX date_idx ON sip_trace (time_stamp);
+CREATE INDEX fromip_idx ON sip_trace (fromip);
+CREATE INDEX callid_idx ON sip_trace (callid);
 

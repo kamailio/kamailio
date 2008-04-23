@@ -7,8 +7,9 @@ CREATE TABLE usr_preferences (
     attribute VARCHAR(32) DEFAULT '' NOT NULL,
     type INT(11) DEFAULT 0 NOT NULL,
     value VARCHAR(128) DEFAULT '' NOT NULL,
-    last_modified DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL,
-    KEY ua_idx (uuid, attribute),
-    KEY uda_idx (username, domain, attribute)
+    last_modified DATETIME DEFAULT '1900-01-01 00:00:01' NOT NULL
 ) ENGINE=MyISAM;
+
+CREATE INDEX ua_idx ON usr_preferences (uuid, attribute);
+CREATE INDEX uda_idx ON usr_preferences (username, domain, attribute);
 

@@ -8,7 +8,7 @@ CREATE TABLE presentity (
     expires INT(11) NOT NULL,
     received_time INT(11) NOT NULL,
     body BLOB NOT NULL,
-    UNIQUE KEY presentity_idx (username, domain, event, etag)
+    CONSTRAINT presentity_idx UNIQUE (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('active_watchers','9');
@@ -34,7 +34,7 @@ CREATE TABLE active_watchers (
     version INT(11) DEFAULT 0 NOT NULL,
     socket_info VARCHAR(64) NOT NULL,
     local_contact VARCHAR(128) NOT NULL,
-    UNIQUE KEY active_watchers_idx (presentity_uri, callid, to_tag, from_tag)
+    CONSTRAINT active_watchers_idx UNIQUE (presentity_uri, callid, to_tag, from_tag)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('watchers','3');
@@ -47,7 +47,7 @@ CREATE TABLE watchers (
     status INT(11) NOT NULL,
     reason VARCHAR(64),
     inserted_time INT(11) NOT NULL,
-    UNIQUE KEY watcher_idx (presentity_uri, watcher_username, watcher_domain, event)
+    CONSTRAINT watcher_idx UNIQUE (presentity_uri, watcher_username, watcher_domain, event)
 ) ENGINE=MyISAM;
 
 INSERT INTO version (table_name, table_version) values ('xcap','3');
@@ -61,9 +61,10 @@ CREATE TABLE xcap (
     source INT(11) NOT NULL,
     doc_uri VARCHAR(128) NOT NULL,
     port INT(11) NOT NULL,
-    UNIQUE KEY account_doc_type_idx (username, domain, doc_type, doc_uri),
-    KEY source_idx (source)
+    CONSTRAINT account_doc_type_idx UNIQUE (username, domain, doc_type, doc_uri)
 ) ENGINE=MyISAM;
+
+CREATE INDEX source_idx ON xcap (source);
 
 INSERT INTO version (table_name, table_version) values ('pua','5');
 CREATE TABLE pua (
