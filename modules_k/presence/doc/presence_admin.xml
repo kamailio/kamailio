@@ -332,26 +332,6 @@ modparam("presence", "enable_sphere_check", 1)
 	</programlisting>
 		</example>
 	</section>
-<section>
-        <title><varname>log_notify</varname> (int)</title>
-        <para>
-        Configures whether to log a message with the following structure:
-        'NOTIFY to user@domain / event_package send via TRANSPORT:IP:PORT'
-        for each notify beeing sent out.
-        </para>
-        <para>
-        <emphasis>Default value is <quote> 0 </quote>.
-        </emphasis>
-        </para>
-        <example>
-        <title>Set <varname>log_notify</varname> parameter</title>
-        <programlisting format="linespecific">
-...
-modparam("presence", "log_notify", 1)
-...
-    </programlisting>
-        </example>
-    </section> 
 
 </section>
 
