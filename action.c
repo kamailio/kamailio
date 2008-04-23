@@ -783,6 +783,7 @@ int do_action(struct run_act_ctx* h, struct action* a, struct sip_msg* msg)
 						break;
 					} else {
 						LOG(L_WARN,"WARNING: do_action: error in expression\n");
+						v = 0; /* error is treated as false (Miklos) */
 					}
 				}
 
