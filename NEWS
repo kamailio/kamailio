@@ -8,6 +8,10 @@ $Id$
 2.1.0 changes
 
 modules:
+ - textops   - functions:
+                        - remove_hf_re("regexp") -- filter message headers out
+                          by matching the header name field against a regular
+                          expression.
  - avp       - export new selects table to allow dissecting the content of an
                attribute by interpreting it as a "name-addr" value 
  - auth      - added extra authentication checks support, to protect

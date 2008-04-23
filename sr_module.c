@@ -1088,3 +1088,21 @@ int get_int_fparam(int* dst, struct sip_msg* msg, fparam_t* param)
 
     return 0;
 }
+
+/**
+ * Retrieve the compiled RegExp.
+ * @return: 0 for success, negative on error.
+ */
+int get_regex_fparam(regex_t *dst, struct sip_msg* msg, fparam_t* param)
+{
+	switch (param->type) {
+		case FPARAM_REGEX:
+			*dst = *param->v.regex;
+			return 0;
+
+		default:
+			ERR("unexpected parameter type (%d), instead of regexp.\n", 
+					param->type);
+	}
+	return -1;
+}
