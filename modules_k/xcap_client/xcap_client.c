@@ -406,7 +406,7 @@ error:
 	return 0;
 }
 
-#define STR_MATCH(s1, s2)   ((s1).len==(s2).len && strncmp((s1).s, (s2).s, (s1).len)==0)
+#define STR_MATCH(s1, s2)   ((s1).len==(s2).len && memcmp((s1).s, (s2).s, (s1).len)==0)
 
 int get_auid_flag(str auid)
 {
