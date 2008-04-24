@@ -126,6 +126,7 @@ struct tcp_cfg_options{
 	int keepidle;   /* idle time (s) before tcp starts sending keepalives */
 	int keepintvl;  /* interval between keep alives */
 	int keepcnt;    /* maximum no. of keepalives before giving up */
+	int crlf_ping;  /* on/off - reply to double CRLF keepalives */
 };
 
 

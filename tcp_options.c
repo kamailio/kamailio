@@ -58,6 +58,7 @@ void init_tcp_options()
 #ifdef HAVE_TCP_QUICKACK
 	tcp_options.delayed_ack=1;
 #endif
+	tcp_options.crlf_ping=1;
 }
 
 

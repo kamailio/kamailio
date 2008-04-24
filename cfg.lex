@@ -308,6 +308,7 @@ TCP_OPT_KEEPALIVE	"tcp_keepalive"
 TCP_OPT_KEEPIDLE	"tcp_keepidle"
 TCP_OPT_KEEPINTVL	"tcp_keepintvl"
 TCP_OPT_KEEPCNT		"tcp_keepcnt"
+TCP_OPT_CRLF_PING	"tcp_crlf_ping"
 DISABLE_TLS		"disable_tls"|"tls_disable"
 ENABLE_TLS		"enable_tls"|"tls_enable"
 TLSLOG			"tlslog"|"tls_log"
@@ -600,6 +601,8 @@ EAT_ABLE	[\ \t\b\r]
 									return TCP_OPT_KEEPINTVL; }
 <INITIAL>{TCP_OPT_KEEPCNT}	{ count(); yylval.strval=yytext;
 									return TCP_OPT_KEEPCNT; }
+<INITIAL>{TCP_OPT_CRLF_PING}	{ count(); yylval.strval=yytext;
+									return TCP_OPT_CRLF_PING; }
 <INITIAL>{DISABLE_TLS}	{ count(); yylval.strval=yytext; return DISABLE_TLS; }
 <INITIAL>{ENABLE_TLS}	{ count(); yylval.strval=yytext; return ENABLE_TLS; }
 <INITIAL>{TLSLOG}		{ count(); yylval.strval=yytext; return TLS_PORT_NO; }

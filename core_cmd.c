@@ -562,7 +562,7 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 	if (!tcp_disable){
 		tcp_options_get(&t);
 		rpc->add(c, "{", &handle);
-		rpc->struct_add(handle, "dddddddddddddd",
+		rpc->struct_add(handle, "ddddddddddddddd",
 			"fd_cache",		t.fd_cache,
 			"tcp_buf_write",	t.tcp_buf_write,
 			"tcp_connect_wait",	t.tcp_connect_wait,
@@ -577,7 +577,8 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 			"keepalive",	t.keepalive,
 			"keepidle",		t.keepidle,
 			"keepintvl",	t.keepintvl,
-			"keepcnt",		t.keepcnt
+			"keepcnt",		t.keepcnt,
+			"crlf_ping",	t.crlf_ping
 		);
 	}else{
 		rpc->fault(c, 500, "tcp support disabled");

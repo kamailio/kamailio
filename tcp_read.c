@@ -78,6 +78,7 @@
 #include "io_wait.h"
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
 #include "tsend.h"
+#include "forward.h"
 
 #ifdef USE_STUN
 #include "ser_stun.h"
@@ -325,7 +326,13 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 			case H_SKIP_EMPTY:
 				switch (*p){
 					case '\n':
+						break;
 					case '\r':
+						if (tcp_options.crlf_ping) {
+							r->state=H_SKIP_EMPTY_CR_FOUND;
+							r->start=p;
+						}
+						break;
 					case ' ':
 					case '\t':
 						/* skip empty lines */
@@ -357,6 +364,36 @@ int tcp_read_headers(struct tcp_connection *c, int* read_flags)
 						r->start=p;
 				};
 				p++;
+				break;
+
+			case H_SKIP_EMPTY_CR_FOUND:
+				if (*p=='\n'){
+					r->state=H_SKIP_EMPTY_CRLF_FOUND;
+					p++;
+				}else{
+					r->state=H_SKIP_EMPTY;
+				}
+				break;
+
+			case H_SKIP_EMPTY_CRLF_FOUND:
+				if (*p=='\r'){
+					r->state = H_SKIP_EMPTY_CRLFCR_FOUND;
+					p++;
+				}else{
+					r->state = H_SKIP_EMPTY;
+				}
+				break;
+
+			case H_SKIP_EMPTY_CRLFCR_FOUND:
+				if (*p=='\n'){
+					r->state = H_PING_CRLF;
+					r->complete = 1;
+					r->has_content_len = 1; /* hack to avoid error check */
+					p++;
+					goto skip;
+				}else{
+					r->state = H_SKIP_EMPTY;
+				}
 				break;
 #ifdef USE_STUN
 			case H_STUN_MSG:
@@ -539,6 +576,7 @@ int tcp_read_req(struct tcp_connection* con, int* bytes_read, int* read_flags)
 	int resp;
 	long size;
 	struct tcp_req* req;
+	struct dest_info dst;
 	int s;
 	char c;
 	int ret;
@@ -639,6 +677,15 @@ again:
 							   previous char, req->parsed should be ok
 							   because we always alloc BUF_SIZE+1 */
 			*req->parsed=0;
+
+			if (req->state==H_PING_CRLF) {
+				init_dst_from_rcv(&dst, &con->rcv);
+
+				if (tcp_send(&dst, 0, CRLF, CRLF_LEN) < 0) {
+					LOG(L_ERR, "CRLF ping: tcp_send() failed\n");
+				}
+				ret = 0;
+			}else
 #ifdef USE_STUN
 			if (unlikely(req->state==H_STUN_END)){
 				/* stun request */
