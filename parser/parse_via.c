@@ -1827,6 +1827,7 @@ parse_again:
 						goto error;
 					case L_PARAM:
 					case F_PARAM:
+					case F_PORT:
 					case P_PARAM:
 						LOG(L_ERR, "ERROR:parse_via:"
 						" bad char <%c> in state %d\n",
