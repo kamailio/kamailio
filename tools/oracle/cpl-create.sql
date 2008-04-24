@@ -1,19 +1,18 @@
-INSERT INTO VERSION (table_name,table_version) values ('cpl',2);
-create table CPL
-(
-  ID       NUMBER(10) not null,
-  USERNAME VARCHAR2(64) not null,
-  DOMAIN   VARCHAR2(64) default '',
-  CPL_XML  VARCHAR2(1000),
-  CPL_BIN  VARCHAR2(1000)
+INSERT INTO version (table_name, table_version) values ('cpl','1');
+CREATE TABLE cpl (
+    id NUMBER(10) PRIMARY KEY,
+    username VARCHAR2(64),
+    domain VARCHAR2(64) DEFAULT '',
+    cpl_xml CLOB,
+    cpl_bin CLOB,
+    CONSTRAINT cpl_account_idx  UNIQUE (username, domain)
 );
-alter table CPL add constraint PK_CPL primary key (ID);
-alter table CPL add constraint CPL_ACCOUNT_IDX unique (USERNAME,DOMAIN);
-create or replace trigger cpl_tr
+
+CREATE OR REPLACE TRIGGER cpl_tr
 before insert on cpl FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
-end cpl_tr;
+END cpl_tr;
 /
-BEGIN map2users('CPL'); END;
+BEGIN map2users('cpl'); END;
 /

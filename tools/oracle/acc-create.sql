@@ -1,45 +1,44 @@
-INSERT INTO VERSION (table_name,table_version) values ('acc',4);
-create table ACC
-(
-  ID         NUMBER(10) not null,
-  METHOD     VARCHAR2(16) DEFAULT '',
-  FROM_TAG   VARCHAR2(64) DEFAULT '',
-  TO_TAG     VARCHAR2(64) DEFAULT '',
-  CALLID     VARCHAR2(64) DEFAULT '',
-  SIP_CODE   VARCHAR2(3) DEFAULT '',
-  SIP_REASON VARCHAR2(32) DEFAULT '',
-  TIME       DATE not null
+INSERT INTO version (table_name, table_version) values ('acc','4');
+CREATE TABLE acc (
+    id NUMBER(10) PRIMARY KEY,
+    method VARCHAR2(16) DEFAULT '',
+    from_tag VARCHAR2(64) DEFAULT '',
+    to_tag VARCHAR2(64) DEFAULT '',
+    callid VARCHAR2(64) DEFAULT '',
+    sip_code VARCHAR2(3) DEFAULT '',
+    sip_reason VARCHAR2(32) DEFAULT '',
+    time DATE
 );
-alter table ACC add constraint PK_ACC primary key (ID);
-create index ACC_CALLID_IDX on ACC (CALLID);
-create or replace trigger acc_tr
+
+CREATE OR REPLACE TRIGGER acc_tr
 before insert on acc FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END acc_tr;
 /
-BEGIN map2users('ACC'); END;
+BEGIN map2users('acc'); END;
 /
+CREATE INDEX acc_callid_idx  ON acc (callid);
 
-INSERT INTO VERSION (table_name,table_version) values ('missed_calls',3);
-create table MISSED_CALLS
-(
-  ID         NUMBER(10) not null,
-  METHOD     VARCHAR2(16) DEFAULT '',
-  FROM_TAG   VARCHAR2(64) DEFAULT '',
-  TO_TAG     VARCHAR2(64) DEFAULT '',
-  CALLID     VARCHAR2(64) DEFAULT '',
-  SIP_CODE   VARCHAR2(3) DEFAULT '',
-  SIP_REASON VARCHAR2(32) DEFAULT '',
-  TIME       DATE not null
+INSERT INTO version (table_name, table_version) values ('missed_calls','3');
+CREATE TABLE missed_calls (
+    id NUMBER(10) PRIMARY KEY,
+    method VARCHAR2(16) DEFAULT '',
+    from_tag VARCHAR2(64) DEFAULT '',
+    to_tag VARCHAR2(64) DEFAULT '',
+    callid VARCHAR2(64) DEFAULT '',
+    sip_code VARCHAR2(3) DEFAULT '',
+    sip_reason VARCHAR2(32) DEFAULT '',
+    time DATE
 );
-alter table MISSED_CALLS add constraint PK_MISSED_CALLS primary key (ID);
-create index MISSED_CALLS_CALLID_IDX on MISSED_CALLS (CALLID);
-create or replace trigger missed_calls_tr
+
+CREATE OR REPLACE TRIGGER missed_calls_tr
 before insert on missed_calls FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END missed_calls_tr;
 /
-BEGIN map2users('MISSED_CALLS'); END;
+BEGIN map2users('missed_calls'); END;
 /
+CREATE INDEX missed_calls_callid_idx  ON missed_calls (callid);
+

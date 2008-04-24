@@ -1,21 +1,21 @@
-INSERT INTO VERSION (table_name,table_version) values ('domainpolicy',2);
-create table DOMAINPOLICY
-(
-  ID          NUMBER(10) not null,
-  RULE        VARCHAR2(255) not null,
-  TYPE        VARCHAR2(255) not null,
-  ATT         VARCHAR2(255),
-  VAL         VARCHAR2(128),
-  DESCRIPTION VARCHAR2(255) not null
+INSERT INTO version (table_name, table_version) values ('domainpolicy','2');
+CREATE TABLE domainpolicy (
+    id NUMBER(10) PRIMARY KEY,
+    rule VARCHAR2(255),
+    type VARCHAR2(255),
+    att VARCHAR2(255),
+    val VARCHAR2(128),
+    description VARCHAR2(255),
+    CONSTRAINT domainpolicy_rav_idx  UNIQUE (rule, att, val)
 );
-alter table DOMAINPOLICY add constraint PK_DOMAINPOLICY primary key (ID);
-alter table DOMAINPOLICY add constraint DOMAINPOLICY_RAV_IDX unique (RULE,ATT,VAL);
-create index DOMAINPOLICY_RULE_IDX on DOMAINPOLICY (RULE);
-create or replace trigger domainpolicy_tr
+
+CREATE OR REPLACE TRIGGER domainpolicy_tr
 before insert on domainpolicy FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END domainpolicy_tr;
 /
-BEGIN map2users('DOMAINPOLICY'); END;
+BEGIN map2users('domainpolicy'); END;
 /
+CREATE INDEX domainpolicy_rule_idx  ON domainpolicy (rule);
+

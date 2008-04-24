@@ -1,7 +1,7 @@
-create table VERSION
-(
-  TABLE_NAME    VARCHAR2(32) not null,
-  TABLE_VERSION NUMBER(10) default 0
+CREATE TABLE version (
+    table_name VARCHAR2(32),
+    table_version NUMBER(10) DEFAULT 0 NOT NULL
 );
-BEGIN map2users('VERSION'); END;
+
+BEGIN map2users('version'); END;
 /

@@ -1,60 +1,58 @@
-INSERT INTO VERSION (table_name,table_version) VALUES ('rls_presentity',0);
-create table RLS_PRESENTITY
-(
-  ID             NUMBER(10) not null,
-  RLSUBS_DID     VARCHAR2(512) not null,
-  RESOURCE_URI   VARCHAR2(128) not null,
-  CONTENT_TYPE   VARCHAR2(64) not null,
-  EXPIRES        NUMBER(10) not null,
-  UPDATED        NUMBER(10) not null,
-  AUTH_STATE     NUMBER(10) not null,
-  REASON         VARCHAR2(64) not null,
-  PRESENCE_STATE VARCHAR2(4000) not null
+INSERT INTO version (table_name, table_version) values ('rls_presentity','0');
+CREATE TABLE rls_presentity (
+    id NUMBER(10) PRIMARY KEY,
+    rlsubs_did VARCHAR2(512),
+    resource_uri VARCHAR2(128),
+    content_type VARCHAR2(64),
+    presence_state BLOB,
+    expires NUMBER(10),
+    updated NUMBER(10),
+    auth_state NUMBER(10),
+    reason VARCHAR2(64),
+    CONSTRAINT ORA_rls_presentity_idx  UNIQUE (rlsubs_did, resource_uri)
 );
-alter table RLS_PRESENTITY add constraint PK_RLS_PRESENTITY primary key (ID);
-alter table RLS_PRESENTITY add constraint RLS_PRESENTITY_IDX unique (RLSUBS_DID,RESOURCE_URI);
-create index RLS_PRESENTITY_UPDATED_IDX ON RLS_PRESENTITY (UPDATED);
-create or replace trigger rls_presentity_tr
+
+CREATE OR REPLACE TRIGGER rls_presentity_tr
 before insert on rls_presentity FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END rls_presentity_tr;
 /
-BEGIN map2users('RLS_PRESENTITY'); END;
+BEGIN map2users('rls_presentity'); END;
 /
+CREATE INDEX rls_presentity_updated_idx  ON rls_presentity (updated);
 
-INSERT INTO VERSION (table_name,table_version) VALUES ('rls_watchers',1);
-CREATE table RLS_WATCHERS
-(
-  ID               NUMBER(10) not null,
-  PRESENTITY_URI   VARCHAR2(128) not null,
-  TO_USER          VARCHAR2(64) not null,
-  TO_DOMAIN        VARCHAR2(64) not null,
-  WATCHER_USERNAME VARCHAR2(64) not null,
-  WATCHER_DOMAIN   VARCHAR2(64) not null,
-  EVENT            VARCHAR2(64) default 'presence',
-  EVENT_ID         VARCHAR2(64),
-  TO_TAG           VARCHAR2(64) not null,
-  FROM_TAG         VARCHAR2(64) not null,
-  CALLID           VARCHAR2(64) not null,
-  LOCAL_CSEQ       NUMBER(10) not null,
-  REMOTE_CSEQ      NUMBER(10) not null,
-  CONTACT          VARCHAR2(64) not null,
-  RECORD_ROUTE     VARCHAR2(1000),
-  EXPIRES          NUMBER(10) not null,
-  STATUS           NUMBER(10) default 2,
-  REASON           VARCHAR2(64) not null,
-  VERSION          NUMBER(10) default 0,
-  SOCKET_INFO      VARCHAR2(64) not null,
-  LOCAL_CONTACT    VARCHAR2(128) not null
+INSERT INTO version (table_name, table_version) values ('rls_watchers','1');
+CREATE TABLE rls_watchers (
+    id NUMBER(10) PRIMARY KEY,
+    presentity_uri VARCHAR2(128),
+    to_user VARCHAR2(64),
+    to_domain VARCHAR2(64),
+    watcher_username VARCHAR2(64),
+    watcher_domain VARCHAR2(64),
+    event VARCHAR2(64) DEFAULT 'presence',
+    event_id VARCHAR2(64),
+    to_tag VARCHAR2(64),
+    from_tag VARCHAR2(64),
+    callid VARCHAR2(64),
+    local_cseq NUMBER(10),
+    remote_cseq NUMBER(10),
+    contact VARCHAR2(64),
+    record_route CLOB,
+    expires NUMBER(10),
+    status NUMBER(10) DEFAULT 2 NOT NULL,
+    reason VARCHAR2(64),
+    version NUMBER(10) DEFAULT 0 NOT NULL,
+    socket_info VARCHAR2(64),
+    local_contact VARCHAR2(128),
+    CONSTRAINT rls_watchers_rls_watcher_idx  UNIQUE (presentity_uri, callid, to_tag, from_tag)
 );
-alter table RLS_WATCHERS add constraint PK_RLS_WATCHERS primary key (ID);
-alter table RLS_WATCHERS add constraint RLS_WATCHERS_RLS_WATCHER_IDX unique (PRESENTITY_URI,CALLID,TO_TAG,FROM_TAG);
-create or replace trigger rls_watchers_tr
+
+CREATE OR REPLACE TRIGGER rls_watchers_tr
 before insert on rls_watchers FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END rls_watchers_tr;
 /
-BEGIN map2users('RLS_WATCHERS'); END;
+BEGIN map2users('rls_watchers'); END;
 /

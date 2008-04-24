@@ -1,38 +1,36 @@
-INSERT INTO VERSION (table_name,table_version) values ('trusted',4);
-create table TRUSTED
-(
-  ID           NUMBER(10) not null,
-  SRC_IP       VARCHAR2(50) not null,
-  PROTO        VARCHAR2(4) not null,
-  FROM_PATTERN VARCHAR2(64) default null,
-  TAG          VARCHAR2(32)
+INSERT INTO version (table_name, table_version) values ('trusted','4');
+CREATE TABLE trusted (
+    id NUMBER(10) PRIMARY KEY,
+    src_ip VARCHAR2(50),
+    proto VARCHAR2(4),
+    from_pattern VARCHAR2(64) DEFAULT NULL,
+    tag VARCHAR2(32)
 );
-alter table TRUSTED add constraint PK_TRUSTED primary key (ID);
-create index TRUSTED_PEER_IDX on TRUSTED (SRC_IP);
-create or replace trigger TRUSTED_tr
-before insert on TRUSTED FOR EACH ROW
+
+CREATE OR REPLACE TRIGGER trusted_tr
+before insert on trusted FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
-END TRUSTED_tr;
+END trusted_tr;
 /
-BEGIN map2users('TRUSTED'); END;
+BEGIN map2users('trusted'); END;
 /
+CREATE INDEX trusted_peer_idx  ON trusted (src_ip);
 
-INSERT INTO VERSION (table_name,table_version) values ('address',3);
-create table ADDRESS
-(
-  ID      NUMBER(10) not null,
-  GRP     NUMBER(5) default 0,
-  IP_ADDR VARCHAR2(15) not null,
-  MASK    NUMBER(5) default 32,
-  PORT    NUMBER(5) default 0
+INSERT INTO version (table_name, table_version) values ('address','3');
+CREATE TABLE address (
+    id NUMBER(10) PRIMARY KEY,
+    grp NUMBER(5) DEFAULT 0 NOT NULL,
+    ip_addr VARCHAR2(15),
+    mask NUMBER(5) DEFAULT 32 NOT NULL,
+    port NUMBER(5) DEFAULT 0 NOT NULL
 );
-alter table ADDRESS add constraint PK_ADDRESS primary key (ID);
-create or replace trigger address_tr
+
+CREATE OR REPLACE TRIGGER address_tr
 before insert on address FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END address_tr;
 /
-BEGIN map2users('ADDRESS'); END;
+BEGIN map2users('address'); END;
 /

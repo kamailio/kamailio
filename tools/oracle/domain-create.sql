@@ -1,17 +1,16 @@
-INSERT INTO VERSION (table_name,table_version) values ('domain',1);
-create table DOMAIN
-(
-  ID            NUMBER(10) not null,
-  DOMAIN        VARCHAR2(64) default '',
-  LAST_MODIFIED DATE default to_date('01-JAN-1900 00:00:01','dd-mm-yyyy hh24:mi:ss')
+INSERT INTO version (table_name, table_version) values ('domain','1');
+CREATE TABLE domain (
+    id NUMBER(10) PRIMARY KEY,
+    domain VARCHAR2(64) DEFAULT '',
+    last_modified DATE DEFAULT to_date('1900-01-01 00:00:01','yyyy-mm-dd hh24:mi:ss'),
+    CONSTRAINT domain_domain_idx  UNIQUE (domain)
 );
-alter table DOMAIN add constraint PK_DOMAIN primary key (ID);
-alter table DOMAIN add constraint DOMAIN_DOMAIN_IDX unique (DOMAIN);
-create or replace trigger domain_tr
+
+CREATE OR REPLACE TRIGGER domain_tr
 before insert on domain FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END domain_tr;
 /
-BEGIN map2users('DOMAIN'); END;
+BEGIN map2users('domain'); END;
 /

@@ -1,33 +1,33 @@
-INSERT INTO VERSION (table_name,table_version) values ('dialog',2);
-create table DIALOG
-(
-  ID               NUMBER(10) not null,
-  HASH_ENTRY       NUMBER(10) not null,
-  HASH_ID          NUMBER(10) not null,
-  CALLID           VARCHAR2(255) not null,
-  FROM_URI         VARCHAR2(128) not null,
-  FROM_TAG         VARCHAR2(64) not null,
-  TO_URI           VARCHAR2(128) not null,
-  TO_TAG           VARCHAR2(64) not null,
-  CALLER_CSEQ      VARCHAR2(7) not null,
-  CALLEE_CSEQ      VARCHAR2(7) not null,
-  CALLER_ROUTE_SET VARCHAR2(512),
-  CALLEE_ROUTE_SET VARCHAR2(512),
-  CALLER_CONTACT   VARCHAR2(128) not null,
-  CALLEE_CONTACT   VARCHAR2(128) not null,
-  CALLER_SOCK      VARCHAR2(64) not null,
-  CALLEE_SOCK      VARCHAR2(64) not null,
-  STATE            NUMBER(10) not null,
-  START_TIME       NUMBER(10) not null,
-  TIMEOUT          NUMBER(10) not null
+INSERT INTO version (table_name, table_version) values ('dialog','2');
+CREATE TABLE dialog (
+    id NUMBER(10) PRIMARY KEY,
+    hash_entry NUMBER(10),
+    hash_id NUMBER(10),
+    callid VARCHAR2(255),
+    from_uri VARCHAR2(128),
+    from_tag VARCHAR2(64),
+    to_uri VARCHAR2(128),
+    to_tag VARCHAR2(64),
+    caller_cseq VARCHAR2(7),
+    callee_cseq VARCHAR2(7),
+    caller_route_set VARCHAR2(512),
+    callee_route_set VARCHAR2(512),
+    caller_contact VARCHAR2(128),
+    callee_contact VARCHAR2(128),
+    caller_sock VARCHAR2(64),
+    callee_sock VARCHAR2(64),
+    state NUMBER(10),
+    start_time NUMBER(10),
+    timeout NUMBER(10)
 );
-alter table DIALOG add constraint PK_DIALOG primary key (ID);
-create index DIALOG_HASH_IDX on DIALOG (HASH_ENTRY,HASH_ID);
-create or replace trigger dialog_tr
+
+CREATE OR REPLACE TRIGGER dialog_tr
 before insert on dialog FOR EACH ROW
 BEGIN
   auto_id(:NEW.id);
 END dialog_tr;
 /
-BEGIN map2users('DIALOG'); END;
+BEGIN map2users('dialog'); END;
 /
+CREATE INDEX dialog_hash_idx  ON dialog (hash_entry, hash_id);
+
