@@ -40,7 +40,7 @@ static struct dlg_head_cbl* create_cbs = 0;
 
 static struct dlg_head_cbl* load_cbs = 0;
 
-static struct dlg_cb_params params = {NULL, DLG_DIR_NONE, NULL};
+static struct dlg_cb_params params = {NULL, DLG_DIR_NONE, NULL, NULL};
 
 
 #define POINTER_CLOSED_MARKER  ((void *)(-1))
@@ -222,6 +222,7 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 	params.direction = DLG_DIR_DOWNSTREAM;
 	/* avoid garbage due static structure */
 	params.param = NULL;
+	params.dlg_data = NULL;
 
 	for ( cb=create_cbs->first; cb; cb=cb->next)  {
 		LM_DBG("dialog=%p\n",dlg);
@@ -233,12 +234,13 @@ void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg)
 
 
 void run_dlg_callbacks(int type , struct dlg_cell *dlg, struct sip_msg *msg,
-															unsigned int dir)
+											unsigned int dir, void *dlg_data)
 {
 	struct dlg_callback *cb;
 
 	params.msg = msg;
 	params.direction = dir;
+	params.dlg_data = dlg_data;
 
 	if (dlg->cbs.first==0 || ((dlg->cbs.types)&type)==0 )
 		return;

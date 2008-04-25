@@ -259,7 +259,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 
 	if (type==TMCB_RESPONSE_FWDED) {
 		/* The state does not change, but the msg is mutable in this callback*/
-		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl, DLG_DIR_UPSTREAM);
+		run_dlg_callbacks(DLGCB_RESPONSE_FWDED, dlg, rpl, DLG_DIR_UPSTREAM, 0);
 		return;
 	}
 
@@ -275,7 +275,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	next_state_dlg( dlg, event, &old_state, &new_state, &unref);
 
 	if (new_state==DLG_STATE_EARLY) {
-		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl, DLG_DIR_UPSTREAM);
+		run_dlg_callbacks(DLGCB_EARLY, dlg, rpl, DLG_DIR_UPSTREAM, 0);
 		if (old_state!=DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, 1);
 		return;
@@ -316,7 +316,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 		insert_dlg_timer( &dlg->tl, dlg->lifetime );
 
 		/* dialog confirmed */
-		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl, DLG_DIR_UPSTREAM);
+		run_dlg_callbacks( DLGCB_CONFIRMED, dlg, rpl, DLG_DIR_UPSTREAM, 0);
 
 		if (old_state==DLG_STATE_EARLY)
 			if_update_stat(dlg_enable_stats, early_dlgs, -1);
@@ -328,7 +328,7 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 	if ( old_state!=DLG_STATE_DELETED && new_state==DLG_STATE_DELETED ) {
 		LM_DBG("dialog %p failed (negative reply)\n", dlg);
 		/* dialog setup not completed (3456XX) */
-		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl, DLG_DIR_UPSTREAM);
+		run_dlg_callbacks( DLGCB_FAILED, dlg, rpl, DLG_DIR_UPSTREAM, 0);
 		/* do unref */
 		if (unref)
 			unref_dlg(dlg,unref);
@@ -352,7 +352,7 @@ static void dlg_seq_up_onreply(struct cell* t, int type,
 
 	if (type==TMCB_RESPONSE_FWDED) {
 		run_dlg_callbacks(DLGCB_RESPONSE_WITHIN, dlg, param->rpl,
-			DLG_DIR_UPSTREAM);
+			DLG_DIR_UPSTREAM, 0);
 		return;
 	}
 
@@ -376,7 +376,7 @@ static void dlg_seq_down_onreply(struct cell* t, int type,
 
 	if (type==TMCB_RESPONSE_FWDED) {
 		run_dlg_callbacks(DLGCB_RESPONSE_WITHIN, dlg, param->rpl,
-			DLG_DIR_DOWNSTREAM);
+			DLG_DIR_DOWNSTREAM, 0);
 		return;
 	}
 
@@ -638,7 +638,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 		/* remove from timer */
 		remove_dlg_timer(&dlg->tl);
 		/* dialog terminated (BYE) */
-		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req, dir);
+		run_dlg_callbacks( DLGCB_TERMINATED, dlg, req, dir, 0);
 
 		/* delete the dialog from DB */
 		if (dlg_db_mode)
@@ -666,7 +666,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			}
 
 			/* within dialog request */
-			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir);
+			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir, 0);
 
 			if ( (event!=DLG_EVENT_REQACK) &&
 			(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
@@ -718,7 +718,7 @@ void dlg_ontimeout( struct dlg_tl *tl)
 		LM_DBG("dlg %p timeout at %d\n", dlg, tl->timeout);
 
 		/* dialog timeout */
-		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0, DLG_DIR_NONE);
+		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0, DLG_DIR_NONE, 0);
 
 		/* delete the dialog from DB */
 		if (dlg_db_mode)

@@ -156,7 +156,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 		remove_dlg_timer(&dlg->tl);
 
 		/* dialog terminated (BYE) */
-		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req, DLG_DIR_NONE);
+		run_dlg_callbacks( DLGCB_TERMINATED, dlg, ps->req, DLG_DIR_NONE, 0);
 
 		LM_DBG("first final reply\n");
 		/* derefering the dialog */

@@ -37,9 +37,10 @@
 struct dlg_cell;
 
 struct dlg_cb_params {
-	struct sip_msg* msg;
-	unsigned int direction;
-	void **param;
+	struct sip_msg* msg;       /* sip msg related to the callback event */
+	unsigned int direction;    /* direction of the sip msg */
+	void *dlg_data;            /* generic paramter, specific to callback */
+	void **param;              /* parameter passed at callback registration*/
 };
 
 /* callback function prototype */
@@ -88,7 +89,7 @@ int register_dlgcb( struct dlg_cell* dlg, int types, dialog_cb f, void *param, p
 void run_create_callbacks(struct dlg_cell *dlg, struct sip_msg *msg);
 
 void run_dlg_callbacks( int type , struct dlg_cell *dlg, struct sip_msg *msg,
-		unsigned int dir);
+		unsigned int dir, void *dlg_data);
 
 void run_load_callbacks( void );
 

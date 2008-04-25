@@ -114,7 +114,7 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	remove_dlg_timer(&dlg->tl);
 
-	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE);
+	run_dlg_callbacks( DLGCB_DESTROY , dlg, 0, DLG_DIR_NONE, 0);
 
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
