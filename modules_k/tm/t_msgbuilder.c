@@ -335,6 +335,7 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*p=0;
 
 	pkg_free(via);
+	free_hdr_field_lst(buf_hdrs);
 	return cancel_buf;
 error02:
 	free_hdr_field_lst(buf_hdrs);
