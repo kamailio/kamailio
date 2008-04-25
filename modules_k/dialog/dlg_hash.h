@@ -167,6 +167,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 		int *old_state, int *new_state, int *unref);
 
 struct mi_root * mi_print_dlgs(struct mi_root *cmd, void *param );
+struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd, void *param );
 
 static inline int match_dialog(struct dlg_cell *dlg, str *callid,
 									str *ftag, str *ttag, unsigned int *dir ) {

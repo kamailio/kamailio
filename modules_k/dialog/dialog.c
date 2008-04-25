@@ -149,8 +149,9 @@ static stat_export_t mod_stats[] = {
 
 
 static mi_export_t mi_cmds[] = {
-	{ "dlg_list",  mi_print_dlgs,   MI_NO_INPUT_FLAG,  	0,  0},
-	{ "dlg_end_dlg", mi_terminate_dlg, 			0,		0,	0},
+	{ "dlg_list",      mi_print_dlgs,      MI_NO_INPUT_FLAG,  0,  0},
+	{ "dlg_list_ctx",  mi_print_dlgs_ctx,  MI_NO_INPUT_FLAG,  0,  0},
+	{ "dlg_end_dlg",   mi_terminate_dlg,                  0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 

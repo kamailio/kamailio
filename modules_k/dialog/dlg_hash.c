@@ -562,24 +562,16 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 }
 
 
-
-
-struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
+static int internal_mi_print_dlgs(struct mi_node *rpl, int with_context)
 {
 	struct dlg_cell *dlg;
-	struct mi_node* rpl = NULL, *node= NULL;
+	struct mi_node* node= NULL;
 	struct mi_node* node1 = NULL;
 	struct mi_attr* attr= NULL;
-	struct mi_root* rpl_tree= NULL;
 	unsigned int i;
 	int len;
 	char* p;
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
-	rpl = &rpl_tree->node;
-	
 	LM_DBG("printing %i dialogs\n", d_table->size);
 
 	for( i=0 ; i<d_table->size ; i++ ) {
@@ -688,16 +680,63 @@ struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
 			}
 			if(node1 == 0)
 				goto error;
-		
+
+			if (with_context) {
+				node1 = add_mi_node_child(node, 0, "context", 7, 0, 0);
+				if(node1 == 0)
+					goto error;
+				run_dlg_callbacks( DLGCB_MI_CONTEXT, dlg, NULL, 
+					DLG_DIR_NONE, (void *)node1);
+			}
+
 		}
 		dlg_unlock( d_table, &(d_table->entries[i]) );
 	}
-	return rpl_tree;
+	return 0;
 
 error:
 	dlg_unlock( d_table, &(d_table->entries[i]) );
 	LM_ERR("failed to add node\n");
-	free_mi_tree(rpl_tree);
-	return 0;
-
+	return -1;
 }
+
+
+struct mi_root * mi_print_dlgs(struct mi_root *cmd_tree, void *param )
+{
+	struct mi_root* rpl_tree= NULL;
+	struct mi_node* rpl = NULL;
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
+		return 0;
+	rpl = &rpl_tree->node;
+
+	if ( internal_mi_print_dlgs(rpl,0)!=0 ) {
+		free_mi_tree(rpl_tree);
+		return NULL;
+	}
+
+	return rpl_tree;
+}
+
+
+struct mi_root * mi_print_dlgs_ctx(struct mi_root *cmd_tree, void *param )
+{
+	struct mi_root* rpl_tree= NULL;
+	struct mi_node* rpl = NULL;
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl_tree==0)
+		return 0;
+	rpl = &rpl_tree->node;
+
+	if ( internal_mi_print_dlgs(rpl,1)!=0 ) {
+		free_mi_tree(rpl_tree);
+		return NULL;
+	}
+
+	return rpl_tree;
+}
+
+
+
