@@ -71,7 +71,8 @@ Bogdan-Andrei Iancu
         1.7. Exported MI Functions
 
               1.7.1. dlg_list
-              1.7.2. dlg_end_dlg
+              1.7.2. dlg_list_ctx
+              1.7.3. dlg_end_dlg
 
         1.8. Exported pseudo-variables
 
@@ -600,7 +601,21 @@ modparam("dialog", "timeout_column", "timeout_c_name")
                 :dlg_list:_reply_fifo_file_
                 _empty_line_
 
-1.7.2. dlg_end_dlg
+1.7.2. dlg_list_ctx
+
+   It returns a listing of all dialogs (calls) including the
+   associated context from modules sitting on top of the dialog
+   module.
+
+   Name: dlg_list_ctx
+
+   Parameters: none
+
+   MI FIFO Command Format:
+                :dlg_list_ctx:_reply_fifo_file_
+                _empty_line_
+
+1.7.3. dlg_end_dlg
 
    Terminates an ongoing dialog by sending BYE in both
    directions.

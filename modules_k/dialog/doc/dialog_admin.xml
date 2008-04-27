@@ -821,6 +821,26 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 		</section>
 
 		<section>
+			<title><varname>dlg_list_ctx</varname></title>
+			<para>
+			It returns a listing of all dialogs (calls) including
+			the associated context from modules sitting on top of
+			the dialog module.
+			</para>
+		<para>
+		Name: <emphasis>dlg_list_ctx</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:dlg_list_ctx:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		</section>
+
+		<section>
 			<title><varname>dlg_end_dlg</varname></title>
 			<para>
 			Terminates an ongoing dialog by sending BYE in both directions.
