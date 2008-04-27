@@ -667,6 +667,7 @@ Chapter 2. Developer Guide
      * int type - types of callbacks; more types may be register
        for the same callback function; only DLG_CREATED must be
        register alone. Possible types:
+          + DLGCB_LOADED
           + DLG_CREATED - called when a new dialog is created -
             it's a global type (not associated to any dialog)
           + DLG_FAILED - called when the dialog was negatively
@@ -679,6 +680,17 @@ Chapter 2. Developer Guide
             via BYE - it's a per dialog type.
           + DLG_EXPIRED - called when the dialog expires without
             receiving a BYE - it's a per dialog type.
+          + DLGCB_EARLY - called when the dialog is created in an
+            early state (18x replied) - it's a per dialog type.
+          + DLGCB_RESPONSE_FWDED - called when the dialog matches
+            a reply to the initial INVITE request - it's a per
+            dialog type.
+          + DLGCB_RESPONSE_WITHIN - called when the dialog
+            matches a reply to a subsequent in dialog request -
+            it's a per dialog type.
+          + DLGCB_MI_CONTEXT - called when the mi dlg_list_ctx
+            command is invoked - it's a per dialog type.
+          + DLGCB_DESTROY
      * dialog_cb cb - callback function to be called. Prototype
        is: "void (dialog_cb) (struct dlg_cell* dlg, int type,
        struct dlg_cb_params * params); "
