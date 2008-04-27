@@ -30,10 +30,32 @@
 #ifndef _SST_HANDLERS_H_
 #define _SST_HANDLERS_H_
 
-#include "../../sr_module.h" /* Needed for find_export() */
 #include "../../pvar.h"
 #include "../../parser/msg_parser.h"
 #include "../dialog/dlg_load.h"
+
+
+/**
+ * Fag values used in the sst_info_t See below.
+ */
+enum sst_flags {
+	SST_UNDF=0,             /* 0 - --- */
+	SST_UAC=1,              /* 1 - 2^0 */
+	SST_UAS=2,              /* 2 - 2^1 */
+	SST_PXY=4,              /* 4 - 2^2 */
+	SST_NSUP=8              /* 8 - 2^3 */
+};
+
+/**
+ * The local state required to figure out if and who supports SST and
+ * if and who will be the refresher.
+ */
+typedef struct sst_info_st {
+	enum sst_flags requester;
+	enum sst_flags supported;
+	unsigned int interval;
+} sst_info_t;
+
 
 /**
  * The static (opening) callback function for all dialog creations

@@ -60,9 +60,11 @@
 #include "../../data_lump_rpl.h"
 #include "../../ut.h"
 #include "../../dprint.h"
+#include "../../sr_module.h" /* Needed for find_export() */
 #include "../sl/sl_api.h"
 
 #include "sst_handlers.h"
+#include "sst_mi.h"
 
 /*
  * My own LM_*() macros to add the correct message prefix and
@@ -96,27 +98,6 @@
  * register_dlgcb function.
  */
 extern struct dlg_binds *dlg_binds;
-
-/**
- * Fag values used in the sst_info_t See below.
- */
-enum sst_flags {
-	SST_UNDF=0,		/* 0 - --- */
-	SST_UAC=1,		/* 1 - 2^0 */
-	SST_UAS=2,		/* 2 - 2^1 */
-	SST_PXY=4,		/* 4 - 2^2 */
-	SST_NSUP=8		/* 8 - 2^3 */
-};
-
-/**
- * The local state required to figure out if and who supports SST and
- * if and who will be the refresher.
- */
-typedef struct sst_info_st {
-	enum sst_flags requester;
-	enum sst_flags supported;
-	unsigned int interval;
-} sst_info_t;
 
 /**
  * A collection of information about SST in the current SIP message
@@ -993,4 +974,8 @@ static void setup_dialog_callbacks(struct dlg_cell *did, sst_info_t *info)
 	LM_DBG("Adding callback DLGCB_RESPONSE_FWDED\n");
 	dlg_binds->register_dlgcb(did, DLGCB_RESPONSE_FWDED,
 			sst_dialog_response_fwded_CB, info, NULL);
+	
+	LM_DBG("Adding mi handler\n");
+	dlg_binds->register_dlgcb(did, DLGCB_MI_CONTEXT,
+			sst_dialog_mi_context_CB, info, NULL);
 }
