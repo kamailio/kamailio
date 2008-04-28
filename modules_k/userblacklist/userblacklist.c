@@ -66,8 +66,8 @@ static int check_blacklist_fixup(void** param, int param_no);
 static int check_user_blacklist_fixup(void** param, int param_no);
 
 /* ---- exported commands: */
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2);
-static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1, char *unused);
+static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4);
+static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1);
 
 /* ---- module init functions: */
 static int mod_init(void);
@@ -76,11 +76,13 @@ static int mi_child_init(void);
 static void mod_destroy(void);
 
 /* --- fifo functions */
-struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usage: openserctl fifo sp_reload_blacklist */
+struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usage: openserctl fifo reload_blacklist */
 
 
 static cmd_export_t cmds[]={
 	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 2, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 3, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
+	{ "check_user_blacklist", (cmd_function)check_user_blacklist, 4, check_user_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ "check_blacklist", (cmd_function)check_blacklist, 1, check_blacklist_fixup, 0, REQUEST_ROUTE | FAILURE_ROUTE },
 	{ 0, 0, 0, 0, 0, 0}
 };
@@ -103,14 +105,14 @@ static mi_export_t mi_cmds[] = {
 
 struct module_exports exports= {
 	"userblacklist",
-	DEFAULT_DLFLAGS,   /* dlopen flags */
+	DEFAULT_DLFLAGS,
 	cmds,
 	params,
 	0,
 	mi_cmds,
 	0,
-	0,          /* extra processes */
-	mod_init,   /* module initialization function */
+	0,
+	mod_init,
 	0,
 	mod_destroy,
 	child_init
@@ -145,76 +147,126 @@ static int check_user_blacklist_fixup(void** param, int param_no)
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
 
-	model=NULL;
-	if (param_no==1 || param_no==2) {
-		if(s.len==0) {
-			LM_ERR("no param %d!\n", param_no);
+	if (param_no > 0 && param_no <= 4) {
+		if(s.len == 0 && param_no != 4) {
+			LM_ERR("no parameter %d\n", param_no);
 			return E_UNSPEC;
 		}
 
 		if(pv_parse_format(&s, &model) < 0 || !model) {
-			LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
+			LM_ERR("wrong format [%.*s] for parameter %d\n", s.len, s.s, param_no);
 			return E_UNSPEC;
 		}
+
 		if(!model->spec.getf) {
 			if(param_no == 1) {
-			   if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n) != 0) {
-					LM_ERR("wrong value [%s] for param no %d!\n", s.s, param_no);
+				if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n) != 0) {
+					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
 					return E_UNSPEC;
-			   }
+				}
+			} else {
+				if(param_no == 2 || param_no == 3) {
+					LM_ERR("wrong value [%.*s] for parameter %d\n", s.len, s.s, param_no);
+					return E_UNSPEC;
+				} else {
+					// only a string
+					return 0;
+				}
 			}
 		}
 		*param = (void*)model;
+	} else {
+		LM_ERR("wrong number of parameters\n");
 	}
 
 	return 0;
 }
 
 
-static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2)
+static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, char* str3, char* str4)
 {
 	str user = { .len = 0, .s = NULL };
 	str domain = { .len = 0, .s = NULL};
+	str table = { .len = 0, .s = NULL};
+	str number = { .len = 0, .s = NULL};
+
 	char whitelist;
+	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 
+	/* user */
 	if(((pv_elem_p)str1)->spec.getf) {
 		if(pv_printf_s(msg, (pv_elem_p)str1, &user) != 0) {
 			LM_ERR("cannot print user pseudo-variable\n");
 			return -1;
 		}
 	}
-	if(((pv_elem_p)str2)->spec.getf)
-	{
+	/* domain */
+	if(((pv_elem_p)str2)->spec.getf) {
 		if(pv_printf_s(msg, (pv_elem_p)str2, &domain) != 0) {
 			LM_ERR("cannot print domain pseudo-variable\n");
 			return -1;
 		}
 	}
+	/* source number */
+	if(str3 != NULL && ((pv_elem_p)str3)->spec.getf) {
+		if(pv_printf_s(msg, (pv_elem_p)str3, &number) != 0) {
+			LM_ERR("cannot print number pseudo-variable\n");
+			return -1;
+		}
+	}
+	/* table name */
+	if(str4 != NULL && strlen(str4) > 0) {
+		/* string */
+		table.s=str4;
+		table.len=strlen(str4);
+	} else {
+		/* use default table name */
+		table.len=db_table.len;
+		table.s=db_table.s;
+	}
+
 	if (msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("SIP msg is not a request\n");
 		return -1;
 	}
-	if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s) || (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
-		LM_ERR("cannot parse msg URI\n");
-		return -1;
-	}
-	strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
-	req_number[msg->parsed_uri.user.len] = '\0';
 
-	LM_DBG("check entry %s\n", req_number);
-	if (db_build_userbl_tree(&user, &domain, &db_table, dt_root, use_domain) < 0) {
+	if(number.s == NULL) {
+		/* use R-URI */
+		if ((parse_sip_msg_uri(msg) < 0) || (!msg->parsed_uri.user.s) || (msg->parsed_uri.user.len > MAXNUMBERLEN)) {
+			LM_ERR("cannot parse msg URI\n");
+			return -1;
+		}
+		strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
+		req_number[msg->parsed_uri.user.len] = '\0';
+	} else {
+		if (number.len > MAXNUMBERLEN) {
+			LM_ERR("number to long\n");
+			return -1;
+		}
+		strncpy(req_number, number.s, number.len);
+		req_number[number.len] = '\0';
+	}
+
+	LM_DBG("check entry %s for user %.*s on domain %.*s in table %.*s\n", req_number,
+		user.len, user.s, domain.len, domain.s, table.len, table.s);
+	if (db_build_userbl_tree(&user, &domain, &table, dt_root, use_domain) < 0) {
 		LM_ERR("cannot build d-tree\n");
 		return -1;
 	}
 
-	if (dt_longest_match(dt_root, req_number, &whitelist) >= 0) {
+	ptr = req_number;
+	/* Skip over non-digits.  */
+	while (strlen(ptr) > 0 && !isdigit(*ptr)) {
+		ptr = ptr + 1;
+	}
+
+	if (dt_longest_match(dt_root, ptr, &whitelist) >= 0) {
 		if (whitelist) {
 			/* LM_ERR("whitelisted"); */
 			return 1; /* found, but is whitelisted */
 		}
-	}
-	else {
+	} else {
 		/* LM_ERR("not found"); */
 		return 1; /* not found is ok */
 	}
@@ -283,12 +335,12 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 	char *table = (char *)(*arg);
 	struct dt_node_t *node = NULL;
 	if (arg_no != 1) {
-		LM_ERR("fixup with funny arg_no param.\n");
+		LM_ERR("wrong number of parameters\n");
 		return -1;
 	}
 
 	if (!table) {
-		LM_ERR("no table.\n");
+		LM_ERR("no table name\n");
 		return -1;
 	}
 	/* try to add the table */
@@ -300,13 +352,13 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 	/* get the node that belongs to the table */
 	node = table2dt(table);
 	if (!node) {
-		LM_ERR("invalid table '%s'.\n", table);
+		LM_ERR("invalid table '%s'\n", table);
 		return -1;
 	}
 
 	struct check_blacklist_fs_t *new_arg = (struct check_blacklist_fs_t*)pkg_malloc(sizeof(struct check_blacklist_fs_t));
 	if (!new_arg) {
-		LM_ERR("out of private memory.\n");
+		LM_ERR("out of private memory\n");
 		return -1;
 	}
 	memset(new_arg, 0, sizeof(struct check_blacklist_fs_t));
@@ -317,9 +369,10 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 }
 
 
-static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1, char *unused)
+static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
 {
 	char whitelist;
+	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 
 	if (msg->first_line.type != SIP_REQUEST) {
@@ -339,8 +392,14 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	strncpy(req_number, msg->parsed_uri.user.s, msg->parsed_uri.user.len);
 	req_number[msg->parsed_uri.user.len] = '\0';
 
+	ptr = req_number;
+	/* Skip over non-digits.  */
+	while (strlen(ptr) > 0 && !isdigit(*ptr)) {
+		ptr = ptr + 1;
+	}
+
 	LM_DBG("check entry %s\n", req_number);
-	if (dt_longest_match(arg1->dt_root, req_number, &whitelist) >= 0) {
+	if (dt_longest_match(arg1->dt_root, ptr, &whitelist) >= 0) {
 		if (whitelist) {
 			/* LM_DBG("whitelisted"); */
 			return 1; /* found, but is whitelisted */
@@ -374,11 +433,11 @@ static int reload_sources(void)
 		tmp.len = strlen(src->table);
 		int n = db_reload_source(&tmp, src->dt_root);
 		if (n < 0) {
-			LM_ERR("cannot reload source from '%.*s'.\n", tmp.len, tmp.s);
+			LM_ERR("cannot reload source from '%.*s'\n", tmp.len, tmp.s);
 			result = -1;
 			break;
 		}
-		LM_INFO("got %d entries from '%.*s'.\n", n, tmp.len, tmp.s);
+		LM_INFO("got %d entries from '%.*s'\n", n, tmp.len, tmp.s);
 		src = src->next;
 	}
 
@@ -393,7 +452,7 @@ static int init_source_list(void)
 {
 	sources = shm_malloc(sizeof(struct source_list_t));
 	if (!sources) {
-		LM_ERR("out of private memory.\n");
+		LM_ERR("out of private memory\n");
 		return -1;
 	}
 	sources->head = NULL;
@@ -461,15 +520,14 @@ struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param)
 
 static int mod_init(void)
 {
-	LM_INFO("initializing");
+	LM_INFO("initializing ...\n");
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 
-	/* FIXME check table version is missing */
 	if (db_bind(&db_url) != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;
-	LM_INFO("finished initializing");
+	LM_INFO("finished initializing\n");
 
 	return 0;
 }

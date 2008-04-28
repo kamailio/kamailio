@@ -76,8 +76,9 @@ void dt_insert(struct dt_node_t *root, const char *number, char whitelist)
 	struct dt_node_t *node = root;
 
 	int i = 0;
+	unsigned int digit;
 	while (number[i] != 0) {
-		unsigned int digit = number[i] - '0';
+		digit = number[i] - '0';
 		if (digit > 9) {
 			LM_ERR("cannot insert non-numerical number\n");
 			return;
@@ -111,9 +112,9 @@ int dt_longest_match(struct dt_node_t *root, const char *number, char *whitelist
 		nmatch = 0;
 		*whitelist = node->whitelist;
 	}
+	unsigned int digit;
 	while (number[i] != 0) {
-		unsigned int digit = number[i] - '0';
-		if (digit > 9) return nmatch;
+		digit = number[i] - '0';
 		if (!node->child[digit]) return nmatch;
 		node = node->child[digit];
 		i++;

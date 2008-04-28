@@ -36,7 +36,7 @@ Henning Westerholt
         1.4. Exported Functions
 
               1.4.1. check_user_blacklist (string user, string
-                      domain)
+                      domain, string number, string table)
 
               1.4.2. check_blacklist (string table)
 
@@ -138,13 +138,17 @@ modparam("userblacklist", "use_domain", 0)
 
 1.4. Exported Functions
 
-1.4.1.  check_user_blacklist (string user, string domain)
+1.4.1.  check_user_blacklist (string user, string domain, string
+number, string table)
 
-   Finds the longest prefix that matches the request URI for the
-   given user and domain name in the database. If a match is found
-   and it is not set to whitelist, false is returned. Otherwise,
-   true is returned. Pseudo-variables or AVPs can be used for both
-   parameters.
+   Finds the longest prefix that matches the request URI user (or
+   the number parameter) for the given user and domain name in the
+   database. If a match is found and it is not set to whitelist,
+   false is returned. Otherwise, true is returned.
+   Pseudo-variables or AVPs can be used for the user, domain and
+   number parameters. The number and table variables are optional,
+   the defaults are used if they are ommited. The number parameter
+   can be used to check for example against the from URI user.
 
    Example 1.4. check_user_blacklist usage
 ...
