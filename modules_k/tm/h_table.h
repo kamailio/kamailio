@@ -40,7 +40,6 @@
 #include <stdlib.h>
 
 #include "../../parser/msg_parser.h"
-#include "../../types.h"
 #include "../../proxy.h"
 #include "../../md5utils.h"
 #include "../../usr_avp.h"
