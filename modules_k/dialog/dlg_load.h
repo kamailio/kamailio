@@ -30,6 +30,7 @@
 #define _DIALOG_DLG_LOAD_H_
 
 #include "dlg_cb.h"
+#include "../../sr_module.h"
 
 struct dlg_binds {
 	register_dlgcb_f  register_dlgcb;
