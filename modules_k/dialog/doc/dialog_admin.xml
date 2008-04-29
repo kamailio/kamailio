@@ -247,7 +247,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 		<itemizedlist>
 			<listitem><para>
 				<emphasis>0 - DID_ONLY</emphasis> - the match is done 
-				exclusivly based on DID;
+				exclusively based on DID;
 			</para></listitem>
 			<listitem><para>
 				<emphasis>1 - DID_FALLBACK</emphasis> - the match is first 
@@ -256,7 +256,7 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
 			</para></listitem>
 			<listitem><para>
 				<emphasis>2 - DID_NONE</emphasis> - the match is done 
-				exclusivly based on SIP elements; no DID information is added 
+				exclusively based on SIP elements; no DID information is added 
 				in RR.
 			</para></listitem>
 		</itemizedlist>

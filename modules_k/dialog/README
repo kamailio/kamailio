@@ -271,10 +271,10 @@ modparam("dialog", "dlg_extra_hdrs", "Hint: credit expired\r\n")
    matching based on SIP elements (as in RFC3261).
 
    The supported modes are:
-     * 0 - DID_ONLY - the match is done exclusivly based on DID;
+     * 0 - DID_ONLY - the match is done exclusively based on DID;
      * 1 - DID_FALLBACK - the match is first tried based on DID
        and if not present, it will fallback to SIP matching;
-     * 2 - DID_NONE - the match is done exclusivly based on SIP
+     * 2 - DID_NONE - the match is done exclusively based on SIP
        elements; no DID information is added in RR.
 
    Default value is "0 (DID_ONLY)". 
