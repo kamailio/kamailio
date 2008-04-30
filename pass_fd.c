@@ -33,9 +33,12 @@
   *               to handle signals  (andrei)
   *  2005-06-13  added flags to recv_all & receive_fd, to allow full blocking
   *              or semi-nonblocking mode (andrei)
+  *  2008-04-30  added MSG_WAITALL emulation for cygwin (andrei)
   */
 
 #ifdef USE_TCP
+
+#include "pass_fd.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -43,6 +46,9 @@
 #include <stdlib.h> /* for NULL definition on openbsd */
 #include <errno.h>
 #include <string.h>
+#ifdef NO_MSG_WAITALL
+#include <poll.h>
+#endif /* NO_MSG_WAITALL */
 
 #include "dprint.h"
 
@@ -68,9 +74,18 @@ int recv_all(int socket, void* data, int data_len, int flags)
 {
 	int b_read;
 	int n;
+#ifdef NO_MSG_WAITALL
+	struct pollfd pfd;
+#endif /* NO_MSG_WAITALL */
 	
 	b_read=0;
 again:
+#ifdef NO_MSG_WAITALL
+	if (flags & MSG_WAITALL){
+		n=-1;
+		goto poll_recv; /* simulate MSG_WAITALL */
+	}
+#endif /* NO_MSG_WAITALL */
 	n=recv(socket, (char*)data, data_len, flags);
 	if (n<0){
 		/* error */
@@ -83,10 +98,31 @@ again:
 	}
 	b_read+=n;
 	while( (b_read!=data_len) && (n)){
+#ifdef NO_MSG_WAITALL
+		/* cygwin & win do not support MSG_WAITALL => workaround using poll */
+poll_recv:
+		n=recv(socket, (char*)data+b_read, data_len-b_read, 0);
+#else /* NO_MSG_WAITALL */
 		n=recv(socket, (char*)data+b_read, data_len-b_read, MSG_WAITALL);
+#endif /* NO_MSG_WAITALL */
 		if (n<0){
 			/* error */
 			if (errno==EINTR) continue; /* signal, try again */
+#ifdef NO_MSG_WAITALL
+			if (errno==EAGAIN || errno==EWOULDBLOCK){
+				/* emulate MSG_WAITALL using poll */
+				pfd.fd=socket;
+				pfd.events=POLLIN;
+poll_retry:
+				n=poll(&pfd, 1, -1);
+				if (n<0){ 
+					if (errno==EINTR) goto poll_retry;
+					LOG(L_CRIT, "ERROR: recv_all: poll on %d failed: %s\n",
+								socket, strerror(errno));
+					return n;
+				} else continue; /* try recv again */
+			}
+#endif /* NO_MSG_WAITALL */
 			LOG(L_CRIT, "ERROR: recv_all: 2nd recv on %d failed: %s\n",
 					socket, strerror(errno));
 			return n;
@@ -184,6 +220,10 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd, int flags)
 	int new_fd;
 	int ret;
 	int n;
+#ifdef NO_MSG_WAITALL
+	struct pollfd pfd;
+	int f;
+#endif /*NO_MSG_WAITALL */
 #ifdef HAVE_MSGHDR_MSG_CONTROL
 	struct cmsghdr* cmsg;
 	union{
@@ -206,11 +246,34 @@ int receive_fd(int unix_socket, void* data, int data_len, int* fd, int flags)
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
 	
+#ifdef NO_MSG_WAITALL
+	f=flags & ~MSG_WAITALL;
+#endif /* NO_MSG_WAITALL */
+
 again:
-	ret=recvmsg(unix_socket, &msg, flags);
+#ifdef NO_MSG_WAITALL
+		ret=recvmsg(unix_socket, &msg, f);
+#else /* NO_MSG_WAITALL */
+		ret=recvmsg(unix_socket, &msg, flags);
+#endif /* NO_MSG_WAITALL */
 	if (ret<0){
 		if (errno==EINTR) goto again;
-		if ((errno==EAGAIN)||(errno==EWOULDBLOCK)) goto error;
+		if ((errno==EAGAIN)||(errno==EWOULDBLOCK)){
+#ifdef NO_MSG_WAITALL
+			if (flags & MSG_WAITALL){
+				/* emulate MSG_WAITALL using poll */
+				pfd.fd=unix_socket;
+				pfd.events=POLLIN;
+poll_again:
+				ret=poll(&pfd, 1, -1);
+				if (ret>=0) goto again;
+				else if (errno==EINTR) goto poll_again;
+				LOG(L_CRIT, "ERROR: receive_fd: poll on %d failed: %s\n",
+							unix_socket, strerror(errno));
+			}
+#endif /* NO_MSG_WAITALL */
+			goto error;
+		}
 		LOG(L_CRIT, "ERROR: receive_fd: recvmsg on %d failed: %s\n",
 				unix_socket, strerror(errno));
 		goto error;
