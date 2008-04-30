@@ -126,6 +126,8 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - partial cygwin (windows) support revived: core+static modules, 
+               no ipv6, no tcp, no dynamic modules
              - most of the config variables can now be changed on the fly,
                without ser restart  (migration work in progress)
              - tcp improvements (better tcp timers, send fd cache, special

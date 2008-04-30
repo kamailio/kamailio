@@ -78,12 +78,13 @@ MAIN_NAME=ser
 VERSION = 2
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev18-tcp
+EXTRAVERSION = -dev19-tcp
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
 RELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
-OS = $(shell uname -s | sed -e s/SunOS/solaris/ | tr "[A-Z]" "[a-z]")
+OS = $(shell uname -s | sed -e s/SunOS/solaris/ -e s/CYGWIN.*/cygwin/ \
+		 | tr "[A-Z]" "[a-z]")
 
 ifeq ($(OS),solaris)
 	GETARCH=isainfo -n
@@ -445,6 +446,7 @@ DEFS+= $(extra_defs) \
 	 -DUSE_DNS_FAILOVER \
 	 -DUSE_DST_BLACKLIST \
 	 -DUSE_NAPTR \
+	 -DDBG_QM_MALLOC \
 	 #-DUSE_DNS_CACHE_STATS \
 	 #-DUSE_DST_BLACKLIST_STATS \
 	 #-DDNS_WATCHDOG_SUPPORT \
@@ -543,7 +545,7 @@ ifeq ($(CC_NAME), gcc)
 endif
 endif
 
-# arh. specific definitions
+# arch. specific definitions
 ifeq ($(ARCH), i386)
 	use_fast_lock=yes
 endif
@@ -1530,11 +1532,29 @@ ifeq ($(OS), darwin)
 	YACC=yacc
 endif
 
-ifneq (,$(findstring CYGWIN, $(OS)))
-	#cygwin is the same as common
+ifneq (,$(findstring cygwin, $(OS)))
+	# cygwin doesn't support IPV6 and doesn't support fd passing so no TCP
+	DEFS:=$(filter-out -DUSE_IPV6 -DUSE_TCP, $(DEFS))
+	DEFS+=-DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
+			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
+			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
 	ifneq ($(found_lock_method), yes)
-		DEFS+= -DUSE_SYSV_SEM  # try sys v sems
+		DEFS+= -DUSE_POSIX_SEM
+		#DEFS+= -DUSE_SYSV_SEM  # try posix sems
+		# PTHREAD_MUTEX do not work for processes (try test/pthread_test.c)
+		#LIBS+= -lpthread
 		found_lock_method=yes
+	else
+		ifneq (,$(findstring -DUSE_POSIX_SEM, $(DEFS)))
+			#LIBS+=-lpthread
+		endif
+		ifneq (,$(findstring -DUSE_PTHREAD_MUTEX, $(DEFS)))
+$(error PTHREAD_MUTEX do not work for processes on Windows/CYGWIN)
+		endif
+	endif
+	# check for >= 2.5.70
+	ifeq ($(NO_SELECT),)
+		DEFS+=-DHAVE_SELECT
 	endif
 endif
 

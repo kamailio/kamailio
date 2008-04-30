@@ -35,6 +35,8 @@ TOC
 -------------------------------------------
 
 Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, Darwin
+Partially supported: Windows+Cygwin (core + static modules only, no IPv6,
+ no TCP, no dynamic modules)
 Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc,
  powerpc64
 Experimental architectures: mips1, mips2, sparc32, alpha
@@ -137,6 +139,18 @@ OS Notes:
       and then: apt-get update; apt-get install libradiusclient-ng-dev
       (or, if you want to use the pre-built modules:
        apt-get install ser ser-cpl-module ser-jabber-module ser-mysq-module ser-pa-module ser-postgres-module ser-radius-modules )
+
+ Cygwin  (alpha state, partial support)
+
+ make sure make, bison, flex, minires and minires-devel (needed for the resolver functions) are installed. 
+ 
+ Only building ser's core and some static modules is supported for now.
+ Stuff known not to work:
+           - IPv6 (cygwin doesn't support it yet)
+           - TCP (the tcp code heavily depends on file descriptor passing 
+             between processes, which is not yet supported by cygwin)
+           - dynamic modules (non statically linked -- not supported because
+             backlinking doesn't work in windows by design)
 
 
   Compile example (all the modules and ser in a tar.gz):
