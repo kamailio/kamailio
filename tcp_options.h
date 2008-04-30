@@ -26,6 +26,7 @@
 #ifndef tcp_options_h
 #define tcp_options_h
 
+#ifdef USE_TCP
 
 #ifndef NO_TCP_BUF_WRITE
 #define TCP_BUF_WRITE /* enabled buffered writing */
@@ -106,6 +107,7 @@
 #endif /* __OS_ */
 #endif /* NO_TCP_QUICKACK */
 
+#endif /* USE_TCP */
 
 struct tcp_cfg_options{
 	/* ser tcp options */

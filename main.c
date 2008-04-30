@@ -479,10 +479,10 @@ void cleanup(show_status)
 	cfg_destroy();
 #ifdef USE_TCP
 	destroy_tcp();
-#endif
 #ifdef USE_TLS
 	destroy_tls();
-#endif
+#endif /* USE_TLS */
+#endif /* USE_TCP */
 	destroy_timer();
 	destroy_script_cb();
 	destroy_nonsip_hooks();

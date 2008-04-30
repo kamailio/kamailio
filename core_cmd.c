@@ -525,8 +525,8 @@ static const char* core_tcpinfo_doc[] = {
 
 static void core_tcpinfo(rpc_t* rpc, void* c)
 {
-	void *handle;
 #ifdef USE_TCP
+	void *handle;
 	struct tcp_gen_info ti;
 
 	if (!tcp_disable){
@@ -555,8 +555,8 @@ static const char* core_tcp_options_doc[] = {
 
 static void core_tcp_options(rpc_t* rpc, void* c)
 {
-	void *handle;
 #ifdef USE_TCP
+	void *handle;
 	struct tcp_cfg_options t;
 
 	if (!tcp_disable){
