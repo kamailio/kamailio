@@ -496,7 +496,7 @@ int init_dns_cache_stats(int iproc_num)
 /* must be called with the DNS_LOCK hold
  * remove and entry from the hash, dec. its refcnt and if not referenced
  * anymore deletes it */
-void _dns_hash_remove(struct dns_hash_entry* e)
+inline static void _dns_hash_remove(struct dns_hash_entry* e)
 {
 	clist_rm(e, next, prev);
 #ifdef DNS_CACHE_DEBUG
@@ -1669,7 +1669,9 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 					atomic_set(&e->refcnt, 1);/* because we ret. a ref. to it*/
 				goto end; /* we do not cache obvious stuff */
 		}
-	}else if (type==T_AAAA){
+	}
+#ifdef USE_IPV6
+	else if (type==T_AAAA){
 		if ((ip=str2ip6(name))!=0){
 				e=dns_cache_mk_ip_entry(name, ip);
 				if (e)
@@ -1677,6 +1679,7 @@ inline static struct dns_hash_entry* dns_cache_do_request(str* name, int type)
 				goto end;/* we do not cache obvious stuff */
 		}
 	}
+#endif /* USE_IPV6 */
 #ifdef DNS_WATCHDOG_SUPPORT
 	if (atomic_get(dns_servers_up)==0)
 		goto end; /* the servers are down, needless to perform the query */
@@ -2055,7 +2058,7 @@ no_more_rrs:
  * returns a pointer to the internal hostent structure on success or
  *          0 on error
  */
-struct hostent* dns_entry2he(struct dns_hash_entry* e)
+inline static struct hostent* dns_entry2he(struct dns_hash_entry* e)
 {
 	static struct hostent he;
 	static char hostname[256];
@@ -2074,9 +2077,16 @@ struct hostent* dns_entry2he(struct dns_hash_entry* e)
 			len=4;
 			break;
 		case T_AAAA:
+#ifdef USE_IPV6
 			af=AF_INET6;
 			len=16;
 			break;
+#else /* USE_IPV6 */
+			LOG(L_ERR, "ERROR: dns_entry2he: IPv6 dns cache entry, but "
+						"IPv6 support disabled at compile time"
+						" (recompile with -DUSE_IPV6)\n");
+			return 0;
+#endif /* USE_IPV6 */
 		default:
 			LOG(L_CRIT, "BUG: dns_entry2he: wrong entry type %d for %.*s\n",
 					e->type, e->name_len, e->name);
@@ -2120,7 +2130,7 @@ struct hostent* dns_entry2he(struct dns_hash_entry* e)
  * to a statical internal hostent structure
  * returns 0 on success, <0 on error (see the error codes)
  */
-struct hostent* dns_a_get_he(str* name)
+inline static struct hostent* dns_a_get_he(str* name)
 {
 	struct dns_hash_entry* e;
 	struct ip_addr* ip;
@@ -2139,12 +2149,12 @@ struct hostent* dns_a_get_he(str* name)
 }
 
 
-
+#ifdef USE_IPV6
 /* gethostbyname compatibility: performs an aaaa_lookup and returns a pointer
  * to a statical internal hostent structure
  * returns 0 on success, <0 on error (see the error codes)
  */
-struct hostent* dns_aaaa_get_he(str* name)
+inline static struct hostent* dns_aaaa_get_he(str* name)
 {
 	struct dns_hash_entry* e;
 	struct ip_addr* ip;
@@ -2161,6 +2171,7 @@ struct hostent* dns_aaaa_get_he(str* name)
 	dns_hash_put(e);
 	return he;
 }
+#endif
 
 
 
@@ -2175,10 +2186,16 @@ inline static int dns_rr2ip(int type, struct dns_rr* rr, struct ip_addr* ip)
 			return 0;
 			break;
 		case T_AAAA:
+#ifdef USE_IPV6
 			ip->af=AF_INET6;
 			ip->len=16;
 			memcpy(ip->u.addr, ((struct aaaa_rdata*)rr->rdata)->ip6, 16);
 			return 0;
+#else /* USE_IPV6 */
+			LOG(L_ERR, "ERROR: dns_rr2ip: IPv6 dns rr, but IPv6 support"
+					   "disabled at compile time (recompile with "
+					   "-DUSE_IPV6)\n" );
+#endif /*USE_IPV6 */
 			break;
 	}
 	return -1;
@@ -2196,8 +2213,8 @@ inline static int dns_rr2ip(int type, struct dns_rr* rr, struct ip_addr* ip)
  */
 struct hostent* dns_get_he(str* name, int flags)
 {
+#ifdef USE_IPV6
 	struct hostent* he;
-
 
 	if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
 		he=dns_aaaa_get_he(name);
@@ -2212,6 +2229,9 @@ struct hostent* dns_get_he(str* name, int flags)
 		he=dns_aaaa_get_he(name);
 	}
 	return he;
+#else /* USE_IPV6 */
+	return dns_a_get_he(name);
+#endif /* USE_IPV6 */
 }
 
 
@@ -2589,8 +2609,10 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
  *  ...
  *  dns_hash_put(dns_entry); -- finished with the entry
  */
-int dns_a_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
-					str* name, struct ip_addr* ip)
+inline static int dns_a_resolve( struct dns_hash_entry** e,
+								 unsigned char* rr_no,
+								 str* name,
+								 struct ip_addr* ip)
 {
 	struct dns_rr* rr;
 	int ret;
@@ -2630,14 +2652,16 @@ error:
 }
 
 
-
+#ifdef USE_IPV6
 /* lookup, fills the dns_entry pointer and the ip addr.
  *  (with the first good ip). if *e ==0 does the a lookup, and changes it
  *   to the result, if not it uses the current value and tries to use
  * Same as dns_a_resolve but for aaaa records (see above).
  */
-int dns_aaaa_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
-						str* name, struct ip_addr* ip)
+inline static int dns_aaaa_resolve( struct dns_hash_entry** e,
+									unsigned char* rr_no,
+									str* name,
+									struct ip_addr* ip)
 {
 	struct dns_rr* rr;
 	int ret;
@@ -2673,6 +2697,7 @@ int dns_aaaa_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 error:
 	return ret;
 }
+#endif /* USE_IPV6 */
 
 
 
@@ -2685,13 +2710,17 @@ error:
  *  see dns_a_resolve() for the rest of the params., examples a.s.o
  *  WARNING: don't forget dns_hash_put(*e) when e is not needed anymore
  */
-int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
-					str* name, struct ip_addr* ip, int flags)
+inline static int dns_ip_resolve(	struct dns_hash_entry** e,
+									unsigned char* rr_no,
+									str* name,
+									struct ip_addr* ip,
+									int flags)
 {
 	int ret;
 
 	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* first call */
+#ifdef USE_IPV6
 		if ((flags&(DNS_IPV6_FIRST|DNS_IPV6_ONLY))){
 			ret=dns_aaaa_resolve(e, rr_no, name, ip);
 			if (ret>=0) return ret;
@@ -2704,9 +2733,13 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 		}else if (!(flags&(DNS_IPV6_ONLY|DNS_IPV4_ONLY))){
 			ret=dns_aaaa_resolve(e, rr_no, name, ip);
 		}
+#else /* USE_IPV6 */
+		ret=dns_a_resolve(e, rr_no, name, ip);
+#endif /* USE_IPV6 */
 	}else if ((*e)->type==T_A){
 		/* continue A resolving */
 		ret=dns_a_resolve(e, rr_no, name, ip);
+#ifdef USE_IPV6
 		if (ret>=0) return ret;
 		if (!(flags&(DNS_IPV6_ONLY|DNS_IPV6_FIRST|DNS_IPV4_ONLY))){
 			/* not found, try with AAAA */
@@ -2715,7 +2748,9 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 			*rr_no=0;
 			ret=dns_aaaa_resolve(e, rr_no, name, ip);
 		}
+#endif /* USE_IPV6 */
 	}else if ((*e)->type==T_AAAA){
+#ifdef USE_IPV6
 		/* continue AAAA resolving */
 		ret=dns_aaaa_resolve(e, rr_no, name, ip);
 		if (ret>=0) return ret;
@@ -2726,6 +2761,10 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
 			*rr_no=0;
 			ret=dns_a_resolve(e, rr_no, name, ip);
 		}
+#else /* USE_IPV6 */
+		/* ipv6 disabled, try with A */
+		ret=dns_a_resolve(e, rr_no, name, ip);
+#endif /* USE_IPV6 */
 	}else{
 		LOG(L_CRIT, "BUG: dns_ip_resolve: invalid record type %d\n",
 					(*e)->type);
@@ -2747,7 +2786,7 @@ int dns_ip_resolve(struct dns_hash_entry** e, unsigned char* rr_no,
  *    record in the priority order and for records with the same priority
  *     the record with the higher weight (from the remaining ones)
  */
-int dns_srv_resolve_nxt(struct dns_hash_entry** e,
+inline static int dns_srv_resolve_nxt(struct dns_hash_entry** e,
 #ifdef DNS_SRV_LB
 						srv_flags_t* tried,
 #endif
@@ -2803,7 +2842,7 @@ error:
  *  WARNING: don't forget to init h prior to calling this function the first
  *   time and dns_srv_handle_put(h), even if error is returned
  */
-int dns_srv_resolve_ip(struct dns_srv_handle* h,
+inline static int dns_srv_resolve_ip(struct dns_srv_handle* h,
 					str* name, struct ip_addr* ip, unsigned short* port,
 					int flags)
 {
@@ -2860,7 +2899,7 @@ error:
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
  * WARNING: when finished, dns_sip_resolve_put(h) must be called!
  */
-int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
+inline static int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
 						struct ip_addr* ip, unsigned short* port, char* proto,
 						int flags)
 {
@@ -3014,7 +3053,7 @@ int dns_srv_sip_resolve(struct dns_srv_handle* h,  str* name,
  *            0 on success and it fills *ip, *port, dns_sip_resolve_h
  * WARNING: when finished, dns_sip_resolve_put(h) must be called!
  */
-int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
+inline static int dns_naptr_sip_resolve(struct dns_srv_handle* h,  str* name,
 						struct ip_addr* ip, unsigned short* port, char* proto,
 						int flags)
 {
@@ -3119,7 +3158,7 @@ int dns_sip_resolve(struct dns_srv_handle* h,  str* name,
 /* performs an a lookup and fills ip with the first good ip address
  * returns 0 on success, <0 on error (see the error codes)
  */
-int dns_a_get_ip(str* name, struct ip_addr* ip)
+inline static int dns_a_get_ip(str* name, struct ip_addr* ip)
 {
 	struct dns_hash_entry* e;
 	int ret;
@@ -3133,8 +3172,8 @@ int dns_a_get_ip(str* name, struct ip_addr* ip)
 }
 
 
-
-int dns_aaaa_get_ip(str* name, struct ip_addr* ip)
+#ifdef USE_IPV6
+inline static int dns_aaaa_get_ip(str* name, struct ip_addr* ip)
 {
 	struct dns_hash_entry* e;
 	int ret;
@@ -3146,6 +3185,7 @@ int dns_aaaa_get_ip(str* name, struct ip_addr* ip)
 	if (e) dns_hash_put(e);
 	return ret;
 }
+#endif /* USE_IPV6 */
 
 
 
@@ -3707,12 +3747,17 @@ static void dns_cache_add_record(rpc_t* rpc, void* ctx, unsigned short type)
 			}
 			break;
 		case T_AAAA:
+#ifdef USE_IPV6
 			ip_addr = str2ip6(&ip);
 			if (!ip_addr) {
 				rpc->fault(ctx, 400, "Malformed ip address");
 				goto error;
 			}
 			break;
+#else /* USE_IPV6 */
+			rpc->fault(ctx, 400, "IPv6 support disabled ");
+			return;
+#endif /* USE_IPV6 */
 		/* case T_SRV: nothing to do */
 		}
 	}
