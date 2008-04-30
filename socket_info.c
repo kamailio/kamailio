@@ -494,8 +494,12 @@ int add_interfaces(char* if_name, int family, unsigned short port,
 				#else
 					( (ifr.ifr_addr.sa_family==AF_INET)?
 						sizeof(struct sockaddr_in):
+					#ifdef USE_IPV6
 						((ifr.ifr_addr.sa_family==AF_INET6)?
 						sizeof(struct sockaddr_in6):sizeof(struct sockaddr)) )
+					#else /* USE_IPV6 */
+						sizeof(struct sockaddr) )
+					#endif /* USE_IPV6 */
 				#endif
 				)
 			#endif

@@ -1215,10 +1215,10 @@ ipv6addr:
 		if ($$==0) {
 			LOG(L_CRIT, "ERROR: cfg. parser: out of memory.\n");
 		} else {
+		#ifdef USE_IPV6
 			memset($$, 0, sizeof(struct ip_addr));
 			$$->af=AF_INET6;
 			$$->len=16;
-		#ifdef USE_IPV6
 			if (inet_pton(AF_INET6, $1, $$->u.addr)<=0) {
 				yyerror("bad ipv6 address");
 			}
@@ -1481,8 +1481,10 @@ exp_elem:
 		s_tmp.s=$3;
 		s_tmp.len=strlen($3);
 		ip_tmp=str2ip(&s_tmp);
+	#ifdef USE_IPV6
 		if (ip_tmp==0)
 			ip_tmp=str2ip6(&s_tmp);
+	#endif
 		if (ip_tmp) {
 			$$=mk_elem($2, SRCIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
 		} else {
@@ -1499,8 +1501,10 @@ exp_elem:
 		s_tmp.s=$3;
 		s_tmp.len=strlen($3);
 		ip_tmp=str2ip(&s_tmp);
+	#ifdef USE_IPV6
 		if (ip_tmp==0)
 			ip_tmp=str2ip6(&s_tmp);
+	#endif /* USE_IPV6 */
 		if (ip_tmp) {
 			$$=mk_elem($2, DSTIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
 		} else {
@@ -1520,8 +1524,10 @@ exp_elem:
 		s_tmp.s=$3;
 		s_tmp.len=strlen($3);
 		ip_tmp=str2ip(&s_tmp);
+	#ifdef USE_IPV6
 		if (ip_tmp==0)
 			ip_tmp=str2ip6(&s_tmp);
+	#endif /* USE_IPV6 */
 		if (ip_tmp) {
 			$$=mk_elem($2, SNDIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
 		} else {
@@ -1551,8 +1557,10 @@ exp_elem:
 		s_tmp.s=$3;
 		s_tmp.len=strlen($3);
 		ip_tmp=str2ip(&s_tmp);
+	#ifdef USE_IPV6
 		if (ip_tmp==0)
 			ip_tmp=str2ip6(&s_tmp);
+	#endif /* USE_IPV6 */
 		if (ip_tmp) {
 			$$=mk_elem($2, TOIP_O, 0, NET_ST, mk_net_bitlen(ip_tmp, ip_tmp->len*8) );
 		} else {

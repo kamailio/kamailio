@@ -220,7 +220,7 @@ error_dots:
 }
 
 
-
+#ifdef USE_IPV6
 /* returns an ip_addr struct.; on error returns 0
  * the ip_addr struct is static, so subsequent calls will destroy its content*/
 static inline struct ip_addr* str2ip6(str* st)
@@ -323,6 +323,7 @@ error_char:
 			st->s);*/
 	return 0;
 }
+#endif /* USE_IPV6 */
 
 
 

@@ -115,6 +115,7 @@ void print_ip(char* p, struct ip_addr* ip, char *s)
 								(s)?s:""
 								);
 			break;
+#ifdef USE_IPV6
 		case AF_INET6:
 			DBG("%s%x:%x:%x:%x:%x:%x:%x:%x%s", (p)?p:"",
 											htons(ip->u.addr16[0]),
@@ -128,6 +129,7 @@ void print_ip(char* p, struct ip_addr* ip, char *s)
 											(s)?s:""
 				);
 			break;
+#endif /* USE_IPV6 */
 		default:
 			DBG("print_ip: warning unknown address family %d\n", ip->af);
 	}
@@ -144,6 +146,7 @@ void stdout_print_ip(struct ip_addr* ip)
 								ip->u.addr[2],
 								ip->u.addr[3]);
 			break;
+#ifdef USE_IPV6
 		case AF_INET6:
 			printf("%x:%x:%x:%x:%x:%x:%x:%x",	htons(ip->u.addr16[0]),
 											htons(ip->u.addr16[1]),
@@ -155,6 +158,7 @@ void stdout_print_ip(struct ip_addr* ip)
 											htons(ip->u.addr16[7])
 				);
 			break;
+#endif /* USE_IPV6 */
 		default:
 			DBG("print_ip: warning unknown address family %d\n", ip->af);
 	}
