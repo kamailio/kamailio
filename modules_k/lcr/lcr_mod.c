@@ -280,8 +280,8 @@ static cmd_export_t cmds[] = {
 	 REQUEST_ROUTE | FAILURE_ROUTE},
 	{"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
 	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw", (cmd_function)from_gw_1,1,fixup_pvar_null,fixup_free_pvar_null,
-	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+	{"from_gw", (cmd_function)from_gw_1, 1, fixup_pvar_null,
+	 fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"from_gw_grp", (cmd_function)from_gw_grp, 1, fixup_uint_null, 0,
 	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
 	{"to_gw", (cmd_function)to_gw, 0, 0, 0,
@@ -2302,8 +2302,7 @@ static int fixstringloadgws(void **param, int param_count)
 	}
 	if(model->spec.getf==NULL) {
 	    if(param_count==1) {
-		if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0
-			   || model->spec.pvp.pvn.u.isname.name.n<100) {
+		if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0) {
 		    LM_ERR("Wrong value <%s> for param <%d>!\n",
 			   s.s, param_count);
 		    return -1;
