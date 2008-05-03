@@ -125,7 +125,8 @@ int dbt_row_free(dbt_table_p _dtp, dbt_row_p _drp)
 	if(_drp->fields)
 	{
 		for(i=0; i<_dtp->nrcols; i++)
-			if(_dtp->colv[i]->type==DB_STR
+			if((_dtp->colv[i]->type==DB_STR || _dtp->colv[i]->type==DB_STRING
+						|| _dtp->colv[i]->type==DB_BLOB)
 					&& _drp->fields[i].val.str_val.s)
 				shm_free(_drp->fields[i].val.str_val.s);
 		shm_free(_drp->fields);
