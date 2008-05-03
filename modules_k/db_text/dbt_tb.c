@@ -54,7 +54,7 @@ dbt_column_p dbt_column_new(char *_s, int _l)
 	dcp = (dbt_column_p)shm_malloc(sizeof(dbt_column_t));
 	if(!dcp)
 		return NULL;
-	dcp->name.s  = (char*)shm_malloc(_l*sizeof(char));
+	dcp->name.s  = (char*)shm_malloc((_l+1)*sizeof(char));
 	if(!dcp->name.s)
 	{
 		shm_free(dcp);
@@ -62,6 +62,7 @@ dbt_column_p dbt_column_new(char *_s, int _l)
 	}
 	dcp->name.len = _l;
 	strncpy(dcp->name.s, _s, _l);
+	dcp->name.s[_l] = '\0';
 	dcp->next = dcp->prev = NULL;
 	dcp->type = 0;
 	dcp->flag = DBT_FLAG_UNSET;
@@ -147,7 +148,7 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 	dtp = (dbt_table_p)shm_malloc(sizeof(dbt_table_t));
 	if(!dtp)
 		goto done;
-	dtp->name.s = (char*)shm_malloc(_tbname->len*sizeof(char));
+	dtp->name.s = (char*)shm_malloc((_tbname->len+1)*sizeof(char));
 	if(!dtp->name.s)
 	{
 		shm_free(dtp);
@@ -155,9 +156,10 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 		goto done;
 	}
 	memcpy(dtp->name.s, _tbname->s, _tbname->len);
+	dtp->name.s[_tbname->len] = '\0';
 	dtp->name.len = _tbname->len;
 	
-	dtp->dbname.s = (char*)shm_malloc(_dbname->len*sizeof(char));
+	dtp->dbname.s = (char*)shm_malloc((_dbname->len+1)*sizeof(char));
 	if(!dtp->dbname.s)
 	{
 		shm_free(dtp->name.s);
@@ -166,6 +168,7 @@ dbt_table_p dbt_table_new(const str *_tbname, const str *_dbname, const char *pa
 		goto done;
 	}
 	memcpy(dtp->dbname.s, _dbname->s, _dbname->len);
+	dtp->dbname.s[_dbname->len] = '\0';
 	dtp->dbname.len = _dbname->len;
 
 	dtp->rows = NULL;
@@ -285,7 +288,7 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 			case DB_BLOB:
 				_drp->fields[_idx].type = _t;
 				_drp->fields[_idx].val.str_val.s = 
-					(char*)shm_malloc(_vp->val.str_val.len*sizeof(char));
+					(char*)shm_malloc((_vp->val.str_val.len+1)*sizeof(char));
 				if(!_drp->fields[_idx].val.str_val.s)
 				{
 					_drp->fields[_idx].nul = 1;
@@ -293,6 +296,7 @@ int dbt_row_set_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.str_val.s,
 					_vp->val.str_val.len);
+				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
 				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
 			break;
 			
@@ -365,7 +369,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 					shm_free(_drp->fields[_idx].val.str_val.s);
 			
 				_drp->fields[_idx].val.str_val.s = 
-					(char*)shm_malloc(_vp->val.str_val.len*sizeof(char));
+					(char*)shm_malloc((_vp->val.str_val.len+1)*sizeof(char));
 				if(!_drp->fields[_idx].val.str_val.s)
 				{
 					_drp->fields[_idx].nul = 1;
@@ -373,6 +377,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.str_val.s,
 					_vp->val.str_val.len);
+				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
 				_drp->fields[_idx].val.str_val.len = _vp->val.str_val.len;
 			break;
 			
@@ -389,7 +394,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 											=strlen(_vp->val.string_val);
 				
 				_drp->fields[_idx].val.str_val.s = 
-					(char*)shm_malloc(_drp->fields[_idx].val.str_val.len
+					(char*)shm_malloc((_drp->fields[_idx].val.str_val.len+1)
 									  *sizeof(char));
 				if(!_drp->fields[_idx].val.str_val.s)
 				{
@@ -398,6 +403,7 @@ int dbt_row_update_val(dbt_row_p _drp, dbt_val_p _vp, int _t, int _idx)
 				}
 				memcpy(_drp->fields[_idx].val.str_val.s, _vp->val.string_val,
 					_drp->fields[_idx].val.str_val.len);
+				_drp->fields[_idx].val.str_val.s[_vp->val.str_val.len] = '\0';
 			break;
 			
 			case DB_DOUBLE:

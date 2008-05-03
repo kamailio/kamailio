@@ -156,7 +156,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	}
 	memset(_dcache, 0, sizeof(dbt_cache_t));
 	
-	_dcache->name.s = (char*)shm_malloc(_s->len*sizeof(char));
+	_dcache->name.s = (char*)shm_malloc((_s->len+1)*sizeof(char));
 	if(!_dcache->name.s)
 	{
 		LM_ERR(" no shm memory for s!!\n");
@@ -166,6 +166,7 @@ dbt_cache_p dbt_cache_get_db(str *_s)
 	}
 	
 	memcpy(_dcache->name.s, _s->s, _s->len);
+	_dcache->name.s[_s->len] = '\0';
 	_dcache->name.len = _s->len;
 	
 	if(*_dbt_cachedb)
@@ -209,7 +210,7 @@ int dbt_cache_check_db(str *_s)
 /**
  *
  */
-int dbt_db_del_table(dbt_cache_p _dc, const str *_s)
+int dbt_db_del_table(dbt_cache_p _dc, const str *_s, int sync)
 {
 	dbt_table_p _tbc = NULL;
 	int hash;
@@ -219,8 +220,9 @@ int dbt_db_del_table(dbt_cache_p _dc, const str *_s)
 
 	hash = core_hash(&_dc->name, _s, DBT_CACHETBL_SIZE);
 	hashidx = hash % DBT_CACHETBL_SIZE;
-		
-	lock_get(&_dbt_cachetbl[hashidx].sem);
+	
+	if(sync)
+		lock_get(&_dbt_cachetbl[hashidx].sem);
 
 	_tbc = _dbt_cachetbl[hashidx].dtp;
 
@@ -243,7 +245,8 @@ int dbt_db_del_table(dbt_cache_p _dc, const str *_s)
 		_tbc = _tbc->next;
 	}
 
-	lock_release(&_dbt_cachetbl[hashidx].sem);
+	if(sync)
+		lock_release(&_dbt_cachetbl[hashidx].sem);
 
 	dbt_table_free(_tbc);
 	
@@ -279,7 +282,8 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 			/* found - if cache mode or no-change, return */
 			if(db_mode==0 || dbt_check_mtime(_s, &(_dc->name), &(_tbc->mt))!=1)
 			{
-				LM_DBG("cache or mtime succeeded\n");
+				LM_DBG("cache or mtime succeeded for [%.*s]\n",
+						_tbc->name.len, _tbc->name.s);
 				return _tbc;
 			}
 			break;
@@ -290,9 +294,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 	/* new table */
 	if(_tbc) /* free old one */
 	{
-		lock_release(&_dbt_cachetbl[hashidx].sem);
-		dbt_db_del_table(_dc, _s);
-		lock_get(&_dbt_cachetbl[hashidx].sem);
+		dbt_db_del_table(_dc, _s, 0);
 	}
 
 	_tbc = dbt_load_file(_s, &(_dc->name));
