@@ -231,6 +231,7 @@ found_repl:
 	*re_end=0;
 	if (regcomp(regex, re, cflags)!=0){
 		pkg_free(regex);
+		regex=0;
 		*re_end=c; /* restore */
 		LOG(L_ERR, "ERROR: subst_parser: bad regular expression %.*s in "
 				"%.*s\n", (int)(re_end-re), re, subst->len, subst->s);
