@@ -195,6 +195,14 @@ modparam("usrloc", "db_mode", $RET)
 +++
 fi
 
+db_get ser-oob/CREATE_DB
+if [ "$RET" = "true" ] ; then
+  db_set ser-oob/CREATE_DB false
+  echo "Creating ser database"
+  /usr/sbin/ser_mysql.sh create
+fi
+
+
 fi # if changing config
 
 echo ""

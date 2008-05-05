@@ -132,3 +132,11 @@ Description: usrloc database mode
  avoid it).
  .
  Enter "!" to not modify this option.
+
+Template: ser-oob/CREATE_DB
+Type: boolean
+Default: false
+Description: Create ser database
+ Do you want to create ser database 'ser' with default users 'ser' and 'serro' on Mysql
+ server running on localhost ? You should use this option when doing first-time installation only.
+
