@@ -198,8 +198,11 @@ fi
 db_get ser-oob/CREATE_DB
 if [ "$RET" = "true" ] ; then
   db_set ser-oob/CREATE_DB false
+  db_get ser-oob/MYSQLPASS
+  PASS="$RET"
+  db_set ser-oob/MYSQLPASS ""
   echo "Creating ser database"
-  /usr/sbin/ser_mysql.sh create
+  /usr/sbin/ser_mysql.sh create -q$PASS
 fi
 
 

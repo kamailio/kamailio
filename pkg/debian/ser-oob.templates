@@ -139,4 +139,13 @@ Default: false
 Description: Create ser database
  Do you want to create ser database 'ser' with default users 'ser' and 'serro' on Mysql
  server running on localhost ? You should use this option when doing first-time installation only.
+ .
+ Note: you can run the script creation script manually by calling 'ser_mysql.sh'.
+
+Template: ser-oob/MYSQLPASS
+Type: string
+Default:
+Description: Mysql root password
+ Please enter your Mysql root password. It will be used to create the ser database. You can leave it empty
+ to use empty password.
 
