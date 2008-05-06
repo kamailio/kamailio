@@ -121,8 +121,7 @@
 	
     <column>
 	  <name>sip_status</name>
-	  <type>string</type>
-	  <size>128</size>
+	  <type>int</type>
 	  <null/>
 	  <description>
 	    The status code of the final SIP reply that finished the transaction
