@@ -39,7 +39,6 @@
 
 
 
-#warning "arm atomic operations support not tested"
 
 #ifdef NOSMP
 #define HAVE_ASM_INLINE_MEMBAR
@@ -167,8 +166,10 @@
 			"     strexeq %1, %4, [%3] \n\t" \
 			"     cmp %1, #0 \n\t" \
 			"     bne 1b \n\t" \
+			/* strexeq is exec. only if cmp was successful \
+			 * => if not successful %1 is not changed and remains 0 */ \
 			: "=&r"(ret), "=&r"(tmp), "=m"(*var) :\
-				"r"(var), "r"(new_v), "r"(old) : "cc" \
+				"r"(var), "r"(new_v), "r"(old), "1"(0) : "cc" \
 			); \
 		return ret; \
 	}
@@ -179,8 +180,8 @@ ATOMIC_FUNC_DECL(inc,      "add  %1, %0, #1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      "sub  %1, %0, #1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", int, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", int, int, ret )
-ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", int, int, ret )
+ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", int, int, ret==0 )
+ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", int, int, ret==0 )
 //ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , int, int,  ret)
 ATOMIC_XCHG_DECL(get_and_set, int)
 ATOMIC_CMPXCHG_DECL(cmpxchg, int)
@@ -190,8 +191,8 @@ ATOMIC_FUNC_DECL(inc,      "add  %1, %0, #1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      "sub  %1, %0, #1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", long, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", long, long, ret )
-ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", long, long, ret )
+ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", long, long, ret==0 )
+ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", long, long, ret==0 )
 //ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , long, long,  ret)
 ATOMIC_XCHG_DECL(get_and_set, long)
 ATOMIC_CMPXCHG_DECL(cmpxchg, long)
