@@ -37,7 +37,7 @@
 #define _MYSQL_MOD_H
 
 /** @defgroup mysql MySQL db driver
- *  @ingroup DB-API
+ *  @ingroup DB_API
  */
 /** @{ */
 extern int my_ping_interval;
