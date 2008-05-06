@@ -17,8 +17,8 @@ Elena-Ramona Modroiu
    Copyright © 2007, 2008 1und1 Internet AG, BASIS AudioNet GmbH,
    Elena-Ramona Modroiu
    Revision History
-   Revision $Revision: 3898 $ $Date: 2008-03-08 00:03:56 +0100
-                              (Sa, 08 MÃ¤r 2008) $
+   Revision $Revision: 3898 $ $Date: 2008-03-08 01:03:56 +0200
+                              (Sat, 08 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -32,6 +32,7 @@ Elena-Ramona Modroiu
               1.3.1. initial_probability (string)
               1.3.2. hash_file (string)
               1.3.3. shvset (string)
+              1.3.4. varset (string)
 
         1.4. Exported Functions
 
@@ -63,22 +64,23 @@ Elena-Ramona Modroiu
    1.1. initial_probability parameter usage
    1.2. hash_file parameter usage
    1.3. shvset parameter usage
-   1.4. rand_event() usage
-   1.5. rand_set_prob() usage
-   1.6. rand_reset_prob() usage
-   1.7. rand_get_prob() usage
-   1.8. sleep usage
-   1.9. usleep usage
-   1.10. rand_set_prob usage
-   1.11. rand_reset_prob usage
-   1.12. rand_get_prob usage
-   1.13. check_config_hash usage
-   1.14. get_config_hash usage
-   1.15. shv_set usage
-   1.16. shv_get usage
-   1.17. RANDOM pseudo-variable usage
-   1.18. time(name) pseudo-variable usage
-   1.19. shv(name) pseudo-variable usage
+   1.4. varset parameter usage
+   1.5. rand_event() usage
+   1.6. rand_set_prob() usage
+   1.7. rand_reset_prob() usage
+   1.8. rand_get_prob() usage
+   1.9. sleep usage
+   1.10. usleep usage
+   1.11. rand_set_prob usage
+   1.12. rand_reset_prob usage
+   1.13. rand_get_prob usage
+   1.14. check_config_hash usage
+   1.15. get_config_hash usage
+   1.16. shv_set usage
+   1.17. shv_get usage
+   1.18. RANDOM pseudo-variable usage
+   1.19. time(name) pseudo-variable usage
+   1.20. shv(name) pseudo-variable usage
 
 Chapter 1. Admin Guide
 
@@ -172,6 +174,27 @@ modparam("cfgutils", "shvset", "debug=i:1")
 modparam("cfgutils", "shvset", "pstngw=s:sip:10.10.10.10")
 ...
 
+1.3.4. varset (string)
+
+   Set the value of a script variable ($var(name)). The parameter
+   can be set many times.
+
+   The value of the parameter has the format: _name_ '=' _type_
+   ':' _value_
+     * _name_: shared variable name
+     * _type_: type of the value
+          + "i": integer value
+          + "s": string value
+     * _value_: value to be set
+
+   Default value is "NULL".
+
+   Example 1.4. varset parameter usage
+...
+modparam("cfgutils", "varset", "init=i:1")
+modparam("cfgutils", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
+...
+
 1.4. Exported Functions
 
 1.4.1. rand_event()
@@ -179,7 +202,7 @@ modparam("cfgutils", "shvset", "pstngw=s:sip:10.10.10.10")
    Return true or false, depending on a random value and a
    probability value.
 
-   Example 1.4. rand_event() usage
+   Example 1.5. rand_event() usage
 ...
 if (rand_event()) {
   append_to_reply("Retry-After: 120\n");
@@ -195,7 +218,7 @@ if (rand_event()) {
 
    "probability" can have a value from the range 0..99.
 
-   Example 1.5. rand_set_prob() usage
+   Example 1.6. rand_set_prob() usage
 ...
 rand_set_prob("4");
 ...
@@ -204,7 +227,7 @@ rand_set_prob("4");
 
    Reset the probability back to the inital value.
 
-   Example 1.6. rand_reset_prob() usage
+   Example 1.7. rand_reset_prob() usage
 ...
 rand_reset_prob();
 ...
@@ -214,7 +237,7 @@ rand_reset_prob();
    Return the current probability setting, e.g. for logging
    purposes.
 
-   Example 1.7. rand_get_prob() usage
+   Example 1.8. rand_get_prob() usage
 ...
 rand_get_prob();
 
@@ -229,7 +252,7 @@ rand_get_prob();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.8. sleep usage
+   Example 1.9. sleep usage
 ...
 sleep("1");
 ...
@@ -244,7 +267,7 @@ sleep("1");
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.9. usleep usage
+   Example 1.10. usleep usage
 ...
 usleep("500");
 ...
@@ -258,7 +281,7 @@ usleep("500");
 
    The parameter value must be a number from 0 to 99.
 
-   Example 1.10. rand_set_prob usage
+   Example 1.11. rand_set_prob usage
 ...
 $ openserctl fifo rand_set_prob 10
 ...
@@ -269,7 +292,7 @@ $ openserctl fifo rand_set_prob 10
 
    This command don't need a parameter.
 
-   Example 1.11.  rand_reset_prob usage
+   Example 1.12.  rand_reset_prob usage
 ...
 $ openserctl fifo rand_reset_prob
 ...
@@ -280,7 +303,7 @@ $ openserctl fifo rand_reset_prob
 
    The function return the actual probability value.
 
-   Example 1.12. rand_get_prob usage
+   Example 1.13. rand_get_prob usage
 ...
 $ openserctl fifo get_prob
 The actual probability is 50 percent.
@@ -295,7 +318,7 @@ The actual probability is 50 percent.
    400 if there are not identical and 500 on errors. Additional a
    short text message is printed.
 
-   Example 1.13. check_config_hash usage
+   Example 1.14. check_config_hash usage
 ...
 $ openserctl fifo check_config_hash
 The actual config file hash is identical to the stored one.
@@ -307,7 +330,7 @@ The actual config file hash is identical to the stored one.
 
    The function returns 200 OK and the hash value.
 
-   Example 1.14. get_config_hash usage
+   Example 1.15. get_config_hash usage
 ...
 $ openserctl fifo get_config_hash
 1580a37104eb4de69ab9f31ce8d6e3e0
@@ -331,7 +354,7 @@ $ openserctl fifo get_config_hash
                 _value_
                 _empty_line_
 
-   Example 1.15. shv_set usage
+   Example 1.16. shv_set usage
 ...
 $ openserctl fifo shv_set debug int 0
 ...
@@ -349,7 +372,7 @@ $ openserctl fifo shv_set debug int 0
                 _name_
                 _empty_line_
 
-   Example 1.16. shv_get usage
+   Example 1.17. shv_get usage
 ...
 $ openserctl fifo shv_get debug
 $ openserctl fifo shv_get
@@ -361,7 +384,7 @@ $ openserctl fifo shv_get
 
    Returns a random value from the [0 - 2^31) range.
 
-   Example 1.17. RANDOM pseudo-variable usage
+   Example 1.18. RANDOM pseudo-variable usage
 ...
 if (get_random()) {
   $avp(i:10) = ($RANDOM / 16777216); # 2^24
@@ -391,7 +414,7 @@ if (get_random()) {
      * isdst - return daylight saving time status (int, 0 - DST
        off, >0 DST on)
 
-   Example 1.18. time(name) pseudo-variable usage
+   Example 1.19. time(name) pseudo-variable usage
 ...
 if ($time(year) == 2008) {
         xlog("request: $rm from $fu to $ru in year 2008\n");
@@ -407,7 +430,7 @@ if ($time(year) == 2008) {
    variable. The module exports a set of MI functions to get/set
    the value of shared variables.
 
-   Example 1.19. shv(name) pseudo-variable usage
+   Example 1.20. shv(name) pseudo-variable usage
 ...
 modparam("cfgutils", "shvset", "debug=i:1")
 ...

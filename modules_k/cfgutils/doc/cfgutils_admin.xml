@@ -132,6 +132,41 @@ modparam("cfgutils", "shvset", "pstngw=s:sip:10.10.10.10")
 </programlisting>
 	    </example>
 	</section>
+	<section>
+		<title><varname>varset</varname> (string)</title>
+		<para>
+		Set the value of a script variable ($var(name)). The parameter
+		can be set many times.
+		</para>
+		<para>
+		The value of the parameter has the format:
+		_name_ '=' _type_ ':' _value_
+		</para>
+		<itemizedlist>
+			<listitem><para>_name_: shared variable name</para></listitem>
+			
+			<listitem><para>_type_: type of the value</para>
+			      <itemizedlist>
+	                 <listitem><para> <quote>i</quote>: integer value </para></listitem> 
+			         <listitem><para> <quote>s</quote>: string value </para></listitem>	
+				  </itemizedlist>
+			</listitem>	  
+
+			<listitem><para>_value_: value to be set</para></listitem>
+		</itemizedlist>
+		<para>
+		Default value is <quote>NULL</quote>.
+		</para>
+		<example>
+		<title><varname>varset</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("cfgutils", "varset", "init=i:1")
+modparam("cfgutils", "varset", "gw=s:sip:11.11.11.11;transport=tcp")
+...
+</programlisting>
+	    </example>
+	</section>
 </section>
 
     <section>
