@@ -463,4 +463,3 @@ CREATE TABLE customers (
     UNIQUE KEY cu_idx (cid)
 );
 
- 
