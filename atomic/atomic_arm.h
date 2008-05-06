@@ -45,7 +45,6 @@
 
 
 
-#warning "arm atomic operations support not tested"
 
 #ifdef NOSMP
 #define HAVE_ASM_INLINE_MEMBAR
@@ -131,16 +130,16 @@ ATOMIC_FUNC_DECL(inc,      "add  %1, %0, #1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      "sub  %1, %0, #1", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", int, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", int, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", int, int, ret )
-ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", int, int, ret )
+ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", int, int, ret==0 )
+ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", int, int, ret==0 )
 ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , int, int,  ret)
 
 ATOMIC_FUNC_DECL(inc,      "add  %1, %0, #1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL(dec,      "sub  %1, %0, #1", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(and,     "and  %1, %0, %4", long, void, /* no return */ )
 ATOMIC_FUNC_DECL1(or,      "orr  %1, %0, %4", long, void, /* no return */ )
-ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", long, long, ret )
-ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", long, long, ret )
+ATOMIC_FUNC_DECL(inc_and_test, "add  %1, %0, #1", long, long, ret==0 )
+ATOMIC_FUNC_DECL(dec_and_test, "sub  %1, %0, #1", long, long, ret==0 )
 ATOMIC_FUNC_DECL2(get_and_set, /* no extra op needed */ , long, long,  ret)
 
 #define atomic_inc(var) atomic_inc_int(&(var)->val)
