@@ -742,7 +742,7 @@ error:
 	return NULL;
 }
 
-int param_set_shvar( modparam_t type, void* val)
+int param_set_xvar( modparam_t type, void* val, int mode)
 {
 	str s;
 	char *p;
@@ -785,7 +785,10 @@ int param_set_shvar( modparam_t type, void* val)
 			goto error;
 		isv.n = ival;
 	}
-	sv = add_local_shvar(&s);
+	if(mode==0)
+		sv = add_var(&s);
+	else
+		sv = add_local_shvar(&s);
 	if(sv==NULL)
 		goto error;
 	if(set_var_value(sv, &isv, flags)==NULL)
@@ -795,6 +798,16 @@ int param_set_shvar( modparam_t type, void* val)
 error:
 	LM_ERR("unable to set shv parame [%s]\n", s.s);
 	return -1;
+}
+
+int param_set_var( modparam_t type, void* val)
+{
+	return param_set_xvar(type, val, 0);
+}
+
+int param_set_shvar( modparam_t type, void* val)
+{
+	return param_set_xvar(type, val, 1);
 }
 
 

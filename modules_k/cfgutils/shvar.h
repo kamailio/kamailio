@@ -67,6 +67,7 @@ void shvar_destroy_locks(void);
 struct mi_root* mi_shvar_get(struct mi_root* cmd_tree, void* param);
 struct mi_root* mi_shvar_set(struct mi_root* cmd_tree, void* param);
 
+int param_set_var( modparam_t type, void* val);
 int param_set_shvar( modparam_t type, void* val);
 
 /*** $time(name) PV class */

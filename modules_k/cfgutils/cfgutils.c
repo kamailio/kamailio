@@ -113,6 +113,7 @@ static param_export_t params[]={
 	{"initial_probability", INT_PARAM, &initial},
 	{"hash_file",           STR_PARAM, &hash_file        },
 	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
+	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
 	{0,0,0}
 };
 
