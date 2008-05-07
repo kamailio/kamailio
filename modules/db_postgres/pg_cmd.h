@@ -51,6 +51,7 @@
 #include <libpq-fe.h>
 
 struct pg_params {
+	int n;
 	const char** val;
 	int* len;
 	int* fmt;

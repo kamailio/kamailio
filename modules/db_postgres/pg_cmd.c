@@ -78,7 +78,9 @@ static void pg_cmd_free(db_cmd_t* cmd, struct pg_cmd* payload)
 
 /** Generate a unique name for a server-side PostgreSQL command.
  * This function generates a unique name for each command that will be used to
- * identify the prepared statement on the server.
+ * identify the prepared statement on the server. The name has only has to be
+ * unique within a connection to the server so we just keep a global counter
+ * and the name will be that number converted to text.
  *
  * @param cmd A command whose name is to be generated 
  * @return A string allocated using pkg_malloc containing the name or NULL on
@@ -128,7 +130,8 @@ static int create_pg_params(db_cmd_t* cmd)
 	pcmd->params.len = (int*)pkg_malloc(sizeof(int) * num);
 	pcmd->params.fmt = (int*)pkg_malloc(sizeof(int) * num);
 	
-	if (!pcmd->params.val || !pcmd->params.len || !pcmd->params.fmt) {
+	if (!pcmd->params.val || 
+		!pcmd->params.len || !pcmd->params.fmt) {
 		ERR("postgres: No memory left\n");
 		goto error;
 	}
@@ -136,6 +139,7 @@ static int create_pg_params(db_cmd_t* cmd)
 	memset(pcmd->params.val, '\0', sizeof(const char*) * num);
 	memset(pcmd->params.len, '\0', sizeof(int) * num);
 	memset(pcmd->params.fmt, '\0', sizeof(int) * num);
+	pcmd->params.n = num;
 	return 0;
 
  error:
@@ -240,24 +244,28 @@ int pg_cmd(db_cmd_t* cmd)
 		break;
 		
 	case DB_SQL:
-		pcmd->sql_cmd.s = (char*)pkg_malloc(cmd->table.len);
+		pcmd->sql_cmd.s = (char*)pkg_malloc(cmd->table.len + 1);
 		if (pcmd->sql_cmd.s == NULL) {
 			ERR("postgres: Out of private memory\n");
 			goto error;
 		}
 		memcpy(pcmd->sql_cmd.s,cmd->table.s, cmd->table.len);
+		pcmd->sql_cmd.s[cmd->table.len] = '\0';
 		pcmd->sql_cmd.len = cmd->table.len;
         break;
 	}
 
 	DB_SET_PAYLOAD(cmd, pcmd);
 
+	/* Create parameter arrays for PostgreSQL API functions */
+	if (create_pg_params(cmd) < 0) goto error;	
+
 	/* Generate a unique name for the command on the server */
 	if (gen_cmd_name(cmd) != 0) goto error; 
 
 	/* Upload the command to the server */
 	if (upload_cmd(cmd) != 0) goto error;
-	
+
 	/* Obtain the description of the uploaded command, this includes
 	 * information about result and parameter fields */
 	if (get_types(cmd) != 0) goto error;
@@ -272,8 +280,6 @@ int pg_cmd(db_cmd_t* cmd)
 
 	if (check_types(cmd)) goto error;
 
-	/* Create parameter arrays for PostgreSQL API functions */
-	if (create_pg_params(cmd) < 0) goto error;	
 	return 0;
 
  error:
@@ -343,22 +349,23 @@ static int upload_cmd(db_cmd_t* cmd)
 	/* FIXME: The function should take the connection as one of parameters */
 	pcon = DB_GET_PAYLOAD(cmd->ctx->con[db_payload_idx]);
 
-	DBG("postgres: Uploading query '%s'='%s'\n", pcmd->name, 
+	DBG("postgres: Uploading comand '%s': '%s'\n", pcmd->name, 
 		pcmd->sql_cmd.s);
 
 	res = PQprepare(pcon->con, pcmd->name, pcmd->sql_cmd.s, 0, NULL);
 	
 	st = PQresultStatus(res);
-	PQclear(res);
 
 	if (st != PGRES_COMMAND_OK && st != PGRES_NONFATAL_ERROR &&
 		st != PGRES_TUPLES_OK) {
 		ERR("postgres: Error while uploading command to server: %d, %s", 
 			st, PQresultErrorMessage(res));
 		ERR("postgres: Command: '%s'\n", pcmd->sql_cmd.s);
+		PQclear(res);
 		return -1;
 	}
 
+	PQclear(res);
 	return 0;
 }
 
@@ -392,9 +399,9 @@ int pg_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 		
 		/* Execute the statement */
 		tmp = PQexecPrepared(pcon->con, pcmd->name,
-							 cmd->match_count + cmd->vals_count,
+							 pcmd->params.n,
 							 pcmd->params.val, pcmd->params.len,
-							 NULL, 1);
+							 pcmd->params.fmt, 1);
 		if (!tmp) {
 			ERR("postgres: PQexecPrepared returned no result\n");
 			continue;
