@@ -29,7 +29,7 @@
 #include "../../ut.h"
 
 
-/*
+/**
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
@@ -104,7 +104,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 }
 
 
-/*
+/**
  * Close the connection and release memory
  */
 void db_mysql_free_connection(struct pool_con* con)
