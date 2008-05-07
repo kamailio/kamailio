@@ -359,15 +359,15 @@ int pg_test(void)
 		goto error;
 	}
 
-	put->vals[0].v.lstr.s = "abc";
+	put->vals[0].v.lstr.s = "abc should not be there";
 	put->vals[0].v.lstr.len = 3;
-	put->vals[1].v.lstr.s = "abc";
+	put->vals[1].v.lstr.s = "abc should not be there";
 	put->vals[1].v.lstr.len = 3;
-	put->vals[2].v.lstr.s = "abc";
+	put->vals[2].v.lstr.s = "abc should not be there";
 	put->vals[2].v.lstr.len = 3;
-	put->vals[3].v.lstr.s = "abc";
+	put->vals[3].v.lstr.s = "abc should not be there";
 	put->vals[3].v.lstr.len = 3;
-	put->vals[4].v.lstr.s = "a";
+	put->vals[4].v.lstr.s = "a should not be there";
 	put->vals[4].v.lstr.len = 1;
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
