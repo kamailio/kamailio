@@ -31,6 +31,10 @@ if [ ! $ret -eq 0 ] ; then
 	exit 0
 fi ;
 
+cp $CFG $CFG.bak
+
+echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
+
 ../openser -w . -f $CFG > /dev/null
 ret=$?
 
@@ -69,5 +73,7 @@ ret=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from
 cd ../test
 
 killall -9 openser
+
+mv $CFG.bak $CFG
 
 exit $ret
