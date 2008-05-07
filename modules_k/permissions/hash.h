@@ -87,7 +87,8 @@ int hash_table_insert(struct trusted_list** hash_table, char* src_ip,
  * Check if an entry exists in hash table that has given src_ip and protocol
  * value and pattern that matches to From URI.
  */
-int match_hash_table(struct trusted_list** table, struct sip_msg* msg);
+int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
+		     char *scr_ip, int proto);
 
 
 /* 

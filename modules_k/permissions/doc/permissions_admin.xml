@@ -110,7 +110,7 @@
 		<para>
 		The module can be used to determine if request is
 		allowed to the destination specified by an URI stored in
-		a pseudo-variable.  Permission rules are stored in
+		a pvar.  Permission rules are stored in
 		plaintext configuration files similar to
 		<filename moreinfo="none">hosts.allow</filename> and
 		<filename moreinfo="none">hosts.deny</filename> used by tcpd.
@@ -124,7 +124,7 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			Create a pair &lt;From URI, URI stored in pseudo-variable&gt;.
+			Create a pair &lt;From URI, URI stored in pvar&gt;.
 			</para>
 		</listitem>
 		<listitem>
@@ -151,7 +151,7 @@
 		no permission control files.
 		</para>
 		<para>
-		From URI and URI stored in pseudo-variable are always compared with regular 
+		From URI and URI stored in pvar are always compared with regular 
 		expressions! For the syntax see the sample file: 
 		<filename moreinfo="none">config/permissions.allow</filename>.
 		</para>
@@ -164,8 +164,8 @@
 		stored in cached openser database table.
 		Port 0 in cached database table matches any port.  IP
 		address and port to be matched can be either taken from
-		the request (allow_source_address) or given as pseudo
-		value arguments (allow_address).
+		the request (allow_source_address) or given as pvar
+		arguments (allow_address).
 		</para>
 		<para>
 		Addresses stored in cached database table can be grouped
@@ -196,13 +196,15 @@
 		<itemizedlist>
 		<listitem>
 			<para>
-			source address is equal to source address of request,
+			source address is equal to source address of
+			request or source address given in pvar,
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			transport protocol is either "any" or equal to
-			transport protocol of request, and
+			transport protocol is either "ANY" or equal to
+			transport protocol of request or transport
+			protocol given in pvar, and
 			</para>
 		</listitem>
 		<listitem>
@@ -217,7 +219,8 @@
 		</para>
 		<para>
 		Rules are stored in a database table specified by module
-		parameters.  There also exists a module parameter that
+		parameters.  There also exists a module parameter
+	        <varname>dm_mode</varname> that
 		determines if rules are cached into memory for faster
 		matching or if database is consulted for each invocation
 		of allow_trusted function call.
@@ -857,7 +860,7 @@ if (method=="REGISTER") {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">allow_uri(basename, pseudo-variable)</function>
+		<function moreinfo="none">allow_uri(basename, pvar)</function>
 		</title>
 		<para>
 		Returns true if the pair constructed as described in <xref
@@ -879,7 +882,7 @@ if (method=="REGISTER") {
 			</para>
 		</listitem>
 		<listitem>
-			<para><emphasis>pseudo-variable</emphasis> - Any
+			<para><emphasis>pvar</emphasis> - Any
 			pseudo-variable defined in OpenSER.
 			</para>
 		</listitem>
@@ -888,7 +891,7 @@ if (method=="REGISTER") {
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>allow_uri(basename, pseudo-variable)</function> usage</title>
+		<title><function>allow_uri(basename, pvar)</function> usage</title>
 		<programlisting format="linespecific">
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
@@ -908,8 +911,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 		<para>
 		Sets address group to be used in subsequent allow_address
 		function calls to an unsigned integer value given as
-		argument.  Argument can be an integer string or a pseudo
-		variable.
+		argument.  Argument can be an integer string or a pvar.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -921,7 +923,7 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 
 // Set address group identifier to 1.
 set_address_group("1");
-// Set address group identifier to value of pseudo variable i:100.
+// Set address group identifier to value of pvar i:100.
 set_address_group("$avp(i:100)");
 ...
 </programlisting>
@@ -929,11 +931,11 @@ set_address_group("$avp(i:100)");
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">allow_address(ip_addr_pv, port_pv)</function>
+		<function moreinfo="none">allow_address(ip_addr_pvar, port_pvar)</function>
 		</title>
 		<para>
-		Returns true if IP address and port given as values of pseudo
-		variable arguments and belonging to an earlier
+		Returns true if IP address and port given as values of pvar
+		arguments and belonging to an earlier
 		assigned address group matches an IP subnet found in
 		cached address table.  Cached address table entry
 		containing port value 0 matches any port.
@@ -942,7 +944,7 @@ set_address_group("$avp(i:100)");
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>allow_address(ip_addr_pv, port_pv)</function> usage</title>
+		<title><function>allow_address(ip_addr_pvar, port_pvar)</function> usage</title>
 		<programlisting format="linespecific">
 ...
 
@@ -1010,17 +1012,24 @@ if ($var(group) != -1) {
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">allow_trusted()</function>
+		<function moreinfo="none">allow_trusted([src_ip_pvar, proto_pvar])</function>
 		</title>
 		<para>
-		Checks based on request's source address, transport
-		protocol, and From URI if request can be trusted without
+		Checks based either on request's source address and transport
+		protocol or source address and transport protocol given
+		in pvar arguments, and From URI of request
+		if request can be trusted without
 		authentication.  Returns 1 if a match is found
 		as described in <xref linkend="sec-trusted-requests"/>
 		and -1 otherwise.  If a match is found
 		and peer_tag_avp has been defined, adds a
                 non-NULL tag column value of the
 		matching peer to AVP peer_tag_avp.
+		</para>
+		<para>
+		Source address and transport protocol given in pvar
+		arguments must be in string format.  Valid transport
+		protocol values are "UDP, "TCP", "TLS", and "SCTP".
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -1030,6 +1039,10 @@ if ($var(group) != -1) {
 		<programlisting format="linespecific">
 ...
 if (allow_trusted()) {
+	t_relay();
+};
+...
+if (allow_trusted("$si", "$proto")) {
 	t_relay();
 };
 ...

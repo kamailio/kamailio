@@ -3,7 +3,7 @@
  *
  * Header file for trusted.c implementing allow_trusted function
  *
- * Copyright (C) 2003 Juha Heinanen
+ * Copyright (C) 2003-2008 Juha Heinanen
  *
  * This file is part of openser, a free SIP server.
  *
@@ -68,6 +68,20 @@ void clean_trusted(void);
  * Check if request comes from trusted ip address with matching from URI
  */
 int allow_trusted(struct sip_msg* _msg, char* _s1, char* _s2);
+
+
+/*
+ * Checks based on request's source address, protocol, and From URI
+ * if request can be trusted without authentication.
+ */
+int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2);
+
+
+/*
+ * Checks based on source address and protocol given in pvar arguments and
+ * and requests's From URI, if request can be trusted without authentication.
+ */
+int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp);
 
 
 #endif /* TRUSTED_H */

@@ -342,7 +342,7 @@ static inline int match_proto(const char *proto_string, int proto_int)
  * Matches from uri against patterns returned from database.  Returns 1 when
  * first pattern matches and 0 if none of the patterns match.
  */
-static int match_res(struct sip_msg* msg, db_res_t* _r)
+static int match_res(struct sip_msg* msg, int proto, db_res_t* _r)
 {
         int i, tag_avp_type;
 	str uri;
@@ -367,7 +367,7 @@ static int match_res(struct sip_msg* msg, db_res_t* _r)
 	    val = ROW_VALUES(row + i);
 	    if ((ROW_N(row + i) == 3) &&
 		(VAL_TYPE(val) == DB_STRING) && !VAL_NULL(val) &&
-		match_proto(VAL_STRING(val), msg->rcv.proto) &&
+		match_proto(VAL_STRING(val), proto) &&
 		(VAL_NULL(val + 1) ||
 		 ((VAL_TYPE(val + 1) == DB_STRING) && !VAL_NULL(val + 1))) &&
 		(VAL_NULL(val + 2) ||
@@ -404,12 +404,10 @@ found:
 
 
 /*
- * Checks based on request's source address, protocol, and from field
- * if request can be trusted without authentication.  Possible protocol
- * values are "any" (that matches any protocol), "tcp", "udp", "tls",
- * and "sctp".
+ * Checks based on given source IP address and protocol, and From URI
+ * of request if request can be trusted without authentication.
  */
-int allow_trusted(struct sip_msg* _msg, char* str1, char* str2) 
+int allow_trusted(struct sip_msg* msg, char *src_ip, int proto) 
 {
 	int result;
 	db_res_t* res = NULL;
@@ -419,7 +417,7 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 	db_key_t cols[3];
 	
 	if (!db_url.s) {
-		LM_ERR("set db_mode parameter of permissions module first !\n");
+		LM_ERR("db_mode parameter has not been set\n");
 		return -1;
 	}
 
@@ -436,9 +434,10 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 		
 		VAL_TYPE(vals) = DB_STRING;
 		VAL_NULL(vals) = 0;
-		VAL_STRING(vals) = ip_addr2a(&(_msg->rcv.src_ip));
+		VAL_STRING(vals) = src_ip;
 
-		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 3, 0, &res) < 0){
+		if (perm_dbf.query(db_handle, keys, 0, vals, cols, 1, 3, 0,
+				   &res) < 0){
 			LM_ERR("failed to query database\n");
 			perm_dbf.close(db_handle);
 			return -1;
@@ -449,13 +448,76 @@ int allow_trusted(struct sip_msg* _msg, char* str1, char* str2)
 			return -1;
 		}
 		
-		result = match_res(_msg, res);
+		result = match_res(msg, proto, res);
 		perm_dbf.free_result(db_handle, res);
 		return result;
-	} else if (db_mode == ENABLE_CACHE) {
-		return match_hash_table(*hash_table, _msg);
 	} else {
-		LM_ERR("set db_mode parameter of permissions module properly\n");
-		return -1;
+		return match_hash_table(*hash_table, msg, src_ip, proto);
 	}
+}
+
+
+/*
+ * Checks based on request's source address, protocol, and From URI
+ * if request can be trusted without authentication.
+ */
+int allow_trusted_0(struct sip_msg* _msg, char* str1, char* str2) 
+{
+    return allow_trusted(_msg, ip_addr2a(&(_msg->rcv.src_ip)),
+			 _msg->rcv.proto);
+}
+
+
+/*
+ * Checks based on source address and protocol given in pvar arguments and
+ * and requests's From URI, if request can be trusted without authentication.
+ */
+int allow_trusted_2(struct sip_msg* _msg, char* _src_ip_sp, char* _proto_sp) 
+{
+    pv_spec_t *src_ip_sp, *proto_sp;
+    pv_value_t pv_val;
+    char *src_ip, *proto;
+    int proto_int;
+
+    src_ip_sp = (pv_spec_t *)_src_ip_sp;
+    proto_sp = (pv_spec_t *)_proto_sp;
+    
+    if (src_ip_sp && (pv_get_spec_value(_msg, src_ip_sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    src_ip = pv_val.rs.s;
+	} else {
+	    LM_ERR("src_ip pvar value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("src_ip pvar does not exist or has no value\n");
+	return -1;
+    }
+    
+    if (proto_sp && (pv_get_spec_value(_msg, proto_sp, &pv_val) == 0)) {
+	if (pv_val.flags & PV_VAL_STR) {
+	    proto = pv_val.rs.s;
+	} else {
+	    LM_ERR("proto pvar value is not string\n");
+	    return -1;
+	}
+    } else {
+	LM_ERR("proto pvar does not exist or has no value\n");
+	return -1;
+    }
+
+    if (strcmp(proto, "UDP") == 0) {
+	proto_int = PROTO_UDP;
+    } else if (strcmp(proto, "TCP") == 0) {
+	proto_int = PROTO_TCP;
+    } else if (strcmp(proto, "TLS") == 0) {
+	proto_int = PROTO_TLS;
+    } else if (strcmp(proto, "SCTP") == 0) {
+	proto_int = PROTO_SCTP;
+    } else {
+	LM_ERR("unknown protocol %s\n", proto);
+	return -1;
+    }
+
+    return allow_trusted(_msg, src_ip, proto_int);
 }

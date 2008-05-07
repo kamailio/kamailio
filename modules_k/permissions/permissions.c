@@ -132,8 +132,10 @@ static cmd_export_t cmds[] = {
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_register", (cmd_function)allow_register_2, 2, load_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_trusted",  (cmd_function)allow_trusted,    0, 0, 0,
+	{"allow_trusted",  (cmd_function)allow_trusted_0,  0, 0, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_trusted",  (cmd_function)allow_trusted_2,  2, fixup_pvar_pvar,
+	        fixup_free_pvar_pvar, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_uri",      (cmd_function)allow_uri, 2, double_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"set_address_group", (cmd_function)set_address_group, 1, fixup_igp_null, 0,
@@ -668,6 +670,11 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if ((db_mode != DISABLE_CACHE) && (db_mode != ENABLE_CACHE)) {
+	        LM_ERR("invalid db_mode value: %d\n", db_mode);
+		return -1;
+	}
+	    
 	rules_num = 1;
 	return 0;
 }

@@ -128,22 +128,22 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
 		return -1;
 	}
 
-	if (strcmp(proto, "any") == 0) {
+	if (strcasecmp(proto, "any") == 0) {
 		np->proto = PROTO_NONE;
-	} else if (strcmp(proto, "udp") == 0) {
+	} else if (strcasecmp(proto, "udp") == 0) {
 		np->proto = PROTO_UDP;
-	} else if (strcmp(proto, "tcp") == 0) {
+	} else if (strcasecmp(proto, "tcp") == 0) {
 		np->proto = PROTO_TCP;
-	} else if (strcmp(proto, "tls") == 0) {
+	} else if (strcasecmp(proto, "tls") == 0) {
 		np->proto = PROTO_TLS;
-	} else if (strcmp(proto, "sctp") == 0) {
+	} else if (strcasecmp(proto, "sctp") == 0) {
 		np->proto = PROTO_SCTP;
-	} else if (strcmp(proto, "none") == 0) {
+	} else if (strcasecmp(proto, "none") == 0) {
 	        shm_free(np);
 		return 1;
 	} else {
 		LM_CRIT("unknown protocol\n");
-	    shm_free(np);
+		shm_free(np);
 		return -1;
 	}
 
@@ -199,7 +199,8 @@ int hash_table_insert(struct trusted_list** table, char* src_ip,
  * Check if an entry exists in hash table that has given src_ip and protocol
  * value and pattern that matches to From URI.  If, assign 
  */
-int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
+int match_hash_table(struct trusted_list** table, struct sip_msg* msg,
+		     char *src_ip_c_str, int proto)
 {
 	str uri;
 	char uri_string[MAX_URI_SIZE + 1];
@@ -208,7 +209,7 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 	str src_ip;
 	int_str val;
 
-	src_ip.s = ip_addr2a(&msg->rcv.src_ip);
+	src_ip.s = src_ip_c_str;
 	src_ip.len = strlen(src_ip.s);
 
 	if (parse_from_header(msg) < 0) return -1;
@@ -222,8 +223,8 @@ int match_hash_table(struct trusted_list** table, struct sip_msg* msg)
 
 	for (np = table[perm_hash(src_ip)]; np != NULL; np = np->next) {
 	    if ((np->src_ip.len == src_ip.len) && 
-		(strncasecmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
-		((np->proto == PROTO_NONE) || (np->proto == msg->rcv.proto))) {
+		(strncmp(np->src_ip.s, src_ip.s, src_ip.len) == 0) &&
+		((np->proto == PROTO_NONE) || (np->proto == proto))) {
 		if (!(np->pattern)) goto found;
 		if (regcomp(&preg, np->pattern, REG_NOSUB)) {
 		    LM_ERR("invalid regular expression\n");

@@ -16,7 +16,7 @@ Juha Heinanen
 
    Copyright © 2003 Miklos Tirpak
 
-   Copyright © 2006 Juha Heinanen
+   Copyright © 2006-2008 Juha Heinanen
    Revision History
    Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
                               (Wed, 19 Mar 2008) $
@@ -67,12 +67,12 @@ Juha Heinanen
               1.4.3. allow_routing(allow_file,deny_file)
               1.4.4. allow_register(basename)
               1.4.5. allow_register(allow_file, deny_file)
-              1.4.6. allow_uri(basename, pseudo-variable)
+              1.4.6. allow_uri(basename, pvar)
               1.4.7. set_address_group(group_id)
-              1.4.8. allow_address(ip_addr_pv, port_pv)
+              1.4.8. allow_address(ip_addr_pvar, port_pvar)
               1.4.9. allow_source_address(group_id)
               1.4.10. allow_source_address_group()
-              1.4.11. allow_trusted()
+              1.4.11. allow_trusted([src_ip_pvar, proto_pvar])
 
         1.5. Exported MI Functions
 
@@ -108,9 +108,9 @@ Juha Heinanen
    1.21. allow_routing(allow_file, deny_file) usage
    1.22. allow_register(basename) usage
    1.23. allow_register(allow_file, deny_file) usage
-   1.24. allow_uri(basename, pseudo-variable) usage
+   1.24. allow_uri(basename, pvar) usage
    1.25. set_address_group(group_id) usage
-   1.26. allow_address(ip_addr_pv, port_pv) usage
+   1.26. allow_address(ip_addr_pvar, port_pvar) usage
    1.27. allow_source_address(group_id) usage
    1.28. allow_source_address_group() usage
    1.29. allow_trusted() usage
@@ -186,15 +186,14 @@ Chapter 1. Admin Guide
 1.1.3. URI Permissions
 
    The module can be used to determine if request is allowed to
-   the destination specified by an URI stored in a
-   pseudo-variable. Permission rules are stored in plaintext
-   configuration files similar to hosts.allow and hosts.deny used
-   by tcpd.
+   the destination specified by an URI stored in a pvar.
+   Permission rules are stored in plaintext configuration files
+   similar to hosts.allow and hosts.deny used by tcpd.
 
    When allow_uri function is called, it tries to find a rule that
    matches selected fields of the message. The matching algorithm
    is as follows, first match wins:
-     * Create a pair <From URI, URI stored in pseudo-variable>.
+     * Create a pair <From URI, URI stored in pvar>.
      * Request will be allowed when the pair matches an entry in
        the allow file.
      * Otherwise request will be denied when the pair matches an
@@ -205,8 +204,8 @@ Chapter 1. Admin Guide
    an empty file. Thus, permission control can be turned off by
    providing no permission control files.
 
-   From URI and URI stored in pseudo-variable are always compared
-   with regular expressions! For the syntax see the sample file:
+   From URI and URI stored in pvar are always compared with
+   regular expressions! For the syntax see the sample file:
    config/permissions.allow.
 
 1.1.4. Address Permissions
@@ -215,8 +214,8 @@ Chapter 1. Admin Guide
    and port) matches any of the IP subnets stored in cached
    openser database table. Port 0 in cached database table matches
    any port. IP address and port to be matched can be either taken
-   from the request (allow_source_address) or given as pseudo
-   value arguments (allow_address).
+   from the request (allow_source_address) or given as pvar
+   arguments (allow_address).
 
    Addresses stored in cached database table can be grouped
    together into one or more groups specified by a group
@@ -235,16 +234,18 @@ Chapter 1. Admin Guide
    <source address, transport protocol, regular expression>.
 
    A requests is accepted if there exists a rule, where
-     * source address is equal to source address of request,
-     * transport protocol is either "any" or equal to transport
-       protocol of request, and
+     * source address is equal to source address of request or
+       source address given in pvar,
+     * transport protocol is either "ANY" or equal to transport
+       protocol of request or transport protocol given in pvar,
+       and
      * regular expression is either empty (NULL in database) or
        matches From URI of request.
 
    Otherwise the request is rejected.
 
    Rules are stored in a database table specified by module
-   parameters. There also exists a module parameter that
+   parameters. There also exists a module parameter dm_mode that
    determines if rules are cached into memory for faster matching
    or if database is consulted for each invocation of
    allow_trusted function call.
@@ -632,7 +633,7 @@ if (method=="REGISTER") {
 };
 ...
 
-1.4.6.  allow_uri(basename, pseudo-variable)
+1.4.6.  allow_uri(basename, pvar)
 
    Returns true if the pair constructed as described in
    Section 1.1.3, "URI Permissions" have appropriate permissions
@@ -646,11 +647,11 @@ if (method=="REGISTER") {
        If the parameter doesn't contain full pathname then the
        function expects the file to be located in the same
        directory as the main configuration file of the server.
-     * pseudo-variable - Any pseudo-variable defined in OpenSER.
+     * pvar - Any pseudo-variable defined in OpenSER.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.24. allow_uri(basename, pseudo-variable) usage
+   Example 1.24. allow_uri(basename, pvar) usage
 ...
 if (allow_uri("basename", "$rt")) {  // Check Refer-To URI
         t_relay();
@@ -665,7 +666,7 @@ i:705)
 
    Sets address group to be used in subsequent allow_address
    function calls to an unsigned integer value given as argument.
-   Argument can be an integer string or a pseudo variable.
+   Argument can be an integer string or a pvar.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -674,21 +675,20 @@ i:705)
 
 // Set address group identifier to 1.
 set_address_group("1");
-// Set address group identifier to value of pseudo variable i:100.
+// Set address group identifier to value of pvar i:100.
 set_address_group("$avp(i:100)");
 ...
 
-1.4.8.  allow_address(ip_addr_pv, port_pv)
+1.4.8.  allow_address(ip_addr_pvar, port_pvar)
 
-   Returns true if IP address and port given as values of pseudo
-   variable arguments and belonging to an earlier assigned address
-   group matches an IP subnet found in cached address table.
-   Cached address table entry containing port value 0 matches any
-   port.
+   Returns true if IP address and port given as values of pvar
+   arguments and belonging to an earlier assigned address group
+   matches an IP subnet found in cached address table. Cached
+   address table entry containing port value 0 matches any port.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. allow_address(ip_addr_pv, port_pv) usage
+   Example 1.26. allow_address(ip_addr_pvar, port_pvar) usage
 ...
 
 // Check source address/port of request
@@ -735,20 +735,30 @@ if ($var(group) != -1) {
 };
 ...
 
-1.4.11.  allow_trusted()
+1.4.11.  allow_trusted([src_ip_pvar, proto_pvar])
 
-   Checks based on request's source address, transport protocol,
-   and From URI if request can be trusted without authentication.
-   Returns 1 if a match is found as described in Section 1.1.5,
-   "Trusted Requests" and -1 otherwise. If a match is found and
-   peer_tag_avp has been defined, adds a non-NULL tag column value
-   of the matching peer to AVP peer_tag_avp.
+   Checks based either on request's source address and transport
+   protocol or source address and transport protocol given in pvar
+   arguments, and From URI of request if request can be trusted
+   without authentication. Returns 1 if a match is found as
+   described in Section 1.1.5, "Trusted Requests" and -1
+   otherwise. If a match is found and peer_tag_avp has been
+   defined, adds a non-NULL tag column value of the matching peer
+   to AVP peer_tag_avp.
+
+   Source address and transport protocol given in pvar arguments
+   must be in string format. Valid transport protocol values are
+   "UDP, "TCP", "TLS", and "SCTP".
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.29. allow_trusted() usage
 ...
 if (allow_trusted()) {
+        t_relay();
+};
+...
+if (allow_trusted("$si", "$proto")) {
         t_relay();
 };
 ...
