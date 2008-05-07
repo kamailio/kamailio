@@ -171,10 +171,8 @@
 		Addresses stored in cached database table can be grouped
 		together into one or more groups specified by a group
 		identifier (unsigned integer).  Group
-		identifier is given as argument to
-		allow_source_address function or assigned separately
-		for subsequent allow_address function calls using
-		set_address_group function.
+		identifier is given as argument to allow_address and
+		allow_source_address functions.
 		</para>
 	</section>
 	<section id="sec-trusted-requests">
@@ -906,54 +904,30 @@ if (allow_uri("basename", "$avp(i:705)") {  // Check URI stored in $avp(i:705)
 	</section>
 	<section>
 		<title>
-		<function moreinfo="none">set_address_group(group_id)</function>
-		</title>
-		<para>
-		Sets address group to be used in subsequent allow_address
-		function calls to an unsigned integer value given as
-		argument.  Argument can be an integer string or a pvar.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-		</para>
-		<example>
-		<title><function>set_address_group(group_id)</function> usage</title>
-		<programlisting format="linespecific">
-...
-
-// Set address group identifier to 1.
-set_address_group("1");
-// Set address group identifier to value of pvar i:100.
-set_address_group("$avp(i:100)");
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">allow_address(ip_addr_pvar, port_pvar)</function>
+		<function moreinfo="none">allow_address(group_id, ip_addr_pvar, port_pvar)</function>
 		</title>
 		<para>
 		Returns true if IP address and port given as values of pvar
-		arguments and belonging to an earlier
-		assigned address group matches an IP subnet found in
-		cached address table.  Cached address table entry
-		containing port value 0 matches any port.
+		arguments belonging to a group given as group_id argument
+		matches an IP subnet found in cached address table.
+		Cached address table entry containing port value 0
+		matches any port.  group_id argument can be an integer
+		string or a pseudo variable. 
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>allow_address(ip_addr_pvar, port_pvar)</function> usage</title>
+		<title><function>allow_address()</function> usage</title>
 		<programlisting format="linespecific">
 ...
 
-// Check source address/port of request
-if (!allow_address("$si", "$sp")) {
+// Check if source address/port is in group 1
+if (!allow_address("1", "$si", "$sp")) {
 	sl_send_reply("403", "Forbidden");
 };
-// Check IP address/port stored in AVPs i:704/i:705
-if (!allow_address("$avp(i:704)", "$avp(i:705)") {
+// Check IP address/port stored in AVPs i:704/i:705 is in group 2
+if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
 	sl_send_reply("403", "Forbidden");
 };
 ...
@@ -965,8 +939,7 @@ if (!allow_address("$avp(i:704)", "$avp(i:705)") {
 		<function moreinfo="none">allow_source_address(group_id)</function>
 		</title>
 		<para>
-		Equal to set_address_group(group_id);
-		allow_address("$si", "$sp"), but faster.
+		Equal to allow_address(group_id, "$si", "$sp").
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.

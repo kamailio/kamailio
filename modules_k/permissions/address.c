@@ -52,9 +52,6 @@ struct subnet **subnet_table;        /* Ptr to current subnet table */
 struct subnet *subnet_table_1;       /* Ptr to subnet table 1 */
 struct subnet *subnet_table_2;       /* Ptr to subnet table 2 */
 
-/* Address group of allow_address queries */
-static unsigned int addr_group = 0;               
-
 static db_con_t* db_handle = 0;
 static db_func_t perm_dbf;
 
@@ -311,41 +308,27 @@ void clean_addresses(void)
 
 
 /*
- * Sets address group to be used by subsequent allow_address() tests.
+ * Checks if an entry exists in cached address table that belongs to a
+ * given address group and has given ip address and port.  Port value
+ * 0 in cached address table matches any port.
  */
-int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2) 
-{
-	int a = 0;
-
-	if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &a)!=0)
-	{
-		LM_ERR("cannot get group value\n");
-		return -1;
-	}
-
-	addr_group = a;
-    LM_DBG("set addr_group to <%u>\n", addr_group);
-
-    return 1;
-}
-
-
-/*
- * Checks if an entry exists in cached address table that belongs to
- * pre-assigned group and has ip address and port given in pseudo
- * variable parameters.  Port value 0 in cached address table matches
- * any port.
- */
-int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp) 
+int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
+		  char* _port_sp)
 {
     pv_spec_t *addr_sp, *port_sp;
     pv_value_t pv_val;
 
     unsigned int addr, port;
+    int addr_group;
     struct in_addr addr_struct;
 
     addr_sp = (pv_spec_t *)_addr_sp;
     port_sp = (pv_spec_t *)_port_sp;
+
+    if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
+	LM_ERR("cannot get group value\n");
+	return -1;
+    }
 
     if (addr_sp && (pv_get_spec_value(_msg, addr_sp, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_INT) {
@@ -362,7 +345,7 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 	    return -1;
 	}
     } else {
-	LM_ERR("cannot get pseudo variable value\n");
+	LM_ERR("cannot get value of address pvar\n");
 	return -1;
     }
 
@@ -379,7 +362,7 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 	    return -1;
 	}
     } else {
-	LM_ERR("cannot get pseudo variable value\n");
+	LM_ERR("cannot get value of port pvar\n");
 	return -1;
     }
 
@@ -391,29 +374,27 @@ int allow_address(struct sip_msg* _msg, char* _addr_sp, char* _port_sp)
 
 
 /*
- * allow_source_address(group) equals to
- * set_address_group(group); allow_address("$si", "$sp");
- * but is faster.  group can be an integer string or pseudo variable.
+ * allow_source_address("group") equals to allow_address("group", "$si", "$sp")
+ * but is faster.
  */
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2) 
 {
-    int group = 0;
+    int addr_group = 0;
 
-	if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &group)!=0)
-	{
-		LM_ERR("cannot get group value\n");
-		return -1;
-	}
+    if(fixup_get_ivalue(_msg, (gparam_p)_addr_group, &addr_group) !=0 ) {
+	LM_ERR("cannot get group value\n");
+	return -1;
+    }
 
     LM_DBG("looking for <%u, %x, %u>\n",
-	group, _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
+	addr_group, _msg->rcv.src_ip.u.addr32[0], _msg->rcv.src_port);
 
-    if (match_addr_hash_table(*addr_hash_table, group,
+    if (match_addr_hash_table(*addr_hash_table, addr_group,
 			      _msg->rcv.src_ip.u.addr32[0],
 			      _msg->rcv.src_port) == 1)
 	return 1;
     else
-	return match_subnet_table(*subnet_table, group,
+	return match_subnet_table(*subnet_table, addr_group,
 				  _msg->rcv.src_ip.u.addr32[0],
 				  _msg->rcv.src_port);
 }

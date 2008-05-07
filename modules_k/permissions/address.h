@@ -60,23 +60,16 @@ void clean_addresses(void);
 
 
 /*
- * Sets address group to be used by subsequent allow_address() tests.
+ * Checks if an entry exists in cached address table that belongs to a
+ * given address group and has given ip address and port.  Port value
+ * 0 in cached address table matches any port.
  */
-int set_address_group(struct sip_msg* _msg, char* _addr_group, char* _str2);
+int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
+		  char* _port_sp);
 
 
 /*
- * Checks if an entry exists in cached address table that belongs to
- * pre-assigned group (default 0) and has ip address and port given in pseudo
- * variable parameters.  Port value 0 in cached address table matches
- * any port.
- */
-int allow_address(struct sip_msg* _msg, char* _addr, char* _port);
-
-
-/*
- * allow_source_address(group) equals to
- * set_address_group(group); allow_address("$si", "$sp");
+ * allow_source_address("group") equals to allow_address("group", "$si", "$sp")
  * but is faster.
  */
 int allow_source_address(struct sip_msg* _msg, char* _addr_group, char* _str2);

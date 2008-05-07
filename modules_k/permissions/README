@@ -68,11 +68,12 @@ Juha Heinanen
               1.4.4. allow_register(basename)
               1.4.5. allow_register(allow_file, deny_file)
               1.4.6. allow_uri(basename, pvar)
-              1.4.7. set_address_group(group_id)
-              1.4.8. allow_address(ip_addr_pvar, port_pvar)
-              1.4.9. allow_source_address(group_id)
-              1.4.10. allow_source_address_group()
-              1.4.11. allow_trusted([src_ip_pvar, proto_pvar])
+              1.4.7. allow_address(group_id, ip_addr_pvar,
+                      port_pvar)
+
+              1.4.8. allow_source_address(group_id)
+              1.4.9. allow_source_address_group()
+              1.4.10. allow_trusted([src_ip_pvar, proto_pvar])
 
         1.5. Exported MI Functions
 
@@ -109,11 +110,10 @@ Juha Heinanen
    1.22. allow_register(basename) usage
    1.23. allow_register(allow_file, deny_file) usage
    1.24. allow_uri(basename, pvar) usage
-   1.25. set_address_group(group_id) usage
-   1.26. allow_address(ip_addr_pvar, port_pvar) usage
-   1.27. allow_source_address(group_id) usage
-   1.28. allow_source_address_group() usage
-   1.29. allow_trusted() usage
+   1.25. allow_address() usage
+   1.26. allow_source_address(group_id) usage
+   1.27. allow_source_address_group() usage
+   1.28. allow_trusted() usage
 
 Chapter 1. Admin Guide
 
@@ -220,9 +220,7 @@ Chapter 1. Admin Guide
    Addresses stored in cached database table can be grouped
    together into one or more groups specified by a group
    identifier (unsigned integer). Group identifier is given as
-   argument to allow_source_address function or assigned
-   separately for subsequent allow_address function calls using
-   set_address_group function.
+   argument to allow_address and allow_source_address functions.
 
 1.1.5. Trusted Requests
 
@@ -662,53 +660,37 @@ i:705)
 };
 ...
 
-1.4.7.  set_address_group(group_id)
-
-   Sets address group to be used in subsequent allow_address
-   function calls to an unsigned integer value given as argument.
-   Argument can be an integer string or a pvar.
-
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-
-   Example 1.25. set_address_group(group_id) usage
-...
-
-// Set address group identifier to 1.
-set_address_group("1");
-// Set address group identifier to value of pvar i:100.
-set_address_group("$avp(i:100)");
-...
-
-1.4.8.  allow_address(ip_addr_pvar, port_pvar)
+1.4.7.  allow_address(group_id, ip_addr_pvar, port_pvar)
 
    Returns true if IP address and port given as values of pvar
-   arguments and belonging to an earlier assigned address group
+   arguments belonging to a group given as group_id argument
    matches an IP subnet found in cached address table. Cached
    address table entry containing port value 0 matches any port.
+   group_id argument can be an integer string or a pseudo
+   variable.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.26. allow_address(ip_addr_pvar, port_pvar) usage
+   Example 1.25. allow_address() usage
 ...
 
-// Check source address/port of request
-if (!allow_address("$si", "$sp")) {
+// Check if source address/port is in group 1
+if (!allow_address("1", "$si", "$sp")) {
         sl_send_reply("403", "Forbidden");
 };
-// Check IP address/port stored in AVPs i:704/i:705
-if (!allow_address("$avp(i:704)", "$avp(i:705)") {
+// Check IP address/port stored in AVPs i:704/i:705 is in group 2
+if (!allow_address("2", "$avp(i:704)", "$avp(i:705)") {
         sl_send_reply("403", "Forbidden");
 };
 ...
 
-1.4.9.  allow_source_address(group_id)
+1.4.8.  allow_source_address(group_id)
 
-   Equal to set_address_group(group_id); allow_address("$si",
-   "$sp"), but faster.
+   Equal to allow_address(group_id, "$si", "$sp").
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.27. allow_source_address(group_id) usage
+   Example 1.26. allow_source_address(group_id) usage
 ...
 
 // Check source address/port of request
@@ -717,7 +699,7 @@ if (!allow_source_address("0")) {
 };
 ...
 
-1.4.10.  allow_source_address_group()
+1.4.9.  allow_source_address_group()
 
    Checks if source address/port is found in cached address or
    subnet table in any group. If yes, returns that group. If not
@@ -726,7 +708,7 @@ if (!allow_source_address("0")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. allow_source_address_group() usage
+   Example 1.27. allow_source_address_group() usage
 ...
 
 $var(group) = allow_source_address_group();
@@ -735,7 +717,7 @@ if ($var(group) != -1) {
 };
 ...
 
-1.4.11.  allow_trusted([src_ip_pvar, proto_pvar])
+1.4.10.  allow_trusted([src_ip_pvar, proto_pvar])
 
    Checks based either on request's source address and transport
    protocol or source address and transport protocol given in pvar
@@ -752,7 +734,7 @@ if ($var(group) != -1) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.29. allow_trusted() usage
+   Example 1.28. allow_trusted() usage
 ...
 if (allow_trusted()) {
         t_relay();

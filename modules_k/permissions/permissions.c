@@ -95,11 +95,6 @@ static int load_fixup(void** param, int param_no);
  */
 static int single_fixup(void** param, int param_no);
 
-/*
- * Fixes up allow_addess() parameters
- */
-static int address_fixup(void** param, int param_no);
-
 
 /*
  * Parse pseudo variable parameter
@@ -138,10 +133,8 @@ static cmd_export_t cmds[] = {
 	        fixup_free_pvar_pvar, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_uri",      (cmd_function)allow_uri, 2, double_fixup, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"set_address_group", (cmd_function)set_address_group, 1, fixup_igp_null, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{"allow_address",  (cmd_function)allow_address, 2, address_fixup, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
+	{"allow_address",  (cmd_function)allow_address, 3, fixup_igp_pvar_pvar,
+	        fixup_free_igp_pvar_pvar, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_source_address", (cmd_function)allow_source_address, 1, fixup_igp_null, 0,
 		REQUEST_ROUTE | FAILURE_ROUTE},
 	{"allow_source_address_group", (cmd_function)allow_source_address_group, 0, 0, 0,
@@ -573,45 +566,6 @@ static int double_fixup(void** param, int param_no)
 	*param = (void *)0;
 
 	return 0;
-}
-
-
-/*
- * Convert pvars into parsed pseudo variable specifications
- */
-static int address_fixup(void** param, int param_no)
-{
-    pv_spec_t *sp;
-	str s;
-
-    if ((param_no == 1) || (param_no == 2)) { /* pseudo variables */
-	
-	sp = (pv_spec_t*)pkg_malloc(sizeof(pv_spec_t));
-	if (sp == 0) {
-	    LM_ERR("no pkg memory left\n");
-	    return -1;
-	}
-	s.s = (char*)*param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, sp) == 0) {
-	    LM_ERR("parsing of pseudo variable %s failed!\n", (char*)*param);
-	    pkg_free(sp);
-	    return -1;
-	}
-
-	if (sp->type == PVT_NULL) {
-	    LM_ERR("bad pseudo variable\n");
-	    pkg_free(sp);
-	    return -1;
-	}
-
-	*param = (void*)sp;
-
-	return 0;
-    }
-
-    *param = (void *)0;
-
-    return 0;
 }
 
 
