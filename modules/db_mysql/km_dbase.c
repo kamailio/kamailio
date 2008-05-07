@@ -117,9 +117,11 @@ static int db_mysql_submit_query(const db_con_t* _h, const str* _s)
 
 
 
-/*
- * Initialize database module
+/**
+ * Initialize the database module.
  * No function should be called before this
+ * \param _url URL used for initialization
+ * \return zero on success, negative value on failure
  */
 db_con_t* db_mysql_init(const str* _url)
 {
@@ -127,9 +129,11 @@ db_con_t* db_mysql_init(const str* _url)
 }
 
 
-/*
- * Shut down database module
+/**
+ * Shut down the database module.
  * No function should be called after this
+ * \param _h handle to the closed connection
+ * \return zero on success, negative value on failure
  */
 void db_mysql_close(db_con_t* _h)
 {
@@ -137,8 +141,11 @@ void db_mysql_close(db_con_t* _h)
 }
 
 
-/*
- * Retrieve result set
+/**
+ * Retrieve a result set
+ * \param _h handle to the database
+ * \param _r result set that should be retrieved
+ * \return zero on success, negative value on failure
  */
 static int db_mysql_store_result(const db_con_t* _h, db_res_t** _r)
 {
@@ -197,8 +204,11 @@ done:
 }
 
 
-/*
- * Release a result set from memory
+/**
+ * Release a result set from memory.
+ * \param _h handle to the database
+ * \param _r result set that should be freed
+ * \return zero on success, negative value on failure
  */
 int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
 {
@@ -217,16 +227,17 @@ int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
 }
 
 
-/*
- * Query table for specified rows
- * _h: structure representing database connection
- * _k: key names
- * _op: operators
- * _v: values of the keys that must match
- * _c: column names to return
- * _n: number of key=values pairs to compare
- * _nc: number of columns to return
- * _o: order by the specified column
+/**
+ * Query a table for specified rows.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _op operators
+ *\param  _v values of the keys that must match
+ * \param _c column names to return
+ * \param _n number of key=values pairs to compare
+ * \param _nc number of columns to return
+ * \param _o order by the specified column
+ * \return zero on success, negative value on failure
  */
 int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
@@ -236,16 +247,16 @@ int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	db_mysql_val2str, db_mysql_submit_query, db_mysql_store_result);
 }
 
-/*
- * gets a partial result set
- * _h: structure representing the database connection
- * _r: pointer to a structure representing the result
- * nrows: number of fetched rows
+/**
+ * Gets a partial result set.
+ * \param _h structure representing the database connection
+ * \param _r pointer to a structure representing the result
+ * \param nrows number of fetched rows
+ * \return zero on success, negative value on failure
  */
 int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 {
-	int n;
-	int i;
+	int rows, i;
 
 	if (!_h || !_r || nrows < 0) {
 		LM_ERR("Invalid parameter value\n");
@@ -287,9 +298,11 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 
 		RES_NUM_ROWS(*_r) = mysql_num_rows(CON_RESULT(_h));
 		if (!RES_NUM_ROWS(*_r)) {
+			LM_DBG("no rows returned from the query\n");
 			RES_ROWS(*_r) = 0;
 			return 0;
 		}
+
 	} else {
 		/* free old rows */
 		if(RES_ROWS(*_r)!=0)
@@ -299,27 +312,27 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 	}
 
 	/* determine the number of rows remaining to be processed */
-	n = RES_NUM_ROWS(*_r) - RES_LAST_ROW(*_r);
+	rows = RES_NUM_ROWS(*_r) - RES_LAST_ROW(*_r);
 
 	/* If there aren't any more rows left to process, exit */
-	if(n<=0)
+	if(rows<=0)
 		return 0;
 
 	/* if the fetch count is less than the remaining rows to process                 */
 	/* set the number of rows to process (during this call) equal to the fetch count */
-	if(nrows < n)
-		n = nrows;
+	if(nrows < rows)
+		rows = nrows;
 
-	RES_LAST_ROW(*_r) += n;
-	RES_ROW_N(*_r) = n;
+	RES_LAST_ROW(*_r) += rows;
+	RES_ROW_N(*_r) = rows;
 
-	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * n);
+	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * rows);
 	if (!RES_ROWS(*_r)) {
 		LM_ERR("no memory left\n");
 		return -5;
 	}
 
-	for(i = 0; i < n; i++) {
+	for(i = 0; i < rows; i++) {
 		CON_ROW(_h) = mysql_fetch_row(CON_RESULT(_h));
 		if (!CON_ROW(_h)) {
 			LM_ERR("driver error: %s\n", mysql_error(CON_CONNECTION(_h)));
@@ -337,8 +350,12 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 	return 0;
 }
 
-/*
- * Execute a raw SQL query
+/**
+ * Execute a raw SQL query.
+ * \param _h handle for the database
+ * \param _s raw query string
+ * \param _r result set for storage
+ * \return zero on success, negative value on failure
  */
 int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 {
@@ -347,12 +364,13 @@ int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 }
 
 
-/*
- * Insert a row into specified table
- * _h: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
+/**
+ * Insert a row into a specified table.
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \return zero on success, negative value on failure
  */
 int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
@@ -361,13 +379,14 @@ int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, 
 }
 
 
-/*
+/**
  * Delete a row from the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _n: number of key=value pairs
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _o operators
+ * \param _v values of the keys that must match
+ * \param _n number of key=value pairs
+ * \return zero on success, negative value on failure
  */
 int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const db_val_t* _v, const int _n)
@@ -377,16 +396,17 @@ int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 }
 
 
-/*
+/**
  * Update some rows in the specified table
- * _h: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _uk: updated columns
- * _uv: updated values of the columns
- * _n: number of key=value pairs
- * _un: number of columns to update
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _o operators
+ * \param _v values of the keys that must match
+ * \param _uk updated columns
+ * \param _uv updated values of the columns
+ * \param _n number of key=value pairs
+ * \param _un number of columns to update
+ * \return zero on success, negative value on failure
  */
 int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o, 
 	const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, 
@@ -397,8 +417,13 @@ int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 }
 
 
-/*
- * Just like insert, but replace the row if it exists
+/**
+ * Just like insert, but replace the row if it exists.
+ * \param _h database handle
+ * \param _k key names
+ * \param _v values of the keys that must match
+ * \param _n number of key=value pairs
+ * \return zero on success, negative value on failure
  */
 int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
@@ -407,8 +432,11 @@ int db_mysql_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 }
 
 
-/*
- * Returns the last inserted ID
+/**
+ * Returns the last inserted ID.
+ * \param _h database handle
+ * \return returns the ID as integer or returns 0 if the previous statement
+ * does not use an AUTO_INCREMENT value.
  */
 int db_last_inserted_id(const db_con_t* _h)
 {
@@ -419,13 +447,13 @@ int db_last_inserted_id(const db_con_t* _h)
 	return mysql_insert_id(CON_CONNECTION(_h));
 }
 
- 
- /*
-  * Insert a row into specified table, update on duplicate key
-  * _h: structure representing database connection
-  * _k: key names
-  * _v: values of the keys
-  * _n: number of key=value pairs
+
+ /**
+  * Insert a row into a specified table, update on duplicate key.
+  * \param _h structure representing database connection
+  * \param _k key names
+  * \param _v values of the keys
+  * \param _n number of key=value pairs
  */
  int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n)
@@ -479,9 +507,11 @@ error:
 }
 
 
-/*
- * Store name of table that will be used by
- * subsequent database functions
+/**
+ * Store the name of table that will be used by subsequent database functions
+ * \param _h database handle
+ * \param _t table name
+ * \return zero on success, negative value on failure
  */
 int db_mysql_use_table(db_con_t* _h, const str* _t)
 {
