@@ -69,7 +69,7 @@ int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r)
 		return -2;
 	}
 
-	if (db_postgres_convert_rows(_h, _r, 0, PQntuples(CON_RESULT(_h))) < 0) {
+	if (db_postgres_convert_rows(_h, _r) < 0) {
 		LM_ERR("failed to convert rows\n");
 		db_free_columns(_r);
 		return -3;
@@ -88,9 +88,6 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 		LM_ERR("invalid parameter value\n");
 		return -1;
 	}
-
-	/* Get the number of rows (tuples) in the query result. */
-	RES_NUM_ROWS(_r) = PQntuples(CON_RESULT(_h));
 
 	/* Get the number of columns (fields) in each row of the query result. */
 	RES_COL_N(_r) = PQnfields(CON_RESULT(_h));
@@ -184,60 +181,36 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 /**
  * Convert rows from PostgreSQL to db API representation
  */
-int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
-		int row_count)
+int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
-	int row, col;
 	char **row_buf, *s;
-	int len, fetch_count;
+	int row, col, len;
 
 	if (!_h || !_r)  {
-		LM_ERR("invalid parameter value\n");
+		LM_ERR("invalid parameter\n");
 		return -1;
 	}
 
-	if (row_count == 0) {
-		LM_ERR("no rows requested from the query\n");
-		return 0;
-	}
-
-	if (!RES_NUM_ROWS(_r)) {
+	RES_ROW_N(_r) = PQntuples(CON_RESULT(_h));
+	if (!RES_ROW_N(_r)) {
 		LM_DBG("no rows returned from the query\n");
+		RES_ROWS(_r) = 0;
 		return 0;
 	}
 
-	if (row_start < 0)  {
-		LM_ERR("starting row (%d) cannot be less "
-			"then zero, setting it to zero\n", row_start);
-		row_start = 0;
-	}
-
-	if ((row_start + row_count) > RES_NUM_ROWS(_r))  {
-		LM_ERR("starting row + row count cannot be > "
-			"total rows. Setting row count to read remainder of result set\n");
-		row_count = RES_NUM_ROWS(_r) - row_start;
-	}
-
-	/* Save the number of rows in the current fetch */
-	RES_ROW_N(_r) = row_count;
-
-	/*
-	 * Allocate an array of pointers one per column. It that will be used to hold
-	 * the address of the string representation of each column.
-	 */
-	len = sizeof(char *) * RES_COL_N(_r);
-	row_buf = (char **)pkg_malloc(len);
-	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_r), len, row_buf);
+	len = sizeof(db_row_t) * RES_COL_N(_r);
+	row_buf = (char**)pkg_malloc(len);
 	if (!row_buf) {
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
+	LM_DBG("allocate for %d columns %d bytes in row buffer at %p\n", RES_COL_N(_r), len, row_buf);
 	memset(row_buf, 0, len);
 
 	/* Allocate a row structure for each row in the current fetch. */
-	len = sizeof(db_row_t) * row_count;
+	len = sizeof(db_row_t) * RES_ROW_N(_r);
 	RES_ROWS(_r) = (db_row_t*)pkg_malloc(len);
-	LM_DBG("allocate %d bytes for %d rows at %p\n", len, row_count, RES_ROWS(_r));
+	LM_DBG("allocate %d bytes for %d rows at %p\n", len, RES_ROW_N(_r), RES_ROWS(_r));
 
 	if (!RES_ROWS(_r)) {
 		LM_ERR("no private memory left\n");
@@ -245,8 +218,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 	}
 	memset(RES_ROWS(_r), 0, len);
 
-	fetch_count = 0;
-	for(row = row_start; row < (row_start + row_count); row++) {
+	for(row = 0; row < RES_ROW_N(_r); row++) {
 		for(col = 0; col < RES_COL_N(_r); col++) {
 				/*
 				 * The row data pointer returned by PQgetvalue points to storage
@@ -274,9 +246,9 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 		/*
 		** ASSERT: row_buf contains an entire row in strings
 		*/
-		if(db_postgres_convert_row(_h, _r, &(RES_ROWS(_r)[fetch_count]), row_buf)<0){
+		if(db_postgres_convert_row(_h, _r, &(RES_ROWS(_r)[row]), row_buf)<0){
 			LM_ERR("failed to convert row #%d\n",  row);
-			RES_ROW_N(_r) = row - row_start;
+			RES_ROW_N(_r) = row - RES_LAST_ROW(_r);
 			for (col = 0; col < RES_COL_N(_r); col++) {
 				LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
 				pkg_free(row_buf[col]);
@@ -328,7 +300,6 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r, int row_start,
 			 */
 			row_buf[col] = (char *)NULL;
 		}
-	fetch_count++;
 	}
 
 	LM_DBG("freeing row buffer at %p\n", row_buf);
