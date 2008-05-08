@@ -144,6 +144,7 @@ static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 
 	RES_ROW_N(_r) = mysql_num_rows(CON_RESULT(_h));
 	if (!RES_ROW_N(_r)) {
+		LM_DBG("no rows returned from the query\n");
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
