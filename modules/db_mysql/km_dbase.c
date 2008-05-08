@@ -323,8 +323,10 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 	if(nrows < rows)
 		rows = nrows;
 
-	RES_LAST_ROW(*_r) += rows;
 	RES_ROW_N(*_r) = rows;
+
+	LM_DBG("converting row %d of %d count %d\n", RES_LAST_ROW(*_r),
+			RES_NUM_ROWS(*_r), RES_ROW_N(*_r));
 
 	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(sizeof(db_row_t) * rows);
 	if (!RES_ROWS(*_r)) {
@@ -347,6 +349,9 @@ int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 			return -7;
 		}
 	}
+
+	/* update the total number of rows processed */
+	RES_LAST_ROW(*_r) += rows;
 	return 0;
 }
 
