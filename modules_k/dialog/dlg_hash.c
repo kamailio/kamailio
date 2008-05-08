@@ -508,7 +508,7 @@ void next_state_dlg(struct dlg_cell *dlg, int event,
 			switch (dlg->state) {
 				case DLG_STATE_DELETED:
 					if (dlg->flags&DLG_FLAG_HASBYE) {
-						LM_CRIT("bogus event %d in state %d "
+						LM_CRIT("bogus event %d in state %d (with BYE) "
 							"for dlg with clid '%.*s' and tags '%.*s' '%.*s'\n",
 							event,dlg->state,
 							dlg->callid.len, dlg->callid.s,
