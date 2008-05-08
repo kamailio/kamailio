@@ -119,3 +119,11 @@
 ## do (1) or don't (0) store plaintext passwords
 ## in the subscriber table - default '1'
 # STORE_PLAINTEXT_PW=0
+
+## OPENSER START Options
+## PID file path - default is: /var/run/openser.pid
+# PID_FILE=/var/run/openser.pid
+
+## Extra start options - default is: not set
+# example: start openser with 64MB share memory: STARTOPTIONS="-m 64"
+# STARTOPTIONS=
