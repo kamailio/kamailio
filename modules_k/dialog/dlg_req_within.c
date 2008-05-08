@@ -234,7 +234,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 		goto err;
 	}
 
-	LM_DBG("sending bye to %s\n", (dir==0)?"caller":"callee");
+	LM_DBG("sending BYE to %s\n", (dir==0)?"caller":"callee");
 
 	ref_dlg(cell, 1);
 
@@ -247,14 +247,14 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 		(void*)cell);  /* callback parameter*/
 
 	if(result < 0){
-		LM_ERR("failed to send the bye request\n");
+		LM_ERR("failed to send the BYE request\n");
 		goto err1;
 	}
 
 	free_tm_dlg(dialog_info);
 	pkg_free(str_hdr.s);
 
-	LM_DBG("bye sent to %s\n", (dir==0)?"caller":"callee");
+	LM_DBG("BYE sent to %s\n", (dir==0)?"caller":"callee");
 	return 0;
 
 err1:
