@@ -715,7 +715,10 @@ void dlg_ontimeout( struct dlg_tl *tl)
 	next_state_dlg( dlg, DLG_EVENT_REQBYE, &old_state, &new_state, &unref);
 
 	if (new_state==DLG_STATE_DELETED && old_state!=DLG_STATE_DELETED) {
-		LM_DBG("dlg %p timeout at %d\n", dlg, tl->timeout);
+		LM_WARN("timeout for dlg with CallID '%.*s' and tags '%.*s' '%.*s'\n",
+			dlg->callid.len, dlg->callid.s,
+			dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+			dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s);
 
 		/* dialog timeout */
 		run_dlg_callbacks( DLGCB_EXPIRED, dlg, 0, DLG_DIR_NONE, 0);
