@@ -250,8 +250,12 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 		if(RES_ROWS(*_res) != NULL) {
 			db_free_rows(*_res);
 		}
+		RES_ROWS(*_res) = 0;
 		RES_ROW_N(*_res) = 0;
 	}
+
+	/* Get the number of rows (tuples) in the query result. */
+	RES_NUM_ROWS(*_res) = PQntuples(CON_RESULT(_con));
 
 	/* determine the number of rows remaining to be processed */
 	rows = RES_NUM_ROWS(*_res) - RES_LAST_ROW(*_res);
@@ -259,8 +263,8 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 	/* If there aren't any more rows left to process, exit */
 	if (rows <= 0)
 		return 0;
-	
-	/* if the fetch count is less than the remaining rows to process		 */
+
+	/* if the fetch count is less than the remaining rows to process                 */
 	/* set the number of rows to process (during this call) equal to the fetch count */
 	if (nrows < rows)
 		rows = nrows;
@@ -270,7 +274,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 	LM_DBG("converting row %d of %d count %d\n", RES_LAST_ROW(*_res),
 			RES_NUM_ROWS(*_res), RES_ROW_N(*_res));
 
-	if (db_postgres_convert_rows(_con, *_res, RES_LAST_ROW(*_res), RES_ROW_N(*_res)) < 0) {
+	if (db_postgres_convert_rows(_con, *_res) < 0) {
 		LM_ERR("failed to convert rows\n");
 		if (*_res)
 			db_free_result(*_res);
