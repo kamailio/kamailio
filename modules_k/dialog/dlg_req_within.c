@@ -222,7 +222,6 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 	dlg_t* dialog_info;
 	str met = {"BYE", 3};
 	str str_hdr = {NULL,0};
-	struct dlg_entry *d_entry;
 	int result;
 
 	if ((dialog_info = build_dlg_t(cell, dir)) == 0){
@@ -237,10 +236,7 @@ static inline int send_bye(struct dlg_cell * cell, int dir, str *extra_hdrs)
 
 	LM_DBG("sending bye to %s\n", (dir==0)?"caller":"callee");
 
-	d_entry = &(d_table->entries[cell->h_entry]);
-	dlg_lock( d_table, d_entry);
-	ref_dlg_unsafe(cell, 1);
-	dlg_unlock( d_table, d_entry);
+	ref_dlg(cell, 1);
 
 	result = d_tmb.t_request_within
 		(&met,         /* method*/
