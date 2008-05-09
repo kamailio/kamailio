@@ -89,6 +89,9 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
+	/* Get the number of rows (tuples) in the query result. */
+	RES_ROW_N(_r) = PQntuples(CON_RESULT(_h));
+
 	/* Get the number of columns (fields) in each row of the query result. */
 	RES_COL_N(_r) = PQnfields(CON_RESULT(_h));
 
@@ -191,14 +194,13 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 		return -1;
 	}
 
-	RES_ROW_N(_r) = PQntuples(CON_RESULT(_h));
 	if (!RES_ROW_N(_r)) {
 		LM_DBG("no rows returned from the query\n");
 		RES_ROWS(_r) = 0;
 		return 0;
 	}
-
-	len = sizeof(db_row_t) * RES_COL_N(_r);
+	/*Allocate an array of pointers per column to holds the string representation */
+	len = sizeof(char *) * RES_COL_N(_r);
 	row_buf = (char**)pkg_malloc(len);
 	if (!row_buf) {
 		LM_ERR("no private memory left\n");
@@ -218,7 +220,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 	}
 	memset(RES_ROWS(_r), 0, len);
 
-	for(row = 0; row < RES_ROW_N(_r); row++) {
+	for(row = RES_LAST_ROW(_r); row < (RES_LAST_ROW(_r) + RES_ROW_N(_r)); row++) {
 		for(col = 0; col < RES_COL_N(_r); col++) {
 				/*
 				 * The row data pointer returned by PQgetvalue points to storage
@@ -243,10 +245,8 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 					row, col, RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s, row_buf[col]);
 		}
 
-		/*
-		** ASSERT: row_buf contains an entire row in strings
-		*/
-		if(db_postgres_convert_row(_h, _r, &(RES_ROWS(_r)[row]), row_buf)<0){
+		/* ASSERT: row_buf contains an entire row in strings */
+		if(db_postgres_convert_row(_h, _r, &(RES_ROWS(_r)[row - RES_LAST_ROW(_r)]), row_buf)<0){
 			LM_ERR("failed to convert row #%d\n",  row);
 			RES_ROW_N(_r) = row - RES_LAST_ROW(_r);
 			for (col = 0; col < RES_COL_N(_r); col++) {
@@ -282,10 +282,6 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 				case DB_STR:
 					break;
 				default:
-					LM_DBG("[%d][%d] Col[%.*s] Type[%d] "
-						"Freeing row_buf[%p]\n", row, col,
-						RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s,
-						RES_TYPES(_r)[col], row_buf[col]);
 					LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
 					pkg_free(row_buf[col]);
 			}
