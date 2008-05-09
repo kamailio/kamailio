@@ -583,18 +583,24 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 
 			dlg = lookup_dlg( h_entry, h_id);
 			if (dlg==0) {
-				LM_WARN("unable to find dialog for %.*s\n",
+				LM_WARN("unable to find dialog for %.*s "
+					"with route param '%.*s'\n",
 					req->first_line.u.request.method.len,
-					req->first_line.u.request.method.s);
+					req->first_line.u.request.method.s,
+					val.len,val.s);
 				return;
 			}
 
 			if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
 				return;
 			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
-				LM_WARN("tight matching failed for %.*s\n",
+				LM_WARN("tight matching failed for %.*s "
+					"with clid '%.*s' and tags '%.*s' '%.*s'"
+					"and direction %d\n",
 					req->first_line.u.request.method.len,
-					req->first_line.u.request.method.s);
+					req->first_line.u.request.method.s,
+					callid.len,callid.s,
+					ftag.len,ftag.s,ttag.len,ttag.s,dir);
 				return;
 			}
 		}
