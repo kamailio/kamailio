@@ -103,7 +103,7 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 	}
 
 	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
-		LM_ERR("could not allocate columns");
+		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
 
@@ -116,7 +116,7 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			db_free_columns(_r);
 			return -4;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p", sizeof(str), col,
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
 				RES_NAMES(_r)[col]);
 
 		/* The pointer that is here returned is part of the result structure. */
@@ -132,21 +132,21 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			case INT2OID:
 			case INT4OID:
 			case INT8OID:
-				LM_DBG("use DB_INT result type");
+				LM_DBG("use DB_INT result type\n");
 				RES_TYPES(_r)[col] = DB_INT;
 			break;
 
 			case FLOAT4OID:
 			case FLOAT8OID:
 			case NUMERICOID:
-				LM_DBG("use DB_DOUBLE result type");
+				LM_DBG("use DB_DOUBLE result type\n");
 				RES_TYPES(_r)[col] = DB_DOUBLE;
 			break;
 
 			case DATEOID:
 			case TIMESTAMPOID:
 			case TIMESTAMPTZOID:
-				LM_DBG("use DB_DATETIME result type");
+				LM_DBG("use DB_DATETIME result type\n");
 				RES_TYPES(_r)[col] = DB_DATETIME;
 			break;
 
@@ -154,19 +154,19 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			case CHAROID:
 			case VARCHAROID:
 			case BPCHAROID:
-				LM_DBG("use DB_STRING result type");
+				LM_DBG("use DB_STRING result type\n");
 				RES_TYPES(_r)[col] = DB_STRING;
 			break;
 
 			case TEXTOID:
 			case BYTEAOID:
-				LM_DBG("use DB_BLOB result type");
+				LM_DBG("use DB_BLOB result type\n");
 				RES_TYPES(_r)[col] = DB_BLOB;
 			break;
 
 			case BITOID:
 			case VARBITOID:
-				LM_DBG("use DB_BITMAP result type");
+				LM_DBG("use DB_BITMAP result type\n");
 				RES_TYPES(_r)[col] = DB_BITMAP;
 			break;
 				

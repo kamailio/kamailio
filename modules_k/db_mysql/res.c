@@ -56,7 +56,7 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 	}
 	
 	if (db_allocate_columns(_r, RES_COL_N(_r)) != 0) {
-		LM_ERR("could not allocate columns");
+		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
 
@@ -87,34 +87,34 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 			case MYSQL_TYPE_DECIMAL:
 			case MYSQL_TYPE_NEWDECIMAL:
 			case MYSQL_TYPE_TIMESTAMP:
-				LM_DBG("use DB_INT result type");
+				LM_DBG("use DB_INT result type\n");
 				RES_TYPES(_r)[col] = DB_INT;
 				break;
 
 			case MYSQL_TYPE_FLOAT:
 			case MYSQL_TYPE_DOUBLE:
-				LM_DBG("use DB_DOUBLE result type");
+				LM_DBG("use DB_DOUBLE result type\n");
 				RES_TYPES(_r)[col] = DB_DOUBLE;
 				break;
 
 			case MYSQL_TYPE_DATETIME:
-				LM_DBG("use DB_DATETIME result type");
+				LM_DBG("use DB_DATETIME result type\n");
 				RES_TYPES(_r)[col] = DB_DATETIME;
 				break;
 
 			case MYSQL_TYPE_BLOB:
-				LM_DBG("use DB_BLOB result type");
+				LM_DBG("use DB_BLOB result type\n");
 				RES_TYPES(_r)[col] = DB_BLOB;
 				break;
 
 			case FIELD_TYPE_SET:
-				LM_DBG("use DB_BITMAP result type");
+				LM_DBG("use DB_BITMAP result type\n");
 				RES_TYPES(_r)[col] = DB_BITMAP;
 				break;
 
 			case MYSQL_TYPE_STRING:
 			case MYSQL_TYPE_VAR_STRING:
-				LM_DBG("use DB_STRING result type");
+				LM_DBG("use DB_STRING result type\n");
 				RES_TYPES(_r)[col] = DB_STRING;
 				break;
 

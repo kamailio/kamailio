@@ -65,7 +65,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 	RES_COL_N(_r) = cols;
 
 	if (db_allocate_columns(_r, cols) != 0) {
-		LM_ERR("could not allocate columns");
+		LM_ERR("could not allocate columns\n");
 		return -3;
 	}
 
@@ -77,7 +77,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			db_free_columns(_r);
 			return -4;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p", sizeof(str), col,
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
 				RES_NAMES(_r)[col]);
 
 		char columnname[80];
@@ -108,14 +108,14 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_BIGINT:
 			case SQL_DECIMAL:
 			case SQL_NUMERIC:
-				LM_DBG("use DB_INT result type");
+				LM_DBG("use DB_INT result type\n");
 				RES_TYPES(_r)[col] = DB_INT;
 				break;
 
 			case SQL_REAL:
 			case SQL_FLOAT:
 			case SQL_DOUBLE:
-				LM_DBG("use DB_DOUBLE result type");
+				LM_DBG("use DB_DOUBLE result type\n");
 				RES_TYPES(_r)[col] = DB_DOUBLE;
 				break;
 
@@ -125,7 +125,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_TIMESTAMP:
 			case SQL_TYPE_DATE:
 			case SQL_TYPE_TIME:
-				LM_DBG("use DB_DATETIME result type");
+				LM_DBG("use DB_DATETIME result type\n");
 				RES_TYPES(_r)[col] = DB_DATETIME;
 				break;
 
@@ -133,7 +133,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_VARCHAR:
 			case SQL_WCHAR:
 			case SQL_WVARCHAR:
-				LM_DBG("use DB_STRING result type");
+				LM_DBG("use DB_STRING result type\n");
 				RES_TYPES(_r)[col] = DB_STRING;
 				break;
 
@@ -143,7 +143,7 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_BIT:
 			case SQL_LONGVARCHAR:
 			case SQL_WLONGVARCHAR:
-				LM_DBG("use DB_BLOB result type");
+				LM_DBG("use DB_BLOB result type\n");
 				RES_TYPES(_r)[col] = DB_BLOB;
 				break;
 
