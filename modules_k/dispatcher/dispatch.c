@@ -438,7 +438,7 @@ int init_ds_db(void)
 	} else if (_ds_table_version != DS_TABLE_VERSION
 			&& _ds_table_version != DS_TABLE_VERSION2) {
 		LM_ERR("invalid table version (found %d , required %d or %d)\n"
-			"(use openser_mysql.sh reinstall)\n",
+			"(use openserdbctl reinit)\n",
 			_ds_table_version, DS_TABLE_VERSION, DS_TABLE_VERSION2 );
 		return -1;
 	}

@@ -137,7 +137,7 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period)
 		return -1;
 	} else if (ver != DLG_TABLE_VERSION) {
 		LM_ERR("Invalid table version (found %d , required %d)\n"
-			"(use openser_mysql.sh reinstall)\n",
+			"(use openserdbctl reinit)\n",
 			ver, DLG_TABLE_VERSION );
 		return -1;
 	}

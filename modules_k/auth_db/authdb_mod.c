@@ -252,7 +252,7 @@ static int auth_fixup(void** param, int param_no)
 			LM_ERR("failed to query table version\n");
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LM_ERR("invalid table version (use openser_mysql.sh reinstall)\n");
+			LM_ERR("invalid table version (use openserdbctl reinit)\n");
 			return -1;
 		}
 	}

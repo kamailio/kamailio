@@ -208,7 +208,7 @@ static int mod_init(void)
 		return -1;
 	} else if (ver < TABLE_VERSION) {
 		LM_ERR("invalid table version for %s "
-				"(use openser_mysql.sh reinstall)\n",table.s);
+				"(use openserdbctl reinit)\n",table.s);
 		return -1;
 	}
 
@@ -220,7 +220,7 @@ static int mod_init(void)
 			return -1;
 		} else if (ver < RE_TABLE_VERSION) {
 			LM_ERR("invalid table version for %s "
-					"(use openser_mysql.sh reinstall)\n",re_table.s);
+					"(use openserdbctl reinit)\n",re_table.s);
 			return -1;
 		}
 

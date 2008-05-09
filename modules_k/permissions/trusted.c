@@ -184,7 +184,7 @@ int init_trusted(void)
 			return -1;
 		} else if (ver < TABLE_VERSION) {
 			LM_ERR("invalid table version %d - expected %d "
-					"(use openser_mysql.sh reinstall)\n", ver,TABLE_VERSION);
+					"(use openserdbctl reinit)\n", ver,TABLE_VERSION);
 			perm_dbf.close(db_handle);
 			return -1;
 		}
@@ -256,7 +256,7 @@ int init_child_trusted(int rank)
 			perm_dbf.close(db_handle);
 			return -1;
 		} else if (ver < TABLE_VERSION) {
-			LM_ERR("invalid table version (use openser_mysql.sh reinstall)\n");
+			LM_ERR("invalid table version (use openserdbctl reinit)\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}		

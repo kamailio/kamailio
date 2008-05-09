@@ -455,7 +455,7 @@ int register_udomain(const char* _n, udomain_t** _d)
 			LM_ERR("querying table version failed\n");
 			goto err;
 		} else if (ver < UL_TABLE_VERSION) {
-			LM_ERR("Invalid table version (use openser_mysql.sh reinstall)\n");
+			LM_ERR("Invalid table version (use openserdbctl reinit)\n");
 			goto err;
 		}
 		/* test if DB really exists */
