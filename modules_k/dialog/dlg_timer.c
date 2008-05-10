@@ -172,11 +172,13 @@ static inline struct dlg_tl* get_expired_dlgs(unsigned int time)
 {
 	struct dlg_tl *tl , *end, *ret;
 
-	if (d_timer->first.next==&(d_timer->first)
-	|| d_timer->first.next->timeout > time )
-		return 0;
-
 	lock_get( d_timer->lock);
+
+	if (d_timer->first.next==&(d_timer->first)
+	|| d_timer->first.next->timeout > time ) {
+		lock_release( d_timer->lock);
+		return 0;
+	}
 
 	end = &d_timer->first;
 	tl = d_timer->first.next;
@@ -212,7 +214,7 @@ void dlg_timer_routine(unsigned int ticks , void * attr)
 	while (tl) {
 		ctl = tl;
 		tl = tl->next;
-		ctl->next = (struct dlg_tl *)-1;
+		ctl->next = (struct dlg_tl *)NULL;
 		LM_DBG("tl=%p next=%p\n", ctl, tl);
 		timer_hdl( ctl );
 	}
