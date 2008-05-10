@@ -152,9 +152,8 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 	fprintf(_f, "State     : %s\n", st);
 	fprintf(_f, "Flags     : %u\n", _c->flags);
 	if (_c->sock) {
-		fprintf(_f, "Sock      : %.*s:%d (%p)\n",
-			_c->sock->address_str.len,_c->sock->address_str.s,
-			_c->sock->port_no,_c->sock);
+		fprintf(_f, "Sock      : %.*s (%p)\n",
+				_c->sock->sock_str.len,_c->sock->sock_str.s,_c->sock);
 	} else {
 		fprintf(_f, "Sock      : none (null)\n");
 	}
