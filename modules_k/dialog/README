@@ -591,25 +591,35 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 
 1.7.1. dlg_list
 
-   It returns a listing of all dialogs (calls).
+   Lists the description of a dialog or of all dialogs (calls).
+   If only one dialogs is to be listed, the dialog identifiers
+   are to be passed as paramter (callid and fromtag).
 
    Name: dlg_list
 
-   Parameters: none
+   Parameters:
+     * callid (optional) - callid if a single dialog to be
+       listed.
+     * from_tag (optional, but cannot be present without the
+       callid paramter) - fromtag (as per initial request) of the
+       dialog to be listed. entry
 
    MI FIFO Command Format:
                 :dlg_list:_reply_fifo_file_
                 _empty_line_
+                                :dlg_list:_reply_fifo_file_
+                abcdrssfrs122444@192.168.1.1
+                AAdfeEFF33
 
 1.7.2. dlg_list_ctx
 
-   It returns a listing of all dialogs (calls) including the
-   associated context from modules sitting on top of the dialog
-   module.
+   The same as the "dlg_list" but including in the dialog
+   description the associated context from modules sitting on top
+   of the dialog module.
 
    Name: dlg_list_ctx
 
-   Parameters: none
+   Parameters: see "dlg_list"
 
    MI FIFO Command Format:
                 :dlg_list_ctx:_reply_fifo_file_
