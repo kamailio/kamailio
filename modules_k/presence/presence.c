@@ -739,6 +739,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 	}ws_t;
 	ws_t* ws_list= NULL;
 
+    LM_DBG("start\n");
 
 	if(ev->content_type.s== NULL)
 	{
@@ -793,6 +794,7 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		goto done;
 	}
 
+    LM_DBG("found %d record-uri in watchers_table\n", result->n);
 	hash_code= core_hash(&pres_uri, &ev->name, shtable_size);
 	subs.db_flag= hash_code;
 
@@ -913,13 +915,14 @@ int update_watchers_status(str pres_uri, pres_ev_t* ev, str* rules_doc)
 		subs.status= status;
 		memset(&subs.reason, 0, sizeof(str));
 
-		if( pres_update_status(subs,reason, query_cols, query_vals,
+ 		if( pres_update_status(subs,reason, query_cols, query_vals,
 					n_query_cols, &subs_array)< 0)
 		{
 			LM_ERR("failed to update watcher status\n");
 			goto done;
 		}
-}
+    }
+
 	pa_dbf.free_result(pa_db, result);
 	result= NULL;
 
@@ -978,6 +981,7 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 	subs_t* s, *ps, *cs;
 	int i= 0;
 
+    LM_DBG("start\n");
 	lock_get(&subs_htable[hash_code].lock);
 	
     ps= subs_htable[hash_code].entries;
@@ -1008,13 +1012,13 @@ static int update_pw_dialogs(subs_t* subs, unsigned int hash_code, subs_t** subs
 			cs->expires-= (int)time(NULL);
 			cs->next= (*subs_array);
 			(*subs_array)= cs;
-			if(s->status== TERMINATED_STATUS)
+			if(subs->status== TERMINATED_STATUS)
 			{
-				cs->expires= 0;
 				ps->next= s->next;
 				shm_free(s->contact.s);
                 shm_free(s);
-			}
+                LM_DBG(" deleted terminated dialog from hash table\n");
+            }
 			else
 				ps= s;
 

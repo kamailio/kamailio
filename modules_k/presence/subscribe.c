@@ -618,6 +618,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 					LM_ERR("wrong status= %d\n", subs.status);
 					goto error;
 				}
+
 				if(insert_db_subs_auth(&subs)< 0)
 				{
 					LM_ERR("while inserting record in watchers table\n");
@@ -637,6 +638,8 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		LM_ERR("wrong status\n");
 		goto error;
 	}
+    LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status), 
+            found==0?"inserated":"found in watcher table");
 	
 	if(update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0)
 	{	

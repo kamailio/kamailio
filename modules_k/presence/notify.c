@@ -185,15 +185,7 @@ int build_str_hdr(subs_t* subs, int is_body, str** hdr)
 	strcpy(str_hdr->s+str_hdr->len, status);
 	str_hdr->len+= strlen(status);
 	
-	if(subs->expires <= 0)
-	{
-		expires_t = 0;
-		subs->status= TERMINATED_STATUS;
-		subs->reason.s= "timeout";
-		subs->reason.len= 7;
-	}
-	else
-		expires_t= subs->expires;
+	expires_t= subs->expires;
 	
 	if(subs->status== TERMINATED_STATUS)
 	{
@@ -1407,8 +1399,9 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 	
 jump_over_body:
 
-	if(subs->expires== 0)
+	if(subs->expires<= 0)
 	{
+        subs->expires= 0;
 		subs->status= TERMINATED_STATUS;
 		subs->reason.s= "timeout";
 		subs->reason.len= 7;
@@ -1517,7 +1510,7 @@ error:
 int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 {
 	/* update first in hash table and the send Notify */
-	if(subs->expires!= 0)
+	if(subs->expires!= 0 && subs->status != TERMINATED_STATUS)
 	{
 		unsigned int hash_code;
 		hash_code= core_hash(&subs->pres_uri, &subs->event->name, shtable_size);
