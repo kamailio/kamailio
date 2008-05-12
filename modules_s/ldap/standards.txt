@@ -23,3 +23,5 @@ RFC4530: LDAP entryUUID Operational Attribute
         directory. Such identifiers can be used to identify the object even
 		when the dn of the object changes. Unfortunately the entryUUID attribute
 		cannot by modified by the user and thus it is not directly usable for us.
+
+RFC2252 LDAPv3: Attribute Syntax Definitions

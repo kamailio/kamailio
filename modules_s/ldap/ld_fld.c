@@ -36,6 +36,10 @@
 
 #define LDAP_DEPRECATED 1
 
+#define _XOPEN_SOURCE 4     /* bsd */
+#define _XOPEN_SOURCE_EXTENDED 1    /* solaris */
+#define _SVID_SOURCE 1 /* timegm */
+
 #include "ld_fld.h"
 
 #include "../../db/db_drv.h"
@@ -43,8 +47,12 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 
+#include <stdlib.h>
+#include <strings.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>   /* strptime, XOPEN issue must be >= 4 */
+
 
 /** Frees memory used by a ld_fld structure.
  * This function frees all memory used by a ld_fld structure
@@ -127,11 +135,63 @@ static inline int ldap_bit2db_int(int* dst, str* src)
 }
 
 
+/* Convert time_t structure to Generalized Time */
+static inline int db_datetime2ldap_gentime(str* dst, time_t src)
+{
+	/*
+	struct tm* t;
+	
+	t = gmtime(&_time);
+	return strftime(result, res_len, "%Y%m%d%H%M%S", t);
+	*/
+	return -1;
+}
+
+
+static inline int ldap_gentime2db_datetime(time_t* dst, str* src)
+{
+	struct tm time;
+	
+	if (src->len < 12) return -1;
+	   
+	/* It is necessary to zero tm structure first */
+	memset(&time, '\0', sizeof(struct tm));
+	strptime(src->s, "%Y%m%d%H%M%S", &time);
+
+	/* Daylight saving information got lost in the database
+	 * so let timegm to guess it. This eliminates the bug when
+	 * contacts reloaded from the database have different time
+	 * of expiration by one hour when daylight saving is used
+	 */ 
+	time.tm_isdst = -1;   
+#ifdef HAVE_TIMEGM
+    *dst = timegm(&time);
+#else
+    *dst = _timegm(&time);
+#endif /* HAVE_TIMEGM */
+	return 0;
+}
+
+
+static inline int ldap_str2db_double(double* dst, char* src)
+{
+	*dst = atof(src);
+	return 0;
+}
+
+
+static inline int ldap_str2db_float(float* dst, char* src)
+{
+	*dst = (float)atof(src);
+	return 0;
+}
+
+
 int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
 {
 	int i;
 	struct ld_fld* lfld;
-	str tmp;
+	str v;
 
 	if (fld == NULL || msg == NULL) return 0;
 	for(i = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i]); i++) {	
@@ -151,32 +211,57 @@ int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
 			return -1;
 		}
 
+		v.s = lfld->values[0]->bv_val;
+		v.len = lfld->values[0]->bv_len;
+
 		switch(fld[i].type) {
 		case DB_CSTR:
-			fld[i].v.cstr = lfld->values[0]->bv_val;
+			fld[i].v.cstr = v.s;
 			break;
 
 		case DB_STR:
 		case DB_BLOB:
-			fld[i].v.lstr.s = lfld->values[0]->bv_val;
-			fld[i].v.lstr.len = lfld->values[0]->bv_len;
+			fld[i].v.lstr.s = v.s;
+			fld[i].v.lstr.len = v.len;
 			break;
 
 		case DB_INT:
 		case DB_BITMAP:
-			tmp.s = lfld->values[0]->bv_val;
-			tmp.len = lfld->values[0]->bv_len;
+			if (v.s[0] == '\'' && 
+				v.s[v.len - 1] == 'B' &&
+				v.s[v.len - 2] == '\'') {
 
-
-			if (tmp.s[0] == '\'' && 
-				tmp.s[tmp.len - 1] == 'B' &&
-				tmp.s[tmp.len - 2] == '\'') {
-
-				tmp.s++;
-				tmp.len -= 3;
-				return ldap_bit2db_int(&fld[i].v.int4, &tmp);
+				v.s++;
+				v.len -= 3;
+				return ldap_bit2db_int(&fld[i].v.int4, &v);
 			} else {
-				return ldap_int2db_int(&fld[i].v.int4, &tmp);
+				return ldap_int2db_int(&fld[i].v.int4, &v);
+			}
+			break;
+
+		case DB_DATETIME:
+			if (ldap_gentime2db_datetime(&fld[i].v.time, &v) != 0) {
+				ERR("ldap: Error while converting LDAP time value '%.*s'\n",
+					v.len, ZSW(v.s));
+				return -1;
+			}
+			break;
+
+		case DB_FLOAT:
+			/* We know that the ldap library zero-terminated v.s */
+			if (ldap_str2db_float(&fld[i].v.flt, v.s) != 0) {
+				ERR("ldap: Error while converting '%.*s' to float\n",
+					v.len, ZSW(v.s));
+				return -1;
+			}
+			break;
+
+		case DB_DOUBLE:
+			/* We know that the ldap library zero-terminated v.s */
+			if (ldap_str2db_double(&fld[i].v.dbl, v.s) != 0) {
+				ERR("ldap: Error while converting '%.*s' to double\n",
+					v.len, ZSW(v.s));
+				return -1;
 			}
 			break;
 			

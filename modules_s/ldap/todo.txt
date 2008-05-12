@@ -1,11 +1,68 @@
-* Support for authentication
-* Support for SSL
-* Copy all data from the configuration structures into db api structures
-  (right now we only store pointers)
-* Implement < and > operators properly
-* Implement support for other than str parameters
-* Escape values of parameters injected into the search filter
-* Proper handling of NULL values
-* use the asynchronous functions of the api instead of synchronous
-* Support for multi-value attributes (they should be broken up into rows)
+* Authentication Support
+ 
+  The driver supports no authentication method at the moment, we should
+  include support for simple authentication at least, but better SASL.
+  This will take a change in the URI parser because the one provided
+  by libldap (which we use to parse the URI right now) does not support
+  embedded usernames and passwords in the URI.
 
+* TLS/SSL Support
+  
+  The driver should support encrypted connections to LDAP servers and some
+  level of certificate validation. Currently there are no options or
+  parameters to configure SSL/TLS certificates and keys to use.
+
+* Copy Data from Config Data Structure
+
+  The driver maintains an internal data structure that gets initialized
+  from the supplied configuration file. The structure contains things like
+  search filters and field mapping tables. The LDAP specific extension
+  structures make a shallow copy of strings from the configuration
+  data structure, they should rather copy the whole string so that they
+  do not depend on the config structure.
+
+* Implement Support For < And > Operators
+
+  The LDAP search filter syntax (RFC4515) does not support < and >
+  operators, only <= and >=. Currently the ldap driver simply uses <= instead
+  of < and >= instead of >. We need a better implementation of this.
+
+* Implement Support For Other Than str Parameters
+
+* Escape Values of Parameters Injected Into the Search Filter
+
+  see RFC4515 for description of escaping.
+
+* Proper handling of NULL Values in Parameter.
+
+  Is it correct that parameters with NULL values are represented as
+  paramName= in the filter?
+
+* Use Asynchronous API Functions Instead of Synchronous
+
+  This would be useful when we have support for multiple database drivers 
+  within one database context, then we could initiate multiple searches
+  simultaneously without being blocked waiting for the result.
+
+* Support For Multi-Value Attributes
+
+  The module should support multi-value attributes. Objects containing
+  attributes with multi-values should be returned as multiple records,
+  each record containing one value of the multi-value attribute. Currently
+  the module will report an error if it encounters a multi-value attribute.
+
+* Support For Time Zones in Generalized Times
+  
+  The time conversion functions ignore time zones in GeneralizedTime
+  attributes, this should be fixed.
+
+* Handle Fractions of Seconds in Generalized Time
+ 
+  There is no need to account fractions of seconds because we store time
+  internally as time_t, but the parses should be able to skip fractions
+  of seconds gracefully.
+
+* Eliminate Use of All libldap Functions Marked as Deprecated
+
+  We should eliminate the use of all functions that are marked as deprecated
+  in the header field and remove LDAP_DEPRECATED define from all files.
