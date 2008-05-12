@@ -251,27 +251,18 @@ int ld_cmd(db_cmd_t* cmd)
 
 	switch(cmd->type) {
 	case DB_PUT:
-		ERR("ldap: DB_PUT not supported\n");
+	case DB_DEL:
+	case DB_UPD:
+		ERR("ldap: The driver does not support directory modifications yet.\n");
 		goto error;
 		break;
 		
-	case DB_DEL:
-		ERR("ldap: DB_DEL not supported\n");
-		goto error;
-		break;
-
 	case DB_GET:		
 		break;
 
-	case DB_UPD:
-		ERR("ldap: DB_UPD not supported\n");
-		goto error;
-		break;
-		
 	case DB_SQL:
-		ERR("ldap: DB_SQL not supported\n");
+		ERR("ldap: The driver does not support raw queries yet.\n");
 		goto error;
-        break;
 	}
 
 	cfg = ld_find_config(&cmd->table);
@@ -293,7 +284,6 @@ int ld_cmd(db_cmd_t* cmd)
 	if (ld_resolve_fld(cmd->result, cfg) < 0) goto error;
 
 	if (build_result_array(&lcmd->result, cmd) < 0) goto error;
-
 	DB_SET_PAYLOAD(cmd, lcmd);
 	return 0;
 
@@ -314,9 +304,13 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	struct ld_res* lres;
 	struct ld_cmd* lcmd;
 	struct ld_con* lcon;
-	char* filter;
-	int ret;
+	char* filter, *err_desc;
+	int ret, err;
 	LDAPMessage* msg;
+
+	filter = NULL;
+	err_desc = NULL;
+	msg = NULL;
 
 	/* First things first: retrieve connection info from the currently active
 	 * connection and also mysql payload from the database command
@@ -327,26 +321,67 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 
 	if (build_search_filter(&filter, cmd->match, &lcmd->filter) < 0) {
 		ERR("ldap: Error while building LDAP search filter\n");
-		return -1;
+		goto error;
 	}
 
 	ret = ldap_search_ext_s(lcon->con, lcmd->base, lcmd->scope, filter,
 							lcmd->result, 0, NULL, NULL, NULL, 0, &msg);
-	if (filter) pkg_free(filter);
 
 	if (ret != LDAP_SUCCESS) {
 		ERR("ldap: Error in ldap_search: %s\n", ldap_err2string(ret));
-		return -1;
+		goto error;
 	}
 
+	ret = ldap_parse_result(lcon->con, msg, &err, NULL, &err_desc, NULL, NULL, 0);
+	if (ret != LDAP_SUCCESS) {
+		ERR("ldap: Error while reading result status: %s\n", 
+			ldap_err2string(ret));
+		goto error;
+	}
+
+	if (err != LDAP_SUCCESS) {
+		ERR("ldap: LDAP server reports error: %s\n", ldap_err2string(err));
+		goto error;
+	}
+			
 	if (res) {
 		lres = DB_GET_PAYLOAD(res);
-		if (lres->msg) ldap_msgfree(lres->msg);
 		lres->msg = msg;
 	} else {
 		ldap_msgfree(msg);
 	}
 
+	if (filter) pkg_free(filter);
+	if (err_desc) ldap_memfree(err_desc);
+	return 0;
+	
+ error:
+	if (filter) pkg_free(filter);
+	if (msg) ldap_msgfree(msg);
+	if (err_desc) ldap_memfree(err_desc);
+	return -1;
+}
+
+
+/* Iterate to the next search result in the linked list
+ * of messages returned by the LDAP server and convert
+ * the field values.
+ */
+static int next_search_entry(db_res_t* res, LDAP* con)
+{
+	struct ld_res* lres;
+
+	lres = DB_GET_PAYLOAD(res);
+	while(lres->current) {
+		if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
+			break;
+		}
+		lres->current = ldap_next_message(con, lres->current);
+	}
+	if (lres->current == NULL) return 1;
+
+	if (ld_ldap2fld(res->cmd->result, con, lres->current) < 0) return -1;
+	res->cur_rec->fld = res->cmd->result;
 	return 0;
 }
 
@@ -363,17 +398,7 @@ int ld_cmd_first(db_res_t* res)
 	lcon = DB_GET_PAYLOAD(con);
 
 	lres->current = ldap_first_message(lcon->con, lres->msg);
-	while(lres->current) {
-		if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
-			break;
-		}
-		lres->current = ldap_next_message(lcon->con, lres->msg);
-	}
-	if (lres->current == NULL) return 1;
-
-	if (ld_ldap2fld(res->cmd->result, lcon->con, lres->current) < 0) return -1;
-	res->cur_rec->fld = res->cmd->result;
-	return 0;
+	return next_search_entry(res, lcon->con);
 }
 
 
@@ -388,19 +413,9 @@ int ld_cmd_next(db_res_t* res)
 	con = res->cmd->ctx->con[db_payload_idx];
 	lcon = DB_GET_PAYLOAD(con);
 
-	if (lres->current == NULL) return 1;
-
 	lres->current = ldap_next_message(lcon->con, lres->current);
-	while(lres->current) {
-		if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
-			break;
-		}
-		lres->current = ldap_next_message(lcon->con, lres->current);
-	}
-	if (lres->current == NULL) return 1;
-	if (ld_ldap2fld(res->cmd->result, lcon->con, lres->current) < 0) return -1;
-	res->cur_rec->fld = res->cmd->result;
-	return 0;
+	return next_search_entry(res, lcon->con);
 }
+
 
 /** @} */

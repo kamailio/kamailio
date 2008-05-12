@@ -8,6 +8,4 @@
 * Proper handling of NULL values
 * use the asynchronous functions of the api instead of synchronous
 * Support for multi-value attributes (they should be broken up into rows)
-* Handle the value in LDAP_RES_SEARCH_RESULT somehow intelligently (it
-  may indicate a failure)
 

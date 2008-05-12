@@ -41,6 +41,7 @@
 #include "../../db/db_drv.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
+#include "../../ut.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -53,7 +54,7 @@
 static void ld_fld_free(db_fld_t* fld, struct ld_fld* payload)
 {
 	db_drv_free(&payload->gen);
-	if (payload->values) ldap_value_free(payload->values);
+	if (payload->values) ldap_value_free_len(payload->values);
 	payload->values = NULL;
 	pkg_free(payload);
 }
@@ -97,48 +98,88 @@ int ld_resolve_fld(db_fld_t* fld, struct ld_config* cfg)
 }
 
 
+static inline int ldap_int2db_int(int* dst, str* src)
+{
+	if (str2sint(src, dst) != 0) {
+		ERR("ldap: Error while converting value '%.*s' to integer\n",
+			src->len, ZSW(src->s));
+		return -1;
+	}
+	return 0;
+}
+
+
+static inline int ldap_bit2db_int(int* dst, str* src)
+{
+	int i, v;
+
+	if (src->len > 32) {
+		WARN("ldap: bitString '%.*s'B is longer than 32 bits, truncating\n",
+			 src->len, ZSW(src->s));
+	}
+	v = 0;
+	for(i = 0; i < src->len; i++) {
+		v <<= 1;
+		v += src->s[i] - '0';
+	}
+	*dst = v;
+	return 0;
+}
+
+
 int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
 {
 	int i;
 	struct ld_fld* lfld;
+	str tmp;
 
 	if (fld == NULL || msg == NULL) return 0;
 	for(i = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i]); i++) {	
 		lfld = DB_GET_PAYLOAD(fld + i);
 
-		if (lfld->values) ldap_value_free(lfld->values);
-		lfld->values = ldap_get_values(ldap, msg, lfld->attr.s);
+		if (lfld->values) ldap_value_free_len(lfld->values);
+		lfld->values = ldap_get_values_len(ldap, msg, lfld->attr.s);
 
-		if (lfld->values == NULL) {
-			/* FIXME: Test for errno value here */
-			ERR("ldap: Error in ldap_get_values\n");
-			return -1;
-		}
-
-		if (lfld->values[0] == NULL) {
+		if (lfld->values == NULL || lfld->values[0] == NULL) {
 			fld[i].flags |= DB_NULL;
 			continue;
 		}
 
 		if (lfld->values[1] != NULL) {
-			ERR("ldap: Multivalue attributes not yet supported\n");
+			ERR("ldap: Multivalue attributes not yet supported: %.*s\n", 
+				lfld->attr.len, lfld->attr.s);
 			return -1;
 		}
 
 		switch(fld[i].type) {
-		case DB_STR:
-			fld[i].v.cstr = lfld->values[0];
+		case DB_CSTR:
+			fld[i].v.cstr = lfld->values[0]->bv_val;
 			break;
 
-		case DB_CSTR:
-			fld[i].v.lstr.s = lfld->values[0];
-			fld[i].v.lstr.len = strlen(lfld->values[0]);
+		case DB_STR:
+		case DB_BLOB:
+			fld[i].v.lstr.s = lfld->values[0]->bv_val;
+			fld[i].v.lstr.len = lfld->values[0]->bv_len;
 			break;
 
 		case DB_INT:
-			fld[i].v.int4 = 33;
-			break;
+		case DB_BITMAP:
+			tmp.s = lfld->values[0]->bv_val;
+			tmp.len = lfld->values[0]->bv_len;
 
+
+			if (tmp.s[0] == '\'' && 
+				tmp.s[tmp.len - 1] == 'B' &&
+				tmp.s[tmp.len - 2] == '\'') {
+
+				tmp.s++;
+				tmp.len -= 3;
+				return ldap_bit2db_int(&fld[i].v.int4, &tmp);
+			} else {
+				return ldap_int2db_int(&fld[i].v.int4, &tmp);
+			}
+			break;
+			
 		default:
 			ERR("ldap: Unsupported field type: %d\n", fld[i].type);
 			return -1;

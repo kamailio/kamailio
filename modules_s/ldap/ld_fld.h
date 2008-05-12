@@ -48,7 +48,7 @@
 struct ld_fld {
 	db_drv_t gen;
 	str attr;  /**< Name of corresponding LDAP attribute */
-	char** values; /**< Values retrieved from the LDAP result */
+	struct berval** values; /**< Values retrieved from the LDAP result */
 };
 
 
