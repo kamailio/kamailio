@@ -51,7 +51,7 @@ struct pg_res {
     int row, rows;
 };
 
-int pg_res(db_res_t* cmd);
+int pg_res(db_res_t* res);
 
 /** @} */
 
