@@ -221,7 +221,7 @@ static inline int db_unixodbc_convert_rows(const db_con_t* _h, db_res_t* _r)
 		LM_ERR("no private memory left\n");
 		return -2;
 	}
-	LM_DBG("allocate %d bytes for rows at %p", len,
+	LM_DBG("allocate %d bytes for rows at %p\n", len,
 			RES_ROWS(_r));
 	memset(RES_ROWS(_r), 0, len);
 

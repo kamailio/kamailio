@@ -57,7 +57,7 @@ int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* 
 		LM_ERR("no memory left\n");
 		return -1;
 	}
-	LM_DBG("allocate %d bytes for row values at %p", len,
+	LM_DBG("allocate %d bytes for row values at %p\n", len,
 			ROW_VALUES(_r));
 
 	memset(ROW_VALUES(_r), 0, len);
@@ -67,7 +67,7 @@ int db_unixodbc_convert_row(const db_con_t* _h, const db_res_t* _res, db_row_t* 
 		if (db_unixodbc_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			((CON_ROW(_h))[i]), lengths[i]) < 0) {
 			LM_ERR("failed to convert value\n");
-			LM_DBG("free row at %pn", _r);
+			LM_DBG("free row at %p\n", _r);
 			db_free_row(_r);
 			return -3;
 		}

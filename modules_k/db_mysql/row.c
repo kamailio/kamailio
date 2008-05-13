@@ -52,7 +52,7 @@ int db_mysql_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r)
 		LM_ERR("no private memory left\n");
 		return -1;
 	}
-	LM_DBG("allocate %d bytes for row values at %p", len,
+	LM_DBG("allocate %d bytes for row values at %p\n", len,
 			ROW_VALUES(_r));
 
 	memset(ROW_VALUES(_r), 0, len);
@@ -65,7 +65,7 @@ int db_mysql_convert_row(const db_con_t* _h, db_res_t* _res, db_row_t* _r)
 		if (db_mysql_str2val(RES_TYPES(_res)[i], &(ROW_VALUES(_r)[i]),
 			    ((MYSQL_ROW)CON_ROW(_h))[i], lengths[i]) < 0) {
 			LM_ERR("failed to convert value\n");
-			LM_DBG("free row at %pn", _r);
+			LM_DBG("free row at %p\n", _r);
 			db_free_row(_r);
 			return -3;
 		}
