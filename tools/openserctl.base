@@ -141,8 +141,8 @@ if [ -z "$SUB_TABLE" ] ; then
 	SUB_TABLE=subscriber
 fi
 REALM_COLUMN=domain
-HA1_COLUMN=HA1
-HA1B_COLUMN=HA1B
+HA1_COLUMN=ha1
+HA1B_COLUMN=ha1b
 PASSWORD_COLUMN=password
 RPID_COLUMN=rpid
 SUBSCRIBER_COLUMN='username'
@@ -178,6 +178,12 @@ if [ -z "$DOMAIN_TABLE" ] ; then
 	DOMAIN_TABLE=domain
 fi
 DO_DOMAIN_COLUMN=domain
+DO_LAST_MODIFIED_COLUMN=last_modified
+
+# trusted table
+if [ -z "$TRUSTED_TABLE" ] ; then
+	TRUSTED_TABLE=trusted
+fi
 
 # lcr tables
 if [ -z "$LCR_TABLE" ] ; then

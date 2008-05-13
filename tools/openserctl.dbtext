@@ -1,96 +1,25 @@
 # $Id$
 #
-# sc: openser control; tool for maintaining openser's databases
+# openser control: tool for maintaining openser's databases
 #
-# History:
-# --------
-# 2005-03-25 - SC with DBText support (cesc santasusana)
-# 2005-07-08 - Removed all non-DBText functions (daniel)
-# 2006-05-16 - added ability to specify MD5 from a configuration file
-#              FreeBSD does not have the md5sum function (norm)
-#
-
 #===================================================================
 
+##### ----------------------------------------------- #####
+### load SQL base
+#
+if [ -f "$MYLIBDIR/openserctl.sqlbase" ]; then
+	. "$MYLIBDIR/openserctl.sqlbase"
+else
+	echo "Cannot load SQL core functions '$MYLIBDIR/openserctl.sqlbase' - exiting ..."
+	exit -1
+fi
+# DBTEXT_PATH="$MYLIBDIR/dbtext/openser/"
 # path to the dbtext database
-if [ -z "$DB_PATH" ] ; then
-	DB_PATH="/usr/local/etc/openser/dbtext"
+if [ -z "$DBTEXT_PATH" ] ; then
+	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
 fi
 
-#Set variables to dbtext's files ...
+export DBTEXT_PATH
 
-if [ -z "$UL_FILE" ] ; then
-        UL_FILE=$DB_PATH/$UL_TABLE
-fi
-if [ -z "$DOMAIN_FILE" ] ; then
-        DOMAIN_FILE=$DB_PATH/$DOMAIN_TABLE
-fi
-if [ -z "$ALS_FILE" ] ; then
-        ALS_FILE=$DB_PATH/$ALS_TABLE
-fi
-if [ -z "$SUB_FILE" ] ; then
-        SUB_FILE=$DB_PATH/$SUB_TABLE
-fi
-if [ -z "$URI_FILE" ] ; then
-        URI_FILE=$DB_PATH/$URI_TABLE
-fi
-if [ -z "$ACL_FILE" ] ; then
-        ACL_FILE=$DB_PATH/$ACL_TABLE
-fi
-if [ -z "$LCR_FILE" ] ; then
-        LCR_FILE=$DB_PATH/$LCR_TABLE
-fi
-if [ -z "$GW_FILE" ] ; then
-        GW_FILE=$DB_PATH/$GW_TABLE
-fi
-if [ -z "$TRUSTED_FILE" ] ; then
-	TRUSTED_FILE=$DB_PATH/$TRUSTED_TABLE
-fi
-if [ -z "$DISPATCHER_FILE" ] ; then
-	DISPATCHER_FILE=$DB_PATH/$DISPATCHER_TABLE
-fi
-
-#===================================================================
-
-get_next_id() {
-	get_next_id_lines=`wc -l $1 | cut -d " " -f 1`
-
-	if [ "$get_next_id_lines" = "1" ] ; then
-		get_next_id_next_id="1"
-	else
-		let "get_next_id_lines=$get_next_id_lines-1"
-		get_next_id_max_id=`tail -n $get_next_id_lines $1 | sort -g | tail -n 1 | cut -d ":" -f 1`
-		let "get_next_id_next_id=$get_next_id_max_id+1"
-	fi
-}
-
-chown_openser() {
-        if [ -n "$OPENSER_USER" -a -n "$OPENSER_GROUP" ] ; then
-                chown $OPENSER_USER:$OPENSER_GROUP $1
-        fi
-}
-
-# domain don't support reload at the moment
-usage_domain() {
-        echo
-        mecho " -- command 'domain' - manage domains"
-	echo
-cat <<EOF
- domain show ........................ show list of served domains
- domain add <domainname> ............ add a new served domain
- domain rm <domainname> ............. remove a served domain
-EOF
-}
-USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_domain"
-
-# showdb is not implemented for SQL databases
-usage_showdb() {
-        echo
-        mecho " -- command 'showdb|userdb' - dump offline users"
-        echo
-cat <<EOF
- showdb ............................. display offline users
- userdb ............................. display offline users
-EOF
-}
-USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_showdb"
+DBCMD=${MYLIBDIR}/dbtextdb/dbtextdb.py
+DBROCMD=${MYLIBDIR}/dbtextdb/dbtextdb.py

@@ -65,9 +65,6 @@ fi
 ### DBENGINE
 #
 DBENGINELOADED=0
-#if [ -z "$DBENGINE" ] ; then
-#	DBENGINE="MYSQL"
-#fi
 case $DBENGINE in
 	MYSQL|mysql|MySQL)
 		if [ -f "$MYLIBDIR/openserctl.mysql" ]; then
@@ -107,29 +104,31 @@ fi
 ### CTLENGINE
 #
 CTLENGINELOADED=0
-if [ -z "$CTLENGINE" ] ; then
-	CTLENGINE="FIFO"
-fi
-case $CTLENGINE in
-	FIFO|fifo)
-	if [ -f "$MYLIBDIR/openserctl.fifo" ]; then
-		. "$MYLIBDIR/openserctl.fifo"
-			CTLENGINELOADED=1
-		fi
-		;;
-	UNIXSOCK|unixsock)
-		if [ -f "$MYLIBDIR/openserctl.unixsock" ]; then
-			. "$MYLIBDIR/openserctl.unixsock"
-			CTLENGINELOADED=1
-		fi
-		;;
-esac
+load_ctlengine() {
+	if [ -z "$CTLENGINE" ] ; then
+		CTLENGINE="FIFO"
+	fi
+	case $CTLENGINE in
+		FIFO|fifo)
+			if [ -f "$MYLIBDIR/openserctl.fifo" ]; then
+				. "$MYLIBDIR/openserctl.fifo"
+				CTLENGINELOADED=1
+			fi
+			;;
+		UNIXSOCK|unixsock)
+			if [ -f "$MYLIBDIR/openserctl.unixsock" ]; then
+				. "$MYLIBDIR/openserctl.unixsock"
+				CTLENGINELOADED=1
+			fi
+			;;
+	esac
 
-if [ $CTLENGINELOADED -eq 1 ] ; then 
-	mdbg "Control engine '$CTLENGINE' loaded"
-else
-	mwarn "no control engine found - tried '$CTLENGINE'"
-fi
+	if [ $CTLENGINELOADED -eq 1 ] ; then
+		mdbg "Control engine '$CTLENGINE' loaded"
+	else
+		mwarn "no control engine found - tried '$CTLENGINE'"
+	fi
+}
 
 #
 ##### ------------------------------------------------ #####
@@ -161,6 +160,7 @@ require_dbengine() {
 }
 
 require_ctlengine() {
+	load_ctlengine
 	if [ $CTLENGINELOADED -eq 0 ] ; then 
 		merr "This command requires a control engine - none was loaded"
 		exit -1
@@ -178,18 +178,13 @@ require_ctlengine() {
 ### helper functions (require db and/or ctl)
 #
 
+lower() {
+	echo $1 | tr [A-Z] [a-z]
+}
+
 # params: user
 # output: false if exists, true otherwise
 is_user() {
-    if  [ "$DBENGINE" = "DBTEXT" ] ; then
-        CNT=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | wc -w`
-
-        if [ "0$CNT" -eq 0 ] ; then
-                false
-        else
-                true
-        fi
-    else
 	set_user $1
 	
 	QUERY="select count(*) from $SUB_TABLE where \
@@ -202,9 +197,25 @@ $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 	else
 		true
 	fi
-    fi
 }
 
+
+# params: table, column, value
+# output: false if exists, true otherwise
+is_value_in_db() {
+	TABLE=$1
+	COL=$2
+	VALUE=$3
+	
+	QUERY="select count(*) from $TABLE where $COL='$VALUE';"
+	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+	mdbg "is_value_in_db: counter=$CNT"
+	if [ "$CNT" = "0" ] ; then
+		false
+	else
+		true
+	fi
+}
 
 #
 ##### ------------------------------------------------ #####
@@ -212,101 +223,6 @@ $SUBSCRIBER_COLUMN='$OSERUSER' and $REALM_COLUMN='$OSERDOMAIN';"
 #
 acl() {
 	require_dbengine
-    if [ "$DBENGINE" = "DBTEXT" ] ; then
-        case $1 in
-                show)
-                        if [ $# -eq 2 ] ; then
-                                set_user $2
-                                is_user
-                                if [ $? -ne 0 ] ; then
-                                        mecho "Non-existent user. Still proceeding? [Y|N] "
-                                        read answer
-                                        if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-                                                minfo "Proceeding with non-local user"
-                                        else
-                                                exit 1
-                                        fi
-                                fi
-                                EGREP_COND="^$OSERUSER:$OSERDOMAIN:"
-                        elif [ $# -ne 1 ] ; then
-                                usage_acl
-                                exit 1
-                        fi
-                        if [ -z $EGREP_COND ]; then
-                                EGREP_COND=""
-                        fi
-                        echo -e "\nuser*domain**group*lastmodified" | tr "*" "\t"
-                        cat $ACL_FILE | $EGREP -v "username" | $EGREP "$EGREP_COND" | tr ":" "\t"
-
-                        ;;
-
-                grant)
-                        if [ $# -lt 3 ] ; then
-                                usage_acl
-                                exit 1
-                        fi
-                        set_user $2
-                        is_user
-                        if [ $? -ne 0 ] ; then
-                                mecho "Non-existent user. Still proceeding? [Y|N] "
-                                read answer
-                                if [ "$answer" = "y" -o "$answer" = "Y" ] ; then
-                                        minfo "Proceeding with non-local user"
-                                else
-                                        exit 1
-                                fi
-                        fi
-                        shift 2
-                        while [ $# -gt 0 ] ; do
-
-                                if [ $VERIFY_ACL -eq 1 ] ; then
-                                        found=0
-                                        for i in $ACL_GROUPS ; do
-                                                if [ "$1" = "$i" ] ; then
-                                                        found=1
-                                                        break
-                                                fi
-                                        done
-                                        if [ $found -eq 0 ] ; then
-                                                mwarn "Invalid privilege: $1 ignored"
-                                                shift
-                                                continue
-                                        fi
-                                fi
-
-				date_now=`date +%s`
-				get_next_id $ACL_FILE
-                                line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$1:$date_now"
-                                echo $line >> $ACL_FILE
-                                shift
-                        done
-
-                        $0 acl show $OSERUSER@$OSERDOMAIN
-
-                        ;;
-
-                revoke)
-                        if [ $# -eq 3 ] ; then
-                                CLAUSE="$3:"
-                        elif [ $# -ne 2 ] ; then
-                                usage_acl
-                                exit 1
-                        fi
-
-                        set_user $2
-
-                        cat $ACL_FILE | $EGREP -v "^[0-9]+:$OSERUSER:$OSERDOMAIN:$CLAUSE" >> $ACL_FILE.tmp
-                        mv -f $ACL_FILE.tmp $ACL_FILE
-                        $0 acl show $2
-
-                        ;;
-
-                *)
-                        usage_acl
-                        exit 1
-                        ;;
-        esac
-    else
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
@@ -411,7 +327,6 @@ $CLAUSE;"
 			exit 1
 			;;
 	esac
-    fi
 }
 
 
@@ -607,6 +522,11 @@ AS 'SIP-ID' FROM $DA_TABLE $CLAUSE ; "
 			TMP_OSERDOMAIN=$OSERDOMAIN
 			set_user $2
 			
+			if `is_value_in_db $DA_TABLE $DA_ALIAS_USER_COLUMN $TMP_OSERUSER`; then
+				minfo "$TMP_OSERUSER alias already in $DA_TABLE table"
+				exit 0
+			fi
+
 			QUERY="INSERT INTO $DA_TABLE ($DA_USER_COLUMN,$DA_DOMAIN_COLUMN,\
 $DA_ALIAS_USER_COLUMN,$DA_ALIAS_DOMAIN_COLUMN) VALUES ('$OSERUSER',\
 '$OSERDOMAIN','$TMP_OSERUSER','$TMP_OSERDOMAIN' );"
@@ -1019,46 +939,6 @@ db_ops() {
 ### domain management
 #
 domain() {
-    if [ "$DBENGINE" = "DBTEXT" ] ; then
-        case $1 in
-                show)
-                        # QUERY="select * FROM $DOMAIN_TABLE ; "
-                        # sql_ro_query "$QUERY"
-                        $CTLCMD domain_dump
-                        ;;
-                add)
-                        shift
-                        if [ $# -ne 1 ] ; then
-                                merr "missing domain to be added"
-                                exit 1
-                        fi
-			date_now=`date +%s`
-			get_next_id $DOMAIN_FILE
-                        line="$get_next_id_next_id:$1:$date_now"
-                        echo "$line" >> $DOMAIN_FILE
-                        minfo "Domain $1 saved into DBTEXT database"
-			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
-                        #FIXME: domain_reload command not supported yet
-                        #$CTLCMD domain_reload
-                        ;;
-                rm)
-                        shift
-                        if [ $# -ne 1 ] ; then
-                                merr "missing domain to be removed"
-                                exit 1
-                        fi
-                        cat $DOMAIN_FILE | $EGREP -v "^[0-9]+:$1:" > $DOMAIN_FILE.tmp
-                        mv -f $DOMAIN_FILE.tmp $DOMAIN_FILE
-                        minfo "Domain $1 removed from DBTEXT database"
-			mwarn "not able to synchronize database, reloading is not yet implemented for dbtext"
-                        #FIXME: domain_reload command not supported yet
-                        #$CTLCMD domain_reload
-                        ;;
-                *)
-                        usage_domain
-                        exit 1
-        esac
-    else
 	case $1 in
 		reload)
 			require_ctlengine
@@ -1080,8 +960,12 @@ domain() {
 				merr "missing domain parameter"
 				exit 1
 			fi
-			QUERY="insert into $DOMAIN_TABLE ($DO_DOMAIN_COLUMN) \
-				VALUES ('$1');"
+			if `is_value_in_db $DOMAIN_TABLE $DO_DOMAIN_COLUMN $1`; then
+				minfo "$1 already in $DOMAIN_TABLE table"
+				exit 0
+			fi
+			QUERY="insert into $DOMAIN_TABLE ($DO_DOMAIN_COLUMN, \
+			$DO_LAST_MODIFIED_COLUMN) VALUES ('$1',now());"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "domain - SQL Error"
@@ -1108,7 +992,80 @@ domain() {
 			usage_domain
 			exit 1
 	esac
-    fi
+}
+
+#
+##### ------------------------------------------------ #####
+### trusted management
+#
+trusted() {
+	case $1 in
+		reload)
+			require_ctlengine
+			$CTLCMD trusted_reload
+			;;
+		dump)
+			require_ctlengine
+			$CTLCMD trusted_dump
+			;;
+		show)
+			require_dbengine
+			QUERY="select * FROM $TRUSTED_TABLE ; "
+			$DBROCMD "$QUERY"
+			;;
+		add)
+			require_dbengine
+			shift
+			if [ $# -lt 2 ] ; then
+				usage_trusted
+				exit 1
+			fi
+			if `is_value_in_db $TRUSTED_TABLE src_ip $1`; then
+				minfo "$1 already in $TRUSTED_TABLE table"
+				exit 0
+			fi
+			case $2 in
+				any|udp|tcp|tls|sctp|none)
+					;;
+				*)
+					merr "unknown protocol"
+					exit 1
+			esac
+			PATTERN="^sip:.*$"
+			if [ ! -z "$3" ]; then
+				PATTERN="$3"
+			fi
+
+			QUERY="insert into $TRUSTED_TABLE \
+				( $TRUSTED_SRC_IP_COLUMN, $TRUSTED_PROTO_COLUMN, \
+				$TRUSTED_FROM_PATTERN_COLUMN, $TRUSTED_TAG_COLUMN) \
+				VALUES ('$1', '$2', '$PATTERN', '$TAG');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "trusted - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 trusted reload' to synchronize cache and database"
+			;;
+		rm)
+			require_dbengine
+			shift
+			if [ $# -ne 2 ] ; then
+				usage_trusted
+				exit 1
+			fi
+			QUERY="delete from $TRUSTED_TABLE where $TRUSTED_SRC_IP_COLUMN='$1';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "trusted - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 trusted reload' to synchronize cache and database"
+			;;
+		*)
+			usage_trusted
+			exit 1
+	esac
 }
 
 #
@@ -1118,106 +1075,6 @@ domain() {
 lcr() {
 	require_dbengine
 	require_ctlengine
-    if [ "$DBENGINE" = "DBTEXT" ] ; then
-        case $1 in
-                show)
-                        mecho "lcr routes"
-                        lines=`wc -l $LCR_FILE | cut -d " " -f 1`
-                        let "lines=$lines-1"
-                        tail -n $lines $LCR_FILE
-
-                        mecho "lcr gateways"
-                        lines=`wc -l $GW_FILE | cut -d " " -f 1`
-                        let "lines=$lines-1"
-                        tail -n $lines $GW_FILE
-                        ;;
-
-                addgw)
-                        shift
-                        if [ $# -lt 6 ] ; then
-                                echo too few parameters
-                                usage
-                                exit 1
-                        fi
-                        if [ $# -gt 6 ] ; then
-                                GW_PREFIX=$7
-                                if [ $# -gt 7 ] ; then
-                                        STRIP=$8
-                                else
-                                        STRIP=0
-                                fi
-                        else
-                                GW_PREFIX=""
-                                STRIP=0
-                        fi
-                        GW_NAME=$1
-                        GW_IP=$2
-                        GW_PORT=$3
-                        GW_URI_SCHEME=$4
-                        if   [ $GW_URI_SCHEME = 'sip' ]; then
-                                GW_URI_SCHEME=1
-                        elif [ $GW_URI_SCHEME = 'sips' ]; then
-                                GW_URI_SCHEME=2
-                        fi
-                        GW_TRANSPORT=$5
-                        if   [ $GW_TRANSPORT = 'udp' ]; then
-                                GW_TRANSPORT=1
-                        elif [ $GW_TRANSPORT = 'tcp' ]; then
-                                GW_TRANSPORT=2
-                        elif [ $GW_TRANSPORT = 'tls' ]; then
-                                GW_TRANSPORT=3
-                        fi
-                        GW_GRP_ID=$6
-			# FIXME
-			GW_DM=1
-			get_next_id $GW_FILE
-                        echo $get_next_id_next_id:$GW_NAME:$GW_GRP_ID:$GW_IP:$GW_PORT:$GW_URI_SCHEME:$GW_TRANSPORT:$STRIP:$GW_PREFIX:$GW_DM >> $GW_FILE
-                        chown_openser $GW_FILE
-                        $CTLCMD lcr_reload
-                        ;;
-
-                rmgw)
-                        shift
-                        if [ $# -ne 1 ] ; then
-                                merr "missing gateway to be removed"
-                                exit 1
-                        fi
-                        cat $GW_FILE | $EGREP -v "^[0-9]+:$1:" > $GW_FILE.tmp
-                        mv -f $GW_FILE.tmp $GW_FILE
-                        chown_openser $GW_FILE
-                        $CTLCMD lcr_reload
-                        ;;
-
-                addroute)
-                        shift
-                        if [ $# -ne 4 ] ; then
-                                merr "too few parameters"
-                                usage
-                                exit 1
-                        fi
-			get_next_id $LCR_FILE
-                        echo $get_next_id_next_id:$1:$2:$3:$4 >> $LCR_FILE
-                        chown_openser $LCR_FILE
-                        $CTLCMD lcr_reload
-                        ;;
-
-                rmroute)
-                        shift
-                        if [ $# -ne 4 ] ; then
-                                merr "too few parameters"
-                                usage
-                                exit 1
-                        fi
-                        cat $LCR_FILE | $EGREP -v "^[0-9]+:$1:$2:$3:$4\$" > $LCR_FILE.tmp
-                        mv -f $LCR_FILE.tmp $LCR_FILE
-                        chown_openser $LCR_FILE
-                        $CTLCMD lcr_reload
-                        ;;
-                *)
-                        usage_lcr
-                        exit 1
-        esac
-    else
 	case $1 in
 		show)
 			mecho "lcr routes"
@@ -1338,7 +1195,6 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 			usage_lcr
 			exit 1
 	esac
-    fi
 }
 
 #
@@ -1348,309 +1204,156 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 cr() {
 	require_dbengine
 	require_ctlengine
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-		merr "carrierroute not supported in dbtext mode"
-		exit 1
-	else
-		case $1 in
-			show)
-				mecho "cr routing tree"
-				QUERY="select * FROM $ROUTE_TREE_TABLE ORDER BY $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN; "
-				$DBROCMD "$QUERY"
-				mecho "cr routes"
-				QUERY="select * FROM $CARRIERROUTE_TABLE ORDER BY \
-					$CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN,\
-					$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN,\
-					$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN,\
-					$CARRIERROUTE_CARRIERROUTE_PROB_COLUMN;"
-				$DBROCMD "$QUERY"
-				;;
-			reload)
-				$CTLCMD cr_reload_routes
-				;;
+	case $1 in
+		show)
+			mecho "cr routing tree"
+			QUERY="select * FROM $ROUTE_TREE_TABLE ORDER BY $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN; "
+			$DBROCMD "$QUERY"
+			mecho "cr routes"
+			QUERY="select * FROM $CARRIERROUTE_TABLE ORDER BY \
+				$CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN,\
+				$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN,\
+				$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN,\
+				$CARRIERROUTE_CARRIERROUTE_PROB_COLUMN;"
+			$DBROCMD "$QUERY"
+			;;
+		reload)
+			$CTLCMD cr_reload_routes
+			;;
 
-			dump)
-				$CTLCMD cr_dump
-				;;
+		dump)
+			$CTLCMD cr_dump
+			;;
 
-			addrt)
-				shift
-					if [ $# -ne 2 ] ; then
-					merr "cr - missing route_tree"
+		addrt)
+			shift
+			if [ $# -ne 2 ] ; then
+				merr "cr - missing route_tree"
 				exit 1
-				fi
-				QUERY="insert into $ROUTE_TREE_TABLE
-					( $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN, \
-					$CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN) \
-					VALUES ($1, '$2');"
-				$DBCMD "$QUERY"
-				if [ $? -ne 0 ] ; then
-					merr "cr - SQL Error"
-					exit 1
-				fi
-				minfo "execute '$0 cr reload' to synchronize cache and database"
-				;;
+			fi
+			QUERY="insert into $ROUTE_TREE_TABLE
+				( $CARRIERROUTE_ROUTE_TREE_PREFIX_COLUMN, \
+				$CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN) \
+				VALUES ($1, '$2');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "cr - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 cr reload' to synchronize cache and database"
+			;;
 
-			rmrt)
-				shift
-				if [ $# -ne 1 ] ; then
-					merr "cr - missing route_tree to be removed"
-					exit 1
-				fi
-				QUERY="delete from $ROUTE_TREE_TABLE where $CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN='$1';"
-				$DBCMD "$QUERY"
-				if [ $? -ne 0 ] ; then
-					merr "cr - SQL Error"
-					exit 1 
-				fi
-				minfo "execute '$0 cr reload' to synchronize cache and database"
-				;;
+		rmrt)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "cr - missing route_tree to be removed"
+				exit 1
+			fi
+			QUERY="delete from $ROUTE_TREE_TABLE where $CARRIERROUTE_ROUTE_TREE_CARRIER_COLUMN='$1';"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "cr - SQL Error"
+				exit 1 
+			fi
+			minfo "execute '$0 cr reload' to synchronize cache and database"
+			;;
 
-			addcarrier)
-				shift
-				if [ $# -lt 4 ] ; then
-					merr "cr - too few parameters"
-					exit 1
-				fi
-				if [ $# -gt 4 ] ; then
-					PROB=$5
-					if [ $# -gt 5 ] ; then
-						STRIP=$6
-						if [ $# -gt 6 ] ; then
-							REWRITE_PREFIX=$7
-							if [ $# -gt 7 ] ; then
-								REWRITE_SUFFIX=$8
-								if [ $# -gt 8 ] ; then
-									COMMENT=$9
-								else
-									COMMENT=
-								fi
+		addcarrier)
+			shift
+			if [ $# -lt 4 ] ; then
+				merr "cr - too few parameters"
+				exit 1
+			fi
+			if [ $# -gt 4 ] ; then
+				PROB=$5
+				if [ $# -gt 5 ] ; then
+					STRIP=$6
+					if [ $# -gt 6 ] ; then
+						REWRITE_PREFIX=$7
+						if [ $# -gt 7 ] ; then
+							REWRITE_SUFFIX=$8
+							if [ $# -gt 8 ] ; then
+								COMMENT=$9
 							else
-								REWRITE_SUFFIX=
 								COMMENT=
 							fi
 						else
-							REWRITE_PREFIX=
 							REWRITE_SUFFIX=
 							COMMENT=
 						fi
 					else
-						STRIP=0
 						REWRITE_PREFIX=
 						REWRITE_SUFFIX=
 						COMMENT=
 					fi
 				else
-					PROB=1
 					STRIP=0
 					REWRITE_PREFIX=
 					REWRITE_SUFFIX=
 					COMMENT=
 				fi
-				CARRIER=$1
-				SCAN_PREFIX=$2
-				DOMAIN=$3
-				REWRITE_HOST=$4
-				#PROB=1
-				#STRIP=0
-				#REWRITE_PREFIX=
-				#REWRITE_SUFFIX=
-				#COMMENT=
-				QUERY="insert into $CARRIERROUTE_TABLE \
-					( $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_PROB_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_STRIP_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_REWRITE_HOST_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_REWRITE_PREFIX_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_REWRITE_SUFFIX_COLUMN, \
-					$CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN ) \
-					VALUES ($CARRIER, '$SCAN_PREFIX', $DOMAIN, $PROB, $STRIP, \
-					'$REWRITE_HOST', '$REWRITE_PREFIX', '$REWRITE_SUFFIX', '$COMMENT');"
-				$DBCMD "$QUERY"
-				if [ $? -ne 0 ] ; then
-					merr "cr - SQL Error"
-					exit 1
-				fi
-				minfo "execute '$0 cr reload' to synchronize cache and database"
-				;;
-
-			rmcarrier)
-				shift
-				if [ $# -ne 3 ] ; then
-					merr "cr - too few parameters"
-					exit 1
-				fi
-				CARRIER=$1
-				SCAN_PREFIX=$2
-				DOMAIN=$3
-				QUERY="delete from $CARRIERROUTE_TABLE where $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN='$CARRIER' AND \
-					$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN='$SCAN_PREFIX' AND \
-					$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN=$DOMAIN ;"
-				$DBCMD "$QUERY"
-				if [ $? -ne 0 ] ; then
-					merr "cr - SQL Error"
-					exit 1
-				fi
-				minfo "execute '$0 cr reload' to synchronize cache and database"
-				;;
-
-			*)
-				usage_cr
+			else
+				PROB=1
+				STRIP=0
+				REWRITE_PREFIX=
+				REWRITE_SUFFIX=
+				COMMENT=
+			fi
+			CARRIER=$1
+			SCAN_PREFIX=$2
+			DOMAIN=$3
+			REWRITE_HOST=$4
+			#PROB=1
+			#STRIP=0
+			#REWRITE_PREFIX=
+			#REWRITE_SUFFIX=
+			#COMMENT=
+			QUERY="insert into $CARRIERROUTE_TABLE \
+				( $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_PROB_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_STRIP_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_REWRITE_HOST_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_REWRITE_PREFIX_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_REWRITE_SUFFIX_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN ) \
+				VALUES ($CARRIER, '$SCAN_PREFIX', $DOMAIN, $PROB, $STRIP, \
+				'$REWRITE_HOST', '$REWRITE_PREFIX', '$REWRITE_SUFFIX', '$COMMENT');"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "cr - SQL Error"
 				exit 1
-		esac
-	fi
+			fi
+			minfo "execute '$0 cr reload' to synchronize cache and database"
+			;;
+
+		rmcarrier)
+			shift
+			if [ $# -ne 3 ] ; then
+				merr "cr - too few parameters"
+				exit 1
+			fi
+			CARRIER=$1
+			SCAN_PREFIX=$2
+			DOMAIN=$3
+			QUERY="delete from $CARRIERROUTE_TABLE where $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN='$CARRIER' AND \
+				$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN='$SCAN_PREFIX' AND \
+				$CARRIERROUTE_CARRIERROUTE_DOMAIN_COLUMN=$DOMAIN ;"
+			$DBCMD "$QUERY"
+			if [ $? -ne 0 ] ; then
+				merr "cr - SQL Error"
+				exit 1
+			fi
+			minfo "execute '$0 cr reload' to synchronize cache and database"
+			;;
+
+		*)
+			usage_cr
+			exit 1
+	esac
 }
 
-#
-##### ------------------------------------------------ #####
-### TRUSTED management
-#
-trusted() {
-	require_dbengine
-	require_ctlengine
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-		case $1 in
-			show)
-				lines=`wc -l $TRUSTED_FILE | cut -d " " -f 1`
-				let "lines=$lines-1"
-				tail -n $lines $TRUSTED_FILE
-				;;
-
-			dump)
-				$CTLCMD trusted_dump
-				;;
-
-			reload)
-                               $CTLCMD trusted_reload
-                               ;;
-
-			add)
-				shift
-				if [ $# -lt 2 ] ; then
-					merr "trusted - too few parameters"
-					exit 1
-				fi
-				SRC_IP=$1
-				PROTO=$2
-				case $PROTO in
-					any|udp|tcp|tls|sctp|none)
-						;;
-					*)
-						merr "unknown protocol"
-						exit 1
-				esac
-				if [ $# -gt 2 ] ; then
-					FROM_PATTERN=$3
-					if [ $# -gt 3 ] ; then
-						TAG=$4
-					else
-						TAG=
-					fi
-				else
-					FROM_PATTERN=
-					TAG=
-				fi
-				get_next_id $TRUSTED_FILE
-				echo $get_next_id_next_id:$SRC_IP:$PROTO:$FROM_PATTERN:$TAG >> $TRUSTED_FILE
-				chown_openser $GW_FILE
-				minfo "execute '$0 trusted reload' to synchronize cache and database"
-				;;
-
-			rm)
-				shift
-				if [ $# -lt 1 ] ; then
-					merr "trusted - missing IP to be removed"
-					exit 1
-				fi
-				SRC_IP=$1
-				cat $TRUSTED_FILE | $EGREP -v "^[0-9]+:$SRC_IP:" > $TRUSTED_FILE.tmp
-				mv -f $TRUSTED_FILE.tmp $TRUSTED_FILE
-				chown_openser $TRUSTED_FILE
-				minfo "execute '$0 trusted reload' to synchronize cache and database"
-				;;
-
-			*)
-				usage_trusted
-				exit 1
-		esac
-	else
-		case $1 in
-			show)
-				QUERY="select * FROM $TRUSTED_TABLE ; "
-				$DBROCMD "$QUERY"
-				;;
-
-			dump)
-				$CTLCMD trusted_dump
-				;;
-
-			reload)
-				$CTLCMD trusted_reload
-				;;
-
-			add)
-				shift
-				if [ $# -lt 2 ] ; then
-					merr "trusted - too few parameters"
-					exit 1
-				fi
-				SRC_IP=$1
-				PROTO=$2
-				case $PROTO in
-					any|udp|tcp|tls|sctp|none)
-						;;
-					*)
-						merr "unknown protocol"
-						exit 1
-				esac
-				if [ $# -gt 2 ] ; then
-					FROM_PATTERN=$3
-					if [ $# -gt 3 ] ; then
-						TAG=$4
-					else
-						TAG=
-					fi
-				else
-					FROM_PATTERN=
-					TAG=
-				fi
-				QUERY="insert into $TRUSTED_TABLE \
-					( $TRUSTED_SRC_IP_COLUMN, $TRUSTED_PROTO_COLUMN, \
-						$TRUSTED_FROM_PATTERN_COLUMN, $TRUSTED_TAG_COLUMN) \
-					VALUES ('$SRC_IP', '$PROTO', '$FROM_PATTERN', '$TAG');"
-				$DBCMD "$QUERY"
-				if [ $? -ne 0 ] ; then
-					merr "trusted - SQL Error"
-					exit 1
-				fi
-				minfo "execute '$0 trusted reload' to synchronize cache and database"
-				;;
-
-			rm)
-				shift
-				if [ $# -lt 1 ] ; then
-					merr "trusted - missing IP to be removed"
-					exit 1
-				fi
-				SRC_IP=$1
-				QUERY="delete from $TRUSTED_TABLE where $TRUSTED_SRC_IP_COLUMN='$SRC_IP';"
-				$DBCMD "$QUERY"
-				if [ $? -ne 0 ] ; then
-					merr "trusted - SQL Error"
-					exit 1
-				fi
-				minfo "execute '$0 trusted reload' to synchronize cache and database"
-				;;
-
-			*)
-				usage_trusted
-				exit 1
-		esac
-	fi
-
-}
 
 #
 ##### ------------------------------------------------ #####
@@ -1658,134 +1361,73 @@ trusted() {
 #
 dispatcher() {
 	require_dbengine
-	require_ctlengine 
-
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-		case $1 in
-			show)
-				lines=`wc -l $DISPATCHER_FILE | cut -d " " -f 1`
-				let "lines=$lines-1"
-				tail -n $lines $DISPATCHER_FILE
-				;;
-
-			addgw)
-				shift
-				if [ $# -lt 3 ] ; then
-					merr "too few parameters"
-					usage_dispatcher
-					exit 1
-				fi
-
-				if [ $# -gt 3 ] ; then
-					DISPATCHER_DESCRIPTION=$4
-				else
-					DISPATCHER_DESCRIPTION=""
-				fi 
-
-				DISPATCHER_SETID=$1
-				DISPATCHER_DESTINATION=$2
-				DISPATCHER_FLAGS=$3
-
-				get_next_id $DISPATCHER_FILE
-				echo $get_next_id_next_id:$DISPATCHER_SETID:$DISPATCHER_DESTINATION:$DISPATCHER_FLAGS:$DISPATCHER_DESCRIPTION >> $DISPATCHER_FILE
-				chown_openser $DISPATCHER_FILE
-				$CTLCMD ds_reload
-				;;
-
-			rmgw)
-				shift
-				if [ $# -ne 1 ] ; then
-					merr "missing gateway id to be removed"
-					exit 1
-				fi
-				cat $DISPATCHER_FILE | $EGREP -v "^[0-9]+:$1:" > $DISPATCHER_FILE.tmp
-				mv -f $DISPATCHER_FILE.tmp $DISPATCHER_FILE
-				chown_openser $DISPATCHER_FILE
-				$CTLCMD ds_reload
-				;;
-
-			reload)
-				$CTLCMD ds_reload
-				;;
-
-			dump)
-				$CTLCMD ds_list
-				;;
-
-			*)
+	require_ctlengine
+	case $1 in
+		show)
+			mecho "dispatcher gateways"
+			QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_SETID_COLUMN; "
+			$DBROCMD "$QUERY"
+			;;
+		addgw)
+			shift
+			if [ $# -lt 3 ] ; then
+				merr "too few parameters"
 				usage_dispatcher
 				exit 1
+			fi
 
-		esac
-	else
+			if [ $# -gt 3 ] ; then
+				DISPATCHER_DESCRIPTION=$4
+			else
+				DISPATCHER_DESCRIPTION=""
+			fi 
 
-		case $1 in
-			show)
-				mecho "dispatcher gateways"
-				QUERY="select * FROM $DISPATCHER_TABLE ORDER BY $DISPATCHER_SETID_COLUMN; "
-				$DBROCMD "$QUERY"
-				;;
-			addgw)
-				shift
-				if [ $# -lt 3 ] ; then
-					merr "too few parameters"
-					usage_dispatcher
-					exit 1
-				fi
+			DISPATCHER_SETID=$1
+			DISPATCHER_DESTINATION=$2
+			DISPATCHER_FLAGS=$3
 
-				if [ $# -gt 3 ] ; then
-					DISPATCHER_DESCRIPTION=$4
-				else
-					DISPATCHER_DESCRIPTION=""
-				fi 
+			QUERY="insert into $DISPATCHER_TABLE \
+				( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
+				VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,'$DISPATCHER_DESCRIPTION');"
+			$DBCMD "$QUERY"
 
-				DISPATCHER_SETID=$1
-				DISPATCHER_DESTINATION=$2
-				DISPATCHER_FLAGS=$3
-
-				QUERY="insert into $DISPATCHER_TABLE \
-					( $DISPATCHER_SETID_COLUMN, $DISPATCHER_DESTINATION_COLUMN, $DISPATCHER_FLAGS_COLUMN, $DISPATCHER_DESCRIPTION_COLUMN ) \
-					VALUES ($DISPATCHER_SETID,'$DISPATCHER_DESTINATION',$DISPATCHER_FLAGS,'$DISPATCHER_DESCRIPTION');"
-				$DBCMD "$QUERY"
-
-				if [ $? -ne 0 ] ; then
-					merr "dispatcher - SQL Error"
-					exit 1
-				fi
-
-				$CTLCMD ds_reload
-				;;
-			rmgw)
-				shift
-				if [ $# -ne 1 ] ; then
-					merr "missing gateway id to be removed"
-					exit 1
-				fi
-
-				QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_ID_COLUMN='$1';"
-				$DBCMD "$QUERY"
-
-				if [ $? -ne 0 ] ; then
-					merr "dispatcher - SQL Error"
-					exit 1
-				fi
-
-				$CTLCMD ds_reload
-				;;
-			reload)
-				$CTLCMD ds_reload
-				;;
-
-			dump)
-				$CTLCMD ds_list
-				;;
-
-			*)
-				usage_dispatcher
+			if [ $? -ne 0 ] ; then
+				merr "dispatcher - SQL Error"
 				exit 1
+			fi
 
-		esac
-	fi
+			$CTLCMD ds_reload
+			;;
+		rmgw)
+			shift
+			if [ $# -ne 1 ] ; then
+				merr "missing gateway id to be removed"
+				exit 1
+			fi
+
+			QUERY="delete from $DISPATCHER_TABLE where $DISPATCHER_ID_COLUMN='$1';"
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dispatcher - SQL Error"
+				exit 1
+			fi
+
+			$CTLCMD ds_reload
+			;;
+		reload)
+			$CTLCMD ds_reload
+			;;
+
+		dump)
+			$CTLCMD ds_list
+			;;
+
+		*)
+			usage_dispatcher
+			exit 1
+
+	esac
 }
 
 #
@@ -1861,79 +1503,8 @@ rpid() {
 		merr "rpid - too few parameters"
 		exit 1
 	fi
-    shift;
-
+	shift;
 	require_dbengine
-    if [ "$DBENGINE" = "DBTEXT" ] ; then
-        case $1 in
-                show)
-                        echo
-                        if [ $# -eq 2 ] ; then
-                                set_user $2
-                                is_user
-                                if [ $? -ne 0 ] ; then
-                                        merr "non-existent user"
-                                        exit 1;
-                                fi
-                                CLAUSE=":$OSERUSER:$OSERDOMAIN:"
-
-                        elif [ $# -ne 1 ] ; then
-                                usage
-                                exit 1
-                        fi
-                        mecho "RPID show ... "
-                        if [ -z $CLAUSE ]; then
-                                CLAUSE=""
-                        fi
-                        #12 is the rpid field
-                        cat $SUB_FILE | $EGREP "$CLAUSE" | cut -s -d : -f 2,7
-                        echo
-                        ;;
-                add|rm)
-                        MODE=$1;
-
-                        if [ "$MODE" = "add" ] ; then
-                            ARG_NUM=3;
-                        else
-                            ARG_NUM=2;
-                        fi
-
-                        if [ $# -lt $ARG_NUM ] ; then
-                                usage
-                                exit 1
-                        fi
-
-                        set_user $2
-                        is_user
-                        if [ $? -ne 0 ] ; then
-                                merr "non-existent user"
-                                exit 1
-                        fi
-                        shift 2
-
-                        if [ "$MODE" = "add" ] ; then
-                                RPID_VAL="'$1'";
-                        else
-                                RPID_VAL="";
-                        fi
-
-                        old_line=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
-                        pre_rpid=`echo $old_line | cut -s -d : -f 1-6`
-                        new_line=$pre_rpid:$RPID_VAL
-                        cat $SUB_FILE | sed s/$old_line/$new_line/g >> $SUB_FILE.tmp
-                        mv -f $SUB_FILE.tmp $SUB_FILE
-
-                        minfo "RPID added/removed ... showing current value"
-                        $0 rpid show $OSERUSER@$OSERDOMAIN
-
-                        ;;
-
-                *)
-                        usage_rpid
-                        exit 1
-                        ;;
-        esac
-    else
 	case $1 in
 		show)
 			if [ $# -eq 2 ] ; then
@@ -1999,7 +1570,6 @@ WHERE $SUBSCRIBER_COLUMN='$OSERUSER' AND $REALM_COLUMN='$OSERDOMAIN';"
 			exit 1
 			;;
 	esac
-    fi
 }
 
 #
@@ -2243,13 +1813,13 @@ subscriber() {
 			credentials $1 $2
 			is_user $1
 			if [ $? -eq 0 ] ; then
-				merr "user '$1' already exists"
+				minfo "user '$1' already exists"
 				exit 1
 			fi
 			set_user $1
 			check_alias $OSERUSER $OSERDOMAIN
 			if [ "$ALIAS_EXISTS" = "1" ] ; then
-				merr "user '$1' already exists as alias"
+				minfo "user '$1' already exists as alias"
 				exit 1
 			fi
 
@@ -2428,7 +1998,7 @@ usrloc() {
 			check_alias $OSERUSER $OSERDOMAIN
 			if [ "$ALIAS_EXISTS" = "1" ] ; then
 				if [ "$CHECK_SUB" -ne 0 ] ; then
-					merr "alias already defined"
+					minfo "alias already defined"
 				else
 					merr "AOR is an alias"
 				fi
@@ -2614,140 +2184,6 @@ tls_ca() {
 	fi
 }
 
-#======================================================
-# dbtext specific functions
-
-dbtext_add() {
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-		if [ $# -ne 3 ] ; then
-			usage_subscriber
-			exit 1
-		fi
-		shift
-		credentials $1 $2
-		is_user $1
-		if [ $? -eq 0 ] ; then
-			merr "user already exists"
-			exit 1
-		fi
-
-		#Add to SUBSCRIBER file                 
-		#id(int,auto) username(str) domain(str) password(str)
-		#ha1(str) ha1b(str) rpid(str,null)
-		get_next_id $SUB_FILE
-		date_now=`date +%s`
-		line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$2::$HA1:$HA1B:"
-
-		echo $line >> $SUB_FILE
-
-		#Add to URI file
-		#id(int,auto) username(str) domain(str) uri_user(str) last_modified(int)
-		get_next_id $URI_FILE
-		line="$get_next_id_next_id:$OSERUSER:$OSERDOMAIN:$OSERUSER:$date_now"
-		echo $line >> $URI_FILE
-
-		minfo "New user ($OSERUSER@$OSERDOMAIN) added to DBTEXT files"
-	else
-		merr "dbtext_add: unknown command for DBENGINE=$DBENGINE"
-	fi
-}
-
-dbtext_passwd() {
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-                if [ $# -ne 3 ] ; then
-                        usage_subscriber
-                        exit 1
-                fi
-                shift
-                credentials $1 $2
-
-                is_user $1
-                if [ $? -ne 0 ] ; then
-                        merr "non-existent user"
-                        exit 1
-                fi
-
-		date_now=`date +%s`
-		line1=`cat $SUB_FILE | $EGREP :$OSERUSER:$OSERDOMAIN: | head -n 1`
-		line1_keep1=`echo $line1 | cut -s -d : -f 1,2,3`
-		#  4 - password(str)
-		#  5 - ha1(str)
-		#  6 - ha1b(str)
-		line1_keep2=`echo $line1 | cut -s -d : -f 7`
-		line2_update="$line1_keep1:$2:$HA1:$HA1B:$line1_keep2"
-		cat $SUB_FILE | sed s/"$line1"/"$line2_update"/g >> $SUB_FILE.tmp
-		mv -f $SUB_FILE.tmp $SUB_FILE
-		minfo "Password change succeeded (DBTEXT)"
-	else
-		merr "dbtext_passwd: unknown command for DBENGINE=$DBENGINE"
-	fi
-}
-
-
-dbtext_rm() {
-        if [ "$DBENGINE" = "DBTEXT" ] ; then
-                if [ $# -ne 2 ] ; then
-                        usage_subscriber
-                        exit 1
-                fi
-                shift
-
-                set_user $1
-                is_user
-                if [ $? -ne 0 ] ; then
-                        merr "non-existent user"
-                        exit 1
-                fi
-
-                # begin with remove all user's privileges
-                minfo "ACL revoke not implemented for DBTEXT ... rights not removed"
-
-                cat $URI_FILE | $EGREP -v "^[0-9]+:$OSERUSER:" > $URI_FILE.tmp
-                mv -f $URI_FILE.tmp $URI_FILE
-
-                # destroy the user now
-                cat $SUB_FILE | $EGREP -v "^[0-9]+:$OSERUSER:$OSERDOMAIN:" >> $SUB_FILE.tmp
-                mv -f $SUB_FILE.tmp $SUB_FILE
-
-                # and also all his contacts
-                $0 ul rm $1   > /dev/null 2>&1
-                minfo "\nUSER $OSERUSER removed\n"
-
-        else
-                merr "dbtext_rm: unknown command for DBENGINE=$DBENGINE"
-        fi
-}
-
-dbtext_showdb() {
-	if [ "$DBENGINE" = "DBTEXT" ] ; then
-		shift
-		if [ $# -eq 1 ] ; then
-			set_user $1
-			is_user
-			if [ $? -ne 0 ] ; then
-				merr "nnon-existent user"
-				exit 1;
-			fi
-			echo -e "\n** In Location Table: ** "
-			cat $UL_FILE | head -n 1 | tr -d "(,)" | sed s/"str\|int\|null\|auto"/""/g | tr " " ":"
-			cat $UL_FILE | $EGREP "^$OSERUSER:($OSERDOMAIN)?\B?:" 
-		else
-			usr_loc=`cat $UL_FILE | cut -s -d : -f 2 | tr '\n' '|' | sed s/'|\$'/''/g`
-			if [ "$usr_loc" = "" ]; then
-				echo -e "\n** No subscribers currently registered: ** "
-			else
-				echo -e "\n** Subscribers currently registered: ** " 
-				cat $SUB_FILE | $EGREP $usr_loc | cut -s -d : -f 2
-				echo -e "\n** Detailed location data available on disk (username, domain, contact, callid): ** " 
-				cat $UL_FILE | $EGREP $usr_loc | cut -s -d : -f 1,2,3,8
-			fi
-		fi
-		minfo "Note: Due to usage of cache, server's list may differ from DB list."
-	else
-		merr "dbtext_showdb: unknown command for DBENGINE=$DBENGINE"
-	fi
-}
-
 #
 ##### ================================================ #####
 ### main command switch
@@ -2759,27 +2195,15 @@ case $1 in
 		;;
 
 	add)
-	    if [ "$DBENGINE" = "DBTEXT" ] ; then
-		dbtext_add "$@"
-	    else
 		subscriber "$@"
-	    fi
 		;;
 
 	passwd)
-	    if [ "$DBENGINE" = "DBTEXT" ] ; then
-		dbtext_passwd "$@"
-	    else
 		subscriber "$@"
-	    fi
 		;;
 
 	rm)
-	    if [ "$DBENGINE" = "DBTEXT" ] ; then
-		dbtext_rm "$@"
-	    else
 		subscriber "$@"
-	    fi
 		;;
 
 	alias|ul|usrloc)
@@ -2804,26 +2228,22 @@ case $1 in
 
 	db)
 		shift
-	    if [ "$DBENGINE" = "DBTEXT" ] ; then
-		usage
-		exit 1
-	    else
 		db_ops "$@"
-	    fi
 		;;
 
 	showdb|userdb)
-	    if [ "$DBENGINE" = "DBTEXT" ] ; then
-		dbtext_showdb "$@"
-	    else
 		usage
 		exit 1
-	    fi
 		;;
 
 	domain)
 		shift
 		domain "$@"
+		;;
+
+	trusted)
+		shift
+		trusted "$@"
 		;;
 
 	fifo|unixsock)
