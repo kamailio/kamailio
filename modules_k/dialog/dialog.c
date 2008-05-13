@@ -388,13 +388,13 @@ static int child_init(int rank)
 
 static void mod_destroy(void)
 {
-	destroy_dlg_timer();
 	if(dlg_db_mode == DB_MODE_DELAYED) {
 		dialog_update_db(0, 0);
 		destroy_dlg_db();
 	}
 	/* no DB interaction from now on */
 	dlg_db_mode = DB_MODE_NONE;
+	destroy_dlg_timer();
 	destroy_dlg_table();
 	destroy_dlg_callbacks( DLGCB_CREATED|DLGCB_LOADED );
 	destroy_dlg_handlers();
