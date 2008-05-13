@@ -34,13 +34,25 @@
 #include "../../str.h"
 
 
+enum ld_syntax {
+	LD_SYNTAX_STRING = 0,
+	LD_SYNTAX_GENTIME,
+	LD_SYNTAX_INT,
+	LD_SYNTAX_BIT,
+	LD_SYNTAX_BOOL,
+	LD_SYNTAX_BIN,
+	LD_SYNTAX_FLOAT
+};
+
+
 struct ld_config {
 	str table;      /**< Name of the db api table */
 	char* base;     /**< The search base to be used with the table */
 	int scope;      /**< LDAP scope */
 	char* filter;   /**< The search filter */
-	char** fields;  /**< An array of DB API fields */
-	char** attrs;   /**< An array of LDAP attribute names */
+	char** field;  /**< An array of DB API fields */
+	char** attr;   /**< An array of LDAP attribute names */
+	enum ld_syntax* syntax; /**< An array of configured LDAP syntaxes */
 	int n;          /**< Number of fields in the arrays */
 	struct ld_config* next; /**< The next table in the list */
 };
@@ -49,7 +61,7 @@ extern struct ld_config* ld_cfg_root;
 
 struct ld_config* ld_find_config(str* table);
 
-char* ld_find_attr_name(struct ld_config* cfg, char* fld_name);
+char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_config* cfg, char* fld_name);
 
 int ld_load_config(str* filename);
 

@@ -98,7 +98,7 @@ int ld_resolve_fld(db_fld_t* fld, struct ld_config* cfg)
 
 	for(i = 0; !DB_FLD_EMPTY(fld) && !DB_FLD_LAST(fld[i]); i++) {
 		lfld = DB_GET_PAYLOAD(fld + i);
-		lfld->attr.s = ld_find_attr_name(cfg, fld[i].name);
+		lfld->attr.s = ld_find_attr_name(&lfld->syntax, cfg, fld[i].name);
 		if (lfld->attr.s == NULL) lfld->attr.s = fld[i].name;
 		if (lfld->attr.s) lfld->attr.len = strlen(lfld->attr.s);
 	}
@@ -227,18 +227,35 @@ int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
 
 		case DB_INT:
 		case DB_BITMAP:
-			if (v.s[0] == '\'' && 
-				v.s[v.len - 1] == 'B' &&
+			if (v.s[0] == '\'' && v.s[v.len - 1] == 'B' && 
 				v.s[v.len - 2] == '\'') {
-
 				v.s++;
 				v.len -= 3;
-				return ldap_bit2db_int(&fld[i].v.int4, &v);
-			} else {
-				return ldap_int2db_int(&fld[i].v.int4, &v);
+				if (ldap_bit2db_int(&fld[i].v.int4, &v) != 0) {
+					ERR("ldap: Error while converting bit string '%.*s'\n",
+						v.len, ZSW(v.s));
+					return -1;
+				}
+				break;
+			}
+
+			if (v.len == 4 && !strncasecmp("TRUE", v.s, v.len)) {
+				fld[i].v.int4 = 1;
+				break;
+			}
+
+			if (v.len == 5 && !strncasecmp("FALSE", v.s, v.len)) {
+				fld[i].v.int4 = 0;
+				break;
+			}
+
+			if (ldap_int2db_int(&fld[i].v.int4, &v) != 0) {
+				ERR("ldap: Error while converting %.*s to integer\n",
+					v.len, ZSW(v.s));
+				return -1;
 			}
 			break;
-
+			
 		case DB_DATETIME:
 			if (ldap_gentime2db_datetime(&fld[i].v.time, &v) != 0) {
 				ERR("ldap: Error while converting LDAP time value '%.*s'\n",

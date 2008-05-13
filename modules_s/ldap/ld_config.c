@@ -91,6 +91,7 @@ struct parser_tab {
 
 static struct parser_tab token_scope[];
 static struct parser_tab option_name[];
+static struct parser_tab token_syntax[];
 
 
 /*
@@ -581,6 +582,7 @@ static int parse_field_map(token_t* token)
 	int ret;
 	token_t t;
 	void* ptr;
+	struct parser_tab* r;
 
 	ret = lex(&t, 0);
 	if (ret < 0) return -1;
@@ -596,24 +598,33 @@ static int parse_field_map(token_t* token)
 		return -1;
 	}
 
-	ptr = pkg_realloc(pstate.cfg->fields, sizeof(char*) * (pstate.cfg->n + 1));
+	ptr = pkg_realloc(pstate.cfg->field, sizeof(char*) * (pstate.cfg->n + 1));
 	if (ptr == NULL) {
 		ERR("ldap:%s:%d: Out of memory\n", 
 		    pstate.file, token->start.line);
 		return -1;
 	}
-	pstate.cfg->fields = (char**)ptr;
-	pstate.cfg->fields[pstate.cfg->n] = NULL;
+	pstate.cfg->field = (char**)ptr;
+	pstate.cfg->field[pstate.cfg->n] = NULL;
 
-	ptr = pkg_realloc(pstate.cfg->attrs, sizeof(char*) * (pstate.cfg->n + 1));
+	ptr = pkg_realloc(pstate.cfg->attr, sizeof(char*) * (pstate.cfg->n + 1));
 	if (ptr == NULL) {
 		ERR("ldap:%s:%d: Out of memory\n", 
 		    pstate.file, token->start.line);
 		return -1;
 	}
-	pstate.cfg->attrs = (char**)ptr;
-	pstate.cfg->attrs[pstate.cfg->n] = NULL;
+	pstate.cfg->attr = (char**)ptr;
+	pstate.cfg->attr[pstate.cfg->n] = NULL;
 
+	ptr = pkg_realloc(pstate.cfg->syntax, sizeof(enum ld_syntax) * (pstate.cfg->n + 1));
+	if (ptr == NULL) {
+		ERR("ldap:%s:%d: Out of memory\n",
+			pstate.file, token->start.line);
+		return -1;
+	}
+	pstate.cfg->syntax = (enum ld_syntax*)ptr;
+	pstate.cfg->syntax[pstate.cfg->n] = LD_SYNTAX_STRING;
+		
 	pstate.cfg->n++;
 
 	ret = lex(&t, 0);
@@ -631,8 +642,8 @@ static int parse_field_map(token_t* token)
 		return -1;
 	}
 	
-	pstate.cfg->fields[pstate.cfg->n - 1] = as_asciiz(&t.val);
-	if (pstate.cfg->fields[pstate.cfg->n - 1] == NULL) {
+	pstate.cfg->field[pstate.cfg->n - 1] = as_asciiz(&t.val);
+	if (pstate.cfg->field[pstate.cfg->n - 1] == NULL) {
 		ERR("ldap:%s:%d: Out of memory\n", 
 		    pstate.file, token->start.line);
 		return -1;
@@ -654,11 +665,58 @@ static int parse_field_map(token_t* token)
 	ret = lex(&t, 0);
 	if (ret < 0) return -1;
 	if (ret == 0) {
-		ERR("ldap:%s:%d:%d: LDAP Attribute name expected\n", 
+		ERR("ldap:%s:%d:%d: LDAP Attribute syntax or name expected\n", 
 		    pstate.file, token->start.line, token->start.col);
 		return -1;
 	}
 
+	if (t.type == '(') {
+		ret = lex(&t, 0);
+		if (ret < 0) return -1;
+		if (ret == 0) {
+			ERR("ldap:%s:%d:%d: LDAP Attribute Syntax expected\n", 
+				pstate.file, token->start.line, token->start.col);
+			return -1;
+		}
+		if (t.type != TOKEN_ALPHA) {
+			ERR("ldap:%s:%d:%d: Invalid LDAP attribute syntax format %d:'%.*s'\n", 
+				pstate.file, t.start.line, t.start.col,
+				t.type, t.val.len, ZSW(t.val.s));
+			return -1;
+		}
+		
+		r = lookup_token(token_syntax, &t.val);
+		if (!r) {
+			ERR("ldap:%s:%d:%d: Invalid syntaxt value '%.*s'\n", 
+				pstate.file, t.start.line, t.start.col,
+				t.val.len, ZSW(t.val.s));
+			return -1;
+		}
+		pstate.cfg->syntax[pstate.cfg->n - 1] = r->u.ival;
+
+		ret = lex(&t, 0);
+		if (ret < 0) return -1;
+		if (ret == 0) {
+			ERR("ldap:%s:%d:%d: Closing ')' missing in attribute syntax\n", 
+				pstate.file, token->start.line, token->start.col);
+			return -1;
+		}
+
+		if (t.type != ')') {
+			ERR("ldap:%s:%d:%d: Syntax error, ')' expected\n", 
+				pstate.file, t.start.line, t.start.col);
+			return -1;
+		}
+
+		ret = lex(&t, 0);
+		if (ret < 0) return -1;
+		if (ret == 0) {
+			ERR("ldap:%s:%d:%d: LDAP Attribute name expected\n", 
+				pstate.file, token->start.line, token->start.col);
+			return -1;
+		}
+	}
+	
 	if (t.type != TOKEN_ALPHA) {
 		ERR("ldap:%s:%d:%d: Invalid LDAP attribute name format %d:'%.*s'\n", 
 		    pstate.file, t.start.line, t.start.col,
@@ -666,8 +724,8 @@ static int parse_field_map(token_t* token)
 		return -1;
 	}
 
-	pstate.cfg->attrs[pstate.cfg->n - 1] = as_asciiz(&t.val);
-	if (pstate.cfg->attrs[pstate.cfg->n - 1] == NULL) {
+	pstate.cfg->attr[pstate.cfg->n - 1] = as_asciiz(&t.val);
+	if (pstate.cfg->attr[pstate.cfg->n - 1] == NULL) {
 		ERR("ldap:%s:%d: Out of memory\n", 
 		    pstate.file, token->start.line);
 		return -1;
@@ -846,13 +904,15 @@ struct ld_config* ld_find_config(str* table)
 }
 
 
-char* ld_find_attr_name(struct ld_config* cfg, char* fld_name)
+char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_config* cfg, char* fld_name)
 {
 	int i;
 
 	for(i = 0; i < cfg->n; i++) {
-		if (!strcmp(fld_name, cfg->fields[i]))
-			return cfg->attrs[i];
+		if (!strcmp(fld_name, cfg->field[i])) {
+			*syntax = cfg->syntax[i];
+			return cfg->attr[i];
+		}
 	}
 	return NULL;
 }
@@ -863,6 +923,18 @@ static struct parser_tab token_scope[] = {
 	{STR_STATIC_INIT("onelevel"), {.ival = LDAP_SCOPE_ONELEVEL}},
 	{STR_STATIC_INIT("subtree"),  {.ival = LDAP_SCOPE_SUBTREE}},
 	{STR_STATIC_INIT("children"), {.ival = LDAP_SCOPE_CHILDREN}},
+	{STR_NULL}
+};
+
+
+static struct parser_tab token_syntax[] = {
+	{STR_STATIC_INIT("GeneralizedTime"), {.ival = LD_SYNTAX_GENTIME}},
+	{STR_STATIC_INIT("Integer"),         {.ival = LD_SYNTAX_INT}},
+	{STR_STATIC_INIT("BitString"),       {.ival = LD_SYNTAX_BIT}},
+	{STR_STATIC_INIT("Boolean"),         {.ival = LD_SYNTAX_BOOL}},
+	{STR_STATIC_INIT("String"),          {.ival = LD_SYNTAX_STRING}},
+	{STR_STATIC_INIT("Binary"),          {.ival = LD_SYNTAX_BIN}},
+	{STR_STATIC_INIT("Float"),           {.ival = LD_SYNTAX_FLOAT}},
 	{STR_NULL}
 };
 

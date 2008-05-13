@@ -45,9 +45,11 @@
 
 #include <ldap.h>
 
+
 struct ld_fld {
 	db_drv_t gen;
-	str attr;  /**< Name of corresponding LDAP attribute */
+	str attr;               /**< Name of corresponding LDAP attribute */
+	enum ld_syntax syntax;  /**< LDAP attribute syntax */
 	struct berval** values; /**< Values retrieved from the LDAP result */
 };
 
