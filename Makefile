@@ -141,8 +141,8 @@ else
 							unixsock dbg print_lib auth_identity
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
-	exclude_modules+= avpops  bdb db_ops dbtext flatstore lcr msilo pdt \
-						permissions speeddial iptrtpproxy
+	exclude_modules+= avpops  bdb dbtext flatstore lcr msilo pdt \
+					  iptrtpproxy
 endif
 
 # always exclude the CVS dir
