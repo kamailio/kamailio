@@ -153,7 +153,7 @@ void deleteRegUserRow(int userIndex)
 	 * malloc() */
 	if (theRow != NULL) {
 		CONTAINER_REMOVE(cb.container, &indexToRemove);
-		shm_free(theRow->openserSIPUserUri);
+		pkg_free(theRow->openserSIPUserUri);
 		pkg_free(theRow->index.oids);
 		free(theRow);
 	}
@@ -257,8 +257,18 @@ int createRegUserRow(char *stringToRegister)
 	theRow->index.oids = OIDIndex;
 	theRow->openserSIPUserIndex = index;
 
-	theRow->openserSIPUserUri     = (unsigned char*) stringToRegister;
-	theRow->openserSIPUserUri_len = stringLength;
+	theRow->openserSIPUserUri     = (unsigned char*)pkg_malloc(stringLength* sizeof(char));
+    if(theRow->openserSIPUserUri== NULL)
+    {
+        pkg_free(OIDIndex);
+		free(theRow);
+		LM_ERR("failed to create a row for openserSIPRegUserTable\n");
+		return 0;
+
+    }
+    memcpy(theRow->openserSIPUserUri, stringToRegister, stringLength);
+	
+    theRow->openserSIPUserUri_len = stringLength;
 
 	theRow->openserSIPUserAuthenticationFailures = 0;
 

@@ -119,5 +119,6 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param);
  */
 void consumeInterprocessBuffer();
 
+void freeInterprocessBuffer(void);
 
 #endif

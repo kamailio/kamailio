@@ -81,6 +81,12 @@ int initInterprocessBuffers(void)
 	 * over the usrloc module to RegUserTable callback. */
 	frontRegUserTableBuffer =  shm_malloc(sizeof(interprocessBuffer_t));
 	endRegUserTableBuffer   =  shm_malloc(sizeof(interprocessBuffer_t));
+    
+    if(frontRegUserTableBuffer == NULL || endRegUserTableBuffer == NULL)
+    {
+        LM_ERR("no more shared memory\n");
+        return -1;
+    }
 
 	memset(frontRegUserTableBuffer, 0x00, sizeof(interprocessBuffer_t));
 	memset(endRegUserTableBuffer,   0x00, sizeof(interprocessBuffer_t));
@@ -93,6 +99,15 @@ int initInterprocessBuffers(void)
 	lock_init(interprocessCBLock);
 
 	hashTable = createHashTable(HASH_SIZE);
+    if(hashTable == NULL)
+    {
+        LM_ERR("no more shared memory\n");
+        shm_free(frontRegUserTableBuffer);
+        frontRegUserTableBuffer = NULL;
+        shm_free(endRegUserTableBuffer);
+        endRegUserTableBuffer = NULL;
+        return -1;
+    }
 
 	return 1;
 }
@@ -218,6 +233,8 @@ void consumeInterprocessBuffer(void)
 		 * buffer element. */
 		previousBuffer = currentBuffer;
 		currentBuffer = currentBuffer->next;
+		shm_free(previousBuffer->stringName);
+		shm_free(previousBuffer->stringContact);
 		shm_free(previousBuffer);
 
 	}
@@ -321,5 +338,38 @@ static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer)
 
 		deleteUser(hashTable, currentBuffer->stringName, HASH_SIZE);
 	}
+}
+
+void freeInterprocessBuffer(void)
+{
+    interprocessBuffer_t *currentBuffer, *previousBuffer;
+
+	if (frontRegUserTableBuffer->next == NULL) {
+        LM_DBG("Nothing to clean\n");
+		return;
+	}
+
+	currentBuffer = frontRegUserTableBuffer->next;
+	
+	frontRegUserTableBuffer->next = NULL;
+	endRegUserTableBuffer->next   = NULL;
+
+
+	while (currentBuffer != NULL) {
+
+        previousBuffer = currentBuffer;
+        currentBuffer = currentBuffer->next;
+        shm_free(previousBuffer->stringName);
+        shm_free(previousBuffer->stringContact);
+        shm_free(previousBuffer);
+
+	}
+    
+    if(frontRegUserTableBuffer)
+        shm_free(frontRegUserTableBuffer);
+
+    if(endRegUserTableBuffer)
+        shm_free(endRegUserTableBuffer);
+
 }
 

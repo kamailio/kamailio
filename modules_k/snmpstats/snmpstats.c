@@ -279,7 +279,10 @@ static void mod_destroy(void)
 {
 	LM_INFO("The SNMPStats module got the kill "
 			"signal\n");
-	LM_INFO("                 Shutting down the AgentX Sub-Agent!\n");
+	
+    freeInterprocessBuffer();
+
+    LM_INFO("                 Shutting down the AgentX Sub-Agent!\n");
 }
 
 

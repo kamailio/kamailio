@@ -75,6 +75,7 @@
 #include "openserSIPContactTable.h"
 #include "snmpstats_globals.h"
 
+#include "../../mem/mem.h"
 #include "../../str.h"
 #include "../../sr_module.h"
 #include "../../locking.h"
@@ -99,16 +100,21 @@ size_t openserSIPContactTable_oid_len = OID_LENGTH(openserSIPContactTable_oid);
 int insertContactRecord(
 		contactToIndexStruct_t **contactRecord, int index, char *name) 
 {
-	contactToIndexStruct_t *newContactRecord = 
-		pkg_malloc(sizeof(contactToIndexStruct_t));
+    int nameLength =strlen(name);
+	
+    contactToIndexStruct_t *newContactRecord = (contactToIndexStruct_t *)
+        pkg_malloc(sizeof(contactToIndexStruct_t) +(nameLength+1)* sizeof(char));
 
 	if (newContactRecord == NULL)
 	{
+        LM_ERR("no more pkg memory\n");
 		return 0;
 	}
 
 	newContactRecord->next         = *contactRecord;
-	newContactRecord->contactName  = name;
+	newContactRecord->contactName  = (char*)newContactRecord + sizeof(contactToIndexStruct_t);
+    memcpy(newContactRecord->contactName, name, nameLength);
+    newContactRecord->contactName[nameLength]= '\0';
 	newContactRecord->contactIndex = index;
 
 	*contactRecord = newContactRecord;
@@ -142,7 +148,7 @@ int deleteContactRecord(contactToIndexStruct_t **contactRecord,char *contactName
 			}
 
 			contactIndexToReturn = currentContact->contactIndex;
-			pkg_free(currentContact);
+            pkg_free(currentContact);
 			return contactIndexToReturn;
 		}
 
@@ -196,8 +202,19 @@ int createContactRow(int userIndex, int contactIndex, char *contactName,
 	theRow->openserSIPContactIndex = contactIndex;
 
 	/* Fill in the rest of the rows columns */
-	theRow->openserSIPContactURI     = (unsigned char*)contactName;
-	theRow->openserSIPContactURI_len = stringLength;
+	theRow->openserSIPContactURI = (unsigned char*)
+        pkg_malloc((stringLength+ 1)* sizeof(char));
+    if(theRow->openserSIPContactURI == NULL)
+    {
+        pkg_free(OIDIndex);
+		free(theRow);
+		LM_ERR("failed to allocate memory for contact name\n");
+		return 0;
+    }
+    memcpy(theRow->openserSIPContactURI, contactName, stringLength);
+    theRow->openserSIPContactURI[stringLength] = '\0';
+
+    theRow->openserSIPContactURI_len = stringLength;
 	theRow->contactInfo = contactInfo;
 
 	CONTAINER_INSERT(cb.container, theRow);
@@ -230,7 +247,7 @@ void deleteContactRow(int userIndex, int contactIndex)
 	 * malloc() */
 	if (theRow != NULL) {
 		CONTAINER_REMOVE(cb.container, &indexToRemove);
-		shm_free(theRow->openserSIPContactURI);
+		pkg_free(theRow->openserSIPContactURI);
 		pkg_free(theRow->index.oids);
 		free(theRow);
 	} 

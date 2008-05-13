@@ -233,7 +233,6 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 }
 
 
-
 /* Returns a aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
  * structure is used to map between the "aor" (OpenSER's way of indexing
  * users/contacts), and the SNMPStats user and contact integer indexes.  
@@ -244,8 +243,10 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
  */
 aorToIndexStruct_t *createHashRecord(int userIndex, char *aor) 
 {
-	aorToIndexStruct_t *theRecord = pkg_malloc(sizeof(aorToIndexStruct_t));
+	int aorLength =strlen(aor);
 
+    aorToIndexStruct_t *theRecord = pkg_malloc(sizeof(aorToIndexStruct_t)+
+            (aorLength+1)* sizeof(char));
 	if (theRecord == NULL)
 	{
 		LM_ERR("failed to create a mapping record for %s", aor);
@@ -254,8 +255,10 @@ aorToIndexStruct_t *createHashRecord(int userIndex, char *aor)
 
 	memset(theRecord, 0, sizeof(aorToIndexStruct_t));
 
-	theRecord->aor = aor;
-	theRecord->aorLength = strlen(aor);
+	theRecord->aor = (char*)theRecord + sizeof(aorToIndexStruct_t);
+    memcpy(theRecord->aor, aor, aorLength );
+	theRecord->aor[aorLength] = '\0';
+    theRecord->aorLength = aorLength;
 	theRecord->userIndex = userIndex;
 	theRecord->numContacts = 1;
 
