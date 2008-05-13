@@ -290,5 +290,4 @@ int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg)
 	return 0;
 }
 
-
 /** @} */

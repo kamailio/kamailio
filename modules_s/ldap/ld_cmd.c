@@ -60,6 +60,24 @@ struct string_buffer {
 };
 
 
+#define TEST_RESIZE \
+	if (rsize > sb->size) { \
+		asize = rsize - sb->size; \
+		new_size = sb->size + (asize / sb->increment  + \
+							   (asize % sb->increment > 0)) * sb->increment; \
+		newp = pkg_malloc(new_size); \
+		if (!newp) { \
+			ERR("ldap: No memory left\n"); \
+			return -1; \
+		} \
+		if (sb->s) { \
+			memcpy(newp, sb->s, sb->len); \
+			pkg_free(sb->s); \
+		} \
+		sb->s = newp; \
+		sb->size = new_size; \
+	}
+
 /** Appends string to string buffer.
  * This function appends string to dynamically created string buffer,
  * the buffer is automatically extended if there is not enough room
@@ -70,29 +88,69 @@ struct string_buffer {
  */
 static inline int sb_add(struct string_buffer *sb, str *nstr)
 {
-	int new_size = 0;
+	int new_size = 0, asize;
 	int rsize = sb->len + nstr->len;
-	int asize;
 	char *newp;
 	
-	if (rsize > sb->size) {
-		asize = rsize - sb->size;
-		new_size = sb->size + (asize / sb->increment  + 
-							   (asize % sb->increment > 0)) * sb->increment;
-		newp = pkg_malloc(new_size);
-		if (!newp) {
-			ERR("ldap: No memory left\n");
-			return -1;
-		}
-		if (sb->s) {
-			memcpy(newp, sb->s, sb->len);
-			pkg_free(sb->s);
-		}
-		sb->s = newp;
-		sb->size = new_size;
-	}
+	TEST_RESIZE;
+
 	memcpy(sb->s + sb->len, nstr->s, nstr->len);
 	sb->len += nstr->len;
+	return 0;
+}
+
+
+/** Appends string to string buffer.
+ * This function appends string to dynamically created string buffer,
+ * the buffer is automatically extended if there is not enough room
+ * in the buffer. The buffer is allocated using pkg_malloc.
+ * @param sb    string buffer
+ * @param nstr  string to add
+ * @return      0 if OK, -1 if failed
+ */
+static inline int sb_add_esc(struct string_buffer *sb, str *nstr)
+{
+	int new_size = 0, asize, i;
+	int rsize = sb->len + nstr->len * 3;
+	char *newp, *w;
+	
+	TEST_RESIZE;
+
+	w = sb->s + sb->len;
+	for(i = 0; i < nstr->len; i++) {
+		switch(nstr->s[i]) {
+		case '*':  
+			*w++ = '\\'; *w++ = '2'; *w++ = 'A'; 
+			sb->len += 3;
+			break;
+
+		case '(':
+			*w++ = '\\'; *w++ = '2'; *w++ = '8'; 
+			sb->len += 3;
+			break;
+
+		case ')':  
+			*w++ = '\\'; *w++ = '2'; *w++ = '9'; 
+			sb->len += 3;
+			break;
+
+		case '\\':
+			*w++ = '\\'; *w++ = '5'; *w++ = 'C'; 
+ 			sb->len += 3;
+			break;
+
+		case '\0': 
+			*w++ = '\\'; *w++ = '0'; *w++ = '0'; 
+			sb->len += 3;
+			break;
+
+		default:
+			*w++ = nstr->s[i];
+			sb->len++;
+			break;
+		}
+	}
+
 	return 0;
 }
 
@@ -207,11 +265,11 @@ static int build_search_filter(char** dst, db_fld_t* fld, str* filter_add)
 		if ((fld[i].flags & DB_NULL) == 0) {
 			switch(fld[i].type) {
 			case DB_CSTR:
-				rv |= sb_add(&sql_buf, set_str(&tmpstr, fld[i].v.cstr));
+				rv |= sb_add_esc(&sql_buf, set_str(&tmpstr, fld[i].v.cstr));
 				break;
 				
 			case DB_STR:
-				rv |= sb_add(&sql_buf, &fld[i].v.lstr);
+				rv |= sb_add_esc(&sql_buf, &fld[i].v.lstr);
 				break;
 			
 			default:

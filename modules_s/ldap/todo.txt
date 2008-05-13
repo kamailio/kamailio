@@ -29,7 +29,7 @@
 
 X Implement Support For Other Than str Parameters
 
-* Escape Values of Parameters Injected Into the Search Filter
+X Escape Values of Parameters Injected Into the Search Filter
 
   see RFC4515 for description of escaping.
 
