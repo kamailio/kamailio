@@ -76,10 +76,11 @@ ret=$?
 sleep 1
 
 if [ "$ret" -eq 0 ] ; then
-	sipp -sn uas -bg -i localhost -m 10 -p 7000 &> /dev/null
-	sipp -sn uas -bg -i localhost -m 10 -p 8000 &> /dev/null
+	sipp -sn uas -bg -i localhost -m 12 -p 7000 &> /dev/null
+	sipp -sn uas -bg -i localhost -m 12 -p 8000 &> /dev/null
 	sipp -sn uac -s 49721123456787 127.0.0.1:5060 -i 127.0.0.1 -m 20 -p 5061 &> /dev/null
 	ret=$?
+	killall sipp &> /dev/null
 fi;
 
 if [ "$ret" -eq 0 ] ; then
@@ -95,6 +96,7 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 if [ "$ret" -eq 0 ] ; then
+	killall sipp &> /dev/null
 	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
 	ret=$?
@@ -107,6 +109,7 @@ flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000',
 
 if [ ! "$ret" -eq 0 ] ; then
 	../scripts/openserctl fifo cr_reload_routes
+	killall sipp &> /dev/null
 	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
 	ret=$?

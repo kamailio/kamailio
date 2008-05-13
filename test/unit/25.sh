@@ -64,33 +64,30 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('',
 ../openser -w . -f $CFG &> /dev/null
 sleep 1
 
-sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
+sipp -sn uas -bg -i localhost -p 5060 &> /dev/null
+
 sipp -sn uac -s 49721123456789 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
 
 if [ "$ret" -eq 1 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456788 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 1 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456787 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 1 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456786','1','_test_');"
-openserctl fifo reload_blacklist
+../scripts/openserctl fifo reload_blacklist
 
 if [ "$ret" -eq 1 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
@@ -98,22 +95,19 @@ fi;
 $MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('49721123456786','','12345','0','_test_');"
 
 if [ "$ret" -eq 0 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
 
 if [ "$ret" -eq 1 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('2','1','_test_');"
-openserctl fifo reload_blacklist
+../scripts/openserctl fifo reload_blacklist
 
 if [ "$ret" -eq 1 ] ; then
-	sipp -sn uas -bg -i localhost -m 1 -f 2 -p 5060 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 	ret=$?
 fi;
