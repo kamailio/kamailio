@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE section PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" 
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<section id="cfg_db" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <sectioninfo>
+	<authorgroup>
+	    <author>
+		<firstname>Tomas</firstname>
+		<surname>Mandys</surname>
+		<affiliation><orgname>Iptel.org</orgname></affiliation>
+		<address>
+		    <email>tomas dot mandys at iptel dot org</email>
+		</address>
+	    </author>
+	</authorgroup>
+	<copyright>
+	    <year>2008</year>
+	    <holder>Tomas Mandys</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision$</revnumber>
+		<date>$Date$</date>
+	    </revision>
+	</revhistory>
+
+    </sectioninfo>
+
+    <title>cfg_db module</title>
+	<section id="cfg_db.overview">
+		<title>Overview</title>
+		<para>
+		The module implements driver for config params API. When
+		config parameters are being declared (typically when is starting)
+		API then driver is notified and has chance set value (of any
+		parameter) based on value taken from database. It's primarily
+		targeted for interfacing with 3rd party software which is aware
+		of configuration.
+		</para>
+		<para>
+		Parameter is uniquely identified by <emphasis>group_name</emphasis> plus 
+		<emphasis>name</emphasis>. Hence the driver checks a value can be found
+		regarding particular parameter. Because configuration parameters may
+		be spread in many tables, translation table telling where parameters 
+		will be sniffed, is used first. More look-up tables may be defined for
+		single parameter, tables are sniffed in the first round by exact match
+		until parameter is found, all tables listed with wildcard (asterisk) in group name
+		are sniffed in the second round. If parameter is not found
+		then its value is left unchanged.
+		</para>
+		<para>
+		Config parameters are normally declared in C code and this module
+		additionally supports also declaring custom parameters in extra table.
+		Such parameters may be used typically in script only. All parameters
+		listed in the table are declared in the first step, values are initialized
+		in the second step using the same procedure as C-code params.
+		</para>
+		<para>
+		The module does not reflect changes made in parameters when ser is running.
+		It just declares variable and assings value when ser is starting. That's all.
+		</para>
+	</section>
+
+	<section id="cfg_db.dep">
+		<title>Dependencies</title>
+				   
+		<para>
+		A loaded database module.
+		</para>
+	</section>
+
+
+	<section id="cfg_db.parameters">
+
+		<title>Parameters</title>
+
+		<section id="db_url">
+			<title><varname>db_url</varname> (string)</title>
+			<para>
+			Default database URL. 
+			</para>
+			<para>
+			The format is:
+			</para>
+			<programlisting>
+			db_url = database
+			</programlisting>
+			<example>
+				<title>Example <varname>db_url</varname></title>
+				<programlisting>
+	loadmodule("mysql.so");
+	loadmodule("cfg_db.so");
+	...
+	modparam("cfg_db", "db_url", "mysql://ser:123@127.0.0.1:12345/ser");
+	...
+				</programlisting>
+			</example>
+		</section>
+
+		<section id="transl_tbl">
+			<title><varname>transl_tbl</varname> (string) := "cfg_transl"</title>
+			<para>
+				Name of table used for pointing group_name+name into
+				config table. If empty/null field values are found
+				then default values will be used. The default
+				values are declared in record having <emphasis>group_name</emphasis>
+				called <emphasis>&lt;default&gt;</emphasis>. The C-code
+				"absolutely" default values ("cfg_var", "group_name", "name", "value").
+				The other keyword is asterisk <emphasis>*</emphasis> which matches
+				all parameters and will be used if parameter is not
+				explicitely mentioned.
+			</para>		
+		</section>
+		<section id="custom_tbl">
+			<title><varname>custom_tbl</varname> (string) := "cfg_custom"</title>
+			<para>
+				Name of table used for extra param declaration (group_name, name,
+				type, min/max value, description).
+			</para>		
+		</section>		
+	</section>
+
+	<section id="cfg_db.functions">
+		<title>Functions</title>
+		<para>
+		None.
+		</para>
+	</section>
+
+    <section id="cfg_db.examples">
+		<title>Examples</title>
+		<example>
+			<title>Content of tables</title>
+			<programlisting>
+	cfg_transl table:
+	group_name|name|cfg_table|cfg_table_group_name_field|cfg_table_name_field|cfg_table_value_field
+	core|use_dst_blacklist|cfg_dns|||
+	core|dst_blacklist_mem|cfg_dns|||
+	core|dst_blacklist_expire|||
+	my|route_addr|cfg_my|my_group_name|my_name|my_value	; overrides &lt;default&gt; values
+	my|use_rtp_proxy|cfg_my|my_group_name|my_name|my_value
+	*|*||||	; matches all param ids, points to tables defined in row &lt;default&gt;
+	&lt;default&gt;||cfg_var|group_name|name|value  ; default cfg_table* values
+		
+	cfg_custom table:
+	group_name|name|value_type|min_value|max_value|description
+	my|route_addr|S|||Routing address
+	my|use_rtp_proxy|I|0|1|Use RTP proxy
+	
+	cfg_var table:
+	group_name|my_name|value
+	core|debug|4
+	
+	cfg_my table:
+	my_group_name|my_name|my_value
+	my|route_addr|127.0.0.1
+	my|use_rtp_proxy|1
+	
+	cfg_dns table:
+	group_name|name|value
+	dns|use_dst_blacklist|1
+	dns|dst_blacklist_mem|1024
+	dns|dst_blacklist_expire|60
+	
+			</programlisting>
+
+		</example>
+    </section>
+</section>
+
