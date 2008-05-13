@@ -27,7 +27,7 @@
   operators, only <= and >=. Currently the ldap driver simply uses <= instead
   of < and >= instead of >. We need a better implementation of this.
 
-* Implement Support For Other Than str Parameters
+X Implement Support For Other Than str Parameters
 
 * Escape Values of Parameters Injected Into the Search Filter
 
@@ -66,3 +66,15 @@
 
   We should eliminate the use of all functions that are marked as deprecated
   in the header field and remove LDAP_DEPRECATED define from all files.
+
+X Support for Bool Attribute Types
+
+  The module should be able to convert boolean attributes from the LDAP result
+  into int fields.
+
+X Support for Syntax Specification in the Config File
+
+  There is no easy or portable way of retrieving syntaxes of attributes from
+  the LDAP server, so it might be necessary to specify the syntax of
+  attributes in the configuration file so that the module knows how to convert
+  DB API fields into attribute values in command parameters.
