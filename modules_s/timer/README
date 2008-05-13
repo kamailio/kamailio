@@ -1,53 +1,108 @@
+
 timer module
-============
 
-Author: tomas.mandys at iptel dot org
+Tomas Mandys
 
-Timer support directly from script. Core trigger will trigger specific route block.
+   Iptel.org
 
-mod_params
------------
-timer_id = alphanum
-declare_timer = timer_id "=" (route#|route_name) "," interval "," ("slow" | "fast") "," ["enable"]
+   Copyright © 2007 iptelorg GmbH
+   Revision History
+   Revision $Revision$ $Date$
+     _________________________________________________________________
 
-format:
+Overview
 
+   The module supports triggering specific route block on timer.
 
-commands
---------
+Dependencies
 
-timer_enable(timer_id, 0|1)
+   none
 
+ABNF syntax
 
-selects
--------
+        timer_id = alphanum
+        slow_fast = "slow" | "fast"
+        declare_timer_syntax = timer_id "=" (route#|route_name) "," interval ",
+" slow_fast "," ["enable"]
+        enable_disable = "0" | "1"
+
+Parameters
+
+declare_timer (string)
+
+   Declares timer route which will be called in specific interval.
+
+   The format is:
+                        declare_timer = declare_timer_syntax
+
+   timer_id is timer identifier, route is handler to be called when timer is
+   triggered, interval is timer interval in milliseconds, slow_fast determines
+   if handler will be hooked in slow or fast timer queue, fast timer handler
+   returns as quickly as possible, slow timer handler may spend longer time,
+   see ser/doc/timers.txt documentation. Use enable to enable timer when ser is
+   starting, otherwise use timer_enable to start it later.
+
+   Example 1. Example declare_timer
+        ...
+        modparam("timer", "declare_timer", "MY_TIMER=MY_TIMER_ROUTE,10,slow,ena
+ble");
+        ...
+
+Functions
+
+timer_enable(timer_id, enable_disable)
+
+   Enable/disable timer route specified by timer_id. Because of timer core API
+   the callback is not disabled immediately but is removed from handler by
+   itself not to decrease performance. Disabling and enabling in sequence may
+   be tricky. timer_id references to timer declared by declare_timer.
+
+   Example 2. timer_enable usage
+        ...
+        timer_enable("MY_TIMER", 1);
+        ...
 
 @timer.timer.timer_id.enabled
-@timer.executed  ... name of executed timer from called route script
 
+   Return true ("1") if timer specified by timer_id is enabled, otherwise
+   returns false ("0").
 
-Examples:
---------
-1) example
+   Example 3. timer.timer.timer_id.enabled usage
+        if (@timer.timer.MY_TIMER.enabled == "1") {
+        ....
+        }
 
+@timer.executed
+
+   Returns name of timer which has been executed, i.e. non empty value is
+   returned only when handler is being processed.
+
+   Example 4. timer.executed usage
+        if (@timer.executed != "") {
+                # timer is being handled
+        ....
+        }
+
+Examples
+
+   Example 5. timer common example
 loadmodule "modules/xlog/xlog.so"
-loadmodule "/modules/timer/timer.so"
+loadmodule "modules/timer/timer.so"
 
-modparam("timer", "declare_timer", "tmr1=ONTIMER,1000"); 
+modparam("timer", "declare_timer", "tmr1=ONTIMER,1000");
 modparam("timer", "declare_timer", "tmr2=ONTIMER2,2000,slow,enable");
 
 route["print"] {
-	xlog("L_INFO", "fired: %@timer.executed\n");
+        xlog("L_INFO", "fired: %@timer.executed\n");
 }
 
 route["ONTIMER"] {
-	# do something
-	route("print");}
+        # do something
+        route("print");}
 
 
 route["ONTIMER2"] {
-	# do something
-	timer_enable("tmr1", 0);
-	route("print");
+        # do something
+        timer_enable("tmr1", 0);
+        route("print");
 }
-
