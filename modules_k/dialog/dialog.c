@@ -394,8 +394,8 @@ static void mod_destroy(void)
 	}
 	/* no DB interaction from now on */
 	dlg_db_mode = DB_MODE_NONE;
-	destroy_dlg_timer();
 	destroy_dlg_table();
+	destroy_dlg_timer();
 	destroy_dlg_callbacks( DLGCB_CREATED|DLGCB_LOADED );
 	destroy_dlg_handlers();
 }
