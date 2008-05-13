@@ -593,19 +593,21 @@ void destroy(void)
 		}
 	}
 
-	for (i=0; i<*nqueues; i++) {
-		if (queues[i].pipe) {
-			shm_free(queues[i].pipe);
-			queues[i].pipe = NULL;
-		}
-		if (queues[i].method) {
-			if (queues[i].method->s) {
-				shm_free(queues[i].method->s);
-				queues[i].method->s = NULL;
-				queues[i].method->len = 0;
+	if (nqueues) {
+		for (i=0; i<*nqueues; i++) {
+			if (queues[i].pipe) {
+				shm_free(queues[i].pipe);
+				queues[i].pipe = NULL;
 			}
-			shm_free(queues[i].method);
-			queues[i].method = NULL;
+			if (queues[i].method) {
+				if (queues[i].method->s) {
+					shm_free(queues[i].method->s);
+					queues[i].method->s = NULL;
+					queues[i].method->len = 0;
+				}
+				shm_free(queues[i].method);
+				queues[i].method = NULL;
+			}
 		}
 	}
 
