@@ -155,7 +155,7 @@ static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 		LM_ERR("no private memory left\n");
 		return -2;
 	}
-	LM_DBG("allocate %d bytes for rows at %p", len, RES_ROWS(_r));
+	LM_DBG("allocate %d bytes for rows at %p\n", len, RES_ROWS(_r));
 	memset(RES_ROWS(_r), 0, len);
 
 	for(row = 0; row < RES_ROW_N(_r); row++) {
