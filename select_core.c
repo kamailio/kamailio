@@ -170,7 +170,7 @@ SELECT_uri_header(rpid)
 int parse_contact_header( struct sip_msg *msg)
 {
         if ( !msg->contact && ( parse_headers(msg,HDR_CONTACT_F,0)==-1 || !msg->contact)) {
-                ERR("bad msg or missing CONTACT header\n");
+                DBG("bad msg or missing CONTACT header\n");
                 return -1;
         }
 
