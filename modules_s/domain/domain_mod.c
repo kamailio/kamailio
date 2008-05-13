@@ -222,11 +222,13 @@ static int init_db(void)
 		return -1;
 	}
 
-	INFO("prepare load_attrs_cmd\n");
-	load_attrs_cmd = db_cmd(DB_GET, db, domattr_table.s, load_attrs_columns, load_attrs_match, NULL);
-	if (load_attrs_cmd == NULL) {
-		ERR("Error while preparing load_attrs database command\n");
-		return -1;
+	if (load_domain_attrs) {
+		INFO("prepare load_attrs_cmd\n");
+		load_attrs_cmd = db_cmd(DB_GET, db, domattr_table.s, load_attrs_columns, load_attrs_match, NULL);
+		if (load_attrs_cmd == NULL) {
+			ERR("Error while preparing load_attrs database command\n");
+			return -1;
+		}
 	}
 
 	return 0;
