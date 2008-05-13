@@ -24,6 +24,7 @@ cd ../scripts
 # setup config file
 cp openserctlrc openserctlrc.bak
 sed -i "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" openserctlrc
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserctl
 
 ./openserctl avp list > /dev/null
 

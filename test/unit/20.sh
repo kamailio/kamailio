@@ -31,12 +31,6 @@ fi ;
 CFG="20.cfg"
 TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 
-# insert a test user into log db
-if [ ! -e $SIPP ] ; then 
-	echo "404 - sipp not found"
-	exit 0
-fi;
-
 # add an registrar entry to the db;
 mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 

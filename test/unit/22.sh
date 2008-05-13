@@ -49,7 +49,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi ;
 
-TMP=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username="1000";" | tail -n 1`
+TMP=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
 if [ "$TMP" -eq 0 ] ; then
 	ret=1
 fi ;
@@ -67,7 +67,7 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 
-ret=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username="1000";" | tail -n 1`
+ret=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
 
 killall -9 openser
 
