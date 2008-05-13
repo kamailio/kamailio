@@ -234,7 +234,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 				len = strlen(s);
 				row_buf[col] = pkg_malloc(len+1);
 				if (!row_buf[col]) {
-					LM_ERR("no private memory left");
+					LM_ERR("no private memory left\n");
 					return -1;
 				}
 				memset(row_buf[col], 0, len+1);
