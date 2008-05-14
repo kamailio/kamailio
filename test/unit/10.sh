@@ -23,6 +23,7 @@ cd ../scripts
 
 # setup config file
 cp openserctlrc openserctlrc.bak
+cp openserctl openserctl.bak
 sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" openserctlrc
 sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserctl
 
@@ -42,6 +43,7 @@ fi ;
 
 # cleanup
 mv openserctlrc.bak openserctlrc
+mv openserctl.bak openserctl
 
 cd ../test
 exit $ret
