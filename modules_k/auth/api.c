@@ -206,8 +206,17 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
 		return ERROR;
 	}
 
+	if (mark_authorized_cred(_m, *_h) < 0) {
+		LM_ERR("failed to mark parsed credentials\n");
+		if (send_resp(_m, 500, &auth_400_err, 0, 0) == -1) {
+			LM_ERR("failed to send 400 reply\n");
+		}
+		return ERROR;
+	}
+
 	if (check_nonce(&c->digest.nonce, &secret) != 0) {
 		LM_DBG("invalid nonce value received\n");
+		c->stale = 1;
 		return STALE_NONCE;
 	}
 
@@ -240,14 +249,6 @@ auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 			c->stale = 1;
 			res = STALE_NONCE;
 		}
-	}
-
-	if (mark_authorized_cred(_m, _h) < 0) {
-		LM_ERR("failed to mark parsed credentials\n");
-		if (send_resp(_m, 500, &auth_400_err, 0, 0) == -1) {
-			LM_ERR("failed to send 500 reply\n");
-		}
-		res = ERROR;
 	}
 
 	return res;
