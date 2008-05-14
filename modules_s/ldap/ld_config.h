@@ -31,18 +31,9 @@
 #ifndef _LD_CONFIG_H
 #define _LD_CONFIG_H
 
+#include "ld_fld.h"
+
 #include "../../str.h"
-
-
-enum ld_syntax {
-	LD_SYNTAX_STRING = 0,
-	LD_SYNTAX_GENTIME,
-	LD_SYNTAX_INT,
-	LD_SYNTAX_BIT,
-	LD_SYNTAX_BOOL,
-	LD_SYNTAX_BIN,
-	LD_SYNTAX_FLOAT
-};
 
 
 struct ld_config {

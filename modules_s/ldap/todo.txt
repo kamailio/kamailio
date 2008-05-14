@@ -21,7 +21,7 @@
   data structure, they should rather copy the whole string so that they
   do not depend on the config structure.
 
-* Implement Support For < And > Operators
+X Implement Support For < And > Operators
 
   The LDAP search filter syntax (RFC4515) does not support < and >
   operators, only <= and >=. Currently the ldap driver simply uses <= instead
@@ -78,3 +78,22 @@ X Support for Syntax Specification in the Config File
   the LDAP server, so it might be necessary to specify the syntax of
   attributes in the configuration file so that the module knows how to convert
   DB API fields into attribute values in command parameters.
+
+* Support DB_NEQ Operator in Integer Attributes
+ 
+  fld!=10 could be converted to the search filter as: (|(fld<=9)(fld>=11))
+
+* Indicate Underflow/Overflow in Integer Attributes
+
+  The operators < and > cannot be used in LDAP search filter, RFC4515 only
+  supports <= and >= so we create the search filter like this:
+  fld<10 -> (fld<=9)
+  fld>10 -> (fld>=11)
+  The module should issue an warning when the incremented/decremented field
+  value overflows/underflows.
+
+* Support for Older LDAP Libraries
+
+  Older versions of the openldap client library might not contain 
+  LDAP_SCOPE_CHILDREN. We need to handle this case in a graceful manner and
+  make sure that the module compiles.

@@ -40,11 +40,22 @@
 
 #include "ld_config.h"
 
+struct ld_config;
+
 #include "../../db/db_gen.h"
 #include "../../db/db_fld.h"
 
 #include <ldap.h>
 
+enum ld_syntax {
+	LD_SYNTAX_STRING = 0,
+	LD_SYNTAX_GENTIME,
+	LD_SYNTAX_INT,
+	LD_SYNTAX_BIT,
+	LD_SYNTAX_BOOL,
+	LD_SYNTAX_BIN,
+	LD_SYNTAX_FLOAT
+};
 
 struct ld_fld {
 	db_drv_t gen;
@@ -68,6 +79,8 @@ int ld_fld(db_fld_t* fld, char* table);
 int ld_resolve_fld(db_fld_t* fld, struct ld_config* cfg);
 
 int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
+
+int ld_fld2ldap(char** filter, db_fld_t* fld, str* add);
 
 /** @} */
 
