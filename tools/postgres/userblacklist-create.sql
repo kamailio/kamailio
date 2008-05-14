@@ -4,7 +4,7 @@ CREATE TABLE userblacklist (
     username VARCHAR(64) DEFAULT '' NOT NULL,
     domain VARCHAR(64) DEFAULT '' NOT NULL,
     prefix VARCHAR(64) DEFAULT '' NOT NULL,
-    whitelist INTEGER DEFAULT 0 NOT NULL,
+    whitelist SMALLINT DEFAULT 0 NOT NULL,
     description VARCHAR(64) DEFAULT '' NOT NULL
 );
 
@@ -14,7 +14,7 @@ INSERT INTO version (table_name, table_version) values ('globalblacklist','1');
 CREATE TABLE globalblacklist (
     id SERIAL PRIMARY KEY NOT NULL,
     prefix VARCHAR(64) DEFAULT '' NOT NULL,
-    whitelist INTEGER DEFAULT 0 NOT NULL,
+    whitelist SMALLINT DEFAULT 0 NOT NULL,
     description VARCHAR(64) DEFAULT '' NOT NULL
 );
 
