@@ -44,7 +44,6 @@ typedef struct _pdt_tree
 {
 	str sdomain;
 	pdt_node_t *head;
-	int idsync;
 
 	struct _pdt_tree *next;
 } pdt_tree_t;
@@ -62,6 +61,8 @@ str* pdt_get_domain(pdt_tree_t *pt, str* sdomain, str *code, int *plen);
 pdt_tree_t* pdt_init_tree(str* sdomain);
 void pdt_free_tree(pdt_tree_t *pt);
 int pdt_print_tree(pdt_tree_t *pt);
+
+int pdt_check_pd(pdt_tree_t *pt, str* sdomain, str *sp, str *sd);
 
 /* used to get the index for the PDT Tree hash*/
 #define strpos(s,c) (strchr(s,c)-s)

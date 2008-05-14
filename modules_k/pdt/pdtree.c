@@ -359,9 +359,9 @@ int pdt_print_node(pdt_node_t *pn, char *code, int len)
 	return 0;
 }
 
+static char pdt_code_buf[PDT_MAX_DEPTH+1];
 int pdt_print_tree(pdt_tree_t *pt)
 {
-	static char code_buf[PDT_MAX_DEPTH+1];
 	int len;
 
 	if(pt == NULL)
@@ -372,8 +372,78 @@ int pdt_print_tree(pdt_tree_t *pt)
 	
 	LM_DBG("[%.*s]\n", pt->sdomain.len, pt->sdomain.s);
 	len = 0;
-	pdt_print_node(pt->head, code_buf, len);
+	pdt_print_node(pt->head, pdt_code_buf, len);
 	return pdt_print_tree(pt->next);
 }
 
+int pdt_check_pd_node(pdt_node_t *pn, str *sp, str *sd,
+		char *code, int len)
+{
+	int i;
+	int ret;
+ 
+	if(pn==NULL || code==NULL || len>=PDT_MAX_DEPTH)
+		return 0;
+	ret = 0;
+	for(i=0; i<PDT_NODE_SIZE; i++)
+	{
+		code[len]=pdt_char_list.s[i];
+		if(pn[i].domain.s!=NULL)
+		{
+			/* we have a domain - check for duplicates */
+			LM_DBG("[%.*s] [%.*s]\n",
+					len+1, code, pn[i].domain.len, pn[i].domain.s);
+			if(sp->len == len+1 &&
+					strncmp(sp->s, code, sp->len)==0)
+			{
+				LM_DBG("duplicated prefix\n");
+				return 1;
+			}
+			if(sd->len == pn[i].domain.len &&
+					strncmp(sd->s, pn[i].domain.s, sd->len)==0)
+			{
+				LM_DBG("duplicated domain\n");
+				return 1;
+			}
+		}
+		ret = pdt_check_pd_node(pn[i].child, sp, sd, code, len+1);
+		if(ret != 0)
+			break;
+	}
+
+	return ret;
+}
+
+/* returns 
+ * 1 if prefix or domain already exists 
+ * 0 if prefix or domain does not exist
+ * -1 if any error
+ */
+int pdt_check_pd(pdt_tree_t *pt, str* sdomain, str *sp, str *sd)
+{
+	int len;
+	int ret;
+	pdt_tree_t *it;
+		
+	if(pt==NULL || sp==NULL || sd==NULL)
+	{
+		LM_ERR("bad parameters\n");
+		return -1;
+	}
+
+	it = pt;
+	while(it!=NULL)
+	{
+		if(it->sdomain.len==sdomain->len
+				&& strncasecmp(it->sdomain.s, sdomain->s, sdomain->len)==0)
+			break;
+		it = it->next;
+	}
+	if(it == NULL)
+		return 0;
+
+	len = 0;
+	ret = pdt_check_pd_node(it->head, sp, sd, pdt_code_buf, len);
+	return ret;
+}
 

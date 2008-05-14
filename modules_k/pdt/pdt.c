@@ -54,7 +54,6 @@
 #include "../../mod_fix.h"
 #include "../../parser/parse_from.h"
 
-#include "domains.h"
 #include "pdtree.h"
 
 MODULE_VERSION
@@ -62,11 +61,9 @@ MODULE_VERSION
 
 #define NR_KEYS			3
 
-int hs_two_pow = 4;
 int pdt_fetch_rows = 1000;
 
 /** structures containing prefix-domain pairs */
-hash_list_t **_dhash = NULL; 
 pdt_tree_t **_ptree = NULL; 
 
 /** database connection */
@@ -127,7 +124,6 @@ static param_export_t params[]={
 	{"domain_column",  STR_PARAM, &domain_column.s},
 	{"prefix",         STR_PARAM, &prefix.s},
 	{"char_list",      STR_PARAM, &pdt_char_list.s},
-	{"hsize_2pow",     INT_PARAM, &hs_two_pow},
 	{"fetch_rows",     INT_PARAM, &pdt_fetch_rows},
 	{"check_domain",   INT_PARAM, &pdt_check_domain},
 	{0, 0, 0}
@@ -173,12 +169,6 @@ static int mod_init(void)
 	domain_column.len = strlen(domain_column.s);
 	prefix.len = strlen(prefix.s);
 
-	if(hs_two_pow<0)
-	{
-		LM_ERR("hash_size_two_pow must be positive and less than %d\n",
-				MAX_HSIZE_TWO_POW);
-		return -1;
-	}
 	if(pdt_fetch_rows<=0)
 		pdt_fetch_rows = 1000;
 
@@ -228,14 +218,7 @@ static int mod_init(void)
 		goto error1;
 	}
 	
-	/* pdt hash and tree pointers in shm */
-	_dhash = (hash_list_t**)shm_malloc( sizeof(hash_list_t*) );
-	if (_dhash==0) {
-		LM_ERR("out of shm mem for dhash\n");
-		goto error1;
-	}
-	*_dhash=0;
-	
+	/* tree pointer in shm */
 	_ptree = (pdt_tree_t**)shm_malloc( sizeof(pdt_tree_t*) );
 	if (_ptree==0) {
 		LM_ERR("out of shm mem for pdtree\n");
@@ -255,7 +238,6 @@ static int mod_init(void)
 
 #if 0
 	pdt_print_tree(*_ptree);
-	pdt_print_hash_list(*_dhash);
 #endif
 
 	/* success code */
@@ -268,8 +250,6 @@ error1:
 		lock_dealloc( pdt_lock );
 		pdt_lock = 0;
 	}
-	if(_dhash!=0)
-		shm_free(_dhash);
 	if(_ptree!=0)
 		shm_free(_ptree);
 
@@ -315,12 +295,6 @@ static int mod_child_init(int r)
 static void mod_destroy(void)
 {
 	LM_DBG("cleaning up\n");
-	if (_dhash!=NULL)
-	{
-		if (*_dhash!=NULL)
-			free_hash_list(*_dhash);
-		shm_free(_dhash);
-	}
 	if (_ptree!=NULL)
 	{
 		if (*_ptree!=NULL)
@@ -579,9 +553,7 @@ static int pdt_load_db(void)
 	str p, d, sdomain;
 	db_res_t* db_res = NULL;
 	int i, ret;
-	hash_list_t *_dhash_new = NULL; 
 	pdt_tree_t *_ptree_new = NULL; 
-	hash_list_t *old_hash = NULL; 
 	pdt_tree_t *old_tree = NULL; 
 
 	if(db_con==NULL)
@@ -596,13 +568,6 @@ static int pdt_load_db(void)
 		return -1;
 	}
 
-	/* init the hash and tree in share memory */
-	if( (_dhash_new = init_hash_list(hs_two_pow)) == NULL)
-	{
-		LM_ERR("domain hash could not be allocated\n");	
-		goto error;
-	}
-	
 	if (DB_CAPABILITY(pdt_dbf, DB_CAP_FETCH)) {
 		if(pdt_dbf.query(db_con,0,0,0,db_cols,0,3,&sdomain_column,0) < 0)
 		{
@@ -618,7 +583,6 @@ static int pdt_load_db(void)
 		} else {
 			if(RES_ROW_N(db_res)==0)
 			{
-				free_hash_list(_dhash_new);
 				return 0;
 			}
 		}
@@ -630,7 +594,6 @@ static int pdt_load_db(void)
 			pdt_dbf.free_result(db_con, db_res);
 			if( ret==0)
 			{
-				free_hash_list(_dhash_new);
 				return 0;
 			} else {
 				goto error;
@@ -658,8 +621,8 @@ static int pdt_load_db(void)
 				continue;
 			}
 		
-			if(pdt_check_domain!=0
-					&& pdt_check_pd(_dhash_new, &sdomain, &p, &d)==1)
+			if(pdt_check_domain!=0 && _ptree_new!=NULL
+					&& pdt_check_pd(_ptree_new, &sdomain, &p, &d)==1)
 			{
 				LM_ERR("sdomain [%.*s]: prefix [%.*s] or domain <%.*s> "
 					"duplicated\n", sdomain.len, sdomain.s, p.len, p.s,
@@ -670,12 +633,6 @@ static int pdt_load_db(void)
 			if(pdt_add_to_tree(&_ptree_new, &sdomain, &p, &d)<0)
 			{
 				LM_ERR("Error adding info to tree\n");
-				goto error;
-			}
-			
-			if(pdt_add_to_hash(_dhash_new, &sdomain, &p, &d)!=0)
-			{
-				LM_ERR("Error adding info to hash\n");
 				goto error;
 			}
 	 	}
@@ -704,14 +661,10 @@ static int pdt_load_db(void)
 
 	old_tree = *_ptree;
 	*_ptree = _ptree_new;
-	old_hash = *_dhash;
-	*_dhash = _dhash_new;
 
 	pdt_reload_flag = 0;
 
 	/* free old data */
-	if (old_hash!=NULL)
-		free_hash_list(old_hash);
 	if (old_tree!=NULL)
 		pdt_free_tree(old_tree);
 
@@ -719,8 +672,6 @@ static int pdt_load_db(void)
 
 error:
 	pdt_dbf.free_result(db_con, db_res);
-	if (_dhash_new!=NULL)
-		free_hash_list(_dhash_new);
 	if (_ptree_new!=NULL)
 		pdt_free_tree(_ptree_new);
 	return -1;
@@ -764,7 +715,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	str sd, sp, sdomain;
 	struct mi_node* node= NULL;
 
-	if(_dhash==NULL)
+	if(_ptree==NULL)
 	{
 		LM_ERR("strange situation\n");
 		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
@@ -800,7 +751,7 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	while(i< sp.len)
 	{
 		if(strpos(pdt_char_list.s,sp.s[i]) < 0) 
-			return init_mi_tree( 400, "bad prefix", 10);
+			return init_mi_tree(400, "bad prefix", 10);
 		i++;
 	}
 
@@ -817,13 +768,14 @@ struct mi_root* pdt_mi_add(struct mi_root* cmd_tree, void* param)
 	}
 
 	if(*sd.s=='.')
-		 return init_mi_tree( 400, "empty param", 11);
+		 return init_mi_tree(400, "empty param", 11);
 
 	
-	if(pdt_check_pd(*_dhash, &sdomain, &sp, &sd)==1)
+	if(pdt_check_domain!=0 && *_ptree!=NULL
+			&& pdt_check_pd(*_ptree, &sdomain, &sp, &sd)==1)
 	{
 		LM_ERR("(sdomain,prefix,domain) exists\n");
-		return init_mi_tree( 400,
+		return init_mi_tree(400,
 				"(sdomain,prefix,domain) exists already", 38);
 	}
 	db_vals[0].type = DB_STR;
@@ -883,12 +835,6 @@ struct mi_root* pdt_mi_delete(struct mi_root* cmd_tree, void* param)
 	db_val_t db_vals[2];
 	db_op_t  db_ops[2] = {OP_EQ, OP_EQ};
 
-	if(_dhash==NULL)
-	{
-		LM_ERR("strange situation\n");
-		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
-	}
-
 	/* read sdomain */
 	node = cmd_tree->node.kids;
 	if(node == NULL)
@@ -947,6 +893,58 @@ error:
 }
 
 
+int pdt_print_mi_node(pdt_node_t *pt, struct mi_node* rpl, char *code,
+		int len, str *sdomain, str *sd, str *sp)
+{
+	int i;
+	struct mi_node* node = NULL;
+	struct mi_attr* attr= NULL;
+
+	if(pt==NULL || len>=PDT_MAX_DEPTH)
+		return 0;
+	
+	for(i=0; i<PDT_NODE_SIZE; i++)
+	{
+		code[len]=pdt_char_list.s[i];
+		if(pt[i].domain.s!=NULL)
+		{
+			if((sp->s==NULL && sd->s==NULL)
+				|| (sp->s==NULL && (sd->s!=NULL && pt[i].domain.len==sd->len
+						&& strncasecmp(pt[i].domain.s, sd->s, sd->len)==0)) 
+				|| (sd->s==NULL && (len+1>=sp->len
+						&& strncmp(code, sp->s, sp->len)==0))
+				|| ((sp->s!=NULL && len+1>=sp->len
+						&& strncmp(code, sp->s, sp->len)==0)
+						&& (sd->s!=NULL && pt[i].domain.len>=sd->len
+						&& strncasecmp(pt[i].domain.s, sd->s, sd->len)==0)))
+			{
+				node = add_mi_node_child(rpl, 0, "PDT", 3, 0, 0);
+				if(node == NULL)
+					goto error;
+
+				attr = add_mi_attr(node, MI_DUP_VALUE, "SDOMAIN", 7,
+						sdomain->s, sdomain->len);
+				if(attr == NULL)
+					goto error;
+				attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6,
+							code, len+1);
+				if(attr == NULL)
+					goto error;
+						
+				attr = add_mi_attr(node, MI_DUP_VALUE,"DOMAIN", 6,
+							pt[i].domain.s, pt[i].domain.len);
+				if(attr == NULL)
+					goto error;
+			}
+		}
+		if(pdt_print_mi_node(pt[i].child, rpl, code, len+1, sdomain, sd, sp)<0)
+			goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
 /**
  * "pdt_list" syntax :
  *    sdomain
@@ -968,15 +966,15 @@ error:
 struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 {
 	str sd, sp, sdomain;
-	pd_t *it;
+	pdt_tree_t *pt;
+	struct mi_node* node = NULL;
 	unsigned int i= 0;
-	hash_t *h;
 	struct mi_root* rpl_tree = NULL;
 	struct mi_node* rpl = NULL;
-	struct mi_node* node = NULL;
-	struct mi_attr* attr= NULL;
+	static char code_buf[PDT_MAX_DEPTH+1];
+	int len;
 
-	if(_dhash==NULL)
+	if(_ptree==NULL)
 	{
 		LM_ERR("empty domain list\n");
 		return init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN);
@@ -1029,70 +1027,33 @@ struct mi_root* pdt_mi_list(struct mi_root* cmd_tree, void* param)
 		}
 	}
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+	rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 	if(rpl_tree == NULL)
 		return 0;
-	if(*_dhash==0)
-		return rpl_tree;
-
 	rpl = &rpl_tree->node;
 
-	lock_get(&(*_dhash)->hl_lock);
-	h = (*_dhash)->hash;
+	if(*_ptree==0)
+		return rpl_tree;
 
-	while(h!=NULL)
+	pt = *_ptree;
+	
+	while(pt!=NULL)
 	{
 		if(sdomain.s==NULL || 
-			(sdomain.s!=NULL && h->sdomain.len>=sdomain.len && 
-			 strncmp(h->sdomain.s, sdomain.s, sdomain.len)==0))
+			(sdomain.s!=NULL && pt->sdomain.len>=sdomain.len && 
+			 strncmp(pt->sdomain.s, sdomain.s, sdomain.len)==0))
 		{
-			for(i=0; i<h->hash_size; i++)
-			{
-				it = h->dhash[i];
-				while(it!=NULL)
-				{
-					if((sp.s==NULL && sd.s==NULL)
-						||(sp.s==NULL && (sd.s!=NULL && it->domain.len>=sd.len
-							&& strncasecmp(it->domain.s, sd.s, sd.len)==0)) 
-						|| (sd.s==NULL && (sp.s!=NULL && it->prefix.len>=sp.len
-							&& strncmp(it->prefix.s, sp.s, sp.len)==0))
-						|| ((sp.s!=NULL && it->prefix.len>=sp.len &&
-							strncmp(it->prefix.s, sp.s, sp.len)==0)
-						&& (sd.s!=NULL && it->domain.len>=sd.len &&
-							strncasecmp(it->domain.s, sd.s, sd.len)==0)))
-					{
-						node = add_mi_node_child(rpl, 0 ,"PDT", 3, 0, 0);
-						if(node == NULL)
-							goto error;
-
-						attr = add_mi_attr(node, MI_DUP_VALUE, "SDOMAIN", 7,
-							h->sdomain.s, h->sdomain.len);
-						if(attr == NULL)
-							goto error;
-						attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX", 6,
-							it->prefix.s, it->prefix.len);
-						if(attr == NULL)
-							goto error;
-						
-						attr = add_mi_attr(node, MI_DUP_VALUE,"DOMAIN", 6,
-							it->domain.s, it->domain.len);
-						if(attr == NULL)
-							goto error;
-
-					}
-					it = it->n;
-				}
-			}
+			len = 0;
+			if(pdt_print_mi_node(pt->head, rpl, code_buf, len, &pt->sdomain,
+						&sd, &sp)<0)
+				goto error;
 		}
-		h = h->next;
+		pt = pt->next;
 	}
-
-	lock_release(&(*_dhash)->hl_lock);
 	
 	return rpl_tree;
 
 error:
-	lock_release(&(*_dhash)->hl_lock);
 	free_mi_tree(rpl_tree);
 	return 0;
 }

@@ -221,26 +221,6 @@ modparam("pdt", "prefix", "00")
 	</section>
 
 	<section>
-	    <title><varname>hsize_2pow</varname> (integer)</title>
-	    <para>
-		Number of the hash entries = 2^hash_size.
-	    </para>
-	    <para>
-		<emphasis>
-		    Default value is 4.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>hsize_2pow</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("pdt", "hsize_2pow", 4)
-...
-</programlisting>
-	    </example>
-	</section>
-
-	<section>
 	    <title><varname>fetch_rows</varname> (integer)</title>
 	    <para>
 		Number of rows to be loaded in one step from database.
