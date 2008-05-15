@@ -294,6 +294,77 @@ usleep("500");
 			</programlisting>
 		</example>
 	</section>
+	
+	<section>
+		<title>
+			<function moreinfo="none">dbg_abort()</function>
+		</title>
+		<para>
+			Debugging function that aborts the server.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>dbg_abort</function> usage</title>
+			<programlisting format="linespecific">
+...
+dbg_abort();
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title>
+			<function moreinfo="none">dbg_pkg_status()</function>
+		</title>
+		<para>
+			Debugging function that dumps the status for the private (PKG) memory.
+			This information is logged to the default log facility, depending on
+			the general log level and the memlog setting. You need to compile
+			the server with activated memory debugging to get detailed informations.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>dbg_pkg_status</function> usage</title>
+			<programlisting format="linespecific">
+...
+dbg_pkg_status();
+...
+			</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title>
+			<function moreinfo="none">dbg_shm_status()</function>
+		</title>
+		<para>
+			Debugging function that dumps the status for the shared (SHM) memory.
+			This information is logged to the default log facility, depending on
+			the general log level and the memlog setting. You need to compile
+			the server with activated memory debugging to get detailed informations.
+		</para>
+		<para>
+			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+			FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+			<title><function>dbg_shm_status</function> usage</title>
+			<programlisting format="linespecific">
+...
+dbg_shm_status();
+...
+			</programlisting>
+		</example>
+	</section>
+
+
 </section>
 	<section>
 		<title><acronym>MI</acronym> Commands</title>

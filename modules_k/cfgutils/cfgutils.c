@@ -68,6 +68,9 @@ static int get_prob(struct sip_msg*, char *, char *);
 static int rand_event(struct sip_msg*, char *, char *);
 static int m_sleep(struct sip_msg*, char *, char *);
 static int m_usleep(struct sip_msg*, char *, char *);
+static int dbg_abort(struct sip_msg*, char*,char*);
+static int dbg_pkg_status(struct sip_msg*, char*,char*);
+static int dbg_shm_status(struct sip_msg*, char*,char*);
 
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
@@ -95,16 +98,22 @@ static cmd_export_t cmds[]={
 		1,          /* number of parameters */
 		fixup_prob, 0,         /* */
 		/* can be applied to original/failed requests and replies */
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"rand_reset_prob", (cmd_function)reset_prob, 0, 0, 0,
-		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE}, 
-	{"rand_get_prob", (cmd_function)get_prob, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"rand_event", (cmd_function)rand_event, 0, 0, 0,
+	{"rand_get_prob",   (cmd_function)get_prob,   0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"sleep",    (cmd_function)m_sleep,    1,      fixup_uint_null, 0, 
+	{"rand_event",      (cmd_function)rand_event, 0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"usleep",   (cmd_function)m_usleep,   1,      fixup_uint_null, 0,
+	{"sleep",  (cmd_function)m_sleep,  1, fixup_uint_null, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"usleep", (cmd_function)m_usleep, 1, fixup_uint_null, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"dbg_abort",      (cmd_function)dbg_abort,        0, 0, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"dbg_pkg_status", (cmd_function)dbg_pkg_status,   0, 0, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
+	{"dbg_shm_status", (cmd_function)dbg_shm_status,   0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
@@ -345,6 +354,25 @@ static int m_usleep(struct sip_msg *msg, char *time, char *str2)
 {
 	LM_DBG("sleep %lu microseconds\n", (unsigned long)time);
 	sleep_us((unsigned int)(unsigned long)time);
+	return 1;
+}
+
+static int dbg_abort(struct sip_msg* msg, char* foo, char* bar)
+{
+	LM_CRIT("abort called\n");
+	abort();
+	return 0;
+}
+
+static int dbg_pkg_status(struct sip_msg* msg, char* foo, char* bar)
+{
+	pkg_status();
+	return 1;
+}
+
+static int dbg_shm_status(struct sip_msg* msg, char* foo, char* bar)
+{
+	shm_status();
 	return 1;
 }
 
