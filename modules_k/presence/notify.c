@@ -1280,6 +1280,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	
 	while(s)
 	{
+
 		if(notify(s, watcher_subs, notify_body, 0)< 0 )
 		{
 			LM_ERR("Could not send notify for [event]=%.*s\n",
@@ -1533,6 +1534,12 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 			}
 		}
 	}
+     
+    if(subs->reason.s && subs->status== ACTIVE_STATUS && 
+        subs->reason.len== 12 && strncmp(subs->reason.s, "polite-block", 12)== 0)
+    {
+        force_null_body = 1;
+    }
 
 	if(send_notify_request(subs, watcher_subs, n_body, force_null_body)< 0)
 	{
