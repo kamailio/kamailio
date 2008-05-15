@@ -1279,6 +1279,7 @@ int reply_received( struct sip_msg  *p_msg )
 	struct ua_client *uac;
 	struct cell *t;
 	struct usr_avp **backup_list;
+	unsigned int reply_route;
 
 	/* make sure we know the associated transaction ... */
 	if (t_check(p_msg, &branch ) == -1) goto not_found;
@@ -1334,7 +1335,8 @@ int reply_received( struct sip_msg  *p_msg )
 	}
 
 	/* processing of on_reply block */
-	if (t->on_reply) {
+	reply_route = t->on_reply;
+	if (reply_route) {
 		if (onreply_avp_mode) {
 			/* lock the reply*/
 			LOCK_REPLIES( t );
@@ -1347,7 +1349,7 @@ int reply_received( struct sip_msg  *p_msg )
 		p_msg->flags = t->uas.request->flags;
 		setb0flags(t->uac[branch].br_flags);
 		/* run block */
-		if ( (run_top_route(onreply_rlist[t->on_reply], p_msg)&ACT_FL_DROP) &&
+		if ( (run_top_route(onreply_rlist[reply_route], p_msg)&ACT_FL_DROP) &&
 		(msg_status<200) ) {
 			if (onreply_avp_mode) {
 				UNLOCK_REPLIES( t );
@@ -1365,7 +1367,7 @@ int reply_received( struct sip_msg  *p_msg )
 			set_avp_list( backup_list );
 	}
 
-	if (!onreply_avp_mode || !t->on_reply)
+	if (!onreply_avp_mode || !reply_route)
 		/* lock the reply*/
 		LOCK_REPLIES( t );
 
