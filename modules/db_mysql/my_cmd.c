@@ -52,7 +52,7 @@
 #include <mysql/errmsg.h>
 #include <mysql/mysqld_error.h>
 
-#define STR_BUF_SIZE 256
+#define STR_BUF_SIZE 1024
 
 #ifdef MYSQL_FAKE_NULL
 
@@ -604,7 +604,14 @@ static inline int update_result(db_fld_t* result, MYSQL_STMT* st)
 			break;
 
 		case DB_CSTR:
-			result[i].v.cstr[rp->length] = '\0';
+			if (rp->length < STR_BUF_SIZE) {
+				result[i].v.cstr[rp->length] = '\0';
+			} else {
+				/* Truncated field but rp->length contains full size,
+				 * zero terminated the last byte in the buffer
+				 */
+				result[i].v.cstr[STR_BUF_SIZE - 1] = '\0';
+			}
 #ifdef MYSQL_FAKE_NULL
 			if (strcmp(FAKE_NULL_STR.s,result[i].v.cstr)==0) {
 				result[i].flags |= DB_NULL;
