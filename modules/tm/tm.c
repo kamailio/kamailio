@@ -86,6 +86,9 @@
  *               t_set_max_lifetime(), max_{non}inv_lifetime  (andrei)
  *  2008-02-05	module config parameters use the configuration framework (Miklos)
  *  2008-02-29  added t_grep_status(code) (andrei)
+ *  2008-05-15  added t_relay(host, port) (similar to forward(host, port)) &
+ *               t_relay_to_{udp,tcp,tls}(<no param>) (force protocol, but 
+ *               forward to uri)  (andrei)
  */
 
 
@@ -151,17 +154,21 @@ inline static int w_t_retransmit_reply(struct sip_msg* p_msg, char* foo,
 				char* bar );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* foo, char* bar );
 inline static int w_t_relay( struct sip_msg  *p_msg , char *_foo, char *_bar);
+inline static int w_t_relay2( struct sip_msg  *p_msg , char *proxy, char*);
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg , char *proxy,
 				 char *);
+inline static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg , char*, char*);
 #ifdef USE_TCP
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg , char *proxy,
 				char *);
+inline static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg , char*, char*);
 #endif
 #ifdef USE_TLS
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
 				char *);
+inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg , char*, char*);
 #endif
-inline static int w_t_relay_to(struct sip_msg* msg, char* str,char*);
+inline static int w_t_relay_to_avp(struct sip_msg* msg, char* str,char*);
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
@@ -236,12 +243,18 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{T_RELAY_TO_UDP,       w_t_relay_to_udp,        2, fixup_hostport2proxy,
 			REQUEST_ROUTE|FAILURE_ROUTE},
+	{T_RELAY_TO_UDP,       w_t_relay_to_udp_uri,    0, 0,
+			REQUEST_ROUTE|FAILURE_ROUTE},
 #ifdef USE_TCP
 	{T_RELAY_TO_TCP,       w_t_relay_to_tcp,        2, fixup_hostport2proxy,
+			REQUEST_ROUTE|FAILURE_ROUTE},
+	{T_RELAY_TO_TCP,       w_t_relay_to_tcp_uri,    0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 #ifdef USE_TLS
 	{T_RELAY_TO_TLS,       w_t_relay_to_tls,        2, fixup_hostport2proxy,
+			REQUEST_ROUTE|FAILURE_ROUTE},
+	{T_RELAY_TO_TLS,       w_t_relay_to_tls_uri,    0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
@@ -260,7 +273,9 @@ static cmd_export_t cmds[]={
 			REQUEST_ROUTE},
 	{T_RELAY,              w_t_relay,               0, 0,
 			REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay_to", w_t_relay_to,  			2, fixup_proto_hostport2proxy,
+	{T_RELAY,              w_t_relay2,              2, fixup_hostport2proxy,
+			REQUEST_ROUTE | FAILURE_ROUTE },
+	{"t_relay_to_avp", w_t_relay_to_avp,  		2, fixup_proto_hostport2proxy,
 			REQUEST_ROUTE},
 	{T_FORWARD_NONACK,     w_t_forward_nonack,      2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
@@ -1151,8 +1166,8 @@ inline static int w_t_on_reply( struct sip_msg* msg, char *go_to, char *foo )
 
 
 
-inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
-	struct proxy_l *proxy )
+inline static int _w_t_relay_to(struct sip_msg  *p_msg ,
+									struct proxy_l *proxy, int force_proto)
 {
 	struct cell *t;
 
@@ -1162,7 +1177,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 			LOG(L_CRIT, "BUG: w_t_relay_to: undefined T\n");
 			return -1;
 		}
-		if (t_forward_nonack(t, p_msg, proxy, PROTO_NONE)<=0 ) {
+		if (t_forward_nonack(t, p_msg, proxy, force_proto)<=0 ) {
 			LOG(L_ERR, "ERROR: w_t_relay_to: t_relay_to failed\n");
 			/* let us save the error code, we might need it later
 			when the failure_route has finished (Miklos) */
@@ -1172,7 +1187,7 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 		return 1;
 	}
 	if (rmode==MODE_REQUEST)
-		return t_relay_to( p_msg, proxy, PROTO_NONE,
+		return t_relay_to( p_msg, proxy, force_proto,
 			0 /* no replication */ );
 	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
 	return 0;
@@ -1180,44 +1195,63 @@ inline static int _w_t_relay_to( struct sip_msg  *p_msg ,
 
 
 inline static int w_t_relay_to_udp( struct sip_msg  *p_msg ,
-	char *proxy, /* struct proxy_l *proxy expected */
-	char *_foo       /* nothing expected */ )
+									char *proxy,/* struct proxy_l * expected */
+									char *_foo       /* nothing expected */ )
 {
-	((struct proxy_l *)proxy)->proto=PROTO_UDP;
-	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
+	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy, PROTO_UDP);
+}
+
+/* forward to uri, but force udp as transport */
+inline static int w_t_relay_to_udp_uri( struct sip_msg  *p_msg ,
+										char *_foo, char *_bar   )
+{
+	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_UDP);
 }
 
 
 #ifdef USE_TCP
 inline static int w_t_relay_to_tcp( struct sip_msg  *p_msg ,
-	char *proxy, /* struct proxy_l *proxy expected */
-	char *_foo       /* nothing expected */ )
+									char *proxy, /* struct proxy_l* */
+									char *_foo       /* nothing expected */ )
 {
-	((struct proxy_l *)proxy)->proto=PROTO_TCP;
-	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
+	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy, PROTO_TCP);
+}
+
+/* forward to uri, but force tcp as transport */
+inline static int w_t_relay_to_tcp_uri( struct sip_msg  *p_msg ,
+										char *_foo, char *_bar   )
+{
+	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_TCP);
 }
 #endif
 
 
 #ifdef USE_TLS
 inline static int w_t_relay_to_tls( struct sip_msg  *p_msg ,
-	char *proxy, /* struct proxy_l *proxy expected */
-	char *_foo       /* nothing expected */ )
+									char *proxy, /* struct proxy_l* expected */
+									char *_foo       /* nothing expected */ )
 {
-	((struct proxy_l *)proxy)->proto=PROTO_TLS;
-	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy);
+	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy, PROTO_TLS);
+}
+
+/* forward to uri, but force tls as transport */
+inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg ,
+										char *_foo, char *_bar   )
+{
+	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_TLS);
 }
 #endif
 
-inline static int w_t_relay_to( struct sip_msg  *p_msg ,
-	char *proto_par, 
-	char *addr_par   )
+inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
+									char *proto_par, 
+									char *addr_par   )
 {
 	struct proxy_l *proxy;
 	int r = -1;
+	
 	proxy = t_protoaddr2proxy(proto_par, addr_par);
 	if (proxy) {
-		r = _w_t_relay_to(p_msg, proxy);		
+		r = _w_t_relay_to(p_msg, proxy, PROTO_NONE);
 		free_proxy(proxy);
 	}
 	return r;
@@ -1273,32 +1307,20 @@ inline static int w_t_replicate_to( struct sip_msg  *p_msg ,
 }
 
 inline static int w_t_relay( struct sip_msg  *p_msg ,
-						char *_foo, char *_bar)
+								char *_foo, char *_bar)
 {
-	struct cell *t;
-
-	if (rmode==MODE_ONFAILURE) {
-		t=get_t();
-		if (!t || t==T_UNDEFINED) {
-			LOG(L_CRIT, "BUG: w_t_relay: undefined T\n");
-			return -1;
-		}
-		if (t_forward_nonack(t, p_msg, ( struct proxy_l *) 0, PROTO_NONE)<=0) {
-			LOG(L_ERR, "ERROR: w_t_relay (failure mode): forwarding failed\n");
-			/* let us save the error code, we might need it later
-			when the failure_route has finished (Miklos) */
-			tm_error=ser_error;
-			return -1;
-		}
-		return 1;
-	}
-	if (rmode==MODE_REQUEST)
-		return t_relay_to( p_msg,
-		(struct proxy_l *) 0 /* no proxy */, PROTO_NONE,
-		0 /* no replication */ );
-	LOG(L_CRIT, "ERROR: w_t_relay_to: unsupported mode: %d\n", rmode);
-	return 0;
+	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_NONE);
 }
+
+
+/* like t_relay but use the specified destination and port and the same proto
+ * as the received msg */
+static int w_t_relay2( struct sip_msg  *p_msg , char *proxy,
+								char *_foo)
+{
+	return _w_t_relay_to(p_msg, (struct proxy_l*) proxy, p_msg->rcv.proto);
+}
+
 
 /* relays CANCEL at the beginning of the script */
 inline static int w_t_relay_cancel( struct sip_msg  *p_msg ,

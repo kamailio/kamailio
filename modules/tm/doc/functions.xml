@@ -17,11 +17,18 @@
     <section id="t_relay_to_udp">
 	<title>
 	    <function>t_relay_to_udp(ip, port)</function>,
+	    <function>t_relay_to_udp()</function>,
 	    <function>t_relay_to_tcp(ip, port)</function>
+	    <function>t_relay_to_tcp()</function>
+	    <function>t_relay_to_tls(ip, port)</function>
+	    <function>t_relay_to_tls()</function>
 	</title>
 	<para>
-	    Relay a message statefully to a fixed destination. This along with
-	    <function>t_relay</function> is the function most users want to
+	    Relay a message statefully using a fixed protocol either to the 
+		 specified fixed destination or to a destination derived from the 
+		 message uri (if the host address and port are not specified).
+		 These along with
+	    <function>t_relay</function> are the functions most users want to
 	    use--all other are mostly for programming. Programmers interested
 	    in writing <acronym>TM</acronym> logic should review how t_relay is
 	    implemented in tm.c and how <acronym>TM</acronym> callbacks work.
@@ -37,11 +44,17 @@
 		</para>
 	    </listitem>
 	</itemizedlist>
+	<para>If no parameters are specified the message is sent to a destination
+	 derived from the message uri (using sip sepcific DNS lookups), but with 
+	 the protocol corresponding to the function name.</para>
 	<example>
 	    <title><function>t_relay_to_udp</function> usage</title>
 	    <programlisting>
 ...
-t_relay_to_udp("1.2.3.4", "5060");
+if (src_ip==10.0.0.0/8)
+	t_relay_to_udp("1.2.3.4", "5060"); # sent to 1.2.3.4:5060 over udp
+else
+	t_relay_to_tcp(); # relay to msg. uri, but over tcp
 ...
 	    </programlisting>
 	</example>
@@ -50,11 +63,29 @@ t_relay_to_udp("1.2.3.4", "5060");
     <section id="t_relay">
 	<title>
 	    <function>t_relay()</function>
+	    <function>t_relay(host, port)</function>
 	</title>
 	<para>
-	    Relay a message statefully to destination indicated in current URI. (If the
-	    original URI was rewritten by UsrLoc, RR, strip/prefix, etc., the new URI will
-	    be taken). Returns a negative value on failure--you may still want to send a
+	    Relay a message statefully either to the destination indicated in the
+		current URI (if called without any parameters) or to the specified 
+		host and port. In the later case (host and port specified) the protocol
+		 used is the same protocol on which the message was received.
+	</para>
+	<para>
+		<function>t_relay()</function> is the statefull version for 
+		<function>forward(uri:host, uri:port)</function>
+		while <function>t_relay(host, port)</function> is similar to 
+		<function>forward(host, port)</function>.
+	</para>
+	<para>
+		In the forward to uri case (<function>t_relay()</function>), if the
+	    original URI was rewritten (by UsrLoc, RR, strip/prefix, etc.) the new
+		URI will be taken). The destination (including the protocol) is 
+		determined from the uri, using SIP specific DNS resolving if needed
+		(NAPTR, SRV a.s.o depending also on the dns options).
+	</para>
+	<para>
+		Returns a negative value on failure--you may still want to send a
 	    negative reply upstream statelessly not to leave upstream UAC in lurch.
 	</para>
 	<example>

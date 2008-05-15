@@ -24,7 +24,16 @@ modules:
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
- - tm        - method for canceling unreplied branches can now be selected
+ - tm        - t_relay_to renamed to t_relay_to_avp (undocumented function)
+             - t_relay() can now also take host and port parameters (e.g.
+               t_relay(host, port)), behaving like a statefull 
+               forwad(host, port) version (forward to host:port using the same
+               protocol on which the message was received)
+             - t_relay_to_udp(), t_relay_to_tcp() and t_relay_to_tls() work
+               now even with no parameters: in this case the message is 
+               forwarded using the request uri, but with the specified protocol
+               (equivalent to a t_relay() with a forced protocol)
+             - method for canceling unreplied branches can now be selected
                using the new cancel_b_method tm parameter.
              - support for adding a 503 reply source to the blacklist for
                the time specified in the Retry-After header (see the new tm
