@@ -417,7 +417,7 @@ int allow_trusted(struct sip_msg* msg, char *src_ip, int proto)
 	db_key_t cols[3];
 	
 	if (!db_url.s) {
-		LM_ERR("db_mode parameter has not been set\n");
+		LM_ERR("db_url parameter has not been set\n");
 		return -1;
 	}
 
