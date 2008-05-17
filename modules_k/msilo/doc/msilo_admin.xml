@@ -36,6 +36,12 @@
 		to have no support for MESSAGE request. In this case it should be used 
 		the <quote>failure_route</quote> to store the undelivered requests.
 	</para>
+	<para>
+		Another functionality provided by the modules is to send messages at
+		a certain time -- the reminder functionality. Using config logic, a
+		received message can be stored and delivered at a time specified while
+		storing with the 'snd_time_avp'.
+	</para>
 	</section>
 	<section>
 	<title>Dependencies</title>

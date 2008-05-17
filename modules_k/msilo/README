@@ -134,6 +134,11 @@ Chapter 1. Admin Guide
    should be used the "failure_route" to store the undelivered
    requests.
 
+   Another functionality provided by the modules is to send
+   messages at a certain time -- the reminder functionality. Using
+   config logic, a received message can be stored and delivered at
+   a time specified while storing with the 'snd_time_avp'.
+
 1.2. Dependencies
 
 1.2.1. OpenSER modules
