@@ -118,13 +118,12 @@ modparam("msilo", "db_table", "silo")
 		</example>
 	</section>
 	<section>
-		<title><varname>registrar</varname> (string)</title>
+		<title><varname>from_address</varname> (string)</title>
 		<para>
 		The &sip; address used to inform users that destination of their 
 		message is not online and the message will be delivered next time 
 		when that user goes online. If the parameter is not set, the module 
-		will not send any notification. All requests
-		intended for this &sip; address will not be stored for lately delivery.
+		will not send any notification. It can contain pseudo-variables.
 		</para>
 		<para>
 		<emphasis>
@@ -132,10 +131,76 @@ modparam("msilo", "db_table", "silo")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set the <quote>registrar</quote> parameter</title>
+		<title>Set the <quote>from_address</quote> parameter</title>
 <programlisting format="linespecific">
 ...
-modparam("msilo", "registrar", "sip:registrar@example.org")
+modparam("msilo", "from_address", "sip:registrar@example.org")
+modparam("msilo", "from_address", "sip:$rU@example.org")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>contact_hdr</varname> (string)</title>
+		<para>
+		The value of the Contact header (including header name and ending
+		\r\n) to be added in notification messages.
+		It can contain pseudo-variables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>contact_hdr</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "contact_hdr", "Contact: &lt;sip:null@example.com&gt;\r\n")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>offline_message</varname> (string)</title>
+		<para>
+		The body of the notification message.
+		It can contain pseudo-variables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>offline_message</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "offline_message", "*** User $rU is offline!")
+modparam("msilo", "offline_message", "&lt;em&gt;I am offline!&lt;/em&gt;")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>content_type_hdr</varname> (string)</title>
+		<para>
+		The value of the Content-Type header (including header name and ending
+		\r\n) to be added in notification messages. It must reflect what the
+		'offline_message' contains.
+		It can contain pseudo-variables.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>NULL</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set the <quote>content_type_hdr</quote> parameter</title>
+<programlisting format="linespecific">
+...
+modparam("msilo", "content_type_hdr", "Content-Type: text/plain\r\n")
+modparam("msilo", "content_type_hdr", "Content-Type: text/html\r\n")
 ...
 </programlisting>
 		</example>

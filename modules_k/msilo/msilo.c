@@ -66,13 +66,6 @@
 
 #include "../tm/tm_load.h"
 
-#define CONTACT_PREFIX "Content-Type: text/plain"CRLF"Contact: <"
-#define CONTACT_SUFFIX  ">;msilo=yes"CRLF
-#define CONTACT_PREFIX_LEN (sizeof(CONTACT_PREFIX)-1)
-#define CONTACT_SUFFIX_LEN  (sizeof(CONTACT_SUFFIX)-1)
-#define OFFLINE_MESSAGE	"] is offline. The message will be delivered when user goes online."
-#define OFFLINE_MESSAGE_LEN	(sizeof(OFFLINE_MESSAGE)-1)
-
 #include "ms_msg_list.h"
 #include "msfuncs.h"
 
@@ -131,9 +124,17 @@ struct tm_binds tmb;
 
 static str ms_db_url = str_init(DEFAULT_DB_URL);
 static str ms_db_table = str_init("silo");
-str  ms_registrar = {NULL, 0}; /*"sip:registrar@example.org";*/
 str  ms_reminder = {NULL, 0};
 str  ms_outbound_proxy = {NULL, 0};
+
+char*  ms_from = NULL; /*"sip:registrar@example.org";*/
+char*  ms_contact = NULL; /*"Contact: <sip:registrar@example.org>\r\n";*/
+char*  ms_content_type = NULL; /*"Content-Type: text/plain\r\n";*/
+char*  ms_offline_message = NULL; /*"<em>I'm offline.</em>"*/
+void**  ms_from_sp = NULL;
+void**  ms_contact_sp = NULL;
+void**  ms_content_type_sp = NULL;
+void**  ms_offline_message_sp = NULL;
 
 int  ms_expire_time = 259200;
 int  ms_check_time = 60;
@@ -180,29 +181,32 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[]={
-	{ "db_url",       STR_PARAM, &ms_db_url.s             },
-	{ "db_table",     STR_PARAM, &ms_db_table.s           },
-	{ "registrar",    STR_PARAM, &ms_registrar.s          },
-	{ "reminder",     STR_PARAM, &ms_reminder.s           },
-	{ "outbound_proxy",STR_PARAM, &ms_outbound_proxy.s    },
-	{ "expire_time",  INT_PARAM, &ms_expire_time          },
-	{ "check_time",   INT_PARAM, &ms_check_time           },
-	{ "send_time",    INT_PARAM, &ms_send_time            },
-	{ "clean_period", INT_PARAM, &ms_clean_period         },
-	{ "use_contact",  INT_PARAM, &ms_use_contact          },
-	{ "sc_mid",       STR_PARAM, &sc_mid.s                },
-	{ "sc_from",      STR_PARAM, &sc_from.s               },
-	{ "sc_to",        STR_PARAM, &sc_to.s                 },
-	{ "sc_uri_user",  STR_PARAM, &sc_uri_user.s           },
-	{ "sc_uri_host",  STR_PARAM, &sc_uri_host.s           },
-	{ "sc_body",      STR_PARAM, &sc_body.s               },
-	{ "sc_ctype",     STR_PARAM, &sc_ctype.s              },
-	{ "sc_exp_time",  STR_PARAM, &sc_exp_time.s           },
-	{ "sc_inc_time",  STR_PARAM, &sc_inc_time.s           },
-	{ "sc_snd_time",  STR_PARAM, &sc_snd_time.s           },
-	{ "snd_time_avp", STR_PARAM, &ms_snd_time_avp_param.s },
-	{ "add_date",     INT_PARAM, &ms_add_date             },
-	{ "max_messages", INT_PARAM, &ms_max_messages         },
+	{ "db_url",           STR_PARAM, &ms_db_url.s             },
+	{ "db_table",         STR_PARAM, &ms_db_table.s           },
+	{ "from_address",     STR_PARAM, &ms_from                 },
+	{ "contact_hdr",      STR_PARAM, &ms_contact              },
+	{ "content_type_hdr", STR_PARAM, &ms_content_type         },
+	{ "offline_message",  STR_PARAM, &ms_offline_message      },
+	{ "reminder",         STR_PARAM, &ms_reminder.s           },
+	{ "outbound_proxy",   STR_PARAM, &ms_outbound_proxy.s     },
+	{ "expire_time",      INT_PARAM, &ms_expire_time          },
+	{ "check_time",       INT_PARAM, &ms_check_time           },
+	{ "send_time",        INT_PARAM, &ms_send_time            },
+	{ "clean_period",     INT_PARAM, &ms_clean_period         },
+	{ "use_contact",      INT_PARAM, &ms_use_contact          },
+	{ "sc_mid",           STR_PARAM, &sc_mid.s                },
+	{ "sc_from",          STR_PARAM, &sc_from.s               },
+	{ "sc_to",            STR_PARAM, &sc_to.s                 },
+	{ "sc_uri_user",      STR_PARAM, &sc_uri_user.s           },
+	{ "sc_uri_host",      STR_PARAM, &sc_uri_host.s           },
+	{ "sc_body",          STR_PARAM, &sc_body.s               },
+	{ "sc_ctype",         STR_PARAM, &sc_ctype.s              },
+	{ "sc_exp_time",      STR_PARAM, &sc_exp_time.s           },
+	{ "sc_inc_time",      STR_PARAM, &sc_inc_time.s           },
+	{ "sc_snd_time",      STR_PARAM, &sc_snd_time.s           },
+	{ "snd_time_avp",     STR_PARAM, &ms_snd_time_avp_param.s },
+	{ "add_date",         INT_PARAM, &ms_add_date             },
+	{ "max_messages",     INT_PARAM, &ms_max_messages         },
 	{ 0,0,0 }
 };
 
@@ -325,6 +329,72 @@ static int mod_init(void)
 		return -1;
 	}
 
+	if(ms_from!=NULL)
+	{
+		ms_from_sp = (void**)pkg_malloc(sizeof(void*));
+		if(ms_from_sp==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			return -1;
+		}
+		*ms_from_sp = (void*)ms_from;
+		if(fixup_spve_null(ms_from_sp, 1)!=0)
+		{
+			LM_ERR("bad contact parameter\n");
+			return -1;
+		}
+	}
+	if(ms_contact!=NULL)
+	{
+		ms_contact_sp = (void**)pkg_malloc(sizeof(void*));
+		if(ms_contact_sp==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			return -1;
+		}
+		*ms_contact_sp = (void*)ms_contact;
+		if(fixup_spve_null(ms_contact_sp, 1)!=0)
+		{
+			LM_ERR("bad contact parameter\n");
+			return -1;
+		}
+	}
+	if(ms_content_type!=NULL)
+	{
+		ms_content_type_sp = (void**)pkg_malloc(sizeof(void*));
+		if(ms_content_type_sp==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			return -1;
+		}
+		*ms_content_type_sp = (void*)ms_content_type;
+		if(fixup_spve_null(ms_content_type_sp, 1)!=0)
+		{
+			LM_ERR("bad content_type parameter\n");
+			return -1;
+		}
+	}
+	if(ms_offline_message!=NULL)
+	{
+		ms_offline_message_sp = (void**)pkg_malloc(sizeof(void*));
+		if(ms_offline_message_sp==NULL)
+		{
+			LM_ERR("no more pkg\n");
+			return -1;
+		}
+		*ms_offline_message_sp = (void*)ms_offline_message;
+		if(fixup_spve_null(ms_offline_message_sp, 1)!=0)
+		{
+			LM_ERR("bad offline_message parameter\n");
+			return -1;
+		}
+	}
+	if(ms_offline_message!=NULL && ms_content_type==NULL)
+	{
+		LM_ERR("content_type parameter must be set\n");
+		return -1;
+	}
+
 	ml = msg_list_init();
 	if(ml==NULL)
 	{
@@ -340,8 +410,6 @@ static int mod_init(void)
 	if(ms_send_time>0 && ms_reminder.s!=NULL)
 		register_timer(m_send_ontimer, 0, ms_send_time);
 
-	if(ms_registrar.s!=NULL)
-		ms_registrar.len = strlen(ms_registrar.s);
 	if(ms_reminder.s!=NULL)
 		ms_reminder.len = strlen(ms_reminder.s);
 	if(ms_outbound_proxy.s!=NULL)
@@ -399,9 +467,13 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	
 	int nr_keys = 0, val, lexpire;
 	content_type_t ctype;
-	static char buf[512];
-	static char buf1[1024];
+#define MS_BUF1_SIZE	1024
+	static char ms_buf1[MS_BUF1_SIZE];
 	int mime;
+	str notify_from;
+	str notify_body;
+	str notify_ctype;
+	str notify_contact;
 
 	int_str        avp_value;
 	struct usr_avp *avp;
@@ -461,13 +533,6 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 		}
 	}
 	
-	if(pto->uri.len == ms_registrar.len && 
-			!strncasecmp(pto->uri.s, ms_registrar.s, ms_registrar.len))
-	{
-		LM_DBG("message to MSILO REGISTRAR!\n");
-		goto error;
-	}
-
 	/* get the owner */
 	memset(&puri, 0, sizeof(struct sip_uri));
 	if(owner)
@@ -579,13 +644,6 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	pfrom = (struct to_body*)msg->from->parsed;
 	LM_DBG("'From' header: <%.*s>\n", pfrom->uri.len, pfrom->uri.s);	
 	
-	if(ms_registrar.s && pfrom->uri.len == ms_registrar.len && 
-			!strncasecmp(pfrom->uri.s, ms_registrar.s, ms_registrar.len))
-	{
-		LM_DBG("message from MSILO REGISTRAR!\n");
-		goto error;
-	}
-
 	db_keys[nr_keys] = &sc_from;
 	
 	db_vals[nr_keys].type = DB_STR;
@@ -690,27 +748,45 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	update_stat(ms_stored_msgs, 1);
 #endif
 
-	if(ms_registrar.len <= 0
-			|| ms_registrar.len+CONTACT_PREFIX_LEN+CONTACT_SUFFIX_LEN+1>=1024)
+	if(ms_from==NULL || ms_offline_message == NULL)
 		goto done;
 
 	LM_DBG("sending info message.\n");
-	strcpy(buf1, CONTACT_PREFIX);
-	strncat(buf1, ms_registrar.s, ms_registrar.len);
-	strncat(buf1, CONTACT_SUFFIX, CONTACT_SUFFIX_LEN);
-	str_hdr.len = CONTACT_PREFIX_LEN+ms_registrar.len+CONTACT_SUFFIX_LEN;
-	str_hdr.s = buf1;
-
-	strncpy(buf, "User [", 6);
-	body.len = 6;
-	if(pto->uri.len+OFFLINE_MESSAGE_LEN+7/*6+1*/ < 512)
+	if(fixup_get_svalue(msg, (gparam_p)*ms_from_sp, &notify_from)!=0
+			|| notify_from.len<=0)
 	{
-		strncpy(buf+body.len, pto->uri.s, pto->uri.len);
-		body.len += pto->uri.len;
+		LM_WARN("cannot get notification From address\n");
+		goto done;
 	}
-	strncpy(buf+body.len, OFFLINE_MESSAGE, OFFLINE_MESSAGE_LEN);
-	body.len += OFFLINE_MESSAGE_LEN;
-	body.s = buf;
+	if(fixup_get_svalue(msg, (gparam_p)*ms_offline_message_sp, &notify_body)!=0
+			|| notify_body.len<=0)
+	{
+		LM_WARN("cannot get notification body\n");
+		goto done;
+	}
+	if(fixup_get_svalue(msg, (gparam_p)*ms_content_type_sp, &notify_ctype)!=0
+			|| notify_ctype.len<=0)
+	{
+		LM_WARN("cannot get notification content type\n");
+		goto done;
+	}
+
+	if(ms_contact!=NULL && fixup_get_svalue(msg, (gparam_p)*ms_contact_sp,
+				&notify_contact)==0 && notify_contact.len>0)
+	{
+		if(notify_contact.len+notify_ctype.len>=MS_BUF1_SIZE)
+		{
+			LM_WARN("insuffiecient buffer to build notification headers\n");
+			goto done;
+		}
+		memcpy(ms_buf1, notify_contact.s, notify_contact.len);
+		memcpy(ms_buf1+notify_contact.len, notify_ctype.s, notify_ctype.len);
+		str_hdr.s = ms_buf1;
+		str_hdr.len = notify_contact.len + notify_ctype.len;
+	} else {
+		str_hdr = notify_ctype;
+	}
+
 	/* look for Contact header -- must be parsed by now*/
 	ctaddr.s = NULL;
 	if(ms_use_contact && msg->contact!=NULL && msg->contact->body.s!=NULL
@@ -740,9 +816,9 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	tmb.t_request(&msg_type,  /* Type of the message */
 			(ctaddr.s)?&ctaddr:&pfrom->uri,    /* Request-URI */
 			&pfrom->uri,      /* To */
-			&ms_registrar,    /* From */
+			&notify_from,     /* From */
 			&str_hdr,         /* Optional headers including CRLF */
-			&body,            /* Message body */
+			&notify_body,     /* Message body */
 			(ms_outbound_proxy.s)?&ms_outbound_proxy:0, /* outbound uri */
 			NULL,             /* Callback function */
 			NULL              /* Callback parameter */
