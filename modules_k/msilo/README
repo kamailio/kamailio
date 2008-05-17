@@ -575,17 +575,17 @@ port=5060
 listen=10.0.0.2   # listen address
 
 # ------------------ module loading ----------------------------------
+mpath="/usr/local/lib/openser/modules/"
 
-loadmodule "modules/print/print.so"
-loadmodule "modules/textops/textops.so"
+loadmodule "textops.so"
 
-loadmodule "modules/sl/sl.so"
-loadmodule "modules/mysql/mysql.so"
-loadmodule "modules/maxfwd/maxfwd.so"
-loadmodule "modules/msilo/msilo.so"
-loadmodule "modules/tm/tm.so"
-loadmodule "modules/registrar/registrar.so"
-loadmodule "modules/usrloc/usrloc.so"
+loadmodule "sl.so"
+loadmodule "mysql.so"
+loadmodule "maxfwd.so"
+loadmodule "msilo.so"
+loadmodule "tm.so"
+loadmodule "registrar.so"
+loadmodule "usrloc.so"
 
 # ----------------- setting module-specific parameters ---------------
 
@@ -599,8 +599,12 @@ modparam("usrloc", "db_mode", 0)
 
 # -- msilo params --
 
-modparam("msilo","db_url","mysql://user:xxx@127.0.0.1/msilo")
-modparam("msilo","registrar","sip:registrar@mydomain.com")
+modparam("msilo","db_url","mysql://openser:openserrw@localhost/openser")
+modparam("msilo","from_address","sip:registrar@openser.org")
+modparam("msilo","contact_hdr","Contact: registrar@192.168.1.2:5060;msil
+o=yes\r\n")
+modparam("msilo","content_type_hdr","Content-Type: text/plain\r\n")
+modparam("msilo","offline_message","*** User $rU is offline!")
 
 # -- tm params --
 
@@ -613,7 +617,7 @@ route{
     if ( !mf_process_maxfwd_header("10") )
     {
         sl_send_reply("483","To Many Hops");
-        drop();
+        exit;
     };
 
 
@@ -632,7 +636,7 @@ route{
             }else{
                 log("MSILO: no offline messages dumped\n");
             };
-            break;
+            exit;
         };
 
         # domestic SIP destinations are handled using our USRLOC DB
@@ -640,10 +644,10 @@ route{
         if(!lookup("location"))
         {
             if (! t_newtran())
-               {
+            {
                 sl_reply_error();
-                break;
-               };
+                exit;
+            };
             # we do not care about anything else but MESSAGEs
             if (!method=="MESSAGE")
             {
@@ -651,7 +655,7 @@ route{
                 {
                     sl_reply_error();
                 };
-                break;
+                exit;
             };
             log("MESSAGE received -> storing using MSILO\n");
             # MSILO - storing as offline message
@@ -669,13 +673,13 @@ route{
                     sl_reply_error();
                 };
             };
-            break;
+            exit;
         };
         # if the downstream UA does not support MESSAGE requests
         # go to failure_route[1]
         t_on_failure("1");
         t_relay();
-        break;
+        exit;
     };
 
     # forward anything else
@@ -686,7 +690,7 @@ failure_route[1] {
     # forwarding failed -- check if the request was a MESSAGE
     if (!method=="MESSAGE")
     {
-        break;
+        exit;
     };
 
     log(1,"MSILO:the downstream UA doesn't support MESSAGEs\n");
