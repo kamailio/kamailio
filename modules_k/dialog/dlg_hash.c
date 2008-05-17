@@ -302,6 +302,7 @@ struct dlg_cell* lookup_dlg( unsigned int h_entry, unsigned int h_id)
 				goto not_found;
 			}
 			dlg->ref++;
+			LM_DBG("ref dlg %p with 1 -> %d\n", dlg, dlg->ref);
 			dlg_unlock( d_table, d_entry);
 			LM_DBG("dialog id=%u found on entry %u\n", h_id, h_entry);
 			return dlg;
@@ -334,6 +335,7 @@ static inline struct dlg_cell* internal_get_dlg(unsigned int h_entry,
 				goto not_found;
 			}
 			dlg->ref++;
+			LM_DBG("ref dlg %p with 1 -> %d\n", dlg, dlg->ref);
 			dlg_unlock( d_table, d_entry);
 			LM_DBG("dialog callid='%.*s' found\n on entry %u, dir=%d\n",
 				callid->len, callid->s,h_entry,*dir);
@@ -389,6 +391,8 @@ void link_dlg(struct dlg_cell *dlg, int n)
 	}
 
 	dlg->ref += 1 + n;
+
+	LM_DBG("ref dlg %p with %d -> %d\n", dlg, n+1, dlg->ref);
 
 	dlg_unlock( d_table, d_entry);
 	return;

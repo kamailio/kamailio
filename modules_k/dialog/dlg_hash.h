@@ -127,7 +127,12 @@ inline void unlink_unsafe_dlg(struct dlg_entry *d_entry, struct dlg_cell *dlg);
 inline void destroy_dlg(struct dlg_cell *dlg);
 
 #define ref_dlg_unsafe(_dlg,_cnt)     \
-	(_dlg)->ref += (_cnt)
+	do { \
+		(_dlg)->ref += (_cnt); \
+		LM_DBG("ref dlg %p with %d -> %d\n", \
+			(_dlg),(_cnt),(_dlg)->ref); \
+	}while(0)
+
 #define unref_dlg_unsafe(_dlg,_cnt,_d_entry)   \
 	do { \
 		(_dlg)->ref -= (_cnt); \
