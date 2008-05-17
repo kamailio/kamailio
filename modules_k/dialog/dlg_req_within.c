@@ -160,7 +160,7 @@ void bye_reply_cb(struct cell* t, int type, struct tmcb_params* ps){
 
 		LM_DBG("first final reply\n");
 		/* derefering the dialog */
-		unref_dlg(dlg, unref+2);
+		unref_dlg(dlg, unref+1);
 
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 	}
@@ -276,6 +276,8 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 	unsigned int h_entry, h_id;
 	struct dlg_cell * dlg = NULL;
 	str mi_extra_hdrs = {NULL,0};
+	int status, msg_len;
+	char *msg;
 
 
 	if( d_table ==NULL)
@@ -304,13 +306,23 @@ struct mi_root * mi_terminate_dlg(struct mi_root *cmd_tree, void *param ){
 
 	dlg = lookup_dlg(h_entry, h_id);
 
+	// lookup_dlg has incremented the reference count
+
 	if(dlg){
 		if ( (send_bye(dlg,DLG_CALLER_LEG,&mi_extra_hdrs)!=0) ||
 		(send_bye(dlg,DLG_CALLEE_LEG,&mi_extra_hdrs)!=0)) {
-			return init_mi_tree(500, MI_DLG_OPERATION_ERR,
-				MI_DLG_OPERATION_ERR_LEN);
+			status = 500;
+			msg = MI_DLG_OPERATION_ERR;
+			msg_len = MI_DLG_OPERATION_ERR_LEN;
+		} else {
+			status = 200;
+			msg = MI_OK_S;
+			msg_len = MI_OK_LEN;
 		}
-		return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+
+		unref_dlg(dlg, 1);
+
+		return init_mi_tree(status, msg, msg_len);
 	}
 
 end:
