@@ -38,7 +38,7 @@
 #include "../../resolve.h"
 
 #include <ldap.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <libgen.h>
 
