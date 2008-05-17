@@ -591,8 +591,12 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				return;
 			}
 
-			if (pre_match_parse( req, &callid, &ftag, &ttag)<0)
+			// lookup_dlg has incremented the ref count by 1
+
+			if (pre_match_parse( req, &callid, &ftag, &ttag)<0) {
+				unref_dlg(dlg, 1);
 				return;
+			}
 			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
 				LM_WARN("tight matching failed for %.*s "
 					"with clid '%.*s' and tags '%.*s' '%.*s'"
@@ -601,6 +605,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 					req->first_line.u.request.method.s,
 					callid.len,callid.s,
 					ftag.len,ftag.s,ttag.len,ttag.s,dir);
+				unref_dlg(dlg, 1);
 				return;
 			}
 		}
