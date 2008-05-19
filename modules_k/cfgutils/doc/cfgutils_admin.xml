@@ -72,7 +72,7 @@
 		<title><varname>initial_probability</varname> parameter usage</title>
 		<programlisting format="linespecific">
    
-modparam("cfgutils", "initial_probability", "15");
+modparam("cfgutils", "initial_probability", 15)
    
 </programlisting>
 	    </example>
@@ -91,7 +91,7 @@ modparam("cfgutils", "initial_probability", "15");
 		<title><varname>hash_file</varname> parameter usage</title>
 		<programlisting format="linespecific">
    
-modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg");
+modparam("cfgutils", "hash_file", "/etc/openser/openser.cfg")
    
 </programlisting>
 	    </example>
