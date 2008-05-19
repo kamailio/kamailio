@@ -537,7 +537,7 @@ static int parse_search_scope(token_t* token)
 
 	r = lookup_token(token_scope, &t.val);
 	if (!r) {
-		ERR("ldap:%s:%d:%d: Invalid option value '%.*s'\n", 
+		ERR("ldap:%s:%d:%d: Unsupported option value '%.*s'\n", 
 		    pstate.file, t.start.line, t.start.col,
 		    t.val.len, ZSW(t.val.s));
 		return -1;
@@ -921,8 +921,12 @@ char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_config* cfg, char* fld
 static struct parser_tab token_scope[] = {
 	{STR_STATIC_INIT("base"),     {.ival = LDAP_SCOPE_BASE}},
 	{STR_STATIC_INIT("onelevel"), {.ival = LDAP_SCOPE_ONELEVEL}},
+	{STR_STATIC_INIT("one"),      {.ival = LDAP_SCOPE_ONELEVEL}},
 	{STR_STATIC_INIT("subtree"),  {.ival = LDAP_SCOPE_SUBTREE}},
+	{STR_STATIC_INIT("sub"),      {.ival = LDAP_SCOPE_SUBTREE}},
+#if defined HAVE_SCOPE_CHILDREN
 	{STR_STATIC_INIT("children"), {.ival = LDAP_SCOPE_CHILDREN}},
+#endif
 	{STR_NULL}
 };
 
