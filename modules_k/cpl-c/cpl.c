@@ -285,7 +285,7 @@ static int cpl_init(void)
 	}
 
 	if (cpl_env.log_dir==0) {
-		LM_INFO("log_dir param found void -> logging disabled!\n");
+		LM_INFO("log_dir param found empty -> logging disabled!\n");
 	} else {
 		if ( strlen(cpl_env.log_dir)>MAX_LOG_DIR_SIZE ) {
 			LM_ERR("dir \"%s\" has a too long name :-(!\n",	cpl_env.log_dir);
