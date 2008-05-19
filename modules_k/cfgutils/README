@@ -42,9 +42,9 @@ Elena-Ramona Modroiu
               1.4.4. rand_get_prob()
               1.4.5. sleep(time)
               1.4.6. usleep(time)
-              1.4.7. dbg_abort()
-              1.4.8. dbg_pkg_status()
-              1.4.9. dbg_shm_status()
+              1.4.7. abort()
+              1.4.8. pkg_status()
+              1.4.9. shm_status()
 
         1.5. MI Commands
 
@@ -74,9 +74,9 @@ Elena-Ramona Modroiu
    1.8. rand_get_prob() usage
    1.9. sleep usage
    1.10. usleep usage
-   1.11. dbg_abort usage
-   1.12. dbg_pkg_status usage
-   1.13. dbg_shm_status usage
+   1.11. abort usage
+   1.12. pkg_status usage
+   1.13. shm_status usage
    1.14. rand_set_prob usage
    1.15. rand_reset_prob usage
    1.16. rand_get_prob usage
@@ -278,19 +278,20 @@ sleep("1");
 usleep("500");
 ...
 
-1.4.7.  dbg_abort()
+1.4.7.  abort()
 
-   Debugging function that aborts the server.
+   Debugging function that aborts the server. Depending on the
+   configuration of the server a core dump will be created.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.11. dbg_abort usage
+   Example 1.11. abort usage
 ...
-dbg_abort();
+abort();
 ...
 
-1.4.8.  dbg_pkg_status()
+1.4.8.  pkg_status()
 
    Debugging function that dumps the status for the private (PKG)
    memory. This information is logged to the default log facility,
@@ -301,12 +302,12 @@ dbg_abort();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.12. dbg_pkg_status usage
+   Example 1.12. pkg_status usage
 ...
-dbg_pkg_status();
+pkg_status();
 ...
 
-1.4.9.  dbg_shm_status()
+1.4.9.  shm_status()
 
    Debugging function that dumps the status for the shared (SHM)
    memory. This information is logged to the default log facility,
@@ -317,9 +318,9 @@ dbg_pkg_status();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
 
-   Example 1.13. dbg_shm_status usage
+   Example 1.13. shm_status usage
 ...
-dbg_shm_status();
+shm_status();
 ...
 
 1.5. MI Commands

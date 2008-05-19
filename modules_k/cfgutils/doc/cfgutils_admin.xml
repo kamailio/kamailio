@@ -297,20 +297,21 @@ usleep("500");
 	
 	<section>
 		<title>
-			<function moreinfo="none">dbg_abort()</function>
+			<function moreinfo="none">abort()</function>
 		</title>
 		<para>
-			Debugging function that aborts the server.
+			Debugging function that aborts the server. Depending on the
+			configuration of the server a core dump will be created.
 		</para>
 		<para>
 			This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
 			FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-			<title><function>dbg_abort</function> usage</title>
+			<title><function>abort</function> usage</title>
 			<programlisting format="linespecific">
 ...
-dbg_abort();
+abort();
 ...
 			</programlisting>
 		</example>
@@ -318,7 +319,7 @@ dbg_abort();
 	
 	<section>
 		<title>
-			<function moreinfo="none">dbg_pkg_status()</function>
+			<function moreinfo="none">pkg_status()</function>
 		</title>
 		<para>
 			Debugging function that dumps the status for the private (PKG) memory.
@@ -331,10 +332,10 @@ dbg_abort();
 			FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-			<title><function>dbg_pkg_status</function> usage</title>
+			<title><function>pkg_status</function> usage</title>
 			<programlisting format="linespecific">
 ...
-dbg_pkg_status();
+pkg_status();
 ...
 			</programlisting>
 		</example>
@@ -342,7 +343,7 @@ dbg_pkg_status();
 	
 	<section>
 		<title>
-			<function moreinfo="none">dbg_shm_status()</function>
+			<function moreinfo="none">shm_status()</function>
 		</title>
 		<para>
 			Debugging function that dumps the status for the shared (SHM) memory.
@@ -355,10 +356,10 @@ dbg_pkg_status();
 			FAILURE_ROUTE, BRANCH_ROUTE.
 		</para>
 		<example>
-			<title><function>dbg_shm_status</function> usage</title>
+			<title><function>shm_status</function> usage</title>
 			<programlisting format="linespecific">
 ...
-dbg_shm_status();
+shm_status();
 ...
 			</programlisting>
 		</example>

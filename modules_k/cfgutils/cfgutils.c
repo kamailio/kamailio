@@ -109,11 +109,11 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{"usleep", (cmd_function)m_usleep, 1, fixup_uint_null, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"dbg_abort",      (cmd_function)dbg_abort,        0, 0, 0,
+	{"abort",      (cmd_function)dbg_abort,        0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"dbg_pkg_status", (cmd_function)dbg_pkg_status,   0, 0, 0,
+	{"pkg_status", (cmd_function)dbg_pkg_status,   0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
-	{"dbg_shm_status", (cmd_function)dbg_shm_status,   0, 0, 0,
+	{"shm_status", (cmd_function)dbg_shm_status,   0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
