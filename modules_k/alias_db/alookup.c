@@ -35,6 +35,7 @@
 #include "../../parser/parse_uri.h"
 #include "../../db/db.h"
 #include "../../mod_fix.h"
+#include "../../dset.h"
 
 #include "alias_db.h"
 #include "alookup.h"
@@ -75,6 +76,7 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	db_val_t db_vals[2];
 	db_key_t db_cols[] = {&user_column, &domain_column};
 	db_res_t* db_res = NULL;
+	int i;
 	
 	if(_table==NULL || fixup_get_svalue(_msg, (gparam_p)_table, &table_s)!=0)
 	{
@@ -124,87 +126,104 @@ int alias_db_lookup(struct sip_msg* _msg, char* _table, char* _str2)
 	}
 
 	memcpy(useruri_buf, "sip:", 4);
-	user_s.len = 4;
-	user_s.s = useruri_buf+4;
-	switch(RES_ROWS(db_res)[0].values[0].type)
-	{ 
-		case DB_STRING:
-			strcpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[0].val.string_val);
-			user_s.len += strlen(user_s.s);
-		break;
-		case DB_STR:
-			strncpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[0].val.str_val.s,
-				RES_ROWS(db_res)[0].values[0].val.str_val.len);
-			user_s.len += RES_ROWS(db_res)[0].values[0].val.str_val.len;
-		break;
-		case DB_BLOB:
-			strncpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[0].val.blob_val.s,
-				RES_ROWS(db_res)[0].values[0].val.blob_val.len);
-			user_s.len += RES_ROWS(db_res)[0].values[0].val.blob_val.len;
-		default:
-			LM_ERR("unknown type of DB user column\n");
-			if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
-			{
-				LM_DBG("failed to freeing result of query\n");
-			}
-			goto err_server;
-	}
+	for(i=0; i<RES_ROW_N(db_res); i++)
+	{
+		user_s.len = 4;
+		user_s.s = useruri_buf+4;
+		switch(RES_ROWS(db_res)[i].values[0].type)
+		{ 
+			case DB_STRING:
+				strcpy(user_s.s, 
+					(char*)RES_ROWS(db_res)[i].values[0].val.string_val);
+				user_s.len += strlen(user_s.s);
+			break;
+			case DB_STR:
+				strncpy(user_s.s, 
+					(char*)RES_ROWS(db_res)[i].values[0].val.str_val.s,
+					RES_ROWS(db_res)[i].values[0].val.str_val.len);
+				user_s.len += RES_ROWS(db_res)[i].values[0].val.str_val.len;
+			break;
+			case DB_BLOB:
+				strncpy(user_s.s, 
+					(char*)RES_ROWS(db_res)[i].values[0].val.blob_val.s,
+					RES_ROWS(db_res)[i].values[0].val.blob_val.len);
+				user_s.len += RES_ROWS(db_res)[i].values[0].val.blob_val.len;
+			break;
+			default:
+				LM_ERR("unknown type of DB user column\n");
+				if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
+				{
+					LM_DBG("failed to freeing result of query\n");
+				}
+				goto err_server;
+		}
 	
-	/* add the @*/
-	useruri_buf[user_s.len] = '@';
-	user_s.len++;
+		/* add the @*/
+		useruri_buf[user_s.len] = '@';
+		user_s.len++;
 	
-	/* add the domain */
-	user_s.s = useruri_buf+user_s.len;
-	switch(RES_ROWS(db_res)[0].values[1].type)
-	{ 
-		case DB_STRING:
-			strcpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[1].val.string_val);
-			user_s.len += strlen(user_s.s);
-		break;
-		case DB_STR:
-			strncpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[1].val.str_val.s,
-				RES_ROWS(db_res)[0].values[1].val.str_val.len);
-			user_s.len += RES_ROWS(db_res)[0].values[1].val.str_val.len;
-			useruri_buf[user_s.len] = '\0';
-		break;
-		case DB_BLOB:
-			strncpy(user_s.s, 
-				(char*)RES_ROWS(db_res)[0].values[1].val.blob_val.s,
-				RES_ROWS(db_res)[0].values[1].val.blob_val.len);
-			user_s.len += RES_ROWS(db_res)[0].values[1].val.blob_val.len;
-			useruri_buf[user_s.len] = '\0';
-		default:
-			LM_ERR("unknown type of DB user column\n");
-			if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
+		/* add the domain */
+		user_s.s = useruri_buf+user_s.len;
+		switch(RES_ROWS(db_res)[i].values[1].type)
+		{ 
+			case DB_STRING:
+				strcpy(user_s.s, 
+					(char*)RES_ROWS(db_res)[i].values[1].val.string_val);
+				user_s.len += strlen(user_s.s);
+			break;
+			case DB_STR:
+				strncpy(user_s.s, 
+					(char*)RES_ROWS(db_res)[i].values[1].val.str_val.s,
+					RES_ROWS(db_res)[i].values[1].val.str_val.len);
+				user_s.len += RES_ROWS(db_res)[i].values[1].val.str_val.len;
+				useruri_buf[user_s.len] = '\0';
+			break;
+			case DB_BLOB:
+				strncpy(user_s.s, 
+					(char*)RES_ROWS(db_res)[i].values[1].val.blob_val.s,
+					RES_ROWS(db_res)[i].values[1].val.blob_val.len);
+				user_s.len += RES_ROWS(db_res)[i].values[1].val.blob_val.len;
+				useruri_buf[user_s.len] = '\0';
+			break;
+			default:
+				LM_ERR("unknown type of DB user column\n");
+				if (db_res != NULL && adbf.free_result(db_handle, db_res) < 0)
+				{
+					LM_DBG("failed to freeing result of query\n");
+				}
+				goto err_server;
+		}
+		/* set the URI */
+		LM_DBG("new URI [%d] is [%s]\n", i, useruri_buf);
+		if(i==0)
+		{
+			if(rewrite_ruri(_msg, useruri_buf)<0)
 			{
-				LM_DBG("failed to freeing result of query\n");
+				LM_ERR("cannot replace the R-URI\n");
+				goto err_server;
 			}
-			goto err_server;
+			if(ald_append_branches==0)
+				break;
+		} else {
+			user_s.s = useruri_buf;
+			if (append_branch(_msg, &user_s, 0, 0, MIN_Q, 0, 0) == -1)
+			{
+				LM_ERR("error while appending branches\n");
+				goto err_server;
+			}
+		}
 	}
 
 	/**
-	 * Free the result because we don't need it
-	 * anymore
+	 * Free the DB result
 	 */
 	if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
 		LM_DBG("failed to freeing result of query\n");
 
-	/* set the URI */
-	LM_DBG("the URI of alias from R-URI [%s]\n", useruri_buf);
-	if(rewrite_ruri(_msg, useruri_buf)<0)
-	{
-		LM_ERR("cannot replace the R-URI\n");
-		goto err_server;
-	}
-
 	return 1;
 
 err_server:
+	if (db_res!=NULL && adbf.free_result(db_handle, db_res) < 0)
+		LM_DBG("failed to freeing result of query\n");
 	return -1;
 }

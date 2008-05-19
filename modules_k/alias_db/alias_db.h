@@ -42,6 +42,7 @@ extern str alias_user_column;     /* 'alias_username' column name */
 extern str alias_domain_column;   /* 'alias_domain' column name */
 extern str domain_prefix;
 extern int use_domain;      /* use or not the domain for alias lookup */
+extern int ald_append_branches;  /* append branches after an alias lookup */
 
 extern db_con_t* db_handle;   /* Database connection handle */
 

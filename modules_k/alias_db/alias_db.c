@@ -62,6 +62,7 @@ str alias_user_column   = str_init("alias_username");
 str alias_domain_column = str_init("alias_domain");
 str domain_prefix       = {NULL, 0};
 int use_domain          = 0;
+int ald_append_branches = 0;
 
 db_con_t* db_handle;   /* Database connection handle */
 db_func_t adbf;  /* DB functions */
@@ -83,6 +84,7 @@ static param_export_t params[] = {
 	{"alias_domain_column", STR_PARAM, &alias_domain_column.s },
 	{"use_domain",          INT_PARAM, &use_domain      },
 	{"domain_prefix",       STR_PARAM, &domain_prefix.s },
+	{"append_branches",     INT_PARAM, &ald_append_branches   },
 	{0, 0, 0}
 };
 

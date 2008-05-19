@@ -160,7 +160,7 @@ modparam("alias_db", "alias_domain_column", "adomain")
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>o</quote>.
+			Default value is <quote>0</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -189,6 +189,28 @@ modparam("alias_db", "use_domain", 1)
 		<programlisting format="linespecific">
 ...
 modparam("alias_db", "domain_prefix", "sip.")
+...
+</programlisting>
+		</example>
+	</section>
+	
+	<section>
+		<title><varname>append_branches</varname> (int)</title>
+		<para>
+			If the alias resolves to many SIP IDs, the first is replacing
+			the R-URI, the rest are added as branches.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>0</quote> (0 - don't add branches;
+			1 - add branches).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>append_branches</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("alias_db", "append_branches", 1)
 ...
 </programlisting>
 		</example>
