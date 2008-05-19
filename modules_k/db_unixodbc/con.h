@@ -40,6 +40,7 @@
 #include <string.h>
 #include <sql.h>
 #include <sqlext.h>
+#include <sqlucode.h>
 
 
 #define STRN_LEN 1024
