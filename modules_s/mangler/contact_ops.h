@@ -59,6 +59,11 @@ struct uri_format
 	str ip;
 	str port;
 	str protocol;
+	str rcv_ip;
+	str rcv_port;
+	str rcv_proto;
+	str transport; /* used only when encoding */
+	str rest; /* used only when encoding */
 	int first;
 	int second;
 };
@@ -70,11 +75,12 @@ int encode_contact (struct sip_msg *msg, char *encoding_prefix,char *public_ip);
 int decode_contact (struct sip_msg *msg, char *unused1,char *unused2);
 int decode_contact_header (struct sip_msg *msg, char *unused1,char *unused2);
 	
-int encode2format (str uri, struct uri_format *format);
-int decode2format (str uri, char separator, struct uri_format *format);
+int encode2format (struct sip_msg* msg, str* uri, struct uri_format *format);
+int decode2format (str* uri, char separator, struct uri_format *format);
 
-int encode_uri (str uri, char *encoding_prefix, char *public_ip,char separator, str * result);
-int decode_uri (str uri, char separator, str * result);
+int encode_uri (struct sip_msg* msg, str* uri, char *encoding_prefix,
+				char *public_ip,char separator, str * result);
+int decode_uri (str* uri, char separator, str * result, str* dst_uri);
 
 
 
