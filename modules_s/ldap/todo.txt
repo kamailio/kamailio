@@ -92,7 +92,7 @@ X Support for Syntax Specification in the Config File
   The module should issue an warning when the incremented/decremented field
   value overflows/underflows.
 
-* Support for Older LDAP Libraries
+X Support for Older LDAP Libraries
 
   Older versions of the openldap client library might not contain 
   LDAP_SCOPE_CHILDREN. We need to handle this case in a graceful manner and
