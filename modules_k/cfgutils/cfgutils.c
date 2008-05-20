@@ -241,13 +241,18 @@ static struct mi_root* mi_get_hash(struct mi_root* cmd, void* param )
 {
 	struct mi_root* rpl_tree= NULL;
 	struct mi_node* node= NULL;
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-	if(rpl_tree == NULL)
-		return 0;
-	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%.*s\n", MD5_LEN, config_hash);
-	if(node == NULL)
-		goto error;
-	
+
+	if (!hash_file) {
+		LM_INFO("no hash_file given, disable hash functionality\n");
+		rpl_tree = init_mi_tree(404, "Functionality disabled\n", 23);
+	} else {
+		rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+		if(rpl_tree == NULL)
+			return 0;
+		node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%.*s\n", MD5_LEN, config_hash);
+		if(node == NULL)
+			goto error;
+	}
 	return rpl_tree;
 
 error:
@@ -262,25 +267,29 @@ static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param )
 	char tmp[MD5_LEN];
 	memset(tmp, 0, MD5_LEN);
 
-	if (MD5File(tmp, hash_file) != 0) {
-		LM_ERR("could not hash the config file");
-		rpl_tree = init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN );
-	}
-	
-	if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
-		rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
-		if(rpl_tree == NULL)
-			return 0;
-		node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is identical to the stored one.\n");
+	if (!hash_file) {
+		LM_INFO("no hash_file given, disable hash functionality\n");
+		rpl_tree = init_mi_tree(404, "Functionality disabled\n", 23);
 	} else {
-		rpl_tree = init_mi_tree( 400, "Error", 5 );
-		if(rpl_tree == NULL)
-			return 0;
-		node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is not identical to the stored one.\n");
+		if (MD5File(tmp, hash_file) != 0) {
+			LM_ERR("could not hash the config file");
+			rpl_tree = init_mi_tree( 500, MI_INTERNAL_ERR_S, MI_INTERNAL_ERR_LEN );
+		}
+		
+		if (strncmp(config_hash, tmp, MD5_LEN) == 0) {
+			rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+			if(rpl_tree == NULL)
+				return 0;
+			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is identical to the stored one.\n");
+		} else {
+			rpl_tree = init_mi_tree( 400, "Error", 5 );
+			if(rpl_tree == NULL)
+				return 0;
+			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "The actual config file hash is not identical to the stored one.\n");
+		}
+		if(node == NULL)
+			goto error;
 	}
-
-	if(node == NULL)
-		goto error;
 	
 	return rpl_tree;
 
@@ -378,14 +387,15 @@ static int dbg_shm_status(struct sip_msg* msg, char* foo, char* bar)
 
 static int mod_init(void)
 {
-	if (!hash_file)
-		hash_file = cfg_file;
-
-	if (MD5File(config_hash, hash_file) != 0) {
-		LM_ERR("could not hash the config file");
-		return -1;
+	if (!hash_file) {
+		LM_INFO("no hash_file given, disable hash functionality\n");
+	} else {
+		if (MD5File(config_hash, hash_file) != 0) {
+			LM_ERR("could not hash the config file");
+			return -1;
+		}
+		LM_DBG("config file hash is %.*s", MD5_LEN, config_hash);
 	}
-	LM_DBG("config file hash is %.*s", MD5_LEN, config_hash);
 
 	if (initial > 100) {
 		LM_ERR("invalid probability <%d>\n", initial);

@@ -84,8 +84,8 @@ modparam("cfgutils", "initial_probability", 15)
 		The config file name for that a hash value should be calculated on startup.
 		</para>
 		<para>
-		The default value is equal the config file that is used from the server,
-		for example <quote>/etc/openser/openser.cfg</quote>.
+		There is no default value, is no parameter is given the hash functionality
+		is disabled.
 		</para>
 		<example>
 		<title><varname>hash_file</varname> parameter usage</title>
@@ -431,8 +431,8 @@ The actual probability is 50 percent.
 			</para>
 			<para>
 				The function returns 200 OK if the hash values are identical, 400 if
-				there are not identical and 500 on errors. Additional a short
-				text message is printed.
+				there are not identical, 404 if no file for hashing has been configured
+				and 500 on errors. Additional a short text message is printed.
 			</para>
 			<example>
 				<title><function moreinfo="none">check_config_hash</function> usage</title>
@@ -450,7 +450,8 @@ The actual config file hash is identical to the stored one.
 				Return the stored config file hash.
 			</para>
 			<para>
-				The function returns 200 OK and the hash value.
+				The function returns 200 OK and the hash value on success or 404 if no
+				file for hashing has been configured.
 			</para>
 			<example>
 				<title><function moreinfo="none">get_config_hash</function> usage</title>
