@@ -220,6 +220,7 @@ INSTALL_TOUCH = touch          # used to create the file first (good to
                                #  make solaris install work)
 INSTALL_CFG = $(INSTALL) -m 644
 INSTALL_BIN = $(INSTALL) -m 755
+INSTALL_SCRIPT = $(INSTALL) -m 755
 INSTALL_MODULES = $(INSTALL) -m 755
 INSTALL_LIB = $(INSTALL) -m 755
 INSTALL_DOC = $(INSTALL) -m 644

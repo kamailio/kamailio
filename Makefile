@@ -219,8 +219,8 @@ modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 # which utils need compilation (directory path) and which to install
 # (full path including file name)
 utils_compile=	utils/gen_ha1 utils/sercmd
-utils_install=	utils/gen_ha1/gen_ha1 \
-				scripts/mysql/ser_mysql.sh utils/sercmd/sercmd
+utils_bin_install=	$(utils_compile)
+utils_script_install=	scripts/mysql/ser_mysql.sh
 
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
@@ -482,12 +482,26 @@ install-modules: $(modules_prefix)/$(modules_dir)
 	done; true
 
 install-utils: utils $(bin_prefix)/$(bin_dir)
-	@for r in $(utils_install) "" ; do \
+	@for r in $(utils_bin_install) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
 				$(INSTALL_TOUCH) \
 					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ; \
 				$(INSTALL_BIN)  "$$r"  $(bin_prefix)/$(bin_dir) ; \
+			else \
+				echo "ERROR: $$r not compiled" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ;\
+		fi ; \
+	done; true
+	@for r in $(utils_script_install) "" ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(INSTALL_TOUCH) \
+					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ; \
+				$(INSTALL_SCRIPT)  "$$r"  $(bin_prefix)/$(bin_dir) ; \
 			else \
 				echo "ERROR: $$r not compiled" ; \
 				if [ ${err_fail} = 1 ] ; then \
