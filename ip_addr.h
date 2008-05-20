@@ -237,9 +237,7 @@ inline static void ip_addr_mk_any(int af, struct ip_addr* ip)
 inline static int matchnet(struct ip_addr* ip, struct net* net)
 {
 	unsigned int r;
-	int ret;
-	
-	ret=-1;
+
 	if (ip->af == net->ip.af){
 		for(r=0; r<ip->len/4; r++){ /* ipv4 & ipv6 addresses are
 									   all multiple of 4*/
