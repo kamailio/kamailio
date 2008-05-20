@@ -44,9 +44,11 @@
 #include "../../mem/mem.h"
 #include "../../dprint.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <stdint.h>
 #include <string.h>
-#include <netinet/in.h>
 
 /**
  * This is the epoch time in time_t format, this value is used to convert
