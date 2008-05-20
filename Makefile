@@ -219,7 +219,7 @@ modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 # which utils need compilation (directory path) and which to install
 # (full path including file name)
 utils_compile=	utils/gen_ha1 utils/sercmd
-utils_bin_install=	$(utils_compile)
+utils_bin_install=	utils/gen_ha1/gen_ha1 utils/sercmd/sercmd
 utils_script_install=	scripts/mysql/ser_mysql.sh
 
 
