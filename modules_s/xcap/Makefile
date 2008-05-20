@@ -14,7 +14,7 @@ NAME = xcap.so
 # and root ser directory must be in include directories
 
 DEFS +=-DSER 
-INCLUDES += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \ 
+INCLUDES += -I/usr/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
 			-I$(LOCALBASE)/include -I../../lib -I../..
 LIBS += -L$(LOCALBASE)/lib -L/usr/pkg/lib -lxml2 -lcurl 
 SERLIBPATH=../../lib
