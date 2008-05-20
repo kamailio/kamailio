@@ -96,7 +96,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	LM_NOTICE("initializing...\n");
+	LM_INFO("initializing...\n");
 	suffix.len = strlen(suffix.s);
 	return 0;
 }
