@@ -123,7 +123,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	int ver = 0;
 	bind_presence_t bind_presence;
 	presence_api_t pres;
 		
@@ -151,11 +150,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	ver = db_table_version(&pxml_dbf, pxml_db, &xcap_table);
-	if(ver!=S_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n",
-				 ver, xcap_table.len, xcap_table.s, S_TABLE_VERSION);
+	if(db_check_table_version(&pxml_dbf, pxml_db, &xcap_table, S_TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		return -1;
 	}
 	/* load SL API */

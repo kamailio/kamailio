@@ -143,8 +143,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	int ver = 0;
-	
 	load_tm_f  load_tm;
 
 	LM_DBG("...\n");
@@ -192,11 +190,8 @@ static int mod_init(void)
 		return -1;
 	}
 	/* verify table version  */
-	ver = db_table_version(&pua_dbf, pua_db, &db_table);
-	if(ver!=PUA_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>,"
-				" need v%d\n", ver, db_table.len, db_table.s, PUA_TABLE_VERSION);
+	if(db_check_table_version(&pua_dbf, pua_db, &db_table, PUA_TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		return -1;
 	}
 

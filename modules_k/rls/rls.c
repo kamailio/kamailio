@@ -206,7 +206,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	int ver = 0;
 	bind_presence_t bind_presence;
 	presence_api_t pres;
 	bind_pua_t bind_pua;
@@ -331,22 +330,12 @@ static int mod_init(void)
 		return -1;
 	}
 	/* verify table version */
-	 ver = db_table_version(&rls_dbf, rls_db, &rlsubs_table);
-	if(ver!=W_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>,"
-				" need v%d\n", ver, rlsubs_table.len, rlsubs_table.s,
-				W_TABLE_VERSION);
-		return -1;
+	if((db_check_table_version(&rls_dbf, rls_db, &rlsubs_table, W_TABLE_VERSION) < 0) ||
+		(db_check_table_version(&rls_dbf, rls_db, &rlpres_table, P_TABLE_VERSION) < 0)) {
+			LM_ERR("error during table version check.\n");
+			return -1;
 	}
 	
-	ver = db_table_version(&rls_dbf, rls_db, &rlpres_table);
-	if(ver!=P_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>,"
-				" need v%d\n", ver, rlpres_table.len, rlpres_table.s, P_TABLE_VERSION);
-		return -1;
-	}
 	if(hash_size<=1)
 		hash_size= 512;
 	else

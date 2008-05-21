@@ -121,8 +121,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	int ver;
-
 	xcap_db_url.len = xcap_db_url.s ? strlen(xcap_db_url.s) : 0;
 	xcap_db_table.len = xcap_db_table.s ? strlen(xcap_db_table.s) : 0;
 	
@@ -146,11 +144,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	ver = db_table_version(&xcap_dbf, xcap_db, &xcap_db_table);
-	if(ver!=XCAP_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n",
-				 ver, xcap_db_table.len, xcap_db_table.s, XCAP_TABLE_VERSION);
+	if(db_check_table_version(&xcap_dbf, xcap_db, &xcap_db_table, XCAP_TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		return -1;
 	}
 

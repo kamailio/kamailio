@@ -40,7 +40,7 @@
 #include "../../parser/parse_from.h"
 #include "../../usr_avp.h"
 
-#define TABLE_VERSION 3
+#define TABLE_VERSION 4
 
 struct trusted_list ***hash_table;     /* Pointer to current hash table pointer */
 struct trusted_list **hash_table_1;   /* Pointer to hash table 1 */
@@ -147,9 +147,7 @@ int reload_trusted_table(void)
  */
 int init_trusted(void)
 {
-	int ver;
 	/* Check if hash table needs to be loaded from trusted table */
-
 	if (!db_url.s) {
 		LM_INFO("db_url parameter of permissions module not set, "
 			"disabling allow_trusted\n");
@@ -176,15 +174,8 @@ int init_trusted(void)
 			return -1;
 		}
 
-		ver = db_table_version(&perm_dbf, db_handle, &trusted_table);
-
-		if (ver < 0) {
-			LM_ERR("failed to query table version\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		} else if (ver < TABLE_VERSION) {
-			LM_ERR("invalid table version %d - expected %d "
-					"(use openserdbctl reinit)\n", ver,TABLE_VERSION);
+		if(db_check_table_version(&perm_dbf, db_handle, &trusted_table, TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check.\n");
 			perm_dbf.close(db_handle);
 			return -1;
 		}
@@ -235,8 +226,6 @@ error:
  */
 int init_child_trusted(int rank)
 {
-	int ver;
-
 	if (!db_url.s) {
 		return 0;
 	}
@@ -249,17 +238,11 @@ int init_child_trusted(int rank)
 			return -1;
 		}
 
-		ver = db_table_version(&perm_dbf, db_handle, &trusted_table);
-
-		if (ver < 0) {
-			LM_ERR("failed to query table version\n");
+		if(db_check_table_version(&perm_dbf, db_handle, &trusted_table, TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check.\n");
 			perm_dbf.close(db_handle);
 			return -1;
-		} else if (ver < TABLE_VERSION) {
-			LM_ERR("invalid table version (use openserdbctl reinit)\n");
-			perm_dbf.close(db_handle);
-			return -1;
-		}		
+		}
 
 	}
 

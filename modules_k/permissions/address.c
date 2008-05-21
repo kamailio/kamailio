@@ -173,8 +173,6 @@ int reload_address_table(void)
  */
 int init_addresses(void)
 {
-    int ver;
-
     if (!db_url.s) {
 	LM_INFO("db_url parameter of permissions module not set, "
 	    "disabling allow_addr\n");
@@ -200,28 +198,22 @@ int init_addresses(void)
 		return -1;
     }
 
-    ver = db_table_version(&perm_dbf, db_handle, &address_table);
-
-    if (ver < 0) {
-	LM_ERR("failed to query table version\n");
-	perm_dbf.close(db_handle);
-	return -1;
-    } else if (ver < TABLE_VERSION) {
-	    LM_ERR("invalid table version %d - expected %d\n", ver,TABLE_VERSION);
-	perm_dbf.close(db_handle);
-	return -1;
+    if(db_check_table_version(&perm_dbf, db_handle, &address_table, TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
+		perm_dbf.close(db_handle);
+		return -1;
     }
 
     addr_hash_table_1 = new_addr_hash_table();
     if (!addr_hash_table_1) return -1;
-		
+
     addr_hash_table_2  = new_addr_hash_table();
     if (!addr_hash_table_2) goto error;
 		
     addr_hash_table = (struct addr_list ***)shm_malloc
 	(sizeof(struct addr_list **));
     if (!addr_hash_table) goto error;
-    
+
     *addr_hash_table = addr_hash_table_1;
 
     subnet_table_1 = new_subnet_table();

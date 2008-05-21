@@ -85,14 +85,11 @@ void domain_db_close(void)
 
 int domain_db_ver(str* name)
 {
-	int ver;
-
 	if (db_handle==0){
 		LM_ERR("Null database handler\n");
 		return -1;
 	}
-	ver=db_table_version(&domain_dbf, db_handle, name);
-	return ver;
+	return db_table_version(&domain_dbf, db_handle, name);
 }
 
 

@@ -170,7 +170,6 @@ static int mod_init(void)
 	presentity_table.len = strlen(presentity_table.s);
 	active_watchers_table.len = strlen(active_watchers_table.s);
 	watchers_table.len = strlen(watchers_table.s);
-	int ver = 0;
 
 	LM_NOTICE("initializing module ...\n");
 
@@ -241,31 +240,12 @@ static int mod_init(void)
 		return -1;
 	}
 	
-	/*verify table version */
-
-	ver = db_table_version(&pa_dbf, pa_db, &presentity_table);
-	if(ver!=P_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n", 
-				ver, presentity_table.len, presentity_table.s , P_TABLE_VERSION);
-		return -1;
-	}
-	
-	ver = db_table_version(&pa_dbf, pa_db, &active_watchers_table);
-	if(ver!=ACTWATCH_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n", 
-				ver, active_watchers_table.len, active_watchers_table.s,
-				ACTWATCH_TABLE_VERSION);
-		return -1;
-	}
-
-	ver = db_table_version(&pa_dbf, pa_db, &watchers_table);
-	if(ver!=S_TABLE_VERSION)
-	{
-		LM_ERR("Wrong version v%d for table <%.*s>, need v%d\n",
-				ver, watchers_table.len, watchers_table.s, S_TABLE_VERSION);
-		return -1;
+	/*verify table versions */
+	if((db_check_table_version(&pa_dbf, pa_db, &presentity_table, P_TABLE_VERSION) < 0) ||
+		(db_check_table_version(&pa_dbf, pa_db, &active_watchers_table, ACTWATCH_TABLE_VERSION) < 0) ||
+		(db_check_table_version(&pa_dbf, pa_db, &watchers_table, S_TABLE_VERSION) < 0)) {
+			LM_ERR("error during table version check.\n");
+			return -1;
 	}
 
 	EvList= init_evlist();

@@ -400,26 +400,6 @@ static void lcr_db_close(void)
 }
 
 
-static int lcr_db_ver(const str* db_url, str* name)
-{
-	db_con_t* dbh;
-	int ver;
-
-	if (lcr_dbf.init==0){
-		LM_CRIT("Unbound database\n");
-		return -1;
-	}
-	dbh=lcr_dbf.init(db_url);
-	if (dbh==0){
-		LM_ERR("Unable to open database connection\n");
-		return -1;
-	}
-	ver=db_table_version(&lcr_dbf, dbh, name);
-	lcr_dbf.close(dbh);
-	return ver;
-}
-
-
 static int mi_child_init(void)
 {
 	return lcr_db_init(&db_url);
@@ -431,10 +411,9 @@ static int mi_child_init(void)
  */
 static int mod_init(void)
 {
-    int ver, i;
-
+	int i;
     pv_spec_t avp_spec;
-	str s;
+    str s;
     unsigned short avp_flags;
 
     LM_DBG("Initializing\n");
@@ -581,24 +560,23 @@ static int mod_init(void)
     }
 
     /* Check table version */
-    ver = lcr_db_ver(&db_url, &gw_table);
-    if (ver < 0) {
-	LM_ERR("Error while querying gw table version\n");
-	goto err;
-    } else if (ver < GW_TABLE_VERSION) {
-	LM_ERR("Invalid table version of gw table <%d>\n", ver);
-	goto err;
-    }		
-
-    /* Check table version */
-    ver = lcr_db_ver(&db_url, &lcr_table);
-    if (ver < 0) {
-	LM_ERR("Error while querying lcr table version\n");
-	goto err;
-    } else if (ver < LCR_TABLE_VERSION) {
-	LM_ERR("Invalid table version of lcr table <%d>\n", ver);
-	goto err;
-    }		
+	db_con_t* dbh;
+	if (lcr_dbf.init==0){
+		LM_CRIT("Unbound database\n");
+		return -1;
+	}
+	dbh=lcr_dbf.init(&db_url);
+	if (dbh==0){
+		LM_ERR("Unable to open database connection\n");
+		return -1;
+	}
+	if((db_check_table_version(&lcr_dbf, dbh, &gw_table, GW_TABLE_VERSION) < 0) ||
+		(db_check_table_version(&lcr_dbf, dbh, &lcr_table, LCR_TABLE_VERSION) < 0)) {
+			LM_ERR("error during table version check.\n");
+			lcr_dbf.close(dbh);
+			goto err;
+    }
+	lcr_dbf.close(dbh);
 
     /* Initializing gw tables and gw table pointer variable */
     gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) *

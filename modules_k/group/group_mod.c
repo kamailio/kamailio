@@ -176,8 +176,6 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	int ver;
-
 	LM_DBG("group module - initializing\n");
 
 	/* Calculate lengths */
@@ -202,28 +200,17 @@ static int mod_init(void)
 	}
 
 	/* check version for group table */
-	ver = group_db_ver( &table );
-	if (ver < 0) {
-		LM_ERR("failed to query table version\n");
-		return -1;
-	} else if (ver < TABLE_VERSION) {
-		LM_ERR("invalid table version for %s "
-				"(use openserdbctl reinit)\n",table.s);
-		return -1;
+	if (db_check_table_version(&group_dbf, group_dbh, &table, TABLE_VERSION) < 0) {
+			LM_ERR("error during group table version check.\n");
+			return -1;
 	}
 
 	if (re_table.len) {
-		/* check version for re_group table */
-		ver = group_db_ver( &re_table );
-		if (ver < 0) {
-			LM_ERR("failed to query table version\n");
-			return -1;
-		} else if (ver < RE_TABLE_VERSION) {
-			LM_ERR("invalid table version for %s "
-					"(use openserdbctl reinit)\n",re_table.s);
+		/* check version for group re_group table */
+		if (db_check_table_version(&group_dbf, group_dbh, &re_table, RE_TABLE_VERSION) < 0) {
+			LM_ERR("error during re_group table version check.\n");
 			return -1;
 		}
-
 		if (load_re( &re_table )!=0 ) {
 			LM_ERR("failed to load <%s> table\n", re_table.s);
 			return -1;

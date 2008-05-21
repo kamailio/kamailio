@@ -50,25 +50,6 @@ int db_bind(const str *url)
 }
 
 
-/**
- * Check the table version
- *
- * \return 0 means ok, -1 means an error occured
- */
-static int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const int version) {
-
-	int ver = db_table_version(dbf, dbh, table);
-	if (ver < 0) {
-		LM_ERR("Error while querying version for table %.*s\n", table->len, table->s);
-		return -1;
-	} else if (ver < version) {
-		LM_ERR("Invalid version for table %.*s found\n", table->len, table->s);
-		return -1;
-	}
-	return 0;
-}
-
-
 int db_init(const str *url, const str *table)
 {
 	dbc = dbf.init(url);

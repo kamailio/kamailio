@@ -214,8 +214,3 @@ void group_db_close(void)
 	}
 }
 
-
-int group_db_ver(str* name)
-{
-	return db_table_version( &group_dbf, group_dbh, name);
-}

@@ -423,7 +423,6 @@ int register_udomain(const char* _n, udomain_t** _d)
 {
 	dlist_t* d;
 	str s;
-	int ver;
 	db_con_t* con;
 
 	s.s = (char*)_n;
@@ -449,13 +448,8 @@ int register_udomain(const char* _n, udomain_t** _d)
 			goto err;
 		}
 
-		ver = db_table_version(&ul_dbf, con, &s);
-
-		if (ver < 0) {
-			LM_ERR("querying table version failed\n");
-			goto err;
-		} else if (ver < UL_TABLE_VERSION) {
-			LM_ERR("Invalid table version (use openserdbctl reinit)\n");
+		if(db_check_table_version(&ul_dbf, con, &s, UL_TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check.\n");
 			goto err;
 		}
 		/* test if DB really exists */

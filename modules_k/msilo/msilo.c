@@ -255,7 +255,6 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	pv_spec_t avp_spec;
-	int ver = 0;
 
 	ms_db_url.len = strlen (ms_db_url.s);
 	ms_db_table.len = strlen (ms_db_table.s);
@@ -311,12 +310,8 @@ static int mod_init(void)
 		return -1;
 	}
 
-	ver = db_table_version(&msilo_dbf, db_con, &ms_db_table);
-	if(ver!=S_TABLE_VERSION)
-	{
-		LM_ERR("wrong version v%d for table <%.*s>,"
-				" need v%d\n", ver, ms_db_table.len, ms_db_table.s,
-				S_TABLE_VERSION);
+	if(db_check_table_version(&msilo_dbf, db_con, &ms_db_table, S_TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		return -1;
 	}
 	if(db_con)

@@ -231,8 +231,7 @@ static void destroy(void)
  */
 static int auth_fixup(void** param, int param_no)
 {
-	db_con_t* dbh;
-	int ver;
+	db_con_t* dbh = NULL;
 	str name;
 
 	if (param_no == 1) {
@@ -246,16 +245,12 @@ static int auth_fixup(void** param, int param_no)
 			LM_ERR("unable to open database connection\n");
 			return -1;
 		}
-		ver = db_table_version(&auth_dbf, dbh, &name);
-		auth_dbf.close(dbh);
-		if (ver < 0) {
-			LM_ERR("failed to query table version\n");
-			return -1;
-		} else if (ver < TABLE_VERSION) {
-			LM_ERR("invalid table version (use openserdbctl reinit)\n");
+		if(db_check_table_version(&auth_dbf, dbh, &name, TABLE_VERSION) < 0) {
+			LM_ERR("error during table version check.\n");
+			auth_dbf.close(dbh);
 			return -1;
 		}
 	}
-
+	auth_dbf.close(dbh);
 	return 0;
 }

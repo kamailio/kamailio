@@ -44,8 +44,6 @@ str cpl_bin_col  = str_init("cpl_bin");
 
 int cpl_db_bind(const str* db_url, const str *db_table)
 {
-	int ver;
-
 	if (db_bind_mod(db_url, &cpl_dbf )) {
 		LM_CRIT("cannot bind to database module! "
 		    "Did you forget to load a database module ?\n");
@@ -62,15 +60,8 @@ int cpl_db_bind(const str* db_url, const str *db_table)
 	if ( cpl_db_init( db_url, db_table) )
 		return -1;
 
-	ver = db_table_version(&cpl_dbf, db_hdl, db_table);
-	if (ver < 0) {
-		LM_CRIT("failed to query table version\n");
-		cpl_db_close();
-		return -1;
-	} else if (ver < TABLE_VERSION) {
-		LM_ERR("Invalid table version (%d, required %d)"
-			"(use openserdbctl reinit)\n",
-			ver, TABLE_VERSION);
+	if(db_check_table_version(&cpl_dbf, db_hdl, db_table, TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		cpl_db_close();
 		return -1;
 	}

@@ -118,8 +118,6 @@ int dlg_connect_db(const str *db_url)
 
 int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period)
 {
-	int ver;
-
 	/* Find a database module */
 	if (db_bind_mod(db_url, &dialog_dbf) < 0){
 		LM_ERR("Unable to bind to a database driver\n");
@@ -131,14 +129,8 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period)
 		return -1;
 	}
 
-	ver = db_table_version(&dialog_dbf, dialog_db_handle, &dialog_table_name);
-	if (ver < 0) {
-		LM_ERR("failed to query table version\n");
-		return -1;
-	} else if (ver != DLG_TABLE_VERSION) {
-		LM_ERR("Invalid table version (found %d , required %d)\n"
-			"(use openserdbctl reinit)\n",
-			ver, DLG_TABLE_VERSION );
+	if(db_check_table_version(&dialog_dbf, dialog_db_handle, &dialog_table_name, DLG_TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		return -1;
 	}
 
