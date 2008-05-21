@@ -301,7 +301,8 @@ int pg_fld2pg(struct pg_params* dst, int off, pg_type_t* types,
 				db_int2pg_int2(dst, off + i, src + i);
 			else if (pfld->oid == types[PG_INT4].oid)
 				db_int2pg_int4(dst, off + i, src + i);
-			else if (pfld->oid == types[PG_TIMESTAMP].oid)
+			else if ((pfld->oid == types[PG_TIMESTAMP].oid) ||
+					 (pfld->oid == types[PG_TIMESTAMPTZ].oid))
 				db_int2pg_timestamp(dst, off + i, src + i, flags);
 			else if (pfld->oid == types[PG_INT8].oid)
 				db_int2pg_int8(dst, off + i, src + i);
@@ -331,7 +332,8 @@ int pg_fld2pg(struct pg_params* dst, int off, pg_type_t* types,
 		case DB_DATETIME:
 			if (pfld->oid == types[PG_INT4].oid)
 				db_int2pg_int4(dst, off + i, src + i);
-			else if (pfld->oid == types[PG_TIMESTAMP].oid)
+			else if ((pfld->oid == types[PG_TIMESTAMP].oid) ||
+					 (pfld->oid == types[PG_TIMESTAMPTZ].oid))
 				db_int2pg_timestamp(dst, off + i, src + i, flags);
 			else if (pfld->oid == types[PG_INT8].oid)
 				db_int2pg_int8(dst, off + i, src + i);
@@ -415,6 +417,7 @@ int pg_check_fld2pg(db_fld_t* fld, pg_type_t* types)
 			if (pfld->oid == types[PG_BOOL].oid) continue;
 			if (pfld->oid == types[PG_INET].oid) continue;
 			if (pfld->oid == types[PG_TIMESTAMP].oid) continue;
+			if (pfld->oid == types[PG_TIMESTAMPTZ].oid) continue;
 			if (pfld->oid == types[PG_BIT].oid) continue;
 			if (pfld->oid == types[PG_VARBIT].oid) continue;
 			break;
@@ -449,6 +452,7 @@ int pg_check_fld2pg(db_fld_t* fld, pg_type_t* types)
 			if (pfld->oid == types[PG_INT4].oid) continue;
 			if (pfld->oid == types[PG_INT8].oid) continue;
 			if (pfld->oid == types[PG_TIMESTAMP].oid) continue;
+			if (pfld->oid == types[PG_TIMESTAMPTZ].oid) continue;
 			break;
 
 		default:
@@ -535,6 +539,7 @@ int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types)
 			if (pfld->oid == types[PG_BOOL].oid) continue;
 			if (pfld->oid == types[PG_INET].oid) continue;
 			if (pfld->oid == types[PG_TIMESTAMP].oid) continue;
+			if (pfld->oid == types[PG_TIMESTAMPTZ].oid) continue;
 			if (pfld->oid == types[PG_BIT].oid) continue;
 			if (pfld->oid == types[PG_VARBIT].oid) continue;
 			break;
@@ -580,6 +585,7 @@ int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types)
 			if (pfld->oid == types[PG_INT2].oid) continue;
 			if (pfld->oid == types[PG_INT4].oid) continue;
 			if (pfld->oid == types[PG_TIMESTAMP].oid) continue;
+			if (pfld->oid == types[PG_TIMESTAMPTZ].oid) continue;
 			break;
 
 		default:
@@ -832,7 +838,8 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 				ret |= pg_bool2db_int(dst + i, val, len);
 			else if (type == types[PG_INET].oid)
 				ret |= pg_inet2db_int(dst + i, val, len);
-			else if (type == types[PG_TIMESTAMP].oid)
+			else if ((type == types[PG_TIMESTAMP].oid) ||
+					 (type == types[PG_TIMESTAMPTZ].oid))
 				ret |= pg_timestamp2db_int(dst + i, val, len, flags);
 			else if (type == types[PG_BIT].oid)
 				ret |= pg_bit2db_int(dst + i, val, len);
@@ -860,7 +867,8 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 				ret |= pg_int2_2_db_int(dst + i, val, len);
 			else if (type == types[PG_INT4].oid)
 				ret |= pg_int4_2_db_int(dst + i, val, len);
-			else if (type == types[PG_TIMESTAMP].oid)
+			else if ((type == types[PG_TIMESTAMP].oid) ||
+					 (type == types[PG_TIMESTAMPTZ].oid))
 				ret |= pg_timestamp2db_int(dst + i, val, len, flags);
 			else goto bug;
 			break;
