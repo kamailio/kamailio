@@ -59,13 +59,16 @@ if [ ! $ret -eq 0 ] ; then
 	cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
 fi;
 
-killall -9 openser
+sleep 1
+killall -9 openser > /dev/null
 ret=$?
 
-if [ ! $ret -eq 0 ] ; then
+if [ $ret -eq 0 ] ; then
 	ret=1
-
+else
+	ret=0
 fi;
+
 if [ ! -e core ] ; then
 	ret=1
 fi;
