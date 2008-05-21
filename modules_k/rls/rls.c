@@ -79,7 +79,7 @@ search_event_t pres_search_event;
 get_event_list_t pres_get_ev_list;
 int clean_period= 100;
 char* xcap_root;
-unsigned int xcap_port= 80;
+unsigned int xcap_port= 8000;
 int rls_restore_db_subs(void);
 int rls_integrated_xcap_server= 0;
 
@@ -180,7 +180,7 @@ static param_export_t params[]={
 	{ "integrated_xcap_server",	INT_PARAM,   &rls_integrated_xcap_server     },	
 	{ "to_presence_code",       INT_PARAM,   &to_presence_code               },
 	{ "xcap_root",              STR_PARAM,   &xcap_root                      },
-	/*address and port(default: 80):"http://192.168.2.132/xcap-root:800"*/
+	/*address and port(default: 80):"http://192.168.2.132:8000/xcap-root"*/
 	{ "rls_event",              STR_PARAM|USE_FUNC_PARAM,(void*)add_rls_event},
 	{0,							0,				0						     }
 };
@@ -225,38 +225,41 @@ static int mod_init(void)
 	else
 		server_address.len= strlen(server_address.s);
 	
-	if(xcap_root== NULL)
+	if(!rls_integrated_xcap_server && xcap_root== NULL)
 	{
 		LM_ERR("xcap_root parameter not set\n");
 		return -1;
 	}
 	/* extract port if any */
-	sep= strchr(xcap_root, ':');
-	if(sep)
-	{
-		char* sep2= NULL;
-		sep2= strchr(sep+ 1, ':');
-		if(sep2)
-			sep= sep2;
-		
-		str port_str;
+	if(xcap_root)
+    {
+        sep= strchr(xcap_root, ':');
+        if(sep)
+        {
+            char* sep2= NULL;
+            sep2= strchr(sep+ 1, ':');
+            if(sep2)
+                sep= sep2;
 
-		port_str.s= sep+ 1;
-		port_str.len= strlen(xcap_root)- (port_str.s-xcap_root);
+            str port_str;
 
-		if(str2int(&port_str, &xcap_port)< 0)
-		{
-			LM_ERR("converting string to int [port]= %.*s\n",port_str.len,
-					port_str.s);
-			return -1;
-		}
-		if(xcap_port< 0 || xcap_port> 65535)
-		{
-			LM_ERR("wrong xcap server port\n");
-			return -1;
-		}
-		*sep= '\0';
-	}
+            port_str.s= sep+ 1;
+            port_str.len= strlen(xcap_root)- (port_str.s-xcap_root);
+
+            if(str2int(&port_str, &xcap_port)< 0)
+            {
+                LM_ERR("converting string to int [port]= %.*s\n",port_str.len,
+                        port_str.s);
+                return -1;
+            }
+            if(xcap_port< 0 || xcap_port> 65535)
+            {
+                LM_ERR("wrong xcap server port\n");
+                return -1;
+            }
+            *sep= '\0';
+        }
+    }
 
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)
