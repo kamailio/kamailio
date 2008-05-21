@@ -542,6 +542,7 @@ int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types)
 		case DB_BITMAP:
 			if (pfld->oid == types[PG_INT2].oid) continue;
 			if (pfld->oid == types[PG_INT4].oid) continue;
+			if (pfld->oid == types[PG_INT8].oid) continue;
 			if (pfld->oid == types[PG_BIT].oid) continue;
 			if (pfld->oid == types[PG_VARBIT].oid) continue;
 			break;
@@ -811,6 +812,8 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 				ret |= pg_int2_2_db_int(dst + i, val, len);
 			else if (type == types[PG_INT4].oid)
 				ret |= pg_int4_2_db_int(dst + i, val, len);
+			else if (type == types[PG_INT8].oid)
+				ret |= pg_int8_2_db_int(dst + i, val, len);
 			else if (type == types[PG_BIT].oid)
 				ret |= pg_bit2db_int(dst + i, val, len);
 			else if (type == types[PG_VARBIT].oid)
