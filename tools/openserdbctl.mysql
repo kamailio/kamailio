@@ -103,17 +103,17 @@ db_charset_test()
 {
 	if [ -n "$PW" ]; then
 		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD "-p$PW" | $AWK '{print $2}' | $SED -e 1d`
-		ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
+		ALLCHARSETS=`echo "show character set" | $CMD "-p$PW" | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
 	else
 		CURRCHARSET=`echo "show variables like '%character_set_server%'" | $CMD | $AWK '{print $2}' | $SED -e 1d`
-		ALLCHARSETS=`echo "show character set" | $CMD | $AWK '{print $1}' | $SED -e 1d | $GREP -iv utf8\|ucs2`
+		ALLCHARSETS=`echo "show character set" | $CMD | $AWK '{print $1}' | $SED -e 1d | $GREP -iv -e "utf8\|ucs2"`
 	fi
 
 	while [ `echo "$ALLCHARSETS" | $GREP -icw $CURRCHARSET`  = "0" ]
 	do
 		mwarn "Your current default mysql characters set cannot be used to create DB. Please choice another one from the following list:"
 		mecho "$ALLCHARSETS"
-		mecho -n "Enter character set name: "
+		mecho "Enter character set name: "
 		read CURRCHARSET
 		if [ `echo $CURRCHARSET | $GREP -cE "\w+"` = "0" ]; then
 			merr "can't continue: user break"
