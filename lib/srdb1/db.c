@@ -373,6 +373,22 @@ int db_table_version(const db_func_t* dbf, db_con_t* connection, const str* tabl
 	return ret;
 }
 
+/*
+ * Check the table version
+ * 0 means ok, -1 means an error occured
+ */
+int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const unsigned int version)
+{
+	int ver = db_table_version(dbf, dbh, table);
+	if (ver < 0) {
+		LM_ERR("querying version for table %.*s\n", table->len, table->s);
+		return -1;
+	} else if (ver != version) {
+		LM_ERR("invalid version %d for table %.*s found, espected %d\n", ver, table->len, table->s, version);
+		return -1;
+	}
+	return 0;
+}
 
 /*
  * Store name of table that will be used by

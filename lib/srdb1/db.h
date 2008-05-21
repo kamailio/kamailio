@@ -253,7 +253,7 @@ typedef int (*db_replace_f) (const db_con_t* handle, const db_key_t* keys,
  * field.
  * \param _h structure representing database connection
  * \return returns the ID as integer or returns 0 if the previous statement
-   does not use an AUTO_INCREMENT value.
+ * does not use an AUTO_INCREMENT value.
  */
 typedef int (*db_last_inserted_id_f) (const db_con_t* _h);
 
@@ -349,6 +349,7 @@ void db_do_close(db_con_t* _h, void (*free_connection)());
  * \brief Get the version of a table.
  *
  * Returns the version number of a given table from the version table.
+ * Instead of this function you could also use db_check_table_version
  * \param dbf database module callbacks
  * \param con database connection handle
  * \param table checked table
@@ -356,6 +357,17 @@ void db_do_close(db_con_t* _h, void (*free_connection)());
  */
 int db_table_version(const db_func_t* dbf, db_con_t* con, const str* table);
 
+/**
+ * \brief Check the table version
+ *
+ * Small helper function to check the table version.
+ * \param dbf database module callbacks
+ * \param con database connection handle
+ * \param table checked table
+ * \param \version checked version
+ * \return 0 means ok, -1 means an error occured
+ */
+int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const unsigned int version);
 
 /**
  * \brief Stores the name of a table.
