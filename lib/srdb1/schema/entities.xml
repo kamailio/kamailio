@@ -15,6 +15,7 @@
 <!ENTITY cseq_len "11">
 <!ENTITY expires_len "11">
 <!ENTITY flag_len "11">
+<!ENTITY description_len "255">
 <!ENTITY MYSQL_TABLE_TYPE "MyISAM">
 <!ENTITY USERCOL "username">
 <!ENTITY DEFAULT_ALIASES_EXPIRES "2020-05-28 21:32:15">

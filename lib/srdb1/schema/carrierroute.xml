@@ -109,7 +109,7 @@
 		  <column>
 			  <name>description</name>
 			  <type>string</type>
-			  <size>&hf_len;</size>
+			  <size>&description_len;</size>
 			  <null/>
 			  <default><null/></default>
 			  <description>A comment for the route entry, useful for larger routing tables.</description>

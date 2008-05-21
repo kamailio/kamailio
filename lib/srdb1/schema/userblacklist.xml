@@ -58,14 +58,6 @@
         <description>Specify if this a blacklist (0) or a whitelist (1) entry.</description>
     </column>
 
-     <column>
-        <name>description</name>
-        <type>string</type>
-        <size>&user_len;</size>
-        <default/>
-        <description>A comment for the entry.</description>
-    </column>
-
     <index>
         <name>userblacklist_idx</name>
         <colref linkend="username"/>
