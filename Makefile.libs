@@ -105,7 +105,11 @@ $(LIB_RUNTIME_NAME):
 	-@ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME)
 
 $(LIB_LINK_NAME):
+ifeq ($(OS), freebsd)
+	-@ln -s $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
+else
 	-@ln -s $(LIB_NAME) $(LIB_LINK_NAME)
+endif
 
 .PHONY: link_clean
 link_clean:
@@ -128,12 +132,19 @@ $(lib_prefix)/$(lib_dir):
 
 .PHONY: install
 install: $(LIB_NAME) $(lib_prefix)/$(lib_dir) $(LIBINAME_F)
+ifeq ($(OS), freebsd)
+	$(INSTALL_TOUCH) $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME)
+	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME)
+	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME)
+	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_RUNTIME_NAME) $(LIB_LINK_NAME)
+else
 	$(INSTALL_TOUCH) $(lib_prefix)/$(lib_dir)/$(LIB_NAME)
 	$(INSTALL_LIB) $(LIB_NAME) $(lib_prefix)/$(lib_dir)
 	rm -f $(lib_prefix)/$(lib_dir)/$(LIB_RUNTIME_NAME) \
 			$(lib_prefix)/$(lib_dir)/$(LIB_LINK_NAME) 
 	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_NAME) $(LIB_RUNTIME_NAME) 
 	cd $(lib_prefix)/$(lib_dir) ; ln -s $(LIB_NAME) $(LIB_LINK_NAME) 
+endif
 
 
 .PHONY:install-if-newer
