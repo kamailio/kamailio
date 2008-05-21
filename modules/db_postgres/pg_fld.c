@@ -561,6 +561,8 @@ int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types)
 			if (pfld->oid == types[PG_TEXT].oid) continue;
 			if (pfld->oid == types[PG_BPCHAR].oid) continue;
 			if (pfld->oid == types[PG_VARCHAR].oid) continue;
+			if (pfld->oid == types[PG_INT2].oid) continue;
+			if (pfld->oid == types[PG_INT4].oid) continue;
 			break;
 
 		case DB_STR:
@@ -570,6 +572,8 @@ int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types)
 			if (pfld->oid == types[PG_TEXT].oid) continue;
 			if (pfld->oid == types[PG_BPCHAR].oid) continue;
 			if (pfld->oid == types[PG_VARCHAR].oid) continue;
+			if (pfld->oid == types[PG_INT2].oid) continue;
+			if (pfld->oid == types[PG_INT4].oid) continue;
 			break;
 
 		case DB_DATETIME:
@@ -590,6 +594,80 @@ int pg_check_pg2fld(db_fld_t* fld, pg_type_t* types)
 			fld[i].name, name, db_fld_str[fld[i].type]);
 		return -1;
 	}
+	return 0;
+}
+
+
+static inline int pg_int2_2_db_cstr(db_fld_t* fld, char* val, int len)
+{
+	struct pg_fld* pfld = DB_GET_PAYLOAD(fld);
+	int size, v;
+
+	v = (int16_t)ntohs(*((int16_t*)val));
+
+    size = snprintf(pfld->buf, INT2STR_MAX_LEN, "%-d", v);
+    if (size < 0 || size >= INT2STR_MAX_LEN) {
+        BUG("postgres: Error while converting integer to string\n");
+        return -1;
+    }
+
+	fld->v.cstr = pfld->buf;
+	return 0;
+}
+
+
+static inline int pg_int4_2_db_cstr(db_fld_t* fld, char* val, int len)
+{
+	struct pg_fld* pfld = DB_GET_PAYLOAD(fld);
+	int size, v;
+
+	v = (int16_t)ntohs(*((int32_t*)val));
+
+    size = snprintf(pfld->buf, INT2STR_MAX_LEN, "%-d", v);
+    if (len < 0 || size >= INT2STR_MAX_LEN) {
+        BUG("postgres: Error while converting integer to string\n");
+        return -1;
+    }
+
+	fld->v.cstr = pfld->buf;
+	return 0;
+}
+
+
+static inline int pg_int2_2_db_str(db_fld_t* fld, char* val, int len)
+{
+	struct pg_fld* pfld = DB_GET_PAYLOAD(fld);
+	int size, v;
+
+	v = (int16_t)ntohs(*((int16_t*)val));
+
+    size = snprintf(pfld->buf, INT2STR_MAX_LEN, "%-d", v);
+    if (size < 0 || size >= INT2STR_MAX_LEN) {
+        BUG("postgres: Error while converting integer to string\n");
+        return -1;
+    }
+
+	fld->v.lstr.s = pfld->buf;
+	fld->v.lstr.len = size;
+	return 0;
+}
+
+
+static inline int pg_int4_2_db_str(db_fld_t* fld, char* val, int len)
+{
+	struct pg_fld* pfld = DB_GET_PAYLOAD(fld);
+	int size, v;
+
+	v = (int16_t)ntohs(*((int32_t*)val));
+
+    size = snprintf(pfld->buf, INT2STR_MAX_LEN, "%-d", v);
+    if (size < 0 || size >= INT2STR_MAX_LEN) {
+        BUG("postgres: Error while converting integer to string\n");
+        return -1;
+    }
+
+	fld->v.lstr.s = pfld->buf;
+	fld->v.lstr.len = size;
 	return 0;
 }
 
@@ -793,6 +871,10 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 				(type == types[PG_BPCHAR].oid) ||
 				(type == types[PG_VARCHAR].oid))
 				ret |= pg_string2db_cstr(dst + i, val, len);
+			else if (type == types[PG_INT2].oid)
+				ret |= pg_int2_2_db_cstr(dst + i, val, len);
+			else if (type == types[PG_INT4].oid)
+				ret |= pg_int4_2_db_cstr(dst + i, val, len);
 			else goto bug;
 			break;
 
@@ -804,6 +886,10 @@ int pg_pg2fld(db_fld_t* dst, PGresult* src, int row,
 				(type == types[PG_BPCHAR].oid) ||
 				(type == types[PG_VARCHAR].oid))
 				ret |= pg_string2db_str(dst + i, val, len);
+			else if (type == types[PG_INT2].oid)
+				ret |= pg_int2_2_db_str(dst + i, val, len);
+			else if (type == types[PG_INT4].oid)
+				ret |= pg_int4_2_db_str(dst + i, val, len);
 			else goto bug;
 			break;
 
