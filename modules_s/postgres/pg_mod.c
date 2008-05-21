@@ -135,20 +135,22 @@ int pg_test(void)
 	char* times;
 
 	db_fld_t int_vals[] = {
-		{.name = "col_bool",      .type = DB_INT},
-		{.name = "col_int8",      .type = DB_INT},
-		{.name = "col_int4",      .type = DB_INT},
-		{.name = "col_inet",      .type = DB_INT},
-		{.name = "col_timestamp", .type = DB_INT},
-		{.name = "col_bit",       .type = DB_INT},
-		{.name = "col_varbit",    .type = DB_INT},
+		{.name = "col_bool",        .type = DB_INT},
+		{.name = "col_int8",        .type = DB_INT},
+		{.name = "col_int4",        .type = DB_INT},
+		{.name = "col_inet",        .type = DB_INT},
+		{.name = "col_timestamp",   .type = DB_INT},
+		{.name = "col_timestamptz", .type = DB_INT},
+		{.name = "col_bit",         .type = DB_INT},
+		{.name = "col_varbit",      .type = DB_INT},
 		{.name = NULL}
 	};
 
 	db_fld_t datetime_vals[] = {
-		{.name = "col_int8",      .type = DB_INT},
-		{.name = "col_int4",      .type = DB_INT},
-		{.name = "col_timestamp", .type = DB_INT},
+		{.name = "col_int8",        .type = DB_INT},
+		{.name = "col_int4",        .type = DB_INT},
+		{.name = "col_timestamp",   .type = DB_INT},
+		{.name = "col_timestamptz", .type = DB_INT},
 		{.name = NULL}
 	};
 
@@ -197,21 +199,22 @@ int pg_test(void)
 
 
 	db_fld_t res[] = {
-		{.name = "col_bool",      .type = DB_INT},
-		{.name = "col_bytea",     .type = DB_BLOB},
-		{.name = "col_char",      .type = DB_STR},
-		{.name = "col_int8",      .type = DB_INT},
-		{.name = "col_int4",      .type = DB_INT},
-		{.name = "col_int2",      .type = DB_INT},
-		{.name = "col_text",      .type = DB_STR},
-		{.name = "col_float4",    .type = DB_FLOAT},
-		{.name = "col_float8",    .type = DB_DOUBLE},
-		{.name = "col_inet",      .type = DB_INT},
-		{.name = "col_bpchar",    .type = DB_STR},
-		{.name = "col_varchar",   .type = DB_STR},
-		{.name = "col_timestamp", .type = DB_DATETIME},
-		{.name = "col_bit",       .type = DB_BITMAP},
-		{.name = "col_varbit",    .type = DB_BITMAP},
+		{.name = "col_bool",        .type = DB_INT},
+		{.name = "col_bytea",       .type = DB_BLOB},
+		{.name = "col_char",        .type = DB_STR},
+		{.name = "col_int8",        .type = DB_INT},
+		{.name = "col_int4",        .type = DB_INT},
+		{.name = "col_int2",        .type = DB_INT},
+		{.name = "col_text",        .type = DB_STR},
+		{.name = "col_float4",      .type = DB_FLOAT},
+		{.name = "col_float8",      .type = DB_DOUBLE},
+		{.name = "col_inet",        .type = DB_INT},
+		{.name = "col_bpchar",      .type = DB_STR},
+		{.name = "col_varchar",     .type = DB_STR},
+		{.name = "col_timestamp",   .type = DB_DATETIME},
+		{.name = "col_timestamptz", .type = DB_DATETIME},
+		{.name = "col_bit",         .type = DB_BITMAP},
+		{.name = "col_varbit",      .type = DB_BITMAP},
 		{.name = NULL}
 	};
 
@@ -248,6 +251,7 @@ int pg_test(void)
 	put->vals[4].v.int4 = 0xffffffff;
 	put->vals[5].v.int4 = 0xffffffff;
 	put->vals[6].v.int4 = 0xffffffff;
+	put->vals[7].v.int4 = 0xffffffff;
 
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
@@ -261,6 +265,7 @@ int pg_test(void)
 	put->vals[4].v.int4 = 0;
 	put->vals[5].v.int4 = 0;
 	put->vals[6].v.int4 = 0;
+	put->vals[7].v.int4 = 0;
 
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
@@ -279,6 +284,7 @@ int pg_test(void)
 	put->vals[1].v.int4 = 0xffffffff;
 	put->vals[2].v.int4 = 0xffffffff;
 	put->vals[3].v.int4 = 0xffffffff;
+	put->vals[4].v.int4 = 0xffffffff;
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
 		goto error;
@@ -288,6 +294,7 @@ int pg_test(void)
 	put->vals[1].v.int4 = 0;
 	put->vals[2].v.int4 = 0;
 	put->vals[3].v.int4 = 0;
+	put->vals[4].v.int4 = 0;
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
 		goto error;
@@ -429,6 +436,7 @@ int pg_test(void)
 	put->vals[0].v.time = 0xffffffff;
 	put->vals[1].v.time = 0xffffffff;
 	put->vals[2].v.time = 0xffffffff;
+	put->vals[3].v.time = 0xffffffff;
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
 		goto error;
@@ -437,6 +445,7 @@ int pg_test(void)
 	put->vals[0].v.time = 0;
 	put->vals[1].v.time = 0;
 	put->vals[2].v.time = 0;
+	put->vals[3].v.time = 0;
 	if (db_exec(NULL, put)) {
 		ERR("Error while executing database command\n");
 		goto error;
