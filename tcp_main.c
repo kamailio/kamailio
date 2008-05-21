@@ -169,6 +169,14 @@
 #include <fcntl.h> /* must be included after io_wait.h if SIGIO_RT is used */
 
 
+#ifdef NO_MSG_DONTWAIT
+#ifndef MSG_DONTWAIT
+/* should work inside tcp_main */
+#define MSG_DONTWAIT 0
+#endif
+#endif /*NO_MSG_DONTWAIT */
+
+
 #define TCP_PASS_NEW_CONNECTION_ON_DATA /* don't pass a new connection
 										   immediately to a child, wait for
 										   some data on it first */
@@ -2555,7 +2563,7 @@ inline static int handle_tcp_child(struct tcp_child* tcp_c, int fd_i)
 			local_timer_reinit(&tcpconn->timer);
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, crt_timeout, t);
 			/* must be after the de-ref*/
-			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W);
+			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD);
 			tcpconn->flags&=~(F_CONN_READER|F_CONN_OOB_DATA);
 #ifdef TCP_BUF_WRITE
 			if (unlikely(tcpconn->flags & F_CONN_WRITE_W))
@@ -2745,14 +2753,22 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			 * no need for reinit */
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
-			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W);
+			tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD)
+#ifdef TCP_BUF_WRITE
+					/* not used for now, the connection is sent to tcp_main
+					 * before knowing whether we can write on it or we should 
+					 * wait */
+							| (((int)!(tcpconn->flags & F_CONN_WANTS_WR)-1)& 
+								F_CONN_WRITE_W)
+#endif /* TCP_BUF_WRITE */
+				;
 			tcpconn->flags&=~F_CONN_FD_CLOSED;
 			flags=POLLIN 
 #ifdef TCP_BUF_WRITE
 					/* not used for now, the connection is sent to tcp_main
 					 * before knowing if we can write on it or we should 
 					 * wait */
-					| (((int)!(tcpconn->flags & F_CONN_WRITE_W)-1) & POLLOUT)
+					| (((int)!(tcpconn->flags & F_CONN_WANTS_WR)-1) & POLLOUT)
 #endif /* TCP_BUF_WRITE */
 					;
 			if (unlikely(
@@ -2775,7 +2791,8 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			if (unlikely((tcpconn->state==S_CONN_BAD) || 
 							!(tcpconn->flags & F_CONN_HASHED) ))
 				break;
-			if (!(tcpconn->flags & F_CONN_WRITE_W)){
+			if (!(tcpconn->flags & F_CONN_WANTS_WR)){
+				tcpconn->flags|=F_CONN_WANTS_WR;
 				t=get_ticks_raw();
 				if (likely((tcpconn->flags & F_CONN_MAIN_TIMER) && 
 					(TICKS_LT(tcpconn->wbuf_q.wr_timeout, tcpconn->timeout)) &&
@@ -2790,28 +2807,31 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 							"timeout adjusted to %d s\n", tcpconn, 
 							TICKS_TO_S(tcpconn->wbuf_q.wr_timeout-t));
 				}
-				if (!(tcpconn->flags & F_CONN_READ_W)){
-					if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
+				if (!(tcpconn->flags & F_CONN_WRITE_W)){
+					tcpconn->flags|=F_CONN_WRITE_W;
+					if (!(tcpconn->flags & F_CONN_READ_W)){
+						if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLOUT,
 												F_TCPCONN, tcpconn)<0)){
-						LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed"
-								    " to enable write watch on socket\n");
-						if (tcpconn_try_unhash(tcpconn))
-							tcpconn_put_destroy(tcpconn);
-						break;
-					}
-				}else{
-					if (unlikely(io_watch_chg(&io_h, tcpconn->s,
-												POLLIN|POLLOUT, -1)<0)){
-						LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child: failed"
-								    " to change socket watch events\n");
-						io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
-						tcpconn->flags&=~F_CONN_READ_W;
-						if (tcpconn_try_unhash(tcpconn))
-							tcpconn_put_destroy(tcpconn);
-						break;
+							LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child:"
+										" failed to enable write watch on"
+										" socket\n");
+							if (tcpconn_try_unhash(tcpconn))
+								tcpconn_put_destroy(tcpconn);
+							break;
+						}
+					}else{
+						if (unlikely(io_watch_chg(&io_h, tcpconn->s,
+													POLLIN|POLLOUT, -1)<0)){
+							LOG(L_CRIT, "ERROR: tcp_main: handle_ser_child:"
+									" failed to change socket watch events\n");
+							io_watch_del(&io_h, tcpconn->s, -1, IO_FD_CLOSING);
+							tcpconn->flags&=~F_CONN_READ_W;
+							if (tcpconn_try_unhash(tcpconn))
+								tcpconn_put_destroy(tcpconn);
+							break;
+						}
 					}
 				}
-				tcpconn->flags|=F_CONN_WRITE_W;
 			}else{
 				LOG(L_WARN, "tcp_main: hanlder_ser_child: connection %p"
 							" already watched for write\n", tcpconn);
@@ -2849,19 +2869,20 @@ inline static int handle_ser_child(struct process_table* p, int fd_i)
 			 * no need for reinit */
 			local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, t);
-			tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W;
+			tcpconn->flags|=F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD;
 			if (unlikely(cmd==CONN_NEW_COMPLETE)){
 				/* check if needs to be watched for write */
 				lock_get(&tcpconn->write_lock);
 					/* if queue non empty watch it for write */
 					flags=(_wbufq_empty(tcpconn)-1)&POLLOUT;
 				lock_release(&tcpconn->write_lock);
-				tcpconn->flags|=(!(flags&POLLOUT)-1)&F_CONN_WRITE_W;
+				tcpconn->flags|=(!(flags&POLLOUT)-1)&
+									(F_CONN_WRITE_W|F_CONN_WANTS_WR);
 			}else{
 				/* CONN_NEW_PENDING_WRITE */
 				/* no need to check, we have something queued for write */
 				flags=POLLOUT;
-				tcpconn->flags|=F_CONN_WRITE_W;
+				tcpconn->flags|=(F_CONN_WRITE_W|F_CONN_WANTS_WR);
 			}
 			flags|=POLLIN;
 			if (unlikely(
@@ -3027,7 +3048,7 @@ static inline int handle_new_connect(struct socket_info* si)
 		/* activate the timer */
 		local_timer_add(&tcp_main_ltimer, &tcpconn->timer, 
 								tcp_con_lifetime, get_ticks_raw());
-		tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W);
+		tcpconn->flags|=(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD);
 		if (unlikely(io_watch_add(&io_h, tcpconn->s, POLLIN, 
 													F_TCPCONN, tcpconn)<0)){
 			LOG(L_CRIT, "ERROR: tcp_main: handle_new_connect: failed to add"
@@ -3116,19 +3137,21 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 				 * there's really any data in the read buffer or the POLLIN
 				 * was generated by the error or EOF => to avoid loosing
 				 *  data it's safer to either directly check the read buffer 
-				 *  or *  try a read)*/
+				 *  or try a read)*/
 				/* in most cases the read buffer will be empty, so in general
 				 * is cheaper to check it here and then send the 
 				 * conn.  to a a child only if needed (another syscall + at 
 				 * least 2 * syscalls in the reader + ...) */
 				if ((ioctl(tcpconn->s, FIONREAD, &bytes)>=0) && (bytes>0)){
-					tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
+					tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W|
+										F_CONN_WANTS_RD|F_CONN_WANTS_WR);
 					tcpconn->flags|=F_CONN_FORCE_EOF|F_CONN_WR_ERROR;
 					goto send_to_child;
 				}
 				/* if bytes==0 or ioctl failed, destroy the connection now */
 			}
-			tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W);
+			tcpconn->flags&=~(F_CONN_WRITE_W|F_CONN_READ_W|
+								F_CONN_WANTS_RD|F_CONN_WANTS_WR);
 			if (unlikely(!tcpconn_try_unhash(tcpconn))){
 				LOG(L_CRIT, "BUG: tcpconn_ev: unhashed connection %p\n",
 							tcpconn);
@@ -3137,6 +3160,7 @@ inline static int handle_tcpconn_ev(struct tcp_connection* tcpconn, short ev,
 			goto error;
 		}
 		if (empty_q){
+			tcpconn->flags&=~F_CONN_WANTS_WR;
 			if (!(tcpconn->flags & F_CONN_READ_W)){
 				if (unlikely(io_watch_del(&io_h, tcpconn->s, fd_i, 0)==-1)){
 					LOG(L_ERR, "ERROR: handle_tcpconn_ev: io_watch_del(2)"
@@ -3192,7 +3216,7 @@ send_to_child:
 		tcpconn->flags|= ((int)!(ev & POLLPRI) -1)  & F_CONN_OOB_DATA;
 		tcpconn->flags|=F_CONN_READER;
 		local_timer_del(&tcp_main_ltimer, &tcpconn->timer);
-		tcpconn->flags&=~(F_CONN_MAIN_TIMER|F_CONN_READ_W);
+		tcpconn->flags&=~(F_CONN_MAIN_TIMER|F_CONN_READ_W|F_CONN_WANTS_RD);
 		tcpconn_ref(tcpconn); /* refcnt ++ */
 		if (unlikely(send2child(tcpconn)<0)){
 			LOG(L_ERR,"ERROR: handle_tcpconn_ev: no children available\n");
