@@ -33,6 +33,7 @@
  *  2006-04-20  comp support in recv_info and dest_info (andrei)
  *  2006-04-21  added init_dst_from_rcv (andrei)
  *  2007-06-26  added ip_addr_mk_any() (andrei)
+ *  2008-05-21  added su2a(), ip_addr2sbuf(), ip4tosbuf(), ip62sbuf() (andrei)
  */
 
 #ifndef ip_addr_h
@@ -45,6 +46,7 @@
 #include <netdb.h>
 #include "str.h"
 #include "compiler_opt.h"
+#include "ut.h"
 
 
 #include "dprint.h"
@@ -443,8 +445,174 @@ static inline int hostent2su( union sockaddr_union* su,
 	return 0;
 }
 
+
+
+/* maximum size of a str returned by ip_addr2str */
+#define IP6_MAX_STR_SIZE 39 /*1234:5678:9012:3456:7890:1234:5678:9012*/
+#define IP4_MAX_STR_SIZE 15 /*123.456.789.012*/
+
+#ifdef USE_IPV6
+/* converts a raw ipv6 addr (16 bytes) to ascii */
+static inline int ip6tosbuf(unsigned char* ip6, char* buff, int len)
+{
+	int offset;
+	register unsigned char a,b,c;
+	register unsigned char d;
+	register unsigned short hex4;
+	int r;
+	#define HEXDIG(x) (((x)>=10)?(x)-10+'A':(x)+'0')
+	
+	
+	offset=0;
+	if (unlikely(len<IP6_MAX_STR_SIZE))
+		return 0;
+	for(r=0;r<7;r++){
+		hex4=((unsigned char)ip6[r*2]<<8)+(unsigned char)ip6[r*2+1];
+		a=hex4>>12;
+		b=(hex4>>8)&0xf;
+		c=(hex4>>4)&0xf;
+		d=hex4&0xf;
+		if (a){
+			buff[offset]=HEXDIG(a);
+			buff[offset+1]=HEXDIG(b);
+			buff[offset+2]=HEXDIG(c);
+			buff[offset+3]=HEXDIG(d);
+			buff[offset+4]=':';
+			offset+=5;
+		}else if(b){
+			buff[offset]=HEXDIG(b);
+			buff[offset+1]=HEXDIG(c);
+			buff[offset+2]=HEXDIG(d);
+			buff[offset+3]=':';
+			offset+=4;
+		}else if(c){
+			buff[offset]=HEXDIG(c);
+			buff[offset+1]=HEXDIG(d);
+			buff[offset+2]=':';
+			offset+=3;
+		}else{
+			buff[offset]=HEXDIG(d);
+			buff[offset+1]=':';
+			offset+=2;
+		}
+	}
+	/* last int16*/
+	hex4=((unsigned char)ip6[r*2]<<8)+(unsigned char)ip6[r*2+1];
+	a=hex4>>12;
+	b=(hex4>>8)&0xf;
+	c=(hex4>>4)&0xf;
+	d=hex4&0xf;
+	if (a){
+		buff[offset]=HEXDIG(a);
+		buff[offset+1]=HEXDIG(b);
+		buff[offset+2]=HEXDIG(c);
+		buff[offset+3]=HEXDIG(d);
+		offset+=4;
+	}else if(b){
+		buff[offset]=HEXDIG(b);
+		buff[offset+1]=HEXDIG(c);
+		buff[offset+2]=HEXDIG(d);
+		offset+=3;
+	}else if(c){
+		buff[offset]=HEXDIG(c);
+		buff[offset+1]=HEXDIG(d);
+		offset+=2;
+	}else{
+		buff[offset]=HEXDIG(d);
+		offset+=1;
+	}
+	
+	return offset;
+}
+#endif /* USE_IPV6 */
+
+
+
+/* converts a raw ipv4 addr (4 bytes) to ascii */
+static inline int ip4tosbuf(unsigned char* ip4, char* buff, int len)
+{
+	int offset;
+	register unsigned char a,b,c;
+	int r;
+	
+	
+	offset=0;
+	if (unlikely(len<IP4_MAX_STR_SIZE))
+		return 0;
+	for(r=0;r<3;r++){
+		a=(unsigned char)ip4[r]/100;
+		c=(unsigned char)ip4[r]%10;
+		b=(unsigned char)ip4[r]%100/10;
+		if (a){
+			buff[offset]=a+'0';
+			buff[offset+1]=b+'0';
+			buff[offset+2]=c+'0';
+			buff[offset+3]='.';
+			offset+=4;
+		}else if (b){
+			buff[offset]=b+'0';
+			buff[offset+1]=c+'0';
+			buff[offset+2]='.';
+			offset+=3;
+		}else{
+			buff[offset]=c+'0';
+			buff[offset+1]='.';
+			offset+=2;
+		}
+	}
+	/* last number */
+	a=(unsigned char)ip4[r]/100;
+	c=(unsigned char)ip4[r]%10;
+	b=(unsigned char)ip4[r]%100/10;
+	if (a){
+		buff[offset]=a+'0';
+		buff[offset+1]=b+'0';
+		buff[offset+2]=c+'0';
+		offset+=3;
+	}else if (b){
+		buff[offset]=b+'0';
+		buff[offset+1]=c+'0';
+		offset+=2;
+	}else{
+		buff[offset]=c+'0';
+		offset+=1;
+	}
+	
+	return offset;
+}
+
+
+
+/* fast ip_addr -> string converter;
+ * returns number of bytes written in buf on success, <=0 on error
+ * The buffer must have enough space to hold the maximum size ip address
+ *  of the corresponding address (see IP[46] above) or else the function
+ *  will return error (no detailed might fit checks are made, for example
+ *   if len==7 the function will fail even for 1.2.3.4).
+ */
+static inline int ip_addr2sbuf(struct ip_addr* ip, char* buff, int len)
+{
+	switch(ip->af){
+	#ifdef USE_IPV6
+		case AF_INET6:
+			return ip6tosbuf(ip->u.addr, buff, len);
+			break;
+	#endif /* USE_IPV6 */
+		case AF_INET:
+			return ip4tosbuf(ip->u.addr, buff, len);
+			break;
+		default:
+			LOG(L_CRIT, "BUG: ip_addr2sbuf: unknown address family %d\n",
+					ip->af);
+			return 0;
+	}
+	return 0;
+}
+
+
+
 /* maximum size of a str returned by ip_addr2a (including \0) */
-#define IP_ADDR_MAX_STR_SIZE 40 /* 1234:5678:9012:3456:7890:1234:5678:9012\0 */
+#define IP_ADDR_MAX_STR_SIZE (IP6_MAX_STR_SIZE+1) /* ip62ascii +  \0*/
 /* fast ip_addr -> string converter;
  * it uses an internal buffer
  */
@@ -452,125 +620,46 @@ static inline char* ip_addr2a(struct ip_addr* ip)
 {
 
 	static char buff[IP_ADDR_MAX_STR_SIZE];
-	int offset;
-	register unsigned char a,b,c;
-#ifdef USE_IPV6
-	register unsigned char d;
-	register unsigned short hex4;
-#endif
-	int r;
-	#define HEXDIG(x) (((x)>=10)?(x)-10+'A':(x)+'0')
+	int len;
 	
 	
-	offset=0;
-	switch(ip->af){
-	#ifdef USE_IPV6
-		case AF_INET6:
-			for(r=0;r<7;r++){
-				hex4=ntohs(ip->u.addr16[r]);
-				a=hex4>>12;
-				b=(hex4>>8)&0xf;
-				c=(hex4>>4)&0xf;
-				d=hex4&0xf;
-				if (a){
-					buff[offset]=HEXDIG(a);
-					buff[offset+1]=HEXDIG(b);
-					buff[offset+2]=HEXDIG(c);
-					buff[offset+3]=HEXDIG(d);
-					buff[offset+4]=':';
-					offset+=5;
-				}else if(b){
-					buff[offset]=HEXDIG(b);
-					buff[offset+1]=HEXDIG(c);
-					buff[offset+2]=HEXDIG(d);
-					buff[offset+3]=':';
-					offset+=4;
-				}else if(c){
-					buff[offset]=HEXDIG(c);
-					buff[offset+1]=HEXDIG(d);
-					buff[offset+2]=':';
-					offset+=3;
-				}else{
-					buff[offset]=HEXDIG(d);
-					buff[offset+1]=':';
-					offset+=2;
-				}
-			}
-			/* last int16*/
-			hex4=ntohs(ip->u.addr16[r]);
-			a=hex4>>12;
-			b=(hex4>>8)&0xf;
-			c=(hex4>>4)&0xf;
-			d=hex4&0xf;
-			if (a){
-				buff[offset]=HEXDIG(a);
-				buff[offset+1]=HEXDIG(b);
-				buff[offset+2]=HEXDIG(c);
-				buff[offset+3]=HEXDIG(d);
-				buff[offset+4]=0;
-			}else if(b){
-				buff[offset]=HEXDIG(b);
-				buff[offset+1]=HEXDIG(c);
-				buff[offset+2]=HEXDIG(d);
-				buff[offset+3]=0;
-			}else if(c){
-				buff[offset]=HEXDIG(c);
-				buff[offset+1]=HEXDIG(d);
-				buff[offset+2]=0;
-			}else{
-				buff[offset]=HEXDIG(d);
-				buff[offset+1]=0;
-			}
-			break;
-	#endif
-		case AF_INET:
-			for(r=0;r<3;r++){
-				a=ip->u.addr[r]/100;
-				c=ip->u.addr[r]%10;
-				b=ip->u.addr[r]%100/10;
-				if (a){
-					buff[offset]=a+'0';
-					buff[offset+1]=b+'0';
-					buff[offset+2]=c+'0';
-					buff[offset+3]='.';
-					offset+=4;
-				}else if (b){
-					buff[offset]=b+'0';
-					buff[offset+1]=c+'0';
-					buff[offset+2]='.';
-					offset+=3;
-				}else{
-					buff[offset]=c+'0';
-					buff[offset+1]='.';
-					offset+=2;
-				}
-			}
-			/* last number */
-			a=ip->u.addr[r]/100;
-			c=ip->u.addr[r]%10;
-			b=ip->u.addr[r]%100/10;
-			if (a){
-				buff[offset]=a+'0';
-				buff[offset+1]=b+'0';
-				buff[offset+2]=c+'0';
-				buff[offset+3]=0;
-			}else if (b){
-				buff[offset]=b+'0';
-				buff[offset+1]=c+'0';
-				buff[offset+2]=0;
-			}else{
-				buff[offset]=c+'0';
-				buff[offset+1]=0;
-			}
-			break;
-		
-		default:
-			LOG(L_CRIT, "BUG: ip_addr2a: unknown address family %d\n",
-					ip->af);
-			return 0;
-	}
-	
+	len=ip_addr2sbuf(ip, buff, sizeof(buff)-1);
+	buff[len]=0;
+
 	return buff;
+}
+
+
+
+#define SU2A_MAX_STR_SIZE  (IP6_MAX_STR_SIZE + 2 /* [] */+\
+								1 /* : */ + USHORT2SBUF_MAX_LEN + 1 /* \0 */)
+/* returns an asciiz string containing the ip and the port
+ *  (<ip_addr>:port or [<ipv6_addr>]:port)
+ */
+static inline char* su2a(union sockaddr_union* su, int su_len)
+{
+	static char buf[SU2A_MAX_STR_SIZE];
+	int offs;
+	
+#ifdef USE_IPV6
+	if (unlikely(su->s.sa_family==AF_INET6)){
+		if (unlikely(su_len<sizeof(su->sin6)))
+			return "<addr. error>";
+		buf[0]='[';
+		offs=1+ip6tosbuf((unsigned char*)&su->sin6.sin6_addr, &buf[1],
+							sizeof(buf)-4);
+		buf[offs]=']';
+		offs++;
+	}else
+#endif /* USE_IPV6*/
+	if (unlikely(su_len<sizeof(su->sin)))
+		return "<addr. error>";
+	else
+		offs=ip4tosbuf((unsigned char*)&su->sin.sin_addr, buf, sizeof(buf)-2);
+	buf[offs]=':';
+	offs+=1+ushort2sbuf(su_getport(su), &buf[offs+1], sizeof(buf)-(offs+1)-1);
+	buf[offs]=0;
+	return buf;
 }
 
 
