@@ -42,6 +42,7 @@
 
 #include "pg_oid.h"
 #include "pg_cmd.h"
+#include "../../ut.h"
 #include "../../db/db_gen.h"
 #include "../../db/db_fld.h"
 #include <libpq-fe.h>
@@ -64,7 +65,8 @@ struct pg_fld {
 		long long    int8;    /**< 8-byte integer value in network byte order */
 		char         byte[8];
 	} v;
-	Oid oid;                 /**< Type of the field on the server */
+	char buf[INT2STR_MAX_LEN]; /**< Buffer for int2str conversions */
+	Oid oid;                   /**< Type of the field on the server */
 };
 
 

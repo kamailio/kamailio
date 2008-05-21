@@ -221,7 +221,7 @@ int pg_test(void)
 		ERR("Error while initializing database layer\n");
 		goto error;
 	}
-	if (db_add_db(db, "postgres://janakj:honzacvut@localhost/ser") < 0) goto error;
+	if (db_add_db(db, "postgres://janakj:heslo@localhost/ser") < 0) goto error;
 	if (db_connect(db) < 0) goto error;
 	
 	del = db_cmd(DB_DEL, db, "test", NULL, NULL, NULL);
