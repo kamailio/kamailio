@@ -41,6 +41,7 @@
  * 2005-12-09 added msgid_var (andrei)
  * 2007-05-14 added get_sys_ver() (andrei)
  * 2007-06-05 added MAX_UVAR_VALUE(), MAX_int(a,b) MIN_int(a,b) (andrei)
+ * 2008-05-21 added ushort2sbuf(), ushort2str() (andrei)
  */
 
 
@@ -56,6 +57,7 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#include "compiler_opt.h"
 #include "config.h"
 #include "dprint.h"
 #include "str.h"
@@ -232,36 +234,37 @@ static inline int btostr( char *p,  unsigned char val)
  * returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len 
  * left padded with 0 to "size"
  */
-static inline char* int2str_base_0pad(unsigned int l, int* len, int base, int size)
+static inline char* int2str_base_0pad(unsigned int l, int* len, int base, 
+											int size)
 {
-        static char r[INT2STR_MAX_LEN];
-        int i, j;
+	static char r[INT2STR_MAX_LEN];
+	int i, j;
 
-        if (base < 2) {
-                BUG("base underflow\n");
+	if (base < 2) {
+		BUG("base underflow\n");
 		return NULL;
-        }
-        if (base > 36) {
-                BUG("base overflow\n");
+	}
+	if (base > 36) {
+		BUG("base overflow\n");
 		return NULL;
-        }
-        i=INT2STR_MAX_LEN-2;
-        j=i-size;
-        r[INT2STR_MAX_LEN-1]=0; /* null terminate */
-        do{
-                r[i]=l%base;
-                if (r[i]<10)
-                        r[i]+='0';
-                else
-                        r[i]+='a'-10;
-                i--;
-                l/=base;
-        }while((l || i>j) && (i>=0));
-        if (l && (i<0)){
-                BUG("result buffer overflow\n");
-        }
-        if (len) *len=(INT2STR_MAX_LEN-2)-i;
-        return &r[i+1];
+	}
+	i=INT2STR_MAX_LEN-2;
+	j=i-size;
+	r[INT2STR_MAX_LEN-1]=0; /* null terminate */
+	do{
+		r[i]=l%base;
+		if (r[i]<10)
+		        r[i]+='0';
+		else
+		        r[i]+='a'-10;
+		i--;
+		l/=base;
+	}while((l || i>j) && (i>=0));
+	if (l && (i<0)){
+		BUG("result buffer overflow\n");
+	}
+	if (len) *len=(INT2STR_MAX_LEN-2)-i;
+	return &r[i+1];
 }
 
 /* returns a pointer to a static buffer containing l in asciiz (with base "base") & sets len */
@@ -290,6 +293,49 @@ static inline char* int2str(unsigned int l, int* len)
 	}
 	if (len) *len=(INT2STR_MAX_LEN-2)-i;
 	return &r[i+1];
+}
+
+
+
+#define USHORT2SBUF_MAX_LEN  5 /* 65535*/
+/* converts an unsigned short (16 bits) to asciiz
+ * returns bytes written or 0 on error
+ * the passed len must be at least USHORT2SBUF_MAX chars or error
+ * would be returned.
+ * (optimized for port conversion (4 or 5 digits most of the time)*/
+static inline int ushort2sbuf(unsigned short u, char* buf, int len)
+{
+	int offs;
+	unsigned char a, b, c, d;
+	
+	if (unlikely(len<USHORT2SBUF_MAX_LEN))
+		return 0;
+	offs=0;
+	a=u/10000; u%=10000;
+	buf[offs]=a+'0'; offs+=(a!=0);
+	b=u/1000;  u%=1000;
+	buf[offs]=b+'0'; offs+=((offs|b)!=0);
+	c=u/100;   u%=100;
+	buf[offs]=c+'0'; offs+=((offs|c)!=0);
+	d=u/10;    u%=10;
+	buf[offs]=d+'0'; offs+=((offs|d)!=0);
+	buf[offs]=(unsigned char)u+'0';
+	return offs+1;
+}
+
+
+
+#define USHORT2STR_MAX_LEN  (USHORT2SBUF_MAX_LEN+1) /* 65535\0*/
+/* converts an unsigned short (16 bits) to asciiz
+ * (optimized for port conversiob (4 or 5 digits most of the time)*/
+static inline char* ushort2str(unsigned short u)
+{
+	static char buf[USHORT2STR_MAX_LEN];
+	int len;
+
+	len=ushort2sbuf(u, buf, sizeof(buf)-1);
+	buf[len]=0;
+	return buf;
 }
 
 
