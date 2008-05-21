@@ -33,7 +33,7 @@
 
 extern int is_bla_aor;
 extern str header_name;
-extern str outbound_proxy;
+extern str bla_outbound_proxy;
 extern str server_address;
 extern str reg_from_uri;
 

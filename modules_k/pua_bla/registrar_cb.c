@@ -91,11 +91,11 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	subs.event= BLA_EVENT;
 	subs.contact= &server_address;
 	
-	if(outbound_proxy.s && outbound_proxy.len)
+	if(bla_outbound_proxy.s && bla_outbound_proxy.len)
 	{
-		LM_DBG("outbound_proxy= %.*s\n", outbound_proxy.len, 
-				outbound_proxy.s);
-		subs.outbound_proxy= &outbound_proxy;
+		LM_DBG("outbound_proxy= %.*s\n", bla_outbound_proxy.len, 
+				bla_outbound_proxy.s);
+		subs.outbound_proxy= &bla_outbound_proxy;
 	}
 	else
 		subs.outbound_proxy= NULL;
