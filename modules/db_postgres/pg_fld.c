@@ -627,7 +627,7 @@ static inline int pg_int4_2_db_cstr(db_fld_t* fld, char* val, int len)
 	struct pg_fld* pfld = DB_GET_PAYLOAD(fld);
 	int size, v;
 
-	v = (int16_t)ntohs(*((int32_t*)val));
+	v = (int32_t)ntohl(*((int32_t*)val));
 
     size = snprintf(pfld->buf, INT2STR_MAX_LEN, "%-d", v);
     if (len < 0 || size >= INT2STR_MAX_LEN) {
@@ -664,7 +664,7 @@ static inline int pg_int4_2_db_str(db_fld_t* fld, char* val, int len)
 	struct pg_fld* pfld = DB_GET_PAYLOAD(fld);
 	int size, v;
 
-	v = (int16_t)ntohs(*((int32_t*)val));
+	v = (int32_t)ntohl(*((int32_t*)val));
 
     size = snprintf(pfld->buf, INT2STR_MAX_LEN, "%-d", v);
     if (size < 0 || size >= INT2STR_MAX_LEN) {
