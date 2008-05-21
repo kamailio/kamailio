@@ -4,8 +4,7 @@ CREATE TABLE userblacklist (
     username VARCHAR2(64) DEFAULT '',
     domain VARCHAR2(64) DEFAULT '',
     prefix VARCHAR2(64) DEFAULT '',
-    whitelist NUMBER(5) DEFAULT 0 NOT NULL,
-    description VARCHAR2(64) DEFAULT ''
+    whitelist NUMBER(5) DEFAULT 0 NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER userblacklist_tr
@@ -23,7 +22,7 @@ CREATE TABLE globalblacklist (
     id NUMBER(10) PRIMARY KEY,
     prefix VARCHAR2(64) DEFAULT '',
     whitelist NUMBER(5) DEFAULT 0 NOT NULL,
-    description VARCHAR2(64) DEFAULT ''
+    description VARCHAR2(255) DEFAULT NULL
 );
 
 CREATE OR REPLACE TRIGGER globalblacklist_tr
