@@ -13,7 +13,11 @@ else
 	echo "Cannot load SQL core functions '$MYLIBDIR/openserctl.sqlbase' - exiting ..."
 	exit -1
 fi
-# DBTEXT_PATH="$MYLIBDIR/dbtext/openser/"
+
+if [ $TEST = "true" ]; then
+	DBTEXT_PATH="$MYLIBDIR/dbtext/openser/"
+fi;
+
 # path to the dbtext database
 if [ -z "$DBTEXT_PATH" ] ; then
 	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
