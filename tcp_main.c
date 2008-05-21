@@ -506,7 +506,8 @@ again:
 			else goto error_timeout;
 		}
 		if (errno!=EINPROGRESS && errno!=EALREADY){
-			LOG(L_ERR, "ERROR: tcp_blocking_connect: (%d) %s\n",
+			LOG(L_ERR, "ERROR: tcp_blocking_connect %s: (%d) %s\n",
+					su2a((union sockaddr_union*)servaddr, addrlen),
 					errno, strerror(errno));
 			goto error;
 		}
@@ -536,15 +537,19 @@ again:
 #endif
 		if (n<0){
 			if (errno==EINTR) continue;
-			LOG(L_ERR, "ERROR: tcp_blocking_connect: poll/select failed:"
-					" (%d) %s\n", errno, strerror(errno));
+			LOG(L_ERR, "ERROR: tcp_blocking_connect %s: poll/select failed:"
+					" (%d) %s\n",
+					su2a((union sockaddr_union*)servaddr, addrlen),
+					errno, strerror(errno));
 			goto error;
 		}else if (n==0) /* timeout */ continue;
 #if defined(HAVE_SELECT) && defined(BLOCKING_USE_SELECT)
 		if (FD_ISSET(fd, &sel_set))
 #else
 		if (pf.revents&(POLLERR|POLLHUP|POLLNVAL)){ 
-			LOG(L_ERR, "ERROR: tcp_blocking_connect: poll error: flags %x\n",
+			LOG(L_ERR, "ERROR: tcp_blocking_connect %s: poll error: "
+					"flags %x\n",
+					su2a((union sockaddr_union*)servaddr, addrlen),
 					pf.revents);
 			poll_err=1;
 		}
@@ -554,7 +559,9 @@ again:
 			getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &err_len);
 			if ((err==0) && (poll_err==0)) goto end;
 			if (err!=EINPROGRESS && err!=EALREADY){
-				LOG(L_ERR, "ERROR: tcp_blocking_connect: SO_ERROR (%d) %s\n",
+				LOG(L_ERR, "ERROR: tcp_blocking_connect %s: SO_ERROR (%d) "
+						"%s\n",
+						su2a((union sockaddr_union*)servaddr, addrlen),
 						err, strerror(err));
 				goto error;
 			}
@@ -562,8 +569,9 @@ again:
 	}
 error_timeout:
 	/* timeout */
-	LOG(L_ERR, "ERROR: tcp_blocking_connect: timeout %d s elapsed from %d s\n",
-			elapsed, tcp_connect_timeout);
+	LOG(L_ERR, "ERROR: tcp_blocking_connect %s: timeout %d s elapsed "
+				"from %d s\n", su2a((union sockaddr_union*)servaddr, addrlen),
+				elapsed, tcp_connect_timeout);
 error:
 	return -1;
 end:
@@ -956,18 +964,20 @@ inline static int tcp_do_connect(	union sockaddr_union* server,
 
 	s=socket(AF2PF(server->s.sa_family), SOCK_STREAM, 0);
 	if (unlikely(s==-1)){
-		LOG(L_ERR, "ERROR: tcp_do_connect: socket: (%d) %s\n",
-				errno, strerror(errno));
+		LOG(L_ERR, "ERROR: tcp_do_connect %s: socket: (%d) %s\n",
+				su2a(server, sizeof(*server)), errno, strerror(errno));
 		goto error;
 	}
 	if (init_sock_opt(s)<0){
-		LOG(L_ERR, "ERROR: tcp_do_connect: init_sock_opt failed\n");
+		LOG(L_ERR, "ERROR: tcp_do_connect %s: init_sock_opt failed\n",
+					su2a(server, sizeof(*server)));
 		goto error;
 	}
 	
 	if (unlikely(from && bind(s, &from->s, sockaddru_len(*from)) != 0)){
 		LOG(L_WARN, "WARNING: tcp_do_connect: binding to source address"
-					" failed: %s [%d]\n", strerror(errno), errno);
+					" %s failed: %s [%d]\n", su2a(from, sizeof(*from)),
+					strerror(errno), errno);
 	}
 	*state=S_CONN_OK;
 #ifdef TCP_BUF_WRITE
@@ -979,16 +989,17 @@ again:
 			if (likely(errno==EINPROGRESS))
 				*state=S_CONN_CONNECT;
 			else if (errno!=EALREADY){
-				LOG(L_ERR, "ERROR: tcp_do_connect: connect: (%d) %s\n",
-						errno, strerror(errno));
+				LOG(L_ERR, "ERROR: tcp_do_connect: connect %s: (%d) %s\n",
+							su2a(server, sizeof(*server)),
+							errno, strerror(errno));
 				goto error;
 			}
 		}
 	}else{
 #endif /* TCP_BUF_WRITE */
 		if (tcp_blocking_connect(s, &server->s, sockaddru_len(*server))<0){
-			LOG(L_ERR, "ERROR: tcp_do_connect: tcp_blocking_connect"
-						" failed\n");
+			LOG(L_ERR, "ERROR: tcp_do_connect: tcp_blocking_connect %s"
+						" failed\n", su2a(server, sizeof(*server)));
 			goto error;
 		}
 #ifdef TCP_BUF_WRITE
@@ -1018,8 +1029,9 @@ find_socket:
 		*res_si=find_si(&ip, 0, PROTO_TCP);
 	
 	if (unlikely(*res_si==0)){
-		LOG(L_WARN, "WARNING: tcp_do_connect: could not find corresponding"
-				" listening socket, using default...\n");
+		LOG(L_WARN, "WARNING: tcp_do_connect %s: could not find corresponding"
+				" listening socket for %s, using default...\n",
+					su2a(server, sizeof(*server)), ip_addr2a(&ip));
 		if (server->s.sa_family==AF_INET) *res_si=sendipv4_tcp;
 #ifdef USE_IPV6
 		else *res_si=sendipv6_tcp;
@@ -1054,14 +1066,14 @@ struct tcp_connection* tcpconn_connect( union sockaddr_union* server,
 	}
 	s=tcp_do_connect(server, from, type, &my_name, &si, &state);
 	if (s==-1){
-		LOG(L_ERR, "ERROR: tcp_do_connect: failed (%d) %s\n",
-				errno, strerror(errno));
+		LOG(L_ERR, "ERROR: tcp_do_connect %s: failed (%d) %s\n",
+				su2a(server, sizeof(*server)), errno, strerror(errno));
 		goto error;
 	}
 	con=tcpconn_new(s, server, &my_name, si, type, state);
 	if (con==0){
-		LOG(L_ERR, "ERROR: tcp_connect: tcpconn_new failed, closing the "
-				 " socket\n");
+		LOG(L_ERR, "ERROR: tcp_connect %s: tcpconn_new failed, closing the "
+				 " socket\n", su2a(server, sizeof(*server)));
 		goto error;
 	}
 	return con;
@@ -1086,8 +1098,9 @@ int tcpconn_finish_connect( struct tcp_connection* c,
 	
 	s=tcp_do_connect(&c->rcv.src_su, from, c->type, &local_addr, &si, &state);
 	if (unlikely(s==-1)){
-		LOG(L_ERR, "ERROR: tcpconn_finish_connect: tcp_do_connect for %p"
-						" failed\n", c);
+		LOG(L_ERR, "ERROR: tcpconn_finish_connect %s: tcp_do_connect for %p"
+					" failed\n", su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
+					c);
 		return -1;
 	}
 	c->rcv.bind_address=si;
@@ -1608,16 +1621,18 @@ no_id:
 			if (likely(tcp_options.tcp_connect_wait && 
 						tcp_options.tcp_buf_write )){
 				if (unlikely(*tcp_connections_no >= tcp_max_connections)){
-					LOG(L_ERR, "ERROR: tcp_send: maximum number of connections"
-								" exceeded (%d/%d)\n",
+					LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
+								" connections exceeded (%d/%d)\n",
+								su2a(&dst->to, sizeof(&dst->to)),
 								*tcp_connections_no, tcp_max_connections);
 					return -1;
 				}
 				c=tcpconn_new(-1, &dst->to, from, 0, dst->proto,
 								S_CONN_PENDING);
 				if (unlikely(c==0)){
-					LOG(L_ERR, "ERROR: tcp_send: could not create new"
-							" connection\n");
+					LOG(L_ERR, "ERROR: tcp_send %s: could not create new"
+							" connection\n",
+							su2a(&dst->to, sizeof(&dst->to)));
 					return -1;
 				}
 				c->flags|=F_CONN_PENDING|F_CONN_FD_CLOSED;
@@ -1625,8 +1640,10 @@ no_id:
 											 table */
 				/* add it to id hash and aliases */
 				if (unlikely(tcpconn_add(c)==0)){
-					LOG(L_ERR, "ERROR: tcp_send: could not add "
-									"connection %p\n", c);
+					LOG(L_ERR, "ERROR: tcp_send %s: could not add "
+								"connection %p\n",
+								su2a(&dst->to, sizeof(&dst->to)),
+									c);
 					_tcpconn_free(c);
 					n=-1;
 					goto end_no_conn;
@@ -1634,8 +1651,9 @@ no_id:
 				/* do connect and if src ip or port changed, update the 
 				 * aliases */
 				if (unlikely((fd=tcpconn_finish_connect(c, from))<0)){
-					LOG(L_ERR, "ERROR: tcp_send: tcpconn_finish_connect(%p)"
-							" failed\n", c);
+					LOG(L_ERR, "ERROR: tcp_send %s: tcpconn_finish_connect(%p)"
+							" failed\n", su2a(&dst->to, sizeof(&dst->to)),
+								c);
 					goto conn_wait_error;
 				}
 				/* ? TODO: it might be faster just to queue the write directly
@@ -1658,8 +1676,9 @@ no_id:
 							if (unlikely(_wbufq_insert(c, buf+n, len-n)<0)){
 								lock_release(&c->write_lock);
 								n=-1;
-								LOG(L_ERR, "ERROR: tcp_send: EAGAIN and"
+								LOG(L_ERR, "ERROR: tcp_send %s: EAGAIN and"
 										" write queue full or failed for %p\n",
+										su2a(&dst->to, sizeof(&dst->to)),
 										c);
 								goto conn_wait_error;
 							}
@@ -1669,8 +1688,10 @@ no_id:
 						response[1]=CONN_NEW_PENDING_WRITE;
 						if (unlikely(send_fd(unix_tcp_sock, response, 
 												sizeof(response), fd) <= 0)){
-							LOG(L_ERR, "BUG: tcp_send: CONN_NEW_PENDING_WRITE"
-										" for %p failed:" " %s (%d)\n",
+							LOG(L_ERR, "BUG: tcp_send %s: "
+										"CONN_NEW_PENDING_WRITE  for %p"
+										" failed:" " %s (%d)\n",
+										su2a(&dst->to, sizeof(&dst->to)),
 										c, strerror(errno), errno);
 							goto conn_wait_error;
 						}
@@ -1678,8 +1699,9 @@ no_id:
 						goto end;
 					}
 					/* error: destroy it directly */
-					LOG(L_ERR, "ERROR: tcp_send: connect & send "
+					LOG(L_ERR, "ERROR: tcp_send %s: connect & send "
 										" for %p failed:" " %s (%d)\n",
+										su2a(&dst->to, sizeof(&dst->to)),
 										c, strerror(errno), errno);
 					goto conn_wait_error;
 				}
@@ -1689,8 +1711,9 @@ no_id:
 				response[1]=CONN_NEW_COMPLETE;
 				if (unlikely(send_fd(unix_tcp_sock, response, 
 										sizeof(response), fd) <= 0)){
-					LOG(L_ERR, "BUG: tcp_send: CONN_NEW_COMPLETE  for %p"
+					LOG(L_ERR, "BUG: tcp_send %s: CONN_NEW_COMPLETE  for %p"
 								" failed:" " %s (%d)\n",
+								su2a(&dst->to, sizeof(&dst->to)),
 								c, strerror(errno), errno);
 					goto conn_wait_error;
 				}
@@ -1698,7 +1721,8 @@ no_id:
 			}
 #endif /* TCP_CONNECT_WAIT  && TCP_BUF_WRITE */
 			if (unlikely((c=tcpconn_connect(&dst->to, from, dst->proto))==0)){
-				LOG(L_ERR, "ERROR: tcp_send: connect failed\n");
+				LOG(L_ERR, "ERROR: tcp_send %s: connect failed\n",
+								su2a(&dst->to, sizeof(&dst->to)));
 				return -1;
 			}
 			atomic_set(&c->refcnt, 2); /* ref. from here and it will also
@@ -1713,7 +1737,8 @@ no_id:
 			response[1]=CONN_NEW;
 			n=send_fd(unix_tcp_sock, response, sizeof(response), c->s);
 			if (unlikely(n<=0)){
-				LOG(L_ERR, "BUG: tcp_send: failed send_fd: %s (%d)\n",
+				LOG(L_ERR, "BUG: tcp_send %s: failed send_fd: %s (%d)\n",
+						su2a(&dst->to, sizeof(&dst->to)),
 						strerror(errno), errno);
 				/* we can safely delete it, it's not referenced by anybody */
 				_tcpconn_free(c);
@@ -1869,8 +1894,10 @@ send_it:
 			lock_release(&c->write_lock);
 		}
 #endif /* TCP_BUF_WRITE */
-		LOG(L_ERR, "ERROR: tcp_send: failed to send on %p: %s (%d)\n",
-					c, strerror(errno), errno);
+		LOG(L_ERR, "ERROR: tcp_send: failed to send on %p (%s:%d->%s): %s (%d)"
+					"\n", c, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
+					su2a(&c->rcv.src_su, sizeof(&c->rcv.src_su)),
+					strerror(errno), errno);
 #ifdef TCP_BUF_WRITE
 error:
 #endif /* TCP_BUF_WRITE */
@@ -1890,8 +1917,9 @@ error:
 		 * if it succeeds */
 #ifdef TCP_FD_CACHE
 		if (unlikely(fd_cache_e)){
-			LOG(L_ERR, "ERROR: tcp_send: error on cached fd, removing from the"
-					"cache (%d, %p, %d)\n", 
+			LOG(L_ERR, "ERROR: tcp_send %s: error on cached fd, removing from"
+					" the cache (%d, %p, %d)\n", 
+					su2a(&c->rcv.src_su, sizeof(&c->rcv.src_su)),
 					fd, fd_cache_e->con, fd_cache_e->id);
 			tcp_fd_cache_rm(fd_cache_e);
 			close(fd);
@@ -1973,6 +2001,7 @@ int tcp_init(struct socket_info* sock_info)
 		LOG(L_ERR, "ERROR: tcp_init: could no init sockaddr_union\n");
 		goto error;
 	}
+	DBG("tcp_init: added %s\n", su2a(addr, sizeof(*addr)));
 	sock_info->socket=socket(AF2PF(addr->s.sa_family), SOCK_STREAM, 0);
 	if (sock_info->socket==-1){
 		LOG(L_ERR, "ERROR: tcp_init: socket: %s\n", strerror(errno));
@@ -3063,8 +3092,8 @@ static inline int handle_new_connect(struct socket_info* si)
 		/* prepare it for passing to a child */
 		tcpconn->flags|=F_CONN_READER;
 		tcpconn_add(tcpconn);
-		DBG("handle_new_connect: new connection: %p %d flags: %04x\n",
-			tcpconn, tcpconn->s, tcpconn->flags);
+		DBG("handle_new_connect: new connection from %s: %p %d flags: %04x\n",
+			su2a(&su, sizeof(su)), tcpconn, tcpconn->s, tcpconn->flags);
 		if(unlikely(send2child(tcpconn)<0)){
 			LOG(L_ERR,"ERROR: handle_new_connect: no children "
 					"available\n");
