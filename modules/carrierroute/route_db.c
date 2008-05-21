@@ -55,24 +55,6 @@ db_func_t dbf;
 db_con_t * dbh = NULL;
 
 /**
- * Check the table version
- *
- * @return 0 means ok, -1 means an error occured
- */
-static int check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, const int version) {
-
-	int ver = db_table_version(dbf, dbh, table);
-	if (ver < 0) {
-		LM_ERR("Error while querying version for table %.*s\n", table->len, table->s);
-		return -1;
-	} else if (ver < version) {
-		LM_ERR("Invalid version for table %.*s found\n", table->len, table->s);
-		return -1;
-	}
-	return 0;
-}
-
-/**
  * Initialises the db API
  *
  * @return 0 means ok, -1 means an error occured.
@@ -90,9 +72,9 @@ int db_init(void) {
 		LM_ERR("Can't connect to database.\n");
 		return -1;
 	}
-	if ( (check_table_version(&dbf, dbh, &db_table, ROUTE_TABLE_VER) < 0) ||
-		 (check_table_version(&dbf, dbh, &carrier_table, CARRIER_TABLE_VER) < 0) ||
-		 (check_table_version(&dbf, dbh, &db_failure_table, FAILURE_TABLE_VER) < 0) ) {
+	if ( (db_check_table_version(&dbf, dbh, &db_table, ROUTE_TABLE_VER) < 0) ||
+		 (db_check_table_version(&dbf, dbh, &carrier_table, CARRIER_TABLE_VER) < 0) ||
+		 (db_check_table_version(&dbf, dbh, &db_failure_table, FAILURE_TABLE_VER) < 0) ) {
 			LM_ERR("Error during table version check.\n");
 			return -1;
 	}
