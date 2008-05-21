@@ -169,6 +169,8 @@ static int parse_postgres_uri(struct pg_uri* res, str* uri)
 				break;
 
 			case '/':
+				if (memchr(uri->s + i + 1, '/', uri->len - i - 1) != NULL)
+					break;
 				if (dupl_string(&res->host, begin, uri->s + i) < 0) goto err;
 				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
 					goto err;
@@ -186,6 +188,8 @@ static int parse_postgres_uri(struct pg_uri* res, str* uri)
 				break;
 
 			case '/':
+				if (memchr(uri->s + i + 1, '/', uri->len - i - 1) != NULL)
+					break;
 				res->host = prev_token;
 				res->port = str2s(begin, uri->s + i - begin, 0);
 				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
@@ -203,6 +207,8 @@ static int parse_postgres_uri(struct pg_uri* res, str* uri)
 				break;
 
 			case '/':
+				if (memchr(uri->s + i + 1, '/', uri->len - i - 1) != NULL)
+					break;
 				if (dupl_string(&res->host, begin, uri->s + i) < 0) goto err;
 				if (dupl_string(&res->database, uri->s + i + 1, uri->s + uri->len) < 0) 
 					goto err;
