@@ -105,7 +105,7 @@ static int mod_init(void)
 	
 	if(default_domain.s == NULL )
 	{	
-		LM_ERR("default domain not found\n");
+		LM_ERR("default domain parameter not set\n");
 		return -1;
 	}
 	default_domain.len= strlen(default_domain.s);

@@ -77,7 +77,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set default_domain parameter
 ...
-modparam(pua_usrloc, "default_domain", "openser.org");
+modparam(pua_usrloc, "default_domain", "openser.org")
 ...
 
 1.3.2. entity_prefix (str)
@@ -89,7 +89,7 @@ modparam(pua_usrloc, "default_domain", "openser.org");
 
    Example 1.2. Set presentity_prefix parameter
 ...
-modparam(pua_usrloc, "entity_prefix", "pres");
+modparam(pua_usrloc, "entity_prefix", "pres")
 ...
 
 1.4. Exported Functions
