@@ -57,6 +57,8 @@
 #include "parser/parse_expires.h"
 #include "parser/parse_refer_to.h"
 #include "parser/parse_rpid.h"
+#include "parser/parse_content.h"
+#include "parser/parse_body.h"
 #include "dset.h"
 #include "sr_module.h"
 
@@ -492,6 +494,18 @@ int select_msg_body(str* res, select_t* s, struct sip_msg* msg)
 	res->s = get_body(msg);
 	res->len = msg->buf+msg->len - res->s;
 	return 0;	
+}
+
+int select_msg_body_sdp(str* res, select_t* sel, struct sip_msg* msg)
+{
+	/* try to get the body part with application/sdp */
+	if ((res->s = get_body_part(msg,
+				TYPE_APPLICATION, SUBTYPE_SDP,
+				&res->len))
+	)
+		return 0;
+	else
+		return -1;
 }
 
 int select_msg_header(str* res, select_t* s, struct sip_msg* msg)
