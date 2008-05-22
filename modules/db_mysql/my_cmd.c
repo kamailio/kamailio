@@ -1237,6 +1237,8 @@ int my_cmd_next(db_res_t* res)
 		mcmd->next_flag =  mcmd->next_flag<0?-2:2;
 		return 1;
 	}
+	/* MYSQL_DATA_TRUNCATED is only defined in mysql >= 5.0 */
+#if defined MYSQL_DATA_TRUNCATED
 	if (ret == MYSQL_DATA_TRUNCATED) {
 		int i;
 		ERR("mysql: mysql_stmt_fetch, data truncated, fields: %d\n", res->cmd->result_count);
@@ -1246,11 +1248,13 @@ int my_cmd_next(db_res_t* res)
 					i, *(mcmd->st->bind[i].length), mcmd->st->bind[i].buffer_length);
 			}
 		}
+		ret = 0;
 	}
+#endif
 	if (mcmd->next_flag <= 0) {
 		mcmd->next_flag++;
 	}
-	if (ret != 0 && ret != MYSQL_DATA_TRUNCATED) {
+	if (ret != 0) {
 		ERR("mysql: Error in mysql_stmt_fetch (ret=%d): %s\n", ret, mysql_stmt_error(mcmd->st));
 		return -1;
 	}
