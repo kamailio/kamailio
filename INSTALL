@@ -1,549 +1,628 @@
 $Id$
 
 
-     ===========================================
+		===========================================
 
-     SIP Express Router (ser) Installation Notes
+		SIP Express Router (ser) Installation Notes
 
-             http://www.iptel.org/ser/
+			 http://www.iptel.org/ser/
 
-     ===========================================
+		===========================================
 
-  This memo gives you hints how to set up SER quickly. To 
-  understand how SER works and how to configure it properly,
-  read admin's guide available from SER website. We also
-  urge you to read latest ISSUES (available from SER website 
-  too) and check for potential problems in this release.
-  Users of previous releases are encouraged to read NEWS to
-  learn how to move to this new SER version.
+
+   This memo gives you hints how to set up SER quickly. To understand how
+   SER works and how to configure it properly, read admin's guide available
+   from SER website. We also urge you to read latest ISSUES (available from
+   SER website too) and check for potential problems in this release.  Users
+   of previous releases are encouraged to read NEWS to learn how to move to
+   this new SER version.
   
 
-TOC
+Contents
 
-1. Supported Architectures and Requirements
-2. Howto Build ser From Source Distribution
-3. Quick-Start Installation Guide
-   A) Getting Help
-   B) Disclaimers
-   C) Quick Start
-   D) ser with Persistent Data Storage
-4. Troubleshooting
-
+   1. Supported Architectures and Requirements
+   2. Howto Build ser From Source Distribution
+   3. Quick-Start Installation Guide
+   4. Troubleshooting
 
 
 1. Supported Architectures and Requirements
--------------------------------------------
 
-Supported operating systems: Linux, FreeBSD, NetBSD, OpenBSD, Solaris, Darwin
-Supported architectures: i386, x86_64 (amd64), armv4l, sparc64, powerpc,
- powerpc64
-Experimental architectures: mips1, mips2, sparc32, alpha
+   SER supports the following operating systems:
 
-(for other architectures the Makefiles might need to be edited)
+      o  Linux, FreeBSD, NetBSD, OpenBSD, Solaris, Darwin
 
-There are various configuration options defined in the Makefile.
+   on these architectures:   
+      
+      o  i386, x86_64 (amd64), armv4l, sparc64, powerpc, powerpc64.
 
+   Additionally, there is experimental support for these architectures:
 
-Requirements:
+      o  mips1, mips2, sparc32, alpha
 
-- gcc or icc : gcc >= 2.9x; 3.[12] recommended (it will work with older version
-  but it might require some options tweaking for best performance)
-- bison or yacc (Berkley yacc)
-- flex
-- GNU make (on Linux this is the standard "make", on *BSD and Solaris is
- called "gmake") version >= 3.79.
-- sed and tr (used in the makefiles)
-- GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to work
-- GNU install, BSD install or Solaris install if you want "make
-  install", "make bin", "make sunpkg" to work
-- libmysqlclient & libz (zlib) if you want mysql support (the mysql module)
-- libexpat if you want the jabber gateway support (the jabber module)
-- libxml2 if you want to compile the cpl-c (CPL support) or pa (presence) 
-modules
-- libradiusclient-ng (> 5.0) if you need radius support (the auth_radius,
-group_radius, uri_radius and avp_radius modules)
-- libpq if you need postgres support (the postgres module)
+   Other architectures and operating systems may work as well but have
+   not been tested and may alterations to the Makefiles.
 
 
-OS Notes:
+1.1. Requirements
 
- FreeBSD/OpenBSD/NetBSD: make sure gmake, bison or yacc & flex are installed.
+   In order to build SER from its sources, you will need:
+
+      o  gcc or icc : gcc >= 2.9x; version 3.1 or higher recommended (older
+         versions will work but they may require some options tweaking for
+         best performance)
+      o  bison or yacc (Berkley yacc)
+      o  flex
+      o  GNU make, version 3.79 or newer (on Linux this is the standard
+         "make", on *BSD and Solaris it is called "gmake")
+      o  sed and tr (used in the makefiles)
+      o  GNU tar ("gtar" on Solaris) and gzip if you want "make tar" to
+         work
+      o  GNU install, BSD install or Solaris install if you want
+         "make install", "make bin", "make sunpkg" to work
+
+   If you want to build some of the modules, you will have to fulfill
+   additional requirements:
+
+      o  libmysqlclient & libz (zlib) for MySQL support (the mysql
+         module)
+      o  libexpat for jabber gateway support (the jabber module)
+      o  libxml2 for the cpl-c (CPL support) and pa (presence) modules
+      o  libradiusclient-ng (> 5.0) for radius support (the acc_radius,
+         auth_radius, avp_radius, and uri_radius modules)
+      o  libpq for PostgreSQL support (the postgres module)
+
+
+1.2. Operating System Specific Notes
+
+1.2.1. The BSDs
+
+   Make sure to have gmake, bison or yacc, and flex installed.
+
+
+1.2.2. FreeBSD 5.4
+
+   If you want to compile all the modules, you will need the following
+   packages:
+
+      o  mysql-client-* (any version, install one of the mysql*-client
+         ports) for libmysqlclient
+      o  postgresql-libpqxx-2.4.2_1 (/usr/ports/databases/postgresql-libpqxx)
+         for libpq
+      o  expat-1.95.8 (/usr/ports/textproc/expat2) for libexpat
+      o  libxml2-2.6.18 (/usr/ports/textproc/libxml2) for libxml2
+      o  radiusclient-0.4.7 (/usr/ports/net/radiusclient) for
+         libradiusclient-ng 
+       
+         NOTE: You will need to add radiusclient_ng=4 to the gmake command
+         line for compiling SER if you use the 0.4.* version.
   
-  FreeBSD 5.4:
+         Compile example (all the modules and ser in a tar.gz):
+
+            $ gmake bin radiusclient_ng=4 \
+              include_modules="mysql jabber cpl-c auth_radius group_radius \
+              uri_radius postgres pa"
+
+1.2.3. OpenBSD 3.7
+
+   If you want to compile all the modules, you will need the following
+   packages:
+
+      o  mysql-client-4.0.23 (/usr/ports/databases/mysql) for libmysqlclient
+      o  expat-1.95.6 (/usr/ports/textproc/expat) for libexpat
+      o  libxml-2.6.16p0 (/usr/ports/textproc/libxml) for libxml2
+      o  radiusclient-ng-0.5.1 from 
+         http://download.berlios.de/radiusclient-ng/radiusclient-ng-0.5.1.tar.gz
+         (you need to download and install it, since there is no "official"
+         openbsd port for it) for libradiusclient-ng
+
+
+1.2.4. NetBSD 2.0
+
+   If you want to compile all the modules, you will need the following
+   packages:
+
+      o  mysql-client-4.1.12 (/usr/pkgsrc/databases/mysql4-client) for
+         libmysqlclient
+      o  expat-1.95.8nb2 (/usr/pkgsrc/textproc/expat) for libexpat
+      o  libxml2-2.6.19 (/usr/pkgsrc/textproc/libxml2) for libxml2
+      o  radiusclient-ng-0.5.1 (see OpenBSD)
+
+
+1.2.5. Solaris 10
+
+   You can use Solaris's yacc instead of bison. You might need also gtar
+   and ginstall. If you don't have ginstall you can use Solaris
+   install, just make sure it's in the PATH (it's usually in /usr/sbin) and
+   add INSTALL=install either to the environment or to the make command line
+   (e.g.: gmake INSTALL=install all).
   
-  If you want to compile all the modules, you will need the following packages:
-  - mysql-client-* (any version, install one of the mysql*-client ports) for
-  libmysqlclient
-  - postgresql-libpqxx-2.4.2_1 (/usr/ports/databases/postgresql-libpqxx) for
-  libpq
-  - expat-1.95.8 (/usr/ports/textproc/expat2) for libexpat
-  - libxml2-2.6.18 (/usr/ports/textproc/libxml2) for libxml2
-  - radiusclient-0.4.7 (/usr/ports/net/radiusclient) for libradiusclient-ng 
-  NOTE: you'll need to add radiusclient_ng=4 to the gmake command line if you
-  use the 0.4.* version.
-  
-  Compile example (all the modules and ser in a tar.gz):
-     gmake bin radiusclient_ng=4 include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
-
-  OpenBSD 3.7
-  - mysql-client-4.0.23 (/usr/ports/databases/mysql) for libmysqlclient
-  - expat-1.95.6 (/usr/ports/textproc/expat) for libexpat
-  - libxml-2.6.16p0 (/usr/ports/textproc/libxml) for libxml2
-  - radiusclient-ng-0.5.1 from 
-   http://download.berlios.de/radiusclient-ng/radiusclient-ng-0.5.1.tar.gz
-   (you need to download and install it, since there is no "official" 
-   openbsd port for it) for libradiusclient-ng 
-  Compile example (all the modules and ser in a tar.gz):
-     gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
-
-  NetBSD 2.0
-  - mysql-client-4.1.12 (/usr/pkgsrc/databases/mysql4-client) for libmysqlclient
-  - expat-1.95.8nb2 (/usr/pkgsrc/textproc/expat) for libexpat
-  - libxml2-2.6.19 (/usr/pkgsrc/textproc/libxml2) for libxml2
-  - radiusclient-ng-0.5.1 (see OpenBSD)
-  
-  Compile example (all the modules and ser in a tar.gz):
-     gmake bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius pa"
-
- Solaris 10
- 
-  As above; you can use Solaris's yacc instead of bison. You might
-  need also gtar and ginstall. If you don't have ginstall you can use Solaris
-  install, just make sure it's in the PATH (it's usually in /usr/sbin) and
-  add INSTALL=install either to the environment or to the make command line
-  (e.g.: gmake INSTALL=install all).
-  
-  Needed packages:
-  [TODO]
-  
-  Compile example (all the modules and ser in a tar.gz):
-     gmake bin INSTALL=install include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
-
- Linux
-
- Needed packages for compiling all the modules:
-  Debian:
-      - libmysqlclient-dev for libmysqlclient
-      - libpq-dev for libpq
-      - libexpat1-dev for libexpat
-      - libxml2-dev for libxml2
-      - libradiusclient-ng-dev for libradiusclient (you can download the 
-      package from http://apt.sip-router.org/debian/dists/unstable/main/binary-i386/libradiusclient-ng-dev_0.5.1-0.5_i386.deb ).
-      NOTE: you can get up-to-date ser packages or libradiusclient packages
-      from http://apt.sip-router.org: add to your /etc/apt/sources.list the
-      following lines:
-         deb http://apt.sip-router.org/debian testing main contrib non-free
-         deb http://apt.sip-router.org/debian unstable main contrib non-free
-      and then: apt-get update; apt-get install libradiusclient-ng-dev
-      (or, if you want to use the pre-built modules:
-       apt-get install ser ser-cpl-module ser-jabber-module ser-mysq-module ser-pa-module ser-postgres-module ser-radius-modules )
-
-
-  Compile example (all the modules and ser in a tar.gz):
-     make bin include_modules="mysql jabber cpl-c auth_radius group_radius uri_radius postgres pa"
-
+   Needed packages:
+   
+      [TODO]
 
-2. Howto Build ser From Source Distribution
--------------------------------------------
 
-(NOTE: if make doesn't work try gmake  instead)
+1.2.6.  Debian GNU/Linux
 
-SER is split in four main parts: The core, the modules, the utilties, and scripts/examples
-When you build, you can decide to build only the core, the modules, both, or all.
+   Needed packages for compiling all the modules:
 
-Compile SER core only:
-make   #builds only ser core, equivalent to make ser
+     o  libmysqlclient-dev for libmysqlclient
+     o  libpq-dev for libpq
+     o  libexpat1-dev for libexpat
+     o  libxml2-dev for libxml2
+     o  libradiusclient-ng-dev for libradiusclient (you can download the 
+        package from http://apt.sip-router.org/debian/dists/unstable/main/binary-i386/libradiusclient-ng-dev_0.5.1-0.5_i386.deb).
 
-Compile modules except some explicitly excepted (see below)
-make modules  
+        XXX There is a libradiusclient-ng-dev in all current Debian
+            releases. Any reason not to use this?
 
-Compile all:
-make all
+   Debian currently still ships version 0.9.7. SER 2.0 will follow soon
+   in the sid and lenny releases.
 
-Explicitly excepted modules (default in <=0.9.x):
-By default make all will not build modules that require external libraries or
-that are considered to be "experimental". The modules that have external
-dependencies are: mysql, jabber, cpl-c, auth_radius, group_radius, uri_radius,
-avp_radius, postgres, pa.
 
-Including groups of modules (available in >0.9.x):
-Instead of compiling the default modules only, you can specify groups of
-modules to include, according to their status:
-standard - Modules in this group are considered a standard part of SER (due to widespread usage)
-    but they have no dependencies (note that some of these interplay with external systems.
-    However, they don't have compile or link dependencies).
+1.2.7.  Red Hat Linux
 
-standard-dep -  Modules in this group are considered a standard part of SER (due to widespread usage)
-    but they have dependencies that most be satisfied for compilation.
-    NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been included in this
-    group due to interdependencies
+   [TODO]
 
-stable - Modules in this group satisfy specific or niche applications, but are considered
-    stable for production use. They may or may not have dependencies
 
-experimental - Modules in this group are either not complete, untested, or without enough reports
-    of usage to allow the module into the stable group. They may or may not have dependencies.
 
-To compile core with standard modules:
-make group_include="standard" all
+2. How To Build SER From a Source Distribution
 
-To compile all modules (provided you have all the required libraries installed) use:
-make group_include="standard standard-dep stable experimental" all
+2.1. Basics
 
-There are also in addition some "convenience" groups:
+   SER is split in four main parts: The core, the modules, the utilties,
+   and scripts/examples. When you build SER, you can decide to build only
+   the core, the modules, both, or all.
 
-mysql - Include all modules dependent on mysql
+   To compile SER's core only:
+   
+      $ make
 
-radius - Include all modules on radiusclient
+   If make doesn't work, try gmake instead.
 
-presence - Include all the presence modules
+   To compile a basic set of modules:
 
-Ex. to make a standard installation with mysql, use:
-make group_include="standard mysql" all
+      $ make modules  
 
-In addition to group_include (or instead), you can use 
-include_modules="modA modB"
-to specify exactly the modules you want to include, ex.
-make include_modules="mymodule" modules
+   Compile core and the basic set of modules:
 
-You can also explicitly skip modules using skip_modules. Let's say you want all the standard
- and standard-dep modules except domain:
-make group_include="standard standard-dep" skip_modules="domain" all
+      $ make all
 
-NOTE!!! As this mechanism is very powerful, you may be uncertain which modules wwill be included.
-Just replace all (or modules) with print-modules and you will see which modules will be included
-and excluded, ex:
-make print-modules
-will show which modules are excluded by default.
+   By default no modules will be build that require external libraries or
+   that are considered to be "experimental".
 
-If you want to install or to build a binary package (a tar.gz with ser and
- the modules), substitute "all" in the above command with "install" or "bin".
+   Instead of compiling the default modules only, you can specify groups
+   of modules to include, according to their status:
 
+      o  standard - modules in this group are considered a standard part of
+         SER (due to widespread usage) but they have no dependencies (note
+         that some of these interplay with external systems. However, they
+         don't have compile or link dependencies). Only modules in this
+         group are build by default.
 
-More compile examples:
+      o  standard-dep -  modules in this group are considered a standard
+         part of SER (due to widespread usage) but they have dependencies
+         that must be satisfied for compilation.
 
-- compile with profiling
+         NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap)
+         have been included in this group due to interdependencies
 
-make PROFILE=-pg all
+      o  stable - modules in this group satisfy specific or niche
+         applications, but are considered stable for production use. They
+         may or may not have dependencies
 
--compile debug mode version
+      o  experimental - modules in this group are either not complete,
+         untested, or without enough reports of usage to allow the module
+         into the stable group. They may or may not have dependencies.
 
-make mode=debug all
+   To compile core with standard modules:
 
--compile debug version with profiling
+      $ make group_include="standard" all
 
-make mode=debug PROFILE=-pg all
+   To compile all modules (provided you have all the required libraries
+   installed) use:
 
--compile only the print module
+      $ make group_include="standard standard-dep stable experimental" all
 
-make modules=modules/print modules
+   There are also in addition some "convenience" groups:
 
--compile all the "default" modules except textops and vm
+      o  mysql - include all modules dependent on mysql
 
-make skip_modules="textops vm" modules
+      o  radius - include all modules on radiusclient
 
--compile all default modules and include uri_radius (not compiled by default):
+      o  presence - include all the presence modules
 
-make include_modules="uri_radius" modules
+   So, to make a standard installation with mysql, use:
 
--compile all the modules from the modules subdirectory (even the one excluded
-by default):
+      $ make group_include="standard mysql" all
 
-make exclude_modules="" modules
+   In addition to group_include (or instead), you can use
+   
+      include_modules="modA modB"
 
--compile all the modules from the modules subdirectory excluding vm:
+   to specify exactly the modules you want to include. For example, to
+   only include "mymodule", run
 
-make exclude_modules=vm modules
+      $ make include_modules="mymodule" modules
 
-or
+   You can also explicitly skip modules using skip_modules. Let's say you
+   want all the standard and standard-dep modules except domain:
 
-make exclude_modules="" skip_modules=vm modules
+      $ make group_include="standard standard-dep" skip_modules="domain" all
 
+   As this mechanism is very powerful, you may be uncertain which modules
+   will be included. If you use the make target print-modules, you will
+   receive a list of all modules that will be in included and excluded.
+   The command
 
--compile with the "tm" module statically linked and with profiling
+      $ make print-modules
 
-make static_modules=tm PROFILE=-pg all
+   thus will show which modules are build by default.
 
--compile with gcc-3.2 instead of gcc
+   If you want to install or build a binary package (a tar.gz with ser and
+   the modules), substitute "all" in the above command with "install" or
+   "bin".
 
-make CC=gcc-3.2 all
 
-or
+   Some More compile examples:
 
-CC=gcc-3.2 make all
+      o  compile with profiling
 
+            $ make PROFILE=-pg all
 
+      o  compile debug mode version
 
-Make targets:
+            $ make mode=debug all
 
-Clean:
+      o  compile debug version with profiling
 
-make clean   (clean the modules too)
-make proper  (clean also the dependencies)
-make distclean (the same as proper)
-make mantainer-clean (clean everything, including auto generated files,
- tags, *.dbg a.s.o)
+            $ make mode=debug PROFILE=-pg all
 
-Compile:
+      o  compile only the print module
 
-make proper
-make
-(or gmake on non-Linux systems)
-make modules 
-or make modules exclude_modules="CVS print" etc.
+            $ make modules=modules/print modules
 
-Make tags:
+      o  compile all the "default" modules except textops and vm
 
-make TAGS
+            $ make skip_modules="textops vm" modules
 
-Create a tar.gz with the sources (in ../):
+      o  compile all default modules and include uri_radius (not compiled
+         by default):
 
-make tar
+            $ make include_modules="uri_radius" modules
 
-Create a tar.gz with the binary distribution (in ../):
+      o  compile all the modules from the modules subdirectory (even the
+         one excluded by default):
 
-make bin
+            $ make exclude_modules="" modules
 
-Create a gzipped solaris package (in ../):
+      o  compile all the modules from the modules subdirectory excluding
+         vm:
 
-make sunpkg
+            $ make exclude_modules=vm modules
 
-Create debian packages (in ../):
+         or
 
-make deb
+            $ make exclude_modules="" skip_modules=vm modules
 
-or
 
-dpkg-buildpackage
+      o  compile with the "tm" module statically linked and with profiling
 
-Install:
+            $ make static_modules=tm PROFILE=-pg all
 
-make prefix=/usr/local  install
+      o  compile with gcc-3.2 instead of gcc
 
-Note: If you use prefix parameter in make install then you also need
-to use this parameter in previous make commands, i.e. make, make modules,
-or make all. If you fail to do this then SER will look for the default
-configuration file in a wrong directory, because the directory of the
-default configuration file is hard coded into ser during compile time. 
-When you use a different prefix parameter when installing then the 
-directory hard coded in ser and the directory in which the file will be 
-installed by make install will not match. (You can specify exact location
-of the configuration file using -f parameter of ser).
+            $ make CC=gcc-3.2 all
 
-For example, if you do the following:
-make all
-make prefix=/ install
+         or
 
-Then the installation will put the default configuration file into
-/etc/ser/ser.cfg (because prefix is /), but ser will look for the file
-in /usr/local/etc/ser/ser.cfg (because there was no prefix parameter
-in make all and /usr/local is the default value of prefix).
+            $ CC=gcc-3.2 make all
 
-Workaround is trivial, use the same parameters in all make commands:
-make prefix=/ all
-make prefix=/ install
 
-That applies to other make parameters as well (for example parameters
-"modules" or "excluded_modules").
+2.2. Make Targets
+
+   Targets for cleaning:
+
+      o  make clean - clean the core and the modules, too.
+
+      o  make proper - additionally, clean the dependency (.d) files.
+
+      o  make distclean - the same as proper.
+
+      o  make mantainer-clean - clean everything, including auto
+         generated files, tags, *.dbg a.s.o)
+
+   Compile:
+
+      o  make proper
+
+      o  make
+         (or gmake on non-Linux systems)
+
+      o  make modules 
+         or make modules exclude_modules="CVS print" etc.
+
+   Make tags:
+
+      o  make TAGS
+
+   Create a tar.gz with the sources (in ../):
+
+      o  make tar
+
+   Create a tar.gz with the binary distribution (in ../):
+
+      o  make bin
+
+   Create a gzipped solaris package (in ../):
+
+      o  make sunpkg
+
+   Create debian packages (in ../):
+
+      o  make deb
+
+   or
+
+      o  dpkg-buildpackage
+
+   Install:
+
+      o  make prefix=/usr/local  install
+
+   Note: If you use prefix parameter in make install then you also need to
+   use this parameter in previous make commands, i.e. make, make modules, or
+   make all. If you fail to do this then SER will look for the default
+   configuration file in a wrong directory, because the directory of the
+   default configuration file is hard coded into ser during compile time.
+   When you use a different prefix parameter when installing then the
+   directory hard coded in ser and the directory in which the file will be
+   installed by make install will not match. (You can specify exact location
+   of the configuration file using -f parameter of ser).
+
+   For example, if you do the following:
+
+      $ make all
+      $ make prefix=/ install
+
+   Then the installer will put the default configuration file into
+   /etc/ser/ser.cfg (because prefix is /), but ser will look for the file in
+   /usr/local/etc/ser/ser.cfg (because there was no prefix parameter in make
+   all and /usr/local is the default value of prefix).
+
+   Workaround is trivial, use the same parameters in all make commands:
+
+      $ make prefix=/ all
+      $ make prefix=/ install
+
+   That applies to other make parameters as well (for example parameters
+   "modules" or "excluded_modules").
 
 
 3. Quick-Start Installation Guide
-----------------------------------------------
 
-A) Getting Help
+3.1. Getting Help
 
-This guide gives you instructions on how to set up the SIP Express 
-Router (ser) on your box quickly. In case the default configuration
-does not fly, check documentation at ser site
-  http://www.iptel.org/ser/
-to learn how to configure SER for your site.
+   This guide gives you instructions on how to set up the SIP Express 
+   Router (ser) on your box quickly. In case the default configuration
+   does not fly, check documentation at ser site
+     
+      http://www.iptel.org/ser/
 
-If the documentation does not resolve your problem you may try contacting 
-our user forum by E-mail at serusers@iptel.org -- that is the mailing list 
-of ser community. To participate in the mailing list, subscribe at the 
-following web address:
-  http://mail.iptel.org/mailman/listinfo/serusers
+   to learn how to configure SER for your site.
 
-To participate in our commercial support program, contact info@iptel.org.
-The support program will provide you with most timely and accurate help
-for configuration, integration, development and any other technical
-activity.
+   If the documentation does not resolve your problem you may try contacting
+   our user forum by E-mail at serusers@iptel.org -- that is the mailing
+   list of the ser community. To participate in the mailing list, subscribe
+   at the following web address:
+
+      http://mail.iptel.org/mailman/listinfo/serusers
+
+   XXX Is the following still true?
+   To participate in our commercial support program, contact info@iptel.org.
+   The support program will provide you with most timely and accurate help
+   for configuration, integration, development and any other technical
+   activity.
 
 
-B) Disclaimers
+3.2. Disclaimers
  
-Note well the default "quick-start" configuration is very simple in order 
-to be easily installable. It provides minimum features. Particularly, 
-authentication is by default disabled, which means anyone can register using
-any name with the server. (This is on purpose to avoid installation 
-dependencies on MySQL which is needed for storing user credentials.)
+   Note well the default "quick-start" configuration is very simple in order 
+   to be easily installable. It provides minimum features. Particularly, 
+   authentication is by default disabled, which means anyone can register
+   using any name with the server. (This is on purpose to avoid installation 
+   dependencies on MySQL which is needed for storing user credentials.)
+
+   As soon as everything is working fine, you should advance to the more
+   complex scenario described in section 3.4.
 
 
-C) Quick Start
+3.3. Quick Start
 
-The following step-by step guide gives you instructions how to install the 
-sql-free distribution of ser. If you need persistence and authentication, 
-then you have to install additional MySql support -- proceed to section D)
-after you are finished with C).
+   The following step-by step guide gives you instructions how to install the
+   sql-free distribution of ser. If you need persistence and authentication,
+   then you have to install additional MySql support -- proceed to section D)
+   after you are finished with C).
 
-1) Download an RPM or debian package from our site
-    http://www.iptel.org/ser
-If you don't use an rpm or debian based distribution, try our tar.gz'ed binaries
- (ser-$(version)_$(os)_$(arch).tar.gz, e.g: ser-0.8.8_linux_i386.tar.gz).
-If you use Solaris 8 you can try our solaris package.
-If you use Gentoo Linux you do not have to download a package.
-
-2) install the package
-RPM:
-    rpm -i <package_name>
-debian:
-    dpkg -i <package_name>
-gentoo:
-    emerge ser
-	(or if use only stable packets:
-	 ACCEPT_KEYWORDS="~x86" emerge ser)
-tar.gz:
-    cd /; tar zxvf <package_name>_os_arch.tar.gz
-    (it will install in /usr/local/, and the configuration file in
-     /usr/local/etc/ser/ser.cfg)
-Solaris:
-    gunzip <package_name>.gz ; pkgadd -d <package_name>
-*BSD:
-    pkg_add package_name
+      1. Download an RPM or debian package from our site
     
-3) start the server
-RPM + gentoo:
-    /etc/init.d/ser start
-debian:
-    ser is started automatically after the install
-    (in case something fails you can start it with /etc/init.d/ser start)
-tar.gz:
-    the tar.gz does not include an init.d script, you'll have to create one of
-    your own or adapt one from the source distribution (debian/init.d,
-    rpm/ser.init.*, gentoo/ser.init)
-    You can start ser directly with /usr/local/sbin/ser.
-Solaris:
-    see tar.gz.
+            http://www.iptel.org/ser
+
+         If you don't use an rpm or debian based distribution, try our
+         tar.gz'ed binaries (ser-$(version)_$(os)_$(arch).tar.gz, e.g:
+         ser-0.8.8_linux_i386.tar.gz).  If you use Solaris 8 you can try our
+         solaris package.  If you use Gentoo Linux you do not have to
+         download a package.
+
+      2. Install the package
+
+            o  RPM: rpm -i <package_name>
+ 
+            o  Debian: dpkg -i <package_name>
+               (or, if available in version 2.0 in your Debian release,
+               just do apt-get install ser. In this case you don't need
+               to download anything, of course).
+
+            o  gentoo: emerge ser
+               (or if use only stable packets:
+               ACCEPT_KEYWORDS="~x86" emerge ser)
+
+            o  tar.gz:
+
+                  $ cd /; tar zxvf <package_name>_os_arch.tar.gz
+
+               (it will install in /usr/local/, and the configuration file
+               in /usr/local/etc/ser/ser.cfg)
+
+            o  Solaris:
+
+                  $ gunzip <package_name>.gz ; pkgadd -d <package_name>
+
+            o  The BSDs:
+
+                  $ pkg_add package_name
     
-4) optionally, watch server's health using the
-   serctl utility
-    - to do so, first set the environment variable SIP_DOMAIN to your domain 
-      name, e.g., in Bourne shell, call
-        export SIP_DOMAIN="myserver.foobar.com"
-	- if you are using other than 'localhost' mysql server for maintaining
-	  subscriber database, change the variable 'SQL_HOST' to the proper
-	  host name in the serctl script
-    - run the serctl utility
-        /usr/sbin/serctl moni
-      or
-        /usr/local/sbin/serctl moni (if you installed from a tar.gz or solaris
-        package)
+      3. Start the server
 
-5) Register with the server using your favorite
-   SIP User Agent. You may want to look at configuration
-   hints for use of iptel.org site at
-     http://www.iptel.org/phpBB/viewforum.php?forum=1&8
-   For example, users of Windows Messenger need to set
-   in Tools->Options->Accounts the following values:
-     Sign-in Name: <username>@<your_server_address>
-     Advanced->Configure Settings (on)
-     Advanced->Server: <your_server_address>
-     Connect Using: UDP
+            o  RPM + gentoo: /etc/init.d/ser start
+
+            o  Debian: ser is started automatically after the install
+               (in case something fails you can start it with
+               /etc/init.d/ser start)
+
+            o  tar.gz: the tar.gz does not include an init.d script,
+               you'll have to create one of your own or adapt one from the
+               source distribution (debian/init.d, rpm/ser.init.*,
+               gentoo/ser.init).  You can start ser directly with
+               /usr/local/sbin/ser.
+
+            o  Solaris: see tar.gz.
+    
+      4. Optionally, watch server's health using the serctl utility.
+
+         XXX Does this still work?
+
+            o  to do so, first set the environment variable SIP_DOMAIN to
+               your domain name, e.g., in Bourne shell, call 
+               
+                  $ export SIP_DOMAIN="myserver.foobar.com"
+
+	    o  if you are using other than 'localhost' mysql server for
+               maintaining subscriber database, change the variable
+               'SQL_HOST' to the proper host name in the serctl script
+
+            o  run the serctl utility
+
+                  $ /usr/sbin/serctl moni
+      
+               or
+                  
+                  $ /usr/local/sbin/serctl moni
+                  
+               (if you installed from a tar.gz or solaris package)
+
+      5. Register with the server using your favorite SIP User Agent.
+         Point it to the IP address or hostname of your server and use
+         whatever username you like.
 
 
+3.4 SER with Persistent Data Storage
 
-D) ser with Persistent Data Storage
+   The default configuration is very simple and features many
+   simplifications. In particular, it does not authenticate users and looses
+   the user location database on reboot. To provide persistence, keep user
+   credentials and remember users' locations across reboots, ser can be
+   configured to use MySQL.
+   
+      1. Before you proceed, you need to make sure MySQL is installed on
+         your server. Your MySQL server must be configured to deal with a
+         large number of connection. To increase it, set the following line
+         in [mysqld] section of your configuration file:
 
-The default configuration is very simple and features many simplifications. 
-In particular, it does not authenticate users and loses User Location database 
-on reboot. To provide persistence, keep user credentials and remember users' 
-locations across reboots, ser can be configured to use MySQL. Before you proceed, 
-you need to make sure MySQL is installed on your box. Your MySQL server must be 
-configured to deal with a large number of connection. To increase it, set the 
-following line in [mysqld] section of your configuration file:
+            set-variable    = max_connections=500
 
-   set-variable    = max_connections=500
+      2. Download the package containing mysql support for ser from
+         http://www.iptel.org/ser/ (rpm and deb provided, most of the binary
+         tar.gz distributions and the solaris package include it by default;
+         if it is not present you'll have to rebuild from the source).
 
-1) Download the package containing mysql support for ser from: 
-    http://www.iptel.org/ser/
-    (rpm and deb provided, most of the binary tar.gz distributions and the 
-     solaris package include it; if it is not present you'll have to rebuild
-     from the source).
-	For gentoo please include 'mysql' to your USE variable in /etc/make.conf
-	or give it as variable to the emerge command.
-2) install the package
-    rpm -i <package_name>
-    or
-    dpkg -i <package_name>
-	or
-	emerge ser
-	(if do not want to put 'mysql' into your USE variable you can type:
-	 USE="mysql" emerge ser)
-3) create MySQL tables
-	- if you have a previously installed SER on your system, use
-    	/usr/sbin/ser_mysql.sh reinstall 
-	  to convert your SER database into new structures
-	- otherwise, if this is your very first installation, use
-    	/usr/sbin/ser_mysql.sh create
-	  to create SER database structures
-   (you will be prompted for password of MySql "root" user)
-4) configure ser to use SQL
-    uncomment all lines in configuration file ser.cfg which are related to 
-    authentication:
-    - loadmodule "/usr/lib/ser/modules/mysql.so"
-    - loadmodule "/usr/lib/ser/modules/auth.so"
-    - loadmodule "/usr/lib/ser/modules/auth_db.so"
-    - modparam("usrloc", "db_mode", 2)
-    - modparam("auth", "calculate_ha1", yes)
-    - modparam("auth_db", "password_column", "password")
-    - if (!www_authorize("iptel.org", "subscriber")) {
-        www_challenge("iptel.org", "0"); 
-        break;
-      }; 
-5) be sure to replace realm, the first parameter in www_* actions, 
-   with name of your server; some broken UAC implementations don't 
-   authenticate otherwise; the authentication command in your
-   configuration script should look then like this:
-      if (!www_authorize("myserver.foobar.com", "subscriber")) {
-        www_challenge("myserver.foobar.com", "0"); 
-        break;
-      }
-6) restart the server
-    /etc/init.d/ser restart
-7) you can now start  managing the server using the serctl utility; 
-   you need to first set the environment variable SIP_DOMAIN to your 
-   local SIP realm, e.g.,
-       export SIP_DOMAIN="myserver.foobar.com"
+	 For gentoo please include 'mysql' to your USE variable in
+         /etc/make.conf or give it as variable to the emerge command.
 
-   a) watch the server status using 'serctl moni'
-   b) try to login with your SIP client as user 'admin' with password 'heslo'
-   c) try adding new users using 
-       'serctl add <name> <password> <email>'
+      3. Install the package
+
+            $ rpm -i <package_name>
+
+         or
+ 
+            $ dpkg -i <package_name>
+	
+         or
+	
+            $ USE="mysql" emerge ser
+	 
+      4. Create MySQL tables. If this is your first installation, you
+         can do this using the command
+
+            $ /usr/sbin/ser_mysql.sh create
+
+         (if you use the .tar.gz packages, the script will be in 
+         /usr/local/sbin). If you a previously installed SER on your
+         system, use
+
+            $ /usr/sbin/ser_mysql.sh reinstall 
+            
+	 to convert your SER database into new structures.
+
+      5. Configure ser to use the database.
+
+         The easiest way to get a fully functional configuration with all
+         bells and whistels is to use the example configuration file
+         ser-oob.cfg. Just make it your ser.cfg file
+
+            $ cp /etc/ser/ser-oob.cfg /etc/ser/ser.cfg
+
+         XXX Is it actually installed in /etc/ser?
+
+      6. Restart the server
+
+            $ /etc/init.d/ser restart
+
+     7.  Create a domain and some users.
+
+         [TODO] XXX This kinda sucks without serctl. Should we quickly
+                    create a poor mans version that can only add a
+                    domain and users?
+
+         This is best being done with the ser_ctl management tool
+         which is available at XXX Right, er, exactly?
 
 
 4. Troubleshooting
-------------------
 
-Q: Windows Messenger authentication fails. 
+   Q: Windows Messenger authentication fails. 
 
-A: The most likely reason for this problem is a bug in Windows Messenger. 
-WM only authenticates if server name in request URI equals authentication 
-realm. After a challenge is sent by SIP server, WM does not resubmit the 
-challenged request at all and pops up authentication window again. If you 
-want to authenticate WM, you need to set up your realm value to equal server 
-name. If your server has no name, IP address can be used as realm too.
+   A: The most likely reason for this problem is a bug in Windows Messenger. 
+      WM only authenticates if server name in request URI equals
+      authentication realm. After a challenge is sent by SIP server, WM does
+      not resubmit the challenged request at all and pops up authentication
+      window again. If you want to authenticate WM, you need to set up your
+      realm value to equal server name. If your server has no name, IP
+      address can be used as realm too.
 
-Q: SIP requests are replied by ser with "483 Too Many Hops" or 
-   "513 Message Too Large"
+   Q: SIP requests are replied by ser with "483 Too Many Hops" or 
+      "513 Message Too Large"
 
-A: In both cases, the reason is probably an error in request routing script 
-   which caused an infinite loop. You can easily verify whether this happens 
-   by watching SIP traffic on loopback interface. A typical reason for misrouting 
-   is a failure to match local domain correctly. If a server fails to recognize 
-   a request for itself, it will try to forward it to current URI in believe it 
-   would forward them to a foreign domain. Alas, it forwards the request to itself 
-   again. This continues to happen until value of max_forwards header field reaches 
-   zero or the request grows too big. Solutions is easy: make sure that domain matching 
-   is correctly configured. A quick way to achieve that is to introduce a config
-   option to ser.cfg: alias=domainname, where domainname shall be replaced with
-   name of domain, which you wish to server and which appears in request-URIs.
+   A: In both cases, the reason is probably an error in request routing
+      script which caused an infinite loop. You can easily verify whether
+      this happens by watching SIP traffic on loopback interface. A typical
+      reason for misrouting is a failure to match local domain correctly. If
+      a server fails to recognize a request for itself, it will try to
+      forward it to current URI in believe it would forward them to a
+      foreign domain. Alas, it forwards the request to itself again. This
+      continues to happen until value of max_forwards header field reaches
+      zero or the request grows too big. Solutions is easy: make sure that
+      domain matching is correctly configured. A quick way to achieve that
+      is to introduce a config option to ser.cfg: alias=domainname, where
+      domainname shall be replaced with name of domain, which you wish to
+      server and which appears in request-URIs.
