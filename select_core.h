@@ -130,6 +130,7 @@ SELECT_F(select_msg_id)
 SELECT_F(select_msg_id_hex)
 SELECT_F(select_msg_body)
 SELECT_F(select_msg_body_sdp)
+SELECT_F(select_sdp_line)
 SELECT_F(select_msg_header)
 SELECT_F(select_anyheader)
 SELECT_F(select_anyheader_params)
@@ -318,6 +319,7 @@ static select_row_t select_core[] = {
 	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("body"), select_msg_body, 0},
 	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("content"), select_msg_body, 0},
 	{ select_msg_body, SEL_PARAM_STR, STR_STATIC_INIT("sdp"), select_msg_body_sdp, 0},
+	{ select_msg_body_sdp, SEL_PARAM_STR, STR_STATIC_INIT("line"), select_sdp_line, CONSUME_NEXT_STR | FIXUP_CALL},
 	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("request"), select_msg_request, 0},
 	{ select_msg, SEL_PARAM_STR, STR_STATIC_INIT("req"), select_msg_request, 0},
 	{ select_msg_request, SEL_PARAM_STR, STR_STATIC_INIT("method"), select_msg_request_method, 0},

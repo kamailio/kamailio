@@ -508,6 +508,74 @@ int select_msg_body_sdp(str* res, select_t* sel, struct sip_msg* msg)
 		return -1;
 }
 
+int select_sdp_line(str* res, select_t* sel, struct sip_msg* msg)
+{
+	int	len;
+	char	*buf;
+	char	*buf_end, *line_end;
+	char	line;
+
+	if (msg == NULL) {
+		if (res!=NULL) return -1;
+		if (sel->n < 5) return -1;
+
+		if (sel->params[4].type != SEL_PARAM_STR) {
+			ERR("wrong parameter type");
+			return -1;
+		}
+		if ((sel->params[4].v.s.len < 1) ||
+			(sel->params[4].v.s.len > 2) ||
+			((sel->params[4].v.s.len == 2) && (sel->params[4].v.s.s[1] != '='))
+		) {
+			ERR("wrong sdp line format: %.*s\n",
+				sel->params[4].v.s.len, sel->params[4].v.s.s);
+			return -1;
+		}
+		return 0;
+	}
+
+	/* try to get the body part with application/sdp */
+	if (!(buf = get_body_part(msg,
+				TYPE_APPLICATION, SUBTYPE_SDP,
+				&len))
+	)
+		return -1;
+
+	buf_end = buf + len;
+	line = *(sel->params[4].v.s.s);
+
+	while (buf < buf_end) {
+		if (*buf == line) {
+			/* the requested SDP line is found, return its value */
+			buf += 2;
+			line_end = buf;
+			while ((line_end < buf_end) && (*line_end != '\n'))
+				line_end++;
+
+			if (line_end >= buf_end) {
+				ERR("wrong SDP line format\n");
+				return -1;
+			}
+			line_end--;
+			if (*line_end == '\r') line_end--;
+
+			if (line_end < buf) {
+				ERR("wrong SDP line format\n");
+				return -1;
+			}
+
+			res->s = buf;
+			res->len = line_end - buf + 1;
+			return 0;
+		}
+		while ((buf < buf_end) && (*buf != '\n'))
+			buf++;
+		buf++;
+	}
+
+	return -1;
+}
+
 int select_msg_header(str* res, select_t* s, struct sip_msg* msg)
 {
 	/* get all headers */
