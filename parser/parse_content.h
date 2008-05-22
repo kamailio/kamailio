@@ -120,4 +120,9 @@ int parse_accept_hdr( struct sip_msg *msg );
  */
 char* parse_content_length( char* buffer, char* end, int* len);
 
+/*
+ * Sets the mime type from the body of a Content-Type header
+ */
+char* decode_mime_type(char *start, char *end, unsigned int *mime_type);
+
 #endif
