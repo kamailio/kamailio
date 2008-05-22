@@ -54,6 +54,10 @@ static inline void parse_contact_class(param_hooks_t* _h, param_t* _p)
 		LOG(L_ERR, "ERROR: parse_contact_class: empty value\n");
 		return;
 	}
+	if (!_h) {
+		LOG(L_CRIT, "BUG: parse_uri_class: NULL param hook pointer\n");
+		return;
+	}
 	switch(_p->name.s[0]) {
 	case 'q':
 	case 'Q':
@@ -109,6 +113,10 @@ static inline void parse_uri_class(param_hooks_t* _h, param_t* _p)
 
 	if (!_p->name.s) {
 		LOG(L_ERR, "ERROR: parse_uri_class: empty value\n");
+		return;
+	}
+	if (!_h) {
+		LOG(L_CRIT, "BUG: parse_uri_class: NULL param hook pointer\n");
 		return;
 	}
 	switch(_p->name.s[0]) {
@@ -316,7 +324,7 @@ static inline void parse_param_name(str* _s, pclass_t _c, param_hooks_t* _h, par
 
  out:
 	_p->name.len = _s->s - _p->name.s;
-	
+
 	switch(_c) {
 	case CLASS_CONTACT: parse_contact_class(_h, _p); break;
 	case CLASS_URI:     parse_uri_class(_h, _p);     break;
@@ -436,12 +444,13 @@ int parse_params(str* _s, pclass_t _c, param_hooks_t* _h, param_t** _p)
 {
 	param_t* t;
 
-	if (!_s || !_h || !_p) {
+	if (!_s || !_p) {
 		LOG(L_ERR, "parse_params(): Invalid parameter value\n");
 		return -1;
 	}
 
-	memset(_h, 0, sizeof(param_hooks_t));
+	if (_h)
+		memset(_h, 0, sizeof(param_hooks_t));
 	*_p = 0;
 
 	if (!_s->s) { /* no parameters at all -- we're done */
