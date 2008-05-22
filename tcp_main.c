@@ -1623,7 +1623,7 @@ no_id:
 				if (unlikely(*tcp_connections_no >= tcp_max_connections)){
 					LOG(L_ERR, "ERROR: tcp_send %s: maximum number of"
 								" connections exceeded (%d/%d)\n",
-								su2a(&dst->to, sizeof(&dst->to)),
+								su2a(&dst->to, sizeof(dst->to)),
 								*tcp_connections_no, tcp_max_connections);
 					return -1;
 				}
@@ -1632,7 +1632,7 @@ no_id:
 				if (unlikely(c==0)){
 					LOG(L_ERR, "ERROR: tcp_send %s: could not create new"
 							" connection\n",
-							su2a(&dst->to, sizeof(&dst->to)));
+							su2a(&dst->to, sizeof(dst->to)));
 					return -1;
 				}
 				c->flags|=F_CONN_PENDING|F_CONN_FD_CLOSED;
@@ -1642,7 +1642,7 @@ no_id:
 				if (unlikely(tcpconn_add(c)==0)){
 					LOG(L_ERR, "ERROR: tcp_send %s: could not add "
 								"connection %p\n",
-								su2a(&dst->to, sizeof(&dst->to)),
+								su2a(&dst->to, sizeof(dst->to)),
 									c);
 					_tcpconn_free(c);
 					n=-1;
@@ -1652,7 +1652,7 @@ no_id:
 				 * aliases */
 				if (unlikely((fd=tcpconn_finish_connect(c, from))<0)){
 					LOG(L_ERR, "ERROR: tcp_send %s: tcpconn_finish_connect(%p)"
-							" failed\n", su2a(&dst->to, sizeof(&dst->to)),
+							" failed\n", su2a(&dst->to, sizeof(dst->to)),
 								c);
 					goto conn_wait_error;
 				}
@@ -1678,7 +1678,7 @@ no_id:
 								n=-1;
 								LOG(L_ERR, "ERROR: tcp_send %s: EAGAIN and"
 										" write queue full or failed for %p\n",
-										su2a(&dst->to, sizeof(&dst->to)),
+										su2a(&dst->to, sizeof(dst->to)),
 										c);
 								goto conn_wait_error;
 							}
@@ -1691,7 +1691,7 @@ no_id:
 							LOG(L_ERR, "BUG: tcp_send %s: "
 										"CONN_NEW_PENDING_WRITE  for %p"
 										" failed:" " %s (%d)\n",
-										su2a(&dst->to, sizeof(&dst->to)),
+										su2a(&dst->to, sizeof(dst->to)),
 										c, strerror(errno), errno);
 							goto conn_wait_error;
 						}
@@ -1701,7 +1701,7 @@ no_id:
 					/* error: destroy it directly */
 					LOG(L_ERR, "ERROR: tcp_send %s: connect & send "
 										" for %p failed:" " %s (%d)\n",
-										su2a(&dst->to, sizeof(&dst->to)),
+										su2a(&dst->to, sizeof(dst->to)),
 										c, strerror(errno), errno);
 					goto conn_wait_error;
 				}
@@ -1713,7 +1713,7 @@ no_id:
 										sizeof(response), fd) <= 0)){
 					LOG(L_ERR, "BUG: tcp_send %s: CONN_NEW_COMPLETE  for %p"
 								" failed:" " %s (%d)\n",
-								su2a(&dst->to, sizeof(&dst->to)),
+								su2a(&dst->to, sizeof(dst->to)),
 								c, strerror(errno), errno);
 					goto conn_wait_error;
 				}
@@ -1722,7 +1722,7 @@ no_id:
 #endif /* TCP_CONNECT_WAIT  && TCP_BUF_WRITE */
 			if (unlikely((c=tcpconn_connect(&dst->to, from, dst->proto))==0)){
 				LOG(L_ERR, "ERROR: tcp_send %s: connect failed\n",
-								su2a(&dst->to, sizeof(&dst->to)));
+								su2a(&dst->to, sizeof(dst->to)));
 				return -1;
 			}
 			atomic_set(&c->refcnt, 2); /* ref. from here and it will also
@@ -1738,7 +1738,7 @@ no_id:
 			n=send_fd(unix_tcp_sock, response, sizeof(response), c->s);
 			if (unlikely(n<=0)){
 				LOG(L_ERR, "BUG: tcp_send %s: failed send_fd: %s (%d)\n",
-						su2a(&dst->to, sizeof(&dst->to)),
+						su2a(&dst->to, sizeof(dst->to)),
 						strerror(errno), errno);
 				/* we can safely delete it, it's not referenced by anybody */
 				_tcpconn_free(c);
@@ -1896,7 +1896,7 @@ send_it:
 #endif /* TCP_BUF_WRITE */
 		LOG(L_ERR, "ERROR: tcp_send: failed to send on %p (%s:%d->%s): %s (%d)"
 					"\n", c, ip_addr2a(&c->rcv.dst_ip), c->rcv.dst_port,
-					su2a(&c->rcv.src_su, sizeof(&c->rcv.src_su)),
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
 					strerror(errno), errno);
 #ifdef TCP_BUF_WRITE
 error:
@@ -1919,7 +1919,7 @@ error:
 		if (unlikely(fd_cache_e)){
 			LOG(L_ERR, "ERROR: tcp_send %s: error on cached fd, removing from"
 					" the cache (%d, %p, %d)\n", 
-					su2a(&c->rcv.src_su, sizeof(&c->rcv.src_su)),
+					su2a(&c->rcv.src_su, sizeof(c->rcv.src_su)),
 					fd, fd_cache_e->con, fd_cache_e->id);
 			tcp_fd_cache_rm(fd_cache_e);
 			close(fd);
