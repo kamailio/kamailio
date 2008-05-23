@@ -30,6 +30,9 @@
  * the mime type (bogdan)
  * 2003-08-04 CPL subtype added (bogdan)
  * 2003-08-05 parse_accept_hdr function added (bogdan)
+ * 2008-05-23 reset the type/subtype to unknown, if the end of
+ *		tree has reached, but the type/subtype has still
+ *		some remaining characters (Miklos)
  */
 
 
@@ -256,6 +259,7 @@ char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 	int node;
 	char *mark;
 	char *p;
+	unsigned int type_candidate;
 
 	p = start;
 
@@ -273,22 +277,28 @@ char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 	} else {
 		node = 0;
 		mark = p;
+		type_candidate = TYPE_UNKNOWN;
 		while (p<end && is_mime_char(*p)  ) {
 			while ( node!=-1 && !is_char_equal(*p,type_tree[node].c) ){
 				node = type_tree[node].next;
 			}
-			if (node!=-1 && type_tree[node].nr_sons)
-				node++; 
-				/* ? increment only for (p < end - 1), 
-				 * otherwise will not work for final nodes with children */
+			if (node!=-1) {
+				type_candidate = type_tree[node].final;
+				if (type_tree[node].nr_sons)
+					node++;
+				else
+					node = -1;
+			} else {
+				/* end of the type tree has reached,
+				but the type has still some remaining
+				characters (Miklos) */
+				type_candidate = TYPE_UNKNOWN;
+			}
 			p++;
 		}
 		if (p==end || mark==p)
 			goto error;
-		if (node!=-1)
-			*mime_type = type_tree[node].final<<16;
-		else
-			*mime_type = TYPE_UNKNOWN<<16;
+		*mime_type = type_candidate<<16;
 	}
 
 	/* search the '/' separator */
@@ -312,19 +322,27 @@ char* decode_mime_type(char *start, char *end, unsigned int *mime_type)
 	} else {
 		node = 0;
 		mark = p;
+		type_candidate = SUBTYPE_UNKNOWN;
 		while (p<end && is_mime_char(*p) ) {
 			while(node!=-1 && !is_char_equal(*p,subtype_tree[node].c) )
 				node = subtype_tree[node].next;
-			if (node!=-1 && subtype_tree[node].nr_sons && (p < end - 1))
-				node++;
+			if (node!=-1) {
+				type_candidate = subtype_tree[node].final;
+				if (subtype_tree[node].nr_sons)
+        				node++;
+				else
+					node = -1;
+			} else {
+				/* end of the subtype tree has reached,
+				but the subtype has still some remaining
+				characters (Miklos) */
+				type_candidate = SUBTYPE_UNKNOWN;
+			}
 			p++;
 		}
 		if (p==mark)
 			goto error;
-		if (node!=-1)
-			*mime_type |= subtype_tree[node].final;
-		else
-			*mime_type |= SUBTYPE_UNKNOWN;
+		*mime_type |= type_candidate;;
 	}
 
 	/* now its possible to have some spaces */
