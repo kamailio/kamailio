@@ -496,6 +496,7 @@ int select_msg_body(str* res, select_t* s, struct sip_msg* msg)
 	return 0;	
 }
 
+/* returns the sdp part of the message body */
 int select_msg_body_sdp(str* res, select_t* sel, struct sip_msg* msg)
 {
 	/* try to get the body part with application/sdp */
@@ -508,6 +509,7 @@ int select_msg_body_sdp(str* res, select_t* sel, struct sip_msg* msg)
 		return -1;
 }
 
+/* returns the value of the requested SDP line */
 int select_sdp_line(str* res, select_t* sel, struct sip_msg* msg)
 {
 	int	len;
@@ -547,7 +549,13 @@ int select_sdp_line(str* res, select_t* sel, struct sip_msg* msg)
 	while (buf < buf_end) {
 		if (*buf == line) {
 			/* the requested SDP line is found, return its value */
-			buf += 2;
+			buf++;
+			if ((buf >= buf_end) || (*buf != '=')) {
+				ERR("wrong SDP line format\n");
+				return -1;
+			}
+			buf++;
+
 			line_end = buf;
 			while ((line_end < buf_end) && (*line_end != '\n'))
 				line_end++;
