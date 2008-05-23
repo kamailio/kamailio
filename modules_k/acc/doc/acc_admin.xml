@@ -21,17 +21,17 @@
 		module takes no acc-specific script command -- the functionality 
 		binds invisibly through transaction processing. Script writers just 
 		need to mark the transaction for accounting with proper setflag. 
-		Even so, the module allows the script writter to force accouting in 
+		Even so, the module allows the script writter to force accounting in 
 		special cases via some script functions.
 	</para>
 	<para>
-		The accouting module will log by default a fixed set of attributes 
-		for the transaction - if you customize you accouting by adding more
+		The accounting module will log by default a fixed set of attributes 
+		for the transaction - if you customize your accounting by adding more
 		information to be logged, please see the next chapter about extra
-		accouting - <xref linkend="ACC-extra-id"/>.
+		accounting - <xref linkend="ACC-extra-id"/>.
 	</para>
 	<para>
-		The fixed minimal accouting information is: 
+		The fixed minimal accounting information is: 
 		<itemizedlist>
 		<listitem>
 			<para>Request Method name</para>
@@ -64,13 +64,13 @@
 		<listitem>
 			<para>
 			A single INVITE may produce multiple accounting reports -- that's
-			due to SIP forking feature
+			due to SIP forking feature.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
-			All flags related to accouting need to be set in request processing
-			route - only the "missed-call" flag may be toggeled from other
+			All flags related to accounting need to be set in request processing
+			route - only the "missed-call" flag may be toggled from other
 			types of routes.
 			</para>
 		</listitem>
@@ -79,14 +79,14 @@
 			There is no session/dialog accounting (yet) -- &openser; maintains
 			no sessions. If one needs to correlate INVITEs with BYEs for 
 			generating proper CDRs for example for purpose of billing, then 
-			it is better done in the entity which collects accounting 
+			it is better done in the entity which processes accounting 
 			information.
 			</para>
 		</listitem>
 		<listitem>
 			<para>
 			If a UA fails in middle of conversation, a proxy will never 
-			learn it. In general, a better practice is to account from an 
+			find out about it. In general, a better practice is to account from an 
 			end-device (such as PSTN gateway), which best knows about call 
 			status (including media status and PSTN status in case of the 
 			gateway).
@@ -95,7 +95,7 @@
 		</itemizedlist>
 	</para>
 	<para>
-		The SQL backend support is compiled in the moduls. For RADIUS and 
+		The SQL backend support is compiled in the modules. For RADIUS and 
 		DIAMETER you need to enable it by recompiling the module with properly 
 		set defines: uncomment the RAD_ACC or DDIAM_ACC lines in
 		modules/acc/Makefile. To compile RADIUS support, 
@@ -165,7 +165,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 			Selection of extra information is done via 
 			<emphasis>xxx_extra</emphasis> parameters by specifying the names
 			of additional information you want to log. This information is 
-			defined via pseudo-variables and may include headers or AVPs values
+			defined via pseudo-variables and may include headers, AVPs values
 			or other message or system values. The syntax of the parameter is:
 			</para>
 			<itemizedlist>
@@ -243,23 +243,23 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 		<section>
 			<title>Configuration</title>
 			<para>
-			First how it works? The idea is to have a set of AVPs and for each
-			call leg to store another set of values of the AVPs. The meaning 
-			the AVP content is stricly decided by the script writter - it can
+			First how it works: The idea is to have a set of AVPs and for each
+			call leg to store a set of values in the AVPs. The meaning of
+			the AVP content is stricly decided by the script writer - it can
 			be the origin and source of the leg, its status or any other 
-			related imformation. If you have a set of 4 AVPS (AVP1, AVP2, AVP3,
-			AVP4), then, for the A call B and B forwards to C example, the for
-			each leg ([A,B] and [B,C]) you need to set a different set of 
-			values for the AVPs.
+			related information. If you have a set of 4 AVPS (AVP1, AVP2, AVP3,
+			AVP4), then for the "A call B and B forwards to C" example, 
+			you need to set a different set of values for the AVPs
+			for each leg ([A,B] and [B,C]) .
 			The script writer must take care and properly insert all 
-			these AVP from the script (in proper order and with correct type).
+			these AVP from the script (in proper order and with the correct type).
 			</para>
 			<para>
-			When the accouning infomation for the call will be written/sent, 
-			all the call-leg pairs will be added (based on found AVP sets).
+			When the accounting information for the call will be written/sent, 
+			all the call-leg pairs will be added (based on the found AVP sets).
 			</para>
 			<para>
-			By default, the multiple call-legs support is disabled - it can be
+			By default, the multiple call-leg support is disabled - it can be
 			enabled just be setting the per-leg set of AVPs via the 
 			<varname>multi_leg_info</varname> module parameter.
 			</para>
@@ -285,16 +285,16 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 				</para>
 				<note><para>You will need to add in your DB (all acc related
 				tables) the colums for call-leg info (a column for each AVP
-				for the set).
+				of the set).
 				</para></note>
 				</listitem>
 				<listitem>
 				<para><emphasis>Radius</emphasis> -- all sets will be added
-				to same Radius accounting message as RADIUS AVPs - for each
+				to the same Radius accounting message as RADIUS AVPs - for each
 				call-leg a set of RADIUS AVPs will be added (corresponding
 				to the per-leg AVP set)
 				</para>
-				<note><para>You will need to add in your dictionaty the
+				<note><para>You will need to add in your dictionary the
 				RADIUS AVPs used in call-leg AVP set definition.
 				</para></note>
 				</listitem>
@@ -404,7 +404,7 @@ modparam("acc", "report_ack", 1)
 		<title><varname>report_cancels</varname> (integer)</title>
 		<para>
 		By default, CANCEL reporting is disabled -- most accounting
-		applications are happy to see INVITE's cancellation status.
+		applications wants to see INVITE's cancellation status.
 		Turn on if you explicitly want to account CANCEL transactions.
 		</para>
 		<para>
@@ -442,7 +442,7 @@ modparam("acc", "detect_direction", 1)
 	<section>
 		<title><varname>multi_leg_info</varname> (string)</title>
 		<para>
-		Defines the AVP set to be used in per-call-leg accoutning.
+		Defines the AVP set to be used in per-call-leg accounting.
 		See <xref linkend="multi-call-legs"/> for a 
 		detailed description of the Multi Call-Legs accounting.
 		</para>
