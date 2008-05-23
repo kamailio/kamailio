@@ -10,8 +10,8 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -157,7 +157,7 @@ modparam("presence", "db_url",
 
    Example 1.2. Set presentity_table parameter
 ...
-modparam("presence", "presentity_table", "presentity");
+modparam("presence", "presentity_table", "presentity")
 ...
 
 1.3.3. active_watchers_table(str)

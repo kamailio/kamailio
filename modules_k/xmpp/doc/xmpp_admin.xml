@@ -131,7 +131,7 @@
 		<title>Set <varname>backend</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "backend", "server");
+ modparam("xmpp", "backend", "server")
 ...
 </programlisting>
 		</example>
@@ -155,7 +155,7 @@
 		<title>Set <varname>domain_separator</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "domain_separator", "*");
+ modparam("xmpp", "domain_separator", "*")
 ...
 </programlisting>
 		</example>
@@ -176,7 +176,7 @@
 		<title>Set <varname>gateway_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org");
+ modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org")
 ...
 </programlisting>
 		</example>
@@ -195,7 +195,7 @@
 		<title>Set <varname>xmpp_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org");
+ modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org")
 ...
 </programlisting>
 		</example>
@@ -214,7 +214,7 @@
 		<title>Set <varname>xmpp_host</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_host", "xmpp.openser.org");
+ modparam("xmpp", "xmpp_host", "xmpp.openser.org")
 ...
 </programlisting>
 		</example>
@@ -233,7 +233,7 @@
 		<title>Set <varname>xmpp_port</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_port", "5269");
+ modparam("xmpp", "xmpp_port", "5269")
 ...
 </programlisting>
 		</example>
@@ -258,7 +258,7 @@
 		<title>Set <varname>xmpp_password</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_password", "secret");
+ modparam("xmpp", "xmpp_password", "secret")
 ...
 </programlisting>
 		</example>
@@ -281,7 +281,7 @@
 		<title>Set <varname>outbound_proxy</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp");
+ modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp")
 ...
 </programlisting>
 		</example>

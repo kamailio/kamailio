@@ -112,7 +112,7 @@ modparam("presence", "db_url",
 		<title>Set <varname>presentity_table</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("presence", "presentity_table", "presentity");
+modparam("presence", "presentity_table", "presentity")
 ...
 </programlisting>
 		</example>

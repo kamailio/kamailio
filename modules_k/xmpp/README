@@ -12,8 +12,8 @@ Andreea Spirea
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -151,7 +151,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Set backend parameter
 ...
- modparam("xmpp", "backend", "server");
+ modparam("xmpp", "backend", "server")
 ...
 
 1.3.2. domain_separator (string)
@@ -167,7 +167,7 @@ Chapter 1. Admin Guide
 
    Example 1.2. Set domain_separator parameter
 ...
- modparam("xmpp", "domain_separator", "*");
+ modparam("xmpp", "domain_separator", "*")
 ...
 
 1.3.3. gateway_domain (string)
@@ -181,7 +181,7 @@ Chapter 1. Admin Guide
 
    Example 1.3. Set gateway_domain parameter
 ...
- modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org");
+ modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org")
 ...
 
 1.3.4. xmpp_domain (string)
@@ -193,7 +193,7 @@ Chapter 1. Admin Guide
 
    Example 1.4. Set xmpp_domain parameter
 ...
- modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org");
+ modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org")
 ...
 
 1.3.5. xmpp_host (string)
@@ -206,7 +206,7 @@ Chapter 1. Admin Guide
 
    Example 1.5. Set xmpp_host parameter
 ...
- modparam("xmpp", "xmpp_host", "xmpp.openser.org");
+ modparam("xmpp", "xmpp_host", "xmpp.openser.org")
 ...
 
 1.3.6. xmpp_port (integer)
@@ -220,7 +220,7 @@ Chapter 1. Admin Guide
 
    Example 1.6. Set xmpp_port parameter
 ...
- modparam("xmpp", "xmpp_port", "5269");
+ modparam("xmpp", "xmpp_port", "5269")
 ...
 
 1.3.7. xmpp_password (string)
@@ -238,7 +238,7 @@ Chapter 1. Admin Guide
 
    Example 1.7. Set xmpp_password parameter
 ...
- modparam("xmpp", "xmpp_password", "secret");
+ modparam("xmpp", "xmpp_password", "secret")
 ...
 
 1.3.8. outbound_proxy (string)
@@ -253,7 +253,7 @@ Chapter 1. Admin Guide
 
    Example 1.8. Set outbound_proxy parameter
 ...
- modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp");
+ modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp")
 ...
 
 1.4. Exported Functions
