@@ -83,13 +83,13 @@ void domain_db_close(void)
 
 
 
-int domain_db_ver(str* name)
+int domain_db_ver(str* name, int version)
 {
 	if (db_handle==0){
-		LM_ERR("Null database handler\n");
+		LM_ERR("null database handler\n");
 		return -1;
 	}
-	return db_table_version(&domain_dbf, db_handle, name);
+	return db_check_table_version(&domain_dbf, db_handle, name, version);
 }
 
 

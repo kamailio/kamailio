@@ -143,7 +143,7 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	int i, ver;
+        int i;
 
 	LM_DBG("Initializing\n");
 	
@@ -152,20 +152,17 @@ static int mod_init(void)
 	domain_col.len = strlen(domain_col.s);
 
 	/* Check if database module has been loaded */
-	if (domain_db_bind(&db_url)<0)  return -1;
+	if (domain_db_bind(&db_url) < 0)  return -1;
 
 	/* Check if cache needs to be loaded from domain table */
 	if (db_mode != 0) {
+
 		if (domain_db_init(&db_url)<0) return -1;
+
 		/* Check table version */
-		ver = domain_db_ver(&domain_table);
-		if (ver < 0) {
-		        LM_ERR("Error while querying table version\n");
-			goto error;
-		} else if (ver < TABLE_VERSION) {
-		        LM_ERR("Invalid table version <%d> (should be %d)\n",
-			       ver, TABLE_VERSION);
-			goto error;
+		if (domain_db_ver(&domain_table, TABLE_VERSION) < 0) {
+		    LM_ERR("error during check of domain table version\n");
+		    goto error;
 		}
 
 		/* Initializing hash tables and hash table variable */
