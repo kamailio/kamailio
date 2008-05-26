@@ -169,7 +169,7 @@ modparam("siptrace", "trace_on", 1)
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>trace_on</varname> parameter</title>
+		<title>Set <varname>traced_user_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("siptrace", "traced_user_avp", "$avp(i:123)")
@@ -194,7 +194,7 @@ modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 		</emphasis>
 		</para>
 		<example>
-		<title>Set <varname>trace_on</varname> parameter</title>
+		<title>Set <varname>trace_table_avp</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
 modparam("siptrace", "trace_table_avp", "$avp(i:345)")

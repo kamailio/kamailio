@@ -54,8 +54,8 @@ Daniel-Constantin Mierla
    1.2. Set sip_trace parameter
    1.3. Set trace_flag parameter
    1.4. Set trace_on parameter
-   1.5. Set trace_on parameter
-   1.6. Set trace_on parameter
+   1.5. Set traced_user_avp parameter
+   1.6. Set trace_table_avp parameter
    1.7. Set duplicate_uri parameter
    1.8. Set trace_local_ip parameter
    1.9. sip_trace() usage
@@ -154,7 +154,7 @@ modparam("siptrace", "trace_on", 1)
 
    Default value is "NULL" (feature disabled).
 
-   Example 1.5. Set trace_on parameter
+   Example 1.5. Set traced_user_avp parameter
 ...
 modparam("siptrace", "traced_user_avp", "$avp(i:123)")
 modparam("siptrace", "traced_user_avp", "$avp(s:user)")
@@ -170,7 +170,7 @@ modparam("siptrace", "traced_user_avp", "$avp(s:user)")
 
    Default value is "NULL" (feature disabled).
 
-   Example 1.6. Set trace_on parameter
+   Example 1.6. Set trace_table_avp parameter
 ...
 modparam("siptrace", "trace_table_avp", "$avp(i:345)")
 modparam("siptrace", "trace_table_avp", "$avp(s:siptrace_table)")
