@@ -60,7 +60,7 @@ if [ ! $ret -eq 0 ] ; then
 fi;
 
 sleep 1
-killall -9 openser > /dev/null
+killall -9 openser &> /dev/null
 ret=$?
 
 if [ $ret -eq 0 ] ; then
