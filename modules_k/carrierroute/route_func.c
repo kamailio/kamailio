@@ -60,7 +60,7 @@
 int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_domain, struct multiparam_t *_dstavp) {
 	str user;
 	str domain;
-  int_str avp_val;
+	int_str avp_val;
 	
 	if (pv_printf_s(_msg, _user, &user)<0)	{
 		LM_ERR("cannot print the format\n");
@@ -74,6 +74,7 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
 	
 	/* get carrier id */
 	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
+		LM_ERR("Error in load user carrier");
 		return -1;
 	}
 	else {
