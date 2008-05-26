@@ -144,6 +144,10 @@ int load_user_carrier(str * user, str * domain) {
 		return 0;
 	}
 
+	if (VAL_NULL(ROW_VALUES(RES_ROWS(res)))) {
+		return 0;
+	}
+
 	id = VAL_INT(ROW_VALUES(RES_ROWS(res)));
 	dbf.free_result(dbh, res);
 	return id;
