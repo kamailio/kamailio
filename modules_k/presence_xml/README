@@ -180,10 +180,10 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 1.5. Installation
 
    The module requires 1 table in OpenSER database: xcap. The SQL
-   syntax to create it can be found in presence_xml-create.sql
-   script in the database directories in the openser/scripts
-   folder. You can also find the complete database documentation
-   on the project webpage,
+   syntax to create it can be found in presence-create.sql script
+   in the database directories in the openser/scripts folder. You
+   can also find the complete database documentation on the
+   project webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
 Chapter 2. Developer Guide

@@ -218,7 +218,7 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 	<title>Installation</title>
 	<para>
 	The module requires 1 table in OpenSER database: xcap. The SQL 
-	syntax to create it can be found in presence_xml-create.sql     
+	syntax to create it can be found in presence-create.sql     
 	script in the database directories in the openser/scripts folder.
 	You can also find the complete database documentation on the
 	project webpage, &openserdbdocs;.
