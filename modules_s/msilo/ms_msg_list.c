@@ -1,4 +1,4 @@
-/**
+/*
  * $Id$
  *
  * MSILO module
