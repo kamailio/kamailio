@@ -211,7 +211,7 @@ static char* get_filename(str* dir, str* name)
     *p++ = '/';
 
     memcpy(p, name->s, name->len);
-    *p += name->len;
+    p += name->len;
 
     *p++ = '_';
 
@@ -281,7 +281,8 @@ int flat_open_table(int* idx, db_con_t* con, str* name)
 	} else {
 		*idx = i;
 	}
-	
+	DBG("flatstore: Handle to file '%s' opened successfully\n", 
+		fcon->file[*idx].filename);
 	return 0;
 
  no_mem:
