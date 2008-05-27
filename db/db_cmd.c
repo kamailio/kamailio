@@ -140,23 +140,23 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			}
 		}
 
-		r = db_drv_func((void*)(&newp->first[i]), &con->uri->scheme, "db_first");
-		if (r < 0) goto err;
-		if (r > 0) {
-			ERR("DB driver %.*s does not implement mandatory db_first function\n",
-				con->uri->scheme.len, ZSW(con->uri->scheme.s));
-			goto err;
+		if (type == DB_GET) {
+			r = db_drv_func((void*)(&newp->first[i]), &con->uri->scheme, "db_first");
+			if (r < 0) goto err;
+			if (r > 0) {
+				ERR("DB driver %.*s does not implement mandatory db_first function\n",
+					con->uri->scheme.len, ZSW(con->uri->scheme.s));
+				goto err;
+			}
+			
+			r = db_drv_func((void*)(&newp->next[i]), &con->uri->scheme, "db_next");
+			if (r < 0) goto err;
+			if (r > 0) {
+				ERR("DB driver %.*s does not implement mandatory db_next function\n",
+					con->uri->scheme.len, ZSW(con->uri->scheme.s));
+				goto err;
+			}
 		}
-
-		r = db_drv_func((void*)(&newp->next[i]), &con->uri->scheme, "db_next");
-		if (r < 0) goto err;
-		if (r > 0) {
-			ERR("DB driver %.*s does not implement mandatory db_next function\n",
-				con->uri->scheme.len, ZSW(con->uri->scheme.s));
-			goto err;
-		}
-
-
 	}
     return newp;
 
