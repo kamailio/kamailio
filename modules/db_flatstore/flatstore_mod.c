@@ -105,18 +105,9 @@ time_t flat_local_timestamp;
 
 /* Flatstore database module interface */
 static cmd_export_t cmds[] = {
-	{"db_ctx",    (cmd_function)NULL,     0, 0, 0},
 	{"db_con",    (cmd_function)flat_con, 0, 0, 0},
-	{"db_uri",    (cmd_function)NULL,     0, 0, 0},
 	{"db_cmd",    (cmd_function)flat_cmd, 0, 0, 0},
 	{"db_put",    (cmd_function)flat_put, 0, 0, 0},
-	{"db_del",    (cmd_function)NULL,     0, 0, 0},
-	{"db_get",    (cmd_function)NULL,     0, 0, 0},
-	{"db_upd",    (cmd_function)NULL,     0, 0, 0},
-	{"db_sql",    (cmd_function)NULL,     0, 0, 0},
-	{"db_fld",    (cmd_function)NULL,     0, 0, 0},
-	{"db_setopt", (cmd_function)NULL,     0, 0, 0},
-	{"db_getopt", (cmd_function)NULL,     0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
