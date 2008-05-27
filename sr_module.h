@@ -105,7 +105,7 @@ typedef int (*param_func_t)( modparam_t type, void* val);
 #define PROC_NOCHLDINIT -128 /* no child init functions will be called
                                 if this rank is used in fork_process() */
 
-#define PROC_MIN PROC_NOCHILDINIT /* Minimum process rank */
+#define PROC_MIN PROC_NOCHLDINIT /* Minimum process rank */
 
 #define MODULE_VERSION \
 	char *module_version=SER_FULL_VERSION; \
