@@ -230,6 +230,7 @@ CREATE TABLE gw (
     port SMALLINT UNSIGNED,
     uri_scheme TINYINT UNSIGNED,
     transport SMALLINT UNSIGNED,
+    prefix VARCHAR(16) NOT NULL,
     grp_id INT NOT NULL,
     UNIQUE KEY gw_idx1 (gw_name),
     KEY gw_idx2 (grp_id)

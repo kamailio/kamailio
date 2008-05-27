@@ -239,6 +239,7 @@ CREATE TABLE gw (
     port SMALLINT,
     uri_scheme SMALLINT,
     transport SMALLINT,
+    prefix VARCHAR(16) NOT NULL,
     grp_id INTEGER NOT NULL,
     CONSTRAINT gw_idx1 UNIQUE (gw_name)
 );

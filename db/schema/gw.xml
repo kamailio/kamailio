@@ -8,51 +8,57 @@
 ]>
 
 <table>
-    <name>gw</name>
-    <version>3</version>
-
-    <column id="gw.gw_name">
+  <name>gw</name>
+  <version>3</version>
+  
+  <column id="gw.gw_name">
 	<name>gw_name</name>
 	<type>string</type>
 	<size>128</size>
-    </column>
-
-    <column>
+  </column>
+  
+  <column>
 	<name>ip_addr</name>
 	<type>unsigned int</type>
-    </column>
-
-    <column>
+  </column>
+  
+  <column>
 	<name>port</name>
 	<type>unsigned short</type>
 	<null/>
-    </column>
-
-    <column>
+  </column>
+  
+  <column>
 	<name>uri_scheme</name>
 	<type>unsigned char</type>
 	<null/>
-    </column>
-
-    <column>
+  </column>
+  
+  <column>
 	<name>transport</name>
 	<type>unsigned short</type>
 	<null/>
-    </column>
+  </column>
 
-    <column id="gw.grp_id">
+  <column id="gw.prefix">
+	<name>prefix</name>
+	<type>string</type>
+	<size>16</size>
+  </column>
+
+  <column id="gw.grp_id">
 	<name>grp_id</name>
 	<type>int</type>
-    </column>
-
-    <index>
+  </column>
+  
+  <index>
 	<name>gw_idx1</name>
 	<colref linkend="gw.gw_name"/>
 	<unique/>
-    </index>
-
-    <index>
+  </index>
+  
+  <index>
 	<name>gw_idx2</name>
 	<colref linkend="gw.grp_id"/>
-    </index>
+  </index>
 </table>
