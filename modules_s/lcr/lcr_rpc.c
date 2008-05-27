@@ -60,7 +60,7 @@ static void dump (rpc_t* rpc, void* c)
 		}
 		
 		if (rpc->add(c, "{", &st) < 0) return;
-
+		
 		if ((*gws)[i].scheme == SIP_URI_T) {
 		    rpc->struct_add(st, "s", "scheme", "sip");
 		} else {
@@ -68,17 +68,17 @@ static void dump (rpc_t* rpc, void* c)
 		}
 		if ((*gws)[i].port == 0) {
 			rpc->struct_printf(st, "host", "%d.%d.%d.%d",
-					   ((*gws)[i].ip_addr << 24) >> 24,
-					   (((*gws)[i].ip_addr >> 8) << 24) >> 24,
-					   (((*gws)[i].ip_addr >> 16) << 24) >> 24,
-					   (*gws)[i].ip_addr >> 24);
+							   ((*gws)[i].ip_addr << 24) >> 24,
+							   (((*gws)[i].ip_addr >> 8) << 24) >> 24,
+							   (((*gws)[i].ip_addr >> 16) << 24) >> 24,
+							   (*gws)[i].ip_addr >> 24);
 		} else {
 			rpc->struct_printf(st, "host", "%d.%d.%d.%d:%d",
-					   ((*gws)[i].ip_addr << 24) >> 24,
-					   (((*gws)[i].ip_addr >> 8) << 24) >> 24,
-					   (((*gws)[i].ip_addr >> 16) << 24) >> 24,
-					   (*gws)[i].ip_addr >> 24,
-					   (*gws)[i].port);
+							   ((*gws)[i].ip_addr << 24) >> 24,
+							   (((*gws)[i].ip_addr >> 8) << 24) >> 24,
+							   (((*gws)[i].ip_addr >> 16) << 24) >> 24,
+							   (*gws)[i].ip_addr >> 24,
+							   (*gws)[i].port);
 		}
 		transport = (*gws)[i].transport;
 		if (transport == PROTO_UDP) {
@@ -88,7 +88,7 @@ static void dump (rpc_t* rpc, void* c)
 		} else  if (transport == PROTO_TLS) {
 			rpc->struct_add(st, "s", "transport", "TLS");
 		}
-	        if ((*gws)[i].prefix_len) {
+		if ((*gws)[i].prefix_len) {
 			rpc->struct_add(st, "s", "prefix", (*gws)[i].prefix);
 		}
 	}
