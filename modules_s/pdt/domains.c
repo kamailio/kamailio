@@ -1,7 +1,8 @@
 /**
  * $Id$
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2008 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *

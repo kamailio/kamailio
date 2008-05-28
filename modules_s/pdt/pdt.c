@@ -1,7 +1,8 @@
-/**
+/*
  * $Id$
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2001-2003 FhG FOKUS
+ * Copyright (C) 2008 iptelorg GmbH
  *
  * This file is part of ser, a free SIP server.
  *
@@ -44,7 +45,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "../../db/db_op.h"
 #include "../../sr_module.h"
 #include "../../db/db.h"
 #include "../../mem/shm_mem.h"
@@ -73,8 +73,11 @@ pdt_tree_t *_ptree = NULL;
 time_t last_sync;
 
 /** database connection */
-static db_con_t *db_con = NULL;
-static db_func_t pdt_dbf;
+static db_ctx_t* ctx = NULL;
+static db_cmd_t* db_load = NULL;
+static db_cmd_t* db_insert = NULL;
+static db_cmd_t* db_delete = NULL;
+static db_cmd_t* db_del_domain = NULL;
 
 
 /** parameters */
@@ -135,8 +138,69 @@ struct module_exports exports = {
 };
 
 
+static void pdt_db_close(void)
+{
+	if (db_load) db_cmd_free(db_load);
+	db_load = NULL;
 
-/**
+	if (db_insert) db_cmd_free(db_insert);
+	db_insert = NULL;
+
+	if (db_delete) db_cmd_free(db_delete);
+	db_delete = NULL;
+
+	if (db_del_domain) db_cmd_free(db_del_domain);
+	db_del_domain = NULL;
+
+	if (ctx) {
+		db_disconnect(ctx);
+		db_ctx_free(ctx);
+		ctx = NULL;
+	}
+}
+
+
+static int pdt_db_init(void)
+{
+	db_fld_t fields[] = {
+		{.name = prefix_column, .type = DB_STR},
+		{.name = domain_column, .type = DB_STR},
+		{.name = 0}
+	};
+	
+	db_fld_t del_dom_param[] = {
+		{.name = domain_column, .type = DB_STR},
+		{.name = 0}
+	};
+
+	ctx = db_ctx("pdt");
+	if (!ctx) goto error;
+	if (db_add_db(ctx, db_url) < 0) goto error;
+	if (db_connect(ctx) < 0) goto error;
+
+	db_load = db_cmd(DB_GET, ctx, db_table, fields, NULL, NULL);
+	if (!db_load) goto error;
+
+	db_insert = db_cmd(DB_PUT, ctx, db_table, NULL, NULL, fields);
+	if (!db_insert) goto error;
+
+	db_delete = db_cmd(DB_DEL, ctx, db_table, NULL, fields, NULL);
+	if (!db_delete) goto error;
+
+	db_del_domain = db_cmd(DB_DEL, ctx, db_table, NULL, del_dom_param, NULL);
+	if (!db_del_domain) goto error;
+
+    return 0;
+
+error:
+	pdt_db_close();
+	ERR("pdt: Error while initializing database layer\n");
+	return -1;
+}
+
+
+
+/*
  * init module function
  */
 static int mod_init(void)
@@ -152,35 +216,8 @@ static int mod_init(void)
 
 	prefix.len = strlen(prefix.s);
 
-	/* binding to mysql module */
-	if(bind_dbmod(db_url, &pdt_dbf))
-	{
-		LOG(L_ERR, "PDT:mod_init: Database module not found\n");
-		return -1;
-	}
 
-	if (!DB_CAPABILITY(pdt_dbf, DB_CAP_ALL))
-	{
-		LOG(L_ERR, "PDT: mod_init: Database module does not "
-		    "implement all functions needed by the module\n");
-		return -1;
-	}
-
-	/* open a connection with the database */
-	db_con = pdt_dbf.init(db_url);
-	if(db_con==NULL)
-	{
-		LOG(L_ERR,
-			"PDT: mod_init: Error while connecting to database\n");
-		return -1;
-	}
-
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
-	{
-		LOG(L_ERR, "PDT: mod_init: Error in use_table\n");
-		goto error1;
-	}
-	DBG("PDT: mod_init: Database connection opened successfully\n");
+	if (pdt_db_init() < 0) return -1;
 
 	/* init the hash and tree in share memory */
 	if( (_dhash = pdt_init_hash(hs_two_pow)) == NULL)
@@ -202,8 +239,7 @@ static int mod_init(void)
 		goto error3;
 	}
 
-	pdt_dbf.close(db_con);
-	db_con = 0;
+	pdt_db_close();
 
 	pdt_print_tree(_ptree);
 	DBG("PDT:mod_init: -------------------\n");
@@ -216,37 +252,33 @@ static int mod_init(void)
 	/* success code */
 	return 0;
 
-error3:
+ error3:
 	if(_ptree!=NULL)
 	{
 		pdt_free_tree(_ptree);
 		_ptree = 0;
 	}
-error2:
+ error2:
 	if(_dhash!=NULL)
 	{
 		pdt_free_hash(_dhash);
 		_dhash = 0;
 	}
-error1:
-	if(db_con!=NULL)
-	{
-		pdt_dbf.close(db_con);
-		db_con = 0;
-	}
+ error1:
+	pdt_db_close();
 	return -1;
 }
 
 /* each child get a new connection to the database */
-static int child_init(int r)
+static int child_init(int rank)
 {
-	DBG("PDT:child_init #%d / pid <%d>\n", r, getpid());
+	DBG("PDT:child_init #%d / pid <%d>\n", rank, getpid());
 
-	if(r>0)
+	if(rank>0)
 	{
 		if(_dhash==NULL)
 		{
-			LOG(L_ERR,"PDT:child_init #%d: ERROR no domain hash\n", r);
+			LOG(L_ERR,"PDT:child_init #%d: ERROR no domain hash\n", rank);
 			return -1;
 		}
 
@@ -261,26 +293,16 @@ static int child_init(int r)
 		}
 	}
 
-	if (rank==PROC_INIT || r==PROC_MAIN || r==PROC_TCP_MAIN)
+	if (rank==PROC_INIT || rank==PROC_MAIN || rank==PROC_TCP_MAIN)
 		return 0; /* do nothing for the main or tcp_main processes */
 
-	db_con = pdt_dbf.init(db_url);
-	if(db_con==NULL)
-	{
-	  LOG(L_ERR,"PDT:child_init #%d: Error while connecting database\n",r);
-	  return -1;
-	}
+	if (pdt_db_init() < 0) return -1;
 
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
-	{
-		LOG(L_ERR, "PDT:child_init #%d: Error in use_table\n", r);
-		return -1;
-	}
 	if(sync_time<=0)
 		sync_time = 300;
-	sync_time += r%60;
+	sync_time += rank%60;
 
-	DBG("PDT:child_init #%d: Database connection opened successfully\n",r);
+	DBG("PDT:child_init #%d: Database connection opened successfully\n",rank);
 
 	return 0;
 }
@@ -292,8 +314,8 @@ static void mod_destroy(void)
 		pdt_free_hash(_dhash);
 	if (_ptree!=NULL)
 		pdt_free_tree(_ptree);
-	if (db_con!=NULL && pdt_dbf.close!=NULL)
-		pdt_dbf.close(db_con);
+
+	pdt_db_close();
 }
 
 
@@ -431,71 +453,51 @@ int update_new_uri(struct sip_msg *msg, int plen, str *d, int mode)
 
 int pdt_load_db()
 {
-	db_key_t db_cols[] = {prefix_column, domain_column};
-	str p, d;
-	db_res_t* db_res = NULL;
-	int i;
+	db_res_t* res = NULL;
+	db_rec_t* rec;
 
-
-	if(db_con==NULL)
-	{
-		LOG(L_ERR, "PDT:pdt_load_db: no db connection\n");
+	if (db_exec(&res, db_load) < 0) {
+		ERR("pdt: Error while loading data from database\n");
 		return -1;
 	}
+	if (res == NULL) return 0;
 
-	if (pdt_dbf.use_table(db_con, db_table) < 0)
-	{
-		LOG(L_ERR, "PDT:pdt_load_db: Error in use_table\n");
-		return -1;
+	for(rec = db_first(res); rec; rec = db_next(res)) {
+		if (rec->fld[0].flags & DB_NULL ||
+			rec->fld[1].flags & DB_NULL) {
+			INFO("pdt: Record with NULL value(s) found in database, skipping\n");
+			continue;
+		}
+
+		if (pdt_check_pd(_dhash, &rec->fld[0].v.lstr, 
+						 &rec->fld[1].v.lstr) != 0) {
+			ERR("pdt: Prefix [%.*s] or domain <%.*s> duplicated\n",
+				STR_FMT(&rec->fld[0].v.lstr), 
+				STR_FMT(&rec->fld[1].v.lstr));
+			goto error;
+		}
+		
+		if (pdt_add_to_tree(_ptree, &rec->fld[0].v.lstr, 
+							&rec->fld[1].v.lstr) != 0) {
+			ERR("pdt: Error adding info in tree\n");
+			goto error;
+		}
+		
+		if(pdt_add_to_hash(_dhash, &rec->fld[0].v.lstr, 
+						   &rec->fld[1].v.lstr) != 0) {
+			ERR("pdt: Error adding info in hash\n");
+			goto error;
+		}
 	}
 
-	if(pdt_dbf.query(db_con, NULL, NULL, NULL, db_cols,
-				0, 2, prefix_column, &db_res)==0)
-	{
-		for(i=0; i<RES_ROW_N(db_res); i++)
-		{
-			/* check for NULL values ?!?! */
-			p.s = (char*)(RES_ROWS(db_res)[i].values[0].val.string_val);
-			p.len = strlen(p.s);
-
-			d.s = (char*)(RES_ROWS(db_res)[i].values[1].val.string_val);
-			d.len = strlen(d.s);
-
-			if(p.s==NULL || d.s==NULL || p.len<=0 || d.len<=0)
-			{
-				LOG(L_ERR, "PDT:pdt_load_db: Error - bad values in db\n");
-				goto error;
-			}
-
-			if(pdt_check_pd(_dhash, &p, &d)!=0)
-			{
-				LOG(L_ERR,
-				"PDT:pdt_load_db: prefix [%.*s] or domain <%.*s> duplicated\n",
-					p.len, p.s, d.len, d.s);
-				goto error;;
-			}
-
-			if(pdt_add_to_tree(_ptree, &p, &d)!=0)
-			{
-				LOG(L_ERR, "PDT:pdt_load_db: Error adding info in tree\n");
-				goto error;
-			}
-
-			if(pdt_add_to_hash(_dhash, &p, &d)!=0)
-			{
-				LOG(L_ERR, "PDT:pdt_load_db: Error adding info in hash\n");
-				goto error;
-			}
- 		}
-	}
-
-	pdt_dbf.free_result(db_con, db_res);
+	db_res_free(res);
 	return 0;
 
 error:
-	pdt_dbf.free_result(db_con, db_res);
+	if (res) db_res_free(res);
 	return -1;
 }
+
 
 int pdt_sync_cache()
 {
@@ -606,10 +608,6 @@ static const char* rpc_add_doc[2] = {
 
 static void rpc_add(rpc_t* rpc, void* c)
 {
-	db_key_t db_keys[NR_KEYS] = {prefix_column, domain_column};
-	db_val_t db_vals[NR_KEYS];
-	db_op_t  db_ops[NR_KEYS] = {OP_EQ, OP_EQ};
-
 	pd_t* cell;
 	pd_op_t *ito, *tmp;
 	str sd, sp;
@@ -645,23 +643,18 @@ static void rpc_add(rpc_t* rpc, void* c)
 		return;
 	}
 
-	db_vals[0].type = DB_STR;
-	db_vals[0].nul = 0;
-	db_vals[0].val.str_val = sp;
+	db_insert->vals[0].v.lstr = sp;
+	db_insert->vals[1].v.lstr = sd;
 
-	db_vals[1].type = DB_STR;
-	db_vals[1].nul = 0;
-	db_vals[1].val.str_val= sd;
-
-	DBG("PDT:pdt_fifo_add: [%.*s] <%.*s>\n", sp.len, sp.s, sd.len, sd.s);
+	DBG("PDT:pdt_fifo_add: [%.*s] <%.*s>\n", STR_FMT(&sp), STR_FMT(&sd));
 
 	     /* insert a new domain into database */
-	if(pdt_dbf.insert(db_con, db_keys, db_vals, NR_KEYS)<0) {
+	if (db_exec(NULL, db_insert) < 0) {
 		LOG(L_ERR, "PDT:pdt_fifo_add: error storing new prefix/domain\n");
 		rpc->fault(c, 430, "Cannot Store Prefix/domain");
 		return;
 	}
-
+	
 	     /* insert the new domain into hashtables, too */
 	cell = new_cell(&sp, &sd);
 	if(cell==NULL) {
@@ -708,8 +701,12 @@ static void rpc_add(rpc_t* rpc, void* c)
  error2:
 	free_cell(cell);
  error1:
-	if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, NR_KEYS)<0)
+
+	db_delete->vals[0].v.lstr = sp;
+	db_delete->vals[1].v.lstr = sd;
+	if (db_exec(NULL, db_delete) < 0) {
 		LOG(L_ERR,"PDT:pdt_fifo_add: database/cache are inconsistent\n");
+	}
 }
 
 
@@ -726,9 +723,6 @@ static void rpc_delete(rpc_t* rpc, void* c)
 	int hash_entry;
 	pd_t *it;
 	pd_op_t *ito, *tmp;
-	db_key_t db_keys[1] = {domain_column};
-	db_val_t db_vals[1];
-	db_op_t  db_ops[1] = {OP_EQ};
 
 	if(_dhash==NULL) {
 		LOG(L_ERR, "PDT:pdt_fifo_delete: strange situation\n");
@@ -808,15 +802,11 @@ static void rpc_delete(rpc_t* rpc, void* c)
 		DBG("PDT:pdt_fifo_delete: prefix for domain [%s] not found\n", sd.s);
 		rpc->fault(c, 404, "Domain Not Found");
 	} else {
-		db_vals[0].type = DB_STR;
-		db_vals[0].nul = 0;
-		db_vals[0].val.str_val.s = sd.s;
-		db_vals[0].val.str_val.len = sd.len;
-		if(pdt_dbf.delete(db_con, db_keys, db_ops, db_vals, 1)<0)
-			{
-				LOG(L_ERR,"PDT:pdt_fifo_delete: database/cache are inconsistent\n");
-				rpc->fault(c, 502, "Database And Cache Are Inconsistent");
-			}
+		db_del_domain->match[0].v.lstr = sd;
+		if (db_exec(NULL, db_del_domain) < 0) {
+			LOG(L_ERR,"PDT:pdt_fifo_delete: database/cache are inconsistent\n");
+			rpc->fault(c, 502, "Database And Cache Are Inconsistent");
+		}
 	}
 }
 
