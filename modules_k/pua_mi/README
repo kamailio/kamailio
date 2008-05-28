@@ -90,6 +90,8 @@ Chapter 1. Admin Guide
        application/pidf+xml) or . if no information is enclosed.
      * ETag - ETag that publish should match or . if no ETag is
        given.
+     * extra_headers - Extra headers added to PUBLISH request or .
+       if no extra headers.
      * body - The body of the publish request containing published
        information or missing if no published information. It has
        to be a single line for FIFO transport.
@@ -102,6 +104,7 @@ sip:system@openser.org
 3600
 presence
 application/pidf+xml
+.
 .
 <?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns
 :dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params

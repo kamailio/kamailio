@@ -118,6 +118,13 @@
 			</listitem>
 			<listitem>
 				<para>
+					<emphasis>extra_headers</emphasis>
+					- Extra headers added to PUBLISH
+		request or . if no extra headers.
+		                </para> 
+			</listitem>
+			<listitem>
+				<para>
 					<emphasis>body</emphasis>
 					- The body of the publish
 		request containing published information or missing if
@@ -136,6 +143,7 @@ sip:system@openser.org
 3600
 presence
 application/pidf+xml
+.
 .
 <?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='system@openser.org'><tuple id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presence>
 ]]>

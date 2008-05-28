@@ -44,6 +44,7 @@
  *		<content_type>     - body type if body of a type different from default
  *                            event content-type or . 
  *		<ETag>             - ETag that publish should match or . if no ETag
+ *		<extra_headers>    - extra headers to be added to the request or .
  *		<publish_body>     - may not be present in case of update for expire
  */
 
@@ -58,6 +59,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	str event;
 	str content_type;
 	str etag;
+	str extra_headers;
 	int result;
 	int sign= 1;
 
@@ -145,10 +147,24 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	if(etag.s== NULL || etag.len== 0)
 	{
 		LM_ERR("empty etag parameter\n");
-		return init_mi_tree(400, "Bad expires", 11);
+		return init_mi_tree(400, "Empty etag parameter", 11);
 	}
 	LM_DBG("etag '%.*s'\n",
 	    etag.len, etag.s);
+
+	node = node->next;
+	if(node == NULL)
+		return 0;
+
+	/* Get extra_headers */
+	extra_headers = node->value;
+	if(extra_headers.s== NULL || extra_headers.len== 0)
+	{
+		LM_ERR("empty extra_headers parameter\n");
+		return init_mi_tree(400, "Empty extra_headers", 11);
+	}
+	LM_DBG("extra_headers '%.*s'\n",
+	    extra_headers.len, extra_headers.s);
 
 	node = node->next;
 
@@ -205,7 +221,11 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 		publ.etag= &etag;
 	}	
 	publ.expires= exp;
-	
+
+	if (!(extra_headers.len == 1 && extra_headers.s[0] == '.')) {
+	    publ.extra_headers = &extra_headers;
+	}
+
 	if (cmd->async_hdl!=NULL)
 	{
 		publ.source_flag= MI_ASYN_PUBLISH;
