@@ -96,8 +96,22 @@ int xjab_connections(ih_req_p _irp, void *_p, char *_bb, int *_bl,
 xj_wlist jwl = NULL;
 
 /** Structure that represents database connection */
-static db_con_t** db_con;
-static db_func_t jabber_dbf;
+db_ctx_t* ctx = NULL;
+db_cmd_t* cmd = NULL;
+
+db_fld_t db_params[] = {
+	{.name = "sip_id", .type = DB_CSTR},
+	{.name = "type", .type = DB_INT},
+	{.name = 0}
+};
+
+db_fld_t db_cols[] = {
+	{.name = "jab_id", .type = DB_CSTR},
+	{.name = "jab_passwd", .type = DB_CSTR},
+	{.name = 0}
+};
+
+
 
 /** parameters */
 
@@ -203,25 +217,6 @@ static int mod_init(void)
 		return -1;
 	}
 
-	/* import mysql functions */
-	if (bind_dbmod(db_url, &jabber_dbf)<0)
-	{
-		LOG(L_ERR, "XJAB:mod_init: error - database module not found\n");
-		return -1;
-	}
-
-	if (!DB_CAPABILITY(jabber_dbf, DB_CAP_QUERY)) {
-		LOG(L_ERR, "XJAB:mod_init: Database module does not implement 'query' function\n");
-		return -1;
-	}
-
-	db_con = (db_con_t**)shm_malloc(nrw*sizeof(db_con_t*));
-	if (db_con == NULL)
-	{
-		LOG(L_ERR, "XJAB:mod_init: Error while allocating db_con's\n");
-		return -1;
-	}
-
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR: xjab:mod_init: can't import load_tm\n");
@@ -258,25 +253,6 @@ static int mod_init(void)
 			return -1;
 		}
 	}
-
-	for(i=0; i<nrw; i++)
-	{
-		db_con[i] = jabber_dbf.init(db_url);
-		if (!db_con[i])
-		{
-			LOG(L_ERR, "XJAB:mod_init: Error while connecting database\n");
-			return -1;
-		}
-		else
-		{
-			if (jabber_dbf.use_table(db_con[i], db_table) < 0) {
-				LOG(L_ERR, "XJAB:mod_init: Error in use_table\n");
-				return -1;
-			}
-			DBG("XJAB:mod_init: Database connection opened successfully\n");
-		}
-	}
-
 
 	/** creating the pipes */
 
@@ -357,8 +333,19 @@ static int child_init(int rank)
 					/* initialize the config framework */
 					if (cfg_child_init()) return -1;
 
-					xj_worker_process(jwl,jaddress,jport,i,db_con[i],
-							&jabber_dbf);
+					ctx = db_ctx("jabber");
+					if (ctx == NULL) goto dberror;
+					if (db_add_db(ctx, db_url) < 0) goto dberror;
+					if (db_connect(ctx) < 0) goto dberror;
+
+					cmd = db_cmd(DB_GET, ctx, db_table, db_cols, db_params, NULL);
+					if (!cmd) goto dberror;
+
+					xj_worker_process(jwl,jaddress,jport,i, cmd);
+
+					db_cmd_free(cmd);
+					db_ctx_free(ctx);
+					ctx = NULL;
 
 					/* destroy the local config */
 					cfg_child_destroy();
@@ -390,6 +377,13 @@ static int child_init(int rank)
 	//		close(pipes[i][0]);
 	//}
 	return 0;
+
+ dberror:
+	if (cmd) db_cmd_free(cmd);
+	cmd = NULL;
+	if (ctx) db_ctx_free(ctx);
+	ctx = NULL;
+	return -1;
 }
 
 /**
@@ -696,14 +690,10 @@ void destroy(void)
 		}
 		pkg_free(pipes);
 	}
-	// cleaning MySQL connections
-	if(db_con != NULL)
-	{
-		for(i = 0; i<nrw; i++)
-			jabber_dbf.close(db_con[i]);
-		shm_free(db_con);
-	}
 
+	if (ctx) db_ctx_free(ctx);
+	ctx = NULL;
+	
 	xj_wlist_free(jwl);
 	DBG("XJAB: Unloaded ...\n");
 }
@@ -859,10 +849,23 @@ void xjab_check_workers(int mpid)
 				return;
 			}
 
+
 			/* initialize the config framework */
 			if (cfg_child_init()) return;
 
-			xj_worker_process(jwl,jaddress,jport,i,db_con[i], &jabber_dbf);
+			ctx = db_ctx("jabber");
+			if (ctx == NULL) goto dberror;
+			if (db_add_db(ctx, db_url) < 0) goto dberror;
+			if (db_connect(ctx) < 0) goto dberror;
+
+			cmd = db_cmd(DB_GET, ctx, db_table, db_cols, db_params, NULL);
+			if (!cmd) goto dberror;
+			
+			xj_worker_process(jwl,jaddress,jport,i, cmd);
+
+			db_cmd_free(cmd);
+			db_ctx_free(ctx);
+			ctx = NULL;
 
 			/* destroy the local config */
 			cfg_child_destroy();
@@ -870,6 +873,12 @@ void xjab_check_workers(int mpid)
 			exit(0);
 		}
 	}
+	
+ dberror:
+	if (cmd) db_cmd_free(cmd);
+	cmd = NULL;
+	if (ctx) db_ctx_free(ctx);
+	ctx = NULL;
 }
 
 #ifdef HAVE_IHTTP

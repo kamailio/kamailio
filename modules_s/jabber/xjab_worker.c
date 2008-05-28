@@ -260,8 +260,7 @@ done:
  *   dbf: database module callbacks structure
  * #return : 0 on success or <0 on error
  */
-int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
-		db_con_t* db_con, db_func_t* dbf)
+int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank, db_cmd_t* cmd)
 {
 	int pipe, ret, i, pos, maxfd, flag;
 	xj_jcon_pool jcp;
@@ -273,19 +272,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 	xj_jconf jcf = NULL;
 	char *p, buff[1024], recv_buff[4096];
 	int flags, nr, ltime = 0;
-	
-	db_key_t keys[] = {"sip_id", "type"};
-	db_val_t vals[2];
-	db_key_t col[] = {"jab_id", "jab_passwd"};
 	db_res_t* res = NULL;
+	db_rec_t* rec;
 
-	vals[0].type=DB_STRING;
-	vals[0].nul=0;
-	vals[0].val.string_val=buff;
-	vals[1].type=DB_INT;
-	vals[1].nul=0;
-	vals[1].val.int_val=0;
-		
 	_xj_pid = getpid();
 	
 	//signal(SIGTERM, xj_sig_handler);
@@ -424,8 +413,9 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_worker:%d: new connection for <%s>.\n", _xj_pid, buff);
 #endif		
-		if(dbf->query(db_con, keys, 0, vals, col, 2, 2, NULL, &res) != 0 ||
-			RES_ROW_N(res) <= 0)
+		cmd->match[0].v.cstr = buff;
+		cmd->match[1].v.int4 = 0;
+		if (db_exec(&res, cmd) < 0 || !res || !(rec = db_first(res)))
 		{
 #ifdef XJ_EXTRA_DEBUG
 			DBG("XJAB:xj_worker:%d: no database result when looking"
@@ -451,13 +441,13 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		
 #ifdef XJ_EXTRA_DEBUG
 		DBG("XJAB:xj_worker: auth to jabber as: [%s] / [xxx]\n",
-			(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val));
+			rec->fld[0].v.cstr);
 //			(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val));
 #endif		
 		if(xj_jcon_user_auth(jbc,
-			(char*)(ROW_VALUES(RES_ROWS(res))[0].val.string_val),
-			(char*)(ROW_VALUES(RES_ROWS(res))[1].val.string_val),
-			XJAB_RESOURCE) < 0)
+							 rec->fld[0].v.cstr, 
+							 rec->fld[1].v.cstr,
+							 XJAB_RESOURCE) < 0)
 		{
 			DBG("XJAB:xj_worker:%d: Authentication to the Jabber server"
 				" failed ...\n", _xj_pid);
@@ -496,14 +486,10 @@ int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, int rank,
 		/** wait for a while - the worker is tired */
 		//sleep(3);
 		
-		if ((res != NULL) && (dbf->free_result(db_con,res) < 0))
-		{
-			DBG("XJAB:xj_worker:%d:Error while freeing"
-				" SQL result - worker terminated\n", _xj_pid);
-			return -1;
-		}
-		else
+		if (res) {
+			db_res_free(res);
 			res = NULL;
+		}
 
 step_z:
 		if(jsmsg->type == XJ_GO_ONLINE)
@@ -614,14 +600,8 @@ step_v: // error connecting to Jabber server
 		xj_wlist_del(jwl, jsmsg->jkey, _xj_pid);
 
 		// cleaning db_query
-		if ((res != NULL) && (dbf->free_result(db_con,res) < 0))
-		{
-			DBG("XJAB:xj_worker:%d:Error while freeing"
-				" SQL result - worker terminated\n", _xj_pid);
-			return -1;
-		}
-		else
-			res = NULL;
+		if (res) db_res_free(res);
+		res = NULL;
 
 step_w:
 		if(jsmsg!=NULL)
@@ -1206,26 +1186,26 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 				cbp, *cbp);
 #endif
 		set_uac_req(&uac_r,
-				&msg_type,
-				&str_hdr,
-				msg,
-				0,
-				TMCB_LOCAL_COMPLETED,
-				xj_tuac_callback,
-				(void*)cb
-			);
+					&msg_type,
+					&str_hdr,
+					msg,
+					0,
+					TMCB_LOCAL_COMPLETED,
+					xj_tuac_callback,
+					(void*)cbp
+					);
 	}
 	else
-	{
-		set_uac_req(&uac_r,
-				&msg_type,
-				&str_hdr,
-				msg,
-				0,
-				0,
-				0,
-				0
-			);
+		{
+			set_uac_req(&uac_r,
+						&msg_type,
+						&str_hdr,
+						msg,
+						0,
+						0,
+						0,
+						0
+						);
 	}
 
 	return tmb.t_request(&uac_r, 0, to, &tfrom, 0);
