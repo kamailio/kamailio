@@ -294,9 +294,6 @@ static int cpl_init(void)
 		}
 	}
 
-	/* bind to the mysql module */
-	if (cpl_db_bind(DB_URL)<0) goto error;
-
 	/* import the TM auto-loading function */
 	if ( !(load_tm=(load_tm_f)find_export("load_tm", NO_SCRIPT, 0))) {
 		LOG(L_ERR, "ERROR:cpl_c:cpl_init: cannot import load_tm\n");
@@ -600,7 +597,7 @@ static int cpl_invoke_script(struct sip_msg* msg, char* str1, char* str2)
 	}
 
 	/* get the script for this user */
-	if (get_user_script(&user, &script, "cpl_bin")==-1)
+	if (get_user_script(&user, &script, 1)==-1)
 		goto error1;
 
 	/* has the user a non-empty script? if not, return normally, allowing ser to
@@ -775,7 +772,7 @@ static inline int do_script_download(struct sip_msg *msg)
 		goto error;
 
 	/* get the user's xml script from the database */
-	if (get_user_script(&user, &script, "cpl_xml")==-1)
+	if (get_user_script(&user, &script, 0)==-1)
 		goto error;
 
 	/* add a lump with content-type hdr */

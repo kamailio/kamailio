@@ -35,62 +35,71 @@
 #include "../../dprint.h"
 #include "cpl_db.h"
 
-static db_con_t* db_hdl=0;
-static db_func_t cpl_dbf;
+static db_ctx_t* ctx = NULL;
+static db_cmd_t* get_script;
+static db_cmd_t* write_script;
+static db_cmd_t* delete_user;
 
 
-
-int cpl_db_bind(char* db_url)
+void cpl_db_close()
 {
-	if (bind_dbmod(db_url, &cpl_dbf )) {
-		LOG(L_CRIT, "ERROR:cpl_db_bind: cannot bind to database module! "
-		    "Did you forget to load a database module ?\n");
-		return -1;
-	}
-	
-	     /* CPL module uses all database functions */
-	if (!DB_CAPABILITY(cpl_dbf, DB_CAP_ALL)) {
-		LOG(L_CRIT, "ERROR:cpl_db_bind: Database modules does not "
-		    "provide all functions needed by cpl-c module\n");
-		return -1;
-	}
+	if (delete_user) db_cmd_free(delete_user);
+	delete_user = NULL;
 
-	return 0;
+	if (write_script) db_cmd_free(write_script);
+	write_script = NULL;
+
+	if (get_script) db_cmd_free(get_script);
+	get_script = NULL;
+
+	if (ctx) {
+		db_disconnect(ctx);
+		db_ctx_free(ctx);
+		ctx = NULL;
+	}
 }
-
 
 
 int cpl_db_init(char* db_url, char* db_table)
 {
-	if (cpl_dbf.init==0){
-		LOG(L_CRIT, "BUG: cpl_db_init: unbound database module\n");
-		return -1;
-	}
-	db_hdl=cpl_dbf.init(db_url);
-	if (db_hdl==0){
-		LOG(L_CRIT,"ERROR:cpl_db_init: cannot initialize database "
-			"connection\n");
-		goto error;
-	}
-	if (cpl_dbf.use_table(db_hdl, db_table)<0) {
-		LOG(L_CRIT,"ERROR:cpl_db_init: cannot select table \"%s\"\n",db_table);
-		goto error;
-	}
+	db_fld_t cols[] = {
+		{.name = "cpl_bin", .type = DB_BLOB},
+		{.name = "cpl_xml", .type = DB_STR},
+		{.name = 0}
+	};
+
+	db_fld_t match[] = {
+		{.name = "uid", .type = DB_CSTR},
+		{.name = 0}
+	};
+
+	db_fld_t vals[] = {
+		{.name = "uid",     .type = DB_CSTR},
+		{.name = "cpl_bin", .type = DB_BLOB},
+		{.name = "cpl_xml", .type = DB_STR },
+		{.name = 0}
+	};
+
+	ctx = db_ctx("cpl-c");
+	if (ctx == NULL) goto error;
+
+	if (db_add_db(ctx, db_url) < 0) goto error;
+	if (db_connect(ctx) < 0) goto error;
+
+	get_script = db_cmd(DB_GET, ctx, db_table, cols, match, NULL);
+	if (!get_script) goto error;
+
+	write_script = db_cmd(DB_PUT, ctx, db_table, NULL, NULL, vals);
+	if (!write_script) goto error;
+
+	delete_user = db_cmd(DB_DEL, ctx, db_table, NULL, match, NULL);
+	if (!delete_user) goto error;
+
 	return 0;
 error:
-	if (db_hdl){
-		cpl_dbf.close(db_hdl);
-		db_hdl=0;
-	}
+	ERR("cpl-c: Error while initializing db layer\n");
+	cpl_db_close();
 	return -1;
-}
-
-void cpl_db_close()
-{
-	if (db_hdl && cpl_dbf.close){
-		cpl_dbf.close(db_hdl);
-		db_hdl=0;
-	}
 }
 
 
@@ -99,55 +108,53 @@ void cpl_db_close()
  * Returns:  1 - success
  *          -1 - error
  */
-int get_user_script(str *user, str *script, const char* key)
+int get_user_script(str *user, str *script, int bin)
 {
-	db_key_t   keys_cmp[1];
-	db_key_t   keys_ret[1];
-	db_val_t   vals[1];
-	db_res_t   *res = 0 ;
+	db_res_t* res = 0;
+	db_rec_t* rec;
+	int i;
 
-	keys_cmp[0]="user";
-	keys_ret[0]=key;
+	if (bin) i = 0;
+	else i = 1;
+
+	get_script->match[0].v.cstr = user->s;
+
 	DBG("DEBUG:get_user_script: fetching script for user <%s>\n",user->s);
-	vals[0].type = DB_STRING;
-	vals[0].nul  = 0;
-	vals[0].val.string_val = user->s;
-	if (cpl_dbf.query(db_hdl, keys_cmp, 0, vals, keys_ret, 1, 1, NULL, &res)
-			< 0){
+	if (db_exec(&res, get_script) < 0) {
 		LOG(L_ERR,"ERROR:cpl-c:get_user_script: db_query failed\n");
 		goto error;
 	}
 
-	if (res->n==0) {
+	if (!res || !(rec = db_first(res))) {
 		DBG("DEBUG:get_user_script: user <%.*s> not found in db -> probably "
 			"he has no script\n",user->len, user->s);
 		script->s = 0;
 		script->len = 0;
 	} else {
-		if (res->rows[0].values[0].nul) {
+		if (rec->fld[i].flags & DB_NULL) {
 			DBG("DEBUG:get_user_script: user <%.*s> has a NULL script\n",
 				user->len, user->s);
 			script->s = 0;
 			script->len = 0;
 		} else {
 			DBG("DEBUG:get_user_script: we got the script len=%d\n",
-				res->rows[0].values[0].val.blob_val.len);
-			script->len = res->rows[0].values[0].val.blob_val.len;
+				rec->fld[i].v.blob.len);
+			script->len = rec->fld[i].v.blob.len;
 			script->s = shm_malloc( script->len );
 			if (!script->s) {
 				LOG(L_ERR,"ERROR:cpl-c:get_user_script: no free sh_mem\n");
 				goto error;
 			}
-			memcpy( script->s, res->rows[0].values[0].val.blob_val.s,
+			memcpy( script->s, rec->fld[i].v.blob.s,
 				script->len);
 		}
 	}
 
-	cpl_dbf.free_result( db_hdl, res);
+	if (res) db_res_free(res);
 	return 1;
 error:
 	if (res)
-		cpl_dbf.free_result( db_hdl, res);
+		db_res_free(res);
 	script->s = 0;
 	script->len = 0;
 	return -1;
@@ -162,57 +169,18 @@ error:
  */
 int write_to_db(char *usr, str *xml, str *bin)
 {
-	db_key_t   keys[] = {"user","cpl_xml","cpl_bin"};
-	db_val_t   vals[3];
-	db_res_t   *res;
+	write_script->vals[0].v.cstr = usr;
+	write_script->vals[1].v.blob = *bin;
+	write_script->vals[2].v.lstr = *xml;
 
-	/* lets see if the user is already in database */
-	vals[0].type = DB_STRING;
-	vals[0].nul  = 0;
-	vals[0].val.string_val = usr;
-	if (cpl_dbf.query(db_hdl, keys, 0, vals, keys, 1, 1, NULL, &res) < 0) {
-		LOG(L_ERR,"ERROR:cpl:write_to_db: db_query failed\n");
-		goto error;
+	/* No need to do update/insert here, the db layer does that
+	 * automatically without the need to query the db
+	 */
+	if (db_exec(NULL, write_script) < 0) {
+		ERR("cpl-c: Error while writing script into database\n");
+		return -1;
 	}
-	if (res->n>1) {
-		LOG(L_ERR,"ERROR:cpl:write_to_db: Inconsistent CPL database:"
-			" %d records for user %s\n",res->n,usr);
-		goto error;
-	}
-
-	/* username */
-	vals[0].type = DB_STRING;
-	vals[0].nul  = 0;
-	vals[0].val.string_val = usr;
-	/* cpl text */
-	vals[1].type = DB_BLOB;
-	vals[1].nul  = 0;
-	vals[1].val.blob_val.s = xml->s;
-	vals[1].val.blob_val.len = xml->len;
-	/* cpl bin */
-	vals[2].type = DB_BLOB;
-	vals[2].nul  = 0;
-	vals[2].val.blob_val.s = bin->s;
-	vals[2].val.blob_val.len = bin->len;
-	/* insert or update ? */
-	if (res->n==0) {
-		DBG("DEBUG:cpl:write_to_db:No user %s in CPL database->insert\n",usr);
-		if (cpl_dbf.insert(db_hdl, keys, vals, 3) < 0) {
-			LOG(L_ERR,"ERROR:cpl:write_to_db: insert failed !\n");
-			goto error;
-		}
-	} else {
-		DBG("DEBUG:cpl:write_to_db:User %s already in CPL database ->"
-			" update\n",usr);
-		if (cpl_dbf.update(db_hdl, keys, 0, vals, keys+1, vals+1, 1, 2) < 0) {
-			LOG(L_ERR,"ERROR:cpl:write_to_db: update failed !\n");
-			goto error;
-		}
-	}
-
-	return 1;
-error:
-	return -1;
+	return 0;
 }
 
 
@@ -225,15 +193,9 @@ error:
  */
 int rmv_from_db(char *usr)
 {
-	db_key_t   keys[] = {"user"};
-	db_val_t   vals[1];
-
-	/* username */
-	vals[0].type = DB_STRING;
-	vals[0].nul  = 0;
-	vals[0].val.string_val = usr;
-
-	if (cpl_dbf.delete(db_hdl, keys, NULL, vals, 1) < 0) {
+	delete_user->match[0].v.cstr = usr;
+	
+	if (db_exec(NULL, delete_user) < 0) {
 		LOG(L_ERR,"ERROR:cpl-c:rmv_from_db: error when deleting script for "
 			"user \"%s\"\n",usr);
 		return -1;

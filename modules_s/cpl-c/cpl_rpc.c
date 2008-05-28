@@ -212,7 +212,7 @@ static void cpl_get(rpc_t* rpc, void* c)
 	}
 	
 	     /* get the script for this user */
-	if (get_user_script(&user, &script, "cpl_xml")==-1) {
+	if (get_user_script(&user, &script, 0)==-1) {
 		rpc->fault(c, 500, "Database query failed");
 		return;
 	}
