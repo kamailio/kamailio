@@ -248,8 +248,8 @@ if (avp_equals_xl("my_avp", "%ct")) {
 	</itemizedlist>
     </section>
     
-	<section id="dump_avp">
-	<title><function>dump_avp()</function></title>
+	<section id="dump_attrs">
+	<title><function>dump_attrs()</function></title>
 	<para>
 		Dumps all AVPs in user lists to the debug output (with level INFO).
 	</para>

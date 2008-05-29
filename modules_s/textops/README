@@ -184,6 +184,6 @@ if (method == "REGISTER" ) {
     # Many user agents can use the Date header field
     # in 200 OK replies to REGISTER to synchronize
     # internal clock
-    apppend_date();
+    append_time();
 };
 ...
