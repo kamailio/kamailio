@@ -900,7 +900,7 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	db_res_t *result = NULL;
 	int from_user_col, from_domain_col, from_tag_col;
 	int to_user_col, to_domain_col, to_tag_col;
-	int expires_col= 0,callid_col, cseq_col, i, status_col, reason_col;
+	int expires_col= 0,callid_col, cseq_col, i, reason_col;
 	int version_col= 0, record_route_col = 0, contact_col = 0;
 	int sockinfo_col= 0, local_contact_col= 0, event_id_col = 0;
 	subs_t s, *s_new;
@@ -957,7 +957,6 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	result_cols[record_route_col=n_result_cols++] =   &str_record_route_col;
 	result_cols[contact_col=n_result_cols++]      =   &str_contact_col;
 	result_cols[expires_col=n_result_cols++]      =   &str_expires_col;
-	result_cols[status_col=n_result_cols++]       =   &str_status_col;
 	result_cols[reason_col=n_result_cols++]       =   &str_reason_col;
 	result_cols[sockinfo_col=n_result_cols++]     =   &str_socket_info_col;
 	result_cols[local_contact_col=n_result_cols++]=   &str_local_contact_col;
@@ -995,8 +994,15 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
 	//		continue;
 
-		memset(&s, 0, sizeof(subs_t));
+        if(row_vals[reason_col].val.string_val!= NULL)
+        {
+            continue;
+        }
+		//	s.reason.len= strlen(s.reason.s);
 
+		memset(&s, 0, sizeof(subs_t));
+		s.status= ACTIVE_STATUS;
+		
 		s.pres_uri= *pres_uri;
 		s.to_user.s= (char*)row_vals[to_user_col].val.string_val;
 		s.to_user.len= strlen(s.to_user.s);
@@ -1028,11 +1034,6 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 		s.contact.s= (char*)row_vals[contact_col].val.string_val;
 		s.contact.len= strlen(s.contact.s);
 		
-		s.status= row_vals[status_col].val.int_val;
-		s.reason.s= (char*)row_vals[reason_col].val.string_val;
-		if(s.reason.s)
-			s.reason.len= strlen(s.reason.s);
-
 		s.sockinfo_str.s = (char*)row_vals[sockinfo_col].val.string_val;
 		s.sockinfo_str.len = s.sockinfo_str.s?strlen(s.sockinfo_str.s):0;
 
@@ -1144,7 +1145,8 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 			continue;
 		}
 		
-		if((!(s->status== ACTIVE_STATUS && 
+		if((!(s->status== ACTIVE_STATUS &&
+            s->reason.s == NULL &&
 			s->event== event && s->pres_uri.len== pres_uri->len &&
 			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
 			(sender && sender->len== s->contact.len && 
