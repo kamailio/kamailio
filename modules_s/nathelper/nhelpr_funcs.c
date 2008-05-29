@@ -160,7 +160,9 @@ other:
  */
 int extract_body(struct sip_msg *msg, str *body )
 {
-	
+	char c;
+	int skip;
+
 	body->s = get_body(msg);
 	if (body->s==0) {
 		LOG(L_ERR, "ERROR: extract_body: failed to get the message body\n");
@@ -180,7 +182,18 @@ int extract_body(struct sip_msg *msg, str *body )
 		LOG(L_ERR,"ERROR: extract_body: content type mismatching\n");
 		goto error;
 	}
-	
+
+	for (skip = 0; skip < body->len; skip++) {
+		c = body->s[body->len - skip - 1];
+		if (c != '\r' && c != '\n')
+			break;
+	}
+	if (skip == body->len) {
+		LOG(L_ERR, "ERROR: extract_body: empty body\n");
+		goto error;
+	}
+	body->len -= skip;
+
 	/*DBG("DEBUG:extract_body:=|%.*s|\n",body->len,body->s);*/
 
 	return 1;

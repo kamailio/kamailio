@@ -997,10 +997,10 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	ADD_ANORTPPROXY	0x04
 #define ADD_ADIRECTIONP 0x08
 
-#define	ADIRECTION	"a=direction:active\r\n"
+#define	ADIRECTION	"a=direction:active"
 #define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
 
-#define ADIRECTIONP     "a=direction:passive\r\n"
+#define ADIRECTIONP     "a=direction:passive"
 #define ADIRECTIONP_LEN (sizeof(ADIRECTIONP) - 1)
 
 #define	AOLDMEDIP	"a=oldmediaip:"
@@ -1012,7 +1012,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	AOLDMEDPRT	"a=oldmediaport:"
 #define	AOLDMEDPRT_LEN	(sizeof(AOLDMEDPRT) - 1)
 
-#define	ANORTPPROXY	"a=nortpproxy:yes\r\n"
+#define	ANORTPPROXY	"a=nortpproxy:yes"
 #define	ANORTPPROXY_LEN	(sizeof(ANORTPPROXY) - 1)
 
 static int
@@ -1039,39 +1039,42 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			return -1;
 		}
 		if (level & ADD_ADIRECTION) {
-			buf = pkg_malloc(ADIRECTION_LEN * sizeof(char));
+			buf = pkg_malloc((ADIRECTION_LEN + CRLF_LEN) * sizeof(char));
 			if (buf == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
 				return -1;
 			}
-			memcpy(buf, ADIRECTION, ADIRECTION_LEN);
-			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0) == NULL) {
+			memcpy(buf, CRLF, CRLF_LEN);
+			memcpy(buf + CRLF_LEN, ADIRECTION, ADIRECTION_LEN);
+			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN + CRLF_LEN, 0) == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
 			}
 		}
 		if (level & ADD_ADIRECTIONP) {
-			buf = pkg_malloc(ADIRECTIONP_LEN * sizeof(char));
+			buf = pkg_malloc((ADIRECTIONP_LEN + CRLF_LEN) * sizeof(char));
 			if (buf == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
 				return -1;
 			}
-			memcpy(buf, ADIRECTIONP, ADIRECTIONP_LEN);
-			if (insert_new_lump_after(anchor, buf, ADIRECTIONP_LEN, 0) == NULL) {
+			memcpy(buf, CRLF, CRLF_LEN);
+			memcpy(buf + CRLF_LEN, ADIRECTIONP, ADIRECTIONP_LEN);
+			if (insert_new_lump_after(anchor, buf, ADIRECTIONP_LEN + CRLF_LEN, 0) == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
 			}
 		}
 		if (level & ADD_ANORTPPROXY) {
-			buf = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+			buf = pkg_malloc((ANORTPPROXY_LEN + CRLF_LEN) * sizeof(char));
 			if (buf == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: out of memory\n");
 				return -1;
 			}
-			memcpy(buf, ANORTPPROXY, ANORTPPROXY_LEN);
-			if (insert_new_lump_after(anchor, buf, ANORTPPROXY_LEN, 0) == NULL) {
+			memcpy(buf, CRLF, CRLF_LEN);
+			memcpy(buf + CRLF_LEN, ANORTPPROXY, ANORTPPROXY_LEN);
+			if (insert_new_lump_after(anchor, buf, ANORTPPROXY_LEN + CRLF_LEN, 0) == NULL) {
 				LOG(L_ERR, "ERROR: fix_nated_sdp: insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
@@ -1307,9 +1310,9 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 			LOG(L_ERR, "ERROR: alter_mediaip: out of memory\n");
 			return -1;
 		}
-		memcpy(buf, omip.s, omip.len);
-		memcpy(buf + omip.len, oldip->s, oldip->len);
-		memcpy(buf + omip.len + oldip->len, CRLF, CRLF_LEN);
+		memcpy(buf, CRLF, CRLF_LEN);
+		memcpy(buf + CRLF_LEN, omip.s, omip.len);
+		memcpy(buf + CRLF_LEN + omip.len, oldip->s, oldip->len);
 		if (insert_new_lump_after(anchor, buf,
 		    omip.len + oldip->len + CRLF_LEN, 0) == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaip: insert_new_lump_after failed\n");
@@ -1405,9 +1408,9 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 			LOG(L_ERR, "ERROR: alter_mediaport: out of memory\n");
 			return -1;
 		}
-		memcpy(buf, AOLDMEDPRT, AOLDMEDPRT_LEN);
-		memcpy(buf + AOLDMEDPRT_LEN, oldport->s, oldport->len);
-		memcpy(buf + AOLDMEDPRT_LEN + oldport->len, CRLF, CRLF_LEN);
+		memcpy(buf, CRLF, CRLF_LEN);
+		memcpy(buf + CRLF_LEN, AOLDMEDPRT, AOLDMEDPRT_LEN);
+		memcpy(buf + CRLF_LEN + AOLDMEDPRT_LEN, oldport->s, oldport->len);
 		if (insert_new_lump_after(anchor, buf,
 		    AOLDMEDPRT_LEN + oldport->len + CRLF_LEN, 0) == NULL) {
 			LOG(L_ERR, "ERROR: alter_mediaport: insert_new_lump_after failed\n");
@@ -2386,7 +2389,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 	} /* Iterate sessions */
 
 	if (proxied == 0) {
-		cp = pkg_malloc(ANORTPPROXY_LEN * sizeof(char));
+		cp = pkg_malloc((ANORTPPROXY_LEN + CRLF_LEN) * sizeof(char));
 		if (cp == NULL) {
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: out of memory\n");
 			return -1;
@@ -2397,8 +2400,9 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			pkg_free(cp);
 			return -1;
 		}
-		memcpy(cp, ANORTPPROXY, ANORTPPROXY_LEN);
-		if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN, 0) == NULL) {
+		memcpy(cp, CRLF, CRLF_LEN);
+		memcpy(cp + CRLF_LEN, ANORTPPROXY, ANORTPPROXY_LEN);
+		if (insert_new_lump_after(anchor, cp, ANORTPPROXY_LEN + CRLF_LEN, 0) == NULL) {
 			LOG(L_ERR, "ERROR: force_rtp_proxy2: insert_new_lump_after failed\n");
 			pkg_free(cp);
 			return -1;
