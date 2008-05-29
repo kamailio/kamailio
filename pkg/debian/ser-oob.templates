@@ -166,3 +166,9 @@ Description: Admin user
  .
  Leave this entry empty to not add the user record.
 
+Template: ser-oob/SERCTL_PASS
+Type: string
+Default:
+Description: Admin user passowrd
+ Please enter password for admin user.
+

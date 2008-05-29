@@ -207,22 +207,28 @@ fi
 
 db_get ser-oob/SERCTL_DOMAIN
 if [ "$RET" != "" ] ; then
+  DOMAIN="$RET"
   # clear it, to be sure we do not add it more than once
   db_set ser-oob/SERCTL_DOMAIN
   # add the domain using ser_ctl
   echo "Calling ser_ctl to add domain"
-  ser_ctl add domain $RET || echo "Waring: ser_ctl failed!"
-fi
+  ser_ctl domain add $DOMAIN || echo "Waring: ser_ctl failed!"
 
-db_get ser-oob/SERCTL_USER
-if [ "$RET" != "" ] ; then
-  # clear it, to be sure we do not add it more than once
-  db_set ser-oob/SERCTL_USER
-  # add the user using ser_ctl
-  echo "Calling ser_ctl to add user"
-  ser_ctl user add $RET || echo "Waring: ser_ctl failed!"
-  echo "Calling ser_ctl to set user rights"
-  ser_ctl attrs $RET sw_is_admin=1 sw_is_hostmaster=1 || echo "Waring: ser_ctl failed!"
+  db_get ser-oob/SERCTL_USER
+  if [ "$RET" != "" ] ; then
+    # clear it, to be sure we do not add it more than once
+    db_set ser-oob/SERCTL_USER
+    USER="$RET"
+    db_get ser-oob/SERCTL_PASS
+    PASS="$RET"
+    # clear it
+    db_set ser-oob/SERCTL_PASS
+    # add the user using ser_ctl
+    echo "Calling ser_ctl to add user"
+    ser_ctl user add $USER@$DOMAIN -p "$PASS" || echo "Waring: ser_ctl failed!"
+    echo "Calling ser_ctl to set user rights"
+    ser_ctl attrs set $USER@$DOMAIN sw_is_admin=1 sw_is_hostmaster=1 || echo "Waring: ser_ctl failed!"
+  fi
 fi
 
 
