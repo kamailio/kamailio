@@ -51,14 +51,19 @@ Description: List of IP addresses to listen on
  doesn't know what socket to choose.
  Please do not list private administrative address here (separate question for it will follow).
  .
+ Note: if you do not specify any listen ip address then SER will listen on all interfaces,
+ and also replication using multicast will be disabled in the ser config.
+ .
  Enter "!" to not modify this option.
 
 Template: ser-oob/ADMINADDR
 Type: string
-Default: 127.0.0.1
+Default:
 Description: Administrative IP address
  Set the IP address of administrative interface (usually a private one), on which
  Ser will also listen.
+ .
+ You can enter empty string to not listen on any administrative address.
  .
  Enter "!" to not modify this option.
 

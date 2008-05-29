@@ -133,13 +133,27 @@ fi
 
 db_get ser-oob/LISTEN
 if test "$RET" != "!" ; then
-  echo "$RET"|sed 's/,/\n/g'|awk '{print "listen=\"" $1 "\""}' | \
-  fn_config_replace $CONFIGFILE LISTEN
+  if test "$RET" != "" ; then
+    echo "$RET"|sed 's/,/\n/g'|awk '{print "listen=\"" $1 "\""}' | \
+    fn_config_replace $CONFIGFILE LISTEN
+    # enable the replication block
+    echo "#" | fn_config_replace $CONFIGFILE REPLICATION1
+    echo "#" | fn_config_replace $CONFIGFILE REPLICATION2
+  else
+    echo "#listen=127.0.0.1" | fn_config_replace $CONFIGFILE LISTEN
+    # comment out the replication block
+    echo "/*" | fn_config_replace $CONFIGFILE REPLICATION1
+    echo "*/" | fn_config_replace $CONFIGFILE REPLICATION2
+  fi
 fi
 
 db_get ser-oob/ADMINADDR
 if test "$RET" != "!" ; then
-  echo "listen=udp:$RET" | fn_config_replace $CONFIGFILE LISTEN_ADMIN
+  if test "$RET" != "" ; then
+    echo "listen=udp:$RET" | fn_config_replace $CONFIGFILE LISTEN_ADMIN
+  else
+    echo "#listen=udp:127.0.0.1" | fn_config_replace $CONFIGFILE LISTEN_ADMIN
+  fi
 fi
 
 db_get ser-oob/SENDADDR
