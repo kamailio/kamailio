@@ -351,7 +351,7 @@ static int rtpproxy_retr = 5;
 static int rtpproxy_tout = 1;
 static pid_t mypid;
 static unsigned int myseqn = 0;
-static str nortpproxy_str = str_init("a=nortpproxy:yes\r\n");
+static str nortpproxy_str = str_init("a=nortpproxy:yes");
 static int sipping_flag = -1;
 static int natping_processes = 1;
 
@@ -1025,6 +1025,11 @@ mod_init(void)
 		nortpproxy_str.s = NULL;
 	} else {
 		nortpproxy_str.len = strlen(nortpproxy_str.s);
+		while (nortpproxy_str.len > 0 && (nortpproxy_str.s[nortpproxy_str.len - 1] == '\r' ||
+		    nortpproxy_str.s[nortpproxy_str.len - 1] == '\n'))
+			nortpproxy_str.len--;
+		if (nortpproxy_str.len == 0)
+			nortpproxy_str.s = NULL;
 	}
 
 	if (natping_interval > 0) {
@@ -1558,7 +1563,7 @@ nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2)
 #define	ADD_ANORTPPROXY	0x04
 #define	FIX_ORGIP	0x08
 
-#define	ADIRECTION	"a=direction:active\r\n"
+#define	ADIRECTION	"a=direction:active"
 #define	ADIRECTION_LEN	(sizeof(ADIRECTION) - 1)
 
 #define	AOLDMEDIP	"a=oldmediaip:"
@@ -1645,26 +1650,28 @@ fix_nated_sdp_f(struct sip_msg* msg, char* str1, char* str2)
 			return -1;
 		}
 		if (level & ADD_ADIRECTION) {
-			buf = pkg_malloc(ADIRECTION_LEN * sizeof(char));
+			buf = pkg_malloc((ADIRECTION_LEN + CRLF_LEN) * sizeof(char));
 			if (buf == NULL) {
 				LM_ERR("out of pkg memory\n");
 				return -1;
 			}
-			memcpy(buf, ADIRECTION, ADIRECTION_LEN);
-			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN, 0)==NULL) {
+			memcpy(buf, CRLF, CRLF_LEN);
+			memcpy(buf + CRLF_LEN, ADIRECTION, ADIRECTION_LEN);
+			if (insert_new_lump_after(anchor, buf, ADIRECTION_LEN + CRLF_LEN, 0) == NULL) {
 				LM_ERR("insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
 			}
 		}
 		if ((level & ADD_ANORTPPROXY) && nortpproxy_str.len) {
-			buf = pkg_malloc(nortpproxy_str.len * sizeof(char));
+			buf = pkg_malloc((nortpproxy_str.len + CRLF_LEN) * sizeof(char));
 			if (buf == NULL) {
 				LM_ERR("out of pkg memory\n");
 				return -1;
 			}
-			memcpy(buf, nortpproxy_str.s, nortpproxy_str.len);
-			if (insert_new_lump_after(anchor, buf, nortpproxy_str.len, 0)==NULL) {
+			memcpy(buf, CRLF, CRLF_LEN);
+			memcpy(buf + CRLF_LEN, nortpproxy_str.s, nortpproxy_str.len);
+			if (insert_new_lump_after(anchor, buf, nortpproxy_str.len + CRLF_LEN, 0) == NULL) {
 				LM_ERR("insert_new_lump_after failed\n");
 				pkg_free(buf);
 				return -1;
@@ -1846,9 +1853,9 @@ alter_mediaip(struct sip_msg *msg, str *body, str *oldip, int oldpf,
 			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
-		memcpy(buf, omip.s, omip.len);
-		memcpy(buf + omip.len, oldip->s, oldip->len);
-		memcpy(buf + omip.len + oldip->len, CRLF, CRLF_LEN);
+		memcpy(buf, CRLF, CRLF_LEN);
+		memcpy(buf + CRLF_LEN, omip.s, omip.len);
+		memcpy(buf + CRLF_LEN + omip.len, oldip->s, oldip->len);
 		if (insert_new_lump_after(anchor, buf,
 		    omip.len + oldip->len + CRLF_LEN, 0) == NULL) {
 			LM_ERR("insert_new_lump_after failed\n");
@@ -1939,9 +1946,9 @@ alter_mediaport(struct sip_msg *msg, str *body, str *oldport, str *newport,
 			LM_ERR("out of pkg memory\n");
 			return -1;
 		}
-		memcpy(buf, AOLDMEDPRT, AOLDMEDPRT_LEN);
-		memcpy(buf + AOLDMEDPRT_LEN, oldport->s, oldport->len);
-		memcpy(buf + AOLDMEDPRT_LEN + oldport->len, CRLF, CRLF_LEN);
+		memcpy(buf, CRLF, CRLF_LEN);
+		memcpy(buf + CRLF_LEN, AOLDMEDPRT, AOLDMEDPRT_LEN);
+		memcpy(buf + CRLF_LEN + AOLDMEDPRT_LEN, oldport->s, oldport->len);
 		if (insert_new_lump_after(anchor, buf,
 		    AOLDMEDPRT_LEN + oldport->len + CRLF_LEN, 0) == NULL) {
 			LM_ERR("insert_new_lump_after failed\n");
@@ -2730,7 +2737,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	} /* Iterate sessions */
 
 	if (proxied == 0 && nortpproxy_str.len) {
-		cp = pkg_malloc(nortpproxy_str.len * sizeof(char));
+		cp = pkg_malloc((nortpproxy_str.len + sizeof(CRLF)) * sizeof(char));
 		if (cp == NULL) {
 			LM_ERR("out of pkg memory\n");
 			return -1;
@@ -2741,8 +2748,9 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			pkg_free(cp);
 			return -1;
 		}
-		memcpy(cp, nortpproxy_str.s, nortpproxy_str.len);
-		if (insert_new_lump_after(anchor, cp, nortpproxy_str.len, 0) == NULL) {
+		memcpy(cp, CRLF, sizeof(CRLF));
+		memcpy(cp + sizeof(CRLF), nortpproxy_str.s, nortpproxy_str.len);
+		if (insert_new_lump_after(anchor, cp, nortpproxy_str.len + sizeof(CRLF), 0) == NULL) {
 			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(cp);
 			return -1;
