@@ -153,7 +153,7 @@ Template: ser-oob/SERCTL_DOMAIN
 Type: string
 Default:
 Description: Domain
- Please enter your sip domain name. A record for it will be added using 'ser_ctl add domain' command. Note: this requires database to be already working.
+ Please enter your sip domain name. A record for it will be added using 'ser_ctl domain add' command. Note: this requires database to be already working.
  .
  Leave this entry empty to not add any domain.
 
@@ -169,6 +169,6 @@ Description: Admin user
 Template: ser-oob/SERCTL_PASS
 Type: string
 Default:
-Description: Admin user passowrd
+Description: Admin user password
  Please enter password for admin user.
 

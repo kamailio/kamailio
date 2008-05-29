@@ -205,20 +205,33 @@ if [ "$RET" = "true" ] ; then
   /usr/sbin/ser_mysql.sh create -q$PASS
 fi
 
+# restart ser - after creating db, but before calling ser_ctl
+if [ -x "/etc/init.d/ser" ]; then
+  if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+    invoke-rc.d ser restart || echo "Warning: ser restart failed!"
+  else
+    /etc/init.d/ser restart || echo "Warning: ser restart failed!"
+  fi
+fi
+
 db_get ser-oob/SERCTL_DOMAIN
 if [ "$RET" != "" ] ; then
   DOMAIN="$RET"
   # clear it, to be sure we do not add it more than once
   db_set ser-oob/SERCTL_DOMAIN
   # add the domain using ser_ctl
+  echo "Waiting for ser to finish startup..."
+  # wait some time, to allow ser start after starting it
+  sleep 10
   echo "Calling ser_ctl to add domain"
-  ser_ctl domain add $DOMAIN || echo "Waring: ser_ctl failed!"
+  ser_ctl domain add $DOMAIN || echo "Warning: ser_ctl failed!"
 
   db_get ser-oob/SERCTL_USER
   if [ "$RET" != "" ] ; then
+    USER="$RET"
     # clear it, to be sure we do not add it more than once
     db_set ser-oob/SERCTL_USER
-    USER="$RET"
+    # get the user password
     db_get ser-oob/SERCTL_PASS
     PASS="$RET"
     # clear it
@@ -243,15 +256,6 @@ echo ""
 echo "To change it's configuration use 'dpkg-reconfigure ser-oob'"
 echo "***"
 echo ""
-
-if [ -x "/etc/init.d/ser" ]; then
-  if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-    invoke-rc.d ser restart || exit 0
-  else
-    /etc/init.d/ser restart || exit 0
-  fi
-fi
-                                                                
 
 exit 0
 
