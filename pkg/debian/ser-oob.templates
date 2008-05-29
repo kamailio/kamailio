@@ -149,3 +149,20 @@ Description: Mysql root password
  Please enter your Mysql root password. It will be used to create the ser database. You can leave it empty
  to use empty password.
 
+Template: ser-oob/SERCTL_DOMAIN
+Type: string
+Default:
+Description: Domain
+ Please enter your sip domain name. A record for it will be added using 'ser_ctl add domain' command. Note: this requires database to be already working.
+ .
+ Leave this entry empty to not add any domain.
+ 
+Template: ser-oob/SERCTL_USER
+Type: string
+Default:
+Description: Admin user
+ Please enter username for admin user. It will be created using 'ser_ctl user add' command and it's rights will be set using 'ser_ctl attrs <user> sw_is_admin=1 sw_is_hostmaster=1' command.
+ Note: this requires database to be already working.
+ .
+ Leave this entry empty to not add the user record.
+
