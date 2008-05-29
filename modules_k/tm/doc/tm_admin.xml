@@ -690,10 +690,13 @@ if (t_newtran()) {
 			</listitem>
 			<listitem>
 				<para><emphasis>0x02</emphasis> - do not internally send a 
-				negative reply in case of failure. It applies only when the
-				transaction is created. By default one is sent.
-				Useful if you want to implement a serial forking in case of
-				failure.
+				negative reply in case of forward failure (due internal error,
+				bad RURI, bad message, etc).  When a forward failure occurs, no
+				SIP request is relayed and therefore no negative reply or
+				timeout will show up on the failure_route (if one is set).
+				It applies only when the transaction is created.
+				By default one negative reply is sent.
+				Useful if you want to implement a serial forking in case of failure.
 				</para>
 			</listitem>
 			<listitem>

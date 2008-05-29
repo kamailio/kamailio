@@ -593,9 +593,13 @@ if (t_newtran()) {
        generated. Useful if you already pushed an stateless 100
        reply from script.
      * 0x02 - do not internally send a negative reply in case of
-       failure. It applies only when the transaction is created.
-       By default one is sent. Useful if you want to implement a
-       serial forking in case of failure.
+       forward failure (due internal error, bad RURI, bad
+       message, etc). When a forward failure occurs, no SIP
+       request is relayed and therefore no negative reply or
+       timeout will show up on the failure_route (if one is set).
+       It applies only when the transaction is created. By
+       default one negative reply is sent. Useful if you want to
+       implement a serial forking in case of failure.
      * 0x04 - disable the DNS failover for the transaction. Only
        first IP will be used. It disable the failover both at
        transaport and transaction level.
