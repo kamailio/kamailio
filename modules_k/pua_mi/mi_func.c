@@ -147,10 +147,9 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	if(etag.s== NULL || etag.len== 0)
 	{
 		LM_ERR("empty etag parameter\n");
-		return init_mi_tree(400, "Empty etag parameter", 11);
+		return init_mi_tree(400, "Empty etag parameter", 20);
 	}
-	LM_DBG("etag '%.*s'\n",
-	    etag.len, etag.s);
+	LM_DBG("etag '%.*s'\n", etag.len, etag.s);
 
 	node = node->next;
 	if(node == NULL)
@@ -161,7 +160,7 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 	if(extra_headers.s== NULL || extra_headers.len== 0)
 	{
 		LM_ERR("empty extra_headers parameter\n");
-		return init_mi_tree(400, "Empty extra_headers", 11);
+		return init_mi_tree(400, "Empty extra_headers", 19);
 	}
 	LM_DBG("extra_headers '%.*s'\n",
 	    extra_headers.len, extra_headers.s);
@@ -186,10 +185,9 @@ struct mi_root* mi_pua_publish(struct mi_root* cmd, void* param)
 			return init_mi_tree(400, "Empty body parameter", 20);
 		}
 	}
-	LM_DBG("body '%.*s'\n",
-	    body.len, body.s);
+	LM_DBG("body '%.*s'\n", body.len, body.s);
 
-	/* Check that body is NULL iff content type is . */
+	/* Check that body is NULL if content type is . */
 	if(body.s== NULL && (content_type.len!= 1 || content_type.s[0]!= '.'))
 	{
 		LM_ERR("body is missing, but content type is not .\n");
