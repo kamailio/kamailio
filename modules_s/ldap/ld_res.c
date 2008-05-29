@@ -34,6 +34,8 @@
  * Functions working with result structures received from LDAP servers.
  */
 
+#include <string.h>
+
 #include "ld_res.h"
 #include "ld_cmd.h"
 

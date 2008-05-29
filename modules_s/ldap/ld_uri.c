@@ -34,6 +34,8 @@
  * The implementation of parser parsing ldap:.. URIs.
  */
 
+#include <string.h>
+
 #include "ld_uri.h"
 
 #include "../../mem/mem.h"
