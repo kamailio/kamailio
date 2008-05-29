@@ -139,11 +139,15 @@ if test "$RET" != "!" ; then
     # enable the replication block
     echo "#" | fn_config_replace $CONFIGFILE REPLICATION1
     echo "#" | fn_config_replace $CONFIGFILE REPLICATION2
+    # enable replication listen addr
+    echo "listen=224.0.1.75" | fn_config_replace $CONFIGFILE LISTEN_REPL
   else
     echo "#listen=127.0.0.1" | fn_config_replace $CONFIGFILE LISTEN
     # comment out the replication block
     echo "/*" | fn_config_replace $CONFIGFILE REPLICATION1
     echo "*/" | fn_config_replace $CONFIGFILE REPLICATION2
+    # disable replication listen addr
+    echo "#listen=224.0.1.75" | fn_config_replace $CONFIGFILE LISTEN_REPL
   fi
 fi
 
