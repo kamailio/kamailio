@@ -627,7 +627,7 @@ int ld_fld2ldap(char** filter, db_fld_t* fld, str* add)
 		rv |= sb_add(&buf, "(", 1);
 		lfld = DB_GET_PAYLOAD(fld + i);	
 
-		if ((fld[i].flags & DB_NULL) == 0) {
+		if (fld[i].flags & DB_NULL) {
 			rv |= sb_add(&buf, lfld->attr.s, lfld->attr.len);
 			rv |= sb_add(&buf, "=", 1);
 			goto skip;
