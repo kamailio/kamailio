@@ -276,6 +276,9 @@ typedef struct cell
 
 	/* list with user avp */
 	struct usr_avp *user_avps;
+
+	/* holders for higher contexts */
+	void *dialog_ctx;
 }cell_type;
 
 
