@@ -57,13 +57,6 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 #define FOR_ALL_ATTR(_node,_attr) \
 	for( (_attr)=(_node)->properties ; (_attr) ; (_attr)=(_attr)->next)
 
-/* right and left space trimming */
-#define trimlr(_s_) \
-	do{\
-		for(;(_s_).s[(_s_).len-1]==' ';(_s_).s[--(_s_).len]=0);\
-		for(;(_s_).s[0]==' ';(_s_).s=(_s_).s+1,(_s_).len--);\
-	}while(0);
-
 #define check_overflow(_p_,_offset_,_end_,_error_) \
 	do{\
 		if ((_p_)+(_offset_)>=(_end_)) { \
@@ -114,7 +107,7 @@ enum {EMAIL_TO,EMAIL_HDR_NAME,EMAIL_KNOWN_HDR_BODY,EMAIL_UNKNOWN_HDR_BODY};
 		(_val_).s = (char*)xmlGetProp(node,(_attr_name_));\
 		(_val_).len = strlen((_val_).s);\
 		/* remove all spaces from begin and end */\
-		trimlr( (_val_) );\
+		trim_spaces_lr( (_val_) );\
 		if ((_val_).len==0) {\
 			LM_ERR("%s:%d: attribute <%s> has an "\
 				"empty value\n",__FILE__,__LINE__,(_attr_name_));\
