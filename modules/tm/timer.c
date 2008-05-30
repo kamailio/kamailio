@@ -308,38 +308,19 @@ static void fake_reply(struct cell *t, int branch, int code )
 	if ( is_local(t) ) {
 		reply_status=local_reply( t, FAKED_REPLY, branch, 
 					  code, &cancel_bitmap );
-		if (reply_status == RPS_COMPLETED) {
-			put_on_wait(t);
-		}
 	} else {
+		/* rely reply, but don't put on wait, we still need t
+		 * to send the cancels */
 		reply_status=relay_reply( t, FAKED_REPLY, branch, code,
-					  &cancel_bitmap );
-
-#if 0
-		if (reply_status==RPS_COMPLETED) {
-			     /* don't need to cleanup uac_timers -- they were cleaned
-				branch by branch and this last branch's timers are
-				reset now too
-			     */
-			     /* don't need to issue cancels -- local cancels have been
-				issued branch by branch and this last branch was
-				canceled now too
-			     */
-			     /* then the only thing to do now is to put the transaction
-				on FR/wait state 
-			     */
-			     /*
-			       set_final_timer(  t );
-			     */
-		}
-#endif
-
+					  &cancel_bitmap, 0 );
 	}
 	/* now when out-of-lock do the cancel I/O */
 	if (do_cancel_branch) cancel_branch(t, branch, 0);
 	/* it's cleaned up on error; if no error occurred and transaction
 	   completed regularly, I have to clean-up myself
 	*/
+	if (reply_status == RPS_COMPLETED)
+		put_on_wait(t);
 }
 
 
@@ -550,6 +531,9 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 							  a little race risk, but
 							  nothing bad would happen */
 		rbuf->flags|=F_RB_TIMEOUT;
+		/* WARNING:  the next line depends on taking care not to start the 
+		 *           wait timer before finishing with t (if this is not 
+		 *           guaranteed then comment the timer_allow_del() line) */
 		timer_allow_del(); /* [optional] allow timer_dels, since we're done
 							  and there is no race risk */
 		final_response_handler(rbuf, t);

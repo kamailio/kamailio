@@ -121,7 +121,7 @@ int t_reply_unsafe( struct cell *t, struct sip_msg * , unsigned int , char * );
 
 
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
-	unsigned int msg_status, branch_bm_t *cancel_bitmap );
+	unsigned int msg_status, branch_bm_t *cancel_bitmap, int do_put_on_wait );
 
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
     unsigned int msg_status, branch_bm_t *cancel_bitmap );

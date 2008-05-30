@@ -87,6 +87,8 @@
  *             (it can be disabled with reparse_invite=0) (Miklos)
  * 2007-09-03: drop_replies() has been introduced (Miklos)
  * 2008-03-12  use cancel_b_method on 6xx (andrei)
+ * 2008-05-30  make sure the wait timer is started after we don't need t
+ *             anymore to allow safe calls from fr_timer (andrei)
  *
  */
 
@@ -425,6 +427,32 @@ static int send_local_ack(struct sip_msg* msg, str* next_hop,
 
 
 
+inline static void start_final_repl_retr( struct cell *t )
+{
+	if (unlikely(!is_local(t) && t->uas.request->REQ_METHOD==METHOD_INVITE )){
+		/* crank timers for negative replies */
+		if (t->uas.status>=300) {
+			if (start_retr(&t->uas.response)!=0)
+				LOG(L_CRIT, "BUG: start_final_repl_retr: start retr failed"
+						" for %p\n", &t->uas.response);
+			return;
+		}
+		/* local UAS retransmits too */
+		if (t->relayed_reply_branch==-2 && t->uas.status>=200) {
+			/* we retransmit 200/INVs regardless of transport --
+			   even if TCP used, UDP could be used upstream and
+			   loose the 200, which is not retransmitted by proxies
+			*/
+			if (force_retr( &t->uas.response )!=0)
+				LOG(L_CRIT, "BUG: start_final_repl_retr: force retr failed for"
+						" %p\n", &t->uas.response);
+			return;
+		}
+	}
+}
+
+
+
 static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 			 unsigned int code, char * text,
 			 char *to_tag, unsigned int to_tag_len, int lock,
@@ -499,7 +527,7 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 		cleanup_uac_timers( trans );
 		if (is_invite(trans)) 
 			cancel_uacs( trans, cancel_bitmap, F_CANCEL_B_KILL );
-		set_final_timer(  trans );
+		start_final_repl_retr(  trans );
 	}
 
 	/* send it out */
@@ -529,6 +557,13 @@ static int _reply_light( struct cell *trans, char* buf, unsigned int len,
 #endif
 		DBG("DEBUG: reply sent out. buf=%p: %.9s..., shmem=%p: %.9s\n",
 			buf, buf, rb->buffer, rb->buffer );
+	}
+	if (code>=200) {
+		/* start wait timer after finishing with t so that this function can
+		 * be safely called from a fr_timer which allows quick timer dels
+		 * (timer_allow_del()) (there's no chance of having the wait handler
+		 *  executed while we still need t) --andrei */
+		put_on_wait(trans);
 	}
 	pkg_free( buf ) ;
 	DBG("DEBUG: _reply_light: finished\n");
@@ -1203,32 +1238,12 @@ int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 
 
 
-
-
-void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
+void set_final_timer( struct cell *t )
 {
-	if ( !is_local(t) && t->uas.request->REQ_METHOD==METHOD_INVITE ) {
-		/* crank timers for negative replies */
-		if (t->uas.status>=300) {
-			if (start_retr(&t->uas.response)!=0)
-				LOG(L_CRIT, "BUG: set_final_timer: start retr failed for %p\n",
-						&t->uas.response);
-			return;
-		}
-		/* local UAS retransmits too */
-		if (t->relayed_reply_branch==-2 && t->uas.status>=200) {
-			/* we retransmit 200/INVs regardless of transport --
-			   even if TCP used, UDP could be used upstream and
-			   loose the 200, which is not retransmitted by proxies
-			*/
-			if (force_retr( &t->uas.response )!=0)
-				LOG(L_CRIT, "BUG: set_final_timer: force retr failed for %p\n",
-						&t->uas.response);
-			return;
-		}
-	}
+	start_final_repl_retr(t);
 	put_on_wait(t);
 }
+
 
 void cleanup_uac_timers( struct cell *t )
 {
@@ -1351,9 +1366,11 @@ skip:
 /* this is the code which decides what and when shall be relayed
    upstream; note well -- it assumes it is entered locked with
    REPLY_LOCK and it returns unlocked!
+   If do_put_on_wait==1 and this is the final reply, the transaction
+   wait timer will be started (put_on_wait(t)).
 */
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
-	unsigned int msg_status, branch_bm_t *cancel_bitmap )
+	unsigned int msg_status, branch_bm_t *cancel_bitmap, int do_put_on_wait )
 {
 	int relay;
 	int save_clone;
@@ -1538,12 +1555,13 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 		/* Set retransmission timer before the reply is sent out to avoid
 		* race conditions
 		*
-		* Call set_final_timer() only if we really send out the reply.
-		* It can happen that the reply has been already sent from failure_route
-		* or from a callback and the timer has been already started. (Miklos)
+		* Call start_final_repl_retr/put_on_wait() only if we really send out
+		* the reply. It can happen that the reply has been already sent from
+		* failure_route or from a callback and the timer has been already
+		* started. (Miklos)
 		*/
 		if (reply_status == RPS_COMPLETED) {
-			set_final_timer(t);
+			start_final_repl_retr(t);
 		}
 		if (SEND_PR_BUFFER( uas_rb, buf, res_len )>=0){
 			if (unlikely(!totag_retr && has_tran_tmcbs(t, TMCB_RESPONSE_OUT))){
@@ -1560,6 +1578,21 @@ enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 				run_onsend_callbacks2(TMCB_RESPONSE_SENT, t, &onsend_params);
 			}
 #endif
+		}
+		/* Call put_on_wait() only if we really send out
+		* the reply. It can happen that the reply has been already sent from
+		* failure_route  or from a callback and the timer has been already
+		* started. (Miklos)
+		*
+		* put_on_wait() should always be called after we finished dealling 
+		* with t, because otherwise the wait timer might fire before we
+		*  finish with t, and by the time we want to use t it could
+		*  be already deleted. This could happen only if this function is
+		*  called from timer (fr_timer) (the timer doesn't refcnt) and the
+		*  timer allows quick dels (timer_allow_del()). --andrei
+		*/
+		if (do_put_on_wait && (reply_status == RPS_COMPLETED)) {
+			put_on_wait(t);
 		}
 		pkg_free( buf );
 	}
@@ -1918,7 +1951,7 @@ int reply_received( struct sip_msg  *p_msg )
 		}
 	} else {
 		reply_status=relay_reply( t, p_msg, branch, msg_status,
-			&cancel_bitmap );
+									&cancel_bitmap, 1 );
 		if (reply_status == RPS_COMPLETED) {
 			     /* no more UAC FR/RETR (if I received a 2xx, there may
 				be still pending branches ...
@@ -1932,7 +1965,6 @@ int reply_received( struct sip_msg  *p_msg )
 			/* Call to set_final_timer is embedded in relay_reply to avoid
 			 * race conditions when reply is sent out and an ACK to stop
 			 * retransmissions comes before retransmission timer is set.*/
-			/* set_final_timer(t) */
 		}else if (cancel_bitmap){
 			/* cancel everything, even non-INVITEs (e.g in case of 6xx), use
 			 * cancel_b_method for canceling unreplied branches */

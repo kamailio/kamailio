@@ -214,7 +214,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 			atomic_set_long((void*)&crb->buffer, 0);
 			if (flags & F_CANCEL_B_FAKE_REPLY){
 				LOCK_REPLIES(t);
-				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm) == 
+				if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm, 1) == 
 										RPS_ERROR){
 					return -1;
 				}
@@ -234,7 +234,7 @@ int cancel_branch( struct cell *t, int branch, int flags )
 				if (flags & F_CANCEL_B_FAKE_REPLY){
 					stop_rb_timers( irb ); /* stop even the fr timer */
 					LOCK_REPLIES(t);
-					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm) == 
+					if (relay_reply(t, FAKED_REPLY, branch, 487, &tmp_bm, 1)== 
 											RPS_ERROR){
 						return -1;
 					}
