@@ -161,9 +161,9 @@
 		</para>
 		<para>
 		Failover at transport level may be triggered by a failure of sending
-		out the request message. A failure occures if the coresponding 
+		out the request message. A failure occurs if the corresponding 
 		interface was found for sending the request, if the TCP connection
-		was refused or if a generic internal error happend during send. There
+		was refused or if a generic internal error happened during send. There
 		is no ICMP error report support.
 		</para>
 		<para>
@@ -916,7 +916,7 @@ if (t_check_status("(487)|(408)")) {
 		</title>
 		<para>
 		Flush the flags from current request into the already created 
-		transaction. It make sens only in routing block if the transaction was
+		transaction. It make sense only in routing block if the transaction was
 		created via t_newtran() and the flags have been altered since.
 		</para>
 		<para>
