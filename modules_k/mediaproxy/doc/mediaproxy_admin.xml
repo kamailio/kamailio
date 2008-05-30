@@ -1,580 +1,407 @@
 <!-- Module User's Guide -->
 
 <chapter>
-	
-	<title>&adminguide;</title>
-	
-	<section>
-	<title>Overview</title>
-		<para>
-			Mediaproxy is an &openser; module that is designed to allow automatic 
-			NAT traversal for the majority of existing SIP clients. This means 
-			that there will be no need to configure anything in particular on 
-			the NAT box to allow these clients to work behind NAT when using 
-			the mediaproxy module.
-		</para>
-	</section>
-	
-	<section>
-	<title>Principle of operation</title>
-		<para>
-			This NAT traversal solution operates by placing a mediaproxy server 
-			in the middle between 2 SIP user-agents. It mangles the SDP 
-			messages for both of them in a way that will make the parties talk 
-			with mediaproxy while they think they talk directly with each other.
-		</para>
-		<para>
-			To achieve this, mediaproxy is actually composed by 2 components:
-			<itemizedlist>
-				<listitem><para>
-					the &openser; mediaproxy module itself
-				</para></listitem>
-				<listitem><para>
-					an external proxy server called &openser; MediaProxy 
-					(available from http://mediaproxy.ag-projects.com/ )
-				</para></listitem>
-			</itemizedlist>
-		</para>
-		<para>
-			To avoid confusion in this document the mediaproxy module will be 
-			called 'module' or 'mediaproxy module', while the mediaproxy server 
-			will be called 'proxy server' from here on.
-		</para>
-		<para>
-			The proxy server can be run on the same machine as the module or on 
-			a remote host. Moreover it is possible for a single module to 
-			control multiple proxy servers running on multiple geographically 
-			distributed hosts. To find out more about the architecture 
-			of &openser; MediaProxy please read the documentation that comes with it.
-		</para>
-		<para>
-			To be able to act as a proxy between the 2 talking parties, the 
-			machine(s) running the module/proxy server must have a public IP 
-			address.
-		</para>
-		<para>
-			The module will ask the proxy server to allocate as many sockets as there
-			are media streams in the SDP body of the SIP INVITE/Ok messages. The proxy
-			server will send back to the module the address and port(s) for them. Then
-			the module will replace the original contact IP and RTP ports from the SDP
-			messages with the ones provided by the proxy server. By doing this both
-			clients will try to contact the proxy server instead of talking directly
-			with each other. Once the clients contact the proxy server, it will record
-			the addresses they came from and will know where to forward packets received
-			from the other party This is needed because the address/port the NAT box
-			will allocate for the leaving streams is not known before they actually
-			leave the NAT box. However the address of the proxy server is always known
-			(being a public one) so the 2 parties know where to connect and then after
-			they did so, the proxy learns the addresses they came from and can forward
-			packets between them.
-		</para>
-	</section>
+  
+  <title>&adminguide;</title>
+  
+  <section>
+  <title>Overview</title>
+    <para>
+      Mediaproxy is an &openser; module that is designed to allow automatic 
+      NAT traversal for the majority of existing SIP clients. This means 
+      that there will be no need to configure anything in particular on 
+      the NAT box to allow these clients to work behind NAT when using 
+      the mediaproxy module.
+    </para>
+  </section>
+  
+  <section>
+  <title>Principle of operation</title>
+    <para>
+      This NAT traversal solution operates by placing a media relay in the
+      middle between 2 SIP user-agents. It mangles the SDP messages for both
+      of them in a way that will make the parties talk with the relay while
+      they think they talk directly with each other.
+    </para>
 
-	<section>
-	<title>Types of SIP clients</title>			
-		<para>
-			The SIP clients that will work transparently behind NAT when using the
-			mediaproxy module are the so-called symmetric clients. The symmetric clients
-			have the particularity that use the same port to send the data as the one
-			they use to receive it. In other words, if they are for example configured
-			to use port 5060 for SIP signaling, they will use the same port when sending
-			data as well as when receiving it. This must be true for both the SIP
-			signaling as well as the RTP streams for a client to work transparently with
-			the mediaproxy module without any additional configuration on the NAT box.
-		</para>
-		<para>
-			This ability is important because the only way to get back to a client
-			behind NAT is to send to the IP address and port the packet was received
-			from. Once a packet is sent from the client behind NAT to the outside world,
-			it opens a communication channel in the NAT box that is open in both
-			directions for a while (it will timeout after a while after no more data is
-			sent through it, but it can be kept active by sending data through it at
-			certain regular time intervals). While this channel is open, any data sent
-			to the public address and port that the NAT box assigned for the address and
-			port the client behind NAT is sending from (and this mapping is guaranteed
-			to be unique), will go back straight to the address and port the client has
-			sent from. This is why is necessary for the clients to be symmetric. If they
-			listen on the same port they sent from, the data sent back to the public
-			address that the NAT box assigned to the leaving packets will actually reach
-			the listening port of the client behind NAT.
-		</para>
-		<para>
-			Some SIP clients implement particular algorithms to detect if they are
-			actually behind a NAT box and try to act smart by detecting the IP address
-			of the NAT box (or simply allowing one to manually configure it), and then
-			use this IP address in the SIP and SDP messages instead of their own private
-			IP address. This situation can be confusing for a module that tries to
-			perform transparent NAT traversal as it can wrongly mistake such a client
-			that is behind NAT with a client that is actually in the public address
-			space. However for the mediaproxy module it is not important if the clients
-			apply or not this kind of behavior, as it is able to cope with both
-			situations gracefully.
-		</para>
-		<para>
-			This doesn't mean that mediaproxy is not able to work with asymmetric
-			clients behind NAT, but in their case special static forwarding routes need
-			to be configured on the NAT box.
-		</para>
-		<para>
-			Mediaproxy has special support for asymmetric clients, can detect them and
-			send the data to the ports they expect it to, however they can work behind
-			NAT only if static routes are configured on the NAT box since there is no
-			way of getting back to an address/port that has not previously opened a data
-			channel in the NAT box by sending something out first. Nevertheless the
-			support for asymmetric clients is important, because without it they won't
-			be able to work even when they have public Internet addresses. Also this
-			support allows one to use an asymmetric client behind NAT if he can
-			configure the NAT box to forward the packets meant to that client.
-		</para>
-		<para>
-			The only requirement a symmetric SIP client must met to be able to work
-			transparently behind NAT when using the mediaproxy module is to accept to be
-			configured to use a so called outbound proxy and this proxy must be the one
-			running with the mediaproxy module loaded.
-		</para>
-	</section>
+    <para>
+      Mediaproxy consists of 2 components:
+      <itemizedlist>
+        <listitem>
+          <para>The &openser; mediaproxy module</para>
+        </listitem>
+        <listitem>
+          <para>
+            An external application called MediaProxy which employs a
+            dispatcher and multiple distributed media relays. This is
+            available from http://ag-projects.com/MediaProxy.html
+            (version 2.0.0 or newer is required by this module).
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
 
-	<section>
-	<title>Features</title>
-		<para>
-			<itemizedlist>
-				<listitem><para>
-					make symmetric clients work behind NAT transparently if they use the SIP
-					server as the outbound SIP server.
-				</para></listitem>
-				<listitem><para>
-					handle all media streams specified in the SDP body. There is a limit of 64
-					RTP streams per session in the code now, but we hardly find this to be a
-					limitation for the time being.
-				</para></listitem>
-				<listitem><para>
-					able to distribute RTP traffic load on multiple proxy servers running on
-					multiple hosts.
-				</para></listitem>
-				<listitem><para>
-					able to specify which proxy server to use based on the SIP domain of the
-					caller/destination (done by the proxy server's dispatcher module).
-				</para></listitem>
-				<listitem><para>
-					handle asymmetric clients properly. They can even work behind NAT if a
-					proper port forwarding is done for them on the NAT box.
-				</para></listitem>
-			</itemizedlist>
-		</para>
-	</section>
-	
-	<section>
-	<title>Dependencies</title>
-		<section>
-		<title>&openser; Modules</title>
-			<para>
-				The following modules must be loaded before this module:
-				<itemizedlist>
-					<listitem><para>
-						<emphasis>usrloc</emphasis> module - this is required if pinging of
-						contacts behind NAT is enabled. In this case the nat_bflag must also
-						be defined on the ursloc module.
-					</para></listitem>
-				</itemizedlist>
-			</para>
-		</section>
-		<section>
-		<title>External Libraries or Applications</title>
-			<para>
-				The following libraries or applications must be installed before
-				running &openser; with this module loaded:
-				<itemizedlist>
-					<listitem><para>
-						<emphasis>None</emphasis>.
-					</para></listitem>
-				</itemizedlist>
-			</para>
-		</section>
-	</section>
-	
-	<section>
-	<title>Exported parameters</title>
-		<section>
-		<title><varname>mediaproxy_socket</varname> (string)</title>
-			<para>
-				It is the path to the filesystem socket where the proxy server
-				listens for commands from the module.
-			</para>
-			<para>
-				<emphasis>
-					Default value is 
-						<quote>/var/run/proxydispatcher.sock</quote>.
-				</emphasis>
-			</para>
-			<example>
-			<title>Setting <varname>mediaproxy_socket</varname> parameter</title>
-				<programlisting format="linespecific">
+    <para>
+      The mediaproxy dispatcher runs on the same machine as &openser;
+      and its purpose is to select a media relay for a call. The media
+      relay may run on the same machine as the dispatcher or on multiple
+      remote hosts and its purpose is to forward the streams between the
+      calling parties. To find out more about the architecture of MediaProxy
+      please read the documentation that comes with it.
+    </para>
+
+    <para>
+      To be able to act as a relay between the 2 user agents, the machine(s)
+      running the module/proxy server must have a public IP address.
+    </para>
+
+    <para>
+      &openser; will ask the media relay to allocate as many ports as there are
+      media streams in the SDP offer and answer. The media relay will send back
+      to &openser; the IP address and port(s) for them. Then &openser; will
+      replace the original contact IP and RTP ports from the SDP messages with
+      the ones provided by the media relay. By doing this, both user agents will
+      try to contact the media relay instead of communicating directly with each
+      other. Once the user agents contact the media relay, it will record the
+      addresses they came from and will know where to forward packets received
+      from the other endpoint. This is needed because the address/port the NAT
+      box will allocate for the media streams is not known before they actually
+      leave the NAT box. However the address of the media relay is always known
+      (being a public IP) so the 2 endpoints know where to connect. After they
+      do so, the relay learns their addresses and can forward packets between
+      them.
+    </para>
+
+    <para>
+      The SIP clients that will work transparently behind NAT when using
+      mediaproxy, are the so-called symmetric clients. The symmetric clients
+      have the particularity that use the same port to send and receive data.
+      This must be true for both signaling and media for a client to work
+      transparently with mediaproxy without any configuration on the NAT box.
+    </para>
+  </section>
+
+  <section>
+  <title>Features</title>
+    <para>
+      <itemizedlist>
+        <listitem>
+          <para>
+            make symmetric clients work behind NAT transparently, with no
+            configuration needed on the client's NAT box.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            have the ability to distribute RTP traffic on multiple media relays
+            running on multiple hosts.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+  </section>
+
+  <section>
+  <title>Dependencies</title>
+    <section>
+    <title>&openser; Modules</title>
+      <para>
+        The following modules must be loaded before this module:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <emphasis>dialog</emphasis> module - if engage_media_proxy is used
+              (see below the description of engage_media_proxy).
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
+    <section>
+    <title>External Libraries or Applications</title>
+      <para>
+        The following libraries or applications must be installed before
+        running &openser; with this module loaded:
+        <itemizedlist>
+          <listitem>
+            <para>
+              <emphasis>None</emphasis>.
+            </para>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+  </section>
+  
+  <section>
+  <title>Exported parameters</title>
+    <section>
+    <title><varname>disable</varname> (int)</title>
+      <para>
+        Boolean flag that specifies if mediaproxy should be disabled. This
+        is useful when you want to use the same openser configuration in
+        two different context, one using mediaproxy, the other not. In the
+        case mediaproxy is disabled, calls to its functions will have no
+        effect, allowing you to use the same configuration without changes.
+      </para>
+
+      <para>
+        <emphasis>
+          Default value is <quote>0</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+      <title>Setting the <varname>disable</varname> parameter</title>
+        <programlisting format="linespecific">
 ...
-modparam("mediaproxy", "mediaproxy_socket", "/var/run/proxydispatcher.sock")
+modparam("mediaproxy", "disable", 1)
 ...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title><varname>sip_asymmetrics</varname> (string)</title>
-			<para>
-				It is the path to a file that lists regular expressions that match
-				'User-Agent' or 'Server' fields from clients that are asymmetric
-				regarding SIP signaling. Needed to detect when a client is asymmetric
-				regarding SIP signaling. An example file is in the config/ subdirectory.
-			</para>
-			<para>
-				<emphasis>
-					Default value is
-						<quote>/etc/openser/sip-asymmetric-clients</quote>.
-				</emphasis>
-			</para>
-			<example>
-			<title>Setting <varname>sip_asymmetrics</varname> parameter</title>
-				<programlisting format="linespecific">
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+    <title><varname>mediaproxy_socket</varname> (string)</title>
+      <para>
+        It is the path to the filesystem socket where the mediaproxy dispatcher
+        listens for commands from the module.
+      </para>
+
+      <para>
+        <emphasis>
+          Default value is 
+            <quote>/var/run/mediaproxy/dispatcher.sock</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+      <title>Setting the <varname>mediaproxy_socket</varname> parameter</title>
+        <programlisting format="linespecific">
 ...
-modparam("mediaproxy", "sip_asymmetrics", "/etc/openser/sip-asymmetrics-clients")
+modparam("mediaproxy", "mediaproxy_socket", "/var/run/mediaproxy/dispatcher.sock")
 ...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title><varname>rtp_asymmetrics</varname> (string)</title>
-			<para>
-				It is the path to a file that lists regular expressions that match
-				'User-Agent' or 'Server' fields from clients that are asymmetric
-				regarding the RTP media. Needed to detect when a client is asymmetric
-				regarding the RTP media. An example file is in the config/ subdirectory.
-			</para>
-			<para>
-				<emphasis>
-					Default value is
-						<quote>/etc/openser/rtp-asymmetric-clients</quote>.
-				</emphasis>
-			</para>
-			<example>
-			<title>Setting <varname>rtp_asymmetrics</varname> parameter</title>
-				<programlisting format="linespecific">
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+    <title><varname>mediaproxy_timeout</varname> (int)</title>
+      <para>
+        How much time (in milliseconds) to wait for an answer from the
+        mediaproxy dispatcher.
+      </para>
+
+      <para>
+        <emphasis>
+          Default value is <quote>500</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+      <title>Setting the <varname>mediaproxy_timeout</varname> parameter</title>
+        <programlisting format="linespecific">
 ...
-modparam("mediaproxy", "rtp_asymmetrics", "/etc/openser/rtp-asymmetrics-clients")
+modparam("mediaproxy", "mediaproxy_timeout", 500)
 ...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title><varname>natping_interval</varname> (integer)</title>
-			<para>
-				It holds an integer value representing how often the module will
-				send packets to all registered clients that are behind NAT to keep
-				their opened channels alive. Represents an interval in seconds.
-			</para>
-			<para>
-				<emphasis>
-					Default value is 60.
-				</emphasis>
-			</para>
-			<example>
-			<title>Setting <varname>natping_interval</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("mediaproxy", "natping_interval", 20)
-...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title><varname>signaling_ip_avp</varname> (string)</title>
-			<para>
-				Specification of the AVP which holds the IP address from where
-				the SIP signaling originated. If this AVP is set it will be used
-				to get the signaling IP address, else the source IP address
-				from where the SIP message was received will be used.
-				This AVP is meant to be used in cases where there are more than
-				one proxy in the call setup path and the proxy that actually
-				starts mediaproxy doesn't receive the SIP messages directly
-				from the UA and it cannot determine the NAT IP address from
-				where the signaling originated. In such a case attaching a
-				SIP header at the first proxy and then copying that header's
-				value into the signaling_ip_avp on the proxy that starts
-				mediaproxy will allow it to get the correct NAT IP address
-				from where the SIP signaling originated.
-			</para>
-			<para>
-				<emphasis>
-					Default value is <quote>$avp(s:signaling_ip)</quote>.
-				</emphasis>
-			</para>
-			<example>
-			<title>Setting <varname>signaling_ip_avp</varname> parameter</title>
-				<programlisting format="linespecific">
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+    <title><varname>signaling_ip_avp</varname> (string)</title>
+      <para>
+        Specification of the AVP which holds the IP address from where
+        the SIP signaling originated. If this AVP is set it will be used
+        to get the signaling IP address, else the source IP address
+        from where the SIP message was received will be used.
+        This AVP is meant to be used in cases where there are more than
+        one proxy in the call setup path and the proxy that actually
+        starts mediaproxy doesn't receive the SIP messages directly
+        from the UA and it cannot determine the NAT IP address from
+        where the signaling originated. In such a case attaching a
+        SIP header at the first proxy and then copying that header's
+        value into the signaling_ip_avp on the proxy that starts
+        mediaproxy will allow it to get the correct NAT IP address
+        from where the SIP signaling originated.
+      </para>
+
+      <para>
+        <emphasis>
+          Default value is <quote>$avp(s:signaling_ip)</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+      <title>Setting the <varname>signaling_ip_avp</varname> parameter</title>
+        <programlisting format="linespecific">
 ...
 modparam("mediaproxy", "signaling_ip_avp", "$avp(s:nat_ip)")
 ...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title><varname>domain_avp</varname> (string)</title>
-			<para>
-				Specification of the AVP which holds an optional application
-				defined domain name, that specifies the domain to be used to
-				select the mediaproxies for the current call. If a domain name
-				is written to this AVP before calling use_media_proxy(), it will
-				be used to select the mediaproxies for the call, overwriting the
-				normal selection process based on the caller/callee domain.
-			</para>
-			<para>
-				<emphasis>
-					Default value is <quote>$avp(s:mediaproxy_domain)</quote>.
-				</emphasis>
-			</para>
-			<example>
-			<title>Setting <varname>domain_avp</varname> parameter</title>
-				<programlisting format="linespecific">
-...
-modparam("mediaproxy", "domain_avp", "$avp(s:mediaproxy_domain)")
-...
-</programlisting>
-			</example>
-		</section>
-	</section>
+        </programlisting>
+      </example>
+    </section>
 
-	<section>
-	<title>Exported Functions</title>
-		<section>
-		<title>
-		<function moreinfo="none">client_nat_test(type)</function>
-		</title>
-			<para>
-				Tests if the client is behind NAT or not. The types of tests are
-				specified by the type parameter which represents a sum of the 
-				following numbers (add the values of the ones you wish to perform
-				tests for):
-			</para>
-			<para>
-				<itemizedlist>
-				<listitem><para>
-					1 - tests if client has a private IP address (as defined 
-					by RFC1918) in the Contact field of the SIP message.
-				</para></listitem>
-				<listitem><para>
-					2 - tests if client has contacted &openser; from an address 
-					that is different from the one in the Via field.
-				</para></listitem>
-				<listitem><para>
-					4 - tests if client has a private IP address 
-					(as defined by RFC1918) in the top Via field of the 
-					SIP message.
-				</para></listitem>
-				</itemizedlist>
-			</para>
-			<para>
-				For example calling client_nat_test("3") in openser.cfg will 
-				perform first 2 tests listen above and return true as soon as 
-				one succeeds if both fail will return false.
-			</para>
-			<para>
-				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
-			</para>			
-			<example>
-			<title><function>client_nat_test</function> usage</title>
-				<programlisting format="linespecific">
+    <section>
+    <title><varname>media_relay_avp</varname> (string)</title>
+      <para>
+        Specification of the AVP which holds an optional application
+        defined media relay IP address of a particular media relay that
+        is preferred to be used for the current call. If an IP address
+        is written to this AVP before calling use_media_proxy(), it
+        will be preferred by the dispatcher over the normal selection
+        algorithm.
+      </para>
+
+      <para>
+        <emphasis>
+          Default value is <quote>$avp(s:media_relay)</quote>.
+        </emphasis>
+      </para>
+
+      <example>
+      <title>Setting the <varname>media_relay_avp</varname> parameter</title>
+        <programlisting format="linespecific">
 ...
-if (client_nat_test("3")) {
-    .....
+modparam("mediaproxy", "media_relay_avp", "$avp(s:media_relay)")
+...
+        </programlisting>
+      </example>
+    </section>
+  </section>
+
+  <section>
+  <title>Exported Functions</title>
+    <section>
+    <title><function moreinfo="none">engage_media_proxy()</function></title>
+      <para>
+        Trigger the use of MediaProxy for all the dialog requests and
+        replies that have an SDP body. This needs to be called only
+        once for the first INVITE in a dialog. After that it will use
+        the dialog module to trace the dialog and automatically call
+        use_media_proxy() on every request and reply that belongs to
+        the dialog and has an SDP body. When the dialog ends it will
+        also call automatically end_media_session(). All of these are
+        called internally on dialog callbacks, so for this function to
+        work, the dialog module must be loaded and configured.
+      </para>
+
+      <para>
+        This function is an advanced mechanism to use a media relay
+        without having to manually call a function on each message that
+        belongs to the dialog. However this method is less flexible,
+        because once things were set in motion by calling this function
+        on the first INVITE, it cannot be stopped, not even by calling
+        end_media_session(). It will only stop when the dialog ends.
+        Until then it will modify the SDP content of every in-dialog
+        message to make it use a media relay. If one needs more control
+        over the process, like starting to use mediaproxy only later in
+        the failure route, or stopping to use mediaproxy in the failure
+        route, then the use_media_proxy and end_media_session functions
+        should be used, and manually called as appropriate. Using this
+        function should NOT be mixed with either of use_media_proxy()
+        or end_media_session().
+      </para>
+
+      <para>
+        This function can be used from REQUEST_ROUTE.
+      </para>
+
+      <example>
+      <title>Using the <function>engage_media_proxy</function> function</title>
+        <programlisting format="linespecific">
+...
+if (method==INVITE &amp;&amp; !has_totag()) {
+    # We can also use a specific media relay if we need to
+    #$avp(s:media_relay) = "1.2.3.4";
+    engage_media_proxy();
 }
 ...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title>
-		<function moreinfo="none">fix_contact()</function>
-		</title>
-			<para>
-				Will replace the IP:Port in the Contact field of the SIP message
-				with the ones the SIP message was received from. For clients that
-				are asymmetric regarding SIP signaling (as determined from the
-				sip_asymmetrics file) will preserve the port.
-			</para>
-			<para>
-				Usually called after an if (client_nat_test(type)) has succeded
-			</para>
-			<para>
-				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
-			</para>		
-			<example>
-			<title><function>fix_contact</function> usage</title>
-				<programlisting format="linespecific">
-...
-if (client_nat_test("3")) {
-    fix_contact();
-}
-...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title>
-		<function moreinfo="none">use_media_proxy()</function>
-		</title>
-			<para>
-				Will make a call to the proxy server and replace the IPs and ports
-				in the SDP body with the ones returned by the proxy server for
-				each media stream that the SDP message describes. This will force
-				the media streams to be routed through the proxy server.
-			</para>
-			<para>
-				Called when you want to make the session go through a proxy server.
-			</para>
-			<para>This function has the following return codes:</para>
-			<para>
-				<itemizedlist>
-				<listitem><para>
-					+1 - successfully modified message (true value)
-				</para></listitem>
-				<listitem><para>
-					-1 - error in processing message (false value)
-				</para></listitem>
-				<listitem><para>
-					-2 - missing SDP body, nothing to process (false value)
-				</para></listitem>
-				</itemizedlist>
-			</para>
-			<para>
-				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
-			</para>		
-			<example>
-			<title><function>use_media_proxy</function> usage</title>
-				<programlisting format="linespecific">
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+    <title><function moreinfo="none">use_media_proxy()</function></title>
+      <para>
+        Will make a call to the dispatcher and replace the IPs and ports
+        in the SDP body with the ones returned by the media relay for
+        each supported media stream in the SDP body. This will force the
+        media streams to be routed through the media relay. If a mix of
+        supported and unsupported streams are present in the SDP, only
+        the supported streams will be modified, while the unsupported
+        streams will be left alone.
+      </para>
+
+      <para>
+        This function should NOT be mixed with engage_media_proxy().
+      </para>
+
+      <para>This function has the following return codes:</para>
+      <para>
+        <itemizedlist>
+        <listitem><para>
+          +1 - successfully modified message (true value)
+        </para></listitem>
+        <listitem><para>
+          -1 - error in processing message (false value)
+        </para></listitem>
+        <listitem><para>
+          -2 - missing SDP body, nothing to process (false value)
+        </para></listitem>
+        </itemizedlist>
+      </para>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+      </para>
+
+      <example>
+      <title>Using the <function>use_media_proxy</function> function</title>
+        <programlisting format="linespecific">
 ...
 if (method==INVITE) {
+    # We can also use a specific media relay if we need to
+    #$avp(s:media_relay) = "1.2.3.4";
     use_media_proxy();
 }
 ...
-</programlisting>
-			</example>
-			<example>
-			<title>Using mediaproxies from a specific domain</title>
-				<programlisting format="linespecific">
-...
-if (method==INVITE) {
-    $avp(s:mediaproxy_domain) = "example.com";
-    use_media_proxy();
-}
-...
-</programlisting>
-			</example>
-		</section>
-		<section>
-		<title>
-		<function moreinfo="none">end_media_session()</function>
-		</title>
-			<para>
-				Will call on the proxy server to end the media session for that call
-				this is done at the end of the call to instruct the proxy server to
-				free the resources allocated to that call as well as to save log
-				information about the call.
-			</para>
-			<para>
-				Called when a session should end (BYE or CANCEL received).
-			</para>
-			<para>
-				This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
-			</para>		
-			<example>
-			<title><function>end_media_session</function> usage</title>
-				<programlisting format="linespecific">
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+    <title><function moreinfo="none">end_media_session()</function></title>
+      <para>
+        Will call on the dispatcher to inform the media relay to end the
+        media session. This is done when a call ends, to instruct the media
+        relay to release the resources allocated to that call as well as
+        to save logging information about the media session. Called on BYE,
+        CANCEL or failures.
+      </para>
+
+      <para>
+        This function should NOT be mixed with engage_media_proxy().
+      </para>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+      </para>    
+
+      <example>
+      <title>Using the <function>end_media_session</function> function</title>
+        <programlisting format="linespecific">
 ...
 if (method==BYE) {
     end_media_session();
 }
 ...
-</programlisting>
-			</example>
-		</section>
-	</section>
-	
-	<section>
-	<title>Comparison with the nathelper module</title>
-		<para>
-			After reading all this you may wonder what this module can offer you that
-			the nathelper module (a similar nat traversal solution) can't and why was
-			necessary to develop this module.
-		</para>
-		<para>
-			While at surface they seem to offer about the same functionality, there are
-			a few core differences that make them quite different.
-		</para>
-		<para>
-			The main and most notable difference is that mediaproxy offers a
-			distributed environment, where the mediaproxy module can control multiple
-			mediaproxy servers. The mediaproxy servers can be local or remote and they
-			can be specified per domain or as defaults for domains that don't have their
-			own mediaproxy servers defined. These mediaproxy servers can be arranged in
-			load balancing and fallback schemes allowing the platform to scale up easily
-			and also offer redundancy to keep the service running even if some of the
-			mediaproxies go offline. Mediaproxy is able to detect the dead proxies and
-			redistribute the calls among the other mediaproxies that are available.
-			(More details about this can be found in the &openser; MediaProxy documentation.)
-		</para>
-		<para>
-			Another important difference is that mediaproxy tries to move the complex
-			logic of decision from the &openser; configuration file to the module and the
-			proxy servers themselves. This is why there are very few functions in this
-			module that take any parameters. Instead, control is achieved by modifying
-			resources outside of openser.cfg. This includes for example specifying the
-			mediaproxy servers using DNS SRV records, or declaring asymmetric clients
-			in external files that are automatically re-read as soon as they change.
-			This allows &openser; to run without interruption or restarts. If one wants to
-			change &openser;'s behavior, instead of changing openser.cfg and restarting &openser;, one
-			will change these external resources and &openser; will adapt it's behavior on the
-			fly without any need for restart.
-		</para>
-		<para>
-			Another advantage of this is that openser.cfg becomes simpler and easier to
-			maintain.
-		</para>
-	</section>
-
-	<section>
-	<title>How to use sip_ping from the nathelper module</title>
-		<para>
-			The nathelper module provides an option to ping with real SIP messages 
-			instead of just sending 4 zero bytes, which has the advantage that 
-			the communication is bidirectional and thus some NATs that only keep
-			the connection open if there is traffic from the inside won't close 
-			the pinholes (the 4 zero byte ping doesn't have a reply from inside 
-			the NAT).
-		</para>
-		<example>
-		<title>Pinging example configuration</title>
-				<programlisting format="linespecific">
-...
-loadmodule "/lib/openser/modules/mediaproxy.so"
-loadmodule "/lib/openser/modules/nathelper.so"
-
-modparam("mediaproxy", "natping_interval", 0)
-
-modparam("nathelper", "rtpproxy_disable", 1)
-modparam("nathelper", "natping_interval", 30)
-modparam("nathelper", "sipping_from", "sip:ping@sipserver.net")
-
-modparam("registrar", "nat_flag", 6)
-modparam("registrar", "sip_natping_flag", 2)
-....
-....
-if (method=="REGISTER") {
-    setflag(6);  # nat
-    setflag(2);  # sip_ping
-    if (!save("location")) {
-        sl_reply_error();
-    }
-}
-...
-</programlisting>
-		</example>
-	</section>
+        </programlisting>
+      </example>
+    </section>
+  </section>
 
 </chapter>
 

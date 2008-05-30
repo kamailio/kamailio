@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2004-2007 Dan Pascu
+ * Copyright (C) 2004-2008 Dan Pascu
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,10 +20,18 @@
  *
  */
 
-// TODO
-//
-// - make the asymmetric files use CFG_DIR
-// - find a way to install the config files with make install
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <time.h>
+#include <ctype.h>
+#include <errno.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/un.h>
 
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -31,38 +39,27 @@
 #include "../../pvar.h"
 #include "../../error.h"
 #include "../../data_lump.h"
-#include "../../forward.h"
 #include "../../mem/mem.h"
-#include "../../resolve.h"
-#include "../../timer.h"
 #include "../../ut.h"
+#include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_to.h"
-#include "../../parser/parse_uri.h"
 #include "../../msg_translator.h"
-#include "../registrar/sip_msg.h"
-#include "../usrloc/usrloc.h"
-#include "../../mod_fix.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <regex.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/un.h>
+#include "../dialog/dlg_load.h"
+#include "../dialog/dlg_hash.h"
 
 
 MODULE_VERSION
 
+
+#if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+# define INLINE inline
+#else
+# define INLINE
+#endif
+
 #define SIGNALING_IP_AVP_SPEC  "$avp(s:signaling_ip)"
-#define DOMAIN_AVP_SPEC        "$avp(s:mediaproxy_domain)"
+#define MEDIA_RELAY_AVP_SPEC   "$avp(s:media_relay)"
 
 
 // Although `AF_LOCAL' is mandated by POSIX.1g, `AF_UNIX' is portable to
@@ -74,9 +71,14 @@ MODULE_VERSION
 #endif
 
 
-#define min(x, y)         (((x) < (y)) ? (x) : (y))
+#define isnulladdr(adr)  ((adr).len==7 && memcmp("0.0.0.0", (adr).s, 7)==0)
+#define isnullport(port) ((port).len==1 && (port).s[0]=='0')
 
-#define isAnyAddress(adr) ((adr).len==7 && memcmp("0.0.0.0", (adr).s, 7)==0)
+#define STR_MATCH(str, buf)  ((str).len==strlen(buf) && memcmp(buf, (str).s, (str).len)==0)
+#define STR_IMATCH(str, buf) ((str).len==strlen(buf) && strncasecmp(buf, (str).s, (str).len)==0)
+
+#define STR_HAS_PREFIX(str, prefix)  ((str).len>=(prefix).len && memcmp((prefix).s, (str).s, (prefix).len)==0)
+#define STR_HAS_IPREFIX(str, prefix) ((str).len>=(prefix).len && strncasecmp((prefix).s, (str).s, (prefix).len)==0)
 
 
 typedef int Bool;
@@ -84,24 +86,26 @@ typedef int Bool;
 #define False 0
 
 
-typedef int  (*CheckLocalPartyProc)(struct sip_msg* msg, char* s1, char* s2);
-
-typedef Bool (*NatTestProc)(struct sip_msg* msg);
+typedef Bool (*NatTestFunction)(struct sip_msg *msg);
 
 
 typedef enum {
-    NTNone=0,
-    NTPrivateContact=1,
-    NTSourceAddress=2,
-    NTPrivateVia=4
-} NatTestType;
+    TNone=0,
+    TSupported,
+    TUnsupported
+} TransportType;
 
-typedef enum {
-    STUnknown=0,
-    STAudio,
-    STVideo,
-    STAudioVideo
-} StreamType;
+#define RETRY_INTERVAL 10
+#define BUFFER_SIZE    8192
+
+typedef struct MediaproxySocket {
+    char *name;             // name
+    int  sock;              // socket
+    int  timeout;           // how many miliseconds to wait for an answer
+    time_t last_failure;    // time of the last failure
+    char data[BUFFER_SIZE]; // buffer for the answer data
+} MediaproxySocket;
+
 
 typedef struct {
     const char *name;
@@ -110,25 +114,27 @@ typedef struct {
 } NetInfo;
 
 typedef struct {
+    str type;      // stream type (`audio', `video', `image', ...)
     str ip;
     str port;
-    str type;    // stream type (`audio', `video', ...)
-    int localIP; // true if the IP is locally defined inside this media stream
+    str rtcp_port; // pointer to the rtcp port if explicitly specified by stream
+    str direction;
+    Bool local_ip; // true if the IP is locally defined inside this media stream
+    TransportType transport;
+    char *start_line;
+    char *next_line;
 } StreamInfo;
 
-typedef struct {
-    NatTestType test;
-    NatTestProc proc;
-} NatTest;
-
-typedef struct {
-    char *file;        // the file which lists the asymmetric clients
-    long timestamp;    // for checking if it was modified
-
-    regex_t **clients; // the asymmetric clients regular expressions
-    int size;          // size of the array above
-    int count;         // how many clients are in the array above
-} AsymmetricClients;
+#define MAX_STREAMS 32
+typedef struct SessionInfo {
+    str ip;
+    str ip_line;   // pointer to the whole session level ip line
+    str direction;
+    str separator;
+    StreamInfo streams[MAX_STREAMS];
+    unsigned int stream_count;
+    unsigned int supported_count;
+} SessionInfo;
 
 typedef struct AVP_Param {
     str spec;
@@ -137,81 +143,52 @@ typedef struct AVP_Param {
 } AVP_Param;
 
 
-/* Function prototypes */
-static int ClientNatTest(struct sip_msg *msg, char *str1, char *str2);
-static int FixContact(struct sip_msg *msg, char *str1, char *str2);
-static int UseMediaProxy(struct sip_msg *msg, char *str1, char *str2);
-static int EndMediaSession(struct sip_msg *msg, char *str1, char *str2);
+// Function prototypes
+//
+static int EngageMediaProxy(struct sip_msg *msg);
+static int UseMediaProxy(struct sip_msg *msg);
+static int EndMediaSession(struct sip_msg *msg);
 
 static int mod_init(void);
-
-static Bool testPrivateContact(struct sip_msg* msg);
-static Bool testSourceAddress(struct sip_msg* msg);
-static Bool testPrivateVia(struct sip_msg* msg);
+static int child_init(int rank);
 
 
-/* Local global variables */
-static char *mediaproxySocket = "/var/run/proxydispatcher.sock";
+// Module global variables and state
+//
+static int mediaproxy_disabled = False;
 
-static int natpingInterval = 60; // 60 seconds
+static MediaproxySocket mediaproxy_socket = {
+    "/var/run/mediaproxy/dispatcher.sock", // name
+    -1,                                    // sock
+    500,                                   // timeout in 500 miliseconds if there is no answer
+    0,                                     // time of the last failure
+    ""                                     // data
+};
 
-/* The AVP where the caller signaling IP is stored (if defined) */
+
+struct dlg_binds dlg_api;
+Bool have_dlg_api = False;
+static int dialog_flag = -1;
+
+// The AVP where the caller signaling IP is stored (if defined)
 static AVP_Param signaling_ip_avp = {str_init(SIGNALING_IP_AVP_SPEC), {0}, 0};
 
-/* The AVP where the application-defined mediaproxy domain is stored */
-static AVP_Param domain_avp = {str_init(DOMAIN_AVP_SPEC), {0}, 0};
-
-static usrloc_api_t userLocation;
-
-static AsymmetricClients sipAsymmetrics = {
-    "/etc/openser/sip-asymmetric-clients",
-    //CFG_DIR"/sip-asymmetric-clients",
-    0,
-    NULL,
-    0,
-    0
-};
-
-static AsymmetricClients rtpAsymmetrics = {
-    "/etc/openser/rtp-asymmetric-clients",
-    0,
-    NULL,
-    0,
-    0
-};
-
-static CheckLocalPartyProc isFromLocal;
-static CheckLocalPartyProc isDestinationLocal;
-
-NetInfo rfc1918nets[] = {
-    {"10.0.0.0",    0x0a000000UL, 0xff000000UL},
-    {"172.16.0.0",  0xac100000UL, 0xfff00000UL},
-    {"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
-    {NULL,          0UL,          0UL}
-};
-
-NatTest natTests[] = {
-    {NTPrivateContact, testPrivateContact},
-    {NTSourceAddress,  testSourceAddress},
-    {NTPrivateVia,     testPrivateVia},
-    {NTNone,           NULL}
-};
+// The AVP where the application-defined media relay IP is stored
+static AVP_Param media_relay_avp = {str_init(MEDIA_RELAY_AVP_SPEC), {0}, 0};
 
 static cmd_export_t commands[] = {
-    {"fix_contact",       (cmd_function)FixContact,      0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-    {"use_media_proxy",   (cmd_function)UseMediaProxy,   0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-    {"end_media_session", (cmd_function)EndMediaSession, 0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
-    {"client_nat_test",   (cmd_function)ClientNatTest,   1, fixup_uint_null, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"engage_media_proxy", (cmd_function)EngageMediaProxy, 0, 0, 0, REQUEST_ROUTE},
+    {"use_media_proxy",    (cmd_function)UseMediaProxy,    0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
+    {"end_media_session",  (cmd_function)EndMediaSession,  0, 0, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t parameters[] = {
-    {"mediaproxy_socket", STR_PARAM, &mediaproxySocket},
-    {"sip_asymmetrics",   STR_PARAM, &(sipAsymmetrics.file)},
-    {"rtp_asymmetrics",   STR_PARAM, &(rtpAsymmetrics.file)},
-    {"natping_interval",  INT_PARAM, &natpingInterval},
-    {"signaling_ip_avp",  STR_PARAM, &(signaling_ip_avp.spec.s)},
-    {"domain_avp",        STR_PARAM, &(domain_avp.spec.s)},
+    {"disable",            INT_PARAM, &mediaproxy_disabled},
+    {"mediaproxy_socket",  STR_PARAM, &(mediaproxy_socket.name)},
+    {"mediaproxy_timeout", INT_PARAM, &(mediaproxy_socket.timeout)},
+    {"signaling_ip_avp",   STR_PARAM, &(signaling_ip_avp.spec.s)},
+    {"media_relay_avp",    STR_PARAM, &(media_relay_avp.spec.s)},
     {0, 0, 0}
 };
 
@@ -227,23 +204,22 @@ struct module_exports exports = {
     mod_init,        // module init function (before fork. kids will inherit)
     NULL,            // reply processing function
     NULL,            // destroy function
-    NULL             // child init function
+    child_init       // child init function
 };
 
 
 
 // String processing functions
+//
 
-/*
- * strfind() finds the start of the first occurrence of the substring needle
- * of length nlen in the memory area haystack of length len.
- */
+// strfind() finds the start of the first occurrence of the substring needle
+// of length nlen in the memory area haystack of length len.
 static void*
 strfind(const void *haystack, size_t len, const void *needle, size_t nlen)
 {
     char *sp;
 
-    /* Sanity check */
+    // Sanity check
     if(!(haystack && needle && nlen && len>=nlen))
         return NULL;
 
@@ -256,17 +232,15 @@ strfind(const void *haystack, size_t len, const void *needle, size_t nlen)
     return NULL;
 }
 
-/*
- * strcasefind() finds the start of the first occurrence of the substring
- * needle of length nlen in the memory area haystack of length len by doing
- * a case insensitive search
- */
+// strcasefind() finds the start of the first occurrence of the substring
+// needle of length nlen in the memory area haystack of length len by doing
+// a case insensitive search
 static void*
 strcasefind(const char *haystack, size_t len, const char *needle, size_t nlen)
 {
     char *sp;
 
-    /* Sanity check */
+    // Sanity check
     if(!(haystack && needle && nlen && len>=nlen))
         return NULL;
 
@@ -280,8 +254,8 @@ strcasefind(const char *haystack, size_t len, const char *needle, size_t nlen)
     return NULL;
 }
 
-/* returns string with whitespace trimmed from left end */
-static inline void
+// returns string with whitespace trimmed from left end
+static INLINE void
 ltrim(str *string)
 {
     while (string->len>0 && isspace((int)*(string->s))) {
@@ -290,8 +264,8 @@ ltrim(str *string)
     }
 }
 
-/* returns string with whitespace trimmed from right end */
-static inline void
+// returns string with whitespace trimmed from right end
+static INLINE void
 rtrim(str *string)
 {
     char *ptr;
@@ -303,15 +277,15 @@ rtrim(str *string)
     }
 }
 
-/* returns string with whitespace trimmed from both ends */
-static inline void
+// returns string with whitespace trimmed from both ends
+static INLINE void
 trim(str *string)
 {
     ltrim(string);
     rtrim(string);
 }
 
-/* returns a pointer to first CR or LF char found or the end of string */
+// returns a pointer to first CR or LF char found or the end of string
 static char*
 findendline(char *string, int len)
 {
@@ -340,39 +314,9 @@ strtoint(str *data)
 }
 
 
-/* Free the returned string with pkg_free() after you've done with it */
+// find a line in str `block' that starts with `start'.
 static char*
-encodeQuopri(str buf)
-{
-    char *result;
-    int i, j;
-    char c;
-
-    result = pkg_malloc(buf.len*3+1);
-    if (!result) {
-        LM_ERR("out of memory\n");
-        return NULL;
-    }
-
-    for (i=0, j=0; i<buf.len; i++) {
-        c = buf.s[i];
-        if ((c>0x20 && c<0x7f && c!='=') || c=='\n' || c=='\r') {
-            result[j++] = c;
-        } else {
-            result[j++] = '=';
-            sprintf(&result[j], "%02X", (c & 0xff));
-            j += 2;
-        }
-    }
-    result[j] = 0;
-
-    return result;
-}
-
-
-/* Find a line in str `block' that starts with `start'. */
-static char*
-findLineStartingWith(str *block, char *start, int ignoreCase)
+find_line_starting_with(str *block, char *start, int ignoreCase)
 {
     char *ptr, *bend;
     str zone;
@@ -387,7 +331,7 @@ findLineStartingWith(str *block, char *start, int ignoreCase)
             ptr = strcasefind(zone.s, zone.len, start, tlen);
         else
             ptr = strfind(zone.s, zone.len, start, tlen);
-        if (!ptr || ptr==zone.s || ptr[-1]=='\n' || ptr[-1]=='\r')
+        if (!ptr || ptr==block->s || ptr[-1]=='\n' || ptr[-1]=='\r')
             break;
         zone.s = ptr + tlen;
     }
@@ -396,9 +340,39 @@ findLineStartingWith(str *block, char *start, int ignoreCase)
 }
 
 
-/* get up to `limit' whitespace separated tokens from `char *string' */
+// count all lines in str `block' that starts with `start'.
+static unsigned int
+count_lines_starting_with(str *block, char *start, int ignoreCase)
+{
+    char *ptr, *bend;
+    str zone;
+    int tlen;
+    unsigned count;
+
+    bend = block->s + block->len;
+    tlen = strlen(start);
+
+    count = 0;
+
+    for (zone = *block; zone.len > 0; zone.len = bend - zone.s) {
+        if (ignoreCase)
+            ptr = strcasefind(zone.s, zone.len, start, tlen);
+        else
+            ptr = strfind(zone.s, zone.len, start, tlen);
+        if (!ptr)
+            break;
+        if (ptr==block->s || ptr[-1]=='\n' || ptr[-1]=='\r')
+            count++;
+        zone.s = ptr + tlen;
+    }
+
+    return count;
+}
+
+
+// get up to `limit' whitespace separated tokens from `char *string'
 static int
-getTokens(char *string, str *tokens, int limit)
+get_tokens(char *string, str *tokens, int limit)
 {
     int i, len, size;
     char *ptr;
@@ -427,9 +401,9 @@ getTokens(char *string, str *tokens, int limit)
     return i;
 }
 
-/* get up to `limit' whitespace separated tokens from `str *string' */
+// get up to `limit' whitespace separated tokens from `str *string'
 static int
-getStrTokens(str *string, str *tokens, int limit)
+get_str_tokens(str *string, str *tokens, int limit)
 {
     int count;
     char c;
@@ -441,7 +415,7 @@ getStrTokens(str *string, str *tokens, int limit)
     c = string->s[string->len];
     string->s[string->len] = 0;
 
-    count = getTokens(string->s, tokens, limit);
+    count = get_tokens(string->s, tokens, limit);
 
     string->s[string->len] = c;
 
@@ -450,15 +424,18 @@ getStrTokens(str *string, str *tokens, int limit)
 
 
 // Functions to extract the info we need from the SIP/SDP message
+//
 
 static Bool
-getCallId(struct sip_msg* msg, str *cid)
+get_callid(struct sip_msg* msg, str *cid)
 {
     if (msg->callid == NULL) {
         if (parse_headers(msg, HDR_CALLID_F, 0) == -1) {
+            LM_ERR("cannot parse Call-ID header\n");
             return False;
         }
         if (msg->callid == NULL) {
+            LM_ERR("missing Call-ID header\n");
             return False;
         }
     }
@@ -470,86 +447,34 @@ getCallId(struct sip_msg* msg, str *cid)
     return True;
 }
 
-/* Get caller signaling IP */
-static str
-getSignalingIP(struct sip_msg* msg)
+static Bool
+get_cseq_number(struct sip_msg *msg, str *cseq)
 {
-    int_str value;
+    if (msg->cseq == NULL) {
+        if (parse_headers(msg, HDR_CSEQ_F, 0)==-1) {
+            LM_ERR("cannot parse CSeq header\n");
+            return False;
+        }
+        if (msg->cseq == NULL) {
+            LM_ERR("missing CSeq header\n");
+            return False;
+        }
+	}
 
-    if (!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
-                          signaling_ip_avp.name, &value, NULL) ||
-        value.s.s==NULL || value.s.len==0) {
+	*cseq = get_cseq(msg)->number;
 
-        value.s.s = ip_addr2a(&msg->rcv.src_ip);
-        value.s.len = strlen(value.s.s);
+    if (cseq->s==NULL || cseq->len==0) {
+        LM_ERR("missing CSeq number\n");
+        return False;
     }
 
-    return value.s;
+    return True;
 }
 
-/* Get the application-defined mediaproxy domain if defined */
 static str
-getMediaproxyDomain(struct sip_msg* msg)
+get_from_uri(struct sip_msg *msg)
 {
-    int_str value;
-
-    if (!search_first_avp(domain_avp.type | AVP_VAL_STR,
-                          domain_avp.name, &value, NULL) || value.s.s==NULL) {
-        value.s.len = 0;
-    }
-
-    return value.s;
-}
-
-/* Get caller domain */
-static str
-getFromDomain(struct sip_msg* msg)
-{
-    static char buf[16] = "unknown"; // buf is here for a reason. don't
-    static str notfound = {buf, 7};  // use the constant string directly!
-    static struct sip_uri puri;
-    str uri;
-
-    if (parse_from_header(msg) < 0) {
-        LM_ERR("cannot parse the From header\n");
-        return notfound;
-    }
-
-    uri = get_from(msg)->uri;
-
-    if (parse_uri(uri.s, uri.len, &puri) < 0) {
-        LM_ERR("cannot parse the From URI\n");
-        return notfound;
-    } else if (puri.host.len == 0) {
-        return notfound;
-    }
-
-    return puri.host;
-}
-
-/* Get destination domain (only works for requests) */
-static str
-getDestinationDomain(struct sip_msg* msg)
-{
-    static char buf[16] = "unknown"; // buf is here for a reason. don't
-    static str notfound = {buf, 7};  // use the constant string directly!
-
-    if (parse_sip_msg_uri(msg) < 0) {
-        LM_ERR("cannot parse the destination URI\n");
-        return notfound;
-    } else if (msg->parsed_uri.host.len==0) {
-        return notfound;
-    }
-
-    return msg->parsed_uri.host;
-}
-
-
-static str
-getFromAddress(struct sip_msg *msg)
-{
-    static char buf[16] = "unknown"; // buf is here for a reason. don't
-    static str notfound = {buf, 7};  // use the constant string directly!
+    static str notfound = str_init("unknown");
     str uri;
     char *ptr;
 
@@ -577,10 +502,9 @@ getFromAddress(struct sip_msg *msg)
 
 
 static str
-getToAddress(struct sip_msg *msg)
+get_to_uri(struct sip_msg *msg)
 {
-    static char buf[16] = "unknown"; // buf is here for a reason. don't
-    static str notfound = {buf, 7};  // use the constant string directly!
+    static str notfound = str_init("unknown");
     str uri;
     char *ptr;
 
@@ -608,10 +532,9 @@ getToAddress(struct sip_msg *msg)
 
 
 static str
-getFromTag(struct sip_msg *msg)
+get_from_tag(struct sip_msg *msg)
 {
-    static char buf[4] = "";        // buf is here for a reason. don't
-    static str notfound = {buf, 0}; // use the constant string directly!
+    static str notfound = str_init("");
     str tag;
 
     if (parse_from_header(msg) < 0) {
@@ -629,10 +552,9 @@ getFromTag(struct sip_msg *msg)
 
 
 static str
-getToTag(struct sip_msg *msg)
+get_to_tag(struct sip_msg *msg)
 {
-    static char buf[4] = "";        // buf is here for a reason. don't
-    static str notfound = {buf, 0}; // use the constant string directly!
+    static str notfound = str_init("");
     str tag;
 
     if (!msg->to) {
@@ -650,10 +572,9 @@ getToTag(struct sip_msg *msg)
 
 
 static str
-getUserAgent(struct sip_msg* msg)
+get_user_agent(struct sip_msg* msg)
 {
-    static char buf[16] = "unknown-agent"; // buf is here for a reason. don't
-    static str notfound = {buf, 13};       // use the constant string directly!
+    static str notfound = str_init("unknown agent");
     str block, server;
     char *ptr;
 
@@ -668,7 +589,7 @@ getUserAgent(struct sip_msg* msg)
     block.s   = msg->buf;
     block.len = msg->len;
 
-    ptr = findLineStartingWith(&block, "Server:", True);
+    ptr = find_line_starting_with(&block, "Server:", True);
     if (!ptr)
         return notfound;
 
@@ -683,43 +604,49 @@ getUserAgent(struct sip_msg* msg)
 }
 
 
-static Bool
-getContactURI(struct sip_msg* msg, struct sip_uri *uri, contact_t** _c)
+// Get caller signaling IP
+static str
+get_signaling_ip(struct sip_msg* msg)
 {
+    int_str value;
 
-    if ((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
-        return False;
+    if (!search_first_avp(signaling_ip_avp.type | AVP_VAL_STR,
+                          signaling_ip_avp.name, &value, NULL) ||
+        value.s.s==NULL || value.s.len==0) {
 
-    if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {
-        LM_ERR("cannot parse the Contact header\n");
-        return False;
+        value.s.s = ip_addr2a(&msg->rcv.src_ip);
+        value.s.len = strlen(value.s.s);
     }
 
-    *_c = ((contact_body_t*)msg->contact->parsed)->contacts;
+    return value.s;
+}
 
-    if (*_c == NULL) {
-        return False;
+// Get the application-defined media_relay if defined
+static str
+get_media_relay(struct sip_msg* msg)
+{
+    static str notfound = str_init("");
+    int_str value;
+
+    if (!search_first_avp(media_relay_avp.type | AVP_VAL_STR,
+                          media_relay_avp.name, &value, NULL) || value.s.s==NULL || value.s.len==0) {
+        return notfound;
     }
 
-    if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
-        LM_ERR("cannot parse the Contact URI\n");
-        return False;
-    }
-
-    return True;
+    return value.s;
 }
 
 
 // Functions to manipulate the SDP message body
+//
 
 static Bool
-checkContentType(struct sip_msg *msg)
+check_content_type(struct sip_msg *msg)
 {
     str type;
 
     if (!msg->content_type) {
-        LM_WARN("the Content-Type header is missing! Assume the content type "
-                "is text/plain ;-)\n");
+        LM_WARN("the Content-Type header is missing! Assume the content type is text/plain\n");
         return True;
     }
 
@@ -746,7 +673,7 @@ checkContentType(struct sip_msg *msg)
 //   -1 - error in getting body or invalid content type
 //   -2 - empty message
 static int
-getSDPMessage(struct sip_msg *msg, str *sdp)
+get_sdp_message(struct sip_msg *msg, str *sdp)
 {
     sdp->s = get_body(msg);
     if (sdp->s==NULL) {
@@ -758,7 +685,7 @@ getSDPMessage(struct sip_msg *msg, str *sdp)
     if (sdp->len == 0)
         return -2;
 
-    if (!checkContentType(msg)) {
+    if (!check_content_type(msg)) {
         LM_ERR("content type is not `application/sdp'\n");
         return -1;
     }
@@ -767,16 +694,100 @@ getSDPMessage(struct sip_msg *msg, str *sdp)
 }
 
 
+// Return a str containing the line separator used in the SDP body
+static str
+get_sdp_line_separator(str *sdp)
+{
+    char *ptr, *end_ptr, *sdp_end;
+    str separator;
+
+    sdp_end = sdp->s + sdp->len;
+
+    ptr = find_line_starting_with(sdp, "v=", False);
+    end_ptr = findendline(ptr, sdp_end-ptr);
+    separator.s = ptr = end_ptr;
+    while ((*ptr=='\n' || *ptr=='\r') && ptr<sdp_end)
+        ptr++;
+    separator.len = ptr - separator.s;
+    if (separator.len > 2)
+        separator.len = 2; // safety check
+
+    return separator;
+}
+
+
+// will return the direction attribute defined in the given block.
+// if missing, default is used if provided, else `sendrecv' is used.
+static str
+get_direction_attribute(str *block, str *default_direction)
+{
+    str direction, zone, line;
+    char *ptr;
+
+    for (zone=*block;;) {
+        ptr = find_line_starting_with(&zone, "a=", False);
+        if (!ptr) {
+            if (default_direction)
+                return *default_direction;
+            direction.s = "sendrecv";
+            direction.len = 8;
+            return direction;
+        }
+
+        line.s = ptr + 2;
+        line.len = findendline(line.s, zone.s + zone.len - line.s) - line.s;
+
+        if (line.len==8) {
+            if (strncmp(line.s, "sendrecv", 8)==0 || strncmp(line.s, "sendonly", 8)==0 ||
+                strncmp(line.s, "recvonly", 8)==0 || strncmp(line.s, "inactive", 8)==0) {
+                return line;
+            }
+        }
+
+        zone.s   = line.s + line.len;
+        zone.len = block->s + block->len - zone.s;
+    }
+}
+
+
+// will return the rtcp port of the stream in the given block
+// if defined by the stream, otherwise will return {NULL, 0}.
+static str
+get_rtcp_port_attribute(str *block)
+{
+    str zone, rtcp_port, notfound = {NULL, 0};
+    char *ptr;
+    int count;
+
+    ptr = find_line_starting_with(block, "a=rtcp:", False);
+
+    if (!ptr)
+        return notfound;
+
+    zone.s = ptr + 7;
+    zone.len = findendline(zone.s, block->s + block->len - zone.s) - zone.s;
+
+    count = get_str_tokens(&zone, &rtcp_port, 1);
+
+    if (count != 1) {
+        LM_ERR("invalid `a=rtcp' line in SDP body\n");
+        return notfound;
+    }
+
+    return rtcp_port;
+}
+
+
 // will return the ip address present in a `c=' line in the given block
 // returns: -1 on error, 0 if not found, 1 if found
 static int
-getMediaIPFromBlock(str *block, str *mediaip)
+get_media_ip_from_block(str *block, str *mediaip)
 {
     str tokens[3], zone;
     char *ptr;
     int count;
 
-    ptr = findLineStartingWith(block, "c=", False);
+    ptr = find_line_starting_with(block, "c=", False);
 
     if (!ptr) {
         mediaip->s   = NULL;
@@ -787,7 +798,7 @@ getMediaIPFromBlock(str *block, str *mediaip)
     zone.s = ptr + 2;
     zone.len = findendline(zone.s, block->s + block->len - zone.s) - zone.s;
 
-    count = getStrTokens(&zone, tokens, 3);
+    count = get_str_tokens(&zone, tokens, 3);
 
     if (count != 3) {
         LM_ERR("invalid `c=' line in SDP body\n");
@@ -802,13 +813,13 @@ getMediaIPFromBlock(str *block, str *mediaip)
 
 
 static Bool
-getSessionLevelMediaIP(str *sdp, str *mediaip)
+get_sdp_session_ip(str *sdp, str *mediaip, str *ip_line)
 {
+    char *ptr, *end_ptr;
     str block;
-    char *ptr;
 
     // session IP can be found from the beginning up to the first media block
-    ptr = findLineStartingWith(sdp, "m=", False);
+    ptr = find_line_starting_with(sdp, "m=", False);
     if (ptr) {
         block.s   = sdp->s;
         block.len = ptr - block.s;
@@ -816,10 +827,23 @@ getSessionLevelMediaIP(str *sdp, str *mediaip)
         block = *sdp;
     }
 
-    if (getMediaIPFromBlock(&block, mediaip) == -1) {
-        LM_ERR("parse error while getting session-level media IP from "
-               "the SDP body\n");
+    if (get_media_ip_from_block(&block, mediaip) == -1) {
+        LM_ERR("parse error while getting session-level media IP from SDP\n");
         return False;
+    }
+
+    if (ip_line != NULL) {
+        ptr = find_line_starting_with(&block, "c=", False);
+        if (!ptr) {
+            ip_line->s = NULL;
+            ip_line->len = 0;
+        } else {
+            end_ptr = findendline(ptr, block.s + block.len - ptr);
+            while ((*end_ptr=='\n' || *end_ptr=='\r'))
+                end_ptr++;
+            ip_line->s = ptr;
+            ip_line->len = end_ptr - ptr;
+        }
     }
 
     // it's not an error to be missing. it can be locally defined
@@ -828,95 +852,211 @@ getSessionLevelMediaIP(str *sdp, str *mediaip)
 }
 
 
-static int
-getMediaStreams(str *sdp, str *sessionIP, StreamInfo *streams, int limit)
+// will return the direction as defined at the session level
+// in the SDP. if missing, `sendrecv' is used.
+static str
+get_session_direction(str *sdp)
 {
-    str tokens[2], block, zone;
-    char *ptr, *sdpEnd;
-    int i, count, streamCount, result;
+    static str default_direction = str_init("sendrecv");
+    str block;
+    char *ptr;
 
-    sdpEnd = sdp->s + sdp->len;
+    // session level direction can be found from the beginning up to the first media block
+    ptr = find_line_starting_with(sdp, "m=", False);
+    if (ptr) {
+        block.s   = sdp->s;
+        block.len = ptr - block.s;
+    } else {
+        block = *sdp;
+    }
 
-    for (i=0, block=*sdp; i<limit; i++) {
-        ptr = findLineStartingWith(&block, "m=", False);
+    return get_direction_attribute(&block, &default_direction);
+}
+
+
+static Bool
+supported_transport(str transport)
+{
+    // supported transports: RTP/AVP, RTP/AVPF, RTP/SAVP, RTP/SAVPF, udp, udptl
+    str prefixes[] = {str_init("RTP"), str_init("udp"), {NULL, 0}};
+    int i;
+
+    for (i=0; prefixes[i].s != NULL; i++) {
+        if (STR_HAS_IPREFIX(transport, prefixes[i])) {
+            return True;
+        }
+    }
+
+    return False;
+}
+
+
+static int
+get_session_info(str *sdp, SessionInfo *session)
+{
+    str tokens[3], ip, ip_line, block, zone;
+    char *ptr, *sdp_end;
+    int i, count, result;
+
+    count = count_lines_starting_with(sdp, "v=", False);
+    if (count != 1) {
+        LM_ERR("cannot handle more than 1 media session in SDP\n");
+        return -1;
+    }
+
+    count = count_lines_starting_with(sdp, "m=", False);
+    if (count > MAX_STREAMS) {
+        LM_ERR("cannot handle more than %d media streams in SDP\n", MAX_STREAMS);
+        return -1;
+    }
+
+    memset(session, 0, sizeof(SessionInfo));
+
+    if (count == 0)
+        return 0;
+
+    if (!get_sdp_session_ip(sdp, &ip, &ip_line)) {
+        LM_ERR("failed to parse the SDP message\n");
+        return -1;
+    }
+
+    ptr = memchr(ip.s, '/', ip.len);
+    if (ptr) {
+        LM_ERR("unsupported multicast IP specification in SDP: %.*s\n", ip.len, ip.s);
+        return -1;
+    }
+
+    session->ip = ip;
+    session->ip_line = ip_line;
+    session->direction = get_session_direction(sdp);
+    session->separator = get_sdp_line_separator(sdp);
+    session->stream_count = count;
+
+    sdp_end = sdp->s + sdp->len;
+
+    for (i=0, block=*sdp; i<MAX_STREAMS; i++) {
+        ptr = find_line_starting_with(&block, "m=", False);
 
         if (!ptr)
             break;
 
         zone.s = ptr + 2;
-        zone.len = findendline(zone.s, sdpEnd - zone.s) - zone.s;
-        count = getStrTokens(&zone, tokens, 2);
+        zone.len = findendline(zone.s, sdp_end - zone.s) - zone.s;
 
-        if (count != 2) {
+        count = get_str_tokens(&zone, tokens, 3);
+        if (count != 3) {
             LM_ERR("invalid `m=' line in the SDP body\n");
             return -1;
         }
 
-        streams[i].type = tokens[0];
-        streams[i].port = tokens[1];
+        session->streams[i].start_line = ptr;
+        session->streams[i].next_line = zone.s + zone.len + session->separator.len;
+        if (session->streams[i].next_line > sdp_end)
+            session->streams[i].next_line = sdp_end; //safety check
+
+        if (supported_transport(tokens[2])) {
+            // handle case where port is specified like <port>/<nr_of_ports>
+            // as defined by RFC2327. ex: m=audio 5012/1 RTP/AVP 18 0 8
+            // TODO: also handle case where nr_of_ports > 1  -Dan
+            ptr = memchr(tokens[1].s, '/', tokens[1].len);
+            if (ptr != NULL) {
+                str port_nr;
+
+                port_nr.s = ptr + 1;
+                port_nr.len = tokens[1].s + tokens[1].len - port_nr.s;
+                if (port_nr.len==0) {
+                    LM_ERR("invalid port specification in `m=' line: %.*s\n", tokens[1].len, tokens[1].s);
+                    return -1;
+                }
+                if (!(port_nr.len==1 && port_nr.s[0]=='1')) {
+                    LM_ERR("unsupported number of ports specified in `m=' line\n");
+                    return -1;
+                }
+                tokens[1].len = ptr - tokens[1].s;
+            }
+
+            session->streams[i].type = tokens[0];
+            session->streams[i].port = tokens[1];
+
+            session->streams[i].transport = TSupported;
+            session->supported_count++;
+        } else {
+            // mark that we have an unsupported transport so we can ignore this stream later
+            LM_INFO("unsupported transport in stream nr %d's `m=' line: %.*s\n", i+1, tokens[2].len, tokens[2].s);
+            session->streams[i].type = tokens[0];
+            session->streams[i].port = tokens[1];
+            session->streams[i].transport = TUnsupported;
+        }
 
         block.s   = zone.s + zone.len;
-        block.len = sdpEnd - block.s;
+        block.len = sdp_end - block.s;
     }
 
-    streamCount = i;
-
-    for (i=0; i<streamCount; i++) {
-        block.s = streams[i].port.s;
-        if (i < streamCount-1)
-            block.len = streams[i+1].port.s - block.s;
+    for (i=0; i<session->stream_count; i++) {
+        block.s = session->streams[i].port.s;
+        if (i < session->stream_count-1)
+            block.len = session->streams[i+1].port.s - block.s;
         else
-            block.len = sdpEnd - block.s;
+            block.len = sdp_end - block.s;
 
-        result = getMediaIPFromBlock(&block, &(streams[i].ip));
+        result = get_media_ip_from_block(&block, &ip);
         if (result == -1) {
             LM_ERR("parse error while getting the contact IP for the "
                    "media stream number %d\n", i+1);
             return -1;
         } else if (result == 0) {
-            if (sessionIP->s == NULL) {
+            if (session->ip.s == NULL) {
                 LM_ERR("media stream number %d doesn't define a contact IP "
                        "and the session-level IP is missing\n", i+1);
                 return -1;
             }
-            streams[i].ip = *sessionIP;
-            streams[i].localIP = 0;
+            session->streams[i].ip = session->ip;
+            session->streams[i].local_ip = 0;
         } else {
-            streams[i].localIP = 1;
+            if (session->streams[i].transport == TSupported) {
+                ptr = memchr(ip.s, '/', ip.len);
+                if (ptr) {
+                    LM_ERR("unsupported multicast IP specification in stream nr %d: %.*s\n", i+1, ip.len, ip.s);
+                    return -1;
+                }
+            }
+            session->streams[i].ip = ip;
+            session->streams[i].local_ip = 1;
         }
+
+        session->streams[i].rtcp_port = get_rtcp_port_attribute(&block);
+        session->streams[i].direction = get_direction_attribute(&block, &session->direction);
     }
 
-    return streamCount;
+    return session->stream_count;
 }
 
 
 static Bool
-replaceElement(struct sip_msg *msg, str *oldElem, str *newElem)
+insert_element(struct sip_msg *msg, char *position, char *element)
 {
-    struct lump* anchor;
+    struct lump *anchor;
     char *buf;
+    int len;
 
-    if (newElem->len==oldElem->len &&
-        memcmp(newElem->s, oldElem->s, newElem->len)==0) {
-        return True;
-    }
+    len = strlen(element);
 
-    buf = pkg_malloc(newElem->len);
+    buf = pkg_malloc(len);
     if (!buf) {
         LM_ERR("out of memory\n");
         return False;
     }
 
-    anchor = del_lump(msg, oldElem->s - msg->buf, oldElem->len, 0);
+    anchor = anchor_lump(msg, position - msg->buf, 0, 0);
     if (!anchor) {
-        LM_ERR("failed to delete old element\n");
+        LM_ERR("failed to get anchor for new element\n");
         pkg_free(buf);
         return False;
     }
 
-    memcpy(buf, newElem->s, newElem->len);
+    memcpy(buf, element, len);
 
-    if (insert_new_lump_after(anchor, buf, newElem->len, 0)==0) {
+    if (insert_new_lump_after(anchor, buf, len, 0)==0) {
         LM_ERR("failed to insert new element\n");
         pkg_free(buf);
         return False;
@@ -926,558 +1066,320 @@ replaceElement(struct sip_msg *msg, str *oldElem, str *newElem)
 }
 
 
-// Functions dealing with the external mediaproxy helper
-
-static inline size_t
-uwrite(int fd, const void *buf, size_t count)
+static Bool
+replace_element(struct sip_msg *msg, str *old_element, str *new_element)
 {
-    int len;
+    struct lump *anchor;
+    char *buf;
 
-    do
-        len = write(fd, buf, count);
-    while (len == -1 && errno == EINTR);
-
-    return len;
-}
-
-static inline size_t
-uread(int fd, void *buf, size_t count)
-{
-    int len;
-
-    do
-        len = read(fd, buf, count);
-    while (len == -1 && errno == EINTR);
-
-    return len;
-}
-
-static inline size_t
-readall(int fd, void *buf, size_t count)
-{
-    int len, total;
-
-    for (len=0, total=0; count-total>0; total+=len) {
-        len = uread(fd, (char*)buf+total, count-total);
-        if (len == -1) {
-            return -1;
-        }
-        if (len == 0) {
-            break;
-        }
+    if (new_element->len==old_element->len &&
+        memcmp(new_element->s, old_element->s, new_element->len)==0) {
+        return True;
     }
 
-    return total;
+    buf = pkg_malloc(new_element->len);
+    if (!buf) {
+        LM_ERR("out of memory\n");
+        return False;
+    }
+
+    anchor = del_lump(msg, old_element->s - msg->buf, old_element->len, 0);
+    if (!anchor) {
+        LM_ERR("failed to delete old element\n");
+        pkg_free(buf);
+        return False;
+    }
+
+    memcpy(buf, new_element->s, new_element->len);
+
+    if (insert_new_lump_after(anchor, buf, new_element->len, 0)==0) {
+        LM_ERR("failed to insert new element\n");
+        pkg_free(buf);
+        return False;
+    }
+
+    return True;
 }
 
-static char*
-sendMediaproxyCommand(char *command)
+
+static Bool
+remove_element(struct sip_msg *msg, str *element)
+{
+    if (!del_lump(msg, element->s - msg->buf, element->len, 0)) {
+        LM_ERR("failed to delete old element\n");
+        return False;
+    }
+
+    return True;
+}
+
+
+// Functions dealing with the external mediaproxy helper
+//
+
+static Bool
+mediaproxy_connect(void)
 {
     struct sockaddr_un addr;
-    int smpSocket, len;
-    static char buf[1024];
+
+    if (mediaproxy_socket.sock >= 0)
+        return True;
+
+    if (mediaproxy_socket.last_failure + RETRY_INTERVAL > time(NULL))
+        return False;
 
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_LOCAL;
-    strncpy(addr.sun_path, mediaproxySocket, sizeof(addr.sun_path) - 1);
+    strncpy(addr.sun_path, mediaproxy_socket.name, sizeof(addr.sun_path) - 1);
 #ifdef HAVE_SOCKADDR_SA_LEN
     addr.sun_len = strlen(addr.sun_path);
 #endif
 
-    smpSocket = socket(AF_LOCAL, SOCK_STREAM, 0);
-    if (smpSocket < 0) {
-        LM_ERR("failed to create socket\n");
-        return NULL;
+    mediaproxy_socket.sock = socket(AF_LOCAL, SOCK_STREAM, 0);
+    if (mediaproxy_socket.sock < 0) {
+        LM_ERR("can't create socket\n");
+        mediaproxy_socket.last_failure = time(NULL);
+        return False;
     }
-    if (connect(smpSocket, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        close(smpSocket);
-        LM_ERR("failed to connect to MediaProxy\n");
-        return NULL;
-    }
-
-    len = uwrite(smpSocket, command, strlen(command));
-
-    if (len <= 0) {
-        close(smpSocket);
-        LM_ERR("failed to send command to MediaProxy\n");
-        return NULL;
+    if (connect(mediaproxy_socket.sock, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        LM_ERR("failed to connect to %s: %s\n", mediaproxy_socket.name, strerror(errno));
+        close(mediaproxy_socket.sock);
+        mediaproxy_socket.sock = -1;
+        mediaproxy_socket.last_failure = time(NULL);
+        return False;
     }
 
-    len = readall(smpSocket, buf, sizeof(buf)-1);
-
-    close(smpSocket);
-
-    if (len < 0) {
-        LM_ERR("failed to read reply from MediaProxy\n");
-        return NULL;
-    }
-
-    buf[len] = 0;
-
-    return buf;
+    return True;
 }
 
-
-// Miscellaneous helper functions
-
-/* Test if IP in `address' belongs to a RFC1918 network */
-static inline int
-rfc1918address(str *address)
-{
-    struct in_addr inaddr;
-    uint32_t netaddr;
-    int i, result;
-    char c;
-
-    c = address->s[address->len];
-    address->s[address->len] = 0;
-
-    result = inet_aton(address->s, &inaddr);
-
-    address->s[address->len] = c;
-
-    if (result==0)
-        return -1; /* invalid address to test */
-
-    netaddr = ntohl(inaddr.s_addr);
-
-    for (i=0; rfc1918nets[i].name!=NULL; i++) {
-        if ((netaddr & rfc1918nets[i].mask)==rfc1918nets[i].address) {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-#define isPrivateAddress(x) (rfc1918address(x)==1 ? 1 : 0)
-// test for a public address is more complex (also need to test for
-// address not in 0.0.0.0/8, 127.0.0.0/8, 224.0.0.0/4).
-// #define isPublicAddress(x)  (rfc1918address(x)==0 ? 1 : 0)
-
-
-// Check if the requested asymmetrics file has changed and reload it if needed
 static void
-checkAsymmetricFile(AsymmetricClients *aptr)
+mediaproxy_disconnect(void)
 {
-    char buf[512], errbuf[256], *which;
-    regex_t *re, **regs;
-    int i, size, code;
-    Bool firstTime = False;
-    struct stat statbuf;
-    FILE *file;
-    str line;
+    if (mediaproxy_socket.sock < 0)
+        return;
 
-    if (stat(aptr->file, &statbuf) < 0)
-        return; // ignore missing file
+    close(mediaproxy_socket.sock);
+    mediaproxy_socket.sock = -1;
+    mediaproxy_socket.last_failure = time(NULL);
+}
 
-    if (statbuf.st_mtime <= aptr->timestamp)
-        return; // not changed
+static char*
+send_command(char *command)
+{
+    int cmd_len, bytes, tries, sent, received, count;
+    struct timeval timeout;
+    fd_set rset;
 
-    which = (aptr == &sipAsymmetrics ? "SIP" : "RTP");
+    if (!mediaproxy_connect())
+        return NULL;
 
-    if (!aptr->clients) {
-        // if we are here the first time allocate memory to hold the regexps
+    cmd_len = strlen(command);
 
-        // initial size of array
-        // (hopefully not reached so we won't need to realloc)
-        size = 32;
-        aptr->clients = (regex_t**)pkg_malloc(size*sizeof(regex_t**));
-        if (!aptr->clients) {
-            LM_WARN("cannot allocate memory for the %s asymmetric client list."
-                    " %s asymmetric clients will not be handled properly.\n",
-                    which, which);
-            return; // ignore as it is not fatal
+    for (sent=0, tries=0; sent<cmd_len && tries<3; tries++, sent+=bytes) {
+        do
+            bytes = send(mediaproxy_socket.sock, command+sent, cmd_len-sent, MSG_DONTWAIT|MSG_NOSIGNAL);
+        while (bytes == -1 && errno == EINTR);
+        if (bytes == -1) {
+            switch (errno) {
+            case ECONNRESET:
+            case EPIPE:
+                mediaproxy_disconnect();
+                mediaproxy_socket.last_failure = 0; // we want to reconnect immediately
+                if (mediaproxy_connect()) {
+                    sent = bytes = 0;
+                    continue;
+                } else {
+                    LM_ERR("connection with mediaproxy did die\n");
+                }
+                break;
+            case EACCES:
+                LM_ERR("got permission denied while sending to %s\n", mediaproxy_socket.name);
+                break;
+            case EWOULDBLOCK:
+                // this shouldn't happen as we read back all the answer after a request.
+                // if it would block, it means there is an error.
+                LM_ERR("sending command would block!\n");
+                break;
+            default:
+                LM_ERR("%d: %s\n", errno, strerror(errno));
+                break;
+            }
+            mediaproxy_disconnect();
+            return NULL;
         }
-        aptr->size  = size;
-        aptr->count = 0;
-        firstTime = True;
-    } else {
-        // else clean old stuff
-        for (i=0; i<aptr->count; i++) {
-            regfree(aptr->clients[i]);
-            pkg_free(aptr->clients[i]);
-            aptr->clients[i] = NULL;
-        }
-        aptr->count = 0;
+    }
+    if (sent < cmd_len) {
+        LM_ERR("couldn't send complete command after 3 tries\n");
+        mediaproxy_disconnect();
+        return NULL;
     }
 
-    // read new
-    file = fopen(aptr->file, "r");
-    i = 0; // this will count on which line are we in the file
-    while (!feof(file)) {
-        if (!fgets(buf, 512, file))
-            break;
-        i++;
+    mediaproxy_socket.data[0] = 0;
+    received = 0;
+    while (True) {
+        FD_ZERO(&rset);
+        FD_SET(mediaproxy_socket.sock, &rset);
+        timeout.tv_sec = mediaproxy_socket.timeout / 1000;
+        timeout.tv_usec = (mediaproxy_socket.timeout % 1000) * 1000;
 
-        line.s = buf;
-        line.len = strlen(buf);
-        trim(&line);
-        if (line.len == 0 || line.s[0] == '#')
-            continue; // comment or empty line. ignore
-        line.s[line.len] = 0;
+        do
+            count = select(mediaproxy_socket.sock + 1, &rset, NULL, NULL, &timeout);
+        while (count == -1 && errno == EINTR);
 
-        re = (regex_t*)pkg_malloc(sizeof(regex_t));
-        if (!re) {
-            LM_WARN("cannot allocate memory for all the %s asymmetric "
-                    "clients listed in file. Some of them will not be "
-                    "handled properly.\n", which);
-            break;
-        }
-        code = regcomp(re, line.s, REG_EXTENDED|REG_ICASE|REG_NOSUB);
-        if (code == 0) {
-            if (aptr->count+1 > aptr->size) {
-                size = aptr->size * 2;
-                regs = aptr->clients;
-                regs = (regex_t**)pkg_realloc(regs, size*sizeof(regex_t**));
-                if (!regs) {
-                    LM_WARN("cannot allocate memory for all the %s asymmetric "
-                            "clients listed in file. Some of them will not be "
-                            "handled properly.\n", which);
+        if (count == -1) {
+            LM_ERR("select failed: %d: %s\n", errno, strerror(errno));
+            mediaproxy_disconnect();
+            return NULL;
+        } else if (count == 0) {
+            LM_ERR("did timeout waiting for an answer\n");
+            mediaproxy_disconnect();
+            return NULL;
+        } else {
+            do
+                bytes = recv(mediaproxy_socket.sock, mediaproxy_socket.data+received, BUFFER_SIZE-1-received, 0);
+            while (bytes == -1 && errno == EINTR);
+            if (bytes == -1) {
+                LM_ERR("failed to read answer: %d: %s\n", errno, strerror(errno));
+                mediaproxy_disconnect();
+                return NULL;
+            } else if (bytes == 0) {
+                LM_ERR("connection with mediaproxy closed\n");
+                mediaproxy_disconnect();
+                return NULL;
+            } else {
+                mediaproxy_socket.data[received+bytes] = 0;
+                if (strstr(mediaproxy_socket.data+received, "\r\n")!=NULL) {
                     break;
                 }
-                aptr->clients = regs;
-                aptr->size = size;
+                received += bytes;
             }
-            aptr->clients[aptr->count] = re;
-            aptr->count++;
-        } else {
-            regerror(code, re, errbuf, 256);
-            LM_WARN("cannot compile line %d of the %s asymmetric clients file "
-                    "into a regular expression (will be ignored): %s",
-                    i, which, errbuf);
-            pkg_free(re);
         }
     }
 
-    aptr->timestamp = statbuf.st_mtime;
-
-    LM_INFO("%sloaded %s asymmetric clients file containing %d entr%s.\n",
-            firstTime ? "" : "re", which, aptr->count,
-            aptr->count==1 ? "y" : "ies");
-
+    return mediaproxy_socket.data;
 }
 
 
+// Exported API implementation
 //
-// This is a hack. Until a I find a better way to allow all children to update
-// the asymmetric client list when the files change on disk, it stays as it is
-// A timer registered from mod_init() only runs in one of the ser processes
-// and the others will always see the file that was read at startup.
-//
-#include <time.h>
-#define CHECK_INTERVAL 5
-static void
-periodicAsymmetricsCheck(void)
-{
-    static time_t last = 0;
-    time_t now;
-
-    // this is not guaranteed to run at every CHECK_INTERVAL.
-    // it is only guaranteed that the files won't be checked more often.
-    now = time(NULL);
-    if (now > last + CHECK_INTERVAL) {
-        checkAsymmetricFile(&sipAsymmetrics);
-        checkAsymmetricFile(&rtpAsymmetrics);
-        last = now;
-    }
-}
-
-static Bool
-isSIPAsymmetric(str userAgent)
-{
-    int i, code;
-    char c;
-
-    periodicAsymmetricsCheck();
-
-    if (!sipAsymmetrics.clients || sipAsymmetrics.count==0)
-        return False;
-
-    c = userAgent.s[userAgent.len];
-    userAgent.s[userAgent.len] = 0;
-
-    for (i=0; i<sipAsymmetrics.count; i++) {
-        code = regexec(sipAsymmetrics.clients[i], userAgent.s, 0, NULL, 0);
-        if (code == 0) {
-            userAgent.s[userAgent.len] = c;
-            return True;
-        } else if (code != REG_NOMATCH) {
-            char errbuf[256];
-            regerror(code, sipAsymmetrics.clients[i], errbuf, 256);
-            LM_WARN("failed to match regexp: %s\n", errbuf);
-        }
-    }
-
-    userAgent.s[userAgent.len] = c;
-
-    return False;
-}
-
-
-static Bool
-isRTPAsymmetric(str userAgent)
-{
-    int i, code;
-    char c;
-
-    periodicAsymmetricsCheck();
-
-    if (!rtpAsymmetrics.clients || rtpAsymmetrics.count==0)
-        return False;
-
-    c = userAgent.s[userAgent.len];
-    userAgent.s[userAgent.len] = 0;
-
-    for (i=0; i<rtpAsymmetrics.count; i++) {
-        code = regexec(rtpAsymmetrics.clients[i], userAgent.s, 0, NULL, 0);
-        if (code == 0) {
-            userAgent.s[userAgent.len] = c;
-            return True;
-        } else if (code != REG_NOMATCH) {
-            char errbuf[256];
-            regerror(code, rtpAsymmetrics.clients[i], errbuf, 256);
-            LM_WARN("failed to match regexp: %s\n", errbuf);
-        }
-    }
-
-    userAgent.s[userAgent.len] = c;
-
-    return False;
-}
-
-
-// NAT tests
-
-/* Test if address of signaling is different from address in 1st Via field */
-static Bool
-testSourceAddress(struct sip_msg* msg)
-{
-    Bool diffIP, diffPort;
-    int via1Port;
-
-    diffIP = received_test(msg);
-    if (isSIPAsymmetric(getUserAgent(msg))) {
-        // ignore port test for asymmetric clients (it's always different)
-        diffPort = False;
-    } else {
-        via1Port = (msg->via1->port ? msg->via1->port : SIP_PORT);
-        diffPort = (msg->rcv.src_port != via1Port);
-    }
-
-    return (diffIP || diffPort);
-}
-
-/* Test if Contact field contains a private IP address as defined in RFC1918 */
-static Bool
-testPrivateContact(struct sip_msg* msg)
-{
-    struct sip_uri uri;
-    contact_t* contact;
-
-    if (!getContactURI(msg, &uri, &contact))
-        return False;
-
-    return isPrivateAddress(&(uri.host));
-}
-
-/* Test if top Via field contains a private IP address as defined in RFC1918 */
-static Bool
-testPrivateVia(struct sip_msg* msg)
-{
-    return isPrivateAddress(&(msg->via1->host));
-}
-
-
-#include "functions.h"
-
-/* The public functions that are exported by this module */
 
 static int
-ClientNatTest(struct sip_msg* msg, char* str1, char* str2)
+use_media_proxy(struct sip_msg *msg, char *dialog_id)
 {
-    int tests, i;
+    str callid, cseq, from_uri, to_uri, from_tag, to_tag, user_agent;
+    str signaling_ip, media_relay, sdp, str_buf, tokens[MAX_STREAMS+1];
+    char request[8192], media_str[4096], buf[64], *result, *type;
+    int i, j, port, len, status;
+    Bool removed_session_ip;
+    SessionInfo session;
+    StreamInfo stream;
 
-    tests = (int)(long)str1;
-
-    for (i=0; natTests[i].test!=NTNone; i++) {
-        if ((tests & natTests[i].test)!=0 && natTests[i].proc(msg)) {
-            return 1;
-        }
-    }
-
-    return -1; // all failed
-}
-
-
-static int
-EndMediaSession(struct sip_msg* msg, char* str1, char* str2)
-{
-    char *command, *result;
-    str callId;
-
-    if (!getCallId(msg, &callId)) {
-        LM_ERR("can't get Call-Id\n");
+    if (msg == NULL)
         return -1;
-    }
-
-    command = pkg_malloc(callId.len + 20);
-    if (command == NULL) {
-        LM_ERR("out of memory\n");
-        return -1;
-    }
-
-    sprintf(command, "delete %.*s info=\n", callId.len, callId.s);
-    result = sendMediaproxyCommand(command);
-
-    pkg_free(command);
-
-    return result==NULL ? -1 : 1;
-}
-
-
-static int
-UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
-{
-    str sdp, sessionIP, signalingIP, callId, userAgent, tokens[64];
-    str fromDomain, toDomain, fromAddr, toAddr, fromTag, toTag, domain;
-    char *ptr, *command, *result, *agent, *fromType, *toType, *info;
-    int streamCount, i, port, count, portCount, cmdlen, infolen, status;
-    StreamInfo streams[64], stream;
-    Bool request;
 
     if (msg->first_line.type == SIP_REQUEST) {
-        request = True;
+        type = "request";
     } else if (msg->first_line.type == SIP_REPLY) {
-        request = False;
+        type = "reply";
     } else {
         return -1;
     }
 
-    if (!getCallId(msg, &callId)) {
-        LM_ERR("can't get Call-Id\n");
+    if (!get_callid(msg, &callid)) {
+        LM_ERR("failed to get Call-ID\n");
         return -1;
     }
 
-    status = getSDPMessage(msg, &sdp);
+    if (!get_cseq_number(msg, &cseq)) {
+        LM_ERR("failed to get CSeq\n");
+        return -1;
+    }
+
+    status = get_sdp_message(msg, &sdp);
     // status = -1 is error, -2 is missing SDP body
     if (status < 0)
         return status;
 
-    if (!getSessionLevelMediaIP(&sdp, &sessionIP)) {
-        LM_ERR("failed to parse the SDP message\n");
-        return -1;
-    }
-
-    streamCount = getMediaStreams(&sdp, &sessionIP, streams, 64);
-    if (streamCount == -1) {
+    status = get_session_info(&sdp, &session);
+    if (status < 0) {
         LM_ERR("can't extract media streams from the SDP message\n");
         return -1;
     }
 
-    if (streamCount == 0)
-        return 1; // there are no media streams. we have nothing to do.
+    if (session.supported_count == 0)
+        return 1; // there are no supported media streams. we have nothing to do.
 
-    fromDomain = getFromDomain(msg);
-    fromType   = (isFromLocal(msg, NULL, NULL)>0) ? "local" : "remote";
-    fromAddr   = getFromAddress(msg);
-    toAddr     = getToAddress(msg);
-    fromTag    = getFromTag(msg);
-    toTag      = getToTag(msg);
-    userAgent  = getUserAgent(msg);
-    if (request) {
-        toDomain = getDestinationDomain(msg); // call only for requests
-        toType = (isDestinationLocal(msg, NULL, NULL)>0) ? "local" : "remote";
-    } else {
-        toDomain.s = "unknown";
-        toDomain.len = 7;
-        toType = "unknown";
+    for (i=0, str_buf.len=sizeof(media_str), str_buf.s=media_str; i<session.stream_count; i++) {
+        stream = session.streams[i];
+        if (stream.transport != TSupported)
+            continue; // skip streams with unsupported transports
+        if (stream.type.len + stream.ip.len + stream.port.len + stream.direction.len + 4 > str_buf.len) {
+            LM_ERR("media stream description is longer than %d bytes\n", sizeof(media_str));
+            return -1;
+        }
+        len = sprintf(str_buf.s, "%.*s:%.*s:%.*s:%.*s,",
+                      stream.type.len, stream.type.s,
+                      stream.ip.len, stream.ip.s,
+                      stream.port.len, stream.port.s,
+                      stream.direction.len, stream.direction.s);
+        str_buf.s   += len;
+        str_buf.len -= len;
     }
 
-    signalingIP = getSignalingIP(msg);
-    domain = getMediaproxyDomain(msg);
+    *(str_buf.s-1) = 0; // remove the last comma
 
-    infolen = fromAddr.len + toAddr.len + fromTag.len + toTag.len +
-        domain.len + 64;
+    from_uri     = get_from_uri(msg);
+    to_uri       = get_to_uri(msg);
+    from_tag     = get_from_tag(msg);
+    to_tag       = get_to_tag(msg);
+    user_agent   = get_user_agent(msg);
+    signaling_ip = get_signaling_ip(msg);
+    media_relay  = get_media_relay(msg);
 
-    cmdlen = callId.len + signalingIP.len + fromDomain.len + toDomain.len +
-        userAgent.len*3 + infolen + 128;
+    len = snprintf(request, sizeof(request),
+                   "update\r\n"
+                   "type: %s\r\n"
+                   "dialog_id: %s\r\n"
+                   "call_id: %.*s\r\n"
+                   "cseq: %.*s\r\n"
+                   "from_uri: %.*s\r\n"
+                   "to_uri: %.*s\r\n"
+                   "from_tag: %.*s\r\n"
+                   "to_tag: %.*s\r\n"
+                   "user_agent: %.*s\r\n"
+                   "media: %s\r\n"
+                   "signaling_ip: %.*s\r\n"
+                   "media_relay: %.*s\r\n"
+                   "\r\n",
+                   type, dialog_id, callid.len, callid.s, cseq.len, cseq.s,
+                   from_uri.len, from_uri.s, to_uri.len, to_uri.s,
+                   from_tag.len, from_tag.s, to_tag.len, to_tag.s,
+                   user_agent.len, user_agent.s, media_str,
+                   signaling_ip.len, signaling_ip.s,
+                   media_relay.len, media_relay.s);
 
-    for (i=0; i<streamCount; i++) {
-        stream = streams[i];
-        cmdlen += stream.ip.len + stream.port.len + stream.type.len + 4;
-    }
-
-    command = pkg_malloc(cmdlen);
-    if (!command) {
-        LM_ERR("out of memory\n");
+    if (len >= sizeof(request)) {
+        LM_ERR("mediaproxy request is longer than %d bytes\n", sizeof(request));
         return -1;
     }
 
-    if (request)
-        count = sprintf(command, "request %.*s", callId.len, callId.s);
-    else
-        count = sprintf(command, "lookup %.*s", callId.len, callId.s);
-
-    for (i=0, ptr=command+count; i<streamCount; i++) {
-        char c = (i==0 ? ' ' : ',');
-        count = sprintf(ptr, "%c%.*s:%.*s:%.*s", c,
-                        streams[i].ip.len, streams[i].ip.s,
-                        streams[i].port.len, streams[i].port.s,
-                        streams[i].type.len, streams[i].type.s);
-        ptr += count;
-    }
-
-    agent = encodeQuopri(userAgent);
-    if (!agent) {
-        LM_ERR("out of memory\n");
-        pkg_free(command);
-        return -1;
-    }
-
-    info = pkg_malloc(infolen);
-    if (!info) {
-        LM_ERR("out of memory\n");
-        pkg_free(command);
-        pkg_free(agent);
-        return -1;
-    }
-
-    sprintf(info, "from:%.*s,to:%.*s,fromtag:%.*s,totag:%.*s",
-            fromAddr.len, fromAddr.s, toAddr.len, toAddr.s,
-            fromTag.len, fromTag.s, toTag.len, toTag.s);
-
-    if (domain.len) {
-        strcat(info, ",domain:");
-        strncat(info, domain.s, domain.len);
-    }
-    if (isRTPAsymmetric(userAgent)) {
-        strcat(info, ",asymmetric");
-    }
-
-    snprintf(ptr, command + cmdlen - ptr, " %.*s %.*s %s %.*s %s %s info=%s\n",
-             signalingIP.len, signalingIP.s, fromDomain.len, fromDomain.s,
-             fromType, toDomain.len, toDomain.s, toType, agent, info);
-
-    pkg_free(info);
-    pkg_free(agent);
-
-    result = sendMediaproxyCommand(command);
-
-    pkg_free(command);
+    result = send_command(request);
 
     if (result == NULL)
         return -1;
 
-    count = getTokens(result, tokens, sizeof(tokens)/sizeof(str));
+    len = get_tokens(result, tokens, sizeof(tokens)/sizeof(str));
 
-    if (count == 0) {
+    if (len == 0) {
         LM_ERR("empty response from mediaproxy\n");
         return -1;
-    } else if (count<streamCount+1) {
-        if (request) {
+    } else if (len==1 && STR_MATCH(tokens[0], "error")) {
+        LM_ERR("mediaproxy returned error\n");
+        return -1;
+    } else if (len<session.supported_count+1) {
+        if (msg->first_line.type == SIP_REQUEST) {
             LM_ERR("insufficient ports returned from mediaproxy: got %d, "
-                   "expected %d\n", count-1, streamCount);
+                   "expected %d\n", len-1, session.supported_count);
             return -1;
         } else {
             LM_WARN("broken client. Called UA added extra media stream(s) "
@@ -1485,51 +1387,242 @@ UseMediaProxy(struct sip_msg* msg, char* str1, char* str2)
         }
     }
 
-    if (sessionIP.s && !isAnyAddress(sessionIP)) {
-        if (!replaceElement(msg, &sessionIP, &tokens[0])) {
-            LM_ERR("failed to replace session-level media IP in the SDP body\n");
-            return -1;
+    removed_session_ip = False;
+
+    // only replace the session ip if there are no streams with unsupported
+    // transports otherwise we insert an ip line in the supported streams
+    // and remove the session level ip
+    if (session.ip.s && !isnulladdr(session.ip)) {
+        if (session.stream_count == session.supported_count) {
+            if (!replace_element(msg, &session.ip, &tokens[0])) {
+                LM_ERR("failed to replace session-level media IP in the SDP body\n");
+                return -1;
+            }
+        } else {
+            if (!remove_element(msg, &session.ip_line)) {
+                LM_ERR("failed to remove session-level media IP in the SDP body\n");
+                return -1;
+            }
+            removed_session_ip = True;
         }
     }
 
-    portCount = min(count-1, streamCount);
-
-    for (i=0; i<portCount; i++) {
-        // check. is this really necessary?
-        port = strtoint(&tokens[i+1]);
-        if (port <= 0 || port > 65535) {
-            LM_ERR("invalid port returned by mediaproxy: %.*s\n",
-                   tokens[i+1].len, tokens[i+1].s);
-            //return -1;
+    for (i=0, j=1; i<session.stream_count; i++) {
+        stream = session.streams[i];
+        if (stream.transport != TSupported) {
+            if (!stream.local_ip && removed_session_ip) {
+                strcpy(buf, "c=IN IP4 ");
+                strncat(buf, session.ip.s, session.ip.len);
+                strncat(buf, session.separator.s, session.separator.len);
+                if (!insert_element(msg, stream.next_line, buf)) {
+                    LM_ERR("failed to insert IP address in media stream number %d\n", i+1);
+                    return -1;
+                }
+            }
             continue;
         }
 
-        if (streams[i].port.len!=1 || streams[i].port.s[0]!='0') {
-            if (!replaceElement(msg, &(streams[i].port), &tokens[i+1])) {
+        if (!isnullport(stream.port)) {
+            if (!replace_element(msg, &stream.port, &tokens[j])) {
                 LM_ERR("failed to replace port in media stream number %d\n", i+1);
                 return -1;
             }
         }
 
-        if (streams[i].localIP && !isAnyAddress(streams[i].ip)) {
-            if (!replaceElement(msg, &(streams[i].ip), &tokens[0])) {
-                LM_ERR("failed to replace IP address in media stream number %d\n", i+1);
+        if (stream.rtcp_port.len>0 && !isnullport(stream.rtcp_port)) {
+            str rtcp_port;
+
+            port = strtoint(&tokens[j]);
+            rtcp_port.s = int2str(port+1, &rtcp_port.len);
+            if (!replace_element(msg, &stream.rtcp_port, &rtcp_port)) {
+                LM_ERR("failed to replace RTCP port in media stream number %d\n", i+1);
                 return -1;
             }
         }
+
+        if (stream.local_ip && !isnulladdr(stream.ip)) {
+            if (!replace_element(msg, &stream.ip, &tokens[0])) {
+                LM_ERR("failed to replace IP address in media stream number %d\n", i+1);
+                return -1;
+            }
+        } else if (!stream.local_ip && removed_session_ip) {
+            strcpy(buf, "c=IN IP4 ");
+            strncat(buf, tokens[0].s, tokens[0].len);
+            strncat(buf, session.separator.s, session.separator.len);
+            if (!insert_element(msg, stream.next_line, buf)) {
+                LM_ERR("failed to insert IP address in media stream number %d\n", i+1);
+                return -1;
+            }
+        }
+
+        j++;
     }
 
     return 1;
 }
 
 
-/* Module management: initialization/destroy/function-parameter-fixing/... */
+static int
+end_media_session(str callid, str from_tag, str to_tag)
+{
+    char request[2048], *result;
+    int len;
+
+    len = snprintf(request, sizeof(request),
+                   "remove\r\n"
+                   "call_id: %.*s\r\n"
+                   "from_tag: %.*s\r\n"
+                   "to_tag: %.*s\r\n"
+                   "\r\n",
+                   callid.len, callid.s,
+                   from_tag.len, from_tag.s,
+                   to_tag.len, to_tag.s);
+
+    if (len >= sizeof(request)) {
+        LM_ERR("mediaproxy request is longer than %d bytes\n", sizeof(request));
+        return -1;
+    }
+
+    result = send_command(request);
+
+    return result==NULL ? -1 : 1;
+}
+
+
+// Dialog callbacks and helpers
+//
+
+typedef enum {
+    MPInactive = 0,
+    MPActive
+} MediaProxyState;
+
+
+static INLINE char*
+get_dialog_id(struct dlg_cell *dlg)
+{
+    static char buffer[64];
+
+    snprintf(buffer, sizeof(buffer), "%d:%d", dlg->h_entry, dlg->h_id);
+
+    return buffer;
+}
+
+
+static void
+__dialog_requests(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+{
+    use_media_proxy(_params->msg, get_dialog_id(dlg));
+}
+
+
+static void
+__dialog_replies(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+{
+    struct sip_msg *reply = _params->msg;
+
+    if (reply == FAKED_REPLY)
+        return;
+
+    if (reply->REPLY_STATUS>100 && reply->REPLY_STATUS<300) {
+        use_media_proxy(reply, get_dialog_id(dlg));
+    }
+}
+
+
+static void
+__dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+{
+    if ((int)*_params->param == MPActive) {
+        end_media_session(dlg->callid, dlg->tag[DLG_CALLER_LEG], dlg->tag[DLG_CALLEE_LEG]);
+        *_params->param = MPInactive;
+    }
+}
+
+
+static void
+__dialog_created(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
+{
+    struct sip_msg *request = _params->msg;
+
+    if (request->REQ_METHOD != METHOD_INVITE)
+        return;
+
+    if ((request->msg_flags & FL_USE_MEDIA_PROXY) == 0)
+        return;
+
+    if (dlg_api.register_dlgcb(dlg, DLGCB_REQ_WITHIN, __dialog_requests, NULL, NULL) != 0)
+        LM_ERR("cannot register callback for in-dialog requests\n");
+    if (dlg_api.register_dlgcb(dlg, DLGCB_RESPONSE_FWDED | DLGCB_RESPONSE_WITHIN, __dialog_replies, NULL, NULL) != 0)
+        LM_ERR("cannot register callback for dialog and in-dialog replies\n");
+    if (dlg_api.register_dlgcb(dlg, DLGCB_TERMINATED | DLGCB_FAILED | DLGCB_EXPIRED | DLGCB_DESTROY, __dialog_ended, (void*)MPActive, NULL) != 0)
+        LM_ERR("cannot register callback for dialog termination\n");
+
+    use_media_proxy(request, get_dialog_id(dlg));
+}
+
+
+//
+// The public functions that are exported by this module
+//
+
+
+static int
+EngageMediaProxy(struct sip_msg *msg)
+{
+    if (mediaproxy_disabled)
+        return -1;
+
+    if (!have_dlg_api) {
+        LM_ERR("engage_media_proxy requires the dialog module to be loaded and configured\n");
+        return -1;
+    }
+    msg->msg_flags |= FL_USE_MEDIA_PROXY;
+    setflag(msg, dialog_flag); // have the dialog module trace this dialog
+    return 1;
+}
+
+
+static int
+UseMediaProxy(struct sip_msg *msg)
+{
+    if (mediaproxy_disabled)
+        return -1;
+
+    return use_media_proxy(msg, "");
+}
+
+
+static int
+EndMediaSession(struct sip_msg *msg)
+{
+    str callid, from_tag, to_tag;
+
+    if (mediaproxy_disabled)
+        return -1;
+
+    if (!get_callid(msg, &callid)) {
+        LM_ERR("failed to get Call-ID\n");
+        return -1;
+    }
+
+    from_tag = get_from_tag(msg);
+    to_tag   = get_to_tag(msg);
+
+    return end_media_session(callid, from_tag, to_tag);
+}
+
+
+//
+// Module management: initialization/destroy/function-parameter-fixing/...
+//
+
 
 static int
 mod_init(void)
 {
-    bind_usrloc_t ul_bind_usrloc;
     pv_spec_t avp_spec;
+    int *param;
 
     // initialize the signaling_ip_avp structure
     if (signaling_ip_avp.spec.s==NULL || *(signaling_ip_avp.spec.s)==0) {
@@ -1546,55 +1639,54 @@ mod_init(void)
         return -1;
     }
 
-    // initialize the domain_avp structure
-    if (domain_avp.spec.s==NULL || *(domain_avp.spec.s)==0) {
-        LM_WARN("missing/empty domain_avp parameter. will use default.\n");
-        domain_avp.spec.s = DOMAIN_AVP_SPEC;
+    // initialize the media_relay_avp structure
+    if (media_relay_avp.spec.s==NULL || *(media_relay_avp.spec.s)==0) {
+        LM_WARN("missing/empty media_relay_avp parameter. will use default.\n");
+        media_relay_avp.spec.s = MEDIA_RELAY_AVP_SPEC;
     }
-    domain_avp.spec.len = strlen(domain_avp.spec.s);
-    if (pv_parse_spec(&(domain_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
-        LM_CRIT("invalid AVP specification for domain_avp: `%s'\n", domain_avp.spec.s);
+    media_relay_avp.spec.len = strlen(media_relay_avp.spec.s);
+    if (pv_parse_spec(&(media_relay_avp.spec), &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
+        LM_CRIT("invalid AVP specification for media_relay_avp: `%s'\n", media_relay_avp.spec.s);
         return -1;
     }
-    if (pv_get_avp_name(0, &(avp_spec.pvp), &(domain_avp.name), &(domain_avp.type))!=0) {
-        LM_CRIT("invalid AVP specification for domain_avp: `%s'\n", domain_avp.spec.s);
-        return -1;
-    }
-
-    isFromLocal = (CheckLocalPartyProc)find_export("is_from_local", 0, 0);
-    isDestinationLocal = (CheckLocalPartyProc)find_export("is_uri_host_local", 0, 0);
-    if (!isFromLocal || !isDestinationLocal) {
-        LM_CRIT("can't find the is_from_local and/or is_uri_host_local "
-                "functions. Check if domain.so is loaded\n");
+    if (pv_get_avp_name(0, &(avp_spec.pvp), &(media_relay_avp.name), &(media_relay_avp.type))!=0) {
+        LM_CRIT("invalid AVP specification for media_relay_avp: `%s'\n", media_relay_avp.spec.s);
         return -1;
     }
 
-    if (natpingInterval > 0) {
-        ul_bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);
-        if (!ul_bind_usrloc) {
-            LM_CRIT("can't find the usrloc module. Check if usrloc.so is loaded.\n");
+    // bind to the dialog API
+    if (load_dlg_api(&dlg_api)==0) {
+        have_dlg_api = True;
+
+        // load dlg_flag and default_timeout parameters from the dialog module
+        param = find_param_export("dialog", "dlg_flag", INT_PARAM);
+        if (!param) {
+            LM_CRIT("cannot find dlg_flag parameter in the dialog module\n");
             return -1;
         }
+        dialog_flag = *param;
 
-        if (ul_bind_usrloc(&userLocation) < 0) {
-            LM_CRIT("can't access the usrloc module.\n");
+        // register dialog creation callback
+        if (dlg_api.register_dlgcb(NULL, DLGCB_CREATED, __dialog_created, NULL, NULL) != 0) {
+            LM_CRIT("cannot register callback for dialog creation\n");
             return -1;
         }
-
-        if (userLocation.nat_flag==0) {
-            LM_CRIT("bad config - nat ping enabled, but no nat bflag set in "
-                    "the usrloc module\n");
-            return -1;
-        }
-
-        register_timer(pingClients, NULL, natpingInterval);
+    } else {
+        LM_NOTICE("engage_media_proxy() will not work because the dialog module is not loaded\n");
     }
-
-    checkAsymmetricFile(&sipAsymmetrics);
-    checkAsymmetricFile(&rtpAsymmetrics);
-
-    // children won't benefit from this. figure another way
-    //register_timer(checkAsymmetricFiles, NULL, 5);
 
     return 0;
 }
+
+
+static int
+child_init(int rank)
+{
+    // initialize the connection to mediaproxy if needed
+    if (!mediaproxy_disabled)
+        mediaproxy_connect();
+
+    return 0;
+}
+
+

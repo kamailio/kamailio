@@ -12,34 +12,34 @@
 ]>
 
 <book>
-	<bookinfo>
-	<title>Mediaproxy Module</title>
-	<authorgroup>
-		<author>
-		<firstname>Dan</firstname>
-		<surname>Pascu</surname>
-		<email>dan@ag-projects.com</email>
-		</author>
-		<editor>
-		<firstname>Dan</firstname>
-		<surname>Pascu</surname>
-		<email>dan@ag-projects.com</email>
-		</editor>
-	</authorgroup>
-	<copyright>
-		<year>2004</year>
-		<holder>Dan Pascu</holder>
-	</copyright>
-	<revhistory>
-		<revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-		</revision>
-	</revhistory>
-	</bookinfo>
-	<toc></toc>
+  <bookinfo>
+  <title>Mediaproxy Module</title>
+  <authorgroup>
+    <author>
+    <firstname>Dan</firstname>
+    <surname>Pascu</surname>
+    <email>dan@ag-projects.com</email>
+    </author>
+    <editor>
+    <firstname>Dan</firstname>
+    <surname>Pascu</surname>
+    <email>dan@ag-projects.com</email>
+    </editor>
+  </authorgroup>
+  <copyright>
+    <year>2004</year>
+    <holder>Dan Pascu</holder>
+  </copyright>
+  <revhistory>
+    <revision>
+    <revnumber>$Revision$</revnumber>
+    <date>$Date$</date>
+    </revision>
+  </revhistory>
+  </bookinfo>
+  <toc></toc>
 
-	&admin;
-	&faq;
+  &admin;
+  &faq;
 
 </book>

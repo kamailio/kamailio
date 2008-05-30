@@ -42,7 +42,9 @@ Dan Pascu
 
         1.5. Exported functions
 
-              1.5.1. nat_keepalive()
+              1.5.1. client_nat_test(type)
+              1.5.2. fix_contact()
+              1.5.3. nat_keepalive()
 
         1.6. Exported statistics
 
@@ -65,15 +67,17 @@ Dan Pascu
 
    List of Examples
 
-   1.1. Setting keepalive_interval parameter
-   1.2. Setting keepalive_method parameter
-   1.3. Setting keepalive_from parameter
-   1.4. Setting keepalive_extra_headers parameter
-   1.5. Setting keepalive_state_file parameter
-   1.6. Using the nat_keepalive function
-   1.7. Using $keepalive.socket in multi-proxy environments
-   1.8. Using $source_uri to set the received AVP on registrars
-   1.9. Using $source_uri in multi-proxy environments
+   1.1. Setting the keepalive_interval parameter
+   1.2. Setting the keepalive_method parameter
+   1.3. Setting the keepalive_from parameter
+   1.4. Setting the keepalive_extra_headers parameter
+   1.5. Setting the keepalive_state_file parameter
+   1.6. Using the client_nat_test function
+   1.7. Using the fix_contact function
+   1.8. Using the nat_keepalive function
+   1.9. Using $keepalive.socket in multi-proxy environments
+   1.10. Using $source_uri to set the received AVP on registrars
+   1.11. Using $source_uri in multi-proxy environments
 
 Chapter 1. Admin Guide
 
@@ -378,7 +382,7 @@ Chapter 1. Admin Guide
 
    Default value is "60".
 
-   Example 1.1. Setting keepalive_interval parameter
+   Example 1.1. Setting the keepalive_interval parameter
 ...
 modparam("nat_traversal", "keepalive_interval", 90)
 ...
@@ -408,7 +412,7 @@ modparam("nat_traversal", "keepalive_interval", 90)
 
    Default value is "NOTIFY".
 
-   Example 1.2. Setting keepalive_method parameter
+   Example 1.2. Setting the keepalive_method parameter
 ...
 modparam("nat_traversal", "keepalive_method", "OPTIONS")
 ...
@@ -425,7 +429,7 @@ modparam("nat_traversal", "keepalive_method", "OPTIONS")
    Default value is "sip:keepalive@proxy_ip" with proxy_ip being
    the actual IP of the outgoing interface.
 
-   Example 1.3. Setting keepalive_from parameter
+   Example 1.3. Setting the keepalive_from parameter
 ...
 modparam("nat_traversal", "keepalive_from", "sip:keepalive@my-domain.com
 ")
@@ -441,7 +445,7 @@ modparam("nat_traversal", "keepalive_from", "sip:keepalive@my-domain.com
 
    Default value is undefined (send no extra headers).
 
-   Example 1.4. Setting keepalive_extra_headers parameter
+   Example 1.4. Setting the keepalive_extra_headers parameter
 ...
 modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: OpenSE
 R\r\nX-MyHeader: some_value\r\n")
@@ -465,7 +469,7 @@ R\r\nX-MyHeader: some_value\r\n")
 
    Default value is undefined "keepalive_state".
 
-   Example 1.5. Setting keepalive_state_file parameter
+   Example 1.5. Setting the keepalive_state_file parameter
 ...
 modparam("nat_traversal", "keepalive_state_file", "/var/run/openser/keep
 alive_state")
@@ -473,7 +477,53 @@ alive_state")
 
 1.5. Exported functions
 
-1.5.1.  nat_keepalive()
+1.5.1.  client_nat_test(type)
+
+   Check if the client is behind NAT. What tests are performed is
+   specified by the type parameter which is an integer given by
+   the sum of the numbers corresponsing to the tests that one
+   wishes to perform. The numbers corresponding to individual
+   tests are shown below:
+
+     * 1 - tests if client has a private IP address (as defined by
+       RFC1918) in the Contact field of the SIP message.
+     * 2 - tests if client has contacted OpenSER from an address
+       that is different from the one in the Via field. Both the
+       IP and port are compared by this test.
+     * 4 - tests if client has a private IP address (as defined by
+       RFC1918) in the top Via field of the SIP message.
+
+   For example calling client_nat_test("3") will perform test 1
+   and test 2 and return true if at least one succeeds, otherwise
+   false.
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   FAILURE_ROUTE, BRANCH_ROUTE.
+
+   Example 1.6. Using the client_nat_test function
+...
+if (client_nat_test("3")) {
+    .....
+}
+...
+
+1.5.2.  fix_contact()
+
+   Will replace the IP and port in the Contact header with the IP
+   and port the SIP message was received from. Usually called
+   after a succesful call to client_nat_test(type)
+
+   This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
+   BRANCH_ROUTE.
+
+   Example 1.7. Using the fix_contact function
+...
+if (client_nat_test("3")) {
+    fix_contact();
+}
+...
+
+1.5.3.  nat_keepalive()
 
    Trigger keepalive functionality for the source address of the
    request. When called it only sets some internal flags, which
@@ -497,7 +547,7 @@ alive_state")
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.6. Using the nat_keepalive function
+   Example 1.8. Using the nat_keepalive function
 ...
 if ((method=="REGISTER" || method=="SUBSCRIBE" ||
     (method=="INVITE" && !has_totag())) && client_nat_test("3"))
@@ -565,7 +615,7 @@ if ((method=="REGISTER" || method=="SUBSCRIBE" ||
    message is sent to P1 for being relayed back to the user agent
    by P1 which has the NAT open with it.
 
-   Example 1.7. Using $keepalive.socket in multi-proxy
+   Example 1.9. Using $keepalive.socket in multi-proxy
    environments
 ...
 # This code runs on P1 which has received an INVITE from P2 to forward
@@ -599,7 +649,7 @@ if (method=="INVITE" && $hdr(X-Scope)=="nat-relay") {
    to indicate the NAT endpoint URI to P2, so that P2 can include
    it later for incoming INVITE requests to this user agent.
 
-   Example 1.8. Using $source_uri to set the received AVP on
+   Example 1.10. Using $source_uri to set the received AVP on
    registrars
 ...
 modparam("registrar", "received_avp", "$avp(s:received_uri)")
@@ -636,7 +686,7 @@ if (method=="REGISTER") {
 }
 ...
 
-   Example 1.9. Using $source_uri in multi-proxy environments
+   Example 1.11. Using $source_uri in multi-proxy environments
 ...
 # This code runs on P1 which received the REGISTER request and has to
 # forward it to the registrar P2.

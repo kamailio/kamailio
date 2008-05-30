@@ -360,7 +360,7 @@
         </emphasis>
       </para>
       <example>
-      <title>Setting <varname>keepalive_interval</varname> parameter</title>
+      <title>Setting the <varname>keepalive_interval</varname> parameter</title>
         <programlisting format="linespecific">
 ...
 modparam("nat_traversal", "keepalive_interval", 90)
@@ -397,7 +397,7 @@ modparam("nat_traversal", "keepalive_interval", 90)
         </emphasis>
       </para>
       <example>
-      <title>Setting <varname>keepalive_method</varname> parameter</title>
+      <title>Setting the <varname>keepalive_method</varname> parameter</title>
         <programlisting format="linespecific">
 ...
 modparam("nat_traversal", "keepalive_method", "OPTIONS")
@@ -422,7 +422,7 @@ modparam("nat_traversal", "keepalive_method", "OPTIONS")
         </emphasis>
       </para>
       <example>
-      <title>Setting <varname>keepalive_from</varname> parameter</title>
+      <title>Setting the <varname>keepalive_from</varname> parameter</title>
         <programlisting format="linespecific">
 ...
 modparam("nat_traversal", "keepalive_from", "sip:keepalive@my-domain.com")
@@ -445,7 +445,7 @@ modparam("nat_traversal", "keepalive_from", "sip:keepalive@my-domain.com")
         </emphasis>
       </para>
       <example>
-      <title>Setting <varname>keepalive_extra_headers</varname> parameter</title>
+      <title>Setting the <varname>keepalive_extra_headers</varname> parameter</title>
         <programlisting format="linespecific">
 ...
 modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: OpenSER\r\nX-MyHeader: some_value\r\n")
@@ -478,7 +478,7 @@ modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: OpenSER\r\nX-M
         </emphasis>
       </para>
       <example>
-      <title>Setting <varname>keepalive_state_file</varname> parameter</title>
+      <title>Setting the <varname>keepalive_state_file</varname> parameter</title>
         <programlisting format="linespecific">
 ...
 modparam("nat_traversal", "keepalive_state_file", "/var/run/openser/keepalive_state")
@@ -491,6 +491,82 @@ modparam("nat_traversal", "keepalive_state_file", "/var/run/openser/keepalive_st
 
   <section>
   <title>Exported functions</title>
+    <section>
+    <title>
+      <function moreinfo="none">client_nat_test(type)</function>
+    </title>
+      <para>
+        Check if the client is behind NAT. What tests are performed is
+        specified by the type parameter which is an integer given by the sum
+        of the numbers corresponsing to the tests that one wishes to perform.
+        The numbers corresponding to individual tests are shown below:
+      </para>
+
+      <para>
+        <itemizedlist>
+        <listitem><para>
+          1 - tests if client has a private IP address (as defined by RFC1918)
+              in the Contact field of the SIP message.
+        </para></listitem>
+        <listitem><para>
+          2 - tests if client has contacted &openser; from an address that
+              is different from the one in the Via field. Both the IP and
+              port are compared by this test.
+        </para></listitem>
+        <listitem><para>
+          4 - tests if client has a private IP address (as defined by RFC1918)
+              in the top Via field of the SIP message.
+        </para></listitem>
+        </itemizedlist>
+      </para>
+
+      <para>
+        For example calling client_nat_test("3") will perform test 1 and
+        test 2 and return true if at least one succeeds, otherwise false.
+      </para>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, FAILURE_ROUTE, BRANCH_ROUTE.
+      </para>
+
+      <example>
+      <title>Using the <function>client_nat_test</function> function</title>
+        <programlisting format="linespecific">
+...
+if (client_nat_test("3")) {
+    .....
+}
+...
+        </programlisting>
+      </example>
+    </section>
+
+    <section>
+    <title>
+    <function moreinfo="none">fix_contact()</function>
+    </title>
+      <para>
+        Will replace the IP and port in the Contact header with the
+        IP and port the SIP message was received from. Usually called
+        after a succesful call to client_nat_test(type)
+      </para>
+
+      <para>
+        This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, BRANCH_ROUTE.
+      </para>
+
+      <example>
+      <title>Using the <function>fix_contact</function> function</title>
+        <programlisting format="linespecific">
+...
+if (client_nat_test("3")) {
+    fix_contact();
+}
+...
+        </programlisting>
+      </example>
+    </section>
+
     <section>
     <title>
     <function moreinfo="none">nat_keepalive()</function>

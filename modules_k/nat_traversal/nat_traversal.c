@@ -28,6 +28,9 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
@@ -35,14 +38,17 @@
 #include "../../lock_ops.h"
 #include "../../dprint.h"
 #include "../../str.h"
-#include "../../error.h"
 #include "../../pvar.h"
+#include "../../error.h"
 #include "../../timer.h"
+#include "../../data_lump.h"
+#include "../../mod_fix.h"
 #include "../../script_cb.h"
+#include "../../parser/msg_parser.h"
 #include "../../parser/parse_from.h"
+#include "../../parser/parse_uri.h"
 #include "../../parser/parse_expires.h"
 #include "../../parser/contact/parse_contact.h"
-#include "../../parser/contact/contact.h"
 #include "../dialog/dlg_load.h"
 #include "../tm/tm_load.h"
 #include "../sl/sl_cb.h"
@@ -77,6 +83,27 @@ MODULE_VERSION
 typedef int Bool;
 #define True  1
 #define False 0
+
+
+typedef Bool (*NatTestFunction)(struct sip_msg *msg);
+
+typedef enum {
+    NTNone=0,
+    NTPrivateContact=1,
+    NTSourceAddress=2,
+    NTPrivateVia=4
+} NatTestType;
+
+typedef struct {
+    NatTestType test;
+    NatTestFunction proc;
+} NatTest;
+
+typedef struct {
+    const char *name;
+    uint32_t address;
+    uint32_t mask;
+} NetInfo;
 
 
 typedef struct SIP_Dialog {
@@ -146,6 +173,12 @@ typedef struct Keepalive_Params {
 // Function prototypes
 //
 static int NAT_Keepalive(struct sip_msg *msg);
+static int FixContact(struct sip_msg *msg);
+static int ClientNatTest(struct sip_msg *msg, unsigned int tests);
+
+static Bool test_private_contact(struct sip_msg *msg);
+static Bool test_source_address(struct sip_msg *msg);
+static Bool test_private_via(struct sip_msg *msg);
 
 static INLINE char* shm_strdup(char *source);
 
@@ -184,9 +217,25 @@ stat_var *registered_endpoints = 0;
 stat_var *subscribed_endpoints = 0;
 stat_var *dialog_endpoints = 0;
 
+static NetInfo rfc1918nets[] = {
+    {"10.0.0.0",    0x0a000000UL, 0xff000000UL},
+    {"172.16.0.0",  0xac100000UL, 0xfff00000UL},
+    {"192.168.0.0", 0xc0a80000UL, 0xffff0000UL},
+    {NULL,          0UL,          0UL}
+};
+
+static NatTest NAT_Tests[] = {
+    {NTPrivateContact, test_private_contact},
+    {NTSourceAddress,  test_source_address},
+    {NTPrivateVia,     test_private_via},
+    {NTNone,           NULL}
+};
+
 
 static cmd_export_t commands[] = {
-    {"nat_keepalive", (cmd_function)NAT_Keepalive, 0, NULL, 0, REQUEST_ROUTE},
+    {"nat_keepalive",   (cmd_function)NAT_Keepalive, 0, NULL, 0, REQUEST_ROUTE},
+    {"fix_contact",     (cmd_function)FixContact,    0, NULL, 0, REQUEST_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+    {"client_nat_test", (cmd_function)ClientNatTest, 1, fixup_uint_null, 0, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
 
@@ -702,8 +751,104 @@ shm_strdup(char *source)
 }
 
 
+static Bool
+get_contact_uri(struct sip_msg* msg, struct sip_uri *uri, contact_t **_c)
+{
+
+    if ((parse_headers(msg, HDR_CONTACT_F, 0) == -1) || !msg->contact)
+        return False;
+
+    if (!msg->contact->parsed && parse_contact(msg->contact) < 0) {
+        LM_ERR("cannot parse the Contact header\n");
+        return False;
+    }
+
+    *_c = ((contact_body_t*)msg->contact->parsed)->contacts;
+
+    if (*_c == NULL) {
+        return False;
+    }
+
+    if (parse_uri((*_c)->uri.s, (*_c)->uri.len, uri) < 0 || uri->host.len <= 0) {
+        LM_ERR("cannot parse the Contact URI\n");
+        return False;
+    }
+
+    return True;
+}
+
+
+#define is_private_address(x) (rfc1918address(x)==1 ? 1 : 0)
+
+// Test if IP in `address' belongs to a RFC1918 network
+static INLINE int
+rfc1918address(str *address)
+{
+    struct in_addr inaddr;
+    uint32_t netaddr;
+    int i, result;
+    char c;
+
+    c = address->s[address->len];
+    address->s[address->len] = 0;
+
+    result = inet_aton(address->s, &inaddr);
+
+    address->s[address->len] = c;
+
+    if (result==0)
+        return -1; // invalid address to test
+
+    netaddr = ntohl(inaddr.s_addr);
+
+    for (i=0; rfc1918nets[i].name!=NULL; i++) {
+        if ((netaddr & rfc1918nets[i].mask)==rfc1918nets[i].address) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+// Test if address of signaling is different from address in 1st Via field
+static Bool
+test_source_address(struct sip_msg *msg)
+{
+    Bool different_ip, different_port;
+    int via1_port;
+
+    different_ip = received_test(msg);
+    via1_port = (msg->via1->port ? msg->via1->port : SIP_PORT);
+    different_port = (msg->rcv.src_port != via1_port);
+
+    return (different_ip || different_port);
+}
+
+
+// Test if Contact field contains a private IP address as defined in RFC1918
+static Bool
+test_private_contact(struct sip_msg *msg)
+{
+    struct sip_uri uri;
+    contact_t* contact;
+
+    if (!get_contact_uri(msg, &uri, &contact))
+        return False;
+
+    return is_private_address(&(uri.host));
+}
+
+
+// Test if top Via field contains a private IP address as defined in RFC1918
+static Bool
+test_private_via(struct sip_msg *msg)
+{
+    return is_private_address(&(msg->via1->host));
+}
+
+
 // return the Expires header value (converted to an UNIX timestamp if > 0)
-//
 static int
 get_expires(struct sip_msg *msg)
 {
@@ -728,7 +873,6 @@ get_expires(struct sip_msg *msg)
 
 
 // return the highest expire value from all registered contacts in the request
-//
 static time_t
 get_register_expire(struct sip_msg *request, struct sip_msg *reply)
 {
@@ -1255,6 +1399,84 @@ NAT_Keepalive(struct sip_msg *msg)
         return -1;
     }
 
+}
+
+
+// Replace IP:Port in Contact field with the source address of the packet.
+static int
+FixContact(struct sip_msg *msg)
+{
+    str before_host, after;
+    contact_t* contact;
+    struct lump* anchor;
+    struct sip_uri uri;
+    char *newip, *buf;
+    int len, newiplen, offset;
+
+    if (!get_contact_uri(msg, &uri, &contact))
+        return -1;
+
+    newip = ip_addr2a(&msg->rcv.src_ip);
+    newiplen = strlen(newip);
+
+    // Don't do anything if the IP's are the same, just return success.
+    if (newiplen==uri.host.len && memcmp(uri.host.s, newip, newiplen)==0) {
+        return 1;
+    }
+
+    if (uri.port.len == 0)
+        uri.port.s = uri.host.s + uri.host.len;
+
+    before_host.s   = contact->uri.s;
+    before_host.len = uri.host.s - contact->uri.s;
+    after.s   = uri.port.s + uri.port.len;
+    after.len = contact->uri.s + contact->uri.len - after.s;
+
+    len = before_host.len + newiplen + after.len + 20;
+
+    // first try to alloc mem. if we fail we don't want to have the lump
+    // deleted and not replaced. at least this way we keep the original.
+    buf = pkg_malloc(len);
+    if (buf == NULL) {
+        LM_ERR("out of memory\n");
+        return -1;
+    }
+
+    offset = contact->uri.s - msg->buf;
+    anchor = del_lump(msg, offset, contact->uri.len, HDR_CONTACT_F);
+
+    if (!anchor) {
+        pkg_free(buf);
+        return -1;
+    }
+
+    len = sprintf(buf, "%.*s%s:%d%.*s", before_host.len, before_host.s,
+                  newip, msg->rcv.src_port, after.len, after.s);
+
+    if (insert_new_lump_after(anchor, buf, len, HDR_CONTACT_F) == 0) {
+        pkg_free(buf);
+        return -1;
+    }
+
+    contact->uri.s   = buf;
+    contact->uri.len = len;
+
+    return 1;
+}
+
+
+static int
+ClientNatTest(struct sip_msg *msg, unsigned int tests)
+{
+    int i;
+
+    for (i=0; NAT_Tests[i].test!=NTNone; i++) {
+        if ((tests & NAT_Tests[i].test)!=0 && NAT_Tests[i].proc(msg)) {
+            return 1;
+        }
+    }
+
+    return -1; // all failed
 }
 
 
