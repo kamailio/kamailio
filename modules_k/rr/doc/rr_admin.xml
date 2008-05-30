@@ -390,7 +390,7 @@ if (check_route_param("nat=yes")) {
 		<para>The function checks the flow direction of the request.
 		As for checking it's used the <quote>ftag</quote> Route header 
 		parameter, the append_fromtag (see <xref linkend="append-fromtag-id"/> 
-		module parameter must be enables. Also this must be call only after 
+		module parameter must be enabled. Also this must be called only after 
 		loose_route() (see <xref linkend="loose-route-id"/>).
 		</para>
 		<para>
