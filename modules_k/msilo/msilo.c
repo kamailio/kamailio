@@ -771,7 +771,7 @@ static int m_store(struct sip_msg* msg, char* owner, char* s2)
 	{
 		if(notify_contact.len+notify_ctype.len>=MS_BUF1_SIZE)
 		{
-			LM_WARN("insuffiecient buffer to build notification headers\n");
+			LM_WARN("insufficient buffer to build notification headers\n");
 			goto done;
 		}
 		memcpy(ms_buf1, notify_contact.s, notify_contact.len);
