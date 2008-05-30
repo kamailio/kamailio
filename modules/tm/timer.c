@@ -465,7 +465,11 @@ ticks_t retr_buf_handler(ticks_t ticks, struct timer_ln* tl, void *p)
 							  a little race risk, but
 							  nothing bad would happen */
 		rbuf->flags|=F_RB_TIMEOUT;
-		timer_allow_del(); /* [optional] allow timer_dels, since we're done
+		/* to be safe timer_allow_del() requires that we start the wait timer
+		 * only after we don't need/use t anymore. This is no guaranteed in
+		 * ser 2.0, so timer deletion before the handler finishes is not 
+		 * allowed anymore */
+		/* timer_allow_del();*//* [optional] allow timer_dels, since we're done
 							  and there is no race risk */
 		final_response_handler(rbuf, t);
 		return 0;
