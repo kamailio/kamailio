@@ -274,7 +274,7 @@ int flat_open_table(int* idx, db_con_t* con, str* name)
 				return -1;
 			}			
 		} else {
-			new[fcon->n].f = NULL;
+			new->f = NULL;
 		}
 		
 		*idx = fcon->n - 1;
