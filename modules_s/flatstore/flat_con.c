@@ -32,6 +32,7 @@
 
 #include "flat_con.h"
 #include "flatstore_mod.h"
+#include "flat_uri.h"
 
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -229,6 +230,7 @@ static char* get_filename(str* dir, str* name)
 
 int flat_open_table(int* idx, db_con_t* con, str* name)
 {
+	struct flat_uri* furi;
 	struct flat_con* fcon;
 	struct flat_file* new;
 	int i;
@@ -238,6 +240,7 @@ int flat_open_table(int* idx, db_con_t* con, str* name)
 	filename = NULL;
 	table = NULL;
 	fcon = DB_GET_PAYLOAD(con);
+	furi = DB_GET_PAYLOAD(con->uri);
 	
 	for(i = 0; i < fcon->n; i++) {
 		if (name->len == fcon->file[i].table.len &&
@@ -249,7 +252,7 @@ int flat_open_table(int* idx, db_con_t* con, str* name)
 		 * fcon->file, so that we can fail gracefully if one of the
 		 * operations fail. 
 		 */
-		if ((filename = get_filename(&con->uri->body, name)) == NULL)
+		if ((filename = get_filename(&furi->path, name)) == NULL)
 			goto no_mem;
 
 		if ((table = pkg_malloc(name->len)) == NULL) goto no_mem;
