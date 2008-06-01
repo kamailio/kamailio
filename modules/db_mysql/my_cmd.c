@@ -1231,6 +1231,12 @@ int my_cmd_next(db_res_t* res)
 
 	mcmd = DB_GET_PAYLOAD(res->cmd);
 	if (mcmd->next_flag == 2 || mcmd->next_flag == -2) return 1;
+
+	if (mcmd->st == NULL) {
+		ERR("mysql: Prepared statement not found\n");
+		return -1;
+	}
+
 	ret = mysql_stmt_fetch(mcmd->st);
 	
 	if (ret == MYSQL_NO_DATA) {
