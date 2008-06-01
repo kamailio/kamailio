@@ -34,6 +34,7 @@
 #include "flat_con.h"
 #include "flat_cmd.h"
 #include "flat_rpc.h"
+#include "flat_uri.h"
 
 #include "../../sr_module.h"
 #include "../../mem/shm_mem.h"
@@ -105,9 +106,10 @@ time_t flat_local_timestamp;
 
 /* Flatstore database module interface */
 static cmd_export_t cmds[] = {
-	{"db_con",    (cmd_function)flat_con, 0, 0, 0},
-	{"db_cmd",    (cmd_function)flat_cmd, 0, 0, 0},
-	{"db_put",    (cmd_function)flat_put, 0, 0, 0},
+	{"db_uri", (cmd_function)flat_uri, 0, 0, 0},
+	{"db_con", (cmd_function)flat_con, 0, 0, 0},
+	{"db_cmd", (cmd_function)flat_cmd, 0, 0, 0},
+	{"db_put", (cmd_function)flat_put, 0, 0, 0},
 	{0, 0, 0, 0, 0}
 };
 
