@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2006/09/12 12:53:10 dan_pascu Exp $
+# $Id$
 #
 # nat_traversal module makefile
 #

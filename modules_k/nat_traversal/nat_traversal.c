@@ -1,4 +1,4 @@
-/* $Id: nat_traversal.c 1 2007-11-27 17:18:10Z dan_pascu $
+/* $Id$
  *
  * Copyright (C) 2007-2008 Dan Pascu
  *
