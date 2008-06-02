@@ -111,8 +111,8 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 	for (dom = root; dom!=NULL ; dom=dom->next) {
 		/* build query */
 		i = snprintf( query_buf, sizeof(query_buf), "select %.*s, %.*s, %.*s,"
-			" %.*s, %.*s from %s where %.*s > %.*s and "
-			"bitand(%.*s, %d) = %d and mod(id, %u) = %u",
+			" %.*s, %.*s from %s where %.*s > %.*s and %.*s & %d = %d and "
+			"id %% %u = %u",
 			received_col.len, received_col.s,
 			contact_col.len, contact_col.s,
 			sock_col.len, sock_col.s,
