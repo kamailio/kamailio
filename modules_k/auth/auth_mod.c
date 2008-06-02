@@ -43,6 +43,7 @@
 #include "../../pvar.h"
 #include "../../ut.h"
 #include "../../mod_fix.h"
+#include "../../lock_alloc.h"
 #include "../sl/sl_api.h"
 #include "auth_mod.h"
 #include "challenge.h"
@@ -57,6 +58,7 @@ MODULE_VERSION
 #define DEF_RPID_SUFFIX ";party=calling;id-type=subscriber;screen=yes"
 #define DEF_STRIP_REALM ""
 #define DEF_RPID_AVP "$avp(s:rpid)"
+
 
 static str auth_500_err = str_init("Server Internal Error");
 
@@ -81,7 +83,7 @@ struct sl_binds slb;
  * Module parameter variables
  */
 char* sec_param    = 0;   /* If the parameter was not used, the secret phrase will be auto-generated */
-int   nonce_expire = 300; /* Nonce lifetime */
+unsigned int   nonce_expire = 300; /* Nonce lifetime */
 
 str secret;
 char* sec_rand = 0;
@@ -106,6 +108,13 @@ static pv_spec_t user_spec;
 /* definition of AVP containing password value */
 char* passwd_spec_param = 0;
 static pv_spec_t passwd_spec;
+
+/* nonce index */
+gen_lock_t* nonce_lock= NULL;
+char* nonce_buf= NULL;
+int* sec_monit= NULL;
+int* second= NULL;
+int* next_index= NULL;
 
 /*
  * Exported functions 
@@ -270,6 +279,44 @@ static int mod_init(void)
 			default: ;
 		}
 	}
+    
+    nonce_lock = (gen_lock_t*)lock_alloc();
+    if(nonce_lock== NULL)
+    {
+        LM_ERR("no more shared memory\n");
+        return -1;
+    }
+
+    /* initialize lock_nonce */
+    if(lock_init(nonce_lock)== 0)
+    {
+        LM_ERR("failed to init lock\n");
+        return -9;
+    }
+
+    nonce_buf= (char*)shm_malloc(NBUF_LEN);
+    if(nonce_buf== NULL)
+    {
+        LM_ERR("no more share memory\n");
+        return -10;
+    }
+    memset(nonce_buf, 255, NBUF_LEN);
+   
+    sec_monit= (int*)shm_malloc((nonce_expire +1)* sizeof(int));
+    if(sec_monit== NULL)
+    {
+        LM_ERR("no more share memory\n");
+        return -10;
+    }
+    memset(sec_monit, -1, (nonce_expire +1)* sizeof(int));
+    second= (int*)shm_malloc(sizeof(int));
+    next_index= (int*)shm_malloc(sizeof(int));
+    if(second==  NULL || next_index== NULL)
+    {
+        LM_ERR("no more share memory\n");
+        return -10;
+    }
+    *next_index= -1;
 
 	return 0;
 }
@@ -279,6 +326,21 @@ static int mod_init(void)
 static void destroy(void)
 {
 	if (sec_rand) pkg_free(sec_rand);
+    
+    if(nonce_lock)
+    {
+        lock_destroy(nonce_lock);
+        lock_dealloc(nonce_lock);
+    }
+
+    if(nonce_buf)
+        shm_free(nonce_buf);
+    if(second)
+        shm_free(second);
+    if(sec_monit)
+        shm_free(sec_monit);
+    if(next_index)
+        shm_free(next_index);
 }
 
 static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
@@ -329,7 +391,7 @@ static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,
 		memcpy(_ha1, sval.rs.s, sval.rs.len);
 		_ha1[sval.rs.len] = '\0';
 	}
-
+    
 	return 0;
 }
 

@@ -31,7 +31,10 @@
 #include "../../md5.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../timer.h"
 #include "nonce.h"
+#include "index.h"
+#include "auth_mod.h"
 
 
 /*
@@ -94,20 +97,24 @@ static inline int hex2integer(char* _s)
  * Nonce value consists of the expires time (in seconds since 1.1 1970) 
  * and a secret phrase
  */
-void calc_nonce(char* _nonce, int _expires, str* _secret)
+void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 {
 	MD5_CTX ctx;
 	unsigned char bin[16];
 
 	MD5Init(&ctx);
 	
+
 	integer2hex(_nonce, _expires);
-	MD5Update(&ctx, _nonce, 8);
+
+    integer2hex(_nonce + 8, _index);
+    
+    MD5Update(&ctx, _nonce, 16);
 
 	MD5Update(&ctx, _secret->s, _secret->len);
 	MD5Final(bin, &ctx);
-	string2hex(bin, 16, _nonce + 8);
-	_nonce[8 + 32] = '\0';
+	string2hex(bin, 16, _nonce + 16);
+	_nonce[16 + 32] = '\0';
 }
 
 
@@ -119,6 +126,14 @@ time_t get_nonce_expires(str* _n)
 	return (time_t)hex2integer(_n->s);
 }
 
+/*
+ * Get nonce index
+ */
+int get_nonce_index(str* _n)
+{
+    return hex2integer(_n->s + 8);
+}
+
 
 /*
  * Check, if the nonce received from client is
@@ -128,6 +143,7 @@ int check_nonce(str* _nonce, str* _secret)
 {
 	int expires;
 	char non[NONCE_LEN + 1];
+    int index;
 
 	if (_nonce->s == 0) {
 		return -1;  /* Invalid nonce */
@@ -138,15 +154,30 @@ int check_nonce(str* _nonce, str* _secret)
 	}
 
 	expires = get_nonce_expires(_nonce);
-	calc_nonce(non, expires, _secret);
+   
+    /* Verify if it is the first time this nonce is received */
+    index= get_nonce_index(_nonce);
+    if(index== -1)
+    {
+        LM_ERR("failed to extract nonce index\n");
+        return 3;
+    }
+    LM_DBG("nonce index= %d\n", index);
 
+    if(!is_nonce_index_valid(index))
+    {
+       LM_ERR("nonce index not valid\n");
+       return 4;
+    }
+
+    calc_nonce(non, expires, index, _secret);
+
+ 	
 	LM_DBG("comparing [%.*s] and [%.*s]\n",
 			_nonce->len, ZSW(_nonce->s), NONCE_LEN, non);
-	
-	if (!memcmp(non, _nonce->s, _nonce->len)) {
+    if (!memcmp(non, _nonce->s, _nonce->len)) {
 		return 0;
 	}
-
 	return 2;
 }
 

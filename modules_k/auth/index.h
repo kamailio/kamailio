@@ -1,9 +1,9 @@
 /*
- * $Id$
+ * $Id:$
  *
- * Nonce related functions
+ * Nonce index  related functions
  *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C)2008  Voice System S.R.L
  *
  * This file is part of openser, a free SIP server.
  *
@@ -20,42 +20,23 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
+ *
+ * History:
+ * --------
+ *  2008-05-29  initial version (anca)
+*/
 
-
-#ifndef NONCE_H
-#define NONCE_H
-
-#include "../../str.h"
-#include <time.h>
-
-
-/*
- * Length of nonce string in bytes
- */
-#define NONCE_LEN (16+32)
-
+#ifndef _NONCE_INDEX_H_
+#define _NONCE_INDEX_H_
 
 /*
- * Calculate nonce value
+ * Get valid index for nonce
  */
-void calc_nonce(char* _nonce, int _expires, int _index, str* _secret);
-
+int reserve_nonce_index(void);
 
 /*
- * Check nonce value received from UA
+ * Check index validity
  */
-int check_nonce(str* _nonce, str* _secret);
+int is_nonce_index_valid(int index);
 
-
-/*
- * Get expiry time from nonce string
- */
-time_t get_nonce_expires(str* _nonce);
-
-/*
- * Check if the nonce is stale
- */
-int is_nonce_stale(str* _nonce);
-
-#endif /* NONCE_H */
+#endif

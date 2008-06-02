@@ -114,7 +114,6 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 			return (res == -1) ? -2 : -3;
 		} else if (res == 0) {
 			r = &(((auth_body_t*)(ptr->parsed))->digest.realm);
-
 			if (r->len == _realm->len) {
 				if (!strncasecmp(_realm->s, r->s, r->len)) {
 					*_h = ptr;
@@ -138,7 +137,8 @@ static inline int find_credentials(struct sip_msg* _m, str* _realm,
 	/*
 	 * Credentials with given realm not found
 	 */
-	return 1;
+
+    return 1;
 }
 
 

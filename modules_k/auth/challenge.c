@@ -40,6 +40,7 @@
 #include "common.h"
 #include "challenge.h"
 #include "nonce.h"
+#include "index.h"
 #include "api.h"
 
 static str auth_400_err = str_init(MESSAGE_400);
@@ -81,6 +82,16 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	
 	int hf_name_len;
 	char *hf, *p;
+    int index;
+
+    /* get the nonce index and mark it as used */
+    index= reserve_nonce_index();
+    if(index == -1)
+    {
+        LM_ERR("no more nonces can be generated\n");
+        return 0;
+    }
+    LM_DBG("nonce index= %d\n", index);
 
 	     /* length calculation */
 	*_len=hf_name_len=strlen(_hf_name);
@@ -107,7 +118,7 @@ static inline char *build_auth_hf(int _retries, int _stale, str* _realm,
 	memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN);p+=DIGEST_REALM_LEN;
 	memcpy(p, _realm->s, _realm->len);p+=_realm->len;
 	memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN);p+=DIGEST_NONCE_LEN;
-	calc_nonce(p, time(0) + nonce_expire, &secret);
+	calc_nonce(p, time(0) + nonce_expire, index, &secret);
 	p+=NONCE_LEN;
 	*p='"';p++;
 	if (_qop) {
@@ -182,7 +193,7 @@ static inline int challenge(struct sip_msg* _msg, gparam_p _realm, int _qop,
 	auth_hf = build_auth_hf(0, (cred ? cred->stale : 0), &realm, 
 			&auth_hf_len, _qop, _challenge_msg);
 	if (!auth_hf) {
-		LM_ERR("no mem w/cred\n");
+		LM_ERR("failed to generate nonce\n");
 		return -1;
 	}
 

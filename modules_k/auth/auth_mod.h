@@ -32,18 +32,28 @@
 #include "../../str.h"
 #include "../../parser/msg_parser.h"    /* struct sip_msg */
 #include "../sl/sl_api.h"
+#include "../../lock_ops.h"
 
+#define MAX_NONCE_INDEX     100000
+#define NBUF_LEN            (MAX_NONCE_INDEX>>3)
 
 /*
  * Module parameters variables
  */
 extern str secret;            /* secret phrase used to generate nonce */
-extern int nonce_expire;      /* nonce expire interval */
+extern unsigned int nonce_expire;      /* nonce expire interval */
 extern str rpid_prefix;       /* Remote-Party-ID prefix */
 extern str rpid_suffix;       /* Remote-Party-ID suffix */
 extern str realm_prefix;      /* strip off auto-generated realm */
 
 /** SL binds */
 extern struct sl_binds slb;
+
+/* nonce index */
+extern gen_lock_t* nonce_lock;
+extern char* nonce_buf;
+extern int* sec_monit;
+extern int* second;
+extern int* next_index;
 
 #endif /* AUTH_MOD_H */
