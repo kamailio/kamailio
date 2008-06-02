@@ -39,6 +39,7 @@
 #define _DIALOG_DLG_HASH_H_
 
 #include "../../locking.h"
+#include "../../mi/mi.h"
 #include "dlg_timer.h"
 #include "dlg_cb.h"
 
@@ -93,6 +94,7 @@ struct dlg_cell
 	str                  contact[2];
 	struct socket_info * bind_addr[2];
 	struct dlg_head_cbl  cbs;
+	struct dlg_profile_link *profile_links;
 };
 
 
@@ -239,5 +241,8 @@ static inline int match_downstream_dialog(struct dlg_cell *dlg, str *callid, str
 		return 0;
 	return 1;
 }
+
+
+int mi_print_dlg(struct mi_node *rpl, struct dlg_cell *dlg, int with_context);
 
 #endif

@@ -63,6 +63,7 @@
 #include "dlg_cb.h"
 #include "dlg_handlers.h"
 #include "dlg_db_handler.h"
+#include "dlg_profile.h"
 
 static str       rr_param;
 static int       dlg_flag;
@@ -450,10 +451,13 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 		return;
 	}
 
+	/* move pending profile linkers into dialog */
+	set_current_dialog( req, dlg);
+
 	/* first INVITE seen (dialog created, unconfirmed) */
 	run_create_callbacks( dlg, req);
 
-	link_dlg( dlg , 1/* one extra ref for the callback*/);
+	link_dlg( dlg , 2/* extra ref for the callback and current dlg hook */);
 
 	if ( seq_match_mode!=SEQ_MATCH_NO_ID &&
 	add_dlg_rr_param( req, dlg->h_entry, dlg->h_id)<0 ) {
@@ -470,11 +474,14 @@ void dlg_onreq(struct cell* t, int type, struct tmcb_params *param)
 
 	dlg->lifetime = get_dlg_timeout(req);
 
+	t->dialog_ctx = (void*) dlg;
+
 	if_update_stat( dlg_enable_stats, processed_dlgs, 1);
 
 	return;
 error:
 	unref_dlg(dlg,2);
+	profile_cleanup( req, NULL);
 	update_stat(failed_dlgs, 1);
 	return;
 }
@@ -642,6 +649,9 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	CURR_DLG_LIFETIME = (unsigned int)(time(0))-dlg->start_ts;
 	CURR_DLG_STATUS = new_state;
 
+	/* set current dialog - it will keep a ref! */
+	set_current_dialog( req, dlg);
+
 	/* run actions for the transition */
 	if (event==DLG_EVENT_REQBYE && new_state==DLG_STATE_DELETED &&
 	old_state!=DLG_STATE_DELETED) {
@@ -656,7 +666,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			remove_dialog_from_db(dlg);
 
 		/* destroy dialog */
-		unref_dlg(dlg, unref+1);
+		unref_dlg(dlg, unref);
 
 		if_update_stat( dlg_enable_stats, active_dlgs, -1);
 		return;
@@ -704,8 +714,6 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			update_dialog_dbinfo(dlg);
 	}
 
-
-	unref_dlg( dlg , 1);
 	return;
 }
 

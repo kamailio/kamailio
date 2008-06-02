@@ -50,6 +50,7 @@
 #include "../../hash_func.h"
 #include "../../mi/mi.h"
 #include "dlg_hash.h"
+#include "dlg_profile.h"
 
 #define MAX_LDG_LOCKS  2048
 #define MIN_LDG_LOCKS  2
@@ -118,6 +119,9 @@ inline void destroy_dlg(struct dlg_cell *dlg)
 
 	if (dlg->cbs.first)
 		destroy_dlg_callbacks_list(dlg->cbs.first);
+
+	if (dlg->profile_links)
+		destroy_linkers(dlg->profile_links);
 
 	if (dlg->tag[DLG_CALLER_LEG].s)
 		shm_free(dlg->tag[DLG_CALLER_LEG].s);
@@ -740,6 +744,12 @@ static inline int internal_mi_print_dlg(struct mi_node *rpl,
 error:
 	LM_ERR("failed to add node\n");
 	return -1;
+}
+
+
+int mi_print_dlg(struct mi_node *rpl, struct dlg_cell *dlg, int with_context)
+{
+	return internal_mi_print_dlg( rpl, dlg, with_context);
 }
 
 

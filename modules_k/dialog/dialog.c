@@ -48,11 +48,13 @@
 #include "../../error.h"
 #include "../../ut.h"
 #include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "../../script_cb.h"
+#include "../../script_var.h"
 #include "../../mem/mem.h"
+#include "../../mi/mi.h"
 #include "../tm/tm_load.h"
 #include "../rr/api.h"
-#include "../../mi/mi.h"
 #include "dlg_hash.h"
 #include "dlg_timer.h"
 #include "dlg_handlers.h"
@@ -60,6 +62,7 @@
 #include "dlg_cb.h"
 #include "dlg_db_handler.h"
 #include "dlg_req_within.h"
+#include "dlg_profile.h"
 
 MODULE_VERSION
 
@@ -75,6 +78,8 @@ static int dlg_flag = -1;
 static str timeout_spec = {NULL, 0};
 static int default_timeout = 60 * 60 * 12;  /* 12 hours */
 static int seq_match_mode = SEQ_MATCH_STRICT_ID;
+static char* profiles_wv_s = NULL;
+static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
 
 /* statistic variables */
@@ -96,9 +101,28 @@ static unsigned int db_update_period = DB_DEFAULT_UPDATE_PERIOD;
 static int pv_get_dlg_count( struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+/* commands wrappers and fixups */
+static int fixup_profile(void** param, int param_no);
+static int fixup_get_profile2(void** param, int param_no);
+static int fixup_get_profile3(void** param, int param_no);
+static int w_set_dlg_profile(struct sip_msg*, char*, char*);
+static int w_is_in_profile(struct sip_msg*, char*, char*);
+static int w_get_profile_size(struct sip_msg*, char*, char*, char*);
 
 
 static cmd_export_t cmds[]={
+	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  1,fixup_profile,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  2,fixup_profile,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"is_in_profile", (cmd_function)w_is_in_profile,      1,fixup_profile,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"is_in_profile", (cmd_function)w_is_in_profile,      2,fixup_profile,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"get_profile_size",(cmd_function)w_get_profile_size, 2,fixup_get_profile2,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"get_profile_size",(cmd_function)w_get_profile_size, 3,fixup_get_profile3,
+			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"load_dlg",  (cmd_function)load_dlg,   0, 0, 0, 0},
 	{0,0,0,0,0,0}
 };
@@ -134,6 +158,8 @@ static param_export_t mod_params[]={
 	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
 	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
+	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
+	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
 	{ 0,0,0 }
 };
 
@@ -149,9 +175,11 @@ static stat_export_t mod_stats[] = {
 
 
 static mi_export_t mi_cmds[] = {
-	{ "dlg_list",      mi_print_dlgs,       0,  0,  0},
-	{ "dlg_list_ctx",  mi_print_dlgs_ctx,   0,  0,  0},
-	{ "dlg_end_dlg",   mi_terminate_dlg,    0,  0,  0},
+	{ "dlg_list",           mi_print_dlgs,       0,  0,  0},
+	{ "dlg_list_ctx",       mi_print_dlgs_ctx,   0,  0,  0},
+	{ "dlg_end_dlg",        mi_terminate_dlg,    0,  0,  0},
+	{ "profile_get_size",   mi_get_profile,      0,  0,  0},
+	{ "profile_list_dlgs",  mi_profile_list,     0,  0,  0},
 	{ 0, 0, 0, 0, 0}
 };
 
@@ -180,6 +208,64 @@ struct module_exports exports= {
 	mod_destroy,
 	child_init       /* per-child init function */
 };
+
+
+static int fixup_profile(void** param, int param_no)
+{
+	struct dlg_profile_table *profile;
+	str s;
+
+	s.s = (char*)(*param);
+	s.len = strlen(s.s);
+
+	if (param_no==1) {
+		profile = search_dlg_profile( &s );
+		if (profile==NULL) {
+			LM_CRIT("profile <%s> not definited\n",s.s);
+			return E_CFG;
+		}
+		pkg_free(*param);
+		*param = (void*)profile;
+		return 0;
+	} else if (param_no==2) {
+		return fixup_pvar(param);
+	}
+	return 0;
+}
+
+
+static int fixup_get_profile2(void** param, int param_no)
+{
+	pv_spec_t *sp;
+	int ret;
+
+	if (param_no==1) {
+		return fixup_profile(param, 1);
+	} else if (param_no==2) {
+		ret = fixup_pvar(param);
+		if (ret<0) return ret;
+		sp = (pv_spec_t*)(*param);
+		if (sp->type!=PVT_AVP && sp->type!=PVT_SCRIPTVAR) {
+			LM_ERR("return must be an AVP or SCRIPT VAR!\n");
+			return E_SCRIPT;
+		}
+	}
+	return 0;
+}
+
+
+static int fixup_get_profile3(void** param, int param_no)
+{
+	if (param_no==1) {
+		return fixup_profile(param, 1);
+	} else if (param_no==2) {
+		return fixup_profile(param, 2);
+	} else if (param_no==3) {
+		return fixup_get_profile2( param, 2);
+	}
+	return 0;
+}
+
 
 
 int load_dlg( struct dlg_binds *dlgb )
@@ -289,6 +375,16 @@ static int mod_init(void)
 	if (dlg_enable_stats==0)
 		exports.stats = 0;
 
+	/* create profile hashes */
+	if (add_profile_definitions( profiles_nv_s, 0)!=0 ) {
+		LM_ERR("failed to add profiles without value\n");
+		return -1;
+	}
+	if (add_profile_definitions( profiles_wv_s, 1)!=0 ) {
+		LM_ERR("failed to add profiles with value\n");
+		return -1;
+	}
+
 	/* load the TM API */
 	if (load_tm_api(&d_tmb)!=0) {
 		LM_ERR("can't load TM API\n");
@@ -311,6 +407,11 @@ static int mod_init(void)
 	/* listen for all routed requests  */
 	if ( d_rrb.register_rrcb( dlg_onroute, 0 ) <0 ) {
 		LM_ERR("cannot register RR callback\n");
+		return -1;
+	}
+
+	if (register_script_cb( profile_cleanup, POST_SCRIPT_CB|REQ_TYPE_CB,0)<0) {
+		LM_ERR("cannot regsiter script callback");
 		return -1;
 	}
 
@@ -398,5 +499,126 @@ static void mod_destroy(void)
 	destroy_dlg_timer();
 	destroy_dlg_callbacks( DLGCB_CREATED|DLGCB_LOADED );
 	destroy_dlg_handlers();
+	destroy_dlg_profiles();
 }
+
+
+
+static int w_set_dlg_profile(struct sip_msg *msg, char *profile, char *value)
+{
+	pv_spec_t *sp;
+	pv_value_t pv_val;
+
+	sp = (pv_spec_t *)value;
+
+	if (((struct dlg_profile_table*)profile)->has_value) {
+		if ( sp==NULL || (pv_get_spec_value( msg, sp, &pv_val)!=0) || 
+		(pv_val.flags&PV_VAL_STR)==0 ||
+		pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+			LM_WARN("cannot get string for value\n");
+			return -1;
+		}
+		if ( set_dlg_profile( msg, &(pv_val.rs),
+		(struct dlg_profile_table*)profile) < 0 ) {
+			LM_ERR("failed to set profile");
+			return -1;
+		}
+	} else {
+		if ( set_dlg_profile( msg, NULL,
+		(struct dlg_profile_table*)profile) < 0 ) {
+			LM_ERR("failed to set profile");
+			return -1;
+		}
+	}
+	return 1;
+}
+
+
+static int w_is_in_profile(struct sip_msg *msg, char *profile, char *value)
+{
+	pv_spec_t *sp;
+	pv_value_t pv_val;
+
+	sp = (pv_spec_t *)value;
+
+	if ( sp!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
+		if ( (pv_get_spec_value( msg, sp, &pv_val)!=0) || 
+		(pv_val.flags&PV_VAL_STR)==0 ||
+		pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+			LM_WARN("cannot get string for value\n");
+			return -1;
+		}
+		return is_dlg_in_profile( msg, (struct dlg_profile_table*)profile,
+			&(pv_val.rs));
+	} else {
+		return is_dlg_in_profile( msg, (struct dlg_profile_table*)profile,
+			NULL);
+	}
+}
+
+
+static int w_get_profile_size(struct sip_msg *msg, char *profile, 
+													char *value, char *result)
+{
+	pv_spec_t *sp;
+	pv_spec_t *sp_dest;
+	unsigned int size;
+	pv_value_t pv_val;
+	int_str res;
+	int_str avp_name;
+	unsigned short avp_type;
+	script_var_t * sc_var;
+
+	sp = (pv_spec_t *)value;
+	sp_dest = (pv_spec_t *)result;
+
+	if ( sp!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
+		if ( (pv_get_spec_value( msg, sp, &pv_val)!=0) || 
+		(pv_val.flags&PV_VAL_STR)==0 ||
+		pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+			LM_WARN("cannot get string for value\n");
+			return -1;
+		}
+		size = get_profile_size( (struct dlg_profile_table*)profile ,
+			&(pv_val.rs) );
+	} else {
+		size = get_profile_size( (struct dlg_profile_table*)profile,
+			NULL );
+	}
+
+	switch (sp_dest->type) {
+		case PVT_AVP:
+			if (pv_get_avp_name( msg, &(sp_dest->pvp), &avp_name,
+			&avp_type)!=0){
+				LM_CRIT("BUG in getting AVP name\n");
+				return -1;
+			}
+			res.n = size;
+			if (add_avp(avp_type, avp_name, res)<0){
+				LM_ERR("cannot add AVP\n");
+				return -1;
+			}
+			break;
+
+		case PVT_SCRIPTVAR:
+			if(sp_dest->pvp.pvn.u.dname == 0){
+				LM_ERR("cannot find svar name\n");
+				return -1;
+			}
+			res.n = size;
+			sc_var = (script_var_t *)sp_dest->pvp.pvn.u.dname;
+			if(!set_var_value(sc_var, &res, VAR_VAL_STR)){
+				LM_ERR("cannot set svar\n");
+				return -1;
+			}
+			break;
+
+		default:
+			LM_CRIT("BUG: invalid pvar type\n");
+			return -1;
+	}
+
+	return 1;
+}
+
 
