@@ -36,6 +36,46 @@
 	</para>
 	</section>
 
+	<section>
+	<title>Dialog profiling</title>
+	<para>
+	Dialog profiling is a mechanism that helps in clasifying, sorting and
+	keeping trace of certain types of dialogs, using whatever properties of
+	the dialog (like caller, destination, type of calls, etc).
+	Dialogs can be dynamically added in different (and several) profile 
+	tables - logically, each profile table can have a special meaning (like 
+	dialogs outside the doamin, dialogs terminated to PSTN, etc).
+	</para>
+	<para>
+	There are two types of profiles:
+	<itemizedlist>
+		<listitem>
+		<para>
+			<emphasis>with no value</emphasis> - a dialog simply belongs 
+			to a profile. (like outbound calls profile). There is no other 
+			additional information to describe the dialog's belonging to the
+			profile;
+		</para>
+		</listitem>
+		<listitem>
+		<para>
+			<emphasis>with value</emphasis> - a dialog belongs to a profile 
+			having a certain value (like in caller profile, where the value 
+			is the caller ID). The belonging of the dialog to the profile is
+			strictly related to the value.
+		</para>
+		</listitem>
+	</itemizedlist>
+	</para>
+	<para>
+	A dialog can be added to multiple profiles in the same time.
+	</para>
+	<para>
+	Profiles are vizible (at the moment) in the request route (for initial 
+	and sequential requests) and in the branch, failure and reply routes of 
+	the original request.
+	</para>
+	</section>
 
 	<section>
 	<title>Dependencies</title>
@@ -752,14 +792,184 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 		</example>
 	</section>
 
+	<section>
+		<title><varname>profiles_with_value</varname> (string)</title>
+		<para>
+			List of names for profiles with values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>empty</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>profiles_with_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "profiles_with_value", "caller ; my_profile")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>profiles_no_value</varname> (string)</title>
+		<para>
+			List of names for profiles without values.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>empty</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>profiles_no_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "profiles_no_value", "inbound ; outbound")
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
 	<section>
 	<title>Exported Functions</title>
-	<para>
-		There are no exported functions that could be used in scripts.
-	</para>
+	<section>
+		<title>
+		<function moreinfo="none">set_dlg_profile(profile,[value])</function>
+		</title>
+		<para>
+		Inserts the current dialog into a profile. Note that the profile does
+		not supports values, this will be silently discarded. Also, there is
+		no check for inserting the same dialog in the same profile for multiple
+		times.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>profile</emphasis> - name of the profile to be 
+			added to;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> (optional) - string value to 
+			define the belonging of the dialog to the profile - note that the
+			profile must support values.
+			Pseudo-variables are supported.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>set_dlg_profile</function> usage</title>
+		<programlisting format="linespecific">
+...
+set_dlg_profile("inbound_call");
+set_dlg_profile("caller","$fu");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">is_in_profile(profile,[value])</function>
+		</title>
+		<para>
+		Checks if the current dialog belongs to a profile. If the profile 
+		supports values, the check can be reinforced to take into account a 
+		specific value - if the dialog was inserted into the profile for a 
+		specific value. If not value is passed, only simply belonging of the 
+		dialog to the profile is checked. Note that the profile does not 
+		supports values, this will be silently discarded.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>profile</emphasis> - name of the profile to be 
+			checked against;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> (optional) - string value to 
+			toughen  the check. Pseudo-variables are supported.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>is_in_profile</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (is_in_profile("inbound_call")) {
+	log("this request belongs to a inbound call\n");
+}
+...
+if (is_in_profile("caller","XX")) {
+	log("this request belongs to a call of user XX\n");
+}
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">get_profile_size(profile,[value],size)</function>
+		</title>
+		<para>
+		Returns the number of dialogs belonging to a profile. If the profile 
+		supports values, the check can be reinforced to take into account a 
+		specific value - how many dialogs were inserted into the profile with 
+		a specific value. If not value is passed, only simply belonging of the 
+		dialog to the profile is checked. Note that the profile does not 
+		supports values, this will be silently discarded.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>profile</emphasis> - name of the profile to get 
+			the size for;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> (optional) - string value to 
+			toughen  the check. Pseudo-variables are supported;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>size</emphasis> - an AVP or script variable to
+			return the profile size in.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>get_profile_size</function> usage</title>
+		<programlisting format="linespecific">
+...
+get_profile_size("inbound_call","$avp(size)");
+xlog("currently there are $avp(size) inbound calls\n");
+...
+get_profile_size("caller","$fu");
+xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 
@@ -898,6 +1108,76 @@ modparam("dialog", "timeout_column", "timeout_c_name")
 		_empty_line_
 		</programlisting>
 		</section>
+
+		<section>
+		<title><varname>profile_get_size</varname></title>
+		<para>
+		Returns the number of dialogs belonging to a profile. If the profile 
+		supports values, the check can be reinforced to take into account a 
+		specific value - how many dialogs were inserted into the profile with 
+		a specific value. If not value is passed, only simply belonging of the 
+		dialog to the profile is checked. Note that the profile does not 
+		supports values, this will be silently discarded.
+		</para>
+		<para>
+		Name: <emphasis>profile_get_size</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>profile</emphasis> - name of the profile to get the
+				value for.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>value</emphasis> (optional)- string value to 
+				toughen the check;
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:profile_get_size:_reply_fifo_file_
+		inbound_calls
+		_empty_line_
+		</programlisting>
+		</section>
+
+		<section>
+		<title><varname>profile_list_dlgs</varname></title>
+		<para>
+		Lists all the dialogs belonging to a profile. If the profile 
+		supports values, the check can be reinforced to take into account a 
+		specific value - list only the dialogs that were inserted into the 
+		profile with that specific value. If not value is passed, all dialogs 
+		belonging to the profile will be listed. Note that the profile does 
+		not supports values, this will be silently discarded.
+		</para>
+		<para>
+		Name: <emphasis>profile_list_dlgs</emphasis>
+		</para>
+		<para>Parameters:</para>
+		<itemizedlist>
+			<listitem><para>
+				<emphasis>profile</emphasis> - name of the profile to list the
+				dialog for.
+			</para></listitem>
+			<listitem><para>
+				<emphasis>value</emphasis> (optional)- string value to 
+				toughen the check;
+			</para></listitem>
+		</itemizedlist>
+		<para>
+		MI FIFO Command Format:
+		</para>
+		<programlisting  format="linespecific">
+		:profile_list_dlgs:_reply_fifo_file_
+		inbound_calls
+		_empty_line_
+		</programlisting>
+		</section>
+
+
 
 	</section>
 
