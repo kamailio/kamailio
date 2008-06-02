@@ -122,14 +122,6 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
-sql_query "$1" "CREATE FUNCTION "bitand" (int,int) RETURNS int AS 'SELECT \$1 & \$2;' LANGUAGE 'sql';"
-# emulate oracle proprietary function used by the usrloc module in mysql
-
-if [ $? -ne 0 ] ; then
-	merr "Creating oracle emulation function failed!"
-	exit 1
-fi
-
 for TABLE in $STANDARD_MODULES; do
     mdbg "Creating core table: $TABLE"
     sql_query "$1" < $DB_SCHEMA/$TABLE-create.sql
