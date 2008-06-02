@@ -173,30 +173,18 @@ error:
 static inline char *print_uac_request(struct sip_msg *i_req, unsigned int *len,
 		struct socket_info *send_sock, enum sip_protos proto )
 {
-	char *buf, *shbuf;
-
-	shbuf=0;
+	char *buf;
 
 	/* build the shm buffer now */
-	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto );
+	buf=build_req_buf_from_sip_req( i_req, len, send_sock, proto,
+			MSG_TRANS_SHM_FLAG);
 	if (!buf) {
-		LM_ERR("no more pkg_mem\n"); 
+		LM_ERR("no more shm_mem\n"); 
 		ser_error=E_OUT_OF_MEM;
-		goto error01;
+		return NULL;
 	}
 
-	shbuf=(char *)shm_malloc(*len);
-	if (!shbuf) {
-		ser_error=E_OUT_OF_MEM;
-		LM_ERR("no more share memory\n");
-		goto error02;
-	}
-	memcpy( shbuf, buf, *len );
-
-error02:
-	pkg_free( buf );
-error01:
-	return shbuf;
+	return buf;
 }
 
 
