@@ -46,14 +46,14 @@ $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values 
 
 
 # setup userblacklist, first some dummy data
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('494675454','','49900','0','_test_');"
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('494675453','test.domain','49901','0','_test_');"
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('494675231','test','499034132','0','_test_');"
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('494675231','','499034133','1','_test_');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675454','','49900','0');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675453','test.domain','49901','0');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675231','test','499034132','0');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('494675231','','499034133','1');"
 # some actual data
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('49721123456789','','12345','0','_test_');"
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('49721123456788','','123456788','1','_test_');"
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('49721123456788','','1234','0','_test_');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('49721123456789','','12345','0');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('49721123456788','','123456788','1');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('49721123456788','','1234','0');"
 # and the global ones
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456787','0','_test_');"
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456','0','_test_');"
@@ -92,7 +92,7 @@ if [ "$ret" -eq 1 ] ; then
 	ret=$?
 fi;
 
-$MYSQL "insert into userblacklist (username, domain, prefix, whitelist, description) values ('49721123456786','','12345','0','_test_');"
+$MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('49721123456786','','12345','0');"
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
@@ -118,7 +118,12 @@ killall -9 sipp > /dev/null 2>&1
 killall -9 openser > /dev/null 2>&1
 
 $MYSQL "delete from location where (user_agent = \"ser_test\");"
-$MYSQL "delete from userblacklist where description='_test_';"
+$MYSQL "delete from userblacklist where username='49721123456786';"
+$MYSQL "delete from userblacklist where username='49721123456788';"
+$MYSQL "delete from userblacklist where username='49721123456789';"
+$MYSQL "delete from userblacklist where username='494675231';"
+$MYSQL "delete from userblacklist where username='494675453';"
+$MYSQL "delete from userblacklist where username='494675454';"
 $MYSQL "delete from globalblacklist where description='_test_';"
 
 exit $ret;
