@@ -54,7 +54,11 @@ Chapter 1. User's Guide
 1.1. Overview
 
    This is a module which provides Oracle connectivity for
-   OpenSER. It implements the DB API defined in OpenSER.
+   OpenSER. It implements the DB API defined in OpenSER. If you
+   want to use the nathelper module, or any other modules that
+   calls the get_all_ucontacts API export from usrloc, then you
+   need to set the DORACLE_USRLOC define in the Makefile.defs file
+   before compilation.
 
 1.2. Dependencies
 
