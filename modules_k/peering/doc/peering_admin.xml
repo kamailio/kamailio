@@ -188,7 +188,7 @@ modparam("peering", "verify_source_service_type", 22)
 		<programlisting format="linespecific">
 ...
 if (verify_destination()) {
-   append_hf("P-Request-Hash: $avp(200)\r\n");
+   append_hf("P-Request-Hash: $avp(i:200)\r\n");
 }
 ...
 </programlisting>
