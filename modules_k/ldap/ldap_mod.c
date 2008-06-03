@@ -1,5 +1,5 @@
 /*
- * $Id:$
+ * $Id$
  *
  * OpenSER LDAP Module
  *
@@ -320,15 +320,14 @@ static int ldap_search_fixup(void** param, int param_no)
 
 	if (param_no == 1) {
 		s.s = (char*)*param;
-		if (s.s==0 || s.s[0]==0) {
-			model = 0;
-		} else {
-			s.len = strlen(s.s);
-			if (pv_parse_format(&s,&model)<0) 
-			{
-				LM_ERR("pv_parse_format failed\n");
-				return E_OUT_OF_MEM;
-			}
+		s.len = strlen(s.s);
+		if (s.len==0) {
+			LM_ERR("ldap url is empty string!\n");
+			return E_CFG;
+		}
+		if ( pv_parse_format(&s,&model) || model==NULL) {
+			LM_ERR("wrong format [%s] for ldap url!\n", s.s);
+			return E_CFG;
 		}
 		*param = (void*)model;
 	}

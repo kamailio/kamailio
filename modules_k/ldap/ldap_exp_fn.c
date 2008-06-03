@@ -67,14 +67,17 @@ int ldap_search_impl(
 	/*
 	* do variable substitution for _ldap_url (pv_printf_s)
 	*/
-	if (_ldap_url) {
-		if (pv_printf_s(_msg, _ldap_url, &ldap_url) != 0) {
+	if (_ldap_url==NULL) {
+		LM_ERR("empty ldap_url\n");
+		return -2;
+	}
+	if ( _ldap_url->spec.getf!=NULL) {
+		if (pv_printf_s( _msg, _ldap_url, &ldap_url)!=0 || ldap_url.len<=0) {
 			LM_ERR("pv_printf_s failed\n");
 			return -2;
 		}
 	} else {
-		LM_ERR("empty ldap_url\n");
-		return -2;
+		ldap_url = _ldap_url->text;
 	}
 
 	/*
