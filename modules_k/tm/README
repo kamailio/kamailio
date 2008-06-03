@@ -644,11 +644,13 @@ t_relay("udp:mydomain.com");
      * code - Reply code number.
      * reason_phrase - Reason string.
 
+   Both parameters accept any kind of pseudo-variables.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
    Example 1.20. t_reply usage
 ...
-t_reply("404", "Not found");
+t_reply("404", "Use $rU not found");
 ...
 
 1.4.5.  t_replicate(URI,[flags])

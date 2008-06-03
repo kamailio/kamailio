@@ -802,13 +802,16 @@ t_relay("udp:mydomain.com");
 		</listitem>
 		</itemizedlist>
 		<para>
+		Both parameters accept any kind of pseudo-variables.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>t_reply</function> usage</title>
 		<programlisting format="linespecific">
 ...
-t_reply("404", "Not found");
+t_reply("404", "Use $rU not found");
 ...
 </programlisting>
 		</example>

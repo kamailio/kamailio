@@ -103,6 +103,7 @@ static int child_init(int rank);
 inline static int w_t_release(struct sip_msg* msg, char* , char* );
 inline static int w_t_newtran(struct sip_msg* p_msg, char* , char* );
 inline static int w_t_reply(struct sip_msg *msg, char* code, char* text);
+inline static int w_pv_t_reply(struct sip_msg *msg, char* code, char* text);
 inline static int w_t_relay(struct sip_msg *p_msg , char *proxy, char* flags);
 inline static int w_t_replicate(struct sip_msg *p_msg, char *dst,char* );
 inline static int w_t_on_negative(struct sip_msg* msg, char *go_to, char* );
@@ -137,43 +138,43 @@ stat_var *tm_trans_inuse;
 
 
 static cmd_export_t cmds[]={
-	{"t_newtran",            (cmd_function)w_t_newtran,             0, 0,
+	{"t_newtran",       (cmd_function)w_t_newtran,      0, 0,
 			0, REQUEST_ROUTE},
-	{"t_reply",              (cmd_function)w_t_reply,               2, fixup_t_send_reply,
+	{"t_reply",         (cmd_function)w_pv_t_reply,     2, fixup_t_send_reply,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_release",            (cmd_function)w_t_release,             0, 0,
+	{"t_release",       (cmd_function)w_t_release,      0, 0,
 			0, REQUEST_ROUTE},
-	{"t_replicate",          (cmd_function)w_t_replicate,           1, fixup_t_replicate,
+	{"t_replicate",     (cmd_function)w_t_replicate,    1, fixup_t_replicate,
 			0, REQUEST_ROUTE},
-	{"t_replicate",          (cmd_function)w_t_replicate,           2, fixup_t_replicate,
+	{"t_replicate",     (cmd_function)w_t_replicate,    2, fixup_t_replicate,
 			0, REQUEST_ROUTE},
-	{"t_relay",              (cmd_function)w_t_relay,               0, 0,
+	{"t_relay",         (cmd_function)w_t_relay,        0, 0,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              (cmd_function)w_t_relay,               1, fixup_t_relay1,
+	{"t_relay",         (cmd_function)w_t_relay,        1, fixup_t_relay1,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_relay",              (cmd_function)w_t_relay,               2, fixup_t_relay2,
+	{"t_relay",         (cmd_function)w_t_relay,        2, fixup_t_relay2,
 			0, REQUEST_ROUTE | FAILURE_ROUTE },
-	{"t_on_failure",         (cmd_function)w_t_on_negative,         1, fixup_uint_null,
+	{"t_on_failure",    (cmd_function)w_t_on_negative,  1, fixup_uint_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_on_reply",           (cmd_function)w_t_on_reply,            1, fixup_uint_null,
+	{"t_on_reply",      (cmd_function)w_t_on_reply,     1, fixup_uint_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_on_branch",          (cmd_function)w_t_on_branch,           1, fixup_uint_null,
+	{"t_on_branch",     (cmd_function)w_t_on_branch,    1, fixup_uint_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_check_status",       (cmd_function)t_check_status,          1, fixup_regexp_null,
+	{"t_check_status",  (cmd_function)t_check_status,   1, fixup_regexp_null,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_write_req",          (cmd_function)t_write_req,              2, fixup_t_write,
+	{"t_write_req",     (cmd_function)t_write_req,      2, fixup_t_write,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-	{"t_write_unix",         (cmd_function)t_write_unix,             2, fixup_t_write,
+	{"t_write_unix",    (cmd_function)t_write_unix,     2, fixup_t_write,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | BRANCH_ROUTE },
-	{"t_flush_flags",        (cmd_function)t_flush_flags,            0, 0,
+	{"t_flush_flags",   (cmd_function)t_flush_flags,    0, 0,
 			0, REQUEST_ROUTE | BRANCH_ROUTE  },
-	{"t_local_replied",      (cmd_function)t_local_replied,          1, fixup_local_replied,
+	{"t_local_replied", (cmd_function)t_local_replied,  1, fixup_local_replied,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
-	{"t_check_trans",        (cmd_function)t_check_trans,            0, 0,
+	{"t_check_trans",   (cmd_function)t_check_trans,    0, 0,
 			0, REQUEST_ROUTE | BRANCH_ROUTE },
-	{"t_was_cancelled",      (cmd_function)t_was_cancelled,          0, 0,
+	{"t_was_cancelled", (cmd_function)t_was_cancelled,  0, 0,
 			0, FAILURE_ROUTE | ONREPLY_ROUTE },
-	{"load_tm",              (cmd_function)load_tm,    0, 0,
+	{"load_tm",         (cmd_function)load_tm,          0, 0,
 			0, 0},
 	{0,0,0,0,0,0}
 };
@@ -386,32 +387,36 @@ static int fixup_t_relay2(void** param, int param_no)
 }
 
 
-/* (char *code, char *reason_phrase)==>(int code, r_p as is) */
 static int fixup_t_send_reply(void** param, int param_no)
 {
-	unsigned long code;
-	int err;
-	str *s;
+	pv_elem_t *model=NULL;
+	str s;
 
-	if (param_no==1){
-		code=str2s(*param, strlen(*param), &err);
-		if (err==0){
-			pkg_free(*param);
-			*param=(void*)code;
-			return 0;
-		}else{
-			LM_ERR("bad  number <%s>\n", (char*)(*param));
-			return E_UNSPEC;
+	/* convert to str */
+	s.s = (char*)*param;
+	s.len = strlen(s.s);
+	if (s.len==0) {
+		LM_ERR("param no. %d is empty!\n", param_no);
+		return E_CFG;
+	}
+
+	model=NULL;
+	if (param_no==1 || param_no==2) {
+		if(pv_parse_format(&s ,&model) || model==NULL) {
+			LM_ERR("wrong format [%s] for param no %d!\n", s.s, param_no);
+			return E_CFG;
 		}
-	} else if (param_no==2) {
-		s = (str*)pkg_malloc(sizeof(str));
-		if (s==0) {
-			LM_ERR("no more pkg mem\n");
-			return E_OUT_OF_MEM;
+		if(model->spec.getf==NULL && param_no==1) {
+			if(str2int(&s,
+			(unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0
+			|| model->spec.pvp.pvn.u.isname.name.n<100
+			|| model->spec.pvp.pvn.u.isname.name.n>699) {
+				LM_ERR("wrong value [%s] for param no %d! - Allowed only"
+					" 1xx - 6xx \n", s.s, param_no);
+				return E_CFG;
+			}
 		}
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
+		*param = (void*)model;
 	}
 
 	return 0;
@@ -819,8 +824,8 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 	}
 	t=get_t();
 	if ( t==0 || t==T_UNDEFINED ) {
-		LM_ERR("failed to send a t_reply to a message for which no transaction-"
-				"state has been established\n");
+		LM_ERR("failed to send a t_reply to a message for which no "
+			"transaction-state has been established\n");
 		return -1;
 	}
 	/* if called from reply_route, make sure that unsafe version
@@ -837,6 +842,31 @@ inline static int w_t_reply(struct sip_msg* msg, char* str1, char* str2)
 			LM_CRIT("unsupported route_type (%d)\n", route_type);
 			return -1;
 	}
+}
+
+
+inline static int w_pv_t_reply(struct sip_msg *msg, char* code, char* text)
+{
+	str code_s;
+	unsigned int code_i;
+
+	if(((pv_elem_p)code)->spec.getf!=NULL) {
+		if(pv_printf_s(msg, (pv_elem_p)code, &code_s)!=0)
+			return -1;
+		if(str2int(&code_s, &code_i)!=0 || code_i<100 || code_i>699)
+			return -1;
+	} else {
+		code_i = ((pv_elem_p)code)->spec.pvp.pvn.u.isname.name.n;
+	}
+
+	if(((pv_elem_p)text)->spec.getf!=NULL) {
+		if(pv_printf_s(msg, (pv_elem_p)text, &code_s)!=0 || code_s.len <=0)
+			return -1;
+	} else {
+		code_s = ((pv_elem_p)text)->text;
+	}
+
+	return w_t_reply(msg, (char*)(unsigned long)code_i, (char*)&code_s);
 }
 
 
