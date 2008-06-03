@@ -213,10 +213,15 @@ struct module_exports exports= {
 static int fixup_profile(void** param, int param_no)
 {
 	struct dlg_profile_table *profile;
+	pv_elem_t *model=NULL;
 	str s;
 
 	s.s = (char*)(*param);
 	s.len = strlen(s.s);
+	if(s.len==0) {
+		LM_ERR("param %d is empty string!\n", param_no);
+		return E_CFG;
+	}
 
 	if (param_no==1) {
 		profile = search_dlg_profile( &s );
@@ -228,7 +233,11 @@ static int fixup_profile(void** param, int param_no)
 		*param = (void*)profile;
 		return 0;
 	} else if (param_no==2) {
-		return fixup_pvar(param);
+		if(pv_parse_format(&s ,&model) || model==NULL) {
+			LM_ERR("wrong format [%s] for value param!\n", s.s);
+			return E_CFG;
+		}
+		*param = (void*)model;
 	}
 	return 0;
 }
@@ -506,19 +515,18 @@ static void mod_destroy(void)
 
 static int w_set_dlg_profile(struct sip_msg *msg, char *profile, char *value)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
+	pv_elem_t *pve;
+	str val_s;
 
-	sp = (pv_spec_t *)value;
+	pve = (pv_elem_t *)value;
 
 	if (((struct dlg_profile_table*)profile)->has_value) {
-		if ( sp==NULL || (pv_get_spec_value( msg, sp, &pv_val)!=0) || 
-		(pv_val.flags&PV_VAL_STR)==0 ||
-		pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+		if ( pve==NULL || pv_printf_s(msg, pve, &val_s)!=0 || 
+		val_s.len == 0 || val_s.s == NULL) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
-		if ( set_dlg_profile( msg, &(pv_val.rs),
+		if ( set_dlg_profile( msg, &val_s,
 		(struct dlg_profile_table*)profile) < 0 ) {
 			LM_ERR("failed to set profile");
 			return -1;
@@ -536,20 +544,19 @@ static int w_set_dlg_profile(struct sip_msg *msg, char *profile, char *value)
 
 static int w_is_in_profile(struct sip_msg *msg, char *profile, char *value)
 {
-	pv_spec_t *sp;
-	pv_value_t pv_val;
+	pv_elem_t *pve;
+	str val_s;
 
-	sp = (pv_spec_t *)value;
+	pve = (pv_elem_t *)value;
 
-	if ( sp!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
-		if ( (pv_get_spec_value( msg, sp, &pv_val)!=0) || 
-		(pv_val.flags&PV_VAL_STR)==0 ||
-		pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+	if ( pve!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
+		if ( pv_printf_s(msg, pve, &val_s)!=0 || 
+		val_s.len == 0 || val_s.s == NULL) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
 		return is_dlg_in_profile( msg, (struct dlg_profile_table*)profile,
-			&(pv_val.rs));
+			&val_s);
 	} else {
 		return is_dlg_in_profile( msg, (struct dlg_profile_table*)profile,
 			NULL);
@@ -560,30 +567,27 @@ static int w_is_in_profile(struct sip_msg *msg, char *profile, char *value)
 static int w_get_profile_size(struct sip_msg *msg, char *profile, 
 													char *value, char *result)
 {
-	pv_spec_t *sp;
+	pv_elem_t *pve;
+	str val_s;
 	pv_spec_t *sp_dest;
 	unsigned int size;
-	pv_value_t pv_val;
 	int_str res;
 	int_str avp_name;
 	unsigned short avp_type;
 	script_var_t * sc_var;
 
-	sp = (pv_spec_t *)value;
+	pve = (pv_elem_t *)value;
 	sp_dest = (pv_spec_t *)result;
 
-	if ( sp!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
-		if ( (pv_get_spec_value( msg, sp, &pv_val)!=0) || 
-		(pv_val.flags&PV_VAL_STR)==0 ||
-		pv_val.rs.len == 0 || pv_val.rs.s == NULL) {
+	if ( pve!=NULL && ((struct dlg_profile_table*)profile)->has_value) {
+		if ( pv_printf_s(msg, pve, &val_s)!=0 || 
+		val_s.len == 0 || val_s.s == NULL) {
 			LM_WARN("cannot get string for value\n");
 			return -1;
 		}
-		size = get_profile_size( (struct dlg_profile_table*)profile ,
-			&(pv_val.rs) );
+		size = get_profile_size( (struct dlg_profile_table*)profile ,&val_s );
 	} else {
-		size = get_profile_size( (struct dlg_profile_table*)profile,
-			NULL );
+		size = get_profile_size( (struct dlg_profile_table*)profile, NULL );
 	}
 
 	switch (sp_dest->type) {
