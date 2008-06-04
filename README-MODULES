@@ -1,11 +1,11 @@
 # $Id$
 
-=========================================
-NOTE!!! THIS FILE IS NO LONGER IN USE.
+THIS FILE IS NOT IN USE ANYMORE. FOR AN UPDATED LIST OF OFFICIAL MODULES,
 PLEASE REFER TO:
-http://www.iptel.org/views/moduledocs
-FOR AN UPDATED LIST OF OFFICIAL MODULES.
-=========================================
+
+   http://www.iptel.org/views/moduledocs
+
+*****************************************************************************
 
 'Owner' field contains a developers CVS username, see file
 AUTHORS for more details.

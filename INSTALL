@@ -23,7 +23,6 @@ Contents
    1. Supported Architectures and Requirements
    2. Howto Build ser From Source Distribution
    3. Quick-Start Installation Guide
-   4. Troubleshooting
 
 
 1. Supported Architectures and Requirements
@@ -150,11 +149,7 @@ Contents
      o  libpq-dev for libpq
      o  libexpat1-dev for libexpat
      o  libxml2-dev for libxml2
-     o  libradiusclient-ng-dev for libradiusclient (you can download the 
-        package from http://apt.sip-router.org/debian/dists/unstable/main/binary-i386/libradiusclient-ng-dev_0.5.1-0.5_i386.deb).
-
-        XXX There is a libradiusclient-ng-dev in all current Debian
-            releases. Any reason not to use this?
+     o  libradiusclient-ng-dev for libradiusclient
 
    Debian currently still ships version 0.9.7. SER 2.0 will follow soon
    in the sid and lenny releases.
@@ -418,12 +413,6 @@ Contents
 
       http://mail.iptel.org/mailman/listinfo/serusers
 
-   XXX Is the following still true?
-   To participate in our commercial support program, contact info@iptel.org.
-   The support program will provide you with most timely and accurate help
-   for configuration, integration, development and any other technical
-   activity.
-
 
 3.2. Disclaimers
  
@@ -498,30 +487,7 @@ Contents
 
             o  Solaris: see tar.gz.
     
-      4. Optionally, watch server's health using the serctl utility.
-
-         XXX Does this still work?
-
-            o  to do so, first set the environment variable SIP_DOMAIN to
-               your domain name, e.g., in Bourne shell, call 
-               
-                  $ export SIP_DOMAIN="myserver.foobar.com"
-
-	    o  if you are using other than 'localhost' mysql server for
-               maintaining subscriber database, change the variable
-               'SQL_HOST' to the proper host name in the serctl script
-
-            o  run the serctl utility
-
-                  $ /usr/sbin/serctl moni
-      
-               or
-                  
-                  $ /usr/local/sbin/serctl moni
-                  
-               (if you installed from a tar.gz or solaris package)
-
-      5. Register with the server using your favorite SIP User Agent.
+      4. Register with the server using your favorite SIP User Agent.
          Point it to the IP address or hostname of your server and use
          whatever username you like.
 
@@ -576,13 +542,14 @@ Contents
 
       5. Configure ser to use the database.
 
-         The easiest way to get a fully functional configuration with all
-         bells and whistels is to use the example configuration file
-         ser-oob.cfg. Just make it your ser.cfg file
+         A simple configuration that uses the database is provided as the
+	 file ser-advanced.cfg which will be installed in /etc/ser. In
+	 order to use it, either copy it over /etc/ser/ser.cfg or modify
+	 the start scripts to use the option "-f /etc/ser/ser-advanced.cfg".
+	 Since you most likely won't go back to the simple standard
+	 configuration, the first option will do:
 
             $ cp /etc/ser/ser-oob.cfg /etc/ser/ser.cfg
-
-         XXX Is it actually installed in /etc/ser?
 
       6. Restart the server
 
@@ -590,39 +557,37 @@ Contents
 
      7.  Create a domain and some users.
 
-         [TODO] XXX This kinda sucks without serctl. Should we quickly
-                    create a poor mans version that can only add a
-                    domain and users?
+	 The best way to do this is by using the serctl. The source
+	 package is available at
 
-         This is best being done with the ser_ctl management tool
-         which is available at XXX Right, er, exactly?
+	    http://ftp.iptel.org/pub/serctl/
+
+         There also may be binary packages for your system. Once you have
+	 installed serctl, create a domain. If your domain is example.com,
+	 you do:
+
+	    $ ser_domain add example.com example.com
+
+	 Yes, that would be example.com twice. The first occurence is
+	 the logical name you use for the domain, the second for the
+	 actual DNS name. You can state additional DNS names after that
+	 as well, such as "sip.example.com". These would then be aliases
+	 and can be used interchangably for being called (but not for
+	 necessarly for registering -- always use the first name for that).
+
+	 You add users in three steps. First, you add the user itself,
+	 the you assign one or more URIs to it and finally, you add
+	 credentials so that the user can register.
+
+	    $ ser_user add john
+	    $ ser_uri add john sip:john@example.com sip:john.doe@example.com
+	    $ ser_cred add john john example.com example.com
+
+	 See the help text of ser_user, ser_uri, and ser_cred for more
+	 details.
+
+     8.  Register with the server using your favorite SIP User Agent.
+         Use the domain and user you insterted above. Remember that you
+	 may need to configure DNS for it to work.
 
 
-4. Troubleshooting
-
-   Q: Windows Messenger authentication fails. 
-
-   A: The most likely reason for this problem is a bug in Windows Messenger. 
-      WM only authenticates if server name in request URI equals
-      authentication realm. After a challenge is sent by SIP server, WM does
-      not resubmit the challenged request at all and pops up authentication
-      window again. If you want to authenticate WM, you need to set up your
-      realm value to equal server name. If your server has no name, IP
-      address can be used as realm too.
-
-   Q: SIP requests are replied by ser with "483 Too Many Hops" or 
-      "513 Message Too Large"
-
-   A: In both cases, the reason is probably an error in request routing
-      script which caused an infinite loop. You can easily verify whether
-      this happens by watching SIP traffic on loopback interface. A typical
-      reason for misrouting is a failure to match local domain correctly. If
-      a server fails to recognize a request for itself, it will try to
-      forward it to current URI in believe it would forward them to a
-      foreign domain. Alas, it forwards the request to itself again. This
-      continues to happen until value of max_forwards header field reaches
-      zero or the request grows too big. Solutions is easy: make sure that
-      domain matching is correctly configured. A quick way to achieve that
-      is to introduce a config option to ser.cfg: alias=domainname, where
-      domainname shall be replaced with name of domain, which you wish to
-      server and which appears in request-URIs.
