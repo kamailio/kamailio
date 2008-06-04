@@ -72,11 +72,12 @@
  *              t_relay_cancel() introduced -- can be used to relay CANCELs
  *              at the beginning of the script. (Miklos)
  * 2007-06-04  running transaction are canceled hop by hop (andrei)
- *  2007-08-37  In case of DNS failover the new SIP message is constructed
+ * 2007-08-37  In case of DNS failover the new SIP message is constructed
  *              from the message buffer of the failed branch instead of
- *              applying the lumps again, because the per-branch lumps are not saved,
- *              thus, are not available. Set reparse_on_dns_failover to 0 to
- *              revert the change. (Miklos)
+ *              applying the lumps again, because the per-branch lumps are no
+ *              t saved, thus, are not available. Set reparse_on_dns_failover
+ *              to 0 to revert the change. (Miklos)
+ * 2008-06-04  T_CANCELED is now set each time a CANCEL is received (andrei)
  */
 
 #include "defs.h"
@@ -695,9 +696,15 @@ void e2e_cancel( struct sip_msg *cancel_msg,
 		run_trans_callbacks_internal(&t_invite->tmcb_hl, TMCB_E2ECANCEL_IN, 
 										t_invite, &tmcb);
 	}
+	/* mark transaction as canceled, so that no new message are forwarded
+	 * on it and t_is_canceled() returns true 
+	 * WARNING: it's safe to do it without locks, at least for now (in a race
+	 * event even if a flag is unwillingly reset nothing bad will happen),
+	 * however this should be rechecked for any future new flags use.
+	 */
+	t_invite->flags|=T_CANCELED;
 	/* first check if there are any branches */
 	if (t_invite->nr_of_outgoings==0){
-		t_invite->flags|=T_CANCELED;
 		/* no branches yet => force a reply to the invite */
 		t_reply( t_invite, t_invite->uas.request, 487, CANCELED );
 		DBG("DEBUG: e2e_cancel: e2e cancel -- no more pending branches\n");

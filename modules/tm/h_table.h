@@ -226,7 +226,10 @@ struct totag_elem {
 /* set to one if you want to disallow silent transaction
    dropping when C timer hits */
 #define T_NOISY_CTIMER_FLAG  (1<<2)
-/* transaction canceled */
+/* transaction canceled
+ * WARNING: this flag can be set outside reply lock from e2e_cancel().
+ * If a future flag could be affected by a race w/ e2e_cancel() the code
+ * should be changed.*/
 #define T_CANCELED           (1<<3)
 /* 6xx received => stop forking */
 #define T_6xx            (1<<4) 
