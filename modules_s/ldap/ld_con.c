@@ -23,10 +23,10 @@
  */
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Functions related to connections to LDAP servers.
  */
 
@@ -62,12 +62,12 @@ static void ld_con_free(db_con_t* con, struct ld_con* payload)
 	 * to it in the connection pool
 	 */
 	if (db_pool_remove((db_pool_entry_t*)payload) == 0) return;
-	
+
 	db_pool_entry_free(&payload->gen);
 	if (payload->con) {
 		ret = ldap_unbind_ext_s(payload->con, NULL, NULL);
 		if (ret != LDAP_SUCCESS) {
-			ERR("ldap: Error while unbinding from %s: %s\n", 
+			ERR("ldap: Error while unbinding from %s: %s\n",
 				luri->uri, ldap_err2string(ret));
 		}
 	}
@@ -129,10 +129,10 @@ int ld_con_connect(db_con_t* con)
 	struct ld_con* lcon;
 	struct ld_uri* luri;
 	int ret, version = 3;
-	
+
 	lcon = DB_GET_PAYLOAD(con);
 	luri = DB_GET_PAYLOAD(con->uri);
-	
+
 	/* Do not reconnect already connected connections */
 	if (lcon->flags & LD_CONNECTED) return 0;
 
@@ -141,7 +141,7 @@ int ld_con_connect(db_con_t* con)
 	if (lcon->con) {
 		ret = ldap_unbind_ext_s(lcon->con, NULL, NULL);
 		if (ret != LDAP_SUCCESS) {
-			ERR("ldap: Error while unbinding from %s: %s\n", 
+			ERR("ldap: Error while unbinding from %s: %s\n",
 				luri->uri, ldap_err2string(ret));
 		}
 	}
@@ -155,15 +155,14 @@ int ld_con_connect(db_con_t* con)
 
 	ret = ldap_set_option(lcon->con, LDAP_OPT_PROTOCOL_VERSION, &version);
 	if (ret != LDAP_OPT_SUCCESS) {
-		ERR("ldap: Error while setting protocol version 3: %s\n", 
+		ERR("ldap: Error while setting protocol version 3: %s\n",
 			ldap_err2string(ret));
 		goto error;
 	}
 
-	/* FIXME: Currently only anonymous binds are supported */
-	ret = ldap_simple_bind_s(lcon->con, NULL, NULL);
+	ret = ldap_simple_bind_s(lcon->con, luri->username, luri->password);
 	if (ret != LDAP_SUCCESS) {
-		ERR("ldap: Bind to %s failed: %s\n", 
+		ERR("ldap: Bind to %s failed: %s\n",
 			luri->uri, ldap_err2string(ret));
 		goto error;
 	}
@@ -176,7 +175,7 @@ int ld_con_connect(db_con_t* con)
 	if (lcon->con) {
 		ret = ldap_unbind_ext_s(lcon->con, NULL, NULL);
 		if (ret) {
-			ERR("ldap: Error while unbinding from %s: %s\n", 
+			ERR("ldap: Error while unbinding from %s: %s\n",
 				luri->uri, ldap_err2string(ret));
 		}
 	}
@@ -201,7 +200,7 @@ void ld_con_disconnect(db_con_t* con)
 	if (lcon->con) {
 		ret = ldap_unbind_ext_s(lcon->con, NULL, NULL);
 		if (ret) {
-			ERR("ldap: Error while unbinding from %s: %s\n", 
+			ERR("ldap: Error while unbinding from %s: %s\n",
 				luri->uri, ldap_err2string(ret));
 		}
 	}
