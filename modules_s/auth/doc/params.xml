@@ -59,8 +59,8 @@
 		protecting or severely limiting reply attacks.
 	</para>
 	<para>
-		The possible flag values all three parameters are: 1 for checking if
-		the message uri changed (uses the whole uri), 2 for checking the
+		The possible flag values for all three parameters are: 1 for checking
+		if the message uri changed (uses the whole uri), 2 for checking the
 		callid, 4 for the from tag and 8 for the source ip (see nonce.h). For
 		example setting
 		 <varname>auth_checks_register</varname> to 6 would check if the
