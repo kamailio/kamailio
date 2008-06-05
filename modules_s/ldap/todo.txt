@@ -1,10 +1,14 @@
-* Authentication Support
+X Simple Authentication
+
+  Implement support for simple LDAP authentication with username and
+  password.  This will take a change in the URI parser because the one provided
+  by libldap (which we use to parse the URI right now) does not support
+  embedded usernames and passwords in the URI.
+
+* SASL Authentication Support
  
   The driver supports no authentication method at the moment, we should
   include support for simple authentication at least, but better SASL.
-  This will take a change in the URI parser because the one provided
-  by libldap (which we use to parse the URI right now) does not support
-  embedded usernames and passwords in the URI.
 
 * TLS/SSL Support
   
