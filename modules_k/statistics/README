@@ -1,3 +1,4 @@
+
 Statistics Module
 
 Bogdan Iancu
@@ -10,9 +11,9 @@ Bogdan Iancu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-03-19 15:31:30 -0400
+   (Wed, 19 Mar 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -30,8 +31,8 @@ Bogdan Iancu
 
         1.4. Exported Functions
 
-              1.4.1. update_stat(variable,value)
-              1.4.2. reset_stat(variable)
+              1.4.1. update_stat(variable,value) 
+              1.4.2. reset_stat(variable) 
 
    List of Examples
 
@@ -43,9 +44,9 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The Statistics module is a wrapper over the internal statistics
-   manager, allowing the script writer to dynamically define and
-   use of statistic variables.
+   The Statistics module is a wrapper over the internal
+   statistics manager, allowing the script writer to dynamically
+   define and use of statistic variables.
 
    By bringing the statistics support into the script, it takes
    advantage of the script flexibility in defining logics, making
@@ -80,11 +81,13 @@ modparam("statistics", "variable", "active_calls/no_reset")
 
 1.4.1.  update_stat(variable,value)
 
-   Updates the value of the statistic variable with the new value.
+   Updates the value of the statistic variable with the new
+   value.
 
    Meaning of the parameters is as follows:
-     * variable - variable to be updated
-     * value - value to update with; it may be also negative
+     * variable - variable to be updated (it can be a string or a
+       pseudovariable);
+     * value - value to update with; it may be also negative.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    FAILURE_ROUTE and ONREPLY_ROUTE.
@@ -93,12 +96,17 @@ modparam("statistics", "variable", "active_calls/no_reset")
 ...
 update_stat("register_counter", "+1");
 ...
-update_stat("active_calls", "-1");
+$var(a_calls) = "active_calls";
+update_stat("$var(a_calls)", "-1");
 ...
 
 1.4.2.  reset_stat(variable)
 
    Resets to zero the value of the statistic variable.
+
+   Meaning of the parameters is as follows:
+     * variable - variable to be reset-ed (it can be a string or
+       a pseudovariable).
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    FAILURE_ROUTE and ONREPLY_ROUTE.
@@ -106,4 +114,7 @@ update_stat("active_calls", "-1");
    Example 1.3. reset_stat usage
 ...
 reset_stat("register_counter");
+...
+$var(reg_counter) = "register_counter";
+update_stat("$var(reg_counter)");
 ...

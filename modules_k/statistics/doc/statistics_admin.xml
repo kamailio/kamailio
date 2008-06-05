@@ -86,11 +86,12 @@ modparam("statistics", "variable", "active_calls/no_reset")
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>variable</emphasis> - variable to be updated
+			(it can be a string or a pseudovariable);
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>value</emphasis> - value to update with; it may be
-			also negative
+			also negative.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -104,7 +105,8 @@ modparam("statistics", "variable", "active_calls/no_reset")
 ...
 update_stat("register_counter", "+1");
 ...
-update_stat("active_calls", "-1");
+$var(a_calls) = "active_calls";
+update_stat("$var(a_calls)", "-1");
 ...
 </programlisting>
 		</example>
@@ -117,6 +119,14 @@ update_stat("active_calls", "-1");
 		<para>
 		Resets to zero the value of the statistic variable.
 		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>variable</emphasis> - variable to be reset-ed
+			(it can be a string or a pseudovariable).
+			</para>
+		</listitem>
+		</itemizedlist>
 		<para>
 		This function can be used from REQUEST_ROUTE, BRANCH_ROUTE, 
 		FAILURE_ROUTE and ONREPLY_ROUTE.
@@ -126,6 +136,9 @@ update_stat("active_calls", "-1");
 		<programlisting format="linespecific">
 ...
 reset_stat("register_counter");
+...
+$var(reg_counter) = "register_counter";
+update_stat("$var(reg_counter)");
 ...
 </programlisting>
 		</example>
