@@ -624,6 +624,41 @@ modparam("tm", "onreply_avp_mode", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>disable_6xx_block</varname> (integer)</title>
+		<para>
+		Tells how the 6xx replies should be internally handled:
+		<itemizedlist>
+			<listitem><para>
+			<emphasis>0</emphasis> - the 6xx replies will block any further
+			serial forking (adding new branches). This is the RFC3261
+			behaviour.
+			</para></listitem>
+			<listitem><para>
+			<emphasis>1</emphasis> - the 6xx replies will be handled as any
+			other negative reply - serial forking will be allowed.
+			Logically, you need to break RFC3261 if you want to do redirects
+			to announcement and voicemail services.
+			</para></listitem>
+		</itemizedlist>
+		</para>
+		<para>
+		<emphasis>
+			Default value is 0.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>disable_6xx_block</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "disable_6xx_block", 1)
+...
+</programlisting>
+		</example>
+	</section>
+
+
+
 	</section>
 
 

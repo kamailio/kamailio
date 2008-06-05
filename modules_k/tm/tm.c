@@ -215,6 +215,8 @@ static param_export_t params[]={
 		&syn_branch },
 	{ "onreply_avp_mode",         INT_PARAM,
 		&onreply_avp_mode },
+	{ "disable_6xx_block",        INT_PARAM,
+		&disable_6xx_block },
 	{0,0,0}
 };
 

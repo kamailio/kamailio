@@ -52,6 +52,8 @@ enum rps {
 extern char tm_tags[TOTAG_VALUE_LEN];
 extern char *tm_tag_suffix;
 
+extern int disable_6xx_block;
+
 /* has this to-tag been never seen in previous 200/INVs? */
 int unmatched_totag(struct cell *t, struct sip_msg *ack);
 

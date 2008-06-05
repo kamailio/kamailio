@@ -96,6 +96,9 @@
 int restart_fr_on_each_reply=1;
 int onreply_avp_mode = 0;
 
+/* disable the 6xx fork-blocking - default no (as per RFC3261) */
+int disable_6xx_block = 0;
+
 /* private place where we create to-tags for replies */
 char tm_tags[TOTAG_VALUE_LEN];
 static str  tm_tag = {tm_tags,TOTAG_VALUE_LEN};
@@ -780,7 +783,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 		 * save of the final reply per branch */
 		Trans->uac[branch].reply = reply;
 
-		if (new_code>=600) {
+		if (new_code>=600 && !disable_6xx_block) {
 			/* this is a winner and close all branches */
 			which_cancel( Trans, cancel_bitmap );
 			picked_branch=branch;

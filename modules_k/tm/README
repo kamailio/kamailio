@@ -57,6 +57,7 @@ Bogdan-Andrei Iancu
               1.3.14. pass_provisional_replies (integer)
               1.3.15. syn_branch (integer)
               1.3.16. onreply_avp_mode (integer)
+              1.3.17. disable_6xx_block (integer)
 
         1.4. Exported Functions
 
@@ -128,21 +129,22 @@ Bogdan-Andrei Iancu
    1.14. Set pass_provisional_replies parameter
    1.15. Set syn_branch parameter
    1.16. Set onreply_avp_mode parameter
-   1.17. t_newtran usage
-   1.18. t_relay usage
+   1.17. Set disable_6xx_block parameter
+   1.18. t_newtran usage
    1.19. t_relay usage
-   1.20. t_reply usage
-   1.21. t_replicate usage
-   1.22. t_release usage
-   1.23. t_check_status usage
-   1.24. t_flush_flags usage
-   1.25. t_local_replied usage
-   1.26. t_write_fifo/unix usage
-   1.27. t_check_trans usage
-   1.28. t_was_cancelled usage
-   1.29. t_on_failure usage
-   1.30. t_on_reply usage
-   1.31. t_on_branch usage
+   1.20. t_relay usage
+   1.21. t_reply usage
+   1.22. t_replicate usage
+   1.23. t_release usage
+   1.24. t_check_status usage
+   1.25. t_flush_flags usage
+   1.26. t_local_replied usage
+   1.27. t_write_fifo/unix usage
+   1.28. t_check_trans usage
+   1.29. t_was_cancelled usage
+   1.30. t_on_failure usage
+   1.31. t_on_reply usage
+   1.32. t_on_branch usage
 
 Chapter 1. Admin Guide
 
@@ -544,6 +546,23 @@ modparam("tm", "syn_branch", 0)
 modparam("tm", "onreply_avp_mode", 1)
 ...
 
+1.3.17. disable_6xx_block (integer)
+
+   Tells how the 6xx replies should be internally handled:
+     * 0 - the 6xx replies will block any further serial forking
+       (adding new branches). This is the RFC3261 behaviour.
+     * 1 - the 6xx replies will be handled as any other negative
+       reply - serial forking will be allowed. Logically, you need
+       to break RFC3261 if you want to do redirects to
+       announcement and voicemail services.
+
+   Default value is 0.
+
+   Example 1.17. Set disable_6xx_block parameter
+...
+modparam("tm", "disable_6xx_block", 1)
+...
+
 1.4. Exported Functions
 
 1.4.1.  t_newtran()
@@ -559,7 +578,7 @@ Warning
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.17. t_newtran usage
+   Example 1.18. t_newtran usage
 ...
 if (t_newtran()) {
         log("UAS logic");
@@ -609,7 +628,7 @@ if (t_newtran()) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.18. t_relay usage
+   Example 1.19. t_relay usage
 ...
 if (!t_relay()) {
     sl_reply_error();
@@ -628,7 +647,7 @@ if (!t_relay()) {
 
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.19. t_relay usage
+   Example 1.20. t_relay usage
 ...
 t_relay("tcp:192.168.1.10:5060");
 t_relay("mydomain.com:5070","0x1");
@@ -648,7 +667,7 @@ t_relay("udp:mydomain.com");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.20. t_reply usage
+   Example 1.21. t_reply usage
 ...
 t_reply("404", "Use $rU not found");
 ...
@@ -670,7 +689,7 @@ t_reply("404", "Use $rU not found");
 
    This functions can be used from REQUEST_ROUTE.
 
-   Example 1.21. t_replicate usage
+   Example 1.22. t_replicate usage
 ...
 t_replicate("sip:1.2.3.4:5060");
 t_replicate("sip:1.2.3.4:5060;transport=tcp");
@@ -684,7 +703,7 @@ t_replicate("sip:1.2.3.4","0x4");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.22. t_release usage
+   Example 1.23. t_release usage
 ...
 t_release();
 ...
@@ -701,7 +720,7 @@ t_release();
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE .
 
-   Example 1.23. t_check_status usage
+   Example 1.24. t_check_status usage
 ...
 if (t_check_status("(487)|(408)")) {
     log("487 or 408 negative reply\n");
@@ -717,7 +736,7 @@ if (t_check_status("(487)|(408)")) {
 
    This function can be used from REQUEST_ROUTE and BRANCH_ROUTE .
 
-   Example 1.24. t_flush_flags usage
+   Example 1.25. t_flush_flags usage
 ...
 t_flush_flags();
 ...
@@ -732,7 +751,7 @@ t_flush_flags();
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    FAILURE_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.25. t_local_replied usage
+   Example 1.26. t_local_replied usage
 ...
 if (t_local_replied("all")) {
         log ("no reply received\n");
@@ -748,7 +767,7 @@ if (t_local_replied("all")) {
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE
    and BRANCH_ROUTE.
 
-   Example 1.26. t_write_fifo/unix usage
+   Example 1.27. t_write_fifo/unix usage
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
 modparam("tm","tw_append","append2:body=msg[body]")
@@ -775,7 +794,7 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 
    This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
 
-   Example 1.27. t_check_trans usage
+   Example 1.28. t_check_trans usage
 ...
 if ( is_method("CANCEL") ) {
         if ( t_check_trans() )
@@ -791,7 +810,7 @@ if ( is_method("CANCEL") ) {
 
    This function can be used from ONREPLY_ROUTE, FAILURE_ROUTE.
 
-   Example 1.28. t_was_cancelled usage
+   Example 1.29. t_was_cancelled usage
 ...
 if (t_was_cancelled()) {
     log("transaction was cancelled by UAC\n");
@@ -825,7 +844,7 @@ if (t_was_cancelled()) {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.29. t_on_failure usage
+   Example 1.30. t_on_failure usage
 ...
 route {
         t_on_failure("1");
@@ -866,7 +885,7 @@ failure_route[1] {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.30. t_on_reply usage
+   Example 1.31. t_on_reply usage
 ...
 route {
         t_on_reply("1");
@@ -907,7 +926,7 @@ onreply_route[1] {
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE,
    ONREPLY_ROUTE and FAILURE_ROUTE.
 
-   Example 1.31. t_on_branch usage
+   Example 1.32. t_on_branch usage
 ...
 route {
         t_on_branch("1");
