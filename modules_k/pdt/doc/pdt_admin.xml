@@ -51,10 +51,23 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    A sample config file and the <acronym>MySQL</acronym> script to
-			create the database needed by PDT are located in './doc/'.
+		    A sample config file is located in './doc/'.
 		</para>
-	    </listitem>
+		</listitem>
+		
+		<listitem>
+		<para>
+			<acronym>MySQL</acronym> script to create the database needed by
+			PDT is located in '../../scripts/mysql/pdt-create.sql'
+		</para>
+		<para>
+			The database is loaded by &openser; only at start up time and 
+			only cache is used to lookup domains. Check the MI Functions for
+			adding/deleting prefix-domain pairs or reloading from database
+			at runtime.
+		</para>
+		</listitem>
+
 	    <listitem>
 		<para>
 		    Sample shell scripts to manage prefix-domain pairs are also located
@@ -394,10 +407,11 @@ prefix2domain();
 		<section>
 		<title>Exported MI Functions</title>
 		<para>
-		The modules uses only the cache to look up domains. If you want to
-		add or delete a new prefix-domain pair you have to use MI FIFO commands.
-		All changes made via these commands are applied to database, while the database
-		is loaded only at &openser; start up time.
+		The database is loaded by &openser; at start up time.
+		The module uses only the cache to look up domains. If you want to
+		add or delete a new prefix-domain pair at runtime you have to use
+		MI FIFO commands. All changes made via these commands are applied to
+		database and the cache is updated correspondingly. 
 		</para>
 
 	<section>
@@ -531,7 +545,6 @@ prefix2domain();
 
     <section>
 	<title>Installation and Running</title>
-	<para>Make sure you have created the table needed by this module.</para>
     <para>
 	Example shell scripts for MI FIFO commands are placed in './doc/'
 	(pdt_fifo_add.sh, pdt_fifo_delete.sh, pdt_fifo_list.sh). 

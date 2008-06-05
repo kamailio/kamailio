@@ -20,13 +20,13 @@
 	    <author>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		<affiliation><orgname>rosdev.ro</orgname></affiliation>
-		    <email>ramona@rosdev.ro</email>
+		<affiliation><orgname>asipto.com</orgname></affiliation>
+		    <email>ramona@asipto.com</email>
 	    </author>
 	    <editor>
 		<firstname>Elena-Ramona</firstname>
 		<surname>Modroiu</surname>
-		    <email>ramona@rosdev.ro</email>
+		    <email>ramona@asipto.com</email>
 	    </editor>
 	</authorgroup>
 	<copyright>
@@ -41,12 +41,6 @@
 	    <year>2008</year>
 	    <holder>Elena-Ramona Modroiu</holder>
 	</copyright>
-	<revhistory>
-	    <revision>
-		<revnumber>$Revision$</revnumber>
-		<date>$Date$</date>
-	    </revision>
-	</revhistory>
     </bookinfo>
     <toc></toc>
     

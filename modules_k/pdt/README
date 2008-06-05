@@ -2,23 +2,20 @@ pdt Module
 
 Elena-Ramona Modroiu
 
-   rosdev.ro
-   <ramona@rosdev.ro>
+   asipto.com
+   <ramona@asipto.com>
 
 Edited by
 
 Elena-Ramona Modroiu
 
-   <ramona@rosdev.ro>
+   <ramona@asipto.com>
 
    Copyright © 2003 FhG FOKUS
 
    Copyright © 2004 voice-system.ro
 
    Copyright © 2008 Elena-Ramona Modroiu
-   Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -109,8 +106,13 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
    not be used to look up the domain (the classic example, 00 used
    for international calls, then follows the country prefix). For
    more information on this, see 'prefix' parameter.
-     * A sample config file and the MySQL script to create the
-       database needed by PDT are located in './doc/'.
+     * A sample config file is located in './doc/'.
+     * MySQL script to create the database needed by PDT is
+       located in '../../scripts/mysql/pdt-create.sql'
+       The database is loaded by OpenSER only at start up time and
+       only cache is used to lookup domains. Check the MI
+       Functions for adding/deleting prefix-domain pairs or
+       reloading from database at runtime.
      * Sample shell scripts to manage prefix-domain pairs are also
        located in './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
        pdt_fifo_list.sh).
@@ -299,11 +301,11 @@ prefix2domain();
 
 1.5. Exported MI Functions
 
-   The modules uses only the cache to look up domains. If you want
-   to add or delete a new prefix-domain pair you have to use MI
+   The database is loaded by OpenSER at start up time. The module
+   uses only the cache to look up domains. If you want to add or
+   delete a new prefix-domain pair at runtime you have to use MI
    FIFO commands. All changes made via these commands are applied
-   to database, while the database is loaded only at OpenSER start
-   up time.
+   to database and the cache is updated correspondingly.
 
 1.5.1.  pdt_add
 
@@ -389,8 +391,6 @@ prefix2domain();
                 _empty_line_
 
 1.6. Installation and Running
-
-   Make sure you have created the table needed by this module.
 
    Example shell scripts for MI FIFO commands are placed in
    './doc/' (pdt_fifo_add.sh, pdt_fifo_delete.sh,
