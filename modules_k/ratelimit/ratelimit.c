@@ -124,6 +124,7 @@ typedef struct pipe {
 
 	/* updated values */
 	int *   counter;
+	int *   last_counter;
 	int *   load;
 } pipe_t;
 
@@ -521,10 +522,16 @@ static int mod_init(void)
 			LM_ERR("oom for pipes[%d].counter\n", i);
 			return -1;
 		}
+		pipes[i].last_counter = shm_malloc(sizeof(int));
+		if (pipes[i].last_counter==NULL) {
+			LM_ERR("oom for pipes[%d].last_counter\n", i);
+			return -1;
+		}
 		*pipes[i].algo    = pipes[i].algo_mp;
 		*pipes[i].limit   = pipes[i].limit_mp;
 		*pipes[i].load    = 0;
 		*pipes[i].counter = 0;
+		*pipes[i].last_counter = 0;
 	}
 
 	for (i=0; i<*nqueues; i++) {
@@ -586,6 +593,10 @@ void destroy(void)
 		if (pipes[i].counter) {
 			shm_free(pipes[i].counter);
 			pipes[i].counter = NULL;
+		}
+		if (pipes[i].last_counter) {
+			shm_free(pipes[i].last_counter);
+			pipes[i].last_counter = NULL;
 		}
 		if (pipes[i].limit) {
 			shm_free(pipes[i].limit);
@@ -1121,6 +1132,7 @@ static void timer(unsigned int ticks, void *param)
 	for (i=0; i<MAX_PIPES; i++) {
 		if (*pipes[i].limit && timer_interval)
 			*pipes[i].load = *pipes[i].counter / (*pipes[i].limit * timer_interval);
+		*pipes[i].last_counter = *pipes[i].counter;
 		*pipes[i].counter = 0;
 	}
 	LOCK_RELEASE(rl_lock);
@@ -1162,6 +1174,11 @@ struct mi_root* mi_stats(struct mi_root* cmd_tree, void* param)
 
 			p = int2str((unsigned long)(*pipes[i].load), &len);
 			attr = add_mi_attr(node, MI_DUP_VALUE, "load", 4, p, len);
+			if(attr == NULL)
+				goto error;
+
+			p = int2str((unsigned long)(*pipes[i].last_counter), &len);
+			attr = add_mi_attr(node, MI_DUP_VALUE, "counter", 7, p, len);
 			if(attr == NULL)
 				goto error;
 		}
