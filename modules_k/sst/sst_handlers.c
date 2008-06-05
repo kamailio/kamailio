@@ -366,14 +366,14 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 {
 	switch (type) {
 		case DLGCB_FAILED:
-			LM_ERR("DID %p failed (canceled). "
-					"Terminating session.\n", did);
+			LM_DBG("DID %p failed (canceled). "
+				"Terminating session.\n", did);
 			break;
 		case DLGCB_EXPIRED:
 			/* In the case of expired, the msg is pointing at a
 			 * FAKED_REPLY (-1)
 			 */
-			LM_ERR("Terminating session.\n");
+			LM_DBG("Terminating session.\n");
 			break;
 		default: /* Normal termination. */
 			LM_DBG("Terminating DID %p session\n", did);
