@@ -34,6 +34,7 @@
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
+#include "../../mod_fix.h"
 #include "../../statistics.h"
 #include "../../mem/mem.h"
 #include "stats_funcs.h"
@@ -45,6 +46,12 @@ static int mod_init(void);
 static int w_update_stat(struct sip_msg* msg, char* stat, char* n);
 static int w_reset_stat(struct sip_msg* msg, char* stat, char* foo);
 static int fixup_stat(void** param, int param_no);
+
+struct stat_or_pv {
+	stat_var   *stat;
+	pv_spec_t  *pv;
+};
+
 
 
 static cmd_export_t cmds[]={
@@ -100,7 +107,7 @@ static int mod_init(void)
 
 static int fixup_stat(void** param, int param_no)
 {
-	stat_var *stat;
+	struct stat_or_pv *sopv;
 	str s;
 	long n;
 	int err;
@@ -108,15 +115,30 @@ static int fixup_stat(void** param, int param_no)
 	s.s = (char*)*param;
 	s.len = strlen(s.s);
 	if (param_no==1) {
-		/* var name - string */
-		stat = get_stat( &s );
-		if (stat==0) {
-			LM_ERR("fixup_stat: variable <%s> not "
-				"defined\n", s.s);
-			return E_CFG;
+		/* var name - string or pv */
+		sopv = (struct stat_or_pv *)pkg_malloc(sizeof(struct stat_or_pv));
+		if (sopv==NULL) {
+			LM_ERR("no more pkg mem\n");
+			return E_OUT_OF_MEM;
 		}
-		pkg_free(*param);
-		*param=(void*)stat;
+		memset( sopv, 0 , sizeof(struct stat_or_pv) );
+		/* is it pv? */
+		if (s.s[0]=='$') {
+			if (fixup_pvar(param)!=0) {
+				LM_ERR("invalid pv %.s as parameter\n",s.s);
+				return E_CFG;
+			}
+			sopv->pv = (pv_spec_t*)(*param);
+		} else {
+			/* it is string */
+			sopv->stat = get_stat( &s );
+			if (sopv->stat==0) {
+				LM_ERR("variable <%s> not defined\n", s.s);
+				return E_CFG;
+			}
+		}
+		pkg_free(s.s);
+		*param=(void*)sopv;
 		return 0;
 	} else if (param_no==2) {
 		/* update value - integer */
@@ -144,16 +166,57 @@ static int fixup_stat(void** param, int param_no)
 }
 
 
-static int w_update_stat(struct sip_msg *msg, char *stat, char *n)
+static int w_update_stat(struct sip_msg *msg, char *stat_p, char *n)
 {
-	update_stat( (stat_var*)stat, (long)n);
+	struct stat_or_pv *sopv = (struct stat_or_pv *)stat_p;
+	pv_value_t pv_val;
+	stat_var *stat;
+
+	if (sopv->stat) {
+		update_stat( sopv->stat, (long)n);
+	} else {
+		if (pv_get_spec_value(msg, sopv->pv, &pv_val)!=0 ||
+		(pv_val.flags & PV_VAL_STR)==0 ) {
+			LM_ERR("failed to get pv string value\n");
+			return -1;
+		}
+		stat = get_stat( &(pv_val.rs) );
+		if ( stat == 0 ) {
+			LM_ERR("variable <%.*s> not defined\n",
+				pv_val.rs.len, pv_val.rs.s);
+			return -1;
+		}
+		update_stat( stat, (long)n);
+	}
+
 	return 1;
 }
 
 
-static int w_reset_stat(struct sip_msg *msg, char* stat, char *foo)
+static int w_reset_stat(struct sip_msg *msg, char* stat_p, char *foo)
 {
-	reset_stat( (stat_var*)stat );
+	struct stat_or_pv *sopv = (struct stat_or_pv *)stat_p;
+	pv_value_t pv_val;
+	stat_var *stat;
+
+	if (sopv->stat) {
+		reset_stat( sopv->stat );
+	} else {
+		if (pv_get_spec_value(msg, sopv->pv, &pv_val)!=0 ||
+		(pv_val.flags & PV_VAL_STR)==0 ) {
+			LM_ERR("failed to get pv string value\n");
+			return -1;
+		}
+		stat = get_stat( &(pv_val.rs) );
+		if ( stat == 0 ) {
+			LM_ERR("variable <%.*s> not defined\n",
+				pv_val.rs.len, pv_val.rs.s);
+			return -1;
+		}
+		reset_stat( stat );
+	}
+
+
 	return 1;
 }
 
