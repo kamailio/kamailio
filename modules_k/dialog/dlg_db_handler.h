@@ -58,6 +58,7 @@
 #define DB_MODE_NONE				0
 #define DB_MODE_REALTIME			1
 #define DB_MODE_DELAYED				2
+#define DB_MODE_SHUTDOWN			3
 
 #define DIALOG_TABLE_COL_NO 		18
 

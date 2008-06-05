@@ -460,7 +460,8 @@ static int mod_init(void)
 	if (dlg_db_mode==DB_MODE_NONE) {
 		db_url.s = 0; db_url.len = 0;
 	} else {
-		if (dlg_db_mode!=DB_MODE_REALTIME && dlg_db_mode!=DB_MODE_DELAYED) {
+		if (dlg_db_mode!=DB_MODE_REALTIME &&
+		dlg_db_mode!=DB_MODE_DELAYED && dlg_db_mode!=DB_MODE_SHUTDOWN ) {
 			LM_ERR("unsupported db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
@@ -484,6 +485,7 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if ( (dlg_db_mode==DB_MODE_REALTIME && (rank>0 || rank==PROC_TIMER)) ||
+	(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ||
 	(dlg_db_mode==DB_MODE_DELAYED && (rank==PROC_MAIN || rank==PROC_TIMER ||
 	rank>0) )){
 		if ( dlg_connect_db(&db_url) ) {
@@ -492,13 +494,18 @@ static int child_init(int rank)
 		}
 	}
 
+	/* in DB_MODE_SHUTDOWN only PROC_MAIN will do a DB dump at the end, so
+	 * for the rest of the processes will be the same as DB_MODE_NONE */
+	if (dlg_db_mode==DB_MODE_SHUTDOWN && rank!=PROC_MAIN)
+		dlg_db_mode = DB_MODE_NONE;
+
 	return 0;
 }
 
 
 static void mod_destroy(void)
 {
-	if(dlg_db_mode == DB_MODE_DELAYED) {
+	if(dlg_db_mode == DB_MODE_DELAYED || dlg_db_mode == DB_MODE_SHUTDOWN) {
 		dialog_update_db(0, 0);
 		destroy_dlg_db();
 	}

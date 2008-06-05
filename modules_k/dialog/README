@@ -346,6 +346,8 @@ modparam("dialog", "db_url", "dbdriver://username:password@dbhost/dbname
        reflected into the database immediatly.
      * 2 - DELAYED - the dialog information changes will be
        flushed into DB periodically, based on a timre routine.
+     * 3 - SHUTDOWN - the dialog information will be flushed into
+       DB only at shutdown - no runtime updates.
 
    Default value is "0".
 

@@ -358,6 +358,10 @@ modparam("dialog", "db_url", "&exampledb;")
 				changes will be flushed into DB periodically, based on a
 				timre routine.
 			</para></listitem>
+			<listitem><para>
+				<emphasis>3 - SHUTDOWN</emphasis> - the dialog information 
+				will be flushed into DB only at shutdown - no runtime updates.
+			</para></listitem>
 		</itemizedlist>
 		<para>
 		<emphasis>
