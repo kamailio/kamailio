@@ -91,6 +91,7 @@ static int replace_f(struct sip_msg*, char*, char*);
 static int replace_body_f(struct sip_msg*, char*, char*);
 static int replace_all_f(struct sip_msg*, char*, char*);
 static int replace_body_all_f(struct sip_msg*, char*, char*);
+static int replace_body_atonce_f(struct sip_msg*, char*, char*);
 static int subst_f(struct sip_msg*, char*, char*);
 static int subst_uri_f(struct sip_msg*, char*, char*);
 static int subst_user_f(struct sip_msg*, char*, char*);
@@ -123,67 +124,87 @@ static int mod_init(void);
 
 
 static cmd_export_t cmds[]={
-	{"search",           (cmd_function)search_f,          1, fixup_regexp_null,
-			fixup_free_regexp_null,
+	{"search",           (cmd_function)search_f,          1,
+			fixup_regexp_null, fixup_free_regexp_null,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"search_body",      (cmd_function)search_body_f,     1, fixup_regexp_null,
-			fixup_free_regexp_null,
+	{"search_body",      (cmd_function)search_body_f,     1,
+			fixup_regexp_null, fixup_free_regexp_null,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"search_append",    (cmd_function)search_append_f,   2, fixup_regexp_none,
-			fixup_free_regexp_none,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
+	{"search_append",    (cmd_function)search_append_f,   2,
+			fixup_regexp_none,fixup_free_regexp_none,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{"search_append_body", (cmd_function)search_append_body_f,   2,
-			fixup_regexp_none,
-			fixup_free_regexp_none, 
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace",          (cmd_function)replace_f,         2, fixup_regexp_none,
-			fixup_free_regexp_none,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace_body",     (cmd_function)replace_body_f,    2, fixup_regexp_none, 
-			fixup_free_regexp_none,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace_all",      (cmd_function)replace_all_f,     2, fixup_regexp_none, 
-			fixup_free_regexp_none,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"replace_body_all", (cmd_function)replace_body_all_f,2, fixup_regexp_none,
-			fixup_free_regexp_none,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"append_to_reply",  (cmd_function)append_to_reply_f, 1, fixup_spve_null, 0,
+			fixup_regexp_none, fixup_free_regexp_none, 
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"replace",          (cmd_function)replace_f,         2,
+			fixup_regexp_none, fixup_free_regexp_none,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"replace_body",     (cmd_function)replace_body_f,    2,
+			fixup_regexp_none, fixup_free_regexp_none,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"replace_all",      (cmd_function)replace_all_f,     2,
+			fixup_regexp_none, fixup_free_regexp_none,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"replace_body_all", (cmd_function)replace_body_all_f,2,
+			fixup_regexp_none, fixup_free_regexp_none,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"replace_body_atonce", (cmd_function)replace_body_atonce_f,2, 
+			fixup_regexpNL_none, fixup_free_regexp_none,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"append_to_reply",  (cmd_function)append_to_reply_f, 1,
+			fixup_spve_null, 0,
 			REQUEST_ROUTE|BRANCH_ROUTE|ERROR_ROUTE},
-	{"append_hf",        (cmd_function)append_hf_1,       1, add_header_fixup, 0,
+	{"append_hf",        (cmd_function)append_hf_1,       1,
+			add_header_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"append_hf",        (cmd_function)append_hf_2,       2, add_header_fixup, 0,
+	{"append_hf",        (cmd_function)append_hf_2,       2,
+			add_header_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"insert_hf",        (cmd_function)insert_hf_1,       1, add_header_fixup, 0,
+	{"insert_hf",        (cmd_function)insert_hf_1,       1, 
+			add_header_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"insert_hf",        (cmd_function)insert_hf_2,       2, add_header_fixup, 0,
+	{"insert_hf",        (cmd_function)insert_hf_2,       2, 
+			add_header_fixup, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"append_urihf",     (cmd_function)append_urihf,      2, fixup_str_str, fixup_free_str_str,
+	{"append_urihf",     (cmd_function)append_urihf,      2,
+			fixup_str_str, fixup_free_str_str,
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"remove_hf",        (cmd_function)remove_hf_f,       1, hname_fixup, free_hname_fixup,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"is_present_hf",    (cmd_function)is_present_hf_f,   1, hname_fixup, free_hname_fixup,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"subst",            (cmd_function)subst_f,           1, fixup_substre, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"subst_uri",        (cmd_function)subst_uri_f,       1, fixup_substre, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
-	{"subst_user",       (cmd_function)subst_user_f,      1, fixup_substre, 0,
+	{"remove_hf",        (cmd_function)remove_hf_f,       1,
+			hname_fixup, free_hname_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"subst_body",       (cmd_function)subst_body_f,      1, fixup_substre, 0,
+	{"is_present_hf",    (cmd_function)is_present_hf_f,   1,
+			hname_fixup, free_hname_fixup,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"filter_body",      (cmd_function)filter_body_f,     1, fixup_str_null, 0,
+	{"subst",            (cmd_function)subst_f,           1,
+			fixup_substre, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"append_time",      (cmd_function)append_time_f,     0, 0, 0,
+	{"subst_uri",        (cmd_function)subst_uri_f,       1,
+			fixup_substre, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"subst_user",       (cmd_function)subst_user_f,      1,
+			fixup_substre, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"subst_body",       (cmd_function)subst_body_f,      1,
+			fixup_substre, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"filter_body",      (cmd_function)filter_body_f,     1,
+			fixup_str_null, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
+	{"append_time",      (cmd_function)append_time_f,     0,
+			0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE },
-	{"is_method",        (cmd_function)is_method_f,       1, fixup_method, 0,
+	{"is_method",        (cmd_function)is_method_f,       1,
+			fixup_method, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"has_body",         (cmd_function)has_body_f,        0, 0, 0,
+	{"has_body",         (cmd_function)has_body_f,        0,
+			0, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"has_body",         (cmd_function)has_body_f,        1, fixup_body_type, 0,
+	{"has_body",         (cmd_function)has_body_f,        1, 
+			fixup_body_type, 0,
 			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
-	{"is_privacy",       (cmd_function)is_privacy_f,      1, fixup_privacy, 0,
-			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE}, 
+	{"is_privacy",       (cmd_function)is_privacy_f,      1,
+			fixup_privacy, 0,
+			REQUEST_ROUTE|ONREPLY_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -381,7 +402,7 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* str2)
 	return ret;
 }
 
-static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
+static int do_replace_body_f(struct sip_msg* msg, char* key, char* str2, int nobol)
 {
 	struct lump* l;
 	regmatch_t pmatch;
@@ -439,13 +460,23 @@ static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
 		/* new cycle */
 		begin=begin+pmatch.rm_eo;
 		/* is it still a string start */
-		if (*(begin-1)=='\n' || *(begin-1)=='\r')
+		if (nobol && (*(begin-1)=='\n' || *(begin-1)=='\r'))
 			eflags&=~REG_NOTBOL;
 		else
 			eflags|=REG_NOTBOL;
 		ret=1;
 	} /* while found ... */
 	return ret;
+}
+
+static int replace_body_all_f(struct sip_msg* msg, char* key, char* str2)
+{
+	return do_replace_body_f(msg, key, str2, 1);
+}
+
+static int replace_body_atonce_f(struct sip_msg* msg, char* key, char* str2)
+{
+	return do_replace_body_f(msg, key, str2, 0);
 }
 
 static int replace_f(struct sip_msg* msg, char* key, char* str2)

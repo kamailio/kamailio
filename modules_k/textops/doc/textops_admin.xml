@@ -286,7 +286,7 @@ replace_all("openser", "OpenSER SIP Proxy");
 		</title>
 		<para>
 		Replaces all occurrence of re in the body of the message
-		with txt.
+		with txt. Matching is done on a per-line basis.
 		</para>
 		<para>Meaning of the parameters is as follows:</para>
 		<itemizedlist>
@@ -308,6 +308,41 @@ replace_all("openser", "OpenSER SIP Proxy");
 		<programlisting format="linespecific">
 ...
 replace_body_all("openser", "OpenSER SIP Proxy");
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">replace_body_atonce(re, txt)</function>
+		</title>
+		<para>
+		Replaces all occurrence of re in the body of the message
+		with txt. Matching is done over the whole body.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>re</emphasis> - Regular expression.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>txt</emphasis> - String.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>replace_body_atonce</function> usage</title>
+		<programlisting format="linespecific">
+...
+# strip the whole body from the message:
+if(has_body() &amp;&amp; replace_body_atonce("^.+$", ""))
+        remove_hf("Content-Type"); 
 ...
 </programlisting>
 		</example>
