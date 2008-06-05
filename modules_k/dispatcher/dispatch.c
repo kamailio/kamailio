@@ -1525,6 +1525,14 @@ static void ds_options_callback( struct cell *t, int type,
 					uri.s, group);
 		}
 	}
+	if(ds_probing_mode==1 && ps->code == 407)
+	{
+		if (ds_set_state(group, &uri, DS_PROBING_DST, 1) != 0)
+		{
+			LM_ERR("Setting the probing state failed (%.*s, group %d)\n",
+					uri.len, uri.s, group);
+		}
+	}
 
 	return;
 }
@@ -1559,7 +1567,8 @@ void ds_check_timer(unsigned int ticks, void* param)
 		for(j=0; j<list->nr; j++) 
 		{
 			/* If the Flag of the entry has "Probing set, send a probe:	*/
-			if ((list->dlist[j].flags&DS_PROBING_DST) > 0)
+			if (ds_probing_mode==1 ||
+					(list->dlist[j].flags&DS_PROBING_DST) != 0)
 			{
 				LM_DBG("probing set #%d, URI %.*s\n", list->id,
 						list->dlist[j].uri.len, list->dlist[j].uri.s);

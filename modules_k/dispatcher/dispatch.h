@@ -73,7 +73,9 @@ extern pv_spec_t ds_setid_pv;
 struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
-extern int probing_threshhold; /* number of failed requests, before a destination is taken into probing */ 
+extern int probing_threshhold; /* number of failed requests,
+						before a destination is taken into probing */ 
+extern int ds_probing_mode;
 
 int init_data();
 int init_ds_db();
