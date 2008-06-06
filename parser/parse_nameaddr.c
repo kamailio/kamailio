@@ -57,7 +57,8 @@ int parse_nameaddr(str* _s, name_addr_t* _a)
 		_a->name.len = _a->uri.s - _a->name.s;
 		_a->uri.s++; /* We will skip < character */
 	} else {
-		LOG(L_ERR, "parse_nameaddr(): No < found\n");
+		LOG(L_ERR, "parse_nameaddr(): No < found in (%.*s)\n", _s->len,
+					ZSW(_s->s));
 		return -3;
 	}
 	
@@ -65,7 +66,8 @@ int parse_nameaddr(str* _s, name_addr_t* _a)
 	uri_end = find_not_quoted(&_a->uri, '>');
 	
 	if (!uri_end) {
-		LOG(L_ERR, "parse_nameaddr(): No > found\n");
+		LOG(L_ERR, "parse_nameaddr(): No > found in (%.*s)\n", _s->len,
+					ZSW(_s->s));
 		return -4;
 	}
 
