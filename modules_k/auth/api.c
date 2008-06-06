@@ -33,6 +33,7 @@
 #include "common.h"
 #include "api.h"
 #include "rpid.h"
+#include "index.h"
 
 static str auth_400_err = str_init(MESSAGE_400);
 static str auth_500_err = str_init(MESSAGE_500);
@@ -230,28 +231,37 @@ auth_result_t pre_auth(struct sip_msg* _m, str* _realm, hdr_types_t _hftype,
  */
 auth_result_t post_auth(struct sip_msg* _m, struct hdr_field* _h)
 {
-	int res = AUTHORIZED;
-	auth_body_t* c;
+    auth_body_t* c;
+    int index;
 
-	c = (auth_body_t*)((_h)->parsed);
+    c = (auth_body_t*)((_h)->parsed);
 
-	if (is_nonce_stale(&c->digest.nonce)) {
-		if ((_m->REQ_METHOD == METHOD_ACK) || 
-		    (_m->REQ_METHOD == METHOD_CANCEL)) {
-			/* Method is ACK or CANCEL, we must accept stale
-			 * nonces because there is no way how to challenge
-			 * with new nonce (ACK has no response associated 
-			 * and CANCEL must have the same CSeq as the request 
-			 * to be canceled)
-			 */
-		} else {
-			LM_DBG("response is OK, but nonce is stale\n");
-			c->stale = 1;
-			res = STALE_NONCE;
-		}
-	}
+    if ((_m->REQ_METHOD == METHOD_ACK) || 
+        (_m->REQ_METHOD == METHOD_CANCEL)) 
+        return AUTHORIZED;
 
-	return res;
+    if (is_nonce_stale(&c->digest.nonce)) {
+            LM_DBG("response is OK, but nonce is stale\n");
+            c->stale = 1;
+            return STALE_NONCE;
+    } else {
+        /* Verify if it is the first time this nonce is received */
+        index= get_nonce_index(&c->digest.nonce);
+        if(index== -1)
+        {
+            LM_ERR("failed to extract nonce index\n");
+            return ERROR;
+        }
+        LM_DBG("nonce index= %d\n", index);
+
+        if(!is_nonce_index_valid(index))
+        {
+           LM_DBG("nonce index not valid\n");
+           return NONCE_REUSED;
+        }
+    }
+    return AUTHORIZED;
+
 }
 
 int check_response(dig_cred_t* _cred, str* _method, char* _ha1)

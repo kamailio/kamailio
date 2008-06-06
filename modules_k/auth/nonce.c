@@ -117,6 +117,14 @@ void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 	_nonce[16 + 32] = '\0';
 }
 
+/*
+ * Get nonce index
+ */
+int get_nonce_index(str* _n)
+{
+    return hex2integer(_n->s + 8);
+}
+
 
 /*
  * Get expiry time from nonce string
@@ -124,14 +132,6 @@ void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 time_t get_nonce_expires(str* _n)
 {
 	return (time_t)hex2integer(_n->s);
-}
-
-/*
- * Get nonce index
- */
-int get_nonce_index(str* _n)
-{
-    return hex2integer(_n->s + 8);
 }
 
 
@@ -155,21 +155,6 @@ int check_nonce(str* _nonce, str* _secret)
 
 	expires = get_nonce_expires(_nonce);
    
-    /* Verify if it is the first time this nonce is received */
-    index= get_nonce_index(_nonce);
-    if(index== -1)
-    {
-        LM_ERR("failed to extract nonce index\n");
-        return 3;
-    }
-    LM_DBG("nonce index= %d\n", index);
-
-    if(!is_nonce_index_valid(index))
-    {
-       LM_ERR("nonce index not valid\n");
-       return 4;
-    }
-
     calc_nonce(non, expires, index, _secret);
 
  	

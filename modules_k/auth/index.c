@@ -147,7 +147,7 @@ int is_nonce_index_valid(int index)
     {
         if(index>= *next_index)
         {
-            LM_ERR("index out of range\n");
+            LM_DBG("index out of range\n");
             lock_release(nonce_lock);
             return 0;
         }
@@ -164,7 +164,7 @@ int is_nonce_index_valid(int index)
     {
         if(!(index>= sec_monit[*second] || index<= *next_index))
         {
-            LM_ERR("index out of the permitted interval\n");
+            LM_DBG("index out of the permitted interval\n");
             goto error;
         }
     }
@@ -172,7 +172,7 @@ int is_nonce_index_valid(int index)
     {
         if(!(index >= sec_monit[*second] && index<=*next_index))
         {
-            LM_ERR("index out of the permitted interval\n");
+            LM_DBG("index out of the permitted interval\n");
             goto error;
         }
     }
@@ -180,7 +180,7 @@ int is_nonce_index_valid(int index)
     /* check if the first time used */
     if(check_buf_bit(index))
     {
-        LM_ERR("nonce already used\n");
+        LM_DBG("nonce already used\n");
         goto error;
     }
     

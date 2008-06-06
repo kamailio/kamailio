@@ -44,7 +44,8 @@ typedef enum auth_result {
 	                    /* return 0 to the openser core */
 	AUTHORIZED,         /* Authorized. If returned by pre_auth, */
 	                    /* no digest authorization necessary */
-	DO_AUTHORIZATION    /* Can only be returned by pre_auth. */
+	DO_AUTHORIZATION,   /* Can only be returned by pre_auth. */
+    NONCE_REUSED        /* Returned if nonce is used more than once */
 	                    /* Means to continue doing authorization */
 } auth_result_t;
 

@@ -54,6 +54,11 @@ int check_nonce(str* _nonce, str* _secret);
 time_t get_nonce_expires(str* _nonce);
 
 /*
+ * Get index from nonce string
+ */
+int get_nonce_index(str* _nonce);
+
+/*
  * Check if the nonce is stale
  */
 int is_nonce_stale(str* _nonce);
