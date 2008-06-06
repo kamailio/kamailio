@@ -80,7 +80,7 @@ Chapter 1. Admin Guide
 
 1.2. How it works
 
-   At startup, the module will load a set of transforamtion rules
+   At startup, the module will load a set of transformation rules
    from a database. Every database raw will be stored in memory as
    a translation rule. Each rule will describe how the matching
    should be made, how the input value should be modified and
@@ -89,8 +89,8 @@ Chapter 1. Admin Guide
    The module expects an input value which will be matched against
    a rules via regexp or string matching. Overlapping matching
    expressions can be controlled via priorities. Once a rule is
-   matched, the definied transformation (if any) is applied and
-   the result is returned as output value. Also, if any string
+   matched, the defined transformation (if any) is applied and the
+   result is returned as output value. Also, if any string
    attribute is associated to the rule, this will be returned to
    the script along with the output value.
 
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
    The module can be used to implement dialplans - do to auto
    completion of the dial numbers (like national to
    international), to convert generic numbers to specific numbers
-   (like for emergincy numbers).
+   (like for emergency numbers).
 
    Also the module can be used for detecting range or sets of
    numbers mapped on a service/case - attributes string can be
@@ -164,7 +164,7 @@ modparam("dialplan", "dpid_col", "column_name")
 
 1.5.4. pr_col (string)
 
-   The column name to store the priority of the correspondig rule
+   The column name to store the priority of the corresponding rule
    from the database raw.
 
    Default value is "pr".
@@ -271,12 +271,12 @@ modparam("dialplan", "fetch_rows", 4000)
 1.6.1.  dp_translate(id, src/dest)
 
    Will try to translate the src string into dest string according
-   to the translation rules with dpid equal to id.
+   to the translation rules with dialplan ID equal to id.
 
    Meaning of the parameters is as follows:
      * id -the dialplan id of the possible matching rules. This
-       parameter cand have the following types:
-          + integer- the dialplan id is staticaly assigned
+       parameter can have the following types:
+          + integer- the dialplan id is statically assigned
           + avp var -the dialplan id is the value of an existing
             avp variable
           + script var -the dialplan id is the value of an

@@ -15,18 +15,19 @@
 	<section>
 	<title>How it works</title>
 	<para>
-	At startup, the module will load a set of transforamtion rules from a database.
-	Every database raw will be stored in memory as a translation rule. Each rule 
-	will describe how the matching should be made, how the input value should be
-	modified and which attributes should be set for the matching transformation.
+	At startup, the module will load a set of transformation rules from a 
+	database. Every database raw will be stored in memory as a translation 
+	rule. Each rule will describe how the matching should be made, how the 
+	input value should be modified and which attributes should be set for 
+	the matching transformation.
 	</para>
 	<para>
 	The module expects an input value which will be matched against a rules
 	via regexp or string matching. Overlapping matching expressions can be
-	controlled via priorities. Once a rule is matched, the definied transformation
-	(if any) is applied and the result is returned as output value. Also, if any
-	string attribute is associated to the rule, this will be returned to the
-	script along with the output value.
+	controlled via priorities. Once a rule is matched, the defined 
+	transformation (if any) is applied and the result is returned as output 
+	value. Also, if any string attribute is associated to the rule, this will 
+	be returned to the script along with the output value.
 	</para>
 	<para>
 	<emphasis> The first matching rule will be processed.</emphasis>
@@ -35,24 +36,24 @@
 
 	<section>
 	<title>Usage cases</title>
-    <para>
-        The module can be used to implement dialplans - do to auto completion of the dial
-        numbers (like national to international), to convert generic numbers to specific
-        numbers (like for emergincy numbers).
-    </para>
-    <para>
-        Also the module can be used for detecting range or sets of numbers mapped on a 
-        service/case - attributes string can be used here to store extra information
-        about the service/case.
-    </para>
-    <para>
-        Non-SIP string translation can be implemented - like converting country names
-        from all possible formats to a canonical format:
-        (UK, England, United Kingdom) -> GB.
-    </para>
-    <para>
-        Any other string-base translation or detection for whatever other purposes.
-    </para>
+	<para>
+	The module can be used to implement dialplans - do to auto completion of 
+	the dial numbers (like national to international), to convert generic 
+	numbers to specific numbers (like for emergency numbers).
+	</para>
+	<para>
+	Also the module can be used for detecting range or sets of numbers mapped 
+	on a service/case - attributes string can be used here to store extra 
+	information about the service/case.
+	</para>
+	<para>
+	Non-SIP string translation can be implemented - like converting country 
+	names from all possible formats to a canonical format:
+	(UK, England, United Kingdom) -> GB.
+	</para>
+	<para>
+	Any other string-base translation or detection for whatever other purposes.
+	</para>
 	</section>
 
 
@@ -156,7 +157,7 @@ modparam("dialplan", "dpid_col", "column_name")
 	<section>
 		<title><varname>pr_col</varname> (string)</title>
 		<para>
-		The column name to store the priority of the correspondig rule from the 		database raw.
+		The column name to store the priority of the corresponding rule from the 		database raw.
 		</para>
 		<para>
 		<emphasis>
@@ -348,18 +349,18 @@ modparam("dialplan", "fetch_rows", 4000)
 	</title>
 	<para>
 	Will try to translate the src string into dest string according to 
-	the translation rules with dpid equal to id.
+	the translation rules with dialplan ID equal to id.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
 	<listitem>
 		<para>
 		<emphasis>id</emphasis> -the dialplan id of the possible matching rules.
-		This parameter cand have the following types:
+		This parameter can have the following types:
 		</para>
 		<itemizedlist>
 			<listitem>
-			<para><emphasis>integer</emphasis>- the dialplan id is staticaly 
+			<para><emphasis>integer</emphasis>- the dialplan id is statically 
 			assigned </para>
 			</listitem>
 			
