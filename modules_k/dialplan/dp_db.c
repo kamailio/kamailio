@@ -1,5 +1,5 @@
 /*
- * $Id:$
+ * $Id$
  *
  * Copyright (C)  2007-2008 Voice Sistem SRL
  *
@@ -72,8 +72,6 @@ int * crt_idx, *next_idx;
 
 int init_db_data(void)
 {
-	int ver;
-
 	if(dp_table_name.s == 0){
 		LM_ERR("invalid database table name\n");
 		return -1;
@@ -88,14 +86,9 @@ int init_db_data(void)
 	if(dp_connect_db() !=0)
 		return -1;
 
-	ver = db_table_version(&dp_dbf, dp_db_handle, &dp_table_name);
-	if (ver < 0){
-		LM_ERR("failed to query table version\n");
-		goto error;
-	} else if (ver != DP_TABLE_VERSION){
-		LM_ERR("Invalid table version "
-			"(found %d , required %d)\n (use openser_mysql.sh reinstall)\n", 
-			ver, DP_TABLE_VERSION );
+	if(db_check_table_version(&dp_dbf, dp_db_handle, &dp_table_name,
+	DP_TABLE_VERSION) < 0) {
+		LM_ERR("error during table version check.\n");
 		goto error;
 	}
 
