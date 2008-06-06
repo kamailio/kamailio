@@ -74,7 +74,8 @@ static inline int do_parse_rr_body(char *buf, int len, rr_t **head)
 		
 		     /* Parse name-addr part of the header */
 		if (parse_nameaddr(&s, &r->nameaddr) < 0) {
-			LOG(L_ERR, "parse_rr(): Error while parsing name-addr\n");
+			LOG(L_ERR, "parse_rr(): Error while parsing name-addr (%.*s)\n",
+					s.len, ZSW(s.s));
 			goto error;
 		}
 		r->len = r->nameaddr.len;
