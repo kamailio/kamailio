@@ -107,13 +107,13 @@ static tls_domain_t mod_params = {
 	{},               /* IP address */
 	0,                /* Port number */
 	0,                /* SSL ctx */
-	TLS_CERT_FILE,    /* Certificate file */
-	TLS_PKEY_FILE,    /* Private key file */
+	STR_STATIC_INIT(TLS_CERT_FILE),    /* Certificate file */
+	STR_STATIC_INIT(TLS_PKEY_FILE),    /* Private key file */
 	0,                /* Verify certificate */
 	9,                /* Verify depth */
-	TLS_CA_FILE,      /* CA file */
+	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
 	0,                /* Require certificate */
-	0,                /* Cipher list */
+	{0, },                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
 	0                 /* next */
 };
@@ -127,13 +127,13 @@ tls_domain_t srv_defaults = {
 	{},               /* IP address */
 	0,                /* Port number */
 	0,                /* SSL ctx */
-	TLS_CERT_FILE,    /* Certificate file */
-	TLS_PKEY_FILE,    /* Private key file */
+	STR_STATIC_INIT(TLS_CERT_FILE),    /* Certificate file */
+	STR_STATIC_INIT(TLS_PKEY_FILE),    /* Private key file */
 	0,                /* Verify certificate */
 	9,                /* Verify depth */
-	TLS_CA_FILE,      /* CA file */
+	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
 	0,                /* Require certificate */
-	0,                /* Cipher list */
+	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
 	0                 /* next */
 };
@@ -147,13 +147,13 @@ tls_domain_t cli_defaults = {
 	{},               /* IP address */
 	0,                /* Port number */
 	0,                /* SSL ctx */
-	0,                /* Certificate file */
-	0,                /* Private key file */
+	{0, 0},                /* Certificate file */
+	{0, 0},                /* Private key file */
 	0,                /* Verify certificate */
 	9,                /* Verify depth */
-	TLS_CA_FILE,      /* CA file */
+	STR_STATIC_INIT(TLS_CA_FILE),      /* CA file */
 	0,                /* Require certificate */
-	0,                /* Cipher list */
+	{0, 0},                /* Cipher list */
 	TLS_USE_TLSv1,    /* TLS method */
 	0                 /* next */
 };
@@ -197,10 +197,10 @@ static param_export_t params[] = {
 	{"verify_certificate",  PARAM_INT,    &mod_params.verify_cert },
 	{"verify_depth",        PARAM_INT,    &mod_params.verify_depth},
 	{"require_certificate", PARAM_INT,    &mod_params.require_cert},
-	{"private_key",         PARAM_STRING, &mod_params.pkey_file   },
-	{"ca_list",             PARAM_STRING, &mod_params.ca_file     },
-	{"certificate",         PARAM_STRING, &mod_params.cert_file   },
-	{"cipher_list",         PARAM_STRING, &mod_params.cipher_list },
+	{"private_key",         PARAM_STR,    &mod_params.pkey_file   },
+	{"ca_list",             PARAM_STR,    &mod_params.ca_file     },
+	{"certificate",         PARAM_STR,    &mod_params.cert_file   },
+	{"cipher_list",         PARAM_STR,    &mod_params.cipher_list },
 	{"handshake_timeout",   PARAM_INT,    &tls_handshake_timeout  },
 	{"send_timeout",        PARAM_INT,    &tls_send_timeout       },
 	{"connection_timeout",  PARAM_INT,    &tls_con_lifetime       },
@@ -265,33 +265,28 @@ static tls_cfg_t* tls_use_modparams(void)
 
 static int fix_rel_pathnames(void)
 {
-	str tmp;
-  	
 	if (tls_cfg_file.s) {
 		tls_cfg_file.s = get_abs_pathname(NULL, &tls_cfg_file);
 		if (tls_cfg_file.s == NULL) return -1;
 		tls_cfg_file.len = strlen(tls_cfg_file.s);
 	}
 	
-	if (mod_params.pkey_file) {
-		tmp.s = mod_params.pkey_file;
-		tmp.len = strlen(tmp.s);
-		mod_params.pkey_file = get_abs_pathname(NULL, &tmp);
-		if (mod_params.pkey_file == NULL) return -1;
+	if (mod_params.pkey_file.s) {
+		mod_params.pkey_file.s = get_abs_pathname(NULL, &mod_params.pkey_file);
+		if (mod_params.pkey_file.s == NULL) return -1;
+		mod_params.pkey_file.len = strlen(mod_params.pkey_file.s);
 	}
 	
-	if (mod_params.ca_file) {
-		tmp.s = mod_params.ca_file;
-		tmp.len = strlen(tmp.s);
-		mod_params.ca_file = get_abs_pathname(NULL, &tmp);
-		if (mod_params.ca_file == NULL) return -1;
+	if (mod_params.ca_file.s) {
+		mod_params.ca_file.s = get_abs_pathname(NULL, &mod_params.ca_file);
+		if (mod_params.ca_file.s == NULL) return -1;
+		mod_params.ca_file.len = strlen(mod_params.ca_file.s);
 	}
 	
-	if (mod_params.cert_file) {
-		tmp.s = mod_params.cert_file;
-		tmp.len = strlen(tmp.s);
-		mod_params.cert_file = get_abs_pathname(NULL, &tmp);
-		if (mod_params.cert_file == NULL) return -1;
+	if (mod_params.cert_file.s) {
+		mod_params.cert_file.s = get_abs_pathname(NULL, &mod_params.cert_file);
+		if (mod_params.cert_file.s == NULL) return -1;
+		mod_params.cert_file.len = strlen(mod_params.cert_file.s);
 	}
 	
 	return 0;

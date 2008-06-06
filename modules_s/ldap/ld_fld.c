@@ -179,7 +179,7 @@ int ld_fld(db_fld_t* fld, char* table)
 }
 
 
-int ld_resolve_fld(db_fld_t* fld, struct ld_config* cfg)
+int ld_resolve_fld(db_fld_t* fld, struct ld_cfg* cfg)
 {
 	int i;
 	struct ld_fld* lfld;

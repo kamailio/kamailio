@@ -35,7 +35,7 @@
 #include "ld_con.h"
 #include "ld_mod.h"
 #include "ld_uri.h"
-#include "ld_config.h"
+#include "ld_cfg.h"
 #include "ld_res.h"
 
 #include "../../mem/mem.h"
@@ -89,7 +89,7 @@ static int build_result_array(char*** res, db_cmd_t* cmd)
 int ld_cmd(db_cmd_t* cmd)
 {
 	struct ld_cmd* lcmd;
-	struct ld_config* cfg;
+	struct ld_cfg* cfg;
  
 	lcmd = (struct ld_cmd*)pkg_malloc(sizeof(struct ld_cmd));
 	if (lcmd == NULL) {
@@ -115,19 +115,18 @@ int ld_cmd(db_cmd_t* cmd)
 		goto error;
 	}
 
-	cfg = ld_find_config(&cmd->table);
+	cfg = ld_find_cfg(&cmd->table);
 	if (cfg == NULL) {
 		ERR("ldap: Cannot find configuration for '%.*s', giving up\n",
 			STR_FMT(&cmd->table));
 		goto error;
 	}
 
-	lcmd->base = cfg->base;
+	lcmd->base = cfg->base.s;
 	lcmd->scope = cfg->scope;
 
-	if (cfg->filter) {
-		lcmd->filter.s = cfg->filter;
-		lcmd->filter.len = strlen(cfg->filter);
+	if (cfg->filter.s) {
+		lcmd->filter = cfg->filter;
 	}
 
 	if (ld_resolve_fld(cmd->match, cfg) < 0) goto error;

@@ -90,10 +90,10 @@ void tls_free_domain(tls_domain_t* d)
 		shm_free(d->ctx);
 	}
 
-	if (d->cipher_list) shm_free(d->cipher_list);
-	if (d->ca_file) shm_free(d->ca_file);
-	if (d->pkey_file) shm_free(d->pkey_file);
-	if (d->cert_file) shm_free(d->cert_file);
+	if (d->cipher_list.s) shm_free(d->cipher_list.s);
+	if (d->ca_file.s) shm_free(d->ca_file.s);
+	if (d->pkey_file.s) shm_free(d->pkey_file.s);
+	if (d->cert_file.s) shm_free(d->cert_file.s);
 	shm_free(d);
 }
 
@@ -179,24 +179,28 @@ static int fill_missing(tls_domain_t* d, tls_domain_t* parent)
 		return -1;
 	}
 	
-	if (!d->cert_file && 
-	    shm_asciiz_dup(&d->cert_file, parent->cert_file) < 0) return -1;
-	LOG(L_INFO, "%s: certificate='%s'\n", tls_domain_str(d), d->cert_file);
+	if (!d->cert_file.s && 
+	    shm_asciiz_dup(&d->cert_file.s, parent->cert_file.s) < 0) return -1;
+	d->cert_file.len = parent->cert_file.len;
+	LOG(L_INFO, "%s: certificate='%s'\n", tls_domain_str(d), d->cert_file.s);
 	
-	if (!d->ca_file &&
-	    shm_asciiz_dup(&d->ca_file, parent->ca_file) < 0) return -1;
-	LOG(L_INFO, "%s: ca_list='%s'\n", tls_domain_str(d), d->ca_file);
+	if (!d->ca_file.s &&
+	    shm_asciiz_dup(&d->ca_file.s, parent->ca_file.s) < 0) return -1;
+	d->ca_file.len = parent->ca_file.len;
+	LOG(L_INFO, "%s: ca_list='%s'\n", tls_domain_str(d), d->ca_file.s);
 	
 	if (d->require_cert == -1) d->require_cert = parent->require_cert;
 	LOG(L_INFO, "%s: require_certificate=%d\n", tls_domain_str(d), d->require_cert);
 	
-	if (!d->cipher_list &&
-	    shm_asciiz_dup(&d->cipher_list, parent->cipher_list) < 0) return -1;
-	LOG(L_INFO, "%s: cipher_list='%s'\n", tls_domain_str(d), d->cipher_list);
+	if (!d->cipher_list.s &&
+	    shm_asciiz_dup(&d->cipher_list.s, parent->cipher_list.s) < 0) return -1;
+	d->cipher_list.len = parent->cipher_list.len;
+	LOG(L_INFO, "%s: cipher_list='%s'\n", tls_domain_str(d), d->cipher_list.s);
 	
-	if (!d->pkey_file &&
-	    shm_asciiz_dup(&d->pkey_file, parent->pkey_file) < 0) return -1;
-	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file);
+	if (!d->pkey_file.s &&
+	    shm_asciiz_dup(&d->pkey_file.s, parent->pkey_file.s) < 0) return -1;
+	d->pkey_file.len = parent->pkey_file.len;
+	LOG(L_INFO, "%s: private_key='%s'\n", tls_domain_str(d), d->pkey_file.s);
 	
 	if (d->verify_cert == -1) d->verify_cert = parent->verify_cert;
 	LOG(L_INFO, "%s: verify_certificate=%d\n", tls_domain_str(d), d->verify_cert);
@@ -216,16 +220,16 @@ static int load_cert(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->cert_file) {
+	if (!d->cert_file.s) {
 		DBG("%s: No certificate configured\n", tls_domain_str(d));
 		return 0;
 	}
 
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if (!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file)) {
+		if (!SSL_CTX_use_certificate_chain_file(d->ctx[i], d->cert_file.s)) {
 			ERR("%s: Unable to load certificate file '%s'\n",
-			    tls_domain_str(d), d->cert_file);
+			    tls_domain_str(d), d->cert_file.s);
 			TLS_ERR("load_cert:");
 			return -1;
 		}
@@ -243,19 +247,19 @@ static int load_ca_list(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->ca_file) {
+	if (!d->ca_file.s) {
 		DBG("%s: No CA list configured\n", tls_domain_str(d));
 		return 0;
 	}
 
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file, 0) != 1) {
-			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d), d->ca_file);
+		if (SSL_CTX_load_verify_locations(d->ctx[i], d->ca_file.s, 0) != 1) {
+			ERR("%s: Unable to load CA list '%s'\n", tls_domain_str(d), d->ca_file.s);
 			TLS_ERR("load_ca_list:");
 			return -1;
 		}
-		SSL_CTX_set_client_CA_list(d->ctx[i], SSL_load_client_CA_file(d->ca_file));
+		SSL_CTX_set_client_CA_list(d->ctx[i], SSL_load_client_CA_file(d->ca_file.s));
 		if (SSL_CTX_get_client_CA_list(d->ctx[i]) == 0) {
 			ERR("%s: Error while setting client CA list\n", tls_domain_str(d));
 			TLS_ERR("load_ca_list:");
@@ -274,10 +278,10 @@ static int set_cipher_list(tls_domain_t* d)
 	int i;
 	int procs_no;
 
-	if (!d->cipher_list) return 0;
+	if (!d->cipher_list.s) return 0;
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
-		if (SSL_CTX_set_cipher_list(d->ctx[i], d->cipher_list) == 0 ) {
+		if (SSL_CTX_set_cipher_list(d->ctx[i], d->cipher_list.s) == 0 ) {
 			ERR("%s: Failure to set SSL context cipher list\n", tls_domain_str(d));
 			return -1;
 		}
@@ -479,7 +483,7 @@ static int load_private_key(tls_domain_t* d)
 	int idx, ret_pwd, i;
 	int procs_no;
 	
-	if (!d->pkey_file) {
+	if (!d->pkey_file.s) {
 		DBG("%s: No private key specified\n", tls_domain_str(d));
 		return 0;
 	}
@@ -487,15 +491,15 @@ static int load_private_key(tls_domain_t* d)
 	procs_no=get_max_procs();
 	for(i = 0; i < procs_no; i++) {
 		SSL_CTX_set_default_passwd_cb(d->ctx[i], passwd_cb);
-		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file);
+		SSL_CTX_set_default_passwd_cb_userdata(d->ctx[i], d->pkey_file.s);
 		
 		for(idx = 0, ret_pwd = 0; idx < NUM_RETRIES; idx++) {
-			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file, SSL_FILETYPE_PEM);
+			ret_pwd = SSL_CTX_use_PrivateKey_file(d->ctx[i], d->pkey_file.s, SSL_FILETYPE_PEM);
 			if (ret_pwd) {
 				break;
 			} else {
 				ERR("%s: Unable to load private key '%s'\n",
-				    tls_domain_str(d), d->pkey_file);
+				    tls_domain_str(d), d->pkey_file.s);
 				TLS_ERR("load_private_key:");
 				continue;
 			}
@@ -503,21 +507,21 @@ static int load_private_key(tls_domain_t* d)
 		
 		if (!ret_pwd) {
 			ERR("%s: Unable to load private key file '%s'\n", 
-			    tls_domain_str(d), d->pkey_file);
+			    tls_domain_str(d), d->pkey_file.s);
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
 		
 		if (!SSL_CTX_check_private_key(d->ctx[i])) {
 			ERR("%s: Key '%s' does not match the public key of the certificate\n", 
-			    tls_domain_str(d), d->pkey_file);
+			    tls_domain_str(d), d->pkey_file.s);
 			TLS_ERR("load_private_key:");
 			return -1;
 		}
 	}		
 
 	DBG("%s: Key '%s' successfuly loaded\n",
-	    tls_domain_str(d), d->pkey_file);
+	    tls_domain_str(d), d->pkey_file.s);
 	return 0;
 }
 

@@ -22,33 +22,32 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
-#ifndef _LD_CONFIG_H
-#define _LD_CONFIG_H
+#ifndef _LD_CFG_H
+#define _LD_CFG_H
 
 #include "ld_fld.h"
 
 #include "../../str.h"
 
 
-struct ld_config {
+struct ld_cfg {
 	str table;      /**< Name of the db api table */
-	char* base;     /**< The search base to be used with the table */
+	str base;       /**< The search base to be used with the table, zero terminated */
 	int scope;      /**< LDAP scope */
-	char* filter;   /**< The search filter */
-	char** field;  /**< An array of DB API fields */
-	char** attr;   /**< An array of LDAP attribute names */
+	str filter;   /**< The search filter, zero terminated */
+	str* field;  /**< An array of DB API fields, zero terminated */
+	str* attr;   /**< An array of LDAP attribute names, zero terminated */
 	enum ld_syntax* syntax; /**< An array of configured LDAP syntaxes */
 	int n;          /**< Number of fields in the arrays */
-	struct ld_config* next; /**< The next table in the list */
+	struct ld_cfg* next; /**< The next table in the list */
 };
 
-extern struct ld_config* ld_cfg_root;
+struct ld_cfg* ld_find_cfg(str* table);
 
-struct ld_config* ld_find_config(str* table);
+char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_cfg* cfg, char* fld_name);
 
-char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_config* cfg, char* fld_name);
+int ld_load_cfg(str* filename);
 
-int ld_load_config(str* filename);
+void ld_cfg_free(void);
 
-
-#endif /* _LD_CONFIG_H */
+#endif /* _LD_CFG_H */

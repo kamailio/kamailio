@@ -32,7 +32,7 @@
 
 #include "ld_mod.h"
 #include "ld_uri.h"
-#include "ld_config.h"
+#include "ld_cfg.h"
 #include "ld_con.h"
 #include "ld_cmd.h"
 #include "ld_fld.h"
@@ -51,6 +51,7 @@
 str ld_cfg_file = STR_STATIC_INIT("ldap.cfg");
 
 static int ld_mod_init(void);
+static void ld_mod_destroy(void);
 
 MODULE_VERSION
 
@@ -89,13 +90,13 @@ static param_export_t params[] = {
 struct module_exports exports = {
 	"ldap",
 	cmds,
-	0,             /* RPC method */
-	params,        /* module parameters */
-	ld_mod_init, /* module initialization function */
-	0,             /* response function*/
-	0,             /* destroy function */
-	0,             /* oncancel function */
-	0              /* per-child init function */
+	0,              /* RPC method */
+	params,         /* module parameters */
+	ld_mod_init,    /* module initialization function */
+	0,              /* response function*/
+	ld_mod_destroy, /* destroy function */
+	0,              /* oncancel function */
+	0               /* per-child init function */
 };
 
 
@@ -514,9 +515,15 @@ int ldap_test(void)
 #endif /* LDAP_TEST */
 
 
+static void ld_mod_destroy(void)
+{
+	ld_cfg_free();
+}
+
+
 static int ld_mod_init(void)
 {
-	if (ld_load_config(&ld_cfg_file)) {
+	if (ld_load_cfg(&ld_cfg_file)) {
 			ERR("ldap: Error while loading configuration file\n");
 			return -1;
 	}
