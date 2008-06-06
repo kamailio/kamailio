@@ -6,7 +6,7 @@
 TABLES = standard acc imc lcr siptrace domainpolicy cpl domain group \
 	dialog permissions registrar usrloc msilo alias_db uri_db speeddial \
 	avpops auth_db pdt dispatcher presence rls extensions carrierroute \
-	userblacklist
+	userblacklist dialplan
 
 ROOT=../..
 STYLESHEETS=$(ROOT)/doc/dbschema/xsl
