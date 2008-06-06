@@ -337,20 +337,22 @@ int ds_load_list(char *lfile)
 		/* eat all white spaces */
 		while(*p && (*p==' ' || *p=='\t' || *p=='\r' || *p=='\n'))
 			p++;
+		
+		/* get flags */
+		flags = 0;
 		if(*p=='\0' || *p=='#')
 		{
 			/* no flags given */
-			goto next_line;
+			goto add_destination;
 		}
 
-		/* get flags */
-		flags = 0;
 		while(*p>='0' && *p<='9')
 		{
 			flags = flags*10+ (*p-'0');
 			p++;
 		}
 		
+add_destination:
 		if(add_dest2list(id, uri, flags, *next_idx, &setn) != 0)
 			goto error;
 					
