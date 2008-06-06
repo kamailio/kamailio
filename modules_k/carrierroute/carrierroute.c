@@ -335,7 +335,7 @@ static int pv_fixup(void ** param) {
 
 /**
  * fixes the module functions' parameters if it is a carrier.
- * supports name string, and AVPs.
+ * supports name string, pseudo-variables and AVPs.
  *
  * @param param the parameter
  *
@@ -355,7 +355,7 @@ static int carrier_fixup(void ** param) {
 	
 	s.s = (char *)(*param);
 	s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
+	if (pv_parse_spec(&s, &avp_spec)==0) {
 		/* This is a name */
 		mp->type=MP_INT;
 		
@@ -371,15 +371,22 @@ static int carrier_fixup(void ** param) {
 		*param = (void *)mp;
 	}
 	else {
-		/* This is an AVP - could be an id or name */
-		mp->type=MP_AVP;
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
-			LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-			pkg_free(mp);
-			return -1;
+			if (avp_spec.type==PVT_AVP) {
+			/* This is an AVP - could be an id or name */
+			mp->type=MP_AVP;
+			if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
+				LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
+				pkg_free(mp);
+				return -1;
+			}
+		} else {
+			mp->type=MP_PVE;
+			if(pv_parse_format(&s, &(mp->u.p))<0) {
+				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
+				return -1;
+			}
 		}
 	}
-	
 	*param = (void*)mp;
 
 	return 0;
@@ -422,15 +429,22 @@ static int domain_fixup(void ** param) {
 		*param = (void *)mp;
 	}
 	else {
-		/* This is an AVP - could be an id or name */
-		mp->type=MP_AVP;
-		if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
-			LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-			pkg_free(mp);
-			return -1;
-		}
+		if (avp_spec.type==PVT_AVP) {
+			/* This is an AVP - could be an id or name */
+			mp->type=MP_AVP;
+			if(pv_get_avp_name(0, &(avp_spec.pvp), &(mp->u.a.name), &(mp->u.a.flags))!=0) {
+				LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
+				pkg_free(mp);
+				return -1;
+			}
+		} else {
+			mp->type=MP_PVE;
+			if(pv_parse_format(&s, &(mp->u.p))<0) {
+				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
+				return -1;
+			}
+		}	
 	}
-	
 	*param = (void*)mp;
 
 	return 0;
