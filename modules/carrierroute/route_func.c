@@ -91,22 +91,24 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
 /**
  * Get the carrier id from multiparam_t structure.
  *
- * @param mp carrier id as integer or AVP name of carrier
+ * @param mp carrier id as integer, pseudo-variable or AVP name of carrier
  * @return carrier id on success, -1 otherwise
  *
  */
-int mp2carrier_id(struct multiparam_t *mp) {
+int mp2carrier_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 	int carrier_id;
 	struct usr_avp *avp;
 	int_str avp_val;
+	str tmp;
 
+	/* TODO combine the redundant parts of the logic */
 	switch (mp->type) {
 	case MP_INT:
 		return mp->u.n;
 		break;
 	case MP_AVP:
-    avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
-    if (!avp) {
+    	avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
+    	if (!avp) {
 			LM_ERR("cannot find AVP '%.*s'\n", mp->u.a.name.s.len, mp->u.a.name.s.s);
 			return -1;
 		}
@@ -122,10 +124,21 @@ int mp2carrier_id(struct multiparam_t *mp) {
 			return carrier_id;
 		}
 		break;
+	case MP_PVE:
+		/* retrieve carrier name from parameter */
+		if (pv_printf_s(_msg, mp->u.p, &tmp)<0) {
+			LM_ERR("error - cannot print the format\n");
+			return -1;
+		}
+		carrier_id = find_tree(tmp);
+		if (carrier_id < 0) {
+			LM_WARN("could not find carrier tree '%.*s'\n", avp_val.s.len, avp_val.s.s);
+			/* might be using fallback later... */
+		}
+		return carrier_id;
 	default:
 		LM_ERR("invalid carrier type\n");
 		return -1;
-		break;
 	}
 }
 
@@ -133,22 +146,24 @@ int mp2carrier_id(struct multiparam_t *mp) {
 /**
  * Get the domain id from multiparam_t structure.
  *
- * @param mp carrier id as integer or AVP name of carrier
+ * @param mp carrier id as integer, pseudo-variable or AVP name of carrier
  * @return carrier id on success, -1 otherwise
  *
  */
-int mp2domain_id(struct multiparam_t *mp) {
+int mp2domain_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 	int domain_id;
 	struct usr_avp *avp;
 	int_str avp_val;
+	str tmp;
 
+	/* TODO combine the redundant parts of the logic */
 	switch (mp->type) {
 	case MP_INT:
 		return mp->u.n;
 		break;
 	case MP_AVP:
-    avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
-    if (!avp) {
+    	avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
+    	if (!avp) {
 			LM_ERR("cannot find AVP '%.*s'\n", mp->u.a.name.s.len, mp->u.a.name.s.s);
 			return -1;
 		}
@@ -164,10 +179,21 @@ int mp2domain_id(struct multiparam_t *mp) {
 			return domain_id;
 		}
 		break;
+	case MP_PVE:
+		/* retrieve domain name from parameter */
+		if (pv_printf_s(_msg, mp->u.p, &tmp)<0) {
+			LM_ERR("error - cannot print the format\n");
+			return -1;
+		}
+		domain_id = add_domain(&avp_val.s);
+		if (domain_id < 0) {
+			LM_ERR("could not find domain '%.*s'\n", avp_val.s.len, avp_val.s.s);
+			return -1;
+		}
+		return domain_id;
 	default:
 		LM_ERR("invalid domain type\n");
 		return -1;
-		break;
 	}
 }
 
@@ -583,8 +609,8 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 
 	ret = -1;
 
-	carrier_id = mp2carrier_id(_carrier);
-	domain_id = mp2domain_id(_domain);
+	carrier_id = mp2carrier_id(_msg, _carrier);
+	domain_id = mp2domain_id(_msg, _domain);
 	if (domain_id < 0) {
 		LM_ERR("invalid domain id %d\n", domain_id);
 		return -1;
@@ -738,8 +764,8 @@ int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
 
 	ret = -1;
 
-	carrier_id = mp2carrier_id(_carrier);
-	domain_id = mp2domain_id(_domain);
+	carrier_id = mp2carrier_id(_msg, _carrier);
+	domain_id = mp2domain_id(_msg, _domain);
 	if (domain_id < 0) {
 		LM_ERR("invalid domain id %d\n", domain_id);
 		return -1;
