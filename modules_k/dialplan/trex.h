@@ -26,6 +26,14 @@
 		source distribution.
 
 ****************************************************************/
+
+/****************************************************************
+ * NOTE:
+ * The code below is no longer the original T-Rex code as it was 
+ * modified to meet the needs of integration into the OpenSER
+ * code.
+ *****************************************************************/
+
 #include <setjmp.h>
 #include <ctype.h>
 #include <string.h>
