@@ -76,13 +76,13 @@ typedef struct tls_domain {
 	struct ip_addr ip;
 	unsigned short port;
 	SSL_CTX** ctx;
-	char* cert_file;
-	char* pkey_file;
+	str cert_file;
+	str pkey_file;
 	int verify_cert;
 	int verify_depth;
-	char* ca_file;
-        int require_cert;
-	char* cipher_list;
+	str ca_file;
+	int require_cert;
+	str cipher_list;
 	enum tls_method method;
 	struct tls_domain* next;
 } tls_domain_t;
