@@ -994,9 +994,10 @@ int get_subs_db(str* pres_uri, pres_ev_t* event, str* sender,
 	//	if(row_vals[expires_col].val.int_val< (int)time(NULL))
 	//		continue;
 
-        if(row_vals[reason_col].val.string_val!= NULL)
+        if(row_vals[reason_col].val.string_val)
         {
-            continue;
+            if(strlen(row_vals[reason_col].val.string_val) != 0)
+                continue;
         }
 		//	s.reason.len= strlen(s.reason.s);
 
@@ -1146,7 +1147,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 		}
 		
 		if((!(s->status== ACTIVE_STATUS &&
-            s->reason.s == NULL &&
+            s->reason.s == NULL && s->reason.len== 0 &&
 			s->event== event && s->pres_uri.len== pres_uri->len &&
 			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
 			(sender && sender->len== s->contact.len && 
