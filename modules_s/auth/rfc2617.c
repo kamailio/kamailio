@@ -35,6 +35,7 @@
 #include "rfc2617.h"
 #include "../../md5global.h"
 #include "../../md5.h"
+#include "../../dprint.h"
 
 
 inline void cvt_hex(HASH _b, HASHHEX _h)
@@ -72,6 +73,11 @@ void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 	MD5_CTX Md5Ctx;
 	HASH HA1;
 	
+	DEBUG("calc_HA1: alg=%d, username=%.*s, realm=%.*s, password=%.*s, "
+			"nonce=%.*s, cnonce=%.*s\n",
+			_alg, _username->len, _username->s, _realm->len, _realm->s, _password->len, _password->s,
+			_nonce->len, _nonce->s, _cnonce->len, _cnonce->s);
+
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _username->s, _username->len);
 	MD5Update(&Md5Ctx, ":", 1);
@@ -81,6 +87,7 @@ void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 	MD5Final(HA1, &Md5Ctx);
 
 	if (_alg == HA_MD5_SESS) {
+		DEBUG("calc_HA1: HA_MD5_SESS\n");
 		MD5Init(&Md5Ctx);
 		MD5Update(&Md5Ctx, HA1, HASHLEN);
 		MD5Update(&Md5Ctx, ":", 1);
@@ -91,6 +98,7 @@ void calc_HA1(ha_alg_t _alg, str* _username, str* _realm, str* _password,
 	};
 
 	cvt_hex(HA1, _sess_key);
+	DEBUG("calc_HA1: H(A1) = %.*s\n", HASHHEXLEN, _sess_key);
 }
 
 
@@ -113,6 +121,11 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 	HASH RespHash;
 	HASHHEX HA2Hex;
 	
+	DEBUG("calc_response: H(A1)=%.*s, nonce=%.*s, nc=%.*s, cnonce=%.*s, "
+			"qop=%.*s, auth_int=%d, method=%.*s, uri=%.*s\n",
+			HASHHEXLEN, _ha1, _nonce->len, _nonce->s, _nc->len, _nc->s, _cnonce->len, _cnonce->s,
+			_qop->len, _qop->s, _auth_int, _method->len, _method->s, _uri->len, _uri->s);
+	
 	     /* calculate H(A2) */
 	MD5Init(&Md5Ctx);
 	MD5Update(&Md5Ctx, _method->s, _method->len);
@@ -126,6 +139,8 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 
 	MD5Final(HA2, &Md5Ctx);
 	cvt_hex(HA2, HA2Hex);
+
+	DEBUG("calc_response: H(A2)=%.*s\n", HASHHEXLEN, HA2Hex);
 	
 	     /* calculate response */
 	MD5Init(&Md5Ctx);
@@ -145,4 +160,5 @@ void calc_response(HASHHEX _ha1,      /* H(A1) */
 	MD5Update(&Md5Ctx, HA2Hex, HASHHEXLEN);
 	MD5Final(RespHash, &Md5Ctx);
 	cvt_hex(RespHash, _response);
+	DEBUG("calc_response: response=%.*s\n", HASHHEXLEN, _response);
 }

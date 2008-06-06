@@ -58,19 +58,38 @@
 #define DIGEST_NONCE_LEN  (sizeof(DIGEST_NONCE)-1)
 #define DIGEST_MD5	  ", algorithm=MD5"
 #define DIGEST_MD5_LEN	  (sizeof(DIGEST_MD5)-1)
+#define DIGEST_ALGORITHM     ", algorithm="
+#define DIGEST_ALGORITHM_LEN (sizeof(DIGEST_ALGORITHM)-1)
 
 
-/*
+/**
  * Create {WWW,Proxy}-Authenticate header field
- * The result is stored in an attribute
- * return -1 on error, 0 on success
+ * @param nonce nonce value
+ * @param algorithm algorithm value
+ * @return -1 on error, 0 on success
+ * 
+ * The result is stored in an attribute.
+ * If nonce is not null that it is used, instead of call calc_nonce.
+ * If algorithm is not null that it is used irrespective of _PRINT_MD5
+ * 
+ * Major usage of nonce and algorithm params is AKA authentication. 
  */
-int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
+int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, str* algorithm, int hftype)
 {
     char *p;
     str* hfn, hf;
     avp_value_t val;
     int nonce_len, l, cfg;
+    
+    if (realm) {
+        DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
+    }
+    if (nonce) {
+        DEBUG("build_challenge_hf: nonce='%.*s'\n", nonce->len, nonce->s);
+    }
+    if (algorithm) {
+        DEBUG("build_challenge_hf: algorithm='%.*s'\n", algorithm->len, algorithm->s);
+    }
     
     if (hftype == HDR_PROXYAUTH_T) {
 		hfn = &proxy_challenge_header;
@@ -85,19 +104,31 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     hf.len = hfn->len;
     hf.len += DIGEST_REALM_LEN
 	+ realm->len
-	+ DIGEST_NONCE_LEN
-	+ nonce_len
-	+ 1 /* '"' */
-	+ ((stale) ? STALE_PARAM_LEN : 0)
+	+ DIGEST_NONCE_LEN;
+    if (nonce) {
+    	hf.len += nonce->len
+    	          + 1; /* '"' */
+    }
+    else {
+    	hf.len += nonce_len
+    	          + 1; /* '"' */
+    }
+	hf.len += ((stale) ? STALE_PARAM_LEN : 0);
+    if (algorithm) {
+    	hf.len += DIGEST_ALGORITHM_LEN + algorithm->len;
+    }
+    else {
+    	hf.len += 0
 #ifdef _PRINT_MD5
 	+DIGEST_MD5_LEN
 #endif
-	+CRLF_LEN;
+		;
+    }
     
     if (qop.qop_parsed != QOP_UNSPEC) {
 		hf.len += QOP_PARAM_START_LEN + qop.qop_str.len + QOP_PARAM_END_LEN;
     }
-	
+	hf.len += CRLF_LEN;
     p = hf.s = pkg_malloc(hf.len);
     if (!hf.s) {
 		ERR("auth: No memory left\n");
@@ -108,15 +139,21 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
     memcpy(p, DIGEST_REALM, DIGEST_REALM_LEN); p += DIGEST_REALM_LEN;
     memcpy(p, realm->s, realm->len); p += realm->len;
     memcpy(p, DIGEST_NONCE, DIGEST_NONCE_LEN); p += DIGEST_NONCE_LEN;
-    l=nonce_len;
-    if (calc_nonce(p, &l, cfg, time(0) + nonce_expire, &secret1, &secret2, msg) != 0) {
-		ERR("auth: calc_nonce failed (len %d, needed %d)\n",
-			nonce_len, l);
-		pkg_free(hf.s);
-		return -1;
-	}
-    p += l;
+    if (nonce) {
+        memcpy(p, nonce->s, nonce->len); p += nonce->len;
+    }
+    else {
+        l=nonce_len;
+        if (calc_nonce(p, &l, cfg, time(0) + nonce_expire, &secret1, &secret2, msg) != 0) {
+            ERR("auth: calc_nonce failed (len %d, needed %d)\n",
+                 nonce_len, l);
+            pkg_free(hf.s);
+            return -1;
+        }
+        p += l;
+    }
     *p = '"'; p++;
+
     if (qop.qop_parsed != QOP_UNSPEC) {
 		memcpy(p, QOP_PARAM_START, QOP_PARAM_START_LEN);
 		p += QOP_PARAM_START_LEN;
@@ -129,9 +166,15 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
 		memcpy(p, STALE_PARAM, STALE_PARAM_LEN);
 		p += STALE_PARAM_LEN;
     }
+	if (algorithm) {
+		memcpy(p, DIGEST_ALGORITHM, DIGEST_ALGORITHM_LEN); p += DIGEST_ALGORITHM_LEN;
+		memcpy(p, algorithm->s, algorithm->len); p += algorithm->len;
+	}
+	else {
 #ifdef _PRINT_MD5
     memcpy(p, DIGEST_MD5, DIGEST_MD5_LEN ); p += DIGEST_MD5_LEN;
 #endif
+	}
     memcpy(p, CRLF, CRLF_LEN); p += CRLF_LEN;
 	hf.len=(int)(p-hf.s); /* fix len, it might be smaller due to a smaller
 							 nonce */
@@ -145,6 +188,6 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype)
 		return -1;
     }
 	pkg_free(hf.s);
-	
+
     return 0;
 }

@@ -52,6 +52,7 @@ extern str flags_column;    /* Flags column in credentials table */
 
 extern int calc_ha1;          /* if set to 1, ha1 is calculated by the server */
 extern int use_did;           /* Whether query should also use did in query */
+extern int check_all;         /* if set to 1, multiple db entries are checked */
 
 extern db_ctx_t* auth_db_handle; /* database connection handle */
 

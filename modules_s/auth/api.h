@@ -32,20 +32,29 @@
 
 
 #include "../../parser/msg_parser.h"
+#include "../../parser/digest/digest.h"
 #include "../../usr_avp.h"
 #include "../../parser/hf.h"
 #include "../../str.h"
 #include "challenge.h"
+#include "rfc2617.h"
 
 
 typedef enum auth_result {
 	ERROR = -2 ,        /* Error occurred, a reply has been sent out -> return 0 to the ser core */
 	NOT_AUTHENTICATED,  /* Don't perform authentication, credentials missing */
 	DO_AUTHENTICATION,  /* Perform digest authentication */
-        AUTHENTICATED,      /* Authenticated by default, no digest authentication necessary */
-	BAD_CREDENTIALS     /* Digest credentials are malformed */
+	AUTHENTICATED,      /* Authenticated by default, no digest authentication necessary */
+	BAD_CREDENTIALS,    /* Digest credentials are malformed */
+	CREATE_CHALLENGE,   /* when AKAv1-MD5 is used first request does not contain credentials,
+	                     * only usename, realm and algorithm. Server should get Authentication
+	                     * Vector from AuC/HSS, create challenge and send it to the UE. */
+	DO_RESYNCHRONIZATION   /* When AUTS is received we need do resynchronization
+	                        * of sequnce numbers with mobile station. */
 } auth_result_t;
 
+typedef int (*check_auth_hdr_t)(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
+int check_auth_hdr(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
 
 /*
  * Purpose of this function is to find credentials with given realm,
@@ -54,9 +63,9 @@ typedef enum auth_result {
  * ACK and CANCEL
  */
 typedef auth_result_t (*pre_auth_t)(struct sip_msg* msg, str* realm,
-				    hdr_types_t hftype, struct hdr_field** hdr);
+				    hdr_types_t hftype, struct hdr_field** hdr, check_auth_hdr_t check_auth_hdr);
 auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
-		       struct hdr_field** hdr);
+		       struct hdr_field** hdr, check_auth_hdr_t check_auth_hdr);
 
 
 /*
@@ -75,6 +84,8 @@ typedef struct auth_api {
     post_auth_t post_auth;                /* The function to be called after authentication */
     build_challenge_hf_t build_challenge; /* Function to build digest challenge header */
     struct qp* qop;                       /* qop module parameter */
+	calc_HA1_t      calc_HA1;
+	calc_response_t calc_response;
 } auth_api_t;
 
 typedef int (*bind_auth_t)(auth_api_t* api);

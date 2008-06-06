@@ -166,7 +166,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	user.s = 0;
 	received = NULL;
 
-	switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
+	switch(auth_api.pre_auth(msg, realm, hftype, &h, NULL)) {
 	case ERROR:
 	case BAD_CREDENTIALS:
 	    ret = -3;
@@ -253,7 +253,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm,
 	if (received) rc_avpair_free(received);
 	if (user.s) pkg_free(user.s);
 	if (ret < 0) {
-	    if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
+	    if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, NULL, NULL, hftype) < 0) {
 		ERR("Error while creating challenge\n");
 		ret = -2;
 	    }

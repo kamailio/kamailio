@@ -49,8 +49,8 @@
 #include "../../mem/mem.h"
 #include "../../config.h"
 #include "../../id.h"
+#include "../auth/api.h"
 #include "authdb_mod.h"
-#include "rfc2617.h"
 
 
 #define IS_NULL(f)	((f).flags & DB_NULL)
@@ -115,7 +115,7 @@ static inline int get_ha1(struct username* username, str* did, str* realm,
 	if (calc_ha1) {
 		/* Only plaintext passwords are stored in database,
 		 * we have to calculate HA1 */
-		calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
+		auth_api.calc_HA1(HA_MD5, &username->whole, realm, &result, 0, 0, ha1);
 		DBG("auth_db:get_ha1: HA1 string calculated: %s\n", ha1);
 	} else {
 		memcpy(ha1, result.s, result.len);
@@ -146,7 +146,7 @@ static inline int check_response(dig_cred_t* cred, str* method, char* ha1)
 	 * Now, calculate our response from parameters received
 	 * from the user agent
 	 */
-	calc_response(ha1, &(cred->nonce), 
+	auth_api.calc_response(ha1, &(cred->nonce), 
 				  &(cred->nc), &(cred->cnonce), 
 				  &(cred->qop.qop_str), cred->qop.qop_parsed == QOP_AUTHINT,
 				  method, &(cred->uri), hent, resp);
@@ -216,6 +216,97 @@ static int generate_avps(db_res_t* result, db_rec_t *row)
 	return 0;
 }
 
+/* this is a dirty work around to check the credentials of all users,
+ * if the database query returned more then one result
+ *
+ * Fills res (which must be db_free'd afterwards if the call was succesfull)
+ * returns  0 on success, 1 on no match (?)
+ *          and -1 on error (memory, db a.s.o).
+ * WARNING: if -1 is returned res _must_ _not_ be freed (it's empty)
+ *
+ */
+static inline int check_all_ha1(struct sip_msg* msg, struct hdr_field* hdr, 
+		dig_cred_t* dig, str* method, str* did, str* realm, 
+		authdb_table_info_t *table_info, db_res_t** res) 
+{
+	char ha1[256];
+	db_rec_t *row;
+	str result;
+	db_cmd_t *q;
+   
+	if (calc_ha1) {
+		q = table_info->query_password;
+		DBG("querying plain password\n");
+	}
+	else {
+	    if (dig->username.domain.len) {
+			q = table_info->query_pass2;
+			DBG("querying ha1b\n");
+		}
+		else {
+			q = table_info->query_pass;
+			DBG("querying ha1\n");
+		}
+	}
+    
+	q->match[0].v.lstr = dig->username.user;
+	if (dig->username.domain.len) 
+		q->match[1].v.lstr = dig->username.domain;
+	else
+		q->match[1].v.lstr = *realm;
+
+	if (use_did) q->match[2].v.lstr = *did;
+
+	if (db_exec(res, q) < 0 ) {
+		ERR("Error while querying database\n");
+	}
+
+	if (*res) row = db_first(*res);
+	else row = NULL;
+	while (row) {
+		if (IS_NULL(row->fld[0]) || IS_NULL(row->fld[1])) {
+			LOG(L_ERR, "auth_db:check_all_ha1: Credentials for '%.*s'@'%.*s' contain NULL value, skipping\n",
+			    dig->username.user.len, ZSW(dig->username.user.s), realm->len, ZSW(realm->s));
+		}
+		else {
+			if (row->fld[1].v.int4 & DB_DISABLED) {
+				/* disabled rows ignored */
+			}
+			else {
+				if (row->fld[1].v.int4 & DB_LOAD_SER) {
+					result.s = row->fld[0].v.cstr;
+					result.len = strlen(result.s);
+					if (calc_ha1) {
+						 /* Only plaintext passwords are stored in database,
+						  * we have to calculate HA1 */
+						auth_api.calc_HA1(HA_MD5, &(dig->username.whole), realm, &result, 0, 0, ha1);
+						DBG("auth_db:check_all_ha1: HA1 string calculated: %s\n", ha1);
+					} else {
+						memcpy(ha1, result.s, result.len);
+						ha1[result.len] = '\0';
+					}
+
+					if (!check_response(dig, method, ha1)) {
+						if (auth_api.post_auth(msg, hdr) == AUTHENTICATED) {
+							generate_avps(*res, row);
+							return 0;
+						}
+					}
+				}
+			}
+		}
+		row = db_next(*res);
+	}
+
+	if (!row) {
+		DBG("auth_db:check_all_ha1: Credentials for '%.*s'@'%.*s' not found",
+		    dig->username.user.len, ZSW(dig->username.user.s), realm->len, ZSW(realm->s));
+	}		
+	return 1;
+
+
+}
+
 
 /*
  * Authenticate digest credentials
@@ -239,7 +330,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
 	result = 0;
 	ret = -1;
     
-	switch(auth_api.pre_auth(msg, realm, hftype, &h)) {
+	switch(auth_api.pre_auth(msg, realm, hftype, &h, NULL)) {
 	case ERROR:
 	case BAD_CREDENTIALS:
 		ret = -3;
@@ -272,18 +363,35 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
 	} else {
 		did.len = 0;
 		did.s = 0;
-	}
-	
-	res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
-	if (res < 0) {
-		ret = -2;
-		goto end;
-	}
-	if (res > 0) {
-		/* Username not found in the database */
-		ret = -1;
-		goto end;
-	}
+	}	
+    
+
+	if (check_all) {
+		res = check_all_ha1(msg, h, &(cred->digest), &msg->first_line.u.request.method, &did, realm, table, &result);
+		if (res < 0) {
+			ret = -2;
+			goto end;
+		}
+		else if (res > 0) {
+			ret = -1;
+			goto end;
+		}
+		else {
+			ret = 1;
+			goto end;
+		}
+    	} else {
+		res = get_ha1(&cred->digest.username, &did, realm, table, ha1, &result, &row);
+		if (res < 0) {
+			ret = -2;
+			goto end;
+		}
+		if (res > 0) {
+			/* Username not found in the database */
+			ret = -1;
+			goto end;
+        	}
+    	}
     
 	/* Recalculate response, it must be same to authorize successfully */
 	if (!check_response(&(cred->digest), &msg->first_line.u.request.method, ha1)) {
@@ -313,7 +421,7 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
  end:
 	if (result) db_res_free(result);
 	if (ret < 0) {
-		if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, hftype) < 0) {
+		if (auth_api.build_challenge(msg, (cred ? cred->stale : 0), realm, NULL, NULL, hftype) < 0) {
 			ERR("Error while creating challenge\n");
 			ret = -2;
 		}

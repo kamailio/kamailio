@@ -93,16 +93,17 @@ sl_api_t sl;
  */
 static char* db_url         = DEFAULT_RODB_URL;
 
-str username_column = STR_STATIC_INIT(USERNAME_COL);
-str did_column      = STR_STATIC_INIT(DID_COL);
-str realm_column    = STR_STATIC_INIT(REALM_COL);
-str pass_column     = STR_STATIC_INIT(PASS_COL);
-str pass_column_2   = STR_STATIC_INIT(PASS_COL_2);
-str flags_column    = STR_STATIC_INIT(FLAGS_COL);
+str username_column         = STR_STATIC_INIT(USERNAME_COL);
+str did_column              = STR_STATIC_INIT(DID_COL);
+str realm_column            = STR_STATIC_INIT(REALM_COL);
+str pass_column             = STR_STATIC_INIT(PASS_COL);
+str pass_column_2           = STR_STATIC_INIT(PASS_COL_2);
+str flags_column            = STR_STATIC_INIT(FLAGS_COL);
 str plain_password_column   = STR_STATIC_INIT(PLAIN_PASS_COL);
 
-int calc_ha1 = 0;
-int use_did = 0;
+int calc_ha1                = 0;
+int use_did                 = 0;
+int check_all               = 0;
 
 db_ctx_t* auth_db_handle = 0;      /* database connection handle */
 auth_api_t auth_api;
@@ -140,6 +141,7 @@ static param_export_t params[] = {
     {"calculate_ha1",     PARAM_INT,    &calc_ha1        },
     {"load_credentials",  PARAM_STR,    &credentials_list},
     {"use_did",           PARAM_INT,    &use_did         },
+    {"check_all_ha1",     PARAM_INT,    &check_all       },
     {0, 0, 0}
 };
 
@@ -177,7 +179,7 @@ static int generate_queries(authdb_table_info_t *info)
 	db_fld_t *result_cols = NULL;
 	int len, i;
 
-len = sizeof(*result_cols) * (credentials_n + 3);
+	len = sizeof(*result_cols) * (credentials_n + 3);
 	result_cols = pkg_malloc(len);
 	if (!result_cols) {
 		ERR("can't allocate pkg mem\n");

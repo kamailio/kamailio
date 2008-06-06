@@ -36,17 +36,24 @@
 #include "auth_mod.h"
 #include "nonce.h"
 
+static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth_body, auth_result_t* auth_res);
+
 /*
  * Purpose of this function is to find credentials with given realm,
  * do sanity check, validate credential correctness and determine if
  * we should really authenticate (there must be no authentication for
  * ACK and CANCEL
+ * @param hdr output param where the Authorize headerfield will be returned.
+ * @param check_hdr  pointer to the function checking Authorization header field
  */
 auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
-						struct hdr_field**  hdr)
+						struct hdr_field**  hdr, check_auth_hdr_t check_auth_hdr)
 {
 	int ret;
 	auth_body_t* c;
+	check_auth_hdr_t check_hf;
+	auth_result_t    auth_rv;
+
 	static str prack = STR_STATIC_INIT("PRACK");
 
 	     /* ACK and CANCEL must be always authenticated, there is
@@ -79,27 +86,56 @@ auth_result_t pre_auth(struct sip_msg* msg, str* realm, hdr_types_t hftype,
 	     /* Pointer to the parsed credentials */
 	c = (auth_body_t*)((*hdr)->parsed);
 
-	     /* Check credentials correctness here */
-	if (check_dig_cred(&(c->digest)) != E_DIG_OK) {
-		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
-		return BAD_CREDENTIALS;
-	}
+	    /* digest headers are in c->digest */
+	DBG("auth: digest-algo: %.*s parsed value: %d\n", c->digest.alg.alg_str.len, c->digest.alg.alg_str.s, c->digest.alg.alg_parsed);
 
-	ret = check_nonce(&c->digest.nonce, &secret1, &secret2, msg);
-	if (ret!=0){
-		if (ret==3){
-			/* failed auth_extra_checks */
-			c->stale=1; /* we mark the nonce as stale 
-			 				(hack that makes our life much easier) */
-		}else{
-			DBG("auth:pre_auth: Invalid nonce value received\n");
-			return NOT_AUTHENTICATED;
-		}
+	    /* check authorization header field's validity */
+	if (check_auth_hdr == NULL) {
+		check_hf = auth_check_hdr_md5;
 	}
-
+	else {	/* use check function of external authentication module */
+		check_hf = check_auth_hdr;
+	}
+	/* use the right function */
+	if (!check_hf(msg, c, &auth_rv)) {
+		return auth_rv;
+	}
+	
 	return DO_AUTHENTICATION;
 }
 
+/**
+ * TODO move it to rfc2617.c 
+ * 
+ * @param auth_res return value of authentication. Maybe the it will be not affected.
+ * @result if authentication should continue (1) or not (0)
+ * 
+ */
+static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth, auth_result_t* auth_res)
+{
+	int ret;
+	
+	    /* Check credentials correctness here */
+	if (check_dig_cred(&auth->digest) != E_DIG_OK) {
+		LOG(L_ERR, "auth:pre_auth: Credentials are not filled properly\n");
+		*auth_res = BAD_CREDENTIALS;
+		return 0;
+	}
+
+	ret = check_nonce(&auth->digest.nonce, &secret1, &secret2, msg);
+	if (ret!=0){
+		if (ret==3){
+			/* failed auth_extra_checks */
+			auth->stale=1; /* we mark the nonce as stale 
+			 				(hack that makes our life much easier) */
+		} else {
+			DBG("auth:pre_auth: Invalid nonce value received\n");
+			*auth_res = NOT_AUTHENTICATED;
+			return 0;
+		}
+	}
+	return 1;
+}
 
 /*
  * Purpose of this function is to do post authentication steps like
@@ -147,5 +183,7 @@ int bind_auth(auth_api_t* api)
 	api->post_auth = post_auth;
 	api->build_challenge = build_challenge_hf;
 	api->qop = &qop;
+	api->calc_HA1 = calc_HA1;
+	api->calc_response = calc_response;
 	return 0;
 }

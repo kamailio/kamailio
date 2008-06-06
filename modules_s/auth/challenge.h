@@ -33,12 +33,19 @@
 
 #include "../../str.h"
 
-/*
+/**
  * Create {WWW,Proxy}-Authenticate header field
- * The result is stored in an attribute
- * return -1 on error, 0 on success
+ * @param nonce nonce value
+ * @param algorithm algorithm value
+ * @return -1 on error, 0 on success
+ * 
+ * The result is stored in an attribute.
+ * If nonce is not null that it is used, instead of call calc_nonce.
+ * If algorithm is not null that it is used irrespective of _PRINT_MD5
+ * 
+ * Major usage of nonce and algorithm params is AKA authentication. 
  */
-typedef int (*build_challenge_hf_t)(struct sip_msg* msg, int stale, str* realm, int hftype);
-int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, int hftype);
+typedef int (*build_challenge_hf_t)(struct sip_msg* msg, int stale, str* realm, str* nonce, str* algorithm, int hftype);
+int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, str* algorithm, int hftype);
 
 #endif /* CHALLENGE_H */
