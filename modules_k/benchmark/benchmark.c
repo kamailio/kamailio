@@ -100,9 +100,9 @@ static inline int fixup_bm_timer(void** param, int param_no);
  */
 static cmd_export_t cmds[] = {
 	{ "bm_start_timer", (cmd_function)bm_start_timer, 1, fixup_bm_timer, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{ "bm_log_timer",   (cmd_function)bm_log_timer, 1, fixup_bm_timer, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE },
 	{"load_bm",         (cmd_function)load_bm, 0, 0, 0, 0},
 	{ 0, 0, 0, 0, 0, 0 }
 };
