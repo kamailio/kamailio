@@ -154,7 +154,8 @@ int check_nonce(str* _nonce, str* _secret)
 	}
 
 	expires = get_nonce_expires(_nonce);
-   
+    index = get_nonce_index(_nonce);
+
     calc_nonce(non, expires, index, _secret);
 
  	
