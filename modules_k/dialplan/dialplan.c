@@ -406,7 +406,6 @@ static int dp_translate_f(struct sip_msg* msg, char* str1, char* str2)
 	if (dp_update(msg, &repl_par->v.sp[0], &repl_par->v.sp[1], 
 	&output, attrs_par) !=0){
 		LM_ERR("cannot set the output\n");
-		pkg_free(output.s);
 		return -1;
 	}
 
@@ -594,31 +593,19 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
     
     root= &rpl->node;
 
-    node = add_mi_node_child(root, 0, "OUTPUT", 6, 0, 0);
+    node = add_mi_node_child(root, 0, "Output", 6, output.s, output.len );
     if( node == NULL)
         goto error;
 
-    attr= add_mi_attr(node, MI_DUP_VALUE, 0, 0, output.s, output.len);
-    if(attr == NULL)
-        goto error;
-    
-    node = add_mi_node_child(root, 0, "ATTRIBUTES", 10, 0, 0);
+    node = add_mi_node_child(root, 0, "ATTRIBUTES", 10, attrs.s, attrs.len);
     if( node == NULL)
         goto error;
 
-    attr= add_mi_attr(node, MI_DUP_VALUE, 0, 0, attrs.s, attrs.len);
-    if(attr == NULL)
-        goto error;
-
-    if(output.s)
-        pkg_free(output.s);
     return rpl;
 
 error:
     if(rpl)
         free_mi_tree(rpl);
-    if(output.s)
-        pkg_free(output.s);
     return 0;
 }
 
