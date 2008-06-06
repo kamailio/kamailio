@@ -163,6 +163,13 @@ xlset_attr($attribute, xl_format)
    Note: You must ensure, that the xlog module is loaded to be able to use
    this function.
 
+xlfix_attr($attribute)
+
+   Fixes an xl formatted attribute value to pure string.
+
+   Meaning of the parameter is as follows:
+     * $attribute - The name of the AVP.
+
 insert_attr_hf(name)
 
    Inserts new header into the request, which is beeing forwarded. The AVP

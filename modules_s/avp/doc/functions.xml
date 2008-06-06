@@ -246,6 +246,23 @@ if (attr_equals_xl("my_avp", "%ct")) {
 	</itemizedlist>
 	<para>Note: You must ensure, that the xlog module is loaded to be able to use this function.</para>
     </section>
+
+	<section id="xlfix_attr">
+	<title><function>xlfix_attr($attribute)</function></title>
+	<para>
+		Fixes an xl formatted <emphasis>attribute</emphasis>  value to pure
+		string.
+	</para>
+	<para>Meaning of the parameter is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>$attribute</emphasis> - The name of the
+		    AVP.
+		</para>
+	    </listitem>
+	</itemizedlist>
+    </section>
+    
     
 	<section id="insert_attr_hf_1">
 	<title><function>insert_attr_hf(name)</function></title>
