@@ -53,6 +53,9 @@
 #include "../../dprint.h"
 #include "../../md5.h"
 #include "../../socket_info.h"
+#include "../../receive.h"
+#include "../../route.h"
+#include "../../action.h"
 #include "ut.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -153,6 +156,36 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 	return hashid;
 }
 
+
+static inline struct sip_msg* buf_to_sip_msg(char *buf, unsigned int len,	
+ 	     														dlg_t *dialog)
+{
+	static struct sip_msg req;
+
+	memset( &req, 0, sizeof(req) );
+	req.id = get_next_msg_no();
+	req.buf = buf;
+	req.len = len;
+	if (parse_msg(buf, len, &req)!=0) {
+		LM_CRIT("BUG - buffer parsing failed!");
+		return NULL;
+	}
+	/* populate some special fields in sip_msg */
+   	req.set_global_address=default_global_address;
+   	req.set_global_port=default_global_port;
+	req.force_send_socket = dialog->send_sock; 
+	if (set_dst_uri(&req, dialog->hooks.next_hop)) {
+		LM_ERR("failed to set dst_uri");
+		free_sip_msg(&req);
+		return NULL;
+	}
+	req.rcv.proto = dialog->send_sock->proto;
+	req.rcv.src_ip = dialog->send_sock->address;
+	req.rcv.src_port = dialog->send_sock->port_no;
+
+	return &req;
+}
+
 /*
  * Send a request using data from the dialog structure
  */
@@ -162,8 +195,11 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	union sockaddr_union to_su;
 	struct cell *new_cell;
 	struct retr_buf *request;
-	char* buf;
-	int buf_len, ret, flags;
+	static struct sip_msg *req;
+	struct usr_avp **backup;
+	char *buf, *buf1;
+	int buf_len, buf_len1;
+	int ret, flags;
 	unsigned int hi;
 
 	ret=-1;
@@ -202,11 +238,6 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	/* pass the transaction flags from dialog to transaction */
 	new_cell->flags |= dialog->T_flags;
 
-	/* better reset avp list now - anyhow, it's useless from
-	 * this point (bogdan) */
-	/* dcm: for testing: avps should stay to parrent message
-	 * reset_avps(); */
-
 	/* add the callback the transaction for LOCAL_COMPLETED event */
 	flags = TMCB_LOCAL_COMPLETED;
 	/* Add also TMCB_LOCAL_RESPONSE_OUT if provisional replies are desired */
@@ -238,6 +269,51 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		LM_ERR("failed to build message\n");
 		ret=E_OUT_OF_MEM;
 		goto error1;
+	}
+
+	if (local_rlist) {
+		LM_DBG("building sip_msg from buffer\n");
+		req = buf_to_sip_msg(buf, buf_len, dialog);
+		if (req==NULL) {
+			LM_ERR("failed to build sip_msg from buffer");
+		} else {
+			/* set transaction AVP list */
+			backup = set_avp_list( &new_cell->user_avps );
+
+			/* run the route */
+			LM_DBG("running local route - lump are %p %p\n",
+				req->add_rm, req->body_lumps);
+			run_top_route( local_rlist, req);
+
+			set_avp_list( backup );
+
+			/* check for changes - if none, do not regenerate the buffer 
+			 * we ignore any change on RURI and DSTURI and they should not
+			 * be changed  -bogdan */
+			if (req->new_uri.s)
+				{ pkg_free(req->new_uri.s); req->new_uri.len=0; }
+			if (req->dst_uri.s)
+				{ pkg_free(req->dst_uri.s); req->dst_uri.len=0; }
+
+			if (req->add_rm || req->body_lumps) {
+				LM_DBG("re-building the buffer (sip_msg changed) - lumps are"
+					"%p %p\n",req->add_rm, req->body_lumps);
+				/* build the shm buffer now */
+				buf1 = build_req_buf_from_sip_req(req,(unsigned int*)&buf_len1,
+					dialog->send_sock, dialog->send_sock->proto,
+					MSG_TRANS_SHM_FLAG|MSG_TRANS_NOVIA_FLAG );
+				if (!buf1) {
+					LM_ERR("no more shm mem\n"); 
+					free_sip_msg(req);
+					/* keep original buffer */
+				} else {
+					shm_free(buf);
+					buf = buf1;
+					buf_len = buf_len1;
+					/* use new buffer */
+				}
+			}
+		}
 	}
 
 	new_cell->method.s = buf;
