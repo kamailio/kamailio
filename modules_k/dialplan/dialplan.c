@@ -1,5 +1,5 @@
 /*
- *  $Id:$
+ *  $Id$
  *
  * Copyright (C)  2007-2008 Voice Sistem SRL
  *
@@ -46,7 +46,7 @@
 
 MODULE_VERSION
 
-#define DEFAULT_PARAM    "$ru.user"
+#define DEFAULT_PARAM    "$ruri.user"
 
 static int mod_init(void);
 static int child_init(int rank);
