@@ -330,7 +330,7 @@ modparam("avpops","db_scheme",
             naming format' chapter.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.13. avp_db_load usage
 ...
@@ -349,7 +349,7 @@ avp_db_load("$ru","$avp(i1:123)/$some_scheme");
    description.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.14. avp_db_store usage
 ...
@@ -366,7 +366,7 @@ avp_db_store("$ru/username","$avp(email)");
    description.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.15. avp_db_delete usage
 ...
@@ -398,7 +398,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
        derived from the type of the columns.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.16. avp_db_query usage
 ...
@@ -438,7 +438,7 @@ avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
           + flag = 'g'|'G'
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.18. avp_delete usage
 ...
@@ -468,7 +468,7 @@ avp_delete("a3");
           + flags = 'g' - effective only with AVPs
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.19. avp_pushto usage
 ...
@@ -510,7 +510,7 @@ avp_pushto("$br","$avp(i:680)");
        'i:0xhex_number' (e.g.,: 'i:0xabcd');
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.20. avp_check usage
 ...
@@ -535,7 +535,7 @@ avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
           + flags = 'g' | 'G' | 'd' | 'D' | 'n' | 'N' | 's' | 'S'
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.21. avp_copy usage
 ...
@@ -560,7 +560,7 @@ avp_copy("$avp(old)","$avp(new)/gd");
      * format - the formatted string to be printed in 'dest' AVP.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.22. avp_printf usage
 ...
@@ -592,7 +592,7 @@ d)");
             matching tokens; i, I - match ignore case)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.23. avp_subst usage
 ...
@@ -637,7 +637,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
        'i:0xhex_number' (e.g.,: 'i:0xabcd');
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.24. avp_op usage
 ...
@@ -656,7 +656,7 @@ avp_op("$avp(number)","sub/$avp(number2)/d");
             string; n = value number (int)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.25. is_avp_set usage
 ...
@@ -670,7 +670,7 @@ if(is_avp_set("$avp(i:678)"))
    helper/debug function.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-   BRANCH_ROUTE and ONREPLY_ROUTE.
+   BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
    Example 1.26. avp_print usage
 ...
