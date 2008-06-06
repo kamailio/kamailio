@@ -38,6 +38,7 @@
 #define PWINFO_EVENT        1<<1
 #define BLA_EVENT           1<<2
 #define MSGSUM_EVENT        1<<3
+#define CONFERENCE_EVENT    1<<4
 
 #define UL_PUBLISH          1<<0
 #define BLA_PUBLISH         1<<1
@@ -129,29 +130,30 @@ typedef int  (*query_dialog_t)(ua_pres_t* presentity);
 
 static inline int get_event_flag(str* event)
 {
-    switch (event->len) {
-    case 8:
-	if (strncmp(event->s, "presence", 8) == 0)
-	    return PRESENCE_EVENT;
-	break;
-    case 10:
-	if (strncmp(event->s, "dialog;sla", 10) == 0)
-	    return BLA_EVENT;
-	break;
-    case 14:
-	if (strncmp(event->s, "presence;winfo", 14) == 0)
-	    return PWINFO_EVENT;
-	break;
-    case 15:
-	if (strncmp(event->s, "message-summary", 15) == 0)
-	    return MSGSUM_EVENT;
-	break;
-    default:
-	break;
+    switch (event->len) 
+    {
+        case 8:
+            if (strncmp(event->s, "presence", 8) == 0)
+                return PRESENCE_EVENT;
+            break;
+        case 10:
+            if (strncmp(event->s, "dialog;sla", 10) == 0)
+                return BLA_EVENT;
+            if (strncmp(event->s, "conference", 10) == 0)
+                return CONFERENCE_EVENT;
+            break;
+        case 14:
+            if (strncmp(event->s, "presence;winfo", 14) == 0)
+                return PWINFO_EVENT;
+            break;
+        case 15:
+            if (strncmp(event->s, "message-summary", 15) == 0)
+                return MSGSUM_EVENT;
     }
+
     LM_ERR("Unknown event string\n");
     return -1;
-}	
+}
 
 int update_contact(struct sip_msg* msg, char* str1, char* str2);
 
