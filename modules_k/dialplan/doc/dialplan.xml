@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "dialplan_admin.xml">
+<!ENTITY devel SYSTEM "dialplan_devel.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+	<bookinfo>
+	<title>dialplan Module</title>
+	<productname class="trade">&opensername;</productname>
+	<authorgroup>
+		<author>
+		<firstname>Andreea-Ancuta</firstname>
+		<surname>Onofrei</surname>
+		<affiliation><orgname>&vsname;</orgname></affiliation>
+		<address>
+			<email>team@voice-system.ro</email>
+		</address>
+		</author>
+		<editor>
+		<firstname>Andreea-Ancuta</firstname>
+		<surname>Onofrei</surname>
+		<address>
+			<email>team@voice-system.ro</email>
+		</address>
+		</editor>
+	</authorgroup>
+	<copyright>
+		<year>2007-2008</year>
+		<holder>&voicesystem;</holder>
+	</copyright>
+	<revhistory>
+		<revision>
+		<revnumber>$Revision: 1.1 $</revnumber>
+		<date>$Date: 2007/08/30 13:16:22 $</date>
+		</revision>
+	</revhistory>
+	</bookinfo>
+	<toc></toc>
+	
+	&admin;
+	&devel;
+	
+</book>
