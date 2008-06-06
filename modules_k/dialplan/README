@@ -283,7 +283,7 @@ modparam("dialplan", "fetch_rows", 4000)
             existing script variable.
      * src/dest - input and output of the function. If this
        parameter is missing the default parameter
-       "ru.user/ru.user" will be used, thus translating the
+       "ruri.user/ruri.user" will be used, thus translating the
        request uri.
        Both src and dest can have the following types:
           + R-URI
@@ -302,13 +302,13 @@ modparam("dialplan", "fetch_rows", 4000)
 
    Example 1.13. dp_translate usage
 ...
-dp_translate("240", "$ru.user/$avp(s:dest)");
+dp_translate("240", "$ruri.user/$avp(s:dest)");
 xlog("translated to var $avp(s:dest) \n");
 ...
 
    Example 1.14. dp_translate usage
 ...
-$avp(s:src) = $ru.user;
+$avp(s:src) = $ruri.user;
 dp_translate("$var(x)", "$avp(s:src)/$var(y)");
 xlog("translated to var $var(y) \n");
 ...
