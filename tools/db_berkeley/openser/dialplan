@@ -1,0 +1,10 @@
+METADATA_COLUMNS
+id(int) dpid(int) pr(int) match_op(int) match_exp(str) match_len(int) subst_exp(str) repl_exp(str) attrs(str)
+METADATA_KEY
+
+METADATA_READONLY
+0
+METADATA_LOGFLAGS
+0
+METADATA_DEFAULTS
+NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL|NIL
