@@ -44,7 +44,7 @@
         <name>match_op</name>
         <type>int</type>
         <size>11</size>
-        <description>Matching operator for rule (0-regexp, 1-equal).</description>
+        <description>Matching operator for rule (0-equal, 1-regexp).</description>
     </column>
 
      <column id="match_exp">
