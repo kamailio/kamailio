@@ -354,7 +354,6 @@ static inline int authenticate(struct sip_msg* msg, str* realm, authdb_table_inf
 	case AUTHENTICATED:
 		ret = 1; 
 		goto end;
-	
 	}
     
 	cred = (auth_body_t*)h->parsed;
