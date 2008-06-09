@@ -33,7 +33,7 @@
 #include "dp_db.h"
 #include "dialplan.h"
 
-str dp_db_url = {0, 0};
+str dp_db_url       =   {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 str dp_table_name   =   str_init(DP_TABLE_NAME);
 str dpid_column     =   str_init(DPID_COL);
 str pr_column       =   str_init(PR_COL);
