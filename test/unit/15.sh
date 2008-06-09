@@ -23,7 +23,7 @@ CFG=15.cfg
 
 echo "loadmodule \"../modules/db_text/db_text.so\"" >> $CFG
 cat 2.cfg >> $CFG
-echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist\", \"db_url\", \"text://`pwd`/../scripts/dbtext/openser\")" >> $CFG
+echo "modparam(\"acc|alias_db|auth_db|dialog|dialplan|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist\", \"db_url\", \"text://`pwd`/../scripts/dbtext/openser\")" >> $CFG
 
 ../openser -w . -f $CFG > /dev/null
 ret=$?
