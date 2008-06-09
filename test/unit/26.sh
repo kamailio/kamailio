@@ -19,12 +19,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-CFG=26.cfg
+source include/require
 
-if [ ! -e ../modules/carrierroute/carrierroute.so ] ; then
-	echo "carrierroute not found, not run"
+if ! (check_openser && check_module "carrierroute" ); then
 	exit 0
 fi ;
+
+CFG=26.cfg
 
 cp $CFG $CFG.bak
 

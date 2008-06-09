@@ -19,14 +19,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# needs the sipp utility to run
-which sipp > /dev/null
-ret=$?
+source include/require
 
-if [ ! $? -eq 0 ] ; then
-	echo "sipp not found, not run"
+if ! (check_sipp && check_openser); then
 	exit 0
 fi ;
+
 
 CFG=21.cfg
 
@@ -49,8 +47,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi;
 
-
-#cleanup:
+#cleanup
 killall -9 openser &> /dev/null;
 killall -9 sipp &> /dev/null;
 $MYSQL "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"

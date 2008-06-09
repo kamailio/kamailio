@@ -19,12 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# needs the sipp utility to run
-which sipp > /dev/null
-ret=$?
+source include/require
 
-if [ ! $? -eq 0 ] ; then
-	echo "sipp not found, not run"
+if ! (check_sipp && check_openser); then
 	exit 0
 fi ;
 
@@ -43,7 +40,7 @@ sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 egrep '^ACC:[[:space:]]+transaction[[:space:]]+answered:[[:print:]]*code=200;reason=OK$' $TMPFILE > /dev/null
 ret=$?
 
-# cleanup:
+# cleanup
 killall -9 sipp &> /dev/null
 killall -9 openser &> /dev/null
 rm $TMPFILE

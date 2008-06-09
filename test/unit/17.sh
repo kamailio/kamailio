@@ -19,8 +19,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-if [ ! -e ../modules/db_berkeley/db_berkeley.so ] ; then
-	echo "db_berkeley driver not found, not run"
+source include/common
+source include/require
+
+if ! (check_openser && check_module "db_berkeley" ); then
 	exit 0
 fi ;
 
@@ -30,7 +32,7 @@ tmp_name=""$RANDOM"_openserdb_tmp"
 
 echo "loadmodule \"../modules/db_berkeley/db_berkeley.so\"" >> $CFG
 cat 2.cfg >> $CFG
-echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist\", \"db_url\", \"berkeley://`pwd`/../scripts/$tmp_name\")" >> $CFG
+echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/../scripts/$tmp_name\")" >> $CFG
 
 cd ../scripts
 

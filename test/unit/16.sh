@@ -19,10 +19,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+source include/require
+
 # Needs a default openser database setup for postgres
 
-if [ ! -e ../modules/db_postgres/db_postgres.so ] ; then
-	echo "postgres driver not found, not run"
+if ! (check_openser && check_module "db_postgres" ); then
 	exit 0
 fi ;
 
@@ -30,8 +32,7 @@ CFG=2.cfg
 cp $CFG $CFG.bak
 
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"acc|alias_db|auth_db|dialog|dispatcher|domain|domainpolicy|group|imc|lcr|msilo|siptrace|speeddial|uri_db|usrloc|permissions|pdt|userblacklist\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
-
+echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # start
 ../openser -w . -f $CFG > /dev/null

@@ -19,15 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# needs the netcat utility to run
+source include/require
 
-CFG=33.cfg
-
-which nc > /dev/null
-ret=$?
-
-if [ ! $ret -eq 0 ] ; then
-	echo "netcat not found, not run"
+if ! (check_netcat && check_openser); then
 	exit 0
 fi;
 
@@ -36,7 +30,9 @@ if [ -e core ] ; then
 	exit 0
 fi;
 
-cp $CFG $CFG.bak                
+CFG=33.cfg
+
+cp $CFG $CFG.bak
 
 ../openser -w . -f $CFG > /dev/null
 ret=$?

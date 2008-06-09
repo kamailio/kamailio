@@ -19,14 +19,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-CFG=11.cfg
+source include/require
 
-# Needs a default openser database setup for mysql
-
-if [ ! -e ../modules/db_postgres/db_postgres.so ] ; then
-	echo "postgres driver not found, not run"
+if ! (check_sipp && check_openser && check_module "db_postgres"); then
 	exit 0
 fi ;
+
+CFG=11.cfg
 
 cp $CFG $CFG.bak
 

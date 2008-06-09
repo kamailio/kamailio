@@ -19,14 +19,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-CFG=11.cfg
+source include/require
 
-# Needs a default openser database setup for mysql
-
-if [ ! -e ../modules/db_mysql/db_mysql.so ] ; then
-	echo "mysql driver not found, not run"
+if ! (check_openser && check_module "db_mysql"); then
 	exit 0
 fi ;
+
+CFG=11.cfg
 
 DOMAIN="local"
 MYSQL="mysql openser -u openser --password=openserrw -e"

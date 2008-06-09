@@ -19,12 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# needs the sipp utility to run
-which sipp > /dev/null
-ret=$?
+source include/require
 
-if [ ! $? -eq 0 ] ; then
-	echo "sipp not found, not run"
+if ! (check_sipp && check_openser && check_module "db_mysql" && check_module "presence" && check_module "presence_xml"); then
 	exit 0
 fi ;
 

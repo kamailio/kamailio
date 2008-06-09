@@ -1,7 +1,4 @@
-#!/bin/bash
-# load all modules without external dependencies with dbtext
-
-# Copyright (C) 2007 1&1 Internet AG
+# Copyright (C) 2008 1&1 Internet AG
 #
 # This file is part of openser, a free SIP server.
 #
@@ -19,25 +16,39 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/common
-source include/require
+function check_openser() {
+	if ! (test -e ../openser) ; then
+		echo "openser not found, not run"
+		return -1
+	fi;
+	return 0
+}
 
-CFG=15.cfg
+function check_module() {
+	if [ $# -ne 1 ]; then
+		echo "wrong number of params in check_module()"
+		return -1
+	fi
 
-if ! (check_openser); then
-	exit 0
-fi ;
+	if ! (test -e ../modules/$1/$1.so) ; then
+		echo "modules/$1/$1.so not found, not run"
+		return -1
+	fi;
+	return 0
+}
 
-echo "loadmodule \"../modules/db_text/db_text.so\"" >> $CFG
-cat 2.cfg >> $CFG
-echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"text://`pwd`/../scripts/dbtext/openser\")" >> $CFG
+function check_netcat() {
+	if ! ( which nc > /dev/null ); then
+		echo "netcat not found, not run"
+		return -1
+	fi;
+	return 0
+}
 
-../openser -w . -f $CFG > /dev/null
-ret=$?
-
-sleep 1
-killall -9 openser
-
-rm $CFG
-
-exit $ret
+function check_sipp() {
+	if ! ( which sipp > /dev/null ); then
+		echo "sipp not found, not run"
+		return -1
+	fi;
+	return 0
+}

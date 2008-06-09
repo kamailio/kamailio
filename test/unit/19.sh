@@ -19,16 +19,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-CFG=19.cfg
+source include/require
 
-# needs the sipp utility to run
-which sipp > /dev/null
-ret=$?
-
-if [ ! $? -eq 0 ] ; then
-	echo "sipp not found, not run"
+if ! (check_sipp && check_openser); then
 	exit 0
 fi ;
+
+CFG=19.cfg
 
 # add an registrar entry to the db;
 mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
@@ -39,7 +36,7 @@ sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 10 -f 2 -p 5061 &> /dev/null
 
 ret=$?
 
-# cleanup:
+# cleanup
 killall -9 sipp > /dev/null 2>&1
 killall -9 openser > /dev/null 2>&1
 

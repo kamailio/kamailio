@@ -20,6 +20,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/require
+
+if ! (check_openser); then
+	exit 0
+fi ;
+
 # the config file
 CFG=18.cfg
 

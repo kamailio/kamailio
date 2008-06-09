@@ -19,16 +19,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# needs the netcat utility to run
+source include/require
 
 CFG=12.cfg
 TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 
-which nc > /dev/null
-ret=$?
-
-if [ ! $? -eq 0 ] ; then
-	echo "netcat not found, not run"
+if ! (check_netcat && check_openser); then
 	exit 0
 fi ;
 
