@@ -13,6 +13,12 @@
 <!-- Get the docbook2man XSLT -->
 <xsl:include href="http://docbook2x.sourceforge.net/latest/xslt/man/docbook.xsl" />
 
+<xsl:template match="serdoc:todo">
+  <para>
+    <xsl:text>TODO</xsl:text>
+  </para>
+</xsl:template>
+
 <xsl:template match="serdoc:link">
   <xsl:call-template name="inline-bold" />
 </xsl:template>
@@ -28,6 +34,10 @@
 </xsl:template>
 
 <xsl:template match="serdoc:modparam">
+  <xsl:call-template name="inline-bold-monospace"/>
+</xsl:template>
+
+<xsl:template match="serdoc:field">
   <xsl:call-template name="inline-bold-monospace"/>
 </xsl:template>
 
