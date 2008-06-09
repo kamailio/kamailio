@@ -117,17 +117,17 @@ static int mod_init(void)
 {
 	LM_INFO("initializing module...\n");
 	
-    dp_db_url.len = dp_db_url.s ? strlen(dp_db_url.s) : 0;
+	dp_db_url.len = dp_db_url.s ? strlen(dp_db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(dp_db_url.s), dp_db_url.len,dp_db_url.s);
-    dp_table_name.len   = strlen(dp_table_name.s);
-    dpid_column.len     = strlen( dpid_column.s);
-    pr_column.len       = strlen(pr_column.s);
-    match_op_column.len = strlen(match_op_column.s);
-    match_exp_column.len= strlen(match_exp_column.s);
-    match_len_column.len= strlen(match_len_column.s);
-    subst_exp_column.len= strlen(subst_exp_column.s);
-    repl_exp_column.len = strlen(repl_exp_column.s);
-    attrs_column.len    = strlen(attrs_column.s);
+	dp_table_name.len   = strlen(dp_table_name.s);
+	dpid_column.len     = strlen( dpid_column.s);
+	pr_column.len       = strlen(pr_column.s);
+	match_op_column.len = strlen(match_op_column.s);
+	match_exp_column.len= strlen(match_exp_column.s);
+	match_len_column.len= strlen(match_len_column.s);
+	subst_exp_column.len= strlen(subst_exp_column.s);
+	repl_exp_column.len = strlen(repl_exp_column.s);
+	attrs_column.len    = strlen(attrs_column.s);
 
 	if(attr_pvar_s.s) {
 		attr_pvar = (pv_spec_t *)shm_malloc(sizeof(pv_spec_t));
@@ -531,18 +531,17 @@ static struct mi_root * mi_reload_rules(struct mi_root *cmd_tree, void *param)
 static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 {
 
-    struct mi_root* rpl= NULL;
-    struct mi_node* root, *node;
-    struct mi_attr* attr;
-    dpl_id_p idp;
-    str dpid_str;
-    str input;
-    int dpid;
-    int err;
-    str attrs;
-    str output= {0, 0};
-    
-    node = cmd->node.kids;
+	struct mi_root* rpl= NULL;
+	struct mi_node* root, *node;
+	dpl_id_p idp;
+	str dpid_str;
+	str input;
+	int dpid;
+	int err;
+	str attrs;
+	str output= {0, 0};
+
+	node = cmd->node.kids;
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
@@ -552,26 +551,25 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 		LM_ERR( "empty idp parameter\n");
 		return init_mi_tree(404, "Empty id parameter", 18);
 	}
-    dpid = str2s(dpid_str.s, dpid_str.len, &err);
-    if(err != 0)    {
-        LM_ERR("Wrong id parameter - should be an integer\n");
-        return init_mi_tree(404, "Wrong id parameter", 18);
-    }
+	dpid = str2s(dpid_str.s, dpid_str.len, &err);
+	if(err != 0)    {
+		LM_ERR("Wrong id parameter - should be an integer\n");
+		return init_mi_tree(404, "Wrong id parameter", 18);
+	}
 
-    if ((idp = select_dpid(dpid)) ==0 ){
+	if ((idp = select_dpid(dpid)) ==0 ){
 		LM_ERR("no information available for dpid %i\n", dpid);
 		return init_mi_tree(404, "No information available for dpid", 33);
 	}
 
-	
 	node = node->next;
 	if(node == NULL)
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-    if(node->next!= NULL)
-        return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+	if(node->next!= NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-    input=  node->value;
+	input=  node->value;
 	if(input.s == NULL || input.len== 0)	{
 		LM_ERR( "empty input parameter\n");
 		return init_mi_tree(404, "Empty input parameter", 21);
@@ -581,31 +579,31 @@ static struct mi_root * mi_translate(struct mi_root *cmd, void *param)
 
 	if (translate(NULL, input, &output, idp, &attrs)!=0){
 		LM_DBG("could not translate %.*s with dpid %i\n", 
-                input.len, input.s, idp->dp_id);
+			input.len, input.s, idp->dp_id);
 		return 0;
 	}
 	LM_DBG("input %.*s with dpid %i => output %.*s\n",
 			input.len, input.s, idp->dp_id, output.len, output.s);
 
-    rpl = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-    if (rpl==0)
-        goto error;
-    
-    root= &rpl->node;
+	rpl = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if (rpl==0)
+		goto error;
 
-    node = add_mi_node_child(root, 0, "Output", 6, output.s, output.len );
-    if( node == NULL)
-        goto error;
+	root= &rpl->node;
 
-    node = add_mi_node_child(root, 0, "ATTRIBUTES", 10, attrs.s, attrs.len);
-    if( node == NULL)
-        goto error;
+	node = add_mi_node_child(root, 0, "Output", 6, output.s, output.len );
+	if( node == NULL)
+		goto error;
 
-    return rpl;
+	node = add_mi_node_child(root, 0, "ATTRIBUTES", 10, attrs.s, attrs.len);
+	if( node == NULL)
+		goto error;
+
+	return rpl;
 
 error:
-    if(rpl)
-        free_mi_tree(rpl);
-    return 0;
+	if(rpl)
+		free_mi_tree(rpl);
+	return 0;
 }
 
