@@ -3,7 +3,9 @@
   "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
 
 
-<refentry id="module.auth_db" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:serdoc="http://sip-router.org/xml/serdoc">
+<refentry xml:id="module.auth_db"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
   <refmeta>
     <refentrytitle>auth_db</refentrytitle>
     <manvolnum>7</manvolnum>
@@ -174,7 +176,7 @@
       <para>
         The <parameter>db_url</parameter> parameter contains the URL used to
         connect to the database. The scheme identifies the database module in
-        use. Check the reference for the database you are intending to use for
+        use. Check the reference for the database you intend to use for
         more information.
       </para>
     </refsect2>
@@ -339,19 +341,7 @@
 
   <refsect1 xml:id="module.auth_db.database">
     <title>Database Scheme</title>
-    <para>
-      The <command>auth_db</command> module uses user credentials stored
-      in a database to check credentials provided by a client. The
-      type and address of the database is determined by the
-      <serdoc:modparam module="auth_db">db_url</serdoc:modparam> parameter.
-      The table to be queried is passed as the <symbol>table</symbol>
-      argument to the <serdoc:func>www_authenticate</serdoc:func> and
-      <serdoc:func>proxy_authenticate</serdoc:func> functions. The fields
-      of this table can be configured by the various module parameters
-      having a <parameter>_column</parameter> suffix.
-      For simplicity's sake, the following discussion assumes that the
-      names of the fields are left at their default values.
-    </para>
+
 
     <refsect2 xml:id="table.credentials.auth_username">
       <title><varname>auth_username</varname></title>
@@ -539,6 +529,9 @@
       <member><serdoc:sbin>ser</serdoc:sbin></member>
       <member><serdoc:file>ser.cfg</serdoc:file></member>
       <member><serdoc:module>auth</serdoc:module></member>
+      <member><serdoc:module>auth_diameter</serdoc:module></member>
+      <member><serdoc:module>auth_identity</serdoc:module></member>
+      <member><serdoc:module>auth_radius</serdoc:module></member>
     </simplelist>
   </refsect1>
 
