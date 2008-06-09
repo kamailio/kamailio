@@ -64,7 +64,7 @@ static param_export_t params[] = {
     {"verify_destination_service_type", INT_PARAM,
      &verify_destination_service_type},
     {"verify_source_service_type", INT_PARAM,
-     &verify_destination_service_type},
+     &verify_source_service_type},
     {0, 0, 0}
 };
 
