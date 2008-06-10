@@ -7,7 +7,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	The dialog module provides dialog awareness to &openser; proxy. Its 
+	The dialog module provides dialog awareness to the &openser; proxy. Its 
 	functionality is to keep trace of the current dialogs, to offer information
 	about them (like how many dialogs are active). The module exports no 
 	functions that could be used directly from scripts.
@@ -39,7 +39,7 @@
 	<section>
 	<title>Dialog profiling</title>
 	<para>
-	Dialog profiling is a mechanism that helps in clasifying, sorting and
+	Dialog profiling is a mechanism that helps in classifying, sorting and
 	keeping trace of certain types of dialogs, using whatever properties of
 	the dialog (like caller, destination, type of calls, etc).
 	Dialogs can be dynamically added in different (and several) profile 
@@ -71,7 +71,7 @@
 	A dialog can be added to multiple profiles in the same time.
 	</para>
 	<para>
-	Profiles are vizible (at the moment) in the request route (for initial 
+	Profiles are visible (at the moment) in the request route (for initial 
 	and sequential requests) and in the branch, failure and reply routes of 
 	the original request.
 	</para>

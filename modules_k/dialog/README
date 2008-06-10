@@ -10,8 +10,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -140,10 +140,10 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The dialog module provides dialog awareness to OpenSER proxy.
-   Its functionality is to keep trace of the current dialogs, to
-   offer information about them (like how many dialogs are
-   active). The module exports no functions that could be used
+   The dialog module provides dialog awareness to the OpenSER
+   proxy. Its functionality is to keep trace of the current
+   dialogs, to offer information about them (like how many dialogs
+   are active). The module exports no functions that could be used
    directly from scripts.
 
    The module, via an internal API, also provide the foundation to
@@ -165,7 +165,7 @@ Chapter 1. Admin Guide
 
 1.3. Dialog profiling
 
-   Dialog profiling is a mechanism that helps in clasifying,
+   Dialog profiling is a mechanism that helps in classifying,
    sorting and keeping trace of certain types of dialogs, using
    whatever properties of the dialog (like caller, destination,
    type of calls, etc). Dialogs can be dynamically added in
@@ -185,7 +185,7 @@ Chapter 1. Admin Guide
 
    A dialog can be added to multiple profiles in the same time.
 
-   Profiles are vizible (at the moment) in the request route (for
+   Profiles are visible (at the moment) in the request route (for
    initial and sequential requests) and in the branch, failure and
    reply routes of the original request.
 
