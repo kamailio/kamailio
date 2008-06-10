@@ -49,6 +49,7 @@ extern int config_check;
 extern char* stat_file;
 extern unsigned short port_no;
 
+extern time_t up_since;
 extern pid_t creator_pid;  /* pid of first process before daemonization */
 extern int uid;
 extern int gid;

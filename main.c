@@ -294,6 +294,7 @@ int *process_count = 0;			/* Total number of SER processes currently
 gen_lock_t* process_lock;		/* lock on the process table */
 int process_no = 0;				/* index of process in the pt */
 
+time_t up_since;
 int sig_flag = 0;              /* last signal received */
 int dont_fork = 0;
 int dont_daemonize = 0;
@@ -1276,6 +1277,7 @@ int main(int argc, char** argv)
 	int dont_fork_cnt;
 
 	/*init*/
+	time(&up_since);
 	creator_pid = getpid();
 	ret=-1;
 	my_argc=argc; my_argv=argv;
