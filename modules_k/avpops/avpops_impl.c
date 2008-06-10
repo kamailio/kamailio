@@ -1218,7 +1218,7 @@ cycle2:
 		} else if (val->ops&AVPOPS_OP_RE) {
 			backup  = avp_val.s.s[avp_val.s.len];
 			avp_val.s.s[avp_val.s.len] = '\0';
-			if (regexec((regex_t*)check_val.s.s, avp_val.s.s, 1, &pmatch, 0)==0)
+			if (regexec((regex_t*)check_val.s.s, avp_val.s.s, 1, &pmatch,0)==0)
 			{
 				avp_val.s.s[avp_val.s.len] = backup;
 				return 1;
@@ -1227,7 +1227,11 @@ cycle2:
 		} else if (val->ops&AVPOPS_OP_FM){
 			backup  = avp_val.s.s[avp_val.s.len];
 			avp_val.s.s[avp_val.s.len] = '\0';
-			if (fnmatch( check_val.s.s, avp_val.s.s, 0)==0)
+			if (fnmatch( check_val.s.s, avp_val.s.s,
+			#ifdef FNM_CASEFOLD
+			(val->ops&AVPOPS_FLAG_CI)?FNM_CASEFOLD:
+			#endif
+			0 )==0)
 			{
 				avp_val.s.s[avp_val.s.len] = backup;
 				return 1;
