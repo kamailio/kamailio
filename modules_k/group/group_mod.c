@@ -124,9 +124,9 @@ db_con_t* group_dbh = 0;
  */
 static cmd_export_t cmds[] = {
 	{"is_user_in",      (cmd_function)is_user_in,      2,  hf_fixup, 0,
-			REQUEST_ROUTE|FAILURE_ROUTE},
+			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"get_user_group",  (cmd_function)get_user_group,  2,  get_gid_fixup, 0,
-			REQUEST_ROUTE|FAILURE_ROUTE},
+			REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
