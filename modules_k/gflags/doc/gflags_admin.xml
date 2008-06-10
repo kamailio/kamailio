@@ -75,7 +75,7 @@ modparam("gflags", "initial", 15)
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE and BRANCH_ROUTE.
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 		</para>
 		<example>
 		<title><function moreinfo="none">set_gflag()</function> usage</title>
@@ -94,7 +94,7 @@ set_gflag("4");
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE and BRANCH_ROUTE.
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 		</para>
 		<example>
 		<title><function moreinfo="none">reset_gflag()</function> usage</title>
@@ -114,7 +114,7 @@ reset_gflag("4");
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
-		ONREPLY_ROUTE and BRANCH_ROUTE.
+		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 		</para>
 		<example>
 		<title><function moreinfo="none">is_gflag()</function> usage</title>
