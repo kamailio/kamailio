@@ -61,7 +61,7 @@ static int mod_init(void);
  */
 static cmd_export_t cmds[] = {
 	{"add_diversion",    (cmd_function)add_diversion,    1, fixup_str_null,
-		0, REQUEST_ROUTE | FAILURE_ROUTE},
+		0, REQUEST_ROUTE|FAILURE_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
