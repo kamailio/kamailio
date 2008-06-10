@@ -87,7 +87,7 @@ typedef struct dig_cred {
 	struct username username;   /* Username */
 	str realm;                  /* Realm */
 	str nonce;                  /* Nonce value */
-	str uri;                    /* URI */
+	str uri;                    /* digest-uri, duplicated Request-URI of the Request-Line */
 	str response;               /* Response string */
 	struct algorithm alg;       /* Type of algorithm used */
 	str cnonce;                 /* Cnonce value */
