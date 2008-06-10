@@ -93,9 +93,12 @@ static int fixup_exist(void** param, int param_no);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"check_to",       (cmd_function)check_to,       0, 0, 0, REQUEST_ROUTE},
-	{"check_from",     (cmd_function)check_from,     0, 0, 0, REQUEST_ROUTE},
-	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist, REQUEST_ROUTE},
+	{"check_to",       (cmd_function)check_to,       0, 0, 0,
+		REQUEST_ROUTE},
+	{"check_from",     (cmd_function)check_from,     0, 0, 0,
+		REQUEST_ROUTE},
+	{"does_uri_exist", (cmd_function)does_uri_exist, 0, 0, fixup_exist,
+		REQUEST_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
