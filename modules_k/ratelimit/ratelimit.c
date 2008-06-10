@@ -209,13 +209,13 @@ static int set_load_source(modparam_t, void *);
 void destroy(void);
 
 static cmd_export_t cmds[]={
-	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,               0,               REQUEST_ROUTE},
+	{"rl_check",      (cmd_function)w_rl_check_default,     0, 0,               0,               REQUEST_ROUTE|LOCAL_ROUTE},
 	{"rl_check",      (cmd_function)w_rl_check_forced,      1, fixup_pvar_null,
-		fixup_free_pvar_null, REQUEST_ROUTE},
-	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_uint_null, 0,               REQUEST_ROUTE},
-	{"rl_drop",       (cmd_function)w_rl_drop_default,      0, 0,               0,               REQUEST_ROUTE},
-	{"rl_drop",       (cmd_function)w_rl_drop_forced,       1, fixup_uint_null, 0,               REQUEST_ROUTE},
-	{"rl_drop",       (cmd_function)w_rl_drop,              2, fixup_uint_uint, 0,               REQUEST_ROUTE},
+		fixup_free_pvar_null, REQUEST_ROUTE|LOCAL_ROUTE},
+	{"rl_check_pipe", (cmd_function)w_rl_check_forced_pipe, 1, fixup_uint_null, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
+	{"rl_drop",       (cmd_function)w_rl_drop_default,      0, 0,               0,               REQUEST_ROUTE|LOCAL_ROUTE},
+	{"rl_drop",       (cmd_function)w_rl_drop_forced,       1, fixup_uint_null, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
+	{"rl_drop",       (cmd_function)w_rl_drop,              2, fixup_uint_uint, 0,               REQUEST_ROUTE|LOCAL_ROUTE},
 	{0,0,0,0,0,0}
 };
 static param_export_t params[]={
