@@ -61,7 +61,7 @@ int use_domain = 0;  /* By default we use domain */
  */
 static cmd_export_t cmds[] = {
 	{"radius_is_user_in", (cmd_function)radius_is_user_in, 2, hf_fixup,
-			0, REQUEST_ROUTE},
+			0, REQUEST_ROUTE|FAILURE_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
