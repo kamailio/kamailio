@@ -48,12 +48,12 @@
  * nonce = TIMESTAMP[8 chars] MD5SUM(TIMESTAMP, SECRET1)[32 chars] \
  *          MD5SUM(info(auth_extra_checks), SECRET2)[32 chars]
  */
-#define MAX_NONCE_LEN (8 + 32 + 32)
+#define MAX_NONCE_LEN (8 + 8 + 32 + 32)
 /*
  * Minimum length of the nonce string
  * nonce = TIMESTAMP[8 chars] MD5SUM(TIMESTAMP, SECRET1)[32 chars]
  */
-#define MIN_NONCE_LEN (8 + 32)
+#define MIN_NONCE_LEN (8 + 8 + 32)
 
 /* Extra authentication checks for REGISTER messages */
 extern int auth_checks_reg;
@@ -75,7 +75,7 @@ int get_auth_checks(struct sip_msg* msg);
 /*
  * Calculate nonce value
  */
-int calc_nonce(char* nonce, int* nonce_len, int cfg, int expires, str* secret1,
+int calc_nonce(char* nonce, int* nonce_len, int cfg, int since, int expires, str* secret1,
 			   str* secret2, struct sip_msg* msg);
 
 
@@ -90,6 +90,10 @@ int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg);
  */
 time_t get_nonce_expires(str* nonce);
 
+/*
+ * Get valid_since time from nonce string
+ */
+time_t get_nonce_since(str* nonce);
 
 /*
  * Check if the nonce is stale
