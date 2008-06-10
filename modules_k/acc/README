@@ -153,7 +153,7 @@ Chapter 1. Admin Guide
    To account a transaction and to choose which set of backends to
    be used, the script writer just has to set some flags (see the
    module parameters section for flag definitions Section 1.5,
-   "Exported Parameters"). If the accouting flag for a specific
+   "Exported Parameters"). If the accounting flag for a specific
    backend is set, the acc module will then report on completed
    transaction. A typical usage of the module takes no
    acc-specific script command -- the functionality binds
@@ -436,21 +436,21 @@ modparam("acc", "detect_direction", 1)
    Section 1.3, "Multi Call-Legs accounting" for a detailed
    description of the Multi Call-Legs accounting.
 
-   If empty, the multi-leg accouting support will be disabled.
+   If empty, the multi-leg accounting support will be disabled.
 
    Default value is 0 (disabled).
 
    Example 1.6. multi_leg_info example
-# for syslog-based accouting, use any text you want to be printed
+# for syslog-based accounting, use any text you want to be printed
 modparam("acc", "multi_leg_info",
     "text1=$avp(src);text2=$avp(dst)")
-# for mysql-based accouting, use the names of the columns
+# for mysql-based accounting, use the names of the columns
 modparam("acc", "multi_leg_info",
     "leg_src=$avp(src);leg_dst=$avp(dst)")
-# for RADIUS-based accouting, use the names of the RADIUS AVPs
+# for RADIUS-based accounting, use the names of the RADIUS AVPs
 modparam("acc", "multi_leg_info",
     "RAD_LEG_SRC=$avp(src);RAD_LEG_SRC=$avp(dst)")
-# for DIAMETER-based accouting, use the DIAMETER AVP ID (as integer)
+# for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
 modparam("acc", "multi_leg_info",
     "2345=$avp(src);2346=$avp(dst)")
 
@@ -512,7 +512,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
    and dictionary, see etc for an example of config file and
    dictionary.
 
-   If the parameter is set to empty string, the RADIUS accouting
+   If the parameter is set to empty string, the RADIUS accounting
    support will be disabled (even if compiled).
 
    Default value is "/usr/local/etc/radiusclient/radiusclient.conf
@@ -610,7 +610,7 @@ modparam("acc", "db_url", "mysql://user:password@localhost/openser")
 
 1.5.22. acc_method_column (string)
 
-   Column name in accouting table to store the request's method
+   Column name in accounting table to store the request's method
    name as string.
 
    Default value is "method".
@@ -620,7 +620,7 @@ modparam("acc", "acc_method_column", "method")
 
 1.5.23. acc_from_tag_column (string)
 
-   Column name in accouting table to store the From header TAG
+   Column name in accounting table to store the From header TAG
    parameter.
 
    Default value is "from_tag".
@@ -630,7 +630,7 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 
 1.5.24. acc_to_tag_column (string)
 
-   Column name in accouting table to store the To header TAG
+   Column name in accounting table to store the To header TAG
    parameter.
 
    Default value is "to_tag".
@@ -640,7 +640,7 @@ modparam("acc", "acc_to_tag_column", "to_tag")
 
 1.5.25. acc_callid_column (string)
 
-   Column name in accouting table to store the request's Callid
+   Column name in accounting table to store the request's Callid
    value.
 
    Default value is "callid".
@@ -650,7 +650,7 @@ modparam("acc", "acc_callid_column", "callid")
 
 1.5.26. acc_sip_code_column (string)
 
-   Column name in accouting table to store the final reply's
+   Column name in accounting table to store the final reply's
    numric code value in string format.
 
    Default value is "sip_code".
@@ -660,7 +660,7 @@ modparam("acc", "acc_sip_code_column", "sip_code")
 
 1.5.27. acc_sip_reason_column (string)
 
-   Column name in accouting table to store the final reply's
+   Column name in accounting table to store the final reply's
    reason phrase value.
 
    Default value is "sip_reason".
@@ -670,7 +670,7 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
 
 1.5.28. acc_time_column (string)
 
-   Column name in accouting table to store the time stamp of the
+   Column name in accounting table to store the time stamp of the
    transaction completion in date-time format.
 
    Default value is "time".

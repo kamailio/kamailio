@@ -16,7 +16,7 @@
 		To account a transaction and to choose which set of backends to be 
 		used, the script writer just has to set some flags (see the module
 		parameters section for flag definitions <xref linkend="ACC-param-id"/>).
-		If the accouting flag for a specific backend is set, the acc module 
+		If the accounting flag for a specific backend is set, the acc module 
 		will then report on completed transaction. A typical usage of the 
 		module takes no acc-specific script command -- the functionality 
 		binds invisibly through transaction processing. Script writers just 
@@ -447,7 +447,7 @@ modparam("acc", "detect_direction", 1)
 		detailed description of the Multi Call-Legs accounting.
 		</para>
 		<para>
-		If empty, the multi-leg accouting support will be disabled.
+		If empty, the multi-leg accounting support will be disabled.
 		</para>
 		<para>
 		Default value is 0 (disabled).
@@ -455,16 +455,16 @@ modparam("acc", "detect_direction", 1)
 		<example>
 		<title>multi_leg_info example</title>
 		<programlisting format="linespecific">
-# for syslog-based accouting, use any text you want to be printed
+# for syslog-based accounting, use any text you want to be printed
 modparam("acc", "multi_leg_info",
     "text1=$avp(src);text2=$avp(dst)")
-# for mysql-based accouting, use the names of the columns
+# for mysql-based accounting, use the names of the columns
 modparam("acc", "multi_leg_info",
     "leg_src=$avp(src);leg_dst=$avp(dst)")
-# for RADIUS-based accouting, use the names of the RADIUS AVPs
+# for RADIUS-based accounting, use the names of the RADIUS AVPs
 modparam("acc", "multi_leg_info",
     "RAD_LEG_SRC=$avp(src);RAD_LEG_SRC=$avp(dst)")
-# for DIAMETER-based accouting, use the DIAMETER AVP ID (as integer)
+# for DIAMETER-based accounting, use the DIAMETER AVP ID (as integer)
 modparam("acc", "multi_leg_info",
     "2345=$avp(src);2346=$avp(dst)")
 </programlisting>
@@ -561,7 +561,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
 		config file and dictionary.
 		</para>
 		<para>
-		If the parameter is set to empty string, the RADIUS accouting support
+		If the parameter is set to empty string, the RADIUS accounting support
 		will be disabled (even if compiled).
 		</para>
 		<para>
@@ -719,7 +719,7 @@ modparam("acc", "db_url", "mysql://user:password@localhost/openser")
 	<section>
 		<title><varname>acc_method_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the request's method name as
+		Column name in accounting table to store the request's method name as
 		string.
 		</para>
 		<para>
@@ -735,7 +735,7 @@ modparam("acc", "acc_method_column", "method")
 	<section>
 		<title><varname>acc_from_tag_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the From header TAG parameter.
+		Column name in accounting table to store the From header TAG parameter.
 		</para>
 		<para>
 		Default value is <quote>from_tag</quote>.
@@ -750,7 +750,7 @@ modparam("acc", "acc_from_tag_column", "from_tag")
 	<section>
 		<title><varname>acc_to_tag_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the To header TAG parameter.
+		Column name in accounting table to store the To header TAG parameter.
 		</para>
 		<para>
 		Default value is <quote>to_tag</quote>.
@@ -765,7 +765,7 @@ modparam("acc", "acc_to_tag_column", "to_tag")
 	<section>
 		<title><varname>acc_callid_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the request's Callid value.
+		Column name in accounting table to store the request's Callid value.
 		</para>
 		<para>
 		Default value is <quote>callid</quote>.
@@ -780,7 +780,7 @@ modparam("acc", "acc_callid_column", "callid")
 	<section>
 		<title><varname>acc_sip_code_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the final reply's numric code
+		Column name in accounting table to store the final reply's numric code
 		value in string format.
 		</para>
 		<para>
@@ -796,7 +796,7 @@ modparam("acc", "acc_sip_code_column", "sip_code")
 	<section>
 		<title><varname>acc_sip_reason_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the final reply's reason
+		Column name in accounting table to store the final reply's reason
 		phrase value.
 		</para>
 		<para>
@@ -812,7 +812,7 @@ modparam("acc", "acc_sip_reason_column", "sip_reason")
 	<section>
 		<title><varname>acc_time_column</varname> (string)</title>
 		<para>
-		Column name in accouting table to store the time stamp of the 
+		Column name in accounting table to store the time stamp of the 
 		transaction completion in date-time format.
 		</para>
 		<para>
