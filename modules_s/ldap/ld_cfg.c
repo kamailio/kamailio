@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
@@ -78,7 +78,9 @@ void ld_cfg_free(void)
 
 		if (c->id.s) pkg_free(c->id.s);
 		if (c->host.s) pkg_free(c->host.s);
-		
+		if (c->username.s) pkg_free(c->username.s);
+		if (c->password.s) pkg_free(c->password.s);
+
 		pkg_free(c);
 	}
 
@@ -125,26 +127,26 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 	}
 	cfg->syntax = (enum ld_syntax*)ptr;
 	cfg->syntax[cfg->n] = LD_SYNTAX_STRING;
-		
+
 	cfg->n++;
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("ldap:%s:%d:%d: Database field name expected\n", 
+		ERR("ldap:%s:%d:%d: Database field name expected\n",
 		    st->file, st->line, st->col);
 		return -1;
 	}
 
 	if (t.type != CFG_TOKEN_ALPHA) {
-		ERR("ldap:%s:%d:%d: Invalid field name format %d:'%.*s'\n", 
+		ERR("ldap:%s:%d:%d: Invalid field name format %d:'%.*s'\n",
 		    st->file, t.start.line, t.start.col,
 		    t.type, STR_FMT(&t.val));
 		return -1;
 	}
-	
+
 	if ((cfg->field[cfg->n - 1].s = as_asciiz(&t.val)) == NULL) {
-		ERR("ldap:%s:%d:%d: Out of memory\n", st->file, 
+		ERR("ldap:%s:%d:%d: Out of memory\n", st->file,
 			t.start.line, t.start.col);
 		return -1;
 	}
@@ -153,12 +155,12 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("ldap:%s:%d:%d: Delimiter ':' missing\n", 
+		ERR("ldap:%s:%d:%d: Delimiter ':' missing\n",
 		    st->file, st->line, st->col);
 		return -1;
 	}
 	if (t.type != ':') {
-		ERR("ldap:%s:%d:%d: Syntax error, ':' expected\n", 
+		ERR("ldap:%s:%d:%d: Syntax error, ':' expected\n",
 		    st->file, t.start.line, t.start.col);
 		return -1;
 	}
@@ -166,7 +168,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("ldap:%s:%d:%d: LDAP Attribute syntax or name expected\n", 
+		ERR("ldap:%s:%d:%d: LDAP Attribute syntax or name expected\n",
 		    st->file, st->line, st->col);
 		return -1;
 	}
@@ -175,19 +177,19 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
 		if (ret > 0) {
-			ERR("ldap:%s:%d:%d: LDAP Attribute Syntax expected\n", 
+			ERR("ldap:%s:%d:%d: LDAP Attribute Syntax expected\n",
 				st->file, st->line, st->col);
 			return -1;
 		}
 		if (t.type != CFG_TOKEN_ALPHA) {
-			ERR("ldap:%s:%d:%d: Invalid LDAP attribute syntax format %d:'%.*s'\n", 
+			ERR("ldap:%s:%d:%d: Invalid LDAP attribute syntax format %d:'%.*s'\n",
 				st->file, t.start.line, t.start.col,
 				t.type, STR_FMT(&t.val));
 			return -1;
 		}
-		
+
 		if ((syntax = cfg_lookup_token(syntaxes, &t.val)) == NULL) {
-			ERR("ldap:%s:%d:%d: Invalid syntaxt value '%.*s'\n", 
+			ERR("ldap:%s:%d:%d: Invalid syntaxt value '%.*s'\n",
 				st->file, t.start.line, t.start.col, STR_FMT(&t.val));
 			return -1;
 		}
@@ -196,13 +198,13 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
 		if (ret > 0) {
-			ERR("ldap:%s:%d:%d: Closing ')' missing in attribute syntax\n", 
+			ERR("ldap:%s:%d:%d: Closing ')' missing in attribute syntax\n",
 				st->file, st->line, st->col);
 			return -1;
 		}
 
 		if (t.type != ')') {
-			ERR("ldap:%s:%d:%d: Syntax error, ')' expected\n", 
+			ERR("ldap:%s:%d:%d: Syntax error, ')' expected\n",
 				st->file, st->line, st->col);
 			return -1;
 		}
@@ -210,20 +212,20 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
 		if (ret > 0) {
-			ERR("ldap:%s:%d:%d: LDAP Attribute name expected\n", 
+			ERR("ldap:%s:%d:%d: LDAP Attribute name expected\n",
 				st->file, st->line, st->col);
 			return -1;
 		}
 	}
-	
+
 	if (t.type != CFG_TOKEN_ALPHA) {
-		ERR("ldap:%s:%d:%d: Invalid LDAP attribute name format %d:'%.*s'\n", 
+		ERR("ldap:%s:%d:%d: Invalid LDAP attribute name format %d:'%.*s'\n",
 		    st->file, t.start.line, t.start.col, t.type, STR_FMT(&t.val));
 		return -1;
 	}
 
 	if ((cfg->attr[cfg->n - 1].s = as_asciiz(&t.val)) == NULL) {
-		ERR("ldap:%s:%d:%d: Out of memory\n", 
+		ERR("ldap:%s:%d:%d: Out of memory\n",
 		    st->file, t.start.line, t.start.col);
 		return -1;
 	}
@@ -258,6 +260,9 @@ static cfg_option_t ldap_tab_options[] = {
 
 static cfg_option_t ldap_con_options[] = {
 	{"host", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"port", .f = cfg_parse_int_opt},
+	{"username", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"password", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{0}
 };
 
@@ -275,21 +280,21 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 	cfg_token_t t;
 	int ret, type, i;
 	cfg_option_t* opt;
-	str* id;
+	str* id = NULL;
 	struct ld_cfg* tab;
 	struct ld_con_info* cinfo;
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: Section type missing\n", 
+		ERR("%s:%d:%d: Section type missing\n",
 		    st->file, st->line, st->col);
 		return -1;
 	}
-	
-	if (t.type != CFG_TOKEN_ALPHA || 
+
+	if (t.type != CFG_TOKEN_ALPHA ||
 	    ((opt = cfg_lookup_token(section_types, &t.val)) == NULL)) {
-		ERR("%s:%d:%d: Invalid section type %d:'%.*s'\n", 
+		ERR("%s:%d:%d: Invalid section type %d:'%.*s'\n",
 		    st->file, t.start.line, t.start.col, t.type, STR_FMT(&t.val));
 		return -1;
 	}
@@ -303,7 +308,7 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		memset(tab, '\0', sizeof(*tab));
 		tab->next = cfg;
 		cfg = tab;
-		
+
 		cfg_set_options(st, ldap_tab_options);
 		ldap_tab_options[2].param = &cfg->filter;
 		ldap_tab_options[3].param = &cfg->base;
@@ -318,9 +323,12 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		memset(cinfo, '\0', sizeof(*cinfo));
 		cinfo->next = con;
 		con = cinfo;
-		
+
 		cfg_set_options(st, ldap_con_options);
 		ldap_con_options[0].param = &con->host;
+		ldap_con_options[1].param = &con->port;
+		ldap_con_options[2].param = &con->username;
+		ldap_con_options[3].param = &con->password;
 	} else {
 		BUG("%s:%d:%d: Unsupported section type %c\n",
 			st->file, t.start.line, t.start.col, t.type);
@@ -330,7 +338,7 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
 	if (ret > 0) {
-		ERR("%s:%d:%d: Delimiter ':' expected.\n", 
+		ERR("%s:%d:%d: Delimiter ':' expected.\n",
 		    st->file, st->line, st->col);
 		return -1;
 	}
@@ -351,7 +359,7 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 			st->file, st->line, st->col);
 		return -1;
 	}
-	
+
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return ret;
 	if (ret > 0) {
@@ -364,7 +372,7 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 			st->file, t.start.line, t.start.col);
 		return -1;
 	}
-	
+
 	if (cfg_eat_eol(st, flags)) return -1;
 	return 0;
 
@@ -399,6 +407,21 @@ char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_cfg* cfg, char* fld_na
 	return NULL;
 }
 
+
+struct ld_con_info* ld_find_conn_info(str* conn_id)
+{
+	struct ld_con_info* ptr;
+
+	ptr = con;
+	while(ptr) {
+		if (ptr->id.len == conn_id->len &&
+			!memcmp(ptr->id.s, conn_id->s, conn_id->len)) {
+			return ptr;
+		}
+		ptr = ptr->next;
+	}
+	return NULL;
+}
 
 
 int ld_load_cfg(str* filename)

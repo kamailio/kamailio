@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
@@ -45,12 +45,17 @@ struct ld_cfg {
 struct ld_con_info {
 	str id;
 	str host;
+	unsigned int port;
+	str username;
+	str password;
 	struct ld_con_info* next;
 };
 
 struct ld_cfg* ld_find_cfg(str* table);
 
 char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_cfg* cfg, char* fld_name);
+
+struct ld_con_info* ld_find_conn_info(str* conn_id);
 
 int ld_load_cfg(str* filename);
 

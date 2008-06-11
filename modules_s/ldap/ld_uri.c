@@ -31,6 +31,7 @@
  */
 
 #include "ld_uri.h"
+#include "ld_cfg.h"
 
 #include "../../mem/mem.h"
 #include "../../ut.h"
@@ -85,6 +86,26 @@ static int dupl_string(char** dst, const char* begin, const char* end)
 	return 0;
 }
 
+/** Duplicate a string
+ */
+static char* pkgstrdup(str* s)
+{
+	char* dst;
+
+	if (!s)
+		return NULL;
+
+	dst = pkg_malloc(s->len + 1);
+	if (dst == NULL)
+		return NULL;
+
+	memcpy(dst, s->s, s->len);
+	dst[s->len] = '\0';
+
+	return dst;
+}
+
+
 /*
  * Parse ldap URI of form
  * //[username[:password]@]hostname[:port]
@@ -98,7 +119,7 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 
 	enum state {
 		ST_BEGIN,      /* First state */
-		ST_SECTTITLE,  /* Config section title */
+		ST_SECTION_ID,  /* Config section id */
 		ST_SLASH2,     /* Second slash */
 		ST_USER_HOST,  /* Username or hostname */
 		ST_PASS_PORT,  /* Password or port part */
@@ -109,6 +130,9 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 	const char* begin;
 	const char* ldapbegin;
 	char* prev_token;
+	struct ld_con_info* cfg_conn_info;
+	char* sport, *puri;
+	int portlen = 0;
 
 	prev_token = 0;
 
@@ -123,7 +147,7 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 	st = ST_BEGIN;
 	ldapbegin = begin = uri->s;
 
-	for(i = 0; i < uri->len; i++) {
+	for(i = 0; i < uri->len && st != ST_SECTION_ID; i++) {
 		switch(st) {
 		case ST_BEGIN:
 			switch(uri->s[i]) {
@@ -132,11 +156,11 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 				break;
 
 			default:
-				st = ST_SECTTITLE;
+				st = ST_SECTION_ID;
 			}
 			break;
 
-		case ST_SECTTITLE:
+		case ST_SECTION_ID:
 			break;
 
 		case ST_SLASH2:
@@ -206,8 +230,61 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 			goto err;
 		}
 		break;
-	case ST_SECTTITLE:
-		/* haven't supported yet */
+	case ST_SECTION_ID:
+		/* the value of uri is the id of the config
+		   connection section in this case */
+		cfg_conn_info = ld_find_conn_info(uri);
+		if (!cfg_conn_info) {
+			ERR("ldap: connection id '%.*s' not found in ldap config\n", uri->len, uri->s);
+			goto err;
+		}
+
+		ldapurllen = cfg_conn_info->host.len;
+		sport = NULL;
+		if (cfg_conn_info->port) {
+			sport = int2str(cfg_conn_info->port, &portlen);
+			// +1: we need space for ':' host and port delimiter
+			ldapurllen += portlen + 1;
+		}
+
+		// +3 for the '://' ldap url snippet
+		puri = res->uri = pkg_malloc(scheme->len + 3 + ldapurllen + 1);
+		if (res->uri== NULL) {
+			ERR("ldap: No memory left\n");
+			goto err;
+		}
+		memcpy(puri, scheme->s, scheme->len);
+		puri += scheme->len;
+		memcpy(puri, "://", strlen("://"));
+		puri+= strlen("://");
+		memcpy(puri, cfg_conn_info->host.s, cfg_conn_info->host.len);
+		puri+=cfg_conn_info->host.len;
+		if (sport) {
+			*puri++ = ':';
+			memcpy(puri, sport, portlen);
+		}
+		res->uri[scheme->len + 3 + ldapurllen] = '\0';
+
+		if (ldap_url_parse(res->uri, &res->ldap_url) != 0) {
+			ERR("ldap: Error while parsing URL '%s'\n", res->uri);
+			goto err;
+		}
+
+		if (cfg_conn_info->username.s) {
+			if (!(res->username = pkgstrdup(&cfg_conn_info->username))) {
+				ERR("ldap: No memory left\n");
+				goto err;
+			}
+		}
+
+		if (cfg_conn_info->password.s) {
+			if (!(res->password = pkgstrdup(&cfg_conn_info->password))) {
+				ERR("ldap: No memory left\n");
+				goto err;
+			}
+		}
+
+		break;
 	default:
 		goto err;
 	}
