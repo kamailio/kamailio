@@ -435,10 +435,17 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.sample \
 				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
 		fi
+		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
+			< etc/ser-oob.cfg > $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg.sample
+		chmod 644 $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg.sample
+		if [ -z "${skip_cfg_install}" -a \
+				! -f $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg ]; then \
+			mv -f $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg.sample \
+				$(cfg-prefix)/$(cfg-dir)ser-advanced.cfg; \
+		fi
 		# radius dictionary
 		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
 		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
-		$(INSTALL-CFG) etc/ser-oob.cfg $(cfg-prefix)/$(cfg-dir)/ser-advanced.cfg
 
 install-bin: $(bin-prefix)/$(bin-dir) 
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
