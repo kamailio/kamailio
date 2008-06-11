@@ -70,22 +70,25 @@ enum db_flags {
 	DB_NO_TZ = (1 << 1), /**< Inhibit time-zone shifts for timestamp fields */
 };
 
+/* union of all possible types */
+typedef union db_fld_val {
+	int          int4;   /* integer value */
+	float        flt;    /* float value */
+	double       dbl;    /* double value */
+	time_t       time;   /* unix time value */
+	char*        cstr;   /* NULL terminated string */
+	str          lstr;   /* String with known length */
+	str          blob;   /* Blob data */
+	unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */ 
+	long long    int8;   /* 8-byte integer */
+} db_fld_val_t;
+
 typedef struct db_fld {
 	db_gen_t gen;  /* Generic part of the structure */
     char* name;
     enum db_fld_type type;
     unsigned int flags;
-    union {
-		int          int4;   /* integer value */
-		float        flt;    /* float value */
-		double       dbl;    /* double value */
-		time_t       time;   /* unix time value */
-		char*        cstr;   /* NULL terminated string */
-		str          lstr;   /* String with known length */
-		str          blob;   /* Blob data */
-		unsigned int bitmap; /* Bitmap data type, 32 flags, should be enough */ 
-		long long    int8;   /* 8-byte integer */
-    } v;                     /* union of all possible types */
+	db_fld_val_t v;
 	enum db_fld_op op;
 } db_fld_t;
 
