@@ -446,6 +446,9 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		# radius dictionary
 		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
 		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
+		# TLS configuration
+		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/tls.cfg
+		$(INSTALL-CFG) modules/tls/tls.cfg $(cfg-prefix)/$(cfg-dir)
 
 install-bin: $(bin-prefix)/$(bin-dir) 
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
