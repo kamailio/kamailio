@@ -397,6 +397,7 @@ inline static int get_dlg_timeout(struct sip_msg *req)
 	&& pv_val.flags&PV_VAL_INT && pv_val.ri>0 ) {
 		return pv_val.ri;
 	}
+	LM_INFO("invalid AVP value, use default timeout");
 	return default_timeout;
 }
 
