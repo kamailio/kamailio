@@ -249,10 +249,10 @@ cfg_option_t cfg_bool_values[] = {
 
 static void print_token(cfg_token_t* token)
 {
+#ifdef EXTRA_DEBUG
 	int i, j;
 	char* buf;
 
-#ifdef EXTRA_DEBUG
 	if ((buf = pkg_malloc(token->val.len * 2)) == NULL) {
 		DBG("token(%d, '%.*s', <%d,%d>-<%d,%d>)\n", 
 			token->type, STR_FMT(&token->val),
