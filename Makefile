@@ -121,7 +121,7 @@ else
 							jabber  \
 							cpl-c \
 							auth_radius group_radius uri_radius avp_radius \
-							acc_radius dialog pa rls presence_b2b xcap \
+							acc_radius dialog pa rls presence_b2b xcap xmlrpc \
 							osp tls \
 							unixsock eval
 endif
