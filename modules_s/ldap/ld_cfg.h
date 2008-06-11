@@ -42,6 +42,12 @@ struct ld_cfg {
 	struct ld_cfg* next; /**< The next table in the list */
 };
 
+struct ld_con_info {
+	str id;
+	str host;
+	struct ld_con_info* next;
+};
+
 struct ld_cfg* ld_find_cfg(str* table);
 
 char* ld_find_attr_name(enum ld_syntax* syntax, struct ld_cfg* cfg, char* fld_name);

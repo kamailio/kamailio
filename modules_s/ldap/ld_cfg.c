@@ -38,11 +38,20 @@
 #include <libgen.h>
 
 
-static struct ld_cfg* cfg;
+enum section_type {
+	LDAP_CON_SECTION = 0,
+	LDAP_TABLE_SECTION
+};
+
+
+static struct ld_cfg* cfg = NULL;
+
+static struct ld_con_info* con = NULL;
 
 
 void ld_cfg_free(void)
 {
+	struct ld_con_info* c;
 	struct ld_cfg* ptr;
 	int i;
 
@@ -62,6 +71,17 @@ void ld_cfg_free(void)
 		if (ptr->attr) pkg_free(ptr->attr);
 		if (ptr->syntax) pkg_free(ptr->syntax);
 	}
+
+	while (con) {
+		c = con;
+		con = con->next;
+
+		if (c->id.s) pkg_free(c->id.s);
+		if (c->host.s) pkg_free(c->host.s);
+		
+		pkg_free(c);
+	}
+
 }
 
 
@@ -83,7 +103,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 
 	cfg_option_t* syntax;
 
-	if (cfg_eat_equal(st)) return -1;
+	if (cfg_eat_equal(st, flags)) return -1;
 
 	if (!(ptr = pkg_realloc(cfg->field, sizeof(str) * (cfg->n + 1)))) {
 		ERR("ldap:%s:%d:%d Out of memory\n", st->file, st->line, st->col);
@@ -110,7 +130,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("ldap:%s:%d:%d: Database field name expected\n", 
 		    st->file, st->line, st->col);
 		return -1;
@@ -132,7 +152,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("ldap:%s:%d:%d: Delimiter ':' missing\n", 
 		    st->file, st->line, st->col);
 		return -1;
@@ -145,7 +165,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("ldap:%s:%d:%d: LDAP Attribute syntax or name expected\n", 
 		    st->file, st->line, st->col);
 		return -1;
@@ -154,7 +174,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 	if (t.type == '(') {
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
-		if (ret == 0) {
+		if (ret > 0) {
 			ERR("ldap:%s:%d:%d: LDAP Attribute Syntax expected\n", 
 				st->file, st->line, st->col);
 			return -1;
@@ -175,7 +195,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
-		if (ret == 0) {
+		if (ret > 0) {
 			ERR("ldap:%s:%d:%d: Closing ')' missing in attribute syntax\n", 
 				st->file, st->line, st->col);
 			return -1;
@@ -189,7 +209,7 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
-		if (ret == 0) {
+		if (ret > 0) {
 			ERR("ldap:%s:%d:%d: LDAP Attribute name expected\n", 
 				st->file, st->line, st->col);
 			return -1;
@@ -208,7 +228,8 @@ static int parse_field_map(void* param, cfg_parser_t* st, unsigned int flags)
 		return -1;
 	}
 	cfg->attr[cfg->n - 1].len = t.val.len;
-	
+
+	if (cfg_eat_eol(st, flags)) return -1;
 	return 0;
 }
 
@@ -226,49 +247,127 @@ static cfg_option_t scope_values[] = {
 };
 
 
-static cfg_option_t ldap_options[] = {
-	{"scope",     .param = scope_values, .f = cfg_parse_enum_val},
+static cfg_option_t ldap_tab_options[] = {
+	{"scope",     .param = scope_values, .f = cfg_parse_enum_opt},
 	{"field_map", .f = parse_field_map},
-	{"filter",    .f = cfg_parse_str_val, .flags = CFG_STR_PKGMEM},
-	{"base",      .f = cfg_parse_str_val, .flags = CFG_STR_PKGMEM},
+	{"filter",    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"base",      .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{0}
 };
 
 
-static int parse_table(void* param, cfg_parser_t* st, unsigned int flags)
+static cfg_option_t ldap_con_options[] = {
+	{"host", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{0}
+};
+
+
+static cfg_option_t section_types[] = {
+	{"connection", .val = LDAP_CON_SECTION},
+	{"con",        .val = LDAP_CON_SECTION},
+	{"table",      .val = LDAP_TABLE_SECTION},
+	{0}
+};
+
+
+static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 {
-	int i;
-	str name, tab;
-	struct ld_cfg* ptr;
+	cfg_token_t t;
+	int ret, type, i;
+	cfg_option_t* opt;
+	str* id;
+	struct ld_cfg* tab;
+	struct ld_con_info* cinfo;
 
-	if (cfg_parse_section(&name, st, 0)) return -1;
-
-	if ((tab.s = as_asciiz(&name)) == NULL) {
-		ERR("ldap:%s:%d: Out of memory\n", st->file, st->line);
+	ret = cfg_get_token(&t, st, 0);
+	if (ret < 0) return -1;
+	if (ret > 0) {
+		ERR("%s:%d:%d: Section type missing\n", 
+		    st->file, st->line, st->col);
 		return -1;
 	}
-	tab.len = name.len;;
-
-	if ((ptr = (struct ld_cfg*)pkg_malloc(sizeof(*ptr))) == NULL) {
-		ERR("ldap:%s:%d: Out of memory\n", st->file, st->line);
-		goto error;
+	
+	if (t.type != CFG_TOKEN_ALPHA || 
+	    ((opt = cfg_lookup_token(section_types, &t.val)) == NULL)) {
+		ERR("%s:%d:%d: Invalid section type %d:'%.*s'\n", 
+		    st->file, t.start.line, t.start.col, t.type, STR_FMT(&t.val));
+		return -1;
 	}
-	memset(ptr, '\0', sizeof(*ptr));
-	ptr->table = tab;
-	ptr->next = cfg;
-	cfg = ptr;
+	type = opt->val;
 
-	cfg_set_options(st, ldap_options);
-	ldap_options[2].param = &cfg->filter;
-	ldap_options[3].param = &cfg->base;
-	for(i = 0; scope_values[i].name; i++) {
-		scope_values[i].param = &cfg->scope;
+	if (type == LDAP_TABLE_SECTION) {
+		if ((tab = pkg_malloc(sizeof(*tab))) == NULL) {
+			ERR("ldap:%s:%d: Out of memory\n", st->file, st->line);
+			return -1;
+		}
+		memset(tab, '\0', sizeof(*tab));
+		tab->next = cfg;
+		cfg = tab;
+		
+		cfg_set_options(st, ldap_tab_options);
+		ldap_tab_options[2].param = &cfg->filter;
+		ldap_tab_options[3].param = &cfg->base;
+		for(i = 0; scope_values[i].name; i++) {
+			scope_values[i].param = &cfg->scope;
+		}
+	} else if (type == LDAP_CON_SECTION) {
+		if ((cinfo = pkg_malloc(sizeof(*cinfo))) == NULL) {
+			ERR("ldap:%s:%d: Out of memory\n", st->file, st->line);
+			return -1;
+		}
+		memset(cinfo, '\0', sizeof(*cinfo));
+		cinfo->next = con;
+		con = cinfo;
+		
+		cfg_set_options(st, ldap_con_options);
+		ldap_con_options[0].param = &con->host;
+	} else {
+		BUG("%s:%d:%d: Unsupported section type %c\n",
+			st->file, t.start.line, t.start.col, t.type);
+		return -1;
 	}
+
+	ret = cfg_get_token(&t, st, 0);
+	if (ret < 0) return -1;
+	if (ret > 0) {
+		ERR("%s:%d:%d: Delimiter ':' expected.\n", 
+		    st->file, st->line, st->col);
+		return -1;
+	}
+
+	if (type == LDAP_TABLE_SECTION) {
+		id = &cfg->table;
+	} else if (type == LDAP_CON_SECTION) {
+		id = &con->id;
+	} else {
+		BUG("%s:%d:%d: Invalid section type %d\n", st->file,
+			st->line, st->col, type);
+	}
+
+	ret = cfg_parse_str(id, st, CFG_STR_PKGMEM);
+	if (ret < 0) return -1;
+	if (ret > 0) {
+		ERR("%s:%d:%d: Section identifier expected\n",
+			st->file, st->line, st->col);
+		return -1;
+	}
+	
+	ret = cfg_get_token(&t, st, 0);
+	if (ret < 0) return ret;
+	if (ret > 0) {
+		ERR("%s:%d:%d: Missing closing ']'.\n",
+			st->file, st->line, st->col);
+		return -1;
+	}
+	if (t. type != ']') {
+		ERR("%s:%d:%d: Syntax error, ']' expected.\n",
+			st->file, t.start.line, t.start.col);
+		return -1;
+	}
+	
+	if (cfg_eat_eol(st, flags)) return -1;
 	return 0;
 
- error:
-	if (tab.s) pkg_free(tab.s);
-	return -1;
 }
 
 
@@ -312,7 +411,7 @@ int ld_load_cfg(str* filename)
 		return -1;
 	}
 
-	cfg_section_parser(parser, parse_table, NULL);
+	cfg_section_parser(parser, parse_section, NULL);
 
 	if (cfg_parse(parser)) {
 		if (cfg == NULL) {
