@@ -438,8 +438,7 @@ install-cfg: $(cfg-prefix)/$(cfg-dir)
 		# radius dictionary
 		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
 		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
-#		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)
-		$(INSTALL-CFG) etc/ser.cfg $(cfg-prefix)/$(cfg-dir)/ser-advanced.cfg
+		$(INSTALL-CFG) etc/ser-oob.cfg $(cfg-prefix)/$(cfg-dir)/ser-advanced.cfg
 
 install-bin: $(bin-prefix)/$(bin-dir) 
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
