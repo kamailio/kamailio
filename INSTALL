@@ -59,17 +59,19 @@ Contents
          work
       o  GNU install, BSD install or Solaris install if you want
          "make install", "make bin", "make sunpkg" to work
+	  o  libmysqlclient & libz (zlib) for MySQL support (the mysql
+	     module)
 
    If you want to build some of the modules, you will have to fulfill
    additional requirements:
 
-      o  libmysqlclient & libz (zlib) for MySQL support (the mysql
-         module)
       o  libexpat for jabber gateway support (the jabber module)
-      o  libxml2 for the cpl-c (CPL support) and pa (presence) modules
+      o  libxml2 for the cpl-c (CPL support), pa (presence) and xmlrpc
+	     modules
       o  libradiusclient-ng (> 5.0) for radius support (the acc_radius,
          auth_radius, avp_radius, and uri_radius modules)
       o  libpq for PostgreSQL support (the postgres module)
+	  o  libssl for SSL/TLS support (tls module).
 
 
 1.2. Operating System Specific Notes
@@ -589,5 +591,3 @@ Contents
      8.  Register with the server using your favorite SIP User Agent.
          Use the domain and user you insterted above. Remember that you
 	 may need to configure DNS for it to work.
-
-
