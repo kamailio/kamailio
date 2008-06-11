@@ -214,7 +214,7 @@ enum st {
     token->end.col = st->col;   \
     token->type = (c);          \
     print_token(token);         \
-    return 1;
+    return 0;
 
 
 /*
@@ -252,6 +252,7 @@ static void print_token(cfg_token_t* token)
 	int i, j;
 	char* buf;
 
+#ifdef EXTRA_DEBUG
 	if ((buf = pkg_malloc(token->val.len * 2)) == NULL) {
 		DBG("token(%d, '%.*s', <%d,%d>-<%d,%d>)\n", 
 			token->type, STR_FMT(&token->val),
@@ -274,7 +275,9 @@ static void print_token(cfg_token_t* token)
 			token->end.line, token->end.col);
 		pkg_free(buf);
 	}
+#endif /* EXTRA_DEBUG */
 }
+
 
 int cfg_get_token(cfg_token_t* token, cfg_parser_t* st, unsigned int flags)
 {
@@ -481,7 +484,7 @@ int cfg_get_token(cfg_token_t* token, cfg_parser_t* st, unsigned int flags)
 	case ST_S: 
 	case ST_C:
 	case ST_CE:
-		return 0;
+		return 1;
 
 	case ST_A:
 		RETURN(CFG_TOKEN_ALPHA);
@@ -508,37 +511,18 @@ int cfg_parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 {
 	cfg_token_t t;
 	int ret;
-	str* name;
 
-	name = (str*)param;
-	if (name == NULL) {
-		BUG("cfg_parser: Invalid parameter value to cfg_parse_section\n");
-		return -1;
+	ret = cfg_parse_str(param, st, flags);
+	if (ret < 0) return ret;
+	if (ret > 0) {
+		ERR("%s:%d:%d: Section name missing.\n",
+			st->file, st->line, st->col);
+		return ret;
 	}
 
-	ret = cfg_get_token(&t, st, 0);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Section name missing.\n", st->file, st->line, st->col);
-		return -1;
-	}
-
-	if (t.type != CFG_TOKEN_ALPHA) {
-		ERR("%s:%d:%d: Invalid table name %d:'%.*s'\n", 
-		    st->file, t.start.line, t.start.col,
-		    t.type, STR_FMT(&t.val));
-		return -1;
-	}
-	
-	if ((name->s = as_asciiz(&t.val)) == NULL) {
-		ERR("%s:%d:%d: Out of memory\n", st->file, t.start.line, t.start.col);
-		return -1;
-	}
-	name->len = t.val.len;
-
-	ret = cfg_get_token(&t, st, 0);
+	ret = cfg_get_token(&t, st, flags);
 	if (ret < 0) goto error;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: Closing ']' missing\n", st->file, st->line, st->col);
 		goto error;
 	}
@@ -547,10 +531,23 @@ int cfg_parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		    st->file, t.start.line, t.start.col);
 		goto error;
 	}
+
+	if (cfg_eat_eol(st, flags)) goto error;
 	return 0;
 
  error:
-	if (name->s) pkg_free(name->s);
+	if (param && ((str*)param)->s) {
+		if (flags & CFG_STR_PKGMEM) {
+			pkg_free(((str*)param)->s);
+			((str*)param)->s = NULL;
+		} else if (flags & CFG_STR_SHMMEM) {
+			shm_free(((str*)param)->s);
+			((str*)param)->s = NULL;
+		} else if (flags & CFG_STR_MALLOC) {
+			free(((str*)param)->s);
+			((str*)param)->s = NULL;
+		}		
+	}
 	return -1;
 }
 
@@ -679,7 +676,8 @@ int cfg_parse(cfg_parser_t* st)
 
 	while(1) {
 		ret = cfg_get_token(&t, st, 0);
-		if (ret <= 0) return ret;
+		if (ret < 0) return ret;
+		if (ret > 0) break;
 
 		switch(t.type) {
 		case CFG_TOKEN_ALPHA:
@@ -711,15 +709,6 @@ int cfg_parse(cfg_parser_t* st)
 			    st->file, t.start.line, t.start.col);
 			return -1;
 		}
-
-		     /* Skip EOL */
-		ret = cfg_get_token(&t, st, 0);
-		if (ret <= 0) return ret;
-		if (t.type != '\n') {
-			ERR("%s:%d:%d: End of line expected\n", 
-			    st->file, t.start.line, t.start.col);
-			return -1;
-		}
 	}
 	return 0;
 }
@@ -728,7 +717,7 @@ int cfg_parse(cfg_parser_t* st)
 cfg_option_t* cfg_lookup_token(cfg_option_t* table, str* token)
 {
 	int len, i;
-	int (*cmp)(const char* s12, const char* s2, size_t n) = NULL;
+	int (*cmp)(const char* s1, const char* s2, size_t n) = NULL;
 
 
 	if (table == NULL) return NULL;
@@ -755,17 +744,17 @@ cfg_option_t* cfg_lookup_token(cfg_option_t* table, str* token)
 }
 
 
-int cfg_eat_equal(cfg_parser_t* st)
+int cfg_eat_equal(cfg_parser_t* st, unsigned int flags)
 {
 	cfg_token_t t;
 	int ret;
 
-	ret = cfg_get_token(&t, st, 0);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Option value missing\n", 
+	ret = cfg_get_token(&t, st, flags);
+	if (ret < 0) return ret;
+	if (ret > 0) {
+		ERR("%s:%d:%d: Delimiter '=' missing\n", 
 		    st->file, st->line, st->col);
-		return -1;
+		return ret;
 	}
 
 	if (t.type != '=') {
@@ -777,7 +766,25 @@ int cfg_eat_equal(cfg_parser_t* st)
 }
 
 
-int cfg_parse_enum_val(void* param, cfg_parser_t* st, unsigned int flags)
+int cfg_eat_eol(cfg_parser_t* st, unsigned int flags)
+{
+	cfg_token_t t;
+	int ret;
+
+	/* Skip EOL */
+	ret = cfg_get_token(&t, st, 0);
+	if (ret < 0) return ret;
+	if (ret > 0) return 0;
+	if (t.type != '\n') {
+		ERR("%s:%d:%d: End of line expected\n", 
+			st->file, t.start.line, t.start.col);
+		return -1;
+	}
+	return 0;
+}
+
+
+int cfg_parse_enum(void* param, cfg_parser_t* st, unsigned int flags)
 {
 	int ret;
     cfg_token_t t;
@@ -785,25 +792,18 @@ int cfg_parse_enum_val(void* param, cfg_parser_t* st, unsigned int flags)
 	
 	values = (cfg_option_t*)param;
 
-	if (cfg_eat_equal(st)) return -1;
+	ret = cfg_get_token(&t, st, flags);
+	if (ret != 0) return ret;
 
-	ret = cfg_get_token(&t, st, CFG_EXTENDED_ALPHA);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Option value missing\n",
-		    st->file, st->line, st->col);
-		return -1;
-	}
-	
 	if (t.type != CFG_TOKEN_ALPHA && t.type != CFG_TOKEN_STRING) {
-		ERR("%s:%d:%d: Invalid option value '%.*s'\n",
+		ERR("%s:%d:%d: Invalid enum value '%.*s'\n",
 		    st->file, t.start.line, t.start.col, STR_FMT(&t.val));
 		return -1;
 	}
 
 	if (values) {
 		if ((val = cfg_lookup_token(values, &t.val)) == NULL) {
-			ERR("%s:%d:%d Unsupported option value '%.*s'\n", 
+			ERR("%s:%d:%d Unsupported enum value '%.*s'\n", 
 				st->file, t.start.line, t.start.col, STR_FMT(&t.val));
 			return -1;
 		}
@@ -814,25 +814,36 @@ int cfg_parse_enum_val(void* param, cfg_parser_t* st, unsigned int flags)
 }
 
 
-int cfg_parse_str_val(void* param, cfg_parser_t* st, unsigned int flags)
+int cfg_parse_enum_opt(void* param, cfg_parser_t* st, unsigned int flags)
+{
+	int ret;
+
+	if (cfg_eat_equal(st, flags)) return -1;
+
+	ret = cfg_parse_enum(param, st, CFG_EXTENDED_ALPHA | flags);
+	if (ret > 0) {
+		ERR("%s:%d:%d: Option value missing\n",
+		    st->file, st->line, st->col);
+		return ret;
+	} else if (ret < 0) return ret;
+
+	if (cfg_eat_eol(st, flags)) return -1;
+	return 0;
+}
+
+
+int cfg_parse_str(void* param, cfg_parser_t* st, unsigned int flags)
 {
 	str* val;
 	int ret;
 	char* buf;
     cfg_token_t t;
 	
-	if (cfg_eat_equal(st)) return -1;
-
-	ret = cfg_get_token(&t, st, CFG_EXTENDED_ALPHA);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Option value missing\n",
-		    st->file, t.start.line, t.start.col);
-		return -1;
-	}
+	ret = cfg_get_token(&t, st, flags);
+	if (ret != 0) return ret;
 	
 	if (t.type != CFG_TOKEN_ALPHA && t.type != CFG_TOKEN_STRING) {
-		ERR("%s:%d:%d: Invalid option value '%.*s'\n",
+		ERR("%s:%d:%d: Invalid string value '%.*s', a string expected.\n",
 		    st->file, t.start.line, t.start.col, STR_FMT(&t.val));
 		return -1;
 	}
@@ -881,8 +892,24 @@ int cfg_parse_str_val(void* param, cfg_parser_t* st, unsigned int flags)
 }
 
 
+int cfg_parse_str_opt(void* param, cfg_parser_t* st, unsigned int flags)
+{
+	int ret;
 
-int cfg_parse_int_val(void* param, cfg_parser_t* st, unsigned int flags)
+	if (cfg_eat_equal(st, flags)) return -1;
+
+	ret = cfg_parse_str(param, st, flags | CFG_EXTENDED_ALPHA);
+	if (ret > 0) {
+		ERR("%s:%d:%d: Option value missing\n",
+		    st->file, st->line, st->col);
+	} else if (ret < 0) return ret;
+
+	if (cfg_eat_eol(st, flags)) return -1;
+	return 0;
+}
+
+
+int cfg_parse_int(void* param, cfg_parser_t* st, unsigned int flags)
 {
 	int* val;
 	int ret, tmp;
@@ -890,18 +917,11 @@ int cfg_parse_int_val(void* param, cfg_parser_t* st, unsigned int flags)
 
 	val = (int*)param;
 
-	if (cfg_eat_equal(st)) return -1;
-	
-	ret = cfg_get_token(&t, st, CFG_EXTENDED_ALPHA);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Option value missing\n", 
-		    st->file, t.start.line, t.start.col);
-		return -1;
-	}
+	ret = cfg_get_token(&t, st, flags);
+	if (ret != 0) return ret;
 
 	if (t.type != CFG_TOKEN_ALPHA && t.type != CFG_TOKEN_STRING) {
-		ERR("%s:%d:%d: Invalid option value '%.*s', integer expected\n", 
+		ERR("%s:%d:%d: Invalid integer value '%.*s'\n", 
 		    st->file, t.start.line, t.start.col, STR_FMT(&t.val));
 		return -1;
 	}
@@ -917,7 +937,24 @@ int cfg_parse_int_val(void* param, cfg_parser_t* st, unsigned int flags)
 }
 
 
-int cfg_parse_bool_val(void* param, cfg_parser_t* st, unsigned int flags)
+int cfg_parse_int_opt(void* param, cfg_parser_t* st, unsigned int flags)
+{
+	int ret;
+
+	if (cfg_eat_equal(st, flags)) return -1;
+
+	ret = cfg_parse_int(param, st, flags);
+	if (ret > 0) {
+		ERR("%s:%d:%d: Option value missing\n", 
+		    st->file, st->line, st->col);
+	} else if (ret < 0) return ret;
+
+	if (cfg_eat_eol(st, flags)) return -1;
+	return 0;
+}
+
+
+int cfg_parse_bool(void* param, cfg_parser_t* st, unsigned int flags)
 {
 	int ret, *val;
 	cfg_token_t t;
@@ -925,27 +962,8 @@ int cfg_parse_bool_val(void* param, cfg_parser_t* st, unsigned int flags)
 	
 	val = (int*)param;
 
-	ret = cfg_get_token(&t, st, 0);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Option value missing\n", 
-		    st->file, t.start.line, t.start.col);
-		return -1;
-	}
-	
-	if (t.type != '=') {
-		ERR("%s:%d:%d: Syntax error, '=' expected\n", 
-		    st->file, t.start.line, t.start.col);
-		return -1;
-	}
-
-	ret = cfg_get_token(&t, st, CFG_EXTENDED_ALPHA);
-	if (ret < 0) return -1;
-	if (ret == 0) {
-		ERR("%s:%d:%d: Option value missing\n", 
-		    st->file, t.start.line, t.start.col);
-		return -1;
-	}
+	ret = cfg_get_token(&t, st, flags);
+	if (ret != 0) return ret;
 
 	if (t.type != CFG_TOKEN_ALPHA && t.type != CFG_TOKEN_STRING) {
 		ERR("%s:%d:%d: Invalid option value '%.*s', boolean expected\n", 
@@ -960,5 +978,21 @@ int cfg_parse_bool_val(void* param, cfg_parser_t* st, unsigned int flags)
 	}
 
 	if (val) *val = map->val;
+	return 0;
+}
+
+
+int cfg_parse_bool_opt(void* param, cfg_parser_t* st, unsigned int flags)
+{
+	int ret;
+	if (cfg_eat_equal(st, flags)) return -1;
+
+    ret = cfg_parse_bool(param, st, CFG_EXTENDED_ALPHA | flags);
+	if (ret > 0) {
+		ERR("%s:%d:%d: Option value missing\n", 
+		    st->file, st->line, st->col);
+	} else if (ret < 0) return ret;
+
+	if (cfg_eat_eol(st, flags)) return -1;
 	return 0;
 }

@@ -156,7 +156,9 @@ int cfg_get_token(struct cfg_token* token, struct cfg_parser* st, unsigned int f
 
 /* Commonly needed parser functions */
 
-int cfg_eat_equal(struct cfg_parser* st);
+int cfg_eat_equal(struct cfg_parser* st, unsigned int flags);
+
+int cfg_eat_eol(struct cfg_parser* st, unsigned int flags);
 
 /* Parse section identifier of form [section]. The function expects parameter
  * param to be of type (str*). The result string is allocated using pkg_malloc
@@ -165,14 +167,22 @@ int cfg_eat_equal(struct cfg_parser* st);
 int cfg_parse_section(void* param, struct cfg_parser* st, unsigned int flags);
 
 /* Parse string parameter value, either quoted or unquoted */
-int cfg_parse_str_val(void* param, struct cfg_parser* st, unsigned int flags);
+int cfg_parse_str_opt(void* param, struct cfg_parser* st, unsigned int flags);
 
-int cfg_parse_enum_val(void* param, struct cfg_parser* st, unsigned int flags);
+int cfg_parse_str(void* param, struct cfg_parser* st, unsigned int flags);
+
+int cfg_parse_enum_opt(void* param, struct cfg_parser* st, unsigned int flags);
+
+int cfg_parse_enum(void* param, struct cfg_parser* st, unsigned int flags);
 
 /* Parser integer parameter value */
-int cfg_parse_int_val(void* param, struct cfg_parser* st, unsigned int flags);
+int cfg_parse_int_opt(void* param, struct cfg_parser* st, unsigned int flags);
+
+int cfg_parse_int(void* param, struct cfg_parser* st, unsigned int flags);
 
 /* Parse boolean parameter value */
-int cfg_parse_bool_val(void* param, struct cfg_parser* st, unsigned int flags);
+int cfg_parse_bool_opt(void* param, struct cfg_parser* st, unsigned int flags);
+
+int cfg_parse_bool(void* param, struct cfg_parser* st, unsigned int flags);
 
 #endif /* _CFG_PARSER_H */
