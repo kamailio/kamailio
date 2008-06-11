@@ -10,8 +10,8 @@ Bogdan Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -131,7 +131,7 @@ modparam("sl", "enable_stats", 0)
 ...
 sl_send_reply("404", "Not found");
 ...
-sl_reply("$err.rcode", "$err.rreason");
+sl_send_reply("$err.rcode", "$err.rreason");
 ...
 
 1.4.2.  sl_reply_error()
