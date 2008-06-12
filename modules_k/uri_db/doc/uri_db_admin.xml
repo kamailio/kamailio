@@ -52,7 +52,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>DEFAULT_RODB_URL</quote>.
+			Default value is <quote>&defaultrodb;</quote>.
 		</emphasis>
 		</para>
 		<example>
@@ -69,7 +69,9 @@ modparam("uri_db", "db_url", "mysql://username:password@localhost/openser")
 		<title><varname>db_table</varname> (string)</title>
 		<para>
 		The DB table that should be used. Its possible to use the
-		<quote>subscriber</quote> and <quote>uri</quote> table.
+		<quote>subscriber</quote> and <quote>uri</quote> table. If the
+		<quote>uri</quote> table should be used, an additional parameter
+		(<xref linkend="use-uri-table"/>) must be set.
 		</para>
 		<para>
 		<emphasis>
@@ -146,7 +148,7 @@ modparam("uri_db", "uriuser_column", "uri_user")
 		</example>
 	</section>
 
-	<section>
+	<section id="use-uri-table">
 		<title><varname>use_uri_table</varname> (integer)</title>
 		<para>
 		Specify if the <quote>uri</quote> table should be used for checkings

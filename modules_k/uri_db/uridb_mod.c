@@ -82,7 +82,6 @@ str db_table              = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN};
 str uridb_user_col        = {USER_COL, USER_COL_LEN};
 str uridb_domain_col      = {DOMAIN_COL, DOMAIN_COL_LEN};
 str uridb_uriuser_col     = {URI_USER_COL, URI_USER_COL_LEN};
-str subscriber_table      = {SUBSCRIBER_TABLE, SUBSCRIBER_TABLE_LEN};
 
 int use_uri_table = 0;     /* Should uri table be used */
 int use_domain = 0;        /* Should does_uri_exist honor the domain part ? */
