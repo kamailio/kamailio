@@ -375,7 +375,6 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 
 	if (cfg_eat_eol(st, flags)) return -1;
 	return 0;
-
 }
 
 
