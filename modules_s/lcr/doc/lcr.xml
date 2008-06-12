@@ -37,7 +37,7 @@
             and next_gw functions.
             </listitem>
 
-            <listitem> LCR may sequentially forward contacts if they don't share the the same qvalues.
+            <listitem> LCR may sequentially forward contacts if they don't share the same qvalues.
             Use the functions load_contacts and next_contacts to access and select a contact.
             </listitem>
         </itemizedlist>

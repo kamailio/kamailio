@@ -132,7 +132,7 @@ cpl_run_script("incoming","force_stateful");
 	    present, the function looks to "Accept" header and if it contains
 	    the "*" or "application/cpl-xml" the request it will be consider
 	    one for downloading CPL scripts.  The functions returns to script
-	    only if the the REGISTER is not related to CPL. In other case, the
+	    only if the REGISTER is not related to CPL. In other case, the
 	    function will send by itself the necessary replies (stateless -
 	    using sl), including for errors.
 	</para>

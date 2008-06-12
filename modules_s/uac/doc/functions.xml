@@ -39,7 +39,7 @@ uac_replace_from("batman","");
 	    <function>uac_replace_from(uri)</function>
 	</title>
 	<para>
-	    Replace in FROM header the the <emphasis>URI</emphasis> part
+	    Replace in FROM header the <emphasis>URI</emphasis> part
 	    without altering the display name.
 	</para>
 	<example>

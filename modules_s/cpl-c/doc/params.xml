@@ -65,7 +65,7 @@ modparam("cpl_c","cpl_table","cpltable")
 	<para>
 	    Points to the DTD file describing the CPL grammar. The file 
 	    name may include also the path to the file. This path can be 
-	    absolute or relative (be careful the the path will be relative 
+	    absolute or relative (be careful the path will be relative 
 	    to the starting directory of SER).
 	</para>
 	<warning>

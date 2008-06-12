@@ -142,7 +142,7 @@ uac_replace_from("batman","");
 
 1.4.2. uac_replace_from(uri)
 
-   Replace in FROM header the the URI part without altering the
+   Replace in FROM header the URI part without altering the
    display name.
 
    Example 1-5. uac_replace_from usage

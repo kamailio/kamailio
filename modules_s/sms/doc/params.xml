@@ -190,7 +190,7 @@ modparam("sms", "links", "NOKIA[D1;d2]")
 	<title><varname>default_net</varname> (string)</title>
 	<para>
 	    The default network to use. If no one specified, the first defined
-	    network is used. This parameter is useful only if the the
+	    network is used. This parameter is useful only if the
 	    "sms_send_msg" exported function is used (see <xref
 	    linkend="sms.functions"/>).
 	</para>
