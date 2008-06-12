@@ -43,15 +43,15 @@ extern "C" {
 
 
 enum db_fld_type {
-    DB_NONE = 0,   /* Bumper */
-    DB_INT,        /* 32-bit integer */
-    DB_FLOAT,      /* 32-bit fixed-precision number */
-    DB_DOUBLE,     /* double data type */
-    DB_CSTR,       /* Zero-terminated string */
-    DB_STR,        /* str structure */
-    DB_DATETIME,   /* Date and time in number of seconds since 1-Jan-1970 */
-    DB_BLOB,       /* Generic binary object*/
-    DB_BITMAP      /* Bitmap of flags */
+	DB_NONE = 0,   /* Bumper */
+	DB_INT,        /* 32-bit integer */
+	DB_FLOAT,      /* 32-bit fixed-precision number */
+	DB_DOUBLE,     /* double data type */
+	DB_CSTR,       /* Zero-terminated string */
+	DB_STR,        /* str structure */
+	DB_DATETIME,   /* Date and time in number of seconds since 1-Jan-1970 */
+	DB_BLOB,       /* Generic binary object*/
+	DB_BITMAP      /* Bitmap of flags */
 };
 
 extern char* db_fld_str[];
@@ -66,7 +66,7 @@ enum db_fld_op {
 };
 
 enum db_flags {
-    DB_NULL = (1 << 0),  /**< The field is NULL, i.e. no value was provided */
+	DB_NULL = (1 << 0),  /**< The field is NULL, i.e. no value was provided */
 	DB_NO_TZ = (1 << 1), /**< Inhibit time-zone shifts for timestamp fields */
 };
 
@@ -85,9 +85,9 @@ typedef union db_fld_val {
 
 typedef struct db_fld {
 	db_gen_t gen;  /* Generic part of the structure */
-    char* name;
-    enum db_fld_type type;
-    unsigned int flags;
+	char* name;
+	enum db_fld_type type;
+	unsigned int flags;
 	db_fld_val_t v;
 	enum db_fld_op op;
 } db_fld_t;

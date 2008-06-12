@@ -47,9 +47,9 @@ typedef unsigned char (db_uri_cmp_t)(struct db_uri* uri1, struct db_uri* uri2);
 
 typedef struct db_uri {
 	db_gen_t gen;      /* Generic part of the structure */
-    str scheme;        /* URI scheme */
-    str body;          /* Entire URI body */
-    db_uri_cmp_t* cmp; /* Comparison function */
+	str scheme;        /* URI scheme */
+	str body;          /* Entire URI body */
+	db_uri_cmp_t* cmp; /* Comparison function */
 } db_uri_t;
 
 

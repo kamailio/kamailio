@@ -68,23 +68,23 @@ unsigned char db_uri_cmp(db_uri_t* uri1, db_uri_t* uri2)
  */
 db_uri_t* db_uri(const char* uri)
 {
-    char* colon;
-    int len;
-    db_uri_t* newp;
+	char* colon;
+	int len;
+	db_uri_t* newp;
     
-    newp = (db_uri_t*)pkg_malloc(sizeof(db_uri_t));
-    if (newp == NULL) goto error;
-    memset(newp, '\0', sizeof(db_uri_t));
+	newp = (db_uri_t*)pkg_malloc(sizeof(db_uri_t));
+	if (newp == NULL) goto error;
+	memset(newp, '\0', sizeof(db_uri_t));
 	if (db_gen_init(&newp->gen) < 0) goto error;	
 
-    len = strlen(uri);
-    colon = q_memchr((char*)uri, ':', len);
-    if (colon == NULL) {
+	len = strlen(uri);
+	colon = q_memchr((char *)uri, ':', len);
+	if (colon == NULL) {
 		newp->scheme.s = pkg_malloc(len + 1);
 		if (newp->scheme.s == NULL) goto error;
 		memcpy(newp->scheme.s, uri, len);
 		newp->scheme.len = len;
-    } else {
+	} else {
 		newp->scheme.len = colon - uri;
 		newp->scheme.s = pkg_malloc(newp->scheme.len + 1);
 		if (newp->scheme.s == NULL) goto error;
@@ -95,22 +95,22 @@ db_uri_t* db_uri(const char* uri)
 		if (newp->body.s == NULL) goto error;
 		memcpy(newp->body.s, colon + 1, newp->body.len);
 		newp->body.s[newp->body.len] = '\0';
-    }
-    newp->scheme.s[newp->scheme.len] = '\0';
+	}
+	newp->scheme.s[newp->scheme.len] = '\0';
 
 	/* Call db_uri function if the driver has it */
 	if (db_drv_call(&newp->scheme, "db_uri", newp, 0) < 0) goto error;
-    return newp;
+	return newp;
     
  error:
-    ERR("db_uri: Error while creating db_uri structure\n");
+	ERR("db_uri: Error while creating db_uri structure\n");
 	if (newp) {
 		db_gen_free(&newp->gen);
 		if (newp->body.s) pkg_free(newp->body.s);
 		if (newp->scheme.s) pkg_free(newp->scheme.s);
 		pkg_free(newp);
 	}
-    return 0;
+	return 0;
 }
 
 

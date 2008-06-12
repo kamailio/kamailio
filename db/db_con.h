@@ -54,7 +54,7 @@ typedef struct db_con {
 	db_con_disconnect_t* disconnect;
 
 	struct db_ctx* ctx;
-    db_uri_t* uri;
+	db_uri_t* uri;
 } db_con_t;
 
 struct db_con* db_con(struct db_ctx* ctx, db_uri_t* uri);
