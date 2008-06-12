@@ -20,7 +20,7 @@ fi;
 
 # path to the dbtext database
 if [ -z "$DBTEXT_PATH" ] ; then
-	DBTEXT_PATH="/usr/local/etc/openser/dbtext"
+	DBTEXT_PATH="/usr/local/share/openser/dbtext/openser"
 fi
 
 export DBTEXT_PATH

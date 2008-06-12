@@ -10,7 +10,7 @@
 
 # path to the db_berkeley directory
 if [ -z "$DB_PATH" ] ; then
-	DB_PATH="/usr/local/etc/openser/db_berkeley"
+	DB_PATH="/usr/local/share/openser/db_berkeley/openser"
 fi
 
 #===================================================================
