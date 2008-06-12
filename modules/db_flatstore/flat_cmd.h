@@ -25,9 +25,6 @@
 #ifndef _FLAT_CMD_H
 #define _FLAT_CMD_H
 
-#include "../../db/db_drv.h"
-#include "../../db/db_cmd.h"
-
 /** \addtogroup flatstore
  * @{ 
  */
@@ -35,6 +32,9 @@
 /** \file 
  * Inmplementation of flatstore commands.
  */
+
+#include "../../db/db_drv.h"
+#include "../../db/db_cmd.h"
 
 
 /** Extension structure of db_cmd adding flatstore specific data.
