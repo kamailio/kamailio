@@ -72,7 +72,7 @@ case $DBENGINE in
 			DBENGINELOADED=1
 		fi
 		;;
-	PGSQL|pgsql|postgres|postgresql)
+	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
 		if [ -f "$MYLIBDIR/openserctl.pgsql" ]; then
 			. "$MYLIBDIR/openserctl.pgsql"
 			DBENGINELOADED=1
@@ -85,12 +85,19 @@ case $DBENGINE in
 		fi
 		;;
 
-	DBTEXT|dbtext)
+	DBTEXT|dbtext|textdb)
 		if [ -f "$MYLIBDIR/openserctl.dbtext" ]; then
 			. "$MYLIBDIR/openserctl.dbtext"
 			DBENGINELOADED=1
 		fi
 		;;
+	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
+		if [ -f "$MYLIBDIR/openserctl.db_berkeley" ]; then
+			. "$MYLIBDIR/openserctl.db_berkeley"
+			DBENGINELOADED=1
+		fi
+		;;
+
 esac
 
 if [ $DBENGINELOADED -eq 1 ] ; then
