@@ -1531,7 +1531,7 @@ try_again:
 		fprintf(stderr, "WARNING: no fork mode %s\n",
 				(udp_listen)?(
 				(udp_listen->next)?"and more than one listen address found "
-				"(will use only the the first one)":""
+				"(will use only the first one)":""
 				):"and no udp listen address found" );
 	}
 	if (config_check){

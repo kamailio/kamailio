@@ -45,7 +45,7 @@
 	file's directory.)
     </para>
     <para>
-	Note the the request write must be atomic, otherwise it might get
+	Note the request write must be atomic, otherwise it might get
 	intermixed with writes from other writers. You can easily use it via
 	Unix command-line tools, see the following example:
     </para>

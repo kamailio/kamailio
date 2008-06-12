@@ -93,7 +93,7 @@ struct mime_type {
 #define get_accept(_msg_) ((int*)((_msg_)->accept->parsed))
 
 /*
- * parse the the body of the Content-Type header. It's value is also converted
+ * parse the body of the Content-Type header. It's value is also converted
  * as int.
  * Returns:   n (n>0)  : the found type
  *            0        : hdr not found
@@ -104,7 +104,7 @@ int parse_content_type_hdr( struct sip_msg *msg);
 int parse_accept_body(struct hdr_field *hdr);
 
 /*
- * parse the the body of the Accept header. It's values are also converted
+ * parse the body of the Accept header. It's values are also converted
  * as an null-terminated array of ints.
  * Returns:   1 : OK
  *            0 : hdr not found

@@ -250,7 +250,7 @@ static inline int t_uac_prepare(str* method, str* headers, str* body,
 	 * this point (bogdan) */
 	reset_avps();
 
-	/* add the callback the the transaction for LOCAL_COMPLETED event */
+	/* add the callback the transaction for LOCAL_COMPLETED event */
  
 	flags = TMCB_LOCAL_COMPLETED;
 	/* Add also TMCB_LOCAL_REPLY_OUT if provisional replies are desired */

@@ -647,7 +647,7 @@ failure_route[0]{
    (Filename is to where a report will be dumped. ser assumes /tmp as
    file's directory.)
 
-   Note the the request write must be atomic, otherwise it might get
+   Note the request write must be atomic, otherwise it might get
    intermixed with writes from other writers. You can easily use it via
    Unix command-line tools, see the following example:
 [jiri@bat jiri]$ cat > /tmp/ser_fifo
