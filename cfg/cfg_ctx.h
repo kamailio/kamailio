@@ -56,7 +56,7 @@ typedef struct _cfg_ctx {
 	but have not been committed yet */
 	cfg_changed_var_t	*changed_first;
 	cfg_changed_var_t	*changed_last;
-	/* lock potecting the the linked-list of
+	/* lock protecting the linked-list of
 	changed variables */
 	gen_lock_t		lock;
 

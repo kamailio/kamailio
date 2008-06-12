@@ -254,7 +254,7 @@ void cfg_script_destroy(cfg_group_t *group)
 	if (group->mapping) pkg_free(group->mapping);
 	if (group->handle) pkg_free(group->handle);
 
-	/* it may happen that the the temporary var list
+	/* it may happen that the temporary var list
 	still exists because the fixup failed and did not complete */
 	script_var = (cfg_script_var_t *)group->vars;
 	while (script_var) {

@@ -753,7 +753,7 @@ onreply_route[0]{
 
 t_grep_status("code")
 
-   Returns true if "code" is the the final reply received (or locally
+   Returns true if "code" is the final reply received (or locally
    generated) in at least one of the current transactions branches.
 
    Example 37. t_grep_status usage
@@ -832,7 +832,7 @@ TM Module API
    (Filename is to where a report will be dumped. ser assumes /tmp as
    file's directory.)
 
-   Note the the request write must be atomic, otherwise it might get
+   Note the request write must be atomic, otherwise it might get
    intermixed with writes from other writers. You can easily use it via
    Unix command-line tools, see the following example:
 [jiri@bat jiri]$ cat > /tmp/ser_fifo

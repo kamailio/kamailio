@@ -610,7 +610,7 @@ onreply_route[0]{
 	    <function>t_grep_status("code")</function>
 	</title>
 	<para>
-		Returns true if "code" is the the final reply received (or locally
+		Returns true if "code" is the final reply received (or locally
 		 generated) in at least one of the current transactions branches.
 	</para>
 	<example>
