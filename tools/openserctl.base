@@ -561,7 +561,7 @@ check_uri() {
 }
 
 print_status() {
-	echo $1 | grep "^[1-6][0-9][0-9]" > /dev/null
+	echo $1 | $EGREP "^[1-6][0-9][0-9]" > /dev/null
 	if [ "$?" -eq 0 ] ; then 
 		echo $1
 	else

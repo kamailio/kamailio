@@ -215,7 +215,7 @@ is_value_in_db() {
 	VALUE=$3
 	
 	QUERY="select count(*) from $TABLE where $COL='$VALUE';"
-	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | grep -v ERROR | $LAST_LINE`
+	CNT=`$DBROCMD "$QUERY" "$DBRAWPARAMS" | $EGREP -v ERROR | $LAST_LINE`
 	mdbg "is_value_in_db: counter=$CNT"
 	if [ "$CNT" = "0" ] ; then
 		false
