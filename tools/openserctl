@@ -1088,11 +1088,10 @@ lcr() {
 			QUERY="select * FROM $LCR_TABLE ORDER BY $LCR_PREFIX_COLUMN; "
 			$DBROCMD "$QUERY"
 			mecho "lcr gateways"
-			#QUERY="select * FROM $GW_TABLE ORDER BY grp_id; "
 			QUERY="select $LCR_GW_GWNAME_COLUMN, $LCR_GW_IP_COLUMN,\
 $LCR_GW_PORT_COLUMN, $LCR_GW_URIS_COLUMN, $LCR_GW_PROTO_COLUMN,\
-$LCR_GW_GRPID_COLUMN, $LCR_GW_STRIP_COLUMN, $LCR_GW_PREFIX_COLUMN \
-FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
+$LCR_GW_GRPID_COLUMN, $LCR_GW_STRIP_COLUMN, $LCR_GW_TAG_COLUMN, \
+$LCR_GW_FLAGS_COLUMN FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 			$DBROCMD "$QUERY"
 			;;
 		reload)
@@ -1141,14 +1140,26 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 				exit 1
 			fi
 			if [ $# -gt 6 ] ; then
-				GW_PREFIX=$7
+				GW_FLAGS=$7
 				if [ $# -gt 7 ] ; then
-					STRIP=$8
+					GW_TAG=$8
+				else
+					GW_TAG=""
+					GW_STRIP=0
+				fi
+				if [ $# -gt 8 ] ; then
+					STRIP=$9
 				else
 					STRIP=0
 				fi
+				if [ $# -gt 9 ] ; then
+				    merr "lcr - too many parameters"
+				    usage_lcr
+				    exit 1
+				fi
 			else
-				GW_PREFIX=""
+				GW_FLAGS=0
+				GW_TAG=""
 				STRIP=0
 			fi
 			GW_NAME=$1
@@ -1173,10 +1184,10 @@ FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 				( $LCR_GW_GWNAME_COLUMN, $LCR_GW_GRPID_COLUMN,\
 					$LCR_GW_IP_COLUMN,$LCR_GW_PORT_COLUMN,$LCR_GW_URIS_COLUMN,\
 					$LCR_GW_PROTO_COLUMN,$LCR_GW_STRIP_COLUMN,\
-					$LCR_GW_PREFIX_COLUMN) \
+					$LCR_GW_TAG_COLUMN,$LCR_GW_FLAGS_COLUMN) \
 				VALUES ('$GW_NAME', $GW_GRP_ID,\
 					'$GW_IP', $GW_PORT, $GW_URI_SCHEME,\
-					$GW_TRANSPORT, $STRIP, '$GW_PREFIX');"
+					$GW_TRANSPORT, $STRIP, '$GW_TAG', $GW_FLAGS);"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "lcr - SQL Error"
