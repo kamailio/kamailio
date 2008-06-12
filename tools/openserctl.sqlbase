@@ -31,23 +31,6 @@ if [ -z "$DBROOTUSER" ]; then
 	DBROOTUSER="root"
 fi
 
-usage_trusted() {
-	echo
-	mecho " -- command 'trusted' - manage trusted hosts"
-	echo
-cat <<EOF
- trusted reload ..................... reload trusted hosts from disk
- trusted show ....................... show trusted hosts in memory
- trusted showdb ..................... show trusted hosts in the database
- trusted add <ip> <proto> [pattern].. add the ip/proto to the database
- trusted rm <ip> <proto> ............ delete the ip/proto from the database
-    - <proto> is one of tcp, udp, tls, any
-    - <pattern> is a regex, default: ^sip\:.*$
-EOF
-}
-USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_trusted"
-
-
 #params: none
 # output: DBRWPW
 prompt_pw() {
