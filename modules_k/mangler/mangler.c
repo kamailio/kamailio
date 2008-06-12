@@ -70,13 +70,6 @@ static void destroy (void);
  */
 static int mod_init (void);
 
-#if 0 /* not used -- Wall complains */
-/* Header field fixup */
-static int fixup_char2str(void** param, int param_no);
-static int fixup_char2int (void **param, int param_no);
-static int fixup_char2uint (void **param, int param_no);
-#endif
-
 
 char *contact_flds_separator = DEFAULT_SEPARATOR;
 
@@ -94,9 +87,9 @@ static param_export_t params[] = {
  */
 static cmd_export_t cmds[] = 
 {
-	{"sdp_mangle_ip",   (cmd_function)sdp_mangle_ip, 2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE}, // fixup_char2str?
-	{"sdp_mangle_port", (cmd_function)sdp_mangle_port, 1,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},// fixup_char2int if I use an int as offset
-	{"encode_contact",  (cmd_function)encode_contact,2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},//fixup_char2str
+	{"sdp_mangle_ip",   (cmd_function)sdp_mangle_ip, 2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"sdp_mangle_port", (cmd_function)sdp_mangle_port, 1,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
+	{"encode_contact",  (cmd_function)encode_contact,2,0, 0, REQUEST_ROUTE|ONREPLY_ROUTE},
 	{"decode_contact",  (cmd_function)decode_contact,0,0, 0, REQUEST_ROUTE},
 	{"decode_contact_header", (cmd_function)decode_contact_header,0,0,0,REQUEST_ROUTE|ONREPLY_ROUTE},
 	{0, 0, 0, 0, 0, 0}
@@ -208,78 +201,3 @@ static void destroy (void)
 
 	return;
 }
-
-#ifdef O
-static int fixup_char2int (void **param, int param_no)
-{
-	int offset,res;
-	if (param_no == 1)
-	{
-		res = sscanf(*param,"%d",&offset);
-		if (res != 1)
-			{
-			LM_ERR("invalid value %s\n",(char *)(*param));
-			return -1;
-			}
-		free(*param);	
-		*param = (void *)offset;/* value of offset */
-	}
-		
-	return 0;
-}
-
-static int fixup_char2uint (void **param, int param_no)
-{
-	int res;
-	unsigned int newContentLength;
-	if (param_no == 1)
-	{
-		res = sscanf(*param,"%u",&newContentLength);
-		if (res != 1)
-			{
-			LM_ERR("invalid value %s\n",(char *)*param);
-			return -1;
-			}
-		free(*param);	
-		*param = (void *)newContentLength;
-	}
-		
-	return 0;
-}
-
-
-
-static int fixup_char2str(void** param, int param_no)
-{
-	str* s;
-	
-	if (param_no == 1) 
-	{
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) 
-		{
-			LM_ERR("no pkg memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	else if (param_no == 2) 
-	{
-		s = (str*)pkg_malloc(sizeof(str));
-		if (!s) 
-		{
-			LM_ERR("no pkg memory left\n");
-			return E_UNSPEC;
-		}
-		
-		s->s = (char*)*param;
-		s->len = strlen(s->s);
-		*param = (void*)s;
-	}
-	
-	return 0;
-}
-#endif
