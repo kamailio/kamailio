@@ -58,7 +58,7 @@ static int parse_ipv6(struct ip_addr* ip, cfg_token_t* token,
 	ip6_str.s = t.val.s;
 	while(1) {
 		ret = cfg_get_token(&t, st, 0);
-		if (ret <= 0) goto err;
+		if (ret != 0) goto err;
 		if (t.type == ']') break;
 		if (t.type != CFG_TOKEN_ALPHA && t.type != ':') goto err;
 	}
@@ -94,11 +94,11 @@ static int parse_ipv4(struct ip_addr* ip, cfg_token_t* token,
 	for(i = 1; i < 4; i++) {
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
-		if (ret == 0 || t.type != '.')  goto err;
+		if (ret > 0 || t.type != '.')  goto err;
 		
 		ret = cfg_get_token(&t, st, 0);
 		if (ret < 0) return -1;
-		if (ret == 0 || t.type != CFG_TOKEN_ALPHA) goto err;
+		if (ret > 0 || t.type != CFG_TOKEN_ALPHA) goto err;
 		if (str2int(&t.val, &v) < 0)  goto err;
 		if (v < 0 || v > 255) goto err;
 		ip->u.addr[i] = v;
@@ -141,20 +141,20 @@ static cfg_option_t token_default[] = {
 
 
 static cfg_option_t options[] = {
-	{"method",              .param = methods, .f = cfg_parse_enum_val},
-	{"tls_method",          .param = methods, .f = cfg_parse_enum_val},
-	{"verify_certificate",  .f = cfg_parse_bool_val},
-	{"verify_cert",         .f = cfg_parse_bool_val},
-	{"verify_depth",        .f = cfg_parse_int_val},
-	{"require_certificate", .f = cfg_parse_bool_val},
-	{"require_cert",        .f = cfg_parse_bool_val},
-	{"private_key",         .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
-	{"pkey_file",           .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
-	{"calist_file",         .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
-	{"certificate",         .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
-	{"cert_file",           .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
-	{"cipher_list",         .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
-	{"ca_list",             .f = cfg_parse_str_val, .flags = CFG_STR_SHMMEM},
+	{"method",              .param = methods, .f = cfg_parse_enum_opt},
+	{"tls_method",          .param = methods, .f = cfg_parse_enum_opt},
+	{"verify_certificate",  .f = cfg_parse_bool_opt},
+	{"verify_cert",         .f = cfg_parse_bool_opt},
+	{"verify_depth",        .f = cfg_parse_int_opt},
+	{"require_certificate", .f = cfg_parse_bool_opt},
+	{"require_cert",        .f = cfg_parse_bool_opt},
+	{"private_key",         .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"pkey_file",           .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"calist_file",         .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"certificate",         .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"cert_file",           .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"cipher_list",         .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
+	{"ca_list",             .f = cfg_parse_str_opt, .flags = CFG_STR_SHMMEM},
 	{0}
 };
 
@@ -189,7 +189,7 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: Missing IP address\n", st->file, 
 			token->start.line, token->start.col);
 		return -1;
@@ -216,7 +216,7 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 	     /* Parse port */
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: Syntax error, ':' expected\n", st->file, st->line, 
 			st->col);
 		return -1;
@@ -230,7 +230,7 @@ static int parse_hostport(int* type, struct ip_addr* ip, unsigned int* port,
 	
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: Premature end of file, port number missing\n", 
 		    st->file, t.start.line, t.start.col);
 		return -1;
@@ -259,7 +259,7 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: TLS domain type missing\n", 
 		    st->file, st->line, st->col);
 		return -1;
@@ -274,7 +274,7 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 	
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: TLS domain IP address missing\n", 
 		    st->file, st->line, st->col);
 		return -1;
@@ -290,7 +290,7 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 
 	ret = cfg_get_token(&t, st, 0);
 	if (ret < 0) return -1;
-	if (ret == 0) {
+	if (ret > 0) {
 		ERR("%s:%d:%d: Closing ']' missing\n", 
 		    st->file, st->line, st->col);
 		return -1;
@@ -299,7 +299,9 @@ static int parse_domain(void* param, cfg_parser_t* st, unsigned int flags)
 		ERR("%s:%d:%d: Syntax error, ']' expected\n", 
 		    st->file, t.start.line, t.start.col);
 		return -1;
-	}	
+	}
+
+	if (cfg_eat_eol(st, flags)) return -1;
 
 	if ((domain = tls_new_domain(opt->val | type, &ip, port)) == NULL) {
 		ERR("%s:%d: Cannot create TLS domain structure\n", st->file, st->line);
@@ -370,6 +372,3 @@ int tls_parse_method(str* method)
 
     return opt->val;
 }
-
-
-
