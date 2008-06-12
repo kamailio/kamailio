@@ -106,46 +106,6 @@ struct tm_binds tmb;
 
 
 
-#if 0
-inline int add_contact(struct sip_msg* msg , str* user)
-{
-	struct lump_rpl *lump;
-	char *buf, *p;
-	int len;
-
-	len = 9 /*"Contact: "*/ + user->len/*user*/ + 1 /*"@"*/
-		+ domain.len/*host*/ + 6/*"<sip:>"*/ + CRLF_LEN;
-
-	buf = pkg_malloc( len );
-	if(!buf) {
-		LM_ERR("out of memory! \n");
-		return -1;
-	}
-
-	p = buf;
-	append_str( p, "Contact: " , 9);
-	append_str( p, "<sip:" , 5);
-	append_str( p, user->s, user->len);
-	*(p++) = '@';
-	append_str( p, domain.s, domain.len);
-	*(p++) = '>';
-	append_str( p, CRLF, CRLF_LEN);
-
-	lump = build_lump_rpl( buf , len , LUMP_RPL_HDR);
-	if(!lump) {
-		LM_ERR("unable to build lump_rpl! \n");
-		pkg_free( buf );
-		return -1;
-	}
-	add_lump_rpl( msg , lump );
-
-	pkg_free(buf);
-	return 1;
-}
-#endif
-
-
-
 int push_on_network(struct sip_msg *msg, int net)
 {
 	str    body;
@@ -225,14 +185,6 @@ int push_on_network(struct sip_msg *msg, int net)
 		goto error;
 	}
 	from = (struct to_body*)msg->from->parsed;
-
-#if 0
-	/* adds contact header into reply */
-	if (add_contact(msg,&(uri.user))==-1) {
-		LM_ERR("failed build contact for reply\n");
-		goto error;
-	}
-#endif
 
 	/*-------------BUILD AND FILL THE SMS_MSG STRUCTURE --------------------*/
 	/* computes the amount of memory needed */
