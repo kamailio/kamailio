@@ -567,12 +567,12 @@ int binrpc_send_command_ex(
 
 static int parse_arg(struct binrpc_val* v, char* arg)
 {
-	int i;
+	int i=0;
 	double f;
 	char* tmp;
 	int len;
 
-  f = 0.0;
+	f = 0.0;
 
 	if (*arg)
 		i=strtol(arg, &tmp, 10);
@@ -1013,7 +1013,7 @@ int binrpc_parse_error_response(
 }
 
 /* returns a pointer to a static buffer containing l in asciiz & sets len */
-static inline char* int2str(unsigned int l, int* len)
+static inline char* int2str_internal(unsigned int l, int* len)
 {
 	static char r[INT2STR_MAX_LEN];
 	int i;
@@ -1027,7 +1027,7 @@ static inline char* int2str(unsigned int l, int* len)
 	}while(l && (i>=0));
 	if (l && (i<0)){
 		snprintf(binrpc_last_errs, sizeof(binrpc_last_errs)-1,
-			"BUG: int2str: overflow");
+			"BUG: int2str_internal: overflow");
 	}
 	if (len) *len=(INT2STR_MAX_LEN-2)-i;
 	return &r[i+1];
@@ -1109,7 +1109,7 @@ static int val2buffer(struct binrpc_val* v, unsigned char** buf,
 		case BINRPC_T_INT:
 			num_len = 0;
 			number = NULL;
-			number = int2str(v->u.intval, &num_len);
+			number = int2str_internal(v->u.intval, &num_len);
 			if (number == NULL) {
 				printf("ERROR: Conversion of %d into string failed.\n", v->type);
 				return FATAL_ERROR;
