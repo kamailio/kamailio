@@ -37,6 +37,10 @@
   <xsl:call-template name="inline-bold-monospace"/>
 </xsl:template>
 
+<xsl:template match="serdoc:coreparam">
+  <xsl:call-template name="inline-bold-monospace"/>
+</xsl:template>
+
 <xsl:template match="serdoc:field">
   <xsl:call-template name="inline-bold-monospace"/>
 </xsl:template>
@@ -86,5 +90,13 @@
   <xsl:text>Type: </xsl:text>
   <xsl:call-template name="inline-monospace" />
 </xsl:template>
+
+<xsl:template match="serdoc:optional">
+  <xsl:text>[</xsl:text>
+  <xsl:apply-templates />
+  <xsl:text>]</xsl:text>
+</xsl:template>
+
+
 
 </xsl:stylesheet>
