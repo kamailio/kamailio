@@ -1,0 +1,762 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+
+<refentry xml:id="module.acc_syslog"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>acc_syslog</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>acc_syslog</refname>
+    <refpurpose>Transaction Accounting into the System Log</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>acc_syslog</command> SER module stores information
+      about processed SIP transactions in the system log.
+    </para>
+    <para>
+      Unlike most other modules, <command>acc_syslog</command> is normally
+      not used by calling one of its functions. Instead, it is
+      invoked by setting a certain flag and then starting a transaction
+      by calling a function from the <serdoc:module>tm</serdoc:module>
+      module, usually <serdoc:func>t_relay</serdoc:func>.
+    </para>
+    <para>
+      There are two flags. Their names are determined by the module
+      parameters <serdoc:modparam module="acc_db">log_flag</serdoc:modparam>
+      and <serdoc:modparam module="acc_db">log_missed_flag</serdoc:modparam>
+      respectively. The former is intended to be used for all transactions
+      that are involved in a successfully established call, while the latter
+      is to be used for transactions of a failed call attempt. If either of
+      the flags is set, a line is written to the system log upon completion
+      of the transaction. The difference between the two flags lies in the
+      text that starts the entry. If the
+      <serdoc:modparam module="acc_db">log_flag</serdoc:modparam> is set,
+      the entry starts with the text
+      <literal>"ACC: transaction answered"</literal>, while the
+      <serdoc:modparam module="acc_db">log_missed_flag</serdoc:modparam>
+      causes the entry to start with <literal>"ACC: call missed"</literal>.
+    </para>
+    <para>
+      Neither flag is set by default. In order to activate the writing of
+      accounting entries, you have to explicitely choose flags by setting
+      the module parameters.
+    </para>
+    <para>
+      Normally, you can use the same flag for both parameters since
+      <command>acc_syslog</command>'s internal logic takes care of
+      figuring out the right introduction. It only uses
+      <literal>"ACC: transaction answered"</literal> if the transaction ended
+      with a final response sent upstream with a 2xx
+      status, ie., was successful. Likewise, the module starts entries
+      with <literal>"ACC: call missed"</literal> if the final response sent
+      upstream had a status of 300 or up.
+    </para>
+    <para>
+      Note that the <command>acc_syslog</command> module only writes accounting
+      entries for individual transactions. A call usually consists at least
+      of an INVITE and a BYE transaction for the start and end of a call.
+      Searching the accounting records for the call and translating them
+      into call detail records is not performed by the module.
+    </para>
+  </refsect1>
+
+  <refsect1 xml:id="module.acc_syslog.functions">
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.acc_syslog_log">
+      <title>
+        <function>acc_syslog_log</function>
+        ([<symbol>status</symbol>])
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>acc_syslog_log()</function> function forces
+        <command>acc_syslog</command> to write a syslog entry with
+        information taken from the currently processed request. The
+        entry will by prefixed with the phrase
+        <literal>"ACC: request accounted"</literal>.
+      </para>
+      <para>
+        If the argument <symbol>status</symbol> is given, it contains the
+        status code that should be stored in the field
+        <varname>sip_status</varname>. If it is missing, the field will
+        be set to <literal>0</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.acc_syslog_missed">
+      <title>
+        <function>acc_syslog_missed</function>
+        ([<symbol>status</symbol>])
+      </title>
+      <para>
+        Allowed in request and failure processing.
+      </para>
+      <para>
+        The <function>acc_syslog_log()</function> function forces
+        <command>acc_syslog</command> to write a syslog entry with
+        information taken from the currently processed request. The
+        entry will by prefixed with the phrase
+        <literal>"ACC: call missed"</literal>.
+      </para>
+      <para>
+        If the argument <symbol>status</symbol> is given, it contains the
+        status code that should be stored in the field
+        <varname>sip_status</varname>. If it is missing, the field will
+        be set to <literal>0</literal>.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 xml:id="module.acc_syslog.parameters">
+    <title>Module Parameters</title>
+
+    <refsect2 xml:id="module.acc_syslog.attrs">
+      <title><parameter>attrs</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>""</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>attrs</parameter> parameter contains a comma 
+        separated list of those attributes whose values should be written
+        in the accounting entry. See the description of the field
+        <varname>attrs</varname> in the section
+        <serdoc:link linend="module.acc_syslog.entries">Syslog
+        Entries</serdoc:link> below for information on how these values
+        are stored.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.early_media">
+      <title><parameter>early_media</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>early_media</parameter> parameter determines,
+        whether the arrival of a reponse 183 (Session Progress) should
+        trigger writing of an accounting entry, too. If the parameter is
+        set to <literal>yes</literal>, a 183 response will be treated as
+        a successful response and an entry will be written if
+        the <serdoc:modparam module="acc_syslog">log_flag</serdoc:modparam>
+        is set.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.failed_transactions">
+      <title><parameter>failed_transaction</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>failed_transactions</parameter> parameter determines,
+        whether transaction with a final response indicating a failure
+        (ie., status codes of 300 and up) should be accounted too if the
+        <serdoc:modparam module="acc_syslog">log_flag</serdoc:modparam>
+        is set.
+      </para>
+      <para>
+        The value of the <parameter>failed_transactions</parameter> parameter
+        has no influence on accounting if the
+        <serdoc:modparam module="acc_syslog">log_missed_flag</serdoc:modparam>
+        is set, in which case the transaction will be accounted for only
+        if the final response indicates a failure.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.log_flag">
+      <title><parameter>log_flag</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>flag name</serdoc:paramtype>
+        <serdoc:paramdefault>none</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_flag</parameter> parameter sets the name of the
+        flag that decides whether information about a succeeeded
+        transaction (ie., one with a final response from the 2xx group) is
+        to be written to the system log.
+      </para>
+      <para>
+        By setting the
+        <serdoc:modparam module="acc_syslog">early_media</serdoc:modparam>
+        and
+        <serdoc:modparam module="acc_syslog">failed_transactions</serdoc:modparam>
+        to <literal>yes</literal> setting the <parameter>log_flag</parameter>
+        also triggers writing for 183 provisional responses and failed
+        transactions respectively.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.log_fmt">
+      <title><parameter>log_fmt</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>"acdfgimnoprstuxDFIMPRSTUX"</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_fmt</parameter> parameter determines, which
+        information is written to the system log. Its value is a string.
+        The various fields described in the section
+        <serdoc:link linkend="module.acc_syslog.entries">Syslog
+        Entries</serdoc:link> below are assigned a letter. If the letter
+        for the field is included in the string, the field will be written.
+      </para>
+      <para>
+        The mapping between letters and fields is as follows:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term><literal>a</literal></term>
+          <listitem><serdoc:field table="acc">attr</serdoc:field></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>c</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_callid</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>d</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_tag</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>f</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_from</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>g</literal></term>
+          <listitem>
+            <serdoc:field table="acc">flags</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>i</literal></term>
+          <listitem>
+            <serdoc:field table="acc">in_ruri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>m</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_method</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>n</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_cseq</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>o</literal></term>
+          <listitem>
+            <serdoc:field table="acc">out_ruri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>p</literal></term>
+          <listitem>
+            <serdoc:field table="acc">src_ip</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>r</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_tag</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>t</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_to</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>u</literal></term>
+          <listitem>
+            <serdoc:field table="acc">digest_username</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>x</literal></term>
+          <listitem>
+            <serdoc:field table="acc">request_timestamp</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>D</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_did</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>F</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_uri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>I</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_uid</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>M</literal></term>
+          <listitem>
+            <serdoc:field table="acc">from_did</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>P</literal></term>
+          <listitem>
+            <serdoc:field table="acc">src_port</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>R</literal></term>
+          <listitem>
+            <serdoc:field table="acc">digest_realm</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>S</literal></term>
+          <listitem>
+            <serdoc:field table="acc">sip_status</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>T</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_uri</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>U</literal></term>
+          <listitem>
+            <serdoc:field table="acc">to_uid</serdoc:field>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>X</literal></term>
+          <listitem>
+            <serdoc:field table="acc">response_timestamp</serdoc:field>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>
+        By default, all of the fields are active.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.log_level">
+      <title><parameter>log_level</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>int</serdoc:paramtype>
+        <serdoc:paramdefault>2</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_level</parameter> parameter sets the log
+        level that <command>acc_syslog</command> will use when writing
+        to the syslog. Its value is an integer that correspondents to
+        the priority values defined by syslog as follows:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term><literal>4</literal></term>
+          <listitem><literal>debug</literal></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>3</literal></term>
+          <listitem><literal>info</literal></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>2</literal></term>
+          <listitem><literal>notice</literal></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>1</literal></term>
+          <listitem>
+            <literal>warning</literal> (or <literal>warn</literal>)
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>-1</literal></term>
+          <listitem>
+            <literal>err</literal> (or <literal>error</literal>)
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>-2</literal></term>
+          <listitem><literal>crit</literal></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>-3</literal></term>
+          <listitem><literal>alert</literal></listitem>
+        </varlistentry>
+      </variablelist>
+      <para>
+        Note that the <parameter>log_level</parameter> must be at less
+        or equal than the core parameter
+        <serdoc:coreparam>debug</serdoc:coreparam> or no entries will
+        be written at all.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.log_missed_flag">
+      <title><parameter>log_missed_flag</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>flag name</serdoc:paramtype>
+        <serdoc:paramdefault>none</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>log_missed_flag</parameter> parameter sets the name
+        of the flag that decides whether information about a failed
+        transaction (ie., one with a final response of status 300 or up) is
+        to be written to the system log.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.report_ack">
+      <title><parameter>report_ack</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>report_ack</parameter> parameter determines,
+        whether a separate accounting entry should be written for the
+        ACK following a 200 OK response. If activated, such entries will
+        be written with the starting text
+        <literal>"ACC: request acknowledged"</literal>.
+      </para>
+      <para>
+        Usually, having the entry for the first transaction is enough
+        and no additional entry is necessary. There is, however, a chance
+        that the ACK does not reach its destination and the call does
+        in fact not start. If you need to know about those cases, you can
+        enable the <parameter>report_ack</parameter> parameter and check
+        that there is an ACK for every INVITE.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.acc_syslog.report_cancels">
+      <title><parameter>report_cancels</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>report_cancels</parameter> parameter determines,
+        whether accounting entries should be made for CANCEL transactions.
+      </para>
+      <para>
+        You can recognize a canceled transaction by its status 487 in the
+        <varname>sip_status</varname> field.
+        Because of this, there is usually no need for the extra entries
+        the CANCEL transaction itself may create.
+      </para>
+    </refsect2>
+
+    <!--
+    <refsect2 xml:id="module.acc_syslog.">
+      <title><parameter></parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype></serdoc:paramtype>
+        <serdoc:paramdefault></serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <serdoc:todo />
+    </refsect2>
+    -->
+
+  </refsect1>
+
+  <refsect1 xml:id="module.acc_syslog.entries">
+    <title>Syslog Entries</title>
+
+    <para>
+      All accounting entries that are written to the system log consist of
+      a single line. It is started with any of the prefixes mentioned
+      above, followed by a colon and a comma-separated list of accounting
+      fields. Each field has a name, followed by an equals sign followed
+      by the fields value.
+    </para>
+    <para>
+      Which entries will be written is determined by the module parameter
+      <serdoc:modparam module="acc_syslog">log_fmt</serdoc:modparam>. By
+      default, it prints all available fields.
+    </para>
+    <para>
+      The following lists and explains all the accounting fields.
+    </para>
+
+    <refsect2>
+      <title><varname>attrs</varname></title>
+      <para>
+        The <varname>attrs</varname> field will contain the attribute and
+        their values that have been selected for storing with the accounting
+        entry.
+      </para>
+      <para>
+        The field will contain a comma separated list of entries. Each
+        entry will start with the name of the attribute, followed by a
+        colon, followed by its value enclosed in double quotation marks.
+        Which attributes will be in the list is controlled by the
+        <serdoc:modparam module="acc_db">attrs</serdoc:modparam> module
+        parameter.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>digest_username</varname></title>
+      <para>
+        The <varname>digest_username</varname> field will contain the
+        username used in authenticating the request. If no
+        authentication was done or the authentication failed, the field
+        will be <literal>NULL</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>digest_realm</varname></title>
+      <para>
+        The <varname>digest_realm</varname> field will contain the realm
+        used in authenticating the request. If no authentication was done
+        or it failed, the field will be <literal>NULL</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>flags</varname></title>
+      <para>
+        The <varname>flags</varname> field will contain the combined
+        numerical value of the flags that where set for the transaction
+        when the entry was written. The value is determined by treating
+        the flags as a bit field with the flag's number as the number of
+        the corresponding bit.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>from_did</varname></title>
+      <para>
+        The <varname>from_did</varname> field will contain the domain ID
+        determined for the callee's domain and stored in the
+        <varname>$fd.did</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>from_tag</varname></title>
+      <para>
+        The <varname>from_tag</varname> field will contain the value of the
+        tag parameter of the From header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>from_uid</varname></title>
+      <para>
+        The <varname>from_uid</varname> field will contain the user ID
+        determined for the callee and stored in the
+        <varname>$fu.uid</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>from_uri</varname></title>
+      <para>
+        The <varname>from_uri</varname> field will contain the URI of the
+        From header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>in_ruri</varname></title>
+      <para>
+        The <varname>in_ruri</varname> field will contain the Request-URI
+        the request arrived with.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>out_ruri</varname></title>
+      <para>
+        The <varname>out_ruri</varname> field will contain the Request-URI
+        of the winning branch, ie., of that relayed request which caused
+        the final response that was sent upstram.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>request_timestamp</varname></title>
+      <para>
+        The <varname>request_timestamp</varname> field will contain the
+        date and time when the request was received, ie., when the
+        transaction started.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>response_timestamp</varname></title>
+      <para>
+        The <varname>response_timestamp</varname> field will contain the
+        date and time when the response was sent upstream, ie. when the
+        transaction ended.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>server_id</varname></title>
+      <para>
+        The <varname>server_id</varname> field will contain the server ID
+        of the SER instance that processed the transaction. This is useful
+        in a cluster of several SER machines. By giving each machine its
+        own
+        <serdoc:link linkend="core.parameter.server_id">server_id</serdoc:link>
+        you can later determine, which server the accounting entry
+        originated from.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>sip_callid</varname></title>
+      <para>
+        The <varname>sip_callid</varname> field will contain the content
+        of the Call-ID header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>sip_cseq</varname></title>
+      <para>
+        The <varname>sip_cseq</varname> field will contain the sequence
+        number contained in the CSeq header field of the request. The
+        method in that header field (which should be identical to the
+        method of the request) can be found in the
+        <serdoc:field table="acc">sip_method</serdoc:field> field.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>sip_from</varname></title>
+      <para>
+        The <varname>sip_from</varname> field will contain the content
+        of the From header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>sip_method</varname></title>
+      <para>
+        The <varname>sip_method</varname> field will contain the method
+        of the request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>sip_status</varname></title>
+      <para>
+        The <varname>sip_status</varname> field will contain the status code
+        of the final response or, if
+        <serdoc:modparam module="acc_db">early_media</serdoc:modparam> is set,
+        183 response transmitted upstream for the transaction.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>sip_to</varname></title>
+      <para>
+        The <varname>sip_to</varname> field will contain the content of the
+        To header field of the request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>src_ip</varname></title>
+      <para>
+        The <varname>src_ip</varname> field will contain the source IP
+        address of the received request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>src_port</varname></title>
+      <para>
+        The <varname>src_port</varname> field will contain the source port
+        of the received request.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>to_did</varname></title>
+      <para>
+        The <varname>to_did</varname> field will contain the domain ID
+        determined for the caller's domain and stored in the
+        <varname>$td.did</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>to_tag</varname></title>
+      <para>
+        The <varname>to_tag</varname> field will contain the value of the
+        tag parameter of the response sent upstream or <literal>NULL</literal>
+        if the response was missing this parameter.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>to_uid</varname></title>
+      <para>
+        The <varname>to_uid</varname> field will contain the user ID
+        determined for the caller and stored in the
+        <varname>$tu.uid</varname> attribute or <literal>NULL</literal>
+        if the attribute was not set.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <title><varname>to_uri</varname></title>
+      <para>
+        The <varname>to_uri</varname> field will contain the URI of the
+        To header field of the request.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>acc_db</serdoc:module></member>
+      <member><serdoc:module>acc_radius</serdoc:module></member>
+      <member><serdoc:module>tm</serdoc:module></member>
+      <member><serdoc:sbin>syslogd</serdoc:sbin></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+<!-- vim:sw=2 sta et sts=2 ai
+  -->

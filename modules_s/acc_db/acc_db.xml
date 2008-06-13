@@ -2,9 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
   "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
 
-
 <refentry xml:id="module.acc_db"
-          xmlns:xi="http://www.w3.org/2001/XInclude"
           xmlns:serdoc="http://sip-router.org/xml/serdoc">
   <refmeta>
     <refentrytitle>acc_db</refentrytitle>
@@ -19,13 +17,13 @@
     <title>Description</title>
     <para>
       The <command>acc_db</command> SER module stores information about
-      processed transaction in a database. 
+      processed SIP transactions in a database. 
     </para>
     <para>
-      Unlike most other modules, <command>acc_db</command> is usually
+      Unlike most other modules, <command>acc_db</command> is normally
       not used by calling one of its functions. Instead, it is
       invoked by setting a certain flag and then starting a transaction
-      by calling a functions from the <serdoc:module>tm</serdoc:module>
+      by calling a function from the <serdoc:module>tm</serdoc:module>
       module, usually <serdoc:func>t_relay</serdoc:func>.
     </para>
     <para>
@@ -37,7 +35,7 @@
       set, information on the transaction (an "accounting entry") is written
       to the database table given by the parameter
       <serdoc:modparam module="acc_db">acc_table</serdoc:modparam>.
-      The second flag is to be used by all transactions of a failed call
+      The second flag is to be used for transactions of a failed call
       attempt. Information on transactions for which this flag is set are
       then written to the table given by the
       <serdoc:modparam module="acc_db">mc_table</serdoc:modparam> (for
@@ -77,7 +75,6 @@
       Searching the accounting records for the call and translating them
       into call detail records is not performed by the module.
     </para>
-
   </refsect1>
 
   <refsect1 xml:id="module.acc_db.functions">
@@ -255,7 +252,8 @@
       <para>
         The <parameter>early_media</parameter> parameter determines,
         whether the arrival of a reponse 183 (Session Progress) should
-        trigger the writing of information, too. If the parameter is set,
+        trigger the writing of information, too. If the parameter is
+        set to <literal>yes</literal>,
         a 183 response will be treated as a successful response and
         information stored in the
         <serdoc:modparam module="acc_db">acc_table</serdoc:modparam> if
@@ -272,8 +270,8 @@
       </serdoc:paraminfo>
       <para>
         The <parameter>failed_transactions</parameter> parameter determines,
-        whether transaction with a final response indication a failure
-        (ie., status codes of 300 and up) should be accounted too, if the
+        whether transaction with a final response indicating a failure
+        (ie., status codes of 300 and up) should be accounted too if the
         <serdoc:modparam module="acc_db">log_flag</serdoc:modparam> is set.
       </para>
       <para>
@@ -408,10 +406,11 @@
       </serdoc:paraminfo>
       <para>
         The <parameter>log_fmt</parameter> parameter determines, which
-        information is written to the database. It contains a string where
-        each of the letters indicates a different of the fields described
-        in the section <serdoc:link linkend="module.acc_db.database">Database
-        Schema</serdoc:link> below.
+        information is written to the database. Its value is a string.
+        The various fields described in the section
+        <serdoc:link linkend="module.acc_db.database">Database
+        Schema</serdoc:link> below are assigned a letter. If the letter
+        for the field is included in the string, the field will be written.
       </para>
       <para>
         The mapping between letters and fields is as follows:
@@ -629,7 +628,8 @@
         The <parameter>report_ack</parameter> parameter determines,
         whether a separate accounting entry should be written for the
         ACK following a 200 OK response.
-      </para><para>
+      </para>
+      <para>
         Usually, having the entry for the first transaction is enough
         and no additional entry is necessary. There is, however, a chance
         that the ACK does not reach its destination and the call does
@@ -639,15 +639,15 @@
       </para>
     </refsect2>
 
-    <refsect2 xml:id="module.acc_db.report_cancel">
-      <title><parameter>report_cancel</parameter></title>
+    <refsect2 xml:id="module.acc_db.report_cancels">
+      <title><parameter>report_cancels</parameter></title>
       <serdoc:paraminfo>
         <serdoc:paramtype>boolean</serdoc:paramtype>
         <serdoc:paramdefault>no</serdoc:paramdefault>
       </serdoc:paraminfo>
       <para>
-        The <parameter>report_cancel</parameter> parameter determines,
-        whether a accounting entries should be made for CANCEL transactions.
+        The <parameter>report_cancels</parameter> parameter determines,
+        whether accounting entries should be made for CANCEL transactions.
       </para>
       <para>
         You can recognize a canceled transaction by its status 487 in the
