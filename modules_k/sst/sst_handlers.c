@@ -20,11 +20,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
  * USA
- *
- * History:
- * --------
- * 2006-05-11 initial version (karwin)
- * 2006-10-10 RFC complient changes (karwin)
+ */
+
+/**
+ *\file
+ *\brief Functions for the SST module
  */
 
 /**
@@ -171,10 +171,12 @@ static str sst_422_rpl = str_init("Session Timer Too Small");
  *
  * @param timeout_avp_p - The pointer to the dialog modules timeout
  *                        AVP.
- * @param minSE - The minimum session expire value allowed by this
+ * @param min_se - The minimum session expire value allowed by this
  *                PROXY.
+ * @param flag - sst flag
+ * @param reject - reject state
  */
-void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se, 
+void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se,
 		int flag, unsigned int reject)
 {
 	timeout_avp = timeout_avp_p;
@@ -221,8 +223,7 @@ void sst_handler_init(pv_spec_t *timeout_avp_p, unsigned int min_se,
  *
  * @param did - The dialog ID
  * @param type - The trigger event type (CREATED)
- * @param msg - The SIP message that triggered the callback (INVITE)
- * @param param - The pointer to nothing. As we did not attach
+ * @param params - The pointer to nothing. As we did not attach
  *                anything to this callback in the dialog module.
  */
 void sst_dialog_created_CB(struct dlg_cell *did, int type,
@@ -357,9 +358,7 @@ static void sst_dialog_confirmed_CB(struct dlg_cell *did, int type,
  *
  * @param did - The Dialog ID / structure pointer. Used as an ID only.
  * @param type - The termination cause/reason.
- * @param msg - The pointer to the SIP message. On an DLGCB_EXPIRED type, the
- *              message is a FAKED_REPLY (-1) and cannot be looked at safely.
- * @param param - Not used
+ * @param params - The sst information
  */
 static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
 		struct dlg_cb_params * params)
@@ -404,8 +403,7 @@ static void sst_dialog_terminate_CB(struct dlg_cell* did, int type,
  *
  * @param did - The dialog structure. The pointer is used as an ID.
  * @param type - The reason for the callback. DLGCB_REQ_WITHIN
- * @param msg - The SIP message that causes the callback.
- * @param param - The sst information
+ * @param params - The sst information
  */
 static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
 		struct dlg_cb_params * params)
@@ -473,8 +471,7 @@ static void sst_dialog_request_within_CB(struct dlg_cell* did, int type,
  *
  * @param did - The dialog structure. The pointer is used as an ID.
  * @param type - The reason for the callback. DLGCB_CONFIRMED
- * @param msg - The SIP message that causes the callback.
- * @param param - The sst information
+ * @param params - The sst information
  */
 static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 		struct dlg_cb_params * params) 

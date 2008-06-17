@@ -378,9 +378,9 @@ int process_pong(struct ha *the_table,unsigned int seqno)
 
 /**
  * ac_cancel:
- * @param1: the Application Server structure which sent this action
- * @param2: the action payload
- * @param3: len the length of the payload
+ * @param the_as Application Server structure which sent this action
+ * @param action action payload
+ * @param len the length of the payload
  * 
  * This function cancels a previously initiated UAC Transaction.
  * it receives the HashIndex and Label of the cell being cancelled
@@ -621,7 +621,9 @@ error:
 
 /**
  * ac_reply: UAS transaction Reply action. It replies to an incoming request with a response.
- * @the_as: The App Server that sent this action.
+ * @param the_as The App Server that sent this action.
+ * @param action action
+ * @param len length
  *
  * function description
  *
@@ -642,7 +644,7 @@ int ac_reply(as_p the_as,char *action,int len)
    ttag=NULL;
    my_msg=NULL;
    i=k=0;
-   
+
    net2hostL(flags,action,k);
    net2hostL(hash_index,action,k);
    net2hostL(label,action,k);
@@ -1227,8 +1229,8 @@ static inline int calculate_hooks(dlg_t* _d)
 }
 
 /**
- * Strips the <strip_top_vias> topmost via headers.
- * Leaves only the topmost <allow_top_routes> Record-Route headers.
+ * Strips the "<strip_top_vias>" topmost via headers.
+ * Leaves only the topmost "<allow_top_routes>" Record-Route headers.
  *
  */
 int extract_allowed_headers(struct sip_msg *my_msg,int strip_top_vias,int allow_top_Rroutes,hdr_flags_t forbidden_hdrs,char *headers,int headers_len)
