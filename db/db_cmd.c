@@ -151,7 +151,7 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 			}
 		}
 
-		if (type == DB_GET) {
+		if (type == DB_GET || type == DB_SQL) {
 			r = db_drv_func((void*)(&newp->first[i]), &con->uri->scheme, "db_first");
 			if (r < 0) goto err;
 			if (r > 0) {
