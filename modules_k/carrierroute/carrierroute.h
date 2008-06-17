@@ -110,6 +110,10 @@ enum hash_algorithm {
 	alg_error
 };
 
+/**
+ * Generic parameter that holds a string, an int or an pseudo-variable
+ * @todo replace this with gparam_t
+ */
 struct multiparam_t {
 	enum {
 		MP_INT,

@@ -36,7 +36,7 @@
  * Adds a route rule to rf
  *
  * @param rf the current route_flags struct
- * @param full_prefix the whole scan prefix
+ * @param prefix the whole scan prefix
  * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
@@ -65,8 +65,8 @@ int add_route_rule(struct route_flags *rf, const str * prefix,
 /**
  * Adds a failure route rule to rt
  *
- * @param rt the current route tree node
- * @param full_prefix the whole scan prefix
+ * @param failure_tree the current route tree node
+ * @param prefix the whole scan prefix
  * @param host the hostname last tried
  * @param reply_code the reply code 
  * @param flags user defined flags

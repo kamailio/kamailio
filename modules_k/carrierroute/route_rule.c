@@ -47,6 +47,7 @@ static int fixup_rule_backup(struct route_flags * rf, struct route_rule * rr);
  * @param max_targets the number of targets
  * @param prob the weight of the rule
  * @param rewrite_hostpart the rewrite_host of the rule
+ * @param strip the strip value of the rule
  * @param rewrite_local_prefix the rewrite prefix
  * @param rewrite_local_suffix the rewrite suffix
  * @param status the status of the rule
@@ -223,8 +224,8 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
  * Adds a failure route rule to rt. prefix, host, reply_code, and comment
  * must not contain NULL pointers.
  *
- * @param rt the current route tree node
- * @param full_prefix the whole scan prefix
+ * @param failure_tree the current route tree node
+ * @param prefix the whole scan prefix
  * @param host the hostname last tried
  * @param reply_code the reply code 
  * @param flags user defined flags

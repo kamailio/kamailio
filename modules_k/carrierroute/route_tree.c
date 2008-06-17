@@ -202,7 +202,7 @@ struct route_tree * create_route_tree(const str * domain, int id) {
 /**
  * Try to find a matching route_flags struct in rt and return it, add it if not found.
  *
- * @param rt the current route tree node
+ * @param route_tree the current route tree node
  * @param flags user defined flags
  * @param mask mask for user defined flags
  *
@@ -253,7 +253,7 @@ struct route_flags * add_route_flags(struct route_tree_item * route_tree, const 
  * Note that this is a recursive function. It strips off digits from the
  * beginning of scan_prefix and calls itself.
  *
- * @param rt the current route tree node
+ * @param route_tree the current route tree node
  * @param scan_prefix the prefix at the current position
  * @param flags user defined flags
  * @param mask mask for user defined flags
@@ -322,7 +322,7 @@ int add_route_to_tree(struct route_tree_item * route_tree, const str * scan_pref
  * Note that this is a recursive function. It strips off digits from the
  * beginning of scan_prefix and calls itself.
  *
- * @param rt the current route tree node
+ * @param failure_tree the current route tree node
  * @param scan_prefix the prefix at the current position
  * @param full_prefix the whole scan prefix
  * @param host the hostname last tried
@@ -359,7 +359,9 @@ int add_failure_route_to_tree(struct failure_route_tree_item * failure_tree, con
 	}
 }
 
-
+/**
+ * Destroy the route map by freeing its memory.
+ */
 void destroy_route_map(void) {
 	struct route_map * tmp, *tmp2;
 	if (script_routes) {
@@ -391,7 +393,7 @@ void destroy_route_tree(struct route_tree *route_tree) {
 /**
  * Destroys route_flags in shared memory by freing all its memory.
  *
- * @param route_flags route_flags struct to be destroyed
+ * @param rf route_flags struct to be destroyed
  */
 static void destroy_route_flags(struct route_flags *rf) {
 	struct route_rule *rs;
@@ -441,7 +443,7 @@ static void destroy_route_tree_item(struct route_tree_item *route_tree_item) {
 /**
  * Destroys failure_route_tree_item in shared memory by freing all its memory.
  *
- * @param failure_route_tree_item route tree node to be destroyed
+ * @param route_tree_item route tree node to be destroyed
  */
 static void destroy_failure_route_tree_item(struct failure_route_tree_item *route_tree_item) {
 	int i;

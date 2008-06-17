@@ -42,7 +42,7 @@
  * Note that this is a recursive function. It strips of digits from the
  * beginning of scan_prefix and calls itself.
  *
- * @param rt the current route tree node
+ * @param route_tree the current route tree node
  * @param scan_prefix the prefix at the current position
  * @param flags user defined flags
  * @param mask mask for user defined flags
@@ -66,7 +66,7 @@
  *
  * @see add_route()
  */
-int add_route_to_tree(struct route_tree_item * rt, const str * scan_prefix,
+int add_route_to_tree(struct route_tree_item * route_tree, const str * scan_prefix,
 		flag_t flags, flag_t mask, const str * full_prefix, int max_targets, double prob,
 		const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
 		const str * rewrite_local_suffix, int status, int hash_index,
@@ -81,7 +81,7 @@ int add_route_to_tree(struct route_tree_item * rt, const str * scan_prefix,
  * Note that this is a recursive function. It strips of digits from the
  * beginning of scan_prefix and calls itself.
  *
- * @param rt the current route tree node
+ * @param failure_tree the current route tree node
  * @param scan_prefix the prefix at the current position
  * @param full_prefix the whole scan prefix
  * @param host the hostname last tried

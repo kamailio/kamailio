@@ -92,6 +92,7 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
  * Get the carrier id from multiparam_t structure.
  *
  * @param mp carrier id as integer, pseudo-variable or AVP name of carrier
+ * @param _msg SIP message
  * @return carrier id on success, -1 otherwise
  *
  */
@@ -146,6 +147,7 @@ int mp2carrier_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 /**
  * Get the domain id from multiparam_t structure.
  *
+ * @param _msg SIP message
  * @param mp carrier id as integer, pseudo-variable or AVP name of carrier
  * @return carrier id on success, -1 otherwise
  *
@@ -224,7 +226,7 @@ static inline int reply_code_matcher(const str *rcw, const str *rc) {
 /**
  * writes the next_domain avp using the rule list of route_tree
  *
- * @param route_tree the current failure routing tree node
+ * @param failure_tree the current failure routing tree node
  * @param host last tried host
  * @param reply_code the last reply code
  * @param flags flags for the failure route rule
@@ -272,7 +274,7 @@ static int set_next_domain_on_rule(const struct failure_route_tree_item *failure
  * The longest match is taken, so it is possible to define
  * failure route rules for a single number
  *
- * @param route_tree the current routing tree node
+ * @param failure_tree the current routing tree node
  * @param uri the uri to be rewritten at the current position
  * @param host last tried host
  * @param reply_code the last reply code

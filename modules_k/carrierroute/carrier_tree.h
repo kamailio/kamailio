@@ -77,6 +77,7 @@ void release_data(struct rewrite_data *data);
  * @param tree the name of the carrier tree
  * @param carrier_id the id
  * @param id the domain id of the carrier tree
+ * @param trees number of route_tree entries
  *
  * @return a pointer to the newly allocated route tree or NULL on
  * error, in which case it LOGs an error message.
@@ -166,9 +167,10 @@ int find_tree(str tree);
 /**
  * adds a carrier tree for the given carrier
  *
- * @param tree the carrier name of desired routing tree
+ * @param carrier the carrier name of desired routing tree
  * @param carrier_id the id of the carrier
  * @param rd route data to be searched
+ * @param trees number of route_tree entries
  *
  * @return a pointer to the root node of the desired routing tree,
  * NULL on failure
@@ -181,7 +183,7 @@ struct carrier_tree * add_carrier_tree(const str * carrier, int carrier_id, stru
  * filled and a not existing domain shall be added, an error is
  * returned
  *
- * @param domain the id of the desired carrier tree
+ * @param carrier_id the id of the desired carrier tree
  * @param rd route data to be searched
  *
  * @return a pointer to the root node of the desired routing tree,
