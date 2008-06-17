@@ -8,8 +8,8 @@
 	<title>Overview</title>
 	<para>
 		This module provides the possibility to print user formatted log or
-		debug messages from &openser; scripts, similar to printf function but now
-		a specifier is replaced with a part of the &sip; request or other
+		debug messages from &openser; scripts, similar to printf function. 
+		A C-style printf specifier is replaced with a part of the &sip; request or other
 		variables from system.
 		<xref linkend="sec-implemented-specifiers"/> shows what can be printed
 		out.
@@ -18,12 +18,12 @@
 	<section id="sec-implemented-specifiers">
 	<title>Implemented Specifiers</title>
 	<para>
-	The specifiers have been replaced by pseudo-variables which are
-	now part of &openser; core and are used by other modules as well (e.g., avpops
+	In the xlog function, you use pseudo-variables, that are a part
+	of &openser; core and are used by other modules as well (e.g., avpops
 	in the function avp_printf())
 	</para>
 	<para>
-	The most important changes are:
+	The most important changes from earlier versions of OpenSER are:
 	</para>
 	<itemizedlist>
 		<listitem>
@@ -131,7 +131,7 @@ modparam("xlog", "force_color", 0)
 		<para>
 		Print a formated message using LOG function.
 		</para>
-		<para>Meaning of the parameters is as follows:</para>
+		<para>Meaning of the parameters are as follows:</para>
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>level</emphasis> - The level that will be used in LOG function. It can be:
@@ -180,7 +180,7 @@ modparam("xlog", "force_color", 0)
 			</listitem>
 			</itemizedlist>
 			<para>
-			If it is not a pseudo-variable, then What really matters is the
+			If it is not a pseudo-variable, then what really matters is the
 			third letter of the value. If the log level is higher than the
 			<quote>debug</quote> global parameter, the message is not printed
 			to syslog.
