@@ -364,8 +364,8 @@ void serve_stats(int fd)
 
 /**
  * (from snprintf manual)
- * "The  functions  snprintf()  and vsnprintf() do not write more than size bytes (including the trailing '\0').  If the output was truncated due to
- * this limit then the return value is the number of characters (not including the trailing '\0') which would have been written to the final string
+ * "The  functions  snprintf()  and vsnprintf() do not write more than size bytes (including the trailing '\\0').  If the output was truncated due to
+ * this limit then the return value is the number of characters (not including the trailing '\\0') which would have been written to the final string
  * if  enough space had been available. Thus, a return value of size or more means that the output was truncated."
  */
 inline int print_stats_info(int f,int sock)

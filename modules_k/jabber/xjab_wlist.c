@@ -49,7 +49,7 @@
  * - pipes : communication pipes
  * - size : size of list - number of workers
  * - max : maximum number of jobs per worker
- * #return : pointer to workers list or NULL on error
+ * return : pointer to workers list or NULL on error
  */
 xj_wlist xj_wlist_init(int **pipes, int size, int max, int cache_time,
 		int sleep_time, int delay_time)
@@ -129,7 +129,7 @@ clean:
  * - jwl : pointer to the workers list
  * - pids : p.id's array
  * - size : number of pids
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_wlist_set_pid(xj_wlist jwl, int pid, int idx)
 {
@@ -387,7 +387,7 @@ int xj_wlist_set_flag(xj_wlist jwl, xj_jkey jkey, int fl)
 /**
  * set IM aliases, jdomain and outbound proxy
  *
- * #return 0 if OK
+ * return 0 if OK
  */
 int  xj_wlist_set_aliases(xj_wlist jwl, char *als, char *jd, char *pa)
 {
@@ -577,7 +577,7 @@ clean3:
  * check if the addr contains jdomain or an alias
  * - jwl : pointer to the workers list
  * - addr: the address to check against jdomain and aliases
- * #returns 0 - if contains or !=0 if not
+ * returns 0 - if contains or !=0 if not
  */
 int  xj_wlist_check_aliases(xj_wlist jwl, str *addr)
 {

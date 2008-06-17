@@ -600,7 +600,7 @@ int xj_jcon_free(xj_jcon jbc)
  * - jbc : pointer to Jabber connection
  * - cache_time : life time of the connection
  * - delay_time : time needed to became an active connection
- * #return : pointer to the structure or NULL on error
+ * return : pointer to the structure or NULL on error
  */
 int xj_jcon_set_attrs(xj_jcon jbc, xj_jkey jkey, int cache_time, 
 				int delay_time)
@@ -619,7 +619,7 @@ int xj_jcon_set_attrs(xj_jcon jbc, xj_jkey jkey, int cache_time,
  * update the life time of the connection
  * - ojc : pointer to the open connection
  * - cache_time : number of seconds to keep the connection open
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_jcon_update(xj_jcon jbc, int cache_time)
 {

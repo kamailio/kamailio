@@ -49,7 +49,7 @@ extern int ms_add_date;
  * - slen: length of source buffer
  * - dst: destination buffer
  * - dlen: max length of destination buffer
- * #return: destination length => OK; -1 => error
+ * return: destination length => OK; -1 => error
  */
 
 int m_apo_escape(char* src, int slen, char* dst, int dlen)
@@ -90,7 +90,7 @@ int m_apo_escape(char* src, int slen, char* dst, int dlen)
  * - buf: pointer to string for output
  * - bufLen: length of buf param
  *
- * #return: >0 length of data copied to buf ; <0 error occured
+ * return: >0 length of data copied to buf ; <0 error occured
   */
 int timetToSipDateStr(time_t date, char* buf, int bufLen)
 {
@@ -126,7 +126,7 @@ int timetToSipDateStr(time_t date, char* buf, int bufLen)
  * - ctype: parsed C-T
  * - flag: what to parse - bit mask of CT_TYPE, CT_CHARSET, CT_MSGR
  *
- * #return: 0 OK ; -1 error
+ * return: 0 OK ; -1 error
   */
 int m_extract_content_type(char* src, int len, content_type_t* ctype, int flag)
 {
@@ -189,7 +189,7 @@ error:
  * Add Content-Type, Contact and Date headers if they exist
  * expects - max buf len of the resulted body in body->len
  *         - body->s MUST be allocated
- * #return: 0 OK ; -1 error
+ * return: 0 OK ; -1 error
  * */
 int m_build_headers(str *buf, str ctype, str contact, time_t date)
 {
@@ -238,7 +238,7 @@ error:
  *
  * expects - max buf len of the resulted body in body->len
  *         - body->s MUST be allocated
- * #return: 0 OK ; -1 error
+ * return: 0 OK ; -1 error
  * */
 int m_build_body(str *body, time_t date, str msg, time_t sdate)
 {

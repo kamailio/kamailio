@@ -247,7 +247,7 @@ done:
  * - db_con : connection to database
  * - priority: jabber's priority
  *   dbf: database module callbacks structure
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_worker_process(xj_wlist jwl, char* jaddress, int jport, char* priority,
 		int rank, db_con_t* db_con, db_func_t* dbf)
@@ -1142,7 +1142,7 @@ void xj_sig_handler(int s)
  * - from : origin
  * - contact : contact header
  * - msg : body of the message
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
 {
@@ -1196,7 +1196,7 @@ int xj_send_sip_msg(str *proxy, str *to, str *from, str *msg, int *cbp)
  * - from : origin
  * - contact : contact header
  * - msg : body of the message, string terminated by zero
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_send_sip_msgz(str *proxy, str *to, str *from, char *msg, int *cbp)
 {

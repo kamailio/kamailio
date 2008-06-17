@@ -43,7 +43,7 @@
  * init a jc_pool structure
  * - size : maximum number of the open connection to Jabber
  * - jlen : maximum size of messages queue
- * #return : pointer to the structure or NULL on error
+ * return : pointer to the structure or NULL on error
  */
 xj_jcon_pool xj_jcon_pool_init(int size, int jlen, int ch)
 {
@@ -96,7 +96,7 @@ xj_jcon_pool xj_jcon_pool_init(int size, int jlen, int ch)
  * - jcp : pointer to the Jabber connections pool structure
  * - _jsm : pointer to the message
  * - _ojc : pointer to the Jabber connection that will be used for this message
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_jcon_pool_add_jmsg(xj_jcon_pool jcp, xj_sipmsg _jsm, xj_jcon _ojc)
 {
@@ -126,7 +126,7 @@ int xj_jcon_pool_add_jmsg(xj_jcon_pool jcp, xj_sipmsg _jsm, xj_jcon _ojc)
 /**
  * delete first element from messages queue
  * - jcp : pointer to the Jabber connections pool structure
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_jcon_pool_del_jmsg(xj_jcon_pool jcp, int idx)
 {
@@ -144,7 +144,7 @@ int xj_jcon_pool_del_jmsg(xj_jcon_pool jcp, int idx)
 /**
  * add a new connection in pool
  * - jcp : pointer to the Jabber connections pool structure
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_jcon_pool_add(xj_jcon_pool jcp, xj_jcon jc)
 {
@@ -168,7 +168,7 @@ int xj_jcon_pool_add(xj_jcon_pool jcp, xj_jcon jc)
  * get the jabber connection associated with 'id'
  * - jcp : pointer to the Jabber connections pool structure
  * - id : id of the Jabber connection
- * #return : pointer to the open connection to Jabber structure or NULL on error
+ * return : pointer to the open connection to Jabber structure or NULL on error
  */
 xj_jcon xj_jcon_pool_get(xj_jcon_pool jcp, xj_jkey jkey)
 {
@@ -200,7 +200,7 @@ xj_jcon xj_jcon_pool_get(xj_jcon_pool jcp, xj_jkey jkey)
  * remove the connection associated with 'id' from pool
  * - jcp : pointer to the Jabber connections pool structure
  * - id : id of the Jabber connection
- * #return : 0 on success or <0 on error
+ * return : 0 on success or <0 on error
  */
 int xj_jcon_pool_del(xj_jcon_pool jcp, xj_jkey jkey)
 {
