@@ -92,7 +92,7 @@ static int w_op_avps(struct sip_msg* msg, char* param, char *op);
 static int w_subst(struct sip_msg* msg, char* src, char *subst);
 static int w_is_avp_set(struct sip_msg* msg, char* param, char *foo);
 
-/*
+/*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -126,7 +126,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
+/*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
@@ -224,7 +224,7 @@ static int fixup_db_avp(void** param, int param_no, int allow_scheme)
 	flags0=0;
 	if (db_url.s==0)
 	{
-		LM_ERR("you have to config a db url for using avp_db_xxx functions\n");
+		LM_ERR("you have to configure a db_url for using avp_db_xxx functions\n");
 		return E_UNSPEC;
 	}
 
@@ -333,7 +333,7 @@ static int fixup_db_query_avp(void** param, int param_no)
 
 	if (db_url.s==0)
 	{
-		LM_ERR("you have to config a db url for using avp_db_query function\n");
+		LM_ERR("you have to configure db_url for using avp_db_query function\n");
 		return E_UNSPEC;
 	}
 
