@@ -228,7 +228,7 @@ struct module_exports exports = {
 /**
  * Fixes the hash source to enum values
  *
- * @param hash_source the hash source as string
+ * @param my_hash_source the hash source as string
  *
  * @return the enum value on success, -1 on failure
  */

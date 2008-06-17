@@ -23,7 +23,7 @@
  */
 
 /**
- * @file carrierroute/route.h
+ * @file
  * @brief Contains the functions to manage routing rule data.
  *
  */
@@ -40,8 +40,8 @@
 struct route_rule_p_list;
 
 /**
- * @struct route_rule Second stage of processing: Try to map the end of the
- * user part of the URI to a given suffix. Then rewrite with given parameters.
+ * Second stage of processing: Try to map the end of the user part of the URI
+ * to a given suffix. Then rewrite with given parameters.
  */
 struct route_rule {
 	int dice_to; /*!< prob * DICE_MAX */
@@ -61,9 +61,8 @@ struct route_rule {
 };
 
 /**
- * @struct failure_route_rule Second stage of processing: Try to map the end of
- * the user part of the URI to a given suffix. Then rewrite with given
- * parameters.
+ * Second stage of processing: Try to map the end of the user part of the URI
+ * to a given suffix. Then rewrite with given parameters.
  */
 struct failure_route_rule {
 	str host; /*!< The new target host for the request */
@@ -76,6 +75,9 @@ struct failure_route_rule {
 	struct failure_route_rule * next; /*!< A pointer to the next route rule */
 };
 
+/**
+ * list of routing rules with hash index
+ */
 struct route_rule_p_list {
 	struct route_rule * rr;
 	int hash_index;
@@ -83,7 +85,7 @@ struct route_rule_p_list {
 };
 
 /**
- * @struct route_flags Use route rules only if message flags match stored mask/flags.
+ * Use route rules only if message flags match stored mask/flags.
  */
 struct route_flags {
 	flag_t flags;  /*!< The flags for which the route ist valid */
@@ -92,12 +94,12 @@ struct route_flags {
 	struct route_rule ** rules; /*!< The array points to the rules in order of hash indices */
 	int rule_num; /*!< The number of rules */
 	int dice_max; /*!< The DICE_MAX value for the rule set, calculated by rule_fixup */
-	int max_targets; /*!< upper edge of hashing via prime number algorithm, must be eqal to @var rule_num */
+	int max_targets; /*!< upper edge of hashing via prime number algorithm, must be eqal to rule_num */
 	struct route_flags * next; /*!< A pointer to the next route flags struct */
 };
 
 /**
- * @struct route_tree_item First stage of processing: The actual route tree.
+ * First stage of processing: The actual route tree.
  * Take one digit after another off the user part of the uri until the pointer
  * for the digit is NULL.
  * Note: We can only handle digits right now, ie., no letters or symbols.
@@ -109,9 +111,8 @@ struct route_tree_item {
 };
 
 /**
- * @struct failure_route_tree_item First stage of processing: The actual route
- * tree. Take one digit after another of the user part of the uri until the
- * pointer for the digit is NULL.
+ * First stage of processing: The actual route tree. Take one digit after
+ * another of the user part of the uri until the pointer for the digit is NULL.
  * Note: We can only handle digits right now, ie., no letters or symbols.
  * Seems okay since this is for PSTN routing.
  */
@@ -121,7 +122,7 @@ struct failure_route_tree_item {
 };
 
 /**
- * @struct route_tree The head of each route tree.
+ * The head of each route tree.
  */
 struct route_tree {
 	int id; /*!< the numerical id of the routing tree */
@@ -130,8 +131,8 @@ struct route_tree {
 	struct failure_route_tree_item * failure_tree; /*!< the root node of the failure routing tree */
 };
 
-/** @struct carrier_tree The struct for a carrier routing tree.
- *
+/**
+ * The struct for a carrier routing tree.
  */
 struct carrier_tree {
 	struct route_tree ** trees; /*!< array of route trees */
@@ -142,7 +143,7 @@ struct carrier_tree {
 };
 
 /**
- * @struct rewrite_data contains all routing trees.
+ * contains all routing trees.
  */
 struct rewrite_data {
 	struct carrier_tree ** carriers; /*!< array of carrier trees */
@@ -153,7 +154,7 @@ struct rewrite_data {
 };
 
 /**
- * @struct route_map used to map routing domain names to numbers for
+ * used to map routing domain names to numbers for
  * faster access.
  */
 struct route_map {
@@ -163,7 +164,7 @@ struct route_map {
 };
 
 /**
- * @struct route_map used to map carrier tree names to numbers for
+ * used to map carrier tree names to numbers for
  * faster access.
  */
 struct tree_map {

@@ -49,7 +49,7 @@ static void destroy_carriers(struct carrier * start);
 static char query[QUERY_LEN];
 
 /**
- * @var Database API
+ * Database API
  */
 db_func_t dbf;
 db_con_t * dbh = NULL;

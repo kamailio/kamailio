@@ -49,7 +49,7 @@ static int backup_config();
  * reports errors during config file parsing using LOG macro
  *
  * @param cfg points to the current config data structure
- * @param fmg a format string
+ * @param fmt a format string
  * @param ap format arguments
  */
 void conf_error(cfg_t *cfg, const char * fmt, va_list ap) {

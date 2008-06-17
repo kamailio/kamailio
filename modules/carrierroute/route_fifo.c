@@ -379,9 +379,9 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
  * does the work for dump_fifo, traverses the routing tree
  * and prints route rules if present.
  *
+ * @param msg MI node that is used to append the informations
  * @param tree pointer to the routing tree node
  * @param prefix carries the current scan prefix
- * @param file filehandle to the output file
  *
  * @return mi node containing the route rules
  */
@@ -440,7 +440,8 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
  * parses the command line argument for options
  *
  * @param buf the command line argument
- * @param opts pointer t
+ * @param opts fifo options
+ * @param opt_set set of the options
  *
  * @return 0 on success, -1 on failure
  *
