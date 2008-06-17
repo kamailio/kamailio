@@ -24,7 +24,7 @@
  */
 
 /**
- * \class mysql/dbase.c
+ * \file
  * \brief Implementation of core functions for the MySQL driver.
  *
  * This file contains the implementation of core functions for the MySQL
@@ -237,6 +237,7 @@ int db_mysql_free_result(db_con_t* _h, db_res_t* _r)
  * \param _n number of key=values pairs to compare
  * \param _nc number of columns to return
  * \param _o order by the specified column
+ * \param _r pointer to a structure representing the result
  * \return zero on success, negative value on failure
  */
 int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
