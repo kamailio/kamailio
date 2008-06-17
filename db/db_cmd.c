@@ -79,6 +79,17 @@ db_cmd_t* db_cmd(enum db_cmd_type type, db_ctx_t* ctx, char* table,
 		if (newp->vals == NULL) goto err;
 	}
 
+	/* FIXME: This should be redesigned so that we do not need to connect
+	 * connections in context before comands are created, this takes splitting
+	 * the command initializatio sequence in two steps, one would be creating
+	 * all the data structures and the second would be checking corresponding
+	 * fields and tables on the server.
+	 */
+	if (ctx->con_n == 0) {
+		ERR("No connections found in context %.*s\n", STR_FMT(&ctx->id));
+		goto err;
+	}
+
 	for(i = 0; i < ctx->con_n; i++) {
 		con = ctx->con[i];
 
