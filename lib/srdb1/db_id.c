@@ -36,6 +36,9 @@
 
 /**
  * Duplicate a string
+ * \param dst destination
+ * \param begin start of the string
+ * \param end end of the string
  */
 static int dupl_string(char** dst, const char* begin, const char* end)
 {
@@ -56,8 +59,8 @@ static int dupl_string(char** dst, const char* begin, const char* end)
  * Parse a database URL of form 
  * scheme://[username[:password]@]hostname[:port]/database
  *
- * \param id that should be filled
- * \param parsed url
+ * \param id filled id struct
+ * \param url parsed URL
  * \return 0 if parsing was successful and -1 otherwise
  */
 static int parse_db_url(struct db_id* id, const str* url)
@@ -212,8 +215,10 @@ static int parse_db_url(struct db_id* id, const str* url)
 }
 
 
-/*
+/**
  * Create a new connection identifier
+ * \param url database URL
+ * \return connection identifier, or zero on error
  */
 struct db_id* new_db_id(const str* url)
 {
@@ -244,8 +249,11 @@ struct db_id* new_db_id(const str* url)
 }
 
 
-/*
+/**
  * Compare two connection identifiers
+ * \param id1 first identifier
+ * \param id2 second identifier
+ * \return one if both are equal, zero otherwise
  */
 unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2)
 {
@@ -265,8 +273,9 @@ unsigned char cmp_db_id(const struct db_id* id1, const struct db_id* id2)
 }
 
 
-/*
+/**
  * Free a connection identifier
+ * \param id identifier
  */
 void free_db_id(struct db_id* id)
 {

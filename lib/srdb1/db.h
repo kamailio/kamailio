@@ -71,7 +71,7 @@ typedef int (*db_use_table_f)(db_con_t* _h, const str * _t);
  * 
  * The function takes one parameter, the parameter must contain the database
  * connection URL. The URL is of the form 
- * mysql://username:password@host:port/database where:
+ * mysql://username:password\@host:port/database where:
  * 
  * username: Username to use when logging into database (optional).
  * password: password if it was set (optional)
@@ -362,7 +362,7 @@ int db_table_version(const db_func_t* dbf, db_con_t* con, const str* table);
  *
  * Small helper function to check the table version.
  * \param dbf database module callbacks
- * \param con database connection handle
+ * \param dbh database connection handle
  * \param table checked table
  * \param \version checked version
  * \return 0 means ok, -1 means an error occured

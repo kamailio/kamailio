@@ -83,7 +83,6 @@ int db_do_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
  * \param _h structure representing database connection
  * \param _s char holding the raw query
  * \param _r the result that is returned
- * \param (*val2str) function pointer to the db specific val conversion function
  * \param (*submit_query) function pointer to the db specific query submit function
  * \param (*store_result) function pointer to the db specific store result function
  * \return zero on success, negative on errors
@@ -175,7 +174,6 @@ int db_do_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
  * \param _k key names, if not present the whole table will be returned
  * \param _v values of the keys that must match
  * \param _n number of key/value pairs that are compared, if zero then no comparison is done
- * \param _un: number of columns that should be updated
  * \param (*val2str) function pointer to the db specific val conversion function
  * \param (*submit_query) function pointer to the db specific query submit function
  * \return zero on success, negative on errors
