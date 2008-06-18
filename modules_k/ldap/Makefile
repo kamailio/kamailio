@@ -14,8 +14,10 @@ NAME=ldap.so
 
 LIBS=-lldap
 
-# DEFS+=-I$(LOCALBASE)/include
-# LIBS=-L$(LOCALBASE)/lib -lldap
+ifeq ($(OS),solaris)
+       DEFS+=-I$(LOCALBASE)/include -I/usr/sfw/include -I/usr/local/include -I/opt/sfw/include -I/opt/csw/include
+       LIBS=-L$(LOCALBASE)/lib -L/usr/sfw/lib -L/usr/local/lib -L/opt/sfw/lib -I/opt/csw/lib -lldap 
+endif
 
 
 include ../../Makefile.modules
