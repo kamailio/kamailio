@@ -194,7 +194,7 @@ static regex_t queue_params_regex;
 /** module functions */
 static int mod_init(void);
 static int child_init(int);
-static void timer(unsigned int, void *);
+static void rl_timer(unsigned int, void *);
 static int w_rl_check_default(struct sip_msg*, char *, char *);
 static int w_rl_check_forced(struct sip_msg*, char *, char *);
 static int w_rl_check_forced_pipe(struct sip_msg*, char *, char *);
@@ -433,7 +433,7 @@ static int mod_init(void)
 	}
 
 	/* register timer to reset counters */
-	if (register_timer(timer, 0, timer_interval) < 0) {
+	if (register_timer_process(rl_timer, NULL, timer_interval, TIMER_PROC_INIT_FLAG) < 0) {
 		LM_ERR("could not register timer function\n");
 		return -1;
 	}
@@ -1100,7 +1100,7 @@ static int add_queue_params(modparam_t type, void * val)
 
 
 /* timer housekeeping, invoked each timer interval to reset counters */
-static void timer(unsigned int ticks, void *param)
+static void rl_timer(unsigned int ticks, void *param)
 {
 	int i, len;
 	char *c, *p;
