@@ -1057,6 +1057,13 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</listitem>
 		</itemizedlist>
 		<para>
+		Note: To detect retransmissions using this function you have to make sure
+		that the initial request has already created a transaction, e.g. by using
+		t_relay(). If the processing of requests may take long time (e.g. DB lookups)
+		and the retransmission arrives before t_relay() is called, you can use the
+		t_newtran() function to manually create a transaction.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
 		</para>
 		<example>
