@@ -26,7 +26,12 @@
         </para>
         <para>
         Verification functions communicate with the broker using Radius
-        protocol.
+        protocol.  Sample FreeRADIUS configuration files for broker's
+	Radius server are available from http://www.wirlab.net/tsi/.
+        </para>
+
+        <para>
+        Comments and suggestions for improvements are welcome.
         </para>
 
 	</section>

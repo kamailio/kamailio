@@ -67,7 +67,10 @@ Chapter 1. Admin Guide
    a trusted peer.
 
    Verification functions communicate with the broker using Radius
-   protocol.
+   protocol. Sample FreeRADIUS configuration files for broker's
+   Radius server are available from http://www.wirlab.net/tsi/.
+
+   Comments and suggestions for improvements are welcome.
 
 1.2. Dependencies
 
