@@ -469,46 +469,46 @@ static int attr2uri(struct sip_msg* msg, char* p1, char* p2)
     unsigned int u;
     
     if (p2) {
-	pnr = ((fparam_t*)p2)->v.i;
+		pnr = ((fparam_t*)p2)->v.i;
     } else {
-	pnr = SET_URI_T;
+		pnr = SET_URI_T;
     }
     
     avp_entry = search_avp(((fparam_t*)p1)->v.avp, &value, NULL);
     if (avp_entry == 0) {
-	ERR("attr2uri: AVP '%s' not found\n", ((fparam_t*)p1)->orig);
-	return -1;
+		ERR("attr2uri: AVP '%s' not found\n", ((fparam_t*)p1)->orig);
+		return -1;
     }
     
     memset(&act, 0, sizeof(act));
-
+	
     if ((pnr == STRIP_T) || (pnr == STRIP_TAIL_T)) {
-	/* we need integer value for these actions */
+		/* we need integer value for these actions */
         if (avp_entry->flags & AVP_VAL_STR) {
-	    if (str2int(&value.s, &u)) {
-		ERR("not an integer value: %.*s\n",
-			value.s.len, value.s.s);
-		return -1;
-	    }
-	    act.val[0].u.number = u;
-	} else {
-	    act.val[0].u.number = value.n;
-	}
-	act.val[0].type = NUMBER_ST;
+			if (str2int(&value.s, &u)) {
+				ERR("not an integer value: %.*s\n",
+					value.s.len, value.s.s);
+				return -1;
+			}
+			act.val[0].u.number = u;
+		} else {
+			act.val[0].u.number = value.n;
+		}
+		act.val[0].type = NUMBER_ST;
     } else {
-	/* we need string value */
-	if ((avp_entry->flags & AVP_VAL_STR) == 0) {
-	    act.val[0].u.string = int2str(value.n, NULL);
-	} else {
-	    act.val[0].u.string = value.s.s;
-	}
-	act.val[0].type = STRING_ST;
+		/* we need string value */
+		if ((avp_entry->flags & AVP_VAL_STR) == 0) {
+			act.val[0].u.string = int2str(value.n, NULL);
+		} else {
+			act.val[0].u.string = value.s.s;
+		}
+		act.val[0].type = STRING_ST;
     }
     act.type = pnr;
     init_run_actions_ctx(&ra_ctx);
     if (do_action(&ra_ctx, &act, msg) < 0) {
-	ERR("failed to change ruri part'n");
-	return -1;
+		ERR("failed to change ruri part.\n");
+		return -1;
     }
     return 1;
 }
