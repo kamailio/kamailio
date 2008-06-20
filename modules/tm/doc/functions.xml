@@ -375,7 +375,7 @@ t_forward_nonack("1.2.3.4", "5060");
 		transaction. If the transaction is already created (e.g called after
 		 <function>t_relay()</function> or in an onreply_route) all the
 		 branches will have their final response timeout updated on-the-fly.
-		If one of the parameters is 0, it's value won't be changed.
+		If one of the parameters is 0, its value won't be changed.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -391,6 +391,11 @@ t_forward_nonack("1.2.3.4", "5060");
 		</para>
 	    </listitem>
 	</itemizedlist>
+	<para>
+		See also: 
+			<varname>fr_timer</varname>,
+			<varname>fr_inv_timer</varname>.
+	</para>
 	<example>
 	    <title><function>t_set_fr</function> usage</title>
 	    <programlisting>

@@ -20,10 +20,11 @@ Jiri Kuthan
         1.3.5. retr_timer1 (integer)
         1.3.6. retr_timer2 (integer)
         1.3.7. noisy_ctimer (integer)
-        1.3.8. unix_tx_timeout (integer)
-        1.3.9. aggregate_challenges (integer)
-        1.3.10. blst_methods_add (unsigned integer)
-        1.3.11. blst_methods_lookup (unsigned integer)
+        1.3.8. restart_fr_on_each_reply (integer)
+        1.3.9. unix_tx_timeout (integer)
+        1.3.10. aggregate_challenges (integer)
+        1.3.11. blst_methods_add (unsigned integer)
+        1.3.12. blst_methods_lookup (unsigned integer)
 
    1.4. Functions
 
@@ -105,9 +106,8 @@ Jiri Kuthan
 
 1.2. Known Issues
 
-     * We don't have authentication merging on forking.
-     * Local ACK/CANCELs copy'n'pastes Route and ignores deleted Routes.
-     * 6xx should be delayed.
+     * Local ACK/CANCELs copy'n'pastes Route and ignores deleted Routes
+       (solved in ser 2.1).
      * Possibly, performance could be improved by not parsing non-INVITEs,
        as they do not be replied with 100, and do not result in
        ACK/CANCELs, and other things which take parsing. However, we need
@@ -121,8 +121,6 @@ Jiri Kuthan
      * t_replicate should be done more cleanly--Vias, Routes, etc. should
        be removed from a message prior to replicating it (well, does not
        matter any longer so much as there is a new replication module).
-     * SNMP support (as nobody cares about SNMP, in particular for TM, I
-       will drop this item soon).
 
 1.3. Parameters
 
@@ -134,11 +132,13 @@ Jiri Kuthan
    Timer which hits if no final reply for a request or ACK for a negative
    INVITE reply arrives (in milliseconds).
 
-   Default value is 30 seconds.
+   Default value is 30000 ms (30 seconds).
+
+   See also: t_set_fr().
 
    Example 1. Set fr_timer parameter
 ...
-modparam("tm", "fr_timer", 10)
+modparam("tm", "fr_timer", 10000)
 ...
 
 1.3.2. fr_inv_timer (integer)
@@ -146,38 +146,43 @@ modparam("tm", "fr_timer", 10)
    Timer which hits if no final reply for an INVITE arrives after a
    provisional message was received (in milliseconds).
 
-   Default value is 120 seconds.
+   Note: this timer can be restarted when a provisional response is
+   received. For more details see restart_fr_on_each_reply.
+
+   Default value is 120000 ms (120 seconds).
+
+   See also: t_set_fr().
 
    Example 2. Set fr_inv_timer parameter
 ...
-modparam("tm", "fr_inv_timer", 200)
+modparam("tm", "fr_inv_timer", 180000)
 ...
 
 1.3.3. wt_timer (integer)
 
    Time for which a transaction stays in memory to absorb delayed messages
-   after it completed; also, when this timer hits, retransmission of local
-   cancels is stopped (a puristic but complex behavior would be not to
-   enter wait state until local branches are finished by a final reply or
-   FR timer--we simplified).
+   after it completed (in milliseconds); also, when this timer hits,
+   retransmission of local cancels is stopped (a puristic but complex
+   behavior would be not to enter wait state until local branches are
+   finished by a final reply or FR timer--we simplified).
 
-   Default value is 5 seconds.
+   Default value is 5000 ms (5 seconds).
 
    Example 3. Set wt_timer parameter
 ...
-modparam("tm", "wt_timer", 10)
+modparam("tm", "wt_timer", 1000)
 ...
 
 1.3.4. delete_timer (integer)
 
    Time after which a to-be-deleted transaction currently ref-ed by a
-   process will be tried to be deleted again.
+   process will be tried to be deleted again (in milliseconds).
 
    Default value is 200 milliseconds.
 
    Example 4. Set delete_timer parameter
 ...
-modparam("tm", "delete_timer", 5)
+modparam("tm", "delete_timer", 100)
 ...
 
 1.3.5. retr_timer1 (integer)
@@ -206,12 +211,15 @@ modparam("tm", "retr_timer2", 2000)
 
 1.3.7. noisy_ctimer (integer)
 
-   If set, on FR timer INVITE transactions will be explicitly canceled if
-   possible, silently dropped otherwise. Preferably, it is turned off to
-   allow very long ringing. This behavior is overridden if a request is
-   forked, or some functionality explicitly turned it off for a
-   transaction (like acc does to avoid unaccounted transactions due to
-   expired timer).
+   If set, INVITE transactions that time-out (FR INV timer) will be always
+   replied. If it's not set, the transaction has only one branch and no
+   response was ever received on this branch, it will be silently dropped
+   (no 408 reply will be generated) This behavior is overridden if a
+   request is forked, the transaction has a failure route or callback, or
+   some functionality explicitly turned it on for a transaction (like acc
+   does to avoid unaccounted transactions due to expired timer). Turn this
+   off only if you know the client UACs will timeout and their timeout
+   interval for INVITEs is lower or equal than tm's fr_inv_timer.
 
    Default value is 0 (false).
 
@@ -220,7 +228,29 @@ modparam("tm", "retr_timer2", 2000)
 modparam("tm", "noisy_ctimer", 1)
 ...
 
-1.3.8. unix_tx_timeout (integer)
+1.3.8. restart_fr_on_each_reply (integer)
+
+   If set (default), the fr_inv_timer for an INVITE transaction will be
+   restarted for each provisional reply received (rfc3261 mandated
+   behaviour). If not set, the fr_inv_timer will be restarted only for the
+   first provisional replies and for increasing replies greater or equal
+   180 (e.g. 180, 181, 182, 185, ...).
+
+   Setting it to 0 is especially useful when dealing with bad UAs that
+   continuously retransmit 180s, not allowing the transaction to timeout
+   (and thus making impossible the implementation of certain services,
+   like automatic voicemail after x seconds).
+
+   Default value is 1 (on).
+
+   See also: fr_inv_timer.
+
+   Example 8. Set restart_fr_on_each_reply parameter
+...
+modparam("tm", "restart_fr_on_each_reply", 0)
+...
+
+1.3.9. unix_tx_timeout (integer)
 
    Unix socket transmission timeout, in milliseconds.
 
@@ -230,12 +260,12 @@ modparam("tm", "noisy_ctimer", 1)
 
    The default value is 500 milliseconds.
 
-   Example 8. Set unix_tx_timeout parameter
+   Example 9. Set unix_tx_timeout parameter
 ...
 modparam("tm", "unix_tx_timeout", 250)
 ...
 
-1.3.9. aggregate_challenges (integer)
+1.3.10. aggregate_challenges (integer)
 
    If set (default), the final reply is a 401 or a 407 and more then one
    branch received a 401 or 407, then all the WWW-Authenticate and
@@ -247,12 +277,12 @@ modparam("tm", "unix_tx_timeout", 250)
 
    Default value is 1 (required by rfc3261).
 
-   Example 9. Set aggregate_challenges parameter
+   Example 10. Set aggregate_challenges parameter
 ...
 modparam("tm", "aggregate_challenges", 0)
 ...
 
-1.3.10. blst_methods_add (unsigned integer)
+1.3.11. blst_methods_add (unsigned integer)
 
    Bitmap of method types that trigger blacklisting on transaction
    timeouts. (This setting has no effect on blacklisting because of send
@@ -271,13 +301,13 @@ modparam("tm", "aggregate_challenges", 0)
 
    The default value is 1, only INVITEs trigger blacklisting
 
-   Example 10. Set blst_methods_add parameter
+   Example 11. Set blst_methods_add parameter
 ...
 # INVITEs and REGISTERs trigger blacklisting
 modparam("tm", "blst_methods_add", 33)
 ...
 
-1.3.11. blst_methods_lookup (unsigned integer)
+1.3.12. blst_methods_lookup (unsigned integer)
 
    Bitmap of method types that are looked-up in the blacklist before
    statefull forwarding. See also blst_methods_add
@@ -285,7 +315,7 @@ modparam("tm", "blst_methods_add", 33)
    The default value is 4294967287, every method type except BYE. (We try
    to deliver BYEs no matter what)
 
-   Example 11. Set blst_methods_lookup parameter
+   Example 12. Set blst_methods_lookup parameter
 ...
 # lookup only INVITEs
 modparam("tm", "blst_methods_lookup", 1)
@@ -307,7 +337,7 @@ modparam("tm", "blst_methods_lookup", 1)
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 12. t_relay_to_udp usage
+   Example 13. t_relay_to_udp usage
 ...
 t_relay_to_udp("1.2.3.4", "5060");
 ...
@@ -320,7 +350,7 @@ t_relay_to_udp("1.2.3.4", "5060");
    still want to send a negative reply upstream statelessly not to leave
    upstream UAC in lurch.
 
-   Example 13. t_relay usage
+   Example 14. t_relay usage
 ...
 if (!t_relay())
 {
@@ -349,7 +379,7 @@ if (!t_relay())
    Meaning of the parameters is as follows:
      * failure_route - Failure route block to be called.
 
-   Example 14. t_on_failure usage
+   Example 15. t_on_failure usage
 ...
 route {
     t_on_failure("1");
@@ -375,7 +405,7 @@ failure_route[1] {
    Meaning of the parameters is as follows:
      * onreply_route - Onreply route block to be called.
 
-   Example 15. t_on_reply usage
+   Example 16. t_on_reply usage
 ...
 loadmodule "/usr/local/lib/ser/modules/nathelper.so"
 ...
@@ -407,7 +437,7 @@ es');
    Meaning of the parameters is as follows:
      * branch_route - branch route block to be called.
 
-   Example 16. t_on_branch usage
+   Example 17. t_on_branch usage
 ...
 route {
         t_on_branch("1");
@@ -425,7 +455,7 @@ branch_route[1] {
    Similarly to t_fork_to, it extends destination set by a new entry. The
    difference is that current URI is taken as new entry.
 
-   Example 17. append_branch usage
+   Example 18. append_branch usage
 ...
 set_user("john");
 t_fork();
@@ -440,7 +470,7 @@ t_relay();
    the only way a script can add a new transaction in an atomic way.
    Typically, it is used to deploy a UAS.
 
-   Example 18. t_newtran usage
+   Example 19. t_newtran usage
 ...
 if (t_newtran()) {
     log("UAS logic");
@@ -459,7 +489,7 @@ if (t_newtran()) {
      * code - Reply code number.
      * reason_phrase - Reason string.
 
-   Example 19. t_reply usage
+   Example 20. t_reply usage
 ...
 t_reply("404", "Not found");
 ...
@@ -472,7 +502,7 @@ t_reply("404", "Not found");
    none was found. However this is safely (atomically) done using
    t_newtran.
 
-   Example 20. t_lookup_request usage
+   Example 21. t_lookup_request usage
 ...
 if (t_lookup_request()) {
     ...
@@ -483,7 +513,7 @@ if (t_lookup_request()) {
 
    Retransmits a reply sent previously by UAS transaction.
 
-   Example 21. t_retransmit_reply usage
+   Example 22. t_retransmit_reply usage
 ...
 t_retransmit_reply();
 ...
@@ -493,7 +523,7 @@ t_retransmit_reply();
    Remove transaction from memory (it will be first put on a wait timer to
    absorb delayed messages).
 
-   Example 22. t_release usage
+   Example 23. t_release usage
 ...
 t_release();
 ...
@@ -506,7 +536,7 @@ t_release();
      * ip - IP address where the message should be sent.
      * port - Port number.
 
-   Example 23. t_forward_nonack usage
+   Example 24. t_forward_nonack usage
 ...
 t_forward_nonack("1.2.3.4", "5060");
 ...
@@ -517,7 +547,7 @@ t_forward_nonack("1.2.3.4", "5060");
    transaction. If the transaction is already created (e.g called after
    t_relay() or in an onreply_route) all the branches will have their
    final response timeout updated on-the-fly. If one of the parameters is
-   0, it's value won't be changed.
+   0, its value won't be changed.
 
    Meaning of the parameters is as follows:
      * fr_inv_timeout - new final response timeout (in milliseconds) for
@@ -526,7 +556,9 @@ t_forward_nonack("1.2.3.4", "5060");
        non-INVITE transaction, or INVITEs which haven't received yet a
        provisional response. See also fr_timer.
 
-   Example 24. t_set_fr usage
+   See also: fr_timer, fr_inv_timer.
+
+   Example 25. t_set_fr usage
 ...
 route {
         t_set_fr(10000); # set only fr invite timeout to 10s
@@ -547,7 +579,7 @@ branch_route[1] {
    Returns true if the failure route is executed for a branch that did
    timeout. It can be used only from the failure_route.
 
-   Example 25. t_branch_timeout usage
+   Example 26. t_branch_timeout usage
 ...
 failure_route[0]{
         if (t_branch_timeout()){
@@ -562,7 +594,7 @@ failure_route[0]{
    receive at least one reply in the past (the "current" reply is not
    taken into account). It can be used only from the failure_route.
 
-   Example 26. t_branch_replied usage
+   Example 27. t_branch_replied usage
 ...
 failure_route[0]{
         if (t_branch_timeout()){
@@ -579,7 +611,7 @@ failure_route[0]{
    Returns true if at least one of the current transactions branches did
    timeout.
 
-   Example 27. t_any_timeout usage
+   Example 28. t_any_timeout usage
 ...
 failure_route[0]{
         if (!t_branch_timeout()){
@@ -596,7 +628,7 @@ failure_route[0]{
    receive some reply in the past. If called from a failure or onreply
    route, the "current" reply is not taken into account.
 
-   Example 28. t_any_replied usage
+   Example 29. t_any_replied usage
 ...
 onreply_route[0]{
         if (!t_any_replied()){
@@ -609,7 +641,7 @@ onreply_route[0]{
 
    Returns true if the current transaction was canceled.
 
-   Example 29. t_is_canceled usage
+   Example 30. t_is_canceled usage
 ...
 failure_route[0]{
         if (t_is_canceled()){
