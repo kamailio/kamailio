@@ -24,7 +24,8 @@ modules:
  - blst      - new module containing script blacklist manipulations functions
                (the source of a message can be blacklisted, removed from the
                 blacklist or checked for presence in the blacklist).
- - tm        - t_relay_to renamed to t_relay_to_avp (undocumented function)
+ - tm        - added t_reset_fr(), t_reset_retr(), t_reset_max_lifetime()
+             - t_relay_to renamed to t_relay_to_avp (undocumented function)
              - t_relay() can now also take host and port parameters (e.g.
                t_relay(host, port)), behaving like a statefull 
                forwad(host, port) version (forward to host:port using the same
@@ -121,6 +122,17 @@ modules:
                            received bogus CANCEL will create a new transaction 
                            that will live by default 30s).
              - functions:
+                        - t_reset_fr() -- resets the current transaction 
+                          fr_inv_timer and fr_timer to the default values
+                          (set via the tm modparams fr_inv_timer and fr_timer).
+                        - t_reset_retr() -- resets the current transaction
+                          retransmission intervals on the fly, to the default
+                          values (set via the tm modparams retr_timer1 and 
+                          retr_timer2).
+                        - t_reset_max_lifetime() -- resets the current 
+                          transaction maximum lifetime to the default value
+                          (set via the tm  modparam max_inv_lifetime or 
+                           max_noninv_lifetime).
                         - t_grep_status("code") -- returns true if any branch
                           received code as the final reply (or if no final 
                           reply was yet received, but a "code" provisional 
