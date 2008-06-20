@@ -21,13 +21,17 @@
 	    negative INVITE reply arrives (in milliseconds).
 	</para>
 	<para>
-	    Default value is 30 seconds.
+	    Default value is 30000 ms (30 seconds).
+	</para>
+	<para>
+		See also: <function>t_set_fr()</function>,
+				<varname>max_noninv_lifetime</varname>.
 	</para>
 	<example>
 	    <title>Set <varname>fr_timer</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "fr_timer", 10)
+modparam("tm", "fr_timer", 10000)
 ...
 	    </programlisting>
 	</example>
@@ -40,13 +44,125 @@ modparam("tm", "fr_timer", 10)
 	    provisional message was received (in milliseconds).
 	</para>
 	<para>
-	    Default value is 120 seconds.
+	</para>
+		Note: this timer can be restarted when a provisional response is
+		received. For more details see
+		<varname>restart_fr_on_each_reply</varname>.
+	<para>
+	    Default value is 120000 ms (120 seconds).
+	</para>
+	<para>
+		See also: <function>t_set_fr()</function>,
+				<varname>max_inv_lifetime</varname>.
 	</para>
 	<example>
 	    <title>Set <varname>fr_inv_timer</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "fr_inv_timer", 200)
+modparam("tm", "fr_inv_timer", 180000)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="max_inv_lifetime">
+	<title><varname>max_inv_lifetime</varname> (integer)</title>
+	<para>
+		Maximum time an INVITE transaction is allowed to be active (in 
+		milliseconds). After this interval has passed from the transaction
+		creation, the transaction will be either moved into the wait state
+		or in the final response retransmission state, irrespective of the
+		transaction  <varname>fr_inv_timer</varname> and
+		<varname>fr_timer</varname> values.
+	</para>
+	<para>
+		An INVITE transaction will be kept in memory for maximum:
+		<varname>max_inv_lifetime</varname>+<varname>fr_timer</varname>(from 
+		the ack to the final reply wait)+<varname>wt_timer</varname>.
+	</para>
+	<para>
+		The main difference between this timer and 
+		<varname>fr_inv_timer</varname> is that the 
+		<varname>fr_inv_timer</varname> is per branch, while 
+		<varname>max_inv_lifetime</varname> is per the whole transaction.
+		Even on a per branch basis <varname>fr_inv_timer</varname> could be 
+		restarted. For example, by default if 
+		<varname>restart_fr_on_each_reply</varname> is not cleared, the 
+		<varname>fr_inv_timer</varname> will be restarted for each received 
+		provisional reply. Even if <varname>restart_fr_on_each_reply</varname>
+		is not set the <varname>fr_inv_timer</varname> will still be restarted
+		for each increasing reply (e.g. 180, 181, 182, ...). 
+		Another example when a transaction can live substantially more then its
+		<varname>fr_inv_timer</varname> and where
+		<varname>max_inv_lifetime</varname> will help is when dns failover is 
+		used (each failed dns destination can introduce a new branch).
+	</para>
+	<para>
+		The default value is 180000 ms (180 seconds - the rfc3261 
+		timer C value).
+	</para>
+	<para>
+		See also: <varname>max_noninv_lifetime</varname>,
+					<function>t_set_max_lifetime()</function> (allows changing
+					<varname>max_inv_lifetime</varname> on a per transaction
+					basis),
+					<function>t_reset_max_lifetime</function>
+					<varname>fr_timer</varname>,
+					<varname>wt_timer</varname>,
+					<varname>restart_fr_on_each_reply</varname>.
+	</para>
+	<example>
+	    <title>Set <varname>max_inv_lifetime</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "max_inv_lifetime", 150000)
+...
+	    </programlisting>
+	</example>
+    </section>
+
+	<section id="max_noninv_lifetime">
+	<title><varname>max_noninv_lifetime</varname> (integer)</title>
+	<para>
+		Maximum time a non-INVITE transaction is allowed to be active (in 
+		milliseconds). After this interval has passed from the transaction
+		creation, the transaction will be either moved into the wait state
+		or in the final response retransmission state, irrespective of the
+		transaction <varname>fr_timer</varname> value.
+		It's the same as <varname>max_inv_lifetime</varname>, but for 
+		non-INVITEs.
+	</para>
+	<para>
+		A non-INVITE transaction will be kept in memory for maximum:
+		<varname>max_noninv_lifetime</varname>+<varname>wt_timer</varname>.
+	</para>
+	<para>
+		The main difference between this timer and 
+		<varname>fr_timer</varname> is that the 
+		<varname>fr_timer</varname> is per branch, while 
+		<varname>max_noninv_lifetime</varname> is per the whole transaction.
+		An example when a transaction can live substantially more then its
+		<varname>fr_timer</varname> and where
+		<varname>max_noninv_lifetime</varname> will help is when dns failover
+		is used (each failed dns destination can introduce a new branch).
+	</para>
+	<para>
+		The default value is 32000 ms (32 seconds - the rfc3261 timer F value).
+	</para>
+	<para>
+		See also: <varname>max_inv_lifetime</varname>,
+					<function>t_set_max_lifetime()</function> (allows changing
+					<varname>max_noninv_lifetime</varname> on a per transaction
+					basis),
+					<function>t_reset_max_lifetime</function>
+					<varname>fr_timer</varname>,
+					<varname>wt_timer</varname>.
+	</para>
+	<example>
+	    <title>Set <varname>max_noninv_lifetime</varname> parameter</title>
+	    <programlisting>
+...
+modparam("tm", "max_inv_lifetime", 30000)
 ...
 	    </programlisting>
 	</example>
@@ -56,19 +172,20 @@ modparam("tm", "fr_inv_timer", 200)
 	<title><varname>wt_timer</varname> (integer)</title>
 	<para>
 	    Time for which a transaction stays in memory to absorb delayed
-	    messages after it completed; also, when this timer hits,
+	    messages after it completed (in milliseconds); also, when this 
+	    timer hits,
 	    retransmission of local cancels is stopped (a puristic but complex
 	    behavior would be not to enter wait state until local branches are
 	    finished by a final reply or FR timer--we simplified).
 	</para>
 	<para>
-	    Default value is 5 seconds.
+	    Default value is 5000 ms (5 seconds).
 	</para>
 	<example>
 	    <title>Set <varname>wt_timer</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "wt_timer", 10)
+modparam("tm", "wt_timer", 1000)
 ...
 	    </programlisting>
 	</example>
@@ -78,7 +195,11 @@ modparam("tm", "wt_timer", 10)
 	<title><varname>delete_timer</varname> (integer)</title>
 	<para>
 	    Time after which a to-be-deleted transaction currently ref-ed by a
-	    process will be tried to be deleted again.
+	    process will be tried to be deleted again (in milliseconds).
+	</para>
+	<para>
+	    Note: this parameter is obsolete for ser 2.1 (in 2.1 the transaction
+		 is deleted the moment it's not referenced anymore).
 	</para>
 	<para>
 	    Default value is 200 milliseconds.
@@ -87,7 +208,7 @@ modparam("tm", "wt_timer", 10)
 	    <title>Set <varname>delete_timer</varname> parameter</title>
 	    <programlisting>
 ...
-modparam("tm", "delete_timer", 5)
+modparam("tm", "delete_timer", 100)
 ...
 	    </programlisting>
 	</example>
@@ -144,7 +265,7 @@ modparam("tm", "retr_timer2", 2000)
 		 turned it on  for a transaction (like acc does to avoid unaccounted
 		 transactions due to expired timer).
 		Turn this off only if you know the client UACs will timeout and their
-		timeout interval fro INVITEs is lower or equal than tm's
+		timeout interval for INVITEs is lower or equal than tm's
 		<varname>fr_inv_timer</varname>.
 	</para>
 	<para>
@@ -159,6 +280,70 @@ modparam("tm", "noisy_ctimer", 1)
 	    </programlisting>
 	</example>
     </section>
+
+	<section id="restart_fr_on_each_reply">
+	<title><varname>restart_fr_on_each_reply</varname> (integer)</title>
+	<para>
+		If set (default), the <varname>fr_inv_timer</varname> for an INVITE
+		transaction will be restarted for each provisional reply received
+		(rfc3261 mandated behaviour). If not set, the 
+		<varname>fr_inv_timer</varname> will be restarted only for the first
+		provisional replies and for increasing replies greater or equal 180
+		(e.g. 180, 181, 182, 185, ...).
+	</para>
+	<para>
+		Setting it to 0 is especially useful when dealing with bad UAs that
+		continuously retransmit 180s, not allowing the transaction to timeout 
+		(and thus making impossible the implementation of certain services,
+		like automatic voicemail after x seconds).
+	</para>
+	<para>
+		Default value is 1 (on).
+	</para>
+	<para>
+		See also: <varname>fr_inv_timer</varname>,
+				<varname>max_inv_lifetime</varname>.
+	</para>
+	<example>
+		<title>Set <varname>restart_fr_on_each_reply</varname>
+				parameter</title>
+		<programlisting>
+...
+modparam("tm", "restart_fr_on_each_reply", 0)
+...
+	    </programlisting>
+	</example>
+	</section>
+
+	<section id="auto_inv_100">
+	<title><varname>auto_inv_100</varname> (integer)</title>
+	<para>
+		If set (default) tm will automatically send and 100 reply to INVITEs.
+	</para>
+	<para>
+		Setting it to 0 one can be used to enable doing first some tests or
+		pre-processing on the INVITE and only if some conditions are met
+		manually send a 100 (using <function>t_reply()</function>). Note 
+		however that in this case all the 100s have to be sent "by hand".
+		<function>t_set_auto_inv_100()</function> might  help to selectively
+		turn off this feature only for some specific transactions.
+	</para>
+	<para>
+		Default value is 1 (on).
+	</para>
+	<para>
+		See also:
+				<function>t_set_auto_inv_100()</function>.
+	</para>
+	<example>
+		<title>Set <varname>auto_inv_100</varname> parameter</title>
+		<programlisting>
+...
+modparam("tm", "auto_inv_100", 0)
+...
+	    </programlisting>
+	</example>
+	</section>
 
 	<section id="unix_tx_timeout">
 	<title><varname>unix_tx_timeout</varname> (integer)</title>
@@ -437,7 +622,7 @@ modparam("tm", "blst_methods_lookup", 1)
 	</para>
 	<para>
 		<emphasis>0</emphasis> will immediately stop the request (INVITE) 
-		retrasmission on the branch and it will behave as if the branch was 
+		retransmission on the branch and it will behave as if the branch was 
 		immediately replied with a 487 (a fake internal 487 reply). The 
 		advantage is the unreplied branches will be terminated immediately.
 		However it introduces a race risk with a possible slightly delayed

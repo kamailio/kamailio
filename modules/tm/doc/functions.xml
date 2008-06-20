@@ -408,7 +408,7 @@ t_forward_nonack("1.2.3.4", "5060");
 		If the transaction is already created (e.g called after
 		 <function>t_relay()</function> or in an onreply_route) all the
 		 branches will have their final response timeout updated on-the-fly.
-		If one of the parameters is 0, it's value won't be changed.
+		If one of the parameters is 0, its value won't be changed.
 	</para>
 	<para>Meaning of the parameters is as follows:</para>
 	<itemizedlist>
@@ -424,6 +424,12 @@ t_forward_nonack("1.2.3.4", "5060");
 		</para>
 	    </listitem>
 	</itemizedlist>
+	<para>
+		See also: 
+			<varname>fr_timer</varname>,
+			<varname>fr_inv_timer</varname>,
+			<function>t_reset_fr()</function>.
+	</para>
 	<example>
 	    <title><function>t_set_fr</function> usage</title>
 	    <programlisting>
@@ -442,6 +448,121 @@ branch_route[1] {
 	}
 }
 	    </programlisting>
+	</example>
+	</section>
+
+	<section id="t_reset_fr">
+	<title>
+	    <function>t_reset_fr()</function>
+	</title>
+	<para>
+		Resets the <varname>fr_inv_timer</varname> and 
+		<varname>fr_timer</varname> for the current transaction to the default
+		values (set using the tm module parameters
+		<varname>fr_inv_timer</varname> and <varname>fr_timer</varname>).
+	</para>
+	<para>
+		It will effectively cancel any previous calls to 
+		<function>t_set_fr</function> for the same transaction.
+	</para>
+	<para>
+		See also: <varname>fr_timer</varname>,
+				<varname>fr_inv_timer</varname>,
+				<function>t_set_fr</function>.
+	</para>
+	<example>
+		<title><function>t_reset_fr</function> usage</title>
+		<programlisting>
+...
+route { 
+...
+		t_reset_fr();
+...
+} 
+		</programlisting>
+	</example>
+	</section>
+
+
+	<section id="t_set_max_lifetime">
+	<title>
+	    <function>t_set_max_lifetime(inv_lifetime, noninv_lifetime)</function>
+	</title>
+	<para>
+		Sets the maximum lifetime for the current INVITE or non-INVITE 
+		transaction, or for transactions created during the same script
+		invocation, after calling this function (that's why it takes values
+		for both INVITE and non-INVITE).
+		If one of the parameters is 0, its value won't be changed.
+	</para>
+	<para>
+		It works as a per transaction <varname>max_inv_lifetime</varname> or
+		<varname>max_noninv_lifetime</varname>.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para><emphasis>inv_lifetime</emphasis> - maximum INVITE transaction
+			lifetime (in milliseconds). See also 
+			<varname>max_inv_lifetime</varname>.
+		</para>
+		<para><emphasis>noninv_lifetime</emphasis> - maximum non-INVITE 
+			transaction lifetime (in milliseconds).
+			See also <varname>max_noninv_lifetime</varname>.
+		</para>
+	    </listitem>
+	</itemizedlist>
+	<para>
+		See also: <varname>max_inv_lifetime</varname>,
+				<varname>max_noninv_lifetime</varname>,
+				<function>t_reset_max_lifetime</function>.
+	</para>
+	<example>
+		<title><function>t_set_max_lifetime</function> usage</title>
+		<programlisting>
+...
+route { 
+    if (src_ip=1.2.3.4)
+        t_set_max_lifetime(120000, 0); # set only max_inv_lifetime to 120s
+    else
+        t_set_max_lifetime(90000, 15000); # set the maximum lifetime to 90s if
+                                          # the current transaction is an 
+                                          # INVITE and to 15s if not
+} 
+
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="t_reset_max_lifetime">
+	<title>
+	    <function>t_reset_max_lifetime()</function>
+	</title>
+	<para>
+		Resets the the maximum lifetime for the current INVITE or non-INVITE 
+		transaction to the default value (set using the tm module parameter
+		<varname>max_inv_lifetime</varname> or 
+		<varname>max_noninv_lifetime</varname>).
+	</para>
+	<para>
+		It will effectively cancel any previous calls to 
+		<function>t_set_max_lifetime</function> for the same transaction.
+	</para>
+	<para>
+		See also: <varname>max_inv_lifetime</varname>,
+				<varname>max_noninv_lifetime</varname>,
+				<function>t_set_max_lifetime</function>.
+	</para>
+	<example>
+		<title><function>t_reset_max_lifetime</function> usage</title>
+		<programlisting>
+...
+route { 
+...
+		t_reset_max_lifetime();
+...
+} 
+		</programlisting>
 	</example>
 	</section>
 
@@ -487,6 +608,12 @@ branch_route[1] {
 		</para>
 	    </listitem>
 	</itemizedlist>
+	<para>
+		See also: 
+			<varname>retr_timer1</varname>,
+			<varname>retr_timer2</varname>,
+			<function>t_reset_retr()</function>.
+	</para>
 	<example>
 	    <title><function>t_set_retr</function> usage</title>
 	    <programlisting>
@@ -505,6 +632,65 @@ branch_route[1] {
 	}
 }
 	    </programlisting>
+	</example>
+	</section>
+
+
+	<section id="t_reset_retr">
+	<title>
+	    <function>t_reset_retr()</function>
+	</title>
+	<para>
+		Resets the <varname>retr_timer1</varname> and 
+		<varname>retr_timer2</varname> for the current transaction to the 
+		default values (set using the tm module parameters
+		<varname>retr_timer1</varname> and <varname>retr_timer2</varname>).
+	</para>
+	<para>
+		It will effectively cancel any previous calls to 
+		<function>t_set_retr</function> for the same transaction.
+	</para>
+	<para>
+		See also: <varname>retr_timer1</varname>,
+				<varname>retr_timer2</varname>,
+				<function>t_set_retr</function>.
+	</para>
+	<example>
+		<title><function>t_reset_retr</function> usage</title>
+		<programlisting>
+...
+route { 
+...
+		t_reset_retr();
+...
+} 
+		</programlisting>
+	</example>
+	</section>
+
+	<section id="t_set_auto_inv_100">
+	<title>
+	    <function>t_set_auto_inv_100(0|1)</function>
+	</title>
+	<para>
+		Switch automatically sending 100 replies to INVITEs on/off on a 
+		per transaction basis. It overrides the 
+		<varname>auto_inv_100</varname> value for the current transaction.
+	</para>
+	<para>
+		See also: <varname>auto_inv_100</varname>.
+	</para>
+	<example>
+		<title><function>t_set_auto_inv_100</function> usage</title>
+		<programlisting>
+...
+route { 
+...
+	if (src_ip==1.2.3.0/24)
+		t_set_auto_inv_100(0); # turn off automatic 100 replies
+...
+} 
+		</programlisting>
 	</example>
 	</section>
 

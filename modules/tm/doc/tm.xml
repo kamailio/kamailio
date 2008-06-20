@@ -96,22 +96,6 @@
 	<itemizedlist>
 	    <listitem>
 		<para>
-		    We don't have authentication merging on forking.
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    Local ACK/CANCELs copy'n'pastes Route and ignores deleted
-		    Routes.
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    6xx should be delayed.
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
 		    Possibly, performance could be improved by not parsing
 		    non-INVITEs, as they do not be replied with 100, and do not
 		    result in ACK/CANCELs, and other things which take
@@ -135,13 +119,6 @@
 		    cleanly--Vias, Routes, etc. should be removed from a
 		    message prior to replicating it (well, does not matter any
 		    longer so much as there is a new replication module).
-		</para>
-	    </listitem>
-	    <listitem>
-		<para>
-		    <acronym>SNMP</acronym> support (as nobody cares about
-		    <acronym>SNMP</acronym>, in particular for
-		    <acronym>TM</acronym>, I will drop this item soon).
 		</para>
 	    </listitem>
 	</itemizedlist>
