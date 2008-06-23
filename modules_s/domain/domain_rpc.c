@@ -46,7 +46,6 @@ static void dump_domain(rpc_t* rpc, void* ctx, domain_t* d)
 
 	if (rpc->add(ctx, "{", &st) < 0) return;
 	if (rpc->struct_add(st, "S", "did", &d->did) < 0) return;
-	if (rpc->struct_add(st, "d", "flags", d->flags[0]) < 0) return;
 
 	for(i = 0; i < d->n; i++) {
 		if (rpc->struct_add(st, "S", "domain", &d->domain[i]) < 0) return;
@@ -58,11 +57,11 @@ static void dump_domain(rpc_t* rpc, void* ctx, domain_t* d)
 		name = get_avp_name(a);
 		get_avp_val(a, &val);
 		if (a->flags & AVP_VAL_STR) {
-			if (rpc->struct_printf(st, "attr", "%.*s=%.*s", name->len, ZSW(name->s),
-					       val.s.len, ZSW(val.s.s)) < 0) return;
+			if (rpc->struct_printf(st, "attr", "%.*s=%.*s", 
+								   STR_FMT(name), STR_FMT(&val.s)) < 0) return;
 		} else {
-			if (rpc->struct_printf(st, "attr", "%.*s=%d", name->len, ZSW(name->s),
-					       val.n) < 0) return;
+			if (rpc->struct_printf(st, "attr", "%.*s=%d", 
+								   STR_FMT(name), val.n) < 0) return;
 		}
 		a = a->next;
 	}
