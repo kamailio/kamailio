@@ -340,8 +340,8 @@ int run_select(str* res, select_t* s, struct sip_msg* msg)
 	}
 	DBG("Calling SELECT %p \n", s->f);
 
-	/* save and resore the original select_level
-	 * because of the nested selets */
+	/* save and restore the original select_level
+	 * because of the nested selects */
 	orig_level = select_level;
 	ret = 0;
 	for (	select_level=0;
