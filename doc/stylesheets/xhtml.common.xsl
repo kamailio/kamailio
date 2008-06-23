@@ -16,6 +16,7 @@
 <!-- HTML Customization -->
     <xsl:param name="html.cleanup" select="1"/>
     <xsl:param name="html.stylesheet">ser.css</xsl:param>
+	<xsl:param name="section.autolabel">1</xsl:param>
 
 <!-- Needed for strict XHTML -->
     <xsl:param name="css.decoration">0</xsl:param>
