@@ -45,6 +45,8 @@
 #  2007-03-29  install-modules changed to use make -C modpath install (andrei)
 #  2007-05-04  "if ! foo" not supported in standard sh, switched to 
 #                "if foo; then :; else ... ; fi" (andrei)
+# 2008-06-23  added 2 new targets: README and man (re-generate the README
+#              or manpages for all the modules) (andrei)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -402,6 +404,40 @@ modules-doc:
 			$(MAKE) -C $$r/doc $(doc_format) ; \
 		fi ; \
 	done 
+
+.PHONY: modules-readme
+modules-readme: README
+
+.PHONY: README
+README:
+	-@for r in $(modules) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo  "" ; \
+			echo  "" ; \
+			if  $(MAKE) -C $$r README || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
+				exit 1; \
+			fi ; \
+		fi ; \
+	done; true 
+
+.PHONY: modules-man
+modules-man: man
+
+.PHONY: man
+man:
+	-@for r in $(modules) "" ; do \
+		if [ -n "$$r" ]; then \
+			echo  "" ; \
+			echo  "" ; \
+			if  $(MAKE) -C $$r man || [ ${err_fail} != 1 ] ; then \
+				:; \
+			else \
+				exit 1; \
+			fi ; \
+		fi ; \
+	done; true
 
 .PHONY: install
 install: install-bin install-modules install-cfg \

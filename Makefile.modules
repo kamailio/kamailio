@@ -9,6 +9,7 @@
 #  2007-03-29  if a module depends on SER_LIBS, it will be rebuilt on install
 #               with the proper rpath; libraries will be automatically
 #               installed if needed (andrei)
+#  2008-06-23  added the README & man targets (andrei)
 #
 
 MOD_NAME=$(NAME:.so=)
@@ -70,3 +71,30 @@ install-libs:
 		$(MAKE) -C "$${lib}" install-if-newer ;\
 	done
 
+# README build rules
+ifneq (,$(wildcard doc/Makefile))
+#doc/Makefile present => we can generate README
+
+README: doc/*.xml
+	$(MAKE) -C doc $(MOD_NAME).txt
+	cp doc/$(MOD_NAME).txt $@
+
+else
+# do nothing
+
+README:
+endif
+
+#man page build rules
+ifneq (,$(wildcard $(MOD_NAME).xml))
+
+$(MOD_NAME).7: $(MOD_NAME).xml
+	docbook2x-man -s ../../doc/stylesheets/serdoc2man.xsl $<
+
+man: $(MOD_NAME).7
+
+else
+
+man:
+
+endif

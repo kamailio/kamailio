@@ -330,6 +330,18 @@ or
 
 dpkg-buildpackage
 
+Documentation:
+
+make README
+
+Regenerates the README for all the "default" modules (include_modules,
+ skip_modules a.s.o can be used to alter the module list).
+
+make man
+
+Generates a manpage for all the modules that support it (.xml file in the
+ module directory).
+
 Install:
 
 make prefix=/usr/local  install
