@@ -1,7 +1,7 @@
 #
 # The list of documents to build (without extensions)
 #
-DOCUMENTS = textops
+DOCUMENTS = blst
 
 #
 # The root directory containing Makefile.doc
