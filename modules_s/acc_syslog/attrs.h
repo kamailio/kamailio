@@ -135,6 +135,19 @@ do {                                                        \
 } while(0)
 
 
+#define attrs_append_printf(dst, fmt, args...)              \
+do {                                                        \
+	int len = snprintf((dst).s, (dst).len, (fmt), ## args);	\
+	if (len < 0 || len >= (dst).len) {                      \
+		ERR("Buffer too small\n");                          \
+		goto error;                                         \
+	}                                                       \
+	(dst).s += len;                                         \
+	(dst).len -= len;                                       \
+} while(0)
+
+
+
 /* 
  * Limitation -- currently supports string avps only 
  */
@@ -159,10 +172,14 @@ static str* print_attrs(avp_ident_t* avps, int avps_n, int quote)
 	}
 
 	for(i = 0; i < avps_n; i++) {
-		if (!search_first_avp(avps[i].flags, avps[i].name, &val, &st)) continue;
+		avp_t *this_avp = search_first_avp(avps[i].flags, avps[i].name, &val, &st);
+		if (!this_avp) continue;
 		attrs_append(p, avps[i].name.s);
 		attrs_append(p, attrs_name_delim);
-		attrs_append_esc(p, val.s, quote);
+		if (this_avp->flags & AVP_VAL_STR)
+			attrs_append_esc(p, val.s, quote);
+		else
+			attrs_append_printf(p, "%d", val.n);
 
 		while(search_next_avp(&st, &val)) {
 			attrs_append(p, attrs_delim);
