@@ -439,26 +439,30 @@ $(man_prefix)/$(man_dir)/man5:
 		
 # note: sed with POSIX.1 regex doesn't support |, + or ? (darwin, solaris ...) 
 install-cfg: $(cfg_prefix)/$(cfg_dir)
-		sed -e "s#/usr/.*lib/ser/modules/#$(modules_target)#g" \
-			< etc/ser.cfg > $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)ser.cfg.sample
+		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
+			< etc/ser-basic.cfg > $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
+		chmod 644 $(cfg-prefix)/$(cfg-dir)ser.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)ser.cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)ser.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)ser.cfg; \
+				! -f $(cfg-prefix)/$(cfg-dir)ser.cfg ]; then \
+			mv -f $(cfg-prefix)/$(cfg-dir)ser.cfg.sample \
+				$(cfg-prefix)/$(cfg-dir)ser.cfg; \
 		fi
-		sed -e "s#/usr/.*lib/ser/modules/#$(modules_target)#g" \
-			< etc/ser-oob.cfg > $(cfg_prefix)/$(cfg_dir)ser-oob.cfg.sample
-		chmod 644 $(cfg_prefix)/$(cfg_dir)ser-oob.cfg.sample
+		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
+			< etc/ser-oob.cfg > $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg.sample
+		chmod 644 $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
-				! -f $(cfg_prefix)/$(cfg_dir)ser-oob.cfg ]; then \
-			mv -f $(cfg_prefix)/$(cfg_dir)ser-oob.cfg.sample \
-				$(cfg_prefix)/$(cfg_dir)ser-oob.cfg; \
+				! -f $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg ]; then \
+			mv -f $(cfg-prefix)/$(cfg-dir)ser-advanced.cfg.sample \
+				$(cfg-prefix)/$(cfg-dir)ser-advanced.cfg; \
 		fi
 		# radius dictionary
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser 
-		$(INSTALL_CFG) etc/dictionary.ser $(cfg_prefix)/$(cfg_dir)
-#		$(INSTALL_CFG) etc/ser.cfg $(cfg_prefix)/$(cfg_dir)
+		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/dictionary.ser 
+		$(INSTALL-CFG) etc/dictionary.ser $(cfg-prefix)/$(cfg-dir)
+
+		# TLS configuration
+		$(INSTALL-TOUCH) $(cfg-prefix)/$(cfg-dir)/tls.cfg
+		$(INSTALL-CFG) modules/tls/tls.cfg $(cfg-prefix)/$(cfg-dir)
+		modules/tls/ser_cert.sh -d $(cfg-prefix)/$(cfg-dir)
 
 install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
