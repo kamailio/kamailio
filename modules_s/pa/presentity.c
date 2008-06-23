@@ -330,6 +330,7 @@ void free_presentity(presentity_t* _p)
 	presence_tuple_t *tuple, *t;
 	internal_pa_subscription_t *iw, *niw;
 	pa_presence_note_t *n, *nn;
+	pa_extension_element_t *e, *ne;
 
 	/* remove presentity from domain */
 	remove_presentity(_p->pdomain, _p);
@@ -369,6 +370,14 @@ void free_presentity(presentity_t* _p)
 		nn = (pa_presence_note_t*)n->data.next;
 		free_pres_note(n);
 		n = nn;
+	}
+
+	/* remove extension_elements */
+	e = (pa_extension_element_t*)_p->data.first_unknown_element;
+	while (e) {
+		ne = (pa_extension_element_t*)e->data.next;
+		free_pa_extension_element(e);
+		e = ne;
 	}
 
 	if (_p->authorization_info) {
