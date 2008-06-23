@@ -544,9 +544,6 @@ static void pa_destroy(void)
 {
 	DBG("PA module cleanup\n");
 
-	/* FIXME: only for testing */
-	return;
-	
 	DBG("destroying PA module\n");
 	DBG(" ... qsa interface\n");
 	pa_qsa_interface_destroy();
