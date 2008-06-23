@@ -267,7 +267,7 @@ notifier_domain_t *create_notifier_domain(const str_t *name)
 void destroy_notifier_domain(notifier_domain_t *domain)
 {
 	notifier_package_t *p, *n;
-	qsa_content_type_t *c, *nc;
+	qsa_content_type_t *c, *tmp;
 
 	/* this function is always called only if no only one reference
 	 * to domain exists (see domain maintainer), this should mean, that 
@@ -287,8 +287,9 @@ void destroy_notifier_domain(notifier_domain_t *domain)
 	
 	c = domain->first_content_type;
 	while (c) {
-		nc = c->next;
-		destroy_content_type(c);
+		tmp = c;
+		c = c->next;
+		destroy_content_type(tmp);
 	}
 	domain->first_content_type = NULL;
 	domain->last_content_type = NULL;
