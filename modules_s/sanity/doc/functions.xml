@@ -63,7 +63,7 @@ if (method=="REGISTER" && sanity_check("256")) {
 		which URIs will be checked if the parse uri test will be executed.
 	</para>
 	<example>
-		<title><fucntion>sanity_check</function> usage with two parameters</title>
+		<title><function>sanity_check</function> usage with two parameters</title>
 		<programlisting>
 <![CDATA[
 ...
