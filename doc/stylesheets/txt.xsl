@@ -7,4 +7,9 @@
 
     <!-- Common XHTML customization -->
     <xsl:import href="xhtml.common.xsl"/>
+
+	<!-- Display all subsections in in the toc of READMEs -->
+  	<xsl:param name="toc.section.depth">4</xsl:param>
+  	<!-- Only the first section in the output should contain toc -->
+  	<xsl:param name="generate.section.toc.level">1</xsl:param>
 </xsl:stylesheet>
