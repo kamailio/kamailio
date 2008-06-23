@@ -303,8 +303,8 @@ static void destroy(void)
 
 	/* Parent only, synchronize the world
 	* and then nuke it */
-	if (is_main && db) {
-		if (synchronize_all_udomains() != 0) {
+	if (is_main) {
+		if (db && synchronize_all_udomains() != 0) {
 			LOG(L_ERR, "destroy(): Error while flushing cache\n");
 		}
 		free_all_udomains();
