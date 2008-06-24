@@ -4,6 +4,7 @@ CREATE TABLE version (
     table_version INTEGER NOT NULL DEFAULT '0'
 );
 
+INSERT INTO version (table_name, table_version) values ('acc','4');
 CREATE TABLE acc (
     id SERIAL NOT NULL,
     from_uid VARCHAR(64),
@@ -37,6 +38,7 @@ CREATE INDEX acc_cid_key ON acc (sip_callid);
 CREATE INDEX acc_from_uid ON acc (from_uid);
 CREATE INDEX acc_to_uid ON acc (to_uid);
 
+INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id SERIAL NOT NULL,
     from_uid VARCHAR(64),
@@ -69,6 +71,7 @@ CREATE TABLE missed_calls (
 CREATE INDEX mc_cid_key ON missed_calls (sip_callid);
 CREATE INDEX mc_to_uid ON missed_calls (to_uid);
 
+INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL DEFAULT '_default',
@@ -85,6 +88,7 @@ CREATE INDEX uid ON credentials (uid);
 CREATE INDEX did_idx ON credentials (did);
 CREATE INDEX realm_idx ON credentials (realm);
 
+INSERT INTO version (table_name, table_version) values ('attr_types','4');
 CREATE TABLE attr_types (
     name VARCHAR(32) NOT NULL,
     rich_type VARCHAR(32) NOT NULL DEFAULT 'string',
@@ -100,6 +104,7 @@ CREATE TABLE attr_types (
     CONSTRAINT upt_idx1 UNIQUE (name)
 );
 
+INSERT INTO version (table_name, table_version) values ('global_attrs','1');
 CREATE TABLE global_attrs (
     name VARCHAR(32) NOT NULL,
     type INTEGER NOT NULL DEFAULT '0',
@@ -108,6 +113,7 @@ CREATE TABLE global_attrs (
     CONSTRAINT global_attrs_idx UNIQUE (name, value)
 );
 
+INSERT INTO version (table_name, table_version) values ('domain_attrs','1');
 CREATE TABLE domain_attrs (
     did VARCHAR(64),
     name VARCHAR(32) NOT NULL,
@@ -119,6 +125,7 @@ CREATE TABLE domain_attrs (
 
 CREATE INDEX domain_did ON domain_attrs (did, flags);
 
+INSERT INTO version (table_name, table_version) values ('user_attrs','3');
 CREATE TABLE user_attrs (
     uid VARCHAR(64) NOT NULL,
     name VARCHAR(32) NOT NULL,
@@ -128,6 +135,7 @@ CREATE TABLE user_attrs (
     CONSTRAINT userattrs_idx UNIQUE (uid, name, value)
 );
 
+INSERT INTO version (table_name, table_version) values ('uri_attrs','2');
 CREATE TABLE uri_attrs (
     username VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
@@ -139,6 +147,7 @@ CREATE TABLE uri_attrs (
     CONSTRAINT uriattrs_idx UNIQUE (username, did, name, value, scheme)
 );
 
+INSERT INTO version (table_name, table_version) values ('domain','2');
 CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
@@ -148,6 +157,7 @@ CREATE TABLE domain (
 
 CREATE INDEX did_idx ON domain (did);
 
+INSERT INTO version (table_name, table_version) values ('domain_settings','1');
 CREATE TABLE domain_settings (
     did VARCHAR(64) NOT NULL,
     filename VARCHAR(255) NOT NULL,
@@ -160,6 +170,7 @@ CREATE TABLE domain_settings (
 
 CREATE INDEX ds_df ON domain_settings (did, filename);
 
+INSERT INTO version (table_name, table_version) values ('location','9');
 CREATE TABLE location (
     uid VARCHAR(64) NOT NULL,
     aor VARCHAR(255) NOT NULL,
@@ -178,6 +189,7 @@ CREATE TABLE location (
 CREATE INDEX location_contact ON location (contact);
 CREATE INDEX location_expires ON location (expires);
 
+INSERT INTO version (table_name, table_version) values ('contact_attrs','1');
 CREATE TABLE contact_attrs (
     uid VARCHAR(64) NOT NULL,
     contact VARCHAR(255) NOT NULL,
@@ -188,6 +200,7 @@ CREATE TABLE contact_attrs (
     CONSTRAINT contactattrs_idx UNIQUE (uid, contact, name)
 );
 
+INSERT INTO version (table_name, table_version) values ('trusted','1');
 CREATE TABLE trusted (
     src_ip VARCHAR(39) NOT NULL,
     proto VARCHAR(4) NOT NULL,
@@ -195,6 +208,7 @@ CREATE TABLE trusted (
     CONSTRAINT trusted_idx UNIQUE (src_ip, proto, from_pattern)
 );
 
+INSERT INTO version (table_name, table_version) values ('ipmatch','1');
 CREATE TABLE ipmatch (
     ip VARCHAR(50) NOT NULL DEFAULT '',
     avp_val VARCHAR(30) DEFAULT NULL,
@@ -203,6 +217,7 @@ CREATE TABLE ipmatch (
     CONSTRAINT ipmatch_idx UNIQUE (ip, mark)
 );
 
+INSERT INTO version (table_name, table_version) values ('phonebook','1');
 CREATE TABLE phonebook (
     id SERIAL NOT NULL,
     uid VARCHAR(64) NOT NULL,
@@ -214,6 +229,7 @@ CREATE TABLE phonebook (
 
 CREATE INDEX pb_uid ON phonebook (uid);
 
+INSERT INTO version (table_name, table_version) values ('gw','3');
 CREATE TABLE gw (
     gw_name VARCHAR(128) NOT NULL,
     ip_addr INTEGER NOT NULL,
@@ -226,12 +242,14 @@ CREATE TABLE gw (
 
 CREATE INDEX gw_idx2 ON gw (grp_id);
 
+INSERT INTO version (table_name, table_version) values ('gw_grp','2');
 CREATE TABLE gw_grp (
     grp_id SERIAL NOT NULL,
     grp_name VARCHAR(64) NOT NULL,
     CONSTRAINT gwgrp_idx UNIQUE (grp_id)
 );
 
+INSERT INTO version (table_name, table_version) values ('lcr','1');
 CREATE TABLE lcr (
     prefix VARCHAR(16) NOT NULL,
     from_uri VARCHAR(255) NOT NULL DEFAULT '%',
@@ -243,6 +261,7 @@ CREATE INDEX lcr_idx1 ON lcr (prefix);
 CREATE INDEX lcr_idx2 ON lcr (from_uri);
 CREATE INDEX lcr_idx3 ON lcr (grp_id);
 
+INSERT INTO version (table_name, table_version) values ('grp','3');
 CREATE TABLE grp (
     uid VARCHAR(64) NOT NULL DEFAULT '',
     grp VARCHAR(64) NOT NULL DEFAULT '',
@@ -251,6 +270,7 @@ CREATE TABLE grp (
 
 CREATE INDEX grp_idx ON grp (uid, grp);
 
+INSERT INTO version (table_name, table_version) values ('silo','4');
 CREATE TABLE silo (
     mid SERIAL NOT NULL,
     from_hdr VARCHAR(255) NOT NULL,
@@ -264,6 +284,7 @@ CREATE TABLE silo (
     CONSTRAINT silo_idx1 UNIQUE (mid)
 );
 
+INSERT INTO version (table_name, table_version) values ('uri','3');
 CREATE TABLE uri (
     uid VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
@@ -275,6 +296,7 @@ CREATE TABLE uri (
 CREATE INDEX uri_idx1 ON uri (username, did, scheme);
 CREATE INDEX uri_uid ON uri (uid);
 
+INSERT INTO version (table_name, table_version) values ('speed_dial','2');
 CREATE TABLE speed_dial (
     id SERIAL NOT NULL,
     uid VARCHAR(64) NOT NULL,
@@ -287,6 +309,7 @@ CREATE TABLE speed_dial (
 
 CREATE INDEX speeddial_uid ON speed_dial (uid);
 
+INSERT INTO version (table_name, table_version) values ('sd_attrs','1');
 CREATE TABLE sd_attrs (
     id VARCHAR(64) NOT NULL,
     name VARCHAR(32) NOT NULL,
@@ -296,6 +319,7 @@ CREATE TABLE sd_attrs (
     CONSTRAINT sd_idx UNIQUE (id, name, value)
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity','5');
 CREATE TABLE presentity (
     pres_id VARCHAR(64) NOT NULL,
     uri VARCHAR(255) NOT NULL,
@@ -305,6 +329,7 @@ CREATE TABLE presentity (
     CONSTRAINT presentity_key UNIQUE (pres_id)
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity_notes','5');
 CREATE TABLE presentity_notes (
     dbid VARCHAR(64) NOT NULL,
     pres_id VARCHAR(64) NOT NULL,
@@ -315,6 +340,7 @@ CREATE TABLE presentity_notes (
     CONSTRAINT pnotes_idx1 UNIQUE (dbid)
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity_extensions','5');
 CREATE TABLE presentity_extensions (
     dbid VARCHAR(64) NOT NULL,
     pres_id VARCHAR(64) NOT NULL,
@@ -324,6 +350,7 @@ CREATE TABLE presentity_extensions (
     CONSTRAINT presextensions_idx1 UNIQUE (dbid)
 );
 
+INSERT INTO version (table_name, table_version) values ('presentity_contact','5');
 CREATE TABLE presentity_contact (
     pres_id VARCHAR(64) NOT NULL,
     basic INTEGER NOT NULL,
@@ -336,6 +363,7 @@ CREATE TABLE presentity_contact (
     CONSTRAINT presid_index UNIQUE (pres_id, tupleid)
 );
 
+INSERT INTO version (table_name, table_version) values ('watcherinfo','5');
 CREATE TABLE watcherinfo (
     w_uri VARCHAR(255) NOT NULL,
     display_name VARCHAR(128) NOT NULL,
@@ -352,6 +380,7 @@ CREATE TABLE watcherinfo (
     CONSTRAINT wi_idx1 UNIQUE (s_id)
 );
 
+INSERT INTO version (table_name, table_version) values ('tuple_notes','5');
 CREATE TABLE tuple_notes (
     pres_id VARCHAR(64) NOT NULL,
     tupleid VARCHAR(64) NOT NULL,
@@ -359,6 +388,7 @@ CREATE TABLE tuple_notes (
     lang VARCHAR(64) NOT NULL
 );
 
+INSERT INTO version (table_name, table_version) values ('tuple_extensions','5');
 CREATE TABLE tuple_extensions (
     pres_id VARCHAR(64) NOT NULL,
     tupleid VARCHAR(64) NOT NULL,
@@ -366,6 +396,7 @@ CREATE TABLE tuple_extensions (
     status_extension INTEGER NOT NULL
 );
 
+INSERT INTO version (table_name, table_version) values ('offline_winfo','5');
 CREATE TABLE offline_winfo (
     uid VARCHAR(64) NOT NULL,
     watcher VARCHAR(255) NOT NULL,
@@ -378,6 +409,7 @@ CREATE TABLE offline_winfo (
     CONSTRAINT offline_winfo_key UNIQUE (dbid)
 );
 
+INSERT INTO version (table_name, table_version) values ('rls_subscription','1');
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
     doc_version INTEGER NOT NULL,
@@ -392,6 +424,7 @@ CREATE TABLE rls_subscription (
     CONSTRAINT rls_subscription_key UNIQUE (id)
 );
 
+INSERT INTO version (table_name, table_version) values ('rls_vs','1');
 CREATE TABLE rls_vs (
     id VARCHAR(48) NOT NULL,
     rls_id VARCHAR(48) NOT NULL,
@@ -399,12 +432,14 @@ CREATE TABLE rls_vs (
     CONSTRAINT rls_vs_key UNIQUE (id)
 );
 
+INSERT INTO version (table_name, table_version) values ('rls_vs_names','1');
 CREATE TABLE rls_vs_names (
     id VARCHAR(48) NOT NULL,
     name VARCHAR(64),
     lang VARCHAR(64)
 );
 
+INSERT INTO version (table_name, table_version) values ('i18n','1');
 CREATE TABLE i18n (
     code INTEGER NOT NULL,
     reason_re VARCHAR(255) DEFAULT NULL,
@@ -415,12 +450,14 @@ CREATE TABLE i18n (
 
 CREATE INDEX i18n_idx ON i18n (code);
 
+INSERT INTO version (table_name, table_version) values ('pdt','1');
 CREATE TABLE pdt (
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(255) NOT NULL,
     CONSTRAINT pdt_idx UNIQUE (prefix)
 );
 
+INSERT INTO version (table_name, table_version) values ('cpl','2');
 CREATE TABLE cpl (
     uid VARCHAR(64) NOT NULL,
     cpl_xml BYTEA,
@@ -428,6 +465,7 @@ CREATE TABLE cpl (
     CONSTRAINT cpl_key UNIQUE (uid)
 );
 
+INSERT INTO version (table_name, table_version) values ('customers','1');
 CREATE TABLE customers (
     cid SERIAL NOT NULL,
     name VARCHAR(128) NOT NULL,
