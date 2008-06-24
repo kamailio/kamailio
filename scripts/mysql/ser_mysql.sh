@@ -290,17 +290,17 @@ create_db ()
     sql_query "" "FLUSH PRIVILEGES"
 
     # Load table definitions
-    sql_query $DBNAME < $CREATE_SCRIPT
+    sql_query $DBNAME < ${SCRIPT_DIR}/${CREATE_SCRIPT}
 
     # Load initial data
-    sql_query $DBNAME < $DATA_SCRIPT
+    sql_query $DBNAME < ${SCRIPT_DIR}/${DATA_SCRIPT}
 } # create_db
 
 
 # Update initial data
 update_db_data ()
 {
-    sql_query $DBNAME < $DATA_SCRIPT
+    sql_query $DBNAME < ${SCRIPT_DIR}/${DATA_SCRIPT}
 } # update_db_data
 
 
