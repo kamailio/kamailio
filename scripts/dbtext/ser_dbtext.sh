@@ -2,11 +2,11 @@
 #
 # $Id$
 #
-# Script for dbtext database maintenance
+# SER dbtext Database Administration Tool
 #
 # TODO: Check if user and group exist
 #
-# Copyright (C) 2006 iptelorg GmbH
+# Copyright (C) 2006-2008 iptelorg GmbH
 #
 
 #################################################################
@@ -16,13 +16,14 @@ DEFAULT_ROOTDIR="/var/local/lib/ser" # Default dbtext root directory
 DEFAULT_DBNAME="ser"                 # Default database name
 DEFAULT_OWNER="ser"                  # The owner of dbtext files
 DEFAULT_GROUP="ser"                  # The group of dbtext files
-DEFAULT_SRCDB="ser_db"      # Source data generated from XML description
+DEFAULT_SRCDB_DIR=""                 # Default directory of the source data
+DEFAULT_SRCDB="ser_db"               # Source data generated from XML description
 
 
 usage() {
 cat <<EOF
 NAME
-  $COMMAND - SER dbtext database administration tool
+  $COMMAND - SER dbtext Database Administration Tool
 
 SYNOPSIS
   $COMMAND [options] create
@@ -31,25 +32,25 @@ SYNOPSIS
   $COMMAND [options] restore [filename.tar]
 
 DESCRIPTION
-  This tool is a simple shell wrapper that can be used to create, drop, or 
-  backup SER database stored in plain-text files on the filesystem (used
-  by dbtext SER module). See section COMMANDS for brief overview of supported 
+  This tool is a simple shell wrapper that can be used to create, drop, or
+  backup SER database stored in plain-text files on the filesystem (used by
+  dbtext SER module). See section COMMANDS for brief overview of supported
   actions.
 
   The database template for SER dbtext database is stored in dbtext_template
   directory which can usualy be found in /usr/lib/ser (depending on
-  installation). You can use the template to create SER database manually
-  if you cannot or do not want to use this shell wrapper.
+  installation). You can use the template to create SER database manually if
+  you cannot or do not want to use this shell wrapper.
 
 COMMANDS
   create
-    Create a new SER database from scratch. The database must not exist.
-    This command creates the database, the default name of the database
-    is '${DEFAULT_DBNAME}' (the default name can be changed using a command line
-    parameter, see below). The database will be created in the default dbtext 
+    Create a new SER database from scratch. The database must not exist.  This
+    command creates the database, the default name of the database is
+    '${DEFAULT_DBNAME}' (the default name can be changed using a command line
+    parameter, see below). The database will be created in the default dbtext
     database directory (${DEFAULT_ROOTDIR}) unless changed using -d command
     line option (see below). You can use command line options to change the
-    default database name, owner username and group. 
+    default database name, owner username and group.
 
   drop
     This command can be used to delete SER database. WARNING: This command
@@ -63,8 +64,8 @@ COMMANDS
     will dumps the contents on the standard output.
 
   restore <filename>
-    Load the contents of SER database from a file (if you specify one) or
-    from the standard input. 
+    Load the contents of SER database from a file (if you specify one) or from
+    the standard input.
 
 OPTIONS
   -h, --help
@@ -94,16 +95,16 @@ AUTHOR
   Written by Jan Janak <jan@iptel.org>
 
 COPYRIGHT
-  Copyright (C) 2006 iptelorg GmbH
-  This is free software. You may redistribute copies of it under the
-  termp of the GNU General Public License. There is NO WARRANTY, to the
-  extent permitted by law.
+  Copyright (C) 2006-2008 iptelorg GmbH
+  This is free software. You may redistribute copies of it under the termp of
+  the GNU General Public License. There is NO WARRANTY, to the extent
+  permitted by law.
 
 FILES
-  $SRCDB
+  ${SRCDB_DIR}/${SRCDB}
     
 REPORTING BUGS
-  Report bugs to <ser-bugs@iptel.org>             
+  Report bugs to <ser-bugs@iptel.org>
 EOF
 } #usage
 
@@ -164,14 +165,25 @@ create_db ()
 	exit 1
     fi
     
-    dbg "Copying template files from ${SRCDB} to ${ROOTDIR}/${DBNAME}"
-    cp -a ${SRCDB}/* "${ROOTDIR}/${DBNAME}"
+    dbg "Copying template files from ${SRCDB_DIR}/${SRCDB} to ${ROOTDIR}/${DBNAME}"
+    cp -a ${SRCDB_DIR}/${SRCDB}/* "${ROOTDIR}/${DBNAME}"
 
     dbg "Setting owner and group of new files to ${OWNER}:${GROUP}"
     chown -R "${OWNER}:${GROUP}" "${ROOTDIR}/${DBNAME}"
     chmod -R 0660 ${ROOTDIR}/${DBNAME}/*
 } # create_db
 
+
+# Convert relative path to the script directory to absolute if necessary by
+# extracting the directory of this script and prefixing the relative path with
+# it.
+abs_srcdb_dir()
+{
+	my_dir=`dirname $0`;
+	if [ "${SRCDB_DIR:0:1}" != "/" ] ; then
+		SCRIPT_DIR="${my_dir}/${SRCDB_DIR}"
+    fi
+}
 
 
 # Main program
@@ -180,7 +192,10 @@ COMMAND=`basename $0`
 if [ -z "$DBNAME" ] ; then DBNAME=$DEFAULT_DBNAME; fi;
 if [ -z "$OWNER" ]  ; then OWNER=$DEFAULT_OWNER; fi;
 if [ -z "$GROUP" ]  ; then GROUP=$DEFAULT_GROUP; fi;
-if [ -z "$SRCDB" ]  ; then SRCDB=`dirname $0`"/"$DEFAULT_SRCDB; fi
+if [ -z "$SRCDB_DIR" ] ; then SRCDB_DIR=$DEFAULT_SRCDB_DIR; fi;
+if [ -z "$SRCDB" ]  ; then SRCDB=$DEFAULT_SRCDB; fi
+
+abs_srcdb_dir
 
 TEMP=`getopt -o hn:d:o:g:v --long help,name:,dir:,owner:,group:,verbose -n $COMMAND -- "$@"`
 if [ $? != 0 ] ; then exit 1; fi
@@ -190,10 +205,10 @@ while true ; do
     case "$1" in
 	-h|--help)    usage; exit 0 ;;
 	-n|--name)    DBNAME=$2; shift 2 ;;
-        -d|--dir)     ROOTDIR=$2; shift 2 ;;
+    -d|--dir)     ROOTDIR=$2; shift 2 ;;
 	-o|--owner)   OWNER=$2;  shift 2 ;;
 	-g|--group)   GROUP=$2;  shift 2 ;;
-        -v|--verbose) export OPTS="${OPTS} -v "; VERBOSE=1; shift ;;
+    -v|--verbose) export OPTS="${OPTS} -v "; VERBOSE=1; shift ;;
 	--)           shift; break ;;
 	*)            echo "Internal error"; exit 1 ;;
     esac
