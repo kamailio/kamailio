@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Script for adding and dropping ser MySQL tables
+# SER MySQL Database Administration Tool
 #
 # Copyright (C) 2006 iptelorg GmbH
 #
@@ -21,6 +21,10 @@ DEFAULT_RWPASS="heslo"       # Default password of read-write user
 DEFAULT_MYSQL="mysql"
 DEFAULT_MYSQLDUMP="mysqldump"
 
+# The default directory which contains SQL scripts. If empty then the
+# directory which contains this shell script will be used. If relative then
+# the pathname will be made absolute with respect to the location of this
+# shell script.
 DEFAULT_SCRIPT_DIR=""
 
 DEFAULT_CREATE_SCRIPT="my_create.sql"
@@ -33,7 +37,7 @@ DEFAULT_DUMP_OPTS="-c -a -e --add-locks --all"
 usage() {
 cat <<EOF
 NAME
-  $COMMAND - SER MySQL database administration tool
+  $COMMAND - SER MySQL Database Administration Tool
 
 SYNOPSIS
   $COMMAND [options] create
@@ -42,65 +46,63 @@ SYNOPSIS
   $COMMAND [options] restore [filename]
   $COMMAND [options] update-data
 
-DESCRIPTION
-  This tool is a simple shell wrapper over mysql client utility that can
-  be used to create, drop, or backup SER database stored on a MySQL server.
-  See section COMMANDS for brief overview of supported actions.
+DESCRIPTION 
+  This tool is a simple shell wrapper over mysql client utility that can be
+  used to create, drop, or backup SER database stored on a MySQL server.  See
+  section COMMANDS for brief overview of supported actions.
 
   The SQL definition of tables within SER database is stored in a separate
-  file which can be usualy found in /usr/lib/ser/my_create.sql (depending
-  on installation). You can use that file to create SER database manually
-  if you cannot or do not want to use this shell wrapper.
+  files which can be usualy found under /usr/share/ser (depending on the
+  installation). You can use those file to create the SER database manually if
+  you cannot or do not want to use this shell wrapper.
 
-  This tool requires mysql client utility to create or drop SER database.
-  Furthemore backup and restore commands require mysqldump. Both tools
-  can be found in mysql-client package.
+  This tool requires mysql client utility to create or drop the SER database.
+  Additionally backup and restore commands require mysqldump. Both tools can
+  be found in mysql-client package.
 
 COMMANDS
   create
-    Create a new SER database from scratch. The database must not exist.
-    This command creates the database, the default name of the database
-    is '${DEFAULT_DBNAME}' (the default name can be changed using a command line
+    Create a new SER database from scratch. The database must not exist.  This
+    command creates the database, the default name of the database is
+    '${DEFAULT_DBNAME}' (the default name can be changed using a command line
     parameter, see below). Furthemore the script will load table definition
     from the external SQL file and create users with access to the newly
-    created database. You can use command line options to change the
-    default database name, usernames and passwords. Note that you need to
-    change SER and SERWeb configuration if you change database name or
-    usernames because SER and SERWeb are pre-configured to use the default
-    names.
+    created database. You can use command line options to change the default
+    database name, usernames and passwords. Note that you need to change SER
+    and SERWeb configuration if you change database name or usernames because
+    SER and SERWeb are pre-configured to use the default names.
 
-  drop
-    This command can be used to delete SER database and corresponding
-    database users. WARNING: This command will delete all data in the
-    database and this action cannot be undone afterwards. Make sure that
-    you have backups if you want to keep the data from the database.
-    The command also deletes the database users by default. You can change
-    that behavior using -k command line options, see below.
+  drop 
+    This command can be used to delete SER database and corresponding database
+    users. WARNING: This command will delete all data in the database and this
+    action cannot be undone! Make sure that you have backups if you want to
+    keep the data from the database.  The command also deletes the database
+    users by default. You can change that behavior using -k command line
+    options, see below.
 
   backup <filename>
     Backup the contents of SER database. If you specify a filename then the
     contents of the database will be saved in that file, otherwise the tool
-    will dumps the contents on the standard output. By default the backup
-    SQL data contains CREATE TABLE statements that will drop and recreate
-    database tables being loaded. This ensures that the tables are empty
-    and have correct structure. You can change this behavior using -t command 
-    line option.
+    will dumps the contents on the standard output. By default the backup SQL
+    data contains CREATE TABLE statements that will drop and recreate database
+    tables being loaded. This ensures that the tables are empty and have
+    correct structure. You can change this behavior using -t command line
+    option.
 
   restore <filename>
-    Load the contents of SER database from a file (if you specify one) or
-    from the standard input. Make sure that the database exists before you
-    load the data. Make sure that the database is empty if you have backups 
-    without create table statements (i.e. created with -t command line option) 
-    and that the tables are empty.
+    Load the contents of SER database from a file (if you specify one) or from
+    the standard input. Make sure that the database exists before you load the
+    data. Make sure that the database is empty if you have backups without
+    create table statements (i.e. created with -t command line option) and
+    that the tables are empty.
 
-  update-data
-    Update initial data in database. This command delete vendor-controled
-    rows from databaze and replace them with new ones.
-    
-    
-OPTIONS
-  -h, --help
-      Display this help text.
+  update-data 
+    Update initial data in the database. This command deletes vendor-controled
+    rows from database and replaces them with new ones.
+
+OPTIONS 
+  -h, --help Display
+    this help text.
 
   -n NAME, --name=NAME
       Database name of SER database.
@@ -141,19 +143,18 @@ OPTIONS
       (No default value)
 
   -d DIRECTORY, --script-dir=DIRECTORY
-      Directory containing the SQL scripts with database schema and
-      initial data definition.
+      Directory containing the SQL scripts with database schema and initial
+      data definition.
       (Default value is '$DEFAULT_SCRIPT_DIR')
 
   -k, --keep-users
-      Do not delete database users when removing the database. This
-      is useful if you have multiple databases and use the same users
-      to access them.
+      Do not delete database users when removing the database. This is useful
+      if you have multiple databases and use the same users to access them.
 
   -v, --verbose
-      Enable verbose mode. This option can be given multiple times
-      to produce more and more output.
-        
+      Enable verbose mode. This option can be given multiple times to produce
+      more and more output.
+
 ENVIRONMENT VARIABLES
   MYSQL     Path to mysql command (Currently ${MYSQL})
   MYSQLDUMP Path to mysqldump command (Currently ${MYSQLDUMP})
@@ -163,9 +164,9 @@ AUTHOR
 
 COPYRIGHT
   Copyright (C) 2006-2008 iptelorg GmbH
-  This is free software. You may redistribute copies of it under the
-  termp of the GNU General Public License. There is NO WARRANTY, to the
-  extent permitted by law.
+  This is free software. You may redistribute copies of it under the termp of
+  the GNU General Public License. There is NO WARRANTY, to the extent
+  permitted by law.
 
 FILES
   ${SCRIPT_DIR}/${CREATE_SCRIPT}
@@ -215,9 +216,7 @@ abs_script_dir()
 }
 
 
-#
 # Execute an SQL command
-#
 sql_query()
 {
 	if [ $# -gt 1 ] ; then
