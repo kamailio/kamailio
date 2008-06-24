@@ -122,6 +122,7 @@ CC_EXTRA_OPTS ?=
 # dirs 
 cfg-dir = etc/ser/
 bin-dir = sbin/
+share-dir = share/ser/
 modules-dir = lib/ser/modules/
 ifeq ($(OS), linux)
 	doc-dir = share/doc/ser/
@@ -176,6 +177,7 @@ modules-prefix = $(basedir)$(prefix)
 doc-prefix = $(basedir)$(prefix)
 man-prefix = $(basedir)$(prefix)
 ut-prefix = $(basedir)$(prefix)
+share-prefix = $(basedir)$(prefix)
 
 
 # target dirs for various stuff
@@ -201,6 +203,7 @@ INSTALL-BIN = $(INSTALL) -m 755
 INSTALL-MODULES = $(INSTALL) -m 755
 INSTALL-DOC = $(INSTALL) -m 644
 INSTALL-MAN = $(INSTALL) -m 644
+INSTALL-SHARE = $(INSTALL) -m 644
 
 #set some vars from the environment (and not make builtins)
 CC   := $(shell echo "$${CC}")

@@ -199,7 +199,10 @@ modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 # (full path including file name)
 utils_compile=	utils/gen_ha1 utils/sercmd
 utils_install=	utils/gen_ha1/gen_ha1 \
-				scripts/mysql/ser_mysql.sh utils/sercmd/sercmd
+				utils/sercmd/sercmd
+share_install= scripts/mysql/my_create.sql \
+			   scripts/mysql/my_data.sql \
+			   scripts/mysql/my_drop.sql
 
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
@@ -229,6 +232,7 @@ export PREFIX LOCALBASE
 #export NAME RELEASE OS ARCH 
 #export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
 #export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
+#export share-prefix share-dir
 #export cfg-target modules-target
 #export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
 #export INSTALL-TOUCH
@@ -392,7 +396,7 @@ modules-doc:
 
 .PHONY: install
 install: all mk-install-dirs install-cfg install-bin install-modules \
-	install-doc install-man install-utils
+	install-doc install-man install-utils install-share
 
 
 .PHONY: dbinstall
@@ -403,7 +407,8 @@ dbinstall:
 
 mk-install-dirs: $(cfg-prefix)/$(cfg-dir) $(bin-prefix)/$(bin-dir) \
 			$(modules-prefix)/$(modules-dir) $(doc-prefix)/$(doc-dir) \
-			$(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5
+			$(man-prefix)/$(man-dir)/man8 $(man-prefix)/$(man-dir)/man5 \
+			$(share-prefix)/$(share-dir)
 
 
 $(cfg-prefix)/$(cfg-dir): 
@@ -411,6 +416,9 @@ $(cfg-prefix)/$(cfg-dir):
 
 $(bin-prefix)/$(bin-dir):
 		mkdir -p $(bin-prefix)/$(bin-dir)
+
+$(share-prefix)/$(share-dir):
+		mkdir -p $(share-prefix)/$(share-dir)
 
 $(modules-prefix)/$(modules-dir):
 		mkdir -p $(modules-prefix)/$(modules-dir)
@@ -456,6 +464,19 @@ install-bin: $(bin-prefix)/$(bin-dir)
 		$(INSTALL-TOUCH) $(bin-prefix)/$(bin-dir)/ser 
 		$(INSTALL-BIN) ser $(bin-prefix)/$(bin-dir)
 
+install-share: $(share-prefix)/$(share-dir)
+	-@for r in $(share_install) "" ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(INSTALL-TOUCH) \
+					$(share-prefix)/$(share-dir)/`basename "$$r"` ; \
+				$(INSTALL-SHARE)  "$$r"  $(share-prefix)/$(share-dir) ; \
+			else \
+				echo "ERROR: $$r not found" ; \
+			fi ;\
+		fi ; \
+	done
+
 install-modules: modules $(modules-prefix)/$(modules-dir)
 	-@for r in $(modules_full_path) "" ; do \
 		if [ -n "$$r" ]; then \
@@ -480,9 +501,10 @@ install-utils: utils $(bin-prefix)/$(bin-dir)
 				echo "ERROR: $$r not compiled" ; \
 			fi ;\
 		fi ; \
-	done 
-
-
+	done
+	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share-prefix)/$(share-dir)\"#g" \
+		< scripts/mysql/ser_mysql.sh > $(bin-prefix)/$(bin-dir)/ser_mysql.sh
+	chmod 755 $(bin-prefix)/$(bin-dir)/ser_mysql.sh
 
 install-modules-all: install-modules install-modules-doc
 
@@ -542,8 +564,10 @@ lib_dependent_modules = dialog pa rls presence_b2b xcap
 
 # exports for libs
 export cfg-prefix cfg-dir bin-prefix bin-dir modules-prefix modules-dir
-export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir
-export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN 
+export doc-prefix doc-dir man-prefix man-dir ut-prefix ut-dir \
+				  share-prefix share-dir
+export INSTALL INSTALL-CFG INSTALL-BIN INSTALL-MODULES INSTALL-DOC INSTALL-MAN \
+			   INSTALL-SHARE
 export INSTALL-TOUCH
 
 dep_mods = $(filter $(addprefix modules/, $(lib_dependent_modules)), $(modules))
