@@ -8,7 +8,7 @@
 	<title>Overview</title>
 	<para>
 		This is a module to help with &sdp; mangling.
-		Still in testing.
+		Note: This module is obselete and will be removed for the 1.5.0 release.
 	</para>
 	</section>
 	<section>

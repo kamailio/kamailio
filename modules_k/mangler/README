@@ -10,8 +10,8 @@ Gabriel Vasile
 
    Copyright © 2003 Fill in here
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -49,7 +49,8 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This is a module to help with SDP mangling. Still in testing.
+   This is a module to help with SDP mangling. Note: This module
+   is obselete and will be removed for the 1.5.0 release.
 
 1.2. Dependencies
 
