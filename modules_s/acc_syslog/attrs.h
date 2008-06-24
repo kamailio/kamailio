@@ -148,9 +148,6 @@ do {                                                        \
 
 
 
-/* 
- * Limitation -- currently supports string avps only 
- */
 #define ATTRS_BUF_LEN 4096
 static str* print_attrs(avp_ident_t* avps, int avps_n, int quote)
 {
