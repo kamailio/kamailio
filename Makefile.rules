@@ -18,9 +18,26 @@
 # --------
 #  2007-03-29  set rpath differently for make install
 #              automatically build listed SER_LIBS if needed (andrei)
+#  2008-06-23  automatically rebuild if make time defines or includes
+#              changed (via makecfg.lst)
 #
 
 
+# check if the saved cfg corresponds with the current one
+# (if not rebuild everything)
+ifeq (,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))
+-include makecfg.lst
+ifneq ($(strip $(DEFS)), $(strip $(CFG_DEFS)))
+#$(warning different defs: <$(strip $(DEFS))> != )
+#$(warning               : <$(strip $(CFG_DEFS))>)
+$(shell rm -f makecfg.lst)
+endif
+ifneq ($(INCLUDES), $(CFG_INCLUDES))
+$(shell rm -f makecfg.lst)
+endif
+endif
+
+ALLDEP+=makecfg.lst
 
 #implicit rules
 %.o:%.c  $(ALLDEP)
@@ -117,6 +134,9 @@ $(NAME): $(objs) $(ALLDEP)
 librpath.lst: $(ALLDEP)
 	@echo LIB_RPATH_LST:=$(SER_RPATH_LST) >librpath.lst
 
+makecfg.lst:
+	@echo CFG_DEFS:=$(subst ',\', $(subst ",\", $(strip $(DEFS)))) >>$@
+	@echo CFG_INCLUDES:=$(subst ',\', $(subst ",\", $(strip $(INCLUDES)))) >>$@
 .PHONY: all
 all: $(NAME) modules
 
@@ -128,7 +148,8 @@ static: $(objs)
 
 .PHONY: clean
 clean: 
-	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst 2>/dev/null
+	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst \
+				makecfg.lst 2>/dev/null
 	-@for r in $(modules) $(static_modules_path) "" ; do \
 		if [ -d "$$r" ]; then \
 			echo "module $$r" ; \

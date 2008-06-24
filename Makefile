@@ -341,6 +341,8 @@ tar:
 		--exclude=.svn* \
 		--exclude=.cvsignore \
 		--exclude=librpath.lst \
+		--exclude=libiname.lst \
+		--exclude=makecfg.lst \
 		--exclude=*.[do] \
 		--exclude=*.so \
 		--exclude=*.il \

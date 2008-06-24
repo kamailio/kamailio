@@ -262,6 +262,12 @@ new config variables:
     is not initialized at startup and cannot be enabled runtime,
     that saves some memory.
 
+build system:
+ - check defines and includes used at compile time and if different 
+   force rebuilding everything in the current dir (creates a new file: 
+   makecfg.lst that stores the compile defines & includes used at compile 
+   time)
+
 
 
 2.0.0 changes
