@@ -21,6 +21,8 @@ DEFAULT_RWPASS="heslo"       # Default password of read-write user
 DEFAULT_MYSQL="mysql"
 DEFAULT_MYSQLDUMP="mysqldump"
 
+DEFAULT_SCRIPT_DIR=""
+
 DEFAULT_CREATE_SCRIPT="my_create.sql"
 DEFAULT_DATA_SCRIPT="my_data.sql"
 DEFAULT_DROP_SCRIPT="my_drop.sql"
@@ -138,6 +140,11 @@ OPTIONS
       administrator is needed and will not ask for it.
       (No default value)
 
+  -d DIRECTORY, --script-dir=DIRECTORY
+      Directory containing the SQL scripts with database schema and
+      initial data definition.
+      (Default value is '$DEFAULT_SCRIPT_DIR')
+
   -k, --keep-users
       Do not delete database users when removing the database. This
       is useful if you have multiple databases and use the same users
@@ -155,15 +162,15 @@ AUTHOR
   Written by Jan Janak <jan@iptel.org>
 
 COPYRIGHT
-  Copyright (C) 2006 iptelorg GmbH
+  Copyright (C) 2006-2008 iptelorg GmbH
   This is free software. You may redistribute copies of it under the
   termp of the GNU General Public License. There is NO WARRANTY, to the
   extent permitted by law.
 
 FILES
-  $CREATE_SCRIPT
-  $DATA_SCRIPT
-  $DROP_SCRIPT
+  ${SCRIPT_DIR}/${CREATE_SCRIPT}
+  ${SCRIPT_DIR}/${DATA_SCRIPT}
+  ${SCRIPT_DIR}/${DROP_SCRIPT}
     
 REPORTING BUGS
   Report bugs to <ser-bugs@iptel.org>             
@@ -195,6 +202,18 @@ prompt_pw()
 	PW="-p$PW"
     fi
 }
+
+# Convert relative path to the script directory to absolute if necessary by
+# extracting the directory of this script and prefixing the relative path with
+# it.
+abs_script_dir()
+{
+	my_dir=`dirname $0`;
+	if [ "${SCRIPT_DIR:0:1}" != "/" ] ; then
+		SCRIPT_DIR="${my_dir}/${SCRIPT_DIR}"
+    fi
+}
+
 
 #
 # Execute an SQL command
@@ -298,12 +317,17 @@ if [ -z "$SQLUSER" ] ; then SQLUSER=$DEFAULT_SQLUSER; fi;
 if [ -z "$MYSQL" ] ; then MYSQL=$DEFAULT_MYSQL; fi
 if [ -z "$MYSQLDUMP" ] ; then MYSQLDUMP=$DEFAULT_MYSQLDUMP; fi
 if [ -z "$DUMP_OPTS" ] ; then DUMP_OPTS=$DEFAULT_DUMP_OPTS; fi 
-if [ -z "$CREATE_SCRIPT" ] ; then CREATE_SCRIPT=`dirname $0`"/"$DEFAULT_CREATE_SCRIPT; fi
-if [ -z "$DATA_SCRIPT" ] ; then DATA_SCRIPT=`dirname $0`"/"$DEFAULT_DATA_SCRIPT; fi
-if [ -z "$DROP_SCRIPT" ] ; then DROP_SCRIPT=`dirname $0`"/"$DEFAULT_DROP_SCRIPT; fi
+if [ -z "$CREATE_SCRIPT" ] ; then CREATE_SCRIPT=$DEFAULT_CREATE_SCRIPT; fi
+if [ -z "$DATA_SCRIPT" ] ; then DATA_SCRIPT=$DEFAULT_DATA_SCRIPT; fi
+if [ -z "$DROP_SCRIPT" ] ; then DROP_SCRIPT=$DEFAULT_DROP_SCRIPT; fi
+if [ -z "$SCRIPT_DIR" ] ; then SCRIPT_DIR=$DEFAULT_SCRIPT_DIR; fi;
 
-TEMP=`getopt -o hn:r:w:p:P:ts:u:vkq:: --long help,name:,ro-username:,rw-username:,\
-ro-password:,rw-password:,tables,server:,username:,verbose,keep-users,sql-password:: -n $COMMAND -- "$@"`
+# Make the path to the script directory absolute
+abs_script_dir
+
+TEMP=`getopt -o hn:r:w:p:P:ts:u:vkq::d: --long help,name:,ro-username:,rw-username:,\
+ro-password:,rw-password:,tables,server:,username:,verbose,keep-users,\
+sql-password::,script-dir: -n $COMMAND -- "$@"`
 if [ $? != 0 ] ; then exit 1; fi
 eval set -- "$TEMP"
 
@@ -318,9 +342,15 @@ while true ; do
 	-t|--tables)       DUMP_OPTS="$DUMP_OPTS -t "; shift ;;
 	-s|--server)       DBHOST=$2; shift 2 ;;
 	-u|--username)     SQLUSER=$2; shift 2 ;;
-        -v|--verbose)      MYSQL_OPTS="$MYSQL_OPTS -v "; shift ;;
+    -v|--verbose)      MYSQL_OPTS="$MYSQL_OPTS -v "; shift ;;
 	-k|--keep-users)   KEEP_USERS=1; shift ;;
-        -q|--sql-password)
+    -d|--script-dir)   
+        SCRIPT_DIR=$2;
+		# The script directory changed, make it absolute again
+        abs_script_dir
+        shift 2 
+        ;;
+    -q|--sql-password)
 	    case "$2" in
 		"") DONT_ASK=1; shift 2 ;;
 		*)  PW=$2; shift 2 ;;
