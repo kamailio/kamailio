@@ -2,9 +2,9 @@
 #
 # $Id$
 #
-# Script for adding and dropping ser MySQL tables
+# SER MySQL Database Administration Tool
 #
-# Copyright (C) 2006 iptelorg GmbH
+# Copyright (C) 2006-2008 iptelorg GmbH
 #
 
 #################################################################
@@ -21,6 +21,12 @@ DEFAULT_RWPASS="heslo"       # Default password of read-write user
 DEFAULT_MYSQL="mysql"
 DEFAULT_MYSQLDUMP="mysqldump"
 
+# The default directory which contains SQL scripts. If empty then the
+# directory which contains this shell script will be used. If relative then
+# the pathname will be made absolute with respect to the location of this
+# shell script.
+DEFAULT_SCRIPT_DIR=""
+
 DEFAULT_CREATE_SCRIPT="my_create.sql"
 DEFAULT_DATA_SCRIPT="my_data.sql"
 DEFAULT_DROP_SCRIPT="my_drop.sql"
@@ -31,7 +37,7 @@ DEFAULT_DUMP_OPTS="-c -a -e --add-locks --all"
 usage() {
 cat <<EOF
 NAME
-  $COMMAND - SER MySQL database administration tool
+  $COMMAND - SER MySQL Database Administration Tool
 
 SYNOPSIS
   $COMMAND [options] create
@@ -41,61 +47,60 @@ SYNOPSIS
   $COMMAND [options] update-data
 
 DESCRIPTION
-  This tool is a simple shell wrapper over mysql client utility that can
-  be used to create, drop, or backup SER database stored on a MySQL server.
-  See section COMMANDS for brief overview of supported actions.
+  This tool is a simple shell wrapper over mysql client utility that can be
+  used to create, drop, or backup SER database stored on a MySQL server.  See
+  section COMMANDS for brief overview of supported actions.
 
-  The SQL definition of tables within SER database is stored in a separate
-  file which can be usualy found in /usr/lib/ser/my_create.sql (depending
-  on installation). You can use that file to create SER database manually
-  if you cannot or do not want to use this shell wrapper.
+  The SQL definition of tables and initial data within SER database is stored
+  in a separate files which can be usualy found under /usr/local/share/ser
+  (depending on installation). You can use those files to create SER database
+  manually if you cannot or do not want to use this shell wrapper.
 
   This tool requires mysql client utility to create or drop SER database.
-  Furthemore backup and restore commands require mysqldump. Both tools
-  can be found in mysql-client package.
+  Additionally backup and restore commands require mysqldump. Both tools can
+  be found in mysql-client package.
 
 COMMANDS
   create
-    Create a new SER database from scratch. The database must not exist.
-    This command creates the database, the default name of the database
-    is '${DEFAULT_DBNAME}' (the default name can be changed using a command line
-    parameter, see below). Furthemore the script will load table definition
-    from the external SQL file and create users with access to the newly
-    created database. You can use command line options to change the
-    default database name, usernames and passwords. Note that you need to
-    change SER and SERWeb configuration if you change database name or
-    usernames because SER and SERWeb are pre-configured to use the default
-    names.
+    Create a new SER database from scratch. The database must not exist.  This
+    command creates the database, the default name of the database is
+    '${DEFAULT_DBNAME}' (the default name can be changed using a command line
+    parameter, see below). Furthemore the script will load table definitions
+    from an external SQL file and create users with access to the newly
+    created database. You can use command line options to change the default
+    database name, usernames and passwords. Note that you need to change SER
+    and SERWeb configuration if you change the database name or usernames
+    because SER and SERWeb are pre-configured to use the default names.
 
   drop
-    This command can be used to delete SER database and corresponding
-    database users. WARNING: This command will delete all data in the
-    database and this action cannot be undone afterwards. Make sure that
-    you have backups if you want to keep the data from the database.
-    The command also deletes the database users by default. You can change
-    that behavior using -k command line options, see below.
+    This command can be used to delete SER database and corresponding database
+    users. WARNING: This command will delete all data in the database and this
+    action cannot be undone! Make sure that you have backups if you want to
+    keep the data from the database.  The command also deletes the database
+    users by default. You can change that behavior using -k command line
+    options, see below.
 
   backup <filename>
     Backup the contents of SER database. If you specify a filename then the
     contents of the database will be saved in that file, otherwise the tool
-    will dumps the contents on the standard output. By default the backup
-    SQL data contains CREATE TABLE statements that will drop and recreate
-    database tables being loaded. This ensures that the tables are empty
-    and have correct structure. You can change this behavior using -t command 
-    line option.
+    will dumps the contents to the standard output. By default the backup SQL
+    data contains CREATE TABLE statements that will drop and recreate database
+    tables being loaded. This ensures that the tables are empty and have
+    correct structure. You can change this behavior using -t command line
+    option.
 
   restore <filename>
-    Load the contents of SER database from a file (if you specify one) or
-    from the standard input. Make sure that the database exists before you
-    load the data. Make sure that the database is empty if you have backups 
-    without create table statements (i.e. created with -t command line option) 
-    and that the tables are empty.
+    Load the contents of SER database from a file (if you specify one) or from
+    the standard input. Make sure that the database exists before you load the
+    data. Make sure that the database is empty if you have backups without
+    create table statements (i.e. created with -t command line option) and
+    that the tables are empty.
 
   update-data
-    Update initial data in database. This command delete vendor-controled
-    rows from databaze and replace them with new ones.
-    
-    
+    Update initial data in the database. This command deletes vendor-controled
+    rows from the database and replaces them with new data.
+
+
 OPTIONS
   -h, --help
       Display this help text.
@@ -138,15 +143,19 @@ OPTIONS
       administrator is needed and will not ask for it.
       (No default value)
 
+  -d DIRECTORY, --script-dir=DIRECTORY
+  	  Directory containing the SQL scripts with database schema and initial
+  	  data definition.
+  	  (Default value is '$DEFAULT_SCRIPT_DIR')
+
   -k, --keep-users
-      Do not delete database users when removing the database. This
-      is useful if you have multiple databases and use the same users
-      to access them.
+      Do not delete database users when removing the database. This is useful
+      if you have multiple databases and use the same users to access them.
 
   -v, --verbose
-      Enable verbose mode. This option can be given multiple times
-      to produce more and more output.
-        
+      Enable verbose mode. This option can be given multiple times to produce
+      more and more output.
+
 ENVIRONMENT VARIABLES
   MYSQL     Path to mysql command (Currently ${MYSQL})
   MYSQLDUMP Path to mysqldump command (Currently ${MYSQLDUMP})
@@ -155,15 +164,15 @@ AUTHOR
   Written by Jan Janak <jan@iptel.org>
 
 COPYRIGHT
-  Copyright (C) 2006 iptelorg GmbH
-  This is free software. You may redistribute copies of it under the
-  termp of the GNU General Public License. There is NO WARRANTY, to the
-  extent permitted by law.
+  Copyright (C) 2006-2008 iptelorg GmbH
+  This is free software. You may redistribute copies of it under the termp of
+  the GNU General Public License. There is NO WARRANTY, to the extent
+  permitted by law.
 
 FILES
-  $CREATE_SCRIPT
-  $DATA_SCRIPT
-  $DROP_SCRIPT
+  ${SCRIPT_DIR}/${CREATE_SCRIPT}
+  ${SCRIPT_DIR}/${DATA_SCRIPT}
+  ${SCRIPT_DIR}/${DROP_SCRIPT}
     
 REPORTING BUGS
   Report bugs to <ser-bugs@iptel.org>             
@@ -171,9 +180,7 @@ EOF
 } #usage
 
 
-#
 # Read password from user
-#
 prompt_pw()
 {
     export PW
@@ -196,9 +203,20 @@ prompt_pw()
     fi
 }
 
-#
+
+# Convert relative path to the script directory to absolute if necessary by
+# extracting the directory of this script and prefixing the relative path with
+# it.
+abs_script_dir()
+{
+	my_dir=`dirname $0`;
+	if [ "${SCRIPT_DIR:0:1}" != "/" ] ; then
+		SCRIPT_DIR="${my_dir}/${SCRIPT_DIR}"
+	fi
+}
+
+
 # Execute an SQL command
-#
 sql_query()
 {
 	if [ $# -gt 1 ] ; then
@@ -221,6 +239,7 @@ sql_query()
 		fi
 	fi
 }
+
 
 # Drop SER database
 drop_db()
@@ -271,39 +290,44 @@ create_db ()
     sql_query "" "FLUSH PRIVILEGES"
 
     # Load table definitions
-    sql_query $DBNAME < $CREATE_SCRIPT
+    sql_query $DBNAME < ${SCRIPT_DIR}/${CREATE_SCRIPT}
 
     # Load initial data
-    sql_query $DBNAME < $DATA_SCRIPT
+    sql_query $DBNAME < ${SCRIPT_DIR}/${DATA_SCRIPT}
 } # create_db
 
 
 # Update initial data
 update_db_data ()
 {
-    sql_query $DBNAME < $DATA_SCRIPT
+    sql_query $DBNAME < ${SCRIPT_DIR}/${DATA_SCRIPT}
 } # update_db_data
 
 
 # Main program
 COMMAND=`basename $0`
 
-if [ -z "$DBNAME" ] ; then DBNAME=$DEFAULT_DBNAME; fi;
-if [ -z "$ROUSER" ] ; then ROUSER=$DEFAULT_ROUSER; fi;
-if [ -z "$RWUSER" ] ; then RWUSER=$DEFAULT_RWUSER; fi;
-if [ -z "$ROPASS" ] ; then ROPASS=$DEFAULT_ROPASS; fi;
-if [ -z "$RWPASS" ] ; then RWPASS=$DEFAULT_RWPASS; fi;
-if [ -z "$DBHOST" ] ; then DBHOST=$DEFAULT_DBHOST; fi;
-if [ -z "$SQLUSER" ] ; then SQLUSER=$DEFAULT_SQLUSER; fi;
-if [ -z "$MYSQL" ] ; then MYSQL=$DEFAULT_MYSQL; fi
-if [ -z "$MYSQLDUMP" ] ; then MYSQLDUMP=$DEFAULT_MYSQLDUMP; fi
-if [ -z "$DUMP_OPTS" ] ; then DUMP_OPTS=$DEFAULT_DUMP_OPTS; fi 
-if [ -z "$CREATE_SCRIPT" ] ; then CREATE_SCRIPT=`dirname $0`"/"$DEFAULT_CREATE_SCRIPT; fi
-if [ -z "$DATA_SCRIPT" ] ; then DATA_SCRIPT=`dirname $0`"/"$DEFAULT_DATA_SCRIPT; fi
-if [ -z "$DROP_SCRIPT" ] ; then DROP_SCRIPT=`dirname $0`"/"$DEFAULT_DROP_SCRIPT; fi
+if [ -z "$DBNAME" ] ; then DBNAME="$DEFAULT_DBNAME"; fi;
+if [ -z "$ROUSER" ] ; then ROUSER="$DEFAULT_ROUSER"; fi;
+if [ -z "$RWUSER" ] ; then RWUSER="$DEFAULT_RWUSER"; fi;
+if [ -z "$ROPASS" ] ; then ROPASS="$DEFAULT_ROPASS"; fi;
+if [ -z "$RWPASS" ] ; then RWPASS="$DEFAULT_RWPASS"; fi;
+if [ -z "$DBHOST" ] ; then DBHOST="$DEFAULT_DBHOST"; fi;
+if [ -z "$SQLUSER" ] ; then SQLUSER="$DEFAULT_SQLUSER"; fi;
+if [ -z "$MYSQL" ] ; then MYSQL="$DEFAULT_MYSQL"; fi
+if [ -z "$MYSQLDUMP" ] ; then MYSQLDUMP="$DEFAULT_MYSQLDUMP"; fi
+if [ -z "$DUMP_OPTS" ] ; then DUMP_OPTS="$DEFAULT_DUMP_OPTS"; fi 
+if [ -z "SCRIPT_DIR" ] ; then SCRIPT_DIR="$DEFAULT_SCRIPT_DIR"; fi
+if [ -z "$CREATE_SCRIPT" ] ; then CREATE_SCRIPT="$DEFAULT_CREATE_SCRIPT"; fi
+if [ -z "$DATA_SCRIPT" ] ; then DATA_SCRIPT="$DEFAULT_DATA_SCRIPT"; fi
+if [ -z "$DROP_SCRIPT" ] ; then DROP_SCRIPT="$DEFAULT_DROP_SCRIPT"; fi
 
-TEMP=`getopt -o hn:r:w:p:P:ts:u:vkq:: --long help,name:,ro-username:,rw-username:,\
-ro-password:,rw-password:,tables,server:,username:,verbose,keep-users,sql-password:: -n $COMMAND -- "$@"`
+# Make the path to the script directory absolute
+abs_script_dir
+
+TEMP=`getopt -o hn:r:w:p:P:ts:u:vkq::d: --long help,name:,ro-username:,rw-username:,\
+ro-password:,rw-password:,tables,server:,username:,verbose,keep-users],\
+sql-password::,script-dir: -n $COMMAND -- "$@"`
 if [ $? != 0 ] ; then exit 1; fi
 eval set -- "$TEMP"
 
@@ -318,9 +342,15 @@ while true ; do
 	-t|--tables)       DUMP_OPTS="$DUMP_OPTS -t "; shift ;;
 	-s|--server)       DBHOST=$2; shift 2 ;;
 	-u|--username)     SQLUSER=$2; shift 2 ;;
-        -v|--verbose)      MYSQL_OPTS="$MYSQL_OPTS -v "; shift ;;
+    -v|--verbose)      MYSQL_OPTS="$MYSQL_OPTS -v "; shift ;;
 	-k|--keep-users)   KEEP_USERS=1; shift ;;
-        -q|--sql-password)
+    -d|--script-dir)
+        SCRIPT_DIR=$2;
+  	    # The script directory changed, make it absolute again
+  	    abs_script_dir
+  	    shift 2
+  	    ;;
+     -q|--sql-password)
 	    case "$2" in
 		"") DONT_ASK=1; shift 2 ;;
 		*)  PW=$2; shift 2 ;;
