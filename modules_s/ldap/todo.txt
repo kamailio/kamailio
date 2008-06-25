@@ -101,3 +101,6 @@ X Support for Older LDAP Libraries
   Older versions of the openldap client library might not contain 
   LDAP_SCOPE_CHILDREN. We need to handle this case in a graceful manner and
   make sure that the module compiles.
+
+* Check that we escape strings properly according to RFC4514
+
