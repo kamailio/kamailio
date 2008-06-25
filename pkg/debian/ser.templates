@@ -15,9 +15,9 @@ Description: Change config file now ?
 
 Template: ser/USER
 Type: string
-Default: ser
+Default: root
 Description: User to run SER as
- Set the user which SER should run as. Default is 'ser' user.
+ Set the user which SER should run as. Default is 'root' user.
  .
  Note: if you want ser to be able to dump a core file in case of crash, you have to run it as root user.
  .
@@ -25,9 +25,9 @@ Description: User to run SER as
 
 Template: ser/GROUP
 Type: string
-Default: ser
+Default: root
 Description: Group to run SER as
- Set the group which SER should run as. Default is 'ser' group.
+ Set the group which SER should run as. Default is 'root' group.
  .
  Enter "!" to not modify this option.
 

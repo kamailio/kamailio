@@ -12,12 +12,12 @@ SER_CFG_FILE="/etc/ser/ser.cfg"
 
 # user to run ser as
 #DEBCONF-USER-START
-SER_USER="ser"
+SER_USER="root"
 #DEBCONF-USER-END
 
 # group to run ser as
 #DEBCONF-GROUP-START
-SER_GROUP="ser"
+SER_GROUP="root"
 #DEBCONF-GROUP-END
 
 # ser pidfile
