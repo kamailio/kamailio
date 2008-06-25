@@ -5,9 +5,11 @@
   
   <xsl:import href="common.xsl"/>
   <xsl:output method="text" indent="no" omit-xml-declaration="yes"/>
-  
-  <!-- Create the file for the table in dbtext subdirectory -->
-  <xsl:template match="table">
+
+  <!-- Special case for the version table, this table needs to be
+	   populated with versions of other tables
+	-->
+  <xsl:template match="table[@id='version']">
 	<xsl:variable name="name">
 	  <xsl:call-template name="get-name"/>
 	</xsl:variable>
@@ -19,8 +21,56 @@
 	   indent="no"
 	   omit-xml-declaration="yes">
 	  <xsl:apply-imports/>
+
+	  <xsl:variable name="version_table" select="."/>
+	  <xsl:for-each select="parent::database/table">
+		<xsl:if test="normalize-space(version/text())">
+		  <xsl:variable name="table" select="."/>
+		  <xsl:for-each select="$version_table/column">
+			<xsl:choose>
+			  <xsl:when test="@id='tn'">
+				<xsl:call-template name="escape">
+				  <xsl:with-param name="value">
+					<xsl:call-template name="get-name">
+					  <xsl:with-param name="select" select="$table"/>
+					</xsl:call-template>
+				  </xsl:with-param>
+				</xsl:call-template>
+			  </xsl:when>
+			  <xsl:when test="@id='tv'">
+				<xsl:call-template name="escape">
+				  <xsl:with-param name="value">
+					<xsl:value-of select="normalize-space($table/version/text())"/>
+				  </xsl:with-param>
+				</xsl:call-template>
+			  </xsl:when>
+			</xsl:choose>
+			<xsl:if test="position()!=last()">
+			  <xsl:text>:</xsl:text>	    
+			</xsl:if>
+		  </xsl:for-each>
+		  <xsl:text>&#x0A;</xsl:text>
+		</xsl:if>
+	  </xsl:for-each>
+
 	</xsl:document>
   </xsl:template>
+
+  <!-- Create the file for the table in dbtext subdirectory -->
+  <xsl:template match="table">
+	<xsl:variable name="name">
+	  <xsl:call-template name="get-name"/>
+	</xsl:variable>
+
+	<xsl:variable name="path" select="concat($dir, concat('/', concat($prefix, $name)))"/>
+	<xsl:document 
+	   href="{$path}"
+	   method="text"
+	   indent="no"
+	   omit-xml-declaration="yes">
+	  <xsl:apply-imports/>
+	</xsl:document>
+  </xsl:template> <!-- table -->
   
   <!-- Create column definitions -->
   <xsl:template match="column">
@@ -65,7 +115,7 @@
 	<xsl:if test="position()=last()">
 	  <xsl:text>&#x0A;</xsl:text>
 	</xsl:if>
-  </xsl:template>
+  </xsl:template> <!-- column -->
   
   <!-- Escape all : occurrences -->
   <xsl:template name="escape">
@@ -81,7 +131,7 @@
 		<xsl:value-of select="$value"/>
 	  </xsl:otherwise>
 	</xsl:choose>
-  </xsl:template>
+  </xsl:template> <!-- escape -->
   
   <!-- Process initial data -->
   <xsl:template match="row">
@@ -138,8 +188,8 @@
 	
 	<xsl:apply-imports/>
 	<xsl:text>&#x0A;</xsl:text>
-  </xsl:template>
-  
+  </xsl:template> <!-- row -->
+
   <!-- Make sure all values reference existing columns -->
   <xsl:template match="value">
 	<xsl:variable name="column">
@@ -147,5 +197,6 @@
 		<xsl:with-param name="id" select="@col"/>
 	  </xsl:call-template>
 	</xsl:variable>
-  </xsl:template>
+  </xsl:template> <!-- value -->
+
 </xsl:stylesheet>
