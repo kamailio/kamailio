@@ -53,9 +53,13 @@
 #include "../../dprint.h"
 #include "../../md5.h"
 #include "../../socket_info.h"
+
+#ifdef USE_LOCAL_ROUTE
 #include "../../receive.h"
 #include "../../route.h"
 #include "../../action.h"
+#endif
+
 #include "ut.h"
 #include "h_table.h"
 #include "t_hooks.h"
@@ -157,6 +161,7 @@ static inline unsigned int dlg2hash( dlg_t* dlg )
 }
 
 
+#ifdef USE_LOCAL_ROUTE
 static inline struct sip_msg* buf_to_sip_msg(char *buf, unsigned int len,	
  	     														dlg_t *dialog)
 {
@@ -185,6 +190,7 @@ static inline struct sip_msg* buf_to_sip_msg(char *buf, unsigned int len,
 
 	return &req;
 }
+#endif
 
 /*
  * Send a request using data from the dialog structure
@@ -195,13 +201,18 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	union sockaddr_union to_su;
 	struct cell *new_cell;
 	struct retr_buf *request;
+#ifndef USE_LOCAL_ROUTE
+	char* buf;
+	int buf_len, ret, flags;
+#else
 	static struct sip_msg *req;
 	struct usr_avp **backup;
 	char *buf, *buf1;
 	int buf_len, buf_len1;
 	int ret, flags;
-	unsigned int hi;
 	int backup_route_type;
+#endif
+	unsigned int hi;
 
 	ret=-1;
 	
@@ -272,6 +283,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		goto error1;
 	}
 
+#ifdef USE_LOCAL_ROUTE
 	if (local_rlist) {
 		LM_DBG("building sip_msg from buffer\n");
 		req = buf_to_sip_msg(buf, buf_len, dialog);
@@ -319,6 +331,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 			}
 		}
 	}
+#endif
 
 	new_cell->method.s = buf;
 	new_cell->method.len = method->len;
