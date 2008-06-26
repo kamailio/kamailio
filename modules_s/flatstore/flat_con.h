@@ -88,5 +88,6 @@ void flat_con_disconnect(db_con_t* con);
 
 int flat_open_table(int *idx, db_con_t* con, str* name);
 
+/** @} */
 
 #endif /* _FLAT_CON_H */
