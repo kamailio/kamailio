@@ -88,6 +88,7 @@ LDFLAGS:=$(LIB_LDFLAGS) $(NAME_LD_FLAGS)
 NAME:=$(LIB_NAME)
 
 
+include $(COREPATH)/Makefile.targets
 include $(COREPATH)/Makefile.rules
 
 ifeq	(,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))

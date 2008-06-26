@@ -11,6 +11,7 @@ LIBS=../../md5.o
 
 
 include ../../Makefile.sources
+include ../../Makefile.targets
 include ../../Makefile.rules
 
 modules:

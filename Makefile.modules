@@ -51,6 +51,7 @@ LDFLAGS:=$(MOD_LDFLAGS)
 endif
 
 
+include $(COREPATH)/Makefile.targets
 include $(COREPATH)/Makefile.rules
 
 
