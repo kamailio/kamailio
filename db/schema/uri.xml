@@ -8,67 +8,67 @@
 ]>
 
 <table>
-    <name>uri</name>
-    <version>3</version>
+  <name>uri</name>
+  <version>3</version>
 
-    <column id="uri.uid">
+  <column id="uri.uid">
 	<name>uid</name>
 	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column id="uri.did">
+  <column id="uri.did">
 	<name>did</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column id="uri.username">
+  <column id="uri.username">
 	<name>username</name>
 	<type>string</type>
 	<size>&user_len;</size>
-    </column>
+  </column>
 
-    <column id="uri.flags">
+  <column id="uri.flags">
 	<name>flags</name>
 	<type>unsigned int</type>
 	<default>0</default>
 	<description>
-	    Various flags (is_from, is_to, is_disabled, is_canon).
+	  Various flags (is_from, is_to, is_disabled, is_canon).
 	</description>
-    </column>
+  </column>
 
-    <column id="uri.scheme">
-        <name>scheme</name>
+  <column id="uri.scheme">
+    <name>scheme</name>
 	<type>string</type>
 	<size>8</size>
 	<default>sip</default>
 	<description>
-	    URI scheme:
-	     - SIP  
-	     - SIPS 
-	     - TEL  
-	     - TELS 
+	  URI scheme:
+	  - SIP  
+	  - SIPS 
+	  - TEL  
+	  - TELS 
 	</description>
-    </column>
-														    
+  </column>
+  
 
-    <index>
+  <index>
 	<name>uri_idx1</name>
 	<colref linkend="uri.username"/>
 	<colref linkend="uri.did"/>
 	<colref linkend="uri.scheme"/>
-    </index>
+  </index>
 
-    <index>
+  <index>
 	<name>uri_uid</name>
 	<colref linkend="uri.uid"/>
-    </index>
+  </index>
 
-	<verbatim db="mysql" id="func.touri">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.touri">
+	<create>
+	  <![CDATA[
 drop function if exists touri;
 delimiter //
 create function touri (puid varchar(64)) returns varchar(128) 
@@ -84,15 +84,15 @@ end
 //
 delimiter ;
 ]]>
-	  </create>
-	  <destroy>
-drop function if exists touri;
-	  </destroy>
-	</verbatim>
+	</create>
+	<destroy>
+	  drop function if exists touri;
+	</destroy>
+  </verbatim>
 
-	<verbatim db="mysql" id="func.touid">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.touid">
+	<create>
+	  <![CDATA[
 drop function if exists touid;
 delimiter //
 create function touid (puri varchar(128)) returns varchar(128) 
@@ -120,9 +120,9 @@ end
 //
 delimiter ;
 ]]>
-	  </create>
-	  <destroy>
-	  </destroy>
-	</verbatim>
+	</create>
+	<destroy>
+	</destroy>
+  </verbatim>
 
 </table>

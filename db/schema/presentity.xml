@@ -8,64 +8,71 @@
 ]>
 
 <table role="presence">
-	
-	<name>presentity</name>
-	<description>Table holding presentities for PA module. It is basic PA table,
-	most of other PA tables are related to this one.</description>
+  
+  <name>presentity</name>
+  <description>
+	Table holding presentities for PA module. It is basic PA table, most of
+	other PA tables are related to this one.
+  </description>
 
-	<!-- related to the version of presence snapshot -->
-	<version>5</version>
-    
-	<column id="presentity.pres_id">
-		<name>pres_id</name>
-		<description>Generated presentity identifier unique across pdomains.</description>
-		<type>string</type>
-		<size>64</size>
-	</column>
+  <!-- related to the version of presence snapshot -->
+  <version>5</version>
+  
+  <column id="presentity.pres_id">
+	<name>pres_id</name>
+	<description>Generated presentity identifier unique across pdomains.</description>
+	<type>string</type>
+	<size>64</size>
+  </column>
 
-	<column id="presentity.uri">
-		<name>uri</name>
-		<description>Presentity URI used when creating presentity.</description>
-		<type>string</type>
-		<size>&uri_len;</size>
-	</column>
+  <column id="presentity.uri">
+	<name>uri</name>
+	<description>Presentity URI used when creating presentity.</description>
+	<type>string</type>
+	<size>&uri_len;</size>
+  </column>
 
-	<column id="presentity.uid">
-		<name>uid</name>
-		<description>Presentity UID (unique user identification in SER).</description>
-		<name db="oracle">uuid</name>
-		<type>string</type>
-		<size>&id_len;</size>
-	</column>
+  <column id="presentity.uid">
+	<name>uid</name>
+	<description>Presentity UID (unique user identification in SER).</description>
+	<name db="oracle">uuid</name>
+	<type>string</type>
+	<size>&id_len;</size>
+  </column>
 
-	<column>
-		<name>pdomain</name>
-		<description><para>PA domain name. It represents separate "group" of
+  <column>
+	<name>pdomain</name>
+	<description>
+	  <para>PA domain name. It represents separate "group" of
 		presentities. There can be two pdomains now - named
-		<emphasis>registrar</emphasis> and <emphasis>jabber</emphasis>.</para></description>
-		<type>string</type>
-		<size>128</size>
-	</column>
-	
-	<!-- XCAP parameters has to be stored with presentity (each can
-	have other.	They are stored in serialized form (we don't need
-	to know what is within them). -->
-	<column>
-		<name>xcap_params</name>
-		<description><para>XCAP parameters (in serialized form) used to
+		<emphasis>registrar</emphasis> and <emphasis>jabber</emphasis>.</para>
+	</description>
+	<type>string</type>
+	<size>128</size>
+  </column>
+  
+  <!-- XCAP parameters has to be stored with presentity (each can
+	   have other.	They are stored in serialized form (we don't need
+	   to know what is within them). -->
+  <column>
+	<name>xcap_params</name>
+	<description>
+	  <para>XCAP parameters (in serialized form) used to
 		obtain authorization information.</para>
-		<para>Stored due to possibility to change user's XCAP parameters from script, but this is quite
-		ineffective and it will be thrown out because XCAP parameters are mostly
-		the same for all presentities.</para></description>
-		<type>binary</type>
-	</column>
+	  <para>Stored due to possibility to change user's XCAP parameters from
+		script, but this is quite ineffective and it will be thrown out
+		because XCAP parameters are mostly the same for all
+		presentities.</para>
+	</description>
+	<type>binary</type>
+  </column>
 
-	<!-- indexes/keys -->
+  <!-- indexes/keys -->
 
-	<index>
-		<name>presentity_key</name>
-		<colref linkend="presentity.pres_id"/>
-		<unique/>
-	</index>
+  <index>
+	<name>presentity_key</name>
+	<colref linkend="presentity.pres_id"/>
+	<unique/>
+  </index>
 
 </table>

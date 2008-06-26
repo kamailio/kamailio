@@ -8,211 +8,198 @@
 ]>
 
 <table xmlns:db="http://docbook.org/ns/docbook">
-    <name>domain</name>
-    <version>2</version>
+  <name>domain</name>
+  <version>2</version>
 
-    <description>
+  <description>
 	<db:para>
-	    Domain table is used in multi-domain setups where single SER
-	    instance is responsible for multiple domains at the same time. Each
-	    virtual domain has a unique identifier called DID. This is a string
-	    that uniquely identifies the domain. In smaller setups DID will be
-	    same as the domain part used in SIP URIs, that is for virtual
-	    domain iptel.org will have DID "iptel.org".
+	  Domain table is used in multi-domain setups where single SER instance is
+	  responsible for multiple domains at the same time. Each virtual domain
+	  has a unique identifier called DID. This is a string that uniquely
+	  identifies the domain. In smaller setups DID will be same as the domain
+	  part used in SIP URIs, that is for virtual domain iptel.org will have
+	  DID "iptel.org".
 	</db:para>
 	<db:para>
-	    DIDs are not limited to domain names that can appear in SIP
-	    URIs. Domain names are subject to change over time and, especially
-	    in setups with large number of domains hosted on a single SIP proxy
-	    server, a different format for DIDs (not based on the domain name)
-	    might be more convenient.
+	  DIDs are not limited to domain names that can appear in SIP URIs. Domain
+	  names are subject to change over time and, especially in setups with
+	  large number of domains hosted on a single SIP proxy server, a different
+	  format for DIDs (not based on the domain name) might be more convenient.
 	</db:para>
 	<db:para>
-	    Each virtual domain has one or more domain names
-	    assigned. Typically all domain names and IP addresses that resolve
-	    to the SIP proxy responsible for the domain should be listed in
-	    this table. Virtual domain iptel.org, for example, would contain
-	    domain names: "iptel.org", "sip.iptel.org", "proxy.iptel.org",
-	    "195.37.77.101".
+	  Each virtual domain has one or more domain names assigned. Typically all
+	  domain names and IP addresses that resolve to the SIP proxy responsible
+	  for the domain should be listed in this table. Virtual domain iptel.org,
+	  for example, would contain domain names: "iptel.org", "sip.iptel.org",
+	  "proxy.iptel.org", "195.37.77.101".
 	</db:para>
-    </description>
+  </description>
 
-    <column id="domain.did">
+  <column id="domain.did">
 	<name>did</name>
 	<type>string</type>
 	<size>&id_len;</size>
 	<description>
-	    Unique identifier of the domain.
+	  Unique identifier of the domain.
 	</description>
-    </column>
+  </column>
 
-    <column id="domain.domain">
+  <column id="domain.domain">
 	<name>domain</name>
 	<type>string</type>
 	<size>&domain_len;</size>
 	<description>
-	    Domain name.
+	  Domain name.
 	</description>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>flags</name>
 	<type>unsigned int</type>
 	<default>0</default>
 	<description>
-	    Various flags. The meaning of bits in the flags field is described
-	    in the table below. 
-	    <db:note>
+	  Various flags. The meaning of bits in the flags field is described
+	  in the table below. 
+	  <db:note>
 		<db:simpara>
-		    Note that several flags below have no meaning in this table
-		    and are only presented for completeness, because the flags
-		    column has identical meaning of flags across most tables in
-		    the database.
+		  Note that several flags below have no meaning in this table and are
+		  only presented for completeness, because the flags column has
+		  identical meaning of flags across most tables in the database.
 		</db:simpara>
-	    </db:note>
-	    <db:table><db:title>possible domain flags</db:title>
+	  </db:note>
+	  <db:table><db:title>possible domain flags</db:title>
 		<db:tgroup cols="4">
-		    <db:thead>
+		  <db:thead>
 			<db:row>
-			    <db:entry>Bit</db:entry>
-			    <db:entry>Hex value</db:entry>
-			    <db:entry>Flag</db:entry>
-			    <db:entry>Description</db:entry>
+			  <db:entry>Bit</db:entry>
+			  <db:entry>Hex value</db:entry>
+			  <db:entry>Flag</db:entry>
+			  <db:entry>Description</db:entry>
 			</db:row>
-		    </db:thead>
-		    <db:tbody>
+		  </db:thead>
+		  <db:tbody>
 			<db:row>
-			    <db:entry>0</db:entry>
-			    <db:entry>0x00000001</db:entry>
-			    <db:entry>FOR_SER</db:entry>
-			    <db:entry>
-				If set then SER will load the row (not
-				applicable in this table).
-			    </db:entry>
-			</db:row>
-			<db:row>
-			    <db:entry>1</db:entry>
-			    <db:entry>0x00000002</db:entry>
-			    <db:entry>DISABLED</db:entry>
-			    <db:entry>
-				The data represented by the row is temporarily
-				disabled, which means it stays in the database
-				but no applications use it.
-			    </db:entry>
+			  <db:entry>0</db:entry>
+			  <db:entry>0x00000001</db:entry>
+			  <db:entry>FOR_SER</db:entry>
+			  <db:entry>
+				If set then SER will load the row (not applicable in this
+				table).
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>2</db:entry>
-			    <db:entry>0x00000004</db:entry>
-			    <db:entry>CANONICAL</db:entry>
-			    <db:entry>
-				The URI or domain name is canonical. When
-				displaying the URI of the user or name of a
-				domain then this entry should be used.  Not
-				applicable in this table.
-			    </db:entry>
+			  <db:entry>1</db:entry>
+			  <db:entry>0x00000002</db:entry>
+			  <db:entry>DISABLED</db:entry>
+			  <db:entry>
+				The data represented by the row is temporarily disabled, which
+				means it stays in the database but no applications use it.
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>3</db:entry>
-			    <db:entry>0x00000008</db:entry>
-			    <db:entry>ALLOWED_TO</db:entry>
-			    <db:entry>
-				The URI represented by this row can be used in
-				The Request-URI or To header field. In other
-				words the user will be reachable under this URI
-				and can use it as an alias. Not applicable in
+			  <db:entry>2</db:entry>
+			  <db:entry>0x00000004</db:entry>
+			  <db:entry>CANONICAL</db:entry>
+			  <db:entry>
+				The URI or domain name is canonical. When displaying the URI
+				of the user or name of a domain then this entry should be
+				used.  Not applicable in this table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>3</db:entry>
+			  <db:entry>0x00000008</db:entry>
+			  <db:entry>ALLOWED_TO</db:entry>
+			  <db:entry>
+				The URI represented by this row can be used in The Request-URI
+				or To header field. In other words the user will be reachable
+				under this URI and can use it as an alias. Not applicable in
 				this table.
-			    </db:entry>
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>4</db:entry>
-			    <db:entry>0x00000010</db:entry>
-			    <db:entry>ALLOWED_FROM</db:entry>
-			    <db:entry>
-				The user identified by uid can use this URI in
-				From header field. Not applicable in this
+			  <db:entry>4</db:entry>
+			  <db:entry>0x00000010</db:entry>
+			  <db:entry>ALLOWED_FROM</db:entry>
+			  <db:entry>
+				The user identified by uid can use this URI in From header
+				field. Not applicable in this table.
+			  </db:entry>
+			</db:row>
+			<db:row>
+			  <db:entry>5</db:entry>
+			  <db:entry>0x00000020</db:entry>
+			  <db:entry>FOR_SERWEB</db:entry>
+			  <db:entry>
+				The data represented by the row is for SERWeb. This is
+				currently used in credentials table only where the flags
+				allows to keep different credentials for digest authentication
+				in SIP and for SERWeb authentication. Not applicable in this
 				table.
-			    </db:entry>
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>5</db:entry>
-			    <db:entry>0x00000020</db:entry>
-			    <db:entry>FOR_SERWEB</db:entry>
-			    <db:entry>
-				The data represented by the row is for
-				SERWeb. This is currently used in credentials
-				table only where the flags allows to keep
-				different credentials for digest authentication
-				in SIP and for SERWeb authentication. Not
-				applicable in this table.
-			    </db:entry>
+			  <db:entry>6</db:entry>
+			  <db:entry>0x00000040</db:entry>
+			  <db:entry>PENDING</db:entry>
+			  <db:entry>
+				The account owning the piece of data has not been activated
+				yet. Not applicable in this table, this is mainly used in
+				credentials table.
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>6</db:entry>
-			    <db:entry>0x00000040</db:entry>
-			    <db:entry>PENDING</db:entry>
-			    <db:entry>
-				The account owning the piece of data has not
-				been activated yet. Not applicable in this
-				table, this is mainly used in credentials
-				table.
-			    </db:entry>
-			</db:row>
-			<db:row>
-			    <db:entry>7</db:entry>
-			    <db:entry>0x00000100</db:entry>
-			    <db:entry>DELETED</db:entry>
-			    <db:entry>
+			  <db:entry>7</db:entry>
+			  <db:entry>0x00000100</db:entry>
+			  <db:entry>DELETED</db:entry>
+			  <db:entry>
 				The row has been scheduled for deletion.
-			    </db:entry>
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>8</db:entry>
-			    <db:entry>0x00000200</db:entry>
-			    <db:entry>CALLER_DELETED</db:entry>
-			    <db:entry>
-				The accounting record has been scheduled for
-				deletion by the caller. The row can be deleted
-				once both the caller and callee schedule the
-				record for deletion. A single record can be
-				shared by two users and thus both of them must
-				schedule it for deletion before it can be
-				physically deleted.
-			    </db:entry>
+			  <db:entry>8</db:entry>
+			  <db:entry>0x00000200</db:entry>
+			  <db:entry>CALLER_DELETED</db:entry>
+			  <db:entry>
+				The accounting record has been scheduled for deletion by the
+				caller. The row can be deleted once both the caller and callee
+				schedule the record for deletion. A single record can be
+				shared by two users and thus both of them must schedule it for
+				deletion before it can be physically deleted.
+			  </db:entry>
 			</db:row>
 			<db:row>
-			    <db:entry>9</db:entry>
-			    <db:entry>0x00000400</db:entry>
-			    <db:entry>CALLEE_DELETED</db:entry>
-			    <db:entry>
-				The accounting record has been scheduled for
-				deletion by the callee. The row can be deleted
-				once both the caller and callee schedule the
-				record for deletion. A single record can be
-				shared by two users and thus both of them must
-				schedule it for deletion before it can be
-				physically deleted.
-			    </db:entry>
+			  <db:entry>9</db:entry>
+			  <db:entry>0x00000400</db:entry>
+			  <db:entry>CALLEE_DELETED</db:entry>
+			  <db:entry>
+				The accounting record has been scheduled for deletion by the
+				callee. The row can be deleted once both the caller and callee
+				schedule the record for deletion. A single record can be
+				shared by two users and thus both of them must schedule it for
+				deletion before it can be physically deleted.
+			  </db:entry>
 			</db:row>
-		    </db:tbody>
+		  </db:tbody>
 		</db:tgroup>
-	    </db:table>
+	  </db:table>
 	</description>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>domain_idx</name>
 	<unique/>
 	<colref linkend="domain.domain"/>
-    </index>
+  </index>
 
-    <index>
+  <index>
 	<name>did_idx</name>
 	<colref linkend="domain.did"/>
-    </index>
+  </index>
 
-	<verbatim db="mysql" id="func.todomain">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.todomain">
+	<create>
+	  <![CDATA[
 drop function if exists todomain;
 delimiter //
 create function todomain (pdid varchar(64)) returns varchar(128) 
@@ -226,15 +213,15 @@ end
 //
 delimiter ;
 ]]>
-	  </create>
-	  <destroy>
-drop function if exists todomain;
-	  </destroy>
-	</verbatim>
+	</create>
+	<destroy>
+	  drop function if exists todomain;
+	</destroy>
+  </verbatim>
 
-	<verbatim db="mysql" id="func.todid">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.todid">
+	<create>
+	  <![CDATA[
 drop function if exists todid;
 delimiter //
 create function todid (pdomain varchar(128)) returns varchar(64) 
@@ -248,9 +235,9 @@ end
 //
 delimiter ;
 ]]>
-	  </create>
-	  <destroy>
-drop function if exists todid;
-	  </destroy>
-	</verbatim>
+	</create>
+	<destroy>
+	  drop function if exists todid;
+	</destroy>
+  </verbatim>
 </table>

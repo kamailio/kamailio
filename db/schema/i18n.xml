@@ -8,42 +8,47 @@
 ]>
 
 <table xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>i18n</name>
-    <version>1</version>
-    
-    <column id="i18n.code">
+  <name>i18n</name>
+  <version>1</version>
+  
+  <column id="i18n.code">
 	<name>code</name>
 	<type>int</type>
-    </column>
-    <column>
+  </column>
+
+  <column>
 	<name>reason_re</name>
 	<type>string</type>
 	<size>255</size>
 	<default><null/></default>
 	<null/>
-    </column>
-    <column id="i18n.lang">
+  </column>
+
+  <column id="i18n.lang">
 	<name>lang</name>
 	<type>string</type>
 	<size>32</size>
-    </column>
-    <column id="i18n.nr">
+  </column>
+
+  <column id="i18n.nr">
 	<name>new_reason</name>
 	<type>string</type>
 	<size>255</size>
 	<null/>
-    </column>
-    <index>
+  </column>
+
+  <index>
 	<name>i18n_idx</name>
 	<colref linkend="i18n.code"/>
-    </index>
-    <index>
+  </index>
+
+  <index>
 	<name>i18n_uniq_idx</name>
 	<unique/>
 	<colref linkend="i18n.code"/>
 	<colref linkend="i18n.lang"/>
-    </index>
+  </index>
 
-    <xi:include href="i18n-en.xml" xpointer="xpointer(data/row)"/>
-    <xi:include href="i18n-cs.xml" xpointer="xpointer(data/row)"/>
+  <xi:include href="i18n-en.xml" xpointer="xpointer(data/row)"/>
+  <xi:include href="i18n-cs.xml" xpointer="xpointer(data/row)"/>
 </table>

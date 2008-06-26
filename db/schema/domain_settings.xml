@@ -8,106 +8,107 @@
 ]>
 
 <table xmlns:db="http://docbook.org/ns/docbook"
-    role="serweb">
-    <name>domain_settings</name>
-    <version>1</version>
+       role="serweb">
+  <name>domain_settings</name>
+  <version>1</version>
 
-    <description>
+  <description>
 	Domain specific files and their older versions.
-    </description>
-    <column id="ds.did">
+  </description>
+  <column id="ds.did">
 	<name>did</name>
 	<type>string</type>
 	<size>&id_len;</size>
-        <description>
-            Unique identifier of the domain.
-        </description>
-    </column>
+    <description>
+      Unique identifier of the domain.
+    </description>
+  </column>
 
-    <column id="ds.filename">
+  <column id="ds.filename">
 	<name>filename</name>
 	<type>string</type>
 	<size>255</size>
 	<description>
-	    Name of file (within domain directory)
+	  Name of file (within domain directory)
 	</description>
-    </column>
+  </column>
 
-    <column id="ds.version">
+  <column id="ds.version">
 	<name>version</name>
 	<type>unsigned int</type>
 	<description>
-	    Version of file
+	  Version of file
 	</description>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>timestamp</name>
 	<type>unsigned int</type>
 	<null/>
 	<description>
-	   Timestamp of creation this version of file 
+	  Timestamp of creation this version of file 
 	</description>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>content</name>
 	<type>binary</type>
 	<null/>
 	<description>
-	    Content of file
+	  Content of file
 	</description>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>flags</name>
-        <type>unsigned int</type>
+    <type>unsigned int</type>
 	<default>0</default>
-        <description>
-	    Flags which describes some special meanings of rows. Meaning of flags is summarized in the table below.
-            <db:table><db:title>possible domain_settings flags</db:title>
-                <db:tgroup cols="4">
-                    <db:thead>
-                        <db:row>
-                           <db:entry>Bit</db:entry>
-                           <db:entry>Hex value</db:entry>
-                           <db:entry>Flag</db:entry>
-                           <db:entry>Description</db:entry>
-                        </db:row>
-                    </db:thead>
-                    <db:tbody>
-                        <db:row>
-                           <db:entry>7</db:entry>
-                           <db:entry>0x00000001</db:entry>
-                           <db:entry>DELETED</db:entry>
-                           <db:entry>
-                               File has been deleted.
-                           </db:entry>
-                        </db:row>
-                        <db:row>
-                           <db:entry>13</db:entry>
-                           <db:entry>0x00000002</db:entry>
-                           <db:entry>DIR</db:entry>
-                           <db:entry>
-			       This is a directory.
-                           </db:entry>
-                        </db:row>
-                    </db:tbody>
-                </db:tgroup>
-            </db:table>
+    <description>
+	  Flags which describes some special meanings of rows. Meaning of flags is
+	  summarized in the table below.
+      <db:table><db:title>possible domain_settings flags</db:title>
+        <db:tgroup cols="4">
+          <db:thead>
+            <db:row>
+              <db:entry>Bit</db:entry>
+              <db:entry>Hex value</db:entry>
+              <db:entry>Flag</db:entry>
+              <db:entry>Description</db:entry>
+            </db:row>
+          </db:thead>
+          <db:tbody>
+            <db:row>
+              <db:entry>7</db:entry>
+              <db:entry>0x00000001</db:entry>
+              <db:entry>DELETED</db:entry>
+              <db:entry>
+                File has been deleted.
+              </db:entry>
+            </db:row>
+            <db:row>
+              <db:entry>13</db:entry>
+              <db:entry>0x00000002</db:entry>
+              <db:entry>DIR</db:entry>
+              <db:entry>
+			    This is a directory.
+              </db:entry>
+            </db:row>
+          </db:tbody>
+        </db:tgroup>
+      </db:table>
 	</description>
-    </column>
-    
-    <index>
+  </column>
+  
+  <index>
 	<name>ds_id</name>
 	<unique/>
 	<colref linkend="ds.did"/>
 	<colref linkend="ds.filename"/>
 	<colref linkend="ds.version"/>
-    </index>
-    <index>
+  </index>
+  <index>
 	<name>ds_df</name>
 	<colref linkend="ds.did"/>
 	<colref linkend="ds.filename"/>
-    </index>
+  </index>
 </table>

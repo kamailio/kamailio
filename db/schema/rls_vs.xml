@@ -8,37 +8,37 @@
 ]>
 
 <table role="presence" xmlns:db="http://docbook.org/ns/docbook">
-    <name>rls_vs</name>
-    <version>1</version>
-	
-	<!-- table holding information about virtual subscriptions created
-	in the context of resource list subscriptions -->
-    
-	<!-- id of virtual subscription (generated) -->
-    <column id="rls_vs.id">
-		<name>id</name>
-		<type>string</type>
-		<size>48</size>
-    </column>
-	
-	<!-- id of "parent" resource list subscription 
-	(related to rls_susbscription.id) -->
-    <column>
-		<name>rls_id</name>
-		<type>string</type>
-		<size>48</size>
-    </column>
-	
-	<column>
-		<name>uri</name>
-		<type>string</type>
-		<size>&uri_len;</size>
-	</column>
+  <name>rls_vs</name>
+  <version>1</version>
+  
+  <!-- table holding information about virtual subscriptions created
+	   in the context of resource list subscriptions -->
+  
+  <!-- id of virtual subscription (generated) -->
+  <column id="rls_vs.id">
+	<name>id</name>
+	<type>string</type>
+	<size>48</size>
+  </column>
+  
+  <!-- id of "parent" resource list subscription 
+	   (related to rls_susbscription.id) -->
+  <column>
+	<name>rls_id</name>
+	<type>string</type>
+	<size>48</size>
+  </column>
+  
+  <column>
+	<name>uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+  </column>
 
-    <index>
-		<name>rls_vs_key</name>
-		<colref linkend="rls_vs.id"/>
-		<unique/>
-    </index>
-	
+  <index>
+	<name>rls_vs_key</name>
+	<colref linkend="rls_vs.id"/>
+	<unique/>
+  </index>
+  
 </table>

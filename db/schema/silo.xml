@@ -8,70 +8,70 @@
 ]>
 
 <table>
-    <name>silo</name>
-    <version>4</version>
+  <name>silo</name>
+  <version>4</version>
 
-    <column id="silo.mid">
+  <column id="silo.mid">
 	<name>mid</name>
 	<type>int</type>
 	<type db="mysql">INT AUTO_INCREMENT</type>
 	<type db="postgres">SERIAL</type>
 	<type db="dbtext">int,auto</type>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>from_hdr</name>
 	<type>string</type>
 	<size>255</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>to_hdr</name>
 	<type>string</type>
 	<size>255</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>ruri</name>
 	<type>string</type>
 	<size>&uri_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>uid</name>
 	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>inc_time</name>
 	<type>datetime</type>
 	<default>1970-01-01 00:00:00</default>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>exp_time</name>
 	<type>datetime</type>
 	<default>1970-01-01 00:00:00</default>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>ctype</name>
 	<type>string</type>
 	<default>text/plain</default>
 	<size>128</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>body</name>
 	<type>binary</type>
 	<default></default>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<unique/>
 	<name>silo_idx1</name>
 	<colref linkend="silo.mid"/>
-    </index>
+  </index>
 </table>

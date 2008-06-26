@@ -8,33 +8,33 @@
 ]>
 
 <table role="presence" xmlns:db="http://docbook.org/ns/docbook">
-    <name>rls_vs_names</name>
-    <version>1</version>
-	
-	<!-- table holding information about names of standalone
-	resources in list (i. e. standalone virtual subscriptions) 
+  <name>rls_vs_names</name>
+  <version>1</version>
+  
+  <!-- table holding information about names of standalone
+	   resources in list (i. e. standalone virtual subscriptions) 
 	-->
-    
-	<!-- id of "parent" virtual subscription (related to 
-	rls_vs.id) -->
-    <column>
-		<name>id</name>
-		<type>string</type>
-		<size>48</size>
-    </column>
-	
-	<column>
-		<name>name</name>
-		<type>string</type>
-		<size>64</size>
-		<null/> <!-- ? -->
-	</column>
-	
-	<column>
-		<name>lang</name>
-		<type>string</type>
-		<size>64</size>
-		<null/>
-	</column>
-	
+  
+  <!-- id of "parent" virtual subscription (related to 
+	   rls_vs.id) -->
+  <column>
+	<name>id</name>
+	<type>string</type>
+	<size>48</size>
+  </column>
+  
+  <column>
+	<name>name</name>
+	<type>string</type>
+	<size>64</size>
+	<null/> <!-- ? -->
+  </column>
+  
+  <column>
+	<name>lang</name>
+	<type>string</type>
+	<size>64</size>
+	<null/>
+  </column>
+  
 </table>

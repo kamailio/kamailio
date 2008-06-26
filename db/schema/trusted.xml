@@ -8,32 +8,32 @@
 ]>
 
 <table>
-    <name>trusted</name>
-    <version>1</version>
+  <name>trusted</name>
+  <version>1</version>
 
-    <column id="trusted.src_ip">
+  <column id="trusted.src_ip">
 	<name>src_ip</name>
 	<type>string</type>
 	<size>39</size>
-    </column>
+  </column>
 
-    <column id="trusted.proto">
+  <column id="trusted.proto">
 	<name>proto</name>
 	<type>string</type>
 	<size>4</size>
-    </column>
+  </column>
 
-    <column id="trusted.from_pattern">
+  <column id="trusted.from_pattern">
 	<name>from_pattern</name>
 	<type>string</type>
 	<size>64</size>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>trusted_idx</name>
 	<unique/>
 	<colref linkend="trusted.src_ip"/>
 	<colref linkend="trusted.proto"/>
 	<colref linkend="trusted.from_pattern"/>
-    </index>
+  </index>
 </table>

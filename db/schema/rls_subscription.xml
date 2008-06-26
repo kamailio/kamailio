@@ -8,69 +8,69 @@
 ]>
 
 <table role="presence" xmlns:db="http://docbook.org/ns/docbook">
-    <name>rls_subscription</name>
-    <version>1</version>
-    
-    <column id="rls_subscription.id">
-		<name>id</name>
-		<type>string</type>
-		<size>48</size>
-    </column>
-	
-	<column>
-		<name>doc_version</name>
-		<type>int</type>
-	</column>
-	
-    <column>
-		<name>dialog</name>
-		<type>binary</type>
-    </column>
-    
-	<column>
-		<name>expires</name>
-		<type>datetime</type>
-		<default>2005-12-02 09:00:13</default>
-    </column>
-	
-	<column>
-		<name>status</name>
-		<type>int</type>
-	</column>
-	
-	<column>
-		<name>contact</name>
-		<type>string</type>
-		<size>&uri_len;</size>
-	</column>
+  <name>rls_subscription</name>
+  <version>1</version>
+  
+  <column id="rls_subscription.id">
+	<name>id</name>
+	<type>string</type>
+	<size>48</size>
+  </column>
+  
+  <column>
+	<name>doc_version</name>
+	<type>int</type>
+  </column>
+  
+  <column>
+	<name>dialog</name>
+	<type>binary</type>
+  </column>
+  
+  <column>
+	<name>expires</name>
+	<type>datetime</type>
+	<default>2005-12-02 09:00:13</default>
+  </column>
+  
+  <column>
+	<name>status</name>
+	<type>int</type>
+  </column>
+  
+  <column>
+	<name>contact</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+  </column>
 
-	<column>
-		<name>uri</name>
-		<type>string</type>
-		<size>&uri_len;</size>
-	</column>
+  <column>
+	<name>uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+  </column>
 
-	<column>
-		<name>package</name>
-		<type>string</type>
-		<size>128</size>
-	</column>
-	
-	<column>
-		<name>w_uri</name>
-		<type>string</type>
-		<size>&uri_len;</size>
-	</column>
-	
-	<column>
-		<name>xcap_params</name>
-		<type>binary</type>
-	</column>
-	
-    <index>
-		<name>rls_subscription_key</name>
-		<colref linkend="rls_subscription.id"/>
-		<unique/>
-    </index>
-	
+  <column>
+	<name>package</name>
+	<type>string</type>
+	<size>128</size>
+  </column>
+  
+  <column>
+	<name>w_uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+  </column>
+  
+  <column>
+	<name>xcap_params</name>
+	<type>binary</type>
+  </column>
+  
+  <index>
+	<name>rls_subscription_key</name>
+	<colref linkend="rls_subscription.id"/>
+	<unique/>
+  </index>
+  
 </table>

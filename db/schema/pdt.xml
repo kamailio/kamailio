@@ -8,24 +8,24 @@
 ]>
 
 <table>
-    <name>pdt</name>
-    <version>1</version>
+  <name>pdt</name>
+  <version>1</version>
 
-    <column id="pdt.prefix">
+  <column id="pdt.prefix">
 	<name>prefix</name>
 	<type>string</type>
 	<size>32</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>domain</name>
 	<type>string</type>
 	<size>&uri_len;</size>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>pdt_idx</name>
 	<unique/>
 	<colref linkend="pdt.prefix"/>
-    </index>
+  </index>
 </table>

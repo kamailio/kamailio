@@ -9,41 +9,43 @@
 
 <table role="presence">
 
-	<name>tuple_extensions</name>
+  <name>tuple_extensions</name>
 
-	<!-- related to the version of presence snapshot -->
-	<version>5</version>
-	<description>Extension elements published within tuples.</description>
+  <!-- related to the version of presence snapshot -->
+  <version>5</version>
+  <description>Extension elements published within tuples.</description>
 
-	<!-- presentity ID -->
-	<column id="tuple_notes.pres_id">
-		<name>pres_id</name>
-		<type>string</type>
-		<size>64</size>
-		<description>Presentity ID.</description>
-	</column>
+  <!-- presentity ID -->
+  <column id="tuple_notes.pres_id">
+	<name>pres_id</name>
+	<type>string</type>
+	<size>64</size>
+	<description>Presentity ID.</description>
+  </column>
 
-	<column id="tuple_notes.tupleid">
-		<name>tupleid</name>
-		<type>string</type>
-		<size>64</size>
-		<description>Tuple identification.</description>
-	</column>
+  <column id="tuple_notes.tupleid">
+	<name>tupleid</name>
+	<type>string</type>
+	<size>64</size>
+	<description>Tuple identification.</description>
+  </column>
 
-	<!-- serialized XML element -->
-	<column>
-		<name>element</name>
-		<type>binary</type>
-		<description>Whole extension element in serialized form.</description>
-	</column>
+  <!-- serialized XML element -->
+  <column>
+	<name>element</name>
+	<type>binary</type>
+	<description>Whole extension element in serialized form.</description>
+  </column>
 
-	<!-- 0 if it is not status extension, nonzero otherwise -->
-	<column>
-		<name>status_extension</name>
-		<type>int</type>
-		<size>1</size>
-		<description>Flag set to nonzero if element is nested in &lt;status&gt;,
-		otherwise is extension element nested in &lt;tuple&gt;.</description>
-	</column>
-    
+  <!-- 0 if it is not status extension, nonzero otherwise -->
+  <column>
+	<name>status_extension</name>
+	<type>int</type>
+	<size>1</size>
+	<description>
+	  Flag set to nonzero if element is nested in &lt;status&gt;,
+	  otherwise is extension element nested in &lt;tuple&gt;.
+	</description>
+  </column>
+  
 </table>

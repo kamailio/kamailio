@@ -8,71 +8,71 @@
 ]>
 
 <table>
-    <name>uri_attrs</name>
-    <version>2</version>
+  <name>uri_attrs</name>
+  <version>2</version>
 
-    <column id="uriattrs.username">
+  <column id="uriattrs.username">
 	<name>username</name>
 	<type>string</type>
 	<size>&user_len;</size>
-    </column>
+  </column>
 
-    <column id="uriattrs.did">
-        <name>did</name>
-        <type>string</type>
-        <size>&id_len;</size>
-    </column>
-				
-    <column id="uriattrs.name">
+  <column id="uriattrs.did">
+    <name>did</name>
+    <type>string</type>
+    <size>&id_len;</size>
+  </column>
+  
+  <column id="uriattrs.name">
 	<name>name</name>
 	<type>string</type>
 	<size>&avp_name_len;</size>
-    </column>
+  </column>
 
-    <column id="uriattrs.value">
+  <column id="uriattrs.value">
 	<name>value</name>
 	<type>string</type>
 	<null/>
 	<size>&avp_val_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>type</name>
 	<type>int</type>
 	<default>0</default>
-    </column>
+  </column>
 
-    <column id="uriattrs.flags">
+  <column id="uriattrs.flags">
 	<name>flags</name>
 	<type>unsigned int</type>
 	<default>0</default>
 	<description>
-	    Various flags (SER_LOAD and such).
+	  Various flags (SER_LOAD and such).
 	</description>
-    </column>
+  </column>
 
-    <column id="uriattrs.scheme">
-        <name>scheme</name>
-        <type>string</type>
+  <column id="uriattrs.scheme">
+    <name>scheme</name>
+    <type>string</type>
 	<size>8</size>
-        <default>sip</default>
-        <description>
-            URI scheme:
-              - SIP  
-              - SIPS 
-              - TEL  
-              - TELS 
-        </description>
-    </column>
+    <default>sip</default>
+    <description>
+      URI scheme:
+      - SIP  
+      - SIPS 
+      - TEL  
+      - TELS 
+    </description>
+  </column>
 
-    <index>
+  <index>
 	<unique/>
 	<name>uriattrs_idx</name>
-        <colref linkend="uriattrs.username"/>
+    <colref linkend="uriattrs.username"/>
 	<colref linkend="uriattrs.did"/>
 	<colref linkend="uriattrs.name"/>
 	<colref linkend="uriattrs.value"/>
 	<colref linkend="uriattrs.scheme"/>
-    </index>
+  </index>
 
 </table>

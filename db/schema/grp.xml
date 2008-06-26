@@ -8,30 +8,33 @@
 ]>
 
 <table>
-    <name>grp</name>
-    <version>3</version>
-    
-    <column id="grp.uid">
+  <name>grp</name>
+  <version>3</version>
+  
+  <column id="grp.uid">
 	<name>uid</name>
 	<name db="oracle">uuid</name>
 	<type>string</type>
 	<default></default>
 	<size>&user_len;</size>
-    </column>
-    <column id="grp.grp">
+  </column>
+
+  <column id="grp.grp">
 	<name>grp</name>
 	<type>string</type>
 	<default></default>
 	<size>64</size>
-    </column>
-    <column>
+  </column>
+
+  <column>
 	<name>last_modified</name>
 	<type>datetime</type>
 	<default>1970-01-01 00:00:00</default>
-    </column>
-    <index>
+  </column>
+
+  <index>
 	<name>grp_idx</name>
 	<colref linkend="grp.uid"/>
 	<colref linkend="grp.grp"/>
-    </index>
+  </index>
 </table>

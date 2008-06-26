@@ -8,46 +8,46 @@
 ]>
 
 <table>
-    <name>lcr</name>
-    <version>1</version>
+  <name>lcr</name>
+  <version>1</version>
 
-    <column id="lcr.prefix">
+  <column id="lcr.prefix">
 	<name>prefix</name>
 	<type>string</type>
 	<size>16</size>
-    </column>
+  </column>
 
-    <column id="lcr.from_uri">
+  <column id="lcr.from_uri">
 	<name>from_uri</name>
 	<type>string</type>
 	<default>%</default>
 	<size>&uri_len;</size>
-    </column>
+  </column>
 
-    <column id="lcr.grp_id">
+  <column id="lcr.grp_id">
 	<name>grp_id</name>
 	<type>int</type>
 	<null/>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>priority</name>
 	<type>int</type>
 	<null/>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>lcr_idx1</name>
 	<colref linkend="lcr.prefix"/>
-    </index>
+  </index>
 
-    <index>
+  <index>
 	<name>lcr_idx2</name>
 	<colref linkend="lcr.from_uri"/>
-    </index>
+  </index>
 
-    <index>
+  <index>
 	<name>lcr_idx3</name>
 	<colref linkend="lcr.grp_id"/>
-    </index>
+  </index>
 </table>

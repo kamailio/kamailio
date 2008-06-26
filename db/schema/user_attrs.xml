@@ -8,50 +8,50 @@
 ]>
 
 <table>
-    <name>user_attrs</name>
-    <version>3</version>
+  <name>user_attrs</name>
+  <version>3</version>
 
-    <column id="userattrs.uid">
+  <column id="userattrs.uid">
 	<name>uid</name>
 	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column id="userattrs.name">
+  <column id="userattrs.name">
 	<name>name</name>
 	<type>string</type>
 	<size>&avp_name_len;</size>
-    </column>
+  </column>
 
-    <column id="userattrs.value">
+  <column id="userattrs.value">
 	<name>value</name>
 	<type>string</type>
 	<null/>
 	<size>&avp_val_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>type</name>
 	<type>int</type>
 	<default>0</default>
-    </column>
+  </column>
 
-    <column id="userattrs.flags">
+  <column id="userattrs.flags">
 	<name>flags</name>
 	<type>unsigned int</type>
 	<default>0</default>
 	<description>
-	    Various flags (SER_LOAD and such).
+	  Various flags (SER_LOAD and such).
 	</description>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<unique/>
 	<name>userattrs_idx</name>
 	<colref linkend="userattrs.uid"/>
 	<colref linkend="userattrs.name"/>
 	<colref linkend="userattrs.value"/>
-    </index>
+  </index>
 
 </table>

@@ -8,31 +8,31 @@
 ]>
 
 <table id="cpl" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>cpl</name>
-    <version>2</version>
+  <name>cpl</name>
+  <version>2</version>
 
-    <column id="cpl.uid">
+  <column id="cpl.uid">
 	<name>uid</name>
 	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>cpl_xml</name>
 	<type>binary</type>
 	<null/>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>cpl_bin</name>
 	<type>binary</type>
 	<null/>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>cpl_key</name>
 	<unique/>
 	<colref linkend="cpl.uid"/>
-    </index>
+  </index>
 </table>

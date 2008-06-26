@@ -8,118 +8,127 @@
 ]>
 
 <table role="presence">
-    <name>watcherinfo</name>
-	<description>Table holding information about watchers. Here are both
-	presence and presence.winfo watchers.</description>
+  <name>watcherinfo</name>
+  <description>
+	Table holding information about watchers. Here are both presence and
+	presence.winfo watchers.
+  </description>
+  
+  <!-- related to the version of presence snapshot -->
+  <version>5</version>
 
-	<!-- related to the version of presence snapshot -->
-	<version>5</version>
+  <!-- watcher's URI -->
+  <column id="watcherinfo.w_uri">
+	<name>w_uri</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+	<description>
+	  Watcher's URI (From header uri used in first SUBSCRIBE request).
+	</description>
+  </column>
 
-	<!-- watcher's URI -->
-	<column id="watcherinfo.w_uri">
-		<name>w_uri</name>
-		<type>string</type>
-		<size>&uri_len;</size>
-		<description>Watcher's URI (From header uri used in first SUBSCRIBE
-		request).</description>
-	</column>
+  <!-- displayname information taken from From header -->
+  <column>
+	<name>display_name</name>
+	<type>string</type>
+	<size>128</size>
+  </column>
 
-	<!-- displayname information taken from From header -->
-	<column>
-		<name>display_name</name>
-		<type>string</type>
-		<size>128</size>
-	</column>
+  <!-- watcher's identification -->
+  <column id="watcherinfo.s_id">
+	<name>s_id</name>
+	<type>string</type>
+	<size>64</size>
+	<description>Generated watcher's identification.</description>
+  </column>
 
-	<!-- watcher's identification -->
-	<column id="watcherinfo.s_id">
-		<name>s_id</name>
-		<type>string</type>
-		<size>64</size>
-		<description>Generated watcher's identification.</description>
-	</column>
+  <!-- event package: presence or presence.winfo -->
+  <column>
+	<name>package</name>
+	<type>string</type>
+	<size>32</size>
+	<default>presence</default>
+	<description>
+	  Watcher's event package - presence or presence.winfo.
+	</description>
+  </column>
 
-	<!-- event package: presence or presence.winfo -->
-	<column>
-		<name>package</name>
-		<type>string</type>
-		<size>32</size>
-		<default>presence</default>
-		<description>Watcher's event package - presence or
-		presence.winfo.</description>
-	</column>
+  <column>
+	<name>status</name>
+	<type>string</type>
+	<size>32</size>
+	<default>pending</default>
+	<description>
+	  Watcher's status as string (pending, active, rejected, terminated or
+	  pending_terminated).
+	</description>
+  </column>
 
-	<column>
-		<name>status</name>
-		<type>string</type>
-		<size>32</size>
-		<default>pending</default>
-		<description>Watcher's status as string (pending, active,
-		rejected, terminated or pending_terminated).</description>
-	</column>
+  <column>
+	<name>event</name>
+	<type>string</type>
+	<size>32</size>
+	<description>
+	  Event which lead to watcher's status (subscribe, ...).
+	</description>
+  </column>
 
-	<column>
-		<name>event</name>
-		<type>string</type>
-		<size>32</size>
-		<description>Event which lead to watcher's status (subscribe,
-		...).</description>
-	</column>
+  <column>
+	<name>expires</name>
+	<type>datetime</type>
+	<default>2005-12-07 08:13:15</default>
+	<description>Subscription expiration value.</description>
+  </column>
 
-	<column>
-		<name>expires</name>
-		<type>datetime</type>
-		<default>2005-12-07 08:13:15</default>
-		<description>Subscription expiration value.</description>
-	</column>
+  <column>
+	<name>accepts</name>
+	<type>int</type>
+	<description>MIME type used in NOTIFYs.</description>
+  </column>
 
-	<column>
-		<name>accepts</name>
-		<type>int</type>
-		<description>MIME type used in NOTIFYs.</description>
-	</column>
+  <!-- foreign key (presentity) -->
+  <column>
+	<name>pres_id</name>
+	<type>string</type>
+	<size>64</size>
+	<description>Watched presentity identification.</description>
+  </column>
 
-	<!-- foreign key (presentity) -->
-    <column>
-		<name>pres_id</name>
-		<type>string</type>
-		<size>64</size>
-		<description>Watched presentity identification.</description>
-    </column>
+  <column>
+	<name>server_contact</name>
+	<type>string</type>
+	<size>&uri_len;</size>
+	<description>Contact address used for resubscriptions.</description>
+  </column>
 
-	<column>
-		<name>server_contact</name>
-		<type>string</type>
-		<size>&uri_len;</size>
-		<description>Contact address used for resubscriptions.</description>
-	</column>
+  <column>
+	<name>dialog</name>
+	<type>binary</type>
+	<description>Serialized subscription dialog.</description>
+  </column>
 
-	<column>
-		<name>dialog</name>
-		<type>binary</type>
-		<description>Serialized subscription dialog.</description>
-	</column>
+  <column>
+	<name>doc_index</name>
+	<type>int</type>
+	<description>
+	  Last index used in NOTIFY (some document formats use numbers incremented
+	  in each NOTIFY).
+	</description>
+  </column>
 
-	<column>
-		<name>doc_index</name>
-		<type>int</type>
-		<description>Last index used in NOTIFY (some document formats use
-		numbers incremented in each NOTIFY).</description>
-	</column>
+  <index>
+	<name>wi_idx1</name>
+	<colref linkend="watcherinfo.s_id"/>
+	<unique/>
+  </index>
 
-	<index>
-		<name>wi_idx1</name>
-		<colref linkend="watcherinfo.s_id"/>
-		<unique/>
-	</index>
-
-	<!-- this index may help when reading from the database, 
-	but it is done only on startup thus this index is probably 
-	not needed -->
-	<!--
-	<index>
+  <!-- this index may help when reading from the database, 
+	   but it is done only on startup thus this index is probably 
+	   not needed -->
+  <!--
+	  <index>
 		<name>wi_pres_idx</name>
 		<colref linkend="watcherinfo.pres_id"/>
-	</index>
-	-->
+	  </index>
+	  -->
 </table>

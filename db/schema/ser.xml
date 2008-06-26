@@ -8,113 +8,113 @@
 ]>
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
-    <name>ser</name>
+  <name>ser</name>
 
-    <xi:include href="version.xml"/>
+  <xi:include href="version.xml"/>
 
-    <!-- Accounting related tables -->
-    <xi:include href="acc.xml"/>
-    <xi:include href="missed_calls.xml"/>
+  <!-- Accounting related tables -->
+  <xi:include href="acc.xml"/>
+  <xi:include href="missed_calls.xml"/>
 
-    <!-- Table that stores credentials for digest and serweb authentication -->
-    <xi:include href="credentials.xml"/>
+  <!-- Table that stores credentials for digest and serweb authentication -->
+  <xi:include href="credentials.xml"/>
 
-    <!-- Attribute types -->
-    <xi:include href="attr_types.xml"/>
+  <!-- Attribute types -->
+  <xi:include href="attr_types.xml"/>
 
-    <!-- Various attribute tables -->
-    <xi:include href="global_attrs.xml"/>
-    <xi:include href="domain_attrs.xml"/>
-    <xi:include href="user_attrs.xml"/>
-    <xi:include href="uri_attrs.xml"/>
+  <!-- Various attribute tables -->
+  <xi:include href="global_attrs.xml"/>
+  <xi:include href="domain_attrs.xml"/>
+  <xi:include href="user_attrs.xml"/>
+  <xi:include href="uri_attrs.xml"/>
 
-    <!-- Multi-domain support -->
-    <xi:include href="domain.xml"/>
+  <!-- Multi-domain support -->
+  <xi:include href="domain.xml"/>
 
-    <!-- Table containing text files, styles and other files specific for domain (used by serweb) -->
-    <xi:include href="domain_settings.xml"/>
+  <!-- Table containing text files, styles and other files specific for domain (used by serweb) -->
+  <xi:include href="domain_settings.xml"/>
 
-    <!-- User location database -->
-    <xi:include href="location.xml"/>
-    <xi:include href="contact_attrs.xml"/>
+  <!-- User location database -->
+  <xi:include href="location.xml"/>
+  <xi:include href="contact_attrs.xml"/>
 
-    <!-- Permissions module -->
-    <xi:include href="trusted.xml"/>
-    <xi:include href="ipmatch.xml"/>
+  <!-- Permissions module -->
+  <xi:include href="trusted.xml"/>
+  <xi:include href="ipmatch.xml"/>
 
-    <!-- Table containing phonebook (used by serweb -->
-    <xi:include href="phonebook.xml"/>
+  <!-- Table containing phonebook (used by serweb -->
+  <xi:include href="phonebook.xml"/>
 
-    <!-- Least Cost Routing related tables -->
-    <xi:include href="gw.xml"/>
-    <xi:include href="gw_grp.xml"/>
-    <xi:include href="lcr.xml"/>
+  <!-- Least Cost Routing related tables -->
+  <xi:include href="gw.xml"/>
+  <xi:include href="gw_grp.xml"/>
+  <xi:include href="lcr.xml"/>
 
-    <xi:include href="grp.xml"/>
+  <xi:include href="grp.xml"/>
 
-    <!-- Instant Messages Scheduled for later delivery -->
-    <xi:include href="silo.xml"/>
+  <!-- Instant Messages Scheduled for later delivery -->
+  <xi:include href="silo.xml"/>
 
-    <!-- The table mapping SIP URIs to subscribers -->
-    <xi:include href="uri.xml"/>
+  <!-- The table mapping SIP URIs to subscribers -->
+  <xi:include href="uri.xml"/>
 
-    <!-- Speeddial module -->
-    <xi:include href="speed_dial.xml"/>
-    <xi:include href="sd_attrs.xml"/>
+  <!-- Speeddial module -->
+  <xi:include href="speed_dial.xml"/>
+  <xi:include href="sd_attrs.xml"/>
 
-    <!-- Presence related tables -->
-    <xi:include href="presentity.xml"/>
-    <xi:include href="presentity_notes.xml"/>
-    <xi:include href="presentity_extensions.xml"/>
-    <xi:include href="presentity_contact.xml"/>
-    <xi:include href="watcherinfo.xml"/>
-    <xi:include href="tuple_notes.xml"/>
-    <xi:include href="tuple_extensions.xml"/>
-    <xi:include href="offline_winfo.xml"/>
-    
-	<!-- Resource-lists related tables -->
-    <xi:include href="rls_subscription.xml"/>
-    <xi:include href="rls_vs.xml"/>
-    <xi:include href="rls_vs_names.xml"/>
+  <!-- Presence related tables -->
+  <xi:include href="presentity.xml"/>
+  <xi:include href="presentity_notes.xml"/>
+  <xi:include href="presentity_extensions.xml"/>
+  <xi:include href="presentity_contact.xml"/>
+  <xi:include href="watcherinfo.xml"/>
+  <xi:include href="tuple_notes.xml"/>
+  <xi:include href="tuple_extensions.xml"/>
+  <xi:include href="offline_winfo.xml"/>
+  
+  <!-- Resource-lists related tables -->
+  <xi:include href="rls_subscription.xml"/>
+  <xi:include href="rls_vs.xml"/>
+  <xi:include href="rls_vs_names.xml"/>
 
-    <xi:include href="i18n.xml"/>
+  <xi:include href="i18n.xml"/>
 
-    <xi:include href="pdt.xml"/>
+  <xi:include href="pdt.xml"/>
 
-    <xi:include href="cpl.xml"/>
+  <xi:include href="cpl.xml"/>
 
-    <!-- Customers -->
-    <xi:include href="customers.xml"/>
+  <!-- Customers -->
+  <xi:include href="customers.xml"/>
 
-	<verbatim db="mysql" id="func.active">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.active">
+	<create>
+	  <![CDATA[
 drop function if exists active;
 create function active (flags int unsigned) returns bool DETERMINISTIC
     return not flags&194;
 ]]>
-	  </create>
-	  <destroy>
-drop function if exists active;
-	  </destroy>
-	</verbatim>
+	</create>
+	<destroy>
+	  drop function if exists active;
+	</destroy>
+  </verbatim>
 
-	<verbatim db="mysql" id="func.canonical">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.canonical">
+	<create>
+	  <![CDATA[
 drop function if exists canonical;
 create function canonical (flags int unsigned) returns bool DETERMINISTIC
     return flags&4 and active(flags);
 ]]>
-	  </create>
-	  <destroy>
-drop function if exists canonical;
-	  </destroy>
-	</verbatim>
+	</create>
+	<destroy>
+	  drop function if exists canonical;
+	</destroy>
+  </verbatim>
 
-	<verbatim db="mysql" id="func.tostr">
-	  <create>
-<![CDATA[
+  <verbatim db="mysql" id="func.tostr">
+	<create>
+	  <![CDATA[
 drop function if exists tostr;
 delimiter //
 create function tostr (flags int(10) unsigned) returns varchar(128)
@@ -168,17 +168,17 @@ end
 //
 delimiter ;
 ]]>
-	  </create>
-	  <destroy>
-drop function if exists tostr;
-	  </destroy>
-    </verbatim>
+	</create>
+	<destroy>
+	  drop function if exists tostr;
+	</destroy>
+  </verbatim>
 
-    <!-- Include extra definitions if found, it is not
-         an error if they are not present, although it
-         would produce a warning
-      -->
-    <xi:include href="extra.xml" xpointer="xpointer(data/table)">
+  <!-- Include extra definitions if found, it is not
+       an error if they are not present, although it
+       would produce a warning
+    -->
+  <xi:include href="extra.xml" xpointer="xpointer(data/table)">
 	<xi:fallback/>
-    </xi:include>
+  </xi:include>
 </database>

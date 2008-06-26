@@ -8,58 +8,58 @@
 ]>
 
 <table>
-    <name>speed_dial</name>
-    <version>2</version>
+  <name>speed_dial</name>
+  <version>2</version>
 
-    <column id="sd.id">
+  <column id="sd.id">
 	<name>id</name>
 	<type>int</type>
 	<type db="mysql">INT AUTO_INCREMENT</type>
 	<type db="postgres">SERIAL</type>
 	<type db="dbtext">int,auto</type>
-    </column>
+  </column>
 
-    <column id="sd.uid">
+  <column id="sd.uid">
 	<name>uid</name>
 	<name db="oracle">uuid</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column id="sd.dial_username">
+  <column id="sd.dial_username">
 	<name>dial_username</name>
 	<type>string</type>
 	<size>&user_len;</size>
-    </column>
+  </column>
 
-    <column id="sd.dial_did">
+  <column id="sd.dial_did">
 	<name>dial_did</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>new_uri</name>
 	<type>string</type>
 	<size>&uri_len;</size>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>speeddial_idx1</name>
 	<unique/>
 	<colref linkend="sd.uid"/>
 	<colref linkend="sd.dial_did"/>
 	<colref linkend="sd.dial_username"/>
-    </index>
+  </index>
 
-    <index>
+  <index>
 	<unique/>
 	<name>speeddial_id</name>
 	<colref linkend="sd.id"/>
-    </index>
+  </index>
 
-    <index>
+  <index>
 	<name>speeddial_uid</name>
 	<colref linkend="sd.uid"/>
-    </index>
+  </index>
 </table>

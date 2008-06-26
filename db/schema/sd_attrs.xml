@@ -8,46 +8,46 @@
 ]>
 
 <table>
-    <name>sd_attrs</name>
-    <version>1</version>
+  <name>sd_attrs</name>
+  <version>1</version>
 
-    <column id="sdattrs.id">
+  <column id="sdattrs.id">
 	<name>id</name>
 	<type>string</type>
 	<size>&id_len;</size>
-    </column>
+  </column>
 
-    <column id="sdattrs.name">
+  <column id="sdattrs.name">
 	<name>name</name>
 	<type>string</type>
 	<size>&avp_name_len;</size>
-    </column>
+  </column>
 
-    <column id="sdattrs.value">
+  <column id="sdattrs.value">
 	<name>value</name>
 	<type>string</type>
 	<null/>
 	<size>&avp_val_len;</size>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>type</name>
 	<type>int</type>
 	<default>0</default>
-    </column>
+  </column>
 
-    <column id="sdattrs.flags">
+  <column id="sdattrs.flags">
 	<name>flags</name>
 	<type>unsigned int</type>
 	<default>0</default>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<unique/>
 	<name>sd_idx</name>
 	<colref linkend="sdattrs.id"/>
 	<colref linkend="sdattrs.name"/>
 	<colref linkend="sdattrs.value"/>
-    </index>
+  </index>
 
 </table>

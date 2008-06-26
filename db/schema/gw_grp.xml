@@ -8,26 +8,26 @@
 ]>
 
 <table>
-    <name>gw_grp</name>
-    <version>2</version>
+  <name>gw_grp</name>
+  <version>2</version>
 
-    <column id="gw_grp.id">
+  <column id="gw_grp.id">
 	<name>grp_id</name>
 	<type>int</type>
 	<type db="mysql">INT AUTO_INCREMENT</type>
 	<type db="postgres">SERIAL</type>
 	<type db="dbtext">int,auto</type>
-    </column>
+  </column>
 
-    <column>
+  <column>
 	<name>grp_name</name>
 	<type>string</type>
 	<size>64</size>
-    </column>
+  </column>
 
-    <index>
+  <index>
 	<name>gwgrp_idx</name>
 	<unique/>
 	<colref linkend="gw_grp.id"/>
-    </index>
+  </index>
 </table>
