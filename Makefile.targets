@@ -1,0 +1,29 @@
+
+#
+# $Id$
+#
+#
+# Makefile targets that should be treated specially, 
+# e.g.:  non obj/executable affecting targets => don't build dependencies for
+#  them or don't try any action that would be useful only for generating
+#  actual code
+#
+# History:
+# --------
+#  2008-06-26  initial version (andrei) 
+#
+
+clean_targets:=	clean proper distclean realclean mantainer-clean clean_libs
+doc_targets:=	modules-doc modules-readme README modules-man man \
+		install-doc install-modules-doc install-man
+# auxiliary: maintance, debugging, etc. (don't affect code/objects)
+aux_targets:=	TAGS tar dist print-modules dbg dbinstall \
+		librpath.lst makecfg.lst
+# other targets that don't produce code in the current directory ("external")
+ext_targets:=	modules libs utils \
+		install-cfg install-modules install-utils  install-modules-all \
+		install-share 
+
+# all the targets that don't require code dependecies in the current dir.
+nodep_targets:=	$(clean_targets) $(doc_targets) $(aux_targets) $(ext_targets)
+

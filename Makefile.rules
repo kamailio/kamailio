@@ -210,10 +210,15 @@ clean_doxygen:
 TAGS:
 	$(MKTAGS) 
 	
+	
+	
 ifeq (,$(MAKECMDGOALS))
 -include $(depends)
+else
+ifeq (,$(strip $(nodep_targets)))
+include Makefile.targets
 endif
-ifneq (,$(filter-out clean proper distclean realclean mantainer-clean TAGS \
-		tar modules, $(MAKECMDGOALS)))
+ifneq (,$(filter-out $(nodep_targets),$(MAKECMDGOALS)))
 -include $(depends)
 endif
+endif # ifeq (,$(MAKECMDGOALS))
