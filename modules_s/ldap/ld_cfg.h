@@ -48,6 +48,7 @@ struct ld_con_info {
 	unsigned int port;
 	str username;
 	str password;
+	int authmech;
 	struct ld_con_info* next;
 };
 

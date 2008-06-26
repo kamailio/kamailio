@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sasl/sasl.h>
 
 /** Free all memory allocated for a ld_con structure.
  * This function function frees all memory that is in use by
@@ -124,6 +125,52 @@ int ld_con(db_con_t* con)
 }
 
 
+int lutil_sasl_interact(
+	LDAP *ld,
+	unsigned flags,
+	void *defaults,
+	void *in )
+{
+	sasl_interact_t *interact = in;
+	const char *dflt = interact->defresult;
+
+
+	if (ld == NULL)
+		return LDAP_PARAM_ERROR;
+
+	while (interact->id != SASL_CB_LIST_END) {
+		switch( interact->id ) {
+			// the username to authenticate
+			case SASL_CB_AUTHNAME:
+				if (defaults)
+					dflt = ((struct ld_uri*)defaults)->username;
+				break;
+			// the password for the provided username
+			case SASL_CB_PASS:
+				if (defaults)
+					dflt = ((struct ld_uri*)defaults)->password;
+				break;
+			// the realm for the authentication attempt
+			case SASL_CB_GETREALM:
+			// the username to use for proxy authorization
+			case SASL_CB_USER:
+			// generic prompt for input with input echoing disabled
+			case SASL_CB_NOECHOPROMPT:
+			// generic prompt for input with input echoing enabled
+			case SASL_CB_ECHOPROMPT:
+				break;
+		}
+
+		interact->result = (dflt && *dflt) ? dflt : "";
+		interact->len = strlen(interact->result);
+
+		interact++;
+	}
+
+	return LDAP_SUCCESS;
+}
+
+
 int ld_con_connect(db_con_t* con)
 {
 	struct ld_con* lcon;
@@ -160,7 +207,24 @@ int ld_con_connect(db_con_t* con)
 		goto error;
 	}
 
-	ret = ldap_simple_bind_s(lcon->con, luri->username, luri->password);
+	switch (luri->authmech) {
+		case LDAP_AUTHMECH_NONE:
+			ret = ldap_simple_bind_s(lcon->con, NULL, NULL);
+			break;
+		case LDAP_AUTHMECH_SIMPLE:
+			ret = ldap_simple_bind_s(lcon->con, luri->username, luri->password);
+			break;
+		case LDAP_AUTHMECH_DIGESTMD5:
+			ret = ldap_sasl_interactive_bind_s( lcon->con, NULL,
+					LDAP_MECHANISM_STR_DIGESTMD5, NULL, NULL,
+					0, lutil_sasl_interact, luri );
+			break;
+		case LDAP_AUTHMECH_EXTERNAL:
+		default:
+			ret = !LDAP_SUCCESS;
+			break;
+	}
+
 	if (ret != LDAP_SUCCESS) {
 		ERR("ldap: Bind to %s failed: %s\n",
 			luri->uri, ldap_err2string(ret));

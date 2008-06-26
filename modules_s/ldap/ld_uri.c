@@ -284,6 +284,8 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 			}
 		}
 
+		res->authmech = cfg_conn_info->authmech;
+
 		break;
 	default:
 		goto err;

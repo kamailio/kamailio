@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
@@ -38,6 +38,17 @@
 
 #include <ldap.h>
 
+enum auth_type {
+	LDAP_AUTHMECH_NONE = 0,
+	LDAP_AUTHMECH_SIMPLE,
+	LDAP_AUTHMECH_DIGESTMD5,
+	LDAP_AUTHMECH_EXTERNAL
+};
+
+#define LDAP_MECHANISM_STR_DIGESTMD5 "digest-md5"
+#define LDAP_MECHANISM_STR_EXTERNAL "external"
+
+
 
 /** LDAP driver specific payload to attach to db_uri structures.
  * This is the LDAP specific structure that will be attached
@@ -49,6 +60,7 @@ struct ld_uri {
 	char* username;
 	char* password;
 	char* uri;             /**< The whole URI, including scheme */
+	int authmech;
 	LDAPURLDesc* ldap_url; /**< URI parsed by the ldap client library */
 };
 

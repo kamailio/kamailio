@@ -24,6 +24,7 @@
 
 #include "ld_cfg.h"
 #include "ld_mod.h"
+#include "ld_uri.h"
 
 #include "../../cfg_parser.h"
 #include "../../mem/mem.h"
@@ -42,7 +43,6 @@ enum section_type {
 	LDAP_CON_SECTION = 0,
 	LDAP_TABLE_SECTION
 };
-
 
 static struct ld_cfg* cfg = NULL;
 
@@ -258,11 +258,21 @@ static cfg_option_t ldap_tab_options[] = {
 };
 
 
+static cfg_option_t auth_values[] = {
+	{"none",       .val = LDAP_AUTHMECH_NONE},
+	{"simple",     .val = LDAP_AUTHMECH_SIMPLE},
+	{"digest-md5", .val = LDAP_AUTHMECH_DIGESTMD5},
+	{"external",   .val = LDAP_AUTHMECH_EXTERNAL},
+	{0}
+};
+
+
 static cfg_option_t ldap_con_options[] = {
-	{"host", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"port", .f = cfg_parse_int_opt},
+	{"host",     .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"port",     .f = cfg_parse_int_opt},
 	{"username", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{"password", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"authtype", .param = auth_values, .f = cfg_parse_enum_opt},
 	{0}
 };
 
@@ -329,6 +339,9 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		ldap_con_options[1].param = &con->port;
 		ldap_con_options[2].param = &con->username;
 		ldap_con_options[3].param = &con->password;
+		for(i = 0; auth_values[i].name; i++) {
+			auth_values[i].param = &con->authmech;
+		}
 	} else {
 		BUG("%s:%d:%d: Unsupported section type %c\n",
 			st->file, t.start.line, t.start.col, t.type);
