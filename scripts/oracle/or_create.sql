@@ -1,9 +1,3 @@
-CREATE TABLE version (
-    table_name VARCHAR(32) NOT NULL,
-    table_version INT UNSIGNED NOT NULL DEFAULT '0'
-);
-
-INSERT INTO version (table_name, table_version) values ('acc','4');
 CREATE TABLE acc (
     id INT NOT NULL,
     server_id INT NOT NULL DEFAULT '0',
@@ -37,7 +31,6 @@ CREATE TABLE acc (
     KEY acc_to_uid (to_uid)
 );
 
-INSERT INTO version (table_name, table_version) values ('missed_calls','4');
 CREATE TABLE missed_calls (
     id INT NOT NULL,
     server_id INT NOT NULL DEFAULT '0',
@@ -70,7 +63,6 @@ CREATE TABLE missed_calls (
     KEY mc_to_uid (to_uid)
 );
 
-INSERT INTO version (table_name, table_version) values ('credentials','7');
 CREATE TABLE credentials (
     auth_username VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL DEFAULT '_default',
@@ -86,7 +78,6 @@ CREATE TABLE credentials (
     KEY realm_idx (realm)
 );
 
-INSERT INTO version (table_name, table_version) values ('attr_types','4');
 CREATE TABLE attr_types (
     name VARCHAR(32) NOT NULL,
     rich_type VARCHAR(32) NOT NULL DEFAULT 'string',
@@ -102,7 +93,6 @@ CREATE TABLE attr_types (
     UNIQUE KEY upt_idx1 (name)
 );
 
-INSERT INTO version (table_name, table_version) values ('global_attrs','1');
 CREATE TABLE global_attrs (
     name VARCHAR(32) NOT NULL,
     type INT NOT NULL DEFAULT '0',
@@ -111,7 +101,6 @@ CREATE TABLE global_attrs (
     UNIQUE KEY global_attrs_idx (name, value)
 );
 
-INSERT INTO version (table_name, table_version) values ('domain_attrs','1');
 CREATE TABLE domain_attrs (
     did VARCHAR(64),
     name VARCHAR(32) NOT NULL,
@@ -122,7 +111,6 @@ CREATE TABLE domain_attrs (
     KEY domain_did (did, flags)
 );
 
-INSERT INTO version (table_name, table_version) values ('user_attrs','3');
 CREATE TABLE user_attrs (
     uuid VARCHAR(64) NOT NULL,
     name VARCHAR(32) NOT NULL,
@@ -132,7 +120,6 @@ CREATE TABLE user_attrs (
     UNIQUE KEY userattrs_idx (uuid, name, value)
 );
 
-INSERT INTO version (table_name, table_version) values ('uri_attrs','2');
 CREATE TABLE uri_attrs (
     username VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
@@ -144,7 +131,6 @@ CREATE TABLE uri_attrs (
     UNIQUE KEY uriattrs_idx (username, did, name, value, scheme)
 );
 
-INSERT INTO version (table_name, table_version) values ('domain','2');
 CREATE TABLE domain (
     did VARCHAR(64) NOT NULL,
     domain VARCHAR(128) NOT NULL,
@@ -153,7 +139,6 @@ CREATE TABLE domain (
     KEY did_idx (did)
 );
 
-INSERT INTO version (table_name, table_version) values ('domain_settings','1');
 CREATE TABLE domain_settings (
     did VARCHAR(64) NOT NULL,
     filename VARCHAR(255) NOT NULL,
@@ -165,7 +150,6 @@ CREATE TABLE domain_settings (
     KEY ds_df (did, filename)
 );
 
-INSERT INTO version (table_name, table_version) values ('location','9');
 CREATE TABLE location (
     uuid VARCHAR(64) NOT NULL,
     aor VARCHAR(255) NOT NULL,
@@ -184,7 +168,6 @@ CREATE TABLE location (
     KEY location_expires (expires)
 );
 
-INSERT INTO version (table_name, table_version) values ('contact_attrs','1');
 CREATE TABLE contact_attrs (
     uuid VARCHAR(64) NOT NULL,
     contact VARCHAR(255) NOT NULL,
@@ -195,7 +178,6 @@ CREATE TABLE contact_attrs (
     UNIQUE KEY contactattrs_idx (uuid, contact, name)
 );
 
-INSERT INTO version (table_name, table_version) values ('trusted','1');
 CREATE TABLE trusted (
     src_ip VARCHAR(39) NOT NULL,
     proto VARCHAR(4) NOT NULL,
@@ -203,7 +185,6 @@ CREATE TABLE trusted (
     UNIQUE KEY trusted_idx (src_ip, proto, from_pattern)
 );
 
-INSERT INTO version (table_name, table_version) values ('ipmatch','1');
 CREATE TABLE ipmatch (
     ip VARCHAR(50) NOT NULL DEFAULT '',
     avp_val VARCHAR(30) DEFAULT NULL,
@@ -212,7 +193,6 @@ CREATE TABLE ipmatch (
     UNIQUE KEY ipmatch_idx (ip, mark)
 );
 
-INSERT INTO version (table_name, table_version) values ('phonebook','1');
 CREATE TABLE phonebook (
     id INT UNSIGNED NOT NULL,
     uuid VARCHAR(64) NOT NULL,
@@ -223,7 +203,6 @@ CREATE TABLE phonebook (
     KEY pb_uid (uuid)
 );
 
-INSERT INTO version (table_name, table_version) values ('gw','3');
 CREATE TABLE gw (
     gw_name VARCHAR(128) NOT NULL,
     ip_addr INT UNSIGNED NOT NULL,
@@ -236,14 +215,12 @@ CREATE TABLE gw (
     KEY gw_idx2 (grp_id)
 );
 
-INSERT INTO version (table_name, table_version) values ('gw_grp','2');
 CREATE TABLE gw_grp (
     grp_id INT NOT NULL,
     grp_name VARCHAR(64) NOT NULL,
     UNIQUE KEY gwgrp_idx (grp_id)
 );
 
-INSERT INTO version (table_name, table_version) values ('lcr','1');
 CREATE TABLE lcr (
     prefix VARCHAR(16) NOT NULL,
     from_uri VARCHAR(255) NOT NULL DEFAULT '%',
@@ -254,7 +231,6 @@ CREATE TABLE lcr (
     KEY lcr_idx3 (grp_id)
 );
 
-INSERT INTO version (table_name, table_version) values ('grp','3');
 CREATE TABLE grp (
     uuid VARCHAR(64) NOT NULL DEFAULT '',
     grp VARCHAR(64) NOT NULL DEFAULT '',
@@ -262,7 +238,6 @@ CREATE TABLE grp (
     KEY grp_idx (uuid, grp)
 );
 
-INSERT INTO version (table_name, table_version) values ('silo','4');
 CREATE TABLE silo (
     mid INT NOT NULL,
     from_hdr VARCHAR(255) NOT NULL,
@@ -276,7 +251,6 @@ CREATE TABLE silo (
     UNIQUE KEY silo_idx1 (mid)
 );
 
-INSERT INTO version (table_name, table_version) values ('uri','3');
 CREATE TABLE uri (
     uuid VARCHAR(64) NOT NULL,
     did VARCHAR(64) NOT NULL,
@@ -287,7 +261,6 @@ CREATE TABLE uri (
     KEY uri_uid (uuid)
 );
 
-INSERT INTO version (table_name, table_version) values ('speed_dial','2');
 CREATE TABLE speed_dial (
     id INT NOT NULL,
     uuid VARCHAR(64) NOT NULL,
@@ -299,7 +272,6 @@ CREATE TABLE speed_dial (
     KEY speeddial_uid (uuid)
 );
 
-INSERT INTO version (table_name, table_version) values ('sd_attrs','1');
 CREATE TABLE sd_attrs (
     id VARCHAR(64) NOT NULL,
     name VARCHAR(32) NOT NULL,
@@ -309,7 +281,6 @@ CREATE TABLE sd_attrs (
     UNIQUE KEY sd_idx (id, name, value)
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity','5');
 CREATE TABLE presentity (
     pres_id VARCHAR(64) NOT NULL,
     uri VARCHAR(255) NOT NULL,
@@ -319,7 +290,6 @@ CREATE TABLE presentity (
     UNIQUE KEY presentity_key (pres_id)
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity_notes','5');
 CREATE TABLE presentity_notes (
     dbid VARCHAR(64) NOT NULL,
     pres_id VARCHAR(64) NOT NULL,
@@ -330,7 +300,6 @@ CREATE TABLE presentity_notes (
     UNIQUE KEY pnotes_idx1 (dbid)
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity_extensions','5');
 CREATE TABLE presentity_extensions (
     dbid VARCHAR(64) NOT NULL,
     pres_id VARCHAR(64) NOT NULL,
@@ -340,7 +309,6 @@ CREATE TABLE presentity_extensions (
     UNIQUE KEY presextensions_idx1 (dbid)
 );
 
-INSERT INTO version (table_name, table_version) values ('presentity_contact','5');
 CREATE TABLE presentity_contact (
     pres_id VARCHAR(64) NOT NULL,
     basic INT(3) NOT NULL,
@@ -353,7 +321,6 @@ CREATE TABLE presentity_contact (
     UNIQUE KEY presid_index (pres_id, tupleid)
 );
 
-INSERT INTO version (table_name, table_version) values ('watcherinfo','5');
 CREATE TABLE watcherinfo (
     w_uri VARCHAR(255) NOT NULL,
     display_name VARCHAR(128) NOT NULL,
@@ -370,7 +337,6 @@ CREATE TABLE watcherinfo (
     UNIQUE KEY wi_idx1 (s_id)
 );
 
-INSERT INTO version (table_name, table_version) values ('tuple_notes','5');
 CREATE TABLE tuple_notes (
     pres_id VARCHAR(64) NOT NULL,
     tupleid VARCHAR(64) NOT NULL,
@@ -378,7 +344,6 @@ CREATE TABLE tuple_notes (
     lang VARCHAR(64) NOT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('tuple_extensions','5');
 CREATE TABLE tuple_extensions (
     pres_id VARCHAR(64) NOT NULL,
     tupleid VARCHAR(64) NOT NULL,
@@ -386,7 +351,6 @@ CREATE TABLE tuple_extensions (
     status_extension INT(1) NOT NULL
 );
 
-INSERT INTO version (table_name, table_version) values ('offline_winfo','5');
 CREATE TABLE offline_winfo (
     uuid VARCHAR(64) NOT NULL,
     watcher VARCHAR(255) NOT NULL,
@@ -399,7 +363,6 @@ CREATE TABLE offline_winfo (
     UNIQUE KEY offline_winfo_key (dbid)
 );
 
-INSERT INTO version (table_name, table_version) values ('rls_subscription','1');
 CREATE TABLE rls_subscription (
     id VARCHAR(48) NOT NULL,
     doc_version INT NOT NULL,
@@ -414,7 +377,6 @@ CREATE TABLE rls_subscription (
     UNIQUE KEY rls_subscription_key (id)
 );
 
-INSERT INTO version (table_name, table_version) values ('rls_vs','1');
 CREATE TABLE rls_vs (
     id VARCHAR(48) NOT NULL,
     rls_id VARCHAR(48) NOT NULL,
@@ -422,14 +384,12 @@ CREATE TABLE rls_vs (
     UNIQUE KEY rls_vs_key (id)
 );
 
-INSERT INTO version (table_name, table_version) values ('rls_vs_names','1');
 CREATE TABLE rls_vs_names (
     id VARCHAR(48) NOT NULL,
     name VARCHAR(64),
     lang VARCHAR(64)
 );
 
-INSERT INTO version (table_name, table_version) values ('i18n','1');
 CREATE TABLE i18n (
     code INT NOT NULL,
     reason_re VARCHAR(255) DEFAULT NULL,
@@ -439,14 +399,12 @@ CREATE TABLE i18n (
     UNIQUE KEY i18n_uniq_idx (code, lang)
 );
 
-INSERT INTO version (table_name, table_version) values ('pdt','1');
 CREATE TABLE pdt (
     prefix VARCHAR(32) NOT NULL,
     domain VARCHAR(255) NOT NULL,
     UNIQUE KEY pdt_idx (prefix)
 );
 
-INSERT INTO version (table_name, table_version) values ('cpl','2');
 CREATE TABLE cpl (
     uuid VARCHAR(64) NOT NULL,
     cpl_xml BLOB,
@@ -454,7 +412,6 @@ CREATE TABLE cpl (
     UNIQUE KEY cpl_key (uuid)
 );
 
-INSERT INTO version (table_name, table_version) values ('customers','1');
 CREATE TABLE customers (
     cid INT UNSIGNED NOT NULL,
     name VARCHAR(128) NOT NULL,

@@ -46,9 +46,6 @@
 	  <xsl:call-template name="get-name"/>
 	</xsl:variable>
 
-	<!-- Create row in version table -->
-	<xsl:apply-templates select="version"/>
-
 	<xsl:text>CREATE TABLE </xsl:text>
 	<xsl:value-of select="$table.name"/>
 	<xsl:text> (&#x0A;</xsl:text>
@@ -73,16 +70,6 @@
 	<xsl:text>);&#x0A;&#x0A;</xsl:text>
   </xsl:template>
 
-  <xsl:template match="version">
-	<xsl:text>INSERT INTO version (table_name, table_version) values ('</xsl:text>
-	<xsl:call-template name="get-name">
-	  <xsl:with-param name="select" select="parent::table"/>
-	</xsl:call-template>
-	<xsl:text>','</xsl:text>
-	<xsl:value-of select="text()"/>
-	<xsl:text>');&#x0A;</xsl:text>
-  </xsl:template>
-  
   <!-- ################ /TABLE ################  -->
 
 

@@ -10,8 +10,6 @@
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>ser</name>
 
-  <xi:include href="version.xml"/>
-
   <!-- Accounting related tables -->
   <xi:include href="acc.xml"/>
   <xi:include href="missed_calls.xml"/>
