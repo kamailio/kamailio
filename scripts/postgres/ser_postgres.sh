@@ -11,6 +11,8 @@
 DEFAULT_DBNAME="ser"
 DEFAULT_SQLUSER="postgres"
 
+DEFAULT_SCRIPT_DIR=""
+
 DEFAULT_PSQL="/usr/bin/psql"
 DEFAULT_PG_DUMP="/usr/bin/pg_dump"
 
@@ -26,10 +28,10 @@ Usage: $COMMAND create  [database]
        $COMMAND drop    [database]
        $COMMAND backup  [database] <file> 
        $COMMAND restore [database] <file>
-   
-  Command 'create' creates database named '${DBNAME}' containing tables 
-  needed for SER and SERWeb. In addition to that two users are created, 
-  one with read/write permissions and one with read-only permissions.
+
+  Command 'create' creates database named '${DBNAME}' containing tables needed
+  for SER and SERWeb. In addition to that two users are created, one with
+  read/write permissions and one with read-only permissions.
 
   Commmand 'drop' deletes database named '${DBNAME}' and associated users.
 
@@ -86,7 +88,7 @@ db_drop()
     # Revoke user permissions
 
     echo "Dropping database $1"
-    $CMD "template1" < ${DROP_SCRIPT}
+    $CMD "template1" < ${SCRIPT_DIR}/${DROP_SCRIPT}
     echo "DROP DATABASE $1" | $CMD "template1" 
 }
 
@@ -96,10 +98,21 @@ db_create ()
 {
     echo "Creating database $1"
     echo "CREATE DATABASE $1" | $CMD "template1"
-    $CMD $1 < $CREATE_SCRIPT
-    $CMD $1 < $DATA_SCRIPT
+    $CMD $1 < ${SCRIPT_DIR}/${CREATE_SCRIPT}
+    $CMD $1 < ${SCRIPT_DIR}/${DATA_SCRIPT}
 }
 
+
+# Convert relative path to the script directory to absolute if necessary by
+# extracting the directory of this script and prefixing the relative path with
+# it.
+abs_script_dir()
+{
+  	my_dir=`dirname $0`;
+  	if [ "${SCRIPT_DIR:0:1}" != "/" ] ; then
+  	    SCRIPT_DIR="${my_dir}/${SCRIPT_DIR}"
+  	fi
+}
 
 
 # Main program
@@ -138,6 +151,10 @@ if [ -z "$DROP_SCRIPT" ]; then
     DROP_SCRIPT=$DEFAULT_DROP_SCRIPT;
 fi
 
+if [ -z "$SCRIPT_DIR" ]; then
+	SCRIPT_DIR=$DEFAULT_SCRIPT_DIR;
+fi
+
 if [ $# -eq 0 ]; then
     usage
     exit 1
@@ -151,6 +168,8 @@ fi
 
 CMD="$PSQL ${DBHOST} -U $SQLUSER"
 DUMP_CMD="$PG_DUMP ${DBHOST} -U $SQLUSER"
+
+abs_script_dir
 
 case $1 in
     create) # Create SER database and users
