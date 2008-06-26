@@ -3,3 +3,4 @@ cfg.tab.h
 lex.yy.c
 ser
 librpath.lst
+*.tar.gz
