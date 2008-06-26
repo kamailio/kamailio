@@ -221,7 +221,13 @@ modules_full_path=$(join  $(modules), $(addprefix /, $(modules_names)))
 # (full path including file name)
 utils_compile=	utils/gen_ha1 utils/sercmd
 utils_bin_install=	utils/gen_ha1/gen_ha1 utils/sercmd/sercmd
-utils_script_install=	scripts/mysql/ser_mysql.sh
+utils_script_install=
+
+# This is the list of files to be installed into the arch-independent
+# shared directory (by default /usr/local/share/ser)
+share_install= scripts/mysql/my_create.sql \
+			   scripts/mysql/my_data.sql   \
+			   scripts/mysql/my_drop.sql
 
 
 ALLDEP=Makefile Makefile.sources Makefile.defs Makefile.rules
@@ -443,7 +449,7 @@ man:
 
 .PHONY: install
 install: install-bin install-modules install-cfg \
-	install-doc install-man install-utils
+	install-doc install-man install-utils install-share
 
 .PHONY: dbinstall
 dbinstall:
@@ -453,7 +459,8 @@ dbinstall:
 
 mk-install_dirs: $(cfg_prefix)/$(cfg_dir) $(bin_prefix)/$(bin_dir) \
 			$(modules_prefix)/$(modules_dir) $(doc_prefix)/$(doc_dir) \
-			$(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
+			$(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5 \
+            $(share_prefix)/$(share_dir)
 
 
 $(cfg_prefix)/$(cfg_dir): 
@@ -461,6 +468,9 @@ $(cfg_prefix)/$(cfg_dir):
 
 $(bin_prefix)/$(bin_dir):
 		mkdir -p $(bin_prefix)/$(bin_dir)
+
+$(share_prefix)/$(share_dir):
+		mkdir -p $(share_prefix)/$(share_dir)
 
 $(modules_prefix)/$(modules_dir):
 		mkdir -p $(modules_prefix)/$(modules_dir)
@@ -506,8 +516,23 @@ install-bin: $(bin_prefix)/$(bin_dir) $(NAME)
 		$(INSTALL_TOUCH) $(bin_prefix)/$(bin_dir)/$(NAME)
 		$(INSTALL_BIN) $(NAME) $(bin_prefix)/$(bin_dir)
 
-
 export INSTALL_TOUCH RELEASE
+
+install-share: $(share_prefix)/$(share_dir)
+	@for r in $(share_install) "" ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f "$$r" ]; then \
+				$(INSTALL_TOUCH) \
+					$(share_prefix)/$(share_dir)/`basename "$$r"` ; \
+				$(INSTALL_SHARE)  "$$r"  $(share_prefix)/$(share_dir) ; \
+			else \
+				echo "ERROR: $$r not found" ; \
+				if [ ${err_fail} = 1 ] ; then \
+					exit 1; \
+				fi ; \
+			fi ;\
+		fi ; \
+	done; true
 
 install-modules: $(modules_prefix)/$(modules_dir)
 	@for r in $(modules) "" ; do \
@@ -551,7 +576,12 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 			fi ;\
 		fi ; \
 	done; true
-
+	# FIXME: This is a hack, this should be (and will be) done properly in
+    # per-module Makefiles
+	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
+		< scripts/mysql/ser_mysql.sh > $(bin_prefix)/$(bin_dir)/ser_mysql.sh
+	chmod 755 $(bin_prefix)/$(bin_dir)/ser_mysql.sh
+	true
 
 
 install-modules-all: install-modules install-modules-doc
