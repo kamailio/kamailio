@@ -22,7 +22,7 @@
 	</para>
 	<para>
 		This modules scales up to more than a few million users, and is able to handle
-		more than several hundert thousand routing table entries. It should be able to handle
+		more than several hundred thousand routing table entries. It should be able to handle
 		more, but this is not that much tested at the moment. In load balancing scenarios the
 		usage of the config file mode is recommended, to avoid the additional complexity that
 		the database driven routing creates.
@@ -413,7 +413,7 @@ modparam("carrierroute", "rewrite_prefix_column", "rewrite_prefix")
 		    <title>Set <varname>rewrite_suffix_column</varname> parameter</title>
 		    <programlisting format="linespecific">
 			    ...
-			    modparam("carrierroute", "rewrite_suffix_column", "rewrite_suffix")
+modparam("carrierroute", "rewrite_suffix_column", "rewrite_suffix")
 			    ...
 		    </programlisting>
 	    </example>
