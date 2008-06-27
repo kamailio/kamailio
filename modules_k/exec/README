@@ -14,8 +14,8 @@ Jan Janak
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-28 11:13:17 +0200
+                              (Fri, 28 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -74,6 +74,11 @@ Chapter 1. Admin Guide
        original).
      * SIP_USER is userpart of current request URI.
      * SIP_OUSER is userpart of original request URI.
+
+   NOTE: The envirnment variables must be specified with double $
+   (e.g., $$SIP_OUSER) in the parameters given to exec functions.
+   Otherwise they will be evaluated as OpenSER pseudo-variables,
+   throwing errors.
 
 1.2. Dependencies
 

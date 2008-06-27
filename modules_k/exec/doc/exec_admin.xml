@@ -63,6 +63,12 @@
 		</para>
 		</listitem>
 	</itemizedlist>
+	<para>
+		NOTE: The envirnment variables must be specified with double $
+		(e.g., $$SIP_OUSER) in the parameters given to exec functions.
+		Otherwise they will be evaluated as &openser; pseudo-variables,
+		throwing errors.
+	</para>
 	</section>
 
 	<section>
