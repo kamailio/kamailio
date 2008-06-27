@@ -177,7 +177,7 @@ Chapter 1. Admin Guide
    available.
 
    This modules scales up to more than a few million users, and is
-   able to handle more than several hundert thousand routing table
+   able to handle more than several hundred thousand routing table
    entries. It should be able to handle more, but this is not that
    much tested at the moment. In load balancing scenarios the
    usage of the config file mode is recommended, to avoid the
@@ -422,8 +422,7 @@ modparam("carrierroute", "rewrite_prefix_column", "rewrite_prefix")
 
    Example 1.15. Set rewrite_suffix_column parameter
                             ...
-                            modparam("carrierroute", "rewrite_suffix_col
-umn", "rewrite_suffix")
+modparam("carrierroute", "rewrite_suffix_column", "rewrite_suffix")
                             ...
 
 1.3.16. carrier_id_col (string)
