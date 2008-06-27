@@ -89,11 +89,13 @@ Chapter 1. Admin Guide
 
    Database URL.
 
-   Default value is "DEFAULT_RODB_URL".
+   Default value is
+   "mysql://openserro:openserro@localhost/openser".
 
    Example 1.1. Set db_url parameter
 ...
-modparam("alias_db", "db_url", "mysql://user:passwd@localhost/openser")
+modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbna
+me")
 ...
 
 1.3.2. user_column (str)
