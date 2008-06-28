@@ -48,6 +48,8 @@
 #  2008-06-23  added 2 new targets: README and man (re-generate the README
 #              or manpages for all the modules) (andrei)
 #  2008-06-25  make cfg support (use a pre-built cfg.: config.mak) (andrei)
+#  2008-06-28  added install-modules-man & error checks for 
+#              install-utils & doc (andrei)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -303,13 +305,14 @@ lex.yy.c: cfg.lex cfg.tab.h $(ALLDEP)
 cfg.tab.c cfg.tab.h: cfg.y  $(ALLDEP)
 	$(YACC) $(YACC_FLAGS) $<
 
+include Makefile.shared
+
 ifeq ($(config_mak),1)
 
 COREPATH=.
 include Makefile.cfg
 
 else
-include Makefile.shared
 
 config.mak: Makefile.defs
 	@echo making config...
@@ -550,6 +553,9 @@ $(doc_prefix)/$(doc_dir):
 $(man_prefix)/$(man_dir)/man8:
 		mkdir -p $(man_prefix)/$(man_dir)/man8
 
+$(man_prefix)/$(man_dir)/man7:
+		mkdir -p $(man_prefix)/$(man_dir)/man7
+
 $(man_prefix)/$(man_dir)/man5:
 		mkdir -p $(man_prefix)/$(man_dir)/man5
 		
@@ -564,7 +570,8 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 				$(cfg_prefix)/$(cfg_dir)ser.cfg; \
 		fi
 		sed -e "s#/usr/.*lib/ser/modules/#$(modules-target)#g" \
-			< etc/ser-oob.cfg > $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
+			< etc/ser-oob.cfg \
+			> $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
 		chmod 644 $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg.sample
 		if [ -z "${skip_cfg_install}" -a \
 				! -f $(cfg_prefix)/$(cfg_dir)ser-advanced.cfg ]; then \
@@ -572,9 +579,9 @@ install-cfg: $(cfg_prefix)/$(cfg_dir)
 				$(cfg_prefix)/$(cfg_dir)ser-advanced.cfg; \
 		fi
 		# radius dictionary
-		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser 
+		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/dictionary.ser
 		$(INSTALL_CFG) etc/dictionary.ser $(cfg_prefix)/$(cfg_dir)
-
+		
 		# TLS configuration
 		$(INSTALL_TOUCH) $(cfg_prefix)/$(cfg_dir)/tls.cfg
 		$(INSTALL_CFG) modules/tls/tls.cfg $(cfg_prefix)/$(cfg_dir)
@@ -589,9 +596,10 @@ install-share: $(share_prefix)/$(share_dir)
 	@for r in $(share_install) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
-				$(INSTALL_TOUCH) \
-					$(share_prefix)/$(share_dir)/`basename "$$r"` ; \
-				$(INSTALL_SHARE)  "$$r"  $(share_prefix)/$(share_dir) ; \
+				$(call try_err, $(INSTALL_TOUCH) \
+						$(share_prefix)/$(share_dir)/`basename "$$r"` ); \
+				$(call try_err, \
+					$(INSTALL_SHARE)  "$$r"  $(share_prefix)/$(share_dir) );\
 			else \
 				echo "ERROR: $$r not found" ; \
 				if [ ${err_fail} = 1 ] ; then \
@@ -618,9 +626,10 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 	@for r in $(utils_bin_install) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
-				$(INSTALL_TOUCH) \
-					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ; \
-				$(INSTALL_BIN)  "$$r"  $(bin_prefix)/$(bin_dir) ; \
+				$(call try_err, $(INSTALL_TOUCH) \
+						$(bin_prefix)/$(bin_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_BIN)  "$$r"  $(bin_prefix)/$(bin_dir) ); \
 			else \
 				echo "ERROR: $$r not compiled" ; \
 				if [ ${err_fail} = 1 ] ; then \
@@ -632,9 +641,10 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 	@for r in $(utils_script_install) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f "$$r" ]; then \
-				$(INSTALL_TOUCH) \
-					$(bin_prefix)/$(bin_dir)/`basename "$$r"` ; \
-				$(INSTALL_SCRIPT)  "$$r"  $(bin_prefix)/$(bin_dir) ; \
+				$(call try_err, $(INSTALL_TOUCH) \
+						$(bin_prefix)/$(bin_dir)/`basename "$$r"` ); \
+				$(call try_err,\
+					$(INSTALL_SCRIPT)  "$$r"  $(bin_prefix)/$(bin_dir) ); \
 			else \
 				echo "ERROR: $$r not compiled" ; \
 				if [ ${err_fail} = 1 ] ; then \
@@ -648,7 +658,6 @@ install-utils: utils $(bin_prefix)/$(bin_dir)
 	sed -e "s#^DEFAULT_SCRIPT_DIR.*#DEFAULT_SCRIPT_DIR=\"$(share_prefix)/$(share_dir)\"#g" \
 		< scripts/mysql/ser_mysql.sh > $(bin_prefix)/$(bin_dir)/ser_mysql.sh
 	chmod 755 $(bin_prefix)/$(bin_dir)/ser_mysql.sh
-	true
 
 
 install-modules-all: install-modules install-modules-doc
@@ -671,17 +680,20 @@ install-modules-doc: $(doc_prefix)/$(doc_dir)
 	@for r in $(modules_basenames) "" ; do \
 		if [ -n "$$r" ]; then \
 			if [ -f modules/"$$r"/README ]; then \
-				$(INSTALL_TOUCH)  $(doc_prefix)/$(doc_dir)/README ; \
-				$(INSTALL_DOC)  modules/"$$r"/README  \
-									$(doc_prefix)/$(doc_dir)/README ; \
-				mv -f $(doc_prefix)/$(doc_dir)/README \
-						$(doc_prefix)/$(doc_dir)/README."$$r" ; \
+				$(call try_err,\
+					$(INSTALL_TOUCH) $(doc_prefix)/$(doc_dir)/README ); \
+				$(call try_err,\
+					$(INSTALL_DOC)  modules/"$$r"/README  \
+									$(doc_prefix)/$(doc_dir)/README ); \
+				$(call try_err,\
+					mv -f $(doc_prefix)/$(doc_dir)/README \
+							$(doc_prefix)/$(doc_dir)/README."$$r" ); \
 			fi ; \
 		fi ; \
-	done 
+	done; true
 
 
-install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
+install-ser-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 		sed -e "s#/etc/ser/ser\.cfg#$(cfg_target)ser.cfg#g" \
 			-e "s#/usr/sbin/#$(bin_target)#g" \
 			-e "s#/usr/lib/ser/modules/#$(modules_target)#g" \
@@ -694,6 +706,21 @@ install-man: $(man_prefix)/$(man_dir)/man8 $(man_prefix)/$(man_dir)/man5
 			-e "s#/usr/share/doc/ser/#$(doc_target)#g" \
 			< ser.cfg.5 >  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
 		chmod 644  $(man_prefix)/$(man_dir)/man5/ser.cfg.5
+
+install-man:  install-ser-man install-modules-man
+
+install-modules-man: modules-man $(man_prefix)/$(man_dir)/man7
+	@for r in $(modules_basenames) "" ; do \
+		if [ -n "$$r" ]; then \
+			if [ -f modules/"$$r"/"$$r".7 ]; then \
+				$(call try_err,\
+					$(INSTALL_TOUCH) $(man_prefix)/$(man_dir)/man7/"$$r".7 );\
+				$(call try_err,\
+					$(INSTALL_MAN)  modules/"$$r"/"$$r".7  \
+									$(man_prefix)/$(man_dir)/man7 ); \
+			fi ; \
+		fi ; \
+	done; true
 
 
 .PHONY: clean_libs

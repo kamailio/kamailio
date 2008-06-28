@@ -33,3 +33,12 @@ mapf2=$(foreach v,$($(2)),$(call $(1),$v,$(3)))
 
 #cfg_fixed_to_file=$(call mapf2,cfg_save_var,saved_fixed_vars,$(1))
 #cfg_chg_to_file=$(call mapf2,cfg_save_var2,saved_chg_vars,$(1))
+
+ifeq (${err_fail},1)
+sh_err_fail=set -e;
+try_err=$(1) ; if [ $$? != 0 ]; then echo ERROR: $(1) failed ;  exit 1 ; fi
+else
+sh_err_fail=
+try_err=$(1) ; if [ $$? != 0 ]; then echo ERROR: $(1) failed ; fi
+endif
+
