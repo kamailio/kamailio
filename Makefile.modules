@@ -10,6 +10,7 @@
 #               with the proper rpath; libraries will be automatically
 #               installed if needed (andrei)
 #  2008-06-23  added the README & man targets (andrei)
+#  2008-06-27  make cfg / config.mak support (andrei)
 #
 
 MOD_NAME=$(NAME:.so=)
@@ -18,7 +19,7 @@ MOD_NAME=$(NAME:.so=)
 COREPATH ?=../..
 
 ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
- $(COREPATH)/Makefile.modules $(COREPATH)/Makefile.defs
+ $(COREPATH)/Makefile.modules $(COREPATH)/config.mak
 
 #override modules value, a module cannot have submodules
 override modules=
@@ -28,13 +29,14 @@ override static_modules_path=
 # should be set in Makefile of apart module
 # INCLUDES += -I$(COREPATH)
 
+ifneq ($(makefile_defs_included),1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the module dir!
 
 #$(warning "you should run make from the main ser directory")
-ifneq ($(makefile_defs), 1)
-$(error "the local makefile does not include Makefile.defs!")
-endif
 
 else
 # called by the main Makefile
@@ -45,14 +47,21 @@ endif
 
 include $(COREPATH)/Makefile.sources
 
+
+# if config was not loaded (makefile_defs!=1) ignore
+# the rest of makefile and try only to remake the config
+ifeq ($(makefile_defs),1)
+
 ifeq (,$(filter $(MOD_NAME), $(static_modules)))
 CFLAGS:=$(MOD_CFLAGS)
 LDFLAGS:=$(MOD_LDFLAGS)
 endif
 
 
+
 include $(COREPATH)/Makefile.targets
 include $(COREPATH)/Makefile.rules
+
 
 
 $(modules_prefix)/$(modules_dir):
@@ -63,7 +72,7 @@ LIBS:=$(filter-out -ldl -lresolv, $(LIBS))
 
 .PHONY: install
 .PHONY: install-libs
-install: install-libs $(NAME) $(modules_prefix)/$(modules_dir)
+install: $(NAME) $(modules_prefix)/$(modules_dir) install-libs
 	$(INSTALL_TOUCH) $(modules_prefix)/$(modules_dir)/$(NAME)
 	$(INSTALL_MODULES)  $(NAME)  $(modules_prefix)/$(modules_dir)
 
@@ -99,3 +108,7 @@ else
 man:
 
 endif
+
+endif # ifeq($(makefile_defs),1)
+
+include $(COREPATH)/Makefile.cfg

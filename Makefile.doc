@@ -142,14 +142,14 @@ check: $(xml_files)
 
 .PHONY: clean
 clean:
-	rm -f $(txt_files)
-	rm -f $(xhtml_files)
-	rm -f $(pdf_files)
-	rm -f $(html_files)
+	@rm -f $(txt_files)
+	@rm -f $(xhtml_files)
+	@rm -f $(pdf_files)
+	@rm -f $(html_files)
 
 .PHONY: proper realclean distclean
 proper realclean distclean: clean
-	rm -f $(dep_files) *~
+	@rm -f $(dep_files) *~
 
 
 ifeq (,$(MAKECMDGOALS))

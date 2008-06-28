@@ -8,14 +8,19 @@
 # --------
 #  2007-03-16  created by andrei
 #  2007-05-19  rebuild on changed install name on darwin  (andrei)
+#  2008-06-27  make cfg / config.mak support (andrei)
 
 # NAME, MAJOR_VER and MINOR_VER should be pre-defined in the library 
 # makefile
 #
 
+ifneq ($(makefile_defs_included), 1)
+$(error "the local makefile does not include Makefile.defs!")
+endif
+
 ifneq	(,$(filter install% %install install, $(MAKECMDGOALS)))
 compile_for_install:=yes
-$(warning install mode => compile_for_install=$(compile_for_install))
+$(info install mode => compile_for_install=$(compile_for_install))
 endif
 
 ifeq ($(NAME),)
@@ -30,6 +35,11 @@ endif
 ifeq ($(BUGFIX_VER),)
 	BUGFIX_VER:=0
 endif
+
+# if config was not loaded (makefile_defs!=1) ignore
+# the rest of makefile and try only to remake the config
+ifeq ($(makefile_defs),1)
+
 
 ifeq ($(OS), darwin)
 	LIB_NAME:= \
@@ -64,15 +74,11 @@ endif
 COREPATH ?=../..
 
 ALLDEP=Makefile $(COREPATH)/Makefile.sources $(COREPATH)/Makefile.rules \
- $(COREPATH)/Makefile.libs
+ $(COREPATH)/Makefile.libs $(COREPATH)/config.mak
 
 
 ifeq ($(MAKELEVEL), 0)
 # make called directly in the library dir!
-ifneq ($(makefile_defs), 1)
-$(error "the local makefile does not include Makefile.defs!")
-endif
-
 else
 # called by the main Makefile
 
@@ -159,3 +165,6 @@ ifneq ($(strip $(LIBINAME_F)),)
 $(LIBINAME_F): $(ALLDEP)
 	@echo "COMPILED_INAME:=$(LIB_INSTALL_NAME)" > $(LIBINAME_F)
 endif
+
+endif # ifeq ($(makefile_defs),1)
+include $(COREPATH)/Makefile.cfg

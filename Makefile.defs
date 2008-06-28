@@ -63,14 +63,39 @@
 #  2007-07-07  added HAVE_SCHED_SETSCHEDULER for linux (andrei)
 #  2007-07-18  added DNS_WATCHDOG_SUPPORT (Miklos)
 #  2007-07-30  added USE_DNS_CACHE_STATS and USE_DST_BLACKLIST_STATS (Gergo)
+#  2008-06-26  support for make cfg / config.mak and hack to load 
+#               automatically config.mak when included from a module, lib 
+#               a.s.o (not from the main Makefile)  (andrei)
+
 
 # check if already included/exported
 
-ifeq ($(makefile_defs), 1)
+
+# used for sanity checks for Makefile.defs inclusion (!= makefile_defs which
+# specifies if we have a set of valid defs)
+override makefile_defs_included:=1
+ifeq ($(makefile_defs),1)
+$(info Makefile.defs defs skipped)
 else
-makefile_defs=1
+
+ifeq (,$(main_makefile))
+# hack to automatically use config.mak in all the modules, without 
+# changing the current module makefiles (which all include Makefile.defs):
+# if not called from the main makefile (module, lib or ut):
+# include config.mak, but if not present or incomplete (makefile_defs!=1)
+# don't export the vars)
+COREPATH?= ../..
+include $(COREPATH)/config.mak
+$(info config.mak included)
+# config.mak should set makefile_defs if complete
 export makefile_defs
 
+else
+override makefile_defs=1
+export makefile_defs
+
+
+$(info normal Makefile.defs exec)
 # main binary name
 MAIN_NAME=ser
 
@@ -78,7 +103,7 @@ MAIN_NAME=ser
 VERSION = 2
 PATCHLEVEL = 1
 SUBLEVEL =  0
-EXTRAVERSION = -dev22-tcp
+EXTRAVERSION = -dev23-make
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
 			$(SUBLEVEL) )
@@ -214,7 +239,7 @@ ifeq ($(OS), solaris)
 INSTALL ?= ginstall
 TAR ?= gtar
 else
-INSTALL ?= install 
+INSTALL ?= install
 TAR ?= tar
 endif
 
@@ -432,7 +457,7 @@ endif
 #		records are used from the cache. (requires external watchdog)
 # Sometimes is needes correct non-quoted $OS. HACK: gcc translates known OS to number ('linux'), so there is added underscore
 
-DEFS+= $(extra_defs) \
+DEFS= $(extra_defs) \
 	 -DNAME='"$(MAIN_NAME)"' -DVERSION='"$(RELEASE)"' -DARCH='"$(ARCH)"' \
 	 -DOS='$(OS)_' -DOS_QUOTED='"$(OS)"' -DCOMPILER='"$(CC_VER)"' -D__CPU_$(ARCH) -D__OS_$(OS) \
 	 -DSER_VER=$(SER_VER) \
@@ -1297,20 +1322,19 @@ endif # CC_NAME=suncc
 endif # CC_NAME=icc
 endif # CC_NAME=gcc
 
-
 #*FLAGS used for compiling the modules
 ifeq	($(CC_NAME), gcc)
-MOD_CFLAGS:=-fPIC -DPIC $(CFLAGS)
-LIB_CFLAGS:=-fPIC -DPIC $(CFLAGS)
+MOD_CFLAGS=-fPIC -DPIC $(CFLAGS)
+LIB_CFLAGS=-fPIC -DPIC $(CFLAGS)
 endif
 ifeq	($(CC_NAME), icc)
-MOD_CFLAGS:=-Kpic $(CFLAGS)
-LIB_CFLAGS:=-Kpic $(CFLAGS)
+MOD_CFLAGS=-Kpic $(CFLAGS)
+LIB_CFLAGS=-Kpic $(CFLAGS)
 endif
 ifeq	($(CC_NAME), suncc)
 # FIMXE: use -KPIC instead -xcode ?
-MOD_CFLAGS:=-xcode=pic32  $(CFLAGS)
-LIB_CFLAGS:=-xcode=pic32  $(CFLAGS)
+MOD_CFLAGS=-xcode=pic32  $(CFLAGS)
+LIB_CFLAGS=-xcode=pic32  $(CFLAGS)
 endif
 
 ifeq ($(LEX),)
@@ -1352,7 +1376,8 @@ ifeq ($(OS), linux)
 		ifeq ($(NO_EPOLL),)
 			DEFS+=-DHAVE_EPOLL
 			# linux + gcc >= 3.0 + -malign-double + epoll => problems
-			CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
+			CFLAGS_RM+=-malign-double
+			#CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
 		endif
 	endif
 	# check for >= 2.2.0
@@ -1489,7 +1514,8 @@ ifeq ($(OS), netbsd)
 		ifeq ($(NO_KQUEUE),)
 			DEFS+=-DHAVE_KQUEUE
 			# netbsd + kqueue and -malign-double don't work
-			CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
+			CFLAGS_RM+=-malign-double
+			#CFLAGS:=$(filter-out -malign-double, $(CFLAGS))
 		endif
 	endif
 	ifeq ($(NO_SELECT),)
@@ -1538,7 +1564,8 @@ endif
 
 ifneq (,$(findstring cygwin, $(OS)))
 	# cygwin doesn't support IPV6 and doesn't support fd passing so no TCP
-	DEFS:=$(filter-out -DUSE_IPV6 -DUSE_TCP, $(DEFS))
+	#DEFS:=$(filter-out -DUSE_IPV6 -DUSE_TCP, $(DEFS))
+	DEFS_RM+=-DUSE_IPV6 -DUSE_TCP
 	DEFS+=-DHAVE_UNION_SEMUN -DHAVE_SCHED_YIELD \
 			-DHAVE_MSG_NOSIGNAL -DHAVE_MSGHDR_MSG_CONTROL -DHAVE_ALLOCA_H \
 			-DHAVE_TIMEGM -DHAVE_SCHED_SETSCHEDULER
@@ -1584,20 +1611,50 @@ $(warning	No locking method found so far, trying SYS V sems)
 endif
 
 
+endif # ifeq (,$(main_makefile))
+endif  # ifeq ($(makefile_defs), 1)
+
+# if incomplete or missing config.mak, or already exported vars, don't
+# try to export/re-export
+ifeq ($(makefile_defs),1) 
+ifneq ($(exported_vars),1)
+
+
+override exported_vars:=1
+export exported_vars
+
+# variable changeable only at configure time (once saved in config.mak they
+#  cannot be overwritten from environment or command line, unless make cfg
+#  is run)
+saved_fixed_vars:=	MAIN_NAME \
+		RELEASE OS ARCH \
+		DEFS DEFS_RM PROFILE CC LD MKDEP MKTAGS LDFLAGS INCLUDES \
+		MOD_LDFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH \
+		LIB_SUFFIX LIB_PREFIX \
+		LIBS \
+		LEX YACC YACC_FLAGS \
+		PREFIX LOCALBASE \
+		TAR \
+		INSTALL INSTALL_CFG INSTALL_BIN INSTALL_MODULES INSTALL_DOC \
+		INSTALL_MAN INSTALL_LIB INSTALL_TOUCH INSTALL_SHARE
+
+# variable changeable at compile time
+# extra: prefix DESTDIR BASEDIR basedirt
+saved_chg_vars:=\
+		CC_EXTRA_OPTS CPU CFLAGS_RM CFLAGS MOD_CFLAGS LIB_CFLAGS	\
+		BASEDIR basedir DESTDIR \
+		PREFIX prefix\
+		cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir \
+		doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir \
+		share_prefix share_dir lib_prefix lib_dir \
+		cfg_target lib_target modules_target
+
 
 #export relevant variables to the sub-makes
-export RELEASE OS ARCH
-export DEFS PROFILE CC LD MKDEP MKTAGS CFLAGS LDFLAGS INCLUDES MOD_CFLAGS \
-		MOD_LDFLAGS LIB_CFLAGS LIB_LDFLAGS LIB_SONAME LD_RPATH \
-		LIB_SUFFIX LIB_PREFIX
-export LIBS
-export LEX YACC YACC_FLAGS
-export PREFIX LOCALBASE
-export TAR
-export cfg_prefix cfg_dir bin_prefix bin_dir modules_prefix modules_dir
-export doc_prefix doc_dir man_prefix man_dir ut_prefix ut_dir
-export lib_prefix lib_dir cfg_target lib_target modules_target
-export INSTALL INSTALL_CFG INSTALL_BIN INSTALL_MODULES INSTALL_DOC INSTALL_MAN 
-export INSTALL_LIB INSTALL_TOUCH
+export $(saved_fixed_vars)
+export $(saved_chg_vars)
 
-endif  # ifeq ($(makefile_defs, 1)
+
+endif # ifneq ($(exported_vars),1)
+endif # ifeq ($(makefile_defs),1)
+

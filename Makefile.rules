@@ -25,7 +25,7 @@
 
 # check if the saved cfg corresponds with the current one
 # (if not rebuild everything)
-ifeq (,$(filter clean %clean clean% proper %proper proper%, $(MAKECMDGOALS)))
+ifeq (,$(filter $(nodep_targets),$(MAKECMDGOALS)))
 -include makecfg.lst
 ifneq ($(strip $(DEFS)), $(strip $(CFG_DEFS)))
 #$(warning different defs: <$(strip $(DEFS))> != )
@@ -92,11 +92,13 @@ SER_LIBS_DEPS:= \
 	$(foreach l, $(SER_LIBS), $(dir $l)$(LIB_PREFIX)$(notdir $l)$(LIB_SUFFIX))
 ALL_LIBS+=$(foreach l, $(SER_LIBS), -L$(dir $l) -l$(notdir $l))
 
-$(NAME): $(SER_LIBS_DEPS) librpath.lst
+$(NAME): librpath.lst $(SER_LIBS_DEPS)
 
-$(SER_LIBS_DEPS):
+$(SER_LIBS_DEPS): FORCE
 	$(MAKE) -wC $(dir $@)  compile_for_install=$(lib_compile_for_install)
 
+.PHONY: FORCE
+FORCE:
 
 ifneq ($(SER_IPATH_LST),)
 
@@ -111,9 +113,6 @@ $(SER_IPATH_LST): FORCE
 		echo "re-building $(@D)" ; \
 		$(MAKE) -wC $(@D) compile_for_install=$(lib_compile_for_install) ; \
 	fi
-
-.PHONY: FORCE
-FORCE:
 
 .PHONY: FORCE-BUILD-LIBS
 FORCE-BUILD-LIBS:
@@ -148,8 +147,7 @@ static: $(objs)
 
 .PHONY: clean
 clean: 
-	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst \
-				makecfg.lst 2>/dev/null
+	-@rm -f $(objs) $(NAME) $(objs:.o=.il) librpath.lst 2>/dev/null
 	-@for r in $(modules) $(static_modules_path) "" ; do \
 		if [ -d "$$r" ]; then \
 			echo "module $$r" ; \
@@ -168,12 +166,15 @@ clean:
 .PHONY: proper
 .PHONY: distclean
 .PHONY: realclean
-proper realclean distclean: clean 
-	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) 2>/dev/null
+proper realclean distclean: mrproper
+
+mrproper: clean 
+	-@rm -f $(depends) $(auto_gen) $(auto_gen_others) \
+			makecfg.lst 2>/dev/null
 	-@for r in $(modules) "" ; do \
 		if [ -d "$$r" ]; then \
-			 $(MAKE) -C $$r proper ; \
-		        $(MAKE) -C $$r/doc proper ; \
+			$(MAKE) -C $$r proper ; \
+			$(MAKE) -C $$r/doc proper ; \
 		fi ; \
 	done 
 	@if [ -n "$(modules)" ]; then \

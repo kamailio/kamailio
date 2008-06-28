@@ -252,9 +252,26 @@ make mode=debug PROFILE=-pg all
 
 make modules=modules/print modules
 
+- compile by default only the print module, in debuging mode and with 
+ profiling:
+
+make cfg modules=modules/print mode=debug PROFILE=-pg
+make all
+
+- compile by default all the usual modules + mysql and postgres, optimized 
+for pentium-m and for space
+
+make cfg include_modules="mysql postgres" CPU=pentium-m CC_EXTRA_OPTS=-Os
+make all
+
 -compile all the "default" modules except textops and vm
 
 make skip_modules="textops vm" modules
+
+- save the above option in the make config, so that all make commands
+will use it by default:
+
+make cfg skip_modules="textops vm"
 
 -compile all default modules and include uri_radius (not compiled by default):
 
@@ -290,10 +307,24 @@ CC=gcc-3.2 make all
 
 Make targets:
 
+Configure:
+
+make cfg or make config (force config regeneration and store it in config.mak)
+
+Example: make cfg include_modules=mysql mode=debug  (all future make 
+invocations will include the mysql module and will build in debug mode)
+
+Note: if config.mak doesn't exist (e.g. initial checkout or after a make 
+proper) or if Makefile.defs was changed, the config will be re-generated
+automatically by the first make command. For example:
+ make cfg  include_modules=mysql; make all is equivalent to 
+ rm config.mak; make include_modules=mysql.
+
+
 Clean:
 
 make clean   (clean the modules too)
-make proper  (clean also the dependencies)
+make proper  (clean also the dependencies and the config)
 make distclean (the same as proper)
 make mantainer-clean (clean everything, including auto generated files,
  tags, *.dbg a.s.o)
@@ -301,6 +332,7 @@ make mantainer-clean (clean everything, including auto generated files,
 Compile:
 
 make proper
+optional: make cfg  <various cfg. options that should be saved>
 make
 (or gmake on non-Linux systems)
 make modules 
@@ -368,6 +400,7 @@ in make all and /usr/local is the default value of prefix).
 Workaround is trivial, use the same parameters in all make commands:
 make prefix=/ all
 make prefix=/ install
+or save the desired prefix in the make config (e.g.: make cfg prefix=/).
 
 That applies to other make parameters as well (for example parameters
 "modules" or "excluded_modules").
