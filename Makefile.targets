@@ -13,7 +13,8 @@
 #  2008-06-26  initial version (andrei) 
 #
 
-clean_targets:=	clean proper distclean realclean mantainer-clean clean_libs
+clean_targets:=	clean proper distclean realclean mantainer-clean clean_libs \
+				clean-all proper-all distclean-all realclean-all
 doc_targets:=	modules-doc modules-readme README modules-man man \
 		install-doc install-modules-doc install-man install-ser-man \
 		install-modules-man

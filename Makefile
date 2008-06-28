@@ -48,8 +48,8 @@
 #  2008-06-23  added 2 new targets: README and man (re-generate the README
 #              or manpages for all the modules) (andrei)
 #  2008-06-25  make cfg support (use a pre-built cfg.: config.mak) (andrei)
-#  2008-06-28  added install-modules-man & error checks for 
-#              install-utils & doc (andrei)
+#  2008-06-28  added clean-all, proper-all, install-modules-man and error 
+#               checks for install-utils & doc (andrei)
 
 auto_gen=lex.yy.c cfg.tab.c #lexx, yacc etc
 auto_gen_others=cfg.tab.h  # auto generated, non-c
@@ -234,13 +234,13 @@ export extra_defs
 # - exclude_modules
 
 ifneq ($(modules_configured),1) 
+modules_all=$(filter-out modules/CVS,$(wildcard modules/*))
 ifneq ($(group_include),)
 	modules=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), \
 			$(addprefix modules/, $(include_modules) ))
 else	
 	# Standard, old resultant set
-	modules_all=$(filter-out CVS, $(wildcard modules/*))
 	modules_noinc=$(filter-out $(addprefix modules/, \
 			$(exclude_modules) $(static_modules)), $(modules_all))
 	modules=$(filter-out $(modules_noinc), \
@@ -732,7 +732,18 @@ clean_libs:
 # cleaning in libs always when cleaning ser
 clean:	clean_libs
 
+#try to clean everything (including all the modules, even ones that are not
+# configured/compiled normally
+.PHONY: clean-all
+clean-all: modules=$(modules_all)
+clean-all: clean
+
 proper realclean distclean: clean_cfg 
+
+.PHONY: proper-all realclean-all distclean-all
+proper-all realclean-all distclean-all: modules=$(modules_all)
+proper-all realclean-all distclean-all: proper
+
 
 .PHONY: clean_cfg
 clean_cfg:
