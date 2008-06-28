@@ -516,7 +516,7 @@ man:
 	done; true
 
 .PHONY: install
-install: install-bin install-modules install-cfg \
+install:all install-bin install-modules install-cfg \
 	install-doc install-man install-utils install-share
 
 .PHONY: dbinstall
