@@ -501,7 +501,7 @@ int subnet_table_insert(struct subnet* table, unsigned int grp,
     }
 
     mask = 32 - mask;
-    subnet = subnet << mask;
+    subnet = htonl(ntohl(subnet) >> mask); //subnet << mask;
 
     i = count - 1;
 
@@ -539,7 +539,7 @@ int match_subnet_table(struct subnet* table, unsigned int grp,
     if (i == count) return -1;
 
     while ((i < count) && (table[i].grp == grp)) {
-	subnet = ip_addr << table[i].mask;
+	subnet = htonl(ntohl(ip_addr) >> table[i].mask); //ip_addr << table[i].mask;
 	if ((table[i].subnet == subnet) &&
 	    ((table[i].port == port) || (table[i].port == 0)))
 	    return 1;
@@ -588,7 +588,7 @@ int subnet_table_mi_print(struct subnet* table, struct mi_node* rpl)
     for (i = 0; i < count; i++) {
 	addr.af = AF_INET;
 	addr.len = 4;
-	addr.u.addr32[0] = table[i].subnet >> table[i].mask;
+	addr.u.addr32[0] = htonl(ntohl(table[i].subnet) << table[i].mask); //table[i].subnet >> table[i].mask;
 	if (addf_mi_node_child(rpl, 0, 0, 0,
 			       "%4d <%u, %s, %u, %u>",
 			       i, table[i].grp, ip_addr2a(&addr),
