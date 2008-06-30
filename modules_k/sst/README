@@ -10,8 +10,8 @@ Ron Winacott
 
    Copyright © 2006 SOMA Networks, Inc.
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -75,8 +75,8 @@ Chapter 1. Admin Guide
    dialog expire timer value for the current context dialog by
    setting the avp value.
 
-   You flag any call setup INVITE that you want to cuase a timed
-   session to be established. This will cuase OpenSER to request
+   You flag any call setup INVITE that you want to cause a timed
+   session to be established. This will cause OpenSER to request
    the use of session times if the UAC does not request it.
 
    All of this happens with a properly configured dialog and sst

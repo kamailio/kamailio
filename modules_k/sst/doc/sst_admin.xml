@@ -29,8 +29,8 @@
 	override the dialog expire timer value for the current context
 	dialog by setting the avp value.</para>
 
-	<para>You flag any call setup INVITE that you want to cuase a
-	timed session to be established. This will cuase OpenSER to
+	<para>You flag any call setup INVITE that you want to cause a
+	timed session to be established. This will cause OpenSER to
 	request the use of session times if the UAC does not request
 	it.</para>
 

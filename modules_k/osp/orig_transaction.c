@@ -86,7 +86,7 @@ static int ospLoadRoutes(
     int result = 0;
     
     for (count = 0; count < destcount; count++) {
-        /* This is necessary becuase we will save destinations in reverse order */
+        /* This is necessary because we will save destinations in reverse order */
         dest = ospInitDestination(&dests[count]);
 
         if (dest == NULL) {
