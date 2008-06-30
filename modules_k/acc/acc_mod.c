@@ -111,7 +111,7 @@ struct acc_extra *log_extra = 0;
 /* ----- RADIUS acc variables ----------- */
 
 #ifdef RAD_ACC
-static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
+static char *radius_config = 0;
 int radius_flag = -1;
 int radius_missed_flag = -1;
 static int service_type = -1;

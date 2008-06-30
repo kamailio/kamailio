@@ -515,8 +515,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
    If the parameter is set to empty string, the RADIUS accounting
    support will be disabled (even if compiled).
 
-   Default value is "/usr/local/etc/radiusclient/radiusclient.conf
-   ".
+   Default value is "NULL".
 
    Example 1.12. radius_config example
 modparam("acc", "radius_config", "/etc/radiusclient/radiusclient.conf")

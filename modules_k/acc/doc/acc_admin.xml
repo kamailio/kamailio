@@ -565,8 +565,7 @@ modparam("acc", "log_extra", "ua=$hdr(User-Agent);uuid=$avp(i:123)")
 		will be disabled (even if compiled).
 		</para>
 		<para>
-		Default value is <quote>/usr/local/etc/radiusclient/radiusclient.conf
-		</quote>.
+		Default value is <quote>NULL</quote>.
 		</para>
 		<example>
 		<title>radius_config example</title>
