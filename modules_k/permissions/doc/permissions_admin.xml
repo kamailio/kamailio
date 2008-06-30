@@ -397,7 +397,7 @@ modparam("permissions", "deny_suffix", ".deny")
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("permissions", "db_url", "mysql://openser:pass@db_host/openser")
+modparam("permissions", "db_url", "&exampledb;")
 ...
 </programlisting>
 		</example>

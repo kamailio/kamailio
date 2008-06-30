@@ -175,7 +175,7 @@ int init_addresses(void)
 {
     if (!db_url.s) {
 	LM_INFO("db_url parameter of permissions module not set, "
-	    "disabling allow_addr\n");
+	    "disabling allow_address\n");
 	return 0;
     } else {
 	if (db_bind_mod(&db_url, &perm_dbf) < 0) {
