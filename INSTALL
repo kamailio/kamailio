@@ -258,8 +258,19 @@ make modules=modules/print modules
 make cfg modules=modules/print mode=debug PROFILE=-pg
 make all
 
+- change & save the  modules list without rebuilding the whole config
+ (so that already compiled modules won't be re-compiled by 
+  make all/make modules):
+
+make modules-cfg include_modules="mysql postgress"
+
+- change only the compile/build options, without changing the modules list:
+
+make cfg-defs CPU=ultrasparc PROFILE=-pg
+
 - compile by default all the usual modules + mysql and postgres, optimized 
-for pentium-m and for space
+for pentium-m and for space (saves both the build options and the module 
+ list)
 
 make cfg include_modules="mysql postgres" CPU=pentium-m CC_EXTRA_OPTS=-Os
 make all
@@ -309,7 +320,7 @@ Make targets:
 
 Configure:
 
-make cfg or make config (force config regeneration and store it in config.mak)
+make cfg or make config (force config and module list regeneration)
 
 Example: make cfg include_modules=mysql mode=debug  (all future make 
 invocations will include the mysql module and will build in debug mode)
@@ -318,16 +329,24 @@ Note: if config.mak doesn't exist (e.g. initial checkout or after a make
 proper) or if Makefile.defs was changed, the config will be re-generated
 automatically by the first make command. For example:
  make cfg  include_modules=mysql; make all is equivalent to 
- rm config.mak; make include_modules=mysql.
+ rm config.mak modules.lst; make include_modules=mysql.
 
+make cfg-defs  (force config regeneration, but don't touch the module list)
+
+Example: make cfg-defs CPU=ultrasparc CC_EXTRA_OPTS=-Os PROFILE=-pg
+
+make modules-cfg or
+make modules-list    (saves the module list, without regenerating the 
+                       build config)
+Example: make modules-list include_modules="tls" skip_modules="print"
 
 Clean:
 
 make clean   (clean the modules too)
 make proper  (clean also the dependencies and the config)
 make distclean (the same as proper)
-make mantainer-clean (clean everything, including make's config, auto 
- generated files, tags, *.dbg a.s.o)
+make mantainer-clean (clean everything, including make's config, saved 
+  module list, auto generated files, tags, *.dbg a.s.o)
 make clean-all (clean all the modules in modules/*)
 make proper-all (like make proper but for all the  modules in modules/*)
 
