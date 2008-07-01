@@ -1,0 +1,529 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbookid/id/g/4.5/docbookx.dtd">
+
+
+<refentry xml:id="module.auth_identity"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:serdoc="http://sip-router.org/xml/serdoc">
+  <refmeta>
+    <refentrytitle>auth_identity</refentrytitle>
+    <manvolnum>7</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>auth_identity</refname>
+    <refpurpose>Securely identify originator of SIP messages.</refpurpose>
+  </refnamediv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>auth_identity</command> SER module provides
+      functionalities for securely identifying originators of SIP
+      messages by implementing the mechanism described in RFC 4474
+      and known as SIP Identity framework.
+    </para>
+    <para>
+      The module provides two services:
+      The <emphasis>authorizer</emphasis> authorizes a message and adds
+      Identity and Identity-Info headers to forwarded requests.
+      The <emphasis>verifier</emphasis> verifies the identity of a
+      received message.
+    </para>
+    <para>
+      In order to use the <command>auth_identity</command> module you
+      have to provide a certificate. More information can be found in
+      the section
+      <serdoc:link linkend="module.auth_identity.certificates">Certificates
+      </serdoc:link> below.
+    </para>
+  </refsect1>
+
+  <refsect1 xml:id="module.auth_identity.functions">
+    <title>Functions</title>
+
+    <refsect2 xml:id="function.auth_add_identity">
+      <title>
+        <function>auth_add_identity</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>auth_add_identity()</function> function authorizes
+        a request by adding identity information to it.
+      </para>
+      <para>
+        It calculates a SHA1 hash over certain components of the message
+        and encrypts it using the private key given through the
+        <serdoc:modparam
+          module="auth_identity">privatekey_path</serdoc:modparam>
+        parameter. The resulting cyphertext is appended to the message
+        as the content of the Identity header field.
+      </para>
+      <para>
+        To allow the receiver to decypher the identity information, it adds
+        the URL where the receiver may find the certificate in the
+        Indentity-Info header field. This URL is set through the
+        <serdoc:modparam
+          module="auth_identity">certificate_url</serdoc:modparam>
+        parameter.
+      </para>
+      <para>
+        <emphasis>Note:</emphasis> After the function has been called,
+        the following header fields must not be modified:
+        From, To, Call-ID, CSeq, Date, Contact. Additionally, the
+        message body must remain unmodified, too.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.auth_date_proc">
+      <title>
+        <function>auth_date_proc</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>auth_date_proc()</function> checks the age of a
+        request to be authroized. If the time given in the Date header
+        field of the request differs by more than the amount of seconds
+        given by the
+        <serdoc:modparam module="auth_identity">msg_timeout</serdoc:modparam>
+        parameter, the function returns <literal>false</literal>. It also
+        returns <literal>false</literal> if the certificate used by the
+        authorizer has expired.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.vrfy_check_callid">
+      <title>
+        <function>vrfy_check_callid</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>vrfy_check_callid()</function> checks whether a
+        request for this call has been processed within the
+        time given by the
+        <serdoc:modparam
+          module="auth_identity">auth_validity_time</serdoc:modparam>
+        parameter.
+      </para>
+      <para>
+        The function generates a call identifier from the Call-ID and CSqe
+        header fields and the Tag parameter of the From header field and
+        compares it with the values stored in the Call-ID cache.
+      </para>
+      <para>
+        It returns <literal>false</literal> if the value is found and thus
+        the request is replayed or <literal>true</literal> otherwise.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.vrfy_check_certificate">
+      <title>
+        <function>vrfy_check_certificate</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>vrfy_check_certificate()</function> function
+        checks the downloaded certificate and returns <literal>true</literal>
+        if it is valid or <literal>false</literal> otherwise.
+      </para>
+      <para>
+        A certificate is considered valid if it has not yet expired and
+        if its subject is identical to the domain part of the URL.
+      </para>
+      <!-- XXX Er, which URL? -->
+      <para>
+        Before <function>vrfy_check_certificate()</function> can be called,
+        the function <function>vrfy_check_date()</function> must have been
+        called and returned <literal>true</literal>.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.vrfy_check_date">
+      <title>
+        <function>vrfy_check_date</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>vrfy_check_date()</function> function checks
+        the date of the request currently being processed. It returns
+        <literal>false</literal> if the time in the Date header field
+        of the request differs from the current system time by more than
+        the number of seconds given by the
+        <serdoc:modparam
+          module="auth_identity">auth_validity_time</serdoc:modparam>
+        parameter.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.vrfy_check_msgvalidity">
+      <title>
+        <function>vrfy_check_msgvalidity</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>vrfy_check_msgvalidity()</function> function
+        checks the integrity of the request currently being processed.
+      </para>
+      <para>
+        It does so by calculating a SHA1 hash over certain parts of the
+        message and comparing it with the hash value that results from
+        decrypting the content of the Identity header field using the
+        certificate previously retrieved using the
+        <function>vrfy_get_certificate()</function> function.
+      </para>
+      <para>
+        The function returns <literal>true</literal> if the two hashes
+        match.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="function.vrfy_get_certificate">
+      <title>
+        <function>vrfy_get_certificate</function>
+        ()
+      </title>
+      <para>
+        Allowed in request processing only.
+      </para>
+      <para>
+        The <function>vrfy_get_certificate()</function> tries to get
+        the certificate from the URL given in the Identity-Info header
+        field of the currently processed request.
+      </para>
+      <para>
+        It returns <literal>true</literal> if the certifcate was
+        successfully loaded in a format that the module can process or
+        <literal>false</literal> otherwise.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+
+  <refsect1 xml:id="module.auth_identity.parameters">
+
+    <refsect2 xml:id="module.auth_identity.accept_pem_certs">
+      <title><parameter>accept_pem_certs</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>boolean</serdoc:paramtype>
+        <serdoc:paramdefault>no</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>accept_pem_certs</parameter> parameter defines,
+        whether the verifier should process certificates in PEM format.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.auth_validity_time">
+      <title><parameter>auth_validity_time</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>3600</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>auth_validity_time</parameter> parameter
+        sets the maximum age of a verified message.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.cainfo_path">
+      <title><parameter>cainfo_path</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>""</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>cainfo_path</parameter> paramter contains the
+        path and name of a file that contains trusted certificates.
+      </para>
+      <para>
+        The file should contain one or more certificates in PEM format
+        concatenated together. It is necessary if the verifier should
+        accept self-signed certifcates.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.callid_cache_limit">
+      <title><parameter>callid_cache_limit</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>262144</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>callid_cache_limit</parameter> parameter
+        limits the number of entries in the Call-ID cache.
+      </para>
+      <para>
+        The Call-IDs of previously verified messages are stored in the
+        Call-ID cache for some time in order to recognize call
+        replay attacks. The cache uses shared memory. Each entry is
+        about 100 bytes in size.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.certificate_cache_limit">
+      <title><parameter>certificate_cache_limit</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>integer</serdoc:paramtype>
+        <serdoc:paramdefault>32768</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>certificate_cache_limit</parameter> parameter
+        limits the number of entries stored in the certificate cache.
+      </para>
+      <para>
+        Each retrieved certificate is placed in the certificate cache
+        to speed up processing should it be needed again.
+      </para>
+      <para>
+        The cahce uses shared memory. Each entry is approximately 600
+        bytes in size.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.certificate_path">
+      <title><parameter>certificate_path</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>""</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>certificate_path</parameter> parameter must be
+        set to path and name of the file that contains the certificate
+        of the authentication service in PEM format.
+      </para>
+      <para>
+        The parameter is required for the authentication service to work.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.certificate_url">
+      <title><parameter>certificate_url</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>""</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>certificate_url</parameter> parameter must be
+        set to the URL where a verifier can retrieve the certificate.
+        The URL will be stored in the Identity-Info header of any
+        authorized request.
+      </para>
+      <para>
+        The certificate must be available at the given URL in DER
+        format.
+      </para>
+      <para>
+        The parameter is required for the authentication service to work.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.msg_timeout">
+      <title><parameter>msg_timeout</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>int</serdoc:paramtype>
+        <serdoc:paramdefault>600</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>msg_timeout</parameter> parameter contains the
+        maximum age of a request to be authorized in seconds.
+      </para>
+      <para>
+        The authorizer will compare the time given in the Date header field
+        of the request with its own current time.
+      </para>
+    </refsect2>
+
+    <refsect2 xml:id="module.auth_identity.privatekey_path">
+      <title><parameter>privatekey_path</parameter></title>
+      <serdoc:paraminfo>
+        <serdoc:paramtype>string</serdoc:paramtype>
+        <serdoc:paramdefault>""</serdoc:paramdefault>
+      </serdoc:paraminfo>
+      <para>
+        The <parameter>privatekey_path</parameter> must be set to the paht
+        and name of the file that contains the private key of the
+        authentication service in PEM format.
+      </para>
+      <para>
+        The parameter is required for the authentication service to work.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 id="modules.auth_identity.examples">
+    <title>Examples</title>
+    <para>
+      The <emphasis>authentifier</emphasis> is typically included in the
+      part of the routing
+      logic that sends a request to a foreign domain. In the
+      <filename>ser-oob.cfg</filename> configuration, this is the
+      <varname>route[OUTBOUND]</varname>. With an authentifier included,
+      it looks like this:
+    </para>
+    <programlisting><![CDATA[
+route[OUTBOUND]
+{
+	if ($f.did && !$t.did) {
+		# Authentication service
+		if (method=="INVITE" || method=="OPTION") {
+			# Identity and Identity-info headers must not exist
+			if (@identity) {
+				t_reply("403", "Invalid Identity header");
+				drop;
+			}
+			if (@identity_info) {
+				t_reply("403", "Invalid Identity-info header");
+				drop;
+			}
+
+			if (!auth_date_proc()) {
+				t_reply("403", "Invalid Date value");
+				drop;
+			}
+
+			if (!auth_add_identity()) {
+				t_reply("480", "Authentication error");
+				drop;
+			}
+		}
+		route(FORWARD);
+	}
+}
+]]></programlisting>
+    <para>
+      The <emphasis>verifier</emphasis> should be run after you discovered
+      that a request originates from a foreign domain (for your own domains,
+      you should be doing digest authentication instead).
+    </para>
+    <para>
+      While you should reject any request that does contain an Identity
+      header but does not verify, it is up to your local policy, what to
+      do with messages that do not contain an Identity header at all.
+      You could reject them or divert them to voice mail or any of a number
+      of other options.
+    </para>
+    <para>
+      The following config snippet rejects any message that does not have
+      an Identity header.
+    </para>
+    <programlisting><![CDATA[
+	if (method=="INVITE" || method=="OPTION") {
+		if (!@identity) {
+			t_reply("428", "Use Identity Header");
+			drop;
+		}
+		if (!@identity_info) {
+			t_reply("436", "Bad Identity-Info");
+			drop;
+		}
+
+		if (!vrfy_check_date()) {
+			t_reply("403", "Outdated Date header value");
+			drop;
+		}
+
+		if (!vrfy_get_certificate()) {
+			t_reply("436", "Bad Identity-Info");
+			drop;
+		}
+
+		if (!vrfy_check_certificate()) {
+			t_reply("437", "Unsupported Certificate");
+			drop;
+		}
+
+		if (!vrfy_check_msgvalidity()) {
+			t_reply("438", "Invalid Identity Header");
+			drop;
+		}
+
+		if (!vrfy_check_callid()) {
+			t_reply("403", "Message is replayed");
+			drop;
+		}
+	}
+]]></programlisting>
+  </refsect1>
+
+  <refsect1 id="modules.auth_identity.credentials">
+    <title>Credentials</title>
+    <serdoc:todo />
+  </refsect1>
+
+  <!--
+    Compilation sections only go into the Admin Guide since we assume
+    that if you read a manpage you already have installed the module.
+  --> 
+  <refsect1 role="admin-guide">
+    <title>Compilation</title>
+    <para>
+      This <command>auth_identity</command> module needs the following
+      headers and libraries:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <emphasis>OpenSSL</emphasis> (version 0.9.8 or higher) for
+        cryptographic functions,
+      </listitem>
+      <listitem>
+        <emphasis>libcURL</emphasis> for HTTP, HTTPS functions.
+      </listitem>
+    </itemizedlist>
+    <para>
+      If you'd like to use the <emphasis>TLS</emphasis> module, too,
+      you will have to change <varname>LIB</varname> variable in the
+      Makefile to the value that is by default commented out.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Known Limitations</title>
+    <para>
+      Both authorizer and verifier currently only support SIP requests
+      except for responses to CANCEL and REGISTER requests.
+    </para>
+    <para>
+      The verifier does not support the subjectAltName extension of
+      certificates.
+    </para>
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>Authors</title>
+    <para>
+      Written by Gergely Kovacs and Martin Hoffmann.
+    </para>
+  </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+    </simplelist>
+  </refsect1>
+
+</refentry>
+
+<!-- vim:sw=2 sta et sts=2 ai
+  -->

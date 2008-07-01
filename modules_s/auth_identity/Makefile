@@ -6,7 +6,7 @@ NAME=auth_identity.so
 
 DEFS+= -Wall -I$(LOCALBASE)/ssl/include
 #
-# Dinamic linking
+# Dynamic linking
 #
 LIBS+= -L$(LOCALBASE)/lib -L$(LOCALBASE)/ssl/lib -lssl -lcrypto -lcurl
 
