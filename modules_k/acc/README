@@ -197,7 +197,7 @@ Chapter 1. Admin Guide
        best knows about call status (including media status and
        PSTN status in case of the gateway).
 
-   The SQL backend support is compiled in the modules. For RADIUS
+   The SQL backend support is compiled in the module. For RADIUS
    and DIAMETER you need to enable it by recompiling the module
    with properly set defines: uncomment the RAD_ACC or DDIAM_ACC
    lines in modules/acc/Makefile. To compile RADIUS support, you
@@ -209,7 +209,12 @@ Chapter 1. Admin Guide
    module's radius_config parameter points to its location. In
    particular, accounting secret must match that one configured in
    server and proper dictionary is used (one is available at
-   etc/sip_dictionary). Uses along with FreeRadius (
+   etc/sip_dictionary). Also note that Debian radiusclient-ng uses
+   /var/run/radius.seq as seqfile but OpenSER Debian init script
+   expects /var/run/openser/openser_radius.seq, so is needed to
+   change it in radiusclient-ng configuration or in OpenSER Debian
+   init script (if not, OpenSER can't create the seq file when not
+   running as root). Uses along with FreeRadius (
    http://www.freeradius.org/) and Radiator (
    http://www.open.com.au/radiator/) servers have been reported to
    us.

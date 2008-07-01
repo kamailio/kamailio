@@ -95,26 +95,30 @@
 		</itemizedlist>
 	</para>
 	<para>
-		The SQL backend support is compiled in the modules. For RADIUS and 
-		DIAMETER you need to enable it by recompiling the module with properly 
+		The SQL backend support is compiled in the module. For RADIUS and
+		DIAMETER you need to enable it by recompiling the module with properly
 		set defines: uncomment the RAD_ACC or DDIAM_ACC lines in
 		modules/acc/Makefile. To compile RADIUS support, 
 		you need to have radiusclient-ng (only versions higher or equal 
 		to 0.5.0) installed on your system which is available from
 		<ulink url='http://developer.berlios.de/projects/radiusclient-ng/'>
-		http://developer.berlios.de/projects/radiusclient-ng/</ulink>. 
+		http://developer.berlios.de/projects/radiusclient-ng/</ulink>.
 		The radius client needs to be configured properly. To do so, use the 
 		template at etc/radiusclient.conf and make sure
-		that module's radius_config parameter points to its location.  
-		In particular, accounting secret must match that one configured in 
+		that module's radius_config parameter points to its location.
+		In particular, accounting secret must match that one configured in
 		server and proper dictionary is used (one is available at 
-		etc/sip_dictionary). Uses along with FreeRadius 
-		(<ulink url='http://www.freeradius.org/'>
+		etc/sip_dictionary). Also note that Debian radiusclient-ng uses
+		/var/run/radius.seq as seqfile but OpenSER Debian init script expects
+		/var/run/openser/openser_radius.seq, so is needed to change it in
+		radiusclient-ng configuration or in OpenSER Debian init script (if not,
+		OpenSER can't create the seq file when not running as root). Uses along
+		with FreeRadius (<ulink url='http://www.freeradius.org/'>
 		http://www.freeradius.org/</ulink>) and Radiator 
 		(<ulink url='http://www.open.com.au/radiator/'>
-		http://www.open.com.au/radiator/</ulink>) servers have been 
+		http://www.open.com.au/radiator/</ulink>) servers have been
 		reported to us.
-	</para>
+        </para>
 	<para>
 	NOTE: diameter support was developed for DISC (DIameter Server Client 
 	project at http://developer.berlios.de/projects/disc/). This project 
