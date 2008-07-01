@@ -1,0 +1,60 @@
+# test results for basex.c
+
+
+pentium-m (core2): 
+gcc -g  -Wall -O9 -mtune=pentium-m -mcpu=pentium-m -D__CPU_x86  ${DEFS} \
+        ../basex.c basex.c -o basex
+
+               4		  8		 16		 32		 40		 64		 80		128
+lookup:
+base16_enc4   83		 96		125		177		205		291		345		509
+base16_dec4
+base16_enc    79		 97		150		208		240		326		390		559
+base16_dec    76		 96		152		217		249		350		402		588
+
+lookup(DEFS=-DBASEX=BASE64)::
+base16_enc4										211
+base16_dec4										252
+base16_enc										231
+base16_dec										251
+lookup_Large (DEFS=-DBASE16_LOOKUP_LARGE -DBASEX=BASE64):
+base16_enc4										218
+base16_dec4										236
+base16_enc										199
+base16_dec										236
+
+no lookup (DEFS=NO_BASE64_LOOKUP_TABLE -DBASEX=BASE64):
+base64_enc  156									1005						
+            181									1242
+lookup (DEFS=-DBASEX=BASE64):
+base64_enc   82			101		120		185		209		302		335		521
+base64_dec   89			103		140		198		208		289		359		546
+lookup_large (DEFS=-DBASE64_LOOKUP_LARGE -DBASEX=BASE64):
+base64_enc   79			 85		103		157		186		268		276		421
+base64_dec   93			103		126		188		207		281		348		510
+
+lookup_8k (DEFS=-DBASE64_LOOKUP_8K -DBASEX=BASE64), -e 1
+base64_enc   77			 94						177						422
+lookup_8k words (like above but -e 0)
+base64_enc   77									156						329
+
+
+ultrasparc:
+gcc -g  -Wall -O9 -mtune=ultrasparc -mcpu=ultrasparc -D__CPU_sparc64 ${DEFS} \
+     ../basex.c basex.c -o basex
+
+no lookup (DEFS=-DNO_BASE64_LOOKUP_TABLE -DBASEX=BASE64):
+base64_enc     			   						 728						  
+              									1425
+lookup (DEFS=-DBASEX=BASE64):
+base64_enc     			   						314						   
+              									260
+lookup_large (DEFS=-DBASE64_LOOKUP_LARGE -DBASEX=BASE64):
+base64_enc     			   						295						   
+
+lookup_8k (DEFS=-DBASE64_LOOKUP_8K -DBASEX=BASE64), -e 1
+base64_enc     			   						323						   
+               									250
+lookup_8k words (like above but -e 0)
+base64_enc   91			118						296						
+            101			117						249
