@@ -106,7 +106,7 @@ extern int endianness_sanity_check();
 /* OSes that don't define BYTE_ORDER (sanity check above makes sure
  *   little & big endian are not defined in the same time )*/
 /* solaris */
-#if defined _LITTLE_ENDIAN && !defined __IS_LITLE_ENDIAN
+#if defined _LITTLE_ENDIAN && !defined __IS_LITTLE_ENDIAN
 	#define __IS_LITTLE_ENDIAN 0x01020304
 #endif
 #if defined _BIG_ENDIAN && !defined __IS_BIG_ENDIAN
@@ -116,7 +116,7 @@ extern int endianness_sanity_check();
 		(defined LITTLE_ENDIAN || defined BIG_ENDIAN)
 /* OSes that don't define BYTE_ORDER (sanity check above makes sure
  *   little & big endian are not defined in the same time )*/
-#if defined LITTLE_ENDIAN && !defined __IS_LITLE_ENDIAN
+#if defined LITTLE_ENDIAN && !defined __IS_LITTLE_ENDIAN
 	#define __IS_LITTLE_ENDIAN 0x01020304
 #endif
 #if defined BIG_ENDIAN && !defined __IS_BIG_ENDIAN
