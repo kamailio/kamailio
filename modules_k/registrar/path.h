@@ -22,13 +22,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+/*!
+ * \file
+ * \brief SIP registrar module - helper functions for Path support
+ * \ingroup registrar   
+ */  
 
 #ifndef REG_PATH_H
 #define REG_PATH_H
 
 #include "../../parser/msg_parser.h"
 
-/*
+/*! \brief
  * Extracts all Path header bodies into one string and
  * checks if first hop is a loose router. It also extracts
  * the received-param of the first hop if path_use_received is 1.

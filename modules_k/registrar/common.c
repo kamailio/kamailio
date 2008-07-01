@@ -28,6 +28,12 @@
  *            from URI (bogdan)
 */
 
+/*!
+ * \file
+ * \brief SIP registrar module
+ * \ingroup registrar
+ */
+
 #include <string.h> 
 #include "../../dprint.h"
 #include "../../ut.h"      /* q_memchr */
@@ -39,7 +45,7 @@
 
 #define MAX_AOR_LEN 256
 
-/*
+/*! \brief
  * Extract Address of Record
  */
 int extract_aor(str* _uri, str* _a)

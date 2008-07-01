@@ -29,7 +29,7 @@
 time_t act_time;
 
 
-/*
+/*! \brief
  * Get actual time and store
  * value in act_time
  */

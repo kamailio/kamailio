@@ -21,6 +21,11 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*!
+ * \file
+ * \brief SIP registrar module - SIP message related functions
+ * \ingroup registrar   
+ */  
 
 
 #ifndef SIP_MSG_H
@@ -31,14 +36,14 @@
 #include "../../parser/contact/parse_contact.h"
 
 
-/*
+/*! \brief
  * Parse the whole message and bodies of all header fields
  * that will be needed by registrar
  */
 int parse_message(struct sip_msg* _m);
 
 
-/*
+/*! \brief
  * Check if the originating REGISTER message was formed correctly
  * The whole message must be parsed before calling the function
  * _s indicates whether the contact was star
@@ -46,19 +51,19 @@ int parse_message(struct sip_msg* _m);
 int check_contacts(struct sip_msg* _m, int* _s);
 
 
-/*
+/*! \brief
  * Get the first contact in message
  */
 contact_t* get_first_contact(struct sip_msg* _m);
 
 
-/* 
+/*! \brief
  * Get next contact in message
  */
 contact_t* get_next_contact(contact_t* _c);
 
 
-/*
+/*! \brief
  * Calculate absolute expires value per contact as follows:
  * 1) If the contact has expires value, use the value. If it
  *    is not zero, add actual time to it
@@ -70,7 +75,7 @@ contact_t* get_next_contact(contact_t* _c);
 void calc_contact_expires(struct sip_msg* _m, param_t* _ep, int* _e);
 
 
-/*
+/*! \brief
  * Calculate contact q value as follows:
  * 1) If q parameter exist, use it
  * 2) If the parameter doesn't exist, use default value

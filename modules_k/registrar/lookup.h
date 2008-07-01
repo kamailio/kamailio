@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - lookup contacts in usrloc
+ * \ingroup registrar   
+ */  
+
 
 #ifndef LOOKUP_H
 #define LOOKUP_H
@@ -29,13 +35,13 @@
 #include "../../parser/msg_parser.h"
 
 
-/*
+/*! \brief
  * Lookup a contact in usrloc and rewrite R-URI if found
  */
 int lookup(struct sip_msg* _m, char* _t, char* _s);
 
 
-/*
+/*! \brief
  * Return true if the AOR in the Request-URI is registered,
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches

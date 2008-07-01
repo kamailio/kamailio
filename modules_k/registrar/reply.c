@@ -29,6 +29,12 @@
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - Send a reply
+ * \ingroup registrar   
+ */  
+
 #include <stdio.h>
 #include "../../ut.h"
 #include "../../parser/msg_parser.h"
@@ -59,7 +65,7 @@
 #define CONTACT_SEP_LEN (sizeof(CONTACT_SEP) - 1)
 
 
-/*
+/*! \brief
  * Buffer for Contact header field
  */
 static struct {
@@ -69,7 +75,7 @@ static struct {
 } contact = {0, 0, 0};
 
 
-/*
+/*! \brief
  * Calculate the length of buffer needed to
  * print contacts
  */
@@ -104,7 +110,7 @@ static inline unsigned int calc_buf_len(ucontact_t* c)
 }
 
 
-/*
+/*! \brief
  * Allocate a memory buffer and print Contact
  * header fields into it
  */
@@ -356,7 +362,7 @@ static int add_unsupported(struct sip_msg* _m, str* _p)
  	return 0;
 }
  
-/*
+/*! \brief
  * Send a reply
  */
 int send_reply(struct sip_msg* _m)
@@ -428,7 +434,7 @@ int send_reply(struct sip_msg* _m)
 }
 
 
-/*
+/*! \brief
  * Release contact buffer if any
  */
 void free_contact_buf(void)

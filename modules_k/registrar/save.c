@@ -38,6 +38,11 @@
  * 2007-02-24  sip_natping_flag moved into branch flags, so migrated to 
  *             nathelper module (bogdan)
  */
+/*!
+ * \file
+ * \brief SIP registrar module - Process REGISTER request and send reply
+ * \ingroup registrar   
+ */  
 
 
 #include "../../str.h"
@@ -66,7 +71,7 @@
 
 static int mem_only = 0;
 
-/*
+/*! \brief
  * Process request that contained a star, in that case, 
  * we will remove all bindings with the given username 
  * from the usrloc and return 200 OK response
@@ -109,7 +114,7 @@ static inline int star(udomain_t* _d, str* _a)
 }
 
 
-/*
+/*! \brief
  */
 static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 {
@@ -158,7 +163,7 @@ static struct socket_info *get_sock_hdr(struct sip_msg *msg)
 
 
 
-/*
+/*! \brief
  * Process request that contained no contact header
  * field, it means that we have to send back a response
  * containing a list of all existing bindings for the
@@ -187,7 +192,7 @@ static inline int no_contacts(udomain_t* _d, str* _a)
 
 
 
-/*
+/*! \brief
  * Fills the common part (for all contacts) of the info structure
  */
 static inline ucontact_info_t* pack_ci( struct sip_msg* _m, contact_t* _c,
@@ -340,7 +345,7 @@ error:
 
 
 
-/*
+/*! \brief
  * Message contained some contacts, but record with same address
  * of record was not found so we have to create a new record
  * and insert all contacts from the message that have expires
@@ -503,7 +508,7 @@ static int test_max_contacts(struct sip_msg* _m, urecord_t* _r, contact_t* _c,
 }
 
 
-/*
+/*! \brief
  * Message contained some contacts and appropriate
  * record was found, so we have to walk through
  * all contacts and do the following:
@@ -639,7 +644,7 @@ error:
 }
 
 
-/* 
+/*! \brief
  * This function will process request that
  * contained some contact header fields
  */
@@ -678,7 +683,7 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 }
 
 
-/*
+/*! \brief
  * Process REGISTER request and save it's contacts
  */
 #define is_cflag_set(_name) (((unsigned int)(unsigned long)_cflags)&(_name))

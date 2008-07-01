@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - common stuff
+ * \ingroup registrar   
+ */  
+
 
 #ifndef COMMON_H
 #define COMMON_H
@@ -29,7 +35,7 @@
 #include "../../str.h"
 
 
-/*
+/*! \brief
  * Extract Address Of Record
  */
 int extract_aor(str* _uri, str* _a);

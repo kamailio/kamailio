@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - send a reply
+ * \ingroup registrar   
+ */  
+
 
 #ifndef REPLY_H
 #define REPLY_H
@@ -29,19 +35,19 @@
 #include "../../parser/msg_parser.h"
 #include "../usrloc/ucontact.h"
 
-/*
+/*! \brief
  * Send a reply
  */
 int send_reply(struct sip_msg* _m);
 
 
-/*
+/*! \brief
  * Build Contact HF for reply
  */
 int build_contact(ucontact_t* c);
 
 
-/*
+/*! \brief
  * Release contact buffer if any
  */
 void free_contact_buf(void);

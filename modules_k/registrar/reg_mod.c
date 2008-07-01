@@ -44,6 +44,17 @@
  *
  */
 
+/*!
+ * \defgroup registrar SIP Registrar support
+ * The module contains REGISTER processing logic.
+ */  
+
+/*!
+ * \file
+ * \brief SIP registrar module - interface
+ * \ingroup registrar   
+ */  
+
 #include <stdio.h>
 #include "../../sr_module.h"
 #include "../../timer.h"
@@ -64,53 +75,40 @@
 MODULE_VERSION
 
 
-/* Module init & destroy function */
+/*! \brief Module init & destroy function */
 static int  mod_init(void);
 static int  child_init(int);
 static void mod_destroy(void);
-/* Fixup functions */
+/*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
-/* Functions */
+/*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
 
-/* Default expires value in seconds */
-int default_expires = 3600;
-/* Default q value multiplied by 1000 */
-qvalue_t default_q  = Q_UNSPECIFIED;
-/* If set to 1, lookup will put all contacts found in msg structure */
-int append_branches = 1;
-/* If set to 1, username in aor will be case sensitive */
-int case_sensitive  = 0;
-/* if the TCP connection should be kept open */
-int tcp_persistent_flag = -1;
-/* Minimum expires the phones are allowed to use in seconds
- * use 0 to switch expires checking off */
-int min_expires     = 60;
-/* Maximum expires the phones are allowed to use in seconds,
- * use 0 to switch expires checking off */
-int max_expires     = 0;
-/* Maximum number of contacts per AOR */
-int max_contacts = 0;
-/* The value of Retry-After HF in 5xx replies */
-int retry_after = 0;
-/* if the looked up contacts should be filtered based on supported methods */
-int method_filtering = 0;
-/* if the Path HF should be handled */
-int path_enabled = 0;
-/* if the Path HF should be inserted in the reply.
- *   - STRICT (2): always insert, error if no support indicated in request
- *   - LAZY   (1): insert only if support indicated in request
- *   - OFF    (0): never insert */
-int path_mode = PATH_MODE_STRICT;
-/* if the received- and nat-parameters of last Path uri should be used
- * to determine if UAC is nat'ed */
-int path_use_params = 0;
+int default_expires = 3600; 			/*!< Default expires value in seconds */
+qvalue_t default_q  = Q_UNSPECIFIED;		/*!< Default q value multiplied by 1000 */
+int append_branches = 1;			/*!< If set to 1, lookup will put all contacts found in msg structure */
+int case_sensitive  = 0;			/*!< If set to 1, username in aor will be case sensitive */
+int tcp_persistent_flag = -1;			/*!< if the TCP connection should be kept open */
+int min_expires     = 60;			/*!< Minimum expires the phones are allowed to use in seconds
+ 						 * use 0 to switch expires checking off */
+int max_expires     = 0;			/*!< Maximum expires the phones are allowed to use in seconds,
+ 						 * use 0 to switch expires checking off */
+int max_contacts = 0;				/*!< Maximum number of contacts per AOR (0=no checking) */
+int retry_after = 0;				/*!< The value of Retry-After HF in 5xx replies */
+int method_filtering = 0;			/*!< if the looked up contacts should be filtered based on supported methods */
+int path_enabled = 0;				/*!< if the Path HF should be handled */
+int path_mode = PATH_MODE_STRICT;		/*!< if the Path HF should be inserted in the reply.
+ 			*   - STRICT (2): always insert, error if no support indicated in request
+ 			*   - LAZY   (1): insert only if support indicated in request
+ 			*   - OFF    (0): never insert */
 
-/* if instead of extacting the AOR from the request, it should be 
- * fetched via this AVP ID */
-char *aor_avp_param =0;
+int path_use_params = 0;			/*!< if the received- and nat-parameters of last Path uri should be used
+ 						 * to determine if UAC is nat'ed */
+
+char *aor_avp_param =0;				/*!< if instead of extacting the AOR from the request, it should be 
+ 						 * fetched via this AVP ID */
 unsigned short aor_avp_type=0;
 int_str aor_avp_name;
 
@@ -119,7 +117,7 @@ unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
 
 int reg_use_domain = 0;
-char* realm_pref    = "";   /* Realm prefix to be removed */
+char* realm_pref    = "";   			/*!< Realm prefix to be removed */
 str realm_prefix;
 
 int sock_flag = -1;
@@ -138,7 +136,7 @@ stat_var *default_expire_stat;
 struct sl_binds slb;
 
 
-/*
+/*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -156,7 +154,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
+/*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
@@ -183,7 +181,7 @@ static param_export_t params[] = {
 };
 
 
-/* We expose internal variables via the statistic framework below.*/
+/*! \brief We expose internal variables via the statistic framework below.*/
 stat_export_t mod_stats[] = {
 	{"max_expires",       STAT_NO_RESET, &max_expires_stat        },
 	{"max_contacts",      STAT_NO_RESET, &max_contacts_stat       },
@@ -194,7 +192,7 @@ stat_export_t mod_stats[] = {
 };
 
 
-/*
+/*! \brief
  * Module exports structure
  */
 struct module_exports exports = {
@@ -213,7 +211,7 @@ struct module_exports exports = {
 };
 
 
-/*
+/*! \brief
  * Initialize parent
  */
 static int mod_init(void)
@@ -332,7 +330,7 @@ static int child_init(int rank)
 }
 
 
-/*
+/*! \brief
  * Convert char* parameter to udomain_t* pointer
  */
 static int domain_fixup(void** param, int param_no)
@@ -351,7 +349,7 @@ static int domain_fixup(void** param, int param_no)
 }
 
 
-/*
+/*! \brief
  * Fixup for "save" function - both domain and flags
  */
 static int save_fixup(void** param, int param_no)

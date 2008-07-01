@@ -33,6 +33,12 @@
  *             nathelper module (bogdan)
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - interface
+ * \ingroup registrar   
+ */  
+
 
 #ifndef REG_MOD_H
 #define REG_MOD_H
@@ -89,7 +95,7 @@ extern int path_use_params;
 extern str sock_hdr_name;
 extern int sock_flag;
 
-usrloc_api_t ul;  /* Structure containing pointers to usrloc functions */
+usrloc_api_t ul;  /*!< Structure containing pointers to usrloc functions */
 
 extern struct sl_binds slb;
 

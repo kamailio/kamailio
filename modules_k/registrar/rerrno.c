@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - registrar errno
+ * \ingroup registrar   
+ */  
+
 
 #include "rerrno.h"
 

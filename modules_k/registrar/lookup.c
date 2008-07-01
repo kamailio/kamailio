@@ -25,6 +25,11 @@
  * ---------
  * 2003-03-12 added support for zombie state (nils)
  */
+/*!
+ * \file
+ * \brief SIP registrar module - lookup contacts in usrloc
+ * \ingroup registrar  
+ */  
 
 
 #include <string.h>
@@ -45,9 +50,9 @@
 	( !method_filtering || ((_msg)->REQ_METHOD)&((_c)->methods) )
 
 
-/*
+/*! \brief
  * Lookup contact in the database and rewrite Request-URI
- * Returns: -1 : not found
+ * \return: -1 : not found
  *          -2 : found but method not allowed
  *          -3 : error
  */
@@ -163,7 +168,7 @@ done:
 }
 
 
-/*
+/*! \brief the is_registered() function
  * Return true if the AOR in the Request-URI is registered,
  * it is similar to lookup but registered neither rewrites
  * the Request-URI nor appends branches

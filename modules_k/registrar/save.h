@@ -28,6 +28,11 @@
  *             <sobomax@portaone.com> (janakj)
  * 2006-11-22  save_noreply and save_memory merged into save() (bogdan)
  */
+/*!
+ * \file
+ * \brief SIP registrar module - process REGISTER message
+ * \ingroup registrar   
+ */  
 
 
 #ifndef SAVE_H
@@ -37,7 +42,7 @@
 #include "../../parser/msg_parser.h"
 
 
-/*
+/*! \brief
  * Process REGISTER request and save it's contacts
  */
 int save(struct sip_msg* _m, char* _d, char* _cflags);

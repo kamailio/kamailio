@@ -22,6 +22,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+/*!
+ * \file
+ * \brief SIP registrar module - Helper functions for Path support
+ * \ingroup registrar   
+ */  
 
 
 #include "../../data_lump.h"
@@ -30,7 +35,7 @@
 #include "path.h"
 #include "reg_mod.h"
 
-/*
+/*! \brief
  * Combines all Path HF bodies into one string.
  */
 int build_path_vector(struct sip_msg *_m, str *path, str *received)

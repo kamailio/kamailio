@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SIP registrar module - time related functions
+ * \ingroup registrar   
+ */  
+
 
 #ifndef REGTIME_H
 #define REGTIME_H
@@ -32,7 +38,7 @@
 extern time_t act_time;
 
 
-/*
+/*! \brief
  * Get actual time and store
  * value in act_time
  */
