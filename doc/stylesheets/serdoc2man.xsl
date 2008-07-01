@@ -10,8 +10,12 @@
                 version='1.0'
                 xml:lang="en">
                 
+<!-- Don't include stuff with role="admin-guide" -->
+<xsl:template match="* [@role='admin-guide']" />
+
 <!-- Get the docbook2man XSLT -->
 <xsl:include href="http://docbook2x.sourceforge.net/latest/xslt/man/docbook.xsl" />
+
 
 <xsl:template match="serdoc:todo">
   <para>
