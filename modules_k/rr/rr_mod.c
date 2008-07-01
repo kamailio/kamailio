@@ -34,6 +34,11 @@
  *              parameters; add_rr_param may be called from BRANCH and FAILURE
  *              routes (bogdan)
  */
+/*!
+ * \file
+ * \brief Route & Record-Route module
+ * \ingroup rr
+ */
 
 
 #include <stdio.h>
@@ -80,7 +85,7 @@ static int w_add_rr_param(struct sip_msg *,char *, char *);
 static int w_check_route_param(struct sip_msg *,char *, char *);
 static int w_is_direction(struct sip_msg *,char *, char *);
 
-/*
+/*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -103,7 +108,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
+/*! \brief
  * Exported parameters
  */
 static param_export_t params[] ={ 
@@ -120,17 +125,17 @@ static param_export_t params[] ={
 
 struct module_exports exports = {
 	"rr",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,        /* Exported functions */
-	params,      /* Exported parameters */
-	0,           /* exported statistics */
-	0,           /* exported MI functions */
-	0,           /* exported pseudo-variables */
-	0,           /* extra processes */
-	mod_init,    /* initialize module */
-	0,           /* response function*/
-	mod_destroy, /* destroy function */
-	0            /* per-child init function */
+	DEFAULT_DLFLAGS, /*!< dlopen flags */
+	cmds,        /*!< Exported functions */
+	params,      /*!< Exported parameters */
+	0,           /*!< exported statistics */
+	0,           /*!< exported MI functions */
+	0,           /*!< exported pseudo-variables */
+	0,           /*!< extra processes */
+	mod_init,    /*!< initialize module */
+	0,           /*!< response function*/
+	mod_destroy, /*!< destroy function */
+	0            /*!< per-child init function */
 };
 
 

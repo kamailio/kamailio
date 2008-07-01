@@ -31,6 +31,13 @@
  *            the port or the IP address (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module, loose routing support
+ * \ingroup rr
+ */
+
+
 
 #include <string.h>
 #include "../../ut.h"

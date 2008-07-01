@@ -26,6 +26,12 @@
  * 2003-03-15 License added (janakj)
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module interface
+ * \ingroup rr
+ */
+
 #ifndef RR_MOD_H
 #define RR_MOD_H
 

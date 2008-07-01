@@ -25,6 +25,12 @@
  *  2005-08-02  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module
+ * \ingroup rr
+ */
+
 #ifndef RR_CB_H_
 #define RR_CB_H_
 
@@ -32,29 +38,29 @@
 #include "../../parser/msg_parser.h"
 
 
-/* callback function prototype */
+/*! \brief callback function prototype */
 typedef void (rr_cb_t) (struct sip_msg* req, str *rr_param, void *param);
-/* register callback function prototype */
+/*! \brief register callback function prototype */
 typedef int (*register_rrcb_t)( rr_cb_t f, void *param);
 
 
 
 
 struct rr_callback {
-	int id;                   /* id of this callback - useless */
-	rr_cb_t* callback;        /* callback function */
-	void *param;              /* param to be passed to callback function */
-	struct rr_callback* next; /* next callback element*/
+	int id;                   /*!< id of this callback - useless */
+	rr_cb_t* callback;        /*!< callback function */
+	void *param;              /*!< param to be passed to callback function */
+	struct rr_callback* next; /*!< next callback element*/
 };
 
 
 void destroy_rrcb_lists();
 
 
-/* register a RR callback */
+/*! \brief register a RR callback */
 int register_rrcb(rr_cb_t f, void *param );
 
-/* run RR transaction callbacks */
+/*! \brief run RR transaction callbacks */
 void run_rr_callbacks( struct sip_msg *req, str *rr_param);
 
 

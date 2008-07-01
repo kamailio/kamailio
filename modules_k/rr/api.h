@@ -25,6 +25,13 @@
  *  2005-08-02  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief RR module API
+ * \ingroup rr
+ */
+
+
 #ifndef RR_API_H_
 #define RR_API_H_
 
@@ -49,13 +56,13 @@ struct rr_binds {
 
 typedef  int (*load_rr_f)( struct rr_binds* );
 
-/*
+/*! \brief
  * function exported by module - it will load the other functions
  */
 int load_rr( struct rr_binds * );
 
 
-/*
+/*! \brief
  * function to be called directly from other modules 
  * to load the RR API
  */

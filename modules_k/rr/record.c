@@ -31,6 +31,16 @@
  *            routes (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module, loose routing support
+ * \ingroup rr
+ */
+
+/*!
+ * \defgroup rr Route & Record-Route Module
+ */
+
 #include <string.h>
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -66,13 +76,14 @@
 #define RR_PARAM_BUF_SIZE 512
 
 
-/* RR param buffer - usd for storing RR param which are
- * added before RR insertion -bogdan */
+/*! \brief RR param buffer 
+ *  \note used for storing RR param which are added before RR insertion -bogdan 
+ */
 static char rr_param_buf_ptr[RR_PARAM_BUF_SIZE];
 static str rr_param_buf = {rr_param_buf_ptr,0};
 static unsigned int rr_param_msg;
 
-/*
+/*! \brief
  * Extract username from the Request URI
  * First try to look at the original Request URI and if there
  * is no username use the new Request URI
@@ -106,7 +117,7 @@ static inline int get_username(struct sip_msg* _m, str* _user)
 
 
 static inline struct lump *insert_rr_param_lump(struct lump *before,
-															char *s, int l)
+						char *s, int l)
 {
 	struct lump *rrp_l;
 	char *s1;
@@ -130,11 +141,11 @@ static inline struct lump *insert_rr_param_lump(struct lump *before,
 }
 
 
-/*
+/*! \brief
  * build a Record-Route header field
  */
 static inline int build_rr(struct lump* _l, struct lump* _l2, str* user,
-										str *tag, str *params, int _inbound)
+						str *tag, str *params, int _inbound)
 {
 	char* prefix, *suffix, *term, *r2;
 	int suffix_len, prefix_len;
@@ -242,7 +253,7 @@ lump_err:
 }
 
 
-/*
+/*! \brief
  * Insert a new Record-Route header field
  * And also 2nd one if it is enabled and realm changed so
  * the 2nd record-route header will be necessary
@@ -317,7 +328,7 @@ int record_route(struct sip_msg* _m, str *params)
 }
 
 
-/*
+/*! \brief
  * Insert manually created Record-Route header, no checks, no restrictions,
  * always adds lr parameter, only fromtag is added automatically when requested
  */
@@ -436,7 +447,7 @@ static struct lump *get_rr_param_lump( struct lump** root)
 }
 
 
-/*
+/*! \brief
  * Appends a new Record-Route parameter
  */
 int add_rr_param(struct sip_msg* msg, str* rr_param)

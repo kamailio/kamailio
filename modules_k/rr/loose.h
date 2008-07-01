@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module, loose routing support
+ * \ingroup rr
+ */
+
 
 #ifndef LOOSE_H
 #define LOOSE_H
@@ -34,25 +40,25 @@
 #define RR_FLOW_DOWNSTREAM  (1<<0)
 #define RR_FLOW_UPSTREAM    (1<<1)
 
-/*
+/*! \brief
  * Do loose routing as per RFC3261
  */
 int loose_route(struct sip_msg* _m, char* _s1, char* _s2);
 
 
-/*
+/*! \brief
  * Check if the our route hdr has required params
  */
 int check_route_param(struct sip_msg *msg, regex_t* re);
 
 
-/*
+/*! \brief
  * Check the direction of the message
  */
 int is_direction(struct sip_msg *msg, int dir);
 
 
-/*
+/*! \brief
  * Gets the value of a route parameter
  */
 int get_route_param( struct sip_msg *msg, str *name, str *val);

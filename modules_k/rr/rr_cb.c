@@ -25,6 +25,12 @@
  *  2005-08-02  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module, callback API
+ * \ingroup rr
+ */
+
 #include "../../mem/mem.h"
 #include "rr_cb.h"
 

@@ -25,6 +25,12 @@
  *  2005-08-02  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief OpenSER RR module (record-routing)
+ * \ingroup rr
+ */
+
 
 #include "../../sr_module.h"
 #include "loose.h"

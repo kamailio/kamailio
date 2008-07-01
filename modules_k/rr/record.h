@@ -27,6 +27,12 @@
  * 2005-04-10 add_rr_param() function added (bogdan)
  */
 
+/*!
+ * \file
+ * \brief Route & Record-Route module
+ * \ingroup rr
+ */
+
 #ifndef RECORD_H
 #define RECORD_H
 
@@ -34,20 +40,20 @@
 #include "../../str.h"
 
 
-/*
+/*! \brief
  * Insert a new Record-Route header field with lr parameter
  */
 int record_route(struct sip_msg* _m, str* _param);
 
 
-/*
+/*! \brief
  * Insert manually created Record-Route header, no checks, no restrictions,
  * always adds lr parameter, only fromtag is added automatically when requested
  */
 int record_route_preset(struct sip_msg* _m, str* _data);
 
 
-/*
+/*! \brief
  * Appends a new Record-Route parameter
  */
 int add_rr_param(struct sip_msg* msg, str* rr_param);
