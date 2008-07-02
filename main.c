@@ -162,6 +162,8 @@
 #include "cfg/cfg.h"
 #include "cfg/cfg_struct.h"
 #include "cfg_core.h"
+#include "endianness.h" /* init */
+#include "basex.h" /* init */
 
 #ifdef DEBUG_DMALLOC
 #include <dmalloc.h>
@@ -1721,6 +1723,15 @@ try_again:
 			&core_cfg)
 	) {
 		LOG(L_CRIT, "could not declare the core configuration\n");
+		goto error;
+	}
+
+	if (endianness_sanity_check() != 0){
+		LOG(L_CRIT, "BUG: endianness sanity tests failed\n");
+		goto error;
+	}
+	if (init_basex() != 0){
+		LOG(L_CRIT, "could not initialize base* framework\n");
 		goto error;
 	}
 	
