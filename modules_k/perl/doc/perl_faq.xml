@@ -36,7 +36,7 @@
 	    </question>
 	    <answer>
 		<para>
-			Take a look at &serhomelink;.
+			Take a look at &openserhomelink;.
 		</para>
 	    </answer>
 	</qandaentry>
@@ -51,10 +51,10 @@
 		</para>
 		<itemizedlist>
 		    <listitem>
-			<para>User Mailing List - &seruserslink;</para>
+			<para>User Mailing List - &openseruserslink;</para>
 		    </listitem>
 		    <listitem>
-			<para>Developer Mailing List - &serdevlink;</para>
+			<para>Developer Mailing List - &openserdevlink;</para>
 		    </listitem>
 		</itemizedlist>
 		<para>
@@ -75,7 +75,7 @@
 	    <answer>
 		<para>
 			Please follow the guidelines provided at:
-			&serbugslink;.
+			&openserbugslink;.
 		</para>
 	    </answer>
 	</qandaentry>
