@@ -22,13 +22,19 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief USRLOC - Hash table collision slot related functions
+ *  \ingroup usrloc
+ */
+
+
 
 #include "hslot.h"
 
 int ul_locks_no=4;
 gen_lock_set_t* ul_locks=0;
 
-/*
+/*! \brief
  * Initialize locks
  */
 int ul_init_locks(void)
@@ -114,7 +120,7 @@ int init_slot(struct udomain* _d, hslot_t* _s, int n)
 }
 
 
-/*
+/*! \brief
  * Deinitialize given slot structure
  */
 void deinit_slot(hslot_t* _s)
@@ -134,7 +140,7 @@ void deinit_slot(hslot_t* _s)
 }
 
 
-/*
+/*! \brief
  * Add an element to an slot's linked list
  */
 void slot_add(hslot_t* _s, struct urecord* _r)
@@ -151,7 +157,7 @@ void slot_add(hslot_t* _s, struct urecord* _r)
 }
 
 
-/*
+/*! \brief
  * Remove an element from slot linked list
  */
 void slot_rem(hslot_t* _s, struct urecord* _r)

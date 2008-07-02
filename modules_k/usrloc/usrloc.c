@@ -28,7 +28,11 @@
  *            of registered users.  (Jeffrey Magder - SOMA Networks)
  */
 
- 
+/*! \file
+ *  \brief USRLOC - Usrloc interface
+ *  \ingroup usrloc
+ */
+
 #include "usrloc.h"
 #include "../../sr_module.h"
 #include "ul_mod.h"

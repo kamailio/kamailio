@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief USRLOC - Hash table collision slot related functions
+ *  \ingroup usrloc
+ */
+
+
 
 #ifndef HSLOT_H
 #define HSLOT_H
@@ -37,36 +43,36 @@ struct urecord;
 
 
 typedef struct hslot {
-	int n;                  /* Number of elements in the collision slot */
-	struct urecord* first;  /* First element in the list */
-	struct urecord* last;   /* Last element in the list */
-	struct udomain* d;      /* Domain we belong to */
+	int n;                  /*!< Number of elements in the collision slot */
+	struct urecord* first;  /*!< First element in the list */
+	struct urecord* last;   /*!< Last element in the list */
+	struct udomain* d;      /*!< Domain we belong to */
 #ifdef GEN_LOCK_T_PREFERED
-	gen_lock_t *lock;       /* Lock for hash entry - fastlock */
+	gen_lock_t *lock;       /*!< Lock for hash entry - fastlock */
 #else
-	int lockidx;            /* Lock index for hash entry - the rest*/
+	int lockidx;            /*!< Lock index for hash entry - the rest*/
 #endif
 } hslot_t;
 
-/*
+/*! \brief
  * Initialize slot structure
  */
 int init_slot(struct udomain* _d, hslot_t* _s, int n);
 
 
-/*
+/*! \brief
  * Deinitialize given slot structure
  */
 void deinit_slot(hslot_t* _s);
 
 
-/*
+/*! \brief
  * Add an element to slot linked list
  */
 void slot_add(hslot_t* _s, struct urecord* _r);
 
 
-/*
+/*! \brief
  * Remove an element from slot linked list
  */
 void slot_rem(hslot_t* _s, struct urecord* _r);

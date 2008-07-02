@@ -28,6 +28,12 @@
  *            (bogdan)
  */
 
+/*! \file
+ *  \brief USRLOC - List of registered domains
+ *  \ingroup usrloc
+ */
+
+
 
 #ifndef DLIST_H
 #define DLIST_H
@@ -71,13 +77,13 @@ void free_all_udomains(void);
 void print_all_udomains(FILE* _f);
 
 
-/*
+/*! \brief
  * Called from timer
  */
 int synchronize_all_udomains(void);
 
 
-/*
+/*! \brief
  * Get contacts to all registered users
  */
 typedef int  (*get_all_ucontacts_t) (void* buf, int len, unsigned int flags,
@@ -90,7 +96,7 @@ int get_all_ucontacts(void *, int, unsigned int,
 unsigned long get_number_of_users();
 
 
-/*
+/*! \brief
  * Find a particular domain
  */
 int find_domain(str* _d, udomain_t** _p);

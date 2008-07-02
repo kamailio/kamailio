@@ -28,6 +28,10 @@
  * 2004-06-07 updated to the new DB api (andrei)
  */
 
+/*! \file
+ *  \brief USRLOC - Usrloc record structure
+ *  \ingroup usrloc
+ */
 
 
 #include "urecord.h"
@@ -45,7 +49,7 @@ int matching_mode = CONTACT_ONLY;
 
 int cseq_delay = 20;
 
-/*
+/*! \brief
  * Create and initialize new record structure
  */
 int new_urecord(str* _dom, str* _aor, urecord_t** _r)
@@ -72,7 +76,7 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 }
 
 
-/*
+/*! \brief
  * Free all memory used by the given structure
  * The structure must be removed from all linked
  * lists first
@@ -95,7 +99,7 @@ void free_urecord(urecord_t* _r)
 }
 
 
-/*
+/*! \brief
  * Print a record
  */
 void print_urecord(FILE* _f, urecord_t* _r)
@@ -120,7 +124,7 @@ void print_urecord(FILE* _f, urecord_t* _r)
 }
 
 
-/*
+/*! \brief
  * Add a new contact
  * Contacts are ordered by: 1) q 
  *                          2) descending modification time
@@ -168,7 +172,7 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 }
 
 
-/*
+/*! \brief
  * Remove the contact from lists
  */
 void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
@@ -188,7 +192,7 @@ void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 
 
 
-/*
+/*! \brief
  * Remove contact from the list and delete
  */
 void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
@@ -199,7 +203,7 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * This timer routine is used when
  * db_mode is set to NO_DB
  */
@@ -234,7 +238,7 @@ static inline int nodb_timer(urecord_t* _r)
 
 
 
-/*
+/*! \brief
  * This routine is used when db_mode is
  * set to WRITE_THROUGH
  */
@@ -273,7 +277,7 @@ static inline int wt_timer(urecord_t* _r)
 
 
 
-/*
+/*! \brief
  * Write-back timer
  */
 static inline int wb_timer(urecord_t* _r)
@@ -392,7 +396,7 @@ int db_delete_urecord(urecord_t* _r)
 }
 
 
-/*
+/*! \brief
  * Release urecord previously obtained
  * through get_urecord
  */
@@ -406,7 +410,7 @@ void release_urecord(urecord_t* _r)
 }
 
 
-/*
+/*! \brief
  * Create and insert new contact
  * into urecord
  */
@@ -434,7 +438,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 }
 
 
-/*
+/*! \brief
  * Delete ucontact from urecord
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
@@ -487,7 +491,7 @@ static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
 }
 
 
-/*
+/*! \brief
  * Get pointer to ucontact with given contact
  * Returns:
  *      0 - found

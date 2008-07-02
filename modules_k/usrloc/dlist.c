@@ -29,6 +29,11 @@
  *            (bogdan)
  */
 
+/*! \file
+ *  \brief USRLOC - List of registered domains
+ *  \ingroup usrloc
+ */
+
 
 #include "dlist.h"
 #include <stdlib.h>	       /* abort */
@@ -45,15 +50,15 @@
 #include "ul_mod.h"
 
 
-/*
+/*! \brief
  * List of all registered domains
  */
 dlist_t* root = 0;
 
 
-/*
+/*! \brief
  * Find domain with the given name
- * Returns 0 if the domain was found
+ * \return 0 if the domain was found
  * and 1 of not
  */
 static inline int find_dlist(str* _n, dlist_t** _d)
@@ -337,7 +342,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 
 
 
-/*
+/*! \brief
  * Return list of all contacts for all currently registered
  * users in all domains. Caller must provide buffer of
  * sufficient length for fitting all those contacts. In the
@@ -371,12 +376,11 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 
 
 
-/*
+/*! \brief
  * Create a new domain structure
- * Returns 0 if everything went OK, otherwise value < 0
- * is returned
+ * \return 0 if everything went OK, otherwise value < 0 is returned
  *
- * The structure is NOT created in shared memory so the
+ * \note The structure is NOT created in shared memory so the
  * function must be called before ser forks if it should
  * be available to all processes
  */
@@ -418,7 +422,7 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 }
 
 
-/*
+/*! \brief
  * Function registers a new domain with usrloc
  * if the domain exists, pointer to existing structure
  * will be returned, otherwise a new domain will be
@@ -481,7 +485,7 @@ err:
 }
 
 
-/*
+/*! \brief
  * Free all allocated memory
  */
 void free_all_udomains(void)
@@ -499,7 +503,7 @@ void free_all_udomains(void)
 }
 
 
-/*
+/*! \brief
  * Just for debugging
  */
 void print_all_udomains(FILE* _f)
@@ -517,7 +521,9 @@ void print_all_udomains(FILE* _f)
 }
 
 
-/* Loops through all domains summing up the number of users. */
+/*! \brief
+ *  Loops through all domains summing up the number of users. 
+ */
 unsigned long get_number_of_users(void)
 {
 	int numberOfUsers = 0;
@@ -536,7 +542,7 @@ unsigned long get_number_of_users(void)
 }
 
 
-/*
+/*! \brief
  * Run timer handler of all domains
  */
 int synchronize_all_udomains(void)
@@ -558,7 +564,7 @@ int synchronize_all_udomains(void)
 }
 
 
-/*
+/*! \brief
  * Find a particular domain
  */
 int find_domain(str* _d, udomain_t** _p)

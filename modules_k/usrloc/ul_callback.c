@@ -24,6 +24,10 @@
  *  2004-03-16  created (bogdan)
  */
 
+/*! \file
+ *  \brief USRLOC - Callback functions
+ *  \ingroup usrloc
+ */
 
 
 #include <stdlib.h>
@@ -71,7 +75,8 @@ void destroy_ulcb_list(void)
 
 
 
-/* register a callback function 'f' for 'types' mask of events;
+/*! \brief 
+	register a callback function 'f' for 'types' mask of events;
 */
 int register_ulcb( int types, ul_cb f, void *param )
 {

@@ -25,6 +25,11 @@
  * ---------
  */
 
+/*! \file
+ *  \brief USRLOC - Usrloc record structure
+ *  \ingroup usrloc
+ */
+
 
 #ifndef URECORD_H
 #define URECORD_H
@@ -40,20 +45,20 @@
 
 struct hslot;
 
-/*
+/*! \brief
  * Basic hash table element
  */
 typedef struct urecord {
-	str* domain;                   /* Pointer to domain we belong to 
+	str* domain;                   /*!< Pointer to domain we belong to 
                                     * ( null terminated string) */
-	str aor;                       /* Address of record */
-	unsigned int aorhash;          /* Hash over address of record */
-	ucontact_t* contacts;          /* One or more contact fields */
+	str aor;                       /*!< Address of record */
+	unsigned int aorhash;          /*!< Hash over address of record */
+	ucontact_t* contacts;          /*!< One or more contact fields */
 
-	struct hslot* slot;            /* Collision slot in the hash table 
+	struct hslot* slot;            /*!< Collision slot in the hash table 
                                     * array we belong to */
-	struct urecord* prev;          /* Next item in the hash entry */
-	struct urecord* next;          /* Previous item in the hash entry */
+	struct urecord* prev;          /*!< Next item in the hash entry */
+	struct urecord* next;          /*!< Previous item in the hash entry */
 } urecord_t;
 
 

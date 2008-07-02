@@ -33,6 +33,17 @@
  * 2004-06-07 updated to the new DB api (andrei)
  */
 
+/*! \file
+ *  \brief USRLOC - Usrloc module interface
+ *  \ingroup usrloc
+ */
+
+/*! \defgroup usrloc User location module
+	\brief The module keeps a user location table
+   	and provides access to the table to other modules. The module
+   	exports no functions that could be used directly from scripts.
+ */
+
 #include <stdio.h>
 #include "ul_mod.h"
 #include "../../sr_module.h"
@@ -66,10 +77,10 @@ MODULE_VERSION
 #define METHODS_COL    "methods"
 #define LAST_MOD_COL   "last_modified"
 
-static int mod_init(void);                          /* Module initialization function */
-static void destroy(void);                          /* Module destroy function */
-static void timer(unsigned int ticks, void* param); /* Timer handler */
-static int child_init(int rank);                    /* Per-child init function */
+static int mod_init(void);                          /*!< Module initialization function */
+static void destroy(void);                          /*!< Module destroy function */
+static void timer(unsigned int ticks, void* param); /*!< Timer handler */
+static int child_init(int rank);                    /*!< Per-child init function */
 static int mi_child_init(void);
 
 extern int bind_usrloc(usrloc_api_t* api);
@@ -78,50 +89,28 @@ extern int ul_locks_no;
  * Module parameters and their default values
  */
 
-/* Name of column containing usernames */
-str user_col        = str_init(USER_COL);
-/* Name of column containing domains */
-str domain_col      = str_init(DOMAIN_COL);
-/* Name of column containing contact addresses */
-str contact_col     = str_init(CONTACT_COL);
-/* Name of column containing expires values */
-str expires_col     = str_init(EXPIRES_COL);
-/* Name of column containing q values */
-str q_col           = str_init(Q_COL);
-/* Name of column containing callid string */
-str callid_col      = str_init(CALLID_COL);
-/* Name of column containing cseq values */
-str cseq_col        = str_init(CSEQ_COL);
-/* Name of column containing internal flags */
-str flags_col       = str_init(FLAGS_COL);
-/* Name of column containing contact flags */
-str cflags_col      = str_init(CFLAGS_COL);
-/* Name of column containing user agent string */
-str user_agent_col  = str_init(USER_AGENT_COL);
-/* Name of column containing transport info of REGISTER */
-str received_col    = str_init(RECEIVED_COL);
-/* Name of column containing the Path header */
-str path_col        = str_init(PATH_COL);
-/* Name of column containing the received socket */
-str sock_col        = str_init(SOCK_COL);
-/* Name of column containing the supported methods */
-str methods_col     = str_init(METHODS_COL);
-/* Name of column containing the last modified date */
-str last_mod_col     = str_init(LAST_MOD_COL);
+str user_col        = str_init(USER_COL); 		/*!< Name of column containing usernames */
+str domain_col      = str_init(DOMAIN_COL); 		/*!< Name of column containing domains */
+str contact_col     = str_init(CONTACT_COL);		/*!< Name of column containing contact addresses */
+str expires_col     = str_init(EXPIRES_COL);		/*!< Name of column containing expires values */
+str q_col           = str_init(Q_COL);			/*!< Name of column containing q values */
+str callid_col      = str_init(CALLID_COL);		/*!< Name of column containing callid string */
+str cseq_col        = str_init(CSEQ_COL);		/*!< Name of column containing cseq values */
+str flags_col       = str_init(FLAGS_COL);		/*!< Name of column containing internal flags */
+str cflags_col      = str_init(CFLAGS_COL);		/*!< Name of column containing contact flags */
+str user_agent_col  = str_init(USER_AGENT_COL);		/*!< Name of column containing user agent string */
+str received_col    = str_init(RECEIVED_COL);		/*!< Name of column containing transport info of REGISTER */
+str path_col        = str_init(PATH_COL);		/*!< Name of column containing the Path header */
+str sock_col        = str_init(SOCK_COL);		/*!< Name of column containing the received socket */
+str methods_col     = str_init(METHODS_COL);		/*!< Name of column containing the supported methods */
+str last_mod_col     = str_init(LAST_MOD_COL);		/*!< Name of column containing the last modified date */
+str db_url          = str_init(DEFAULT_DB_URL);		/*!< Database URL */
+int timer_interval  = 60;				/*!< Timer interval in seconds */
+int db_mode         = 0;				/*!< Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
+int use_domain      = 0;				/*!< Whether usrloc should use domain part of aor */
+int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 
-/* Database URL */
-str db_url          = str_init(DEFAULT_DB_URL);
-/* Timer interval in seconds */
-int timer_interval  = 60;
-/* Database sync scheme: 0-no db, 1-write through, 2-write back, 3-only db */
-int db_mode         = 0;
-/* Whether usrloc should use domain part of aor */
-int use_domain      = 0;
-/* By default do not enable timestamp ordering */
-int desc_time_order = 0;
-
-/* number of rows to fetch from result */
-int ul_fetch_rows = 2000;
+int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 
 /* flag */
@@ -133,7 +122,7 @@ db_func_t ul_dbf;
 
 
 
-/*
+/*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -142,7 +131,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/* 
+/*! \brief
  * Exported parameters 
  */
 static param_export_t params[] = {
@@ -199,21 +188,21 @@ static mi_export_t mi_cmds[] = {
 
 struct module_exports exports = {
 	"usrloc",
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,       /* Exported functions */
-	params,     /* Export parameters */
-	mod_stats,  /* exported statistics */
-	mi_cmds,    /* exported MI functions */
-	0,          /* exported pseudo-variables */
-	0,          /* extra processes */
-	mod_init,   /* Module initialization function */
-	0,          /* Response function */
-	destroy,    /* Destroy function */
-	child_init  /* Child initialization function */
+	DEFAULT_DLFLAGS, /*!< dlopen flags */
+	cmds,       /*!< Exported functions */
+	params,     /*!< Export parameters */
+	mod_stats,  /*!< exported statistics */
+	mi_cmds,    /*!< exported MI functions */
+	0,          /*!< exported pseudo-variables */
+	0,          /*!< extra processes */
+	mod_init,   /*!< Module initialization function */
+	0,          /*!< Response function */
+	destroy,    /*!< Destroy function */
+	child_init  /*!< Child initialization function */
 };
 
 
-/*
+/*! \brief
  * Module initialization function
  */
 static int mod_init(void)
@@ -365,7 +354,7 @@ static int mi_child_init(void)
 }
 
 
-/*
+/*! \brief
  * Module destroy function
  */
 static void destroy(void)
@@ -387,7 +376,7 @@ static void destroy(void)
 }
 
 
-/*
+/*! \brief
  * Timer handler
  */
 static void timer(unsigned int ticks, void* param)

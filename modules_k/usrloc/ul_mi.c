@@ -27,6 +27,11 @@
  * 2006-12-01  created (bogdan)
  */
 
+/*! \file
+ *  \brief USRLOC - Usrloc MI functions
+ *  \ingroup usrloc
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include "../../mi/mi.h"
@@ -82,8 +87,7 @@ static inline int mi_fix_aor(str *aor)
 
 
 
-static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r,
-													time_t t, int short_dump)
+static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t, int short_dump)
 {
 	struct mi_node *anode;
 	struct mi_node *cnode;
@@ -213,7 +217,7 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r,
 
 /*************************** MI functions *****************************/
 
-/*
+/*! \brief
  * Expects 2 nodes: the table name and the AOR
  */
 struct mi_root* mi_usrloc_rm_aor(struct mi_root *cmd, void *param)
@@ -247,7 +251,7 @@ struct mi_root* mi_usrloc_rm_aor(struct mi_root *cmd, void *param)
 }
 
 
-/*
+/*! \brief
  * Expects 3 nodes: the table name, the AOR and contact
  */
 struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
@@ -404,7 +408,7 @@ struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param)
 }
 
 
-/*
+/*! \brief
  * Expects 7 nodes: 
  *        table name,
  *        AOR
@@ -524,7 +528,7 @@ lock_error:
 }
 
 
-/*
+/*! \brief
  * Expects 2 nodes: the table name and the AOR
  */
 struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)

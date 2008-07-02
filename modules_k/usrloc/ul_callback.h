@@ -24,6 +24,10 @@
  *  2004-03-16  created (bogdan)
  */
 
+/*! \file
+ *  \brief USRLOC - Module callbacks
+ *  \ingroup usrloc
+ */
 
 #ifndef _UL_CALLBACKS_H
 #define _UL_CALLBACKS_H
@@ -37,17 +41,17 @@
 #define UL_CONTACT_EXPIRE      (1<<3)
 #define ULCB_MAX               ((1<<4)-1)
 
-/* callback function prototype */
+/*! \brief callback function prototype */
 typedef void (ul_cb) (ucontact_t *c, int type, void *param);
-/* register callback function prototype */
+/*! \brief register callback function prototype */
 typedef int (*register_ulcb_t)( int cb_types, ul_cb f, void *param);
 
 
 struct ul_callback {
-	int id;                      /* id of this callback - useless */
-	int types;                   /* types of events that trigger the callback*/
-	ul_cb* callback;             /* callback function */
-	void *param;                 /* param to be passed to callback function */
+	int id;                      /*!< id of this callback - useless */
+	int types;                   /*!< types of events that trigger the callback*/
+	ul_cb* callback;             /*!< callback function */
+	void *param;                 /*!< param to be passed to callback function */
 	struct ul_callback* next;
 };
 
@@ -69,10 +73,10 @@ int init_ulcb_list();
 void destroy_ulcb_list();
 
 
-/* register a callback for several types of events */
+/*! \brief register a callback for several types of events */
 int register_ulcb( int types, ul_cb f, void *param );
 
-/* run all transaction callbacks for an event type */
+/*! \brief run all transaction callbacks for an event type */
 static inline void run_ul_callbacks( int type , ucontact_t *c)
 {
 	struct ul_callback *cbp;

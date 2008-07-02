@@ -29,6 +29,11 @@
  *   
  */
 
+/*! \file
+ *  \brief USRLOC - 
+ *  \ingroup usrloc
+ */
+
 #include "udomain.h"
 #include <string.h>
 #include "../../parser/parse_methods.h"
@@ -66,7 +71,7 @@ static char *build_stat_name( str* domain, char *var_name)
 #endif
 
 
-/*
+/*! \brief
  * Create a new domain structure
  * _n is pointer to str representing
  * name of the domain, the string is
@@ -138,7 +143,7 @@ error0:
 }
 
 
-/*
+/*! \brief
  * Free all memory allocated for
  * the domain
  */
@@ -158,8 +163,8 @@ void free_udomain(udomain_t* _d)
 }
 
 
-/*
- * Returns a statis dummy urecord for temporary usage
+/*! \brief
+ * Returns a static dummy urecord for temporary usage
  */
 static inline void get_static_urecord(udomain_t* _d, str* _aor,
 														struct urecord** _r)
@@ -173,7 +178,7 @@ static inline void get_static_urecord(udomain_t* _d, str* _aor,
 }
 
 
-/*
+/*! \brief
  * Just for debugging
  */
 void print_udomain(FILE* _f, udomain_t* _d)
@@ -205,7 +210,7 @@ void print_udomain(FILE* _f, udomain_t* _d)
 }
 
 
-/*
+/*! \brief
  * expects 12 rows (contact, expirs, q, callid, cseq, flags, 
  *   ua, received, path, socket, methods, last_modified)
  */
@@ -474,7 +479,7 @@ error:
 }
 
 
-/*
+/*! \brief
  * loads from DB all contacts for an AOR
  */
 urecord_t* db_load_urecord(db_con_t* _c, udomain_t* _d, str *_aor)
@@ -611,7 +616,7 @@ int db_timer_udomain(udomain_t* _d)
 }
 
 
-/* performs a dummy query just to see if DB is ok */
+/*! \brief performs a dummy query just to see if DB is ok */
 int testdb_udomain(db_con_t* con, udomain_t* d)
 {
 	db_key_t key[1], col[1];
@@ -640,7 +645,7 @@ int testdb_udomain(db_con_t* con, udomain_t* d)
 }
 
 
-/*
+/*! \brief
  * Insert a new record into domain
  */
 int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
@@ -659,7 +664,7 @@ int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 }
 
 
-/*
+/*! \brief
  * Remove a record from domain
  */
 void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
@@ -703,7 +708,7 @@ int mem_timer_udomain(udomain_t* _d)
 }
 
 
-/*
+/*! \brief
  * Get lock
  */
 void lock_udomain(udomain_t* _d, str* _aor)
@@ -722,7 +727,7 @@ void lock_udomain(udomain_t* _d, str* _aor)
 }
 
 
-/*
+/*! \brief
  * Release lock
  */
 void unlock_udomain(udomain_t* _d, str* _aor)
@@ -739,7 +744,7 @@ void unlock_udomain(udomain_t* _d, str* _aor)
 	}
 }
 
-/*
+/*! \brief
  * Get lock
  */
 void lock_ulslot(udomain_t* _d, int i)
@@ -753,7 +758,7 @@ void lock_ulslot(udomain_t* _d, int i)
 }
 
 
-/*
+/*! \brief
  * Release lock
  */
 void unlock_ulslot(udomain_t* _d, int i)
@@ -768,7 +773,7 @@ void unlock_ulslot(udomain_t* _d, int i)
 
 
 
-/*
+/*! \brief
  * Create and insert a new record
  */
 int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
@@ -785,7 +790,7 @@ int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 }
 
 
-/*
+/*! \brief
  * Obtain a urecord pointer if the urecord exists in domain
  */
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
@@ -821,7 +826,7 @@ int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r)
 }
 
 
-/*
+/*! \brief
  * Delete a urecord from domain
  */
 int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r)

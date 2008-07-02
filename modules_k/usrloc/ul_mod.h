@@ -25,6 +25,10 @@
  * ---------
  */
 
+/*! \file
+ *  \brief USRLOC - Usrloc module interface
+ *  \ingroup usrloc
+ */
 
 #ifndef UL_MOD_H
 #define UL_MOD_H

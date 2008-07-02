@@ -28,7 +28,10 @@
  * 2004-06-07 updated to the new DB api (andrei)
  */
 
-
+/*! \file
+ *  \brief USRLOC - Usrloc contact structure
+ *  \ingroup usrloc
+ */
 
 #include "ucontact.h"
 #include <string.h>             /* memcpy */
@@ -44,11 +47,10 @@
 #include "ucontact.h"
 
 
-/*
+/*! \brief
  * Create a new contact structure
  */
-ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
-														ucontact_info_t* _ci)
+ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact, ucontact_info_t* _ci)
 {
 	ucontact_t *c;
 
@@ -96,7 +98,7 @@ error:
 
 
 
-/*
+/*! \brief
  * Free all memory associated with given contact structure
  */
 void free_ucontact(ucontact_t* _c)
@@ -111,7 +113,7 @@ void free_ucontact(ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Print contact, for debugging purposes only
  */
 void print_ucontact(FILE* _f, ucontact_t* _c)
@@ -164,7 +166,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Update ucontact structure in memory
  */
 int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
@@ -225,7 +227,7 @@ int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 /* ================ State related functions =============== */
 
 
-/*
+/*! \brief
  * Update state of the contact
  */
 void st_update_ucontact(ucontact_t* _c)
@@ -259,10 +261,9 @@ void st_update_ucontact(ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Update state of the contact
- * Returns 1 if the contact should be
- * delete from memory immediately,
+ * \return 1 if the contact should be deleted from memory immediately,
  * 0 otherwise
  */
 int st_delete_ucontact(ucontact_t* _c)
@@ -301,10 +302,10 @@ int st_delete_ucontact(ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Called when the timer is about to delete
- * an expired contact, this routine returns
- * 1 if the contact should be removed from
+ * an expired contact. 
+ * \return 1 if the contact should be removed from
  * the database and 0 otherwise
  */
 int st_expired_ucontact(ucontact_t* _c)
@@ -331,7 +332,7 @@ int st_expired_ucontact(ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Called when the timer is about flushing the contact,
  * updates contact state and returns 1 if the contact
  * should be inserted, 2 if update and 0 otherwise
@@ -368,7 +369,7 @@ int st_flush_ucontact(ucontact_t* _c)
 
 /* ============== Database related functions ================ */
 
-/*
+/*! \brief
  * Insert contact into the database
  */
 int db_insert_ucontact(ucontact_t* _c)
@@ -504,7 +505,7 @@ int db_insert_ucontact(ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Update contact in the database
  */
 int db_update_ucontact(ucontact_t* _c)
@@ -633,7 +634,7 @@ int db_update_ucontact(ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Delete contact from the database
  */
 int db_delete_ucontact(ucontact_t* _c)
@@ -749,7 +750,7 @@ static inline void update_contact_pos(struct urecord* _r, ucontact_t* _c)
 }
 
 
-/*
+/*! \brief
  * Update ucontact with new values
  */
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
