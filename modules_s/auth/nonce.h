@@ -33,6 +33,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../str.h"
+#include "../../basex.h"
 #include <time.h>
 
 /* auth_extra_checks flags */
@@ -42,18 +43,40 @@
 #define AUTH_CHECK_FROMTAG  (1 << 2)
 #define AUTH_CHECK_SRC_IP   (1 << 3)
 
+/* nonce structure */
+struct bin_nonce_str{
+	int expire;
+	int since;
+	char md5_1[16];
+	char md5_2[16]; /* optional */
+};
 
+/* nonce union */
+union bin_nonce{
+	struct bin_nonce_str n;
+	unsigned char raw[sizeof(struct bin_nonce_str)];
+};
+
+/* maximum nonce length in binary form (not converted to base64/hex):
+ * expires_t | since_t | MD5(expires_t | since_t | s1) | MD5(..., s2)*/
+#define MAX_BIN_NONCE_LEN (sizeof(struct bin_nonce_str)) /* (4+4+16+16) */
+
+/* minimum nonce length in binary form (not converted to base64/hex):
+ * expires_t | since_t | MD5(expires_t | since_t | s1) */
+#define MIN_BIN_NONCE_LEN (sizeof(struct bin_nonce_str)-16) /* (4+4+16)*/
 /*
  * Maximum length of nonce string in bytes
  * nonce = expires_TIMESTAMP[8 chars] since_TIMESTAMP[8 chars] MD5SUM(expires_TIMESTAMP, since_TIMESTAMP, SECRET1)[32 chars] \
  *          MD5SUM(info(auth_extra_checks), SECRET2)[32 chars]
  */
-#define MAX_NONCE_LEN (8 + 8 + 32 + 32)
+#define MAX_NONCE_LEN  base64_enc_len(MAX_BIN_NONCE_LEN)
 /*
  * Minimum length of the nonce string
  * nonce = expires_TIMESTAMP[8 chars] since_TIMESTAMP[8 chars] MD5SUM(expires_TIMESTAMP, since_TIMESTAMP, SECRET1)[32 chars]
  */
-#define MIN_NONCE_LEN (8 + 8 + 32)
+#define MIN_NONCE_LEN base64_enc_len(MIN_BIN_NONCE_LEN)
+
+
 
 /* Extra authentication checks for REGISTER messages */
 extern int auth_checks_reg;
@@ -84,21 +107,6 @@ int calc_nonce(char* nonce, int* nonce_len, int cfg, int since, int expires, str
  */
 int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg);
 
-
-/*
- * Get expiry time from nonce string
- */
-time_t get_nonce_expires(str* nonce);
-
-/*
- * Get valid_since time from nonce string
- */
-time_t get_nonce_since(str* nonce);
-
-/*
- * Check if the nonce is stale
- */
-int is_nonce_stale(str* nonce);
 
 
 #endif /* NONCE_H */

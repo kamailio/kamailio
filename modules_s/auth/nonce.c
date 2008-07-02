@@ -33,6 +33,8 @@
  * 2007-10-19 auth extra checks: longer nonces that include selected message
  *            parts to protect against various reply attacks without keeping
  *            state (andrei)
+ * 2008-07-01 switched to base64 for nonces; check staleness in check_nonce
+ *            (andrei)
  */
 
 
@@ -40,6 +42,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include "../../compiler_opt.h"
 #include "../../md5global.h"
 #include "../../md5.h"
 #include "../../dprint.h"
@@ -49,6 +52,7 @@
 #include "../../ip_addr.h"
 #include "nonce.h"
 #include "../../globals.h"
+#include <assert.h>
 
 
 int auth_checks_reg = 0;
@@ -86,62 +90,53 @@ int get_auth_checks(struct sip_msg* msg)
 }
 
 
-/** Convert integer to its HEX representation.
- * This function converts an integer number to
- * its hexadecimal representation. The destination
- * buffer must be at least 8 bytes long, the resulting
- * string is NOT zero terminated.
- * @param dst is the destination buffer, at least 8 characters long
- * @param src is the integer number to be converted
- */
-static inline void integer2hex(char* dst, int src)
+
+/* like calc_nonce (below), but calculate the binary nonce (don't convert to
+ * ascii)  and return the binary nonce len (cannot return error)
+ * See calc_nonce below for more details.*/
+inline static int calc_bin_nonce(union bin_nonce* b_nonce, int cfg,
+					int since, int expires, str* secret1, str* secret2,
+					struct sip_msg* msg)
 {
-	int i;
-	unsigned char j;
-	char* s;
+	MD5_CTX ctx;
+	
+	str* s;
+	int len;
 
-	src = htonl(src);
-	s = (char*)&src;
-    
-	for (i = 0; i < 4; i++) {
-		
-		j = (s[i] >> 4) & 0xf;
-		if (j <= 9) {
-			dst[i * 2] = (j + '0');
-		} else { 
-			dst[i * 2] = (j + 'a' - 10);
+	MD5Init(&ctx);
+	
+	b_nonce->n.expire=htonl(expires);
+	b_nonce->n.since=htonl(since);
+	MD5Update(&ctx, &b_nonce->raw[0], 4 + 4);
+	MD5Update(&ctx, secret1->s, secret1->len);
+	MD5Final(&b_nonce->n.md5_1[0], &ctx);
+	len = 4 + 4 + 16;
+	
+	if (cfg && msg) {
+		MD5Init(&ctx);
+		if (cfg & AUTH_CHECK_FULL_URI) {
+			s = GET_RURI(msg);
+			MD5Update(&ctx, s->s, s->len);
 		}
-
-		j = s[i] & 0xf;
-		if (j <= 9) {
-			dst[i * 2 + 1] = (j + '0');
-		} else {
-		       dst[i * 2 + 1] = (j + 'a' - 10);
+		if ((cfg & AUTH_CHECK_CALLID) && 
+			!(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == 0)) {
+			MD5Update(&ctx, msg->callid->body.s, msg->callid->body.len);
 		}
+		if ((cfg & AUTH_CHECK_FROMTAG) &&
+			!(parse_headers(msg, HDR_FROM_F, 0) < 0 || msg->from == 0)) {
+			MD5Update(&ctx, get_from(msg)->tag_value.s, 
+					  get_from(msg)->tag_value.len);
+		}
+		if (cfg & AUTH_CHECK_SRC_IP) {
+			MD5Update(&ctx, msg->rcv.src_ip.u.addr, msg->rcv.src_ip.len);
+		}
+		MD5Update(&ctx, secret2->s, secret2->len);
+		MD5Final(&b_nonce->n.md5_2[0], &ctx);
+		len += 16;
 	}
+	return len;
 }
 
-
-/*
- * Convert hex string to integer
- */
-static inline int hex2integer(char* src)
-{
-	unsigned int i, res = 0;
-
-	for(i = 0; i < 8; i++) {
-		res *= 16;
-		if ((src[i] >= '0') && (src[i] <= '9')) {
-			res += src[i] - '0';
-		} else if ((src[i] >= 'a') && (src[i] <= 'f')) {
-			res += src[i] - 'a' + 10;
-		} else if ((src[i] >= 'A') && (src[i] <= 'F')) {
-			res += src[i] - 'A' + 10;
-		} else return 0;
-	}
-
-	return res;
-}
 
 
 /** Calculates the nonce string for RFC2617 digest authentication.
@@ -184,16 +179,14 @@ static inline int hex2integer(char* src)
  *            the  generated nonce.
  * @return 0 on success and -1 on error
  */
-int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires, str* secret1,
-			   str* secret2, struct sip_msg* msg)
+int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, 
+					int expires, str* secret1, str* secret2,
+					struct sip_msg* msg)
 {
-	MD5_CTX ctx;
-	unsigned char bin[16];
-	str* s;
+	union bin_nonce b_nonce;
 	int len;
-
-	if (*nonce_len < MAX_NONCE_LEN) {
-		if (cfg && msg) {
+	if (unlikely(*nonce_len < MAX_NONCE_LEN)) {
+		if (unlikely(cfg && msg)) {
 			*nonce_len = MAX_NONCE_LEN;
 			return -1;
 		} else if (*nonce_len < MIN_NONCE_LEN) {
@@ -201,65 +194,41 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires, str
 			return -1;
 		}
 	}
-	MD5Init(&ctx);
-	
-	integer2hex(nonce, expires);
-	integer2hex(nonce + 8, since);
-	MD5Update(&ctx, nonce, 8 + 8);
-	MD5Update(&ctx, secret1->s, secret1->len);
-	MD5Final(bin, &ctx);
-	string2hex(bin, 16, nonce + 8 + 8);
-	len = 8 + 8 + 32;
-	
-	if (cfg && msg) {
-		MD5Init(&ctx);
-		if (cfg & AUTH_CHECK_FULL_URI) {
-			s = GET_RURI(msg);
-			MD5Update(&ctx, s->s, s->len);
-		}
-		if ((cfg & AUTH_CHECK_CALLID) && 
-			!(parse_headers(msg, HDR_CALLID_F, 0) < 0 || msg->callid == 0)) {
-			MD5Update(&ctx, msg->callid->body.s, msg->callid->body.len);
-		}
-		if ((cfg & AUTH_CHECK_FROMTAG) &&
-			!(parse_headers(msg, HDR_FROM_F, 0) < 0 || msg->from == 0)) {
-			MD5Update(&ctx, get_from(msg)->tag_value.s, 
-					  get_from(msg)->tag_value.len);
-		}
-		if (cfg & AUTH_CHECK_SRC_IP) {
-			MD5Update(&ctx, msg->rcv.src_ip.u.addr, msg->rcv.src_ip.len);
-		}
-		MD5Update(&ctx, secret2->s, secret2->len);
-		MD5Final(bin, &ctx);
-		string2hex(bin, 16, nonce + len);
-		len += 32;
-	}
-	*nonce_len = len;
+	len=calc_bin_nonce(&b_nonce, cfg, since, expires, secret1, secret2, msg);
+	*nonce_len=base64_enc(&b_nonce.raw[0], len, 
+							(unsigned char*)nonce, *nonce_len);
+	assert(*nonce_len>=0); /*FIXME*/
 	return 0;
 }
+
 
 
 /** Returns the expire time of the nonce string.
  * This function returns the absolute expire time
  * extracted from the nonce string in the parameter.
- * @param n is a valid nonce string.
+ * @param bn is a valid pointer to a union bin_nonce (decoded nonce)
  * @return Absolute time when the nonce string expires.
  */
-time_t get_nonce_expires(str* n)
-{
-	return (time_t)hex2integer(n->s);
-}
+
+#define get_bin_nonce_expire(bn) ((time_t)ntohl((bn)->n.expire))
 
 /** Returns the valid_since time of the nonce string.
  * This function returns the absolute time
  * extracted from the nonce string in the parameter.
- * @param n is a valid nonce string.
+ * @param bn is a valid pointer to a union bin_nonce (decoded nonce)
  * @return Absolute time when the nonce string was created.
  */
-time_t get_nonce_since(str* n)
-{
-	return (time_t)hex2integer(n->s + 8);
-}
+#define get_bin_nonce_since(bn) ((time_t)ntohl((bn)->n.since))
+
+
+/** Checks if nonce is stale.
+ * This function checks if a nonce given to it in the parameter is stale. 
+ * A nonce is stale if the expire time stored in the nonce is in the past.
+ * @param b_nonce a pointer to a union bin_nonce to be checked.
+ * @return 1 the nonce is stale, 0 the nonce is not stale.
+ */
+#define is_bin_nonce_stale(b_nonce) (get_bin_nonce_expire(b_nonce) < time(0))
+
 
 
 /** Check whether the nonce returned by UA is valid.
@@ -280,71 +249,62 @@ time_t get_nonce_since(str* n)
  *             auth_extra_checks are enabled - the selected message fields
  *             have not changes from the time the nonce was generated)
  *         -1 - invalid nonce
- *          1 - nonce length mismatch
+ *          1 - nonce length too small
  *          2 - no match
  *          3 - nonce expires ok, but the auth_extra checks failed
+ *          4 - stale
  */
 int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg)
 {
-	int since, expires, non_len, cfg;
-	char non[MAX_NONCE_LEN];
+	int since, expires, b_nonce2_len, b_nonce_len, cfg;
+	union bin_nonce b_nonce;
+	union bin_nonce b_nonce2;
 
 	cfg = get_auth_checks(msg);
 
-	if (nonce->s == 0) {
+	if (unlikely(nonce->s == 0)) {
 		return -1;  /* Invalid nonce */
 	}
-	non_len = sizeof(non);
-
-	if (get_nonce_len(cfg) != nonce->len) {
-		return 1; /* Lengths must be equal */
-	}
-
-	since = get_nonce_since(nonce);
-	expires = get_nonce_expires(nonce);
-	if (calc_nonce(non, &non_len, cfg, since, expires, secret1, secret2, msg) != 0) {
-		if (since < up_since) {
-			/* if valid_since time is time pointing before ser was started then we consider nonce as stalled. 
-			   It may be the nonce generated by previous ser instance having different secret keys.
-			   Therefore we force credentials to be rebuilt by UAC without prompting for password */
-			return 3;
-		}
-		ERR("auth: check_nonce: calc_nonce failed (len %zd, needed %d)\n",
-			sizeof(non), non_len);
-		return -1;
-	}
-
-	DBG("auth:check_nonce: comparing [%.*s] and [%.*s]\n",
-	    nonce->len, ZSW(nonce->s), non_len, non);
 	
-	if (!memcmp(non, nonce->s, MIN_NONCE_LEN)) {
+	if (unlikely(nonce->len<MIN_NONCE_LEN)){
+		return 1; /* length musth be >= then minimum length */
+	}
+	
+	/* decode nonce */
+	b_nonce_len=base64_dec((unsigned char*)nonce->s, nonce->len,
+							&b_nonce.raw[0], sizeof(b_nonce));
+	if (unlikely(b_nonce_len <=MIN_BIN_NONCE_LEN)){
+		DBG("auth: check_nonce: base64_dec failed\n");
+		return -1; /* error decoding the nonce (invalid nonce since we checked
+		              the len of the base64 enc. nonce above)*/
+	}
+	
+	since = get_bin_nonce_since(&b_nonce);
+	expires = get_bin_nonce_expire(&b_nonce);
+	if (unlikely(since < up_since)) {
+		/* if valid_since time is time pointing before ser was started 
+		 * then we consider nonce as stalled. 
+		   It may be the nonce generated by previous ser instance having
+		   different length (for example because of different auth.
+		   checks)..  Therefore we force credentials to be rebuilt by UAC
+		   without prompting for password */
+		return 3;
+	}
+	
+	b_nonce2_len=calc_bin_nonce(&b_nonce2, cfg, since, expires, secret1,
+									secret2, msg);
+	if (!memcmp(&b_nonce, &b_nonce2, MIN_BIN_NONCE_LEN)) {
 		if (cfg) {
-			if (non_len != nonce->len)
+			if (unlikely(b_nonce_len != b_nonce2_len))
 				return 2; /* someone truncated our nonce? */
-			if (memcmp(non + MIN_NONCE_LEN, nonce->s + MIN_NONCE_LEN, 
-					   non_len - MIN_NONCE_LEN) != 0)
+			if (memcmp(&b_nonce.n.md5_2[0], &b_nonce2.n.md5_2[0], 16))
 				return 3; /* auth_extra_checks failed */
 		}
+		if (unlikely(is_bin_nonce_stale(&b_nonce)))
+			return 4;
 		return 0;
 	}
 	
 	return 2;
 }
 
-
-/** Checks if nonce is stale.
- * This function checks if a nonce given to it in the parameter is stale. 
- * A nonce is stale if the expire time stored in the nonce is in the past.
- * @param n a nonce to be checked.
- * @return 1 the nonce is stale, 0 the nonce is not stale.
- */
-int is_nonce_stale(str* n) 
-{
-	if (!n->s) return 0;
-
-	if (get_nonce_expires(n) < time(0)) {
-		return 1;
-	} else {
-		return 0;
-	}
-}

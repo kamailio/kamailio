@@ -26,6 +26,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+/*
+ * History:
+ * --------
+ *  ...
+ * 2008-07-01 set c->stale in auth_check_hdr_md5 (andrei)
+ */
 
 #include <string.h>
 #include "api.h"
@@ -124,8 +130,8 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth, auth_resul
 
 	ret = check_nonce(&auth->digest.nonce, &secret1, &secret2, msg);
 	if (ret!=0){
-		if (ret==3){
-			/* failed auth_extra_checks */
+		if (ret==3 || ret==4){
+			/* failed auth_extra_checks or stale */
 			auth->stale=1; /* we mark the nonce as stale 
 			 				(hack that makes our life much easier) */
 		} else {
@@ -148,7 +154,7 @@ auth_result_t post_auth(struct sip_msg* msg, struct hdr_field* hdr)
 
 	c = (auth_body_t*)((hdr)->parsed);
 
-	if (c->stale || is_nonce_stale(&c->digest.nonce)) {
+	if (c->stale ) {
 		if ((msg->REQ_METHOD == METHOD_ACK) || 
 		    (msg->REQ_METHOD == METHOD_CANCEL)) {
 			     /* Method is ACK or CANCEL, we must accept stale
