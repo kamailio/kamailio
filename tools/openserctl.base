@@ -229,6 +229,8 @@ CARRIERROUTE_CARRIERROUTE_REWRITE_HOST_COLUMN=rewrite_host
 CARRIERROUTE_CARRIERROUTE_REWRITE_PREFIX_COLUMN=rewrite_prefix
 CARRIERROUTE_CARRIERROUTE_REWRITE_SUFFIX_COLUMN=rewrite_suffix
 CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN=description
+CARRIERROUTE_CARRIERROUTE_FLAGS_COLUMN=flags
+CARRIERROUTE_CARRIERROUTE_MASK_COLUMN=mask
 
 # URI table
 if [ -z "$URI_TABLE" ] ; then
@@ -376,9 +378,9 @@ cat <<EOF
  cr rmrt  <routing_tree> ....................................... rm a tree
  cr addcarrier <carrier> <scan_prefix> <domain> <rewrite_host> ................
                <prob> <strip> <rewrite_prefix> <rewrite_suffix> ...............
-               <comment> ....................................... add a carrier
-               (strip, rewrite_prefix, rewrite_suffix and comment are optional
-                arguments) ...................................................
+               <flags> <mask> <comment> .........................add a carrier
+               (prob, strip, rewrite_prefix, rewrite_suffix,...................
+                flags, mask and comment are optional arguments) ...............
  cr rmcarrier  <carrier> <scan_prefix> <domain> ................ rm a carrier
 EOF
 }

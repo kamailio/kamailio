@@ -1282,6 +1282,13 @@ cr() {
 				merr "cr - too few parameters"
 				exit 1
 			fi
+			PROB=1
+			STRIP=0
+			REWRITE_PREFIX=
+			REWRITE_SUFFIX=
+			COMMENT=
+			FLAGS=
+			MASK=
 			if [ $# -gt 4 ] ; then
 				PROB=$5
 				if [ $# -gt 5 ] ; then
@@ -1292,40 +1299,23 @@ cr() {
 							REWRITE_SUFFIX=$8
 							if [ $# -gt 8 ] ; then
 								COMMENT=$9
-							else
-								COMMENT=
+								if [ $# -gt 9 ] ; then
+									FLAGS=${10}
+									if [ $# -gt 10 ] ; then
+										MASK=${11}
+									fi
+								fi
 							fi
-						else
-							REWRITE_SUFFIX=
-							COMMENT=
 						fi
-					else
-						REWRITE_PREFIX=
-						REWRITE_SUFFIX=
-						COMMENT=
 					fi
-				else
-					STRIP=0
-					REWRITE_PREFIX=
-					REWRITE_SUFFIX=
-					COMMENT=
 				fi
-			else
-				PROB=1
-				STRIP=0
-				REWRITE_PREFIX=
-				REWRITE_SUFFIX=
-				COMMENT=
 			fi
 			CARRIER=$1
 			SCAN_PREFIX=$2
 			DOMAIN=$3
 			REWRITE_HOST=$4
-			#PROB=1
-			#STRIP=0
-			#REWRITE_PREFIX=
-			#REWRITE_SUFFIX=
-			#COMMENT=
+			echo $FLAGS
+			echo $MASK
 			QUERY="insert into $CARRIERROUTE_TABLE \
 				( $CARRIERROUTE_CARRIERROUTE_CARRIER_COLUMN, \
 				$CARRIERROUTE_CARRIERROUTE_SCAN_PREFIX_COLUMN, \
@@ -1335,9 +1325,12 @@ cr() {
 				$CARRIERROUTE_CARRIERROUTE_REWRITE_HOST_COLUMN, \
 				$CARRIERROUTE_CARRIERROUTE_REWRITE_PREFIX_COLUMN, \
 				$CARRIERROUTE_CARRIERROUTE_REWRITE_SUFFIX_COLUMN, \
-				$CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN ) \
-				VALUES ($CARRIER, '$SCAN_PREFIX', $DOMAIN, $PROB, $STRIP, \
-				'$REWRITE_HOST', '$REWRITE_PREFIX', '$REWRITE_SUFFIX', '$COMMENT');"
+				$CARRIERROUTE_CARRIERROUTE_COMMENT_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_FLAGS_COLUMN, \
+				$CARRIERROUTE_CARRIERROUTE_MASK_COLUMN ) \
+				VALUES ($CARRIER, '$SCAN_PREFIX', '$DOMAIN', $PROB, $STRIP, \
+				'$REWRITE_HOST', '$REWRITE_PREFIX', '$REWRITE_SUFFIX', '$COMMENT', \
+				$FLAGS, $MASK);"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "cr - SQL Error"
