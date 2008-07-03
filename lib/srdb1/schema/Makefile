@@ -159,7 +159,7 @@ docbook:
 		echo "  <!ENTITY `basename "$$FILE" | sed -e 's#_#-#g'` SYSTEM \""$$FILE"\">" >> "$(ROOT)/doc/database/tables.sgml" ; \
 	done ; \
 	#Include general documentation entities
-	echo "  <!ENTITY % docentities SYSTEM \"../entities.sgml\"> %docentities;" >> "$(ROOT)/doc/database/tables.sgml" ; \
+	echo "  <!ENTITY % docentities SYSTEM \"../entities.xml\"> %docentities;" >> "$(ROOT)/doc/database/tables.sgml" ; \
 	echo "]>" >> "$(ROOT)/doc/database/tables.sgml"
 	# add bookinfo
 	cat "$(ROOT)/doc/dbschema/bookinfo.xml" >> "$(ROOT)/doc/database/tables.sgml"
