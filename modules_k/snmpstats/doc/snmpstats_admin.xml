@@ -501,7 +501,7 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
     snmpd -x localhost:705
 	</programlisting>
 
-	This tells NetSNMP to act as a master agent, listening on the localhost
+	This tells NetSNMP to act as a master agent, listening on the localhost UDP
 	interface at port 705.  
 	</para>
 	</section>
@@ -545,7 +545,7 @@ modparam("snmpstats", "snmpCommunity", "customCommunityString")
 	connect to the NetSNMP Master agent, start snmpd with the following:
 
 	<programlisting format="linespecific">
-    snmpd -f -Dagentx -x localhost:705 2>&amp;1 | less
+    snmpd -f -Dagentx -x tcp:localhost:705 2>&amp;1 | less
 	</programlisting>
 
 	You should see something similar to the following:

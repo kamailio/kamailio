@@ -421,7 +421,7 @@ module.
     snmpd -x localhost:705
 
    This tells NetSNMP to act as a master agent, listening on the
-   localhost interface at port 705.
+   localhost UDP interface at port 705.
 
 1.6.3.  Configuring the SNMPStats module for communication with a
 Master Agent
@@ -450,7 +450,7 @@ Master Agent
    As a quick test to make sure that the SNMPStats module
    sub-agent can succesfully connect to the NetSNMP Master agent,
    start snmpd with the following:
-    snmpd -f -Dagentx -x localhost:705 2>&1 | less
+    snmpd -f -Dagentx -x tcp:localhost:705 2>&1 | less
 
    You should see something similar to the following:
     No log handling enabled - turning on stderr logging
