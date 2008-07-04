@@ -72,15 +72,14 @@
 		The database url.
 		</para>
 		<para>
-		<emphasis>	Default value is <quote>NULL</quote>.	
+		<emphasis>	Default value is <quote>&defaultdb;</quote>.	
 		</emphasis>
 		</para>
 		<example>
 		<title>Set <varname>db_url</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("xcap_client", "db_url", 
-	"mysql://openser:openserrw@192.168.2.132/openser")
+modparam("xcap_client", "db_url", "&exampledb;")
 ...
 </programlisting>
 		</example>

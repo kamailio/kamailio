@@ -58,7 +58,7 @@ void destroy(void);
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
 str xcap_db_table = str_init("xcap");
-str xcap_db_url = {0, 0};
+str xcap_db_url = str_init(DEFAULT_DB_URL);
 xcap_callback_t* xcapcb_list= NULL;
 int periodical_query= 1;
 unsigned int query_period= 100;

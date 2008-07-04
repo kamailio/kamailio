@@ -70,7 +70,7 @@ str rlsubs_table= str_init("rls_watchers");
 str rlpres_table= str_init("rls_presentity");
 str rls_xcap_table= str_init("xcap");
 
-str db_url= {0, 0};
+str db_url= str_init(DEFAULT_DB_URL);
 int hash_size= 512;
 shtable_t rls_table;
 int pid;
