@@ -177,7 +177,7 @@ Chapter 1. Admin Guide
    the XMPP(jabber) client, as seen by the SIP client:
    "sip:username<delim>jjabber_server@gateway_domain".
 
-   Default value is "sip-xmpp.openser.org".
+   Default value is "sip-xmpp.example.org".
 
    Example 1.3. Set gateway_domain parameter
 ...
@@ -189,7 +189,7 @@ Chapter 1. Admin Guide
    The xmpp domain of the component or the server, depending on
    the mode we are in. It can be the same as the gateway_domain.
 
-   Default value is "sip-xmpp.openser.org".
+   Default value is "sip-xmpp.example.org".
 
    Example 1.4. Set xmpp_domain parameter
 ...
@@ -202,7 +202,7 @@ Chapter 1. Admin Guide
    backend is set to "component"; or the address to bind to in the
    server mode.
 
-   Default value is "xmpp.openser.org".
+   Default value is "xmpp.example.org".
 
    Example 1.5. Set xmpp_host parameter
 ...

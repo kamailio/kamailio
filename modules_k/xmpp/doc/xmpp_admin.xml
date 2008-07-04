@@ -169,7 +169,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is "sip-xmpp.openser.org".
+			Default value is "sip-xmpp.example.org".
 		</emphasis>
 		</para>
 		<example>
@@ -188,7 +188,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is "sip-xmpp.openser.org".
+			Default value is "sip-xmpp.example.org".
 		</emphasis>
 		</para>
 		<example>
@@ -207,7 +207,7 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is "xmpp.openser.org".
+			Default value is "xmpp.example.org".
 		</emphasis>
 		</para>
 		<example>
