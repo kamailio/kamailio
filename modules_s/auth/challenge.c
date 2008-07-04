@@ -80,6 +80,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     str* hfn, hf;
     avp_value_t val;
     int nonce_len, l, cfg;
+	int t;
     
     if (realm) {
         DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
@@ -144,7 +145,9 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     }
     else {
         l=nonce_len;
-        if (calc_nonce(p, &l, cfg, time(0), time(0) + nonce_expire, &secret1, &secret2, msg) != 0) {
+		t=time(0);
+        if (calc_nonce(p, &l, cfg, t, t + nonce_expire, 
+						&secret1, &secret2, msg) != 0) {
             ERR("auth: calc_nonce failed (len %d, needed %d)\n",
                  nonce_len, l);
             pkg_free(hf.s);
