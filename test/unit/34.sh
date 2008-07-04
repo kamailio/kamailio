@@ -1,7 +1,7 @@
 #!/bin/bash
-# load all modules without external dependencies with mysql
+# load all presence related modules with mysql
 
-# Copyright (C) 2007 1&1 Internet AG
+# Copyright (C) 2008 1&1 Internet AG
 #
 # This file is part of openser, a free SIP server.
 #
@@ -22,18 +22,20 @@
 # Needs a default openser database setup for mysql
 
 source include/require
-CFG=2.cfg
+CFG=34.cfg
 
-if ! (check_openser && check_module "db_mysql" ); then
+if ! (check_openser && check_module "db_mysql" && check_module "presence" \
+		&& check_module "presence_xml" && check_module "pua" \
+		&& check_module "xcap_client" && check_module "rls" \
+		&& check_module "presence_mwi" && check_module "pua_bla" \
+		&& check_module "pua_mi" && check_module "pua_usrloc" \
+		&& check_module "pua_xmpp" && check_module "xmpp"); then
 	exit 0
 fi ;
 
 cp $CFG $CFG.bak
 
-touch dispatcher.list
-
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")" >> $CFG
 
 # start
 ../openser -w . -f $CFG > /dev/null
@@ -43,6 +45,5 @@ sleep 1
 killall -9 openser
 
 mv $CFG.bak $CFG
-rm -f dispatcher.list
 
 exit $ret
