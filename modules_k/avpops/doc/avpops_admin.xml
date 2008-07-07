@@ -173,22 +173,6 @@ modparam("avpops","avp_table","avptable")
 			</example>
 		</section>
 		<section>
-			<title><varname>avp_aliases</varname> (string) - removed</title>
-			<para>
-			This is no longer a parameter of 'avpops' module. AVP aliases can
-			be defined directly in configuration script, in global parameters
-			section.
-			</para>
-			<example>
-				<title>Set <varname>avp_aliases</varname> in config file</title>
-				<programlisting format="linespecific">
-...
-avp_aliases="uuid=I:660;email=s:email_addr;fwd=i:753"
-...
-				</programlisting>
-			</example>
-		</section>
-		<section>
 			<title><varname>use_domain</varname> (integer)</title>
 			<para>
 				If the domain part of the an URI should be used for 
@@ -538,30 +522,6 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
 avp_db_query("select password, ha1 from subscriber where username='$tu'",
 	"$avp(i:678);$avp(i:679)");
 avp_db_query("delete from subscriber");
-...
-				</programlisting>
-			</example>
-		</section>
-		<section>
-			<title>
-				<function moreinfo="none">avp_write(value,name) - removed</function>
-			</title>
-			<para>
-			The function has been removed from 'avpops' module. Same
-			functionality can be achived directly in configuration script
-			via assignement operator.
-			</para>
-			<example>
-				<title><function>avp_write</function> migration</title>
-				<programlisting format="linespecific">
-...
-avp_write("$tu","$avp(i:678)");           => $avp(i:678) = $tu;
-avp_write("$ru/username","$avp(email)");  => $avp(email) = $rU;
-avp_write("$si","$avp(s:ip)");            => $avp(s:ip) = $si;
-avp_write("$du","$avp(s:next_hop)");      => $avp(s:next_hop) = $du;
-avp_write("$hdr(call-id)","$avp(i:11)");  => $avp(i:11) = $hdr(call-id);
-avp_write("i:333","$avp(i:6)");           => $avp(i:6) = 333;
-avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
 ...
 				</programlisting>
 			</example>

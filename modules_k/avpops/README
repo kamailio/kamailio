@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-10 17:13:24 +0200
-                              (Mon, 10 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-10 16:13:24 +0100
+                              (Mo, 10 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -32,15 +32,14 @@ Ramona-Elena Modroiu
               1.4.1. avp_url (string)
               1.4.2. db_url (string)
               1.4.3. avp_table (string)
-              1.4.4. avp_aliases (string) - removed
-              1.4.5. use_domain (integer)
-              1.4.6. uuid_column (string)
-              1.4.7. username_column (string)
-              1.4.8. domain_column (string)
-              1.4.9. attribute_column (string)
-              1.4.10. value_column (string)
-              1.4.11. type_column (string)
-              1.4.12. db_scheme (string)
+              1.4.4. use_domain (integer)
+              1.4.5. uuid_column (string)
+              1.4.6. username_column (string)
+              1.4.7. domain_column (string)
+              1.4.8. attribute_column (string)
+              1.4.9. value_column (string)
+              1.4.10. type_column (string)
+              1.4.11. db_scheme (string)
 
         1.5. Exported Functions
 
@@ -48,45 +47,42 @@ Ramona-Elena Modroiu
               1.5.2. avp_db_store(source,name)
               1.5.3. avp_db_delete(source,name)
               1.5.4. avp_db_query(query[,dest])
-              1.5.5. avp_write(value,name) - removed
-              1.5.6. avp_delete(name)
-              1.5.7. avp_pushto(destination,name)
-              1.5.8. avp_check(name,op_value)
-              1.5.9. avp_copy(old_name,new_name)
-              1.5.10. avp_printf(dest, format)
-              1.5.11. avp_subst(avps, subst)
-              1.5.12. avp_op(name,op_value)
-              1.5.13. is_avp_set(name)
-              1.5.14. avp_print()
+              1.5.5. avp_delete(name)
+              1.5.6. avp_pushto(destination,name)
+              1.5.7. avp_check(name,op_value)
+              1.5.8. avp_copy(old_name,new_name)
+              1.5.9. avp_printf(dest, format)
+              1.5.10. avp_subst(avps, subst)
+              1.5.11. avp_op(name,op_value)
+              1.5.12. is_avp_set(name)
+              1.5.13. avp_print()
 
    List of Examples
 
    1.1. AVP naming examples
    1.2. Set avp_url parameter
    1.3. Set avp_table parameter
-   1.4. Set avp_aliases in config file
-   1.5. Set use_domain parameter
-   1.6. Set uuid_column parameter
-   1.7. Set username_column parameter
-   1.8. Set domain_column parameter
-   1.9. Set attribute_column parameter
-   1.10. Set value_column parameter
-   1.11. Set type_column parameter
-   1.12. Set db_scheme parameter
-   1.13. avp_db_load usage
-   1.14. avp_db_store usage
-   1.15. avp_db_delete usage
-   1.16. avp_db_query usage
-   1.17. avp_write migration
-   1.18. avp_delete usage
-   1.19. avp_pushto usage
-   1.20. avp_check usage
-   1.21. avp_copy usage
-   1.22. avp_printf usage
-   1.23. avp_subst usage
-   1.24. avp_op usage
-   1.25. is_avp_set usage
-   1.26. avp_print usage
+   1.4. Set use_domain parameter
+   1.5. Set uuid_column parameter
+   1.6. Set username_column parameter
+   1.7. Set domain_column parameter
+   1.8. Set attribute_column parameter
+   1.9. Set value_column parameter
+   1.10. Set type_column parameter
+   1.11. Set db_scheme parameter
+   1.12. avp_db_load usage
+   1.13. avp_db_store usage
+   1.14. avp_db_delete usage
+   1.15. avp_db_query usage
+   1.16. avp_delete usage
+   1.17. avp_pushto usage
+   1.18. avp_check usage
+   1.19. avp_copy usage
+   1.20. avp_printf usage
+   1.21. avp_subst usage
+   1.22. avp_op usage
+   1.23. is_avp_set usage
+   1.24. avp_print usage
 
 Chapter 1. Admin Guide
 
@@ -188,96 +184,85 @@ modparam("avpops","avp_url","mysql://user:passwd@host/database")
 modparam("avpops","avp_table","avptable")
 ...
 
-1.4.4. avp_aliases (string) - removed
-
-   This is no longer a parameter of 'avpops' module. AVP aliases
-   can be defined directly in configuration script, in global
-   parameters section.
-
-   Example 1.4. Set avp_aliases in config file
-...
-avp_aliases="uuid=I:660;email=s:email_addr;fwd=i:753"
-...
-
-1.4.5. use_domain (integer)
+1.4.4. use_domain (integer)
 
    If the domain part of the an URI should be used for identifying
    an AVP in DB operations.
 
    Default value is 0 (no).
 
-   Example 1.5. Set use_domain parameter
+   Example 1.4. Set use_domain parameter
 ...
 modparam("avpops","use_domain",1)
 ...
 
-1.4.6. uuid_column (string)
+1.4.5. uuid_column (string)
 
    Name of column containing the uuid (unique user id).
 
    Default value is "uuid".
 
-   Example 1.6. Set uuid_column parameter
+   Example 1.5. Set uuid_column parameter
 ...
 modparam("avpops","uuid_column","uuid")
 ...
 
-1.4.7. username_column (string)
+1.4.6. username_column (string)
 
    Name of column containing the username.
 
    Default value is "username".
 
-   Example 1.7. Set username_column parameter
+   Example 1.6. Set username_column parameter
 ...
 modparam("avpops","username_column","username")
 ...
 
-1.4.8. domain_column (string)
+1.4.7. domain_column (string)
 
    Name of column containing the domain name.
 
    Default value is "domain".
 
-   Example 1.8. Set domain_column parameter
+   Example 1.7. Set domain_column parameter
 ...
 modparam("avpops","domain_column","domain")
 ...
 
-1.4.9. attribute_column (string)
+1.4.8. attribute_column (string)
 
    Name of column containing the attribute name (AVP name).
 
    Default value is "attribute".
 
-   Example 1.9. Set attribute_column parameter
+   Example 1.8. Set attribute_column parameter
 ...
 modparam("avpops","attribute_column","attribute")
 ...
 
-1.4.10. value_column (string)
+1.4.9. value_column (string)
 
    Name of column containing the AVP value.
 
    Default value is "value".
 
-   Example 1.10. Set value_column parameter
+   Example 1.9. Set value_column parameter
 ...
 modparam("avpops","value_column","value")
 ...
 
-1.4.11. type_column (string)
+1.4.10. type_column (string)
 
    Name of column containing the AVP type.
 
    Default value is "type".
 
-   Example 1.11. Set type_column parameter
+   Example 1.10. Set type_column parameter
 ...
 modparam("avpops","type_column","type")
 ...
 
-1.4.12. db_scheme (string)
+1.4.11. db_scheme (string)
 
    Definition of a DB scheme to be used for non-standard access to
    Database information.
@@ -294,7 +279,7 @@ modparam("avpops","type_column","type")
 
    Default value is "NULL".
 
-   Example 1.12. Set db_scheme parameter
+   Example 1.11. Set db_scheme parameter
 ...
 modparam("avpops","db_scheme",
 "scheme1:table=subscriber;uuid_col=uuid;value_col=first_name")
@@ -332,7 +317,7 @@ modparam("avpops","db_scheme",
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.13. avp_db_load usage
+   Example 1.12. avp_db_load usage
 ...
 avp_db_load("$fu","$(i:678)");
 avp_db_load("$ru/domain","i:/domain_preferences");
@@ -351,7 +336,7 @@ avp_db_load("$ru","$avp(i1:123)/$some_scheme");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.14. avp_db_store usage
+   Example 1.13. avp_db_store usage
 ...
 avp_db_store("$tu","$avp(i:678)");
 avp_db_store("$ru/username","$avp(email)");
@@ -368,7 +353,7 @@ avp_db_store("$ru/username","$avp(email)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.15. avp_db_delete usage
+   Example 1.14. avp_db_delete usage
 ...
 avp_db_delete("$tu","$avp(i:678)");
 avp_db_delete("$ru/username","$avp(email)");
@@ -400,7 +385,7 @@ avp_db_delete("$uuid","$avp(s:404fwd)/fwd_table");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.16. avp_db_query usage
+   Example 1.15. avp_db_query usage
 ...
 avp_db_query("select password, ha1 from subscriber where username='$tu'"
 ,
@@ -408,24 +393,7 @@ avp_db_query("select password, ha1 from subscriber where username='$tu'"
 avp_db_query("delete from subscriber");
 ...
 
-1.5.5.  avp_write(value,name) - removed
-
-   The function has been removed from 'avpops' module. Same
-   functionality can be achived directly in configuration script
-   via assignement operator.
-
-   Example 1.17. avp_write migration
-...
-avp_write("$tu","$avp(i:678)");           => $avp(i:678) = $tu;
-avp_write("$ru/username","$avp(email)");  => $avp(email) = $rU;
-avp_write("$si","$avp(s:ip)");            => $avp(s:ip) = $si;
-avp_write("$du","$avp(s:next_hop)");      => $avp(s:next_hop) = $du;
-avp_write("$hdr(call-id)","$avp(i:11)");  => $avp(i:11) = $hdr(call-id);
-avp_write("i:333","$avp(i:6)");           => $avp(i:6) = 333;
-avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
-...
-
-1.5.6.  avp_delete(name)
+1.5.5.  avp_delete(name)
 
    Deletes from memory the AVPs with name or, if empty, all AVPs.
 
@@ -440,7 +408,7 @@ avp_write("s:abc","$avp(i:7)");           => $avp(i:7) = "abc";
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.18. avp_delete usage
+   Example 1.16. avp_delete usage
 ...
 avp_delete("$avp(i:678)/g");
 avp_delete("$avp(email)");
@@ -448,7 +416,7 @@ avp_delete("i");
 avp_delete("a3");
 ...
 
-1.5.7.  avp_pushto(destination,name)
+1.5.6.  avp_pushto(destination,name)
 
    Pushes the value of AVP(s) into the SIP message.
 
@@ -470,7 +438,7 @@ avp_delete("a3");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.19. avp_pushto usage
+   Example 1.17. avp_pushto usage
 ...
 avp_pushto("$ru/domain","$fd");
 avp_pushto("$ru","$avp(i:678)");
@@ -479,7 +447,7 @@ avp_pushto("$du","$avp(i:679)");
 avp_pushto("$br","$avp(i:680)");
 ...
 
-1.5.8.  avp_check(name,op_value)
+1.5.7.  avp_check(name,op_value)
 
    Checks the value of the AVP(s) against an operator and value.
 
@@ -512,7 +480,7 @@ avp_pushto("$br","$avp(i:680)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.20. avp_check usage
+   Example 1.18. avp_check usage
 ...
 avp_check("$avp(i:678)", "lt/i:345/g");
 avp_check("$fd","eq/$td/I");
@@ -521,7 +489,7 @@ avp_check("$avp(s:foo)","re/sip:.*@bar.net/g");
 avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
 ...
 
-1.5.9.  avp_copy(old_name,new_name)
+1.5.8.  avp_copy(old_name,new_name)
 
    Copy / move an avp under a new name.
 
@@ -537,13 +505,13 @@ avp_check("$avp(s:foo)","fm/$avp(fm_avp)/g");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.21. avp_copy usage
+   Example 1.19. avp_copy usage
 ...
 avp_copy("$avp(i:678)", "$avp(s:345)/g");
 avp_copy("$avp(old)","$avp(new)/gd");
 ...
 
-1.5.10.  avp_printf(dest, format)
+1.5.9.  avp_printf(dest, format)
 
    NOTE: since OpenSER 1.3.0 the function has been moved to core
    and it is an alias to pv_printf().
@@ -562,13 +530,13 @@ avp_copy("$avp(old)","$avp(new)/gd");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.22. avp_printf usage
+   Example 1.20. avp_printf usage
 ...
 avp_printf("$avp(i:20)", "This is a $rm request with call-id $hdr(call-i
 d)");
 ...
 
-1.5.11.  avp_subst(avps, subst)
+1.5.10.  avp_subst(avps, subst)
 
    Perl/sed-like subst applied to AVPs having string value.
 
@@ -594,7 +562,7 @@ d)");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.23. avp_subst usage
+   Example 1.21. avp_subst usage
 ...
 # if avp i:678 has a string value in e-mail format, replace the
 # domain part with the value of domain part from R-URI
@@ -612,7 +580,7 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    applied to all of them, after the first src_avp is processed,
    it will be added in avp list and next processing will use it.
 
-1.5.12.  avp_op(name,op_value)
+1.5.11.  avp_op(name,op_value)
 
    Different integer operations with avps.
 
@@ -639,13 +607,13 @@ avp_subst("$avp(i:678)/$avp(i:679)/g", "/(.*)@(.*)/\1@$rd/");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.24. avp_op usage
+   Example 1.22. avp_op usage
 ...
 avp_op("$avp(i:678)", "add/i:345/g");
 avp_op("$avp(number)","sub/$avp(number2)/d");
 ...
 
-1.5.13.  is_avp_set(name)
+1.5.12.  is_avp_set(name)
 
    Check if any AVP with name is set.
 
@@ -658,13 +626,13 @@ avp_op("$avp(number)","sub/$avp(number2)/d");
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.25. is_avp_set usage
+   Example 1.23. is_avp_set usage
 ...
 if(is_avp_set("$avp(i:678)"))
     log("AVP with integer id 678 exists\n");
 ...
 
-1.5.14.  avp_print()
+1.5.13.  avp_print()
 
    Prints the list with all the AVPs from memory. This is only a
    helper/debug function.
@@ -672,7 +640,7 @@ if(is_avp_set("$avp(i:678)"))
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
 
-   Example 1.26. avp_print usage
+   Example 1.24. avp_print usage
 ...
 avp_print();
 ...
