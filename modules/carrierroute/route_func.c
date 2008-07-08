@@ -108,8 +108,8 @@ int mp2carrier_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 		return mp->u.n;
 		break;
 	case MP_AVP:
-    	avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
-    	if (!avp) {
+		avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
+		if (!avp) {
 			LM_ERR("cannot find AVP '%.*s'\n", mp->u.a.name.s.len, mp->u.a.name.s.s);
 			return -1;
 		}
@@ -133,7 +133,7 @@ int mp2carrier_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 		}
 		carrier_id = find_tree(tmp);
 		if (carrier_id < 0) {
-			LM_WARN("could not find carrier tree '%.*s'\n", avp_val.s.len, avp_val.s.s);
+			LM_WARN("could not find carrier tree '%.*s'\n", tmp.len, tmp.s);
 			/* might be using fallback later... */
 		}
 		return carrier_id;
@@ -164,8 +164,8 @@ int mp2domain_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 		return mp->u.n;
 		break;
 	case MP_AVP:
-    	avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
-    	if (!avp) {
+		avp = search_first_avp(mp->u.a.flags, mp->u.a.name, &avp_val, 0);
+		if (!avp) {
 			LM_ERR("cannot find AVP '%.*s'\n", mp->u.a.name.s.len, mp->u.a.name.s.s);
 			return -1;
 		}
@@ -187,9 +187,9 @@ int mp2domain_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 			LM_ERR("error - cannot print the format\n");
 			return -1;
 		}
-		domain_id = add_domain(&avp_val.s);
+		domain_id = add_domain(&tmp);
 		if (domain_id < 0) {
-			LM_ERR("could not find domain '%.*s'\n", avp_val.s.len, avp_val.s.s);
+			LM_ERR("could not find domain '%.*s'\n", tmp.len, tmp.s);
 			return -1;
 		}
 		return domain_id;
