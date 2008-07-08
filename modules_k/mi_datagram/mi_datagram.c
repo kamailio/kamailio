@@ -148,7 +148,7 @@ static int mi_mod_init(void)
 	str port_str;
 
 	/* checking the mi_socket module param */
-	LM_DBG("testing socket existance ...\n");
+	LM_DBG("testing socket existance...\n");
 
 	if( mi_socket==NULL || *mi_socket == 0) {
 		LM_ERR("no DATAGRAM_ socket configured\n");
@@ -213,10 +213,10 @@ static int mi_mod_init(void)
 		
 		n=stat(mi_socket, &filestat);
 		if( n==0){
-			LM_INFO("the socket %s already existstrying to delete it...\n",
+			LM_INFO("the socket %s already exists, trying to delete it...\n",
 					mi_socket);
 			if (unlink(mi_socket)<0){
-				LM_ERR("cannot delete old socket : %s\n", strerror(errno));
+				LM_ERR("cannot delete old socket: %s\n", strerror(errno));
 				return -1;
 			}
 		}else if (n<0 && errno!=ENOENT){
@@ -337,7 +337,7 @@ static int mi_destroy(void)
 				goto error;
 			}
 		} else if (n<0 && errno!=ENOENT) {
-			LM_ERR("socket stat failed:	%s\n",	strerror(errno));
+			LM_ERR("socket stat failed: %s\n",	strerror(errno));
 			goto error;
 		}
 	}
