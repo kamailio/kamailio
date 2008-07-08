@@ -795,7 +795,10 @@ if (!t_relay()) {
 		</title>
 		<para>
 		Relay a message statefully to a fixed destination. The destination is
-		specified as <quote>[proto:]host[:port]</quote>.
+		specified as <quote>[proto:]host[:port]</quote>. If a destination URI
+		<quote>$du</quote> for this message was set before the function
+		is called then this value will be used as destination instead of the
+		function parameter.
 		</para>
 		<para>
 		The function may take as parameter an optional set of flags for 
