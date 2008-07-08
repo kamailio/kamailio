@@ -610,13 +610,17 @@ int db_update_ucontact(ucontact_t* _c)
 	vals2[10].val.time_val = _c->last_modified;
 
 	if (use_domain) {
-		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
-		vals1[0].val.str_val.len = dom - _c->aor->s;
-
 		vals1[3].type = DB_STR;
 		vals1[3].nul = 0;
-		vals1[3].val.str_val.s = dom + 1;
-		vals1[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		if (dom==0) {
+			vals1[0].val.str_val.len = 0;
+			vals1[3].val.str_val = *_c->aor;
+		} else {
+			vals1[0].val.str_val.len = dom - _c->aor->s;
+			vals1[3].val.str_val.s = dom + 1;
+			vals1[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		}
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
@@ -665,13 +669,17 @@ int db_delete_ucontact(ucontact_t* _c)
 	vals[2].val.str_val = _c->callid;
 
 	if (use_domain) {
-		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
-		vals[0].val.str_val.len = dom - _c->aor->s;
-
 		vals[3].type = DB_STR;
 		vals[3].nul = 0;
-		vals[3].val.str_val.s = dom + 1;
-		vals[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		if (dom==0) {
+			vals[0].val.str_val.len = 0;
+			vals[3].val.str_val = *_c->aor;
+		} else {
+			vals[0].val.str_val.len = dom - _c->aor->s;
+			vals[3].val.str_val.s = dom + 1;
+			vals[3].val.str_val.len = _c->aor->s + _c->aor->len - dom - 1;
+		}
 	}
 
 	if (ul_dbf.use_table(ul_dbh, _c->domain) < 0) {
