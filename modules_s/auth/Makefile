@@ -9,5 +9,8 @@ include ../../Makefile.defs
 auto_gen=
 NAME=auth.so
 LIBS=
+# DEFS:
+#       -DUSE_NC  - compile with nounce count support
+DEFS+=-DUSE_NC
 
 include ../../Makefile.modules

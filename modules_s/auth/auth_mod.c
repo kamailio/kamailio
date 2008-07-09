@@ -53,6 +53,8 @@
 #include "auth_mod.h"
 #include "challenge.h"
 #include "api.h"
+#include "nid.h"
+#include "nc.h"
 
 MODULE_VERSION
 
@@ -124,6 +126,10 @@ static param_export_t params[] = {
 	{"auth_checks_register",   PARAM_INT,    &auth_checks_reg       },
 	{"auth_checks_no_dlg",     PARAM_INT,    &auth_checks_ood       },
 	{"auth_checks_in_dlg",     PARAM_INT,    &auth_checks_ind       },
+	{"nonce-count"  ,          PARAM_INT,    &nc_enabled            },
+	{"nc_array_size",          PARAM_INT,    &nc_array_size         },
+	{"nc_array_order",         PARAM_INT,    &nc_array_k            },
+	{"nid_pool_no",             PARAM_INT,  &nid_pool_no          },
     {0, 0, 0}
 };
 
@@ -231,10 +237,33 @@ static int mod_init(void)
     }
 	
     parse_qop(&qop);
-    if (qop.qop_parsed == QOP_OTHER) {
-		ERR("auth: Unsupported qop parameter value\n");
-		return -1;
-    }
+	switch(qop.qop_parsed){
+		case QOP_OTHER:
+			ERR("auth: Unsupported qop parameter value\n");
+			return -1;
+		case QOP_AUTH:
+		case QOP_AUTHINT:
+			if (nc_enabled){
+#ifndef USE_NC
+				WARN("auth: nounce count support enabled from config, but"
+					" disabled at compile time (recompile with -DUSE_NC\n");
+#else
+				if (nid_crt==0)
+					init_nonce_id();
+				init_nonce_count();
+#endif
+			}
+#ifdef USE_NC
+			else{
+				INFO("auth: qop set, but nonce-count (nc_enabled) support"
+						" disabled\n");
+			}
+#endif
+			break;
+		default:
+			break;
+	}
+
     
     return 0;
 }
@@ -244,6 +273,10 @@ static void destroy(void)
 {
     if (sec_rand1) pkg_free(sec_rand1);
     if (sec_rand2) pkg_free(sec_rand2);
+#ifdef USE_NC
+	destroy_nonce_count();
+	destroy_nonce_id();
+#endif
 }
 
 

@@ -35,6 +35,7 @@
  *            state (andrei)
  * 2008-07-01 switched to base64 for nonces; check staleness in check_nonce
  *            (andrei)
+ * 2008-07-04 nonce-count support (andrei)
  */
 
 
@@ -53,6 +54,9 @@
 #include "nonce.h"
 #include "../../globals.h"
 #include <assert.h>
+#ifdef USE_NC
+#include "nc.h"
+#endif
 
 
 int auth_checks_reg = 0;
@@ -91,12 +95,12 @@ int get_auth_checks(struct sip_msg* msg)
 
 
 
-/* like calc_nonce (below), but calculate the binary nonce (don't convert to
- * ascii)  and return the binary nonce len (cannot return error)
+/* takes a pre-filled bin_nonce union (see BIN_NONCE_PREPARE), fills the
+ * MD5s and returns the length of the binary nonce (cannot return error).
  * See calc_nonce below for more details.*/
-inline static int calc_bin_nonce(union bin_nonce* b_nonce, int cfg,
-					int since, int expires, str* secret1, str* secret2,
-					struct sip_msg* msg)
+inline static int calc_bin_nonce_md5(union bin_nonce* b_nonce, int cfg,
+										str* secret1, str* secret2,
+										struct sip_msg* msg)
 {
 	MD5_CTX ctx;
 	
@@ -105,14 +109,21 @@ inline static int calc_bin_nonce(union bin_nonce* b_nonce, int cfg,
 
 	MD5Init(&ctx);
 	
-	b_nonce->n.expire=htonl(expires);
-	b_nonce->n.since=htonl(since);
 	MD5Update(&ctx, &b_nonce->raw[0], 4 + 4);
-	MD5Update(&ctx, secret1->s, secret1->len);
-	MD5Final(&b_nonce->n.md5_1[0], &ctx);
-	len = 4 + 4 + 16;
-	
-	if (cfg && msg) {
+	if (cfg && msg){
+		/* auth extra checks => 2 md5s */
+		len = 4 + 4 + 16 + 16;
+#ifdef USE_NC
+		if (b_nonce->n.nid_pf & (NF_VALID_NC_ID | NF_VALID_OT_ID)){
+			/* if extra auth checks enabled, nid & pf are after the 2nd md5 */
+			MD5Update(&ctx, (unsigned char*)&b_nonce->n.nid_i, 
+							nonce_nid_extra_size);
+			len+=nonce_nid_extra_size;
+		}
+#endif /* USE_NC */
+		MD5Update(&ctx, secret1->s, secret1->len);
+		MD5Final(&b_nonce->n.md5_1[0], &ctx);
+		/* second MD5(auth_extra_checks) */
 		MD5Init(&ctx);
 		if (cfg & AUTH_CHECK_FULL_URI) {
 			s = GET_RURI(msg);
@@ -132,8 +143,22 @@ inline static int calc_bin_nonce(union bin_nonce* b_nonce, int cfg,
 		}
 		MD5Update(&ctx, secret2->s, secret2->len);
 		MD5Final(&b_nonce->n.md5_2[0], &ctx);
-		len += 16;
+	}else{
+		/* no extra checks => only one md5 */
+		len = 4 + 4 + 16;
+#ifdef USE_NC
+		if (b_nonce->n_small.nid_pf & (NF_VALID_NC_ID | NF_VALID_OT_ID)){
+			/* if extra auth checks are not enabled, nid & pf are after the
+			 *  1st md5 */
+			MD5Update(&ctx, (unsigned char*)&b_nonce->n_small.nid_i,
+							nonce_nid_extra_size);
+			len+=nonce_nid_extra_size;
+		}
+#endif /* USE_NC */
+		MD5Update(&ctx, secret1->s, secret1->len);
+		MD5Final(&b_nonce->n.md5_1[0], &ctx);
 	}
+	
 	return len;
 }
 
@@ -169,32 +194,44 @@ inline static int calc_bin_nonce(union bin_nonce* b_nonce, int cfg,
  * @param since Time when nonce was created, i.e. nonce is valid since <valid_since> up to <expires>
  * @param expires Time in seconds after which the nonce will be considered 
  *                stale.
+ * @param n_id    Nounce count and/or one-time nonce index value
+ *                (32 bit counter)
+ * @param pf      First 2 bits are flags, the rest is the index pool number
+ *                 used if nonce counts or one-time nonces are enabled.
+ *                The possible flags values are: NF_VALID_NC_ID which means
+ *                the nonce-count support is enabled and NF_VALID_OT_ID 
+ *                which means the one-time nonces support is enabled.
+ *                The pool number can be obtained by and-ing with
+ *                NF_POOL_NO_MASK
  * @param secret1 A secret used for the nonce expires integrity check:
  *                MD5(<expire_time>, <valid_since>, secret1).
  * @param secret2 A secret used for integrity check of the message parts 
  *                selected by auth_extra_checks (if any):
  *                MD5(<msg_parts(auth_extra_checks)>, secret2).
- * @param msg The message for which the nonce is computed. If auth_extra_checks
- *            is set, the MD5 of some fields of the message will be included in 
- *            the  generated nonce.
+ * @param msg     The message for which the nonce is computed. If 
+ *                auth_extra_checks is set, the MD5 of some fields of the
+ *                message will be included in the  generated nonce.
  * @return 0 on success and -1 on error
  */
-int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, 
-					int expires, str* secret1, str* secret2,
+int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires,
+#ifdef USE_NC
+					unsigned int n_id, unsigned char pf,
+#endif /* USE_NC */
+					str* secret1, str* secret2,
 					struct sip_msg* msg)
 {
 	union bin_nonce b_nonce;
 	int len;
 	if (unlikely(*nonce_len < MAX_NONCE_LEN)) {
-		if (unlikely(cfg && msg)) {
-			*nonce_len = MAX_NONCE_LEN;
-			return -1;
-		} else if (*nonce_len < MIN_NONCE_LEN) {
-			*nonce_len = MIN_NONCE_LEN;
+		len=get_nonce_len(cfg, pf & NF_VALID_NC_ID);
+		if (unlikely(*nonce_len<len)){
+			*nonce_len=len;
 			return -1;
 		}
 	}
-	len=calc_bin_nonce(&b_nonce, cfg, since, expires, secret1, secret2, msg);
+
+	BIN_NONCE_PREPARE(&b_nonce, expires, since, n_id, pf, cfg, msg);
+	len=calc_bin_nonce_md5(&b_nonce, cfg, secret1, secret2, msg);
 	*nonce_len=base64_enc(&b_nonce.raw[0], len, 
 							(unsigned char*)nonce, *nonce_len);
 	assert(*nonce_len>=0); /*FIXME*/
@@ -221,6 +258,7 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since,
 #define get_bin_nonce_since(bn) ((time_t)ntohl((bn)->n.since))
 
 
+
 /** Checks if nonce is stale.
  * This function checks if a nonce given to it in the parameter is stale. 
  * A nonce is stale if the expire time stored in the nonce is in the past.
@@ -228,6 +266,7 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since,
  * @return 1 the nonce is stale, 0 the nonce is not stale.
  */
 #define is_bin_nonce_stale(b_nonce) (get_bin_nonce_expire(b_nonce) < time(0))
+
 
 
 
@@ -253,34 +292,49 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since,
  *          2 - no match
  *          3 - nonce expires ok, but the auth_extra checks failed
  *          4 - stale
+ *          5 - invalid nc value (not an unsigned int)
  */
-int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg)
+int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
+					struct sip_msg* msg)
 {
-	int since, expires, b_nonce2_len, b_nonce_len, cfg;
+	str * nonce;
+	int since, b_nonce2_len, b_nonce_len, cfg;
 	union bin_nonce b_nonce;
 	union bin_nonce b_nonce2;
+#ifdef USE_NC
+	unsigned int n_id;
+	unsigned int nc;
+	unsigned char pf;
+#endif
 
 	cfg = get_auth_checks(msg);
+	nonce=&auth->digest.nonce;
 
 	if (unlikely(nonce->s == 0)) {
 		return -1;  /* Invalid nonce */
 	}
 	
-	if (unlikely(nonce->len<MIN_NONCE_LEN)){
+	if (unlikely(nonce->len<MIN_NONCE_LEN)){ 
 		return 1; /* length musth be >= then minimum length */
 	}
+	
+#ifdef USE_NC
+	/* clear all possible nonce flags positions prior to decoding,
+	 * to make sure they can be used even if the nonce is shorter */
+	b_nonce.n.nid_pf=0;
+	b_nonce.n_small.nid_pf=0;
+#endif /* USE_NC */
 	
 	/* decode nonce */
 	b_nonce_len=base64_dec((unsigned char*)nonce->s, nonce->len,
 							&b_nonce.raw[0], sizeof(b_nonce));
-	if (unlikely(b_nonce_len <=MIN_BIN_NONCE_LEN)){
+	if (unlikely(b_nonce_len < MIN_BIN_NONCE_LEN)){
 		DBG("auth: check_nonce: base64_dec failed\n");
 		return -1; /* error decoding the nonce (invalid nonce since we checked
 		              the len of the base64 enc. nonce above)*/
 	}
 	
 	since = get_bin_nonce_since(&b_nonce);
-	expires = get_bin_nonce_expire(&b_nonce);
 	if (unlikely(since < up_since)) {
 		/* if valid_since time is time pointing before ser was started 
 		 * then we consider nonce as stalled. 
@@ -290,16 +344,67 @@ int check_nonce(str* nonce, str* secret1, str* secret2, struct sip_msg* msg)
 		   without prompting for password */
 		return 3;
 	}
-	
-	b_nonce2_len=calc_bin_nonce(&b_nonce2, cfg, since, expires, secret1,
-									secret2, msg);
-	if (!memcmp(&b_nonce, &b_nonce2, MIN_BIN_NONCE_LEN)) {
+	b_nonce2=b_nonce; /*pre-fill it with the values from the received nonce*/
+	b_nonce2.n.expire=b_nonce.n.expire;
+	b_nonce2.n.since=b_nonce.n.since;
+#ifdef USE_NC
+	if (cfg){
+		b_nonce2.n.nid_i=b_nonce.n.nid_i;
+		b_nonce2.n.nid_pf=b_nonce.n.nid_pf;
+		pf=b_nonce.n.nid_pf;
+		n_id=ntohl(b_nonce.n.nid_i);
+	}else{
+		b_nonce2.n_small.nid_i=b_nonce.n_small.nid_i;
+		b_nonce2.n_small.nid_pf=b_nonce.n_small.nid_pf;
+		pf=b_nonce.n_small.nid_pf;
+		n_id=ntohl(b_nonce.n_small.nid_i);
+	}
+	if (unlikely(nc_enabled && !(pf & NF_VALID_NC_ID))){
+		/* nounce count enabled, but nonce is not marked as nonce count ready
+		 * or is too short => either an old nonce (should
+		 * be caught by the ser start time  check) or truncated nonce  */
+		return 4; /* return stale for now */
+	}
+	/* don't check if we got the expected length, if the length is smaller 
+	 * then expected then  the md5 check below will fail (since the nid 
+	 * members of the bin_nonce struct will be 0); if the length is bigger
+	 * and it was not caught by the base64_dec above, and the md5 matches,
+	 * we ignore the extra stuff */
+#endif /* USE_NC */
+	b_nonce2_len=calc_bin_nonce_md5(&b_nonce2, cfg, secret1, secret2, msg);
+	if (!memcmp(&b_nonce.n.md5_1[0], &b_nonce2.n.md5_1[0], 16)) {
+#ifdef USE_NC
+		/* if nounce-count checks enabled & auth. headers has nc */
+		if (nc_enabled && (pf & NF_VALID_NC_ID) && auth->digest.nc.s &&
+				auth->digest.nc.len){
+			if (str2int(&auth->digest.nc, &nc)!=0){
+				/* error, bad nc */
+				ERR("FIXME:check_nonce: bad nc value %.*s\n",
+						auth->digest.nc.len, auth->digest.nc.s);
+				return 5; /* invalid nc */
+			}
+			switch(nc_check_val(n_id, pf & NF_POOL_NO_MASK, nc)){
+				case NC_OK:
+					/* don't perform extra checks or one-time nonce checks
+					 * anymore, if we have nc */
+					goto check_stale;
+				case NC_ID_OVERFLOW: /* id too old => stale */
+				case NC_TOO_BIG:  /* nc overlfow => force re-auth => stale */
+				case NC_REPLAY:    /* nc seen before => re-auth => stale */
+				case NC_INV_POOL: /* pool-no too big, maybe ser restart?*/
+					return 4; /* stale */
+			}
+		}
+#endif /* USE_NC */
 		if (cfg) {
 			if (unlikely(b_nonce_len != b_nonce2_len))
 				return 2; /* someone truncated our nonce? */
 			if (memcmp(&b_nonce.n.md5_2[0], &b_nonce2.n.md5_2[0], 16))
 				return 3; /* auth_extra_checks failed */
 		}
+#ifdef USE_NC
+check_stale:
+#endif /* USE_NC */
 		if (unlikely(is_bin_nonce_stale(&b_nonce)))
 			return 4;
 		return 0;

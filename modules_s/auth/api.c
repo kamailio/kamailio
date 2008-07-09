@@ -128,7 +128,7 @@ static int auth_check_hdr_md5(struct sip_msg* msg, auth_body_t* auth, auth_resul
 		return 0;
 	}
 
-	ret = check_nonce(&auth->digest.nonce, &secret1, &secret2, msg);
+	ret = check_nonce(auth, &secret1, &secret2, msg);
 	if (ret!=0){
 		if (ret==3 || ret==4){
 			/* failed auth_extra_checks or stale */

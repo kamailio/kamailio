@@ -34,6 +34,7 @@
  * 2007-10-19 auth extra checks: longer nonces that include selected message
  *            parts to protect against various reply attacks without keeping
  *            state (andrei)
+ * 2008-07-08 nonce-count (nc) support (andrei)
  */
 
 #include "../../data_lump.h"
@@ -45,6 +46,7 @@
 #include "challenge.h"
 #include "nonce.h"
 #include "api.h"
+#include "nc.h"
 
 #define QOP_PARAM_START   ", qop=\""
 #define QOP_PARAM_START_LEN (sizeof(QOP_PARAM_START)-1)
@@ -81,6 +83,10 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     avp_value_t val;
     int nonce_len, l, cfg;
 	int t;
+#ifdef USE_NC
+	unsigned int n_id;
+	unsigned char pool;
+#endif
     
     if (realm) {
         DEBUG("build_challenge_hf: realm='%.*s'\n", realm->len, realm->s);
@@ -100,7 +106,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     
 	cfg = get_auth_checks(msg);
 
-    nonce_len = get_nonce_len(cfg);
+    nonce_len = get_nonce_len(cfg, nc_enabled);
 
     hf.len = hfn->len;
     hf.len += DIGEST_REALM_LEN
@@ -132,7 +138,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
 	hf.len += CRLF_LEN;
     p = hf.s = pkg_malloc(hf.len);
     if (!hf.s) {
-		ERR("auth: No memory left\n");
+		ERR("auth: No memory left (%d bytes)\n", hf.len);
 		return -1;
     }
     
@@ -146,8 +152,23 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     else {
         l=nonce_len;
 		t=time(0);
-        if (calc_nonce(p, &l, cfg, t, t + nonce_expire, 
-						&secret1, &secret2, msg) != 0) {
+#ifdef USE_NC
+		if (nc_enabled){
+			pool=nid_get_pool();
+			n_id=nid_inc(pool);
+			nc_new(n_id, pool);
+			pool|=NF_VALID_NC_ID;
+		}else{
+			pool=0;
+			n_id=0;
+		}
+		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, n_id, pool,
+						&secret1, &secret2, msg) != 0)
+#else  /* USE_NC */
+		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, 
+						&secret1, &secret2, msg) != 0) 
+#endif /* USE_NC */
+		{
             ERR("auth: calc_nonce failed (len %d, needed %d)\n",
                  nonce_len, l);
             pkg_free(hf.s);
