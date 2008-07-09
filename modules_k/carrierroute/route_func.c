@@ -412,6 +412,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		memcpy(p, AT_SIGN, AT_SIGN_LEN);
 		p += AT_SIGN_LEN;
 	}
+	/* this could be an error, or a blacklisted destination */
 	if (rs->host.len == 0) {
 		*p = '\0';
 		pkg_free(dest->s);
@@ -476,6 +477,7 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, flag_t fla
 	switch (alg) {
 		case alg_prime:
 			if ((prob = prime_hash_func(msg, hash_source, rf->max_targets)) < 0) {
+				LM_ERR("could not hash message with prime algorithm");
 				return -1;
 			}
 			if ((rr = get_rule_by_hash(rf, prob)) == NULL) {
@@ -488,6 +490,7 @@ static int rewrite_on_rule(const struct route_tree_item * route_tree, flag_t fla
 				return -1;
 			}
 			if ((prob = hash_func(msg, hash_source, rf->dice_max)) < 0) {
+				LM_ERR("could not hash message with CRC32");
 				return -1;
 			}
 			/* This auto-magically takes the last rule if anything is broken.
@@ -664,7 +667,8 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 	}
 
 	if (rewrite_uri_recursor(rt->tree, &prefix_matching, flags, &dest, _msg, &rewrite_user, _hsrc, _halg, _dstavp) != 0) {
-		LM_ERR("during rewrite_uri_recursor, uri %.*s, carrier %d, domain %d\n", prefix_matching.len,
+		/* this is not necessarily an error, rewrite_recursor does already some error logging */
+		LM_INFO("rewrite_uri_recursor doesn't complete, uri %.*s, carrier %d, domain %d\n", prefix_matching.len,
 			prefix_matching.s, carrier_id, domain_id);
 		goto unlock_and_out;
 	}
