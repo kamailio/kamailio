@@ -9,5 +9,6 @@ include ../../Makefile.defs
 
 auto_gen=
 NAME=h350.so
+LIBS=
 
 include ../../Makefile.modules
