@@ -14,9 +14,31 @@ modules:
                           expression.
  - avp       - export new selects table to allow dissecting the content of an
                attribute by interpreting it as a "name-addr" value 
- - auth      - added extra authentication checks support, to protect
+ - auth      - experimental support for nc checking when qop=auth
+               (fast, non-locking implementation, see nonce-count, 
+                nc_array_size, nc_array_order and nid_pool_no) 
+             - switched to base64 nonces
+             - record nonce generation time inside the nonce so that a 
+               received nonce can be checked against ser start time
+               (if older => stale). This allows gracefully handling ser
+               restarts with different auth configs.
+             - added extra authentication checks support, to protect
                against various reply attacks.
              - params:
+                       - nonce-count - if enabled and qop=auth or 
+                          qop=auth-int, store and check received nc values
+                          (for details see rfc2617 and auth/doc)
+                       - nc_array_size - size of the array used for storing
+                          nc values, default 1Mb. It will be rounded down to
+                          a 2^k value. It represents the maximum number of
+                          in-flight nonces supported.
+                       - nc_array_order - equivalent to nc_array_size, but 
+                          instead of specifying the size in bytes, it can 
+                          be used to directly set the power of 2 used
+                          (nc_array_size=2^nc_array_order)
+                       - nid_pool_no - number of nc array partitions, useful
+                          for increasing performance on multi-cpu systems
+                          (default 1, recommended 4)
                        - auth_extra_checks - flags specifying which extra
                           message part/parts will be checked for change before
                           allowing nonce reuse. See the auth module docs for
