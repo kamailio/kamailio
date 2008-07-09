@@ -63,18 +63,18 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
 	int_str avp_val;
 	
 	if (pv_printf_s(_msg, _user, &user)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the user\n");
 		return -1;
 	}
 
 	if (pv_printf_s(_msg, _domain, &domain)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the domain\n");
 		return -1;
 	}
 	
 	/* get carrier id */
 	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
-		LM_ERR("Error in load user carrier");
+		LM_ERR("error in load user carrier");
 		return -1;
 	}
 	else {
@@ -128,7 +128,7 @@ int mp2carrier_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 	case MP_PVE:
 		/* retrieve carrier name from parameter */
 		if (pv_printf_s(_msg, mp->u.p, &tmp)<0) {
-			LM_ERR("error - cannot print the format\n");
+			LM_ERR("cannot print the carrier\n");
 			return -1;
 		}
 		carrier_id = find_tree(tmp);
@@ -184,7 +184,7 @@ int mp2domain_id(struct sip_msg * _msg, struct multiparam_t *mp) {
 	case MP_PVE:
 		/* retrieve domain name from parameter */
 		if (pv_printf_s(_msg, mp->u.p, &tmp)<0) {
-			LM_ERR("error - cannot print the format\n");
+			LM_ERR("cannot print the domain\n");
 			return -1;
 		}
 		domain_id = add_domain(&tmp);
@@ -622,12 +622,12 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 	}
 
 	if (pv_printf_s(_msg, _rewrite_user, &rewrite_user)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the rewrite_user\n");
 		return -1;
 	}
 
 	if (pv_printf_s(_msg, _prefix_matching, &prefix_matching)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
 	}
 
@@ -778,17 +778,17 @@ int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
 	}
 
 	if (pv_printf_s(_msg, _prefix_matching, &prefix_matching)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
 	}
 
 	if (pv_printf_s(_msg, _host, &host)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the host\n");
 		return -1;
 	}
 
 	if (pv_printf_s(_msg, _reply_code, &reply_code)<0)	{
-		LM_ERR("cannot print the format\n");
+		LM_ERR("cannot print the reply_code\n");
 		return -1;
 	}
 
