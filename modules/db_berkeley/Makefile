@@ -14,6 +14,6 @@ DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
 include ../../Makefile.defs 
 auto_gen=
 NAME=db_berkeley.so
-LIBS+=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -L$(LOCALBASE)/BerkeleyDB.4.6/lib -ldb
+LIBS=-L$(LOCALBASE)/lib -L$(SYSBASE)/lib -L$(LOCALBASE)/BerkeleyDB.4.6/lib -ldb
 
 include ../../Makefile.modules
