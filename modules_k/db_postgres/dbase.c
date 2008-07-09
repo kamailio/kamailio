@@ -199,7 +199,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 		if (*_res)
 			db_free_result(*_res);
 
-        *_res = 0;
+		*_res = 0;
 		return 0;
 	}
 
@@ -223,6 +223,7 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 			case PGRES_COMMAND_OK:
 				/* Successful completion of a command returning no data (such as INSERT or UPDATE). */
 				return 0;
+
 			case PGRES_TUPLES_OK:
 				/* Successful completion of a command returning data (such as a SELECT or SHOW). */
 				if (db_postgres_get_columns(_con, *_res) < 0) {
@@ -230,12 +231,20 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 					return -2;
 				}
 				break;
+
+			case PGRES_FATAL_ERROR:
+				LM_ERR("%p - invalid query, execution aborted\n", _con);
+				LM_ERR("%p - PQresultStatus(%s)\n", _con, PQresStatus(pqresult));
+				if (*_res)
+					db_free_result(*_res);
+				*_res = 0;
+				return -3;
+
 			case PGRES_EMPTY_QUERY:
 			case PGRES_COPY_OUT:
 			case PGRES_COPY_IN:
 			case PGRES_BAD_RESPONSE:
 			case PGRES_NONFATAL_ERROR:
-			case PGRES_FATAL_ERROR:
 				LM_WARN("%p - probable invalid query\n", _con);
 			default:
 				LM_WARN("%p - PQresultStatus(%s)\n",
@@ -411,6 +420,7 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 		/* Successful completion of a command returning no data (such as INSERT or UPDATE). */
 		rc = 0;
 		break;
+
 		case PGRES_TUPLES_OK:
 			/* Successful completion of a command returning data (such as a SELECT or SHOW). */
 			if (db_postgres_convert_result(_con, *_r) < 0) {
@@ -422,12 +432,21 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			}
 			rc =  0;
 			break;
+
+		case PGRES_FATAL_ERROR:
+			LM_ERR("%p - invalid query, execution aborted\n", _con);
+			LM_ERR("%p: %s\n", _con, PQresStatus(pqresult));
+			LM_ERR("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
+			if (*_r) db_free_result(*_r);
+			*_r = 0;
+			rc = -3;
+			break;
+
 		case PGRES_EMPTY_QUERY:
 		case PGRES_COPY_OUT:
 		case PGRES_COPY_IN:
 		case PGRES_BAD_RESPONSE:
 		case PGRES_NONFATAL_ERROR:
-		case PGRES_FATAL_ERROR:
 			LM_WARN("%p Probable invalid query\n", _con);
 		default:
 			LM_WARN("%p: %s\n", _con, PQresStatus(pqresult));
