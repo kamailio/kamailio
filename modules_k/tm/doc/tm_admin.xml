@@ -544,6 +544,28 @@ modparam("tm", "tw_append",
 		</example>
 	</section>
 
+		<section>
+		<title><varname>enable_stats</varname> (integer)</title>
+		<para>
+		If the module should generate and export statistics to the core
+		manager. A zero value means disabled.
+		</para>
+		<para>
+		The TM module provides statistics about how many transaction were
+		created (splitted per code classes), how many transaction are currently
+		in use and some other values.
+		</para>
+		<para>
+		Default value is 1 (enabled).
+		</para>
+		<example>
+		<title>enable_stats example</title>
+		<programlisting format="linespecific">
+modparam("tm", "enable_stats", 0)
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title><varname>pass_provisional_replies</varname> (integer)</title>
 		<para>
