@@ -1038,7 +1038,7 @@ trusted() {
 					merr "unknown protocol"
 					exit 1
 			esac
-			PATTERN="^sip:.*$"
+			PATTERN=""
 			if [ ! -z "$3" ]; then
 				PATTERN="$3"
 			fi
@@ -1046,7 +1046,7 @@ trusted() {
 			QUERY="insert into $TRUSTED_TABLE \
 				( $TRUSTED_SRC_IP_COLUMN, $TRUSTED_PROTO_COLUMN, \
 				$TRUSTED_FROM_PATTERN_COLUMN, $TRUSTED_TAG_COLUMN) \
-				VALUES ('$1', '$2', '$PATTERN', '$TAG');"
+				VALUES ('$1', '$2', '$PATTERN', '$4');"
 			$DBCMD "$QUERY"
 			if [ $? -ne 0 ] ; then
 				merr "trusted - SQL Error"
