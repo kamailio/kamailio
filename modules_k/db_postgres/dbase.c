@@ -241,18 +241,21 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 				return -3;
 
 			case PGRES_EMPTY_QUERY:
+			/* notice or warning */
+			case PGRES_NONFATAL_ERROR:
+			/* status for COPY command, not used */
 			case PGRES_COPY_OUT:
 			case PGRES_COPY_IN:
+			/* unexpected response */
 			case PGRES_BAD_RESPONSE:
-			case PGRES_NONFATAL_ERROR:
 				LM_WARN("%p - probable invalid query\n", _con);
 			default:
 				LM_WARN("%p - PQresultStatus(%s)\n",
 					_con, PQresStatus(pqresult));
 				if (*_res) 
 					db_free_result(*_res);
-        		*_res = 0;
-				return 0;
+				*_res = 0;
+				return -4;
 		}
 
 	} else {
@@ -427,12 +430,12 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 				LM_ERR("%p Error returned from convert_result()\n", _con);
 				if (*_r) db_free_result(*_r);
 
-        		*_r = 0;
+				*_r = 0;
 				rc = -4;
 			}
 			rc =  0;
 			break;
-
+		/* query failed */
 		case PGRES_FATAL_ERROR:
 			LM_ERR("%p - invalid query, execution aborted\n", _con);
 			LM_ERR("%p: %s\n", _con, PQresStatus(pqresult));
@@ -443,18 +446,21 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			break;
 
 		case PGRES_EMPTY_QUERY:
+		/* notice or warning */
+		case PGRES_NONFATAL_ERROR:
+		/* status for COPY command, not used */
 		case PGRES_COPY_OUT:
 		case PGRES_COPY_IN:
+		/* unexpected response */
 		case PGRES_BAD_RESPONSE:
-		case PGRES_NONFATAL_ERROR:
 			LM_WARN("%p Probable invalid query\n", _con);
 		default:
 			LM_WARN("%p: %s\n", _con, PQresStatus(pqresult));
-        	LM_WARN("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
+			LM_WARN("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
 			if (*_r) db_free_result(*_r);
 
 			*_r = 0;
-			rc = (int)pqresult;
+			rc = -4;
 			break;
 	}
 
