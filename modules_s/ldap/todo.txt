@@ -104,3 +104,41 @@ X Support for Older LDAP Libraries
 
 * Check that we escape strings properly according to RFC4514
 
+* Support for server-side compare operation (could be used for authentication
+  where the client would send the digest credentials and the server replies
+  whether or not they are valid, similar to RADIUS digest authentication)
+
+* Support for alias-dereferencing
+ 
+  Aliases represent links to other entries or partitions of the namespace. 
+  When the distinguished name of an alias is used, the entry accessed is 
+  the entry to which the alias refers.
+  Alias dereferencing specifies if aliases are dereferenced-- that is, if 
+  the alias entry itself or the entry it points to is used. Aliases can be 
+  dereferenced or not when locating the base object and/or when searching 
+  under the base object. 
+
+* Support for handling of NULL Values in configuration parameters
+
+  When an optional attribute is missing and also when the attribute is 
+  present but has no value; e.g. DN=NULL for anonymous authentication.
+
+* Support for asynchronous notifications
+  The only standardized async. notification seems to be "notice of disconnection"
+  so all that we can do is just log incoming asynchronous notifications from the
+  server
+
+* Support for subscribing to notifications of changes in the DIT (optional)
+  This could be useful for updating data that is cached in SER, such as the list
+  of supported domains. This is a "nice to have" type of feature, so no time
+  estimation for implementation.
+
+* Support for automatic reconnects (check if we do it and if we do it properly).
+
+* Implement support for referrals (in the ldap module, not in the libldap library).
+  Including loop detection.
+
+* Support for time limited search operations
+
+* Support for size limited search operations
+
