@@ -31,14 +31,15 @@ objectIdentifier serObjectClass   serLDAP:1
 #
 # Convenience macros for commonly used syntax OIDs
 #
-objectIdentifier ldapSyntax          ldap3OID:115.121.1
-objectIdentifier stringSyntax        ldapSyntax:15
-objectIdentifier octetStringSyntax   ldapSyntax:40
-objectIdentifier bitStringSyntax     ldapSyntax:6
-objectIdentifier intSyntax           ldapSyntax:27
-objectIdentifier numericStringSyntax ldapSyntax:36
-objectIdentifier binarySyntax        ldapSyntax:5
-objectIdentifier boolSyntax          ldapSyntax:7
+objectIdentifier ldapSyntax            ldap3OID:115.121.1
+objectIdentifier stringSyntax          ldapSyntax:15
+objectIdentifier octetStringSyntax     ldapSyntax:40
+objectIdentifier bitStringSyntax       ldapSyntax:6
+objectIdentifier intSyntax             ldapSyntax:27
+objectIdentifier numericStringSyntax   ldapSyntax:36
+objectIdentifier binarySyntax          ldapSyntax:5
+objectIdentifier boolSyntax            ldapSyntax:7
+objectIdentifier genTimeSyntax         ldapSyntax:24 
 
 #
 # This is the parent attribute type for various UID attributes of SER, such
