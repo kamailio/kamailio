@@ -48,7 +48,7 @@ extern unsigned nc_array_size; /* 2^k == 1<<nc_array_bits */
 #include "../../atomic_ops.h"
 
 
-/* default number of maximum in-flight nounces */
+/* default number of maximum in-flight nonces */
 #define DEFAULT_NC_ARRAY_SIZE 1024*1024 /* uses 1Mb of memory */
 #define MIN_NC_ARRAY_SIZE        102400 /* warn if size < 100k */
 #define MAX_NC_ARRAY_SIZE 1024*1024*1024 /* warn if size > 1Gb */
@@ -67,7 +67,7 @@ enum nc_check_ret{
 	NC_REPLAY=-4 
 };
 
-/* check if nounce-count nc w/ index i is expected/valid and record its
+/* check if nonce-count nc w/ index i is expected/valid and record its
  * value */
 enum nc_check_ret nc_check_val(nid_t i, unsigned pool, unsigned int nc);
 

@@ -63,8 +63,8 @@ int init_nonce_count()
 
 
 	if (nid_crt==0){
-		BUG("auth: init_nonce_count: nounce index must be "
-				"initialized first (see init_nounce_id())\n");
+		BUG("auth: init_nonce_count: nonce index must be "
+				"initialized first (see init_nonce_id())\n");
 		return -1;
 	}
 	orig_array_size=nc_array_size;
@@ -76,12 +76,12 @@ int init_nonce_count()
 	}
 	size=1UL<<nc_array_k; /* ROUNDDOWN to 2^nc_array_k */
 	if (size < MIN_NC_ARRAY_SIZE){
-		WARN("auth: nounce-count in.flight nonces is very low (%d),"
+		WARN("auth: nonce-count in.flight nonces is very low (%d),"
 				" consider increasing nc_array_size to at least %d\n",
 				orig_array_size, MIN_NC_ARRAY_SIZE);
 	}
 	if (size > MAX_NC_ARRAY_SIZE){
-		WARN("auth: nounce-count in flight nonces is too high (%d),"
+		WARN("auth: nonce-count in flight nonces is too high (%d),"
 				" consider decreasing nc_array_size to at least %d\n",
 				orig_array_size, MAX_NC_ARRAY_SIZE);
 	}
@@ -121,7 +121,7 @@ int init_nonce_count()
 		return -1;
 	}
 	if (nc_partition_size  < MIN_NC_ARRAY_PARTITION){
-		WARN("auth: nounce-count in-flight nonces very low,"
+		WARN("auth: nonce-count in-flight nonces very low,"
 				" consider either decreasing nc_pool_no (%d) or "
 				" increasing nc_array_size (%d) such that "
 				"nc_array_size/nid_pool_no >= %d\n",
@@ -179,7 +179,7 @@ void destroy_nonce_count()
 	((pos)/(sizeof(unsigned int)/sizeof(nc_t)))
 
 /* get position inside an int nc_array cell for the raw index pos
- * (pos can be obtained from a nounce id with get_nc_array_raw_idx(i, p),
+ * (pos can be obtained from a nonce id with get_nc_array_raw_idx(i, p),
  *  see above) */
 #define get_nc_int_pos(pos) \
 	((pos)%(sizeof(unsigned int)/sizeof(nc_t)))
@@ -211,7 +211,7 @@ nid_t nc_new(nid_t id, unsigned char p)
 
 
 
-/* check if nounce-count nc w/ index i is expected/valid and if so it 
+/* check if nonce-count nc w/ index i is expected/valid and if so it 
  * updated the stored nonce-count
  * returns: 0 - ok, < 0 some error:
  * NC_INV_POOL      (pool number is invalid/corrupted)

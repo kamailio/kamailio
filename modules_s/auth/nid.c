@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * nounce id and pool management (stuff common to nonce-count and one
+ * nonce id and pool management (stuff common to nonce-count and one
  * time nonces)
  *
  * Copyright (C) 2008 iptelorg GmbH
