@@ -116,7 +116,7 @@
         <type>int</type>
         <size>&flag_len;</size>
         <default>0</default>
-        <description>Flags</description>
+        <description>Internal flags</description>
     </column>
 
     <column>
@@ -124,7 +124,7 @@
         <type>int</type>
         <size>&flag_len;</size>
         <default>0</default>
-        <description>CFlags</description>
+        <description>Branch and contact flags</description>
     </column>
 
     <column>
