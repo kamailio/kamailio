@@ -24,8 +24,8 @@
  */
 /*
  * Defines: 
- *  USE_NC USE_OT_NONCE  - if neither of them defined no code will be 
- *                         compiled
+ *  USE_NC, USE_OT_NONCE  - if neither of them defined no code will be 
+ *                          compiled
  */
 /*
  * History:

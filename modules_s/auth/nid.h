@@ -24,8 +24,8 @@
  */
 /*
  * Defines: 
- *  USE_NC USE_OT_NONCE  - if neither of them defined no code will be 
- *                         compiled
+ *  USE_NC, USE_OT_NONCE  - if neither of them defined no code will be 
+ *                          compiled
  */
 /*
  * History:
@@ -43,6 +43,13 @@ extern unsigned nid_pool_no; /* number of index pools */
 #include "../../atomic_ops.h"
 #include "../../pt.h" /* process_no */
 
+/* id incremenet, to avoid cacheline ping-pong and cover all the
+ * array locations it should be a number prime with the array size and
+ * bigger then the cacheline. Since this is used also for onetime nonces
+ * => NID_INC/8 > CACHELINE
+ * This number also limit the maximum pool/partition size, since the
+ * id overlfow checks check if crt_id - nonce_id >= partition_size*NID_INC
+ * => maximum partition size is (nid_t)(-1)/NID_INC*/
 #define NID_INC 257
 
 #define DEFAULT_NID_POOL_SIZE 1
@@ -50,6 +57,8 @@ extern unsigned nid_pool_no; /* number of index pools */
 
 #define CACHELINE_SIZE 256 /* more then most real-word cachelines */
 
+/* if larger tables are needed (see NID_INC comments above), consider
+ * switching to unsigned long long */
 typedef unsigned int nid_t;
 
 struct pool_index{

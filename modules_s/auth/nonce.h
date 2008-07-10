@@ -57,20 +57,20 @@
  * bit7 : on => nid & pool are valid for nonce-count
  * bit6 : on => nid & pool are valid for one-time nonce
  */
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 #define NF_VALID_NC_ID 128 
 #define NF_VALID_OT_ID  64 
 
 #define NF_POOL_NO_MASK  63
 #endif
 
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 #define nonce_nid_extra_size (sizeof(unsigned int)+sizeof(unsigned char))
 
-#else /* USE_NC */
+#else /* USE_NC || USE_OT_NONCE*/
 
 #define nonce_nid_extra_size 0
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 
 /* nonce structure, complete (maximum size) */
 struct bin_nonce_str{
@@ -78,11 +78,11 @@ struct bin_nonce_str{
 	int since;
 	char md5_1[16];
 	char md5_2[16]; /* optional */
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 	unsigned int nid_i;
 	unsigned char nid_pf; /* pool no & flags:
 						 	  bits 7, 6 = flags, bits 5..0 pool no*/ 
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 };
 
 /* nonce structure, small version  (no auth_extra_checks secondary md5) */
@@ -90,11 +90,11 @@ struct bin_nonce_small_str{
 	int expire;
 	int since;
 	char md5_1[16];
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 	unsigned int nid_i;
 	unsigned char nid_pf; /* pool no & flags:
 							  bits 7, 6 = flags, bits 5..0 pool no*/ 
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 };
 
 /* nonce union */
@@ -112,7 +112,7 @@ union bin_nonce{
 		(bn)->n.since=htonl(since_val); \
 	}while(0)
 
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 #define BIN_NONCE_PREPARE(bn, expire_v, since_v, id_v, pf_v, cfg, msg)  \
 	do{ \
 		BIN_NONCE_PREPARE_COMMON(bn, expire_v, since_v); \
@@ -124,10 +124,10 @@ union bin_nonce{
 			(bn)->n_small.nid_pf=(pf_v); \
 		} \
 	}while(0)
-#else /* USE_NC */
+#else /* USE_NC || USE_OT_NONCE */
 #define BIN_NONCE_PREPARE(bn, expire, since, id, pf, cfg, msg)  \
 	BIN_NONCE_PREPARE_COMMON(bn, expire, since)
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 
 
 
@@ -140,7 +140,7 @@ union bin_nonce{
  * (sizeof(struct) cannot be used safely since structs can be padded
  *  by the compiler if not defined with special attrs)
  */
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 #define MAX_BIN_NONCE_LEN (4 + 4 + 16 + 16 + 4 +1)
 #define MAX_NOCFG_BIN_NONCE_LEN (4 + 4 + 16 + 4 + 1)
 
@@ -148,14 +148,14 @@ union bin_nonce{
 	( ( (cfg)?MAX_BIN_NONCE_LEN:MAX_NOCFG_BIN_NONCE_LEN ) - \
 		(!(nid_enabled))*nonce_nid_extra_size )
 
-#else /* USE_NC */
+#else /* USE_NC || USE_OT_NONCE */
 #define MAX_BIN_NONCE_LEN (4 + 4 + 16 + 16)
 #define MAX_NOCFG_BIN_NONCE_LEN (4 + 4 + 16)
 
 #define get_bin_nonce_len(cfg, nid_enabled) \
 		( (cfg)?MAX_BIN_NONCE_LEN:MAX_NOCFG_BIN_NONCE_LEN )
 
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 
 /* minimum nonce length in binary form (not converted to base64/hex):
  * expires_t | since_t | MD5(expires_t | since_t | s1) => 4 + 4 + 16 = 24 
@@ -208,9 +208,9 @@ int get_auth_checks(struct sip_msg* msg);
  * Calculate nonce value
  */
 int calc_nonce(char* nonce, int* nonce_len, int cfg, int since, int expires,
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 				unsigned int n_id, unsigned char pf,
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 				str* secret1, str* secret2, struct sip_msg* msg);
 
 

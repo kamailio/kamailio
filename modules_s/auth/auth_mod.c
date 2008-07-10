@@ -55,6 +55,7 @@
 #include "api.h"
 #include "nid.h"
 #include "nc.h"
+#include "ot_nonce.h"
 
 MODULE_VERSION
 
@@ -126,10 +127,13 @@ static param_export_t params[] = {
 	{"auth_checks_register",   PARAM_INT,    &auth_checks_reg       },
 	{"auth_checks_no_dlg",     PARAM_INT,    &auth_checks_ood       },
 	{"auth_checks_in_dlg",     PARAM_INT,    &auth_checks_ind       },
-	{"nonce-count"  ,          PARAM_INT,    &nc_enabled            },
+	{"nonce_count"  ,          PARAM_INT,    &nc_enabled            },
 	{"nc_array_size",          PARAM_INT,    &nc_array_size         },
 	{"nc_array_order",         PARAM_INT,    &nc_array_k            },
-	{"nid_pool_no",             PARAM_INT,  &nid_pool_no          },
+	{"one_time_nonce"  ,       PARAM_INT,    &otn_enabled           },
+	{"otn_in_flight_no",       PARAM_INT,    &otn_in_flight_no      },
+	{"otn_in_flight_order",    PARAM_INT,    &otn_in_flight_k       },
+	{"nid_pool_no",            PARAM_INT,    &nid_pool_no            },
     {0, 0, 0}
 };
 
@@ -246,11 +250,13 @@ static int mod_init(void)
 			if (nc_enabled){
 #ifndef USE_NC
 				WARN("auth: nounce count support enabled from config, but"
-					" disabled at compile time (recompile with -DUSE_NC\n");
+					" disabled at compile time (recompile with -DUSE_NC)\n");
+				nc_enabled=0;
 #else
 				if (nid_crt==0)
 					init_nonce_id();
-				init_nonce_count();
+				if (init_nonce_count()!=0)
+					return -1;
 #endif
 			}
 #ifdef USE_NC
@@ -261,10 +267,24 @@ static int mod_init(void)
 #endif
 			break;
 		default:
+			if (nc_enabled){
+				WARN("auth: nonce-count support enabled, but qop not set\n");
+				nc_enabled=0;
+			}
 			break;
 	}
+	if (otn_enabled){
+#ifdef USE_OT_NONCE
+		if (nid_crt==0) init_nonce_id();
+		if (init_ot_nonce()!=0) 
+			return -1;
+#else
+		WARN("auth: one-time-nonce support enabled from config, but "
+				"disabled at compile time (recompile with -DUSE_OT_NONCE)\n");
+		otn_enabled=0;
+#endif /* USE_OT_NONCE */
+	}
 
-    
     return 0;
 }
 
@@ -275,6 +295,11 @@ static void destroy(void)
     if (sec_rand2) pkg_free(sec_rand2);
 #ifdef USE_NC
 	destroy_nonce_count();
+#endif
+#ifdef USE_OT_NONCE
+	destroy_ot_nonce();
+#endif
+#if defined USE_NC || defined USE_OT_NONCE
 	destroy_nonce_id();
 #endif
 }

@@ -10,7 +10,8 @@ auto_gen=
 NAME=auth.so
 LIBS=
 # DEFS:
-#       -DUSE_NC  - compile with nounce count support
-DEFS+=-DUSE_NC
+#       -DUSE_NC       - compile with nounce count support
+#       -DUSE_OT_NONCE - compile with one-time nonces support
+DEFS+=-DUSE_NC -DUSE_OT_NONCE
 
 include ../../Makefile.modules

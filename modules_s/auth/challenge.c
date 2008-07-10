@@ -47,6 +47,7 @@
 #include "nonce.h"
 #include "api.h"
 #include "nc.h"
+#include "ot_nonce.h"
 
 #define QOP_PARAM_START   ", qop=\""
 #define QOP_PARAM_START_LEN (sizeof(QOP_PARAM_START)-1)
@@ -83,7 +84,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     avp_value_t val;
     int nonce_len, l, cfg;
 	int t;
-#ifdef USE_NC
+#if defined USE_NC || defined USE_OT_NONCE
 	unsigned int n_id;
 	unsigned char pool;
 #endif
@@ -106,7 +107,7 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     
 	cfg = get_auth_checks(msg);
 
-    nonce_len = get_nonce_len(cfg, nc_enabled);
+    nonce_len = get_nonce_len(cfg, nc_enabled || otn_enabled);
 
     hf.len = hfn->len;
     hf.len += DIGEST_REALM_LEN
@@ -152,22 +153,32 @@ int build_challenge_hf(struct sip_msg* msg, int stale, str* realm, str* nonce, s
     else {
         l=nonce_len;
 		t=time(0);
-#ifdef USE_NC
-		if (nc_enabled){
+#if defined USE_NC || defined USE_OT_NONCE
+		if (nc_enabled || otn_enabled){
 			pool=nid_get_pool();
 			n_id=nid_inc(pool);
-			nc_new(n_id, pool);
-			pool|=NF_VALID_NC_ID;
+#ifdef USE_NC
+			if (nc_enabled){
+				nc_new(n_id, pool);
+				pool|=  NF_VALID_NC_ID;
+			}
+#endif
+#ifdef USE_OT_NONCE
+			if (otn_enabled){
+				otn_new(n_id, pool);
+				pool|= NF_VALID_OT_ID;
+			}
+#endif
 		}else{
 			pool=0;
 			n_id=0;
 		}
 		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, n_id, pool,
 						&secret1, &secret2, msg) != 0)
-#else  /* USE_NC */
+#else  /* USE_NC || USE_OT_NONCE*/
 		if (calc_nonce(p, &l, cfg, t, t + nonce_expire, 
 						&secret1, &secret2, msg) != 0) 
-#endif /* USE_NC */
+#endif /* USE_NC || USE_OT_NONCE */
 		{
             ERR("auth: calc_nonce failed (len %d, needed %d)\n",
                  nonce_len, l);
