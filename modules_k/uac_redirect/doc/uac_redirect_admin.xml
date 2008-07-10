@@ -71,12 +71,6 @@
 		module will log three additional records corresponding to each
 		redirect URI.
 		</para>
-		<para>
-		For each redirect contact, a separate record will be logged. For
-		example, if a call is redirected to three new contacts, the 
-		module will log three additional records corresponding to each
-		redirect URI.
-		</para>
 	</section>
 
 
