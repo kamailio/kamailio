@@ -20,8 +20,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
-if ! (check_openser && check_module "carrierroute" ); then
+if ! (check_openser && check_module "carrierroute"); then
 	exit 0
 fi ;
 
@@ -34,8 +35,6 @@ echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
-MYSQL="mysql openser -u openser --password=openserrw -e"
-
 $MYSQL "insert into route_tree (id, carrier) values ('1', 'default');"
 $MYSQL "insert into route_tree (id, carrier) values ('2', 'carrier1');"
 $MYSQL "insert into route_tree (id, carrier) values ('3', 'carrier2');"
@@ -58,11 +57,11 @@ $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob,
 values ('8','3','2','49','0','1','0','127.0.0.1:10000');"
 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('1', '3', '0', '49', '127.0.0.1:10000', '5..', '', '', 'fallback');"
+flags, mask, next_domain) values ('1', '3', '0', '49', '127.0.0.1:10000', '5..', '0', '0', 'fallback');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('2', '3', 'fallback', '49', '127.0.0.1:10000', '483', '', '', '2');"
+flags, mask, next_domain) values ('2', '3', 'fallback', '49', '127.0.0.1:10000', '483', '0', '0', '2');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('3', '3', 'fallback', '49', '127.0.0.1:9000', '4..', '', '', '2');"
+flags, mask, next_domain) values ('3', '3', 'fallback', '49', '127.0.0.1:9000', '4..', '0', '0', '2');"
 
 $MYSQL "alter table subscriber add cr_preferred_carrier int(10) default NULL;"
 
@@ -104,9 +103,9 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('4', '3', 'fallback', '49', '127.0.0.1:10000', '4..', '', '', '4');"
+flags, mask, next_domain) values ('4', '3', 'fallback', '49', '127.0.0.1:10000', '4..', '0', '0', '4');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000', '486', '', '', '2');"
+flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000', '486', '0', '0', '2');"
 
 if [ ! "$ret" -eq 0 ] ; then
 	../scripts/openserctl fifo cr_reload_routes

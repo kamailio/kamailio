@@ -22,9 +22,11 @@
 # Needs a default openser database setup for mysql
 
 source include/require
+source include/database
+
 CFG=2.cfg
 
-if ! (check_openser && check_module "db_mysql" ); then
+if ! (check_openser && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 

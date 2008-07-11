@@ -22,6 +22,8 @@
 # Needs a default openser database setup for mysql
 
 source include/require
+source include/database
+
 CFG=34.cfg
 
 if ! (check_openser && check_module "db_mysql" && check_module "presence" \
@@ -29,7 +31,7 @@ if ! (check_openser && check_module "db_mysql" && check_module "presence" \
 		&& check_module "xcap_client" && check_module "rls" \
 		&& check_module "presence_mwi" && check_module "pua_bla" \
 		&& check_module "pua_mi" && check_module "pua_usrloc" \
-		&& check_module "pua_xmpp" && check_module "xmpp"); then
+		&& check_module "pua_xmpp" && check_module "xmpp" && check_mysql); then
 	exit 0
 fi ;
 

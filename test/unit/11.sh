@@ -20,10 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
 CFG=11.cfg
 
-if ! (check_netcat && check_openser && check_module "db_mysql"); then
+if ! (check_netcat && check_openser && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 

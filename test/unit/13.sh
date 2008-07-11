@@ -20,6 +20,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
 CFG=13.cfg
 
@@ -34,8 +35,6 @@ echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
-MYSQL="mysql openser -u openser --password=openserrw -e"
-
 $MYSQL "insert into route_tree (id, carrier) values ('1', 'carrier1');"
 $MYSQL "insert into route_tree (id, carrier) values ('2', 'default');"
 $MYSQL "insert into route_tree (id, carrier) values ('3', 'carrier2');"
@@ -53,13 +52,13 @@ $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip,
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('11','3','0','','1','0','host1.local');"
 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
-mask, next_domain) values ('1', '1', '1', '49', 'host1.local', '404', '', '', '2');"
+mask, next_domain) values ('1', '1', '1', '49', 'host1.local', '404', '0', '0', '2');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
-mask, next_domain) values ('2', '1', '1', '49', 'host1.local', '4..', '', '', '3');"
+mask, next_domain) values ('2', '1', '1', '49', 'host1.local', '4..', '0', '0', '3');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
-mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '', '', '2');"
+mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '0', '0', '2');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
-mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '', '', '3');"
+mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '0', '0', '3');"
 
 ../openser -w . -f $CFG > /dev/null
 

@@ -20,15 +20,13 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
 if ! (check_sipp && check_openser); then
 	exit 0
 fi ;
 
 CFG=25.cfg
-
-MYSQL="mysql openser -u openser --password=openserrw -e"
-
 
 # add an registrar entry to the db;
 $MYSQL "insert into location (username,contact,socket,user_agent,cseq,q) values (\"49721123456789\",\"sip:123456789@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"

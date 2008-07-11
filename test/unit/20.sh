@@ -20,6 +20,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
 if ! (check_sipp && check_openser); then
 	exit 0
@@ -29,7 +30,7 @@ CFG="20.cfg"
 TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
 
 # add an registrar entry to the db;
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
+$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
 sipp -sn uas -bg -i localhost -m 1 -f 10 -p 5060 &> /dev/null
 
@@ -45,6 +46,6 @@ killall -9 sipp &> /dev/null
 killall -9 openser &> /dev/null
 rm $TMPFILE
 
-mysql  --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM location WHERE ((contact = \"sip:foo@localhost\") and (user_agent = \"ser_test\"));"
+$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost\") and (user_agent = \"ser_test\"));"
 
 exit $ret;

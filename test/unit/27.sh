@@ -20,8 +20,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
-if ! (check_sipp && check_openser && check_module "db_mysql" && check_module "presence" && check_module "presence_xml"); then
+if ! (check_sipp && check_openser && check_module "db_mysql" \
+	&& check_module "presence" && check_module "presence_xml" \
+	&& check_mysql); then
 	exit 0
 fi ;
 

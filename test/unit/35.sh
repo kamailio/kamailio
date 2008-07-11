@@ -20,6 +20,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
 if ! (check_sipp && check_openser); then
 	exit 0
@@ -33,22 +34,22 @@ IP="127.0.0.31"
 MASK=27
 
 # add an registrar entry to the db;
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO trusted (src_ip, proto) VALUES (\"127.0.0.1\",\"any\");"
+$MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
+$MYSQL "INSERT INTO trusted (src_ip, proto) VALUES (\"127.0.0.1\",\"any\");"
 
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
+$MYSQL "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 
 ../openser -w . -f $CFG &> /dev/null
 sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
 ret=$?
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM address WHERE (ip_addr='$IP' AND mask='$MASK');"
+$MYSQL "DELETE FROM address WHERE (ip_addr='$IP' AND mask='$MASK');"
 
 if [ "$ret" -eq 0 ] ; then
 	killall sipp
 	IP="127.47.6.254"
 	MASK=10
-	mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
+	$MYSQL "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 	
 	../scripts/openserctl fifo address_reload
 	#../scripts/openserctl fifo address_dump
@@ -56,7 +57,7 @@ if [ "$ret" -eq 0 ] ; then
 	sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
 	ret=$?
-	mysql --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM address WHERE (ip_addr='$IP' AND mask='$MASK');"
+	$MYSQL "DELETE FROM address WHERE (ip_addr='$IP' AND mask='$MASK');"
 fi;
 
 
@@ -64,7 +65,7 @@ fi;
 killall -9 sipp > /dev/null 2>&1
 killall -9 openser > /dev/null 2>&1
 
-mysql  --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
-mysql --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM trusted WHERE (src_ip=\"127.0.0.1\");"
+$MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
+$MYSQL "DELETE FROM trusted WHERE (src_ip=\"127.0.0.1\");"
 
 exit $ret;

@@ -1,6 +1,3 @@
-#!/bin/bash
-# database access with fetch_result for usrloc on mysql
-
 # Copyright (C) 2008 1&1 Internet AG
 #
 # This file is part of openser, a free SIP server.
@@ -19,36 +16,19 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-source include/require
-source include/database
+MYSQL="mysql openser --show-warnings --batch --user=openser --password=openserrw -e"
 
-if ! (check_openser && check_module "db_mysql" && check_mysql); then
-	exit 0
-fi ;
-
-CFG=11.cfg
-
-DOMAIN="local"
-
-cp $CFG $CFG.bak
-
-echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
-
-COUNTER=0
-while [  $COUNTER -lt 139 ]; do
-	COUNTER=$(($COUNTER+1))
-	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER', '$DOMAIN', 'foobar-$COUNTER@$DOMAIN', '___test___');"
-done
-
-../openser -w . -f $CFG > /dev/null
-ret=$?
-
-sleep 1
-killall -9 openser
-
-$MYSQL "delete from location where user_agent = '___test___'"
-
-mv $CFG.bak $CFG
-
-exit $ret
+function check_mysql() {
+	$MYSQL "select * from location;"
+	if ! [ "$?" -eq 0 ] ; then
+		echo "can't read from database"
+		return -1
+	fi;
+	$MYSQL "insert into location (user_agent) values ('___test___');"
+	if ! [ "$?" -eq 0 ] ; then
+		echo "can't write to database"
+		return -1
+	fi;
+	$MYSQL "delete from location where user_agent ='___test___';"
+	return 0
+}

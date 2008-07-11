@@ -20,6 +20,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 source include/require
+source include/database
 
 if ! (check_sipp && check_openser); then
 	exit 0
@@ -27,8 +28,6 @@ fi ;
 
 
 CFG=21.cfg
-
-MYSQL="mysql openser -u openser --password=openserrw -e"
 
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
