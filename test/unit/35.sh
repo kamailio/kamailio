@@ -34,6 +34,7 @@ MASK=27
 
 # add an registrar entry to the db;
 mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
+mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO trusted (src_ip, proto) VALUES (\"127.0.0.1\",\"any\");"
 
 mysql --show-warnings -B -u openser --password=openserrw -D openser -e "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 
@@ -64,5 +65,6 @@ killall -9 sipp > /dev/null 2>&1
 killall -9 openser > /dev/null 2>&1
 
 mysql  --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
+mysql --show-warnings -B -u openser --password=openserrw -D openser -e "DELETE FROM trusted WHERE (src_ip=\"127.0.0.1\");"
 
 exit $ret;
