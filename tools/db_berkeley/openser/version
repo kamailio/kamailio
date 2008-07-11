@@ -10,14 +10,10 @@ METADATA_DEFAULTS
 NIL|0
 acc|
 acc|4
-METADATA_DEFAULTS
-''|''|NIL|''
 active_watchers|
 active_watchers|9
 address|
 address|3
-METADATA_DEFAULTS
-''|''|''|''
 aliases|
 aliases|1004
 carrierfailureroute|
@@ -34,12 +30,6 @@ dialplan|
 dialplan|1
 dispatcher|
 dispatcher|2
-METADATA_DEFAULTS
-NIL|0|''|''
-METADATA_DEFAULTS
-NIL|0|''|''
-METADATA_DEFAULTS
-NIL|0|''|0|''
 domain|
 domain|1
 domainpolicy|
@@ -50,8 +40,6 @@ grp|
 grp|2
 gw|
 gw|7
-METADATA_DEFAULTS
-NIL|NIL
 imc_members|
 imc_members|1
 imc_rooms|
@@ -64,8 +52,6 @@ missed_calls|
 missed_calls|3
 pdt|
 pdt|1
-METADATA_DEFAULTS
-NIL|''|''|''|''|''|''|''|''|'1900-01-01 00:00:01'|'1900-01-01 00:00:01'|''|'o'|''|''|''|''|0|NULL|NULL
 presentity|
 presentity|2
 pua|
@@ -78,8 +64,6 @@ rls_watchers|
 rls_watchers|1
 route_tree|
 route_tree|1
-METADATA_DEFAULTS
-0|'1900-01-01 00:00:01'|''|0|0
 silo|
 silo|5
 sip_trace|
