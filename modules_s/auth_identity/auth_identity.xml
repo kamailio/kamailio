@@ -219,6 +219,7 @@
 
 
   <refsect1 xml:id="module.auth_identity.parameters">
+    <title>Module Parameters</title>
 
     <refsect2 xml:id="module.auth_identity.accept_pem_certs">
       <title><parameter>accept_pem_certs</parameter></title>
@@ -388,21 +389,21 @@ route[OUTBOUND]
 		if (method=="INVITE" || method=="OPTION") {
 			# Identity and Identity-info headers must not exist
 			if (@identity) {
-				t_reply("403", "Invalid Identity header");
+				sl_reply("403", "Invalid Identity header");
 				drop;
 			}
 			if (@identity_info) {
-				t_reply("403", "Invalid Identity-info header");
+				sl_reply("403", "Invalid Identity-info header");
 				drop;
 			}
 
 			if (!auth_date_proc()) {
-				t_reply("403", "Invalid Date value");
+				sl_reply("403", "Invalid Date value");
 				drop;
 			}
 
 			if (!auth_add_identity()) {
-				t_reply("480", "Authentication error");
+				sl_reply("480", "Authentication error");
 				drop;
 			}
 		}
@@ -427,47 +428,146 @@ route[OUTBOUND]
       an Identity header.
     </para>
     <programlisting><![CDATA[
-	if (method=="INVITE" || method=="OPTION") {
+	if (method=="INVITE" || method=="OPTIONS") {
 		if (!@identity) {
-			t_reply("428", "Use Identity Header");
+			sl_reply("428", "Use Identity Header");
 			drop;
 		}
 		if (!@identity_info) {
-			t_reply("436", "Bad Identity-Info");
+			sl_reply("436", "Bad Identity-Info");
 			drop;
 		}
 
 		if (!vrfy_check_date()) {
-			t_reply("403", "Outdated Date header value");
+			sl_reply("403", "Outdated Date header value");
 			drop;
 		}
 
 		if (!vrfy_get_certificate()) {
-			t_reply("436", "Bad Identity-Info");
+			sl_reply("436", "Bad Identity-Info");
 			drop;
 		}
 
 		if (!vrfy_check_certificate()) {
-			t_reply("437", "Unsupported Certificate");
+			sl_reply("437", "Unsupported Certificate");
 			drop;
 		}
 
 		if (!vrfy_check_msgvalidity()) {
-			t_reply("438", "Invalid Identity Header");
+			sl_reply("438", "Invalid Identity Header");
 			drop;
 		}
 
 		if (!vrfy_check_callid()) {
-			t_reply("403", "Message is replayed");
+			sl_reply("403", "Message is replayed");
 			drop;
 		}
 	}
 ]]></programlisting>
   </refsect1>
 
+  <refsect1 id="mdoule.auth_identity.how-it-works">
+    <title>The SIP Identity Mechanism</title>
+    <para>
+      The SIP Identity Mechanism is defined in RFC 4474 "Enhancements for
+      Authenticated Identity Management in the Session Initiation Protocol
+      (SIP)". Its main purpose is to affirm the identity of the originator
+      of a request as stated in the From header field of the request.
+      While basic SIP provides a mechanism for a user agent to proof its
+      authenticity to the proxy serving the domain of the address used
+      by the user agent, no such mechanism exists to proof the authenticity
+      to other proxies or end points. The SIP Identity Mechanism mends this
+      oversight.
+    </para>
+    <para>
+      The mechanism allows a proxy to cryptographically sign a message as
+      authentic before sending it to another proxy. It does so after
+      making sure the sender actually is who he claims and is allowed to
+      use the address in the context of the message.
+    </para>
+    <para>
+      If the proxy is satisfied, it creates two header fields: Identity and
+      Identity-Info. The Identity header field contains a signed hash over
+      the following components of the message:
+    </para>
+    <itemizedlist>
+      <listitem>
+        the address given in the From header field,
+      </listitem>
+      <listitem>
+        the address given in the To header field,
+      </listitem>
+      <listitem>
+        the Call-ID,
+      </listitem>
+      <listitem>
+        the content of the CSeq header field,
+      </listitem>
+      <listitem>
+        the content of the Date header field,
+      </listitem>
+      <listitem>
+        the address given in the Contact header field if present, and
+      </listitem>
+      <listitem>
+        the body of the message.
+      </listitem>
+    </itemizedlist>
+    <para>
+      The hash is signed with a certificate for the domain. A URL pointing
+      to a place where an interested party can download a copy of the
+      certificate is placed into the Identity-Info header field.
+    </para>
+    <para>
+      If the message arrives at a proxy or user agent that wishes to verify
+      the authenticity, this device downloads the certificate and itself
+      forms the hash over the above components. If both hashes match, the
+      message has been authenticated by the proxy of the domain of the
+      certificate and has not been tempered with on the way.
+    </para>
+  </refsect1>
+
   <refsect1 id="modules.auth_identity.credentials">
-    <title>Credentials</title>
-    <serdoc:todo />
+    <title>Certificates</title>
+    <para>
+      In order to use the <command>auth_identity</command> module, you need a
+      certificate for your domain. There is two options, how to get one: you
+      buy one from a certification authority or you create your own
+      certification authority and use a self-signed certificate.  If you plan
+      to provide real  inter-domain calls for your domain, you should pick the
+      first option. Although it is more expensive, it guarantees proper
+      interaction between domains.
+    </para>
+    <para>
+      Either way, you will end up with a private key and a certificate which
+      includes the public key for that private key. You can use the same key
+      and certificate as for the TLS encrypted SIP transport. Because of
+      this, details on the process of acquiring them can be found in 
+      <serdoc:module>tls</serdoc:module>.
+    </para>
+    <para>
+      Once you have the certificate and private key, you set the module
+      parameter
+      <serdoc:modparam module="auth_identity">certificate_path</serdoc:modparam>
+      to point to the file containing the certificate and
+      <serdoc:modparam module="auth_identity">privatekey_path</serdoc:modparam>
+      to point to the file with the private key.
+    </para>
+    <para>
+      Finally, you have to put a public version of your certificate onto
+      a web server somewhere. This version must be DER encoded and,
+      obviously, must not contain the private key. You can create this
+      by issuing
+    </para>
+    <programlisting><![CDATA[
+# openssl x509 -in your_certificate.crt -outform der -out your_certificate.der
+]]></programlisting>
+    <para>
+      You then place the DER encoded certificate into a publicly
+      available directory on your webserver and state the URL to the
+      file in the parameter
+      <serdoc:modparam module="auth_identity">certificate_url</serdoc:modparam>.
+    </para>
   </refsect1>
 
   <!--
