@@ -32,7 +32,7 @@ ifneq ($(strip $(DEFS)), $(strip $(CFG_DEFS)))
 #$(warning               : <$(strip $(CFG_DEFS))>)
 $(shell rm -f makecfg.lst)
 endif
-ifneq ($(INCLUDES), $(CFG_INCLUDES))
+ifneq ($(strip $(INCLUDES)), $(strip $(CFG_INCLUDES)))
 $(shell rm -f makecfg.lst)
 endif
 endif
