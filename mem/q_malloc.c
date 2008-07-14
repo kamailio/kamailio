@@ -632,7 +632,59 @@ void* qm_realloc(struct qm_block* qm, void* p, unsigned long size)
 }
 
 
+void qm_check(struct qm_block* qm)
+{
+	struct qm_frag* f;
+	long fcount = 0;
+	
+	LOG(memlog, "DEBUG: qm_check()\n");
+	f = qm->first_frag;
+	while ((char*)f < (char*)qm->last_frag_end) {
+		fcount++;
+		/* check struct qm_frag */
+#ifdef DBG_QM_MALLOC
+		if (f->check!=ST_CHECK_PATTERN){
+			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
+					"beginning overwritten(%lx)!\n",
+					f, (char*)f + sizeof(struct qm_frag),
+					f->check);
+			qm_status(qm);
+			abort();
+		};
+#endif
+		if (f + sizeof(struct qm_frag) + f->size + sizeof(struct qm_frag_end) > qm->first_frag + qm->size) {
+			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
+				"bad size: %lu (frag end: %p > end of block: %p)\n",
+				f, (char*)f + sizeof(struct qm_frag) + sizeof(struct qm_frag_end), f->size,
+				f + sizeof(struct qm_frag) + f->size, qm->first_frag + qm->size);
+			qm_status(qm);
+			abort();
+		}
+		/* check struct qm_frag_end */
+		if (FRAG_END(f)->size != f->size) {
+			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p) "
+				"size in qm_frag and qm_frag_end does not match: frag->size=%lu, frag_end->size=%lu)\n",
+				f, (char*)f + sizeof(struct qm_frag),
+				f->size, FRAG_END(f)->size);
+			qm_status(qm);
+			abort();
+		}
+#ifdef DBG_QM_MALLOC
+		if ((FRAG_END(f)->check1 != END_CHECK_PATTERN1) ||
+			(FRAG_END(f)->check2 != END_CHECK_PATTERN2)) {
+			LOG(L_CRIT, "BUG: qm_*: fragm. %p (address %p)"
+						" end overwritten(%lx, %lx)!\n",
+					f, (char*)f + sizeof(struct qm_frag), 
+					FRAG_END(f)->check1, FRAG_END(f)->check2);
+			qm_status(qm);
+			abort();
+		}
+#endif
+		f = FRAG_NEXT(f);
+	}
 
+	LOG(memlog, "DEBUG: qm_check: %lu fragments OK\n", fcount);
+}
 
 void qm_status(struct qm_block* qm)
 {
