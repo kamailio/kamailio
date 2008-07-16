@@ -1,4 +1,4 @@
-Auth Module
+1. Auth Module
 
 Jan Janak
 
@@ -15,7 +15,36 @@ Juha Heinanen
    Revision $Revision$ $Date$
      __________________________________________________________________
 
-Overview
+   1.1. Overview
+   1.2. Dependencies
+   1.3. Parameters
+
+        1.3.1. auth_checks_register, auth_checks_no_dlg, and
+                auth_checks_in_dlg (flags)
+
+        1.3.2. qop (string)
+        1.3.3. nonce_count (boolean)
+        1.3.4. one_time_nonce (boolean)
+        1.3.5. nid_pool_no (integer)
+        1.3.6. nc_array_size (integer)
+        1.3.7. nc_array_order (integer)
+        1.3.8. otn_in_flight_no (integer)
+        1.3.9. otn_in_flight_order (integer)
+        1.3.10. secret (string)
+        1.3.11. nonce_expire (integer)
+        1.3.12. rpid_prefix (string)
+        1.3.13. rpid_suffix (string)
+
+   1.4. Functions
+
+        1.4.1. www_challenge(realm,qop)
+        1.4.2. proxy_challenge(realm, qop)
+        1.4.3. consume_credentials()
+        1.4.4. is_rpid_user_e164()
+        1.4.5. append_rpid_hf()
+        1.4.6. append_rpid_hf(prefix, suffix)
+
+1.1. Overview
 
    This is a generic module that itself doesn't provide all functions
    necessary for authentication but provides functions that are needed by
@@ -29,18 +58,19 @@ Overview
    functionality. This also allows us to avoid unnecessary dependencies in
    the binary packages.
 
-Dependencies
+1.2. Dependencies
 
    The module depends on the following modules (in the other words the
    listed modules must be loaded before this module):
      * sl. The modules needs sl module to send stateless replies.
 
-Parameters
+1.3. Parameters
 
    Revision History
    Revision $Revision$ $Date$
 
-auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg (flags)
+1.3.1.  auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg
+(flags)
 
    These three module parameters control which optional integrity checks
    will be performed on the SIP message carrying digest response during
@@ -58,7 +88,7 @@ auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg (flags)
 
    Without the extra checks the nonce will protect only against expired
    values. Some reply attacks are still possible in the expire "window". A
-   possible workarround is to always force qop authentification and always
+   possible workaround is to always force qop authentication and always
    check the uri from the authorization header, but this would not work if
    an upstream proxy rewrites the uri and it will also not work with a lot
    of UA implementations.
@@ -73,8 +103,8 @@ auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg (flags)
    is the same when an UA tries to reuse the nonce, thus protecting or
    severely limiting reply attacks.
 
-   The possible flag values all three parameters are: 1 for checking if
-   the message uri changed (uses the whole uri), 2 for checking the
+   The possible flag values for all three parameters are: 1 for checking
+   if the message uri changed (uses the whole uri), 2 for checking the
    callid, 4 for the from tag and 8 for the source ip (see nonce.h). For
    example setting auth_checks_register to 6 would check if the callid or
    the from tag changed from the REGISTER message for which the original
@@ -91,14 +121,278 @@ auth_checks_register, auth_checks_no_dlg, and auth_checks_in_dlg (flags)
    Example 1. Setting the auth_checks_register module parameter
 modparam("auth", "auth_checks_register", 2) # callid
 
-secret (string)
+1.3.2. qop (string)
+
+   If set, enable qop for challenges: each challenge will include a qop
+   parameter. This is the recommended way, but some older non rfc3261
+   compliant UAs might get confused and might not authenticate properly if
+   qop is enabled.
+
+   Enabling qop together with nonce_count will provide extra-security
+   (protection against replay attacks) while still allowing credentials
+   caching at the UA side and thus not compromising performance.
+
+   The possible values are: "auth", "auth-int" and "" (unset).
+
+   The default value is not-set ("").
+
+   See also: nonce_count.
+
+   Example 2. qop example
+modparam("auth", "qop", "auth")   # set qop=auth
+
+1.3.3. nonce_count (boolean)
+
+   If enabled the received nc value is remembered and checked against the
+   older value (for a successful authentication the received nc must be
+   greater then the previously received one, see rfc2617 for more
+   details). This will provide protection against replay attacks while
+   still allowing credentials caching at the UA side.
+
+   It depends on qop being enabled (if qop is not enabled, the challenges
+   won't include qop and so the UA will probably not include the qop or nc
+   parameters in its response).
+
+   If a response doesn't include qop or nc (for example obsolete UAs that
+   don't support them) the response will be checked according to the other
+   enabled nonce checks, in this order: one_time_nonce and auth_check_*.
+   If a response includes nc only the normal nonce_expire checks and the
+   nonce_count checks will be performed, all the other checks will be
+   ignored.
+
+   The nonce_count checks work by tracking a limited number of nonces. The
+   maximum number of tracked nonces is set using the nc_array_size or
+   nc_array_order parameters. If this number is exceeded, older entries
+   will be overwritten. As long as the maximum rate of challengeable
+   messages per average response time is lower then nc_array_size, the
+   nonce_count checks should work flawlessly. For optimum performance
+   (maximum reuse of cache credentials) nc_array_size divided by
+   nid_pool_no should be lower then the message rate multiplied by the
+   desired nonce_expire.
+
+   The maximum accepted nc value is 255. If nc becomes greater then this,
+   the nonce will be considered stale and the UA will be re-challenged.
+
+   Note: nonce_count should be enabled only in stateful mode (a
+   transaction should be created prior to the authentication check to
+   absorb possible retransmissions and all the replies should be sent
+   statefuly, using t_reply()). If nonce_count and the authentication
+   checks are used in the stateless mode then all retransmissions will be
+   challenged.
+
+   The default value is 0 (off).
+
+   See also: qop, nc_array_size, nc_array_order, nid_pool_no,
+   nonce_expire. one_time_nonce.
+
+   Example 3. nonce_count example
+modparam("auth", "nonce_count", 1) # enable nonce_count support
+modparam("auth", "qop", "auth")    # enable qop=auth
+
+....
+route{
+...
+        # go stateful and catch retransmissions
+        if (!t_newtran())
+                drop; # retransmission
+        if (method=="REGISTER"){
+                if (!www_authenticate("test", "credentials")){
+                        # reply must be sent with t_reply because the
+                        # transaction is already created at this point
+                        # (we are in "stateful" mode)
+                        if ($? == -2){
+                                t_reply("500", "Internal Server Error");
+                        }else if ($? == -3){
+                                t_reply("400", "Bad Request");
+                        }else{
+                                if ($disgest_challenge)
+                                        append_to_reply("%$digest_challenge");
+                                t_reply("401", "Unauthorized");
+                        }
+                        drop;
+                }
+                if (!save_contacts("location")) {
+                        t_reply("400", "Invalid REGISTER Request");
+                        drop;
+                }
+                drop;
+        }else{
+                if (!proxy_authenticate("my_realm", "credentials")){
+                        if ($? == -2){
+                                t_reply("500", "Internal Server Error");
+                        }else if ($? == -3){
+                                t_reply("400", "Bad Request");
+                        }else{
+                                if ($digest_challenge)
+                                        append_to_reply("%$digest_challenge");
+                                t_reply("401", "Unauthorized");
+                        }
+                        drop;
+                }
+        }
+...
+
+1.3.4. one_time_nonce (boolean)
+
+   If set to 1 nonce reuse is disabled: each nonce is allowed only once,
+   in the first reponse to a challenge. All the messages will be
+   challenged, even retransmissions. Stateful mode should be used, to
+   catch retransmissions before the authentication checks (using
+   t_newtran() before the authentication checks and sending all the
+   replies with t_reply()).
+
+   one_time_nonce provides enhanced replay protections at the cost of
+   invalidating UA side credentials caching, challenging every message
+   (and thus generating extra messages and extra round-trips) and
+   requiring stateful mode. In general qop and nonce_count should be
+   prefered (if possible) with fallback to auth_checks_*. Due to the
+   disadvantages listed above, one_time_nonce should be used only if the
+   extra checks provided by auth_checks_register, auth_checks_no_dlg and
+   auth_checks_in_dlg are deemed insufficient for a specific setup.
+
+   Compared to nonce_count, one_time_nonce provides the same protection,
+   but at a higher message cost. The only advantages are that it works
+   with user agents that do not support qop and nc and that it uses less
+   memory for the same supported number of maximum in-flight nonces (by a
+   factor of 8). one_time_nonce can be used as fallback from nonce_count,
+   when the UA doesn't support nc (it happens automatically when both of
+   them are enabled).
+
+   Like nonce_count, one_time_nonce works by tracking a limited number of
+   nonces. The maximum number of tracked nonces is set using the
+   otn_in_flight_no or otn_in_flight_order parameters. If this number is
+   exceeded, older entries will be overwritten. As long as the maximum
+   rate of challengeable messages per average response time is lower then
+   otn_in_flight_no, the one_time_nonce checks should work flawlessly.
+
+   The default value is 0 (off).
+
+   See also: otn_in_flight_no, otn_in_flight_order, nid_pool_no and
+   nonce_count.
+
+   Example 4. one_time_nonce example
+modparam("auth", "one_time_nonce", 1)
+# Note: stateful mode should be used, see the nonce_count example
+
+1.3.5. nid_pool_no (integer)
+
+   Controls the number of partitions for the nonce_count and
+   one_time_nonce arrays (it's common to both of them to reduce the nonce
+   size).
+
+   Instead of using single arrays for keeping nonce state, these arrays
+   can be divided into more partitions. Each ser process is assigned to
+   one of these partitions, allowing for higher concurrency on multi-CPU
+   machines. Besides increasing performance, increasing nid_pool_no has
+   also a negative effect: it could decrease the maximum supported
+   in-flight nonces in certain conditions. In the worst case, when only
+   one ser process receives most of the traffic (e.g. very busy tcp
+   connection between two proxies), the in-flight nonces could be limited
+   to the array size (nc_array_size for nonce_count or otn_in_flight_no
+   for one_time_nonce) divided by the partitions number (nid_pool_no).
+   However for normal traffic, when the process receiving a message is
+   either random or chosen in a round-robin fashion the maximum in-flight
+   nonces number will be very little influenced by nid_pool_no (the
+   messages will be close to equally distributed to processes using
+   different partitions).
+
+   nid_pool_no value should be one of: 1, 2, 4, 8, 16, 32 or 64 (the
+   maximum value is 64 and all values should be of the form 2^k or else
+   they will be rounded down to 2^k).
+
+   The default value is 1.
+
+   See also: nonce_count, one_time_nonce, nc_array_size and
+   otn_in_flight_no.
+
+   Example 5. nid_pool_no example
+modparam("auth", "nid_pool_no", 4)
+
+1.3.6. nc_array_size (integer)
+
+   Maximum number of in-flight nonces for nonce_count. It represents the
+   maximum nonces for which state will be kept. When this number is
+   exceeded, state for the older nonces will be discarded to make space
+   for new ones (see nonce_count for more details).
+
+   The value should be of the form 2^k. If it's not it will be rounded
+   down to 2^k (for example a value of 1000000 will be rounded down to
+   2^19=524288). nc_array_order can be used to directly specify the power
+   of 2 (e.g. nc_array_order set to 20 is equivalent to nc_array_size set
+   to 1048576).
+
+   The memory used to keep the nonce state will be nc_array_size in bytes.
+
+   The default value is 1048576 (1M in-flight nonces, using 1Mb memory).
+
+   See also: nonce_count and nid_pool_no.
+
+   Example 6. nc_array_size example
+modparam("auth", "nc_array_size", 4194304)   # 4Mb
+
+1.3.7. nc_array_order (integer)
+
+   Equivalent to nc_array_size, but instead of directly specifying the
+   size, its value is the power at which 2 should be raised
+   (log2(nc_array_size)).
+
+   nc_array_size = 2^nc_array_order. For more details see nc_array_size.
+
+   The default value is 20 (1M in-flight nonces, using 1Mb memory).
+
+   See also: nonce_count, nc_array_size and nid_pool_no.
+
+   Example 7. nc_array_order example
+modparam("auth", "nc_array_order", 22)   # 4Mb
+
+1.3.8. otn_in_flight_no (integer)
+
+   Maximum number of in-flight nonces for one_time_nonce. It represents
+   the maximum number of nonces remembered for the one-time-nonce check.
+   When this number is exceeded, information about older nonces will be
+   discarded and overwritten with information about the new generated ones
+   (see one_time_nonce for more details).
+
+   The value should be of the form 2^k. If it's not it will be rounded
+   down to 2^k (for example a value of 1000000 will be rounded down to
+   2^19=524288). otn_in_flight_no can be used to directly specify the
+   power of 2 (e.g. otn_in_flight_order set to 19 is equivalent to
+   otn_in_fligh_number set to 524288).
+
+   The memory used to keep the nonce information will be the
+   otn_in_flight_no divided by 8 (only 1 bit of state is kept per nonce).
+
+   The default value is 1048576 (1M in-flight nonces, using 128Kb memory).
+
+   See also: one_time_nonce and nid_pool_no.
+
+   Example 8. otn_in_flight_no example
+modparam("auth", "otn_in_flight_no", 8388608)   # 8 Mb (1Mb memory)
+
+1.3.9. otn_in_flight_order (integer)
+
+   Equivalent to otn_in_flight_no, but instead of directly specifying the
+   size, its value is the power at which 2 should be raised
+   (log2(otn_in_flight_no)).
+
+   otn_in_flight_no = 2^otn_in_flight_order. For more details see
+   otn_in_flight_order.
+
+   The default value is 20 (1M in-flight nonces, using 128Kb memory).
+
+   See also: one_time_nonce, otn_in_flight_no and nid_pool_no.
+
+   Example 9. otn_in_flight_order example
+modparam("auth", "otn_in_flight_order", 23)   # 8 Mb (1Mb memory)
+
+1.3.10. secret (string)
 
    Default value is randomly generated string.
 
-   Example 2. Setting secret module parameter
+   Example 10. Setting secret module parameter
 modparam("auth", "secret", "johndoessecretphrase")
 
-nonce_expire (integer)
+1.3.11. nonce_expire (integer)
 
    Nonces have limited lifetime. After a given period of time nonces will
    be considered invalid. This is to protect replay attacks. Credentials
@@ -110,35 +404,35 @@ nonce_expire (integer)
 
    The value is in seconds and default value is 300 seconds.
 
-   Example 3. nonce_expire example
+   Example 11. nonce_expire example
 modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 
-rpid_prefix (string)
+1.3.12. rpid_prefix (string)
 
    Prefix to be added to Remote-Party-ID header field just before the URI
    returned from either radius or database.
 
    Default value is "" (empty string).
 
-   Example 4. rpid_prefix
+   Example 12. rpid_prefix
 modparam("auth", "rpid_prefix", "Whatever <")
 
-rpid_suffix (string)
+1.3.13. rpid_suffix (string)
 
    Suffix to be added to Remote-Party-ID header field after the URI
    returned from either radius or database.
 
    Default value is ";party=calling;id-type=subscriber;screen=yes".
 
-   Example 5. rpid_suffix
+   Example 13. rpid_suffix
 modparam("auth", "rpid_suffix", "@1.2.3.4>")
 
-Functions
+1.4. Functions
 
    Revision History
    Revision $Revision$ $Date$
 
-www_challenge(realm,qop)
+1.4.1. www_challenge(realm,qop)
 
    The function challenges a user agent. It will generate a WWW-Authorize
    header field containing a digest challenge, it will put the header
@@ -164,14 +458,14 @@ www_challenge(realm,qop)
        we made this optional. On the other hand there are still some user
        agents that cannot handle request without qop parameter too.
 
-   Example 6. www_challenge usage
+   Example 14. www_challenge usage
 ...
 if (www_authorize("iptel.org", "subscriber")) {
     www_challenge("iptel.org", "1");
 };
 ...
 
-proxy_challenge(realm, qop)
+1.4.2. proxy_challenge(realm, qop)
 
    The function challenges a user agent. It will generate a
    Proxy-Authorize header field containing a digest challenge, it will put
@@ -194,14 +488,14 @@ proxy_challenge(realm, qop)
        we made this optional. On the other hand there are still some user
        agents that cannot handle request without qop parameter too.
 
-   Example 7. proxy_challenge usage
+   Example 15. proxy_challenge usage
 ...
 if (!proxy_authorize("", "subscriber)) {
     proxy_challenge("", "1");  # Realm will be autogenerated
 };
 ...
 
-consume_credentials()
+1.4.3. consume_credentials()
 
    This function removes previously authorized credentials from the
    message being processed by the server. That means that the downstream
@@ -211,14 +505,14 @@ consume_credentials()
    little bit shorter. The function must be called after www_authorize or
    proxy_authorize.
 
-   Example 8. consume_credentials example
+   Example 16. consume_credentials example
 ...
 if (www_authorize("", "subscriber)) {
     consume_credentials();
 };
 ...
 
-is_rpid_user_e164()
+1.4.4. is_rpid_user_e164()
 
    The function checks if the SIP URI received from the database or radius
    server and will potentially be used in Remote-Party-ID header field
@@ -226,14 +520,14 @@ is_rpid_user_e164()
    user part. Check fails, if no such SIP URI exists (i.e. radius server
    or database didn't provide this information).
 
-   Example 9. is_rpid_user_e164 usage
+   Example 17. is_rpid_user_e164 usage
 ...
 if (is_rpid_user_e164()) {
     # do something here
 };
 ...
 
-append_rpid_hf()
+1.4.5. append_rpid_hf()
 
    Appends to the message a Remote-Party-ID header that contains header
    'Remote-Party-ID: ' followed by the saved value of the SIP URI received
@@ -241,15 +535,15 @@ append_rpid_hf()
    parameter radius_rpid_suffix. The function does nothing if no saved SIP
    URI exists.
 
-   Example 10. append_rpid_hf usage
+   Example 18. append_rpid_hf usage
 ...
 append_rpid_hf();  # Append Remote-Party-ID header field
 ...
 
-append_rpid_hf(prefix, suffix)
+1.4.6. append_rpid_hf(prefix, suffix)
 
-   This function is the same as the function described in the section
-   called "append_rpid_hf()". The only difference is that it accepts two
+   This function is the same as the function described in Section 1.4.5,
+   "append_rpid_hf()". The only difference is that it accepts two
    parameters, prefix and suffix to be added to Remote-Party-ID header
    field. This function ignores rpid_prefix and rpid_suffix parameters,
    instead of that allows to set them for every call.
@@ -262,7 +556,7 @@ append_rpid_hf(prefix, suffix)
        will be appended at the end of the header field. It can be used to
        set various URI parameters, for example.
 
-   Example 11. append_rpid_hf(prefix, suffix) usage
+   Example 19. append_rpid_hf(prefix, suffix) usage
 ...
 append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");  # Append Re
 mote-Party-ID header field
