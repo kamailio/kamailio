@@ -394,6 +394,13 @@ int arm_timer()
 
 
 
+#ifdef DBG_ser_time
+/* debugging  only */
+void check_ser_drift();
+#endif /* DBG_set_time */
+
+
+
 /* adjust the timer using the "real" time, each TIMER_RESYNC_TICKS, but only
  * if timer drift > TIMER_MAX_DRIFT
  * NOTES: - it will adjust time within  TIMER_MAX_DRIFT from the "real"
@@ -412,6 +419,9 @@ inline static void adjust_ticks()
 	
 	/* fix ticks if necessary */
 	if ((*ticks-last_adj_check)>=(ticks_t)TIMER_RESYNC_TICKS){
+#ifdef DBG_ser_time
+		check_ser_drift();
+#endif /* DBG_ser_time */
 		last_adj_check=*ticks;
 		if (gettimeofday(&crt_time, 0)<0){
 			LOG(L_ERR, "ERROR: adjust_ticks: gettimeofday failed: %s [%d]\n",
@@ -459,6 +469,62 @@ inline static void adjust_ticks()
 	}
 }
 
+
+
+/* time(2) equivalent, using ser internal timers (faster then a syscall) */
+time_t ser_time(time_t *t)
+{
+	if (likely(t==0))
+		return last_time.tv_sec+TICKS_TO_S(*ticks-last_ticks);
+	*t=last_time.tv_sec+TICKS_TO_S(*ticks-last_ticks);
+	return *t;
+}
+
+
+
+/* gettimeofday(2) equivalent, using ser internal timers (faster 
+ * but more imprecise)
+ * WARNING: ignores tz (it's obsolete anyway)*/
+int ser_gettimeofday(struct timeval* tv, struct timezone* tz)
+{
+	if (likely(tv!=0)){
+		tv->tv_sec=last_time.tv_sec+TICKS_TO_S(*ticks-last_ticks);
+		tv->tv_usec=last_time.tv_usec+
+					(TICKS_TO_MS(*ticks-last_ticks)%1000)*1000;
+	}
+	return 0;
+}
+
+
+
+#ifdef DBG_ser_time
+/* debugging  only, remove */
+void check_ser_drift()
+{
+	time_t t1, t2;
+	struct timeval tv1, tv2;
+	int r;
+	
+	t1=time(0);
+	t2=ser_time(0);
+	if (t1!=t2)
+		BUG("time(0)!=ser_time(0) : %d != %d \n", (unsigned)t1, (unsigned)t2);
+	
+	r=gettimeofday(&tv1, 0);
+	ser_gettimeofday(&tv2, 0);
+	if (tv1.tv_sec!=tv2.tv_sec)
+		BUG("gettimeofday seconds!=ser_gettimeofday seconds : %d != %d \n",
+				(unsigned)tv1.tv_sec, (unsigned)tv2.tv_sec);
+	else if ((tv1.tv_usec > tv2.tv_usec) && 
+				(unsigned)(tv1.tv_usec-tv2.tv_usec)>100000)
+		BUG("gettimeofday usecs > ser_gettimeofday with > 0.1s : %d ms\n",
+			(unsigned)(tv1.tv_usec-tv2.tv_usec)/1000);
+	else if ((tv1.tv_usec < tv2.tv_usec) && 
+				(unsigned)(tv2.tv_usec-tv1.tv_usec)>100000)
+		BUG("gettimeofday usecs < ser_gettimeofday with > 0.1s : %d ms\n",
+			(unsigned)(tv2.tv_usec-tv1.tv_usec)/1000);
+}
+#endif /* DBG_ser_time */
 
 
 
