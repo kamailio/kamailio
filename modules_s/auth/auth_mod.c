@@ -119,6 +119,7 @@ static cmd_export_t cmds[] = {
 static param_export_t params[] = {
     {"secret",                 PARAM_STRING, &sec_param             },
     {"nonce_expire",           PARAM_INT,    &nonce_expire          },
+	{"nonce_auth_max_drift",   PARAM_INT,    &nonce_auth_max_drift  },
     {"protect_contacts",       PARAM_INT,    &protect_contacts      },
     {"challenge_attr",         PARAM_STR,    &challenge_attr        },
     {"proxy_challenge_header", PARAM_STR,    &proxy_challenge_header},
