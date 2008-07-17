@@ -173,7 +173,7 @@ Chapter 1. Admin Guide
    type of calls, etc). Dialogs can be dynamically added in
    different (and several) profile tables - logically, each
    profile table can have a special meaning (like dialogs outside
-   the doamin, dialogs terminated to PSTN, etc).
+   the domain, dialogs terminated to PSTN, etc).
 
    There are two types of profiles:
      * with no value - a dialog simply belongs to a profile.
