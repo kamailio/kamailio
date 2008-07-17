@@ -28,6 +28,10 @@ modules:
              - added extra authentication checks support, to protect
                against various reply attacks.
              - params:
+                       - nonce_auth_max_drift - maximum difference in seconds
+                          from the current time, if a nonce appears to be
+                          created in the future (if exceeded the nonce is 
+                          considered stale).
                        - one_time_nonce - if enabled each nonce is allowed 
                           only once => each new request (including 
                           retransmissions!) will be challenged. It should be
@@ -65,7 +69,8 @@ modules:
                           and index partitions, useful for increasing 
                           performance on multi-cpu systems (default 1,
                           recommended 4)
-                       - auth_extra_checks - flags specifying which extra
+                       - auth_checks_register, auth_checks_no_dlg, 
+                         auth_checks_in_dlg - flags specifying which extra
                           message part/parts will be checked for change before
                           allowing nonce reuse. See the auth module docs for
                           for more information (modules/auth/README).
