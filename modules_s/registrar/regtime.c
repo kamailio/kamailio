@@ -29,6 +29,7 @@
 
 
 #include "regtime.h"
+#include "../../ser_time.h"
 
 
 time_t act_time;
@@ -40,5 +41,5 @@ time_t act_time;
  */
 void get_act_time(void)
 {
-	act_time = time(0);
+	act_time = ser_time(0);
 }

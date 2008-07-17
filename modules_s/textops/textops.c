@@ -77,6 +77,7 @@
 #include "../xlog/xl_lib.h"
 #include "../../script_cb.h"
 #include "../../select_buf.h"
+#include "../../ser_time.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -691,7 +692,7 @@ static int append_time_f(struct sip_msg* msg, char* p1, char *p2)
 	time_t now;
 	struct tm *bd_time;
 
-	now=time(0);
+	now=ser_time(0);
 
 	bd_time=gmtime(&now);
 	if (bd_time==NULL) {

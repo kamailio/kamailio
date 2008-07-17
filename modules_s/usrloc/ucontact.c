@@ -44,6 +44,7 @@
 #include "../../db/db.h"
 #include "../../ip_addr.h"
 #include "../../globals.h"
+#include "../../ser_time.h"
 #include "ul_mod.h"
 #include "ul_callback.h"
 #include "reg_avps.h"
@@ -172,7 +173,7 @@ void free_ucontact(ucontact_t* _c)
  */
 void print_ucontact(FILE* _f, ucontact_t* _c)
 {
-	time_t t = time(0);
+	time_t t = ser_time(0);
 	char* st;
 
 	switch(_c->state) {

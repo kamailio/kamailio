@@ -53,6 +53,7 @@
 #include "../../ip_addr.h"
 #include "nonce.h"
 #include "../../globals.h"
+#include "../../ser_time.h"
 #include <assert.h>
 #ifdef USE_NC
 #include "nc.h"
@@ -268,7 +269,8 @@ int calc_nonce(char* nonce, int *nonce_len, int cfg, int since, int expires,
  * @param b_nonce a pointer to a union bin_nonce to be checked.
  * @return 1 the nonce is stale, 0 the nonce is not stale.
  */
-#define is_bin_nonce_stale(b_nonce) (get_bin_nonce_expire(b_nonce) < time(0))
+#define is_bin_nonce_stale(b_nonce)\
+	(get_bin_nonce_expire(b_nonce) < ser_time(0))
 
 
 
@@ -347,7 +349,7 @@ int check_nonce(auth_body_t* auth, str* secret1, str* secret2,
 		   different length (for example because of different auth.
 		   checks)..  Therefore we force credentials to be rebuilt by UAC
 		   without prompting for password */
-		return 3;
+		return 4;
 	}
 	b_nonce2=b_nonce; /*pre-fill it with the values from the received nonce*/
 	b_nonce2.n.expire=b_nonce.n.expire;
