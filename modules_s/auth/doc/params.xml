@@ -524,7 +524,37 @@ modparam("auth", "nonce_expire", 600)   # Set nonce_expire to 600s
 	    </programlisting>
 	</example>
     </section>
-    
+
+	<section id="nonce_auth_max_drift">
+	<title><varname>nonce_auth_max_drift</varname> (integer)</title>
+	<para>
+		Maximum difference in seconds between a nonce creation time and the
+		current time, if the nonce creation time appears to be in the future.
+	</para>
+	<para>
+		In some cases, like shortly after a system time backward adjustment 
+		or when the current proxy is part of a cluster which is not
+		time-synchronized, it's possible to receive a nonce with creation time
+		in the future. In this case if the difference is greater then
+		<varname>nonce_auth_max_drift</varname> seconds, consider the nonce
+		stale and re-challenge (otherwise after a dramatic time change
+		backwards, it might happen that some previously generated nonces will
+		be valid for too much time).
+	</para>
+	<para>
+		The default value is 3 seconds
+	</para>
+	<para>
+		See also: <varname>nonce_expire</varname>.
+	</para>
+	<example>
+	    <title>nonce_auth_max_drift example</title>
+	    <programlisting>
+modparam("auth", "nonce_auth_max_drift", 1)   # set max drift to 1 s
+	    </programlisting>
+	</example>
+    </section>
+
     <section id="rpid_prefix">
 	<title><varname>rpid_prefix</varname> (string)</title>
 	<para>
