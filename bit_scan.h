@@ -46,6 +46,11 @@
 
 #include <limits.h>
 
+/* fix __CPU_i386 -> __CPU_x86 */
+#if defined __CPU_i386 && ! defined __CPU_x86
+#define __CPU_x86
+#endif
+
 
 #ifdef CC_GCC_LIKE_ASM
 #if defined __CPU_x86 || defined __CPU_x86_64

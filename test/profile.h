@@ -68,6 +68,10 @@
  *                              the cpu cycles counter
  */
 
+#if defined __CPU_i386 && ! defined __CPU_x86
+#define __CPU_x86
+#endif
+
 #ifdef __CPU_x86
 typedef unsigned long long cycles_t;
 
