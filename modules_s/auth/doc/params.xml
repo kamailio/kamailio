@@ -209,16 +209,18 @@ route{
 			}else if ($? == -3){
 				t_reply("400", "Bad Request");
 			}else{
-				if ($disgest_challenge) 
+				if ($digest_challenge) 
 					append_to_reply("%$digest_challenge");
 				t_reply("401", "Unauthorized");
 			}
 			drop;
 		}
-		if (!save_contacts("location")) {
+		if (!save_noreply("location")) {
 			t_reply("400", "Invalid REGISTER Request");
 			drop;
 		}
+		append_to_reply("%$contact");
+		t_reply("$code", "$reason"); # no %, avps are used directly 
 		drop;
 	}else{
 		if (!proxy_authenticate("my_realm", "credentials")){
