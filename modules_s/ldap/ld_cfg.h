@@ -49,6 +49,9 @@ struct ld_con_info {
 	str username;
 	str password;
 	int authmech;
+	int tls;  /**<  TLS encryption enabled */
+	str ca_list;  /**< Path of the file that contains certificates of the CAs */
+	str req_cert;  /**< LDAP level of certificate request behaviour */
 	struct ld_con_info* next;
 };
 

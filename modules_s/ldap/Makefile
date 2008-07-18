@@ -8,6 +8,8 @@ NAME=ldap.so
 
 #DEFS += -DLD_TEST
 
+DEFS += -Wall -DOPENLDAP23
+
 # Uncomment this if you have a recent version of libldap with
 # LD_SCOPE_CHILDREN defined
 #DEFS += -DHAVE_SCOPE_CHILDREN

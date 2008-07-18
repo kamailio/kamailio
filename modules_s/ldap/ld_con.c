@@ -42,7 +42,6 @@
 #include <ldap.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <sasl/sasl.h>
 
 /** Free all memory allocated for a ld_con structure.
@@ -176,6 +175,7 @@ int ld_con_connect(db_con_t* con)
 	struct ld_con* lcon;
 	struct ld_uri* luri;
 	int ret, version = 3;
+	char* err_str = NULL;
 
 	lcon = DB_GET_PAYLOAD(con);
 	luri = DB_GET_PAYLOAD(con->uri);
@@ -193,6 +193,19 @@ int ld_con_connect(db_con_t* con)
 		}
 	}
 
+	/* we pass the TLS_REQCERT and TLS_REQCERT attributes over environment
+	   variables to ldap library */
+	if (luri->tls) {
+		if (setenv("LDAPTLS_CACERT", luri->ca_list, 1)) {
+			ERR("ldap: Can't set environment variable 'LDAPTLS_CACERT'\n");
+			goto error;
+		}
+		if (setenv("LDAPTLS_REQCERT", luri->req_cert, 1)) {
+			ERR("ldap: Can't set environment variable 'LDAPTLS_REQCERT'\n");
+			goto error;
+		}
+	}
+
 	ret = ldap_initialize(&lcon->con, luri->uri);
 	if (lcon->con == NULL) {
 		ERR("ldap: Error while initializing new LDAP connection to %s\n",
@@ -205,6 +218,24 @@ int ld_con_connect(db_con_t* con)
 		ERR("ldap: Error while setting protocol version 3: %s\n",
 			ldap_err2string(ret));
 		goto error;
+	}
+
+	if (luri->tls) {
+		ret = ldap_start_tls_s(lcon->con, NULL, NULL);
+		if (ret != LDAP_SUCCESS) {
+			/* get addition info of this error */
+#ifdef OPENLDAP23
+			ldap_get_option(lcon->con, LDAP_OPT_ERROR_STRING, &err_str);
+#elif OPENLDAP24
+			ldap_get_option(lcon->con, LDAP_OPT_DIAGNOSTIC_MESSAGE, &err_str);
+#endif
+			ERR("ldap: Error while starting TLS: %s\n", ldap_err2string(ret));
+			if (err_str) {
+				ERR("ldap: %s\n", err_str);
+				ldap_memfree(err_str);
+			}
+			goto error;
+		}
 	}
 
 	switch (luri->authmech) {

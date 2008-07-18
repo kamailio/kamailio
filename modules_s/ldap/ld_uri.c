@@ -285,6 +285,19 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 		}
 
 		res->authmech = cfg_conn_info->authmech;
+		res->tls = cfg_conn_info->tls;
+		if (cfg_conn_info->ca_list.s) {
+			if (!(res->ca_list = pkgstrdup(&cfg_conn_info->ca_list))) {
+					ERR("ldap: No memory left\n");
+					goto err;
+			}
+		}
+		if (cfg_conn_info->req_cert.s) {
+			if (!(res->req_cert = pkgstrdup(&cfg_conn_info->req_cert))) {
+					ERR("ldap: No memory left\n");
+					goto err;
+			}
+		}
 
 		break;
 	default:
@@ -304,6 +317,14 @@ int parse_ldap_uri(struct ld_uri* res, str* scheme, str* uri)
 		pkg_free(res->password);
 		res->password = NULL;
 	}
+	if (res->ca_list) {
+		pkg_free(res->ca_list);
+		res->ca_list = NULL;
+	}
+	if (res->req_cert) {
+		pkg_free(res->req_cert);
+		res->req_cert = NULL;
+	}
 	return -1;
 }
 
@@ -314,6 +335,8 @@ static void ld_uri_free(db_uri_t* uri, struct ld_uri* payload)
 	if (payload->uri) pkg_free(payload->uri);
     if (payload->username) pkg_free(payload->username);
     if (payload->password) pkg_free(payload->password);
+    if (payload->ca_list) pkg_free(payload->ca_list);
+    if (payload->req_cert) pkg_free(payload->req_cert);
 	db_drv_free(&payload->drv);
 	pkg_free(payload);
 }

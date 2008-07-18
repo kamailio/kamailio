@@ -61,6 +61,9 @@ struct ld_uri {
 	char* password;
 	char* uri;             /**< The whole URI, including scheme */
 	int authmech;
+	int tls;  /**<  TLS encryption enabled */
+	char* ca_list;  /**< Path of the file that contains certificates of the CAs */
+	char* req_cert;  /**< LDAP level of certificate request behaviour */
 	LDAPURLDesc* ldap_url; /**< URI parsed by the ldap client library */
 };
 
