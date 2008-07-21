@@ -336,7 +336,7 @@ int uac_auth( struct sip_msg *msg)
 	t = uac_tmb.t_gett();
 	if (t==T_UNDEFINED || t==T_NULL_CELL)
 	{
-		LOG(LOG_CRIT,"BUG:uac:uac_auth: no current transaction found\n");
+		LOG(L_CRIT,"BUG:uac:uac_auth: no current transaction found\n");
 		goto error;
 	}
 

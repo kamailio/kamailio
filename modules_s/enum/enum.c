@@ -167,23 +167,23 @@ static inline int parse_naptr_regexp(char* first, int len, str* pattern,
 						replacement->s = second + 1;
 						return 1;
 					} else {
-						LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+						LOG(L_ERR, "parse_regexp(): third ! missing from regexp\n");
 						return -1;
 					}
 				} else {
-					LOG(LOG_ERR, "parse_regexp(): third ! missing from regexp\n");
+					LOG(L_ERR, "parse_regexp(): third ! missing from regexp\n");
 					return -2;
 				}
 			} else {
-				LOG(LOG_ERR, "parse_regexp(): second ! missing from regexp\n");
+				LOG(L_ERR, "parse_regexp(): second ! missing from regexp\n");
 				return -3;
 			}
 		} else {
-			LOG(LOG_ERR, "parse_regexp(): first ! missing from regexp\n");
+			LOG(L_ERR, "parse_regexp(): first ! missing from regexp\n");
 			return -4;
 		}
 	} else {
-		LOG(LOG_ERR, "parse_regexp(): regexp missing\n");
+		LOG(L_ERR, "parse_regexp(): regexp missing\n");
 		return -5;
 	}
 }
