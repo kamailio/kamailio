@@ -6,20 +6,19 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>	This modules is a gateway between Openser and a jabber server. It enables the exchange of instant messages between
+	<para>	This module is a gateway between Openser and a XMPP/Jabber server. It enables the exchange of instant messages between
 		SIP clients and XMPP(jabber) clients. </para>
-	<para>	The gateway has two modes to run:</para>
+	<para>	The module can be used in two different modes:</para>
 
 	<itemizedlist>
 		<listitem>
-			<para>	<emphasis role='bold'>the component-mode</emphasis> - the gateway requires a standalone XMPP server amd the 'xmpp' module acts as
-			a XMPP component </para>
+			<para>	<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode, OpenSER connects to an XMPP server using the standardized XMPP component interface, extending your XMPP services. The connection is done over TCP/IP with authorization.</para>
 		</listitem>
 		<listitem>
-			<para>	<emphasis role='bold'>the server-mode</emphasis> - the module acts itself as a XMPP server, no requirement for another XMPP server in the system. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. This mode is in beta stage for the moment.</para>
+			<para><emphasis role='bold'>XMPP Server</emphasis>. In this mode, the OpenSER XMPP module is a stand-alone XMPP server, with no requirement for another XMPP server in the system. This server uses XMPP S2S (Server to Server) connections to connect to other XMPP servers or receive connections from other servers. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. This mode is in beta stage for the moment.</para>
 		</listitem>
 	</itemizedlist>
-	<para>	In the component mode, you need a local XMPP server (recommended Jabberd2); the xmpp module will relay all your connections to a tcp connection to the local jabber server. The documentation and the source for a Jabber server are located at the following link:
+	<para>	In the component mode, you need a local XMPP server (recommended Jabberd2). The XMPP module will connect by using TCP/IP connection to the local jabber server. The documentation and the source for Jabberd server are located at the following link:
 <ulink url="http://jabberd.jabberstudio.org/2/#download">http://jabberd.jabberstudio.org/2/#download</ulink>	</para>
 	<para> After you have a running XMPP server, what you need to do is set the following parameters in the Openser configuration file:</para>
 	<itemizedlist>
@@ -31,8 +30,7 @@
 			<para>listen = your ip;</para>
 		</listitem> 
 		<listitem>
-			<para>alias=openser domain and 
-	alias=gateway domain;</para>
+			<para>alias=OpenSER SIP domain and alias=gateway domain;</para>
 		</listitem>
 		<listitem>
 			<para>in the following section of the configuration file, change to your gateway domain:</para>
@@ -45,37 +43,37 @@
 	...........]]>	</emphasis> </programlisting> 	
 	<itemizedlist>
 		<listitem>
-			<para>you can also change the jabber server password, which must be the same as the xmpp_password parameter.</para>
+			<para>you can also define a password for the XMPP Component connection to the Jabber server, which must be the same as the xmpp_password parameter.</para>
 		</listitem>
 	</itemizedlist>
 	<para>	A use case, for the component-mode, would look like this:</para>
 	<itemizedlist>
 		<listitem>
-			<para>Openser is running on sip-server.openser.org;</para>
+			<para>Openser is hosting the sip-server.openser.org SIP domain</para>
 		</listitem>
 		<listitem>
-			<para>the gateway is running on sip-xmpp.openser.org;</para>
+			<para>The gateway SIP domain is sip-xmpp.openser.org</para>
 		</listitem>	
 		<listitem>
-			<para>the jabber server is running on xmpp.openser.org;</para>
+			<para>The XMPP server is hosting the XMPP domain xmpp.openser.org</para>
 		</listitem>	
 		<listitem>
-			<para>the component is running on xmpp-sip.openser.org.</para>
+			<para>The Component is hosting the XMPP domain xmpp-sip.openser.org</para>
 		</listitem>	
 	</itemizedlist>
 	<para>
-		In the server mode, the xmpp module is a minimal jabber server, thus you do not need to install another jabber server, the gateway will connect to the jabber servers, where the users you want to chat with have an account. </para>
-	<para>If you want to change to server-mode, you have to change the "backend" parameter, as shown in the Exported Parameters section, from component to server.</para>
+		In the XMPP stand-alone server mode, the XMPP module is a minimal XMPP/Jabber server. In this mode, another Jabber server is not needed. The gateway will connect to other XMPP servers basaed on the JID domain and by using the standardized XMPP S2S protocol.</para>
+	<para>If you want to change to server-mode, you have to change the "backend" parameter, as shown in the Exported Parameters section, from "component" to "server".</para>
 	<para>	A use case, for the server-mode, would look like this: </para>
 	<itemizedlist>
 		<listitem>
-			<para>Openser is running on sip-server.openser.org; </para>
+			<para>Openser is hosting the SIP domain sip-server.openser.org </para>
 		</listitem>
 		<listitem>
-			<para>the gateway is running on sip-xmpp.openser.org;</para>
+			<para>The gateway is hosting the SIP domain sip-xmpp.openser.org;</para>
 		</listitem>	
 		<listitem>
-			<para>the "XMPP server" is running on xmpp-sip.openser.org.</para>
+			<para>The "XMPP server" is running on xmpp-sip.openser.org.</para>
 		</listitem>
 	</itemizedlist>	
 	<para>In both cases, the destination address must have the same pattern:</para>
@@ -106,7 +104,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libexpat1-devel</emphasis> - used for parsing/building XML.
+				<emphasis>expat</emphasis> - used for parsing/building XML. Linux package: libexpat1-devel
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -120,7 +118,7 @@
 	<section>
 		<title><varname>backend(string)</varname></title>
 		<para>
-		The mode you are using the module; it can be either component or server.
+		The mode you are using the module; it can be either "component" or "server".
 		</para>
 		<para>
 		<emphasis>
@@ -144,6 +142,7 @@
 				"sip:username<![CDATA[<]]>domain_separator<![CDATA[>]]>jabber_server@gateway_domain".
 			The address of a SIP client has the following pattern :
 			"sip_username<![CDATA[<]]>domain_separator<![CDATA[>]]>openser_domain@xmpp_domain";
+			A common used character in XMPP transports is "%".
 
 		</para>
 		<para>
@@ -155,7 +154,7 @@
 		<title>Set <varname>domain_separator</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "domain_separator", "*")
+ modparam("xmpp", "domain_separator", "%")
 ...
 </programlisting>
 		</example>
@@ -163,7 +162,7 @@
 	<section>
 		<title><varname>gateway_domain</varname> (string)</title>
 		<para>
-		 The domain of the gateway, which must resolve. It must be the same with the gateway_domain from the destination address of the
+		 The domain of the gateway, which must resolve in DNS. It must be the same with the gateway_domain from the destination address of the
 		 XMPP(jabber) client, as seen by the SIP client:
 			"sip:username<![CDATA[<]]>delim<![CDATA[>]]>jjabber_server@gateway_domain".
 		</para>
@@ -184,7 +183,9 @@
 	<section>
 		<title><varname>xmpp_domain</varname> (string)</title>
 		<para>
-			The xmpp domain of the component or the server, depending on the mode we are in. It can be the same as the gateway_domain.
+			The XMPP domain of the component or the server, depending on the mode we are in. It can be the same as the gateway_domain.
+			For a server DNS name, you need to add _xmpp-server._tcp SRV records in your DNS zone to enable connections from other
+			XMPP servers.
 		</para>
 		<para>
 		<emphasis>
@@ -203,7 +204,7 @@
 	<section>
 		<title><varname>xmpp_host</varname> (string)</title>
 		<para>
-			 The ip address or the name of the local jabber server, if the backend is set to "component"; or the address to bind to in the server mode.
+			 The IP address or the name of the local XMPP/Jabber server, if the backend is set to "component". For server mode, this is the IP address the XMPP component binds to.
 		</para>
 		<para>
 		<emphasis>
@@ -222,7 +223,7 @@
 	<section>
 		<title><varname>xmpp_port</varname> (integer)</title>
 		<para>
-			In the component mode, this is the port of the jabber router we connect to. In the server mode, it is the transport address to bind to.	 
+			In component mode, this is the port the XMPP server component interface listens to. In server mode, this is the port the server listens to.
 		</para>
 		<para>
 		<emphasis>
@@ -241,10 +242,12 @@
 
 <section>
 		<title><varname>xmpp_password</varname> (string)</title>
-		<para>	The password of the local jabber server. 	</para>
+		<para>	The password of the local XMPP server.</para>
 		<para>
 			<emphasis>
-				Default value is "secret"; if changed here, it must also be changed in the c2s.xml, added by the jabber server. This is how the default configuration for the jabberd2 looks like:
+				This is the password for the component interface on the XMPP server, when connecting as a component. Default password is "secret".
+				When connecting to jabberd2, 
+				you need to make sure this is the password configured in the file "c2s.xml". This is how the default configuration for the jabberd2 looks like:
 			</emphasis>
 			<programlisting format="linespecific">
 		<![CDATA[	<router>
@@ -268,7 +271,7 @@
 		<para>
 		The SIP address used as next hop when sending the message. Very
 		useful when using OpenSER with a domain name not in DNS, or
-		when using a separate OpenSER instance for xmpp processing. If
+		when using a separate OpenSER instance for XMPP processing. If
 		not set, the message will be sent to the address in destination
 		URI.
 		</para>
