@@ -2,7 +2,7 @@
  * $Id$
  *
  * XMPP Module
- * This file is part of openser, a free SIP server.
+ * This file is part of OpenSER, a free SIP server.
  *
  * Copyright (C) 2006 Voice Sistem S.R.L.
  *
@@ -22,6 +22,9 @@
  *
  * Author: Andreea Spirea
  *
+ */
+/*! \file
+ *  \brief OpenSER XMPP module
  */
 
 #include <stdio.h>

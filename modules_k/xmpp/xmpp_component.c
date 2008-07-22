@@ -23,6 +23,9 @@
  * Author: Andreea Spirea
  *
  */
+/*! \file
+ * \brief OpenSER XMPP :: XMPP Component interface support
+ */
 
 /*
  * An inbound SIP message:
@@ -141,7 +144,7 @@ out:
 	xode_free(node);
 }
 
-/**
+/*!
  *
  */
 static int do_send_message_component(struct xmpp_private_data *priv,

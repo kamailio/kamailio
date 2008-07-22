@@ -23,6 +23,9 @@
  *
  * 
  */
+/*! \file 
+ * \brief OpenSER XMPP :: API
+ */
 
 
 #include <stdlib.h>
@@ -68,7 +71,7 @@ void destroy_xmpp_cb_list(void)
 
 
 
-/* register a callback function 'f' for 'types' mask of events;
+/*! \brief register a callback function 'f' for 'types' mask of events;
 */
 int register_xmpp_cb( int types, xmpp_cb_f f, void *param )
 {

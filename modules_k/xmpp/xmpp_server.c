@@ -23,6 +23,9 @@
  * Author: Andreea Spirea
  *
  */
+/*! \file
+ * \brief OpenSER XMPP :: XMPP server implementation (limited functionality)
+ */
 
 /*
  * An inbound SIP message:

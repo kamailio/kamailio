@@ -28,7 +28,7 @@ static int _xode_strcmp(const char *a, const char *b)
     return strcmp(a,b);
 }
 
-/* Internal routines */
+/*! \brief Internal routines */
 static xode _xode_new(xode_pool p, const char* name, unsigned int type)
 {
     xode result = NULL;

@@ -24,22 +24,25 @@
  *
  */
 
-/*
- * An inbound SIP message:
+/*! \file
+ * \brief OpenSER XMPP module :: 
+ *
+ * \page XMPProuting XMPP to SIP transport interface
+ *
+ * An inbound SIP URI:
  *   from sip:user1@domain1 to sip:user2*domain2@gateway_domain
- * is translated to an XMPP message:
+ * is translated to an XMPP JID:
  *   from user1*domain1@xmpp_domain to user2@domain2
  *
- * An inbound XMPP message:
+ * An inbound XMPP JID (uri):
  *   from user1@domain1 to user2*domain2@xmpp_domain
- * is translated to a SIP message:
+ * is translated to a SIP URI:
  *   from sip:user1*domain1@gateway_domain to sip:user2@domain2
  *
  * Where '*' is the domain_separator, and gateway_domain and
  * xmpp_domain are defined below.
- */
-
-/*
+ *
+ * 
  * 2-way dialback sequence with xmppd2:
  *
  *  Originating server (us)         Receiving server (them)      Authoritative server (us)
@@ -79,6 +82,9 @@
  *           |------------------------------>|                               :
  *                                           |    incoming <message/>        |
  *                                           |------------------------------>|
+ *
+ * Note: Dialback is an old mechanism that is now replaced by TLS connections
+ * 	 in "modern" XMPP servers. With TLS, dialback is not used.
  */
 
 #include <stdio.h>
@@ -247,7 +253,11 @@ void destroy(void)
 
 /*********************************************************************************/
 
-/* Relay a MESSAGE to a SIP client */
+/*! \brief Relay a MESSAGE to a SIP client 
+	\todo This assumes that a message is text/plain, which is not always the case with
+		XMPP messages. We should propably also set the character set, as all
+		SIP clients doesn't assume utf8 for text/plain
+*/
 int xmpp_send_sip_msg(char *from, char *to, char *msg)
 {
 	str msg_type = { "MESSAGE", 7 };
@@ -266,15 +276,15 @@ int xmpp_send_sip_msg(char *from, char *to, char *msg)
 	msgstr.len = strlen(msg);
 
 	return tmb.t_request(
-			&msg_type,						/* Type of the message */
-			0,								/* Request-URI */
-			&tostr,							/* To */
-			&fromstr,						/* From */
-			&hdr,							/* Optional headers */
-			&msgstr,						/* Message body */
+			&msg_type,						/*!< Type of the message */
+			0,							/*!< Request-URI */
+			&tostr,							/*!< To */
+			&fromstr,						/*!< From */
+			&hdr,							/*!< Optional headers */
+			&msgstr,						/*!< Message body */
 	(outbound_proxy.s)?&outbound_proxy:NULL,/* Outbound proxy*/
-			0,								/* Callback function */
-			0								/* Callback parameter */
+			0,								/*!< Callback function */
+			0								/*!< Callback parameter */
 			);
 }
 
@@ -312,7 +322,7 @@ static int xmpp_send_pipe_cmd(enum xmpp_pipe_cmd_type type, str *from, str *to,
 {
 	struct xmpp_pipe_cmd *cmd;
 	
-	/* todo: make shm allocation for one big chunk to include all fields */
+	/*! \todo: make shm allocation for one big chunk to include all fields */
 	cmd = (struct xmpp_pipe_cmd *) shm_malloc(sizeof(struct xmpp_pipe_cmd));
 	memset(cmd, 0, sizeof(struct xmpp_pipe_cmd));
 
@@ -395,7 +405,7 @@ static int cmd_send_message(struct sip_msg* msg, char* _foo, char* _bar)
 }
 
 
-/**
+/*!
  *
  */
 int xmpp_send_xpacket(str *from, str *to, str *msg, str *id)
@@ -405,7 +415,7 @@ int xmpp_send_xpacket(str *from, str *to, str *msg, str *id)
 	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_PACKET, from, to, msg, id);
 }
 
-/**
+/*!
  *
  */
 int xmpp_send_xmessage(str *from, str *to, str *msg, str *id)
@@ -415,7 +425,7 @@ int xmpp_send_xmessage(str *from, str *to, str *msg, str *id)
 	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_MESSAGE, from, to, msg, id);
 }
 
-/**
+/*!
  *
  */
 int xmpp_send_xsubscribe(str *from, str *to, str *msg, str *id)
@@ -425,7 +435,7 @@ int xmpp_send_xsubscribe(str *from, str *to, str *msg, str *id)
 	return xmpp_send_pipe_cmd(XMPP_PIPE_SEND_PSUBSCRIBE, from, to, msg, id);
 }
 
-/**
+/*!
  *
  */
 int xmpp_send_xnotify(str *from, str *to, str *msg, str *id)
