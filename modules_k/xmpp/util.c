@@ -25,6 +25,7 @@
  */
 /*! \file
  * \brief OpenSER XMPP module - utilities
+ *  \ingroup xmpp
  */
 
 #include <stdio.h>

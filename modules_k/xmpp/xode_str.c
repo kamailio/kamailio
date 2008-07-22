@@ -19,6 +19,11 @@
  *  Copyright (C) 1998-1999 The Jabber Team http://jabber.org/
  */
 
+/*! \file
+ * \ingroup xmpp
+ */
+
+
 #include "xode.h"
 
 xode_pool xode_spool_getpool(const xode_spool s)

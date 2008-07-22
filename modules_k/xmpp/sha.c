@@ -20,6 +20,9 @@
  *
  */
 
+/*! \file
+ * \ingroup xmpp
+ */
 
 
 /* 

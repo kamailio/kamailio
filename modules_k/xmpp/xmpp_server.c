@@ -25,6 +25,7 @@
  */
 /*! \file
  * \brief OpenSER XMPP :: XMPP server implementation (limited functionality)
+ *  \ingroup xmpp
  */
 
 /*

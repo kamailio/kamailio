@@ -25,6 +25,7 @@
  */
 /*! \file 
  * \brief OpenSER XMPP :: API
+ *  \ingroup xmpp
  */
 
 

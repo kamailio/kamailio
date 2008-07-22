@@ -24,8 +24,14 @@
  *
  */
 
+/*! \defgroup xmpp
+ *  \brief The XMPP core interface
+ *  This module implements gateway functionality between SIP and XMPP. 
+ */
+
 /*! \file
  * \brief OpenSER XMPP module :: 
+ *  \ingroup xmpp
  *
  * \page XMPProuting XMPP to SIP transport interface
  *

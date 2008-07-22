@@ -33,11 +33,12 @@
  *  pstrdup: do a hash lookup, success=return, fail=pmalloc & hash put
  *  pool_free: 
  *  
- *  
- *  
- *  
- *  
  */
+
+/*! \file
+ * \ingroup xmpp
+ */
+
 
 #include "xode.h"
 //#include "config.h"

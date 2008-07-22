@@ -23,6 +23,12 @@
  * 
  */
 
+/*! \file
+ * \brief The XMPP api
+ * \ingroup xmpp
+ */
+
+
 #ifndef _XMPP_API_H_
 #define _XMPP_API_H_
 
@@ -36,9 +42,9 @@ typedef int (*register_xmpp_cb_t)(int types, xmpp_cb_f f, void *param);
 
 typedef struct xmpp_callback_
 {
-	int types;                   /* types of events that trigger the callback*/
-	xmpp_cb_f *cbf;              /* callback function */
-	void *cbp;                   /* param to be passed to callback function */
+	int types;                   /*!< types of events that trigger the callback*/
+	xmpp_cb_f *cbf;              /*!< callback function */
+	void *cbp;                   /*!< param to be passed to callback function */
 	struct xmpp_callback_ *next;
 } xmpp_callback_t;
 
@@ -63,7 +69,7 @@ void destroy_xmpp_cb_list();
 
 int register_xmpp_cb( int types, xmpp_cb_f f, void *param );
 
-/* run all transaction callbacks for an event type */
+/*! \brief run all transaction callbacks for an event type */
 static inline void run_xmpp_callbacks( int type, char *msg)
 {
 	xmpp_callback_t *it;

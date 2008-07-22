@@ -25,6 +25,7 @@
  */
 /*! \file
  * \brief OpenSER XMPP :: XMPP Component interface support
+ *  \ingroup xmpp
  */
 
 /*

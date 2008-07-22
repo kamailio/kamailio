@@ -55,6 +55,11 @@
  * <panos@alumni.cs.colorado.edu> for xinetd.
  */
 
+/*! \file
+ * \ingroup xmpp
+ */
+
+
 #include "xode.h"
 
 #if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)

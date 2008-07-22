@@ -19,6 +19,11 @@
  *  Copyright (C) 1998-1999 The Jabber Team http://jabber.org/
  */
 
+/*! \file
+ * \ingroup xmpp
+ */
+
+
 #include "xode.h"
 #include <sys/types.h>
 #include <sys/stat.h>

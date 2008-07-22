@@ -24,6 +24,10 @@
  *
  */
 
+/*! \file
+ * \ingroup xmpp
+ */
+
 #ifndef _MOD_XMPP_H
 #define _MOD_XMPP_H
 
