@@ -25,6 +25,11 @@
  * --------
  *  2007-03-29  initial version (anca)
  */
+
+/*! \file
+ * \brief OpenSER presence gateway: SIP/SIMPLE -- XMPP (pua_xmpp)
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -182,9 +187,9 @@ str* build_pidf(xmlNodePtr pres_node, char* uri, char* resource)
 		LM_ERR("extracting presence node\n");
 		goto error;
 	}
-    xmlDocSetRootElement(doc, root_node);
+	xmlDocSetRootElement(doc, root_node);
 
-    xmlNewProp(root_node, BAD_CAST "xmlns",
+	xmlNewProp(root_node, BAD_CAST "xmlns",
 			BAD_CAST "urn:ietf:params:xml:ns:pidf");
 	xmlNewProp(root_node, BAD_CAST "xmlns:dm",
 			BAD_CAST "urn:ietf:params:xml:ns:pidf:data-model");

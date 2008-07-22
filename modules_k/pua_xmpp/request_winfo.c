@@ -26,6 +26,10 @@
  *  2007-03-29  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER pua_xmpp :: Winfo support
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <libxml/parser.h>

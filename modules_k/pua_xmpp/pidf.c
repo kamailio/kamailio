@@ -25,6 +25,9 @@
  * --------
  *  2007-03-29  initial version (anca)
  */
+/*! \file
+ * \brief OpenSER presence gateway: SIP/SIMPLE -- XMPP
+ */
 
 #include <stdio.h>
 #include <string.h>

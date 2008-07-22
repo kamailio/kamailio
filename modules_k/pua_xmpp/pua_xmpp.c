@@ -26,6 +26,10 @@
  *  2007-03-29  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence gateway: SIP/SIMPLE -- XMPP (pua_xmpp)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,33 +90,33 @@ static int fixup_pua_xmpp(void** param, int param_no);
 
 static cmd_export_t cmds[]=
 {
-	{"pua_xmpp_notify", (cmd_function)Notify2Xmpp,	0,		0,		  0, REQUEST_ROUTE},
-	{"pua_xmpp_req_winfo", (cmd_function)request_winfo,	2,  fixup_pua_xmpp, 0,REQUEST_ROUTE},
+	{"pua_xmpp_notify", (cmd_function)Notify2Xmpp,	0, 0, 0, REQUEST_ROUTE},
+	{"pua_xmpp_req_winfo", (cmd_function)request_winfo, 2, fixup_pua_xmpp, 0, REQUEST_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
 static param_export_t params[]={
 	{"server_address",     STR_PARAM,	&server_address	},
-	{0,						0,				0			}
+	{0,			0,		0	}
 };
 
-/** module exports */
+/*! \brief module exports */
 struct module_exports exports= {
 	"pua_xmpp",                 /* module name */
 	DEFAULT_DLFLAGS,            /* dlopen flags */
 	cmds,                       /* exported functions */
 	params,                     /* exported  parameters */
 	0,                          /* exported statistics */
-	0,							/* exported MI functions*/
-	0,							/* exported pseudo-variables */
-	0,							/* extra processes */
+	0,			    /* exported MI functions*/
+	0,			    /* exported pseudo-variables */
+	0,			    /* extra processes */
 	mod_init,                   /* module initialization function */
 	(response_function) 0,      /* response handling function */
 	(destroy_function) 0,       /* destroy function */
 	child_init                  /* per-child init function */
 };
 
-/**
+/*! \brief
  * init module function
  */
 static int mod_init(void)
@@ -159,7 +163,7 @@ static int mod_init(void)
 	XMLNodeGetAttrContentByName= libxml_api.xmlNodeGetAttrContentByName;
 	XMLDocGetNodeByName= libxml_api.xmlDocGetNodeByName;
 	XMLNodeGetNodeByName= libxml_api.xmlNodeGetNodeByName;
-    XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
+	XMLNodeGetNodeContentByName= libxml_api.xmlNodeGetNodeContentByName;
 
 	if(XMLNodeGetAttrContentByName== NULL || XMLDocGetNodeByName== NULL ||
 		XMLNodeGetNodeByName== NULL || XMLNodeGetNodeContentByName== NULL)
@@ -173,31 +177,31 @@ static int mod_init(void)
 	bind_xmpp= (bind_xmpp_t)find_export("bind_xmpp", 0,0);
 	if (!bind_xmpp)
 	{
-		LM_ERR("Can't bind xmpp\n");
+		LM_ERR("Can't bind to the XMPP module.\n");
 		return -1;
 	}
 	if(bind_xmpp(&xmpp_api)< 0)
 	{
-		LM_ERR("Can't bind xmpp\n");
+		LM_ERR("Can't bind to the XMPP module.\n");
 		return -1;
 	}
 	if(xmpp_api.xsubscribe== NULL)
 	{
-		LM_ERR("Could not import xsubscribe from xmpp\n");
+		LM_ERR("Could not import xsubscribe from the XMPP module. Version mismatch?\n");
 		return -1;
 	}
 	xmpp_subscribe= xmpp_api.xsubscribe;
 
 	if(xmpp_api.xnotify== NULL)
 	{
-		LM_ERR("Could not import xnotify from xmpp\n");
+		LM_ERR("Could not import xnotify from the XMPP module. Version mismatch?\n");
 		return -1;
 	}
 	xmpp_notify= xmpp_api.xnotify;
 	
 	if(xmpp_api.xpacket== NULL)
 	{
-		LM_ERR("Could not import xnotify from xmpp\n");
+		LM_ERR("Could not import xnotify from the XMPP module. Version mismatch?\n");
 		return -1;
 	}
 	xmpp_packet= xmpp_api.xpacket;
@@ -250,39 +254,39 @@ static int mod_init(void)
 	bind_pua= (bind_pua_t)find_export("bind_pua", 1,0);
 	if (!bind_pua)
 	{
-		LM_ERR("Can't bind pua\n");
+		LM_ERR("Can't bind to PUA module\n");
 		return -1;
 	}
 	
 	if (bind_pua(&pua) < 0)
 	{
-		LM_ERR("Can't bind pua\n");
+		LM_ERR("Can't bind to PUA module\n");
 		return -1;
 	}
 	if(pua.send_publish == NULL)
 	{
-		LM_ERR("Could not import send_publish\n");
+		LM_ERR("Could not import send_publish() in module PUA. Version mismatch?\n");
 		return -1;
 	}
 	pua_send_publish= pua.send_publish;
 
 	if(pua.send_subscribe == NULL)
 	{
-		LM_ERR("Could not import send_subscribe\n");
+		LM_ERR("Could not import send_publish() in module PUA. Version mismatch?\n");
 		return -1;
 	}
 	pua_send_subscribe= pua.send_subscribe;
 	
 	if(pua.is_dialog == NULL)
 	{
-		LM_ERR("Could not import send_subscribe\n");
+		LM_ERR("Could not import send_subscribe() in module PUA. Version mismatch?\n");
 		return -1;
 	}
 	pua_is_dialog= pua.is_dialog;
 
 	if(pua.register_puacb(XMPP_INITIAL_SUBS, Sipreply2Xmpp, NULL)< 0)
 	{
-		LM_ERR("Could not register callback\n");
+		LM_ERR("Could not register PUA callback\n");
 		return -1;
 	}	
 

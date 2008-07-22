@@ -25,6 +25,11 @@
  * --------
  *  2007-03-29  initial version (anca)
  */
+
+/*! \file
+ * \brief OpenSER presence gateway: SIP/SIMPLE -- XMPP (pua_xmpp)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <libxml/parser.h>
@@ -707,29 +712,29 @@ char* get_error_reason(int code, str* reason)
 	
 	switch( code )
 	{
-		case 300:	{ strcpy(err_cond, "redirect");					break;}
-		case 301:	{ strcpy(err_cond, "gone");						break;}
-		case 302:	{ strcpy(err_cond, "redirect");					break;}
-		case 305:	{ strcpy(err_cond, "redirect");					break;}
+		case 300:	{ strcpy(err_cond, "redirect");				break;}
+		case 301:	{ strcpy(err_cond, "gone");				break;}
+		case 302:	{ strcpy(err_cond, "redirect");				break;}
+		case 305:	{ strcpy(err_cond, "redirect");				break;}
 		case 380:	{ strcpy(err_cond, "not-acceptable");			break;}
-		case 400:	{ strcpy(err_cond, "bad-request");				break;}
+		case 400:	{ strcpy(err_cond, "bad-request");			break;}
 		case 401:	{ strcpy(err_cond, "not-authorized");			break;}
 		case 402:	{ strcpy(err_cond, "payment-required");			break;}
-		case 403:	{ strcpy(err_cond, "forbidden");				break;}
+		case 403:	{ strcpy(err_cond, "forbidden");			break;}
 		case 404:	{ strcpy(err_cond, "item-not-found");			break;}
-		case 405:	{ strcpy(err_cond, "not-allowed");				break;}
+		case 405:	{ strcpy(err_cond, "not-allowed");			break;}
 		case 406:	{ strcpy(err_cond, "not-acceptable");			break;}
-		case 407:	{ strcpy(err_cond, "registration-required");	break;}
+		case 407:	{ strcpy(err_cond, "registration-required");		break;}
 		case 408:	{ strcpy(err_cond, "service-unavailable");		break;}
-		case 410:	{ strcpy(err_cond, "gone");						break;}
-		case 413: 	{ strcpy(err_cond, "bad-request");				break;}
-		case 414:	{ strcpy(err_cond, "bad-request");				break;}
-		case 415:	{ strcpy(err_cond, "bad-request");				break;}
-		case 416:	{ strcpy(err_cond, "bad-request");				break;}
-		case 420:	{ strcpy(err_cond, "bad-request");				break;}
-		case 421:	{ strcpy(err_cond, "bad-request");				break;}
-		case 423:	{ strcpy(err_cond, "bad-request");				break;}
-		case 480:	{ strcpy(err_cond, "recipient-unavailable");	break;}
+		case 410:	{ strcpy(err_cond, "gone");				break;}
+		case 413: 	{ strcpy(err_cond, "bad-request");			break;}
+		case 414:	{ strcpy(err_cond, "bad-request");			break;}
+		case 415:	{ strcpy(err_cond, "bad-request");			break;}
+		case 416:	{ strcpy(err_cond, "bad-request");			break;}
+		case 420:	{ strcpy(err_cond, "bad-request");			break;}
+		case 421:	{ strcpy(err_cond, "bad-request");			break;}
+		case 423:	{ strcpy(err_cond, "bad-request");			break;}
+		case 480:	{ strcpy(err_cond, "recipient-unavailable");		break;}
 		case 481: 	{ strcpy(err_cond, "item-not-found");			break;}
 		case 482:	{ strcpy(err_cond, "not-acceptable");			break;}
 		case 483:	{ strcpy(err_cond, "not-acceptable");			break;}
@@ -737,16 +742,16 @@ char* get_error_reason(int code, str* reason)
 		case 485: 	{ strcpy(err_cond, "item-not-found");			break;}
 		case 488:	{ strcpy(err_cond, "not-acceptable");			break;}
 		case 491:	{ strcpy(err_cond, "unexpected-request");		break;}
-		case 500:   { strcpy(err_cond, "internal-server-error");	break;}
-		case 501:   { strcpy(err_cond, "feature-not-implemented");	break;}
-		case 502:   { strcpy(err_cond, "remote-server-not-found");	break;}
-		case 503:   { strcpy(err_cond, "service-unavailable");		break;}
-		case 504:   { strcpy(err_cond, "remote-server-timeout");	break;}
+		case 500:	{ strcpy(err_cond, "internal-server-error");		break;}
+		case 501:	{ strcpy(err_cond, "feature-not-implemented");		break;}
+		case 502:	{ strcpy(err_cond, "remote-server-not-found");		break;}
+		case 503:	{ strcpy(err_cond, "service-unavailable");		break;}
+		case 504:	{ strcpy(err_cond, "remote-server-timeout");		break;}
 		case 505:	{ strcpy(err_cond, "not-acceptable");			break;}
-		case 513:   { strcpy(err_cond, "bad-request");				break;}
+		case 513:	{ strcpy(err_cond, "bad-request");			break;}
 		case 600:	{ strcpy(err_cond, "service-unavailable");		break;}
 		case 603:	{ strcpy(err_cond, "service-unavailable");		break;}
-		case 604:   { strcpy(err_cond, "item-not-found");			break;}
+		case 604:	{ strcpy(err_cond, "item-not-found");			break;}
 		case 606:	{ strcpy(err_cond, "not-acceptable");			break;}
 		default:	{ strcpy(err_cond, "not-acceptable");			break;}
 	}
@@ -810,11 +815,11 @@ int Sipreply2Xmpp(ua_pres_t* hentity, struct sip_msg * msg)
 	doc= xmlNewDoc(BAD_CAST "1.0");
 	if(doc==0)
 		goto error;
-    root_node = xmlNewNode(NULL, BAD_CAST "presence");
+	root_node = xmlNewNode(NULL, BAD_CAST "presence");
 	
 	if(root_node==0)
 		goto error;
-    xmlDocSetRootElement(doc, root_node);
+	xmlDocSetRootElement(doc, root_node);
 
 	attr= xmlNewProp(root_node, BAD_CAST "to", BAD_CAST to_uri.s);
 	if(attr== NULL)
