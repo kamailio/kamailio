@@ -268,13 +268,13 @@ static cfg_option_t auth_values[] = {
 
 
 static cfg_option_t ldap_con_options[] = {
-	{"host",     		.f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"port",     		.f = cfg_parse_int_opt},
-	{"username", 		.f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"password", 		.f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"authtype", 		.param = auth_values, .f = cfg_parse_enum_opt},
-	{"tls",			.param = cfg_bool_values, .f = cfg_parse_enum_opt},
-	{"ca_list",  		.f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"host",     		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"port",     		    .f = cfg_parse_int_opt},
+	{"username", 		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"password", 		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"authtype", 		    .param = auth_values, .f = cfg_parse_enum_opt},
+	{"tls",			        .f = cfg_parse_bool_opt},
+	{"ca_list",  		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{"require_certificate", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{0}
 };
@@ -345,9 +345,7 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		for(i = 0; auth_values[i].name; i++) {
 			auth_values[i].param = &con->authmech;
 		}
-		for(i = 0; cfg_bool_values[i].name; i++) {
-			cfg_bool_values[i].param = &con->tls;
-		}
+		ldap_con_options[5].param = &con->tls;
 		ldap_con_options[6].param = &con->ca_list;
 		ldap_con_options[7].param = &con->req_cert;
 	} else {
