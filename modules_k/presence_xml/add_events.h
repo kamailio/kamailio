@@ -26,6 +26,13 @@
  *  2007-04-18  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: 
+ * \ref add_events.c
+ * \ingroup presence_xml
+ */
+
+
 #ifndef _XML_ADD_EV_H_
 #define _XML_ADD_EV_H_
 

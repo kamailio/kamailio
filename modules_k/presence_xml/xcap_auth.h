@@ -25,6 +25,13 @@
  * --------
  *  2007-04-12  initial version (anca)
  */
+
+/*! \file
+ * \brief OpenSER Presence_XML :: XCAP authentication
+ * \ref xcap_auth.c
+ * \ingroup presence_xml
+ */
+
 #ifndef _AUTH_XML_H_
 #define _AUTH_XML_H_
 

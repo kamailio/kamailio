@@ -26,6 +26,13 @@
  *  2007-04-18  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: Core
+ * \ref presence_xml.c
+ * \ingroup presence_xml
+ */
+
+
 #ifndef _PRES_XML_H_
 #define _PRES_XML_H_
 

@@ -26,6 +26,13 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: PIDF handling
+ * \ref pidf.c
+ * \ingroup presence_xml
+ */
+
+
 #ifndef PIDF_H
 #define PIDF_H
 

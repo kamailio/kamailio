@@ -26,6 +26,13 @@
  *  2007-04-11  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: 
+ * \ref notify_body.c
+ * \ingroup presence_xml
+ */
+
+
 #ifndef _NBODY_H_
 #define _NBODY_H_
 

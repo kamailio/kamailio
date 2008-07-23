@@ -26,6 +26,16 @@
  *  2007-04-12  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: Core
+ * \ingroup presence_xml
+ */
+
+/*! \defgroup presence_xml
+ * This module implements a range of XML-based SIP event packages for presence
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,13 +98,13 @@ db_func_t pxml_dbf;
 xcapGetNewDoc_t xcap_GetNewDoc;
 
 static param_export_t params[]={
-	{ "db_url",					STR_PARAM,                          &db_url.s},
-	{ "xcap_table",				STR_PARAM,                      &xcap_table.s},
-	{ "force_active",			INT_PARAM,                     &force_active },
-	{ "pidf_manipulation",      INT_PARAM,                 &pidf_manipulation}, 
-	{ "integrated_xcap_server", INT_PARAM,            &integrated_xcap_server}, 
-	{ "xcap_server",     STR_PARAM|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
-	{  0,						0,										    0}
+	{ "db_url",		STR_PARAM, &db_url.s},
+	{ "xcap_table",		STR_PARAM, &xcap_table.s},
+	{ "force_active",	INT_PARAM, &force_active },
+	{ "pidf_manipulation",  INT_PARAM, &pidf_manipulation},
+	{ "integrated_xcap_server", INT_PARAM, &integrated_xcap_server},
+	{ "xcap_server",     	STR_PARAM|USE_FUNC_PARAM,(void*)pxml_add_xcap_server},
+	{ 0, 0, 0}
 };
 
 static mi_export_t mi_cmds[] = {
@@ -104,18 +114,18 @@ static mi_export_t mi_cmds[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"presence_xml",				/* module name */
-	 DEFAULT_DLFLAGS,           /* dlopen flags */
-	 0,  						/* exported functions */
-	 params,					/* exported parameters */
-	 0,							/* exported statistics */
-	 mi_cmds,					/* exported MI functions */
-	 0,							/* exported pseudo-variables */
-	 0,							/* extra processes */
-	 mod_init,					/* module initialization function */
-	 (response_function) 0,		/* response handling function */
- 	 destroy,					/* destroy function */
-	 child_init                 /* per-child init function */
+	"presence_xml",		/* module name */
+	 DEFAULT_DLFLAGS,	/* dlopen flags */
+	 0,  			/* exported functions */
+	 params,		/* exported parameters */
+	 0,			/* exported statistics */
+	 mi_cmds,		/* exported MI functions */
+	 0,			/* exported pseudo-variables */
+	 0,			/* extra processes */
+	 mod_init,		/* module initialization function */
+	 (response_function) 0,	/* response handling function */
+ 	 destroy,		/* destroy function */
+	 child_init		/* per-child init function */
 };
 	
 /**

@@ -25,6 +25,12 @@
  * --------
  *  2007-04-14  initial version (anca)
  */
+
+/*! \file
+ * \brief OpenSER Presence_XML ::  PIDF handling
+ * \ingroup presence_xml
+ */
+
 #define _XOPEN_SOURCE
 
 #include <time.h>

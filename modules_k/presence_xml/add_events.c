@@ -26,6 +26,11 @@
  *  2007-04-17  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: 
+ * \ingroup presence_xml
+ */
+
 /*
  *	add 3 events: presence, presence.winfo, dialog;sla
  * */

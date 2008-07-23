@@ -26,6 +26,12 @@
  *  2007-04-11  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER Presence_XML :: XCAP authentication
+ * \ingroup presence_xml
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

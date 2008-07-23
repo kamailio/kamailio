@@ -25,6 +25,11 @@
  * --------
  *  2007-04-11  initial version (anca)
  */
+/*! \file
+ * \brief OpenSER Presence_XML :: Notify BODY handling
+ * \ingroup presence_xml
+ */
+
 
 #include <string.h>
 #include <stdlib.h>
