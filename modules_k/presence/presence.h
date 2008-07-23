@@ -27,6 +27,12 @@
  *  2006-10-09  first version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Core
+ * \ingroup presence 
+ */
+
+
 #ifndef PA_MOD_H
 #define PA_MOD_H
 

@@ -26,6 +26,11 @@
  *  2007-08-20  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module
+ * \ingroup presence 
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../mem/shm_mem.h"

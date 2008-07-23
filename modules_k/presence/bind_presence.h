@@ -26,6 +26,12 @@
  *  2007-04-17  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module
+ * \ingroup presence 
+ */
+
+
 #ifndef _PRES_BIND_H_
 #define _PRES_BIND_H_
 

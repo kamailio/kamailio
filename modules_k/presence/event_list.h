@@ -26,6 +26,12 @@
  *  2007-04-05  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Events
+ * \ingroup presence 
+ */
+
+
 #ifndef _PRES_EV_LST_H
 #define  _PRES_EV_LST_H
 

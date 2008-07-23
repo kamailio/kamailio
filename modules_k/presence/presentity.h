@@ -26,6 +26,13 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Presentity handling
+ * \ref presentity.c
+ * \ingroup presence 
+ */
+
+
 #ifndef PRESENTITY_H
 #define PRESENTITY_H
 

@@ -26,6 +26,23 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \defgroup presence
+ *  \brief A generic implementation of the SIP event package (PUBLISH, SUBSCRIBE, NOTIFY)
+ *
+ *	   The OpenSER presence module is a generic module for SIP event packages, which is much more than presence.
+ *	   It is extensible by developing other modules that use the internal developer API.
+ *	   Examples:
+ *	   - \ref presence_mwi
+ *	   - \ref presence_xml
+ */
+
+/*! \file
+ * \brief OpenSER presence module
+ * 
+ * \ingroup presence 
+ */
+
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -146,18 +163,18 @@ static mi_export_t mi_cmds[] = {
 
 /** module exports */
 struct module_exports exports= {
-	"presence",					/* module name */
-	DEFAULT_DLFLAGS,			/* dlopen flags */
-	cmds,						/* exported functions */
-	params,						/* exported parameters */
-	0,							/* exported statistics */
-	mi_cmds,   					/* exported MI functions */
-	0,							/* exported pseudo-variables */
-	0,							/* extra processes */
-	mod_init,					/* module initialization function */
-	(response_function) 0,      /* response handling function */
-	(destroy_function) destroy, /* destroy function */
-	child_init                  /* per-child init function */
+	"presence",			/* module name */
+	DEFAULT_DLFLAGS,		/* dlopen flags */
+	cmds,				/* exported functions */
+	params,				/* exported parameters */
+	0,				/* exported statistics */
+	mi_cmds,   			/* exported MI functions */
+	0,				/* exported pseudo-variables */
+	0,				/* extra processes */
+	mod_init,			/* module initialization function */
+	(response_function) 0,      	/* response handling function */
+	(destroy_function) destroy, 	/* destroy function */
+	child_init                  	/* per-child init function */
 };
 
 /**
@@ -176,7 +193,7 @@ static int mod_init(void)
 	if(db_url.s== NULL)
 	{
 		use_db= 0;
-		LM_DBG("presence module used for library purpose only\n");
+		LM_DBG("Presence module used for API library purpose only\n");
 		EvList= init_evlist();
 		if(!EvList)
 		{
@@ -207,14 +224,14 @@ static int mod_init(void)
 	/* load SL API */
 	if(load_sl_api(&slb)==-1)
 	{
-		LM_ERR("can't load sl functions\n");
+		LM_ERR("Can't load sl functions. Module SL not loaded?\n");
 		return -1;
 	}
 
 	/* load all TM stuff */
 	if(load_tm_api(&tmb)==-1)
 	{
-		LM_ERR("can't load tm functions\n");
+		LM_ERR("Can't load tm functions. Module TM not loaded?\n");
 		return -1;
 	}
 	
@@ -236,7 +253,7 @@ static int mod_init(void)
 	pa_db = pa_dbf.init(&db_url);
 	if (!pa_db)
 	{
-		LM_ERR("connecting to database failed\n");
+		LM_ERR("Connection to database failed\n");
 		return -1;
 	}
 	
@@ -443,7 +460,7 @@ static int fixup_presence(void** param, int param_no)
  	return E_UNSPEC;
 }
 
-/* 
+/*! \brief
  *  mi cmd: refreshWatchers
  *			<presentity_uri> 
  *			<event>

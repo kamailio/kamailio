@@ -26,6 +26,11 @@
  *  2007-04-17  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module
+ * \ingroup presence
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../dprint.h"
@@ -46,11 +51,11 @@ int bind_presence(presence_api_t* api)
 	api->get_event_list= get_event_list;
 	api->update_watchers_status= update_watchers_status;
 	api->new_shtable= new_shtable;
-    api->destroy_shtable= destroy_shtable;
-    api->insert_shtable= insert_shtable;
-    api->search_shtable= search_shtable;
-    api->delete_shtable= delete_shtable;
-    api->update_shtable= update_shtable;
+	api->destroy_shtable= destroy_shtable;
+	api->insert_shtable= insert_shtable;
+	api->search_shtable= search_shtable;
+	api->delete_shtable= delete_shtable;
+	api->update_shtable= update_shtable;
 	api->mem_copy_subs= mem_copy_subs;
 	api->update_db_subs= update_db_subs;
 	api->extract_sdialog_info= extract_sdialog_info;

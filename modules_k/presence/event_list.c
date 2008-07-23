@@ -26,6 +26,13 @@
  *  2007-04-04  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module
+ * \ref event_list.h
+ * \ingroup presence 
+ */
+
+
 #include <stdlib.h>
 #include<stdio.h>
 #include <string.h>

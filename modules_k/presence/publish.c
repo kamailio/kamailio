@@ -26,6 +26,12 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Support for PUBLISH handling
+ * \ingroup presence 
+ */
+
+
 #include <time.h>
 
 #include "../../ut.h"

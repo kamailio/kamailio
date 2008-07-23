@@ -26,6 +26,13 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: PUBLISH support
+ * \ref publish.c
+ * \ingroup presence 
+ */
+
+
 #ifndef PUBLISH_H
 #define PUBLISH_H
 

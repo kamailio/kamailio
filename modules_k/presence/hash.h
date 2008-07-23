@@ -26,6 +26,12 @@
  *  2007-08-20  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Hash tables
+ * \ingroup presence 
+ */
+
+
 
 #ifndef PS_HASH_H
 #define PS_HASH_H

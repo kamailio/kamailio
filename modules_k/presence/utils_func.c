@@ -26,6 +26,12 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Utilities
+ * \ingroup presence 
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -26,6 +26,13 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: SUBSCRIBE support
+ * \ref subscribe.c
+ * \ingroup presence 
+ */
+
+
 #ifndef SUBSCRIBE_H
 #define SUBSCRIBE_H
 

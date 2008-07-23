@@ -26,6 +26,12 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Support for SUBSCRIBE handling
+ * \ingroup presence 
+ */
+
+
 #include "../../ut.h"
 #include "../../usr_avp.h"
 #include "../../data_lump_rpl.h"

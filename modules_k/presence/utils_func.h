@@ -26,6 +26,13 @@
  *  2006-08-15  initial version (anca)
  */
 
+/*! \file
+ * \brief OpenSER presence module :: Utility functions
+ * \ref utils_func.c
+ * \ingroup presence 
+ */
+
+
 
 #ifndef UTILS_FUNC_H
 #define UTILS_FUNC_H
