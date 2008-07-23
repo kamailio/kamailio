@@ -10,8 +10,8 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -90,33 +90,34 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The modules handles PUBLISH and SUBSCRIBE messages and
-   generates NOTIFY messages in a general, event independent way.
-   It allows registering events to it from other OpenSER modules.
-   Events that can currently be added to it are: presence,
-   presence.winfo, dialog;sla from presence_xml module and
-   message-summary from presence_mwi module.
+   The Presence module implements the core functionality of SIP
+   event notification. It handles PUBLISH and SUBSCRIBE messages
+   and generates NOTIFY messages in a general, event independent
+   way. It is extensible and allows registering events to it from
+   other OpenSER modules. Supported SIP event packages are
+   presence, presence.winfo, dialog;sla from the presence_xml
+   module and message-summary from the presence_mwi module.
 
-   The modules uses database storage. It has later been improved
-   with memory caching operations to improve performance. The
-   Subscribe dialog information are stored in memory and are
-   periodically updated in database, while for Publish only the
-   presence or absence of stored info for a certain resource is
-   maintained in memory to avoid unnecessary, costly db
-   operations. It is possible to configure a fallback to database
-   mode(by setting module parameter "fallback2db"). In this mode,
-   in case a searched record is not found in cache, the search is
-   continued in database. This is useful for an architecture in
-   which processing and memory load might be divided on more
-   machines using the same database.
+   The module uses database storage and memory caching (to improve
+   performance). The SIP SUBSCRIBE dialog information is stored in
+   memory and is periodically updated in the database, while for
+   PUBLISH only the presence or absence of stored info for a
+   certain resource is maintained in memory to avoid unnecessary,
+   costly database operations. It is possible to disable in-memory
+   caching by configurng a fallback to database mode (by setting
+   module parameter "fallback2db"). In this mode, in case a
+   searched record is not found in cache, the search is continued
+   in database. This is useful for an architecture in which
+   processing and memory load might be divided on several OpenSER
+   instances, maybe on different servers using the same database.
 
-   The module can also work only with the functionality of a
-   library, with no message processing and generation, but used
-   only for the exported functions. This mode of operation is
-   enabled if the db_url parameter is not set to any value.
+   The module implements several API functions, that can be used
+   by other modules. In fact, it can be used only as a resource
+   module, or "library". This mode of operation is enabled if the
+   db_url parameter is not set to any value.
 
-   The server follows the specifications in: RFC3265, RFC3856,
-   RFC3857, RFC3858.
+   The OpenSER Presence module implements the specifications in:
+   RFC3265, RFC3856, RFC3857, RFC3858.
 
 1.2. Dependencies
 
@@ -151,7 +152,8 @@ modparam("presence", "db_url",
 
 1.3.2. presentity_table(str)
 
-   The name of the db table where Publish information are stored.
+   The name of the db table where PUBLISH presence information is
+   stored.
 
    Default value is "presentity".
 
@@ -163,7 +165,7 @@ modparam("presence", "presentity_table", "presentity")
 1.3.3. active_watchers_table(str)
 
    The name of the db table where active subscription information
-   are stored.
+   is stored.
 
    Default value is "active_watchers".
 
@@ -185,8 +187,8 @@ modparam("presence", "watchers_table", "watchers")
 
 1.3.5. clean_period (int)
 
-   The period at which to verify if there are expired messages
-   stored in database.
+   The period between checks if there are expired messages stored
+   in database.
 
    Default value is "100".
 
@@ -249,7 +251,7 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
    operation. In this mode, in case a searched record is not found
    in cache, the search is continued in database. Useful for an
    architecture in which processing and memory load might be
-   divided on more machines using the same database.
+   divided on more servers using the same database.
 
    Example 1.10. Set fallback2db parameter
 ...
@@ -258,9 +260,9 @@ modparam("presence", "fallback2db", 1)
 
 1.3.11. subs_htable_size (int)
 
-   The size of the hash table to store subscription dialogs. This
-   parameter will be used as the power of 2 when computing table
-   size.
+   The size of the in-memory hash table to store subscription
+   dialogs. This parameter will be used as the power of 2 when
+   computing table size.
 
    Default value is "9 (512)".
 
@@ -271,9 +273,9 @@ modparam("presence", "subs_htable_size", 11)
 
 1.3.12. pres_htable_size (int)
 
-   The size of the hash table to store publish records. This
-   parameter will be used as the power of 2 when computing table
-   size.
+   The size of the in-memory hash table to store publish records.
+   This parameter will be used as the power of 2 when computing
+   table size.
 
    Default value is "9 (512)".
 
@@ -302,17 +304,17 @@ modparam("presence", "enable_sphere_check", 1)
 
 1.4.1.  handle_publish(char* sender_uri)
 
-   The function handles PUBLISH requests. It stores and updates
-   published information in database and calls functions to send
-   NOTIFY messages when changes in the published information
-   occur. It takes one argument -> sender_uri. The parameter was
-   added for enabling BLA implementation. If present, Notification
-   of a change in published state is not sent to the respective
-   uri even though a subscription exists. It should be taken from
-   the Sender header. It was left at the decision of the
-   administrator whether or not to transmit the content of this
-   header as parameter for handle_publish, to prevent security
-   problems.
+   Handles PUBLISH requests by storing and updating published
+   information in memory cach and database, then calls functions
+   to send NOTIFY messages when changes in the published
+   information occur. It takes one argument -> sender_uri. The
+   parameter was added for enabling BLA implementation. If
+   present, Notification of a change in published state is not
+   sent to the respective uri even though a subscription exists.
+   It should be taken from the Sender header. It was left at the
+   decision of the administrator whether or not to transmit the
+   content of this header as parameter for handle_publish, to
+   prevent security problems.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -337,9 +339,9 @@ modparam("presence", "enable_sphere_check", 1)
 1.4.2.  handle_subscribe()
 
    The function which handles SUBSCRIBE requests. It stores or
-   updates information in database and calls functions to send
-   Notify messages when a Subscribe which initiate a dialog is
-   received
+   updates information in memory and database and calls functions
+   to send Notify messages when a SUBSCRIBE which initiate a
+   dialog is received
 
    This function can be used from REQUEST_ROUTE.
 
@@ -385,11 +387,12 @@ if(method=="SUBSCRIBE")
 
 1.6. Installation
 
-   The module requires 3 table in OpenSER database: presentity,
-   active_watchers and watchers tables. The SQL syntax to create
-   them can be found in presence-create.sql script in the database
-   directories in the openser/scripts folder. You can also find
-   the complete database documentation on the project webpage,
+   The module requires 3 tables in the OpenSER database:
+   "presentity", "active_watchers" and "watchers". The SQL syntax
+   to create them can be found in presence-create.sql script in
+   the database directories in the openser/scripts folder. You can
+   also find the complete database documentation on the project
+   webpage,
    http://www.openser.org/docs/db-tables/openser-db-devel.html.
 
 Chapter 2. Developer Guide
