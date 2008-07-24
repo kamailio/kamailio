@@ -23,6 +23,8 @@
 
 /**
  * \file db/db.h
+ * \ingroup db
+ * \ref db.c
  * \brief Generic Database Interface
  *
  * This is a generic database interface for modules that need to utilize a

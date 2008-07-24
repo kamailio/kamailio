@@ -29,8 +29,11 @@
 
 /**
  * \file db/db.c
+ * \ingroup db
  * \brief Generic Database Interface
  *
+ */
+/*! \defgroup db DB: The OpenSER generic database interface
  * This is a generic database interface for modules that need to utilize a
  * database. The interface should be used by all modules that access database.
  * The interface will be independent of the underlying database server.
@@ -41,6 +44,17 @@
  *
  * If you want to see more complicated examples of how the API could be used,
  * take a look at the sources of the usrloc or auth modules.
+ * - \ref usrloc
+ * - \ref auth
+ *
+ * Implemented modules
+ * - \ref db_berkeley
+ * - \ref db_flatstore
+ * - \ref db_text
+ * - \ref db_mysql
+ * - \ref db_oracle
+ * - \ref db_postgres
+ * - \ref db_unixodbc
  */
 
 #include "../dprint.h"
@@ -52,8 +66,7 @@
 #include "db_pool.h"
 #include "db.h"
 
-/** maximal length of a SQL URL */
-static unsigned int MAX_URL_LENGTH = 255;
+static unsigned int MAX_URL_LENGTH = 255;	/*!< maximum length of a SQL URL */
 
 
 int db_check_api(db_func_t* dbf, char *mname)
@@ -127,9 +140,9 @@ error:
 	return -1;
 }
 
-/* fills mydbf with the corresponding db module callbacks
- * returns 0 on success, -1 on error
- * on error mydbf will contain only 0s */
+/*! \brief fills mydbf with the corresponding db module callbacks
+ * \return returns 0 on success, -1 on error
+ * \note on error mydbf will contain only 0s */
 int db_bind_mod(const str* mod, db_func_t* mydbf)
 {
 	char* tmp, *p;
@@ -222,9 +235,9 @@ error:
 }
 
 
-/*
+/*! \brief
  * Initialize database module
- * No function should be called before this
+ * \note No function should be called before this
  */
 db_con_t* db_do_init(const str* url, void* (*new_connection)())
 {
@@ -242,7 +255,7 @@ db_con_t* db_do_init(const str* url, void* (*new_connection)())
 	}
 	if (url->len > MAX_URL_LENGTH)
 	{
-		LM_ERR("SQL URL too long\n");
+		LM_ERR("The configured db_url is too long\n");
 		return 0;
 	}
 	
@@ -285,9 +298,9 @@ db_con_t* db_do_init(const str* url, void* (*new_connection)())
 }
 
 
-/*
+/*! \brief
  * Shut down database module
- * No function should be called after this
+ * \note No function should be called after this
  */
 void db_do_close(db_con_t* _h, void (*free_connection)())
 {
@@ -308,9 +321,9 @@ void db_do_close(db_con_t* _h, void (*free_connection)())
 
 
 
-/*
+/*! \brief
  * Get version of a table
- * If there is no row for the given table, return version 0
+ * \return If there is no row for the given table, return version 0
  */
 int db_table_version(const db_func_t* dbf, db_con_t* connection, const str* table)
 {
@@ -373,7 +386,7 @@ int db_table_version(const db_func_t* dbf, db_con_t* connection, const str* tabl
 	return ret;
 }
 
-/*
+/*! \brief
  * Check the table version
  * 0 means ok, -1 means an error occured
  */
@@ -384,13 +397,13 @@ int db_check_table_version(db_func_t* dbf, db_con_t* dbh, const str* table, cons
 		LM_ERR("querying version for table %.*s\n", table->len, table->s);
 		return -1;
 	} else if (ver != version) {
-		LM_ERR("invalid version %d for table %.*s found, espected %d\n", ver, table->len, table->s, version);
+		LM_ERR("invalid version %d for table %.*s found, expected %d (check table structure and table \"version\")\n", ver, table->len, table->s, version);
 		return -1;
 	}
 	return 0;
 }
 
-/*
+/*! \brief
  * Store name of table that will be used by
  * subsequent database functions
  */

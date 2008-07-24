@@ -21,8 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
+/*!
  * \file db_cap.h
+ * \ingroup db
  * \brief Data structures that represents capabilities in the database.
  *
  * This file defines data structures that represents certain database
@@ -34,31 +35,31 @@
 #define DB_CAP_H
 
 
-/**
+/*! \brief
  * Represents the capabilities that a database driver supports.
  */
 typedef enum db_cap {
-	DB_CAP_QUERY =     1 << 0,  /**< driver can perform queries                                     */
-	DB_CAP_RAW_QUERY = 1 << 1,  /**< driver can perform raw queries                                 */
-	DB_CAP_INSERT =    1 << 2,  /**< driver can insert data                                         */
-	DB_CAP_DELETE =    1 << 3,  /**< driver can delete data                                         */
-	DB_CAP_UPDATE =    1 << 4,  /**< driver can update data                                         */
-	DB_CAP_REPLACE =   1 << 5,  /**< driver can replace (also known as INSERT OR UPDATE) data       */
-	DB_CAP_FETCH   =   1 << 6,  /**< driver supports fetch result queries                           */
-	DB_CAP_LAST_INSERTED_ID = 1 << 7,  /**< driver can return the ID of the last insert operation   */
- 	DB_CAP_INSERT_UPDATE = 1 << 8 /**< driver can insert data into database and update on duplicate */
+	DB_CAP_QUERY =     1 << 0,  /*!< driver can perform queries                                     */
+	DB_CAP_RAW_QUERY = 1 << 1,  /*!< driver can perform raw queries                                 */
+	DB_CAP_INSERT =    1 << 2,  /*!< driver can insert data                                         */
+	DB_CAP_DELETE =    1 << 3,  /*!< driver can delete data                                         */
+	DB_CAP_UPDATE =    1 << 4,  /*!< driver can update data                                         */
+	DB_CAP_REPLACE =   1 << 5,  /*!< driver can replace (also known as INSERT OR UPDATE) data       */
+	DB_CAP_FETCH   =   1 << 6,  /*!< driver supports fetch result queries                           */
+	DB_CAP_LAST_INSERTED_ID = 1 << 7,  /*!< driver can return the ID of the last insert operation   */
+ 	DB_CAP_INSERT_UPDATE = 1 << 8 /*!< driver can insert data into database and update on duplicate */
 
 } db_cap_t;
 
 
-/**
+/*! \brief
  * All database capabilities except raw_query, replace, insert_update and 
  * last_inserted_id which should be checked separately when needed
  */
 #define DB_CAP_ALL (DB_CAP_QUERY | DB_CAP_INSERT | DB_CAP_DELETE | DB_CAP_UPDATE)
 
 
-/**
+/*! \brief
  * Returns true if all the capabilities in cpv are supported by module
  * represented by dbf, false otherwise
  */

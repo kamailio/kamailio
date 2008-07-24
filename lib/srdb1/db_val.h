@@ -29,6 +29,7 @@
  * Several datatypes are recognized and converted by the database API.
  * Available types: DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME, DB_BLOB and DB_BITMAP
  * It also provides some macros for convenient access to this values.
+ * \ingroup db
  */
 
 

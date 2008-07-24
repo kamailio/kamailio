@@ -24,6 +24,7 @@
 /**
  * \file db/db_res.c
  * \brief Functions to manage result structures
+ * \ingroup db
  *
  * Provides some convenience macros and some memory management
  * functions for result structures.

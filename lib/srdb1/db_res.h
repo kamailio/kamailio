@@ -28,6 +28,7 @@
  * Data structure that represents a result from a database query,
  * it also provides some convenience macros and some memory management
  * functions for result structures.
+ * \ingroup db
  */
 
 #ifndef DB_RES_H

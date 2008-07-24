@@ -24,6 +24,7 @@
 /**
  * \file db/db_op.h
  * \brief Type that represents a expression operator.
+ * \ingroup db
  */
 
 #ifndef DB_OP_H

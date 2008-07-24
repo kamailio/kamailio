@@ -23,6 +23,7 @@
 
 /**
  * \file db/db_key.h
+ * \ingroup db
  * \brief Type that represents a database key.
  */
 

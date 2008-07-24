@@ -23,6 +23,7 @@
 
 /**
  * \file db/db_id.c
+ * \ingroup db
  * \brief Functions for parsing a database URL and work with db identifier.
  */
 

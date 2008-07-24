@@ -21,8 +21,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
+/*!
  * \file db/db_con.h
+ * \ingroup db
  * \brief Type that represents a database connection
  */
 
@@ -32,13 +33,13 @@
 #include "../str.h"
 
 
-/**
+/*! \brief
  * This structure represents a database connection, pointer to this structure
  * are used as a connection handle from modules uses the db API.
  */
 typedef struct {
-	const str* table;      /**< Default table that should be used              */
-	unsigned long tail;    /**< Variable length tail, database module specific */
+	const str* table;      /*!< Default table that should be used              */
+	unsigned long tail;    /*!< Variable length tail, database module specific */
 } db_con_t;
 
 

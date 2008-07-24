@@ -27,6 +27,7 @@
  *
  * This file holds a type that represents a row in a database, some convenience
  * macros and a function for memory managements.
+ * \ingroup db
  */
 
 #include "db_row.h"

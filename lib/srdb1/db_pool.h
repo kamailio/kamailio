@@ -24,6 +24,7 @@
 /**
  * \file db/db_pool.h
  * \brief Functions for managing a pool of database connections.
+ * \ingroup db
  */
 
 #ifndef _DB_POOL_H

@@ -27,6 +27,7 @@
  *
  * This utility methods are used from the database SQL driver to convert
  * values and print SQL queries from the internal API representation.
+ * \ingroup db
 */
 
 #ifndef DB_UT_H

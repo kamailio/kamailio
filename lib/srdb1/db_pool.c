@@ -24,6 +24,7 @@
 /**
  * \file db/db_pool.c
  * \brief Functions for managing a pool of database connections.
+ * \ingroup db
  */
 
 #include "../dprint.h"

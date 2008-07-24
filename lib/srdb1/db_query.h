@@ -24,6 +24,7 @@
 /**
  * \file db/db_query.h
  * \brief Query helper for database drivers
+ * \ingroup db
  *
  * This helper methods for database queries are used from the database
  * SQL driver to do the actual work. Each function uses some functions from
