@@ -24,6 +24,13 @@
  */
 
 
+/*! \file
+ *  \brief DB_MYSQL :: Result related functions
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+
 #include <string.h>
 #include <mysql/mysql.h>
 #include "../../db/db_res.h"
@@ -34,7 +41,7 @@
 #include "res.h"
 
 
-/**
+/*! \brief
  * Get and convert columns from a result
  */
 int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
@@ -130,7 +137,7 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 }
 
 
-/**
+/*! \brief
  * Convert rows from mysql to db API representation
  */
 static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
@@ -177,7 +184,7 @@ static inline int db_mysql_convert_rows(const db_con_t* _h, db_res_t* _r)
 }
 
 
-/**
+/*! \brief
  * Fill the structure with data from database
  */
 int db_mysql_convert_result(const db_con_t* _h, db_res_t* _r)

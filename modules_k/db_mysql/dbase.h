@@ -23,6 +23,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Core
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+
 
 #ifndef DBASE_H
 #define DBASE_H
@@ -35,25 +42,25 @@
 #include "../../db/db_val.h"
 #include "../../str.h"
 
-/*
+/*! \brief
  * Initialize database connection
  */
 db_con_t* db_mysql_init(const str* _sqlurl);
 
 
-/*
+/*! \brief
  * Close a database connection
  */
 void db_mysql_close(db_con_t* _h);
 
 
-/*
+/*! \brief
  * Free all memory allocated by get_result
  */
 int db_mysql_free_result(db_con_t* _h, db_res_t* _r);
 
 
-/*
+/*! \brief
  * Do a query
  */
 int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
@@ -61,32 +68,32 @@ int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_key_t _o, db_res_t** _r);
 
 
-/*
+/*! \brief
  * fetch rows from a result
  */
 int db_mysql_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
 
 
-/*
+/*! \brief
  * Raw SQL query
  */
 int db_mysql_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
 
 
-/*
+/*! \brief
  * Insert a row into table
  */
 int db_mysql_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n);
 
 
-/*
+/*! \brief
  * Delete a row from table
  */
 int db_mysql_delete(const db_con_t* _h, const db_key_t* _k, const 
 	db_op_t* _o, const db_val_t* _v, const int _n);
 
 
-/*
+/*! \brief
  * Update a row in table
  */
 int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
@@ -94,24 +101,24 @@ int db_mysql_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 	const int _un);
 
 
-/*
+/*! \brief
  * Just like insert, but replace the row if it exists
  */
 int db_mysql_replace(const db_con_t* handle, const db_key_t* keys, const db_val_t* 	vals, const int n);
 
-/*
+/*! \brief
  * Returns the last inserted ID
  */
 int db_last_inserted_id(const db_con_t* _h);
 
-/*
+/*! \brief
  * Insert a row into table, update on duplicate key
  */
 int db_insert_update(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 	const int _n);
 
 
-/*
+/*! \brief
  * Store name of table that will be used by
  * subsequent database functions
  */

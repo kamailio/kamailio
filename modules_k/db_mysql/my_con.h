@@ -21,6 +21,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Core
+ *  \ref my_con.c
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+
 #ifndef MY_CON_H
 #define MY_CON_H
 
@@ -32,14 +40,14 @@
 
 
 struct my_con {
-	struct db_id* id;        /* Connection identifier */
-	unsigned int ref;        /* Reference count */
-	struct pool_con* next;   /* Next connection in the pool */
+	struct db_id* id;        /*!< Connection identifier */
+	unsigned int ref;        /*!< Reference count */
+	struct pool_con* next;   /*!< Next connection in the pool */
 
-	MYSQL_RES* res;          /* Actual result */
-	MYSQL* con;              /* Connection representation */
-	MYSQL_ROW row;           /* Actual row in the result */
-	time_t timestamp;        /* Timestamp of last query */
+	MYSQL_RES* res;          /*!< Actual result */
+	MYSQL* con;              /*!< Connection representation */
+	MYSQL_ROW row;           /*!< Actual row in the result */
+	time_t timestamp;        /*!< Timestamp of last query */
 };
 
 
@@ -52,14 +60,14 @@ struct my_con {
 #define CON_TIMESTAMP(db_con)  (((struct my_con*)((db_con)->tail))->timestamp)
 
 
-/*
+/*! \brief
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
 struct my_con* db_mysql_new_connection(const struct db_id* id);
 
 
-/*
+/*! \brief
  * Close the connection and release memory
  */
 void db_mysql_free_connection(struct pool_con* con);

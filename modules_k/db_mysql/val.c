@@ -21,6 +21,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Data conversion
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
 
 #include "../../dprint.h"
 #include "../../db/db_ut.h"
@@ -31,7 +36,7 @@
 #include <stdio.h>
 
 
-/*
+/*! \brief
  * Convert str to db value, does not copy strings
  */
 int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
@@ -127,7 +132,7 @@ int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int
 }
 
 
-/*
+/*! \brief
  * Used when converting result from a query
  */
 int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len)

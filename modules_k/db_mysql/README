@@ -12,8 +12,8 @@ Daniel-Constantin Mierla
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -59,15 +59,15 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-     * libmysqlclient-dev - the development libraries of
-       mysql-client.
+     * mysql - the development libraries forthe Mysql database. In
+       some Linux distributions named "libmysqlclient-dev".
 
 1.3. Exported Parameters
 
 1.3.1. ping_interval (integer)
 
-   Time interval to send ping messages to MySQL server in order to
-   keep the connection open.
+   Time interval in seconds to send ping messages to MySQL server
+   in order to keep the connection open.
 
    Default value is 300 (5 min).
 
@@ -78,14 +78,14 @@ modparam("db_mysql", "ping_interval", 600)
 
 1.3.2. timeout_interval (integer)
 
-   Time interval after that an connection attempt, read or write
-   request is aborted. The value counts three times, as several
-   retries are done from the driver before it gives up.
+   Time interval (in seconds) after that an connection attempt,
+   read or write request is aborted. The value counts three times,
+   as several retries are done from the driver before it gives up.
 
-   The read timeout parameter is ignored on driver versions prior
-   to "5.1.12", "5.0.25" and "4.1.22". The write timeout parameter
-   is ignored on version prior to "5.1.12" and "5.0.25", the "4.1"
-   release don't support it at all.
+   The read timeout parameter is ignored on MySQL driver versions
+   prior to "5.1.12", "5.0.25" and "4.1.22". The write timeout
+   parameter is ignored on versions prior to "5.1.12" and
+   "5.0.25", the "4.1" release don't support it at all.
 
    Default value is 2 (6 sec).
 
@@ -96,8 +96,8 @@ modparam("db_mysql", "timeout_interval", 2)
 
 1.3.3. auto_reconnect (integer)
 
-   Configure the module to auto reconnect to MySQL server if the
-   connection was lost.
+   Configure whether the module should automatically reconnect to
+   MySQL server if the connection was lost.
 
    Default value is 1 (1 - on / 0 - off).
 
@@ -113,8 +113,8 @@ modparam("auto_reconnect", "auto_reconnect", 0)
 1.5. Installation
 
    Because it dependes on an external library, the mysql module is
-   not compiled and installed by default. You can use one of the
-   next options.
+   not compiled and installed by default. You can use one of these
+   options.
      * - edit the "Makefile" and remove "db_mysql" from
        "excluded_modules" list. Then follow the standard procedure
        to install OpenSER: "make all; make install".

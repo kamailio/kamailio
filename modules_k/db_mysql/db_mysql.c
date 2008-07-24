@@ -29,6 +29,18 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Core
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+/*! \defgroup db_mysql DB_MYSQL :: the MySQL driver for OpenSER
+ *  \brief The OpenSER database interface to the MySQL database
+ *  - http://www.mysql.org
+ *
+ */
+
 #include "../../sr_module.h"
 #include "../../db/db.h"
 #include "dbase.h"
@@ -46,7 +58,7 @@ MODULE_VERSION
 
 int db_mysql_bind_api(db_func_t *dbb);
 
-/*
+/*! \brief
  * MySQL database module interface
  */
 static cmd_export_t cmds[] = {
@@ -55,7 +67,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
+/*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
