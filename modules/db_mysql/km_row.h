@@ -23,6 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Row related functions
+ *  \ref row.c
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+
 #ifndef ROW_H
 #define ROW_H
 

@@ -21,6 +21,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Connections
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+
 #include "my_con.h"
 #include "db_mysql.h"
 #include <mysql/mysql_version.h>
@@ -29,7 +36,7 @@
 #include "../../ut.h"
 
 
-/**
+/*! \brief
  * Create a new connection structure,
  * open the MySQL connection and set reference count to 1
  */
@@ -104,7 +111,7 @@ struct my_con* db_mysql_new_connection(const struct db_id* id)
 }
 
 
-/**
+/*! \brief
  * Close the connection and release memory
  */
 void db_mysql_free_connection(struct pool_con* con)

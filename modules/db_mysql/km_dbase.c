@@ -23,12 +23,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-/**
+/*!
  * \file
  * \brief Implementation of core functions for the MySQL driver.
  *
  * This file contains the implementation of core functions for the MySQL
  * database driver, for example to submit a query or fetch a result.
+ * \ingroup db_mysql
+ *  Module: \ref db_mysql
  */
 
 #include <stdio.h>

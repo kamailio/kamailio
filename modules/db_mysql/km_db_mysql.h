@@ -28,6 +28,13 @@
  *  2003-03-16  flags export parameter added (janakj)
  */
 
+/*! \file
+ *  \brief DB_MYSQL :: Core
+ *  \ingroup db_mysql
+ *  Module: \ref db_mysql
+ */
+
+
 #ifndef DB_MOD_H
 #define DB_MOD_H
 

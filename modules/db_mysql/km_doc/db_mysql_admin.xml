@@ -35,7 +35,7 @@
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>libmysqlclient-dev</emphasis> - the development libraries of mysql-client.
+				<emphasis>mysql</emphasis> - the development libraries forthe Mysql database. In some Linux distributions named "libmysqlclient-dev".
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -47,7 +47,7 @@
 	<section>
 		<title><varname>ping_interval</varname> (integer)</title>
 		<para>
-		Time interval to send ping messages to MySQL server in order to keep
+		Time interval in seconds to send ping messages to MySQL server in order to keep
 		the connection open.
 		</para>
 		<para>
@@ -67,14 +67,14 @@ modparam("db_mysql", "ping_interval", 600)
 		<section>
 		<title><varname>timeout_interval</varname> (integer)</title>
 		<para>
-		Time interval after that an connection attempt, read or write request
+		Time interval (in seconds) after that an connection attempt, read or write request
 		is aborted. The value counts three times, as several retries are done
 		from the driver before it gives up.
 		</para>
 		<para>
-		The read timeout parameter is ignored on driver versions prior to
+		The read timeout parameter is ignored on MySQL driver versions prior to
 		<quote>5.1.12</quote>, <quote>5.0.25</quote> and <quote>4.1.22</quote>.
-		The write timeout parameter is ignored on version prior to <quote>5.1.12</quote>
+		The write timeout parameter is ignored on versions prior to <quote>5.1.12</quote>
 		and <quote>5.0.25</quote>, the <quote>4.1</quote> release don't support it at all.
 		</para>
 		<para>
@@ -94,7 +94,7 @@ modparam("db_mysql", "timeout_interval", 2)
 	<section>
 		<title><varname>auto_reconnect</varname> (integer)</title>
 		<para>
-		Configure the module to auto reconnect to MySQL server if the
+		Configure whether the module should automatically reconnect to MySQL server if the
 		connection was lost.
 		</para>
 		<para>
@@ -122,7 +122,7 @@ modparam("auto_reconnect", "auto_reconnect", 0)
 	<title>Installation</title>
 		<para>
 		Because it dependes on an external library, the mysql module is not
-		compiled and installed by default. You can use one of the next options.
+		compiled and installed by default. You can use one of these options.
 		</para>
 		<itemizedlist>
 			<listitem>
