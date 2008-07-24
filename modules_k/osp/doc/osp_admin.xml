@@ -68,12 +68,32 @@ modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
       </example>
     </section>
     <section>
+      <title><varname>sp1_weight</varname>, <varname>sp2_weight</varname>, ..., <varname>sp16_weight</varname></title>
+      <para>These sp_weight (integer) parameters are used for load balancing peering requests to peering servers. These parameters are most effective when configured as factors of 1000. For example, if sp1_uri should manage twice the traffic load of sp2_uri, then set sp1_weight to 2000 and sp2_weight to 1000. Shared load balancing between peering servers is recommended. However, peering servers can be configured as primary and backup by assigning a sp_weight of 0 to the primary server and a non-zero sp_weight to the back-up server. The default values for sp1_weight and sp2_weight are 1000.</para>
+      <example>
+        <title>Setting the OSP server weights</title>
+        <programlisting format="linespecific">
+modparam("osp","sp1_weight",1000)
+        </programlisting>
+      </example>
+    </section>
+    <section>
       <title><varname>device_ip</varname></title>
       <para>The device_ip (string) is a recommended parameter that explicitly defines the IP address of OpenSER in a peering request message (as SourceAlternate type=transport).  The IP address must be in brackets as shown in the example below.</para>
       <example>
         <title>Setting the device IP address</title>
         <programlisting format="linespecific">
 modparam("osp","device_ip","[1.1.1.1]")
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>device_port</varname></title>
+      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by OpenSER in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple OpenSERs are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
+      <example>
+        <title>Setting the device port</title>
+        <programlisting format="linespecific">
+modparam("osp","device_port","5060")
         </programlisting>
       </example>
     </section>
@@ -100,26 +120,6 @@ modparam("osp","token_format",2)
 modparam("osp","private_key","/usr/local/etc/openser/pkey.pem")
 modparam("osp","local_certificate","/usr/local/etc/openser/localcert.pem")
 modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
-        </programlisting>
-      </example>
-    </section>
-    <section>
-      <title><varname>sp1_weight</varname>, <varname>sp2_weight</varname>, ..., <varname>sp16_weight</varname></title>
-      <para>These sp_weight (integer) parameters are used for load balancing peering requests to peering servers. These parameters are most effective when configured as factors of 1000. For example, if sp1_uri should manage twice the traffic load of sp2_uri, then set sp1_weight to 2000 and sp2_weight to 1000. Shared load balancing between peering servers is recommended. However, peering servers can be configured as primary and backup by assigning a sp_weight of 0 to the primary server and a non-zero sp_weight to the back-up server. The default values for sp1_weight and sp2_weight are 1000.</para>
-      <example>
-        <title>Setting the OSP server weights</title>
-        <programlisting format="linespecific">
-modparam("osp","sp1_weight",1000)
-        </programlisting>
-      </example>
-    </section>
-    <section>
-      <title><varname>device_port</varname></title>
-      <para>The device_port (string) parameter is an optional field which includes the SIP port being used by OpenSER in the peering request (as SourceAlternate type=network) to the peering server. If is not configured, this information is not included in the peering request. This field is useful if multiple OpenSERs are running on the same Linux computer since it enables the peering server to administer different peering policies based on different SIP proxies. This parameter has not been implemented yet.</para>
-      <example>
-        <title>Setting the device port</title>
-        <programlisting format="linespecific">
-modparam("osp","device_port","5060")
         </programlisting>
       </example>
     </section>
@@ -175,7 +175,7 @@ modparam("osp","retry_limit",2)
     </section>
     <section>
       <title><varname>timeout</varname></title>
-      <para>The timeout (integer) parameter defines the maximum time in milliseconds, to wait for a response from a peering server. If no response is received within this time, the current connection is aborted and the OSP Module attempts to contact the next peering server. The default value is 10 seconds.</para> 
+      <para>The timeout (integer) parameter defines the maximum time in milliseconds, to wait for a response from a peering server. If no response is received within this time, the current connection is aborted and the OSP Module attempts to contact the next peering server. The default value is 10 seconds.</para>
       <example>
         <title>Setting the timeout</title>
         <programlisting format="linespecific">
@@ -210,6 +210,26 @@ modparam("osp","validate_call_id",1)
         <title>Instructing the module to use calling number in Remote-Party-ID</title>
         <programlisting format="linespecific">
 modparam("osp","use_rpid_calling_number",1)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>redirection_uri_format</varname></title>
+      <para>The redirection_uri_format (integer) parameter instructs the OSP module to use the different URI format in the SIP redirection message. If this value is set to 0, the OSP Module uses "xxxxxxxxxx@xxx.xxx.xxx.xxx" URI in the SIP redirection messages. If this value is set to 1, the OSP Module will use "<xxxxxxxxxx@xxx.xxx.xxx.xxx>" URI in the SIP redirection messages. The default value is 0</para>
+      <example>
+        <title>Setting the redirection URI format</title>
+        <programlisting format="linespecific">
+modparam("osp","redirection_uri_format",1)
+        </programlisting>
+      </example>
+    </section>
+    <section>
+      <title><varname>source_networkid_avp</varname></title>
+      <para>The source_networkid_avp (string) parameter instructs the OSP module to use the defined AVP to pass the source network ID value. The default value is "$avp(s:_osp_source_networkid_)".  Then the source network ID can be set by "$avp(s:_osp_source_networkid_) = pseudo-variables".  All pseudo variables are described in http://openser.org/dokuwiki/doku.php/pseudovariables:1.3.x.</para>
+      <example>
+        <title>Setting the source network ID AVP</title>
+        <programlisting format="linespecific">
+modparam("osp","source_networkid_avp","$avp(s:snid)")
         </programlisting>
       </example>
     </section>
