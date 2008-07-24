@@ -31,8 +31,7 @@
  * \ingroup presence_xml
  */
 
-/*! \defgroup presence_xml
- * This module implements a range of XML-based SIP event packages for presence
+/*! \defgroup presence_xml Presence_xml :: This module implements a range of XML-based SIP event packages for presence
  */
 
 

@@ -26,8 +26,7 @@
  *  2006-08-15  initial version (anca)
  */
 
-/*! \defgroup presence
- *  \brief A generic implementation of the SIP event package (PUBLISH, SUBSCRIBE, NOTIFY)
+/*! \defgroup presence Presence :: A generic implementation of the SIP event package (PUBLISH, SUBSCRIBE, NOTIFY)
  *
  *	   The OpenSER presence module is a generic module for SIP event packages, which is much more than presence.
  *	   It is extensible by developing other modules that use the internal developer API.

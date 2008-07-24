@@ -24,9 +24,10 @@
  *
  */
 
-/*! \defgroup xmpp
- *  \brief The XMPP core interface
+/*! \defgroup xmpp XMPP: The SIP/Simple - XMPP integration core 
  *  This module implements gateway functionality between SIP and XMPP. 
+ *
+ *  This module in parts replace the older \ref jabber module.
  */
 
 /*! \file
