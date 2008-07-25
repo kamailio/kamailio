@@ -23,7 +23,7 @@
  */
 
 /**
- * @file route_rule.h
+ * @file route_rule.c
  * @brief Contains the functions to manage routing rule data.
  */
 
