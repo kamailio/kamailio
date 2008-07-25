@@ -32,6 +32,8 @@
 /*! \file
  *  \brief USRLOC - List of registered domains
  *  \ingroup usrloc
+ *
+ * - Module: \ref usrloc
  */
 
 

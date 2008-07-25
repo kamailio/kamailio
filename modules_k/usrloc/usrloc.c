@@ -31,6 +31,8 @@
 /*! \file
  *  \brief USRLOC - Usrloc interface
  *  \ingroup usrloc
+ *
+ * - Module \ref usrloc
  */
 
 #include "usrloc.h"

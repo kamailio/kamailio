@@ -27,6 +27,8 @@
 /*! \file
  *  \brief USRLOC - Callback functions
  *  \ingroup usrloc
+ *
+ * - Module: \ref usrloc
  */
 
 

@@ -45,7 +45,7 @@
  */
 
 /*!
- * \defgroup registrar SIP Registrar support
+ * \defgroup registrar Registrar :: SIP Registrar support
  * The module contains REGISTER processing logic.
  */  
 
@@ -53,6 +53,8 @@
  * \file
  * \brief SIP registrar module - interface
  * \ingroup registrar   
+ *
+ * - Module: \ref registrar
  */  
 
 #include <stdio.h>

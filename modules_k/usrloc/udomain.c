@@ -32,6 +32,8 @@
 /*! \file
  *  \brief USRLOC - 
  *  \ingroup usrloc
+ *
+ * - Module: \ref usrloc
  */
 
 #include "udomain.h"

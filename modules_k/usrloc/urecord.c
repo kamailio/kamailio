@@ -31,6 +31,8 @@
 /*! \file
  *  \brief USRLOC - Usrloc record structure
  *  \ingroup usrloc
+ *
+ * - Module \ref usrloc
  */
 
 

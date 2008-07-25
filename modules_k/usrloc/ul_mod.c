@@ -36,9 +36,11 @@
 /*! \file
  *  \brief USRLOC - Usrloc module interface
  *  \ingroup usrloc
+ *
+ * - Module \ref usrloc
  */
 
-/*! \defgroup usrloc User location module
+/*! \defgroup usrloc Usrloc :: User location module
 	\brief The module keeps a user location table
    	and provides access to the table to other modules. The module
    	exports no functions that could be used directly from scripts.

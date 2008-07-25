@@ -30,6 +30,8 @@
 /*! \file
  *  \brief USRLOC - Usrloc MI functions
  *  \ingroup usrloc
+ *
+ * - Module: \ref usrloc
  */
 
 #include <string.h>

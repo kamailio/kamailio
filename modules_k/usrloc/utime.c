@@ -25,6 +25,8 @@
 /*! \file
  *  \brief USRLOC - time related functions
  *  \ingroup usrloc
+ *
+ * - Module \ref usrloc
  */
 
 #include "utime.h"

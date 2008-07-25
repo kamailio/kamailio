@@ -25,6 +25,8 @@
 /*! \file
  *  \brief USRLOC - Hash table collision slot related functions
  *  \ingroup usrloc
+ *
+ * - Module: \ref usrloc
  */
 
 

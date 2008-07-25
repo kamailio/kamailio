@@ -31,6 +31,8 @@
 /*! \file
  *  \brief USRLOC - Usrloc contact structure
  *  \ingroup usrloc
+ *
+ * - Module: \ref usrloc
  */
 
 #include "ucontact.h"

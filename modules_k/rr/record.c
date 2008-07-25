@@ -38,7 +38,7 @@
  */
 
 /*!
- * \defgroup rr Route & Record-Route Module
+ * \defgroup rr RR :: Route & Record-Route Module
  */
 
 #include <string.h>
