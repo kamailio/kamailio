@@ -30,7 +30,7 @@
  *
  * \ingroup tm
  * - Module: \ref tm
- * - \ref dig.c
+ * - \ref dlg.c
  */
 
 

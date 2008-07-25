@@ -25,7 +25,7 @@
  *
  * \ingroup tm
  * - Module: \ref tm
- * - \ref t_dig.c
+ * - \ref t_dlg.c
  */
 
 

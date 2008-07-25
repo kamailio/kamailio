@@ -38,7 +38,7 @@
  *
  * \ingroup tm
  * - Module: \ref tm
- * - \reg TMcloneMessage
+ * - \ref TMcloneMessage
  *
  *
  * \page TMcloneMessage TM :: A note about cloned messages
