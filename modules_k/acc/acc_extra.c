@@ -30,7 +30,7 @@
  *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
-*! \file
+/*! \file
  * \ingroup acc
  * \brief Acc:: Extra attributes
  *

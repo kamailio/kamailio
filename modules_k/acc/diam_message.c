@@ -25,7 +25,7 @@
  *   2003-04-07 created by bogdan
  */
 
-*! \file
+/*! \file
  * \ingroup acc
  * \brief Acc:: Diameter messages
  *
