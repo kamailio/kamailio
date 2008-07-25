@@ -32,6 +32,11 @@
  *		to ds_is_from_list.
  */
 
+/*! \file
+ * \ingroup dispatcher
+ * \brief Dispatcher :: Dispatch
+ */
+
 #ifndef _DISPATCH_H_
 #define _DISPATCH_H_
 
@@ -41,12 +46,12 @@
 #include "../tm/tm_load.h"
 
 
-#define DS_HASH_USER_ONLY	1  /* use only the uri user part for hashing */
-#define DS_FAILOVER_ON		2  /* store the other dest in avps */
+#define DS_HASH_USER_ONLY	1  /*!< use only the uri user part for hashing */
+#define DS_FAILOVER_ON		2  /*!< store the other dest in avps */
 
-#define DS_INACTIVE_DST		1  /* inactive destination */
-#define DS_PROBING_DST		2  /* checking destination */
-#define DS_RESET_FAIL_DST	4  /* Reset-Failure-Counter */
+#define DS_INACTIVE_DST		1  /*!< inactive destination */
+#define DS_PROBING_DST		2  /*!< checking destination */
+#define DS_RESET_FAIL_DST	4  /*!< Reset-Failure-Counter */
 
 extern str ds_db_url;
 extern str ds_table_name;
@@ -73,7 +78,7 @@ extern pv_spec_t ds_setid_pv;
 struct tm_binds tmb;
 extern str ds_ping_method;
 extern str ds_ping_from;
-extern int probing_threshhold; /* number of failed requests,
+extern int probing_threshhold; /*!< number of failed requests,
 						before a destination is taken into probing */ 
 extern int ds_probing_mode;
 
@@ -92,7 +97,7 @@ int ds_print_list(FILE *fout);
 int ds_print_mi_list(struct mi_node* rpl);
 
 int ds_is_from_list(struct sip_msg *_m, int group);
-/*
+/*! \brief
  * Timer for checking inactive destinations
  */
 void ds_check_timer(unsigned int ticks, void* param);

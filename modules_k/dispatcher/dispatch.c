@@ -40,6 +40,11 @@
  * 2007-09-17  added list-file support for reload data (carstenbock)
  */
 
+/*! \file
+ * \ingroup dispatcher
+ * \brief Dispatcher :: Dispatch
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -73,17 +78,17 @@ typedef struct _ds_dest
 {
 	str uri;
 	int flags;
-	struct ip_addr ip_address; /* IP-Address of the entry */
-    unsigned short int port; /* Port of the request URI */
-    int failure_count;
+	struct ip_addr ip_address; 	/*!< IP-Address of the entry */
+	unsigned short int port; 	/*!< Port of the request URI */
+	int failure_count;
 	struct _ds_dest *next;
 } ds_dest_t, *ds_dest_p;
 
 typedef struct _ds_set
 {
-	int id;				/* id of dst set */
-	int nr;				/* number of items in dst set */
-	int last;			/* last used item in dst set */
+	int id;				/*!< id of dst set */
+	int nr;				/*!< number of items in dst set */
+	int last;			/*!< last used item in dst set */
 	ds_dest_p dlist;
 	struct _ds_set *next;
 } ds_set_t, *ds_set_p;
@@ -229,7 +234,7 @@ err:
 	return -1;
 }
 
-/* compact destinations from sets for fast access */
+/*! \brief  compact destinations from sets for fast access */
 int reindex_dests(int list_idx, int setn)
 {
 	int j;
@@ -270,7 +275,7 @@ err1:
 	return -1;
 }
 
-/*load groups of destinations from file */
+/*! \brief load groups of destinations from file */
 int ds_load_list(char *lfile)
 {
 	char line[256], *p;
@@ -408,7 +413,7 @@ void ds_disconnect_db(void)
 	}
 }
 
-/*initialize and verify DB stuff*/
+/*! \brief Initialize and verify DB stuff*/
 int init_ds_db(void)
 {
 	int ret;
@@ -452,7 +457,7 @@ int init_ds_db(void)
 	return ret;
 }
 
-/*load groups of destinations from DB*/
+/*! \brief load groups of destinations from DB*/
 int ds_load_db(void)
 {
 	int i, id, nr_rows, setn;
@@ -544,7 +549,7 @@ err2:
 	return -1;
 }
 
-/*called from dispatcher.c: free all*/
+/*! \brief called from dispatcher.c: free all*/
 int ds_destroy_list(void)
 {
 	if (ds_lists) {
@@ -640,19 +645,19 @@ unsigned int ds_get_hash(str *x, str *y)
 }
 
 
-/*
+/*! \brief
  * gets the part of the uri we will use as a key for hashing
- * params:  key1       - will be filled with first part of the key
+ * \param  key1       - will be filled with first part of the key
  *                       (uri user or "" if no user)
- *          key2       - will be filled with the second part of the key
+ * \param  key2       - will be filled with the second part of the key
  *                       (uri host:port)
- *          uri        - str with the whole uri
- *          parsed_uri - struct sip_uri pointer with the parsed uri
+ * \param  uri        - str with the whole uri
+ * \param  parsed_uri - struct sip_uri pointer with the parsed uri
  *                       (it must point inside uri). It can be null
  *                       (in this case the uri will be parsed internally).
- *          flags  -    if & DS_HASH_USER_ONLY, only the user part of the uri
+ * \param  flags  -    if & DS_HASH_USER_ONLY, only the user part of the uri
  *                      will be used
- * returns: -1 on error, 0 on success
+ * \return: -1 on error, 0 on success
  */
 static inline int get_uri_hash_keys(str* key1, str* key2,
 							str* uri, struct sip_uri* parsed_uri, int flags)
@@ -1481,7 +1486,7 @@ int ds_print_mi_list(struct mi_node* rpl)
 	return 0;
 }
 
-/**
+/*! \brief
  * Callback-Function for the OPTIONS-Request
  * This Function is called, as soon as the Transaction is finished
  * (e. g. a Response came in, the timeout was hit, ...)
@@ -1539,7 +1544,7 @@ static void ds_options_callback( struct cell *t, int type,
 	return;
 }
 
-/*
+/*! \brief
  * Timer for checking inactive destinations
  * 
  * This timer is regularly fired.

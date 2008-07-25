@@ -35,6 +35,19 @@
  * 			   reload triggered from ds_reload MI_Command (ancuta)
  */
 
+/*! \file
+ * \ingroup dispatcher
+ * \brief Dispatcher :: Dispatch
+ */
+
+/*! \defgroup dispatcher Dispatcher :: Load balancing and failover module
+ * 	The dispatcher module implements a set of functions for distributing SIP requests on a 
+ *	set of servers, but also grouping of server resources.
+ *
+ *	- The module has an internal API exposed to other modules.
+ *	- The module implements a couple of MI functions for managing the list of server resources
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -337,7 +350,7 @@ static int mod_init(void)
 	return 0;
 }
 
-/**
+/*! \brief
  * Initialize children
  */
 static int child_init(int rank)
@@ -359,7 +372,7 @@ static int mi_child_init(void)
 
 }
 
-/**
+/*! \brief
  * destroy function
  */
 static void destroy(void)
