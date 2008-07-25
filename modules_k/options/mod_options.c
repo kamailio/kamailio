@@ -26,6 +26,15 @@
  * 2003-11-11: build_lump_rpl() removed, add_lump_rpl() has flags (bogdan)
  */
 
+/*! \file options/mod_options.c
+ *  \brief Options reply modules
+ *  \ingroup options
+ *  Module: \ref options
+ */
+
+/*! \defgroup options OPTIONS :: Reply to OPTION pokes
+ */
+
 #ifdef EXTRA_DEBUG
 #include <stdlib.h>   /* required by abort() */
 #endif

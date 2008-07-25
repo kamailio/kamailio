@@ -22,6 +22,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file options/mod_options.h
+ *  \brief Options reply modules
+ *  \ingroup options
+ *  Module: \ref options
+ */
+
 #ifndef OPT_RPL_H
 #define OPT_RPL_H
 

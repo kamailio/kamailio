@@ -16,7 +16,7 @@
 	<para>
 		To answer OPTIONS request directed to your server is the easiest
 		way for is-alive-tests on the SIP (application) layer from remote 
-		(similar to	ICMP echo requests, also known as <quote>ping</quote>, 
+		(similar to ICMP echo requests, also known as <quote>ping</quote>, 
 		on the network layer).
 	</para>
 	</section>

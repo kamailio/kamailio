@@ -26,6 +26,15 @@
  * 2008-04-11 initial version (osas)
  */
 
+/*!
+ *\file sst/sst_mi.h
+ *\brief Functions for the SST module
+ * \ref sst/sst_mi.c
+ * \ingroup sst
+ * Module: \ref sst
+ */
+
+
 #ifndef _SST_MI_H_
 #define _SST_MI_H_
 

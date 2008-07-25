@@ -27,6 +27,13 @@
  * 2006-10-10 Code cleanup of this header file. (karwin)
  */
 
+/*! \file sst/sst_handlers.h
+ * \brief Session timer handling
+ * \ingroup sst
+ * Module: \ref sst
+ */
+ 
+
 #ifndef _SST_HANDLERS_H_
 #define _SST_HANDLERS_H_
 
@@ -35,7 +42,7 @@
 #include "../dialog/dlg_load.h"
 
 
-/**
+/*! \brief
  * Fag values used in the sst_info_t See below.
  */
 enum sst_flags {
@@ -46,7 +53,7 @@ enum sst_flags {
 	SST_NSUP=8              /* 8 - 2^3 */
 };
 
-/**
+/** \brief
  * The local state required to figure out if and who supports SST and
  * if and who will be the refresher.
  */
@@ -57,18 +64,18 @@ typedef struct sst_info_st {
 } sst_info_t;
 
 
-/**
+/** \brief
  * The static (opening) callback function for all dialog creations
  */
 void sst_dialog_created_CB(struct dlg_cell *did, int type, 
 		struct dlg_cb_params * params);
 
-/**
+/** \brief
  * The script function
  */
 int sst_check_min(struct sip_msg *msg, char *str1, char *str2);
 
-/**
+/** \brief
  * The handlers initializer function
  */
 void sst_handler_init(pv_spec_t *timeout_avp, unsigned int minSE, 

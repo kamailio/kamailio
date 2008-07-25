@@ -30,6 +30,19 @@
  * 2006-10-10 RFC compilent changes. Added the other flags (karwin)
  */
 
+/*! \file sst/sst.c
+ *  \brief SST :: Core
+ *  \ingroup sst
+ *  Modules: \ref sst
+ */
+
+/*! \defgroup sst SIP Session Timers module
+ *	Implementation of SIP Session Timers - a way to make sure a SIP dialog is alive
+ *	and force hangup if a UA involved in a dialog stops responding.
+ *
+ *  - \ref SST_support
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

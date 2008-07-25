@@ -26,12 +26,20 @@
  * 2008-04-11 initial version (osas)
  */
 
+/*! 
+ *\file  sst/sst_mi.c
+ *\brief Manager functions for the SST module
+ * \ingroup sst
+ * Module: \ref sst
+ */
+
+
 #include "../../ut.h"
 #include "../../mi/mi.h"
 #include "../dialog/dlg_load.h"
 #include "sst_handlers.h"
 
-/**
+/*! \brief
  * The dialog mi helper function.
  */
 void sst_dialog_mi_context_CB(struct dlg_cell* did, int type, struct dlg_cb_params * params)

@@ -22,13 +22,15 @@
  * USA
  */
 
-/**
- *\file
- *\brief Functions for the SST module
+/*!
+ * \file sst/sst_handlers.c
+ * \brief Functions for the SST module
+ * \ingroup sst
+ * Module: \ref sst
  */
 
-/**
- * SST support:
+/*!
+ * \page SST_support SST support:
  *
  * The Session-Expires header conveys the session interval for a SIP
  * call. It is placed in an INVITE request and is allowed in any 2xx
