@@ -27,6 +27,13 @@
  *  2003-10-24  updated to the new socket_info lists (andrei)
  */
 
+/*! \file
+ * \brief TM :: Fast Call-ID Generator
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../dprint.h"
@@ -36,19 +43,20 @@
 
 #define CALLID_NR_LEN 20
 
-/* Call-ID has the following form: <callid_nr>-<pid>@<ip>
+/*! \brief
+ *  Call-ID has the following form: <callid_nr>-<pid>@<ip>
  * callid_nr is initialized as a random number and continually
  * increases; -<pid>@<ip> is kept in callid_suffix
  */
-#define CALLID_SUFFIX_LEN ( 1 /* - */                                            + \
-			    5 /* pid */                                          + \
-                           42 /* embedded v4inv6 address can be looong '128.' */ + \
-	                    2 /* parenthesis [] */                              + \
-                            1 /* ZT 0 */                                         + \
-	                   16 /* one never knows ;-) */                            \
+#define CALLID_SUFFIX_LEN ( 1 /*!< - */                                            + \
+			    5 /*!< pid */                                          + \
+                           42 /*!< embedded v4inv6 address can be looong '128.' */ + \
+	                    2 /*!< parenthesis [] */                              + \
+                            1 /*!< ZT 0 */                                         + \
+	                   16 /*!< one never knows ;-) */                            \
                           )
 
-#define CID_SEP '-' /* the character which separates random from constant part */
+#define CID_SEP '-'	/*!< the character which separates random from constant part */
 
 static unsigned long callid_nr;
 static char callid_buf[CALLID_NR_LEN + CALLID_SUFFIX_LEN];
@@ -57,16 +65,16 @@ str callid_prefix;
 str callid_suffix;
 
 
-/*
+/*! \brief
  * Initialize the Call-ID generator -- generates random prefix
  */
 int init_callid(void)
 {
 	int rand_bits, i;
 
-	     /* calculate the initial call-id */
-	     /* how many bits and chars do we need to display the 
-	      * whole ULONG number */
+	/* calculate the initial call-id */
+	/* how many bits and chars do we need to display the 
+	 * whole ULONG number */
 	callid_prefix.len = sizeof(unsigned long) * 2;
 	callid_prefix.s = callid_buf;
 
@@ -78,8 +86,7 @@ int init_callid(void)
 	for(rand_bits = 1, i = RAND_MAX; i; i >>= 1, rand_bits++);  /* how long are the rand()s ? */
 	i = callid_prefix.len * 4 / rand_bits; /* how many rands() fit in the ULONG ? */
 
-	     /* now fill in the callid with as many random
-	      * numbers as you can + 1 */
+	/* now fill in the callid with as many random numbers as you can + 1 */
        	callid_nr = rand(); /* this is the + 1 */
 
 	while(i--) {
@@ -98,7 +105,7 @@ int init_callid(void)
 }
 
 
-/*
+/*! \brief
  * Child initialization -- generates suffix
  */
 int child_init_callid(int rank) 
@@ -128,7 +135,7 @@ int child_init_callid(int rank)
 }
 
 
-/*
+/*! \brief
  * Increment a character in hex, return
  * carry flag
  */
@@ -149,7 +156,7 @@ static inline int inc_hexchar(char* _c)
 }
 
 
-/*
+/*! \brief
  * Get a unique Call-ID
  */
 void generate_callid(str* callid)

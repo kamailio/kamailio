@@ -26,7 +26,12 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
-
+/*! \file
+ * \brief TM :: Hash lookups
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #ifndef _T_LOOKUP_H
 #define _T_LOOKUP_H

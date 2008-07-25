@@ -37,6 +37,13 @@
  *            (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
  */
 
+/*! \file
+ * \brief TM :: Message printing
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include "../../hash_func.h"
 #include "../../dprint.h"
 #include "../../parser/parser_f.h"

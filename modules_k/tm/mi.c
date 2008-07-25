@@ -27,6 +27,13 @@
  *  2006-12-04  created (bogdan)
  */
 
+/*! \file
+ * \brief TM :: MI functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include <stdlib.h>
 #include "../../parser/parse_from.h"
 #include "mi.h"
@@ -54,7 +61,7 @@ struct str_list {
 
 /************** Helper functions (from previous FIFO impl) *****************/
 
-/*
+/*! \brief
  * check if the request pushed via MI is correctly formed
  */
 static inline struct mi_root* mi_check_msg(struct sip_msg* msg, str* method,
@@ -101,8 +108,7 @@ static inline struct mi_root* mi_check_msg(struct sip_msg* msg, str* method,
 }
 
 
-static inline struct str_list *new_str(char *s, int len,
-											struct str_list **last, int *total)
+static inline struct str_list *new_str(char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *new;
 	new=pkg_malloc(sizeof(struct str_list));
@@ -122,8 +128,7 @@ static inline struct str_list *new_str(char *s, int len,
 }
 
 
-static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l,
-											struct socket_info** send_sock)
+static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l, struct socket_info** send_sock)
 {
 	struct str_list sl, *last, *new, *i, *foo;
 	int hf_avail, frag_len, total_len;
@@ -226,6 +231,7 @@ error:
 }
 
 
+/*! \brief Print routes */
 static inline void mi_print_routes( struct mi_node *node, dlg_t* dlg)
 {
 #define MI_ROUTE_PREFIX_S       "Route: "

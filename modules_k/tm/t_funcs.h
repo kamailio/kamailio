@@ -30,6 +30,12 @@
  *  2007-01-25  DNS failover at transaction level added (bogdan) 
  */
 
+/*! \file
+ * \brief TM :: Transaction maintenance functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 
 #ifndef _T_FUNCS_H
@@ -78,7 +84,6 @@ extern int noisy_ctimer;
    for reducing time spend in REPLIES locks
 */
 
-
 /* send a buffer -- 'PR' means private, i.e., it is assumed noone
    else can affect the buffer during sending time
 */
@@ -112,13 +117,13 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 #define INIT_REF_UNSAFE(_T_cell) ((_T_cell)->ref_count=1)
 #define IS_REFFED_UNSAFE(_T_cell) ((_T_cell)->ref_count!=0)
 
-/*
+/*! \brief
  * Parse and fixup the fr_*_timer AVP specs
  */
 int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
 
 
-/*
+/*! \brief
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
 int fr_avp2timer( utime_t* timer);

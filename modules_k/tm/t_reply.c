@@ -64,6 +64,12 @@
  *  2007-01-25  DNS failover at transaction level added (bogdan)
  */
 
+/*! \file
+ * \brief TM :: Reply handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #include "../../hash_func.h"
 #include "../../dprint.h"

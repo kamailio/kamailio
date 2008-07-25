@@ -26,6 +26,12 @@
  *              on darwin (andrei)
  */
 
+/*! \file
+ * \brief TM :: Locking functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #include <errno.h>
 
@@ -40,7 +46,9 @@
 #define SEM_MIN		16
 #define SEM_MAX		4096
 
-/* we implement mutex here using lock sets; as the number of
+/*! \page TMlocking TM :: Transaction locking
+
+   We implement mutex here using lock sets; as the number of
    semaphores may be limited (e.g. sysv) and number of synchronized 
    elements high, we partition the synced SER elements and share 
    semaphores in each of the partitions; we try to use as many 
@@ -48,34 +56,29 @@
 
    we allocate the locks according to the following plans:
 
-   1) transaction timer lists have each a semaphore in
-      a semaphore set
-   2) retransmission timer lists have each a semaphore
-      in a semaphore set
-   3) we allocate a semaphore set for hash_entries and
+   -1) transaction timer lists have each a semaphore in a semaphore set
+   -2) retransmission timer lists have each a semaphore in a semaphore set
+   -3) we allocate a semaphore set for hash_entries and
       try to use as many semaphores in it as OS allows;
       we partition the hash_entries by available
       semaphores which are shared  in each partition
-   4) cells get always the same semaphore as its hash
-      entry in which they live
+   -4) cells get always the same semaphore as its hash entry in which they live
 
 */
 
-/* and the maximum number of semaphores in the entry_semaphore set */
-static int sem_nr;
+static int sem_nr;			/*!< and the maximum number of semaphores in the entry_semaphore set */
 gen_lock_set_t* timer_semaphore=0;
 gen_lock_set_t* entry_semaphore=0;
 gen_lock_set_t* reply_semaphore=0;
 #endif
 
 /* timer group locks */
-
-
-static ser_lock_t* timer_group_lock=0; /* pointer to a TG_NR lock array,
-								    it's safer if we alloc this in shared mem 
+static ser_lock_t* timer_group_lock=0; /*!< timer group locks
+					 pointer to a TG_NR lock array, it's safer if we alloc this in shared mem 
 									( required for fast lock ) */
 
-/* initialize the locks; return 0 on success, -1 otherwise
+/*! \brief initialize the locks
+	\return 0 on success, -1 otherwise
 */
 int lock_initialize(void)
 {
@@ -194,7 +197,7 @@ void lock_cleanup(void)
 
 #else
 
-/* remove the semaphore set from system */
+/*! \brief remove the semaphore set from system */
 void lock_cleanup()
 {
 	/* that's system-wide; all other processes trying to use

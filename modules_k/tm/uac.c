@@ -40,8 +40,15 @@
  *  2004-02-13  t->is_invite, t->local, t->noisy_ctimer replaced (bogdan)
  *  2004-08-23  avp support in t_uac (bogdan)
  *
+ */
+
+/*! \file
+ * \brief TM :: Simple user agent support
  *
- * simple UAC for things such as SUBSCRIBE or SMS gateway;
+ * \ingroup tm
+ * - Module: \ref tm
+ *
+ * Simple UAC for things such as SUBSCRIBE or SMS gateway;
  * no authentication and other UAC features -- just send
  * a message, retransmit and await a reply; forking is not
  * supported during client generation, in all other places

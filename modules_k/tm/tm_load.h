@@ -31,6 +31,12 @@
  *
  */
 
+/*! \file
+ * \brief TM :: ??
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #ifndef _TM_BIND_H
 #define _TM_BIND_H

@@ -32,13 +32,20 @@
  * requests; not doing so would result ugly memory problems
  */
 
+/*! \file
+ * \brief TM :: Lump handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 
 #ifndef _FIX_LUMPS_H
 #define _FIX_LUMPS_H
 
-/* used to delete attached via lumps from msg; msg can
-   be either an original pkg msg, whose Via lump I want
+/*! \brief used to delete attached via lumps from msg
+
+   msg can be either an original pkg msg, whose Via lump I want
    to delete before generating next branch, or a shmem-stored
    message processed during on_reply -- then I want to
    delete the Via lump for the same reason
@@ -47,8 +54,9 @@
    is stored in shmem for branch picking, forwarded lated and
    Via removal is applied to the shmem-ed message
 
-   the same thing for Content-Length lumps (FIXME: this
-   should be done in a nicer way)
+   the same thing for Content-Length lumps 
+
+   \todo (FIXME: this should be done in a nicer way)
 */
 inline static void free_via_clen_lump( struct lump **list )
 {

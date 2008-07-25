@@ -31,14 +31,24 @@
  *  2003-11-11  updated cloning of lump_rpl (bogdan)
  *  2004-03-31  alias shortcuts are also translated (andrei)
  *
+ */
+
+/*! \file
+ * \brief TM :: SIP message handling
  *
- * cloning a message into shared memory (TM keeps a snapshot
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \reg TMcloneMessage
+ *
+ *
+ * \page TMcloneMessage TM :: A note about cloned messages
+ * TM clones a message into shared memory (TM keeps a snapshot
  * of messages in memory); note that many operations, which
  * allocate pkg memory (such as parsing) cannot be used with
  * a cloned message -- it would result in linking pkg structures
  * to shmem msg and eventually in a memory error 
  *
- * the cloned message is stored in a single memory fragment to
+ * The cloned message is stored in a single memory fragment to
  * save too many shm_mallocs -- these are expensive as they
  * not only take lookup in fragment table but also a shmem lock
  * operation (the same for shm_free)

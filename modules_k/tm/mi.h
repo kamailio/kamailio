@@ -26,6 +26,13 @@
  *  2006-12-04  created (bogdan)
  */
 
+/*! \file
+ * \brief TM :: MI functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref mi.c
+ */
 
 #ifndef _TM_MI_H_
 #define _TM_MI_H_

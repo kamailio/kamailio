@@ -25,6 +25,15 @@
  *            (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
  */
 
+/*! \file
+ * \brief TM :: Dialog handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref dig.c
+ */
+
+
 #ifndef DLG_H
 #define DLG_H
 

@@ -25,6 +25,13 @@
  *  2004-11-15  t_write_xxx can print whatever avp/hdr
  */
 
+/*! \file
+ * \brief TM :: Transaction maintenance functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 
 
 #ifndef _TM_T_FIFO_H_

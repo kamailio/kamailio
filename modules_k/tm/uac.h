@@ -24,6 +24,14 @@
  * 2003-02-28 protocolization of t_uac_dlg completed (jiri)
  */
 
+/*! \file
+ * \brief TM :: Simple UA support
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+
 #ifndef _UAC_H
 #define _UAC_H
 

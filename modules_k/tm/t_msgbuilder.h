@@ -24,6 +24,12 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
+/*! \file
+ * \brief TM :: Message printing
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #ifndef _MSGBUILDER_H
 #define _MSGBUILDER_H

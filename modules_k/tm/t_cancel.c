@@ -27,6 +27,13 @@
  * 2004-02-13  timer_link.payload removed (bogdan)
  */
 
+/*! \file
+ * \brief TM :: CANCEL processing
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include "t_funcs.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -37,15 +44,15 @@
 #include "t_lookup.h" /* for t_lookup_callid in fifo_uac_cancel */
 
 
-/* determine which branches should be canceled; do it
-   only from within REPLY_LOCK, otherwise collisions
+/*! \brief
+   Determine which branches should be canceled.
+
+   Do it only from within REPLY_LOCK, otherwise collisions
    could occur (e.g., two 200 for two branches processed
    by two processes might concurrently try to generate
    a CANCEL for the third branch, resulting in race conditions
    during writing to cancel buffer
 */
-
-
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
 {
 	int i;
@@ -58,7 +65,7 @@ void which_cancel( struct cell *t, branch_bm_t *cancel_bm )
 }
 
 
-/* cancel branches scheduled for deletion */
+/*! \brief cancel branches scheduled for deletion */
 void cancel_uacs( struct cell *t, branch_bm_t cancel_bm )
 {
 	int i;
@@ -122,12 +129,13 @@ char *build_cancel(struct cell *Trans,unsigned int branch,
 }
 
 
-/**
+/*! \brief
  * This function cancels a previously created local invite transaction.
+ *
  * The cancel parameter should NOT have any via (CANCEL is hop-by-hop).
  *
- * returns 0 if error
- * return >0 if OK (returns the LABEL of the cancel).
+ * \return 0 if error
+ * \return >0 if OK (returns the LABEL of the cancel).
  */
 unsigned int t_uac_cancel( str *headers, str *body,
 	unsigned int cancelled_hashIdx, unsigned int cancelled_label,

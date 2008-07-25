@@ -29,6 +29,12 @@
  *              (bogdan)
  */
 
+/*! \file
+ * \brief TM :: Transaction maintenance functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -72,7 +78,7 @@
 					 (size_t)(((struct sockaddr_un*)0)->sun_path) )
 #endif
 
-int tm_unix_tx_timeout = 2; /* Default is 2 seconds */
+int tm_unix_tx_timeout = 2; /*!< Default is 2 seconds */
 
 #define TWRITE_PARAMS          20
 #define TWRITE_VERSION_S       "0.3"
@@ -114,8 +120,8 @@ static str   eol={"\n",1};
 static int sock;
 
 struct append_elem {
-	str        name;       /* name / title */
-	pv_spec_t  spec;       /* value's spec */
+	str        name;       /*!< name / title */
+	pv_spec_t  spec;       /*!< value's spec */
 	struct append_elem *next;
 };
 
@@ -134,7 +140,8 @@ struct tw_info {
 static struct tw_append *tw_appends;
 
 
-/* tw_append syntax:
+/*! \brief
+ * tw_append syntax:
  * tw_append = name:element[;element]
  * element   = (title=pseudo_variable) | msg(body)
  */

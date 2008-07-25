@@ -26,6 +26,14 @@
  *  2007-02-02  retransmission timers have milliseconds resolution (bogdan)
  */
 
+/*! \file
+ * \brief TM :: Timer handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+
 
 #ifndef _TIMER_H
 #define _TIMER_H

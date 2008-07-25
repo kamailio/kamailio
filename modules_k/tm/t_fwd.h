@@ -24,6 +24,14 @@
  *  2003-02-18  added proto to various function prototypes (andrei)
  */
 
+/*! \file
+ * \brief TM :: Forward messages
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+
 
 #ifndef _T_FWD_H
 #define _T_FWD_H

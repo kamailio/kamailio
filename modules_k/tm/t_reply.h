@@ -20,7 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+/*! \file
+ * \brief TM :: Reply handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref t_reply.c
+ */
 
 #ifndef _T_REPLY_H
 #define _T_REPLY_H

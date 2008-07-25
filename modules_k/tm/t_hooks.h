@@ -30,6 +30,13 @@
  *              TMCB_REQUEST_DELETED (bogdan)
  */
 
+/*! \file
+ * \brief TM :: Callback hooks
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref TMcallbacks
+ */
 
 #ifndef _HOOKS_H
 #define _HOOKS_H
@@ -52,7 +59,9 @@ struct cell;
 #define TMCB_TRANS_DELETED      (1<<11)
 #define TMCB_MAX                ((1<<12)-1)
 
-/* 
+/*! 
+ * \page TMcallbacks TM :: Callback hooks
+ *
  *  Caution: most of the callbacks work with shmem-ized messages
  *  which you can no more change (e.g., lumps are fixed). Most
  *  reply-processing callbacks are also called from a mutex,
@@ -68,8 +77,8 @@ struct cell;
  *  all transactions.
  *
  *
- *  Callback description:
- *  ---------------------
+ *  \paragraph Callback description:
+ *  --------------------------------
  *
  * TMCB_REQUEST_IN -- a brand-new request was received and is
  * about to establish transaction; it is not yet cloned and
@@ -119,13 +128,13 @@ struct cell;
  *  has not been executed and may fail, there is no guarantee
  *  a reply will be successfully sent out at this point of time.
  *
- *     Note: TMCB_REPLY_ON_FAILURE and TMCB_REPLY_FWDED are
+ *     \Note: TMCB_REPLY_ON_FAILURE and TMCB_REPLY_FWDED are
  *     called from reply mutex which is used to deterministically
  *     process multiple replies received in parallel. A failure
  *     to set the mutex again or stay too long in the callback
  *     may result in deadlock.
  *
- *     Note: the reply callbacks will not be evoked if "silent
+ *     \Note: the reply callbacks will not be evoked if "silent
  *     C-timer hits". That's a feature to clean transactional
  *     state from a proxy quickly -- transactions will then
  *     complete statelessly. If you wish to disable this
@@ -148,7 +157,7 @@ struct cell;
  *  transaction arrived. Message may be FAKED_REPLY.
  *
 
-	note that callbacks MUST be installed before forking
+	\note note that callbacks MUST be installed before forking
 	(callback lists do not live in shmem and have no access
 	protection), i.e., at best from mod_init functions.
 
@@ -158,7 +167,7 @@ struct cell;
 */
 
 
-/* pack structure with all params passed to callback function */
+/*! \brief pack structure with all params passed to callback function */
 struct tmcb_params {
 	struct sip_msg* req;
 	struct sip_msg* rpl;
@@ -168,18 +177,18 @@ struct tmcb_params {
 	void *extra2;
 };
 
-/* callback function prototype */
+/*! \brief callback function prototype */
 typedef void (transaction_cb) (struct cell* t, int type, struct tmcb_params*);
-/* register callback function prototype */
+/*! \brief register callback function prototype */
 typedef int (*register_tmcb_f)(struct sip_msg* p_msg, struct cell *t,
 		int cb_types, transaction_cb f, void *param);
 
 
 struct tm_callback {
-	int id;                      /* id of this callback - useless */
-	int types;                   /* types of events that trigger the callback*/
-	transaction_cb* callback;    /* callback function */
-	void *param;                 /* param to be passed to callback function */
+	int id;                      /*!< id of this callback - useless */
+	int types;                   /*!< types of events that trigger the callback*/
+	transaction_cb* callback;    /*!< callback function */
+	void *param;                 /*!< param to be passed to callback function */
 	struct tm_callback* next;
 };
 
@@ -205,22 +214,19 @@ int init_tmcb_lists();
 void destroy_tmcb_lists();
 
 
-/* register a callback for several types of events */
-int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
-											transaction_cb f, void *param );
+/*! \brief register a callback for several types of events */
+int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param );
 
-/* inserts a callback into the a callback list */
-int insert_tmcb(struct tmcb_head_list *cb_list, int types,
-									transaction_cb f, void *param );
+/*! \brief inserts a callback into the a callback list */
+int insert_tmcb(struct tmcb_head_list *cb_list, int types, transaction_cb f, void *param );
 
-/* set extra params for callbacks */
+/*! \brief set extra params for callbacks */
 void set_extra_tmcb_params(void *extra1, void *extra2);
 
-/* run all transaction callbacks for an event type */
-void run_trans_callbacks( int type , struct cell *trans,
-						struct sip_msg *req, struct sip_msg *rpl, int code );
+/*! \brief run all transaction callbacks for an event type */
+void run_trans_callbacks( int type , struct cell *trans, struct sip_msg *req, struct sip_msg *rpl, int code );
 
-/* run all REQUEST_IN callbacks */
+/*! \brief run all REQUEST_IN callbacks */
 void run_reqin_callbacks( struct cell *trans, struct sip_msg *req, int code );
 
 #endif

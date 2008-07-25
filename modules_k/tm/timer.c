@@ -31,7 +31,14 @@
 
 
 
-/* 
+/*! \file
+ * \brief TM :: Transaction timers
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref TmTimers
+
+ * \page TmTimers TM :: Implementation of timers
   timer.c is where we implement TM timers. It has been designed
   for high performance using some techniques of which timer users
   need to be aware.
@@ -52,6 +59,7 @@
 	manner; you have no guarantee in your process that after resetting a timer, 
 	it will no more hit. It might have been removed by timer process,
     and is waiting to be executed.  The following example shows it:
+\code
 
 			PROCESS1				TIMER PROCESS
 
@@ -66,6 +74,7 @@
 		resetting the timer, it is
 		WRONG -- it was (step 2.)
 
+\endcode
 	So be careful when writing the timer handlers. Currently defined timers 
 	don't hurt if they hit delayed, I hope at least. Retransmission timer 
 	may results in a useless retransmission -- not too bad. FR timer not too
@@ -74,6 +83,7 @@
 	putting a transaction on wait don't do anything with it anymore.
 
 		Example when it does not hurt:
+\code
 
 			P1						TIMER
 	0.								RETR timer removed from list and
@@ -83,6 +93,7 @@
 	2.								RETR timer executed -- too late but it does
 									not hurt
 	3.								WAIT handler executed
+\endcode
 
 	The rule of thumb is don't touch data you put under a timer. Create data,
     put them under a timer, and let them live until they are safely destroyed from

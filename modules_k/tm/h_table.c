@@ -39,6 +39,14 @@
  * 2007-01-25  DNS failover at transaction level added (bogdan)
  */
 
+/*! \file
+ * \brief TM :: Hash tables
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+
 #include <stdlib.h>
 
 
@@ -58,7 +66,7 @@
 
 static enum kill_reason kr;
 
-/* pointer to the big table where all the transaction data
+/*! \brief pointer to the big table where all the transaction data
    lives */
 static struct s_table*  tm_table;
 
@@ -323,7 +331,7 @@ error:
 
 
 
-/* Release all the data contained by the hash table. All the aux. structures
+/*! \brief Release all the data contained by the hash table. All the aux. structures
  *  as sems, lists, etc, are also released */
 void free_hash_table(void)
 {
@@ -385,7 +393,7 @@ error0:
 }
 
 
-/*  Takes an already created cell and links it into hash table on the
+/*! \brief  Takes an already created cell and links it into hash table on the
  *  appropriate entry. */
 void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 {
@@ -412,7 +420,7 @@ void insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash )
 }
 
 
-/*  Un-link a  cell from hash_table, but the cell itself is not released */
+/*! \brief  Un-link a  cell from hash_table, but the cell itself is not released */
 void remove_from_hash_table_unsafe( struct cell * p_cell)
 {
 	struct entry*  p_entry  = &(tm_table->entrys[p_cell->hash_index]);

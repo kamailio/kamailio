@@ -20,7 +20,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+/*! \file
+ * \brief TM :: SIP message handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #ifndef _SIP_MSG_H
 #define _SIP_MSG_H

@@ -50,6 +50,21 @@
  *              (by Andrei Pisau <andrei.pisau at voice-system dot ro> )
  */
 
+/*! \file
+ * \brief TM :: module core
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+/*! \defgroup tm TM :: Stateful transaction handling
+ *
+ * The TM module enables stateful processing of SIP transactions. The
+ * main use of stateful logic, which is costly in terms of memory
+ * and CPU, is some services inherently need state.
+ */
+
+
 
 #include <stdio.h>
 #include <string.h>

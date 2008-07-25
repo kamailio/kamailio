@@ -31,6 +31,14 @@
  *              tls/sips support for get_proto & uri2proxy (andrei)
  */
 
+/*! \file
+ * \brief TM :: Utilities
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+
 
 #ifndef _TM_UT_H
 #define _TM_UT_H

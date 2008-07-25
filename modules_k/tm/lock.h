@@ -26,6 +26,15 @@
  *              on darwin (andrei)
  */
 
+/*! \file
+ * \brief TM :: Locking functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref lock.c
+ */
+
+
 #ifndef __lock_h
 #define __lock_h
 
@@ -57,12 +66,10 @@ enum timer_groups {
 
 /* extern ser_lock_t timer_group_lock[TG_NR]; */
 
-
 #include "h_table.h"
 #include "timer.h" 
 
-/* Uni*x permissions for IPC */
-#define IPC_PERMISSIONS 0666
+#define IPC_PERMISSIONS 0666		/*!< Uni*x permissions for IPC */
 
 
 int lock_initialize();
@@ -89,8 +96,7 @@ int release_timerlist_lock( struct timer *timerlist );
 
 /* lock semaphore s */
 #ifdef DBG_LOCK
-static inline void _lock( ser_lock_t* s , char *file, char *function,
-							unsigned int line )
+static inline void _lock( ser_lock_t* s , char *file, char *function, unsigned int line )
 #else
 static inline void _lock( ser_lock_t* s )
 #endif

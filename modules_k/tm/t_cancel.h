@@ -24,11 +24,19 @@
  *  2004-02-11  FIFO/CANCEL + alignments (hash=f(callid,cseq)) (uli+jiri)
  */
 
+/*! \file
+ * \brief TM :: CANCEL handling
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #ifndef _CANCEL_H
 #define _CANCEL_H
 
-/* a buffer is empty but cannot be used by anyone else;
+/*! \brief
+   A buffer is empty but cannot be used by anyone else
+
    particularly, we use this value in the buffer pointer
    in local_buffer to tell "a process is already scheduled
    to generate a CANCEL, other processes are not supposed to"
@@ -37,7 +45,6 @@
    canceling the third branch); note that to really avoid
    race conditions, the value must be set in REPLY_LOCK
 */
-
 #define BUSY_BUFFER ((char *)-1)
 
 void which_cancel( struct cell *t, branch_bm_t *cancel_bm );

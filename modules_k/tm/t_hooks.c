@@ -29,6 +29,13 @@
  *              available in callbacks (bogdan)
  */
 
+/*! \file
+ * \brief TM :: ???
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include "stdlib.h"
 #include "../../dprint.h"
 #include "../../error.h"
@@ -113,12 +120,12 @@ int insert_tmcb(struct tmcb_head_list *cb_list, int types,
 
 
 
-/* register a callback function 'f' for 'types' mask of events;
+/*! \brief
+ * register a callback function 'f' for 'types' mask of events;
  * will be called back whenever one of the events occurs in transaction module
  * (global or per transaction, depending of event type)
 */
-int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types,
-											transaction_cb f, void *param )
+int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param )
 {
 	struct tmcb_head_list *cb_list;
 

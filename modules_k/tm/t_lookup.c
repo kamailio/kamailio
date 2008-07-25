@@ -49,7 +49,13 @@
  * 2004-10-10: use of mhomed disabled for replies (jiri)
  * 2005-02-01: use the incoming request interface for sending the replies
  *             - changes in init_rb() (bogdan)
+ */
+
+/*! \file
+ * \brief TM :: Transaction matching
  *
+ * \ingroup tm
+ * - Module: \ref tm
  *
  * This C-file takes care of matching requests and replies with
  * existing transactions. Note that we do not do SIP-compliant

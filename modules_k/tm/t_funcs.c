@@ -39,6 +39,14 @@
  *  2007-01-25  DNS failover at transaction level added (bogdan) 
  */
 
+/*! \file
+ * \brief TM :: Transaction maintenance functions
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
+
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
@@ -136,12 +144,13 @@ void put_on_wait(  struct cell  *Trans  )
 #endif
 
 
-	/* we put the transaction on wait timer; we do it only once
+	/*! 
+            we put the transaction on wait timer; we do it only once
 	   in transaction's timelife because putting it multiple-times
 	   might result in a second instance of a wait timer to be
 	   set after the first one fired; on expiration of the second
 	   instance, the transaction would be re-deleted
-
+\verbatim
 			PROCESS1		PROCESS2		TIMER PROCESS
 		0. 200/INVITE rx;
 		   put_on_wait
@@ -152,6 +161,7 @@ void put_on_wait(  struct cell  *Trans  )
 							on WAIT again
 		4.									WAIT timer executed,
 											transaction deleted
+\endverbatim
 	*/
 	set_1timer( &Trans->wait_tl, WT_TIMER_LIST, 0 );
 }
@@ -275,7 +285,7 @@ done:
 
 
 
-/*
+/*! \brief
  * Initialize parameters containing the ID of
  * AVPs with variable timers
  */
@@ -326,7 +336,7 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 }
 
 
-/*
+/*! \brief
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
 static inline int avp2timer(utime_t *timer, int type, int_str name)

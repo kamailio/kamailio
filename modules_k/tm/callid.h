@@ -26,25 +26,34 @@
  * 2003-04-09 Created by janakj
  */
 
+/*! \file
+ * \brief TM :: Fast Call-ID Generator
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref callid.c
+ */
+
+
 #ifndef CALLID_H
 #define CALLID_H
 
 #include "../../str.h"
 
 
-/*
+/*! \brief
  * Initialize the Call-ID generator -- generates random prefix
  */
 int init_callid(void);
 
 
-/*
+/*! \brief
  * Child initialization -- generates suffix
  */
 int child_init_callid(int rank);
 
 
-/*
+/*! \brief
  * Get a unique Call-ID
  */
 void generate_callid(str* callid);

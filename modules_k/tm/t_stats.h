@@ -26,6 +26,12 @@
  *              (Jeffrey Magder - SOMA Networks)
  */
 
+/*! \file
+ * \brief TM :: Transaction statistics
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
 
 #ifndef _T_STATS_H
 #define _T_STATS_H

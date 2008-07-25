@@ -20,6 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief TM :: ????
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include "t_dlg.h"
 
 dlg_t dlg=0;

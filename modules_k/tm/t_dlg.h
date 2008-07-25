@@ -20,6 +20,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \brief TM :: ???
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ * - \ref t_dig.c
+ */
+
+
 
 #ifndef _T_DLG_H
 #define _T_DLG_H

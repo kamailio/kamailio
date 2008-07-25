@@ -38,6 +38,13 @@
  *  2007-01-25  DNS failover at transaction level added (bogdan)
  */
 
+/*! \file
+ * \brief TM :: Message forwarding
+ *
+ * \ingroup tm
+ * - Module: \ref tm
+ */
+
 #include "../../dprint.h"
 #include "../../config.h"
 #include "../../ut.h"
@@ -169,7 +176,7 @@ error:
 	return -1;
 }
 
-/* be aware and use it *all* the time between pre_* and post_* functions! */
+/*! \brief be aware and use it *all* the time between pre_* and post_* functions! */
 static inline char *print_uac_request(struct sip_msg *i_req, unsigned int *len,
 		struct socket_info *send_sock, enum sip_protos proto )
 {
@@ -256,7 +263,10 @@ error0:
 
 
 
-/* introduce a new uac, which is blind -- it only creates the
+/*! \brief
+   introduce a new uac, which is blind 
+
+   This UA only creates the
    data structures and starts FR timer, but that's it; it does
    not print messages and send anything anywhere; that is good
    for FIFO apps -- the transaction must look operationally
@@ -292,8 +302,7 @@ int add_blind_uac(void)  /*struct cell *t*/
 }
 
 
-static inline int update_uac_dst( struct sip_msg *request,
-													struct ua_client *uac )
+static inline int update_uac_dst( struct sip_msg *request, struct ua_client *uac )
 {
 	struct socket_info* send_sock;
 	char *shbuf;
@@ -354,7 +363,9 @@ static inline unsigned int count_local_rr(struct sip_msg *req)
 }
 
 
-/* introduce a new uac to transaction; returns its branch id (>=0)
+/*! \brief introduce a new uac to transaction
+
+   returns its branch id (>=0)
    or error (<0); it doesn't send a message yet -- a reply to it
    might interfere with the processes of adding multiple branches
 */
