@@ -187,6 +187,35 @@ route["ONTIMER2"] {
 			</programlisting>
 
 		</example>
+		<example>
+			<title>Using timer module for testing a functionality</title>
+			<para>
+				The timer module may be used to test a functionality being developed and 
+				not requiring real request.A developer may put tested code in route section
+				which is called once after ser starts.
+			</para>
+			<programlisting>
+			
+loadmodule "timer"; 
+loadmodule "xlog";  
+
+modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable"); 
+
+route {  
+	xlog("L_E","main route"); 
+}  
+    
+route[TEST] {  
+	timer_enable("TIMER_TEST", "0");  
+	xlog("L_E","test start\n");    
+		
+	# add here tested functionality
+		
+	xlog("L_E","test end\n"); 
+}
+			</programlisting>
+
+		</example>
     </section>
 </section>
 

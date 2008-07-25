@@ -1,5 +1,5 @@
 
-timer module
+1. timer module
 
 Tomas Mandys
 
@@ -10,15 +10,30 @@ Tomas Mandys
    Revision $Revision$ $Date$
      _________________________________________________________________
 
-Overview
+   1.1. Overview
+   1.2. Dependencies
+   1.3. ABNF syntax
+   1.4. Parameters
+
+        1.4.1. declare_timer (string)
+
+   1.5. Functions
+
+        1.5.1. timer_enable(timer_id, enable_disable) 
+        1.5.2. @timer.timer.timer_id.enabled 
+        1.5.3. @timer.executed 
+
+   1.6. Examples
+
+1.1. Overview
 
    The module supports triggering specific route block on timer.
 
-Dependencies
+1.2. Dependencies
 
    none
 
-ABNF syntax
+1.3. ABNF syntax
 
         timer_id = alphanum
         slow_fast = "slow" | "fast"
@@ -26,9 +41,9 @@ ABNF syntax
 " slow_fast "," ["enable"]
         enable_disable = "0" | "1"
 
-Parameters
+1.4. Parameters
 
-declare_timer (string)
+1.4.1. declare_timer (string)
 
    Declares timer route which will be called in specific interval.
 
@@ -48,9 +63,9 @@ declare_timer (string)
 ble");
         ...
 
-Functions
+1.5. Functions
 
-timer_enable(timer_id, enable_disable)
+1.5.1.  timer_enable(timer_id, enable_disable)
 
    Enable/disable timer route specified by timer_id. Because of timer core API
    the callback is not disabled immediately but is removed from handler by
@@ -62,7 +77,7 @@ timer_enable(timer_id, enable_disable)
         timer_enable("MY_TIMER", 1);
         ...
 
-@timer.timer.timer_id.enabled
+1.5.2.  @timer.timer.timer_id.enabled
 
    Return true ("1") if timer specified by timer_id is enabled, otherwise
    returns false ("0").
@@ -72,7 +87,7 @@ timer_enable(timer_id, enable_disable)
         ....
         }
 
-@timer.executed
+1.5.3.  @timer.executed
 
    Returns name of timer which has been executed, i.e. non empty value is
    returned only when handler is being processed.
@@ -83,7 +98,7 @@ timer_enable(timer_id, enable_disable)
         ....
         }
 
-Examples
+1.6. Examples
 
    Example 5. timer common example
 loadmodule "modules/xlog/xlog.so"
@@ -105,4 +120,27 @@ route["ONTIMER2"] {
         # do something
         timer_enable("tmr1", 0);
         route("print");
+}
+
+   Example 6. Using timer module for testing a functionality
+
+   The timer module may be used to test a functionality being developed and not
+   requiring real request.A developer may put tested code in route section
+   which is called once after ser starts.
+loadmodule "timer";
+loadmodule "xlog";
+
+modparam("timer", "declare_timer", "TIMER_TEST=TEST,100,,enable");
+
+route {
+        xlog("L_E","main route");
+}
+
+route[TEST] {
+        timer_enable("TIMER_TEST", "0");
+        xlog("L_E","test start\n");
+
+        # add here tested functionality
+
+        xlog("L_E","test end\n");
 }
