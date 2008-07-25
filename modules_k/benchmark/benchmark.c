@@ -25,6 +25,21 @@
  *
  */
 
+/*! \file
+ * \brief Benchmark :: Module Core
+ *
+ * \ingroup benchmark
+ * - Module: benchmark
+ */
+
+/*! \defgroup benchmark Benchmark :: Developer benchmarking module
+ *
+ * This module is for OpenSER developers, as well as admins. It gives
+ * a possibility to clock certain critical paths in module code or 
+ * configuration sections.
+ * 
+ */
+
 #define _GNU_SOURCE
 #include <string.h>
 #include <sys/time.h>
@@ -214,6 +229,7 @@ static void destroy(void)
 		shm_free(bm_mycfg);
 	}
 }
+
 void reset_timer(int i)
 {
 	if(bm_mycfg==NULL || bm_mycfg->tindex[i]==NULL)
@@ -237,8 +253,9 @@ void reset_timers(void)
 		reset_timer(i);
 }
 
-/*
+/*! \brief
  * timer_active().
+ *
  * Global enable mode can be:
  * -1 - All timing disabled
  *  0 - Timing enabled, watch for single timers enabled (default: off)
@@ -254,7 +271,7 @@ inline int timer_active(unsigned int id)
 }
 
 
-/*
+/*! \brief
  * start_timer()
  */
 
@@ -278,7 +295,7 @@ int bm_start_timer(struct sip_msg* _msg, char* timer, char *foobar)
 }
 
 
-/*
+/*! \brief
  * log_timer()
  */
 
@@ -436,8 +453,7 @@ int _bm_register_timer(char *tname, int mode, unsigned int *id)
 	return 0;
 }
 
-/* API Binding */
-
+/*! \brief API Binding */
 int load_bm( struct bm_binds *bmb)
 {
 	if(bmb==NULL)
@@ -464,9 +480,10 @@ static inline char * pkg_strndup( char* _p, int _len)
 }
 
 
-/* MI functions */
+/*! \name TimerMIfunctions MI functions */
+/*@{ */
 
-/*
+/*! \brief
  * Expects 1 node: 0 for disable, 1 for enable
  */
 struct mi_root* mi_bm_enable_global(struct mi_root *cmd, void *param)
@@ -603,8 +620,9 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 }
+/*@} */
 
-/* item functions */
+/*! \brief item functions */
 static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {

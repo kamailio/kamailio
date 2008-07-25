@@ -25,6 +25,15 @@
  *
  */
 
+/*! \file
+ * \brief Benchmark :: Module Core
+ *
+ * \ingroup benchmark
+ * - \ref benchmark.c
+ * - Module: benchmark
+ */
+
+
 #ifndef _BENCHMARK_MOD_H_
 #define _BENCHMARK_MOD_H_
 

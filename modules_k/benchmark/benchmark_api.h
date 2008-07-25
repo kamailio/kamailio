@@ -25,6 +25,14 @@
  *
  */
 
+/*! \file
+ * \brief Benchmark :: API functions
+ *
+ * \ingroup benchmark
+ * - Module: benchmark
+ */
+
+
 #ifndef BENCHMARK_API_H
 #define BENCHMARK_API_H
 
