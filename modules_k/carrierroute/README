@@ -225,7 +225,8 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running OpenSER with this module loaded:
-     * libconfuse, a configuration file parser library.
+     * libconfuse, a configuration file parser library. (
+       http://www.nongnu.org/confuse/ )
 
 1.3. Exported Parameters
 

@@ -86,6 +86,7 @@
 		    <listitem>
 			<para>
 				<emphasis>libconfuse</emphasis>, a configuration file parser library.
+				( http://www.nongnu.org/confuse/ )
 			</para>
 		    </listitem>
 		</itemizedlist>
