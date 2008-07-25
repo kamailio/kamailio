@@ -23,6 +23,14 @@
  * --------
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc:: Diameter support
+ *
+ * - \ref diam_dict.c
+ * - Module: \ref acc
+ */
+
 #ifdef DIAM_ACC
 
 #ifndef DIAM_ACC_H
@@ -33,7 +41,7 @@
 
 #define vendorID	0
 
-/* Accounting AVPs */
+/*! \brief Accounting AVPs */
 enum{
 	/*Accounting*/
 	AVP_SIP_CALLID				= 550,	/* string */

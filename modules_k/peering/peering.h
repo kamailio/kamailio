@@ -21,6 +21,14 @@
  *
  */
 
+/*! \file
+ * \ingroup peering
+ * \brief Peering:: Core
+ *
+ * - Module: \ref peering
+ */
+
+
 #ifndef _PEERING_H_
 #define _PEERING_H_
 

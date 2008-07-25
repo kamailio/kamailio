@@ -21,6 +21,21 @@
  *
  */
 
+/*! \file
+ * \ingroup peering
+ * \brief Peering:: Core
+ *
+ * - Module: \ref peering
+ */
+
+/*! \defgroup peering Peering :: Radius based peering verification module
+ *
+ * The Peering module allows SIP providers (operators or
+ *  organizations) to verify from a broker if source or destination
+ *  of a SIP request is a trusted peer.
+ *
+ */
+
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"

@@ -24,6 +24,13 @@
  *   2003-04-07 created by bogdan
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc:: Diameter messages
+ *
+ * - Module: \ref acc
+ */
+
 #ifdef DIAM_ACC
 
 #ifndef _AAA_DIAMETER_MSG_H

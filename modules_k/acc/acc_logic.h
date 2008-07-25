@@ -26,6 +26,13 @@
  * 2005-09-19  created during a big re-structuring of acc module(bogdan)
  */
 
+/*! \file
+ * \ingroup acc
+ * \brief Acc:: Accounting logic
+ *
+ * - \ref acc_logic.c
+ * - Module: \ref acc
+ */
 
 #ifndef _ACC_ACC_LOGIC_H
 #define _ACC_ACC_LOGIC_H

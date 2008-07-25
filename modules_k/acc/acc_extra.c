@@ -30,6 +30,13 @@
  *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc:: Extra attributes
+ *
+ * - Module: \ref acc
+ */
+
 
 
 #include <stdlib.h>
@@ -201,7 +208,7 @@ void destroy_extras( struct acc_extra *extra)
 
 
 #ifdef RAD_ACC
-/* extra name is moved as string part of an attribute; str.len will contain an
+/*! \brief extra name is moved as string part of an attribute; str.len will contain an
  * index to the corresponding attribute
  */
 int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
@@ -216,7 +223,7 @@ int extra2attrs( struct acc_extra *extra, struct attr *attrs, int offset)
 #endif
 
 
-/* converts the name of the extra from str to integer 
+/*! \brief converts the name of the extra from str to integer 
  * and stores it over str.len ; str.s is freed and made zero
  */
 int extra2int( struct acc_extra *extra, int *attrs )

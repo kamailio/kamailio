@@ -44,6 +44,21 @@
  * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
+/*! \file
+ * \ingroup acc
+ * \brief Acc:: Core module interface
+ *
+ * - Module: \ref acc
+ */
+
+/*! \defgroup acc ACC :: The OpenSER accounting Module
+ *            
+ * The ACC module is used to account transactions information to
+ *  different backends like syslog, SQL, RADIUS and DIAMETER (beta
+ *  version).
+ *            
+ */ 
+
 #include <stdio.h>
 #include <string.h>
 
@@ -79,36 +94,33 @@ static int child_init(int rank);
 /* ----- General purpose variables ----------- */
 
 /* what would you like to report on */
-/* should early media replies (183) be logged ? default==no */
-int early_media = 0;
-/* would you like us to report CANCELs from upstream too? */
-int report_cancels = 0;
-/* report e2e ACKs too */
-int report_ack = 0;
-/* detect and correct direction in the sequential requests */
-int detect_direction = 0;
-/* should failed replies (>=3xx) be logged ? default==no */
-int failed_transaction_flag = -1;
-/* multi call-leg support */
-static char* leg_info_str = 0;
+
+int early_media = 0;		/*!< should early media replies (183) be logged ? default==no */
+int report_cancels = 0;		/*!< would you like us to report CANCELs from upstream too? */
+int report_ack = 0;		/*!< report e2e ACKs too */
+int detect_direction = 0;	/*!< detect and correct direction in the sequential requests */
+int failed_transaction_flag = -1; /*!< should failed replies (>=3xx) be logged ? default==no */
+static char* leg_info_str = 0;	/*!< multi call-leg support */
 struct acc_extra *leg_info = 0;
 
 
 /* ----- SYSLOG acc variables ----------- */
+/*! \name AccSyslogVariables  Syslog Variables */     
+/*@{*/
 
 int log_flag = -1;
 int log_missed_flag = -1;
-/* noisiness level logging facilities are used */
-int log_level = L_NOTICE;
-/* log facility that is used */
-int log_facility = LOG_DAEMON;
-static char * log_facility_str = 0;
-/* log extra variables */
-static char *log_extra_str = 0;
-struct acc_extra *log_extra = 0;
+int log_level = L_NOTICE;	/*!< Syslog: noisiness level logging facilities are used */
+int log_facility = LOG_DAEMON;	/*!< Syslog: log facility that is used */
+static char * log_facility_str = 0; /*!< Syslog: log facility that is used */
+static char *log_extra_str = 0; /*!< Syslog: log extra variables */
+struct acc_extra *log_extra = 0; /*!< Log extra attributes */
 
+/*@}*/
 
 /* ----- RADIUS acc variables ----------- */
+/*! \name AccRadiusVariables  Radius Variables */     
+/*@{*/
 
 #ifdef RAD_ACC
 static char *radius_config = 0;
@@ -120,35 +132,36 @@ void *rh;
 static char *rad_extra_str = 0;
 struct acc_extra *rad_extra = 0;
 #endif
+/*@}*/
 
 
 /* ----- DIAMETER acc variables ----------- */
 
+/*! \name AccDiamaterVariables  Radius Variables */     
+/*@{*/
 #ifdef DIAM_ACC
 int diameter_flag = -1;
 int diameter_missed_flag = -1;
-/* diameter extra variables */
-static char *dia_extra_str = 0;
+static char *dia_extra_str = 0;		/*!< diameter extra variables */
 struct acc_extra *dia_extra = 0;
-/* buffer used to read from TCP connection*/
-rd_buf_t *rb;
+rd_buf_t *rb;				/*!< buffer used to read from TCP connection*/
 char* diameter_client_host="localhost";
 int diameter_client_port=3000;
 #endif
 
+/*@}*/
 
 /* ----- SQL acc variables ----------- */
+/*! \name AccSQLVariables  Radius Variables */     
+/*@{*/
 
 #ifdef SQL_ACC
 int db_flag = -1;
 int db_missed_flag = -1;
-/* db extra variables */
-static char *db_extra_str = 0;
+static char *db_extra_str = 0;		/*!< db extra variables */
 struct acc_extra *db_extra = 0;
-/* Database url */
-static str db_url = {NULL, 0};
-/* name of database tables */
-str db_table_acc = str_init("acc");
+static str db_url = {NULL, 0};		/*!< Database url */
+str db_table_acc = str_init("acc");	/*!< name of database tables */
 str db_table_mc = str_init("missed_calls");
 /* names of columns in tables acc/missed calls*/
 str acc_method_col     = str_init("method");
@@ -159,6 +172,8 @@ str acc_sipcode_col    = str_init("sip_code");
 str acc_sipreason_col  = str_init("sip_reason");
 str acc_time_col       = str_init("time");
 #endif
+
+/*@}*/
 
 /* ------------- fixup function --------------- */
 static int acc_fixup(void** param, int param_no);

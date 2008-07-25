@@ -20,6 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ * \ingroup acc
+ * \brief Acc:: Diameter TCP connections
+ *
+ * - Module: \ref acc
+ */
+
 #ifdef DIAM_ACC
 
 #include <sys/socket.h>
@@ -42,7 +49,7 @@
 
 #define M_NAME "acc"
 
-/* TCP connection setup */ 
+/*! \brief TCP connection setup */ 
 int init_mytcp(char* host, int port)
 {
 	int sockfd;
@@ -80,7 +87,7 @@ int init_mytcp(char* host, int port)
 	return sockfd;
 }
 
-/* send a message over an already opened TCP connection */
+/*! \brief send a message over an already opened TCP connection */
 int tcp_send_recv(int sockfd, char* buf, int len, rd_buf_t* rb, 
 					unsigned int waited_id)
 {
@@ -200,7 +207,7 @@ void reset_read_buffer(rd_buf_t *rb)
 	rb->buf				= 0;
 }
 
-/* read from a socket, an AAA message buffer */
+/*! \brief read from a socket, an AAA message buffer */
 int do_read( int socket, rd_buf_t *p)
 {
 	unsigned char  *ptr;
@@ -284,7 +291,7 @@ void close_tcp_connection(int sfd)
 	shutdown(sfd, 2);
 }
 
-/* 
+/*! \brief 
  * Extract URI depending on the request from To or From header 
  */
 int get_uri(struct sip_msg* m, str** uri)

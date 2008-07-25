@@ -34,6 +34,12 @@
  * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
+/*! \file
+ * \ingroup acc
+ * \brief Acc:: Core accounting
+ * 
+ * Module: \ref acc
+ */
 
 #include <stdio.h>
 #include <time.h>

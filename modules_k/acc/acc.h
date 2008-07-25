@@ -30,6 +30,14 @@
  * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
+/*! \file
+ * \ingroup acc
+ * \brief Acc:: Core accounting
+ *
+ * - See \ref acc.c
+ * - Module: \ref acc
+ */
+
 #ifndef _ACC_ACC_H_
 #define _ACC_ACC_H_
 

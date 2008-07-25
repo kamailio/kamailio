@@ -22,6 +22,15 @@
  *
  */
 
+/*! \file
+ * \ingroup peering
+ * \brief Peering:: Verification functions
+ *
+ * - \ref verifiy.c
+ * - Module: \ref peering
+ */
+
+
 #ifndef _PEERING_VERIFY_H_
 #define _PEERING_VERIFY_H_
 

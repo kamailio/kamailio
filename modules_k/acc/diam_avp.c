@@ -26,6 +26,13 @@
  *
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc:: Diameter support
+ *
+ * - Module: \ref acc
+ */
+
 #ifdef DIAM_ACC
 
 #include <stdio.h>

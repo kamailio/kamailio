@@ -28,6 +28,13 @@
  *             of acc module (bogdan)
  */
 
+/*! \file
+ * \ingroup acc
+ * \brief Acc:: Logic
+ *
+ * - Module: \ref acc
+ */
+
 #include <stdio.h>
 #include <string.h>
 

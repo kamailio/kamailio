@@ -22,6 +22,14 @@
  *
  */
 
+/*! \file
+ * \ingroup peering
+ * \brief Verification functions
+ *
+ * - Module: \ref peering
+ */
+
+
 
 #include "../../str.h"
 #include "../../radius.h"

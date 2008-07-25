@@ -25,6 +25,12 @@
  *   2003-04-07 created by bogdan
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc:: Diameter messages
+ *
+ * - Module: \ref acc
+ */
 
 #ifdef DIAM_ACC
 
@@ -56,7 +62,7 @@
 	( (_len_)+(((_len_)&3)?4-((_len_)&3):0) )
 
 
-/* from a AAAMessage structure, a buffer to be send is build
+/*! \brief from a AAAMessage structure, a buffer to be send is build
  */
 AAAReturnCode AAABuildMsgBuffer( AAAMessage *msg )
 {
@@ -137,7 +143,7 @@ error:
 
 
 
-/* frees a message allocated through AAANewMessage()
+/*! \brief frees a message allocated through AAANewMessage()
  */
 AAAReturnCode  AAAFreeMessage(AAAMessage **msg)
 {
@@ -171,7 +177,7 @@ done:
 
 
 
-/* Sets the proper result_code into the Result-Code AVP; thus avp must already
+/*! \brief Sets the proper result_code into the Result-Code AVP; thus avp must already
  * exists into the reply message */
 AAAResultCode  AAASetMessageResultCode(
 	AAAMessage *message,
@@ -186,7 +192,7 @@ AAAResultCode  AAASetMessageResultCode(
 
 
 
-/* This function convert message to message structure */
+/*! \brief This function convert message to message structure */
 AAAMessage* AAATranslateMessage( unsigned char* source, unsigned int sourceLen,
 															int attach_buf)
 {
@@ -320,7 +326,7 @@ error:
 
 
 
-/* print as debug all info contained by an aaa message + AVPs
+/*! \brief print as debug all info contained by an aaa message + AVPs
  */
 void AAAPrintMessage( AAAMessage *msg)
 {

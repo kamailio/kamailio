@@ -31,6 +31,13 @@
  * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc::  Core module
+ *
+ * - \ref acc_mod.c
+ * - Module: \ref acc
+ */
 
 #ifndef _ACC_MOD_H
 #define _ACC_MOD_H

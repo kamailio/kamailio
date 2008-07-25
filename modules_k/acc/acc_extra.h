@@ -30,6 +30,13 @@
  *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
  */
 
+*! \file
+ * \ingroup acc
+ * \brief Acc:: Extra attributes
+ *
+ * - \ref acc_extra.h
+ * - Module: \ref acc
+ */
 
 #ifndef _ACC_EXTRA_H_
 #define _ACC_EXTRA_H_
@@ -40,8 +47,8 @@
 
 struct acc_extra
 {
-	str        name;       /* name (log comment/ column name) */
-	pv_spec_t  spec;       /* value's spec */
+	str        name;       /*!< name (log comment/ column name) */
+	pv_spec_t  spec;       /*!< value's spec */
 	struct acc_extra *next;
 };
 
