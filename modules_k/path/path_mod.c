@@ -23,6 +23,27 @@
  *
  */
 
+/*! \file
+ * \brief Path :: Core
+ *
+ * \ingroup path
+ * - Module: path
+ */
+
+/*! \defgroup path Path:: Handling of "path" header for intermediate proxies
+ * This module is designed to be used at intermediate sip proxies
+ * like loadbalancers in front of registrars and proxies. It
+ * provides functions for inserting a Path header including a
+ * parameter for passing forward the received-URI of a
+ * registration to the next hop. It also provides a mechanism for
+ * evaluating this parameter in subsequent requests and to set the
+ * destination URI according to it.
+ *
+ * - No developer API
+ * - No MI functions
+ */
+
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,32 +60,32 @@
 MODULE_VERSION
 
 
-/* If received-param of current Route uri should be used
+/*! \brief If received-param of current Route uri should be used
  * as dst-uri. */
 int use_received = 0;
 
-/*
+/*! \brief
  * Module destroy function prototype
  */
 static void destroy(void);
 
-/*
+/*! \brief
  * Module child-init function prototype
  */
 static int child_init(int rank);
 
-/*
+/*! \brief
  * Module initialization function prototype
  */
 static int mod_init(void);
 
-/*
+/*! \brief
  * rr callback API
  */
 struct rr_binds path_rrb;
 
 
-/*
+/*! \brief
  * Exported functions
  */
 static cmd_export_t cmds[] = {
@@ -80,7 +101,7 @@ static cmd_export_t cmds[] = {
 };
 
 
-/*
+/*! \brief
  * Exported parameters
  */
 static param_export_t params[] = {
@@ -89,7 +110,7 @@ static param_export_t params[] = {
 };
 
 
-/*
+/*! \brief
  * Module interface
  */
 struct module_exports exports = {

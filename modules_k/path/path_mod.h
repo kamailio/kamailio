@@ -23,6 +23,13 @@
  *
  */
 
+/*! \file
+ * \brief Path :: Module Core
+ *
+ * \ingroup path
+ * - Module: path
+ */
+
 
 #ifndef PATH_MOD_H
 #define PATH_MOD_H

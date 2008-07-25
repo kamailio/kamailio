@@ -23,6 +23,12 @@
  *
  */
 
+/*! \file
+ * \brief Path :: Utilities
+ *
+ * \ingroup path
+ * - Module: path
+ */
 
 #include <string.h>
 #include <stdio.h>
@@ -143,7 +149,7 @@ out4:
 	return -1;
 }
 
-/*
+/*! \brief
  * Prepend own uri to Path header
  */
 int add_path(struct sip_msg* _msg, char* _a, char* _b)
@@ -152,7 +158,7 @@ int add_path(struct sip_msg* _msg, char* _a, char* _b)
 	return prepend_path(_msg, &user, 0);
 }
 
-/*
+/*! \brief
  * Prepend own uri to Path header and take care of given
  * user.
  */
@@ -161,7 +167,7 @@ int add_path_usr(struct sip_msg* _msg, char* _usr, char* _b)
 	return prepend_path(_msg, (str*)_usr, 0);
 }
 
-/*
+/*! \brief
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri.
  */
@@ -171,7 +177,7 @@ int add_path_received(struct sip_msg* _msg, char* _a, char* _b)
 	return prepend_path(_msg, &user, 1);
 }
 
-/*
+/*! \brief
  * Prepend own uri to Path header and append received address as
  * "received"-param to that uri and take care of given user.
  */
@@ -180,7 +186,7 @@ int add_path_received_usr(struct sip_msg* _msg, char* _usr, char* _b)
 	return prepend_path(_msg, (str*)_usr, 1);
 }
 
-/*
+/*! \brief
  * rr callback
  */
 void path_rr_callback(struct sip_msg *_m, str *r_param, void *cb_param)
