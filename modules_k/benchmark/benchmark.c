@@ -622,7 +622,7 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 }
 /*@} */
 
-/*! \brief item functions */
+/*! \brief PV get function for time diff */
 static int bm_get_time_diff(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res)
 {
