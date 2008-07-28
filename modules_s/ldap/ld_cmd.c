@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,12 +18,12 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
 /** \file
@@ -67,7 +67,7 @@ static int build_result_array(char*** res, db_cmd_t* cmd)
 		*res = NULL;
 		return 0;
 	}
-	
+
 	t = (char**)pkg_malloc(sizeof(char*) * (cmd->result_count + 1));
 	if (t == NULL) {
 		ERR("ldap: No memory left\n");
@@ -90,7 +90,7 @@ int ld_cmd(db_cmd_t* cmd)
 {
 	struct ld_cmd* lcmd;
 	struct ld_cfg* cfg;
- 
+
 	lcmd = (struct ld_cmd*)pkg_malloc(sizeof(struct ld_cmd));
 	if (lcmd == NULL) {
 		ERR("ldap: No memory left\n");
@@ -106,8 +106,8 @@ int ld_cmd(db_cmd_t* cmd)
 		ERR("ldap: The driver does not support directory modifications yet.\n");
 		goto error;
 		break;
-		
-	case DB_GET:		
+
+	case DB_GET:
 		break;
 
 	case DB_SQL:
@@ -183,7 +183,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 
 	ret = ldap_parse_result(lcon->con, msg, &err, NULL, &err_desc, NULL, NULL, 0);
 	if (ret != LDAP_SUCCESS) {
-		ERR("ldap: Error while reading result status: %s\n", 
+		ERR("ldap: Error while reading result status: %s\n",
 			ldap_err2string(ret));
 		goto error;
 	}
@@ -192,7 +192,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 		ERR("ldap: LDAP server reports error: %s\n", ldap_err2string(err));
 		goto error;
 	}
-			
+
 	if (res) {
 		lres = DB_GET_PAYLOAD(res);
 		lres->msg = msg;
@@ -203,7 +203,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	if (filter) pkg_free(filter);
 	if (err_desc) ldap_memfree(err_desc);
 	return 0;
-	
+
  error:
 	if (filter) pkg_free(filter);
 	if (msg) ldap_msgfree(msg);
@@ -216,20 +216,40 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
  * of messages returned by the LDAP server and convert
  * the field values.
  */
-static int next_search_entry(db_res_t* res, LDAP* con)
+static int search_entry(db_res_t* res, int init)
 {
+	db_con_t* con;
 	struct ld_res* lres;
+	struct ld_con* lcon;
 
 	lres = DB_GET_PAYLOAD(res);
-	while(lres->current) {
-		if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
-			break;
-		}
-		lres->current = ldap_next_message(con, lres->current);
-	}
-	if (lres->current == NULL) return 1;
+	/* FIXME */
+	con = res->cmd->ctx->con[db_payload_idx];
+	lcon = DB_GET_PAYLOAD(con);
 
-	if (ld_ldap2fld(res->cmd->result, con, lres->current) < 0) return -1;
+	if (init
+	    || !lres->current
+	    || ldap_msgtype(lres->current) != LDAP_RES_SEARCH_ENTRY
+	    /* there is no more value combination result left */
+	    || ld_incindex(res->cmd->result)) {
+
+		if (init)
+			lres->current = ldap_first_message(lcon->con, lres->msg);
+		else
+			lres->current = ldap_next_message(lcon->con, lres->current);
+
+		while(lres->current) {
+			if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
+				break;
+			}
+			lres->current = ldap_next_message(lcon->con, lres->current);
+		}
+		if (lres->current == NULL) return 1;
+		if (ld_ldap2fldinit(res->cmd->result, lcon->con, lres->current) < 0) return -1;
+	} else {
+		if (ld_ldap2fld(res->cmd->result, lcon->con, lres->current) < 0) return -1;
+	}
+
 	res->cur_rec->fld = res->cmd->result;
 	return 0;
 }
@@ -237,33 +257,13 @@ static int next_search_entry(db_res_t* res, LDAP* con)
 
 int ld_cmd_first(db_res_t* res)
 {
-	db_con_t* con;
-	struct ld_res* lres;
-	struct ld_con* lcon;
-
-	lres = DB_GET_PAYLOAD(res);
-	/* FIXME */
-	con = res->cmd->ctx->con[db_payload_idx];
-	lcon = DB_GET_PAYLOAD(con);
-
-	lres->current = ldap_first_message(lcon->con, lres->msg);
-	return next_search_entry(res, lcon->con);
+	return search_entry(res, 1);
 }
 
 
 int ld_cmd_next(db_res_t* res)
 {
-	db_con_t* con;
-	struct ld_res* lres;
-	struct ld_con* lcon;
-
-	lres = DB_GET_PAYLOAD(res);
-	/* FIXME */
-	con = res->cmd->ctx->con[db_payload_idx];
-	lcon = DB_GET_PAYLOAD(con);
-
-	lres->current = ldap_next_message(lcon->con, lres->current);
-	return next_search_entry(res, lcon->con);
+	return search_entry(res, 0);
 }
 
 

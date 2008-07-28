@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
@@ -26,10 +26,10 @@
 #define _LD_FLD_H
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Implementation of ld_fld data structure representing LDAP fields and
  * related functions.
  */
@@ -58,6 +58,8 @@ struct ld_fld {
 	str attr;               /**< Name of corresponding LDAP attribute */
 	enum ld_syntax syntax;  /**< LDAP attribute syntax */
 	struct berval** values; /**< Values retrieved from the LDAP result */
+	unsigned int valuesnum;
+	unsigned int index;
 };
 
 
@@ -77,6 +79,14 @@ int ld_resolve_fld(db_fld_t* fld, struct ld_cfg* cfg);
 int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
 
 int ld_fld2ldap(char** filter, db_fld_t* fld, str* add);
+
+int ld_incindex(db_fld_t* fld);
+
+int ld_ldap2fldinit(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
+
+int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
+
+int ld_ldap2fldex(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg, int init);
 
 /** @} */
 
