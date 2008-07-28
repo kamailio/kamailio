@@ -215,7 +215,7 @@ modparam("osp","use_rpid_calling_number",1)
     </section>
     <section>
       <title><varname>redirection_uri_format</varname></title>
-      <para>The redirection_uri_format (integer) parameter instructs the OSP module to use the different URI format in the SIP redirection message. If this value is set to 0, the OSP Module uses "xxxxxxxxxx@xxx.xxx.xxx.xxx" URI in the SIP redirection messages. If this value is set to 1, the OSP Module will use "<xxxxxxxxxx@xxx.xxx.xxx.xxx>" URI in the SIP redirection messages. The default value is 0</para>
+      <para>The redirection_uri_format (integer) parameter instructs the OSP module to use the different URI format in the SIP redirection message. If this value is set to 0, the OSP Module uses "xxxxxxxxxx@xxx.xxx.xxx.xxx" URI in the SIP redirection messages. If this value is set to 1, the OSP Module will use <quote>&lt;xxxxxxxxxx@xxx.xxx.xxx.xxx&gt;</quote> URI in the SIP redirection messages. The default value is 0</para>
       <example>
         <title>Setting the redirection URI format</title>
         <programlisting format="linespecific">
