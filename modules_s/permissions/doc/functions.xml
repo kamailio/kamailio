@@ -243,4 +243,309 @@ if (method=="REGISTER") {
 	    </programlisting>
 	</example>
     </section>
+    <section id="ip_is_trusted">
+	<title>
+	    <function>ip_is_trusted(ip_set, ip)</function>
+	</title>
+	<para>
+		The function returns true if <emphasis>ip</emphasis> is contained
+		in <emphasis>ip_set</emphasis>. Both IPv4 and IPv6 are supported.
+	</para>
+	<para>Meaning of the parameters is as follows:</para>
+	<itemizedlist>
+	    <listitem>
+		<para>
+			<emphasis>ip_set</emphasis> is identified by comma/space/semicolon
+			delimited list of IP addresses or subnet masks. The subnet mask
+			is written in IP_slash_number form. If the number is not mentioned 
+			then default value is taken, the default  value is number of bits
+			of particular IP address, i.e. 32 in case of IPv4, 128 in case of IPv6.
+		</para>
+	    </listitem>
+		<listitem>
+		<para>
+			<emphasis>ip</emphasis> to test. Besides direct address in string form there
+			are extra identifiers to force IP related to current message:
+			<emphasis>Source</emphasis>, <emphasis>Destination</emphasis>, <emphasis>Received</emphasis>.
+			Note that only the first character is essential.
+		</para>
+		</listitem>
+	</itemizedlist>
+	<example>
+	    <title><function>ip_is_trusted</function> usage</title>
+	    <programlisting>
+route[TT2] {
+	if (ip_is_trusted("$net", "$ip")) {
+		xlog("L_E", "'%$ip' - TRUE\n");
+	} else {
+		xlog("L_E", "'%$ip' - FALSE\n");
+	}
+}
+
+route[TT1] {
+	xlog("L_E", "Testing netmask '%$net'\n");
+	
+	$ip = "s";   # source address
+	route(TT2);
+	
+	$ip = "127.0.0.1";
+	route(TT2);
+	
+	$ip = "127.0.0.2";
+	route(TT2);
+	
+	$ip = "10.0.0.1";
+	route(TT2);
+	
+	$ip = "11.0.0.1";
+	route(TT2);
+	
+	$ip = "172.1.8.1";
+	route(TT2);
+	
+	$ip = "192.168.1.1";
+	route(TT2);
+	
+	$ip = "192.168.1.255";
+	route(TT2);
+	
+	$ip = "192.168.2.1";
+	route(TT2);
+	
+	$ip = "192.168.3.1";
+	route(TT2);
+	
+	$ip = "192.168.4.97";
+	route(TT2);
+	
+	$ip = "192.168.4.100";
+	route(TT2);
+
+	$ip = "[0:2:4:A:B:D:E:F301]";
+	route(TT2);
+	
+	$ip = "[0:2:4:A:B:D:E:F401]";
+	route(TT2);
+	
+	$ip = "[0:0:0:0:0:0:0:0]";
+	route(TT2);
+}
+		
+route[TEST] {
+	$net = "0.0.0.0 128.2.3.4/1 127.0.128.16 [0:2:4:A:B:D:E:F301]";
+	route(TT1);
+
+	$net = "255.255.255.255/0"; # all IPv4 addresses, dentical to 0.0.0.0/0
+	route(TT1);
+	
+	$net = "127.0.0.1/24";
+	route(TT1);
+	
+	$net = "10.0.0.0/8";  # All type A addresses
+	route(TT1);	         
+	
+	$net = "192.168.1.0/24";
+	route(TT1);
+	
+	$net = "192.168.4.96/27";
+	route(TT1);
+	
+	$net = "192.168.1.1/32"; # only one IP matches
+	route(TT1);
+	
+	$net = "192.168.1.0/24,192.168.2.0/24";
+	route(TT1);
+	
+	$net = "192.168.1.0/24,192.168.2.0/24,127.0.0.1/31";
+	route(TT1);
+	
+	$net = "[0:0:0:0:0:0:0:0]/0";  # all IPv6 addresses
+	route(TT1);
+	
+	$net = "[0:2:4:A:B:D:E:f300]/120";
+	route(TT1);
+
+
+# the result is:
+
+Testing netmask '0.0.0.0 128.2.3.4/1 127.0.128.16 [0:2:4:A:B:D:E:F301]'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - TRUE
+'192.168.1.1' - TRUE
+'192.168.1.255' - TRUE
+'192.168.2.1' - TRUE
+'192.168.3.1' - TRUE
+'192.168.4.97' - TRUE
+'192.168.4.100' - TRUE
+'[0:2:4:A:B:D:E:F301]' - TRUE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '255.255.255.255/0'
+'s' - TRUE
+'127.0.0.1' - TRUE
+'127.0.0.2' - TRUE
+'10.0.0.1' - TRUE
+'11.0.0.1' - TRUE
+'172.1.8.1' - TRUE
+'192.168.1.1' - TRUE
+'192.168.1.255' - TRUE
+'192.168.2.1' - TRUE
+'192.168.3.1' - TRUE
+'192.168.4.97' - TRUE
+'192.168.4.100' - TRUE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '127.0.0.1/24'
+'s' - FALSE
+'127.0.0.1' - TRUE
+'127.0.0.2' - TRUE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - FALSE
+'192.168.1.255' - FALSE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '10.0.0.0/8'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - TRUE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - FALSE
+'192.168.1.255' - FALSE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '192.168.1.0/24'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - TRUE
+'192.168.1.255' - TRUE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '192.168.4.96/27'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - FALSE
+'192.168.1.255' - FALSE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - TRUE
+'192.168.4.100' - TRUE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '192.168.1.1/32'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - TRUE
+'192.168.1.255' - FALSE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '192.168.1.0/24,192.168.2.0/24'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - TRUE
+'192.168.1.255' - TRUE
+'192.168.2.1' - TRUE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '192.168.1.0/24,192.168.2.0/24,127.0.0.1/31'
+'s' - FALSE
+'127.0.0.1' - TRUE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - TRUE
+'192.168.1.255' - TRUE
+'192.168.2.1' - TRUE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - FALSE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+Testing netmask '[0:0:0:0:0:0:0:0]/0'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - FALSE
+'192.168.1.255' - FALSE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - TRUE
+'[0:2:4:A:B:D:E:F401]' - TRUE
+'[0:0:0:0:0:0:0:0]' - TRUE
+Testing netmask '[0:2:4:A:B:D:E:f300]/120'
+'s' - FALSE
+'127.0.0.1' - FALSE
+'127.0.0.2' - FALSE
+'10.0.0.1' - FALSE
+'11.0.0.1' - FALSE
+'172.1.8.1' - FALSE
+'192.168.1.1' - FALSE
+'192.168.1.255' - FALSE
+'192.168.2.1' - FALSE
+'192.168.3.1' - FALSE
+'192.168.4.97' - FALSE
+'192.168.4.100' - FALSE
+'[0:2:4:A:B:D:E:F301]' - TRUE
+'[0:2:4:A:B:D:E:F401]' - FALSE
+'[0:0:0:0:0:0:0:0]' - FALSE
+}
+	    </programlisting>
+	</example>
+    </section>
 </section>

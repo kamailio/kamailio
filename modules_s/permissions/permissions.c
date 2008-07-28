@@ -46,6 +46,8 @@
 #include "ipmatch.h"
 #include "im_db.h"
 #include "permissions_rpc.h"
+#include "ip_set.h"
+#include "../../resolve.h"
 
 MODULE_VERSION
 
@@ -83,6 +85,7 @@ db_ctx_t	*db_conn = NULL;
 /* fixup function prototypes */
 static int fixup_files_1(void** param, int param_no);
 static int fixup_files_2(void** param, int param_no);
+static int fixup_ip_is_trusted(void** param, int param_no);
 static int fixup_w_im(void **, int);
 static int fixup_w_im_onsend(void **, int);
 
@@ -98,6 +101,7 @@ int w_im_2(struct sip_msg *msg, char *str1, char *str2);
 int w_im_1(struct sip_msg *msg, char *str1, char *str2);
 int w_im_onsend(struct sip_msg *msg, char *str1, char *str2);
 int w_im_filter(struct sip_msg *msg, char *str1, char *str2);
+static int w_ip_is_trusted(struct sip_msg *msg, char *str1, char *str2);
 
 
 /* module interface function prototypes */
@@ -120,6 +124,8 @@ static cmd_export_t cmds[] = {
 	{"ipmatch",        w_im_2,           2, fixup_w_im,     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"ipmatch_onsend", w_im_onsend,      1, fixup_w_im_onsend, ONSEND_ROUTE },
 	{"ipmatch_filter", w_im_filter,      1, fixup_int_1,     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | ONSEND_ROUTE},
+	{"ip_is_trusted",  w_ip_is_trusted,  2, fixup_ip_is_trusted, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE | BRANCH_ROUTE},
+	       	       
         {0, 0, 0, 0, 0}
 };
 
@@ -522,3 +528,111 @@ int w_im_filter(struct sip_msg *msg, char *str1, char *str2)
 
 	return ipmatch_filter(msg, str1, str2);
 }
+
+
+struct ip_set_param {
+	str s;
+	unsigned int sz;
+	struct ip_set ip_set;
+	fparam_t *fparam;
+};
+
+#define MODULE_NAME "permissions"
+
+static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
+	str ip_set_s, ip_s;
+	struct ip_addr *ip, ip_buf;
+	struct ip_set new_ip_set;
+	
+	if (get_str_fparam(&ip_set_s, msg, ((struct ip_set_param*)_ip_set)->fparam) < 0) {
+	    ERR(MODULE_NAME": ip_is_trusted: Error while obtaining ip_set parameter value\n");
+	    return -1;
+	}
+	if (get_str_fparam(&ip_s, msg, (fparam_t*)_ip) < 0) {
+	    ERR(MODULE_NAME": ip_is_trusted: Error while obtaining ip parameter value\n");
+	    return -1;
+	}
+	if (!ip_s.len || !ip_set_s.len) return -1;
+	switch (ip_s.s[0]) {
+		case 's':	/* src */
+		case 'S':
+			ip = &msg->rcv.src_ip;
+			break;
+		case 'd':	/* dst */
+		case 'D':
+			ip = &msg->rcv.dst_ip;
+			break;
+		case 'r':	/* rcv */
+		case 'R':
+			ip = &msg->rcv.bind_address->address;
+			break;			
+		default:
+			/* string -> ip */
+
+			if ( ((ip = str2ip(&ip_s))==0)
+				#ifdef  USE_IPV6
+			                  && ((ip = str2ip6(&ip_s))==0)
+				#endif
+							                  ){
+				ERR(MODULE_NAME": ip_is_trusted: string to ip conversion error '%.*s'\n", ip_s.len, ip_s.s);
+				return -1;
+			}
+			ip_buf = *ip;
+			ip = &ip_buf;  /* value has been in static buffer */			
+			break;
+	}
+
+	/* test if ip_set string has changed since last call */
+	if (((struct ip_set_param*)_ip_set)->s.len != ip_set_s.len || 
+		memcmp(((struct ip_set_param*)_ip_set)->s.s, ip_set_s.s, ip_set_s.len) != 0) {
+
+		if (ip_set_parse(&new_ip_set, ip_set_s) < 0) {
+			return -1;
+		};
+		if (((struct ip_set_param*)_ip_set)->sz < ip_set_s.len) {
+			void *p;
+			p = pkg_realloc(((struct ip_set_param*)_ip_set)->s.s, ip_set_s.len);
+			if (!p) {
+				ip_set_destroy(&new_ip_set);
+				return E_OUT_OF_MEM;
+			}
+			((struct ip_set_param*)_ip_set)->s.s = p;			
+			((struct ip_set_param*)_ip_set)->sz = ip_set_s.len;			
+		}
+		memcpy(((struct ip_set_param*)_ip_set)->s.s, ip_set_s.s, ip_set_s.len);
+		((struct ip_set_param*)_ip_set)->s.len = ip_set_s.len;
+		ip_set_destroy(&((struct ip_set_param*)_ip_set)->ip_set);
+		((struct ip_set_param*)_ip_set)->ip_set = new_ip_set;
+/* ip_set_print(stderr, &((struct ip_set_param*)_ip_set)->ip_set); */
+	}
+	switch (ip_set_ip_exists(&((struct ip_set_param*)_ip_set)->ip_set, ip)) {
+		case IP_TREE_FIND_FOUND:
+		case IP_TREE_FIND_FOUND_UPPER_SET:
+			return 1;
+		default:
+			return -1;
+	}
+}
+
+static int fixup_ip_is_trusted(void** param, int param_no) {
+	int ret;
+	struct ip_set_param *p;
+	if (param_no == 1) {
+
+		ret = fixup_var_str_12(param, param_no);
+		if (ret < 0) return ret;
+		p = pkg_malloc(sizeof(*p));
+		if (!p) return E_OUT_OF_MEM;
+		memset(p, 0, sizeof(*p));
+		ip_set_init(&p->ip_set);
+		p->fparam = *param;
+		*param = p;
+	}
+	else {
+		return fixup_var_str_12(param, param_no);
+	
+	}
+	return E_OK;
+}
+
+
