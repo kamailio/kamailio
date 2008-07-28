@@ -12,8 +12,8 @@ Daniel-Constantin Mierla
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -108,9 +108,9 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This modules provides offline message storage for the Open SIP
-   Express Router. It stores received messages for an offline user
-   and sends them when the user becomes online.
+   This modules provides offline message storage for the Kamailio
+   SIP Router. It stores received messages for an offline user and
+   sends them when the user becomes online.
 
    For each message, the modules stores "Request-URI" ("R-URI")
    only if it is a complete address of record

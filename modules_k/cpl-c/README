@@ -10,8 +10,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-10 17:13:24 +0200
-                              (Mon, 10 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-10 16:13:24 +0100
+                              (Mo, 10 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -501,4 +501,4 @@ if (method=="REGISTER") {
    name of the columns must be as they are in the SQL script. You
    can also find the complete database documentation on the
    project webpage,
-   http://www.openser.org/docs/db-tables/openser-db-devel.html.
+   http://www.kamailio.org/docs/db-tables/openser-db-devel.html.

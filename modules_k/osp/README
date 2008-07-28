@@ -16,8 +16,8 @@ Di-Shi Sun
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -29,13 +29,13 @@ Di-Shi Sun
         1.3. Exported Parameters
 
               1.3.1. sp1_uri, sp2_uri, ..., sp16_uri
-              1.3.2. device_ip
-              1.3.3. token_format
-              1.3.4. private_key, local_certificate,
+              1.3.2. sp1_weight, sp2_weight, ..., sp16_weight
+              1.3.3. device_ip
+              1.3.4. device_port
+              1.3.5. token_format
+              1.3.6. private_key, local_certificate,
                       ca_certificates
 
-              1.3.5. sp1_weight, sp2_weight, ..., sp16_weight
-              1.3.6. device_port
               1.3.7. enable_crypto_hardware_support
               1.3.8. ssl_lifetime
               1.3.9. persistence
@@ -45,6 +45,8 @@ Di-Shi Sun
               1.3.13. max_destinations
               1.3.14. validate_call_id
               1.3.15. use_rpid_for_calling_number
+              1.3.16. redirection_uri_format
+              1.3.17. source_networkid_avp
 
         1.4. Exported Functions
 
@@ -62,11 +64,11 @@ Di-Shi Sun
    List of Examples
 
    1.1. Setting the OSP servers
-   1.2. Setting the device IP address
-   1.3. Setting the token format
-   1.4. Set authorization files
-   1.5. Setting the OSP server weights
-   1.6. Setting the device port
+   1.2. Setting the OSP server weights
+   1.3. Setting the device IP address
+   1.4. Setting the device port
+   1.5. Setting the token format
+   1.6. Set authorization files
    1.7. Setting the hardware support
    1.8. Setting the ssl lifetime
    1.9. Setting the persistence
@@ -78,14 +80,16 @@ Di-Shi Sun
    1.15. Instructing the module to use calling number in
           Remote-Party-ID
 
-   1.16. checkospheader usage
-   1.17. validateospheader usage
-   1.18. requestosprouting usage
-   1.19. checkosproute usage
-   1.20. prepareosproute usage
-   1.21. checkcallingtranslation usage
-   1.22. prepareallosproute usage
-   1.23. reportospusage usage
+   1.16. Setting the redirection URI format
+   1.17. Setting the source network ID AVP
+   1.18. checkospheader usage
+   1.19. validateospheader usage
+   1.20. requestosprouting usage
+   1.21. checkosproute usage
+   1.22. prepareosproute usage
+   1.23. checkcallingtranslation usage
+   1.24. prepareallosproute usage
+   1.25. reportospusage usage
 
 Chapter 1. Admin Guide
 
@@ -146,17 +150,48 @@ Chapter 1. Admin Guide
 modparam("osp","sp1_uri","http://osptestserver.transnexus.com:1080/osp")
 modparam("osp","sp2_uri","https://[1.2.3.4]:1443/osp")
 
-1.3.2. device_ip
+1.3.2. sp1_weight, sp2_weight, ..., sp16_weight
+
+   These sp_weight (integer) parameters are used for load
+   balancing peering requests to peering servers. These parameters
+   are most effective when configured as factors of 1000. For
+   example, if sp1_uri should manage twice the traffic load of
+   sp2_uri, then set sp1_weight to 2000 and sp2_weight to 1000.
+   Shared load balancing between peering servers is recommended.
+   However, peering servers can be configured as primary and
+   backup by assigning a sp_weight of 0 to the primary server and
+   a non-zero sp_weight to the back-up server. The default values
+   for sp1_weight and sp2_weight are 1000.
+
+   Example 1.2. Setting the OSP server weights
+modparam("osp","sp1_weight",1000)
+
+1.3.3. device_ip
 
    The device_ip (string) is a recommended parameter that
    explicitly defines the IP address of OpenSER in a peering
    request message (as SourceAlternate type=transport). The IP
    address must be in brackets as shown in the example below.
 
-   Example 1.2. Setting the device IP address
+   Example 1.3. Setting the device IP address
 modparam("osp","device_ip","[1.1.1.1]")
 
-1.3.3. token_format
+1.3.4. device_port
+
+   The device_port (string) parameter is an optional field which
+   includes the SIP port being used by OpenSER in the peering
+   request (as SourceAlternate type=network) to the peering
+   server. If is not configured, this information is not included
+   in the peering request. This field is useful if multiple
+   OpenSERs are running on the same Linux computer since it
+   enables the peering server to administer different peering
+   policies based on different SIP proxies. This parameter has not
+   been implemented yet.
+
+   Example 1.4. Setting the device port
+modparam("osp","device_port","5060")
+
+1.3.5. token_format
 
    When OpenSER receives a SIP INVITE with a peering token, the
    OSP Module will validate the token to determine whether or not
@@ -175,10 +210,10 @@ modparam("osp","device_ip","[1.1.1.1]")
    2 - Validate both signed and unsigned tokens are allowed. Calls
    with valid tokens are allowed.
 
-   Example 1.3. Setting the token format
+   Example 1.5. Setting the token format
 modparam("osp","token_format",2)
 
-1.3.4. private_key, local_certificate, ca_certificates
+1.3.6. private_key, local_certificate, ca_certificates
 
    These parameters identify files are used for validating peering
    authorization tokens and establishing a secure channel between
@@ -191,7 +226,7 @@ modparam("osp","token_format",2)
    copied to the expected file location or the parameters below
    may be changed.
 
-   Example 1.4. Set authorization files
+   Example 1.6. Set authorization files
 
    If the default CFG_DIR value was used at compile time, the
    files will be loaded from:
@@ -199,37 +234,6 @@ modparam("osp","private_key","/usr/local/etc/openser/pkey.pem")
 modparam("osp","local_certificate","/usr/local/etc/openser/localcert.pem
 ")
 modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
-
-1.3.5. sp1_weight, sp2_weight, ..., sp16_weight
-
-   These sp_weight (integer) parameters are used for load
-   balancing peering requests to peering servers. These parameters
-   are most effective when configured as factors of 1000. For
-   example, if sp1_uri should manage twice the traffic load of
-   sp2_uri, then set sp1_weight to 2000 and sp2_weight to 1000.
-   Shared load balancing between peering servers is recommended.
-   However, peering servers can be configured as primary and
-   backup by assigning a sp_weight of 0 to the primary server and
-   a non-zero sp_weight to the back-up server. The default values
-   for sp1_weight and sp2_weight are 1000.
-
-   Example 1.5. Setting the OSP server weights
-modparam("osp","sp1_weight",1000)
-
-1.3.6. device_port
-
-   The device_port (string) parameter is an optional field which
-   includes the SIP port being used by OpenSER in the peering
-   request (as SourceAlternate type=network) to the peering
-   server. If is not configured, this information is not included
-   in the peering request. This field is useful if multiple
-   OpenSERs are running on the same Linux computer since it
-   enables the peering server to administer different peering
-   policies based on different SIP proxies. This parameter has not
-   been implemented yet.
-
-   Example 1.6. Setting the device port
-modparam("osp","device_port","5060")
 
 1.3.7. enable_crypto_hardware_support
 
@@ -338,6 +342,32 @@ modparam("osp","validate_call_id",1)
    Remote-Party-ID
 modparam("osp","use_rpid_calling_number",1)
 
+1.3.16. redirection_uri_format
+
+   The redirection_uri_format (integer) parameter instructs the
+   OSP module to use the different URI format in the SIP
+   redirection message. If this value is set to 0, the OSP Module
+   uses "xxxxxxxxxx@xxx.xxx.xxx.xxx" URI in the SIP redirection
+   messages. If this value is set to 1, the OSP Module will use
+   "<xxxxxxxxxx@xxx.xxx.xxx.xxx>" URI in the SIP redirection
+   messages. The default value is 0
+
+   Example 1.16. Setting the redirection URI format
+modparam("osp","redirection_uri_format",1)
+
+1.3.17. source_networkid_avp
+
+   The source_networkid_avp (string) parameter instructs the OSP
+   module to use the defined AVP to pass the source network ID
+   value. The default value is "$avp(s:_osp_source_networkid_)".
+   Then the source network ID can be set by
+   "$avp(s:_osp_source_networkid_) = pseudo-variables". All pseudo
+   variables are described in
+   http://openser.org/dokuwiki/doku.php/pseudovariables:1.3.x.
+
+   Example 1.17. Setting the source network ID AVP
+modparam("osp","source_networkid_avp","$avp(s:snid)")
+
 1.4. Exported Functions
 
 1.4.1. checkospheader()
@@ -347,7 +377,7 @@ modparam("osp","use_rpid_calling_number",1)
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.16. checkospheader usage
+   Example 1.18. checkospheader usage
 ...
 if (checkospheader()) {
   log(1,"OSP header field found.\n");
@@ -366,7 +396,7 @@ if (checkospheader()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.17. validateospheader usage
+   Example 1.19. validateospheader usage
 ...
 if (validateospheader()) {
   log(1,"valid OSP header found\n");
@@ -395,7 +425,7 @@ if (validateospheader()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.18. requestosprouting usage
+   Example 1.20. requestosprouting usage
 ...
 if (requestosprouting()) {
   log(1,"successfully queried OSP server, now relaying call\n");
@@ -411,7 +441,7 @@ if (requestosprouting()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.19. checkosproute usage
+   Example 1.21. checkosproute usage
 ...
 if (checkosproute()) {
   log(1,"There is at least one route for the call\n");
@@ -434,7 +464,7 @@ if (checkosproute()) {
 
    This function can be used from BRANCH_ROUTE.
 
-   Example 1.20. prepareosproute usage
+   Example 1.22. prepareosproute usage
 ...
 if (prepareosproute()) {
   log(1,"successfully prepared the route, now relaying call\n");
@@ -456,7 +486,7 @@ if (prepareosproute()) {
 
    This function can be used from BRANCH_ROUTE.
 
-   Example 1.21. checkcallingtranslation usage
+   Example 1.23. checkcallingtranslation usage
 ...
 if (checkcallingtranslation()) {
   # Remove the Remote_Party-ID from the received message
@@ -478,7 +508,7 @@ if (checkcallingtranslation()) {
 
    This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
-   Example 1.22. prepareallosproute usage
+   Example 1.24. prepareallosproute usage
 ...
 if (prepareallosproute()) {
   log(1,"Routes are prepared, now either forking or redirecting the call
@@ -505,7 +535,7 @@ if (prepareallosproute()) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.23. reportospusage usage
+   Example 1.25. reportospusage usage
 ...
 if (is_direction("downstream")) {
   log(1,"This BYE message is from SOURCE\n");

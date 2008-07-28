@@ -10,8 +10,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -29,6 +29,7 @@ Bogdan-Andrei Iancu
               1.3.1. sampling_time_unit (integer)
               1.3.2. reqs_density_per_unit (integer)
               1.3.3. remove_latency (integer)
+              1.3.4. pike_log_level (integer)
 
         1.4. Exported Functions
 
@@ -45,7 +46,8 @@ Bogdan-Andrei Iancu
    1.1. Set sampling_time_unit parameter
    1.2. Set reqs_density_per_unit parameter
    1.3. Set remove_latency parameter
-   1.4. pike_check_req usage
+   1.4. Set pike_log_level parameter
+   1.5. pike_check_req usage
    2.1. Tree of IP addresses
 
 Chapter 1. Admin Guide
@@ -121,6 +123,19 @@ modparam("pike", "reqs_density_per_unit", 30)
 modparam("pike", "remove_latency", 130)
 ...
 
+1.3.4. pike_log_level (integer)
+
+   Log level to be used by module to auto report the blocking
+   (only first time) and unblocking of IPs detected as source of
+   floods.
+
+   Default value is 1 (L_WARN).
+
+   Example 1.4. Set pike_log_level parameter
+...
+modparam("pike", "pike_log_level", -1)
+...
+
 1.4. Exported Functions
 
 1.4.1.  pike_check_req()
@@ -128,12 +143,22 @@ modparam("pike", "remove_latency", 130)
    Process the source IP of the current request and returns false
    if the IP was exceeding the blocking limit.
 
-   IMPORTANT: in case of internal error, the function returns true
-   to avoid reporting the current processed IP as blocked.
+   Return codes:
+     * 1 (true) - IP is not to be blocked or internal error
+       occured.
+
+Warning
+       IMPORTANT: in case of internal error, the function returns
+       true to avoid reporting the current processed IP as
+       blocked.
+     * -1 (false) - IP is source of flooding, being previously
+       detected
+     * -2 (false) - IP is detected as a new source of flooding -
+       first time detection
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.4. pike_check_req usage
+   Example 1.5. pike_check_req usage
 ...
 if (!pike_check_req()) { exit; };
 ...

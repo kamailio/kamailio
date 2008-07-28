@@ -841,7 +841,7 @@ Chapter 2. Frequently Asked Questions
 
        Where can I find more about OpenSER?
 
-       Take a look at http://www.openser.org/.
+       Take a look at http://www.kamailio.org/.
 
    2.5.
 
@@ -850,16 +850,16 @@ Chapter 2. Frequently Asked Questions
        First at all check if your question was already answered on one
        of our mailing lists:
          * User Mailing List -
-           http://lists.openser.org/cgi-bin/mailman/listinfo/users
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
          * Developer Mailing List -
-           http://lists.openser.org/cgi-bin/mailman/listinfo/devel
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
        E-mails regarding any stable OpenSER release should be sent to
-       <users@lists.openser.org> and e-mails regarding development
-       versions should be sent to <devel@lists.openser.org>.
+       <users@lists.kamailio.org> and e-mails regarding development
+       versions should be sent to <devel@lists.kamailio.org>.
 
        If you want to keep the mail private, send it to
-       <team@lists.openser.org>.
+       <team@lists.kamailio.org>.
 
    2.6.
 

@@ -1,4 +1,3 @@
-
 jabber Module
 
 Daniel-Constantin Mierla
@@ -14,8 +13,8 @@ Daniel-Constantin Mierla
    Copyright © 2003 FhG FOKUS
    Revision History
    Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-   (Wed, 19 Mar 2008) $
-     _________________________________________________________
+                              (Mi, 19 MÃ¤r 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -51,11 +50,11 @@ Daniel-Constantin Mierla
 
         1.6. Exported Functions
 
-              1.6.1. jab_send_message() 
-              1.6.2. jab_join_jconf() 
-              1.6.3. jab_exit_jconf() 
-              1.6.4. jab_go_online() 
-              1.6.5. jab_go_offline() 
+              1.6.1. jab_send_message()
+              1.6.2. jab_join_jconf()
+              1.6.3. jab_exit_jconf()
+              1.6.4. jab_go_online()
+              1.6.5. jab_go_offline()
 
    List of Examples
 
@@ -100,9 +99,9 @@ Chapter 1. Admin Guide
        (message/presence/iq) (December 2003).
      * Aliases -- Possibility to set host aliases for addresses
        (see parameter's desc.) (December 2003).
-     * Send received SIP MESSAGE messages to different IM
-       networks (Jabber, ICQ,MSN, AIM, Yahoo) using a Jabber
-       server (December 2003).
+     * Send received SIP MESSAGE messages to different IM networks
+       (Jabber, ICQ,MSN, AIM, Yahoo) using a Jabber server
+       (December 2003).
      * Send incoming Jabber instant messages as SIP MESSAGE
        messages.
      * Gateways detection -- Ability to see whether an IM gateway
@@ -113,7 +112,7 @@ Chapter 1. Admin Guide
 Note
 
    A more complete guide about SIMPLE2Jabber gateway can be found
-   at http://www.openser.org/. The part below will be removed
+   at http://www.kamailio.org/. The part below will be removed
    soon, only the manual from web will be updated.
 
    The Jabber server setup is not a subject of this guide. Check
@@ -149,22 +148,21 @@ Note
 
    The JIDs of Jabber transports must start with the name of the
    network. For AIM, JID must start with "aim.", for ICQ with
-   "icq" (that because I use icqv7-t), for MSN with "msn." and
-   for Yahoo with "yahoo.". The gateway needs these to find out
-   what transport is working and which not. For our use case
-   these could be like "aim.server.org", "icq.server.org",
+   "icq" (that because I use icqv7-t), for MSN with "msn." and for
+   Yahoo with "yahoo.". The gateway needs these to find out what
+   transport is working and which not. For our use case these
+   could be like "aim.server.org", "icq.server.org",
    "msn.server.org", "yahoo.server.org".
 
    It is indicated to have these aliases in DNS, thus the client
    application can resolve the DNS name. Otherwise there must be
    set the outbound proxy to OpenSER server.
 
-   *** Routing rules for Jabber gateway First step is to
-   configure OpenSER to recognize messages for Jabber gateway.
-   Look at "doc/xjab.cfg" to see a sample. The idea is to look in
-   messages for destination address and if it contains Jabber
-   alias or other IM alias, that means the message is for Jabber
-   gateway.
+   *** Routing rules for Jabber gateway First step is to configure
+   OpenSER to recognize messages for Jabber gateway. Look at
+   "doc/xjab.cfg" to see a sample. The idea is to look in messages
+   for destination address and if it contains Jabber alias or
+   other IM alias, that means the message is for Jabber gateway.
 
    Next step is to find out what means that message for Jabber
    gateway. It could be a special message what triggers the
@@ -186,13 +184,11 @@ Note
      * For Jabber network:
        "username<delim>jabber_server@jabber_alias".
      * For Jabber conference:
-       "nickname<delim>room<delim>conference_server@jabber_alias"
-       .
+       "nickname<delim>room<delim>conference_server@jabber_alias".
      * For AIM network: "aim_username@aim_alias".
      * For ICQ network: "icq_number@icq_alias".
-     * For MSN network:
-       "msn_username<delim>msn_server@msn_alias". msn_server can
-       be "msn.com" or "hotmail.com".
+     * For MSN network: "msn_username<delim>msn_server@msn_alias".
+       msn_server can be "msn.com" or "hotmail.com".
      * For YAHOO network: "yahoo_username@yahoo_alias".
 
 Note
@@ -207,10 +203,10 @@ Note
    gateway is not able to create new account in foreign networks,
    excepting local Jabber server.
 
-   When you want to send a message to someone in other IM
-   network, you must set the destination of the message according
-   with the pattern corresponding to that IM network (see last
-   part of "Admin guide" chapter).
+   When you want to send a message to someone in other IM network,
+   you must set the destination of the message according with the
+   pattern corresponding to that IM network (see last part of
+   "Admin guide" chapter).
 
    Sending a message to user@jabber.xxx.org which is in Jabber
    network, the destination must be:
@@ -221,10 +217,10 @@ Note
 
 Note
 
-   The OpenSER administrator have to set the Jabber transports
-   for each IM network in order to be able to send messages to
-   those networks. The alias of each IM network can be found out
-   from OpenSER admin.
+   The OpenSER administrator have to set the Jabber transports for
+   each IM network in order to be able to send messages to those
+   networks. The alias of each IM network can be found out from
+   OpenSER admin.
 
    You cannot send messages from your SIP client to your
    associated Jabber account--is something like sending messages
@@ -251,7 +247,7 @@ Note
 
    SQL URL of database.
 
-   Default value is "mysql://root@127.0.0.1/sip_jab". 
+   Default value is "mysql://root@127.0.0.1/sip_jab".
 
    Example 1.1. Set db_url parameter
 ...
@@ -263,7 +259,7 @@ modparam("jabber", "db_url", "mysql://username:password@host/sip_jab")
    IP or hostname of Jabber server -- it must be the same as the
    value from <host> tag of Jabber server config file.
 
-   Default value is "127.0.0.1". 
+   Default value is "127.0.0.1".
 
    Example 1.2. Set jaddress parameter
 ...
@@ -274,7 +270,7 @@ modparam("jabber", "jaddress", "1.2.3.4")
 
    Port number of Jabber server.
 
-   Default value is "5222". 
+   Default value is "5222".
 
    Example 1.3. Set jport parameter
 ...
@@ -283,8 +279,8 @@ modparam("jabber", "jport", 1234)
 
 1.5.4. jdomain (string)
 
-   Format: jabber.sipserver.com=<delim>. If the destination is
-   for Jabber network the URI should be like:
+   Format: jabber.sipserver.com=<delim>. If the destination is for
+   Jabber network the URI should be like:
    username<delim>jabber_server@jdomain or
    nickname<delim>roomname<delim>conference_server@jdomain
 
@@ -293,7 +289,7 @@ modparam("jabber", "jport", 1234)
    username@jabber_server or roomname@conference_server/nickname
    before the message is sent to Jabber server.
 
-   Default value is none. 
+   Default value is none.
 
    Example 1.4. Set jdomain parameter
 ...
@@ -311,14 +307,14 @@ modparam("jabber", "jdomain", "jabber.sipserver.com=*")
    destination address contains <aliasX>.
 
    (Ex: jdomain is 'jabber.x.com=*' and msn_alias is
-   'msn.x.com=%'. The destination address forM MSN Network, on
-   SIP side, is like 'username*hotmail.com@msn.x.com'. The
-   destination address will be transformed to
+   'msn.x.com=%'. The destination address forM MSN Network, on SIP
+   side, is like 'username*hotmail.com@msn.x.com'. The destination
+   address will be transformed to
    'username%hotmail.com@msn.x.com'. 'msn.x.com' must be the same
    as the JID associated with MSN transport in Jabber
    configuration file (usually is 'jabberd.xml'))
 
-   Default value is none. 
+   Default value is none.
 
    Example 1.5. Set jdomain parameter
 ...
@@ -347,7 +343,7 @@ modparam("jabber", "proxy", "10.0.0.1:5060 sipserver.com:5060")
    The address in whose behalf the INFO and ERROR messages are
    sent.
 
-   Default value is "jabber_gateway@127.0.0.1". 
+   Default value is "jabber_gateway@127.0.0.1".
 
    Example 1.7. Set registrar parameter
 ...
@@ -358,7 +354,7 @@ modparam("jabber", "registrar", "jabber_gateway@127.0.0.1")
 
    Number of workers.
 
-   Default value is 2. 
+   Default value is 2.
 
    Example 1.8. Set workers parameter
 ...
@@ -369,7 +365,7 @@ modparam("jabber", "workers", 2)
 
    Maximum jobs per worker.
 
-   Default value is 10. 
+   Default value is 10.
 
    Example 1.9. Set max_jobs parameter
 ...
@@ -380,7 +376,7 @@ modparam("jabber", "max_jobs", 10)
 
    Cache time of a Jabber connection.
 
-   Default value is 600. 
+   Default value is 600.
 
    Example 1.10. Set cache_time parameter
 ...
@@ -391,7 +387,7 @@ modparam("jabber", "cache_time", 600)
 
    Time to keep a SIP message (in seconds).
 
-   Default value is 90 seconds. 
+   Default value is 90 seconds.
 
    Example 1.11. Set delay_time parameter
 ...
@@ -402,7 +398,7 @@ modparam("jabber", "delay_time", 90)
 
    Time between expired Jabber connections checking (in seconds).
 
-   Default value is 20 seconds. 
+   Default value is 20 seconds.
 
    Example 1.12. Set sleep_time parameter
 ...
@@ -414,7 +410,7 @@ modparam("jabber", "sleep_time", 20)
    Time between checking the status of JabberGW workers (in
    seconds).
 
-   Default value is 20 seconds. 
+   Default value is 20 seconds.
 
    Example 1.13. Set check_time parameter
 ...
@@ -425,7 +421,7 @@ modparam("jabber", "check_time", 20)
 
    Presence priority for Jabber gateway.
 
-   Default value is "9". 
+   Default value is "9".
 
    Example 1.14. Set priority parameter
 ...

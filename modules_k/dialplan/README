@@ -352,7 +352,7 @@ xlog("translated to var $var(y) \n");
    dialplan-create.sql script in the database directories in the
    openser/scripts folder. You can also find the complete database
    documentation on the project webpage,
-   http://www.openser.org/docs/db-tables/openser-db-devel.html.
+   http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
 
 Chapter 2. Developer's Guide
 

@@ -12,8 +12,8 @@ Daniel-Constantin Mierla
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -245,7 +245,7 @@ sip_trace();
    siptrace-create.sql SQL script in the database directories in
    the openser/scripts folder as template. You can also find the
    complete database documentation on the project webpage,
-   http://www.openser.org/docs/db-tables/openser-db-devel.html.
+   http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
 
 1.7. Known issues
 

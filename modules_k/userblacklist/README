@@ -201,7 +201,7 @@ openserctl fifo reload_blacklist
    parameters so they can be changed, but the name of the columns
    must be as they are in the SQL script. You can also find the
    complete database documentation on the project webpage,
-   http://www.openser.org/docs/db-tables/openser-db-devel.html.
+   http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
 
    Example 1.7. Example database content - globalblacklist table
 ...

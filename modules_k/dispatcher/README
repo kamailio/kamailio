@@ -1,4 +1,3 @@
-
 DISPATCHER Module
 
 Daniel-Constantin Mierla
@@ -22,8 +21,8 @@ Carsten Bock
    Copyright © 2005 Voice-System.RO
    Revision History
    Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-   (Wed, 19 Mar 2008) $
-     _________________________________________________________
+                              (Mi, 19 MÃ¤r 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -59,20 +58,20 @@ Carsten Bock
 
         1.4. Exported Functions
 
-              1.4.1. ds_select_dst(set, alg) 
-              1.4.2. ds_select_domain(set, alg) 
-              1.4.3. ds_next_dst() 
-              1.4.4. ds_next_domain() 
-              1.4.5. ds_mark_dst() 
-              1.4.6. ds_mark_dst("s") 
-              1.4.7. ds_is_from_list() 
-              1.4.8. ds_is_from_list("group") 
+              1.4.1. ds_select_dst(set, alg)
+              1.4.2. ds_select_domain(set, alg)
+              1.4.3. ds_next_dst()
+              1.4.4. ds_next_domain()
+              1.4.5. ds_mark_dst()
+              1.4.6. ds_mark_dst("s")
+              1.4.7. ds_is_from_list()
+              1.4.8. ds_is_from_list("group")
 
         1.5. Exported MI Functions
 
-              1.5.1. ds_set_state 
-              1.5.2. ds_list 
-              1.5.3. ds_reload 
+              1.5.1. ds_set_state
+              1.5.2. ds_list
+              1.5.3. ds_reload
 
         1.6. Installation and Running
 
@@ -111,10 +110,10 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This modules implements a dispatcher for destination
-   addresses. It computes hashes over parts of the request and
-   selects an address from a destination set. The selected
-   address is used then as outbound proxy.
+   This modules implements a dispatcher for destination addresses.
+   It computes hashes over parts of the request and selects an
+   address from a destination set. The selected address is used
+   then as outbound proxy.
 
    The module can be used as a stateless load balancer, having no
    guarantee of fair distribution.
@@ -139,7 +138,7 @@ Chapter 1. Admin Guide
    Path to the file with destination sets.
 
    Default value is "/etc/openser/dispatcher.list" or
-   "/usr/local/etc/openser/dispatcher.list". 
+   "/usr/local/etc/openser/dispatcher.list".
 
    Example 1.1. Set the "list_file" parameter
 ...
@@ -151,12 +150,12 @@ modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
    If you want to load the sets of gateways from the database you
    must set this parameter.
 
-   Default value is "NULL" (disable DB support). 
+   Default value is "NULL" (disable DB support).
 
    Example 1.2. Set "db_url" parameter
 ...
-modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/databas
-e")
+modparam("dispatcher", "db_url", "mysql://user:passwb@localhost/database
+")
 ...
 
 1.3.3. table_name (string)
@@ -164,7 +163,7 @@ e")
    If you want to load the sets of gateways from the database you
    must set this parameter as the database name.
 
-   Default value is "dispatcher". 
+   Default value is "dispatcher".
 
    Example 1.3. Set "table_name" parameter
 ...
@@ -176,7 +175,7 @@ modparam("dispatcher", "table_name", "my_dispatcher")
    The column's name in the database storing the gateway's group
    id.
 
-   Default value is "setid". 
+   Default value is "setid".
 
    Example 1.4. Set "setid_col" parameter
 ...
@@ -185,10 +184,10 @@ modparam("dispatcher", "setid_col", "groupid")
 
 1.3.5. destination_col (string)
 
-   The column's name in the database storing the destination's
-   sip uri.
+   The column's name in the database storing the destination's sip
+   uri.
 
-   Default value is "destination". 
+   Default value is "destination".
 
    Example 1.5. Set "destination_col" parameter
 ...
@@ -200,7 +199,7 @@ modparam("dispatcher", "destination_col", "uri")
    The column's name in the database storing the flags for
    destination uri.
 
-   Default value is "flags". 
+   Default value is "flags".
 
    Example 1.6. Set "flags_col" parameter
 ...
@@ -209,10 +208,10 @@ modparam("dispatcher", "flags_col", "dstflags")
 
 1.3.7. force_dst (int)
 
-   If set to 1, force overwriting of destination address when
-   that is already set.
+   If set to 1, force overwriting of destination address when that
+   is already set.
 
-   Default value is "0". 
+   Default value is "0".
 
    Example 1.7. Set the "force_dst" parameter
 ...
@@ -221,46 +220,44 @@ modparam("dispatcher", "force_dst", 1)
 
 1.3.8. flags (int)
 
-   Various flags that affect dispatcher's behaviour. The flags
-   are defined as a bitmask on an integer value. If flag 1 is set
-   only the username part of the uri will be used when computing
-   an uri based hash. If no flags are set the username, hostname
-   and port will be used The port is used only if different from
-   5060 (normal sip uri) or 5061 (in the sips case).
+   Various flags that affect dispatcher's behaviour. The flags are
+   defined as a bitmask on an integer value. If flag 1 is set only
+   the username part of the uri will be used when computing an uri
+   based hash. If no flags are set the username, hostname and port
+   will be used The port is used only if different from 5060
+   (normal sip uri) or 5061 (in the sips case).
 
    If flag 2 is set, then the failover support is enabled. The
    functions exported by the module will store the rest of
    addresses from the destination set in AVP, and use these AVPs
    to contact next address when the current-tried fails.
 
-   Default value is "0". 
+   Default value is "0".
 
    Example 1.8. Set the "flags" parameter
  ...
  modparam("dispatcher", "flags", 3)
  ...
 
-
 1.3.9. use_default (int)
 
    If the parameter is set to 1, the last address in destination
-   set is used as last option to send the message. For example,
-   it is good when wanting to send the call to an anouncement
-   server saying: "the gateways are full, try later".
+   set is used as last option to send the message. For example, it
+   is good when wanting to send the call to an anouncement server
+   saying: "the gateways are full, try later".
 
-   Default value is "0". 
+   Default value is "0".
 
    Example 1.9. Set the "use_default" parameter
  ...
  modparam("dispatcher", "use_default", 1)
  ...
 
-
 1.3.10. dst_avp (str)
 
-   The name of the avp which will hold the list with addresses,
-   in the order they have been selected by the chosen algorithm.
-   If use_default is 1, the value of last dst_avp_id is the last
+   The name of the avp which will hold the list with addresses, in
+   the order they have been selected by the chosen algorithm. If
+   use_default is 1, the value of last dst_avp_id is the last
    address in destination set. The first dst_avp_id is the
    selected destinations. All the other addresses from the
    destination set will be added in the avp list to be able to
@@ -271,13 +268,12 @@ Note
    You must set this parameter if you want do do load balancing
    fail over.
 
-   Default value is "null" - don't add AVPs. 
+   Default value is "null" - don't add AVPs.
 
    Example 1.10. Set the "dst_avp" parameter
  ...
  modparam("dispatcher", "dst_avp", "$avp(i:271)")
  ...
-
 
 1.3.11. grp_avp (str)
 
@@ -289,31 +285,29 @@ Note
    You must set this parameter if you want do do load balancing
    fail over.
 
-   Default value is "null" - don't add AVP. 
+   Default value is "null" - don't add AVP.
 
    Example 1.11. Set the "grp_avp" parameter
  ...
  modparam("dispatcher", "grp_avp", "$avp(i:272)")
  ...
 
-
 1.3.12. cnt_avp (str)
 
-   The name of the avp storing the number of destination
-   addresses kept in dst_avp avps.
+   The name of the avp storing the number of destination addresses
+   kept in dst_avp avps.
 
 Note
 
    You must set this parameter if you want do do load balancing
    fail over.
 
-   Default value is "null" - don't add AVP. 
+   Default value is "null" - don't add AVP.
 
    Example 1.12. Set the "cnt_avp" parameter
  ...
  modparam("dispatcher", "cnt_avp", "$avp(i:273)")
  ...
-
 
 1.3.13. hash_pvar (str)
 
@@ -324,32 +318,29 @@ Note
    You must set this parameter if you want do hashing over custom
    message parts.
 
-   Default value is "null" - disabled. 
+   Default value is "null" - disabled.
 
    Example 1.13. Use $avp(i:273) for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "$avp(i:273)")
  ...
 
-
    Example 1.14. Use combination of PVs for hashing:
  ...
  modparam("dispatcher", "hash_pvar", "hash the $fU@$ci")
  ...
-
 
 1.3.14. setid_pvar (str)
 
    The name of the PV where to store the set ID (group ID) when
    calling ds_is_from_list() with no parameter.
 
-   Default value is "null" - don't set PV. 
+   Default value is "null" - don't set PV.
 
    Example 1.15. Set the "setid_pvar" parameter
  ...
  modparam("dispatcher", "setid_pvar", "$var(setid)")
  ...
-
 
 1.3.15. ds_ping_method (string)
 
@@ -357,13 +348,12 @@ Note
    probe the failed gateways. This method is only available, if
    compiled with the probing of failed gateways enabled.
 
-   Default value is "OPTIONS". 
+   Default value is "OPTIONS".
 
    Example 1.16. Set the "ds_ping_method" parameter
  ...
  modparam("dispatcher", "ds_ping_method", "INFO")
  ...
-
 
 1.3.16. ds_ping_from (string)
 
@@ -372,13 +362,12 @@ Note
    available, if compiled with the probing of failed gateways
    enabled.
 
-   Default value is "sip:dispatcher@localhost". 
+   Default value is "sip:dispatcher@localhost".
 
    Example 1.17. Set the "ds_ping_from" parameter
  ...
  modparam("dispatcher", "ds_ping_from", "sip:proxy@sip.somehost.com")
  ...
-
 
 1.3.17. ds_ping_interval (int)
 
@@ -387,44 +376,41 @@ Note
    the TM-Module is loaded. If set to "0", the pinging of failed
    requests is disabled.
 
-   Default value is "10". 
+   Default value is "10".
 
    Example 1.18. Set the "ds_ping_interval" parameter
  ...
  modparam("dispatcher", "ds_ping_interval", 30)
  ...
 
-
 1.3.18. ds_probing_threshhold (int)
 
-   If you want to set a gateway into probing mode, you will need
-   a specific number of requests until it will change from
-   "active" to probing. The number of attempts can be set with
-   this parameter.
+   If you want to set a gateway into probing mode, you will need a
+   specific number of requests until it will change from "active"
+   to probing. The number of attempts can be set with this
+   parameter.
 
-   Default value is "3". 
+   Default value is "3".
 
    Example 1.19. Set the "ds_probing_threshhold" parameter
  ...
  modparam("dispatcher", "ds_probing_threshhold", 10)
  ...
 
-
 1.3.19. ds_probing_mode (int)
 
-   Controls what gateways are tested to see if they are
-   reachable. If set to 0, only the gateways with state PROBING
-   are tested, if set to 1, all gateways are tested. If set to 1
-   and the response is 407 (timeout), an active gateway is set to
-   PROBING state.
+   Controls what gateways are tested to see if they are reachable.
+   If set to 0, only the gateways with state PROBING are tested,
+   if set to 1, all gateways are tested. If set to 1 and the
+   response is 407 (timeout), an active gateway is set to PROBING
+   state.
 
-   Default value is "0". 
+   Default value is "0".
 
    Example 1.20. Set the "ds_probing_mode" parameter
  ...
  modparam("dispatcher", "ds_probing_mode", 1)
  ...
-
 
 1.4. Exported Functions
 
@@ -435,16 +421,15 @@ Note
    Meaning of the parameters is as follows:
      * set - the id of the set from where to pick up destination
        address. It is the first column in destination list file.
-     * alg - the algorithm used to select the destination
-       address.
+     * alg - the algorithm used to select the destination address.
           + "0" - hash over callid
           + "1" - hash over from uri.
           + "2" - hash over to uri.
           + "3" - hash over request-uri.
           + "4" - round-robin (next destination).
           + "5" - hash over authorization-username
-            (Proxy-Authorization or "normal" authorization). If
-            no username is found, round robin is used.
+            (Proxy-Authorization or "normal" authorization). If no
+            username is found, round robin is used.
           + "6" - random (using rand()).
           + "7" - hash over the content of PVs string. Note: This
             works only when the parameter hash_pvar is set.
@@ -466,8 +451,8 @@ ds_select_dst("1", "0");
 1.4.2.  ds_select_domain(set, alg)
 
    The method selects a destination from addresses set and
-   rewrites the host and port from R-URI. The parameters have
-   same meaning as for ds_select_dst().
+   rewrites the host and port from R-URI. The parameters have same
+   meaning as for ds_select_dst().
 
    If the bit 2 in 'flags' is set, the rest of the addresses from
    the destination set is stored in AVP list. You can use
@@ -492,8 +477,8 @@ ds_select_dst("1", "0");
 
 1.4.5.  ds_mark_dst()
 
-   Mark the last used address from destination set as inactive,
-   in order to be ingnored in the future. In this way it can be
+   Mark the last used address from destination set as inactive, in
+   order to be ingnored in the future. In this way it can be
    implemented an automatic detection of failed gateways. When an
    address is marked as inactive, it will be ignored by
    'ds_select_dst' and 'ds_select_domain'.
@@ -523,16 +508,16 @@ ds_select_dst("1", "0");
 
 1.4.7.  ds_is_from_list()
 
-   This function returns true, if the current request comes from
-   a host from the dispatcher-list; otherwise false.
+   This function returns true, if the current request comes from a
+   host from the dispatcher-list; otherwise false.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE and ONREPLY_ROUTE.
 
 1.4.8.  ds_is_from_list("group")
 
-   This function returns true, if the current request comes from
-   a host in the given group of the dispatcher-list; otherwise
+   This function returns true, if the current request comes from a
+   host in the given group of the dispatcher-list; otherwise
    false.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -592,8 +577,8 @@ ds_select_dst("1", "0");
    Each destination point must be on one line. First token is the
    set id, followed by destination address. Optionally, the third
    field can be flags value (1 - destination inactive, 2 -
-   destination in probing mod -- you can do bitwise OR to set
-   both flags). The set id must be an integer value. Destination
+   destination in probing mod -- you can do bitwise OR to set both
+   flags). The set id must be an integer value. Destination
    address must be a valid SIP URI. Empty lines or lines starting
    with "#" are ignored.
 
@@ -672,45 +657,49 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   Does dispatcher provide a fair distribution?
+       Does dispatcher provide a fair distribution?
 
-   There is no guarantee of that. You should do some measurements
-   to decide what distribution algorithm fits better in your
-   environment.
+       There is no guarantee of that. You should do some measurements
+       to decide what distribution algorithm fits better in your
+       environment.
+
    2.2.
 
-   Is dispatcher dialog stateful?
+       Is dispatcher dialog stateful?
 
-   No. Dispatcher is stateless, although some distribution
-   algorithms are designed to select same destination for
-   subsequent requests of the same dialog (e.g., hashing the
-   call-id).
+       No. Dispatcher is stateless, although some distribution
+       algorithms are designed to select same destination for
+       subsequent requests of the same dialog (e.g., hashing the
+       call-id).
+
    2.3.
 
-   Where can I find more about OpenSER?
+       Where can I find more about OpenSER?
 
-   Take a look at http://www.openser.org/.
+       Take a look at http://www.kamailio.org/.
+
    2.4.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
-     * User Mailing List -
-       http://lists.openser.org/cgi-bin/mailman/listinfo/users
-     * Developer Mailing List -
-       http://lists.openser.org/cgi-bin/mailman/listinfo/devel
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-   E-mails regarding any stable version should be sent to
-   <users@lists.openser.org> and e-mail regarding development
-   versions or CVS snapshots should be send to
-   <devel@lists.openser.org>.
+       E-mails regarding any stable version should be sent to
+       <users@lists.kamailio.org> and e-mail regarding development
+       versions or CVS snapshots should be send to
+       <devel@lists.kamailio.org>.
 
-   If you want to keep the mail private, send it to
-   <team@lists.openser.org>.
+       If you want to keep the mail private, send it to
+       <team@lists.kamailio.org>.
+
    2.5.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143
