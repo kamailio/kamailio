@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2005 Voice Sistem SRL
  *
- * This file is part of openser, a free SIP server.
+ * This file is part of Kamailio, a free SIP server.
  *
  * UAC OpenSER-module is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
