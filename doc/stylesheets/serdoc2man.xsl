@@ -64,6 +64,9 @@
   <xsl:text>(5)</xsl:text>
 </xsl:template>
 
+<xsl:template match="serdoc:prototype">
+  <xsl:call-template name="inline-bold-monospace"/>
+</xsl:template>
 
 <xsl:template match="serdoc:paraminfo">
   <para>
@@ -95,7 +98,9 @@
   <xsl:call-template name="inline-monospace" />
 </xsl:template>
 
-<xsl:template match="serdoc:optional">
+
+
+<xsl:template match="optional">
   <xsl:text>[</xsl:text>
   <xsl:apply-templates />
   <xsl:text>]</xsl:text>
