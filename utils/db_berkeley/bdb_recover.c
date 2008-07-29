@@ -173,7 +173,7 @@ int create_all(void)
 	
 #ifdef EXTRA_DEBUG
 	tim2 = time(NULL);
-	i = tim2 - tim1;
+	int i = tim2 - tim1;
 	printf("took %i sec\n", i);
 #endif
 
