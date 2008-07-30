@@ -22,7 +22,7 @@ Andreea-Ancuta Onofrei
         1.3. Usage cases
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported Parameters
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * None
@@ -124,7 +124,7 @@ Chapter 1. Admin Guide
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.5. Exported Parameters
@@ -359,5 +359,5 @@ Chapter 2. Developer's Guide
    Revision History
    Revision $Revision: 1.1 $ $Date: 2007/08/30 13:16:22 $
 
-   The module does not provide any API to use in other OpenSER
+   The module does not provide any API to use in other Kamailio
    modules.

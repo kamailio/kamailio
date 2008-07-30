@@ -36,7 +36,7 @@ Juha Heinanen
 
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -129,7 +129,7 @@ Chapter 1. Admin Guide
    When allow_routing function is called it tries to find a rule
    that matches selected fields of the message.
 
-   OpenSER is a forking proxy and therefore a single message can
+   Kamailio is a forking proxy and therefore a single message can
    be sent to different destinations simultaneously. When checking
    permissions all the destinations must be checked and if one of
    them fails, the forwarding will fail.
@@ -250,15 +250,15 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other OpenSER modules.
+     * No dependencies on other Kamailio modules.
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.3. Exported Parameters

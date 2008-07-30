@@ -22,7 +22,7 @@ Bogdan-Andrei Iancu
         1.2. Accounting
         1.3. Dependencies
 
-              1.3.1. OpenSER Modules
+              1.3.1. Kamailio Modules
               1.3.2. External Libraries or Applications
 
         1.4. Exported Parameters
@@ -60,7 +60,7 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    UAC REDIRECT - User Agent Client redirection - module enhance
-   OpenSER with the functionality of being able to handle
+   Kamailio with the functionality of being able to handle
    (interpret, filter, log and follow) redirect responses ( 3xx
    replies class).
 
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 
 1.3. Dependencies
 
-1.3.1. OpenSER Modules
+1.3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * TM - Transaction Module, for accessing replies.
@@ -111,7 +111,7 @@ Chapter 1. Admin Guide
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None
 
 1.4. Exported Parameters

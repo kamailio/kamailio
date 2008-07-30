@@ -12,8 +12,8 @@ Dan Pascu
 
    Copyright © 2008 Dan Pascu
    Revision History
-   Revision $Revision$ $Date: 2008-05-21 22:26:43 +0300
-                              (Wed, 21 May 2008) $
+   Revision $Revision$ $Date: 2008-06-02 22:49:34 +0200
+                              (Mo, 02 Jun 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -29,7 +29,7 @@ Dan Pascu
 
         1.3. Dependencies
 
-              1.3.1. OpenSER Modules
+              1.3.1. Kamailio Modules
               1.3.2. External Libraries or Applications
 
         1.4. Exported parameters
@@ -356,7 +356,7 @@ Chapter 1. Admin Guide
 
 1.3. Dependencies
 
-1.3.1. OpenSER Modules
+1.3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * sl module - if keepalive is enabled.
@@ -367,7 +367,7 @@ Chapter 1. Admin Guide
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.4. Exported parameters
@@ -455,16 +455,16 @@ R\r\nX-MyHeader: some_value\r\n")
 
    Specifies a filename where information about the NAT endpoints
    and the conditions for which they are being kept alive is saved
-   when OpenSER exits. The information in this file is then used
-   when OpenSER starts to restore its internal state and continue
+   when Kamailio exits. The information in this file is then used
+   when Kamailio starts to restore its internal state and continue
    to send keepalive messages to the NAT endpoints that have not
-   expired in the meantime. This is useful when restarting OpenSER
-   to avoid losing keepalive state information about the NAT
-   endpoints. The internal keepalive state is guaranteed to be
-   saved in this file on exit, even when OpenSER crashes.
+   expired in the meantime. This is useful when restarting
+   Kamailio to avoid losing keepalive state information about the
+   NAT endpoints. The internal keepalive state is guaranteed to be
+   saved in this file on exit, even when Kamailio crashes.
 
    The value of this parameter can be either a relative path, in
-   which case it will store it in the OpenSER working directory,
+   which case it will store it in the Kamailio working directory,
    or an absolute path.
 
    Default value is undefined "keepalive_state".
@@ -487,7 +487,7 @@ alive_state")
 
      * 1 - tests if client has a private IP address (as defined by
        RFC1918) in the Contact field of the SIP message.
-     * 2 - tests if client has contacted OpenSER from an address
+     * 2 - tests if client has contacted Kamailio from an address
        that is different from the one in the Via field. Both the
        IP and port are compared by this test.
      * 4 - tests if client has a private IP address (as defined by

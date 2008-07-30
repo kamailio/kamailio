@@ -21,7 +21,7 @@ Bogdan Iancu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -55,14 +55,14 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The SL module allows OpenSER to act as a stateless UA server
+   The SL module allows Kamailio to act as a stateless UA server
    and generate replies to SIP requests without keeping state.
    That is beneficial in many scenarios, in which you wish not to
    burden server's memory and scale well.
 
    The SL module needs to filter ACKs sent after a local stateless
    reply to an INVITE was generated. To recognize such ACKs,
-   OpenSER adds a special "signature" in to-tags. This signature
+   Kamailio adds a special "signature" in to-tags. This signature
    is sought for in incoming ACKs, and if included, the ACKs are
    absorbed.
 
@@ -77,22 +77,22 @@ Chapter 1. Admin Guide
    these matter to you, better use stateful processing (tm module)
    for INVITE processing. Particularly, the problem happens when a
    UA sends an INVITE which already has a to-tag in it (e.g., a
-   re-INVITE) and OpenSER want to reply to it. Than, it will keep
-   the current to-tag, which will be mirrored in ACK. OpenSER will
-   not see its signature and forward the ACK downstream. Caused
-   harm is not bad--just a useless ACK is forwarded.
+   re-INVITE) and Kamailio want to reply to it. Than, it will keep
+   the current to-tag, which will be mirrored in ACK. Kamailio
+   will not see its signature and forward the ACK downstream.
+   Caused harm is not bad--just a useless ACK is forwarded.
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other OpenSER modules.
+     * No dependencies on other Kamailio modules.
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.3. Exported Parameters

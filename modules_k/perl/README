@@ -23,7 +23,7 @@ Bastian Friedrich
         1.3. Using the module
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported Parameters
@@ -244,7 +244,7 @@ if (perl_exec("ldap_alias")) {
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * The "sl" module is needed for sending replies uppon fatal
@@ -254,7 +254,7 @@ if (perl_exec("ldap_alias")) {
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * Perl 5.8.x or later
 
    Additionally, a number of perl modules should be installed. The
@@ -1335,7 +1335,7 @@ Chapter 4. Frequently Asked Questions
 
    4.2.
 
-       Where can I find more about OpenSER?
+       Where can I find more about Kamailio?
 
        Take a look at http://www.kamailio.org/.
 
@@ -1350,7 +1350,7 @@ Chapter 4. Frequently Asked Questions
          * Developer Mailing List -
            http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-       E-mails regarding any stable OpenSER release should be sent to
+       E-mails regarding any stable Kamailio release should be sent to
        <users@lists.kamailio.org> and e-mails regarding development
        versions should be sent to <devel@lists.kamailio.org>.
 

@@ -21,7 +21,7 @@ Bastian Friedrich
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -50,7 +50,7 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    The Perl Virtual Database (VDB) provides a virtualization
-   framework for OpenSER's database access. It does not handle a
+   framework for Kamailio's database access. It does not handle a
    particular database engine itself but lets the user relay
    database requests to arbitrary Perl functions.
 
@@ -58,9 +58,9 @@ Chapter 1. Admin Guide
    supply functionality dedicated to the client module. See below
    for options.
 
-   The module can be used in all current OpenSER modules that need
-   database access. Relaying of insert, update, query and delete
-   operations is supported.
+   The module can be used in all current Kamailio modules that
+   need database access. Relaying of insert, update, query and
+   delete operations is supported.
 
    Modules can be configured to use the perlvdb module as database
    backend using the db_url_parameter:
@@ -74,7 +74,7 @@ race")
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * perl -- Perl module
@@ -82,7 +82,7 @@ race")
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None (Besides the ones mentioned in the perl module
        documentation).
 

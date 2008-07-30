@@ -21,7 +21,7 @@ Anca-Maria Vamanu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * a database module.
@@ -320,5 +320,5 @@ if(method=="NOTIFY")
 
 Chapter 2. Developer Guide
 
-   The module provides no functions to be used in other OpenSER
+   The module provides no functions to be used in other Kamailio
    modules.

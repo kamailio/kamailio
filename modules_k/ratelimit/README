@@ -22,8 +22,8 @@ Hendrik Scholz
 
    Copyright © 2008 VoIP Embedded Inc.
    Revision History
-   Revision $Revision: 3939 $ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision: 3939 $ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -43,7 +43,7 @@ Hendrik Scholz
 
         1.5. Dependencies
 
-              1.5.1. OpenSER Modules
+              1.5.1. Kamailio Modules
               1.5.2. External Libraries or Applications
 
         1.6. Exported Parameters
@@ -194,15 +194,15 @@ Chapter 1. Admin Guide
 
 1.5. Dependencies
 
-1.5.1. OpenSER Modules
+1.5.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other OpenSER modules.
+     * No dependencies on other Kamailio modules.
 
 1.5.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.6. Exported Parameters

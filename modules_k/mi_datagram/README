@@ -22,7 +22,7 @@ Andreea-Ancuta Onofrei
         1.2. DATAGRAM command syntax
         1.3. Dependencies
 
-              1.3.1. OpenSER Modules
+              1.3.1. Kamailio Modules
               1.3.2. External Libraries or Applications
 
         1.4. Exported Parameters
@@ -75,15 +75,15 @@ Chapter 1. Admin Guide
 
 1.3. Dependencies
 
-1.3.1. OpenSER Modules
+1.3.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other OpenSER modules.
+     * No dependencies on other Kamailio modules.
 
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * none
 
 1.4. Exported Parameters
@@ -227,7 +227,7 @@ Chapter 2. Frequently Asked Questions
          * Developer Mailing List -
            http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-       E-mails regarding any stable OpenSER release should be sent to
+       E-mails regarding any stable Kamailio release should be sent to
        <users@lists.kamailio.org> and e-mails regarding development
        versions should be sent to <devel@lists.kamailio.org>.
 

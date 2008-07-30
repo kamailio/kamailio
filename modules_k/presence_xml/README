@@ -21,7 +21,7 @@ Anca-Maria Vamanu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -62,7 +62,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * a database module.
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * libxml.
 
 1.3. Exported Parameters
@@ -191,5 +191,5 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 
 Chapter 2. Developer Guide
 
-   The module exports no function to be used in other OpenSER
+   The module exports no function to be used in other Kamailio
    modules.

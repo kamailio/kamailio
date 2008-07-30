@@ -28,7 +28,7 @@ Daniel-Constantin Mierla
         1.3. Admin Guide
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported Parameters
@@ -125,20 +125,20 @@ Note
    Main steps of using the Jabber gateway:
      * Create the MySQL database.
      * Setup the local Jabber server.
-     * Set the module parameter values in cfg file of OpenSER,
+     * Set the module parameter values in cfg file of Kamailio,
        load the dependent modules, set up the routing rules for
        Jabber gateway.
-     * Run OpenSER.
+     * Run Kamailio.
 
-   The administrator of OpenSER/Jabber gateway must inform the
+   The administrator of Kamailio/Jabber gateway must inform the
    users what are the aliases for Jabber/Other IM networks. Other
    IMs could be AIM, ICQ, MSN, Yahoo, and so on.
 
-   These aliases depend on the server hostname where runs OpenSER
+   These aliases depend on the server hostname where runs Kamailio
    and how local Jabber server is setup.
 
    Next is presented a use case. Prologue:
-     * OpenSER is running on "server.org".
+     * Kamailio is running on "server.org".
      * Local Jabber server is running on "jabsrv.server.org".
      * Jabber network alias (first part of "jdomain") is
        "jabber.server.org"
@@ -156,10 +156,10 @@ Note
 
    It is indicated to have these aliases in DNS, thus the client
    application can resolve the DNS name. Otherwise there must be
-   set the outbound proxy to OpenSER server.
+   set the outbound proxy to Kamailio server.
 
    *** Routing rules for Jabber gateway First step is to configure
-   OpenSER to recognize messages for Jabber gateway. Look at
+   Kamailio to recognize messages for Jabber gateway. Look at
    "doc/xjab.cfg" to see a sample. The idea is to look in messages
    for destination address and if it contains Jabber alias or
    other IM alias, that means the message is for Jabber gateway.
@@ -217,10 +217,10 @@ Note
 
 Note
 
-   The OpenSER administrator have to set the Jabber transports for
-   each IM network in order to be able to send messages to those
-   networks. The alias of each IM network can be found out from
-   OpenSER admin.
+   The Kamailio administrator have to set the Jabber transports
+   for each IM network in order to be able to send messages to
+   those networks. The alias of each IM network can be found out
+   from Kamailio admin.
 
    You cannot send messages from your SIP client to your
    associated Jabber account--is something like sending messages
@@ -228,7 +228,7 @@ Note
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * A database module.
@@ -238,7 +238,7 @@ Note
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * Expat library.
 
 1.5. Exported Parameters

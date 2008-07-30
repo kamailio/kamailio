@@ -27,8 +27,8 @@ Jan Janak
 
    Copyright © 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
+                              (Sa, 08 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -39,7 +39,7 @@ Jan Janak
         1.2. Additional Credentials
         1.3. Dependencies
 
-              1.3.1. OpenSER Modules
+              1.3.1. Kamailio Modules
               1.3.2. External Libraries or Applications
 
         1.4. Exported Parameters
@@ -92,7 +92,7 @@ Chapter 1. Admin Guide
      * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
      * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 
-   All additional credentials will be stored as OpenSER AVPs
+   All additional credentials will be stored as Kamailio AVPs
    (SIP_AVP_NAME = SIP_AVP_VALUE).
 
    The RPID value may be fetch via this mechanism.
@@ -111,7 +111,7 @@ Chapter 1. Admin Guide
 
 1.3. Dependencies
 
-1.3.1. OpenSER Modules
+1.3.1. Kamailio Modules
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
@@ -120,7 +120,7 @@ Chapter 1. Admin Guide
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before compilling OpenSER with this module loaded:
+   before compilling Kamailio with this module loaded:
      * radiusclient-ng 0.5.0 or higher -- library and development
        files. See
        http://developer.berlios.de/projects/radiusclient-ng/.

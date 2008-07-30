@@ -139,9 +139,9 @@ modparam("enum", "domain_suffix", "e1234.arpa.")
 
 Note
 
-   Currently OpenSER does not support tel URIs. This means that at
-   present tel_uri_params is appended as URI parameters to every
-   URI.
+   Currently Kamailio does not support tel URIs. This means that
+   at present tel_uri_params is appended as URI parameters to
+   every URI.
 
    Default value is ""
 

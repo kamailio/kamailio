@@ -24,7 +24,7 @@ Henning Westerholt
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -86,7 +86,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
@@ -95,7 +95,7 @@ Chapter 1. Admin Guide
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * none
 
 1.3. Exported Parameters
@@ -191,7 +191,7 @@ openserctl fifo reload_blacklist
 
 1.6.1. Database setup
 
-   Before running OpenSER with userblacklist, you have to setup
+   Before running Kamailio with userblacklist, you have to setup
    the database table where the module will read the blacklist
    data. For that, if the table was not created by the
    installation script or you choose to install everything by

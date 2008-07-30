@@ -25,7 +25,7 @@ Elena-Ramona Modroiu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -109,8 +109,8 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
      * A sample config file is located in './doc/'.
      * MySQL script to create the database needed by PDT is
        located in '../../scripts/mysql/pdt-create.sql'
-       The database is loaded by OpenSER only at start up time and
-       only cache is used to lookup domains. Check the MI
+       The database is loaded by Kamailio only at start up time
+       and only cache is used to lookup domains. Check the MI
        Functions for adding/deleting prefix-domain pairs or
        reloading from database at runtime.
      * Sample shell scripts to manage prefix-domain pairs are also
@@ -119,15 +119,15 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * A OpenSER database module (e.g., mysql, dbtext).
+     * A Kamailio database module (e.g., mysql, dbtext).
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.3. Exported Parameters
@@ -301,7 +301,7 @@ prefix2domain();
 
 1.5. Exported MI Functions
 
-   The database is loaded by OpenSER at start up time. The module
+   The database is loaded by Kamailio at start up time. The module
    uses only the cache to look up domains. If you want to add or
    delete a new prefix-domain pair at runtime you have to use MI
    FIFO commands. All changes made via these commands are applied

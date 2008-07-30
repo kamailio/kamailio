@@ -29,7 +29,7 @@ Bogdan-Andrei Iancu
         1.3. Multiple RTPProxy usage
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported Parameters
@@ -121,7 +121,7 @@ Chapter 1. Admin Guide
      * UDP package - 4 bytes (zero filled) UDP packages are sent
        to the contact address.
           + Advantages: low bandwitdh traffic, easy to generate by
-            OpenSER;
+            Kamailio;
           + Disadvantages: unidirectional traffic through NAT
             (inbound - from outside to inside); As many NATs do
             update the bind timeout only on outbound traffic, the
@@ -129,11 +129,11 @@ Chapter 1. Admin Guide
      * SIP request - a stateless SIP request is sent to the
        contact address.
           + Advantages: bidirectional traffic through NAT, since
-            each PING request from OpenSER (inbound traffic) will
+            each PING request from Kamailio (inbound traffic) will
             force the SIP client to generate a SIP reply (outbound
             traffic) - the NAT bind will be surely kept open.
           + Disadvantages: higher bandwitdh traffic, more
-            expensive (as time) to generate by OpenSER;
+            expensive (as time) to generate by Kamailio;
 
 1.3. Multiple RTPProxy usage
 
@@ -163,7 +163,7 @@ Chapter 1. Admin Guide
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * usrloc module - only if the NATed contacts are to be
@@ -172,7 +172,7 @@ Chapter 1. Admin Guide
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.5. Exported Parameters
@@ -637,7 +637,7 @@ Chapter 2. Frequently Asked Questions
 
    2.2.
 
-       Where can I find more about OpenSER?
+       Where can I find more about Kamailio?
 
        Take a look at http://www.kamailio.org/.
 
@@ -652,7 +652,7 @@ Chapter 2. Frequently Asked Questions
          * Developer Mailing List -
            http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-       E-mails regarding any stable OpenSER release should be sent to
+       E-mails regarding any stable Kamailio release should be sent to
        <users@lists.kamailio.org> and e-mails regarding development
        versions should be sent to <devel@lists.kamailio.org>.
 

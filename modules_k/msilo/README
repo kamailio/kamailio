@@ -23,7 +23,7 @@ Daniel-Constantin Mierla
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER modules
+              1.2.1. Kamailio modules
               1.2.2. External libraries or applications
 
         1.3. Exported Parameters
@@ -70,7 +70,7 @@ Daniel-Constantin Mierla
 
         1.6. Installation and Running
 
-              1.6.1. OpenSER config file
+              1.6.1. Kamailio config file
 
    List of Examples
 
@@ -102,7 +102,7 @@ Daniel-Constantin Mierla
    1.26. Set the "max_messages" parameter
    1.27. m_store usage
    1.28. m_dump usage
-   1.29. OpenSER config script - sample msilo usage
+   1.29. Kamailio config script - sample msilo usage
 
 Chapter 1. Admin Guide
 
@@ -124,7 +124,7 @@ Chapter 1. Admin Guide
    database. Expiration time is computed based on incoming time
    and one of the module's parameters.
 
-   Every time when a user registers with OpenSER, the module is
+   Every time when a user registers with Kamailio, the module is
    looking in database for offline messages intended for that
    user. All of them will be sent to contact address provided in
    REGISTER request.
@@ -141,7 +141,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER modules
+1.2.1. Kamailio modules
 
    The following modules must be loaded before this module:
      * database module - mysql, dbtext or other module that
@@ -152,7 +152,7 @@ Chapter 1. Admin Guide
 1.2.2. External libraries or applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module:
+   before running Kamailio with this module:
      * none.
 
 1.3. Exported Parameters
@@ -553,11 +553,11 @@ m_dump("$fu");
 
 1.6. Installation and Running
 
-1.6.1. OpenSER config file
+1.6.1. Kamailio config file
 
    Next picture displays a sample usage of msilo.
 
-   Example 1.29. OpenSER config script - sample msilo usage
+   Example 1.29. Kamailio config script - sample msilo usage
 ...
 # $Id$
 #

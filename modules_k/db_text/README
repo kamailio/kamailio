@@ -12,8 +12,8 @@ Daniel-Constantin Mierla
 
    Copyright © 2003, 2004 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:31:30 +0200
-                              (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
+                              (Mi, 19 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -28,7 +28,7 @@ Daniel-Constantin Mierla
 
         1.2. Dependencies
 
-              1.2.1. OpenSER modules
+              1.2.1. Kamailio modules
               1.2.2. External libraries or applications
 
         1.3. Exported Parameters
@@ -38,15 +38,16 @@ Daniel-Constantin Mierla
         1.4. Exported Functions
         1.5. Installation and Running
 
-              1.5.1. Using dbtext with basic OpenSER configuration
+              1.5.1. Using dbtext with basic Kamailio
+                      configuration
 
    2. Developer Guide
 
    List of Examples
 
    1.1. Sample of a dbtext table
-   1.2. Minimal OpenSER location dbtext table definition
-   1.3. Minimal OpenSER subscriber dbtext table example
+   1.2. Minimal Kamailio location dbtext table definition
+   1.3. Minimal Kamailio subscriber dbtext table example
    1.4. Set db_mode parameter
    1.5. Load the dbtext module
    1.6. Definition of 'subscriber' table (one line)
@@ -59,7 +60,7 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    The module implements a simplified database engine based on
-   text files. It can be used by OpenSER DB interface instead of
+   text files. It can be used by Kamailio DB interface instead of
    other database module (like MySQL).
 
    The module is meant for use in demos or small devices that do
@@ -67,7 +68,7 @@ Chapter 1. Admin Guide
    if you deal with large amount of data you may run quickly out
    of memory. Also, it has not implemented all standard database
    facilities (like order by), it includes minimal functionality
-   to work properly (who knows ?!?) with OpenSER.
+   to work properly (who knows ?!?) with Kamailio.
 
    NOTE: the timestamp is printed in an integer value from time_t
    structure. If you use it in a system that cannot do this
@@ -83,7 +84,7 @@ Chapter 1. Admin Guide
 
    The dbtext database system architecture:
      * a database is represented by a directory in the local file
-       system. NOTE: when you use dbtext in OpenSER, the database
+       system. NOTE: when you use dbtext in Kamailio, the database
        URL for modules must be the path to the directory where the
        table-files are located, prefixed by "dbtext://", e.g.,
        "dbtext:///var/dbtext/ser". If there is no "/" after
@@ -130,12 +131,12 @@ id(int,auto) name(str) flag(double) desc(str,null)
 3:bob:2.50:
 ...
 
-   Example 1.2. Minimal OpenSER location dbtext table definition
+   Example 1.2. Minimal Kamailio location dbtext table definition
 ...
 username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
 ...
 
-   Example 1.3. Minimal OpenSER subscriber dbtext table example
+   Example 1.3. Minimal Kamailio subscriber dbtext table example
 ...
 username(str) password(str) ha1(str) domain(str) ha1b(str)
 suser:supasswd:xxx:alpha.org:xxx
@@ -150,7 +151,7 @@ suser:supasswd:xxx:alpha.org:xxx
 
 1.2. Dependencies
 
-1.2.1. OpenSER modules
+1.2.1. Kamailio modules
 
    The next modules must be loaded before this module:
      * none.
@@ -158,7 +159,7 @@ suser:supasswd:xxx:alpha.org:xxx
 1.2.2. External libraries or applications
 
    The next libraries or applications must be installed before
-   running OpenSER with this module:
+   running Kamailio with this module:
      * none.
 
 1.3. Exported Parameters
@@ -189,7 +190,7 @@ modparam("db_text", "db_mode", 1)
    Compile the module and load it instead of mysql or other DB
    modules.
 
-   REMINDER: when you use dbtext in OpenSER, the database URL for
+   REMINDER: when you use dbtext in Kamailio, the database URL for
    modules must be the path to the directory where the table-files
    are located, prefixed by "dbtext://", e.g.,
    "dbtext:///var/dbtext/ser". If there is no "/" after
@@ -205,12 +206,12 @@ modparam("module_name", "database_URL", "text:///path/to/dbtext/database
 ")
 ...
 
-1.5.1. Using dbtext with basic OpenSER configuration
+1.5.1. Using dbtext with basic Kamailio configuration
 
    Here are the definitions for most important table as well as a
-   basic configuration file to use dbtext with OpenSER. The table
+   basic configuration file to use dbtext with Kamailio. The table
    structures may change in time and you will have to adjust next
-   examples. These are know to work with upcoming OpenSER v0.9.x
+   examples. These are know to work with upcoming Kamailio v0.9.x
 
    You have to populate the table 'subscriber' by hand with user
    profiles in order to have authentication. To use with the given
@@ -390,4 +391,4 @@ route[1]
 Chapter 2. Developer Guide
 
    Once you have the module loaded, you can use the API specified
-   by OpenSER DB interface.
+   by Kamailio DB interface.

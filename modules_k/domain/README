@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2002-2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
+                              (Sa, 08 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -235,7 +235,7 @@ if (is_domain_local("$avp(s:some_avp)")) {
 Chapter 2. Developer Guide
 
    The module provides is_domain_local API function for use by
-   other OpenSER modules.
+   other Kamailio modules.
 
 2.1. Available Functions
 

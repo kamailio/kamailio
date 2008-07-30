@@ -12,8 +12,8 @@ Dan Pascu
 
    Copyright © 2004 Dan Pascu
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-05-30 17:58:10 +0200
+                              (Fr, 30 Mai 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -25,7 +25,7 @@ Dan Pascu
         1.3. Features
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported parameters
@@ -57,7 +57,7 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   Mediaproxy is an OpenSER module that is designed to allow
+   Mediaproxy is an Kamailio module that is designed to allow
    automatic NAT traversal for the majority of existing SIP
    clients. This means that there will be no need to configure
    anything in particular on the NAT box to allow these clients to
@@ -72,13 +72,13 @@ Chapter 1. Admin Guide
    each other.
 
    Mediaproxy consists of 2 components:
-     * The OpenSER mediaproxy module
+     * The Kamailio mediaproxy module
      * An external application called MediaProxy which employs a
        dispatcher and multiple distributed media relays. This is
        available from http://ag-projects.com/MediaProxy.html
        (version 2.0.0 or newer is required by this module).
 
-   The mediaproxy dispatcher runs on the same machine as OpenSER
+   The mediaproxy dispatcher runs on the same machine as Kamailio
    and its purpose is to select a media relay for a call. The
    media relay may run on the same machine as the dispatcher or on
    multiple remote hosts and its purpose is to forward the streams
@@ -90,19 +90,19 @@ Chapter 1. Admin Guide
    machine(s) running the module/proxy server must have a public
    IP address.
 
-   OpenSER will ask the media relay to allocate as many ports as
+   Kamailio will ask the media relay to allocate as many ports as
    there are media streams in the SDP offer and answer. The media
-   relay will send back to OpenSER the IP address and port(s) for
-   them. Then OpenSER will replace the original contact IP and RTP
-   ports from the SDP messages with the ones provided by the media
-   relay. By doing this, both user agents will try to contact the
-   media relay instead of communicating directly with each other.
-   Once the user agents contact the media relay, it will record
-   the addresses they came from and will know where to forward
-   packets received from the other endpoint. This is needed
-   because the address/port the NAT box will allocate for the
-   media streams is not known before they actually leave the NAT
-   box. However the address of the media relay is always known
+   relay will send back to Kamailio the IP address and port(s) for
+   them. Then Kamailio will replace the original contact IP and
+   RTP ports from the SDP messages with the ones provided by the
+   media relay. By doing this, both user agents will try to
+   contact the media relay instead of communicating directly with
+   each other. Once the user agents contact the media relay, it
+   will record the addresses they came from and will know where to
+   forward packets received from the other endpoint. This is
+   needed because the address/port the NAT box will allocate for
+   the media streams is not known before they actually leave the
+   NAT box. However the address of the media relay is always known
    (being a public IP) so the 2 endpoints know where to connect.
    After they do so, the relay learns their addresses and can
    forward packets between them.
@@ -123,7 +123,7 @@ Chapter 1. Admin Guide
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * dialog module - if engage_media_proxy is used (see below
@@ -132,7 +132,7 @@ Chapter 1. Admin Guide
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.5. Exported parameters

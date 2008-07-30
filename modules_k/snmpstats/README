@@ -33,7 +33,7 @@ Jeffrey Magder
 
         1.3. Dependencies
 
-              1.3.1. OpenSER Modules
+              1.3.1. Kamailio Modules
               1.3.2. External Libraries or Applications
 
         1.4. Exported Parameters
@@ -198,7 +198,7 @@ Chapter 1. Admin Guide
 
 1.3. Dependencies
 
-1.3.1. OpenSER Modules
+1.3.1. Kamailio Modules
 
    The SNMPStats module provides a plethora of statistics, some of
    which are collected by other modules. If the dependent modules
@@ -222,7 +222,7 @@ Chapter 1. Admin Guide
 1.3.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * NetSNMP v5.3 or greater - NetSNMP must be around at the
        time of compilation. Furthermore, there are several shared
        objects that must be loadable at the time SNMPStats is
@@ -663,7 +663,7 @@ theTableName
 
    2.10.
 
-   Where can I find more about OpenSER?
+   Where can I find more about Kamailio?
 
    Take a look at http://www.kamailio.org/.
 
@@ -678,7 +678,7 @@ theTableName
      * Developer Mailing List -
        http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-   E-mails regarding any stable OpenSER release should be sent to
+   E-mails regarding any stable Kamailio release should be sent to
    <users@lists.kamailio.org> and e-mails regarding development
    versions should be sent to <devel@lists.kamailio.org>.
 

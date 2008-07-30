@@ -21,7 +21,7 @@ Bogdan-Andrei Iancu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -91,7 +91,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * any DB module- a DB module for interfacing the DB
@@ -107,7 +107,7 @@ Chapter 1. Admin Guide
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * libxml2 and libxml2-devel - on some SO, these to packages
        are merged into libxml2. This library contains an engine
        for XML parsing, DTD validation and DOM manipulation.
@@ -193,7 +193,7 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
    Points to the DTD file describing the CPL grammar. The file
    name may include also the path to the file. This path can be
    absolute or relative (be careful the path will be relative to
-   the starting directory of OpenSER).
+   the starting directory of Kamailio).
 
    This parameter is MANDATORY!
 
@@ -339,7 +339,7 @@ modparam("cpl-c","use_domain",1)
    processing, the function is very flexible, being able to run in
    different modes (see below the"mode" parameter). Normally this
    function will end script execution. There is no guaranty that
-   the CPL script interpretation ended when OpenSER script ended
+   the CPL script interpretation ended when Kamailio script ended
    also (for the same INVITE ;-)) - this can happen when the CPL
    script does a PROXY and the script interpretation pause after
    proxying and it will be resume when some reply is received
@@ -491,7 +491,7 @@ if (method=="REGISTER") {
 
 1.6.1. Database setup
 
-   Before running OpenSER with cpl-c, you have to setup the
+   Before running Kamailio with cpl-c, you have to setup the
    database table where the module will store the CPL scripts. For
    that, if the table was not created by the installation script
    or you choose to install everything by yourself you can use the

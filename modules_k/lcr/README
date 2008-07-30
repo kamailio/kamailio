@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2005-2007 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
+                              (Sa, 08 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -23,7 +23,7 @@ Juha Heinanen
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER modules
+              1.2.1. Kamailio modules
               1.2.2. External libraries or applications
 
         1.3. Exported Parameters
@@ -154,7 +154,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER modules
+1.2.1. Kamailio modules
 
    The following modules must be loaded before this module:
      * TM module
@@ -163,7 +163,7 @@ Chapter 1. Admin Guide
 1.2.2. External libraries or applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module:
+   before running Kamailio with this module:
      * none.
 
 1.3. Exported Parameters

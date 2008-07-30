@@ -23,7 +23,7 @@ Bogdan-Andrei Iancu
         1.3. Dialog profiling
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported Parameters
@@ -140,7 +140,7 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The dialog module provides dialog awareness to the OpenSER
+   The dialog module provides dialog awareness to the Kamailio
    proxy. Its functionality is to keep trace of the current
    dialogs, to offer information about them (like how many dialogs
    are active). The module exports no functions that could be used
@@ -148,7 +148,7 @@ Chapter 1. Admin Guide
 
    The module, via an internal API, also provide the foundation to
    build on top of it more complex dialog-based functionalities
-   via other OpenSER modules.
+   via other Kamailio modules.
 
 1.2. How it works
 
@@ -191,7 +191,7 @@ Chapter 1. Admin Guide
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * TM - Transaction module
@@ -200,7 +200,7 @@ Chapter 1. Admin Guide
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.5. Exported Parameters
@@ -916,7 +916,7 @@ Chapter 3. Frequently Asked Questions
 
    3.2.
 
-       Where can I find more about OpenSER?
+       Where can I find more about Kamailio?
 
        Take a look at http://www.kamailio.org/.
 
@@ -931,7 +931,7 @@ Chapter 3. Frequently Asked Questions
          * Developer Mailing List -
            http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-       E-mails regarding any stable OpenSER release should be sent to
+       E-mails regarding any stable Kamailio release should be sent to
        <users@lists.kamailio.org> and e-mails regarding development
        versions should be sent to <devel@lists.kamailio.org>.
 

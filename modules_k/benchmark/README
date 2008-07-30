@@ -30,7 +30,7 @@ Bastian Friedrich
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -88,21 +88,21 @@ Chapter 1. Admin Guide
    profiling information for every function.
 
    The duration between calls to start_timer and log_timer is
-   stored and logged via OpenSER's logging facility. Please note
+   stored and logged via Kamailio's logging facility. Please note
    that all durations are given as microseconds (don't confuse
    with milliseconds!).
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other OpenSER modules.
+     * No dependencies on other Kamailio modules.
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.3. Exported Parameters
@@ -253,8 +253,8 @@ bm_log_timer("usrloc-lookup");
 Chapter 2. Developer Guide
 
    The benchmark module provides an internal API to be used by
-   other OpenSER modules. The available functions are identical to
-   the user exported functions.
+   other Kamailio modules. The available functions are identical
+   to the user exported functions.
 
    Please note that this module is intended mainly for developers.
    It should be used with caution in production environments.

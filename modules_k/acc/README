@@ -52,7 +52,7 @@ Bogdan-Andrei Iancu
 
         1.4. Dependencies
 
-              1.4.1. OpenSER Modules
+              1.4.1. Kamailio Modules
               1.4.2. External Libraries or Applications
 
         1.5. Exported Parameters
@@ -186,7 +186,7 @@ Chapter 1. Admin Guide
      * All flags related to accounting need to be set in request
        processing route - only the "missed-call" flag may be
        toggled from other types of routes.
-     * There is no session/dialog accounting (yet) -- OpenSER
+     * There is no session/dialog accounting (yet) -- Kamailio
        maintains no sessions. If one needs to correlate INVITEs
        with BYEs for generating proper CDRs for example for
        purpose of billing, then it is better done in the entity
@@ -268,7 +268,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
      * xxx_extra = extra_definition (';'extra_definition)*
      * extra_definition = log_name '=' pseudo_variable
 
-   The full list of supported pseudo-variables in OpenSER is
+   The full list of supported pseudo-variables in Kamailio is
    availabe at:
    http://openser.org/dokuwiki/doku.php/pseudovariables:devel
 
@@ -358,7 +358,7 @@ Note
 
 1.4. Dependencies
 
-1.4.1. OpenSER Modules
+1.4.1. Kamailio Modules
 
    The module depends on the following modules (in the other words
    the listed modules must be loaded before this module):
@@ -370,7 +370,7 @@ Note
 1.4.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * radiusclient-ng 0.5.0 or higher -- if compiled with RADIUS
        support. See
        http://developer.berlios.de/projects/radiusclient-ng/.
@@ -839,7 +839,7 @@ Chapter 2. Frequently Asked Questions
 
    2.4.
 
-       Where can I find more about OpenSER?
+       Where can I find more about Kamailio?
 
        Take a look at http://www.kamailio.org/.
 
@@ -854,7 +854,7 @@ Chapter 2. Frequently Asked Questions
          * Developer Mailing List -
            http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-       E-mails regarding any stable OpenSER release should be sent to
+       E-mails regarding any stable Kamailio release should be sent to
        <users@lists.kamailio.org> and e-mails regarding development
        versions should be sent to <devel@lists.kamailio.org>.
 

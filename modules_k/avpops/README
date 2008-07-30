@@ -23,7 +23,7 @@ Ramona-Elena Modroiu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. AVP naming format
@@ -111,7 +111,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * Optionally a database module
@@ -119,7 +119,7 @@ Chapter 1. Admin Guide
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None
 
 1.3. AVP naming format
@@ -299,7 +299,7 @@ modparam("avpops","db_scheme",
        Parameter syntax:
           + source = (pvar|str_value)
             ['/'('username'|'domain'|'uri'|'uuid')])
-          + pvar = any pseudo variable defined in OpenSER. If the
+          + pvar = any pseudo variable defined in Kamailio. If the
             pvar is $ru (request uri), $fu (from uri), $tu (to
             uri) or $ou (original uri), then the implicit flag is
             'uri'. Otherwise, the implicit flag is 'uuid'.
@@ -513,12 +513,12 @@ avp_copy("$avp(old)","$avp(new)/gd");
 
 1.5.9.  avp_printf(dest, format)
 
-   NOTE: since OpenSER 1.3.0 the function has been moved to core
+   NOTE: since Kamailio 1.3.0 the function has been moved to core
    and it is an alias to pv_printf().
 
    Prints the formatted string 'format' in the AVP 'dest'. The
    'format' parameter can include any pseudo-variable defined in
-   OpenSER. The list with all pseudo-variables in OpenSER can be
+   Kamailio. The list with all pseudo-variables in Kamailio can be
    found at: http://openser.org/dokuwiki/.
 
    Meaning of the parameters is as follows:

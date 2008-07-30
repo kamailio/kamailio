@@ -10,8 +10,8 @@ Elena-Ramona Modroiu
 
    Copyright © 2003, 2004 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-10 17:13:24 +0200
-                              (Mon, 10 Mar 2008) $
+   Revision $Revision$ $Date: 2008-03-10 16:13:24 +0100
+                              (Mo, 10 MÃ¤r 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -21,7 +21,7 @@ Elena-Ramona Modroiu
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -96,7 +96,7 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
      * sl - used to send stateless replies.
@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * None.
 
 1.3. Exported Parameters
