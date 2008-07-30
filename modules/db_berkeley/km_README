@@ -21,7 +21,7 @@ Will Quan
         1.1. Overview
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -67,15 +67,15 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The following modules must be loaded before this module:
-     * No dependencies on other OpenSER modules.
+     * No dependencies on other Kamailio modules.
 
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * Berkeley Berkeley DB 4.6 - an embedded database.
 
 1.3. Exported Parameters
@@ -166,7 +166,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    You can use one of the next options.
      * edit the "Makefile" and remove "db_berkeley" from
        "excluded_modules" list. Then follow the standard procedure
-       to install OpenSER: "make all; make install".
+       to install Kamailio: "make all; make install".
      * from command line use: 'make all
        include_modules="db_berkeley"; make install
        include_modules="db_berkeley"'.
