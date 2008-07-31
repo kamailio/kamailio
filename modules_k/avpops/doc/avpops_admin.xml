@@ -397,7 +397,9 @@ modparam("avpops","db_scheme",
 					matching_flags = 'a' | 'A' | 'i' | 'I' | 's' | 'S'
 					[script_flags]
 					</emphasis></para><para>'a' or 'A' means matching any of
-					AVP name types ('i' and 's'), the rest have the
+					AVP name types ('i' and 's') (NOTE: matching_flags cannot
+					be used with $db_scheme because the name of AVP to save in 
+					cannot be specified), the rest have the
 					meaning descriped in 'AVP naming format' chapter.</para>
 					</listitem>
 				</itemizedlist>

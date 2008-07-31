@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-10 16:13:24 +0100
-                              (Mo, 10 MÃ¤r 2008) $
+   Revision $Revision$ $Date: 2008-03-10 17:13:24 +0200
+                              (Mon, 10 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -311,8 +311,10 @@ modparam("avpops","db_scheme",
           + matching_flags = 'a' | 'A' | 'i' | 'I' | 's' | 'S'
             [script_flags]
             'a' or 'A' means matching any of AVP name types ('i'
-            and 's'), the rest have the meaning descriped in 'AVP
-            naming format' chapter.
+            and 's') (NOTE: matching_flags cannot be used with
+            $db_scheme because the name of AVP to save in cannot
+            be specified), the rest have the meaning descriped in
+            'AVP naming format' chapter.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE, LOCAL_ROUTE and ONREPLY_ROUTE.
