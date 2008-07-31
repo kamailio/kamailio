@@ -8,6 +8,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=perl.so
+LIBS=
 
 ifeq ($(PERLLDOPTS),)
 	LIBS+=`perl -MExtUtils::Embed -e ldopts`
