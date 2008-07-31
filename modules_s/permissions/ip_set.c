@@ -30,8 +30,9 @@
 #include <stdio.h>
 #include <string.h>
 
-void ip_set_init(struct ip_set *ip_set) {
+void ip_set_init(struct ip_set *ip_set, int use_shm) {
 	memset(ip_set, 0, sizeof(*ip_set));
+	ip_set->use_shm = use_shm;
 	ip_tree_init(&ip_set->ipv4_tree);
 	#ifdef USE_IPV6
 	ip_tree_init(&ip_set->ipv6_tree);
@@ -39,19 +40,19 @@ void ip_set_init(struct ip_set *ip_set) {
 }
 
 void ip_set_destroy(struct ip_set *ip_set) {
-	ip_tree_destroy(&ip_set->ipv4_tree, 0);
+	ip_tree_destroy(&ip_set->ipv4_tree, 0, ip_set->use_shm);
 	#ifdef USE_IPV6
-	ip_tree_destroy(&ip_set->ipv6_tree, 0);
+	ip_tree_destroy(&ip_set->ipv6_tree, 0, ip_set->use_shm);
 	#endif
 }
 
 int ip_set_add_ip(struct ip_set *ip_set, struct ip_addr *ip, unsigned int network_prefix) {
 	switch (ip->af) {
 		case AF_INET:
-			return ip_tree_add_ip(&ip_set->ipv4_tree, ip->u.addr, (ip->len*8<network_prefix)?ip->len*8:network_prefix);
+			return ip_tree_add_ip(&ip_set->ipv4_tree, ip->u.addr, (ip->len*8<network_prefix)?ip->len*8:network_prefix, ip_set->use_shm);
 	#ifdef USE_IPV6
 		case AF_INET6:
-			return ip_tree_add_ip(&ip_set->ipv6_tree, ip->u.addr, (ip->len*8<network_prefix)?ip->len*8:network_prefix);
+			return ip_tree_add_ip(&ip_set->ipv6_tree, ip->u.addr, (ip->len*8<network_prefix)?ip->len*8:network_prefix, ip_set->use_shm);
 	#endif
 		default:
 			return -1;				
@@ -81,62 +82,122 @@ void ip_set_print(FILE *stream, struct ip_set *ip_set) {
 	#endif
 }
 
-int ip_set_parse(struct ip_set *ip_set, str ip_set_s){
+int ip_set_add_list(struct ip_set *ip_set, str ip_set_s){
 
-	str s;
-	struct ip_addr *ip;
-	unsigned int prefix;
-	
-	ip_set_init(ip_set);
-
-	/* parse comma delimited string of IPs and masks,  e.g. 1.2.3.4,2.3.5.3/24,[abcd:12456:2775:ab::7533] */
+	str ip_s, mask_s;
+				 
+	/* parse comma delimited string of IPs and masks,  e.g. 1.2.3.4,2.3.5.3/24,[abcd:12456:2775:ab::7533],9.8.7.6/255.255.255.0 */
 	while (ip_set_s.len) {
-		while (ip_set_s.len && (*ip_set_s.s == ',' || *ip_set_s.s == ';' || *ip_set_s.s == ' ')) {			
+		while (ip_set_s.len && (*ip_set_s.s == ',' || *ip_set_s.s == ';' || *ip_set_s.s == ' ')) {
 			ip_set_s.s++;
 			ip_set_s.len--;
 		}
-		s.s = ip_set_s.s;
-		s.len = 0;
-		while (s.len < ip_set_s.len && (s.s[s.len] != ',' && s.s[s.len] != ';' && s.s[s.len] != ' ' && s.s[s.len] != '/')) {
-			s.len++;
+		ip_s.s = ip_set_s.s;
+		ip_s.len = 0;
+		while (ip_s.len < ip_set_s.len && (ip_s.s[ip_s.len] != ',' && ip_s.s[ip_s.len] != ';' && ip_s.s[ip_s.len] != ' ' && ip_s.s[ip_s.len] != '/')) {
+			ip_s.len++;
 		}
-		if ( ((ip = str2ip(&s))==0)
-			#ifdef  USE_IPV6
-						  && ((ip = str2ip6(&s))==0)
-			#endif
-										  ){
-			ip_set_destroy(ip_set);
-			ERR("ip_set_parse: string to ip conversion error near '%.*s'\n", ip_set_s.len, ip_set_s.s);
-			return -1;
-		}
-		ip_set_s.s += s.len;
-		ip_set_s.len -= s.len;
+		ip_set_s.s += ip_s.len;
+		ip_set_s.len -= ip_s.len;
+		mask_s.len = 0;
 		if (ip_set_s.len && ip_set_s.s[0] == '/') {
 			ip_set_s.s++;
 			ip_set_s.len--;
-			s.s = ip_set_s.s;
-			s.len = 0;
-			while (s.len < ip_set_s.len && (s.s[s.len] >= '0' && s.s[s.len] <= '9')) {
-				s.len++;
+			mask_s.s = ip_set_s.s;
+			while (mask_s.len < ip_set_s.len && (mask_s.s[mask_s.len] != ',' && mask_s.s[mask_s.len] != ';' && mask_s.s[mask_s.len] != ' ')) {
+				mask_s.len++;
 			}
-			if (str2int(&s, &prefix) < 0) {
-				ERR("ip_set_parse: cannot convert mask near '%.*s'\n", ip_set_s.len, ip_set_s.s);
-				ip_set_destroy(ip_set);
+			ip_set_s.s += mask_s.len;
+			ip_set_s.len -= mask_s.len;
+		}
+		if (ip_set_add_ip_s(ip_set, ip_s, mask_s) < 0) {
+			return -1;
+		}
+	}
+	return 0;
+}
+
+int ip_set_add_ip_s(struct ip_set *ip_set, str ip_s, str mask_s){
+
+	int fl;
+	struct ip_addr *ip, ip_buff;
+	unsigned int prefix, i;
+
+	if ( ((ip = str2ip(&ip_s))==0)
+		#ifdef  USE_IPV6
+					  && ((ip = str2ip6(&ip_s))==0)
+		#endif
+									  ){
+		ERR("ip_set_add_ip_s: string to ip conversion error '%.*s'\n", ip_s.len, ip_s.s);
+		return -1;
+	}
+	ip_buff = *ip;
+
+	if (mask_s.len > 0) {
+		i = 0;
+		fl = 0;
+		while (i < mask_s.len &&
+			   ((mask_s.s[i] >= '0' && mask_s.s[i] <= '9') || 
+				(mask_s.s[i] >= 'a' && mask_s.s[i] <= 'f') || 
+				(mask_s.s[i] >= 'A' && mask_s.s[i] <= 'F') ||
+				mask_s.s[i] == '.' ||
+				mask_s.s[i] == ':' ||
+				mask_s.s[i] == '[' ||
+				mask_s.s[i] == ']'
+				) ) {
+			fl |= mask_s.s[i] < '0' || mask_s.s[i] > '9';
+			i++;
+		}
+		
+		if (fl) {  /* 255.255.255.0 format */
+			if ( ((ip = str2ip(&mask_s))==0)
+				#ifdef  USE_IPV6
+					  && ((ip = str2ip6(&mask_s))==0)
+				#endif
+				  ){
+				ERR("ip_set_add_ip_s: string to ip mask conversion error '%.*s'\n", mask_s.len, mask_s.s);
+				return -1;
+			}
+			if (ip_buff.af != ip->af) {
+				ERR("ip_set_add_ip_s: IPv4 vs. IPv6 near '%.*s' vs. '%.*s'\n", ip_s.len, ip_s.s, mask_s.len, mask_s.s);
+				return -1;
+			}
+			fl = 0;
+			prefix = 0;
+			for (i=0; i<ip->len; i++) {				
+				unsigned char msk;				
+				msk = 0x80;
+				while (msk) {
+					if ((ip->u.addr[i] & msk) != 0) {
+						if (fl) {
+							ERR("ip_set_add_ip_s: bad IP mask '%.*s'\n", mask_s.len, mask_s.s);
+							return -1;
+						}
+						prefix++;
+					}
+					else {
+						fl = 1;
+					}
+					msk /= 2;
+				}
+			}
+		}	
+		else {     /* 24 format */
+			if (str2int(&mask_s, &prefix) < 0) {
+				ERR("ip_set_add_ip_s: cannot convert mask '%.*s'\n", mask_s.len, mask_s.s);
 				return -1;
 			}				
-			ip_set_s.s += s.len;
-			ip_set_s.len -= s.len;
 		}
-		else {
-			prefix = ip->len*8;
-		}
-		if (ip_set_add_ip(ip_set, ip, prefix) < 0) {
-			ERR("ip_set_parse: cannot add IP into ip set\n");
-			ip_set_destroy(ip_set);
-			return -1;
-		}		
 	}
-	return 0;		
+	else {
+		prefix = ip_buff.len*8;
+	}
+	if (ip_set_add_ip(ip_set, &ip_buff, prefix) < 0) {
+		ERR("ip_set_add_ip_s: cannot add IP into ip set\n");
+		return -1;
+	}		
+	return 0;
 }
+
 
 

@@ -35,17 +35,19 @@
 /* ip_set stuff, combines IPv4 and IPv6 tree in one set */
    
 struct ip_set {
+	int use_shm;
 	struct ip_tree_leaf *ipv4_tree;
 #ifdef USE_IPV6
 	struct ip_tree_leaf *ipv6_tree;	
 #endif
 };
 
-extern void ip_set_init(struct ip_set *ip_set);
+extern void ip_set_init(struct ip_set *ip_set, int use_shm);
 extern void ip_set_destroy(struct ip_set *ip_set);
 extern int ip_set_add_ip(struct ip_set *ip_set, struct ip_addr *ip, unsigned int network_prefix);
+extern int ip_set_add_ip_s(struct ip_set *ip_set, str ip_s, str mask_s);
 extern int ip_set_ip_exists(struct ip_set *ip_set, struct ip_addr *ip);
 extern void ip_set_print(FILE *stream, struct ip_set *ip_set);
-extern int ip_set_parse(struct ip_set *ip_set, str ip_set_s);
+extern int ip_set_add_list(struct ip_set *ip_set, str ip_set_s);
 
 #endif

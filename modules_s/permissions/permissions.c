@@ -36,10 +36,13 @@
  *               safe_file_load module parameter introduced (Miklos)
  *   2006-08-14: child processes do not keep the DB connection open
  *               if cache is enabled (Miklos)
+ *   2008-07-xx: added ip_is_trusted function (tma)
+ *   2008-08-01: added ipset manipulable via RPC (tma)
  */
 
 #include <stdio.h>
 #include "../../mem/mem.h"
+#include "../../mem/shm_mem.h"
 #include "permissions.h"
 #include "trusted.h"
 #include "allow_files.h"
@@ -82,12 +85,17 @@ char	*ipmatch_table = "ipmatch";
 /* Database API */
 db_ctx_t	*db_conn = NULL;
 
+static str *ip_set_list_names = NULL;    /* declared names */
+static struct ip_set_ref **ip_set_list_local = NULL;  /* local copy of ip set in shared memory */
+static int ip_set_list_count = 0;  /* number of delared names */
+
 /* fixup function prototypes */
 static int fixup_files_1(void** param, int param_no);
 static int fixup_files_2(void** param, int param_no);
 static int fixup_ip_is_trusted(void** param, int param_no);
 static int fixup_w_im(void **, int);
 static int fixup_w_im_onsend(void **, int);
+static int fixup_param_declare_ip_set( modparam_t type, void* val);
 
 /* module function prototypes */
 static int allow_routing_0(struct sip_msg* msg, char* str1, char* str2);
@@ -125,6 +133,7 @@ static cmd_export_t cmds[] = {
 	{"ipmatch_onsend", w_im_onsend,      1, fixup_w_im_onsend, ONSEND_ROUTE },
 	{"ipmatch_filter", w_im_filter,      1, fixup_int_1,     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | ONSEND_ROUTE},
 	{"ip_is_trusted",  w_ip_is_trusted,  2, fixup_ip_is_trusted, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE | BRANCH_ROUTE},
+	{"ip_is_in_ipset", w_ip_is_trusted,  2, fixup_ip_is_trusted, REQUEST_ROUTE | ONREPLY_ROUTE | FAILURE_ROUTE | ONSEND_ROUTE | BRANCH_ROUTE},
 	       	       
         {0, 0, 0, 0, 0}
 };
@@ -145,6 +154,8 @@ static param_export_t params[] = {
 	{"proto_col",          PARAM_STRING, &proto_col         },
 	{"from_col",           PARAM_STRING, &from_col          },
 	{"ipmatch_table",      PARAM_STRING, &ipmatch_table     },
+	{"declare_ipset",      PARAM_STRING|PARAM_USE_FUNC, fixup_param_declare_ip_set},
+	
         {0, 0, 0}
 };
 
@@ -272,6 +283,7 @@ static int mod_init(void)
 {
 	LOG(L_INFO, "permissions - initializing\n");
 
+
 	/* do not load the files if not necessary */
 	if (strlen(default_allow_file) || strlen(default_deny_file)) {
 		if (load_file(default_allow_file, &allow, &allow_rules_num, 1) != 0) goto error;
@@ -313,6 +325,15 @@ static int mod_init(void)
 		perm_destroy_db();
 	}
 
+	if (ip_set_list_malloc(ip_set_list_count, ip_set_list_names) < 0) goto error;
+	if (ip_set_list_count > 0) {
+		ip_set_list_local = pkg_malloc(ip_set_list_count*sizeof(*ip_set_list_local));
+		if (!ip_set_list_local) goto error;
+		memset(ip_set_list_local, 0, sizeof(*ip_set_list_local)*ip_set_list_count);
+	}
+	if (ip_set_list_names) 
+		pkg_free(ip_set_list_names);  /* we need not longer names in pkg memory */
+
 	return 0;
 
 error:
@@ -330,6 +351,8 @@ error:
 	/* free the cache */
 	clean_trusted();
 	clean_ipmatch();
+
+	ip_set_list_free();
 
 	return -1;
 }
@@ -375,12 +398,22 @@ error:
  */
 static void mod_exit(void)
 {
+	int i;
 	/* free file containers */
 	delete_files(&allow, allow_rules_num);
 	delete_files(&deny, deny_rules_num);
 
 	clean_trusted();
 	clean_ipmatch();
+
+	if (ip_set_list_local) {
+		for (i=0; i<ip_set_list_count; i++) {
+			/* we need delete all cloned sets because might not exist in global list after commit, they have refcnt>1 */
+			if (ip_set_list_local[i])
+				shm_free(ip_set_list_local[i]);
+		}
+	}
+	ip_set_list_free();
 }
 
 
@@ -529,25 +562,97 @@ int w_im_filter(struct sip_msg *msg, char *str1, char *str2)
 	return ipmatch_filter(msg, str1, str2);
 }
 
-
 struct ip_set_param {
-	str s;
-	unsigned int sz;
-	struct ip_set ip_set;
-	fparam_t *fparam;
+	enum {IP_SET_PARAM_KIND_GLOBAL, IP_SET_PARAM_KIND_LOCAL} kind;
+	union {
+		struct {
+			str s;
+			unsigned int sz;
+			struct ip_set ip_set;
+			fparam_t *fparam;
+		} local;
+		struct {
+			struct ip_set_list_item *ip_set;
+		} global;			
+	};
 };
 
 #define MODULE_NAME "permissions"
 
+static inline int is_ip_set_name(str *s) {
+	return (s->len && ((s->s[0] >= 'A' && s->s[0] <= 'Z') || (s->s[0] >= 'a' && s->s[0] <= 'z') || s->s[0] == '_'));
+}
+
+
+static int fixup_param_declare_ip_set( modparam_t type, void* val) {
+	str *p;
+	int i;
+	str s;
+	for (i=0; i<ip_set_list_count; i++) {
+		if (strcmp(val, ip_set_list_names[i].s) == 0) {
+			ERR(MODULE_NAME": declare_ip_set: ip set '%s' already exists\n", (char*)val);
+			return E_CFG;
+		}
+	}
+	s.s = val;
+	s.len = strlen(s.s);
+	if (!is_ip_set_name(&s)) {
+		ERR(MODULE_NAME": declare_ip_set: ip set '%s' is not correct identifier\n", (char*)val);
+		return E_CFG;
+	}
+	p = pkg_realloc(ip_set_list_names, sizeof(*p)*(ip_set_list_count+1));
+	if (!p) return E_OUT_OF_MEM;
+	p[ip_set_list_count] = s;
+	ip_set_list_count++;
+	ip_set_list_names = p;
+	return E_OK;
+};
+	
+
 static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 	str ip_set_s, ip_s;
 	struct ip_addr *ip, ip_buf;
-	struct ip_set new_ip_set;
-	
-	if (get_str_fparam(&ip_set_s, msg, ((struct ip_set_param*)_ip_set)->fparam) < 0) {
-	    ERR(MODULE_NAME": ip_is_trusted: Error while obtaining ip_set parameter value\n");
-	    return -1;
+	struct ip_set new_ip_set, *ip_set;
+	struct ip_set_list_item *isli = NULL;
+	int kind;
+	kind = ((struct ip_set_param*)_ip_set)->kind;
+	if (kind == IP_SET_PARAM_KIND_LOCAL) {
+		if (get_str_fparam(&ip_set_s, msg, ((struct ip_set_param*)_ip_set)->local.fparam) < 0) {
+		    ERR(MODULE_NAME": ip_is_trusted: Error while obtaining ip_set parameter value\n");
+			return -1;
+		}
+		if (is_ip_set_name(&ip_set_s)) {
+			isli = ip_set_list_find_by_name(ip_set_s);
+			if (!isli) {
+				ERR(MODULE_NAME": ip_is_trusted: ip set '%.*s' is not declared\n", ip_set_s.len, ip_set_s.s);
+				return -1;
+			}
+			kind = IP_SET_PARAM_KIND_GLOBAL;
+			goto force_global;
+		}		
+		ip_set = &((struct ip_set_param*)_ip_set)->local.ip_set;
 	}
+	else {
+		isli = ((struct ip_set_param*)_ip_set)->global.ip_set;
+	force_global:
+		if (!isli->ip_set) return -1; /* empty ip set */
+		
+		if (unlikely(isli->ip_set != ip_set_list_local[isli->idx])) {   /* global ip set has changed ? */
+			if (ip_set_list_local[isli->idx]) {
+				if (atomic_dec_and_test(&ip_set_list_local[isli->idx]->refcnt)) {
+					ip_set_destroy(&ip_set_list_local[isli->idx]->ip_set);
+					shm_free(ip_set_list_local[isli->idx]);
+					ip_set_list_local[isli->idx] = NULL;
+				}
+			}
+			lock_get(&isli->read_lock);			
+			atomic_inc(&isli->ip_set->refcnt);
+			ip_set_list_local[isli->idx] = isli->ip_set;
+			lock_release(&isli->read_lock);
+		}
+		ip_set = &ip_set_list_local[isli->idx]->ip_set;
+	}
+	
 	if (get_str_fparam(&ip_s, msg, (fparam_t*)_ip) < 0) {
 	    ERR(MODULE_NAME": ip_is_trusted: Error while obtaining ip parameter value\n");
 	    return -1;
@@ -583,29 +688,33 @@ static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 	}
 
 	/* test if ip_set string has changed since last call */
-	if (((struct ip_set_param*)_ip_set)->s.len != ip_set_s.len || 
-		memcmp(((struct ip_set_param*)_ip_set)->s.s, ip_set_s.s, ip_set_s.len) != 0) {
+	if (kind == IP_SET_PARAM_KIND_LOCAL) {
+		if (((struct ip_set_param*)_ip_set)->local.s.len != ip_set_s.len || 
+			memcmp(((struct ip_set_param*)_ip_set)->local.s.s, ip_set_s.s, ip_set_s.len) != 0) {
 
-		if (ip_set_parse(&new_ip_set, ip_set_s) < 0) {
-			return -1;
-		};
-		if (((struct ip_set_param*)_ip_set)->sz < ip_set_s.len) {
-			void *p;
-			p = pkg_realloc(((struct ip_set_param*)_ip_set)->s.s, ip_set_s.len);
-			if (!p) {
+			ip_set_init(&new_ip_set, 0);
+			if (ip_set_add_list(&new_ip_set, ip_set_s) < 0) {
 				ip_set_destroy(&new_ip_set);
-				return E_OUT_OF_MEM;
+				return -1;
+			};
+			if (((struct ip_set_param*)_ip_set)->local.sz < ip_set_s.len) {
+				void *p;
+				p = pkg_realloc(((struct ip_set_param*)_ip_set)->local.s.s, ip_set_s.len);
+				if (!p) {
+					ip_set_destroy(&new_ip_set);
+					return E_OUT_OF_MEM;
+				}
+				((struct ip_set_param*)_ip_set)->local.s.s = p;			
+				((struct ip_set_param*)_ip_set)->local.sz = ip_set_s.len;			
 			}
-			((struct ip_set_param*)_ip_set)->s.s = p;			
-			((struct ip_set_param*)_ip_set)->sz = ip_set_s.len;			
+			memcpy(((struct ip_set_param*)_ip_set)->local.s.s, ip_set_s.s, ip_set_s.len);
+			((struct ip_set_param*)_ip_set)->local.s.len = ip_set_s.len;
+			ip_set_destroy(&((struct ip_set_param*)_ip_set)->local.ip_set);
+			((struct ip_set_param*)_ip_set)->local.ip_set = new_ip_set;
 		}
-		memcpy(((struct ip_set_param*)_ip_set)->s.s, ip_set_s.s, ip_set_s.len);
-		((struct ip_set_param*)_ip_set)->s.len = ip_set_s.len;
-		ip_set_destroy(&((struct ip_set_param*)_ip_set)->ip_set);
-		((struct ip_set_param*)_ip_set)->ip_set = new_ip_set;
-/* ip_set_print(stderr, &((struct ip_set_param*)_ip_set)->ip_set); */
 	}
-	switch (ip_set_ip_exists(&((struct ip_set_param*)_ip_set)->ip_set, ip)) {
+/* ip_set_print(stderr, &ip_set); */
+	switch (ip_set_ip_exists(ip_set, ip)) {
 		case IP_TREE_FIND_FOUND:
 		case IP_TREE_FIND_FOUND_UPPER_SET:
 			return 1;
@@ -615,24 +724,41 @@ static int w_ip_is_trusted(struct sip_msg* msg, char* _ip_set, char* _ip) {
 }
 
 static int fixup_ip_is_trusted(void** param, int param_no) {
-	int ret;
+	int ret = E_CFG;
 	struct ip_set_param *p;
+	str s;
 	if (param_no == 1) {
-
-		ret = fixup_var_str_12(param, param_no);
-		if (ret < 0) return ret;
+		
 		p = pkg_malloc(sizeof(*p));
 		if (!p) return E_OUT_OF_MEM;
 		memset(p, 0, sizeof(*p));
-		ip_set_init(&p->ip_set);
-		p->fparam = *param;
-		*param = p;
+		s.s = *param;
+		s.len = strlen(s.s);
+
+		if (is_ip_set_name(&s)) {
+			p->global.ip_set = ip_set_list_find_by_name(s);
+			if (!p->global.ip_set) {
+				ERR(MODULE_NAME": fixup_ip_is_trusted: ip set '%.*s' is not declared\n", s.len, s.s);			
+				goto err;
+			}
+			p->kind = IP_SET_PARAM_KIND_GLOBAL;
+		} else {
+			ret = fixup_var_str_12(param, param_no);
+			if (ret < 0) goto err;
+			ip_set_init(&p->local.ip_set, 0);
+			p->local.fparam = *param;
+			*param = p;
+			p->kind = IP_SET_PARAM_KIND_LOCAL;
+		}
 	}
 	else {
 		return fixup_var_str_12(param, param_no);
 	
 	}
 	return E_OK;
+err:
+	pkg_free(p);
+	return ret;
 }
 
 

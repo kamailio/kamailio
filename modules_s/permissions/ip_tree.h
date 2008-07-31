@@ -106,9 +106,9 @@ struct ip_tree_find {
 #define IP_TREE_FIND_FOUND_UPPER_SET 2
 
 extern void ip_tree_init(struct ip_tree_leaf **tree);
-extern void ip_tree_destroy(struct ip_tree_leaf **tree, int leaves_only);
+extern void ip_tree_destroy(struct ip_tree_leaf **tree, int leaves_only, int use_shm);
 extern int ip_tree_find_ip(struct ip_tree_leaf *tree, unsigned char *ip, unsigned int ip_len, struct ip_tree_find *h);
-extern int ip_tree_add_ip(struct ip_tree_leaf **tree, unsigned char *ip, unsigned int ip_len);
+extern int ip_tree_add_ip(struct ip_tree_leaf **tree, unsigned char *ip, unsigned int ip_len, int use_shm);
 extern void ip_tree_print(FILE *stream, struct ip_tree_leaf *tree, unsigned int indent);
-
+extern str ip_tree_mask_to_str(unsigned char *pm, unsigned int len);
 #endif

@@ -163,8 +163,8 @@
 		same as described in Section 1.1.1.
 	    </para>
 	</section>
-	<section id="refer_to_permissions">
-	    <title>Refer-To Permissions</title>
+	<section id="Messages catching">
+	    <title>Messages catching</title>
 	    <para>
 		The module can be also used for catching messages coming from
 		or going to specific network elements, for example gateways or
@@ -180,5 +180,6 @@
     
     <xi:include href="params.xml"/>
     <xi:include href="functions.xml"/>
+    <xi:include href="xmlrpc.xml"/>
 
 </section>
