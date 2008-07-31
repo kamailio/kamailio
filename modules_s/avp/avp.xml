@@ -526,6 +526,17 @@
       </para>
     </refsect2>
   </refsect1>
+
+  <refsect1 role="manpage">
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><serdoc:sbin>ser</serdoc:sbin></member>
+      <member><serdoc:file>ser.cfg</serdoc:file></member>
+      <member><serdoc:module>avp_db</serdoc:module></member>
+      <member><serdoc:module>avp_radius</serdoc:module></member>
+    </simplelist>
+  </refsect1>
+
 </refentry>
 
 <!-- vim:sw=2 sta et sts=2 ai tw=76
