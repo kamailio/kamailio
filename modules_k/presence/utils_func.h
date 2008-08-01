@@ -62,13 +62,15 @@ static inline int uandd_to_uri(str user,  str domain, str *out)
 		LM_ERR("no more memory\n");
 		return -1;
 	}
-	out->len = 0;
 	strcpy(out->s,"sip:");
 	out->len = 4;
-	strncpy(out->s+out->len, user.s, user.len);
-	out->len += user.len;
-	out->s[out->len] = '@';
-	out->len+= 1;
+	if(user.s!=NULL && user.len>0)
+	{
+		strncpy(out->s+out->len, user.s, user.len);
+		out->len += user.len;
+		out->s[out->len] = '@';
+		out->len+= 1;
+	}
 	strncpy(out->s + out->len, domain.s, domain.len);
 	out->len += domain.len;
 
