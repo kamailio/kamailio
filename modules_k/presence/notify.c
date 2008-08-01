@@ -1347,7 +1347,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 		if( subs->event->req_auth)
 		{
 			
-			if(subs->auth_rules_doc &&
+			if(subs->auth_rules_doc && subs->event->apply_auth_nbody &&
 				subs->event->apply_auth_nbody(n_body, subs, &notify_body)< 0)
 			{
 				LM_ERR("in function apply_auth_nbody\n");
@@ -1390,7 +1390,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 				if(subs->event->req_auth)
 				{
 					 
-					if(subs->auth_rules_doc && 
+					if(subs->auth_rules_doc && subs->event->apply_auth_nbody &&
 					subs->event->apply_auth_nbody(notify_body,subs,&final_body)<0)
 					{
 						LM_ERR("in function apply_auth\n");
