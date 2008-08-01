@@ -397,6 +397,7 @@ static int shm_copy_xcap_list(void)
 
 		shm_xs->addr= (char*)shm_xs+ size;
 		strcpy(shm_xs->addr, xs->addr);
+		shm_xs->port= xs->port;
 		shm_xs->next= xs_list; 
 		xs_list= shm_xs;
 
