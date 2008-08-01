@@ -75,6 +75,10 @@ else
 	MY_LIBS:=$(filter-out %xmlrpc_xmlparse %xmlrpc_xmltok %pthread, $(MY_LIBS))
 endif
 
+# Solaris has filio.h
+ifeq ($(OS),solaris)
+	MY_DEFS+=-DHAVE_SYS_FILIO_H
+endif
 
 DEFS+=$(MY_DEFS)
 LIBS+=$(MY_LIBS)
