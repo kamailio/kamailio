@@ -371,6 +371,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	int len = 0;
 	unsigned int hash_code;
 	subs_t* s= NULL;
+	int state = FULL_STATE_FLAG;
 
 	hash_code = 0;
 	version_str = int2str(subs->version, &len);
@@ -421,6 +422,8 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 		
 		w->next= watchers->next;
 		watchers->next= w;
+
+		state = PARTIAL_STATE_FLAG;
 
 		goto done;
 	}
@@ -496,7 +499,7 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	
 done:
 	notify_body = create_winfo_xml(watchers,version_str,subs->pres_uri,
-			FULL_STATE_FLAG );
+			state );
 	
 	if(watcher_subs == NULL) 
 		lock_release(&subs_htable[hash_code].lock);

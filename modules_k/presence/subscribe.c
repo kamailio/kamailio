@@ -225,7 +225,7 @@ int update_subs_db(subs_t* subs, int type)
 		update_keys[n_update_cols] = &str_version_col;
 		update_vals[n_update_cols].type = DB_INT;
 		update_vals[n_update_cols].nul = 0;
-		update_vals[n_update_cols].val.int_val = subs->version+ 1; 
+		update_vals[n_update_cols].val.int_val = subs->version+ 1;
 		n_update_cols++;
 	}
 
