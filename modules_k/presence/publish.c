@@ -465,7 +465,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		}
 		if(parse_uri(buf, buf_len, &puri)!=0)
 		{
-			LM_ERR("bad owner SIP address!\n");
+			LM_ERR("bad sender SIP address!\n");
 			reply_code= 400; 
 			reply_str= pu_400a_rpl;
 			goto error;

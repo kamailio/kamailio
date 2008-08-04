@@ -660,7 +660,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	if(reason.s)
 		pkg_free(reason.s);
 	
-	if(parsed_event->parsed!= EVENT_DIALOG && subs.pres_uri.s)
+//	if(parsed_event->parsed!= EVENT_DIALOG && subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
 	
 	if((!server_address.s) || (server_address.len== 0))
@@ -692,7 +692,8 @@ error:
 		}
 	}
 
-	if(parsed_event->parsed!= EVENT_DIALOG &&subs.pres_uri.s)
+//  if(parsed_event->parsed!= EVENT_DIALOG &&subs.pres_uri.s)
+	if(subs.pres_uri.s)	
 		pkg_free(subs.pres_uri.s);
 	
 	if(subs.auth_rules_doc)
@@ -824,11 +825,6 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 		subs->from_domain = uri.host;
 	}
 
-	if(subs->event->evp->parsed== EVENT_DIALOG)
-	{
-		subs->pres_uri= pfrom->uri;
-	}
-
 	/*generate to_tag if the message does not have a to_tag*/
 	if (pto->tag_value.s==NULL || pto->tag_value.len==0 )
 	{  
@@ -892,6 +888,23 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
 			subs->contact.s, subs->contact.len);	
 
+    if(subs->event->evp->parsed== EVENT_DIALOG)
+    {
+        /* user_contact@from_domain */
+        if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0)
+        {
+            LM_ERR("failed to parse contact uri\n");
+            goto error;
+        }
+        if(uandd_to_uri(uri.user, subs->from_domain, &subs->pres_uri)< 0)
+        {
+            LM_ERR("failed to construct uri\n");
+            goto error;
+        }
+        LM_DBG("&&&&&&&&&&&&&&& dialog pres_uri= %.*s\n",subs->pres_uri.len, subs->pres_uri.s);
+    }
+
+
 	/*process record route and add it to a string*/
 	if(*to_tag_gen && msg->record_route!=NULL)
 	{
@@ -948,12 +961,18 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 
 	/* first try to_user== pres_user and to_domain== pres_domain */
 
-	uandd_to_uri(subs->to_user, subs->to_domain, &pres_uri);
-	if(pres_uri.s== NULL)
-	{
-		LM_ERR("creating uri from user and domain\n");
-		return -1;
-	}
+    if(subs->pres_uri.s == NULL)
+    {
+	    uandd_to_uri(subs->to_user, subs->to_domain, &pres_uri);
+	    if(pres_uri.s== NULL)
+	    {
+		    LM_ERR("creating uri from user and domain\n");
+		    return -1;
+	    }
+    }
+    else
+        pres_uri = subs->pres_uri;
+
 	hash_code= core_hash(&pres_uri, &subs->event->name, shtable_size);
 	lock_get(&subs_htable[hash_code].lock);
 	i= hash_code;
@@ -965,9 +984,14 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	}
 	lock_release(&subs_htable[hash_code].lock);
 
-	pkg_free(pres_uri.s);
+    if(subs->pres_uri.s)
+        goto not_found;
+	
+    pkg_free(pres_uri.s);
 	pres_uri.s= NULL;
-	LM_DBG("record not found using R-URI search iteratively\n");
+	
+
+    LM_DBG("record not found using R-URI search iteratively\n");
 	/* take one row at a time */
 	for(i= 0; i< shtable_size; i++)
 	{
@@ -992,6 +1016,8 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	{
 		return get_database_info(msg, subs, reply_code, reply_str);	
 	}
+
+not_found:
 
 	LM_ERR("record not found in hash_table\n");
 	*reply_code= 481;

@@ -172,8 +172,7 @@ presentity_t* new_presentity( str* domain,str* user,int expires,
 	int size, init_len;
 	
 	/* allocating memory for presentity */
-	size = sizeof(presentity_t)+ (domain->len+ user->len+ etag->len + 50)
-		* sizeof(char);
+	size = sizeof(presentity_t)+ domain->len+ user->len+ etag->len +1;
 	if(sender)
 		size+= sizeof(str)+ sender->len* sizeof(char);
 	
