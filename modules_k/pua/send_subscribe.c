@@ -142,9 +142,9 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	dlg_t* td =NULL;
 	int size;
 
-	size= sizeof(dlg_t)+ ( presentity->call_id.len+ presentity->to_tag.len+
-		presentity->from_tag.len+ presentity->watcher_uri->len+
-		2* presentity->pres_uri->len+ 1)* sizeof(char);
+	size= sizeof(dlg_t)+ presentity->call_id.len+ presentity->to_tag.len+
+		presentity->from_tag.len+ presentity->watcher_uri->len+ 
+		presentity->pres_uri->len+ presentity->remote_contact.len;
 
 	td = (dlg_t*)pkg_malloc(size);
 	if(td == NULL)
@@ -202,6 +202,8 @@ dlg_t* pua_build_dlg_t(ua_pres_t* presentity)
 	td->loc_seq.is_set = 1;
 	td->state= DLG_CONFIRMED ;
 	
+	LM_DBG("size = %d\n", size);
+
 	return td;
 }
 
@@ -677,16 +679,15 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
 	ua_pres_t* hentity= NULL;
 	int size;
 
-	size= sizeof(ua_pres_t)+ 2*sizeof(str)+(subs->pres_uri->len+
+	size= sizeof(ua_pres_t)+ 2*sizeof(str)+subs->pres_uri->len+
 		subs->watcher_uri->len+ subs->contact.len+ subs->id.len+
-		subs->to_tag.len+ subs->call_id.len+ subs->from_tag.len+ 1)
-		*sizeof(char);
+		subs->to_tag.len+ subs->call_id.len+ subs->from_tag.len+ 1;
 	
 	if(subs->outbound_proxy && subs->outbound_proxy->len && subs->outbound_proxy->s )
-		size+= sizeof(str)+ subs->outbound_proxy->len* sizeof(char);
+		size+= sizeof(str)+ subs->outbound_proxy->len;
 
 	if(subs->extra_headers && subs->extra_headers->s)
-		size+= sizeof(str)+ subs->extra_headers->len* sizeof(char);
+		size+= sizeof(str)+ subs->extra_headers->len;
 
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
@@ -754,6 +755,7 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
 	hentity->ua_flag= hentity->ua_flag;
 	hentity->cb_param= subs->cb_param;
 
+    LM_DBG("size= %d\n", size);
 
 	return hentity;
 

@@ -88,8 +88,8 @@ typedef struct ua_pres{
 	str* outbound_proxy;
 	str* extra_headers;
 	str record_route;
-	str contact;
 	str remote_contact;
+	str contact;
 
 	/*?? should this be long? */
 }ua_pres_t;

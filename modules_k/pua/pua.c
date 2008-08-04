@@ -87,6 +87,7 @@ static str str_cseq_col= str_init("cseq");
 static str str_event_col= str_init("event");
 static str str_record_route_col= str_init("record_route");
 static str str_contact_col= str_init("contact");
+static str str_remote_contact_col= str_init("remote_contact");
 static str str_extra_headers_col= str_init("extra_headers");
 static str str_desired_expires_col= str_init("desired_expires");
 
@@ -117,8 +118,8 @@ static param_export_t params[]={
 	{"db_table" ,		 STR_PARAM, &db_table.s			 },
 	{"min_expires",		 INT_PARAM, &min_expires		 },
 	{"default_expires",  INT_PARAM, &default_expires     },
-	{"update_period",	 INT_PARAM, &update_period	     },
-	{"outbound_proxy",	 STR_PARAM, &outbound_proxy.s	     },
+	{"update_period",	 INT_PARAM, &update_period       },
+	{"outbound_proxy",	 STR_PARAM, &outbound_proxy.s    },
 	{0,							 0,			0            }
 };
 
@@ -300,20 +301,21 @@ static void destroy(void)
 static int db_restore(void)
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[17]; 
+	db_key_t result_cols[18]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
 	str pres_uri, pres_id;
 	str etag, tuple_id;
 	str watcher_uri, call_id;
-	str to_tag, from_tag;
+	str to_tag, from_tag, remote_contact;
 	str record_route, contact, extra_headers;
 	int size= 0, i;
 	int n_result_cols= 0;
 	int puri_col,pid_col,expires_col,flag_col,etag_col, desired_expires_col;
-	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col;
+	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,remote_contact_col;
 	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
+
 
 	result_cols[puri_col=n_result_cols++]	= &str_pres_uri_col;
 	result_cols[pid_col=n_result_cols++]	= &str_pres_id_col;
@@ -329,6 +331,7 @@ static int db_restore(void)
 	result_cols[event_col= n_result_cols++]	= &str_event_col;
 	result_cols[record_route_col= n_result_cols++]	= &str_record_route_col;
 	result_cols[contact_col= n_result_cols++]	= &str_contact_col;
+	result_cols[remote_contact_col= n_result_cols++]	= &str_remote_contact_col;
 	result_cols[extra_headers_col= n_result_cols++]	= &str_extra_headers_col;
 	result_cols[desired_expires_col= n_result_cols++]	= &str_desired_expires_col;
 	
@@ -386,6 +389,7 @@ static int db_restore(void)
 		memset(&record_route,	 0, sizeof(str));
 		memset(&pres_id,         0, sizeof(str));
 		memset(&contact,         0, sizeof(str));
+		memset(&remote_contact,         0, sizeof(str));
 		memset(&extra_headers,   0, sizeof(str));
 		
 		pres_id.s= (char*)row_vals[pid_col].val.string_val;
@@ -423,7 +427,11 @@ static int db_restore(void)
 			
 			contact.s= (char*)row_vals[contact_col].val.string_val;
 			contact.len = strlen(contact.s);
-		}
+			
+            remote_contact.s= (char*)row_vals[remote_contact_col].val.string_val;
+			remote_contact.len = strlen(remote_contact.s);
+
+        }
 		extra_headers.s= (char*)row_vals[extra_headers_col].val.string_val;
 		if(extra_headers.s)
 			extra_headers.len= strlen(extra_headers.s);
@@ -508,7 +516,17 @@ static int db_restore(void)
 			size+= contact.len;
 
 			p->cseq= row_vals[cseq_col].val.int_val;
+
+			p->remote_contact.s= (char*)shm_malloc(remote_contact.len* sizeof(char));
+			if(p->remote_contact.s== NULL)
+			{
+				LM_ERR("No more shared memory\n");
+				goto error;
+			}
+			memcpy(p->remote_contact.s, remote_contact.s, remote_contact.len);
+			p->remote_contact.len= remote_contact.len;
 		}
+
 		if(extra_headers.s)
 		{
 			p->extra_headers= (str*)((char*)p+ size);
@@ -538,6 +556,7 @@ static int db_restore(void)
 			memcpy(p->etag.s, etag.s, etag.len);
 			p->etag.len= etag.len;
 		}
+
 		print_ua_pres(p);
 		insert_htable(p);
 	}
@@ -719,10 +738,10 @@ error:
 static void db_update(unsigned int ticks,void *param)
 {
 	ua_pres_t* p= NULL;
-	db_key_t q_cols[19], result_cols[1];
+	db_key_t q_cols[20], result_cols[1];
 	db_res_t *res= NULL;
 	db_key_t db_cols[5];
-	db_val_t q_vals[19], db_vals[5];
+	db_val_t q_vals[20], db_vals[5];
 	db_op_t  db_ops[1] ;
 	int n_query_cols= 0, n_query_update= 0;
 	int n_update_cols= 0;
@@ -730,6 +749,7 @@ static void db_update(unsigned int ticks,void *param)
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
 	int no_lock= 0, contact_col, desired_expires_col, extra_headers_col;
+	int remote_contact_col;
 	
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
@@ -808,6 +828,11 @@ static void db_update(unsigned int ticks,void *param)
 	q_cols[contact_col= n_query_cols] = &str_contact_col;
 	q_vals[contact_col].type = DB_STR;
 	q_vals[contact_col].nul = 0;
+	n_query_cols++;
+
+	q_cols[remote_contact_col= n_query_cols] = &str_remote_contact_col;
+	q_vals[remote_contact_col].type = DB_STR;
+	q_vals[remote_contact_col].nul = 0;
 	n_query_cols++;
 
 	/* must keep this the last  column to be inserted */
@@ -977,6 +1002,8 @@ static void db_update(unsigned int ticks,void *param)
 					
 					q_vals[record_route_col].val.str_val = p->record_route;
 					q_vals[contact_col].val.str_val = p->contact;
+					if(p->remote_contact.s)
+						q_vals[remote_contact_col].val.str_val = p->remote_contact;
 					
 					if(p->extra_headers)
 						q_vals[extra_headers_col].val.str_val = *(p->extra_headers);
