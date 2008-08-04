@@ -90,6 +90,7 @@ static str str_contact_col= str_init("contact");
 static str str_remote_contact_col= str_init("remote_contact");
 static str str_extra_headers_col= str_init("extra_headers");
 static str str_desired_expires_col= str_init("desired_expires");
+static str str_version_col = str_init("version");
 
 /* module functions */
 
@@ -301,7 +302,7 @@ static void destroy(void)
 static int db_restore(void)
 {
 	ua_pres_t* p= NULL;
-	db_key_t result_cols[18]; 
+	db_key_t result_cols[19]; 
 	db_res_t *res= NULL;
 	db_row_t *row = NULL;	
 	db_val_t *row_vals= NULL;
@@ -315,7 +316,7 @@ static int db_restore(void)
 	int puri_col,pid_col,expires_col,flag_col,etag_col, desired_expires_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,cseq_col,remote_contact_col;
 	int event_col,contact_col,tuple_col,record_route_col, extra_headers_col;
-
+	int version_col;
 
 	result_cols[puri_col=n_result_cols++]	= &str_pres_uri_col;
 	result_cols[pid_col=n_result_cols++]	= &str_pres_id_col;
@@ -334,6 +335,7 @@ static int db_restore(void)
 	result_cols[remote_contact_col= n_result_cols++]	= &str_remote_contact_col;
 	result_cols[extra_headers_col= n_result_cols++]	= &str_extra_headers_col;
 	result_cols[desired_expires_col= n_result_cols++]	= &str_desired_expires_col;
+	result_cols[version_col= n_result_cols++]	= &str_version_col;
 	
 	if(!pua_db)
 	{
@@ -525,6 +527,9 @@ static int db_restore(void)
 			}
 			memcpy(p->remote_contact.s, remote_contact.s, remote_contact.len);
 			p->remote_contact.len= remote_contact.len;
+	
+			p->version= row_vals[version_col].val.int_val;
+
 		}
 
 		if(extra_headers.s)
@@ -749,7 +754,7 @@ static void db_update(unsigned int ticks,void *param)
 	int puri_col,pid_col,expires_col,flag_col,etag_col,tuple_col,event_col;
 	int watcher_col,callid_col,totag_col,fromtag_col,record_route_col,cseq_col;
 	int no_lock= 0, contact_col, desired_expires_col, extra_headers_col;
-	int remote_contact_col;
+	int remote_contact_col, version_col;
 	
 	if(ticks== 0 && param == NULL)
 		no_lock= 1;
@@ -835,12 +840,16 @@ static void db_update(unsigned int ticks,void *param)
 	q_vals[remote_contact_col].nul = 0;
 	n_query_cols++;
 
+	q_cols[version_col= n_query_cols] = &str_version_col;
+	q_vals[version_col].type = DB_INT;
+	q_vals[version_col].nul = 0;
+	n_query_cols++;
+
 	/* must keep this the last  column to be inserted */
 	q_cols[extra_headers_col= n_query_cols] = &str_extra_headers_col;
 	q_vals[extra_headers_col].type = DB_STR;
 	q_vals[extra_headers_col].nul = 0;
 	n_query_cols++;
-
 
 	/* cols and values used for update */
 	db_cols[0]= &str_expires_col;
@@ -999,6 +1008,7 @@ static void db_update(unsigned int ticks,void *param)
 					q_vals[expires_col].val.int_val = p->expires;
 					q_vals[desired_expires_col].val.int_val = p->desired_expires;
 					q_vals[event_col].val.int_val = p->event;
+					q_vals[version_col].val.int_val = p->version;
 					
 					q_vals[record_route_col].val.str_val = p->record_route;
 					q_vals[contact_col].val.str_val = p->contact;

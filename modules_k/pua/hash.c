@@ -44,6 +44,10 @@ void print_ua_pres(ua_pres_t* p)
 	{	
 		LM_DBG("\twatcher_uri= %.*s  len= %d\n", p->watcher_uri->len, p->watcher_uri->s, p->watcher_uri->len);
 		LM_DBG("\tcall_id= %.*s   len= %d\n", p->call_id.len, p->call_id.s, p->call_id.len);
+		LM_DBG("\tfrom_tag= %.*s   len= %d\n", p->from_tag.len, p->from_tag.s, p->from_tag.len);
+		LM_DBG("\tto_tag= %.*s  len= %d\n", p->to_tag.len, p->to_tag.s, p->to_tag.len);
+		LM_DBG("\tflag= %d\n", p->flag);
+		LM_DBG("\tevent= %d\n", p->event);
 	}	
 	else
 	{

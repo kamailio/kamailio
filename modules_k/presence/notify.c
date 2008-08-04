@@ -1153,7 +1153,7 @@ subs_t* get_subs_dialog(str* pres_uri, pres_ev_t* event, str* sender)
 		}
 		
 		if((!(s->status== ACTIVE_STATUS &&
-            s->reason.s == NULL && s->reason.len== 0 &&
+            s->reason.len== 0 &&
 			s->event== event && s->pres_uri.len== pres_uri->len &&
 			strncmp(s->pres_uri.s, pres_uri->s, pres_uri->len)== 0)) || 
 			(sender && sender->len== s->contact.len && 

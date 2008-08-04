@@ -363,17 +363,20 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		   a subscription with type= INSERT_TYPE, else return*/	
 		
 		if(presentity)
-		{	
+		{
 			subs_info_t subs;
 			hentity->event= presentity->event;
 			delete_htable(presentity, hash_code);
 			lock_release(&HashT->p_records[hash_code].lock);
-		
+
 			memset(&subs, 0, sizeof(subs_info_t));
 			subs.pres_uri= hentity->pres_uri; 
 			subs.watcher_uri= hentity->watcher_uri;
 			subs.contact= &hentity->contact;
-			
+
+			if(hentity->remote_contact.s)
+				subs.remote_target= &hentity->remote_contact;
+
 			if(hentity->desired_expires== 0)
 				subs.expires= -1;
 			else
@@ -689,6 +692,9 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
 	if(subs->extra_headers && subs->extra_headers->s)
 		size+= sizeof(str)+ subs->extra_headers->len;
 
+	if(subs->remote_contact.s)
+		size+= subs->remote_contact.len;
+
 	hentity= (ua_pres_t*)shm_malloc(size);
 	if(hentity== NULL)
 	{
@@ -733,6 +739,12 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
 	{
 		CONT_COPY(hentity, hentity->id, subs->id)
 	}
+	
+	if(subs->remote_contact.s)
+	{
+		CONT_COPY(hentity, hentity->remote_contact, subs->remote_contact)
+	}
+
 	if(subs->extra_headers)
 	{
 		hentity->extra_headers= (str*)((char*)hentity+ size);
