@@ -193,8 +193,9 @@ modparam("presence_xml", "integrated_xcap_server", 1)
 		</example>
 	</section>
 	<section>
-		<title><varname>server_address</varname> (str)</title>
+		<title><varname>xcap_server</varname> (str)</title>
 		<para>
+		The address of the xcap servers used for storage.
 		This parameter is compulsory if the integrated_xcap_server parameter
 		is not set. It can be set more that once, to construct an address
 		list of trusted XCAP servers.</para>

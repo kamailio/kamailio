@@ -31,7 +31,7 @@ Anca-Maria Vamanu
               1.3.3. force_active (int)
               1.3.4. pidf_manipulation (int)
               1.3.5. integrated_xcap_server (int)
-              1.3.6. server_address (str)
+              1.3.6. xcap_server (str)
 
         1.4. Exported Functions
         1.5. Installation
@@ -164,11 +164,12 @@ modparam("presence_xml", "pidf_manipulation", 1)
 modparam("presence_xml", "integrated_xcap_server", 1)
 ...
 
-1.3.6. server_address (str)
+1.3.6. xcap_server (str)
 
-   This parameter is compulsory if the integrated_xcap_server
-   parameter is not set. It can be set more that once, to
-   construct an address list of trusted XCAP servers.
+   The address of the xcap servers used for storage. This
+   parameter is compulsory if the integrated_xcap_server parameter
+   is not set. It can be set more that once, to construct an
+   address list of trusted XCAP servers.
 
    Example 1.6. Set xcap_server parameter
 ...
