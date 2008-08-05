@@ -15,7 +15,7 @@ MASTER_SITES= http://openser.org/pub/openser/1.2.0/src/
 MAINTAINER= daniel@voice-system.ro
 
 MAN8=openser.8
-MAN5=openser.cfg.5
+MAN5=kamailio.cfg.5
 # MANCOMPRESSED must not be specified (if defined is assumed to be yes)
 
 

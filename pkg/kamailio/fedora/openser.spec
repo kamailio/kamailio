@@ -476,7 +476,7 @@ fi
 %attr(755,root,root) %{_initrddir}/openser
 
 %config(noreplace) %{_sysconfdir}/openser/dictionary.radius
-%config(noreplace) %{_sysconfdir}/openser/openser.cfg
+%config(noreplace) %{_sysconfdir}/openser/kamailio.cfg
 %config(noreplace) %{_sysconfdir}/openser/kamctlrc
 
 %config(noreplace) %{_sysconfdir}/openser/tls/ca.conf
@@ -498,7 +498,7 @@ fi
 
 %{_datadir}/openser/dbtext/openser/*
 
-%{_mandir}/man5/openser.cfg.5*
+%{_mandir}/man5/kamailio.cfg.5*
 %{_mandir}/man8/openser.8*
 %{_mandir}/man8/kamctl.8*
 %{_mandir}/man8/kamunix.8*

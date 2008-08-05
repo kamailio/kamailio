@@ -22,7 +22,7 @@ OSER_BIN=/usr/sbin/openser
 test -x $OSER_BIN || exit 5
 
 # Check for existence of needed config file and read it
-OSER_CONFIG=/etc/openser/openser.cfg
+OSER_CONFIG=/etc/openser/kamailio.cfg
 test -r $OSER_CONFIG || exit 6
 
 # Shell functions sourced from /etc/rc.status:

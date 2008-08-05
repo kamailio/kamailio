@@ -44,12 +44,12 @@ MODULES=	acc alias_db auth auth_db auth_diameter avpops benchmark \
 RC_FILES=	acc/radiusclient.conf \
 		acc/servers \
 		dictionary.radius \
-		openser.cfg
+		kamailio.cfg
 RC_DIRS=	acc
 
 ONLY_FOR_ARCHS=	i386
 
-MAN5=		openser.cfg.5
+MAN5=		kamailio.cfg.5
 MAN8=		openser.8 \
 		kamctl.8 \
 		kamunix.8
@@ -154,7 +154,7 @@ post-patch:
 	@${REINPLACE_CMD} -e 's|/usr/local/sbin/openser|${PREFIX}/sbin/openser|' \
 		${WRKSRC}/INSTALL
 	@${REINPLACE_CMD} -e 's|/usr/local|${PREFIX}|' \
-		${WRKSRC}/etc/openser.cfg \
+		${WRKSRC}/etc/kamailio.cfg \
 		${WRKSRC}/scripts/kamctl \
 		${WRKSRC}/scripts/kamctl.8 \
 		${WRKSRC}/scripts/kamctl.base \
@@ -183,8 +183,8 @@ post-patch:
 		${WRKSRC}/modules/acc/acc_mod.c ${WRKSRC}/modules/acc/README
 
 post-install:
-	${INSTALL_DATA} ${WRKSRC}/etc/openser.cfg \
-		${PREFIX}/etc/openser/openser.cfg.default
+	${INSTALL_DATA} ${WRKSRC}/etc/kamailio.cfg \
+		${PREFIX}/etc/openser/kamailio.cfg.default
 	${MKDIR} ${PREFIX}/etc/openser/acc
 	${INSTALL_DATA} ${WRKSRC}/modules/acc/etc/radiusclient.conf \
 		${PREFIX}/etc/openser/acc/radiusclient.conf.default

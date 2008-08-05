@@ -35,7 +35,7 @@ openser (1.2.0-0) unstable; urgency=low
     + No longer needs to be run as root to dump core.
   * debian/patches/01_sourced_scripts.dpatch:
     + Removed; merged upstream.
-  * debian/patches/02_openser.cfg.dpatch:
+  * debian/patches/02_kamailio.cfg.dpatch:
     + Removed; no longer needed.
   * debian/patches/12_fail_on_build_failure.dpatch:
     + Removed; merged upstream.
@@ -112,7 +112,7 @@ openser (1.1.0-3) unstable; urgency=low
       packaging directory dedicated to Sarge.
   * debian/control:
     + Build-Depends cleanup.
-  * debian/patches/02_openser.cfg.dpatch:
+  * debian/patches/02_kamailio.cfg.dpatch:
     + Remove the C-style comment block containing fork=no, otherwise the
       default config file will trigger the test for fork=no in the
       initscript (closes: #386464).

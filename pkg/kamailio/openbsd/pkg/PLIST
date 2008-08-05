@@ -1,4 +1,4 @@
-etc/openser/openser.cfg
+etc/openser/kamailio.cfg
 etc/openser/kamctl
 sbin/openser
 sbin/kamctl

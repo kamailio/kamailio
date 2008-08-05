@@ -7,7 +7,7 @@
 #
 # processname: openser
 # pidfile: /var/run/openser.pid
-# config: /etc/openser/openser.cfg
+# config: /etc/openser/kamailio.cfg
 #
 ### BEGIN INIT INFO
 # Provides: openser

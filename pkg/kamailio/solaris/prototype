@@ -2,7 +2,7 @@
 i pkginfo=pkginfo
 d none etc 0755 bin bin
 d none etc/openser 0755 bin bin
-e none etc/openser/openser.cfg 0644 bin bin
+e none etc/openser/kamailio.cfg 0644 bin bin
 e none etc/openser/kamctlrc 0644 bin bin
 d none sbin 0755 bin bin
 f none sbin/openser 0755 bin bin
@@ -129,4 +129,4 @@ f none man/man8/openser.8 0644 bin bin
 f none man/man8/kamctl.8 0644 bin bin
 f none man/man8/kamunix.8 0644 bin bin
 d none man/man5 0755 bin bin
-f none man/man5/openser.cfg.5 0644 bin bin
+f none man/man5/kamailio.cfg.5 0644 bin bin

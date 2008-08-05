@@ -28,7 +28,7 @@ RUN_OPENSER=no
 # otherwise the boot process will just stop
 check_fork ()
 {
-    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/openser/openser.cfg; then
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/openser/kamailio.cfg; then
 	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/openser debug instead"
 	exit 1
     fi

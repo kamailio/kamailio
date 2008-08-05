@@ -7,7 +7,7 @@
 #
 # processname: openser
 # pidfile: /var/run/openser.pid
-# config: /etc/openser/openser.cfg
+# config: /etc/openser/kamailio.cfg
 
 # Source function library.
 . /etc/rc.d/init.d/functions
