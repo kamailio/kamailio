@@ -35,7 +35,7 @@
 # 2003-03-01 bug_fix: route set reversed
 # 2003-02-27 dialog support completed (jiri)
 # 2003-04-28 dialog info precomputed in SER (jiri)
-# 2007-04-06 updated for OpenSER 1.2.0+ (daniel)
+# 2007-04-06 updated for Kamailio 1.2.0+ (daniel)
 
 #--------------------------------
 # config: who with whom
@@ -57,7 +57,7 @@ fi
 
 #---------------------------------
 # fixed config data
-FIFO="/tmp/openser_fifo"
+FIFO="/tmp/kamailio_fifo"
 # address of controller
 FROM="<sip:controller@foo.bar>"
 CSEQ="1"

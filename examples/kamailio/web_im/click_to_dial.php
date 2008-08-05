@@ -15,7 +15,7 @@ Click-To-Dial
 
 /* config values */
 $web_contact="sip:daemon@mydomain.net";
-$fifo="/tmp/openser_fifo";
+$fifo="/tmp/kamailio_fifo";
 $signature="web_dialer_0.1.0";
 
 /* open reply fifo */
