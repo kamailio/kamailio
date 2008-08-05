@@ -334,7 +334,7 @@ shm_status();
 
    Example 1.14. rand_set_prob usage
 ...
-$ openserctl fifo rand_set_prob 10
+$ kamctl fifo rand_set_prob 10
 ...
 
 1.5.2. rand_reset_prob
@@ -345,7 +345,7 @@ $ openserctl fifo rand_set_prob 10
 
    Example 1.15.  rand_reset_prob usage
 ...
-$ openserctl fifo rand_reset_prob
+$ kamctl fifo rand_reset_prob
 ...
 
 1.5.3. rand_get_prob
@@ -356,7 +356,7 @@ $ openserctl fifo rand_reset_prob
 
    Example 1.16. rand_get_prob usage
 ...
-$ openserctl fifo get_prob
+$ kamctl fifo get_prob
 The actual probability is 50 percent.
 ...
 
@@ -372,7 +372,7 @@ The actual probability is 50 percent.
 
    Example 1.17. check_config_hash usage
 ...
-$ openserctl fifo check_config_hash
+$ kamctl fifo check_config_hash
 The actual config file hash is identical to the stored one.
 ...
 
@@ -385,7 +385,7 @@ The actual config file hash is identical to the stored one.
 
    Example 1.18. get_config_hash usage
 ...
-$ openserctl fifo get_config_hash
+$ kamctl fifo get_config_hash
 1580a37104eb4de69ab9f31ce8d6e3e0
 ...
 
@@ -409,7 +409,7 @@ $ openserctl fifo get_config_hash
 
    Example 1.19. shv_set usage
 ...
-$ openserctl fifo shv_set debug int 0
+$ kamctl fifo shv_set debug int 0
 ...
 
 1.5.7. shv_get
@@ -427,8 +427,8 @@ $ openserctl fifo shv_set debug int 0
 
    Example 1.20. shv_get usage
 ...
-$ openserctl fifo shv_get debug
-$ openserctl fifo shv_get
+$ kamctl fifo shv_get debug
+$ kamctl fifo shv_get
 ...
 
 1.6. Exported pseudo-variables

@@ -149,8 +149,8 @@ if(is_gflag("4"))
 
    Example 1.5. set_gflag usage
 ...
-$ openserctl fifo set_gflag 1
-$ openserctl fifo set_gflag 0x3
+$ kamctl fifo set_gflag 1
+$ kamctl fifo set_gflag 0x3
 ...
 
 1.5.2. reset_gflag
@@ -161,8 +161,8 @@ $ openserctl fifo set_gflag 0x3
 
    Example 1.6.  reset_gflag usage
 ...
-$ openserctl fifo reset_gflag 1
-$ openserctl fifo reset_gflag 0x3
+$ kamctl fifo reset_gflag 1
+$ kamctl fifo reset_gflag 0x3
 ...
 
 1.5.3. is_gflag
@@ -174,19 +174,19 @@ $ openserctl fifo reset_gflag 0x3
 
    Example 1.7. is_gflag usage
 ...
-$ openserctl fifo set_gflag 1024
-$ openserctl fifo is_gflag 1024
+$ kamctl fifo set_gflag 1024
+$ kamctl fifo is_gflag 1024
 TRUE
-$ openserctl fifo is_gflag 1025
+$ kamctl fifo is_gflag 1025
 TRUE
-$ openserctl fifo is_gflag 1023
+$ kamctl fifo is_gflag 1023
 FALSE
-$ openserctl fifo set_gflag 0x10
-$ openserctl fifo is_gflag 1023
+$ kamctl fifo set_gflag 0x10
+$ kamctl fifo is_gflag 1023
 TRUE
-$ openserctl fifo is_gflag 1007
+$ kamctl fifo is_gflag 1007
 FALSE
-$ openserctl fifo is_gflag 16
+$ kamctl fifo is_gflag 16
 TRUE
 ...
 
@@ -197,7 +197,7 @@ TRUE
 
    Example 1.8.  get_gflags usage
 ...
-$ openserctl fifo get_gflags
+$ kamctl fifo get_gflags
 0x3039
 12345
 ...

@@ -382,7 +382,7 @@ shm_status();
 				<title><function moreinfo="none">rand_set_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ openserctl fifo rand_set_prob 10
+$ kamctl fifo rand_set_prob 10
 ...
 </programlisting>
 			</example>
@@ -401,7 +401,7 @@ $ openserctl fifo rand_set_prob 10
 					<function moreinfo="none">rand_reset_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ openserctl fifo rand_reset_prob
+$ kamctl fifo rand_reset_prob
 ...
 </programlisting>
 			</example>
@@ -418,7 +418,7 @@ $ openserctl fifo rand_reset_prob
 				<title><function moreinfo="none">rand_get_prob</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ openserctl fifo get_prob
+$ kamctl fifo get_prob
 The actual probability is 50 percent.
 ...
 </programlisting>
@@ -438,7 +438,7 @@ The actual probability is 50 percent.
 				<title><function moreinfo="none">check_config_hash</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ openserctl fifo check_config_hash
+$ kamctl fifo check_config_hash
 The actual config file hash is identical to the stored one.
 ...
 </programlisting>
@@ -457,7 +457,7 @@ The actual config file hash is identical to the stored one.
 				<title><function moreinfo="none">get_config_hash</function> usage</title>
 				<programlisting format="linespecific">
 ...
-$ openserctl fifo get_config_hash
+$ kamctl fifo get_config_hash
 1580a37104eb4de69ab9f31ce8d6e3e0
 ...
 </programlisting>
@@ -495,7 +495,7 @@ $ openserctl fifo get_config_hash
 			<title><function moreinfo="none">shv_set</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ openserctl fifo shv_set debug int 0
+$ kamctl fifo shv_set debug int 0
 ...
 </programlisting>
 			</example>
@@ -522,8 +522,8 @@ $ openserctl fifo shv_set debug int 0
 			<title><function moreinfo="none">shv_get</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ openserctl fifo shv_get debug
-$ openserctl fifo shv_get
+$ kamctl fifo shv_get debug
+$ kamctl fifo shv_get
 ...
 </programlisting>
 			</example>

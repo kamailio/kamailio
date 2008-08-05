@@ -136,7 +136,7 @@ modparam("db_oracle", "reconnect", 0.5)
 	<section>
 	<title>Utility openser_orasel</title>
 		<para>
-		For working with openserctl script, should be able to print the 'query' 
+		For working with kamctl script, should be able to print the 'query' 
 		results to the terminal in a user-readable form. The standard command-line 
 		Oracle client (sqlplus) is not quite suitable for this, as it cannot align 
 		row width to real (received) data's (it always prints a cell width as 

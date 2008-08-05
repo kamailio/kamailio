@@ -110,7 +110,7 @@ mv acc_4.log acc_3.log.20050605
        data into the renamed files.
      * Send Kamailio the MI command to close and reopen the
        renamed files. For example, using FIFO:
-openserctl fifo flat_rotate
+kamctl fifo flat_rotate
 
        This will force Kamailio to close the renamed files and
        open new ones with original names, such as acc_1.log. New

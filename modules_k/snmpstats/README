@@ -575,7 +575,7 @@ dules/snmpstats.so>:
     LD_LIBRARY_PATH=/path/noted/in/step/one/above
 
    For example, on my system I ran:
-    LD_LIBRARY_PATH=/usr/local/lib openserctl start
+    LD_LIBRARY_PATH=/usr/local/lib kamctl start
 
    2.6.
 

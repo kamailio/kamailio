@@ -184,7 +184,7 @@ if (!check_blacklist("global_blacklist")))
 
    Example 1.6. reload_blacklists usage
 ...
-openserctl fifo reload_blacklist
+kamctl fifo reload_blacklist
 ...
 
 1.6. Installation and Running

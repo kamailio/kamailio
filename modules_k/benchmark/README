@@ -227,7 +227,7 @@ bm_log_timer("test");
 
    Example 1.6. Enabling a timer
 ...
-openserctl fifo bm_enable_timer test 1
+kamctl fifo bm_enable_timer test 1
 ...
 
 1.6.3. bm_granularity

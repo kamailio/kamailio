@@ -198,7 +198,7 @@
 		</para>
 
 		<programlisting format="linespecific">
-    LD_LIBRARY_PATH=/usr/local/lib openserctl start
+    LD_LIBRARY_PATH=/usr/local/lib kamctl start
 		</programlisting>
 
 	    </answer>

@@ -593,7 +593,7 @@ start_recording();
 
    Example 1.23. nh_enable_ping usage
 ...
-$ openserctl fifo nh_enable_ping 1
+$ kamctl fifo nh_enable_ping 1
 ...
 
 1.7.2. nh_enable_rtpp
@@ -611,7 +611,7 @@ $ openserctl fifo nh_enable_ping 1
 
    Example 1.24.  nh_enable_rtpp usage
 ...
-$ openserctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
+$ kamctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 ...
 
 1.7.3. nh_show_rtpp
@@ -623,7 +623,7 @@ $ openserctl fifo nh_enable_rtpp udp:192.168.2.133:8081 0
 
    Example 1.25.  nh_show_rtpp usage
 ...
-$ openserctl fifo nh_show_rtpp
+$ kamctl fifo nh_show_rtpp
 ...
 
 Chapter 2. Frequently Asked Questions

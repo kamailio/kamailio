@@ -152,8 +152,8 @@ if(is_gflag("4"))
 			<title><function moreinfo="none">set_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ openserctl fifo set_gflag 1
-$ openserctl fifo set_gflag 0x3
+$ kamctl fifo set_gflag 1
+$ kamctl fifo set_gflag 0x3
 ...
 </programlisting>
 			</example>
@@ -172,8 +172,8 @@ $ openserctl fifo set_gflag 0x3
 				<function moreinfo="none">reset_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ openserctl fifo reset_gflag 1
-$ openserctl fifo reset_gflag 0x3
+$ kamctl fifo reset_gflag 1
+$ kamctl fifo reset_gflag 0x3
 ...
 </programlisting>
 			</example>
@@ -191,19 +191,19 @@ $ openserctl fifo reset_gflag 0x3
 			<title><function moreinfo="none">is_gflag</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ openserctl fifo set_gflag 1024
-$ openserctl fifo is_gflag 1024
+$ kamctl fifo set_gflag 1024
+$ kamctl fifo is_gflag 1024
 TRUE
-$ openserctl fifo is_gflag 1025
+$ kamctl fifo is_gflag 1025
 TRUE
-$ openserctl fifo is_gflag 1023
+$ kamctl fifo is_gflag 1023
 FALSE
-$ openserctl fifo set_gflag 0x10
-$ openserctl fifo is_gflag 1023
+$ kamctl fifo set_gflag 0x10
+$ kamctl fifo is_gflag 1023
 TRUE
-$ openserctl fifo is_gflag 1007
+$ kamctl fifo is_gflag 1007
 FALSE
-$ openserctl fifo is_gflag 16
+$ kamctl fifo is_gflag 16
 TRUE
 ...
 </programlisting>
@@ -220,7 +220,7 @@ TRUE
 				<function moreinfo="none">get_gflags</function> usage</title>
 			<programlisting format="linespecific">
 ...
-$ openserctl fifo get_gflags
+$ kamctl fifo get_gflags
 0x3039
 12345
 ...

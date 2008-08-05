@@ -33,10 +33,10 @@
 	The tracing can be turned on/off using fifo commad.
 	</para>
 	<para>
-	openserctl fifo sip_trace on
+	kamctl fifo sip_trace on
 	</para>
 	<para>
-	openserctl fifo sip_trace off
+	kamctl fifo sip_trace off
 	</para>
 	</section>
 	<section>

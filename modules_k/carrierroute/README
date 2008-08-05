@@ -873,7 +873,7 @@ reply_code, dstavp)
 
    Example 1.38. cr_replace_host usage
 ...
-openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
+kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
 
 1.5.4. cr_deactivate_host
@@ -895,7 +895,7 @@ openserctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 
    Example 1.39. cr_deactivate_host usage
 ...
-openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
+kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
 
 1.5.5. cr_activate_host
@@ -911,7 +911,7 @@ openserctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Example 1.40. cr_activate_host usage
 ...
-openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
+kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
 
 1.5.6. cr_add_host
@@ -931,7 +931,7 @@ openserctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 
    Example 1.41. cr_add_host usage
 ...
-openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
+kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
 1.5.7. cr_delete_host
@@ -952,7 +952,7 @@ openserctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Example 1.42. cr_delete_host usage
 ...
-openserctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
+kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
 1.6. Examples

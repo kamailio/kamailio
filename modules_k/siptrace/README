@@ -79,9 +79,9 @@ Chapter 1. Admin Guide
 
    The tracing can be turned on/off using fifo commad.
 
-   openserctl fifo sip_trace on
+   kamctl fifo sip_trace on
 
-   openserctl fifo sip_trace off
+   kamctl fifo sip_trace off
 
 1.2. Dependencies
 

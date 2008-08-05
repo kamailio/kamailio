@@ -76,7 +76,7 @@ static int mi_child_init(void);
 static void mod_destroy(void);
 
 /* --- fifo functions */
-struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usage: openserctl fifo reload_blacklist */
+struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param);  /* usage: kamctl fifo reload_blacklist */
 
 
 static cmd_export_t cmds[]={
