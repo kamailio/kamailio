@@ -1975,6 +1975,7 @@ static int sel_get(str* res, select_t* s, struct sip_msg* msg) {
 
 SELECT_F(select_any_nameaddr)
 SELECT_F(select_any_uri)
+SELECT_F(select_anyheader_params)
 
 select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT(MODULE_NAME), sel_eval, SEL_PARAM_EXPECTED},
@@ -1985,8 +1986,10 @@ select_row_t sel_declaration[] = {
 
 	{ sel_get, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ sel_get, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
+	{ sel_get, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
 	{ sel_register, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR},
 	{ sel_register, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED | CONSUME_NEXT_STR},
+	{ sel_register, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
 
 	/* for backward compatability only, use @sys.unique */
 	{ sel_eval, SEL_PARAM_STR, STR_STATIC_INIT("uuid"), select_sys_unique, 0},

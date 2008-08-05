@@ -2084,6 +2084,7 @@ static int sel_hf_value2_name_param_name(str* res, select_t* s, struct sip_msg* 
 
 SELECT_F(select_any_nameaddr)
 SELECT_F(select_any_uri)
+SELECT_F(select_anyheader_params)
 
 select_row_t sel_declaration[] = {
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value"), sel_hf_value, SEL_PARAM_EXPECTED},
@@ -2094,6 +2095,8 @@ select_row_t sel_declaration[] = {
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("uri"), sel_hf_value_name_uri, FIXUP_CALL},
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("name"), sel_hf_value_name_name, FIXUP_CALL},
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED | CONSUME_NEXT_STR}, /* it duplicates param,p,name,... */
+	{ sel_hf_value_name, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
+
 	{ sel_hf_value_name_uri, SEL_PARAM_INT, STR_NULL, select_any_uri, NESTED},
 	{ sel_hf_value_name, SEL_PARAM_STR, STR_NULL, sel_hf_value_name_param_name, FIXUP_CALL},
 
@@ -2102,6 +2105,7 @@ select_row_t sel_declaration[] = {
 
 	{ NULL, SEL_PARAM_STR, STR_STATIC_INIT("hf_value2"), sel_hf_value2, SEL_PARAM_EXPECTED},
 	{ sel_hf_value2, SEL_PARAM_STR, STR_NULL, sel_hf_value2_name, CONSUME_NEXT_INT | OPTIONAL | FIXUP_CALL},
+	{ sel_hf_value2_name, SEL_PARAM_STR, STR_STATIC_INIT("params"), select_anyheader_params, NESTED},
 	{ sel_hf_value2_name, SEL_PARAM_STR, STR_NULL, sel_hf_value2_name_param_name, FIXUP_CALL},
 	{ sel_hf_value2_name_param_name, SEL_PARAM_STR, STR_STATIC_INIT("nameaddr"), select_any_nameaddr, NESTED},
 	{ sel_hf_value2_name_param_name, SEL_PARAM_STR, STR_STATIC_INIT("uri"), select_any_uri, NESTED},
