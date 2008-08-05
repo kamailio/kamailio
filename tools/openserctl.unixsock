@@ -23,13 +23,13 @@ fi
 ##### ----------------------------------------------- #####
 ### parameters
 #
-export CHROOT_DIR # needed for openserunix
+export CHROOT_DIR # needed for kamunix
 if [ -z "$OSER_UNIXSOCK" ]; then
 	OSER_UNIXSOCK=$CHROOT_DIR/tmp/openser.sock
 fi
 
 if [ -z "$OSERUNIX" ]; then
-	OSERUNIX=openserunix
+	OSERUNIX=kamunix
 fi
 
 #
