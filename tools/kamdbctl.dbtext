@@ -1,6 +1,6 @@
 # $Id$
 #
-# Script for adding and dropping OpenSER DBTEXT tables
+# Script for adding and dropping Kamailio DBTEXT tables
 #
 # History:
 # 2007-02-14  Branch from mysqldb.sh script and adapt minimal capabilities(Cesc Santasusana)
@@ -10,16 +10,16 @@
 #             control tool for database tasks, like the kamctl (henning)
 
 # path to the database schemas
-DATA_DIR="/usr/local/share/openser"
-if [ -d "$DATA_DIR/dbtext/openser" ] ; then
-	DB_SCHEMA="$DATA_DIR/dbtext/openser"
+DATA_DIR="/usr/local/share/kamailio"
+if [ -d "$DATA_DIR/dbtext/kamailio" ] ; then
+	DB_SCHEMA="$DATA_DIR/dbtext/kamailio"
 else
-	DB_SCHEMA="./dbtext/openser"
+	DB_SCHEMA="./dbtext/kamailio"
 fi
 
 # path to the dbtext database
 if [ -z "$DB_PATH" ] ; then
-	DB_PATH="/usr/local/etc/openser/dbtext"
+	DB_PATH="/usr/local/etc/kamailio/dbtext"
 fi
 
 openser_drop()  # pars: <database name>

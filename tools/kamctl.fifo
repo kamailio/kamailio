@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# openser control tool for maintaining openser
+# control tool for maintaining Kamailio
 #
 #===================================================================
 
@@ -24,7 +24,7 @@ fi
 ### parameters
 #
 if [ -z "$OSER_FIFO" ]; then
-	OSER_FIFO=/tmp/openser_fifo
+	OSER_FIFO=/tmp/kamailio_fifo
 fi
 
 #
@@ -53,7 +53,7 @@ fifo_cmd()
 	name=openser_receiver_$$
 	path=$CHROOT_DIR/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
-		merr "Error opening OpenSER's FIFO $OSER_FIFO"
+		merr "Error opening Kamailio's FIFO $OSER_FIFO"
 		merr "Make sure you have the line 'modparam(\"mi_fifo\", \"fifo_name\", \"$OSER_FIFO\")' in your config"
 		merr "and also have loaded the mi_fifo module."
 		if [ ! -z $CHROOT_DIR ]; then
@@ -102,7 +102,7 @@ fifo_openser_monitor() {
 	name=openser_receiver_$$
 	path=$CHROOT_DIR/tmp/$name
 	if [ ! -w $OSER_FIFO ]; then
-		merr "Error opening OpenSER's FIFO $OSER_FIFO"
+		merr "Error opening Kamailio's FIFO $OSER_FIFO"
 		merr "Make sure you have the line 'modparam(\"mi_fifo\", \"fifo_name\", \"$OSER_FIFO\")' in your config"
 		merr "and also have loaded the mi_fifo module."
 		exit 1

@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# openser control tool for maintaining openser databases
+# control tool for maintaining Kamailio databases
 #
 #===================================================================
 
@@ -13,11 +13,11 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include resource files, if any
-if [ -f /etc/openser/kamctlrc ]; then
-	. /etc/openser/kamctlrc
+if [ -f /etc/kamailio/kamctlrc ]; then
+	. /etc/kamailio/kamctlrc
 fi
-if [ -f /usr/local/etc/openser/kamctlrc ]; then
-	. /usr/local/etc/openser/kamctlrc
+if [ -f /usr/local/etc/kamailio/kamctlrc ]; then
+	. /usr/local/etc/kamailio/kamctlrc
 fi
 if [ -f ~/.kamctlrc ]; then
 	. ~/.kamctlrc
@@ -38,7 +38,7 @@ if [ -z "$MYDIR" ] ; then
 fi
 
 if [ -z "$MYLIBDIR" ] ; then
-	MYLIBDIR="/usr/local/lib/openser/kamctl"
+	MYLIBDIR="/usr/local/lib/kamailio/kamctl"
 	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
 	fi

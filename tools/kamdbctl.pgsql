@@ -1,6 +1,6 @@
 # $Id$
 #
-# Script for adding and dropping OpenSER Postgres tables
+# Script for adding and dropping Kamailio Postgres tables
 #
 # History:
 # 2006-05-16  added ability to specify MD5 from a configuration file
@@ -29,7 +29,7 @@
 # 2007-06-11  Use a common control tool for database tasks, like the kamctl
 
 # path to the database schemas
-DATA_DIR="/usr/local/share/openser"
+DATA_DIR="/usr/local/share/kamailio"
 if [ -d "$DATA_DIR/postgres" ] ; then
 	DB_SCHEMA="$DATA_DIR/postgres"
 else
@@ -161,7 +161,7 @@ then
 	fi
 fi
 
-minfo "Core OpenSER tables succesfully created."
+minfo "Core Kamailio tables succesfully created."
 
 get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
 if [ "$ANSWER" = "y" ]; then

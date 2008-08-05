@@ -1,17 +1,17 @@
 #
 # $Id$
 #
-# Script for maintaining OpenSER Berkeley DB tables
+# Script for maintaining Kamailio Berkeley DB tables
 # Copyright (C) 2007 Cisco Systems
 #
-# This file is part of openser, a free SIP server.
+# This file is part of Kamailio, a free SIP server.
 #
-# openser is free software; you can redistribute it and/or modify
+# Kamailio is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version
 #
-# openser is distributed in the hope that it will be useful,
+# Kamailio is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -87,23 +87,23 @@ if [ $ret -eq 0 ] ; then
 fi ;
 
 # path to the database schemas
-DATA_DIR="/usr/local/share/openser"
-if [ -d "$DATA_DIR/db_berkeley/openser" ] ; then
-	DB_SCHEMA="$DATA_DIR/db_berkeley/openser"
+DATA_DIR="/usr/local/share/kamailio"
+if [ -d "$DATA_DIR/db_berkeley/kamailio" ] ; then
+	DB_SCHEMA="$DATA_DIR/db_berkeley/kamailio"
 else
-	DB_SCHEMA="./db_berkeley/openser"
+	DB_SCHEMA="./db_berkeley/kamailio"
 fi
 
 # path to the db_berkeley database
 if [ -z "$DB_PATH" ]; then
-	DB_PATH="/usr/local/etc/openser/db_berkeley"
+	DB_PATH="/usr/local/etc/kamailio/db_berkeley"
 fi
 
 berkeley_usage() 
 {
 COMMAND=`basename $0`
 cat <<EOF
-Script for maintaining OpenSER Berkeley DB tables
+Script for maintaining Kamailio Berkeley DB tables
        $COMMAND list      (lists the underlying db files in DB_PATH)
        $COMMAND cat       <db>  (db_dump the underlying db file to STDOUT)
        $COMMAND swap      <db>  (installs db.new by db -> db.old; db.new -> db)

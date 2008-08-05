@@ -1,6 +1,6 @@
 # $Id$
 #
-# Script for adding and dropping OpenSER MySQL tables
+# Script for adding and dropping Kamailio MySQL tables
 #
 # History:
 # 2006-04-07  removed gen_ha1 dependency - use md5sum;
@@ -17,7 +17,7 @@
 # 2007-06-11  Use a common control tool for database tasks, like the kamctl
 
 # path to the database schemas
-DATA_DIR="/usr/local/share/openser"
+DATA_DIR="/usr/local/share/kamailio"
 if [ -d "$DATA_DIR/mysql" ] ; then
 	DB_SCHEMA="$DATA_DIR/mysql"
 else
@@ -159,7 +159,7 @@ for TABLE in $STANDARD_MODULES; do
 	fi
 done
 
-minfo "Core OpenSER tables succesfully created."
+minfo "Core Kamailio tables succesfully created."
 
 if [ -e $DB_SCHEMA/extensions-create.sql ]
 then

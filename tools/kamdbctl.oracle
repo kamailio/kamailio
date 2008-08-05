@@ -1,7 +1,7 @@
 #!/bin/sh
 # $Id$
 #
-# Script for adding and dropping OpenSER Oracle tables
+# Script for adding and dropping Kamailio Oracle tables
 #
 # History:
 
@@ -12,7 +12,7 @@ DBSYSUSER="sys"
 
 
 # path to the database schemas
-DATA_DIR="/usr/local/share/openser"
+DATA_DIR="/usr/local/share/kamailio"
 if [ -d "$DATA_DIR/oracle" ] ; then
 	DB_SCHEMA="$DATA_DIR/oracle"
 else
@@ -39,7 +39,7 @@ if [ -z "$SQLPLUS" ] ; then
 	export SQLPLUS
 fi
 if [ -z "$OPENSER_ORASEL" ] ; then
-	OPENSER_ORASEL=`which openser_orasel 2>/dev/null`
+	OPENSER_ORASEL=`which kamailio_orasel 2>/dev/null`
 	if [ -n "$SQLPLUS" ]; then
 		export OPENSER_ORASEL
 	fi
@@ -209,7 +209,7 @@ if [ -e $DB_SCHEMA/extensions-create.sql ]; then
 	fi
 fi
 
-minfo "Core OpenSER tables succesfully created."
+minfo "Core Kamailio tables succesfully created."
 
 get_answer $INSTALL_PRESENCE_TABLES "Install presence related tables? (y/n): "
 if [ "$ANSWER" = "y" ]; then

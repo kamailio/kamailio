@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# sc: openser control; tool for maintaining openser
+# control tool for maintaining Kamailio
 #
 #===================================================================
 

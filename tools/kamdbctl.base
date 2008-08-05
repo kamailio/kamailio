@@ -2,7 +2,7 @@ PATH=$PATH:/usr/local/sbin
 
 # config vars
 
-# name of the database to be used by OpenSER
+# name of the database to be used by Kamailio
 DBNAME=${DBNAME:-openser}
 
 # address of database server

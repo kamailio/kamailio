@@ -1,10 +1,10 @@
 .\" $Id$
-.TH kamctl 8 21.06.2006 openser "OpenSER" 
+.TH kamctl 8 21.06.2006 Kamailio "Kamailio" 
 .\" Process with
 .\" groff -man -Tascii kamctl.8 
 .\"
 .SH NAME
-kamctl \- openser control tool
+kamctl \- Kamailio control tool
 .SH SYNOPSIS
 .B kamctl
 .BI command
@@ -15,14 +15,14 @@ kamctl \- openser control tool
 .SH DESCRIPTION
 .B kamctl
 is a shell script to control
-.B OpenSER SIP server
+.B Kamailio SIP server
 It can be used to manage users, domains, aliases and other server options
 
 .SH FILES
 .PD 0
-.I /etc/openser/.kamctlrc
+.I /etc/kamailio/.kamctlrc
 .br
-.I /usr/local/etc/openser/.kamctlrc
+.I /usr/local/etc/kamailio/.kamctlrc
 .br
 .I ~/.kamctlrc
 .br
@@ -210,17 +210,17 @@ lcr addroute +1 '' 1 1
 .SH AUTHORS
 
 see 
-.B /usr/share/doc/openser/AUTHORS
+.B /usr/share/doc/kamailio/AUTHORS
 
 .SH SEE ALSO
-.BR openser(8), openser.cfg(5)
+.BR kamailio(8), kamailio.cfg(5)
 .PP
-Full documentation on openser is available at
-.I http://www.openser.org/.
+Full documentation on Kamailio is available at
+.I http://www.kamailio.org/.
 .PP
 Mailing lists:
 .nf 
-users@openser.org - openser user community
+users@lists.kamailio.org - Kamailio user community
 .nf 
-devel@openser.org - openser development, new features and unstable version
+devel@lists.kamailio.org - Kamailio development, new features and unstable version
 

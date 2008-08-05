@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# sc: openser control; tool for maintaining openser
+# control tool for maintaining Kamailio
 #
 #===================================================================
 
@@ -82,9 +82,9 @@ if [ -z "$EXPR" ] ; then
 fi
 
 ##### ------------------------------------------------ #####
-### configuration for starting/stopping openser
+### configuration for starting/stopping kamailio
 if [ -z "$PID_FILE" ] ; then
-	PID_FILE=/var/run/openser.pid
+	PID_FILE=/var/run/kamailio.pid
 fi
 if [ -z "$SYSLOG" ] ; then
 	SYSLOG=1 # 0=output to console, 1=output to syslog
@@ -96,7 +96,7 @@ if [ -z "$DIR" ] ; then
 	DIR=`dirname $0`
 fi
 if [ -z "$OSERBIN" ] ; then
-	OSERBIN=$DIR/openser
+	OSERBIN=$DIR/kamailio
 fi
 
 ##### ------------------------------------------------ #####
@@ -302,9 +302,9 @@ usage_base() {
 	mecho " -- command 'start|stop|restart'"
 	echo
 cat <<EOF
- restart ............................ restart OpenSER
- start .............................. start OpenSER
- stop ............................... stop OpenSER
+ restart ............................ restart Kamailio
+ start .............................. start Kamailio
+ stop ............................... stop Kamailio
 EOF
 }
 

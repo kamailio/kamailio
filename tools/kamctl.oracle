@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# sc: openser control; tool for maintaining openser
+# control tool for maintaining Kamailio
 #
 #===================================================================
 
@@ -44,7 +44,7 @@ if [ -z "$SQLPLUS" ] ; then
 fi
 
 if [ -z "$OPENSER_ORASEL" ] ; then
-	locate_tool openser_orasel
+	locate_tool kamailio_orasel
 	if [ -n "$TOOLPATH" ] ; then
 		OPENSER_ORASEL="$TOOLPATH"
 		export OPENSER_ORASEL

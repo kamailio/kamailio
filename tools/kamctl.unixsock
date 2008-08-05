@@ -1,7 +1,7 @@
 #
 # $Id$
 #
-# sc: openser control; tool for maintaining openser
+# control tool for maintaining Kamailio
 #
 #===================================================================
 
@@ -25,7 +25,7 @@ fi
 #
 export CHROOT_DIR # needed for kamunix
 if [ -z "$OSER_UNIXSOCK" ]; then
-	OSER_UNIXSOCK=$CHROOT_DIR/tmp/openser.sock
+	OSER_UNIXSOCK=$CHROOT_DIR/tmp/kamailio.sock
 fi
 
 if [ -z "$OSERUNIX" ]; then

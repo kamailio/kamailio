@@ -1,13 +1,13 @@
 # $Id$
 #
-# The OpenSER configuration file for the control tools.
+# The Kamailio configuration file for the control tools.
 #
 # Here you can set variables used in the kamctl and kamdbctl setup
 # scripts. Per default all variables here are commented out, the control tools
 # will use their internal default values.
 
 ## your SIP domain
-# SIP_DOMAIN=openser.org
+# SIP_DOMAIN=kamailio.org
 
 ## chrooted directory
 # $CHROOT_DIR="/path/to/chrooted/directory"
@@ -24,7 +24,7 @@
 # DBNAME=openser
 
 # database path used by dbtext or db_berkeley
-# DB_PATH="/usr/local/etc/openser/dbtext"
+# DB_PATH="/usr/local/etc/kamailio/dbtext"
 
 ## database read/write user
 # DBRWUSER=openser
@@ -87,12 +87,12 @@
 # must also adjust the STANDARD_TABLES or EXTRA_TABLES variable accordingly in the
 # kamdbctl.base script.
 
-# openser standard modules
+# Kamailio standard modules
 # STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc msilo
 #                   alias_db uri_db speeddial avpops auth_db pdt dialog dispatcher
 #                   dialplan"
 
-# openser extra modules
+# Kamailio extra modules
 # EXTRA_MODULES="imc cpl siptrace domainpolicy carrierroute userblacklist"
 
 
@@ -122,9 +122,9 @@
 # STORE_PLAINTEXT_PW=0
 
 ## OPENSER START Options
-## PID file path - default is: /var/run/openser.pid
-# PID_FILE=/var/run/openser.pid
+## PID file path - default is: /var/run/kamailio.pid
+# PID_FILE=/var/run/kamailio.pid
 
 ## Extra start options - default is: not set
-# example: start openser with 64MB share memory: STARTOPTIONS="-m 64"
+# example: start Kamailio with 64MB share memory: STARTOPTIONS="-m 64"
 # STARTOPTIONS=

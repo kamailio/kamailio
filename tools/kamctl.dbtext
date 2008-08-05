@@ -1,6 +1,6 @@
 # $Id$
 #
-# openser control: tool for maintaining openser's databases
+# control tool for maintaining Kamailio
 #
 #===================================================================
 
@@ -20,7 +20,7 @@ fi;
 
 # path to the dbtext database
 if [ -z "$DBTEXT_PATH" ] ; then
-	DBTEXT_PATH="/usr/local/share/openser/dbtext/openser"
+	DBTEXT_PATH="/usr/local/share/kamailio/dbtext/openser"
 fi
 
 export DBTEXT_PATH

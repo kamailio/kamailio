@@ -1,6 +1,6 @@
 # $Id$
 #
-# openser control; tool for maintaining openser's databases
+# control tool for maintaining Kamailio
 #
 # History:
 # --------
@@ -10,7 +10,7 @@
 
 # path to the db_berkeley directory
 if [ -z "$DB_PATH" ] ; then
-	DB_PATH="/usr/local/share/openser/db_berkeley/openser"
+	DB_PATH="/usr/local/share/kamailio/db_berkeley/kamailio"
 fi
 
 #===================================================================

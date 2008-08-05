@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# openser control tool for maintaining openser
+# control tool for maintaining Kamailio
 #
 #===================================================================
 
@@ -13,11 +13,11 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include config files
-if [ -f /etc/openser/kamctlrc ]; then
-	. /etc/openser/kamctlrc
+if [ -f /etc/kamailio/kamctlrc ]; then
+	. /etc/kamailio/kamctlrc
 fi
-if [ -f /usr/local/etc/openser/kamctlrc ]; then
-	. /usr/local/etc/openser/kamctlrc
+if [ -f /usr/local/etc/kamailio/kamctlrc ]; then
+	. /usr/local/etc/kamailio/kamctlrc
 fi
 if [ -f ~/.kamctlrc ]; then
 	. ~/.kamctlrc
@@ -33,7 +33,7 @@ fi
 ### force values for variables in this section
 # you better set the variables in ~/.kamctlrc
 if [ -z "$ETCDIR" ] ; then
-	ETCDIR="/usr/local/etc/openser"
+	ETCDIR="/usr/local/etc/kamailio"
 fi
 
 ### version for this script
@@ -44,7 +44,7 @@ if [ -z "$MYDIR" ] ; then
 fi
 
 if [ -z "$MYLIBDIR" ] ; then
-	MYLIBDIR="/usr/local/lib/openser/kamctl"
+	MYLIBDIR="/usr/local/lib/kamailio/kamctl"
 	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
 	fi
@@ -347,14 +347,14 @@ check_ul_alias() {
 	RET="$?"
 	ALIAS_UL_EXISTS=0
 	if [ $RET -ne 0 ] ; then
-		merr "OpenSER $CTLENGINE not accessible: $RET"
+		merr "Kamailio $CTLENGINE not accessible: $RET"
 		exit 1
 	fi
 	echo "$RES" | $EGREP "^404" > /dev/null
 	if [ $? -ne 0 ] ; then
 		echo "$RES" | $EGREP "^400" > /dev/null
 		if [ $? -eq 0 ] ; then
-			merr "400; check if you use aliases in OpenSER"
+			merr "400; check if you use aliases in Kamailio"
 			exit 1
 		fi
 		echo "$RES" | $EGREP "^200" > /dev/null
@@ -1447,18 +1447,18 @@ dispatcher() {
 #
 openser_start() {
 	echo
-	minfo "Starting OpenSER : "
+	minfo "Starting Kamailio : "
 	if [ -r $PID_FILE ] ; then
-		ps axw | $EGREP openser
+		ps axw | $EGREP kamailio
 		ls -l $PID_FILE
-		minfo "PID file exists ($PID_FILE)! OpenSER already running?"
+		minfo "PID file exists ($PID_FILE)! Kamailio already running?"
 		exit 1
 	fi
 	
 	if [ ! -x "$OSERBIN" ] ; then
 		echo
-		merr "OpenSER binaries not found at $OSERBIN"
-		merr "set OSERBIN to the path of openser in $0 or ~/.kamctlrc"
+		merr "Kamailio binaries not found at $OSERBIN"
+		merr "set OSERBIN to the path of kamailio in $0 or ~/.kamctlrc"
 		exit 1
 	fi
 	if [ $SYSLOG = 1 ] ; then
@@ -1469,7 +1469,7 @@ openser_start() {
 	sleep 3
 	if [ ! -s $PID_FILE ] ; then
 		echo
-		merr "PID file $PID_FILE does not exist -- OpenSER start failed"
+		merr "PID file $PID_FILE does not exist -- Kamailio start failed"
 		exit 1
 	fi
 	minfo "started (pid: `cat $PID_FILE`)"
@@ -1481,14 +1481,14 @@ openser_start() {
 #
 openser_stop() {
 	echo
-	minfo "Stopping OpenSER : "
+	minfo "Stopping Kamailio : "
 	if [ -r $PID_FILE ] ; then
 		kill `cat $PID_FILE`
 		minfo "stopped"
 	else
 		echo
-		merr "No PID file found ($PID_FILE)! OpenSER probably not running"
-		minfo "check with 'ps axw | $EGREP openser'"
+		merr "No PID file found ($PID_FILE)! Kamailio probably not running"
+		minfo "check with 'ps axw | $EGREP kamailio'"
 		exit 1
 	fi
 }
