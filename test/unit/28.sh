@@ -22,20 +22,20 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser && check_module "db_mysql" && check_module "cpl-c" && check_mysql); then
+if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_module "cpl-c" && check_mysql); then
 	exit 0
 fi ;
 
 CFG=28.cfg
 CPL=cpl_ignore.xml
-TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
+TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 
-../openser -w . -f $CFG &> /dev/null;
+../kamailio -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
-../scripts/openserctl fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
+../scripts/kamailioctl fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml &> /dev/null;
@@ -43,14 +43,14 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/openserctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
+  ../scripts/kamailioctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
   diff $TMPFILE $CPL 
   ret=$?
 fi; 
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/openserctl fifo REMOVE_CPL sip:alice@127.0.0.1
-  ../scripts/openserctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
+  ../scripts/kamailioctl fifo REMOVE_CPL sip:alice@127.0.0.1
+  ../scripts/kamailioctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
 fi;
 
 diff $TMPFILE $CPL &> /dev/null;
@@ -61,7 +61,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-killall -9 openser &> /dev/null;
+killall -9 kamailio &> /dev/null;
 killall -9 sipp &> /dev/null;
 rm $TMPFILE
 

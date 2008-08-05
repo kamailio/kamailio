@@ -24,11 +24,11 @@ CFG=1.cfg
 # setup config
 echo -e "debug=3" > $CFG
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
 rm -f $CFG
 

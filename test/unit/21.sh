@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser); then
+if ! (check_sipp && check_kamailio); then
 	exit 0
 fi ;
 
@@ -32,7 +32,7 @@ CFG=21.cfg
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
 
-../openser -w . -f $CFG &> /dev/null;
+../kamailio -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
@@ -47,7 +47,7 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup
-killall -9 openser &> /dev/null;
+killall -9 kamailio &> /dev/null;
 killall -9 sipp &> /dev/null;
 $MYSQL "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"
 

@@ -22,13 +22,13 @@
 source include/common
 source include/require
 
-if ! (check_openser && check_module "db_berkeley" ); then
+if ! (check_kamailio && check_module "db_berkeley" ); then
 	exit 0
 fi ;
 
 CFG=17.cfg
 
-tmp_name=""$RANDOM"_openserdb_tmp"
+tmp_name=""$RANDOM"_kamailiodb_tmp"
 
 echo "loadmodule \"../modules/db_berkeley/db_berkeley.so\"" >> $CFG
 cat 2.cfg >> $CFG
@@ -37,29 +37,29 @@ echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"berkeley://`pwd`/../scripts/$tmp_n
 cd ../scripts
 
 # setup config file
-cp openserctlrc openserctlrc.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=DB_BERKELEY/g" openserctlrc
-sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" openserctlrc
-sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" openserctlrc
+cp kamailioctlrc kamailioctlrc.bak
+sed -i "s/# DBENGINE=MYSQL/DBENGINE=DB_BERKELEY/g" kamailioctlrc
+sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" kamailioctlrc
+sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" kamailioctlrc
 
-cp openserdbctl openserdbctl.bak
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserdbctl
+cp kamailiodbctl kamailiodbctl.bak
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" kamailiodbctl
 
-./openserdbctl create $tmp_name > /dev/null
+./kamailiodbctl create $tmp_name > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	../openser -w . -f ../test/$CFG > /dev/null	
+	../kamailio -w . -f ../test/$CFG > /dev/null	
 	ret=$?
 fi ;
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
 # cleanup
-./openserdbctl drop $tmp_name > /dev/null
-mv openserctlrc.bak openserctlrc
-mv openserdbctl.bak openserdbctl
+./kamailiodbctl drop $tmp_name > /dev/null
+mv kamailioctlrc.bak kamailioctlrc
+mv kamailiodbctl.bak kamailiodbctl
 
 cd ../test/
 rm $CFG

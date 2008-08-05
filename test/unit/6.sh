@@ -1,5 +1,5 @@
 #!/bin/bash
-# checks a configuration with 'openser -c' and 'openser -C'
+# checks a configuration with 'kamailio -c' and 'kamailio -C'
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -22,11 +22,11 @@
 CFG=2.cfg
 
 # start
-../openser -w . -c -f $CFG > /dev/null 2>&1
+../kamailio -w . -c -f $CFG > /dev/null 2>&1
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	../openser -C -f $CFG > /dev/null 2>&1
+	../kamailio -C -f $CFG > /dev/null 2>&1
 	ret=$?
 fi ;
 

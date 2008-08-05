@@ -22,13 +22,13 @@
 source include/require
 
 CFG=12.cfg
-TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
+TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
-if ! (check_netcat && check_openser); then
+if ! (check_netcat && check_kamailio); then
 	exit 0
 fi ;
 
-../openser -w . -f $CFG &> $TMPFILE
+../kamailio -w . -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1
@@ -39,7 +39,7 @@ cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
 cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl ul show | grep "AOR:: 1000" > /dev/null
+	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 fi ;
 
@@ -47,7 +47,7 @@ fi ;
 cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl ul show | grep "AOR:: 1000" > /dev/null
+	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		ret=1
@@ -83,7 +83,7 @@ fi ;
 
 cd ../test
 
-killall -9 openser
+killall -9 kamailio
 rm $TMPFILE
 
 exit $ret

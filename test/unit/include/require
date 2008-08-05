@@ -1,13 +1,13 @@
 # Copyright (C) 2008 1&1 Internet AG
 #
-# This file is part of openser, a free SIP server.
+# This file is part of kamailio, a free SIP server.
 #
-# openser is free software; you can redistribute it and/or modify
+# kamailio is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version
 #
-# openser is distributed in the hope that it will be useful,
+# kamailio is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
@@ -16,9 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-function check_openser() {
-	if ! (test -e ../openser) ; then
-		echo "openser not found, not run"
+function check_kamailio() {
+	if ! (test -e ../kamailio) ; then
+		echo "kamailio not found, not run"
 		return -1
 	fi;
 	return 0

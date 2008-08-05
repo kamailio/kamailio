@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser); then
+if ! (check_sipp && check_kamailio); then
 	exit 0
 fi ;
 
@@ -39,7 +39,7 @@ $MYSQL "INSERT INTO trusted (src_ip, proto) VALUES (\"127.0.0.1\",\"any\");"
 
 $MYSQL "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 
-../openser -w . -f $CFG &> /dev/null
+../kamailio -w . -f $CFG &> /dev/null
 sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
 ret=$?
@@ -51,8 +51,8 @@ if [ "$ret" -eq 0 ] ; then
 	MASK=10
 	$MYSQL "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 	
-	../scripts/openserctl fifo address_reload
-	#../scripts/openserctl fifo address_dump
+	../scripts/kamailioctl fifo address_reload
+	#../scripts/kamailioctl fifo address_dump
 
 	sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
@@ -63,7 +63,7 @@ fi;
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-killall -9 openser > /dev/null 2>&1
+killall -9 kamailio > /dev/null 2>&1
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
 $MYSQL "DELETE FROM trusted WHERE (src_ip=\"127.0.0.1\");"

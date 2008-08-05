@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_openser && check_module "db_mysql" && check_mysql); then
+if ! (check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 
@@ -41,11 +41,11 @@ while [  $COUNTER -lt 139 ]; do
 	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER', '$DOMAIN', 'foobar-$COUNTER@$DOMAIN', '___test___');"
 done
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
 $MYSQL "delete from location where user_agent = '___test___'"
 

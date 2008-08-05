@@ -1,5 +1,5 @@
 #!/bin/bash
-# loads the openser default config
+# loads the kamailio default config
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -19,15 +19,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Needs a default openser database setup for mysql
+# Needs a default kamailio database setup for mysql
 
 CFG=5.cfg
 
 # start
-../openser -w . -f $CFG &> /dev/null
+../kamailio -w . -f $CFG &> /dev/null
 ret=$?
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
 exit $ret

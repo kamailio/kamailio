@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_openser && check_module "carrierroute"); then
+if ! (check_kamailio && check_module "carrierroute"); then
 	exit 0
 fi ;
 
@@ -69,7 +69,7 @@ $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('4972112
 $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('49721123456785', 3);"
 
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -108,7 +108,7 @@ $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_n
 flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000', '486', '0', '0', '2');"
 
 if [ ! "$ret" -eq 0 ] ; then
-	../scripts/openserctl fifo cr_reload_routes
+	../scripts/kamailioctl fifo cr_reload_routes
 	killall sipp &> /dev/null
 	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null
@@ -116,7 +116,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 
-killall -9 openser
+killall -9 kamailio
 killall -9 sipp
 
 # cleanup database

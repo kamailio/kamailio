@@ -23,7 +23,7 @@ source include/require
 
 CFG=14.cfg
 
-if ! (check_openser && check_module "carrierroute" ); then
+if ! (check_kamailio && check_module "carrierroute" ); then
 	exit 0
 fi ;
 
@@ -32,17 +32,17 @@ cp $CFG $CFG.bak
 # setup config
 echo "modparam(\"carrierroute\", \"config_file\", \"`pwd`/../test/carrierroute.cfg\")" >> $CFG
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
 
 cd ../scripts
 
-TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
+TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl fifo cr_dump_routes > $TMPFILE
+	./kamailioctl fifo cr_dump_routes > $TMPFILE
 	ret=$?
 fi ;
 
@@ -75,7 +75,7 @@ Printing tree for domain other
 	fi ;
 fi ;
 
-killall -9 openser
+killall -9 kamailio
 
 cd ../test
 

@@ -22,19 +22,19 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser); then
+if ! (check_sipp && check_kamailio); then
 	exit 0
 fi ;
 
 CFG="20.cfg"
-TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
+TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost\",\"udp:127.0.0.1:5060\",\"ser_test\",1,-1);"
 
 sipp -sn uas -bg -i localhost -m 1 -f 10 -p 5060 &> /dev/null
 
-../openser -w . -f $CFG &> $TMPFILE
+../kamailio -w . -f $CFG &> $TMPFILE
 
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 
@@ -43,7 +43,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp &> /dev/null
-killall -9 openser &> /dev/null
+killall -9 kamailio &> /dev/null
 rm $TMPFILE
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost\") and (user_agent = \"ser_test\"));"

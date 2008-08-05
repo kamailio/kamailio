@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser); then
+if ! (check_sipp && check_kamailio); then
 	exit 0
 fi ;
 
@@ -56,7 +56,7 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('1'
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('','0','_test_');"
 
 
-../openser -w . -f $CFG &> /dev/null
+../kamailio -w . -f $CFG &> /dev/null
 sleep 1
 
 sipp -sn uas -bg -i localhost -p 5060 &> /dev/null
@@ -80,7 +80,7 @@ if [ "$ret" -eq 1 ] ; then
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456786','1','_test_');"
-../scripts/openserctl fifo reload_blacklist
+../scripts/kamailioctl fifo reload_blacklist
 
 if [ "$ret" -eq 1 ] ; then
 	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
@@ -100,7 +100,7 @@ if [ "$ret" -eq 1 ] ; then
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('2','1','_test_');"
-../scripts/openserctl fifo reload_blacklist
+../scripts/kamailioctl fifo reload_blacklist
 
 if [ "$ret" -eq 1 ] ; then
 	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
@@ -110,7 +110,7 @@ fi;
 
 # cleanup:
 killall -9 sipp > /dev/null 2>&1
-killall -9 openser > /dev/null 2>&1
+killall -9 kamailio > /dev/null 2>&1
 
 $MYSQL "delete from location where (user_agent = \"ser_test\");"
 $MYSQL "delete from userblacklist where username='49721123456786';"

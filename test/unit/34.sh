@@ -19,14 +19,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Needs a default openser database setup for mysql
+# Needs a default kamailio database setup for mysql
 
 source include/require
 source include/database
 
 CFG=34.cfg
 
-if ! (check_openser && check_module "db_mysql" && check_module "presence" \
+if ! (check_kamailio && check_module "db_mysql" && check_module "presence" \
 		&& check_module "presence_xml" && check_module "pua" \
 		&& check_module "xcap_client" && check_module "rls" \
 		&& check_module "presence_mwi" && check_module "pua_bla" \
@@ -40,11 +40,11 @@ cp $CFG $CFG.bak
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
 # start
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
 mv $CFG.bak $CFG
 

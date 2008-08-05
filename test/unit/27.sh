@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser && check_module "db_mysql" \
+if ! (check_sipp && check_kamailio && check_module "db_mysql" \
 	&& check_module "presence" && check_module "presence_xml" \
 	&& check_mysql); then
 	exit 0
@@ -30,7 +30,7 @@ fi ;
 
 CFG=presence.cfg
 
-../openser -w . -f $CFG &> /dev/null;
+../kamailio -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
@@ -47,7 +47,7 @@ fi;
 
 
 #cleanup:
-killall -9 openser &> /dev/null;
+killall -9 kamailio &> /dev/null;
 killall -9 sipp &> /dev/null;
 
 exit $ret;

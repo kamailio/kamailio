@@ -21,24 +21,24 @@
 
 source include/require
 
-if ! (check_sipp && check_openser && check_module "db_postgres" && check_module "cpl-c"); then
+if ! (check_sipp && check_kamailio && check_module "db_postgres" && check_module "cpl-c"); then
 	exit 0
 fi ;
 
 CFG=28.cfg
 CPL=cpl_ignore.xml
-TMPFILE=`mktemp -t openser-test.XXXXXXXXXX`
+TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 cp $CFG $CFG.tmp
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"cpl-c\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
+echo "modparam(\"cpl-c\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 
 
-../openser -w . -f $CFG &> /dev/null;
+../kamailio -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
-../scripts/openserctl fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
+../scripts/kamailioctl fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml &> /dev/null;
@@ -46,14 +46,14 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/openserctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
+  ../scripts/kamailioctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
   diff $TMPFILE $CPL 
   ret=$?
 fi; 
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/openserctl fifo REMOVE_CPL sip:alice@127.0.0.1
-  ../scripts/openserctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
+  ../scripts/kamailioctl fifo REMOVE_CPL sip:alice@127.0.0.1
+  ../scripts/kamailioctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
 fi;
 
 diff $TMPFILE $CPL &> /dev/null;
@@ -64,7 +64,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-killall -9 openser &> /dev/null;
+killall -9 kamailio &> /dev/null;
 killall -9 sipp &> /dev/null;
 rm $TMPFILE
 mv $CFG.tmp $CFG

@@ -1,5 +1,5 @@
 #!/bin/bash
-# creates a mysql database with openserdbctl and deletes it again
+# creates a mysql database with kamailiodbctl and deletes it again
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -29,35 +29,35 @@ fi ;
 
 source dbrootpw
 
-tmp_name=""$RANDOM"_openserdb_tmp"
+tmp_name=""$RANDOM"_kamailiodb_tmp"
 
 cd ../scripts
 
 # setup config file
-cp openserctlrc openserctlrc.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" openserctlrc
-sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" openserctlrc
-sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" openserctlrc
+cp kamailioctlrc kamailioctlrc.bak
+sed -i "s/# DBENGINE=MYSQL/DBENGINE=MYSQL/g" kamailioctlrc
+sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" kamailioctlrc
+sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" kamailioctlrc
 
-cp openserdbctl openserdbctl.bak
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserdbctl
+cp kamailiodbctl kamailiodbctl.bak
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" kamailiodbctl
 
 # set the mysql root password
-cp openserdbctl.mysql openserdbctl.mysql.bak
-sed -i "s/#PW=""/PW="$PW"/g" openserdbctl.mysql
+cp kamailiodbctl.mysql kamailiodbctl.mysql.bak
+sed -i "s/#PW=""/PW="$PW"/g" kamailiodbctl.mysql
 
-./openserdbctl create $tmp_name > /dev/null
+./kamailiodbctl create $tmp_name > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./openserdbctl drop $tmp_name > /dev/null
+	./kamailiodbctl drop $tmp_name > /dev/null
 	ret=$?
 fi ;
 
 # cleanup
-mv openserctlrc.bak openserctlrc
-mv openserdbctl.mysql.bak openserdbctl.mysql
-mv openserdbctl.bak openserdbctl
+mv kamailioctlrc.bak kamailioctlrc
+mv kamailiodbctl.mysql.bak kamailiodbctl.mysql
+mv kamailiodbctl.bak kamailiodbctl
 
 cd ../test
 exit $ret

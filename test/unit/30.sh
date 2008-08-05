@@ -21,7 +21,7 @@
 
 source include/require
 
-if ! (check_sipp && check_openser && check_module "carrierroute"); then
+if ! (check_sipp && check_kamailio && check_module "carrierroute"); then
 	exit 0
 fi ;
 
@@ -34,7 +34,7 @@ cp $CFG $CFG.bak
 echo "modparam(\"carrierroute\", \"config_file\", \"`pwd`/../test/carrierroute-2.cfg\")" >> $CFG
 
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -61,7 +61,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi;
 
-killall -9 openser
+killall -9 kamailio
 killall -9 sipp
 
 cd ../test

@@ -24,7 +24,7 @@ source include/database
 
 CFG=11.cfg
 
-if ! (check_netcat && check_openser && check_module "db_mysql" && check_mysql); then
+if ! (check_netcat && check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 
@@ -32,7 +32,7 @@ cp $CFG $CFG.bak
 
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -43,11 +43,11 @@ cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
 cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl ul show | grep "AOR:: 1000" > /dev/null
+	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 fi ;
 
-TMP=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from location where username="1000";" | tail -n 1`
+TMP=`mysql -B -u kamailioro --password=kamailioro kamailio -e "select COUNT(*) from location where username="1000";" | tail -n 1`
 if [ "$TMP" -eq 0 ] ; then
 	ret=1
 fi ;
@@ -56,7 +56,7 @@ fi ;
 cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl ul show | grep "AOR:: 1000" > /dev/null
+	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		ret=1
@@ -65,11 +65,11 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 
-ret=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from location where username="1000";" | tail -n 1`
+ret=`mysql -B -u kamailioro --password=kamailioro kamailio -e "select COUNT(*) from location where username="1000";" | tail -n 1`
 
 cd ../test
 
-killall -9 openser
+killall -9 kamailio
 
 mv $CFG.bak $CFG
 

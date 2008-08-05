@@ -22,9 +22,9 @@
 source include/common
 source include/require
 
-# Needs a default openser database setup for postgres
+# Needs a default kamailio database setup for postgres
 
-if ! (check_openser && check_module "db_postgres" ); then
+if ! (check_kamailio && check_module "db_postgres" ); then
 	exit 0
 fi ;
 
@@ -32,14 +32,14 @@ CFG=2.cfg
 cp $CFG $CFG.bak
 
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
+echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
 
 # start
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
 mv $CFG.bak $CFG
 rm -f dispatcher.list

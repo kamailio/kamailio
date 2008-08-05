@@ -1,5 +1,5 @@
 #!/bin/bash
-# runs ../openser with all command line arguments.
+# runs ../kamailio with all command line arguments.
 # ommited options are -h -v -C -c -D
 
 # Copyright (C) 2007 1&1 Internet AG
@@ -22,7 +22,7 @@
 
 source include/require
 
-if ! (check_openser); then
+if ! (check_kamailio); then
 	exit 0
 fi ;
 
@@ -33,14 +33,14 @@ CFG=18.cfg
 echo -e "debug=3" > $CFG
 
 # start:
-../openser -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
+../kamailio -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
 
 ret=$?
 
 sleep 1
 
 # clean up:
-killall -9 openser
+killall -9 kamailio
 
 rm $CFG
 rm pgid.out

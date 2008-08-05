@@ -22,7 +22,7 @@
 source include/require
 source include/database
 
-if ! (check_sipp && check_openser); then
+if ! (check_sipp && check_kamailio); then
 	exit 0
 fi ;
 
@@ -35,7 +35,7 @@ UAC=5080
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES (\"foo\",\"sip:foo@localhost:$UAS\",\"udp:127.0.0.1:$UAS\",\"ser_test\",1,-1);"
 
-../openser -w . -f $CFG &> /dev/null
+../kamailio -w . -f $CFG &> /dev/null
 sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null
 
@@ -43,7 +43,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-killall -9 openser > /dev/null 2>&1
+killall -9 kamailio > /dev/null 2>&1
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
 exit $ret;

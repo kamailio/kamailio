@@ -1,5 +1,5 @@
 #!/bin/bash
-# creates a postgres database with openserdbctl and deletes it again
+# creates a postgres database with kamailiodbctl and deletes it again
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -27,30 +27,30 @@ if [ ! -f ~/.pgpass ] ; then
        exit 0
 fi ;
 
-tmp_name=""$RANDOM"_openserdb_tmp"
+tmp_name=""$RANDOM"_kamailiodb_tmp"
 
 cd ../scripts
 
 # setup config file
-cp openserctlrc openserctlrc.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=PGSQL/g" openserctlrc
-sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" openserctlrc
-sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" openserctlrc
+cp kamailioctlrc kamailioctlrc.bak
+sed -i "s/# DBENGINE=MYSQL/DBENGINE=PGSQL/g" kamailioctlrc
+sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" kamailioctlrc
+sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" kamailioctlrc
 
-cp openserdbctl openserdbctl.bak
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserdbctl
+cp kamailiodbctl kamailiodbctl.bak
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" kamailiodbctl
 
-./openserdbctl create $tmp_name &> /dev/null
+./kamailiodbctl create $tmp_name &> /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./openserdbctl drop $tmp_name &> /dev/null
+	./kamailiodbctl drop $tmp_name &> /dev/null
 	ret=$?
 fi ;
 
 # cleanup
-mv openserctlrc.bak openserctlrc
-mv openserdbctl.bak openserdbctl
+mv kamailioctlrc.bak kamailioctlrc
+mv kamailiodbctl.bak kamailiodbctl
 
 cd ../test
 exit $ret

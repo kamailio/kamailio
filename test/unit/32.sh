@@ -21,7 +21,7 @@
 
 source include/require
 
-if ! (check_sipp && check_openser && check_module "db_postgres"); then
+if ! (check_sipp && check_kamailio && check_module "db_postgres"); then
 	exit 0
 fi ;
 
@@ -30,7 +30,7 @@ CFG=11.cfg
 cp $CFG $CFG.bak
 
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
+echo "modparam(\"usrloc\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
 echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
 
 DOMAIN="local"
@@ -38,16 +38,16 @@ DOMAIN="local"
 COUNTER=0
 while [  $COUNTER -lt 139 ]; do
 	COUNTER=$(($COUNTER+1))
-	PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER', '$DOMAIN', 'foobar-$COUNTER@$DOMAIN', '___test___');"
+	PGPASSWORD='kamailiorw' psql -A -t -n -q -h localhost -U kamailio kamailio -c "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER', '$DOMAIN', 'foobar-$COUNTER@$DOMAIN', '___test___');"
 done
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 openser
+killall -9 kamailio
 
-PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "delete from location where user_agent = '___test___'"
+PGPASSWORD='kamailiorw' psql -A -t -n -q -h localhost -U kamailio kamailio -c "delete from location where user_agent = '___test___'"
 
 mv $CFG.bak $CFG
 

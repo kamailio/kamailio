@@ -21,7 +21,7 @@
 
 source include/require
 
-if ! (check_netcat && check_openser); then
+if ! (check_netcat && check_kamailio); then
 	exit 0
 fi;
 
@@ -34,19 +34,19 @@ CFG=33.cfg
 
 cp $CFG $CFG.bak
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
 
 if [ $ret -eq 0 ] ; then
-	../scripts/openserctl fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
+	../scripts/kamailioctl fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
 	ret=$?
 fi;
 
 echo " " >> $CFG
 if [ $ret -eq 0 ] ; then
-	../scripts/openserctl fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
+	../scripts/kamailioctl fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
 	ret=$?
 fi;
 
@@ -56,7 +56,7 @@ if [ ! $ret -eq 0 ] ; then
 fi;
 
 sleep 1
-killall -9 openser &> /dev/null
+killall -9 kamailio &> /dev/null
 ret=$?
 
 if [ $ret -eq 0 ] ; then

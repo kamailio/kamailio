@@ -23,22 +23,22 @@ CFG=4.cfg
 
 # setup config
 echo -e "loadmodule \"../modules/mi_fifo/mi_fifo.so\"" > $CFG
-echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/openser_fifo\")" >> $CFG
+echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
 
-../openser -w . -f $CFG > /dev/null
+../kamailio -w . -f $CFG > /dev/null
 ret=$?
 
 cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
 	sleep 1
-	./openserctl ps > /dev/null
+	./kamailioctl ps > /dev/null
 	ret=$?
 fi ;
 
 cd ../test
 
-killall -9 openser
+killall -9 kamailio
 
 rm -f $CFG
 

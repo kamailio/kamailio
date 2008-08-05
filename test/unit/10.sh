@@ -1,5 +1,5 @@
 #!/bin/bash
-# test basic db related openserctl functionality for dbtext
+# test basic db related kamailioctl functionality for dbtext
 
 # Copyright (C) 2007 1&1 Internet AG
 #
@@ -22,28 +22,28 @@
 cd ../scripts
 
 # setup config file
-cp openserctlrc openserctlrc.bak
-cp openserctl openserctl.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" openserctlrc
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" openserctl
+cp kamailioctlrc kamailioctlrc.bak
+cp kamailioctl kamailioctl.bak
+sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" kamailioctlrc
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" kamailioctl
 
-./openserctl avp list > /dev/null
+./kamailioctl avp list > /dev/null
 
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl domain showdb > /dev/null
+	./kamailioctl domain showdb > /dev/null
 	ret=$?
 fi ;
 
 if [ "$ret" -eq 0 ] ; then
-	./openserctl lcr show > /dev/null
+	./kamailioctl lcr show > /dev/null
 	ret=$?
 fi ;
 
 # cleanup
-mv openserctlrc.bak openserctlrc
-mv openserctl.bak openserctl
+mv kamailioctlrc.bak kamailioctlrc
+mv kamailioctl.bak kamailioctl
 
 cd ../test
 exit $ret
