@@ -108,6 +108,7 @@ static int fixup_profile(void** param, int param_no);
 static int fixup_get_profile2(void** param, int param_no);
 static int fixup_get_profile3(void** param, int param_no);
 static int w_set_dlg_profile(struct sip_msg*, char*, char*);
+static int w_unset_dlg_profile(struct sip_msg*, char*, char*);
 static int w_is_in_profile(struct sip_msg*, char*, char*);
 static int w_get_profile_size(struct sip_msg*, char*, char*, char*);
 
@@ -117,6 +118,10 @@ static cmd_export_t cmds[]={
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"set_dlg_profile", (cmd_function)w_set_dlg_profile,  2,fixup_profile,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"unset_dlg_profile", (cmd_function)w_unset_dlg_profile,  1,fixup_profile,
+			0, FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
+	{"unset_dlg_profile", (cmd_function)w_unset_dlg_profile,  2,fixup_profile,
+			0, FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"is_in_profile", (cmd_function)w_is_in_profile,      1,fixup_profile,
 			0, REQUEST_ROUTE| FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"is_in_profile", (cmd_function)w_is_in_profile,      2,fixup_profile,
@@ -550,6 +555,37 @@ static int w_set_dlg_profile(struct sip_msg *msg, char *profile, char *value)
 	}
 	return 1;
 }
+
+
+
+static int w_unset_dlg_profile(struct sip_msg *msg, char *profile, char *value)
+{
+	pv_elem_t *pve;
+	str val_s;
+
+	pve = (pv_elem_t *)value;
+
+	if (((struct dlg_profile_table*)profile)->has_value) {
+		if ( pve==NULL || pv_printf_s(msg, pve, &val_s)!=0 || 
+		val_s.len == 0 || val_s.s == NULL) {
+			LM_WARN("cannot get string for value\n");
+			return -1;
+		}
+		if ( unset_dlg_profile( msg, &val_s,
+		(struct dlg_profile_table*)profile) < 0 ) {
+			LM_ERR("failed to unset profile");
+			return -1;
+		}
+	} else {
+		if ( unset_dlg_profile( msg, NULL,
+		(struct dlg_profile_table*)profile) < 0 ) {
+			LM_ERR("failed to unset profile");
+			return -1;
+		}
+	}
+	return 1;
+}
+
 
 
 static int w_is_in_profile(struct sip_msg *msg, char *profile, char *value)

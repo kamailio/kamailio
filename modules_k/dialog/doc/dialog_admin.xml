@@ -905,6 +905,44 @@ set_dlg_profile("caller","$fu");
 
 	<section>
 		<title>
+		<function moreinfo="none">unset_dlg_profile(profile,[value])</function>
+		</title>
+		<para>
+		Removes the current dialog from a profile.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>profile</emphasis> - name of the profile to be 
+			removed from;
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>value</emphasis> (optional) - string value to 
+			define the belonging of the dialog to the profile - note that the
+			profile must support values.
+			Pseudo-variables are supported.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from BRANCH_ROUTE,
+			REPLY_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>unset_dlg_profile</function> usage</title>
+		<programlisting format="linespecific">
+...
+unset_dlg_profile("inbound_call");
+unset_dlg_profile("caller","$fu");
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
+		<title>
 		<function moreinfo="none">is_in_profile(profile,[value])</function>
 		</title>
 		<para>

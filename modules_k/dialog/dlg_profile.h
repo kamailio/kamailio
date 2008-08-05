@@ -82,6 +82,9 @@ void set_current_dialog(struct sip_msg *msg, struct dlg_cell *dlg);
 int set_dlg_profile(struct sip_msg *msg, str *value,
 		struct dlg_profile_table *profile);
 
+int unset_dlg_profile(struct sip_msg *msg, str *value,
+		struct dlg_profile_table *profile);
+
 int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 		str *value);
 

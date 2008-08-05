@@ -414,6 +414,59 @@ int set_dlg_profile(struct sip_msg *msg, str *value,
 }
 
 
+int unset_dlg_profile(struct sip_msg *msg, str *value,
+									struct dlg_profile_table *profile)
+{
+	struct dlg_cell *dlg;
+	struct dlg_profile_link *linker;
+	struct dlg_profile_link *linker_prev;
+	struct dlg_entry *d_entry;
+
+	/* get current dialog */
+	dlg = get_current_dialog(msg);
+
+	if (dlg==NULL || route_type==REQUEST_ROUTE) {
+		LM_CRIT("BUG - dialog NULL or del_profile used in request route\n");
+		return -1;
+	}
+
+	/* check the dialog linkers */
+	d_entry = &d_table->entries[dlg->h_entry];
+	dlg_lock( d_table, d_entry);
+	linker = dlg->profile_links;
+	linker_prev = NULL;
+	for( ; linker ; linker_prev=linker,linker=linker->next) {
+		if (linker->profile==profile) {
+			if (profile->has_value==0) {
+				goto found;
+			} else if (value && value->len==linker->hash_linker.value.len &&
+			memcmp(value->s,linker->hash_linker.value.s,value->len)==0){
+				goto found;
+			}
+			dlg_unlock( d_table, d_entry);
+			return -1;
+		}
+	}
+	dlg_unlock( d_table, d_entry);
+	return -1;
+
+found:
+	/* table still locked */
+	/* remove the linker element from dialog */
+	if (linker_prev==NULL) {
+		dlg->profile_links = linker->next;
+	} else {
+		linker_prev->next = linker->next;
+	}
+	linker->next = NULL;
+	dlg_unlock( d_table, d_entry);
+	/* remove linker from profile table and free it */
+	destroy_linkers(linker);
+	return 1;
+}
+
+
+
 int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 																str *value)
 {
