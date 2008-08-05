@@ -88,7 +88,7 @@ mv acc_4.log acc_3.log.20050605
 			Send &openser; the MI command to close and reopen the
 			renamed files. For example, using FIFO:
 			<screen>
-openserctl fifo flat_rotate
+kamctl fifo flat_rotate
 			</screen>
 			This will force &openser; to close the renamed files and open
 			new ones with original names, such as
