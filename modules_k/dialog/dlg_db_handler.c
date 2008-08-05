@@ -105,7 +105,7 @@ extern stat_var *early_dlgs;
 	}while(0);
 
 
-static int load_dialog_info_from_db(int dlg_hash_size);
+static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows);
 
 
 int dlg_connect_db(const str *db_url)
@@ -120,7 +120,7 @@ int dlg_connect_db(const str *db_url)
 }
 
 
-int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period)
+int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period, int fetch_num_rows)
 {
 	/* Find a database module */
 	if (db_bind_mod(db_url, &dialog_dbf) < 0){
@@ -144,7 +144,7 @@ int init_dlg_db(const str *db_url, int dlg_hash_size , int db_update_period)
 		return -1;
 	}
 
-	if( (load_dialog_info_from_db(dlg_hash_size) ) !=0 ){
+	if( (load_dialog_info_from_db(dlg_hash_size, fetch_num_rows) ) !=0 ){
 		LM_ERR("unable to load the dialog data\n");
 		return -1;
 	}
@@ -185,7 +185,7 @@ static int use_dialog_table(void)
 
 
 
-static int select_entire_dialog_table(db_res_t ** res)
+static int select_entire_dialog_table(db_res_t ** res, int fetch_num_rows)
 {
 	db_key_t query_cols[DIALOG_TABLE_COL_NO] = {	&h_entry_column,
 			&h_id_column,		&call_id_column,	&from_uri_column,
@@ -200,10 +200,22 @@ static int select_entire_dialog_table(db_res_t ** res)
 	}
 
 	/*select the whole tabel and all the columns*/
-	if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0, 
-	DIALOG_TABLE_COL_NO, 0, res) < 0) {
-		LM_ERR("Error while querying database\n");
-		return -1;
+	if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
+		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0, 
+				DIALOG_TABLE_COL_NO, 0, 0) < 0) {
+			LM_ERR("Error while querying database\n");
+			return -1;
+		}
+		if(dialog_dbf.fetch_result(dialog_db_handle, res, fetch_num_rows) < 0) {
+			LM_ERR("fetching rows failed\n");
+			return -1;
+		}
+	} else {
+		if(dialog_dbf.query(dialog_db_handle,0,0,0,query_cols, 0, 
+				DIALOG_TABLE_COL_NO, 0, res) < 0) {
+			LM_ERR("Error while querying database\n");
+			return -1;
+		}
 	}
 
 	return 0;
@@ -240,7 +252,7 @@ struct socket_info * create_socket_info(db_val_t * vals, int n){
 
 
 
-static int load_dialog_info_from_db(int dlg_hash_size)
+static int load_dialog_info_from_db(int dlg_hash_size, int fetch_num_rows)
 {
 	db_res_t * res;
 	db_val_t * values;
@@ -253,7 +265,7 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 	
 
 	res = 0;
-	if((nr_rows = select_entire_dialog_table(&res)) < 0)
+	if((nr_rows = select_entire_dialog_table(&res, fetch_num_rows)) < 0)
 		goto end;
 
 	nr_rows = RES_ROW_N(res);
@@ -263,100 +275,103 @@ static int load_dialog_info_from_db(int dlg_hash_size)
 	rows = RES_ROWS(res);
 	
 	/*for every row---dialog*/
-	for(i=0; i<nr_rows; i++){
 
-		values = ROW_VALUES(rows + i);
-
-		if (VAL_NULL(values) || VAL_NULL(values+1)) {
-			LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
-				h_entry_column.len, h_entry_column.s,
-				h_id_column.len, h_id_column.s);
-			continue;
-		}
-
-		if (VAL_NULL(values+7) || VAL_NULL(values+8)) {
-			LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
-				start_time_column.len, start_time_column.s,
-				state_column.len, state_column.s);
-			continue;
-		}
-
-		/*restore the dialog info*/
-		GET_STR_VALUE(callid, values, 2, 1, 0);
-		GET_STR_VALUE(from_uri, values, 3, 1, 0);
-		GET_STR_VALUE(from_tag, values, 4, 1, 0);
-		GET_STR_VALUE(to_uri, values, 5, 1, 0);
-
-		if((dlg=build_new_dlg( &callid, &from_uri, &to_uri, &from_tag))==0){
-			LM_ERR("failed to build new dialog\n");
-			goto error;
-		}
-
-		if(dlg->h_entry != VAL_INT(values)){
-			LM_ERR("inconsistent hash data in the dialog database: "
-				"you may have restarted openser using a different hash_size:"
-				"please erase %.*s database and restart\n", 
-				dialog_table_name.len, dialog_table_name.s);
-			shm_free(dlg);
-			goto error;
-		}
-
-		/*link the dialog*/
-		link_dlg(dlg, 0);
-
-		dlg->h_id = VAL_INT(values+1);
-		next_id = d_table->entries[dlg->h_entry].next_id;
-
-		d_table->entries[dlg->h_entry].next_id =
-			(next_id < dlg->h_id) ? (dlg->h_id+1) : next_id;
-
-		GET_STR_VALUE(to_tag, values, 6, 1, 1);
-
-		dlg->start_ts	= VAL_INT(values+7);
-
-		dlg->state 		= VAL_INT(values+8);
-		if (dlg->state==DLG_STATE_CONFIRMED_NA ||
-		dlg->state==DLG_STATE_CONFIRMED) {
-			if_update_stat(dlg_enable_stats, active_dlgs, 1);
-		} else if (dlg->state==DLG_STATE_EARLY) {
-			if_update_stat(dlg_enable_stats, early_dlgs, 1);
-		}
-
-		dlg->tl.timeout = (unsigned int)(VAL_INT(values+9)) + get_ticks();
-		if (dlg->tl.timeout<=(unsigned int)time(0))
-			dlg->tl.timeout = 0;
-		else
-			dlg->tl.timeout -= (unsigned int)time(0);
-
-		/*restore the timer values */
-		insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
-		LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
-
-		GET_STR_VALUE(cseq1, values, 10 , 1, 1);
-		GET_STR_VALUE(cseq2, values, 11 , 1, 1);
-		GET_STR_VALUE(rroute1, values, 12, 0, 0);
-		GET_STR_VALUE(rroute2, values, 13, 0, 0);
-		GET_STR_VALUE(contact1, values, 14, 1, 1);
-		GET_STR_VALUE(contact2, values, 15, 1, 1);
-
-		if ( (dlg_set_leg_info( dlg, &from_tag, &rroute1, &contact1,
-		&cseq1, DLG_CALLER_LEG)!=0) ||
-		(dlg_set_leg_info( dlg, &to_tag, &rroute2, &contact2,
-		&cseq2, DLG_CALLEE_LEG)!=0) ) {
-			LM_ERR("dlg_set_leg_info failed\n");
-			unref_dlg(dlg,1);
-			continue;
-		}
-
-		dlg->bind_addr[DLG_CALLER_LEG] = create_socket_info(values, 16);
-		dlg->bind_addr[DLG_CALLEE_LEG] = create_socket_info(values, 17);
+	do {
+		for(i=0; i<nr_rows; i++){
 	
-		dlg->lifetime = 0;
-		dlg->flags = 0;
+			values = ROW_VALUES(rows + i);
+	
+			if (VAL_NULL(values) || VAL_NULL(values+1)) {
+				LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
+					h_entry_column.len, h_entry_column.s,
+					h_id_column.len, h_id_column.s);
+				continue;
+			}
+	
+			if (VAL_NULL(values+7) || VAL_NULL(values+8)) {
+				LM_ERR("columns %.*s or/and %.*s cannot be null -> skipping\n",
+					start_time_column.len, start_time_column.s,
+					state_column.len, state_column.s);
+				continue;
+			}
+	
+			/*restore the dialog info*/
+			GET_STR_VALUE(callid, values, 2, 1, 0);
+			GET_STR_VALUE(from_uri, values, 3, 1, 0);
+			GET_STR_VALUE(from_tag, values, 4, 1, 0);
+			GET_STR_VALUE(to_uri, values, 5, 1, 0);
+	
+			if((dlg=build_new_dlg( &callid, &from_uri, &to_uri, &from_tag))==0){
+				LM_ERR("failed to build new dialog\n");
+				goto error;
+			}
+	
+			if(dlg->h_entry != VAL_INT(values)){
+				LM_ERR("inconsistent hash data in the dialog database: "
+					"you may have restarted openser using a different hash_size:"
+					"please erase %.*s database and restart\n", 
+					dialog_table_name.len, dialog_table_name.s);
+				shm_free(dlg);
+				goto error;
+			}
+	
+			/*link the dialog*/
+			link_dlg(dlg, 0);
+	
+			dlg->h_id = VAL_INT(values+1);
+			next_id = d_table->entries[dlg->h_entry].next_id;
+	
+			d_table->entries[dlg->h_entry].next_id =
+				(next_id < dlg->h_id) ? dlg->h_id : next_id;
+	
+			GET_STR_VALUE(to_tag, values, 6, 1, 1);
+	
+			dlg->start_ts	= VAL_INT(values+7);
+			dlg->state 		= VAL_INT(values+8);
+			dlg->tl.timeout = (unsigned int)(VAL_INT(values+9)) + get_ticks();
+			if (dlg->tl.timeout<=(unsigned int)time(0))
+				dlg->tl.timeout = 0;
+			else
+				dlg->tl.timeout -= (unsigned int)time(0);
+	
+			/*restore the timer values */
+			insert_dlg_timer(&(dlg->tl), (int)dlg->tl.timeout);
+			LM_DBG("current dialog timeout is %u\n", dlg->tl.timeout);
+	
+			GET_STR_VALUE(cseq1, values, 10 , 1, 1);
+			GET_STR_VALUE(cseq2, values, 11 , 1, 1);
+			GET_STR_VALUE(rroute1, values, 12, 0, 0);
+			GET_STR_VALUE(rroute2, values, 13, 0, 0);
+			GET_STR_VALUE(contact1, values, 14, 1, 1);
+			GET_STR_VALUE(contact2, values, 15, 1, 1);
+	
+			if ( (dlg_set_leg_info( dlg, &from_tag, &rroute1, &contact1,
+			&cseq1, DLG_CALLER_LEG)!=0) ||
+			(dlg_set_leg_info( dlg, &to_tag, &rroute2, &contact2,
+			&cseq2, DLG_CALLEE_LEG)!=0) ) {
+				LM_ERR("dlg_set_leg_info failed\n");
+				unref_dlg(dlg,1);
+				continue;
+			}
+	
+			dlg->bind_addr[DLG_CALLER_LEG] = create_socket_info(values, 16);
+			dlg->bind_addr[DLG_CALLEE_LEG] = create_socket_info(values, 17);
+		
+			dlg->lifetime = 0;
+			dlg->flags = 0;
 next_dialog:
-		;
-	}
-
+			;
+ 		}
+		if (DB_CAPABILITY(dialog_dbf, DB_CAP_FETCH) && (fetch_num_rows > 0)) {
+			if(dialog_dbf.fetch_result(dialog_db_handle, &res, fetch_num_rows) < 0) {
+				LM_ERR("fetching rows failed\n");
+				goto error;
+			}
+			nr_rows = RES_ROW_N(res);			
+		} else {
+			nr_rows = 0;
+		}
+	} while (nr_rows > 0);
 end:
 	dialog_dbf.free_result(dialog_db_handle, res);
 	return 0;

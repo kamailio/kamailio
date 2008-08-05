@@ -81,6 +81,8 @@ static int seq_match_mode = SEQ_MATCH_STRICT_ID;
 static char* profiles_wv_s = NULL;
 static char* profiles_nv_s = NULL;
 str dlg_extra_hdrs = {NULL,0};
+static int db_fetch_rows = 200;
+
 
 /* statistic variables */
 int dlg_enable_stats = 1;
@@ -158,6 +160,7 @@ static param_export_t mod_params[]={
 	{ "to_sock_column",        STR_PARAM, &to_sock_column.s         },
 	{ "from_sock_column",      STR_PARAM, &from_sock_column.s       },
 	{ "db_update_period",      INT_PARAM, &db_update_period         },
+	{ "db_fetch_rows",         INT_PARAM, &db_fetch_rows            },
 	{ "profiles_with_value",   STR_PARAM, &profiles_wv_s            },
 	{ "profiles_no_value",     STR_PARAM, &profiles_nv_s            },
 	{ 0,0,0 }
@@ -469,7 +472,7 @@ static int mod_init(void)
 			LM_ERR("db_url not configured for db_mode %d\n", dlg_db_mode);
 			return -1;
 		}
-		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period)!=0) {
+		if (init_dlg_db(&db_url, dlg_hash_size, db_update_period,db_fetch_rows)!=0) {
 			LM_ERR("failed to initialize the DB support\n");
 			return -1;
 		}

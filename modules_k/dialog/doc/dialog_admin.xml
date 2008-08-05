@@ -399,6 +399,28 @@ modparam("dialog", "db_update_period", 120)
 		</example>
 	</section>
 
+<section>
+		<title><varname>db_fetch_rows</varname> (integer)</title>
+		<para>
+			The number of the rows to be fetched at once from database when loading the dialog records at startup from the database.
+			This value can be used to tune the load time at startup. For 1MB of private memory (default) it should be below 400.
+			The database driver must support fetch_result() capability. A value of 0 means the functionality is disabled.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>200</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("dialog", "db_fetch_rows", 500)
+...
+</programlisting>
+		</example>
+	</section>
+
 	<section>
 		<title><varname>table_name</varname> (string)</title>
 		<para>
