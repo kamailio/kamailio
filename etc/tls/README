@@ -8,7 +8,7 @@ IMPORTANT: it's not a trustable certificate - the CA is also an example.
 
 All TLS configuration file may be found in "user" directory. If you want to
 generate your own certificate, you may find in the "rootCA" directory the 
-root CA to sign your request with. Use "openserctl tls userCERT" command to
+root CA to sign your request with. Use "kamctl tls userCERT" command to
 create a new certificate; the rootCA password is "openser".
 
 What is the purpose of these default CA and certificate? First to make an 
