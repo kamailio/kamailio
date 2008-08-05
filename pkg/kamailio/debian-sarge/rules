@@ -140,7 +140,7 @@ real-clean:
 	# Add here commands to clean up after the build process.
 	$(MAKE) TLS=$(TLS) include_modules="$(ALL_MODULES)" proper
 	rm -f cfg.tab.h
-	rm -f utils/openserunix/openserunix.o utils/openserunix/openserunix
+	rm -f utils/kamunix/kamunix.o utils/kamunix/kamunix
 	rm -f utils/db_berkeley/bdb_recover.o utils/db_berkeley/bdb_recover
 
 	dh_clean

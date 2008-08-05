@@ -465,7 +465,7 @@ fi
 %{_sbindir}/openser
 %{_sbindir}/openserctl
 %{_sbindir}/openserdbctl
-%{_sbindir}/openserunix
+%{_sbindir}/kamunix
 
 %dir %{_sysconfdir}/openser
 %dir %{_sysconfdir}/openser/tls
@@ -501,7 +501,7 @@ fi
 %{_mandir}/man5/openser.cfg.5*
 %{_mandir}/man8/openser.8*
 %{_mandir}/man8/openserctl.8*
-%{_mandir}/man8/openserunix.8*
+%{_mandir}/man8/kamunix.8*
 
 %doc docdir/AUTHORS
 %doc docdir/NEWS

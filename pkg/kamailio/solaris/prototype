@@ -127,6 +127,6 @@ d none man 0755 bin bin
 d none man/man8 0755 bin bin
 f none man/man8/openser.8 0644 bin bin
 f none man/man8/openserctl.8 0644 bin bin
-f none man/man8/openserunix.8 0644 bin bin
+f none man/man8/kamunix.8 0644 bin bin
 d none man/man5 0755 bin bin
 f none man/man5/openser.cfg.5 0644 bin bin

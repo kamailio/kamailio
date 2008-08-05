@@ -24,7 +24,7 @@ MAKE_ENV=	CC="${CC}" \
 		PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
 		PTHREAD_LIBS="${PTHREAD_LIBS}"
 
-PLIST_FILES=	sbin/openser sbin/openserctl sbin/openserdbctl sbin/openserunix \
+PLIST_FILES=	sbin/openser sbin/openserctl sbin/openserdbctl sbin/kamunix \
 		lib/openser/openserctl/openserctl.base lib/openser/openserctl/openserctl.ctlbase \
 		lib/openser/openserctl/openserctl.dbtext lib/openser/openserctl/openserctl.fifo \
 		lib/openser/openserctl/openserctl.sqlbase lib/openser/openserctl/openserctl.unixsock \
@@ -52,7 +52,7 @@ ONLY_FOR_ARCHS=	i386
 MAN5=		openser.cfg.5
 MAN8=		openser.8 \
 		openserctl.8 \
-		openserunix.8
+		kamunix.8
 
 PORTDOCS=	*
 
