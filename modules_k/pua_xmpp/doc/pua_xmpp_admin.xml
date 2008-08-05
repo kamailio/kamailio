@@ -60,13 +60,13 @@
 		<section>
 		<title><varname>server_address</varname>(str)</title>
 		<para>
-		The IP address of the server. 
+		The SIP URI specifying the address of the SIP server. 
 		</para>
 		<example>
 		<title>Set <varname>server_address</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("pua_xmpp", "server_address", "160.23.23.10")
+modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 ...
 </programlisting>
 		</example>
@@ -92,12 +92,12 @@ modparam("pua_xmpp", "server_address", "160.23.23.10")
 		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
-		<title><function>Notify2Xmpp</function> usage</title>
+		<title><function>pua_xmpp_notify</function> usage</title>
 		<programlisting format="linespecific">
 ...
-	if( is_method("NOTIFY") &amp;&amp; uri=~"sip:.+@sip-xmpp.siphub.ro")
+	if( is_method("NOTIFY") &amp;&amp; uri=~"sip:.+@sip-xmpp.kamailio.org")
 	{
-		if(Notify2Xmpp())
+		if(pua_xmpp_notify())
 			t_reply("200", "OK");
 		exit;
 	}
