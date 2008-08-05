@@ -12,10 +12,10 @@
 ##### ----------------------------------------------- #####
 ### load SQL base
 #
-if [ -f "$MYLIBDIR/openserctl.sqlbase" ]; then
-	. "$MYLIBDIR/openserctl.sqlbase"
+if [ -f "$MYLIBDIR/kamctl.sqlbase" ]; then
+	. "$MYLIBDIR/kamctl.sqlbase"
 else
-	echo "Cannot load SQL core functions '$MYLIBDIR/openserctl.sqlbase' - exiting ..."
+	echo "Cannot load SQL core functions '$MYLIBDIR/kamctl.sqlbase' - exiting ..."
 	exit -1
 fi
 

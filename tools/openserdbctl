@@ -13,19 +13,19 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include resource files, if any
-if [ -f /etc/openser/openserctlrc ]; then
-	. /etc/openser/openserctlrc
+if [ -f /etc/openser/kamctlrc ]; then
+	. /etc/openser/kamctlrc
 fi
-if [ -f /usr/local/etc/openser/openserctlrc ]; then
-	. /usr/local/etc/openser/openserctlrc
+if [ -f /usr/local/etc/openser/kamctlrc ]; then
+	. /usr/local/etc/openser/kamctlrc
 fi
-if [ -f ~/.openserctlrc ]; then
-	. ~/.openserctlrc
+if [ -f ~/.kamctlrc ]; then
+	. ~/.kamctlrc
 fi
 
 if [ $TEST = "true" ]; then
-	if [ -f ./openserctlrc ]; then
-		. ./openserctlrc
+	if [ -f ./kamctlrc ]; then
+		. ./kamctlrc
 	fi
 fi
 
@@ -38,7 +38,7 @@ if [ -z "$MYDIR" ] ; then
 fi
 
 if [ -z "$MYLIBDIR" ] ; then
-	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	MYLIBDIR="/usr/local/lib/openser/kamctl"
 	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
 	fi
@@ -48,10 +48,10 @@ fi
 ##### ------------------------------------------------ #####
 ### load base functions
 #
-if [ -f "$MYLIBDIR/openserdbctl.base" ]; then
-	. "$MYLIBDIR/openserdbctl.base"
+if [ -f "$MYLIBDIR/kamdbctl.base" ]; then
+	. "$MYLIBDIR/kamdbctl.base"
 else
-	echo -e "Cannot load core functions '$MYLIBDIR/openserdbctl.base' - exiting ...\n"
+	echo -e "Cannot load core functions '$MYLIBDIR/kamdbctl.base' - exiting ...\n"
 	exit -1
 fi
 
@@ -67,45 +67,45 @@ fi
 
 case $DBENGINE in
 	MYSQL|mysql|MySQL)
-		if [ -f "$MYLIBDIR/openserdbctl.mysql" ]; then
-			. "$MYLIBDIR/openserdbctl.mysql"
+		if [ -f "$MYLIBDIR/kamdbctl.mysql" ]; then
+			. "$MYLIBDIR/kamdbctl.mysql"
 			USED_DBENGINE="mysql"
 		else
-			merr "could not load the script in $MYLIBDIR/openserdbctl.mysql for database engine $DBENGINE"
+			merr "could not load the script in $MYLIBDIR/kamdbctl.mysql for database engine $DBENGINE"
 		fi
 		;;
 	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
-		if [ -f "$MYLIBDIR/openserdbctl.pgsql" ]; then
-			. "$MYLIBDIR/openserdbctl.pgsql"
+		if [ -f "$MYLIBDIR/kamdbctl.pgsql" ]; then
+			. "$MYLIBDIR/kamdbctl.pgsql"
 			USED_DBENGINE="postgres"
 		else
-			merr "could not load the script in $MYLIBDIR/openserdbctl.pgsql for database engine $DBENGINE"
+			merr "could not load the script in $MYLIBDIR/kamdbctl.pgsql for database engine $DBENGINE"
 		fi
 		;;
 	ORACLE|oracle|Oracle)
-		if [ -f "$MYLIBDIR/openserdbctl.oracle" ]; then
-			. "$MYLIBDIR/openserdbctl.oracle"
+		if [ -f "$MYLIBDIR/kamdbctl.oracle" ]; then
+			. "$MYLIBDIR/kamdbctl.oracle"
 			USED_DBENGINE="oracle"
 		else
-			merr "could not load the script in $MYLIBDIR/openserdbctl.oracle for database engine $DBENGINE"
+			merr "could not load the script in $MYLIBDIR/kamdbctl.oracle for database engine $DBENGINE"
 		fi
 		;;
 	DBTEXT|dbtext|textdb)
-		if [ -f "$MYLIBDIR/openserdbctl.dbtext" ]; then
-			. "$MYLIBDIR/openserdbctl.dbtext"
+		if [ -f "$MYLIBDIR/kamdbctl.dbtext" ]; then
+			. "$MYLIBDIR/kamdbctl.dbtext"
 			USED_DBENGINE="dbtext"
 			DBNAME=$DB_PATH
 		else
-			merr "could not load the script in $MYLIBDIR/openserdbctl.dbtext for database engine $DBENGINE"
+			merr "could not load the script in $MYLIBDIR/kamdbctl.dbtext for database engine $DBENGINE"
 		fi
 		;;
 	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
-		if [ -f "$MYLIBDIR/openserdbctl.db_berkeley" ]; then
-			. "$MYLIBDIR/openserdbctl.db_berkeley"
+		if [ -f "$MYLIBDIR/kamdbctl.db_berkeley" ]; then
+			. "$MYLIBDIR/kamdbctl.db_berkeley"
 			USED_DBENGINE="berkeley"
 			DBNAME=$DB_PATH
 		else
-			merr "could not load the script in $MYLIBDIR/openserdbctl.db_berkeley for database engine $DBENGINE"
+			merr "could not load the script in $MYLIBDIR/kamdbctl.db_berkeley for database engine $DBENGINE"
 		fi
 		;;
 esac
@@ -194,7 +194,7 @@ case $1 in
 			usage
 			exit 1
 		fi
-		tmp_file=`mktemp /tmp/openserdbctl.XXXXXXXXXX` || exit 1
+		tmp_file=`mktemp /tmp/kamdbctl.XXXXXXXXXX` || exit 1
 		openser_dump $DBNAME $tmp_file
 		ret=$?
 		if [ "$ret" -ne 0 ]; then

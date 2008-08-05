@@ -12,10 +12,10 @@
 ##### ----------------------------------------------- #####
 ### load CTL base
 #
-if [ -f "$MYLIBDIR/openserctl.ctlbase" ]; then
-	. "$MYLIBDIR/openserctl.ctlbase"
+if [ -f "$MYLIBDIR/kamctl.ctlbase" ]; then
+	. "$MYLIBDIR/kamctl.ctlbase"
 else
-	mwarn "Cannot load CTL core functions '$MYLIBDIR/openserctl.ctlbase' ..."
+	mwarn "Cannot load CTL core functions '$MYLIBDIR/kamctl.ctlbase' ..."
 	# exit -1
 fi
 

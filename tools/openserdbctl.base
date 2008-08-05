@@ -128,7 +128,7 @@ credentials()
 	fi
 }
 
-# FIXME use the definition from openserctl.base
+# FIXME use the definition from kamctl.base
 
 mdbg() {
 	if [ "0$VERBOSE" -ne 0 ] ; then

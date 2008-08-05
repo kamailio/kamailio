@@ -23,10 +23,10 @@ fi
 ##### ----------------------------------------------- #####
 ### load ORACLE SQL base
 #
-if [ -f "$MYLIBDIR/openserdbfunc.oracle" ]; then
-	. "$MYLIBDIR/openserdbfunc.oracle"
+if [ -f "$MYLIBDIR/kamdbfunc.oracle" ]; then
+	. "$MYLIBDIR/kamdbfunc.oracle"
 else
-	echo "Cannot load ORACLE core functions '$MYLIBDIR/openserdbfunc.oracle' - exiting ..."
+	echo "Cannot load ORACLE core functions '$MYLIBDIR/kamdbfunc.oracle' - exiting ..."
 	exit -1
 fi
 

@@ -2,7 +2,7 @@
 #
 # The OpenSER configuration file for the control tools.
 #
-# Here you can set variables used in the openserctl and openserdbctl setup
+# Here you can set variables used in the kamctl and kamdbctl setup
 # scripts. Per default all variables here are commented out, the control tools
 # will use their internal default values.
 
@@ -13,7 +13,7 @@
 # $CHROOT_DIR="/path/to/chrooted/directory"
 
 ## database type: MYSQL, PGSQL, ORACLE, DB_BERKELEY, or DBTEXT, by default none is loaded
-# If you want to setup a database with openserdbctl, you must at least specify
+# If you want to setup a database with kamdbctl, you must at least specify
 # this parameter.
 # DBENGINE=MYSQL
 
@@ -85,7 +85,7 @@
 # Define what module tables should be installed.
 # If you use the postgres database and want to change the installed tables, then you
 # must also adjust the STANDARD_TABLES or EXTRA_TABLES variable accordingly in the
-# openserdbctl.base script.
+# kamdbctl.base script.
 
 # openser standard modules
 # STANDARD_MODULES="standard acc lcr domain group permissions registrar usrloc msilo

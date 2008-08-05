@@ -13,25 +13,25 @@ PATH=$PATH:/usr/local/sbin/
 TEST="false"
 
 ### include config files
-if [ -f /etc/openser/openserctlrc ]; then
-	. /etc/openser/openserctlrc
+if [ -f /etc/openser/kamctlrc ]; then
+	. /etc/openser/kamctlrc
 fi
-if [ -f /usr/local/etc/openser/openserctlrc ]; then
-	. /usr/local/etc/openser/openserctlrc
+if [ -f /usr/local/etc/openser/kamctlrc ]; then
+	. /usr/local/etc/openser/kamctlrc
 fi
-if [ -f ~/.openserctlrc ]; then
-	. ~/.openserctlrc
+if [ -f ~/.kamctlrc ]; then
+	. ~/.kamctlrc
 fi
 
 if [ $TEST = "true" ]; then
-	if [ -f ./openserctlrc ]; then
-		. ./openserctlrc
+	if [ -f ./kamctlrc ]; then
+		. ./kamctlrc
 	fi
 fi
 
 
 ### force values for variables in this section
-# you better set the variables in ~/.openserctlrc
+# you better set the variables in ~/.kamctlrc
 if [ -z "$ETCDIR" ] ; then
 	ETCDIR="/usr/local/etc/openser"
 fi
@@ -44,7 +44,7 @@ if [ -z "$MYDIR" ] ; then
 fi
 
 if [ -z "$MYLIBDIR" ] ; then
-	MYLIBDIR="/usr/local/lib/openser/openserctl"
+	MYLIBDIR="/usr/local/lib/openser/kamctl"
 	if [ ! -d "$MYLIBDIR" ]; then
 		MYLIBDIR=$MYDIR
 	fi
@@ -53,10 +53,10 @@ fi
 ##### ------------------------------------------------ #####
 ### load base functions
 #
-if [ -f "$MYLIBDIR/openserctl.base" ]; then
-	. "$MYLIBDIR/openserctl.base"
+if [ -f "$MYLIBDIR/kamctl.base" ]; then
+	. "$MYLIBDIR/kamctl.base"
 else
-	echo -e "Cannot load core functions '$MYLIBDIR/openserctl.base' - exiting ...\n"
+	echo -e "Cannot load core functions '$MYLIBDIR/kamctl.base' - exiting ...\n"
 	exit -1
 fi
 
@@ -67,33 +67,33 @@ fi
 DBENGINELOADED=0
 case $DBENGINE in
 	MYSQL|mysql|MySQL)
-		if [ -f "$MYLIBDIR/openserctl.mysql" ]; then
-			. "$MYLIBDIR/openserctl.mysql"
+		if [ -f "$MYLIBDIR/kamctl.mysql" ]; then
+			. "$MYLIBDIR/kamctl.mysql"
 			DBENGINELOADED=1
 		fi
 		;;
 	PGSQL|pgsql|postgres|postgresql|POSTGRESQL)
-		if [ -f "$MYLIBDIR/openserctl.pgsql" ]; then
-			. "$MYLIBDIR/openserctl.pgsql"
+		if [ -f "$MYLIBDIR/kamctl.pgsql" ]; then
+			. "$MYLIBDIR/kamctl.pgsql"
 			DBENGINELOADED=1
 		fi
 		;;
 	ORACLE|oracle|Oracle)
-		if [ -f "$MYLIBDIR/openserctl.oracle" ]; then
-			. "$MYLIBDIR/openserctl.oracle"
+		if [ -f "$MYLIBDIR/kamctl.oracle" ]; then
+			. "$MYLIBDIR/kamctl.oracle"
 			DBENGINELOADED=1
 		fi
 		;;
 
 	DBTEXT|dbtext|textdb)
-		if [ -f "$MYLIBDIR/openserctl.dbtext" ]; then
-			. "$MYLIBDIR/openserctl.dbtext"
+		if [ -f "$MYLIBDIR/kamctl.dbtext" ]; then
+			. "$MYLIBDIR/kamctl.dbtext"
 			DBENGINELOADED=1
 		fi
 		;;
 	DB_BERKELEY|db_berkeley|BERKELEY|berkeley)
-		if [ -f "$MYLIBDIR/openserctl.db_berkeley" ]; then
-			. "$MYLIBDIR/openserctl.db_berkeley"
+		if [ -f "$MYLIBDIR/kamctl.db_berkeley" ]; then
+			. "$MYLIBDIR/kamctl.db_berkeley"
 			DBENGINELOADED=1
 		fi
 		;;
@@ -117,14 +117,14 @@ load_ctlengine() {
 	fi
 	case $CTLENGINE in
 		FIFO|fifo)
-			if [ -f "$MYLIBDIR/openserctl.fifo" ]; then
-				. "$MYLIBDIR/openserctl.fifo"
+			if [ -f "$MYLIBDIR/kamctl.fifo" ]; then
+				. "$MYLIBDIR/kamctl.fifo"
 				CTLENGINELOADED=1
 			fi
 			;;
 		UNIXSOCK|unixsock)
-			if [ -f "$MYLIBDIR/openserctl.unixsock" ]; then
-				. "$MYLIBDIR/openserctl.unixsock"
+			if [ -f "$MYLIBDIR/kamctl.unixsock" ]; then
+				. "$MYLIBDIR/kamctl.unixsock"
 				CTLENGINELOADED=1
 			fi
 			;;
@@ -1458,7 +1458,7 @@ openser_start() {
 	if [ ! -x "$OSERBIN" ] ; then
 		echo
 		merr "OpenSER binaries not found at $OSERBIN"
-		merr "set OSERBIN to the path of openser in $0 or ~/.openserctlrc"
+		merr "set OSERBIN to the path of openser in $0 or ~/.kamctlrc"
 		exit 1
 	fi
 	if [ $SYSLOG = 1 ] ; then

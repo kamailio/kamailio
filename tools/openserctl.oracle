@@ -17,17 +17,17 @@ alter session set nls_date_format='DD-MM-RR HH24:MI:SS';
 ##### ----------------------------------------------- #####
 ### load SQL base
 #
-if [ -f "$MYLIBDIR/openserctl.sqlbase" ]; then
-	. "$MYLIBDIR/openserctl.sqlbase"
+if [ -f "$MYLIBDIR/kamctl.sqlbase" ]; then
+	. "$MYLIBDIR/kamctl.sqlbase"
 else
-	echo "Cannot load SQL core functions '$MYLIBDIR/openserctl.sqlbase' - exiting ..."
+	echo "Cannot load SQL core functions '$MYLIBDIR/kamctl.sqlbase' - exiting ..."
 	exit -1
 fi
 
-if [ -f "$MYLIBDIR/openserdbfunc.oracle" ]; then
-	. "$MYLIBDIR/openserdbfunc.oracle"
+if [ -f "$MYLIBDIR/kamdbfunc.oracle" ]; then
+	. "$MYLIBDIR/kamdbfunc.oracle"
 else
-	echo "Cannot load ORACLE core functions '$MYLIBDIR/openserdbfunc.oracle' - exiting ..."
+	echo "Cannot load ORACLE core functions '$MYLIBDIR/kamdbfunc.oracle' - exiting ..."
 	exit -1
 fi
 

@@ -24,9 +24,9 @@
 # 2007-01-26  added seperate installation routine for presence related tables
 #             and fix permissions for the SERIAL sequences.
 # 2007-05-21  Move SQL database definitions out of this script (henning)
-# 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
+# 2007-05-31  Move common definitions to kamdbctl.base file (henningw)
 #
-# 2007-06-11  Use a common control tool for database tasks, like the openserctl
+# 2007-06-11  Use a common control tool for database tasks, like the kamctl
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/openser"

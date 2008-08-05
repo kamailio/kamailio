@@ -4,7 +4,7 @@
 
 """SQL-like access layer for dbtext.
 
-This module provides the glue for openserctl to interact with dbtext files
+This module provides the glue for kamctl to interact with dbtext files
 using basic SQL syntax thus avoiding special case handling of dbtext.
 
 """

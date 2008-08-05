@@ -5,9 +5,9 @@
 # History:
 # 2007-02-14  Branch from mysqldb.sh script and adapt minimal capabilities(Cesc Santasusana)
 #
-# 2007-05-31  Move common definitions to openserdbctl.base file (henningw)
+# 2007-05-31  Move common definitions to kamdbctl.base file (henningw)
 # 2007-06-13  Move database definitions out of this script, use a common
-#             control tool for database tasks, like the openserctl (henning)
+#             control tool for database tasks, like the kamctl (henning)
 
 # path to the database schemas
 DATA_DIR="/usr/local/share/openser"
