@@ -505,7 +505,7 @@ Chapter 2. Frequently Asked Questions
 
    Why am I not receiving any SNMP Traps?
 
-   Assuming you've configured the trap thresholds in openser.cfg
+   Assuming you've configured the trap thresholds in kamailio.cfg
    with something similar to:
     modparam("snmpstats", "MsgQueueMinorThreshold", 1234)
     modparam("snmpstats", "MsgQueueMajorThreshold", 5678)

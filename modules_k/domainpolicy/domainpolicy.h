@@ -52,7 +52,7 @@ int dp_can_connect(struct sip_msg* _msg, char* _s1, char* _s2);
 /*
  * Apply DP-DDDS policy to current SIP message. This means
  * build a new destination URI from the policy AVP and export it
- * as AVP. Then in openser.cfg this new target AVP can be pushed
+ * as AVP. Then in kamailio.cfg this new target AVP can be pushed
  * into the destination URI $duri
  */
 int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2);

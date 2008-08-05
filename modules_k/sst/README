@@ -59,12 +59,12 @@ Chapter 1. Admin Guide
 
    The sst module provides a way to update the dialog expire timer
    based on the SIP INVITE/200 OK Session-Expires header value.
-   You can use the sst module in an OpenSER proxy to allow freeing
+   You can use the sst module in an Kamailio proxy to allow freeing
    of local resources of dead (expired) calls.
 
    You can also use the sst module to validate the MIN_SE header
    value and reply to any request with a "422 - Session Timer Too
-   Small" if the value is too small for your OpenSER
+   Small" if the value is too small for your Kamailio
    configuration.
 
 1.2. How it works
@@ -76,12 +76,12 @@ Chapter 1. Admin Guide
    setting the avp value.
 
    You flag any call setup INVITE that you want to cause a timed
-   session to be established. This will cause OpenSER to request
+   session to be established. This will cause Kamailio to request
    the use of session times if the UAC does not request it.
 
    All of this happens with a properly configured dialog and sst
    module and setting the dialog flag and the sst flag at the time
-   any INVITE sip message is seen. There is no openser.cfg script
+   any INVITE sip message is seen. There is no kamailio.cfg script
    function call required to set the dialog expire timeout value.
    See the dialog module users guide for more information.
 
@@ -221,8 +221,8 @@ modparam("sst", "reject_to_small", 0)
 
 1.4.5. sst_flag (integer)
 
-   Keeping with OpenSER, the module will not do anything to any
-   message unless instructed to do so via the openser.cfg script.
+   Keeping with Kamailio, the module will not do anything to any
+   message unless instructed to do so via the kamailio.cfg script.
    You must set the sst_flag value in the setflag() call of the
    INVITE you want the sst module to process. But before you can
    do that, you need to tell the sst module which flag value you

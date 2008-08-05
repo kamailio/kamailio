@@ -37,7 +37,7 @@
 	<para>All of this happens with a properly configured dialog
 	and sst module and setting the dialog flag and the sst flag at
 	the time any INVITE sip message is seen. There is no
-	openser.cfg script function call required to set the dialog
+	kamailio.cfg script function call required to set the dialog
 	expire timeout value. See the dialog module users guide for
 	more information.</para>
 
@@ -248,7 +248,7 @@ modparam("sst", "reject_to_small", 0)
 		
 		<para>Keeping with OpenSER, the module will not do
 		anything to any message unless instructed to do so via
-		the openser.cfg script. You must set the sst_flag
+		the kamailio.cfg script. You must set the sst_flag
 		value in the setflag() call of the INVITE you want the
 		sst module to process. But before you can do that, you
 		need to tell the sst module which flag value you are

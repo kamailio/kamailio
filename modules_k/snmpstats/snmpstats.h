@@ -72,19 +72,19 @@
 #define SNMPSTATS_MODULE_NAME "snmpstats"
 #define SYSUPTIME_OID         ".1.3.6.1.2.1.1.3.0"
 
-/* This is the first function to be called by OpenSER, to initialize the module.
+/* This is the first function to be called by Kamailio, to initialize the module.
  * This call must always return a value as soon as possible.  If it were not to
- * return, then OpenSER would not be able to initialize any of the other
+ * return, then Kamailio would not be able to initialize any of the other
  * modules. */
 static int  mod_init(void);
 
-/* This function is called when OpenSER has finished creating all instances of
+/* This function is called when Kamailio has finished creating all instances of
  * itself.  It is at this point that we want to create our AgentX sub-agent
  * process, and register a handler for any state changes of our child. */
 static int  mod_child_init(int rank);
 
 
-/* This function is called when OpenSER is shutting down.  When this happens, we
+/* This function is called when Kamailio is shutting down.  When this happens, we
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy(void);
 
@@ -97,7 +97,7 @@ static proc_export_t mod_procs[] = {
 
 /*
  * This structure defines the SNMPStats parameters that can be configured
- * through the openser.cfg configuration file.  
+ * through the kamailio.cfg configuration file.  
  */
 static param_export_t mod_params[] = 
 {

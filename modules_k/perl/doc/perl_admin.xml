@@ -7,12 +7,12 @@
 	<section>
 		<title>Overview</title>
 		<para>
-		The time needed when writing a new OpenSER module unfortunately is quite high, while the
+		The time needed when writing a new Kamailio module unfortunately is quite high, while the
 		options provided by the configuration file are limited to the features implemented in the
 		modules.
 		</para>
 		<para>
-		With this Perl module, you can easily implement your own OpenSER extensions in Perl. This allows
+		With this Perl module, you can easily implement your own Kamailio extensions in Perl. This allows
 		for simple access to the full world of CPAN modules. SIP URI rewriting could be implemented
 		based on regular expressions; accessing arbitrary data backends, e.g. LDAP or Berkeley DB files,
 		is now extremely simple.
@@ -21,7 +21,7 @@
 	<section>
 		<title>Installing the module</title>
 		<para>
-		This Perl module is loaded in openser.cfg (just like all the other modules) with
+		This Perl module is loaded in kamailio.cfg (just like all the other modules) with
 		loadmodule("/path/to/perl.so");.
 		</para>
 
@@ -49,9 +49,9 @@ TYPEMAP:    echo "`perl -MConfig -e 'print $Config{installprivlib}'`/ExtUtils/ty
 	<section>
 		<title>Using the module</title>
 		<para>
-		The Perl module has two interfaces: The perl side, and the OpenSER side. Once a Perl
+		The Perl module has two interfaces: The perl side, and the Kamailio side. Once a Perl
 		function is defined and loaded via the module parameters (see below), it may be
-		called in OpenSER's configuration at an arbitary point. E.g., you could write
+		called in Kamailio's configuration at an arbitary point. E.g., you could write
 		a function "ldap_alias" in Perl, and then execute <programlisting format="linespecific">
 ...
 if (perl_exec("ldap_alias")) {
@@ -101,7 +101,7 @@ if (perl_exec("ldap_alias")) {
 			</para>
 			</listitem>
 		</itemizedlist>
-		Additionally, a number of perl modules should be installed. The OpenSER::LDAPUtils package
+		Additionally, a number of perl modules should be installed. The Kamailio::LDAPUtils package
 		relies on Net::LDAP to be installed. One of the sample scripts needs IPC::Shareable
 		</para>
 		<para>
@@ -167,7 +167,7 @@ modparam("perl", "filename", "/home/john/openser/myperl.pl")
 		<section>
 			<title><varname>modpath</varname> (string)</title>
 			<para>
-			The path to the Perl modules included (OpenSER.pm et.al). It is not absolutely
+			The path to the Perl modules included (Kamailio.pm et.al). It is not absolutely
 			crucial to set this path,
 			as you <emphasis>may</emphasis> install the Modules in Perl's standard path, or update
 			the <quote>%INC</quote> variable from within your script. Using this module parameter
@@ -221,7 +221,7 @@ if (method=="INVITE") {
 			<para>
 			Calls a perl function <emphasis>with</emphasis> passing it the current SIP message.
 			The SIP message is reflected by a Perl module that gives you access to the information
-			in the current SIP message (OpenSER::Message).
+			in the current SIP message (Kamailio::Message).
 			</para>
 			<para>
 			The first parameter is the function to be called.

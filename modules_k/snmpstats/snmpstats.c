@@ -79,7 +79,7 @@
 #include "utilities.h"
 #include "sub_agent.h"
 
-/* Required in every OpenSER Module. */
+/* Required in every Kamailio Module. */
 MODULE_VERSION
 
 /* 
@@ -89,7 +89,7 @@ MODULE_VERSION
  * handler.  
  *
  * Specifically, If the process that generated the SIGCHLD doesn't match this
- * pid, we call OpenSER's default handlers.  Otherwise, we just ignore SIGCHLD.
+ * pid, we call Kamailio's default handlers.  Otherwise, we just ignore SIGCHLD.
  */
 volatile pid_t sysUpTime_pid;
 
@@ -97,7 +97,7 @@ volatile pid_t sysUpTime_pid;
  * for a full description. */
 static int spawn_sysUpTime_child();
 
-/* Storage for the "snmpgetPath" and "snmpCommunity" openser.cfg parameters.
+/* Storage for the "snmpgetPath" and "snmpCommunity" kamailio.cfg parameters.
  * The parameters are used to define what happens with the sysUpTime child.  */
 char *snmpget_path   = NULL;
 char *snmp_community = NULL;
@@ -105,7 +105,7 @@ char *snmp_community = NULL;
 /* 
  * This module replaces the default SIGCHLD handler with our own, as explained
  * in the documentation for sysUpTime_pid above.  This structure holds the old
- * handler so we can call and restore OpenSER's usual handler when appropriate
+ * handler so we can call and restore Kamailio's usual handler when appropriate
  */
 static struct sigaction old_sigchld_handler;
 
@@ -209,9 +209,9 @@ static int register_message_code_statistics(void)
 	return 0;
 }
 
-/* This is the first function to be called by OpenSER, to initialize the module.
+/* This is the first function to be called by Kamailio, to initialize the module.
  * This call must always return a value as soon as possible.  If it were not to
- * return, then OpenSER would not be able to initialize any of the other
+ * return, then Kamailio would not be able to initialize any of the other
  * modules. */
 static int mod_init(void) 
 {
@@ -228,9 +228,9 @@ static int mod_init(void)
 	
 	/* We need to register for callbacks with usrloc module, for whenever a
 	 * contact is added or removed from the system.  We need to do it now
-	 * before OpenSER's functions get a chance to load up old user data from
+	 * before Kamailio's functions get a chance to load up old user data from
 	 * the database.  That load will happen if a lookup() function is come
-	 * across in openser.cfg. */
+	 * across in kamailio.cfg. */
 
 	if (!registerForUSRLOCCallbacks()) 
 	{
@@ -244,7 +244,7 @@ static int mod_init(void)
 						" with the usrloc module\n");
 		LM_ERR("Are you sure that the usrloc module was loaded"
 				" before the snmpstats module in ");
-		LM_ERR("openser.cfg?  openserSIPRegUserTable will not be "
+		LM_ERR("kamailio.cfg?  openserSIPRegUserTable will not be "
 			   "updated.");
 		*/
 	} 
@@ -257,7 +257,7 @@ static int mod_init(void)
 }
 
 
-/* This function is called when OpenSER has finished creating all instances of
+/* This function is called when Kamailio has finished creating all instances of
  * itself.  It is at this point that we want to create our AgentX sub-agent
  * process, and register a handler for any state changes of our child. */
 static int mod_child_init(int rank) 
@@ -273,7 +273,7 @@ static int mod_child_init(int rank)
 	return 0;
 }
 
-/* This function is called when OpenSER is shutting down. When this happens, we
+/* This function is called when Kamailio is shutting down. When this happens, we
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy(void) 
 {
@@ -289,8 +289,8 @@ static void mod_destroy(void)
 /* The SNMPStats module forks off a child process to run an snmp command via
  * execve(). We need a customized handler to catch and ignore its SIGCHLD when 
  * it terminates. We also need to make sure to forward other processes 
- * SIGCHLD's to OpenSER's usual SIGCHLD handler.  We do this by resetting back
- * OpenSER's own signal handlers after we caught our appropriate SIGCHLD. */
+ * SIGCHLD's to Kamailio's usual SIGCHLD handler.  We do this by resetting back
+ * Kamailio's own signal handlers after we caught our appropriate SIGCHLD. */
 static void sigchld_handler(int signal)
 {
 	int pid_of_signalled_process_status;
@@ -298,7 +298,7 @@ static void sigchld_handler(int signal)
 
 	/* We need to lookout for the expected SIGCHLD from our
 	 * sysUpTime child process, and ignore it.  If the SIGCHLD is
-	 * from another process, we need to call OpenSER's usual
+	 * from another process, we need to call Kamailio's usual
 	 * handlers */
 	pid_of_signalled_process = 
 			waitpid(-1, &pid_of_signalled_process_status, WNOHANG);
@@ -307,16 +307,16 @@ static void sigchld_handler(int signal)
 	{
 		/* It was the sysUpTime process which died, which was expected.
 		 * At this point we will never see any SIGCHLDs from any other
-		 * SNMPStats process.  This means that we can restore OpenSER's
+		 * SNMPStats process.  This means that we can restore Kamailio's
 		 * original handlers. */
 		sigaction(SIGCHLD, &old_sigchld_handler, NULL);
 	} else 
 	{
 
-		/* We need this 'else-block' in case another OpenSER process dies
+		/* We need this 'else-block' in case another Kamailio process dies
 		 * unexpectantly before the sysUpTime process dies.  If this
 		 * doesn't happen, then this code will never be called, because
-		 * the block above re-assigns OpenSER's original SIGCHLD
+		 * the block above re-assigns Kamailio's original SIGCHLD
 		 * handler.  If it does happen, then we make sure to call the
 		 * default signal handlers. */
 		if (old_sigchld_handler.sa_handler != SIG_IGN &&
@@ -454,7 +454,7 @@ static int spawn_sysUpTime_child(void)
 }
 
 
-/* This function is called whenever the openser.cfg file specifies the
+/* This function is called whenever the kamailio.cfg file specifies the
  * snmpgetPath parameter.  The function will set the snmpget_path parameter. */
 int set_snmpget_path( modparam_t type, void *val) 
 {

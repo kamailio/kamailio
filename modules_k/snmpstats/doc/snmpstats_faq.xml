@@ -47,7 +47,7 @@
 	    </question>
 	    <answer>
 		<para>
-		Assuming you've configured the trap thresholds in openser.cfg with something similar to:
+		Assuming you've configured the trap thresholds in kamailio.cfg with something similar to:
 		</para>
 
 		<programlisting format="linespecific">
@@ -58,7 +58,7 @@
     modparam("snmpstats", "dlg_minor_threshold", 600)
 		</programlisting>
 		<para>
-		Then either OpenSER is not reaching these thresholds (which is a good thing),
+		Then either Kamailio is not reaching these thresholds (which is a good thing),
 		or you haven't set up the trap monitor correctly.  To prove this to yourself,
 		you can start NetSNMP with:
 		</para>
@@ -110,7 +110,7 @@
 	</qandaentry>
 	<qandaentry>
 	    <question>
-		<para>OpenSER refuses to load the SNMPStats module.  Why is it displaying "load_module: could not open module snmpstats.so"?
+		<para>Kamailio refuses to load the SNMPStats module.  Why is it displaying "load_module: could not open module snmpstats.so"?
 		</para>
 	    </question>
 	    <answer>
@@ -180,7 +180,7 @@
 			</listitem>
 			<listitem>
 				<para>
-				Try starting OpenSER again.
+				Try starting Kamailio again.
 				</para>
 			</listitem>
 		</orderedlist>
@@ -225,7 +225,7 @@
 
 		<programlisting format="linespecific">
     -- FROM       OPENSER-SIP-COMMON-MIB
-    -- TEXTUAL CONVENTION OpenSERSIPEntityRole
+    -- TEXTUAL CONVENTION KamailioSIPEntityRole
     SYNTAX        BITS {other(0), userAgent(1), proxyServer(2), redirectServer(3), registrarServer(4)} 
     MAX-ACCESS    read-only
     STATUS        current
@@ -271,7 +271,7 @@
     		</programlisting>
 
 		For example, consider an snmpget on the openserSIPEntityType scalar, 
-		run on the same machine running the OpenSER instance, with the default
+		run on the same machine running the Kamailio instance, with the default
 		"public" community string.  The command would be:
 
 		<programlisting format="linespecific">
@@ -302,7 +302,7 @@
     		</programlisting>
 
 		For example, consider the openserSIPRegUserTable.  If we run the snmptable
-		command on the same machine as the running OpenSER instance, configured with
+		command on the same machine as the running Kamailio instance, configured with
 		the default "public" community string.  The command would be:
 
 		<programlisting format="linespecific">

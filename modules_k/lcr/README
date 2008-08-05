@@ -344,7 +344,7 @@ modparam("lcr","priority_column","priority")
    of the destination set.
 
    There is NO default value, thus this variable must be defined
-   in openser.cfg.
+   in kamailio.cfg.
 
    Example 1.16. Setting contact_avp module parameter
 ...
@@ -358,7 +358,7 @@ modparam("lcr", "contact_avp", "$avp(i:711)")
    parameter.
 
    There is NO default value, thus this variable must be defined
-   in openser.cfg.
+   in kamailio.cfg.
 
    Example 1.17. Setting fr_inv_timer_avp module parameter
 ...
@@ -371,7 +371,7 @@ modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
    of matching gateways.
 
    There is NO default value, thus this variable must be defined
-   in openser.cfg.
+   in kamailio.cfg.
 
    Example 1.18. Setting gw_uri_avp module parameter
 ...
@@ -383,7 +383,7 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
    An AVP that contains caller's RPID (if any).
 
    There is NO default value, thus this variable must be defined
-   in openser.cfg.
+   in kamailio.cfg.
 
    Example 1.19. Setting rpid_avp module parameter
 ...
@@ -396,7 +396,7 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
    user for subsequent next_gw calls.
 
    There is NO default value, thus this variable must be defined
-   in openser.cfg.
+   in kamailio.cfg.
 
    Example 1.20. Setting ruri_user_avp module parameter
 ...
@@ -438,7 +438,7 @@ modparam("lcr","fr_inv_timer_next",30)
    gateway's flags.
 
    There is NO default value, thus this variable must be defined
-   in openser.cfg.
+   in kamailio.cfg.
 
    Example 1.23. Setting flags_avp module parameter
 ...

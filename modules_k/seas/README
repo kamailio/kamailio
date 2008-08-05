@@ -77,19 +77,19 @@ Chapter 1. The Sip Express Application Server User's Guide
 
 1.1.1. Sip Express Application Server module overview
 
-   SEAS module enables OpenSER to transfer the execution logic
+   SEAS module enables Kamailio to transfer the execution logic
    control of a sip message to a given external entity, called the
-   Application Server. When the OpenSER script is being executed
+   Application Server. When the Kamailio script is being executed
    on an incoming SIP message, invocation of the as_relay_t()
    function makes this module send the message along with some
    transaction information to the specified Application Server.
    The Application Server then executes some call-control logic
-   code, and tells OpenSER to take some actions, ie. forward the
+   code, and tells Kamailio to take some actions, ie. forward the
    message downstream, or respond to the message with a SIP repy,
    etc.
 
    The module acts implements a network protocol acting as the
-   interface between OpenSER internal API and the external
+   interface between Kamailio internal API and the external
    Application Server entity.
 
    There's only one relevant function, as_relay_t, exported by
@@ -113,15 +113,15 @@ Chapter 1. The Sip Express Application Server User's Guide
    associated transaction (recall that invoking as_relay_t
    indirectly calls t_newtran). This way, all the SIP-Transaction
    machinery, and the SIP-Message parsing, is handled at the
-   OpenSER core, while the execution of the Application Logic is
+   Kamailio core, while the execution of the Application Logic is
    carried in the Application Server.
 
    The SEAS module and protocol provide a means by which an
-   external entity can utilize OpenSER as a transaction-stateful
+   external entity can utilize Kamailio as a transaction-stateful
    SIP-stack to act on behalf of it. This means that this external
    entity (which we call the Application Server) is notified
-   whenever a SIP-Request enters OpenSER, and this external entity
-   can then order OpenSER to execute some actions, either replying
+   whenever a SIP-Request enters Kamailio, and this external entity
+   can then order Kamailio to execute some actions, either replying
    the request, or generating new UAC transactions.
 
    This version of SEAS works with VozTelecom's WeSIP Application
@@ -129,14 +129,14 @@ Chapter 1. The Sip Express Application Server User's Guide
 
 1.1.2. Application Servers
 
-   When OpenSER starts and SEAS module is loaded, a new process is
+   When Kamailio starts and SEAS module is loaded, a new process is
    spawn which listens on a server-socket (IP and port are
    specified as a parameter in the config script). From then on,
    the Application Servers can connect to that socket so that
-   OpenSER can relay messages to them. When an Application Server
+   Kamailio can relay messages to them. When an Application Server
    connects to the socket, it sends its name through the socket,
    so every App Server is identified with a name. Within the
-   OpenSER script, invoking as_relay_t() receives a string as a
+   Kamailio script, invoking as_relay_t() receives a string as a
    parameter, which specifies the name of an application server to
    which the message has to be sent. If that concrete application
    server hasn't already connected to the module, the function
@@ -145,7 +145,7 @@ Chapter 1. The Sip Express Application Server User's Guide
 
 1.1.3. Dependencies
 
-1.1.3.1. OpenSER Modules
+1.1.3.1. Kamailio Modules
 
    SEAS module relies on the Transaction Module (TM module) for
    operation.
@@ -153,7 +153,7 @@ Chapter 1. The Sip Express Application Server User's Guide
 1.1.3.2. External Applications
 
    Using the SEAS module requires to have an Application Server
-   running and connected to a particular instance of OpenSER.
+   running and connected to a particular instance of Kamailio.
 
    At the moment, the only Application Server that works with SEAS
    is WeSIP Application Server, which can be downloaded from
@@ -170,7 +170,7 @@ Chapter 1. The Sip Express Application Server User's Guide
    be configured to connect to that port.
 
    In case this parameter is ommited, SEAS listens on the default
-   IP which OpenSER is using, and opens the ports 5080 and 5081 to
+   IP which Kamailio is using, and opens the ports 5080 and 5081 to
    listen for Application Servers.
 
    Example 1.1. Set listen_sockets parameter
@@ -185,7 +185,7 @@ modparam("seas", "listen_sockets","127.0.0.1:5080")
    Creates a new transaction (if it isn't already created) and
    sends the SIP Request and transaction information to the
    Application Server specified in the parameter. Every
-   Application Server connected to OpenSER through the SEAS
+   Application Server connected to Kamailio through the SEAS
    module, must be identified with a different name.
 
    This function can be used within REQUEST_ROUTE.
@@ -200,14 +200,14 @@ t_reply("500","App Server not connected");
 
 1.1.5.1.1. Return value
 
-   In case the Application Server is connected to OpenSER, the
+   In case the Application Server is connected to Kamailio, the
    function does _not_ return, the Application Server is now in
    charge of processing the request, and it may then reply to the
    request, initiate new transactions, or whatever the application
    being executed wants.
 
    In case the Application Server identified by the string
-   parameter passed to as_relay_t() is not connected to OpenSER,
+   parameter passed to as_relay_t() is not connected to Kamailio,
    the function returns 0, so that the script can continue
    processing the request.
 
@@ -489,17 +489,17 @@ addresses="localhost:5060"
 
    Specifies the SIP address and port in which the Application
    Server from which the Application Server will process the SIP
-   messages. This Addres is where OpenSER listens for the
-   messages, so in fact, OpenSER is listening on them, but OpenSER
+   messages. This Addres is where Kamailio listens for the
+   messages, so in fact, Kamailio is listening on them, but Kamailio
    passes the messages to WeSIP, so WeSIP must be aware of this
    IP/port.
 
 Warning
 
    this attribute MUST match one of the listening points declared
-   within OpenSER in the "listen" parameters.
+   within Kamailio in the "listen" parameters.
 
-   For example in openser.cfg:
+   For example in kamailio.cfg:
 listen = tcp:localhost:5060
 listen = udp:localhost:5060
 
@@ -509,28 +509,28 @@ listen = udp:localhost:5060
    Each property is specified by a key and a value. The most
    significant keys are:
      * com.voztele.javax.sip.SER_ADDRESS
-       This specifies the IP and port in which the OpenSER is
+       This specifies the IP and port in which the Kamailio is
        listening for Application Servers to connect and
        register.This specifies the IP and port in which the
-       OpenSER is listening for Application Servers to connect and
+       Kamailio is listening for Application Servers to connect and
        register.
 
 Warning
        This needs to match the listen_sockets seas module
-       parameter within the OpenSER configuration file. Ie.:
+       parameter within the Kamailio configuration file. Ie.:
 modparam("seas", "listen_sockets","127.0.0.1:5080")
      * javax.sip.STACK_NAME
        Specifies the name identifying this instance of the
        Application Server.
 
 Warning
-       This is the name you will set in the OpenSER configuration
+       This is the name you will set in the Kamailio configuration
        script when you invoke the WeSIP Application Server, by
        calling the as_relay_t function. This is the name you pass
        as the parameter of the function. If you have different
-       WeSIP instances all connecting to the same OpenSER, they
+       WeSIP instances all connecting to the same Kamailio, they
        must each one have a different STACK_NAME", and within
-       OpenSER you can call each of them by invoking as_relay_t()
+       Kamailio you can call each of them by invoking as_relay_t()
        with a different name. Example:
 <Property key="javax.sip.STACK_NAME" value="app_server_one" />
      * com.voztele.javax.sip.THREAD_POOL_SIZE (integer)
@@ -542,7 +542,7 @@ Warning
        and UAC transaction generated from WeSIP, must spiral
        through SER, and will be added a special Header called
        "X-WeSIP-SPIRAL: true" this will make all the outgoing
-       messages pass again through the OpenSER script, so that
+       messages pass again through the Kamailio script, so that
        they can be accounted or whatever the configurator wants.
        For example, the configuration script could go:
 route{
@@ -606,7 +606,7 @@ route{
    hosting is not done in this way. Every host must have a "name"
    attribute which specifies the name of the virtual host, it must
    also have a "nameSip" attribute which MUST MATCH the IP or
-   hostname _and_ port" specified in OpenSER listen parameters and
+   hostname _and_ port" specified in Kamailio listen parameters and
    in the Sip Connector the hostname and the port must be
    separated with an underscore. for example:
    nameSip="localhost_5060" or nameSip="192.168.1.1_5060" The next
@@ -620,7 +620,7 @@ route{
    "true". The "port" attribute specifies the port where this host
    is going to receive SIP messages . This only has to do with the
    SIP protocol, not with HTTP. It must be the same as the port
-   specified in OpenSER parameter "listen_sockets" (for the seas
+   specified in Kamailio parameter "listen_sockets" (for the seas
    module). The "autoDeploy" attribute tells the host to monitor
    the "appBase" directory for new application archives (.sar or
    .war) so they can automatically be deployed. This parameter
@@ -638,21 +638,21 @@ route{
 
 1.2.3. Configuration Examples
 
-   In general, you can configure WeSIP to work with your OpenSER
-   in two ways: have 2 OpenSER instances, the first acting as
+   In general, you can configure WeSIP to work with your Kamailio
+   in two ways: have 2 Kamailio instances, the first acting as
    Proxy/Registrar/Redirect and the second cooperating with WeSIP
    to act as the Application Server. This is the preferred
-   deployment layout, as the first OpenSER works as usual, and the
+   deployment layout, as the first Kamailio works as usual, and the
    requests that need special services are relaied to another
-   OpenSER which acts on behalf of the WeSIP AS. This
+   Kamailio which acts on behalf of the WeSIP AS. This
    configuration profile distributes load (call-routing logic in
    one instance, and Application Services in the other), and is
    also more fault-tolerant. On the other hand, you can have all
    your call-routing logic and Application Server on the same
-   OpenSER, having one script handle all the logic, and then
+   Kamailio, having one script handle all the logic, and then
    invoking the App Server at any point.
 
-1.2.3.1. Openser.cfg in standalone
+1.2.3.1. kamailio.cfg in standalone
 
 debug=3            # debug level (cmd line: -dddddddddd)
 fork=yes
@@ -716,7 +716,7 @@ route[1] {
                }
 }
 
-1.2.3.2. Openser.cfg working as WeSIP front-end
+1.2.3.2. kamailio.cfg working as WeSIP front-end
 
 debug=9            # debug level (cmd line: -dddddddddd)
 fork=yes
@@ -798,7 +798,7 @@ Chapter 2. Developer Guide
 2.1. Internals
 
    The SEAS module runs within the Open Sip Express Router aka.
-   OpenSER. OpenSER uses a pool of processes to execute the script
+   Kamailio. Kamailio uses a pool of processes to execute the script
    logic on every new message received. These are called the
    worker processes. One of these processes will be selected to
    process the script, and at some point it will find a function
@@ -815,26 +815,26 @@ Chapter 2. Developer Guide
    memory segment, and write the address of that segment to a pipe
    (4 bytes pointer in IA32).
 
-   This way, we will have all the OpenSER processes composing the
+   This way, we will have all the Kamailio processes composing the
    SEAS header along with the SIP message, and putting its shared
    memory address into that pipe. This technique of inter-process
    communication avoids race conditions because writing to a pipe
    is granted to be an atomic operation if the data to write is
    less than _POSIX_PIPE_BUF, which usually is 512 bytes.
 
-   At the initialization of OpenSER, the SEAS module creates the
-   discussed pipe, so that all the OpenSER worker processes
+   At the initialization of Kamailio, the SEAS module creates the
+   discussed pipe, so that all the Kamailio worker processes
    inherit the file descriptor associated to the pipe. Then it
    spawns a new process, which will be the one to open two server
    sockets, and wait for the Application Servers to connect and
    register.
 
-   Each Application Server wishing to receive events from OpenSER,
+   Each Application Server wishing to receive events from Kamailio,
    will have to open a socket to the module (the port and IP of
    the socket are defined at start time in the script). After
    connection, it has to print its identification name. The SEAS
    process (from now on, called event dispatcher) will then
-   register it in its internal structures, so that the OpenSER
+   register it in its internal structures, so that the Kamailio
    processes can push events for it. The following picture, shows
    the internals of the SEAS Event dispatcher process:
 
@@ -859,26 +859,26 @@ Chapter 2. Developer Guide
    efficiently, because parsing of text headers requires a lot of
    state.
 
-   OpenSER implements a very efficient parsing mechanism and
+   Kamailio implements a very efficient parsing mechanism and
    SIP-transaction machinery. The goal of the SEAS protocol is to
    keep all this information that has been already extracted at
-   OpenSER, so that it can be reused at the Application Server.
+   Kamailio, so that it can be reused at the Application Server.
 
 2.2.1. The SEAS protocol
 
    The SEAS protocol is a layer of information regarding the
    internal structure of a SIP message that is added whenever SEAS
    sends a SIP event to the Application Servers. The protocol is
-   used for communication between OpenSER and the Application
+   used for communication between Kamailio and the Application
    Servers.
 
    Once an incoming SIP message has reached the worker process
-   within OpenSER, it copies its content into a private memory
+   within Kamailio, it copies its content into a private memory
    area (which is, a memory chunk not shared across processes). In
    this point, the message first line is parsed to know whether it
    is a SIP request or response.
 
-   OpenSER uses a technique called lazy-parsing, which consists in
+   Kamailio uses a technique called lazy-parsing, which consists in
    delaying the parse of headers until some piece of the code
    requires it.
 
@@ -913,17 +913,17 @@ Chapter 2. Developer Guide
    in a sip_msg structure, using dynamically-allocated memory
    segments.
 
-   OpenSER defines different structure types describing different
+   Kamailio defines different structure types describing different
    SIP headers, such as via_body, to_body, cseq_body, via_param,
    and so on. These structures are generally composed of another
    kind of structure called str.
 
-   The str structure is a key component of OpenSER's high
+   The str structure is a key component of Kamailio's high
    performance. In the C programming language, a string's length
    is known because a '0' (null-character) is found at the end of
    it. This forces each of the string manipulation functions to
    keep looking for a '0' in the byte stream, which is quite
-   processor consuming. Instead of this, OpenSER defines a
+   processor consuming. Instead of this, Kamailio defines a
    structure composed of a char pointer and an integer. The char
    points to the start of a string, and the integer gives its
    length, thus avoiding the '0' lookup problem, and giving a
@@ -941,7 +941,7 @@ Chapter 2. Developer Guide
    giving the length, has been casted to an unsigned byte (256
    values, so 256 characters maximum length).
 
-   When messages get transferred from OpenSER to the Application
+   When messages get transferred from Kamailio to the Application
    Server, it is optimum to keep this worthy meta-information
    regarding the SIP message, so that it can be used at the AS
    part. For this to be possible, it is needed to store the

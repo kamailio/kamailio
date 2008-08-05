@@ -420,7 +420,7 @@ modparam("lcr","priority_column","priority")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in openser.cfg.
+			be defined in kamailio.cfg.
 		</emphasis>
 		</para>
 		<example>
@@ -443,7 +443,7 @@ modparam("lcr", "contact_avp", "$avp(i:711)")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in openser.cfg.
+			be defined in kamailio.cfg.
 		</emphasis>
 		</para>
 		<example>
@@ -465,7 +465,7 @@ modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in openser.cfg.
+			be defined in kamailio.cfg.
 		</emphasis>
 		</para>
 		<example>
@@ -486,7 +486,7 @@ modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in openser.cfg.
+			be defined in kamailio.cfg.
 		</emphasis>
 		</para>
 		<example>
@@ -508,7 +508,7 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in openser.cfg.
+			be defined in kamailio.cfg.
 		</emphasis>
 		</para>
 		<example>
@@ -578,7 +578,7 @@ modparam("lcr","fr_inv_timer_next",30)
 		<para>
 		<emphasis>
 			There is NO default value, thus this variable must
-			be defined in openser.cfg.
+			be defined in kamailio.cfg.
 		</emphasis>
 		</para>
 		<example>

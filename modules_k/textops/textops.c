@@ -872,7 +872,7 @@ static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 	parse_headers(msg, HDR_EOH_F, 0);
 	for (hf=msg->headers; hf; hf=hf->next) {
 		/* for well known header names str_hf->s will be set to NULL 
-		   during parsing of openser.cfg and str_hf->len contains 
+		   during parsing of kamailio.cfg and str_hf->len contains 
 		   the header type */
 		if(gp->type==GPARAM_TYPE_INT)
 		{
