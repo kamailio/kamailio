@@ -24,14 +24,14 @@ MAKE_ENV=	CC="${CC}" \
 		PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
 		PTHREAD_LIBS="${PTHREAD_LIBS}"
 
-PLIST_FILES=	sbin/openser sbin/openserctl sbin/openserdbctl sbin/kamunix \
-		lib/openser/openserctl/openserctl.base lib/openser/openserctl/openserctl.ctlbase \
-		lib/openser/openserctl/openserctl.dbtext lib/openser/openserctl/openserctl.fifo \
-		lib/openser/openserctl/openserctl.sqlbase lib/openser/openserctl/openserctl.unixsock \
-		lib/openser/openserctl/openserdbctl.base lib/openser/openserctl/openserdbctl.dbtext \
-		etc/openser/openserctlrc
+PLIST_FILES=	sbin/openser sbin/kamctl sbin/kamdbctl sbin/kamunix \
+		lib/openser/kamctl/kamctl.base lib/openser/kamctl/kamctl.ctlbase \
+		lib/openser/kamctl/kamctl.dbtext lib/openser/kamctl/kamctl.fifo \
+		lib/openser/kamctl/kamctl.sqlbase lib/openser/kamctl/kamctl.unixsock \
+		lib/openser/kamctl/kamdbctl.base lib/openser/kamctl/kamdbctl.dbtext \
+		etc/openser/kamctlrc
 
-PLIST_DIRS=	lib/openser/modules lib/openser/openserctl lib/openser
+PLIST_DIRS=	lib/openser/modules lib/openser/kamctl lib/openser
 
 MODULES=	acc alias_db auth auth_db auth_diameter avpops benchmark \
 		cfgutils dbtext dialog dispatcher diversion domain \
@@ -51,7 +51,7 @@ ONLY_FOR_ARCHS=	i386
 
 MAN5=		openser.cfg.5
 MAN8=		openser.8 \
-		openserctl.8 \
+		kamctl.8 \
 		kamunix.8
 
 PORTDOCS=	*
@@ -71,7 +71,7 @@ OPTIONS=	MYSQL "MySQL support" on \
 .if defined(WITH_MYSQL)
 USE_MYSQL=	yes
 MODULES+=	mysql
-PLIST_FILES+=	lib/openser/openserctl/openserdbctl.mysql lib/openser/openserctl/openserctl.mysql
+PLIST_FILES+=	lib/openser/kamctl/kamdbctl.mysql lib/openser/kamctl/kamctl.mysql
 .else
 MAKE_ENV+=	MYSQL=mysql
 .endif
@@ -79,7 +79,7 @@ MAKE_ENV+=	MYSQL=mysql
 .if defined(WITH_POSTGRESQL)
 USE_PGSQL=	yes
 MODULES+=	postgres
-PLIST_FILES+=	lib/openser/openserctl/openserdbctl.pgsql lib/openser/openserctl/openserctl.pgsql
+PLIST_FILES+=	lib/openser/kamctl/kamdbctl.pgsql lib/openser/kamctl/kamctl.pgsql
 .else
 MAKE_ENV+=	POSTGRESQL=postgres
 .endif
@@ -144,9 +144,9 @@ post-patch:
 .endif
 	@${REINPLACE_CMD} -e 's|-g -O9 ||' -e 's|-O9 ||' ${WRKSRC}/Makefile.defs
 	@${REINPLACE_CMD} -e 's|/usr/local/etc/openser|${PREFIX}/etc/openser|' \
-		${WRKSRC}/scripts/openserdbctl.dbtext
+		${WRKSRC}/scripts/kamdbctl.dbtext
 	@${REINPLACE_CMD} -e 's|/usr/local/share/openser|${PREFIX}/share/openser|' \
-		${WRKSRC}/scripts/openserdbctl.dbtext
+		${WRKSRC}/scripts/kamdbctl.dbtext
 	@${REINPLACE_CMD} -e 's|/etc/openser|${PREFIX}/etc/openser|' \
 		${WRKSRC}/modules/mediaproxy/README \
 		${WRKSRC}/modules/cpl-c/README \
@@ -155,18 +155,18 @@ post-patch:
 		${WRKSRC}/INSTALL
 	@${REINPLACE_CMD} -e 's|/usr/local|${PREFIX}|' \
 		${WRKSRC}/etc/openser.cfg \
-		${WRKSRC}/scripts/openserctl \
-		${WRKSRC}/scripts/openserctl.8 \
-		${WRKSRC}/scripts/openserctl.base \
-		${WRKSRC}/scripts/openserctl.db_berkeley \
-		${WRKSRC}/scripts/openserctl.dbtext \
-		${WRKSRC}/scripts/openserctlrc \
-		${WRKSRC}/scripts/openserdbctl \
-		${WRKSRC}/scripts/openserdbctl.base \
-		${WRKSRC}/scripts/openserdbctl.db_berkeley \
-		${WRKSRC}/scripts/openserdbctl.dbtext \
-		${WRKSRC}/scripts/openserdbctl.mysql \
-		${WRKSRC}/scripts/openserdbctl.pgsql \
+		${WRKSRC}/scripts/kamctl \
+		${WRKSRC}/scripts/kamctl.8 \
+		${WRKSRC}/scripts/kamctl.base \
+		${WRKSRC}/scripts/kamctl.db_berkeley \
+		${WRKSRC}/scripts/kamctl.dbtext \
+		${WRKSRC}/scripts/kamctlrc \
+		${WRKSRC}/scripts/kamdbctl \
+		${WRKSRC}/scripts/kamdbctl.base \
+		${WRKSRC}/scripts/kamdbctl.db_berkeley \
+		${WRKSRC}/scripts/kamdbctl.dbtext \
+		${WRKSRC}/scripts/kamdbctl.mysql \
+		${WRKSRC}/scripts/kamdbctl.pgsql \
 		${WRKSRC}/modules/acc/README \
 		${WRKSRC}/modules/avp_radius/README \
 		${WRKSRC}/modules/db_berkeley/README \

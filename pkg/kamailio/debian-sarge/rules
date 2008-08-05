@@ -161,7 +161,7 @@ install: build
 		doc-dir=share/doc/openser
 
 	find $(CURDIR)/debian/openser/etc/openser -type f -exec chmod -x {} \;
-	sed -i -e "s/^PATH.*//" $(CURDIR)/debian/openser/usr/sbin/openserctl
+	sed -i -e "s/^PATH.*//" $(CURDIR)/debian/openser/usr/sbin/kamctl
 
 	# install only the mysql module
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install-modules-all modules="$(MYSQL_MOD_PATH)"  \

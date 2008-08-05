@@ -42,28 +42,28 @@
 +			cp -f $(cfg-prefix)/$(cfg-dir)/dictionary.radius.default \
  				$(cfg-prefix)/$(cfg-dir)/dictionary.radius; \
  		fi
- 		# openserctl config
+ 		# kamctl config
 @@ -445,7 +432,7 @@
  		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
- 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/openserctl
- 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/openserctl
--		$(INSTALL_BIN) /tmp/openserctl $(bin-prefix)/$(bin-dir)
-+		$(BSD_INSTALL_SCRIPT) /tmp/openserctl $(bin-prefix)/$(bin-dir)
- 		rm -fr /tmp/openserctl
+ 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/kamctl
+ 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/kamctl
+-		$(INSTALL_BIN) /tmp/kamctl $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) /tmp/kamctl $(bin-prefix)/$(bin-dir)
+ 		rm -fr /tmp/kamctl
  		sed -e "s#/usr/local/sbin#$(bin-target)#g" \
- 			< scripts/openserctl.base > /tmp/openserctl.base
+ 			< scripts/kamctl.base > /tmp/kamctl.base
 @@ -492,10 +479,10 @@
  		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
- 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/openserdbctl
- 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/openserdbctl
--		$(INSTALL_BIN) /tmp/openserdbctl $(bin-prefix)/$(bin-dir)
-+		$(BSD_INSTALL_SCRIPT) /tmp/openserdbctl $(bin-prefix)/$(bin-dir)
- 		rm -fr /tmp/openserdbctl
+ 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/kamdbctl
+ 		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/kamdbctl
+-		$(INSTALL_BIN) /tmp/kamdbctl $(bin-prefix)/$(bin-dir)
++		$(BSD_INSTALL_SCRIPT) /tmp/kamdbctl $(bin-prefix)/$(bin-dir)
+ 		rm -fr /tmp/kamdbctl
  		$(INSTALL_TOUCH)   $(bin-prefix)/$(bin-dir)/$(NAME)unix
 -		$(INSTALL_BIN) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
 +		$(BSD_INSTALL_SCRIPT) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
  		# install dbtext stuff
- 		mkdir -p $(modules-prefix)/$(lib-dir)/openserctl ; \
+ 		mkdir -p $(modules-prefix)/$(lib-dir)/kamctl ; \
  		sed -e "s#/usr/local/share/openser#$(data-target)#g" \
 @@ -624,9 +611,7 @@
  			if [ -f modules/"$$r"/README ]; then \

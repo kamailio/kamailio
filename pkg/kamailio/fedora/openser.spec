@@ -446,7 +446,7 @@ mkdir -p $RPM_BUILD_ROOT%{_initrddir}
 %{__install} -p -D -m 755 %{SOURCE1} \
   $RPM_BUILD_ROOT%{_initrddir}/openser
 echo -e "\nETCDIR=\"%{_sysconfdir}/openser\"\n" \
-  >> $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/openserctlrc
+  >> $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/kamctlrc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -463,21 +463,21 @@ fi
 %files
 %defattr(-,root,root,-)
 %{_sbindir}/openser
-%{_sbindir}/openserctl
-%{_sbindir}/openserdbctl
+%{_sbindir}/kamctl
+%{_sbindir}/kamdbctl
 %{_sbindir}/kamunix
 
 %dir %{_sysconfdir}/openser
 %dir %{_sysconfdir}/openser/tls
 %dir %{_libdir}/openser/
 %dir %{_libdir}/openser/modules/
-%dir %{_libdir}/openser/openserctl/
+%dir %{_libdir}/openser/kamctl/
 
 %attr(755,root,root) %{_initrddir}/openser
 
 %config(noreplace) %{_sysconfdir}/openser/dictionary.radius
 %config(noreplace) %{_sysconfdir}/openser/openser.cfg
-%config(noreplace) %{_sysconfdir}/openser/openserctlrc
+%config(noreplace) %{_sysconfdir}/openser/kamctlrc
 
 %config(noreplace) %{_sysconfdir}/openser/tls/ca.conf
 %config(noreplace) %{_sysconfdir}/openser/tls/request.conf
@@ -492,15 +492,15 @@ fi
 %config(noreplace) %{_sysconfdir}/openser/tls/user/user-cert_req.pem
 %config(noreplace) %{_sysconfdir}/openser/tls/user/user-privkey.pem
 
-%{_libdir}/openser/openserctl/openserctl.*
-%{_libdir}/openser/openserctl/openserdbctl.base
-%{_libdir}/openser/openserctl/openserdbctl.dbtext
+%{_libdir}/openser/kamctl/kamctl.*
+%{_libdir}/openser/kamctl/kamdbctl.base
+%{_libdir}/openser/kamctl/kamdbctl.dbtext
 
 %{_datadir}/openser/dbtext/openser/*
 
 %{_mandir}/man5/openser.cfg.5*
 %{_mandir}/man8/openser.8*
-%{_mandir}/man8/openserctl.8*
+%{_mandir}/man8/kamctl.8*
 %{_mandir}/man8/kamunix.8*
 
 %doc docdir/AUTHORS
@@ -642,7 +642,7 @@ fi
 %defattr(-,root,root,-)
 %{_sbindir}/bdb_recover
 %{_libdir}/openser/modules/db_berkeley.so
-%{_libdir}/openser/openserctl/openserdbctl.db_berkeley
+%{_libdir}/openser/kamctl/kamdbctl.db_berkeley
 %{_datadir}/openser/db_berkeley/openser/*
 %doc docdir/README.db_berkeley
 
@@ -669,7 +669,7 @@ fi
 %files mysql
 %defattr(-,root,root,-)
 %{_libdir}/openser/modules/mysql.so
-%{_libdir}/openser/openserctl/openserdbctl.mysql
+%{_libdir}/openser/kamctl/kamdbctl.mysql
 %{_datadir}/openser/mysql/*.sql
 %doc docdir/README.mysql
 
@@ -711,7 +711,7 @@ fi
 %files postgresql
 %defattr(-,root,root,-)
 %{_libdir}/openser/modules/postgres.so
-%{_libdir}/openser/openserctl/openserdbctl.pgsql
+%{_libdir}/openser/kamctl/kamdbctl.pgsql
 %{_datadir}/openser/postgres/*.sql
 %doc docdir/README.postgres
 
@@ -815,7 +815,7 @@ fi
 - Latest snapshot - 1.3.0pre1
 
 * Mon Dec 10 2007 Jan ONDREJ (SAL) <ondrejj(at)salstar.sk> 1.2.2-11
-- added ETCDIR into openserctlrc (need openser-1.3 to work)
+- added ETCDIR into kamctlrc (need openser-1.3 to work)
 
 * Mon Sep 24 2007 Jan ONDREJ (SAL) <ondrejj(at)salstar.sk> 1.2.2-10
 - perl scripts moved to perl_vendorlib directory

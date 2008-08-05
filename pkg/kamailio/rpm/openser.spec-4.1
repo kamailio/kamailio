@@ -323,12 +323,12 @@ fi
 %{_libdir}/openser/modules/xlog.so
 
 %{_sbindir}/openser
-%{_sbindir}/openserctl
-%{_libdir}/openserctl/openserctl.base
-%{_libdir}/openserctl/openserctl.sqlbase
-%{_libdir}/openserctl/openserctl.ctlbase
-%{_libdir}/openserctl/openserctl.fifo
-%{_libdir}/openserctl/openserctl.unixsock
+%{_sbindir}/kamctl
+%{_libdir}/kamctl/kamctl.base
+%{_libdir}/kamctl/kamctl.sqlbase
+%{_libdir}/kamctl/kamctl.ctlbase
+%{_libdir}/kamctl/kamctl.fifo
+%{_libdir}/kamctl/kamctl.unixsock
 
 %{_mandir}/man5/*
 %{_mandir}/man8/*
@@ -340,7 +340,7 @@ fi
 
 %{_libdir}/openser/modules/mysql.so
 %{_sbindir}/openser_mysql.sh
-%{_libdir}/openserctl/openserctl.mysql
+%{_libdir}/kamctl/kamctl.mysql
 
 %files postgres
 %defattr(-,root,root)
@@ -348,7 +348,7 @@ fi
 
 %{_libdir}/openser/modules/postgres.so
 %{_sbindir}/openser_postgres.sh
-%{_libdir}/openserctl/openserctl.pgsql
+%{_libdir}/kamctl/kamctl.pgsql
 
 %files unixodbc
 %defattr(-,root,root)

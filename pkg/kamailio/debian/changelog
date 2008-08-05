@@ -58,7 +58,7 @@ openser (1.1.0-9) unstable; urgency=medium
 
   * debian/rules:
     + Fix sed substitution pattern to properly get rid of the PATH variable
-      in the openserctl, openser_mysql and openser_postgresql scripts.
+      in the kamctl, openser_mysql and openser_postgresql scripts.
 
  -- Julien BLACHE <jblache@debian.org>  Fri, 12 Jan 2007 15:20:26 +0100
 
