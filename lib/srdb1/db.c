@@ -33,7 +33,7 @@
  * \brief Generic Database Interface
  *
  */
-/*! \defgroup db DB: The OpenSER generic database interface
+/*! \defgroup db DB: The Kamailio generic database interface
  * This is a generic database interface for modules that need to utilize a
  * database. The interface should be used by all modules that access database.
  * The interface will be independent of the underlying database server.

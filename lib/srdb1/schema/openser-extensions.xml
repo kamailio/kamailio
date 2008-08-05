@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE database PUBLIC "-//openser.org//DTD DBSchema V1.1//EN"
-  "http://openser.org/pub/openser/dbschema/dtd/1.1/dbschema.dtd" [
+<!DOCTYPE database PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN"
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
   <!ENTITY % entities SYSTEM "entities.xml">
   %entities;
 ]>
 
-<!-- Inclusion point for custom extensions for OpenSER -->
+<!-- Inclusion point for custom extensions for Kamailio -->
 
 <database xmlns:xi="http://www.w3.org/2001/XInclude">
     <name>Extensions</name>

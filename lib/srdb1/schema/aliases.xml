@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.1//EN" 
-  "http://openser.org/pub/openser/dbschema/dtd/1.1/dbschema.dtd" [
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
 %entities;
@@ -12,7 +12,7 @@
     <version>1004</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table for the registrar module is similar to the "location" table, (the aliases index makes lookup of missed calls much faster). Thus, the function lookup("alias") can be used to map aliases to AORs. More information is available at: &OPENSER_MOD_DOC;registrar.html. Most people uses the dbaliases table with the alias_db module now.
+        <db:para>This table for the registrar module is similar to the "location" table, (the aliases index makes lookup of missed calls much faster). Thus, the function lookup("alias") can be used to map aliases to AORs. More information is available at: &KAMAILIO_MOD_DOC;registrar.html. Most people uses the dbaliases table with the alias_db module now.
         </db:para>
     </description>
 
@@ -141,7 +141,7 @@
         <size>&domain_len;</size>
         <null/>
         <default><null/></default>
-        <description>Socket used to connect to OpenSER. For example: UDP:IP:PORT</description>
+        <description>Socket used to connect to Kamailio. For example: UDP:IP:PORT</description>
     </column>
 
     <column>

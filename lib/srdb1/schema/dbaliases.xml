@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE table PUBLIC "-//openser.org//DTD DBSchema V1.1//EN" 
-  "http://openser.org/pub/openser/dbschema/dtd/1.1/dbschema.dtd" [
+<!DOCTYPE table PUBLIC "-//kamailio.org//DTD DBSchema V1.1//EN" 
+  "http://kamailio.org/pub/kamailio/dbschema/dtd/1.1/dbschema.dtd" [
 
 <!ENTITY % entities SYSTEM "entities.xml">
 %entities;
@@ -12,7 +12,7 @@
     <version>1</version>
     <type db="mysql">&MYSQL_TABLE_TYPE;</type>
     <description>
-        <db:para>This table us used by the alias_db module as an alternative for user aliases via userloc. More information about the alias_db module can be found at: &OPENSER_MOD_DOC;alias_db.html
+        <db:para>This table us used by the alias_db module as an alternative for user aliases via userloc. More information about the alias_db module can be found at: &KAMAILIO_MOD_DOC;alias_db.html
         </db:para>
     </description>
 
