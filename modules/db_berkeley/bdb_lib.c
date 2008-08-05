@@ -550,11 +550,11 @@ void bdblib_log(int op, table_p _tp, char* _msg, int len)
  * files (db) that we require.
  * 
  * There is one db file per openser table (eg. acc), and they should exist
- * in your DB_PATH (refer to openserctlrc) directory.
+ * in your DB_PATH (refer to kamctlrc) directory.
  *
  * This function does _not_ create the underlying binary db tables.
  * Creating the tables MUST be manually performed before 
- * openser startup by 'openserdbctl create'
+ * openser startup by 'kamdbctl create'
  *
  * Function returns NULL on error, which will cause openser to exit.
  *
