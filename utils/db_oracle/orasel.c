@@ -58,7 +58,7 @@ static void get_opt(int argc, char* argv[])
 
 	if(argc <= 1 || (argc == 2 && !strcmp(argv[1], "--help"))) {
 help:
-		fprintf(stderr, "OpenSER for oracle 'select' request utility\n");
+		fprintf(stderr, "Kamailio for oracle 'select' request utility\n");
 		opt = -2;  /* flag for help print */
 	} else {
 		while((opt = getopt(argc-1, argv+1, "BLNe:")) != -1) {
