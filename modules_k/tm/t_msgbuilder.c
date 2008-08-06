@@ -278,7 +278,8 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	*len+=from.len+Trans->callid.len+to.len+cseq_n.len+1+method_len+CRLF_LEN;
 
 	/* copy'n'paste Route headers that were sent out */
-	if (!is_local(Trans) && req && req->route) {
+	/* dcm: todo - investigate why not applies to local requests?!? */
+	if (!is_local(Trans)) {
 		buf_hdrs = extract_parsed_hdrs(Trans->uac[branch].request.buffer.s,
 			Trans->uac[branch].request.buffer.len );
 		if (buf_hdrs==NULL) {
