@@ -61,8 +61,9 @@ int ip_set_list_malloc(int num, str* names) {
 					s.s = ip_set_list[i].name.s + j + 1;
 					s.len = ip_set_list[i].name.len - j - 1;
 					ip_set_list[i].name.len = j;
-					ip_set_list[i].ip_set =  shm_malloc(sizeof(*ip_set_list[i].ip_set));
+					ip_set_list[i].ip_set = shm_malloc(sizeof(*ip_set_list[i].ip_set));
 					if (!ip_set_list[i].ip_set) return -1;
+					atomic_set(&ip_set_list[i].ip_set->refcnt, 1);
 					ip_set_add_list(&ip_set_list[i].ip_set->ip_set, s); /* allow pass even in case of error */
 				}
 			}
