@@ -397,7 +397,7 @@ inline static int get_dlg_timeout(struct sip_msg *req)
 	&& pv_val.flags&PV_VAL_INT && pv_val.ri>0 ) {
 		return pv_val.ri;
 	}
-	LM_INFO("invalid AVP value, use default timeout");
+	LM_DBG("invalid AVP value, use default timeout");
 	return default_timeout;
 }
 
@@ -577,6 +577,7 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	int old_state;
 	int unref;
 	int event;
+	int timeout;
 	unsigned int dir;
 
 	dlg = 0;
@@ -680,35 +681,37 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	if ( (event==DLG_EVENT_REQ || event==DLG_EVENT_REQACK)
 	&& new_state==DLG_STATE_CONFIRMED) {
 		LM_DBG("sequential request successfully processed\n");
-		dlg->lifetime = get_dlg_timeout(req);
-		if (update_dlg_timer( &dlg->tl, dlg->lifetime )!=-1) {
+		timeout = get_dlg_timeout(req);
+		/* update timer during sequential request? */
+		if (timeout!=default_timeout) {
+			dlg->lifetime = timeout;
+			if (update_dlg_timer( &dlg->tl, dlg->lifetime )==-1)
+				LM_ERR("failed to update dialog lifetime\n");
+		}
+		if (update_cseqs(dlg, req, dir)!=0) {
+			LM_ERR("cseqs update failed\n");
+		} else {
+			dlg->flags |= DLG_FLAG_CHANGED;
+			if ( dlg_db_mode==DB_MODE_REALTIME )
+				update_dialog_dbinfo(dlg);
+		}
 
-			if (update_cseqs(dlg, req, dir)!=0) {
-				LM_ERR("cseqs update failed\n");
-			} else {
-				dlg->flags |= DLG_FLAG_CHANGED;
-				if ( dlg_db_mode==DB_MODE_REALTIME )
-					update_dialog_dbinfo(dlg);
-			}
+		/* within dialog request */
+		run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir, 0);
 
-			/* within dialog request */
-			run_dlg_callbacks( DLGCB_REQ_WITHIN, dlg, req, dir, 0);
-
-			if ( (event!=DLG_EVENT_REQACK) &&
-			(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
-				/* ref the dialog as registered into the transaction
-				 * callback; unref will be done when the transaction
-				 * will be destroied */
-				ref_dlg( dlg , 1);
-				/* register callback for the replies of this request */
-				if ( d_tmb.register_tmcb( req, 0, 
-				 TMCB_RESPONSE_FWDED|TMCB_TRANS_DELETED,
-				 (dir==DLG_DIR_UPSTREAM)?
-				     dlg_seq_down_onreply:dlg_seq_up_onreply,
-				 (void*)dlg)<0 ) {
-					LM_ERR("failed to register TMCB (2)\n");
+		if ( (event!=DLG_EVENT_REQACK) &&
+		(dlg->cbs.types)&DLGCB_RESPONSE_WITHIN ) {
+			/* ref the dialog as registered into the transaction
+			 * callback; unref will be done when the transaction
+			 * will be destroied */
+			ref_dlg( dlg , 1);
+			/* register callback for the replies of this request */
+			if ( d_tmb.register_tmcb( req, 0, 
+			TMCB_RESPONSE_FWDED|TMCB_TRANS_DELETED,
+			(dir==DLG_DIR_UPSTREAM)?dlg_seq_down_onreply:dlg_seq_up_onreply,
+			(void*)dlg)<0 ) {
+				LM_ERR("failed to register TMCB (2)\n");
 					unref_dlg( dlg , 1);
-				}
 			}
 		}
 	}
