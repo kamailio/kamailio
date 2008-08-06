@@ -1,3 +1,4 @@
+
 Presence Module
 
 Anca-Maria Vamanu
@@ -10,9 +11,9 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -42,30 +43,30 @@ Anca-Maria Vamanu
 
         1.4. Exported Functions
 
-              1.4.1. handle_publish(char* sender_uri)
-              1.4.2. handle_subscribe()
+              1.4.1. handle_publish(char* sender_uri) 
+              1.4.2. handle_subscribe() 
 
         1.5. Exported MI Functions
 
-              1.5.1. refreshWatchers
+              1.5.1. refreshWatchers 
 
         1.6. Installation
 
    2. Developer Guide
 
-        2.1. bind_presence(presence_api_t* api)
-        2.2. add_event
-        2.3. get_rules_doc
-        2.4. get_auth_status
-        2.5. apply_auth_nbody
-        2.6. agg_nbody
-        2.7. free_body
-        2.8. evs_publ_handl
-        2.9. evs_subs_handl
-        2.10. contains_event
-        2.11. get_event_list
-        2.12. update_watchers_status
-        2.13. get_sphere
+        2.1. bind_presence(presence_api_t* api) 
+        2.2. add_event 
+        2.3. get_rules_doc 
+        2.4. get_auth_status 
+        2.5. apply_auth_nbody 
+        2.6. agg_nbody 
+        2.7. free_body 
+        2.8. evs_publ_handl 
+        2.9. evs_subs_handl 
+        2.10. contains_event 
+        2.11. get_event_list 
+        2.12. update_watchers_status 
+        2.13. get_sphere 
 
    List of Examples
 
@@ -98,18 +99,19 @@ Chapter 1. Admin Guide
    presence, presence.winfo, dialog;sla from the presence_xml
    module and message-summary from the presence_mwi module.
 
-   The module uses database storage and memory caching (to improve
-   performance). The SIP SUBSCRIBE dialog information is stored in
-   memory and is periodically updated in the database, while for
-   PUBLISH only the presence or absence of stored info for a
-   certain resource is maintained in memory to avoid unnecessary,
-   costly database operations. It is possible to disable in-memory
-   caching by configurng a fallback to database mode (by setting
-   module parameter "fallback2db"). In this mode, in case a
-   searched record is not found in cache, the search is continued
-   in database. This is useful for an architecture in which
-   processing and memory load might be divided on several Kamailio
-   instances, maybe on different servers using the same database.
+   The module uses database storage and memory caching (to
+   improve performance). The SIP SUBSCRIBE dialog information is
+   stored in memory and is periodically updated in the database,
+   while for PUBLISH only the presence or absence of stored info
+   for a certain resource is maintained in memory to avoid
+   unnecessary, costly database operations. It is possible to
+   disable in-memory caching by configurng a fallback to database
+   mode (by setting module parameter "fallback2db"). In this
+   mode, in case a searched record is not found in cache, the
+   search is continued in database. This is useful for an
+   architecture in which processing and memory load might be
+   divided on several Kamailio instances, maybe on different
+   servers using the same database.
 
    The module implements several API functions, that can be used
    by other modules. In fact, it can be used only as a resource
@@ -142,7 +144,7 @@ Chapter 1. Admin Guide
    Otherwise, it is used as a 'library', for its exported
    functions.
 
-   Default value is "NULL".
+   Default value is "NULL". 
 
    Example 1.1. Set db_url parameter
 ...
@@ -155,7 +157,7 @@ modparam("presence", "db_url",
    The name of the db table where PUBLISH presence information is
    stored.
 
-   Default value is "presentity".
+   Default value is "presentity". 
 
    Example 1.2. Set presentity_table parameter
 ...
@@ -167,7 +169,7 @@ modparam("presence", "presentity_table", "presentity")
    The name of the db table where active subscription information
    is stored.
 
-   Default value is "active_watchers".
+   Default value is "active_watchers". 
 
    Example 1.3. Set active_watchers_table parameter
 ...
@@ -178,7 +180,7 @@ modparam("presence", "active_watchers_table", "active_watchers")
 
    The name of the db table where subscription states are stored.
 
-   Default value is "watchers".
+   Default value is "watchers". 
 
    Example 1.4. Set watchers_table parameter
 ...
@@ -190,7 +192,7 @@ modparam("presence", "watchers_table", "watchers")
    The period between checks if there are expired messages stored
    in database.
 
-   Default value is "100".
+   Default value is "100". 
 
    Example 1.5. Set clean_period parameter
 ...
@@ -199,10 +201,10 @@ modparam("presence", "clean_period", 100)
 
 1.3.6. to_tag_pref (str)
 
-   The prefix used when generating to_tag when sending replies for
-   SUBSCRIBE requests.
+   The prefix used when generating to_tag when sending replies
+   for SUBSCRIBE requests.
 
-   Default value is "10".
+   Default value is "10". 
 
    Example 1.6. Set to_tag_pref parameter
 ...
@@ -211,11 +213,11 @@ modparam("presence", "to_tag_pref", 'pres')
 
 1.3.7. expires_offset (int)
 
-   The value that should be subtracted from the expires value when
-   sending a 200OK for a publish. It is used for forcing the
+   The value that should be subtracted from the expires value
+   when sending a 200OK for a publish. It is used for forcing the
    client cu send an update before the old publish expires.
 
-   Default value is "0".
+   Default value is "0". 
 
    Example 1.7. Set expires_offset parameter
 ...
@@ -227,7 +229,7 @@ modparam("presence", "expires_offset", 10)
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE
    message.
 
-   Default value is "3600".
+   Default value is "3600". 
 
    Example 1.8. Set max_expires parameter
 ...
@@ -237,8 +239,8 @@ modparam("presence", "max_expires", 3600)
 1.3.9. server_address (str)
 
    The presence server address which will become the value of
-   Contact header filed for 200OK replies to Subscribe and Publish
-   and in Notify messages.
+   Contact header filed for 200OK replies to Subscribe and
+   Publish and in Notify messages.
 
    Example 1.9. Set server_address parameter
 ...
@@ -248,10 +250,10 @@ modparam("presence", "server_address", "sip:10.10.10.10:5060")
 1.3.10. fallback2db (int)
 
    Setting this parameter enables a fallback to db mode of
-   operation. In this mode, in case a searched record is not found
-   in cache, the search is continued in database. Useful for an
-   architecture in which processing and memory load might be
-   divided on more servers using the same database.
+   operation. In this mode, in case a searched record is not
+   found in cache, the search is continued in database. Useful
+   for an architecture in which processing and memory load might
+   be divided on more servers using the same database.
 
    Example 1.10. Set fallback2db parameter
 ...
@@ -264,7 +266,7 @@ modparam("presence", "fallback2db", 1)
    dialogs. This parameter will be used as the power of 2 when
    computing table size.
 
-   Default value is "9 (512)".
+   Default value is "9 (512)". 
 
    Example 1.11. Set subs_htable_size parameter
 ...
@@ -277,7 +279,7 @@ modparam("presence", "subs_htable_size", 11)
    This parameter will be used as the power of 2 when computing
    table size.
 
-   Default value is "9 (512)".
+   Default value is "9 (512)". 
 
    Example 1.12. Set pres_htable_size parameter
 ...
@@ -286,14 +288,14 @@ modparam("presence", "pres_htable_size", 11)
 
 1.3.13. enable_sphere_check (int)
 
-   This parameter is a flag that should be set if permission rules
-   include sphere checking. The sphere information is expected to
-   be present in the RPID body published by the presentity. The
-   flag is introduced as this check requires extra processing that
-   should be avoided if this feature is not supported by the
-   clients.
+   This parameter is a flag that should be set if permission
+   rules include sphere checking. The sphere information is
+   expected to be present in the RPID body published by the
+   presentity. The flag is introduced as this check requires
+   extra processing that should be avoided if this feature is not
+   supported by the clients.
 
-   Default value is "0 ".
+   Default value is "0 ". 
 
    Example 1.13. Set enable_sphere_check parameter
 ...
@@ -372,7 +374,8 @@ if(method=="SUBSCRIBE")
      * event : the event package
      * refresh type : it distinguishes between the two different
        types of events that can trigger a refresh:
-          + a change in watchers authentication: refresh type= 0 ;
+          + a change in watchers authentication: refresh type= 0
+            ;
           + a statical update in published state (either through
             direct update in db table or by modifying the pidf
             manipulation document, if pidf_manipulation parameter
@@ -390,15 +393,16 @@ if(method=="SUBSCRIBE")
    The module requires 3 tables in the Kamailio database:
    "presentity", "active_watchers" and "watchers". The SQL syntax
    to create them can be found in presence-create.sql script in
-   the database directories in the kamailio/scripts folder. You can
-   also find the complete database documentation on the project
-   webpage,
-   http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
+   the database directories in the kamailio/scripts folder. You
+   can also find the complete database documentation on the
+   project webpage,
+   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.htmlk
+   amailiodbdocs;.
 
 Chapter 2. Developer Guide
 
-   The module provides the following functions that can be used in
-   other Kamailio modules.
+   The module provides the following functions that can be used
+   in other Kamailio modules.
 
 2.1.  bind_presence(presence_api_t* api)
 
@@ -516,8 +520,8 @@ typedef int (is_allowed_t)(struct subscription* subs);
    This parameter should be a function to be called for an event
    that requires authorization, when constructing final body. The
    authorization document is taken from the auth_rules_doc field
-   of the subs_t structure given as a parameter. It is called only
-   if the req_auth field is not 0.
+   of the subs_t structure given as a parameter. It is called
+   only if the req_auth field is not 0.
 
    Filed type:
 ...
@@ -529,8 +533,9 @@ typedef int (apply_auth_t)(str* , struct subscription*, str** );
    If present, this field marks that the events requires
    aggregation of states. This function receives a body array and
    should return the final body. If not present, it is considered
-   that the event does not require aggregation and the most recent
-   published information is used when constructing Notifies.
+   that the event does not require aggregation and the most
+   recent published information is used when constructing
+   Notifies.
 
    Filed type:
 ...
@@ -542,9 +547,9 @@ str** body_array, int n, int off_index);
 
    This field must be field in if subsequent processing is
    performed on the info from database before being inserted in
-   Notify message body(if agg_nbody or apply_auth_nbody fields are
-   filled in). It should match the allocation function used when
-   processing the body.
+   Notify message body(if agg_nbody or apply_auth_nbody fields
+   are filled in). It should match the allocation function used
+   when processing the body.
 
    Filed type:
 ...
@@ -616,7 +621,7 @@ str* rules_doc);
 typedef char* (*pres_get_sphere_t)(str* pres_uri);
 ...
 
-   This function searches for a sphere definition in the published
-   information if this has type RPID. If not found returns NULL.
-   (the return value is allocated in private memory and should be
-   freed)
+   This function searches for a sphere definition in the
+   published information if this has type RPID. If not found
+   returns NULL. (the return value is allocated in private memory
+   and should be freed)

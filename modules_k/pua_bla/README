@@ -1,3 +1,4 @@
+
 PUA Bridged Line Appearances
 
 Anca-Maria Vamanu
@@ -11,8 +12,8 @@ Anca-Maria Vamanu
    Copyright © 2007 voice-system.ro
    Revision History
    Revision $Revision: 1294 $ $Date: 2007-03-13 14:05:07 +0200
-                              (Thu, 13 March 2007) $
-     __________________________________________________________
+   (Thu, 13 March 2007) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -33,8 +34,8 @@ Anca-Maria Vamanu
 
         1.4. Exported Functions
 
-              1.4.1. bla_set_flag
-              1.4.2. bla_handle_notify
+              1.4.1. bla_set_flag 
+              1.4.2. bla_handle_notify 
 
    List of Examples
 
@@ -75,7 +76,7 @@ Chapter 1. Admin Guide
    The default domain for the registered users to be used when
    constructing the uri for the registrar callback.
 
-   Default value is "NULL".
+   Default value is "NULL". 
 
    Example 1.1. Set default_domain parameter
 ...
@@ -84,12 +85,12 @@ modparam("pua_bla", "default_domain", "kamailio.org")
 
 1.3.2. header_name(str)
 
-   The name of the header to be added to Publish requests. It will
-   contain the uri of the user agent that sent the Notify that is
-   transformed into Publish. It stops sending a Notification with
-   the same information to the sender.
+   The name of the header to be added to Publish requests. It
+   will contain the uri of the user agent that sent the Notify
+   that is transformed into Publish. It stops sending a
+   Notification with the same information to the sender.
 
-   Default value is "NULL".
+   Default value is "NULL". 
 
    Example 1.2. Set header_name parameter
 ...
@@ -101,7 +102,7 @@ modparam("pua_bla", "header_name", "Sender")
    The outbound_proxy uri to be used when sending Subscribe
    requests.
 
-   Default value is "NULL".
+   Default value is "NULL". 
 
    Example 1.3. Set outbound_proxy parameter
 ...

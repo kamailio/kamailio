@@ -1,3 +1,4 @@
+
 group_radius Module
 
 Juha Heinanen
@@ -14,9 +15,9 @@ Jan Janak
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -35,7 +36,7 @@ Jan Janak
 
         1.4. Exported Functions
 
-              1.4.1. radius_is_user_in(URI, group)
+              1.4.1. radius_is_user_in(URI, group) 
 
    List of Examples
 
@@ -56,8 +57,8 @@ Chapter 1. Admin Guide
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words
-   the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
      * none
 
 1.2.2. External Libraries or Applications
@@ -76,7 +77,7 @@ Chapter 1. Admin Guide
    library.
 
    Default value is
-   "/usr/local/etc/radiusclient-ng/radiusclient.conf".
+   "/usr/local/etc/radiusclient-ng/radiusclient.conf". 
 
    Example 1.1. Set radius_config parameter
 ...
@@ -88,7 +89,7 @@ modparam("group_radius", "radius_config", "/etc/radiusclient.conf")
    If set to 1 then username@domain will be used for lookup, if
    set to 0 then only username will be used.
 
-   Default value is 0 (no).
+   Default value is 0 (no). 
 
    Example 1.2. Set use_domain parameter
 ...

@@ -1,3 +1,4 @@
+
 Perl Virtual Database Module
 
 Bastian Friedrich
@@ -10,9 +11,9 @@ Bastian Friedrich
 
    Copyright � 2007 Collax GmbH
    Revision History
-   Revision $Revision: 3939 $ $Date: 2007-03-21 09:53:33 +0100
-                              (Mi, 21 Mär 2007) $
-     __________________________________________________________
+   Revision $Revision: 4594 $ $Date: 2007-03-21 09:53:33 +0100
+   (Mi, 21 Mär 2007) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -62,15 +63,15 @@ Chapter 1. Admin Guide
    need database access. Relaying of insert, update, query and
    delete operations is supported.
 
-   Modules can be configured to use the perlvdb module as database
-   backend using the db_url_parameter:
-modparam("acc", "db_url", "perlvdb:OpenSER::VDB::Adapter::AccountingSIPt
-race")
+   Modules can be configured to use the perlvdb module as
+   database backend using the db_url_parameter:
+modparam("acc", "db_url", "perlvdb:OpenSER::VDB::Adapter::AccountingSIP
+trace")
 
    This configuration options tells acc module that it should use
    the perlvdb module which will in turn use the Perl class
-   OpenSER::VDB::Adapter::AccountingSIPtrace to relay the database
-   requests.
+   OpenSER::VDB::Adapter::AccountingSIPtrace to relay the
+   database requests.
 
 1.2. Dependencies
 
@@ -139,9 +140,9 @@ Chapter 2. Developer Guide
 
 2.3.1. OpenSER::VDB::Value
 
-   A value includes a data type flag and a value. Valid data types
-   are DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME, DB_BLOB,
-   DB_BITMAP. A new variable may be created with
+   A value includes a data type flag and a value. Valid data
+   types are DB_INT, DB_DOUBLE, DB_STRING, DB_STR, DB_DATETIME,
+   DB_BLOB, DB_BITMAP. A new variable may be created with
 my $val = new OpenSER::VDB::Value(DB_STRING, "foobar");
 
    Value objects contain the type() and data() methods to get or
@@ -149,9 +150,9 @@ my $val = new OpenSER::VDB::Value(DB_STRING, "foobar");
 
 2.3.2. OpenSER::VDB::Pair
 
-   The Pair class is derived from the Value class and additionally
-   contains a column name (key). A new variable may be created
-   with
+   The Pair class is derived from the Value class and
+   additionally contains a column name (key). A new variable may
+   be created with
 my $pair = new OpenSER::VDB::Pair("foo", DB_STRING, "bar");
 
    where foo is the key and bar is the value. Additonally to the
@@ -166,8 +167,8 @@ my $pair = new OpenSER::VDB::Pair("foo", DB_STRING, "bar");
 my $cond = new OpenSER::VDB::ReqCond("foo", ">", DB_INT, 5);
 
    where foo is the key, "greater" is the operator and 5 is the
-   value to compare. Additonally to the methods of the Pair class,
-   it contains an op() method to get or set the operator
+   value to compare. Additonally to the methods of the Pair
+   class, it contains an op() method to get or set the operator
    attribute.
 
 2.3.4. OpenSER::VDB::Column
@@ -187,24 +188,24 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
 
    The Result class represents a query result. It contains a
    schema (class Column) and an array of rows, where each row is
-   an array of Values. The object methods coldefs() and rows() may
-   be used to get and set the object attributes.
+   an array of Values. The object methods coldefs() and rows()
+   may be used to get and set the object attributes.
 
 2.4. Adapters
 
    Adapters should be used to turn the relational structured
    database request into pure Perl function arguments. The
-   alias_db function alias_db_lookup for example takes a user/host
-   pair, and turns it into another user/host pair. The Alias
-   adapter turns the ReqCond array into two separate scalars that
-   are used as parameters for a VTab call.
+   alias_db function alias_db_lookup for example takes a
+   user/host pair, and turns it into another user/host pair. The
+   Alias adapter turns the ReqCond array into two separate
+   scalars that are used as parameters for a VTab call.
 
    Adapter classes have to inherit from the OpenSER::VDB base
    class and may provide one or more functions with the names
    insert, update, replace, query and/or delete, depending on the
-   module which is to be used with the adapter. While modules such
-   as alias_db only require a query function, others -- such as
-   siptrace -- depend on inserts only.
+   module which is to be used with the adapter. While modules
+   such as alias_db only require a query function, others -- such
+   as siptrace -- depend on inserts only.
 
 2.4.1. Function parameters
 
@@ -227,9 +228,9 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    objects (new data). It should return an integer value.
 
    query() is passed an array of OpenSER::VDB::ReqCond objects
-   (which rows to select), an array of strings (which column names
-   to return) and a single string by which column to sort. It
-   should return an object of type OpenSER::VDB::Result.
+   (which rows to select), an array of strings (which column
+   names to return) and a single string by which column to sort.
+   It should return an object of type OpenSER::VDB::Result.
 
 2.5. VTabs
 
@@ -245,19 +246,19 @@ my $cols = new OpenSER::VDB::Column(\@types, \@names);
    three options on how to implement VTabs:
      * Single function. When a function is used as a virtual
        table, it is passed the operation name (insert, replace,
-       update, query, delete) as its first parameter. The function
-       may be implemented in the main namespace.
+       update, query, delete) as its first parameter. The
+       function may be implemented in the main namespace.
 
      * Package/class. The defined class needs to have an init()
        function. It will be called during the first call of that
        VTab. Addtionally, the package has to define the necessary
        functions insert, replace, update, delete and/or query.
-       These functions will be called in a function context (first
-       parameter is the class name).
+       These functions will be called in a function context
+       (first parameter is the class name).
 
      * Object. The defined class needs to have a new() function
        which will return a reference to the newly created object.
-       This object needs to define the necessary functions insert,
-       replace, update, delete and/or query. These functions will
-       be called in a method context (first parameter is a
-       reference to the object).
+       This object needs to define the necessary functions
+       insert, replace, update, delete and/or query. These
+       functions will be called in a method context (first
+       parameter is a reference to the object).

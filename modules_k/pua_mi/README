@@ -1,3 +1,4 @@
+
 PUA MI
 
 Anca-Maria Vamanu
@@ -14,9 +15,9 @@ Juha Heinanen
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -32,9 +33,9 @@ Juha Heinanen
         1.4. Exported Functions
         1.5. Exported MI functions
 
-              1.5.1. pua_publish
+              1.5.1. pua_publish 
 
-        1.6. pua_subscribe
+        1.6. pua_subscribe 
 
    List of Examples
 
@@ -52,8 +53,8 @@ Chapter 1. Admin Guide
    applications/scripts to publish not sip-related information
    (e.g., system resources like CPU-usage, memory, number of
    active subscribers ...). Also, this module allows non-SIP
-   speaking applications to subscribe presence information kept in
-   a SIP presence server.
+   speaking applications to subscribe presence information kept
+   in a SIP presence server.
 
 1.2. Dependencies
 
@@ -90,11 +91,12 @@ Chapter 1. Admin Guide
        application/pidf+xml) or . if no information is enclosed.
      * ETag - ETag that publish should match or . if no ETag is
        given.
-     * extra_headers - Extra headers added to PUBLISH request or .
-       if no extra headers.
-     * body - The body of the publish request containing published
-       information or missing if no published information. It has
-       to be a single line for FIFO transport.
+     * extra_headers - Extra headers added to PUBLISH request or
+       . if no extra headers.
+     * body - The body of the publish request containing
+       published information or missing if no published
+       information. It has to be a single line for FIFO
+       transport.
 
    Example 1.1. pua_publish FIFO example
 ...
@@ -106,14 +108,13 @@ presence
 application/pidf+xml
 .
 .
-<?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns
-:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params
-:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='s
-ystem@kamailio.org'><tuple id='0x81475a0'><status><basic>open</basic></st
-atus></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away
-</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presenc
-e>
-
+<?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmln
+s:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:para
+ms:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity
+='system@kamailio.org'><tuple id='0x81475a0'><status><basic>open</basic
+></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away
+/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></
+presence>
 
 1.6.  pua_subscribe
 
@@ -121,5 +122,5 @@ e>
      * presentity_uri - e.g. sip:presentity@kamailio.org
      * watcher_uri - e.g. sip:watcher@kamailio.org
      * event package
-     * expires - Relative time in seconds for the desired validity
-       of the subscription.
+     * expires - Relative time in seconds for the desired
+       validity of the subscription.

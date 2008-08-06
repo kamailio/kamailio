@@ -1,3 +1,4 @@
+
 Presence User Agent for XMPP (Presence gateway between SIP and XMPP)
 
 Anca-Maria Vamanu
@@ -11,8 +12,8 @@ Anca-Maria Vamanu
    Copyright © 2007 voice-system.ro
    Revision History
    Revision $Revision: 1499 $ $Date: 2007-03-12 14:05:57 +0200
-                              (Fri, 12 Jan 2007) $
-     __________________________________________________________
+   (Fri, 12 Jan 2007) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -30,11 +31,11 @@ Anca-Maria Vamanu
 
         1.4. Exported Functions
 
-              1.4.1. pua_xmpp_notify()
+              1.4.1. pua_xmpp_notify() 
               1.4.2. pua_xmpp_req_winfo(char* request_uri, char*
-                      expires)
+                      expires) 
 
-        1.5. Filtering
+        1.5. Filtering 
 
    2. Developer Guide
 
@@ -106,9 +107,9 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
 1.4.2.  pua_xmpp_req_winfo(char* request_uri, char* expires)
 
    Function called when a Subscribe addressed to a user from a
-   xmpp domain is received. It calls sending a Subscribe for winfo
-   for the user, and the following Notify with dialog-info is
-   translated into a subscription in xmpp. It also requires
+   xmpp domain is received. It calls sending a Subscribe for
+   winfo for the user, and the following Notify with dialog-info
+   is translated into a subscription in xmpp. It also requires
    filtering in configuration file, after method, domain and
    event(only for presence).
 
@@ -122,8 +123,8 @@ modparam("pua_xmpp", "server_address", "sip:160.23.23.10")
         if( is_method("SUBSCRIBE"))
         {
                 handle_subscribe();
-                if(uri=~"sip:.+@sip-xmpp.siphub.ro" && $hdr(Event)== "pr
-esence")
+                if(uri=~"sip:.+@sip-xmpp.siphub.ro" && $hdr(Event)== "p
+resence")
                 {
                         pua_xmpp_req_winfo("$ruri", "$hdr(Expires)");
                 }

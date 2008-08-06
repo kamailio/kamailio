@@ -1,3 +1,4 @@
+
 H350 Module
 
 Christian Schlatter
@@ -8,7 +9,7 @@ Christian Schlatter
    Copyright © 2007 University of North Carolina
    Revision History
    Revision 0.1 05-17-2007
-     __________________________________________________________
+     _________________________________________________________
 
    Table of Contents
 
@@ -35,7 +36,9 @@ Christian Schlatter
               1.4.2. h350_auth_lookup(auth_username,
                       "username_avp_spec/pwd_avp_spec")
 
-              1.4.3. h350_result_call_preferences(avp_name_prefix)
+              1.4.3.
+                      h350_result_call_preferences(avp_name_prefix)
+
               1.4.4. h350_result_service_level(avp_name_prefix)
 
    Resources
@@ -59,22 +62,23 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The Kamailio H350 module enables an Kamailio SIP proxy server to
-   access SIP account data stored in an LDAP [RFC4510] directory
-   containing H.350 [H.350] commObjects. ITU-T Recommendation
-   H.350 standardizes LDAP object classes to store Real-Time
-   Communication (RTC) account data. In particular, H.350.4
-   [H.350.4] defines an object class called sipIdentity that
-   includes attribute specifications for SIP account data like SIP
-   URI, SIP digest username/password, or service level. This
-   allows to store SIP account data in a vendor neutral way and
-   lets different entities, like SIP proxies, provisioning, or
-   billing applications, access the data in a standardized format.
+   The Kamailio H350 module enables an Kamailio SIP proxy server
+   to access SIP account data stored in an LDAP [RFC4510]
+   directory containing H.350 [H.350] commObjects. ITU-T
+   Recommendation H.350 standardizes LDAP object classes to store
+   Real-Time Communication (RTC) account data. In particular,
+   H.350.4 [H.350.4] defines an object class called sipIdentity
+   that includes attribute specifications for SIP account data
+   like SIP URI, SIP digest username/password, or service level.
+   This allows to store SIP account data in a vendor neutral way
+   and lets different entities, like SIP proxies, provisioning,
+   or billing applications, access the data in a standardized
+   format.
 
-   The ViDe H.350 Cookbook [vide-h.350-cb] is a good reference for
-   deploying an H.350 directory. Besides general information on
-   H.350, LDAP, and related standards, this document explains how
-   to set up an H.350/LDAP directory and discusses different
+   The ViDe H.350 Cookbook [vide-h.350-cb] is a good reference
+   for deploying an H.350 directory. Besides general information
+   on H.350, LDAP, and related standards, this document explains
+   how to set up an H.350/LDAP directory and discusses different
    deployment scenarios.
 
    The H350 module uses the Kamailio LDAP module to import H.350
@@ -97,6 +101,7 @@ Attribute Name                Attribute Value(s)
 # LDAP URI identifying the owner of this commObject, typically
 # points to an entry in the enterprise directory
 commOwner       ldap://dir.example.com/dc=example,dc=com??one?(uid=bob)
+
 
 # Unique identifier for this commObject, used for referencing
 # this object e.g. from the enterprise directory
@@ -137,12 +142,13 @@ objectClass                   top
                               SIPIdentity
                               callPreferenceURIObject
 
+
 1.2. Dependencies
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (the listed modules
-   must be loaded before this module):
+   The module depends on the following modules (the listed
+   modules must be loaded before this module):
      * LDAP
 
 1.2.2. External Libraries or Applications
@@ -164,6 +170,7 @@ objectClass                   top
    Example 1.2. ldap_session parameter usage
 modparam("h350", "ldap_session", "h350");
 
+
 1.3.2. base_dn (string)
 
    Base LDAP DN to start LDAP search for H.350 entries. For best
@@ -175,6 +182,7 @@ modparam("h350", "ldap_session", "h350");
    Example 1.3. base_dn parameter usage
 modparam("h350", "base_dn", "ou=h350,dc=example,dc=com");
 
+
 1.3.3. search_scope (string)
 
    LDAP search scope for H.350 queries, one of "one", "base", or
@@ -184,6 +192,7 @@ modparam("h350", "base_dn", "ou=h350,dc=example,dc=com");
 
    Example 1.4. search_scope parameter usage
 modparam("h350", "search_scope", "sub");
+
 
 1.4. Exported Functions
 
@@ -249,21 +258,22 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
 
 # now h350_result* or ldap_result* functions can be used
 
+
 1.4.2. h350_auth_lookup(auth_username,
 "username_avp_spec/pwd_avp_spec")
 
    This function performs an LDAP search query for SIP digest
    authentication credentials in an H.350 directory. The H.350
-   directory is searched for a commObject with SIPIdentityUserName
-   of auth_username. If such a commObject is found, the SIP digest
-   authentication username and password are stored in AVPs
-   username_avp_spec and pwd_avp_spec, respectively.
-   pv_*_authorize functions from AUTH module can then be used to
-   perform SIP digest authentication.
+   directory is searched for a commObject with
+   SIPIdentityUserName of auth_username. If such a commObject is
+   found, the SIP digest authentication username and password are
+   stored in AVPs username_avp_spec and pwd_avp_spec,
+   respectively. pv_*_authorize functions from AUTH module can
+   then be used to perform SIP digest authentication.
 
-   The function returns 1 (TRUE) if an H.350 commObject was found,
-   -1 (FALSE) in case of an internal error, and -2 (FALSE) if no
-   matching commObject was found.
+   The function returns 1 (TRUE) if an H.350 commObject was
+   found, -1 (FALSE) in case of an internal error, and -2 (FALSE)
+   if no matching commObject was found.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
@@ -388,6 +398,7 @@ route[1]
     return(1);
 }
 
+
 1.4.3. h350_result_call_preferences(avp_name_prefix)
 
    This function parses the callPreferenceURI attribute of an
@@ -401,13 +412,13 @@ route[1]
      target_uri type[:argument]
 
    In a SIP environment, target_uri is typically the call
-   forwarding rule's target SIP URI, although it could be any type
-   of URI, e.g. an HTTP pointer to a CPL script. Four different
-   values are specified for type: b for "forward on busy", n for
-   "forward on no answer", u for "forward unconditionally", and f
-   for "forward on destination not found". The optional argument
-   is a string indicating the time in milliseconds after which the
-   call forwarding should occur.
+   forwarding rule's target SIP URI, although it could be any
+   type of URI, e.g. an HTTP pointer to a CPL script. Four
+   different values are specified for type: b for "forward on
+   busy", n for "forward on no answer", u for "forward
+   unconditionally", and f for "forward on destination not
+   found". The optional argument is a string indicating the time
+   in milliseconds after which the call forwarding should occur.
 
    Example 1.7. Example H.350 callPreferenceURI simple call
    forwarding rules
@@ -429,8 +440,9 @@ callPreferenceURI: sip:alice@example.com u
 callPreferenceURI: sip:bob@example.com f
 callPreferenceURI: sip:alice@example.com f
 
-   h350_result_call_preferences stores these call forwarding rules
-   as AVPs according to the following rules:
+
+   h350_result_call_preferences stores these call forwarding
+   rules as AVPs according to the following rules:
 
 #
 # AVP storing a forwarding rule's target URI
@@ -445,6 +457,7 @@ AVP value = target_uri
 
 AVP name  = avp_name_prefix + '_' + type + '_t'
 AVP value = argument / 1000
+
 
    Example 1 from above would result in two AVPs:
    $avp("s:prefix_n") = "sip:voicemail@example.com" and
@@ -463,8 +476,8 @@ AVP value = argument / 1000
    callPreferenceURI attribute contained one or multiple values
    matching the simple call forwarding rule syntax described
    above. It returns -1 (FALSE) for internal errors, and -2
-   (FALSE) if none of the rules matched or if no callPreferenceURI
-   attribute was found.
+   (FALSE) if none of the rules matched or if no
+   callPreferenceURI attribute was found.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE and BRANCH_ROUTE.
@@ -537,6 +550,7 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
     exit;
 }
 
+
 1.4.4. h350_result_service_level(avp_name_prefix)
 
    Directory services architecture for SIP [H.350.4] defines a
@@ -545,8 +559,8 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
    an LDAP directory. This function parses the
    SIPIdentityServiceLevel attribute and stores all service level
    values as AVPs for later retrieval in the Kamailio routing
-   script. The function accesses the H.350 commObject fetched by a
-   call to h350_*_lookup or ldap_search.
+   script. The function accesses the H.350 commObject fetched by
+   a call to h350_*_lookup or ldap_search.
 
    The resulting AVPs have a name of the form avp_name_prefix +
    SIPIdentityServiceLevel attribute value, and an integer value
@@ -564,6 +578,7 @@ will be available in the routing script:
 $avp("s:sl_longdistance") = 1
 $avp("s:sl_international") = 1
 $avp("s:sl_900") = 1
+
 
    This function returns the number of added AVPs (TRUE), -1
    (FALSE)for internal errors, and -2 (FALSE)if no
@@ -624,13 +639,14 @@ else {
 }
 exit;
 
+
 Resources
 
    [H.350] Directory Services Architecture for Multimedia
    Conferencing. August 2003. ITU-T.
 
-   [H.350.4] Directory services architecture for SIP. August 2003.
-   ITU-T.
+   [H.350.4] Directory services architecture for SIP. August
+   2003. ITU-T.
 
    [H.350.6] Directory services architecture for call forwarding
    and preferences. March 2004. ITU-T.
