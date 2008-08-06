@@ -346,11 +346,11 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
 			merr "Import of standard table failed [$TABLE.txt]"
-			merr "Create this missing table with bdb_recover."
+			merr "Create this missing table with kambdb_recover."
 		    fi
 	    else
 	    	    merr "Import data not found for table: [$TABLE.txt]" 
-		    merr "Create this missing table with bdb_recover."
+		    merr "Create this missing table with kambdb_recover."
 	    fi
 	done
 	
@@ -364,7 +364,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
 			merr "Import of presence table failed [$TABLE.txt]"
-			merr "Create this missing table with bdb_recover."
+			merr "Create this missing table with kambdb_recover."
 		    fi
 	    else
 		    mwarn "Import data not found for table: [$TABLE.txt]"
@@ -380,7 +380,7 @@ openser_import()  # parms: <DUMP_DIR> [DB_PATH]
 		    # Check return code to make sure the export worked ok
 		    if [ $? -ne 0 ] ; then
 			merr "Import of extra table failed [$TABLE.txt]"
-			merr "Create this missing table with bdb_recover."
+			merr "Create this missing table with kambdb_recover."
 		    fi
 	    else
 		    mwarn "Import data not found for table: [$TABLE.txt]"
