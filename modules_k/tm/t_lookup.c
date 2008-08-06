@@ -509,7 +509,7 @@ int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 					}
 					/* it's a local UAS transaction */
 					if (dlg_matching(p_cell, p_msg))
-						goto found;
+						goto e2e_ack;
 					continue;
 				}
 				continue;
