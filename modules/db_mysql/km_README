@@ -45,8 +45,8 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This is a module which provides MySQL connectivity for OpenSER.
-   It implements the DB API defined in OpenSER.
+   This is a module which provides MySQL connectivity for Kamailio.
+   It implements the DB API defined in Kamailio.
 
 1.2. Dependencies
 
