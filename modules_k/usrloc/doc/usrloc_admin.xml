@@ -26,7 +26,7 @@
 		contact string with callid and cseq number extra checking (if callid
 		is the same, it must have a higher cseq number, otherwise invalid).
 		But as argumented above, this is not enough in NAT traversal context, 
-		so the &openser; implementation of contact machting offers more algorithms:
+		so the &kamailio; implementation of contact machting offers more algorithms:
 		</para>
 		<itemizedlist>
 			<listitem>
@@ -57,7 +57,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -73,7 +73,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

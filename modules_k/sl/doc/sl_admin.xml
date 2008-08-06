@@ -7,7 +7,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		The <acronym>SL</acronym> module allows &openser; to act as a stateless 
+		The <acronym>SL</acronym> module allows &kamailio; to act as a stateless 
 		&ua; server and generate replies to &sip; requests without keeping 
 		state. That is beneficial in many scenarios, in which you wish not to 
 		burden server's memory and scale well.
@@ -15,7 +15,7 @@
 	<para>
 		The <acronym>SL</acronym> module needs to filter ACKs sent after a 
 		local stateless reply to an INVITE was generated. To recognize such 
-		ACKs, &openser; adds a special "signature" in to-tags. This signature is 
+		ACKs, &kamailio; adds a special "signature" in to-tags. This signature is 
 		sought for in incoming ACKs, and if included, the ACKs are absorbed.
 	</para>
 	<para>
@@ -31,8 +31,8 @@
 		matter to you, better use stateful processing (tm module) for INVITE 
 		processing. Particularly, the problem happens when a UA sends an 
 		INVITE which already has a to-tag in it (e.g., a re-INVITE)
-		and &openser; want to reply to it. Than, it will keep the current to-tag, 
-		which will be mirrored in ACK. &openser; will not see its signature and 
+		and &kamailio; want to reply to it. Than, it will keep the current to-tag, 
+		which will be mirrored in ACK. &kamailio; will not see its signature and 
 		forward the ACK downstream. Caused harm is not bad--just a useless 
 		ACK is forwarded.
 	</para>
@@ -40,13 +40,13 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -56,7 +56,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

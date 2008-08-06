@@ -8,7 +8,7 @@
 	<para> The Presence module implements the core functionality of SIP event notification.
 	It handles PUBLISH and SUBSCRIBE messages and generates
 	NOTIFY messages in a general, event independent way. It is extensible and allows registering 
-	events to it from other &openser; modules.
+	events to it from other &kamailio; modules.
 	Supported SIP event packages are presence, presence.winfo, dialog;sla from the presence_xml
 	module and message-summary from the presence_mwi module.
 	</para>
@@ -37,7 +37,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -500,7 +500,7 @@ if(method=="SUBSCRIBE")
 	syntax to create them can be found in presence-create.sql     
 	script in the database directories in the kamailio/scripts folder.
 	You can also find the complete database documentation on the
-	project webpage, &openserdbdocslink;.
+	project webpage, &kamailiodbdocslink;.
 	</para>
 </section>
 

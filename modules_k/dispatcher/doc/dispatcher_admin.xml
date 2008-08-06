@@ -20,7 +20,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; modules</title>
+		<title>&kamailio; modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -36,7 +36,7 @@
 		<title>External libraries or applications</title>
 		<para>
 		The following libraries or applications must be installed before
-		running &openser; with this module:
+		running &kamailio; with this module:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -790,12 +790,12 @@ ds_select_dst("1", "0");
 		</section>
 	
 		<section>
-		<title>&openser; config file</title>
+		<title>&kamailio; config file</title>
 		<para>
 		Next picture displays a sample usage of dispatcher.
 		</para>
 		<example>
-		<title>&openser; config script - sample dispatcher usage</title>
+		<title>&kamailio; config script - sample dispatcher usage</title>
 		<programlisting format="linespecific">
 ...
 &dispatchercfg;

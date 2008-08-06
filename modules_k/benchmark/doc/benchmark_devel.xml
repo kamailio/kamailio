@@ -6,7 +6,7 @@
 
 	<para>
 	The benchmark module provides an internal <acronym>API</acronym> to be used by 
-	other &openser; modules. The available functions are identical to the user exported
+	other &kamailio; modules. The available functions are identical to the user exported
 	functions.
 	</para>
 	<para>

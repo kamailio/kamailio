@@ -42,7 +42,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -65,7 +65,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -312,14 +312,14 @@ sip_trace();
 	<section>
 		<title>Database setup</title>
 		<para>
-			Before running &openser; with siptrace, you have to setup the database 
+			Before running &kamailio; with siptrace, you have to setup the database 
 			tables where the module will store the data. For that, if the 
 			table were not created by the installation script or you choose
 			to install everything by yourself you can use the siptrace-create.sql
 			<acronym>SQL</acronym> script in the database directories in the 
 			kamailio/scripts folder as template. 
 			You can also find the complete database documentation on the
-			project webpage, &openserdbdocslink;.
+			project webpage, &kamailiodbdocslink;.
 		</para>
 	</section>
 

@@ -24,7 +24,7 @@
 		XML-RPC server.  Current version of Abyss server
 		"normalizes" CRLF sequence in received XML-RPC strings
 		to LF character, which makes it impossible to pass CRLF
-		sequence from xmlrpc client application to &openser; modules,
+		sequence from xmlrpc client application to &kamailio; modules,
 		such as mi_fifo and pua_mi, that accept requests via MI
 		transport.  To overcome this limitation mi_xmlrpc module
 		implements a hack that coverts each LFLF sequence in
@@ -50,13 +50,13 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -67,7 +67,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

@@ -4,7 +4,7 @@
     
     <title>&develguide;</title>
     <para>
-		The module provides no functions to be used	in other &openser; modules.
+		The module provides no functions to be used	in other &kamailio; modules.
    </para>
 </chapter>
 

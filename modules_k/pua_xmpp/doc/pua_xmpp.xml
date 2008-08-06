@@ -17,7 +17,7 @@
 <book>
     <bookinfo>
 	<title>Presence User Agent for XMPP (Presence gateway between SIP and XMPP)</title>
-	<productname class="trade">&opensername;</productname>
+	<productname class="trade">&kamailioname;</productname>
 	<authorgroup>
 	    <author>
 		<firstname>Anca-Maria</firstname>

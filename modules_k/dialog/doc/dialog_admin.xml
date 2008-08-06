@@ -7,14 +7,14 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	The dialog module provides dialog awareness to the &openser; proxy. Its 
+	The dialog module provides dialog awareness to the &kamailio; proxy. Its 
 	functionality is to keep trace of the current dialogs, to offer information
 	about them (like how many dialogs are active). The module exports no 
 	functions that could be used directly from scripts.
 	</para>
 	<para>
 	The module, via an internal API, also provide the foundation to build on 
-	top of it more complex dialog-based functionalities via other &openser; 
+	top of it more complex dialog-based functionalities via other &kamailio; 
 	modules.
 	</para>
 	</section>
@@ -80,7 +80,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -103,7 +103,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

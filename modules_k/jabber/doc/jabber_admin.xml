@@ -69,7 +69,7 @@
 	<note>
 		<para>
 		A more complete guide about SIMPLE2Jabber gateway can be found 
-		at &openserhomelink;. The part below will be removed soon, only the manual 
+		at &kamailiohomelink;. The part below will be removed soon, only the manual 
 		from web will be updated.
 		</para>
 	</note>
@@ -98,24 +98,24 @@
 		</listitem>
 		<listitem>
 		<para>
-			Set the module parameter values in cfg file of &openser;, load the 
+			Set the module parameter values in cfg file of &kamailio;, load the 
 			dependent modules, set up the routing rules for Jabber gateway.
 		</para>
 		</listitem>
 		<listitem>
 		<para>
-			Run &openser;.
+			Run &kamailio;.
 		</para>
 		</listitem>
 	</itemizedlist>
 	<para>
-		The administrator of &openser;/Jabber gateway <emphasis>must</emphasis> 
+		The administrator of &kamailio;/Jabber gateway <emphasis>must</emphasis> 
 		inform the users what are the aliases for Jabber/Other &im; networks. 
 		Other &im;s could be <acronym>AIM</acronym>, <acronym>ICQ</acronym>, 
 		<acronym>MSN</acronym>, Yahoo, and so on.
 	</para>
 	<para>
-		These aliases depend on the server hostname where runs &openser; and 
+		These aliases depend on the server hostname where runs &kamailio; and 
 		how local Jabber server is setup.
 	</para>
 	<para>
@@ -123,7 +123,7 @@
 	</para>
 	<itemizedlist>
 		<listitem>
-		<para>&openser; is running on <quote>server.org</quote>.</para>
+		<para>&kamailio; is running on <quote>server.org</quote>.</para>
 		</listitem>
 		<listitem>
 		<para>
@@ -158,10 +158,10 @@
 	<para>
 		It is indicated to have these aliases in <acronym>DNS</acronym>, thus 
 		the client application can resolve the <acronym>DNS</acronym> name. 
-		Otherwise there must be set the outbound proxy to &openser; server.
+		Otherwise there must be set the outbound proxy to &kamailio; server.
 	</para>
 	<para>
-		*** Routing rules for Jabber gateway First step is to configure &openser; 
+		*** Routing rules for Jabber gateway First step is to configure &kamailio; 
 		to recognize messages for Jabber gateway. Look at 
 		<quote>doc/xjab.cfg</quote> to see a sample. The idea is to look in 
 		messages for destination address and if it contains Jabber alias or
@@ -273,9 +273,9 @@
 	</para>
 	<note>
 		<para>
-		The &openser; administrator have to set the Jabber transports for each &im; network in
+		The &kamailio; administrator have to set the Jabber transports for each &im; network in
 		order to be able to send messages to those networks. The alias of each &im; network
-		can be found out from &openser; admin.
+		can be found out from &kamailio; admin.
 		</para>
 		<para>
 		You cannot send messages from your &sip; client to your associated Jabber
@@ -287,7 +287,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -313,7 +313,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

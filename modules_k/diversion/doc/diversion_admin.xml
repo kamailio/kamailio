@@ -23,14 +23,14 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>None.</para>
 	</section>
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

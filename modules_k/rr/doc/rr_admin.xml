@@ -12,7 +12,7 @@
 
 	<section id="RR-dialog-id">
 	<title>Dialog support</title>
-	<para>&openser; is basically <emphasis>only</emphasis> a transaction statefull 
+	<para>&kamailio; is basically <emphasis>only</emphasis> a transaction statefull 
 	proxy, without any dialog support build in. There are many features/services
 	which actually requires a dialog awareness, like storing the information in 
 	the dialog creation stage, information which will be used during the whole 
@@ -80,13 +80,13 @@ UAC                       Kamailio PROXY                          UAS
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -97,7 +97,7 @@ UAC                       Kamailio PROXY                          UAS
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

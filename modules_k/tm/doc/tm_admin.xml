@@ -67,7 +67,7 @@
 		out - changes in that route should reflect only on that branch.
 		</para>
 		<para>
-		There are several types of flags in &openser; :
+		There are several types of flags in &kamailio; :
 		</para>
 			<itemizedlist>
 			<listitem>
@@ -124,7 +124,7 @@
 		and then redirect the call to the voicemail.
 		</para>
 		<para>
-		There are two timers in &openser; :
+		There are two timers in &kamailio; :
 		</para>
 			<itemizedlist>
 			<listitem>
@@ -189,13 +189,13 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -205,7 +205,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -521,7 +521,7 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 		</itemizedlist>
 		</para>
 		<para>
-		The full list of supported pseudo-variables in &openser; is availabe at: 
+		The full list of supported pseudo-variables in &kamailio; is availabe at: 
 		<ulink url="http://kamailio.org/docs/pseudo-variables.html-1.1.x">
 		http://kamailio.org/docs/pseudo-variables-1.1.x.html</ulink>
 		</para>

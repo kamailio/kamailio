@@ -19,11 +19,11 @@
 	</qandaentry>
 	<qandaentry>
 		<question>
-		<para>Where can I find more about &openser;?</para>
+		<para>Where can I find more about &kamailio;?</para>
 		</question>
 		<answer>
 		<para>
-			Take a look at &openserhomelink;.
+			Take a look at &kamailiohomelink;.
 		</para>
 		</answer>
 	</qandaentry>
@@ -38,20 +38,20 @@
 		</para>
 		<itemizedlist>
 			<listitem>
-			<para>User Mailing List - &openseruserslink;</para>
+			<para>User Mailing List - &kamailiouserslink;</para>
 			</listitem>
 			<listitem>
-			<para>Developer Mailing List - &openserdevlink;</para>
+			<para>Developer Mailing List - &kamailiodevlink;</para>
 			</listitem>
 		</itemizedlist>
 		<para>
-			E-mails regarding any stable &openser; release should be sent to 
-			&openserusersmail; and e-mails regarding development versions
-			should be sent to &openserdevmail;.
+			E-mails regarding any stable &kamailio; release should be sent to 
+			&kamailiousersmail; and e-mails regarding development versions
+			should be sent to &kamailiodevmail;.
 		</para>
 		<para>
 			If you want to keep the mail private, send it to 
-			&openserhelpmail;.
+			&kamailiohelpmail;.
 		</para>
 		</answer>
 	</qandaentry>
@@ -62,7 +62,7 @@
 		<answer>
 		<para>
 			Please follow the guidelines provided at:
-			&openserbugslink;.
+			&kamailiobugslink;.
 		</para>
 		</answer>
 	</qandaentry>

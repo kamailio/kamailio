@@ -31,13 +31,13 @@ From: medabeda
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -47,7 +47,7 @@ From: medabeda
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -875,7 +875,7 @@ append_time();
 		The 'name' can be a list of methods in the form of
 		'method1|method2|...'. In this case, the function returns true if the
 		SIP message's method is one from the list. IMPORTANT NOTE: in the list
-		must be only methods defined in &openser; with ID (invite, cancel, ack,
+		must be only methods defined in &kamailio; with ID (invite, cancel, ack,
 		bye, options, info, update, register, message, subscribe, notify,
 		refer, prack, publish; for more see:
 		<ulink url="http://www.iana.org/assignments/sip-parameters">
@@ -1022,7 +1022,7 @@ if(is_privacy("id"))
 		<para>
 			Search functions are applied to the original request,
 			i.e., they ignore all changes resulting from message
-			processing in &openser; script.
+			processing in &kamailio; script.
 		</para>
 	</section>
 </chapter>

@@ -8,7 +8,7 @@
 	<title>Overview</title>
 	<para>
 		This module provides the possibility to print user formatted log or
-		debug messages from &openser; scripts, similar to printf function. 
+		debug messages from &kamailio; scripts, similar to printf function. 
 		A C-style printf specifier is replaced with a part of the &sip; request or other
 		variables from system.
 		<xref linkend="sec-implemented-specifiers"/> shows what can be printed
@@ -19,7 +19,7 @@
 	<title>Implemented Specifiers</title>
 	<para>
 	In the xlog function, you use pseudo-variables, that are a part
-	of &openser; core and are used by other modules as well (e.g., avpops
+	of &kamailio; core and are used by other modules as well (e.g., avpops
 	in the function avp_printf())
 	</para>
 	<para>
@@ -46,7 +46,7 @@
 		</listitem>
 	</itemizedlist>
 	<para>
-	The full list of available pseudo-variables in &openser; is availabe at:
+	The full list of available pseudo-variables in &kamailio; is availabe at:
 	<ulink url="http://kamailio.org/dokuwiki/">
 	http://kamailio.org/dokuwiki/</ulink>
 	</para>
@@ -54,13 +54,13 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -70,7 +70,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

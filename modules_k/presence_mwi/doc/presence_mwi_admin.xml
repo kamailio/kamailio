@@ -20,7 +20,7 @@
 	      rules.  It assumes that publish requests are only issued by
 	      a voicemail application and subscribe requests only by
 	      the owner of voicemail box.  Authorization can thus
-	      be easily done by &openser; configuration file before
+	      be easily done by &kamailio; configuration file before
 	      calling handle_publish() and handle_subscribe()
 	      functions.
 	    </para>
@@ -36,7 +36,7 @@
 	<section>
 	  <title>Dependencies</title>
 	  <section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>

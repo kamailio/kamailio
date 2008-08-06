@@ -66,7 +66,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -87,7 +87,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -169,7 +169,7 @@ modparam("registrar", "max_expires", 120)
 		<title><varname>default_q</varname> (integer)</title>
 		<para>
 		The parameter represents default q value for new contacts. Because 
-		&openser; doesn't support float parameter types, the value in the parameter 
+		&kamailio; doesn't support float parameter types, the value in the parameter 
 		is divided by 1000 and stored as float. For example, if you want 
 		default_q to be 0.38, use value 380 here.
 		</para>

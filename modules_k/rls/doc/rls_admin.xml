@@ -42,7 +42,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -408,7 +408,7 @@ if(method=="NOTIFY")
 	rls-create.sql script in the database directories in
 	the kamailio/scripts folder.
 	You can also find the complete database documentation on the
-	project webpage, &openserdbdocslink;.
+	project webpage, &kamailiodbdocslink;.
 	</para>
 </section>
 

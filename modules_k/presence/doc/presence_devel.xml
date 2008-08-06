@@ -4,7 +4,7 @@
     <title>&develguide;</title>
     <para>
 		The module provides the following functions that can be used
-		in other &openser; modules.
+		in other &kamailio; modules.
    </para>
  		<section>
 				<title>

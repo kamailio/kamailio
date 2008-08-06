@@ -36,7 +36,7 @@
 			<itemizedlist>
 				<listitem>
 				<para><emphasis>Advantages:</emphasis> low bandwitdh traffic,
-				easy to generate by &openser;;
+				easy to generate by &kamailio;;
 				</para>
 				</listitem>
 				<listitem>
@@ -56,14 +56,14 @@
 			<itemizedlist>
 				<listitem>
 				<para><emphasis>Advantages:</emphasis> bidirectional traffic
-				through NAT, since each PING request from &openser; (inbound 
+				through NAT, since each PING request from &kamailio; (inbound 
 				traffic) will force the SIP client to generate a SIP reply 
 				(outbound traffic) - the NAT bind will be surely kept open.
 				</para>
 				</listitem>
 				<listitem>
 				<para><emphasis>Disadvantages:</emphasis> higher bandwitdh 
-				traffic, more expensive (as time) to generate by &openser;;
+				traffic, more expensive (as time) to generate by &kamailio;;
 				</para>
 				</listitem>
 			</itemizedlist>
@@ -107,7 +107,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -124,7 +124,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

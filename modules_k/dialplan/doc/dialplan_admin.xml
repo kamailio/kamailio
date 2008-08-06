@@ -60,7 +60,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following modules must be loaded before this module:
 			<itemizedlist>
@@ -78,7 +78,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -500,7 +500,7 @@ xlog("translated to var $var(y) \n");
         syntax to create them can be found in dialplan-create.sql     
         script in the database directories in the kamailio/scripts folder.
         You can also find the complete database documentation on the
-        project webpage, &openserdbdocslink;.
+        project webpage, &kamailiodbdocslink;.
         </para>
     </section>
 

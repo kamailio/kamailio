@@ -5,7 +5,7 @@
     <title>&develguide;</title>
     <para>
 	The module provides is_domain_local <acronym>API</acronym>
-    function for use by other &openser; modules.
+    function for use by other &kamailio; modules.
     </para>
     <section>
 	<title>Available Functions</title>

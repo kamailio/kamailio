@@ -170,7 +170,7 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The SNMPStats module provides a plethora of statistics, some of which are collected
 		by other modules.  If the dependent modules are not loaded then those specific 
@@ -206,7 +206,7 @@
 	<title>External Libraries or Applications</title>
 	<para>
 	The following libraries or applications must be installed before running
-	&openser; with this module loaded:
+	&kamailio; with this module loaded:
 		<itemizedlist>
 		<listitem>
 		<para>

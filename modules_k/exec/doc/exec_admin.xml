@@ -7,9 +7,9 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Exec module allows to start an external command from a &openser; script. 
+		Exec module allows to start an external command from a &kamailio; script. 
 		The commands may be any valid shell commands--the command string is 
-		passed to shell using <quote>popen</quote> command. &openser; passes 
+		passed to shell using <quote>popen</quote> command. &kamailio; passes 
 		additionally lot of information about request in environment
 		variables:
 	</para>
@@ -66,7 +66,7 @@
 	<para>
 		NOTE: The envirnment variables must be specified with double $
 		(e.g., $$SIP_OUSER) in the parameters given to exec functions.
-		Otherwise they will be evaluated as &openser; pseudo-variables,
+		Otherwise they will be evaluated as &kamailio; pseudo-variables,
 		throwing errors.
 	</para>
 	</section>
@@ -74,13 +74,13 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; Modules</title>
+		<title>&kamailio; Modules</title>
 		<para>
 		The following  modules must be loaded before this module:
 			<itemizedlist>
 			<listitem>
 			<para>
-				<emphasis>No dependencies on other &openser; modules</emphasis>.
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
 			</para>
 			</listitem>
 			</itemizedlist>
@@ -90,7 +90,7 @@
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>

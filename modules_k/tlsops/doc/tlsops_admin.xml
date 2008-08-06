@@ -15,16 +15,16 @@
 	<section>
 	<title>Dependencies</title>
 	<section>
-		<title>&openser; core</title>
+		<title>&kamailio; core</title>
 		<para>
-		&openser; must be compiled with TLS=1.
+		&kamailio; must be compiled with TLS=1.
 		</para>
 	</section>
 	<section>
 		<title>External Libraries or Applications</title>
 		<para>
 		The following libraries or applications must be installed before 
-		running &openser; with this module loaded:
+		running &kamailio; with this module loaded:
 			<itemizedlist>
 			<listitem>
 			<para>
@@ -276,7 +276,7 @@ if (is_peer_verified()) {
 	<section>
 		<title>Debug TLS connections</title>
 	<para>If you want to debug TLS connections, put the following log 
-	statements into your &openser;.cfg.
+	statements into your &kamailio;.cfg.
 	This will dump all available TLS pseudo variables.
 	</para>
 	<example>

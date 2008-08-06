@@ -15,7 +15,7 @@
 	<section>
 		<title>Dependencies</title>
 		<section>
-			<title>&openser; Modules</title>
+			<title>&kamailio; Modules</title>
 			<para>
 			The following modules must be loaded before this module:
 			<itemizedlist>
@@ -56,7 +56,7 @@
 			<title>External Libraries or Applications</title>
 			<para>
 				The following libraries or applications must be installed 
-				before running &openser; with this module loaded:
+				before running &kamailio; with this module loaded:
 				<itemizedlist>
 				<listitem>
 				<para>
@@ -203,7 +203,7 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 				Points to the DTD file describing the CPL grammar. The file 
 				name may include also the path to the file. This path can be 
 				absolute or relative (be careful the path will be relative 
-				to the starting directory of &openser;).
+				to the starting directory of &kamailio;).
 			</para>
 			<para>
 				<emphasis>
@@ -440,7 +440,7 @@ modparam("cpl-c","use_domain",1)
 				function  is very flexible, being able to run in different 
 				modes (see below the"mode" parameter).
 				Normally this function will end script execution.  There is no 
-				guaranty that the CPL script interpretation ended when &openser; 
+				guaranty that the CPL script interpretation ended when &kamailio; 
 				script ended also (for the same INVITE ;-)) - this can happen 
 				when the CPL script does a PROXY and the script interpretation 
 				pause after proxying and it will be resume when some reply is
@@ -676,7 +676,7 @@ if (method=="REGISTER") {
 		<section>
 			<title>Database setup</title>
 			<para>
-			Before running &openser; with cpl-c, you have to setup the database 
+			Before running &kamailio; with cpl-c, you have to setup the database 
 			table where the module will store the CPL scripts. For that, if 
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the cpc-create.sql
@@ -686,7 +686,7 @@ if (method=="REGISTER") {
 			can be changed, but the name of the columns must be as they are 
 			in the <acronym>SQL</acronym> script.
 			You can also find the complete database documentation on the
-			project webpage, &openserdbdocslink;.
+			project webpage, &kamailiodbdocslink;.
 			</para>
 		</section>
 	</section>

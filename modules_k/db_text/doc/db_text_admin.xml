@@ -8,7 +8,7 @@
 	<title>Overview</title>
 	<para>
 		The module implements a simplified database engine based on text
-		files. It can be used by &openser; DB interface instead of other
+		files. It can be used by &kamailio; DB interface instead of other
 		database module (like MySQL).
 	</para>
 	<para>
@@ -17,7 +17,7 @@
 		with large amount of data you may run quickly out of memory. Also, it
 		has not implemented all standard database facilities (like order by),
 		it includes minimal functionality to work properly (who knows ?!?)
-		with &openser;.
+		with &kamailio;.
 	</para>
 	<para>
 		NOTE: the timestamp is printed in an integer value from time_t
@@ -39,7 +39,7 @@
 				<para>
 				a database is represented by a directory in the local file
 				system.
-				NOTE: when you use <emphasis>dbtext</emphasis> in &openser;,
+				NOTE: when you use <emphasis>dbtext</emphasis> in &kamailio;,
 				the	database URL for modules must be the path to the directory
 				where the table-files are located, prefixed by 
 				<quote>dbtext://</quote>, e.g., 
@@ -173,7 +173,7 @@ id(int,auto) name(str) flag(double) desc(str,null)
 </programlisting>
 		</example>
 		<example>
-		<title>Minimal &openser; location dbtext table definition</title>
+		<title>Minimal &kamailio; location dbtext table definition</title>
 <programlisting format="linespecific">
 ...
 username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
@@ -181,7 +181,7 @@ username(str) contact(str) expires(int) q(double) callid(str) cseq(int)
 </programlisting>
 		</example>
 		<example>
-		<title>Minimal &openser; subscriber dbtext table example</title>
+		<title>Minimal &kamailio; subscriber dbtext table example</title>
 <programlisting format="linespecific">
 ...
 username(str) password(str) ha1(str) domain(str) ha1b(str)
@@ -202,7 +202,7 @@ suser:supasswd:xxx:alpha.org:xxx
 	<section>
 	<title>Dependencies</title>
 		<section>
-			<title>&openser; modules</title>
+			<title>&kamailio; modules</title>
 		<para>
 			The next modules must be loaded before this module:
 			<itemizedlist>
@@ -218,7 +218,7 @@ suser:supasswd:xxx:alpha.org:xxx
 			<title>External libraries or applications</title>
 		<para>
 			The next libraries or applications must be installed before running
-			&openser; with this module:
+			&kamailio; with this module:
 			<itemizedlist>
 			<listitem>
 				<para>
@@ -269,7 +269,7 @@ modparam("db_text", "db_mode", 1)
 		Compile the module and load it instead of mysql or other DB modules.
 		</para>
 		<para>
-		REMINDER: when you use <emphasis>dbtext</emphasis> in &openser;,
+		REMINDER: when you use <emphasis>dbtext</emphasis> in &kamailio;,
 		the	database URL for modules must be the path to the directory
 		where the table-files are located, prefixed by
 		<quote>dbtext://</quote>, e.g., 
@@ -290,12 +290,12 @@ modparam("module_name", "database_URL", "text:///path/to/dbtext/database")
 </programlisting>
 		</example>
 		<section>
-			<title>Using dbtext with basic &openser; configuration</title>
+			<title>Using dbtext with basic &kamailio; configuration</title>
 		<para>
 		Here are the definitions for most important table as well as a basic 
-		configuration file to use dbtext with &openser;. The table structures
+		configuration file to use dbtext with &kamailio;. The table structures
 		may change in time and you will have to adjust next examples. These are 
-		know to work with upcoming &openser; v0.9.x
+		know to work with upcoming &kamailio; v0.9.x
 		</para>
 		<para>
 		You have to populate the table 'subscriber' by hand with user profiles 

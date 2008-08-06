@@ -61,7 +61,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 			PDT is located in '../../scripts/mysql/pdt-create.sql'
 		</para>
 		<para>
-			The database is loaded by &openser; only at start up time and 
+			The database is loaded by &kamailio; only at start up time and 
 			only cache is used to lookup domains. Check the MI Functions for
 			adding/deleting prefix-domain pairs or reloading from database
 			at runtime.
@@ -79,13 +79,13 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
     <section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&openser; Modules</title>
+	    <title>&kamailio; Modules</title>
 	    <para>
 		The following modules must be loaded before this module:
 	    	<itemizedlist>
 		    <listitem>
 			<para>
-			    <emphasis>A &openser; database module (e.g., mysql,
+			    <emphasis>A &kamailio; database module (e.g., mysql,
 				dbtext)</emphasis>.
 			</para>
 		    </listitem>
@@ -96,7 +96,7 @@ sip:12391001@mydomain.com  => sip:91001@alpha.org
 	    <title>External Libraries or Applications</title>
 	    <para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 	    	<itemizedlist>
 		    <listitem>
 			<para>
@@ -407,7 +407,7 @@ prefix2domain();
 		<section>
 		<title>Exported MI Functions</title>
 		<para>
-		The database is loaded by &openser; at start up time.
+		The database is loaded by &kamailio; at start up time.
 		The module uses only the cache to look up domains. If you want to
 		add or delete a new prefix-domain pair at runtime you have to use
 		MI FIFO commands. All changes made via these commands are applied to

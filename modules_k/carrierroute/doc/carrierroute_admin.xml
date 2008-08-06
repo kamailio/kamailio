@@ -57,7 +57,7 @@
     <section>
 	<title>Dependencies</title>
 	<section>
-	    <title>&openser; Modules</title>
+	    <title>&kamailio; Modules</title>
 	    <para>
 		The following module must be loaded before this module:
 	    	<itemizedlist>
@@ -81,7 +81,7 @@
 	    <title>External Libraries or Applications</title>
 	    <para>
 		The following libraries or applications must be installed before running
-		&openser; with this module loaded:
+		&kamailio; with this module loaded:
 		<itemizedlist>
 		    <listitem>
 			<para>
@@ -1474,7 +1474,7 @@ domain register {
 	<section>
 		<title>Database setup</title>
 		<para>
-			Before running &openser; with carrierroute, you have to setup the database 
+			Before running &kamailio; with carrierroute, you have to setup the database 
 			table where the module will store the routing data. For that, if 
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the carrierroute-create.sql
@@ -1484,7 +1484,7 @@ domain register {
 			can be changed, but the name of the columns must be as they are 
 			in the <acronym>SQL</acronym> script.
 			You can also find the complete database documentation on the
-			project webpage, &openserdbdocs;.
+			project webpage, &kamailiodbdocs;.
 			The flags and mask columns have the same function as in the
 			carrierfailureroute table. A zero value in the flags and mask
 			column means that any message flags will match this rule.

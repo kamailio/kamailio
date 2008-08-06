@@ -6,7 +6,7 @@
 
 	<para>
 	The RR module provides an internal <acronym>API</acronym> to be used by 
-	other &openser; modules. The <acronym>API</acronym> offers support for
+	other &kamailio; modules. The <acronym>API</acronym> offers support for
 	SIP dialog based functionalities - for more about the dialog support
 	offered by RR module, see <xref linkend="RR-dialog-id"/>.
 	</para>
