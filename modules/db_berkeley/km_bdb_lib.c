@@ -726,7 +726,7 @@ int bdblib_create_journal(table_p _tp)
 	
 	if(! _db_p || ! _tp) return -1;
 	if(! _db_parms->log_enable) return 0;
-	/* journal filename ; e.g. '/var/openser/db/location-YYYYMMDDhhmmss.jnl' */
+	/* journal filename ; e.g. '/var/kamailio/db/location-YYYYMMDDhhmmss.jnl' */
 	s=fn;
 	strncpy(s, _db_p->name.s, _db_p->name.len);
 	s+=_db_p->name.len;
