@@ -25,6 +25,7 @@
  * 2007-09-19  genesis (wiquan)
  */
 
+#include <unistd.h>
 #include "kambdb_recover.h"
 
 tbl_cache_p tables;
@@ -37,8 +38,6 @@ const char *progname;
  */
 int main(int argc, char* argv[])
 {
-	extern char* optarg;
-	extern int optind;
 	int ret, ch, i;
 	
 	ret = 0;
