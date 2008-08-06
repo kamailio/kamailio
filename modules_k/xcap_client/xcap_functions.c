@@ -560,7 +560,7 @@ char* send_http_get(char* path, unsigned int xcap_port, char* match_etag,
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, &etag);
 
 	if(match_header)
-		curl_easy_setopt(curl_handle, CURLOPT_HEADER, match_header);
+		curl_easy_setopt(curl_handle, CURLOPT_HEADER, (long)match_header);
 
 	/* non-2xx => error */
 	curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
