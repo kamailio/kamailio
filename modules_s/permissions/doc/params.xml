@@ -192,7 +192,10 @@ modparam("permissions", "deny_suffix", ".deny")
 	<para>
 		Declares name of ip set which can be manipulated via RPC commands and 
 		tested using <function>ip_is_trusted</function>.
-		Identifier must start with letter or underscore.
+		Identifier must start with letter or underscore.		
+	</para>
+	<para>
+		IP mask may follow equal sign to initialize ipset on startup.
 	</para>
     </section>
 </section>

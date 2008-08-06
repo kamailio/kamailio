@@ -87,7 +87,7 @@ db_ctx_t	*db_conn = NULL;
 
 static str *ip_set_list_names = NULL;    /* declared names */
 static struct ip_set_ref **ip_set_list_local = NULL;  /* local copy of ip set in shared memory */
-static int ip_set_list_count = 0;  /* number of delared names */
+static int ip_set_list_count = 0;  /* number of declared names */
 
 /* fixup function prototypes */
 static int fixup_files_1(void** param, int param_no);
@@ -588,18 +588,22 @@ static int fixup_param_declare_ip_set( modparam_t type, void* val) {
 	str *p;
 	int i;
 	str s;
+	s.s = val;
+	s.len = strlen(s.s);
+	for (i=0; i<s.len && s.s[i]!='='; i++);
+	s.len = i;
+	
 	for (i=0; i<ip_set_list_count; i++) {
-		if (strcmp(val, ip_set_list_names[i].s) == 0) {
-			ERR(MODULE_NAME": declare_ip_set: ip set '%s' already exists\n", (char*)val);
+		if (ip_set_list_names[i].len>=s.len && memcmp(val, ip_set_list_names[i].s, s.len) == 0) {
+			ERR(MODULE_NAME": declare_ip_set: ip set '%.*s' already exists\n", s.len, s.s);
 			return E_CFG;
 		}
 	}
-	s.s = val;
-	s.len = strlen(s.s);
 	if (!is_ip_set_name(&s)) {
-		ERR(MODULE_NAME": declare_ip_set: ip set '%s' is not correct identifier\n", (char*)val);
+		ERR(MODULE_NAME": declare_ip_set: ip set '%.*s' is not correct identifier\n", s.len, s.s);
 		return E_CFG;
 	}
+	s.len = strlen(s.s);
 	p = pkg_realloc(ip_set_list_names, sizeof(*p)*(ip_set_list_count+1));
 	if (!p) return E_OUT_OF_MEM;
 	p[ip_set_list_count] = s;

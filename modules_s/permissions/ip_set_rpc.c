@@ -43,7 +43,7 @@ static struct ip_set_list_item *ip_set_list = NULL;
 static int ip_set_list_count = 0;
 
 int ip_set_list_malloc(int num, str* names) {
-	int i;
+	int i, j;
 	if (num) {
 		ip_set_list = shm_malloc(num*sizeof(*ip_set_list));
 		if (!ip_set_list) return -1;
@@ -55,6 +55,17 @@ int ip_set_list_malloc(int num, str* names) {
 			lock_init(&ip_set_list[i].write_lock);
 			ip_set_list[i].ip_set = NULL;
 			ip_set_init(&ip_set_list[i].ip_set_pending, 1);
+			for (j=0; j<ip_set_list[i].name.len; j++) {
+				if (ip_set_list[i].name.s[j]=='=') {
+					str s;
+					s.s = ip_set_list[i].name.s + j + 1;
+					s.len = ip_set_list[i].name.len - j - 1;
+					ip_set_list[i].name.len = j;
+					ip_set_list[i].ip_set =  shm_malloc(sizeof(*ip_set_list[i].ip_set));
+					if (!ip_set_list[i].ip_set) return -1;
+					ip_set_add_list(&ip_set_list[i].ip_set->ip_set, s); /* allow pass even in case of error */
+				}
+			}
 		}
 	}
 	return 0;
@@ -165,7 +176,7 @@ void rpc_ip_set_commit(rpc_t* rpc, void* ctx) {
 	new_ip_set = shm_malloc(sizeof(*new_ip_set));
 	if (!new_ip_set) {
 		rpc->fault(ctx, 500, "Not enough memory");
-		return;
+		goto err;
 	}
 	
 	if (p->ip_set) {
@@ -179,6 +190,7 @@ void rpc_ip_set_commit(rpc_t* rpc, void* ctx) {
 	p->ip_set = new_ip_set;
 	
 	ip_set_init(&p->ip_set_pending, 1);
+err:	
 	lock_release(&p->read_lock);
 	lock_release(&p->write_lock);
 }

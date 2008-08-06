@@ -475,7 +475,7 @@ onsend_route[0] {
 	    <title><function>ip_is_trusted</function> usage</title>
 	    <programlisting>
 modparam("permissions", "declare_ipset", "my_ipset1");
-modparam("permissions", "declare_ipset", "my_ipset2");
+modparam("permissions", "declare_ipset", "my_ipset2=127.0.0.0/24;10.0.0.0/255.255.255.0");
 	
 route[TT2] {
 	if (ip_is_trusted("$net", "$ip")) {
