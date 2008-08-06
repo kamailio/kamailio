@@ -74,7 +74,7 @@ modparam("db_berkeley", "auto_reload", 1)
 		The following operations can be journaled: 
 		INSERT, UPDATE, DELETE. Other operations such as SELECT, do not. 
 		This journaling are required if you need to recover from a corrupt 
-		DB file. That is, bdb_recover requires these to rebuild 
+		DB file. That is, kambdb_recover requires these to rebuild 
 		the db file. If you find this log feature useful, you may 
 		also be interested in the METADATA_LOGFLAGS bitfield that each 
 		table has. It will allow you to control which operations to 
@@ -223,7 +223,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 		By default, the files are installed in '/usr/local/share/kamailio/db_berkeley/openser'
 		By default these tables are created Read/Write and without any journalling as 
 		shown. These settings can be modified on a per table basis.
-		Note: If you plan to use bdb_recover, you must change the LOGFLAGS.
+		Note: If you plan to use kambdb_recover, you must change the LOGFLAGS.
 		</para>
 	        <programlisting  format="linespecific">
 		METADATA_READONLY
@@ -513,13 +513,13 @@ usage: kamdbctl create
 	</section>
 	
 	<section>
-	<title>DB Recovery : bdb_recover</title>
+	<title>DB Recovery : kambdb_recover</title>
 	<para>
 	The db_berkeley module uses the Concurrent Data Store (CDS) architecture. 
 	As such, no transaction or journaling is provided by the DB natively. 
-	The application bdb_recover is specifically written to recover data from 
+	The application kambdb_recover is specifically written to recover data from 
 	journal files that Kamailio creates.  
-	The bdb_recover application requires an additional text file that contains 
+	The kambdb_recover application requires an additional text file that contains 
 	the table schema.
 	</para>
 	
@@ -540,19 +540,19 @@ usage: kamdbctl create
 	<para>
 	The following illustrates the four operations available to the administrator.
 	<example>
-	<title>bdb_recover usage</title>
+	<title>kambdb_recover usage</title>
 	<programlisting>
-usage: ./bdb_recover -s schemadir [-h home] [-c tablename]
+usage: ./kambdb_recover -s schemadir [-h home] [-c tablename]
 	This will create a brand new DB file with metadata.
 
-usage: ./bdb_recover -s schemadir [-h home] [-C all]
+usage: ./kambdb_recover -s schemadir [-h home] [-C all]
 	This will create all the core tables, each with metadata.
 
-usage: ./bdb_recover -s schemadir [-h home] [-r journal-file]
+usage: ./kambdb_recover -s schemadir [-h home] [-r journal-file]
 	This will rebuild a DB and populate it with operation from journal-file. 
 	The table name is embedded in the journal-file name by convention.
 
-usage: ./bdb_recover -s schemadir [-h home] [-R lastN]
+usage: ./kambdb_recover -s schemadir [-h home] [-R lastN]
 	This will iterate over all core tables enumerated. If journal files exist in 'home', 
 	a new DB file will be created and populated with the data found in the last N files. 
 	The files are 'replayed' in chronological order (oldest to newest). This 
@@ -564,7 +564,7 @@ usage: ./bdb_recover -s schemadir [-h home] [-R lastN]
 	</para>
 	
 	<para>
-	Important note- A corrupted DB file must be moved out of the way before bdb_recover is executed.
+	Important note- A corrupted DB file must be moved out of the way before kambdb_recover is executed.
 	</para>
 	
 	</section>
