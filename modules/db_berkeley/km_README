@@ -1,3 +1,4 @@
+
 Berkeley DB Module
 
 Will Quan
@@ -11,8 +12,8 @@ Will Quan
    Copyright © 2007 Cisco Systems
    Revision History
    Revision $Revision: 846 $ $Date: 2006-05-22 09:15:40 -0500
-                             (Mon, 22 May 2006) $
-     __________________________________________________________
+   (Mon, 22 May 2006) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -41,7 +42,7 @@ Will Quan
         1.9. METADATA_KEYS (required)
         1.10. METADATA_READONLY (optional)
         1.11. METADATA_LOGFLAGS (optional)
-        1.12. DB Maintaince Script : kamdbctl
+        1.12. DB Maintaince Script : kamdbctl 
         1.13. DB Recovery : bdb_recover
         1.14. Known Limitations
 
@@ -62,8 +63,8 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This is a module which integrates the Berkeley DB into Kamailio.
-   It implements the DB API defined in Kamailio.
+   This is a module which integrates the Berkeley DB into
+   Kamailio. It implements the DB API defined in Kamailio.
 
 1.2. Dependencies
 
@@ -84,10 +85,10 @@ Chapter 1. Admin Guide
 
    The auto-reload will close and reopen a Berkeley DB when the
    files inode has changed. The operation occurs only duing a
-   query. Other operations such as insert or delete, do not invoke
-   auto_reload.
+   query. Other operations such as insert or delete, do not
+   invoke auto_reload.
 
-   Default value is 0 (1 - on / 0 - off).
+   Default value is 0 (1 - on / 0 - off). 
 
    Example 1.1. Set auto_reload parameter
 ...
@@ -104,10 +105,10 @@ modparam("db_berkeley", "auto_reload", 1)
    file. If you find this log feature useful, you may also be
    interested in the METADATA_LOGFLAGS bitfield that each table
    has. It will allow you to control which operations to journal,
-   and the destination (like syslog, stdout, local-file). Refer to
-   bdblib_log() and documentation on METADATA.
+   and the destination (like syslog, stdout, local-file). Refer
+   to bdblib_log() and documentation on METADATA.
 
-   Default value is 0 (1 - on / 0 - off).
+   Default value is 0 (1 - on / 0 - off). 
 
    Example 1.2. Set log_enable parameter
 ...
@@ -120,7 +121,7 @@ modparam("db_berkeley", "log_enable", 1)
    The roll operation occurs only at the end of writing a log, so
    it is not guaranteed to to roll 'on time'.
 
-   Default value is 0 (off).
+   Default value is 0 (off). 
 
    Example 1.3. Set journal_roll_interval parameter
 ...
@@ -147,7 +148,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    Parameters: tablename (or db_path); to reload a particular
    table provide the tablename as the arguement (eg subscriber);
    to reload all tables provide the db_path to the db files. The
-   path can be found in kamctlrc DB_PATH variable.
+   path can be found in kamctlrc DB_PATH variable. 
 
 1.6. Installation and Running
 
@@ -165,8 +166,8 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    db_berkeley module is not compiled and installed by default.
    You can use one of the next options.
      * edit the "Makefile" and remove "db_berkeley" from
-       "excluded_modules" list. Then follow the standard procedure
-       to install Kamailio: "make all; make install".
+       "excluded_modules" list. Then follow the standard
+       procedure to install Kamailio: "make all; make install".
      * from command line use: 'make all
        include_modules="db_berkeley"; make install
        include_modules="db_berkeley"'.
@@ -188,7 +189,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    properly: DBENGINE and DB_PATH. Edit file:
    '/usr/local/etc/kamailio/kamctlrc'
                 ## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT,
-by default none is loaded
+ by default none is loaded
                 # DBENGINE=DB_BERKELEY
 
                 ## database path used by dbtext or db_berkeley
@@ -199,11 +200,11 @@ by default none is loaded
    good time to review the meta-data section details, before
    making modifications to your tables dbschema. By default, the
    files are installed in
-   '/usr/local/share/kamailio/db_berkeley/openser' By default these
-   tables are created Read/Write and without any journalling as
-   shown. These settings can be modified on a per table basis.
-   Note: If you plan to use bdb_recover, you must change the
-   LOGFLAGS.
+   '/usr/local/share/kamailio/db_berkeley/openser' By default
+   these tables are created Read/Write and without any
+   journalling as shown. These settings can be modified on a per
+   table basis. Note: If you plan to use bdb_recover, you must
+   change the LOGFLAGS.
                 METADATA_READONLY
                 0
                 METADATA_LOGFLAGS
@@ -211,9 +212,9 @@ by default none is loaded
 
    Execute kamdbctl - There are three (3) groups of tables you
    may need depending on your situation.
-                kamdbctl create             (required)
-                kamdbctl presence           (optional)
-                kamdbctl extra              (optional)
+                kamdbctl create                 (required)
+                kamdbctl presence               (optional)
+                kamdbctl extra                  (optional)
 
    Modify the Kamailio configuration file to use db_berkeley
    module. The database URL for modules must be the path to the
@@ -233,8 +234,8 @@ by default none is loaded
    effort'. So if the hard drive becomes full, the attempt to
    write a journal entry may fail.
 
-   Note on use_domain- The db_berkeley module will attempt natural
-   joins when performing a query. This is basically a
+   Note on use_domain- The db_berkeley module will attempt
+   natural joins when performing a query. This is basically a
    lexigraphical string compare using the keys provided. In most
    places in the db_berkeley dbschema (unless you customize), the
    domainname is identified as a natural key. Consider an example
@@ -257,9 +258,9 @@ by default none is loaded
    begin with 'METADATA'. Here is an example of table meta-data,
    taken from the table 'version'.
 
-   Note on reserved character- The '|' pipe character is used as a
-   record delimiter within the Berkeley DB implementation and must
-   not be present in any DB field.
+   Note on reserved character- The '|' pipe character is used as
+   a record delimiter within the Berkeley DB implementation and
+   must not be present in any DB field.
 
    Example 1.4. METADATA_COLUMNS
 METADATA_COLUMNS
@@ -280,8 +281,8 @@ METADATA_KEY
    delimited by the '|' pipe character. Since the code tokenizes
    on this delimiter, it is important that this character not
    appear in any valid data field. The following is the output of
-   the 'db_berkeley.sh dump version' command. It shows contents of
-   table 'version' in plain text.
+   the 'db_berkeley.sh dump version' command. It shows contents
+   of table 'version' in plain text.
 
    Example 1.5. contents of version table
 VERSION=3
@@ -342,9 +343,10 @@ DATA=END
 
    Example 1.6. METADATA_COLUMNS
 METADATA_COLUMNS
-username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(st
-r) last_name(str) email_address(str) datetime_created(datetime) timezone
-(str) rpid(str)
+username(str) domain(str) password(str) ha1(str) ha1b(str) first_name(s
+tr) last_name(str) email_address(str) datetime_created(datetime) timezo
+ne(str) rpid(str)
+
 
    Related (hardcoded) limitations:
      * maximum of 32 columns per table.
@@ -356,18 +358,19 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
 
 1.9. METADATA_KEYS (required)
 
-   The METADATA_KEYS row indicates the indexes of the key columns,
-   with respect to the order specified in METADATA_COLUMNS. Here
-   is an example taken from table subscriber that brings up a good
-   point:
+   The METADATA_KEYS row indicates the indexes of the key
+   columns, with respect to the order specified in
+   METADATA_COLUMNS. Here is an example taken from table
+   subscriber that brings up a good point:
 
    Example 1.7. METADATA_KEYS
  METADATA_KEY
  0 1
 
-   The point is that both the username and domain name are require
-   as the key to this record. Thus, usrloc modparam use_domain = 1
-   must be set for this to work.
+
+   The point is that both the username and domain name are
+   require as the key to this record. Thus, usrloc modparam
+   use_domain = 1 must be set for this to work.
 
 1.10. METADATA_READONLY (optional)
 
@@ -380,9 +383,9 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
 1.11. METADATA_LOGFLAGS (optional)
 
    The METADATA_LOGFLAGS row contains a bitfield that customizes
-   the journaling on a per table basis. If not present the default
-   value is taken as 0. Here are the masks so far (taken from
-   bdb_lib.h):
+   the journaling on a per table basis. If not present the
+   default value is taken as 0. Here are the masks so far (taken
+   from bdb_lib.h):
 
    Example 1.8. METADATA_LOGFLAGS
 #define JLOG_NONE 0
@@ -393,14 +396,14 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
 #define JLOG_SYSLOG 16
 
    This means that if you want to journal INSERTS to local file
-   and syslog the value should be set to 1+16=17. Or if you do not
-   want to journal at all, set this to 0.
+   and syslog the value should be set to 1+16=17. Or if you do
+   not want to journal at all, set this to 0.
 
 1.12. DB Maintaince Script : kamdbctl
 
    Use the kamdbctl script for maintaining Kamailio Berkeley DB
-   tables. This script assumes you have DBENGINE and DB_PATH setup
-   correctly in kamctlrc. Note Unsupported commands are-
+   tables. This script assumes you have DBENGINE and DB_PATH
+   setup correctly in kamctlrc. Note Unsupported commands are-
    backup, restore, migrate, copy, serweb.
 
    Example 1.9. kamdbctl
@@ -409,25 +412,25 @@ usage: kamdbctl create
        kamdbctl extra
        kamdbctl drop
        kamdbctl reinit
-       kamdbctl bdb list         (lists the underlying db files in D
-B_PATH)
-       kamdbctl bdb cat       db (prints the contents of db file to
-STDOUT in plain-text)
-       kamdbctl bdb swap      db (installs db.new by db -> db.old; d
-b.new -> db)
-       kamdbctl bdb append    db datafile (appends data to a new ins
-tance of db; output DB_PATH/db.new)
-       kamdbctl bdb newappend db datafile (appends data to a new ins
-tance of db; output DB_PATH/db.new)
+       kamdbctl bdb list         (lists the underlying db files in DB_P
+ATH)
+       kamdbctl bdb cat       db (prints the contents of db file to STD
+OUT in plain-text)
+       kamdbctl bdb swap      db (installs db.new by db -> db.old; db.n
+ew -> db)
+       kamdbctl bdb append    db datafile (appends data to a new instan
+ce of db; output DB_PATH/db.new)
+       kamdbctl bdb newappend db datafile (appends data to a new instan
+ce of db; output DB_PATH/db.new)
 
 1.13. DB Recovery : bdb_recover
 
    The db_berkeley module uses the Concurrent Data Store (CDS)
-   architecture. As such, no transaction or journaling is provided
-   by the DB natively. The application bdb_recover is specifically
-   written to recover data from journal files that Kamailio
-   creates. The bdb_recover application requires an additional
-   text file that contains the table schema.
+   architecture. As such, no transaction or journaling is
+   provided by the DB natively. The application bdb_recover is
+   specifically written to recover data from journal files that
+   Kamailio creates. The bdb_recover application requires an
+   additional text file that contains the table schema.
 
    The schema is loaded with the '-s' option and is required for
    all operations. Provide the path to the db_berkeley plain-text
@@ -452,22 +455,22 @@ usage: ./bdb_recover -s schemadir [-h home] [-C all]
         This will create all the core tables, each with metadata.
 
 usage: ./bdb_recover -s schemadir [-h home] [-r journal-file]
-        This will rebuild a DB and populate it with operation from journ
-al-file.
-        The table name is embedded in the journal-file name by conventio
-n.
+        This will rebuild a DB and populate it with operation from jour
+nal-file.
+        The table name is embedded in the journal-file name by conventi
+on.
 
 usage: ./bdb_recover -s schemadir [-h home] [-R lastN]
-        This will iterate over all core tables enumerated. If journal fi
-les exist in 'home',
+        This will iterate over all core tables enumerated. If journal f
+iles exist in 'home',
         a new DB file will be created and populated with the data found
-in the last N files.
-        The files are 'replayed' in chronological order (oldest to newes
-t). This
+ in the last N files.
+        The files are 'replayed' in chronological order (oldest to newe
+st). This
         allows the administrator to rebuild the db with a subset of all
-possible
-        operations if needed. For example, you may only be interested in
-
+ possible
+        operations if needed. For example, you may only be interested i
+n
         the last hours data in table location.
 
    Important note- A corrupted DB file must be moved out of the
@@ -477,5 +480,5 @@ possible
 
    The Berkeley DB does not nativly support an autoincrement (or
    sequence) mechanism. Consequently, this version does not
-   support surragate keys in dbschema. These are the id columns in
-   the tables.
+   support surragate keys in dbschema. These are the id columns
+   in the tables.
