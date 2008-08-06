@@ -74,8 +74,8 @@ int bdb_get_columns(table_p _tp, db_res_t* _res, int* _lres, int _nc)
 			db_free_columns(_res);
 			return -3;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
-				RES_NAMES(_res)[col]);
+		LM_DBG("allocate %lu bytes for RES_NAMES[%d] at %p\n",
+			(unsigned long)sizeof(str), col, RES_NAMES(_res)[col]);
 
 		/* The pointer that is here returned is part of the result structure. */
 		RES_NAMES(_res)[col]->s = cp->name.s;
