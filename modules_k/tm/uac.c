@@ -299,13 +299,17 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		} else {
 			/* set transaction AVP list */
 			backup = set_avp_list( &new_cell->user_avps );
+			/* backup script flags */
 			sflag_bk = getsflags();
+			/* disable parallel forking */
+			set_dset_state( 0 /*disable*/);
 
 			/* run the route */
 			swap_route_type( backup_route_type, LOCAL_ROUTE);
 			run_top_route( local_rlist, req);
 			set_route_type( backup_route_type );
 
+			set_dset_state( 1 /*enable*/);
 			setsflagsval(sflag_bk);
 			set_avp_list( backup );
 
