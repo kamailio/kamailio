@@ -65,6 +65,7 @@
 #include "../../receive.h"
 #include "../../route.h"
 #include "../../action.h"
+#include "../../dset.h"
 #endif
 
 #include "ut.h"
