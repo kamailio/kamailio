@@ -42,7 +42,7 @@
  *            a call (or multiple calls) to PQgetResult.
  *            Removed transaction processing calls (BEGIN/COMMIT/ROLLBACK) as 
  *            they added uneeded overhead.  Klaus' testing showed in excess of 
- *            1ms gain by removing each command.  In addition, OpenSER only 
+ *            1ms gain by removing each command.  In addition, Kamailio only 
  *            issues single queries and is not, at this time transaction aware.
  *            The transaction processing routines have been left in place 
  *            should this support be needed in the future.
