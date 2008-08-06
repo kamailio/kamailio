@@ -59,12 +59,11 @@ Contents
          work
       o  GNU install, BSD install or Solaris install if you want
          "make install", "make bin", "make sunpkg" to work
-	  o  libmysqlclient & libz (zlib) for MySQL support (the mysql
-	     module)
 
    If you want to build some of the modules, you will have to fulfill
    additional requirements:
 
+      o  libmysqlclient & libz (zlib) for MySQL support (the mysql module)
       o  libexpat for jabber gateway support (the jabber module)
       o  libxml2 for the cpl-c (CPL support), pa (presence) and xmlrpc
 	     modules
