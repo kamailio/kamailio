@@ -11,8 +11,8 @@ Bogdan-Andrei Iancu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 15:31:30 -0400
-   (Wed, 19 Mar 2008) $
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
      _________________________________________________________
 
    Table of Contents
@@ -962,7 +962,7 @@ Chapter 3. Frequently Asked Questions
 
    Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/.
+   Take a look at http://www.kamailio.org/kamailiohome;.
    3.3.
 
    Where can I post a question about this module?
@@ -970,9 +970,11 @@ Chapter 3. Frequently Asked Questions
    First at all check if your question was already answered on
    one of our mailing lists:
      * User Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+       http://lists.kamailio.org/cgi-bin/mailman/listinfo/userska
+       mailiousers;
      * Developer Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+       http://lists.kamailio.org/cgi-bin/mailman/listinfo/develka
+       mailiodev;
 
    E-mails regarding any stable Kamailio release should be sent
    to <users@lists.kamailio.org> and e-mails regarding
@@ -986,4 +988,4 @@ Chapter 3. Frequently Asked Questions
    How can I report a bug?
 
    Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143.
+   http://sourceforge.net/tracker/?group_id=139143kamailiobugs;.

@@ -1,3 +1,4 @@
+
 DBTEXT Module
 
 Daniel-Constantin Mierla
@@ -12,9 +13,9 @@ Daniel-Constantin Mierla
 
    Copyright © 2003, 2004 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -64,11 +65,11 @@ Chapter 1. Admin Guide
    other database module (like MySQL).
 
    The module is meant for use in demos or small devices that do
-   not support other DB modules. It keeps everything in memory and
-   if you deal with large amount of data you may run quickly out
-   of memory. Also, it has not implemented all standard database
-   facilities (like order by), it includes minimal functionality
-   to work properly (who knows ?!?) with Kamailio.
+   not support other DB modules. It keeps everything in memory
+   and if you deal with large amount of data you may run quickly
+   out of memory. Also, it has not implemented all standard
+   database facilities (like order by), it includes minimal
+   functionality to work properly (who knows ?!?) with Kamailio.
 
    NOTE: the timestamp is printed in an integer value from time_t
    structure. If you use it in a system that cannot do this
@@ -78,20 +79,21 @@ Chapter 1. Admin Guide
    NOTE: even when is in non-caching mode, the module does not
    write back to hard drive after changes. In this mode, the
    module checks if the corresponding file on disk has changed,
-   and reloads it. The write on disk happens at openser shut down.
+   and reloads it. The write on disk happens at openser shut
+   down.
 
 1.1.1. Design of dbtext engine
 
    The dbtext database system architecture:
      * a database is represented by a directory in the local file
-       system. NOTE: when you use dbtext in Kamailio, the database
-       URL for modules must be the path to the directory where the
-       table-files are located, prefixed by "dbtext://", e.g.,
-       "dbtext:///var/dbtext/ser". If there is no "/" after
-       "dbtext://" then "CFG_DIR/" is inserted at the beginning of
-       the database path. So, either you provide an absolute path
-       to database directory or a relative one to "CFG_DIR"
-       directory.
+       system. NOTE: when you use dbtext in Kamailio, the
+       database URL for modules must be the path to the directory
+       where the table-files are located, prefixed by
+       "dbtext://", e.g., "dbtext:///var/dbtext/ser". If there is
+       no "/" after "dbtext://" then "CFG_DIR/" is inserted at
+       the beginning of the database path. So, either you provide
+       an absolute path to database directory or a relative one
+       to "CFG_DIR" directory.
      * a table is represented by a text file inside database
        directory.
 
@@ -101,24 +103,24 @@ Chapter 1. Admin Guide
    be declared as follows:
      * the name of column must not include white spaces.
      * the format of a column definition is: name(type,attr).
-     * between two column definitions must be a white space, e.g.,
-       "first_name(str) last_name(str)".
+     * between two column definitions must be a white space,
+       e.g., "first_name(str) last_name(str)".
      * the type of a column can be:
           + int - integer numbers.
           + double - real numbers with two decimals.
           + str - strings with maximum size of 4KB.
      * a column can have one of the attributes:
           + auto - only for 'int' columns, the maximum value in
-            that column is incremented and stored in this field if
-            it is not provided in queries.
+            that column is incremented and stored in this field
+            if it is not provided in queries.
           + null - accept null values in column fields.
           + if no attribute is set, the fields of the column
             cannot have null value.
      * each other line is a row with data. The line ends with
        "\n".
      * the fields are separated by ":".
-     * no value between two ':' (or between ':' and start/end of a
-       row) means "null" value.
+     * no value between two ':' (or between ':' and start/end of
+       a row) means "null" value.
      * next characters must be escaped in strings: "\n", "\r",
        "\t", ":".
      * 0 -- the zero value must be escaped too.
@@ -170,11 +172,11 @@ suser:supasswd:xxx:alpha.org:xxx
 
    Set caching mode (0) or non-caching mode (1). In caching mode,
    data is loaded at startup. In non-caching mode, the module
-   check every time a table is requested whether the corresponding
-   file on disk has changed, and if yes, will re-load table from
-   file.
+   check every time a table is requested whether the
+   corresponding file on disk has changed, and if yes, will
+   re-load table from file.
 
-   Default value is "0".
+   Default value is "0". 
 
    Example 1.4. Set db_mode parameter
 ...
@@ -190,49 +192,50 @@ modparam("db_text", "db_mode", 1)
    Compile the module and load it instead of mysql or other DB
    modules.
 
-   REMINDER: when you use dbtext in Kamailio, the database URL for
-   modules must be the path to the directory where the table-files
-   are located, prefixed by "dbtext://", e.g.,
+   REMINDER: when you use dbtext in Kamailio, the database URL
+   for modules must be the path to the directory where the
+   table-files are located, prefixed by "dbtext://", e.g.,
    "dbtext:///var/dbtext/ser". If there is no "/" after
-   "dbtext://" then "CFG_DIR/" is inserted at the beginning of the
-   database path. So, either you provide an absolute path to
+   "dbtext://" then "CFG_DIR/" is inserted at the beginning of
+   the database path. So, either you provide an absolute path to
    database directory or a relative one to "CFG_DIR" directory.
 
    Example 1.5. Load the dbtext module
 ...
 loadmodule "/path/to/kamailio/modules/db_text.so"
 ...
-modparam("module_name", "database_URL", "text:///path/to/dbtext/database
-")
+modparam("module_name", "database_URL", "text:///path/to/dbtext/databas
+e")
 ...
 
 1.5.1. Using dbtext with basic Kamailio configuration
 
    Here are the definitions for most important table as well as a
-   basic configuration file to use dbtext with Kamailio. The table
-   structures may change in time and you will have to adjust next
-   examples. These are know to work with upcoming Kamailio v0.9.x
+   basic configuration file to use dbtext with Kamailio. The
+   table structures may change in time and you will have to
+   adjust next examples. These are know to work with upcoming
+   Kamailio v0.9.x
 
    You have to populate the table 'subscriber' by hand with user
-   profiles in order to have authentication. To use with the given
-   configuration file, the table files must be placed in the
-   '/tmp/serdb' directory.
+   profiles in order to have authentication. To use with the
+   given configuration file, the table files must be placed in
+   the '/tmp/serdb' directory.
 
    Example 1.6. Definition of 'subscriber' table (one line)
 ...
-username(str) domain(str) password(str) first_name(str) last_name(str) p
-hone(str) email_address(str) datetime_created(int) datetime_modified(int
-) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1(st
-r) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,null
-)
+username(str) domain(str) password(str) first_name(str) last_name(str)
+phone(str) email_address(str) datetime_created(int) datetime_modified(i
+nt) confirmation(str) flag(str) sendnotification(str) greeting(str) ha1
+(str) ha1b(str) perms(str) allow_find(str) timezone(str,null) rpid(str,
+null)
 ...
 
-   Example 1.7. Definition of 'location' and 'aliases' tables (one
-   line)
+   Example 1.7. Definition of 'location' and 'aliases' tables
+   (one line)
 ...
-username(str) domain(str,null) contact(str,null) received(str) expires(i
-nt,null) q(double,null) callid(str,null) cseq(int,null) last_modified(st
-r) flags(int) user_agent(str) socket(str)
+username(str) domain(str,null) contact(str,null) received(str) expires(
+int,null) q(double,null) callid(str,null) cseq(int,null) last_modified(
+str) flags(int) user_agent(str) socket(str)
 ...
 
    Example 1.8. Definition of 'version' table and sample records

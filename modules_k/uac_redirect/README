@@ -1,3 +1,4 @@
+
 UAC_REDIRECT Module
 
 Bogdan-Andrei Iancu
@@ -10,9 +11,9 @@ Bogdan-Andrei Iancu
 
    Copyright © 2005 Voice Sistem
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -35,10 +36,10 @@ Bogdan-Andrei Iancu
 
         1.5. Exported Functions
 
-              1.5.1. set_deny_filter(filter,flags)
-              1.5.2. set_accept_filter(filter,flags)
-              1.5.3. get_redirects(max)
-              1.5.4. get_redirects(max,reason)
+              1.5.1. set_deny_filter(filter,flags) 
+              1.5.2. set_accept_filter(filter,flags) 
+              1.5.3. get_redirects(max) 
+              1.5.4. get_redirects(max,reason) 
 
         1.6. Script Example
 
@@ -95,9 +96,9 @@ Chapter 1. Admin Guide
      * outgoing URI - which will be the redirect URI.
 
    For each redirect contact, a separate record will be logged.
-   For example, if a call is redirected to three new contacts, the
-   module will log three additional records corresponding to each
-   redirect URI.
+   For example, if a call is redirected to three new contacts,
+   the module will log three additional records corresponding to
+   each redirect URI.
 
 1.3. Dependencies
 
@@ -105,8 +106,8 @@ Chapter 1. Admin Guide
 
    The following modules must be loaded before this module:
      * TM - Transaction Module, for accessing replies.
-     * ACC - Accounting Module, but only if the logging feature is
-       used.
+     * ACC - Accounting Module, but only if the logging feature
+       is used.
 
 1.3.2. External Libraries or Applications
 
@@ -121,7 +122,7 @@ Chapter 1. Admin Guide
    The default behavior in filtering contacts. It may be "accept"
    or "deny".
 
-   The default value is "accept".
+   The default value is "accept". 
 
    Example 1.1. Set default_filter module parameter
 ...
@@ -130,9 +131,9 @@ modparam("uac_redirect","default_filter","deny")
 
 1.4.2. deny_filter (string)
 
-   The regular expression for default deny filtering. It make sens
-   to be defined on only if the default_filter parameter is set to
-   "accept". All contacts matching the deny_filter will be
+   The regular expression for default deny filtering. It make
+   sens to be defined on only if the default_filter parameter is
+   set to "accept". All contacts matching the deny_filter will be
    rejected; the rest of them will be accepted for redirection.
 
    The parameter may be defined only one - multiple definition
@@ -140,7 +141,7 @@ modparam("uac_redirect","default_filter","deny")
    expression need to be defined, use the set_deny_filter()
    scripting function.
 
-   This parameter is optional, it's default value being NULL.
+   This parameter is optional, it's default value being NULL. 
 
    Example 1.2. Set deny_filter module parameter
 ...
@@ -159,7 +160,7 @@ modparam("uac_redirect","deny_filter",".*@siphub\.net")
    expression need to be defined, use the set_accept_filter()
    scripting function.
 
-   This parameter is optional, it's default value being NULL.
+   This parameter is optional, it's default value being NULL. 
 
    Example 1.3. Set accept_filter module parameter
 ...
@@ -179,7 +180,7 @@ modparam("uac_redirect","accept_filter",".*@siphub\.net")
      * acc_rad_request
      * acc_diam_request
 
-   The default value is "acc_log_request".
+   The default value is "acc_log_request". 
 
    Example 1.4. Set acc_function parameter
 ...
@@ -194,7 +195,7 @@ modparam("uac_redirect","acc_function","acc_db_request")
    enabled. Accounting may only be enabled via two parameters
    set_accept_filter() scripting function.
 
-   The default value is "acc".
+   The default value is "acc". 
 
    Example 1.5. Set acc_db_table parameter
 ...
@@ -209,8 +210,8 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
    additional filter will apply only to the current message - it
    will not have a global effect.
 
-   Default or previous added deny filter may be reset depending of
-   the flag parameter value:
+   Default or previous added deny filter may be reset depending
+   of the flag parameter value:
      * reset_all - reset both default and previous added deny
        filters;
      * reset_default - reset only the default deny filter;
@@ -227,16 +228,17 @@ set_deny_filter(".*@domain1.net","");
 
 1.5.2.  set_accept_filter(filter,flags)
 
-   Sets additional accept filters. Maximum 6 may be combined. This
-   additional filter will apply only to the current message - it
-   will not have a global effect.
+   Sets additional accept filters. Maximum 6 may be combined.
+   This additional filter will apply only to the current message
+   - it will not have a global effect.
 
-   Default or previous added deny filter may be reset depending of
-   the flag parameter value:
+   Default or previous added deny filter may be reset depending
+   of the flag parameter value:
      * reset_all - reset both default and previous added accept
        filters;
      * reset_default - reset only the default accept filter;
-     * reset_added - reset only the previous added accept filters;
+     * reset_added - reset only the previous added accept
+       filters;
      * empty - no reset, just add the filter.
 
    This function can be used from FAILURE_ROUTE.

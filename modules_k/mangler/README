@@ -1,3 +1,4 @@
+
 mangler Module
 
 Gabriel Vasile
@@ -10,9 +11,9 @@ Gabriel Vasile
 
    Copyright © 2003 Fill in here
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 20:31:30 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -30,11 +31,11 @@ Gabriel Vasile
 
         1.4. Exported Functions
 
-              1.4.1. sdp_mangle_ip(pattern, newip)
-              1.4.2. sdp_mangle_port(offset)
-              1.4.3. encode_contact(encoding_prefix)
-              1.4.4. decode_contact()
-              1.4.5. decode_contact_header()
+              1.4.1. sdp_mangle_ip(pattern, newip) 
+              1.4.2. sdp_mangle_port(offset) 
+              1.4.3. encode_contact(encoding_prefix) 
+              1.4.4. decode_contact() 
+              1.4.5. decode_contact_header() 
 
    List of Examples
 
@@ -79,7 +80,7 @@ Warning
    Otherwise it is possible for the decoding step to fail/produce
    wrong results.
 
-   Default value is "*".
+   Default value is "*". 
 
    Example 1.1. Set db_url parameter
 ...
@@ -118,8 +119,8 @@ sdp_mangle_ip("10.0.0.0/8","193.175.135.38");
 
 1.4.2.  sdp_mangle_port(offset)
 
-   Changes ports inside SDP package in lines describing media like
-   m=audio 13451.
+   Changes ports inside SDP package in lines describing media
+   like m=audio 13451.
 
    The function returns negative on error, or number of
    replacements + 1.
@@ -146,16 +147,16 @@ sdp_mangle_port("-12000");
    The function returns negative on error, 1 on success.
 
    Meaning of the parameters is as follows:
-     * encoding_prefix - Something to allow us to determine that a
-       contact is encoded publicip--a routable IP, most probably
-       you should put your external IP of your NAT box.
+     * encoding_prefix - Something to allow us to determine that
+       a contact is encoded publicip--a routable IP, most
+       probably you should put your external IP of your NAT box.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE.
 
    Example 1.4. encode_contact usage
 ...
-if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38");
-
+if (src_ip == 10.0.0.0/8) encode_contact("enc_prefix","193.175.135.38")
+;
 ...
 
 1.4.4.  decode_contact()

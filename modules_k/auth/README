@@ -1,3 +1,4 @@
+
 Auth Module
 
 Jan Janak
@@ -29,9 +30,9 @@ Jan Janak
 
    Copyright © 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-19 21:40:18 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -58,14 +59,14 @@ Jan Janak
 
         1.5. Exported Functions
 
-              1.5.1. www_challenge(realm, qop)
-              1.5.2. proxy_challenge(realm, qop)
-              1.5.3. consume_credentials()
-              1.5.4. is_rpid_user_e164()
+              1.5.1. www_challenge(realm, qop) 
+              1.5.2. proxy_challenge(realm, qop) 
+              1.5.3. consume_credentials() 
+              1.5.4. is_rpid_user_e164() 
               1.5.5. append_rpid_hf()
-              1.5.6. append_rpid_hf(prefix, suffix)
-              1.5.7. pv_www_authorize(realm)
-              1.5.8. pv_proxy_authorize(realm)
+              1.5.6. append_rpid_hf(prefix, suffix) 
+              1.5.7. pv_www_authorize(realm) 
+              1.5.8. pv_proxy_authorize(realm) 
 
    List of Examples
 
@@ -91,32 +92,32 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This is a module that provides common functions that are needed
-   by other authentication related modules. Also, it can perform
-   authentication taking username and password from
+   This is a module that provides common functions that are
+   needed by other authentication related modules. Also, it can
+   perform authentication taking username and password from
    pseudo-variables.
 
 1.2. Nonce Security
 
-   The authentication mechanism offers protection against sniffing
-   intrusion. The module generates and verifies the nonces so that
-   they can be used only once (in an auth response). This is done
-   by having a lifetime value and an index associated with every
-   nonce. Using only an expiration value is not good enough
-   because,as this value has to be of few tens of seconds, it is
-   possible for someone to sniff on the network, get the
-   credentials and then reuse them in another packet with which to
-   register a different contact or make calls using the others's
-   account. The index ensures that this will never be possible
-   since it is generated as unique through the lifetime of the
-   nonce.
+   The authentication mechanism offers protection against
+   sniffing intrusion. The module generates and verifies the
+   nonces so that they can be used only once (in an auth
+   response). This is done by having a lifetime value and an
+   index associated with every nonce. Using only an expiration
+   value is not good enough because,as this value has to be of
+   few tens of seconds, it is possible for someone to sniff on
+   the network, get the credentials and then reuse them in
+   another packet with which to register a different contact or
+   make calls using the others's account. The index ensures that
+   this will never be possible since it is generated as unique
+   through the lifetime of the nonce.
 
 1.3. Dependencies
 
 1.3.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words
-   the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
      * sl -- Stateless replies
 
 1.3.2. External Libraries or Applications
@@ -199,10 +200,10 @@ modparam("auth", "realm_prefix", "sip.")
 
 1.4.6. rpid_avp (string)
 
-   Full AVP specification for the AVP which stores the RPID value.
-   It used to transport the RPID value from authentication backend
-   modules (auth_db or auth_radius) or from script to the auth
-   function append_rpid_hf and is_rpid_user_e164.
+   Full AVP specification for the AVP which stores the RPID
+   value. It used to transport the RPID value from authentication
+   backend modules (auth_db or auth_radius) or from script to the
+   auth function append_rpid_hf and is_rpid_user_e164.
 
    If defined to NULL string, all RPID functions will fail at
    runtime.
@@ -261,15 +262,15 @@ modparam("auth", "calculate_ha1", 1)
    regarding digest authentication see RFC2617.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should
-       present to the user so he can decide what username and
-       password to use. Usually this is domain of the host the
-       server is running on.
-       If an empty string "" is used then the server will generate
-       it from the request. In case of REGISTER requests To header
-       field domain will be used (because this header field
-       represents a user being registered), for all other messages
-       From header field domain will be used.
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. In case of REGISTER requests
+       To header field domain will be used (because this header
+       field represents a user being registered), for all other
+       messages From header field domain will be used.
        The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
        When set to 1 then the server will put a qop parameter in
@@ -306,13 +307,13 @@ if (www_authorize("siphub.net", "subscriber")) {
    regarding digest authentication see RFC2617.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should
-       present to the user so he can decide what username and
-       password to use. Usually this is domain of the host the
-       server is running on.
-       If an empty string "" is used then the server will generate
-       it from the request. From header field domain will be used
-       as realm.
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. From header field domain
+       will be used as realm.
        The string may contain pseudo variables.
      * qop - Value of this parameter can be either "1" or "0".
        When set to 1 then the server will put a qop parameter in
@@ -342,11 +343,12 @@ if (!proxy_authorize("", "subscriber)) {
 
    This function removes previously authorized credentials from
    the message being processed by the server. That means that the
-   downstream message will not contain credentials there were used
-   by this server. This ensures that the proxy will not reveal
-   information about credentials used to downstream elements and
-   also the message will be a little bit shorter. The function
-   must be called after www_authorize or proxy_authorize.
+   downstream message will not contain credentials there were
+   used by this server. This ensures that the proxy will not
+   reveal information about credentials used to downstream
+   elements and also the message will be a little bit shorter.
+   The function must be called after www_authorize or
+   proxy_authorize.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -361,10 +363,10 @@ if (www_authorize("", "subscriber)) {
 
    The function checks if the SIP URI received from the database
    or radius server and will potentially be used in
-   Remote-Party-ID header field contains an E164 number (+followed
-   by up to 15 decimal digits) in its user part. Check fails, if
-   no such SIP URI exists (i.e. radius server or database didn't
-   provide this information).
+   Remote-Party-ID header field contains an E164 number
+   (+followed by up to 15 decimal digits) in its user part. Check
+   fails, if no such SIP URI exists (i.e. radius server or
+   database didn't provide this information).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -379,9 +381,9 @@ if (is_rpid_user_e164()) {
 
    Appends to the message a Remote-Party-ID header that contains
    header 'Remote-Party-ID: ' followed by the saved value of the
-   SIP URI received from the database or radius server followed by
-   the value of module parameter radius_rpid_suffix. The function
-   does nothing if no saved SIP URI exists.
+   SIP URI received from the database or radius server followed
+   by the value of module parameter radius_rpid_suffix. The
+   function does nothing if no saved SIP URI exists.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    BRANCH_ROUTE.
@@ -396,13 +398,14 @@ append_rpid_hf();  # Append Remote-Party-ID header field
    This function is the same as Section 1.5.5, "
    append_rpid_hf()". The only difference is that it accepts two
    parameters--prefix and suffix to be added to Remote-Party-ID
-   header field. This function ignores rpid_prefix and rpid_suffix
-   parameters, instead of that allows to set them in every call.
+   header field. This function ignores rpid_prefix and
+   rpid_suffix parameters, instead of that allows to set them in
+   every call.
 
    Meaning of the parameters is as follows:
-     * prefix - Prefix of the Remote-Party-ID URI. The string will
-       be added at the begining of body of the header field, just
-       before the URI.
+     * prefix - Prefix of the Remote-Party-ID URI. The string
+       will be added at the begining of body of the header field,
+       just before the URI.
      * suffix - Suffix of the Remote-Party-ID header field. The
        string will be appended at the end of the header field. It
        can be used to set various URI parameters, for example.
@@ -436,15 +439,15 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
      * -1 (invalid user) - authentication user does not exist.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should
-       present to the user so he can decide what username and
-       password to use. Usually this is domain of the host the
-       server is running on.
-       If an empty string "" is used then the server will generate
-       it from the request. In case of REGISTER requests To header
-       field domain will be used (because this header field
-       represents a user being registered), for all other messages
-       From header field domain will be used.
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. In case of REGISTER requests
+       To header field domain will be used (because this header
+       field represents a user being registered), for all other
+       messages From header field domain will be used.
        The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.
@@ -470,13 +473,13 @@ if (pv_www_authorize("kamailio.org")) {
    negative return codes, see the above function.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should
-       present to the user so he can decide what username and
-       password to use. Usually this is domain of the host the
-       server is running on.
-       If an empty string "" is used then the server will generate
-       it from the request. From header field domain will be used
-       as realm.
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. From header field domain
+       will be used as realm.
        The string may contain pseudo variables.
 
    This function can be used from REQUEST_ROUTE.

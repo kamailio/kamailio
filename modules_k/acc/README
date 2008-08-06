@@ -1,3 +1,4 @@
+
 Acc Module
 
 Jiri Kuthan
@@ -26,9 +27,9 @@ Bogdan-Andrei Iancu
 
    Copyright © 2004, 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-03-10 16:13:24 +0100
-                              (Mo, 10 MÃ¤r 2008) $
-     __________________________________________________________
+   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   (Wed, 06 Aug 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -94,10 +95,10 @@ Bogdan-Andrei Iancu
 
         1.6. Exported Functions
 
-              1.6.1. acc_log_request(comment)
-              1.6.2. acc_db_request(comment, table)
-              1.6.3. acc_rad_request(comment)
-              1.6.4. acc_diam_request(comment)
+              1.6.1. acc_log_request(comment) 
+              1.6.2. acc_db_request(comment, table) 
+              1.6.3. acc_rad_request(comment) 
+              1.6.4. acc_diam_request(comment) 
 
    2. Frequently Asked Questions
 
@@ -150,17 +151,17 @@ Chapter 1. Admin Guide
    different backends like syslog, SQL, RADIUS and DIAMETER (beta
    version).
 
-   To account a transaction and to choose which set of backends to
-   be used, the script writer just has to set some flags (see the
-   module parameters section for flag definitions Section 1.5,
-   "Exported Parameters"). If the accounting flag for a specific
-   backend is set, the acc module will then report on completed
-   transaction. A typical usage of the module takes no
-   acc-specific script command -- the functionality binds
+   To account a transaction and to choose which set of backends
+   to be used, the script writer just has to set some flags (see
+   the module parameters section for flag definitions
+   Section 1.5, "Exported Parameters"). If the accounting flag
+   for a specific backend is set, the acc module will then report
+   on completed transaction. A typical usage of the module takes
+   no acc-specific script command -- the functionality binds
    invisibly through transaction processing. Script writers just
    need to mark the transaction for accounting with proper
-   setflag. Even so, the module allows the script writter to force
-   accounting in special cases via some script functions.
+   setflag. Even so, the module allows the script writter to
+   force accounting in special cases via some script functions.
 
    The accounting module will log by default a fixed set of
    attributes for the transaction - if you customize your
@@ -191,11 +192,11 @@ Chapter 1. Admin Guide
        with BYEs for generating proper CDRs for example for
        purpose of billing, then it is better done in the entity
        which processes accounting information.
-     * If a UA fails in middle of conversation, a proxy will never
-       find out about it. In general, a better practice is to
-       account from an end-device (such as PSTN gateway), which
-       best knows about call status (including media status and
-       PSTN status in case of the gateway).
+     * If a UA fails in middle of conversation, a proxy will
+       never find out about it. In general, a better practice is
+       to account from an end-device (such as PSTN gateway),
+       which best knows about call status (including media status
+       and PSTN status in case of the gateway).
 
    The SQL backend support is compiled in the module. For RADIUS
    and DIAMETER you need to enable it by recompiling the module
@@ -207,24 +208,24 @@ Chapter 1. Admin Guide
    radius client needs to be configured properly. To do so, use
    the template at etc/radiusclient.conf and make sure that
    module's radius_config parameter points to its location. In
-   particular, accounting secret must match that one configured in
-   server and proper dictionary is used (one is available at
-   etc/sip_dictionary). Also note that Debian radiusclient-ng uses
-   /var/run/radius.seq as seqfile but Kamailio Debian init script
-   expects /var/run/kamailio/kamailio_radius.seq, so is needed to
-   change it in radiusclient-ng configuration or in Kamailio Debian
-   init script (if not, Kamailio can't create the seq file when not
-   running as root). Uses along with FreeRadius (
-   http://www.freeradius.org/) and Radiator (
-   http://www.open.com.au/radiator/) servers have been reported to
-   us.
+   particular, accounting secret must match that one configured
+   in server and proper dictionary is used (one is available at
+   etc/sip_dictionary). Also note that Debian radiusclient-ng
+   uses /var/run/radius.seq as seqfile but Kamailio Debian init
+   script expects /var/run/kamailio/kamailio_radius.seq, so is
+   needed to change it in radiusclient-ng configuration or in
+   Kamailio Debian init script (if not, Kamailio can't create the
+   seq file when not running as root). Uses along with FreeRadius
+   ( http://www.freeradius.org/) and Radiator (
+   http://www.open.com.au/radiator/) servers have been reported
+   to us.
 
    NOTE: diameter support was developed for DISC (DIameter Server
    Client project at http://developer.berlios.de/projects/disc/).
    This project seems to be no longer maintained and DIAMETER
-   specifications were updated in the meantime. Thus, the DIAMETER
-   part in the module is obsolete and needs rework to be usable
-   with opendiameter or other DIAMETER servers.
+   specifications were updated in the meantime. Thus, the
+   DIAMETER part in the module is obsolete and needs rework to be
+   usable with opendiameter or other DIAMETER servers.
 
 1.1.1. General Example
 
@@ -235,8 +236,8 @@ modparam("acc", "log_flag", 1)
 if (uri=~"sip:+40") /* calls to Romania */ {
     if (!proxy_authorize("sip_domain.net" /* realm */,
     "subscriber" /* table name */))  {
-        proxy_challenge("sip_domain.net" /* realm */, "0" /* no qop */ )
-;
+        proxy_challenge("sip_domain.net" /* realm */, "0" /* no qop */
+);
         exit;
     }
 
@@ -260,13 +261,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 
 1.2.2. Definitions and syntax
 
-   Selection of extra information is done via xxx_extra parameters
-   by specifying the names of additional information you want to
-   log. This information is defined via pseudo-variables and may
-   include headers, AVPs values or other message or system values.
-   The syntax of the parameter is:
-     * xxx_extra = extra_definition (';'extra_definition)*
-     * extra_definition = log_name '=' pseudo_variable
+   Selection of extra information is done via xxx_extra
+   parameters by specifying the names of additional information
+   you want to log. This information is defined via
+   pseudo-variables and may include headers, AVPs values or other
+   message or system values. The syntax of the parameter is:
+     * xxx_extra = extra_definition (';'extra_definition)* 
+     * extra_definition = log_name '=' pseudo_variable 
 
    The full list of supported pseudo-variables in Kamailio is
    availabe at:
@@ -281,12 +282,13 @@ if (uri=~"sip:+40") /* calls to Romania */ {
        table the columns corresponding to each extra data;
      * RADIUS accounting - log_name will be the AVP name used for
        packing the data into RADIUS message. The log_name will be
-       translated to AVP number via the dictionary. IMPORTANT: add
-       in RADIUS dictionary the log_name attribute.
+       translated to AVP number via the dictionary. IMPORTANT:
+       add in RADIUS dictionary the log_name attribute.
      * DIAMETER accounting - log_name will be the AVP code used
-       for packing the data into DIAMETER message. The AVP code is
-       given directly as integer, since DIAMETER has no dictionary
-       support yet. IMPORTANT: log_name must be a number.
+       for packing the data into DIAMETER message. The AVP code
+       is given directly as integer, since DIAMETER has no
+       dictionary support yet. IMPORTANT: log_name must be a
+       number.
 
 1.2.3. How it works
 
@@ -306,21 +308,21 @@ if (uri=~"sip:+40") /* calls to Romania */ {
    billed, user B must pay for the call - as last party modifing
    the call destination-, and not A - as initiator of the call.
    Call forwarding on server is only one example which shows the
-   necessity of the having an accounting engine with multiple legs
-   support.
+   necessity of the having an accounting engine with multiple
+   legs support.
 
 1.3.2. Configuration
 
    First how it works: The idea is to have a set of AVPs and for
-   each call leg to store a set of values in the AVPs. The meaning
-   of the AVP content is stricly decided by the script writer - it
-   can be the origin and source of the leg, its status or any
-   other related information. If you have a set of 4 AVPS (AVP1,
-   AVP2, AVP3, AVP4), then for the "A call B and B forwards to C"
-   example, you need to set a different set of values for the AVPs
-   for each leg ([A,B] and [B,C]) . The script writer must take
-   care and properly insert all these AVP from the script (in
-   proper order and with the correct type).
+   each call leg to store a set of values in the AVPs. The
+   meaning of the AVP content is stricly decided by the script
+   writer - it can be the origin and source of the leg, its
+   status or any other related information. If you have a set of
+   4 AVPS (AVP1, AVP2, AVP3, AVP4), then for the "A call B and B
+   forwards to C" example, you need to set a different set of
+   values for the AVPs for each leg ([A,B] and [B,C]) . The
+   script writer must take care and properly insert all these AVP
+   from the script (in proper order and with the correct type).
 
    When the accounting information for the call will be
    written/sent, all the call-leg pairs will be added (based on
@@ -347,9 +349,9 @@ Note
        the colums for call-leg info (a column for each AVP of the
        set).
      * Radius -- all sets will be added to the same Radius
-       accounting message as RADIUS AVPs - for each call-leg a set
-       of RADIUS AVPs will be added (corresponding to the per-leg
-       AVP set)
+       accounting message as RADIUS AVPs - for each call-leg a
+       set of RADIUS AVPs will be added (corresponding to the
+       per-leg AVP set)
 
 Note
        You will need to add in your dictionary the RADIUS AVPs
@@ -360,8 +362,8 @@ Note
 
 1.4.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words
-   the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
      * tm -- Transaction Manager
      * a database module -- If SQL support is used.
      * rr -- Record Route, if "detect_direction" module parameter
@@ -411,8 +413,8 @@ modparam("acc", "report_ack", 1)
 1.5.4. report_cancels (integer)
 
    By default, CANCEL reporting is disabled -- most accounting
-   applications wants to see INVITE's cancellation status. Turn on
-   if you explicitly want to account CANCEL transactions.
+   applications wants to see INVITE's cancellation status. Turn
+   on if you explicitly want to account CANCEL transactions.
 
    Default value is 0 (no).
 
@@ -422,10 +424,10 @@ modparam("acc", "report_cancels", 1)
 1.5.5. detect_direction (integer)
 
    Controlles the direction detection for sequential requests. If
-   enabled (non zero value), for sequential requests with upstream
-   direction (from callee to caller), the FROM and TO will be
-   swapped (the direction will be preserved as in the original
-   request).
+   enabled (non zero value), for sequential requests with
+   upstream direction (from callee to caller), the FROM and TO
+   will be swapped (the direction will be preserved as in the
+   original request).
 
    It affects all values related to TO and FROM headers (body,
    URI, username, domain, TAG).
@@ -461,8 +463,8 @@ modparam("acc", "multi_leg_info",
 
 1.5.7. log_flag (integer)
 
-   Request flag which needs to be set to account a transaction via
-   syslog.
+   Request flag which needs to be set to account a transaction
+   via syslog.
 
    Default value is not-set (no flag).
 
@@ -490,9 +492,9 @@ modparam("acc", "log_level", 2)   # Set log_level to 2
 
 1.5.10. log_facility (string)
 
-   Log facility to which accounting messages are issued to syslog.
-   This allows to easily seperate the accounting specific logging
-   from the other log messages.
+   Log facility to which accounting messages are issued to
+   syslog. This allows to easily seperate the accounting specific
+   logging from the other log messages.
 
    Default value is LOG_DAEMON.
 
@@ -561,7 +563,8 @@ modparam("acc", "service_type", 16)
    Default value is NULL.
 
    Example 1.16. radius_extra example
-modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)")
+modparam("acc", "radius_extra", "via=$hdr(Via[*]); email=$avp(s:email)"
+)
 
 1.5.17. db_flag (integer)
 
@@ -689,8 +692,8 @@ modparam("acc", "acc_time_column", "time")
    Default value is NULL.
 
    Example 1.29. db_extra example
-modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)"
-)
+modparam("acc", "db_extra", "ct=$hdr(Content-type); email=$avp(s:email)
+")
 
 1.5.30. diameter_flag (integer)
 
@@ -714,8 +717,8 @@ modparam("acc", "diameter_missed_flag", 3)
 
 1.5.32. diameter_client_host (string)
 
-   Hostname of the machine where the DIAMETER Client is running --
-   DIAMETER specific.
+   Hostname of the machine where the DIAMETER Client is running
+   -- DIAMETER specific.
 
    Default value is "localhost".
 
@@ -739,16 +742,16 @@ modparam("acc", "diameter_client_port", 3000)
    Default value is NULL.
 
    Example 1.34. diameter_extra example
-modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:e
-mail)")
+modparam("acc", "diameter_extra", "7846=$hdr(Content-type);7847=$avp(s:
+email)")
 
 1.6. Exported Functions
 
 1.6.1.  acc_log_request(comment)
 
    acc_request reports on a request, for example, it can be used
-   to report on missed calls to off-line users who are replied 404
-   - Not Found. To avoid multiple reports on UDP request
+   to report on missed calls to off-line users who are replied
+   404 - Not Found. To avoid multiple reports on UDP request
    retransmission, you would need to embed the action in stateful
    processing.
 
@@ -796,8 +799,8 @@ acc_rad_request("Some comment");
 
 1.6.4.  acc_diam_request(comment)
 
-   Like acc_log_request, acc_diam_request reports on a request. It
-   reports to the configured Diameter server.
+   Like acc_log_request, acc_diam_request reports on a request.
+   It reports to the configured Diameter server.
 
    Meaning of the parameters is as follows:
      * comment - Comment to be appended.
@@ -813,57 +816,55 @@ Chapter 2. Frequently Asked Questions
 
    2.1.
 
-       What happend with old log_fmt parameter
+   What happend with old log_fmt parameter
 
-       The parameter became obsolete with the restructure of the data
-       logged by ACC module (refer to the Overview chapter). For
-       similar behaviour you can use the extra accouting (see the
-       coresponding chapter).
-
+   The parameter became obsolete with the restructure of the data
+   logged by ACC module (refer to the Overview chapter). For
+   similar behaviour you can use the extra accouting (see the
+   coresponding chapter).
    2.2.
 
-       What happend with old multi_leg_enabled parameter
+   What happend with old multi_leg_enabled parameter
 
-       The parameter becaome obsolete by the addition of the new
-       multi_leg_info parameter. The multi-leg accouting is
-       automatically enabled when multi_leg_info is defined.
-
+   The parameter becaome obsolete by the addition of the new
+   multi_leg_info parameter. The multi-leg accouting is
+   automatically enabled when multi_leg_info is defined.
    2.3.
 
-       What happend with old src_leg_avp_id and dst_leg_avp_id
-       parameters
+   What happend with old src_leg_avp_id and dst_leg_avp_id
+   parameters
 
-       The parameter was replaced by the more generic new parameter
-       multi_leg_info. This allows logging (per-leg) of more
-       information than just dst and src.
-
+   The parameter was replaced by the more generic new parameter
+   multi_leg_info. This allows logging (per-leg) of more
+   information than just dst and src.
    2.4.
 
-       Where can I find more about Kamailio?
+   Where can I find more about Kamailio?
 
-       Take a look at http://www.kamailio.org/.
-
+   Take a look at http://www.kamailio.org/kamailiohome;.
    2.5.
 
-       Where can I post a question about this module?
+   Where can I post a question about this module?
 
-       First at all check if your question was already answered on one
-       of our mailing lists:
-         * User Mailing List -
-           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
-         * Developer Mailing List -
-           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
+   First at all check if your question was already answered on
+   one of our mailing lists:
+     * User Mailing List -
+       http://lists.kamailio.org/cgi-bin/mailman/listinfo/userska
+       mailiousers;
+     * Developer Mailing List -
+       http://lists.kamailio.org/cgi-bin/mailman/listinfo/develka
+       mailiodev;
 
-       E-mails regarding any stable Kamailio release should be sent to
-       <users@lists.kamailio.org> and e-mails regarding development
-       versions should be sent to <devel@lists.kamailio.org>.
+   E-mails regarding any stable Kamailio release should be sent
+   to <users@lists.kamailio.org> and e-mails regarding
+   development versions should be sent to
+   <devel@lists.kamailio.org>.
 
-       If you want to keep the mail private, send it to
-       <team@lists.kamailio.org>.
-
+   If you want to keep the mail private, send it to
+   <team@lists.kamailio.org>.
    2.6.
 
-       How can I report a bug?
+   How can I report a bug?
 
-       Please follow the guidelines provided at:
-       http://sourceforge.net/tracker/?group_id=139143.
+   Please follow the guidelines provided at:
+   http://sourceforge.net/tracker/?group_id=139143kamailiobugs;.

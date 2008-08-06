@@ -1,3 +1,4 @@
+
 Auth_db Module
 
 Jan Janak
@@ -29,8 +30,8 @@ Jan Janak
    Copyright © 2005 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-03-19 21:40:18 +0100
-                              (Mi, 19 MÃ¤r 2008) $
-     __________________________________________________________
+   (Wed, 19 Mar 2008) $
+     _________________________________________________________
 
    Table of Contents
 
@@ -55,8 +56,8 @@ Jan Janak
 
         1.4. Exported Functions
 
-              1.4.1. www_authorize(realm, table)
-              1.4.2. proxy_authorize(realm, table)
+              1.4.1. www_authorize(realm, table) 
+              1.4.2. proxy_authorize(realm, table) 
 
    List of Examples
 
@@ -87,11 +88,11 @@ Chapter 1. Admin Guide
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other words
-   the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other
+   words the listed modules must be loaded before this module):
      * auth -- Generic authentication functions
-     * database -- Any database module (currently mysql, postgres,
-       dbtext)
+     * database -- Any database module (currently mysql,
+       postgres, dbtext)
 
 1.2.2. External Libraries or Applications
 
@@ -106,22 +107,22 @@ Chapter 1. Admin Guide
    This is URL of the database to be used. Value of the parameter
    depends on the database module used. For example for mysql and
    postgres modules this is something like
-   mysql://username:password@host:port/database. For dbtext module
-   (which stores data in plaintext files) it is directory in which
-   the database resides.
+   mysql://username:password@host:port/database. For dbtext
+   module (which stores data in plaintext files) it is directory
+   in which the database resides.
 
    Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   "mysql://openserro:openserro@localhost/openser". 
 
    Example 1.1. db_url parameter usage
-modparam("auth_db", "db_url", "dbdriver://username:password@dbhost/dbnam
-e")
+modparam("auth_db", "db_url", "dbdriver://username:password@dbhost/dbna
+me")
 
 1.3.2. user_column (string)
 
-   This is the name of the column holding usernames. Default value
-   is fine for most people. Use the parameter if you really need
-   to change it.
+   This is the name of the column holding usernames. Default
+   value is fine for most people. Use the parameter if you really
+   need to change it.
 
    Default value is "username".
 
@@ -131,8 +132,8 @@ modparam("auth_db", "user_column", "user")
 1.3.3. domain_column (string)
 
    This is the name of the column holding domains of users.
-   Default value is fine for most people. Use the parameter if you
-   really need to change it.
+   Default value is fine for most people. Use the parameter if
+   you really need to change it.
 
    Default value is "domain".
 
@@ -141,12 +142,12 @@ modparam("auth_db", "domain_column", "domain")
 
 1.3.4. password_column (string)
 
-   This is the name of the column holding passwords. Passwords can
-   be either stored as plain text or pre-calculated HA1 strings.
-   HA1 strings are MD5 hashes of username, password, and realm.
-   HA1 strings are more safe because the server doesn't need to
-   know plaintext passwords and they cannot be obtained from HA1
-   strings.
+   This is the name of the column holding passwords. Passwords
+   can be either stored as plain text or pre-calculated HA1
+   strings. HA1 strings are MD5 hashes of username, password, and
+   realm. HA1 strings are more safe because the server doesn't
+   need to know plaintext passwords and they cannot be obtained
+   from HA1 strings.
 
    Default value is "ha1".
 
@@ -157,9 +158,10 @@ modparam("auth_db", "password_column", "password")
 
    As described in the previous section this parameter contains
    name of column holding pre-calculated HA1 string that were
-   calculated including the domain in the username. This parameter
-   is used only when calculate_ha1 is set to 0 and user agent send
-   a credentials containing the domain in the username.
+   calculated including the domain in the username. This
+   parameter is used only when calculate_ha1 is set to 0 and user
+   agent send a credentials containing the domain in the
+   username.
 
    Default value of the parameter is ha1b.
 
@@ -168,13 +170,14 @@ modparam("auth_db", "password_column_2", "ha1_2")
 
 1.3.6. calculate_ha1 (integer)
 
-   This parameter tells the server whether it should use plaintext
-   passwords or a pre-calculated HA1 string for authentification.
+   This parameter tells the server whether it should use
+   plaintext passwords or a pre-calculated HA1 string for
+   authentification.
 
    If the parameter is set to 1 and the username parameter of
    credentials contains also "@domain" (some user agents append
-   the domain to the username parameter), then the server will use
-   the HA1 values from the column specified in the
+   the domain to the username parameter), then the server will
+   use the HA1 values from the column specified in the
    "password_column_2" parameter. If the username parameter
    doesn't contain a domain, the server will use the HA1 values
    from the column given in the "password_column"parameter.
@@ -183,15 +186,15 @@ modparam("auth_db", "password_column_2", "ha1_2")
    calculated from the column specified in the "password_column"
    parameter.
 
-   The "password_column_2"column contain also HA1 strings but they
-   should be calculated including the domain in the username
-   parameter (as opposed to password_column which (when containing
-   HA1 strings) should always contains HA1 strings calculated
-   without domain in username.
+   The "password_column_2"column contain also HA1 strings but
+   they should be calculated including the domain in the username
+   parameter (as opposed to password_column which (when
+   containing HA1 strings) should always contains HA1 strings
+   calculated without domain in username.
 
    This ensures that the authentication will always work when
-   using pre-calculated HA1 strings, not depending on the presence
-   of the domain in username.
+   using pre-calculated HA1 strings, not depending on the
+   presence of the domain in username.
 
    Default value of this parameter is 0.
 
@@ -222,18 +225,19 @@ modparam("auth_db", "use_domain", 1)
    name as the column name.
 
    Parameter syntax:
-     * load_credentials = credential (';' credential)*
+     * load_credentials = credential (';' credential)* 
      * credential = (avp_specification '=' column_name) |
-       (column_name)
+       (column_name) 
      * avp_specification = '$avp(' + 'i:'ID | 's:'NAME | alias +
-       ')'
+       ')' 
 
    Default value of this parameter is "rpid".
 
    Example 1.8. load_credentials parameter usage
 # load rpid column into $avp(i:13) and email_address column
 # into $avp(s:email_address)
-modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
+modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address"
+)
 
 1.4. Exported Functions
 
@@ -257,15 +261,15 @@ modparam("auth_db", "load_credentials", "$avp(i:13)=rpid;email_address")
      * -1 (invalid user) - authentication user does not exist.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should
-       present to the user so he can decide what username and
-       password to use. Usually this is domain of the host the
-       server is running on.
-       If an empty string "" is used then the server will generate
-       it from the request. In case of REGISTER requests To header
-       field domain will be used (because this header field
-       represents a user being registered), for all other messages
-       From header field domain will be used.
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. In case of REGISTER requests
+       To header field domain will be used (because this header
+       field represents a user being registered), for all other
+       messages From header field domain will be used.
        The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords
        (usually subscribers table).
@@ -299,13 +303,13 @@ if (www_authorize("siphub.net", "subscriber")) {
      * -1 (invalid user) - authentication user does not exist.
 
    Meaning of the parameters is as follows:
-     * realm - Realm is a opaque string that the user agent should
-       present to the user so he can decide what username and
-       password to use. Usually this is domain of the host the
-       server is running on.
-       If an empty string "" is used then the server will generate
-       it from the request. From header field domain will be used
-       as realm.
+     * realm - Realm is a opaque string that the user agent
+       should present to the user so he can decide what username
+       and password to use. Usually this is domain of the host
+       the server is running on.
+       If an empty string "" is used then the server will
+       generate it from the request. From header field domain
+       will be used as realm.
        The string may contain pseudo variables.
      * table - Table to be used to lookup usernames and passwords
        (usually subscribers table).

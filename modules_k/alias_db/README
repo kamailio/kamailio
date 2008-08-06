@@ -1,3 +1,4 @@
+
 ALIAS_DB Module
 
 Daniel-Constantin Mierla
@@ -17,7 +18,7 @@ Daniel-Constantin Mierla
    Copyright © 2005 voice-system.ro
 
    Copyright © 2008 asipto.com
-     __________________________________________________________
+     _________________________________________________________
 
    Table of Contents
 
@@ -42,7 +43,7 @@ Daniel-Constantin Mierla
 
         1.4. Exported Functions
 
-              1.4.1. alias_db_lookup(table_name)
+              1.4.1. alias_db_lookup(table_name) 
 
    List of Examples
 
@@ -66,9 +67,9 @@ Chapter 1. Admin Guide
    for search (no memory caching).
 
    Having no memory caching the speed of search can decrease but
-   the provisioning is easier. With very fast databases like MySQL
-   the speed penalty can be lowered. Also, the search can be
-   performed on different tables in the same script.
+   the provisioning is easier. With very fast databases like
+   MySQL the speed penalty can be lowered. Also, the search can
+   be performed on different tables in the same script.
 
 1.2. Dependencies
 
@@ -90,19 +91,19 @@ Chapter 1. Admin Guide
    Database URL.
 
    Default value is
-   "mysql://openserro:openserro@localhost/openser".
+   "mysql://openserro:openserro@localhost/openser". 
 
    Example 1.1. Set db_url parameter
 ...
-modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbna
-me")
+modparam("alias_db", "db_url", "dbdriver://username:password@dbhost/dbn
+ame")
 ...
 
 1.3.2. user_column (str)
 
    Name of the column storing username.
 
-   Default value is "username".
+   Default value is "username". 
 
    Example 1.2. Set user_column parameter
 ...
@@ -113,7 +114,7 @@ modparam("alias_db", "user_column", "susername")
 
    Name of the column storing user's domain.
 
-   Default value is "domain".
+   Default value is "domain". 
 
    Example 1.3. Set domain_column parameter
 ...
@@ -124,7 +125,7 @@ modparam("alias_db", "domain_column", "sdomain")
 
    Name of the column storing alias username.
 
-   Default value is "alias_username".
+   Default value is "alias_username". 
 
    Example 1.4. Set alias_user_column parameter
 ...
@@ -135,7 +136,7 @@ modparam("alias_db", "alias_user_column", "auser")
 
    Name of the column storing alias domain.
 
-   Default value is "alias_domain".
+   Default value is "alias_domain". 
 
    Example 1.5. Set alias_domain_column parameter
 ...
@@ -148,7 +149,7 @@ modparam("alias_db", "alias_domain_column", "adomain")
    searching for alias. If set to 0, the domain from R-URI is not
    used, if set to 1 the domain from R-URI is used.
 
-   Default value is "0".
+   Default value is "0". 
 
    Example 1.6. Set use_domain parameter
 ...
@@ -160,7 +161,7 @@ modparam("alias_db", "use_domain", 1)
    Specifies the prefix to be stripped from the domain in R-URI
    before doing the search.
 
-   Default value is "NULL".
+   Default value is "NULL". 
 
    Example 1.7. Set domain_prefix parameter
 ...
@@ -173,7 +174,7 @@ modparam("alias_db", "domain_prefix", "sip.")
    the R-URI, the rest are added as branches.
 
    Default value is "0" (0 - don't add branches; 1 - add
-   branches).
+   branches). 
 
    Example 1.8. Set append_branches parameter
 ...
@@ -184,12 +185,12 @@ modparam("alias_db", "append_branches", 1)
 
 1.4.1.  alias_db_lookup(table_name)
 
-   The function takes the R-URI and search to see whether it is an
-   alias or not. If it is an alias for a local user, the R-URI is
-   replaced with user's SIP uri.
+   The function takes the R-URI and search to see whether it is
+   an alias or not. If it is an alias for a local user, the R-URI
+   is replaced with user's SIP uri.
 
-   The function returns TRUE if R-URI is alias and it was replaced
-   by user's SIP uri.
+   The function returns TRUE if R-URI is alias and it was
+   replaced by user's SIP uri.
 
    Meaning of the parameters is as follows:
      * table_name - the name of the table where to search for
