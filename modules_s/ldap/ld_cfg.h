@@ -28,6 +28,10 @@
 #include "ld_fld.h"
 
 #include "../../str.h"
+#include <sys/time.h>
+
+/* RFC 2251:  maxInt INTEGER ::= 2147483647 -- (2^^31 - 1) -- */
+#define LD_MAXINT (2147483647)
 
 
 struct ld_cfg {
@@ -39,6 +43,8 @@ struct ld_cfg {
 	str* attr;   /**< An array of LDAP attribute names, zero terminated */
 	enum ld_syntax* syntax; /**< An array of configured LDAP syntaxes */
 	int n;          /**< Number of fields in the arrays */
+	int sizelimit; /**< retrieve at most sizelimit entries for a search */
+	int timelimit; /**< wait at most timelimit seconds for a search to complete */
 	struct ld_cfg* next; /**< The next table in the list */
 };
 

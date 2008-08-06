@@ -254,6 +254,8 @@ static cfg_option_t ldap_tab_options[] = {
 	{"field_map", .f = parse_field_map},
 	{"filter",    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{"base",      .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"timelimit", .f = cfg_parse_int_opt},
+	{"sizelimit", .f = cfg_parse_int_opt},
 	{0}
 };
 
@@ -328,6 +330,8 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		for(i = 0; scope_values[i].name; i++) {
 			scope_values[i].param = &cfg->scope;
 		}
+		ldap_tab_options[4].param = &cfg->timelimit;
+		ldap_tab_options[5].param = &cfg->sizelimit;
 	} else if (type == LDAP_CON_SECTION) {
 		if ((cinfo = pkg_malloc(sizeof(*cinfo))) == NULL) {
 			ERR("ldap:%s:%d: Out of memory\n", st->file, st->line);
@@ -442,6 +446,25 @@ struct ld_con_info* ld_find_conn_info(str* conn_id)
 }
 
 
+int ld_cfg_validity_check(struct ld_cfg *cfg)
+{
+	struct ld_cfg *pcfg;
+
+	for (pcfg = cfg; pcfg; pcfg = pcfg->next) {
+		if (pcfg->sizelimit < 0 || pcfg->sizelimit > LD_MAXINT) {
+			ERR("ldap: invalid sizelimit (%d) specified\n", pcfg->sizelimit);
+			return -1;
+		}
+		if (pcfg->timelimit < 0 || pcfg->timelimit > LD_MAXINT) {
+			ERR("ldap: invalid timelimit (%d) specified\n", pcfg->timelimit);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+
 int ld_load_cfg(str* filename)
 {
 	cfg_parser_t* parser;
@@ -464,5 +487,9 @@ int ld_load_cfg(str* filename)
 		return -1;
 	}
 	cfg_parser_close(parser);
+
+	if (ld_cfg_validity_check(cfg))
+		return -1;
+
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id$ 
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,7 +18,7 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
@@ -26,10 +26,10 @@
 #define _LD_CMD_H
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * Declaration of ld_cmd data structure that contains LDAP specific data
  * stored in db_cmd structures and related functions.
  */
@@ -40,6 +40,7 @@
 #include "../../str.h"
 
 #include <stdarg.h>
+#include <sys/time.h>
 
 
 /** Extension structure of db_cmd adding LDAP specific data.
@@ -52,6 +53,8 @@ struct ld_cmd {
 	int scope;    /**< Scope of the search */
 	str filter;   /**< To be added to the search filter */
 	char** result; /**< An array with result attribute names for ldap_search */
+	int sizelimit; /**< retrieve at most sizelimit entries for a search */
+	struct timeval timelimit; /**< wait at most timelimit seconds for a search to complete */
 };
 
 

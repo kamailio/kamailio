@@ -125,6 +125,12 @@ int ld_cmd(db_cmd_t* cmd)
 	lcmd->base = cfg->base.s;
 	lcmd->scope = cfg->scope;
 
+	lcmd->sizelimit = cfg->sizelimit;
+	if (cfg->timelimit) {
+		lcmd->timelimit.tv_sec = cfg->timelimit;
+		lcmd->timelimit.tv_usec = 0;
+	}
+
 	if (cfg->filter.s) {
 		lcmd->filter = cfg->filter;
 	}
@@ -174,7 +180,10 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	}
 
 	ret = ldap_search_ext_s(lcon->con, lcmd->base, lcmd->scope, filter,
-							lcmd->result, 0, NULL, NULL, NULL, 0, &msg);
+							lcmd->result, 0, NULL, NULL,
+							lcmd->timelimit.tv_sec ? &lcmd->timelimit : NULL,
+							lcmd->sizelimit,
+							&msg);
 
 	if (ret != LDAP_SUCCESS) {
 		ERR("ldap: Error in ldap_search: %s\n", ldap_err2string(ret));
