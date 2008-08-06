@@ -1314,7 +1314,8 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id)
         if (stream.transport != TSupported)
             continue; // skip streams with unsupported transports
         if (stream.type.len + stream.ip.len + stream.port.len + stream.direction.len + 4 > str_buf.len) {
-            LM_ERR("media stream description is longer than %d bytes\n", sizeof(media_str));
+            LM_ERR("media stream description is longer than %lu bytes\n",
+				(unsigned long)sizeof(media_str));
             return -1;
         }
         len = sprintf(str_buf.s, "%.*s:%.*s:%.*s:%.*s,",
@@ -1359,7 +1360,8 @@ use_media_proxy(struct sip_msg *msg, char *dialog_id)
                    media_relay.len, media_relay.s);
 
     if (len >= sizeof(request)) {
-        LM_ERR("mediaproxy request is longer than %d bytes\n", sizeof(request));
+        LM_ERR("mediaproxy request is longer than %lu bytes\n",
+			(unsigned long)sizeof(request));
         return -1;
     }
 
@@ -1479,7 +1481,8 @@ end_media_session(str callid, str from_tag, str to_tag)
                    to_tag.len, to_tag.s);
 
     if (len >= sizeof(request)) {
-        LM_ERR("mediaproxy request is longer than %d bytes\n", sizeof(request));
+        LM_ERR("mediaproxy request is longer than %lu bytes\n",
+			(unsigned long)sizeof(request));
         return -1;
     }
 
@@ -1533,7 +1536,7 @@ __dialog_replies(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 static void
 __dialog_ended(struct dlg_cell *dlg, int type, struct dlg_cb_params *_params)
 {
-    if ((int)*_params->param == MPActive) {
+    if ((int)(long)*_params->param == MPActive) {
         end_media_session(dlg->callid, dlg->tag[DLG_CALLER_LEG], dlg->tag[DLG_CALLEE_LEG]);
         *_params->param = MPInactive;
     }

@@ -77,8 +77,8 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			db_free_columns(_r);
 			return -4;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
-				RES_NAMES(_r)[col]);
+		LM_DBG("allocate %lu bytes for RES_NAMES[%d] at %p\n",
+			(unsigned long)sizeof(str),col,	RES_NAMES(_r)[col]);
 
 		char columnname[80];
 		SQLRETURN ret;
