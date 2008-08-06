@@ -141,7 +141,7 @@ real-clean:
 	$(MAKE) TLS=$(TLS) include_modules="$(ALL_MODULES)" proper
 	rm -f cfg.tab.h
 	rm -f utils/kamunix/kamunix.o utils/kamunix/kamunix
-	rm -f utils/db_berkeley/bdb_recover.o utils/db_berkeley/bdb_recover
+	rm -f utils/db_berkeley/kambdb_recover.o utils/db_berkeley/kambdb_recover
 
 	dh_clean
 

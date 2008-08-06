@@ -640,7 +640,7 @@ fi
 
 %files db_berkeley
 %defattr(-,root,root,-)
-%{_sbindir}/bdb_recover
+%{_sbindir}/kambdb_recover
 %{_libdir}/kamailio/modules/db_berkeley.so
 %{_libdir}/kamailio/kamctl/kamdbctl.db_berkeley
 %{_datadir}/kamailio/db_berkeley/kamailio/*
