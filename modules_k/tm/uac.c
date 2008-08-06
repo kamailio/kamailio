@@ -216,7 +216,7 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 	struct usr_avp **backup;
 	char *buf, *buf1;
 	int buf_len, buf_len1;
-	int ret, flags;
+	int ret, flags, sflag_bk;
 	int backup_route_type;
 #endif
 	unsigned int hi;
@@ -299,15 +299,14 @@ int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 		} else {
 			/* set transaction AVP list */
 			backup = set_avp_list( &new_cell->user_avps );
-
-			LM_DBG("running local route - lump are %p %p\n",
-				req->add_rm, req->body_lumps);
+			sflag_bk = getsflags();
 
 			/* run the route */
 			swap_route_type( backup_route_type, LOCAL_ROUTE);
 			run_top_route( local_rlist, req);
 			set_route_type( backup_route_type );
 
+			setsflagsval(sflag_bk);
 			set_avp_list( backup );
 
 			/* check for changes - if none, do not regenerate the buffer 
