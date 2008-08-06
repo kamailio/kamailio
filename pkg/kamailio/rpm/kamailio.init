@@ -6,13 +6,13 @@
 # description: Kamailio is a fast SIP Proxy.
 #
 # processname: kamailio
-# pidfile: /var/run/kamailio/.pid
+# pidfile: /var/run/kamailio.pid
 # config: /etc/kamailio/kamailio.cfg
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-oser=/usr/sbin/kamailio/
+oser=/usr/sbin/kamailio
 prog=kamailio
 RETVAL=0
 
@@ -21,7 +21,7 @@ start() {
 	daemon $oser $OPTIONS >/dev/null 2>/dev/null
 	RETVAL=$?
 	echo
-	[ $RETVAL = 0 ] && touch /var/lock/subsys/kamailio/
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/kamailio
 	return $RETVAL
 }
 
@@ -30,7 +30,7 @@ stop() {
 	killproc $oser
 	RETVAL=$?
 	echo
-	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/kamailio/ /var/run/kamailio/.pid
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/kamailio /var/run/kamailio.pid
 }
 
 # See how we were called.
@@ -50,7 +50,7 @@ case "$1" in
 		start
 		;;
 	condrestart)
-		if [ -f /var/run/kamailio/.pid ] ; then
+		if [ -f /var/run/kamailio.pid ] ; then
 			stop
 			start
 		fi

@@ -19,7 +19,7 @@ as a conffile.
 
 To setup Kamailio, you need to:
  - configure Kamailio properly to suit your needs
- - edit /etc/default/kamailio/, adjust the MEMORY parameter and set
+ - edit /etc/default/kamailio, adjust the MEMORY parameter and set
    RUN_KAMAILIO to "yes"
 
 If you are building an HA cluster using heartbeat or similar, you'll want
@@ -28,10 +28,10 @@ to disable the init script by running:
   update-rc.d kamailio remove
 
 so that Kamailio will not be launched at system startup. You still need
-to set RUN_KAMAILIO to "yes" if you want to use the /etc/init.d/kamailio/ init
+to set RUN_KAMAILIO to "yes" if you want to use the /etc/init.d/kamailio init
 script.
 
-Set the DUMP_CORE parameter in /etc/default/kamailio/ to "yes" if you want to
+Set the DUMP_CORE parameter in /etc/default/kamailio to "yes" if you want to
 get a core dump in case Kamailio crashes. The debug symbols for Kamailio are
 provided by the kamailio-dbg package.
 

@@ -19,9 +19,9 @@ Release:      %rel
 Packager:     Daniel-Constantin Mierla <daniel@voice-system.ro>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://kamailio/.org/pub/kamailio/stable/%{name}-%{ver}_src.tar.gz
+Source:       http://kamailio.org/pub/kamailio/stable/%{name}-%{ver}_src.tar.gz
 Source2:      kamailio.init
-URL:          http://kamailio/.org/
+URL:          http://kamailio.org/
 Vendor:       kamailio.org
 BuildRoot:    /var/tmp/%{name}-%{ver}-root
 Conflicts:    kamailio-mysql < %ver, kamailio-jabber < %ver, kamailio-radius < %ver, kamailio-cpl < %ver, kamailio-unixodbc < %ver, kamailio-pa < %ver, kamailio-postgres < %ver
@@ -204,8 +204,8 @@ make install-doc modules="%RADIUS_MOD_PATH" \
 		cfg-target=/%{_sysconfdir}/kamailio/ 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d
-install -m755 $RPM_SOURCE_DIR/kamailio/.init \
-              $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio/
+install -m755 $RPM_SOURCE_DIR/kamailio.init \
+              $RPM_BUILD_ROOT/%{_sysconfdir}/rc.d/init.d/kamailio
 
 
 
@@ -225,7 +225,7 @@ fi
 
 %files
 %defattr(-,root,root)
-%dir %{_docdir}/kamailio/
+%dir %{_docdir}/kamailio
 %doc %{_docdir}/kamailio/AUTHORS
 %doc %{_docdir}/kamailio/NEWS
 %doc %{_docdir}/kamailio/INSTALL
@@ -274,11 +274,11 @@ fi
 %doc %{_docdir}/kamailio/README.usrloc
 %doc %{_docdir}/kamailio/README.xlog
 
-%dir %{_sysconfdir}/kamailio/
+%dir %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
 %config %{_sysconfdir}/rc.d/init.d/*
 
-%dir %{_libdir}/kamailio/
+%dir %{_libdir}/kamailio
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
 %{_libdir}/kamailio/modules/alias_db.so
@@ -322,7 +322,7 @@ fi
 %{_libdir}/kamailio/modules/usrloc.so
 %{_libdir}/kamailio/modules/xlog.so
 
-%{_sbindir}/kamailio/
+%{_sbindir}/kamailio
 %{_sbindir}/kamctl
 %{_libdir}/kamctl/kamctl.base
 %{_libdir}/kamctl/kamctl.sqlbase
@@ -339,7 +339,7 @@ fi
 %doc %{_docdir}/kamailio/README.mysql
 
 %{_libdir}/kamailio/modules/mysql.so
-%{_sbindir}/kamailio/_mysql.sh
+%{_sbindir}/kamailio_mysql.sh
 %{_libdir}/kamctl/kamctl.mysql
 
 %files postgres
@@ -347,7 +347,7 @@ fi
 %doc %{_docdir}/kamailio/README.postgres
 
 %{_libdir}/kamailio/modules/postgres.so
-%{_sbindir}/kamailio/_postgres.sh
+%{_sbindir}/kamailio_postgres.sh
 %{_libdir}/kamctl/kamctl.pgsql
 
 %files unixodbc

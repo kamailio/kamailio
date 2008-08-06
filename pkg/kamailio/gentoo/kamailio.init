@@ -9,14 +9,14 @@ depend() {
 
 start() {
 	ebegin "Starting Kamailio"
-	start-stop-daemon --start --quiet --pidfile /var/run/kamailio/.pid \
-		--exec /usr/sbin/kamailio/ -- -P /var/run/kamailio/.pid
+	start-stop-daemon --start --quiet --pidfile /var/run/kamailio.pid \
+		--exec /usr/sbin/kamailio -- -P /var/run/kamailio.pid
 	eend $?
 }
 
 stop() {
 	ebegin "Stopping Kamailio"
-	start-stop-daemon --stop --quiet --pidfile /var/run/kamailio/.pid
+	start-stop-daemon --stop --quiet --pidfile /var/run/kamailio.pid
 	eend $?
 }
 

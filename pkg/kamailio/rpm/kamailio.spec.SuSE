@@ -20,7 +20,7 @@ Release:      %rel
 Packager:     Daniel-Constantin Mierla <daniel@voice-system.ro>
 Copyright:    GPL
 Group:        Networking/Daemons
-Source:       http://kamailio/.org/pub/kamailio/stable/%{name}-%{ver}_src.tar.gz
+Source:       http://kamailio.org/pub/kamailio/stable/%{name}-%{ver}_src.tar.gz
 Source2:      kamailio.init.SuSE
 URL:          http://www.kamailio.org/
 Vendor:       kamailio.org
@@ -191,18 +191,18 @@ make install-doc modules="modules/%JABBER_MODULES %RADIUS_MOD_PATH %MYSQL_MODULE
 
 
 mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/init.d
-install -m755 $RPM_SOURCE_DIR/kamailio/.init.SuSE \
-              $RPM_BUILD_ROOT/%{_sysconfdir}/init.d/kamailio/
+install -m755 $RPM_SOURCE_DIR/kamailio.init.SuSE \
+              $RPM_BUILD_ROOT/%{_sysconfdir}/init.d/kamailio
 
 %clean
 rm -rf "$RPM_BUILD_ROOT"
 
 %post
-sbin/insserv etc/init.d/kamailio/
+sbin/insserv etc/init.d/kamailio
 
 %preun
 if [ $1 = 0 ]; then
-    etc/init.d/kamailio/ stop > /dev/null 2>&1
+    etc/init.d/kamailio stop > /dev/null 2>&1
 fi
 
 %postun
@@ -210,7 +210,7 @@ sbin/insserv etc/init.d/
 
 %files
 %defattr(-,root,root)
-%dir %{_docdir}/kamailio/
+%dir %{_docdir}/kamailio
 %doc %{_docdir}/kamailio/AUTHORS
 %doc %{_docdir}/kamailio/NEWS
 %doc %{_docdir}/kamailio/INSTALL
@@ -259,11 +259,11 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/kamailio/README.usrloc
 %doc %{_docdir}/kamailio/README.xlog
 
-%dir %{_sysconfdir}/kamailio/
+%dir %{_sysconfdir}/kamailio
 %config(noreplace) %{_sysconfdir}/kamailio/*
 %config %{_sysconfdir}/init.d/*
 
-%dir %{_libdir}/kamailio/
+%dir %{_libdir}/kamailio
 %dir %{_libdir}/kamailio/modules
 %{_libdir}/kamailio/modules/acc.so
 %{_libdir}/kamailio/modules/alias_db.so
@@ -307,7 +307,7 @@ sbin/insserv etc/init.d/
 %{_libdir}/kamailio/modules/usrloc.so
 %{_libdir}/kamailio/modules/xlog.so
 
-%{_sbindir}/kamailio/
+%{_sbindir}/kamailio
 %{_sbindir}/kamctl
 %{_libdir}/kamctl/kamctl.base
 %{_libdir}/kamctl/kamctl.sqlbase
@@ -324,7 +324,7 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/kamailio/README.mysql
 
 %{_libdir}/kamailio/modules/mysql.so
-%{_sbindir}/kamailio/_mysql.sh
+%{_sbindir}/kamailio_mysql.sh
 %{_libdir}/kamctl/kamctl.mysql
 
 %files postgres
@@ -332,7 +332,7 @@ sbin/insserv etc/init.d/
 %doc %{_docdir}/kamailio/README.postgres
 
 %{_libdir}/kamailio/modules/postgres.so
-%{_sbindir}/kamailio/_postgres.sh
+%{_sbindir}/kamailio_postgres.sh
 %{_libdir}/kamctl/kamctl.pgsql
 
 %files unixodbc

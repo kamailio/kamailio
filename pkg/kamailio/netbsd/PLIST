@@ -1,8 +1,8 @@
 etc/kamailio/kamailio.cfg
 etc/kamailio/kamctlrc
-sbin/kamailio/
+sbin/kamailio
 sbin/kamctl
-sbin/kamailio/_mysql.sh
+sbin/kamailio_mysql.sh
 lib/kamailio/modules/acc.so
 lib/kamailio/modules/alias_db.so
 lib/kamailio/modules/auth.so
@@ -114,7 +114,7 @@ share/doc/kamailio/README.uri_db
 share/doc/kamailio/README.usrloc
 share/doc/kamailio/README.xlog
 share/doc/kamailio/README.xmpp
-@dirrm share/doc/kamailio/
-@dirrm etc/kamailio/
+@dirrm share/doc/kamailio
+@dirrm etc/kamailio
 @dirrm lib/kamailio/modules
-@dirrm lib/kamailio/
+@dirrm lib/kamailio

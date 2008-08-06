@@ -89,8 +89,8 @@ src_install () {
 		bin-dir="" \
 		cfg-prefix=${D}/etc \
 		cfg-dir=kamailio/ \
-		cfg-target=${D}/etc/kamailio/ \
-		modules-prefix=${D}/usr/lib/kamailio/ \
+		cfg-target=${D}/etc/kamailio \
+		modules-prefix=${D}/usr/lib/kamailio \
 		modules-dir=modules \
 		modules-target=${D}/usr/lib/kamailio/modules/ \
 		man-prefix=${D}/usr/share/man \
@@ -98,11 +98,11 @@ src_install () {
 		doc-prefix=${D}/usr/share/doc \
 		doc-dir=${PF} || die
 	exeinto /etc/init.d
-	newexe ${FILESDIR}/kamailio/.init kamailio
+	newexe ${FILESDIR}/kamailio.init kamailio
 
 	# fix what the Makefile don't do
 	use mysql || \
-		rm ${D}/usr/sbin/kamailio/_mysql.sh
+		rm ${D}/usr/sbin/kamailio_mysql.sh
 }
 
 pkg_postinst() {
@@ -114,5 +114,5 @@ pkg_postinst() {
 }
 
 pkg_prerm () {
-	${D}/etc/init.d/kamailio/ stop >/dev/null
+	${D}/etc/init.d/kamailio stop >/dev/null
 }

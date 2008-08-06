@@ -3,8 +3,8 @@
 # $Id$
 
 PKG=kamailio
-DEFAULTS=/etc/default/kamailio/
-HOMEDIR=/var/run/kamailio/
+DEFAULTS=/etc/default/kamailio
+HOMEDIR=/var/run/kamailio
 
 set -e
 

@@ -2,7 +2,7 @@
 # Copyright (c) 2002 FhG FOKUS, Germany.
 # All rights reserved.
 #
-# /etc/init.d/kamailio/
+# /etc/init.d/kamailio
 #
 ### BEGIN INIT INFO
 # Provides:          sip
@@ -18,7 +18,7 @@
 
 
 # Check for missing binaries (stale symlinks should not happen)
-OSER_BIN=/usr/sbin/kamailio/
+OSER_BIN=/usr/sbin/kamailio
 test -x $OSER_BIN || exit 5
 
 # Check for existence of needed config file and read it

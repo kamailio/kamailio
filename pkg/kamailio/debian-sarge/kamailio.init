@@ -16,12 +16,12 @@
 # Should-Stop:       postgresql mysql radius
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/kamailio/
+DAEMON=/usr/sbin/kamailio
 NAME=kamailio
 DESC=kamailio
-HOMEDIR=/var/run/kamailio/
+HOMEDIR=/var/run/kamailio
 PIDFILE=$HOMEDIR/$NAME.pid
-DEFAULTS=/etc/default/kamailio/
+DEFAULTS=/etc/default/kamailio
 RUN_KAMAILIO=no
 
 # Do not start kamailio if fork=no is set in the config file
@@ -29,7 +29,7 @@ RUN_KAMAILIO=no
 check_fork ()
 {
     if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/kamailio/kamailio.cfg; then
-	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio/ debug instead"
+	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio debug instead"
 	exit 1
     fi
 }
@@ -58,9 +58,9 @@ create_radius_seqfile ()
     # write to the file. If the file exists before kamailio starts, it
     # won't change it's ownership and will be writable for both root
     # and kamailio, no matter what options are chosen at install time
-    RADIUS_SEQ_FILE=/var/run/kamailio/kamailio/_radius.seq
-    if [ -d /var/run/kamailio/ ]; then
-	chown ${USER}:${GROUP} /var/run/kamailio/
+    RADIUS_SEQ_FILE=/var/run/kamailio/kamailio_radius.seq
+    if [ -d /var/run/kamailio ]; then
+	chown ${USER}:${GROUP} /var/run/kamailio
 
 	if [ ! -f $RADIUS_SEQ_FILE ]; then
 	    touch $RADIUS_SEQ_FILE
@@ -79,7 +79,7 @@ if [ -f $DEFAULTS ]; then
 fi
 
 if [ "$RUN_KAMAILIO" != "yes" ]; then
-    echo "Kamailio not yet configured. Edit /etc/default/kamailio/ first."
+    echo "Kamailio not yet configured. Edit /etc/default/kamailio first."
     exit 0
 fi
 

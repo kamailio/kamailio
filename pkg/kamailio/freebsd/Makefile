@@ -24,14 +24,14 @@ MAKE_ENV=	CC="${CC}" \
 		PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
 		PTHREAD_LIBS="${PTHREAD_LIBS}"
 
-PLIST_FILES=	sbin/kamailio/ sbin/kamctl sbin/kamdbctl sbin/kamunix \
+PLIST_FILES=	sbin/kamailio sbin/kamctl sbin/kamdbctl sbin/kamunix \
 		lib/kamailio/kamctl/kamctl.base lib/kamailio/kamctl/kamctl.ctlbase \
 		lib/kamailio/kamctl/kamctl.dbtext lib/kamailio/kamctl/kamctl.fifo \
 		lib/kamailio/kamctl/kamctl.sqlbase lib/kamailio/kamctl/kamctl.unixsock \
 		lib/kamailio/kamctl/kamdbctl.base lib/kamailio/kamctl/kamdbctl.dbtext \
 		etc/kamailio/kamctlrc
 
-PLIST_DIRS=	lib/kamailio/modules lib/kamailio/kamctl lib/kamailio/
+PLIST_DIRS=	lib/kamailio/modules lib/kamailio/kamctl lib/kamailio
 
 MODULES=	acc alias_db auth auth_db auth_diameter avpops benchmark \
 		cfgutils dbtext dialog dispatcher diversion domain \
@@ -143,15 +143,15 @@ post-patch:
 		${WRKSRC}/Makefile
 .endif
 	@${REINPLACE_CMD} -e 's|-g -O9 ||' -e 's|-O9 ||' ${WRKSRC}/Makefile.defs
-	@${REINPLACE_CMD} -e 's|/usr/local/etc/kamailio/|${PREFIX}/etc/kamailio/|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/etc/kamailio|${PREFIX}/etc/kamailio|' \
 		${WRKSRC}/scripts/kamdbctl.dbtext
-	@${REINPLACE_CMD} -e 's|/usr/local/share/kamailio/|${PREFIX}/share/kamailio/|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/share/kamailio|${PREFIX}/share/kamailio|' \
 		${WRKSRC}/scripts/kamdbctl.dbtext
-	@${REINPLACE_CMD} -e 's|/etc/kamailio/|${PREFIX}/etc/kamailio/|' \
+	@${REINPLACE_CMD} -e 's|/etc/kamailio|${PREFIX}/etc/kamailio|' \
 		${WRKSRC}/modules/mediaproxy/README \
 		${WRKSRC}/modules/cpl-c/README \
 		${WRKSRC}/INSTALL
-	@${REINPLACE_CMD} -e 's|/usr/local/sbin/kamailio/|${PREFIX}/sbin/kamailio/|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/sbin/kamailio|${PREFIX}/sbin/kamailio|' \
 		${WRKSRC}/INSTALL
 	@${REINPLACE_CMD} -e 's|/usr/local|${PREFIX}|' \
 		${WRKSRC}/etc/kamailio.cfg \

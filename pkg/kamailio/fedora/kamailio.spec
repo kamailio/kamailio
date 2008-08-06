@@ -433,7 +433,7 @@ mv $RPM_BUILD_ROOT/%{_libdir}/kamailio/perl/* \
 mv $RPM_BUILD_ROOT/%{_sysconfdir}/kamailio/tls/README \
   $RPM_BUILD_ROOT/%{_docdir}/kamailio/README.tls
 rm -f $RPM_BUILD_ROOT%{_docdir}/kamailio/INSTALL
-mv $RPM_BUILD_ROOT/%{_docdir}/kamailio/ docdir
+mv $RPM_BUILD_ROOT/%{_docdir}/kamailio docdir
 
 # recode documentation
 for i in docdir/*; do
@@ -444,8 +444,8 @@ done
 
 mkdir -p $RPM_BUILD_ROOT%{_initrddir}
 %{__install} -p -D -m 755 %{SOURCE1} \
-  $RPM_BUILD_ROOT%{_initrddir}/kamailio/
-echo -e "\nETCDIR=\"%{_sysconfdir}/kamailio/\"\n" \
+  $RPM_BUILD_ROOT%{_initrddir}/kamailio
+echo -e "\nETCDIR=\"%{_sysconfdir}/kamailio\"\n" \
   >> $RPM_BUILD_ROOT%{_sysconfdir}/%{name}/kamctlrc
 
 %clean
@@ -462,18 +462,18 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%{_sbindir}/kamailio/
+%{_sbindir}/kamailio
 %{_sbindir}/kamctl
 %{_sbindir}/kamdbctl
 %{_sbindir}/kamunix
 
-%dir %{_sysconfdir}/kamailio/
+%dir %{_sysconfdir}/kamailio
 %dir %{_sysconfdir}/kamailio/tls
 %dir %{_libdir}/kamailio/
 %dir %{_libdir}/kamailio/modules/
 %dir %{_libdir}/kamailio/kamctl/
 
-%attr(755,root,root) %{_initrddir}/kamailio/
+%attr(755,root,root) %{_initrddir}/kamailio
 
 %config(noreplace) %{_sysconfdir}/kamailio/dictionary.radius
 %config(noreplace) %{_sysconfdir}/kamailio/kamailio.cfg
@@ -499,7 +499,7 @@ fi
 %{_datadir}/kamailio/dbtext/kamailio/*
 
 %{_mandir}/man5/kamailio.cfg.5*
-%{_mandir}/man8/kamailio/.8*
+%{_mandir}/man8/kamailio.8*
 %{_mandir}/man8/kamctl.8*
 %{_mandir}/man8/kamunix.8*
 

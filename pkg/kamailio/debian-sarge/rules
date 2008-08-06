@@ -151,16 +151,16 @@ install: build
 	dh_clean -k
 	dh_installdirs
 
-	# Add here commands to install the package into debian/kamailio/
+	# Add here commands to install the package into debian/kamailio
 	# kamailio base package
 	CC="$(CC)" CFLAGS="$(CFLAGS)" TLS=$(TLS) $(MAKE) install skip_modules="$(EXCLUDED_MODULES)" \
-		basedir=$(CURDIR)/debian/kamailio/ \
+		basedir=$(CURDIR)/debian/kamailio \
 		prefix=/usr \
-		cfg-prefix=$(CURDIR)/debian/kamailio/ \
+		cfg-prefix=$(CURDIR)/debian/kamailio \
 		cfg-target=/etc/kamailio/ \
-		doc-dir=share/doc/kamailio/
+		doc-dir=share/doc/kamailio
 
-	find $(CURDIR)/debian/kamailio/etc/kamailio/ -type f -exec chmod -x {} \;
+	find $(CURDIR)/debian/kamailio/etc/kamailio -type f -exec chmod -x {} \;
 	sed -i -e "s/^PATH.*//" $(CURDIR)/debian/kamailio/usr/sbin/kamctl
 
 	# install only the mysql module
