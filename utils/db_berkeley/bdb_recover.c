@@ -25,7 +25,7 @@
  * 2007-09-19  genesis (wiquan)
  */
 
-#include "bdb_recover.h"
+#include "kambdb_recover.h"
 
 tbl_cache_p tables;
 char* schema_dir = NULL;

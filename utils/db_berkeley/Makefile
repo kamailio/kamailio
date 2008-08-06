@@ -6,7 +6,7 @@
 include ../../Makefile.defs
 
 auto_gen=
-NAME=bdb_recover
+NAME=kambdb_recover
 
 include ../../Makefile.sources
 
