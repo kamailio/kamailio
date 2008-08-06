@@ -1,14 +1,14 @@
-# New ports collection makefile for:	openser
+# New ports collection makefile for:	kamailio
 # Date created:				20 October 2005
 # Whom:					jesusr
 #
-# $FreeBSD: ports/net/openser/Makefile,v 1.9 2007/08/20 09:12:42 miwi Exp $
+# $FreeBSD: ports/net/kamailio/Makefile,v 1.9 2007/08/20 09:12:42 miwi Exp $
 #
 
-PORTNAME=	openser
+PORTNAME=	kamailio
 PORTVERSION=	1.3.0
 CATEGORIES=	net
-MASTER_SITES=	http://openser.org/pub/openser/${PORTVERSION}/src/
+MASTER_SITES=	http://kamailio.org/pub/kamailio/${PORTVERSION}/src/
 DISTNAME=	${PORTNAME}-${PORTVERSION}-tls_src
 
 MAINTAINER=	jesusr@FreeBSD.org
@@ -24,14 +24,14 @@ MAKE_ENV=	CC="${CC}" \
 		PTHREAD_CFLAGS="${PTHREAD_CFLAGS}" \
 		PTHREAD_LIBS="${PTHREAD_LIBS}"
 
-PLIST_FILES=	sbin/openser sbin/kamctl sbin/kamdbctl sbin/kamunix \
-		lib/openser/kamctl/kamctl.base lib/openser/kamctl/kamctl.ctlbase \
-		lib/openser/kamctl/kamctl.dbtext lib/openser/kamctl/kamctl.fifo \
-		lib/openser/kamctl/kamctl.sqlbase lib/openser/kamctl/kamctl.unixsock \
-		lib/openser/kamctl/kamdbctl.base lib/openser/kamctl/kamdbctl.dbtext \
-		etc/openser/kamctlrc
+PLIST_FILES=	sbin/kamailio/ sbin/kamctl sbin/kamdbctl sbin/kamunix \
+		lib/kamailio/kamctl/kamctl.base lib/kamailio/kamctl/kamctl.ctlbase \
+		lib/kamailio/kamctl/kamctl.dbtext lib/kamailio/kamctl/kamctl.fifo \
+		lib/kamailio/kamctl/kamctl.sqlbase lib/kamailio/kamctl/kamctl.unixsock \
+		lib/kamailio/kamctl/kamdbctl.base lib/kamailio/kamctl/kamdbctl.dbtext \
+		etc/kamailio/kamctlrc
 
-PLIST_DIRS=	lib/openser/modules lib/openser/kamctl lib/openser
+PLIST_DIRS=	lib/kamailio/modules lib/kamailio/kamctl lib/kamailio/
 
 MODULES=	acc alias_db auth auth_db auth_diameter avpops benchmark \
 		cfgutils dbtext dialog dispatcher diversion domain \
@@ -50,7 +50,7 @@ RC_DIRS=	acc
 ONLY_FOR_ARCHS=	i386
 
 MAN5=		kamailio.cfg.5
-MAN8=		openser.8 \
+MAN8=		kamailio.8 \
 		kamctl.8 \
 		kamunix.8
 
@@ -71,7 +71,7 @@ OPTIONS=	MYSQL "MySQL support" on \
 .if defined(WITH_MYSQL)
 USE_MYSQL=	yes
 MODULES+=	mysql
-PLIST_FILES+=	lib/openser/kamctl/kamdbctl.mysql lib/openser/kamctl/kamctl.mysql
+PLIST_FILES+=	lib/kamailio/kamctl/kamdbctl.mysql lib/kamailio/kamctl/kamctl.mysql
 .else
 MAKE_ENV+=	MYSQL=mysql
 .endif
@@ -79,7 +79,7 @@ MAKE_ENV+=	MYSQL=mysql
 .if defined(WITH_POSTGRESQL)
 USE_PGSQL=	yes
 MODULES+=	postgres
-PLIST_FILES+=	lib/openser/kamctl/kamdbctl.pgsql lib/openser/kamctl/kamctl.pgsql
+PLIST_FILES+=	lib/kamailio/kamctl/kamdbctl.pgsql lib/kamailio/kamctl/kamctl.pgsql
 .else
 MAKE_ENV+=	POSTGRESQL=postgres
 .endif
@@ -94,7 +94,7 @@ MAKE_ENV+=	UNIXODBC=unixodbc
 .if defined(WITH_CPL)
 USE_GNOME=	libxml2
 MODULES+=	cpl-c
-PLIST_FILES+=	etc/openser/cpl-06.dtd
+PLIST_FILES+=	etc/kamailio/cpl-06.dtd
 .else
 MAKE_ENV+=	CPL=cpl-c
 .endif
@@ -134,8 +134,8 @@ MODULES+=	snmpstats
 MAKE_ENV+=	SNMPSTATS=snmpstats
 .endif
 
-PLIST_FILES+=	${MODULES:S|^|lib/openser/modules/|:S|$|.so|} \
-		${RC_FILES:S|^|etc/openser/|:S|$|.default|}
+PLIST_FILES+=	${MODULES:S|^|lib/kamailio/modules/|:S|$|.so|} \
+		${RC_FILES:S|^|etc/kamailio/|:S|$|.default|}
 
 post-patch:
 .if defined(NOPORTDOCS)
@@ -143,15 +143,15 @@ post-patch:
 		${WRKSRC}/Makefile
 .endif
 	@${REINPLACE_CMD} -e 's|-g -O9 ||' -e 's|-O9 ||' ${WRKSRC}/Makefile.defs
-	@${REINPLACE_CMD} -e 's|/usr/local/etc/openser|${PREFIX}/etc/openser|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/etc/kamailio/|${PREFIX}/etc/kamailio/|' \
 		${WRKSRC}/scripts/kamdbctl.dbtext
-	@${REINPLACE_CMD} -e 's|/usr/local/share/openser|${PREFIX}/share/openser|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/share/kamailio/|${PREFIX}/share/kamailio/|' \
 		${WRKSRC}/scripts/kamdbctl.dbtext
-	@${REINPLACE_CMD} -e 's|/etc/openser|${PREFIX}/etc/openser|' \
+	@${REINPLACE_CMD} -e 's|/etc/kamailio/|${PREFIX}/etc/kamailio/|' \
 		${WRKSRC}/modules/mediaproxy/README \
 		${WRKSRC}/modules/cpl-c/README \
 		${WRKSRC}/INSTALL
-	@${REINPLACE_CMD} -e 's|/usr/local/sbin/openser|${PREFIX}/sbin/openser|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/sbin/kamailio/|${PREFIX}/sbin/kamailio/|' \
 		${WRKSRC}/INSTALL
 	@${REINPLACE_CMD} -e 's|/usr/local|${PREFIX}|' \
 		${WRKSRC}/etc/kamailio.cfg \
@@ -179,22 +179,22 @@ post-patch:
 		${WRKSRC}/modules/unixodbc/README
 	@${REINPLACE_CMD} -e 's|/usr/local|${LOCALBASE}|' \
 		${WRKSRC}/modules/acc/etc/radiusclient.conf
-	@${REINPLACE_CMD} -e 's|/usr/local/etc/radiusclient|${PREFIX}/etc/openser/acc|' \
+	@${REINPLACE_CMD} -e 's|/usr/local/etc/radiusclient|${PREFIX}/etc/kamailio/acc|' \
 		${WRKSRC}/modules/acc/acc_mod.c ${WRKSRC}/modules/acc/README
 
 post-install:
 	${INSTALL_DATA} ${WRKSRC}/etc/kamailio.cfg \
-		${PREFIX}/etc/openser/kamailio.cfg.default
-	${MKDIR} ${PREFIX}/etc/openser/acc
+		${PREFIX}/etc/kamailio/kamailio.cfg.default
+	${MKDIR} ${PREFIX}/etc/kamailio/acc
 	${INSTALL_DATA} ${WRKSRC}/modules/acc/etc/radiusclient.conf \
-		${PREFIX}/etc/openser/acc/radiusclient.conf.default
+		${PREFIX}/etc/kamailio/acc/radiusclient.conf.default
 	${INSTALL_DATA} ${WRKSRC}/modules/acc/etc/servers \
-		${PREFIX}/etc/openser/acc/servers.default
+		${PREFIX}/etc/kamailio/acc/servers.default
 .for d in ${TLS_RC_DIRS}
-	${MKDIR} ${PREFIX}/etc/openser/${d}
+	${MKDIR} ${PREFIX}/etc/kamailio/${d}
 .endfor
 .for f in ${TLS_RC_FILES}
-	${INSTALL_DATA} ${WRKSRC}/etc/${f} ${PREFIX}/etc/openser/${f}.default
+	${INSTALL_DATA} ${WRKSRC}/etc/${f} ${PREFIX}/etc/kamailio/${f}.default
 .endfor
 	@PKG_PREFIX=${PREFIX} ${SH} ${PKGINSTALL} ${PKGNAME} POST-INSTALL
 

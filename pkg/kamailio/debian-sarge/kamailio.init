@@ -1,13 +1,13 @@
 #! /bin/sh
 #
 ### BEGIN INIT INFO
-# Provides:          openser
+# Provides:          kamailio
 # Required-Start:    $syslog $network $local_fs $time
 # Required-Stop:     $syslog $network $local_fs
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Start the OpenSER SIP proxy server
-# Description:       Start the OpenSER SIP proxy server
+# Short-Description: Start the Kamailio SIP proxy server
+# Description:       Start the Kamailio SIP proxy server
 ### END INIT INFO
 #
 # TODO:
@@ -16,27 +16,27 @@
 # Should-Stop:       postgresql mysql radius
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/openser
-NAME=openser
-DESC=openser
-HOMEDIR=/var/run/openser
+DAEMON=/usr/sbin/kamailio/
+NAME=kamailio
+DESC=kamailio
+HOMEDIR=/var/run/kamailio/
 PIDFILE=$HOMEDIR/$NAME.pid
-DEFAULTS=/etc/default/openser
-RUN_OPENSER=no
+DEFAULTS=/etc/default/kamailio/
+RUN_KAMAILIO=no
 
-# Do not start openser if fork=no is set in the config file
+# Do not start kamailio if fork=no is set in the config file
 # otherwise the boot process will just stop
 check_fork ()
 {
-    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/openser/kamailio.cfg; then
-	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/openser debug instead"
+    if grep -q "^[[:space:]]*fork[[:space:]]*=[[:space:]]*no.*" /etc/kamailio/kamailio.cfg; then
+	echo "Not starting $DESC: fork=no specified in config file; run /etc/init.d/kamailio/ debug instead"
 	exit 1
     fi
 }
 
-check_openser_config ()
+check_kamailio_config ()
 {
-	# Check if openser configuration is valid before starting the server
+	# Check if kamailio configuration is valid before starting the server
 	set +e
 	out=$($DAEMON -c 2>&1 > /dev/null)
 	retcode=$?
@@ -52,15 +52,15 @@ create_radius_seqfile ()
 {
     # Create a radius sequence file to be used by the radius client if
     # radius accounting is enabled. This is needed to avoid any issue
-    # with the file not being writable if openser first starts as user
+    # with the file not being writable if kamailio first starts as user
     # root because DUMP_CORE is enabled and creates this file as user
-    # root and then later it switches back to user openser and cannot
-    # write to the file. If the file exists before openser starts, it
+    # root and then later it switches back to user kamailio and cannot
+    # write to the file. If the file exists before kamailio starts, it
     # won't change it's ownership and will be writable for both root
-    # and openser, no matter what options are chosen at install time
-    RADIUS_SEQ_FILE=/var/run/openser/openser_radius.seq
-    if [ -d /var/run/openser ]; then
-	chown ${USER}:${GROUP} /var/run/openser
+    # and kamailio, no matter what options are chosen at install time
+    RADIUS_SEQ_FILE=/var/run/kamailio/kamailio/_radius.seq
+    if [ -d /var/run/kamailio/ ]; then
+	chown ${USER}:${GROUP} /var/run/kamailio/
 
 	if [ ! -f $RADIUS_SEQ_FILE ]; then
 	    touch $RADIUS_SEQ_FILE
@@ -78,16 +78,16 @@ if [ -f $DEFAULTS ]; then
    . $DEFAULTS || true
 fi
 
-if [ "$RUN_OPENSER" != "yes" ]; then
-    echo "OpenSER not yet configured. Edit /etc/default/openser first."
+if [ "$RUN_KAMAILIO" != "yes" ]; then
+    echo "Kamailio not yet configured. Edit /etc/default/kamailio/ first."
     exit 0
 fi
 
 set -e
 
 MEMORY=$((`echo $MEMORY | sed -e 's/[^0-9]//g'`))
-[ -z "$USER" ]  && USER=openser
-[ -z "$GROUP" ] && GROUP=openser
+[ -z "$USER" ]  && USER=kamailio
+[ -z "$GROUP" ] && GROUP=kamailio
 [ $MEMORY -le 0 ] && MEMORY=32
 
 if test "$DUMP_CORE" = "yes" ; then
@@ -105,7 +105,7 @@ OPTIONS="-P $PIDFILE -m $MEMORY -u $USER -g $GROUP"
 
 case "$1" in
   start|debug)
-	check_openser_config
+	check_kamailio_config
 	create_radius_seqfile
 
 	if [ "$1" != "debug" ]; then
@@ -124,7 +124,7 @@ case "$1" in
 	echo "."
 	;;
   restart|force-reload)
-	check_openser_config
+	check_kamailio_config
 	create_radius_seqfile
 
 	echo -n "Restarting $DESC: $NAME"

@@ -2,7 +2,7 @@
 # Copyright (c) 2002 FhG FOKUS, Germany.
 # All rights reserved.
 #
-# /etc/init.d/openser
+# /etc/init.d/kamailio/
 #
 ### BEGIN INIT INFO
 # Provides:          sip
@@ -12,17 +12,17 @@
 # X-UnitedLinux-Should-Stop: $network
 # Default-Start:     3 5
 # Default-Stop:      0 1 2 6
-# Short-Description: OpenSER
-# Description:       Start OpenSER and provide the routing of SIP requests.
+# Short-Description: Kamailio
+# Description:       Start Kamailio and provide the routing of SIP requests.
 ### END INIT INFO
 
 
 # Check for missing binaries (stale symlinks should not happen)
-OSER_BIN=/usr/sbin/openser
+OSER_BIN=/usr/sbin/kamailio/
 test -x $OSER_BIN || exit 5
 
 # Check for existence of needed config file and read it
-OSER_CONFIG=/etc/openser/kamailio.cfg
+OSER_CONFIG=/etc/kamailio/kamailio.cfg
 test -r $OSER_CONFIG || exit 6
 
 # Shell functions sourced from /etc/rc.status:
@@ -61,7 +61,7 @@ rc_reset
 
 case "$1" in
 	start)
-		echo -n "Starting OpenSER "
+		echo -n "Starting Kamailio "
 		## Start daemon with startproc(8). If this fails
 		## the return value is set appropriately by startproc.
 		startproc $OSER_BIN -f $OSER_CONFIG
@@ -70,7 +70,7 @@ case "$1" in
 		rc_status -v
 		;;
 	stop)
-		echo -n "Shutting down OpenSER "
+		echo -n "Shutting down Kamailio "
 		## Stop daemon with killproc(8) and if this fails
 		## killproc sets the return value according to LSB.
 
@@ -93,7 +93,7 @@ case "$1" in
 		## do this on signal 1 (SIGHUP).
 		## If it does not support it, restart.
 
-		echo -n "Reload service OpenSER "
+		echo -n "Reload service Kamailio "
 		## Otherwise:
 		$0 stop  &&  $0 start
 		rc_status
@@ -107,7 +107,7 @@ case "$1" in
 		rc_status -v
 		;;
 	status)
-		echo -n "Checking for service OpenSER "
+		echo -n "Checking for service Kamailio "
 		## Check status with checkproc(8), if process is running
 		## checkproc will return with exit status 0.
 

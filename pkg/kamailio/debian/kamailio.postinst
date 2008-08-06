@@ -2,9 +2,9 @@
 #
 # $Id$
 
-PKG=openser
-DEFAULTS=/etc/default/openser
-HOMEDIR=/var/run/openser
+PKG=kamailio
+DEFAULTS=/etc/default/kamailio/
+HOMEDIR=/var/run/kamailio/
 
 set -e
 
@@ -29,8 +29,8 @@ set -e
 case "$1" in
     configure)
         adduser --quiet --system --group --disabled-password \
-                --shell /bin/false --gecos "OpenSER" \
-                --home $HOMEDIR openser || true
+                --shell /bin/false --gecos "Kamailio" \
+                --home $HOMEDIR kamailio || true
 
         ;;
 

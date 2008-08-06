@@ -1,20 +1,20 @@
-# New ports collection makefile for:    openser
+# New ports collection makefile for:    kamailio
 #
 # $OpenBSD$
 #
 # $Id$
 #
 
-COMMENT= "OpenSER"
+COMMENT= "Kamailio"
 
-PORTNAME= openser
+PORTNAME= kamailio
 PORTVERSION= 1.2.0-notls
 CATEGORIES= net
-MASTER_SITES= http://openser.org/pub/openser/1.2.0/src/
+MASTER_SITES= http://kamailio.org/pub/kamailio/1.2.0/src/
 
 MAINTAINER= daniel@voice-system.ro
 
-MAN8=openser.8
+MAN8=kamailio.8
 MAN5=kamailio.cfg.5
 # MANCOMPRESSED must not be defined in openbsd (defined==yes)
 

@@ -1,5 +1,5 @@
-OpenSER is a very fast and flexible SIP (RFC3261)
-proxy server. Written entirely in C, openser can handle thousands calls
+Kamailio is a very fast and flexible SIP (RFC3261)
+proxy server. Written entirely in C, kamailio can handle thousands calls
 per second even on low-budget hardware. A C Shell like scripting language
 provides full control over the server's behaviour. It's modular
 architecture allows only required functionality to be loaded.
@@ -10,4 +10,4 @@ transaction and dialog module, OSP module, statistics support,
 registrar and user location, SIMPLE Presence, Perl programming interface,
 SNMP and Java SIP Servlet.
 
-WWW: http://www.openser.org/
+WWW: http://www.kamailio.org/

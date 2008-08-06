@@ -44,8 +44,8 @@
  		fi
  		# kamctl config
 @@ -445,7 +432,7 @@
- 		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
- 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/kamctl
+ 		sed -e "s#/usr/local/lib/kamailio/#$(lib-target)#g" | \
+ 		sed -e "s#/usr/local/etc/kamailio/#$(cfg-target)#g"  >/tmp/kamctl
  		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/kamctl
 -		$(INSTALL_BIN) /tmp/kamctl $(bin-prefix)/$(bin-dir)
 +		$(BSD_INSTALL_SCRIPT) /tmp/kamctl $(bin-prefix)/$(bin-dir)
@@ -53,8 +53,8 @@
  		sed -e "s#/usr/local/sbin#$(bin-target)#g" \
  			< scripts/kamctl.base > /tmp/kamctl.base
 @@ -492,10 +479,10 @@
- 		sed -e "s#/usr/local/lib/openser#$(lib-target)#g" | \
- 		sed -e "s#/usr/local/etc/openser#$(cfg-target)#g"  >/tmp/kamdbctl
+ 		sed -e "s#/usr/local/lib/kamailio/#$(lib-target)#g" | \
+ 		sed -e "s#/usr/local/etc/kamailio/#$(cfg-target)#g"  >/tmp/kamdbctl
  		$(INSTALL_TOUCH) $(bin-prefix)/$(bin-dir)/kamdbctl
 -		$(INSTALL_BIN) /tmp/kamdbctl $(bin-prefix)/$(bin-dir)
 +		$(BSD_INSTALL_SCRIPT) /tmp/kamdbctl $(bin-prefix)/$(bin-dir)
@@ -64,7 +64,7 @@
 +		$(BSD_INSTALL_SCRIPT) utils/$(NAME)unix/$(NAME)unix $(bin-prefix)/$(bin-dir)
  		# install dbtext stuff
  		mkdir -p $(modules-prefix)/$(lib-dir)/kamctl ; \
- 		sed -e "s#/usr/local/share/openser#$(data-target)#g" \
+ 		sed -e "s#/usr/local/share/kamailio/#$(data-target)#g" \
 @@ -624,9 +611,7 @@
  			if [ -f modules/"$$r"/README ]; then \
  				$(INSTALL_TOUCH)  $(doc-prefix)/$(doc-dir)/README ; \

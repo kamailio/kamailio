@@ -1,19 +1,19 @@
 #!/bin/bash
 #
-# Startup script for OpenSER
+# Startup script for Kamailio
 #
 # chkconfig: 345 85 15
-# description: OpenSER is a fast SIP Proxy.
+# description: Kamailio is a fast SIP Proxy.
 #
-# processname: openser
-# pidfile: /var/run/openser.pid
-# config: /etc/openser/kamailio.cfg
+# processname: kamailio
+# pidfile: /var/run/kamailio/.pid
+# config: /etc/kamailio/kamailio.cfg
 
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-oser=/usr/sbin/openser
-prog=openser
+oser=/usr/sbin/kamailio/
+prog=kamailio
 RETVAL=0
 
 start() {
@@ -21,7 +21,7 @@ start() {
 	daemon $oser $OPTIONS >/dev/null 2>/dev/null
 	RETVAL=$?
 	echo
-	[ $RETVAL = 0 ] && touch /var/lock/subsys/openser
+	[ $RETVAL = 0 ] && touch /var/lock/subsys/kamailio/
 	return $RETVAL
 }
 
@@ -30,7 +30,7 @@ stop() {
 	killproc $oser
 	RETVAL=$?
 	echo
-	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/openser /var/run/openser.pid
+	[ $RETVAL = 0 ] && rm -f /var/lock/subsys/kamailio/ /var/run/kamailio/.pid
 }
 
 # See how we were called.
@@ -50,7 +50,7 @@ case "$1" in
 		start
 		;;
 	condrestart)
-		if [ -f /var/run/openser.pid ] ; then
+		if [ -f /var/run/kamailio/.pid ] ; then
 			stop
 			start
 		fi

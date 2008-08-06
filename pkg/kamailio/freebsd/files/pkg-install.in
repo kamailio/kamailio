@@ -2,7 +2,7 @@
 
 [ "$2" != POST-INSTALL ] && exit
 
-rc_dir=$PKG_PREFIX/etc/openser
+rc_dir=$PKG_PREFIX/etc/kamailio/
 
 for f in %%RC_FILES%%; do
 	if ! [ -e $rc_dir/$f ]; then
