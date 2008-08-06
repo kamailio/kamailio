@@ -69,14 +69,14 @@ char* generate_ETag(int publ_count)
 		ERR_MEM(PKG_MEM_STR);
 	}
 	memset(etag, 0, ETAG_LEN*sizeof(char));
-	size = sprintf (etag, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
+	size = snprintf (etag, ETAG_LEN, "%c.%d.%d.%d.%d",prefix, startup_time, pid, counter, publ_count);
 	if( size <0 )
 	{
-		LM_ERR("unsuccessfull sprintf\n ");
+		LM_ERR("unsuccessfull snprintf\n ");
 		pkg_free(etag);
 		return NULL;
 	}
-	if(size+ 1> ETAG_LEN)
+	if(size >= ETAG_LEN)
 	{
 		LM_ERR("buffer size overflown\n");
 		pkg_free(etag);
@@ -103,14 +103,14 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 	
 	hdr_append.s = buf;
 	hdr_append.s[0]='\0';
-	hdr_append.len = sprintf(hdr_append.s, "Expires: %d\r\n",lexpire -
+	hdr_append.len = snprintf(hdr_append.s, buf_len, "Expires: %d\r\n",lexpire -
 			expires_offset);
 	if(hdr_append.len < 0)
 	{
-		LM_ERR("unsuccessful sprintf\n");
+		LM_ERR("unsuccessful snprintf\n");
 		goto error;
 	}
-	if(hdr_append.len > buf_len)
+	if(hdr_append.len >= buf_len)
 	{
 		LM_ERR("buffer size overflown\n");
 		goto error;
@@ -130,13 +130,13 @@ int publ_send200ok(struct sip_msg *msg, int lexpire, str etag)
 		ERR_MEM(PKG_MEM_STR);
 	}
 	hdr_append2.s[0]='\0';
-	hdr_append2.len = sprintf(hdr_append2.s, "SIP-ETag: %s\r\n", etag.s);
+	hdr_append2.len = snprintf(hdr_append2.s, size, "SIP-ETag: %s\r\n", etag.s);
 	if(hdr_append2.len < 0)
 	{
-		LM_ERR("unsuccessful sprintf\n ");
+		LM_ERR("unsuccessful snprintf\n ");
 		goto error;
 	}
-	if(hdr_append2.len+1 > size)
+	if(hdr_append2.len >= size)
 	{
 		LM_ERR("buffer size overflown\n");
 		goto error;
