@@ -35,8 +35,8 @@
  *  Module: \ref db_mysql
  */
 
-/*! \defgroup db_mysql DB_MYSQL :: the MySQL driver for OpenSER
- *  \brief The OpenSER database interface to the MySQL database
+/*! \defgroup db_mysql DB_MYSQL :: the MySQL driver for Kamailio
+ *  \brief The Kamailio database interface to the MySQL database
  *  - http://www.mysql.org
  *
  */

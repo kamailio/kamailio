@@ -137,12 +137,12 @@ Chapter 1. Admin Guide
 
    Path to the file with destination sets.
 
-   Default value is "/etc/openser/dispatcher.list" or
-   "/usr/local/etc/openser/dispatcher.list".
+   Default value is "/etc/kamailio/dispatcher.list" or
+   "/usr/local/etc/kamailio/dispatcher.list".
 
    Example 1.1. Set the "list_file" parameter
 ...
-modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
+modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 ...
 
 1.3.2. db_url (string)
@@ -625,7 +625,7 @@ port=5060
 # for more info: sip_router -h
 
 # ------------------ module loading ----------------------------------
-mpath="/usr/local/lib/openser/modules/"
+mpath="/usr/local/lib/kamailio/modules/"
 loadmodule "maxfwd.so"
 loadmodule "sl.so"
 loadmodule "dispatcher.so"

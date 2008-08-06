@@ -59,16 +59,16 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This module is a gateway between Openser and a XMPP/Jabber
+   This module is a gateway between Kamailio and a XMPP/Jabber
    server. It enables the exchange of instant messages between SIP
    clients and XMPP(jabber) clients.
 
    The module can be used in two different modes:
-     * XMPP Component Mode. In this mode, OpenSER connects to an
+     * XMPP Component Mode. In this mode, Kamailio connects to an
        XMPP server using the standardized XMPP component
        interface, extending your XMPP services. The connection is
        done over TCP/IP with authorization.
-     * XMPP Server. In this mode, the OpenSER XMPP module is a
+     * XMPP Server. In this mode, the Kamailio XMPP module is a
        stand-alone XMPP server, with no requirement for another
        XMPP server in the system. This server uses XMPP S2S
        (Server to Server) connections to connect to other XMPP
@@ -84,17 +84,17 @@ Chapter 1. Admin Guide
    link: http://jabberd.jabberstudio.org/2/#download
 
    After you have a running XMPP server, what you need to do is
-   set the following parameters in the Openser configuration file:
+   set the following parameters in the Kamailio configuration file:
      * gateway_domain, xmpp_domain (which can be the same as
        gateway_domain) and xmpp_host, which are explained in the
        Exported Parameters section;
      * listen = your ip;
-     * alias=OpenSER SIP domain and alias=gateway domain;
+     * alias=Kamailio SIP domain and alias=gateway domain;
      * in the following section of the configuration file, change
        to your gateway domain:
 
          ### ---8<--- cut here ---8<--- ###
-        if (avp_check("$rd", "eq/s:sip-xmpp.openser.org")) {
+        if (avp_check("$rd", "eq/s:sip-xmpp.kamailio.org")) {
                 if (!t_newtran()) {
                         sl_reply_error();
         ...........
@@ -104,11 +104,11 @@ Chapter 1. Admin Guide
        the xmpp_password parameter.
 
    A use case, for the component-mode, would look like this:
-     * Openser is hosting the sip-server.openser.org SIP domain
-     * The gateway SIP domain is sip-xmpp.openser.org
-     * The XMPP server is hosting the XMPP domain xmpp.openser.org
+     * Kamailio is hosting the sip-server.kamailio.org SIP domain
+     * The gateway SIP domain is sip-xmpp.kamailio.org
+     * The XMPP server is hosting the XMPP domain xmpp.kamailio.org
      * The Component is hosting the XMPP domain
-       xmpp-sip.openser.org
+       xmpp-sip.kamailio.org
 
    In the XMPP stand-alone server mode, the XMPP module is a
    minimal XMPP/Jabber server. In this mode, another Jabber server
@@ -121,9 +121,9 @@ Chapter 1. Admin Guide
    section, from "component" to "server".
 
    A use case, for the server-mode, would look like this:
-     * Openser is hosting the SIP domain sip-server.openser.org
-     * The gateway is hosting the SIP domain sip-xmpp.openser.org;
-     * The "XMPP server" is running on xmpp-sip.openser.org.
+     * Kamailio is hosting the SIP domain sip-server.kamailio.org
+     * The gateway is hosting the SIP domain sip-xmpp.kamailio.org;
+     * The "XMPP server" is running on xmpp-sip.kamailio.org.
 
    In both cases, the destination address must have the same
    pattern:
@@ -191,7 +191,7 @@ Chapter 1. Admin Guide
 
    Example 1.3. Set gateway_domain parameter
 ...
- modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org")
+ modparam("xmpp", "gateway_domain", "sip-xmpp.kamailio.org")
 ...
 
 1.3.4. xmpp_domain (string)
@@ -206,7 +206,7 @@ Chapter 1. Admin Guide
 
    Example 1.4. Set xmpp_domain parameter
 ...
- modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org")
+ modparam("xmpp", "xmpp_domain", "xmpp-sip.kamailio.org")
 ...
 
 1.3.5. xmpp_host (string)
@@ -219,7 +219,7 @@ Chapter 1. Admin Guide
 
    Example 1.5. Set xmpp_host parameter
 ...
- modparam("xmpp", "xmpp_host", "xmpp.openser.org")
+ modparam("xmpp", "xmpp_host", "xmpp.kamailio.org")
 ...
 
 1.3.6. xmpp_port (integer)
@@ -259,8 +259,8 @@ Chapter 1. Admin Guide
 1.3.8. outbound_proxy (string)
 
    The SIP address used as next hop when sending the message. Very
-   useful when using OpenSER with a domain name not in DNS, or
-   when using a separate OpenSER instance for XMPP processing. If
+   useful when using Kamailio with a domain name not in DNS, or
+   when using a separate Kamailio instance for XMPP processing. If
    not set, the message will be sent to the address in destination
    URI.
 
@@ -268,7 +268,7 @@ Chapter 1. Admin Guide
 
    Example 1.8. Set outbound_proxy parameter
 ...
- modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp")
+ modparam("xmpp", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 
 1.4. Exported Functions
@@ -287,7 +287,7 @@ xmpp_send_message();
 
    Next is presented a sample configuration file one can use to
    implement a standalone SIP-to-XMPP gateway. You can run an
-   instance of OpenSER on a separate machine or on different port
+   instance of Kamailio on a separate machine or on different port
    with the following config, and have the main SIP server
    configured to forward all SIP requests for XMPP world to it.
 ....
@@ -317,11 +317,11 @@ rev_dns=no      # (cmd. line: -R)
 children=4
 
 listen=udp:10.10.10.10:5076
-alias=sip-xmpp.openser.org
+alias=sip-xmpp.kamailio.org
 
 # ------------------ module loading ----------------------------------
 
-mpath="/usr/local/openser-1.1.0-xmpp/lib/openser/modules/"
+mpath="/usr/local/openser-1.1.0-xmpp/lib/kamailio/modules/"
 loadmodule "sl.so"
 loadmodule "tm.so"
 loadmodule "rr.so"
@@ -334,9 +334,9 @@ loadmodule "mi_fifo.so"
 loadmodule "xmpp.so"
 
 modparam("xmpp", "domain_separator", "*")
-modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org")
-modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org")
-modparam("xmpp", "xmpp_host", "xmpp.openser.org")
+modparam("xmpp", "gateway_domain", "sip-xmpp.kamailio.org")
+modparam("xmpp", "xmpp_domain", "xmpp-sip.kamailio.org")
+modparam("xmpp", "xmpp_host", "xmpp.kamailio.org")
 
 modparam("xmpp", "backend", "server")
 # modparam("xmpp", "backend", "component")

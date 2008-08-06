@@ -6,21 +6,21 @@
 	
 	<section>
 	<title>Overview</title>
-	<para>	This module is a gateway between Openser and a XMPP/Jabber server. It enables the exchange of instant messages between
+	<para>	This module is a gateway between Kamailio and a XMPP/Jabber server. It enables the exchange of instant messages between
 		SIP clients and XMPP(jabber) clients. </para>
 	<para>	The module can be used in two different modes:</para>
 
 	<itemizedlist>
 		<listitem>
-			<para>	<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode, OpenSER connects to an XMPP server using the standardized XMPP component interface, extending your XMPP services. The connection is done over TCP/IP with authorization.</para>
+			<para>	<emphasis role='bold'>XMPP Component Mode</emphasis>. In this mode, Kamailio connects to an XMPP server using the standardized XMPP component interface, extending your XMPP services. The connection is done over TCP/IP with authorization.</para>
 		</listitem>
 		<listitem>
-			<para><emphasis role='bold'>XMPP Server</emphasis>. In this mode, the OpenSER XMPP module is a stand-alone XMPP server, with no requirement for another XMPP server in the system. This server uses XMPP S2S (Server to Server) connections to connect to other XMPP servers or receive connections from other servers. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. This mode is in beta stage for the moment.</para>
+			<para><emphasis role='bold'>XMPP Server</emphasis>. In this mode, the Kamailio XMPP module is a stand-alone XMPP server, with no requirement for another XMPP server in the system. This server uses XMPP S2S (Server to Server) connections to connect to other XMPP servers or receive connections from other servers. NOTE: this is limited implementation of a XMPP server, it does not support SRV or TLS so far. This mode is in beta stage for the moment.</para>
 		</listitem>
 	</itemizedlist>
 	<para>	In the component mode, you need a local XMPP server (recommended Jabberd2). The XMPP module will connect by using TCP/IP connection to the local jabber server. The documentation and the source for Jabberd server are located at the following link:
 <ulink url="http://jabberd.jabberstudio.org/2/#download">http://jabberd.jabberstudio.org/2/#download</ulink>	</para>
-	<para> After you have a running XMPP server, what you need to do is set the following parameters in the Openser configuration file:</para>
+	<para> After you have a running XMPP server, what you need to do is set the following parameters in the Kamailio configuration file:</para>
 	<itemizedlist>
 		<listitem>
 			<para>gateway_domain, xmpp_domain (which can be the same as gateway_domain) and xmpp_host, which are explained in the Exported Parameters section;
@@ -30,14 +30,14 @@
 			<para>listen = your ip;</para>
 		</listitem> 
 		<listitem>
-			<para>alias=OpenSER SIP domain and alias=gateway domain;</para>
+			<para>alias=Kamailio SIP domain and alias=gateway domain;</para>
 		</listitem>
 		<listitem>
 			<para>in the following section of the configuration file, change to your gateway domain:</para>
 		</listitem>	
 	</itemizedlist>
 	<programlisting format="linespecific"> <emphasis>	<![CDATA[ ### ---8<--- cut here ---8<--- ###
-	if (avp_check("$rd", "eq/s:sip-xmpp.openser.org")) {
+	if (avp_check("$rd", "eq/s:sip-xmpp.kamailio.org")) {
 		if (!t_newtran()) {
 			sl_reply_error();
 	...........]]>	</emphasis> </programlisting> 	
@@ -49,16 +49,16 @@
 	<para>	A use case, for the component-mode, would look like this:</para>
 	<itemizedlist>
 		<listitem>
-			<para>Openser is hosting the sip-server.openser.org SIP domain</para>
+			<para>Kamailio is hosting the sip-server.kamailio.org SIP domain</para>
 		</listitem>
 		<listitem>
-			<para>The gateway SIP domain is sip-xmpp.openser.org</para>
+			<para>The gateway SIP domain is sip-xmpp.kamailio.org</para>
 		</listitem>	
 		<listitem>
-			<para>The XMPP server is hosting the XMPP domain xmpp.openser.org</para>
+			<para>The XMPP server is hosting the XMPP domain xmpp.kamailio.org</para>
 		</listitem>	
 		<listitem>
-			<para>The Component is hosting the XMPP domain xmpp-sip.openser.org</para>
+			<para>The Component is hosting the XMPP domain xmpp-sip.kamailio.org</para>
 		</listitem>	
 	</itemizedlist>
 	<para>
@@ -67,13 +67,13 @@
 	<para>	A use case, for the server-mode, would look like this: </para>
 	<itemizedlist>
 		<listitem>
-			<para>Openser is hosting the SIP domain sip-server.openser.org </para>
+			<para>Kamailio is hosting the SIP domain sip-server.kamailio.org </para>
 		</listitem>
 		<listitem>
-			<para>The gateway is hosting the SIP domain sip-xmpp.openser.org;</para>
+			<para>The gateway is hosting the SIP domain sip-xmpp.kamailio.org;</para>
 		</listitem>	
 		<listitem>
-			<para>The "XMPP server" is running on xmpp-sip.openser.org.</para>
+			<para>The "XMPP server" is running on xmpp-sip.kamailio.org.</para>
 		</listitem>
 	</itemizedlist>	
 	<para>In both cases, the destination address must have the same pattern:</para>
@@ -175,7 +175,7 @@
 		<title>Set <varname>gateway_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "gateway_domain", "sip-xmpp.openser.org")
+ modparam("xmpp", "gateway_domain", "sip-xmpp.kamailio.org")
 ...
 </programlisting>
 		</example>
@@ -196,7 +196,7 @@
 		<title>Set <varname>xmpp_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_domain", "xmpp-sip.openser.org")
+ modparam("xmpp", "xmpp_domain", "xmpp-sip.kamailio.org")
 ...
 </programlisting>
 		</example>
@@ -215,7 +215,7 @@
 		<title>Set <varname>xmpp_host</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_host", "xmpp.openser.org")
+ modparam("xmpp", "xmpp_host", "xmpp.kamailio.org")
 ...
 </programlisting>
 		</example>
@@ -270,8 +270,8 @@
 		<title><varname>outbound_proxy</varname> (string)</title>
 		<para>
 		The SIP address used as next hop when sending the message. Very
-		useful when using OpenSER with a domain name not in DNS, or
-		when using a separate OpenSER instance for XMPP processing. If
+		useful when using Kamailio with a domain name not in DNS, or
+		when using a separate Kamailio instance for XMPP processing. If
 		not set, the message will be sent to the address in destination
 		URI.
 		</para>
@@ -284,7 +284,7 @@
 		<title>Set <varname>outbound_proxy</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "outbound_proxy", "sip:openser.org;transport=tcp")
+ modparam("xmpp", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 </programlisting>
 		</example>
@@ -317,7 +317,7 @@ xmpp_send_message();
 	<title>Configuration</title>
 		<para>
 		Next is presented a sample configuration file one can use to implement a
-		standalone SIP-to-XMPP gateway. You can run an instance of OpenSER on a
+		standalone SIP-to-XMPP gateway. You can run an instance of Kamailio on a
 		separate machine or on different port with the following config, and have
 		the main SIP server configured to forward all SIP requests for XMPP world
 		to it.

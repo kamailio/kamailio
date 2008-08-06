@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: Support for SUBSCRIBE handling
+ * \brief Kamailio presence module :: Support for SUBSCRIBE handling
  * \ingroup presence 
  */
 

@@ -4,7 +4,7 @@
 	<section>
 	<title>Overview</title>
 	<para>
-	The userblacklist module allows OpenSER to handle blacklists
+	The userblacklist module allows Kamailio to handle blacklists
 	on a per user basis. This information is stored in a database
 	table, which is queried to decide if the number (more exactly,
 	the request URI user) is blacklisted or not.
@@ -201,7 +201,7 @@ kamctl fifo reload_blacklist
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the userblacklist-create.sql
 			<acronym>SQL</acronym> script in the database directories in the 
-			openser/scripts folder as template. 
+			kamailio/scripts folder as template. 
 			Database and table name can be set with module parameters so they 
 			can be changed, but the name of the columns must be as they are 
 			in the <acronym>SQL</acronym> script.

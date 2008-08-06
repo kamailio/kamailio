@@ -68,7 +68,7 @@ Chapter 1. Admin Guide
    database.
 
    There are two ways of storing information.
-     * by calling explicitely the sip_trace() method in OpenSER
+     * by calling explicitely the sip_trace() method in Kamailio
        configuration file. In this case the original message is
        processed.
      * by setting the flag equal with the value of 'trace_flag'
@@ -243,7 +243,7 @@ sip_trace();
    if the table were not created by the installation script or you
    choose to install everything by yourself you can use the
    siptrace-create.sql SQL script in the database directories in
-   the openser/scripts folder as template. You can also find the
+   the kamailio/scripts folder as template. You can also find the
    complete database documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
 

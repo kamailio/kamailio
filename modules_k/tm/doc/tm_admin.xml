@@ -522,8 +522,8 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 		</para>
 		<para>
 		The full list of supported pseudo-variables in &openser; is availabe at: 
-		<ulink url="http://openser.org/docs/pseudo-variables.html-1.1.x">
-		http://openser.org/docs/pseudo-variables-1.1.x.html</ulink>
+		<ulink url="http://kamailio.org/docs/pseudo-variables.html-1.1.x">
+		http://kamailio.org/docs/pseudo-variables-1.1.x.html</ulink>
 		</para>
 		<para>
 		Each element will be appended per line in 

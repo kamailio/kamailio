@@ -199,7 +199,7 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 
    Example 1.7. Set cpl_dtd_file parameter
 ...
-modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
+modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
 ...
 
 1.3.8. log_dir (string)
@@ -213,7 +213,7 @@ modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 
    Example 1.8. Set log_dir parameter
 ...
-modparam("cpl-c","log_dir","/var/log/openser/cpl")
+modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
 ...
 
 1.3.9. proxy_recurse (int)
@@ -496,7 +496,7 @@ if (method=="REGISTER") {
    that, if the table was not created by the installation script
    or you choose to install everything by yourself you can use the
    cpc-create.sql SQL script in the database directories in the
-   openser/scripts folder as template. Database and table name can
+   kamailio/scripts folder as template. Database and table name can
    be set with module parameters so they can be changed, but the
    name of the columns must be as they are in the SQL script. You
    can also find the complete database documentation on the

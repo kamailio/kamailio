@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: Events
+ * \brief Kamailio presence module :: Events
  * \ingroup presence 
  */
 

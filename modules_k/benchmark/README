@@ -84,7 +84,7 @@ Chapter 1. Admin Guide
 
    This module helps developers to benchmark their module
    functions. By adding this module's functions via the
-   configuration file or through its API, OpenSER can log
+   configuration file or through its API, Kamailio can log
    profiling information for every function.
 
    The duration between calls to start_timer and log_timer is

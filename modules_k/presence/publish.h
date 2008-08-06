@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: PUBLISH support
+ * \brief Kamailio presence module :: PUBLISH support
  * \ref publish.c
  * \ingroup presence 
  */

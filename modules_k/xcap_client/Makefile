@@ -1,6 +1,6 @@
 # $Id: Makefile $
 #
-# XCAP client for OpenSer
+# XCAP client for Kamailio
 #
 # 
 # WARNING: do not run this directly, it should be run by the master Makefile

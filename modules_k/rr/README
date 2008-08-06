@@ -121,7 +121,7 @@ Chapter 1. Admin Guide
 
    Example 1.1. Dialog support in RR module
 
-UAC                       OpenSER PROXY                          UAS
+UAC                       Kamailio PROXY                          UAS
 
 ---- INVITE ------>       record_route()          ----- INVITE ---->
                      add_rr_param(";foo=true")

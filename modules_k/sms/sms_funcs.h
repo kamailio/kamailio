@@ -43,7 +43,7 @@
 #define SMS_HDR_BF_ADDR_LEN  (sizeof(SMS_HDR_BF_ADDR)-1)
 #define SMS_HDR_AF_ADDR      " (if you reply DO NOT remove it)\r\n\r\n"
 #define SMS_HDR_AF_ADDR_LEN  (sizeof(SMS_HDR_AF_ADDR)-1)
-#define SMS_FOOTER           "\r\n\r\n[OpenSER.ORG]"
+#define SMS_FOOTER           "\r\n\r\n[Kamailio.ORG]"
 #define SMS_FOOTER_LEN       (sizeof(SMS_FOOTER)-1)
 #define SMS_EDGE_PART        "( / )"
 #define SMS_EDGE_PART_LEN    (sizeof(SMS_EDGE_PART)-1)

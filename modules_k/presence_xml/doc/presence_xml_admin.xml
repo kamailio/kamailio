@@ -167,7 +167,7 @@ modparam("presence_xml", "pidf_manipulation", 1)
 		<title><varname>integrated_xcap_server</varname> (int)</title>
 		<para>
 		This parameter is a flag for the type of XCAP server or servers 
-		used. If the XCAP server is integrated with OpenSER presence_XML
+		used. If the XCAP server is integrated with Kamailio presence_XML
 		module and access the same database tables directly, like the XCAP-lite 
 		server from AG Projects, the parameter should be
 		set to a positive value. Apart from updating in xcap table,
@@ -220,9 +220,9 @@ modparam("presence_xml", "xcap_server", "xcap_server.ag.org")
 <section>
 	<title>Installation</title>
 	<para>
-	The module requires one table in OpenSER database: <quote>xcap</quote>. The SQL 
+	The module requires one table in Kamailio database: <quote>xcap</quote>. The SQL 
 	syntax to create it can be found in presence-create.sql     
-	script in the database directories in the openser/scripts folder.
+	script in the database directories in the kamailio/scripts folder.
 	You can also find the complete database documentation on the
 	project webpage, &openserdbdocs;.
 	</para>

@@ -73,7 +73,7 @@ int sl_startup(void)
 {
 
 	init_tags( sl_tag.s, &tag_suffix,
-			"OpenSER-stateless",
+			"Kamailio-stateless",
 			SL_TOTAG_SEPARATOR );
 
 	/*timeout*/
@@ -106,7 +106,7 @@ static inline void update_sl_reply_stat(int code)
 	if (!sl_enable_stats) 
 		return;
 
-	/* OpenSER already kept track of the total number of 1xx, 2xx, replies.
+	/* Kamailio already kept track of the total number of 1xx, 2xx, replies.
 	* There may be setups that still expect these variables to exist, so we
 	* don't touch them */
 	if (code < 200 ) {

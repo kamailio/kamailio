@@ -8,7 +8,7 @@
 	<title>Overview</title>
 	<para>
 		This module helps developers to benchmark their module functions. By adding
-		this module's functions via the configuration file or through its API, OpenSER
+		this module's functions via the configuration file or through its API, Kamailio
 		can log profiling information for every function.
 	</para>
 	<para>

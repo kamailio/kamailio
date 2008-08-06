@@ -65,7 +65,7 @@ Chapter 1. Admin Guide
    of Kamailio core and are used by other modules as well (e.g.,
    avpops in the function avp_printf())
 
-   The most important changes from earlier versions of OpenSER
+   The most important changes from earlier versions of Kamailio
    are:
      * - '%' has been replaced by '$'
      * - to print a header, use now $hdr(header_name[index])
@@ -75,7 +75,7 @@ Chapter 1. Admin Guide
        instead of %{[$avp_alias[index]}
 
    The full list of available pseudo-variables in Kamailio is
-   availabe at: http://openser.org/dokuwiki/
+   availabe at: http://kamailio.org/dokuwiki/
 
 1.3. Dependencies
 

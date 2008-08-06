@@ -23,7 +23,7 @@
 	in the function avp_printf())
 	</para>
 	<para>
-	The most important changes from earlier versions of OpenSER are:
+	The most important changes from earlier versions of Kamailio are:
 	</para>
 	<itemizedlist>
 		<listitem>
@@ -47,8 +47,8 @@
 	</itemizedlist>
 	<para>
 	The full list of available pseudo-variables in &openser; is availabe at:
-	<ulink url="http://openser.org/dokuwiki/">
-	http://openser.org/dokuwiki/</ulink>
+	<ulink url="http://kamailio.org/dokuwiki/">
+	http://kamailio.org/dokuwiki/</ulink>
 	</para>
 	</section>
 	<section>

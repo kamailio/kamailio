@@ -51,7 +51,7 @@
  * - Module: \ref acc
  */
 
-/*! \defgroup acc ACC :: The OpenSER accounting Module
+/*! \defgroup acc ACC :: The Kamailio accounting Module
  *            
  * The ACC module is used to account transactions information to
  *  different backends like syslog, SQL, RADIUS and DIAMETER (beta

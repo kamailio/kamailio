@@ -148,8 +148,8 @@ struct module_exports exports= {
  * Bind to the dialog module and setup the callbacks. Also initialize
  * the shared memory to store our interninal information in.
  *
- * @return 0 to continue to load the OpenSER, -1 to stop the loading
- * and abort OpenSER.
+ * @return 0 to continue to load the Kamailio, -1 to stop the loading
+ * and abort Kamailio.
  */
 static int mod_init(void) 
 {

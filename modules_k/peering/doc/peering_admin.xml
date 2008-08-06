@@ -166,7 +166,7 @@ modparam("peering", "verify_source_service_type", 22)
 		 </para>
 		 <para>
 		 Value of each SIP-AVP reply attribute is mapped to an
-		 OpenSER AVP.  Prefix # in front of name or value indicates a
+		 Kamailio AVP.  Prefix # in front of name or value indicates a
 	string name or string value, respectively.
 		 </para>
 		 <para>
@@ -238,7 +238,7 @@ if (verify_destination()) {
 		 </para>
 		 <para>
 		 Value of each SIP-AVP reply attribute is mapped to an
-		 OpenSER 
+		 Kamailio 
 		 AVP.  Prefix # in front of name or value indicates a
 	string name or string value, respectively.
 		 </para>

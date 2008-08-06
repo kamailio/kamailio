@@ -57,15 +57,15 @@
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>/etc/openser/dispatcher.list</quote> or
-			<quote>/usr/local/etc/openser/dispatcher.list</quote>.
+			Default value is <quote>/etc/kamailio/dispatcher.list</quote> or
+			<quote>/usr/local/etc/kamailio/dispatcher.list</quote>.
 		</emphasis>
 		</para>
 		<example>
 		<title>Set the <quote>list_file</quote> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("dispatcher", "list_file", "/var/run/openser/dispatcher.list")
+modparam("dispatcher", "list_file", "/var/run/kamailio/dispatcher.list")
 ...
 </programlisting>
 		</example>

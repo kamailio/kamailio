@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence gateway: SIP/SIMPLE -- XMPP (pua_xmpp)
+ * \brief Kamailio presence gateway: SIP/SIMPLE -- XMPP (pua_xmpp)
  */
 
 #include <stdio.h>

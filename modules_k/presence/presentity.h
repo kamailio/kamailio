@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: Presentity handling
+ * \brief Kamailio presence module :: Presentity handling
  * \ref presentity.c
  * \ingroup presence 
  */

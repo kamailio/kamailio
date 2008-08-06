@@ -162,7 +162,7 @@ Chapter 1. Admin Guide
 
    The module provides routing, balancing and blacklisting
    capabilities. It reads routing entries from a database source
-   or from a config file at OpenSER startup. It can uses one
+   or from a config file at Kamailio startup. It can uses one
    routing tree (for one carrier), or if needed for every user a
    different routing tree (unique for each carrier) for number
    prefix based routing. It supports several route tree domains,
@@ -514,11 +514,11 @@ modparam("carrierroute", "config_source", "file")
 
    Specifies the path to the config file.
 
-   Default value is "/etc/openser/carrierroute.conf".
+   Default value is "/etc/kamailio/carrierroute.conf".
 
    Example 1.23. Set config_file parameter
 ...
-modparam("carrierroute", "config_file", "/etc/openser/carrierroute.conf"
+modparam("carrierroute", "config_file", "/etc/kamailio/carrierroute.conf"
 )
 ...
 
@@ -1098,7 +1098,7 @@ domain register {
    data. For that, if the table was not created by the
    installation script or you choose to install everything by
    yourself you can use the carrierroute-create.sql SQL script in
-   the database directories in the openser/scripts folder as
+   the database directories in the kamailio/scripts folder as
    template. Database and table name can be set with module
    parameters so they can be changed, but the name of the columns
    must be as they are in the SQL script. You can also find the

@@ -162,8 +162,8 @@ modparam("imc", "imc_cmd_start_char", "#")
 		<title><varname>outbound_proxy</varname> (str)</title>
 		<para>
 	   The SIP address used as next hop when sending the message. Very
-   useful when using OpenSER with a domain name not in DNS, or
-   when using a separate OpenSER instance for imc processing. If
+   useful when using Kamailio with a domain name not in DNS, or
+   when using a separate Kamailio instance for imc processing. If
    not set, the message will be sent to the address in destination
    URI.
 		</para>
@@ -176,7 +176,7 @@ modparam("imc", "imc_cmd_start_char", "#")
 		<title>Set <varname>outbound_proxy</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("imc", "outbound_proxy", "sip:openser.org;transport=tcp")
+modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 ...
 </programlisting>
 		</example>
@@ -307,8 +307,8 @@ if(is_method("MESSAGE)
     present it will be considered to be the address in the To
     header of the message
   -if the room does not exist the command is treated as create
-  -eg:join sip:chat-000@openser.org,
-      or just, #join, sent to sip:chat-000@openser.org
+  -eg:join sip:chat-000@kamailio.org,
+      or just, #join, sent to sip:chat-000@kamailio.org
 
 3.invite
   -invites a user to become a member of a room
@@ -318,15 +318,15 @@ if(is_method("MESSAGE)
 	   to be the address in the To header of the message
   -only certain users have the right to invite other user: the owner
     and the administrators
-  -eg: #invite sip:john@openser.org sip:chat-000@openser.org
-    or  #invite john@openser.org sent to sip:chat-000@openser.org
+  -eg: #invite sip:john@kamailio.org sip:chat-000@kamailio.org
+    or  #invite john@kamailio.org sent to sip:chat-000@kamailio.org
 
 4.accept
   -accepting an invitation
   -takes one optional parameter - the address of the room - if not
     present it will be considered to be the address in the To header
     of the message
-  -eg: #accept sip:john@openser.org
+  -eg: #accept sip:john@kamailio.org
 
 5.deny
   -rejects an invitation
@@ -339,7 +339,7 @@ if(is_method("MESSAGE)
     2)the address of the room -if not present it will be considered
 	  to be the address in the To header of the message
   -only certain members have the right to remove other members
-  -eg: #remove sip:john@openser.org, sent to sip:chat-000@openser.org
+  -eg: #remove sip:john@kamailio.org, sent to sip:chat-000@kamailio.org
 
 7.exit
   -leaving a room
@@ -368,7 +368,7 @@ if(is_method("MESSAGE)
 		tables were not created by the installation script or you choose
 		to install everything by yourself you can use the imc-create.sql
 		<acronym>SQL</acronym> script in the database directories in the 
-		openser/scripts folder as template. 
+		kamailio/scripts folder as template. 
 		You can also find the complete database documentation on the
 		project webpage, &openserdbdocslink;.
 		</para>

@@ -31,7 +31,7 @@
  */
 
 /*! \file
- * \brief OpenSER XMPP module :: 
+ * \brief Kamailio XMPP module :: 
  *  \ingroup xmpp
  *
  * \page XMPProuting XMPP to SIP transport interface

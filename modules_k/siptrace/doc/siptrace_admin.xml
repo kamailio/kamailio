@@ -14,7 +14,7 @@
 		<itemizedlist>
 		<listitem>
 		<para>
-		by calling explicitely the sip_trace() method in OpenSER configuration
+		by calling explicitely the sip_trace() method in Kamailio configuration
 		file. In this case the original message is processed.
 		</para>
 		</listitem>
@@ -317,7 +317,7 @@ sip_trace();
 			table were not created by the installation script or you choose
 			to install everything by yourself you can use the siptrace-create.sql
 			<acronym>SQL</acronym> script in the database directories in the 
-			openser/scripts folder as template. 
+			kamailio/scripts folder as template. 
 			You can also find the complete database documentation on the
 			project webpage, &openserdbdocslink;.
 		</para>

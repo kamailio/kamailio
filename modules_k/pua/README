@@ -212,9 +212,9 @@ if(method=="NOTIFY")
 
 1.5. Installation
 
-   The module requires 1 table in OpenSER database: pua. The SQL
+   The module requires 1 table in Kamailio database: pua. The SQL
    syntax to create it can be found in presence_xml-create.sql
-   script in the database directories in the openser/scripts
+   script in the database directories in the kamailio/scripts
    folder. You can also find the complete database documentation
    on the project webpage,
    http://www.kamailio.org/docs/db-tables/openser-db-devel.html.

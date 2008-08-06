@@ -130,13 +130,13 @@ modparam("db_unixodbc", "use_escape_common", 1)
 
    In the openser.conf file, add the line:
 ....
-loadmodule "/usr/local/lib/openser/modules/db_unixodbc.so"
+loadmodule "/usr/local/lib/kamailio/modules/db_unixodbc.so"
 ....
 
    You should also uncomment this:
 ....
-loadmodule "/usr/local/lib/openser/modules/auth.so"
-loadmodule "/usr/local/lib/openser/modules/auth_db.so"
+loadmodule "/usr/local/lib/kamailio/modules/auth.so"
+loadmodule "/usr/local/lib/kamailio/modules/auth_db.so"
 modparam("usrloc", "db_mode", 2)
 modparam("auth_db", "calculate_ha1", yes)
 modparam("auth_db", "password_column", "password")

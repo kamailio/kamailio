@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: SUBSCRIBE support
+ * \brief Kamailio presence module :: SUBSCRIBE support
  * \ref subscribe.c
  * \ingroup presence 
  */

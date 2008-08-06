@@ -101,7 +101,7 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    The module implements text based operations over the SIP
-   message processed by OpenSER. SIP is a text based protocol and
+   message processed by Kamailio. SIP is a text based protocol and
    the module provides a large set of very useful functions to
    manipulate the message at text level, e.g., regular expression
    search and replace, Perl-like substitutions, checks for method
@@ -206,7 +206,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 
    Example 1.5. replace usage
 ...
-replace("openser", "OpenSER SIP Proxy");
+replace("openser", "Kamailio SIP Proxy");
 ...
 
 1.3.6.  replace_body(re, txt)
@@ -223,7 +223,7 @@ replace("openser", "OpenSER SIP Proxy");
 
    Example 1.6. replace_body usage
 ...
-replace_body("openser", "OpenSER SIP Proxy");
+replace_body("openser", "Kamailio SIP Proxy");
 ...
 
 1.3.7.  replace_all(re, txt)
@@ -239,7 +239,7 @@ replace_body("openser", "OpenSER SIP Proxy");
 
    Example 1.7. replace_all usage
 ...
-replace_all("openser", "OpenSER SIP Proxy");
+replace_all("openser", "Kamailio SIP Proxy");
 ...
 
 1.3.8.  replace_body_all(re, txt)
@@ -256,7 +256,7 @@ replace_all("openser", "OpenSER SIP Proxy");
 
    Example 1.8. replace_body_all usage
 ...
-replace_body_all("openser", "OpenSER SIP Proxy");
+replace_body_all("openser", "Kamailio SIP Proxy");
 ...
 
 1.3.9.  replace_body_atonce(re, txt)

@@ -82,7 +82,7 @@ Chapter 1. Admin Guide
 1.5.1.  pua_publish
 
    Command parameters:
-     * presentity_uri - e.g. sip:system@openser.org
+     * presentity_uri - e.g. sip:system@kamailio.org
      * expires - Relative expires time in seconds (e.g. 3600).
      * event package - Event package that is target of published
        information (e.g. presence).
@@ -100,7 +100,7 @@ Chapter 1. Admin Guide
 ...
 
 :pua_publish:fifo_test_reply
-sip:system@openser.org
+sip:system@kamailio.org
 3600
 presence
 application/pidf+xml
@@ -109,7 +109,7 @@ application/pidf+xml
 <?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns
 :dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params
 :xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='s
-ystem@openser.org'><tuple id='0x81475a0'><status><basic>open</basic></st
+ystem@kamailio.org'><tuple id='0x81475a0'><status><basic>open</basic></st
 atus></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away
 </rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presenc
 e>
@@ -118,8 +118,8 @@ e>
 1.6.  pua_subscribe
 
    Command parameters:
-     * presentity_uri - e.g. sip:presentity@openser.org
-     * watcher_uri - e.g. sip:watcher@openser.org
+     * presentity_uri - e.g. sip:presentity@kamailio.org
+     * watcher_uri - e.g. sip:watcher@kamailio.org
      * event package
      * expires - Relative time in seconds for the desired validity
        of the subscription.

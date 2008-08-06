@@ -3,6 +3,6 @@
 <chapter>
   
   <title>&develguide;</title>
-  <para>The functions of the OSP modules are not used by other OpenSER modules.</para>
+  <para>The functions of the OSP modules are not used by other Kamailio modules.</para>
 </chapter>
 

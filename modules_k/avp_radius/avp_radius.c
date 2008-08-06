@@ -22,7 +22,7 @@
  *
  * History:
  * -------
- * 2005-07-08: Radius AVP may contain any kind of OpenSER AVP - ID/name or
+ * 2005-07-08: Radius AVP may contain any kind of Kamailio AVP - ID/name or
  *             int/str value (bogdan)
  */
 

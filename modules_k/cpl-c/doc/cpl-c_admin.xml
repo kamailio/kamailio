@@ -214,7 +214,7 @@ modparam("cpl-c","cpl_bin_column","cpl_bin")
 				<title>Set <varname>cpl_dtd_file</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
+modparam("cpl-c","cpl_dtd_file","/etc/kamailio/cpl-06.dtd")
 ...
 </programlisting>
 			</example>
@@ -236,7 +236,7 @@ modparam("cpl-c","cpl_dtd_file","/etc/openser/cpl-06.dtd")
 				<title>Set <varname>log_dir</varname> parameter</title>
 				<programlisting format="linespecific">
 ...
-modparam("cpl-c","log_dir","/var/log/openser/cpl")
+modparam("cpl-c","log_dir","/var/log/kamailio/cpl")
 ...
 </programlisting>
 			</example>
@@ -681,7 +681,7 @@ if (method=="REGISTER") {
 			the table was not created by the installation script or you choose
 			to install everything by yourself you can use the cpc-create.sql
 			<acronym>SQL</acronym> script in the database directories in the 
-			openser/scripts folder as template. 
+			kamailio/scripts folder as template. 
 			Database and table name can be set with module parameters so they 
 			can be changed, but the name of the columns must be as they are 
 			in the <acronym>SQL</acronym> script.

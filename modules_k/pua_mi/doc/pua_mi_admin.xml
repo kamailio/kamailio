@@ -84,7 +84,7 @@
 			<listitem>
 				<para>
 					<emphasis>presentity_uri</emphasis>
-					- e.g. sip:system@openser.org
+					- e.g. sip:system@kamailio.org
 				</para>	
 			</listitem>
 			<listitem>
@@ -139,13 +139,13 @@
 ...
 <![CDATA[
 :pua_publish:fifo_test_reply
-sip:system@openser.org
+sip:system@kamailio.org
 3600
 presence
 application/pidf+xml
 .
 .
-<?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='system@openser.org'><tuple id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presence>
+<?xml version='1.0'?><presence xmlns='urn:ietf:params:xml:ns:pidf' xmlns:dm='urn:ietf:params:xml:ns:pidf:data-model' xmlns:rpid='urn:ietf:params:xml:ns:pidf:rpid' xmlns:c='urn:ietf:params:xml:ns:pidf:cipid' entity='system@kamailio.org'><tuple id='0x81475a0'><status><basic>open</basic></status></tuple><dm:person id='pdd748945'><rpid:activities><rpid:away/>away</rpid:activities><dm:note>CPU:16 MEM:476</dm:note></dm:person></presence>
 ]]>
 </programlisting>
 		</example>
@@ -163,13 +163,13 @@ application/pidf+xml
 			<listitem>
 				<para>
 					<emphasis>presentity_uri</emphasis>
-					- e.g. sip:presentity@openser.org
+					- e.g. sip:presentity@kamailio.org
 				</para>	
 			</listitem>
 			<listitem>
 				<para>
 					<emphasis>watcher_uri</emphasis>
-					- e.g. sip:watcher@openser.org
+					- e.g. sip:watcher@kamailio.org
 				</para>	
 			</listitem>
 

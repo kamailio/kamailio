@@ -347,10 +347,10 @@ xlog("translated to var $var(y) \n");
 
 1.8. Installation
 
-   The modules requires one table in OpenSER database:
+   The modules requires one table in Kamailio database:
    dialplan.The SQL syntax to create them can be found in
    dialplan-create.sql script in the database directories in the
-   openser/scripts folder. You can also find the complete database
+   kamailio/scripts folder. You can also find the complete database
    documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
 

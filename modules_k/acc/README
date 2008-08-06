@@ -210,10 +210,10 @@ Chapter 1. Admin Guide
    particular, accounting secret must match that one configured in
    server and proper dictionary is used (one is available at
    etc/sip_dictionary). Also note that Debian radiusclient-ng uses
-   /var/run/radius.seq as seqfile but OpenSER Debian init script
-   expects /var/run/openser/openser_radius.seq, so is needed to
-   change it in radiusclient-ng configuration or in OpenSER Debian
-   init script (if not, OpenSER can't create the seq file when not
+   /var/run/radius.seq as seqfile but Kamailio Debian init script
+   expects /var/run/kamailio/kamailio_radius.seq, so is needed to
+   change it in radiusclient-ng configuration or in Kamailio Debian
+   init script (if not, Kamailio can't create the seq file when not
    running as root). Uses along with FreeRadius (
    http://www.freeradius.org/) and Radiator (
    http://www.open.com.au/radiator/) servers have been reported to
@@ -270,7 +270,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
 
    The full list of supported pseudo-variables in Kamailio is
    availabe at:
-   http://openser.org/dokuwiki/doku.php/pseudovariables:devel
+   http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel
 
    Via log_name you define how/where the data will be logged. Its
    meaning depends of the accounting support which is used:

@@ -881,7 +881,7 @@ if (method=="REGISTER") {
 		</listitem>
 		<listitem>
 			<para><emphasis>pvar</emphasis> - Any
-			pseudo-variable defined in OpenSER.
+			pseudo-variable defined in Kamailio.
 			</para>
 		</listitem>
 		</itemizedlist>
@@ -1096,7 +1096,7 @@ if (allow_trusted("$si", "$proto")) {
 		<para>
 		Tests if (URI, Contact) pair is allowed according to
 		allow/deny files.  The files must already have been
-		 loaded by OpenSER.
+		 loaded by Kamailio.
 		</para>
 		<para>Parameters: </para>
 		<itemizedlist>

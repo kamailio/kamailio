@@ -1,7 +1,7 @@
 /* 
  * $Id: $
  *
- * OpenSER H.350 Module
+ * Kamailio H.350 Module
  *
  * Copyright (C) 2007 University of North Carolina
  *

@@ -28,7 +28,7 @@
 
 /*! \defgroup presence Presence :: A generic implementation of the SIP event package (PUBLISH, SUBSCRIBE, NOTIFY)
  *
- *	   The OpenSER presence module is a generic module for SIP event packages, which is much more than presence.
+ *	   The Kamailio presence module is a generic module for SIP event packages, which is much more than presence.
  *	   It is extensible by developing other modules that use the internal developer API.
  *	   Examples:
  *	   - \ref presence_mwi
@@ -36,7 +36,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module
+ * \brief Kamailio presence module
  * 
  * \ingroup presence 
  */

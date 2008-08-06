@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: Utility functions
+ * \brief Kamailio presence module :: Utility functions
  * \ref utils_func.c
  * \ingroup presence 
  */

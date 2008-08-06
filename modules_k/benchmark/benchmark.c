@@ -1,7 +1,7 @@
 /*
  * $Id: benchmark.c 941 2007-04-11 12:37:21Z bastian $
  *
- * Benchmarking module for OpenSER
+ * Benchmarking module for Kamailio
  *
  * Copyright (C) 2007 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
@@ -34,7 +34,7 @@
 
 /*! \defgroup benchmark Benchmark :: Developer benchmarking module
  *
- * This module is for OpenSER developers, as well as admins. It gives
+ * This module is for Kamailio developers, as well as admins. It gives
  * a possibility to clock certain critical paths in module code or 
  * configuration sections.
  * 

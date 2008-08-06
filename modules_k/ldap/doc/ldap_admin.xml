@@ -4,7 +4,7 @@
     <section>
       <title>Overview</title>
 
-      <para>The LDAP module implements an LDAP search interface for OpenSER. It exports script functions to perform an LDAP search operation and to store the search results as OpenSER AVPs. This allows for using LDAP directory data in the OpenSER SIP message routing script.</para>
+      <para>The LDAP module implements an LDAP search interface for Kamailio. It exports script functions to perform an LDAP search operation and to store the search results as Kamailio AVPs. This allows for using LDAP directory data in the Kamailio SIP message routing script.</para>
       
       <para>The following features are offered by the LDAP module:</para>
       <itemizedlist>
@@ -27,21 +27,21 @@
             <para>Configurable LDAP connection and bind timeouts</para>
         </listitem>
 		<listitem>
-            <para>Module API for LDAP search operations that can be used by other OpenSER modules</para>
+            <para>Module API for LDAP search operations that can be used by other Kamailio modules</para>
         </listitem>
       </itemizedlist> 
       
-      <para>The module implementation makes use of the open source OpenLDAP library available on most UNIX/Linux platforms. Besides LDAP server failover and automatic reconnect, this module can handle multiple LDAP sessions concurrently allowing to access data stored on different LDAP servers. Each OpenSER worker process maintains one LDAP TCP connection per configured LDAP server. This enables parallel execution of LDAP requests and offloads LDAP concurrency control to the LDAP server(s).</para>
+      <para>The module implementation makes use of the open source OpenLDAP library available on most UNIX/Linux platforms. Besides LDAP server failover and automatic reconnect, this module can handle multiple LDAP sessions concurrently allowing to access data stored on different LDAP servers. Each Kamailio worker process maintains one LDAP TCP connection per configured LDAP server. This enables parallel execution of LDAP requests and offloads LDAP concurrency control to the LDAP server(s).</para>
       
-      <para>An LDAP search module API is provided that can be used by other OpenSER modules. A module using this API does not have to implement LDAP connection management and configuration, while still having access to the full OpenLDAP API for searching and result handling.</para> 
+      <para>An LDAP search module API is provided that can be used by other Kamailio modules. A module using this API does not have to implement LDAP connection management and configuration, while still having access to the full OpenLDAP API for searching and result handling.</para> 
       
-      <para>Since LDAP server implementations are optimized for fast read access they are a good choice to store SIP provisioning data. Performance tests have shown that this module achieves lower data access times and higher call rates than other database modules like e.g. the OpenSER MYSQL module.</para>
+      <para>Since LDAP server implementations are optimized for fast read access they are a good choice to store SIP provisioning data. Performance tests have shown that this module achieves lower data access times and higher call rates than other database modules like e.g. the Kamailio MYSQL module.</para>
 
       <section>
         <title>Usage Basics</title>
 
         <para>
-			First so called LDAP sessions have to be specified in an external configuration file (as described in <xref linkend="ldap-config" xreflabel="LDAP Configuration File"/>). Each LDAP session includes LDAP server access parameters like server hostname or connection timeouts. Normally only a single LDAP session will be used unless there is a need to access more than one LDAP server. The LDAP session name will then be used in the OpenSER configuration script to refer to a specific LDAP session.
+			First so called LDAP sessions have to be specified in an external configuration file (as described in <xref linkend="ldap-config" xreflabel="LDAP Configuration File"/>). Each LDAP session includes LDAP server access parameters like server hostname or connection timeouts. Normally only a single LDAP session will be used unless there is a need to access more than one LDAP server. The LDAP session name will then be used in the Kamailio configuration script to refer to a specific LDAP session.
         </para>
 
         <para>
@@ -53,7 +53,7 @@
         </para>
         
         <para>
-        All <varname>ldap_result*</varname> functions do always access the LDAP result set from the last <varname>ldap_search</varname> call. This should be kept in mind when calling <varname>ldap_search</varname> more than once in the OpenSER configuration script.
+        All <varname>ldap_result*</varname> functions do always access the LDAP result set from the last <varname>ldap_search</varname> call. This should be kept in mind when calling <varname>ldap_search</varname> more than once in the Kamailio configuration script.
         </para>
       </section>
 
@@ -174,14 +174,14 @@
       <title>Dependencies</title>
 
       <section>
-        <title>OpenSER Modules</title>
+        <title>Kamailio Modules</title>
 
         <para>The module depends on the following modules (the listed modules
         must be loaded before this module):</para>
 
         <itemizedlist>
           <listitem>
-            <para><emphasis>No dependencies on other OpenSER modules.</emphasis></para>
+            <para><emphasis>No dependencies on other Kamailio modules.</emphasis></para>
           </listitem>
         </itemizedlist>
       </section>
@@ -190,7 +190,7 @@
         <title>External Libraries or Applications</title>
 
         <para>The following libraries or applications must be installed before
-        running OpenSER with this module loaded:</para>
+        running Kamailio with this module loaded:</para>
 
         <itemizedlist>
           <listitem>
@@ -220,7 +220,7 @@
         are treated as comments.</para>
 
         <para>Each section describes one LDAP session that can be referred to
-        in the OpenSER configuration script. Using the section name as the
+        in the Kamailio configuration script. Using the section name as the
         host part of an LDAP URL tells the module to use the LDAP session
         specified in the respective section. An example LDAP session
         specification looks like:
@@ -404,13 +404,13 @@ ldap_client_bind_timeout = 500
         <para>Full path to LDAP configuration file.</para>
 
         <para>Default value:
-        <varname>/usr/local/etc/openser/ldap.cfg</varname></para>
+        <varname>/usr/local/etc/kamailio/ldap.cfg</varname></para>
 
         <example>
           <title><varname>config_file</varname> parameter usage</title>
 
           <programlisting format="linespecific">
-modparam("ldap", "config_file", "/etc/openser/ldap.ini")
+modparam("ldap", "config_file", "/etc/kamailio/ldap.ini")
 		  </programlisting>
         </example>
       </section>
@@ -425,7 +425,7 @@ modparam("ldap", "config_file", "/etc/openser/ldap.ini")
         <para>Performs an LDAP search operation using given LDAP URL and stores result
         internally for later retrieval by <varname>ldap_result*</varname> functions. If one ore
         more LDAP entries are found the function returns the number of found
-        entries which evaluates to TRUE in the OpenSER configuration script.
+        entries which evaluates to TRUE in the Kamailio configuration script.
         It returns <varname>-1</varname> (<varname>FALSE</varname>) in case no
         LDAP entry was found, and <varname>-2</varname>
         (<varname>FALSE</varname>) if an internal error like e.g. an LDAP
@@ -443,7 +443,7 @@ modparam("ldap", "config_file", "/etc/openser/ldap.ini")
               format). The hostport part must be one of the LDAP session names
               declared in the LDAP configuration script.</para>
 
-              <para>OpenSER pseudo variables and AVPs included in
+              <para>Kamailio pseudo variables and AVPs included in
               <varname>ldap_url</varname> do get substituted with their
               value.</para>
 

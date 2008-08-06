@@ -24,7 +24,7 @@
  *
  */
 /*! \file
- *  \brief OpenSER XMPP module
+ *  \brief Kamailio XMPP module
  *  \ingroup xmpp
  */
 

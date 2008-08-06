@@ -799,8 +799,8 @@ avp_copy("$avp(old)","$avp(new)/gd");
 			'format' parameter can include any pseudo-variable defined in
 			&openser;. The list with all pseudo-variables in &openser; can
 			be found at:	
-			<ulink url="http://openser.org/dokuwiki/">
-			http://openser.org/dokuwiki/</ulink>.
+			<ulink url="http://kamailio.org/dokuwiki/">
+			http://kamailio.org/dokuwiki/</ulink>.
 			</para>
 			<para>Meaning of the parameters is as follows:</para>
 			<itemizedlist>

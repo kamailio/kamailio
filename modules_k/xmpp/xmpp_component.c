@@ -24,7 +24,7 @@
  *
  */
 /*! \file
- * \brief OpenSER XMPP :: XMPP Component interface support
+ * \brief Kamailio XMPP :: XMPP Component interface support
  *  \ingroup xmpp
  */
 

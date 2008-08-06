@@ -311,10 +311,10 @@ if(method=="NOTIFY")
 
 1.5. Installation
 
-   The module requires 2 table in OpenSER database: rls_presentity
+   The module requires 2 table in Kamailio database: rls_presentity
    and rls_watchers.The SQL syntax to create them can be found in
    rls-create.sql script in the database directories in the
-   openser/scripts folder. You can also find the complete database
+   kamailio/scripts folder. You can also find the complete database
    documentation on the project webpage,
    http://www.kamailio.org/docs/db-tables/openser-db-devel.html.
 

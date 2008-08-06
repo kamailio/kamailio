@@ -62,8 +62,8 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   This is a module which integrates the Berkeley DB into OpenSER.
-   It implements the DB API defined in OpenSER.
+   This is a module which integrates the Berkeley DB into Kamailio.
+   It implements the DB API defined in Kamailio.
 
 1.2. Dependencies
 
@@ -155,7 +155,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
    outside the scope of this document. Documentation for this
    procedure is available on the Internet.
 
-   Next, prepare to compile OpenSER with the db_berkeley module.
+   Next, prepare to compile Kamailio with the db_berkeley module.
    In the directory /modules/db_berkeley, modify the Makefile to
    point to your distribution of Berkeley DB. You may also define
    'BDB_EXTRA_DEBUG' to compile in extra debug logs. However, it
@@ -171,7 +171,7 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
        include_modules="db_berkeley"; make install
        include_modules="db_berkeley"'.
 
-   Installation of OpenSER is performed by simply running make
+   Installation of Kamailio is performed by simply running make
    install as root user of the main directory. This will install
    the binaries in /usr/local/sbin/. If this was successful,
    openser control engine files should now be installed as
@@ -179,27 +179,27 @@ modparam("db_berkeley", "journal_roll_interval", 3600)
 
    Decide where (on the filesystem) you want to install the
    Berkeley DB files. For instance,
-   '/usr/local/etc/openser/db_berkeley' directory. Make note of
+   '/usr/local/etc/kamailio/db_berkeley' directory. Make note of
    this directory as we need to add this path to the kamctlrc
-   file. Note: OpenSER will not startup without these DB files.
+   file. Note: Kamailio will not startup without these DB files.
 
    Edit kamctlrc - There are two parameters in this file that
    should be configured before openserctrdb script can work
    properly: DBENGINE and DB_PATH. Edit file:
-   '/usr/local/etc/openser/kamctlrc'
+   '/usr/local/etc/kamailio/kamctlrc'
                 ## database type: MYSQL, PGSQL, DB_BERKELEY, or DBTEXT,
 by default none is loaded
                 # DBENGINE=DB_BERKELEY
 
                 ## database path used by dbtext or db_berkeley
-                # DB_PATH="/usr/local/etc/openser/db_berkeley"
+                # DB_PATH="/usr/local/etc/kamailio/db_berkeley"
 
    (Optional) Pre creation step- Customize your meta-data. The DB
    files are initially seeded with necessary meta-data. This is a
    good time to review the meta-data section details, before
    making modifications to your tables dbschema. By default, the
    files are installed in
-   '/usr/local/share/openser/db_berkeley/openser' By default these
+   '/usr/local/share/kamailio/db_berkeley/openser' By default these
    tables are created Read/Write and without any journalling as
    shown. These settings can be modified on a per table basis.
    Note: If you plan to use bdb_recover, you must change the
@@ -215,11 +215,11 @@ by default none is loaded
                 kamdbctl presence           (optional)
                 kamdbctl extra              (optional)
 
-   Modify the OpenSER configuration file to use db_berkeley
+   Modify the Kamailio configuration file to use db_berkeley
    module. The database URL for modules must be the path to the
    directory where the Berkeley DB table-files are located,
    prefixed by "berkeley://", e.g.,
-   "berkeley:///usr/local/etc/openser/db_berkeley".
+   "berkeley:///usr/local/etc/kamailio/db_berkeley".
 
    A couple other IMPORTANT things to consider are the 'db_mode'
    and the 'use_domain' modparams. The description of these
@@ -398,7 +398,7 @@ r) last_name(str) email_address(str) datetime_created(datetime) timezone
 
 1.12. DB Maintaince Script : kamdbctl
 
-   Use the kamdbctl script for maintaining OpenSER Berkeley DB
+   Use the kamdbctl script for maintaining Kamailio Berkeley DB
    tables. This script assumes you have DBENGINE and DB_PATH setup
    correctly in kamctlrc. Note Unsupported commands are-
    backup, restore, migrate, copy, serweb.
@@ -425,14 +425,14 @@ tance of db; output DB_PATH/db.new)
    The db_berkeley module uses the Concurrent Data Store (CDS)
    architecture. As such, no transaction or journaling is provided
    by the DB natively. The application bdb_recover is specifically
-   written to recover data from journal files that OpenSER
+   written to recover data from journal files that Kamailio
    creates. The bdb_recover application requires an additional
    text file that contains the table schema.
 
    The schema is loaded with the '-s' option and is required for
    all operations. Provide the path to the db_berkeley plain-text
    schema files. By default, these install to
-   '/usr/local/share/openser/db_berkeley/openser/'.
+   '/usr/local/share/kamailio/db_berkeley/kamailio/'.
 
    The '-h' home option is the DB_PATH path. Unlike the Berkeley
    utilities, this application does not look for the DB_PATH

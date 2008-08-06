@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER Presence_XML :: 
+ * \brief Kamailio Presence_XML :: 
  * \ref notify_body.c
  * \ingroup presence_xml
  */

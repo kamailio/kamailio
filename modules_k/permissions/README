@@ -645,7 +645,7 @@ if (method=="REGISTER") {
        If the parameter doesn't contain full pathname then the
        function expects the file to be located in the same
        directory as the main configuration file of the server.
-     * pvar - Any pseudo-variable defined in OpenSER.
+     * pvar - Any pseudo-variable defined in Kamailio.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
@@ -788,7 +788,7 @@ if (allow_trusted("$si", "$proto")) {
 1.5.6.  allow_uri
 
    Tests if (URI, Contact) pair is allowed according to allow/deny
-   files. The files must already have been loaded by OpenSER.
+   files. The files must already have been loaded by Kamailio.
 
    Parameters:
      * basename - Basename from which allow and deny filenames

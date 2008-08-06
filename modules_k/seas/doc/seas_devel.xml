@@ -7,7 +7,7 @@
       <title>Internals</title>
 
       <para>The SEAS module runs within the Open Sip Express Router aka.
-      OpenSER. OpenSER uses a pool of processes to execute the script logic on
+      Kamailio. Kamailio uses a pool of processes to execute the script logic on
       every new message received. These are called the worker processes. One
       of these processes will be selected to process the script, and at some
       point it will find a function invoking the relay of the SIP message to
@@ -22,25 +22,25 @@
       message being handled, put it in a shared memory segment, and write the
       address of that segment to a pipe (4 bytes pointer in IA32).</para>
 
-      <para>This way, we will have all the OpenSER processes composing the
+      <para>This way, we will have all the Kamailio processes composing the
       SEAS header along with the SIP message, and putting its shared memory
       address into that pipe. This technique of inter-process communication
       avoids race conditions because writing to a pipe is granted to be an
       atomic operation if the data to write is less than _POSIX_PIPE_BUF,
       which usually is 512 bytes.</para>
 
-      <para>At the initialization of OpenSER, the SEAS module creates the
-      discussed pipe, so that all the OpenSER worker processes inherit the
+      <para>At the initialization of Kamailio, the SEAS module creates the
+      discussed pipe, so that all the Kamailio worker processes inherit the
       file descriptor associated to the pipe. Then it spawns a new process,
       which will be the one to open two server sockets, and wait for the
       Application Servers to connect and register.</para>
 
-      <para>Each Application Server wishing to receive events from OpenSER,
+      <para>Each Application Server wishing to receive events from Kamailio,
       will have to open a socket to the module (the port and IP of the socket
       are defined at start time in the script). After connection, it has to
       print its identification name. The SEAS process (from now on, called
       event dispatcher) will then register it in its internal structures, so
-      that the OpenSER processes can push events for it. The following
+      that the Kamailio processes can push events for it. The following
       picture, shows the internals of the SEAS Event dispatcher
       process:</para>
 
@@ -80,9 +80,9 @@
       efficiently, because parsing of text headers requires a lot of
       state.</para>
 
-      <para>OpenSER implements a very efficient parsing mechanism and
+      <para>Kamailio implements a very efficient parsing mechanism and
       SIP-transaction machinery. The goal of the SEAS protocol is to keep all
-      this information that has been already extracted at OpenSER, so that it
+      this information that has been already extracted at Kamailio, so that it
       can be reused at the Application Server.</para>
 
       <section>
@@ -91,15 +91,15 @@
         <para>The SEAS protocol is a layer of information regarding the
         internal structure of a SIP message that is added whenever SEAS sends
         a SIP event to the Application Servers. The protocol is used for
-        communication between OpenSER and the Application Servers.</para>
+        communication between Kamailio and the Application Servers.</para>
 
         <para>Once an incoming SIP message has reached the worker process
-        within OpenSER, it copies its content into a private memory area
+        within Kamailio, it copies its content into a private memory area
         (which is, a memory chunk not shared across processes). In this point,
         the message first line is parsed to know whether it is a SIP request
         or response.</para>
 
-        <para>OpenSER uses a technique called lazy-parsing, which consists in
+        <para>Kamailio uses a technique called lazy-parsing, which consists in
         delaying the parse of headers until some piece of the code requires
         it.</para>
 
@@ -132,17 +132,17 @@
         meta-information regarding the SIP message structure, is stored in a
         sip_msg structure, using dynamically-allocated memory segments.</para>
 
-        <para>OpenSER defines different structure types describing different
+        <para>Kamailio defines different structure types describing different
         SIP headers, such as via_body, to_body, cseq_body, via_param, and so
         on. These structures are generally composed of another kind of
         structure called str.</para>
 
-        <para>The str structure is a key component of OpenSER's high
+        <para>The str structure is a key component of Kamailio's high
         performance. In the C programming language, a string's length is known
         because a '0' (null-character) is found at the end of it. This forces
         each of the string manipulation functions to keep looking for a '0' in
         the byte stream, which is quite processor consuming. Instead of this,
-        OpenSER defines a structure composed of a char pointer and an integer.
+        Kamailio defines a structure composed of a char pointer and an integer.
         The char points to the start of a string, and the integer gives its
         length, thus avoiding the '0' lookup problem, and giving a significant
         performance boost.</para>
@@ -159,7 +159,7 @@
         been casted to an unsigned byte (256 values, so 256 characters maximum
         length).</para>
 
-        <para>When messages get transferred from OpenSER to the Application
+        <para>When messages get transferred from Kamailio to the Application
         Server, it is optimum to keep this worthy meta-information regarding
         the SIP message, so that it can be used at the AS part. For this to be
         possible, it is needed to store the pointers to each of the syntactic

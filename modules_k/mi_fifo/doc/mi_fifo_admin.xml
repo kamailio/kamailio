@@ -173,7 +173,7 @@ modparam("mi_fifo", "fifo_user", "root")
 		<title>Set <varname>reply_dir</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam("mi_fifo", "reply_dir", "/home/openser/tmp/")
+modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
 ...
 </programlisting>
 		</example>

@@ -108,7 +108,7 @@ Chapter 1. Admin Guide
    module parameter "fallback2db"). In this mode, in case a
    searched record is not found in cache, the search is continued
    in database. This is useful for an architecture in which
-   processing and memory load might be divided on several OpenSER
+   processing and memory load might be divided on several Kamailio
    instances, maybe on different servers using the same database.
 
    The module implements several API functions, that can be used
@@ -116,7 +116,7 @@ Chapter 1. Admin Guide
    module, or "library". This mode of operation is enabled if the
    db_url parameter is not set to any value.
 
-   The OpenSER Presence module implements the specifications in:
+   The Kamailio Presence module implements the specifications in:
    RFC3265, RFC3856, RFC3857, RFC3858.
 
 1.2. Dependencies
@@ -387,10 +387,10 @@ if(method=="SUBSCRIBE")
 
 1.6. Installation
 
-   The module requires 3 tables in the OpenSER database:
+   The module requires 3 tables in the Kamailio database:
    "presentity", "active_watchers" and "watchers". The SQL syntax
    to create them can be found in presence-create.sql script in
-   the database directories in the openser/scripts folder. You can
+   the database directories in the kamailio/scripts folder. You can
    also find the complete database documentation on the project
    webpage,
    http://www.kamailio.org/docs/db-tables/openser-db-devel.html.

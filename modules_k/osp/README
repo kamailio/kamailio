@@ -95,9 +95,9 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The OSP module enables OpenSER to support secure, multi-lateral
+   The OSP module enables Kamailio to support secure, multi-lateral
    peering using the OSP standard defined by ETSI (TS 101 321
-   V4.1.1). This module will enable your OpenSER to:
+   V4.1.1). This module will enable your Kamailio to:
      * Send a peering authorization request to a peering server.
      * Validate a digitally signed peering authorization token
        received in a SIP INVITE message.
@@ -114,10 +114,10 @@ Chapter 1. Admin Guide
      * auth -- Remote-Party-ID operattion
      * OSP Toolkit -- The OSP Toolkit, available from
        http://sourceforge.net/projects/osp-toolkit, must be built
-       before building OpenSER with the OSP Module. For
-       instructions on building OpenSER with the OSP Toolkit, see
+       before building Kamailio with the OSP Module. For
+       instructions on building Kamailio with the OSP Toolkit, see
        http://www.transnexus.com/White%20Papers/Multi-Lateral_Peer
-       ing_with_OpenSER_V1.1.1pdf
+       ing_with_Kamailio_V1.1.1pdf
 
 1.3. Exported Parameters
 
@@ -133,13 +133,13 @@ Chapter 1. Admin Guide
        communicating with the peering server. Both HTTP and HTTP
        secured with SSL/TLS are supported and are indicated by
        "http://" and "https://" respectively. If the protocol is
-       not explicitly indicated, the OpenSER defaults to HTTP
+       not explicitly indicated, the Kamailio defaults to HTTP
        secured with SSL.
      * The Internet domain name for the peering server. An IP
        address may also be used, provided it is enclosed in square
        brackets such as [172.16.1.1].
      * An optional TCP port number for communicating with the
-       peering server. If the port number is omitted, the OpenSER
+       peering server. If the port number is omitted, the Kamailio
        defaults to port 1080 (for HTTP) or port 1443 (for HTTP
        secured with SSL).
        The uniform resource identifier for requests to the peering
@@ -169,7 +169,7 @@ modparam("osp","sp1_weight",1000)
 1.3.3. device_ip
 
    The device_ip (string) is a recommended parameter that
-   explicitly defines the IP address of OpenSER in a peering
+   explicitly defines the IP address of Kamailio in a peering
    request message (as SourceAlternate type=transport). The IP
    address must be in brackets as shown in the example below.
 
@@ -179,11 +179,11 @@ modparam("osp","device_ip","[1.1.1.1]")
 1.3.4. device_port
 
    The device_port (string) parameter is an optional field which
-   includes the SIP port being used by OpenSER in the peering
+   includes the SIP port being used by Kamailio in the peering
    request (as SourceAlternate type=network) to the peering
    server. If is not configured, this information is not included
    in the peering request. This field is useful if multiple
-   OpenSERs are running on the same Linux computer since it
+   Kamailios are running on the same Linux computer since it
    enables the peering server to administer different peering
    policies based on different SIP proxies. This parameter has not
    been implemented yet.
@@ -193,11 +193,11 @@ modparam("osp","device_port","5060")
 
 1.3.5. token_format
 
-   When OpenSER receives a SIP INVITE with a peering token, the
+   When Kamailio receives a SIP INVITE with a peering token, the
    OSP Module will validate the token to determine whether or not
    the call has been authorized by a peering server. Peering
    tokens may, or may not, be digitally signed. The token_format
-   (integer) parameter defines if OpenSER will validate signed or
+   (integer) parameter defines if Kamailio will validate signed or
    unsigned tokens or both. The values for token format are
    defined below. The default value is 2.
 
@@ -217,12 +217,12 @@ modparam("osp","token_format",2)
 
    These parameters identify files are used for validating peering
    authorization tokens and establishing a secure channel between
-   OpenSER and a peering server using SSL. The files are generated
+   Kamailio and a peering server using SSL. The files are generated
    using the 'Enroll' utility from the OSP Toolkit. By default,
    the proxy will look for pkey.pem, localcert.pem, and
    cacart_0.pem in the default configuration directory. The
    default config directory is set at compile time using CFG_DIR
-   and defaults to /usr/local/etc/openser/. The files may be
+   and defaults to /usr/local/etc/kamailio/. The files may be
    copied to the expected file location or the parameters below
    may be changed.
 
@@ -230,10 +230,10 @@ modparam("osp","token_format",2)
 
    If the default CFG_DIR value was used at compile time, the
    files will be loaded from:
-modparam("osp","private_key","/usr/local/etc/openser/pkey.pem")
-modparam("osp","local_certificate","/usr/local/etc/openser/localcert.pem
+modparam("osp","private_key","/usr/local/etc/kamailio/pkey.pem")
+modparam("osp","local_certificate","/usr/local/etc/kamailio/localcert.pem
 ")
-modparam("osp","ca_certificates","/usr/local/etc/openser/cacert.pem")
+modparam("osp","ca_certificates","/usr/local/etc/kamailio/cacert.pem")
 
 1.3.7. enable_crypto_hardware_support
 
@@ -309,7 +309,7 @@ modparam("osp","timeout",10)
 1.3.13. max_destinations
 
    The max_destinations (integer) parameter defines the maximum
-   number of destinations that OpenSER requests the peering server
+   number of destinations that Kamailio requests the peering server
    to return in a peering response. The default value is 5.
 
    Example 1.13. Setting the number of destination
@@ -363,7 +363,7 @@ modparam("osp","redirection_uri_format",1)
    Then the source network ID can be set by
    "$avp(s:_osp_source_networkid_) = pseudo-variables". All pseudo
    variables are described in
-   http://openser.org/dokuwiki/doku.php/pseudovariables:1.3.x.
+   http://kamailio.org/dokuwiki/doku.php/pseudovariables:1.3.x.
 
    Example 1.17. Setting the source network ID AVP
 modparam("osp","source_networkid_avp","$avp(s:snid)")
@@ -552,5 +552,5 @@ if (is_direction("downstream")) {
 
 Chapter 2. Developer Guide
 
-   The functions of the OSP modules are not used by other OpenSER
+   The functions of the OSP modules are not used by other Kamailio
    modules.

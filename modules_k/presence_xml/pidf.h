@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER Presence_XML :: PIDF handling
+ * \brief Kamailio Presence_XML :: PIDF handling
  * \ref pidf.c
  * \ingroup presence_xml
  */

@@ -5,7 +5,7 @@
 <!ENTITY admin SYSTEM "sst_admin.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
-<!-- Include general OpenSER documentation entities -->
+<!-- Include general Kamailio documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
 %docentities;
 

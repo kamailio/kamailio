@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: Hash tables
+ * \brief Kamailio presence module :: Hash tables
  * \ingroup presence 
  */
 

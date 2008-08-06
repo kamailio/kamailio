@@ -24,7 +24,7 @@
  *
  */
 /*! \file
- * \brief OpenSER XMPP :: XMPP server implementation (limited functionality)
+ * \brief Kamailio XMPP :: XMPP server implementation (limited functionality)
  *  \ingroup xmpp
  */
 

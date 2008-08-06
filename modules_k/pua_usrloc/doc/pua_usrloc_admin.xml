@@ -69,7 +69,7 @@
 		<title>Set <varname>default_domain</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
-modparam(pua_usrloc, "default_domain", "openser.org")
+modparam(pua_usrloc, "default_domain", "kamailio.org")
 ...
 </programlisting>
 		</example>
@@ -113,7 +113,7 @@ modparam(pua_usrloc, "entity_prefix", "pres")
 		<title><function>pua_set_publish</function> usage</title>
 	<programlisting format="linespecific">
 ...
-if(is_method("REGISTER") &amp;&amp; from_uri=~"john@openser.org") 
+if(is_method("REGISTER") &amp;&amp; from_uri=~"john@kamailio.org") 
 	pua_set_publish();		
 ...
 </programlisting>

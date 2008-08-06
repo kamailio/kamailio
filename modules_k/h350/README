@@ -20,7 +20,7 @@ Christian Schlatter
 
         1.2. Dependencies
 
-              1.2.1. OpenSER Modules
+              1.2.1. Kamailio Modules
               1.2.2. External Libraries or Applications
 
         1.3. Exported Parameters
@@ -59,7 +59,7 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The OpenSER H350 module enables an OpenSER SIP proxy server to
+   The Kamailio H350 module enables an Kamailio SIP proxy server to
    access SIP account data stored in an LDAP [RFC4510] directory
    containing H.350 [H.350] commObjects. ITU-T Recommendation
    H.350 standardizes LDAP object classes to store Real-Time
@@ -77,10 +77,10 @@ Chapter 1. Admin Guide
    to set up an H.350/LDAP directory and discusses different
    deployment scenarios.
 
-   The H350 module uses the OpenSER LDAP module to import H.350
-   attribute values into the OpenSER routing script variable
+   The H350 module uses the Kamailio LDAP module to import H.350
+   attribute values into the Kamailio routing script variable
    space. The module exports functions to parse and store the
-   H.350 attribute values from the OpenSER routing script. It
+   H.350 attribute values from the Kamailio routing script. It
    allows a script writer to implement H.350 based SIP digest
    authentication, call forwarding, SIP URI alias to AOR
    rewriting, and service level parsing.
@@ -139,7 +139,7 @@ objectClass                   top
 
 1.2. Dependencies
 
-1.2.1. OpenSER Modules
+1.2.1. Kamailio Modules
 
    The module depends on the following modules (the listed modules
    must be loaded before this module):
@@ -148,7 +148,7 @@ objectClass                   top
 1.2.2. External Libraries or Applications
 
    The following libraries or applications must be installed
-   before running OpenSER with this module loaded:
+   before running Kamailio with this module loaded:
      * OpenLDAP library (libldap), libldap header files
        (libldap-dev) are needed for compilation
 
@@ -195,7 +195,7 @@ modparam("h350", "search_scope", "sub");
    filter strings. The result of the LDAP search is stored
    internally and can be accessed either by one of the
    h350_result* or one of the ldap_result* functions from the
-   OpenSER LDAP module.
+   Kamailio LDAP module.
 
    The function returns -1 (FALSE) for internal errors, and -2
    (FALSE) if no H.350 commObject was found with a matching
@@ -209,7 +209,7 @@ modparam("h350", "search_scope", "sub");
 
    sip_uri
           H.350 SIPIdentitySIPURI to search for in directory.
-          Included OpenSER variables do get expanded.
+          Included Kamailio variables do get expanded.
 
    Return Values:
 
@@ -272,7 +272,7 @@ if (!h350_sipuri_lookup("sip:$rU@$rd"))
 
    auth_username
           H.350 SIPIdentityUserName to search for in directory.
-          Included OpenSER variables do get expanded.
+          Included Kamailio variables do get expanded.
 
    username_avp_spec
           Specification for authentication username AVP, e.g.
@@ -456,7 +456,7 @@ AVP value = argument / 1000
    $avp("s:prefix_f[2]]") = "sip:alice@example.com".
 
    These AVPs can then be used to implement the desired behavior
-   in the OpenSER routing script.
+   in the Kamailio routing script.
 
    This function returns the number of successfully parsed simple
    call forwarding rules (TRUE), in case the H.350
@@ -544,7 +544,7 @@ if (is_avp_set("$avp(s:callee_pref_u)"))
    which can be used to store SIP account service level values in
    an LDAP directory. This function parses the
    SIPIdentityServiceLevel attribute and stores all service level
-   values as AVPs for later retrieval in the OpenSER routing
+   values as AVPs for later retrieval in the Kamailio routing
    script. The function accesses the H.350 commObject fetched by a
    call to h350_*_lookup or ldap_search.
 

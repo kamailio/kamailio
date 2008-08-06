@@ -453,8 +453,8 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...
 $var(username)="abc";
 $avp(s:password)="xyz";
-if (pv_www_authorize("openser.org")) {
-        www_challenge("openser.org", "1");
+if (pv_www_authorize("kamailio.org")) {
+        www_challenge("kamailio.org", "1");
 };
 ...
 

@@ -8,7 +8,7 @@
 	<title>Overview</title>
 	<para>
 		The module implements text based operations over the SIP message
-		processed by OpenSER. SIP is a text based protocol and the module
+		processed by Kamailio. SIP is a text based protocol and the module
 		provides a large set of very useful functions to manipulate the
 		message at text level, e.g., regular expression search and replace,
 		Perl-like substitutions, checks for method type, header presence,
@@ -209,7 +209,7 @@ search_append_body("[Oo]pen[Ss]er", " SIP Proxy");
 		<title><function>replace</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace("openser", "OpenSER SIP Proxy");
+replace("openser", "Kamailio SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -242,7 +242,7 @@ replace("openser", "OpenSER SIP Proxy");
 		<title><function>replace_body</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body("openser", "OpenSER SIP Proxy");
+replace_body("openser", "Kamailio SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -274,7 +274,7 @@ replace_body("openser", "OpenSER SIP Proxy");
 		<title><function>replace_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_all("openser", "OpenSER SIP Proxy");
+replace_all("openser", "Kamailio SIP Proxy");
 ...
 </programlisting>
 		</example>
@@ -307,7 +307,7 @@ replace_all("openser", "OpenSER SIP Proxy");
 		<title><function>replace_body_all</function> usage</title>
 		<programlisting format="linespecific">
 ...
-replace_body_all("openser", "OpenSER SIP Proxy");
+replace_body_all("openser", "Kamailio SIP Proxy");
 ...
 </programlisting>
 		</example>

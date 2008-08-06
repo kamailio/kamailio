@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER Presence_XML :: XCAP authentication
+ * \brief Kamailio Presence_XML :: XCAP authentication
  * \ref xcap_auth.c
  * \ingroup presence_xml
  */

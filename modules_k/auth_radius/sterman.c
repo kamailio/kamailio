@@ -24,7 +24,7 @@
  * History:
  * -------
  * 2003-03-09: Based on digest.c from radius_auth module (janakj)
- * 2005-07-08: Radius AVP may contain any kind of OpenSER AVP - ID/name or
+ * 2005-07-08: Radius AVP may contain any kind of Kamailio AVP - ID/name or
  *             int/str value (bogdan)
  * 2005-07-08: old RPID RADIUS AVP compatibility droped (bogdan)
  */

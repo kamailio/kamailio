@@ -64,7 +64,7 @@ Chapter 1. Admin Guide
 
    This module provides on-server speed dial facilities. An user
    can store records consisting of pairs short numbers (2 digits)
-   and SIP addresses into a table of OpenSER. Then it can dial the
+   and SIP addresses into a table of Kamailio. Then it can dial the
    two digits whenever it wants to call the SIP address associated
    with them.
 
@@ -229,16 +229,16 @@ rev_dns=no      # (cmd. line: -R)
 
 # ------------------ module loading ----------------------------------
 
-loadmodule "/usr/local/lib/openser/modules/sl.so"
-loadmodule "/usr/local/lib/openser/modules/tm.so"
-loadmodule "/usr/local/lib/openser/modules/rr.so"
-loadmodule "/usr/local/lib/openser/modules/maxfwd.so"
-loadmodule "/usr/local/lib/openser/modules/usrloc.so"
-loadmodule "/usr/local/lib/openser/modules/registrar.so"
-loadmodule "/usr/local/lib/openser/modules/textops.so"
-loadmodule "/usr/local/lib/openser/modules/mysql.so"
-loadmodule "/usr/local/lib/openser/modules/speeddial.so"
-loadmodule "/usr/local/lib/openser/modules/mi_fifo.so"
+loadmodule "/usr/local/lib/kamailio/modules/sl.so"
+loadmodule "/usr/local/lib/kamailio/modules/tm.so"
+loadmodule "/usr/local/lib/kamailio/modules/rr.so"
+loadmodule "/usr/local/lib/kamailio/modules/maxfwd.so"
+loadmodule "/usr/local/lib/kamailio/modules/usrloc.so"
+loadmodule "/usr/local/lib/kamailio/modules/registrar.so"
+loadmodule "/usr/local/lib/kamailio/modules/textops.so"
+loadmodule "/usr/local/lib/kamailio/modules/mysql.so"
+loadmodule "/usr/local/lib/kamailio/modules/speeddial.so"
+loadmodule "/usr/local/lib/kamailio/modules/mi_fifo.so"
 
 # ----------------- setting module-specific parameters ---------------
 

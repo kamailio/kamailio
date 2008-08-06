@@ -92,7 +92,7 @@ Chapter 1. Admin Guide
    This module implements rate limiting for SIP requests. In
    contrast to the PIKE module this limits the flow based on a per
    SIP request type basis and not per source IP. The MI interface
-   can be used to change tunables while running OpenSER.
+   can be used to change tunables while running Kamailio.
 
    The module implements the pipe/queue policy from BSD's ipfw
    manual, with some simplifications. In principle, each specified
@@ -104,7 +104,7 @@ Chapter 1. Admin Guide
 
    Limiting the rate messages are processed on a system directly
    influences the load. The ratelimit module can be used to
-   protect a single host or to protect an OpenSER cluster when run
+   protect a single host or to protect an Kamailio cluster when run
    on the dispatching box in front.
 
    A sample configuration snippet might look like this:
@@ -150,11 +150,11 @@ Chapter 1. Admin Guide
    Random Early Detection tries to circumvent the synchronization
    problem imposed by the tail drop algorithm by measuring the
    average load and adapting the drop rate dynamically. When
-   running with the RED algorithm (enabled by default) OpenSER
-   will return errors to the OpenSER routing engine every n'th
+   running with the RED algorithm (enabled by default) Kamailio
+   will return errors to the Kamailio routing engine every n'th
    packet trying to evenly spread the measured load of the last
    timer interval onto the current interval. As a negative side
-   effect OpenSER might drop messages although the limit might not
+   effect Kamailio might drop messages although the limit might not
    be reached within the interval. Decrease the timer interval if
    you encounter this.
 
@@ -271,7 +271,7 @@ modparam("ratelimit", "pipe", "3:FEEDBACK:80")
 
 1.6.4. reply_code (integer)
 
-   The code of the reply sent by OpenSER while limiting.
+   The code of the reply sent by Kamailio while limiting.
 
    Default value is 503.
 
@@ -282,7 +282,7 @@ modparam("ratelimit", "reply_code", 505)
 
 1.6.5. reply_reason (string)
 
-   The reason of the reply sent by OpenSER while limiting.
+   The reason of the reply sent by Kamailio while limiting.
 
    Default value is "Server Unavailable".
 

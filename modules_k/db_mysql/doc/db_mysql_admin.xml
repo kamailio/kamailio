@@ -7,8 +7,8 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		This is a module which provides MySQL connectivity for OpenSER.
-		It implements the DB API defined in OpenSER.
+		This is a module which provides MySQL connectivity for Kamailio.
+		It implements the DB API defined in Kamailio.
 	</para>
 	</section>
 

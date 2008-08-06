@@ -136,7 +136,7 @@ modparam("mi_fifo", "fifo_user", "root")
 
    Example 1.5. Set reply_dir parameter
 ...
-modparam("mi_fifo", "reply_dir", "/home/openser/tmp/")
+modparam("mi_fifo", "reply_dir", "/home/kamailio/tmp/")
 ...
 
 1.4.6. reply_indent (string)

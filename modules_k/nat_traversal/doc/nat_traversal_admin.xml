@@ -448,7 +448,7 @@ modparam("nat_traversal", "keepalive_from", "sip:keepalive@my-domain.com")
       <title>Setting the <varname>keepalive_extra_headers</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: OpenSER\r\nX-MyHeader: some_value\r\n")
+modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: Kamailio\r\nX-MyHeader: some_value\r\n")
 ...
         </programlisting>
       </example>
@@ -481,7 +481,7 @@ modparam("nat_traversal", "keepalive_extra_headers", "User-Agent: OpenSER\r\nX-M
       <title>Setting the <varname>keepalive_state_file</varname> parameter</title>
         <programlisting format="linespecific">
 ...
-modparam("nat_traversal", "keepalive_state_file", "/var/run/openser/keepalive_state")
+modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keepalive_state")
 ...
         </programlisting>
       </example>

@@ -471,7 +471,7 @@ R\r\nX-MyHeader: some_value\r\n")
 
    Example 1.5. Setting the keepalive_state_file parameter
 ...
-modparam("nat_traversal", "keepalive_state_file", "/var/run/openser/keep
+modparam("nat_traversal", "keepalive_state_file", "/var/run/kamailio/keep
 alive_state")
 ...
 

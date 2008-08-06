@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER pua_xmpp :: Winfo support
+ * \brief Kamailio pua_xmpp :: Winfo support
  */
 
 #include <stdio.h>

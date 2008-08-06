@@ -27,7 +27,7 @@
  */
 
 /*! \file
- * \brief OpenSER presence module :: NOTIFY support
+ * \brief Kamailio presence module :: NOTIFY support
  * \ingroup presence 
  */
 

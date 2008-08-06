@@ -1,7 +1,7 @@
 /*
  * $Id: benchmark.h 825 2007-02-16 13:04:16Z bastian $
  *
- * Benchmarking module for OpenSER
+ * Benchmarking module for Kamailio
  *
  * Copyright (C) 2007 Collax GmbH
  *                    (Bastian Friedrich <bastian.friedrich@collax.com>)
