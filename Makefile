@@ -105,7 +105,7 @@ module_group_standard=acc_syslog auth avp avpops ctl dispatcher diversion enum\
 # NOTE! All presence modules (dialog, pa, presence_b2b, rls, xcap) have been
 # included in this group due to interdependencies
 module_group_standard_dep=acc_db acc_radius auth_db auth_radius avp_db \
-				avp_radius \
+				avp_radius auth_identity \
 				db_ops domain lcr msilo mysql dialog pa postgres \
 				presence_b2b rls speeddial uri_db xcap xmlrpc
 
