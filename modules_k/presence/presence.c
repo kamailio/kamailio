@@ -77,7 +77,7 @@
 MODULE_VERSION
 
 #define S_TABLE_VERSION  3
-#define P_TABLE_VERSION  2
+#define P_TABLE_VERSION  3
 #define ACTWATCH_TABLE_VERSION 9
 
 char *log_buf = NULL;

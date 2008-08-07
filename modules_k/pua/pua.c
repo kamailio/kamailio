@@ -53,7 +53,7 @@
 #include "pidf.h"
 
 MODULE_VERSION
-#define PUA_TABLE_VERSION 5
+#define PUA_TABLE_VERSION 6
 
 struct tm_binds tmb;
 htable_t* HashT= NULL;
