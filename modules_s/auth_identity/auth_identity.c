@@ -174,7 +174,7 @@ static int mod_init(void)
 	}
 	if (!glb_authservice_disabled && glb_sservercerturl[0]==0) {
 		LOG(L_WARN, "AUTH_IDENTITY:mod_init: URL of certificate of the server is missing! Authorization service is disabled\n");
-		glb_authservice_disabled=1;openssl verify -CAfile cacert.pem alicecert.pem
+		glb_authservice_disabled=1;
 	}
 	if (!glb_authservice_disabled && glb_sservercertpath[0]==0) {
 		LOG(L_WARN, "AUTH_IDENTITY:mod_init: Path of certificate of the server is missing! Authorization service is disabled\n");
