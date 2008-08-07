@@ -341,7 +341,7 @@ modparam("rls", "rls_event", "dialog;sla")
 		<function moreinfo="none">rls_handle_subscribe()</function>
 		</title>
 		<para>
-		This function detects if a Subscribe message is should be
+		This function detects if a Subscribe message should be
 		handled by RLS. If not it replies with the configured 
 		to_presence_code. If it is, it extracts the dialog info and sends
 		aggregate Notify requests with information for the list.	

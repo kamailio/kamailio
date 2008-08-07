@@ -271,10 +271,10 @@ modparam("rls", "rls_event", "dialog;sla")
 
 1.4.1.  rls_handle_subscribe()
 
-   This function detects if a Subscribe message is should be
-   handled by RLS. If not it replies with the configured
-   to_presence_code. If it is, it extracts the dialog info and
-   sends aggregate Notify requests with information for the list.
+   This function detects if a Subscribe message should be handled
+   by RLS. If not it replies with the configured to_presence_code.
+   If it is, it extracts the dialog info and sends aggregate
+   Notify requests with information for the list.
 
    This function can be used from REQUEST_ROUTE.
 
