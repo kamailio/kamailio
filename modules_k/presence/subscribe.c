@@ -1032,6 +1032,7 @@ found_rec:
 	if(s->event->evp->parsed!= EVENT_DIALOG)
 		subs->pres_uri= pres_uri;
 	
+	subs->version = s->version;
 	subs->status= s->status;
 	if(s->reason.s && s->reason.len)
 	{	
@@ -1088,14 +1089,14 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 {	
 	db_key_t query_cols[10];
 	db_val_t query_vals[10];
-	db_key_t result_cols[8];
+	db_key_t result_cols[9];
 	db_res_t *result= NULL;
 	db_row_t *row ;	
 	db_val_t *row_vals ;
 	int n_query_cols = 0;
 	int n_result_cols = 0;
 	int remote_cseq_col= 0, local_cseq_col= 0, status_col, reason_col;
-	int record_route_col;
+	int record_route_col, version_col;
 	int pres_uri_col;
 	unsigned int remote_cseq;
 	str pres_uri, record_route;
@@ -1168,6 +1169,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	result_cols[status_col=n_result_cols++] = &str_status_col;
 	result_cols[reason_col=n_result_cols++] = &str_reason_col;
 	result_cols[record_route_col=n_result_cols++] = &str_record_route_col;
+	result_cols[version_col=n_result_cols++] = &str_version_col;
 	
 	if (pa_dbf.use_table(pa_db, &active_watchers_table) < 0) 
 	{
@@ -1226,7 +1228,8 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	}
 
 	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
-	
+	subs->version= row_vals[version_col].val.int_val;
+
 	if(subs->event->evp->parsed!= EVENT_DIALOG)
 	{
 		pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
