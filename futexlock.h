@@ -45,6 +45,10 @@
 
 #ifdef HAVE_ASM_INLINE_ATOMIC_OPS
 #define HAVE_FUTEX
+#include <sys/types.h> /* hack to workaround some type conflicts 
+                          between linux-libc-dev andlibc headers
+                          in recent (6.08.2008) x86_64 debian sid
+                          installations */
 #include <linux/futex.h>
 #include <sys/syscall.h>
 #include <unistd.h>
