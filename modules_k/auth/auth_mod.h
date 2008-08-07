@@ -55,5 +55,6 @@ extern char* nonce_buf;
 extern int* sec_monit;
 extern int* second;
 extern int* next_index;
+extern int nonce_reuse;
 
 #endif /* AUTH_MOD_H */

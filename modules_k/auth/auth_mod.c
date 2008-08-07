@@ -116,6 +116,9 @@ int* sec_monit= NULL;
 int* second= NULL;
 int* next_index= NULL;
 
+/* control nonce usage checking */
+int nonce_reuse = 0;
+
 /*
  * Exported functions 
  */
@@ -156,6 +159,7 @@ static param_export_t params[] = {
 	{"username_spec",   STR_PARAM, &user_spec_param   },
 	{"password_spec",   STR_PARAM, &passwd_spec_param },
 	{"calculate_ha1",   INT_PARAM, &auth_calc_ha1     },
+	{"nonce_reuse",     INT_PARAM, &nonce_reuse       },
 	{0, 0, 0}
 };
 
@@ -280,43 +284,46 @@ static int mod_init(void)
 		}
 	}
     
-    nonce_lock = (gen_lock_t*)lock_alloc();
-    if(nonce_lock== NULL)
-    {
-        LM_ERR("no more shared memory\n");
-        return -1;
-    }
+	if(nonce_reuse==0)
+	{
+	    nonce_lock = (gen_lock_t*)lock_alloc();
+		if(nonce_lock== NULL)
+	    {
+		    LM_ERR("no more shared memory\n");
+			return -1;
+	    }
 
-    /* initialize lock_nonce */
-    if(lock_init(nonce_lock)== 0)
-    {
-        LM_ERR("failed to init lock\n");
-        return -9;
-    }
+		/* initialize lock_nonce */
+	    if(lock_init(nonce_lock)== 0)
+		{
+	        LM_ERR("failed to init lock\n");
+		    return -9;
+	    }
 
-    nonce_buf= (char*)shm_malloc(NBUF_LEN);
-    if(nonce_buf== NULL)
-    {
-        LM_ERR("no more share memory\n");
-        return -10;
-    }
-    memset(nonce_buf, 255, NBUF_LEN);
+	    nonce_buf= (char*)shm_malloc(NBUF_LEN);
+		if(nonce_buf== NULL)
+	    {
+		    LM_ERR("no more share memory\n");
+			return -10;
+	    }
+		memset(nonce_buf, 255, NBUF_LEN);
    
-    sec_monit= (int*)shm_malloc((nonce_expire +1)* sizeof(int));
-    if(sec_monit== NULL)
-    {
-        LM_ERR("no more share memory\n");
-        return -10;
-    }
-    memset(sec_monit, -1, (nonce_expire +1)* sizeof(int));
-    second= (int*)shm_malloc(sizeof(int));
-    next_index= (int*)shm_malloc(sizeof(int));
-    if(second==  NULL || next_index== NULL)
-    {
-        LM_ERR("no more share memory\n");
-        return -10;
-    }
-    *next_index= -1;
+	    sec_monit= (int*)shm_malloc((nonce_expire +1)* sizeof(int));
+	    if(sec_monit== NULL)
+		{
+			LM_ERR("no more share memory\n");
+	        return -10;
+		}
+	    memset(sec_monit, -1, (nonce_expire +1)* sizeof(int));
+		second= (int*)shm_malloc(sizeof(int));
+	    next_index= (int*)shm_malloc(sizeof(int));
+		if(second==  NULL || next_index== NULL)
+	    {
+		    LM_ERR("no more share memory\n");
+	        return -10;
+		}
+	    *next_index= -1;
+	}
 
 	return 0;
 }
@@ -327,20 +334,23 @@ static void destroy(void)
 {
 	if (sec_rand) pkg_free(sec_rand);
     
-    if(nonce_lock)
-    {
-        lock_destroy(nonce_lock);
-        lock_dealloc(nonce_lock);
-    }
+	if(nonce_reuse==0)
+	{
+	    if(nonce_lock)
+		{
+			lock_destroy(nonce_lock);
+	        lock_dealloc(nonce_lock);
+		}
 
-    if(nonce_buf)
-        shm_free(nonce_buf);
-    if(second)
-        shm_free(second);
-    if(sec_monit)
-        shm_free(sec_monit);
-    if(next_index)
-        shm_free(next_index);
+	    if(nonce_buf)
+		    shm_free(nonce_buf);
+	    if(second)
+		    shm_free(second);
+	    if(sec_monit)
+		    shm_free(sec_monit);
+	    if(next_index)
+		    shm_free(next_index);
+	}
 }
 
 static inline int auth_get_ha1(struct sip_msg *msg, struct username* _username,

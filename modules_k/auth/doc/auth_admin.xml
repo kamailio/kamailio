@@ -236,6 +236,30 @@ modparam("auth", "calculate_ha1", 1)
 </programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>nonce_reuse</varname> (integer)</title>
+		<para>
+		Since version 1.4.0, the module checks if the nonce value
+		is re-used, enhancing security protection against reply and
+		man in the middle attacks. This check is done by default.
+		</para>
+		<para>
+		If the parameter is set to 1 then the nonce reuse checking is disabled,
+		offering compatibility with previous behavior. Not recommended though, this
+		functionality is still good in some scenarios, specially when registration time
+		is very low to deal with NAT traversal.
+		</para>
+		<para>
+		Default value of this parameter is 0 (protect against nonce reuse).
+		</para>
+		<example>
+		<title><varname>nonce_reuse</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth", "nonce_reuse", 1)
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>
