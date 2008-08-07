@@ -32,7 +32,7 @@ CFG=2.cfg
 cp $CFG $CFG.bak
 
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
+echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # start
 ../kamailio -w . -f $CFG > /dev/null

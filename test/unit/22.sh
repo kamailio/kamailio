@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 
 if ! (check_netcat && check_kamailio && check_module "db_postgres"); then
@@ -29,7 +30,7 @@ CFG=11.cfg
 
 cp $CFG $CFG.tmp
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
+echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
 
 ../kamailio -w . -f $CFG > /dev/null
 ret=$?
@@ -41,11 +42,11 @@ cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
 cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
+	./$CTL ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 fi ;
 
-TMP=`PGPASSWORD='kamailioro' psql -A -t -n -q -h localhost -U kamailioro kamailio -c "select COUNT(*) from location where username='1000';" | tail -n 1`
+TMP=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
 if [ "$TMP" -eq 0 ] ; then
 	ret=1
 fi ;
@@ -54,7 +55,7 @@ fi ;
 cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
+	./$CTL ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		ret=1
@@ -63,7 +64,7 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 
-ret=`PGPASSWORD='kamailioro' psql -A -t -n -q -h localhost -U kamailioro kamailio -c "select COUNT(*) from location where username='1000';" | tail -n 1`
+ret=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
 
 killall -9 kamailio
 

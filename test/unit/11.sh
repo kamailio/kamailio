@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -43,11 +44,11 @@ cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
 cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
+	./$CTL ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 fi ;
 
-TMP=`mysql -B -u kamailioro --password=kamailioro kamailio -e "select COUNT(*) from location where username="1000";" | tail -n 1`
+TMP=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from location where username="1000";" | tail -n 1`
 if [ "$TMP" -eq 0 ] ; then
 	ret=1
 fi ;
@@ -56,7 +57,7 @@ fi ;
 cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl ul show | grep "AOR:: 1000" > /dev/null
+	./$CTL ul show | grep "AOR:: 1000" > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		ret=1
@@ -65,7 +66,7 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 
-ret=`mysql -B -u kamailioro --password=kamailioro kamailio -e "select COUNT(*) from location where username="1000";" | tail -n 1`
+ret=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from location where username="1000";" | tail -n 1`
 
 cd ../test
 

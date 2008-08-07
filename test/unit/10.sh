@@ -19,31 +19,33 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+
 cd ../scripts
 
 # setup config file
-cp kamailioctlrc kamailioctlrc.bak
-cp kamailioctl kamailioctl.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" kamailioctlrc
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" kamailioctl
+cp $CTLRC $CTLRC.bak
+cp $CTL $CTL.bak
+sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $CTL
 
-./kamailioctl avp list > /dev/null
+./$CTL avp list > /dev/null
 
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl domain showdb > /dev/null
+	./$CTL domain showdb > /dev/null
 	ret=$?
 fi ;
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl lcr show > /dev/null
+	./$CTL lcr show > /dev/null
 	ret=$?
 fi ;
 
 # cleanup
-mv kamailioctlrc.bak kamailioctlrc
-mv kamailioctl.bak kamailioctl
+mv $CTLRC.bak $CTLRC
+mv $CTL.bak $CTL
 
 cd ../test
 exit $ret

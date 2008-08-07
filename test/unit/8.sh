@@ -19,30 +19,32 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+
 tmp_name=""$RANDOM"_kamailiodb_tmp"
 
 cd ../scripts
 
 # setup config file
-cp kamailioctlrc kamailioctlrc.bak
-sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" kamailioctlrc
-sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" kamailioctlrc
-sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" kamailioctlrc
+cp $CTLRC $CTLRC.bak
+sed -i "s/# DBENGINE=MYSQL/DBENGINE=DBTEXT/g" $CTLRC
+sed -i "s/# INSTALL_EXTRA_TABLES=ask/INSTALL_EXTRA_TABLES=yes/g" $CTLRC
+sed -i "s/# INSTALL_PRESENCE_TABLES=ask/INSTALL_PRESENCE_TABLES=yes/g" $CTLRC
 
-cp kamailiodbctl kamailiodbctl.bak
-sed -i "s/TEST=\"false\"/TEST=\"true\"/g" kamailiodbctl
+cp $DBCTL $DBCTL.bak
+sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
 
-./kamailiodbctl create $tmp_name > /dev/null
+./$DBCTL create $tmp_name > /dev/null
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailiodbctl drop $tmp_name > /dev/null
+	./$DBCTL drop $tmp_name > /dev/null
 	ret=$?
 fi ;
 
 # cleanup
-mv kamailioctlrc.bak kamailioctlrc
-mv kamailiodbctl.bak kamailiodbctl
+mv $CTLRC.bak $CTLRC
+mv $DBCTL.bak $DBCTL
 
 
 cd ../test

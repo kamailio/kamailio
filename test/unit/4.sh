@@ -19,6 +19,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+
 CFG=4.cfg
 
 # setup config
@@ -32,7 +34,7 @@ cd ../scripts
 
 if [ "$ret" -eq 0 ] ; then
 	sleep 1
-	./kamailioctl ps > /dev/null
+	./$CTL ps > /dev/null
 	ret=$?
 fi ;
 

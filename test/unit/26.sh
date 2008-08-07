@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -108,7 +109,7 @@ $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_n
 flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000', '486', '0', '0', '2');"
 
 if [ ! "$ret" -eq 0 ] ; then
-	../scripts/kamailioctl fifo cr_reload_routes
+	../scripts/$CTL fifo cr_reload_routes
 	killall sipp &> /dev/null
 	sipp -sf failure_route.xml -bg -i localhost -m 10 -p 10000 &> /dev/null
 	sipp -sn uac -s 49721123456785 127.0.0.1:5060 -i 127.0.0.1 -m 10 -p 5061 &> /dev/null

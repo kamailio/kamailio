@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -51,8 +52,8 @@ if [ "$ret" -eq 0 ] ; then
 	MASK=10
 	$MYSQL "INSERT INTO address (ip_addr, mask) VALUES ('$IP', '$MASK');"
 	
-	../scripts/kamailioctl fifo address_reload
-	#../scripts/kamailioctl fifo address_dump
+	../scripts/$CTL fifo address_reload
+	#../scripts/$CTL fifo address_dump
 
 	sipp -sn uas -bg -i localhost -m 10 -f 2 -p $UAS &> /dev/null
 	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -f 2 -p $UAC &> /dev/null

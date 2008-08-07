@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 
 if ! (check_sipp && check_kamailio && check_module "db_postgres" && check_module "cpl-c"); then
@@ -31,14 +32,14 @@ TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 cp $CFG $CFG.tmp
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"cpl-c\", \"db_url\", \"postgres://kamailio:kamailiorw@localhost/kamailio\")" >> $CFG
+echo "modparam(\"cpl-c\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
 
 
 ../kamailio -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
-../scripts/kamailioctl fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
+../scripts/$CTL fifo LOAD_CPL sip:alice@127.0.0.1 $CPL
 
 if [ "$ret" -eq 0 ] ; then
 	sipp -m 1 -f 1 127.0.0.1:5060 -sf cpl_test.xml &> /dev/null;
@@ -46,14 +47,14 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/kamailioctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
+  ../scripts/$CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE 
   diff $TMPFILE $CPL 
   ret=$?
 fi; 
 
 if [ "$ret" -eq 0 ] ; then
-  ../scripts/kamailioctl fifo REMOVE_CPL sip:alice@127.0.0.1
-  ../scripts/kamailioctl fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
+  ../scripts/$CTL fifo REMOVE_CPL sip:alice@127.0.0.1
+  ../scripts/$CTL fifo GET_CPL sip:alice@127.0.0.1 > $TMPFILE
 fi;
 
 diff $TMPFILE $CPL &> /dev/null;

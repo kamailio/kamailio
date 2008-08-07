@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 
 if ! (check_netcat && check_kamailio); then
@@ -40,13 +41,13 @@ ret=$?
 sleep 1
 
 if [ $ret -eq 0 ] ; then
-	../scripts/kamailioctl fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
+	../scripts/$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." > /dev/null
 	ret=$?
 fi;
 
 echo " " >> $CFG
 if [ $ret -eq 0 ] ; then
-	../scripts/kamailioctl fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
+	../scripts/$CTL fifo check_config_hash |grep "The actual config file hash is identical to the stored one." /dev/null
 	ret=$?
 fi;
 

@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 
 if ! (check_kamailio && check_module "carrierroute" && check_module "db_postgres"); then
@@ -32,10 +33,10 @@ cp $CFG $CFG.bak
 # setup config
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
-echo "modparam(\"carrierroute\", \"db_url\", \"postgres://kamailioro:kamailioro@localhost/kamailio\")" >> $CFG
+echo "modparam(\"carrierroute\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # setup database
-PGPASSWORD='kamailiorw' psql -A -t -n -q -h localhost -U kamailio kamailio -c "insert into route_tree (id, carrier) values ('1', 'carrier1');
+PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "insert into route_tree (id, carrier) values ('1', 'carrier1');
 insert into route_tree (id, carrier) values ('2', 'default');
 insert into route_tree (id, carrier) values ('3', 'premium');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('1','1','49','0','0.5','0','host1.local.domain');
@@ -58,7 +59,7 @@ cd ../scripts
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl fifo cr_dump_routes > $TMPFILE
+	./$CTL fifo cr_dump_routes > $TMPFILE
 	ret=$?
 fi ;
 
@@ -89,7 +90,7 @@ fi ;
 killall -9 kamailio
 
 # cleanup database
-PGPASSWORD='kamailiorw' psql -A -t -n -q -h localhost -U kamailio kamailio -c "delete from route_tree where id = 1;
+PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "delete from route_tree where id = 1;
 delete from route_tree where id = 2;
 delete from route_tree where id = 3;
 delete from carrierroute where carrier=1;

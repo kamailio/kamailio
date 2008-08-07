@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 
 CFG=14.cfg
@@ -42,7 +43,7 @@ cd ../scripts
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 if [ "$ret" -eq 0 ] ; then
-	./kamailioctl fifo cr_dump_routes > $TMPFILE
+	./$CTL fifo cr_dump_routes > $TMPFILE
 	ret=$?
 fi ;
 
