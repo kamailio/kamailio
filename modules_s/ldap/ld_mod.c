@@ -1,5 +1,5 @@
-/* 
- * $Id$ 
+/*
+ * $Id$
  *
  * LDAP Database Driver for SER
  *
@@ -18,15 +18,15 @@
  * details.
  *
  * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc., 
+ * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 /** \addtogroup ldap
- * @{ 
+ * @{
  */
 
-/** \file 
+/** \file
  * LDAP module interface.
  */
 
@@ -49,6 +49,7 @@
 #include <ldap.h>
 
 str ld_cfg_file = STR_STATIC_INIT("ldap.cfg");
+int glb_reconn_cnt = 3;
 
 static int ld_mod_init(void);
 static void ld_mod_destroy(void);
@@ -82,7 +83,8 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"config", PARAM_STR, &ld_cfg_file},	
+	{"config", PARAM_STR, &ld_cfg_file},
+	{"reconnect_attempt", PARAM_INT, &glb_reconn_cnt},
 	{0, 0, 0}
 };
 
@@ -467,25 +469,25 @@ int ldap_test(void)
 				case DB_BITMAP:
 					ERR("%s: %d\n", rec->fld[i].name, rec->fld[i].v.int4);
 					break;
-					
+
 				case DB_DATETIME:
 					times = ctime(&rec->fld[i].v.time);
 					ERR("%s: %d:%.*s\n", rec->fld[i].name, rec->fld[i].v.time, strlen(times) - 1, times);
 					break;
-					
+
 				case DB_DOUBLE:
 					ERR("%s: %f\n", rec->fld[i].name, rec->fld[i].v.dbl);
 					break;
-					
+
 				case DB_FLOAT:
 					ERR("%s: %f\n", rec->fld[i].name, rec->fld[i].v.flt);
 					break;
-					
+
 				case DB_STR:
 				case DB_BLOB:
 					ERR("%s: %.*s\n", rec->fld[i].name, rec->fld[i].v.lstr.len, rec->fld[i].v.lstr.s);
 					break;
-					
+
 				case DB_CSTR:
 					ERR("%s: %s\n", rec->fld[i].name, rec->fld[i].v.cstr);
 					break;

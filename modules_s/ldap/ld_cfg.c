@@ -446,7 +446,7 @@ struct ld_con_info* ld_find_conn_info(str* conn_id)
 }
 
 
-int ld_cfg_validity_check(struct ld_cfg *cfg)
+static int ld_cfg_validity_check(struct ld_cfg *cfg)
 {
 	struct ld_cfg *pcfg;
 
@@ -488,8 +488,10 @@ int ld_load_cfg(str* filename)
 	}
 	cfg_parser_close(parser);
 
-	if (ld_cfg_validity_check(cfg))
+	if (ld_cfg_validity_check(cfg)) {
+		ld_cfg_free();
 		return -1;
+	}
 
 	return 0;
 }

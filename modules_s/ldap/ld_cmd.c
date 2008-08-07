@@ -162,6 +162,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	char* filter, *err_desc;
 	int ret, err;
 	LDAPMessage* msg;
+	int reconn_cnt = glb_reconn_cnt;
 
 	filter = NULL;
 	err_desc = NULL;
@@ -179,16 +180,33 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 		goto error;
 	}
 
-	ret = ldap_search_ext_s(lcon->con, lcmd->base, lcmd->scope, filter,
-							lcmd->result, 0, NULL, NULL,
-							lcmd->timelimit.tv_sec ? &lcmd->timelimit : NULL,
-							lcmd->sizelimit,
-							&msg);
-
-	if (ret != LDAP_SUCCESS) {
-		ERR("ldap: Error in ldap_search: %s\n", ldap_err2string(ret));
-		goto error;
-	}
+	do {
+		if (lcon->flags & LD_CONNECTED) {
+			ret = ldap_search_ext_s(lcon->con, lcmd->base, lcmd->scope, filter,
+									lcmd->result, 0, NULL, NULL,
+									lcmd->timelimit.tv_sec ? &lcmd->timelimit : NULL,
+									lcmd->sizelimit,
+									&msg);
+		} else {
+			ret = LDAP_SERVER_DOWN;
+		}
+		if (ret != LDAP_SUCCESS) {
+			ERR("ldap: Error in ldap_search: %s\n", ldap_err2string(ret));
+			if (ret == LDAP_SERVER_DOWN) {
+				lcon->flags &= ~LD_CONNECTED;
+				do {
+					if (!reconn_cnt) {
+						ERR("ldap: maximum reconnection attempt reached! giving up\n");
+						goto error;
+					}
+					reconn_cnt--;
+					err = ld_con_connect(con);
+				} while (err != 0);
+			} else {
+				goto error;
+			}
+		}
+	} while (ret != LDAP_SUCCESS);
 
 	ret = ldap_parse_result(lcon->con, msg, &err, NULL, &err_desc, NULL, NULL, 0);
 	if (ret != LDAP_SUCCESS) {
