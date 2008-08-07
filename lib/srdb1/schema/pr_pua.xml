@@ -134,6 +134,13 @@
     </column>
 
     <column>
+        <name>remote_contact</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Remote contact</description>
+    </column>
+
+    <column>
         <name>version</name>
         <type>int</type>
         <size>11</size>

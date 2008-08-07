@@ -75,6 +75,13 @@
         <name>body</name>
         <type>binary</type>
     </column>
+  
+	<column id="sender">
+        <name>sender</name>
+        <type>string</type>
+        <size>&uri_len;</size>
+        <description>Sender contact</description>
+    </column>
 
     <index>
         <name>presentity_idx</name>
