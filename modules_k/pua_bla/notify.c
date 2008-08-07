@@ -30,6 +30,7 @@
 #include<libxml/parser.h>
 
 #include "../../parser/parse_content.h"
+#include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
 #include "../pua/hash.h"
 #include"pua_bla.h"
@@ -47,6 +48,7 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
  	str extra_headers= {0, 0};
  	static char buf[255];
  	xmlDoc* doc= NULL;
+	str contact;
 
 	memset(&publ, 0, sizeof(publ_info_t));
 	memset(&dialog, 0, sizeof(ua_pres_t));
@@ -198,16 +200,33 @@ int bla_handle_notify(struct sip_msg* msg, char* s1, char* s2)
    		}
    		body.len = get_content_length( msg );
    	}
-   
-   /* build extra_headers with Sender*/
+   	
+	if(msg->contact== NULL || msg->contact->body.s== NULL)
+	{
+		LM_ERR("no contact header found");
+		goto error;
+	}
+	if( parse_contact(msg->contact) <0 )
+	{
+		LM_ERR(" cannot parse contact header\n");
+		goto error;
+	}
+
+	if(msg->contact->parsed == NULL)
+	{
+		LM_ERR("cannot parse contact header\n");
+		goto error;
+	}
+	contact = ((contact_body_t* )msg->contact->parsed)->contacts->uri;
+
+	/* build extra_headers with Sender*/
    	extra_headers.s= buf;
    	memcpy(extra_headers.s, header_name.s, header_name.len);
    	extra_headers.len= header_name.len;
    	memcpy(extra_headers.s+extra_headers.len,": ",2);
    	extra_headers.len+= 2;
-   	memcpy(extra_headers.s+ extra_headers.len, dialog.pres_uri->s,
-   			dialog.pres_uri->len);
-   	extra_headers.len+= dialog.pres_uri->len;
+   	memcpy(extra_headers.s+ extra_headers.len, contact.s, contact.len);
+   	extra_headers.len+= contact.len;
    	memcpy(extra_headers.s+ extra_headers.len, CRLF, CRLF_LEN);
    	extra_headers.len+= CRLF_LEN;
    
