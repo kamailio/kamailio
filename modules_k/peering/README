@@ -1,4 +1,3 @@
-
 Peering Module
 
 Juha Heinanen
@@ -14,8 +13,8 @@ Juha Heinanen
    Copyright © 2008 Juha Heinanen
    Revision History
    Revision $Revision: 4261 $ $Date: 2008-05-30 01:03:56 +0200
-   (Fri, 30 Apr 2008) $
-     _________________________________________________________
+                              (Fri, 30 Apr 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -51,26 +50,25 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    Peering module allows SIP providers (operators or
-   organizations) to verify from a broker if source or
-   destination of a SIP request is a trusted peer.
+   organizations) to verify from a broker if source or destination
+   of a SIP request is a trusted peer.
 
    In order to participate in the trust community provided by a
-   broker, each SIP provider registers with the broker the
-   domains (host parts of SIP URIs) that they serve. When a SIP
-   proxy of a provider needs to send a SIP request to a non-local
-   domain, it can find out from the broker using
-   verify_destination() function if the non-local domain is
-   served by a trusted peer. If so, the provider receives from
-   the broker a hash of the SIP request and a timestamp that it
-   includes in the request to the non-local domain. When a SIP
-   proxy of the non-local domain receives the SIP request, it, in
-   turn, can verify from the broker using verify_source()
-   function if the request came from a trusted peer.
+   broker, each SIP provider registers with the broker the domains
+   (host parts of SIP URIs) that they serve. When a SIP proxy of a
+   provider needs to send a SIP request to a non-local domain, it
+   can find out from the broker using verify_destination()
+   function if the non-local domain is served by a trusted peer.
+   If so, the provider receives from the broker a hash of the SIP
+   request and a timestamp that it includes in the request to the
+   non-local domain. When a SIP proxy of the non-local domain
+   receives the SIP request, it, in turn, can verify from the
+   broker using verify_source() function if the request came from
+   a trusted peer.
 
-   Verification functions communicate with the broker using
-   Radius protocol. Sample FreeRADIUS configuration files for
-   broker's Radius server are available from
-   http://www.wirlab.net/tsi/.
+   Verification functions communicate with the broker using Radius
+   protocol. Sample FreeRADIUS configuration files for broker's
+   Radius server are available from http://www.wirlab.net/tsi/.
 
    Comments and suggestions for improvements are welcome.
 
@@ -78,8 +76,8 @@ Chapter 1. Admin Guide
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
      * none
 
 1.2.2. External Libraries or Applications
@@ -94,8 +92,8 @@ Chapter 1. Admin Guide
 
 1.3.1. radius_config (string)
 
-   This is the location of the configuration file of radius
-   client libraries.
+   This is the location of the configuration file of radius client
+   libraries.
 
    Default value is
    "/usr/local/etc/radiusclient-ng/radiusclient.conf".
@@ -106,8 +104,8 @@ modparam("peering", "radius_config", "/etc/broker/radiusclient.conf")
 1.3.2. verify_destination_service_type (integer)
 
    This is the value of the Service-Type Radius attribute to be
-   used, when sender of SIP Request verifies request's
-   destination using verify_destination() function.
+   used, when sender of SIP Request verifies request's destination
+   using verify_destination() function.
 
    Default value is dictionary value of "Sip-Verify-Destination"
    Service-Type.
@@ -149,21 +147,20 @@ modparam("peering", "verify_source_service_type", 22)
    [#]name(:|#)value
 
    Value of each SIP-AVP reply attribute is mapped to an Kamailio
-   AVP. Prefix # in front of name or value indicates a string
-   name or string value, respectively.
+   AVP. Prefix # in front of name or value indicates a string name
+   or string value, respectively.
 
    One of the SIP-AVP reply attributes contains a string that the
    source peer must include "as is" in a P-Request-Hash header
    when it sends the SIP request to the destination peer. The
-   string value may, for example, be of form hash@timestamp,
-   where hash contains a hash calculated by the broker based on
-   the attributes of the query and some local information and
+   string value may, for example, be of form hash@timestamp, where
+   hash contains a hash calculated by the broker based on the
+   attributes of the query and some local information and
    timestamp is the time when the calculation was done.
 
    AVP names used in reply attributes are assigned by the broker.
 
-   This function can be used from REQUEST_ROUTE and
-   FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.4. verify_destination() usage
 ...
@@ -174,9 +171,9 @@ if (verify_destination()) {
 
 1.4.2. verify_source()
 
-   Function verify_source() queries from broker's Radius server
-   if SIP request was received from a trusted peer. Radius
-   request contains the following attributes/values:
+   Function verify_source() queries from broker's Radius server if
+   SIP request was received from a trusted peer. Radius request
+   contains the following attributes/values:
      * User-Name - Request-URI host
      * SIP-URI-User - Request-URI user
      * SIP-From-Tag - From tag
@@ -192,13 +189,12 @@ if (verify_destination()) {
    [#]name(:|#)value
 
    Value of each SIP-AVP reply attribute is mapped to an Kamailio
-   AVP. Prefix # in front of name or value indicates a string
-   name or string value, respectively.
+   AVP. Prefix # in front of name or value indicates a string name
+   or string value, respectively.
 
    AVP names used in reply attributes are assigned by the broker.
 
-   This function can be used from REQUEST_ROUTE and
-   FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.5. verify_source() usage
 ...

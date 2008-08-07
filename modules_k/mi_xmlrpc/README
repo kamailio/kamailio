@@ -1,4 +1,3 @@
-
 mi_xmlrpc Module
 
 Lavinia-Andreea Andrei
@@ -16,8 +15,8 @@ Juha Heinanen
    Copyright © 2006 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -57,22 +56,22 @@ Chapter 1. Admin Guide
    is received a default method is executed.
 
    At first, it looks up the MI command. If found it parses the
-   called procedure's parameters into a MI tree and the command
-   is executed. A MI reply tree is returned that is formatted
-   back in xmlrpc. The response is built in two ways - like a
-   string that contains the MI tree nodes information (name,
-   values and attributes) or like an array whose elements are
-   consisted of each MI tree node stored information.
+   called procedure's parameters into a MI tree and the command is
+   executed. A MI reply tree is returned that is formatted back in
+   xmlrpc. The response is built in two ways - like a string that
+   contains the MI tree nodes information (name, values and
+   attributes) or like an array whose elements are consisted of
+   each MI tree node stored information.
 
    Implementation of mi_xmlrpc module's xmlrpc server is based on
    Abyss XML-RPC server. Current version of Abyss server
    "normalizes" CRLF sequence in received XML-RPC strings to LF
-   character, which makes it impossible to pass CRLF sequence
-   from xmlrpc client application to Kamailio modules, such as
-   mi_fifo and pua_mi, that accept requests via MI transport. To
-   overcome this limitation mi_xmlrpc module implements a hack
-   that coverts each LFLF sequence in received XML-RPC strings to
-   CRLF sequence.
+   character, which makes it impossible to pass CRLF sequence from
+   xmlrpc client application to Kamailio modules, such as mi_fifo
+   and pua_mi, that accept requests via MI transport. To overcome
+   this limitation mi_xmlrpc module implements a hack that coverts
+   each LFLF sequence in received XML-RPC strings to CRLF
+   sequence.
 
 1.2. To-do
 
@@ -99,8 +98,8 @@ Chapter 1. Admin Guide
    you may check if packages for your OS are not available on the
    "xmlrpc-c"project ( http://xmlrpc-c.sourceforge.net/).
    Otherwise you need to install the library and devel headers
-   from the sources. In both cases, keep in mind to use the
-   0.9.10 version!!.
+   from the sources. In both cases, keep in mind to use the 0.9.10
+   version!!.
 
 1.4. Exported Parameters
 
@@ -119,8 +118,8 @@ modparam("mi_xmlrpc", "port", 8000)
 
 1.4.2. log_file(string)
 
-   A log file to be used by the internal Abyss html server used
-   by the XMLRPX library.
+   A log file to be used by the internal Abyss html server used by
+   the XMLRPX library.
 
    The default values NONE (no logging).
 

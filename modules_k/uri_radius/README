@@ -1,4 +1,3 @@
-
 uri_radius Module
 
 Juha Heinanen
@@ -12,8 +11,8 @@ Juha Heinanen
    Copyright © 2003-2008 Juha Heinanen
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -33,8 +32,8 @@ Juha Heinanen
 
         1.4. Exported Functions
 
-              1.4.1. radius_does_uri_exist([pvar]) 
-              1.4.2. radius_does_uri_user_exist([pvar]) 
+              1.4.1. radius_does_uri_exist([pvar])
+              1.4.2. radius_does_uri_user_exist([pvar])
 
    List of Examples
 
@@ -54,8 +53,8 @@ Chapter 1. Admin Guide
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
      * none
 
 1.2.2. External Libraries or Applications
@@ -73,7 +72,7 @@ Chapter 1. Admin Guide
    Radiusclient configuration file.
 
    Default value is
-   "/usr/local/etc/radiusclient-ng/radiusclient.conf". 
+   "/usr/local/etc/radiusclient-ng/radiusclient.conf".
 
    Example 1.1. Set param_name parameter
 ...
@@ -85,7 +84,7 @@ modparam("uri_radius", "radius_config", "/etc/radiusclient.conf")
    Radius service type used in radius_does_uri_exist and
    radius_does_uri_user_exist checks.
 
-   Default value is 10 (Call-Check). 
+   Default value is 10 (Call-Check).
 
    Example 1.2. Set service_type parameter
 ...
@@ -99,7 +98,7 @@ modparam("uri_radius", "service_type", 11)
    radius_does_uri_exist sends to RADIUS server Request URI user
    in UserName attribute and host in SIP-URI-Host attribute.
 
-   Default value is 0. 
+   Default value is 0.
 
    Example 1.3. Set use_sip_uri_host parameter
 ...
@@ -110,19 +109,19 @@ modparam("uri_radius", "use_sip_uri_host", 1)
 
 1.4.1.  radius_does_uri_exist([pvar])
 
-   Checks from Radius if user@host in Request-URI or in URI
-   stored in pseudo variable argument belongs to a local user.
-   Can be used to decide if 404 or 480 should be returned after
-   lookup has failed. If yes, loads AVP based on SIP-AVP reply
-   items returned from Radius. Each SIP-AVP reply item must have
-   a string value of form:
+   Checks from Radius if user@host in Request-URI or in URI stored
+   in pseudo variable argument belongs to a local user. Can be
+   used to decide if 404 or 480 should be returned after lookup
+   has failed. If yes, loads AVP based on SIP-AVP reply items
+   returned from Radius. Each SIP-AVP reply item must have a
+   string value of form:
 
-     * value = SIP_AVP_NAME SIP_AVP_VALUE 
-     * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER 
-     * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE 
+     * value = SIP_AVP_NAME SIP_AVP_VALUE
+     * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+     * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 
-   Returns 1 if Radius returns Access-Accept, -1 if Radius
-   returns Access-Reject, and -2 in case of internal error.
+   Returns 1 if Radius returns Access-Accept, -1 if Radius returns
+   Access-Reject, and -2 in case of internal error.
 
    This function can be used from REQUEST_ROUTE.
 

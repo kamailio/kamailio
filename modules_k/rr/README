@@ -1,4 +1,3 @@
-
 rr Module
 
 Jan Janak
@@ -22,8 +21,8 @@ Bogdan-Andrei Iancu
    Copyright © 2005 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -45,22 +44,22 @@ Bogdan-Andrei Iancu
 
         1.5. Exported Functions
 
-              1.5.1. loose_route() 
-              1.5.2. record_route() and record_route(string) 
-              1.5.3. record_route_preset(string) 
-              1.5.4. add_rr_param(param) 
-              1.5.5. check_route_param(re) 
-              1.5.6. is_direction(dir) 
+              1.5.1. loose_route()
+              1.5.2. record_route() and record_route(string)
+              1.5.3. record_route_preset(string)
+              1.5.4. add_rr_param(param)
+              1.5.5. check_route_param(re)
+              1.5.6. is_direction(dir)
 
    2. Developer Guide
 
         2.1. Available Functions
 
-              2.1.1. add_rr_param( msg, param) 
-              2.1.2. check_route_param( msg, re) 
-              2.1.3. is_direction( msg, dir) 
-              2.1.4. get_route_param( msg, name, val) 
-              2.1.5. register_rrcb( callback, param) 
+              2.1.1. add_rr_param( msg, param)
+              2.1.2. check_route_param( msg, re)
+              2.1.3. is_direction( msg, dir)
+              2.1.4. get_route_param( msg, name, val)
+              2.1.5. register_rrcb( callback, param)
 
         2.2. Examples
 
@@ -101,13 +100,13 @@ Chapter 1. Admin Guide
    since not all the detection mechanism are available for within
    the dialog requests (like usrloc), to be able to fix
    correspondingly the sequential requests, the proxy must
-   remember that the original request was NAT processed. There
-   are many other cases where dialog awareness fixes or helps.
+   remember that the original request was NAT processed. There are
+   many other cases where dialog awareness fixes or helps.
 
    The solution is to store additional dialog-related information
    in the routing set (Record-Route/Route headers), headers which
-   show up in all sequential requests. So any information added
-   to the Record-Route header will be found (with no direction
+   show up in all sequential requests. So any information added to
+   the Record-Route header will be found (with no direction
    dependencies) in Route header (corresponding to the proxy
    address).
 
@@ -116,8 +115,7 @@ Chapter 1. Admin Guide
    are reinforced by RFC 3261 (see 12.1.1 UAS behavior).
 
    For this purpose, the modules offers the following functions:
-     * add_rr_param() - see Section 1.5.4, " add_rr_param(param)
-       "
+     * add_rr_param() - see Section 1.5.4, " add_rr_param(param) "
      * check_route_param() - see Section 1.5.5, "
        check_route_param(re) "
 
@@ -136,6 +134,7 @@ UAC                       Kamailio PROXY                          UAS
 
 <------ BYE -------        loose_route()          <----- BYE -------
                     check_route_param(";foo=true")
+
 
 1.3. Dependencies
 
@@ -156,10 +155,10 @@ UAC                       Kamailio PROXY                          UAS
 
    If set to 1 then ";lr=on" instead of just ";lr" will be used.
    This is to overcome problems with broken UAs which strip ";lr"
-   parameter when generating Route header fields from
-   Record-Route (";lr=on" seems to help).
+   parameter when generating Route header fields from Record-Route
+   (";lr=on" seems to help).
 
-   Default value is 0 (no). 
+   Default value is 0 (no).
 
    Example 1.2. Set enable_full_lr parameter
 ...
@@ -173,7 +172,7 @@ modparam("rr", "enable_full_lr", 1)
    (such as BYE) come from caller (route's from-tag==BYE's
    from-tag) or callee (route's from-tag==BYE's to-tag)
 
-   Default value is 1 (yes). 
+   Default value is 1 (yes).
 
    Example 1.3. Set append_fromtag parameter
 ...
@@ -185,10 +184,10 @@ modparam("rr", "append_fromtag", 0)
    There are some situations when the server needs to insert two
    Record-Route header fields instead of one. For example when
    using two disconnected networks or doing cross-protocol
-   forwarding from UDP->TCP. This parameter enables inserting of
-   2 Record-Routes. The server will later remove both of them.
+   forwarding from UDP->TCP. This parameter enables inserting of 2
+   Record-Routes. The server will later remove both of them.
 
-   Default value is 1 (yes). 
+   Default value is 1 (yes).
 
    Example 1.4. Set enable_double_rr parameter
 ...
@@ -200,7 +199,7 @@ modparam("rr", "enable_double_rr", 0)
    If set to a non 0 value (which means yes), the username part
    will be also added in the Record-Route URI.
 
-   Default value is 0 (no). 
+   Default value is 0 (no).
 
    Example 1.5. Set add_username parameter
 ...
@@ -212,25 +211,24 @@ modparam("rr", "add_username", 1)
 1.5.1.  loose_route()
 
    The function performs routing of SIP requests which contain a
-   route set. The name is a little bit confusing, as this
-   function also routes requests which are in the "strict router"
-   format.
+   route set. The name is a little bit confusing, as this function
+   also routes requests which are in the "strict router" format.
 
-   This function is usually used to route in-dialog requests
-   (like ACK, BYE, reINVITE). Nevertheless also out-of-dialog
-   requests can have a "pre-loaded route set" and my be routed
-   with loose_route. It also takes care of translating between
+   This function is usually used to route in-dialog requests (like
+   ACK, BYE, reINVITE). Nevertheless also out-of-dialog requests
+   can have a "pre-loaded route set" and my be routed with
+   loose_route. It also takes care of translating between
    strict-routers and loose-router.
 
    The loose_route function analyzes the Route: headers in the
    requests. If there is no Route: header, the function returns
    FALSE and routing should be done with normal lookup functions.
-   If a Route: header is found, the function returns 1 and
-   behaves as described in section 16.12 of RFC 3261. There is
-   only one exception: If the request is out-of-dialog (no
-   to-tag) and there is only one Route: header indicating the
-   local proxy, then the Route: header is removed and the
-   function returns FALSE.
+   If a Route: header is found, the function returns 1 and behaves
+   as described in section 16.12 of RFC 3261. There is only one
+   exception: If the request is out-of-dialog (no to-tag) and
+   there is only one Route: header indicating the local proxy,
+   then the Route: header is removed and the function returns
+   FALSE.
 
    Make sure your loose_routing function can't be used by
    attackers to bypass proxy authorization.
@@ -285,13 +283,13 @@ record_route_preset("1.2.3.4:5090");
 1.5.4.  add_rr_param(param)
 
    Adds a parameter to the Record-Route URI (param must be in
-   ";name=value" format. The function may be called also before
-   or after the record_route() call (see Section 1.5.2, "
+   ";name=value" format. The function may be called also before or
+   after the record_route() call (see Section 1.5.2, "
    record_route() and record_route(string) ").
 
    Meaning of the parameters is as follows:
-     * param - String containing the URI parameter to be added.
-       It must follow the ";name=value" scheme; it may contain
+     * param - String containing the URI parameter to be added. It
+       must follow the ";name=value" scheme; it may contain
        pseudo-variables.
 
    This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
@@ -327,9 +325,8 @@ if (check_route_param("nat=yes")) {
    The function checks the flow direction of the request. As for
    checking it's used the "ftag" Route header parameter, the
    append_fromtag (see Section 1.4.2, "append_fromtag (integer)"
-   module parameter must be enabled. Also this must be called
-   only after loose_route() (see Section 1.5.1, " loose_route()
-   ").
+   module parameter must be enabled. Also this must be called only
+   after loose_route() (see Section 1.5.1, " loose_route() ").
 
    The function returns true if the "dir" is the same with the
    request's flow direction.
@@ -338,9 +335,9 @@ if (check_route_param("nat=yes")) {
    initial request that created the dialog.
 
    Meaning of the parameters is as follows:
-     * dir - string containing the direction to be checked. It
-       may be "upstream" (from UAS to UAC) or "downstream" (UAC
-       to UAS).
+     * dir - string containing the direction to be checked. It may
+       be "upstream" (from UAS to UAC) or "downstream" (UAC to
+       UAS).
 
    This function can be used from REQUEST_ROUTE.
 
@@ -368,8 +365,8 @@ Chapter 2. Developer Guide
 
 2.1.1.  add_rr_param( msg, param)
 
-   Adds a parameter to the requests's Record-Route URI (param
-   must be in ";name=value" format).
+   Adds a parameter to the requests's Record-Route URI (param must
+   be in ";name=value" format).
 
    The function returns 0 on success. Otherwise, -1 is returned.
 
@@ -381,10 +378,10 @@ Chapter 2. Developer Guide
 
 2.1.2.  check_route_param( msg, re)
 
-   The function checks for the request "msg" if the URI
-   parameters of the local Route header (corresponding to the
-   local server) matches the given regular expression "re". It
-   must be call after the loose_route was done.
+   The function checks for the request "msg" if the URI parameters
+   of the local Route header (corresponding to the local server)
+   matches the given regular expression "re". It must be call
+   after the loose_route was done.
 
    The function returns 0 on success. Otherwise, -1 is returned.
 
@@ -396,11 +393,11 @@ Chapter 2. Developer Guide
 
 2.1.3.  is_direction( msg, dir)
 
-   The function checks the flow direction of the request "msg".
-   As for checking it's used the "ftag" Route header parameter,
-   the append_fromtag (see Section 1.4.2, "append_fromtag
-   (integer)" module parameter must be enables. Also this must be
-   call only after the loose_route is done.
+   The function checks the flow direction of the request "msg". As
+   for checking it's used the "ftag" Route header parameter, the
+   append_fromtag (see Section 1.4.2, "append_fromtag (integer)"
+   module parameter must be enables. Also this must be call only
+   after the loose_route is done.
 
    The function returns 0 if the "dir" is the same with the
    request's flow direction. Otherwise, -1 is returned.
@@ -432,8 +429,8 @@ Chapter 2. Developer Guide
 2.1.5.  register_rrcb( callback, param)
 
    The function register a new callback (along with its
-   parameter). The callback will be called when a loose route
-   will be performed for the local address.
+   parameter). The callback will be called when a loose route will
+   be performed for the local address.
 
    The function returns 0 on success. Otherwise, -1 is returned.
 

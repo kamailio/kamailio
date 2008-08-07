@@ -1,4 +1,3 @@
-
 textops Module
 
 Andrei Pelinescu-Onciul
@@ -21,8 +20,8 @@ Daniel-Constantin Mierla
    Copyright © 2003 FhG FOKUS
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -39,32 +38,32 @@ Daniel-Constantin Mierla
 
         1.3. Exported Functions
 
-              1.3.1. search(re) 
-              1.3.2. search_body(re) 
-              1.3.3. search_append(re, txt) 
-              1.3.4. search_append_body(re, txt) 
-              1.3.5. replace(re, txt) 
-              1.3.6. replace_body(re, txt) 
-              1.3.7. replace_all(re, txt) 
-              1.3.8. replace_body_all(re, txt) 
-              1.3.9. replace_body_atonce(re, txt) 
-              1.3.10. subst('/re/repl/flags') 
-              1.3.11. subst_uri('/re/repl/flags') 
-              1.3.12. subst_user('/re/repl/flags') 
-              1.3.13. subst_body('/re/repl/flags') 
-              1.3.14. filter_body(content_type) 
-              1.3.15. append_to_reply(txt) 
-              1.3.16. append_hf(txt) 
-              1.3.17. append_hf(txt, hdr) 
-              1.3.18. insert_hf(txt) 
-              1.3.19. insert_hf(txt, hdr) 
-              1.3.20. append_urihf(prefix, suffix) 
-              1.3.21. is_present_hf(hf_name) 
-              1.3.22. append_time() 
-              1.3.23. is_method(name) 
-              1.3.24. remove_hf(hname) 
-              1.3.25. has_body(), has_body(mime) 
-              1.3.26. is_privacy(privacy_type) 
+              1.3.1. search(re)
+              1.3.2. search_body(re)
+              1.3.3. search_append(re, txt)
+              1.3.4. search_append_body(re, txt)
+              1.3.5. replace(re, txt)
+              1.3.6. replace_body(re, txt)
+              1.3.7. replace_all(re, txt)
+              1.3.8. replace_body_all(re, txt)
+              1.3.9. replace_body_atonce(re, txt)
+              1.3.10. subst('/re/repl/flags')
+              1.3.11. subst_uri('/re/repl/flags')
+              1.3.12. subst_user('/re/repl/flags')
+              1.3.13. subst_body('/re/repl/flags')
+              1.3.14. filter_body(content_type)
+              1.3.15. append_to_reply(txt)
+              1.3.16. append_hf(txt)
+              1.3.17. append_hf(txt, hdr)
+              1.3.18. insert_hf(txt)
+              1.3.19. insert_hf(txt, hdr)
+              1.3.20. append_urihf(prefix, suffix)
+              1.3.21. is_present_hf(hf_name)
+              1.3.22. append_time()
+              1.3.23. is_method(name)
+              1.3.24. remove_hf(hname)
+              1.3.25. has_body(), has_body(mime)
+              1.3.26. is_privacy(privacy_type)
 
         1.4. Known Limitations
 
@@ -102,12 +101,11 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    The module implements text based operations over the SIP
-   message processed by Kamailio. SIP is a text based protocol
-   and the module provides a large set of very useful functions
-   to manipulate the message at text level, e.g., regular
-   expression search and replace, Perl-like substitutions, checks
-   for method type, header presence, insert of new header and
-   date, etc.
+   message processed by Kamailio. SIP is a text based protocol and
+   the module provides a large set of very useful functions to
+   manipulate the message at text level, e.g., regular expression
+   search and replace, Perl-like substitutions, checks for method
+   type, header presence, insert of new header and date, etc.
 
 1.1.1. Known Limitations
 
@@ -301,10 +299,10 @@ if(has_body() && replace_body_atonce("^.+$", ""))
 # replace the uri in to: with the message uri (just an example)
 if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1\u\2/ig') ) {};
 
-# replace the uri in to: with the value of avp sip_address (just an exa
-mple)
-if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)
-\2/ig') ) {};
+# replace the uri in to: with the value of avp sip_address (just an exam
+ple)
+if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)\
+2/ig') ) {};
 
 ...
 
@@ -327,23 +325,22 @@ if ( subst('/^To:(.*)sip:[^@]*@[a-zA-Z0-9.]+(.*)$/t:\1$avp(sip_address)
 
    Example 1.11. subst_uri usage
 ...
-# adds 3463 prefix to numeric uris, and save the original uri (\0 match
-)
+# adds 3463 prefix to numeric uris, and save the original uri (\0 match)
 # as a parameter: orig_uri (just an example)
 if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:3463\1@\2;orig_uri=\0/i')){$
 
-# adds the avp 'uri_prefix' as prefix to numeric uris, and save the ori
-ginal
+# adds the avp 'uri_prefix' as prefix to numeric uris, and save the orig
+inal
 # uri (\0 match) as a parameter: orig_uri (just an example)
-if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=
-\0/i')){$
+if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=\
+0/i')){$
 
 ...
 
 1.3.12.  subst_user('/re/repl/flags')
 
-   Runs the re substitution on the message uri (like subst_uri
-   but works only on the user portion of the uri)
+   Runs the re substitution on the message uri (like subst_uri but
+   works only on the user portion of the uri)
 
    Meaning of the parameters is as follows:
      * '/re/repl/flags' - sed like regular expression. flags can
@@ -363,8 +360,7 @@ if (subst_uri('/^sip:([0-9]+)@(.*)$/sip:$avp(uri_prefix)\1@\2;orig_uri=
 if (subst_user('/3642$/36423463/')){$
 
 ...
-# adds avp 'user_prefix' as prefix to username in r-uri ending with 364
-2
+# adds avp 'user_prefix' as prefix to username in r-uri ending with 3642
 if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 
 ...
@@ -440,9 +436,9 @@ append_to_reply("Foo: $rm at $Ts\r\n");
        pseudo-variables which will be replaced at run time.
 
    Note: Headers which are added in main route cannot be removed
-   in further routes (e.g. failure routes). So, the idea is not
-   to add there any headers that you might want to remove later.
-   To add headers temporarely use the branch route because the
+   in further routes (e.g. failure routes). So, the idea is not to
+   add there any headers that you might want to remove later. To
+   add headers temporarely use the branch route because the
    changes you do there are per-branch.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
@@ -529,8 +525,8 @@ append_urihf("CC-Diversion: ", "\r\n");
 
 Note
 
-   The function is also able to distinguish the compact names.
-   For exmaple "From" will match with "f"
+   The function is also able to distinguish the compact names. For
+   exmaple "From" will match with "f"
 
    Meaning of the parameters is as follows:
      * hf_name - Header field name.(long or compact form)
@@ -545,10 +541,10 @@ if (is_present_hf("From")) log(1, "From HF Present");
 
 1.3.22.  append_time()
 
-   Adds a time header to the reply of the request. You must use
-   it before functions that are likely to send a reply, e.g.,
-   save() from 'registrar' module. Header format is: "Date: %a,
-   %d %b %Y %H:%M:%S GMT", with the legend:
+   Adds a time header to the reply of the request. You must use it
+   before functions that are likely to send a reply, e.g., save()
+   from 'registrar' module. Header format is: "Date: %a, %d %b %Y
+   %H:%M:%S GMT", with the legend:
      * %a abbreviated week of day name (locale)
      * %d day of month as decimal number
      * %b abbreviated month name (locale)
@@ -569,8 +565,8 @@ append_time();
 
 1.3.23.  is_method(name)
 
-   Check if the method of the message matches the name. If name
-   is a known method (invite, cancel, ack, bye, options, info,
+   Check if the method of the message matches the name. If name is
+   a known method (invite, cancel, ack, bye, options, info,
    update, register, message, subscribe, notify, refer, prack),
    the function performs method ID testing (integer comparison)
    instead of ignore case string comparison.
@@ -578,10 +574,10 @@ append_time();
    The 'name' can be a list of methods in the form of
    'method1|method2|...'. In this case, the function returns true
    if the SIP message's method is one from the list. IMPORTANT
-   NOTE: in the list must be only methods defined in Kamailio
-   with ID (invite, cancel, ack, bye, options, info, update,
-   register, message, subscribe, notify, refer, prack, publish;
-   for more see: http://www.iana.org/assignments/sip-parameters).
+   NOTE: in the list must be only methods defined in Kamailio with
+   ID (invite, cancel, ack, bye, options, info, update, register,
+   message, subscribe, notify, refer, prack, publish; for more
+   see: http://www.iana.org/assignments/sip-parameters).
 
    If used for replies, the function tests the value of method
    field from CSeq header.
@@ -627,11 +623,11 @@ if(remove_hf("User-Agent"))
 1.3.25.  has_body(), has_body(mime)
 
    The function returns true if the SIP message has a body
-   attached. The checked includes also the "Content-Lenght"
-   header presence and value.
+   attached. The checked includes also the "Content-Lenght" header
+   presence and value.
 
-   If a paramter is given, the mime described will be also
-   checked against the "Content-Type" header.
+   If a paramter is given, the mime described will be also checked
+   against the "Content-Type" header.
 
    Meaning of the parameters is as follows:
      * mime - mime to be checked against the "Content-Type"

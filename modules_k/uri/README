@@ -1,4 +1,3 @@
-
 uri Module
 
 Jan Janak
@@ -18,8 +17,8 @@ Bogdan-Andrei Iancu
    Copyright © 2005 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -34,13 +33,13 @@ Bogdan-Andrei Iancu
         1.3. Exported Parameters
         1.4. Exported Functions
 
-              1.4.1. is_user(username) 
-              1.4.2. has_totag() 
-              1.4.3. uri_param(param) 
-              1.4.4. uri_param(param,value) 
-              1.4.5. add_uri_param(param) 
-              1.4.6. tel2sip() 
-              1.4.7. is_uri_user_e164(pseudo-variable) 
+              1.4.1. is_user(username)
+              1.4.2. has_totag()
+              1.4.3. uri_param(param)
+              1.4.4. uri_param(param,value)
+              1.4.5. add_uri_param(param)
+              1.4.6. tel2sip()
+              1.4.7. is_uri_user_e164(pseudo-variable)
 
    List of Examples
 
@@ -155,9 +154,9 @@ add_uri_param("nat=yes");
 
 1.4.6.  tel2sip()
 
-   Converts RURI, if it is tel URI, to SIP URI. Returns true,
-   only if conversion succeeded or if no conversion was needed
-   (like RURI was not tel URI.
+   Converts RURI, if it is tel URI, to SIP URI. Returns true, only
+   if conversion succeeded or if no conversion was needed (like
+   RURI was not tel URI.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -171,8 +170,7 @@ tel2sip();
    Checks if userpart of URI stored in pseudo variable is E164
    number.
 
-   This function can be used from REQUEST_ROUTE and
-   FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.7. is_uri_user_e164 usage
 ...

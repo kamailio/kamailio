@@ -1,4 +1,3 @@
-
 uri_db Module
 
 Jan Janak
@@ -18,8 +17,8 @@ Bogdan-Andrei Iancu
    Copyright © 2005 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -43,9 +42,9 @@ Bogdan-Andrei Iancu
 
         1.4. Exported Functions
 
-              1.4.1. check_to() 
-              1.4.2. check_from() 
-              1.4.3. does_uri_exist() 
+              1.4.1. check_to()
+              1.4.2. check_from()
+              1.4.3. does_uri_exist()
 
    List of Examples
 
@@ -85,16 +84,16 @@ Chapter 1. Admin Guide
 
    URL of the database to be used.
 
-   If the db_url string is empty, the default database URL will
-   be used.
+   If the db_url string is empty, the default database URL will be
+   used.
 
    Default value is
-   "mysql://openserro:openserro@localhost/openser". 
+   "mysql://openserro:openserro@localhost/openser".
 
    Example 1.1. Set db_url parameter
 ...
-modparam("uri_db", "db_url", "mysql://username:password@localhost/opens
-er")
+modparam("uri_db", "db_url", "mysql://username:password@localhost/opense
+r")
 ...
 
 1.3.2. db_table (string)
@@ -104,7 +103,7 @@ er")
    used, an additional parameter (Section 1.3.6, "use_uri_table
    (integer)") must be set.
 
-   Default value is "subscriber". 
+   Default value is "subscriber".
 
    Example 1.2. Set uri_table parameter
 ...
@@ -115,7 +114,7 @@ modparam("uri_db", "db_table", "uri")
 
    Column holding usernames in the table.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1.3. Set user_column parameter
 ...
@@ -126,7 +125,7 @@ modparam("uri_db", "user_column", "username")
 
    Column holding domain in the table.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1.4. Set domain_column parameter
 ...
@@ -137,7 +136,7 @@ modparam("uri_db", "domain_column", "domain")
 
    Column holding URI username in the table.
 
-   Default value is "uri_user". 
+   Default value is "uri_user".
 
    Example 1.5. Set uriuser_column parameter
 ...
@@ -146,10 +145,10 @@ modparam("uri_db", "uriuser_column", "uri_user")
 
 1.3.6. use_uri_table (integer)
 
-   Specify if the "uri" table should be used for checkings
-   instead of "subscriber" table. A non-zero value means true.
+   Specify if the "uri" table should be used for checkings instead
+   of "subscriber" table. A non-zero value means true.
 
-   Default value is "0 (false)". 
+   Default value is "0 (false)".
 
    Example 1.6. Set use_uri_table parameter
 ...
@@ -162,12 +161,11 @@ modparam("uri_db", "use_uri_table", 1)
    identify the users (along with username). This is useful in
    multi domain setups, a non-zero value means true.
 
-   This parameter is only evaluated for calls to
-   "does_uri_exist", all other functions checks the digest
-   username and realm against the given username, if the "uri"
-   table is used.
+   This parameter is only evaluated for calls to "does_uri_exist",
+   all other functions checks the digest username and realm
+   against the given username, if the "uri" table is used.
 
-   Default value is "0 (false)". 
+   Default value is "0 (false)".
 
    Example 1.7. Set use_domain parameter
 ...
@@ -192,8 +190,8 @@ if (check_to()) {
 
 1.4.2.  check_from()
 
-   Check From username against URI table (if use_uri_table is
-   set) or digest credentials (no DB backend required).
+   Check From username against URI table (if use_uri_table is set)
+   or digest credentials (no DB backend required).
 
    This function can be used from REQUEST_ROUTE.
 

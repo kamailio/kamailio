@@ -1,4 +1,3 @@
-
 imc Module
 
 Anca-Maria Vamanu
@@ -18,8 +17,8 @@ Anca-Maria Vamanu
    Copyright © 2006 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -42,16 +41,16 @@ Anca-Maria Vamanu
 
         1.4. Exported Functions
 
-              1.4.1. imc_manager() 
+              1.4.1. imc_manager()
 
         1.5. Exported MI Functions
 
-              1.5.1. imc_list_rooms 
-              1.5.2. imc_list_members 
+              1.5.1. imc_list_rooms
+              1.5.2. imc_list_members
 
         1.6. Exported Statistics
 
-              1.6.1. active_rooms 
+              1.6.1. active_rooms
 
         1.7. IMC Commands
         1.8. Installation
@@ -72,19 +71,19 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    This module offers support for instant message conference. It
-   follows the architecture of IRC channels, you can send
-   commands embedded in MESSAGE body, because there are no SIP UA
-   clients which have GUI for IM conferencing.
+   follows the architecture of IRC channels, you can send commands
+   embedded in MESSAGE body, because there are no SIP UA clients
+   which have GUI for IM conferencing.
 
    You have to define an URI corresponding to im conferencing
    manager, where user can send commands to create a new
-   conference room. Once the conference room is created, users
-   can send commands directly to conferece's URI.
+   conference room. Once the conference room is created, users can
+   send commands directly to conferece's URI.
 
    To ease the integration in the configuration file, the
-   interpreter of the IMC commands are embeded in the module,
-   from configuration poin of view, there is only one function
-   which has to be executed for both messages and commands.
+   interpreter of the IMC commands are embeded in the module, from
+   configuration poin of view, there is only one function which
+   has to be executed for both messages and commands.
 
 1.2. Dependencies
 
@@ -107,7 +106,7 @@ Chapter 1. Admin Guide
    The database url.
 
    The default value is
-   "mysql://openser:openserrw@localhost/openser". 
+   "mysql://openser:openserrw@localhost/openser".
 
    Example 1.1. Set db_url parameter
 ...
@@ -118,7 +117,7 @@ modparam("imc", "db_url", "dbdriver://username:password@dbhost/dbname")
 
    The name of the table storing IMC rooms.
 
-   The default value is "imc_rooms". 
+   The default value is "imc_rooms".
 
    Example 1.2. Set rooms_table parameter
 ...
@@ -129,7 +128,7 @@ modparam("imc", "rooms_table", "rooms")
 
    The name of the table storing IMC members.
 
-   The default value is "imc_members". 
+   The default value is "imc_members".
 
    Example 1.3. Set members_table parameter
 ...
@@ -141,7 +140,7 @@ modparam("imc", "rooms_table", "members")
    The power of 2 to get the size of the hash table used for
    storing members and rooms.
 
-   The default value is 4 (resultimg in hash size 16). 
+   The default value is 4 (resultimg in hash size 16).
 
    Example 1.4. Set hash_size parameter
 ...
@@ -150,10 +149,10 @@ modparam("imc", "hash_size", 8)
 
 1.3.5. imc_cmd_start_char (str)
 
-   The character which indicates that the body of the message is
-   a command.
+   The character which indicates that the body of the message is a
+   command.
 
-   The default value is "#". 
+   The default value is "#".
 
    Example 1.5. Set imc_cmd_start_char parameter
 ...
@@ -162,13 +161,13 @@ modparam("imc", "imc_cmd_start_char", "#")
 
 1.3.6. outbound_proxy (str)
 
-   The SIP address used as next hop when sending the message.
-   Very useful when using Kamailio with a domain name not in DNS,
-   or when using a separate Kamailio instance for imc processing.
-   If not set, the message will be sent to the address in
-   destination URI.
+   The SIP address used as next hop when sending the message. Very
+   useful when using Kamailio with a domain name not in DNS, or
+   when using a separate Kamailio instance for imc processing. If
+   not set, the message will be sent to the address in destination
+   URI.
 
-   Default value is NULL. 
+   Default value is NULL.
 
    Example 1.6. Set outbound_proxy parameter
 ...
@@ -179,9 +178,9 @@ modparam("imc", "outbound_proxy", "sip:kamailio.org;transport=tcp")
 
 1.4.1.  imc_manager()
 
-   Handles Message method.It detects if the body of the message
-   is a conference command.If so it executes it, otherwise it
-   sends the message to all the members in the room.
+   Handles Message method.It detects if the body of the message is
+   a conference command.If so it executes it, otherwise it sends
+   the message to all the members in the room.
 
    This function can be used from REQUEST_ROUTE.
 
@@ -231,9 +230,8 @@ if(is_method("MESSAGE)
 1.7. IMC Commands
 
    A command is identified by the starting character. A command
-   must be written in one line. By default, the starting
-   character is '#'. You can change it via "imc_cmd_start_char"
-   parameter.
+   must be written in one line. By default, the starting character
+   is '#'. You can change it via "imc_cmd_start_char" parameter.
 
    Next picture presents the list of commands and their
    parameters.
@@ -310,11 +308,10 @@ if(is_method("MESSAGE)
 1.8. Installation
 
    Before running Kamailio with IMC, you have to setup the
-   database tables where the module will store the data. For
-   that, if the tables were not created by the installation
-   script or you choose to install everything by yourself you can
-   use the imc-create.sql SQL script in the database directories
-   in the kamailio/scripts folder as template. You can also find
-   the complete database documentation on the project webpage,
-   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.htmlk
-   amailiodbdocs;.
+   database tables where the module will store the data. For that,
+   if the tables were not created by the installation script or
+   you choose to install everything by yourself you can use the
+   imc-create.sql SQL script in the database directories in the
+   kamailio/scripts folder as template. You can also find the
+   complete database documentation on the project webpage,
+   http://www.kamailio.org/docs/db-tables/kamailio-db-devel.html.

@@ -1,4 +1,3 @@
-
 avp_radius Module
 
 Juha Heinanen
@@ -14,8 +13,8 @@ Daniel-Constantin Mierla
    Copyright © 2004 Juha Heinanen
    Revision History
    Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
-   (Sat, 08 Mar 2008) $
-     _________________________________________________________
+                              (Sa, 08 MÃ¤r 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -49,15 +48,15 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   avp_radius module allows loading of user's attributes into
-   AVPs from Radius. User's name and domain can be based on From
-   URI, Request URI, or authenticated credentials.
+   avp_radius module allows loading of user's attributes into AVPs
+   from Radius. User's name and domain can be based on From URI,
+   Request URI, or authenticated credentials.
 
    The module assumes that Radius returns the AVPs as values of
    reply attribute SIP-AVP. Its value must be a string of form:
-     * value = SIP_AVP_NAME SIP_AVP_VALUE 
-     * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER 
-     * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE 
+     * value = SIP_AVP_NAME SIP_AVP_VALUE
+     * SIP_AVP_NAME = STRING_NAME | '#'ID_NUMBER
+     * SIP_AVP_VALUE = ':'STRING_VALUE | '#'NUMBER_VALUE
 
    Example 1.1. "SIP-AVP" RADIUS AVP exmaples
 ....
@@ -79,8 +78,8 @@ Chapter 1. Admin Guide
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
      * none
 
 1.2.2. External Libraries or Applications
@@ -95,8 +94,8 @@ Chapter 1. Admin Guide
 
 1.3.1. radius_config (string)
 
-   This is the location of the configuration file of radius
-   client libraries.
+   This is the location of the configuration file of radius client
+   libraries.
 
    Default value is
    "/usr/local/etc/radiusclient-ng/radiusclient.conf".

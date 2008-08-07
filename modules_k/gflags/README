@@ -1,4 +1,3 @@
-
 gflags Module
 
 Jiri Kuthan
@@ -14,8 +13,8 @@ Daniel-Constantin Mierla
    Copyright © 2004 FhG FOKUS
    Revision History
    Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
-   (Sat, 08 Mar 2008) $
-     _________________________________________________________
+                              (Sa, 08 MÃ¤r 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -64,18 +63,18 @@ Chapter 1. Admin Guide
                 t_relay("udp:10.0.0.2:5060");
         }
 
-   The benefit of this module is the value of the switch flags
-   can be manipulated by external applications such as web
-   interface or command line tools. The size of bitmap is 32.
+   The benefit of this module is the value of the switch flags can
+   be manipulated by external applications such as web interface
+   or command line tools. The size of bitmap is 32.
 
-   The module exports external commands that can be used to
-   change the global flags via Management Interface. The MI
-   commands are: "set_gflag", "reset_gflag" and "is_gflag".
+   The module exports external commands that can be used to change
+   the global flags via Management Interface. The MI commands are:
+   "set_gflag", "reset_gflag" and "is_gflag".
 
 1.2. Dependencies
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
      * none
 
 1.3. Exported Parameters
@@ -136,11 +135,11 @@ if(is_gflag("4"))
 
 1.5. MI Commands
 
-   Functions that check or change some flags accepts one
-   parameter which is the flag bitmap/mask specifing the
-   corresponding flags. It is not possible to specify directly
-   the flag position that should be changed as in the functions
-   available in the routing script.
+   Functions that check or change some flags accepts one parameter
+   which is the flag bitmap/mask specifing the corresponding
+   flags. It is not possible to specify directly the flag position
+   that should be changed as in the functions available in the
+   routing script.
 
 1.5.1. set_gflag
 
@@ -170,8 +169,8 @@ $ kamctl fifo reset_gflag 0x3
 
    Return the status of a set of flags.
 
-   The function returns TRUE if all the flags from the set are
-   set and FALSE if at least one is not set.
+   The function returns TRUE if all the flags from the set are set
+   and FALSE if at least one is not set.
 
    Example 1.7. is_gflag usage
 ...

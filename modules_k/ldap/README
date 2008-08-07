@@ -1,4 +1,3 @@
-
 LDAP Module
 
 Christian Schlatter
@@ -9,7 +8,7 @@ Christian Schlatter
    Copyright © 2007 University of North Carolina
    Revision History
    Revision 0.9 05-17-2007
-     _________________________________________________________
+     __________________________________________________________
 
    Table of Contents
 
@@ -39,12 +38,12 @@ Christian Schlatter
 
               1.5.1. ldap_search(ldap_url)
               1.5.2.
-                      ldap_result("ldap_attr_name/avp_spec[/avp_typ
-                      e]" [, regex_subst])
+                      ldap_result("ldap_attr_name/avp_spec[/avp_type
+                      ]" [, regex_subst])
 
               1.5.3.
-                      ldap_result_check("ldap_attr_name/string_to_m
-                      atch" [, regex_subst])
+                      ldap_result_check("ldap_attr_name/string_to_ma
+                      tch" [, regex_subst])
 
               1.5.4. ldap_result_next()
               1.5.5. ldap_filter_url_encode(string, avp_spec)
@@ -101,10 +100,10 @@ Chapter 1. Admin Guide
 1.1. Overview
 
    The LDAP module implements an LDAP search interface for
-   Kamailio. It exports script functions to perform an LDAP
-   search operation and to store the search results as Kamailio
-   AVPs. This allows for using LDAP directory data in the
-   Kamailio SIP message routing script.
+   Kamailio. It exports script functions to perform an LDAP search
+   operation and to store the search results as Kamailio AVPs.
+   This allows for using LDAP directory data in the Kamailio SIP
+   message routing script.
 
    The following features are offered by the LDAP module:
      * LDAP search function taking an LDAP URL as input
@@ -116,21 +115,20 @@ Chapter 1. Admin Guide
      * Module API for LDAP search operations that can be used by
        other Kamailio modules
 
-   The module implementation makes use of the open source
-   OpenLDAP library available on most UNIX/Linux platforms.
-   Besides LDAP server failover and automatic reconnect, this
-   module can handle multiple LDAP sessions concurrently allowing
-   to access data stored on different LDAP servers. Each Kamailio
-   worker process maintains one LDAP TCP connection per
-   configured LDAP server. This enables parallel execution of
-   LDAP requests and offloads LDAP concurrency control to the
-   LDAP server(s).
+   The module implementation makes use of the open source OpenLDAP
+   library available on most UNIX/Linux platforms. Besides LDAP
+   server failover and automatic reconnect, this module can handle
+   multiple LDAP sessions concurrently allowing to access data
+   stored on different LDAP servers. Each Kamailio worker process
+   maintains one LDAP TCP connection per configured LDAP server.
+   This enables parallel execution of LDAP requests and offloads
+   LDAP concurrency control to the LDAP server(s).
 
-   An LDAP search module API is provided that can be used by
-   other Kamailio modules. A module using this API does not have
-   to implement LDAP connection management and configuration,
-   while still having access to the full OpenLDAP API for
-   searching and result handling.
+   An LDAP search module API is provided that can be used by other
+   Kamailio modules. A module using this API does not have to
+   implement LDAP connection management and configuration, while
+   still having access to the full OpenLDAP API for searching and
+   result handling.
 
    Since LDAP server implementations are optimized for fast read
    access they are a good choice to store SIP provisioning data.
@@ -141,19 +139,19 @@ Chapter 1. Admin Guide
 1.1.1. Usage Basics
 
    First so called LDAP sessions have to be specified in an
-   external configuration file (as described in Section 1.3,
-   "LDAP Configuration File"). Each LDAP session includes LDAP
-   server access parameters like server hostname or connection
-   timeouts. Normally only a single LDAP session will be used
-   unless there is a need to access more than one LDAP server.
-   The LDAP session name will then be used in the Kamailio
-   configuration script to refer to a specific LDAP session.
+   external configuration file (as described in Section 1.3, "LDAP
+   Configuration File"). Each LDAP session includes LDAP server
+   access parameters like server hostname or connection timeouts.
+   Normally only a single LDAP session will be used unless there
+   is a need to access more than one LDAP server. The LDAP session
+   name will then be used in the Kamailio configuration script to
+   refer to a specific LDAP session.
 
    The ldap_search function (Section 1.5.1,
    "ldap_search(ldap_url)") performs an LDAP search operation. It
    expects an LDAP URL as input which includes the LDAP session
-   name and search parameters. Section 1.1.2, "LDAP URLs"
-   provides a quick overview on LDAP URLs.
+   name and search parameters. Section 1.1.2, "LDAP URLs" provides
+   a quick overview on LDAP URLs.
 
    The result of an LDAP search is stored internally and can be
    accessed with one of the ldap_result* functions. ldap_result
@@ -164,13 +162,13 @@ Chapter 1. Admin Guide
    "ldap_result_check("ldap_attr_name/string_to_match" [,
    regex_subst])") is a convenience function to compare a string
    with LDAP attribute values using regular expression matching.
-   Finally, ldap_result_next (Section 1.5.4,
-   "ldap_result_next()") allows to handle LDAP search queries
-   that return more than one LDAP entry.
+   Finally, ldap_result_next (Section 1.5.4, "ldap_result_next()")
+   allows to handle LDAP search queries that return more than one
+   LDAP entry.
 
-   All ldap_result* functions do always access the LDAP result
-   set from the last ldap_search call. This should be kept in
-   mind when calling ldap_search more than once in the Kamailio
+   All ldap_result* functions do always access the LDAP result set
+   from the last ldap_search call. This should be kept in mind
+   when calling ldap_search more than once in the Kamailio
    configuration script.
 
 1.1.2. LDAP URLs
@@ -193,9 +191,8 @@ Chapter 1. Admin Guide
           (RFC 4516 defines this as LDAP hostport parameter)
 
    dn
-          Base Distinguished Name (DN) of LDAP search or target
-          of non-search operation, as defined in RFC 4514
-          [RFC4514]
+          Base Distinguished Name (DN) of LDAP search or target of
+          non-search operation, as defined in RFC 4514 [RFC4514]
 
    attrs
           Comma separated list of LDAP attributes to be returned
@@ -236,8 +233,8 @@ Note
 
 1.2.1. Kamailio Modules
 
-   The module depends on the following modules (the listed
-   modules must be loaded before this module):
+   The module depends on the following modules (the listed modules
+   must be loaded before this module):
      * No dependencies on other Kamailio modules.
 
 1.2.2. External Libraries or Applications
@@ -268,16 +265,16 @@ key = value ; comment
    starting with a hash sign and blank lines are treated as
    comments.
 
-   Each section describes one LDAP session that can be referred
-   to in the Kamailio configuration script. Using the section
-   name as the host part of an LDAP URL tells the module to use
-   the LDAP session specified in the respective section. An
-   example LDAP session specification looks like:
+   Each section describes one LDAP session that can be referred to
+   in the Kamailio configuration script. Using the section name as
+   the host part of an LDAP URL tells the module to use the LDAP
+   session specified in the respective section. An example LDAP
+   session specification looks like:
 [example_ldap]
-ldap_server_url            = "ldap://ldap1.example.com, ldap://ldap2.ex
-ample.com"
-ldap_bind_dn               = "cn=sip_proxy,ou=accounts,dc=example,dc=co
-m"
+ldap_server_url            = "ldap://ldap1.example.com, ldap://ldap2.exa
+mple.com"
+ldap_bind_dn               = "cn=sip_proxy,ou=accounts,dc=example,dc=com
+"
 ldap_bind_password         = "pwd"
 ldap_network_timeout       = 500
 ldap_client_bind_timeout   = 500
@@ -360,8 +357,8 @@ ldap_client_bind_timeout = 1000
 1.3.3. Configuration File Example
 
    The following configuration file example includes two LDAP
-   session definitions that could be used e.g. for accessing
-   H.350 data and do phone number to name mappings.
+   session definitions that could be used e.g. for accessing H.350
+   data and do phone number to name mappings.
 
    Example 1.7. Example LDAP Configuration File
 # LDAP session "sipaccounts":
@@ -370,8 +367,7 @@ ldap_client_bind_timeout = 1000
 # - two redundant LDAP servers
 #
 [sipaccounts]
-ldap_server_url = "ldap://h350-1.example.com, ldap://h350-2.example.com
-"
+ldap_server_url = "ldap://h350-1.example.com, ldap://h350-2.example.com"
 ldap_bind_dn = "cn=sip_proxy,ou=accounts,dc=example,dc=com"
 ldap_bind_password = "pwd"
 ldap_network_timeout = 500
@@ -400,7 +396,6 @@ ldap_client_bind_timeout = 500
    Example 1.8. config_file parameter usage
 modparam("ldap", "config_file", "/etc/kamailio/ldap.ini")
 
-
 1.5. Exported Functions
 
 1.5.1. ldap_search(ldap_url)
@@ -416,11 +411,10 @@ modparam("ldap", "config_file", "/etc/kamailio/ldap.ini")
    Function Parameters:
 
    ldap_url
-          An LDAP URL defining the LDAP search operation (refer
-          to Section 1.1.2, "LDAP URLs" for a description of the
-          LDAP URL format). The hostport part must be one of the
-          LDAP session names declared in the LDAP configuration
-          script.
+          An LDAP URL defining the LDAP search operation (refer to
+          Section 1.1.2, "LDAP URLs" for a description of the LDAP
+          URL format). The hostport part must be one of the LDAP
+          session names declared in the LDAP configuration script.
 
           Kamailio pseudo variables and AVPs included in ldap_url
           do get substituted with their value.
@@ -439,9 +433,8 @@ ldap://sipaccounts/ou=sip,dc=example,dc=com??one?(cn=schlatter)
           and SIPIdentityServiceLevel attributes
 
 ldap://ldap_1/dc=example,dc=com?
-       SIPIdentityUserName,SIPIdentityServiceLevel?sub?(cn=$(avp(s:name
-)))
-
+       SIPIdentityUserName,SIPIdentityServiceLevel?sub?(cn=$(avp(s:name)
+))
 
    Return Values:
 
@@ -464,8 +457,8 @@ ldap://ldap_1/dc=example,dc=com?
    Example 1.10. Example Usage
 ...
 # ldap search
-if (!ldap_search("ldap://sipaccounts/ou=sip,dc=example,dc=com??one?(cn=
-$rU)"))
+if (!ldap_search("ldap://sipaccounts/ou=sip,dc=example,dc=com??one?(cn=$
+rU)"))
 {
     switch ($retcode)
     {
@@ -492,21 +485,21 @@ regex_subst])
 
    This function converts LDAP attribute values into AVPs for
    later use in the message routing script. It accesses the LDAP
-   result set fetched by the last ldap_search call.
-   ldap_attr_name specifies the LDAP attribute name who's value
-   should be stored in AVP avp_spec. Multi valued LDAP attributes
-   generate an indexed AVP. The optional regex_subst parameter
-   allows to further define what part of an attribute value
-   should be stored as AVP.
+   result set fetched by the last ldap_search call. ldap_attr_name
+   specifies the LDAP attribute name who's value should be stored
+   in AVP avp_spec. Multi valued LDAP attributes generate an
+   indexed AVP. The optional regex_subst parameter allows to
+   further define what part of an attribute value should be stored
+   as AVP.
 
    An AVP can either be of type string or integer. As default,
-   ldap_result stores LDAP attribute values as AVP of type
-   string. The optional avp_type parameter can be used to
-   explicitly specify the type of the AVP. It can be either str
-   for string, or int for integer. If avp_type is specified as
-   int then ldap_result tries to convert the LDAP attribute
-   values to integer. In this case, the values are only stored as
-   AVP if the conversion to integer is succesfull.
+   ldap_result stores LDAP attribute values as AVP of type string.
+   The optional avp_type parameter can be used to explicitly
+   specify the type of the AVP. It can be either str for string,
+   or int for integer. If avp_type is specified as int then
+   ldap_result tries to convert the LDAP attribute values to
+   integer. In this case, the values are only stored as AVP if the
+   conversion to integer is succesfull.
 
    Function Parameters:
 
@@ -581,9 +574,9 @@ regex_subst])
    fetched by the last ldap_search call. The optional regex_subst
    parameter allows to further define what part of the attribute
    value should be used for the equality match. If ldap_attr_name
-   is multi valued, each value is checked against
-   string_to_match. If one or more of the values do match the
-   function returns 1 (TRUE).
+   is multi valued, each value is checked against string_to_match.
+   If one or more of the values do match the function returns 1
+   (TRUE).
 
    Function Parameters:
 
@@ -592,8 +585,8 @@ regex_subst])
           matched, e.g. SIPIdentitySIPURI
 
    string_to_match
-          String to be matched. Included AVPs and pseudo
-          variabels do get expanded.
+          String to be matched. Included AVPs and pseudo variabels
+          do get expanded.
 
    regex_subst
           Regex substitution that gets applied to LDAP attribute
@@ -645,19 +638,19 @@ if (!ldap_result_check("sn/$ru", "/^sip:([^@]).*$/\1/"))
 
 1.5.4. ldap_result_next()
 
-   An LDAP search operation can return multiple LDAP entries.
-   This function can be used to cycle through all returned LDAP
+   An LDAP search operation can return multiple LDAP entries. This
+   function can be used to cycle through all returned LDAP
    entries. It returns 1 (TRUE) if there is another LDAP entry
    present in the LDAP result set and causes ldap_result*
    functions to work on the next LDAP entry. The function returns
-   -1 (FALSE) if there are no more LDAP entries in the LDAP
-   result set.
+   -1 (FALSE) if there are no more LDAP entries in the LDAP result
+   set.
 
    Return Values:
 
    1 (TRUE)
-          Another LDAP entry is present in the LDAP result set
-          and result pointer is incremented by one
+          Another LDAP entry is present in the LDAP result set and
+          result pointer is incremented by one
 
    -1 (FALSE)
           No more LDAP entries are available
@@ -701,20 +694,19 @@ if (ldap_result_next())
    \                   \5c                RFC 4515
    ?                   %3F                RFC 4516
 
-   The string stored in AVP avp_spec can be safely used in an
-   LDAP URL filter string.
+   The string stored in AVP avp_spec can be safely used in an LDAP
+   URL filter string.
 
    Function Parameters:
 
    string
-          String to apply RFC 4515 and URL escpaing rules to.
-          AVPs and pseudo variables do get expanded. Example:
+          String to apply RFC 4515 and URL escpaing rules to. AVPs
+          and pseudo variables do get expanded. Example:
           "cn=$avp(s:name)"
 
    avp_spec
-          Specification of AVP to store resulting RFC 4515 and
-          URL encoded string, e.g. $avp(s:ldap_search) or
-          $avp(i:10)
+          Specification of AVP to store resulting RFC 4515 and URL
+          encoded string, e.g. $avp(s:ldap_search) or $avp(i:10)
 
    Return Values:
 
@@ -739,8 +731,8 @@ if (!ldap_filter_url_encode("cn=$avp(s:name)", "$avp(s:name_esc)"))
 xlog("L_INFO", "encoded LDAP filter component: [$avp(s:name_esc)]\n");
 
 if (ldap_search(
-     "ldap://h350/ou=commObjects,dc=example,dc=com??sub?($avp(s:name_es
-c))"))
+     "ldap://h350/ou=commObjects,dc=example,dc=com??sub?($avp(s:name_esc
+))"))
     { ... }
 ...
 
@@ -749,9 +741,9 @@ c))"))
 1.6.1. Compiling the Module
 
    OpenLDAP library (libldap) and header files (libldap-dev) v2.1
-   or greater (this module was tested with v2.1.3 and v2.3.32)
-   are required for compiling the LDAP module. The OpenLDAP
-   source is available at http://www.openldap.org/.
+   or greater (this module was tested with v2.1.3 and v2.3.32) are
+   required for compiling the LDAP module. The OpenLDAP source is
+   available at http://www.openldap.org/.
 
    The OpenLDAP library is available pre-compiled for most
    UNIX/Linux flavors. On Debian/Ubuntu, the following packages
@@ -771,12 +763,12 @@ Chapter 2. Developer Guide
 
    In order to use this API, a module has to load the API using
    the load_ldap_api function which returns a pointer to a
-   ldap_api structure. This structure includes pointers to the
-   API functions described below. The LDAP module source file
-   api.h includes all declarations needed to load the API, it has
-   to be included in the file that loads the API. Loading the API
-   is typically done inside a module's mod_init call as the
-   following example shows:
+   ldap_api structure. This structure includes pointers to the API
+   functions described below. The LDAP module source file api.h
+   includes all declarations needed to load the API, it has to be
+   included in the file that loads the API. Loading the API is
+   typically done inside a module's mod_init call as the following
+   example shows:
 
    Example 2.1. Example code fragment to load LDAP module API
 #include "../../sr_module.h"
@@ -796,8 +788,8 @@ static int mod_init(void)
      */
     if (load_ldap_api(&ldap_api) != 0)
     {
-        LM_ERR("Unable to load LDAP API - this module requires ldap mod
-ule\n");
+        LM_ERR("Unable to load LDAP API - this module requires ldap modu
+le\n");
         return -1;
     }
 
@@ -806,8 +798,9 @@ ule\n");
 
 ...
 
-                                   The API functions can then be
-   used like in the following example:
+
+   The API functions can then be used like in the following
+   example:
 
    Example 2.2. Example LDAP module API function call
 ...
@@ -816,7 +809,8 @@ ule\n");
 
 ...
 
-                                2.2. API Functions
+
+2.2. API Functions
 
 2.2.1. ldap_params_search
 
@@ -830,7 +824,8 @@ typedef int (*ldap_params_search_t)(int* _ld_result_count,
                                     char* _filter,
                                     ...);
 
-                           Function arguments:
+
+   Function arguments:
 
    int* _ld_result_count
           The function stores the number of returned LDAP entries
@@ -874,7 +869,8 @@ typedef int (*ldap_params_search_t)(int* _ld_result_count,
 typedef int (*ldap_url_search_t)(char* _ldap_url,
                                  int* _result_count);
 
-                           Function arguments:
+
+   Function arguments:
 
    char* _ldap_url
           LDAP URL as described in Section 1.1.2, "LDAP URLs".
@@ -911,7 +907,8 @@ typedef struct berval {
         char            *bv_val;
 } BerValue;
 
-                           Function arguments:
+
+   Function arguments:
 
    str* _attr_name
           str structure holding the LDAP attribute name.
@@ -942,7 +939,8 @@ typedef struct berval {
         char            *bv_val;
 } BerValue;
 
-                           Function arguments:
+
+   Function arguments:
 
    struct berval **_vals
           berval array returned by ldap_result_attr_vals.
@@ -952,7 +950,8 @@ typedef struct berval {
    Increments the LDAP result pointer.
 typedef int (*ldap_result_next_t)();
 
-                           Return Values:
+
+   Return Values:
 
    -1
           No LDAP result found, probably because
@@ -970,7 +969,8 @@ typedef int (*ldap_result_next_t)();
    ldap_params_search.
 typedef int (*ldap_str2scope_t)(char* scope_str);
 
-                           Function arguments:
+
+   Function arguments:
 
    char* scope_str
           LDAP search scope string. One of "one", "onelevel",
@@ -988,10 +988,11 @@ typedef int (*ldap_str2scope_t)(char* scope_str);
 
    Applies escaping rules described in Section 1.5.5,
    "ldap_filter_url_encode(string, avp_spec)".
-typedef int (*ldap_rfc4515_escape_t)(str *sin, str *sout, int url_encod
-e);
+typedef int (*ldap_rfc4515_escape_t)(str *sin, str *sout, int url_encode
+);
 
-                           Function arguments:
+
+   Function arguments:
 
    str *sin
           str structure holding the string to apply the escaping
@@ -1003,9 +1004,9 @@ e);
           sin plus one.
 
    int url_encode
-          Flag that specifies if a '?' character gets escaped
-          with '%3F' or not. If url_encode equals 0, '?' does not
-          get escaped.
+          Flag that specifies if a '?' character gets escaped with
+          '%3F' or not. If url_encode equals 0, '?' does not get
+          escaped.
 
    Return Values:
 
@@ -1019,12 +1020,13 @@ e);
 
    Returns the OpenLDAP LDAP handle for a specific LDAP session.
    This allows a module implementor to use the OpenLDAP API
-   functions directly, instead of using the API functions
-   exported by the Kamailio LDAP module. The LDAP structure is
-   defined in OpenLDAP's ldap.h, which has to be included.
+   functions directly, instead of using the API functions exported
+   by the Kamailio LDAP module. The LDAP structure is defined in
+   OpenLDAP's ldap.h, which has to be included.
 typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
 
-                           Function arguments:
+
+   Function arguments:
 
    char* _lds_name
           LDAP session name as specified in the LDAP module
@@ -1039,8 +1041,7 @@ typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
           Internal error.
 
    0
-          Success, _ldap_handle contains the OpenLDAP LDAP
-          handle.
+          Success, _ldap_handle contains the OpenLDAP LDAP handle.
 
 2.2.9. get_last_ldap_result
 
@@ -1050,10 +1051,11 @@ typedef int (*get_ldap_handle_t)(char* _lds_name, LDAP** _ldap_handle);
    LDAPMessage structures are defined in OpenLDAP's ldap.h, which
    has to be included.
 typedef void (*get_last_ldap_result_t)
-             (LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result
-);
+             (LDAP** _last_ldap_handle, LDAPMessage** _last_ldap_result)
+;
 
-                           Function arguments:
+
+   Function arguments:
 
    LDAP** _last_ldap_handle
           OpenLDAP LDAP handle returned by this function.
@@ -1063,9 +1065,9 @@ typedef void (*get_last_ldap_result_t)
 
 2.3. Example Usage
 
-   The following example shows how this API can be used to
-   perform an LDAP search operation. It is assumed that the API
-   is loaded and available through the ldap_api pointer.
+   The following example shows how this API can be used to perform
+   an LDAP search operation. It is assumed that the API is loaded
+   and available through the ldap_api pointer.
 ...
 
 int rc, ld_result_count, scope = 0;
@@ -1125,8 +1127,8 @@ if (rc < 0)
 }
 if (rc == 1)
 {
-    LM_INFO("No password attribute value found for [%s]\n", sip_usernam
-e);
+    LM_INFO("No password attribute value found for [%s]\n", sip_username
+);
     ldap_api.ldap_value_free_len(attr_vals);
     return 2;
 }
@@ -1136,14 +1138,14 @@ res_password.len = attr_vals[0]->bv_len;
 
 ldap_api.ldap_value_free_len(attr_vals);
 
-LM_INFO("Password for user [%s]: [%s]\n", sip_username, res_password.s)
-;
+LM_INFO("Password for user [%s]: [%s]\n", sip_username, res_password.s);
 
 ...
 
 return 0;
 
-                Resources
+
+Resources
 
    [RFC4510] Lightweight Directory Access Protocol (LDAP):
    Technical Specification Road Map. June 2006. Internet
@@ -1160,18 +1162,17 @@ return 0;
    Representation of Search Filters. June 2006. Internet
    Engineering Task Force.
 
-   [RFC4516] Lightweight Directory Access Protocol (LDAP):
-   Uniform Resource Locator. June 2006. Internet Engineering Task
-   Force.
+   [RFC4516] Lightweight Directory Access Protocol (LDAP): Uniform
+   Resource Locator. June 2006. Internet Engineering Task Force.
 
    [RFC2617] HTTP Authentication: Basic and Digest Access
    Authentication. June 1999. Internet Engineering Task Force.
 
-   [RFC3261] SIP: Session Initiation Protocol. June 2002.
-   Internet Engineering Task Force.
+   [RFC3261] SIP: Session Initiation Protocol. June 2002. Internet
+   Engineering Task Force.
 
    [H.350] Directory Services Architecture for Multimedia
    Conferencing. August 2003. ITU-T.
 
-   [H.350.4] Directory services architecture for SIP. August
-   2003. ITU-T.
+   [H.350.4] Directory services architecture for SIP. August 2003.
+   ITU-T.

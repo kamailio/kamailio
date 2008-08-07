@@ -1,4 +1,3 @@
-
 cfgutils Module
 
 Henning Westerholt
@@ -19,8 +18,8 @@ Elena-Ramona Modroiu
    Elena-Ramona Modroiu
    Revision History
    Revision $Revision: 3898 $ $Date: 2008-03-08 00:03:56 +0100
-   (Sat, 08 Mar 2008) $
-     _________________________________________________________
+                              (Sa, 08 Mär 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -41,11 +40,11 @@ Elena-Ramona Modroiu
               1.4.2. rand_set_prob(probabiltiy)
               1.4.3. rand_reset_prob()
               1.4.4. rand_get_prob()
-              1.4.5. sleep(time) 
-              1.4.6. usleep(time) 
-              1.4.7. abort() 
-              1.4.8. pkg_status() 
-              1.4.9. shm_status() 
+              1.4.5. sleep(time)
+              1.4.6. usleep(time)
+              1.4.7. abort()
+              1.4.8. pkg_status()
+              1.4.9. shm_status()
 
         1.5. MI Commands
 
@@ -98,11 +97,11 @@ Chapter 1. Admin Guide
    The cfgutils module can be used to introduce randomness to the
    behaviour of the server. It provides setup functions and the
    "rand_event" function. This function return either true or
-   false, depending on a random value and a specified
-   probability. E.g. if you set via fifo or script a probability
-   value of 5%, then 5% of all calls to rand_event will return
-   false. The pseudovariable "$RANDOM" could be used to introduce
-   random values e.g. into a SIP reply.
+   false, depending on a random value and a specified probability.
+   E.g. if you set via fifo or script a probability value of 5%,
+   then 5% of all calls to rand_event will return false. The
+   pseudovariable "$RANDOM" could be used to introduce random
+   values e.g. into a SIP reply.
 
    The benefit of this module is the probability of the decision
    can be manipulated by external applications such as web
@@ -113,13 +112,13 @@ Chapter 1. Admin Guide
    change the global settings via FIFO interface. The FIFO
    commands are: "set_prob", "reset_prob" and "get_prob".
 
-   This module can be used for simple load-shedding, e.g. reply
-   5% of the Invites with a 503 error and a adequate random
+   This module can be used for simple load-shedding, e.g. reply 5%
+   of the Invites with a 503 error and a adequate random
    Retry-After value.
 
-   The module provides as well functions to delay the execution
-   of the server. The functions "sleep" and "usleep" could be
-   used to let the server wait a specific time interval.
+   The module provides as well functions to delay the execution of
+   the server. The functions "sleep" and "usleep" could be used to
+   let the server wait a specific time interval.
 
    It can also hash the config file used from the server with a
    (weak) cryptographic hash function on startup. This value is
@@ -130,8 +129,8 @@ Chapter 1. Admin Guide
 
 1.2. Dependencies
 
-   The module depends on the following modules (in the other
-   words the listed modules must be loaded before this module):
+   The module depends on the following modules (in the other words
+   the listed modules must be loaded before this module):
      * none
 
 1.3. Exported Parameters
@@ -146,10 +145,11 @@ Chapter 1. Admin Guide
 
 modparam("cfgutils", "initial_probability", 15)
 
+
 1.3.2. hash_file (string)
 
-   The config file name for that a hash value should be
-   calculated on startup.
+   The config file name for that a hash value should be calculated
+   on startup.
 
    There is no default value, is no parameter is given the hash
    functionality is disabled.
@@ -157,6 +157,7 @@ modparam("cfgutils", "initial_probability", 15)
    Example 1.2. hash_file parameter usage
 
 modparam("cfgutils", "hash_file", "/etc/kamailio/kamailio.cfg")
+
 
 1.3.3. shvset (string)
 
@@ -246,6 +247,7 @@ rand_reset_prob();
 ...
 rand_get_prob();
 
+
 1.4.5.  sleep(time)
 
    Waits "time" seconds.
@@ -292,10 +294,10 @@ abort();
 1.4.8.  pkg_status()
 
    Debugging function that dumps the status for the private (PKG)
-   memory. This information is logged to the default log
-   facility, depending on the general log level and the memlog
-   setting. You need to compile the server with activated memory
-   debugging to get detailed informations.
+   memory. This information is logged to the default log facility,
+   depending on the general log level and the memlog setting. You
+   need to compile the server with activated memory debugging to
+   get detailed informations.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -308,10 +310,10 @@ pkg_status();
 1.4.9.  shm_status()
 
    Debugging function that dumps the status for the shared (SHM)
-   memory. This information is logged to the default log
-   facility, depending on the general log level and the memlog
-   setting. You need to compile the server with activated memory
-   debugging to get detailed informations.
+   memory. This information is logged to the default log facility,
+   depending on the general log level and the memlog setting. You
+   need to compile the server with activated memory debugging to
+   get detailed informations.
 
    This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE,
    FAILURE_ROUTE, BRANCH_ROUTE.
@@ -325,8 +327,8 @@ shm_status();
 
 1.5.1. rand_set_prop
 
-   Set the probability value to the given parameter. The
-   parameter should be a percent value.
+   Set the probability value to the given parameter. The parameter
+   should be a percent value.
 
    The parameter value must be a number from 0 to 99.
 
@@ -360,8 +362,8 @@ The actual probability is 50 percent.
 
 1.5.4. check_config_hash
 
-   Check if the actual config file hash is identical to the
-   stored one.
+   Check if the actual config file hash is identical to the stored
+   one.
 
    The function returns 200 OK if the hash values are identical,
    400 if there are not identical, 404 if no file for hashing has
@@ -415,8 +417,8 @@ $ kamctl fifo shv_set debug int 0
    Get the value of a shared variable ($shv(name)).
 
    Parameters:
-     * _name_: shared variable name. If this parameter is
-       missing, all shared variables are returned.
+     * _name_: shared variable name. If this parameter is missing,
+       all shared variables are returned.
 
    MI FIFO Command Format:
                 :shv_get:_reply_fifo_file_
@@ -449,7 +451,6 @@ if (get_random()) {
 # normal message processing follows
 
 
-
 1.6.2. $time(name)
 
    The PV provides access to broken-down time attributes.
@@ -473,13 +474,12 @@ if ($time(year) == 2008) {
 }
 ...
 
-
 1.6.3. $shv(name)
 
    It is a class of pseudo-variables stored in shared memory. The
    value of $shv(name) is visible across all openser processes.
-   Each "shv" has single value and it is initialized to integer
-   0. You can use "shvset" parameter to initialize the shared
+   Each "shv" has single value and it is initialized to integer 0.
+   You can use "shvset" parameter to initialize the shared
    variable. The module exports a set of MI functions to get/set
    the value of shared variables.
 

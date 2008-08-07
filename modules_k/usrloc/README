@@ -1,4 +1,3 @@
-
 usrloc Module
 
 Jan Janak
@@ -22,8 +21,8 @@ Bogdan-Andrei Iancu
    Copyright © 2005 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -68,12 +67,12 @@ Bogdan-Andrei Iancu
         1.4. Exported Functions
         1.5. Exported MI Functions
 
-              1.5.1. ul_rm 
-              1.5.2. ul_rm_contact 
-              1.5.3. ul_dump 
-              1.5.4. ul_flush 
-              1.5.5. ul_add 
-              1.5.6. ul_show_contact 
+              1.5.1. ul_rm
+              1.5.2. ul_rm_contact
+              1.5.3. ul_dump
+              1.5.4. ul_flush
+              1.5.5. ul_add
+              1.5.6. ul_show_contact
 
         1.6. Exported statistics
 
@@ -86,25 +85,25 @@ Bogdan-Andrei Iancu
 
         2.1. Available Functions
 
-              2.1.1. ul_register_domain(name) 
-              2.1.2. ul_insert_urecord(domain, aor, rec) 
-              2.1.3. ul_delete_urecord(domain, aor) 
-              2.1.4. ul_get_urecord(domain, aor) 
-              2.1.5. ul_lock_udomain(domain) 
-              2.1.6. ul_unlock_udomain(domain) 
-              2.1.7. ul_release_urecord(record) 
+              2.1.1. ul_register_domain(name)
+              2.1.2. ul_insert_urecord(domain, aor, rec)
+              2.1.3. ul_delete_urecord(domain, aor)
+              2.1.4. ul_get_urecord(domain, aor)
+              2.1.5. ul_lock_udomain(domain)
+              2.1.6. ul_unlock_udomain(domain)
+              2.1.7. ul_release_urecord(record)
               2.1.8. ul_insert_ucontact(record, contact, expires,
-                      q, callid, cseq, flags, cont, ua, sock) 
+                      q, callid, cseq, flags, cont, ua, sock)
 
-              2.1.9. ul_delete_ucontact (record, contact) 
-              2.1.10. ul_get_ucontact(record, contact) 
-              2.1.11. ul_get_all_ucontacts (buf, len, flags) 
+              2.1.9. ul_delete_ucontact (record, contact)
+              2.1.10. ul_get_ucontact(record, contact)
+              2.1.11. ul_get_all_ucontacts (buf, len, flags)
               2.1.12. ul_update_ucontact(contact, expires, q,
-                      callid, cseq, set, res, ua, sock) 
+                      callid, cseq, set, res, ua, sock)
 
-              2.1.13. ul_bind_ursloc( api ) 
-              2.1.14. ul_register_ulcb(type ,callback, param) 
-              2.1.15. ul_get_num_users() 
+              2.1.13. ul_bind_ursloc( api )
+              2.1.14. ul_register_ulcb(type ,callback, param)
+              2.1.15. ul_get_num_users()
 
    List of Examples
 
@@ -143,31 +142,31 @@ Chapter 1. Admin Guide
 
 1.1.1. Contact matching
 
-   How the contacts are matched (dor same AOR - Address of
-   Record) is an important aspect of the usrloc modules,
-   especialy in the context of NAT traversal - this raise mre
-   problems since contacts from different phones of same users
-   may overlap (if behind NATs with same configuration) or the
-   re-register contact of same phone may be seen as a new one
-   (due different binding via NAT).
+   How the contacts are matched (dor same AOR - Address of Record)
+   is an important aspect of the usrloc modules, especialy in the
+   context of NAT traversal - this raise mre problems since
+   contacts from different phones of same users may overlap (if
+   behind NATs with same configuration) or the re-register contact
+   of same phone may be seen as a new one (due different binding
+   via NAT).
 
    The SIP RFC 3261 publishes a matching algorithm based only on
    the contact string with callid and cseq number extra checking
    (if callid is the same, it must have a higher cseq number,
-   otherwise invalid). But as argumented above, this is not
-   enough in NAT traversal context, so the Kamailio
-   implementation of contact machting offers more algorithms:
+   otherwise invalid). But as argumented above, this is not enough
+   in NAT traversal context, so the Kamailio implementation of
+   contact machting offers more algorithms:
      * contact based only - it strict RFC 3261 compiancy - the
        contact is matched as string and extra checked via callid
-       and cseg (if callid is the same, it must have a higher
-       cseq number, otherwise invalid).
+       and cseg (if callid is the same, it must have a higher cseq
+       number, otherwise invalid).
      * contact nad callid based - it an extension of the first
        case - the contact and callid must matched as string; the
        cseg must be higher than the previous one - so be careful
        how you deal with REGISTER retransmissions in this case.
 
-   How to control/select the contact maching algorithm, please
-   see the module parameter matching_mode at Section 1.3.21,
+   How to control/select the contact maching algorithm, please see
+   the module parameter matching_mode at Section 1.3.21,
    "matching_mode (integer)".
 
 1.2. Dependencies
@@ -188,11 +187,11 @@ Chapter 1. Admin Guide
 1.3.1. nat_bflag (integer)
 
    The index of the branch flag to be used as NAT marker (if the
-   contact is or not natted). This is a branch flag and it will
-   be imported and used by all other modules depending of usrloc
+   contact is or not natted). This is a branch flag and it will be
+   imported and used by all other modules depending of usrloc
    module.
 
-   Default value is "not set". 
+   Default value is "not set".
 
    Example 1.1. Set nat_bflag parameter
 ...
@@ -203,7 +202,7 @@ modparam("usrloc", "nat_bflag", 3)
 
    Name of column containing usernames.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1.2. Set user_column parameter
 ...
@@ -214,7 +213,7 @@ modparam("usrloc", "user_column", "username")
 
    Name of column containing domains.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1.3. Set user_column parameter
 ...
@@ -225,7 +224,7 @@ modparam("usrloc", "domain_column", "domain")
 
    Name of column containing contacts.
 
-   Default value is "contact". 
+   Default value is "contact".
 
    Example 1.4. Set contact_column parameter
 ...
@@ -236,7 +235,7 @@ modparam("usrloc", "contact_column", "contact")
 
    Name of column containing expires value.
 
-   Default value is "expires". 
+   Default value is "expires".
 
    Example 1.5. Set expires_column parameter
 ...
@@ -247,7 +246,7 @@ modparam("usrloc", "expires_column", "expires")
 
    Name of column containing q values.
 
-   Default value is "q". 
+   Default value is "q".
 
    Example 1.6. Set q_column parameter
 ...
@@ -258,7 +257,7 @@ modparam("usrloc", "q_column", "q")
 
    Name of column containing callid values.
 
-   Default value is "callid". 
+   Default value is "callid".
 
    Example 1.7. Set callid_column parameter
 ...
@@ -269,7 +268,7 @@ modparam("usrloc", "callid_column", "callid")
 
    Name of column containing cseq numbers.
 
-   Default value is "cseq". 
+   Default value is "cseq".
 
    Example 1.8. Set cseq_column parameter
 ...
@@ -280,7 +279,7 @@ modparam("usrloc", "cseq_column", "cseq")
 
    Name of column containing supported methods.
 
-   Default value is "methods". 
+   Default value is "methods".
 
    Example 1.9. Set methods_column parameter
 ...
@@ -291,7 +290,7 @@ modparam("usrloc", "methods_column", "methods")
 
    Name of column to save the internal flags of the record.
 
-   Default value is "flags". 
+   Default value is "flags".
 
    Example 1.10. Set flags_column parameter
 ...
@@ -302,7 +301,7 @@ modparam("usrloc", "flags_column", "flags")
 
    Name of column to save the branch/contact flags of the record.
 
-   Default value is "cflags". 
+   Default value is "cflags".
 
    Example 1.11. Set cflags_column parameter
 ...
@@ -313,7 +312,7 @@ modparam("usrloc", "cflags_column", "cflags")
 
    Name of column containing user-agent values.
 
-   Default value is "user_agent". 
+   Default value is "user_agent".
 
    Example 1.12. Set user_agent_column parameter
 ...
@@ -325,7 +324,7 @@ modparam("usrloc", "user_agent_column", "user_agent")
    Name of column containing the source IP, port, and protocol
    from the REGISTER message.
 
-   Default value is "received". 
+   Default value is "received".
 
    Example 1.13. Set received_column parameter
 ...
@@ -337,7 +336,7 @@ modparam("usrloc", "received_column", "received")
    Name of column containing the received socket information
    (IP:port) for the REGISTER message.
 
-   Default value is "socket". 
+   Default value is "socket".
 
    Example 1.14. Set socket_column parameter
 ...
@@ -348,7 +347,7 @@ modparam("usrloc", "socket_column", "socket")
 
    Name of column containing the Path header.
 
-   Default value is "path". 
+   Default value is "path".
 
    Example 1.15. Set path_column parameter
 ...
@@ -361,7 +360,7 @@ modparam("usrloc", "path_column", "path")
    for identifing the user (along with the username part). Useful
    in multi domain scenarios. Non 0 value means true.
 
-   Default value is "0 (false)". 
+   Default value is "0 (false)".
 
    Example 1.16. Set use_domain parameter
 ...
@@ -374,7 +373,7 @@ modparam("usrloc", "use_domain", 1)
    otherwise the contact will be ordered based on q value. Non 0
    value means true.
 
-   Default value is "0 (false)". 
+   Default value is "0 (false)".
 
    Example 1.17. Set desc_time_order parameter
 ...
@@ -383,11 +382,11 @@ modparam("usrloc", "desc_time_order", 1)
 
 1.3.18. timer_interval (integer)
 
-   Number of seconds between two timer runs. The module uses
-   timer to delete expired contacts, synchronize with database
-   and other tasks, that need to be run periodically.
+   Number of seconds between two timer runs. The module uses timer
+   to delete expired contacts, synchronize with database and other
+   tasks, that need to be run periodically.
 
-   Default value is 60. 
+   Default value is 60.
 
    Example 1.18. Set timer_interval parameter
 ...
@@ -398,13 +397,12 @@ modparam("usrloc", "timer_interval", 120)
 
    URL of the database that should be used.
 
-   Default value is
-   "mysql://openser:openserrw@localhost/openser". 
+   Default value is "mysql://openser:openserrw@localhost/openser".
 
    Example 1.19. Set db_url parameter
 ...
-modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbnam
-e")
+modparam("usrloc", "db_url", "dbdriver://username:password@dbhost/dbname
+")
 ...
 
 1.3.20. db_mode (integer)
@@ -425,24 +423,23 @@ e")
        will be lost during crash or reboot.
      * 2 - Write-Back scheme. This is a combination of previous
        two schemes. All changes are made to memory and database
-       synchronization is done in the timer. The timer deletes
-       all expired contacts and flushes all modified or new
-       contacts to database. Use this scheme if you encounter
-       high-load peaks and want them to process as fast as
-       possible. The mode will not help at all if the load is
-       high all the time. Also, latency of this mode is much
-       lower than latency of mode 1, but slightly higher than
-       latency of mode 0.
-     * 3 - DB-Only scheme. No memory cache is kept, all
-       operations being directly performed with the database. The
-       timer deletes all expired contacts from database - cleans
-       after clients that didn't un-register or re-register. The
-       mode is useful if you configure more servers sharing the
-       same DB without any replication at SIP level. The mode may
-       be slower due the high number of DB operation. For example
-       NAT pinging is a killer since during each ping cycle all
-       nated contact are loaded from the DB; The lack of memory
-       caching also disable the statistics exports.
+       synchronization is done in the timer. The timer deletes all
+       expired contacts and flushes all modified or new contacts
+       to database. Use this scheme if you encounter high-load
+       peaks and want them to process as fast as possible. The
+       mode will not help at all if the load is high all the time.
+       Also, latency of this mode is much lower than latency of
+       mode 1, but slightly higher than latency of mode 0.
+     * 3 - DB-Only scheme. No memory cache is kept, all operations
+       being directly performed with the database. The timer
+       deletes all expired contacts from database - cleans after
+       clients that didn't un-register or re-register. The mode is
+       useful if you configure more servers sharing the same DB
+       without any replication at SIP level. The mode may be
+       slower due the high number of DB operation. For example NAT
+       pinging is a killer since during each ping cycle all nated
+       contact are loaded from the DB; The lack of memory caching
+       also disable the statistics exports.
 
 Warning
 
@@ -450,7 +447,7 @@ Warning
    and haven't been flushed yet will get lost. If you want
    minimize the risk, use shorter timer interval.
 
-   Default value is 0. 
+   Default value is 0.
 
    Example 1.20. Set db_mode parameter
 ...
@@ -467,7 +464,7 @@ modparam("usrloc", "db_mode", 2)
      * 0 - CONTACT ONLY based matching algorithm.
      * 1 - CONTACT and CALLID based matching algorithm.
 
-   Default value is 0 (CONTACT_ONLY). 
+   Default value is 0 (CONTACT_ONLY).
 
    Example 1.21. Set matching_mode parameter
 ...
@@ -481,13 +478,13 @@ modparam("usrloc", "matching_mode", 1)
    starting from the receiving time of the first register with
    that Call-ID and Cseq.
 
-   Retransmissions within this delay interval will be accepted
-   and replied as the original request, but no update will be
-   done in location. If the delay is exceeded, error is reported.
+   Retransmissions within this delay interval will be accepted and
+   replied as the original request, but no update will be done in
+   location. If the delay is exceeded, error is reported.
 
    A value of 0 disable the retransmission detection.
 
-   Default value is "20 seconds". 
+   Default value is "20 seconds".
 
    Example 1.22. Set cseq_delay parameter
 ...
@@ -496,13 +493,13 @@ modparam("usrloc", "cseq_delay", 5)
 
 1.3.23. fetch_rows (integer)
 
-   The number of the rows to be fetched at once from database
-   when loading the location records. This value can be used to
-   tune the load time at startup. For 1MB of private memory
-   (default) it should be below 4000. The database driver must
-   support fetch_result() capability.
+   The number of the rows to be fetched at once from database when
+   loading the location records. This value can be used to tune
+   the load time at startup. For 1MB of private memory (default)
+   it should be below 4000. The database driver must support
+   fetch_result() capability.
 
-   Default value is "2000". 
+   Default value is "2000".
 
    Example 1.23. Set fetch_rows parameter
 ...
@@ -511,11 +508,11 @@ modparam("usrloc", "fetch_rows", 3000)
 
 1.3.24. hash_size (integer)
 
-   The number of entries of the hash table used by usrloc to
-   store the location records is 2^hash_size. For hash_size=4,
-   the number of entries of the hash table is 16.
+   The number of entries of the hash table used by usrloc to store
+   the location records is 2^hash_size. For hash_size=4, the
+   number of entries of the hash table is 16.
 
-   Default value is "9". 
+   Default value is "9".
 
    Example 1.24. Set hash_size parameter
 ...
@@ -554,9 +551,9 @@ modparam("usrloc", "hash_size", 10)
    Dumps the entire content of the USRLOC in memory cache
 
    Parameters:
-     * brief - (optional, may not be present); if equals to
-       string "brief", a brief dump will be done (only AOR and
-       contacts, with no other details)
+     * brief - (optional, may not be present); if equals to string
+       "brief", a brief dump will be done (only AOR and contacts,
+       with no other details)
 
 1.5.4.  ul_flush
 
@@ -574,8 +571,7 @@ modparam("usrloc", "hash_size", 10)
      * contact - contact string to be added
      * expires - expires value of the contact
      * Q - Q value of the contact
-     * unused - unused attribute (kept for backword
-       compatibility)
+     * unused - unused attribute (kept for backword compatibility)
      * flags - internal USRLOC flags of the contact
      * cflags - per branch flags of the contact
      * methods - mask with supported requests of the contact
@@ -601,9 +597,9 @@ modparam("usrloc", "hash_size", 10)
 
 1.6.2. contacts
 
-   Number of contacts existing in the USRLOC memory cache for
-   that domain - can not be resetted; this statistic will be
-   register for each used domain (Ex: location).
+   Number of contacts existing in the USRLOC memory cache for that
+   domain - can not be resetted; this statistic will be register
+   for each used domain (Ex: location).
 
 1.6.3. expires
 
@@ -613,8 +609,8 @@ modparam("usrloc", "hash_size", 10)
 
 1.6.4. registered_users
 
-   Total number of AOR existing in the USRLOC memory cache for
-   all domains - can not be resetted.
+   Total number of AOR existing in the USRLOC memory cache for all
+   domains - can not be resetted.
 
 Chapter 2. Developer Guide
 
@@ -628,9 +624,9 @@ Chapter 2. Developer Guide
    and returns pointer to a new domain structure. The fixup than
    'fixes' the parameter in registrar so that it will pass the
    pointer instead of the name every time save() or lookup() is
-   called. Some usrloc functions get the pointer as parameter
-   when called. For more details see implementation of save
-   function in registrar.
+   called. Some usrloc functions get the pointer as parameter when
+   called. For more details see implementation of save function in
+   registrar.
 
    Meaning of the parameters is as follows:
      * const char* name - Name of the domain (also called table)
@@ -639,8 +635,8 @@ Chapter 2. Developer Guide
 2.1.2.  ul_insert_urecord(domain, aor, rec)
 
    The function creates a new record structure and inserts it in
-   the specified domain. The record is structure that contains
-   all the contacts for belonging to the specified username.
+   the specified domain. The record is structure that contains all
+   the contacts for belonging to the specified username.
 
    Meaning of the parameters is as follows:
      * udomain_t* domain - Pointer to domain returned by
@@ -677,10 +673,10 @@ Chapter 2. Developer Guide
 
 2.1.5.  ul_lock_udomain(domain)
 
-   The function lock the specified domain, it means, that no
-   other processes will be able to access during the time. This
-   prevents race conditions. Scope of the lock is the specified
-   domain, that means, that multiple domain can be accessed
+   The function lock the specified domain, it means, that no other
+   processes will be able to access during the time. This prevents
+   race conditions. Scope of the lock is the specified domain,
+   that means, that multiple domain can be accessed
    simultaneously, they don't block each other.
 
    Meaning of the parameters is as follows:
@@ -702,8 +698,8 @@ Chapter 2. Developer Guide
    Meaning of the parameters is as follows:
      * urecord_t* record - Record to be released.
 
-2.1.8.  ul_insert_ucontact(record, contact, expires, q, callid,
-cseq, flags, cont, ua, sock)
+2.1.8.  ul_insert_ucontact(record, contact, expires, q, callid, cseq,
+flags, cont, ua, sock)
 
    The function inserts a new contact in the given record with
    specified parameters.
@@ -720,8 +716,8 @@ cseq, flags, cont, ua, sock)
        contact.
      * unsigned int flags - Flags to be set.
      * ucontact_t* cont - Pointer to newly created structure.
-     * str* ua - User-Agent of the REGISTER message that
-       contained the contact.
+     * str* ua - User-Agent of the REGISTER message that contained
+       the contact.
      * struct socket_info *sock - socket on which the REGISTER
        message was received on.
 
@@ -730,8 +726,8 @@ cseq, flags, cont, ua, sock)
    The function deletes given contact from record.
 
    Meaning of the parameters is as follows:
-     * urecord_t* record - Record from which the contact should
-       be removed.
+     * urecord_t* record - Record from which the contact should be
+       removed.
 
      * ucontact_t* contact - Contact to be deleted.
 
@@ -747,14 +743,14 @@ cseq, flags, cont, ua, sock)
 
 2.1.11.  ul_get_all_ucontacts (buf, len, flags)
 
-   The function retrieves all contacts of all registered users
-   and returns them in the caller-supplied buffer. If the buffer
-   is too small, the function returns positive value indicating
-   how much additional space would be necessary to accommodate
-   all of them. Please note that the positive return value should
-   be used only as a "hint", as there is no guarantee that during
-   the time between two subsequent calls number of registered
-   contacts will remain the same.
+   The function retrieves all contacts of all registered users and
+   returns them in the caller-supplied buffer. If the buffer is
+   too small, the function returns positive value indicating how
+   much additional space would be necessary to accommodate all of
+   them. Please note that the positive return value should be used
+   only as a "hint", as there is no guarantee that during the time
+   between two subsequent calls number of registered contacts will
+   remain the same.
 
    If flag parameter is set to non-zero value then only contacts
    that have the specified flags set will be returned. It is, for
@@ -782,8 +778,8 @@ res, ua, sock)
        contact.
      * unsigned int set - OR value of flags to be set.
      * unsigned int res - OR value of flags to be reset.
-     * str* ua - User-Agent of the REGISTER message that
-       contained the contact.
+     * str* ua - User-Agent of the REGISTER message that contained
+       the contact.
      * struct socket_info *sock - socket on which the REGISTER
        message was received on.
 
@@ -812,5 +808,5 @@ res, ua, sock)
 
 2.1.15.  ul_get_num_users()
 
-   The function loops through all domains summing up the number
-   of users.
+   The function loops through all domains summing up the number of
+   users.

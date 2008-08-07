@@ -1,4 +1,3 @@
-
 mysql Module
 
 Daniel-Constantin Mierla
@@ -14,8 +13,8 @@ Daniel-Constantin Mierla
    Copyright © 2006 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -60,8 +59,8 @@ Chapter 1. Admin Guide
 
    The following libraries or applications must be installed
    before running Kamailio with this module loaded:
-     * mysql - the development libraries forthe Mysql database.
-       In some Linux distributions named "libmysqlclient-dev".
+     * mysql - the development libraries forthe Mysql database. In
+       some Linux distributions named "libmysqlclient-dev".
 
 1.3. Exported Parameters
 
@@ -70,7 +69,7 @@ Chapter 1. Admin Guide
    Time interval in seconds to send ping messages to MySQL server
    in order to keep the connection open.
 
-   Default value is 300 (5 min). 
+   Default value is 300 (5 min).
 
    Example 1.1. Set ping_interval parameter
 ...
@@ -80,16 +79,15 @@ modparam("db_mysql", "ping_interval", 600)
 1.3.2. timeout_interval (integer)
 
    Time interval (in seconds) after that an connection attempt,
-   read or write request is aborted. The value counts three
-   times, as several retries are done from the driver before it
-   gives up.
+   read or write request is aborted. The value counts three times,
+   as several retries are done from the driver before it gives up.
 
    The read timeout parameter is ignored on MySQL driver versions
    prior to "5.1.12", "5.0.25" and "4.1.22". The write timeout
    parameter is ignored on versions prior to "5.1.12" and
    "5.0.25", the "4.1" release don't support it at all.
 
-   Default value is 2 (6 sec). 
+   Default value is 2 (6 sec).
 
    Example 1.2. Set timeout_interval parameter
 ...
@@ -101,7 +99,7 @@ modparam("db_mysql", "timeout_interval", 2)
    Configure whether the module should automatically reconnect to
    MySQL server if the connection was lost.
 
-   Default value is 1 (1 - on / 0 - off). 
+   Default value is 1 (1 - on / 0 - off).
 
    Example 1.3. Set auto_reconnect parameter
 ...
@@ -114,12 +112,12 @@ modparam("auto_reconnect", "auto_reconnect", 0)
 
 1.5. Installation
 
-   Because it dependes on an external library, the mysql module
-   is not compiled and installed by default. You can use one of
-   these options.
+   Because it dependes on an external library, the mysql module is
+   not compiled and installed by default. You can use one of these
+   options.
      * - edit the "Makefile" and remove "db_mysql" from
-       "excluded_modules" list. Then follow the standard
-       procedure to install Kamailio: "make all; make install".
+       "excluded_modules" list. Then follow the standard procedure
+       to install Kamailio: "make all; make install".
      * - from command line use: 'make all
        include_modules="db_mysql"; make install
        include_modules="db_mysql"'.

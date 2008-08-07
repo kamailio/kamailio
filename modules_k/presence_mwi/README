@@ -1,4 +1,3 @@
-
 Presence_MWI Module
 
 Juha Heinanen
@@ -14,8 +13,8 @@ Juha Heinanen
    Copyright © 2007 Juha Heinanen
    Revision History
    Revision $Revision: 1 $ $Date: 2007-04-30 14:05:57 +0200 (Mon,
-   30 Jan 2007) $
-     _________________________________________________________
+                           30 Jan 2007) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -44,8 +43,8 @@ Chapter 1. Admin Guide
    rules. It assumes that publish requests are only issued by a
    voicemail application and subscribe requests only by the owner
    of voicemail box. Authorization can thus be easily done by
-   Kamailio configuration file before calling handle_publish()
-   and handle_subscribe() functions.
+   Kamailio configuration file before calling handle_publish() and
+   handle_subscribe() functions.
 
    The module implements a simple check of content type
    application/simple-message-summary: Content must start with

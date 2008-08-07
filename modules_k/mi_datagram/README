@@ -1,4 +1,3 @@
-
 mi_datagram Module
 
 Andreea-Ancuta Onofrei
@@ -12,8 +11,8 @@ Andreea-Ancuta Onofrei
    Copyright © 2007 voice-system.ro
    Revision History
    Revision $Revision: 1133 $ $Date: 2007-05-04 14:31:13 +0300
-   (Thu, 05 Apr 2006) $
-     _________________________________________________________
+                              (Thu, 05 Apr 2006) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -31,8 +30,8 @@ Andreea-Ancuta Onofrei
               1.4.1. socket_name (string)
               1.4.2. children_count (string)
               1.4.3. unix_socket_mode (integer)
-              1.4.4. unix_socket_group (integer)
-                      unix_socket_group (string)
+              1.4.4. unix_socket_group (integer) unix_socket_group
+                      (string)
 
               1.4.5. unix_socket_user (integer) unix_socket_group
                       (string)
@@ -65,14 +64,14 @@ Chapter 1. Admin Guide
 
 1.2. DATAGRAM command syntax
 
-   The external commands issued via DATAGRAM interface must
-   follow the following syntax:
-     * request = first_line (argument '\n')* 
-     * first_line = ':'command_name':''\n' 
-     * argument = (arg_name '::' (arg_value)? ) | (arg_value) 
-     * arg_name = not-quoted_string 
-     * arg_value = not-quoted_string | '"' string '"' 
-     * not-quoted_string = string - {',",\n,\r} 
+   The external commands issued via DATAGRAM interface must follow
+   the following syntax:
+     * request = first_line (argument '\n')*
+     * first_line = ':'command_name':''\n'
+     * argument = (arg_name '::' (arg_value)? ) | (arg_value)
+     * arg_name = not-quoted_string
+     * arg_value = not-quoted_string | '"' string '"'
+     * not-quoted_string = string - {',",\n,\r}
 
 1.3. Dependencies
 
@@ -95,7 +94,7 @@ Chapter 1. Admin Guide
    or UDP socket will be created using this parameter in order to
    read the external commands. Both IPv4 and IPv6 are supported.
 
-   Default value is NONE. 
+   Default value is NONE.
 
    Example 1.1. Set socket_name parameter
 ...
@@ -106,10 +105,10 @@ modparam("mi_datagram", "socket_name", "udp:192.168.2.133:8080")
 
 1.4.2. children_count (string)
 
-   The number of child processes to be created. Each child
-   process will be a datagram server.
+   The number of child processes to be created. Each child process
+   will be a datagram server.
 
-   Default value is 1. 
+   Default value is 1.
 
    Example 1.2. Set children_count parameter
 ...
@@ -122,7 +121,7 @@ modparam("mi_datagram", "children_count", 3)
    socket. Not necessary for a UDP socket. It follows the UNIX
    conventions.
 
-   Default value is 0660 (rw-rw----). 
+   Default value is 0660 (rw-rw----).
 
    Example 1.3. Set unix_socket_mode parameter
 ...
@@ -133,7 +132,7 @@ modparam("mi_datagram", "unix_socket_mode", 0600)
 
    Group to be used for creating the listening UNIX socket.
 
-   Default value is the inherited one. 
+   Default value is the inherited one.
 
    Example 1.4. Set unix_socket_group parameter
 ...
@@ -145,7 +144,7 @@ modparam("mi_datagram", "unix_socket_group", "root")
 
    User to be used for creating the listening UNIX socket.
 
-   Default value is the inherited one. 
+   Default value is the inherited one.
 
    Example 1.5. Set unix_socket_user parameter
 ...
@@ -158,7 +157,7 @@ modparam("mi_datagram", "unix_socket_user", "root")
    The reply will expire after trying to sent it for
    socket_timeout miliseconds.
 
-   Default value is 2000. 
+   Default value is 2000.
 
    Example 1.6. Set socket_timeout parameter
 ...
@@ -171,7 +170,7 @@ modparam("mi_datagram", "socket_timeout", 2000)
    structure is tree oriendeted, the depth level will printed as
    identation.
 
-   Default value is ""\t" (TAB)". 
+   Default value is ""\t" (TAB)".
 
    Example 1.7. Set reply_ident parameter
 ...
@@ -193,49 +192,51 @@ modparam("mi_datagram", "reply_ident", "    ")
 dialog:\n
 tm:\n
 
+
 Chapter 2. Frequently Asked Questions
 
    2.1.
 
-   Both UNIX and UDP type of socket can be created simultaneusly?
+       Both UNIX and UDP type of socket can be created simultaneusly?
 
-   This version supports only one kind of socket at a time. If
-   there are more than one value set for socket_name the last one
-   will take effect.
+       This version supports only one kind of socket at a time. If
+       there are more than one value set for socket_name the last one
+       will take effect.
+
    2.2.
 
-   Is there a limit in the datagram request's size?
+       Is there a limit in the datagram request's size?
 
-   The maximum length of a datagram request or reply is 65457
-   bytes.
+       The maximum length of a datagram request or reply is 65457
+       bytes.
+
    2.3.
 
-   Where can I find more about Kamailio?
+       Where can I find more about Kamailio?
 
-   Take a look at http://www.kamailio.org/kamailiohome;.
+       Take a look at http://www.kamailio.org/.
+
    2.4.
 
-   Where can I post a question about this module?
+       Where can I post a question about this module?
 
-   First at all check if your question was already answered on
-   one of our mailing lists:
-     * User Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/userska
-       mailiousers;
-     * Developer Mailing List -
-       http://lists.kamailio.org/cgi-bin/mailman/listinfo/develka
-       mailiodev;
+       First at all check if your question was already answered on one
+       of our mailing lists:
+         * User Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/users
+         * Developer Mailing List -
+           http://lists.kamailio.org/cgi-bin/mailman/listinfo/devel
 
-   E-mails regarding any stable Kamailio release should be sent
-   to <users@lists.kamailio.org> and e-mails regarding
-   development versions should be sent to
-   <devel@lists.kamailio.org>.
+       E-mails regarding any stable Kamailio release should be sent to
+       <users@lists.kamailio.org> and e-mails regarding development
+       versions should be sent to <devel@lists.kamailio.org>.
 
-   If you want to keep the mail private, send it to
-   <team@lists.kamailio.org>.
+       If you want to keep the mail private, send it to
+       <team@lists.kamailio.org>.
+
    2.5.
 
-   How can I report a bug?
+       How can I report a bug?
 
-   Please follow the guidelines provided at:
-   http://sourceforge.net/tracker/?group_id=139143kamailiobugs;.
+       Please follow the guidelines provided at:
+       http://sourceforge.net/tracker/?group_id=139143.

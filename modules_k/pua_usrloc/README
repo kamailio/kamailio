@@ -1,4 +1,3 @@
-
 PUA Usrloc
 
 Anca-Maria Vamanu
@@ -12,8 +11,8 @@ Anca-Maria Vamanu
    Copyright © 2006 voice-system.ro
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -32,7 +31,7 @@ Anca-Maria Vamanu
 
         1.4. Exported Functions
 
-              1.4.1. pua_set_publish() 
+              1.4.1. pua_set_publish()
 
    List of Examples
 
@@ -44,11 +43,11 @@ Chapter 1. Admin Guide
 
 1.1. Overview
 
-   The pua_usrloc is the connector between usrloc and pua
-   modules. It creates the environment to send PUBLISH requests
-   for user location records, on specific events (e.g., when new
-   record is added in usrloc, a PUBLISH with status open (online)
-   is issued; when expires, it sends closed (offline)).
+   The pua_usrloc is the connector between usrloc and pua modules.
+   It creates the environment to send PUBLISH requests for user
+   location records, on specific events (e.g., when new record is
+   added in usrloc, a PUBLISH with status open (online) is issued;
+   when expires, it sends closed (offline)).
 
    Using this module, phones which have no support for presence
    can be seen as online/offline.
@@ -74,7 +73,7 @@ Chapter 1. Admin Guide
    The default domain to use when constructing the presentity uri
    if it is missing from recorded aor.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1.1. Set default_domain parameter
 ...
@@ -86,7 +85,7 @@ modparam(pua_usrloc, "default_domain", "kamailio.org")
    The prefix when construstructing entity attribute to be added
    to presence node in xml pidf. (ex: pres:user@domain ).
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1.2. Set presentity_prefix parameter
 ...

@@ -1,4 +1,3 @@
-
 group Module
 
 Jan Janak
@@ -16,8 +15,8 @@ Jan Janak
    Copyright © 2003 FhG FOKUS
    Revision History
    Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-   (Wed, 06 Aug 2008) $
-     _________________________________________________________
+                              (Mi, 06 Aug 2008) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -48,8 +47,8 @@ Jan Janak
 
         1.4. Exported Functions
 
-              1.4.1. is_user_in(URI, group) 
-              1.4.2. get_user_group(URI, AVP) 
+              1.4.1. is_user_in(URI, group)
+              1.4.2. get_user_group(URI, AVP)
 
    List of Examples
 
@@ -84,10 +83,10 @@ Chapter 1. Admin Guide
 
 1.1.2. Regular Expression based checking
 
-   Another database table contains list of regular expressions
-   and group IDs. A matching occurs if the user URI match the
-   regular expression. This type of matching may be used to fetch
-   the group ID(s) the user belongs to (via RE matching) .
+   Another database table contains list of regular expressions and
+   group IDs. A matching occurs if the user URI match the regular
+   expression. This type of matching may be used to fetch the
+   group ID(s) the user belongs to (via RE matching) .
 
    Due performance reasons (regular expression evaluation), DB
    cache support is available: the table content is loaded into
@@ -113,7 +112,7 @@ Chapter 1. Admin Guide
    URL of the database table to be used.
 
    Default value is
-   "mysql://openserro:openserro@localhost/openser". 
+   "mysql://openserro:openserro@localhost/openser".
 
    Example 1.1. Set db_url parameter
 ...
@@ -125,7 +124,7 @@ modparam("group", "db_url", "mysql://username:password@dbhost/openser")
    Name of the table holding strict definitions of groups and
    their members.
 
-   Default value is "grp". 
+   Default value is "grp".
 
    Example 1.2. Set table parameter
 ...
@@ -136,7 +135,7 @@ modparam("group", "table", "grp_table")
 
    Name of the "table" column holding usernames.
 
-   Default value is "username". 
+   Default value is "username".
 
    Example 1.3. Set user_column parameter
 ...
@@ -147,7 +146,7 @@ modparam("group", "user_column", "user")
 
    Name of the "table" column holding domains.
 
-   Default value is "domain". 
+   Default value is "domain".
 
    Example 1.4. Set domain_column parameter
 ...
@@ -158,7 +157,7 @@ modparam("group", "domain_column", "realm")
 
    Name of the "table" column holding groups.
 
-   Default value is "grp". 
+   Default value is "grp".
 
    Example 1.5. Set group_column parameter
 ...
@@ -171,7 +170,7 @@ modparam("group", "group_column", "grp")
    also used for strict group matching; otherwise only the
    username part will be used.
 
-   Default value is 0 (no). 
+   Default value is 0 (no).
 
    Example 1.6. Set use_domain parameter
 ...
@@ -184,7 +183,7 @@ modparam("group", "use_domain", 1)
    based groups. If no table is defined, the regular-expression
    support is disabled.
 
-   Default value is "NULL". 
+   Default value is "NULL".
 
    Example 1.7. Set re_table parameter
 ...
@@ -196,7 +195,7 @@ modparam("group", "re_table", "re_grp")
    Name of the "re_table" column holding the regular expression
    used for user matching.
 
-   Default value is "reg_exp". 
+   Default value is "reg_exp".
 
    Example 1.8. Set reg_exp_column parameter
 ...
@@ -207,7 +206,7 @@ modparam("group", "reg_exp_column", "re")
 
    Name of the "re_table" column holding the group IDs.
 
-   Default value is "group_id". 
+   Default value is "group_id".
 
    Example 1.9. Set re_gid_column parameter
 ...
@@ -220,7 +219,7 @@ modparam("group", "re_gid_column", "grp_id")
    will return all group IDs that match the user; otherwise only
    the first will be returned.
 
-   Default value is "1". 
+   Default value is "1".
 
    Example 1.10. Set multiple_gid parameter
 ...
@@ -232,8 +231,8 @@ modparam("group", "multiple_gid", 0)
 1.4.1.  is_user_in(URI, group)
 
    This function is to be used for script group membership. The
-   function returns true if username in the given URI is member
-   of the given group and false if not.
+   function returns true if username in the given URI is member of
+   the given group and false if not.
 
    Meaning of the parameters is as follows:
      * URI - URI whose username and optionally domain to be used,
@@ -247,8 +246,7 @@ modparam("group", "multiple_gid", 0)
             this pseudo-variable.
      * group - Name of the group to check.
 
-   This function can be used from REQUEST_ROUTE and
-   FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.11. is_user_in usage
 ...
@@ -261,8 +259,8 @@ if (is_user_in("Request-URI", "ld")) {
 
    This function is to be used for regular expression based group
    membership. The function returns true if username in the given
-   URI belongs to at least one group; the group ID(s) are
-   returned as AVPs.
+   URI belongs to at least one group; the group ID(s) are returned
+   as AVPs.
 
    Meaning of the parameters is as follows:
      * URI - URI to be matched against the regular expressions:
@@ -276,8 +274,7 @@ if (is_user_in("Request-URI", "ld")) {
      * AVP - $avp(name) - the matched group IDs are returned in
        this AVP.
 
-   This function can be used from REQUEST_ROUTE and
-   FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.12. get_user_group usage
 ...
