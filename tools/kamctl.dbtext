@@ -15,7 +15,7 @@ else
 fi
 
 if [ $TEST = "true" ]; then
-	DBTEXT_PATH="$MYLIBDIR/dbtext/openser/"
+	DBTEXT_PATH="$MYLIBDIR/dbtext/kamailio/"
 fi;
 
 # path to the dbtext database
