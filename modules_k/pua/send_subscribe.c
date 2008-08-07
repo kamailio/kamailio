@@ -35,6 +35,7 @@
 #include "../tm/tm_load.h"
 #include "../tm/dlg.h"
 #include "../../parser/msg_parser.h"
+#include "../../parser/contact/parse_contact.h"
 #include "../../parser/parse_from.h"
 #include "../../parser/parse_expires.h"
 #include "../presence/hash.h"
@@ -407,15 +408,28 @@ void subs_cback_func(struct cell *t, int cb_type, struct tmcb_params *ps)
 		goto done;
 	}
 	/*if a 2XX reply handle the two cases- an existing dialog and a new one*/
-
+	
 	/* extract the contact */
 	if(msg->contact== NULL || msg->contact->body.s== NULL)
 	{
-		LM_ERR("no contact header found in 200 OK reply");
+		LM_ERR("no contact header found");
 		lock_release(&HashT->p_records[hash_code].lock);
 		goto error;
 	}
-	contact= msg->contact->body;
+	if( parse_contact(msg->contact) <0 )
+	{
+		LM_ERR(" cannot parse contact header\n");
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto error;
+	}
+
+	if(msg->contact->parsed == NULL)
+	{
+		LM_ERR("cannot parse contact header\n");
+		lock_release(&HashT->p_records[hash_code].lock);
+		goto error;
+	}
+	contact = ((contact_body_t* )msg->contact->parsed)->contacts->uri;
 
 	if(presentity)
 	{		
@@ -814,6 +828,8 @@ int send_subscribe(subs_info_t* subs)
 	pres.flag= subs->source_flag;
 	pres.id= subs->id;
 	pres.event= subs->event;
+	if(subs->remote_target)
+		pres.remote_contact= *subs->remote_target;
 
 	presentity= search_htable(&pres, hash_code);
 

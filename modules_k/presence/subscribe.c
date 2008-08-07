@@ -645,7 +645,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 		goto error;
 	}
     LM_DBG("subscription status= %s - %s\n", get_status_str(subs.status), 
-            found==0?"inserated":"found in watcher table");
+            found==0?"inserted":"found in watcher table");
 	
 	if(update_subscription(msg, &subs, to_tag_gen, &sent_reply) <0)
 	{	

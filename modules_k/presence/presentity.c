@@ -229,12 +229,63 @@ error:
 	return NULL;
 }
 
+xmlNodePtr xmlNodeGetChildByName(xmlNodePtr node, const char *name)
+{
+	xmlNodePtr cur = node->children;
+	while (cur) {
+		if (xmlStrcasecmp(cur->name, (unsigned char*)name) == 0)
+			return cur;
+		cur = cur->next;
+	}
+	return NULL;
+}
+
+int check_if_dialog(str body, int *is_dialog)
+{
+	xmlDocPtr doc;
+	xmlNodePtr node;
+	char* state;
+
+	doc = xmlParseMemory(body.s, body.len);
+	if(doc== NULL)
+	{
+		LM_ERR("failed to parse xml document\n");
+		return -1;
+	}
+
+	node = doc->children;
+	node = xmlNodeGetChildByName(node, "dialog");
+
+	if(node == NULL)
+		*is_dialog = 0;
+	else
+	{
+		node = xmlNodeGetChildByName(node, "state");
+		if(node== NULL)
+		{
+			LM_ERR("dialog state node not found\n");
+			xmlFreeDoc(doc);
+			return -1;
+		}
+		/* check state */
+		state= (char*)xmlNodeGetContent(node->children);
+		if(strcmp(state, "terminated")== 0)
+			*is_dialog = 0;
+		else
+			*is_dialog = 1;
+	}
+
+	xmlFreeDoc(doc);
+	return 0;
+}
+
+
 int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		int new_t, int* sent_reply, char* sphere)
 {
-	db_key_t query_cols[11], update_keys[7], result_cols[5];
-	db_op_t  query_ops[11];
-	db_val_t query_vals[11], update_vals[7];
+	db_key_t query_cols[12], update_keys[8], result_cols[5];
+	db_op_t  query_ops[12];
+	db_val_t query_vals[12], update_vals[8];
 	db_res_t *result= NULL;
 	int n_query_cols = 0;
 	int n_update_cols = 0;
@@ -243,6 +294,11 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	str cur_etag= {0, 0};
 	str* rules_doc= NULL;
 	str pres_uri= {0, 0};
+	int rez_body_col, rez_sender_col, n_result_cols= 0;
+	db_row_t *row = NULL ;
+	db_val_t *row_vals = NULL;
+	str old_body, sender;
+	int is_dialog= 0, same_sender= 1;
 
 	*sent_reply= 0;
 	if(presentity->event->req_auth)
@@ -291,7 +347,8 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	query_vals[n_query_cols].val.str_val = presentity->etag;
 	n_query_cols++;
 
-	result_cols[0]= &str_expires_col;
+	result_cols[rez_body_col= n_result_cols++] = &str_body_col;
+	result_cols[rez_sender_col= n_result_cols++] = &str_sender_col;
 
 	if(new_t) 
 	{
@@ -310,6 +367,16 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		query_vals[n_query_cols].val.int_val = presentity->expires+
 				(int)time(NULL);
 		n_query_cols++;
+	
+		if( presentity->sender)
+		{
+			query_cols[n_query_cols] = &str_sender_col;
+			query_vals[n_query_cols].type = DB_STR;
+			query_vals[n_query_cols].nul = 0;
+			query_vals[n_query_cols].val.str_val.s = presentity->sender->s;
+			query_vals[n_query_cols].val.str_val.len = presentity->sender->len;
+			n_query_cols++;
+		}
 
 		query_cols[n_query_cols] = &str_body_col;
 		query_vals[n_query_cols].type = DB_BLOB;
@@ -353,7 +420,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		}
 
 		if (pa_dbf.query (pa_db, query_cols, query_ops, query_vals,
-			 result_cols, n_query_cols, 1, 0, &result) < 0) 
+			 result_cols, n_query_cols, n_result_cols, 0, &result) < 0) 
 		{
 			LM_ERR("unsuccessful sql query\n");
 			goto error;
@@ -363,9 +430,39 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 		if (result->n > 0)
 		{
+
+			if(presentity->event->evp->parsed & EVENT_DIALOG)
+			{
+				/* analize if previous body has a dialog */
+				row = &result->rows[0];
+				row_vals = ROW_VALUES(row);
+
+				old_body.s = (char*)row_vals[rez_body_col].val.string_val;
+				old_body.len = strlen(old_body.s);
+
+				if(check_if_dialog(old_body, &is_dialog)< 0)
+				{
+					LM_ERR("failed to check if dialog stored\n");
+					goto error;
+				}
+			
+				sender.s = (char*)row_vals[rez_sender_col].val.string_val;
+				sender.len= strlen(sender.s);
+
+				if(presentity->sender)
+				{
+					if(presentity->sender->len == sender.len && 
+							strncmp(presentity->sender->s, sender.s, sender.len)== 0)
+					{
+						same_sender = 1;
+					}
+					else
+						same_sender= 0;
+				}
+			}
+
 			pa_dbf.free_result(pa_db, result);
 			result= NULL;
-
 			if(presentity->expires == 0) 
 			{
 				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
@@ -406,6 +503,22 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			}
 
 			n_update_cols= 0;
+			/* if event dialog and is_dialog -> if sender not the same as
+			 * old sender do not overwrite */
+			if( (presentity->event->evp->parsed & EVENT_DIALOG) && is_dialog && same_sender==0)
+			{
+				LM_DBG("drop Publish for BLA from a different sender that"
+						" wants to overwrite an existing dialog");
+				LM_DBG("sender = %.*s\n",  presentity->sender->len, presentity->sender->s );
+				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
+				{
+					LM_ERR("sending 200OK reply\n");
+					goto error;
+				}
+				*sent_reply= 1;
+				goto done;
+			}
+
 			if(presentity->event->etag_not_new== 0)
 			{	
 				/* generate another etag */
@@ -483,9 +596,18 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 					}
 				}
 			}
+			
+			if( presentity->sender)
+			{
+				update_keys[n_update_cols] = &str_sender_col;
+				update_vals[n_update_cols].type = DB_STR;
+				update_vals[n_update_cols].nul = 0;
+				update_vals[n_update_cols].val.str_val = *presentity->sender;
+				n_update_cols++;
+			}
 
 			if( pa_dbf.update( pa_db,query_cols, query_ops, query_vals,
-			update_keys,update_vals, n_query_cols, n_update_cols )<0) 
+					update_keys, update_vals, n_query_cols, n_update_cols )<0) 
 			{
 				LM_ERR("updating published info in database\n");
 				goto error;

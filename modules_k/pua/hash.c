@@ -140,7 +140,11 @@ ua_pres_t* search_htable(ua_pres_t* pres, unsigned int hash_code)
 						(strncmp(p->watcher_uri->s, pres->watcher_uri->s,
 								  pres->watcher_uri->len )==0))
 					{
-						break;
+						if(pres->remote_contact.s)
+							if(pres->remote_contact.len== p->remote_contact.len &&
+								strncmp(pres->remote_contact.s, p->remote_contact.s,
+										 p->remote_contact.len)== 0)
+								break;
 					}
 				}
 				else

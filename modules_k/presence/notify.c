@@ -40,7 +40,6 @@
 #include "../../trim.h"
 #include "../../ut.h"
 #include "../../globals.h"
-#include "../../parser/contact/parse_contact.h"
 #include "../../str.h"
 #include "../../db/db.h"
 #include "../../db/db_val.h"
@@ -87,6 +86,7 @@ str str_presentity_uri_col = str_init("presentity_uri");
 str str_inserted_time_col = str_init("inserted_time");
 str str_received_time_col = str_init("received_time");
 str str_id_col = str_init("id");
+str str_sender_col = str_init("sender");
 
 char* get_status_str(int status_flag)
 {
@@ -542,13 +542,109 @@ error:
 	return NULL;
 }
 
-str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag)
+str* build_empty_bla_body(str pres_uri)
+{
+	xmlDocPtr doc;
+	xmlNodePtr node;
+	xmlAttrPtr attr;
+	str* body= NULL;
+	char* text;
+	int len;
+	char* entity= NULL;
+
+	doc = xmlNewDoc(BAD_CAST "1.0");
+	if(doc== NULL)
+	{
+		LM_ERR("failed to construct xml document\n");
+		return NULL;
+	}
+
+	node = xmlNewNode(NULL, BAD_CAST "dialog-info");
+	if(node== NULL)
+	{
+		LM_ERR("failed to initialize node\n");
+		goto error;
+	}
+	xmlDocSetRootElement(doc, node);
+
+	attr =  xmlNewProp(node, BAD_CAST "xmlns",BAD_CAST  "urn:ietf:params:xml:ns:dialog-info");
+	if(attr== NULL)
+	{
+		LM_ERR("failed to initialize node attribute\n");
+		goto error;
+	}
+	attr = xmlNewProp(node, BAD_CAST "version", BAD_CAST "1");
+	if(attr== NULL)
+	{
+		LM_ERR("failed to initialize node attribute\n");
+		goto error;
+	}
+
+	attr = xmlNewProp(node, BAD_CAST "state", BAD_CAST "full");
+	if(attr== NULL)
+	{
+		LM_ERR("failed to initialize node attribute\n");
+		goto error;
+	}
+
+	entity = (char*)pkg_malloc(pres_uri.len+1);
+	if(entity== NULL)
+	{
+		LM_ERR("no more memory\n");
+		goto error;
+	}
+	memcpy(entity, pres_uri.s, pres_uri.len);
+	entity[pres_uri.len]= '\0';
+
+	attr = xmlNewProp(node, BAD_CAST "entity", BAD_CAST entity);
+	if(attr== NULL)
+	{
+		LM_ERR("failed to initialize node attribute\n");
+		pkg_free(entity);
+		goto error;
+	}
+	
+	body = (str*) pkg_malloc(sizeof(str));
+	if(body== NULL)
+	{
+		LM_ERR("no more private memory");
+		pkg_free(entity);
+		goto error;
+	}
+
+	xmlDocDumpFormatMemory(doc,(xmlChar**)(void*)&text, &len, 1);
+	body->s = (char*) pkg_malloc(len);
+	if(body->s == NULL)
+	{
+		LM_ERR("no more private memory");
+		pkg_free(body);
+		pkg_free(entity);
+		goto error;
+	}
+	memcpy(body->s, text, len);
+	body->len= len;
+
+	
+	pkg_free(entity);
+	xmlFreeDoc(doc);
+	xmlFree(text);
+
+	return body;
+
+error:
+	xmlFreeDoc(doc);
+	return NULL;
+
+}
+
+str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag,
+		str* contact)
 {
 	db_key_t query_cols[6];
 	db_val_t query_vals[6];
 	db_key_t result_cols[6];
 	db_res_t *result = NULL;
-	int body_col, expires_col, etag_col= 0;
+	int body_col, expires_col, etag_col= 0, sender_col;
 	str** body_array= NULL;
 	str* notify_body= NULL;	
 	db_row_t *row= NULL ;	
@@ -562,6 +658,7 @@ str* get_p_notify_body(str pres_uri, pres_ev_t* event, str* etag)
 	int size= 0;
 	struct sip_uri uri;
 	unsigned int hash_code;
+	str sender;
 
 	if(parse_uri(pres_uri.s, pres_uri.len, &uri)< 0)
 	{
@@ -610,6 +707,7 @@ db_query:
 	result_cols[body_col=n_result_cols++] = &str_body_col;
 	result_cols[expires_col=n_result_cols++] = &str_expires_col;
 	result_cols[etag_col=n_result_cols++] = &str_etag_col;
+	result_cols[sender_col=n_result_cols++] = &str_sender_col;
 	
 	if (pa_dbf.use_table(pa_db, &presentity_table) < 0) 
 	{
@@ -655,6 +753,26 @@ db_query:
 			LM_DBG("Event does not require aggregation\n");
 			row = &result->rows[n-1];
 			row_vals = ROW_VALUES(row);
+			
+			/* if event BLA - check if sender is the same as contact */
+			/* if so, send an empty dialog info document */
+			if( event->evp->parsed == EVENT_DIALOG && contact )
+			{
+				sender.s = (char*)row_vals[sender_col].val.string_val;
+				if(sender.s== NULL || strlen(sender.s)==0)
+					goto after_sender_check;
+				sender.len= strlen(sender.s);
+			
+				if(sender.len== contact->len &&
+						strncmp(sender.s, contact->s, sender.len)== 0)
+				{
+					notify_body= build_empty_bla_body(pres_uri);
+					pa_dbf.free_result(pa_db, result);
+					return notify_body;
+				}
+			}
+
+after_sender_check:
 			if(row_vals[body_col].val.string_val== NULL)
 			{
 				LM_ERR("NULL notify body record\n");
@@ -1226,7 +1344,7 @@ int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str
 	/* if the event does not require aggregation - we have the final body */
 	if(p->event->agg_nbody)
 	{	
-		notify_body = get_p_notify_body(pres_uri, p->event , offline_etag);
+		notify_body = get_p_notify_body(pres_uri, p->event , offline_etag, NULL);
 		if(notify_body == NULL)
 		{
 			LM_DBG("Could not get the notify_body\n");
@@ -1280,7 +1398,7 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	
 	if(event->type & PUBL_TYPE)
 	{
-		notify_body = get_p_notify_body(*pres_uri, event,NULL);
+		notify_body = get_p_notify_body(*pres_uri, event, NULL, NULL);
 		if(notify_body == NULL)
 		{
 			LM_DBG("Could not get the notify_body\n");
@@ -1384,7 +1502,7 @@ int send_notify_request(subs_t* subs, subs_t * watcher_subs,
 			else
 			{
 				notify_body = get_p_notify_body(subs->pres_uri,
-						subs->event, NULL);
+						subs->event, NULL, (subs->contact.s)?&subs->contact:NULL);
 				if(notify_body == NULL || notify_body->s== NULL)
 				{
 					LM_DBG("Could not get the notify_body\n");
@@ -1478,7 +1596,7 @@ jump_over_body:
 		{
 			if(notify_body->s!=NULL)
 			{
-				if(subs->event->type& WINFO_TYPE)
+				if(subs->event->type& WINFO_TYPE )
 					xmlFree(notify_body->s);
 				else
 				if(subs->event->apply_auth_nbody== NULL && subs->event->agg_nbody== NULL)
@@ -1558,7 +1676,7 @@ int notify(subs_t* subs, subs_t * watcher_subs,str* n_body,int force_null_body)
 		LM_ERR("sending Notify not successful\n");
 		return -1;
 	}
-	return 0;	
+	return 0;
 }
 
 void p_tm_callback( struct cell *t, int type, struct tmcb_params *ps)
