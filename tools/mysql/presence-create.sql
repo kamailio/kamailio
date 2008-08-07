@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('presentity','2');
+INSERT INTO version (table_name, table_version) values ('presentity','3');
 CREATE TABLE presentity (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     username VARCHAR(64) NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE xcap (
 
 CREATE INDEX source_idx ON xcap (source);
 
-INSERT INTO version (table_name, table_version) values ('pua','5');
+INSERT INTO version (table_name, table_version) values ('pua','6');
 CREATE TABLE pua (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     pres_uri VARCHAR(128) NOT NULL,

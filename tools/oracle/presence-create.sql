@@ -1,4 +1,4 @@
-INSERT INTO version (table_name, table_version) values ('presentity','2');
+INSERT INTO version (table_name, table_version) values ('presentity','3');
 CREATE TABLE presentity (
     id NUMBER(10) PRIMARY KEY,
     username VARCHAR2(64),
@@ -99,7 +99,7 @@ BEGIN map2users('xcap'); END;
 /
 CREATE INDEX xcap_source_idx  ON xcap (source);
 
-INSERT INTO version (table_name, table_version) values ('pua','5');
+INSERT INTO version (table_name, table_version) values ('pua','6');
 CREATE TABLE pua (
     id NUMBER(10) PRIMARY KEY,
     pres_uri VARCHAR2(128),
