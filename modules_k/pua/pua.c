@@ -703,7 +703,7 @@ int update_pua(ua_pres_t* p, unsigned int hash_code)
 			pkg_free(td);
 			return -1;
 		}
-		cb_param= subs_cbparam_indlg(p, REQ_ME);
+		cb_param= subs_cbparam_indlg(p, expires, REQ_ME);
 		if(cb_param== NULL)
 		{
 			LM_ERR("while constructing subs callback param\n");
@@ -1010,11 +1010,26 @@ static void db_update(unsigned int ticks,void *param)
 					q_vals[event_col].val.int_val = p->event;
 					q_vals[version_col].val.int_val = p->version;
 					
-					q_vals[record_route_col].val.str_val = p->record_route;
+					if(p->record_route.s== NULL)
+					{
+						q_vals[record_route_col].val.str_val.s= "";
+						q_vals[record_route_col].val.str_val.len = 0;
+					}
+					else
+						q_vals[record_route_col].val.str_val = p->record_route;
+					
 					q_vals[contact_col].val.str_val = p->contact;
 					if(p->remote_contact.s)
+					{
 						q_vals[remote_contact_col].val.str_val = p->remote_contact;
-					
+						LM_DBG("p->remote_contact = %.*s\n", p->remote_contact.len, p->remote_contact.s);
+					}
+					else
+					{
+						q_vals[remote_contact_col].val.str_val.s = "";
+						q_vals[remote_contact_col].val.str_val.len = 0;
+					}
+
 					if(p->extra_headers)
 						q_vals[extra_headers_col].val.str_val = *(p->extra_headers);
 					else

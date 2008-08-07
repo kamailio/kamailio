@@ -691,7 +691,7 @@ ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag)
 
 }	
 
-ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
+ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag)
 {	
 	ua_pres_t* hentity= NULL;
 	int size;
@@ -774,8 +774,12 @@ ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag)
 	CONT_COPY(hentity, hentity->to_tag, subs->to_tag)
 	CONT_COPY(hentity, hentity->from_tag, subs->from_tag)
 	CONT_COPY(hentity, hentity->call_id, subs->call_id)
+	
+	if(expires< 0)
+		hentity->desired_expires= 0;
+	else
+		hentity->desired_expires=expires+ (int)time(NULL);
 
-	hentity->desired_expires= subs->desired_expires;
 	hentity->flag= subs->flag;
 	hentity->event= subs->event;
 	hentity->ua_flag= hentity->ua_flag;
@@ -943,7 +947,7 @@ insert:
 			goto done;
 		}
 				
-		hentity= subs_cbparam_indlg(presentity, REQ_OTHER);
+		hentity= subs_cbparam_indlg(presentity, expires, REQ_OTHER);
 		if(hentity== NULL)
 		{
 			LM_ERR("while building callback param\n");

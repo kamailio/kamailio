@@ -58,6 +58,6 @@ void subs_cback_func(struct cell *t, int type, struct tmcb_params *ps);
 str* subs_build_hdr(str* watcher_uri, int expires, int event, str* extra_headers);
 dlg_t* pua_build_dlg_t(ua_pres_t* presentity);
 ua_pres_t* subscribe_cbparam(subs_info_t* subs, int ua_flag);
-ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int ua_flag);
+ua_pres_t* subs_cbparam_indlg(ua_pres_t* subs, int expires, int ua_flag);
 
 #endif
