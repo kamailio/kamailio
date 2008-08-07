@@ -8,6 +8,7 @@ CREATE TABLE presentity (
     expires INT(11) NOT NULL,
     received_time INT(11) NOT NULL,
     body BLOB NOT NULL,
+    sender VARCHAR(128) NOT NULL,
     CONSTRAINT presentity_idx UNIQUE (username, domain, event, etag)
 ) ENGINE=MyISAM;
 
@@ -84,6 +85,7 @@ CREATE TABLE pua (
     cseq INT(11) NOT NULL,
     record_route TEXT,
     contact VARCHAR(128) NOT NULL,
+    remote_contact VARCHAR(128) NOT NULL,
     version INT(11) NOT NULL,
     extra_headers TEXT NOT NULL
 ) ENGINE=MyISAM;

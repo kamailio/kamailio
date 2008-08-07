@@ -8,6 +8,7 @@ CREATE TABLE presentity (
     expires NUMBER(10),
     received_time NUMBER(10),
     body BLOB,
+    sender VARCHAR2(128),
     CONSTRAINT presentity_presentity_idx  UNIQUE (username, domain, event, etag)
 );
 
@@ -116,6 +117,7 @@ CREATE TABLE pua (
     cseq NUMBER(10),
     record_route CLOB,
     contact VARCHAR2(128),
+    remote_contact VARCHAR2(128),
     version NUMBER(10),
     extra_headers CLOB
 );

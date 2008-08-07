@@ -8,6 +8,7 @@ CREATE TABLE presentity (
     expires INTEGER NOT NULL,
     received_time INTEGER NOT NULL,
     body BYTEA NOT NULL,
+    sender VARCHAR(128) NOT NULL,
     CONSTRAINT presentity_presentity_idx UNIQUE (username, domain, event, etag)
 );
 
@@ -84,6 +85,7 @@ CREATE TABLE pua (
     cseq INTEGER NOT NULL,
     record_route TEXT,
     contact VARCHAR(128) NOT NULL,
+    remote_contact VARCHAR(128) NOT NULL,
     version INTEGER NOT NULL,
     extra_headers TEXT NOT NULL
 );
