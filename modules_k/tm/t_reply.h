@@ -82,17 +82,6 @@ typedef int (*treply_wb_f)( struct cell* trans, unsigned int code, str *text,
 int reply_received( struct sip_msg  *p_msg ) ;
 
 
-/* send a UAS reply
- * Warning: 'buf' and 'len' should already have been build.
- * returns 1 if everything was OK or -1 for error
- */
-
-#ifdef _OBSO
-int t_reply_light( struct cell *trans, char* buf, unsigned int len,
-		   unsigned int code, char * text,
-		   char *to_tag, unsigned int to_tag_len);
-#endif
-
 int t_reply_with_body( struct cell *trans, unsigned int code, 
 		       str *text, str *body, str *new_header, str *to_tag );
 
