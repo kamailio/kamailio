@@ -35,6 +35,7 @@
  *  2004-10-10  added grep_sock_info (andrei)
  *  2004-11-08  added find_si (andrei)
  *  2007-08-23  added detection for INADDR_ANY types of sockets (andrei)
+ *  2008-08-08  sctp support (andrei)
  */
 
 
@@ -103,6 +104,12 @@
 
 
 
+/* protocol order, filled by init_proto_order() */
+enum sip_protos nxt_proto[PROTO_LAST+1]=
+{ PROTO_UDP, PROTO_TCP, PROTO_TLS, PROTO_SCTP, 0 };
+
+
+
 /* another helper function, it just creates a socket_info struct */
 static inline struct socket_info* new_sock_info(	char* name,
 								unsigned short port, unsigned short proto,
@@ -158,6 +165,10 @@ static char* get_proto_name(unsigned short proto)
 		case PROTO_TLS:
 			return "tls";
 #endif
+#ifdef USE_SCTP
+		case PROTO_SCTP:
+			return "sctp";
+#endif
 		default:
 			return "unknown";
 	}
@@ -179,6 +190,11 @@ static struct socket_info** get_sock_info_list(unsigned short proto)
 #ifdef USE_TLS
 		case PROTO_TLS:
 			return &tls_listen;
+			break;
+#endif
+#ifdef USE_SCTP
+		case PROTO_SCTP:
+			return &sctp_listen;
 			break;
 #endif
 		default:
@@ -776,6 +792,9 @@ int fix_all_socket_lists()
 			&& (tls_listen==0)
 #endif
 #endif
+#ifdef USE_SCTP
+			&& (sctp_listen==0)
+#endif
 		){
 		/* get all listening ipv4 interfaces */
 		if (add_interfaces(0, AF_INET, 0,  PROTO_UDP, &udp_listen)==0){
@@ -793,6 +812,13 @@ int fix_all_socket_lists()
 #endif
 			}
 #endif
+#ifdef USE_SCTP
+			if (!sctp_disable){
+				if (add_interfaces(0, AF_INET, 0,  PROTO_SCTP,
+									&sctp_listen)!=0)
+					goto error;
+			}
+#endif /* USE_SCTP */
 		}else{
 			/* if error fall back to get hostname */
 			/* get our address, only the first one */
@@ -836,12 +862,25 @@ int fix_all_socket_lists()
 	}
 #endif
 #endif
+#ifdef USE_SCTP
+	if (!sctp_disable && (fix_socket_list(&sctp_listen, &flags)!=0)){
+		LOG(L_ERR, "ERROR: fix_all_socket_lists: fix_socket_list"
+				" sctp failed\n");
+		goto error;
+	}
+	if (flags){
+		socket_types|=flags|SOCKET_T_SCTP;
+	}
+#endif /* USE_SCTP */
 	if ((udp_listen==0)
 #ifdef USE_TCP
 			&& (tcp_listen==0)
 #ifdef USE_TLS
 			&& (tls_listen==0)
 #endif
+#endif
+#ifdef USE_SCTP
+			&& (sctp_listen==0)
 #endif
 		){
 		LOG(L_ERR, "ERROR: fix_all_socket_lists: no listening sockets\n");
@@ -885,3 +924,37 @@ void print_aliases()
 			printf("             %s: %.*s:*\n", get_proto_name(a->proto), 
 					a->alias.len, a->alias.s);
 }
+
+
+
+void init_proto_order()
+{
+	int r;
+	
+	/* fix proto list  (remove disabled protocols)*/
+#ifdef USE_TCP
+	if (tcp_disable)
+#endif
+		for(r=PROTO_NONE; r<=PROTO_LAST; r++){
+			if (nxt_proto[r]==PROTO_TCP)
+				nxt_proto[r]=nxt_proto[PROTO_TCP];
+		}
+#ifdef USE_TCP
+#ifdef USE_TLS
+	if (tls_disable || tcp_disable)
+#endif
+#endif
+		for(r=PROTO_NONE; r<=PROTO_LAST; r++){
+			if (nxt_proto[r]==PROTO_TLS)
+				nxt_proto[r]=nxt_proto[PROTO_TLS];
+		}
+#ifdef USE_SCTP
+	if (sctp_disable)
+		for(r=PROTO_NONE; r<=PROTO_LAST; r++){
+			if (nxt_proto[r]==PROTO_SCTP)
+				nxt_proto[r]=nxt_proto[PROTO_SCTP];
+		}
+#endif
+}
+
+

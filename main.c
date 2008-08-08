@@ -75,6 +75,7 @@
  * 2007-06-07  added support for locking pages in mem. and using real time
  *              scheduling policies (andrei)
  * 2007-07-30  dst blacklist and DNS cache measurements added (Gergo)
+ * 2008-08-08  sctp support (andrei)
  */
 
 
@@ -145,6 +146,10 @@
 #include "tls_hooks_init.h"
 #endif /* CORE_TLS */
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+#include "sctp_options.h"
+#include "sctp_server.h"
+#endif
 #include "usr_avp.h"
 #include "core_cmd.h"
 #include "flags.h"
@@ -211,6 +216,10 @@ Options:\n\
     -N           Number of tcp child processes (default: equal to `-n')\n\
     -W           poll method\n"
 #endif
+#ifdef USE_SCTP
+"    -S           Disable sctp\n\
+    -O            Number of sctp child processes (default: equal to `-n')\n"
+#endif /* USE_SCTP */
 "    -V           Version number\n\
     -h           This help message\n\
     -b nr        Maximum receive buffer size which will not be exceeded by\n\
@@ -288,6 +297,10 @@ int tls_disable = 0;  /* tls enabled by default */
 int tls_disable = 1;  /* tls disabled by default */
 #endif /* CORE_TLS */
 #endif /* USE_TLS */
+#ifdef USE_SCTP
+int sctp_children_no = 0;
+int sctp_disable = 0; /* 1 if sctp is disabled */
+#endif /* USE_SCTP */
 
 struct process_table *pt=0;		/*array with children pids, 0= main proc,
 									alloc'ed in shared mem if possible*/
@@ -392,6 +405,9 @@ struct socket_info* tcp_listen=0;
 #ifdef USE_TLS
 struct socket_info* tls_listen=0;
 #endif
+#ifdef USE_SCTP
+struct socket_info* sctp_listen=0;
+#endif
 struct socket_info* bind_address=0; /* pointer to the crt. proc.
 									 listening address*/
 struct socket_info* sendipv4; /* ipv4 socket to use when msg. comes from ipv6*/
@@ -403,6 +419,10 @@ struct socket_info* sendipv6_tcp;
 #ifdef USE_TLS
 struct socket_info* sendipv4_tls;
 struct socket_info* sendipv6_tls;
+#endif
+#ifdef USE_SCTP
+struct socket_info* sendipv4_sctp;
+struct socket_info* sendipv6_sctp;
 #endif
 
 unsigned short port_no=0; /* default port*/
@@ -486,6 +506,9 @@ void cleanup(show_status)
 	destroy_tls();
 #endif /* USE_TLS */
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+	destroy_sctp();
+#endif
 	destroy_timer();
 	destroy_script_cb();
 	destroy_nonsip_hooks();
@@ -777,29 +800,46 @@ error:
  * sets proto */
 static int parse_proto(unsigned char* s, long len, int* proto)
 {
-#define PROTO2UINT(a, b, c) ((	(((unsigned int)(a))<<16)+ \
+#define PROTO2UINT3(a, b, c) ((	(((unsigned int)(a))<<16)+ \
 								(((unsigned int)(b))<<8)+  \
 								((unsigned int)(c)) ) | 0x20202020)
+#define PROTO2UINT4(a, b ,c ,d) ((	(((unsigned int)(a))<<24)+ \
+									(((unsigned int)(b))<<16)+ \
+									(((unsigned int)(c))<< 8)+ \
+									(((unsigned int)(d))) \
+								  )| 0x20202020 )
 	unsigned int i;
-	if (len!=3) return -1;
-	i=PROTO2UINT(s[0], s[1], s[2]);
-	switch(i){
-		case PROTO2UINT('u', 'd', 'p'):
-			*proto=PROTO_UDP;
-			break;
+	if (likely(len==3)){
+		i=PROTO2UINT3(s[0], s[1], s[2]);
+		switch(i){
+			case PROTO2UINT3('u', 'd', 'p'):
+				*proto=PROTO_UDP;
+				break;
 #ifdef USE_TCP
-		case PROTO2UINT('t', 'c', 'p'):
-			*proto=PROTO_TCP;
-			break;
+			case PROTO2UINT3('t', 'c', 'p'):
+				*proto=PROTO_TCP;
+				break;
 #ifdef USE_TLS
-		case PROTO2UINT('t', 'l', 's'):
-			*proto=PROTO_TLS;
-			break;
+			case PROTO2UINT3('t', 'l', 's'):
+				*proto=PROTO_TLS;
+				break;
 #endif
 #endif
-		default:
+			default:
+				return -1;
+		}
+	}
+#ifdef USE_SCTP
+	else if (likely(len==4)){
+		i=PROTO2UINT4(s[0], s[1], s[2], s[3]);
+		if (i==PROTO2UINT4('s', 'c', 't', 'p'))
+			*proto=PROTO_SCTP;
+		else
 			return -1;
 	}
+#endif /* USE_SCTP */
+	else
+		return -1;
 	return 0;
 }
 
@@ -1032,12 +1072,13 @@ int main_loop()
 			"stand-alone receiver @ %s:%s",
 			 bind_address->name.s, bind_address->port_no_str.s );
 
-	/* call it also w/ PROC_MAIN to make sure modules that init things only
-	 * in PROC_MAIN get a chance to run */
-	if (init_child(PROC_MAIN) < 0) {
-		LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_MAIN) -- exiting\n");
-		goto error;
-	}
+		/* call it also w/ PROC_MAIN to make sure modules that init things 
+		 * only in PROC_MAIN get a chance to run */
+		if (init_child(PROC_MAIN) < 0) {
+			LOG(L_ERR, "ERROR: main_dontfork: init_child(PROC_MAIN) "
+						"-- exiting\n");
+			goto error;
+		}
 
 		/* We will call child_init even if we
 		 * do not fork - and it will be called with rank 1 because
@@ -1064,6 +1105,22 @@ int main_loop()
 				sendipv6=si;
 	#endif
 		}
+#ifdef USE_SCTP
+		if (!sctp_disable){
+			for(si=sctp_listen; si; si=si->next){
+				if (sctp_init_sock(si)==-1)  goto error;
+				/* get first ipv4/ipv6 socket*/
+				if ((si->address.af==AF_INET)&&
+						((sendipv4_sctp==0)||
+						 	(sendipv4_sctp->flags&(SI_IS_LO|SI_IS_MCAST))))
+					sendipv4_sctp=si;
+		#ifdef USE_IPV6
+				if((sendipv6_sctp==0)&&(si->address.af==AF_INET6))
+					sendipv6_sctp=si;
+		#endif
+			}
+		}
+#endif /* USE_SCTP */
 #ifdef USE_TCP
 		if (!tcp_disable){
 			for(si=tcp_listen; si; si=si->next){
@@ -1099,8 +1156,8 @@ int main_loop()
 #endif /* USE_TLS */
 #endif /* USE_TCP */
 
-			/* all processes should have access to all the sockets (for sending)
-			 * so we open all first*/
+			/* all processes should have access to all the sockets (for 
+			 * sending) so we open all first*/
 		if (do_suid()==-1) goto error; /* try to drop privileges */
 
 		/* init childs with rank==PROC_INIT before forking any process,
@@ -1139,12 +1196,37 @@ int main_loop()
 			/*parent*/
 			/*close(udp_sock)*/; /*if it's closed=>sendto invalid fd errors?*/
 		}
-	}
+#ifdef USE_SCTP
+		/* sctp processes */
+		if (!sctp_disable){
+			for(si=sctp_listen; si; si=si->next){
+				for(i=0;i<sctp_children_no;i++){
+					snprintf(si_desc, MAX_PT_DESC, "sctp receiver child=%d "
+								"sock=%s:%s",
+								i, si->name.s, si->port_no_str.s);
+					child_rank++;
+					pid = fork_process(child_rank, si_desc, 1);
+					if (pid<0){
+						LOG(L_CRIT,  "main_loop: Cannot fork\n");
+						goto error;
+					}else if (pid==0){
+						/* child */
+						bind_address=si; /* shortcut */
+#ifdef STATS
+						setstats( i+r*children_no );
+#endif
+						return sctp_rcv_loop();
+					}
+				}
+			/*parent*/
+			/*close(sctp_sock)*/; /*if closed=>sendto invalid fd errors?*/
+			}
+		}
+#endif /* USE_SCTP */
 
-	/*this is the main process*/
-	bind_address=0;				/* main proc -> it shouldn't send anything, */
+		/*this is the main process*/
+		bind_address=0;	/* main proc -> it shouldn't send anything, */
 
-	{
 #ifdef USE_SLOW_TIMER
 		/* fork again for the "slow" timer process*/
 		pid = fork_process(PROC_TIMER, "slow timer", 1);
@@ -1173,17 +1255,15 @@ int main_loop()
 				set_rt_prio(rt_timer1_prio, rt_timer1_policy);
 			if (arm_timer()<0) goto error;
 			timer_main();
-		}else{
 		}
-	}
 
-/* init childs with rank==MAIN before starting tcp main (in case they want to
- *  fork  a tcp capable process, the corresponding tcp. comm. fds in pt[] must
- *  be set before calling tcp_main_loop()) */
-	if (init_child(PROC_MAIN) < 0) {
-		LOG(L_ERR, "ERROR: main: error in init_child\n");
-		goto error;
-	}
+	/* init childs with rank==MAIN before starting tcp main (in case they want
+	 * to fork  a tcp capable process, the corresponding tcp. comm. fds in
+	 * pt[] must be set before calling tcp_main_loop()) */
+		if (init_child(PROC_MAIN) < 0) {
+			LOG(L_ERR, "ERROR: main: error in init_child\n");
+			goto error;
+		}
 
 #ifdef USE_TCP
 		if (!tcp_disable){
@@ -1204,32 +1284,32 @@ int main_loop()
 			}
 		}
 #endif
-	/* main */
-	strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
+		/* main */
+		strncpy(pt[0].desc, "attendant", MAX_PT_DESC );
 #ifdef USE_TCP
-	close_extra_socks(PROC_ATTENDANT, get_proc_no());
-	if(!tcp_disable){
-		/* main's tcp sockets are disabled by default from init_pt() */
-		unix_tcp_sock=-1;
-	}
+		close_extra_socks(PROC_ATTENDANT, get_proc_no());
+		if(!tcp_disable){
+			/* main's tcp sockets are disabled by default from init_pt() */
+			unix_tcp_sock=-1;
+		}
 #endif
 
-	/*DEBUG- remove it*/
 #ifdef EXTRA_DEBUG
-	for (r=0; r<*process_count; r++){
-		fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
-	}
+		for (r=0; r<*process_count; r++){
+			fprintf(stderr, "% 3d   % 5d - %s\n", r, pt[r].pid, pt[r].desc);
+		}
 #endif
-	DBG("Expect maximum %d  open fds\n", get_max_open_fds());
+		DBG("Expect maximum %d  open fds\n", get_max_open_fds());
 
-	for(;;){
+		for(;;){
 			handle_sigs();
 			pause();
+		}
+	
 	}
 
-
 	/*return 0; */
- error:
+error:
 				 /* if we are here, we are the "main process",
 				  any forked children should exit with exit(-1) and not
 				  ever use return */
@@ -1245,8 +1325,14 @@ static int calc_proc_no(void)
 {
 	int udp_listeners;
 	struct socket_info* si;
+#ifdef USE_SCTP
+	int sctp_listeners;
+#endif
 
 	for (si=udp_listen, udp_listeners=0; si; si=si->next, udp_listeners++);
+#ifdef USE_SCTP
+	for (si=sctp_listen, sctp_listeners=0; si; si=si->next, sctp_listeners++);
+#endif
 	return
 		     /* receivers and attendant */
 		(dont_fork ? 1 : children_no * udp_listeners + 1)
@@ -1258,6 +1344,9 @@ static int calc_proc_no(void)
 #endif
 #ifdef USE_TCP
 		+((!tcp_disable)?( 1/* tcp main */ + tcp_children_no ):0)
+#endif
+#ifdef USE_SCTP
+		+((!sctp_disable)?sctp_children_no*sctp_listeners:0)
 #endif
 		;
 }
@@ -1295,7 +1384,7 @@ int main(int argc, char** argv)
 		"DBG_MSG_QA enabled, ser may exit abruptly\n");
 #endif
 
-	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:"
+	options=  ":f:cm:dVhEb:l:L:n:vrRDTN:W:w:t:u:g:P:G:SO:"
 #ifdef STATS
 		"s:"
 #endif
@@ -1303,6 +1392,9 @@ int main(int argc, char** argv)
 	
 #ifdef USE_TCP
 	init_tcp_options(); /* set the defaults before the config */
+#endif
+#ifdef USE_SCTP
+	init_sctp_options(); /* set defaults before the config */
 #endif
 	/* look if there is a -h, e.g. -f -h construction won't catch it later */
 	opterr = 0;
@@ -1535,6 +1627,25 @@ try_again:
 					fprintf(stderr,"WARNING: tcp support not compiled in\n");
 				#endif
 					break;
+			case 'S':
+				#ifdef USE_SCTP
+					sctp_disable=1;
+				#else
+					fprintf(stderr,"WARNING: sctp support not compiled in\n");
+				#endif
+					break;
+			case 'O':
+				#ifdef USE_SCTP
+					sctp_children_no=strtol(optarg, &tmp, 10);
+					if ((tmp==0) ||(*tmp)){
+						fprintf(stderr, "bad process number: -O %s\n",
+									optarg);
+						goto error;
+					}
+				#else
+					fprintf(stderr,"WARNING: sctp support not compiled in\n");
+				#endif
+					break;
 			case 'w':
 					working_dir=optarg;
 					break;
@@ -1573,6 +1684,14 @@ try_again:
 	/* init locks first */
 	if (init_lock_ops()!=0)
 		goto error;
+#ifdef USE_TCP
+#ifdef USE_TLS
+	if (tcp_disable)
+		tls_disable=1; /* if no tcp => no tls */
+#endif /* USE_TLS */
+#endif /* USE_TCP */
+	/* initialize the configured proto list */
+	init_proto_order();
 	/* init the resolver, before fixing the config */
 	resolv_init();
 	/* fix parameters */
@@ -1586,6 +1705,11 @@ try_again:
 #ifdef USE_TCP
 	if (!tcp_disable){
 		if (tcp_children_no<=0) tcp_children_no=children_no;
+	}
+#endif
+#ifdef USE_SCTP
+	if (!sctp_disable){
+		if (sctp_children_no<=0) sctp_children_no=children_no;
 	}
 #endif
 

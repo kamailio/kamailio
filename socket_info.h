@@ -32,6 +32,7 @@
  * History:
  * --------
  *  2003-10-22  created by andrei
+ *  2008-08-08  sctp support (andrei)
  */
 
 
@@ -50,16 +51,25 @@ extern struct socket_info* tcp_listen;
 #ifdef USE_TLS
 extern struct socket_info* tls_listen;
 #endif
+#ifdef USE_SCTP
+extern struct socket_info* sctp_listen;
+#endif
+
+extern enum sip_protos nxt_proto[PROTO_LAST+1];
+
 
 
 /* flags for finding out the address types */
-#define SOCKET_T_IPV4 1
-#define SOCKET_T_IPV6 2
-#define SOCKET_T_UDP  4
-#define SOCKET_T_TCP  8
-#define SOCKET_T_TLS 16
+#define SOCKET_T_IPV4  1
+#define SOCKET_T_IPV6  2
+#define SOCKET_T_UDP   4
+#define SOCKET_T_TCP   8
+#define SOCKET_T_TLS  16
+#define SOCKET_T_SCTP 32
 
 extern int socket_types;
+
+void init_proto_order();
 
 int add_listen_iface(char* name, unsigned short port, unsigned short proto,
 							enum si_flags flags);
@@ -74,35 +84,18 @@ struct socket_info* grep_sock_info_by_port(unsigned short port,
 struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 												unsigned short proto);
 
+
+
 /* helper function:
  * returns next protocol, if the last one is reached return 0
- * useful for cycling on the supported protocols */
+ * useful for cycling on the supported protocols
+ * order: udp, tcp, tls, sctp */
 static inline int next_proto(unsigned short proto)
 {
-	switch(proto){
-		case PROTO_NONE:
-			return PROTO_UDP;
-		case PROTO_UDP:
-#ifdef	USE_TCP
-			return (tcp_disable)?0:PROTO_TCP;
-#else
-			return 0;
-#endif
-#ifdef USE_TCP
-		case PROTO_TCP:
-#ifdef USE_TLS
-			return (tls_disable)?0:PROTO_TLS;
-#else
-			return 0;
-#endif
-#endif
-#ifdef USE_TLS
-		case PROTO_TLS:
-			return 0;
-#endif
-		default:
+	if (proto>PROTO_LAST)
 			LOG(L_ERR, "ERROR: next_proto: unknown proto %d\n", proto);
-	}
+	else
+		return nxt_proto[proto];
 	return 0;
 }
 
@@ -116,6 +109,11 @@ inline static struct socket_info* get_first_socket()
 	if (udp_listen) return udp_listen;
 #ifdef USE_TCP
 	else if (tcp_listen) return tcp_listen;
+#endif
+#ifdef USE_SCTP
+	else if (sctp_listen) return sctp_listen;
+#endif
+#ifdef USE_TCP
 #ifdef USE_TLS
 	else if (tls_listen) return tls_listen;
 #endif
