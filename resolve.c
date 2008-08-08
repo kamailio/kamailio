@@ -862,8 +862,10 @@ int naptr_proto_supported(char proto)
 			return !tls_disable;
 #endif /* USE_TLS */
 #endif /* USE_TCP */
+#ifdef USE_SCTP
 		case PROTO_SCTP:
-			return 0; /* not supported */
+			return !sctp_disable;
+#endif
 	}
 	return 0;
 }
