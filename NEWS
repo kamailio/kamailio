@@ -200,6 +200,8 @@ modules:
                         - t_set_retr(t1, t2) - changes the retransmissions
                            intervals on the fly, on a per transaction basis.
 core:
+             - sctp support (one-to-many, work in progress, for now linux
+               only with no fallback to one-to-one on full send buffers)
              - partial cygwin (windows) support revived: core+static modules, 
                no ipv6, no tcp, no dynamic modules
              - most of the config variables can now be changed on the fly,
@@ -218,6 +220,14 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
+  disable_sctp = yes/no - diable sctp support
+  sctp_children = number - sctp children no (similar to udp children)
+  sctp_socket_rcvbuf = number - size for the sctp socket receive buffer
+  sctp_socket_sndbuf = number - size for the sctp socket send buffer
+  sctp_autoclose = seconds - number of seconds before autoclosing an idle
+     assocation (default: 180 s).
+  sctp_send_ttl = milliseconds - number of milliseconds before an unsent
+     message/chunk is dropped (default: 32000 ms or 32 s).
   server_id = number - A configurable unique server id that can be used to
                        discriminate server instances within a cluster of
                        servers when all other information, such as IP adddresses

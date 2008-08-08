@@ -55,6 +55,9 @@
 #ifdef USE_TCP
 #include "tcp_server.h"
 #endif
+#ifdef USE_SCTP
+#include "sctp_server.h"
+#endif
 
 #include "compiler_opt.h"
 
@@ -147,6 +150,22 @@ static inline int msg_send(struct dest_info* dst, char* buf, int len)
 	}
 #endif /* USE_TLS */
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+	else if (dst->proto==PROTO_SCTP){
+		if (unlikely(sctp_disable)){
+			STATS_TX_DROPS;
+			LOG(L_WARN, "msg_send: WARNING: attempt to send on sctp and sctp"
+					" support is disabled\n");
+			goto error;
+		}else{
+			if (unlikely(sctp_msg_send(dst, buf, len)<0)){
+				STATS_TX_DROPS;
+				LOG(L_ERR, "msg_send: ERROR: sctp_msg_send failed\n");
+				goto error;
+			}
+		}
+	}
+#endif /* USE_SCTP */
 	else{
 			LOG(L_CRIT, "BUG: msg_send: unknown proto %d\n", dst->proto);
 			goto error;

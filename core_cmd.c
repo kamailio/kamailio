@@ -39,6 +39,9 @@
 #include "tcp_info.h"
 #include "tcp_options.h"
 #include "core_cmd.h"
+#ifdef USE_SCTP
+#include "sctp_options.h"
+#endif
 
 #ifdef USE_DNS_CACHE
 void dns_cache_debug(rpc_t* rpc, void* ctx);
@@ -589,6 +592,36 @@ static void core_tcp_options(rpc_t* rpc, void* c)
 
 
 
+static const char* core_sctp_options_doc[] = {
+	"Returns active sctp options.",    /* Documentation string */
+	0                                 /* Method signature(s) */
+};
+
+static void core_sctp_options(rpc_t* rpc, void* c)
+{
+#ifdef USE_SCTP
+	void *handle;
+	struct sctp_cfg_options t;
+
+	if (!sctp_disable){
+		sctp_options_get(&t);
+		rpc->add(c, "{", &handle);
+		rpc->struct_add(handle, "dddd",
+			"sctp_autoclose",		t.sctp_autoclose,
+			"sctp_send_ttl",	t.sctp_autoclose,
+			"sctp_socket_rcvbuf",	t.sctp_so_rcvbuf,
+			"sctp_socket_sndbuf",	t.sctp_so_sndbuf
+		);
+	}else{
+		rpc->fault(c, 500, "sctp support disabled");
+	}
+#else
+	rpc->fault(c, 500, "sctp support not compiled");
+#endif
+}
+
+
+
 /*
  * RPC Methods exported by this module
  */
@@ -609,6 +642,8 @@ rpc_export_t core_rpc_methods[] = {
 #endif
 	{"core.tcp_info",          core_tcpinfo,           core_tcpinfo_doc,    0},
 	{"core.tcp_options",       core_tcp_options,       core_tcp_options_doc,0},
+	{"core.sctp_options",      core_sctp_options,      core_sctp_options_doc,
+		0},
 #ifdef USE_DNS_CACHE
 	{"dns.mem_info",          dns_cache_mem_info,     dns_cache_mem_info_doc,     0	},
 	{"dns.debug",          dns_cache_debug,           dns_cache_debug_doc,        0	},

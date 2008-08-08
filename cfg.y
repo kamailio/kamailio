@@ -116,6 +116,7 @@
 #include "flags.h"
 #include "tcp_init.h"
 #include "tcp_options.h"
+#include "sctp_options.h"
 
 #include "config.h"
 #include "cfg_core.h"
@@ -208,6 +209,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token FORWARD
 %token FORWARD_TCP
 %token FORWARD_TLS
+%token FORWARD_SCTP
 %token FORWARD_UDP
 %token SEND
 %token SEND_TCP
@@ -369,6 +371,12 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token TLS_CERTIFICATE
 %token TLS_PRIVATE_KEY
 %token TLS_CA_LIST
+%token DISABLE_SCTP
+%token SCTP_CHILDREN
+%token SCTP_SOCKET_RCVBUF
+%token SCTP_SOCKET_SNDBUF
+%token SCTP_AUTOCLOSE
+%token SCTP_SEND_TTL
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
 %token DISABLE_CORE
@@ -1039,6 +1047,54 @@ assign_stm:
 		#endif
 	}
 	| TLS_SEND_TIMEOUT EQUAL error { yyerror("number expected"); }
+	| DISABLE_SCTP EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_disable=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| DISABLE_SCTP EQUAL error { yyerror("boolean value expected"); }
+	| SCTP_CHILDREN EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_children_no=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| SCTP_CHILDREN EQUAL error { yyerror("number expected"); }
+	| SCTP_SOCKET_RCVBUF EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_options.sctp_so_rcvbuf=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| SCTP_SOCKET_RCVBUF EQUAL error { yyerror("number expected"); }
+	| SCTP_SOCKET_SNDBUF EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_options.sctp_so_sndbuf=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| SCTP_SOCKET_SNDBUF EQUAL error { yyerror("number expected"); }
+	| SCTP_AUTOCLOSE EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_options.sctp_autoclose=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| SCTP_AUTOCLOSE EQUAL error { yyerror("number expected"); }
+	| SCTP_SEND_TTL EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_options.sctp_send_ttl=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| SCTP_SEND_TTL EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }
@@ -1965,7 +2021,87 @@ cmd:
 		#endif
 	}
 	| FORWARD_TLS error { $$=0; yyerror("missing '(' or ')' ?"); }
-	| FORWARD_TLS LPAREN error RPAREN { $$=0; yyerror("bad forward_tls argument"); }
+	| FORWARD_TLS LPAREN error RPAREN { $$=0; 
+									yyerror("bad forward_tls argument"); }
+	| FORWARD_SCTP LPAREN host RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN STRING RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST, 0);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN ip RPAREN	{
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN host COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST,
+							(void*)$5);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN STRING COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, STRING_ST, $3, NUMBER_ST,
+							(void*)$5);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN ip COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, IP_ST, (void*)$3, NUMBER_ST, 
+							(void*)$5);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+					}
+	| FORWARD_SCTP LPAREN URIHOST COMMA URIPORT RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, URIPORT_ST, 0);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN URIHOST COMMA NUMBER RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST,
+							(void*)$5);
+		#else
+			$$=0;
+			yyerror("sctp support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP LPAREN URIHOST RPAREN {
+		#ifdef USE_SCTP
+			$$=mk_action(FORWARD_SCTP_T, 2, URIHOST_ST, 0, NUMBER_ST, 0);
+		#else
+			$$=0;
+			yyerror("tls support not compiled in");
+		#endif
+	}
+	| FORWARD_SCTP error { $$=0; yyerror("missing '(' or ')' ?"); }
+	| FORWARD_SCTP LPAREN error RPAREN { $$=0; 
+									yyerror("bad forward_tls argument"); }
 	| SEND LPAREN host RPAREN	{ $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
 	| SEND LPAREN STRING RPAREN { $$=mk_action(SEND_T, 2, STRING_ST, $3, NUMBER_ST, 0); }
 	| SEND LPAREN ip RPAREN		{ $$=mk_action(SEND_T, 2, IP_ST, (void*)$3, NUMBER_ST, 0); }

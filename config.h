@@ -199,6 +199,8 @@
 /* minimum packet size; smaller packets will be dropped silently */
 #define MIN_UDP_PACKET        32
 
+#define MIN_SCTP_PACKET  MIN_UDP_PACKET 
+
 #define DEFAULT_RADIUS_CONFIG "/usr/local/etc/radiusclient/radiusclient.conf"
 
 #define DEFAULT_DID "_default"

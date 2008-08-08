@@ -127,6 +127,7 @@ FORWARD	forward
 FORWARD_TCP	forward_tcp
 FORWARD_UDP	forward_udp
 FORWARD_TLS	forward_tls
+FORWARD_SCTP	forward_sctp
 DROP	"drop"|"exit"
 RETURN	"return"
 BREAK	"break"
@@ -321,6 +322,12 @@ TLS_PRIVATE_KEY "tls_private_key"
 TLS_CA_LIST		"tls_ca_list"
 TLS_HANDSHAKE_TIMEOUT	"tls_handshake_timeout"
 TLS_SEND_TIMEOUT	"tls_send_timeout"
+DISABLE_SCTP	"disable_sctp"
+SCTP_CHILDREN	"sctp_children"
+SCTP_SOCKET_RCVBUF	"sctp_socket_rcvbuf|sctp_socket_receive_buffer"
+SCTP_SOCKET_SNDBUF	"sctp_socket_sndbuf|sctp_socket_send_buffer"
+SCTP_AUTOCLOSE	"sctp_autoclose"
+SCTP_SEND_TTL	"sctp_send_ttl"
 ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 DISABLE_CORE		"disable_core_dump"
@@ -409,6 +416,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{FORWARD}	{count(); yylval.strval=yytext; return FORWARD; }
 <INITIAL>{FORWARD_TCP}	{count(); yylval.strval=yytext; return FORWARD_TCP; }
 <INITIAL>{FORWARD_TLS}	{count(); yylval.strval=yytext; return FORWARD_TLS; }
+<INITIAL>{FORWARD_SCTP}	{count(); yylval.strval=yytext; return FORWARD_SCTP;}
 <INITIAL>{FORWARD_UDP}	{count(); yylval.strval=yytext; return FORWARD_UDP; }
 <INITIAL>{DROP}	{ count(); yylval.strval=yytext; return DROP; }
 <INITIAL>{RETURN}	{ count(); yylval.strval=yytext; return RETURN; }
@@ -621,6 +629,17 @@ EAT_ABLE	[\ \t\b\r]
 										return TLS_HANDSHAKE_TIMEOUT; }
 <INITIAL>{TLS_SEND_TIMEOUT}	{ count(); yylval.strval=yytext;
 										return TLS_SEND_TIMEOUT; }
+<INITIAL>{DISABLE_SCTP}	{ count(); yylval.strval=yytext; return DISABLE_SCTP;}
+<INITIAL>{SCTP_CHILDREN}	{ count(); yylval.strval=yytext;
+										return SCTP_CHILDREN; }
+<INITIAL>{SCTP_SOCKET_RCVBUF}	{ count(); yylval.strval=yytext;
+										return SCTP_SOCKET_RCVBUF; }
+<INITIAL>{SCTP_SOCKET_SNDBUF}	{ count(); yylval.strval=yytext;
+										return SCTP_SOCKET_SNDBUF; }
+<INITIAL>{SCTP_AUTOCLOSE}	{ count(); yylval.strval=yytext;
+										return SCTP_AUTOCLOSE; }
+<INITIAL>{SCTP_SEND_TTL}	{ count(); yylval.strval=yytext;
+										return SCTP_SEND_TTL; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;

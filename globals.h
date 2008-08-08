@@ -75,6 +75,11 @@ extern struct socket_info* sendipv4_tls; /* ipv4 socket to use when msg.
 										comes from ipv6*/
 extern struct socket_info* sendipv6_tls; /* same as above for ipv6 */
 #endif
+#ifdef USE_SCTP
+extern struct socket_info* sendipv4_sctp; /* ipv4 socket to use when msg.
+										comes from ipv6*/
+extern struct socket_info* sendipv6_sctp; /* same as above for ipv6 */
+#endif
 
 extern unsigned int maxbuffer;
 extern int children_no;
@@ -92,6 +97,10 @@ extern int tcp_max_connections;
 #ifdef USE_TLS
 extern int tls_disable;
 extern unsigned short tls_port_no;
+#endif
+#ifdef USE_SCTP
+extern int sctp_disable;
+extern int sctp_children_no;
 #endif
 extern int dont_fork;
 extern int dont_daemonize;

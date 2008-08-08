@@ -401,6 +401,7 @@ static int fix_actions(struct action* a)
 			case FORWARD_T:
 			case FORWARD_TLS_T:
 			case FORWARD_TCP_T:
+			case FORWARD_SCTP_T:
 			case FORWARD_UDP_T:
 			case SEND_T:
 			case SEND_TCP_T:

@@ -1395,6 +1395,30 @@ ifeq ($(OS), linux)
 	ifeq ($(NO_SELECT),)
 		DEFS+=-DHAVE_SELECT
 	endif
+	# sctp support
+	ifeq ($(SCTP),1)
+		# test to see if the devfiles and lib are installed
+		sctp_dev_locations := /usr/include/netinet/sctp.h \
+								$(LOCALBASE)/include/netinet/sctp.h
+		sctp_lib_locations := /usr/lib/libsctp.so \
+								$(LOCALBASE)/usr/local/lib/libsctp.so
+		sctp_dev_path := $(wildcard $(sctp_dev_locations))
+		sctp_lib_path := $(wildcard $(sctp_lib_locations))
+		ifeq ($(sctp_dev_path),)
+			$(info "sctp development files not installed -- sctp disabled")
+			override SCTP := 
+		endif
+		ifeq ($(sctp_lib_path),)
+			$(info "sctp libraries not installed -- sctp disabled")
+			override SCTP := 
+		endif
+		
+		ifeq ($(SCTP),1)
+			# use lksctp
+			DEFS+=-DUSE_SCTP
+			LIBS+=-lsctp
+		endif
+	endif # SCTP
 endif
 
 ifeq  ($(OS), solaris)

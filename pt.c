@@ -83,9 +83,10 @@ static int calc_common_open_fds_no()
 	 *  + 1 udp sock/udp proc + 1 possible dns comm. socket + 
 	 *  + 1 temporary tcp send sock.
 	 */
-	max_fds_no=estimated_proc_no*4 /* udp + tcp unix sock + tmp. tcp send +
-									  tmp dns.*/ -1 /* timer (no udp)*/ + 
-				3 /* stdin/out/err */;
+	max_fds_no=estimated_proc_no*4 /* udp|sctp + tcp unix sock +
+									  tmp. tcp send +
+									  tmp dns.*/
+				-1 /* timer (no udp)*/ + 3 /* stdin/out/err */;
 	return max_fds_no;
 }
 
