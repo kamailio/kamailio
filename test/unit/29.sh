@@ -35,7 +35,7 @@ echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"cpl-c\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
 
 
-../kamailio -w . -f $CFG &> /dev/null;
+../$BIN -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
@@ -65,7 +65,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-killall -9 kamailio &> /dev/null;
+killall -9 $BIN &> /dev/null;
 killall -9 sipp &> /dev/null;
 rm $TMPFILE
 mv $CFG.tmp $CFG

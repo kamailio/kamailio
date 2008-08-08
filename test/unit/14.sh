@@ -33,7 +33,7 @@ cp $CFG $CFG.bak
 # setup config
 echo "modparam(\"carrierroute\", \"config_file\", \"`pwd`/../test/carrierroute.cfg\")" >> $CFG
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -76,7 +76,7 @@ Printing tree for domain other
 	fi ;
 fi ;
 
-killall -9 kamailio
+killall -9 $BIN
 
 cd ../test
 

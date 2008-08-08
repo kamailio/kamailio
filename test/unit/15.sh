@@ -32,11 +32,11 @@ echo "loadmodule \"../modules/db_text/db_text.so\"" >> $CFG
 cat 2.cfg >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"text://`pwd`/../scripts/dbtext/kamailio\")" >> $CFG
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 rm $CFG
 

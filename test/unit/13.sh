@@ -61,7 +61,7 @@ mask, next_domain) values ('3', '2', '1', '49', 'host1.local', '503', '0', '0', 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code, flags,
 mask, next_domain) values ('4', '2', '2', '49', 'host1.local', '5..', '0', '0', '3');"
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -104,7 +104,7 @@ Printing tree for domain 0
 	fi ;
 fi ;
 
-killall -9 kamailio
+killall -9 $BIN
 
 # cleanup database
 $MYSQL "delete from route_tree where id = 1;"

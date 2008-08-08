@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -32,7 +33,7 @@ CFG=21.cfg
 # add an registrar entry to the db;
 $MYSQL "INSERT INTO subscriber (username, domain, password, email_address) VALUES (\"alice\",\"localhost\",\"alice\",\"alice@localhost\");"
 
-../kamailio -w . -f $CFG &> /dev/null;
+../$BIN -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
@@ -47,7 +48,7 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup
-killall -9 kamailio &> /dev/null;
+killall -9 $BIN &> /dev/null;
 killall -9 sipp &> /dev/null;
 $MYSQL "DELETE FROM subscriber WHERE((username = \"alice\") and (domain = \"localhost\"));"
 

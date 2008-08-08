@@ -19,16 +19,18 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+
 CFG=1.cfg
 
 # setup config
 echo -e "debug=3" > $CFG
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 rm -f $CFG
 

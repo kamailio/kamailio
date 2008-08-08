@@ -35,7 +35,7 @@ CFG=33.cfg
 
 cp $CFG $CFG.bak
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -57,7 +57,7 @@ if [ ! $ret -eq 0 ] ; then
 fi;
 
 sleep 1
-killall -9 kamailio &> /dev/null
+killall -9 $BIN &> /dev/null
 ret=$?
 
 if [ $ret -eq 0 ] ; then

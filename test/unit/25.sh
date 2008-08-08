@@ -57,7 +57,7 @@ $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('1'
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('','0','_test_');"
 
 
-../kamailio -w . -f $CFG &> /dev/null
+../$BIN -w . -f $CFG &> /dev/null
 sleep 1
 
 sipp -sn uas -bg -i localhost -p 5060 &> /dev/null
@@ -111,7 +111,7 @@ fi;
 
 # cleanup:
 killall -9 sipp > /dev/null 2>&1
-killall -9 kamailio > /dev/null 2>&1
+killall -9 $BIN > /dev/null 2>&1
 
 $MYSQL "delete from location where (user_agent = \"ser_test\");"
 $MYSQL "delete from userblacklist where username='49721123456786';"

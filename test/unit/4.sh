@@ -27,7 +27,7 @@ CFG=4.cfg
 echo -e "loadmodule \"../modules/mi_fifo/mi_fifo.so\"" > $CFG
 echo -e "modparam(\"mi_fifo\", \"fifo_name\", \"/tmp/kamailio_fifo\")" >> $CFG
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 cd ../scripts
@@ -40,7 +40,7 @@ fi ;
 
 cd ../test
 
-killall -9 kamailio
+killall -9 $BIN
 
 rm -f $CFG
 

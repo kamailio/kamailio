@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -41,11 +42,11 @@ while [  $COUNTER -lt 139 ]; do
 	$MYSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER', '$DOMAIN', 'foobar-$COUNTER@$DOMAIN', '___test___');"
 done
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 $MYSQL "delete from location where user_agent = '___test___'"
 

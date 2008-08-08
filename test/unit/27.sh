@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -30,7 +31,7 @@ fi ;
 
 CFG=presence.cfg
 
-../kamailio -w . -f $CFG &> /dev/null;
+../$BIN -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
@@ -47,7 +48,7 @@ fi;
 
 
 #cleanup:
-killall -9 kamailio &> /dev/null;
+killall -9 $BIN &> /dev/null;
 killall -9 sipp &> /dev/null;
 
 exit $ret;

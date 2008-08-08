@@ -2,3 +2,4 @@ DB_ALL_MOD="acc|alias_db|auth_db|dialog|dialplan|dispatcher|domain|domainpolicy|
 CTLRC="kamctlrc"
 CTL="kamctl"
 DBCTL="kamdbctl"
+BIN="kamailio"

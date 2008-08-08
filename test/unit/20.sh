@@ -19,6 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 source include/database
 
@@ -34,7 +35,7 @@ $MYSQL "INSERT INTO location (username,contact,socket,user_agent,cseq,q) VALUES 
 
 sipp -sn uas -bg -i localhost -m 1 -f 10 -p 5060 &> /dev/null
 
-../kamailio -w . -f $CFG &> $TMPFILE
+../$BIN -w . -f $CFG &> $TMPFILE
 
 sipp -sn uac -s foo 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 10 -p 5061 &> /dev/null
 
@@ -43,7 +44,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp &> /dev/null
-killall -9 kamailio &> /dev/null
+killall -9 $BIN &> /dev/null
 rm $TMPFILE
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost\") and (user_agent = \"ser_test\"));"

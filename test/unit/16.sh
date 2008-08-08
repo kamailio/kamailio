@@ -35,11 +35,11 @@ echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # start
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 mv $CFG.bak $CFG
 rm -f dispatcher.list

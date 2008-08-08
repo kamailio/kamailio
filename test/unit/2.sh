@@ -21,6 +21,7 @@
 
 # Needs a default kamailio database setup for mysql
 
+source include/common
 source include/require
 source include/database
 
@@ -38,11 +39,11 @@ echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")" >> $CFG
 
 # start
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 mv $CFG.bak $CFG
 rm -f dispatcher.list

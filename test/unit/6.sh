@@ -19,14 +19,16 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
+
 CFG=2.cfg
 
 # start
-../kamailio -w . -c -f $CFG > /dev/null 2>&1
+../$BIN -w . -c -f $CFG > /dev/null 2>&1
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	../kamailio -C -f $CFG > /dev/null 2>&1
+	../$BIN -C -f $CFG > /dev/null 2>&1
 	ret=$?
 fi ;
 

@@ -32,7 +32,7 @@ cp $CFG $CFG.tmp
 echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
 echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -66,7 +66,7 @@ fi ;
 
 ret=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
 
-killall -9 kamailio
+killall -9 $BIN
 
 cd ../test
 mv $CFG.tmp $CFG

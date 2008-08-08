@@ -70,7 +70,7 @@ $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('4972112
 $MYSQL "insert into subscriber (username, cr_preferred_carrier) values ('49721123456785', 3);"
 
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 
 ret=$?
 
@@ -117,7 +117,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 
-killall -9 kamailio
+killall -9 $BIN
 killall -9 sipp
 
 # cleanup database

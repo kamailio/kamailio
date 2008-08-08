@@ -49,12 +49,12 @@ sed -i "s/TEST=\"false\"/TEST=\"true\"/g" $DBCTL
 ret=$?
 
 if [ "$ret" -eq 0 ] ; then
-	../kamailio -w . -f ../test/$CFG > /dev/null	
+	../$BIN -w . -f ../test/$CFG > /dev/null	
 	ret=$?
 fi ;
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 # cleanup
 ./$DBCTL drop $tmp_name > /dev/null

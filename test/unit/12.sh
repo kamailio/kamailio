@@ -29,7 +29,7 @@ if ! (check_netcat && check_kamailio); then
 	exit 0
 fi ;
 
-../kamailio -w . -f $CFG &> $TMPFILE
+../$BIN -w . -f $CFG &> $TMPFILE
 ret=$?
 
 sleep 1
@@ -84,7 +84,7 @@ fi ;
 
 cd ../test
 
-killall -9 kamailio
+killall -9 $BIN
 rm $TMPFILE
 
 exit $ret

@@ -49,7 +49,7 @@ insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','0','1','0','host6');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','0','1','0','premium.host.local');"
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -87,7 +87,7 @@ Printing tree for domain 0
 	fi ;
 fi ;
 
-killall -9 kamailio
+killall -9 $BIN
 
 # cleanup database
 PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "delete from route_tree where id = 1;

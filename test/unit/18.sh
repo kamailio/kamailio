@@ -20,6 +20,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+source include/common
 source include/require
 
 if ! (check_kamailio); then
@@ -33,14 +34,14 @@ CFG=18.cfg
 echo -e "debug=3" > $CFG
 
 # start:
-../kamailio -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
+../$BIN -f ./$CFG -l 127.0.0.1 -n 0 -rR -v  -E -d -T -N 0 -b 23 -m 42 -w ./  -u $(id -u)  -g $(id -g) -P ./pid.out -G ./pgid.out  > /dev/null 2>&1
 
 ret=$?
 
 sleep 1
 
 # clean up:
-killall -9 kamailio
+killall -9 $BIN
 
 rm $CFG
 rm pgid.out

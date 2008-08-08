@@ -21,13 +21,15 @@
 
 # Needs a default kamailio database setup for mysql
 
+source include/common
+
 CFG=5.cfg
 
 # start
-../kamailio -w . -f $CFG &> /dev/null
+../$BIN -w . -f $CFG &> /dev/null
 ret=$?
 
 sleep 1
-killall -9 kamailio
+killall -9 $BIN
 
 exit $ret

@@ -32,7 +32,7 @@ CPL=cpl_ignore.xml
 TMPFILE=`mktemp -t kamailio-test.XXXXXXXXXX`
 
 
-../kamailio -w . -f $CFG &> /dev/null;
+../$BIN -w . -f $CFG &> /dev/null;
 ret=$?
 sleep 1
 
@@ -62,7 +62,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-killall -9 kamailio &> /dev/null;
+killall -9 $BIN &> /dev/null;
 killall -9 sipp &> /dev/null;
 rm $TMPFILE
 

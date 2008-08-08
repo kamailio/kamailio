@@ -33,7 +33,7 @@ cp $CFG $CFG.bak
 
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
-../kamailio -w . -f $CFG > /dev/null
+../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
@@ -70,7 +70,7 @@ ret=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from
 
 cd ../test
 
-killall -9 kamailio
+killall -9 $BIN
 
 mv $CFG.bak $CFG
 
