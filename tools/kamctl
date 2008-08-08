@@ -111,31 +111,29 @@ fi
 ### CTLENGINE
 #
 CTLENGINELOADED=0
-load_ctlengine() {
-	if [ -z "$CTLENGINE" ] ; then
-		CTLENGINE="FIFO"
-	fi
-	case $CTLENGINE in
-		FIFO|fifo)
-			if [ -f "$MYLIBDIR/kamctl.fifo" ]; then
-				. "$MYLIBDIR/kamctl.fifo"
-				CTLENGINELOADED=1
-			fi
-			;;
-		UNIXSOCK|unixsock)
-			if [ -f "$MYLIBDIR/kamctl.unixsock" ]; then
-				. "$MYLIBDIR/kamctl.unixsock"
-				CTLENGINELOADED=1
-			fi
-			;;
-	esac
+if [ -z "$CTLENGINE" ] ; then
+	CTLENGINE="FIFO"
+fi
+case $CTLENGINE in
+	FIFO|fifo)
+		if [ -f "$MYLIBDIR/kamctl.fifo" ]; then
+			. "$MYLIBDIR/kamctl.fifo"
+			CTLENGINELOADED=1
+		fi
+		;;
+	UNIXSOCK|unixsock)
+		if [ -f "$MYLIBDIR/kamctl.unixsock" ]; then
+			. "$MYLIBDIR/kamctl.unixsock"
+			CTLENGINELOADED=1
+		fi
+		;;
+esac
 
-	if [ $CTLENGINELOADED -eq 1 ] ; then
-		mdbg "Control engine '$CTLENGINE' loaded"
-	else
-		mwarn "no control engine found - tried '$CTLENGINE'"
-	fi
-}
+if [ $CTLENGINELOADED -eq 1 ] ; then
+	mdbg "Control engine '$CTLENGINE' loaded"
+else
+	mwarn "no control engine found - tried '$CTLENGINE'"
+fi
 
 #
 ##### ------------------------------------------------ #####
@@ -167,7 +165,6 @@ require_dbengine() {
 }
 
 require_ctlengine() {
-	load_ctlengine
 	if [ $CTLENGINELOADED -eq 0 ] ; then 
 		merr "This command requires a control engine - none was loaded"
 		exit -1
