@@ -1727,15 +1727,20 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
     pv_value_t pv_val;
     struct in_addr addr_struct;
     int_str val;
+    char backup;
 
     if (addr_sp && (pv_get_spec_value(_m, addr_sp, &pv_val) == 0)) {
 	if (pv_val.flags & PV_VAL_INT) {
 	    src_addr = pv_val.ri;
 	} else if (pv_val.flags & PV_VAL_STR) {
+	    backup = pv_val.rs.s[pv_val.rs.len];
+	    pv_val.rs.s[pv_val.rs.len] = '\0';
 	    if (inet_aton(pv_val.rs.s, &addr_struct) == 0) {
 		LM_ERR("failed to convert IP address string to in_addr\n");
+		pv_val.rs.s[pv_val.rs.len] = backup;
 		return -1;
 	    } else {
+		pv_val.rs.s[pv_val.rs.len] = backup;
 		src_addr = addr_struct.s_addr;
 	    }
 	} else {
