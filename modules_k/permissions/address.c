@@ -313,6 +313,7 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
     unsigned int addr, port;
     int addr_group;
     struct in_addr addr_struct;
+    char backup;
 
     addr_sp = (pv_spec_t *)_addr_sp;
     port_sp = (pv_spec_t *)_port_sp;
@@ -326,10 +327,14 @@ int allow_address(struct sip_msg* _msg, char* _addr_group, char* _addr_sp,
 	if (pv_val.flags & PV_VAL_INT) {
 	    addr = pv_val.ri;
 	} else if (pv_val.flags & PV_VAL_STR) {
+	    backup = pv_val.rs.s[pv_val.rs.len];
+	    pv_val.rs.s[pv_val.rs.len] = '\0';
 	    if (inet_aton(pv_val.rs.s, &addr_struct) == 0) {
 		LM_ERR("failed to convert IP address string to in_addr\n");
+		pv_val.rs.s[pv_val.rs.len] = backup;
 		return -1;
 	    } else {
+		pv_val.rs.s[pv_val.rs.len] = backup;
 		addr = addr_struct.s_addr;
 	    }
 	} else {
