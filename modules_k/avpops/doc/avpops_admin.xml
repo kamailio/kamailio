@@ -287,12 +287,30 @@ modparam("avpops","value_column","value")
 		<section>
 			<title><varname>type_column</varname> (string)</title>
 			<para>
-				Name of column containing the AVP type.
+				Name of integer column containing the AVP type.
 			</para>
 			<para>
 				<emphasis>Default value is <quote>type</quote>.
 				</emphasis>
 			</para>
+			<para>
+			Possible column values are 
+			<itemizedlist>
+			<listitem><para><emphasis>
+				0 - AVP with string name and string value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+				1 - AVP with string name and integer value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+				2 - AVP with integer name and string value
+			</emphasis></para></listitem>
+			<listitem><para><emphasis>
+				3 - AVP with integer name and integer value
+			</emphasis></para></listitem>
+			</itemizedlist>
+			</para>
+
 			<example>
 				<title>Set <varname>type_column</varname> parameter
 				</title>

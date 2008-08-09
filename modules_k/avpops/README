@@ -12,8 +12,8 @@ Ramona-Elena Modroiu
 
    Copyright © 2004, 2005 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -253,9 +253,15 @@ modparam("avpops","value_column","value")
 
 1.4.10. type_column (string)
 
-   Name of column containing the AVP type.
+   Name of integer column containing the AVP type.
 
    Default value is "type".
+
+   Possible column values are
+     * 0 - AVP with string name and string value
+     * 1 - AVP with string name and integer value
+     * 2 - AVP with integer name and string value
+     * 3 - AVP with integer name and integer value
 
    Example 1.10. Set type_column parameter
 ...
