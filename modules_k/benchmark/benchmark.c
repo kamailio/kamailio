@@ -189,8 +189,6 @@ static int mod_init(void) {
 
 	int ret = 0;
 
-	LM_INFO("benchmark: initializing\n");
-
 	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
 	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
 	bm_mycfg->enable_global = bm_enable_global;

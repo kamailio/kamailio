@@ -169,8 +169,6 @@ static int ospInitMod(void)
 {
     bind_auth_t bind_auth;
 
-    LM_INFO("initializing...\n");
-
     if (ospVerifyParameters() != 0) {
         /* At least one parameter incorrect -> error */
         return -1;   

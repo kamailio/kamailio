@@ -115,8 +115,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	LM_INFO("initializing module...\n");
-	
 	dp_db_url.len = dp_db_url.s ? strlen(dp_db_url.s) : 0;
 	LM_DBG("db_url=%s/%d/%p\n", ZSW(dp_db_url.s), dp_db_url.len,dp_db_url.s);
 	dp_table_name.len   = strlen(dp_table_name.s);

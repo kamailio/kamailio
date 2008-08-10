@@ -197,8 +197,6 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 
-	LM_DBG("initializing\n");
-
 	if (load_tm_api(&tmb)) {
 		LM_ERR("failed to load tm API\n");
 		return -1;

@@ -197,8 +197,6 @@ static int mod_init(void)
 	char* section_name;
 	char* ldap_version;
 	
-	LM_INFO("LDAP_H350 module - initializing\n");
-
 	/*
 	* read config file
 	*/

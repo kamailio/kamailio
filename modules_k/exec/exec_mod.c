@@ -108,7 +108,6 @@ void exec_shutdown(void)
 
 static int mod_init( void )
 {
-	LM_INFO("exec - initializing\n");
 	if (time_to_kill) initialize_kill();
 	return 0;
 }

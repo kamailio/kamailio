@@ -160,8 +160,6 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
-
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 	sdomain_column.len = strlen(sdomain_column.s);

@@ -574,8 +574,6 @@ static int double_fixup(void** param, int param_no)
  */
 static int mod_init(void)
 {
-	LM_DBG("initializing...\n");
-
 	if (db_url.s)
 		db_url.len = strlen(db_url.s);
 	trusted_table.len = strlen(trusted_table.s);

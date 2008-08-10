@@ -237,8 +237,6 @@ static int cpl_init(void)
 	db_table.len = strlen(db_table.s);
 	if (timer_avp.s) timer_avp.len = strlen(timer_avp.s);
 
-	LM_INFO("initializing...\n");
-
 	if (cpl_env.proxy_recurse>MAX_PROXY_RECURSE) {
 		LM_CRIT("value of proxy_recurse param (%d) exceeds "
 			"the maximum safety value (%d)\n",

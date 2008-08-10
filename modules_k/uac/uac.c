@@ -137,8 +137,6 @@ inline static int parse_auth_avp( char *avp_spec, pv_spec_t *avp, char *txt)
 
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
-
 	if (from_restore_mode_str && *from_restore_mode_str) {
 		if (strcasecmp(from_restore_mode_str,"none")==0) {
 			from_restore_mode = FROM_NO_RESTORE;

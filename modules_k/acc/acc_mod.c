@@ -331,8 +331,6 @@ static int free_acc_fixup(void** param, int param_no)
 
 static int mod_init( void )
 {
-	LM_INFO("initializing...\n");
-
 #ifdef SQL_ACC
 	if (db_url.s)
 		db_url.len = strlen(db_url.s);

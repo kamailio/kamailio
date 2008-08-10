@@ -110,8 +110,6 @@ struct module_exports exports= {
 
 static int pike_init(void)
 {
-	LM_INFO("initializing...\n");
-
 	/* alloc the timer lock */
 	timer_lock=lock_alloc();
 	if (timer_lock==0) {

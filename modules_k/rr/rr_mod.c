@@ -73,8 +73,7 @@ static unsigned int last_rr_msg;
 
 MODULE_VERSION
 
-static int  mod_init(void);
-static void mod_destroy(void);
+static int  mod_init(void);static void mod_destroy(void);
 /* fixup functions */
 static int direction_fixup(void** param, int param_no);
 static int it_list_fixup(void** param, int param_no);
@@ -141,7 +140,6 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	LM_DBG("rr - initializing\n");
 #ifdef ENABLE_USER_CHECK
 	if(ignore_user)
 	{

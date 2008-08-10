@@ -551,8 +551,6 @@ static int script_init( struct sip_msg *foo, void *bar)
 
 static int mod_init(void)
 {
-	LM_INFO("TM - initializing...\n");
-
 	/* checking if we have sufficient bitmap capacity for given
 	   maximum number of  branches */
 	if (MAX_BRANCHES+1>31) {

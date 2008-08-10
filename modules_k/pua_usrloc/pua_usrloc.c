@@ -100,8 +100,6 @@ static int mod_init(void)
 {
 	bind_usrloc_t bind_usrloc;
 	bind_pua_t bind_pua;
-
-	LM_DBG("initializing module ...\n");
 	
 	if(default_domain.s == NULL )
 	{	

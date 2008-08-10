@@ -127,7 +127,6 @@ static int child_init(int rank)
  */
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
 	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);

@@ -258,8 +258,6 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	LM_DBG("%s module - initializing...\n", exports.name);
-	
 	return 0;
 }
 

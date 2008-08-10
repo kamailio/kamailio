@@ -212,8 +212,6 @@ static int mod_init(void)
 	if (ds_ping_from.s) ds_ping_from.len = strlen(ds_ping_from.s);
 	if (ds_ping_method.s) ds_ping_method.len = strlen(ds_ping_method.s);
 
-	LM_DBG("initializing ...\n");
-
 	if(init_data()!= 0)
 		return -1;
 

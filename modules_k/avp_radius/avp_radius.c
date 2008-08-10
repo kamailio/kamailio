@@ -111,8 +111,6 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
-
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
 

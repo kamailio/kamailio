@@ -154,7 +154,6 @@ struct module_exports exports= {
 static int mod_init(void) 
 {
 	str s;
-	LM_INFO("SIP Session Timer module - initializing\n");
 	/*
 	 * if statistics are disabled, prevent their registration to core.
 	 */

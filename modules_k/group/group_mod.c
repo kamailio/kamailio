@@ -176,8 +176,6 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	LM_DBG("group module - initializing\n");
-
 	/* Calculate lengths */
 	db_url.len = strlen(db_url.s);
 	table.len = strlen(table.s);

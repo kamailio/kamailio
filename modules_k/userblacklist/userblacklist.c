@@ -520,15 +520,12 @@ struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param)
 
 static int mod_init(void)
 {
-	LM_INFO("initializing ...\n");
 	db_url.len = strlen(db_url.s);
 	db_table.len = strlen(db_table.s);
 
 	if (db_bind(&db_url) != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;
-	LM_INFO("finished initializing\n");
-
 	return 0;
 }
 

@@ -419,8 +419,6 @@ static int mod_init(void)
 {
 	int i;
 
-	LM_DBG("initializing ...\n");
-
 	rl_lock = lock_alloc();
 	if (! rl_lock) {
 		LM_ERR("oom in lock_alloc()\n");

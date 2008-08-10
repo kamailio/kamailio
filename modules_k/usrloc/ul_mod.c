@@ -209,8 +209,6 @@ struct module_exports exports = {
  */
 static int mod_init(void)
 {
-	LM_DBG("initializing\n");
-
 	/* Compute the lengths of string parameters */
 	user_col.len = strlen(user_col.s);
 	domain_col.len = strlen(domain_col.s);

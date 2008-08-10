@@ -320,8 +320,6 @@ static int mod_init(void)
 {
 	unsigned int n;
 
-	LM_INFO("Dialog module - initializing\n");
-
 	if (timeout_spec.s)
 		timeout_spec.len = strlen(timeout_spec.s);
 

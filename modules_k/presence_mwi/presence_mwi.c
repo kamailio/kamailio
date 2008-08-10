@@ -83,8 +83,6 @@ struct module_exports exports= {
 static int mod_init(void)
 {
 	presence_api_t pres;
-    LM_INFO("initializing...\n");
-
     bind_presence_t bind_presence;
 
     bind_presence= (bind_presence_t)find_export("bind_presence", 1,0);

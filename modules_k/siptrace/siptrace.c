@@ -206,8 +206,6 @@ static int mod_init(void)
 	if (trace_local_ip.s)
 		trace_local_ip.len = strlen(trace_local_ip.s);
 
-	LM_INFO("initializing...\n");
-	
 	if (flag_idx2mask(&trace_flag)<0)
 		return -1;
 

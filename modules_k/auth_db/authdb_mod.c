@@ -170,8 +170,6 @@ static int mod_init(void)
 {
 	bind_auth_t bind_auth;
 
-	LM_INFO("initializing...\n");
-
 	db_url.len = strlen(db_url.s);
 	user_column.len = strlen(user_column.s);
 	domain_column.len = strlen(domain_column.s);

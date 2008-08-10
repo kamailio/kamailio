@@ -271,8 +271,6 @@ static int mod_init(void)
 	if (ms_snd_time_avp_param.s)
 		ms_snd_time_avp_param.len = strlen(ms_snd_time_avp_param.s);
 
-	LM_DBG("initializing ...\n");
-
 	/* binding to mysql module  */
 	if (db_bind_mod(&ms_db_url, &msilo_dbf))
 	{

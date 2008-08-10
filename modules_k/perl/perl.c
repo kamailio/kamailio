@@ -303,8 +303,6 @@ static int mod_init(void) {
 
 	int ret = 0;
 
-	LM_INFO("initializing...\n");
-
 	if (!filename) {
 		LM_ERR("insufficient module parameters. Module not loaded.\n");
 		return -1;

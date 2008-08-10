@@ -117,8 +117,6 @@ static int mod_init(void)
 	DICT_VENDOR *vend;
 	bind_auth_t bind_auth;
 
-	LM_INFO("initializing...\n");
-
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
 	attrs[A_SERVICE_TYPE].n			= "Service-Type";

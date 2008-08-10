@@ -336,9 +336,6 @@ error:
 
 static int mod_init(void)
 {
-
-	LM_INFO("initializing ...\n");
-
 	if(imc_hash_size <= 0)
 	{
 		LM_ERR("invalid hash size\n");

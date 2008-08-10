@@ -163,8 +163,6 @@ struct module_exports exports = {
 
 static int avpops_init(void)
 {
-	LM_INFO("initializing...\n");
-
 	if (db_url.s)
 		db_url.len = strlen(db_url.s);
 	if (db_table.s)

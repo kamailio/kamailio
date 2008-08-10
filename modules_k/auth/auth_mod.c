@@ -215,7 +215,6 @@ static inline int generate_random_secret(void)
 static int mod_init(void)
 {
 	str stmp;
-	LM_INFO("initializing...\n");
 	
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {

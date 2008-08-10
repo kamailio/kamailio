@@ -94,8 +94,6 @@ static int reg_param_stat( modparam_t type, void* val)
 
 static int mod_init(void)
 {
-	LM_INFO("initializing\n");
-
 	if (register_all_mod_stats()!=0) {
 		LM_ERR("failed to register statistic variables\n");
 		return E_UNSPEC;

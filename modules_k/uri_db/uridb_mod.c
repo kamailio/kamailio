@@ -154,10 +154,8 @@ static int child_init(int rank)
 static int mod_init(void)
 {
 	int ver;
-
-	LM_DBG("uri_db - initializing\n");
-
 	db_url.len = strlen(db_url.s);
+
 	if (db_url.len == 0) {
 		if (use_uri_table) {
 			LM_ERR("configuration error - no database URL, "

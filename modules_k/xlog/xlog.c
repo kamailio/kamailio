@@ -123,7 +123,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
 	log_buf = (char*)pkg_malloc((buf_size+1)*sizeof(char));
 	if(log_buf==NULL)
 	{

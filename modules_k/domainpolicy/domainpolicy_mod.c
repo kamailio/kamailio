@@ -154,8 +154,6 @@ static int mod_init(void)
 	unsigned int par;
 	int ver;
 
-	LM_INFO("initializing...\n");
-	
 	db_url.len = strlen(db_url.s);
 	domainpolicy_table.len = strlen(domainpolicy_table.s);
 	domainpolicy_col_rule.len = strlen(domainpolicy_col_rule.s);

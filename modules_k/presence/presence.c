@@ -187,8 +187,6 @@ static int mod_init(void)
 	active_watchers_table.len = strlen(active_watchers_table.s);
 	watchers_table.len = strlen(watchers_table.s);
 
-	LM_NOTICE("initializing module ...\n");
-
 	if(db_url.s== NULL)
 	{
 		use_db= 0;

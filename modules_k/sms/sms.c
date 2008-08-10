@@ -603,8 +603,6 @@ void sms_process(int rank)
 
 static int sms_init(void)
 {
-	LM_INFO("SMS - initializing\n");
-
 	if (parse_config_lines()==-1)
 		return -1;
 	if (global_init()==-1)

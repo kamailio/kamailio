@@ -203,7 +203,6 @@ static int mod_init(void)
 	int  i;
 	db_url.len = strlen(db_url.s);
 
-	LM_INFO("initializing ...\n");
 	if(!jdomain)
 	{
 		LM_ERR("jdomain is NULL\n");

@@ -104,8 +104,6 @@ struct module_exports exports = {
  */
 static int mod_init(void) {
 
-	LM_INFO("initializing...\n");
-
 	/* load the SL API */
 	if (load_sl_api(&slb)!=0) {
 		LM_ERR("can't load SL API\n");

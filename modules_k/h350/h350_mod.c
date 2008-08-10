@@ -148,8 +148,6 @@ static int child_init(int rank)
 
 static int mod_init(void)
 {
-	LM_INFO("H350 module - initializing\n");
-
 	/*
 	 * load the LDAP API
 	 */
