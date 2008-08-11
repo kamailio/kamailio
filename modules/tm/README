@@ -1,4 +1,4 @@
-TM Module
+1. TM Module
 
 Jiri Kuthan
 
@@ -9,7 +9,83 @@ Jiri Kuthan
    Revision $Revision$ $Date$
      __________________________________________________________________
 
-Overview
+   1.1. Overview
+   1.2. Known Issues
+   1.3. Parameters
+
+        1.3.1. fr_timer (integer)
+        1.3.2. fr_inv_timer (integer)
+        1.3.3. max_inv_lifetime (integer)
+        1.3.4. max_noninv_lifetime (integer)
+        1.3.5. wt_timer (integer)
+        1.3.6. delete_timer (integer)
+        1.3.7. retr_timer1 (integer)
+        1.3.8. retr_timer2 (integer)
+        1.3.9. noisy_ctimer (integer)
+        1.3.10. restart_fr_on_each_reply (integer)
+        1.3.11. auto_inv_100 (integer)
+        1.3.12. unix_tx_timeout (integer)
+        1.3.13. aggregate_challenges (integer)
+        1.3.14. reparse_invite (integer)
+        1.3.15. ac_extra_hdrs (string)
+        1.3.16. blst_503 (integer)
+        1.3.17. blst_503_def_timeout (integer)
+        1.3.18. blst_503_min_timeout (integer)
+        1.3.19. blst_503_max_timeout (integer)
+        1.3.20. blst_methods_add (unsigned integer)
+        1.3.21. blst_methods_lookup (unsigned integer)
+        1.3.22. cancel_b_method (integer)
+        1.3.23. reparse_on_dns_failover (integer)
+        1.3.24. on_sl_reply (string)
+
+   1.4. Functions
+
+        1.4.1. t_relay_to_udp(ip, port), t_relay_to_udp(),
+                t_relay_to_tcp(ip, port) t_relay_to_tcp()
+                t_relay_to_tls(ip, port) t_relay_to_tls()
+                t_relay_to_sctp(ip, port) t_relay_to_sctp()
+
+        1.4.2. t_relay() t_relay(host, port)
+        1.4.3. t_on_failure(failure_route)
+        1.4.4. t_on_reply(onreply_route)
+        1.4.5. t_on_branch(branch_route)
+        1.4.6. append_branch()
+        1.4.7. t_newtran()
+        1.4.8. t_reply(code, reason_phrase)
+        1.4.9. t_lookup_request()
+        1.4.10. t_retransmit_reply()
+        1.4.11. t_release()
+        1.4.12. t_forward_nonack() t_forward_nonack(ip, port)
+                t_forward_nonack_udp(ip, port) t_forward_nonack_tcp(ip,
+                port) t_forward_nonack_tls(ip, port)
+                t_forward_nonack_sctp(ip, port)
+
+        1.4.13. t_set_fr(fr_inv_timeout [, fr_timeout])
+        1.4.14. t_reset_fr()
+        1.4.15. t_set_max_lifetime(inv_lifetime, noninv_lifetime)
+        1.4.16. t_reset_max_lifetime()
+        1.4.17. t_set_retr(retr_t1_interval, retr_t2_interval)
+        1.4.18. t_reset_retr()
+        1.4.19. t_set_auto_inv_100(0|1)
+        1.4.20. t_branch_timeout()
+        1.4.21. t_branch_replied()
+        1.4.22. t_any_timeout()
+        1.4.23. t_any_replied()
+        1.4.24. t_grep_status("code")
+        1.4.25. t_is_canceled()
+        1.4.26. t_relay_cancel()
+        1.4.27. t_drop_replies()
+        1.4.28. t_save_lumps()
+
+   1.5. TM Module API
+
+        1.5.1. Defines
+        1.5.2. Functions
+
+              1.5.2.1. register_tmcb(cb_type, cb_func)
+              1.5.2.2. load_tm(*import_structure)
+
+1.1. Overview
 
    TM module enables stateful processing of SIP transactions. The main use
    of stateful logic, which is costly in terms of memory and CPU, is some
@@ -58,7 +134,7 @@ Overview
    timeouts, forking, etc. See t_uac prototype in uac.h for more details.
    Who wants to see the transaction result may register for a callback.
 
-Known Issues
+1.2. Known Issues
 
      * Possibly, performance could be improved by not parsing non-INVITEs,
        as they do not be replied with 100, and do not result in
@@ -74,12 +150,12 @@ Known Issues
        be removed from a message prior to replicating it (well, does not
        matter any longer so much as there is a new replication module).
 
-Parameters
+1.3. Parameters
 
    Revision History
    Revision $Revision$ $Date$
 
-fr_timer (integer)
+1.3.1. fr_timer (integer)
 
    Timer which hits if no final reply for a request or ACK for a negative
    INVITE reply arrives (in milliseconds).
@@ -93,7 +169,7 @@ fr_timer (integer)
 modparam("tm", "fr_timer", 10000)
 ...
 
-fr_inv_timer (integer)
+1.3.2. fr_inv_timer (integer)
 
    Timer which hits if no final reply for an INVITE arrives after a
    provisional message was received (in milliseconds).
@@ -110,7 +186,7 @@ fr_inv_timer (integer)
 modparam("tm", "fr_inv_timer", 180000)
 ...
 
-max_inv_lifetime (integer)
+1.3.3. max_inv_lifetime (integer)
 
    Maximum time an INVITE transaction is allowed to be active (in
    milliseconds). After this interval has passed from the transaction
@@ -146,7 +222,7 @@ max_inv_lifetime (integer)
 modparam("tm", "max_inv_lifetime", 150000)
 ...
 
-max_noninv_lifetime (integer)
+1.3.4. max_noninv_lifetime (integer)
 
    Maximum time a non-INVITE transaction is allowed to be active (in
    milliseconds). After this interval has passed from the transaction
@@ -176,7 +252,7 @@ max_noninv_lifetime (integer)
 modparam("tm", "max_inv_lifetime", 30000)
 ...
 
-wt_timer (integer)
+1.3.5. wt_timer (integer)
 
    Time for which a transaction stays in memory to absorb delayed messages
    after it completed (in milliseconds); also, when this timer hits,
@@ -191,7 +267,7 @@ wt_timer (integer)
 modparam("tm", "wt_timer", 1000)
 ...
 
-delete_timer (integer)
+1.3.6. delete_timer (integer)
 
    Time after which a to-be-deleted transaction currently ref-ed by a
    process will be tried to be deleted again (in milliseconds).
@@ -206,7 +282,7 @@ delete_timer (integer)
 modparam("tm", "delete_timer", 100)
 ...
 
-retr_timer1 (integer)
+1.3.7. retr_timer1 (integer)
 
    Initial retransmission period (in milliseconds).
 
@@ -217,7 +293,7 @@ retr_timer1 (integer)
 modparam("tm", "retr_timer1", 1000)
 ...
 
-retr_timer2 (integer)
+1.3.8. retr_timer2 (integer)
 
    Maximum retransmission period (in milliseconds). The retransmission
    interval starts with retr_timer1 and increases until it reaches this
@@ -230,7 +306,7 @@ retr_timer2 (integer)
 modparam("tm", "retr_timer2", 2000)
 ...
 
-noisy_ctimer (integer)
+1.3.9. noisy_ctimer (integer)
 
    If set, INVITE transactions that time-out (FR INV timer) will be always
    replied. If it's not set, the transaction has only one branch and no
@@ -249,7 +325,7 @@ noisy_ctimer (integer)
 modparam("tm", "noisy_ctimer", 1)
 ...
 
-restart_fr_on_each_reply (integer)
+1.3.10. restart_fr_on_each_reply (integer)
 
    If set (default), the fr_inv_timer for an INVITE transaction will be
    restarted for each provisional reply received (rfc3261 mandated
@@ -271,7 +347,7 @@ restart_fr_on_each_reply (integer)
 modparam("tm", "restart_fr_on_each_reply", 0)
 ...
 
-auto_inv_100 (integer)
+1.3.11. auto_inv_100 (integer)
 
    If set (default) tm will automatically send and 100 reply to INVITEs.
 
@@ -291,7 +367,7 @@ auto_inv_100 (integer)
 modparam("tm", "auto_inv_100", 0)
 ...
 
-unix_tx_timeout (integer)
+1.3.12. unix_tx_timeout (integer)
 
    Unix socket transmission timeout, in milliseconds.
 
@@ -306,7 +382,7 @@ unix_tx_timeout (integer)
 modparam("tm", "unix_tx_timeout", 250)
 ...
 
-aggregate_challenges (integer)
+1.3.13. aggregate_challenges (integer)
 
    If set (default), the final reply is a 401 or a 407 and more then one
    branch received a 401 or 407, then all the WWW-Authenticate and
@@ -323,7 +399,7 @@ aggregate_challenges (integer)
 modparam("tm", "aggregate_challenges", 0)
 ...
 
-reparse_invite (integer)
+1.3.14. reparse_invite (integer)
 
    If set (default), the CANCEL and negative ACK requests are constructed
    from the INVITE message which was sent out instead of building them
@@ -349,7 +425,7 @@ reparse_invite (integer)
 modparam("tm", "reparse_invite", 0)
 ...
 
-ac_extra_hdrs (string)
+1.3.15. ac_extra_hdrs (string)
 
    Header fields prefixed by this parameter value are included in the
    CANCEL and negative ACK messages if they were present in the outgoing
@@ -367,7 +443,7 @@ ac_extra_hdrs (string)
 modparam("tm", "ac_extra_hdrs", "myfavoriteheaders-")
 ...
 
-blst_503 (integer)
+1.3.16. blst_503 (integer)
 
    If set and the blacklist support is enabled, every 503 reply source is
    added to the blacklist. The initial blacklist timeout (or ttl) depends
@@ -385,7 +461,7 @@ blst_503 (integer)
 modparam("tm", "blst_503", 1)
 ...
 
-blst_503_def_timeout (integer)
+1.3.17. blst_503_def_timeout (integer)
 
    Blacklist interval in seconds for a 503 reply with no Retry-After
    header. See also blst_503, blst_503_min_timeout and
@@ -400,7 +476,7 @@ blst_503_def_timeout (integer)
 modparam("tm", "blst_503_def_timeout", 120)
 ...
 
-blst_503_min_timeout (integer)
+1.3.18. blst_503_min_timeout (integer)
 
    Minimum blacklist interval in seconds for a 503 reply with a
    Retry-After header. It will be used if the Retry-After value is
@@ -414,7 +490,7 @@ blst_503_min_timeout (integer)
 modparam("tm", "blst_503_min_timeout", 30)
 ...
 
-blst_503_max_timeout (integer)
+1.3.19. blst_503_max_timeout (integer)
 
    Maximum blacklist interval in seconds for a 503 reply with a
    Retry-After header. It will be used if the Retry-After value is
@@ -428,7 +504,7 @@ blst_503_max_timeout (integer)
 modparam("tm", "blst_503_max_timeout", 604800)
 ...
 
-blst_methods_add (unsigned integer)
+1.3.20. blst_methods_add (unsigned integer)
 
    Bitmap of method types that trigger blacklisting on transaction
    timeouts. (This setting has no effect on blacklisting because of send
@@ -453,7 +529,7 @@ blst_methods_add (unsigned integer)
 modparam("tm", "blst_methods_add", 33)
 ...
 
-blst_methods_lookup (unsigned integer)
+1.3.21. blst_methods_lookup (unsigned integer)
 
    Bitmap of method types that are looked-up in the blacklist before
    statefull forwarding. See also blst_methods_add
@@ -467,7 +543,7 @@ blst_methods_lookup (unsigned integer)
 modparam("tm", "blst_methods_lookup", 1)
 ...
 
-cancel_b_method (integer)
+1.3.22. cancel_b_method (integer)
 
    Method used when attempting to CANCEL an unreplied transaction branch
    (a branch where no reply greater the 99 was received). The possible
@@ -505,7 +581,7 @@ cancel_b_method (integer)
 modparam("tm", "cancel_b_method", 1)
 ...
 
-reparse_on_dns_failover (integer)
+1.3.23. reparse_on_dns_failover (integer)
 
    If set to 1, the SIP message after a DNS failover is constructed from
    the outgoing message buffer of the failed branch instead of from the
@@ -533,7 +609,7 @@ reparse_on_dns_failover (integer)
 modparam("tm", "reparse_on_dns_failover", 0)
 ...
 
-on_sl_reply (string)
+1.3.24. on_sl_reply (string)
 
    Sets reply route block, to which control is passed when a reply is
    received that has no associated transaction. The reply is passed to the
@@ -550,13 +626,14 @@ onreply_route["stateless_replies"] {
         return 0;
 }
 
-Functions
+1.4. Functions
 
    Revision History
    Revision $Revision$ $Date$
 
-t_relay_to_udp(ip, port), t_relay_to_udp(), t_relay_to_tcp(ip, port)
+1.4.1.  t_relay_to_udp(ip, port), t_relay_to_udp(), t_relay_to_tcp(ip, port)
 t_relay_to_tcp() t_relay_to_tls(ip, port) t_relay_to_tls()
+t_relay_to_sctp(ip, port) t_relay_to_sctp()
 
    Relay a message statefully using a fixed protocol either to the
    specified fixed destination or to a destination derived from the
@@ -582,7 +659,7 @@ else
         t_relay_to_tcp(); # relay to msg. uri, but over tcp
 ...
 
-t_relay() t_relay(host, port)
+1.4.2.  t_relay() t_relay(host, port)
 
    Relay a message statefully either to the destination indicated in the
    current URI (if called without any parameters) or to the specified host
@@ -610,7 +687,7 @@ if (!t_relay())
 };
 ...
 
-t_on_failure(failure_route)
+1.4.3.  t_on_failure(failure_route)
 
    Sets failure routing block, to which control is passed after a
    transaction completed with a negative result but before sending a final
@@ -647,7 +724,7 @@ failure_route[1] {
    See test/onr.cfg for a more complex example of combination of serial
    with parallel forking.
 
-t_on_reply(onreply_route)
+1.4.4.  t_on_reply(onreply_route)
 
    Sets the reply routing block, to which control is passed when a reply
    for the current transaction is received. Note that the set of commands
@@ -677,7 +754,7 @@ es');
         }
 }
 
-t_on_branch(branch_route)
+1.4.5.  t_on_branch(branch_route)
 
    Sets the branch routing block, to which control is passed after forking
    (when a new branch is created). For now branch routes are intended only
@@ -701,7 +778,7 @@ branch_route[1] {
         }
 }
 
-append_branch()
+1.4.6.  append_branch()
 
    Similarly to t_fork_to, it extends destination set by a new entry. The
    difference is that current URI is taken as new entry.
@@ -715,7 +792,7 @@ t_fork();
 t_relay();
 ...
 
-t_newtran()
+1.4.7.  t_newtran()
 
    Creates a new transaction, returns a negative value on error. This is
    the only way a script can add a new transaction in an atomic way.
@@ -731,7 +808,7 @@ if (t_newtran()) {
 
    See test/uas.cfg for more examples.
 
-t_reply(code, reason_phrase)
+1.4.8.  t_reply(code, reason_phrase)
 
    Sends a stateful reply after a transaction has been established. See
    t_newtran for usage.
@@ -745,7 +822,7 @@ t_reply(code, reason_phrase)
 t_reply("404", "Not found");
 ...
 
-t_lookup_request()
+1.4.9.  t_lookup_request()
 
    Checks if a transaction exists. Returns a positive value if so,
    negative otherwise. Most likely you will not want to use it, as a
@@ -760,7 +837,7 @@ if (t_lookup_request()) {
 };
 ...
 
-t_retransmit_reply()
+1.4.10.  t_retransmit_reply()
 
    Retransmits a reply sent previously by UAS transaction.
 
@@ -769,7 +846,7 @@ t_retransmit_reply()
 t_retransmit_reply();
 ...
 
-t_release()
+1.4.11.  t_release()
 
    Remove transaction from memory (it will be first put on a wait timer to
    absorb delayed messages).
@@ -779,7 +856,9 @@ t_release()
 t_release();
 ...
 
-t_forward_nonack(ip, port)
+1.4.12.  t_forward_nonack() t_forward_nonack(ip, port)
+t_forward_nonack_udp(ip, port) t_forward_nonack_tcp(ip, port)
+t_forward_nonack_tls(ip, port) t_forward_nonack_sctp(ip, port)
 
    mainly for internal usage--forward a non-ACK request statefully.
 
@@ -792,7 +871,7 @@ t_forward_nonack(ip, port)
 t_forward_nonack("1.2.3.4", "5060");
 ...
 
-t_set_fr(fr_inv_timeout [, fr_timeout])
+1.4.13.  t_set_fr(fr_inv_timeout [, fr_timeout])
 
    Sets the fr_inv_timeout and optionally fr_timeout for the current
    transaction or for transactions created during the same script
@@ -826,7 +905,7 @@ branch_route[1] {
         }
 }
 
-t_reset_fr()
+1.4.14.  t_reset_fr()
 
    Resets the fr_inv_timer and fr_timer for the current transaction to the
    default values (set using the tm module parameters fr_inv_timer and
@@ -845,7 +924,7 @@ route {
 ...
 }
 
-t_set_max_lifetime(inv_lifetime, noninv_lifetime)
+1.4.15.  t_set_max_lifetime(inv_lifetime, noninv_lifetime)
 
    Sets the maximum lifetime for the current INVITE or non-INVITE
    transaction, or for transactions created during the same script
@@ -874,7 +953,7 @@ route {
                                           # INVITE and to 15s if not
 }
 
-t_reset_max_lifetime()
+1.4.16.  t_reset_max_lifetime()
 
    Resets the the maximum lifetime for the current INVITE or non-INVITE
    transaction to the default value (set using the tm module parameter
@@ -893,7 +972,7 @@ route {
 ...
 }
 
-t_set_retr(retr_t1_interval, retr_t2_interval)
+1.4.17.  t_set_retr(retr_t1_interval, retr_t2_interval)
 
    Sets the retr_t1_interval and retr_t2_interval for the current
    transaction or for transactions created during the same script
@@ -939,7 +1018,7 @@ branch_route[1] {
         }
 }
 
-t_reset_retr()
+1.4.18.  t_reset_retr()
 
    Resets the retr_timer1 and retr_timer2 for the current transaction to
    the default values (set using the tm module parameters retr_timer1 and
@@ -958,7 +1037,7 @@ route {
 ...
 }
 
-t_set_auto_inv_100(0|1)
+1.4.19.  t_set_auto_inv_100(0|1)
 
    Switch automatically sending 100 replies to INVITEs on/off on a per
    transaction basis. It overrides the auto_inv_100 value for the current
@@ -975,7 +1054,7 @@ route {
 ...
 }
 
-t_branch_timeout()
+1.4.20.  t_branch_timeout()
 
    Returns true if the failure route is executed for a branch that did
    timeout. It can be used only from the failure_route.
@@ -989,7 +1068,7 @@ failure_route[0]{
         }
 }
 
-t_branch_replied()
+1.4.21.  t_branch_replied()
 
    Returns true if the failure route is executed for a branch that did
    receive at least one reply in the past (the "current" reply is not
@@ -1007,7 +1086,7 @@ failure_route[0]{
         }
 }
 
-t_any_timeout()
+1.4.22.  t_any_timeout()
 
    Returns true if at least one of the current transactions branches did
    timeout.
@@ -1023,7 +1102,7 @@ failure_route[0]{
         }
 }
 
-t_any_replied()
+1.4.23.  t_any_replied()
 
    Returns true if at least one of the current transactions branches did
    receive some reply in the past. If called from a failure or onreply
@@ -1038,7 +1117,7 @@ onreply_route[0]{
         }
 }
 
-t_grep_status("code")
+1.4.24.  t_grep_status("code")
 
    Returns true if "code" is the final reply received (or locally
    generated) in at least one of the current transactions branches.
@@ -1052,7 +1131,7 @@ onreply_route[0]{
         }
 }
 
-t_is_canceled()
+1.4.25.  t_is_canceled()
 
    Returns true if the current transaction was canceled.
 
@@ -1065,7 +1144,7 @@ failure_route[0]{
         }
 }
 
-t_relay_cancel()
+1.4.26.  t_relay_cancel()
 
    Forwards the CANCEL if the corresponding INVITE transaction exists. The
    function is supposed to be used at the very beginning of the script,
@@ -1090,7 +1169,7 @@ if (method == CANCEL) {
         # do the same as for INVITEs
 }
 
-t_drop_replies()
+1.4.27.  t_drop_replies()
 
    Drops all the previously received replies in failure_route block to
    make sure that none of them is picked up again. Works only if a new
@@ -1113,7 +1192,7 @@ failure_route[0]{
         }
 }
 
-t_save_lumps()
+1.4.28.  t_save_lumps()
 
    Forces the modifications of the processed SIP message to be saved in
    shared memory before t_relay() is called. The new branches which are
@@ -1153,7 +1232,7 @@ failure_route[1] {
         t_relay();
 }
 
-TM Module API
+1.5. TM Module API
 
    Revision History
    Revision $Revision$ $Date$
@@ -1202,7 +1281,7 @@ end of body
 
    or cat test/transaction.fifo > /tmp/ser_fifo
 
-Defines
+1.5.1. Defines
 
      * ACK_TAG enables stricter matching of acknowledgments including
        to-tags. Without it, to-tags are ignored. It is disabled by default
@@ -1221,9 +1300,9 @@ Defines
        ACK_TAG, all this complex transactions matching goes with RFC3261's
        magic cookie away anyway.
 
-Functions
+1.5.2. Functions
 
-register_tmcb(cb_type, cb_func)
+1.5.2.1.  register_tmcb(cb_type, cb_func)
 
    For programmatic use only--register a function to be called back on an
    event. See t_hooks.h for more details.
@@ -1232,7 +1311,7 @@ register_tmcb(cb_type, cb_func)
      * cb_type - Callback type.
      * cb_func - Callback function.
 
-load_tm(*import_structure)
+1.5.2.2.  load_tm(*import_structure)
 
    For programmatic use only--import exported TM functions. See the acc
    module for an example of use.

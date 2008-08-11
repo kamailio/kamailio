@@ -22,6 +22,8 @@
 	    <function>t_relay_to_tcp()</function>
 	    <function>t_relay_to_tls(ip, port)</function>
 	    <function>t_relay_to_tls()</function>
+	    <function>t_relay_to_sctp(ip, port)</function>
+	    <function>t_relay_to_sctp()</function>
 	</title>
 	<para>
 	    Relay a message statefully using a fixed protocol either to the 
@@ -371,7 +373,12 @@ t_release();
 
     <section id="t_forward_nonack">
 	<title>
+	    <function>t_forward_nonack()</function>
 	    <function>t_forward_nonack(ip, port)</function>
+	    <function>t_forward_nonack_udp(ip, port)</function>
+	    <function>t_forward_nonack_tcp(ip, port)</function>
+	    <function>t_forward_nonack_tls(ip, port)</function>
+	    <function>t_forward_nonack_sctp(ip, port)</function>
 	</title>
 	<para>
 	    mainly for internal usage--forward a non-ACK request statefully.

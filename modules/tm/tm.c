@@ -89,6 +89,8 @@
  *  2008-05-15  added t_relay(host, port) (similar to forward(host, port)) &
  *               t_relay_to_{udp,tcp,tls}(<no param>) (force protocol, but 
  *               forward to uri)  (andrei)
+ *  2008-08-11  sctp support: t_relay_to_sctp, t_replicate_sctp,
+ *               t_forward_nonack_sctp (andrei
  */
 
 
@@ -168,6 +170,11 @@ inline static int w_t_relay_to_tls( struct sip_msg  *p_msg , char *proxy,
 				char *);
 inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg , char*, char*);
 #endif
+#ifdef USE_SCTP
+inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg , char *proxy,
+				char *);
+inline static int w_t_relay_to_sctp_uri( struct sip_msg*, char*, char*);
+#endif
 inline static int w_t_relay_to_avp(struct sip_msg* msg, char* str,char*);
 inline static int w_t_replicate( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
@@ -185,15 +192,23 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 				char *proxy, /* struct proxy_l *proxy expected */
 				char *_foo       /* nothing expected */ );
 #endif
+#ifdef USE_SCTP
+inline static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
+				char *proxy, /* struct proxy_l *proxy expected */
+				char *_foo       /* nothing expected */ );
+#endif
 inline static int w_t_replicate_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack(struct sip_msg* msg, char* str, char* );
 inline static int w_t_forward_nonack_uri(struct sip_msg* msg, char* str,char*);
 inline static int w_t_forward_nonack_udp(struct sip_msg* msg, char* str,char*);
 #ifdef USE_TCP
-inline static int w_t_forward_nonack_tcp(struct sip_msg* msg, char* str,char*);
+inline static int w_t_forward_nonack_tcp(struct sip_msg*, char* str,char*);
 #endif
 #ifdef USE_TLS
-inline static int w_t_forward_nonack_tls(struct sip_msg* msg, char* str,char*);
+inline static int w_t_forward_nonack_tls(struct sip_msg*, char* str,char*);
+#endif
+#ifdef USE_SCTP
+inline static int w_t_forward_nonack_sctp(struct sip_msg*, char* str,char*);
 #endif
 inline static int w_t_forward_nonack_to(struct sip_msg* msg, char* str,char*);
 inline static int w_t_relay_cancel(struct sip_msg *p_msg, char *_foo, char *_bar);
@@ -257,6 +272,12 @@ static cmd_export_t cmds[]={
 	{T_RELAY_TO_TLS,       w_t_relay_to_tls_uri,    0, 0,
 			REQUEST_ROUTE|FAILURE_ROUTE},
 #endif
+#ifdef USE_SCTP
+	{T_RELAY_TO_SCTP,       w_t_relay_to_sctp,       2, fixup_hostport2proxy,
+			REQUEST_ROUTE|FAILURE_ROUTE},
+	{T_RELAY_TO_SCTP,       w_t_relay_to_sctp_uri,    0, 0,
+			REQUEST_ROUTE|FAILURE_ROUTE},
+#endif
 	{"t_replicate",        w_t_replicate,           2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 	{"t_replicate_udp",    w_t_replicate_udp,       2, fixup_hostport2proxy,
@@ -267,6 +288,10 @@ static cmd_export_t cmds[]={
 #endif
 #ifdef USE_TLS
 	{"t_replicate_tls",    w_t_replicate_tls,       2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
+#endif
+#ifdef USE_SCTP
+	{"t_replicate_sctp",    w_t_replicate_sctp,     2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
 	{"t_replicate_to", w_t_replicate_to,  		2, fixup_proto_hostport2proxy,
@@ -289,6 +314,10 @@ static cmd_export_t cmds[]={
 #endif
 #ifdef USE_TLS
 	{T_FORWARD_NONACK_TLS, w_t_forward_nonack_tls,  2, fixup_hostport2proxy,
+			REQUEST_ROUTE},
+#endif
+#ifdef USE_SCTP
+	{T_FORWARD_NONACK_SCTP, w_t_forward_nonack_sctp, 2, fixup_hostport2proxy,
 			REQUEST_ROUTE},
 #endif
 	{"t_forward_nonack_to", w_t_forward_nonack_to,  2, fixup_proto_hostport2proxy,
@@ -882,6 +911,8 @@ inline static int str2proto(char *s, int len) {
 		return PROTO_TCP;
 	else if (len == 3 && !strncasecmp(s, "tls", 3))
 		return PROTO_TLS;	
+	else if (len == 4 && !strncasecmp(s, "sctp", 4))
+		return PROTO_SCTP;
 	else
 		return PROTO_NONE;
 }
@@ -1030,6 +1061,16 @@ inline static int w_t_forward_nonack_tls( struct sip_msg* msg, char* proxy,
 	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_TLS);
 }
 #endif
+
+
+#ifdef USE_SCTP
+inline static int w_t_forward_nonack_sctp( struct sip_msg* msg, char* proxy,
+										char* foo)
+{
+	return _w_t_forward_nonack(msg, ( struct proxy_l *) proxy, PROTO_SCTP);
+}
+#endif
+
 
 inline static int w_t_forward_nonack_to( struct sip_msg  *p_msg ,
 	char *proto_par, 
@@ -1242,6 +1283,24 @@ inline static int w_t_relay_to_tls_uri( struct sip_msg  *p_msg ,
 }
 #endif
 
+
+#ifdef USE_SCTP
+inline static int w_t_relay_to_sctp( struct sip_msg  *p_msg ,
+									char *proxy, /* struct proxy_l* */
+									char *_foo       /* nothing expected */ )
+{
+	return _w_t_relay_to( p_msg, ( struct proxy_l *) proxy, PROTO_SCTP);
+}
+
+/* forward to uri, but force tcp as transport */
+inline static int w_t_relay_to_sctp_uri( struct sip_msg  *p_msg ,
+										char *_foo, char *_bar   )
+{
+	return _w_t_relay_to(p_msg, (struct proxy_l *)0, PROTO_SCTP);
+}
+#endif
+
+
 inline static int w_t_relay_to_avp( struct sip_msg  *p_msg ,
 									char *proto_par, 
 									char *addr_par   )
@@ -1291,6 +1350,17 @@ inline static int w_t_replicate_tls( struct sip_msg  *p_msg ,
 	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_TLS );
 }
 #endif
+
+
+#ifdef USE_SCTP
+inline static int w_t_replicate_sctp( struct sip_msg  *p_msg ,
+	char *proxy, /* struct proxy_l *proxy expected */
+	char *_foo       /* nothing expected */ )
+{
+	return t_replicate(p_msg, ( struct proxy_l *) proxy, PROTO_SCTP );
+}
+#endif
+
 
 inline static int w_t_replicate_to( struct sip_msg  *p_msg ,
 	char *proto_par, 
