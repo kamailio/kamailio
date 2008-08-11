@@ -181,7 +181,7 @@ static int mod_init(void)
 		if (ver < 0) {
 			LM_ERR("Error while querying table version\n");
 			goto error;
-		} else if (ver < URI_TABLE_VERSION) {
+		} else if (ver != URI_TABLE_VERSION) {
 			LM_ERR("Invalid table version of the uri table\n");
 			goto error;
 		}
@@ -191,7 +191,7 @@ static int mod_init(void)
 		if (ver < 0) {
 			LM_ERR("Error while querying table version\n");
 			goto error;
-		} else if (ver < SUBSCRIBER_TABLE_VERSION) {
+		} else if (ver != SUBSCRIBER_TABLE_VERSION) {
 			LM_ERR("Invalid table version of the subscriber table\n");
 			goto error;
 		}
