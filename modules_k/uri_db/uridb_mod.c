@@ -51,7 +51,7 @@ MODULE_VERSION
  * an backwards incompatible way
  */
 #define URI_TABLE_VERSION 1
-#define SUBSCRIBER_TABLE_VERSION 3
+#define SUBSCRIBER_TABLE_VERSION 6
 
 static void destroy(void);       /* Module destroy function */
 static int child_init(int rank); /* Per-child initialization function */
