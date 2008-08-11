@@ -87,6 +87,8 @@ static void dump (rpc_t* rpc, void* c)
 			rpc->struct_add(st, "s", "transport", "TCP");
 		} else  if (transport == PROTO_TLS) {
 			rpc->struct_add(st, "s", "transport", "TLS");
+		}else if (transport == PROTO_SCTP) {
+			rpc->struct_add(st, "s", "transport", "SCTP");
 		}
 		if ((*gws)[i].prefix_len) {
 			rpc->struct_add(st, "s", "prefix", (*gws)[i].prefix);

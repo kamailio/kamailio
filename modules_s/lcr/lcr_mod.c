@@ -505,7 +505,7 @@ int reload_gws ( void )
 		else {
 			transport = (uri_transport)rec->fld[3].v.int4;
 			if ((transport != PROTO_UDP) && (transport != PROTO_TCP) &&
-				(transport != PROTO_TLS)) {
+				(transport != PROTO_TLS) && (transport != PROTO_SCTP)) {
 				ERR("lcr: Unknown or unsupported transport: %u\n", (unsigned int)transport);
 				goto error;
 			}
@@ -693,6 +693,8 @@ int load_gws(struct sip_msg* _m, char* _s1, char* _s2)
 				memcpy(at, "tcp", 3); at = at + 3;
 			} else if (transport == PROTO_TLS) {
 				memcpy(at, "tls", 3); at = at + 3;
+			} else if (transport == PROTO_SCTP) {
+				memcpy(at, "sctp", 4); at = at + 4;
 			} else {
 				ERR("lcr: Unknown or unsupported transport: %u\n", (unsigned int)transport);
 				continue;
