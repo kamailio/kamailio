@@ -86,6 +86,8 @@ static int db_fetch_rows = 200;
 
 /* statistic variables */
 int dlg_enable_stats = 1;
+int active_dlgs_cnt = 0;
+int early_dlgs_cnt = 0;
 stat_var *active_dlgs = 0;
 stat_var *processed_dlgs = 0;
 stat_var *expired_dlgs = 0;
@@ -490,6 +492,11 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
+	if (rank==1) {
+		if_update_stat(dlg_enable_stats, active_dlgs, active_dlgs_cnt);
+		if_update_stat(dlg_enable_stats, early_dlgs, early_dlgs_cnt);
+	}
+
 	if ( (dlg_db_mode==DB_MODE_REALTIME && (rank>0 || rank==PROC_TIMER)) ||
 	(dlg_db_mode==DB_MODE_SHUTDOWN && (rank==PROC_MAIN)) ||
 	(dlg_db_mode==DB_MODE_DELAYED && (rank==PROC_MAIN || rank==PROC_TIMER ||
