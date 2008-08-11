@@ -216,6 +216,7 @@ void destroy_linkers(struct dlg_profile_link *linker)
 {
 	struct dlg_profile_entry *p_entry;
 	struct dlg_profile_link *l;
+	struct dlg_profile_hash *lh;
 
 	while(linker) {
 		l = linker;
@@ -224,11 +225,13 @@ void destroy_linkers(struct dlg_profile_link *linker)
 		if (l->hash_linker.next) {
 			p_entry = &l->profile->entries[l->hash_linker.hash];
 			get_lock( &l->profile->lock );
-			if (p_entry->first==&l->hash_linker) {
+			lh = &l->hash_linker;
+			/* last element on the list? */
+			if (lh==lh->next) {
 				p_entry->first = NULL;
 			} else {
-				p_entry->first->prev = p_entry->first->prev->prev;
-				p_entry->first->prev->next = p_entry->first;
+				lh->next->prev = lh->prev;
+				lh->prev->next = lh->next;
 			}
 			p_entry->content --;
 			release_lock( &l->profile->lock );
