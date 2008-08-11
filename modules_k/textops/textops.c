@@ -44,6 +44,7 @@
  *  2005-07-05  is_method("name") to check method using id (ramona)
  *  2006-03-17  applied patch from Marc Haisenko <haisenko@comdasys.com> 
  *              for adding has_body() function (bogdan)
+ *  2008-07-14  Moved some function declarations to a separate file (Ardjan Zwartjes) 
  *
  */
 
@@ -72,6 +73,9 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include "textops.h"
+#include "api.h"
+
 MODULE_VERSION
 
 
@@ -85,7 +89,6 @@ MODULE_VERSION
 #define MAX_TIME 64
 
 
-static int search_f(struct sip_msg*, char*, char*);
 static int search_body_f(struct sip_msg*, char*, char*);
 static int replace_f(struct sip_msg*, char*, char*);
 static int replace_body_f(struct sip_msg*, char*, char*);
@@ -97,9 +100,7 @@ static int subst_uri_f(struct sip_msg*, char*, char*);
 static int subst_user_f(struct sip_msg*, char*, char*);
 static int subst_body_f(struct sip_msg*, char*, char*);
 static int filter_body_f(struct sip_msg*, char*, char*);
-static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
 static int is_present_hf_f(struct sip_msg* msg, char* str_hf, char* foo);
-static int search_append_f(struct sip_msg*, char*, char*);
 static int search_append_body_f(struct sip_msg*, char*, char*);
 static int append_to_reply_f(struct sip_msg* msg, char* key, char* str);
 static int append_hf_1(struct sip_msg* msg, char* str1, char* str2);
@@ -237,7 +238,7 @@ static char *get_header(struct sip_msg *msg)
 
 
 
-static int search_f(struct sip_msg* msg, char* key, char* str2)
+int search_f(struct sip_msg* msg, char* key, char* str2)
 {
 	/*we registered only 1 param, so we ignore str2*/
 	regmatch_t pmatch;
@@ -269,7 +270,7 @@ static int search_body_f(struct sip_msg* msg, char* key, char* str2)
 }
 
 
-static int search_append_f(struct sip_msg* msg, char* key, char* str2)
+int search_append_f(struct sip_msg* msg, char* key, char* str2)
 {
 	struct lump* l;
 	regmatch_t pmatch;
@@ -857,7 +858,7 @@ static int filter_body_f(struct sip_msg* msg, char* _content_type,
 }
 
 
-static int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
+int remove_hf_f(struct sip_msg* msg, char* str_hf, char* foo)
 {
 	struct hdr_field *hf;
 	struct lump* l;
@@ -1007,7 +1008,7 @@ static int append_to_reply_f(struct sip_msg* msg, char* key, char* str0)
 
 /* add str1 to end of header or str1.r-uri.str2 */
 
-static int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
+int add_hf_helper(struct sip_msg* msg, str *str1, str *str2,
 		gparam_p hfval, int mode, gparam_p hfanc)
 {
 	struct lump* anchor;

@@ -67,6 +67,12 @@ Daniel-Constantin Mierla
 
         1.4. Known Limitations
 
+   2. Developer Guide
+
+        2.1. Functions
+
+              2.1.1. load_textops(*import_structure)
+
    List of Examples
 
    1.1. search usage
@@ -668,3 +674,15 @@ if(is_privacy("id"))
    Search functions are applied to the original request, i.e.,
    they ignore all changes resulting from message processing in
    Kamailio script.
+
+Chapter 2. Developer Guide
+
+2.1. Functions
+
+2.1.1.  load_textops(*import_structure)
+
+   For programmatic use only--import the Textops API.
+
+   Meaning of the parameters is as follows:
+     * import_structure - Pointer to the import structure - see
+       "struct textops_binds" in modules/textops/api.h

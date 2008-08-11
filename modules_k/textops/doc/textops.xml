@@ -4,6 +4,7 @@
 
 
 <!ENTITY admin SYSTEM "textops_admin.xml">
+<!ENTITY devel SYSTEM "textops_devel.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!-- Include general documentation entities -->
@@ -48,6 +49,7 @@
 	<toc></toc>
 	
 	&admin;
+	&devel;
 	&faq;
 	
 </book>
