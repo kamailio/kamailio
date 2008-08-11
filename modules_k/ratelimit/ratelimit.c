@@ -128,12 +128,12 @@ typedef struct pipe {
 	int *   load;
 } pipe_t;
 
-typedef struct queue {
+typedef struct rl_queue {
 	int     *       pipe;
 	int             pipe_mp;
 	str     *       method;
 	str             method_mp;
-} queue_t;
+} rl_queue_t;
 
 /* === these change after startup */
 gen_lock_t * rl_lock;
@@ -152,13 +152,13 @@ typedef struct pipe_params {
 	int limit;
 } pipe_params_t;
 
-typedef struct queue_params {
+typedef struct rl_queue_params {
 	int pipe;
 	str method;
-} queue_params_t;
+} rl_queue_params_t;
 
 static pipe_t pipes[MAX_PIPES];
-static queue_t queues[MAX_QUEUES];
+static rl_queue_t queues[MAX_QUEUES];
 
 static int nqueues_mp = 0;
 static int * nqueues;
@@ -188,7 +188,7 @@ static int cfg_setpoint;        /* desired load, used when reading modparams */
 #endif
 
 static int params_inited = 0;
-static regex_t  pipe_params_regex;
+static regex_t pipe_params_regex;
 static regex_t queue_params_regex;
 
 /** module functions */
@@ -989,7 +989,7 @@ static int parse_pipe_params(char * line, pipe_params_t * params)
  * parses a "pipe_no:method" line
  * \return      0 on success
  */
-static int parse_queue_params(char * line, queue_params_t * params)
+static int parse_queue_params(char * line, rl_queue_params_t * params)
 {
 	regmatch_t m[3];
 	int len;
@@ -1073,7 +1073,7 @@ static int add_pipe_params(modparam_t type, void * val)
 static int add_queue_params(modparam_t type, void * val)
 {
 	char * param_line = val;
-	queue_params_t params;
+	rl_queue_params_t params;
 
 	if (nqueues_mp >= MAX_QUEUES) {
 		LM_ERR("MAX_QUEUES reached (%d)\n", MAX_QUEUES);
