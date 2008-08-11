@@ -128,8 +128,6 @@ struct module_exports exports= {
 
 static int mod_init(void)
 {
-	LM_INFO("Initializing StateLess engine\n");
-
 	/* if statistics are disabled, prevent their registration to core */
 	if (sl_enable_stats==0)
 #ifdef STATIC_SL
