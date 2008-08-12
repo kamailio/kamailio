@@ -241,17 +241,15 @@ int uridb_db_init(const str* db_url)
 {
 	if (uridb_dbf.init==0){
 		LM_CRIT("BUG: null dbf\n");
-		goto error;
+		return -1; 
 	}
 	
 	db_handle=uridb_dbf.init(db_url);
 	if (db_handle==0){
 		LM_ERR("unable to connect to the database\n");
-		goto error;
+		return -1;
 	}
 	return 0;
-error:
-	return -1;
 }
 
 
