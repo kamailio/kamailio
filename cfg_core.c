@@ -60,9 +60,10 @@ struct cfg_group_core default_core_cfg = {
 	0,  /* dns_try_ipv6 -- off, if no ipv6 support */
 #endif
 	0,  /* dns_try_naptr -- off by default */
-	3,  /* udp transport preference (for naptr) */
-	2,  /* tcp transport preference (for naptr) */
-	1,  /* tls transport preference (for naptr) */
+	30,  /* udp transport preference (for naptr) */
+	20,  /* tcp transport preference (for naptr) */
+	10,  /* tls transport preference (for naptr) */
+	20,  /* sctp transport preference (for naptr) */
 	-1, /* dns_retr_time */
 	-1, /* dns_retr_no */
 	-1, /* dns_servers_no */
@@ -124,6 +125,8 @@ cfg_def_t core_cfg_def[] = {
 		"tcp protocol preference when doing NAPTR lookups"},
 	{"dns_tls_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
 		"tls protocol preference when doing NAPTR lookups"},
+	{"dns_sctp_pref",	CFG_VAR_INT,	0, 0, 0, reinit_naptr_proto_prefs,
+		"sctp protocol preference when doing NAPTR lookups"},
 	{"dns_retr_time",	CFG_VAR_INT,	0, 0, 0, resolv_reinit,
 		"time in s before retrying a dns request"},
 	{"dns_retr_no",		CFG_VAR_INT,	0, 0, 0, resolv_reinit,

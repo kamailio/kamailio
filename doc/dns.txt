@@ -91,25 +91,32 @@ DNS Resolver Options
       Default: off
 
    dns_udp_pref = number - udp protocol preference when doing NAPTR lookups.
-      This option works together with dns_tcp_pref and dns_tls_pref. If all
-      this options have the same positive value and more NAPTR records are
-      available, ser will select the NAPTR record preferred by the remote side
-      (according to RFC2915). If the values are positive but different, ser
-      will select the NAPTR record whose protocol it prefers the most
-      (the protocol with the highest dns_<proto>_pref number). If there are 
-      several NAPTR records with the same preferred protocol, ser will select
-      among them based on their order and preference (see RFC2915).
+      This option works together with dns_tcp_pref, dns_tls_pref and 
+      dns_sctp_pref. If all this options have the same positive value and more
+      NAPTR records are available, ser will select the NAPTR record preferred
+      by the remote side (according to RFC2915). If the values are positive
+      but different, ser will select the NAPTR record whose protocol it
+      prefers the most (the protocol with the highest dns_<proto>_pref
+      number). If there are several NAPTR records with the same preferred
+      protocol, ser will select among them based on their order and preference
+      (see RFC2915).
       To completely disable selecting a specific protocol, use  a negative
       number. For example dns_tcp_pref=-1 will completely disable selection
       of tcp NAPTR records, even if this will result in the NAPTR lookup
-      failure.
-      Default: dns_udp_pref=3, dns_tcp_pref=2 and dns_tls_pref=1
+      failure. Note: if a protocol is disabled in ser (e.g. tls_disable=1)
+      the corresponding NAPTR records selection will be also disabled,
+      irrespective of the dns_<proto>_preference value.
+      Default: dns_udp_pref=30, dns_tcp_pref=20,  dns_tls_pref=10 and 
+      dns_sctp_pref=20.
       (prefer udp, but if no udp NAPTR record found or no SRV-resolvable 
-      udp NAPTR record found use tcp records and if this fails too use tls)
+      udp NAPTR record found use tcp or sctp records and if this fails too
+      use tls)
 
    dns_tcp_pref = number  (see dns_udp_pref above)
 
    dns_tls_pref = number (see dns_udp_pref above)
+
+   dns_sctp_pref = number (see dns_udp_pref above)
 
    dns_retr_time = time - time in s before retrying a dns request.
       Default: system specific, depends also on the/etc/resolv.conf content

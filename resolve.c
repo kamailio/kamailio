@@ -42,7 +42,8 @@
  *              whether rest of the name is matched against search list
  *              or blindly accepted (better performance but exploitable)
  *  2008-01-31  resolver options use the configuration framework, and the
- *		resolver is reinitialized when the options change (Miklos)
+ *               resolver is reinitialized when the options change (Miklos)
+ *  2008-08-12  sctp preference support for NAPTR queries (andrei)
  */ 
 
 
@@ -73,7 +74,6 @@
 #define local_free   pkg_free
 
 #ifdef USE_NAPTR
-#define PROTO_LAST  PROTO_SCTP
 static int naptr_proto_pref[PROTO_LAST];
 #endif
 
@@ -81,13 +81,14 @@ static int naptr_proto_pref[PROTO_LAST];
 void init_naptr_proto_prefs()
 {
 	if ((PROTO_UDP >= PROTO_LAST) || (PROTO_TCP >= PROTO_LAST) ||
-		(PROTO_TLS >= PROTO_LAST)){
+		(PROTO_TLS >= PROTO_LAST) || (PROTO_SCTP>=PROTO_LAST)){
 		BUG("init_naptr_proto_prefs: array too small \n");
 		return;
 	}
 	naptr_proto_pref[PROTO_UDP]=cfg_get(core, core_cfg, dns_udp_pref);
 	naptr_proto_pref[PROTO_TCP]=cfg_get(core, core_cfg, dns_tcp_pref);
 	naptr_proto_pref[PROTO_TLS]=cfg_get(core, core_cfg, dns_tls_pref);
+	naptr_proto_pref[PROTO_SCTP]=cfg_get(core, core_cfg, dns_sctp_pref);
 }
 
 #endif /* USE_NAPTR */
@@ -839,7 +840,7 @@ char naptr_get_sip_proto(struct naptr_rdata* n)
 
 inline static int proto_pref_score(char proto)
 {
-	if ((proto>=PROTO_UDP) && (proto<= PROTO_TLS))
+	if ((proto>=PROTO_UDP) && (proto<= PROTO_LAST))
 		return naptr_proto_pref[(int)proto];
 	return 0;
 }

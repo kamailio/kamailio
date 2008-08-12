@@ -290,6 +290,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token DNS_UDP_PREF
 %token DNS_TCP_PREF
 %token DNS_TLS_PREF
+%token DNS_SCTP_PREF
 %token DNS_RETR_TIME
 %token DNS_RETR_NO
 %token DNS_SERVERS_NO
@@ -628,12 +629,15 @@ assign_stm:
 	| DNS_TRY_NAPTR error { yyerror("boolean value expected"); }
 	| DNS_SRV_LB EQUAL NUMBER   { IF_DNS_FAILOVER(default_core_cfg.dns_srv_lb=$3); }
 	| DNS_SRV_LB error { yyerror("boolean value expected"); }
-	| DNS_UDP_PREF EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_udp_pref=$3); }
+	| DNS_UDP_PREF EQUAL NUMBER { IF_NAPTR(default_core_cfg.dns_udp_pref=$3);}
 	| DNS_UDP_PREF error { yyerror("number expected"); }
-	| DNS_TCP_PREF EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_tcp_pref=$3); }
+	| DNS_TCP_PREF EQUAL NUMBER { IF_NAPTR(default_core_cfg.dns_tcp_pref=$3);}
 	| DNS_TCP_PREF error { yyerror("number expected"); }
-	| DNS_TLS_PREF EQUAL NUMBER   { IF_NAPTR(default_core_cfg.dns_tls_pref=$3); }
+	| DNS_TLS_PREF EQUAL NUMBER { IF_NAPTR(default_core_cfg.dns_tls_pref=$3);}
 	| DNS_TLS_PREF error { yyerror("number expected"); }
+	| DNS_SCTP_PREF EQUAL NUMBER { 
+								IF_NAPTR(default_core_cfg.dns_sctp_pref=$3); }
+	| DNS_SCTP_PREF error { yyerror("number expected"); }
 	| DNS_RETR_TIME EQUAL NUMBER   { default_core_cfg.dns_retr_time=$3; }
 	| DNS_RETR_TIME error { yyerror("number expected"); }
 	| DNS_RETR_NO EQUAL NUMBER   { default_core_cfg.dns_retr_no=$3; }

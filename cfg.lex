@@ -246,6 +246,7 @@ DNS_SRV_LB		dns_srv_lb|dns_srv_loadbalancing
 DNS_UDP_PREF	dns_udp_pref|dns_udp_preference
 DNS_TCP_PREF	dns_tcp_pref|dns_tcp_preference
 DNS_TLS_PREF	dns_tls_pref|dns_tls_preference
+DNS_SCTP_PREF	dns_sctp_pref|dns_sctp_preference
 DNS_RETR_TIME	dns_retr_time
 DNS_RETR_NO		dns_retr_no
 DNS_SERVERS_NO	dns_servers_no
@@ -512,6 +513,8 @@ EAT_ABLE	[\ \t\b\r]
 								return DNS_TCP_PREF; }
 <INITIAL>{DNS_TLS_PREF}	{ count(); yylval.strval=yytext;
 								return DNS_TLS_PREF; }
+<INITIAL>{DNS_SCTP_PREF}	{ count(); yylval.strval=yytext;
+								return DNS_SCTP_PREF; }
 <INITIAL>{DNS_RETR_TIME}	{ count(); yylval.strval=yytext;
 								return DNS_RETR_TIME; }
 <INITIAL>{DNS_RETR_NO}	{ count(); yylval.strval=yytext;
