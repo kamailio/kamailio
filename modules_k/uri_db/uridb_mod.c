@@ -160,7 +160,7 @@ static int mod_init(void)
 		if (use_uri_table) {
 			LM_ERR("configuration error - no database URL, "
 				"but use_uri_table is set!\n");
-			goto error;
+			return -1;
 		}
 		return 0;
 	}
@@ -172,34 +172,28 @@ static int mod_init(void)
 
 	if (uridb_db_bind(&db_url)) {
 		LM_ERR("No database module found\n");
-		goto error;
+		return -1;
 	}
 
-	if (use_uri_table) {
-		/* Check table version */
-		ver = uridb_db_ver(&db_url, &db_table);
-		if (ver < 0) {
-			LM_ERR("Error while querying table version\n");
-			goto error;
-		} else if (ver != URI_TABLE_VERSION) {
-			LM_ERR("Invalid table version of the uri table\n");
-			goto error;
-		}
+	/* Check table version */
+	ver = uridb_db_ver(&db_url, &db_table);
+	if (ver < 0) {
+		LM_ERR("Error while querying table version\n");
+		return -1;
 	} else {
-		/* Check table version */
-		ver = uridb_db_ver(&db_url, &db_table);
-		if (ver < 0) {
-			LM_ERR("Error while querying table version\n");
-			goto error;
-		} else if (ver != SUBSCRIBER_TABLE_VERSION) {
+		if (use_uri_table) {
+			if (ver != URI_TABLE_VERSION) {
+			LM_ERR("Invalid table version of the uri table\n");
+			return -1;
+			}
+		} else {
+			if (ver != SUBSCRIBER_TABLE_VERSION) {
 			LM_ERR("Invalid table version of the subscriber table\n");
-			goto error;
+			return -1;
+			}
 		}
 	}
-
 	return 0;
-error:
-	return -1;
 }
 
 
