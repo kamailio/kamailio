@@ -33,6 +33,7 @@
 #include "../../tcp_conn.h"
 #include "../../ut.h"
 #include "tls_select.h"
+#include "../../tls/tls_config.h"
 
 
 struct tcp_connection* get_cur_connection(struct sip_msg* msg)
@@ -602,3 +603,71 @@ int tlsops_alt(struct sip_msg *msg, pv_param_t *param,
 	return pv_get_null(msg, param, res);
 }
 
+
+
+#ifdef OPENSSL_NO_TLSEXT
+int tlsops_tlsext(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	LM_ERR("TLS extension 'server name' pseudo variable is not available! "
+		"please install openssl with TLS extension support and recompile "
+		"openser\n");
+	return pv_get_null(msg, param, res);
+}
+#else
+int tlsops_tlsext(struct sip_msg *msg, pv_param_t *param,
+		pv_value_t *res)
+{
+	static char buf[1024];
+	struct tcp_connection* c;
+	SSL* ssl;
+
+	c = get_cur_connection(msg);
+	if (!c) {
+		LM_INFO("TLS connection not found in select_desc\n");
+		goto err;
+	}
+	ssl = get_ssl(c);
+	if (!ssl) goto err;
+	buf[0] = '\0';
+
+	switch (param->pvn.u.isname.name.n) {
+	case TLSEXT_SNI:
+		{	const char *server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+			if (server_name)  {
+				LM_DBG("received server_name (TLS extension): '%s'\n",server_name);
+			} else {
+				LM_DBG("SSL_get_servername returned NULL\n");
+				return pv_get_null(msg, param, res);
+			}
+
+			/* copy server_name into PV buffer. If the buffer is too small copy only the
+			 * last bytes as these are the more important ones and prefix with '+' */
+			if (strlen(server_name) > sizeof(buf)) {
+				LM_ERR("server_name to big for buffer\n");
+				buf[0] = '+';
+				memcpy(buf+1, server_name+1+strlen(server_name)-sizeof(buf), sizeof(buf)-1);
+				res->rs.len = sizeof(buf);
+			} else {
+				memcpy(buf, server_name, strlen(server_name));
+				res->rs.len = strlen(server_name);
+			}
+			res->rs.s = buf;
+			res->flags = PV_VAL_STR;
+		}
+		break;
+
+	default:
+		LM_CRIT("unexpected parameter value \"%d\"\n",
+			param->pvn.u.isname.name.n);
+		tcpconn_put(c);
+		return pv_get_null(msg, param, res);
+	}
+
+	tcpconn_put(c);
+	return 0;
+err:
+	if (c) tcpconn_put(c);
+	return pv_get_null(msg, param, res);
+}
+#endif

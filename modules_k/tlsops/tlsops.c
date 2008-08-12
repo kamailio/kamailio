@@ -233,6 +233,10 @@ static pv_export_t mod_items[] = {
 	{{"tls_peer_notAfter", sizeof("tls_peer_notAfter")-1},
 		850, tlsops_validity, 0,
 		0, 0, pv_init_iname, CERT_NOTAFTER },
+	/* peer certificate validation parameters */		
+	{{"tls_peer_server_name", sizeof("tls_peer_server_name")-1},
+		850, tlsops_tlsext, 0,
+		0, 0, pv_init_iname, TLSEXT_SNI },
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 

@@ -271,6 +271,14 @@ if (is_peer_verified()) {
 			String type.
 			</para>
 	</section>
+	<section>
+		<title>$tls_peer_server_name</title>
+			<para>
+			<emphasis>$tls_peer_server_name</emphasis> - Returns the server_name
+			TLS extension sent by the TLS client.
+			String type.
+			</para>
+	</section>
 	</section>
 
 	<section>
@@ -333,6 +341,7 @@ xlog("L_INFO","$$tls_peer_expired               = '$tls_peer_expired'\n");
 xlog("L_INFO","$$tls_peer_selfsigned            = '$tls_peer_selfsigned'\n");
 xlog("L_INFO","$$tls_peer_notBefore             = '$tls_peer_notBefore'\n");
 xlog("L_INFO","$$tls_peer_notAfter              = '$tls_peer_notAfter'\n");
+xlog("L_INFO","$$tls_peer_server_name           = '$tls_peer_server_name'\n");
 xlog("L_INFO","==================== end TLS pseudo variables =================='\n");	
 </programlisting>
 	</example>	
@@ -341,10 +350,3 @@ xlog("L_INFO","==================== end TLS pseudo variables =================='
 
 </chapter>
 
-
-
-	
-	
-	
-	
-	
