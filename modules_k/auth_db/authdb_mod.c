@@ -46,22 +46,20 @@
 #include "../sl/sl_api.h"
 #include "aaa_avps.h"
 #include "authorize.h"
+#include "authdb_mod.h"
 
 MODULE_VERSION
 
-#define TABLE_VERSION 6
 
 /*
  * Module destroy function prototype
  */
 static void destroy(void);
 
-
 /*
  * Module child-init function prototype
  */
 static int child_init(int rank);
-
 
 /*
  * Module initialization function prototype
@@ -74,35 +72,16 @@ static int auth_fixup(void** param, int param_no);
 /** SL binds */
 struct sl_binds slb;
 
-#define USER_COL "username"
-#define USER_COL_LEN (sizeof(USER_COL) - 1)
-
-#define DOMAIN_COL "domain"
-#define DOMAIN_COL_LEN (sizeof(DOMAIN_COL) - 1)
-
-#define PASS_COL "ha1"
-#define PASS_COL_LEN (sizeof(PASS_COL) - 1)
-
-#define PASS_COL_2 "ha1b"
-#define PASS_COL_2_LEN (sizeof(PASS_COL_2) - 1)
-
 #define DEFAULT_CRED_LIST "rpid"
 
 /*
  * Module parameter variables
  */
-static str db_url           = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
-str user_column             = {USER_COL, USER_COL_LEN};
-str domain_column           = {DOMAIN_COL, DOMAIN_COL_LEN};
-str pass_column             = {PASS_COL, PASS_COL_LEN};
-str pass_column_2           = {PASS_COL_2, PASS_COL_2_LEN};
-
+str auth_db_db_url          = {DEFAULT_RODB_URL, DEFAULT_RODB_URL_LEN};
 
 int calc_ha1                = 0;
 int use_domain              = 0; /* Use also domain when looking up in table */
 
-db_con_t* auth_db_handle    = 0; /* database connection handle */
-db_func_t auth_dbf;
 auth_api_t auth_api;
 
 char *credentials_list      = DEFAULT_CRED_LIST;
@@ -123,14 +102,14 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",            STR_PARAM, &db_url.s           },
-	{"user_column",       STR_PARAM, &user_column.s      },
-	{"domain_column",     STR_PARAM, &domain_column.s    },
-	{"password_column",   STR_PARAM, &pass_column.s      },
-	{"password_column_2", STR_PARAM, &pass_column_2.s    },
-	{"calculate_ha1",     INT_PARAM, &calc_ha1           },
-	{"use_domain",        INT_PARAM, &use_domain         },
-	{"load_credentials",  STR_PARAM, &credentials_list   },
+	{"auth_db_db_url",          STR_PARAM, &auth_db_db_url.s         },
+	{"subscriber_username_col", STR_PARAM, &subscriber_username_col.s},
+	{"subscriber_domain_col",   STR_PARAM, &subscriber_domain_col.s  },
+	{"password_column",         STR_PARAM, &subscriber_ha1_col.s     },
+	{"password_column_2",       STR_PARAM, &subscriber_ha1b_col.s    },
+	{"calculate_ha1",           INT_PARAM, &calc_ha1                 },
+	{"use_domain",              INT_PARAM, &use_domain               },
+	{"load_credentials",        STR_PARAM, &credentials_list         },
 	{0, 0, 0}
 };
 
@@ -156,13 +135,7 @@ struct module_exports exports = {
 
 static int child_init(int rank)
 {
-	auth_db_handle = auth_dbf.init(&db_url);
-	if (auth_db_handle == 0){
-		LM_ERR("unable to connect to the database\n");
-		return -1;
-	}
-
-	return 0;
+	return auth_db_db_open();
 }
 
 
@@ -170,15 +143,11 @@ static int mod_init(void)
 {
 	bind_auth_t bind_auth;
 
-	db_url.len = strlen(db_url.s);
-	user_column.len = strlen(user_column.s);
-	domain_column.len = strlen(domain_column.s);
-	pass_column.len = strlen(pass_column.s);
-	pass_column_2.len = strlen(pass_column.s);
+	auth_db_db_url.len = strlen(auth_db_db_url.s);
+	auth_db_db_vars();
 
-	/* Find a database module */
-	if (db_bind_mod(&db_url, &auth_dbf) < 0){
-		LM_ERR("unable to bind to a database driver\n");
+	if (auth_db_db_init() < 0){
+		LM_ERR("unable to init the database module\n");
 		return -1;
 	}
 
@@ -212,10 +181,8 @@ static int mod_init(void)
 
 static void destroy(void)
 {
-	if (auth_db_handle) {
-		auth_dbf.close(auth_db_handle);
-		auth_db_handle = 0;
-	}
+	auth_db_db_close();
+
 	if (credentials) {
 		free_aaa_avp_list(credentials);
 		credentials = 0;
@@ -238,17 +205,12 @@ static int auth_fixup(void** param, int param_no)
 		name.s = (char*)*param;
 		name.len = strlen(name.s);
 
-		dbh = auth_dbf.init(&db_url);
+		dbh = auth_db_dbf.init(&auth_db_db_url);
 		if (!dbh) {
 			LM_ERR("unable to open database connection\n");
 			return -1;
 		}
-		if(db_check_table_version(&auth_dbf, dbh, &name, TABLE_VERSION) < 0) {
-			LM_ERR("error during table version check.\n");
-			auth_dbf.close(dbh);
-			return -1;
-		}
 	}
-	auth_dbf.close(dbh);
+	auth_db_dbf.close(dbh);
 	return 0;
 }

@@ -68,11 +68,11 @@ static inline int get_ha1(struct username* _username, str* _domain,
 		return -1;
 	}
 
-	keys[0] = &user_column;
-	keys[1] = &domain_column;
+	keys[0] = &subscriber_username_col;
+	keys[1] = &subscriber_domain_col;
 	/* should we calculate the HA1, and is it calculated with domain? */
 	col[0] = (_username->domain.len && !calc_ha1) ?
-		(&pass_column_2) : (&pass_column);
+		(&subscriber_ha1b_col) : (&subscriber_ha1_col);
 
 	for (n = 0, cred=credentials; cred ; n++, cred=cred->next) {
 		col[1 + n] = &cred->attr_name;
@@ -92,13 +92,13 @@ static inline int get_ha1(struct username* _username, str* _domain,
 
 	n = (use_domain ? 2 : 1);
 	nc = 1 + credentials_n;
-	if (auth_dbf.use_table(auth_db_handle, _table) < 0) {
+	if (auth_db_dbf.use_table(auth_db_dbh, _table) < 0) {
 		LM_ERR("failed to use_table\n");
 		pkg_free(col);
 		return -1;
 	}
 
-	if (auth_dbf.query(auth_db_handle, keys, 0, vals, col, n, nc, 0, res) < 0) {
+	if (auth_db_dbf.query(auth_db_dbh, keys, 0, vals, col, n, nc, 0, res) < 0) {
 		LM_ERR("failed to query database\n");
 		pkg_free(col);
 		return -1;
@@ -106,7 +106,7 @@ static inline int get_ha1(struct username* _username, str* _domain,
 	pkg_free(col);
 
 	if (RES_ROW_N(*res) == 0) {
-		LM_DBG("no result for user \'%.*s@%.*s\'\n",
+		LM_ERR("no result for user \'%.*s@%.*s\'\n",
 				_username->user.len, ZSW(_username->user.s),
 			(use_domain ? (_domain->len) : 0), ZSW(_domain->s));
 		return 1;
@@ -251,7 +251,7 @@ static inline int authorize(struct sip_msg* _m, gparam_p _realm,
 	}
 	if (res > 0) {
 		/* Username not found in the database */
-		auth_dbf.free_result(auth_db_handle, result);
+		auth_db_dbf.free_result(auth_db_dbh, result);
 		return USER_UNKNOWN;
 	}
 
@@ -261,11 +261,11 @@ static inline int authorize(struct sip_msg* _m, gparam_p _realm,
 		ret = auth_api.post_auth(_m, h);
 		if (ret == AUTHORIZED)
 			generate_avps(result);
-		auth_dbf.free_result(auth_db_handle, result);
+		auth_db_dbf.free_result(auth_db_dbh, result);
 		return ret;
 	}
 
-	auth_dbf.free_result(auth_db_handle, result);
+	auth_db_dbf.free_result(auth_db_dbh, result);
 	return INVALID_PASSWORD;
 }
 
