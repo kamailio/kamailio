@@ -971,7 +971,7 @@ static int parse_pipe_params(char * line, pipe_params_t * params)
 		LM_ERR("invalid param tuple: %s\n", line);
 		return -1;
 	}
-	LM_INFO("pipe: [%.*s|%.*s|%.*s]\n",
+	LM_DBG("pipe: [%.*s|%.*s|%.*s]\n",
 		RXLS(m, line, 1), RXLS(m, line, 2), RXLS(m, line, 3));
 	
 	params->no = atoi(RXS(m, line, 1));
@@ -1000,7 +1000,7 @@ static int parse_queue_params(char * line, rl_queue_params_t * params)
 		LM_ERR("invalid param tuple: %s\n", line);
 		return -1;
 	}
-	LM_INFO("queue: [%.*s|%.*s]\n",
+	LM_DBG("queue: [%.*s|%.*s]\n",
 		RXLS(m, line, 1), RXLS(m, line, 2));
 	
 	params->pipe = atoi(RXS(m, line, 1));
