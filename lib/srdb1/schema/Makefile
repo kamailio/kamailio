@@ -26,6 +26,9 @@ ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 # Stylesheet used to generate docbook documentation
 DOCBOOK_XSL = $(STYLESHEETS)/docbook.xsl
 
+# Stylesheet used to generate modules templates
+MODULES_XSL = $(STYLESHEETS)/modules.xsl
+
 # Enable/disable DTD validation
 VALIDATE = 0
 
@@ -46,7 +49,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley docbook oracle
+all: mysql postgres dbtext db_berkeley docbook oracle modules
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -85,7 +88,7 @@ oracle:
 	done
 
 oracle_clean:
-	-@rm -f $(ROOT)/scripts/oracle/*
+	-@rm -f $(ROOT)/scripts/oracle/*.sql
 
 .PHONY: dbtext dbtext_clean
 dbtext:
@@ -170,6 +173,19 @@ docbook_clean:
 	-@rm -f $(ROOT)/doc/database/*.xml
 	-@rm -f $(ROOT)/doc/database/tables.sgml
 
+.PHONY: modules modules_clean
+modules:
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/db/module/" \
+		--stringparam prefix "$$FILE" \
+		--stringparam db "modules" \
+		$(MODULES_XSL) kamailio-"$$FILE".xml ; \
+	done
+
+modules_clean:
+	-@rm -f $(ROOT)/db/module/*
+
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean docbook_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean docbook_clean modules_clean
