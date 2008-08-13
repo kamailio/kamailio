@@ -542,15 +542,15 @@ send_publish:
 	if(body && body->len && body->s )
 		LM_DBG("body:\n%.*s\n ", body->len, body->s);
 
-	result= tmb.t_request(&met,				/* Type of the message */
-			publ->pres_uri,					/* Request-URI */
-			publ->pres_uri,					/* To */
-			publ->pres_uri,					/* From */
-			str_hdr,						/* Optional headers */
-			body,							/* Message body */
-			&outbound_proxy,						/* Outbound proxy*/
-			publ_cback_func,				/* Callback function */
-			(void*)cb_param					/* Callback parameter */
+	result= tmb.t_request(&met,			/*! Type of the message */
+			publ->pres_uri,			/*! Request-URI */
+			publ->pres_uri,			/*! To */
+			publ->pres_uri,			/*! From */
+			str_hdr,			/*! Optional headers */
+			body,				/*! Message body */
+			&outbound_proxy,		/*! Outbound proxy*/
+			publ_cback_func,		/*! Callback function */
+			(void*)cb_param			/*! Callback parameter */
 			);
 
 	if(result< 0)

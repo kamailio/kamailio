@@ -39,15 +39,15 @@ typedef struct publ_info
 	int expires;
 	int flag;
 	int source_flag;
-	int event;   
-	str content_type;  /*the content_type of the body if present(optional if the
-					   *	 same as the default value for that event) */	 
+	int event;
+	str content_type;  /*! the content_type of the body if present(optional if the
+				same as the default value for that event) */
 	str* etag;
 	str* extra_headers;
-	void* cb_param;   /* the parameter for the function to be called on the callback 
-						 for the received reply; it must be allocated in share memory;
-						 a reference to it will be found in the cb_param filed of the ua_pres_structure
-						 receied as a parameter for the registered function*/
+	void* cb_param;   /*! the parameter for the function to be called on the callback 
+				for the received reply; it must be allocated in share memory;
+				a reference to it will be found in the cb_param filed of the ua_pres_structure
+				receied as a parameter for the registered function*/
 }publ_info_t;
 
 typedef int (*send_publish_t)(publ_info_t* publ);
