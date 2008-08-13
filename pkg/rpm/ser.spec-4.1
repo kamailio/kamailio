@@ -1,6 +1,6 @@
 %define name    ser
 %define ver     2.0.0
-%define rel     rc7
+%define rel     1
 
 %define EXCLUDED_MODULES	mysql jabber auth_radius group_radius uri_radius postgres snmp cpl cpl-c extcmd
 %define MYSQL_MODULES		mysql
@@ -15,7 +15,7 @@ Release:      %rel
 Packager:     Jan Janak <jan@iptel.org>
 Copyright:    GPL
 Group:        System Environment/Daemons
-Source:       http://ftp.iptel.org/pub/ser/%{ver}/src/%{name}-%{ver}-%{rel}_src.tar.gz
+Source:       http://ftp.iptel.org/pub/ser/%{ver}/src/%{name}-%{ver}_src.tar.gz
 Source2:      ser.init
 URL:          http://iptel.org/ser
 Vendor:       FhG FOKUS
@@ -66,7 +66,7 @@ The ser-jabber package contains a sip to jabber message translator.
 # membership and uri checking.
 
 %prep
-%setup -n %{name}-%{ver}-%{rel}
+%setup -n %{name}-%{ver}
 
 %build
 make all include_modules="tls" skip_modules="%EXCLUDED_MODULES"      cfg-target=/%{_sysconfdir}/ser/
@@ -137,6 +137,7 @@ fi
 %doc %{_docdir}/ser/INSTALL
 %doc %{_docdir}/ser/README
 %doc %{_docdir}/ser/README-MODULES
+%doc %{_docdir}/ser/README.acc_syslog
 %doc %{_docdir}/ser/README.auth
 %doc %{_docdir}/ser/README.auth_db
 %doc %{_docdir}/ser/README.avp
@@ -149,6 +150,8 @@ fi
 %doc %{_docdir}/ser/README.domain
 %doc %{_docdir}/ser/README.enum
 %doc %{_docdir}/ser/README.exec
+%doc %{_docdir}/ser/README.flatstore
+%doc %{_docdir}/ser/README.gflags
 %doc %{_docdir}/ser/README.lcr
 %doc %{_docdir}/ser/README.maxfwd
 %doc %{_docdir}/ser/README.msilo
@@ -161,6 +164,7 @@ fi
 %doc %{_docdir}/ser/README.ratelimit
 %doc %{_docdir}/ser/README.registrar
 %doc %{_docdir}/ser/README.rr
+%doc %{_docdir}/ser/README.sanity
 %doc %{_docdir}/ser/README.sl
 %doc %{_docdir}/ser/README.sms
 %doc %{_docdir}/ser/README.speeddial
@@ -238,6 +242,7 @@ fi
 
 %{_libdir}/ser/modules/mysql.so
 %{_sbindir}/ser_mysql.sh
+/usr/share/ser/*.sql
 
 %files jabber
 %defattr(-,root,root)
