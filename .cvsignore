@@ -4,3 +4,16 @@ lex.yy.c
 ser
 librpath.lst
 *.tar.gz
+makecfg.lst
+config.mak
+modules.lst
+*.d
+*.so
+*.so.*
+*.o
+*.deb
+*.rpm
+tags
+TAGS
+.*.swp
+test/udp_flood
