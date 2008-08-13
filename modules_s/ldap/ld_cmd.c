@@ -161,12 +161,16 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	struct ld_con* lcon;
 	char* filter, *err_desc;
 	int ret, err;
-	LDAPMessage* msg;
+	LDAPMessage *msg, *resmsg;
 	int reconn_cnt = glb_reconn_cnt;
+	int msgid;
+	char *oid;
+	struct berval *data;
+
 
 	filter = NULL;
 	err_desc = NULL;
-	msg = NULL;
+	resmsg = NULL;
 
 	/* First things first: retrieve connection info from the currently active
 	 * connection and also mysql payload from the database command
@@ -182,15 +186,26 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 
 	do {
 		if (lcon->flags & LD_CONNECTED) {
-			ret = ldap_search_ext_s(lcon->con, lcmd->base, lcmd->scope, filter,
-									lcmd->result, 0, NULL, NULL,
-									lcmd->timelimit.tv_sec ? &lcmd->timelimit : NULL,
-									lcmd->sizelimit,
-									&msg);
+			ret = ldap_search_ext(lcon->con, lcmd->base, lcmd->scope, filter,
+								  lcmd->result, 0, NULL, NULL,
+								  lcmd->timelimit.tv_sec ? &lcmd->timelimit : NULL,
+								  lcmd->sizelimit,
+								  &msgid);
+			if (ret != LDAP_SUCCESS) {
+				ERR("ldap: Error while searching: %s\n", ldap_err2string(ret));
+				goto error;
+			}
+			ret = ldap_result(lcon->con,
+							  LDAP_RES_ANY,
+							  LDAP_MSG_ALL,
+							  NULL,
+							  &resmsg);
 		} else {
-			ret = LDAP_SERVER_DOWN;
+			/* force it to reconnect */
+			ret = -1;
 		}
-		if (ret != LDAP_SUCCESS) {
+
+		if (ret <= 0) {
 			ERR("ldap: Error in ldap_search: %s\n", ldap_err2string(ret));
 			if (ret == LDAP_SERVER_DOWN) {
 				lcon->flags &= ~LD_CONNECTED;
@@ -206,9 +221,39 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 				goto error;
 			}
 		}
-	} while (ret != LDAP_SUCCESS);
+	} while (ret <= 0);
 
-	ret = ldap_parse_result(lcon->con, msg, &err, NULL, &err_desc, NULL, NULL, 0);
+
+	/* looking for unsolicited messages */
+	for (msg = ldap_first_message(lcon->con, resmsg);
+		 msg != NULL;
+		 msg = ldap_next_message(lcon->con, msg)) {
+		if (ldap_msgtype(msg) == LDAP_RES_EXTENDED) {
+			if (ldap_parse_extended_result(lcon->con,
+										   msg,
+										   &oid,
+										   &data,
+										   0) != LDAP_SUCCESS) {
+				ERR("ldap: Error while parsing extended result\n");
+ 				goto error;
+			}
+			if (oid != NULL) {
+				if (strcmp(oid, LDAP_NOTICE_OF_DISCONNECTION) == 0) {
+					WARN("ldap: Notice of Disconnection (OID: %s)\n", oid);
+				} else {
+					WARN("ldap: Unsolicited message received. OID: %s\n", oid);
+				}
+				ldap_memfree(oid);
+			}
+			if (data != NULL) {
+				WARN("ldap: Unsolicited message data: %.*s\n",
+					 (int)data->bv_len, data->bv_val);
+				ber_bvfree(data);
+			}
+		}
+	}
+
+	ret = ldap_parse_result(lcon->con, resmsg, &err, NULL, &err_desc, NULL, NULL, 0);
 	if (ret != LDAP_SUCCESS) {
 		ERR("ldap: Error while reading result status: %s\n",
 			ldap_err2string(ret));
@@ -222,9 +267,9 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 
 	if (res) {
 		lres = DB_GET_PAYLOAD(res);
-		lres->msg = msg;
-	} else {
-		ldap_msgfree(msg);
+		lres->msg = resmsg;
+	} else if (resmsg) {
+		ldap_msgfree(resmsg);
 	}
 
 	if (filter) pkg_free(filter);
@@ -233,7 +278,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 
  error:
 	if (filter) pkg_free(filter);
-	if (msg) ldap_msgfree(msg);
+	if (resmsg) ldap_msgfree(resmsg);
 	if (err_desc) ldap_memfree(err_desc);
 	return -1;
 }
