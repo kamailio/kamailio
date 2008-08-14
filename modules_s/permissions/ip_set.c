@@ -92,6 +92,7 @@ int ip_set_add_list(struct ip_set *ip_set, str ip_set_s){
 			ip_set_s.s++;
 			ip_set_s.len--;
 		}
+		if (!ip_set_s.len) break;
 		ip_s.s = ip_set_s.s;
 		ip_s.len = 0;
 		while (ip_s.len < ip_set_s.len && (ip_s.s[ip_s.len] != ',' && ip_s.s[ip_s.len] != ';' && ip_s.s[ip_s.len] != ' ' && ip_s.s[ip_s.len] != '/')) {
