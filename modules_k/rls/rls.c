@@ -145,7 +145,7 @@ str str_username_col = str_init("username");
 str str_domain_col = str_init("domain");
 str str_doc_type_col = str_init("doc_type");
 str str_etag_col = str_init("etag");
-str str_doc_col = str_init("str_doc_col");
+str str_doc_col = str_init("doc");
 
 
 /** module functions */
