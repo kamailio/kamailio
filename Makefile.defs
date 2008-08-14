@@ -68,7 +68,7 @@ MAIN_NAME=ser
 #version number
 VERSION = 2
 PATCHLEVEL = 0
-SUBLEVEL =   0
+SUBLEVEL =   1
 EXTRAVERSION = 
 
 SER_VER = $(shell expr $(VERSION) \* 1000000 + $(PATCHLEVEL) \* 1000 + \
