@@ -10,8 +10,8 @@ Anca-Maria Vamanu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -187,8 +187,8 @@ modparam("presence", "watchers_table", "watchers")
 
 1.3.5. clean_period (int)
 
-   The period between checks if there are expired messages stored
-   in database.
+   The period in seconds between checks if there are expired
+   messages stored in database.
 
    Default value is "100".
 
@@ -211,9 +211,10 @@ modparam("presence", "to_tag_pref", 'pres')
 
 1.3.7. expires_offset (int)
 
-   The value that should be subtracted from the expires value when
-   sending a 200OK for a publish. It is used for forcing the
-   client cu send an update before the old publish expires.
+   The value in seconds that should be subtracted from the expires
+   value when sending a 200OK for a publish. It is used for
+   forcing the client cu send an update before the old publish
+   expires.
 
    Default value is "0".
 
@@ -225,7 +226,7 @@ modparam("presence", "expires_offset", 10)
 1.3.8. max_expires (int)
 
    The the maximum admissible expires value for PUBLISH/SUBSCRIBE
-   message.
+   message (in seconds).
 
    Default value is "3600".
 

@@ -156,7 +156,7 @@ modparam("presence", "watchers_table", "watchers")
 	<section>
 		<title><varname>clean_period</varname> (int)</title>
 		<para>
-		The period between checks if there are expired messages stored in database.
+		The period in seconds between checks if there are expired messages stored in database.
 		</para>
 		<para>
 		<emphasis>Default value is <quote>100</quote>.
@@ -195,7 +195,7 @@ modparam("presence", "to_tag_pref", 'pres')
 	<section>
 		<title><varname>expires_offset</varname> (int)</title>
 		<para>
-		The value that should be subtracted from the expires value when
+		The value in seconds that should be subtracted from the expires value when
 		sending a 200OK for a publish. It is used for forcing the client
 		cu send an update before the old publish expires.
 		</para>
@@ -217,7 +217,7 @@ modparam("presence", "expires_offset", 10)
                <title><varname>max_expires</varname> (int)</title>
                <para>
                The the maximum admissible expires value for PUBLISH/SUBSCRIBE
-               message.
+               message (in seconds).
                </para>
                <para>
                <emphasis>Default value is <quote>3600</quote>.
