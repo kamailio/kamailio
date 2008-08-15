@@ -539,8 +539,20 @@ static inline int db_uint2ldap_int(struct sbuf* buf, db_fld_t* fld)
 	v = fld->v.int4;
 	switch(fld->op) {
 	case DB_EQ:  rv |= sb_add(buf, "=", 1); break;
-	case DB_LT:  rv |= sb_add(buf, "<=", 2); v--; break;
-	case DB_GT:  rv |= sb_add(buf, ">=", 2); v++; break;
+	case DB_LT:
+		rv |= sb_add(buf, "<=", 2);
+		if (v == INT_MIN)
+			WARN("ldap: parameter with 'less than' comparison would overflow\n");
+		else
+			v--;
+		break;
+	case DB_GT:
+		rv |= sb_add(buf, ">=", 2);
+		if (v == INT_MAX)
+			WARN("ldap: parameter with 'greater than' comparison would overflow\n");
+		else
+			v++;
+		break;
 	case DB_LEQ: rv |= sb_add(buf, "<=", 2); break;
 	case DB_GEQ: rv |= sb_add(buf, ">=", 2); break;
 	default:

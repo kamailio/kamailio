@@ -166,6 +166,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	int msgid;
 	char *oid;
 	struct berval *data;
+	struct timeval restimeout;
 
 
 	filter = NULL;
@@ -195,10 +196,18 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 				ERR("ldap: Error while searching: %s\n", ldap_err2string(ret));
 				goto error;
 			}
+
+			/*
+			 openldap v2.3 library workaround for unsolicited messages:
+			 if only unsolicited messages are available then ldap_result of
+			 v2.3 library waits forever
+			*/
+			memset(&restimeout, 0, sizeof(restimeout));
+			restimeout.tv_sec = 5;
 			ret = ldap_result(lcon->con,
 							  LDAP_RES_ANY,
 							  LDAP_MSG_ALL,
-							  NULL,
+							  &restimeout,
 							  &resmsg);
 		} else {
 			/* force it to reconnect */
@@ -206,7 +215,7 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 		}
 
 		if (ret <= 0) {
-			ERR("ldap: Error in ldap_search: %s\n", ldap_err2string(ret));
+			ERR("ldap: Error in ldap_search: %s\n", ret < 0 ? ldap_err2string(ret) : "timeout");
 			if (ret == LDAP_SERVER_DOWN) {
 				lcon->flags &= ~LD_CONNECTED;
 				do {
