@@ -274,6 +274,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %token UDP
 %token TCP
 %token TLS
+%token SCTP
 
 /* config vars. */
 %token DEBUG_V
@@ -553,6 +554,7 @@ proto:
 	UDP	{ $$=PROTO_UDP; }
 	| TCP	{ $$=PROTO_TCP; }
 	| TLS	{ $$=PROTO_TLS; }
+	| SCTP	{ $$=PROTO_SCTP; }
 	| STAR	{ $$=0; }
 	;
 port:
