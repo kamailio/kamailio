@@ -74,14 +74,14 @@
 #define local_free   pkg_free
 
 #ifdef USE_NAPTR
-static int naptr_proto_pref[PROTO_LAST];
+static int naptr_proto_pref[PROTO_LAST+1];
 #endif
 
 #ifdef USE_NAPTR
 void init_naptr_proto_prefs()
 {
-	if ((PROTO_UDP >= PROTO_LAST) || (PROTO_TCP >= PROTO_LAST) ||
-		(PROTO_TLS >= PROTO_LAST) || (PROTO_SCTP>=PROTO_LAST)){
+	if ((PROTO_UDP > PROTO_LAST) || (PROTO_TCP > PROTO_LAST) ||
+		(PROTO_TLS > PROTO_LAST) || (PROTO_SCTP > PROTO_LAST)){
 		BUG("init_naptr_proto_prefs: array too small \n");
 		return;
 	}
