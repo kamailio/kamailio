@@ -1571,7 +1571,7 @@ try_again:
 					}
 					tmp[tmp_len]=0; /* null terminate the host */
 					/* add a new addr. to our address list */
-					if (add_listen_iface(tmp, port, proto, 0)!=0){
+					if (add_listen_iface(tmp,0,  port, proto, 0)!=0){
 						fprintf(stderr, "failed to add new listen address\n");
 						goto error;
 					}

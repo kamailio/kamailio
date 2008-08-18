@@ -391,6 +391,7 @@ static int fix_actions(struct action* a)
 	struct hostent* he;
 	struct ip_addr ip;
 	struct socket_info* si;
+	char buf[30]; /* tmp buffer needed for module param fixups */
 
 	if (a==0){
 		LOG(L_CRIT,"BUG: fix_actions: null pointer\n");
@@ -506,15 +507,17 @@ static int fix_actions(struct action* a)
 				if (cmd && cmd->fixup) {
 					int i;
 					DBG("fixing %s()\n", cmd->name);
-					/* type cast NUMBER to STRING, old modules may expect all STRING params during fixup */
+					/* type cast NUMBER to STRING, old modules may expect
+					 * all STRING params during fixup */
 					for (i=0; i<t->val[1].u.number; i++) {
 						if (t->val[i+2].type == NUMBER_ST) {
-							char buf[30];
-							snprintf(buf, sizeof(buf)-1, "%ld", t->val[i+2].u.number);
-							/* fixup currently requires string pkg_malloc-aed */
+							snprintf(buf, sizeof(buf)-1, "%ld", 
+										t->val[i+2].u.number);
+							/* fixup currently requires string pkg_malloced*/
 							t->val[i+2].u.string = pkg_malloc(strlen(buf)+1);
 							if (!t->val[i+2].u.string) {
-								LOG(L_CRIT, "ERROR: cannot translate NUMBER to STRING\n");
+								LOG(L_CRIT, "ERROR: cannot translate NUMBER"
+											" to STRING\n");
 								return E_OUT_OF_MEM;
 							}
 							strcpy(t->val[i+2].u.string, buf);
@@ -539,11 +542,13 @@ static int fix_actions(struct action* a)
 								t->val[0].type);
 					return E_BUG;
 				}
-				he=resolvehost(((struct socket_id*)t->val[0].u.data)->name);
+				he=resolvehost(
+						((struct socket_id*)t->val[0].u.data)->addr_lst->name
+						);
 				if (he==0){
 					LOG(L_ERR, "ERROR: fix_actions: force_send_socket:"
 								" could not resolve %s\n",
-							((struct socket_id*)t->val[0].u.data)->name);
+						((struct socket_id*)t->val[0].u.data)->addr_lst->name);
 					return E_BAD_ADDRESS;
 				}
 				hostent2ip_addr(&ip, he, 0);
@@ -552,7 +557,7 @@ static int fix_actions(struct action* a)
 				if (si==0){
 					LOG(L_ERR, "ERROR: fix_actions: bad force_send_socket"
 							" argument: %s:%d (ser doesn't listen on it)\n",
-							((struct socket_id*)t->val[0].u.data)->name,
+						((struct socket_id*)t->val[0].u.data)->addr_lst->name,
 							((struct socket_id*)t->val[0].u.data)->port);
 					return E_BAD_ADDRESS;
 				}

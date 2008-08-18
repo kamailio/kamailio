@@ -175,6 +175,7 @@ static void yyerror(char* s);
 static char* tmp;
 static int i_tmp;
 static struct socket_id* lst_tmp;
+static struct name_lst*  nl_tmp;
 static int rt;  /* Type of route block for find_export */
 static str* str_tmp;
 static str s_tmp;
@@ -186,6 +187,10 @@ static struct action *mod_func_action;
 
 static void warn(char* s);
 static struct socket_id* mk_listen_id(char*, int, int);
+static struct name_lst* mk_name_lst(char* name, int flags);
+static struct socket_id* mk_listen_id2(struct name_lst*, int, int);
+static void free_name_lst(struct name_lst* lst);
+static void free_socket_id_lst(struct socket_id* i);
 
 %}
 
@@ -198,6 +203,7 @@ static struct socket_id* mk_listen_id(char*, int, int);
 	struct net* ipnet;
 	struct ip_addr* ipaddr;
 	struct socket_id* sockid;
+	struct name_lst* name_l;
 	struct avp_spec* attr;
 	select_t* select;
 }
@@ -466,8 +472,11 @@ static struct socket_id* mk_listen_id(char*, int, int);
 %type <ipnet> ipnet
 %type <strval> host
 %type <strval> listen_id
+%type <name_l> listen_id_lst
+%type <name_l> listen_id2
 %type <sockid>  id_lst
 %type <sockid>  phostport
+%type <sockid>  listen_phostport
 %type <intval> proto port
 %type <intval> equalop strop intop binop
 %type <strval> host_sep
@@ -550,6 +559,20 @@ listen_id:
 		}
 	}
 	;
+
+
+listen_id_lst:
+	listen_id	{ $$=mk_name_lst($1, SI_IS_MHOMED); }
+	| listen_id COMMA listen_id_lst	{ $$=mk_name_lst($1, SI_IS_MHOMED); 
+										if ($$) $$->next=$3;
+									}
+	;
+
+listen_id2:
+	LPAREN listen_id_lst RPAREN { $$=$2; }
+	| listen_id	{ $$=mk_name_lst($1, 0); }
+	;
+
 proto:
 	UDP	{ $$=PROTO_UDP; }
 	| TCP	{ $$=PROTO_TCP; }
@@ -568,9 +591,18 @@ phostport:
 	| proto COLON listen_id COLON port	{ $$=mk_listen_id($3, $1, $5);}
 	| listen_id COLON error { $$=0; yyerror(" port number expected"); }
 	;
+
+listen_phostport:
+	listen_id2		{ $$=mk_listen_id2($1, 0, 0); }
+	| listen_id2 COLON port	{ $$=mk_listen_id2($1, 0, $3); }
+	| proto COLON listen_id2	{ $$=mk_listen_id2($3, $1, 0); }
+	| proto COLON listen_id2 COLON port	{ $$=mk_listen_id2($3, $1, $5);}
+	| listen_id2 COLON error { $$=0; yyerror(" port number expected"); }
+	;
+
 id_lst:
-	phostport		{  $$=$1 ; }
-	| phostport id_lst	{ $$=$1; $$->next=$2; }
+	listen_phostport		{  $$=$1 ; }
+	| listen_phostport id_lst	{ $$=$1; $$->next=$2; }
 	;
 
 flags_decl:		FLAGS_DECL	flag_list
@@ -1107,16 +1139,28 @@ assign_stm:
 	| REPLY_TO_VIA EQUAL error { yyerror("boolean value expected"); }
 	| LISTEN EQUAL id_lst {
 		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next) {
-			if (add_listen_iface(lst_tmp->name, lst_tmp->port, lst_tmp->proto, 0)!=0) {
-				LOG(L_CRIT,  "ERROR: cfg. parser: failed to add listen address\n");
+			if (add_listen_iface(	lst_tmp->addr_lst->name,
+									lst_tmp->addr_lst->next,
+									lst_tmp->port, lst_tmp->proto,
+									lst_tmp->flags)!=0) {
+				LOG(L_CRIT,  "ERROR: cfg. parser: failed to add listen"
+								" address\n");
 				break;
 			}
 		}
+		free_socket_id_lst($3);
 	}
 	| LISTEN EQUAL  error { yyerror("ip address or hostname expected"); }
 	| ALIAS EQUAL  id_lst {
-		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next)
-			add_alias(lst_tmp->name, strlen(lst_tmp->name), lst_tmp->port, lst_tmp->proto);
+		for(lst_tmp=$3; lst_tmp; lst_tmp=lst_tmp->next){
+			add_alias(	lst_tmp->addr_lst->name,
+						strlen(lst_tmp->addr_lst->name),
+						lst_tmp->port, lst_tmp->proto);
+			for (nl_tmp=lst_tmp->addr_lst->next; nl_tmp; nl_tmp=nl_tmp->next)
+				add_alias(nl_tmp->name, strlen(nl_tmp->name),
+							lst_tmp->port, lst_tmp->proto);
+		}
+		free_socket_id_lst($3);
 	}
 	| ALIAS  EQUAL error  { yyerror(" hostname expected"); }
 	| ADVERTISED_ADDRESS EQUAL listen_id {
@@ -2289,8 +2333,12 @@ cmd:
 	}
 	| SET_ADV_PORT LPAREN error RPAREN { $$=0; yyerror("bad argument, string expected"); }
 	| SET_ADV_PORT  error {$$=0; yyerror("missing '(' or ')' ?"); }
-	| FORCE_SEND_SOCKET LPAREN phostport RPAREN { $$=mk_action(FORCE_SEND_SOCKET_T, 1, SOCKID_ST, $3); }
-	| FORCE_SEND_SOCKET LPAREN error RPAREN { $$=0; yyerror("bad argument, [proto:]host[:port] expected"); }
+	| FORCE_SEND_SOCKET LPAREN phostport RPAREN { 
+		$$=mk_action(FORCE_SEND_SOCKET_T, 1, SOCKID_ST, $3);
+	}
+	| FORCE_SEND_SOCKET LPAREN error RPAREN {
+		$$=0; yyerror("bad argument, [proto:]host[:port] expected");
+	}
 	| FORCE_SEND_SOCKET error {$$=0; yyerror("missing '(' or ')' ?"); }
 	| ID {mod_func_action = mk_action(MODULE_T, 2, MODEXP_ST, NULL, NUMBER_ST, 0); } LPAREN func_params RPAREN	{
 		mod_func_action->val[0].u.data = find_export_record($1, mod_func_action->val[1].u.number, rt);
@@ -2352,6 +2400,21 @@ static void yyerror(char* s)
 }
 
 
+static struct name_lst* mk_name_lst(char* host, int flags)
+{
+	struct name_lst* l;
+	l=pkg_malloc(sizeof(struct name_lst));
+	if (l==0) {
+		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+	} else {
+		l->name=host;
+		l->flags=flags;
+		l->next=0;
+	}
+	return l;
+}
+
+
 static struct socket_id* mk_listen_id(char* host, int proto, int port)
 {
 	struct socket_id* l;
@@ -2359,7 +2422,12 @@ static struct socket_id* mk_listen_id(char* host, int proto, int port)
 	if (l==0) {
 		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
 	} else {
-		l->name=host;
+		l->addr_lst=mk_name_lst(host, 0);
+		if (l->addr_lst==0){
+			pkg_free(l);
+			return 0;
+		}
+		l->flags=0;
 		l->port=port;
 		l->proto=proto;
 		l->next=0;
@@ -2367,6 +2435,54 @@ static struct socket_id* mk_listen_id(char* host, int proto, int port)
 	return l;
 }
 
+
+static void free_name_lst(struct name_lst* lst)
+{
+	struct name_lst* tmp;
+	
+	while(lst){
+		tmp=lst;
+		lst=lst->next;
+		pkg_free(tmp);
+	}
+}
+
+
+static struct socket_id* mk_listen_id2(struct name_lst* addr_l, int proto,
+										int port)
+{
+	struct socket_id* l;
+	l=pkg_malloc(sizeof(struct socket_id));
+	if (l==0) {
+		LOG(L_CRIT,"ERROR: cfg. parser: out of memory.\n");
+	} else {
+		l->flags=addr_l->flags;
+		l->port=port;
+		l->proto=proto;
+		l->addr_lst=addr_l;
+		l->next=0;
+	}
+	return l;
+}
+
+
+static void free_socket_id(struct socket_id* i)
+{
+	free_name_lst(i->addr_lst);
+	pkg_free(i);
+}
+
+
+static void free_socket_id_lst(struct socket_id* lst)
+{
+	struct socket_id* tmp;
+	
+	while(lst){
+		tmp=lst;
+		lst=lst->next;
+		free_socket_id(tmp);
+	}
+}
 
 /*
 int main(int argc, char ** argv)

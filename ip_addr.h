@@ -89,13 +89,23 @@ union sockaddr_union{
 
 
 enum si_flags { SI_NONE=0, SI_IS_IP=1, SI_IS_LO=2, SI_IS_MCAST=4,
-				 SI_IS_ANY=8 };
+				 SI_IS_ANY=8, SI_IS_MHOMED=16 };
+
+struct addr_info{
+	str name; /* name - eg.: foo.bar or 10.0.0.1 */
+	struct ip_addr address; /*ip address */
+	str address_str;        /*ip address converted to string -- optimization*/
+	enum si_flags flags; /* SI_IS_IP | SI_IS_LO | SI_IS_MCAST */
+	union sockaddr_union su;
+	struct addr_info* next;
+	struct addr_info* prev;
+};
 
 struct socket_info{
 	int socket;
 	str name; /* name - eg.: foo.bar or 10.0.0.1 */
 	struct ip_addr address; /* ip address */
-	str address_str;        /* ip address converted to string -- optimization*/
+	str address_str;        /*ip address converted to string -- optimization*/
 	str port_no_str; /* port number converted to string -- optimization*/
 	enum si_flags flags; /* SI_IS_IP | SI_IS_LO | SI_IS_MCAST */
 	union sockaddr_union su; 
@@ -103,6 +113,7 @@ struct socket_info{
 	struct socket_info* prev;
 	unsigned short port_no;  /* port number */
 	char proto; /* tcp or udp*/
+	struct addr_info* addr_info_lst; /* extra addresses (e.g. SCTP mh) */
 };
 
 
@@ -135,8 +146,20 @@ struct dest_info{
 };
 
 
-struct socket_id{
+/* list of names for multi-homed sockets that need to bind on
+ * multiple addresses in the same time (sctp ) */
+struct name_lst{
 	char* name;
+	struct name_lst* next;
+	int flags;
+};
+
+
+struct socket_id{
+	struct name_lst* addr_lst; /* address list, the first one must
+								  be present and is the main one
+								  (in case of multihoming sctp)*/
+	int flags;
 	int proto;
 	int port;
 	struct socket_id* next;
