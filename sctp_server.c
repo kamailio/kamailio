@@ -57,13 +57,25 @@ int sctp_init_sock(struct socket_info* sock_info)
 	union sockaddr_union* addr;
 	int optval;
 	socklen_t optlen;
+	struct addr_info* ai;
 	
 	addr=&sock_info->su;
 	sock_info->proto=PROTO_SCTP;
 	if (init_su(addr, &sock_info->address, sock_info->port_no)<0){
-		LOG(L_ERR, "ERROR: sctp_init_sock: could not init sockaddr_union\n");
+		LOG(L_ERR, "ERROR: sctp_init_sock: could not init sockaddr_union for"
+					"primary sctp address %.*s:%d\n",
+					sock_info->address_str.len, sock_info->address_str.s,
+					sock_info->port_no );
 		goto error;
 	}
+	for (ai=sock_info->addr_info_lst; ai; ai=ai->next)
+		if (init_su(&ai->su, &ai->address, sock_info->port_no)<0){
+			LOG(L_ERR, "ERROR: sctp_init_sock: could not init"
+					"backup sctp sockaddr_union for %.*s:%d\n",
+					ai->address_str.len, ai->address_str.s,
+					sock_info->port_no );
+			goto error;
+		}
 	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_SEQPACKET, 
 								IPPROTO_SCTP);
 	if (sock_info->socket==-1){
@@ -190,6 +202,24 @@ int sctp_init_sock(struct socket_info* sock_info)
 	#endif
 		goto error;
 	}
+	for (ai=sock_info->addr_info_lst; ai; ai=ai->next)
+		if (sctp_bindx(sock_info->socket, &ai->su.s, 1, SCTP_BINDX_ADD_ADDR)
+					==-1){
+			LOG(L_ERR, "ERROR: sctp_init_sock: sctp_bindx(%x, %.*s:%d, 1, ...)"
+						" on %s:%d : [%d] %s (trying to continue)\n",
+						sock_info->socket,
+						ai->address_str.len, ai->address_str.s, 
+						sock_info->port_no,
+						sock_info->address_str.s, sock_info->port_no,
+						errno, strerror(errno));
+		#ifdef USE_IPV6
+			if (ai->su.s.sa_family==AF_INET6)
+				LOG(L_ERR, "ERROR: sctp_init_sock: might be caused by using a "
+							"link local address, try site local or global\n");
+		#endif
+			/* try to continue, a secondary address bind failure is not 
+			 * critical */
+		}
 	if (listen(sock_info->socket, 1)<0){
 		LOG(L_ERR, "ERROR: sctp_init_sock: listen(%x, 1) on %s: %s\n",
 					sock_info->socket, sock_info->address_str.s,
