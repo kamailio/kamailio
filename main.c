@@ -76,6 +76,8 @@
  *              scheduling policies (andrei)
  * 2007-07-30  dst blacklist and DNS cache measurements added (Gergo)
  * 2008-08-08  sctp support (andrei)
+ * 2008-08-19  -l support for mmultihomed addresses/addresses lists
+ *                (e.g. -l (eth0, 1.2.3.4, foo.bar) ) (andrei)
  */
 
 
@@ -196,10 +198,12 @@ Options:\n\
     -c           Check configuration file for errors\n\
     -l address   Listen on the specified address/interface (multiple -l\n\
                   mean listening on more addresses).  The address format is\n\
-                  [proto:]addr[:port], where proto=udp|tcp and \n\
-                  addr= host|ip_address|interface_name. E.g: -l locahost, \n\
-                  -l udp:127.0.0.1:5080, -l eth0:5062 The default behavior\n\
-                  is to listen on all the interfaces.\n\
+                  [proto:]addr_lst[:port], where proto=udp|tcp|tls|sctp, \n\
+                  addr_lst= addr|(addr, addr_lst) and \n\
+                  addr= host|ip_address|interface_name. \n\
+                  E.g: -l locahost, -l udp:127.0.0.1:5080, -l eth0:5062,\n\
+                  -l \"sctp:(eth0)\", -l \"(eth0, eth1, 127.0.0.1):5065\".\n\
+                  The default behaviour is to listen on all the interfaces.\n\
     -n processes Number of child processes to fork per interface\n\
                   (default: 8)\n\
     -r           Use dns to check if is necessary to add a \"received=\"\n\
@@ -845,13 +849,116 @@ static int parse_proto(unsigned char* s, long len, int* proto)
 
 
 
-/*
- * parses [proto:]host[:port]
- * where proto= udp|tcp|tls
- * returns 0 on success and -1 on failure
+static struct name_lst* mk_name_lst_elem(char* name, int name_len, int flags)
+{
+	struct name_lst* l;
+	
+	l=pkg_malloc(sizeof(struct name_lst)+name_len+1/* 0 */);
+	if (l){
+		l->name=((char*)l)+sizeof(struct name_lst);
+		memcpy(l->name, name, name_len);
+		l->name[name_len]=0;
+		l->flags=flags;
+		l->next=0;
+	}
+	return l;
+}
+
+
+
+/* free a name_lst list with elements allocated with mk_name_lst_elem
+ * (single block both for the structure and for the name) */
+static void free_name_lst(struct name_lst* lst)
+{
+	struct name_lst* l;
+	
+	while(lst){
+		l=lst;
+		lst=lst->next;
+		pkg_free(l);
+	}
+}
+
+
+
+/* parse h and returns a name lst (flags are set to SI_IS_MHOMED if
+ * h contains more then one name or contains a name surrounded by '(' ')' )
+ * valid formats:    "hostname"
+ *                   "(hostname, hostname1, hostname2)"
+ *                   "(hostname hostname1 hostname2)"
+ *                   "(hostname)"
  */
-static int parse_phostport(char* s, char** host, int* hlen, int* port,
-							int* proto)
+static struct name_lst* parse_name_lst(char* h, int h_len)
+{
+	char* last;
+	char* p;
+	struct name_lst* n_lst;
+	struct name_lst* l;
+	struct name_lst** tail;
+	int flags;
+	
+	n_lst=0;
+	tail=&n_lst;
+	last=h+h_len-1;
+	flags=0;
+	/* eat whitespace */
+	for(; h<=last && ((*h==' ') || (*h=='\t')); h++);
+	for(; last>h && ((*last==' ') || (*last=='\t')); last--);
+	/* catch empty strings and invalid lens */
+	if (h>last) goto error;
+	
+	if (*h=='('){
+		/* list mode */
+		if (*last!=')' || ((h+1)>(last-1)))
+			goto error;
+		h++;
+		last--;
+		flags=SI_IS_MHOMED;
+		for(p=h; p<=last; p++)
+			switch (*p){
+				case ',':
+				case ';':
+				case ' ':
+				case '\t':
+					if ((int)(p-h)>0){
+						l=mk_name_lst_elem(h, (int)(p-h), flags);
+						if (l==0) 
+							goto error;
+						*tail=l;
+						tail=&l->next;
+					}
+					h=p+1;
+					break;
+			}
+	}else{
+		/* single addr. mode */
+		flags=0;
+		p=last+1;
+	}
+	if ((int)(p-h)>0){
+		l=mk_name_lst_elem(h, (int)(p-h), flags);
+		if (l==0) 
+			goto error;
+		*tail=l;
+		tail=&l->next;
+	}
+	return n_lst;
+error:
+	if (n_lst) free_name_lst(n_lst);
+	return 0;
+}
+
+
+
+/*
+ * parses [proto:]host[:port]  or
+ *  [proto:](host_1, host_2, ... host_n)[:port]
+ * where proto= udp|tcp|tls
+ * returns  fills proto, port, host and returns list of addresses on success
+ * (pkg malloc'ed) and 0 on failure
+ */
+static struct name_lst* parse_phostport(char* s, char** host, int* hlen,
+										int* port, int* proto)
 {
 	char* first; /* first ':' occurrence */
 	char* second; /* second ':' occurrence */
@@ -884,7 +991,7 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 				break;
 		}
 	}
-	if (p==s) return -1;
+	if (p==s) return 0;
 	if (*(p-1)==':') goto error_colons;
 
 	if (first==0){ /* no ':' => only host */
@@ -892,7 +999,7 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 		*hlen=(int)(p-s);
 		*port=0;
 		*proto=0;
-		return 0;
+		goto end;
 	}
 	if (second){ /* 2 ':' found => check if valid */
 		if (parse_proto((unsigned char*)s, first-s, proto)<0) goto error_proto;
@@ -900,7 +1007,7 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 		if ((tmp==0)||(*tmp)||(tmp==second+1)) goto error_port;
 		*host=first+1;
 		*hlen=(int)(second-*host);
-		return 0;
+		goto end;
 	}
 	/* only 1 ':' found => it's either proto:host or host:port */
 	*port=strtol(first+1, &tmp, 10);
@@ -916,19 +1023,20 @@ static int parse_phostport(char* s, char** host, int* hlen, int* port,
 		*host=s;
 		*hlen=(int)(first-*host);
 	}
-	return 0;
+end:
+	return parse_name_lst(*host, *hlen);
 error_brackets:
 	LOG(L_ERR, "ERROR: parse_phostport: too many brackets in %s\n", s);
-	return -1;
+	return 0;
 error_colons:
 	LOG(L_ERR, "ERROR: parse_phostport: too many colons in %s\n", s);
-	return -1;
+	return 0;
 error_proto:
 	LOG(L_ERR, "ERROR: parse_phostport: bad protocol in %s\n", s);
-	return -1;
+	return 0;
 error_port:
 	LOG(L_ERR, "ERROR: parse_phostport: bad port number in %s\n", s);
-	return -1;
+	return 0;
 }
 
 
@@ -1366,6 +1474,7 @@ int main(int argc, char** argv)
 	int rfd;
 	int debug_save, debug_flag;
 	int dont_fork_cnt;
+	struct name_lst* n_lst;
 
 	/*init*/
 	time(&up_since);
@@ -1563,18 +1672,20 @@ try_again:
 					}
 					break;
 			case 'l':
-					if (parse_phostport(optarg, &tmp, &tmp_len,
-											&port, &proto)<0){
+					if ((n_lst=parse_phostport(optarg, &tmp, &tmp_len,
+											&port, &proto))==0){
 						fprintf(stderr, "bad -l address specifier: %s\n",
 										optarg);
 						goto error;
 					}
-					tmp[tmp_len]=0; /* null terminate the host */
 					/* add a new addr. to our address list */
-					if (add_listen_iface(tmp,0,  port, proto, 0)!=0){
+					if (add_listen_iface(n_lst->name, n_lst->next,  port,
+											proto, n_lst->flags)!=0){
 						fprintf(stderr, "failed to add new listen address\n");
+						free_name_lst(n_lst);
 						goto error;
 					}
+					free_name_lst(n_lst);
 					break;
 			case 'n':
 					children_no=strtol(optarg, &tmp, 10);
