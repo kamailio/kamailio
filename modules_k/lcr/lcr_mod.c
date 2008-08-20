@@ -894,7 +894,7 @@ int reload_gws(void)
 	} else {
 	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
 	    if ((transport != PROTO_UDP) && (transport != PROTO_TCP) &&
-		(transport != PROTO_TLS)) {
+		(transport != PROTO_TLS) && (transport != PROTO_SCTP)) {
 		LM_ERR("Unknown or unsupported transport <%u>\n",
 		       (unsigned int)transport);
 		lcr_dbf.free_result(dbh, res);
@@ -1110,6 +1110,8 @@ int mi_print_gws(struct mi_node* rpl)
 	    transp= ";transport=tcp";
 	else  if (transport == PROTO_TLS)
 	    transp= ";transport=tls";
+	else  if (transport == PROTO_SCTP)
+	    transp= ";transport=sctp";
 	else
 	    transp= "";
 
@@ -1461,6 +1463,8 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 		memcpy(at, "tcp", 3); at = at + 3;
 	    } else if (transport == PROTO_TLS) {
 		memcpy(at, "tls", 3); at = at + 3;
+	    } else if (transport == PROTO_SCTP) {
+		memcpy(at, "sctp", 4); at = at + 4;
 	    } else {
 		LM_ERR("Unknown or unsupported transport <%u>\n",
 		       (unsigned int)transport);
