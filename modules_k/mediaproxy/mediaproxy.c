@@ -562,6 +562,11 @@ get_to_tag(struct sip_msg *msg)
         return notfound;
     }
 
+    if (msg->first_line.type==SIP_REPLY && msg->REPLY_STATUS<200) {
+	// Ignore the To tag for provisional replies
+	return notfound;
+    }
+
     tag = get_to(msg)->tag_value;
 
     if (tag.len == 0)
