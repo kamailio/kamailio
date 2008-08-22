@@ -357,6 +357,7 @@ static int carrier_fixup(void ** param) {
 	s.len = strlen(s.s);
 
 	if (s.s[0]!='$') {
+		/* This is a name string */
 		mp->type=MP_INT;
 		
 		/* get carrier id */
@@ -371,8 +372,10 @@ static int carrier_fixup(void ** param) {
 		*param = (void *)mp;
 	}
 	else {
+		/* This is a pseudo-variable */
 		if (pv_parse_spec(&s, &avp_spec)==0) {
 			LM_ERR("pv_parse_spec failed for '%s'\n", (char *)(*param));
+			pkg_free(mp);
 			return -1;
 		}
 			if (avp_spec.type==PVT_AVP) {
@@ -387,6 +390,7 @@ static int carrier_fixup(void ** param) {
 			mp->type=MP_PVE;
 			if(pv_parse_format(&s, &(mp->u.p))<0) {
 				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
+				pkg_free(mp);
 				return -1;
 			}
 		}
@@ -421,7 +425,7 @@ static int domain_fixup(void ** param) {
 	s.len = strlen(s.s);
 	
 	if (s.s[0]!='$') {
-		/* This is a name */
+		/* This is a name string */
 		mp->type=MP_INT;
 		
 		/* get domain id */
@@ -434,8 +438,10 @@ static int domain_fixup(void ** param) {
 		*param = (void *)mp;
 	}
 	else {
+		/* This is a pseudo-variable */
 		if (pv_parse_spec(&s, &avp_spec)==0) {
 			LM_ERR("pv_parse_spec failed for '%s'\n", (char *)(*param));
+			pkg_free(mp);
 			return -1;
 		}
 		if (avp_spec.type==PVT_AVP) {
@@ -450,6 +456,7 @@ static int domain_fixup(void ** param) {
 			mp->type=MP_PVE;
 			if(pv_parse_format(&s, &(mp->u.p))<0) {
 				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
+				pkg_free(mp);
 				return -1;
 			}
 		}	
