@@ -40,7 +40,7 @@
 #include "../../ut.h"
 
 /**
- * @var defines the option set for the different fifo commands
+ * Defines the option set for the different fifo commands
  * Every line is for a command,
  * The first field defines the required options, the second field defines the
  * optional options and the third field defines the invalid options.
