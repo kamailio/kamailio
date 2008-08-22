@@ -1054,7 +1054,7 @@ trusted() {
 		rm)
 			require_dbengine
 			shift
-			if [ $# -ne 2 ] ; then
+			if [ $# -ne 1 ] ; then
 				usage_trusted
 				exit 1
 			fi
