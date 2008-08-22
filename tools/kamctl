@@ -1175,6 +1175,8 @@ $LCR_GW_FLAGS_COLUMN FROM $GW_TABLE ORDER BY $LCR_GW_GRPID_COLUMN; "
 				GW_TRANSPORT=2
 			elif [ $GW_TRANSPORT = 'tls' ]; then
 				GW_TRANSPORT=3
+			elif [ $GW_TRANSPORT = 'sctp' ]; then
+				GW_TRANSPORT=4
 			fi
 			GW_GRP_ID=$6
 			QUERY="insert into $GW_TABLE \
