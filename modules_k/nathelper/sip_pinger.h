@@ -39,12 +39,6 @@
 #define MAX_SIPPING_SIZE 65536
 
 /* helping macros for building SIP PING ping request */
-#define append_str( _p, _s) \
-	do {\
-		memcpy(_p,(_s).s,(_s).len);\
-		_p += (_s).len;\
-	}while(0)
-
 #define append_fix( _p, _s) \
 	do {\
 		memcpy(_p, _s, sizeof(_s)-1);\
@@ -147,28 +141,28 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 	}
 
 	p = buf;
-	append_str( p, sipping_method);
+	append_str( p, sipping_method.s, sipping_method.len);
 	*(p++) = ' ';
-	append_str( p, *curi);
+	append_str( p, curi->s, curi->len);
 	append_fix( p, " SIP/2.0"CRLF"Via: SIP/2.0/UDP ");
-	append_str( p, s->address_str);
+	append_str( p, s->address_str.s, s->address_str.len);
 	*(p++) = ':';
-	append_str( p, s->port_no_str);
+	append_str( p, s->port_no_str.s, s->port_no_str.len);
 	if (path->len) {
 		append_fix( p, ";branch=0"CRLF"Route: ");
-		append_str( p, *path);
+		append_str( p, path->s, path->len);
 		append_fix( p, CRLF"From: ");
 	} else {
 		append_fix( p, ";branch=0"CRLF"From: ");
 	}
-	append_str( p, sipping_from);
+	append_str( p, sipping_from.s, sipping_from.len);
 	append_fix( p, ";tag=");
 	len = 8;
 	int2reverse_hex( &p, &len, sipping_fromtag++ );
 	append_fix( p, CRLF"To: ");
-	append_str( p, *curi);
+	append_str( p, curi->s, curi->len);
 	append_fix( p, CRLF"Call-ID: ");
-	append_str( p, sipping_callid);
+	append_str( p, sipping_callid.s, sipping_callid.len);
 	*(p++) = '-';
 	len = 8;
 	int2reverse_hex( &p, &len, sipping_callid_cnt++ );
@@ -176,9 +170,9 @@ static inline char* build_sipping(str *curi, struct socket_info* s, str *path,
 	len = 8;
 	int2reverse_hex( &p, &len, get_ticks() );
 	*(p++) = '@';
-	append_str( p, s->address_str);
+	append_str( p, s->address_str.s, s->address_str.len);
 	append_fix( p, CRLF"CSeq: 1 ");
-	append_str( p, sipping_method);
+	append_str( p, sipping_method.s, sipping_method.len);
 	append_fix( p, CRLF"Content-Length: 0" CRLF CRLF);
 
 	*len_p = p - buf;

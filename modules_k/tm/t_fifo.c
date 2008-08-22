@@ -90,12 +90,6 @@ int tm_unix_tx_timeout = 2; /*!< Default is 2 seconds */
 #define APPEND_BUFFER_MAX      4096
 #define CMD_BUFFER_MAX         128
 
-#define append_str(_dest,_src,_len) \
-	do{ \
-		memcpy( (_dest) , (_src) , (_len) );\
-		(_dest) += (_len) ;\
-	}while(0);
-
 #define append_chr(_dest,_c) \
 	*((_dest)++) = _c;
 

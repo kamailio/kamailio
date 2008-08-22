@@ -91,10 +91,6 @@ struct tm_binds tmb;
 #define CONTENT_TYPE_HDR     "Content-Type: text/plain"
 #define CONTENT_TYPE_HDR_LEN (sizeof(CONTENT_TYPE_HDR)-1)
 
-#define append_str(_p,_s,_l) \
-	{memcpy((_p),(_s),(_l));\
-	(_p) += (_l);}
-
 #define is_in_sip_addr(_p) \
 	((_p)!=' ' && (_p)!='\t' && (_p)!='(' && (_p)!='[' && (_p)!='<' \
 	&& (_p)!='>' && (_p)!=']' && (_p)!=')' && (_p)!='?' && (_p)!='!' \
