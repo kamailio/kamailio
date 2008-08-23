@@ -25,7 +25,7 @@ source include/database
 
 CFG=13.cfg
 
-if ! (check_kamailio && check_module "carrierroute" ); then
+if ! (check_kamailio && check_module "carrierroute" && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 

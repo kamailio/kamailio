@@ -23,7 +23,7 @@ source include/common
 source include/require
 source include/database
 
-if ! (check_sipp && check_kamailio); then
+if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 
