@@ -542,7 +542,7 @@ int update_sock_struct_from_via( union sockaddr_union* to,
 			DBG("update_sock_struct_from_via: using 'rport'\n");
 			port=str2s(via->rport->value.s, via->rport->value.len, &err);
 			if (err){
-				LOG(L_NOTICE, "ERROR: forward_reply: bad rport value(%.*s)\n",
+				LOG(L_NOTICE, "ERROR: update_sock_struct_from_via: bad rport value(%.*s)\n",
 						via->rport->value.len, via->rport->value.s);
 				port=0;
 			}
