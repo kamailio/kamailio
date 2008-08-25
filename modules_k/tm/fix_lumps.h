@@ -25,16 +25,14 @@
  *              handle CONTENTLENGTH lumps also (andrei)
  *  2005-07-04  lumps in SHM or dup'ed lumps are not freed and an warning
  *               message is logged (temporary fix) (andrei)
- *
- *
- * here, we delete message lumps which are generated in
- * core functions using pkg_malloc and applied to shmem
- * requests; not doing so would result ugly memory problems
  */
 
-/*! \file
+/*!\file
  * \brief TM :: Lump handling
  *
+ * Delete message lumps which are generated in core functions
+ * using pkg_malloc and applied to shmem requests;
+ * not doing so would result ugly memory problems.
  * \ingroup tm
  * - Module: \ref tm
  */
@@ -43,19 +41,18 @@
 #ifndef _FIX_LUMPS_H
 #define _FIX_LUMPS_H
 
-/*! \brief used to delete attached via lumps from msg
-
-   msg can be either an original pkg msg, whose Via lump I want
-   to delete before generating next branch, or a shmem-stored
-   message processed during on_reply -- then I want to
-   delete the Via lump for the same reason
-
-   the other case when I want to delete them is when a message
-   is stored in shmem for branch picking, forwarded lated and
-   Via removal is applied to the shmem-ed message
-
-   the same thing for Content-Length lumps 
-
+/*!
+ * \brief Used to delete attached via lumps from msg
+ *
+ * A msg can be either an original pkg msg, whose Via lump I want
+ * to delete before generating next branch, or a shmem-stored
+ * message processed during on_reply -- then I want to
+ * delete the Via lump for the same reason.
+ * The other case when I want to delete them is when a message
+ * is stored in shmem for branch picking, forwarded lated and
+ * Via removal is applied to the shmem-ed message.
+ * The same thing apply for  Content-Length lumps.
+ * \param list list of lumps
    \todo (FIXME: this should be done in a nicer way)
 */
 inline static void free_via_clen_lump( struct lump **list )

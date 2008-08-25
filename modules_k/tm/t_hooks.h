@@ -214,16 +214,42 @@ int init_tmcb_lists();
 void destroy_tmcb_lists();
 
 
-/*! \brief register a callback for several types of events */
+/*!
+ * \brief Register a callback function for several types of events
+ *
+ * Register a callback function 'f' for 'types' mask of events. This
+ * will be called back whenever one of the events occurs in transaction module
+ * (global or per transaction, depending of event type).
+ * \param p_msg SIP message
+ * \param t transaction
+ * \param f callback
+ * \param param callback parameter
+ * \return negative result on error, the return code from insert_tmcb on success
+ */
 int register_tmcb( struct sip_msg* p_msg, struct cell *t, int types, transaction_cb f, void *param );
 
-/*! \brief inserts a callback into the a callback list */
+/*!
+ * \brief Inserts a callback into the a callback list
+ * \param cb_list callback list
+ * \param types callback type
+ * \param f transaction callback
+ * \param param callback parameter
+ */
 int insert_tmcb(struct tmcb_head_list *cb_list, int types, transaction_cb f, void *param );
 
-/*! \brief set extra params for callbacks */
+/*!
+ * \brief Set extra parameter for tm callback
+ */
 void set_extra_tmcb_params(void *extra1, void *extra2);
 
-/*! \brief run all transaction callbacks for an event type */
+/*!
+ * \brief Run all transaction callbacks for an event type
+ * \param type callback type
+ * \param trans transaction
+ * \param req SIP request
+ * \param rpl SIP reply
+ * \param code callback code
+ */
 void run_trans_callbacks( int type , struct cell *trans, struct sip_msg *req, struct sip_msg *rpl, int code );
 
 /*! \brief run all REQUEST_IN callbacks */

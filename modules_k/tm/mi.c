@@ -45,13 +45,13 @@
 #include "callid.h"
 #include "uac.h"
 
-
+/*! simple string list */
 struct str_list {
 	str s;
 	struct str_list *next;
 };
 
-
+/*! Which header fields should be skipped */
 #define skip_hf(_hf) \
 	(((_hf)->type == HDR_FROM_T)  || \
 	((_hf)->type == HDR_TO_T)     || \
@@ -61,8 +61,18 @@ struct str_list {
 
 /************** Helper functions (from previous FIFO impl) *****************/
 
-/*! \brief
- * check if the request pushed via MI is correctly formed
+/*!
+ * \brief Check if the request pushed via MI is correctly formed
+ *
+ * Check if the request pushed via MI is correctly formed. Test if
+ * necessary SIP header fileds are included, could be parsed and the
+ * CSEQ is correct.
+ * \param msg SIP message
+ * \param method SIP method
+ * \param body SIP body
+ * \param cseq SIP CSEQ value
+ * \param callid SIP callid, optional
+ * \return zero on success, or a mi_root with an error message included otherwise
  */
 static inline struct mi_root* mi_check_msg(struct sip_msg* msg, str* method,
 										str* body, int* cseq, str* callid)
@@ -107,7 +117,17 @@ static inline struct mi_root* mi_check_msg(struct sip_msg* msg, str* method,
 	return 0;
 }
 
-
+/*!
+ * \brief Allocate a new str on a str list
+ *
+ * Allocate a new str in pkg_mem and attach it to a str list. Update
+ * the total number of list elements.
+ * \param s char array
+ * \param len length of the char array
+ * \param last last list element
+ * \param total total number of list elements
+ * \return pointer to the new list element
+ */
 static inline struct str_list *new_str(char *s, int len, struct str_list **last, int *total)
 {
 	struct str_list *new;
@@ -127,7 +147,16 @@ static inline struct str_list *new_str(char *s, int len, struct str_list **last,
 	return new;
 }
 
-
+/*!
+ * \brief Convert a header field block to char array
+ *
+ * Convert a header field block to char array, allocated in
+ * pkg_mem.
+ * \param uri SIP URI
+ * \param hf header field
+ * \param send_sock socket information
+ * \return new allocated char array on success, zero otherwise
+ */
 static inline char *get_hfblock( str *uri, struct hdr_field *hf, int *l, struct socket_info** send_sock)
 {
 	struct str_list sl, *last, *new, *i, *foo;
@@ -231,7 +260,13 @@ error:
 }
 
 
-/*! \brief Print routes */
+/*!
+ * \brief Print routes
+ *
+ * Print route to MI node, allocate temporary memory in pkg_mem.
+ * \param node MI node
+ * \param dlg route set
+ */
 static inline void mi_print_routes( struct mi_node *node, dlg_t* dlg)
 {
 #define MI_ROUTE_PREFIX_S       "Route: "
@@ -288,6 +323,14 @@ static inline void mi_print_routes( struct mi_node *node, dlg_t* dlg)
 }
 
 
+/*!
+ * \brief Print URIs
+ *
+ * Print URIs to MI node, allocate temporary memory in shm_mem.
+ * \param node MI node
+ * \param reply SIP reply
+ * \return zero on success, -1 on errors
+ */
 static inline int mi_print_uris( struct mi_node *node, struct sip_msg* reply)
 {
 	dlg_t* dlg;
@@ -336,7 +379,6 @@ empty:
 	add_mi_node_child( node, 0, 0, 0, ".",1);
 	return 0;
 }
-
 
 
 static void mi_uac_dlg_hdl( struct cell *t, int type, struct tmcb_params *ps )
