@@ -1493,6 +1493,10 @@ void update_db_subs(db_con_t *db,db_func_t dbf, shtable_t hash_table,
 				s= s->next;
 				prev_s->next= s;
 				
+				/* need for a struct free/destroy? */
+				if (del_s->contact.s)
+					shm_free(del_s->contact.s);
+
 				shm_free(del_s);
 				continue;
 			}
