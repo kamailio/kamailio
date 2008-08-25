@@ -363,12 +363,13 @@ static inline unsigned int count_local_rr(struct sip_msg *req)
 }
 
 
-/*! \brief introduce a new uac to transaction
-
-   returns its branch id (>=0)
-   or error (<0); it doesn't send a message yet -- a reply to it
-   might interfere with the processes of adding multiple branches
-*/
+/*!
+ * \brief Introduce a new UAC to transaction.
+ *
+ * Introduce a new UAC to a transaction. It doesn't send a message yet --
+ * a reply to it might interfere with the processes of adding multiple branches.
+ * \return the branch id (positive) or negative result on error
+ */
 static int add_uac( struct cell *t, struct sip_msg *request, str *uri, 
 							str* next_hop, str* path, struct proxy_l *proxy)
 {
@@ -723,21 +724,24 @@ int t_forward_nonack( struct cell *t, struct sip_msg* p_msg ,
 	return (success_branch>0)?1:-1;
 }
 
-
+/*!
+ * \brief Relay a replicated message.
+ *
+ * Relay a replicated message. We just take the message as is,
+ * including Route-s, Record-route-s, and Vias, forward it downstream
+ * and prevent replies received from relaying by setting the
+ * replication/local_trans bit.
+ * \note this is a quite horrible hack - nevertheless, it should be
+ * good enough for the primary customer of this function, REGISTER
+ * replication. If we want later to make it thoroughly, we need to
+ * introduce delete lumps for all the header fields above.
+ * \param p_msg replicated message
+ * \param dst destination
+ * \param flags message flags
+ * \return -1 on errors, otherwise the return value from t_relay_to
+ */
 int t_replicate(struct sip_msg *p_msg, str *dst, int flags)
 {
-	/* this is a quite horrible hack -- we just take the message
-	   as is, including Route-s, Record-route-s, and Vias ,
-	   forward it downstream and prevent replies received
-	   from relaying by setting the replication/local_trans bit;
-
-		nevertheless, it should be good enough for the primary
-		customer of this function, REGISTER replication
-
-		if we want later to make it thoroughly, we need to
-		introduce delete lumps for all the header fields above
-	*/
-
 	if ( set_dst_uri( p_msg, dst)!=0 ) {
 		LM_ERR("failed to set dst uri\n");
 		return -1;

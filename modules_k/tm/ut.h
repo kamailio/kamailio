@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * utilities
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -55,7 +53,15 @@
 #include "../../mem/mem.h"
 #include "../../parser/msg_parser.h"
 
-/* a forced_proto takes precedence if != PROTO_NONE */
+/*!
+ * \brief Protocol choosing helper function.
+ *
+ * Choose a protocol depeding on the value of the input variables
+ * The forced_proto takes precedence if != PROTO_NONE
+ * \param force_proto forced protocol
+ * \param proto protocol
+ * \return choosen protocol
+ */
 inline static enum sip_protos get_proto(enum sip_protos force_proto,
 										enum sip_protos proto)
 {
@@ -93,8 +99,14 @@ inline static enum sip_protos get_proto(enum sip_protos force_proto,
 
 
 
-/*
- * Convert a URI into a proxy structure
+/*!
+ * \brief Convert a URI into a proxy structure
+ *
+ * Convert a URI into a proxy structure. Parse URI, choose a protocol
+ * and return a new proxy structure, allocated in pkg_memory.
+ * \param uri input URI
+ * \param forced_proto force a protocol
+ * \return proxy structure on success, zero otherwise
  */
 inline static struct proxy_l *uri2proxy( str *uri, int forced_proto )
 {
@@ -126,7 +138,15 @@ inline static struct proxy_l *uri2proxy( str *uri, int forced_proto )
 	return p;
 }
 
-
+/*!
+ * \brief Convert a URI into socket address.
+ *
+ * Convert a URI into a socket address. Create a temporary proxy.
+ * \param uri input URI
+ * \param su target structure
+ * \param proto protocol
+ * \return choosen protocol
+ */
 static inline int uri2su(str *uri, union sockaddr_union *to_su, int proto)
 {
 	struct proxy_l *proxy;
@@ -149,8 +169,15 @@ static inline int uri2su(str *uri, union sockaddr_union *to_su, int proto)
 
 
 
-/*
- * Convert a URI into socket_info
+/*!
+ * \brief Convert a URI into a socket_info
+ *
+ * Convert a URI into a socket_info for sending.
+ * \param msg SIP message
+ * \param uri input URI
+ * \param to_so socket address
+ * \param proto protocol
+ * \return send socket
  */
 static inline struct socket_info *uri2sock(struct sip_msg* msg, str *uri,
 									union sockaddr_union *to_su, int proto)

@@ -77,9 +77,10 @@ static ser_lock_t* timer_group_lock=0; /*!< timer group locks
 					 pointer to a TG_NR lock array, it's safer if we alloc this in shared mem 
 									( required for fast lock ) */
 
-/*! \brief initialize the locks
-	\return 0 on success, -1 otherwise
-*/
+/*!
+ * \brief Initialize the locks
+ * \return 0 on success, -1 otherwise
+ */
 int lock_initialize(void)
 {
 	int i;
@@ -189,6 +190,7 @@ error:
 
 
 #ifdef GEN_LOCK_T_PREFERED
+/*! \brief remove the semaphore set from system */
 void lock_cleanup(void)
 {
 	/* must check if someone uses them, for now just leave them allocated*/
