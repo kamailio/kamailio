@@ -562,15 +562,8 @@ error0:
 
 void free_timer_table(void)
 {
-	enum lists i;
-
-	if (timertable) {
-		/* the mutexs for sync the lists are released*/
-		for ( i=0 ; i<NR_OF_TIMER_LISTS ; i++ )
-			release_timerlist_lock( &timertable->timers[i] );
+	if (timertable)
 		shm_free(timertable);
-	}
-		
 }
 
 void reset_timer_list( enum lists list_id)

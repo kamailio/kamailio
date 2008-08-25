@@ -88,11 +88,6 @@ int init_cell_lock( struct cell *cell );
 int init_entry_lock( struct s_table* ht, struct entry *entry );
 
 
-int release_cell_lock( struct cell *cell );
-int release_entry_lock( struct entry *entry );
-int release_timerlist_lock( struct timer *timerlist );
-
-
 
 /* lock semaphore s */
 #ifdef DBG_LOCK

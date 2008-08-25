@@ -132,7 +132,6 @@ void free_cell( struct cell* dead_cell )
 	if ( has_tran_tmcbs( dead_cell, TMCB_TRANS_DELETED) )
 		run_trans_callbacks( TMCB_TRANS_DELETED, dead_cell, 0, 0, 0);
 
-	release_cell_lock( dead_cell );
 	shm_lock();
 
 	/* UA Server */
@@ -344,7 +343,6 @@ void free_hash_table(void)
 		/* remove the data contained by each entry */
 		for( i = 0 ; i<TM_TABLE_ENTRIES; i++)
 		{
-			release_entry_lock( (tm_table->entrys)+i );
 			/* delete all synonyms at hash-collision-slot i */
 			p_cell=tm_table->entrys[i].first_cell;
 			for( ; p_cell; p_cell = tmp_cell )

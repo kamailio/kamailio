@@ -199,6 +199,7 @@ void lock_cleanup(void)
 
 #else
 
+
 /*! \brief remove the semaphore set from system */
 void lock_cleanup()
 {
@@ -228,9 +229,6 @@ void lock_cleanup()
 #endif /*GEN_LOCK_T_PREFERED*/
 
 
-
-
-
 int init_cell_lock( struct cell *cell )
 {
 #ifdef GEN_LOCK_T_PREFERED
@@ -241,6 +239,7 @@ int init_cell_lock( struct cell *cell )
 #endif /* GEN_LOCK_T_PREFERED */
 	return 0;
 }
+
 
 int init_entry_lock( struct s_table* ht, struct entry *entry )
 {
@@ -258,34 +257,6 @@ int init_entry_lock( struct s_table* ht, struct entry *entry )
 	return 0;
 }
 
-
-
-int release_cell_lock( struct cell *cell )
-{
-#ifndef GEN_LOCK_T_PREFERED
-	/* don't do anything here -- the init_*_lock procedures
-	   just advised on usage of shared semaphores but did not
-	   generate them
-	*/
-#endif
-	return 0;
-}
-
-
-
-int release_entry_lock( struct entry *entry )
-{
-	/* the same as above */
-	return 0;
-}
-
-
-
-int release_timerlist_lock( struct timer *timerlist )
-{
-	/* the same as above */
-	return 0;
-}
 
 int init_timerlist_lock( enum lists timerlist_id)
 {
