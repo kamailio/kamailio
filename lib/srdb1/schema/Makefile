@@ -26,8 +26,11 @@ ORACLE_XSL = $(STYLESHEETS)/oracle.xsl
 # Stylesheet used to generate docbook documentation
 DOCBOOK_XSL = $(STYLESHEETS)/docbook.xsl
 
-# Stylesheet used to generate modules templates
-MODULES_XSL = $(STYLESHEETS)/modules.xsl
+# Stylesheet used to generate modules templates header
+MODULES_H_XSL = $(STYLESHEETS)/modules_h.xsl
+
+# Stylesheet used to generate modules templates implementation
+MODULES_C_XSL = $(STYLESHEETS)/modules_c.xsl
 
 # Stylesheet used to generate modules documentation
 DBDOC_XSL = $(STYLESHEETS)/dbdoc.xsl
@@ -183,7 +186,15 @@ modules:
 		--stringparam dir "$(ROOT)/db/module/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
-		$(MODULES_XSL) kamailio-"$$FILE".xml ; \
+		$(MODULES_H_XSL) kamailio-"$$FILE".xml ; \
+	done
+	
+	for FILE in $(TABLES); do \
+		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
+		--stringparam dir "$(ROOT)/db/module/" \
+		--stringparam prefix "$$FILE" \
+		--stringparam db "modules" \
+		$(MODULES_C_XSL) kamailio-"$$FILE".xml ; \
 	done
 
 modules_clean:
