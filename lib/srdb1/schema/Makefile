@@ -55,7 +55,7 @@ ifeq ($(VERBOSE), 1)
 	override XSLTPROC := $(XSLTPROC) --verbose
 endif
 
-all: mysql postgres dbtext db_berkeley docbook oracle modules dbdoc
+all: mysql postgres dbtext db_berkeley docbook oracle #modules dbdoc
 
 .PHONY: mysql mysql_clean
 mysql:
@@ -183,7 +183,7 @@ docbook_clean:
 modules:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/db/module/" \
+		--stringparam dir "$(ROOT)/modules/$$FILE/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
 		$(MODULES_H_XSL) kamailio-"$$FILE".xml ; \
@@ -191,26 +191,31 @@ modules:
 	
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/db/module/" \
+		--stringparam dir "$(ROOT)/modules/$$FILE/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
 		$(MODULES_C_XSL) kamailio-"$$FILE".xml ; \
 	done
 
 modules_clean:
-	-@rm -f $(ROOT)/db/module/*
+	for FILE in $(TABLES); do \
+		rm -f $(ROOT)/modules/$$FILE/db_*.c; \
+		rm -f $(ROOT)/modules/$$FILE/db_*.h; \
+	done
 
 dbdoc:
 	for FILE in $(TABLES); do \
 		XML_CATALOG_FILES=$(CATALOG) $(XSLTPROC) $(XSLTPROC_FLAGS) \
-		--stringparam dir "$(ROOT)/doc/module/" \
+		--stringparam dir "$(ROOT)/modules/$$FILE/doc/" \
 		--stringparam prefix "$$FILE" \
 		--stringparam db "modules" \
 		$(DBDOC_XSL) kamailio-"$$FILE".xml ; \
 	done
 
 dbdoc_clean:
-	-@rm -f $(ROOT)/doc/module/*
+	for FILE in $(TABLES); do \
+		rm -f $(ROOT)/modules/$$FILE/doc/*_db.xml; \
+	done
 
 .PHONY: clean
-clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean docbook_clean modules_clean
+clean: mysql_clean postgres_clean oracle_clean dbtext_clean db_berkeley_clean docbook_clean # modules_clean dbdoc_clean
