@@ -97,7 +97,7 @@ int tm_unix_tx_timeout = 2; /*!< Default is 2 seconds */
 	do {\
 		if(rlen+len+3 >= ROUTE_BUFFER_MAX){\
 			LM_ERR("buffer overflow while copying new route\n");\
-			goto error;\
+			return -1;\
 		}\
 		if(len){\
 			append_chr(s,','); len++;\
@@ -470,7 +470,14 @@ static inline char* append2buf( char *buf, int len, struct sip_msg *req,
 	return buf;
 }
 
-
+/*!
+ * \brief Assemble a message
+ *
+ * Assemble a message
+ * A return code of 0 would lead to immediate script exit --
+ * -1 return value means 'false' to script processing
+ * \return 1 on success, -1 on errors
+ */
 static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 {
 	static char     id_buf[IDBUF_LEN];
@@ -491,33 +498,33 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	if(msg->first_line.type != SIP_REQUEST){
 		LM_ERR("called for something else then a SIP request\n");
-		goto error;
+		return -1;
 	}
 
 	/* parse all -- we will need every header field for a UAS */
 	if ( parse_headers(msg, HDR_EOH_F, 0)==-1) {
 		LM_ERR("parse_headers failed\n");
-		goto error;
+		return -1;
 	}
 
 	/* find index and hash; (the transaction can be safely used due 
 	 * to refcounting till script completes) */
 	if( t_get_trans_ident(msg,&hash_index,&label) == -1 ) {
 		LM_ERR("t_get_trans_ident failed\n");
-		goto error;
+		return -1;
 	}
 
 	 /* parse from header */
 	if (msg->from->parsed==0 && parse_from_header(msg)<0 ) {
 		LM_ERR("failed to parse <From:> header\n");
-		goto error;
+		return -1;
 	}
 
 	/* parse the RURI (doesn't make any malloc) */
 	msg->parsed_uri_ok = 0; /* force parsing */
 	if (parse_sip_msg_uri(msg)<0) {
 		LM_ERR("uri has not been parsed\n");
-		goto error;
+		return -1;
 	}
 
 	/* parse contact header */
@@ -526,7 +533,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	if(msg->contact) {
 		if (msg->contact->parsed==0 && parse_contact(msg->contact)<0) {
 			LM_ERR("failed to parse <Contact:> header\n");
-			goto error;
+			return -1;
 		}
 		cb = (contact_body_t*)msg->contact->parsed;
 		if(cb && (c=cb->contacts)) {
@@ -552,7 +559,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	if(p_hdr) {
 		if (p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ) {
 			LM_ERR("failed to parse 'Record-Route:' header\n");
-			goto error;
+			return -1;
 		}
 		record_route = (rr_t*)p_hdr->parsed;
 	} else {
@@ -569,7 +576,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 			if (parse_params( &tmp_s, CLASS_URI, &hooks, 
 			&record_route->params) < 0) {
 				LM_ERR("failed to parse record route uri params\n");
-				goto error;
+				return -1;
 			}
 			fproxy_lr = (hooks.uri.lr != 0);
 			LM_DBG("record_route->nameaddr.uri: %.*s\n",
@@ -587,7 +594,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 			if(p_hdr->parsed==0 && parse_rr(p_hdr)!=0 ){
 				LM_ERR("failed to parse <Record-route:> header\n");
-				goto error;
+				return -1;
 			}
 			for(record_route=p_hdr->parsed; record_route;
 				record_route=record_route->next){
@@ -615,7 +622,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 		/* get body */
 		if( (body.s = get_body(msg)) == 0 ){
 			LM_ERR("get_body failed\n");
-			goto error;
+			return -1;
 		}
 		body.len = msg->len - (body.s - msg->buf);
 	} else {
@@ -626,20 +633,20 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	append.s = s = append_buf;
 	if (sizeof(flag_t)*2+12+1 >= APPEND_BUFFER_MAX) {
 		LM_ERR("buffer overflow while copying flags\n");
-		goto error;
+		return -1;
 	}
 	append_str(s,"P-MsgFlags: ",12);
 	l = APPEND_BUFFER_MAX - (12+1); /* include trailing `\n'*/
 
 	if (int2reverse_hex(&s, &l, (int)msg->msg_flags) == -1) {
 		LM_ERR("buffer overflow while copying optional header\n");
-		goto error;
+		return -1;
 	}
 	append_chr(s,'\n');
 
 	if ( twi->append && ((s=append2buf( s, APPEND_BUFFER_MAX-(s-append.s), msg,
 	twi->append->elems))==0) )
-		goto error;
+		return -1;
 
 	/* body separator */
 	append_chr(s,'.');
@@ -648,7 +655,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	eol_line(1).s = s = cmd_buf;
 	if(twi->action.len+12 >= CMD_BUFFER_MAX){
 		LM_ERR("buffer overflow while copying command name\n");
-		goto error;
+		return -1;
 	}
 	append_str(s,"sip_request.",12);
 	append_str(s,twi->action.s,twi->action.len);
@@ -680,7 +687,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	s = int2str(hash_index, &l);
 	if (l+1>=IDBUF_LEN) {
 		LM_ERR("too big hash\n");
-		goto error;
+		return -1;
 	}
 	memcpy(id_buf, s, l);
 	id_buf[l]=':';
@@ -688,7 +695,7 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 	s = int2str(label, &l);
 	if (l+1+eol_line(15).len>=IDBUF_LEN) {
 		LM_ERR("too big label\n");
-		goto error;
+		return -1;
 	}
 	memcpy(id_buf+eol_line(15).len, s, l);
 	eol_line(15).len+=l;
@@ -700,10 +707,6 @@ static int assemble_msg(struct sip_msg* msg, struct tw_info *twi)
 
 	/* success */
 	return 1;
-error:
-	/* 0 would lead to immediate script exit -- -1 returns
-	 * with 'false' to script processing */
-	return -1;
 }
 
 
