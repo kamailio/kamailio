@@ -377,7 +377,7 @@ int ops_dbload_avps (struct sip_msg* msg, struct fis_param *sp,
 	/* do DB query */
 	res = db_load_avp( s0, s1,
 			((use_domain)||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
-			dbp->sa.s, dbp->table, dbp->scheme);
+			dbp->sa.s, &dbp->table, dbp->scheme);
 
 	/* res query ?  */
 	if (res==0)
@@ -518,7 +518,7 @@ int ops_dbdelete_avps (struct sip_msg* msg, struct fis_param *sp,
 	/* do DB delete */
 	res = db_delete_avp(s0, s1,
 			(use_domain||(sp->opd&AVPOPS_FLAG_DOMAIN0))?s2:0,
-			dbp->sa.s, dbp->table);
+			dbp->sa.s, &dbp->table);
 
 	/* res ?  */
 	if (res<0)
@@ -678,7 +678,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 				avp->flags&AVP_VAL_STR);
 			/* save avp */
 			if (db_store_avp( store_keys, store_vals,
-					keys_nr, dbp->table)==0 )
+					keys_nr, &dbp->table)==0 )
 			{
 				avp->flags |= AVP_IS_IN_DB;
 				n++;
@@ -716,7 +716,7 @@ int ops_dbstore_avps (struct sip_msg* msg, struct fis_param *sp,
 				avp->flags&AVP_VAL_STR);
 			/* save avp */
 			if (db_store_avp( store_keys, store_vals,
-			keys_nr, dbp->table)==0)
+			keys_nr, &dbp->table)==0)
 			{
 				avp->flags |= AVP_IS_IN_DB;
 				n++;

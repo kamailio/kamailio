@@ -288,7 +288,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 			dbp->scheme->db_flags|=dbp->a.opd&AVPOPS_VAL_STR?AVP_NAME_STR:0;
 		} else {
 			/* duplicate table as str */
-			pkg_str_dup(dbp->table, &tmp);
+			pkg_str_dup(&dbp->table, &tmp);
 		}
 	}
 

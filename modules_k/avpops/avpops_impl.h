@@ -114,7 +114,7 @@ struct db_param
 {
 	struct fis_param a;        /* attribute */
 	str              sa;       /* attribute as str (for db queries) */
-	str              *table;   /* DB table/scheme name */
+	str              table;    /* DB table/scheme name */
 	struct db_scheme *scheme;  /* DB scheme */
 };
 
