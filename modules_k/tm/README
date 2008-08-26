@@ -71,7 +71,7 @@ Bogdan-Andrei Iancu
               1.4.7. t_check_status(re)
               1.4.8. t_flush_flags()
               1.4.9. t_local_replied(reply)
-              1.4.10. t_write_fifo(info,fifo)
+              1.4.10. t_write_req(info,fifo)
                       t_write_unix(info,sock)
 
               1.4.11. t_check_trans()
@@ -141,7 +141,7 @@ Bogdan-Andrei Iancu
    1.25. t_check_status usage
    1.26. t_flush_flags usage
    1.27. t_local_replied usage
-   1.28. t_write_fifo/unix usage
+   1.28. t_write_req/unix usage
    1.29. t_check_trans usage
    1.30. t_was_cancelled usage
    1.31. t_on_failure usage
@@ -476,7 +476,7 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 
 1.3.13. tw_append (string)
 
-   List of additional information to be appended by t_write_fifo
+   List of additional information to be appended by t_write_req
    and t_write_unix functions.
 
    Default value is null string.
@@ -777,21 +777,21 @@ if (t_local_replied("all")) {
 }
 ...
 
-1.4.10.  t_write_fifo(info,fifo) t_write_unix(info,sock)
+1.4.10.  t_write_req(info,fifo) t_write_unix(info,sock)
 
-   Write via FIFO file or UNIX socket a lot of information
+   Write via FIFO interface or UNIX socket a lot of information
    regarding the request. Which information should be written may
    be control via the "tw_append" parameter.
 
    This functions can be used from REQUEST_ROUTE, FAILURE_ROUTE
    and BRANCH_ROUTE.
 
-   Example 1.28. t_write_fifo/unix usage
+   Example 1.28. t_write_req/unix usage
 ...
 modparam("tm","tw_append","append1:Email=avp[i:12];UA=hdr[User-Agent]")
 modparam("tm","tw_append","append2:body=msg[body]")
 ...
-t_write_fifo("voicemail/append1","/tmp/appx_fifo");
+t_write_req("voicemail/append1","/tmp/appx_fifo");
 ...
 t_write_unix("logger/append2","/var/run/logger.sock");
 ...
