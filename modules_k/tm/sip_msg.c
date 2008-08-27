@@ -807,6 +807,11 @@ do { \
 					new_msg->ppi = new_hdr;
 				}
 				break;
+			case HDR_PAI_T:
+				if (HOOK_NOT_SET(pai)) {
+					new_msg->pai = new_hdr;
+				}
+				break;
 			case HDR_REFER_TO_T:
 				if (HOOK_NOT_SET(refer_to)) {
 					new_msg->refer_to = new_hdr;
