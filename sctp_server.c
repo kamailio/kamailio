@@ -58,6 +58,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	int optval;
 	socklen_t optlen;
 	struct addr_info* ai;
+	struct sctp_event_subscribe es;
 	
 	addr=&sock_info->su;
 	sock_info->proto=PROTO_SCTP;
@@ -85,7 +86,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	INFO("sctp: socket %d initialized (%p)\n", sock_info->socket, sock_info);
 	/* make socket non-blocking */
 #if 0
-	/* MSG_WAITALL doesn't work for recvmsg, so use blocking sockets
+	/* recvmsg must block so use blocking sockets
 	 * and send with MSG_DONTWAIT */
 	optval=fcntl(sock_info->socket, F_GETFL);
 	if (optval==-1){
@@ -179,8 +180,27 @@ int sctp_init_sock(struct socket_info* sock_info)
 		/* non critical, try to continue */
 	}
 	
+	memset(&es, 0, sizeof(es));
 	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message
 	 *  information in sctp_sndrcvinfo */
+	es.sctp_data_io_event=1;
+	/* enable association event notifications */
+	es.sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
+	es.sctp_address_event=1;  /* enable address events notifications */
+	es.sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
+	es.sctp_peer_error_event=1;
+	es.sctp_shutdown_event=1;
+	es.sctp_partial_delivery_event=1;
+	es.sctp_adaptation_layer_event=1;
+	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
+	
+	/* enable the SCTP_EVENTS */
+	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_EVENTS,
+						&es, sizeof(es))==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SCTP_EVENTS: %s\n",
+						strerror(errno));
+		/* non critical, try to continue */
+	}
 	
 	/* SCTP_EVENTS for send dried out -> present in the draft not yet
 	 * present in linux (might help to detect when we could send again to
@@ -233,6 +253,65 @@ error:
 
 
 
+static int sctp_handle_notification(struct socket_info* si,
+									union sockaddr_union* su,
+									char* buf, unsigned len)
+{
+	union sctp_notification* snp;
+	DBG("sctp_rcv_loop: MSG_NOTIFICATION\n");
+
+	if (len < sizeof(snp->sn_header)){
+		LOG(L_ERR, "ERROR: sctp_handle_notification: invalid length %d "
+					"on %.*s:%d, from %s\n",
+					len, si->name.len, si->name.s, si->port_no,
+					su2a(su, sizeof(*su)));
+		goto err;
+	}
+	snp=(union sctp_notification*) buf;
+	switch(snp->sn_header.sn_type){
+		case SCTP_REMOTE_ERROR:
+			if (likely(len>=(sizeof(struct sctp_remote_error)))){
+				INFO("sctp notification from %s on %.*s:%d:"
+						" SCTP_REMOTE_ERROR: %d, len %d\n",
+						su2a(su, sizeof(*su)), si->name.len, si->name.s,
+						si->port_no,
+						ntohs(snp->sn_remote_error.sre_error),
+						ntohs(snp->sn_remote_error.sre_length)
+						);
+			}else{
+				LOG(L_ERR, "ERROR: sctp notification from %s on %.*s:%d:"
+						" SCTP_REMOTE_ERROR: too short\n",
+						su2a(su, sizeof(*su)), si->name.len, si->name.s,
+						si->port_no);
+				goto err;
+			}
+			break;
+		case SCTP_SEND_FAILED:
+			if (likely(len>=(sizeof(struct sctp_send_failed)))){
+				INFO("sctp notification from %s on %.*s:%d:"
+						" SCTP_SEND_FAILED: error %d\n",
+						su2a(su, sizeof(*su)), si->name.len, si->name.s,
+						si->port_no, snp->sn_send_failed.ssf_error);
+			}else{
+				LOG(L_ERR, "ERROR: sctp notification from %s on %.*s:%d:"
+						" SCTP_SEND_FAILED: too short\n",
+						su2a(su, sizeof(*su)), si->name.len, si->name.s,
+						si->port_no);
+				goto err;
+			}
+			break;
+		default:
+			INFO("sctp notification from %s on %.*s:%d: UNKNOWN (%d)\n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no, snp->sn_header.sn_type);
+	}
+	return 0;
+err:
+	return -1;
+}
+
+
+
 int sctp_rcv_loop()
 {
 	unsigned len;
@@ -242,8 +321,10 @@ int sctp_rcv_loop()
 	struct sctp_sndrcvinfo* sinfo;
 	struct msghdr msg;
 	struct iovec iov[1];
-	/*struct cmsghdr* cmsg; */
-	char cbuf[CMSG_SPACE(sizeof(*sinfo))];
+	struct cmsghdr* cmsg;
+	/* use a larger buffer then needed in case some other ancillary info
+	 * is enabled */
+	char cbuf[CMSG_SPACE(sizeof(*sinfo))+CMSG_SPACE(1024)];
 
 	
 	ri.bind_address=bind_address; /* this will not change */
@@ -265,13 +346,10 @@ int sctp_rcv_loop()
 	if (cfg_child_init()) goto error;
 	
 	for(;;){
-		/* recv
-		 * recvmsg must be used because the socket is non-blocking
-		 * and we want MSG_WAITALL */
 		msg.msg_name=&ri.src_su.s;
 		msg.msg_namelen=sockaddru_len(bind_address->su);
 
-		len=recvmsg(bind_address->socket, &msg, MSG_WAITALL);
+		len=recvmsg(bind_address->socket, &msg, 0);
 		/* len=sctp_recvmsg(bind_address->socket, buf, BUF_SIZE, &ri.src_su.s,
 							&msg.msg_namelen, &sinfo, &msg.msg_flags); */
 		if (len==-1){
@@ -287,19 +365,39 @@ int sctp_rcv_loop()
 			else goto error;
 		}
 		if (unlikely(msg.msg_flags & MSG_NOTIFICATION)){
-			/* intercept usefull notifications: TODO */
-			DBG("sctp_rcv_loop: MSG_NOTIFICATION\n");
-			/* notification in CMSG data */
+			/* intercept usefull notifications */
+			sctp_handle_notification(bind_address, &ri.src_su, buf, len);
 			continue;
 		}else if (unlikely(!(msg.msg_flags & MSG_EOR))){
 			LOG(L_ERR, "ERROR: sctp_rcv_loop: partial delivery not"
 						"supported\n");
 			continue;
 		}
-		/* we  0-term the messages for debugging */
-		buf[len]=0; /* no need to save the previous char */
+		
 		su2ip_addr(&ri.src_ip, &ri.src_su);
 		ri.src_port=su_getport(&ri.src_su);
+		
+		/* get ancillary data */
+		for (cmsg=CMSG_FIRSTHDR(&msg); cmsg; cmsg=CMSG_NXTHDR(&msg, cmsg)){
+			if (likely((cmsg->cmsg_level==IPPROTO_SCTP) &&
+						((cmsg->cmsg_type==SCTP_SNDRCV)
+#ifdef SCTP_EXT
+						 || (cmsg->cmsg_type==SCTP_EXTRCV)
+#endif
+						) && (cmsg->cmsg_len>=CMSG_LEN(sizeof(*sinfo)))) ){
+				sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
+				DBG("sctp recv: message from %s:%d stream %d  ppid %x"
+						" flags %x tsn %d" " cumtsn %d associd %d\n",
+						ip_addr2a(&ri.src_ip), htons(ri.src_port),
+						sinfo->sinfo_stream, sinfo->sinfo_ppid,
+						sinfo->sinfo_flags,
+						sinfo->sinfo_tsn, sinfo->sinfo_cumtsn, 
+						sinfo->sinfo_assoc_id);
+				break;
+			}
+		}
+		/* we  0-term the messages for debugging */
+		buf[len]=0; /* no need to save the previous char */
 
 		/* sanity checks */
 		if (len<MIN_SCTP_PACKET) {
