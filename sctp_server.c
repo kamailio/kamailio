@@ -471,8 +471,6 @@ int sctp_rcv_loop()
 	iov[0].iov_len=BUF_SIZE;
 	msg.msg_iov=iov;
 	msg.msg_iovlen=1;
-	msg.msg_control=cbuf;
-	msg.msg_controllen=sizeof(cbuf);
 	msg.msg_flags=0;
 	
 
@@ -482,6 +480,8 @@ int sctp_rcv_loop()
 	for(;;){
 		msg.msg_name=&ri.src_su.s;
 		msg.msg_namelen=sockaddru_len(bind_address->su);
+		msg.msg_control=cbuf;
+		msg.msg_controllen=sizeof(cbuf);
 
 		len=recvmsg(bind_address->socket, &msg, 0);
 		/* len=sctp_recvmsg(bind_address->socket, buf, BUF_SIZE, &ri.src_su.s,
@@ -521,10 +521,12 @@ int sctp_rcv_loop()
 						) && (cmsg->cmsg_len>=CMSG_LEN(sizeof(*sinfo)))) ){
 				sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
 				DBG("sctp recv: message from %s:%d stream %d  ppid %x"
-						" flags %x tsn %d" " cumtsn %d associd %d\n",
+						" flags %x%s tsn %u" " cumtsn %u associd %d\n",
 						ip_addr2a(&ri.src_ip), htons(ri.src_port),
 						sinfo->sinfo_stream, sinfo->sinfo_ppid,
 						sinfo->sinfo_flags,
+						(sinfo->sinfo_flags&SCTP_UNORDERED)?
+							" (SCTP_UNORDERED)":"",
 						sinfo->sinfo_tsn, sinfo->sinfo_cumtsn, 
 						sinfo->sinfo_assoc_id);
 				break;
