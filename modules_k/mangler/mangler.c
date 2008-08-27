@@ -180,6 +180,7 @@ int prepare (void)
 
 static int mod_init (void)
 {
+	LM_WARN("this module is deprecated, and will be removed for the next release");
 	ipExpression = NULL;
 	portExpression = NULL;
 	prepare ();
