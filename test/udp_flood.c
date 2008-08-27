@@ -43,6 +43,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#ifdef USE_SCTP
+#include <netinet/sctp.h>
+#endif /* USE_SCTP */
 #include <arpa/inet.h>
 #include <signal.h>
 
@@ -60,6 +63,8 @@ Options:\n\
     -t throttle   number of packets to send before sleeping\n\
     -r            sleep randomly up to -s usec packets (see -s) \n\
     -T            use tcp instead of udp \n\
+    -S            use sctp instead of udp \n\
+    -1            use sctp in one to one mode \n\
     -n no         tcp connection number \n\
     -R            close the tcp connections with RST (SO_LINGER) \n\
     -v            increase verbosity level\n\
@@ -69,6 +74,8 @@ Options:\n\
 
 #define BUF_SIZE 65535
 
+
+enum protos { PROTO_NONE, PROTO_UDP, PROTO_TCP, PROTO_SCTP };
 
 int main (int argc, char** argv)
 {
@@ -89,7 +96,8 @@ int main (int argc, char** argv)
 	unsigned long usec;
 	int throttle;
 	int random_sleep;
-	int tcp;
+	enum protos proto;
+	int sctp_o2o;
 	int tcp_rst;
 	int con_no;
 	int t;
@@ -106,13 +114,14 @@ int main (int argc, char** argv)
 	usec=0;
 	throttle=0;
 	random_sleep=0;
-	tcp=0;
+	proto=PROTO_UDP;
 	tcp_rst=0;
 	con_no=1;
+	sctp_o2o=0;
 	err=0;
 
 	opterr=0;
-	while ((c=getopt(argc,argv, "f:c:d:p:s:t:n:rTRvhV"))!=-1){
+	while ((c=getopt(argc,argv, "f:c:d:p:s:t:n:rTS1RvhV"))!=-1){
 		switch(c){
 			case 'f':
 				fname=optarg;
@@ -162,7 +171,19 @@ int main (int argc, char** argv)
 				random_sleep=1;
 				break;
 			case 'T':
-				tcp=1;
+				proto=PROTO_TCP;
+				break;
+			case 'S':
+#ifdef USE_SCTP
+				proto=PROTO_SCTP;
+#else
+				fprintf(stderr, "sctp not supported (recompile with "
+								"-DUSE_SCTP)\n");
+				goto error;
+#endif /* USE_SCTP */
+				break;
+			case '1':
+				sctp_o2o=1;
 				break;
 			case 'R':
 				tcp_rst=1;
@@ -216,7 +237,7 @@ int main (int argc, char** argv)
 		fprintf(stderr, "Invalid packet count (-c %d)\n", count);
 		exit(-1);
 	}
-	if (!tcp) con_no=1;
+	if (proto!=PROTO_UDP) con_no=1;
 	
 	/* ignore sigpipe */
 	if (signal(SIGPIPE, SIG_IGN)==SIG_ERR){
@@ -251,16 +272,33 @@ int main (int argc, char** argv)
 	addr.sin_port=htons(port);
 #ifdef HAVE_SOCKADDR_SA_LEN
 	addr.sin_len=sizeof(struct sockaddr_in);
-	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
 #endif
+	memcpy(&addr.sin_addr.s_addr, he->h_addr_list[0], he->h_length);
 	
 	for (k=0; k<con_no; k++){
-		sock = socket(he->h_addrtype, (tcp)?SOCK_STREAM:SOCK_DGRAM, 0);
+		switch(proto){
+			case PROTO_UDP:
+				sock = socket(he->h_addrtype, SOCK_DGRAM, 0);
+				break;
+			case PROTO_TCP:
+				sock = socket(he->h_addrtype, SOCK_STREAM, 0);
+				break;
+#ifdef USE_SCTP
+			case PROTO_SCTP:
+				sock = socket(he->h_addrtype, 
+								sctp_o2o?SOCK_STREAM:SOCK_SEQPACKET,
+								IPPROTO_SCTP);
+				break;
+#endif /* USE_SCTP */
+			default:
+				fprintf(stderr, "BUG: unkown proto %d\n", proto);
+				goto error;
+		}
 		if (sock==-1){
 			fprintf(stderr, "ERROR: socket: %s\n", strerror(errno));
 			goto error;
 		}
-		if (tcp){
+		if (proto==PROTO_TCP){
 			t=1;
 			if (setsockopt(sock, IPPROTO_TCP , TCP_NODELAY, &t, sizeof(t))<0){
 				fprintf(stderr, "ERROR: could not disable Nagle: %s\n",
@@ -276,9 +314,22 @@ int main (int argc, char** argv)
 				}
 			}
 		}
+#ifdef USE_SCTP
+		else if (proto==PROTO_SCTP){
+			t=1;
+			if (setsockopt(sock, SOL_SCTP, SCTP_NODELAY, &t, sizeof(t))<0){
+				fprintf(stderr, "ERROR: could not disable Nagle: %s\n",
+								strerror(errno));
+			}
+		}
+#endif /* USE_SCTP */
 
-		if (connect(sock, (struct sockaddr*) &addr,
-					sizeof(struct sockaddr))!=0){
+		if (
+#ifdef USE_SCTP
+			(proto!=PROTO_SCTP || sctp_o2o) &&
+#endif /* USE_SCTP */
+			(connect(sock, (struct sockaddr*) &addr,
+					sizeof(struct sockaddr))!=0)){
 			fprintf(stderr, "ERROR: connect: %s\n", strerror(errno));
 			goto error;
 		}
@@ -288,9 +339,23 @@ int main (int argc, char** argv)
 		t=throttle;
 		for (r=0; r<count; r++){
 			if ((verbose>1)&&((r%1000)==999)){  putchar('.'); fflush(stdout); }
-			if (send(sock, buf, n, 0)==-1) {
-				fprintf(stderr, "Error(%d): send: %s\n", err, strerror(errno));
-				err++;;
+#ifdef USE_SCTP
+			if (proto==PROTO_SCTP && !sctp_o2o){
+				if (sctp_sendmsg(sock, buf, n,  (struct sockaddr*) &addr,
+									sizeof(struct sockaddr), 0, SCTP_UNORDERED,
+									0, 0, 0)==-1){
+					fprintf(stderr, "Error(%d): send: %s\n", err,
+							strerror(errno));
+					err++;;
+				}
+			}else
+#endif /* USE_SCTP */
+			{
+				if (send(sock, buf, n, 0)==-1) {
+					fprintf(stderr, "Error(%d): send: %s\n", err,
+							strerror(errno));
+					err++;;
+				}
 			}
 			if (usec){
 				t--;
@@ -305,10 +370,11 @@ int main (int argc, char** argv)
 		close(sock);
 		if ((verbose) && (k%1000==999)) { putchar('#'); fflush(stdout); }
 	}
-	if (tcp){
-		printf("\n%d packets sent on %d tcp connections (%d on each of them),"
+	if (proto==PROTO_TCP || proto==PROTO_SCTP){
+		printf("\n%d packets sent on %d %s connections (%d on each of them),"
 				" %d bytes each => total %d bytes\n",
-				count*con_no-err, con_no, count, n,
+				count*con_no-err, con_no, (proto==PROTO_TCP)?"tcp":"sctp",
+				count, n,
 				(con_no*count-err)*n);
 	}else{
 		printf("\n%d packets sent, %d bytes each => total %d bytes\n",
