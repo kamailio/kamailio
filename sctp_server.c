@@ -253,61 +253,195 @@ error:
 
 
 
+/* debugging: return a string name for SCTP_ASSOC_CHANGE state */
+static char* sctp_assoc_change_state2s(short int state)
+{
+	char* s;
+	
+	switch(state){
+		case SCTP_COMM_UP:
+			s="SCTP_COMM_UP";
+			break;
+		case SCTP_COMM_LOST:
+			s="SCTP_COMM_LOST";
+			break;
+		case SCTP_RESTART:
+			s="SCTP_RESTART";
+			break;
+		case SCTP_SHUTDOWN_COMP:
+			s="SCTP_SHUTDOWN_COMP";
+			break;
+		case SCTP_CANT_STR_ASSOC:
+			s="SCTP_CANT_STR_ASSOC";
+			break;
+		default:
+			s="UNKOWN";
+			break;
+	};
+	return s;
+}
+
+
+
+/* debugging: return a string name for a SCTP_PEER_ADDR_CHANGE state */
+static char* sctp_paddr_change_state2s(unsigned int state)
+{
+	char* s;
+	
+	switch (state){
+		case SCTP_ADDR_AVAILABLE:
+			s="SCTP_ADDR_AVAILABLE";
+			break;
+		case SCTP_ADDR_UNREACHABLE:
+			s="SCTP_ADDR_UNREACHABLE";
+			break;
+		case SCTP_ADDR_REMOVED:
+			s="SCTP_ADDR_REMOVED";
+			break;
+		case SCTP_ADDR_ADDED:
+			s="SCTP_ADDR_ADDED";
+			break;
+		case SCTP_ADDR_MADE_PRIM:
+			s="SCTP_ADDR_MADE_PRIM";
+			break;
+		case SCTP_ADDR_CONFIRMED:
+			s="SCTP_ADDR_CONFIRMED";
+			break;
+		default:
+			s="UNKNOWN";
+			break;
+	}
+	return s;
+}
+
+
+
 static int sctp_handle_notification(struct socket_info* si,
 									union sockaddr_union* su,
 									char* buf, unsigned len)
 {
 	union sctp_notification* snp;
+	char su_buf[SU2A_MAX_STR_SIZE];
+	
 	DBG("sctp_rcv_loop: MSG_NOTIFICATION\n");
+	
+	#define SNOT DBG
+	#define ERR_LEN_TOO_SMALL(length, val, bind_addr, from_su, text) \
+		if (unlikely((length)<(val))){\
+			SNOT("ERROR: sctp notification from %s on %.*s:%d: " \
+						text " too short (%d bytes instead of %d bytes)\n", \
+						su2a((from_su), sizeof(*(from_su))), \
+						(bind_addr)->name.len, (bind_addr)->name.s, \
+						(bind_addr)->port_no, (length), (val)); \
+			goto error; \
+		}
 
 	if (len < sizeof(snp->sn_header)){
 		LOG(L_ERR, "ERROR: sctp_handle_notification: invalid length %d "
 					"on %.*s:%d, from %s\n",
 					len, si->name.len, si->name.s, si->port_no,
 					su2a(su, sizeof(*su)));
-		goto err;
+		goto error;
 	}
 	snp=(union sctp_notification*) buf;
 	switch(snp->sn_header.sn_type){
 		case SCTP_REMOTE_ERROR:
-			if (likely(len>=(sizeof(struct sctp_remote_error)))){
-				INFO("sctp notification from %s on %.*s:%d:"
-						" SCTP_REMOTE_ERROR: %d, len %d\n",
-						su2a(su, sizeof(*su)), si->name.len, si->name.s,
-						si->port_no,
-						ntohs(snp->sn_remote_error.sre_error),
-						ntohs(snp->sn_remote_error.sre_length)
-						);
-			}else{
-				LOG(L_ERR, "ERROR: sctp notification from %s on %.*s:%d:"
-						" SCTP_REMOTE_ERROR: too short\n",
-						su2a(su, sizeof(*su)), si->name.len, si->name.s,
-						si->port_no);
-				goto err;
-			}
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_remote_error), si, su,
+								"SCTP_REMOTE_ERROR");
+			SNOT("sctp notification from %s on %.*s:%d: SCTP_REMOTE_ERROR:"
+					" %d, len %d\n, assoc. %d",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no,
+					ntohs(snp->sn_remote_error.sre_error),
+					ntohs(snp->sn_remote_error.sre_length),
+					snp->sn_remote_error.sre_assoc_id
+				);
 			break;
 		case SCTP_SEND_FAILED:
-			if (likely(len>=(sizeof(struct sctp_send_failed)))){
-				INFO("sctp notification from %s on %.*s:%d:"
-						" SCTP_SEND_FAILED: error %d\n",
-						su2a(su, sizeof(*su)), si->name.len, si->name.s,
-						si->port_no, snp->sn_send_failed.ssf_error);
-			}else{
-				LOG(L_ERR, "ERROR: sctp notification from %s on %.*s:%d:"
-						" SCTP_SEND_FAILED: too short\n",
-						su2a(su, sizeof(*su)), si->name.len, si->name.s,
-						si->port_no);
-				goto err;
-			}
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_send_failed), si, su,
+								"SCTP_SEND_FAILED");
+			SNOT("sctp notification from %s on %.*s:%d: SCTP_SEND_FAILED:"
+					" error %d, assoc. %d, flags %x\n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no, snp->sn_send_failed.ssf_error,
+					snp->sn_send_failed.ssf_assoc_id,
+					snp->sn_send_failed.ssf_flags);
 			break;
+		case SCTP_PEER_ADDR_CHANGE:
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_paddr_change), si, su,
+								"SCTP_PEER_ADDR_CHANGE");
+			strcpy(su_buf, su2a((union sockaddr_union*)
+									&snp->sn_paddr_change.spc_aaddr, 
+									sizeof(snp->sn_paddr_change.spc_aaddr)));
+			SNOT("sctp notification from %s on %.*s:%d: SCTP_PEER_ADDR_CHANGE"
+					": %s: %s: assoc. %d \n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no, su_buf,
+					sctp_paddr_change_state2s(snp->sn_paddr_change.spc_state),
+					snp->sn_paddr_change.spc_assoc_id
+					);
+			break;
+		case SCTP_SHUTDOWN_EVENT:
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_shutdown_event), si, su,
+								"SCTP_SHUTDOWN_EVENT");
+			SNOT("sctp notification from %s on %.*s:%d: SCTP_SHUTDOWN_EVENT:"
+					" assoc. %d\n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no, snp->sn_shutdown_event.sse_assoc_id);
+			break;
+		case SCTP_ASSOC_CHANGE:
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_assoc_change), si, su,
+								"SCTP_ASSOC_CHANGE");
+			SNOT("sctp notification from %s on %.*s:%d: SCTP_ASSOC_CHANGE"
+					": %s: assoc. %d, ostreams %d, istreams %d\n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no,
+					sctp_assoc_change_state2s(snp->sn_assoc_change.sac_state),
+					snp->sn_assoc_change.sac_assoc_id,
+					snp->sn_assoc_change.sac_outbound_streams,
+					snp->sn_assoc_change.sac_inbound_streams
+					);
+			break;
+#ifdef SCTP_ADAPTION_INDICATION
+		case SCTP_ADAPTION_INDICATION:
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_adaption_event), si, su,
+								"SCTP_ADAPTION_INDICATION");
+			SNOT("sctp notification from %s on %.*s:%d: "
+					"SCTP_ADAPTION_INDICATION \n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no);
+			break;
+#endif /* SCTP_ADAPTION_INDICATION */
+		case SCTP_PARTIAL_DELIVERY_EVENT:
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_pdapi_event), si, su,
+								"SCTP_PARTIAL_DELIVERY_EVENT");
+			SNOT("sctp notification from %s on %.*s:%d: "
+					"SCTP_PARTIAL_DELIVERY_EVENT: %d%s, assoc. %d\n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no, snp->sn_pdapi_event.pdapi_indication,
+					(snp->sn_pdapi_event.pdapi_indication==
+					 	SCTP_PARTIAL_DELIVERY_ABORTED)? " PD ABORTED":"",
+					snp->sn_pdapi_event.pdapi_assoc_id);
+			break;
+#ifdef SCTP_SENDER_DRY_EVENT /* new, not yet supported */
+		case SCTP_SENDER_DRY_EVENT:
+			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_sender_dry_event),
+								si, su, "SCTP_SENDER_DRY_EVENT");
+			SNOT("sctp notification from %s on %.*s:%d: "
+					"SCTP_SENDER_DRY_EVENT on %d\n",
+					su2a(su, sizeof(*su)), si->name.len, si->name.s,
+					si->port_no, snp->sn_sender_dry_event.sender_dry_assoc_id);
+			break;
+#endif /* SCTP_SENDER_DRY_EVENT */
 		default:
-			INFO("sctp notification from %s on %.*s:%d: UNKNOWN (%d)\n",
+			SNOT("sctp notification from %s on %.*s:%d: UNKNOWN (%d)\n",
 					su2a(su, sizeof(*su)), si->name.len, si->name.s,
 					si->port_no, snp->sn_header.sn_type);
 	}
 	return 0;
-err:
+error:
 	return -1;
+	#undef ERR_LEN_TOO_SMALL
 }
 
 
