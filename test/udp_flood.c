@@ -237,7 +237,7 @@ int main (int argc, char** argv)
 		fprintf(stderr, "Invalid packet count (-c %d)\n", count);
 		exit(-1);
 	}
-	if (proto!=PROTO_UDP) con_no=1;
+	if (proto==PROTO_UDP || (proto==PROTO_SCTP && !sctp_o2o)) con_no=1;
 	
 	/* ignore sigpipe */
 	if (signal(SIGPIPE, SIG_IGN)==SIG_ERR){
