@@ -41,15 +41,15 @@ struct sl_cb_param {
 	void *param;
 };
 
-/* callback function prototype */
+/*! callback function prototype */
 typedef void (sl_cb_t) (unsigned int types, struct sip_msg* req,
 		struct sl_cb_param *sl_param);
-/* register callback function prototype */
+/*! register callback function prototype */
 typedef int (*register_slcb_t)(unsigned int types, sl_cb_t f, void *param);
 
 
 
-
+/*! SL callback definition */
 struct sl_callback {
 	int id;                    /* id of this callback - useless */
 	unsigned int types;        /* maks of types */
@@ -62,14 +62,14 @@ struct sl_callback {
 #define SLCB_REPLY_OUT       (1<<0)
 #define SLCB_ACK_IN          (1<<1)
 
-
+/*! cleanup callback list */
 void destroy_slcb_lists();
 
 
-/* register a SL callback */
+/*! register a SL callback */
 int register_slcb(unsigned int types, sl_cb_t f, void *param );
 
-/* run SL callbacks */
+/*! run SL callbacks */
 void run_sl_callbacks( unsigned int types, struct sip_msg *req, str *buffer,
 		int code, str *reason, union sockaddr_union *to);
 

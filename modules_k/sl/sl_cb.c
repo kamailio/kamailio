@@ -19,20 +19,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- *
  * History:
  * ---------
  *  2006-03-29  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief SL::callbacks
+ * \ingroup sl
+ */
+
 #include "../../mem/mem.h"
 #include "sl_cb.h"
 
+/*! callback list head */
+struct sl_callback* slcb_hl = 0;
 
-struct sl_callback* slcb_hl = 0;  /* head list */
 
-
-
+/*! cleanup callback list */
 void destroy_slcb_lists(void)
 {
 	struct sl_callback *cbp, *cbp_tmp;
@@ -45,6 +50,7 @@ void destroy_slcb_lists(void)
 }
 
 
+/*! register a SL callback */
 int register_slcb(unsigned int types, sl_cb_t f, void *param )
 {
 	struct sl_callback *cbp;
@@ -72,6 +78,7 @@ int register_slcb(unsigned int types, sl_cb_t f, void *param )
 }
 
 
+/*! run SL callbacks */
 void run_sl_callbacks( unsigned int types, struct sip_msg *req, str *buffer,
 							int code, str *reason, union sockaddr_union *to )
 {
@@ -91,6 +98,3 @@ void run_sl_callbacks( unsigned int types, struct sip_msg *req, str *buffer,
 		}
 	}
 }
-
-
-

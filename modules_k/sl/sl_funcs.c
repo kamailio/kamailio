@@ -39,6 +39,11 @@
  *             (Jeffrey Magder - SOMA Networks)
  */
 
+/*!
+ * \file
+ * \brief SL::functions
+ * \ingroup sl
+ */
 
 #include "../../globals.h"
 #include "../../forward.h"
@@ -69,6 +74,8 @@ static char           *tag_suffix;
    we do not filter */
 static unsigned int  *sl_timeout = 0;
 
+
+/*! SL startup helper */
 int sl_startup(void)
 {
 
@@ -89,6 +96,7 @@ int sl_startup(void)
 }
 
 
+/*! SL shutdown helper */
 int sl_shutdown(void)
 {
 	if (sl_timeout)
@@ -97,7 +105,7 @@ int sl_shutdown(void)
 }
 
 
-/* Take care of the statistics associated with numerical codes and replies */
+/*! Take care of the statistics associated with numerical codes and replies */
 static inline void update_sl_reply_stat(int code) 
 {
 	stat_var *numerical_stat;
@@ -132,6 +140,7 @@ static inline void update_sl_reply_stat(int code)
 }
 
 
+/*! sl_send_reply helper function */
 int sl_send_reply_helper(struct sip_msg *msg ,int code, str *text, str *tag)
 {
 	str buf;
@@ -210,17 +219,22 @@ error:
 	return -1;
 }
 
+
+/*! small wrapper around sl_send_reply_helper */
 int sl_send_reply(struct sip_msg *msg ,int code, str *text)
 {
 	return sl_send_reply_helper(msg, code, text, 0);
 }
 
+
+/*! small wrapper around sl_send_reply_helper */
 int sl_send_reply_dlg(struct sip_msg *msg ,int code, str *text, str *tag)
 {
 	return sl_send_reply_helper(msg, code, text, tag);
 }
 
 
+/*! Reply an SIP error */
 int sl_reply_error(struct sip_msg *msg )
 {
 	char err_buf[MAX_REASON_LEN];
@@ -247,11 +261,10 @@ int sl_reply_error(struct sip_msg *msg )
 
 
 
-/* Returns:
-    0  : ACK to a local reply
-    -1 : error
-    1  : is not an ACK  or a non-local ACK
-*/
+/*!
+ * Filter ACKs
+ * \return 0 for ACKs to a local reply, -1 on error, 1 is not an ACK or a non-local ACK
+ */
 int sl_filter_ACK(struct sip_msg *msg, void *bar )
 {
 	str *tag_str;
@@ -292,4 +305,3 @@ int sl_filter_ACK(struct sip_msg *msg, void *bar )
 pass_it:
 	return 1;
 }
-

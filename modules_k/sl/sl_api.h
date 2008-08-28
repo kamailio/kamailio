@@ -20,6 +20,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*!
+ * \file
+ * \brief SL::API
+ * \ingroup sl
+ */
 
 #ifndef _SL_API_H_
 #define _SL_API_H_
@@ -31,6 +36,7 @@ typedef int (*sl_send_reply_f)(struct sip_msg *msg, int code, str *reason);
 typedef int (*sl_send_reply_dlg_f)(struct sip_msg *msg, int code, str *reason,
 		str *tag);
 
+/*! SL API bindings */
 struct sl_binds {
 	sl_send_reply_f reply;
 	sl_send_reply_dlg_f reply_dlg;
@@ -40,7 +46,9 @@ typedef int(*load_sl_f)(struct sl_binds *slb);
 
 int load_sl(struct sl_binds *slb);
 
-
+/*!
+ * \brief Load the SL API
+ */
 static inline int load_sl_api( struct sl_binds *slb )
 {
 	load_sl_f load_sl;

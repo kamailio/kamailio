@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * sl module
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -31,6 +29,11 @@
  *  2006-03-29  callbacks for sending replies added (bogdan)
  */
 
+/*!
+ * \file
+ * \brief SL::module definitions
+ * \ingroup sl
+ */
 
 #include <stdio.h>
 #include <string.h>
@@ -82,6 +85,7 @@ static cmd_export_t cmds[]={
 	{0,0,0,0,0,0}
 };
 
+
 static param_export_t mod_params[]={
 	{ "enable_stats",  INT_PARAM, &sl_enable_stats },
 	{ 0,0,0 }
@@ -102,8 +106,6 @@ stat_export_t mod_stats[] = {
 };
 
 
-
-
 #ifdef STATIC_SL
 struct module_exports sl_exports = {
 #else
@@ -122,8 +124,6 @@ struct module_exports exports= {
 	mod_destroy,
 	0             /* per-child init function */
 };
-
-
 
 
 static int mod_init(void)
@@ -152,8 +152,6 @@ static int mod_init(void)
 }
 
 
-
-
 static void mod_destroy(void)
 {
 	sl_shutdown();
@@ -161,7 +159,9 @@ static void mod_destroy(void)
 
 }
 
-
+/*!
+ * \brief Fixup function for sl_send_reply
+ */
 static int fixup_sl_send_reply(void** param, int param_no)
 {
 	pv_elem_t *model=NULL;
@@ -208,13 +208,20 @@ static int fixup_sl_send_reply(void** param, int param_no)
 }
 
 
-
+/*!
+ * \brief Small wrapper around sl_send_reply
+ */
 static int w_sl_reply_error( struct sip_msg* msg, char* str1, char* str2)
 {
 	return sl_reply_error( msg );
 }
 
 
+/*!
+ * \brief Wrapper around sl_send_reply
+ *
+ * Wrapper around sl_send_reply, evaluate pseudo-variables.
+ */
 static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 {
 	str code_s;
@@ -242,6 +249,11 @@ static int w_sl_send_reply(struct sip_msg* msg, char* str1, char* str2)
 }
 
 
+/*!
+ * \brief Helper function for loading the SL API
+ * \param slb sl_bind structure
+ * \return -1 on parameter errors, 1 otherwise
+ */
 int load_sl( struct sl_binds *slb)
 {
 	if(slb==NULL)

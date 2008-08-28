@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * sl module
- *
  * Copyright (C) 2006 Voice Sistem
  *
  * This file is part of Kamailio, a free SIP server.
@@ -24,6 +22,12 @@
  * History:
  * --------
  *  2006-02-06  original version (bogdan)
+ */
+
+/*!
+ * \file
+ * \brief SL::module definitions
+ * \ingroup sl
  */
 
 #ifndef _SL_H_
