@@ -50,6 +50,7 @@
  *  contactToIndexStruct: maps a contact name to:
  *   - a contactIndex, used to uniquely identify each ContactTable SNMP row.
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

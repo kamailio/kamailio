@@ -34,6 +34,7 @@
  * This file was created to group together utility functions that were useful
  * throughout the SNMPStats module, without belonging to any file in particular.
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

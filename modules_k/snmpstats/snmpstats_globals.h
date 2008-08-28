@@ -32,6 +32,7 @@
  * \file
  * \brief SNMP statistic module, globals
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

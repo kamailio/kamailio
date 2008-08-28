@@ -38,6 +38,7 @@
  * Potential Performance Improvements: Pass the length of the aor strings around
  * everywhere, so we don't have to calculate it ourselves.
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 #include <stdlib.h>

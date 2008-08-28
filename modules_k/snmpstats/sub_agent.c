@@ -34,6 +34,7 @@
  * This file defines all functions required to establish a relationship with a
  * master agent.
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

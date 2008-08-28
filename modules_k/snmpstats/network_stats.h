@@ -41,6 +41,7 @@
  *
  * For further information, please consult network_stats.c
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

@@ -59,6 +59,7 @@
  * \file
  * \brief SNMP statistic module
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 #ifndef _SNMP_STATS_

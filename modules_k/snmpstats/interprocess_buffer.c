@@ -38,6 +38,7 @@
  * Details on why the interprocess buffer is needed can be found in the comments
  * at the top of interprocess_buffer.h
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

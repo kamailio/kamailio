@@ -48,6 +48,7 @@
  * to a non-critical path.  Such an approach allows SNMP support with almost no
  * overhead to the rest of the server.
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

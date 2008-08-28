@@ -56,6 +56,16 @@
  * \file
  * \brief SNMP statistic module
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
+ */
+
+/*!
+ * \defgroup snmpstats SNMPSTATS :: The Kamailio snmpstats Module
+ *
+ * The SNMPStats module provides an SNMP management interface to OpenSER.
+ * Specifically, it provides general SNMP queryable scalar statistics, table
+ * representations of more complicated data such as user and contact information,
+ * and alarm monitoring capabilities.
  */
 
 #include <stdio.h>

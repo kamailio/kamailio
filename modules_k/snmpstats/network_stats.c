@@ -47,6 +47,7 @@
  * The private functions in this file make extensive use of ip address arrays,
  * which are detailed in get_socket_list_from_proto() in this file.
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 

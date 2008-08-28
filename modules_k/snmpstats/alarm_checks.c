@@ -33,6 +33,7 @@
  *\file
  * \brief SNMP statistic module
  * \ingroup snmpstats
+ * - Module: \ref snmpstats
  */
 
 #include <signal.h>
