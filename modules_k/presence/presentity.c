@@ -244,7 +244,6 @@ int check_if_dialog(str body, int *is_dialog)
 {
 	xmlDocPtr doc;
 	xmlNodePtr node;
-	char* state;
 
 	doc = xmlParseMemory(body.s, body.len);
 	if(doc== NULL)
@@ -259,21 +258,7 @@ int check_if_dialog(str body, int *is_dialog)
 	if(node == NULL)
 		*is_dialog = 0;
 	else
-	{
-		node = xmlNodeGetChildByName(node, "state");
-		if(node== NULL)
-		{
-			LM_ERR("dialog state node not found\n");
-			xmlFreeDoc(doc);
-			return -1;
-		}
-		/* check state */
-		state= (char*)xmlNodeGetContent(node->children);
-		if(strcmp(state, "terminated")== 0)
-			*is_dialog = 0;
-		else
-			*is_dialog = 1;
-	}
+		*is_dialog = 1;
 
 	xmlFreeDoc(doc);
 	return 0;
@@ -298,7 +283,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 	db_row_t *row = NULL ;
 	db_val_t *row_vals = NULL;
 	str old_body, sender;
-	int is_dialog= 0, same_sender= 1;
+	int is_dialog= 0, bla_update_publish= 1;
 
 	*sent_reply= 0;
 	if(presentity->event->req_auth)
@@ -439,27 +424,36 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 
 				old_body.s = (char*)row_vals[rez_body_col].val.string_val;
 				old_body.len = strlen(old_body.s);
+				if(check_if_dialog(*body, &is_dialog)< 0)
+				{
+					LM_ERR("failed to check if dialog stored\n");
+					goto error;
+				}
+
+				if(is_dialog== 1)  /* if the new body has a dialog - overwrite */
+					goto after_dialog_check;
 
 				if(check_if_dialog(old_body, &is_dialog)< 0)
 				{
 					LM_ERR("failed to check if dialog stored\n");
 					goto error;
 				}
-			
+
+				if(is_dialog==0 ) /* if the old body has no dialog - overwrite */
+					goto after_dialog_check;
+
 				sender.s = (char*)row_vals[rez_sender_col].val.string_val;
 				sender.len= strlen(sender.s);
 
+				LM_DBG("old_sender = %.*s\n", sender.len, sender.s );
 				if(presentity->sender)
 				{
-					if(presentity->sender->len == sender.len && 
-							strncmp(presentity->sender->s, sender.s, sender.len)== 0)
-					{
-						same_sender = 1;
-					}
-					else
-						same_sender= 0;
+					if(!(presentity->sender->len == sender.len && 
+					strncmp(presentity->sender->s, sender.s, sender.len)== 0))
+						 bla_update_publish= 0;
 				}
 			}
+after_dialog_check:
 
 			pa_dbf.free_result(pa_db, result);
 			result= NULL;
@@ -505,10 +499,10 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 			n_update_cols= 0;
 			/* if event dialog and is_dialog -> if sender not the same as
 			 * old sender do not overwrite */
-			if( (presentity->event->evp->parsed & EVENT_DIALOG) && is_dialog && same_sender==0)
+			if( (presentity->event->evp->parsed & EVENT_DIALOG) &&  bla_update_publish==0)
 			{
 				LM_DBG("drop Publish for BLA from a different sender that"
-						" wants to overwrite an existing dialog");
+						" wants to overwrite an existing dialog\n");
 				LM_DBG("sender = %.*s\n",  presentity->sender->len, presentity->sender->s );
 				if( publ_send200ok(msg, presentity->expires, presentity->etag)< 0)
 				{
