@@ -1,11 +1,41 @@
 /*
+ * $Id$
+ *
+ * SNMPStats Module 
+ * Copyright (C) 2006 SOMA Networks, INC.
+ * Written by: Jeffrey Magder (jmagder@somanetworks.com)
+ *
+ * This file is part of Kamailio, a free SIP server.
+ *
+ * Kamailio is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version
+ *
+ * Kamailio is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+ * USA
+ *
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, master agent connection
  *
  * This file defines all functions required to establish a relationship with a
- * master agent.  
+ * master agent.
+ * \ingroup snmpstats
  */
+
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -37,26 +67,23 @@
 
 static int keep_running;
 
-/* The function handles Handles shutting down of the sub_agent process. */
+/*! The function handles Handles shutting down of the sub_agent process. */
 static void sigterm_handler(int signal) 
 {
 	/* Just exit.  The master agent will clean everything up for us */
 	exit(0);
 }
 
-/* This function:
+/*! This function:
  *
  *   1) Registers itself with the Master Agent
- *
  *   2) Initializes all of the SNMPStats modules scalars and tables, while
  *      simultaneously registering their respective SNMP OID's and handlers 
  *      with the master agent.
- *
  *   3) Repeatedly checks for new SNMP messages to process
  *
- * Note: This function never returns, so it should always be called from a 
- *       sub-process. 
- *
+ * \note This function never returns, so it should always be called from a 
+ *       sub-process.
  */
 static int initialize_agentx(void) 
 {
@@ -92,7 +119,7 @@ static int initialize_agentx(void)
 	return 0;
 }
 
-/* Creates a child that will become the AgentX sub-agent.  The child will
+/*! Creates a child that will become the AgentX sub-agent.  The child will
  * insulate itself from the rest of OpenSER by overriding most of signal
  * handlers. */
 void agentx_child(int rank)
@@ -139,7 +166,7 @@ void agentx_child(int rank)
 
 
 
-/* This function opens up a connection with the master agent specified in
+/*! This function opens up a connection with the master agent specified in
  * the snmpstats modules configuration file */
 void register_with_master_agent(char *name_to_register_under) 
 {
@@ -156,4 +183,3 @@ void register_with_master_agent(char *name_to_register_under)
 	/* Use a name we can register our agent under. */
 	init_snmp(name_to_register_under);
 }
-

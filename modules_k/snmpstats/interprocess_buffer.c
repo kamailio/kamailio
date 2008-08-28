@@ -25,13 +25,19 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, interprocess buffer
  *
  * This file implements the interprocess buffer, used for marshalling data
  * exchange from the usrloc module to the openserSIPRegUserTable,
- * openserSIPContactTable, and indirectly the openserSIPRegUserLookupTable.  
- 
+ * openserSIPContactTable, and indirectly the openserSIPRegUserLookupTable.
+ *
  * Details on why the interprocess buffer is needed can be found in the comments
  * at the top of interprocess_buffer.h
+ * \ingroup snmpstats
  */
 
 
@@ -47,7 +53,7 @@
 
 #include "../usrloc/ul_callback.h"
 
-/*
+/*!
  * The hash table:
  *
  *    1) maps all aor's to snmp's UserIndex for help in deleting SNMP Rows.
@@ -56,22 +62,22 @@
  */
 hashSlot_t *hashTable;
 
-/* All interprocess communication is stored between these two declarations. */
+/*! All interprocess communication is stored between these two declarations. */
 interprocessBuffer_t *frontRegUserTableBuffer;
 interprocessBuffer_t *endRegUserTableBuffer;
 
-/* This is to protect the potential racecondition in which a command is added to
+/*! This is to protect the potential racecondition in which a command is added to
  * the buffer while it is being consumed */
 gen_lock_t           *interprocessCBLock;
 
-/* 
+/*!
  * This function takes an element of the interprocess buffer passed to it, and
  * handles populating the respective user and contact tables with its contained
  * data.  
  */
 static void executeInterprocessBufferCmd(interprocessBuffer_t *currentBuffer);
 
-/*
+/*!
  * Initialize shared memory used to buffer communication between the usrloc
  * module and the SNMPStats module.  (Specifically, the user and contact tables)
  */
@@ -81,7 +87,7 @@ int initInterprocessBuffers(void)
 	 * over the usrloc module to RegUserTable callback. */
 	frontRegUserTableBuffer =  shm_malloc(sizeof(interprocessBuffer_t));
 	endRegUserTableBuffer   =  shm_malloc(sizeof(interprocessBuffer_t));
-    
+
     if(frontRegUserTableBuffer == NULL || endRegUserTableBuffer == NULL)
     {
         LM_ERR("no more shared memory\n");
@@ -112,7 +118,7 @@ int initInterprocessBuffers(void)
 	return 1;
 }
 
-/* USRLOC Callback Handler:
+/*! USRLOC Callback Handler:
  *
  * This function should be registered to receive callbacks from the usrloc
  * module.  It can be called for any of the callbacks listed in ul_callback.h.
@@ -181,7 +187,7 @@ error:
 }
 
 
-/* Interprocess Buffer consumption Function.  This function will iterate over
+/*! Interprocess Buffer consumption Function.  This function will iterate over
  * every element of the interprocess buffer, and add or remove the specified
  * contacts and users.  Whether the contacts are added or removed is dependent
  * on if the original element was added as a result of a UL_CONTACT_INSERT or
@@ -189,7 +195,7 @@ error:
  *
  * The function will free any memory occupied by the interprocess buffer.
  *
- * Note: This function is believed to be thread safe.  Specifically, it protects
+ * \note This function is believed to be thread safe.  Specifically, it protects
  *       corruption of the interprocess buffer through the interprocessCBLock.
  *       This ensures no corruption of the buffer by race conditions.  The lock
  *       has been designed to be occupied for as short a period as possible, so 
@@ -242,7 +248,7 @@ void consumeInterprocessBuffer(void)
 }
 
 
-/* 
+/*!
  * This function takes an element of the interprocess buffer passed to it, and
  * handles populating the respective user and contact tables with its contained
  * data.  
@@ -364,7 +370,7 @@ void freeInterprocessBuffer(void)
         shm_free(previousBuffer);
 
 	}
-    
+
     if(frontRegUserTableBuffer)
         shm_free(frontRegUserTableBuffer);
 
@@ -372,4 +378,3 @@ void freeInterprocessBuffer(void)
         shm_free(endRegUserTableBuffer);
 
 }
-

@@ -28,6 +28,13 @@
  *
  */
 
+/*!
+ * \file
+ * \brief SNMP statistic module, globals
+ * \ingroup snmpstats
+ */
+
+
 #ifndef _SNMP_STATS_GLOBALS_
 #define _SNMP_STATS_GLOBALS_
 
@@ -128,25 +135,25 @@ extern unsigned int global_UserLookupCounter;
  * Configuration File Handler Prototypes
  */
 
-/* Handles setting of the sip entity type parameter. */
+/*! Handles setting of the sip entity type parameter. */
 int handleSipEntityType( modparam_t type, void* val);
 
-/* Handles setting of the Msg Queue Depth Minor Threshold */
+/*! Handles setting of the Msg Queue Depth Minor Threshold */
 int set_queue_minor_threshold(modparam_t type, void *val);
 
-/* Handles setting of the Msg Queue Depth Major Threshold */
+/*! Handles setting of the Msg Queue Depth Major Threshold */
 int set_queue_major_threshold(modparam_t type, void *val);
 
-/* Handles setting of the dialog minor threshold */
+/*! Handles setting of the dialog minor threshold */
 int set_dlg_minor_threshold(modparam_t type, void *val);
 
-/* Handles setting of the dialog major threshold */
+/*! Handles setting of the dialog major threshold */
 int set_dlg_major_threshold(modparam_t type, void *val);
 
-/* Handles setting of the path to the snmpget binary. */
+/*! Handles setting of the path to the snmpget binary. */
 int set_snmpget_path( modparam_t type, void *val);
 
-/* Handles setting of the snmp community string. */
+/*! Handles setting of the snmp community string. */
 int set_snmp_community( modparam_t type, void *val);
 
 

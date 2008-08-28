@@ -25,9 +25,15 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
- * 
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, master agent connection
+ *
  * This file defines all functions required to establish a relationship with a
- * master agent.  
+ * master agent.
+ * \ingroup snmpstats
  */
 
 #ifndef _SNMPSTATS_SUB_AGENT_
@@ -35,12 +41,12 @@
 
 #define AGENT_PROCESS_NAME   "snmpstats_sub_agent"
 
-/* Run the AgentX sub-agent as a separate process.  The child will
+/*! Run the AgentX sub-agent as a separate process.  The child will
  * insulate itself from the rest of OpenSER by overriding most of signal
  * handlers. */
 void agentx_child(int rank);
 
-/* This function opens up a connection with the master agent specified in
+/*! This function opens up a connection with the master agent specified in
  * the snmpstats modules configuration file */
 void register_with_master_agent(char *name_to_register_under);
 

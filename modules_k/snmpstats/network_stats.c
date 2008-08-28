@@ -25,6 +25,11 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, network statistics
  *
  * This file groups together functions for retrieving tcp and udp queue usage
  * information from the proc file system.  
@@ -41,8 +46,9 @@
  *
  * The private functions in this file make extensive use of ip address arrays,
  * which are detailed in get_socket_list_from_proto() in this file.
- *
+ * \ingroup snmpstats
  */
+
 
 #include <string.h>
 #include <stdlib.h>
@@ -54,7 +60,7 @@
 #include "../../socket_info.h"
 #include "../../mem/mem.h"
 
-/*
+/*!
  * This function will retrieve a list of all ip addresses and ports that OpenSER
  * is listening on, with respect to the transport protocol specified with
  * 'protocol'. 
@@ -78,7 +84,7 @@
  * The function will return the number of sockets which were found.  This can be
  * used to index into ipList.
  *
- * NOTE: This function assigns a block of memory equal to:
+ * \note This function assigns a block of memory equal to:
  *
  *            returnedValue * (NUM_IP_OCTETS + 1) * sizeof(int);
  *
@@ -166,7 +172,7 @@ int get_socket_list_from_proto(int **ipList, int protocol) {
 	return numberOfSockets;
 }
 
-/* 
+/*!
  * Takes a 'line' (from the proc file system), parses out the ipAddress,
  * address, and stores the number of bytes waiting in 'rx_queue'
  *
@@ -252,7 +258,7 @@ static int parse_proc_net_line(char *line, int *ipAddress, int *rx_queue)
 }
 
 
-/*
+/*!
  * Returns 1 if ipOne was found in ipArray, and 0 otherwise. 
  *
  * The format of ipOne and ipArray are described in the comments of 
@@ -295,7 +301,7 @@ static int match_ip_and_port(int *ipOne, int *ipArray, int sizeOf_ipArray)
 }
 
 
-/*
+/*!
  * Returns the number of bytes waiting to be consumed on the network interfaces
  * assigned the IP Addresses specified in interfaceList.  The check will be
  * limited to the TCP or UDP transport exclusively.  Specifically:
@@ -357,7 +363,7 @@ static int get_used_waiting_queue(
 	return waitingQueueSize;
 }
 
-/*
+/*!
  * Returns the sum of the number of bytes waiting to be consumed on all network
  * interfaces and transports that OpenSER is listening on. 
  *

@@ -25,7 +25,12 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
- * 
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, interprocess buffer
+ *
  * The SNMPStats module exposes user information through openserSIPRegUserTable,
  * openserSIPContactTable, and openserSIPRegUserLookupTable.  These tables are
  * populated through callback mechanisms from the usrloc module.  Unfortunately
@@ -33,16 +38,18 @@
  * amounts of data.  Because we don't want to experience a performance hit when
  * registering users, we make use of the interprocess buffer.  Specifically,
  * instead of adding/removing users/contacts from the SNMP tables directly, the
- * callbacks add an add/delete command to the interprocessBuffer.  
- 
+ * callbacks add an add/delete command to the interprocessBuffer.
+ *
  * When an snmp request is recieved by the SNMPStats sub-process, it will
  * consume this interprocess buffer, adding and deleting users.  When it is
- * finished, it can service the SNMP request.  
+ * finished, it can service the SNMP request.
  *
  * This doesn't remove the NetSNMP inefficiency of course, but it does move it
  * to a non-critical path.  Such an approach allows SNMP support with almost no
- * overhead to the rest of OpenSER.
+ * overhead to the rest of the server.
+ * \ingroup snmpstats
  */
+
 
 #ifndef _SNMPSTATS_USER_UTILITIES_
 #define _SNMPSTATS_USER_UTILITIES_

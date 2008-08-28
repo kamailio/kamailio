@@ -25,7 +25,12 @@
  * History:
  * --------
  * 2006-11-23 initial version (jmagder)
- * 
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, network statistics
+ *
  * This file groups together function prototypes for retrieving tcp and udp
  * queue usage information from the proc file system.  
  *
@@ -35,12 +40,14 @@
  * systems supporting the proc file system.  
  *
  * For further information, please consult network_stats.c
+ * \ingroup snmpstats
  */
+
 
 #ifndef _SNMPSTATS_NETWORK_STATS_
 #define _SNMPSTATS_NETWORK_STATS_
 
-/*
+/*!
  * This function will retrieve a list of all ip addresses and ports that OpenSER
  * is listening on, with respect to the transport protocol specified with
  * 'protocol'. 
@@ -64,7 +71,7 @@
  * The function will return the number of sockets which were found.  This can be
  * used to index into ipList.
  *
- * NOTE: This function assigns a block of memory equal to:
+ * \note This function assigns a block of memory equal to:
  *
  *            returnedValue * (NUM_IP_OCTETS + 1) * sizeof(int);
  *
@@ -73,7 +80,7 @@
  */
 int get_socket_list_from_proto(int **ipList, int protocol);
 
-/*
+/*!
  * Returns the sum of the number of bytes waiting to be consumed on all network
  * interfaces and transports that OpenSER is listening on. 
  *
@@ -82,7 +89,6 @@ int get_socket_list_from_proto(int **ipList, int protocol);
  *       why this is so can be found in network_stats.c
  */
 int get_total_bytes_waiting();
-
 
 
 #endif

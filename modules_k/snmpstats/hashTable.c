@@ -27,12 +27,17 @@
  * 2006-11-23 initial version (jmagder)
  *
  * Hash Stuff;
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module, hash table
  *
  * For an overview of its structures, please see hashTable.h
  *
  * Potential Performance Improvements: Pass the length of the aor strings around
- * everywhere, so we don't have to calculate it ourselves. 
- *
+ * everywhere, so we don't have to calculate it ourselves.
+ * \ingroup snmpstats
  */
 
 #include <stdlib.h>
@@ -48,7 +53,7 @@
 #include "openserSIPRegUserTable.h"
 
 
-/* Calculates and returns a hash index to a hash table.  The index is calculated
+/*! Calculates and returns a hash index to a hash table.  The index is calculated
  * by summing up all the characters specified with theString, and using the
  * hashTableSize as the modulus.  */
 int calculateHashSlot(char *theString, int hashTableSize) 
@@ -64,7 +69,7 @@ int calculateHashSlot(char *theString, int hashTableSize)
 	return runningTotal % hashTableSize;
 }
 
-/* Searches the hash table specified as theTable, of size 'size', for a record
+/*! Searches the hash table specified as theTable, of size 'size', for a record
  * indexed with 'aor'.  If a match is found, then an aorToIndextStruct_t
  * structure is returned. 
  *
@@ -98,7 +103,7 @@ aorToIndexStruct_t *findHashRecord(hashSlot_t *theTable, char *aor, int size)
 }
 
 
-/* Returns a chunk of memory large enough to store 'size' hashSlot's.  The
+/*! Returns a chunk of memory large enough to store 'size' hashSlot's.  The
  * table will contain mappings between OpenSER's "aor" user/contact indexing
  * scheme, and SNMPStats integer indexing scheme */
 hashSlot_t  *createHashTable(int size) 
@@ -120,7 +125,7 @@ hashSlot_t  *createHashTable(int size)
 }
 
 
-/* Inserts the record specified with 'theRecord' into our hash table. */
+/*! Inserts the record specified with 'theRecord' into our hash table. */
 void insertHashRecord(hashSlot_t *theTable, aorToIndexStruct_t *theRecord, 
 		int size) 
 {
@@ -150,7 +155,7 @@ void insertHashRecord(hashSlot_t *theTable, aorToIndexStruct_t *theRecord,
 	
 }
 
-/*
+/*!
  * This function will search the provided hash table for an entry indexed by
  * 'aor'.  If an entry is found then: 
  *
@@ -233,7 +238,7 @@ void deleteUser(hashSlot_t *theTable, char *aor, int hashTableSize)
 }
 
 
-/* Returns a aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
+/*! Returns a aorToIndexStruct_t, holding the given 'userIndex' and 'aor'.  The
  * structure is used to map between the "aor" (OpenSER's way of indexing
  * users/contacts), and the SNMPStats user and contact integer indexes.  
  *
@@ -268,7 +273,7 @@ aorToIndexStruct_t *createHashRecord(int userIndex, char *aor)
 
 
 
-/* Debugging function.  Prints off an entire hash slot. */
+/*! Debugging function.  Prints off an entire hash slot. */
 void printHashSlot(hashSlot_t *theTable, int index) 
 {
 	aorToIndexStruct_t *currentRecord = theTable[index].first;
@@ -281,4 +286,3 @@ void printHashSlot(hashSlot_t *theTable, int index)
 		currentRecord = currentRecord->next;
 	}
 }
-

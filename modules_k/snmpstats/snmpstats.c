@@ -50,7 +50,12 @@
  *    well as callback mechanisms for the usrloc module.  To understand what the
  *    interprocess buffer and callbacks are and are for, please see the comments
  *    at the beginning of openserSIPRegUserTable.c
- *
+ */
+
+/*!
+ * \file
+ * \brief SNMP statistic module
+ * \ingroup snmpstats
  */
 
 #include <stdio.h>
@@ -82,35 +87,35 @@
 /* Required in every Kamailio Module. */
 MODULE_VERSION
 
-/* 
+/*!
  * The module will fork off a child process to run an snmp command via execve().
  * We need a customized handler to ignore the SIGCHLD when the execve()
  * finishes.  We keep around the child process's pid for the customized
- * handler.  
+ * handler.
  *
  * Specifically, If the process that generated the SIGCHLD doesn't match this
  * pid, we call Kamailio's default handlers.  Otherwise, we just ignore SIGCHLD.
  */
 volatile pid_t sysUpTime_pid;
 
-/* The functions spawns a sysUpTime child.  See the function definition below
+/*! The functions spawns a sysUpTime child.  See the function definition below
  * for a full description. */
 static int spawn_sysUpTime_child();
 
-/* Storage for the "snmpgetPath" and "snmpCommunity" kamailio.cfg parameters.
+/*! Storage for the "snmpgetPath" and "snmpCommunity" kamailio.cfg parameters.
  * The parameters are used to define what happens with the sysUpTime child.  */
 char *snmpget_path   = NULL;
 char *snmp_community = NULL;
 
-/* 
+/*!
  * This module replaces the default SIGCHLD handler with our own, as explained
  * in the documentation for sysUpTime_pid above.  This structure holds the old
  * handler so we can call and restore Kamailio's usual handler when appropriate
  */
 static struct sigaction old_sigchld_handler;
 
-/* The following message codes are from Wikipedia at:
- *     
+/*! The following message codes are from Wikipedia at:
+ *
  *     http://en.wikipedia.org/wiki/SIP_Responses 
  *
  * If there are more message codes added at a later time, they should be added
@@ -137,8 +142,8 @@ char *in_message_code_names[] =
 	"600_in", "603_in", "604_in", "606_in"
 };
 
-/* The following message codes are from Wikipedia at:
- *     
+/*! The following message codes are from Wikipedia at:
+ *
  *     http://en.wikipedia.org/wiki/SIP_Responses 
  *
  * If there are more message codes added at a later time, they should be added
@@ -165,13 +170,13 @@ char *out_message_code_names[] =
 	"600_out", "603_out", "604_out", "606_out"
 };
 
-/* message_code_stat_array[0] will be the data source for message_code_array[0]
+/*! message_code_stat_array[0] will be the data source for message_code_array[0]
  * message_code_stat_array[3] will be the data source for message_code_array[3]
  * and so on. */
 stat_var **in_message_code_stats  = NULL;
 stat_var **out_message_code_stats = NULL;
 
-/* Adds the message code statistics to the statistics framework */
+/*! Adds the message code statistics to the statistics framework */
 static int register_message_code_statistics(void) 
 {
 	int i;
@@ -209,7 +214,7 @@ static int register_message_code_statistics(void)
 	return 0;
 }
 
-/* This is the first function to be called by Kamailio, to initialize the module.
+/*! This is the first function to be called by Kamailio, to initialize the module.
  * This call must always return a value as soon as possible.  If it were not to
  * return, then Kamailio would not be able to initialize any of the other
  * modules. */
@@ -257,7 +262,7 @@ static int mod_init(void)
 }
 
 
-/* This function is called when Kamailio has finished creating all instances of
+/*! This function is called when Kamailio has finished creating all instances of
  * itself.  It is at this point that we want to create our AgentX sub-agent
  * process, and register a handler for any state changes of our child. */
 static int mod_child_init(int rank) 
@@ -273,20 +278,19 @@ static int mod_child_init(int rank)
 	return 0;
 }
 
-/* This function is called when Kamailio is shutting down. When this happens, we
+/*! This function is called when Kamailio is shutting down. When this happens, we
  * log a useful message and kill the AgentX Sub-Agent child process */
 static void mod_destroy(void) 
 {
-	LM_INFO("The SNMPStats module got the kill "
-			"signal\n");
+	LM_INFO("The SNMPStats module got the kill signal\n");
 	
-    freeInterprocessBuffer();
+	freeInterprocessBuffer();
 
-    LM_INFO("                 Shutting down the AgentX Sub-Agent!\n");
+	LM_INFO("Shutting down the AgentX Sub-Agent!\n");
 }
 
 
-/* The SNMPStats module forks off a child process to run an snmp command via
+/*! The SNMPStats module forks off a child process to run an snmp command via
  * execve(). We need a customized handler to catch and ignore its SIGCHLD when 
  * it terminates. We also need to make sure to forward other processes 
  * SIGCHLD's to Kamailio's usual SIGCHLD handler.  We do this by resetting back
@@ -328,7 +332,7 @@ static void sigchld_handler(int signal)
 
 }
 
-/*
+/*!
  * This function will spawn a child that retrieves the sysUpTime and stores the
  * result in a file. This file will be read by the AgentX Sub-agent process to
  * supply the openserSIPServiceStartTime time. This function never returns,
@@ -336,7 +340,7 @@ static void sigchld_handler(int signal)
  * handler to ignore the SIGCHLD for only this process. (See sigchld_handler
  * above).
  *
- * NOTE: sysUpTime is a scalar provided by netsnmp.  It is not the same thing as 
+ * \note sysUpTime is a scalar provided by netsnmp.  It is not the same thing as 
  *       a normal system uptime. Support for this has been provided to try to
  *       match the IETF Draft SIP MIBs as closely as possible. 
  */
@@ -454,7 +458,7 @@ static int spawn_sysUpTime_child(void)
 }
 
 
-/* This function is called whenever the kamailio.cfg file specifies the
+/*! This function is called whenever the kamailio.cfg file specifies the
  * snmpgetPath parameter.  The function will set the snmpget_path parameter. */
 int set_snmpget_path( modparam_t type, void *val) 
 {
