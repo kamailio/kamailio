@@ -26,8 +26,9 @@
 
 /*!
  * \file
- * \brief SL::callbacks
+ * \brief SL :: callbacks
  * \ingroup sl
+ * - Module: \ref sl
  */
 
 #include "../../mem/mem.h"

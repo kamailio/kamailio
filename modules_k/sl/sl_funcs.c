@@ -41,8 +41,9 @@
 
 /*!
  * \file
- * \brief SL::functions
+ * \brief SL :: functions
  * \ingroup sl
+ * - Module: \ref sl
  */
 
 #include "../../globals.h"

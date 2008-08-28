@@ -31,9 +31,20 @@
 
 /*!
  * \file
- * \brief SL::module definitions
+ * \brief SL :: module definitions
  * \ingroup sl
+ * - Module: \ref sl
  */
+
+/*!
+ * \defgroup sl SL :: The Kamailio SL Module
+ *
+ * The SL module allows Kamailio to act as a stateless UA server and
+ * generate replies to SIP requests without keeping state. That is beneficial
+ * in many scenarios, in which you wish not to burden server's memory and scale
+ * well.
+ */
+
 
 #include <stdio.h>
 #include <string.h>

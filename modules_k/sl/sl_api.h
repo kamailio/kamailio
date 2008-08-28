@@ -22,8 +22,9 @@
 
 /*!
  * \file
- * \brief SL::API
+ * \brief SL :: API
  * \ingroup sl
+ * - Module: \ref sl
  */
 
 #ifndef _SL_API_H_

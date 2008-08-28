@@ -28,6 +28,7 @@
  * \file
  * \brief SL::module definitions
  * \ingroup sl
+ * - Module: \ref sl
  */
 
 #ifndef _SL_H_

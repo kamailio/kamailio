@@ -25,6 +25,13 @@
  *  2006-03-29  first version (bogdan)
  */
 
+/*!
+ * \file
+ * \brief SL :: callbacks
+ * \ingroup sl
+ * - Module: \ref sl
+ */
+
 #ifndef SL_CB_H_
 #define SL_CB_H_
 
