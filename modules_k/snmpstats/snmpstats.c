@@ -220,8 +220,6 @@ static int register_message_code_statistics(void)
  * modules. */
 static int mod_init(void) 
 {
-	LM_INFO("Starting up the SNMPStats Module\n");
-
 	if (register_message_code_statistics() < 0) 
 	{
 		return -1;
