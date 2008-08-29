@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -19,12 +18,13 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 /**
- * @file route_tree.h
- * @brief Contains the functions to manage routing tree data in a digital tree.
+ * \file route_tree.h
+ * \brief Contains the functions to manage routing tree data in a digital tree.
+ * \ingroup carrierroute
+ * - Module; \ref carrierroute
  */
 
 #ifndef SP_ROUTE_ROUTE_TREE_H

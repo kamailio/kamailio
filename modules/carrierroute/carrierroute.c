@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -19,12 +18,23 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
 /**
- * @file carrierroute.c
- * @brief Contains the functions exported by the module.
+ * \file carrierroute.c
+ * \brief Contains the functions exported by the module.
+ * \ingroup carrierroute
+ * - Module; \ref carrierroute
+ */
+
+/*!
+ * \defgroup carrierroute CARRIERROUTE :: The Kamailio carrierroute Module
+ * The module provides routing, balancing and blacklisting capabilities.
+ * It reads routing entries from a database source or from a config file
+ * at Kamailio startup. It can uses one routing tree (for one carrier),
+ * or if needed for every user a different routing tree (unique for each carrier)
+ * for number prefix based routing. It supports several route tree domains, e.g.
+ * for failback routes or different routing rules for VoIP and PSTN targets.
  */
 
 #include "../../sr_module.h"

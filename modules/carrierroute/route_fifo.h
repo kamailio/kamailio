@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -19,8 +18,21 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
+
+/**
+ * \file route_fifo.h
+ * \brief Functions for modifying routing data via fifo commands.
+ * \ingroup carrierroute
+ * - Module; \ref carrierroute
+ */
+
+#ifndef SP_ROUTE_ROUTE_FIFO_H
+#define SP_ROUTE_ROUTE_FIFO_H
+
+#include "../../mi/mi.h"
+
+#include "carrier_tree.h"
 
 extern int fifo_err;
 
@@ -43,19 +55,6 @@ extern int fifo_err;
 #define E_HELP -17
 
 #define FIFO_ERR(e) (fifo_err = e)
-
-/**
- * @file route_fifo.h
- * @brief Functions for modifying routing data via fifo commands.
- */
-
-#ifndef SP_ROUTE_ROUTE_FIFO_H
-#define SP_ROUTE_ROUTE_FIFO_H
-
-#include "../../mi/mi.h"
-
-#include "carrier_tree.h"
-
 
 /**
  * @struct fifo_opt
