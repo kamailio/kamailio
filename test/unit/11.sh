@@ -53,6 +53,9 @@ if [ "$TMP" -eq 0 ] ; then
 	ret=1
 fi ;
 
+# see if the user is registered
+cat ../test/invite.sip | nc -q 1 -u localhost 5060 > /dev/null
+
 # unregister the user
 cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
 
