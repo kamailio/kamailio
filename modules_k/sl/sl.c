@@ -117,11 +117,7 @@ stat_export_t mod_stats[] = {
 };
 
 
-#ifdef STATIC_SL
-struct module_exports sl_exports = {
-#else
 struct module_exports exports= {
-#endif
 	"sl",         /* module's name */
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,         /* exported functions */
@@ -141,11 +137,7 @@ static int mod_init(void)
 {
 	/* if statistics are disabled, prevent their registration to core */
 	if (sl_enable_stats==0)
-#ifdef STATIC_SL
-		sl_exports.stats = 0;
-#else
 		exports.stats = 0;
-#endif
 
 	/* filter all ACKs before script */
 	if (register_script_cb(sl_filter_ACK, PRE_SCRIPT_CB|REQ_TYPE_CB, 0 )!=0) {

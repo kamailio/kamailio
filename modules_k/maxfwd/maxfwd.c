@@ -72,11 +72,7 @@ static param_export_t params[]={
 
 
 
-#ifdef STATIC_MAXFWD
-struct module_exports maxfwd_exports = {
-#else
 struct module_exports exports= {
-#endif
 	"maxfwd",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,

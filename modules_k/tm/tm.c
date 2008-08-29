@@ -273,11 +273,7 @@ static mi_export_t mi_cmds [] = {
 };
 
 
-#ifdef STATIC_TM
-struct module_exports tm_exports = {
-#else
 struct module_exports exports= {
-#endif
 	"tm",      /* module name*/
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,      /* exported functions */
@@ -561,11 +557,7 @@ static int mod_init(void)
 
 	/* if statistics are disabled, prevent their registration to core */
 	if (tm_enable_stats==0)
-#ifdef STATIC_TM
-		tm_exports.stats = 0;
-#else
 		exports.stats = 0;
-#endif
 
 	if (init_callid() < 0) {
 		LM_CRIT("Error while initializing Call-ID generator\n");

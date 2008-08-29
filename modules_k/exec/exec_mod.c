@@ -81,11 +81,7 @@ static param_export_t params[] = {
 };
 
 
-#ifdef STATIC_EXEC
-struct module_exports exec_exports = {
-#else
 struct module_exports exports= {
-#endif
 	"exec",
 	DEFAULT_DLFLAGS,/* dlopen flags */
 	cmds,           /* Exported functions */
