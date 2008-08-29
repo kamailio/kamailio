@@ -325,7 +325,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 			reply_str= pu_400a_rpl;
 			goto error;
 		}
-		if(((event_t*)msg->event->parsed)->parsed & EVENT_OTHER)
+		if(((event_t*)msg->event->parsed)->parsed == EVENT_OTHER)
 		{	
 			goto unsupported_event;
 		}
@@ -443,7 +443,7 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		}
 		body.len= get_content_length( msg );
 
-		if(sphere_enable && event->evp->parsed & EVENT_PRESENCE &&
+		if(sphere_enable && event->evp->parsed == EVENT_PRESENCE &&
 				get_content_type(msg)== SUBTYPE_PIDFXML)
 		{
 			sphere= extract_sphere(body);			
