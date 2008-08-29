@@ -83,6 +83,8 @@ extern unsigned short aor_avp_type;
 extern int_str aor_avp_name;
 extern unsigned short rcv_avp_type;
 extern int_str rcv_avp_name;
+extern unsigned short reg_callid_avp_type;
+extern int_str reg_callid_avp_name;
 
 extern str rcv_param;
 extern int max_contacts;

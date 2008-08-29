@@ -582,8 +582,31 @@ modparam("registrar", "path_use_received", 1)
 		</programlisting>
 		</example>
 	</section>
+
+	<section>
+		<title><varname>reg_callid_avp</varname> (string)</title>
+		<para>
+		If reg_callid_avp is defined and populated when registered() is
+		invoked, the result is TRUE only if an active registration with
+		the specified callID is found.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>reg_callid_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
+...
+		</programlisting>
+		</example>
+	</section>
 	</section>
 
+	
 	<section>
 	<title>Exported Functions</title>
 	<section>

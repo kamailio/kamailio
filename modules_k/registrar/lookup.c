@@ -198,12 +198,20 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 	}
 
 	if (res == 0) {
-		ptr = r->contacts;
-		while (ptr && !VALID_CONTACT(ptr, act_time)) {
-			ptr = ptr->next;
+		
+		int_str match_callid;
+		if (reg_callid_avp_name.n) {
+			struct usr_avp *avp =
+				search_first_avp( reg_callid_avp_type, reg_callid_avp_name, &match_callid, 0);
+			if (!(avp && is_avp_str_val(avp)))
+				match_callid=(int_str)0;
 		}
 
-		if (ptr) {
+		for (ptr = r->contacts; ptr; ptr = ptr->next) {
+			if(!VALID_CONTACT(ptr, act_time)) continue;
+			if (match_callid.s.s && /* optionally enforce tighter matching w/ Call-ID */
+				memcmp(match_callid.s.s,ptr->callid.s,match_callid.s.len))
+				continue;
 			ul.unlock_udomain((udomain_t*)_t, &aor);
 			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 			return 1;

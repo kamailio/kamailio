@@ -114,6 +114,11 @@ char *aor_avp_param =0;				/*!< if instead of extacting the AOR from the request
 unsigned short aor_avp_type=0;
 int_str aor_avp_name;
 
+/* Populate this AVP if testing for specific registration instance. */
+char *reg_callid_avp_param = 0;
+unsigned short reg_callid_avp_type = 0;
+int_str reg_callid_avp_name;
+
 char* rcv_avp_param = 0;
 unsigned short rcv_avp_type = 0;
 int_str rcv_avp_name;
@@ -171,6 +176,7 @@ static param_export_t params[] = {
 	{"received_param",     STR_PARAM, &rcv_param           },
 	{"received_avp",       STR_PARAM, &rcv_avp_param       },
 	{"aor_avp",            STR_PARAM, &aor_avp_param       },
+	{"reg_callid_avp",     STR_PARAM, &reg_callid_avp_param},
 	{"max_contacts",       INT_PARAM, &max_contacts        },
 	{"retry_after",        INT_PARAM, &retry_after         },
 	{"sock_flag",          INT_PARAM, &sock_flag           },
@@ -266,6 +272,24 @@ static int mod_init(void)
 	} else {
 		aor_avp_name.n = 0;
 		aor_avp_type = 0;
+	}
+
+	if (reg_callid_avp_param && *reg_callid_avp_param) {
+		s.s = reg_callid_avp_param; s.len = strlen(s.s);
+		if (pv_parse_spec(&s, &avp_spec)==0
+			|| avp_spec.type!=PVT_AVP) {
+			LM_ERR("malformed or non AVP %s AVP definition\n", reg_callid_avp_param);
+			return -1;
+		}
+
+		if(pv_get_avp_name(0, &avp_spec.pvp, &reg_callid_avp_name, &reg_callid_avp_type)!=0)
+		{
+			LM_ERR("[%s]- invalid AVP definition\n", reg_callid_avp_param);
+			return -1;
+		}
+	} else {
+		reg_callid_avp_name.n = 0;
+		reg_callid_avp_type = 0;
 	}
 
 	bind_usrloc = (bind_usrloc_t)find_export("ul_bind_usrloc", 1, 0);

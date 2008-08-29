@@ -56,6 +56,7 @@ Bogdan-Andre Iancu
               1.3.17. use_path (integer)
               1.3.18. path_mode (integer)
               1.3.19. path_use_received (integer)
+              1.3.20. reg_callid_avp (string)
 
         1.4. Exported Functions
 
@@ -96,11 +97,12 @@ Bogdan-Andre Iancu
    1.17. Set use_path parameter
    1.18. Set path_mode parameter
    1.19. Set path_use_received parameter
-   1.20. save usage
+   1.20. Set reg_callid_avp parameter
    1.21. save usage
-   1.22. lookup usage
-   1.23. registered usage
-   1.24. add_sock_hdr usage
+   1.22. save usage
+   1.23. lookup usage
+   1.24. registered usage
+   1.25. add_sock_hdr usage
 
 Chapter 1. Admin Guide
 
@@ -452,6 +454,19 @@ modparam("registrar", "path_mode", 0)
 modparam("registrar", "path_use_received", 1)
 ...
 
+1.3.20. reg_callid_avp (string)
+
+   If reg_callid_avp is defined and populated when registered() is
+   invoked, the result is TRUE only if an active registration with
+   the specified callID is found.
+
+   Default value is NULL (disabled).
+
+   Example 1.20. Set reg_callid_avp parameter
+...
+modparam("registrar", "reg_callid_avp", "$avp(s:avp)")
+...
+
 1.4. Exported Functions
 
 1.4.1.  save(domain)
@@ -470,7 +485,7 @@ modparam("registrar", "path_use_received", 1)
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.20. save usage
+   Example 1.21. save usage
 ...
 save("location");
 ...
@@ -494,7 +509,7 @@ save("location");
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.21. save usage
+   Example 1.22. save usage
 ...
 save("location","0x01");
 ...
@@ -523,7 +538,7 @@ save("location","0x01");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.22. lookup usage
+   Example 1.23. lookup usage
 ...
 lookup("location");
 switch ($?) {
@@ -549,7 +564,7 @@ switch ($?) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.23. registered usage
+   Example 1.24. registered usage
 ...
 if (registered("location")) {
         sl_send_reply("100", "Trying");
@@ -570,7 +585,7 @@ if (registered("location")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.24. add_sock_hdr usage
+   Example 1.25. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
 ...
