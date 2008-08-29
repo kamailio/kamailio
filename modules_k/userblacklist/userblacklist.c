@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2007 1&1 Internet AG
  *
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -19,9 +18,25 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
 
+/*!
+ * \file
+ * \brief USERBLACKLIST :: module definitions
+ * \ingroup userblacklist
+ * - Module: \ref userblacklist
+ */
+
+/*!
+ * \defgroup userblacklist USERBLACKLIST :: The Kamailio userblacklist Module
+ *
+ * The userblacklist module allows Kamailio to handle blacklists on a per user basis.
+ * This information is stored in a database table, which is queried to decide if the
+ * number (more exactly, the request URI user) is blacklisted or not.
+ * An additional functionality that this module provides is the ability to handle
+ * global blacklists. This lists are loaded on startup into memory, thus providing a
+ * better performance then in the userblacklist case.
+ */
 
 #include <string.h>
 
