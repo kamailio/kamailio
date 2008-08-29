@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2007-2008 1&1 Internet AG
  *
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -23,8 +22,10 @@
  */
 
 /**
- * @file route_func.h
- * @brief Routing and balancing functions.
+ * \file route_func.h
+ * \brief Routing and balancing functions.
+ * \ingroup carrierroute
+ * - Module; \ref carrierroute
  */
 
 #ifndef SP_ROUTE_ROUTE_FUNC_H
