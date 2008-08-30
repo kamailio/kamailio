@@ -12,8 +12,8 @@ Daniel-Constantin Mierla
 
    Copyright © 2004 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
-                              (Sa, 08 MÃ¤r 2008) $
+   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
+                              (Sat, 08 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -34,7 +34,8 @@ Daniel-Constantin Mierla
 
         1.4. Exported Functions
 
-              1.4.1. avp_load_radius(user)
+              1.4.1. radius_load_caller_avps(caller)
+              1.4.2. radius_load_callee_avps(callee)
 
    List of Examples
 
@@ -42,15 +43,16 @@ Daniel-Constantin Mierla
    1.2. radius_config parameter usage
    1.3. caller_service_type parameter usage
    1.4. callee_service_type parameter usage
-   1.5. avp_load_radius() usage
+   1.5. radius_load_caller_avps() usage
+   1.6. radius_load_callee_avps() usage
 
 Chapter 1. Admin Guide
 
 1.1. Overview
 
    avp_radius module allows loading of user's attributes into AVPs
-   from Radius. User's name and domain can be based on From URI,
-   Request URI, or authenticated credentials.
+   from Radius. User's name is given in a pseudo variable to load
+   functions.
 
    The module assumes that Radius returns the AVPs as values of
    reply attribute SIP-AVP. Its value must be a string of form:
@@ -70,9 +72,12 @@ Chapter 1. Admin Guide
     -> ID AVP (14) with INTEGER VALUE (28)
 ....
 
-   For AVP with STRING NAME, the module prefixes each attribute
-   name as returned from Radius by string "caller_" or "callee_"
-   depending if caller's or callee's attributes are loaded.
+   Unlike earlier version of this module, load functions don't
+   prefix AVPs that have STRING NAME by by string "caller_" or
+   "callee_" depending if caller's or callee's attributes are
+   loaded. If you need these prefixes, make your Radius server to
+   prepend them into attribute names when constructing reply
+   items.
 
 1.2. Dependencies
 
@@ -101,6 +106,7 @@ Chapter 1. Admin Guide
    "/usr/local/etc/radiusclient-ng/radiusclient.conf".
 
    Example 1.2. radius_config parameter usage
+...
 modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
 
 1.3.2. caller_service_type (integer)
@@ -112,6 +118,7 @@ modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
    Service-Type.
 
    Example 1.3. caller_service_type parameter usage
+...
 modparam("avp_radius", "caller_service_type", 18)
 
 1.3.3. callee_service_type (integer)
@@ -123,29 +130,37 @@ modparam("avp_radius", "caller_service_type", 18)
    Service-Type.
 
    Example 1.4. callee_service_type parameter usage
+...
 modparam("avp_radius", "callee_service_type", 19)
 
 1.4. Exported Functions
 
-1.4.1. avp_load_radius(user)
+1.4.1. radius_load_caller_avps(caller)
 
-   The functions loads user's attributes from radius and stores
-   them into AVPs. Parameter "user" is used to indicate, whose
-   attributes are loaded. Possible values are:
-     * caller - attributes belong to the user of the From URI are
-       loaded
-     * callee - attributes belong to the user of the Request URI
-       are loaded
-     * digest - attributes belong to the authenticated user are
-       loaded
-
-   AVP name returned from Radius is prefixed by string "caller_",
-   if avp_load_radius parameter is "caller" or "digest", and by
-   "callee_", if parameter is "callee".
+   The functions loads caller's attributes from radius and stores
+   them into AVPs. Parameter "caller" is a string that may contain
+   pseudo variables. It indicates the user, whose attributes are
+   loaded.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.5. avp_load_radius() usage
+   Example 1.5. radius_load_caller_avps() usage
 ...
-avp_load_radius("callee");
+radius_load_caller_avps("$fU@$fd");     # take caller from From URI
+...
+radius_load_caller_avps("$au@$ar");     # take caller from Authorization
+...                                     # or Proxy-Authorization header
+
+1.4.2. radius_load_callee_avps(callee)
+
+   The functions loads callee's attributes from radius and stores
+   them into AVPs. Parameter "callee" is a string that may contain
+   pseudo variables. It indicates the user, whose attributes are
+   loaded.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.6. radius_load_callee_avps() usage
+...
+radius_load_callee_avps("$rU@$rd");     # take callee from Request-URI
 ...

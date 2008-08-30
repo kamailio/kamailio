@@ -1,4 +1,4 @@
-<!-- Auth_radius Module User's Guide -->
+<!-- avp_radius Module User's Guide -->
 
 <chapter>
 	
@@ -8,8 +8,8 @@
 	<title>Overview</title>
 	<para>
 	avp_radius module allows loading of user's attributes into AVPs from
-	Radius. User's name and domain can be based on From URI, Request
-	URI, or authenticated credentials.
+	Radius. User's name is given in a pseudo variable to load
+	functions.
 	</para>
 	<para>
 	The module assumes that Radius returns the AVPs as values of reply
@@ -42,10 +42,12 @@
 </programlisting>
 	</example>
 	<para>
-	For AVP with STRING NAME, the module prefixes each attribute name as 
-	returned from Radius by string <quote>caller_</quote> or 
-	<quote>callee_</quote> depending if caller's or callee's attributes 
-	are loaded.
+	Unlike earlier version of this module, load functions don't
+	prefix AVPs that have STRING NAME by by string
+	<quote>caller_</quote> or <quote>callee_</quote> depending if
+	caller's or callee's attributes are loaded.  If you need these
+	prefixes, make your Radius server to prepend them into attribute
+	names when constructing reply items.
 	</para>
 	</section>
 
@@ -96,6 +98,7 @@
 		<example>
 		<title><varname>radius_config</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
 </programlisting>
 		</example>
@@ -113,6 +116,7 @@ modparam("avp_radius", "radius_config", "/etc/radiusclient.conf")
 		<example>
 		<title><varname>caller_service_type</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("avp_radius", "caller_service_type", 18)
 </programlisting>
 		</example>
@@ -130,6 +134,7 @@ modparam("avp_radius", "caller_service_type", 18)
 		<example>
 		<title><varname>callee_service_type</varname> parameter usage</title>
 		<programlisting format="linespecific">
+...
 modparam("avp_radius", "callee_service_type", 19)
 </programlisting>
 		</example>
@@ -138,46 +143,51 @@ modparam("avp_radius", "callee_service_type", 19)
 
 	<section>
 	<title>Exported Functions</title>
+
 	<section>
-		<title><function moreinfo="none">avp_load_radius(user)</function></title>
+		<title><function
+	moreinfo="none">radius_load_caller_avps(caller)</function></title>
 		<para>
-		The functions loads user's attributes from radius and stores them
-		into AVPs.  Parameter <quote>user</quote> is used to indicate,
-		whose attributes are loaded.  Possible values are:
-		</para>
-		<itemizedlist>
-		<listitem>
-			<para><emphasis>caller</emphasis> - attributes belong to the user
-			of the From URI are loaded</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>callee</emphasis> - attributes belong to the user
-			of the Request URI are loaded</para>
-		</listitem>
-		<listitem>
-			<para><emphasis>digest</emphasis> - attributes belong to the
-			authenticated user are loaded</para>
-		</listitem>
-		</itemizedlist>
-		<para>
-		AVP name returned from Radius is prefixed by string
-		<quote>caller_</quote>, if avp_load_radius parameter is
-		<quote>caller</quote> or <quote>digest</quote>, and by
-		<quote>callee_</quote>, if parameter is <quote>callee</quote>.
+		The functions loads caller's attributes from radius and
+		stores them into AVPs.  Parameter <quote>caller</quote>
+		is a string that may contain pseudo variables.
+		It indicates the user, whose attributes are loaded.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function moreinfo="none">avp_load_radius()</function> usage</title>
+		<title><function moreinfo="none">radius_load_caller_avps()</function> usage</title>
 		<programlisting format="linespecific">
 ...
-avp_load_radius("callee");
+radius_load_caller_avps("$fU@$fd");	# take caller from From URI
 ...
+radius_load_caller_avps("$au@$ar");	# take caller from Authorization
+...					# or Proxy-Authorization header
 </programlisting>
 		</example>
 	</section>
 
+	<section>
+		<title><function
+	moreinfo="none">radius_load_callee_avps(callee)</function></title>
+		<para>
+		The functions loads callee's attributes from radius and
+		stores them into AVPs.  Parameter <quote>callee</quote>
+		is a string that may contain pseudo variables.
+		It indicates the user, whose attributes are loaded.
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function moreinfo="none">radius_load_callee_avps()</function> usage</title>
+		<programlisting format="linespecific">
+...
+radius_load_callee_avps("$rU@$rd");	# take callee from Request-URI
+...
+</programlisting>
+		</example>
+	</section>
 	</section>
 </chapter>
-

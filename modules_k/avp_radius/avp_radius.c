@@ -37,48 +37,32 @@
 #include "../../ut.h"
 #include "../../config.h"
 #include "../../radius.h"
-
+#include "../../mod_fix.h"
 
 MODULE_VERSION
 
-#define CALLER_PREFIX "caller_"
-#define CALLER_PREFIX_LEN (sizeof(CALLER_PREFIX) - 1)
-
-#define CALLEE_PREFIX "callee_"
-#define CALLEE_PREFIX_LEN (sizeof(CALLEE_PREFIX) - 1)
-
-
-typedef enum load_avp_param {
-	LOAD_CALLER,       /* Use the caller's username and domain as the key */
-	LOAD_CALLEE,       /* Use the callee's username and domain as the key */
-	LOAD_DIGEST
-} load_avp_param_t;
-
-
 static int mod_init(void);
-static int load_avp_radius(struct sip_msg*, char*, char*);
-static int load_avp_fixup(void**, int);
-
+static int radius_load_caller_avps(struct sip_msg*, char*, char*);
+static int radius_load_callee_avps(struct sip_msg*, char*, char*);
 
 static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int caller_service_type = -1;
 static int callee_service_type = -1;
-static str caller_prefix = {CALLER_PREFIX, CALLER_PREFIX_LEN};
-static str callee_prefix = {CALLEE_PREFIX, CALLEE_PREFIX_LEN};
 
 static void *rh;
 struct attr attrs[A_MAX];
 struct val vals[V_MAX];
 
 
-
 /*
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"avp_load_radius", (cmd_function)load_avp_radius, 1, load_avp_fixup, 0,
-		REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0, 0}
+    {"radius_load_caller_avps", (cmd_function)radius_load_caller_avps, 1,
+     fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+    {"radius_load_callee_avps", (cmd_function)radius_load_callee_avps, 1,
+     fixup_spve_null, 0, REQUEST_ROUTE | FAILURE_ROUTE},
+    {0, 0, 0, 0, 0, 0}
 };
 
 
@@ -111,6 +95,8 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
+	LM_INFO("initializing...\n");
+
 	memset(attrs, 0, sizeof(attrs));
 	memset(vals, 0, sizeof(vals));
 
@@ -131,7 +117,7 @@ static int mod_init(void)
 		LM_ERR("failed to read radius dictionary\n");
 		return -1;
 	}
-	
+
 	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "avp", -1, -1);
 
 	if (caller_service_type != -1) {
@@ -147,7 +133,7 @@ static int mod_init(void)
 
 
 static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
-										int_str *name, int_str *value)
+			      int_str *name, int_str *value)
 {
 	static str names, values;
 	unsigned int r;
@@ -219,196 +205,131 @@ error:
 }
 
 
-static int load_avp_user(struct sip_msg* msg, str* prefix, load_avp_param_t type)
+/* Generate AVPs from Radius reply items */
+static void generate_avps(VALUE_PAIR* received)
 {
-	static char rad_msg[4096];
-	str user_domain, buffer;
-	str* user, *domain, *uri;
-	struct hdr_field* h;
-	dig_cred_t* cred = 0;
-	int_str name, val;
-	unsigned short flags;
+    int_str name, val;
+    unsigned short flags;
+    VALUE_PAIR *vp;
 
-	VALUE_PAIR* send, *received, *vp;
-	uint32_t service;
-	struct sip_uri puri;
-	
-	send = received = 0;
-	user_domain.s = 0;
+    vp = received;
 
-	switch(type) {
-	case LOAD_CALLER:
-		     /* Use From header field */
-		if (parse_from_header(msg) < 0) {
-			LM_ERR("failed to parse From header field\n");
-			return -1;
-		}
-
-		uri = &get_from(msg)->uri;
-		if (parse_uri(uri->s, uri->len, &puri) < 0) {
-			LM_ERR("failed to parse From URI\n");
-			return -1;
-		}
-
-		user = &puri.user;
-		domain = &puri.host;
-		service = vals[V_SIP_CALLER_AVPS].v;
-		break;
-
-	case LOAD_CALLEE:
-		     /* Use the Request-URI */
-		if (parse_sip_msg_uri(msg) < 0) {
-			LM_ERR("failed to parse Request-URI\n");
-			return -1;
-		}
-
-		if (msg->parsed_uri.user.len == 0) {
-			LM_ERR("missing Request-URI user");
-			return -1;
-		}
-		
-		user = &msg->parsed_uri.user; 
-		domain = &msg->parsed_uri.host;
-		service = vals[V_SIP_CALLEE_AVPS].v;
-		break;
-
-	case LOAD_DIGEST:
-		     /* Use digest credentials */
-		get_authorized_cred(msg->proxy_auth, &h);
-		if (!h) {
-			LM_ERR("no authoried credentials\n");
-			return -1;
-		}
-
-		cred = &((auth_body_t*)(h->parsed))->digest;
-		user = &cred->username.user;
-		domain = &cred->realm;
-		service = vals[V_SIP_CALLER_AVPS].v;
-		break;
-
-	default:
-		LM_ERR("unknown user type\n");
-		return -1;
-		
-	}
-
-	user_domain.len = user->len + 1 + domain->len;
-	user_domain.s = (char*)pkg_malloc(user_domain.len);
-	if (!user_domain.s) {
-		LM_ERR("no pkg memory left\n");
-		return -1;
-	}
-
-	memcpy(user_domain.s, user->s, user->len);
-	user_domain.s[user->len] = '@';
-	memcpy(user_domain.s + user->len + 1, domain->s, domain->len);
-
-	if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v,
-			user_domain.s, user_domain.len, 0)) {
-		LM_ERR("failed to add PW_USER_NAME\n");
-		goto error;
-	}
-
-	if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-		LM_ERR("failed to add PW_SERVICE_TYPE\n");
-		goto error;
-	}
-
-	if (rc_auth(rh, 0, send, &received, rad_msg) == OK_RC) {
-		LM_DBG("rc_auth Success\n");
-		rc_avpair_free(send);
-		pkg_free(user_domain.s);
-
-		vp = received;
-		for( ; (vp=rc_avpair_get(vp,attrs[A_SIP_AVP].v,0)) ; vp=vp->next) {
-			flags = 0;
-			if (extract_avp( vp, &flags, &name, &val)!=0 )
-				continue;
-
-			/* append prefix only if AVP has name */
-			if (flags&AVP_NAME_STR) {
-				buffer.len = prefix->len + name.s.len;
-				buffer.s = (char*)pkg_malloc(buffer.len);
-				if (!buffer.s) {
-					LM_ERR("no pkg memory left\n");
-					return -1;
-				}
-				memcpy(buffer.s, prefix->s, prefix->len);
-				memcpy(buffer.s + prefix->len, name.s.s, name.s.len);
-				name.s = buffer;
-			} else {
-				buffer.s = 0;
-			}
-
-			if (add_avp( flags, name, val) < 0) {
-				LM_ERR("unable to create a new AVP\n");
-			} else {
-				LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
-					(flags&AVP_NAME_STR)?name.s.len:4,
-					(flags&AVP_NAME_STR)?name.s.s:"null",
-					(flags&AVP_NAME_STR)?0:name.n,
-					(flags&AVP_VAL_STR)?val.s.len:4,
-					(flags&AVP_VAL_STR)?val.s.s:"null",
-					(flags&AVP_VAL_STR)?0:val.n );
-			}
-
-			if (buffer.s) 
-				pkg_free(buffer.s);
-		}
-
-		rc_avpair_free(received);
-		return 1;
+    for( ; (vp=rc_avpair_get(vp,attrs[A_SIP_AVP].v,0)) ; vp=vp->next) {
+	flags = 0;
+	if (extract_avp( vp, &flags, &name, &val)!=0 )
+	    continue;
+	if (add_avp( flags, name, val) < 0) {
+	    LM_ERR("unable to create a new AVP\n");
 	} else {
-		LM_ERR("rc_auth failed\n");
+	    LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
+		   (flags&AVP_NAME_STR)?name.s.len:4,
+		   (flags&AVP_NAME_STR)?name.s.s:"null",
+		   (flags&AVP_NAME_STR)?0:name.n,
+		   (flags&AVP_VAL_STR)?val.s.len:4,
+		   (flags&AVP_VAL_STR)?val.s.s:"null",
+		   (flags&AVP_VAL_STR)?0:val.n );
 	}
+    }
+    
+    return;
+}
 
-error:
-	if (send) rc_avpair_free(send);
-	if (received) rc_avpair_free(received);
-	if (user_domain.s) pkg_free(user_domain.s);
+
+/*
+ * Loads from Radius caller's AVPs based on pvar argument.
+ * Returns 1 if Radius request succeeded and -1 otherwise.
+ */
+int radius_load_caller_avps(struct sip_msg* _m, char* _caller, char* _s2)
+{
+    str user;
+    VALUE_PAIR *send, *received;
+    UINT4 service;
+    static char msg[4096];
+    int res;
+
+    if ((_caller == NULL) ||
+	(fixup_get_svalue(_m, (gparam_p)_caller, &user) != 0)) {
+	LM_ERR("invalid caller parameter");
 	return -1;
+    }
+
+    send = received = 0;
+
+    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user.s, user.len, 0)) {
+	LM_ERR("error adding A_USER_NAME\n");
+	return -1;
+    }
+
+    service = vals[V_SIP_CALLER_AVPS].v;
+    if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
+	LM_ERR("error adding A_SERVICE_TYPE <%u>\n", service);
+	rc_avpair_free(send);
+	return -1;
+    }
+    if ((res = rc_auth(rh, 0, send, &received, msg)) == OK_RC) {
+	LM_DBG("success\n");
+	rc_avpair_free(send);
+	generate_avps(received);
+	rc_avpair_free(received);
+	return 1;
+    } else {
+	if (res == REJECT_RC) {
+	    LM_DBG("rejected\n");
+	} else {
+	    LM_ERR("failure\n");
+	}
+	rc_avpair_free(send);
+	rc_avpair_free(received);
+	return -1;
+    }
 }
 
 
-static int load_avp_radius(struct sip_msg* msg, char* attr, char* _dummy)
+/*
+ * Loads from Radius callee's AVPs based on pvar argument.
+ * Returns 1 if Radius request succeeded and -1 otherwise.
+ */
+int radius_load_callee_avps(struct sip_msg* _m, char* _callee, char* _s2)
 {
-	switch((load_avp_param_t)attr) {
-	case LOAD_CALLER:
-		return load_avp_user(msg, &caller_prefix, LOAD_CALLER);
-		break;
+    str user;
+    VALUE_PAIR *send, *received;
+    UINT4 service;
+    static char msg[4096];
+    int res;
 
-	case LOAD_CALLEE:
-		return load_avp_user(msg, &callee_prefix, LOAD_CALLEE);
-		break;
-		
-	case LOAD_DIGEST:
-		return load_avp_user(msg, &caller_prefix, LOAD_DIGEST);
+    send = received = 0;
 
-	default:
-		LM_ERR("unknown parameter value\n");
-		return -1;
+    if ((_callee == NULL) ||
+	(fixup_get_svalue(_m, (gparam_p)_callee, &user) != 0)) {
+	LM_ERR("invalid callee parameter");
+	return -1;
+    }
+
+    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user.s, user.len, 0)) {
+	LM_ERR("error adding A_USER_NAME\n");
+	return -1;
+    }
+
+    service = vals[V_SIP_CALLEE_AVPS].v;
+    if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
+	LM_ERR("error adding A_SERVICE_TYPE <%u>\n", service);
+	rc_avpair_free(send);
+	return -1;
+    }
+    if ((res = rc_auth(rh, 0, send, &received, msg)) == OK_RC) {
+	LM_DBG("success\n");
+	rc_avpair_free(send);
+	generate_avps(received);
+	rc_avpair_free(received);
+	return 1;
+    } else {
+	if (res == REJECT_RC) {
+	    LM_DBG("rejected\n");
+	} else {
+	    LM_ERR("failure\n");
 	}
-}
-
-
-static int load_avp_fixup(void** param, int param_no)
-{
-	long id = 0;
-
-	if (param_no == 1) {
-		if (!strcasecmp(*param, "caller")) {
-			id = LOAD_CALLER;
-		} else if (!strcasecmp(*param, "callee")) {
-			id = LOAD_CALLEE;
-		} else if (!strcasecmp(*param, "digest")) {
-			id = LOAD_DIGEST;
-		} else {
-			LM_ERR("unknown parameter\n");
-			return -1;
-		}
-	}
-
-	pkg_free(*param);
-	*param=(void*)id;
-	return 0;
+	rc_avpair_free(send);
+	rc_avpair_free(received);
+	return -1;
+    }
 }
