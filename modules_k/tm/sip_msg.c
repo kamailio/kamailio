@@ -817,6 +817,21 @@ do { \
 					new_msg->refer_to = new_hdr;
 				}
 				break;
+			case HDR_PRIVACY_T:
+				if (HOOK_NOT_SET(privacy)) {
+					new_msg->privacy = new_hdr;
+				}
+				break;
+			case HDR_SESSION_EXPIRES_T:
+				if (HOOK_NOT_SET(session_expires)) {
+					new_msg->session_expires = new_hdr;
+				}
+				break;
+			case HDR_MIN_SE_T:
+				if (HOOK_NOT_SET(min_se)) {
+					new_msg->min_se = new_hdr;
+				}
+				break;
 			default:
 				/* ignore the rest*/
 				;
