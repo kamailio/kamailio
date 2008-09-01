@@ -79,9 +79,11 @@ inline int db_free_columns(db_res_t* _r)
 	LM_DBG("freeing %d columns\n", RES_COL_N(_r));
 	/* free memory previously allocated to save column names */
 	for(col = 0; col < RES_COL_N(_r); col++) {
-		LM_DBG("freeing RES_NAMES[%d] at %p\n", col, RES_NAMES(_r)[col]);
-		pkg_free((str *)RES_NAMES(_r)[col]);
-		RES_NAMES(_r)[col] = NULL;
+		if (RES_NAMES(_r)[col]!=NULL) {
+			LM_DBG("freeing RES_NAMES[%d] at %p\n", col, RES_NAMES(_r)[col]);
+			pkg_free((str *)RES_NAMES(_r)[col]);
+			RES_NAMES(_r)[col] = NULL;
+		}
 	}
 	/* free names and types */
 	if (RES_NAMES(_r)) {
