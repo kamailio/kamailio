@@ -414,12 +414,11 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
  */
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 {
-	struct cell         *p_cell;
-	unsigned int       isACK;
-	struct sip_msg  *t_msg;
-	int ret;
+	struct cell *p_cell;
+	unsigned int isACK;
+	struct sip_msg *t_msg;
+	int ret, match_status;
 	struct via_param *branch;
-	int match_status;
 	struct cell *e2e_ack_trans;
 
 	isACK = p_msg->REQ_METHOD==METHOD_ACK;
@@ -735,24 +734,11 @@ found:
 int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
 	struct cell*  p_cell;
-	int hash_index   = 0;
-	int entry_label  = 0;
-	int branch_id    = 0;
-	char  *hashi, *branchi, *p, *n;
-	int hashl, branchl;
-	int scan_space;
+	int hash_index, entry_label, branch_id, hashl, branchl, scan_space, loopl, synl;
+	hash_index = entry_label = branch_id = hashl = branchl = scan_space = loopl = synl = 0;
+	char  *hashi, *branchi, *p, *n, *loopi, *syni;
+	loopi = syni = NULL;
 	struct cseq_body *cseq;
-
-	char *loopi;
-	int loopl;
-	char *syni;
-	int synl;
-
-	/* make compiler warnings happy */
-	loopi=0;
-	loopl=0;
-	syni=0;
-	synl=0;
 
 	/* split the branch into pieces: loop_detection_check(ignored),
 	 hash_table_id, synonym_id, branch_id */
@@ -1329,8 +1315,7 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	unsigned int hash_index;
 
 	/* I use MAX_HEADER, not sure if this is a good choice... */
-	char callid_header[MAX_HEADER];
-	char cseq_header[MAX_HEADER];
+	char callid_header[MAX_HEADER], cseq_header[MAX_HEADER];
 	/* save return value of print_* functions here */
 	char* endpos;
 
