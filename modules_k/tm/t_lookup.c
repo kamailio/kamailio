@@ -124,38 +124,43 @@
 
 #define HF_LEN(_hf) ((_hf)->len)
 
-/* should be request-uri matching used as a part of pre-3261 
+/*!
+ * Should be request-uri matching used as a part of pre-3261 
  * transaction matching, as the standard wants us to do so
  * (and is reasonable to do so, to be able to distinguish
- * spirals)? turn only off for better interaction with 
+ * spirals)? Turn only off for better interaction with 
  * devices that are broken and send different r-uri in
  * CANCEL/ACK than in original INVITE
  */
 int ruri_matching=1;
 int via1_matching=1;
 
-/* this is a global variable which keeps pointer to
-   transaction currently processed by a process; it it
-   set by t_lookup_request or t_reply_matching; don't
-   dare to change it anywhere else as it would
-   break ref_counting
-*/
-
+/*!
+ * This is a global variable which keeps a pointer to the
+ * transaction currently processed by a process; it is
+ * set by t_lookup_request or t_reply_matching; don't
+ * dare to change it anywhere else as it would
+ * break ref_counting
+ */
 static struct cell *T;
 
-/* simillar to T, but it is used for the cancelled invite
+/*!
+ * Simillar to T, but it is used for the cancelled invite
  * transaction (when processing a CANCEL)
  */
 static struct cell *cancelled_T;
 
-/* simillar to T, but it is used for the ack-ed invite
+/*!
+ * Simillar to T, but it is used for the ack-ed invite
  * transaction (when processing a end-to-end 200 ACK )
  */
 static struct cell *e2eack_T;
 
+/* getter, setter and initialisation functions for the diverse T */
 
 struct cell *get_t(void) { return T; }
 void set_t(struct cell *t) { T=t; }
+
 void init_t(void) {set_t(T_UNDEFINED);}
 
 struct cell *get_cancelled_t(void) { return cancelled_T; }
@@ -165,7 +170,11 @@ struct cell *get_e2eack_t(void) { return e2eack_T; }
 void reset_e2eack_t(void) { e2eack_T=T_UNDEFINED; }
 
 
-
+/*!
+ * \brief Parse necessary dialog related headers in the SIP message
+ * \param msg SIP message
+ * \return 1 on success, 0 on errors
+ */
 static inline int parse_dlg( struct sip_msg *msg )
 {
 	if (parse_headers(msg, HDR_FROM_F | HDR_CSEQ_F | HDR_TO_F, 0)==-1) {
@@ -182,17 +191,20 @@ static inline int parse_dlg( struct sip_msg *msg )
 		return 0;
 	}
 	/* To is automatically parsed through HDR_TO in parse bitmap,
-	 * we don't need to worry about it now
-	if (parse_to_header(msg)==-1) {
-		LM_ERR("To broken\n");
-		return 0;
-	}
-	*/
+	 * we don't need to worry about it now */
 	return 1;
 }
 
-/* is the ACK (p_msg) in p_msg dialog-wise equal to the INVITE (t_msg) 
- * except to-tags? */
+
+/*!
+ * \brief Partial dialog matching for two SIP messages
+ *
+ * Partial dialog matching in two SIP messages. Is the ACK (p_msg)
+ * in p_msg dialog-wise equal to the INVITE (t_msg) except to-tags?
+ * \param t_msg first SIP message with INVITE
+ * \param p_msg second SIP message with ACK
+ * \return 1 on success, 0 on errors
+ */
 static inline int partial_dlg_matching(struct sip_msg *t_msg, struct sip_msg *p_msg)
 {
 	struct to_body *inv_from;
@@ -218,7 +230,15 @@ static inline int partial_dlg_matching(struct sip_msg *t_msg, struct sip_msg *p_
 	return 1;
 }
 
-/* are to-tags in ACK/200 same as those we sent out? */
+
+/*!
+ * \brief Dialog matching
+ *
+ * Dialog matching, are to-tags in ACK/200 same as those we sent out?
+ * \param p_cell transaction with the TO tag
+ * \param ack checked SIP message
+ * \return 1 on success, zero on errors
+ */
 static inline int dlg_matching(struct cell *p_cell, struct sip_msg *ack )
 {
 	if (get_to(ack)->tag_value.len!=p_cell->uas.local_totag.len)
@@ -229,10 +249,15 @@ static inline int dlg_matching(struct cell *p_cell, struct sip_msg *ack )
 	return 1;
 }
 
+/*!
+ * \brief ACK matching
+ * \param p_cell transaction
+ * \param p_msg checked SIP message
+ */
 static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg) 
 {
 	/* partial dialog matching -- no to-tag, only from-tag, 
-	 * callid, cseq number ; */
+	 * callid, cseq number */
 	if (!partial_dlg_matching(p_cell->uas.request, p_msg)) 
 		return 0;
 
@@ -250,7 +275,14 @@ static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg)
 	return 0;
 }
 
-/* branch-based transaction matching */
+
+/*!
+ * \brief Branch-based transaction matching
+ *
+ * \param inv_via VIA body
+ * \param ack_via VIA from ACK
+ * \return 1 on match, 0 for no match
+ */
 static inline int via_matching( struct via_body *inv_via, 
 				struct via_body *ack_via )
 {
@@ -280,14 +312,17 @@ static inline int via_matching( struct via_body *inv_via,
 }
 
 
-/* transaction matching a-la RFC-3261 using transaction ID in branch
-   (the function assumes there is magic cookie in branch) 
-   It returns:
-	 2 if e2e ACK for a proxied transaction found
-     1  if found (covers ACK for local UAS)
-	 0  if not found (trans undefined)
-*/
-
+/*!
+ * \brief Transaction matching a-la RFC-3261 using transaction ID in branch
+ *
+ * Transaction matching a-la RFC-3261 using transaction ID in branch.
+ * The function assumes there is magic cookie in branch
+ * \param p_msg SIP message
+ * \param trans transaction
+ * \param skip_method SIP message method for skipping?
+ * \return 2 if e2e ACK for a proxied transaction found, 1 if found (covers ACK for local UAS)
+ * 0 if not found (undefined transaction)
+ */
 static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 			enum request_method skip_method)
 {
@@ -321,7 +356,7 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 		 * purpose of accounting. We think it is a bad place here, among
 		 * other things because it is not reliable. If a transaction loops
 		 * via SER the ACK can't be matched to proper INVITE transaction
-		 * (it is a separate transactino with its own branch ID) and it
+		 * (it is a separate transaction with its own branch ID) and it
 		 * matches all transaction instances in the loop dialog-wise.
 		 * Eventually, regardless to which transaction in the loop the
 		 * ACK belongs, only the first one will match.
@@ -372,12 +407,11 @@ static int matching_3261( struct sip_msg *p_msg, struct cell **trans,
 }
 
 
-/* function returns:
- *      negative - transaction wasn't found
- *      -2       -  possibly e2e ACK matched
- *      positive - transaction found
+/*!
+ * \brief Lookup request
+ * \return negative - transaction wasn't found, -2 for possibly e2e ACK matched
+ * positive - transaction found
  */
-
 int t_lookup_request( struct sip_msg* p_msg , int leave_new_locked )
 {
 	struct cell         *p_cell;
@@ -565,10 +599,13 @@ found:
 
 
 
-/* function lookups transaction being canceled by CANCEL in p_msg;
- * it returns:
- *       0 - transaction wasn't found
- *       T - transaction found
+/*!
+ * \brief Lookups transaction being canceled by CANCEL in p_msg
+ *
+ * Lookups transaction from hash table that is being canceled
+ * by the CANCEL in the message.
+ * \param p_msg SIP message with CANCEL
+ * \return 0 - transaction wasn't found, T - transaction found
  */
 struct cell* t_lookupOriginalT(  struct sip_msg* p_msg )
 {
@@ -691,10 +728,9 @@ found:
 }
 
 
-
-
-/* Returns 0 - nothing found
- *         1  - T found
+/*!
+ * \brief Reply matching
+ * \return 0 - nothing found, 1  - T found
  */
 int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
@@ -863,11 +899,16 @@ nomatch2:
 
 
 
-/* Determine current transaction
+/*!
+ * \brief Determine current transaction
  *
- *                   Found      Not Found     Error (e.g. parsing)
- *  Return Value     1          0             -1
- *  T                ptr        0             T_UNDEFINED
+ * Determine current transaction for SIP message.
+ * Set T to a ptr if the transaction could be found, to 0 if not found,
+ * and to T_UNDEFINED on errors:
+ * Found      Not Found     Error (e.g. parsing)
+ * Return Value     1          0             -1
+ * T                ptr        0             T_UNDEFINED
+ * \return 1 if transaction found, 0 if not found, -1 on errors (e.g. parsing)
  */
 int t_check( struct sip_msg* p_msg , int *param_branch )
 {
@@ -963,7 +1004,13 @@ int init_rb( struct retr_buf *rb, struct sip_msg *msg)
 	return 1;
 }
 
-
+/*!
+ * \brief Initialize a new transaction for a message
+ *
+ * Initialize a new transaction for a message in shared memory.
+ * \param new_cell new transaction
+ * \param p_msg SIP message
+ */
 static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 {
 	struct sip_msg *shm_msg;
@@ -987,6 +1034,11 @@ static inline void init_new_t(struct cell *new_cell, struct sip_msg *p_msg)
 	new_cell->on_branch=get_on_branch();
 }
 
+
+/*!
+ * \brief Create a new transaction
+ * \return 1 on success, negative on errors
+ */
 static inline int new_t(struct sip_msg *p_msg)
 {
 	struct cell *new_cell;
@@ -1020,19 +1072,14 @@ static inline int new_t(struct sip_msg *p_msg)
 }
 
 
-/* atomic "new_tran" construct; it returns:
-
-	<0	on error
-
-	+1	if a request did not match a transaction
-		- it that was an ack, the calling function
-		  shall forward statelessly
-		- otherwise it means, a new transaction was
-		  introduced and the calling function
-		  shall reply/relay/whatever_appropriate
-
-	0 on retransmission
-*/
+/*!
+ * \brief Atomic "new_tran" construct
+ * \return negative on error, 1 if a request did not match a transaction
+ * - it that was an ack, the calling function shall forward statelessly
+ * - otherwise it means, a new transaction was introduced and the calling function
+ * shall reply/relay/whatever_appropriate
+ * 0 on retransmission
+ */
 int t_newtran( struct sip_msg* p_msg )
 {
 	int lret, my_err;
@@ -1149,7 +1196,10 @@ new_err:
 
 }
 
-
+/*!
+ * \brief Unreference a transaction, release it if necessary
+ * \return 1 on success, -1 on errors
+ */
 int t_unref( struct sip_msg* p_msg  )
 {
 	enum kill_reason kr;
@@ -1178,6 +1228,10 @@ void t_unref_cell(struct cell *c)
 }
 
 
+/*!
+ * \brief Get transaction identifier
+ * \return 1 on success, -1 if not found and on errors
+ */
 int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index,
 															unsigned int* label)
 {
@@ -1199,7 +1253,10 @@ int t_get_trans_ident(struct sip_msg* p_msg, unsigned int* hash_index,
 }
 
 
-
+/*!
+ * \brief Lookup a transaction from a hash identifier
+ * \return 1 on success, -1 if not found, and on errors
+ */
 int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 															unsigned int label)
 {
@@ -1235,7 +1292,10 @@ int t_lookup_ident(struct cell ** trans, unsigned int hash_index,
 }
 
 
-
+/*!
+ * \brief Small wrapper around is_local
+ * \return 1 on success, -1 if transaction not found and on errors
+ */
 int t_is_local(struct sip_msg* p_msg)
 {
 	struct cell* t;
@@ -1254,8 +1314,15 @@ int t_is_local(struct sip_msg* p_msg)
 
 
 
-/* lookup a transaction by callid and cseq, parameters are pure
+/*!
+ * \brief Lookup a transaction by callid and cseq.
+ *
+ * Lookup a transaction by callid and cseq, parameters are pure
  * header field content only, e.g. "123@10.0.0.1" and "11"
+ * \param trans transaction
+ * \param callid Call-Id value
+ * \param cseq CSEQ value
+ * \return 1 if transaction was found, -1 when not found and on errors
  */
 int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 	struct cell* p_cell;
@@ -1323,4 +1390,3 @@ int t_lookup_callid(struct cell ** trans, str callid, str cseq) {
 
 	return -1;
 }
-
