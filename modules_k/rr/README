@@ -341,7 +341,7 @@ if (check_route_param("nat=yes")) {
 
    This function can be used from REQUEST_ROUTE.
 
-   Example 1.11. check_route_param usage
+   Example 1.11. is_direction usage
 ...
 if (is_direction("upstream")) {
     xdbg("upstream request ($rm)\n");
