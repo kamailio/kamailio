@@ -721,8 +721,7 @@ done:
  */
 static inline int t_pick_branch( struct cell *t, int *res_code)
 {
-	int lowest_b, lowest_s, b;
-	int cancelled;
+	int lowest_b, lowest_s, b, cancelled;
 
 	lowest_b=-1; lowest_s=999;
 	cancelled = was_cancelled(t);
@@ -766,9 +765,7 @@ static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch , int *should_store, int *should_relay,
 	branch_bm_t *cancel_bitmap, struct sip_msg *reply )
 {
-	int branch_cnt;
-	int picked_code;
-	int inv_through;
+	int branch_cnt, picked_code, inv_through;
 
 	/* note: this code never lets replies to CANCEL go through;
 	   we generate always a local 200 for CANCEL; 200s are
@@ -1075,28 +1072,21 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
 	unsigned int msg_status, branch_bm_t *cancel_bitmap )
 {
-	int relay;
-	int save_clone;
+	int relay, save_clone, relayed_code, totag_retr;
 	char *buf;
 	/* length of outbound reply */
 	unsigned int res_len;
-	int relayed_code;
 	struct sip_msg *relayed_msg;
 	struct bookmark bm;
-	int totag_retr;
 	enum rps reply_status;
 	/* retransmission structure of outbound reply and request */
 	struct retr_buf *uas_rb;
-	str cb_s;
-	str text;
+	str cb_s, text;
 
-	/* keep compiler warnings about use of uninit vars silent */
-	res_len=0;
-	buf=0;
-	relayed_msg=0;
-	relayed_code=0;
-	totag_retr=0;
-
+	relayed_code = totag_retr = 0;
+	buf = NULL;
+	res_len = 0;
+	relayed_msg = NULL;
 
 	/* remember, what was sent upstream to know whether we are
 	 * forwarding a first final reply or not */
@@ -1259,17 +1249,12 @@ enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch,
 	unsigned int msg_status, branch_bm_t *cancel_bitmap)
 {
 	/* how to deal with replies for local transaction */
-	int local_store, local_winner;
+	int local_store, local_winner, winning_code, totag_retr;
 	enum rps reply_status;
 	struct sip_msg *winning_msg;
-	int winning_code;
-	int totag_retr;
-	/* branch_bm_t cancel_bitmap; */
 
-	/* keep warning 'var might be used un-inited' silent */	
+	winning_code = totag_retr=0;
 	winning_msg=0;
-	winning_code=0;
-	totag_retr=0;
 
 	*cancel_bitmap=0;
 
@@ -1339,10 +1324,7 @@ error:
  */
 int reply_received( struct sip_msg  *p_msg )
 {
-	int msg_status;
-	int last_uac_status;
-	int branch;
-	int reply_status;
+	int msg_status, last_uac_status, branch, reply_status;
 	utime_t timer;
 	/* has the transaction completed now and we need to clean-up? */
 	branch_bm_t cancel_bitmap;
