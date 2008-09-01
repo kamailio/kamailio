@@ -17,47 +17,47 @@
 		<itemizedlist>
 		<listitem>
 			<para><emphasis>struct dlg_cell* dlg</emphasis> - dialog to 
-			register callback to. If maybe NULL only for DLG_CREATED callback
+			register callback to. If maybe NULL only for DLGCB_CREATED callback
 			type, which is not a per dialog type.
 			</para>
 		</listitem>
 		<listitem>
 			<para><emphasis>int type</emphasis> - types of callbacks; more
 			types may be register for the same callback function; only 
-			DLG_CREATED must be register alone. Possible types:
+			DLGCB_CREATED must be register alone. Possible types:
 			<itemizedlist>
 			<listitem>
 				<para><emphasis>DLGCB_LOADED</emphasis>
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLG_CREATED</emphasis> - called when a new 
+				<para><emphasis>DLGCB_CREATED</emphasis> - called when a new 
 				dialog is created - it's a global type (not associated to 
 				any dialog)
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLG_FAILED</emphasis> - called when the dialog
+				<para><emphasis>DLGCB_FAILED</emphasis> - called when the dialog
 				was negatively replied (non-2xx) - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLG_CONFIRMED</emphasis> - called when the 
+				<para><emphasis>DLGCB_CONFIRMED</emphasis> - called when the 
 				dialog is confirmed (2xx replied) - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLG_REQ_WITHIN</emphasis> - called when the 
+				<para><emphasis>DLGCB_REQ_WITHIN</emphasis> - called when the 
 				dialog matches a sequential request - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLG_TERMINATED</emphasis> - called when the 
+				<para><emphasis>DLGCB_TERMINATED</emphasis> - called when the 
 				dialog is terminated via BYE - it's a per dialog type.
 				</para>
 			</listitem>
 			<listitem>
-				<para><emphasis>DLG_EXPIRED</emphasis> - called when the 
+				<para><emphasis>DLGCB_EXPIRED</emphasis> - called when the 
 				dialog expires without receiving a BYE - it's a per dialog 
 				type.
 				</para>
