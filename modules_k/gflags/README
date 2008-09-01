@@ -94,7 +94,7 @@ modparam("gflags", "initial", 15)
 
    Set the bit at the position "flag" in global flags.
 
-   "flag" can have a value from the range 1..31.
+   "flag" can have a value in the range of 0..31.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -108,6 +108,8 @@ set_gflag("4");
 
    Reset the bit at the position "flag" in global flags.
 
+   "flag" can have a value in the range of 0..31.
+
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 
@@ -119,6 +121,8 @@ reset_gflag("4");
 1.4.3. is_gflag(flag)
 
    Check if bit at the position "flag" in global flags is set.
+
+   "flag" can have a value in the range of 0..31.
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
@@ -143,9 +147,10 @@ if(is_gflag("4"))
 
 1.5.1. set_gflag
 
-   Set the value of some flags to 1.
+   Set the value of some flags (specified by bitmask) to 1.
 
-   The parameter value must be a number in decimal or hexa format
+   The parameter value must be a bitmask in decimal or hexadecimal
+   format. The bitmask has a 32 bit size.
 
    Example 1.5. set_gflag usage
 ...
@@ -157,7 +162,8 @@ $ kamctl fifo set_gflag 0x3
 
    Reset the value of some flags to 0.
 
-   The parameter value must be a number in decimal or hexa format
+   The parameter value must be a bitmask in decimal or hexadecimal
+   format. The bitmask has a 32 bit size.
 
    Example 1.6.  reset_gflag usage
 ...
@@ -167,7 +173,10 @@ $ kamctl fifo reset_gflag 0x3
 
 1.5.3. is_gflag
 
-   Return the status of a set of flags.
+   Returns true if the all the flags from the bitmask are set.
+
+   The parameter value must be a bitmask in decimal or hexadecimal
+   format. The bitmask has a 32 bit size.
 
    The function returns TRUE if all the flags from the set are set
    and FALSE if at least one is not set.
@@ -193,7 +202,8 @@ TRUE
 1.5.4. get_gflags
 
    Return the bitmap with all flags. The function gets no
-   parameters and returns the bitmap in hexa and decimal format.
+   parameters and returns the bitmap in hexadecimal and decimal
+   format.
 
    Example 1.8.  get_gflags usage
 ...

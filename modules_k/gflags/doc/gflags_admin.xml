@@ -71,7 +71,7 @@ modparam("gflags", "initial", 15)
 		Set the bit at the position <quote>flag</quote> in global flags.
 		</para>
 		<para>
-		<quote>flag</quote> can have a value from the range 1..31.
+		<quote>flag</quote> can have a value in the range of 0..31.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -93,6 +93,9 @@ set_gflag("4");
 		Reset the bit at the position <quote>flag</quote> in global flags.
 		</para>
 		<para>
+		<quote>flag</quote> can have a value in the range of 0..31.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE, BRANCH_ROUTE and LOCAL_ROUTE.
 		</para>
@@ -111,6 +114,9 @@ reset_gflag("4");
 		<para>
 		Check if bit at the position <quote>flag</quote> in global flags is
 		set.
+		</para>
+		<para>
+		<quote>flag</quote> can have a value in the range of 0..31.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -135,18 +141,20 @@ if(is_gflag("4"))
 
 	<section>
 		<title><acronym>MI</acronym> Commands</title>
-		<para>Functions that check or change some flags accepts one parameter which
-			is the flag bitmap/mask specifing the corresponding flags.
-			It is not possible to specify directly the flag position that should be
-			changed as in the functions available in the routing script.
+		<para>Functions that check or change some flags accepts one parameter 
+			which is the flag bitmap/mask specifing the corresponding flags.
+			It is not possible to specify directly the flag position that 
+			should be changed as in the functions available in the routing 
+			script.
 		</para>
 		<section>
 			<title><function moreinfo="none">set_gflag</function></title>
 			<para>
-			Set the value of some flags to 1.
+			Set the value of some flags (specified by bitmask) to 1.
 			</para>
 			<para>
-			The parameter value must be a number in decimal or hexa format
+			The parameter value must be a bitmask in decimal or hexadecimal format.
+			The bitmask has a 32 bit size.
 			</para>
 			<example>
 			<title><function moreinfo="none">set_gflag</function> usage</title>
@@ -165,7 +173,8 @@ $ kamctl fifo set_gflag 0x3
 			Reset the value of some flags to 0.
 			</para>
 			<para>
-			The parameter value must be a number in decimal or hexa format
+			The parameter value must be a bitmask in decimal or hexadecimal format.
+			The bitmask has a 32 bit size.
 			</para>
 			<example>
 			<title>
@@ -181,7 +190,11 @@ $ kamctl fifo reset_gflag 0x3
 		<section>
 			<title><function moreinfo="none">is_gflag</function></title>
 			<para>
-			Return the status of a set of flags.
+			Returns true if the all the flags from the bitmask are set.
+			</para>
+			<para>
+			The parameter value must be a bitmask in decimal or hexadecimal format.
+			The bitmask has a 32 bit size.
 			</para>
 			<para>
 			The function returns TRUE if all the flags from the set are set
@@ -213,7 +226,7 @@ TRUE
 			<title><function moreinfo="none">get_gflags</function></title>
 			<para>
 			Return the bitmap with all flags. The function gets no 
-			parameters and returns the bitmap in hexa and decimal format.
+			parameters and returns the bitmap in hexadecimal and decimal format.
 			</para>
 			<example>
 			<title>

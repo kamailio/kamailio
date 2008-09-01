@@ -142,7 +142,7 @@ static int fixup_gflags( void** param, int param_no)
 	}
 	if ( myint >= 8*sizeof(*gflags) ) {
 		LM_ERR("flag <%d> out of "
-			"range [0..%lu]\n", myint, (unsigned long)8*sizeof(*gflags) );
+			"range [0..%lu]\n", myint, ((unsigned long)8*sizeof(*gflags))-1 );
 		return E_CFG;
 	}
 	/* convert from flag index to flag bitmap */
@@ -253,7 +253,7 @@ static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
 	if(rpl_tree ==0)
 		return 0;
 
-	if((*gflags) & flag)
+	if( ((*gflags) & flag)== flag )
 		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "TRUE", 4);
 	else
 		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "FALSE", 5);
