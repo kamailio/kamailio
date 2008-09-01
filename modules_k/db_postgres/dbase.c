@@ -405,6 +405,11 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 	int rc = 0;
 
 	*_r = db_new_result();
+	if (*_r==NULL) {
+		LM_ERR("failed to init new result\n");
+		rc = -1;
+		goto done;
+	}
 
 	while (1) {
 		if ((res = PQgetResult(CON_CONNECTION(_con)))) {
@@ -421,18 +426,20 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 
 	switch(pqresult) {
 		case PGRES_COMMAND_OK:
-		/* Successful completion of a command returning no data (such as INSERT or UPDATE). */
+		/* Successful completion of a command returning no data
+		 * (such as INSERT or UPDATE). */
 		rc = 0;
 		break;
 
 		case PGRES_TUPLES_OK:
-			/* Successful completion of a command returning data (such as a SELECT or SHOW). */
+			/* Successful completion of a command returning data
+			 * (such as a SELECT or SHOW). */
 			if (db_postgres_convert_result(_con, *_r) < 0) {
 				LM_ERR("%p Error returned from convert_result()\n", _con);
-				if (*_r) db_free_result(*_r);
-
+				db_free_result(*_r);
 				*_r = 0;
 				rc = -4;
+				break;
 			}
 			rc =  0;
 			break;
@@ -441,7 +448,7 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			LM_ERR("%p - invalid query, execution aborted\n", _con);
 			LM_ERR("%p: %s\n", _con, PQresStatus(pqresult));
 			LM_ERR("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
-			if (*_r) db_free_result(*_r);
+			db_free_result(*_r);
 			*_r = 0;
 			rc = -3;
 			break;
@@ -458,13 +465,13 @@ int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 			LM_ERR("%p Probable invalid query\n", _con);
 			LM_ERR("%p: %s\n", _con, PQresStatus(pqresult));
 			LM_ERR("%p: %s\n", _con, PQresultErrorMessage(CON_RESULT(_con)));
-			if (*_r) db_free_result(*_r);
-
+			db_free_result(*_r);
 			*_r = 0;
 			rc = -4;
 			break;
 	}
 
+done:
 	free_query(_con);
 	return (rc);
 }
