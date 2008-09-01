@@ -236,7 +236,7 @@ static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg)
 	if (!partial_dlg_matching(p_cell->uas.request, p_msg)) 
 		return 0;
 
-  	/* if this transaction is proxied (as opposed to UAS) we're
+	/* if this transaction is proxied (as opposed to UAS) we're
 	 * done now -- we ignore to-tags; the ACK simply belongs to
 	 * this UAS part of dialog, whatever to-tag it gained
 	 */
@@ -245,7 +245,7 @@ static inline int ack_matching(struct cell *p_cell, struct sip_msg *p_msg)
 	}
 	/* it's a local dialog -- we wish to verify to-tags too */
 	if (dlg_matching(p_cell, p_msg)) {
-		return 1;
+		return 2;
 	}
 	return 0;
 }
