@@ -416,7 +416,7 @@ int update_presentity(struct sip_msg* msg, presentity_t* presentity, str* body,
 		if (result->n > 0)
 		{
 
-			if(presentity->event->evp->parsed == EVENT_DIALOG)
+			if(presentity->event->evp->parsed == EVENT_DIALOG_SLA)
 			{
 				/* analize if previous body has a dialog */
 				row = &result->rows[0];
@@ -499,7 +499,7 @@ after_dialog_check:
 			n_update_cols= 0;
 			/* if event dialog and is_dialog -> if sender not the same as
 			 * old sender do not overwrite */
-			if( (presentity->event->evp->parsed == EVENT_DIALOG) &&  bla_update_publish==0)
+			if( (presentity->event->evp->parsed == EVENT_DIALOG_SLA) &&  bla_update_publish==0)
 			{
 				LM_DBG("drop Publish for BLA from a different sender that"
 						" wants to overwrite an existing dialog\n");

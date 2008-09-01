@@ -756,7 +756,7 @@ db_query:
 			
 			/* if event BLA - check if sender is the same as contact */
 			/* if so, send an empty dialog info document */
-			if( event->evp->parsed == EVENT_DIALOG && contact )
+			if( event->evp->parsed == EVENT_DIALOG_SLA && contact )
 			{
 				sender.s = (char*)row_vals[sender_col].val.string_val;
 				if(sender.s== NULL || strlen(sender.s)==0)

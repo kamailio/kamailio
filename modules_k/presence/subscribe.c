@@ -545,7 +545,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	/* getting presentity uri from Request-URI if initial subscribe - or else from database*/
 	if(to_tag_gen)
 	{
-		if(parsed_event->parsed!= EVENT_DIALOG)
+		if(parsed_event->parsed!= EVENT_DIALOG_SLA)
 		{
 			if( parse_sip_msg_uri(msg)< 0)
 			{
@@ -660,7 +660,7 @@ int handle_subscribe(struct sip_msg* msg, char* str1, char* str2)
 	if(reason.s)
 		pkg_free(reason.s);
 	
-//	if(parsed_event->parsed!= EVENT_DIALOG && subs.pres_uri.s)
+//	if(parsed_event->parsed!= EVENT_DIALOG_SLA && subs.pres_uri.s)
 		pkg_free(subs.pres_uri.s);
 	
 	if((!server_address.s) || (server_address.len== 0))
@@ -692,7 +692,7 @@ error:
 		}
 	}
 
-//  if(parsed_event->parsed!= EVENT_DIALOG &&subs.pres_uri.s)
+//  if(parsed_event->parsed!= EVENT_DIALOG_SLA &&subs.pres_uri.s)
 	if(subs.pres_uri.s)	
 		pkg_free(subs.pres_uri.s);
 	
@@ -888,7 +888,7 @@ int extract_sdialog_info(subs_t* subs,struct sip_msg* msg, int mexp, int* to_tag
 	LM_DBG("subs->contact= %.*s - len = %d\n",subs->contact.len,
 			subs->contact.s, subs->contact.len);	
 
-    if(subs->event->evp->parsed== EVENT_DIALOG)
+    if(subs->event->evp->parsed== EVENT_DIALOG_SLA)
     {
         /* user_contact@from_domain */
         if(parse_uri(subs->contact.s, subs->contact.len, &uri)< 0)
@@ -997,7 +997,7 @@ int get_stored_info(struct sip_msg* msg, subs_t* subs, int* reply_code,
 	{
 		lock_get(&subs_htable[i].lock);
 		s= search_shtable(subs_htable, subs->callid,subs->to_tag,subs->from_tag, i);
-		if(s && s->event->evp->parsed!= EVENT_DIALOG)
+		if(s && s->event->evp->parsed!= EVENT_DIALOG_SLA)
 		{
 			pres_uri.s= (char*)pkg_malloc(s->pres_uri.len* sizeof(char));
 			if(pres_uri.s== NULL)
@@ -1029,7 +1029,7 @@ found_rec:
 	
 	LM_DBG("Record found in hash_table\n");
 	
-	if(s->event->evp->parsed!= EVENT_DIALOG)
+	if(s->event->evp->parsed!= EVENT_DIALOG_SLA)
 		subs->pres_uri= pres_uri;
 	
 	subs->version = s->version;
@@ -1230,7 +1230,7 @@ int get_database_info(struct sip_msg* msg, subs_t* subs, int* reply_code, str* r
 	subs->local_cseq= row_vals[local_cseq_col].val.int_val;
 	subs->version= row_vals[version_col].val.int_val;
 
-	if(subs->event->evp->parsed!= EVENT_DIALOG)
+	if(subs->event->evp->parsed!= EVENT_DIALOG_SLA)
 	{
 		pres_uri.s= (char*)row_vals[pres_uri_col].val.string_val;
 		pres_uri.len= strlen(pres_uri.s);
