@@ -735,7 +735,7 @@ int t_reply_matching( struct sip_msg *p_msg , int *p_branch )
 {
 	struct cell*  p_cell;
 	int hash_index, entry_label, branch_id, hashl, branchl, scan_space, loopl, synl;
-	hash_index = entry_label = branch_id = hashl = branchl = scan_space = loopl = synl = 0;
+	hash_index = entry_label = branch_id = loopl = synl = 0;
 	char  *hashi, *branchi, *p, *n, *loopi, *syni;
 	loopi = syni = NULL;
 	struct cseq_body *cseq;
