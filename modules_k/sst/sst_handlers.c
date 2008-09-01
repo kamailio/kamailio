@@ -792,7 +792,7 @@ static int remove_header(struct sip_msg *msg, const char *header)
 
 /**
  * Set the dialog's AVP value so the dialog module will use this value
- * and not the default when erturning from the daialog callback.
+ * and not the default when returning from the dialog callback.
  *
  * @param msg The current message to bind the AVP to.
  * @param value The value you want to set the AVP to.
@@ -803,37 +803,25 @@ static int set_timeout_avp(struct sip_msg *msg, unsigned int value)
 {
 	int rtn = -1; /* assume failure */
 	pv_value_t pv_val;
-	
+	int result = 0;
+
 	/* Set the dialog timeout HERE */
 	if (timeout_avp) {
-		int result = 0;
 		if ((result = pv_get_spec_value(msg, timeout_avp, &pv_val)) == 0) {
-			if (pv_val.flags & PV_VAL_INT) {
-				/* We now hold a reference to the AVP int value */
-				LM_ERR("Found current timeout value is %d, setting it to %d\n",
-						pv_val.ri, value);
-				pv_val.ri = value;
+			/* We now hold a reference to the AVP */
+			if (pv_val.flags & PV_VAL_INT && pv_val.ri == value) {
+				/* INT AVP with the same value */
+				LM_DBG("Current timeout value already set to %d\n",
+					value);
 				rtn = 0;
-			}
-			else {
-				/* Never set so it was never added */
-				if (pv_val.flags == PV_VAL_NULL) {
-					int_str avp_name;
-					int_str avp_value;
-					unsigned short name_type = 0;
-
-					memset(&avp_value, 0, sizeof(int_str));
-					memset(&avp_name, 0, sizeof(int_str));
-
-					pv_get_avp_name(msg, &timeout_avp->pvp, &avp_name,
-							&name_type);
-					avp_value.n = value;
-					add_avp(name_type, avp_name, avp_value);
-					LM_DBG("Added the avp and set the value to %d\n", value);
+			} else {
+				/* AVP not found or non-INT value -> add a new one*/
+				pv_val.flags = PV_VAL_INT;
+				pv_val.ri = value;
+				if (timeout_avp->setf(msg,&timeout_avp->pvp,EQ_T,&pv_val)!=0) {
+					LM_ERR("failed to set new dialog timeout value\n");
+				} else {
 					rtn = 0;
-				}
-				else {
-					LM_ERR("AVP wrong type %d. Not an integer.\n", pv_val.flags);
 				}
 			}
 		}
