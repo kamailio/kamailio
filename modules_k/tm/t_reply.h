@@ -39,19 +39,19 @@
 extern int restart_fr_on_each_reply;
 extern int onreply_avp_mode;
 
-/* reply processing status */
+/*! reply processing status */
 enum rps {
-	/* something bad happened */
+	/*! something bad happened */
 	RPS_ERROR=0,	
-	/* transaction completed but we still accept the reply */
+	/*! transaction completed but we still accept the reply */
 	RPS_PUSHED_AFTER_COMPLETION,
-	/* reply discarded */
+	/*! reply discarded */
 	RPS_DISCARDED,
-	/* reply stored for later processing */
+	/*! reply stored for later processing */
 	RPS_STORE,
-	/* transaction completed */
+	/*! transaction completed */
 	RPS_COMPLETED,
-	/* provisional reply not affecting transaction state */
+	/*! provisional reply not affecting transaction state */
 	RPS_PROVISIONAL
 };
 
@@ -60,10 +60,10 @@ extern char *tm_tag_suffix;
 
 extern int disable_6xx_block;
 
-/* has this to-tag been never seen in previous 200/INVs? */
+/*! has this to-tag been never seen in previous 200/INVs? */
 int unmatched_totag(struct cell *t, struct sip_msg *ack);
 
-/* branch bitmap type */
+/*! branch bitmap type */
 typedef unsigned int branch_bm_t;
 
 /* reply export types */

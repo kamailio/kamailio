@@ -98,27 +98,27 @@
 #include "uac.h"
 
 
-/* restart fr timer on each provisional reply, default yes */
+/*! restart fr timer on each provisional reply, default yes */
 int restart_fr_on_each_reply=1;
 int onreply_avp_mode = 0;
 
-/* disable the 6xx fork-blocking - default no (as per RFC3261) */
+/*! disable the 6xx fork-blocking - default no (as per RFC3261) */
 int disable_6xx_block = 0;
 
-/* private place where we create to-tags for replies */
+/*! private place where we create to-tags for replies */
 char tm_tags[TOTAG_VALUE_LEN];
 static str  tm_tag = {tm_tags,TOTAG_VALUE_LEN};
 char *tm_tag_suffix;
 
 static int picked_branch=-1;
 
-/* where to go if there is no positive reply */
+/*! where to go if there is no positive reply */
 static int goto_on_negative=0;
-/* where to go on receipt of reply */
+/*! where to go on receipt of reply */
 static int goto_on_reply=0;
 
 
-/* returns the picked branch */
+/*! \brief returns the picked branch */
 int t_get_picked_branch(void)
 {
 	return picked_branch;
@@ -134,7 +134,9 @@ int t_get_picked_branch(void)
    before t_relay is called
 */
 
-
+/*!
+ * \brief Set which 'reply' structure to take if only negative replies arrive
+ */
 void t_on_negative( unsigned int go_to )
 {
 	struct cell *t = get_t();
@@ -178,9 +180,11 @@ void tm_init_tags(void)
 		"Kamailio-TM/tags", TM_TAG_SEPARATOR );
 }
 
-/* returns 0 if the message was previously acknowledged
- * (i.e., no E2EACK callback is needed) and one if the
- * callback shall be executed */
+/*!
+ * \brief Checks if the message was previously acknowledged
+ * \return 0 if the message was previously acknowledged (i.e., no
+ * E2EACK callback is needed) and 1 if the callback shall be executed
+ */
 int unmatched_totag(struct cell *t, struct sip_msg *ack)
 {
 	struct totag_elem *i;
@@ -207,6 +211,10 @@ int unmatched_totag(struct cell *t, struct sip_msg *ack)
 	return 1;
 }
 
+
+/*!
+ * \brief Update local tags in transaction
+ */
 static inline void update_local_tags(struct cell *trans, 
 				struct bookmark *bm, char *dst_buffer,
 				char *src_buffer /* to which bm refers */)
@@ -218,10 +226,13 @@ static inline void update_local_tags(struct cell *trans,
 }
 
 
-/* append a newly received tag from a 200/INVITE to 
- * transaction's set; (only safe if called from within
- * a REPLY_LOCK); it returns 1 if such a to tag already
- * exists
+/*!
+ * \brief Append a newly received tag from a 200/INVITE to transaction's set
+ *
+ * Append a newly received tag from a 200/INVITE to transaction's set,
+ * (only safe if called from within a REPLY_LOCK).
+ * \return 1 if such a to tag already exists, 0 on errors and if a new TO tag
+ * was created
  */
 inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 {
@@ -272,8 +283,9 @@ inline static int update_totag_set(struct cell *t, struct sip_msg *ok)
 }
 
 
-/*
- * Build and send an ACK to a negative reply
+/*!
+ * \brief Build and send an ACK to a negative reply
+ * \return 0 on success, -1 for errors
  */
 static int send_ack(struct sip_msg* rpl, struct cell *trans, int branch)
 {
@@ -412,8 +424,9 @@ error:
 }
 
 
-/* send a UAS reply
- * returns 1 if everything was OK or -1 for error
+/*!
+ * \brief Send a UAS reply
+ * \return 1 if everything was OK or -1 for errors
  */
 static int _reply( struct cell *trans, struct sip_msg* p_msg, 
 									unsigned int code, str *text, int lock )
@@ -451,8 +464,15 @@ static int _reply( struct cell *trans, struct sip_msg* p_msg,
 	}
 }
 
-/*if msg is set -> it will fake the env. vars conforming with the msg; if NULL
- * the env. will be restore to original */
+
+/*!
+ * \brief Setup or restore a faked environment conforming with the message
+ *
+ * If msg is set -> it will fake the envinronmental vars conforming with the
+ * message, if NULL the environment will be restored to the original
+ * \param t transaction
+ * \param msg SIP message or NULL
+ */
 static inline void faked_env( struct cell *t,struct sip_msg *msg)
 {
 	static struct cell *backup_t;
@@ -488,6 +508,10 @@ static inline void faked_env( struct cell *t,struct sip_msg *msg)
 }
 
 
+/*!
+ * \brief Fake a request
+ * \return 1 on success, 0 on errors
+ */
 static inline int fake_req(struct sip_msg *faked_req, struct sip_msg *shm_msg,
 		struct ua_server *uas, struct ua_client *uac)
 {
@@ -530,6 +554,11 @@ error:
 }
 
 
+/*!
+ * \brief Free faked requests
+ * \param faked_req SIP message with faked request
+ * \param t transaction
+ */
 inline static void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 {
 	if (faked_req->new_uri.s) {
@@ -546,7 +575,10 @@ inline static void free_faked_req(struct sip_msg *faked_req, struct cell *t)
 }
 
 
-/* return 1 if a failure_route processes */
+/*!
+ * \brief Run failure handlers
+ * \return 1 if a failure_route processes, 0 otherwise
+ */
 static inline int run_failure_handlers(struct cell *t)
 {
 	static struct sip_msg faked_req;
@@ -605,12 +637,17 @@ static inline int run_failure_handlers(struct cell *t)
 }
 
 
+/*!
+ * \brief Test for DNS failover according RFC 3363 and 3261
+ *
+ * Test for DNS failover, according to RFC 3263 and RFC 3261, this means
+ * a 503 reply with Retr-After header or timeout with no reply.
+ * \param t transaction
+ * \return 1 if this is a RFC 3263 failure, 0 otherwise
+ */
 static inline int is_3263_failure(struct cell *t)
 {
 	struct hdr_field *hdr; 
-	/* is is a DNS failover scenario? - according to RFC 3263
-	 * and RFC 3261, this means 503 reply with Retr-After hdr 
-	 * or timeout with no reply */
 	LM_DBG("dns-failover test: branch=%d, last_recv=%d, flags=%X\n",
 		picked_branch, t->uac[picked_branch].last_received,
 		t->uac[picked_branch].flags);
@@ -634,6 +671,10 @@ static inline int is_3263_failure(struct cell *t)
 }
 
 
+/*!
+ * \brief Do DNS failover
+ * \return 0 on success, -1 on failures
+ */
 static inline int do_dns_failover(struct cell *t)
 {
 	static struct sip_msg faked_req;
@@ -673,10 +714,10 @@ done:
 }
 
 
-/* select a branch for forwarding; returns:
- * 0..X ... branch number
- * -1   ... error
- * -2   ... can't decide yet -- incomplete branches present
+/*!
+ * \brief Select a branch for forwarding
+ * \return 0..X ... branch number, -1 for errors, -2 can't decide yet
+ * -- incomplete branches present
  */
 static inline int t_pick_branch( struct cell *t, int *res_code)
 {
@@ -710,16 +751,16 @@ static inline int t_pick_branch( struct cell *t, int *res_code)
 }
 
 
-/* This is the neurological point of reply processing -- called
+/*!
+ * \brief Decide about reply processing and resulting transaction state
+ *
+ * Decide about reply processing and resulting transaction state.
+ * This is the neurological point of reply processing -- called
  * from within a REPLY_LOCK, t_should_relay_response decides
  * how a reply shall be processed and how transaction state is
- * affected.
- *
- * Checks if the new reply (with new_code status) should be sent or not
- *  based on the current
- * transaction status.
- * Returns 	- branch number (0,1,...) which should be relayed
- *         -1 if nothing to be relayed
+ * affected. Checks if the new reply (with new_code status) should be sent
+ * or not based on the current transaction status.
+ * \return the branch number (0,1,...) which should be relayed, -1 if nothing to be relayed
  */
 static enum rps t_should_relay_response( struct cell *Trans , int new_code,
 	int branch , int *should_store, int *should_relay,
@@ -892,10 +933,10 @@ discard:
 	return RPS_DISCARDED;
 }
 
-/* Retransmits the last sent inbound reply.
- * input: p_msg==request for which I want to retransmit an associated reply
- * Returns  -1 - error
- *           1 - OK
+/*!
+ * \brief Retransmits the last sent inbound reply
+ * \param p_msg request for which I want to retransmit an associated reply
+ * \return 1 on succes, -1 on errors
  */
 int t_retransmit_reply( struct cell *t )
 {
@@ -937,13 +978,19 @@ error:
 
 
 
-
+/*!
+ * \brief Small wrapper around _reply with locking
+ */
 int t_reply( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
 	str * text )
 {
 	return _reply( t, p_msg, code, text, 1 /* lock replies */ );
 }
 
+
+/*!
+ * \brief Small wrapper around _reply without locking
+ */
 int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code, 
 	str * text )
 {
@@ -951,10 +998,10 @@ int t_reply_unsafe( struct cell *t, struct sip_msg* p_msg, unsigned int code,
 }
 
 
-
-
-
-void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
+/*!
+ * \brief Set final timer on a transaction
+ */
+void set_final_timer(struct cell *t )
 {
 	if ( !is_local(t) && t->uas.request->REQ_METHOD==METHOD_INVITE ) {
 		/* crank timers for negative replies */
@@ -975,6 +1022,9 @@ void set_final_timer( /* struct s_table *h_table, */ struct cell *t )
 	put_on_wait(t);
 }
 
+/*!
+ * \brief Cleanup UAC timers on a transaction
+ */
 void cleanup_uac_timers( struct cell *t )
 {
 	int i;
@@ -986,6 +1036,7 @@ void cleanup_uac_timers( struct cell *t )
 	}
 	LM_DBG("RETR/FR timers reset\n");
 }
+
 
 static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 {
@@ -1013,10 +1064,14 @@ static int store_reply( struct cell *trans, int branch, struct sip_msg *rpl)
 		return 1;
 }
 
-/* this is the code which decides what and when shall be relayed
-   upstream; note well -- it assumes it is entered locked with 
-   REPLY_LOCK and it returns unlocked!
-*/
+
+/*!
+ *\brief Decide what and when shall be relayed upstream
+ *
+ * This is the code which decides what and when shall be relayed upstream.
+ * \note It assumes it is entered locked with REPLY_LOCK and it returns unlocked!
+ * \return reply reason
+ */
 enum rps relay_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
 	unsigned int msg_status, branch_bm_t *cancel_bitmap )
 {
@@ -1191,10 +1246,15 @@ error01:
 	return RPS_ERROR;
 }
 
-/* this is the "UAC" above transaction layer; if a final reply
-   is received, it triggers a callback; note well -- it assumes
-   it is entered locked with REPLY_LOCK and it returns unlocked!
-*/
+
+/*!
+ * \brief "UAC" above transaction layer
+ *
+ * This is the "UAC" above transaction layer; if a final reply
+ * is received, it triggers a callback.
+ * \note It assumes it is entered locked with REPLY_LOCK and it returns unlocked!
+ * \return reply_status
+ */
 enum rps local_reply( struct cell *t, struct sip_msg *p_msg, int branch, 
 	unsigned int msg_status, branch_bm_t *cancel_bitmap)
 {
@@ -1269,13 +1329,14 @@ error:
 }
 
 
-
-
-/*  This function is called whenever a reply for our module is received; 
-  * we need to register  this function on module initialization;
-  *  Returns :   0 - core router stops
-  *              1 - core router relay statelessly
-  */
+/*!
+ * \brief Called whenever a reply for our module is received
+ *
+ * This function is called whenever a reply for our module is received,
+ * we need to register this function on module initialization.
+ * \param p_msg SIP message
+ * \return 0 - core router stops, 1 - core router relay statelessly
+ */
 int reply_received( struct sip_msg  *p_msg )
 {
 	int msg_status;
@@ -1458,7 +1519,6 @@ not_found:
 }
 
 
-
 int t_reply_with_body( struct cell *trans, unsigned int code, str *text,
 									str *body, str *new_header, str *to_tag )
 {
@@ -1532,4 +1592,3 @@ error_1:
 error:
 	return -1;
 }
-
