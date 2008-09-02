@@ -37,6 +37,7 @@
 #include "../pua/pua.h"
 #include "pua_usrloc.h"
 
+#define BUF_LEN   256
 int pua_set_publish(struct sip_msg* msg , char* s1, char* s2)
 {
 	LM_DBG("set send publish\n");
@@ -69,7 +70,7 @@ str* build_pidf(ucontact_t* c)
 	xmlNodePtr basic_node = NULL;
 	str *body= NULL;
 	str pres_uri= {NULL, 0};
-	char buf[265];
+	char buf[BUF_LEN];
 	char* at= NULL;
 
 	if(c->expires< (int)time(NULL))
@@ -85,21 +86,31 @@ str* build_pidf(ucontact_t* c)
 		pres_uri.len+= pres_prefix.len;
 		memcpy(pres_uri.s+ pres_uri.len, ":", 1);
 		pres_uri.len+= 1;
-	}	
+	}
+	if(pres_uri.len + c->aor->len+ 1 > BUF_LEN)
+	{
+		LM_ERR("buffer size overflown\n");
+		return NULL;
+	}
+
 	memcpy(pres_uri.s+ pres_uri.len, c->aor->s, c->aor->len);
 	pres_uri.len+= c->aor->len;
 
 	at = memchr(c->aor->s, '@', c->aor->len);
 	if(!at)
 	{
+		if(pres_uri.len + 2 + default_domain.len > BUF_LEN)
+		{
+			LM_ERR("buffer size overflown\n");
+			return NULL;
+		}
+
 		pres_uri.s[pres_uri.len++]= '@';
 		memcpy(pres_uri.s+ pres_uri.len, default_domain.s, default_domain.len);
 		pres_uri.len+= default_domain.len;		
 	}
 	pres_uri.s[pres_uri.len]= '\0';
 
-	if(pres_uri.len> 256)
-		return NULL;
 	/* create the Publish body  */
 	doc = xmlNewDoc(BAD_CAST "1.0");
 	if(doc==0)
