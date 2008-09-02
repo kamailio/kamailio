@@ -19,16 +19,16 @@
 MYSQL="mysql openser --show-warnings --batch --user=openser --password=openserrw -e"
 
 function check_mysql() {
-	$MYSQL "select * from location;"
+	$MYSQL "select * from location;" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't read from database"
 		return -1
 	fi;
-	$MYSQL "insert into location (user_agent) values ('___test___');"
+	$MYSQL "insert into location (user_agent) values ('___test___');" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
 		echo "can't write to database"
 		return -1
 	fi;
-	$MYSQL "delete from location where user_agent ='___test___';"
+	$MYSQL "delete from location where user_agent ='___test___';" > /dev/null
 	return 0
 }
