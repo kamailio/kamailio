@@ -23,7 +23,7 @@
  * --------
  */
 
-*! \file
+/*! \file
  * \ingroup acc
  * \brief Acc:: Diameter support
  *
