@@ -144,6 +144,7 @@ OSREL_N= $(shell echo $(OSREL) | sed -e 's/^[^0-9]*//' \
 		[ -n "$$B" ] && R=`expr $$R \* 1000 + $$B` && \
 		[ -n "$$C" ] && R=`expr $$R \* 1000 + $$C`; echo $$R ) )
 
+
 # TLS support
 CORE_TLS ?= 
 # by default compile with tls hooks support (so that no ser recompile is
@@ -1405,11 +1406,11 @@ ifeq ($(OS), linux)
 		sctp_dev_path := $(wildcard $(sctp_dev_locations))
 		sctp_lib_path := $(wildcard $(sctp_lib_locations))
 		ifeq ($(sctp_dev_path),)
-			$(info "sctp development files not installed -- sctp disabled")
+$(info "sctp development files not installed -- sctp disabled")
 			override SCTP := 
 		endif
 		ifeq ($(sctp_lib_path),)
-			$(info "sctp libraries not installed -- sctp disabled")
+$(info "sctp libraries not installed -- sctp disabled")
 			override SCTP := 
 		endif
 		
@@ -1483,6 +1484,26 @@ ifeq ($(OS), freebsd)
 		DEFS+=-DHAVE_SELECT
 	endif
 	YACC=yacc
+	# sctp support
+	ifeq ($(SCTP),1)
+		# test to see if the devfiles and lib are installed
+		sctp_dev_locations := /usr/include/netinet/sctp.h \
+								$(LOCALBASE)/include/netinet/sctp.h
+		sctp_dev_path := $(wildcard $(sctp_dev_locations))
+		ifeq ($(sctp_dev_path),)
+$(info "sctp development files not installed -- sctp disabled")
+			override SCTP := 
+		endif
+		ifeq ($(shell [ $(OSREL_N) -lt 7000 ] && echo sctp), sctp)
+$(info "old freebsd version (>= 7.0 needed) -- sctp disabled")
+			override SCTP := 
+		endif
+		
+		ifeq ($(SCTP),1)
+			DEFS+=-DUSE_SCTP
+			LIBS+=  # no extra libs needed on freebsd
+		endif
+	endif # SCTP
 endif
 
 ifeq ($(OS), openbsd)
