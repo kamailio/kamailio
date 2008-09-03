@@ -105,7 +105,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	/* set receive buffer: SO_RCVBUF*/
 	if (sctp_options.sctp_so_rcvbuf){
 		optval=sctp_options.sctp_so_rcvbuf;
-		if (setsockopt(sock_info->socket, SOL_SCTP, SO_RCVBUF,
+		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_RCVBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SO_RCVBUF (%d):"
 						" %s\n", optval, strerror(errno));
@@ -116,7 +116,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	/* set send buffer: SO_SNDBUF */
 	if (sctp_options.sctp_so_sndbuf){
 		optval=sctp_options.sctp_so_sndbuf;
-		if (setsockopt(sock_info->socket, SOL_SCTP, SO_SNDBUF,
+		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_SNDBUF,
 					(void*)&optval, sizeof(optval)) ==-1){
 			LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SO_SNDBUF (%d):"
 						" %s\n", optval, strerror(errno));
@@ -128,7 +128,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	 * we don't want partial delivery, so fragment interleave must be off too
 	 */
 	optval=0;
-	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_FRAGMENT_INTERLEAVE ,
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_FRAGMENT_INTERLEAVE ,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
 						strerror(errno));
@@ -140,13 +140,13 @@ int sctp_init_sock(struct socket_info* sock_info)
 	 * way to do it is to set it to the socket receive buffer size
 	 * (this is the maximum value allowed in the sctp api draft) */
 	optlen=sizeof(optval);
-	if (getsockopt(sock_info->socket, SOL_SCTP, SO_RCVBUF,
+	if (getsockopt(sock_info->socket, SOL_SOCKET, SO_RCVBUF,
 					(void*)&optval, &optlen) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: getsockopt: %s\n",
 						strerror(errno));
 		goto error;
 	}
-	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
 						strerror(errno));
@@ -155,7 +155,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	
 	/* nagle / no delay */
 	optval=1;
-	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_NODELAY,
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_NODELAY,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
 						strerror(errno));
@@ -164,7 +164,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	
 	/* enable message fragmentation (SCTP_DISABLE_FRAGMENTS)  (on send) */
 	optval=0;
-	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_DISABLE_FRAGMENTS,
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
 						strerror(errno));
@@ -173,7 +173,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	
 	/* set autoclose */
 	optval=sctp_options.sctp_autoclose;
-	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_DISABLE_FRAGMENTS,
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
 						strerror(errno));
@@ -195,7 +195,7 @@ int sctp_init_sock(struct socket_info* sock_info)
 	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
 	
 	/* enable the SCTP_EVENTS */
-	if (setsockopt(sock_info->socket, SOL_SCTP, SCTP_EVENTS,
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_EVENTS,
 						&es, sizeof(es))==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SCTP_EVENTS: %s\n",
 						strerror(errno));
