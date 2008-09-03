@@ -33,10 +33,10 @@ cp $CFG $CFG.bak
 
 echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 
-# 1778 contacts should fit into 1 MB of PKG memory
+# 1768 contacts should fit into 1 MB of PKG memory
 ../$BIN -V | grep "PKG_MALLOC" > /dev/null
 if [ $? -eq 0 ]; then
-	NR=1778
+	NR=1768
 else
 	NR=2778
 fi;
