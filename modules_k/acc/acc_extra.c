@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2004-2006 Voice Sistem SRL
+ * Copyright (C) 2008 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -28,6 +29,7 @@
  *  2006-09-08  flexible multi leg accounting support added,
  *              code cleanup for low level functions (bogdan)
  *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
+ *  2008-09-03  added support for integer type Radius attributes (jh)
  */
 
 /*! \file
@@ -136,7 +138,7 @@ struct acc_extra *parse_acc_extra(char *extra_str)
 			LM_ERR("no more pkg mem 1\n");
 			goto error;
 		}
-		memset( extra, 0, sizeof(struct acc_extra));
+ 		memset( extra, 0, sizeof(struct acc_extra));
 
 		/* link the new extra at the end */
 		if (tail==0) {
@@ -243,7 +245,8 @@ int extra2int( struct acc_extra *extra, int *attrs )
 
 
 
-int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
+int extra2strar(struct acc_extra *extra, struct sip_msg *rq, str *val_arr,
+		int *int_arr, char *type_arr)
 {
 	pv_value_t value;
 	int n;
@@ -251,7 +254,7 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 
 	n = 0;
 	r = 0;
-
+	
 	while (extra) {
 		/* get the value */
 		if (pv_get_spec_value( rq, &extra->spec, &value)!=0) {
@@ -268,6 +271,7 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 			/* convert <null> to empty to have consistency */
 			val_arr[n].s = 0;
 			val_arr[n].len = 0;
+			type_arr[n] = TYPE_NULL;
 		} else {
 			/* set the value into the acc buffer */
 			if (value.rs.s+value.rs.len==static_detector) {
@@ -277,6 +281,12 @@ int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr)
 				r++;
 			} else {
 				val_arr[n] = value.rs;
+			}
+			if (value.flags&PV_VAL_INT) {
+			    int_arr[n] = value.ri;
+			    type_arr[n] = TYPE_INT;
+			} else {
+			    type_arr[n] = TYPE_STR;
 			}
 		}
 		n++;
@@ -290,7 +300,7 @@ done:
 
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
-																	int start)
+		int *int_arr, char *type_arr, int start)
 {
 	static struct usr_avp *avp[MAX_ACC_LEG];
 	unsigned short name_type;
@@ -319,14 +329,18 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 			/* get its value */
 			if(avp[n]->flags & AVP_VAL_STR) {
 				val_arr[n] = value.s;
+				type_arr[n] = TYPE_STR;
 			} else {
 				val_arr[n].s = int2bstr( value.n, int_buf+r*INT2STR_MAX_LEN,
 					&val_arr[n].len);
 				r++;
+				int_arr[n] = value.n;
+				type_arr[n] = TYPE_INT;
 			}
 		} else {
 			val_arr[n].s = 0;
 			val_arr[n].len = 0;
+			type_arr[n] = TYPE_NULL;
 		}
 
 	}
@@ -336,5 +350,3 @@ int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
 exit:
 	return 0;
 }
-
-

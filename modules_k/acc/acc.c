@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2006 Voice Sistem SRL
+ * Copyright (C) 2008 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -32,6 +33,7 @@
  * 2006-09-08  flexible multi leg accounting support added,
  *             code cleanup for low level functions (bogdan)
  * 2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
+ * 2008-09-03  added support for integer type Radius attributes (jh)
  */
 
 /*! \file
@@ -90,10 +92,11 @@ static db_con_t* db_handle=0;
 extern struct acc_extra *db_extra;
 #endif
 
-/* array used to collect the values before being
+/* arrays used to collect the values before being
  * pushed to the storage backend (whatever used) */
 static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
-
+static int int_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
+static char type_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
 
 /********************************************
  *        acc CORE function
@@ -115,7 +118,8 @@ static str val_arr[ACC_CORE_LEN+MAX_ACC_EXTRA+MAX_ACC_LEG];
  * 		sip_code
  * 		sip_status
  * 		*/
-static inline int core2strar( struct sip_msg *req, str *c_vals)
+static inline int core2strar( struct sip_msg *req, str *c_vals,
+			      int *i_vals, char *t_vals)
 {
 	struct to_body *ft_body;
 	struct hdr_field *from;
@@ -123,6 +127,7 @@ static inline int core2strar( struct sip_msg *req, str *c_vals)
 
 	/* method */
 	c_vals[0] = req->first_line.u.request.method;
+	t_vals[0] = TYPE_STR;
 
 	/* from/to URI and TAG */
 	if (req->msg_flags&FL_REQ_UPSTREAM) {
@@ -136,27 +141,37 @@ static inline int core2strar( struct sip_msg *req, str *c_vals)
 
 	if (from && (ft_body=get_ft_body(from)) && ft_body->tag_value.len) {
 		c_vals[1] = ft_body->tag_value;
+		t_vals[1] = TYPE_STR;
 	} else {
 		SET_EMPTY_VAL(1);
+		t_vals[1] = TYPE_NULL;
 	}
 
 	if (to && (ft_body=get_ft_body(to)) && ft_body->tag_value.len) {
 		c_vals[2] = ft_body->tag_value;
+		t_vals[2] = TYPE_STR;
 	} else {
 		SET_EMPTY_VAL(2);
+		t_vals[2] = TYPE_NULL;
 	}
 
 	/* Callid */
-	if (req->callid && req->callid->body.len)
+	if (req->callid && req->callid->body.len) {
 		c_vals[3] = req->callid->body;
-	else
+		t_vals[3] = TYPE_STR;
+	} else {
 		SET_EMPTY_VAL(3);
+		t_vals[3] = TYPE_NULL;
+	}
 
 	/* SIP code */
 	c_vals[4] = acc_env.code_s;
+	i_vals[4] = acc_env.code;
+	t_vals[4] = TYPE_INT;
 
 	/* SIP status */
 	c_vals[5] = acc_env.reason;
+	t_vals[5] = TYPE_STR;
 
 	acc_env.ts = time(NULL);
 	return ACC_CORE_LEN;
@@ -211,10 +226,10 @@ int acc_log_request( struct sip_msg *rq)
 	int i;
 
 	/* get default values */
-	m = core2strar( rq, val_arr);
+	m = core2strar( rq, val_arr, int_arr, type_arr);
 
 	/* get extra values */
-	m += extra2strar( log_extra, rq, val_arr+m);
+	m += extra2strar( log_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 
 	for ( i=0,p=log_msg ; i<m ; i++ ) {
 		if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
@@ -232,7 +247,7 @@ int acc_log_request( struct sip_msg *rq)
 
 	/* get per leg attributes */
 	if ( leg_info ) {
-		n = legs2strar(leg_info,rq,val_arr+m,1);
+	        n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m, 1);
 		do {
 			for (i=m; i<m+n; i++) {
 				if (p+1+log_attrs[i].len+1+val_arr[i].len >= log_msg_end) {
@@ -247,7 +262,9 @@ int acc_log_request( struct sip_msg *rq)
 				memcpy(p, val_arr[i].s, val_arr[i].len);
 				p += val_arr[i].len;
 			}
-		}while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,0))!=0);
+		}while (p!=log_msg_end && (n=legs2strar(leg_info,rq,val_arr+m,
+							int_arr+m,type_arr+m,
+							0))!=0);
 	}
 
 	/* terminating line */
@@ -357,7 +374,7 @@ int acc_db_request( struct sip_msg *rq)
 	int i;
 
 	/* formated database columns */
-	m = core2strar( rq, val_arr );
+	m = core2strar( rq, val_arr, int_arr, type_arr );
 
 	for(i=0; i<m; i++)
 		VAL_STR(db_vals+i) = val_arr[i];
@@ -365,7 +382,7 @@ int acc_db_request( struct sip_msg *rq)
 	VAL_TIME(db_vals+(m++)) = acc_env.ts;
 
 	/* extra columns */
-	m += extra2strar( db_extra, rq, val_arr+m);
+	m += extra2strar( db_extra, rq, val_arr+m, int_arr+m, type_arr+m);
 
 	for( i++ ; i<m; i++)
 		VAL_STR(db_vals+i) = val_arr[i];
@@ -382,7 +399,7 @@ int acc_db_request( struct sip_msg *rq)
 			return -1;
 		}
 	} else {
-		n = legs2strar(leg_info,rq,val_arr+m,1);
+  	        n = legs2strar(leg_info,rq,val_arr+m,int_arr+m,type_arr+m,1);
 		do {
 			for (i=m; i<m+n; i++)
 				VAL_STR(db_vals+i)=val_arr[i];
@@ -390,7 +407,8 @@ int acc_db_request( struct sip_msg *rq)
 				LM_ERR("failed to insert into database\n");
 				return -1;
 			}
-		}while ( (n=legs2strar(leg_info,rq,val_arr+m,0))!=0 );
+		}while ( (n=legs2strar(leg_info,rq,val_arr+m,int_arr+m,
+				       type_arr+m,0))!=0 );
 	}
 
 	return 1;
@@ -492,14 +510,13 @@ static inline UINT4 rad_status( struct sip_msg *req, int code )
 	return rd_vals[RV_STATUS_FAILED].v;
 }
 
-#define ADD_RAD_AVPAIR(_attr,_val,_len) \
-	do { \
-		if ( (_len)!=0 && \
-		!rc_avpair_add( rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
-			LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n,_attr); \
-			goto error; \
-		} \
-	}while(0)
+#define ADD_RAD_AVPAIR(_attr,_val,_len)		\
+    do {								\
+	if (!rc_avpair_add(rh, &send, rd_attrs[_attr].v, _val, _len, 0)) { \
+	    LM_ERR("failed to add %s, %d\n", rd_attrs[_attr].n, _attr);	\
+	    goto error;							\
+	} \
+    }while(0)
 
 int acc_rad_request( struct sip_msg *req )
 {
@@ -511,7 +528,7 @@ int acc_rad_request( struct sip_msg *req )
 
 	send=NULL;
 
-	attr_cnt = core2strar( req, val_arr);
+	attr_cnt = core2strar( req, val_arr, int_arr, type_arr );
 	/* not interested in the last 2 values */
 	attr_cnt -= 2;
 
@@ -532,22 +549,34 @@ int acc_rad_request( struct sip_msg *req )
 	ADD_RAD_AVPAIR( RA_TIME_STAMP, &av_type, -1);
 
 	/* add extra also */
-	attr_cnt += extra2strar( rad_extra, req, val_arr+attr_cnt);
+	attr_cnt += extra2strar(rad_extra, req, val_arr+attr_cnt,
+				int_arr+attr_cnt, type_arr+attr_cnt);
 
 	/* add the values for the vector - start from 1 instead of
 	 * 0 to skip the first value which is the METHOD as string */
 	offset = RA_STATIC_MAX-1;
-	for( i=1; i<attr_cnt; i++)
-		ADD_RAD_AVPAIR( offset+i, val_arr[i].s, val_arr[i].len );
+	for( i=1; i<attr_cnt; i++) {
+	    switch (type_arr[i]) {
+	    case TYPE_STR:
+		ADD_RAD_AVPAIR(offset+i, val_arr[i].s, val_arr[i].len);
+		break;
+	    case TYPE_INT:
+		ADD_RAD_AVPAIR(offset+i, &(int_arr[i]), -1);
+		break;
+	    default:
+		break;
+	    }
+	}
 
 	/* call-legs attributes also get inserted */
 	if ( leg_info ) {
 		offset += attr_cnt;
-		attr_cnt = legs2strar(leg_info,req,val_arr,1);
+		attr_cnt = legs2strar(leg_info,req,val_arr,int_arr,type_arr,1);
 		do {
 			for (i=0; i<attr_cnt; i++)
 				ADD_RAD_AVPAIR( offset+i, val_arr[i].s, val_arr[i].len );
-		}while ( (attr_cnt=legs2strar(leg_info,req,val_arr,0))!=0 );
+		}while ( (attr_cnt=legs2strar(leg_info,req,val_arr,int_arr,
+					      type_arr, 0))!=0 );
 	}
 
 	if (rc_acct(rh, SIP_PORT, send)!=OK_RC) {
@@ -639,7 +668,7 @@ int acc_diam_request( struct sip_msg *req )
 	char tmp[2];
 	unsigned int mid;
 
-	attr_cnt = core2strar( req, val_arr);
+	attr_cnt = core2strar( req, val_arr, int_arr, type_arr );
 	/* last value is not used */
 	attr_cnt--;
 
@@ -691,7 +720,7 @@ int acc_diam_request( struct sip_msg *req )
 	}
 
 	/* also the extra attributes */
-	attr_cnt += extra2strar( dia_extra, req, val_arr);
+	attr_cnt += extra2strar( dia_extra, req, val_arr, int_arr, type_arr);
 
 	/* add attributes */
 	for(i=0; i<attr_cnt; i++) {
@@ -709,7 +738,7 @@ int acc_diam_request( struct sip_msg *req )
 
 	/* and the leg attributes */
 	if ( leg_info ) {
-		cnt = legs2strar(leg_info,req,val_arr,1);
+	        cnt = legs2strar(leg_info,req,val_arr,int_arr,type_arr,1);
 		do {
 			for (i=0; i<cnt; i++) {
 				if((avp=AAACreateAVP(diam_attrs[attr_cnt+i], 0, 0,
@@ -723,7 +752,8 @@ int acc_diam_request( struct sip_msg *req )
 					goto error;
 				}
 			}
-		} while ( (cnt=legs2strar(leg_info,req,val_arr,0))!=0 );
+		} while ( (cnt=legs2strar(leg_info,req,val_arr,int_arr,
+					  type_arr,0))!=0 );
 	}
 
 	if (get_uri(req, &uri) < 0) {

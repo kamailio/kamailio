@@ -2,6 +2,7 @@
  * $Id$
  *
  * Copyright (C) 2004 Voice Sistem SRL
+ * Copyright (C) 2008 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -28,6 +29,7 @@
  *  2006-09-08  flexible multi leg accounting support added,
  *              code cleanup for low level functions (bogdan)
  *  2006-09-19  final stage of a masive re-structuring and cleanup (bogdan)
+ *  2008-09-03  added support for integer type Radius attributes (jh)
  */
 
 /*! \file
@@ -56,6 +58,7 @@ struct acc_extra
 #define MAX_ACC_EXTRA 64
 #define MAX_ACC_LEG   16
 
+enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR};
 
 void init_acc_extra();
 
@@ -65,10 +68,11 @@ struct acc_extra *parse_acc_leg(char *extra);
 
 void destroy_extras( struct acc_extra *extra);
 
-int extra2strar( struct acc_extra *extra, struct sip_msg *rq, str *val_arr);
+int extra2strar( struct acc_extra *extra, struct sip_msg *rq,
+		 str *val_arr, int *int_arr, char *type_arr);
 
 int legs2strar( struct acc_extra *legs, struct sip_msg *rq, str *val_arr,
-																	int start);
+		int *int_arr, char *type_arr, int start);
 
 int extra2int( struct acc_extra *extra, int *attrs );
 
