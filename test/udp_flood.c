@@ -317,7 +317,7 @@ int main (int argc, char** argv)
 #ifdef USE_SCTP
 		else if (proto==PROTO_SCTP){
 			t=1;
-			if (setsockopt(sock, SOL_SCTP, SCTP_NODELAY, &t, sizeof(t))<0){
+			if (setsockopt(sock, IPPROTO_SCTP, SCTP_NODELAY, &t, sizeof(t))<0){
 				fprintf(stderr, "ERROR: could not disable Nagle: %s\n",
 								strerror(errno));
 			}
