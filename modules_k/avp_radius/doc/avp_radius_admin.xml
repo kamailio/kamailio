@@ -139,6 +139,48 @@ modparam("avp_radius", "callee_service_type", 19)
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>caller_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra Radius
+	        attribute name=pseudo variable pairs.  When
+		radius_load_caller_avps() is called, the listed extra 
+		attributes are included Radius request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>caller_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("avp_radius", "caller_extra", "Calling-Station-Id=$fu")
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>callee_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra Radius
+	        attribute name=pseudo variable pairs.  When
+		radius_load_callee_avps() is called, the listed extra 
+		attributes are included Radius request with
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>callee_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+...
+modparam("avp_radius", "callee_extra", "SIP-URI-User=$rU;SIP-URI-Host=$rd")
+</programlisting>
+		</example>
+	</section>
 	</section>
 
 	<section>

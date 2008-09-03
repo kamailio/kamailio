@@ -10,10 +10,7 @@ Daniel-Constantin Mierla
 
    <miconda@gmail.com>
 
-   Copyright © 2004 Juha Heinanen
-   Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Copyright © 2004-2008 Juha Heinanen
      __________________________________________________________
 
    Table of Contents
@@ -31,6 +28,8 @@ Daniel-Constantin Mierla
               1.3.1. radius_config (string)
               1.3.2. caller_service_type (integer)
               1.3.3. callee_service_type (integer)
+              1.3.4. caller_extra (string)
+              1.3.5. callee_extra (string)
 
         1.4. Exported Functions
 
@@ -43,8 +42,10 @@ Daniel-Constantin Mierla
    1.2. radius_config parameter usage
    1.3. caller_service_type parameter usage
    1.4. callee_service_type parameter usage
-   1.5. radius_load_caller_avps() usage
-   1.6. radius_load_callee_avps() usage
+   1.5. caller_extra parameter usage
+   1.6. callee_extra parameter usage
+   1.7. radius_load_caller_avps() usage
+   1.8. radius_load_callee_avps() usage
 
 Chapter 1. Admin Guide
 
@@ -133,6 +134,35 @@ modparam("avp_radius", "caller_service_type", 18)
 ...
 modparam("avp_radius", "callee_service_type", 19)
 
+1.3.4. caller_extra (string)
+
+   Semi-colon separated list of extra Radius attribute name=pseudo
+   variable pairs. When radius_load_caller_avps() is called, the
+   listed extra attributes are included Radius request with
+   current values of corresponding pseudo variables.
+
+   There is no default value, i.e., by default no extra attributes
+   are included.
+
+   Example 1.5. caller_extra parameter usage
+...
+modparam("avp_radius", "caller_extra", "Calling-Station-Id=$fu")
+
+1.3.5. callee_extra (string)
+
+   Semi-colon separated list of extra Radius attribute name=pseudo
+   variable pairs. When radius_load_callee_avps() is called, the
+   listed extra attributes are included Radius request with
+   current values of corresponding pseudo variables.
+
+   There is no default value, i.e., by default no extra attributes
+   are included.
+
+   Example 1.6. callee_extra parameter usage
+...
+modparam("avp_radius", "callee_extra", "SIP-URI-User=$rU;SIP-URI-Host=$r
+d")
+
 1.4. Exported Functions
 
 1.4.1. radius_load_caller_avps(caller)
@@ -144,7 +174,7 @@ modparam("avp_radius", "callee_service_type", 19)
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.5. radius_load_caller_avps() usage
+   Example 1.7. radius_load_caller_avps() usage
 ...
 radius_load_caller_avps("$fU@$fd");     # take caller from From URI
 ...
@@ -160,7 +190,7 @@ radius_load_caller_avps("$au@$ar");     # take caller from Authorization
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.6. radius_load_callee_avps() usage
+   Example 1.8. radius_load_callee_avps() usage
 ...
 radius_load_callee_avps("$rU@$rd");     # take callee from Request-URI
 ...

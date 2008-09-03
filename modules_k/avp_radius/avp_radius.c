@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Copyright (C) 2004 Juha Heinanen <jh@tutpro.com>
+ * Copyright (C) 2004-2008 Juha Heinanen <jh@tutpro.com>
  * Copyright (C) 2004 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -24,8 +24,12 @@
  * -------
  * 2005-07-08: Radius AVP may contain any kind of Kamailio AVP - ID/name or
  *             int/str value (bogdan)
+ * 2008-09-03  New implementation where avp_load_radius() function is replaced
+ *             by radius_load_caller_avps() and radius_load_callee_avps(callee) 
+ *             functions that take caller and callee as string parameter that
+ *             may contain pseudo variables.  Support for adding function
+ *             specific extra attributes defined by module parameters.
  */
-
 
 #include "../../sr_module.h"
 #include "../../mem/mem.h"
@@ -38,20 +42,30 @@
 #include "../../config.h"
 #include "../../radius.h"
 #include "../../mod_fix.h"
+#include "avp_radius.h"
+#include "functions.h"
+#include "extra.h"
 
 MODULE_VERSION
 
 static int mod_init(void);
-static int radius_load_caller_avps(struct sip_msg*, char*, char*);
-static int radius_load_callee_avps(struct sip_msg*, char*, char*);
+static void destroy(void);
 
 static char *radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int caller_service_type = -1;
 static int callee_service_type = -1;
 
-static void *rh;
-struct attr attrs[A_MAX];
-struct val vals[V_MAX];
+void *rh;
+static char *caller_extra_str = 0;
+struct extra_attr *caller_extra = 0;
+static char *callee_extra_str = 0;
+struct extra_attr *callee_extra = 0;
+
+/* Caller and callee AVP attributes and values */
+struct attr caller_attrs[SA_STATIC_MAX+MAX_EXTRA];
+struct attr callee_attrs[SA_STATIC_MAX+MAX_EXTRA];
+struct val caller_vals[RV_STATIC_MAX];
+struct val callee_vals[EV_STATIC_MAX];
 
 
 /*
@@ -70,278 +84,98 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"radius_config",       STR_PARAM, &radius_config      },
-	{"caller_service_type", INT_PARAM, &caller_service_type},
-	{"callee_service_type", INT_PARAM, &callee_service_type},
-	{0, 0, 0}
+    {"radius_config",       STR_PARAM, &radius_config      },
+    {"caller_service_type", INT_PARAM, &caller_service_type},
+    {"callee_service_type", INT_PARAM, &callee_service_type},
+    {"caller_extra",        STR_PARAM, &caller_extra_str   },
+    {"callee_extra",        STR_PARAM, &callee_extra_str   },
+    {0, 0, 0}
 };	
 
 
 struct module_exports exports = {
-	"avp_radius", 
-	DEFAULT_DLFLAGS, /* dlopen flags */
-	cmds,      /* Exported commands */
-	params,    /* Exported parameters */
-	0,         /* exported statistics */
-	0,         /* exported MI functions */
-	0,         /* exported pseudo-variables */
-	0,         /* extra processes */
-	mod_init,  /* module initialization function */
-	0,         /* response function*/
-	0,         /* destroy function */
-	0          /* per-child init function */
+    "avp_radius", 
+    DEFAULT_DLFLAGS, /* dlopen flags */
+    cmds,      /* Exported commands */
+    params,    /* Exported parameters */
+    0,         /* exported statistics */
+    0,         /* exported MI functions */
+    0,         /* exported pseudo-variables */
+    0,         /* extra processes */
+    mod_init,  /* module initialization function */
+    0,         /* response function*/
+    destroy,   /* destroy function */
+    0          /* per-child init function */
 };
 
 
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
+    int n;
 
-	memset(attrs, 0, sizeof(attrs));
-	memset(vals, 0, sizeof(vals));
-
-	attrs[A_SERVICE_TYPE].n	  = "Service-Type";
-	attrs[A_USER_NAME].n	  = "User-Name";
-	attrs[A_SIP_AVP].n	  = "SIP-AVP";
-	vals[V_SIP_CALLER_AVPS].n = "SIP-Caller-AVPs";
-	vals[V_SIP_CALLEE_AVPS].n = "SIP-Callee-AVPs";
-
-	/* read config */
-	if ((rh = rc_read_config(radius_config)) == NULL) {
-		LM_ERR("failed to open radius config file: %s\n", radius_config);
-		return -1;
-	}
-
-	/* read dictionary */
-	if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
-		LM_ERR("failed to read radius dictionary\n");
-		return -1;
-	}
-
-	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "avp", -1, -1);
-
-	if (caller_service_type != -1) {
-		vals[V_SIP_CALLER_AVPS].v = caller_service_type;
-	}
-
-	if (callee_service_type != -1) {
-		vals[V_SIP_CALLEE_AVPS].v = callee_service_type;
-	}
-
-	return 0;
-}
-
-
-static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
-			      int_str *name, int_str *value)
-{
-	static str names, values;
-	unsigned int r;
-	char *p;
-	char *end;
-
-	/* empty? */
-	if (vp->lvalue==0 || vp->strvalue==0)
-		goto error;
-
-	p = vp->strvalue;
-	end = vp->strvalue + vp->lvalue;
-
-	/* get name */
-	if (*p!='#') {
-		/* name AVP */
-		*flags |= AVP_NAME_STR;
-		names.s = p;
-	} else {
-		names.s = ++p;
-	}
-
-	names.len = 0;
-	while( p<end && *p!=':' && *p!='#')
-		p++;
-	if (names.s==p || p==end) {
-		LM_ERR("empty AVP name\n");
-		goto error;
-	}
-	names.len = p - names.s;
-
-	/* get value */
-	if (*p!='#') {
-		/* string value */
-		*flags |= AVP_VAL_STR;
-	}
-	values.s = ++p;
-	values.len = end-values.s;
-	if (values.len==0) {
-		LM_ERR("empty AVP value\n");
-		goto error;
-	}
-
-	if ( !((*flags)&AVP_NAME_STR) ) {
-		/* convert name to id*/
-		if (str2int(&names,&r)!=0 ) {
-			LM_ERR("invalid AVP ID '%.*s'\n", names.len,names.s);
-			goto error;
-		}
-		name->n = (int)r;
-	} else {
-		name->s = names;
-	}
-
-	if ( !((*flags)&AVP_VAL_STR) ) {
-		/* convert value to integer */
-		if (str2int(&values,&r)!=0 ) {
-			LM_ERR("invalid AVP numrical value '%.*s'\n", values.len,values.s);
-			goto error;
-		}
-		value->n = (int)r;
-	} else {
-		value->s = values;
-	}
-
-	return 0;
-error:
-	return -1;
-}
-
-
-/* Generate AVPs from Radius reply items */
-static void generate_avps(VALUE_PAIR* received)
-{
-    int_str name, val;
-    unsigned short flags;
-    VALUE_PAIR *vp;
-
-    vp = received;
-
-    for( ; (vp=rc_avpair_get(vp,attrs[A_SIP_AVP].v,0)) ; vp=vp->next) {
-	flags = 0;
-	if (extract_avp( vp, &flags, &name, &val)!=0 )
-	    continue;
-	if (add_avp( flags, name, val) < 0) {
-	    LM_ERR("unable to create a new AVP\n");
-	} else {
-	    LM_DBG("AVP '%.*s'/%d='%.*s'/%d has been added\n",
-		   (flags&AVP_NAME_STR)?name.s.len:4,
-		   (flags&AVP_NAME_STR)?name.s.s:"null",
-		   (flags&AVP_NAME_STR)?0:name.n,
-		   (flags&AVP_VAL_STR)?val.s.len:4,
-		   (flags&AVP_VAL_STR)?val.s.s:"null",
-		   (flags&AVP_VAL_STR)?0:val.n );
-	}
-    }
+    LM_INFO("initializing...\n");
     
-    return;
+    /* read config */
+    if ((rh = rc_read_config(radius_config)) == NULL) {
+	LM_ERR("failed to open radius config file: %s\n", radius_config);
+	return -1;
+    }
+
+    /* read dictionary */
+    if (rc_read_dictionary(rh, rc_conf_str(rh, "dictionary")) != 0) {
+	LM_ERR("failed to read radius dictionary\n");
+	return -1;
+    }
+
+    /* init the extra engine */
+    init_extra_engine();
+
+    /* parse extra attributes (if any) */
+    if (caller_extra_str &&
+	(caller_extra=parse_extra_str(caller_extra_str)) == 0 ) {
+	LM_ERR("failed to parse caller_extra parameter\n");
+	return -1;
+    }
+    if (callee_extra_str &&
+	(callee_extra=parse_extra_str(callee_extra_str)) == 0 ) {
+	LM_ERR("failed to parse callee_extra parameter\n");
+	return -1;
+    }
+
+    memset(caller_attrs, 0, sizeof(caller_attrs));
+    memset(caller_vals, 0, sizeof(caller_vals));
+    caller_attrs[SA_SERVICE_TYPE].n	   = "Service-Type";
+    caller_attrs[SA_USER_NAME].n	   = "User-Name";
+    caller_attrs[SA_SIP_AVP].n	           = "SIP-AVP";
+    n = SA_STATIC_MAX;
+    n += extra2attrs(caller_extra, caller_attrs, n);
+    caller_vals[RV_SIP_CALLER_AVPS].n     = "SIP-Caller-AVPs";
+    INIT_AV(rh, caller_attrs, n, caller_vals, RV_STATIC_MAX, "avp_radius",
+	    -1, -1);
+    if (caller_service_type != -1) {
+	caller_vals[RV_SIP_CALLER_AVPS].v = caller_service_type;
+    }
+
+    memset(callee_attrs, 0, sizeof(callee_attrs));
+    memset(callee_vals, 0, sizeof(callee_vals));
+    callee_attrs[SA_SERVICE_TYPE].n	   = "Service-Type";
+    callee_attrs[SA_USER_NAME].n	   = "User-Name";
+    callee_attrs[SA_SIP_AVP].n	           = "SIP-AVP";
+    n = SA_STATIC_MAX;
+    n += extra2attrs(callee_extra, callee_attrs, n);
+    callee_vals[EV_SIP_CALLEE_AVPS].n     = "SIP-Callee-AVPs";
+    INIT_AV(rh, callee_attrs, n, callee_vals, EV_STATIC_MAX, "avp_radius",
+	    -1, -1);
+    if (callee_service_type != -1) {
+	callee_vals[EV_SIP_CALLEE_AVPS].v = callee_service_type;
+    }
+
+    return 0;
 }
 
 
-/*
- * Loads from Radius caller's AVPs based on pvar argument.
- * Returns 1 if Radius request succeeded and -1 otherwise.
- */
-int radius_load_caller_avps(struct sip_msg* _m, char* _caller, char* _s2)
+static void destroy(void)
 {
-    str user;
-    VALUE_PAIR *send, *received;
-    UINT4 service;
-    static char msg[4096];
-    int res;
-
-    if ((_caller == NULL) ||
-	(fixup_get_svalue(_m, (gparam_p)_caller, &user) != 0)) {
-	LM_ERR("invalid caller parameter");
-	return -1;
-    }
-
-    send = received = 0;
-
-    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user.s, user.len, 0)) {
-	LM_ERR("error adding A_USER_NAME\n");
-	return -1;
-    }
-
-    service = vals[V_SIP_CALLER_AVPS].v;
-    if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-	LM_ERR("error adding A_SERVICE_TYPE <%u>\n", service);
-	rc_avpair_free(send);
-	return -1;
-    }
-    if ((res = rc_auth(rh, 0, send, &received, msg)) == OK_RC) {
-	LM_DBG("success\n");
-	rc_avpair_free(send);
-	generate_avps(received);
-	rc_avpair_free(received);
-	return 1;
-    } else {
-	rc_avpair_free(send);
-	rc_avpair_free(received);
-#ifdef REJECT_RC
-	if (res == REJECT_RC) {
-	    LM_DBG("rejected\n");
-	    return -1;
-	} else {
-	    LM_ERR("failure\n");
-	    return -2;
-	}
-#else
-	LM_DBG("failure\n");
-	return -1;
-#endif
-    }
-}
-
-
-/*
- * Loads from Radius callee's AVPs based on pvar argument.
- * Returns 1 if Radius request succeeded and -1 otherwise.
- */
-int radius_load_callee_avps(struct sip_msg* _m, char* _callee, char* _s2)
-{
-    str user;
-    VALUE_PAIR *send, *received;
-    UINT4 service;
-    static char msg[4096];
-    int res;
-
-    send = received = 0;
-
-    if ((_callee == NULL) ||
-	(fixup_get_svalue(_m, (gparam_p)_callee, &user) != 0)) {
-	LM_ERR("invalid callee parameter");
-	return -1;
-    }
-
-    if (!rc_avpair_add(rh, &send, attrs[A_USER_NAME].v, user.s, user.len, 0)) {
-	LM_ERR("error adding A_USER_NAME\n");
-	return -1;
-    }
-
-    service = vals[V_SIP_CALLEE_AVPS].v;
-    if (!rc_avpair_add(rh, &send, attrs[A_SERVICE_TYPE].v, &service, -1, 0)) {
-	LM_ERR("error adding A_SERVICE_TYPE <%u>\n", service);
-	rc_avpair_free(send);
-	return -1;
-    }
-    if ((res = rc_auth(rh, 0, send, &received, msg)) == OK_RC) {
-	LM_DBG("success\n");
-	rc_avpair_free(send);
-	generate_avps(received);
-	rc_avpair_free(received);
-	return 1;
-    } else {
-	rc_avpair_free(send);
-	rc_avpair_free(received);
-#ifdef REJECT_RC
-	if (res == REJECT_RC) {
-	    LM_DBG("rejected\n");
-	    return -1;
-	} else {
-	    LM_ERR("failure\n");
-	    return -2;
-	}
-#else
-	LM_DBG("failure\n");
-	return -1;
-#endif
-    }
+    if (caller_extra) destroy_extras(caller_extra);
+    if (callee_extra) destroy_extras(callee_extra);
 }
