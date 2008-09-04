@@ -188,16 +188,26 @@ int add_event(pres_ev_t* event)
 		wipeer_name.s= event->name.s;
 		wipeer_name.len= sep - event->name.s;
 		ev->wipeer= contains_event(&wipeer_name, NULL);
+		if (ev->wipeer) {
+			LM_DBG("Found wipeer event [%.*s] for event [%.*s]\n",wipeer_name.len,wipeer_name.s,event->name.len,event->name.s);
+		}
 	}
 	else
 	{	
 		ev->type= PUBL_TYPE;
+		if (event->name.len + 6 > 50) {
+			LM_ERR("buffer too small\n");
+			goto error;
+		}
 		wipeer_name.s= buf;
 		memcpy(wipeer_name.s, event->name.s, event->name.len);
 		wipeer_name.len= event->name.len;
 		memcpy(wipeer_name.s+ wipeer_name.len, ".winfo", 6);
 		wipeer_name.len+= 6;
 		ev->wipeer= contains_event(&wipeer_name, NULL);
+		if (ev->wipeer) {
+			LM_DBG("Found wipeer event [%.*s] for event [%.*s]\n",wipeer_name.len,wipeer_name.s,event->name.len,event->name.s);
+		}
 	}
 	
 	if(ev->wipeer)	
@@ -246,6 +256,8 @@ void free_pres_event(pres_ev_t* ev)
 		shm_free(ev->name.s);
 	if(ev->content_type.s)
 		shm_free(ev->content_type.s);
+	if(ev->wipeer)
+		ev->wipeer->wipeer = 0;
 	shm_free_event(ev->evp);
 	shm_free(ev);
 

@@ -373,6 +373,12 @@ str* get_wi_notify_body(subs_t* subs, subs_t* watcher_subs)
 	subs_t* s= NULL;
 	int state = FULL_STATE_FLAG;
 
+	if(!subs->event->wipeer) {
+		LM_ERR("can not create NOTIFY body as wipeer not defined for event [%.*s]\n ",
+			subs->event->name.len, subs->event->name.s);
+		return NULL;
+	}
+
 	hash_code = 0;
 	version_str = int2str(subs->version, &len);
 	if(version_str ==NULL)
