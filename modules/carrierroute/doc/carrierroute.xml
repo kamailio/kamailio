@@ -5,7 +5,6 @@
 
 <!ENTITY admin SYSTEM "carrierroute_admin.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
-<!ENTITY db SYSTEM "../../../doc/module/carrierroute_db.xml">
 
 <!-- Include general Kamailio documentation entities -->
 <!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
@@ -60,7 +59,6 @@
 	<toc></toc>
 	
 	&admin;
-	&db;
 	&faq;
 	
 </book>
