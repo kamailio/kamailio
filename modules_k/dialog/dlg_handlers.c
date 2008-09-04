@@ -291,12 +291,13 @@ static void dlg_onreply(struct cell* t, int type, struct tmcb_params *param)
 			LM_ERR("bad reply or missing TO hdr :-/\n");
 			tag.s = 0;
 			tag.len = 0;
-		}
-		tag = get_to(rpl)->tag_value;
-		if (tag.s==0 || tag.len==0) {
-			LM_ERR("missing TAG param in TO hdr :-/\n");
-			tag.s = 0;
-			tag.len = 0;
+		} else {
+			tag = get_to(rpl)->tag_value;
+			if (tag.s==0 || tag.len==0) {
+				LM_ERR("missing TAG param in TO hdr :-/\n");
+				tag.s = 0;
+				tag.len = 0;
+			}
 		}
 
 		/* save callee's tag, cseq, contact and record route*/
