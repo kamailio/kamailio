@@ -164,7 +164,7 @@ modparam("pua", "default_expires", 3600)
 		deleting expired messages.
 		</para>
 		<para>
-		<emphasis>Default value is <quote>30</quote>.
+		<emphasis>Default value is <quote>100</quote>.
 		</emphasis>
 		</para>
 		<example>
