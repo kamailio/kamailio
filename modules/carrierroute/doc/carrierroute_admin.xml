@@ -921,8 +921,11 @@ cr_tree_rewrite_uri(tree, domain)
 	    <para>
       This function loads the carrier and stores it in an AVP.
       It cannot be used in the config file mode, as it needs a mapping of the
-	  given user to a certain carrier. This mapping must be available in the
+	  given user to a certain carrier. The is derived from a database entry
+	  belonging to the user parameter. This mapping must be available in the
 	  table that is specified in the <quote>subscriber_table</quote> variable.
+	  This data is not cached in memory, that means for every execution of this
+	  function a database query will be done.
 	    </para>
 	    <para>Meaning of the parameters is as follows:</para>
 	    <itemizedlist>

@@ -14,8 +14,8 @@ Henning Westerholt
 
    Copyright © 2007 1&1 Internet AG
    Revision History
-   Revision $Revision: 4594 $ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision: 4838 $ $Date: 2008-09-04 15:53:32 +0200
+                              (Do, 04 Sep 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -724,9 +724,12 @@ cr_tree_rewrite_uri(tree, domain)
 
    This function loads the carrier and stores it in an AVP. It
    cannot be used in the config file mode, as it needs a mapping
-   of the given user to a certain carrier. This mapping must be
-   available in the table that is specified in the
-   "subscriber_table" variable.
+   of the given user to a certain carrier. The is derived from a
+   database entry belonging to the user parameter. This mapping
+   must be available in the table that is specified in the
+   "subscriber_table" variable. This data is not cached in memory,
+   that means for every execution of this function a database
+   query will be done.
 
    Meaning of the parameters is as follows:
      * user - Name of the user for the carrier tree lookup.
