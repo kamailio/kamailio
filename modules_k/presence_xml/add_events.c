@@ -46,68 +46,81 @@
 #include "add_events.h"
 #include "presence_xml.h"
 
+extern int disable_presence;
+extern int disable_winfo;
+extern int disable_bla;
+
 static str pu_415_rpl  = str_init("Unsupported media type");
 
 int xml_add_events(void)
 {
 	pres_ev_t event;
 	
-	/* constructing presence event */
-	memset(&event, 0, sizeof(pres_ev_t));
-	event.name.s= "presence";
-	event.name.len= 8;
+	if (!disable_presence) {
+		/* constructing presence event */
+		memset(&event, 0, sizeof(pres_ev_t));
+		event.name.s= "presence";
+		event.name.len= 8;
 
-	event.content_type.s= "application/pidf+xml";
-	event.content_type.len= 20;
+		event.content_type.s= "application/pidf+xml";
+		event.content_type.len= 20;
 
-	event.type= PUBL_TYPE;
-	event.req_auth= 1;
-	event.apply_auth_nbody= pres_apply_auth;
-	event.get_auth_status= pres_watcher_allowed;
-	event.agg_nbody= pres_agg_nbody;
-	event.evs_publ_handl= xml_publ_handl;
-	event.free_body= free_xml_body;
-	event.default_expires= 3600;
-	event.get_rules_doc= pres_get_rules_doc;
-	if(pres_add_event(&event)< 0)
-	{
-		LM_ERR("while adding event presence\n");
-		return -1;
-	}		
+		event.type= PUBL_TYPE;
+		event.req_auth= 1;
+		event.apply_auth_nbody= pres_apply_auth;
+		event.get_auth_status= pres_watcher_allowed;
+		event.agg_nbody= pres_agg_nbody;
+		event.evs_publ_handl= xml_publ_handl;
+		event.free_body= free_xml_body;
+		event.default_expires= 3600;
+		event.get_rules_doc= pres_get_rules_doc;
+		if(pres_add_event(&event)< 0)
+		{
+			LM_ERR("while adding event presence\n");
+			return -1;
+		}		
+		LM_DBG("added 'presence' event to presence module\n");
+	}
 
-	/* constructing presence.winfo event */
-	memset(&event, 0, sizeof(pres_ev_t));
-	event.name.s= "presence.winfo";
-	event.name.len= 14;
+	if (!disable_winfo) {
+		/* constructing presence.winfo event */
+		memset(&event, 0, sizeof(pres_ev_t));
+		event.name.s= "presence.winfo";
+		event.name.len= 14;
 
-	event.content_type.s= "application/watcherinfo+xml";
-	event.content_type.len= 27;
-	event.type= WINFO_TYPE;
-	event.free_body= free_xml_body;
-	event.default_expires= 3600;
+		event.content_type.s= "application/watcherinfo+xml";
+		event.content_type.len= 27;
+		event.type= WINFO_TYPE;
+		event.free_body= free_xml_body;
+		event.default_expires= 3600;
 
-	if(pres_add_event(&event)< 0)
-	{
-		LM_ERR("while adding event presence.winfo\n");
-		return -1;
+		if(pres_add_event(&event)< 0)
+		{
+			LM_ERR("while adding event presence.winfo\n");
+			return -1;
+		}
+		LM_DBG("added 'presence.winfo' event to presence module\n");
 	}
 	
-	/* constructing bla event */
-	memset(&event, 0, sizeof(pres_ev_t));
-	event.name.s= "dialog;sla";
-	event.name.len= 10;
+	if (!disable_bla) {
+		/* constructing bla event */
+		memset(&event, 0, sizeof(pres_ev_t));
+		event.name.s= "dialog;sla";
+		event.name.len= 10;
 
-	event.etag_not_new= 1;
-	event.evs_publ_handl= xml_publ_handl;
-	event.content_type.s= "application/dialog-info+xml";
-	event.content_type.len= 27;
-	event.type= PUBL_TYPE;
-	event.free_body= free_xml_body;
-	event.default_expires= 3600;
-	if(pres_add_event(&event)< 0)
-	{
-		LM_ERR("while adding event dialog;sla\n");
-		return -1;
+		event.etag_not_new= 1;
+		event.evs_publ_handl= xml_publ_handl;
+		event.content_type.s= "application/dialog-info+xml";
+		event.content_type.len= 27;
+		event.type= PUBL_TYPE;
+		event.free_body= free_xml_body;
+		event.default_expires= 3600;
+		if(pres_add_event(&event)< 0)
+		{
+			LM_ERR("while adding event dialog;sla\n");
+			return -1;
+		}
+		LM_DBG("added 'dialog;sla' event to presence module\n");
 	}
 	
 	return 0;

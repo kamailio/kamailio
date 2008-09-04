@@ -9,7 +9,9 @@
 	<para> 
 	The module does specific handling for notify-subscribe events using xml bodies.
 	It is used with the general event handling module, presence. It constructs and adds
-	3 events to it: presence, presence.winfo, dialog;sla. 
+	3 events to it: presence, presence.winfo, dialog;sla. By default all these events
+	will be handled. If you do want to activate only certain events then disable the
+	unneeded events via the module parameters.
 	</para>
 	<para>
 	This module takes the XCAP permission rule documents from xcap_table.
@@ -105,6 +107,61 @@ modparam("presence_xml", "db_url", "&exampledb;")
 		<programlisting format="linespecific">
 ...
 modparam("presence_xml", "xcap_table", "xcaps")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>disable_presence</varname>(int)</title>
+		<para>
+		Set this parameter to disable the handling of the "presence" event.
+		</para>
+		<para>
+		<emphasis>Default value: <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>disable_presence</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "disable_presence", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>disable_winfo</varname>(int)</title>
+		<para>
+		Set this parameter to disable the handling of the "presence.winfo" event.
+		</para>
+		<para>
+		<emphasis>Default value: <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>disable_winfo</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "disable_winfo", 1)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>disable_bla</varname>(int)</title>
+		<para>
+		Set this parameter to disable the handling of the "dialog;sla" event.
+		</para>
+		<para>
+		<emphasis>Default value: <quote>0</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>disable_bla</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("presence_xml", "disable_bla", 1)
 ...
 </programlisting>
 		</example>
