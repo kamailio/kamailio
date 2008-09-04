@@ -71,10 +71,6 @@ struct sl_binds slb;
  */
 static void destroy(void);
 
-/*
- * Module child-init function prototype
- */
-static int child_init(int rank);
 
 /*
  * Module initialization function prototype
@@ -162,14 +158,9 @@ struct module_exports exports = {
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
-	child_init  /* child initialization function */
+	0           /* child initialization function */
 };
 
-
-static int child_init(int rank)
-{
-	return 0;
-}
 
 
 EXTERN_C void boot_DynaLoader (pTHX_ CV* cv);

@@ -329,8 +329,6 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	LM_NOTICE("init_child [%d]  pid [%d]\n", rank, getpid());
-
 	pid = my_pid();
 	
 	if(use_db== 0)

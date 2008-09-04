@@ -50,7 +50,6 @@ int force_color=0;
 
 /** module functions */
 static int mod_init(void);
-static int child_init(int);
 
 static int xlog_1(struct sip_msg*, char*, char*);
 static int xlog_2(struct sip_msg*, char*, char*);
@@ -115,7 +114,7 @@ struct module_exports exports= {
 	mod_init,   /* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,
-	child_init  /* per-child init function */
+	0           /* per-child init function */
 };
 
 /**
@@ -129,15 +128,6 @@ static int mod_init(void)
 		LM_ERR("no pkg memory left\n");
 		return -1;
 	}
-	return 0;
-}
-
-/**
- * Initialize children
- */
-static int child_init(int rank)
-{
-	LM_DBG("init_child [%d]  pid [%d]\n", rank, getpid());
 	return 0;
 }
 

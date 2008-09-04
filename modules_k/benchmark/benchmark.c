@@ -66,10 +66,6 @@ int bm_log_timer(struct sip_msg* _msg, char* timer, char* mystr);
  */
 static void destroy(void);
 
-/*
- * Module child-init function prototype
- */
-static int child_init(int rank);
 
 /*
  * Module initialization function prototype
@@ -174,7 +170,7 @@ struct module_exports exports = {
 	mod_init,   /* module initialization function */
 	0,          /* response function */
 	destroy,    /* destroy function */
-	child_init  /* child initialization function */
+	0           /* child initialization function */
 };
 
 
@@ -198,11 +194,6 @@ static int mod_init(void) {
 	return ret;
 }
 
-static int child_init(int rank)
-{
-	LM_INFO("initing child...\n");
-	return 0;
-}
 
 /*
  * destroy

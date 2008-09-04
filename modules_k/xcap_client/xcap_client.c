@@ -53,7 +53,6 @@ MODULE_VERSION
 #define XCAP_TABLE_VERSION   3
 
 static int mod_init(void);
-static int child_init(int);
 void destroy(void);
 struct mi_root* refreshXcapDoc(struct mi_root* cmd, void* param);
 int get_auid_flag(str auid);
@@ -113,7 +112,7 @@ struct module_exports exports= {
 	mod_init,					/* module initialization function */
 	(response_function) 0,      /* response handling function */
 	(destroy_function) destroy, /* destroy function */
-	child_init                  /* per-child init function */
+	0                           /* per-child init function */
 };
 
 /**
@@ -155,10 +154,6 @@ static int mod_init(void)
 	{
 		register_timer(query_xcap_update, 0, query_period);
 	}
-	return 0;
-}
-static int child_init(int rank)
-{ 
 	return 0;
 }
 

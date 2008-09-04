@@ -193,7 +193,6 @@ static regex_t queue_params_regex;
 
 /** module functions */
 static int mod_init(void);
-static int child_init(int);
 static void rl_timer(unsigned int, void *);
 static int w_rl_check_default(struct sip_msg*, char *, char *);
 static int w_rl_check_forced(struct sip_msg*, char *, char *);
@@ -266,7 +265,7 @@ struct module_exports exports= {
 	mod_init,			/* module initialization function */
 	(response_function) 0,
 	(destroy_function) destroy,	/* module exit function */
-	child_init			/* per-child init function */
+	0				/* per-child init function */
 };
 
 
@@ -563,12 +562,6 @@ static int mod_init(void)
 	return 0;
 }
 
-/* generic openSER module functions */
-static int child_init(int rank)
-{
-	LM_DBG("# %d / pid <%d>\n", rank, getpid());
-	return 0;
-}
 
 void destroy(void)
 {

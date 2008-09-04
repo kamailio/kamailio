@@ -51,7 +51,6 @@ pua_api_t pua;
 /** module functions */
 
 static int mod_init(void);
-static int child_init(int);
 static void destroy(void);
 
 send_publish_t pua_send_publish;
@@ -79,7 +78,7 @@ struct module_exports exports= {
 	 mod_init,					/* module initialization function */
 	 (response_function) 0,		/* response handling function */
  	 destroy,					/* destroy function */
-	 child_init                 /* per-child init function */
+	 0                          /* per-child init function */
 };
 	
 /**
@@ -124,12 +123,6 @@ static int mod_init(void)
 
 	return 0;
 }
-
-static int child_init(int rank)
-{
-	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
-	return 0;
-}	
 
 static void destroy(void)
 {	
