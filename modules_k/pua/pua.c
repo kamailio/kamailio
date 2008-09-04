@@ -868,6 +868,10 @@ static void db_update(unsigned int ticks,void *param)
 	db_vals[3].type = DB_INT;
 	db_vals[3].nul = 0;
 	
+	db_cols[4]= &str_version_col;
+	db_vals[4].type = DB_INT;
+	db_vals[4].nul = 0;
+	
 	result_cols[0]= &str_expires_col;
 
 	if(pua_db== NULL)
@@ -947,6 +951,9 @@ static void db_update(unsigned int ticks,void *param)
 					n_update_cols++;
 						
 					db_vals[3].val.int_val= p->desired_expires;
+					n_update_cols++;
+					
+					db_vals[4].val.int_val= p->version;
 					n_update_cols++;
 					
 					LM_DBG("Updating:n_query_update= %d\tn_update_cols= %d\n",
