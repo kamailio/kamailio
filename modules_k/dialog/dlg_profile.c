@@ -230,9 +230,12 @@ void destroy_linkers(struct dlg_profile_link *linker)
 			if (lh==lh->next) {
 				p_entry->first = NULL;
 			} else {
+				if (p_entry->first==lh)
+					p_entry->first = lh->next;
 				lh->next->prev = lh->prev;
 				lh->prev->next = lh->next;
 			}
+			lh->next = lh->prev = NULL;
 			p_entry->content --;
 			release_lock( &l->profile->lock );
 		}
