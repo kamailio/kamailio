@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef _AVP_RADIUS_EXTRA_H_
-#define _AVP_RADIUS_EXTRA_H_
+#ifndef _MISC_RADIUS_EXTRA_H_
+#define _MISC_RADIUS_EXTRA_H_
 
 #include "../../str.h"
 #include "../../pvar.h"

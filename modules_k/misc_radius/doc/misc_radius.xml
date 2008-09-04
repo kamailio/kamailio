@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
-<!ENTITY admin SYSTEM "avp_radius_admin.xml">
+<!ENTITY admin SYSTEM "misc_radius_admin.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!-- Include general documentation entities -->
@@ -13,7 +13,7 @@
 
 <book>
 	<bookinfo>
-	<title>avp_radius Module</title>
+	<title>misc_radius Module</title>
 	<authorgroup>
 		<author>
 		<firstname>Juha</firstname>

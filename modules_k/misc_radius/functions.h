@@ -1,8 +1,7 @@
-/* domain.h v 0.1 2003/1/20
+/*
+ * functions.h
  *
- * Header file for radius based checks
- *
- * Copyright (C) 2002-2003 Juha Heinanen
+ * Copyright (C) 2008 Juha Heinanen <jh@tutpro.com>
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -19,42 +18,26 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
+#ifndef _MISC_RADIUS_FUNCTIONS_H_
+#define _MISC_RADIUS_FUNCTIONS_H_
 
-#ifndef CHECKS_H
-#define CHECKS_H
+extern int radius_load_caller_avps(struct sip_msg* _m, char* _caller,
+				   char* _s2);
 
+extern int radius_load_callee_avps(struct sip_msg* _m, char* _callee,
+				   char* _s2);
 
-#include "../../parser/msg_parser.h"
+int radius_is_user_in(struct sip_msg* _m, char* _user, char* _group);
 
-
-/*
- * Check from Radius if Request URI belongs to a local user.
- * If so, loads AVPs based on reply items returned from Radius.
- */
 int radius_does_uri_exist_0(struct sip_msg* _m, char* _s1, char* _s2);
 
-
-/*
- * Check from Radius if URI giving in pvar argument belongs to a local user.
- * If so, loads AVPs based on reply items returned from Radius.
- */
 int radius_does_uri_exist_1(struct sip_msg* _m, char* _sp, char* _s2);
 
-
-/*
- * Check from Radius if Request URI user belongs to a local user.
- * If so, loads AVPs based on reply items returned from Radius.
- */
 int radius_does_uri_user_exist_0(struct sip_msg* _m, char* _s1, char* _s2);
 
-
-/*
- * Check from Radius if URI user giving in pvar argument belongs
- * to a local user. If so, loads AVPs based on reply items returned
- * from Radius. 
- */
 int radius_does_uri_user_exist_1(struct sip_msg* _m, char* _sp, char* _s2);
 
-#endif /* CHECKS_H */
+#endif
