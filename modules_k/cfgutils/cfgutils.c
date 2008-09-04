@@ -36,7 +36,15 @@
  * or command line tools.
  * Furthermore it provides some functions to let the server wait a
  * specific time interval.
- * 
+ *
+ * gflags module: global flags; it keeps a bitmap of flags
+ * in shared memory and may be used to change behaviour 
+ * of server based on value of the flags. E.g.,
+ *    if (is_gflag("1")) { t_relay_to_udp("10.0.0.1","5060"); }
+ *    else { t_relay_to_udp("10.0.0.2","5060"); }
+ * The benefit of this module is the value of the switch flags
+ * can be manipulated by external applications such as web interface
+ * or command line tools.
  */
 
 
@@ -46,6 +54,14 @@
 #define FIFO_GET_PROB   "rand_get_prob"
 #define FIFO_GET_HASH   "get_config_hash"
 #define FIFO_CHECK_HASH "check_config_hash"
+
+/* flag buffer size for FIFO protocool */
+#define MAX_FLAG_LEN 12
+/* FIFO action protocol names for gflag functionality */
+#define FIFO_SET_GFLAG "set_gflag"
+#define FIFO_IS_GFLAG "is_gflag"
+#define FIFO_RESET_GFLAG "reset_gflag"
+#define FIFO_GET_GFLAGS "get_gflags"
 
 #include "../../sr_module.h"
 #include "../../error.h"
@@ -57,6 +73,7 @@
 #include "../../mod_fix.h"
 #include "../../md5utils.h"
 #include "../../globals.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include "shvar.h"
 
@@ -72,25 +89,43 @@ static int dbg_abort(struct sip_msg*, char*,char*);
 static int dbg_pkg_status(struct sip_msg*, char*,char*);
 static int dbg_shm_status(struct sip_msg*, char*,char*);
 
+static int set_gflag(struct sip_msg*, char *, char *);
+static int reset_gflag(struct sip_msg*, char *, char *);
+static int is_gflag(struct sip_msg*, char *, char *);
+
+
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_get_prob(struct mi_root* cmd, void* param );
 static struct mi_root* mi_get_hash(struct mi_root* cmd, void* param );
 static struct mi_root* mi_check_hash(struct mi_root* cmd, void* param );
 
+static struct mi_root* mi_set_gflag(struct mi_root* cmd, void* param );
+static struct mi_root* mi_reset_gflag(struct mi_root* cmd, void* param );
+static struct mi_root* mi_is_gflag(struct mi_root* cmd, void* param );
+static struct mi_root* mi_get_gflags(struct mi_root* cmd, void* param );
+
+
 static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 		pv_value_t *res);
 
+
 static int fixup_prob( void** param, int param_no);
+static int fixup_gflags( void** param, int param_no);
+
 
 static int mod_init(void);
 static void mod_destroy(void);
 
-static int initial = 10;
+static int initial_prob = 10;
 static int *probability;
 
 static char config_hash[MD5_LEN];
 static char* hash_file = NULL;
+
+static int initial_gflags=0;
+static unsigned int *gflags=0;
+
 
 static cmd_export_t cmds[]={
 	{"rand_set_prob", /* action name as in scripts */
@@ -115,16 +150,25 @@ static cmd_export_t cmds[]={
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{"shm_status", (cmd_function)dbg_shm_status,   0, 0, 0,
 		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"set_gflag",    (cmd_function)set_gflag,   1,   fixup_gflags, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"reset_gflag",  (cmd_function)reset_gflag, 1,   fixup_gflags, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
+	{"is_gflag",     (cmd_function)is_gflag,    1,   fixup_gflags, 0,
+		REQUEST_ROUTE|FAILURE_ROUTE|ONREPLY_ROUTE|BRANCH_ROUTE|LOCAL_ROUTE},
 	{0, 0, 0, 0, 0, 0}
 };
 
+
 static param_export_t params[]={ 
-	{"initial_probability", INT_PARAM, &initial},
+	{"initial_probability", INT_PARAM, &initial_prob},
+	{"initial_gflags", INT_PARAM, &initial_gflags},
 	{"hash_file",           STR_PARAM, &hash_file        },
 	{"shvset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_shvar },
 	{"varset",              STR_PARAM|USE_FUNC_PARAM, (void*)param_set_var },
 	{0,0,0}
 };
+
 
 static mi_export_t mi_cmds[] = {
 	{ FIFO_SET_PROB,   mi_set_prob,   0,                 0,  0 },
@@ -134,8 +178,13 @@ static mi_export_t mi_cmds[] = {
 	{ FIFO_CHECK_HASH, mi_check_hash, MI_NO_INPUT_FLAG,  0,  0 },
 	{ "shv_get",       mi_shvar_get,  0,                 0,  0 },
 	{ "shv_set" ,      mi_shvar_set,  0,                 0,  0 },
+	{ FIFO_SET_GFLAG,   mi_set_gflag,   0,                 0,  0 },
+	{ FIFO_RESET_GFLAG, mi_reset_gflag, 0,                 0,  0 },
+	{ FIFO_IS_GFLAG,    mi_is_gflag,    0,                 0,  0 },
+	{ FIFO_GET_GFLAGS,  mi_get_gflags,  MI_NO_INPUT_FLAG,  0,  0 },
 	{ 0, 0, 0, 0, 0}
 };
+
 
 static pv_export_t mod_items[] = {
 	{ {"RANDOM", sizeof("RANDOM")-1}, 1000, pv_get_random_val, 0,
@@ -147,6 +196,7 @@ static pv_export_t mod_items[] = {
 
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
+
 
 struct module_exports exports = {
 	"cfgutils",
@@ -188,7 +238,175 @@ static int fixup_prob( void** param, int param_no)
 	return 0;
 }
 
+/**
+ * convert char* to int and do bitwise right-shift
+ * char* must be pkg_alloced and will be freed by the function
+ */
+static int fixup_gflags( void** param, int param_no)
+{
+	unsigned int myint;
+	str param_str;
+
+	/* we only fix the parameter #1 */
+	if (param_no!=1)
+		return 0;
+
+	param_str.s=(char*) *param;
+	param_str.len=strlen(param_str.s);
+
+	if (str2int(&param_str, &myint )<0) {
+		LM_ERR("bad number <%s>\n", (char *)(*param));
+		return E_CFG;
+	}
+	if ( myint >= 8*sizeof(*gflags) ) {
+		LM_ERR("flag <%d> out of "
+			"range [0..%lu]\n", myint, ((unsigned long)8*sizeof(*gflags))-1 );
+		return E_CFG;
+	}
+	/* convert from flag index to flag bitmap */
+	myint = 1 << myint;
+	/* success -- change to int */
+	pkg_free(*param);
+	*param=(void *)(long)myint;
+	return 0;
+}
+
+
 /************************** module functions **********************************/
+
+static int set_gflag(struct sip_msg *bar, char *flag, char *foo) 
+{
+	(*gflags) |= (unsigned int)(long)flag;
+	return 1;
+}
+
+
+static int reset_gflag(struct sip_msg *bar, char *flag, char *foo)
+{
+	(*gflags) &= ~ ((unsigned int)(long)flag);
+	return 1;
+}
+
+
+static int is_gflag(struct sip_msg *bar, char *flag, char *foo)
+{
+	return ( (*gflags) & ((unsigned int)(long)flag)) ? 1 : -1;
+}
+
+
+static struct mi_root* mi_set_gflag(struct mi_root* cmd_tree, void* param )
+{
+	unsigned int flag;
+	struct mi_node* node;
+
+	node = cmd_tree->node.kids;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	flag = 0;
+	if( strno2int( &node->value, &flag) <0)
+		goto error;
+	if (!flag) {
+		LM_ERR("incorrect flag\n");
+		goto error;
+	}
+
+	(*gflags) |= flag;
+
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+error:
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+}
+
+
+static struct mi_root*  mi_reset_gflag(struct mi_root* cmd_tree, void* param )
+{
+	unsigned int flag;
+	struct mi_node* node = NULL;
+
+	node = cmd_tree->node.kids;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	flag = 0;
+	if( strno2int( &node->value, &flag) <0)
+		goto error;
+	if (!flag) {
+		LM_ERR("incorrect flag\n");
+		goto error;
+	}
+
+	(*gflags) &= ~ flag;
+
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+error:
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+}
+
+
+static struct mi_root* mi_is_gflag(struct mi_root* cmd_tree, void* param )
+{
+	unsigned int flag;
+	struct mi_root* rpl_tree = NULL;
+	struct mi_node* node = NULL;
+
+	node = cmd_tree->node.kids;
+	if(node == NULL)
+		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
+
+	flag = 0;
+	if( strno2int( &node->value, &flag) <0)
+		goto error_param;
+	if (!flag) {
+		LM_ERR("incorrect flag\n");
+		goto error_param;
+	}
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+	if(rpl_tree ==0)
+		return 0;
+
+	if( ((*gflags) & flag)== flag )
+		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "TRUE", 4);
+	else
+		node = add_mi_node_child( &rpl_tree->node, 0, 0, 0, "FALSE", 5);
+
+	if(node == NULL)
+	{
+		LM_ERR("failed to add node\n");
+		free_mi_tree(rpl_tree);
+		return 0;
+	}
+
+	return rpl_tree;
+error_param:
+	return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
+}
+
+
+static struct mi_root*  mi_get_gflags(struct mi_root* cmd_tree, void* param )
+{
+	struct mi_root* rpl_tree= NULL;
+	struct mi_node* node= NULL;
+
+	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
+	if(rpl_tree == NULL)
+		return 0;
+
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "0x%X",(*gflags));
+	if(node == NULL)
+		goto error;
+
+	node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "%u",(*gflags));
+	if(node == NULL)
+		goto error;
+
+	return rpl_tree;
+error:
+	free_mi_tree(rpl_tree);
+	return 0;
+}
+
 
 static struct mi_root* mi_set_prob(struct mi_root* cmd, void* param )
 {
@@ -215,7 +433,7 @@ error:
 static struct mi_root* mi_reset_prob(struct mi_root* cmd, void* param )
 {
 
-	*probability = initial;
+	*probability = initial_prob;
 	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN );
 }
 
@@ -306,7 +524,7 @@ static int set_prob(struct sip_msg *bar, char *percent_par, char *foo)
 	
 static int reset_prob(struct sip_msg *bar, char *percent_par, char *foo)
 {
-	*probability=initial;
+	*probability=initial_prob;
 	return 1;
 }
 
@@ -397,11 +615,11 @@ static int mod_init(void)
 		LM_DBG("config file hash is %.*s", MD5_LEN, config_hash);
 	}
 
-	if (initial > 100) {
-		LM_ERR("invalid probability <%d>\n", initial);
+	if (initial_prob > 100) {
+		LM_ERR("invalid probability <%d>\n", initial_prob);
 		return -1;
 	}
-	LM_DBG("initial probability %d percent\n", initial);
+	LM_DBG("initial probability %d percent\n", initial_prob);
 
 	probability=(int *) shm_malloc(sizeof(int));
 
@@ -409,7 +627,7 @@ static int mod_init(void)
 		LM_ERR("no shmem available\n");
 		return -1;
 	}
-	*probability = initial;
+	*probability = initial_prob;
 
 	if(init_shvars()<0)
 	{
@@ -417,6 +635,15 @@ static int mod_init(void)
 		shm_free(probability);
 		return -1;
 	}
+
+	gflags=(unsigned int *) shm_malloc(sizeof(unsigned int));
+	if (!gflags) {
+		LM_ERR(" no shmem available\n");
+		return -1;
+	}
+	*gflags=initial_gflags;
+
+
 	LM_INFO("module initialized, pid [%d]\n", getpid());
 
 	return 0;
@@ -429,5 +656,6 @@ static void mod_destroy(void)
 		shm_free(probability);
 	shvar_destroy_locks();
 	destroy_shvars();
+	if (gflags)
+		shm_free(gflags);
 }
-

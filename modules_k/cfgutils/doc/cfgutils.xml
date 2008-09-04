@@ -35,13 +35,25 @@
 		<affiliation><orgname>rosdev.ro</orgname></affiliation>
 		<email>ramona@rosdev.ro</email>
 		</author>
+		<author>
+		<firstname>Jiri</firstname>
+		<surname>Kuthan</surname>
+		<email>jiri@iptel.org</email>
+		</author>
+		<editor>
+		<firstname>Daniel-Constantin</firstname>
+		<surname>Mierla</surname>
+		<email>miconda@gmail.com</email>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2007</year>
 		<year>2008</year>
+		<year>2004</year>
 		<holder>1und1 Internet AG</holder>
 		<holder>BASIS AudioNet GmbH</holder>
 		<holder>Elena-Ramona Modroiu</holder>
+		<holder>&fhg;</holder>
 	</copyright>
 	<revhistory>
 		<revision>
