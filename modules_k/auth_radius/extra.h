@@ -1,9 +1,7 @@
 /*
- * $Id$
+ * extra.h
  *
- * Digest Authentication - Radius support
- *
- * Copyright (C) 2001-2003 FhG Fokus
+ * Copyright (C) 2008 Juha Heinanen <jh@tutpro.com>
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -21,26 +19,32 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * History:
- * -------
- * 2003-03-09: Based on auth_mod.h from radius_authorize (janakj)
  */
 
+#ifndef _MISC_RADIUS_EXTRA_H_
+#define _MISC_RADIUS_EXTRA_H_
 
-#ifndef AUTHRAD_MOD_H
-#define AUTHRAD_MOD_H
-
-#include "../auth/api.h"
+#include "../../str.h"
+#include "../../pvar.h"
+#include "../../parser/msg_parser.h"
 #include "../../radius.h"
 
-extern struct attr attrs[];
-extern struct val vals[];
-extern void *rh;
+struct extra_attr {
+    str name;
+    pv_spec_t spec;
+    struct extra_attr *next;
+};
 
-extern struct extra_attr *auth_extra;
+#define MAX_EXTRA 4
 
-extern int use_ruri_flag;
+void init_extra_engine();
 
-extern auth_api_t auth_api;
+struct extra_attr *parse_extra_str(char *extra);
 
-#endif /* AUTHRAD_MOD_H */
+void destroy_extras(struct extra_attr *extra);
+
+int extra2strar(struct extra_attr *extra, struct sip_msg *rq, str *val_arr);
+
+int extra2attrs(struct extra_attr *extra, struct attr *attrs, int offset);
+
+#endif

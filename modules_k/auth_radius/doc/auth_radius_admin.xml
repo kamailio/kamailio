@@ -138,6 +138,26 @@ modparam("auth_radius", "service_type", 15)
 		</programlisting>
 		</example>
 	</section>
+	<section>
+		<title><varname>auth_extra</varname> (string)</title>
+		<para>
+		Semi-colon separated list of extra RADIUS attribute
+		name=pseudo variable pairs. When radius_www_authorize() or
+		radius_proxy_authorize() function is called, listed extra
+		attributes are included in RADIUS request with 
+		current values of corresponding pseudo variables.
+		</para>
+		<para>
+		There is no default value, i.e., by default no extra
+		attributes are included.
+		</para>
+		<example>
+		<title><varname>auth_extra</varname> parameter usage</title>
+		<programlisting format="linespecific">
+modparam("auth_radius", "auth_extra", "Acct-Session-Id=$ci")
+		</programlisting>
+		</example>
+	</section>
         <section>
                 <title><varname>use_ruri_flag</varname> (integer)</title>
                 <para>

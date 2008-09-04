@@ -24,8 +24,7 @@
 		<author>
 		<firstname>Juha</firstname>
 		<surname>Heinanen</surname>
-		<affiliation><orgname>Song Networks</orgname></affiliation>
-		<email>jh@song.fi</email>
+		<email>jh@tutpro.com</email>
 		</author>
 		<author>
 		<firstname>Stelios</firstname>
@@ -52,6 +51,11 @@
 		<year>2005</year>
 		<holder>&voicesystem;</holder>
 	</copyright>
+	<copyright>
+		<year>2008</year>
+		<holder>Juha Heinanen</holder>
+	</copyright>
+	<para></para>
 	<revhistory>
 		<revision>
 		<revnumber>$Revision$</revnumber>

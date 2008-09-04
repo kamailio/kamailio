@@ -38,13 +38,37 @@
 #include "../auth/api.h"
 #include "sterman.h"
 #include "authrad_mod.h"
+#include "extra.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 
+/* Array for extra attribute values */
+static str val_arr[MAX_EXTRA];
+
+
+/* Macro to add extra attribute */
+#define ADD_EXTRA_AVPAIR(_attrs, _attr, _val, _len)			\
+    do {								\
+	if ((_len) != 0) {						\
+	    if ((_len) == -1) {						\
+		if (_attrs[_attr].t != PW_TYPE_INTEGER) {		\
+		    LM_ERR("attribute %d is not of type integer\n",	\
+			   _attrs[_attr].v);				\
+		    goto err;						\
+		}							\
+	    }								\
+	    if (!rc_avpair_add( rh, &send, _attrs[_attr].v, _val, _len, 0)) { \
+		LM_ERR("failed to add %s, %d\n", _attrs[_attr].n, _attr); \
+		goto err;						\
+	    }								\
+	}								\
+    }while(0)
+
+
 static inline int extract_avp(VALUE_PAIR* vp, unsigned short *flags,
-										int_str *name, int_str *value)
+			      int_str *name, int_str *value)
 {
 	static str names, values;
 	unsigned int r;
@@ -204,8 +228,8 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 	uint32_t service;
 	str method, user, user_name;
 	str *ruri;
-	int i;
-	
+	int extra_cnt, offset, i;
+		
 	send = received = 0;
 
 	if (!(_cred && _method && _user)) {
@@ -347,6 +371,25 @@ int radius_authorize_sterman(struct sip_msg* _msg, dig_cred_t* _cred, str* _meth
 		if (add_cisco_vsa(&send, _msg)) {
 			goto err;
 		}
+	}
+
+	/* Add extra attributes */
+	extra_cnt = extra2strar(auth_extra, _msg, val_arr);
+	if (extra_cnt == -1) {
+	    LM_ERR("in getting values of extra attributes\n");
+	    goto err;
+	}
+	offset = A_MAX;
+	for (i = 0; i < extra_cnt; i++) {
+	    if (val_arr[i].len == -1) {
+		/* Add integer attribute */
+		ADD_EXTRA_AVPAIR(attrs, offset+i,
+				 &(val_arr[i].s), val_arr[i].len );
+	    } else {
+		/* Add string attribute */
+		ADD_EXTRA_AVPAIR(attrs, offset+i,
+				 val_arr[i].s, val_arr[i].len );
+	    }
 	}
 
 	/* Send request */

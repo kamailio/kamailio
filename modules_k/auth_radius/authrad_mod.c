@@ -44,11 +44,12 @@
 #include "../../mem/mem.h"
 #include "authrad_mod.h"
 #include "authorize.h"
+#include "extra.h"
 
 MODULE_VERSION
 
-struct attr attrs[A_MAX];
-struct val vals[V_MAX];
+struct attr attrs[A_MAX+MAX_EXTRA];
+struct val vals[V_MAX+MAX_EXTRA];
 void *rh;
 
 auth_api_t auth_api;
@@ -64,6 +65,9 @@ static char* radius_config = DEFAULT_RADIUSCLIENT_CONF;
 static int service_type = -1;
 
 int use_ruri_flag = -1;
+
+static char *auth_extra_str = 0;
+struct extra_attr *auth_extra = 0;
 
 /*
  * Exported functions
@@ -86,6 +90,7 @@ static param_export_t params[] = {
 	{"radius_config",    STR_PARAM, &radius_config   },
 	{"service_type",     INT_PARAM, &service_type    },
 	{"use_ruri_flag",    INT_PARAM, &use_ruri_flag   },
+	{"auth_extra",       STR_PARAM, &auth_extra_str  },
 	{0, 0, 0}
 };
 
@@ -116,26 +121,9 @@ static int mod_init(void)
 {
 	DICT_VENDOR *vend;
 	bind_auth_t bind_auth;
+	int n;
 
-	memset(attrs, 0, sizeof(attrs));
-	memset(vals, 0, sizeof(vals));
-	attrs[A_SERVICE_TYPE].n			= "Service-Type";
-	attrs[A_SIP_URI_USER].n			= "Sip-URI-User";
-	attrs[A_DIGEST_RESPONSE].n		= "Digest-Response";
-	attrs[A_DIGEST_ALGORITHM].n		= "Digest-Algorithm";
-	attrs[A_DIGEST_BODY_DIGEST].n		= "Digest-Body-Digest";
-	attrs[A_DIGEST_CNONCE].n		= "Digest-CNonce";
-	attrs[A_DIGEST_NONCE_COUNT].n		= "Digest-Nonce-Count";
-	attrs[A_DIGEST_QOP].n			= "Digest-QOP";
-	attrs[A_DIGEST_METHOD].n		= "Digest-Method";
-	attrs[A_DIGEST_URI].n			= "Digest-URI";
-	attrs[A_DIGEST_NONCE].n			= "Digest-Nonce";
-	attrs[A_DIGEST_REALM].n			= "Digest-Realm";
-	attrs[A_DIGEST_USER_NAME].n		= "Digest-User-Name";
-	attrs[A_USER_NAME].n			= "User-Name";
-	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
-	attrs[A_SIP_AVP].n				= "SIP-AVP";
-	vals[V_SIP_SESSION].n			= "Sip-Session";
+	LM_INFO("initializing...\n");
 
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LM_ERR("failed to open configuration file \n");
@@ -164,7 +152,38 @@ static int mod_init(void)
 		return -4;
 	}
 
-	INIT_AV(rh, attrs, A_MAX, vals, V_MAX, "auth_radius", -5, -6);
+	/* init the extra engine */
+	init_extra_engine();
+
+	/* parse extra attributes (if any) */
+	if (auth_extra_str &&
+	    (auth_extra=parse_extra_str(auth_extra_str)) == 0 ) {
+	    LM_ERR("failed to parse auth_extra parameter\n");
+	    return -1;
+	}
+
+	memset(attrs, 0, sizeof(attrs));
+	attrs[A_SERVICE_TYPE].n			= "Service-Type";
+	attrs[A_SIP_URI_USER].n			= "Sip-URI-User";
+	attrs[A_DIGEST_RESPONSE].n		= "Digest-Response";
+	attrs[A_DIGEST_ALGORITHM].n		= "Digest-Algorithm";
+	attrs[A_DIGEST_BODY_DIGEST].n		= "Digest-Body-Digest";
+	attrs[A_DIGEST_CNONCE].n		= "Digest-CNonce";
+	attrs[A_DIGEST_NONCE_COUNT].n		= "Digest-Nonce-Count";
+	attrs[A_DIGEST_QOP].n			= "Digest-QOP";
+	attrs[A_DIGEST_METHOD].n		= "Digest-Method";
+	attrs[A_DIGEST_URI].n			= "Digest-URI";
+	attrs[A_DIGEST_NONCE].n			= "Digest-Nonce";
+	attrs[A_DIGEST_REALM].n			= "Digest-Realm";
+	attrs[A_DIGEST_USER_NAME].n		= "Digest-User-Name";
+	attrs[A_USER_NAME].n			= "User-Name";
+	attrs[A_CISCO_AVPAIR].n			= "Cisco-AVPair";
+	attrs[A_SIP_AVP].n			= "SIP-AVP";
+	n = A_MAX;
+	n += extra2attrs(auth_extra, attrs, n);
+	memset(vals, 0, sizeof(vals));
+	vals[V_SIP_SESSION].n			= "Sip-Session";
+	INIT_AV(rh, attrs, n, vals, V_MAX, "auth_radius", -5, -6);
 
 	if (service_type != -1) {
 		vals[V_SIP_SESSION].v = service_type;
