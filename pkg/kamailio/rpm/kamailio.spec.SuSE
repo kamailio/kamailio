@@ -2,15 +2,15 @@
 %define ver     1.2.0
 %define rel     0
 
-%define EXCLUDED_MODULES	mysql jabber cpl-c avp_radius auth_radius group_radius uri_radius postgress pa unixodbc osp tlsops
+%define EXCLUDED_MODULES	mysql jabber cpl-c auth_radius misc_radius peering postgress pa unixodbc osp tlsops
 %define MYSQL_MODULES		mysql
 %define POSTGRES_MODULES	postgres
 %define UNIXODBC_MODULES	unixodbc
 %define JABBER_MODULES		jabber
 %define CPL_MODULES			cpl-c
 %define PA_MODULES			pa
-%define RADIUS_MODULES		avp_radius auth_radius group_radius uri_radius
-%define RADIUS_MOD_PATH		modules/avp_radius modules/auth_radius modules/group_radius modules/uri_radius
+%define RADIUS_MODULES		auth_radius misc_radius peering
+%define RADIUS_MOD_PATH		modules/auth_radius modules/misc_radius modules/peering
 
 Summary:      Kamailio, very fast and flexible SIP Proxy
 Name:         %name
@@ -359,14 +359,12 @@ sbin/insserv etc/init.d/
 
 %files radius
 %defattr(-,root,root)
-%{_libdir}/kamailio/modules/avp_radius.so
 %{_libdir}/kamailio/modules/auth_radius.so
-%{_libdir}/kamailio/modules/group_radius.so
-%{_libdir}/kamailio/modules/uri_radius.so
-%doc %{_docdir}/kamailio/README.avp_radius
+%{_libdir}/kamailio/modules/misc_radius.so
+%{_libdir}/kamailio/modules/peering.so
 %doc %{_docdir}/kamailio/README.auth_radius
-%doc %{_docdir}/kamailio/README.group_radius
-%doc %{_docdir}/kamailio/README.uri_radius
+%doc %{_docdir}/kamailio/README.misc_radius
+%doc %{_docdir}/kamailio/README.peering
 
 
 %changelog

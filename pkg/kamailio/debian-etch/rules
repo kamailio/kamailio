@@ -40,7 +40,7 @@ JABBER_MODULES = jabber
 # cpl related modules
 CPL_MODULES = cpl-c
 # module depending on radiusclient
-RADIUS_MODULES = avp_radius auth_radius group_radius uri_radius peering
+RADIUS_MODULES = auth_radius misc_radius peering
 # presence related modules
 PRESENCE_MODULES = presence presence_xml presence_mwi pua pua_bla pua_mi pua_usrloc pua_xmpp xcap_client
 # XMLRPC module

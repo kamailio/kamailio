@@ -34,7 +34,7 @@ pkg_setup() {
 		inc_mod="${inc_mod} postgres"
 
 	use radius && \
-		inc_mod="${inc_mod} auth_radius group_radius uri_radius avp_radius"
+		inc_mod="${inc_mod} auth_radius misc_radius peering
 
 	use jabber && \
 		inc_mod="${inc_mod} jabber"
