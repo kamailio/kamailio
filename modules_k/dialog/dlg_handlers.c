@@ -582,7 +582,6 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 	int timeout;
 	unsigned int dir;
 
-
 	/* skip initial requests - they may end up here because of the
 	 * preloaded route */
 	if ( (!req->to && parse_headers(req, HDR_TO_F,0)<0) || !req->to ) {
@@ -623,13 +622,20 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 				return;
 			}
 			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
-				LM_WARN("tight matching failed for %.*s "
-					"with clid '%.*s' and tags '%.*s' '%.*s'"
-					"and direction %d\n",
-					req->first_line.u.request.method.len,
-					req->first_line.u.request.method.s,
-					callid.len,callid.s,
-					ftag.len,ftag.s,ttag.len,ttag.s,dir);
+				LM_WARN("tight matching failed for %.*s with callid='%.*s'/%d, "
+						"ftag='%.*s'/%d, ttag='%.*s'/%d and direction=%d\n",
+						req->first_line.u.request.method.len,
+						req->first_line.u.request.method.s,
+						callid.len, callid.s, callid.len,
+						ftag.len, ftag.s, ftag.len,
+						ttag.len, ttag.s, ttag.len, dir);
+				LM_WARN("dialog identification elements are callid='%.*s'/%d, "
+						"caller tag='%.*s'/%d, callee tag='%.*s'/%d\n",
+						dlg->callid.len, dlg->callid.s, dlg->callid.len,
+						dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+						dlg->tag[DLG_CALLER_LEG].len,
+						dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s,
+						dlg->tag[DLG_CALLEE_LEG].len);
 				unref_dlg(dlg, 1);
 				return;
 			}
