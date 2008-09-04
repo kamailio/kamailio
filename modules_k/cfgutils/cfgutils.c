@@ -3,7 +3,8 @@
  *
  * Copyright (C) 2007 1&1 Internet AG
  * Copyright (C) 2007 BASIS AudioNet GmbH
- *
+ * Copyright (C) 2004 FhG
+ * Copyright (C) 2005-2006 Voice Sistem S.R.L.
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -20,13 +21,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * History:
- * --------
- *  2007-03-22  initial module created (Henning Westerholt)
- *  2007-03-29  adaption to openser 1.2 and some cleanups
- *  2007-04-20  rename to cfgutils, use pseudovariable for get_random_val
- *              add "rand_" prefix, add sleep and usleep functions
  *
  * cfgutils module: random probability functions for openser;
  * it provide functions to make a decision in the script
@@ -557,13 +551,11 @@ static int pv_get_random_val(struct sip_msg *msg, pv_param_t *param,
 
 	if(msg==NULL || res==NULL)
 		return -1;
+
 	n = rand();
-
 	ch = int2str(n , &l);
-
 	res->rs.s = ch;
 	res->rs.len = l;
-
 	res->ri = n;
 	res->flags = PV_VAL_STR|PV_VAL_INT|PV_TYPE_INT;
 
@@ -642,10 +634,6 @@ static int mod_init(void)
 		return -1;
 	}
 	*gflags=initial_gflags;
-
-
-	LM_INFO("module initialized, pid [%d]\n", getpid());
-
 	return 0;
 }
 
