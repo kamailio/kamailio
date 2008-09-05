@@ -33,7 +33,7 @@
 
 extern str userblacklist_db_url;
 extern db_con_t * userblacklist_dbh;
-db_func_t userblacklist_dbf;
+extern db_func_t userblacklist_dbf;
 
 #define userblacklist_DB_URL { "db_url", STR_PARAM, &userblacklist_db_url.s },
 

@@ -24,6 +24,7 @@
 
 //extern str userblacklist_db_url;
 db_con_t * userblacklist_dbh = NULL;
+db_func_t userblacklist_dbf;
 
 str userblacklist_table = str_init("userblacklist");
 
