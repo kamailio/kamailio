@@ -55,6 +55,7 @@
 #include "../../qvalue.h"
 #include "../../dset.h"
 #include "../../ip_addr.h"
+#include "../../resolve.h"
 #include "../../mi/mi.h"
 #include "../../mod_fix.h"
 #include "../../socket_info.h"
@@ -110,7 +111,6 @@ int reload_gws ( void );
 
 #define PRIORITY_COL "priority"
 
-#define MAX_QUERY_SIZE 512
 #define MAX_NO_OF_GWS 32
 #define MAX_NO_OF_LCRS 256
 #define MAX_PREFIX_LEN 256
@@ -1729,31 +1729,26 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
     int i;
     unsigned int src_addr;
     pv_value_t pv_val;
-    struct in_addr addr_struct;
+    struct ip_addr *ip;
     int_str val;
-    char backup;
 
-    if (addr_sp && (pv_get_spec_value(_m, addr_sp, &pv_val) == 0)) {
-	if (pv_val.flags & PV_VAL_INT) {
-	    src_addr = pv_val.ri;
-	} else if (pv_val.flags & PV_VAL_STR) {
-	    backup = pv_val.rs.s[pv_val.rs.len];
-	    pv_val.rs.s[pv_val.rs.len] = '\0';
-	    if (inet_aton(pv_val.rs.s, &addr_struct) == 0) {
-		LM_ERR("failed to convert IP address string to in_addr\n");
-		pv_val.rs.s[pv_val.rs.len] = backup;
-		return -1;
-	    } else {
-		pv_val.rs.s[pv_val.rs.len] = backup;
-		src_addr = addr_struct.s_addr;
-	    }
+	if (addr_sp && (pv_get_spec_value(_m, addr_sp, &pv_val) == 0)) {
+		if (pv_val.flags & PV_VAL_INT) {
+			src_addr = pv_val.ri;
+		} else if (pv_val.flags & PV_VAL_STR) {
+			if ( (ip=str2ip( &pv_val.rs)) == NULL) {
+				LM_ERR("failed to convert IP address string to in_addr\n");
+				return -1;
+			} else {
+				src_addr = ip->u.addr32[0];
+			}
+		} else {
+			LM_ERR("IP address PV empty value\n");
+			return -1;
+		}
 	} else {
-	    LM_ERR("failed to convert IP address string to in_addr\n");
-	    return -1;
+		src_addr = _m->rcv.src_ip.u.addr32[0];
 	}
-    } else {
-	src_addr = _m->rcv.src_ip.u.addr32[0];
-    }
 
     for (i = 0; i < MAX_NO_OF_GWS; i++) {
 	if ((*gws)[i].ip_addr == 0) {
