@@ -130,7 +130,7 @@ modparam("benchmark", "enable", 1)
    log_timer() function, but only every n'th call. n is defined
    through this variable. A sensible granularity seems to be 100.
 
-   Default value is "100".
+   Default value is "1".
 
    Example 1.2. Set granularity parameter
 ...

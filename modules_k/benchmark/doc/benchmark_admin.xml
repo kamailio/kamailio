@@ -99,7 +99,7 @@ modparam("benchmark", "enable", 1)
 		</para>
 		<para>
 		<emphasis>
-			Default value is <quote>100</quote>.
+			Default value is <quote>1</quote>.
 		</emphasis>
 		</para>
 		<example>
