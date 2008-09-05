@@ -29,54 +29,11 @@
 
 #include "db.h"
 #include "dt.h"
+#include "db_userblacklist.h"
 
 #include "../../db/db.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
-
-
-static db_con_t *dbc;
-static db_func_t dbf;
-
-static str prefix_col = str_init("prefix");
-static str whitelist_col = str_init("whitelist");
-static str username_key = str_init("username");
-static str domain_key = str_init("domain");
-
-
-int db_bind(const str *url)
-{
-	if (db_bind_mod(url, &dbf) < 0) {
-		LM_ERR("can't bind to database module.\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-
-int db_init(const str *url, const str *table)
-{
-	dbc = dbf.init(url);
-	if (!dbc) {
-		LM_ERR("child can't connect to database.\n");
-		return -1;
-	}
-	if(db_check_table_version(&dbf, dbc, table, 1) < 0) {
-		LM_ERR("during table version check.\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-
-void db_destroy(void)
-{
-	if (dbc) {
-		dbf.close(dbc);
-	}
-}
 
 
 /**
@@ -85,8 +42,8 @@ void db_destroy(void)
  */
 int db_build_userbl_tree(const str *username, const str *domain, const str *table, struct dt_node_t *root, int use_domain)
 {
-	db_key_t columns[2] = { &prefix_col, &whitelist_col };
-	db_key_t key[2] = { &username_key, &domain_key };
+	db_key_t columns[2] = { &userblacklist_prefix_col, &userblacklist_whitelist_col };
+	db_key_t key[2] = { &userblacklist_username_col, &userblacklist_domain_col };
 
 	db_val_t val[2];
 	VAL_TYPE(val) = VAL_TYPE(val + 1) = DB_STR;
@@ -100,11 +57,11 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	int i;
 	int n = 0;
 	
-	if (dbf.use_table(dbc, table) < 0) {
+	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
 		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);
 		return -1;
 	}
-	if (dbf.query(dbc, key, 0, val, columns, (!use_domain) ? (1) : (2), 2, 0, &res) < 0) {
+	if (userblacklist_dbf.query(userblacklist_dbh, key, 0, val, columns, (!use_domain) ? (1) : (2), 2, 0, &res) < 0) {
 		LM_ERR("error while executing query.\n");
 		return -1;
 	}
@@ -130,7 +87,7 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 			}
 		}
 	}
-	dbf.free_result(dbc, res);
+	userblacklist_dbf.free_result(userblacklist_dbh, res);
 
 	return n;
 }
@@ -142,16 +99,16 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
  */
 int db_reload_source(const str *table, struct dt_node_t *root)
 {
-	db_key_t columns[2] = { &prefix_col, &whitelist_col };
+	db_key_t columns[2] = { &globalblacklist_prefix_col, &globalblacklist_whitelist_col };
 	db_res_t *res;
 	int i;
 	int n = 0;
 	
-	if (dbf.use_table(dbc, table) < 0) {
+	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
 		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);
 		return -1;
 	}
-	if (dbf.query(dbc, NULL, NULL, NULL, columns, 0, 2, NULL, &res) < 0) {
+	if (userblacklist_dbf.query(userblacklist_dbh, NULL, NULL, NULL, columns, 0, 2, NULL, &res) < 0) {
 		LM_ERR("error while executing query.\n");
 		return -1;
 	}
@@ -177,7 +134,7 @@ int db_reload_source(const str *table, struct dt_node_t *root)
 			}
 		}
 	}
-	dbf.free_result(dbc, res);
+	userblacklist_dbf.free_result(userblacklist_dbh, res);
 
 	return n;
 }

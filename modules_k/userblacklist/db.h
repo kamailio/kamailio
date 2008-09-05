@@ -33,10 +33,6 @@
 #include "../../sr_module.h"
 #include "dt.h"
 
-int db_bind(const str *url);
-int db_init(const str *url, const str *table);
-void db_destroy(void);
-
 int db_build_userbl_tree(const str *user, const str *domain, const str *table, struct dt_node_t *root, int use_domain);
 int db_reload_source(const str *table, struct dt_node_t *root);
 

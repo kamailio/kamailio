@@ -3,6 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
 
 <!ENTITY admin SYSTEM "userblacklist_admin.xml">
+<!ENTITY db    SYSTEM "userblacklist_db.xml">
 <!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
 
 <!-- Include general documentation entities -->
@@ -40,5 +41,6 @@
 	</bookinfo>
 	<toc></toc>
 	&admin;
+	&db;
 	&faq;
 </book>

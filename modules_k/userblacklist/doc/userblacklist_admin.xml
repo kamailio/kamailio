@@ -60,46 +60,6 @@
 	<section>
 	<title>Exported Parameters</title>
     <section>
-	    <title><varname>db_url</varname> (string)</title>
-	    <para>
-		Url to the database containing the routing data.
-	    </para>
-	    <para>
-		<emphasis>
-		Default value is <quote>&defaultrodb;</quote>.
-		</emphasis>
-	    </para>
-	    <example>
-		<title>Set <varname>db_url</varname> parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("userblacklist", "db_url", "&exampledb;")
-...
-		</programlisting>
-	    </example>
-    </section>
-
-    <section>
-	    <title><varname>db_table</varname> (string)</title>
-	    <para>
-		Name of the table where the user blacklist data is stored.
-	    </para>
-	    <para>
-		    <emphasis>
-			    Default value is <quote>userblacklist</quote>.
-		    </emphasis>
-	    </para>
-	    <example>
-		    <title>Set <varname>db_table</varname> parameter</title>
-		    <programlisting format="linespecific">
-...
-modparam("userblacklist", "db_table", "userblacklist")
-...
-		    </programlisting>
-	    </example>
-    </section>
-	
-    <section>
 	    <title><varname>use_domain</varname> (integer)</title>
 	    <para>
 			If set to non-zero value, the domain column in the userblacklist is used.

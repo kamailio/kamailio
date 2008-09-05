@@ -53,6 +53,7 @@
 
 #include "dt.h"
 #include "db.h"
+#include "db_userblacklist.h"
 
 MODULE_VERSION
 
@@ -72,8 +73,7 @@ struct check_blacklist_fs_t {
 };
 
 
-static str db_url       = str_init(DEFAULT_RODB_URL);
-static str db_table     = str_init("userblacklist");
+str userblacklist_db_url = str_init(DEFAULT_RODB_URL);
 static int use_domain   = 0;
 
 /* ---- fixup functions: */
@@ -104,8 +104,11 @@ static cmd_export_t cmds[]={
 
 
 static param_export_t params[] = {
-	{ "db_url",          STR_PARAM, &db_url.s },
-	{ "db_table",        STR_PARAM, &db_table.s },
+	userblacklist_DB_URL
+	userblacklist_DB_TABLE
+	globalblacklist_DB_TABLE
+	userblacklist_DB_COLS
+	globalblacklist_DB_COLS
 	{ "use_domain",      INT_PARAM, &use_domain },
 	{ 0, 0, 0}
 };
@@ -237,8 +240,8 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 		table.len=strlen(str4);
 	} else {
 		/* use default table name */
-		table.len=db_table.len;
-		table.s=db_table.s;
+		table.len=userblacklist_table.len;
+		table.s=userblacklist_table.s;
 	}
 
 	if (msg->first_line.type != SIP_REQUEST) {
@@ -535,10 +538,9 @@ struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param)
 
 static int mod_init(void)
 {
-	db_url.len = strlen(db_url.s);
-	db_table.len = strlen(db_table.s);
+	userblacklist_db_vars();
 
-	if (db_bind(&db_url) != 0) return -1;
+	if (userblacklist_db_init() != 0) return -1;
 	if (init_shmlock() != 0) return -1;
 	if (init_source_list() != 0) return -1;
 	return 0;
@@ -547,7 +549,7 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	if (db_init(&db_url, &db_table) != 0) return -1;
+	if (userblacklist_db_open() != 0) return -1;
 	if (dt_init(&dt_root) != 0) return -1;
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
@@ -558,7 +560,7 @@ static int child_init(int rank)
 
 static int mi_child_init(void)
 {
-	if (db_init(&db_url, &db_table) != 0) return -1;
+	if (userblacklist_db_open() != 0) return -1;
 	if (dt_init(&dt_root) != 0) return -1;
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
@@ -571,6 +573,6 @@ static void mod_destroy(void)
 {
 	destroy_source_list();
 	destroy_shmlock();
-	db_destroy();
+	userblacklist_db_close();
 	dt_destroy(&dt_root);
 }
