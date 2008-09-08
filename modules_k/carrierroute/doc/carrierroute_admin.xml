@@ -25,7 +25,10 @@
 		more than several hundred thousand routing table entries. It should be able to handle
 		more, but this is not that much tested at the moment. In load balancing scenarios the
 		usage of the config file mode is recommended, to avoid the additional complexity that
-		the database driven routing creates.
+		the database driven routing creates. Please note: although the routing tree is stored
+		in shared memory, for the initial loading from the database on startup private memory
+		is allocated. Thus you'll probably need to increase the private memory pool size. For
+		40.000 routing rules a <quote>PKG_MEM_POOL_SIZE</quote> of 10 MB is sufficient.
 	</para>
 	<para>
 		Routing tables can be reloaded and edited (in config file mode) with the MI 
