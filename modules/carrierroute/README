@@ -182,6 +182,11 @@ Chapter 1. Admin Guide
    much tested at the moment. In load balancing scenarios the
    usage of the config file mode is recommended, to avoid the
    additional complexity that the database driven routing creates.
+   Please note: although the routing tree is stored in shared
+   memory, for the initial loading from the database on startup
+   private memory is allocated. Thus you'll probably need to
+   increase the private memory pool size. For 40.000 routing rules
+   a "PKG_MEM_POOL_SIZE" of 10 MB is sufficient.
 
    Routing tables can be reloaded and edited (in config file mode)
    with the MI interface, the config file is updated according the
