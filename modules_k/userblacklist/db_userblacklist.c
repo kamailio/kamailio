@@ -117,6 +117,7 @@ int userblacklist_db_open(void) {
  * This is necessary because we're using the 'str' type.
  */
 void userblacklist_db_vars(void) {
+	if (userblacklist_db_url.s) userblacklist_db_url.len = strlen(userblacklist_db_url.s);
 	userblacklist_table.len = strlen(userblacklist_table.s);
 	userblacklist_id_col.len = strlen(userblacklist_id_col.s);
 	userblacklist_username_col.len = strlen(userblacklist_username_col.s);
