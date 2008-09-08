@@ -531,7 +531,6 @@ static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 {
 	double tmp = ((double) rand() / RAND_MAX);
 	LM_DBG("generated random %f\n", tmp);
-	LM_DBG("my pid is %d", getpid());
 	if (tmp < ((double) (*probability) / 100)) {
 		LM_DBG("return true\n");
 		return 1;
