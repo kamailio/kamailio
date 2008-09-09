@@ -207,7 +207,6 @@ static int mod_init(void) {
 	if(data_main_finalize() < 0) {
 		return -1;
 	}
-	LM_INFO("module initialized, pid [%d]\n", getpid());
 	return 0;
 }
 
