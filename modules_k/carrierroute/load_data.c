@@ -35,6 +35,7 @@
 #include "route_db.h"
 #include "route_config.h"
 #include "carrierroute.h"
+#include "db_carrierroute.h"
 
 /**
  * Binds the loader function pointer api to the matching loader
@@ -53,7 +54,11 @@ int bind_data_loader(const char * source, route_data_load_func_t * api){
 		LM_INFO("use database as configuration source");
 		*api = load_route_data;
 		mode = SP_ROUTE_MODE_DB;
-		if(db_init() < 0){
+		if(carrierroute_db_init() < 0){
+			return -1;
+		}
+		// FIXME, move data initialization into child process
+		if(carrierroute_db_open() < 0){
 			return -1;
 		}
 		return 0;
@@ -83,21 +88,21 @@ int bind_data_loader(const char * source, route_data_load_func_t * api){
 
 int data_main_finalize(void){
 	if(mode == SP_ROUTE_MODE_DB){
-		main_db_close();
+		carrierroute_db_close();
 	}
 	return 0;
 }
 
 int data_child_init(void){
 	if(mode == SP_ROUTE_MODE_DB){
-		return db_child_init();
+		return carrierroute_db_open();
 	}
 	return 0;
 }
 
 void data_destroy(void){
 	if(mode == SP_ROUTE_MODE_DB){
-		db_destroy();
+		carrierroute_db_close();
 	}
 	return;
 }

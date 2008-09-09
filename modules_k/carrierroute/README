@@ -30,43 +30,15 @@ Henning Westerholt
 
         1.3. Exported Parameters
 
-              1.3.1. db_url (string)
-              1.3.2. db_table (string)
-              1.3.3. id_column (string)
-              1.3.4. carrier_column (string)
-              1.3.5. scan_prefix_column (string)
-              1.3.6. domain_column (string)
-              1.3.7. flags_column (string)
-              1.3.8. mask_column (string)
-              1.3.9. prob_column (string)
-              1.3.10. rewrite_host_column (string)
-              1.3.11. strip_column (string)
-              1.3.12. comment_column (string)
-              1.3.13. carrier_table (string)
-              1.3.14. rewrite_prefix_column (string)
-              1.3.15. rewrite_suffix_column (string)
-              1.3.16. carrier_id_col (string)
-              1.3.17. carrier_name_col (string)
-              1.3.18. subscriber_table (string)
-              1.3.19. subscriber_user_col (string)
-              1.3.20. subscriber_domain_col (string)
-              1.3.21. subscriber_carrier_col (string)
-              1.3.22. config_source (string)
-              1.3.23. config_file (string)
-              1.3.24. default_tree (string)
-              1.3.25. use_domain (int)
-              1.3.26. fallback_default (int)
-              1.3.27. db_failure_table (string)
-              1.3.28. failure_id_column (string)
-              1.3.29. failure_carrier_column (string)
-              1.3.30. failure_scan_prefix_column (string)
-              1.3.31. failure_domain_column (string)
-              1.3.32. failure_host_name_column (string)
-              1.3.33. failure_reply_code_column (string)
-              1.3.34. failure_flags_column (string)
-              1.3.35. failure_mask_column (string)
-              1.3.36. failure_next_domain_column (string)
-              1.3.37. failure_comment_column (string)
+              1.3.1. subscriber_table (string)
+              1.3.2. subscriber_user_col (string)
+              1.3.3. subscriber_domain_col (string)
+              1.3.4. subscriber_carrier_col (string)
+              1.3.5. config_source (string)
+              1.3.6. config_file (string)
+              1.3.7. default_tree (string)
+              1.3.8. use_domain (int)
+              1.3.9. fallback_default (int)
 
         1.4. Exported Functions
 
@@ -96,62 +68,93 @@ Henning Westerholt
 
               1.7.1. Database setup
 
+   2. Module parameter for database access.
+
+        2.1. db_url (String)
+        2.2. carrierroute_table (String)
+        2.3. carrierroute_id_col (string)
+        2.4. carrierroute_carrier_col (string)
+        2.5. carrierroute_domain_col (string)
+        2.6. carrierroute_scan_prefix_col (string)
+        2.7. carrierroute_flags_col (string)
+        2.8. carrierroute_mask_col (string)
+        2.9. carrierroute_prob_col (string)
+        2.10. carrierroute_strip_col (string)
+        2.11. carrierroute_rewrite_host_col (string)
+        2.12. carrierroute_rewrite_prefix_col (string)
+        2.13. carrierroute_rewrite_suffix_col (string)
+        2.14. carrierroute_description_col (string)
+        2.15. carrierfailureroute_table (String)
+        2.16. carrierfailureroute_id_col (string)
+        2.17. carrierfailureroute_carrier_col (string)
+        2.18. carrierfailureroute_domain_col (string)
+        2.19. carrierfailureroute_scan_prefix_col (string)
+        2.20. carrierfailureroute_host_name_col (string)
+        2.21. carrierfailureroute_reply_code_col (string)
+        2.22. carrierfailureroute_flags_col (string)
+        2.23. carrierfailureroute_mask_col (string)
+        2.24. carrierfailureroute_next_domain_col (string)
+        2.25. carrierfailureroute_description_col (string)
+        2.26. route_tree_table (String)
+        2.27. route_tree_id_col (string)
+        2.28. route_tree_carrier_col (string)
+
    List of Examples
 
-   1.1. Set db_url parameter
-   1.2. Set db_table parameter
-   1.3. Set id_column parameter
-   1.4. Set carrier_column parameter
-   1.5. Set scan_prefix_column parameter
-   1.6. Set domain_column parameter
-   1.7. Set flags_column parameter
-   1.8. Set mask_column parameter
-   1.9. Set prob_column parameter
-   1.10. Set rewrite_host_column parameter
-   1.11. Set strip_column parameter
-   1.12. Set comment_column parameter
-   1.13. Set carrier_table parameter
-   1.14. Set rewrite_prefix_column parameter
-   1.15. Set rewrite_suffix_column parameter
-   1.16. Set id_col parameter
-   1.17. Set carrier_name_col parameter
-   1.18. Set subscriber_table parameter
-   1.19. Set subscriber_user_col parameter
-   1.20. Set subscriber_domain_col parameter
-   1.21. Set subscriber_carrier_col parameter
-   1.22. Set config_source parameter
-   1.23. Set config_file parameter
-   1.24. Set default_tree parameter
-   1.25. Set use_domain parameter
-   1.26. Set fallback_default parameter
-   1.27. Set db_failuretable parameter
-   1.28. Set failure_id_column parameter
-   1.29. Set failure_carrier_column parameter
-   1.30. Set failure_scan_prefix_column parameter
-   1.31. Set failure_domain_column parameter
-   1.32. Set failure_host_name_column parameter
-   1.33. Set failure_reply_code_column parameter
-   1.34. Set failure_flags_column parameter
-   1.35. Set failure_mask_column parameter
-   1.36. Set failure_next_domain_column parameter
-   1.37. Set failure_comment_column parameter
-   1.38. cr_replace_host usage
-   1.39. cr_deactivate_host usage
-   1.40. cr_activate_host usage
-   1.41. cr_add_host usage
-   1.42. cr_delete_host usage
-   1.43. Configuration example - Routing to default tree
-   1.44. Configuration example - Routing to user tree
-   1.45. Configuration example - module configuration
-   1.46. Example database content - carrierroute table
-   1.47. Example database content - simple carrierfailureroute
+   1.1. Set subscriber_table parameter
+   1.2. Set subscriber_user_col parameter
+   1.3. Set subscriber_domain_col parameter
+   1.4. Set subscriber_carrier_col parameter
+   1.5. Set config_source parameter
+   1.6. Set config_file parameter
+   1.7. Set default_tree parameter
+   1.8. Set use_domain parameter
+   1.9. Set fallback_default parameter
+   1.10. cr_replace_host usage
+   1.11. cr_deactivate_host usage
+   1.12. cr_activate_host usage
+   1.13. cr_add_host usage
+   1.14. cr_delete_host usage
+   1.15. Configuration example - Routing to default tree
+   1.16. Configuration example - Routing to user tree
+   1.17. Configuration example - module configuration
+   1.18. Example database content - carrierroute table
+   1.19. Example database content - simple carrierfailureroute
           table
 
-   1.48. Example database content - more complex
+   1.20. Example database content - more complex
           carrierfailureroute table
 
-   1.49. Example database content - route_tree table
-   1.50. Necessary extensions for the user table
+   1.21. Example database content - route_tree table
+   1.22. Necessary extensions for the user table
+   2.1. Set db_url parameter
+   2.2. Set carrierroute_table parameter
+   2.3. Set carrierroute_id_col parameter
+   2.4. Set carrierroute_carrier_col parameter
+   2.5. Set carrierroute_domain_col parameter
+   2.6. Set carrierroute_scan_prefix_col parameter
+   2.7. Set carrierroute_flags_col parameter
+   2.8. Set carrierroute_mask_col parameter
+   2.9. Set carrierroute_prob_col parameter
+   2.10. Set carrierroute_strip_col parameter
+   2.11. Set carrierroute_rewrite_host_col parameter
+   2.12. Set carrierroute_rewrite_prefix_col parameter
+   2.13. Set carrierroute_rewrite_suffix_col parameter
+   2.14. Set carrierroute_description_col parameter
+   2.15. Set carrierfailureroute_table parameter
+   2.16. Set carrierfailureroute_id_col parameter
+   2.17. Set carrierfailureroute_carrier_col parameter
+   2.18. Set carrierfailureroute_domain_col parameter
+   2.19. Set carrierfailureroute_scan_prefix_col parameter
+   2.20. Set carrierfailureroute_host_name_col parameter
+   2.21. Set carrierfailureroute_reply_code_col parameter
+   2.22. Set carrierfailureroute_flags_col parameter
+   2.23. Set carrierfailureroute_mask_col parameter
+   2.24. Set carrierfailureroute_next_domain_col parameter
+   2.25. Set carrierfailureroute_description_col parameter
+   2.26. Set route_tree_table parameter
+   2.27. Set route_tree_id_col parameter
+   2.28. Set route_tree_carrier_col parameter
 
 Chapter 1. Admin Guide
 
@@ -235,323 +238,103 @@ Chapter 1. Admin Guide
 
 1.3. Exported Parameters
 
-1.3.1. db_url (string)
-
-   Url to the database containing the routing data.
-
-   Default value is
-   "mysql://openserro:openserro@localhost/openser".
-
-   Example 1.1. Set db_url parameter
-...
-modparam("carrierroute", "db_url", "dbdriver://username:password@dbhost/
-dbname")
-...
-
-1.3.2. db_table (string)
-
-   Name of the table where the routing data is stored.
-
-   Default value is "carrierroute".
-
-   Example 1.2. Set db_table parameter
-...
-modparam("carrierroute", "db_table", "carrierroute")
-...
-
-1.3.3. id_column (string)
-
-   Name of the column containing the id identifier.
-
-   Default value is "id".
-
-   Example 1.3. Set id_column parameter
-...
-modparam("carrierroute", "id_column", "id")
-...
-
-1.3.4. carrier_column (string)
-
-   Name of the column containing the carrier id.
-
-   Default value is "carrier".
-
-   Example 1.4. Set carrier_column parameter
-...
-modparam("carrierroute", "carrier_column", "carrier")
-...
-
-1.3.5. scan_prefix_column (string)
-
-   Name of column containing the scan prefixes. Scan prefixes
-   define the matching portion of a phone number, e.g. when we
-   have the scan prefixes 49721 and 49, the called number is
-   49721913740, it matches 49721, because the longest match is
-   taken. If no prefix matches, the number is not routed. To
-   prevent this, an empty prefix value of "" could be added.
-
-   Default value is "scan_prefix".
-
-   Example 1.5. Set scan_prefix_column parameter
-...
-modparam("carrierroute", "scan_prefix_column", "scan_prefix")
-...
-
-1.3.6. domain_column (string)
-
-   Name of column containing the rule domain. You can define
-   several routing domains to have different routing rules. Maybe
-   you use domain 0 for normal routing and domain 1 if domain 0
-   failed.
-
-   Default value is "domain".
-
-   Example 1.6. Set domain_column parameter
-...
-modparam("carrierroute", "domain_column", "domain")
-...
-
-1.3.7. flags_column (string)
-
-   Name of the column containing the flags.
-
-   Default value is "flags".
-
-   Example 1.7. Set flags_column parameter
-...
-modparam("carrierroute", "flags_column", "flags")
-...
-
-1.3.8. mask_column (string)
-
-   Name of the column containing the flags mask.
-
-   Default value is "mask".
-
-   Example 1.8. Set mask_column parameter
-...
-modparam("carrierroute", "mask_column", "mask")
-...
-
-1.3.9. prob_column (string)
-
-   Name of column containing probability. The probability value is
-   used to distribute the traffic between several gateways. Let's
-   say 70 % of the traffic shall be routed to gateway A, the other
-   30 % shall be routed to gateway B, we define a rule for gateway
-   A with a prob value of 0.7 and a rule for gateway B with a prob
-   value of 0.3.
-
-   If all probabilities for a given prefix, tree and domain don't
-   add to 100%, the prefix values will be adjusted according the
-   given prob values. E.g. if three hosts with prob values of 0.5,
-   0.5 and 0.4 are defined, the resulting probabilities are
-   35.714, 35.714 and 28.571%. But its better to choose meaningful
-   values in the first place because of clarity.
-
-   Default value is "prob".
-
-   Example 1.9. Set prob_column parameter
-...
-modparam("carrierroute", "prob_column", "prob")
-...
-
-1.3.10. rewrite_host_column (string)
-
-   Name of column containing rewrite host value. An empty field
-   represents a blacklist entry, anything else is put as domain
-   part into the Request URI of the SIP message.
-
-   Default value is "rewrite_host".
-
-   Example 1.10. Set rewrite_host_column parameter
-...
-modparam("carrierroute", "rewrite_host_column", "rewrite_host")
-...
-
-1.3.11. strip_column (string)
-
-   Name of the column containing the number of digits to be
-   stripped of the userpart of an URI before prepending
-   rewrite_prefix.
-
-   Default value is "strip".
-
-   Example 1.11. Set strip_column parameter
-...
-modparam("carrierroute", "strip_column", "strip")
-...
-
-1.3.12. comment_column (string)
-
-   Name of the column containing an optional comment (useful in
-   large routing tables) The comment is also displayed by the fifo
-   cmd "cr_dump_routes".
-
-   Default value is "description".
-
-   Example 1.12. Set comment_column parameter
-...
-modparam("carrierroute", "comment_column", "description")
-...
-
-1.3.13. carrier_table (string)
-
-   The name of the table containing the existing carriers,
-   consisting of the ids and corresponding names.
-
-   Default value is "route_tree".
-
-   Example 1.13. Set carrier_table parameter
-...
-modparam("carrierroute", "carrier_table", "route_tree")
-...
-
-1.3.14. rewrite_prefix_column (string)
-
-   Name of column containing rewrite prefixes. Here you can define
-   a rewrite prefix for the localpart of the SIP URI.
-
-   Default value is "rewrite_prefix".
-
-   Example 1.14. Set rewrite_prefix_column parameter
-...
-modparam("carrierroute", "rewrite_prefix_column", "rewrite_prefix")
-...
-
-1.3.15. rewrite_suffix_column (string)
-
-   Name of column containing rewrite suffixes. Here you can define
-   a rewrite suffix for the localpart of the SIP URI.
-
-   Default value is "rewrite_suffix".
-
-   Example 1.15. Set rewrite_suffix_column parameter
-                            ...
-modparam("carrierroute", "rewrite_suffix_column", "rewrite_suffix")
-                            ...
-
-1.3.16. carrier_id_col (string)
-
-   The name of the column in the carrier table containing the
-   carrier id.
-
-   Default value is "id".
-
-   Example 1.16. Set id_col parameter
-...
-modparam("carrierroute", "carrier_id_col", "id")
-...
-
-1.3.17. carrier_name_col (string)
-
-   The name of the column in the carrier table containing the
-   carrier name.
-
-   Default value is "carrier".
-
-   Example 1.17. Set carrier_name_col parameter
-...
-modparam("carrierroute", "carrier_name_col", "carrier")
-...
-
-1.3.18. subscriber_table (string)
+1.3.1. subscriber_table (string)
 
    The name of the table containing the subscribers
 
    Default value is "subscriber".
 
-   Example 1.18. Set subscriber_table parameter
+   Example 1.1. Set subscriber_table parameter
 ...
 modparam("carrierroute", "subscriber_table", "subscriber")
 ...
 
-1.3.19. subscriber_user_col (string)
+1.3.2. subscriber_user_col (string)
 
    The name of the column in the subscriber table containing the
    usernames.
 
    Default value is "username".
 
-   Example 1.19. Set subscriber_user_col parameter
+   Example 1.2. Set subscriber_user_col parameter
 ...
 modparam("carrierroute", "subscriber_user_col", "username")
 ...
 
-1.3.20. subscriber_domain_col (string)
+1.3.3. subscriber_domain_col (string)
 
    The name of the column in the subscriber table containing the
    domain of the subscriber.
 
    Default value is "domain".
 
-   Example 1.20. Set subscriber_domain_col parameter
+   Example 1.3. Set subscriber_domain_col parameter
 ...
 modparam("carrierroute", "subscriber_domain_col", "domain")
 ...
 
-1.3.21. subscriber_carrier_col (string)
+1.3.4. subscriber_carrier_col (string)
 
    The name of the column in the subscriber table containing the
    carrier id of the subscriber.
 
    Default value is "cr_preferred_carrier".
 
-   Example 1.21. Set subscriber_carrier_col parameter
+   Example 1.4. Set subscriber_carrier_col parameter
 ...
 modparam("carrierroute", "subscriber_carrier_col", "cr_preferred_carrier
 ")
 ...
 
-1.3.22. config_source (string)
+1.3.5. config_source (string)
 
    Specifies whether the module loads its config data from a file
    or from a database. Possible values are file or db.
 
    Default value is "file".
 
-   Example 1.22. Set config_source parameter
+   Example 1.5. Set config_source parameter
 ...
 modparam("carrierroute", "config_source", "file")
 ...
 
-1.3.23. config_file (string)
+1.3.6. config_file (string)
 
    Specifies the path to the config file.
 
    Default value is "/etc/kamailio/carrierroute.conf".
 
-   Example 1.23. Set config_file parameter
+   Example 1.6. Set config_file parameter
 ...
 modparam("carrierroute", "config_file", "/etc/kamailio/carrierroute.conf
 ")
 ...
 
-1.3.24. default_tree (string)
+1.3.7. default_tree (string)
 
    The name of the carrier tree used per default (if the current
    subscriber has no preferred tree)
 
    Default value is "default".
 
-   Example 1.24. Set default_tree parameter
+   Example 1.7. Set default_tree parameter
 ...
 modparam("carrierroute", "default_tree", "default")
 ...
 
-1.3.25. use_domain (int)
+1.3.8. use_domain (int)
 
    When using tree lookup per user, this parameter specifies
    whether to use the domain part for user matching or not.
 
    Default value is "0".
 
-   Example 1.25. Set use_domain parameter
+   Example 1.8. Set use_domain parameter
 ...
 modparam("carrierroute", "use_domain", 0)
 ...
 
-1.3.26. fallback_default (int)
+1.3.9. fallback_default (int)
 
    This parameter defines the behaviour when using user-based tree
    lookup. If the user has a non-existing tree set and
@@ -560,139 +343,9 @@ modparam("carrierroute", "use_domain", 0)
 
    Default value is "1".
 
-   Example 1.26. Set fallback_default parameter
+   Example 1.9. Set fallback_default parameter
 ...
 modparam("carrierroute", "fallback_default", 1)
-...
-
-1.3.27. db_failure_table (string)
-
-   Name of the table where the failure routing data is stored.
-
-   Default value is "carrierfailureroute".
-
-   Example 1.27. Set db_failuretable parameter
-...
-modparam("carrierroute", "db_failuretable", "carrierfailureroute")
-...
-
-1.3.28. failure_id_column (string)
-
-   Name of the column containing the id identifier.
-
-   Default value is "id".
-
-   Example 1.28. Set failure_id_column parameter
-...
-modparam("carrierroute", "failure_id_column", "id")
-...
-
-1.3.29. failure_carrier_column (string)
-
-   Name of the column containing the carrier id.
-
-   Default value is "carrier".
-
-   Example 1.29. Set failure_carrier_column parameter
-...
-modparam("carrierroute", "failure_carrier_column", "carrier")
-...
-
-1.3.30. failure_scan_prefix_column (string)
-
-   Name of column containing the scan prefixes. Scan prexies
-   define the matching portion of a phone number, e.g. we have the
-   scan prefixes 49721 and 49, the called number is 49721913740,
-   it matches 49721, because the longest match is taken. If no
-   prefix matches, the number is not failure routed. To prevent
-   this, an empty prefix value of "" could be added.
-
-   Default value is "scan_prefix".
-
-   Example 1.30. Set failure_scan_prefix_column parameter
-...
-modparam("carrierroute", "failure_scan_prefix_column", "scan_prefix")
-...
-
-1.3.31. failure_domain_column (string)
-
-   Name of column containing the rule domain. You can define
-   several routing domains to have different routing rules. Maybe
-   you use domain 0 for normal routing and domain 1 if domain 0
-   failed.
-
-   Default value is "domain".
-
-   Example 1.31. Set failure_domain_column parameter
-...
-modparam("carrierroute", "failure_domain_column", "domain")
-...
-
-1.3.32. failure_host_name_column (string)
-
-   Name of the column containing the host name of the last routing
-   destination.
-
-   Default value is "host_name".
-
-   Example 1.32. Set failure_host_name_column parameter
-...
-modparam("carrierroute", "failure_host_name_column", "host_name")
-...
-
-1.3.33. failure_reply_code_column (string)
-
-   Name of the column containing the reply code.
-
-   Default value is "reply_code".
-
-   Example 1.33. Set failure_reply_code_column parameter
-...
-modparam("carrierroute", "failure_reply_code_column", "reply_code")
-...
-
-1.3.34. failure_flags_column (string)
-
-   Name of the column containing the flags.
-
-   Default value is "flags".
-
-   Example 1.34. Set failure_flags_column parameter
-...
-modparam("carrierroute", "failure_flags_column", "flags")
-...
-
-1.3.35. failure_mask_column (string)
-
-   Name of the column containing the flags mask.
-
-   Default value is "mask".
-
-   Example 1.35. Set failure_mask_column parameter
-...
-modparam("carrierroute", "failure_mask_column", "mask")
-...
-
-1.3.36. failure_next_domain_column (string)
-
-   Name of the column containing the next routing domain.
-
-   Default value is "next_domain".
-
-   Example 1.36. Set failure_next_domain_column parameter
-...
-modparam("carrierroute", "failure_next_domain_column", "next_domain")
-...
-
-1.3.37. failure_comment_column (string)
-
-   Name of the column containing an optional comment.
-
-   Default value is "description".
-
-   Example 1.37. Set failure_comment_column parameter
-...
-modparam("carrierroute", "failure_comment_column", "description")
 ...
 
 1.4. Exported Functions
@@ -879,7 +532,7 @@ reply_code, dstavp)
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.38. cr_replace_host usage
+   Example 1.10. cr_replace_host usage
 ...
 kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 ...
@@ -901,7 +554,7 @@ kamctl fifo cr_replace_host "-d proxy -p 49 -h proxy1 -t proxy2"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.39. cr_deactivate_host usage
+   Example 1.11. cr_deactivate_host usage
 ...
 kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -917,7 +570,7 @@ kamctl fifo cr_deactivate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.40. cr_activate_host usage
+   Example 1.12. cr_activate_host usage
 ...
 kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 ...
@@ -937,7 +590,7 @@ kamctl fifo cr_activate_host "-d proxy -p 49 -h proxy1"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.41. cr_add_host usage
+   Example 1.13. cr_add_host usage
 ...
 kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
@@ -958,14 +611,14 @@ kamctl fifo cr_add_host "-d proxy -p 49 -h proxy1 -w 0.25"
 
    Use the "null" prefix to specify an empty prefix.
 
-   Example 1.42. cr_delete_host usage
+   Example 1.14. cr_delete_host usage
 ...
 kamctl fifo cr_delete_host "-d proxy -p 49 -h proxy1 -w 0.25"
 ...
 
 1.6. Examples
 
-   Example 1.43. Configuration example - Routing to default tree
+   Example 1.15. Configuration example - Routing to default tree
 ...
 route {
         # route calls based on hash over callid
@@ -999,7 +652,7 @@ failure_route[2] {
 }
 
 
-   Example 1.44. Configuration example - Routing to user tree
+   Example 1.16. Configuration example - Routing to user tree
 ...
 route[1] {
         cr_user_carrier("$fU", "$fd", "$avp(s:carrier)");
@@ -1039,7 +692,7 @@ failure_route[1] {
 }
 ...
 
-   Example 1.45. Configuration example - module configuration
+   Example 1.17. Configuration example - module configuration
 
    The following config file specifies within the default carrier
    two domains, each with an prefix that contains two hosts. It is
@@ -1119,7 +772,7 @@ domain register {
    For a minimal configuration either use the config file given
    above, or insert some data into the tables of the module.
 
-   Example 1.46. Example database content - carrierroute table
+   Example 1.18. Example database content - carrierroute table
 ...
 +----+---------+--------+-------------+-------+------+---------------+
 | id | carrier | domain | scan_prefix | flags | prob | rewrite_host  |
@@ -1158,7 +811,7 @@ domain register {
    this flags are not set, the other two rules are used. The
    "strip", "mask" and "comment" colums are omitted for brevity.
 
-   Example 1.47. Example database content - simple
+   Example 1.19. Example database content - simple
    carrierfailureroute table
 ...
 +----+---------+--------+---------------+------------+-------------+
@@ -1180,7 +833,7 @@ domain register {
    corresponding entry in the carrierroute table, otherwise the
    module will not load the routing data.
 
-   Example 1.48. Example database content - more complex
+   Example 1.20. Example database content - more complex
    carrierfailureroute table
 ...
 +----+---------+-----------+------------+--------+-----+-------------+
@@ -1207,7 +860,7 @@ domain register {
    holds domain entries for this routing rules. Not all table
    colums are show here for brevity.
 
-   Example 1.49. Example database content - route_tree table
+   Example 1.21. Example database content - route_tree table
 ...
 +----+----------+
 | id | carrier  |
@@ -1226,9 +879,298 @@ domain register {
    that you specified as modul parameter) to choose the actual
    carrier for the users.
 
-   Example 1.50. Necessary extensions for the user table
+   Example 1.22. Necessary extensions for the user table
 
    Suggested changes:
 ...
 ALTER TABLE subscriber ADD cr_preferred_carrier int(10) default NULL;
+...
+
+Chapter 2. Module parameter for database access.
+
+2.1. db_url (String)
+
+   URL to the database containing the data.
+
+   Default value is
+   "mysql://openserro:openserro@localhost/openser".
+
+   Example 2.1. Set db_url parameter
+...
+modparam("carrierroute", "db_url", "dbdriver://username:password@dbhost/
+dbname")
+...
+
+2.2. carrierroute_table (String)
+
+   Name of the carrierroute table for the carrierroute module.
+
+   Default value is "carrierroute".
+
+   Example 2.2. Set carrierroute_table parameter
+...
+modparam("carrierroute", "carrierroute_table", "carrierroute")
+...
+
+2.3. carrierroute_id_col (string)
+
+   unique ID
+
+   Example 2.3. Set carrierroute_id_col parameter
+...
+modparam("carrierroute", "carrierroute_id_col", "id")
+...
+
+2.4. carrierroute_carrier_col (string)
+
+   This column contains the carrier id.
+
+   Example 2.4. Set carrierroute_carrier_col parameter
+...
+modparam("carrierroute", "carrierroute_carrier_col", "carrier")
+...
+
+2.5. carrierroute_domain_col (string)
+
+   This column contains the route domain. Additional domains could
+   be used for example as fallback.
+
+   Example 2.5. Set carrierroute_domain_col parameter
+...
+modparam("carrierroute", "carrierroute_domain_col", "domain")
+...
+
+2.6. carrierroute_scan_prefix_col (string)
+
+   This column contains the scan prefix, which define the matching
+   portion of a phone number.
+
+   Example 2.6. Set carrierroute_scan_prefix_col parameter
+...
+modparam("carrierroute", "carrierroute_scan_prefix_col", "scan_prefix")
+...
+
+2.7. carrierroute_flags_col (string)
+
+   This column contains the flags used for rule matching.
+
+   Example 2.7. Set carrierroute_flags_col parameter
+...
+modparam("carrierroute", "carrierroute_flags_col", "flags")
+...
+
+2.8. carrierroute_mask_col (string)
+
+   This column contains the mask that is applied to the message
+   flags before rule matching.
+
+   Example 2.8. Set carrierroute_mask_col parameter
+...
+modparam("carrierroute", "carrierroute_mask_col", "mask")
+...
+
+2.9. carrierroute_prob_col (string)
+
+   Name of column containing the probability. The probability
+   value is used to distribute the traffic between several
+   gateways.
+
+   Example 2.9. Set carrierroute_prob_col parameter
+...
+modparam("carrierroute", "carrierroute_prob_col", "prob")
+...
+
+2.10. carrierroute_strip_col (string)
+
+   Name of the column containing the number of digits to be
+   stripped of the userpart of an URI before prepending
+   rewrite_prefix.
+
+   Example 2.10. Set carrierroute_strip_col parameter
+...
+modparam("carrierroute", "carrierroute_strip_col", "strip")
+...
+
+2.11. carrierroute_rewrite_host_col (string)
+
+   Name of column containing rewrite prefixes. Here you can define
+   a rewrite prefix for the localpart of the SIP URI.
+
+   Example 2.11. Set carrierroute_rewrite_host_col parameter
+...
+modparam("carrierroute", "carrierroute_rewrite_host_col", "rewrite_host"
+)
+...
+
+2.12. carrierroute_rewrite_prefix_col (string)
+
+   Rewrite prefix for the localpart of the SIP URI.
+
+   Example 2.12. Set carrierroute_rewrite_prefix_col parameter
+...
+modparam("carrierroute", "carrierroute_rewrite_prefix_col", "rewrite_pre
+fix")
+...
+
+2.13. carrierroute_rewrite_suffix_col (string)
+
+   Rewrite suffix for the localpart of the SIP URI.
+
+   Example 2.13. Set carrierroute_rewrite_suffix_col parameter
+...
+modparam("carrierroute", "carrierroute_rewrite_suffix_col", "rewrite_suf
+fix")
+...
+
+2.14. carrierroute_description_col (string)
+
+   A comment for the route entry, useful for larger routing
+   tables.
+
+   Example 2.14. Set carrierroute_description_col parameter
+...
+modparam("carrierroute", "carrierroute_description_col", "description")
+...
+
+2.15. carrierfailureroute_table (String)
+
+   Name of the carrierfailureroute table for the carrierroute
+   module.
+
+   Default value is "carrierfailureroute".
+
+   Example 2.15. Set carrierfailureroute_table parameter
+...
+modparam("carrierroute", "carrierfailureroute_table", "carrierfailurerou
+te")
+...
+
+2.16. carrierfailureroute_id_col (string)
+
+   unique ID
+
+   Example 2.16. Set carrierfailureroute_id_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_id_col", "id")
+...
+
+2.17. carrierfailureroute_carrier_col (string)
+
+   This column contains the carrier id.
+
+   Example 2.17. Set carrierfailureroute_carrier_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_carrier_col", "carrier")
+...
+
+2.18. carrierfailureroute_domain_col (string)
+
+   This column contains the route domain. Additional domains could
+   be used for example as fallback.
+
+   Example 2.18. Set carrierfailureroute_domain_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_domain_col", "domain")
+...
+
+2.19. carrierfailureroute_scan_prefix_col (string)
+
+   This column contains the scan prefix, which define the matching
+   portion of a phone number.
+
+   Example 2.19. Set carrierfailureroute_scan_prefix_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_scan_prefix_col", "scan_pr
+efix")
+...
+
+2.20. carrierfailureroute_host_name_col (string)
+
+   This column contains the routing destination used for rule
+   matching.
+
+   Example 2.20. Set carrierfailureroute_host_name_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_host_name_col", "host_name
+")
+...
+
+2.21. carrierfailureroute_reply_code_col (string)
+
+   This column contains the reply code used for rule matching.
+
+   Example 2.21. Set carrierfailureroute_reply_code_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_reply_code_col", "reply_co
+de")
+...
+
+2.22. carrierfailureroute_flags_col (string)
+
+   This column contains the flags used for rule matching.
+
+   Example 2.22. Set carrierfailureroute_flags_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_flags_col", "flags")
+...
+
+2.23. carrierfailureroute_mask_col (string)
+
+   This column contains the mask that is applied to the message
+   flags before rule matching.
+
+   Example 2.23. Set carrierfailureroute_mask_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_mask_col", "mask")
+...
+
+2.24. carrierfailureroute_next_domain_col (string)
+
+   This column contains the route domain that should be used for
+   the next routing attempt.
+
+   Example 2.24. Set carrierfailureroute_next_domain_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_next_domain_col", "next_do
+main")
+...
+
+2.25. carrierfailureroute_description_col (string)
+
+   A comment for the route entry, useful for larger routing
+   tables.
+
+   Example 2.25. Set carrierfailureroute_description_col parameter
+...
+modparam("carrierroute", "carrierfailureroute_description_col", "descrip
+tion")
+...
+
+2.26. route_tree_table (String)
+
+   Name of the route_tree table for the carrierroute module.
+
+   Default value is "route_tree".
+
+   Example 2.26. Set route_tree_table parameter
+...
+modparam("carrierroute", "route_tree_table", "route_tree")
+...
+
+2.27. route_tree_id_col (string)
+
+   unique ID
+
+   Example 2.27. Set route_tree_id_col parameter
+...
+modparam("carrierroute", "route_tree_id_col", "id")
+...
+
+2.28. route_tree_carrier_col (string)
+
+   This column contains the carrier name.
+
+   Example 2.28. Set route_tree_carrier_col parameter
+...
+modparam("carrierroute", "route_tree_carrier_col", "carrier")
 ...
