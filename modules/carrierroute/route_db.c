@@ -48,61 +48,37 @@ static void destroy_carriers(struct carrier * start);
 
 static char query[QUERY_LEN];
 
-/**
- * Database API
- */
-db_func_t dbf;
-db_con_t * dbh = NULL;
+str * columns[COLUMN_NUM] = { &carrierroute_id_col, &carrierroute_carrier_col,
+	&carrierroute_domain_col,
+	&carrierroute_scan_prefix_col,
+	&carrierroute_flags_col,
+	&carrierroute_mask_col,
+	&carrierroute_prob_col,
+	&carrierroute_rewrite_host_col,
+	&carrierroute_strip_col,
+	&carrierroute_rewrite_prefix_col,
+	&carrierroute_rewrite_suffix_col,
+	&carrierroute_description_col
+};
 
-/**
- * Initialises the db API
- *
- * @return 0 means ok, -1 means an error occured.
- */
-int db_init(void) {
-	if (!db_url.s) {
-		LM_ERR("You have to set the db_url module parameter.\n");
-		return -1;
-	}
-	if (db_bind_mod(&db_url, &dbf) < 0) {
-		LM_ERR("Can't bind database module.\n");
-		return -1;
-	}
-	if((dbh = dbf.init(&db_url)) == NULL){
-		LM_ERR("Can't connect to database.\n");
-		return -1;
-	}
-	if ( (db_check_table_version(&dbf, dbh, &db_table, ROUTE_TABLE_VER) < 0) ||
-		 (db_check_table_version(&dbf, dbh, &carrier_table, CARRIER_TABLE_VER) < 0) ||
-		 (db_check_table_version(&dbf, dbh, &db_failure_table, FAILURE_TABLE_VER) < 0) ) {
-			LM_ERR("Error during table version check.\n");
-			return -1;
-	}
-	return 0;
-}
+str * carrier_columns[CARRIER_COLUMN_NUM] = {
+	&route_tree_id_col,
+	&route_tree_carrier_col
+};
 
-void main_db_close(void){
-	dbf.close(dbh);
-	dbh = NULL;
-}
+str * failure_columns[FAILURE_COLUMN_NUM] = {
+	&carrierfailureroute_id_col,
+	&carrierfailureroute_carrier_col,
+	&carrierfailureroute_domain_col,
+	&carrierfailureroute_scan_prefix_col,
+	&carrierfailureroute_host_name_col,
+	&carrierfailureroute_reply_code_col,
+	&carrierfailureroute_flags_col,
+	&carrierfailureroute_mask_col,
+	&carrierfailureroute_next_domain_col,
+	&carrierfailureroute_description_col
+};
 
-int db_child_init(void) {
-	if(dbh){
-		dbf.close(dbh);
-	}
-	if((dbh = dbf.init(&db_url)) == NULL){
-		LM_ERR("Can't connect to database.\n");
-		return -1;
-	}
-	return 0;
-}
-
-void db_destroy(void){
-	if(dbh){
-		dbf.close(dbh);
-	}
-	return;
-}
 
 int load_user_carrier(str * user, str * domain) {
 	db_res_t * res;
@@ -130,17 +106,17 @@ int load_user_carrier(str * user, str * domain) {
 	vals[1].nul = 0;
 	vals[1].val.str_val = *domain;
 
-	if (dbf.use_table(dbh, &subscriber_table) < 0) {
+	if (carrierroute_dbf.use_table(carrierroute_dbh, &subscriber_table) < 0) {
 		LM_ERR("can't use table\n");
 	}
 
-	if (dbf.query(dbh, keys, op, vals, cols, use_domain ? 2 : 1, 1, NULL, &res) < 0) {
+	if (carrierroute_dbf.query(carrierroute_dbh, keys, op, vals, cols, use_domain ? 2 : 1, 1, NULL, &res) < 0) {
 		LM_ERR("can't query database\n");
 		return -1;
 	}
 
 	if (RES_ROW_N(res) == 0) {
-		dbf.free_result(dbh, res);
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
 		return 0;
 	}
 
@@ -149,7 +125,7 @@ int load_user_carrier(str * user, str * domain) {
 	}
 
 	id = VAL_INT(ROW_VALUES(RES_ROWS(res)));
-	dbf.free_result(dbh, res);
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
 	return id;
 }
 
@@ -182,7 +158,7 @@ int load_route_data(struct rewrite_data * rd) {
 	str tmp_comment;
 
 	if( (strlen("SELECT DISTINCT  FROM  WHERE = ")
-			+ db_table.len + columns[COL_DOMAIN]->len
+			+ carrierroute_table.len + columns[COL_DOMAIN]->len
 			+ columns[COL_CARRIER]->len + 20) >  QUERY_LEN) {
 		LM_ERR("query too long\n");
 		return -1;
@@ -204,8 +180,8 @@ int load_route_data(struct rewrite_data * rd) {
 	for (i=0; i<carrier_count; i++) {
 		memset(query, 0, QUERY_LEN);
 		ret = snprintf(query, QUERY_LEN, "SELECT DISTINCT %.*s FROM %.*s WHERE %.*s=%i",
-		columns[COL_DOMAIN]->len, columns[COL_DOMAIN]->s, db_table.len, db_table.s,
-		columns[COL_CARRIER]->len, columns[COL_CARRIER]->s, tmp->id);
+		columns[COL_DOMAIN]->len, columns[COL_DOMAIN]->s, carrierroute_table.len,
+		carrierroute_table.s, columns[COL_CARRIER]->len, columns[COL_CARRIER]->s, tmp->id);
 		if (ret < 0) {
 			LM_ERR("error in snprintf");
 			goto errout;
@@ -213,7 +189,7 @@ int load_route_data(struct rewrite_data * rd) {
 		query_str.s = query;
 		query_str.len = ret;
 
-		if (dbf.raw_query(dbh, &query_str, &res) < 0) {
+		if (carrierroute_dbf.raw_query(carrierroute_dbh, &query_str, &res) < 0) {
 			LM_ERR("Failed to query database.\n");
 			goto errout;
 		}
@@ -224,18 +200,18 @@ int load_route_data(struct rewrite_data * rd) {
 			LM_ERR("can't add carrier %s\n", tmp->name);
 			goto errout;
 		}
-		dbf.free_result(dbh, res);
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
 		res = NULL;
 		tmp = tmp->next;
 	}
 
-	if (dbf.use_table(dbh, &db_table) < 0) {
-		LM_ERR("Cannot set database table '%.*s'.\n", db_table.len, db_table.s);
+	if (carrierroute_dbf.use_table(carrierroute_dbh, &carrierroute_table) < 0) {
+		LM_ERR("Cannot set database table '%.*s'.\n", carrierroute_table.len, carrierroute_table.s);
 		return -1;
 	}
 
-	if (dbf.query(dbh, NULL, NULL, NULL, (db_key_t *)columns, 0,
-	              COLUMN_NUM, NULL, &res) < 0) {
+	if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *) columns, 0,
+				COLUMN_NUM, NULL, &res) < 0) {
 		LM_ERR("Failed to query database.\n");
 		return -1;
 	}
@@ -279,15 +255,15 @@ int load_route_data(struct rewrite_data * rd) {
 			goto errout;
 		}
 	}
-	dbf.free_result(dbh, res);
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
 	res = NULL;
 	
-	if (dbf.use_table(dbh, &db_failure_table) < 0) {
+	if (carrierroute_dbf.use_table(carrierroute_dbh, &carrierfailureroute_table) < 0) {
 		LM_ERR("cannot set database table '%.*s'.\n",
-				db_failure_table.len, db_failure_table.s);
+				carrierfailureroute_table.len, carrierfailureroute_table.s);
 		return -1;
 	}
-	if (dbf.query(dbh, NULL, NULL, NULL, (db_key_t *)failure_columns, 0,
+	if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *)failure_columns, 0,
 								FAILURE_COLUMN_NUM, NULL, &res) < 0) {
 		LM_ERR("failed to query database.\n");
 		return -1;
@@ -327,13 +303,13 @@ int load_route_data(struct rewrite_data * rd) {
 	}
 
 	destroy_carriers(carriers);
-	dbf.free_result(dbh, res);
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
 	return 0;
 
 errout:
 	destroy_carriers(carriers);
 	if (res) {
-		dbf.free_result(dbh, res);
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
 	}
 	return -1;
 }
@@ -347,12 +323,12 @@ static int store_carriers(struct carrier ** start){
 		LM_ERR("invalid parameter\n");
 		return -1;
 	}
-	if (dbf.use_table(dbh, &carrier_table) < 0) {
+	if (carrierroute_dbf.use_table(carrierroute_dbh, &route_tree_table) < 0) {
 		LM_ERR("couldn't use table\n");
 		return -1;
 	}
 
-	if (dbf.query(dbh, 0, 0, 0, (db_key_t *)carrier_columns, 0, CARRIER_COLUMN_NUM, 0, &res) < 0) {
+	if (carrierroute_dbf.query(carrierroute_dbh, 0, 0, 0, (db_key_t *)carrier_columns, 0, CARRIER_COLUMN_NUM, 0, &res) < 0) {
 		LM_ERR("couldn't query table\n");
 		return -1;
 	}
@@ -372,11 +348,11 @@ static int store_carriers(struct carrier ** start){
 		nc->next = *start;
 		*start = nc;
 	}
-	dbf.free_result(dbh, res);
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
 	return count;
 errout:
 if(res){
-	dbf.free_result(dbh, res);
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
 }
 	return -1;
 }

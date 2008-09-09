@@ -32,19 +32,43 @@
 
 #include "../../db/db.h"
 #include "carrier_tree.h"
+#include "db_carrierroute.h"
 
-/**
- * Initialises the db API 
- *
- * @return 0 means ok, -1 means an error occured.
- */
-int db_init(void);
 
-void main_db_close(void);
+#define COLUMN_NUM 12
+#define COL_ID             0
+#define COL_CARRIER        1
+#define COL_DOMAIN         2
+#define COL_SCAN_PREFIX    3
+#define COL_FLAGS          4
+#define COL_MASK           5
+#define COL_PROB           6
+#define COL_REWRITE_HOST   7
+#define COL_STRIP          8
+#define COL_REWRITE_PREFIX 9
+#define COL_REWRITE_SUFFIX 10
+#define COL_COMMENT        11
 
-int db_child_init(void);
+#define FAILURE_COLUMN_NUM 10
+#define FCOL_ID             0
+#define FCOL_CARRIER        1
+#define FCOL_DOMAIN         2
+#define FCOL_SCAN_PREFIX    3
+#define FCOL_HOST_NAME      4
+#define FCOL_REPLY_CODE     5
+#define FCOL_FLAGS          6
+#define FCOL_MASK           7
+#define FCOL_NEXT_DOMAIN    8
+#define FCOL_COMMENT        9
 
-void db_destroy(void);
+#define CARRIER_COLUMN_NUM 2
+#define CARRIER_ID_COL 0
+#define CARRIER_NAME_COL 1
+
+extern str * columns[];
+extern str * carrier_columns[];
+extern str * failure_columns[];
+
 
 /**
  * Loads the routing data from the database given in global
