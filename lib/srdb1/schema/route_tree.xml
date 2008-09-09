@@ -12,7 +12,8 @@
 		  <version>1</version>
 		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
 		  <description>
-			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting capabilities. More information is available at: &KAMAILIO_MOD_DOC;carrierroute.html
+			  <db:para>This table is used by the carrierroute module to provides routing, balancing and blacklisting capabilities. It contains the existing carriers, consisting of the ids and corresponding names. More
+			  information is available at: &KAMAILIO_MOD_DOC;carrierroute.html
 			  </db:para>
 		  </description>
 		  
@@ -24,7 +25,7 @@
 			  <autoincrement/>
 			  <primary/>
 			  <type db="dbtext">int,auto</type>
-			  <description>unique ID</description>
+			  <description>Name of the column containing the unique identifier of a carrier.</description>
 		  </column>
 		  
 		  <column>
