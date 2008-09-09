@@ -124,7 +124,7 @@ static int db_unixodbc_submit_query(const db_con_t* _h, const str* _s)
 		}
 	}
 
-	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, _s->len);
+	ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s->s, _s->len);
 	if (!SQL_SUCCEEDED(ret))
 	{
 		SQLCHAR sqlstate[7];
@@ -140,7 +140,7 @@ static int db_unixodbc_submit_query(const db_con_t* _h, const str* _s)
 			ret = reconnect(_h);
 			if( SQL_SUCCEEDED(ret) ) {
 				/* Try again */
-				ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s, _s->len);
+				ret=SQLExecDirect(CON_RESULT(_h),  (SQLCHAR*)_s->s, _s->len);
 				if (!SQL_SUCCEEDED(ret)) {
 					LM_ERR("rv=%d. Query= %.*s\n", ret, _s->len, _s->s);
 					db_unixodbc_extract_error("SQLExecDirect", CON_RESULT(_h),
