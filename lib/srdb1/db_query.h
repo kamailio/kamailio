@@ -60,7 +60,7 @@
  * \param _n number of key/value pairs that are compared, if zero then no comparison is done
  * \param _nc number of colums that should be returned
  * \param _o order by the specificied column, optional
- * \param _r the result that is returned
+ * \param _r the result that is returned, set to NULL if you want to use fetch_result later
  * \param (*val2str) function pointer to the db specific val conversion function
  * \param (*submit_query) function pointer to the db specific query submit function
  * \param (*store_result) function pointer to the db specific store result function
