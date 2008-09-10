@@ -79,6 +79,8 @@ int use_domain = 0;
 
 int fallback_default = 1;
 
+int cr_fetch_rows = 2000;
+
 
 /************* Declaration of Interface Functions **************************/
 static int mod_init(void);
@@ -122,6 +124,7 @@ static param_export_t params[]= {
 	{"config_file",                STR_PARAM, &config_file },
 	{"use_domain",                 INT_PARAM, &use_domain },
 	{"fallback_default",           INT_PARAM, &fallback_default },
+	{"fetch_result",               INT_PARAM, &cr_fetch_rows },
 	{0,0,0}
 };
 

@@ -62,6 +62,7 @@ extern const str SP_EMPTY_PREFIX;
 extern int mode;
 extern int use_domain;
 extern int fallback_default;
+extern int cr_fetch_rows;
 
 enum hash_algorithm {
 	alg_crc32 = 1, /*!< hashing algorithm is CRC32 */
