@@ -82,7 +82,7 @@ int bind_data_loader(const char * source, route_data_load_func_t * api){
 			}
 		return 0;
 	}
-	LM_NOTICE("could bind configuration source <%s>", source);
+	LM_ERR("could not bind configuration source <%s>", source);
 	return -1;
 }
 
