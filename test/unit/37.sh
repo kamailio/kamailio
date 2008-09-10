@@ -24,9 +24,10 @@ source include/require
 source include/database
 
 CFG=13.cfg
-# number of routes, multiplied with 10, for bigger rule sets
-# its necessary to increase the PKG_MEM_POOL_SIZE
-NR=375
+# number of routes, multiplied with 10
+# if you want to increase this above 8500, uncomment the fifo command below,
+# otherwise this will fails with memory allocation errors (with 1MB PKG mem)
+NR=850
 
 if ! (check_kamailio && check_module "carrierroute" && check_module "db_mysql" && check_mysql); then
 	exit 0
@@ -64,7 +65,7 @@ done
 ret=$?
 
 # adjust if you have bigger rule sets
-sleep 1
+sleep 2
 
 cd ../scripts
 
