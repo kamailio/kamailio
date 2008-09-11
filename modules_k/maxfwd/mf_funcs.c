@@ -109,7 +109,18 @@ int decrement_maxfwd( struct sip_msg* msg , int x, str *s)
 	return 0;
 }
 
+static inline int btostr( char *p,  unsigned char val)
+{
+	unsigned int a,b,i =0;
 
+	if ( (a=val/100)!=0 )
+		*(p+(i++)) = a+'0';         /*first digit*/
+	if ( (b=val%100/10)!=0 || a)
+		*(p+(i++)) = b+'0';        /*second digit*/
+	*(p+(i++)) = '0'+val%10;              /*third digit*/
+
+	return i;
+}
 
 int add_maxfwd_header( struct sip_msg* msg , unsigned int val )
 {
