@@ -27,8 +27,8 @@ Daniel-Constantin Mierla
    Copyright © 2007, 2008, 2004 1und1 Internet AG, BASIS AudioNet
    GmbH, Elena-Ramona Modroiu, FhG FOKUS
    Revision History
-   Revision $Revision: 3898 $ $Date: 2008-03-08 00:03:56 +0100
-                              (Sa, 08 MÃ¤r 2008) $
+   Revision $Revision: 4843 $ $Date: 2008-09-04 17:02:09 +0200
+                              (Do, 04 Sep 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -125,7 +125,7 @@ Chapter 1. Admin Guide
    "rand_event" function. This function return either true or
    false, depending on a random value and a specified probability.
    E.g. if you set via fifo or script a probability value of 5%,
-   then 5% of all calls to rand_event will return false. The
+   then 5% of all calls to rand_event will return true. The
    pseudovariable "$RANDOM" could be used to introduce random
    values e.g. into a SIP reply.
 
@@ -274,7 +274,7 @@ if (rand_event()) {
 
    Set the "probability" of the decision.
 
-   "probability" can have a value from the range 0..99.
+   "probability" can have a value from the range 0..100.
 
    Example 1.7. rand_set_prob() usage
 ...
@@ -435,7 +435,7 @@ if(is_gflag("4"))
    Set the probability value to the given parameter. The parameter
    should be a percent value.
 
-   The parameter value must be a number from 0 to 99.
+   The parameter value must be a number from 0 to 100.
 
    Example 1.18. rand_set_prob usage
 ...

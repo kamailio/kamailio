@@ -13,7 +13,7 @@
 	and the <quote>rand_event</quote> function. This function return either
 	true or false, depending on a random value and a specified probability.
 	E.g. if you set via fifo or script a probability value of 5%, then 5% of
-	all calls to rand_event will return false.
+	all calls to rand_event will return true.
 	The pseudovariable <quote>$RANDOM</quote> could be used to introduce 
 	random values e.g. into a SIP reply.
 	</para>
@@ -236,7 +236,7 @@ if (rand_event()) {
 		Set the <quote>probability</quote> of the decision.
 	    </para>
 	    <para>
-		<quote>probability</quote> can have a value from the range 0..99.
+		<quote>probability</quote> can have a value from the range 0..100.
 	    </para>
 	    <example>
 		<title><function moreinfo="none">rand_set_prob()</function> usage</title>
@@ -489,7 +489,7 @@ if(is_gflag("4"))
 				The parameter should be a percent value.
 			</para>
 			<para>
-				The parameter value must be a number from 0 to 99.
+				The parameter value must be a number from 0 to 100.
 			</para>
 			<example>
 				<title><function moreinfo="none">rand_set_prob</function> usage</title>

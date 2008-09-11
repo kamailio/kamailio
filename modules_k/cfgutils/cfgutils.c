@@ -529,6 +529,11 @@ static int get_prob(struct sip_msg *bar, char *foo1, char *foo2)
 
 static int rand_event(struct sip_msg *bar, char *foo1, char *foo2)
 {
+	/* most of the time this will be disabled completly. Tis will also fix the
+	 * problem with the corner cases if rand() returned zero or RAND_MAX */
+	if ((*probability) == 0) return -1;
+	if ((*probability) == 100) return 1;
+
 	double tmp = ((double) rand() / RAND_MAX);
 	LM_DBG("generated random %f\n", tmp);
 	if (tmp < ((double) (*probability) / 100)) {
