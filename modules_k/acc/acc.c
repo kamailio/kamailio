@@ -48,7 +48,6 @@
 
 #include "../../dprint.h"
 #include "../../error.h"
-#include "../../ut.h"      /* q_memchr */
 #include "../../mem/mem.h"
 #include "../../usr_avp.h"
 #include "../../db/db.h"

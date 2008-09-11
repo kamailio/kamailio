@@ -375,7 +375,7 @@ int db_delete_urecord(urecord_t* _r)
 	vals[0].val.str_val.len = _r->aor.len;
 
 	if (use_domain) {
-		dom = q_memchr(_r->aor.s, '@', _r->aor.len);
+		dom = memchr(_r->aor.s, '@', _r->aor.len);
 		vals[0].val.str_val.len = dom - _r->aor.s;
 
 		vals[1].type = DB_STR;

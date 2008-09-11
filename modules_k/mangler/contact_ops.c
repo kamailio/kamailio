@@ -312,10 +312,10 @@ encode2format (str uri, struct uri_format *format)
 	string = uri.s;
 
 
-	pos = q_memchr (string, '<', uri.len);
+	pos = memchr (string, '<', uri.len);
 	if (pos != NULL)	/* we are only interested of chars inside <> */
 	{
-		start = q_memchr (string, ':', uri.len);
+		start = memchr (string, ':', uri.len);
 		if (start == NULL)	return -2;
 		if (start - pos < 4) return -3;
 		start = start - 3;
@@ -325,7 +325,7 @@ encode2format (str uri, struct uri_format *format)
 	}
 	else			/* we do not have  <> */
 	{
-		start = q_memchr (string, ':', uri.len);
+		start = memchr (string, ':', uri.len);
 		if (start == NULL)
 			return -5;
 		if (start - pos < 3)
@@ -468,7 +468,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 		}
 	/* sip:enc_pref*username*password*ip*port*protocol@public_ip */
 	
-	start = q_memchr (uri.s, ':', uri.len);
+	start = memchr (uri.s, ':', uri.len);
 	if (start == NULL)
 	{
 		LM_ERR("invalid SIP uri.Missing :\n");
@@ -479,7 +479,7 @@ decode2format (str uri, char separator, struct uri_format *format)
 	
 	/* start */
 
-	end = q_memchr(start,'@',uri.len-(start-uri.s));
+	end = memchr(start,'@',uri.len-(start-uri.s));
 	if (end == NULL) 
 		{
 		LM_ERR("invalid SIP uri.Missing @\n");

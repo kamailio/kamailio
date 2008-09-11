@@ -482,7 +482,7 @@ int db_insert_ucontact(ucontact_t* _c)
 		vals[14].type = DB_STR;
 		vals[14].nul = 0;
 
-		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
 			vals[0].val.str_val.len = 0;
 			vals[14].val.str_val = *_c->aor;
@@ -614,7 +614,7 @@ int db_update_ucontact(ucontact_t* _c)
 	if (use_domain) {
 		vals1[3].type = DB_STR;
 		vals1[3].nul = 0;
-		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
 			vals1[0].val.str_val.len = 0;
 			vals1[3].val.str_val = *_c->aor;
@@ -673,7 +673,7 @@ int db_delete_ucontact(ucontact_t* _c)
 	if (use_domain) {
 		vals[3].type = DB_STR;
 		vals[3].nul = 0;
-		dom = q_memchr(_c->aor->s, '@', _c->aor->len);
+		dom = memchr(_c->aor->s, '@', _c->aor->len);
 		if (dom==0) {
 			vals[0].val.str_val.len = 0;
 			vals[3].val.str_val = *_c->aor;
