@@ -21,8 +21,9 @@
 
 source include/common
 source include/require
+source include/database
 
-if ! (check_kamailio && check_module "carrierroute" && check_module "db_postgres"); then
+if ! (check_kamailio && check_module "carrierroute" && check_module "db_postgres" && check_postgres); then
 	exit 0
 fi ;
 
@@ -36,7 +37,7 @@ echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # setup database
-PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "insert into route_tree (id, carrier) values ('1', 'carrier1');
+$PSQL "insert into route_tree (id, carrier) values ('1', 'carrier1');
 insert into route_tree (id, carrier) values ('2', 'default');
 insert into route_tree (id, carrier) values ('3', 'premium');
 insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('1','1','49','0','0.5','0','host1.local.domain');
@@ -90,7 +91,7 @@ fi ;
 killall -9 $BIN
 
 # cleanup database
-PGPASSWORD='openserrw' psql -A -t -n -q -h localhost -U openser openser -c "delete from route_tree where id = 1;
+$PSQL "delete from route_tree where id = 1;
 delete from route_tree where id = 2;
 delete from route_tree where id = 3;
 delete from carrierroute where carrier=1;

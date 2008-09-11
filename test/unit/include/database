@@ -18,6 +18,11 @@
 
 MYSQL="mysql openser --show-warnings --batch --user=openser --password=openserrw -e"
 
+export PGPASSWORD="openserrw"
+PSQL="psql -A -t -n -q -h localhost -U openser openser -c"
+
+UODBC="isql -b -v openser openser openserrw"
+
 function check_mysql() {
 	$MYSQL "select * from location;" > /dev/null
 	if ! [ "$?" -eq 0 ] ; then
@@ -30,5 +35,35 @@ function check_mysql() {
 		return -1
 	fi;
 	$MYSQL "delete from location where user_agent ='___test___';" > /dev/null
+	return 0
+}
+
+function check_postgres() {
+	$PSQL "select * from location;" > /dev/null
+	if ! [ "$?" -eq 0 ] ; then
+		echo "can't read from database"
+		return -1
+	fi;
+	$PSQL "insert into location (user_agent) values ('___test___');" > /dev/null
+	if ! [ "$?" -eq 0 ] ; then
+		echo "can't write to database"
+		return -1
+	fi;
+	$PSQL "delete from location where user_agent ='___test___';" > /dev/null
+	return 0
+}
+
+function check_unixodbc() {
+	echo "select * from location;" | $UODBC  > /dev/null
+	if ! [ "$?" -eq 0 ] ; then
+		echo "can't read from database"
+		return -1
+	fi;
+	echo "insert into location (id, user_agent) values ('$RANDOM', '___test___');" | $UODBC > /dev/null
+	if ! [ "$?" -eq 0 ] ; then
+		echo "can't write to database"
+		return -1
+	fi;
+	echo "delete from location where user_agent ='___test___';" | $UODBC > /dev/null
 	return 0
 }

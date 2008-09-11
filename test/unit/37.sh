@@ -25,7 +25,7 @@ source include/database
 
 CFG=13.cfg
 # number of routes, multiplied with 10
-# if you want to increase this above 8500, uncomment the fifo command below,
+# if you want to increase this above 8500, comment the fifo command below,
 # otherwise this will fails with memory allocation errors (with 1MB PKG mem)
 NR=850
 

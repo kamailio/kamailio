@@ -1,5 +1,5 @@
 #!/bin/bash
-# database access with fetch_result for usrloc on postgres
+# load all modules without external dependencies with unixodbc
 
 # Copyright (C) 2008 1&1 Internet AG
 #
@@ -23,34 +23,26 @@ source include/common
 source include/require
 source include/database
 
-if ! (check_sipp && check_kamailio && check_module "db_postgres" && check_postgres); then
+# Needs a default kamailio database setup for unixodbc
+
+if ! (check_kamailio && check_module "db_unixodbc" && check_unixodbc); then
 	exit 0
 fi ;
 
-CFG=11.cfg
-
+CFG=2.cfg
 cp $CFG $CFG.bak
 
-echo "loadmodule \"db_postgres/db_postgres.so\"" >> $CFG
-echo "modparam(\"usrloc\", \"db_url\", \"postgres://openser:openserrw@localhost/openser\")" >> $CFG
-echo "modparam(\"usrloc\", \"fetch_rows\", 13)" >> $CFG
+echo "loadmodule \"db_unixodbc/db_unixodbc.so\"" >> $CFG
+echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"unixodbc://openserro:openserro@localhost/openser\")" >> $CFG
 
-DOMAIN="local"
-
-COUNTER=0
-while [  $COUNTER -lt 139 ]; do
-	COUNTER=$(($COUNTER+1))
-	$PSQL "insert into location (username, domain, contact, user_agent) values ('foobar-$COUNTER', '$DOMAIN', 'foobar-$COUNTER@$DOMAIN', '___test___');"
-done
-
+# start
 ../$BIN -w . -f $CFG > /dev/null
 ret=$?
 
 sleep 1
 killall -9 $BIN
 
-$PSQL "delete from location where user_agent = '___test___'"
-
 mv $CFG.bak $CFG
+rm -f dispatcher.list
 
 exit $ret

@@ -21,8 +21,9 @@
 
 source include/common
 source include/require
+source include/database
 
-if ! (check_netcat && check_kamailio && check_module "db_postgres"); then
+if ! (check_netcat && check_kamailio && check_module "db_postgres" && check_postgres); then
 	exit 0
 fi ;
 
@@ -46,7 +47,7 @@ if [ "$ret" -eq 0 ] ; then
 	ret=$?
 fi ;
 
-TMP=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
+TMP=`${PSQL} "select COUNT(*) from location where username='1000';"`
 if [ "$TMP" -eq 0 ] ; then
 	ret=1
 fi ;
@@ -64,7 +65,7 @@ if [ "$ret" -eq 0 ] ; then
 	fi ;
 fi ;
 
-ret=`PGPASSWORD='openserro' psql -A -t -n -q -h localhost -U openserro openser -c "select COUNT(*) from location where username='1000';" | tail -n 1`
+ret=`$PSQL "select COUNT(*) from location where username='1000';" | tail -n 1`
 
 killall -9 $BIN
 
