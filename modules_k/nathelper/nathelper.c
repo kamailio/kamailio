@@ -1142,7 +1142,7 @@ child_init(int rank)
 		rtpp_list = rtpp_list->rset_next){
 
 		for (pnode=rtpp_list->rn_first; pnode!=0; pnode = pnode->rn_next){
-			char *old_colon;
+			char* hostname;
 
 			if (pnode->rn_umode == 0) {
 				rtpp_socks[pnode->idx] = -1;
@@ -1153,9 +1153,11 @@ child_init(int rank)
 			 * This is UDP or UDP6. Detect host and port; lookup host;
 			 * do connect() in order to specify peer address
 			 */
-			old_colon = cp = strrchr(pnode->rn_address, ':');
+			hostname = (char*)pkg_malloc(sizeof(char) * (strlen(pnode->rn_address) + 1));
+			strcpy(hostname, pnode->rn_address);
+
+			cp = strrchr(hostname, ':');
 			if (cp != NULL) {
-				old_colon = cp;
 				*cp = '\0';
 				cp++;
 			}
@@ -1166,12 +1168,12 @@ child_init(int rank)
 			hints.ai_flags = 0;
 			hints.ai_family = (pnode->rn_umode == 6) ? AF_INET6 : AF_INET;
 			hints.ai_socktype = SOCK_DGRAM;
-			if ((n = getaddrinfo(pnode->rn_address, cp, &hints, &res)) != 0) {
+			if ((n = getaddrinfo(hostname, cp, &hints, &res)) != 0) {
 				LM_ERR("%s\n", gai_strerror(n));
+				pkg_free(hostname);
 				return -1;
 			}
-			if (old_colon)
-				*old_colon = ':'; /* restore rn_address */
+			pkg_free(hostname);
 
 			rtpp_socks[pnode->idx] = socket((pnode->rn_umode == 6)
 			    ? AF_INET6 : AF_INET, SOCK_DGRAM, 0);
