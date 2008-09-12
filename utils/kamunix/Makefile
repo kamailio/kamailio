@@ -14,7 +14,7 @@ include ../../Makefile.sources
 # if you want to tune or reset flags
 #DEFS:= 
 #LDFLAGS:= 
-#LIBS:= 
+LIBS= 
 
 include ../../Makefile.rules
 
