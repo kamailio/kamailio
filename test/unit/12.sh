@@ -58,7 +58,7 @@ if [ "$ret" -eq 0 ] ; then
 fi ;
 
 if [ "$ret" -eq 0 ] ; then
-	grep "method: REGISTER, transport: UDP:127.0.0.1:5060, user agent: Twinkle/1.0"  $TMPFILE > /dev/null
+	grep "method: register, transport: UDP:127.0.0.1:5060, user agent: Twinkle/1.0"  $TMPFILE > /dev/null
 	ret=$?
 	if [ "$ret" -eq 0 ] ; then
 		grep "Getting identity from FROM URI" $TMPFILE > /dev/null
@@ -67,14 +67,18 @@ if [ "$ret" -eq 0 ] ; then
 			grep "My identity: sip:1000@127.0.0.1" $TMPFILE > /dev/null
 			ret=$?
 			if [ "$ret" -eq 0 ] ; then
-				grep "Contact header field present" $TMPFILE > /dev/null
+				grep "var(x): sip:1000@127.0.0.1, MD5 var(x): b6c3d120cfd9e85addf64ee8943f4eec" $TMPFILE > /dev/null
 				ret=$?
 				if [ "$ret" -eq 0 ] ; then
-					grep "this is an registration" $TMPFILE > /dev/null
+					grep "Contact header field present" $TMPFILE > /dev/null
 					ret=$?
 					if [ "$ret" -eq 0 ] ; then
-						grep "this is an unregistration" $TMPFILE > /dev/null
+						grep "this is an registration" $TMPFILE > /dev/null
 						ret=$?
+						if [ "$ret" -eq 0 ] ; then
+							grep "this is an unregistration" $TMPFILE > /dev/null
+							ret=$?
+						fi;
 					fi ;
 				fi ;
 			fi ;
