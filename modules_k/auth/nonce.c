@@ -27,7 +27,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <netinet/in.h>
-#include "../../md5global.h"
 #include "../../md5.h"
 #include "../../dprint.h"
 #include "../../ut.h"
