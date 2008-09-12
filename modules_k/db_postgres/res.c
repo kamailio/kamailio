@@ -116,7 +116,7 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 			db_free_columns(_r);
 			return -4;
 		}
-		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", sizeof(str), col,
+		LM_DBG("allocate %d bytes for RES_NAMES[%d] at %p\n", (unsigned int) sizeof(str), col,
 				RES_NAMES(_r)[col]);
 
 		/* The pointer that is here returned is part of the result structure. */
