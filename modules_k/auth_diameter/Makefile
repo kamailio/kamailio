@@ -9,5 +9,6 @@ include ../../Makefile.defs
 
 auto_gen=
 NAME=auth_diameter.so
+LIBS=
 
 include ../../Makefile.modules

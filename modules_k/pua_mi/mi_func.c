@@ -24,7 +24,6 @@
  
 #include <stdio.h>
 #include <stdlib.h>
-#include <libxml/parser.h>
 
 #include "../../parser/parse_expires.h"
 #include "../../parser/parse_uri.h"

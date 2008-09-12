@@ -31,5 +31,6 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=sst.so
+LIBS=
 
 include ../../Makefile.modules

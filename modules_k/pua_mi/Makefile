@@ -10,8 +10,7 @@ auto_gen=
 NAME=pua_mi.so
 LIBS=
 
-DEFS+=-I$(SYSBASE)/include/libxml2 -I$(LOCALBASE)/include/libxml2 \
-      -I$(LOCALBASE)/include
-LIBS+=-L$(SYSBASE)/include/lib  -L$(LOCALBASE)/lib -lxml2
+DEFS+=-I$(LOCALBASE)/include
+LIBS+=-L$(SYSBASE)/include/lib -L$(LOCALBASE)/lib
 
 include ../../Makefile.modules
