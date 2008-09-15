@@ -114,6 +114,18 @@ Description: RTP proxy control socket
  .
  Enter "!" to not modify this option.
 
+Template: ser-oob/RTP_ENABLE
+Type: select
+Choices: 0, 1, detect, !
+Default: detect
+Description: Enable or disable the rtp proxy
+ Select whether to enable or disable using of RTP proxy. Possible values are:
+ "0" -- always disable, "1" -- always enable regardless of whether UAC or UAS is behind NAT,
+ "detect" -- detect whether the UAC or the UAS is behind NAT, and enable the rtp proxy
+ when necessary.
+ .
+ Use "!" to not modify this option.
+
 Template: ser-oob/NATPING_INTERVAL
 Type: select
 Choices: 0, 15, !
@@ -121,7 +133,7 @@ Default: 15
 Description: NAT ping interval
  Set NAT ping interval.
  .
- Enter "!" to not modify this option.
+ Use "!" to not modify this option.
 
 Template: ser-oob/DBMODE
 Type: select

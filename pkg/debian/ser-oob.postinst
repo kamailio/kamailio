@@ -199,6 +199,13 @@ modparam("nathelper", "rtpproxy_sock", "$RET")
 +++
 fi
 
+db_get ser-oob/RTP_ENABLE
+if test "$RET" != "!" ; then
+  fn_config_replace $CONFIGFILE RTP_ENABLE <<+++
+rtp_proxy.enable = "$RET" desc "indicates whether the RTP Proxy is enabled or not (0/1/detect)"
++++
+fi
+
 db_get ser-oob/NATPING_INTERVAL
 if test "$RET" != "!" ; then
   fn_config_replace $CONFIGFILE NATPING_INTERVAL <<+++
