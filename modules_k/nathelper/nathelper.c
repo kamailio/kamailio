@@ -1154,6 +1154,10 @@ child_init(int rank)
 			 * do connect() in order to specify peer address
 			 */
 			hostname = (char*)pkg_malloc(sizeof(char) * (strlen(pnode->rn_address) + 1));
+			if (hostname==NULL) {
+				LM_ERR("no more pkg memory\n");
+				return -1;
+			}
 			strcpy(hostname, pnode->rn_address);
 
 			cp = strrchr(hostname, ':');
