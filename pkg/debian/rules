@@ -45,7 +45,7 @@ EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt lcr msilo bdb dbtext iptrtppr
 # list of modules to include into main package
 INCLUDED_MODULES_MAIN = acc_syslog auth avp ctl dispatcher diversion enum eval exec fifo flatstore gflags maxfwd mediaproxy nathelper options pdt permissions pike print ratelimit registrar rr sanity sl textops timer tm uac unixsock uri usrloc xlog cfg_rpc
 # mysql modules
-INCLUDED_MODULES_MYSQL = cc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql speeddial"
+INCLUDED_MODULES_MYSQL = cc_db auth_db avp_db db_ops uri_db domain lcr msilo mysql speeddial
 # xmlrpc modules
 INCLUDED_MODULES_XMLRPC = xmlrpc
 # radius modules
