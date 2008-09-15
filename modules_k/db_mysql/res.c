@@ -91,10 +91,6 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 			case MYSQL_TYPE_LONG:
 			case MYSQL_TYPE_INT24:
 			case MYSQL_TYPE_LONGLONG:
-			case MYSQL_TYPE_DECIMAL:
-			#if MYSQL_VERSION_ID > 49999
-			case MYSQL_TYPE_NEWDECIMAL:
-			#endif
 			case MYSQL_TYPE_TIMESTAMP:
 				LM_DBG("use DB_INT result type\n");
 				RES_TYPES(_r)[col] = DB_INT;
@@ -121,6 +117,10 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 				RES_TYPES(_r)[col] = DB_BITMAP;
 				break;
 
+			case MYSQL_TYPE_DECIMAL:
+			#if MYSQL_VERSION_ID > 49999
+			case MYSQL_TYPE_NEWDECIMAL:
+			#endif
 			case MYSQL_TYPE_STRING:
 			case MYSQL_TYPE_VAR_STRING:
 				LM_DBG("use DB_STRING result type\n");
