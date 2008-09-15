@@ -140,6 +140,7 @@ install: build
 	#	prefix=/usr \
 	#	cfg-prefix=$(CURDIR)/debian/ser \
 	#	cfg-target=/etc/ser/
+	$(MAKE) clean-modules-cfg
 	$(MAKE) install \
 		include_modules="$(INCLUDED_MODULES_MAIN)" \
 		basedir=$(CURDIR)/debian/ser \
@@ -156,6 +157,7 @@ install: build
 	#	cfg-target=/etc/ser/ \
 	#	doc-dir=share/doc/ser-mysql-modules \
 	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
+	$(MAKE) clean-modules-cfg
 	$(MAKE) install-modules-all \
 		include_modules="$(INCLUDED_MODULES_MYSQL)" \
 		basedir=$(CURDIR)/debian/ser-mysql-modules \
@@ -179,6 +181,7 @@ install: build
 	#	cfg-target=/etc/ser/ \
 	#	doc-dir=share/doc/ser-radius-modules \
 	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
+	$(MAKE) clean-modules-cfg
 	$(MAKE) install-modules-all \
 		include_modules="$(INCLUDED_MODULES_RADIUS)" \
 		basedir=$(CURDIR)/debian/ser-radius-modules \
@@ -218,6 +221,7 @@ install: build
 	#	cfg-target=/etc/ser/ \
 	#	doc-dir=share/doc/ser-xmlrpc-module \
 	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
+	$(MAKE) clean-modules-cfg
 	$(MAKE) install-modules-all \
 		include_modules="$(INCLUDED_MODULES_XMLRPC)" \
 		basedir=$(CURDIR)/debian/ser-xmlrpc-module \
