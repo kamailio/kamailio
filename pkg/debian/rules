@@ -39,7 +39,7 @@ EXCLUDED_MODULES=	jabber xmlrpc postgres cpl cpl-c
 # extra modules to skip, because they are not compilable now
 # - regardless if they go to the main ser package or to some module package,
 # they will be excluded from compile and install of all
-EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt lcr msilo
+EXTRA_EXCLUDED_MODULES=	cpl-c avpops flatstore pdt lcr msilo bdb dbtext iptrtpproxy ldap oracle osp pa rls
 
 ### modules depending on mysql
 ##MYSQL_MODULES=mysql
@@ -106,7 +106,7 @@ clean:
 	rm -f build-stamp configure-stamp
 
 	# Add here commands to clean up after the build process.
-	-$(MAKE) -C lib -f Makefile.ser proper
+	#-$(MAKE) -C lib -f Makefile.ser proper
 	-$(MAKE) \
 		include_modules=" $(JABBER_MODULES) $(CPL_MODULES) \
 		$(POSTGRES_MODULES) $(XMLRPC_MODULES)" proper
