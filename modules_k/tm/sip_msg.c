@@ -401,6 +401,7 @@ struct sip_msg*  sip_msg_cloner( struct sip_msg *org_msg, int *sip_msg_len )
 			case HDR_PAI_T:
 			case HDR_PRIVACY_T:
 			case HDR_RETRY_AFTER_T:
+			case HDR_PATH_T:
 				/* we ignore them for now even if they have something parsed*/
 				break;
 
@@ -832,8 +833,15 @@ do { \
 					new_msg->min_se = new_hdr;
 				}
 				break;
+			case HDR_PATH_T:
+				if (HOOK_NOT_SET(path)) {
+					new_msg->path = new_hdr;
+				} else {
+					LINK_SIBLING_HEADER(path, new_hdr);
+				}
+				break;
 			default:
-				/* ignore the rest*/
+				/* ignore the rest */
 				;
 		}/*switch*/
 
