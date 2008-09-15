@@ -102,7 +102,7 @@ build-stamp: configure-stamp
 	# Add here commands to compile the package.
 	#$(MAKE) all group_include="standard" skip_modules="$(EXCLUDED_MODULES) $(EXTRA_EXCLUDED_MODULES)" cfg-target=/etc/ser/ prefix=/usr
 	$(MAKE) all \
-		include_modules="$(INCLUDED_MODULES_ALL)" \
+		modules="$(INCLUDED_MODULES_ALL)" \
 		cfg-target=/etc/ser/ prefix=/usr
 	##$(MAKE) modules group_include="mysql" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
 	#$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
@@ -142,7 +142,7 @@ install: build
 	#	cfg-target=/etc/ser/
 	$(MAKE) clean-modules-cfg
 	$(MAKE) install \
-		include_modules="$(INCLUDED_MODULES_MAIN)" \
+		modules="$(INCLUDED_MODULES_MAIN)" \
 		basedir=$(CURDIR)/debian/ser \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser \
@@ -159,7 +159,7 @@ install: build
 	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
 	$(MAKE) clean-modules-cfg
 	$(MAKE) install-modules-all \
-		include_modules="$(INCLUDED_MODULES_MYSQL)" \
+		modules="$(INCLUDED_MODULES_MYSQL)" \
 		basedir=$(CURDIR)/debian/ser-mysql-modules \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-mysql-modules \
@@ -183,7 +183,7 @@ install: build
 	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
 	$(MAKE) clean-modules-cfg
 	$(MAKE) install-modules-all \
-		include_modules="$(INCLUDED_MODULES_RADIUS)" \
+		modules="$(INCLUDED_MODULES_RADIUS)" \
 		basedir=$(CURDIR)/debian/ser-radius-modules \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-radius-modules \
@@ -223,7 +223,7 @@ install: build
 	#	skip_modules="$(EXTRA_EXCLUDED_MODULES)"
 	$(MAKE) clean-modules-cfg
 	$(MAKE) install-modules-all \
-		include_modules="$(INCLUDED_MODULES_XMLRPC)" \
+		modules="$(INCLUDED_MODULES_XMLRPC)" \
 		basedir=$(CURDIR)/debian/ser-xmlrpc-module \
 		prefix=/usr \
 		cfg-prefix=$(CURDIR)/debian/ser-xmlrpc-module \
