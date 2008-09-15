@@ -226,6 +226,8 @@ int add_event(pres_ev_t* event)
 	ev->get_rules_doc= event->get_rules_doc;
 	ev->evs_publ_handl= event->evs_publ_handl;
 	ev->etag_not_new= event->etag_not_new;
+	ev->aux_body_processing= event->aux_body_processing;
+	ev->aux_free_body= event->aux_free_body;
 	ev->free_body= event->free_body;
 	ev->default_expires= event->default_expires;
 

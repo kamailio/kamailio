@@ -1335,7 +1335,7 @@ error:
 
 int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str* rules_doc)
 {
-	str* notify_body = NULL;
+	str *notify_body = NULL, *aux_body = NULL;
 	subs_t* subs_array= NULL, *s= NULL;
 	int ret_code= -1;
 
@@ -1357,15 +1357,26 @@ int publ_notify(presentity_t* p, str pres_uri, str* body, str* offline_etag, str
 			/* goto error; */
 		}
 	}
-	
+
 	s= subs_array;
 	while(s)
 	{
+		if (p->event->aux_body_processing) {
+			aux_body = p->event->aux_body_processing(s, notify_body?notify_body:body);
+		}
+
 		s->auth_rules_doc= rules_doc;
-		if(notify(s, NULL, notify_body?notify_body:body, 0)< 0 )
+		if(notify(s, NULL, aux_body?aux_body:(notify_body?notify_body:body), 0)< 0 )
 		{
 			LM_ERR("Could not send notify for %.*s\n",
 					p->event->name.len, p->event->name.s);
+		}
+
+		if(aux_body!=NULL) {
+			if(aux_body->s)	{
+				p->event->aux_free_body(aux_body->s);
+			}
+			pkg_free(aux_body);
 		}
 		s= s->next;
 	}
@@ -1391,7 +1402,7 @@ done:
 int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 {
 	subs_t* subs_array = NULL, *s= NULL;
-	str* notify_body = NULL;
+	str* notify_body = NULL, *aux_body = NULL;
 	int ret_code= -1;
 
 	subs_array= get_subs_dialog(pres_uri, event , NULL);
@@ -1417,11 +1428,22 @@ int query_db_notify(str* pres_uri, pres_ev_t* event, subs_t* watcher_subs )
 	while(s)
 	{
 
-		if(notify(s, watcher_subs, notify_body, 0)< 0 )
+		if (event->aux_body_processing) {
+			aux_body = event->aux_body_processing(s, notify_body);
+		}
+
+		if(notify(s, watcher_subs, aux_body?aux_body:notify_body, 0)< 0 )
 		{
 			LM_ERR("Could not send notify for [event]=%.*s\n",
 					event->name.len, event->name.s);
 			goto done;
+		}
+
+		if(aux_body!=NULL) {
+			if(aux_body->s)	{
+				event->aux_free_body(aux_body->s);
+			}
+			pkg_free(aux_body);
 		}
 		s= s->next;
 	}
