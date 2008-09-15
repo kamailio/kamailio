@@ -527,6 +527,40 @@ if ( subst_body('/^o=(.*) /o=$fU ') ) {};
 
 	<section>
 		<title>
+		<function moreinfo="none">insert_body(txt,content_type)</function>
+		</title>
+		<para>
+		Insert body to a SIP message. If the body exists, the function returns
+		false as multi-part is not supported yet.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para><emphasis>txt</emphasis> - text for the body.
+			</para>
+		</listitem>
+		<listitem>
+			<para><emphasis>content_type</emphasis> - value of Content-Type header.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, ONREPLY_ROUTE, 
+		FAILURE_ROUTE, BRANCH_ROUTE.
+		</para>
+		<example>
+		<title><function>insert_body</function> usage</title>
+		<programlisting format="linespecific">
+...
+insert_body("test", "text/plain");
+...
+</programlisting>
+		</example>
+	</section>
+
+
+	<section>
+		<title>
 		<function moreinfo="none">filter_body(content_type)</function>
 		</title>
 		<para>
