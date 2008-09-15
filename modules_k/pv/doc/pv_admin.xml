@@ -1,0 +1,55 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		This module collects the core pseudo-variables that can be used in
+		configuration file. They are listed in Dokuwiki:
+		<ulink url="http://www.kamailio.org/dokuwiki/">http://www.kamailio.org/dokuwiki/</ulink>,
+		in Pseudo-Variables section
+	</para>
+	</section>
+	<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>No dependencies on other &kamailio; modules</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>None</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+	<section>
+	<title>Exported Parameters</title>
+	<para>None</para>
+	</section>
+	<section>
+	<title>Exported Functions</title>
+	<para>None</para>
+	</section>
+</chapter>
+
