@@ -104,6 +104,9 @@ build-stamp: configure-stamp
 	$(MAKE) all \
 		modules="$(INCLUDED_MODULES_ALL)" \
 		cfg-target=/etc/ser/ prefix=/usr
+	$(MAKE) modules \
+		modules="$(INCLUDED_MODULES_ALL)" \
+		cfg-target=/etc/ser/ prefix=/usr
 	##$(MAKE) modules group_include="mysql" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
 	#$(MAKE) modules modules="$(JABBER_MOD_PATH)" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
 	##$(MAKE) modules group_include="radius" cfg-target=/etc/ser/ prefix=/usr skip_modules="$(EXTRA_EXCLUDED_MODULES)"
