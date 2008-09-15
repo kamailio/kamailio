@@ -33,6 +33,8 @@
 #include "pua.h"
 #include "pidf.h"
 
+extern int dlginfo_increase_version;
+
 int pua_add_events(void)
 {
 	/* add presence */
@@ -43,11 +45,28 @@ int pua_add_events(void)
 		return -1;
 	}
 
+	/* add dialog */
+	if (dlginfo_increase_version) {
+		if(add_pua_event(DIALOG_EVENT, "dialog", "application/dialog-info+xml",
+					bla_process_body)< 0)
+		{
+			LM_ERR("while adding event dialog w/ dlginfo_increase_version\n");
+			return -1;
+		}
+	} else {
+		if(add_pua_event(DIALOG_EVENT, "dialog", "application/dialog-info+xml",
+					dlg_process_body)< 0)
+		{
+			LM_ERR("while adding event dialog w/o dlginfo_increase_version\n");
+			return -1;
+		}
+	}
+
 	/* add dialog;sla */
 	if(add_pua_event(BLA_EVENT, "dialog;sla", "application/dialog-info+xml",
 				bla_process_body)< 0)
 	{
-		LM_ERR("while adding event presence\n");
+		LM_ERR("while adding event dialog;sla\n");
 		return -1;
 	}
 
@@ -55,14 +74,14 @@ int pua_add_events(void)
 	if(add_pua_event(MSGSUM_EVENT, "message-summary", 
 				"application/simple-message-summary", mwi_process_body)< 0)
 	{
-		LM_ERR("while adding event presence\n");
+		LM_ERR("while adding event message-summary\n");
 		return -1;
 	}
 	
 	/* add presence;winfo */
 	if(add_pua_event(PWINFO_EVENT, "presence.winfo", NULL, NULL)< 0)
 	{
-		LM_ERR("while adding event presence\n");
+		LM_ERR("while adding event presence.winfo\n");
 		return -1;
 	}
 	
@@ -290,6 +309,12 @@ error:
 }
 
 int mwi_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
+{
+	*fin_body= publ->body;
+	return 0;
+}
+
+int dlg_process_body(publ_info_t* publ, str** fin_body, int ver, str** tuple)
 {
 	*fin_body= publ->body;
 	return 0;

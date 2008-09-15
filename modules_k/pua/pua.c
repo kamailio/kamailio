@@ -66,6 +66,7 @@ static str db_table= str_init("pua");
 int update_period= 100;
 str outbound_proxy = {0, 0};
 int startup_time = 0;
+int dlginfo_increase_version = 0;
 pua_event_t* pua_evlist= NULL;
 
 /* database connection */
@@ -121,6 +122,7 @@ static param_export_t params[]={
 	{"default_expires",  INT_PARAM, &default_expires     },
 	{"update_period",	 INT_PARAM, &update_period       },
 	{"outbound_proxy",	 STR_PARAM, &outbound_proxy.s    },
+	{"dlginfo_increase_version",	 INT_PARAM, &dlginfo_increase_version},
 	{0,							 0,			0            }
 };
 

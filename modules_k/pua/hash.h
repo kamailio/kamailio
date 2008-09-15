@@ -39,6 +39,7 @@
 #define BLA_EVENT           1<<2
 #define MSGSUM_EVENT        1<<3
 #define CONFERENCE_EVENT    1<<4
+#define DIALOG_EVENT        1<<5
 
 #define UL_PUBLISH          1<<0
 #define BLA_PUBLISH         1<<1
@@ -50,6 +51,7 @@
 #define MI_ASYN_PUBLISH     1<<7
 #define MI_SUBSCRIBE        1<<8
 #define RLS_SUBSCRIBE       1<<9
+#define DIALOG_PUBLISH      1<<10
 
 #define NO_UPDATEDB_FLAG    1<<0
 #define UPDATEDB_FLAG       1<<1
@@ -132,6 +134,10 @@ static inline int get_event_flag(str* event)
 {
     switch (event->len) 
     {
+        case 6:
+            if (strncmp(event->s, "dialog", 6) == 0)
+                return DIALOG_EVENT;
+            break;
         case 8:
             if (strncmp(event->s, "presence", 8) == 0)
                 return PRESENCE_EVENT;
