@@ -1286,8 +1286,8 @@ cr() {
 			REWRITE_PREFIX=
 			REWRITE_SUFFIX=
 			COMMENT=
-			FLAGS=
-			MASK=
+			FLAGS=0
+			MASK=0
 			if [ $# -gt 4 ] ; then
 				PROB=$5
 				if [ $# -gt 5 ] ; then
