@@ -51,6 +51,7 @@ char *deny_filter_s = 0;
 char *accept_filter_s = 0;
 char *def_filter_s = 0;
 
+unsigned int bflags = 0;
 
 #define ACCEPT_RULE_STR "accept"
 #define DENY_RULE_STR   "deny"
@@ -85,6 +86,7 @@ static param_export_t params[] = {
 	{"default_filter",  STR_PARAM,  &def_filter_s     },
 	{"acc_function",    STR_PARAM,  &acc_fct_s        },
 	{"acc_db_table",    STR_PARAM,  &acc_db_table     },
+	{"bflags",    		INT_PARAM,  &bflags			  },
 	{0, 0, 0}
 };
 
@@ -343,7 +345,7 @@ static int w_get_redirect2(struct sip_msg* msg, char *max_c, char *reason)
 	msg_tracer( msg, 0);
 	/* get the contacts */
 	max = (unsigned short)(long)max_c;
-	n = get_redirect(msg , (max>>8)&0xff, max&0xff, (struct acc_param*)reason);
+	n = get_redirect(msg , (max>>8)&0xff, max&0xff, (struct acc_param*)reason, bflags);
 	reset_filters();
 	/* reset the tracer */
 	msg_tracer( msg, 1);

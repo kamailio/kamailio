@@ -41,11 +41,11 @@
 #define DEFAULT_Q_VALUE          10
 
 static int shmcontact2dset(struct sip_msg *req, struct sip_msg *shrpl,
-		long max, struct acc_param *reason);
+		long max, struct acc_param *reason, unsigned int bflags);
 
 
 int get_redirect( struct sip_msg *msg , int maxt, int maxb,
-												struct acc_param *reason)
+									struct acc_param *reason, unsigned int bflags)
 {
 	struct cell *t;
 	str backup_uri;
@@ -84,7 +84,7 @@ int get_redirect( struct sip_msg *msg , int maxt, int maxb,
 		if (max==0)
 			continue;
 		/* get the contact from it */
-		n = shmcontact2dset( msg, t->uac[i].reply, max, reason);
+		n = shmcontact2dset( msg, t->uac[i].reply, max, reason, bflags);
 		if ( n<0 ) {
 			LM_ERR("get contact from shm_reply branch %d failed\n",i);
 			/* do not go to error, try next branches */
@@ -168,7 +168,7 @@ static int sort_contacts(contact_t *ct_list, contact_t **ct_array,
  *            n - ok and n contacts added
  */
 static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
-											long max, struct acc_param *reason)
+								long max, struct acc_param *reason, unsigned int bflags)
 {
 	static struct sip_msg  dup_rpl;
 	static contact_t *scontacts[MAX_CONTACTS_PER_REPLY];
@@ -264,7 +264,7 @@ static int shmcontact2dset(struct sip_msg *req, struct sip_msg *sh_rpl,
 	/* add the sortet contacts as branches in dset and log this! */
 	for ( i=0 ; i<n ; i++ ) {
 		LM_DBG("adding contact <%.*s>\n", scontacts[i]->uri.len, scontacts[i]->uri.s);
-		if (append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], 0, 0)<0) {
+		if (append_branch( 0, &scontacts[i]->uri, 0, 0, sqvalues[i], bflags, 0)<0) {
 			LM_ERR("failed to add contact to dset\n");
 		} else {
 			added++;

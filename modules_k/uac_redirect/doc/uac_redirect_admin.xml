@@ -264,8 +264,36 @@ modparam("uac_redirect","acc_db_table","acc_redirect")
 				</programlisting>
 			</example>
 		</section>
-	</section>
+		<section>
+			<title><varname>bflags</varname> (int)</title>
+			<para>
+			This parameter defines the branch-flags to be set for new, added branch.
+			</para>
+			<para>
+				<emphasis>
+					This parameter is optional, it's default 
+					value being 0.
+				</emphasis>
+			</para>
+			<example>
+				<title>Set <varname>bflags</varname> 
+					module parameter</title>
+				<programlisting format="linespecific">
+...
+modparam("uac_redirect","bflags", 1)
+...
 
+branch_route[1] {
+	if (isbflagset(1)) {
+		log(1, "This branch comes from a 302 Forward Request.\n");
+	} else {
+		log(1, "This is a regular branch.\n");
+	}
+}
+				</programlisting>
+			</example>
+		</section>
+	</section>
 
 	<section>
 		<title>Exported Functions</title>
