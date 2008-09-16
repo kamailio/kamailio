@@ -62,6 +62,26 @@ inline int db_str2int(const char* _s, int* _v)
 }
 
 
+inline int db_str2longlong(const char* _s, long long * _v)
+{
+	long long tmp;
+
+	if (!_s || !_v) {
+	       LM_ERR("Invalid parameter value\n");
+	       return -1;
+	}
+
+	tmp = strtoll(_s, 0, 10);
+	if ((tmp == LLONG_MAX || tmp == LLONG_MIN) && errno == ERANGE) {
+		LM_ERR("Value out of range\n");
+		return -1;
+	}
+
+	*_v = tmp;
+	return 0;
+}
+
+
 /*
  * Convert a string to double
  */
@@ -91,6 +111,29 @@ inline int db_int2str(int _v, char* _s, int* _l)
 	}
 
 	ret = snprintf(_s, *_l, "%-d", _v);
+	if (ret < 0 || ret >= *_l) {
+		LM_ERR("Error in snprintf\n");
+		return -1;
+	}
+	*_l = ret;
+
+	return 0;
+}
+
+
+/*
+ * Convert an long long to string
+ */
+inline int db_longlong2str(long long _v, char* _s, int* _l)
+{
+	int ret;
+
+	if ((!_s) || (!_l) || (!*_l)) {
+		LM_ERR("Invalid parameter value\n");
+		return -1;
+	}
+
+	ret = snprintf(_s, *_l, "%-lld", _v);
 	if (ret < 0 || ret >= *_l) {
 		LM_ERR("Error in snprintf\n");
 		return -1;
