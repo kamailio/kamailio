@@ -115,7 +115,7 @@ void calc_nonce(char* _nonce, int _expires, int _index, str* _secret)
 	MD5Update(&ctx, _nonce, offset);
 
 	MD5Update(&ctx, _secret->s, _secret->len);
-	MD5Final(bin, &ctx);
+	U_MD5Final(bin, &ctx);
 	string2hex(bin, 16, _nonce + offset);
 	_nonce[offset + 32] = '\0';
 }
