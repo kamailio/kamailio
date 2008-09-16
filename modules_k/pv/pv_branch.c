@@ -72,6 +72,8 @@ int pv_get_branchx(struct sip_msg *msg, pv_param_t *param,
 			return pv_get_null(msg, param, res);
 		case 5: /* count */
 			return pv_get_uintval(msg, param, res, nr_branches);
+		case 6: /* flags */
+			return pv_get_uintval(msg, param, res, fl);
 		default:
 			/* 0 - uri */
 			return pv_get_strval(msg, param, res, &uri);
@@ -122,6 +124,8 @@ int pv_parse_branchx_name(pv_spec_p sp, str *in)
 		case 5: 
 			if(strncmp(in->s, "count", 5)==0)
 				sp->pvp.pvn.u.isname.name.n = 5;
+			else if(strncmp(in->s, "flags", 5)==0)
+				sp->pvp.pvn.u.isname.name.n = 6;
 			else goto error;
 		break;
 		default:
