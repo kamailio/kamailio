@@ -105,11 +105,15 @@ static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 			case SQL_SMALLINT:
 			case SQL_INTEGER:
 			case SQL_TINYINT:
-			case SQL_BIGINT:
 			case SQL_DECIMAL:
 			case SQL_NUMERIC:
 				LM_DBG("use DB_INT result type\n");
 				RES_TYPES(_r)[col] = DB_INT;
+				break;
+
+			case SQL_BIGINT:
+				LM_DBG("use DB_BIGINT result type\n");
+				RES_TYPES(_r)[col] = DB_BIGINT;
 				break;
 
 			case SQL_REAL:

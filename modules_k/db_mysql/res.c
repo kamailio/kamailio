@@ -90,10 +90,14 @@ int db_mysql_get_columns(const db_con_t* _h, db_res_t* _r)
 			case MYSQL_TYPE_SHORT:
 			case MYSQL_TYPE_LONG:
 			case MYSQL_TYPE_INT24:
-			case MYSQL_TYPE_LONGLONG:
 			case MYSQL_TYPE_TIMESTAMP:
 				LM_DBG("use DB_INT result type\n");
 				RES_TYPES(_r)[col] = DB_INT;
+				break;
+
+			case MYSQL_TYPE_LONGLONG:
+				LM_DBG("use DB_BIGINT result type\n");
+				RES_TYPES(_r)[col] = DB_BIGINT;
 				break;
 
 			case MYSQL_TYPE_FLOAT:

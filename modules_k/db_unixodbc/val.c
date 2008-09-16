@@ -86,12 +86,26 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			}
 			break;
 
+		case DB_BIGINT:
+			LM_DBG("converting BIGINT [%s]\n", _s);
+			if (db_str2longlong(_s, &VAL_BIGINT(_v)) < 0)
+			{
+				LM_ERR("converting big integer value from string failed\n");
+				return -3;
+			}
+			else
+			{
+				VAL_TYPE(_v) = DB_BIGINT;
+				return 0;
+			}
+			break;
+
 		case DB_BITMAP:
 			LM_DBG("converting BITMAP [%s]\n", _s);
 			if (db_str2int(_s, &VAL_INT(_v)) < 0)
 			{
 				LM_ERR("converting bitmap value from string failed\n");
-				return -3;
+				return -4;
 			}
 			else
 			{
@@ -105,7 +119,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0)
 			{
 				LM_ERR("converting double value from string failed\n");
-				return -4;
+				return -5;
 			}
 			else
 			{
@@ -132,7 +146,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			if (db_str2time(_s, &VAL_TIME(_v)) < 0)
 			{
 				LM_ERR("converting datetime value from string failed\n");
-				return -5;
+				return -6;
 			}
 			else
 			{
@@ -148,7 +162,7 @@ int db_unixodbc_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 			VAL_TYPE(_v) = DB_BLOB;
 			return 0;
 	}
-	return -6;
+	return -7;
 }
 
 /*
@@ -190,11 +204,23 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			}
 			break;
 
+		case DB_BIGINT:
+			if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0)
+			{
+				LM_ERR("converting string to big int failed\n");
+				return -3;
+			}
+			else
+			{
+				return 0;
+			}
+			break;
+
 		case DB_BITMAP:
 			if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0)
 			{
 				LM_ERR("converting string to int failed\n");
-				return -3;
+				return -4;
 			}
 			else
 			{
@@ -206,7 +232,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0)
 			{
 				LM_ERR("converting string to double failed\n");
-				return -4;
+				return -5;
 			}
 			else
 			{
@@ -219,7 +245,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			if (*_len < (l * 2 + 3))
 			{
 				LM_ERR("destination buffer too short\n");
-				return -5;
+				return -6;
 			}
 			else
 			{
@@ -244,7 +270,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			if (*_len < (l * 2 + 3))
 			{
 				LM_ERR("destination buffer too short\n");
-				return -6;
+				return -7;
 			}
 			else
 			{
@@ -268,7 +294,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			if (db_time2str(VAL_TIME(_v), _s, _len) < 0)
 			{
 				LM_ERR("converting string to time_t failed\n");
-				return -7;
+				return -8;
 			}
 			else
 			{
@@ -281,7 +307,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			if (*_len < (l * 2 + 3))
 			{
 				LM_ERR("destination buffer too short\n");
-				return -8;
+				return -9;
 			}
 			else
 			{
@@ -303,7 +329,7 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 
 		default:
 			LM_DBG("unknown data type\n");
-			return -9;
+			return -10;
 	}
 /*return -8; --not reached*/
 }

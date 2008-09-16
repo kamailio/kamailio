@@ -87,11 +87,22 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		}
 		break;
 
+	case DB_BIGINT:
+		LM_DBG("converting BIGINT [%s]\n", _s);
+		if (db_str2longlong(_s, &VAL_BIGINT(_v)) < 0) {
+			LM_ERR("failed to convert BIGINT value from string\n");
+			return -3;
+		} else {
+			VAL_TYPE(_v) = DB_BIGINT;
+			return 0;
+		}
+		break;
+
 	case DB_BITMAP:
 		LM_DBG("converting BITMAP [%s]\n", _s);
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LM_ERR("failed to convert BITMAP value from string\n");
-			return -3;
+			return -4;
 		} else {
 			VAL_TYPE(_v) = DB_BITMAP;
 			return 0;
@@ -102,7 +113,7 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		LM_DBG("converting DOUBLE [%s]\n", _s);
 		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
 			LM_ERR("failed to convert DOUBLE value from string\n");
-			return -4;
+			return -5;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
 			return 0;
@@ -129,7 +140,7 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		LM_DBG("converting DATETIME [%s]\n", _s);
 		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
 			LM_ERR("failed to convert datetime\n");
-			return -5;
+			return -6;
 		} else {
 			VAL_TYPE(_v) = DB_DATETIME;
 			return 0;
@@ -150,7 +161,7 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		LM_DBG("got blob len %d\n", _l);
 		return 0;
 	}
-	return -6;
+	return -7;
 }
 
 
@@ -185,10 +196,19 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		}
 		break;
 
+	case DB_BIGINT:
+		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
+			LM_ERR("failed to convert string to big int\n");
+			return -3;
+		} else {
+			return 0;
+		}
+		break;
+
 	case DB_BITMAP:
 		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
 			LM_ERR("failed to convert string to int\n");
-			return -3;
+			return -4;
 		} else {
 			return 0;
 		}
@@ -197,7 +217,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 	case DB_DOUBLE:
 		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
 			LM_ERR("failed to convert string to double\n");
-			return -3;
+			return -5;
 		} else {
 			return 0;
 		}
@@ -207,7 +227,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short for string\n");
-			return -4;
+			return -6;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
@@ -216,7 +236,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 			if(pgret!=0)
 			{
 				LM_ERR("PQescapeStringConn failed\n");
-				return -4;
+				return -6;
 			}
 			LM_DBG("PQescapeStringConn: in: %d chars,"
 				" out: %d chars\n", l, ret);
@@ -232,7 +252,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		l = VAL_STR(_v).len;
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short for str\n");
-			return -5;
+			return -7;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
@@ -241,7 +261,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 			if(pgret!=0)
 			{
 				LM_ERR("PQescapeStringConn failed \n");
-				return -5;
+				return -7;
 			}
 	        LM_DBG("PQescapeStringConn: in: %d chars, out: %d chars\n", l, ret);
 			_s += ret;
@@ -255,7 +275,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 	case DB_DATETIME:
 		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LM_ERR("failed to convert string to time_t\n");
-			return -6;
+			return -8;
 		} else {
 			return 0;
 		}
@@ -266,7 +286,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 		/* this estimation is not always correct, thus we need to check later again */
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short for blob\n");
-			return -7;
+			return -9;
 		} else {
 			*_s++ = '\'';
 			tmp_s = (char*)PQescapeByteaConn(CON_CONNECTION(_con), (unsigned char*)VAL_STRING(_v),
@@ -274,11 +294,11 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 			if(tmp_s==NULL)
 			{
 				LM_ERR("PQescapeBytea failed\n");
-				return -7;
+				return -9;
 			}
 			if (tmp_len > *_len) {
 				LM_ERR("escaped result too long\n");
-				return -7;
+				return -9;
 			}
 			memcpy(_s, tmp_s, tmp_len);
 			PQfreemem(tmp_s);
@@ -292,7 +312,7 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 
 	default:
 		LM_DBG("unknown data type\n");
-		return -7;
+		return -10;
 	}
 	return -8;
 }
