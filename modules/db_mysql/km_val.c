@@ -75,11 +75,22 @@ int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int
 		}
 		break;
 
+	case DB_BIGINT:
+		LM_DBG("converting BIGINT [%s]\n", _s);
+		if (db_str2longlong(_s, &VAL_BIGINT(_v)) < 0) {
+			LM_ERR("error while converting big integer value from string\n");
+			return -3;
+		} else {
+			VAL_TYPE(_v) = DB_BIGINT;
+			return 0;
+		}
+		break;
+
 	case DB_BITMAP:
 		LM_DBG("converting BITMAP [%s]\n", _s);
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LM_ERR("error while converting bitmap value from string\n");
-			return -3;
+			return -4;
 		} else {
 			VAL_TYPE(_v) = DB_BITMAP;
 			return 0;
@@ -90,7 +101,7 @@ int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int
 		LM_DBG("converting DOUBLE [%s]\n", _s);
 		if (db_str2double(_s, &VAL_DOUBLE(_v)) < 0) {
 			LM_ERR("error while converting double value from string\n");
-			return -4;
+			return -5;
 		} else {
 			VAL_TYPE(_v) = DB_DOUBLE;
 			return 0;
@@ -114,7 +125,7 @@ int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int
 		LM_DBG("converting DATETIME [%s]\n", _s);
 		if (db_str2time(_s, &VAL_TIME(_v)) < 0) {
 			LM_ERR("error while converting datetime value from string\n");
-			return -5;
+			return -6;
 		} else {
 			VAL_TYPE(_v) = DB_DATETIME;
 			return 0;
@@ -128,7 +139,7 @@ int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int
 		VAL_TYPE(_v) = DB_BLOB;
 		return 0;
 	}
-	return -6;
+	return -7;
 }
 
 
@@ -164,10 +175,19 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 		}
 		break;
 
+	case DB_BIGINT:
+		if (db_longlong2str(VAL_BIGINT(_v), _s, _len) < 0) {
+			LM_ERR("error while converting string to big int\n");
+			return -3;
+		} else {
+			return 0;
+		}
+		break;
+
 	case DB_BITMAP:
 		if (db_int2str(VAL_BITMAP(_v), _s, _len) < 0) {
 			LM_ERR("error while converting string to int\n");
-			return -3;
+			return -4;
 		} else {
 			return 0;
 		}
@@ -176,7 +196,7 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 	case DB_DOUBLE:
 		if (db_double2str(VAL_DOUBLE(_v), _s, _len) < 0) {
 			LM_ERR("error while converting string to double\n");
-			return -4;
+			return -5;
 		} else {
 			return 0;
 		}
@@ -186,7 +206,7 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 		l = strlen(VAL_STRING(_v));
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
-			return -5;
+			return -6;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
@@ -201,7 +221,7 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 	case DB_STR:
 		if (*_len < (VAL_STR(_v).len * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
-			return -6;
+			return -7;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
@@ -216,7 +236,7 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 	case DB_DATETIME:
 		if (db_time2str(VAL_TIME(_v), _s, _len) < 0) {
 			LM_ERR("error while converting string to time_t\n");
-			return -7;
+			return -8;
 		} else {
 			return 0;
 		}
@@ -226,7 +246,7 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 		l = VAL_BLOB(_v).len;
 		if (*_len < (l * 2 + 3)) {
 			LM_ERR("destination buffer too short\n");
-			return -8;
+			return -9;
 		} else {
 			old_s = _s;
 			*_s++ = '\'';
@@ -240,7 +260,7 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 
 	default:
 		LM_DBG("unknown data type\n");
-		return -9;
+		return -10;
 	}
 	/*return -8; --not reached*/
 }
