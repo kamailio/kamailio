@@ -1,7 +1,7 @@
 INSERT INTO version (table_name, table_version) values ('rls_presentity','0');
 CREATE TABLE rls_presentity (
     id NUMBER(10) PRIMARY KEY,
-    rlsubs_did VARCHAR2(512),
+    rlsubs_did VARCHAR2(255),
     resource_uri VARCHAR2(128),
     content_type VARCHAR2(64),
     presence_state BLOB,
