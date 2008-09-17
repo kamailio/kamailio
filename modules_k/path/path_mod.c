@@ -65,16 +65,6 @@ MODULE_VERSION
 int use_received = 0;
 
 /*! \brief
- * Module destroy function prototype
- */
-static void destroy(void);
-
-/*! \brief
- * Module child-init function prototype
- */
-static int child_init(int rank);
-
-/*! \brief
  * Module initialization function prototype
  */
 static int mod_init(void);
@@ -124,21 +114,13 @@ struct module_exports exports = {
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
 	0,          /* response function */
-	destroy,    /* destroy function */
-	child_init  /* child initialization function */
+	0,    /* destroy function */
+	0           /* child initialization function */
 };
-
-
-static int child_init(int rank)
-{
-	return 0;
-}
 
 
 static int mod_init(void)
 {
-	LM_INFO("initializing...\n");
-
 	if (use_received) {
 		if (load_rr_api(&path_rrb) != 0) {
 			LM_ERR("failed to load rr-API\n");
@@ -152,10 +134,3 @@ static int mod_init(void)
 	
 	return 0;
 }
-
-
-static void destroy(void)
-{
-}
-
-
