@@ -35,6 +35,7 @@
 #include "../mem/mem.h"
 #include "../dprint.h"
 #include <limits.h>
+#include </usr/include/limits.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +73,7 @@ inline int db_str2longlong(const char* _s, long long * _v)
 	}
 
 	tmp = strtoll(_s, 0, 10);
-	if ((tmp == LLONG_MAX || tmp == LLONG_MIN) && errno == ERANGE) {
+	if (errno == ERANGE) {
 		LM_ERR("Value out of range\n");
 		return -1;
 	}
