@@ -426,6 +426,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		avp_val.s = rs->host;
 		if (add_avp(AVP_VAL_STR | dstavp->u.a.flags, dstavp->u.a.name, avp_val)<0) {
 			LM_ERR("set AVP failed\n");
+			pkg_free(dest->s);
 			return -1;
 		}
 	}
