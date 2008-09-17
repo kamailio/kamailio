@@ -42,7 +42,7 @@ CPL_MODULES = cpl-c
 # module depending on radiusclient
 RADIUS_MODULES = auth_radius misc_radius peering
 # presence related modules
-PRESENCE_MODULES = presence presence_xml presence_mwi pua pua_bla pua_mi pua_usrloc pua_xmpp xcap_client
+PRESENCE_MODULES = presence presence_xml presence_mwi presence_dialoginfo pua pua_bla pua_mi pua_usrloc pua_xmpp pua_dialoginfo xcap_client
 # XMLRPC module
 XMLRPC_MODULES = mi_xmlrpc
 # Perl module
