@@ -1,5 +1,5 @@
 #!/bin/bash
-# private memory effiency and fragmentation with ul_dump w/ and w/o PKG_MALLOC
+# private memory effiency and fragmentation with ul_dump w/ or w/o PKG_MALLOC
 
 # Copyright (C) 2008 1&1 Internet AG
 #
