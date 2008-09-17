@@ -1,0 +1,273 @@
+<!-- Module User's Guide -->
+
+<chapter>
+	
+	<title>&adminguide;</title>
+	
+	<section>
+	<title>Overview</title>
+	<para>
+		The pua_dialoginfo retrieves dialog state information from the 
+		dialog module and PUBLISHes the dialog-information using the pua
+		module. Thus, in combination with the presence_xml module this can
+		be used to derive dialog-info from the dialog module and NOTIFY
+		the subscribed watchers about dialog-info changes. This can be used
+		for example with SNOM and Linksys phones.
+	</para>
+	<para>
+		Note: This implements dialog-info according to RFC 4235 and is not 
+		compatible with the BLA feature defined in draft-anil-sipping-bla-03.txt.
+		(Actually the BLA draft is really crap as it changes SIP semantics)
+	</para>
+	<para>
+		The module is based on code (copy/paste) from pua_usrloc and nat_traversal
+		module.
+	</para>
+	<para>
+		Following you will show some examples of an dialog-info XML document taken
+		from RFC 4235. This will help you to understand the meaning of the module
+		parameters:
+
+			<programlisting format="linespecific">
+<?xml version="1.0"?>
+<dialog-info xmlns="urn:ietf:params:xml:ns:dialog-info"
+             version="1"
+             state="full"
+             entity="sip:alice@example.com">
+    <dialog id="as7d900as8" 
+            call-id="a84b4c76e66710"
+            local-tag="1928301774" 
+            remote-tag="456887766"
+            direction="initiator">
+        <state>early</state>
+    </dialog>
+</dialog-info>
+</programlisting>
+
+		The root element is the "dialog-info". It contains the namespace, the 
+		version (which must be incremented for each new PUBLISH for this certain
+		dialog), the state (this module only supports state=full) and the entity
+		for which we publish the dialog-info.
+
+		The "dialog" element must contain an id parameter. The id parameter is
+		usually different to the optional call-id parameter (which is the call-id of the 
+		INVITE request) as an INVITE can create multiple dialogs (forked request). But
+		as the dialog module does not support multiple dialogs created by a single 
+		transaction, the pua_dialoginfo module sets the id parameter to the same 
+		value as the call-id parameter. The "local-tag" indicates the local tag of the
+		entity. The remote-tag indicates the tag of the remote party. The "direction"
+		indicates if the entity was the initator of the dialog or the recepient (aka
+		if the entity sent or received the first INVITE).
+
+		The "state" element describes the state of the dialog state machine and must be
+		either: trying, proceeding, early, confirmed or terminated.
+
+		The dialog element can contain optional "local" and "remote" elements which
+		decsribes the local and the remote party in more detail, for example:
+
+		<programlisting format="linespecific">
+<?xml version="1.0" encoding="UTF-8"?>
+<dialog-info xmlns="urn:ietf:params:xml:ns:dialog-info"
+             version="1" state="full">
+    <dialog id="123456">
+        <state>early</state>
+        <local>
+            <identity display="Alice">sip:alice@example.com</identity>
+            <target uri="sip:alice@phone11.example.com"/>
+        </local>
+        <remote>
+            <identity display="Bob">sip:bob@example.org</identity>
+            <target uri="sip:bobster@phone21.example.org"/>
+        </remote>
+    </dialog>
+</dialog-info>
+</programlisting>
+
+		The local and remote elements are needed to implement
+
+
+
+		A dialog-info XML document may contain multiple "dialog" elements, for 
+		example if the entity has multiple ongoing dialogs. For example the
+		following XML document shows a confirmed dialog and an early (probably
+		a second incoming call) dialog.
+
+			<programlisting format="linespecific">
+<?xml version="1.0"?>
+<dialog-info xmlns="urn:ietf:params:xml:ns:dialog-info"
+             version="1"
+             state="full"
+             entity="sip:alice@example.com">
+    <dialog id="as7d900as8" 
+            call-id="a84b4c76e66710"
+            local-tag="1928301774" 
+            remote-tag="456887766"
+            direction="recepient">
+    </dialog>
+            local-tag="123456789" remote-tag="EE345"
+            direction="recipient">
+        <state>early</state>
+    </dialog>
+</dialog-info>
+</programlisting>
+
+		As the dialog module callbacks only address a certain dialog, the pua_dialoginfo
+		always PUBLISHes XML documents with a single "dialog" element. If an entity
+		has multiple concurrent dialogs, the pua_dialoginfo module will send PUBLISH for
+		each dialog. These multiple "presenties" can be aggregated by the presence_dialoginfo
+		module into a single XML document with multiple "dialog" elements. Please see the
+		description of the presence_dialoginfo module for details about the aggregation.
+
+	</para>
+	</section>
+		<section>
+	<title>Dependencies</title>
+	<section>
+		<title>&kamailio; Modules</title>
+		<para>
+		The following modules must be loaded before this module:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>dialog</emphasis>.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>pua</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	<section>
+		<title>External Libraries or Applications</title>
+		<para>
+		The following libraries or applications must be installed before running
+		&kamailio; with this module loaded:
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>libxml</emphasis>.
+			</para>
+			</listitem>
+			</itemizedlist>
+		</para>
+	</section>
+	</section>
+
+
+include_callid
+include_localremote
+include_tags
+initial_lifetime
+caller_confirmed
+
+#define DEF_INCLUDE_CALLID 1
+#define DEF_INCLUDE_LOCALREMOTE 1
+#define DEF_INCLUDE_TAGS 1
+#define DEF_INITIAL_LIFETIME 125
+#define DEF_CALLER_ALWAYS_CONFIRMED 0
+
+
+	<section>
+		<title>Exported Parameters</title>
+
+		<section>
+		<title><varname>include_callid</varname> (int)</title>
+		<para>
+			The size of 
+		</para>
+		<para>
+			<emphasis>Default value is <quote>1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>include_callid</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "include_callid", 0)
+...
+</programlisting>
+		</example>
+		</section>
+
+		<section>
+		<title><varname>include_localremote</varname> (int)</title>
+		<para>
+			The size of 
+		</para>
+		<para>
+			<emphasis>Default value is <quote>1</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>include_localremote</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "include_localremote", 0)
+...
+</programlisting>
+		</example>
+		</section>
+
+		<section>
+		<title><varname>include_tags</varname> (int)</title>
+		<para>
+			The size of 
+		</para>
+		<para>
+			<emphasis>Default value is <quote>9</quote>1</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>include_tags</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "include_tags", 0)
+...
+</programlisting>
+		</example>
+		</section>
+
+		<section>
+		<title><varname>initial_lifetime</varname> (int)</title>
+		<para>
+			The size of 
+		</para>
+		<para>
+			<emphasis>Default value is <quote>125</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>initial_lifetime</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "initial_lifetime", 300)
+...
+</programlisting>
+		</example>
+		</section>
+
+		<section>
+		<title><varname>caller_confirmed</varname> (int)</title>
+		<para>
+			The size of 
+		</para>
+		<para>
+			<emphasis>Default value is <quote>0</quote>.</emphasis>
+		</para>
+		<example>
+			<title>Set <varname>caller_confirmed</varname> parameter</title>
+			<programlisting format="linespecific">
+...
+modparam("pua_dialoginfo", "caller_confirmed", 1)
+...
+</programlisting>
+		</example>
+		</section>
+
+	</section>
+
+	<section>
+	<title>Exported Functions</title>
+	</section>		
+
+</chapter>
+

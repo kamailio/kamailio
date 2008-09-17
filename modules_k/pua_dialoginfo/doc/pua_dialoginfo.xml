@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+
+
+<!ENTITY admin SYSTEM "pua_dialoginfo_admin.xml">
+<!ENTITY faq SYSTEM "../../../doc/module_faq.xml">
+
+<!-- Include general documentation entities -->
+<!ENTITY % docentities SYSTEM "../../../doc/entities.xml">
+%docentities;
+
+]>
+
+<book>
+    <bookinfo>
+	<title>pua dialoginfo</title>
+	<productname class="trade">&kamailioname;</productname>
+	<authorgroup>
+	    <author>
+		<firstname>Anca-Maria</firstname>
+		<surname>Vamanu</surname>
+		<affiliation><orgname>&voicesystem;</orgname></affiliation>
+		<address>
+		<email>anca@voice-system.ro</email>
+		<otheraddr>
+		<ulink url="http://www.voice-system.ro">http://www.voice-system.ro</ulink>
+		</otheraddr>
+		</address>
+	    </author>
+	    <editor>
+		<firstname>Anca-Maria</firstname>
+		<surname>Vamanu</surname>
+		<address>
+		    <email>anca@voice-system.ro</email>
+		</address>
+	    </editor>
+	    <author>
+		<firstname>Klaus </firstname>
+		<surname>Darilion</surname>
+		<affiliation><orgname>IPCom (Module implementation was partly sponsored by Silver Server (www.sil.at))</orgname></affiliation>
+	    </author>
+	    <editor>
+		<firstname>Klaus </firstname>
+		<surname>Darilion</surname>
+		<affiliation><orgname>IPCom</orgname></affiliation>
+	    </editor>
+	</authorgroup>
+	<copyright>
+	    <year>2006</year>
+	    <holder>&voicesystem;</holder>
+	</copyright>
+	<copyright>
+	    <year>2008</year>
+	    <holder>Klaus Darilion IPCom</holder>
+	</copyright>
+	<revhistory>
+	    <revision>
+		<revnumber>$Revision: 4594 $</revnumber>
+		<date>$Date: 2008-08-06 12:08:33 +0200 (Wed, 06 Aug 2008) $</date>
+	    </revision>
+	</revhistory>
+  </bookinfo>
+    <toc></toc>
+    
+    &admin;
+    &faq;
+    
+</book>
+
+
