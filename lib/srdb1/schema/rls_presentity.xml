@@ -29,7 +29,7 @@
     <column id="rlsubs_did">
         <name>rlsubs_did</name>
         <type>string</type>
-        <size>512</size>
+        <size>255</size>
         <description>Resource list subscribe dialog id</description>
         <natural/>
     </column>
