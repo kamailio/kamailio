@@ -608,36 +608,42 @@ void dlg_onroute(struct sip_msg* req, str *route_params, void *param)
 			dlg = lookup_dlg( h_entry, h_id);
 			if (dlg==0) {
 				LM_WARN("unable to find dialog for %.*s "
-					"with route param '%.*s'\n",
+					"with route param '%.*s' (%d:%d)\n",
 					req->first_line.u.request.method.len,
 					req->first_line.u.request.method.s,
-					val.len,val.s);
-				return;
-			}
-
-			// lookup_dlg has incremented the ref count by 1
-
-			if (pre_match_parse( req, &callid, &ftag, &ttag)<0) {
-				unref_dlg(dlg, 1);
-				return;
-			}
-			if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
-				LM_WARN("tight matching failed for %.*s with callid='%.*s'/%d, "
-						"ftag='%.*s'/%d, ttag='%.*s'/%d and direction=%d\n",
-						req->first_line.u.request.method.len,
-						req->first_line.u.request.method.s,
-						callid.len, callid.s, callid.len,
-						ftag.len, ftag.s, ftag.len,
-						ttag.len, ttag.s, ttag.len, dir);
-				LM_WARN("dialog identification elements are callid='%.*s'/%d, "
-						"caller tag='%.*s'/%d, callee tag='%.*s'/%d\n",
-						dlg->callid.len, dlg->callid.s, dlg->callid.len,
-						dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
-						dlg->tag[DLG_CALLER_LEG].len,
-						dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s,
-						dlg->tag[DLG_CALLEE_LEG].len);
-				unref_dlg(dlg, 1);
-				return;
+					val.len,val.s, h_entry, h_id);
+				if (seq_match_mode==SEQ_MATCH_STRICT_ID )
+					return;
+			} else {
+				// lookup_dlg has incremented the ref count by 1
+				if (pre_match_parse( req, &callid, &ftag, &ttag)<0) {
+					unref_dlg(dlg, 1);
+					return;
+				}
+				if (match_dialog( dlg, &callid, &ftag, &ttag, &dir )==0) {
+					LM_WARN("tight matching failed for %.*s with callid='%.*s'/%d, "
+							"ftag='%.*s'/%d, ttag='%.*s'/%d and direction=%d\n",
+							req->first_line.u.request.method.len,
+							req->first_line.u.request.method.s,
+							callid.len, callid.s, callid.len,
+							ftag.len, ftag.s, ftag.len,
+							ttag.len, ttag.s, ttag.len, dir);
+					LM_WARN("dialog identification elements are callid='%.*s'/%d, "
+							"caller tag='%.*s'/%d, callee tag='%.*s'/%d\n",
+							dlg->callid.len, dlg->callid.s, dlg->callid.len,
+							dlg->tag[DLG_CALLER_LEG].len, dlg->tag[DLG_CALLER_LEG].s,
+							dlg->tag[DLG_CALLER_LEG].len,
+							dlg->tag[DLG_CALLEE_LEG].len, dlg->tag[DLG_CALLEE_LEG].s,
+							dlg->tag[DLG_CALLEE_LEG].len);
+					unref_dlg(dlg, 1);
+					
+					// Reset variables in order to do a lookup based on SIP-Elements.
+					dlg = 0;
+					dir = DLG_DIR_NONE;
+					
+					if (seq_match_mode==SEQ_MATCH_STRICT_ID )
+						return;
+				}
 			}
 		}
 	}
