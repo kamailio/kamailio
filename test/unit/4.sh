@@ -40,7 +40,7 @@ fi ;
 
 cd ../test
 
-killall -9 $BIN
+$KILL
 
 rm -f $CFG
 

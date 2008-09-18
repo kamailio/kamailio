@@ -41,10 +41,7 @@ ret=$?
 sleep 1
 
 # clean up:
-killall -9 $BIN
+$KILL
 
 rm $CFG
-rm pgid.out
-rm pid.out
-
 exit $ret

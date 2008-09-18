@@ -76,7 +76,7 @@ Printing tree for domain other
 	fi ;
 fi ;
 
-killall -9 $BIN
+$KILL
 
 cd ../test
 

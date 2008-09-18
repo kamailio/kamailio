@@ -40,7 +40,7 @@ echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"unixodbc://openserro:openserro@loc
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 mv $CFG.bak $CFG
 rm -f dispatcher.list

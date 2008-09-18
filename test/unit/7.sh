@@ -32,6 +32,6 @@ CFG=7.cfg
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 exit $ret

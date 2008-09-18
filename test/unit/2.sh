@@ -43,7 +43,7 @@ echo "modparam(\"dispatcher\", \"list_file\", \"`pwd`/../test/dispatcher.list\")
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 mv $CFG.bak $CFG
 rm -f dispatcher.list

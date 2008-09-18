@@ -117,7 +117,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 
-killall -9 $BIN
+$KILL
 killall -9 sipp
 
 # cleanup database

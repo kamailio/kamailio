@@ -77,7 +77,7 @@ if [ $ret -eq 0 ] ; then
 	fi;
 fi ;
 
-killall -9 $BIN
+$KILL
 
 # cleanup database
 $MYSQL "delete from route_tree where id = 1;"

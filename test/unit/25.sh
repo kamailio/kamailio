@@ -111,7 +111,7 @@ fi;
 
 # cleanup:
 killall -9 sipp > /dev/null 2>&1
-killall -9 $BIN > /dev/null 2>&1
+$KILL > /dev/null 2>&1
 
 $MYSQL "delete from location where (user_agent = \"ser_test\");"
 $MYSQL "delete from userblacklist where username='49721123456786';"

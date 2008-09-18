@@ -65,7 +65,7 @@ if [ ! "$ret" -eq 0 ] ; then
 fi;
 
 #cleanup:
-killall -9 $BIN &> /dev/null;
+$KILL &> /dev/null;
 killall -9 sipp &> /dev/null;
 rm $TMPFILE
 mv $CFG.tmp $CFG

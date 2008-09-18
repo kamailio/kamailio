@@ -47,7 +47,7 @@ done
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 $PSQL "delete from location where user_agent = '___test___'"
 

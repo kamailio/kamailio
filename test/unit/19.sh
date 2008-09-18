@@ -44,7 +44,7 @@ ret=$?
 
 # cleanup
 killall -9 sipp > /dev/null 2>&1
-killall -9 $BIN > /dev/null 2>&1
+$KILL > /dev/null 2>&1
 
 $MYSQL "DELETE FROM location WHERE ((contact = \"sip:foo@localhost:$UAS\") and (user_agent = \"ser_test\"));"
 exit $ret;

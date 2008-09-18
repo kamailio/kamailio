@@ -54,7 +54,7 @@ if [ "$ret" -eq 0 ] ; then
 fi ;
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 # cleanup
 ./$DBCTL drop $tmp_name > /dev/null

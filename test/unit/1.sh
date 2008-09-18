@@ -30,7 +30,7 @@ echo -e "debug=3" > $CFG
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 rm -f $CFG
 

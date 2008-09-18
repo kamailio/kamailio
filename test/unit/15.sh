@@ -36,7 +36,7 @@ echo "modparam(\"$DB_ALL_MOD\", \"db_url\", \"text://`pwd`/../scripts/dbtext/kam
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 rm $CFG
 

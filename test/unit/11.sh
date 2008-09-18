@@ -73,7 +73,7 @@ ret=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from
 
 cd ../test
 
-killall -9 $BIN
+$KILL
 
 mv $CFG.bak $CFG
 

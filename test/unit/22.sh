@@ -67,7 +67,7 @@ fi ;
 
 ret=`$PSQL "select COUNT(*) from location where username='1000';" | tail -n 1`
 
-killall -9 $BIN
+$KILL
 
 cd ../test
 mv $CFG.tmp $CFG

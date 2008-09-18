@@ -48,7 +48,7 @@ fi;
 
 
 #cleanup:
-killall -9 $BIN &> /dev/null;
+$KILL &> /dev/null;
 killall -9 sipp &> /dev/null;
 
 exit $ret;

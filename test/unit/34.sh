@@ -47,7 +47,7 @@ echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 ret=$?
 
 sleep 1
-killall -9 $BIN
+$KILL
 
 mv $CFG.bak $CFG
 
