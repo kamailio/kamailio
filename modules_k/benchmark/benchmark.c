@@ -182,16 +182,13 @@ struct module_exports exports = {
  * Called by openser at init time
  */
 static int mod_init(void) {
-
-	int ret = 0;
-
 	bm_mycfg = (bm_cfg_t*)shm_malloc(sizeof(bm_cfg_t));
 	memset(bm_mycfg, 0, sizeof(bm_cfg_t));
 	bm_mycfg->enable_global = bm_enable_global;
 	bm_mycfg->granularity   = bm_granularity;
 	bm_mycfg->loglevel      = bm_loglevel;
 
-	return ret;
+	return 0;
 }
 
 
@@ -214,7 +211,7 @@ static void destroy(void)
 			bmt = bmt->next;
 			shm_free(bmp);
 		}
-		shm_free(bm_mycfg->tindex);
+		if(bm_mycfg->tindex) shm_free(bm_mycfg->tindex);
 		shm_free(bm_mycfg);
 	}
 }
