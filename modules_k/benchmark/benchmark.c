@@ -484,7 +484,6 @@ struct mi_root* mi_bm_enable_global(struct mi_root *cmd, void *param)
 	if ((node == NULL) || (node->next != NULL))
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	//p1 = strndup(node->value.s, node->value.len);
 	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	v1 = strtol(p1, &e1, 0);
@@ -518,8 +517,6 @@ struct mi_root* mi_bm_enable_timer(struct mi_root *cmd, void *param)
 	if ((node == NULL) || (node->next == NULL) || (node->next->next != NULL))
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	/* replace to pkg stuff - or get rid of */
-	//p1 = strndup(node->value.s, node->value.len);
 	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	if(_bm_register_timer(p1, 0, &id)!=0)
@@ -527,7 +524,6 @@ struct mi_root* mi_bm_enable_timer(struct mi_root *cmd, void *param)
 		pkg_free(p1);
 		return init_mi_tree( 400, MI_BAD_PARM_S, MI_BAD_PARM_LEN);
 	}
-	//p2 = strndup(node->next->value.s, node->next->value.len);
 	p2 = pkg_strndup(node->next->value.s, node->next->value.len);
 	v2 = strtol(p2, &e2, 0);
 	
@@ -557,8 +553,6 @@ struct mi_root* mi_bm_granularity(struct mi_root *cmd, void *param)
 	if ((node == NULL) || (node->next != NULL))
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	/* replace to pkg stuff */
-	//p1 = strndup(node->value.s, node->value.len);
 	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	v1 = strtol(p1, &e1, 0);
@@ -588,8 +582,6 @@ struct mi_root* mi_bm_loglevel(struct mi_root *cmd, void *param)
 	if ((node == NULL) || (node->next != NULL))
 		return init_mi_tree( 400, MI_MISSING_PARM_S, MI_MISSING_PARM_LEN);
 
-	/* replace to pkg stuff */
-	//p1 = strndup(node->value.s, node->value.len);
 	p1 = pkg_strndup(node->value.s, node->value.len);
 
 	v1 = strtol(p1, &e1, 0);
