@@ -240,9 +240,7 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
 int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const str * prefix,
 		const str * host, const str * reply_code, flag_t flags, flag_t mask,
 		const int next_domain, const str * comment) {
-	struct failure_route_rule * shm_rr;
-	struct failure_route_rule * rr;
-	struct failure_route_rule * prev;
+	struct failure_route_rule *shm_rr, *rr, *prev;
 	
 	if ((shm_rr = shm_malloc(sizeof(struct failure_route_rule))) == NULL) {
 		LM_ERR("out of shared memory\n");
@@ -330,9 +328,7 @@ int rule_fixup(struct rewrite_data * rd) {
 static int rule_fixup_recursor(struct route_tree_item * rt) {
 	struct route_rule * rr;
 	struct route_flags * rf;
-	int i;
-	int ret = 0;
-	int p_dice;
+	int i, p_dice, ret = 0;
 
 	for (rf=rt->flag_list; rf!=NULL; rf=rf->next) {
 		p_dice = 0;
