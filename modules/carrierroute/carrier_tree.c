@@ -474,8 +474,9 @@ void destroy_route_data(void){
 	}
 	if(global_data){
 		*global_data = NULL;
+		shm_free(global_data);
+		global_data = NULL;
 	}
-	global_data = NULL;
 }
 
 /**
