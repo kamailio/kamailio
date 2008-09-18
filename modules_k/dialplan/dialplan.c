@@ -186,7 +186,11 @@ static void mod_destroy(void)
 	/*destroy shared memory*/
 	if(default_par2){
 		shm_free(default_par2);
-		default_par2 = 0;
+		default_par2 = NULL;
+	}
+	if(attr_pvar){
+		shm_free(attr_pvar);
+		attr_pvar = NULL;
 	}
 	destroy_data();
 
