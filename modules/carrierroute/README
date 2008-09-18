@@ -367,7 +367,7 @@ modparam("carrierroute", "fetch_rows", 3000)
 
 1.4. Exported Functions
 
-   Previous versions of carriertree had some more function. All
+   Previous versions of carrierroute had some more function. All
    the old semantics can be achieved by using the few new
    functions like this:
 cr_rewrite_uri(domain, hash_source)

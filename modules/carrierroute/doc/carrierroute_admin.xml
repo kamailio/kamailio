@@ -314,7 +314,7 @@ modparam("carrierroute", "fetch_rows", 3000)
     <section>
 	<title>Exported Functions</title>
 	<para>
-    Previous versions of carriertree had some more function. All the
+    Previous versions of carrierroute had some more function. All the
     old semantics can be achieved by using the few new functions
     like this:
 	</para>
