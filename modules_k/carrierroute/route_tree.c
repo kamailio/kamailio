@@ -212,8 +212,8 @@ struct route_tree * create_route_tree(const str * domain, int id) {
 struct route_flags * add_route_flags(struct route_tree_item * route_tree, const flag_t flags, const flag_t mask)
 {
 	struct route_flags *shm_rf;
-	struct route_flags *prev_rf = NULL;
-	struct route_flags *tmp_rf = NULL;
+	struct route_flags *prev_rf, *tmp_rf;
+	prev_rf = tmp_rf = NULL;
 
 	/* search for matching route_flags struct */
 	for (tmp_rf=route_tree->flag_list; tmp_rf!=NULL; tmp_rf=tmp_rf->next) {
@@ -396,8 +396,7 @@ void destroy_route_tree(struct route_tree *route_tree) {
  * @param rf route_flags struct to be destroyed
  */
 static void destroy_route_flags(struct route_flags *rf) {
-	struct route_rule *rs;
-	struct route_rule *rs_tmp;
+	struct route_rule *rs, *rs_tmp;
 
 	if (rf->rules) {
 		shm_free(rf->rules);
@@ -418,8 +417,7 @@ static void destroy_route_flags(struct route_flags *rf) {
  */
 static void destroy_route_tree_item(struct route_tree_item *route_tree_item) {
 	int i;
-	struct route_flags *rf;
-	struct route_flags *rf_tmp;
+	struct route_flags *rf, *rf_tmp;
 
 	if (!route_tree_item) {
 		LM_ERR("NULL pointer in parameter\n");
@@ -447,8 +445,7 @@ static void destroy_route_tree_item(struct route_tree_item *route_tree_item) {
  */
 static void destroy_failure_route_tree_item(struct failure_route_tree_item *route_tree_item) {
 	int i;
-	struct failure_route_rule *rs;
-	struct failure_route_rule *rs_tmp;
+	struct failure_route_rule *rs, *rs_tmp;
 	
 	if (!route_tree_item) {
 		LM_ERR("NULL pointer in parameter\n");

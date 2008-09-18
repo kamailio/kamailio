@@ -142,20 +142,11 @@ int load_user_carrier(str * user, str * domain) {
 int load_route_data(struct rewrite_data * rd) {
 	db_res_t * res = NULL;
 	db_row_t * row = NULL;
-	int i, ret;
-	int carrier_count = 0;
+	int i, ret, carrier_count = 0;
 	struct carrier * carriers = NULL, * tmp = NULL;
 	static str query_str;
-	str tmp_carrier;
-	str tmp_domain;
-	str tmp_scan_prefix;
-	str tmp_rewrite_host;
-	str tmp_rewrite_prefix;
-	str tmp_rewrite_suffix;
-	str tmp_host_name;
-	str tmp_reply_code;
-	str tmp_next_domain;
-	str tmp_comment;
+	str tmp_carrier, tmp_domain, tmp_scan_prefix, tmp_rewrite_host, tmp_rewrite_prefix,
+		tmp_rewrite_suffix, tmp_host_name, tmp_reply_code, tmp_next_domain, tmp_comment;
 
 	if( (strlen("SELECT DISTINCT  FROM  WHERE = ")
 			+ carrierroute_table.len + columns[COL_DOMAIN]->len
@@ -342,8 +333,7 @@ errout:
 
 static int store_carriers(struct carrier ** start){
 	db_res_t * res = NULL;
-	int i;
-	int count;
+	int i, count;
 	struct carrier * nc;
 	if(!start){
 		LM_ERR("invalid parameter\n");

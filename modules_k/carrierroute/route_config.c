@@ -70,19 +70,13 @@ void conf_error(cfg_t *cfg, const char * fmt, va_list ap) {
  */
 int load_config(struct rewrite_data * rd) {
 	cfg_t * cfg = NULL;
-	int n, m, o, i, j, k,l;
+	int n, m, o, i, j, k,l, status, hash_index, max_targets, strip;
 	cfg_t * d, * p, * t;
-	str domain;
-	str prefix;
+	str domain, prefix, rewrite_prefix, rewrite_suffix, rewrite_host, comment;
 	double prob;
-	str rewrite_prefix;
-	str rewrite_suffix;
-	str rewrite_host;
-	str comment;
-	int backed_up_size = 0;
 	int * backed_up = NULL;
-	int backup = 0;
-	int status, hash_index, max_targets, strip;
+	int backed_up_size, backup;
+	backed_up_size = backup = 0;
 
 	if ((cfg = parse_config()) == NULL) {
 		return -1;
@@ -108,6 +102,7 @@ int load_config(struct rewrite_data * rd) {
 		if (domain.s==NULL) domain.s="";
 		domain.len = strlen(domain.s);
 		m = cfg_size(d, "prefix");
+
 		LM_INFO("loading domain %.*s\n", domain.len, domain.s);
 		for (j = 0; j < m; j++) {
 			p = cfg_getnsec(d, "prefix", j);
@@ -118,6 +113,7 @@ int load_config(struct rewrite_data * rd) {
 				prefix.s = "";
 				prefix.len = 0;
 			}
+
 			LM_INFO("loading prefix %.*s\n", prefix.len, prefix.s);
 			max_targets = cfg_getint(p, "max_targets");
 			o = cfg_size(p, "target");
@@ -130,6 +126,7 @@ int load_config(struct rewrite_data * rd) {
 					rewrite_host.s = "";
 					rewrite_host.len = 0;
 				}
+
 				LM_INFO("loading target %.*s\n", rewrite_host.len, rewrite_host.s);
 				prob = cfg_getfloat(t, "prob");
 				strip = cfg_getint(t, "strip");
@@ -144,6 +141,7 @@ int load_config(struct rewrite_data * rd) {
 				if (comment.s==NULL) comment.s="";
 				comment.len = strlen(comment.s);
 				status = cfg_getint(t, "status");
+
 				if ((backed_up_size = cfg_size(t, "backed_up")) > 0) {
 					if ((backed_up = pkg_malloc(sizeof(int) * (backed_up_size + 1))) == NULL) {
 						LM_ERR("out of private memory\n");
@@ -155,6 +153,7 @@ int load_config(struct rewrite_data * rd) {
 					backed_up[backed_up_size] = -1;
 				}
 				backup = cfg_getint(t, "backup");
+
 				LM_INFO("adding route for prefix %.*s, to host %.*s, prob %f, backed up: %i, backup: %i\n",
 				    prefix.len, prefix.s, rewrite_host.len, rewrite_host.s, prob, backed_up_size, backup);
 				if (add_route(rd, 1, &domain, &prefix, 0, 0, max_targets, prob, &rewrite_host,

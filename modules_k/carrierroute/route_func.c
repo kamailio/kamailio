@@ -58,8 +58,7 @@
  * @return 1 on success, -1 on failure
  */
 int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_domain, struct multiparam_t *_dstavp) {
-	str user;
-	str domain;
+	str user, domain;
 	int_str avp_val;
 	
 	if (pv_printf_s(_msg, _user, &user)<0)	{
@@ -375,7 +374,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 		const struct sip_msg *msg, const str * user, struct multiparam_t *dstavp) {
 	size_t len;
 	char *p;
-  int_str avp_val;
+	int_str avp_val;
 	int strip = 0;
 
 	strip = (rs->strip > user->len ? user->len : rs->strip);
@@ -601,19 +600,14 @@ int cr_do_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
 		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
 		enum hash_algorithm _halg, struct multiparam_t *_dstavp) {
-	int carrier_id;
-	int domain_id;
-	str rewrite_user;
-	str prefix_matching;
+
+	int carrier_id, domain_id, ret = -1;
+	str rewrite_user, prefix_matching, dest;
 	flag_t flags;
 	struct rewrite_data * rd;
 	struct carrier_tree * ct;
 	struct route_tree * rt;
 	struct action act;
-	str dest;
-	int ret;
-
-	ret = -1;
 
 	carrier_id = mp2carrier_id(_msg, _carrier);
 	domain_id = mp2domain_id(_msg, _domain);
@@ -758,18 +752,13 @@ int cr_prime_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
 int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
 		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
 		pv_elem_t *_host, pv_elem_t *_reply_code, struct multiparam_t *_dstavp) {
-	int carrier_id;
-	int domain_id;
-	str prefix_matching;
-	str host;
-	str reply_code;
+
+	int carrier_id, domain_id, ret = -1;
+	str prefix_matching, host, reply_code;
 	flag_t flags;
 	struct rewrite_data * rd;
 	struct carrier_tree * ct;
 	struct route_tree * rt;
-	int ret;
-
-	ret = -1;
 
 	carrier_id = mp2carrier_id(_msg, _carrier);
 	domain_id = mp2domain_id(_msg, _domain);
