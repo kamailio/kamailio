@@ -45,8 +45,8 @@ struct module_exports exports= {
 	0,
 	0,
 	0,          /* exported statistics */
-	0  ,        /* exported MI functions */
-	mod_pvs,  /* exported pseudo-variables */
+	0,          /* exported MI functions */
+	mod_pvs,    /* exported pseudo-variables */
 	0,          /* extra processes */
 	0,          /* module initialization function */
 	0,

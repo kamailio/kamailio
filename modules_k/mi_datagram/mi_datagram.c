@@ -132,7 +132,7 @@ struct module_exports exports = {
 	0,                             /* exported pseudo-variables */
 	mi_procs,                      /* extra processes */
 	mi_mod_init,                   /* module initialization function */
-	(response_function) 0,         /* response handling function */
+	0,                             /* response handling function */
 	(destroy_function) mi_destroy, /* destroy function */
 	mi_child_init                  /* per-child init function */
 };

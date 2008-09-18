@@ -110,9 +110,9 @@ struct module_exports exports= {
 	0,							/* exported pseudo-variables */
 	0,							/* extra processes */
 	mod_init,					/* module initialization function */
-	(response_function) 0,      /* response handling function */
+	0,							/* response handling function */
 	(destroy_function) destroy, /* destroy function */
-	0                           /* per-child init function */
+	0							/* per-child init function */
 };
 
 /**

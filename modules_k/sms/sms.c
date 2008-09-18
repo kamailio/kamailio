@@ -117,7 +117,7 @@ struct module_exports exports= {
 	0,          /* exported pseudo-variables */
 	sms_procs,  /* extra processes */
 	sms_init,   /* module initialization function */
-	(response_function) 0,
+	0,
 	(destroy_function) sms_exit,   /* module exit function */
 	0           /* per-child init function */
 };

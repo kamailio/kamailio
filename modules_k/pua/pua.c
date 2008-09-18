@@ -129,7 +129,7 @@ static param_export_t params[]={
 /** module exports */
 struct module_exports exports= {
 	"pua",						/* module name */
-	DEFAULT_DLFLAGS,            /* dlopen flags */
+	DEFAULT_DLFLAGS,			/* dlopen flags */
 	cmds,						/* exported functions */
 	params,						/* exported parameters */
 	0,							/* exported statistics */
@@ -137,9 +137,9 @@ struct module_exports exports= {
 	0,							/* exported pseudo-variables */
 	0,							/* extra processes */
 	mod_init,					/* module initialization function */
-	(response_function) 0,		/* response handling function */
+	0,							/* response handling function */
 	destroy,					/* destroy function */
-	child_init                  /* per-child init function */
+	child_init					/* per-child init function */
 };
 	
 /**
@@ -256,8 +256,6 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
-
 	if (pua_dbf.init==0)
 	{
 		LM_CRIT("database not bound\n");
@@ -282,8 +280,7 @@ static int child_init(int rank)
 }	
 
 static void destroy(void)
-{	
-	LM_DBG("destroying module ...\n");
+{
 	if (puacb_list)
 		destroy_puacb_list();
 

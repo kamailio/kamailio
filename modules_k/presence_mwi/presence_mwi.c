@@ -44,8 +44,6 @@ MODULE_VERSION
 
 /* module functions */
 static int mod_init(void);
-static int child_init(int);
-static void destroy(void);
 
 /* module variables */
 add_event_t pres_add_event;
@@ -63,18 +61,18 @@ static param_export_t params[] = {
 
 /* module exports */
 struct module_exports exports= {
-    "presence_mwi",		/* module name */
+    "presence_mwi",				/* module name */
     DEFAULT_DLFLAGS,            /* dlopen flags */
-    cmds,			/* exported functions */
-    params,			/* exported parameters */
-    0,			        /* exported statistics */
-    0,				/* exported MI functions */
-    0,				/* exported pseudo-variables */
-	0,				/* extra processes */
-    mod_init,			/* module initialization function */
-    (response_function) 0,	/* response handling function */
-    destroy,			/* destroy function */
-    child_init                  /* per-child init function */
+    cmds,						/* exported functions */
+    params,						/* exported parameters */
+    0,							/* exported statistics */
+    0,							/* exported MI functions */
+    0,							/* exported pseudo-variables */
+	0,							/* extra processes */
+    mod_init,					/* module initialization function */
+    0,							/* response handling function */
+    0,							/* destroy function */
+    0							/* per-child init function */
 };
 	
 /*
@@ -106,18 +104,4 @@ static int mod_init(void)
     }	
     
     return 0;
-}
-
-static int child_init(int rank)
-{
-    LM_DBG("[%d] pid [%d]\n", rank, getpid());
-	
-    return 0;
-}	
-
-static void destroy(void)
-{	
-    LM_DBG("destroying module ...\n");
-
-    return;
 }

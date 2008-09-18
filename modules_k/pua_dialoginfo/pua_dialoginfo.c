@@ -77,7 +77,6 @@ int caller_confirmed    = DEF_CALLER_ALWAYS_CONFIRMED;
 /** module functions */
 
 static int mod_init(void);
-static void destroy(void);
 
 
 static cmd_export_t cmds[]=
@@ -104,8 +103,8 @@ struct module_exports exports= {
 	0,						/* exported pseudo-variables */
 	0,						/* extra processes */
 	mod_init,				/* module initialization function */
-	(response_function) 0,	/* response handling function */
-	destroy,				/* destroy function */
+	0,						/* response handling function */
+	0,						/* destroy function */
 	NULL					/* per-child init function */
 };
 	
@@ -324,13 +323,3 @@ static int mod_init(void)
 
 	return 0;
 }
-
-static void destroy(void)
-{	
-	LM_DBG("destroying module ...\n");
-
-	return ;
-}
-
-
-

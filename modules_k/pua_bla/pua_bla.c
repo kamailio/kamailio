@@ -47,8 +47,6 @@ str bla_outbound_proxy= {0, 0};
 int is_bla_aor= 0;
 str reg_from_uri= {0, 0};
 static int mod_init(void);
-static int child_init(int);
-static void destroy(void);
 
 send_publish_t pua_send_publish;
 send_subscribe_t pua_send_subscribe;
@@ -74,16 +72,16 @@ static param_export_t params[]=
 struct module_exports exports= {
 	"pua_bla",					/* module name */
 	DEFAULT_DLFLAGS,            /* dlopen flags */
-	 cmds,						/* exported functions */
-	 params,					/* exported parameters */
-	 0,							/* exported statistics */
-	 0,							/* exported MI functions */
-	 0,							/* exported pseudo-variables */
-	 0,							/* extra processes */
-	 mod_init,					/* module initialization function */
-	 (response_function) 0,		/* response handling function */
- 	 destroy,					/* destroy function */
-	 child_init                 /* per-child init function */
+	cmds,						/* exported functions */
+	params,						/* exported parameters */
+	0,							/* exported statistics */
+	0,							/* exported MI functions */
+	0,							/* exported pseudo-variables */
+	0,							/* extra processes */
+	mod_init,					/* module initialization function */
+	0,							/* response handling function */
+	0,							/* destroy function */
+	0							/* per-child init function */
 };
 	
 /**
@@ -206,18 +204,6 @@ static int mod_init(void)
 	return 0;
 }
 
-static int child_init(int rank)
-{
-	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
-	return 0;
-}	
-
-static void destroy(void)
-{	
-	LM_DBG("destroying module ...\n");
-
-	return ;
-}
 
 int bla_set_flag(struct sip_msg* msg , char* s1, char* s2)
 {

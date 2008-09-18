@@ -109,8 +109,8 @@ struct module_exports exports = {
 	0,                                  /* exported PV */
 	mi_procs,                           /* extra processes */
 	mod_init,                           /* module initialization function */
-	(response_function) 0,              /* response handling function */
-	(destroy_function) destroy,         /* destroy function */
+	0,                                  /* response handling function */
+	destroy,                            /* destroy function */
 	0                                   /* per-child init function */
 };
 
@@ -246,8 +246,6 @@ error:
 
 int destroy(void)
 {
-	LM_DBG("destroying module ...\n");
-
 	destroy_async_lock();
 
 	return 0;

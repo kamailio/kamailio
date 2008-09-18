@@ -182,7 +182,7 @@ struct module_exports exports = {
 	0,        /* exported pseudo-variables */
 	cpl_procs,/* extra processes */
 	cpl_init, /* Module initialization function */
-	(response_function) 0,
+	0,
 	(destroy_function) cpl_exit,
 	(child_init_function) cpl_child_init /* per-child init function */
 };

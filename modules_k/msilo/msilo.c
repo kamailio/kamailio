@@ -244,7 +244,7 @@ struct module_exports exports= {
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
-	(response_function) 0,       /* response handler */
+	0,   	    /* response handler */
 	(destroy_function) destroy,  /* module destroy function */
 	child_init  /* per-child init function */
 };

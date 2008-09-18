@@ -101,8 +101,8 @@ struct module_exports exports = {
 	0,        /* exported pseudo-variables */
 	0,        /* extra processes */
 	redirect_init, /* Module initialization function */
-	(response_function) 0,
-	(destroy_function) 0,
+	0,
+	0,
 	(child_init_function) 0 /* per-child init function */
 };
 

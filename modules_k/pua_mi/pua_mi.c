@@ -67,17 +67,17 @@ static mi_export_t mi_cmds[] = {
 /** module exports */
 struct module_exports exports= {
 	"pua_mi",					/* module name */
-	DEFAULT_DLFLAGS,            /* dlopen flags */
-	 0,							/* exported functions */
-	 0,							/* exported parameters */
-	 0,							/* exported statistics */
-	 mi_cmds,					/* exported MI functions */
-	 0,							/* exported pseudo-variables */
-	 0,							/* extra processes */
-	 mod_init,					/* module initialization function */
-	 (response_function) 0,		/* response handling function */
- 	 destroy,					/* destroy function */
-	 0                          /* per-child init function */
+	DEFAULT_DLFLAGS,			/* dlopen flags */
+	0,							/* exported functions */
+	0,							/* exported parameters */
+	0,							/* exported statistics */
+	mi_cmds,					/* exported MI functions */
+	0,							/* exported pseudo-variables */
+	0,							/* extra processes */
+	mod_init,					/* module initialization function */
+	0,							/* response handling function */
+	0,							/* destroy function */
+	0							/* per-child init function */
 };
 	
 /**
@@ -122,13 +122,3 @@ static int mod_init(void)
 
 	return 0;
 }
-
-static void destroy(void)
-{	
-	LM_DBG("destroying module ...\n");
-
-	return ;
-}
-
-
-

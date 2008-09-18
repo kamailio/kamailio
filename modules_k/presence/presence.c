@@ -163,15 +163,15 @@ static mi_export_t mi_cmds[] = {
 /** module exports */
 struct module_exports exports= {
 	"presence",			/* module name */
-	DEFAULT_DLFLAGS,		/* dlopen flags */
+	DEFAULT_DLFLAGS,	/* dlopen flags */
 	cmds,				/* exported functions */
 	params,				/* exported parameters */
-	0,				/* exported statistics */
+	0,					/* exported statistics */
 	mi_cmds,   			/* exported MI functions */
-	0,				/* exported pseudo-variables */
-	0,				/* extra processes */
+	0,					/* exported pseudo-variables */
+	0,					/* extra processes */
 	mod_init,			/* module initialization function */
-	(response_function) 0,      	/* response handling function */
+	0,   				/* response handling function */
 	(destroy_function) destroy, 	/* destroy function */
 	child_init                  	/* per-child init function */
 };

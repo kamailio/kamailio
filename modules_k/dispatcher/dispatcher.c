@@ -187,7 +187,7 @@ struct module_exports exports= {
 	0,          /* exported pseudo-variables */
 	0,          /* extra processes */
 	mod_init,   /* module initialization function */
-	(response_function) 0,
+	0,
 	(destroy_function) destroy,
 	child_init  /* per-child init function */
 };
@@ -353,9 +353,6 @@ static int mod_init(void)
  */
 static int child_init(int rank)
 {
-	
-	LM_DBG(" #%d / pid <%d>\n", rank, getpid());
-
 	srand((11+rank)*getpid()*7);
 
 	return 0;
@@ -375,7 +372,6 @@ static int mi_child_init(void)
  */
 static void destroy(void)
 {
-	LM_DBG("destroying module ...\n");
 	ds_destroy_list();
 	if(ds_db_url.s)
 		ds_disconnect_db();

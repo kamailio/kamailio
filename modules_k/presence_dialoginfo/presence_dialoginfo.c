@@ -45,7 +45,6 @@ MODULE_VERSION
 
 /* module functions */
 static int mod_init(void);
-static void destroy(void);
 
 /* module variables */
 add_event_t pres_add_event;
@@ -74,10 +73,10 @@ struct module_exports exports= {
     0,							/* exported statistics */
     0,							/* exported MI functions */
     0,							/* exported pseudo-variables */
-	0,							/* extra processes */
+    0,							/* extra processes */
     mod_init,					/* module initialization function */
-    (response_function) 0,		/* response handling function */
-    destroy,					/* destroy function */
+    0,							/* response handling function */
+    0,							/* destroy function */
     0							/* per-child init function */
 };
 	
@@ -110,11 +109,4 @@ static int mod_init(void)
 	}	
     
     return 0;
-}
-
-static void destroy(void)
-{	
-    LM_DBG("destroying module ...\n");
-
-    return;
 }

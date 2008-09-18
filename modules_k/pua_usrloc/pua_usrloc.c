@@ -60,8 +60,6 @@ usrloc_api_t ul;
 /** module functions */
 
 static int mod_init(void);
-static int child_init(int);
-static void destroy(void);
 
 int pua_set_publish(struct sip_msg* , char*, char*);
 
@@ -80,7 +78,7 @@ static param_export_t params[]={
 
 struct module_exports exports= {
 	"pua_usrloc",				/* module name */
-	DEFAULT_DLFLAGS,            /* dlopen flags */
+	DEFAULT_DLFLAGS,			/* dlopen flags */
 	cmds,						/* exported functions */
 	params,						/* exported parameters */
 	0,							/* exported statistics */
@@ -88,9 +86,9 @@ struct module_exports exports= {
 	0,							/* exported pseudo-variables */
 	0,							/* extra processes */
 	mod_init,					/* module initialization function */
-	(response_function) 0,		/* response handling function */
-	destroy,					/* destroy function */
-	child_init                  /* per-child init function */
+	0,							/* response handling function */
+	0,							/* destroy function */
+	0							/* per-child init function */
 };
 	
 /**
@@ -193,19 +191,3 @@ static int mod_init(void)
 
 	return 0;
 }
-
-static int child_init(int rank)
-{
-	LM_DBG("child [%d]  pid [%d]\n", rank, getpid());
-	return 0;
-}	
-
-static void destroy(void)
-{	
-	LM_DBG("destroying module ...\n");
-
-	return ;
-}
-
-
-
