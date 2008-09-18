@@ -91,7 +91,6 @@ struct module_exports exports= {
  */
 static int mod_init(void)
 {
-	LM_DBG("initialize module...\n");
 	bind_pua_t bind_pua;
 	bind_usrloc_t bind_usrloc;
 

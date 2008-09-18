@@ -28,11 +28,7 @@
 
 MODULE_VERSION
 
-static int child_init(int rank);
-
 static int mod_init(void);
-
-static void mod_destroy(void);
 
 SV* vdbmod;
 
@@ -72,8 +68,8 @@ struct module_exports exports = {
 	0,           /* extra processes */
 	mod_init,    /* module initialization function */
 	0,           /* response function*/
-	mod_destroy, /* destroy function */
-	child_init   /* per-child init function */
+	0,           /* destroy function */
+	0            /* per-child init function */
 };
 
 
@@ -84,16 +80,5 @@ static int mod_init(void)
 		return -1;
 	}
 
-	return 0;
-}
-
-
-static void mod_destroy(void)
-{
-}
-
-
-static int child_init(int rank)
-{
 	return 0;
 }

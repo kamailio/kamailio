@@ -123,8 +123,6 @@ static int mod_init(void)
 	bind_auth_t bind_auth;
 	int n;
 
-	LM_INFO("initializing...\n");
-
 	if ((rh = rc_read_config(radius_config)) == NULL) {
 		LM_ERR("failed to open configuration file \n");
 		return -1;

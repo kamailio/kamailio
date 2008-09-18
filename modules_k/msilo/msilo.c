@@ -1134,7 +1134,6 @@ void m_clean_silo(unsigned int ticks, void *param)
  */
 void destroy(void)
 {
-	LM_DBG("msilo destroy module ...\n");
 	msg_list_free(ml);
 
 	if(db_con && msilo_dbf.close)

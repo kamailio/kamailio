@@ -601,8 +601,6 @@ void destroy(void)
 	db_key_t rq_cols[4];
 	db_val_t rq_vals[4];
 	
-	LM_DBG("destroy module ...\n");
-	
 	if(imc_db==NULL)
 		goto done;
 

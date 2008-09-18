@@ -50,10 +50,6 @@ int tcp_con_lifetime=DEFAULT_TCP_CONNECTION_LIFETIME;
 /* definition of exported functions */
 static int is_peer_verified(struct sip_msg*, char*, char*);
 
-/* definition of internal functions */
-static int mod_init(void);
-static void mod_destroy(void);
-
 /*
  * Module parameter variables
  */
@@ -254,22 +250,11 @@ struct module_exports exports = {
 	0,           /* exported MI functions */
 	mod_items,   /* exported pseudo-variables */
 	0,           /* extra processes */
-	mod_init,    /* module initialization function */
+	0,           /* module initialization function */
 	0,           /* response function */
-	mod_destroy, /* destroy function */
+	0,           /* destroy function */
 	0            /* child initialization function */
 };
-
-static int mod_init(void)
-{
-	return 0;
-}
-
-
-static void mod_destroy(void)
-{
-	LM_DBG("%s module - shutting down...\n", exports.name);
-}
 
 
 static int is_peer_verified(struct sip_msg* msg, char* foo, char* foo2)

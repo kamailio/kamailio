@@ -567,8 +567,6 @@ void destroy(void)
 {
 	int i;
 
-	LM_DBG("destroy module ...\n");
-
 	regfree(&pipe_params_regex);
 	regfree(&queue_params_regex);
 

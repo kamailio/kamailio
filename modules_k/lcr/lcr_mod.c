@@ -416,8 +416,6 @@ static int mod_init(void)
     str s;
     unsigned short avp_flags;
 
-    LM_DBG("Initializing\n");
-
     /* Update length of module variables */
     db_url.len = strlen(db_url.s);
     gw_table.len = strlen(gw_table.s);

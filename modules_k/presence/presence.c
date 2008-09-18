@@ -418,8 +418,6 @@ static int mi_child_init(void)
  */
 static void destroy(void)
 {
-	LM_NOTICE("destroy module ...\n");
-
 	if(subs_htable && pa_db)
 		timer_db_update(0, 0);
 

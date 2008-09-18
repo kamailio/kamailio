@@ -155,8 +155,6 @@ error1:
 
 static int pike_exit(void)
 {
-	LM_INFO("destroying...\n");
-
 	/* destroy semaphore */
 	if (timer_lock) {
 		lock_destroy(timer_lock);

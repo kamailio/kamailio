@@ -132,8 +132,6 @@ struct module_exports exports = {
 
 static int mod_init(void)
 {
-	LM_DBG("Initializing\n");
-	
 	suffix.s = domain_suffix;
 	suffix.len = strlen(suffix.s);
 

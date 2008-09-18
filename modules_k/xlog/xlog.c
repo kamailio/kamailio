@@ -213,7 +213,6 @@ static int xdbg(struct sip_msg* msg, char* frm, char* str2)
  */
 void destroy(void)
 {
-	LM_DBG("destroy module...\n");
 	if(log_buf)
 		pkg_free(log_buf);
 }
