@@ -76,17 +76,18 @@
 #include "callid.h"
 #include "uac.h"
 
+/*! from tag length, MD5 + '-' + CRC16 */
+#define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN)
 
-#define FROM_TAG_LEN (MD5_LEN + 1 /* - */ + CRC16_LEN) /* length of FROM tags */
-
+/*! from tag */
 static char from_tag[FROM_TAG_LEN + 1];
 
- /* Enable/disable passing of provisional replies to FIFO applications */
+/*! Enable/disable passing of provisional replies to FIFO applications */
 int pass_provisional_replies = 0;
 
 
-/*
- * Initialize UAC
+/*!
+ * \brief Initialize UAC
  */
 int uac_init(void) 
 {
@@ -118,20 +119,28 @@ int uac_init(void)
 }
 
 
-/*
- * Generate a From tag
+/*!
+ * \brief Generate a From tag from the callid
+ * \note update the global from tag value
+ * \param tag tag generated tag
+ * \param callid source callid
  */
 void generate_fromtag(str* tag, str* callid)
 {
-	     /* calculate from tag from callid */
+	/* calculate from tag from callid */
 	crcitt_string_array(&from_tag[MD5_LEN + 1], callid, 1);
-	tag->s = from_tag; 
+	tag->s = from_tag;
 	tag->len = FROM_TAG_LEN;
 }
 
 
-/*
- * Check value of parameters
+/*!
+ * \brief Check value of parameters
+ * \param method SIP method
+ * \param to To URI
+ * \param from From URI
+ * \param dialog dialog state
+ * \param return 0 if parameter are ok, negative on error
  */
 static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 {
@@ -157,6 +166,12 @@ static inline int check_params(str* method, str* to, str* from, dlg_t** dialog)
 	return 0;
 }
 
+
+/*!
+ * \brief Generate a hash from a dialog state
+ * \param dlg dialog state
+ * \return generated hash
+ */
 static inline unsigned int dlg2hash( dlg_t* dlg )
 {
 	str cseq_nr;
@@ -200,8 +215,15 @@ static inline struct sip_msg* buf_to_sip_msg(char *buf, unsigned int len,
 }
 #endif
 
-/*
- * Send a request using data from the dialog structure
+
+/*!
+ * \brief Send a request using data from the dialog structure
+ * \param method SIP method
+ * \param headers SIP header
+ * \param dialog dialog state
+ * \param cb transaction callback
+ * \param cbp transaction callback parameter
+ * \return 1 on success, negative on error
  */
 int t_uac(str* method, str* headers, str* body, dlg_t* dialog,
 												transaction_cb cb, void* cbp)
@@ -370,8 +392,15 @@ error2:
 }
 
 
-/*
- * Send a message within a dialog
+/*!
+ * \brief Send a message within a dialog
+ * \param method SIP method
+ * \param headers SIP header
+ * \param body SIP body
+ * \param dialog dialog state
+ * \param completion_cb transaction callback
+ * \param cbp transaction callback parameter
+ * \param 1 on success, negative on error
  */
 int req_within(str* method, str* headers, str* body, dlg_t* dialog,
 									transaction_cb completion_cb, void* cbp)
@@ -397,8 +426,17 @@ err:
 }
 
 
-/*
- * Send an initial request that will start a dialog
+/*!
+ * \brief Send an initial request that will start a dialog
+ * \param method SIP method
+ * \param to To URI
+ * \param from From URI
+ * \param headers SIP headers
+ * \param body SIP body
+ * \param dialog dialog state
+ * \param cb transaction callback
+ * \param cbp transaction callback parameter
+ * \return 1 on success, negative on error 
  */
 int req_outside(str* method, str* to, str* from, str* headers, str* body,
 								dlg_t** dialog, transaction_cb cb, void* cbp)
@@ -421,8 +459,18 @@ err:
 }
 
 
-/*
- * Send a transactional request, no dialogs involved
+/*!
+ * \brief Send a transactional request, no dialogs involved
+ * \param m SIP method
+ * \param ruri Request URI
+ * \param to To URI
+ * \param from From URI
+ * \param h SIP headers
+ * \param b SIP body
+ * \param oburi outbound URI
+ * \param cb transaction callback
+ * \param cbp transaction callback parameter
+ * \return 1 on success, negative on error 
  */
 int request(str* m, str* ruri, str* to, str* from, str* h, str* b, str *oburi,
 											transaction_cb cb, void* cbp)

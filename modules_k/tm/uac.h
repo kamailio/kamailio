@@ -40,7 +40,8 @@
 #include "dlg.h"
 #include "t_hooks.h"
 
-#define DEFAULT_CSEQ 10 /* Default CSeq number */
+/*! Default CSeq number */
+#define DEFAULT_CSEQ 10
 
 /* Pass provisional replies to fifo applications */
 extern int pass_provisional_replies;

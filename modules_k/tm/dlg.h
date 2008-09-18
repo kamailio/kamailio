@@ -44,37 +44,31 @@
 #include "../../parser/msg_parser.h"
 
 
-/*
- * Dialog sequence
- */
+/*! Dialog sequence */
 typedef struct dlg_seq {
-	unsigned int value;    /* Sequence value */
-	unsigned char is_set;  /* is_set flag */
+	unsigned int value;    /*!< Sequence value */
+	unsigned char is_set;  /*!< is_set flag */
 } dlg_seq_t;
 
 
-/*
- * Dialog state
- */
+/* Dialog state */
 typedef enum dlg_state {
-	DLG_NEW = 0,   /* New dialog, no reply received yet */
-	DLG_EARLY,     /* Early dialog, provisional response received */
-	DLG_CONFIRMED, /* Confirmed dialog, 2xx received */
-	DLG_DESTROYED  /* Destroyed dialog */
+	DLG_NEW = 0,   /*!< New dialog, no reply received yet */
+	DLG_EARLY,     /*!< Early dialog, provisional response received */
+	DLG_CONFIRMED, /*!< Confirmed dialog, 2xx received */
+	DLG_DESTROYED  /*!< Destroyed dialog */
 } dlg_state_t;
 
 
-/*
- * Structure describing a dialog identifier
- */
+/* Structure describing a dialog identifier */
 typedef struct dlg_id {
-	str call_id;    /* Call-ID */
-	str rem_tag;    /* Remote tag of the dialog */
-	str loc_tag;    /* Local tag of the dialog */
+	str call_id;    /*!< Call-ID */
+	str rem_tag;    /*!< Remote tag of the dialog */
+	str loc_tag;    /*!< Local tag of the dialog */
 } dlg_id_t;
 
 
-/*
+/*!
  * It is necessary to analyze the dialog data to find out
  * what URI put into the Record-Route, where the message
  * should be really sent and how to construct the route
@@ -85,32 +79,29 @@ typedef struct dlg_id {
 typedef struct dlg_hooks {
 	str ru;
 	str nh;
-	str* request_uri;   /* This should be put into Request-URI */
-	str* next_hop;      /* Where the message should be really sent */
-	rr_t* first_route;  /* First route to be printed into the message */
-	str* last_route;    /* If not zero add this as the last route */
+	str* request_uri;   /*!< This should be put into Request-URI */
+	str* next_hop;      /*!< Where the message should be really sent */
+	rr_t* first_route;  /*!< First route to be printed into the message */
+	str* last_route;    /*!< If not zero add this as the last route */
 } dlg_hooks_t;
 
 
-/*
- * Structure representing dialog state
- */
+/*! Structure representing dialog state */
 typedef struct dlg {
-	dlg_id_t id;            /* Dialog identifier */
-	dlg_seq_t loc_seq;      /* Local sequence number */
-	dlg_seq_t rem_seq;      /* Remote sequence number */
-	str loc_uri;            /* Local URI */
-	str rem_uri;            /* Remote URI */
-	str rem_target;         /* Remote target URI */
-	str loc_dname;			/* Local Display Name */
-	str rem_dname;			/* Remote Display Name */
-	unsigned int T_flags;   /* Flags to be passed to transaction */
-	dlg_state_t state;      /* State of the dialog */
-	rr_t* route_set;        /* Route set */
-	dlg_hooks_t hooks;      /* Various hooks used to store information that
-				 * can be reused when building a message (to
-				 * prevent repeated analyzing of the dialog data
-				 */
+	dlg_id_t id;            /*!< Dialog identifier */
+	dlg_seq_t loc_seq;      /*!< Local sequence number */
+	dlg_seq_t rem_seq;      /*!< Remote sequence number */
+	str loc_uri;            /*!< Local URI */
+	str rem_uri;            /*!< Remote URI */
+	str rem_target;         /*!< Remote target URI */
+	str loc_dname;			/*!< Local Display Name */
+	str rem_dname;			/*!< Remote Display Name */
+	unsigned int T_flags;   /*!< Flags to be passed to transaction */
+	dlg_state_t state;      /*!< State of the dialog */
+	rr_t* route_set;        /*!< Route set */
+	dlg_hooks_t hooks;      /*!< Various hooks used to store information that
+				 				* can be reused when building a message (to
+				 				* prevent repeated analyzing of the dialog data */
 	struct socket_info* send_sock;
 } dlg_t;
 

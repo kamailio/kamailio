@@ -61,32 +61,33 @@
 #define ROUTE_SEPARATOR_LEN (sizeof(ROUTE_SEPARATOR) - 1)
 
 
-/*** Temporary hack ! */
-/*! \brief
- * This function skips name part
+
+/*!
+ * \brief This function skips a name part in a URI
  *
- * uri parsed by parse_contact must be used
- * (the uri must not contain any leading or
- * trailing part and if angle bracket were
- * used, right angle bracket must be the
+ * This function skips a name part in a URI.
+ * The URI parsed by parse_contact must be used (the URI
+ * must not contain any leading or trailing part and if
+ * angle bracket were used, right angle bracket must be the
  * last character in the string)
- *
- * _s will be modified so it should be a tmp copy
+ * \note Temporary hack!
+ * \param _s URI, will be modified so it should be a temporary copy
  */
 void get_raw_uri(str* _s)
 {
-        char* aq;
-        
-        if (_s->s[_s->len - 1] == '>') {
-                aq = find_not_quoted(_s, '<');
-                _s->len -= aq - _s->s + 2;
-                _s->s = aq + 1;
-        }
+	char* aq;
+	if (_s->s[_s->len - 1] == '>') {
+		aq = find_not_quoted(_s, '<');
+		_s->len -= aq - _s->s + 2;
+		_s->s = aq + 1;
+	}
 }
 
 
-/*! \brief
- * Calculate dialog hooks
+/*!
+ * \brief Calculate dialog hooks
+ * \param _d dialog state
+ * \return 0 on success, -1 on error
  */
 static inline int calculate_hooks(dlg_t* _d)
 {
@@ -134,17 +135,27 @@ static inline int calculate_hooks(dlg_t* _d)
 	return 0;
 }
 
-/*! \brief
- * wrapper to calculate_hooks
- * added by dcm
+
+/*!
+ * \brief Small wrapper to calculate_hooks
+ * \param _d dialog state
+ * \return 0 on success, -1 on error
  */
 int w_calculate_hooks(dlg_t* _d)
 {
 	return calculate_hooks(_d);
 }
 
-/*! \brief
- * Create a new dialog
+
+/*!
+ * \brief Create a new dialog
+ * \param _cid Callid
+ * \param _ltag local tag (usually From tag)
+ * \param _lseq local sequence (usually CSeq)
+ * \param _luri local URI (usually From)
+ * \param _ruri remote URI (usually To)
+ * \param _d dialog state
+ * \return 0 on success, negative on errors
  */
 int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _ruri, dlg_t** _d)
 {
@@ -190,8 +201,12 @@ int new_dlg_uac(str* _cid, str* _ltag, unsigned int _lseq, str* _luri, str* _rur
 }
 
 
-/*! \brief
- * Store display names into a dialog
+/*!
+ * \brief Store display names into a dialog
+ * \param _d dialog state
+ * \param _ldname local display name
+ * \param _rdname remote display name
+ * \return 0 on success, negative on error
  */
 int dlg_add_extra(dlg_t* _d, str* _ldname, str* _rdname)
 {
@@ -210,9 +225,12 @@ int dlg_add_extra(dlg_t* _d, str* _ldname, str* _rdname)
 }
 
 
-/*! \brief
- * Parse Contact header field body and extract URI
- * Does not parse headers !!
+/*!
+ * \brief Parse Contact header field body and extract URI
+ * \note Does not parse headers!
+ * \param _m SIP message
+ * \param _uri SIP URI
+ * \return 0 on success, negative on error
  */
 static inline int get_contact_uri(struct sip_msg* _m, str* _uri)
 {
@@ -240,9 +258,12 @@ static inline int get_contact_uri(struct sip_msg* _m, str* _uri)
 }
 
 
-/*! \brief
- * Extract tag from To header field of a response
- * Doesn't parse message headers !!
+/*!
+ * \brief Extract tag from To header field of a response
+ * \note Doesn't parse message headers!
+ * \param _m SIP message
+ * \param _tag tag
+ * \return 0 on success, -1 on error
  */
 static inline int get_to_tag(struct sip_msg* _m, str* _tag)
 {
@@ -262,8 +283,11 @@ static inline int get_to_tag(struct sip_msg* _m, str* _tag)
 }
 
 
-/*! \brief
- * Extract tag from From header field of a request
+/*!
+ * \brief Extract tag from From header field of a request
+ * \param _m SIP message
+ * \param _tag tag
+ * \return 0 on success, -1 on error
  */
 static inline int get_from_tag(struct sip_msg* _m, str* _tag)
 {
@@ -283,9 +307,12 @@ static inline int get_from_tag(struct sip_msg* _m, str* _tag)
 }
 
 
-/*! \brief
- * Extract Call-ID value
- * Doesn't parse headers !!
+/*!
+ * \brief Extract Call-ID value
+ * \note Doesn't parse headers!
+ * \param _m SIP message
+ * \param _cid Callid
+ * \return 0 on success, -1 on error
  */
 static inline int get_callid(struct sip_msg* _m, str* _cid)
 {
@@ -301,8 +328,12 @@ static inline int get_callid(struct sip_msg* _m, str* _cid)
 }
 
 
-/*! \brief
- * Create a copy of route set either in normal or reverse order
+/*!
+ * \brief Create a copy of route set either in normal or reverse order
+ * \param _m SIP message
+ * \param rr_t Route set
+ * \param _order how to order the copy, set to NORMAL_ORDER for normal copy
+ * \param 0 on success, -1 on error
  */
 static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _order)
 {
@@ -350,9 +381,13 @@ static inline int get_route_set(struct sip_msg* _m, rr_t** _rs, unsigned char _o
 }
 
 
-/*! \brief
- * Extract all necessary information from a response and put it
- * in a dialog structure
+/*!
+ * \brief Extract necessary information from response and insert it into dialog
+ *
+ * Extract all necessary information from a response and put it in a dialog structure
+ * \param _m SIP message
+ * \param _d dialog state
+ * \return 0 on success, negative on error
  */
 static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 {
@@ -386,9 +421,13 @@ static inline int response2dlg(struct sip_msg* _m, dlg_t* _d)
 }
 
 
-/*! \brief
- * Handle dialog in DLG_NEW state, we will be processing the
- * first response
+/*!
+ * \brief Handle dialog in DLG_NEW state
+ *
+ * Handle dialog in DLG_NEW state, we will be processing the first response
+ * \param _d dialog state
+ * \param _m SIP message
+ * \return 1 if the dialog was destroyed, negative on errors, 0 otherwise
  */
 static inline int dlg_new_resp_uac(dlg_t* _d, struct sip_msg* _m)
 {
@@ -436,9 +475,14 @@ static inline int dlg_new_resp_uac(dlg_t* _d, struct sip_msg* _m)
 }
 
 
-/*! \brief
- * Handle dialog in DLG_EARLY state, we will be processing either
- * next provisional response or a final response
+/*!
+ * \brief Handle dialog in DLG_EARLY state
+ *
+ * Handle dialog in DLG_EARLY state we will be processing either
+ * next provisional response or a final response.
+ * \param _d dialog state
+ * \param _m SIP message
+ * \return 1 if the dialog was destroyed, negative on errors, 0 otherwise
  */
 static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 {
@@ -471,8 +515,11 @@ static inline int dlg_early_resp_uac(dlg_t* _d, struct sip_msg* _m)
 }
 
 
-/*! \brief
- * Extract method from CSeq header field
+/*!
+ * \brief Extract method from CSeq header field
+ * \param _m SIP message
+ * \param _method SIP method
+ * \return 0 on success, -1 on error
  */
 static inline int get_cseq_method(struct sip_msg* _m, str* _method)
 {
@@ -487,9 +534,14 @@ static inline int get_cseq_method(struct sip_msg* _m, str* _method)
 }
 
 
-/*! \brief
+/*!
+ * \brief Handle dialog in DLG_CONFIRMED state
+ *
  * Handle dialog in DLG_CONFIRMED state, we will be processing
- * a response to a request sent within a dialog
+ * a response to a request sent within a dialog.
+ * \param _d dialog state
+ * \param _m SIP message
+ * \return 1 if the dialog was destroyed, negative on errors, 0 otherwise
  */
 static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 {
@@ -501,7 +553,7 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 	     /* Dialog has been already confirmed, that means we received
 	      * a response to a request sent within the dialog. We will
 	      * update remote target URI if and only if the message sent was
-	      * a target refresher. 
+	      * a target refresher.
 	      */
 
 	     /* FIXME: Currently we support only INVITEs as target refreshers,
@@ -544,8 +596,11 @@ static inline int dlg_confirmed_resp_uac(dlg_t* _d, struct sip_msg* _m)
 }
 
 
-/*! \brief
- * A response arrived, update dialog
+/*!
+ * \brief A response arrived, update dialog
+ * \param _d dialog state
+ * \param _m SIP message
+ * \return 1 if the dialog was destroyed, negative on errors, 0 otherwise
  */
 int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
 {
@@ -575,9 +630,12 @@ int dlg_response_uac(dlg_t* _d, struct sip_msg* _m)
 }
 
 
-/*! \brief
- * Get CSeq number
- * Does not parse headers !!
+/*!
+ * \brief Get CSeq number
+ * \note Does not parse headers!
+ * \param _m SIP message
+ * \param _cs CSeq number
+ * \param 0 on success, negative on error
  */
 static inline int get_cseq_value(struct sip_msg* _m, unsigned int* _cs)
 {
@@ -600,14 +658,17 @@ static inline int get_cseq_value(struct sip_msg* _m, unsigned int* _cs)
 }
 
 
-/*! \brief
- * Copy To or From URI without tag parameter
+/*!
+ * \brief Copy To or From URI without tag parameter
+ * \param _h SIP header
+ * \param _s target string
+ * \return 0 on success, -1 on error
  */
 static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 {
 	struct to_param* ptr, *prev;
 	struct to_body* body;
-	char* tag = 0; /* Makes gcc happy */
+	char* tag = 0;
 	int tag_len = 0, len;
 
 	if (!_h) {
@@ -664,9 +725,10 @@ static inline int get_dlg_uri(struct hdr_field* _h, str* _s)
 }
 
 
-/*! \brief
- * Extract all information from a request 
- * and update a dialog structure
+/*!
+ * \brief Extract all information from request and update dialog structure
+ * \param _m SIP message
+ * \param _d dialog state
  */
 static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 {
@@ -719,15 +781,19 @@ static inline int request2dlg(struct sip_msg* _m, dlg_t* _d)
 }
 
 
-/*! \brief
- * Establishing a new dialog, UAS side
+/*!
+ * \brief Establishing a new dialog from the UAS side
+ * \param _req SIP request
+ * \param _code request code
+ * \param _d dialog state
+ * \return 0 on success, negative on error
  */
-int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
+int new_dlg_uas(struct sip_msg* _req, int _code, dlg_t** _d)
 {
 	dlg_t* res;
 	str tag;
 
-	if (!_req || /*!_tag ||*/ !_d) {
+	if (!_req || !_d) {
 		LM_ERR("Invalid parameter value\n");
 		return -1;
 	}
@@ -771,8 +837,11 @@ int new_dlg_uas(struct sip_msg* _req, int _code, /*str* _tag,*/ dlg_t** _d)
 }
 
 
-/*! \brief
- * UAS side - update a dialog from a request
+/*!
+ * \brief UAS side - update a dialog from a request
+ * \param _d dialog state
+ * \param _m SIP request
+ * \return 0 on success, negative on error
  */
 int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 {
@@ -819,8 +888,10 @@ int dlg_request_uas(dlg_t* _d, struct sip_msg* _m)
 }
 
 
-/*! \brief
- * Calculate length of the route set
+/*!
+ * \brief Calculate length of the route set
+ * \param _d dialog set
+ * \return the length of the route set, can be 0
  */
 int calculate_routeset_length(dlg_t* _d)
 {
@@ -850,8 +921,11 @@ int calculate_routeset_length(dlg_t* _d)
 }
 
 
-/*! \brief
- * Print the route set
+/*!
+ * \brief Print the route set
+ * \param buf buffer
+ * \param _d dialog state
+ * \return pointer to the buffer
  */
 char* print_routeset(char* buf, dlg_t* _d)
 {
@@ -897,8 +971,9 @@ char* print_routeset(char* buf, dlg_t* _d)
 }
 
 
-/*! \brief
- * Destroy a dialog state
+/*!
+ * \brief Destroy a dialog state
+ * \param _d dialog state
  */
 void free_dlg(dlg_t* _d)
 {
@@ -921,8 +996,11 @@ void free_dlg(dlg_t* _d)
 }
 
 
-/*! \brief
- * Print a dialog structure, just for debugging
+/*!
+ * \brief Print a dialog structure, just for debugging
+ * \param out file
+ * \param _d dialog state
+ * \todo why is this included in the TM API exports
  */
 void print_dlg(FILE* out, dlg_t* _d)
 {
