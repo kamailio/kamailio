@@ -279,5 +279,4 @@ int bdb_val2str(db_val_t* _v, char* _s, int* _len)
 		LM_DBG("Unknown data type\n");
 		return -8;
 	}
-	return -9;
 }

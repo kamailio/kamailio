@@ -262,5 +262,4 @@ int db_mysql_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _len
 		LM_DBG("unknown data type\n");
 		return -10;
 	}
-	/*return -8; --not reached*/
 }

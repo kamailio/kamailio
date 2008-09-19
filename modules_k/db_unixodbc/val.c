@@ -331,5 +331,4 @@ int db_unixodbc_val2str(const db_con_t* _c, const db_val_t* _v, char* _s, int* _
 			LM_DBG("unknown data type\n");
 			return -10;
 	}
-/*return -8; --not reached*/
 }
