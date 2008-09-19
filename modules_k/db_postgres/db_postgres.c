@@ -1,7 +1,5 @@
-/* 
+/*
  * $Id$ 
- *
- * Postgres module interface
  *
  * Copyright (C) 2001-2003 FhG Fokus
  * Copyright (C) 2008 1&1 Internet AG
@@ -21,11 +19,18 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
+ */
+
+/*! \defgroup db_postgres DB_POSTGRES :: the PostgreSQL driver for Kamailio
+ *  \brief The Kamailio database interface to the PostgreSQL database
+ *  - http://www.postgresql.org
  *
- * History:
- * --------
- *  2003-03-11  updated to the new module exports interface (andrei)
- *  2003-03-16  flags export parameter added (janakj)
  */
 
 #include <stdio.h>
@@ -33,6 +38,7 @@
 #include "../../db/db_con.h"
 #include "../../db/db.h"
 #include "dbase.h"
+
 
 MODULE_VERSION
 
@@ -51,13 +57,13 @@ static cmd_export_t cmds[]={
 
 
 
-struct module_exports exports = {	
+struct module_exports exports = {
 	"db_postgres",
 	DEFAULT_DLFLAGS, /* dlopen flags */
 	cmds,
-	0,   /*  module parameters */
-	0,   /* exported statistics */
-	0,   /* exported MI functions */
+	0,        /*  module parameters */
+	0,        /* exported statistics */
+	0,        /* exported MI functions */
 	0,        /* exported pseudo-variables */
 	0,        /* extra processes */
 	mod_init, /* module initialization function */
@@ -92,4 +98,3 @@ int db_postgres_bind_api(db_func_t *dbb)
 
 	return 0;
 }
-

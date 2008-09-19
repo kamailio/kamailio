@@ -1,9 +1,6 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
- *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2006 Norman Brandinger
  * Copyright (C) 2008 1&1 Internet AG
@@ -24,8 +21,6 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ---
- *
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
@@ -37,7 +32,12 @@
  *            Removed dependency on aug_* memory routines (norm)
  *            Added connection pooling support (norm)
  *            Standardized API routines to pg_* names (norm)
- *
+ */
+
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
  */
 
 #include <stdlib.h>
@@ -53,9 +53,11 @@
 #include "pg_type.h"
 
 
-
-/**
- * Fill the result structure with data from the query
+/*!
+ * \brief Fill the result structure with data from the query
+ * \param _h database connection
+ * \param _r result set
+ * \return 0 on success, negative on error
  */
 int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r)
 {
@@ -77,8 +79,12 @@ int db_postgres_convert_result(const db_con_t* _h, db_res_t* _r)
 	return 0;
 }
 
-/**
- * Get and convert columns from a result set
+
+/*!
+ * \brief Get and convert columns from a result set
+ * \param _h database connection
+ * \param _r result set
+ * \return 0 on success, negative on error
  */
 int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 {
@@ -184,8 +190,12 @@ int db_postgres_get_columns(const db_con_t* _h, db_res_t* _r)
 	return 0;
 }
 
-/**
- * Convert rows from PostgreSQL to db API representation
+
+/*!
+ * \brief Convert rows from PostgreSQL to db API representation
+ * \param _h database connection
+ * \param _r result set
+ * \return 0 on success, negative on error
  */
 int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 {
@@ -308,8 +318,13 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 }
 
 
-/**
- * Convert a row from the result query into db API representation
+/*!
+ * \brief Convert a row from the result query into db API representation
+ * \param _h database connection
+ * \param _r result set
+ * \param _row row
+ * \param row_buf row buffer
+ * \param 0 on success, negative on error
  */
 int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 		char **row_buf)

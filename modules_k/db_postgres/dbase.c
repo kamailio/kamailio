@@ -1,9 +1,6 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
- *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2006 Norman Brandinger
  * Copyright (C) 2008 1&1 Internet AG
@@ -23,8 +20,6 @@
  * You should have received a copy of the GNU General Public License 
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- * ---
  *
  * History
  * -------
@@ -63,6 +58,13 @@
  *            to be taken. (norm)
  */
 
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
+ */
+
+/*! maximum number of columns */
 #define MAXCOLUMNS	512
 
 #include <string.h>
@@ -80,56 +82,35 @@
 static int free_query(const db_con_t* _con);
 
 
-/*
-** pg_init	initialize database for future queries
-**
-**	Arguments :
-**		char *_url;	sql database to open
-**
-**	Returns :
-**		db_con_t * NULL upon error
-**		db_con_t * if successful
-**
-**	Notes :
-**		pg_init must be called prior to any database functions.
-*/
-
+/*!
+ * \brief Initialize database for future queries
+ * \param _url URL of the database that should be opened
+ * \return database connection on success, NULL on error
+ * \note this function must be called prior to any database functions
+ */
 db_con_t *db_postgres_init(const str* _url)
 {
 	return db_do_init(_url, (void*) db_postgres_new_connection);
 }
 
 
-/*
-** pg_close	last function to call when db is no longer needed
-**
-**	Arguments :
-**		db_con_t * the connection to shut down, as supplied by pg_init()
-**
-**	Returns :
-**		(void)
-**
-**	Notes :
-**		All memory and resources are freed.
-*/
-
+/*!
+ * \brief Close database when the database is no longer needed
+ * \param _h closed connection, as returned from db_postgres_init
+ * \note free all memory and resources
+ */
 void db_postgres_close(db_con_t* _h)
 {
 	db_do_close(_h, db_postgres_free_connection);
 }
 
-/*
-** submit_query	run a query
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by pg_init()
-**		char *_s	the text query to run
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
 
+/*!
+ * \brief Submit_query, run a query
+ * \param _h database connection
+ * \param _s query string
+ * \return 0 on success, negative on failure
+ */
 static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
 {
 	if(! _con || !_s || !_s->s)
@@ -178,10 +159,13 @@ static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
 	return 0;
 }
 
-/*
- *
- * pg_fetch_result: Gets a partial result set.
- *
+
+/*!
+ * \brief Gets a partial result set
+ * \param _con database connection
+ * \param _res result set
+ * \param nrows number of fetches rows
+ * \return 0 on success, negative on failure
  */
 int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nrows)
 {
@@ -301,17 +285,12 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 	return 0;
 }
 
-/*
-** free_query	clear the db channel and clear any old query result status
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by pg_init()
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
 
+/*!
+ * \brief Free database and any old query results
+ * \param _h database connection
+ * \return 0
+ */
 static int free_query(const db_con_t* _con)
 {
 	if(CON_RESULT(_con))
@@ -324,18 +303,13 @@ static int free_query(const db_con_t* _con)
 	return 0;
 }
 
-/*
-** db_free_result	free the query and free the result memory
-**
-**	Arguments :
-**		db_con_t *	as previously supplied by pg_init()
-**		db_res_t *	the result of a query
-**
-**	Returns :
-**		0 upon success
-**		negative number upon failure
-*/
 
+/*!
+ * \brief Free the query and the result memory in the core
+ * \param _con database connection
+ * \param _r result set
+ * \return 0
+ */
 int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
 {
 	free_query(_con);
@@ -345,16 +319,18 @@ int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
 	return 0;
 }
 
-/*
- * Query table for specified rows
- * _con: structure representing database connection
- * _k: key names
- * _op: operators
- * _v: values of the keys that must match
- * _c: column names to return
- * _n: nmber of key=values pairs to compare
- * _nc: number of columns to return
- * _o: order by the specified column
+
+/*!
+ * \brief Query table for specified rows
+ * \param _con structure representing database connection
+ * \param _k key names
+ * \param _op operators
+ * \param _v values of the keys that must match
+ * \param _c column names to return
+ * \param _n nmber of key=values pairs to compare
+ * \param _nc number of columns to return
+ * \param _o order by the specified column
+ * \return 0 on success, negative on failure
  */
 int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 	     const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
@@ -365,8 +341,12 @@ int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
 }
 
 
-/*
+/*!
  * Execute a raw SQL query
+ * \param _h database connection
+ * \param _s raw query string
+ * \param _r result set
+ * \return 0 on success, negative on failure
  */
 int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 {
@@ -374,30 +354,20 @@ int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 		db_postgres_store_result);
 }
 
-/*
- * Retrieve result set
- *
- * Input:
- *   db_con_t*  _con Structure representing the database connection
- *   db_res_t** _r pointer to a structure represending the result set
- *
- * Output:
- *   return 0: If the status of the last command produced a result set and,
- *   If the result set contains data or the convert_result() routine
- *   completed successfully.
- *
- *   return < 0: If the status of the last command was not handled or if the
- *   convert_result() returned an error.
- *
- * Notes:
- *   A new result structure is allocated on every call to this routine.
- *
- *   If this routine returns 0, it is the callers responsbility to free the
- *   result structure. If this routine returns < 0, then the result structure
- *   is freed before returning to the caller.
- *
- */
 
+/*!
+ * \brief Retrieve result set
+ * \param _con structure representing the database connection
+ * \param _r pointer to a structure represending the result set
+ * \return 0 If the status of the last command produced a result set and,
+ *   If the result set contains data or the convert_result() routine
+ *   completed successfully. Negative if the status of the last command was
+ * not handled or if the convert_result() returned an error.
+ * \note A new result structure is allocated on every call to this routine.
+ * If this routine returns 0, it is the callers responsbility to free the
+ * result structure. If this routine returns < 0, then the result structure
+ * is freed before returning to the caller.
+ */
 int db_postgres_store_result(const db_con_t* _con, db_res_t** _r)
 {
 	PGresult *res = NULL;
@@ -476,12 +446,14 @@ done:
 	return (rc);
 }
 
-/*
- * Insert a row into specified table
- * _con: structure representing database connection
- * _k: key names
- * _v: values of the keys
- * _n: number of key=value pairs
+
+/*!
+ * \brief Insert a row into specified table
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _v values of the keys
+ * \param _n number of key=value pairs
+ * \return 0 on success, negative on failure
  */
 int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		const int _n)
@@ -500,13 +472,14 @@ int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _
 }
 
 
-/*
- * Delete a row from the specified table
- * _con: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _n: number of key=value pairs
+/*!
+ * \brief Delete a row from the specified table
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _o operators
+ * \param _v values of the keys that must match
+ * \param _n number of key=value pairs
+ * \return 0 on success, negative on failure
  */
 int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const int _n)
@@ -525,16 +498,17 @@ int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
 }
 
 
-/*
+/*!
  * Update some rows in the specified table
- * _con: structure representing database connection
- * _k: key names
- * _o: operators
- * _v: values of the keys that must match
- * _uk: updated columns
- * _uv: updated values of the columns
- * _n: number of key=value pairs
- * _un: number of columns to update
+ * \param _h structure representing database connection
+ * \param _k key names
+ * \param _o operators
+ * \param _v values of the keys that must match
+ * \param _uk updated columns
+ * \param _uv updated values of the columns
+ * \param _n number of key=value pairs
+ * \param _un number of columns to update
+ * \return 0 on success, negative on failure
  */
 int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
@@ -554,9 +528,11 @@ int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o
 }
 
 
-/*
- * Store name of table that will be used by
- * subsequent database functions
+/*!
+ * Store name of table that will be used by subsequent database functions
+ * \param _con database connection
+ * \param _t table name
+ * \return 0 on success, negative on error
  */
 int db_postgres_use_table(db_con_t* _con, const str* _t)
 {

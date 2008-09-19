@@ -21,6 +21,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
+ */
+
 #include "pg_con.h"
 #include "../../mem/mem.h"
 #include "../../dprint.h"
@@ -29,9 +35,13 @@
 #include <time.h>
 
 
-/*
- * Create a new connection structure,
- * open the PostgreSQL connection and set reference count to 1
+/*!
+ * \brief Create a new connection
+ *
+ * Create a new connection structure in private memory, open the PostgreSQL
+ * connection and set reference count to 1
+ * \param id database id
+ * \return postgres connection structure, 0 on error
  */
 struct pg_con* db_postgres_new_connection(struct db_id* id)
 {
@@ -91,8 +101,9 @@ struct pg_con* db_postgres_new_connection(struct db_id* id)
 }
 
 
-/*
- * Close the connection and release memory
+/*!
+ * \brief Close the connection and release memory
+ * \param con connection
  */
 void db_postgres_free_connection(struct pool_con* con)
 {

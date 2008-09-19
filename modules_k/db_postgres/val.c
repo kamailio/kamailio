@@ -1,9 +1,6 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
- *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2008 1&1 Internet AG
  *
@@ -23,17 +20,19 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ---
- *
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
  * 2003-04-14 gmtime changed to localtime because mktime later
  *            expects localtime, changed daylight saving bug
  *            previously found in mysql module (janakj)
- *
  */
 
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
+ */
 
 #include "../../db/db_val.h"
 #include "../../db/db_ut.h"
@@ -47,10 +46,17 @@
 #include <time.h>
 
 
-/*
- * Convert a str to a db value, does not copy strings
+/*!
+ * \brief Convert a str to a db value, does not copy strings
+ *
+ * Convert a str to a db value, does not copy strings.
  * The postgresql module uses a custom escape function for BLOBs.
  * If the _s is linked in the db_val result, it will be returned zero
+ * \param _t destination value type
+ * \param _v destination value
+ * \param _s source string
+ * \param _l string length
+ * \return 0 on success, negative on error
  */
 int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l)
 {
@@ -165,8 +171,15 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 }
 
 
-/*
- * Used when converting result from a query
+/*!
+ * \brief Converting a value to a string
+ *
+ * Converting a value to a string, used when converting result from a query
+ * \param _con database connection
+ * \param _v source value
+ * \param _s target string
+ * \param _len target string length
+ * \return 0 on success, negative on error
  */
 int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len)
 {
