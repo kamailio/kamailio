@@ -1,9 +1,6 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
- *
  * Copyright (C) 2003 August.Net Services, LLC
  * Copyright (C) 2008 1&1 Internet AG
  *
@@ -23,14 +20,16 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ---
- *
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
+ */
 
 #ifndef DBASE_H
 #define DBASE_H
@@ -42,69 +41,69 @@
 #include "../../db/db_val.h"
 
 
-/**
+/*
  * Initialize database connection
  */
 db_con_t* db_postgres_init(const str* _url);
 
-/**
+/*
  * Close a database connection
  */
 void db_postgres_close(db_con_t* _h);
 
-/**
+/*
  * Return result of previous query
  */
 int db_postgres_store_result(const db_con_t* _h, db_res_t** _r);
 
 
-/**
+/*
  * Free all memory allocated by get_result
  */
 int db_postgres_free_result(db_con_t* _h, db_res_t* _r);
 
 
-/**
+/*
  * Do a query
  */
 int db_postgres_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
 		const db_key_t _o, db_res_t** _r);
 
-/**
+/*
  * Raw SQL query
  */
 int db_postgres_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);
 
 
-/**
+/*
  * Insert a row into table
  */
 int db_postgres_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v,
 		const int _n);
 
 
-/**
+/*
  * Delete a row from table
  */
 int db_postgres_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const int _n);
 
 
-/**
+/*
  * Update a row in table
  */
 int db_postgres_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
 		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n,
 		const int _un);
 
-/**
+/*
  * fetch rows from a result
  */
 int db_postgres_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
 
 
-/**
+/*
  * Store name of table that will be used by
  * subsequent database functions
  */

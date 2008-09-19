@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2007 1&1 Internet AG
  *
- *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -20,6 +19,12 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ */
+
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_postgres
  */
 
 #ifndef DB_PG_RES_H

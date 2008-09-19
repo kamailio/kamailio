@@ -1,10 +1,8 @@
 /*
  * $Id$
  *
- * POSTGRES module, portions of this code were templated using
- * the mysql module, thus it's similarity.
- *
  * Copyright (C) 2003 August.Net Services, LLC
+ * Copyright (C) 2008 1&1 Internet AG
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -22,14 +20,16 @@
  * along with this program; if not, write to the Free Software 
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * ---
- *
  * History
  * -------
  * 2003-04-06 initial code written (Greg Fausak/Andy Fullford)
- *
  */
 
+/*! \file
+ *  \brief DB_POSTGRES :: Core
+ *  \ingroup db_postgres
+ *  Module: \ref db_mysql
+ */
 
 #ifndef PG_CON_H
 #define PG_CON_H
@@ -40,20 +40,19 @@
 #include <time.h>
 #include <libpq-fe.h>
 
-/*
- * Postgres specific connection data
- */
-struct pg_con {
-	struct db_id* id;        /* Connection identifier */
-	unsigned int ref;        /* Reference count */
-	struct pool_con* next;   /* Next connection in the pool */
 
-	int connected;
-	char *sqlurl;		/* the url we are connected to, all connection memory parents from this */
-	PGconn *con;		/* this is the postgres connection */
-	PGresult *res;		/* this is the current result */
-	char**  row;		/* Actual row in the result */
-	time_t timestamp;	/* Timestamp of last query */
+/*! Postgres specific connection data */
+struct pg_con {
+	struct db_id* id;        /*!< Connection identifier */
+	unsigned int ref;        /*!< Reference count */
+	struct pool_con* next;   /*!< Next connection in the pool */
+
+	int connected;      /*!< connection status */
+	char *sqlurl;		/*!< the url we are connected to, all connection memory parents from this */
+	PGconn *con;		/*!< this is the postgres connection */
+	PGresult *res;		/*!< this is the current result */
+	char**  row;		/*!< Actual row in the result */
+	time_t timestamp;	/*!< Timestamp of last query */
 
 };
 
