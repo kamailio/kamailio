@@ -79,7 +79,7 @@
 #include "val.h"
 #include "res.h"
 
-static int free_query(const db_con_t* _con);
+static void free_query(const db_con_t* _con);
 
 
 /*!
@@ -289,9 +289,8 @@ int db_postgres_fetch_result(const db_con_t* _con, db_res_t** _res, const int nr
 /*!
  * \brief Free database and any old query results
  * \param _h database connection
- * \return 0
  */
-static int free_query(const db_con_t* _con)
+static void free_query(const db_con_t* _con)
 {
 	if(CON_RESULT(_con))
 	{
@@ -299,8 +298,6 @@ static int free_query(const db_con_t* _con)
 		PQclear(CON_RESULT(_con));
 		CON_RESULT(_con) = 0;
 	}
-
-	return 0;
 }
 
 
@@ -308,14 +305,19 @@ static int free_query(const db_con_t* _con)
  * \brief Free the query and the result memory in the core
  * \param _con database connection
  * \param _r result set
- * \return 0
+ * \return 0 on success, -1 on failure
  */
 int db_postgres_free_result(db_con_t* _con, db_res_t* _r)
 {
+     if ((!_con) || (!_r)) {
+	     LM_ERR("invalid parameter value\n");
+	     return -1;
+     }
+     if (db_free_result(_r) < 0) {
+	     LM_ERR("unable to free result structure\n");
+	     return -1;
+     }
 	free_query(_con);
-	if (_r) db_free_result(_r);
-	_r = 0;
-
 	return 0;
 }
 
