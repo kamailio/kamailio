@@ -96,15 +96,15 @@ int load_user_carrier(str * user, str * domain) {
 
 	keys[0] = subscriber_columns[SUBSCRIBER_USERNAME_COL];
 	op[0] = OP_EQ;
-	vals[0].type = DB_STR;
-	vals[0].nul = 0;
-	vals[0].val.str_val = *user;
+	VAL_TYPE(vals) = DB_STR;
+	VAL_NULL(vals) = 0;
+	VAL_STR(vals) = *user;
 
 	keys[1] = subscriber_columns[SUBSCRIBER_DOMAIN_COL];
 	op[1] = OP_EQ;
-	vals[1].type = DB_STR;
-	vals[1].nul = 0;
-	vals[1].val.str_val = *domain;
+	VAL_TYPE(vals+1) = DB_STR;
+	VAL_NULL(vals+1) = 0;
+	VAL_STR(vals+1) = *domain;
 
 	if (carrierroute_dbf.use_table(carrierroute_dbh, &subscriber_table) < 0) {
 		LM_ERR("can't use table\n");
