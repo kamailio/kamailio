@@ -2743,7 +2743,7 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 	} /* Iterate sessions */
 
 	if (proxied == 0 && nortpproxy_str.len) {
-		cp = pkg_malloc((nortpproxy_str.len + sizeof(CRLF)) * sizeof(char));
+		cp = pkg_malloc((nortpproxy_str.len + CRLF_LEN) * sizeof(char));
 		if (cp == NULL) {
 			LM_ERR("out of pkg memory\n");
 			return -1;
@@ -2754,9 +2754,9 @@ force_rtp_proxy2_f(struct sip_msg* msg, char* str1, char* str2)
 			pkg_free(cp);
 			return -1;
 		}
-		memcpy(cp, CRLF, sizeof(CRLF));
-		memcpy(cp + sizeof(CRLF), nortpproxy_str.s, nortpproxy_str.len);
-		if (insert_new_lump_after(anchor, cp, nortpproxy_str.len + sizeof(CRLF), 0) == NULL) {
+		memcpy(cp, CRLF, CRLF_LEN);
+		memcpy(cp + CRLF_LEN, nortpproxy_str.s, nortpproxy_str.len);
+		if (insert_new_lump_after(anchor, cp, nortpproxy_str.len + CRLF_LEN, 0) == NULL) {
 			LM_ERR("insert_new_lump_after failed\n");
 			pkg_free(cp);
 			return -1;
