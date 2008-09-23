@@ -28,19 +28,19 @@
  */
 
 #include "db.h"
-#include "dt.h"
 #include "db_userblacklist.h"
 
 #include "../../db/db.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
+#include "../../trie/dtrie.h"
 
 
 /**
  * Builds a d-tree using database entries.
  * \return negative on failure, postive on success, indicating the number of d-tree entries
  */
-int db_build_userbl_tree(const str *username, const str *domain, const str *table, struct dt_node_t *root, int use_domain)
+int db_build_userbl_tree(const str *username, const str *domain, const str *table, struct dtrie_node_t *root, int use_domain)
 {
 	db_key_t columns[2] = { &userblacklist_prefix_col, &userblacklist_whitelist_col };
 	db_key_t key[2] = { &userblacklist_username_col, &userblacklist_domain_col };
@@ -56,6 +56,7 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 	db_res_t *res;
 	int i;
 	int n = 0;
+	void *nodeflags;
 	
 	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
 		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);
@@ -66,7 +67,7 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 		return -1;
 	}
 
-	dt_clear(root);
+	dtrie_clear(root);
 
 	if (RES_COL_N(res) > 1) {
 		for(i = 0; i < RES_ROW_N(res); i++) {
@@ -77,8 +78,9 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
 					/* LM_DBG("insert into tree prefix %s, whitelist %d",
 						RES_ROWS(res)[i].values[0].val.string_val,
 						RES_ROWS(res)[i].values[1].val.int_val); */
-					dt_insert(root, RES_ROWS(res)[i].values[0].val.string_val,
-						RES_ROWS(res)[i].values[1].val.int_val);
+					if (RES_ROWS(res)[i].values[1].val.int_val == 0) nodeflags=(void *)MARK_BLACKLIST;
+					dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
+						nodeflags);
 					n++;
 				}
 				else {
@@ -97,12 +99,13 @@ int db_build_userbl_tree(const str *username, const str *domain, const str *tabl
  * Rebuild d-tree using database entries
  * \return negative on failure, positive on success, indicating the number of d-tree entries
  */
-int db_reload_source(const str *table, struct dt_node_t *root)
+int db_reload_source(const str *table, struct dtrie_node_t *root)
 {
 	db_key_t columns[2] = { &globalblacklist_prefix_col, &globalblacklist_whitelist_col };
 	db_res_t *res;
 	int i;
 	int n = 0;
+	void *nodeflags;
 	
 	if (userblacklist_dbf.use_table(userblacklist_dbh, table) < 0) {
 		LM_ERR("cannot use table '%.*s'.\n", table->len, table->s);
@@ -113,7 +116,7 @@ int db_reload_source(const str *table, struct dt_node_t *root)
 		return -1;
 	}
 
-	dt_clear(root);
+	dtrie_clear(root);
 
 	if (RES_COL_N(res) > 1) {
 		for(i = 0; i < RES_ROW_N(res); i++) {
@@ -124,8 +127,10 @@ int db_reload_source(const str *table, struct dt_node_t *root)
 					/* LM_DBG("insert into tree prefix %s, whitelist %d",
 						RES_ROWS(res)[i].values[0].val.string_val,
 						RES_ROWS(res)[i].values[1].val.int_val); */
-					dt_insert(root, RES_ROWS(res)[i].values[0].val.string_val,
-						RES_ROWS(res)[i].values[1].val.int_val);
+					if (RES_ROWS(res)[i].values[1].val.int_val == 0) nodeflags=(void *) MARK_BLACKLIST;
+					else nodeflags=(void *)MARK_WHITELIST;
+					dtrie_insert(root, RES_ROWS(res)[i].values[0].val.string_val, strlen(RES_ROWS(res)[i].values[0].val.string_val),
+						nodeflags);
 					n++;
 				}
 				else {

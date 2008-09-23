@@ -31,9 +31,12 @@
 #define _DB_H_
 
 #include "../../sr_module.h"
-#include "dt.h"
+#include "../../trie/dtrie.h"
 
-int db_build_userbl_tree(const str *user, const str *domain, const str *table, struct dt_node_t *root, int use_domain);
-int db_reload_source(const str *table, struct dt_node_t *root);
+#define MARK_WHITELIST 1
+#define MARK_BLACKLIST 2
+
+int db_build_userbl_tree(const str *user, const str *domain, const str *table, struct dtrie_node_t *root, int use_domain);
+int db_reload_source(const str *table, struct dtrie_node_t *root);
 
 #endif

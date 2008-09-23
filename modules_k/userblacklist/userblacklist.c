@@ -51,7 +51,7 @@
 #include "../../ut.h"
 #include "../../mod_fix.h"
 
-#include "dt.h"
+#include "../../trie/dtrie.h"
 #include "db.h"
 #include "db_userblacklist.h"
 
@@ -69,9 +69,8 @@ typedef struct _avp_check
 
 
 struct check_blacklist_fs_t {
-  struct dt_node_t *dt_root;
+  struct dtrie_node_t *dtrie_root;
 };
-
 
 str userblacklist_db_url = str_init(DEFAULT_RODB_URL);
 static int use_domain   = 0;
@@ -142,7 +141,7 @@ struct source_t {
 	/** prefixes to be used are stored in this table */
 	char *table;
 	/** d-tree structure: will be built from data in database */
-	struct dt_node_t *dt_root;
+	struct dtrie_node_t *dtrie_root;
 };
 
 
@@ -153,7 +152,7 @@ struct source_list_t {
 
 static gen_lock_t *lock = NULL;
 static struct source_list_t *sources = NULL;
-static struct dt_node_t *dt_root;
+static struct dtrie_node_t *dtrie_root;
 
 
 static int check_user_blacklist_fixup(void** param, int param_no)
@@ -208,7 +207,7 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 	str table = { .len = 0, .s = NULL};
 	str number = { .len = 0, .s = NULL};
 
-	char whitelist;
+	void *nodeflags;
 	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 
@@ -268,7 +267,7 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 
 	LM_DBG("check entry %s for user %.*s on domain %.*s in table %.*s\n", req_number,
 		user.len, user.s, domain.len, domain.s, table.len, table.s);
-	if (db_build_userbl_tree(&user, &domain, &table, dt_root, use_domain) < 0) {
+	if (db_build_userbl_tree(&user, &domain, &table, dtrie_root, use_domain) < 0) {
 		LM_ERR("cannot build d-tree\n");
 		return -1;
 	}
@@ -279,8 +278,8 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 		ptr = ptr + 1;
 	}
 
-	if (dt_longest_match(dt_root, ptr, &whitelist) >= 0) {
-		if (whitelist) {
+	if (dtrie_longest_match(dtrie_root, ptr, strlen(ptr), &nodeflags) >= 0) {
+		if (nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_ERR("whitelisted"); */
 			return 1; /* found, but is whitelisted */
 		}
@@ -298,11 +297,11 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
  * Finds d-tree root for given table.
  * \return pointer to d-tree root on success, NULL otherwise
  */
-static struct dt_node_t *table2dt(const char *table)
+static struct dtrie_node_t *table2dt(const char *table)
 {
 	struct source_t *src = sources->head;
 	while (src) {
-		if (strcmp(table, src->table) == 0) return src->dt_root;
+		if (strcmp(table, src->table) == 0) return src->dtrie_root;
 		src = src->next;
 	}
 
@@ -344,14 +343,20 @@ static int add_source(const char *table)
 	strcpy(src->table, table);
 	LM_DBG("add table %s", table);
 
-	return dt_init(&(src->dt_root));
+	src->dtrie_root = dtrie_init();
+	if (src->dtrie_root == NULL) {
+		LM_ERR("could not initialize data");
+		return -1;
+	}
+
+	return 0;
 }
 
 
 static int check_blacklist_fixup(void **arg, int arg_no)
 {
 	char *table = (char *)(*arg);
-	struct dt_node_t *node = NULL;
+	struct dtrie_node_t *node = NULL;
 	if (arg_no != 1) {
 		LM_ERR("wrong number of parameters\n");
 		return -1;
@@ -380,7 +385,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 		return -1;
 	}
 	memset(new_arg, 0, sizeof(struct check_blacklist_fs_t));
-	new_arg->dt_root = node;
+	new_arg->dtrie_root = node;
 	*arg=(void*)new_arg;
 
 	return 0;
@@ -389,7 +394,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 
 static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
 {
-	char whitelist;
+	void *nodeflags;
 	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 
@@ -417,8 +422,8 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	}
 
 	LM_DBG("check entry %s\n", req_number);
-	if (dt_longest_match(arg1->dt_root, ptr, &whitelist) >= 0) {
-		if (whitelist) {
+	if (dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), &nodeflags) >= 0) {
+		if (nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_DBG("whitelisted"); */
 			return 1; /* found, but is whitelisted */
 		}
@@ -449,7 +454,7 @@ static int reload_sources(void)
 	while (src) {
 		tmp.s = src->table;
 		tmp.len = strlen(src->table);
-		int n = db_reload_source(&tmp, src->dt_root);
+		int n = db_reload_source(&tmp, src->dtrie_root);
 		if (n < 0) {
 			LM_ERR("cannot reload source from '%.*s'\n", tmp.len, tmp.s);
 			result = -1;
@@ -470,7 +475,7 @@ static int init_source_list(void)
 {
 	sources = shm_malloc(sizeof(struct source_list_t));
 	if (!sources) {
-		LM_ERR("out of private memory\n");
+		LM_ERR("out of shared memory\n");
 		return -1;
 	}
 	sources->head = NULL;
@@ -486,7 +491,7 @@ static void destroy_source_list(void)
 			sources->head = src->next;
 
 			if (src->table) shm_free(src->table);
-			dt_destroy(&(src->dt_root));
+			dtrie_destroy(&(src->dtrie_root));
 			shm_free(src);
 		}
 
@@ -525,9 +530,8 @@ static void destroy_shmlock(void)
 struct mi_root * mi_reload_blacklist(struct mi_root* cmd, void* param)
 {
 	struct mi_root * tmp = NULL;
-
 	if(reload_sources() == 0) {
-		tmp = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);	
+		tmp = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
 	} else {
 		tmp = init_mi_tree( 500, "cannot reload blacklist", 21);
 	}
@@ -550,7 +554,11 @@ static int mod_init(void)
 static int child_init(int rank)
 {
 	if (userblacklist_db_open() != 0) return -1;
-	if (dt_init(&dt_root) != 0) return -1;
+	dtrie_root=dtrie_init();
+	if (dtrie_root == NULL) {
+		LM_ERR("could not initialize data");
+		return -1;
+	}
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
 
@@ -561,7 +569,11 @@ static int child_init(int rank)
 static int mi_child_init(void)
 {
 	if (userblacklist_db_open() != 0) return -1;
-	if (dt_init(&dt_root) != 0) return -1;
+	dtrie_root=dtrie_init();
+	if (dtrie_root == NULL) {
+		LM_ERR("could not initialize data");
+		return -1;
+	}
 	/* because we've added new sources during the fixup */
 	if (reload_sources() != 0) return -1;
 
@@ -574,5 +586,5 @@ static void mod_destroy(void)
 	destroy_source_list();
 	destroy_shmlock();
 	userblacklist_db_close();
-	dt_destroy(&dt_root);
+	dtrie_destroy(&dtrie_root);
 }
