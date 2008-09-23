@@ -613,7 +613,7 @@ static int fixup_pushto_avp(void** param, int param_no)
 		/* attribute name*/
 		if ( *s!='$')
 		{
-			LM_ERR("bad param 1; expected :$pseudo-variable ...\n");
+			LM_ERR("bad param 2; expected: $pseudo-variable ...\n");
 			return E_UNSPEC;
 		}
 		/* compose the param structure */
