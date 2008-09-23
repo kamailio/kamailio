@@ -23,6 +23,22 @@ source include/common
 source include/require
 source include/database
 
+function cleanup() {
+	killall -9 sipp > /dev/null 2>&1
+	$KILL > /dev/null 2>&1
+
+	$MYSQL "delete from location where (user_agent = \"ser_test\");"
+	$MYSQL "delete from userblacklist where username='49721123456786';"
+	$MYSQL "delete from userblacklist where username='49721123456788';"
+	$MYSQL "delete from userblacklist where username='49721123456789';"
+	$MYSQL "delete from userblacklist where username='494675231';"
+	$MYSQL "delete from userblacklist where username='494675453';"
+	$MYSQL "delete from userblacklist where username='494675454';"
+	$MYSQL "delete from globalblacklist where description='_test_';"
+	exit $1;
+}
+
+
 if ! (check_sipp && check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
@@ -65,61 +81,63 @@ sipp -sn uas -bg -i localhost -p 5060 &> /dev/null
 sipp -sn uac -s 49721123456789 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
 ret=$?
 
-if [ "$ret" -eq 1 ] ; then
-	sipp -sn uac -s 49721123456788 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
 fi;
 
-if [ "$ret" -eq 1 ] ; then
-	sipp -sn uac -s 49721123456787 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
+sipp -sn uac -s 49721123456788 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
+fi;
+sipp -sn uac -s 49721123456787 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
 fi;
 
-if [ "$ret" -eq 1 ] ; then
-	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
+sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
 fi;
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('123456786','1','_test_');"
 ../scripts/$CTL fifo reload_blacklist
 
-if [ "$ret" -eq 1 ] ; then
-	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
+sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
+if [ "$ret" -ne 0 ] ; then
+	cleanup 1
 fi;
 
 $MYSQL "insert into userblacklist (username, domain, prefix, whitelist) values ('49721123456786','','12345','0');"
 
-if [ "$ret" -eq 0 ] ; then
-	sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
+sipp -sn uac -s 49721123456786 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
+
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
 fi;
 
-if [ "$ret" -eq 1 ] ; then
-	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
-fi;
+sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
 
 $MYSQL "insert into globalblacklist (prefix, whitelist, description) values ('2','1','_test_');"
+
 ../scripts/$CTL fifo reload_blacklist
 
-if [ "$ret" -eq 1 ] ; then
-	sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
-	ret=$?
+if [ "$ret" -ne 1 ] ; then
+	cleanup 1
 fi;
 
+sipp -sn uac -s 49721123456785 127.0.0.1:5059 -i 127.0.0.1 -m 1 -f 2 -p 5061 &> /dev/null
+ret=$?
 
+sleep 1
 # cleanup:
-killall -9 sipp > /dev/null 2>&1
-$KILL > /dev/null 2>&1
-
-$MYSQL "delete from location where (user_agent = \"ser_test\");"
-$MYSQL "delete from userblacklist where username='49721123456786';"
-$MYSQL "delete from userblacklist where username='49721123456788';"
-$MYSQL "delete from userblacklist where username='49721123456789';"
-$MYSQL "delete from userblacklist where username='494675231';"
-$MYSQL "delete from userblacklist where username='494675453';"
-$MYSQL "delete from userblacklist where username='494675454';"
-$MYSQL "delete from globalblacklist where description='_test_';"
-
-exit $ret;
+cleanup 0
