@@ -424,6 +424,9 @@ int bdb_is_neq_type(db_type_t _t0, db_type_t _t1)
 		case DB_INT:
 			if(_t0==DB_DATETIME || _t0==DB_BITMAP)
 				return 0;
+		case DB_BIGINT:
+				LM_ERR("BIGINT not supported");
+				return 0;
 		case DB_DATETIME:
 			if(_t0==DB_INT)
 				return 0;
@@ -514,6 +517,9 @@ int bdb_cmp_val(db_val_t* _vp, db_val_t* _v)
 		case DB_INT:
 			return (_vp->val.int_val<_v->val.int_val)?-1:
 					(_vp->val.int_val>_v->val.int_val)?1:0;
+		case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return -1;
 		case DB_DOUBLE:
 			return (_vp->val.double_val<_v->val.double_val)?-1:
 					(_vp->val.double_val>_v->val.double_val)?1:0;

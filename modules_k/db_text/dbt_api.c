@@ -133,6 +133,10 @@ static int dbt_convert_row(db_con_t* _h, db_res_t* _res, db_row_t* _r)
 				VAL_TYPE(&(ROW_VALUES(_r)[i])) = DB_INT;
 			break;
 
+			case DB_BIGINT:
+				LM_ERR("BIGINT not supported");
+				return -1;
+
 			case DB_DOUBLE:
 				VAL_DOUBLE(&(ROW_VALUES(_r)[i])) = 
 						DBT_CON_ROW(_h)->fields[i].val.double_val;

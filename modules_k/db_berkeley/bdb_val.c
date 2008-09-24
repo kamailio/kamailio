@@ -112,6 +112,10 @@ int bdb_str2val(db_type_t _t, db_val_t* _v, char* _s, int _l)
 		}
 		break;
 
+	case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return -1;
+
 	case DB_BITMAP:
 		if (db_str2int(_s, &VAL_INT(_v)) < 0) {
 			LM_ERR("Error while converting BITMAP value from string\n");

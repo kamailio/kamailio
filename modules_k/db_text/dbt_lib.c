@@ -432,6 +432,11 @@ int dbt_is_neq_type(db_type_t _t0, db_type_t _t1)
 		case DB_INT:
 			if(_t0==DB_DATETIME || _t0==DB_BITMAP)
 				return 0;
+
+		case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return 0;
+
 		case DB_DATETIME:
 			if(_t0==DB_INT)
 				return 0;

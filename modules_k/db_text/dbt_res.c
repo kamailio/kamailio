@@ -447,6 +447,11 @@ int dbt_cmp_val(dbt_val_p _vp, db_val_t* _v)
 		case DB_INT:
 			return (_vp->val.int_val<_v->val.int_val)?-1:
 					(_vp->val.int_val>_v->val.int_val)?1:0;
+
+		case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return -1;
+
 		case DB_DOUBLE:
 			return (_vp->val.double_val<_v->val.double_val)?-1:
 					(_vp->val.double_val>_v->val.double_val)?1:0;

@@ -297,6 +297,10 @@ nomem:
 			VAL_INT(v) = *_d->pv[i].i;
 			break;
 
+		case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return -1;
+
 		case DB_BITMAP:
 			VAL_BITMAP(v) = *_d->pv[i].i;
 			break;
