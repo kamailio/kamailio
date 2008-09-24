@@ -66,7 +66,7 @@ if [ -z "$LAST_LINE" ] ; then
 	locate_tool tail
 	if [ -z "$TOOLPATH" ] ; then
 		# now error, but we can look for alternative names if it is the case
-		echo "error: 'TAIL' tool not found: set TAIL variable to correct tool path"
+		echo "error: 'tail' tool not found: set LAST_LINE variable to correct tool path"
 		exit
 	fi
 	LAST_LINE="$TOOLPATH -n 1"

@@ -65,10 +65,19 @@
 # AWK="awk"
 
 # grep tool
-# GREP="egrep"
+# GREP="grep"
+
+# egrep tool
+# EGREP="egrep"
 
 # sed tool
 # SED="sed"
+
+# tail tool
+# LAST_LINE="tail -n 1"
+
+# expr tool
+# EXPR="expr"
 
 
 # Describe what additional tables to install. Valid values for the variables
