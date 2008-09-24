@@ -80,7 +80,7 @@ $sht($ci::srcip) = $si;
 ...
 if(is_present_hf("Authorization"))
 {
-        if($sht($au::auth_count)>=3)
+        if($sht($au::auth_count)==3)
         {
                 if($sht($au::last_auth) > $Ts-900)
                 {
@@ -92,6 +92,8 @@ if(is_present_hf("Authorization"))
         }
         if(!www_authorize(""))
         {
+                if($sht($au::auth_count) == null)
+                        $sht($au::auth_count) = 0;
                 $sht($au::auth_count) = $sht($au::auth_count) + 1;
                 if($sht($au::auth_count) == 3)
                         xlog("auth failed 3rd time - src ip: $si\n");
