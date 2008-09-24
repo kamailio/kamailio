@@ -174,6 +174,10 @@ int flat_db_insert(const db_con_t* h, const db_key_t* k, const db_val_t* v,
 			fprintf(f, "%d", VAL_INT(v + i));
 			break;
 
+		case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			return -1;
+
 		case DB_DOUBLE:
 			fprintf(f, "%f", VAL_DOUBLE(v + i));
 			break;
