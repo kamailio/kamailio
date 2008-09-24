@@ -489,10 +489,7 @@ int rls_handle_subscribe(struct sip_msg* msg, char* s1, char* s2)
 	while(hdr)
 	{
 		if(strncmp(hdr->name.s, "Support", 7)== 0)
-		{
-			found= 1;
 			break;
-		}
 		hdr= hdr->next;
 	}
 	while(hdr!= NULL )
