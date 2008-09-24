@@ -310,7 +310,7 @@ modparam("auth", "nonce_reuse", 1)
 
    Example 1.11. www_challenge usage
 ...
-if (www_authorize("siphub.net", "subscriber")) {
+if (!www_authorize("siphub.net", "subscriber")) {
         www_challenge("siphub.net", "1");
 };
 ...
@@ -473,7 +473,7 @@ append_rpid_hf("", ";party=calling;id-type=subscriber;screen=yes");
 ...
 $var(username)="abc";
 $avp(s:password)="xyz";
-if (pv_www_authorize("kamailio.org")) {
+if (!pv_www_authorize("kamailio.org")) {
         www_challenge("kamailio.org", "1");
 };
 ...
