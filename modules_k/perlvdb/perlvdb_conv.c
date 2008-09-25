@@ -101,6 +101,11 @@ inline SV *valdata(db_val_t* val) {
 			data = newSViv(VAL_INT(val));
 			break;
 
+		case DB_BIGINT:
+			LM_ERR("BIGINT not supported");
+			data = &PL_sv_undef;
+			break;
+
 		case DB_DOUBLE:
 			data = newSVnv(VAL_DOUBLE(val));
 			break;
