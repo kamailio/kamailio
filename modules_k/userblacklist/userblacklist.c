@@ -397,6 +397,7 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	void *nodeflags;
 	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
+	int ret = -1;
 
 	if (msg->first_line.type != SIP_REQUEST) {
 		LM_ERR("SIP msg is not a request\n");
@@ -422,19 +423,23 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 	}
 
 	LM_DBG("check entry %s\n", req_number);
+
+	/* avoids dirty reads when updating d-tree */
+	lock_get(lock);
 	if (dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), &nodeflags) >= 0) {
 		if (nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_DBG("whitelisted"); */
-			return 1; /* found, but is whitelisted */
+			ret = 1; /* found, but is whitelisted */
 		}
 	}
 	else {
 		/* LM_ERR("not found"); */
-		return 1; /* not found is ok */
+		ret = 1; /* not found is ok */
 	}
+	lock_release(lock);
 
 	LM_DBG("entry %s is blacklisted\n", req_number);
-	return -1;
+	return ret;
 }
 
 
