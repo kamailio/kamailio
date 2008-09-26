@@ -61,7 +61,7 @@ typedef int (*ldap_result_attr_vals_t)(
 
 typedef void (*ldap_value_free_len_t)(struct berval **_vals);
 
-typedef int (*ldap_result_next_t)();
+typedef int (*ldap_result_next_t)(void);
 
 typedef int (*ldap_str2scope_t)(char* scope_str);
 

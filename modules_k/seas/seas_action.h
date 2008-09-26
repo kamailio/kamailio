@@ -62,7 +62,7 @@ int extract_allowed_headers(struct sip_msg *my_msg,int allow_vias,int allow_Rrou
 /**
  * Action Dispatcher process functions
  */
-int dispatch_actions();
+int dispatch_actions(void);
 int process_action(as_p my_as);
 
 /**

@@ -47,7 +47,7 @@
 #define LF_LEN   (1)
 
 
-void reset_logs();
+void reset_logs(void);
 
 void append_log( int nr, ...);
 

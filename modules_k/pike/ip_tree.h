@@ -86,7 +86,7 @@ struct ip_tree
 
 
 int    init_ip_tree(int);
-void   destroy_ip_tree();
+void   destroy_ip_tree(void);
 struct ip_node* mark_node( unsigned char *ip, int ip_len,
 			struct ip_node **father, unsigned char *flag);
 void   remove_node(struct ip_node *node);

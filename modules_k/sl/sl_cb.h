@@ -70,7 +70,7 @@ struct sl_callback {
 #define SLCB_ACK_IN          (1<<1)
 
 /*! cleanup callback list */
-void destroy_slcb_lists();
+void destroy_slcb_lists(void);
 
 
 /*! register a SL callback */

@@ -51,7 +51,7 @@ typedef struct _ht
 } ht_t;
 
 int ht_init(int size);
-int ht_destroy();
+int ht_destroy(void);
 int ht_set_cell(str *name, int type, int_str *val);
 int ht_del_cell(str *name);
 

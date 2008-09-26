@@ -46,7 +46,7 @@ struct h350_auth_lookup_avp_params
 	pv_spec_t   password_avp_spec;
 };
 
-int h350_exp_fn_init();
+int h350_exp_fn_init(void);
 
 int h350_sipuri_lookup(struct sip_msg* _msg, pv_elem_t* _sip_uri);
 

@@ -56,8 +56,8 @@ extern struct ping *servlet_pings;
 extern int use_ha;
 
 char * create_ping_event(int *evt_len,int flags,unsigned int *seqno);
-int prepare_ha();
-int spawn_pinger();
+int prepare_ha(void);
+int spawn_pinger(void);
 int print_pingtable(struct ha *ta,int idx,int lock);
 inline int init_pingtable(struct ha *table,int timeout,int maxpings);
 inline void destroy_pingtable(struct ha *table);

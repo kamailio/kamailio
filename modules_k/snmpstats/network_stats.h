@@ -89,7 +89,7 @@ int get_socket_list_from_proto(int **ipList, int protocol);
  *       interface.  On other systems, zero will always be returned.  Details of
  *       why this is so can be found in network_stats.c
  */
-int get_total_bytes_waiting();
+int get_total_bytes_waiting(void);
 
 
 #endif

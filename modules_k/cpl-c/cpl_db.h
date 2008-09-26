@@ -28,7 +28,7 @@
 
 int cpl_db_bind(const str* db_url, const str* db_table);
 int cpl_db_init(const str* db_url, const str* db_table);
-void cpl_db_close();
+void cpl_db_close(void);
 
 extern str cpl_username_col;
 extern str cpl_domain_col;

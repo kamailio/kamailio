@@ -65,6 +65,6 @@ typedef struct rx_tx{
 int  mi_init_datagram_server(sockaddr_dtgram * address, unsigned int domain,
 								rx_tx_sockets * socks,int mode, 
 								int uid, int gid );
-int mi_init_datagram_buffer();
+int mi_init_datagram_buffer(void);
 void mi_datagram_server(int rx_sock, int tx_sock);
 #endif /*_DATAGRAM_FNC_H*/

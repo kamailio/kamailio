@@ -37,7 +37,7 @@ struct extra_attr {
 
 #define MAX_EXTRA 4
 
-void init_extra_engine();
+void init_extra_engine(void);
 
 struct extra_attr *parse_extra_str(char *extra);
 

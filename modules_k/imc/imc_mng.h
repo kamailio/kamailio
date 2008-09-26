@@ -94,8 +94,8 @@ imc_room_p imc_get_room(str* name, str* domain);
 int imc_del_room(str* name, str* domain);
 int imc_release_room(imc_room_p room);
 
-int imc_htable_init();
-int imc_htable_destroy();
+int imc_htable_init(void);
+int imc_htable_destroy(void);
 
 
 

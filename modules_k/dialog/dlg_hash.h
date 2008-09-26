@@ -150,7 +150,7 @@ inline void destroy_dlg(struct dlg_cell *dlg);
 
 int init_dlg_table(unsigned int size);
 
-void destroy_dlg_table();
+void destroy_dlg_table(void);
 
 struct dlg_cell* build_new_dlg(str *callid, str *from_uri,
 		str *to_uri, str *from_tag);

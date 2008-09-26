@@ -56,9 +56,9 @@ int is_domain_local(str* domain);
 
 int domain_db_bind(const str* db_url);
 int domain_db_init(const str* db_url);
-void domain_db_close();
+void domain_db_close(void);
 int domain_db_ver(str* name, int version);
 
-int reload_domain_table();
+int reload_domain_table(void);
 
 #endif /* DOMAIN_H */

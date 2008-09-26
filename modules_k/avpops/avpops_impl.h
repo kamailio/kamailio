@@ -152,7 +152,7 @@ int ops_subst(struct sip_msg* msg, struct fis_param** src,
 
 int ops_is_avp_set(struct sip_msg* msg, struct fis_param *ap);
 
-int ops_print_avp();
+int ops_print_avp(void);
 
 #endif
 

@@ -61,7 +61,7 @@ int ldap_write_result(
 	struct ldap_result_params* _lrp,
 	struct subst_expr* _se);
 
-int ldap_result_next();
+int ldap_result_next(void);
 
 int ldap_filter_url_encode(
 	struct sip_msg* _msg,

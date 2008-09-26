@@ -117,7 +117,7 @@ typedef struct openserSIPRegUserTable_context_s
  * callback for UL_CONTACT_INSERT and UL_CONTACT_EXPIRE. 
  *
  * Returns 1 on success, and zero otherwise */
-int registerForUSRLOCCallbacks();
+int registerForUSRLOCCallbacks(void);
 
 /*
  * Creates a row and inserts it.  

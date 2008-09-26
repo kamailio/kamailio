@@ -47,7 +47,7 @@ void e2e_cancel( struct sip_msg *cancel_msg, struct cell *t_cancel,
 int e2e_cancel_branch( struct sip_msg *cancel_msg, struct cell *t_cancel,
 		struct cell *t_invite, int branch );
 
-int add_blind_uac( );
+int add_blind_uac(void);
 
 int t_replicate(struct sip_msg *p_msg, str *dst, int flags);
 
@@ -58,7 +58,7 @@ int t_forward_ack( struct sip_msg* p_msg );
 
 void t_on_branch( unsigned int go_to );
 
-unsigned int get_on_branch();
+unsigned int get_on_branch(void);
 
 #endif
 

@@ -50,7 +50,7 @@ typedef void (*dlg_timer_handler)(struct dlg_tl *);
 
 int init_dlg_timer( dlg_timer_handler );
 
-void destroy_dlg_timer();
+void destroy_dlg_timer(void);
 
 int insert_dlg_timer(struct dlg_tl *tl, int interval);
 

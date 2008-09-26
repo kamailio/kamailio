@@ -60,7 +60,7 @@ struct acc_extra
 
 enum {TYPE_NULL = 0, TYPE_INT, TYPE_STR};
 
-void init_acc_extra();
+void init_acc_extra(void);
 
 struct acc_extra *parse_acc_extra(char *extra);
 

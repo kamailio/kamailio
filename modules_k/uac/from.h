@@ -37,7 +37,7 @@
 #define FROM_AUTO_RESTORE    (1)
 #define FROM_MANUAL_RESTORE  (2)
 
-void init_from_replacer();
+void init_from_replacer(void);
 
 int replace_from( struct sip_msg *msg, str *from_dsp, str *from_uri);
 

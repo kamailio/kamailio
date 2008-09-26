@@ -46,7 +46,7 @@ extern unsigned int     global_msg_id;
 extern int ruri_matching;
 extern int via1_matching;
 
-void init_t();
+void init_t(void);
 int init_rb( struct retr_buf *rb, struct sip_msg *msg );
 struct cell* t_lookupOriginalT( struct sip_msg* p_msg );
 int t_reply_matching( struct sip_msg* , int* );
@@ -73,18 +73,18 @@ int t_check( struct sip_msg* , int *branch );
 typedef struct cell * (*tlookuporiginalt_f)(struct sip_msg*);
 
 typedef struct cell * (*tgett_f)(void);
-struct cell *get_t();
+struct cell *get_t(void);
 
 /* use carefully or better not at all -- current transaction is 
  * primarily set by lookup functions */
 void set_t(struct cell *t);
 
 
-struct cell *get_cancelled_t();
-void reset_cancelled_t();
+struct cell *get_cancelled_t(void);
+void reset_cancelled_t(void);
 
-struct cell *get_e2eack_t();
-void reset_e2eack_t();
+struct cell *get_e2eack_t(void);
+void reset_e2eack_t(void);
 
 
 #define T_GET_TI       "t_get_trans_ident"

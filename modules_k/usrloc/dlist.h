@@ -93,7 +93,7 @@ int get_all_ucontacts(void *, int, unsigned int,
 
 
 /* Sums up the total number of users in memory, over all domains. */
-unsigned long get_number_of_users();
+unsigned long get_number_of_users(void);
 
 
 /*! \brief

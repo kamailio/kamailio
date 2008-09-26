@@ -54,7 +54,7 @@ struct rr_callback {
 };
 
 
-void destroy_rrcb_lists();
+void destroy_rrcb_lists(void);
 
 
 /*! \brief register a RR callback */

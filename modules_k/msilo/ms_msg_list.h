@@ -63,11 +63,11 @@ typedef struct _msg_list
 	gen_lock_t  sem_done;
 } t_msg_list, *msg_list;
 
-msg_list_el msg_list_el_new();
+msg_list_el msg_list_el_new(void);
 void msg_list_el_free(msg_list_el);
 void msg_list_el_free_all(msg_list_el);
 
-msg_list msg_list_init();
+msg_list msg_list_init(void);
 void msg_list_free(msg_list);
 int msg_list_check_msg(msg_list, int);
 int msg_list_set_flag(msg_list, int, int);

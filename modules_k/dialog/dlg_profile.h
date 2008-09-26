@@ -69,7 +69,7 @@ struct dlg_profile_table {
 
 int add_profile_definitions( char* profiles, unsigned int has_value);
 
-void destroy_dlg_profiles();
+void destroy_dlg_profiles(void);
 
 struct dlg_profile_table* search_dlg_profile(str *name);
 

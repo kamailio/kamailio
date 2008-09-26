@@ -64,9 +64,9 @@ Netsnmp_Node_Handler handle_openserDialogLimitMajorAlarm;
 
 /* The following four functions are used to retrieve thresholds set via the
  * kamailio.cfg configuration file. */
-int get_msg_queue_minor_threshold();
-int get_msg_queue_major_threshold();
-int get_dialog_minor_threshold();
-int get_dialog_major_threshold();
+int get_msg_queue_minor_threshold(void);
+int get_msg_queue_major_threshold(void);
+int get_dialog_minor_threshold(void);
+int get_dialog_major_threshold(void);
 
 #endif /* OPENSEROBJECTS_H */

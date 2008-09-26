@@ -60,7 +60,7 @@ int ldap_get_attr_vals(
 	str *_attr_name,
 	struct berval ***_vals);
 
-int ldap_inc_result_pointer();
+int ldap_inc_result_pointer(void);
 
 int ldap_str2scope(char* scope_str);
 

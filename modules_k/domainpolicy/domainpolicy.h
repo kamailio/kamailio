@@ -59,7 +59,7 @@ int dp_apply_policy(struct sip_msg* _msg, char* _s1, char* _s2);
 
 int domainpolicy_db_bind(const str* db_url);
 int domainpolicy_db_init(const str* db_url);
-void domainpolicy_db_close();
+void domainpolicy_db_close(void);
 int domainpolicy_db_ver(const str* db_url, const str* name);
 
 

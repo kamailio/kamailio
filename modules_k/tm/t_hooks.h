@@ -209,9 +209,9 @@ extern unsigned int tmcb_pending_id;
 	( req_in_tmcb_hl->first!=0 )
 
 
-int init_tmcb_lists();
+int init_tmcb_lists(void);
 
-void destroy_tmcb_lists();
+void destroy_tmcb_lists(void);
 
 
 /*!

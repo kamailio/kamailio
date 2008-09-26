@@ -89,7 +89,7 @@ extern hashSlot_t           *hashTable;
  * Initialize shared memory used to buffer communication between the usrloc
  * module and the SNMPStats module.  (Specifically, the user and contact tables)
  */
-int  initInterprocessBuffers();
+int  initInterprocessBuffers(void);
 
 /* USRLOC Callback Handler:
  *
@@ -125,7 +125,7 @@ void handleContactCallbacks(ucontact_t *contactInfo, int type, void *param);
  *       This is made possible by simply changing the head of the interprocess
  *       buffer, and then releasing the lock.  
  */
-void consumeInterprocessBuffer();
+void consumeInterprocessBuffer(void);
 
 void freeInterprocessBuffer(void);
 

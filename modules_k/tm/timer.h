@@ -100,9 +100,9 @@ extern unsigned int timer_id2timeout[NR_OF_TIMER_LISTS];
 
 
 
-struct timer_table * tm_init_timers();
-void unlink_timer_lists();
-void free_timer_table();
+struct timer_table * tm_init_timers(void);
+void unlink_timer_lists(void);
+void free_timer_table(void);
 void init_timer_list( enum lists list_id);
 void reset_timer_list( enum lists list_id);
 
@@ -121,6 +121,6 @@ void timer_routine( unsigned int, void*);
 
 void utimer_routine( utime_t, void*);
 
-struct timer_table *get_timertable();
+struct timer_table *get_timertable(void);
 
 #endif

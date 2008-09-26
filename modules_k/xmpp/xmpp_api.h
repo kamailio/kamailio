@@ -62,9 +62,9 @@ extern xmpp_cb_list_t*  _xmpp_cb_list;
 	((_xmpp_cb_list->types)|(_types_) )
 
 
-int init_xmpp_cb_list();
+int init_xmpp_cb_list(void);
 
-void destroy_xmpp_cb_list();
+void destroy_xmpp_cb_list(void);
 
 
 int register_xmpp_cb( int types, xmpp_cb_f f, void *param );

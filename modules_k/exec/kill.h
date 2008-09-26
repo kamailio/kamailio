@@ -39,8 +39,8 @@ struct timer_list
 
 extern unsigned int time_to_kill;
 
-void destroy_kill();
-int initialize_kill();
+void destroy_kill(void);
+int initialize_kill(void);
 int schedule_to_kill( int pid );
 
 

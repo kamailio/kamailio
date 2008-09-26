@@ -77,9 +77,9 @@ typedef struct dp_param{
 	} v;
 }dp_param_t, *dp_param_p;
 
-int init_data();
-void destroy_data();
-int dp_load_db();
+int init_data(void);
+void destroy_data(void);
+int dp_load_db(void);
 
 dpl_id_p select_dpid(int id);
 

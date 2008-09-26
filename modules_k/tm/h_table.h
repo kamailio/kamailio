@@ -324,13 +324,13 @@ struct s_table
 extern int syn_branch;
 
 
-void reset_kr();
+void reset_kr(void);
 void set_kr( enum kill_reason kr );
-enum kill_reason get_kr();
+enum kill_reason get_kr(void);
 
-struct s_table* get_tm_table();
-struct s_table* init_hash_table();
-void   free_hash_table( );
+struct s_table* get_tm_table(void);
+struct s_table* init_hash_table(void);
+void   free_hash_table(void);
 void   free_cell( struct cell* dead_cell );
 struct cell*  build_cell( struct sip_msg* p_msg );
 void   remove_from_hash_table_unsafe( struct cell * p_cell);
@@ -339,11 +339,11 @@ void   insert_into_hash_table( struct cell * p_cell, unsigned int _hash);
 #endif
 void   insert_into_hash_table_unsafe( struct cell * p_cell, unsigned int _hash );
 
-unsigned int transaction_count( void );
+unsigned int transaction_count(void);
 
 /* Unix socket variant */
 int unixsock_hash(str* msg);
-		    
+
 #endif
 
 

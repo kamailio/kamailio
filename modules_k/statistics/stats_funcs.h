@@ -32,7 +32,7 @@
 
 int reg_statistic( char* name);
 
-int register_all_mod_stats();
+int register_all_mod_stats(void);
 
 
 #endif

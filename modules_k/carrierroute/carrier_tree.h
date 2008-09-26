@@ -194,7 +194,7 @@ struct carrier_tree * get_carrier_tree(int carrier_id, struct rewrite_data * rd)
 /**
  * Frees the routing data
  */
-void destroy_route_data();
+void destroy_route_data(void);
 
 /**
  * Destroys the complete routing tree data.

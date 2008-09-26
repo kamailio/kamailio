@@ -72,7 +72,7 @@ typedef struct _ac_tm
 	ac_maxval_p mv;
 } ac_tm_t, *ac_tm_p;
 
-ac_tm_p ac_tm_new();
+ac_tm_p ac_tm_new(void);
 
 int ac_tm_set_time(ac_tm_p, time_t);
 
@@ -82,7 +82,7 @@ int ac_tm_free(ac_tm_p);
 int ac_get_mweek(struct tm*);
 int ac_get_yweek(struct tm*);
 ac_maxval_p ac_get_maxval(ac_tm_p);
-int ac_get_wkst();
+int ac_get_wkst(void);
 
 int ac_print(ac_tm_p);
 
@@ -140,11 +140,11 @@ typedef struct _tr_res
 	time_t rest;
 } tr_res_t, *tr_res_p;
 
-tr_byxxx_p tr_byxxx_new();
+tr_byxxx_p tr_byxxx_new(void);
 int tr_byxxx_init(tr_byxxx_p, int);
 int tr_byxxx_free(tr_byxxx_p);
 
-tmrec_p tmrec_new();
+tmrec_p tmrec_new(void);
 int tmrec_free(tmrec_p);
 
 int tr_parse_dtstart(tmrec_p, char*);

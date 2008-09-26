@@ -78,7 +78,7 @@ struct ld_session {
 
 extern int add_ld_session(char* _name, LDAP* _ldh, dictionary* _d);
 extern struct ld_session* get_ld_session(char* _name);
-extern int free_ld_sessions();
+extern int free_ld_sessions(void);
 
 extern char* get_ini_key_name(char* _section, char* _key);
 

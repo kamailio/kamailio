@@ -161,7 +161,7 @@ inline static void force_retr(struct retr_buf *rb)
 }
 
 
-void tm_shutdown();
+void tm_shutdown(void);
 
 
 /* function returns:

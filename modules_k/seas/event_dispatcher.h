@@ -36,5 +36,5 @@ extern struct unc_as unc_as_t[];
 
 int process_unbind_action(as_p as,char *payload,int len);
 int process_bind_action(as_p as,char *payload,int len);
-int dispatcher_main_loop();
+int dispatcher_main_loop(void);
 int spawn_action_dispatcher(struct as_entry *as);

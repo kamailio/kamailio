@@ -43,7 +43,7 @@ int init_addresses(void);
 /*
  * Open database connection if necessary
  */
-int mi_init_addresses();
+int mi_init_addresses(void);
 
 
 /*

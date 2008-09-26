@@ -28,6 +28,6 @@
 #ifndef _DLGINFO_ADD_EV_H_
 #define _DLGINFO_ADD_EV_H_
 
-int dlginfo_add_events();
+int dlginfo_add_events(void);
 
 #endif

@@ -112,15 +112,15 @@ void on_negative_reply( struct cell* t, struct sip_msg* msg,
 
 typedef int (*tget_picked_f)(void);
 
-int t_get_picked_branch();
+int t_get_picked_branch(void);
 
 /* set which 'reply' structure to take if only negative
    replies arrive 
 */
 void t_on_negative( unsigned int go_to );
-unsigned int get_on_negative();
+unsigned int get_on_negative(void);
 void t_on_reply( unsigned int go_to );
-unsigned int get_on_reply();
+unsigned int get_on_reply(void);
 
 /* Retransmits the last sent inbound reply.
  * Returns  -1 - error
@@ -128,7 +128,7 @@ unsigned int get_on_reply();
  */
 int t_retransmit_reply( struct cell *t );
 
-void tm_init_tags();
+void tm_init_tags(void);
 
 int unixsock_t_reply(str* msg);
 

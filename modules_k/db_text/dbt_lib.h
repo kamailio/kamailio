@@ -110,8 +110,8 @@ typedef struct _dbt_cache
 
 
 
-int dbt_init_cache();
-int dbt_cache_destroy();
+int dbt_init_cache(void);
+int dbt_cache_destroy(void);
 int dbt_cache_print(int);
 
 dbt_cache_p dbt_cache_get_db(str*);

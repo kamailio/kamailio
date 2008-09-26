@@ -68,9 +68,9 @@ extern struct ulcb_head_list*  ulcb_list;
 	( (ulcb_list->reg_types)|(_types_) )
 
 
-int init_ulcb_list();
+int init_ulcb_list(void);
 
-void destroy_ulcb_list();
+void destroy_ulcb_list(void);
 
 
 /*! \brief register a callback for several types of events */

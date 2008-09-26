@@ -39,11 +39,11 @@ struct uac_credential {
 };
 
 
-int has_credentials();
+int has_credentials(void);
 
 int add_credential( unsigned int type, void *val);
 
-void destroy_credentials();
+void destroy_credentials(void);
 
 int uac_auth( struct sip_msg *msg);
 

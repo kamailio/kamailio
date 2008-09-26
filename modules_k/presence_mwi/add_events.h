@@ -27,6 +27,6 @@
 #ifndef _MWI_ADD_EV_H_
 #define _MWI_ADD_EV_H_
 
-int mwi_add_events();
+int mwi_add_events(void);
 
 #endif
