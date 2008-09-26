@@ -1,5 +1,4 @@
-
-presenece_dialoginfo Module
+presence_dialoginfo Module
 
 Juha Heinanen
 
@@ -26,8 +25,8 @@ Klaus Darilion
    was partly sponsored by Silver Server (www.sil.at))
    Revision History
    Revision $Revision: 1 $ $Date: 2007-04-30 14:05:57 +0200 (Mon,
-   30 Jan 2007) $
-     _________________________________________________________
+                           30 Jan 2007) $
+     __________________________________________________________
 
    Table of Contents
 
@@ -61,29 +60,28 @@ Chapter 1. Admin Guide
    rules. It assumes that publish requests are only issued by an
    authorized application and subscribe requests only by
    authorized users. Authorization can thus be easily done in
-   Kamailio configuration file before calling handle_publish()
-   and handle_subscribe() functions.
+   Kamailio configuration file before calling handle_publish() and
+   handle_subscribe() functions.
 
-   Note: This module only activates the processing of the
-   "dialog" in the presence module. To send dialog-info to
-   watchers you also need a source which PUBLISH the dialog info
-   to the presence module. For example you can use the
-   pua_dialoginfo module or any external component. This approach
-   allows to have the presence server and the dialog-info aware
-   publisher (e.g. the main proxy) on different Kamailio
-   instances.
+   Note: This module only activates the processing of the "dialog"
+   in the presence module. To send dialog-info to watchers you
+   also need a source which PUBLISH the dialog info to the
+   presence module. For example you can use the pua_dialoginfo
+   module or any external component. This approach allows to have
+   the presence server and the dialog-info aware publisher (e.g.
+   the main proxy) on different Kamailio instances.
 
    This module by default does body aggregation. That means, if
-   the presence module received PUBLISH from multiple
-   presentities (e.g. if the entity has multiple dialogs the
-   pua_dialoginfo will send multiple PUBLISH), the module will
-   parse all the received (and still valid, depending on the
-   Expires header in the PUBLISH request) XML documents and
-   generate a single XML document with multiple "dialog"
-   elements. This is perfectly valid, but unfortunately not
-   supported by all SIP phones, e.g. Linksys SPA962 crashes when
-   it receives dialog-info with multiple dialog elements. In this
-   case use the ..... module parameter.
+   the presence module received PUBLISH from multiple presentities
+   (e.g. if the entity has multiple dialogs the pua_dialoginfo
+   will send multiple PUBLISH), the module will parse all the
+   received (and still valid, depending on the Expires header in
+   the PUBLISH request) XML documents and generate a single XML
+   document with multiple "dialog" elements. This is perfectly
+   valid, but unfortunately not supported by all SIP phones, e.g.
+   Linksys SPA962 crashes when it receives dialog-info with
+   multiple dialog elements. In this case use the ..... module
+   parameter.
 
    To get better understanding how all the module works together
    please take a look at the follwing figure:
@@ -121,6 +119,7 @@ alice@example   presence   bob@example   watcher@example
      |             |<-------200 OK--------------|
      |             |            |               |
 
+
      * The watcher subscribes the "Event: dialog" of Bob.
      * Alice calls Bob.
      * Bob replies with ringing, the dialog in the dialog module
@@ -137,10 +136,10 @@ alice@example   presence   bob@example   watcher@example
        watchers.
 
    The presence server can also be separated from the main proxy
-   by using a separate Kamailio instance as shown in the
-   following figure. (Either set the outbound_proxy parameter of
-   pua module or make sure to route the "looped" PUBLISH requests
-   from the main proxy to the presence server).
+   by using a separate Kamailio instance as shown in the following
+   figure. (Either set the outbound_proxy parameter of pua module
+   or make sure to route the "looped" PUBLISH requests from the
+   main proxy to the presence server).
 
 
     Main Proxy and Presence Server use a separate Instance
@@ -169,10 +168,11 @@ alice@example    server     server     bob@example   watcher@example
 
 
 
+
    Known issues:
-     * The "version" attribute is increased for every NOTIFY,
-       even if the XML document has not changed. This is of
-       course valid, but not very smart.
+     * The "version" attribute is increased for every NOTIFY, even
+       if the XML document has not changed. This is of course
+       valid, but not very smart.
 
 1.2. Dependencies
 
@@ -189,10 +189,10 @@ alice@example    server     server     bob@example   watcher@example
 
 1.3.1. force_single_dialog (int)
 
-   By default the module aggregates all available dialog info
-   into a single dialog-info document containing multiple
-   "dialog" elements. If the phone does not support this, you can
-   activate this parameter.
+   By default the module aggregates all available dialog info into
+   a single dialog-info document containing multiple "dialog"
+   elements. If the phone does not support this, you can activate
+   this parameter.
 
    If this parameter is set, only the dialog element with the
    currently most interesting dialog state will be put into the
