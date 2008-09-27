@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <regex.h>
+#include <pcre.h>
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -143,21 +143,13 @@ struct gw_info {
 struct lcr_info {
     char prefix[MAX_PREFIX_LEN + 1];
     unsigned short prefix_len;
+    pcre *prefix_re;
     char from_uri[MAX_FROM_URI_LEN + 1];
     unsigned short from_uri_len;
+    pcre *from_uri_re;
     unsigned int grp_id;
     unsigned short priority;
     unsigned short end_record;
-};
-
-struct prefix_regex {
-	regex_t re;
-	short int valid;
-};
-
-struct from_uri_regex {
-    regex_t re;
-    short int valid;
 };
 
 struct mi {
@@ -244,12 +236,6 @@ struct gw_info *gws_2;	/* Pointer to gw table 2 */
 struct lcr_info **lcrs;  /* Pointer to current lcr table pointer */
 struct lcr_info *lcrs_1; /* Pointer to lcr table 1 */
 struct lcr_info *lcrs_2; /* Pointer to lcr table 2 */
-
-unsigned int *lcrs_ws_reload_counter;
-unsigned int reload_counter;
-
-struct prefix_regex prefix_reg[MAX_NO_OF_LCRS];
-struct from_uri_regex from_uri_reg[MAX_NO_OF_LCRS];
 
 /*
  * Module functions that are defined later
@@ -411,7 +397,7 @@ static int mi_child_init(void)
  */
 static int mod_init(void)
 {
-	int i;
+    int i;
     pv_spec_t avp_spec;
     str s;
     unsigned short avp_flags;
@@ -605,31 +591,20 @@ static int mod_init(void)
 	LM_ERR("No memory for lcr table\n");
 	goto err;
     }
+    memset(lcrs_1, 0, sizeof(struct lcr_info) * (MAX_NO_OF_LCRS + 1));
     lcrs_2 = (struct lcr_info *)shm_malloc(sizeof(struct lcr_info) *
 					   (MAX_NO_OF_LCRS + 1));
     if (lcrs_2 == 0) {
 	LM_ERR("No memory for lcr table\n");
 	goto err;
     }
-    for (i = 0; i < MAX_NO_OF_LCRS + 1; i++) {
-	lcrs_1[i].end_record = lcrs_2[i].end_record = 0;
-    }
+    memset(lcrs_1, 0, sizeof(struct lcr_info) * (MAX_NO_OF_LCRS + 1));
     lcrs = (struct lcr_info **)shm_malloc(sizeof(struct lcr_info *));
     if (lcrs == 0) {
 	LM_ERR("No memory for lcr table pointer\n");
 	goto err;
     }
     *lcrs = lcrs_1;
-
-    lcrs_ws_reload_counter = (unsigned int *)shm_malloc(sizeof(unsigned int));
-    if (lcrs_ws_reload_counter == 0) {
-	LM_ERR("No memory for reload counter\n");
-	goto err;
-    }
-    *lcrs_ws_reload_counter = reload_counter = 0;
-
-    memset(prefix_reg, 0, sizeof(struct prefix_regex) * MAX_NO_OF_LCRS);
-    memset(from_uri_reg, 0, sizeof(struct from_uri_regex) * MAX_NO_OF_LCRS);
 
     /* First reload */
     if (reload_gws() == -1) {
@@ -646,8 +621,18 @@ err:
 
 static void destroy(void)
 {
-	lcr_db_close();
+    int i;
+
+    lcr_db_close();
+
+    for (i = 0; i < MAX_NO_OF_LCRS + 1; i++) {
+	if (lcrs_1[i].prefix_re) shm_free(lcrs_1[i].prefix_re);
+	if (lcrs_1[i].from_uri_re) shm_free(lcrs_1[i].from_uri_re);
+	if (lcrs_2[i].prefix_re) shm_free(lcrs_2[i].prefix_re);
+	if (lcrs_2[i].from_uri_re) shm_free(lcrs_2[i].from_uri_re);
+    }
 }
+
 
 /*
  * Sort lcr records by prefix_len and priority.
@@ -706,87 +691,37 @@ static int rand_lcrs(const void *m1, const void *m2)
     return result;
 }
 
-/*
- * regcomp each prefix.
- */
-static int load_prefix_regex(void)
+
+/* Compile pattern into shared memory and return pointer to it. */
+static pcre *reg_ex_comp(const char *pattern)
 {
-    int i, status, result = 0;
+    pcre *re, *result;
+    const char *error;
+    int rc, size, err_offset;
 
-    for (i = 0; i < MAX_NO_OF_LCRS; i++) {
-	if ((*lcrs)[i].end_record != 0) {
-	    break;
-	}
-	if (prefix_reg[i].valid) {
-	    regfree(&(prefix_reg[i].re));
-	    prefix_reg[i].valid = 0;
-	}
-	memset(&(prefix_reg[i].re), 0, sizeof(regex_t));
-	if ((status=regcomp(&(prefix_reg[i].re),(*lcrs)[i].prefix,0))!=0){
-	    LM_ERR("bad prefix re <%s>, regcomp returned %d (check regex.h)\n",
-		(*lcrs)[i].prefix, status);
-	    result = -1;
-	    break;
-	}
-	prefix_reg[i].valid = 1;
+    re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
+    if (re == NULL) {
+	LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n",
+	       pattern, err_offset, error);
+	return (pcre *)0;
     }
-
+    rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
+    if (rc != 0) {
+	LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
+	       pattern, rc);
+	return (pcre *)0;
+    }
+    result = (pcre *)shm_malloc(size);
+    if (result == NULL) {
+	pcre_free(re);
+	LM_ERR("not enough shared memory for compiled PCRE pattern\n");
+	return (pcre *)0;
+    }
+    memcpy(result, re, size);
+    pcre_free(re);
     return result;
 }
 
-/*
- * regcomp each from_uri.
- */
-static int load_from_uri_regex(void)
-{
-    int i, status, result = 0;
-
-    for (i = 0; i < MAX_NO_OF_LCRS; i++) {
-	if ((*lcrs)[i].end_record != 0) {
-	    break;
-	}
-	if (from_uri_reg[i].valid) {
-	    regfree(&(from_uri_reg[i].re));
-	    from_uri_reg[i].valid = 0;
-	}
-	memset(&(from_uri_reg[i].re), 0, sizeof(regex_t));
-	if ((status=regcomp(&(from_uri_reg[i].re),(*lcrs)[i].from_uri,0))!=0){
-	    LM_ERR("Bad from_uri re <%s>, regcomp returned %d (check regex.h)\n",
-	    	(*lcrs)[i].from_uri, status);
-	    result = -1;
-	    break;
-	}
-	from_uri_reg[i].valid = 1;
-    }
-
-    if (result != -1) {
-	reload_counter = *lcrs_ws_reload_counter;
-    }
-    return result;
-}
-
-static int load_all_regex(void)
-{
-	int result =0;
-
-	if (prefix_mode_param != 0) {
-		result = load_prefix_regex();
-	}
-
-	if (result == 0) {
-		result = load_from_uri_regex();
-	} else {
-		LM_ERR("Unable to load prefix regex\n");
-	}
-
-	if (result == 0) {
-		reload_counter = *lcrs_ws_reload_counter;
-	} else {
-		LM_ERR("Unable to load from_uri regex\n");
-	}
-
-	return result;
-}
 
 /*
  * Reload gws to unused gw table and lcrs to unused lcr table, and, when done
@@ -806,6 +741,7 @@ int reload_gws(void)
     db_row_t* row;
     db_key_t gw_cols[8];
     db_key_t lcr_cols[4];
+    pcre *prefix_re, *from_uri_re;
 
     gw_cols[0] = &ip_addr_col;
     gw_cols[1] = &port_col;
@@ -1000,6 +936,17 @@ int reload_gws(void)
 		return -1;
 	    }
 	}
+	if ((prefix_mode_param == 1) && (prefix_len > 0)){
+	    prefix_re = reg_ex_comp(prefix);
+	    if (prefix_re == 0) {
+		LM_ERR("failed to compile prefix '%s'\n", prefix);
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	} else {
+	    prefix_re = NULL;
+	}
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 	    from_uri_len = 0;
 	    from_uri = 0;
@@ -1012,6 +959,23 @@ int reload_gws(void)
 		lcr_dbf.close(dbh);
 		return -1;
 	    }
+	}
+	if (from_uri_len > 0) {
+	    from_uri_re = reg_ex_comp(from_uri);
+	    if (from_uri_re == NULL) {
+		LM_ERR("failed to compile from_uri '%s'\n", from_uri);
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	    if (from_uri_re == NULL) {
+		LM_ERR("failed to compile from_uri '%s'\n", from_uri);
+		lcr_dbf.free_result(dbh, res);
+		lcr_dbf.close(dbh);
+		return -1;
+	    }
+	} else {
+	    from_uri_re = NULL;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
 	    LM_ERR("Route grp_id is NULL\n");
@@ -1030,24 +994,42 @@ int reload_gws(void)
 
 	if (*lcrs == lcrs_1) {
 	    lcrs_2[i].prefix_len = prefix_len;
-	    if (prefix_len)
+	    if (prefix_len) {
 		memcpy(&(lcrs_2[i].prefix[0]), prefix, prefix_len);
+		if (lcrs_2[i].prefix_re) {
+		    shm_free(lcrs_2[i].prefix_re);
+		}
+		lcrs_2[i].prefix_re = prefix_re;
+	    }		
 	    lcrs_2[i].from_uri_len = from_uri_len;
 	    if (from_uri_len) {
 		memcpy(&(lcrs_2[i].from_uri[0]), from_uri, from_uri_len);
 		lcrs_2[i].from_uri[from_uri_len] = '\0';
+		if (lcrs_2[i].from_uri_re) {
+		    shm_free(lcrs_2[i].from_uri_re);
+		}
+		lcrs_2[i].from_uri_re = from_uri_re;
 	    }
 	    lcrs_2[i].grp_id = grp_id;
 	    lcrs_2[i].priority = priority;
 	    lcrs_2[i].end_record = 0;
 	} else {
 	    lcrs_1[i].prefix_len = prefix_len;
-	    if (prefix_len)
+	    if (prefix_len) {
 		memcpy(&(lcrs_1[i].prefix[0]), prefix, prefix_len);
+		if (lcrs_1[i].prefix_re) {
+		    shm_free(lcrs_1[i].prefix_re);
+		}
+		lcrs_1[i].prefix_re = prefix_re;
+	    }
 	    lcrs_1[i].from_uri_len = from_uri_len;
 	    if (from_uri_len) {
 		memcpy(&(lcrs_1[i].from_uri[0]), from_uri, from_uri_len);
 		lcrs_1[i].from_uri[from_uri_len] = '\0';
+		if (lcrs_1[i].from_uri_re) {
+		    shm_free(lcrs_1[i].from_uri_re);
+		}
+		lcrs_1[i].from_uri_re = from_uri_re;
 	    }
 	    lcrs_1[i].grp_id = grp_id;
 	    lcrs_1[i].priority = priority;
@@ -1064,12 +1046,6 @@ int reload_gws(void)
     } else {
 	lcrs_1[i].end_record = 1;
 	*lcrs = lcrs_1;
-    }
-
-    (*lcrs_ws_reload_counter)++;
-    if (0 != load_all_regex()) {
-
-	return -1;
     }
 
     return 1;
@@ -1176,7 +1152,6 @@ int mi_print_gws(struct mi_node* rpl)
 static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 {
     str ruri_user, from_uri, value;
-    char from_uri_str[MAX_FROM_URI_LEN + 1];
     char ruri[MAX_URI_SIZE];
     unsigned int i, j, k, index, addr, port, strip, gw_index,
 	duplicated_gw, flags, have_rpid_avp;
@@ -1236,22 +1211,6 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 	    from_uri = get_from(_m)->uri;
 	}
     }
-    if (from_uri.len <= MAX_FROM_URI_LEN) {
-	strncpy(from_uri_str, from_uri.s, from_uri.len);
-	from_uri_str[from_uri.len] = '\0';
-    } else {
-	LM_ERR("From URI is too long <%u>\n", from_uri.len);
-	return -1;
-    }
-
-    /*
-     * Check if the gws and lcrs were reloaded
-     */
-	if (reload_counter != *lcrs_ws_reload_counter) {
-		if (load_all_regex() != 0) {
-		    return -1;
-		}
-	}
 
     /*
      * Let's match the gws:
@@ -1268,17 +1227,17 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 	if (lcr_rec.end_record != 0) {
 	    break;
 	}
-	if ( ((prefix_mode_param == 0) && (lcr_rec.prefix_len <= ruri_user.len) &&
-	      (strncmp(lcr_rec.prefix, ruri_user.s, lcr_rec.prefix_len)==0)) ||
-	     ( (prefix_mode_param != 0) && ( (lcr_rec.prefix_len == 0) ||
-					(prefix_reg[i].valid &&
-					 (regexec(&(prefix_reg[i].re), ruri_user.s, 0,
-						  (regmatch_t *)NULL, 0) == 0)) ) ) ) {
+	if (((prefix_mode_param == 0) &&
+	     (lcr_rec.prefix_len <= ruri_user.len) &&
+	     (strncmp(lcr_rec.prefix, ruri_user.s, lcr_rec.prefix_len) == 0)) ||
+	    ((prefix_mode_param != 0) &&
+	     ((lcr_rec.prefix_len == 0) ||
+	      (pcre_exec(lcr_rec.prefix_re, NULL, ruri_user.s, ruri_user.len,
+			 0, 0, NULL, 0) >= 0)))) {
 	    /* 1. Prefix matching is done */
 	    if ((lcr_rec.from_uri_len == 0) ||
-		(from_uri_reg[i].valid &&
-		 (regexec(&(from_uri_reg[i].re), from_uri_str, 0,
-			  (regmatch_t *)NULL, 0) == 0))) {
+		(pcre_exec(lcr_rec.from_uri_re, NULL, from_uri.s, from_uri.len,
+			   0, 0, NULL, 0) >= 0)) {
 		/* 2. from_uri matching is done */
 		for (j = 0; j < MAX_NO_OF_GWS; j++) {
 		    if ((*gws)[j].ip_addr == 0) {

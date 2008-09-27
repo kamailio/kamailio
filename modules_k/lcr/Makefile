@@ -7,7 +7,7 @@
 include ../../Makefile.defs
 auto_gen=
 NAME=lcr.so
-LIBS=
+LIBS=-lpcre
 
 include ../../Makefile.modules
 
