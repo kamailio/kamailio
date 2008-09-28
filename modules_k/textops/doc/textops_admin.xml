@@ -518,7 +518,7 @@ if (subst_user('/(.*)3642$/$avp(user_prefix)\13642/')){$
 		<title><function>subst_body</function> usage</title>
 		<programlisting format="linespecific">
 ...
-if ( subst_body('/^o=(.*) /o=$fU ') ) {};
+if ( subst_body('/^o=(.*) /o=$fU /') ) {};
 
 ...
 </programlisting>
