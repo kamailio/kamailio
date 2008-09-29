@@ -1104,6 +1104,10 @@ int ds_select_dst(struct sip_msg *msg, int set, int alg, int mode)
 				return -1;
 			}
 		break;		
+		case 8:
+			/* use first entry */
+			hash = 0;
+		break;
 		default:
 			LM_WARN("algo %d not implemented - using first entry...\n", alg);
 			hash = 0;

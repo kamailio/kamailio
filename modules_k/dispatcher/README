@@ -20,8 +20,8 @@ Carsten Bock
 
    Copyright © 2005 Voice-System.RO
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -433,6 +433,7 @@ Note
           + "6" - random (using rand()).
           + "7" - hash over the content of PVs string. Note: This
             works only when the parameter hash_pvar is set.
+          + "8" - use first destination (good for failover).
           + "X" - if the algorithm is not implemented, the first
             entry in set is chosen.
 
