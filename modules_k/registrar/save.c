@@ -593,7 +593,17 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				goto error;
 			}
 			if(_mode)
+			{
+				ptr=_r->contacts;
+				while(ptr)
+				{
+					ptr0 = ptr;
+					if(ptr!=c)
+						ul.delete_ucontact(_r, ptr);
+					ptr=ptr0->next;
+				}
 				updated=1;
+			}
 		} else {
 			/* Contact found */
 			if (e == 0) {
