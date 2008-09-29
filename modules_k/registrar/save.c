@@ -56,6 +56,7 @@
 #include "../../ut.h"
 #include "../../qvalue.h"
 #include "../../dset.h"
+#include "../../mod_fix.h"
 #ifdef USE_TCP
 #include "../../tcp_server.h"
 #endif
@@ -736,5 +737,29 @@ error:
 		send_reply(_m);
 
 	return 0;
+}
+
+int unregister(struct sip_msg* _m, char* _d, char* _uri)
+{
+	str aor = {0, 0};
+	str uri = {0, 0};
+
+	if(fixup_get_svalue(_m, (gparam_p)_uri, &uri)!=0 || uri.len<=0)
+	{
+		LM_ERR("invalid uri parameter\n");
+		return -1;
+	}
+
+	if (extract_aor(&uri, &aor) < 0) {
+		LM_ERR("failed to extract Address Of Record\n");
+		return -1;
+	}
+
+	if (star((udomain_t*)_d, &aor) < 0)
+	{
+		LM_ERR("error unregistering user [%.*s]\n", aor.len, aor.s);
+		return -1;
+	}
+	return 1;
 }
 

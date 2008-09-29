@@ -18,8 +18,8 @@ Bogdan-Andre Iancu
 
    Copyright © 2003 FhG FOKUS
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -65,6 +65,7 @@ Bogdan-Andre Iancu
               1.4.3. lookup(domain)
               1.4.4. registered(domain)
               1.4.5. add_sock_hdr(hdr_name)
+              1.4.6. unregister(domain, uri)
 
         1.5. Exported Statistics
 
@@ -103,6 +104,7 @@ Bogdan-Andre Iancu
    1.23. lookup usage
    1.24. registered usage
    1.25. add_sock_hdr usage
+   1.26. registered usage
 
 Chapter 1. Admin Guide
 
@@ -588,6 +590,25 @@ if (registered("location")) {
    Example 1.25. add_sock_hdr usage
 ...
 add_sock_hdr("Sock-Info");
+...
+
+1.4.6.  unregister(domain, uri)
+
+   The function remove all the contact associated to 'uri'.
+
+   Meaning of the parameters is as follows:
+     * domain - Name of table that should be used for the lookup
+       or contact addresses.
+     * uri - The SIP URI address of the user which to remove the
+       contact addresses for. It can contain pseudo-variables that
+       are evaluated at runtime.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.26. registered usage
+...
+unregister("location", "$ru");
+unregister("location", "sip:user@kamailio.org");
 ...
 
 1.5. Exported Statistics

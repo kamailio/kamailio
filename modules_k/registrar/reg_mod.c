@@ -84,6 +84,7 @@ static void mod_destroy(void);
 /*! \brief Fixup functions */
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
+static int unreg_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
@@ -157,6 +158,8 @@ static cmd_export_t cmds[] = {
 			REQUEST_ROUTE | FAILURE_ROUTE },
 	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,fixup_str_null, 0,
 			REQUEST_ROUTE },
+	{"unregister",   (cmd_function)unregister,   2,   unreg_fixup, 0,
+			REQUEST_ROUTE| FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
 
@@ -371,6 +374,28 @@ static int domain_fixup(void** param, int param_no)
 	}
 	return 0;
 }
+
+/*! \brief
+ * Convert char* parameter to udomain_t* pointer
+ * Convert char* parameter to pv_elem_t* pointer
+ */
+static int unreg_fixup(void** param, int param_no)
+{
+	udomain_t* d;
+
+	if (param_no == 1) {
+		if (ul.register_udomain((char*)*param, &d) < 0) {
+			LM_ERR("failed to register domain\n");
+			return E_UNSPEC;
+		}
+
+		*param = (void*)d;
+	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	}
+	return 0;
+}
+
 
 
 /*! \brief

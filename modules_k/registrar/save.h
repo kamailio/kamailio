@@ -46,6 +46,7 @@
  * Process REGISTER request and save it's contacts
  */
 int save(struct sip_msg* _m, char* _d, char* _cflags);
+int unregister(struct sip_msg* _m, char* _d, char* _uri);
 
 
 #endif /* SAVE_H */

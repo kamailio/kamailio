@@ -825,6 +825,43 @@ add_sock_hdr("Sock-Info");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">unregister(domain, uri)</function>
+		</title>
+		<para>
+		The function remove all the contact associated to 'uri'.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be 
+			used for the lookup or contact addresses.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> - The SIP URI address of the user
+			which to remove the contact addresses for. It can contain
+			pseudo-variables that are evaluated at runtime.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>registered</function> usage</title>
+		<programlisting format="linespecific">
+...
+unregister("location", "$ru");
+unregister("location", "sip:user@kamailio.org");
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 <section>
