@@ -631,6 +631,30 @@ static void destroy(void)
 	if (lcrs_2[i].prefix_re) shm_free(lcrs_2[i].prefix_re);
 	if (lcrs_2[i].from_uri_re) shm_free(lcrs_2[i].from_uri_re);
     }
+    if(gws_1) {
+        shm_free(gws_1);
+        gws_1 = NULL;
+    }
+    if(gws_2) {
+        shm_free(gws_2);
+        gws_2 = NULL;
+    }
+    if(gws) {
+        shm_free(gws);
+        gws = NULL;
+    }
+    if(lcrs_1) { 
+        shm_free(lcrs_1);
+        lcrs_1 = NULL;
+    }
+    if(lcrs_2) {
+        shm_free(lcrs_2);
+        lcrs_2 = NULL;
+    }
+    if(lcrs) {
+        shm_free(lcrs);
+        lcrs = NULL;
+    }
 }
 
 
