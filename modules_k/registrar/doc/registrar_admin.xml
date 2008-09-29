@@ -675,6 +675,12 @@ save("location");
 					<para><emphasis>0x02</emphasis> - do not generate a SIP 
 						reply to the current REGISTER request.</para>
 				</listitem>
+				<listitem>
+					<para><emphasis>0x04</emphasis> - store and maintain one
+					contact per AoR. If there are other contact addresses for
+					AoR not matching current registration, remove them.
+					This mode ensures one contact per AoR (user).</para>
+				</listitem>
 			</itemizedlist>
 			<para>The flags may be given in decimal or hexa format.</para>
 		</listitem>

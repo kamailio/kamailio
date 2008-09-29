@@ -64,7 +64,8 @@
 
 #define REG_SAVE_MEM_FL     (1<<0)
 #define REG_SAVE_NORPL_FL   (1<<1)
-#define REG_SAVE_ALL_FL     ((1<<2)-1)
+#define REG_SAVE_REPL_FL    (1<<2)
+#define REG_SAVE_ALL_FL     ((1<<3)-1)
 
 extern int default_expires;
 extern qvalue_t default_q;
