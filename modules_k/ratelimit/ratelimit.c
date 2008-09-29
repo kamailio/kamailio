@@ -644,6 +644,11 @@ void destroy(void)
 		nqueues = NULL;
 	}
 	if (rl_dbg_str) {
+		if (rl_dbg_str->s) {
+			shm_free(rl_dbg_str->s);
+			rl_dbg_str->s = NULL;
+			rl_dbg_str->len = 0;
+		}
 		shm_free(rl_dbg_str);
 		rl_dbg_str = NULL;
 	}
