@@ -70,6 +70,7 @@
 
 #include "save.h"
 #include "lookup.h"
+#include "regpv.h"
 #include "reply.h"
 #include "reg_mod.h"
 
@@ -85,6 +86,7 @@ static void mod_destroy(void);
 static int domain_fixup(void** param, int param_no);
 static int save_fixup(void** param, int param_no);
 static int unreg_fixup(void** param, int param_no);
+static int fetchc_fixup(void** param, int param_no);
 /*! \brief Functions */
 static int add_sock_hdr(struct sip_msg* msg, char *str, char *foo);
 
@@ -143,6 +145,15 @@ stat_var *default_expire_stat;
 /** SL binds */
 struct sl_binds slb;
 
+/*! \brief
+ * Exported PV
+ */
+static pv_export_t mod_pvs[] = {
+	{ {"ulc", sizeof("ulc")-1}, 1001, pv_get_ulc, pv_set_ulc,
+		pv_parse_ulc_name, pv_parse_index, 0, 0 },
+	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
+};
+
 
 /*! \brief
  * Exported functions
@@ -159,6 +170,12 @@ static cmd_export_t cmds[] = {
 	{"add_sock_hdr", (cmd_function)add_sock_hdr, 1,fixup_str_null, 0,
 			REQUEST_ROUTE },
 	{"unregister",   (cmd_function)unregister,   2,   unreg_fixup, 0,
+			REQUEST_ROUTE| FAILURE_ROUTE },
+	{"reg_fetch_contacts", (cmd_function)pv_fetch_contacts, 3, 
+			fetchc_fixup, 0,
+			REQUEST_ROUTE| FAILURE_ROUTE },
+	{"reg_free_contacts", (cmd_function)pv_free_contacts,   1,
+			fixup_str_null, 0,
 			REQUEST_ROUTE| FAILURE_ROUTE },
 	{0, 0, 0, 0, 0, 0}
 };
@@ -213,7 +230,7 @@ struct module_exports exports = {
 	params,      /* Exported parameters */
 	mod_stats,   /* exported statistics */
 	0,           /* exported MI functions */
-	0,           /* exported pseudo-variables */
+	mod_pvs,     /* exported pseudo-variables */
 	0,           /* extra processes */
 	mod_init,    /* module initialization function */
 	0,
@@ -381,15 +398,8 @@ static int domain_fixup(void** param, int param_no)
  */
 static int unreg_fixup(void** param, int param_no)
 {
-	udomain_t* d;
-
 	if (param_no == 1) {
-		if (ul.register_udomain((char*)*param, &d) < 0) {
-			LM_ERR("failed to register domain\n");
-			return E_UNSPEC;
-		}
-
-		*param = (void*)d;
+		return domain_fixup(param, 1);
 	} else if (param_no == 2) {
 		return fixup_spve_null(param, 1);
 	}
@@ -424,6 +434,23 @@ static int save_fixup(void** param, int param_no)
 		*param = (void*)(unsigned long int)flags;
 		return 0;
 	}
+}
+
+/*! \brief
+ * Convert char* parameter to udomain_t* pointer
+ * Convert char* parameter to pv_elem_t* pointer
+ * Convert char* parameter to str* pointer
+ */
+static int fetchc_fixup(void** param, int param_no)
+{
+	if (param_no == 1) {
+		return domain_fixup(param, 1);
+	} else if (param_no == 2) {
+		return fixup_spve_null(param, 1);
+	} else if (param_no == 3) {
+		return fixup_str_null(param, 1);
+	}
+	return 0;
 }
 
 

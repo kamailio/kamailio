@@ -66,6 +66,8 @@ Bogdan-Andre Iancu
               1.4.4. registered(domain)
               1.4.5. add_sock_hdr(hdr_name)
               1.4.6. unregister(domain, uri)
+              1.4.7. reg_fetch_contacts(domain, uri, profile)
+              1.4.8. reg_free_contacts(profile)
 
         1.5. Exported Statistics
 
@@ -74,6 +76,10 @@ Bogdan-Andre Iancu
               1.5.3. defaults_expires
               1.5.4. accepted_regs
               1.5.5. rejected_regs
+
+        1.6. Exported pseudo-variables
+
+              1.6.1. $ulc(profile=>attr)
 
    2. Frequently Asked Questions
 
@@ -105,6 +111,9 @@ Bogdan-Andre Iancu
    1.24. registered usage
    1.25. add_sock_hdr usage
    1.26. registered usage
+   1.27. registered usage
+   1.28. registered usage
+   1.29. $sht(name) usage
 
 Chapter 1. Admin Guide
 
@@ -507,6 +516,10 @@ save("location");
             no DB operation;
           + 0x02 - do not generate a SIP reply to the current
             REGISTER request.
+          + 0x04 - store and maintain one contact per AoR. If
+            there are other contact addresses for AoR not matching
+            current registration, remove them. This mode ensures
+            one contact per AoR (user).
        The flags may be given in decimal or hexa format.
 
    This function can be used from REQUEST_ROUTE.
@@ -611,6 +624,46 @@ unregister("location", "$ru");
 unregister("location", "sip:user@kamailio.org");
 ...
 
+1.4.7.  reg_fetch_contacts(domain, uri, profile)
+
+   The function fetches the contacts for 'uri' from table 'domain'
+   to pseudo-variable $ulc(profile).
+
+   Meaning of the parameters is as follows:
+     * domain - Name of table that should be used for the lookup
+       of contact addresses.
+     * uri - The SIP URI address of the user which to fetch the
+       contact addresses for. It can contain pseudo-variables that
+       are evaluated at runtime.
+     * profile - Name of $ulc pseudo-variable profile that will
+       store the fetched contacts. It is a static string.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.27. registered usage
+...
+reg_fetch_contacts("location", "$ru", "callee");
+reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
+...
+
+1.4.8.  reg_free_contacts(profile)
+
+   The function frees the contacts from pseudo-variable
+   $ulc(profile). Should be called to release the content of a
+   profile. Anyhow, fetching a new contact addresses set over a
+   profile will release any existing data in that profile.
+
+   Meaning of the parameters is as follows:
+     * profile - Name of $ulc pseudo-variable profile that stores
+       fetched contacts. It is a static string.
+
+   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+
+   Example 1.28. registered usage
+...
+reg_free_contacts("callee");
+...
+
 1.5. Exported Statistics
 
 1.5.1. max_expires
@@ -632,6 +685,81 @@ unregister("location", "sip:user@kamailio.org");
 1.5.5. rejected_regs
 
    Number of rejected registrations.
+
+1.6. Exported pseudo-variables
+
+1.6.1. $ulc(profile=>attr)
+
+   Access the attributes of contact addresses stored in 'profile'.
+   It must be used after a call of "reg_fetch_contacts()".
+
+   The "profile" has to be one of the values used with
+   "reg_fetch_contacts()".
+
+   The "attr" can be:
+     * aor - address of record
+     * domain - use location domain name
+     * aorhash - hash id for the record
+     * count - number of contacts
+     * addr - contact address
+     * path - path vector
+     * received - received address
+     * expires - expires value
+     * callid - call-id header value
+     * q - the q value
+     * flags - flags value
+     * cflags - cflags value
+     * user_agent - user agent
+     * socket - local socket
+     * modified - last modified time
+     * methods - methods value
+
+   The pseudo-variable accepts positive index value to access a
+   specific contact record.
+
+   Example 1.29. $sht(name) usage
+...
+if(reg_fetch_contacts("location", "$fu", "caller"))
+{
+        xlog("caller=>aor: $(ulc(caller=>aor))\n");
+        xlog("caller=>domain: $(ulc(caller=>domain))\n");
+        xlog("caller=>aorhash $(ulc(caller=>aorhash))\n");
+        xlog("caller=>count $(ulc(caller=>count))\n");
+        $var(i) = 0;
+        while($var(i) < $(ulc(caller=>count)))
+        {
+                xlog("--- contact [$var(i)]\n");
+                xlog("caller=>addr:       $(ulc(caller=>addr)[$var(i)])\
+n");
+                xlog("caller=>path:       $(ulc(caller=>path)[$var(i)])\
+n");
+                xlog("caller=>received:   $(ulc(caller=>received)[$var(i
+)])\n");
+                xlog("caller=>expires:    $(ulc(caller=>expires)[$var(i)
+])\n");
+                xlog("caller=>callid:     $(ulc(caller=>callid)[$var(i)]
+)\n");
+                xlog("caller=>q:          $(ulc(caller=>q)[$var(i)])\n")
+;
+                xlog("caller=>cseq:       $(ulc(caller=>cseq)[$var(i)])\
+n");
+                xlog("caller=>flags:      $(ulc(caller=>flags)[$var(i)])
+\n");
+                xlog("caller=>cflags:     $(ulc(caller=>cflags)[$var(i)]
+)\n");
+                xlog("caller=>user_agent: $(ulc(caller=>user_agent)[$var
+(i)])\n");
+                xlog("caller=>socket:     $(ulc(caller=>socket)[$var(i)]
+)\n");
+                xlog("caller=>modified:   $(ulc(caller=>modified)[$var(i
+)])\n");
+                xlog("caller=>methods:    $(ulc(caller=>methods)[$var(i)
+])\n");
+                $var(i) = $var(i) + 1;
+        }
+
+}
+...
 
 Chapter 2. Frequently Asked Questions
 

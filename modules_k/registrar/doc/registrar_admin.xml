@@ -867,6 +867,80 @@ unregister("location", "sip:user@kamailio.org");
 </programlisting>
 		</example>
 	</section>
+	<section>
+		<title>
+		<function moreinfo="none">reg_fetch_contacts(domain, uri, profile)</function>
+		</title>
+		<para>
+			The function fetches the contacts for 'uri' from table 'domain'
+			to pseudo-variable $ulc(profile).
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>domain</emphasis> - Name of table that should be 
+			used for the lookup of contact addresses.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>uri</emphasis> - The SIP URI address of the user
+			which to fetch the contact addresses for. It can contain
+			pseudo-variables that are evaluated at runtime.
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+			<emphasis>profile</emphasis> - Name of $ulc pseudo-variable profile
+			that will store the fetched contacts. It is a static string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>registered</function> usage</title>
+		<programlisting format="linespecific">
+...
+reg_fetch_contacts("location", "$ru", "callee");
+reg_fetch_contacts("location", "sip:user@kamailio.org", "caller");
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title>
+		<function moreinfo="none">reg_free_contacts(profile)</function>
+		</title>
+		<para>
+			The function frees the contacts from pseudo-variable $ulc(profile).
+			Should be called to release the content of a profile. Anyhow,
+			fetching a new contact addresses set over a profile will release
+			any existing data in that profile.
+		</para>
+		<para>Meaning of the parameters is as follows:</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+			<emphasis>profile</emphasis> - Name of $ulc pseudo-variable profile
+			that stores fetched contacts. It is a static string.
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
+		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>registered</function> usage</title>
+		<programlisting format="linespecific">
+...
+reg_free_contacts("callee");
+...
+</programlisting>
+		</example>
+	</section>
 
 	</section>
 
@@ -904,6 +978,131 @@ unregister("location", "sip:user@kamailio.org");
 	</section>
 
 </section>
+
+	<section>
+	<title>Exported pseudo-variables</title>
+		
+		<section>
+			<title><varname>$ulc(profile=>attr)</varname></title>
+			<para>
+				Access the attributes of contact addresses stored in
+				'profile'. It must be used after a call of
+				<quote>reg_fetch_contacts()</quote>.
+			</para>
+			<para>
+				The <quote>profile</quote> has to be one of the values used
+				with <quote>reg_fetch_contacts()</quote>.
+			</para>
+			<para>
+			The <quote>attr</quote> can be:
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para><emphasis>aor</emphasis> - address of record
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>domain</emphasis> - use location domain name
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>aorhash</emphasis> - hash id for the record
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>count</emphasis> - number of contacts
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>addr</emphasis> - contact address
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>path</emphasis> - path vector
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>received</emphasis> - received address
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>expires</emphasis> - expires value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>callid</emphasis> - call-id header value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>q</emphasis> - the q value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>flags</emphasis> - flags value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>cflags</emphasis> - cflags value
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>user_agent</emphasis> - user agent
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>socket</emphasis> - local socket
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>modified</emphasis> - last modified time
+				</para>
+				</listitem>	  
+				<listitem>
+				<para><emphasis>methods</emphasis> - methods value
+				</para>
+				</listitem>	  
+			</itemizedlist>
+			<para>
+				The pseudo-variable accepts positive index value to access
+				a specific contact record.
+			</para>
+
+			<example>
+			<title><function moreinfo="none">$sht(name)</function> usage</title>
+<programlisting format="linespecific">
+...
+if(reg_fetch_contacts("location", "$fu", "caller"))
+{
+	xlog("caller=&gt;aor: $(ulc(caller=&gt;aor))\n");
+	xlog("caller=&gt;domain: $(ulc(caller=&gt;domain))\n");
+	xlog("caller=&gt;aorhash $(ulc(caller=&gt;aorhash))\n");
+	xlog("caller=&gt;count $(ulc(caller=&gt;count))\n");
+	$var(i) = 0;
+	while($var(i) &lt; $(ulc(caller=&gt;count)))
+	{
+		xlog("--- contact [$var(i)]\n");
+		xlog("caller=&gt;addr:       $(ulc(caller=&gt;addr)[$var(i)])\n");
+		xlog("caller=&gt;path:       $(ulc(caller=&gt;path)[$var(i)])\n");
+		xlog("caller=&gt;received:   $(ulc(caller=&gt;received)[$var(i)])\n");
+		xlog("caller=&gt;expires:    $(ulc(caller=&gt;expires)[$var(i)])\n");
+		xlog("caller=&gt;callid:     $(ulc(caller=&gt;callid)[$var(i)])\n");
+		xlog("caller=&gt;q:          $(ulc(caller=&gt;q)[$var(i)])\n");
+		xlog("caller=&gt;cseq:       $(ulc(caller=&gt;cseq)[$var(i)])\n");
+		xlog("caller=&gt;flags:      $(ulc(caller=&gt;flags)[$var(i)])\n");
+		xlog("caller=&gt;cflags:     $(ulc(caller=&gt;cflags)[$var(i)])\n");
+		xlog("caller=&gt;user_agent: $(ulc(caller=&gt;user_agent)[$var(i)])\n");
+		xlog("caller=&gt;socket:     $(ulc(caller=&gt;socket)[$var(i)])\n");
+		xlog("caller=&gt;modified:   $(ulc(caller=&gt;modified)[$var(i)])\n");
+		xlog("caller=&gt;methods:    $(ulc(caller=&gt;methods)[$var(i)])\n");
+		$var(i) = $var(i) + 1;
+	}
+
+}
+...
+				 </programlisting>
+			</example>
+		</section>
+	</section>
 
 </chapter>
 
