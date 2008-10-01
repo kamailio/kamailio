@@ -721,43 +721,29 @@ reg_free_contacts("callee");
 ...
 if(reg_fetch_contacts("location", "$fu", "caller"))
 {
-        xlog("caller=>aor: $(ulc(caller=>aor))\n");
-        xlog("caller=>domain: $(ulc(caller=>domain))\n");
-        xlog("caller=>aorhash $(ulc(caller=>aorhash))\n");
-        xlog("caller=>count $(ulc(caller=>count))\n");
-        $var(i) = 0;
-        while($var(i) < $(ulc(caller=>count)))
-        {
-                xlog("--- contact [$var(i)]\n");
-                xlog("caller=>addr:       $(ulc(caller=>addr)[$var(i)])\
-n");
-                xlog("caller=>path:       $(ulc(caller=>path)[$var(i)])\
-n");
-                xlog("caller=>received:   $(ulc(caller=>received)[$var(i
-)])\n");
-                xlog("caller=>expires:    $(ulc(caller=>expires)[$var(i)
-])\n");
-                xlog("caller=>callid:     $(ulc(caller=>callid)[$var(i)]
-)\n");
-                xlog("caller=>q:          $(ulc(caller=>q)[$var(i)])\n")
-;
-                xlog("caller=>cseq:       $(ulc(caller=>cseq)[$var(i)])\
-n");
-                xlog("caller=>flags:      $(ulc(caller=>flags)[$var(i)])
-\n");
-                xlog("caller=>cflags:     $(ulc(caller=>cflags)[$var(i)]
-)\n");
-                xlog("caller=>user_agent: $(ulc(caller=>user_agent)[$var
-(i)])\n");
-                xlog("caller=>socket:     $(ulc(caller=>socket)[$var(i)]
-)\n");
-                xlog("caller=>modified:   $(ulc(caller=>modified)[$var(i
-)])\n");
-                xlog("caller=>methods:    $(ulc(caller=>methods)[$var(i)
-])\n");
-                $var(i) = $var(i) + 1;
-        }
-
+  xlog("caller=>aor: $(ulc(caller=>aor))\n");
+  xlog("caller=>domain: $(ulc(caller=>domain))\n");
+  xlog("caller=>aorhash $(ulc(caller=>aorhash))\n");
+  xlog("caller=>count $(ulc(caller=>count))\n");
+  $var(i) = 0;
+  while($var(i) < $(ulc(caller=>count)))
+  {
+    xlog("--- contact [$var(i)]\n");
+    xlog("caller=>addr:       $(ulc(caller=>addr)[$var(i)])\n");
+    xlog("caller=>path:       $(ulc(caller=>path)[$var(i)])\n");
+    xlog("caller=>received:   $(ulc(caller=>received)[$var(i)])\n");
+    xlog("caller=>expires:    $(ulc(caller=>expires)[$var(i)])\n");
+    xlog("caller=>callid:     $(ulc(caller=>callid)[$var(i)])\n");
+    xlog("caller=>q:          $(ulc(caller=>q)[$var(i)])\n");
+    xlog("caller=>cseq:       $(ulc(caller=>cseq)[$var(i)])\n");
+    xlog("caller=>flags:      $(ulc(caller=>flags)[$var(i)])\n");
+    xlog("caller=>cflags:     $(ulc(caller=>cflags)[$var(i)])\n");
+    xlog("caller=>user_agent: $(ulc(caller=>user_agent)[$var(i)])\n");
+    xlog("caller=>socket:     $(ulc(caller=>socket)[$var(i)])\n");
+    xlog("caller=>modified:   $(ulc(caller=>modified)[$var(i)])\n");
+    xlog("caller=>methods:    $(ulc(caller=>methods)[$var(i)])\n");
+    $var(i) = $var(i) + 1;
+  }
 }
 ...
 
