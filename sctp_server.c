@@ -245,7 +245,7 @@ error:
 
 
 /* init, bind & start listening on the corresp. sctp socket
-   return 0 on success, -1 on error */
+   returns 0 on success, -1 on error */
 int sctp_init_sock(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
@@ -299,6 +299,72 @@ error:
 	return -1;
 }
 
+
+#define USE_SCTP_OO
+
+#ifdef USE_SCTP_OO
+
+/* init, bind & start listening on the corresp. sctp socket, using
+   sctp one-to-one mode
+   returns 0 on success, -1 on error */
+int sctp_init_sock_oo(struct socket_info* sock_info)
+{
+	union sockaddr_union* addr;
+	int optval;
+	
+	sock_info->proto=PROTO_SCTP;
+	addr=&sock_info->su;
+	if (sctp_init_su(sock_info)!=0)
+		goto error;
+	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_STREAM, 
+								IPPROTO_SCTP);
+	if (sock_info->socket==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_oo: socket: %s\n", strerror(errno));
+		goto error;
+	}
+	INFO("sctp:oo socket %d initialized (%p)\n", sock_info->socket, sock_info);
+	/* make socket non-blocking */
+	optval=fcntl(sock_info->socket, F_GETFL);
+	if (optval==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_oo: fnctl failed: (%d) %s\n",
+				errno, strerror(errno));
+		goto error;
+	}
+	if (fcntl(sock_info->socket, F_SETFL, optval|O_NONBLOCK)==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_oo: fcntl: set non-blocking failed:"
+				" (%d) %s\n", errno, strerror(errno));
+		goto error;
+	}
+	
+	/* set sock opts */
+	if (sctp_init_sock_opt_common(sock_info->socket)!=0)
+		goto error;
+	
+#ifdef SCTP_REUSE_PORT
+	/* set reuse port */
+	optval=1;
+	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_REUSE_PORT ,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_oo: setsockopt: "
+					"SCTP_REUSE_PORT: %s\n", strerror(errno));
+		goto error;
+	}
+#endif /* SCTP_REUSE_PORT */
+	
+	if (sctp_bind_sock(sock_info)<0)
+		goto error;
+	if (listen(sock_info->socket, 1)<0){
+		LOG(L_ERR, "ERROR: sctp_init_sock_oo: listen(%x, 1) on %s: %s\n",
+					sock_info->socket, sock_info->address_str.s,
+					strerror(errno));
+		goto error;
+	}
+	return 0;
+error:
+	return -1;
+}
+
+#endif /* USE_SCTP_OO */
 
 
 /* debugging: return a string name for SCTP_ASSOC_CHANGE state */
