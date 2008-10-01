@@ -52,18 +52,16 @@
 
 
 
-int sctp_init_sock(struct socket_info* sock_info)
+/* init all the sockaddr_union members of the socket_info struct
+   returns 0 on success and -1 on error */
+inline static int sctp_init_su(struct socket_info* sock_info)
 {
 	union sockaddr_union* addr;
-	int optval;
-	socklen_t optlen;
 	struct addr_info* ai;
-	struct sctp_event_subscribe es;
 	
 	addr=&sock_info->su;
-	sock_info->proto=PROTO_SCTP;
 	if (init_su(addr, &sock_info->address, sock_info->port_no)<0){
-		LOG(L_ERR, "ERROR: sctp_init_sock: could not init sockaddr_union for"
+		LOG(L_ERR, "ERROR: sctp_init_su: could not init sockaddr_union for"
 					"primary sctp address %.*s:%d\n",
 					sock_info->address_str.len, sock_info->address_str.s,
 					sock_info->port_no );
@@ -71,12 +69,191 @@ int sctp_init_sock(struct socket_info* sock_info)
 	}
 	for (ai=sock_info->addr_info_lst; ai; ai=ai->next)
 		if (init_su(&ai->su, &ai->address, sock_info->port_no)<0){
-			LOG(L_ERR, "ERROR: sctp_init_sock: could not init"
+			LOG(L_ERR, "ERROR: sctp_init_su: could not init"
 					"backup sctp sockaddr_union for %.*s:%d\n",
 					ai->address_str.len, ai->address_str.s,
 					sock_info->port_no );
 			goto error;
 		}
+	return 0;
+error:
+	return -1;
+}
+
+
+
+/* set common (for one to many and one to one) sctp socket options
+   returns 0 on success, -1 on error */
+static int sctp_init_sock_opt_common(int s)
+{
+	struct sctp_event_subscribe es;
+	int optval;
+	socklen_t optlen;
+	
+	/* set receive buffer: SO_RCVBUF*/
+	if (sctp_options.sctp_so_rcvbuf){
+		optval=sctp_options.sctp_so_rcvbuf;
+		if (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+					(void*)&optval, sizeof(optval)) ==-1){
+			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
+						" SO_RCVBUF (%d): %s\n", optval, strerror(errno));
+			/* continue, non-critical */
+		}
+	}
+	
+	/* set send buffer: SO_SNDBUF */
+	if (sctp_options.sctp_so_sndbuf){
+		optval=sctp_options.sctp_so_sndbuf;
+		if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
+					(void*)&optval, sizeof(optval)) ==-1){
+			LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt:"
+						" SO_SNDBUF (%d): %s\n", optval, strerror(errno));
+			/* continue, non-critical */
+		}
+	}
+	
+	/* disable fragments interleave (SCTP_FRAGMENT_INTERLEAVE) --
+	 * we don't want partial delivery, so fragment interleave must be off too
+	 */
+	optval=0;
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_FRAGMENT_INTERLEAVE ,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+					"SCTP_FRAGMENT_INTERLEAVE: %s\n", strerror(errno));
+		goto error;
+	}
+	
+	/* turn off partial delivery: on linux setting SCTP_PARTIAL_DELIVERY_POINT
+	 * to 0 or a very large number seems to be enough, however the portable
+	 * way to do it is to set it to the socket receive buffer size
+	 * (this is the maximum value allowed in the sctp api draft) */
+	optlen=sizeof(optval);
+	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF,
+					(void*)&optval, &optlen) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: getsockopt: "
+						"SO_RCVBUF: %s\n", strerror(errno));
+		goto error;
+	}
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+						"SCTP_PARTIAL_DELIVERY_POINT (%d): %s\n",
+						optval, strerror(errno));
+		goto error;
+	}
+	
+	/* nagle / no delay */
+	optval=1;
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_NODELAY,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+						"SCTP_NODELAY: %s\n", strerror(errno));
+		/* non critical, try to continue */
+	}
+	
+	/* enable message fragmentation (SCTP_DISABLE_FRAGMENTS)  (on send) */
+	optval=0;
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+						"SCTP_DISABLE_FRAGMENTS: %s\n", strerror(errno));
+		/* non critical, try to continue */
+	}
+	
+	/* set autoclose */
+	optval=sctp_options.sctp_autoclose;
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
+					(void*)&optval, sizeof(optval)) ==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+						"SCTP_DISABLE_FRAGMENTS: %s\n", strerror(errno));
+		/* non critical, try to continue */
+	}
+	
+	memset(&es, 0, sizeof(es));
+	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message
+	 *  information in sctp_sndrcvinfo */
+	es.sctp_data_io_event=1;
+	/* enable association event notifications */
+	es.sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
+	es.sctp_address_event=1;  /* enable address events notifications */
+	es.sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
+	es.sctp_peer_error_event=1;
+	es.sctp_shutdown_event=1;
+	es.sctp_partial_delivery_event=1;
+	es.sctp_adaptation_layer_event=1;
+	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
+	
+	/* enable the SCTP_EVENTS */
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, &es, sizeof(es))==-1){
+		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
+				"SCTP_EVENTS: %s\n", strerror(errno));
+		/* non critical, try to continue */
+	}
+	
+	return 0;
+error:
+	return -1;
+}
+
+
+
+/* bind all addresses from sock (sockaddr_unions)
+   returns 0 on success, .1 on error */
+static int sctp_bind_sock(struct socket_info* sock_info)
+{
+	struct addr_info* ai;
+	union sockaddr_union* addr;
+	
+	addr=&sock_info->su;
+	/* bind the addresses*/
+	if (bind(sock_info->socket,  &addr->s, sockaddru_len(*addr))==-1){
+		LOG(L_ERR, "ERROR: sctp_bind_sock: bind(%x, %p, %d) on %s: %s\n",
+				sock_info->socket, &addr->s, 
+				(unsigned)sockaddru_len(*addr),
+				sock_info->address_str.s,
+				strerror(errno));
+	#ifdef USE_IPV6
+		if (addr->s.sa_family==AF_INET6)
+			LOG(L_ERR, "ERROR: sctp_bind_sock: might be caused by using a "
+							"link local address, try site local or global\n");
+	#endif
+		goto error;
+	}
+	for (ai=sock_info->addr_info_lst; ai; ai=ai->next)
+		if (sctp_bindx(sock_info->socket, &ai->su.s, 1, SCTP_BINDX_ADD_ADDR)
+					==-1){
+			LOG(L_ERR, "ERROR: sctp_bind_sock: sctp_bindx(%x, %.*s:%d, 1, ...)"
+						" on %s:%d : [%d] %s (trying to continue)\n",
+						sock_info->socket,
+						ai->address_str.len, ai->address_str.s, 
+						sock_info->port_no,
+						sock_info->address_str.s, sock_info->port_no,
+						errno, strerror(errno));
+		#ifdef USE_IPV6
+			if (ai->su.s.sa_family==AF_INET6)
+				LOG(L_ERR, "ERROR: sctp_bind_sock: might be caused by using a "
+							"link local address, try site local or global\n");
+		#endif
+			/* try to continue, a secondary address bind failure is not 
+			 * critical */
+		}
+	return 0;
+error:
+	return -1;
+}
+
+
+
+/* init, bind & start listening on the corresp. sctp socket
+   return 0 on success, -1 on error */
+int sctp_init_sock(struct socket_info* sock_info)
+{
+	union sockaddr_union* addr;
+	
+	sock_info->proto=PROTO_SCTP;
+	addr=&sock_info->su;
+	if (sctp_init_su(sock_info)!=0)
+		goto error;
 	sock_info->socket = socket(AF2PF(addr->s.sa_family), SOCK_SEQPACKET, 
 								IPPROTO_SCTP);
 	if (sock_info->socket==-1){
@@ -102,144 +279,15 @@ int sctp_init_sock(struct socket_info* sock_info)
 #endif
 
 	/* set sock opts */
-	/* set receive buffer: SO_RCVBUF*/
-	if (sctp_options.sctp_so_rcvbuf){
-		optval=sctp_options.sctp_so_rcvbuf;
-		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_RCVBUF,
-					(void*)&optval, sizeof(optval)) ==-1){
-			LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SO_RCVBUF (%d):"
-						" %s\n", optval, strerror(errno));
-			/* continue, non-critical */
-		}
-	}
-	
-	/* set send buffer: SO_SNDBUF */
-	if (sctp_options.sctp_so_sndbuf){
-		optval=sctp_options.sctp_so_sndbuf;
-		if (setsockopt(sock_info->socket, SOL_SOCKET, SO_SNDBUF,
-					(void*)&optval, sizeof(optval)) ==-1){
-			LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SO_SNDBUF (%d):"
-						" %s\n", optval, strerror(errno));
-			/* continue, non-critical */
-		}
-	}
-	
-	/* disable fragments interleave (SCTP_FRAGMENT_INTERLEAVE) --
-	 * we don't want partial delivery, so fragment interleave must be off too
-	 */
-	optval=0;
-	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_FRAGMENT_INTERLEAVE ,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
-						strerror(errno));
+	if (sctp_init_sock_opt_common(sock_info->socket)!=0)
 		goto error;
-	}
-	
-	/* turn off partial delivery: on linux setting SCTP_PARTIAL_DELIVERY_POINT
-	 * to 0 or a very large number seems to be enough, however the portable
-	 * way to do it is to set it to the socket receive buffer size
-	 * (this is the maximum value allowed in the sctp api draft) */
-	optlen=sizeof(optval);
-	if (getsockopt(sock_info->socket, SOL_SOCKET, SO_RCVBUF,
-					(void*)&optval, &optlen) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: getsockopt: %s\n",
-						strerror(errno));
-		goto error;
-	}
-	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
-						strerror(errno));
-		goto error;
-	}
-	
-	/* nagle / no delay */
-	optval=1;
-	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_NODELAY,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
-						strerror(errno));
-		/* non critical, try to continue */
-	}
-	
-	/* enable message fragmentation (SCTP_DISABLE_FRAGMENTS)  (on send) */
-	optval=0;
-	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
-						strerror(errno));
-		/* non critical, try to continue */
-	}
-	
-	/* set autoclose */
-	optval=sctp_options.sctp_autoclose;
-	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
-					(void*)&optval, sizeof(optval)) ==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: %s\n",
-						strerror(errno));
-		/* non critical, try to continue */
-	}
-	
-	memset(&es, 0, sizeof(es));
-	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message
-	 *  information in sctp_sndrcvinfo */
-	es.sctp_data_io_event=1;
-	/* enable association event notifications */
-	es.sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
-	es.sctp_address_event=1;  /* enable address events notifications */
-	es.sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
-	es.sctp_peer_error_event=1;
-	es.sctp_shutdown_event=1;
-	es.sctp_partial_delivery_event=1;
-	es.sctp_adaptation_layer_event=1;
-	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
-	
-	/* enable the SCTP_EVENTS */
-	if (setsockopt(sock_info->socket, IPPROTO_SCTP, SCTP_EVENTS,
-						&es, sizeof(es))==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: setsockopt: SCTP_EVENTS: %s\n",
-						strerror(errno));
-		/* non critical, try to continue */
-	}
-	
 	/* SCTP_EVENTS for send dried out -> present in the draft not yet
 	 * present in linux (might help to detect when we could send again to
 	 * some peer, kind of poor's man poll on write, based on received
 	 * SCTP_SENDER_DRY_EVENTs */
 	
-	
-	/* bind the addresses  (TODO multiple addresses support)*/
-	if (bind(sock_info->socket,  &addr->s, sockaddru_len(*addr))==-1){
-		LOG(L_ERR, "ERROR: sctp_init_sock: bind(%x, %p, %d) on %s: %s\n",
-				sock_info->socket, &addr->s, 
-				(unsigned)sockaddru_len(*addr),
-				sock_info->address_str.s,
-				strerror(errno));
-	#ifdef USE_IPV6
-		if (addr->s.sa_family==AF_INET6)
-			LOG(L_ERR, "ERROR: sctp_init_sock: might be caused by using a "
-							"link local address, try site local or global\n");
-	#endif
+	if (sctp_bind_sock(sock_info)<0)
 		goto error;
-	}
-	for (ai=sock_info->addr_info_lst; ai; ai=ai->next)
-		if (sctp_bindx(sock_info->socket, &ai->su.s, 1, SCTP_BINDX_ADD_ADDR)
-					==-1){
-			LOG(L_ERR, "ERROR: sctp_init_sock: sctp_bindx(%x, %.*s:%d, 1, ...)"
-						" on %s:%d : [%d] %s (trying to continue)\n",
-						sock_info->socket,
-						ai->address_str.len, ai->address_str.s, 
-						sock_info->port_no,
-						sock_info->address_str.s, sock_info->port_no,
-						errno, strerror(errno));
-		#ifdef USE_IPV6
-			if (ai->su.s.sa_family==AF_INET6)
-				LOG(L_ERR, "ERROR: sctp_init_sock: might be caused by using a "
-							"link local address, try site local or global\n");
-		#endif
-			/* try to continue, a secondary address bind failure is not 
-			 * critical */
-		}
 	if (listen(sock_info->socket, 1)<0){
 		LOG(L_ERR, "ERROR: sctp_init_sock: listen(%x, 1) on %s: %s\n",
 					sock_info->socket, sock_info->address_str.s,
