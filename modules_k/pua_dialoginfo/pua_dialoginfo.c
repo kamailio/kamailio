@@ -229,7 +229,7 @@ __dialog_sendpublish(struct dlg_cell *dlg, int type, struct dlg_cb_params *_para
 			} else {
 				dialog_publish("early", &(dlg->from_uri), &(dlg->to_uri), &(dlg->callid), 1, initial_lifetime, &(dlg->tag[0]), &tag);
 			}
-			dialog_publish("early", &(dlg->to_uri), &(dlg->from_uri), &(dlg->callid), 0, initial_lifetime, &(dlg->tag[0]), &tag);
+			dialog_publish("early", &(dlg->to_uri), &(dlg->from_uri), &(dlg->callid), 0, initial_lifetime, &tag, &(dlg->tag[0]));
 		} else {
 			if (caller_confirmed) {
 				dialog_publish("confirmed", &(dlg->from_uri), &(dlg->to_uri), &(dlg->callid), 1, initial_lifetime, 0, 0);

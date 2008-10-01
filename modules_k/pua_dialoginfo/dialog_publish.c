@@ -55,7 +55,7 @@ void print_publ(publ_info_t* p)
 }	
 
 str* build_dialoginfo(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, str *callertag, str *calleetag)
+	unsigned int initiator, str *localtag, str *remotetag)
 {
 	xmlDocPtr  doc = NULL; 
 	xmlNodePtr root_node = NULL;
@@ -125,22 +125,22 @@ str* build_dialoginfo(char *state, str *entity, str *peer, str *callid,
 		xmlNewProp(dialog_node, BAD_CAST "call-id", BAD_CAST buf);
 	}
 	if (include_tags) {
-		if (callertag && callertag->s) {
-			if (callertag->len > MAX_URI_SIZE) {
-				LM_ERR("callertag '%.*s' too long, maximum=%d\n", callertag->len, callertag->s, MAX_URI_SIZE);
+		if (localtag && localtag->s) {
+			if (localtag->len > MAX_URI_SIZE) {
+				LM_ERR("localtag '%.*s' too long, maximum=%d\n", localtag->len, localtag->s, MAX_URI_SIZE);
 				return NULL;
 			}
-		    memcpy(buf, callertag->s, callertag->len);
-			buf[callertag->len]= '\0';
+		    memcpy(buf, localtag->s, localtag->len);
+			buf[localtag->len]= '\0';
 			xmlNewProp(dialog_node, BAD_CAST "local-tag", BAD_CAST buf);
 		}
-		if (calleetag && calleetag->s) {
-			if (calleetag->len > MAX_URI_SIZE) {
-				LM_ERR("calleetag '%.*s' too long, maximum=%d\n", calleetag->len, calleetag->s, MAX_URI_SIZE);
+		if (remotetag && remotetag->s) {
+			if (remotetag->len > MAX_URI_SIZE) {
+				LM_ERR("remotetag '%.*s' too long, maximum=%d\n", remotetag->len, remotetag->s, MAX_URI_SIZE);
 				return NULL;
 			}
-		    memcpy(buf, calleetag->s, calleetag->len);
-			buf[calleetag->len]= '\0';
+		    memcpy(buf, remotetag->s, remotetag->len);
+			buf[remotetag->len]= '\0';
 			xmlNewProp(dialog_node, BAD_CAST "remote-tag", BAD_CAST buf);
 		}
 	}
@@ -251,7 +251,7 @@ error:
 }	
 
 void dialog_publish(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, unsigned int lifetime, str *callertag, str *calleetag)
+	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag)
 {
 	str* body= NULL;
 	str uri= {NULL, 0};
@@ -273,7 +273,7 @@ void dialog_publish(char *state, str *entity, str *peer, str *callid,
 	content_type.s= "application/dialog-info+xml";
 	content_type.len= 27;
 
-	body= build_dialoginfo(state, entity, peer, callid, initiator, callertag, calleetag);
+	body= build_dialoginfo(state, entity, peer, callid, initiator, localtag, remotetag);
 	if(body == NULL || body->s == NULL)
 		goto error;
 	

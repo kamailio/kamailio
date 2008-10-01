@@ -30,6 +30,6 @@
 send_publish_t pua_send_publish;
 
 void dialog_publish(char *state, str *entity, str *peer, str *callid, 
-	unsigned int initiator, unsigned int lifetime, str *callertag, str *calleetag);
+	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag);
 
 #endif
