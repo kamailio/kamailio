@@ -83,12 +83,23 @@ error:
 
 
 /* set common (for one to many and one to one) sctp socket options
+   tries to ignore non-critical errors (it will only log them), for
+   improved portability (for example older linux kernel version support
+   only a limited number of sctp socket options)
    returns 0 on success, -1 on error */
 static int sctp_init_sock_opt_common(int s)
 {
 	struct sctp_event_subscribe es;
 	int optval;
 	socklen_t optlen;
+	
+	/* set tos */
+	optval = tos;
+	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
+		LOG(L_WARN, "WARNING: sctp_init_sock_opt_common: setsockopt tos: %s\n",
+				strerror(errno));
+		/* continue since this is not critical */
+	}
 	
 	/* set receive buffer: SO_RCVBUF*/
 	if (sctp_options.sctp_so_rcvbuf){
@@ -120,7 +131,7 @@ static int sctp_init_sock_opt_common(int s)
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 					"SCTP_FRAGMENT_INTERLEAVE: %s\n", strerror(errno));
-		goto error;
+		/* try to continue */
 	}
 	
 	/* turn off partial delivery: on linux setting SCTP_PARTIAL_DELIVERY_POINT
@@ -132,14 +143,15 @@ static int sctp_init_sock_opt_common(int s)
 					(void*)&optval, &optlen) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: getsockopt: "
 						"SO_RCVBUF: %s\n", strerror(errno));
-		goto error;
+		/* try to continue */
+		optval=0;
 	}
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 						"SCTP_PARTIAL_DELIVERY_POINT (%d): %s\n",
 						optval, strerror(errno));
-		goto error;
+		/* try to continue */
 	}
 	
 	/* nagle / no delay */
@@ -191,8 +203,9 @@ static int sctp_init_sock_opt_common(int s)
 	}
 	
 	return 0;
-error:
+/*error:
 	return -1;
+*/
 }
 
 
