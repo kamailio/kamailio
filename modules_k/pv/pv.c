@@ -27,13 +27,18 @@
 #include "../../sr_module.h"
 #include "../../pvar.h"
 #include "pv_branch.h"
+#include "pv_core.h"
 
 
 MODULE_VERSION
 
 static pv_export_t mod_pvs[] = {
-	{ {"branch", sizeof("branch")-1}, 101, pv_get_branchx, pv_set_branchx,
+	{ {"branch", sizeof("branch")-1}, /* branch attributes */
+		101, pv_get_branchx, pv_set_branchx,
 		pv_parse_branchx_name, pv_parse_index, 0, 0 },
+	{ {"mi", (sizeof("mi")-1)}, /* message id */
+		PVT_MSGID, pv_get_msgid, 0,
+		0, 0, 0, 0},
 	{ {0, 0}, 0, 0, 0, 0, 0, 0, 0 }
 };
 
