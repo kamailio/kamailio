@@ -292,6 +292,20 @@ DISPATCHER_DESTINATION_COLUMN=destination
 DISPATCHER_FLAGS_COLUMN=flags
 DISPATCHER_DESCRIPTION_COLUMN=description
 
+# dialplan tables
+if [ -z "$DIALPLAN_TABLE" ] ; then
+	DIALPLAN_TABLE=dialplan
+fi
+DIALPLAN_ID_COLUMN=id
+DIALPLAN_DPID_COLUMN=dpid
+DIALPLAN_PR_COLUMN=pr
+DIALPLAN_MATCH_OP_COLUMN=match_op
+DIALPLAN_MATCH_EXP_COLUMN=match_exp
+DIALPLAN_MATCH_LEN_COLUMN=match_len
+DIALPLAN_SUBST_EXP_COLUMN=subst_exp
+DIALPLAN_REPL_EXP_COLUMN=repl_exp
+DIALPLAN_ATTRS_COLUMN=attrs
+
 #
 ##### ------------------------------------------------ #####
 ### usage functions
@@ -438,6 +452,22 @@ cat <<EOF
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_dispatcher"
+
+usage_dialplan() {
+	echo
+	mecho " -- command 'dialplan' - manage dialplans"
+	echo
+cat <<EOF
+ dialplan show <dpid> .............. show dialplan tables
+ dialplan reload ................... reload dialplan tables
+ dialplan addrule <dpid> <prio> <match_op> <match_exp>
+ 		<match_len> <subst_exp> <repl_exp> <attrs>
+		.................... add a rule
+ dialplan rm ....................... removes the entire dialplan table
+ dialplan rmdpid <dpid> ............ removes all the gived dpid entries
+ dialplan rmrule <dpid> <prio> ..... removes all the gived dpid/prio entries
+EOF
+}
 
 ##### ----------------------------------------------- #####
 #### Common functions

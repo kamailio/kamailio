@@ -1442,6 +1442,139 @@ dispatcher() {
 
 #
 ##### ------------------------------------------------ #####
+### DIALPLAN management
+#
+dialplan() {
+	require_dbengine
+	require_ctlengine
+	case $1 in
+		show)
+			shift
+			if [ $# -gt 0 ] ; then
+				mecho "dialplan $1 tables"
+				QUERY="select * FROM $DIALPLAN_TABLE WHERE $DIALPLAN_DPID_COLUMN=$1 ORDER BY $DIALPLAN_PR_COLUMN ; "
+			else
+				mecho "dialplan tables"
+				QUERY="select * FROM $DIALPLAN_TABLE ORDER BY $DIALPLAN_DPID_COLUMN, $DIALPLAN_PR_COLUMN; "
+			fi
+			$DBROCMD "$QUERY"
+			;;
+
+		addrule)
+			shift
+			if [ $# -lt 8 ] ; then
+				merr "too few parameters"
+				usage_dialplan
+				exit 1
+			fi
+
+			DIALPLAN_DPID=$1
+			DIALPLAN_PR=$2
+			DIALPLAN_MATCH_OP=$3
+			case $DIALPLAN_MATCH_OP in
+				equal)
+					DIALPLAN_MATCH_OP=0
+					;;
+				regexp)
+					DIALPLAN_MATCH_OP=1
+					;;
+				*)
+					merr "dialplan - unexpected $DIALPLAN_MATCH_OP for operating matching. Use 'equal' or 'regexp'!"
+					exit 1
+			esac
+			DIALPLAN_MATCH_EXP=$4
+			DIALPLAN_MATCH_LEN=$5
+			DIALPLAN_SUBST_EXP=$6
+			DIALPLAN_REPL_EXP=$7
+			DIALPLAN_ATTRS=$8
+
+			QUERY="insert into $DIALPLAN_TABLE \
+				( $DIALPLAN_DPID_COLUMN, $DIALPLAN_PR_COLUMN, $DIALPLAN_MATCH_OP_COLUMN, \
+					$DIALPLAN_MATCH_EXP_COLUMN, $DIALPLAN_MATCH_LEN_COLUMN, \
+					$DIALPLAN_SUBST_EXP_COLUMN, $DIALPLAN_REPL_EXP_COLUMN, \
+					$DIALPLAN_ATTRS_COLUMN ) \
+				VALUES ( $DIALPLAN_DPID, $DIALPLAN_PR, $DIALPLAN_MATCH_OP, \
+					'$DIALPLAN_MATCH_EXP', $DIALPLAN_MATCH_LEN, '$DIALPLAN_SUBST_EXP', \
+					'$DIALPLAN_REPL_EXP', '$DIALPLAN_ATTRS')";
+			mecho "$QUERY"
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dialplan - SQL Error"
+				exit 1
+			fi
+
+			$CTLCMD dp_reload
+			;;
+
+		rm)
+			QUERY="delete from $DIALPLAN_TABLE; "
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dialplan - SQL Error"
+				exit 1
+			fi
+
+			$CTLCMD dp_reload
+			;;
+
+		rmdpid)
+			shift
+			if [ $# -lt 1 ] ; then
+				merr "too few parameters"
+				usage_dialplan
+				exit 1
+			fi
+
+			DIALPLAN_DPID=$1
+
+			QUERY="delete from $DIALPLAN_TABLE where $DIALPLAN_DPID_COLUMN=$DIALPLAN_DPID; "
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dialplan - SQL Error"
+				exit 1
+			fi
+
+			$CTLCMD dp_reload
+			;;
+
+		rmrule)
+			shift
+			if [ $# -lt 2 ] ; then
+				merr "too few parameters"
+				usage_dialplan
+				exit 1
+			fi
+
+			DIALPLAN_DPID=$1
+			DIALPLAN_PR=$2
+
+			QUERY="delete from $DIALPLAN_TABLE where $DIALPLAN_DPID_COLUMN=$DIALPLAN_DPID AND $DIALPLAN_PR_COLUMN=$DIALPLAN_PR; "
+			$DBCMD "$QUERY"
+
+			if [ $? -ne 0 ] ; then
+				merr "dialplan - SQL Error"
+				exit 1
+			fi
+
+			$CTLCMD dp_reload
+			;;
+
+		reload)
+			$CTLCMD dp_reload
+			;;
+
+		*)
+			usage_dialplan
+			exit 1
+
+	esac
+}
+
+#
+##### ------------------------------------------------ #####
 ### openser_start
 #
 openser_start() {
@@ -2280,6 +2413,11 @@ case $1 in
 	dispatcher)
 		shift
 		dispatcher "$@"
+		;;
+
+	dialplan)
+		shift
+		dialplan "$@"
 		;;
 
 	monitor|console|moni|con)
