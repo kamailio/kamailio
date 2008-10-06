@@ -244,11 +244,11 @@ int db_unixodbc_free_result(db_con_t* _h, db_res_t* _r)
  * _o: order by the specified column
  */
 int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
-const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
-const db_key_t _o, db_res_t** _r)
+		const db_val_t* _v, const db_key_t* _c, const int _n, const int _nc,
+		const db_key_t _o, db_res_t** _r)
 {
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
-	db_unixodbc_val2str,  db_unixodbc_submit_query, db_unixodbc_store_result);
+			db_unixodbc_val2str,  db_unixodbc_submit_query, db_unixodbc_store_result);
 }
 
 /*
@@ -257,7 +257,7 @@ const db_key_t _o, db_res_t** _r)
 int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 {
 	return db_do_raw_query(_h, _s, _r, db_unixodbc_submit_query,
-	db_unixodbc_store_result);
+			db_unixodbc_store_result);
 }
 
 /*
@@ -270,7 +270,7 @@ int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r)
 int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_insert(_h, _k, _v, _n, db_unixodbc_val2str,
-	db_unixodbc_submit_query);
+			db_unixodbc_submit_query);
 }
 
 /*
@@ -282,10 +282,10 @@ int db_unixodbc_insert(const db_con_t* _h, const db_key_t* _k, const db_val_t* _
  * _n: number of key=value pairs
  */
 int db_unixodbc_delete(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-const db_val_t* _v, const int _n)
+		const db_val_t* _v, const int _n)
 {
 	return db_do_delete(_h, _k, _o, _v, _n, db_unixodbc_val2str,
-	db_unixodbc_submit_query);
+			db_unixodbc_submit_query);
 }
 
 /*
@@ -300,10 +300,10 @@ const db_val_t* _v, const int _n)
  * _un: number of columns to update
  */
 int db_unixodbc_update(const db_con_t* _h, const db_key_t* _k, const db_op_t* _o,
-const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un)
+		const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, const int _un)
 {
 	return db_do_update(_h, _k, _o, _v, _uk, _uv, _n, _un, db_unixodbc_val2str,
-	db_unixodbc_submit_query);
+			db_unixodbc_submit_query);
 }
 
 /*
@@ -312,7 +312,7 @@ const db_val_t* _v, const db_key_t* _uk, const db_val_t* _uv, const int _n, cons
 int db_unixodbc_replace(const db_con_t* _h, const db_key_t* _k, const db_val_t* _v, const int _n)
 {
 	return db_do_replace(_h, _k, _v, _n, db_unixodbc_val2str,
-	db_unixodbc_submit_query);
+			db_unixodbc_submit_query);
 }
 
 /*
