@@ -31,9 +31,18 @@
  * \ingroup presence_xml
  */
 
-#define _XOPEN_SOURCE
+/**
+ * make strptime available
+ * use 600 for 'Single UNIX Specification, Version 3'
+ */
+#define _XOPEN_SOURCE 600          /* glibc2 on linux, bsd */
+#define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
 
 #include <time.h>
+  
+#undef _XOPEN_SOURCE
+#undef _XOPEN_SOURCE_EXTENDED
+
 #include <string.h>
 #include <stdlib.h>
 #include <libxml/parser.h>
