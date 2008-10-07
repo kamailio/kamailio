@@ -183,7 +183,9 @@ static int sctp_init_sock_opt_common(int s)
 	struct sctp_event_subscribe es;
 	int optval;
 	socklen_t optlen;
+	int sctp_err;
 	
+	sctp_err=0;
 	/* set tos */
 	optval = tos;
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, (void*)&optval,sizeof(optval)) ==-1){
@@ -223,6 +225,7 @@ static int sctp_init_sock_opt_common(int s)
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 					"SCTP_FRAGMENT_INTERLEAVE: %s\n", strerror(errno));
+		sctp_err++;
 		/* try to continue */
 	}
 #endif /* SCTP_FRAGMENT_INTERLEAVE */
@@ -245,6 +248,7 @@ static int sctp_init_sock_opt_common(int s)
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 						"SCTP_PARTIAL_DELIVERY_POINT (%d): %s\n",
 						optval, strerror(errno));
+		sctp_err++;
 		/* try to continue */
 	}
 #endif /* SCTP_PARTIAL_DELIVERY_POINT */
@@ -256,6 +260,7 @@ static int sctp_init_sock_opt_common(int s)
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 						"SCTP_NODELAY: %s\n", strerror(errno));
+		sctp_err++;
 		/* non critical, try to continue */
 	}
 #endif /* SCTP_NODELAY */
@@ -267,6 +272,7 @@ static int sctp_init_sock_opt_common(int s)
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 						"SCTP_DISABLE_FRAGMENTS: %s\n", strerror(errno));
+		sctp_err++;
 		/* non critical, try to continue */
 	}
 #endif /* SCTP_DISABLE_FRAGMENTS */
@@ -280,6 +286,7 @@ static int sctp_init_sock_opt_common(int s)
 						"SCTP_AUTOCLOSE: %s (critical)\n", strerror(errno));
 		/* critical: w/o autoclose we could have sctp connection living
 		   forever (if the remote side doesn't close them) */
+		sctp_err++;
 		goto error;
 	}
 #else
@@ -305,10 +312,15 @@ static int sctp_init_sock_opt_common(int s)
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, &es, sizeof(es))==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 				"SCTP_EVENTS: %s\n", strerror(errno));
+		sctp_err++;
 		/* non critical, try to continue */
 	}
 #endif /* SCTP_EVENTS */
 	
+	if (sctp_err){
+		LOG(L_ERR, "ERROR: sctp: setting some sctp sockopts failed, "
+					"consider upgrading your kernel\n");
+	}
 	return 0;
 error:
 	return -1;
