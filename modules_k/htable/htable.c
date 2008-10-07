@@ -29,9 +29,11 @@
 #include <fcntl.h>
 
 #include "../../sr_module.h"
+#include "../../dprint.h"
 
 #include "../../pvar.h"
 #include "ht_api.h"
+#include "ht_db.h"
 #include "ht_var.h"
 
 
@@ -59,7 +61,15 @@ static cmd_export_t cmds[]={
 };
 
 static param_export_t params[]={
-	{"hash_size",    INT_PARAM, &ht_size},
+	{"hash_size",          INT_PARAM, &ht_size},
+	{"db_url",             STR_PARAM, &ht_db_url.s},
+	{"db_table",           STR_PARAM, &ht_db_table.s},
+	{"key_name_column",    STR_PARAM, &ht_db_name_column.s},
+	{"key_type_column",    STR_PARAM, &ht_db_ktype_column.s},
+	{"value_type_column",  STR_PARAM, &ht_db_vtype_column.s},
+	{"key_value_column",   STR_PARAM, &ht_db_value_column.s},
+	{"array_size_suffix",  STR_PARAM, &ht_array_size_suffix.s},
+	{"fetch_rows",         INT_PARAM, &ht_fetch_rows},
 	{0,0,0}
 };
 
@@ -91,6 +101,21 @@ static int mod_init(void)
 		ht_size = 14;
 	if(ht_init(1<<ht_size)!=0)
 		return -1;
+	ht_db_init_params();
+
+	if(ht_db_url.len>0 && ht_db_table.len>0)
+	{
+		if(ht_db_init_con()!=0)
+			return -1;
+		if(ht_db_open_con()!=0)
+			return -1;
+		if(ht_db_load_table()!=0)
+		{
+			ht_db_close_con();
+			return -1;
+		}
+		ht_db_close_con();
+	}
 	return 0;
 }
 

@@ -106,6 +106,68 @@ if(is_present_hf("Authorization"))
 			</itemizedlist>
 		</para>
 	</section>
+	<section>
+		<title>Loading from database</title>
+		<para>
+		The module is able to load values in hash table at startup upon
+		providing a DB URL and table name.
+		</para>
+		<para>
+			The structure of the table must contain:
+		</para>
+			<itemizedlist>
+			<listitem>
+			<para>
+				<emphasis>key name</emphasis> - string containing the name of
+				the key.
+			</para>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>key type</emphasis> - the type of the key
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>0</emphasis> - simple key - the key is added
+					as 'key_name'.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>1</emphasis> - array key - the key is added
+					as 'key_name[n]'. n is incremented for each key with this
+					name to build an array in hash table.
+				</para>
+				</listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>value type</emphasis> - the type of the key value
+			</para>
+			<itemizedlist>
+				<listitem>
+				<para>
+					<emphasis>0</emphasis> - value is string.
+				</para>
+				</listitem>
+				<listitem>
+				<para>
+					<emphasis>1</emphasis> - value is integer.
+				</para>
+				</listitem>
+			</itemizedlist>
+			</listitem>
+			<listitem>
+			<para>
+				<emphasis>key value</emphasis> - string containing the value of
+				the key.
+			</para>
+			</listitem>
+			</itemizedlist>
+	</section>
+
 	</section>
 	<section>
 	<title>Exported Parameters</title>
@@ -124,6 +186,161 @@ if(is_present_hf("Authorization"))
 		<programlisting format="linespecific">
 ...
 modparam("htable", "hash_size", 10)
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_url</varname> (str)</title>
+		<para>
+			The URL to connect to database for loading values in hash
+			table at start up.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (do not connect).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_url</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "db_url", "mysql://openser:openserrw@localhost/openser")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>db_table</varname> (str)</title>
+		<para>
+			The DB table name to load values from it in hash
+			table at start up.
+		</para>
+		<para>
+		<emphasis>
+			Default value is NULL (do not load).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>db_table</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "db_url", "htable")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>key_name_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table key name.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'key_name'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "key_name_column", "kname")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>key_type_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table key type.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'key_type'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_name</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "key_type_column", "ktype")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>value_type_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table value type.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'value_type'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>value_type</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "value_type", "vtype")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>key_value_column</varname> (str)</title>
+		<para>
+			The name of the column containing hash table key value.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 'key_value'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>key_value</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "key_value", "kvalue")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>array_size_suffix</varname> (str)</title>
+		<para>
+			The suffix to be added to store the number of items in an
+			array.
+		</para>
+		<para>
+		<emphasis>
+			Default value is '::size'.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>array_size_suffix</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "array_size_suffix", "-count")
+...
+</programlisting>
+		</example>
+	</section>
+	<section>
+		<title><varname>fetch_rows</varname> (integer)</title>
+		<para>
+		How many rows to fetch at once from database.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 100.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("htable", "fetch_rows", 1000)
 ...
 </programlisting>
 		</example>
