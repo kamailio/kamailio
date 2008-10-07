@@ -65,7 +65,7 @@ int sctp_check_support()
 		if (sctp_check_compiled_sockopts(buf, sizeof(buf))!=0){
 			LOG(L_WARN, "WARNING: sctp: your ser version was compiled"
 						" without support for the following sctp options: %s"
-						" which might cause unforseen problems \n", buf);
+						", which might cause unforseen problems \n", buf);
 			LOG(L_WARN, "WARNING: sctp: please consider recompiling ser with"
 						" an upgraded sctp library version\n");
 		}
@@ -228,6 +228,8 @@ static int sctp_init_sock_opt_common(int s)
 		sctp_err++;
 		/* try to continue */
 	}
+#else
+#warning no sctp lib support for SCTP_FRAGMENT_INTERLEAVE, consider upgrading
 #endif /* SCTP_FRAGMENT_INTERLEAVE */
 	
 	/* turn off partial delivery: on linux setting SCTP_PARTIAL_DELIVERY_POINT
@@ -251,6 +253,8 @@ static int sctp_init_sock_opt_common(int s)
 		sctp_err++;
 		/* try to continue */
 	}
+#else
+#warning no sctp lib support for SCTP_PARTIAL_DELIVERY_POINT, consider upgrading
 #endif /* SCTP_PARTIAL_DELIVERY_POINT */
 	
 	/* nagle / no delay */
@@ -263,6 +267,8 @@ static int sctp_init_sock_opt_common(int s)
 		sctp_err++;
 		/* non critical, try to continue */
 	}
+#else
+#warning no sctp lib support for SCTP_NODELAY, consider upgrading
 #endif /* SCTP_NODELAY */
 	
 	/* enable message fragmentation (SCTP_DISABLE_FRAGMENTS)  (on send) */
@@ -275,6 +281,8 @@ static int sctp_init_sock_opt_common(int s)
 		sctp_err++;
 		/* non critical, try to continue */
 	}
+#else
+#warning no sctp lib support for SCTP_DISABLE_FRAGMENTS, consider upgrading
 #endif /* SCTP_DISABLE_FRAGMENTS */
 	
 	/* set autoclose */
@@ -304,7 +312,7 @@ static int sctp_init_sock_opt_common(int s)
 	es.sctp_peer_error_event=1;
 	es.sctp_shutdown_event=1;
 	es.sctp_partial_delivery_event=1;
-	es.sctp_adaptation_layer_event=1;
+	/* es.sctp_adaptation_layer_event=1; - not supported by lksctp<=1.0.6*/
 	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
 	
 	/* enable the SCTP_EVENTS */
@@ -315,6 +323,8 @@ static int sctp_init_sock_opt_common(int s)
 		sctp_err++;
 		/* non critical, try to continue */
 	}
+#else
+#warning no sctp lib support for SCTP_EVENTS, consider upgrading
 #endif /* SCTP_EVENTS */
 	
 	if (sctp_err){
@@ -549,9 +559,11 @@ static char* sctp_paddr_change_state2s(unsigned int state)
 		case SCTP_ADDR_MADE_PRIM:
 			s="SCTP_ADDR_MADE_PRIM";
 			break;
+	/* not supported by lksctp 1.0.6 
 		case SCTP_ADDR_CONFIRMED:
 			s="SCTP_ADDR_CONFIRMED";
 			break;
+	*/
 		default:
 			s="UNKNOWN";
 			break;
