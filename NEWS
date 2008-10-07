@@ -282,16 +282,17 @@ new config variables:
     balancing (see doc/dns.txt)
   dns_try_naptr = yes | no (default no) - enable naptr support 
     (see doc/dns.txt for more info)
-  dns_{udp,tcp,tls}_pref = number - ser preference for each protocol when
-    doing naptr lookups. By default dns_udp_pref=3, dns_tcp_pref=2 and 
-    dns_tls_pref=1. To use the remote site preferences set all dns_*_pref to 
-    the same positive value (e.g. dns_udp_pref=1, dns_tcp_pref=1, 
-    dns_udp_pref=1). To completely ignore NAPTR records for a specific 
-    protocol, set the corresponding protocol preference to -1 (or any other 
-    negative number).  (see doc/dns.txt for more info)
-  dns_search_full_match = yes | no (default yes) - when name was resolved using
-    dns search list, check the domain added in the answer matches with one from
-    the search list (small performance hit, but more safe)
+  dns_{udp,tcp,tls,sctp}_pref = number - ser preference for each protocol
+    when doing naptr lookups. By default dns_udp_pref=30, dns_tcp_pref=20, 
+    dns_tls_pref=10 and dns_sctp_pref=20. To use the remote site preferences
+    set all dns_*_pref to the same positive value (e.g. dns_udp_pref=1,
+    dns_tcp_pref=1, dns_tls_pref=1, dns_sctp_pref=1). To completely ignore 
+    NAPTR records for a specific protocol, set the corresponding protocol 
+    preference to -1 (or any other negative number).  (see doc/dns.txt for 
+    more info)
+  dns_search_full_match = yes | no (default yes) - when name was resolved 
+    using dns search list, check the domain added in the answer matches with
+    one from the search list (small performance hit, but more safe)
   mlock_pages = yes |no (default no) - locks all ser pages into memory making 
     it unswappable (in general one doesn't want his sip proxy swapped out :-))
   shm_force_alloc = yes | no (default no) - tries to pre-fault all the 
