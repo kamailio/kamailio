@@ -1548,6 +1548,12 @@ int main(int argc, char** argv)
 					printf("version: %s\n", version);
 					printf("flags: %s\n", flags );
 					print_ct_constants();
+#ifdef USE_SCTP
+					tmp=malloc(256);
+					if (tmp && (sctp_check_compiled_sockopts(tmp, 256)!=0))
+						printf("sctp unsupported socket options: %s\n", tmp);
+					if (tmp) free(tmp);
+#endif
 					printf("%s\n",id);
 					printf("%s compiled on %s with %s\n", __FILE__,
 							compiled, COMPILER );
@@ -1801,6 +1807,23 @@ try_again:
 		tls_disable=1; /* if no tcp => no tls */
 #endif /* USE_TLS */
 #endif /* USE_TCP */
+#ifdef USE_SCTP
+	if (sctp_disable!=1){
+		/* fix it */
+		if (sctp_check_support()==-1){
+			/* check if sctp support is auto, if not warn about disabling it */
+			if (sctp_disable!=2){
+				fprintf(stderr, "ERROR: " "sctp enabled, but not supported by"
+								" the OS\n");
+				goto error;
+			}
+			sctp_disable=1;
+		}else{
+			/* sctp_disable!=1 and sctp supported => enable sctp */
+			sctp_disable=0;
+		}
+	}
+#endif /* USE_SCTP */
 	/* initialize the configured proto list */
 	init_proto_order();
 	/* init the resolver, before fixing the config */
@@ -1819,21 +1842,6 @@ try_again:
 	}
 #endif
 #ifdef USE_SCTP
-	if (sctp_disable!=1){
-		/* fix it */
-		if (sctp_check_support()==-1){
-			/* check if sctp support is auto, if not warn about disabling it */
-			if (sctp_disable!=2){
-				fprintf(stderr, "ERROR: " "sctp enabled, but not supported by"
-								" the OS\n");
-				goto error;
-			}
-			sctp_disable=1;
-		}else{
-			/* sctp_disable!=1 and sctp supported => enable sctp */
-			sctp_disable=0;
-		}
-	}
 	if (!sctp_disable){
 		if (sctp_children_no<=0) sctp_children_no=children_no;
 	}

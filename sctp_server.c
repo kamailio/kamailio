@@ -57,12 +57,87 @@
 int sctp_check_support()
 {
 	int s;
+	char buf[256];
+	
 	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
 	if (s!=-1){
 		close(s);
+		if (sctp_check_compiled_sockopts(buf, sizeof(buf))!=0){
+			LOG(L_WARN, "WARNING: sctp: your ser version was compiled"
+						" without support for the following sctp options: %s"
+						" which might cause unforseen problems \n", buf);
+			LOG(L_WARN, "WARNING: sctp: please consider recompiling ser with"
+						" an upgraded sctp library version\n");
+		}
 		return 0;
 	}
 	return -1;
+}
+
+
+
+/* append a token to a buffer (uses space between tokens) */
+inline static void append_tok2buf(char* buf, int blen, char* tok)
+{
+	char* p;
+	char* end;
+	int len;
+	
+	if (buf && blen){
+		end=buf+blen;
+		p=memchr(buf, 0, blen);
+		if (p==0) goto error;
+		if (p!=buf && p<(end-1)){
+			*p=' ';
+			p++;
+		}
+		len=MIN_int(strlen(tok), end-1-p);
+		memcpy(p, tok, len);
+		p[len]=0;
+	}
+error:
+	return;
+}
+
+
+
+/* check if support fot all the needed sockopts  was compiled;
+   an ascii list of the unsuported options is returned in buf
+   returns 0 on success and  -number of unsuported options on failure
+   (<0 on failure)
+*/
+int sctp_check_compiled_sockopts(char* buf, int size)
+{
+	int err;
+
+	err=0;
+	if (buf && (size>0)) *buf=0; /* "" */
+#ifndef SCTP_FRAGMENT_INTERLEAVE
+	err++;
+	append_tok2buf(buf, size, "SCTP_FRAGMENT_INTERLEAVE");
+#endif
+#ifndef SCTP_PARTIAL_DELIVERY_POINT
+	err++;
+	append_tok2buf(buf, size, "SCTP_PARTIAL_DELIVERY_POINT");
+#endif
+#ifndef SCTP_NODELAY
+	err++;
+	append_tok2buf(buf, size, "SCTP_NODELAY");
+#endif
+#ifndef SCTP_DISABLE_FRAGMENTS
+	err++;
+	append_tok2buf(buf, size, "SCTP_DISABLE_FRAGMENTS");
+#endif
+#ifndef SCTP_AUTOCLOSE
+	err++;
+	append_tok2buf(buf, size, "SCTP_AUTOCLOSE");
+#endif
+#ifndef SCTP_EVENTS
+	err++;
+	append_tok2buf(buf, size, "SCTP_EVENTS");
+#endif
+	
+	return -err;
 }
 
 
@@ -101,7 +176,8 @@ error:
    tries to ignore non-critical errors (it will only log them), for
    improved portability (for example older linux kernel version support
    only a limited number of sctp socket options)
-   returns 0 on success, -1 on error */
+   returns 0 on success, -1 on error
+   WARNING: please keep it sync'ed w/ sctp_check_compiled_sockopts() */
 static int sctp_init_sock_opt_common(int s)
 {
 	struct sctp_event_subscribe es;
@@ -141,6 +217,7 @@ static int sctp_init_sock_opt_common(int s)
 	/* disable fragments interleave (SCTP_FRAGMENT_INTERLEAVE) --
 	 * we don't want partial delivery, so fragment interleave must be off too
 	 */
+#ifdef SCTP_FRAGMENT_INTERLEAVE
 	optval=0;
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_FRAGMENT_INTERLEAVE ,
 					(void*)&optval, sizeof(optval)) ==-1){
@@ -148,11 +225,13 @@ static int sctp_init_sock_opt_common(int s)
 					"SCTP_FRAGMENT_INTERLEAVE: %s\n", strerror(errno));
 		/* try to continue */
 	}
+#endif /* SCTP_FRAGMENT_INTERLEAVE */
 	
 	/* turn off partial delivery: on linux setting SCTP_PARTIAL_DELIVERY_POINT
 	 * to 0 or a very large number seems to be enough, however the portable
 	 * way to do it is to set it to the socket receive buffer size
 	 * (this is the maximum value allowed in the sctp api draft) */
+#ifdef SCTP_PARTIAL_DELIVERY_POINT
 	optlen=sizeof(optval);
 	if (getsockopt(s, SOL_SOCKET, SO_RCVBUF,
 					(void*)&optval, &optlen) ==-1){
@@ -168,8 +247,10 @@ static int sctp_init_sock_opt_common(int s)
 						optval, strerror(errno));
 		/* try to continue */
 	}
+#endif /* SCTP_PARTIAL_DELIVERY_POINT */
 	
 	/* nagle / no delay */
+#ifdef SCTP_NODELAY
 	optval=1;
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_NODELAY,
 					(void*)&optval, sizeof(optval)) ==-1){
@@ -177,8 +258,10 @@ static int sctp_init_sock_opt_common(int s)
 						"SCTP_NODELAY: %s\n", strerror(errno));
 		/* non critical, try to continue */
 	}
+#endif /* SCTP_NODELAY */
 	
 	/* enable message fragmentation (SCTP_DISABLE_FRAGMENTS)  (on send) */
+#ifdef SCTP_DISABLE_FRAGMENTS
 	optval=0;
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
 					(void*)&optval, sizeof(optval)) ==-1){
@@ -186,15 +269,22 @@ static int sctp_init_sock_opt_common(int s)
 						"SCTP_DISABLE_FRAGMENTS: %s\n", strerror(errno));
 		/* non critical, try to continue */
 	}
+#endif /* SCTP_DISABLE_FRAGMENTS */
 	
 	/* set autoclose */
+#ifdef SCTP_AUTOCLOSE
 	optval=sctp_options.sctp_autoclose;
-	if (setsockopt(s, IPPROTO_SCTP, SCTP_DISABLE_FRAGMENTS,
+	if (setsockopt(s, IPPROTO_SCTP, SCTP_AUTOCLOSE,
 					(void*)&optval, sizeof(optval)) ==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
-						"SCTP_DISABLE_FRAGMENTS: %s\n", strerror(errno));
-		/* non critical, try to continue */
+						"SCTP_AUTOCLOSE: %s (critical)\n", strerror(errno));
+		/* critical: w/o autoclose we could have sctp connection living
+		   forever (if the remote side doesn't close them) */
+		goto error;
 	}
+#else
+#error SCTP_AUTOCLOSE not supported, please upgrade your sctp library
+#endif /* SCTP_AUTOCLOSE */
 	
 	memset(&es, 0, sizeof(es));
 	/* SCTP_EVENTS for SCTP_SNDRCV (sctp_data_io_event) -> per message
@@ -211,16 +301,17 @@ static int sctp_init_sock_opt_common(int s)
 	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
 	
 	/* enable the SCTP_EVENTS */
+#ifdef SCTP_EVENTS
 	if (setsockopt(s, IPPROTO_SCTP, SCTP_EVENTS, &es, sizeof(es))==-1){
 		LOG(L_ERR, "ERROR: sctp_init_sock_opt_common: setsockopt: "
 				"SCTP_EVENTS: %s\n", strerror(errno));
 		/* non critical, try to continue */
 	}
+#endif /* SCTP_EVENTS */
 	
 	return 0;
-/*error:
+error:
 	return -1;
-*/
 }
 
 
