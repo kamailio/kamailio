@@ -1579,6 +1579,8 @@ int main(int argc, char** argv)
 			case 'g':
 			case 'P':
 			case 'G':
+			case 'S':
+			case 'O':
 			case 's':
 					break;
 			case '?':
