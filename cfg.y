@@ -380,6 +380,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token TLS_PRIVATE_KEY
 %token TLS_CA_LIST
 %token DISABLE_SCTP
+%token ENABLE_SCTP
 %token SCTP_CHILDREN
 %token SCTP_SOCKET_RCVBUF
 %token SCTP_SOCKET_SNDBUF
@@ -1093,6 +1094,14 @@ assign_stm:
 		#endif
 	}
 	| DISABLE_SCTP EQUAL error { yyerror("boolean value expected"); }
+	| ENABLE_SCTP EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_disable=($3<=1)?!$3:$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| ENABLE_SCTP EQUAL error { yyerror("boolean or number expected"); }
 	| SCTP_CHILDREN EQUAL NUMBER {
 		#ifdef USE_SCTP
 			sctp_children_no=$3;

@@ -52,6 +52,21 @@
 
 
 
+/* check if the underlying OS supports sctp
+   returns 0 if yes, -1 on error */
+int sctp_check_support()
+{
+	int s;
+	s = socket(PF_INET, SOCK_SEQPACKET, IPPROTO_SCTP);
+	if (s!=-1){
+		close(s);
+		return 0;
+	}
+	return -1;
+}
+
+
+
 /* init all the sockaddr_union members of the socket_info struct
    returns 0 on success and -1 on error */
 inline static int sctp_init_su(struct socket_info* sock_info)

@@ -324,6 +324,7 @@ TLS_CA_LIST		"tls_ca_list"
 TLS_HANDSHAKE_TIMEOUT	"tls_handshake_timeout"
 TLS_SEND_TIMEOUT	"tls_send_timeout"
 DISABLE_SCTP	"disable_sctp"
+ENABLE_SCTP	"enable_sctp"
 SCTP_CHILDREN	"sctp_children"
 SCTP_SOCKET_RCVBUF	"sctp_socket_rcvbuf"|"sctp_socket_receive_buffer"
 SCTP_SOCKET_SNDBUF	"sctp_socket_sndbuf"|"sctp_socket_send_buffer"
@@ -634,6 +635,7 @@ EAT_ABLE	[\ \t\b\r]
 <INITIAL>{TLS_SEND_TIMEOUT}	{ count(); yylval.strval=yytext;
 										return TLS_SEND_TIMEOUT; }
 <INITIAL>{DISABLE_SCTP}	{ count(); yylval.strval=yytext; return DISABLE_SCTP;}
+<INITIAL>{ENABLE_SCTP}	{ count(); yylval.strval=yytext; return ENABLE_SCTP;}
 <INITIAL>{SCTP_CHILDREN}	{ count(); yylval.strval=yytext;
 										return SCTP_CHILDREN; }
 <INITIAL>{SCTP_SOCKET_RCVBUF}	{ count(); yylval.strval=yytext;

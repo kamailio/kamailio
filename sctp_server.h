@@ -29,6 +29,7 @@
 
 #include "ip_addr.h"
 
+int sctp_check_support();
 int sctp_init_sock(struct socket_info* sock_info);
 int sctp_rcv_loop();
 int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len);

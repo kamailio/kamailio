@@ -220,7 +220,9 @@ core:
                between the short name and long name in cache as CNAME record
 
 new config variables:
-  disable_sctp = yes/no - diable sctp support
+  disable_sctp = yes/no - disable sctp support (default auto, see enable_sctp)
+  enable_sctp = 0/1/2  - disable (0)/enable (1)/auto (2) sctp support, 
+                         default auto (2)
   sctp_children = number - sctp children no (similar to udp children)
   sctp_socket_rcvbuf = number - size for the sctp socket receive buffer
   sctp_socket_sndbuf = number - size for the sctp socket send buffer
