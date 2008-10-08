@@ -42,5 +42,6 @@
  * \return zero on success, negative on errors
  */
 int db_unixodbc_convert_result(const db_con_t* _h, db_res_t* _r);
+int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r);
 
 #endif /* RES_H */

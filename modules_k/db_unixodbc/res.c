@@ -43,7 +43,7 @@
 /*
  * Get and convert columns from a result
  */
-static inline int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
+int db_unixodbc_get_columns(const db_con_t* _h, db_res_t* _r)
 {
 	int col;
 	SQLSMALLINT cols; //columns number

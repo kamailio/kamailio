@@ -39,7 +39,9 @@
 #include "../../db/db_query.h"
 #include "val.h"
 #include "con.h"
+#include "row.h"
 #include "res.h"
+#include "list.h"
 #include "db_unixodbc.h"
 #include "dbase.h"
 
@@ -250,6 +252,162 @@ int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
 	return db_do_query(_h, _k, _op, _v, _c, _n, _nc, _o, _r,
 			db_unixodbc_val2str,  db_unixodbc_submit_query, db_unixodbc_store_result);
 }
+
+/*
+ * Gets a partial result set.
+ * _h structure representing the database connection
+ * _r pointer to a structure representing the result
+ * nrows number of fetched rows
+ * return zero on success, negative value on failure
+ */
+int db_unixodbc_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
+{
+	int row_n = 0, i = 0, ret = 0, len;
+	SQLSMALLINT columns;
+	list* rows = NULL;
+	list* rowstart = NULL;
+	strn* temp_row = NULL;
+
+	if ((!_h) || (!_r) || nrows < 0)
+	{
+		LM_ERR("invalid parameter value\n");
+		return -1;
+	}
+
+	/* exit if the fetch count is zero */
+	if (nrows == 0) {
+		if (*_r)
+			db_free_result(*_r);
+		*_r = 0;
+		return 0;
+	}
+
+	/* On the first fetch for a query, allocate structures and get columns */
+	if(*_r == NULL) {
+		/* Allocate a new result structure */
+		*_r = db_new_result();
+		LM_DBG("just allocated a new db result structure");
+
+		if (*_r == NULL) {
+			LM_ERR("no memory left\n");
+			return -2;
+		}
+
+		/* Get columns names and count */
+		if (db_unixodbc_get_columns(_h, *_r) < 0) {
+			LM_ERR("getting column names failed\n");
+			db_free_columns(*_r);
+			return -2;
+		}
+
+	/* On subsequent fetch attempts, reuse already allocated structures */
+	} else {
+		LM_DBG("db result structure already exist, reusing\n");
+		/* free old rows */
+		if(RES_ROWS(*_r) != NULL)
+			db_free_rows(*_r);
+		RES_ROWS(*_r) = 0;
+		RES_ROW_N(*_r) = 0;
+	}
+
+	SQLNumResultCols(CON_RESULT(_h), (SQLSMALLINT *)&columns);
+
+	/* Allocate a temporary row */
+	temp_row = (strn*)pkg_malloc( columns*sizeof(strn) );
+	if(!temp_row) {
+		LM_ERR("no private memory left\n");
+		return -1;
+	}
+
+	/* Now fetch nrows at most */
+	len = sizeof(db_row_t) * nrows;
+	RES_ROWS(*_r) = (struct db_row*)pkg_malloc(len);
+	if (!RES_ROWS(*_r)) {
+		LM_ERR("no memory left\n");
+		return -5;
+	}
+	LM_DBG("allocated %d bytes for RES_ROWS at %p\n", len, RES_ROWS(*_r));
+
+	LM_DBG("Now fetching %i rows at most\n", nrows);
+	while(SQL_SUCCEEDED(ret = SQLFetch(CON_RESULT(_h)))) {
+		LM_DBG("fetching %d columns for row %d...\n",columns, row_n);
+		for(i=0; i < columns; i++) {
+			SQLLEN indicator;
+			LM_DBG("fetching column %d\n",i);
+
+			ret = SQLGetData(CON_RESULT(_h), i+1, SQL_C_CHAR,
+					temp_row[i].s, STRN_LEN, &indicator);
+
+			if (SQL_SUCCEEDED(ret)) {
+				if (indicator == SQL_NULL_DATA)
+					strcpy(temp_row[i].s, "NULL");
+			} else {
+				LM_ERR("SQLGetData failed\n");
+			}
+		}
+
+		LM_DBG("got temp_row at %p\n", temp_row);
+
+		if (db_unixodbc_list_insert(&rowstart, &rows, columns, temp_row) < 0) {
+			LM_ERR("SQL result row insert failed\n");
+			pkg_free(temp_row);
+			temp_row= NULL;
+			pkg_free(*_r);
+			*_r = 0;
+			return -5;
+		}
+
+		row_n++;
+		if (row_n == nrows) {
+			break;
+		}
+	}
+	
+	/* Free temporary row data */
+	LM_DBG("freeing temp_row at %p\n", temp_row);
+	pkg_free(temp_row);
+	CON_ROW(_h) = NULL;
+
+	RES_ROW_N(*_r) = row_n;
+	if (!row_n) {
+		LM_DBG("no more rows to process for db fetch");
+		RES_ROWS(*_r) = 0;
+		return 0;
+	}
+
+	/* Convert rows to internal format */
+	memset(RES_ROWS(*_r), 0, len);
+	i = 0;
+	rows = rowstart;
+	while(rows)
+	{
+		LM_DBG("converting row #%d\n", i);
+		CON_ROW(_h) = rows->data;
+		if (!CON_ROW(_h))
+		{
+			LM_ERR("string null\n");
+			RES_ROW_N(*_r) = row_n;
+			db_free_rows(*_r);
+			return -3;
+		}
+		if (db_unixodbc_convert_row(_h, *_r, &(RES_ROWS(*_r)[i]), rows->lengths) < 0) {
+			LM_ERR("converting fetched row #%d failed\n", i);
+			RES_ROW_N(*_r) = i;
+			db_free_rows(*_r);
+			return -4;
+		}
+		i++;
+		rows = rows->next;
+	}
+	db_unixodbc_list_destroy(rowstart);
+
+	/* update the total number of rows processed */
+	RES_LAST_ROW(*_r) += row_n;
+	LM_DBG("fetch from db processed %d rows so far\n", RES_LAST_ROW(*_r));
+
+	return 0;
+}
+
 
 /*
  * Execute a raw SQL query

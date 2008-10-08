@@ -60,6 +60,11 @@ int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
 const db_key_t* _c, const int _n, const int _nc, const db_key_t _o, db_res_t** _r);
 
 /*
+ * Fetch rows from a result
+ */
+int db_unixodbc_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows);
+
+/*
  * Raw SQL query
  */
 int db_unixodbc_raw_query(const db_con_t* _h, const str* _s, db_res_t** _r);

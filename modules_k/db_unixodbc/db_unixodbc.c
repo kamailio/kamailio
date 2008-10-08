@@ -87,6 +87,7 @@ int db_unixodbc_bind_api(db_func_t *dbb)
 	dbb->init             = db_unixodbc_init;
 	dbb->close            = db_unixodbc_close;
 	dbb->query            = db_unixodbc_query;
+	dbb->fetch_result     = db_unixodbc_fetch_result;
 	dbb->raw_query        = db_unixodbc_raw_query;
 	dbb->free_result      = db_unixodbc_free_result;
 	dbb->insert           = db_unixodbc_insert;
