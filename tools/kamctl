@@ -526,7 +526,7 @@ AS 'SIP-ID' FROM $DA_TABLE $CLAUSE ; "
 			TMP_OSERDOMAIN=$OSERDOMAIN
 			set_user $2
 			
-			if `is_value_in_db $DA_TABLE $DA_ALIAS_USER_COLUMN $TMP_OSERUSER`; then
+			if is_value_in_db $DA_TABLE $DA_ALIAS_USER_COLUMN $TMP_OSERUSER; then
 				minfo "$TMP_OSERUSER alias already in $DA_TABLE table"
 				exit 0
 			fi
@@ -964,7 +964,7 @@ domain() {
 				merr "missing domain parameter"
 				exit 1
 			fi
-			if `is_value_in_db $DOMAIN_TABLE $DO_DOMAIN_COLUMN $1`; then
+			if is_value_in_db $DOMAIN_TABLE $DO_DOMAIN_COLUMN $1; then
 				minfo "$1 already in $DOMAIN_TABLE table"
 				exit 0
 			fi
@@ -1024,7 +1024,7 @@ trusted() {
 				usage_trusted
 				exit 1
 			fi
-			if `is_value_in_db $TRUSTED_TABLE src_ip $1`; then
+			if is_value_in_db $TRUSTED_TABLE src_ip $1; then
 				minfo "$1 already in $TRUSTED_TABLE table"
 				exit 0
 			fi
