@@ -159,6 +159,30 @@ static int sst_flag = 0;
 static str sst_422_rpl = str_init("Session Timer Too Small");
 
 
+/* fixme: copied from functions, but size is too much */
+#define SST_SE_BUF_SIZE	80
+static char sst_se_buf[SST_SE_BUF_SIZE];
+static inline int sst_build_minse_hdr(int seval, str *sehdr)
+{
+	if(sehdr==NULL)
+		return -1;
+
+	sehdr->len = snprintf(sst_se_buf, SST_SE_BUF_SIZE,
+			"Min-SE: %d\r\n", seval);
+	sehdr->s = sst_se_buf;
+	return 0;
+}
+static inline int sst_build_se_hdr(int seval, str *sehdr)
+{
+	if(sehdr==NULL)
+		return -1;
+
+	sehdr->len = snprintf(sst_se_buf, SST_SE_BUF_SIZE,
+			"Session-Expires: %d\r\n", seval);
+	sehdr->s = sst_se_buf;
+	return 0;
+}
+
 /**
  * This is not a public API. This function is called when the module
  * is loaded from the mod_init() function in sst.c to initialize the
@@ -277,15 +301,15 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 				 * Increase the Min-SE: value in the request and
 				 * forward it.
 				 */
-				char buf[80];
+				str msehdr;
 				if (minfo.min_se) {
 					/* We need to update, which means, remove +
 					 * insert */
 					remove_header(msg, "Min-SE");
 				}
 				info->interval = MAX(sst_min_se, minfo.min_se);
-				snprintf(buf, 80, "Min-SE: %d\r\n", info->interval);
-				if (append_header(msg, buf)) {
+				sst_build_minse_hdr(info->interval, &msehdr);
+				if (append_header(msg, msehdr.s)) {
 					LM_ERR("Could not append modified Min-SE: header\n");
 				}
 			}
@@ -305,22 +329,22 @@ void sst_dialog_created_CB(struct dlg_cell *did, int type,
 		/* 
 		 * No Session-Expire: stated in request.
 		 */
-		char buf[80];
+		str msehdr;
 
 		info->interval = MAX(minfo.min_se, sst_min_se);
 
 		if (minfo.min_se && minfo.min_se < sst_min_se) {
 			remove_header(msg, "Min-SE");
-			snprintf(buf, 80, "Min-SE: %d\r\n", info->interval);
-			if (append_header(msg, buf)) {
+			sst_build_minse_hdr(info->interval, &msehdr);
+			if (append_header(msg, msehdr.s)) {
 				LM_ERR("failed to append modified Min-SE: header\n");
 				/* What to do? Let is slide, we can still work */
 			}
 		}
 		
 		info->requester = SST_PXY;
-		snprintf(buf, 80, "Session-Expires: %d\r\n", info->interval);
-		if (append_header(msg, buf)) {
+		sst_build_se_hdr(info->interval, &msehdr);
+		if (append_header(msg, msehdr.s)) {
 			LM_ERR("failed to append Session-Expires header to proxy "
 					"requested SST.\n");
 			shm_free(info);
@@ -530,7 +554,7 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 			else {
 				/* no se header found, we want to resquest it. */
 				if (info->requester == SST_PXY || info->supported == SST_UAC) {
-					char se_buf[80];
+					str sehdr;
 					
 					LM_DBG("appending the Session-Expires: header to the 2XX reply."
 							" UAC will deal with it.\n");
@@ -539,9 +563,8 @@ static void sst_dialog_response_fwded_CB(struct dlg_cell* did, int type,
 					 * header and forward back to the UAC and it will
 					 * deal with refreshing the session.
 					 */
-					snprintf(se_buf, 80, "Session-Expires: %d;refresher=uac\r\n", 
-							info->interval);
-					if (append_header(msg, se_buf)) {
+					sst_build_se_hdr(info->interval, &sehdr);
+					if (append_header(msg, sehdr.s)) {
 						LM_ERR("failed to append Session-Expires header\n");
 						return;
 					}
@@ -632,7 +655,7 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 			 * header
 			 */
 			LM_DBG("No MIN-SE header found.\n");
-			minse = se.interval;
+			minse = 90; /* default by RFC4028, $5 */
 		}
 		
 		LM_DBG("Session-Expires: %d; MIN-SE: %d\n",	se.interval, minse);
@@ -648,18 +671,11 @@ int sst_check_min(struct sip_msg *msg, char *flag, char *str2)
 			 * to send it.
 			 */
 			if (flag) {
-				char tmp[2]; /* to find the length */
-				int hdr_len = snprintf(tmp, 2, "%s %d", "MIN-SE:", sst_min_se);
-				char *minse_hdr = pkg_malloc(hdr_len+1);
-				memset(minse_hdr, 0, hdr_len+1);
-				snprintf(minse_hdr, hdr_len+1, "%s%d", "MIN-SE:", sst_min_se);
-				LM_DBG("Sending 422: %.*s\n", hdr_len, minse_hdr);
-				if (send_response(msg, 422, &sst_422_rpl, minse_hdr, hdr_len)){
+				str msehdr;
+				sst_build_minse_hdr(sst_min_se, &msehdr);
+				LM_DBG("Sending 422: %.*s\n", msehdr.len, msehdr.s);
+				if (send_response(msg, 422, &sst_422_rpl, msehdr.s, msehdr.len)){
 					LM_ERR("Error sending 422 reply.\n");
-				}
-				
-				if (minse_hdr) {
-					pkg_free(minse_hdr);
 				}
 			}
 			LM_DBG("Done returning true (1)\n");
@@ -897,23 +913,16 @@ static int parse_msg_for_sst_info(struct sip_msg *msg, sst_msg_info_t *minfo)
  */
 static int send_reject(struct sip_msg *msg, unsigned int min_se) 
 {
-	char tmp[2]; /* to find the length */
-	int hdr_len = 0;
-	char *minse_hdr = NULL;
+	str msehdr;
 
-	hdr_len = snprintf(tmp, 2, "%s %d", "MIN-SE:", min_se);
-	if ((minse_hdr = pkg_malloc(hdr_len+1)) != NULL) {
-		memset(minse_hdr, 0, hdr_len+1);
-		snprintf(minse_hdr, hdr_len+1, "%s %d", "MIN-SE:", min_se);
-		if (send_response(msg, 422, &sst_422_rpl, minse_hdr, hdr_len)) {
-			LM_ERR("Error sending 422 reply.\n");
-			return(-1);
-		}
-		pkg_free(minse_hdr);
-		LM_DBG("Send reject reply 422 with Min-SE: %d\n", min_se);
-		return(0);
+	sst_build_minse_hdr(min_se, &msehdr);
+
+	if (send_response(msg, 422, &sst_422_rpl, msehdr.s, msehdr.len)) {
+		LM_ERR("Error sending 422 reply.\n");
+		return(-1);
 	}
-	return(-1);
+	LM_DBG("Send reject reply 422 with Min-SE: %d\n", min_se);
+	return(0);
 }
 
 /**
