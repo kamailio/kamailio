@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2005-2007 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 00:03:56 +0100
-                              (Sa, 08 MÃ¤r 2008) $
+   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
+                              (Sat, 08 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -135,9 +135,9 @@ Chapter 1. Admin Guide
    to gateway's priority and (2) randomly (prefix_mode = 1). In
    prefix_mode 0, prefix is a string of characters and in
    prefix_mode 1, prefix is a regular expression. From pattern is
-   always a regular expression or empty. Empty from pattern
-   matches anything. Smaller priority value means higher priority
-   (highest priority value being 0).
+   always a regular expression (see 'man pcresyntax' for syntax)
+   or empty. Empty from pattern matches anything. Smaller priority
+   value means higher priority (highest priority value being 0).
 
    When a gateway is selected, Request URI user part is stripped
    by the number of characters as specified by the gateways strip
@@ -451,7 +451,8 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
    to 0, the prefix mode is set to string and matching is
    implemented as a simple string comparison. When set to 1, the
    prefix mode is set to regex and matching is implemented as
-   regular expression match.
+   regular expression match (see 'man pcresyntax' for regular
+   expression syntax).
 
    Default value is 0.
 

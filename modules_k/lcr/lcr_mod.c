@@ -598,7 +598,7 @@ static int mod_init(void)
 	LM_ERR("No memory for lcr table\n");
 	goto err;
     }
-    memset(lcrs_1, 0, sizeof(struct lcr_info) * (MAX_NO_OF_LCRS + 1));
+    memset(lcrs_2, 0, sizeof(struct lcr_info) * (MAX_NO_OF_LCRS + 1));
     lcrs = (struct lcr_info **)shm_malloc(sizeof(struct lcr_info *));
     if (lcrs == 0) {
 	LM_ERR("No memory for lcr table pointer\n");
@@ -786,31 +786,29 @@ int reload_gws(void)
     lcr_cols[3] = &priority_col;
 
     if (lcr_dbf.init==0){
-	LM_CRIT("Unbound database\n");
+	LM_CRIT("unbound database\n");
 	return -1;
     }
     dbh=lcr_dbf.init(&db_url);
     if (dbh==0){
-	LM_ERR("Unable to open database connection\n");
+	LM_ERR("unable to open database connection\n");
 	return -1;
     }
 
     if (lcr_dbf.use_table(dbh, &gw_table) < 0) {
-	LM_ERR("Error while trying to use gw table\n");
+	LM_ERR("error while trying to use gw table\n");
 	return -1;
     }
 
     if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 8, 0, &res) < 0) {
-	    LM_ERR("Failed to query gw data\n");
+	    LM_ERR("failed to query gw data\n");
 	    lcr_dbf.close(dbh);
 	    return -1;
     }
 
     if (RES_ROW_N(res) + 1 > MAX_NO_OF_GWS) {
-	    LM_ERR("Too many gateways\n");
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	    LM_ERR("too many gateways\n");
+	    goto gw_err;
     }
 
     for (i = 0; i < RES_ROW_N(res); i++) {
@@ -818,11 +816,9 @@ int reload_gws(void)
 	if (!((VAL_TYPE(ROW_VALUES(row)) == DB_STRING) &&
 	      !VAL_NULL(ROW_VALUES(row)) &&
 	      inet_aton((char *)VAL_STRING(ROW_VALUES(row)), &ip_addr) != 0)) {
-	    LM_ERR("Invalid IP address of gw <%s>\n",
+	    LM_ERR("invalid IP address of gw <%s>\n",
 		   (char *)VAL_STRING(ROW_VALUES(row)));
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	    goto gw_err;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 	    port = 0;
@@ -830,21 +826,17 @@ int reload_gws(void)
 	    port = (unsigned int)VAL_INT(ROW_VALUES(row) + 1);
 	}
 	if (port > 65536) {
-	    LM_ERR("Port of gw is too large <%u>\n", port);
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	    LM_ERR("port of gw is too large <%u>\n", port);
+	    goto gw_err;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
 	    scheme = SIP_URI_T;
 	} else {
 	    scheme = (uri_type)VAL_INT(ROW_VALUES(row) + 2);
 	    if ((scheme != SIP_URI_T) && (scheme != SIPS_URI_T)) {
-		LM_ERR("Unknown or unsupported URI scheme <%u>\n",
+		LM_ERR("unknown or unsupported URI scheme <%u>\n",
 		       (unsigned int)scheme);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		goto gw_err;
 	    }
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
@@ -853,11 +845,9 @@ int reload_gws(void)
 	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);
 	    if ((transport != PROTO_UDP) && (transport != PROTO_TCP) &&
 		(transport != PROTO_TLS) && (transport != PROTO_SCTP)) {
-		LM_ERR("Unknown or unsupported transport <%u>\n",
+		LM_ERR("unknown or unsupported transport <%u>\n",
 		       (unsigned int)transport);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		goto gw_err;
 	    }
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
@@ -872,10 +862,8 @@ int reload_gws(void)
 	    tag = (char *)VAL_STRING(ROW_VALUES(row) + 5);
 	    tag_len = strlen(tag);
 	    if (tag_len > MAX_TAG_LEN) {
-		LM_ERR("Too long gw tag <%u>\n", tag_len);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		LM_ERR("too long gw tag <%u>\n", tag_len);
+		goto gw_err;
 	    }
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 6) == 1) {
@@ -887,10 +875,8 @@ int reload_gws(void)
 	    (VAL_TYPE(ROW_VALUES(row) + 7) == DB_INT)) {
 	    flags = (unsigned int)VAL_INT(ROW_VALUES(row) + 7);
 	} else {
-	    LM_ERR("Attribute flags is NULL or non-int\n");
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	    LM_ERR("attribute flags is NULL or non-int\n");
+	    goto gw_err;
 	}
 	if (*gws == gws_1) {
 	    gws_2[i].ip_addr = (unsigned int)ip_addr.s_addr;
@@ -929,23 +915,22 @@ int reload_gws(void)
 
 
     if (lcr_dbf.use_table(dbh, &lcr_table) < 0) {
-	LM_ERR("Error while trying to use lcr table\n");
+	LM_ERR("error while trying to use lcr table\n");
 	return -1;
     }
 
     if (lcr_dbf.query(dbh, NULL, 0, NULL, lcr_cols, 0, 4, 0, &res) < 0) {
-	LM_ERR("Failed to query lcr data\n");
+	LM_ERR("failed to query lcr data\n");
 	lcr_dbf.close(dbh);
 	return -1;
     }
 
     if (RES_ROW_N(res) + 1 > MAX_NO_OF_LCRS) {
-	LM_ERR("Too many lcr entries <%d>\n", RES_ROW_N(res));
-	lcr_dbf.free_result(dbh, res);
-	lcr_dbf.close(dbh);
-	return -1;
+	LM_ERR("too many lcr entries <%d>\n", RES_ROW_N(res));
+	goto gw_err;
     }
     for (i = 0; i < RES_ROW_N(res); i++) {
+	prefix_re = from_uri_re = 0;
 	row = RES_ROWS(res) + i;
 	if (VAL_NULL(ROW_VALUES(row)) == 1) {
 	    prefix_len = 0;
@@ -954,22 +939,16 @@ int reload_gws(void)
 	    prefix = (char *)VAL_STRING(ROW_VALUES(row));
 	    prefix_len = strlen(prefix);
 	    if (prefix_len > MAX_PREFIX_LEN) {
-		LM_ERR("Too long lcr prefix <%u>\n", prefix_len);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		LM_ERR("too long lcr prefix <%u>\n", prefix_len);
+		goto lcr_err;
 	    }
 	}
 	if ((prefix_mode_param == 1) && (prefix_len > 0)){
 	    prefix_re = reg_ex_comp(prefix);
 	    if (prefix_re == 0) {
 		LM_ERR("failed to compile prefix '%s'\n", prefix);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		goto lcr_err;
 	    }
-	} else {
-	    prefix_re = NULL;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
 	    from_uri_len = 0;
@@ -978,41 +957,27 @@ int reload_gws(void)
 	    from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 1);
 	    from_uri_len = strlen(from_uri);
 	    if (from_uri_len > MAX_FROM_URI_LEN) {
-		LM_ERR("Too long from_uri <%u>\n", from_uri_len);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		LM_ERR("too long from_uri <%u>\n", from_uri_len);
+		goto lcr_err;
 	    }
 	}
 	if (from_uri_len > 0) {
 	    from_uri_re = reg_ex_comp(from_uri);
-	    if (from_uri_re == NULL) {
+	    if (from_uri_re == 0) {
 		LM_ERR("failed to compile from_uri '%s'\n", from_uri);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
-	    }
-	    if (from_uri_re == NULL) {
-		LM_ERR("failed to compile from_uri '%s'\n", from_uri);
-		lcr_dbf.free_result(dbh, res);
-		lcr_dbf.close(dbh);
-		return -1;
+		goto lcr_err;
 	    }
 	} else {
-	    from_uri_re = NULL;
+	    from_uri_re = 0;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 2) == 1) {
-	    LM_ERR("Route grp_id is NULL\n");
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	    LM_ERR("route grp_id is NULL\n");
+	    goto lcr_err;
 	}
 	grp_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 2);
 	if (VAL_NULL(ROW_VALUES(row) + 3) == 1) {
-	    LM_ERR("Route priority is NULL\n");
-	    lcr_dbf.free_result(dbh, res);
-	    lcr_dbf.close(dbh);
-	    return -1;
+	    LM_ERR("route priority is NULL\n");
+	    goto lcr_err;
 	}
 	priority = (unsigned int)VAL_INT(ROW_VALUES(row) + 3);
 
@@ -1073,6 +1038,15 @@ int reload_gws(void)
     }
 
     return 1;
+
+ lcr_err:
+    if (prefix_re) shm_free(prefix_re);
+    if (from_uri_re) shm_free(from_uri_re);
+
+ gw_err:
+    lcr_dbf.free_result(dbh, res);
+    lcr_dbf.close(dbh);
+    return -1;
 }
 
 

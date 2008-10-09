@@ -42,7 +42,8 @@
 	according to gateway's priority and (2) randomly (prefix_mode =
 	1).  In prefix_mode 0, prefix is a string of characters and in
 	prefix_mode 1, prefix is a regular expression.  From pattern
-	is always a regular expression or empty.  Empty from pattern
+	is always a regular expression (see 'man pcresyntax' for syntax)
+	or empty.  Empty from pattern
 	matches anything. Smaller priority value means higher priority
 	(highest priority value being 0).
 	</para>
@@ -599,7 +600,8 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 		matching is implemented as a simple string comparison. 
 		When set to 1, the prefix mode is
 		set to regex and matching is implemented as regular
-		expression match.
+		expression match (see 'man pcresyntax' for regular
+		expression syntax).
 		</para>
 		<para>
 		<emphasis>
