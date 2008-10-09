@@ -11,8 +11,8 @@ Jeffrey Magder
 
    Copyright © 2006 SOMA Networks, Inc.
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -230,6 +230,8 @@ Chapter 1. Admin Guide
        necessarily running) on the system that has loaded the
        SNMPStats module. (Details can be found in the compilation
        section below).
+     * lm_sensors-dev - on some OS-es, this lib is required for
+       compilation (http://www.lm-sensors.org/).
 
 1.4. Exported Parameters
 

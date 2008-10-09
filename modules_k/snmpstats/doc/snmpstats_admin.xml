@@ -218,6 +218,12 @@
 			section	below).
 		</para>
 		</listitem>
+		<listitem>
+		<para>
+			<emphasis>lm_sensors-dev</emphasis> - on some OS-es, this lib is
+			required for compilation (http://www.lm-sensors.org/).
+		</para>
+		</listitem>
 		</itemizedlist>
 	</para>
 	</section>
