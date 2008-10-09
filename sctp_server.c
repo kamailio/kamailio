@@ -805,7 +805,9 @@ int sctp_rcv_loop()
 						tmp);
 			continue;
 		}
-	
+#ifdef USE_COMP
+		ri.comp=COMP_NONE;
+#endif
 		/* update the local config */
 		cfg_update();
 		receive_msg(buf, len, &ri);
