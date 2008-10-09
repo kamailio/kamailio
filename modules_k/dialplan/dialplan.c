@@ -3,6 +3,8 @@
  *
  * Copyright (C)  2007-2008 Voice Sistem SRL
  *
+ * Copyright (C)  2008 Juha Heinanen
+ *
  * This file is part of Kamailio, a free SIP server.
  *
  * Kamailio is free software; you can redistribute it and/or modify
@@ -22,6 +24,7 @@
  * History:
  * --------
  *  2007-08-01 initial version (ancuta onofrei)
+ *  2008-10-09 module is now using pcre regexp lib (juha heinanen)
  */
 
 

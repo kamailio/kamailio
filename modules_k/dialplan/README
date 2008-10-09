@@ -8,9 +8,16 @@ Edited by
 
 Andreea-Ancuta Onofrei
 
+Edited by
+
+Juha Heinanen
+
    Copyright © 2007-2008 voice-system.ro
+
+   Copyright © 2008 Juha Heinanen
    Revision History
    Revision $Revision: 1.1 $ $Date: 2007/08/30 13:16:22 $
+   Revision $Revision: 1.2 $ $Date: 2008/10/9 15:57 $
      __________________________________________________________
 
    Table of Contents
@@ -87,12 +94,13 @@ Chapter 1. Admin Guide
    which attributes should be set for the matching transformation.
 
    The module expects an input value which will be matched against
-   a rules via regexp or string matching. Overlapping matching
-   expressions can be controlled via priorities. Once a rule is
-   matched, the defined transformation (if any) is applied and the
-   result is returned as output value. Also, if any string
-   attribute is associated to the rule, this will be returned to
-   the script along with the output value.
+   a rules via regexp (see 'man pcresyntax' for syntax) or string
+   matching. Overlapping matching expressions can be controlled
+   via priorities. Once a rule is matched, the defined
+   transformation (if any) is applied and the result is returned
+   as output value. Also, if any string attribute is associated to
+   the rule, this will be returned to the script along with the
+   output value.
 
    The first matching rule will be processed.
 

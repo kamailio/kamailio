@@ -55,8 +55,8 @@ extern str subst_exp_column;
 extern str repl_exp_column; 
 extern str attrs_column; 
 
-int init_db_data(void);
-int dp_connect_db(void);
-void dp_disconnect_db(void);
+int init_db_data();
+int dp_connect_db();
+void dp_disconnect_db();
 
 #endif

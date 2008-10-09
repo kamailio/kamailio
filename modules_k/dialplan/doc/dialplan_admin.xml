@@ -23,7 +23,8 @@
 	</para>
 	<para>
 	The module expects an input value which will be matched against a rules
-	via regexp or string matching. Overlapping matching expressions can be
+	via regexp (see 'man pcresyntax' for syntax) or string
+	matching. Overlapping matching expressions can be 
 	controlled via priorities. Once a rule is matched, the defined 
 	transformation (if any) is applied and the result is returned as output 
 	value. Also, if any string attribute is associated to the rule, this will 

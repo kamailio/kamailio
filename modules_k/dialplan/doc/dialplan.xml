@@ -32,15 +32,27 @@
 			<email>team@voice-system.ro</email>
 		</address>
 		</editor>
+		<editor>
+		<firstname>Juha</firstname>
+		<surname>Heinanen</surname>
+		</editor>
 	</authorgroup>
 	<copyright>
 		<year>2007-2008</year>
 		<holder>&voicesystem;</holder>
 	</copyright>
+	<copyright>
+		<year>2008</year>
+		<holder>Juha Heinanen</holder>
+	</copyright>
 	<revhistory>
 		<revision>
 		<revnumber>$Revision: 1.1 $</revnumber>
 		<date>$Date: 2007/08/30 13:16:22 $</date>
+		</revision>
+		<revision>
+		<revnumber>$Revision: 1.2 $</revnumber>
+		<date>$Date: 2008/10/9 15:57 $</date>
 		</revision>
 	</revhistory>
 	</bookinfo>

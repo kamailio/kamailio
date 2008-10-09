@@ -28,13 +28,14 @@
 #ifndef _DP_DIALPLAN_H
 #define _DP_DIALPLAN_H
 
+#include <pcre.h>
+#include "../../pvar.h"
 #include "../../parser/msg_parser.h"
-
-/*see copyright in trex.h*/
-#include "trex.h"
 
 #define REGEX_OP	1
 #define EQUAL_OP	0
+
+#define MAX_REPLACE_WITH	10
 
 typedef struct dpl_node{
 	int dpid;
@@ -42,7 +43,7 @@ typedef struct dpl_node{
 	int matchop;
 	int matchlen;
 	str match_exp, subst_exp, repl_exp; /*keeping the original strings*/
-	TRex * match_comp, * subst_comp; /*compiled patterns*/
+	pcre *match_comp, *subst_comp; /*compiled patterns*/
 	struct subst_expr * repl_comp; 
 	str attrs;
 
@@ -77,9 +78,9 @@ typedef struct dp_param{
 	} v;
 }dp_param_t, *dp_param_p;
 
-int init_data(void);
-void destroy_data(void);
-int dp_load_db(void);
+int init_data();
+void destroy_data();
+int dp_load_db();
 
 dpl_id_p select_dpid(int id);
 
@@ -87,5 +88,4 @@ struct subst_expr* repl_exp_parse(str subst);
 void repl_expr_free(struct subst_expr *se);
 int translate(struct sip_msg *msg, str user_name, str* repl_user, dpl_id_p idp, str *);
 int rule_translate(struct sip_msg *msg, str , dpl_node_t * rule,  str *);
-int test_match(str string, TRex *);
 #endif

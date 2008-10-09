@@ -22,6 +22,7 @@
  * History:
  * --------
  *  2007-08-01 initial version (ancuta onofrei)
+ *  2008-10-09 module is now using pcre regexp lib (juha heinanen)
  */
 
 #include <stdlib.h>
@@ -30,6 +31,7 @@
 #include "../../dprint.h"
 #include "../../ut.h"
 #include "../../db/db.h"
+#include "../../re.h"
 #include "dp_db.h"
 #include "dialplan.h"
 
@@ -293,15 +295,54 @@ int str_to_shm(str src, str * dest)
 }
 
 
+/* Compile pcre pattern and return pointer to shm copy of result */
+static pcre *reg_ex_comp(const char *pattern, int *cap_cnt)
+{
+    pcre *re, *result;
+    const char *error;
+    int rc, size, err_offset;
+
+    re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
+    if (re == NULL) {
+	LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n",
+	       pattern, err_offset, error);
+	return (pcre *)0;
+    }
+    rc = pcre_fullinfo(re, NULL, PCRE_INFO_SIZE, &size);
+    if (rc != 0) {
+	pcre_free(re);
+	LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
+	       pattern, rc);
+	return (pcre *)0;
+    }
+    rc = pcre_fullinfo(re, NULL, PCRE_INFO_CAPTURECOUNT, cap_cnt);
+    if (rc != 0) {
+	pcre_free(re);
+	LM_ERR("pcre_fullinfo on compiled pattern '%s' yielded error: %d\n",
+	       pattern, rc);
+	return (pcre *)0;
+    }
+    result = (pcre *)shm_malloc(size);
+    if (result == NULL) {
+	pcre_free(re);
+	LM_ERR("not enough shared memory for compiled PCRE pattern\n");
+	return (pcre *)0;
+    }
+    memcpy(result, re, size);
+    pcre_free(re);
+    return result;
+}
+
+
 /*compile the expressions, and if ok, build the rule */
 dpl_node_t * build_rule(db_val_t * values)
 {
-	TRex * match_comp, *subst_comp;
-	struct subst_expr * repl_comp;
-	const TRexChar * error;
+	pcre *match_comp, *subst_comp;
+	struct subst_expr *repl_comp;
+	const char *error;
 	dpl_node_t * new_rule;
 	str match_exp, subst_exp, repl_exp, attrs;
-	int matchop;
+	int matchop, cap_cnt;
 
 	matchop = VAL_INT(values+2);
 
@@ -317,40 +358,47 @@ dpl_node_t * build_rule(db_val_t * values)
 
 	GET_STR_VALUE(match_exp, values, 3);
 	if(matchop == REGEX_OP){
-
-		match_comp = trex_compile(match_exp.s, &error);
-		if(!match_comp){
-			LM_ERR("failed to compile match expression %.*s\n",
-				match_exp.len, match_exp.s);
-			goto err;
-		}
+	    match_comp = reg_ex_comp(match_exp.s, &cap_cnt);
+	    if(!match_comp){
+		LM_ERR("failed to compile match expression %.*s\n",
+		       match_exp.len, match_exp.s);
+		goto err;
+	    }
 	}
-
+	
 	LM_DBG("build_rule\n");
 	GET_STR_VALUE(repl_exp, values, 6);
 	if(repl_exp.len && repl_exp.s){
-		repl_comp = repl_exp_parse(repl_exp);
-		if(!repl_comp){
-			LM_ERR("failed to compile replacing expression %.*s\n",
-				repl_exp.len, repl_exp.s);
-			goto err;
-		}
+	    repl_comp = repl_exp_parse(repl_exp);
+	    if(!repl_comp){
+		LM_ERR("failed to compile replacing expression %.*s\n",
+		       repl_exp.len, repl_exp.s);
+		goto err;
+	    }
 	}
 
 	GET_STR_VALUE(subst_exp, values, 5);
 	if(subst_exp.s && subst_exp.len){
-		subst_comp = trex_compile(subst_exp.s, &error);
-		if(!subst_comp){
-			LM_ERR("failed to compile subst expression\n");
-			goto err;
-		}
+	    subst_comp = reg_ex_comp(subst_exp.s, &cap_cnt);
+	    if(!subst_comp){
+		LM_ERR("failed to compile subst expression %.*s\n",
+		       subst_exp.len, subst_exp.s);
+		goto err;
+	    }
+	    if (cap_cnt > MAX_REPLACE_WITH) {
+		LM_ERR("subst expression %.*s has too many sub-expressions\n",
+		       subst_exp.len, subst_exp.s);
+		goto err;
+	    }
 	}
 
-	if ( repl_comp &&
-	(trex_getsubexpcount(subst_comp)<=repl_comp->max_pmatch) && 
-	repl_comp->max_pmatch != 0){
-		LM_ERR("repl_exp uses a non existing subexpression\n");
-			goto err;
+	if (repl_comp && (cap_cnt < repl_comp->max_pmatch) && 
+	    (repl_comp->max_pmatch != 0)) {
+	    LM_ERR("repl_exp %.*s refers to %d sub-expressions, but "
+		   "subst_exp %.*s has only %d\n",
+		   repl_exp.len, repl_exp.s, repl_comp->max_pmatch,
+		   subst_exp.len, subst_exp.s, cap_cnt);
+	    goto err;
 	}
 
 	new_rule = (dpl_node_t *)shm_malloc(sizeof(dpl_node_t));
@@ -378,28 +426,19 @@ dpl_node_t * build_rule(db_val_t * values)
 	if(str_to_shm(attrs, &new_rule->attrs)!=0)
 		goto err;
 
-	LM_DBG("attrs are %.*s\n", 
-		new_rule->attrs.len, new_rule->attrs.s);
+	LM_DBG("attrs are %.*s\n", new_rule->attrs.len, new_rule->attrs.s);
 
-	if(match_comp){
-		match_comp->_p = new_rule->match_exp.s;
-		new_rule->match_comp = match_comp;
-	}
-
-	if(subst_comp){
-		subst_comp->_p = new_rule->subst_exp.s;
-		new_rule->subst_comp = subst_comp;
-	}
-
+	new_rule->match_comp = match_comp;
+	new_rule->subst_comp = subst_comp;
 	new_rule->repl_comp  = repl_comp;
 
 	return new_rule;
 
 err:
-	if(match_comp)	trex_destroy(match_comp);
-	if(subst_comp)	trex_destroy(subst_comp);
-	if(repl_comp)	repl_expr_free(repl_comp);
-	if(new_rule)	destroy_rule(new_rule);
+	if(match_comp) shm_free(match_comp);
+	if(subst_comp) shm_free(subst_comp);
+	if(repl_comp) repl_expr_free(repl_comp);
+	if(new_rule) destroy_rule(new_rule);
 	return NULL;
 }
 
@@ -541,10 +580,10 @@ void destroy_rule(dpl_node_t * rule){
 		rule->pr);
 
 	if(rule->match_comp)
-		trex_destroy(rule->match_comp);
+		shm_free(rule->match_comp);
 
 	if(rule->subst_comp)
-		trex_destroy(rule->subst_comp);
+		shm_free(rule->subst_comp);
 
 	/*destroy repl_exp*/
 	if(rule->repl_comp)
