@@ -43,7 +43,6 @@
  * Module management function prototypes
  */
 static int mod_init(void);
-static void destroy(void);
 static int child_init(int rank);
 
 MODULE_VERSION
@@ -144,7 +143,7 @@ struct module_exports exports = {
 	0,         /* extra processes */
 	mod_init,  /* module initialization function */
 	0,         /* response function*/
-	destroy,   /* destroy function */
+	0,         /* destroy function */
 	child_init /* per-child init function */
 };
 
@@ -161,7 +160,7 @@ static int mod_init(void)
 	domainpolicy_col_att.len = strlen(domainpolicy_col_att.s);
 	domainpolicy_col_val.len = strlen(domainpolicy_col_val.s);
 
-	LM_INFO("check for DB module\n");
+	LM_DBG("check for DB module\n");
 
 	/* Check if database module has been loaded */
 	if (domainpolicy_db_bind(&db_url)<0)  {
@@ -170,7 +169,7 @@ static int mod_init(void)
 		return -1;
 	}
 
-	LM_INFO("update length of module variables\n");
+	LM_DBG("update length of module variables\n");
 	/* Update length of module variables */
 	port_override_avp.len         = strlen(port_override_avp.s);
 	transport_override_avp.len    = strlen(transport_override_avp.s);
@@ -190,7 +189,7 @@ static int mod_init(void)
 	}
 
 	/* Assign AVP parameter names */
-	LM_INFO("AVP\n");
+	LM_DBG("AVP\n");
 	if (str2int(&port_override_avp, &par) == 0) {
 		if (!par) {
 			LM_ERR("port_override_avp not defined!\n");
@@ -264,8 +263,6 @@ static int mod_init(void)
 
 static int child_init(int rank)
 {
-	LM_DBG("initializing\n");
-
 	/* Check if database is needed by child */
 	if (rank > 0)  {
 		if (domainpolicy_db_init(&db_url)<0) {
@@ -276,11 +273,3 @@ static int child_init(int rank)
 	return 0;
 }
 
-
-static void destroy(void)
-{
-	/* Destroy is called from the main process only,
-	 * there is no need to close database here because
-	 * it is closed in mod_init already
-	 */
-}
