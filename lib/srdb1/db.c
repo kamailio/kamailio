@@ -306,7 +306,7 @@ void db_do_close(db_con_t* _h, void (*free_connection)())
 {
 	struct pool_con* con;
 
-	if (!_h) {
+	if (!_h || !_h->tail) {
 		LM_ERR("invalid parameter value\n");
 		return;
 	}
