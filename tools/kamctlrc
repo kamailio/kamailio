@@ -64,6 +64,9 @@
 # awk tool
 # AWK="awk"
 
+# If you use a system with a grep and egrep that is not 100% gnu grep compatible,
+# e.g. solaris, install the gnu grep (ggrep) and specify this below.
+#
 # grep tool
 # GREP="grep"
 
