@@ -55,7 +55,7 @@ typedef struct hslot {
 /*! \brief
  * Initialize slot structure
  */
-int init_slot(struct udomain* _d, hslot_t* _s, int n);
+void init_slot(struct udomain* _d, hslot_t* _s, int n);
 
 
 /*! \brief

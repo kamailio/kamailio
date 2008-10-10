@@ -126,7 +126,7 @@ void ul_release_idx(int idx)
  * \param _s hash slot
  * \param n used to get the slot number (modulo number or locks)
  */
-int init_slot(struct udomain* _d, hslot_t* _s, int n)
+void init_slot(struct udomain* _d, hslot_t* _s, int n)
 {
 	_s->n = 0;
 	_s->first = 0;
@@ -138,7 +138,6 @@ int init_slot(struct udomain* _d, hslot_t* _s, int n)
 #else
 	_s->lockidx = n%ul_locks_no;
 #endif
-	return 0;
 }
 
 

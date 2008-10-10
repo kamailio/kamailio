@@ -108,10 +108,7 @@ int new_udomain(str* _n, int _s, udomain_t** _d)
 	(*_d)->name = _n;
 	
 	for(i = 0; i < _s; i++) {
-		if (init_slot(*_d, &((*_d)->table[i]), i) < 0) {
-			LM_ERR("initializing hash table failed\n");
-			goto error2;
-		}
+		init_slot(*_d, &((*_d)->table[i]), i);
 	}
 
 	(*_d)->size = _s;
