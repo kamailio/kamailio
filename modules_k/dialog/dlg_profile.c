@@ -449,8 +449,9 @@ int unset_dlg_profile(struct sip_msg *msg, str *value,
 			memcmp(value->s,linker->hash_linker.value.s,value->len)==0){
 				goto found;
 			}
-			dlg_unlock( d_table, d_entry);
-			return -1;
+			/* allow further search - maybe the dialog is inserted twice in
+			 * the same profile, but with different values -bogdan
+			 */
 		}
 	}
 	dlg_unlock( d_table, d_entry);
@@ -499,8 +500,9 @@ int is_dlg_in_profile(struct sip_msg *msg, struct dlg_profile_table *profile,
 				dlg_unlock( d_table, d_entry);
 				return 1;
 			}
-			dlg_unlock( d_table, d_entry);
-			return -1;
+			/* allow further search - maybe the dialog is inserted twice in
+			 * the same profile, but with different values -bogdan
+			 */
 		}
 	}
 	dlg_unlock( d_table, d_entry);
