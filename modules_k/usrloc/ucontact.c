@@ -787,6 +787,7 @@ int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci)
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_update_ucontact(_c) < 0) {
 			LM_ERR("failed to update database\n");
+			return -1;
 		} else {
 			_c->state = CS_SYNC;
 		}

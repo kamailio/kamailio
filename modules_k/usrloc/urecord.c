@@ -431,6 +431,7 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 	if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 		if (db_insert_ucontact(*_c) < 0) {
 			LM_ERR("failed to insert in database\n");
+			return -1;
 		} else {
 			(*_c)->state = CS_SYNC;
 		}
@@ -445,6 +446,8 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
+	int ret = 0;
+
 	if (exists_ulcb_type(UL_CONTACT_DELETE)) {
 		run_ul_callbacks( UL_CONTACT_DELETE, _c);
 	}
@@ -453,13 +456,14 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 		if (db_mode == WRITE_THROUGH || db_mode==DB_ONLY) {
 			if (db_delete_ucontact(_c) < 0) {
 				LM_ERR("failed to remove contact from database\n");
+				ret = -1;
 			}
 		}
 
 		mem_delete_ucontact(_r, _c);
 	}
 
-	return 0;
+	return ret;
 }
 
 
