@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * List of registered domains
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -34,7 +32,6 @@
  */
 
 
-
 #ifndef DLIST_H
 #define DLIST_H
 
@@ -43,13 +40,13 @@
 #include "../../str.h"
 
 
-/*
+/*!
  * List of all domains registered with usrloc
  */
 typedef struct dlist {
-	str name;            /* Name of the domain (null terminated) */
-	udomain_t* d;        /* Payload */
-	struct dlist* next;  /* Next element in the list */
+	str name;            /*!< Name of the domain (null terminated) */
+	udomain_t* d;        /*!< Payload */
+	struct dlist* next;  /*!< Next element in the list */
 } dlist_t;
 
 

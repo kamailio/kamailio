@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * List of registered domains
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -52,16 +50,17 @@
 #include "ul_mod.h"
 
 
-/*! \brief
- * List of all registered domains
+/*!
+ * \brief Global list of all registered domains
  */
 dlist_t* root = 0;
 
 
-/*! \brief
- * Find domain with the given name
- * \return 0 if the domain was found
- * and 1 of not
+/*!
+ * \brief Find domain with the given name
+ * \param _n domain name
+ * \param _d pointer to domain
+ * \return 0 if the domain was found and 1 of not
  */
 static inline int find_dlist(str* _n, dlist_t** _d)
 {
@@ -82,7 +81,16 @@ static inline int find_dlist(str* _n, dlist_t** _d)
 }
 
 
-
+/*!
+ * \brief Get all contacts from the database, in partitions if wanted
+ * \see get_all_ucontacts
+ * \param buf target buffer
+ * \param len length of buffer
+ * \param flags contact flags
+ * \param part_idx part index
+ * \param part_max maximal part
+ * \return 0 on success, positive if buffer size was not sufficient, negative on failure
+ */
 static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max)
 {
@@ -240,7 +248,16 @@ static inline int get_all_db_ucontacts(void *buf, int len, unsigned int flags,
 }
 
 
-
+/*!
+ * \brief Get all contacts from the memory, in partitions if wanted
+ * \see get_all_ucontacts
+ * \param buf target buffer
+ * \param len length of buffer
+ * \param flags contact flags
+ * \param part_idx part index
+ * \param part_max maximal part
+ * \return 0 on success, positive if buffer size was not sufficient, negative on failure
+ */
 static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max)
 {
@@ -344,9 +361,11 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 
 
 
-/*! \brief
+/*!
+ * \brief Get all contacts from the database, in partitions if wanted
+ *
  * Return list of all contacts for all currently registered
- * users in all domains. Caller must provide buffer of
+ * users in all domains. The caller must provide buffer of
  * sufficient length for fitting all those contacts. In the
  * case when buffer was exhausted, the function returns
  * estimated amount of additional space needed, in this
@@ -366,6 +385,13 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
  * +------------+----------+-----+------+-----+
  * |000000000000|
  * +------------+
+ *
+ * \param buf target buffer
+ * \param len length of buffer
+ * \param flags contact flags
+ * \param part_idx part index
+ * \param part_max maximal part
+ * \return 0 on success, positive if buffer size was not sufficient, negative on failure
  */
 int get_all_ucontacts(void *buf, int len, unsigned int flags,
 								unsigned int part_idx, unsigned int part_max)
@@ -378,12 +404,12 @@ int get_all_ucontacts(void *buf, int len, unsigned int flags,
 
 
 
-/*! \brief
- * Create a new domain structure
+/*!
+ * \brief Create a new domain structure
  * \return 0 if everything went OK, otherwise value < 0 is returned
  *
  * \note The structure is NOT created in shared memory so the
- * function must be called before ser forks if it should
+ * function must be called before the server forks if it should
  * be available to all processes
  */
 static inline int new_dlist(str* _n, dlist_t** _d)
@@ -424,11 +450,15 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 }
 
 
-/*! \brief
- * Function registers a new domain with usrloc
- * if the domain exists, pointer to existing structure
- * will be returned, otherwise a new domain will be
- * created
+/*!
+ * \brief Registers a new domain with usrloc
+ *
+ * Function registers a new domain with usrloc.
+ * If the domain exists, a pointer to existing structure
+ * will be returned, otherwise a new domain will be created
+ * \param _n domain name
+ * \param _d pointer to domain
+ * \return 0 on success, -1 on failure
  */
 int register_udomain(const char* _n, udomain_t** _d)
 {
@@ -487,8 +517,8 @@ err:
 }
 
 
-/*! \brief
- * Free all allocated memory
+/*!
+ * \brief Free all allocated memory for domains
  */
 void free_all_udomains(void)
 {
@@ -505,8 +535,8 @@ void free_all_udomains(void)
 }
 
 
-/*! \brief
- * Just for debugging
+/*!
+ * \brief Just for debugging
  */
 void print_all_udomains(FILE* _f)
 {
@@ -523,8 +553,9 @@ void print_all_udomains(FILE* _f)
 }
 
 
-/*! \brief
- *  Loops through all domains summing up the number of users. 
+/*!
+ * \brief Loops through all domains summing up the number of users
+ * \return the number of users, could be zero
  */
 unsigned long get_number_of_users(void)
 {
@@ -544,8 +575,9 @@ unsigned long get_number_of_users(void)
 }
 
 
-/*! \brief
- * Run timer handler of all domains
+/*!
+ * \brief Run timer handler of all domains
+ * \return 0 if all timer return 0, != 0 otherwise
  */
 int synchronize_all_udomains(void)
 {
@@ -566,8 +598,11 @@ int synchronize_all_udomains(void)
 }
 
 
-/*! \brief
- * Find a particular domain
+/*!
+ * \brief Find a particular domain, small wrapper around find_dlist
+ * \param _d domain name
+ * \param _p pointer to domain if found
+ * \return 1 if domain was found, 0 otherwise
  */
 int find_domain(str* _d, udomain_t** _p)
 {

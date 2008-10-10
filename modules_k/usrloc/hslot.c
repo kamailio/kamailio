@@ -1,7 +1,5 @@
-/* 
+/*
  * $Id$ 
- *
- * Hash table collision slot related functions
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -33,11 +31,15 @@
 
 #include "hslot.h"
 
+/*! number of locks */
 int ul_locks_no=4;
+/*! global list of locks */
 gen_lock_set_t* ul_locks=0;
 
-/*! \brief
- * Initialize locks
+
+/*!
+ * \brief Initialize locks for the hash table
+ * \param 0 on success, -1 on failure
  */
 int ul_init_locks(void)
 {
@@ -66,6 +68,9 @@ int ul_init_locks(void)
 }
 
 
+/*!
+ * \brief Unlock all locks on the list
+ */
 void ul_unlock_locks(void)
 {
 	unsigned int i;
@@ -83,6 +88,9 @@ void ul_unlock_locks(void)
 }
 
 
+/*!
+ * \param Destroy all locks on the list
+ */
 void ul_destroy_locks(void)
 {
 	if (ul_locks !=0){
@@ -92,19 +100,31 @@ void ul_destroy_locks(void)
 }
 
 #ifndef GEN_LOCK_T_PREFERED
+/*!
+ * \brief Lock a lock with a certain index
+ * \param idx lock index
+ */
 void ul_lock_idx(int idx)
 {
 	lock_set_get(ul_locks, idx);
 }
 
+
+/*!
+ * \brief Release a lock with a certain index
+ * \param idx lock index
+ */
 void ul_release_idx(int idx)
 {
 	lock_set_release(ul_locks, idx);
 }
 #endif
 
-/*
- * Initialize cache slot structure
+/*!
+ * \brief Initialize cache slot structure
+ * \param _d domain for the hash slot
+ * \param _s hash slot
+ * \param n used to get the slot number (modulo number or locks)
  */
 int init_slot(struct udomain* _d, hslot_t* _s, int n)
 {
@@ -122,8 +142,9 @@ int init_slot(struct udomain* _d, hslot_t* _s, int n)
 }
 
 
-/*! \brief
- * Deinitialize given slot structure
+/*!
+ * \brief Deinitialize given slot structure
+ * \param _s hash slot
  */
 void deinit_slot(hslot_t* _s)
 {
@@ -142,8 +163,10 @@ void deinit_slot(hslot_t* _s)
 }
 
 
-/*! \brief
- * Add an element to an slot's linked list
+/*!
+ * \brief Add an element to an slot's linked list
+ * \param _s hash slot
+ * \param _r added record
  */
 void slot_add(hslot_t* _s, struct urecord* _r)
 {
@@ -159,8 +182,10 @@ void slot_add(hslot_t* _s, struct urecord* _r)
 }
 
 
-/*! \brief
- * Remove an element from slot linked list
+/*!
+ * \brief Remove an element from slot linked list
+ * \param _s hash slot
+ * \param _r removed record
  */
 void slot_rem(hslot_t* _s, struct urecord* _r)
 {
