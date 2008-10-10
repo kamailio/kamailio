@@ -63,10 +63,18 @@ str* dlginfo_agg_nbody(str* pres_user, str* pres_domain, str** body_array, int n
 {
 	str* n_body= NULL;
 
+	LM_DBG("[pres_user]=%.*s [pres_domain]= %.*s, [n]=%d\n",
+			pres_user->len, pres_user->s, pres_domain->len, pres_domain->s, n);
+
 	if(body_array== NULL)
 		return NULL;
 
 	n_body= agregate_xmls(pres_user, pres_domain, body_array, n);
+	LM_DBG("[n_body]=%p\n", n_body);
+	if(n_body) {
+		LM_DBG("[*n_body]=%.*s\n",
+			n_body->len, n_body->s);
+	}
 	if(n_body== NULL && n!= 0)
 	{
 		LM_ERR("while aggregating body\n");
@@ -297,6 +305,10 @@ str *dlginfo_body_setversion(subs_t *subs, str *body) {
 
 	/* xmlDocDumpFormatMemory creates \0 terminated string */
 	/* version parameters starts at minimum at character 34 */
+	if (body->len < 41) {
+		LM_ERR("body string too short!\n");
+		return NULL;
+	}
 	version_start = strstr(body->s + 34, "version=");
 	if (!version_start) {
 	    LM_ERR("version string not found!\n");
