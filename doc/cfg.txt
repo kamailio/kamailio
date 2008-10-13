@@ -117,6 +117,9 @@ Each row consists of the following items:
 				It can be used only with CFG_VAR_INT type,
 				and per-child process callback is not allowed
 
+	- CFG_READONLY		The variable is read-only, its value cannot
+				be changed.
+
 - minimum value for integers (optional)
 - maximum value for integers (optional)
 - fixup function (optional) that is called when the variable is going to be
