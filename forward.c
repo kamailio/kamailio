@@ -175,6 +175,12 @@ struct socket_info* get_send_socket(struct sip_msg *msg,
 				goto not_forced;
 			}
 		}
+		if (unlikely(msg->force_send_socket->address.af!=to->s.sa_family)){
+			DBG("get_send_socket: force_send_socket of different af (dst %d,"
+					" forced %d)\n",
+					to->s.sa_family, msg->force_send_socket->address.af);
+			goto not_forced;
+		}
 		if (likely((msg->force_send_socket->socket!=-1) &&
 					!(msg->force_send_socket->flags & SI_IS_MCAST)))
 				return msg->force_send_socket;
