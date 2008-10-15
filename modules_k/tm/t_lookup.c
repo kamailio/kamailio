@@ -1057,6 +1057,59 @@ static inline int new_t(struct sip_msg *p_msg)
 	return 1;
 }
 
+/*!
+ * \brief Check if From/To/CSeq were altered and set approriate flags
+ */
+static inline void check_hdrs_changes(struct sip_msg *msg)
+{
+	struct lump *t;
+	unsigned int flags;
+	char *pos;
+
+	flags = FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ;
+
+	/* if internal flags already set, then return */
+	if((msg->msg_flags&flags) == flags)
+		return;
+
+	for (t=msg->add_rm;t;t=t->next) {
+		if ((t->op==LUMP_DEL)||(t->op==LUMP_NOP))
+		{
+			pos = msg->buf + t->u.offset;
+			/* From */
+			if( ((msg->msg_flags&FL_USE_UAC_FROM)==0)
+					&& (( pos < msg->from->name.s 
+							&& pos + t->len > msg->from->name.s )
+						|| (pos >= msg->from->name.s
+							&& pos <= msg->from->name.s+msg->from->len)
+						)
+					)
+				msg->msg_flags |= FL_USE_UAC_FROM;
+			/* To */
+			if( ((msg->msg_flags&FL_USE_UAC_TO)==0)
+					&& (( pos < msg->to->name.s 
+							&& pos + t->len > msg->to->name.s )
+						|| (pos >= msg->to->name.s
+							&& pos <= msg->to->name.s+msg->to->len)
+						)
+					)
+				msg->msg_flags |= FL_USE_UAC_TO;
+			/* CSeq */
+			if( ((msg->msg_flags&FL_USE_UAC_CSEQ)==0)
+					&& (( pos < msg->cseq->name.s 
+							&& pos + t->len > msg->cseq->name.s )
+						|| (pos >= msg->cseq->name.s
+							&& pos <= msg->cseq->name.s+msg->cseq->len)
+						)
+					)
+				msg->msg_flags |= FL_USE_UAC_CSEQ;
+
+			/* if done, then return */
+			if((msg->msg_flags&flags) == flags)
+				return;
+		}
+	}
+}
 
 /*!
  * \brief Atomic "new_tran" construct
@@ -1094,6 +1147,10 @@ int t_newtran( struct sip_msg* p_msg )
 			LM_ERR("EoH not parsed\n");
 			return E_OUT_OF_MEM;
 	}
+	/* auto update internal flags for detecting changes in important hdrs
+	 * headers already parsed to EOH */
+	check_hdrs_changes(p_msg);
+
 	/* t_lookup_requests attempts to find the transaction; 
 	   it also calls check_transaction_quadruple -> it is
 	   safe to assume we have from/callid/cseq/to
