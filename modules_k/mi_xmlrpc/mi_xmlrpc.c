@@ -73,7 +73,7 @@ int rpl_opt = 0;
 
 /* module functions */
 static int mod_init();
-static int destroy(void);
+static void destroy(void);
 static void xmlrpc_process(int rank);
 
 static int port = 8080;
@@ -244,9 +244,7 @@ error:
 }
 
 
-int destroy(void)
+void destroy(void)
 {
 	destroy_async_lock();
-
-	return 0;
 }
