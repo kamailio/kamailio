@@ -37,6 +37,8 @@
  *  2007-08-23  added detection for INADDR_ANY types of sockets (andrei)
  *  2008-08-08  sctp support (andrei)
  *  2008-08-15  support for handling sctp multihomed sockets (andrei)
+ *  2008-10-15  fixed protocol list iteration when some protocols are
+ *               compile time disabled (andrei)
  */
 
 
@@ -296,6 +298,9 @@ static char* get_proto_name(unsigned short proto)
 }
 
 
+
+/* returns 0 if support for the protocol is not compiled or if proto is 
+   invalid */
 static struct socket_info** get_sock_info_list(unsigned short proto)
 {
 	
@@ -303,21 +308,21 @@ static struct socket_info** get_sock_info_list(unsigned short proto)
 		case PROTO_UDP:
 			return &udp_listen;
 			break;
-#ifdef USE_TCP
 		case PROTO_TCP:
+#ifdef USE_TCP
 			return &tcp_listen;
-			break;
 #endif
-#ifdef USE_TLS
+			break;
 		case PROTO_TLS:
+#ifdef USE_TLS
 			return &tls_listen;
-			break;
 #endif
-#ifdef USE_SCTP
+			break;
 		case PROTO_SCTP:
+#ifdef USE_SCTP
 			return &sctp_listen;
-			break;
 #endif
+			break;
 		default:
 			LOG(L_CRIT, "BUG: get_sock_info_list: invalid proto %d\n", proto);
 	}
@@ -394,19 +399,13 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 		hname.len-=2;
 	}
 #endif
-	c_proto=proto?proto:PROTO_UDP;
+	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
 	do{
 		/* get the proper sock_list */
-		if (c_proto==PROTO_NONE)
-			list=&udp_listen;
-		else
-			list=get_sock_info_list(c_proto);
+		list=get_sock_info_list(c_proto);
 	
-		if (list==0){
-			LOG(L_WARN, "WARNING: grep_sock_info: "
-						"unknown proto %d\n", c_proto);
-			goto not_found; /* false */
-		}
+		if (list==0) /* disabled or unknown protocol */
+			continue;
 		for (si=*list; si; si=si->next){
 			DBG("grep_sock_info - checking if host==us: %d==%d && "
 					" [%.*s] == [%.*s]\n", 
@@ -432,7 +431,7 @@ struct socket_info* grep_sock_info(str* host, unsigned short port,
 					goto found;
 		}
 	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
-not_found:
+/* not_found: */
 	return 0;
 found:
 	return si;
@@ -453,19 +452,14 @@ struct socket_info* grep_sock_info_by_port(unsigned short port,
 	if (!port) {
 		goto not_found;
 	}
-	c_proto=proto?proto:PROTO_UDP;
+	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
 	do{
 		/* get the proper sock_list */
-		if (c_proto==PROTO_NONE)
-			list=&udp_listen;
-		else
-			list=get_sock_info_list(c_proto);
+		list=get_sock_info_list(c_proto);
 	
-		if (list==0){
-			LOG(L_WARN, "WARNING: grep_sock_info_by_port: "
-						"unknown proto %d\n", c_proto);
-			goto not_found; /* false */
-		}
+		if (list==0) /* disabled or unknown protocol */
+			continue;
+		
 		for (si=*list; si; si=si->next){
 			DBG("grep_sock_info_by_port - checking if port %d matches"
 					" port %d\n", si->port_no, port);
@@ -499,19 +493,14 @@ struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 	struct addr_info* ai;
 	unsigned short c_proto;
 	
-	c_proto=proto?proto:PROTO_UDP;
+	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
 	do{
 		/* get the proper sock_list */
-		if (c_proto==PROTO_NONE)
-			list=&udp_listen;
-		else
-			list=get_sock_info_list(c_proto);
+		list=get_sock_info_list(c_proto);
 	
-		if (list==0){
-			LOG(L_WARN, "WARNING: grep_sock_info: "
-						"unknown proto %d\n", c_proto);
-			goto not_found; /* false */
-		}
+		if (list==0) /* disabled or unknown protocol */
+			continue;
+		
 		for (si=*list; si; si=si->next){
 			if (port) {
 				if (si->port_no!=port) {
@@ -525,7 +514,7 @@ struct socket_info* find_si(struct ip_addr* ip, unsigned short port,
 					goto found;
 		}
 	}while( (proto==0) && (c_proto=next_proto(c_proto)) );
-not_found:
+/* not_found: */
 	return 0;
 found:
 	return si;
@@ -589,14 +578,12 @@ int add_listen_iface(char* name, struct name_lst* addr_l,
 	struct name_lst* a_l;
 	unsigned short c_port;
 	
-	c_proto=(proto)?proto:PROTO_UDP;
+	c_proto=(proto!=PROTO_NONE)?proto:PROTO_UDP;
 	do{
 		list=get_sock_info_list(c_proto);
-		if (list==0){
-			LOG(L_ERR, "ERROR: add_listen_iface: get_sock_info_list"
-						" failed\n");
-			goto error;
-		}
+		if (list==0) /* disabled or unknown protocol */
+			continue;
+		
 		if (port==0){ /* use default port */
 			c_port=
 #ifdef USE_TLS
