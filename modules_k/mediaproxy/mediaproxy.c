@@ -70,6 +70,12 @@ MODULE_VERSION
 # define AF_LOCAL AF_UNIX
 #endif
 
+// As Solaris does not have the MSG_NOSIGNAL flag for send(2) syscall,
+//it is defined as 0
+#ifndef MSG_NOSIGNAL
+# define MSG_NOSIGNAL 0
+#endif
+
 
 #define isnulladdr(adr)  ((adr).len==7 && memcmp("0.0.0.0", (adr).s, 7)==0)
 #define isnullport(port) ((port).len==1 && (port).s[0]=='0')
