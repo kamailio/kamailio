@@ -14,7 +14,8 @@
 		<itemizedlist>
 			<listitem>
 			<para>
-				sequential forwarding of a request to one or more gateways
+				sequential forwarding of a request to
+				one or more gateways 
 				(functions load_gws and next_gw)
 			</para>
 			</listitem>
@@ -38,14 +39,12 @@
 	<para>
 	Matching gateways are then ordered for forwarding
 	purpose (1) according to longest user part match, (2) according to 
-	tuple's priority, and (3) randomly (prefix_mode = 0) or (1)
-	according to gateway's priority and (2) randomly (prefix_mode =
-	1).  In prefix_mode 0, prefix is a string of characters and in
-	prefix_mode 1, prefix is a regular expression.  From pattern
-	is always a regular expression (see 'man pcresyntax' for syntax)
-	or empty.  Empty from pattern
-	matches anything. Smaller priority value means higher priority
-	(highest priority value being 0).
+	tuple's priority, (3) gateway's randomized weight within its
+	gateway group.  Prefix is a string of
+	characters.  From pattern is a regular expression (see 'man
+	pcresyntax' for syntax) or empty.  Empty from pattern matches anything.
+	Smaller priority value means higher priority (highest priority
+	value being 0).  Weight is an integer value from 1 to 254.
 	</para>
 	<para>
 	When a gateway is selected, Request URI user part is stripped by 
@@ -54,7 +53,8 @@
 	URI scheme, tag, IP address, port, and transport protocol.  Valid
 	URI scheme values are NULL = sip, 1 = sip and 2 = sips.  Tag is
 	inserted in front of Request URI user part. Currently valid transport
-	protocol values are NULL = none, 1 = udp, 2 = tcp, and 3 = tls.
+	protocol values are NULL = none, 1 = udp, 2 = tcp, 3 = tls, and
+	4 = sctp.
 	</para>
 	<para>
 	As a side effect of gateway selection, gateway's flags (that may
@@ -305,6 +305,26 @@ modparam("lcr","strip_column","strip_count")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","tag_column","gw_tag")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>weight_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway's weight within its group.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>weight</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>weight_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr","weight_column","gw_weight")
 ...
 </programlisting>
 		</example>
@@ -593,31 +613,57 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 	</section>
 
 	<section>
-		<title><varname>prefix_mode</varname> (integer)</title>
+		<title><varname>lcr_hash_size</varname> (integer)</title>
 		<para>
-		Defines the prefix mode: string or regular expression.
-		When set to 0, the prefix mode is set to string and
-		matching is implemented as a simple string comparison. 
-		When set to 1, the prefix mode is
-		set to regex and matching is implemented as regular
-		expression match (see 'man pcresyntax' for regular
-		expression syntax).
+		Defines the size of hash table used to store &lt;prefix,
+		from_pattern, priority&gt; tuples.  Hashing is done based
+		on prefix.  Larger value means less collisions with
+		other prefixes.  Hash size value should be a power of
+		2.
 		</para>
 		<para>
 		<emphasis>
-			Default value is 0.
+			Default value is 128.
 		</emphasis>
 		</para>
 		<example>
-		<title>Setting <varname>prefix_mode</varname> module parameter</title>
+		<title>
+		Setting <varname>lcr_hash_size</varname> module
+		parameter
+		</title>
 		<programlisting format="linespecific">
 ...
-/* Turning on the regex mode for prefix */
-modparam("lcr", "prefix_mode", 1)
+modparam("lcr", "lcr_hash_size", 1024)
 ...
 </programlisting>
                 </example>
 	</section>
+
+	<section>
+		<title><varname>fetch_rows</varname> (integer)</title>
+		<para>
+		The number of the rows to be fetched at once from database
+		when loading data from lcr table. This value can be used to tune
+		the load time at startup.  For 1MB of private memory (default)
+		it should be below 3750. In order for this parameter to
+		have effect, database driver must support fetch_result()
+		capability.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>2000</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fetch_rows</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "fetch_rows", 3000)
+...
+</programlisting>
+		</example>
+	</section>
+
 	</section>
 
 	<section>
@@ -633,7 +679,14 @@ modparam("lcr", "prefix_mode", 1)
 		argument is included, caller's URI is taken from it.
 		If pseudo variable argument is not included, caller's
 		URI is taken from rpid_avp AVP or, if rpid_avp value is
-		empty, from From URI. Returns 1 or -1 depending on success.
+		empty, from From URI. Returns 1 or -1 depending on
+		success.
+		</para>
+		<para>
+		Execution time of load_gws() function is O(N) + O(M),
+		where N is number of different prefix lengths and M
+		is number of collisions for matching prefix(es) in lcr
+		hash table.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -656,14 +709,15 @@ if (!load_gws("$var(caller_uri)")) {
 		</title>
 		<para>
 		Loads URI schemes, addresses, ports, and transports of
-		matching gateways to gw_uri_avp AVPs
-		(see Overview section), but only gateways belonging to the
-		group given in group-id argument are loaded.  group-id
-		argument is
-		a string and may contain pseudo-variables that are
-		replaced at runtime.  Caller's
-		URI is taken from rpid_avp AVP or, if rpid_avp value is
-		empty, from From URI. Returns 1 or -1 depending on success. 
+		gateways that belong to a given group to gw_uri_avp
+		AVPs.  group-id	argument is a string that may contain
+		pseudo-variables.  Its value must be a a string of
+		digits that are converted to an integer group id.
+		Returns 1 or -1 depending on success. 
+		</para>
+		<para>
+		Execution time of load_gws_from_grp() function is O(N),
+		where N is number of gateways.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
@@ -753,6 +807,10 @@ if (!next_gw()) {
 			flags_avp.
 		</para>
 		<para>
+		Execution time of from_gw() function is O(log N),
+		where N is number of gateways.
+		</para>
+		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
 		ONREPLY_ROUTE.
 		</para>
@@ -784,9 +842,14 @@ if (from_gw("$si")) {
 		</title>
 		<para>
 			Checks if request came from IP address of a
-			gateway that belongs to the given group.  Sets
+			gateway that belongs to the given group
+			(integer string).  Sets
 			or resets a message flag depending on whether
 			the gateway supports directed media. 
+		</para>
+		<para>
+		Execution time of from_gw_grp() function is O(log N),
+		where N is number of gateways.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
@@ -808,9 +871,15 @@ if (from_gw_grp("1")) {
 		<function moreinfo="none">to_gw([group-id])</function>
 		</title>
 		<para>
-			Checks if in-dialog request goes to a gateway. If an optional
-			group-id is given, only gateways belonging to this group
-			are checked.
+		Checks if in-dialog request goes to a
+			gateway. If an optional 
+			group-id (integer string) is given,
+			only gateways belonging to
+			this group are checked.
+		</para>
+		<para>
+		Execution time of to_gw() function is O(log N),
+		where N is number of gateways.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
@@ -939,20 +1008,40 @@ if (next_contacts()) {
 		</section>
 		
 		<section>
-		<title><function>lcr_dump</function></title>
+		<title><function>lcr_gw_dump</function></title>
 		<para>
-			Causes lcr module to dump the contents of its in-memory gateway
-			table. 
+			Causes lcr module to dump the contents of its
+			in-memory gw table. 
 		</para>
 		<para>
-		Name: <emphasis>lcr_dump</emphasis>
+		Name: <emphasis>lcr_gw_dump</emphasis>
 		</para>
 		<para>Parameters: <emphasis>none</emphasis></para>
  		<para>
 		MI FIFO Command Format:
 		</para>
         <programlisting  format="linespecific">
-		:lcr_dump:_reply_fifo_file_
+		:lcr_gw_dump:_reply_fifo_file_
+		_empty_line_
+		</programlisting>
+		
+		</section>
+		
+		<section>
+		<title><function>lcr_lcr_dump</function></title>
+		<para>
+			Causes lcr module to dump the contents of its
+			in-memory lcr table. 
+		</para>
+		<para>
+		Name: <emphasis>lcr_lcr_dump</emphasis>
+		</para>
+		<para>Parameters: <emphasis>none</emphasis></para>
+ 		<para>
+		MI FIFO Command Format:
+		</para>
+        <programlisting  format="linespecific">
+		:lcr_gw_dump:_reply_fifo_file_
 		_empty_line_
 		</programlisting>
 		
@@ -961,12 +1050,10 @@ if (next_contacts()) {
 	<section>
 	<title>Known Limitations</title>
 	<para>
-		There is an unlikely race condition on lcr reload. If a process uses
-		in memory gw table, which is reloaded at the same time twice through
-		FIFO, the second reload will delete the original table still in use
-		by the process.
+		There is an unlikely race condition on lcr reload.
+		In-memory gateway table does not match in-memory lcr
+		table for a duration of two machine instructions.
 	</para>
 	</section>
-
 </chapter>
 

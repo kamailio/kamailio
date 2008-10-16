@@ -33,10 +33,13 @@
 #include "../../mi/mi.h"
 
 #define MI_LCR_RELOAD "lcr_reload"
-#define MI_LCR_DUMP "lcr_dump"
+#define MI_LCR_GW_DUMP "lcr_gw_dump"
+#define MI_LCR_LCR_DUMP "lcr_lcr_dump"
 
-struct mi_root*  mi_lcr_reload(struct mi_root* cmd, void* param);
+struct mi_root* mi_lcr_reload(struct mi_root* cmd, void* param);
 
-struct mi_root* mi_lcr_dump(struct mi_root* cmd, void* param);
+struct mi_root* mi_lcr_gw_dump(struct mi_root* cmd, void* param);
+
+struct mi_root* mi_lcr_lcr_dump(struct mi_root* cmd, void* param);
 
 #endif

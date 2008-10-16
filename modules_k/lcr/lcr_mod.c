@@ -42,6 +42,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <pcre.h>
+#include "../../locking.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
 #include "../../ut.h"
@@ -63,6 +64,7 @@
 #include "../../socket_info.h"
 #include "../../pvar.h"
 #include "../../mod_fix.h"
+#include "hash.h"
 #include "mi.h"
 
 MODULE_VERSION
@@ -72,7 +74,7 @@ MODULE_VERSION
  * increment this value if you change the table in
  * an backwards incompatible way
  */
-#define GW_TABLE_VERSION 7
+#define GW_TABLE_VERSION 8
 #define LCR_TABLE_VERSION 2
 
 /* usr_avp flag for sequential forking */
@@ -81,9 +83,8 @@ MODULE_VERSION
 static void destroy(void);       /* Module destroy function */
 static int mi_child_init(void);
 static int mod_init(void);       /* Module initialization function */
+static void free_shared_memory(void);
 static int fixstringloadgws(void **param, int param_count);
-
-int reload_gws ( void );
 
 #define GW_TABLE "gw"
 
@@ -103,6 +104,8 @@ int reload_gws ( void );
 
 #define TAG_COL "tag"
 
+#define WEIGHT_COL "weight"
+
 #define FLAGS_COL "flags"
 
 #define LCR_TABLE "lcr"
@@ -113,16 +116,14 @@ int reload_gws ( void );
 
 #define PRIORITY_COL "priority"
 
-#define MAX_NO_OF_GWS 32
-#define MAX_NO_OF_LCRS 256
-#define MAX_PREFIX_LEN 256
+#define MAX_NO_OF_GWS 128
 #define MAX_TAG_LEN 16
-#define MAX_FROM_URI_LEN 256
 
 /* Default module parameter values */
 #define DEF_FR_INV_TIMER 90
 #define DEF_FR_INV_TIMER_NEXT 30
-#define DEF_PREFIX_MODE 0
+#define DEF_LCR_HASH_SIZE 128
+#define DEF_FETCH_ROWS 2000
 
 /*
  * Type definitions
@@ -139,27 +140,22 @@ struct gw_info {
     unsigned int strip;
     char tag[MAX_TAG_LEN + 1];
     unsigned short tag_len;
+    unsigned short weight;
     unsigned int flags;
+    unsigned int next;  /* index of next gw in the same group */
 };
 
-struct lcr_info {
-    char prefix[MAX_PREFIX_LEN + 1];
-    unsigned short prefix_len;
-    pcre *prefix_re;
-    char from_uri[MAX_FROM_URI_LEN + 1];
-    unsigned short from_uri_len;
-    pcre *from_uri_re;
+struct gw_grp {
     unsigned int grp_id;
+    unsigned int first;   /* index to first gw of group in gw table */
+};
+
+struct matched_gw_info {
+    unsigned short gw_index;
+    unsigned short prefix_len;
     unsigned short priority;
-    unsigned short end_record;
+    unsigned int weight;
 };
-
-struct mi {
-    int gw_index;
-    int route_index;
-    int randomizer;
-};
-
 
 /*
  * Database variables
@@ -168,10 +164,15 @@ static db_con_t* db_handle = 0;   /* Database connection handle */
 static db_func_t lcr_dbf;
 
 /*
+ * Locking variables
+ */
+gen_lock_t *reload_lock;
+
+/*
  * Module parameter variables
  */
 
-/* database */
+/* database tables */
 static str db_url           = str_init(DEFAULT_RODB_URL);
 static str gw_table         = str_init(GW_TABLE);
 static str gw_name_col      = str_init(GW_NAME_COL);
@@ -182,11 +183,15 @@ static str uri_scheme_col   = str_init(URI_SCHEME_COL);
 static str transport_col    = str_init(TRANSPORT_COL);
 static str strip_col        = str_init(STRIP_COL);
 static str tag_col          = str_init(TAG_COL);
+static str weight_col       = str_init(WEIGHT_COL);
 static str flags_col        = str_init(FLAGS_COL);
 static str lcr_table        = str_init(LCR_TABLE);
 static str prefix_col       = str_init(PREFIX_COL);
 static str from_uri_col     = str_init(FROM_URI_COL);
 static str priority_col     = str_init(PRIORITY_COL);
+
+/* number of rows to fetch at a shot */
+static int fetch_rows_param = DEF_FETCH_ROWS;
 
 /* timer */
 int fr_inv_timer      = DEF_FR_INV_TIMER;
@@ -200,8 +205,8 @@ static char *contact_avp_param = NULL;
 static char *rpid_avp_param = NULL;
 static char *flags_avp_param = NULL;
 
-/* prefix mode */
-int prefix_mode_param = DEF_PREFIX_MODE;
+/* size of prefix hash table */
+unsigned int lcr_hash_size_param = DEF_LCR_HASH_SIZE;
 
 /*
  * Other module types and variables
@@ -235,9 +240,10 @@ struct gw_info **gws;	/* Pointer to current gw table pointer */
 struct gw_info *gws_1;	/* Pointer to gw table 1 */
 struct gw_info *gws_2;	/* Pointer to gw table 2 */
 
-struct lcr_info **lcrs;  /* Pointer to current lcr table pointer */
-struct lcr_info *lcrs_1; /* Pointer to lcr table 1 */
-struct lcr_info *lcrs_2; /* Pointer to lcr table 2 */
+struct lcr_info ***lcrs;  /* Pointer to current lcr hash table pointer */
+struct lcr_info **lcrs_1; /* Pointer to lcr hash table 1 */
+struct lcr_info **lcrs_2; /* Pointer to lcr hash table 2 */
+
 
 /*
  * Module functions that are defined later
@@ -259,28 +265,28 @@ static int next_contacts (struct sip_msg*, char*, char*);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-	{"load_gws", (cmd_function)load_gws_0, 0, 0, 0, REQUEST_ROUTE},
-	{"load_gws", (cmd_function)load_gws_1, 1, fixup_pvar_null,
-		fixup_free_pvar_null, REQUEST_ROUTE},
-	{"load_gws_from_grp", (cmd_function)load_gws_from_grp, 1,
-	 fixstringloadgws, 0, REQUEST_ROUTE},
-	{"next_gw", (cmd_function)next_gw, 0, 0, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE},
-	{"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw", (cmd_function)from_gw_1, 1, fixup_pvar_null,
-	 fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"from_gw_grp", (cmd_function)from_gw_grp, 1, fixup_uint_null, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
-	{"to_gw", (cmd_function)to_gw, 0, 0, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE},
-	{"to_gw", (cmd_function)to_gw_grp, 1, fixup_uint_null, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE},
-	{"load_contacts", (cmd_function)load_contacts, 0, 0, 0,
-	 REQUEST_ROUTE},
-	{"next_contacts", (cmd_function)next_contacts, 0, 0, 0,
-	 REQUEST_ROUTE | FAILURE_ROUTE},
-	{0, 0, 0, 0, 0, 0}
+    {"load_gws", (cmd_function)load_gws_0, 0, 0, 0, REQUEST_ROUTE},
+    {"load_gws", (cmd_function)load_gws_1, 1, fixup_pvar_null,
+     fixup_free_pvar_null, REQUEST_ROUTE},
+    {"load_gws_from_grp", (cmd_function)load_gws_from_grp, 1,
+     fixstringloadgws, fixup_free_pvar_null, REQUEST_ROUTE},
+    {"next_gw", (cmd_function)next_gw, 0, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE},
+    {"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"from_gw", (cmd_function)from_gw_1, 1, fixup_pvar_null,
+     fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"from_gw_grp", (cmd_function)from_gw_grp, 1, fixup_uint_null, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE},
+    {"to_gw", (cmd_function)to_gw, 0, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE},
+    {"to_gw", (cmd_function)to_gw_grp, 1, fixup_uint_null, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE},
+    {"load_contacts", (cmd_function)load_contacts, 0, 0, 0,
+     REQUEST_ROUTE},
+    {"next_contacts", (cmd_function)next_contacts, 0, 0, 0,
+     REQUEST_ROUTE | FAILURE_ROUTE},
+    {0, 0, 0, 0, 0, 0}
 };
 
 
@@ -288,31 +294,33 @@ static cmd_export_t cmds[] = {
  * Exported parameters
  */
 static param_export_t params[] = {
-	{"db_url",                   STR_PARAM, &db_url.s       },
-	{"gw_table",                 STR_PARAM, &gw_table.s     },
-	{"gw_name_column",           STR_PARAM, &gw_name_col.s  },
-	{"grp_id_column",            STR_PARAM, &grp_id_col.s   },
-	{"ip_addr_column",           STR_PARAM, &ip_addr_col.s  },
-	{"port_column",              STR_PARAM, &port_col.s     },
-	{"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
-	{"transport_column",         STR_PARAM, &transport_col.s },
-	{"strip_column",             STR_PARAM, &strip_col.s    },
-	{"tag_column",               STR_PARAM, &tag_col.s      },
-	{"flags_column",             STR_PARAM, &flags_col.s    },
-	{"lcr_table",                STR_PARAM, &lcr_table.s    },
-	{"prefix_column",            STR_PARAM, &prefix_col.s   },
-	{"from_uri_column",          STR_PARAM, &from_uri_col.s },
-	{"priority_column",          STR_PARAM, &priority_col.s },
-	{"fr_inv_timer_avp",         STR_PARAM,	&fr_inv_timer_avp_param },
-	{"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param },
-	{"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
-	{"contact_avp",              STR_PARAM, &contact_avp_param },
-	{"rpid_avp",                 STR_PARAM, &rpid_avp_param },
-	{"flags_avp",                STR_PARAM, &flags_avp_param },
-	{"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
-	{"fr_inv_timer_next",        INT_PARAM,	&fr_inv_timer_next },
-	{"prefix_mode",              INT_PARAM, &prefix_mode_param },
-	{0, 0, 0}
+    {"db_url",                   STR_PARAM, &db_url.s       },
+    {"gw_table",                 STR_PARAM, &gw_table.s     },
+    {"gw_name_column",           STR_PARAM, &gw_name_col.s  },
+    {"grp_id_column",            STR_PARAM, &grp_id_col.s   },
+    {"ip_addr_column",           STR_PARAM, &ip_addr_col.s  },
+    {"port_column",              STR_PARAM, &port_col.s     },
+    {"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
+    {"transport_column",         STR_PARAM, &transport_col.s },
+    {"strip_column",             STR_PARAM, &strip_col.s    },
+    {"tag_column",               STR_PARAM, &tag_col.s      },
+    {"weight_column",            STR_PARAM, &weight_col.s   },
+    {"flags_column",             STR_PARAM, &flags_col.s    },
+    {"lcr_table",                STR_PARAM, &lcr_table.s    },
+    {"prefix_column",            STR_PARAM, &prefix_col.s   },
+    {"from_uri_column",          STR_PARAM, &from_uri_col.s },
+    {"priority_column",          STR_PARAM, &priority_col.s },
+    {"fr_inv_timer_avp",         STR_PARAM, &fr_inv_timer_avp_param },
+    {"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param },
+    {"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
+    {"contact_avp",              STR_PARAM, &contact_avp_param },
+    {"rpid_avp",                 STR_PARAM, &rpid_avp_param },
+    {"flags_avp",                STR_PARAM, &flags_avp_param },
+    {"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
+    {"fr_inv_timer_next",        INT_PARAM, &fr_inv_timer_next },
+    {"lcr_hash_size",            INT_PARAM, &lcr_hash_size_param },
+    {"fetch_rows",               INT_PARAM, &fetch_rows_param },
+    {0, 0, 0}
 };
 
 
@@ -320,9 +328,10 @@ static param_export_t params[] = {
  * Exported MI functions
  */
 static mi_export_t mi_cmds[] = {
-	{ MI_LCR_RELOAD,  mi_lcr_reload,   MI_NO_INPUT_FLAG,  0,  mi_child_init },
-	{ MI_LCR_DUMP,    mi_lcr_dump,     MI_NO_INPUT_FLAG,  0,  0 },
-	{ 0, 0, 0, 0 ,0}
+    { MI_LCR_RELOAD, mi_lcr_reload, MI_NO_INPUT_FLAG, 0, mi_child_init },
+    { MI_LCR_GW_DUMP, mi_lcr_gw_dump, MI_NO_INPUT_FLAG, 0, 0 },
+    { MI_LCR_LCR_DUMP, mi_lcr_lcr_dump, MI_NO_INPUT_FLAG, 0, 0 },
+    { 0, 0, 0, 0 ,0}
 };
 
 
@@ -348,12 +357,12 @@ struct module_exports exports = {
 static int lcr_db_init(const str* db_url)
 {	
 	if (lcr_dbf.init==0){
-		LM_CRIT("Null lcr_dbf\n");
+		LM_CRIT("null lcr_dbf\n");
 		goto error;
 	}
 	db_handle=lcr_dbf.init(db_url);
 	if (db_handle==0){
-		LM_ERR("Unable to connect to the database\n");
+		LM_ERR("unable to connect to the database\n");
 		goto error;
 	}
 	return 0;
@@ -366,12 +375,12 @@ error:
 static int lcr_db_bind(const str* db_url)
 {
     if (db_bind_mod(db_url, &lcr_dbf)<0){
-	LM_ERR("Unable to bind to the database module\n");
+	LM_ERR("unable to bind to the database module\n");
 	return -1;
     }
 
     if (!DB_CAPABILITY(lcr_dbf, DB_CAP_QUERY)) {
-	LM_ERR("Database module does not implement 'query' function\n");
+	LM_ERR("database module does not implement 'query' function\n");
 	return -1;
     }
 
@@ -414,6 +423,7 @@ static int mod_init(void)
     transport_col.len = strlen(transport_col.s);
     strip_col.len = strlen(strip_col.s);
     tag_col.len = strlen(tag_col.s);
+    weight_col.len = strlen(weight_col.s);
     flags_col.len = strlen(flags_col.s);
     lcr_table.len = strlen(lcr_table.s);
     prefix_col.len = strlen(prefix_col.s);
@@ -422,13 +432,13 @@ static int mod_init(void)
 
     /* Bind database */
     if (lcr_db_bind(&db_url)) {
-	LM_ERR("No database module found\n");
+	LM_ERR("no database module found\n");
 	return -1;
     }
 
-    /* Check value of prefix_mode */
-    if ((prefix_mode_param != 0) && (prefix_mode_param != 1)) {
-	LM_ERR("Invalid prefix_mode value <%d>\n", prefix_mode_param);
+    /* Check value of prefix_hash_size */
+    if (lcr_hash_size_param <= 0) {
+	LM_ERR("invalid prefix_hash_size value <%d>\n", lcr_hash_size_param);
 	return -1;
     }
 
@@ -437,13 +447,13 @@ static int mod_init(void)
 	s.s = fr_inv_timer_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("Malformed or non AVP definition <%s>\n",
+	    LM_ERR("malformed or non AVP definition <%s>\n",
 		   fr_inv_timer_avp_param);
 	    return -1;
 	}
 	
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &fr_inv_timer_avp, &avp_flags)!=0) {
-	    LM_ERR("Invalid AVP definition <%s>\n", fr_inv_timer_avp_param);
+	    LM_ERR("invalid AVP definition <%s>\n", fr_inv_timer_avp_param);
 	    return -1;
 	}
 	fr_inv_timer_avp_type = avp_flags;
@@ -456,12 +466,12 @@ static int mod_init(void)
 	s.s = gw_uri_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("Malformed or non AVP definition <%s>\n", gw_uri_avp_param);
+	    LM_ERR("malformed or non AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
 	
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &gw_uri_avp, &avp_flags)!=0) {
-	    LM_ERR("Invalid AVP definition <%s>\n", gw_uri_avp_param);
+	    LM_ERR("invalid AVP definition <%s>\n", gw_uri_avp_param);
 	    return -1;
 	}
 	gw_uri_avp_type = avp_flags;
@@ -474,13 +484,13 @@ static int mod_init(void)
 	s.s = ruri_user_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("Malformed or non AVP definition <%s>\n",
+	    LM_ERR("malformed or non AVP definition <%s>\n",
 		   ruri_user_avp_param);
 	    return -1;
 	}
 	
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &ruri_user_avp, &avp_flags)!=0) {
-	    LM_ERR("Invalid AVP definition <%s>\n", ruri_user_avp_param);
+	    LM_ERR("invalid AVP definition <%s>\n", ruri_user_avp_param);
 	    return -1;
 	}
 	ruri_user_avp_type = avp_flags;
@@ -493,13 +503,13 @@ static int mod_init(void)
 	s.s = contact_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("Malformed or non AVP definition <%s>\n",
+	    LM_ERR("malformed or non AVP definition <%s>\n",
 		   contact_avp_param);
 	    return -1;
 	}
 	
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &contact_avp, &avp_flags)!=0) {
-	    LM_ERR("Invalid AVP definition <%s>\n", contact_avp_param);
+	    LM_ERR("invalid AVP definition <%s>\n", contact_avp_param);
 	    return -1;
 	}
 	contact_avp_type = avp_flags;
@@ -512,12 +522,12 @@ static int mod_init(void)
 	s.s = rpid_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("Malformed or non AVP definition <%s>\n", rpid_avp_param);
-	    return -1;
+	    LM_ERR("malformed or non AVP definition <%s>\n", rpid_avp_param);
+ 	    return -1;
 	}
 	
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &rpid_avp, &avp_flags)!=0) {
-	    LM_ERR("Invalid AVP definition <%s>\n", rpid_avp_param);
+	    LM_ERR("invalid AVP definition <%s>\n", rpid_avp_param);
 	    return -1;
 	}
 	rpid_avp_type = avp_flags;
@@ -530,12 +540,12 @@ static int mod_init(void)
 	s.s = flags_avp_param; s.len = strlen(s.s);
 	if (pv_parse_spec(&s, &avp_spec)==0
 	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("Malformed or non AVP definition <%s>\n", flags_avp_param);
+	    LM_ERR("malformed or non AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
 	
 	if(pv_get_avp_name(0, &(avp_spec.pvp), &flags_avp, &avp_flags)!=0) {
-	    LM_ERR("Invalid AVP definition <%s>\n", flags_avp_param);
+	    LM_ERR("invalid AVP definition <%s>\n", flags_avp_param);
 	    return -1;
 	}
 	flags_avp_type = avp_flags;
@@ -544,174 +554,212 @@ static int mod_init(void)
 	return -1;
     }
 
-    /* Check table version */
-	db_con_t* dbh;
-	if (lcr_dbf.init==0){
-		LM_CRIT("Unbound database\n");
-		return -1;
-	}
-	dbh=lcr_dbf.init(&db_url);
-	if (dbh==0){
-		LM_ERR("Unable to open database connection\n");
-		return -1;
-	}
-	if((db_check_table_version(&lcr_dbf, dbh, &gw_table, GW_TABLE_VERSION) < 0) ||
-		(db_check_table_version(&lcr_dbf, dbh, &lcr_table, LCR_TABLE_VERSION) < 0)) {
-			LM_ERR("error during table version check.\n");
-			lcr_dbf.close(dbh);
-			goto err;
+    if (fetch_rows_param < 1) {
+	LM_ERR("invalid fetch_rows module parameter value <%d>\n",
+	       fetch_rows_param);
+	return -1;
     }
+
+    /* Check table version */
+    db_con_t* dbh;
+    if (lcr_dbf.init==0){
+	LM_CRIT("unbound database\n");
+	return -1;
+    }
+    dbh=lcr_dbf.init(&db_url);
+    if (dbh==0){
+	LM_ERR("unable to open database connection\n");
+	return -1;
+    }
+    if((db_check_table_version(&lcr_dbf, dbh, &gw_table, GW_TABLE_VERSION)
+	< 0) ||
+       (db_check_table_version(&lcr_dbf, dbh, &lcr_table, LCR_TABLE_VERSION)
+	< 0)) { 
+	LM_ERR("error during table version check\n");
 	lcr_dbf.close(dbh);
+	goto err;
+    }
+    lcr_dbf.close(dbh);
+
+    /* Reset all shm pointers */
+    gws_1 = gws_2 = (struct gw_info *)NULL;
+    gws = (struct gw_info **)NULL;
+    lcrs_1 = lcrs_2 = (struct lcr_info **)NULL;
+    lcrs = (struct lcr_info ***)NULL;
+    reload_lock = (gen_lock_t *)NULL;
 
     /* Initializing gw tables and gw table pointer variable */
+    /* ip_addr of first entry contains the number of gws in table */
     gws_1 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) *
 					 (MAX_NO_OF_GWS + 1));
     if (gws_1 == 0) {
-	LM_ERR("No memory for gw table\n");
+	LM_ERR("no memory for gw table\n");
 	goto err;
     }
     gws_2 = (struct gw_info *)shm_malloc(sizeof(struct gw_info) *
 					 (MAX_NO_OF_GWS + 1));
     if (gws_2 == 0) {
-	LM_ERR("No memory for gw table\n");
+	LM_ERR("no memory for gw table\n");
 	goto err;
     }
     gws = (struct gw_info **)shm_malloc(sizeof(struct gw_info *));
     if (gws == 0) {
-	LM_ERR("No memory for gw table pointer\n");
+	LM_ERR("no memory for gw table pointer\n");
     }
     gws_1[0].ip_addr = 0;    /* Number of gateways in table */
     *gws = gws_1;
 
-    /* Initializing lcr tables and lcr table pointer variable */
-    lcrs_1 = (struct lcr_info *)shm_malloc(sizeof(struct lcr_info) *
-					   (MAX_NO_OF_LCRS + 1));
+    /* Initializing lcr hash tables and hash table pointer variable */
+    /* Last entry in hash table contains list of different prefix lengths */
+    lcrs_1 = (struct lcr_info **)
+	shm_malloc(sizeof(struct lcr_info *) * (lcr_hash_size_param + 1));
     if (lcrs_1 == 0) {
-	LM_ERR("No memory for lcr table\n");
+	LM_ERR("no memory for lcr hash table\n");
 	goto err;
     }
-    memset(lcrs_1, 0, sizeof(struct lcr_info) * (MAX_NO_OF_LCRS + 1));
-    lcrs_2 = (struct lcr_info *)shm_malloc(sizeof(struct lcr_info) *
-					   (MAX_NO_OF_LCRS + 1));
-    if (lcrs_2 == 0) {
-	LM_ERR("No memory for lcr table\n");
+    memset(lcrs_1, 0, sizeof(struct lcr_info *) * (lcr_hash_size_param + 1));
+    lcrs_2 = (struct lcr_info **)
+	shm_malloc(sizeof(struct lcr_info *) * (lcr_hash_size_param + 1));
+    if (lcrs_1 == 0) {
+	LM_ERR("no memory for lcr hash table\n");
 	goto err;
     }
-    memset(lcrs_2, 0, sizeof(struct lcr_info) * (MAX_NO_OF_LCRS + 1));
-    lcrs = (struct lcr_info **)shm_malloc(sizeof(struct lcr_info *));
+    memset(lcrs_2, 0, sizeof(struct lcr_info *) * (lcr_hash_size_param + 1));
+    lcrs = (struct lcr_info ***)shm_malloc(sizeof(struct lcr_info *));
     if (lcrs == 0) {
-	LM_ERR("No memory for lcr table pointer\n");
+	LM_ERR("no memory for lcr hash table pointer\n");
 	goto err;
     }
     *lcrs = lcrs_1;
 
-    /* First reload */
-    if (reload_gws() == -1) {
-	LM_CRIT("Failed to reload gateways and routes\n");
+    /* Allocate and initialize locks */
+    reload_lock = lock_alloc();
+    if (reload_lock == NULL) {
+	LM_ERR("cannot allocate reload_lock\n");
 	goto err;
     }
+    if (lock_init(reload_lock) == NULL) {
+	LM_ERR("cannot init reload_lock\n");
+	goto err;
+    }
+
+    /* First reload */
+    lock_get(reload_lock);
+    if (reload_gws_and_lcrs() == -1) {
+	lock_release(reload_lock);
+	LM_CRIT("failed to reload gateways and routes\n");
+	goto err;
+    }
+    lock_release(reload_lock);
 
     return 0;
 
 err:
+    free_shared_memory();
     return -1;
 }
 
 
 static void destroy(void)
 {
-    int i;
-
     lcr_db_close();
 
-    for (i = 0; i < MAX_NO_OF_LCRS + 1; i++) {
-	if (lcrs_1[i].prefix_re) shm_free(lcrs_1[i].prefix_re);
-	if (lcrs_1[i].from_uri_re) shm_free(lcrs_1[i].from_uri_re);
-	if (lcrs_2[i].prefix_re) shm_free(lcrs_2[i].prefix_re);
-	if (lcrs_2[i].from_uri_re) shm_free(lcrs_2[i].from_uri_re);
-    }
-    if(gws_1) {
+    free_shared_memory();
+}
+
+/* Free shared memory */
+static void free_shared_memory(void)
+{
+    if (gws_1) {
         shm_free(gws_1);
-        gws_1 = NULL;
     }
-    if(gws_2) {
+    if (gws_2) {
         shm_free(gws_2);
-        gws_2 = NULL;
     }
-    if(gws) {
+    if (gws) {
         shm_free(gws);
-        gws = NULL;
     }
-    if(lcrs_1) { 
+    if (lcrs_1) {
+        lcr_hash_table_contents_free(lcrs_1);
         shm_free(lcrs_1);
-        lcrs_1 = NULL;
     }
-    if(lcrs_2) {
+    if (lcrs_2) {
+        lcr_hash_table_contents_free(lcrs_2);
         shm_free(lcrs_2);
-        lcrs_2 = NULL;
     }
-    if(lcrs) {
+    if (lcrs) {
         shm_free(lcrs);
-        lcrs = NULL;
+    }
+    if (reload_lock) {
+	lock_destroy(reload_lock);
+	lock_dealloc(reload_lock);
     }
 }
+   
 
-
-/*
- * Sort lcr records by prefix_len and priority.
+/* 
+ * Convert string parameter to integer for functions that expect an integer.
+ * Taken from sl module.
  */
-static int comp_lcrs(const void *m1, const void *m2)
+static int fixstringloadgws(void **param, int param_count)
 {
-    int result = -1;
+    pv_elem_t *model=NULL;
+    str s;
 
-    struct mi *mi1 = (struct mi *) m1;
-    struct mi *mi2 = (struct mi *) m2;
+    /* convert to str */
+    s.s = (char*)*param;
+    s.len = strlen(s.s);
 
-    struct lcr_info lcr_record1 = (*lcrs)[mi1->route_index];
-    struct lcr_info lcr_record2 = (*lcrs)[mi2->route_index];
-
-    if (prefix_mode_param == 0) {
-        /* Sort by prefix. */
-        if (lcr_record1.prefix_len > lcr_record2.prefix_len) {
-	    result = 1;
-        } else if (lcr_record1.prefix_len == lcr_record2.prefix_len) {
-	    /* Sort by priority. */
-	    if (lcr_record1.priority < lcr_record2.priority) {
-	        result = 1;
-	    } else if (lcr_record1.priority == lcr_record2.priority) {
-	        /* Nothing to do. */
-	        result = 0;
-	    }
-        }
-    } else {
-        if (lcr_record1.priority < lcr_record2.priority) {
-	    result = 1;
-	} else if (lcr_record1.priority == lcr_record2.priority) {
-	    /* Nothing to do. */
-	    result = 0;
+    model=NULL;
+    if (param_count==1) {
+	if(s.len==0) {
+	    LM_ERR("no param <%d>!\n", param_count);
+	    return -1;
 	}
+	
+	if(pv_parse_format(&s,&model)<0 || model==NULL) {
+	    LM_ERR("wrong format <%s> for param <%d>!\n", s.s, param_count);
+	    return -1;
+	}
+	if(model->spec.getf==NULL) {
+	    if(param_count==1) {
+		if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0) {
+		    LM_ERR("wrong value <%s> for param <%d>!\n",
+			   s.s, param_count);
+		    return -1;
+		}
+	    }
+	}
+	*param = (void*)model;
     }
 
-    return result;
+    return 0;
 }
 
+
 /*
- * Sort lcr records by rand table.
+ * Compare matched gateways based on prefix_len, priority, and randomized
+ * weight.
  */
-static int rand_lcrs(const void *m1, const void *m2)
+static int comp_matched(const void *m1, const void *m2)
 {
-    int result = -1;
+    struct matched_gw_info *mi1 = (struct matched_gw_info *) m1;
+    struct matched_gw_info *mi2 = (struct matched_gw_info *) m2;
 
-    struct mi mi1 = *((struct mi *) m1);
-    struct mi mi2 = *((struct mi *) m2);
-
-    if (mi1.randomizer > mi2.randomizer) {
-	result = 1;
-    } else if (mi1.randomizer == mi2.randomizer) {
-	result = 0;
+    /* Sort by prefix_len */
+    if (mi1->prefix_len > mi2->prefix_len) return 1;
+    if (mi1->prefix_len == mi2->prefix_len) {
+	/* Sort by priority */
+	if (mi1->priority < mi2->priority) return 1;
+	if (mi1->priority == mi2->priority) {
+	    /* Sort by randomized weigth */
+	    if (mi1->weight > mi2->weight) return 1;
+	    if (mi1->weight == mi2->weight) return 0;
+	    return -1;
+	}
+	return -1;
     }
-
-    return result;
+    return -1;
 }
 
 
@@ -724,7 +772,7 @@ static pcre *reg_ex_comp(const char *pattern)
 
     re = pcre_compile(pattern, 0, &error, &err_offset, NULL);
     if (re == NULL) {
-	LM_ERR("PCRE compilation of '%s' failed at offset %d: %s\n",
+	LM_ERR("pcre compilation of '%s' failed at offset %d: %s\n",
 	       pattern, err_offset, error);
 	return (pcre *)0;
     }
@@ -780,14 +828,14 @@ static int comp_gws(const void *_g1, const void *_g2)
 
 
 /*
- * Check if ip_addr/grp_id of gateway is unique
+ * Check if ip_addr/grp_id of gateway is unique.
  */
 static int gw_unique(const struct gw_info *gws, const unsigned int count,
 		     const unsigned int ip_addr, const unsigned int grp_id)
 {
-    unsigned int i = 0;
+    unsigned int i;
 
-    for (i = 0; i < count; i++) {
+    for (i = 1; i <= count; i++) {
 	if ((gws[i].ip_addr == ip_addr) &&
 	    (gws[i].grp_id == grp_id))
 	    return 0;
@@ -796,26 +844,141 @@ static int gw_unique(const struct gw_info *gws, const unsigned int count,
     return 1;
 }
 
-    
-/*
- * Reload gws to unused gw table and lcrs to unused lcr table, and, when done
- * make unused gw and lcr table the one in use.
- */
-int reload_gws(void)
+static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
+		     unsigned int grp_id, char *ip_string, unsigned int port,
+		     unsigned int scheme, unsigned int transport,
+		     unsigned int flags, unsigned int strip, char *tag,
+		     unsigned int tag_len, unsigned short weight)
 {
-    unsigned int i, j, port, strip, tag_len, prefix_len, from_uri_len,
-	grp_id, priority;
+    if (gw_unique(gws, i - 1, ip_addr, grp_id) == 0) {
+	LM_ERR("ip_addr/grp_id <%s/%u> of gw is not unique\n",
+	       ip_string, grp_id);
+	return 0;
+    }
+    gws[i].ip_addr = ip_addr;
+    gws[i].port = port;
+    gws[i].grp_id = grp_id;
+    gws[i].scheme = scheme;
+    gws[i].transport = transport;
+    gws[i].flags = flags;
+    gws[i].strip = strip;
+    gws[i].tag_len = tag_len;
+    if (tag_len) memcpy(&(gws[i].tag[0]), tag, tag_len);
+    gws[i].weight = weight;
+    gws[i].next = 0;
+
+    return 1;
+}
+
+/*
+ * Links gws that belong to same group via next field, sets gw_grps
+ * array with first indexes of each group, and sets grp_cnt to number of
+ * different gw groups.
+ */
+static void link_gw_grps(struct gw_info *gws, struct gw_grp *gw_grps,
+			 unsigned int *grp_cnt)
+{
+    unsigned int i, j;
+
+    *grp_cnt = 0;
+    
+    for (i = 1; i <= gws[0].ip_addr; i++) {
+	for (j = 1; j < i; j++) {
+	    if (gws[j].grp_id == gws[i].grp_id) {
+		gws[i].next = gws[j].next;
+		gws[j].next = i;
+		goto found;
+	    }
+	}
+	gw_grps[*grp_cnt].grp_id = gws[i].grp_id;
+	gw_grps[*grp_cnt].first = i;
+	*grp_cnt = *grp_cnt + 1;
+    found:
+	continue;
+    }
+}
+
+/*
+ * Return gw table index of first gw in given group or 0 if no gws in
+ * the group.
+ */
+static int find_first_gw(struct gw_grp *gw_grps, unsigned int grp_cnt,
+			 unsigned int grp_id)
+{
+    unsigned int i;
+    
+    for (i = 0; i < grp_cnt; i++) {
+	if (gw_grps[i].grp_id == grp_id) {
+	    return gw_grps[i].first;
+	}
+    }
+
+    return 0;
+}
+
+/*
+ * Insert prefix_len into list pointed by last lcr hash table entry 
+ * if not there already. Keep list in decending prefix_len order.
+ */
+static int prefix_len_insert(struct lcr_info **table, unsigned short prefix_len)
+{
+    struct lcr_info *lcr_rec, **previous, *this;
+    
+    previous = &(table[lcr_hash_size_param]);
+    this = table[lcr_hash_size_param];
+
+    while (this) {
+	if (this->prefix_len == prefix_len)
+	    return 1;
+	if (this->prefix_len < prefix_len) {
+	    lcr_rec = shm_malloc(sizeof(struct lcr_info));
+	    if (lcr_rec == NULL) {
+		LM_ERR("no shared memory for lcr_info\n");
+		return 0;
+	    }
+	    memset(lcr_rec, 0, sizeof(struct lcr_info));
+	    lcr_rec->prefix_len = prefix_len;
+	    lcr_rec->next = this;
+	    *previous = lcr_rec;
+	    return 1;
+	}
+	previous = &(this->next);
+	this = this->next;
+    }
+
+    lcr_rec = shm_malloc(sizeof(struct lcr_info));
+    if (lcr_rec == NULL) {
+	LM_ERR("no shared memory for lcr_info\n");
+	return 0;
+    }
+    memset(lcr_rec, 0, sizeof(struct lcr_info));
+    lcr_rec->prefix_len = prefix_len;
+    lcr_rec->next = NULL;
+    *previous = lcr_rec;
+    return 1;
+}
+
+
+/*
+ * Reload gws to unused gw table, lcrs to unused lcr hash table, and
+ * prefix lens to a new prefix_len list.  When done, make these tables
+ * and list the current ones.
+ */
+int reload_gws_and_lcrs(void)
+{
+    unsigned int i, n, port, strip, tag_len, prefix_len, from_uri_len,
+	grp_id,	grp_cnt, priority, flags, first_gw, weight, gw_cnt;
     struct in_addr ip_addr;
-    unsigned int flags;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
     char *ip_string, *tag, *prefix, *from_uri;
     db_res_t* res = NULL;
     db_row_t* row;
-    db_key_t gw_cols[8];
+    db_key_t gw_cols[9];
     db_key_t lcr_cols[4];
-    pcre *prefix_re, *from_uri_re;
+    pcre *from_uri_re;
+    struct gw_grp gw_grps[MAX_NO_OF_GWS];
 
     gw_cols[0] = &ip_addr_col;
     gw_cols[1] = &port_col;
@@ -823,24 +986,23 @@ int reload_gws(void)
     gw_cols[3] = &transport_col;
     gw_cols[4] = &strip_col;
     gw_cols[5] = &tag_col;
-    /* FIXME: is this ok if we have different names for grp_id
-       in the two tables? (ge vw lcr) */
     gw_cols[6] = &grp_id_col;
     gw_cols[7] = &flags_col;
+    gw_cols[8] = &weight_col;
 
     lcr_cols[0] = &prefix_col;
     lcr_cols[1] = &from_uri_col;
-    /* FIXME: is this ok if we have different names for grp_id
-       in the two tables? (ge vw lcr) */
     lcr_cols[2] = &grp_id_col;
     lcr_cols[3] = &priority_col;
 
-    if (lcr_dbf.init==0){
+    /* Reload gws */
+
+    if (lcr_dbf.init == 0) {
 	LM_CRIT("unbound database\n");
 	return -1;
     }
-    dbh=lcr_dbf.init(&db_url);
-    if (dbh==0){
+    dbh = lcr_dbf.init(&db_url);
+    if (dbh == 0){
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
@@ -850,7 +1012,7 @@ int reload_gws(void)
 	return -1;
     }
 
-    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 8, 0, &res) < 0) {
+    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 9, 0, &res) < 0) {
 	    LM_ERR("failed to query gw data\n");
 	    lcr_dbf.close(dbh);
 	    return -1;
@@ -860,8 +1022,6 @@ int reload_gws(void)
 	    LM_ERR("too many gateways\n");
 	    goto gw_err;
     }
-
-    j = 0;
 
     for (i = 0; i < RES_ROW_N(res); i++) {
 	row = RES_ROWS(res) + i;
@@ -967,199 +1127,204 @@ int reload_gws(void)
 		   ip_string, i);
 	    goto gw_err;
 	}
-	if (*gws == gws_1) {
-	    if (gw_unique(&(gws_2[1]), j, (unsigned int)ip_addr.s_addr,
-			  grp_id) == 0) {
-		LM_ERR("ip_addr/grp_id <%s/%u> of gw is not unique\n",
-		       ip_string, grp_id);
-		goto gw_err;
-	    }
-	    j = i + 1;
-	    gws_2[j].ip_addr = (unsigned int)ip_addr.s_addr;
-	    gws_2[j].port = port;
-	    gws_2[j].grp_id = grp_id;
-	    gws_2[j].scheme = scheme;
-	    gws_2[j].transport = transport;
-	    gws_2[j].flags = flags;
-	    gws_2[j].strip = strip;
-	    gws_2[j].tag_len = tag_len;
-	    if (tag_len)
-		memcpy(&(gws_2[j].tag[0]), tag, tag_len);
+	if (VAL_NULL(ROW_VALUES(row) + 8) == 1) {
+	    weight = 1;
 	} else {
-	    if (gw_unique(&(gws_1[1]), j, (unsigned int)ip_addr.s_addr,
-			  grp_id) == 0) {
-		LM_ERR("ip_address/grp %s/%u of gw is not unique\n",
-		       ip_string, grp_id);
+	    if (VAL_TYPE(ROW_VALUES(row) + 8) != DB_INT) {
+		LM_ERR("weight of gw <%s> at row <%u> is not int\n",
+		       ip_string, i);
 		goto gw_err;
 	    }
-	    j = i + 1;
-	    gws_1[j].ip_addr = (unsigned int)ip_addr.s_addr;
-	    gws_1[j].port = port;
-	    gws_1[j].grp_id = grp_id;
-	    gws_1[j].scheme = scheme;
-	    gws_1[j].transport = transport;
-	    gws_1[j].flags = flags;
-	    gws_1[j].strip = strip;
-	    gws_1[j].tag_len = tag_len;
-	    if (tag_len)
-		memcpy(&(gws_1[j].tag[0]), tag, tag_len);
+	    weight = (unsigned int)VAL_INT(ROW_VALUES(row) + 8);
+	}
+	if ((weight < 1) || (weight > 254)) {
+	    LM_ERR("weight <%d> of gw <%s> at row <%u> is not 1-254\n",
+		   weight, ip_string, i);
+	    goto gw_err;
+	}
+	
+	if (*gws == gws_1) {
+	    if (!insert_gw(gws_2, i + 1, (unsigned int)ip_addr.s_addr, grp_id,
+			   ip_string, port, scheme, transport, flags, strip,
+			   tag, tag_len, weight)) {
+		goto gw_err;
+	    }
+	} else {
+	    if (!insert_gw(gws_1, i + 1, (unsigned int)ip_addr.s_addr, grp_id,
+			   ip_string, port, scheme, transport, flags, strip,
+			   tag, tag_len, weight)) {
+		goto gw_err;
+	    }
 	}
     }
 
     lcr_dbf.free_result(dbh, res);
+    res = NULL;
     
+    gw_cnt = i;
+
     if (*gws == gws_1) {
-	qsort(&(gws_2[1]), j, sizeof(struct gw_info), comp_gw_grps);
-	gws_2[0].ip_addr = j;
-	*gws = gws_2;
+	qsort(&(gws_2[1]), gw_cnt, sizeof(struct gw_info), comp_gw_grps);
+	gws_2[0].ip_addr = gw_cnt;
+	link_gw_grps(gws_2, gw_grps, &grp_cnt);
     } else {
-	qsort(&(gws_1[1]), j, sizeof(struct gw_info), comp_gw_grps);
-	gws_1[0].ip_addr = j;
-	*gws = gws_1;
+	qsort(&(gws_1[1]), gw_cnt, sizeof(struct gw_info), comp_gw_grps);
+	gws_1[0].ip_addr = gw_cnt;
+	link_gw_grps(gws_1, gw_grps, &grp_cnt);
     }
 
+    for (i = 0; i < grp_cnt; i++) {
+	LM_DBG("gw_grps[%d].grp_id <%d>, gw_grps[%d].first <%d>\n",
+		i, gw_grps[i].grp_id, i, gw_grps[i].first);
+    }
+
+    /* Reload lcrs */
+
+    if (*lcrs == lcrs_1) {
+	lcr_hash_table_contents_free(lcrs_2);
+    } else {
+	lcr_hash_table_contents_free(lcrs_1);
+    }
 
     if (lcr_dbf.use_table(dbh, &lcr_table) < 0) {
 	LM_ERR("error while trying to use lcr table\n");
 	return -1;
     }
 
-    if (lcr_dbf.query(dbh, NULL, 0, NULL, lcr_cols, 0, 4, 0, &res) < 0) {
-	LM_ERR("failed to query lcr data\n");
-	lcr_dbf.close(dbh);
-	return -1;
+    if (DB_CAPABILITY(lcr_dbf, DB_CAP_FETCH)) {
+	if (lcr_dbf.query(dbh, 0, 0, 0, lcr_cols, 0, 4, 0, 0) < 0) {
+	    LM_ERR("db query on lcr table failed\n");
+	    lcr_dbf.close(dbh);
+	    return -1;
+	}
+	if (lcr_dbf.fetch_result(dbh, &res, fetch_rows_param) < 0) {
+	    LM_ERR("failed to fetch rows from lcr table\n");
+	    lcr_dbf.close(dbh);
+	    return -1;
+	}
+    } else {
+	if (lcr_dbf.query(dbh, 0, 0, 0, lcr_cols, 0, 4, 0, &res) < 0) {
+	    LM_ERR("db query on lcr table failed\n");
+	    lcr_dbf.close(dbh);
+	    return -1;
+	}
     }
 
-    if (RES_ROW_N(res) + 1 > MAX_NO_OF_LCRS) {
-	LM_ERR("too many lcr entries <%d>\n", RES_ROW_N(res));
-	goto gw_err;
-    }
-    for (i = 0; i < RES_ROW_N(res); i++) {
-	prefix_re = from_uri_re = 0;
-	row = RES_ROWS(res) + i;
-	if (VAL_NULL(ROW_VALUES(row)) == 1) {
-	    prefix_len = 0;
-	    prefix = 0;
-	} else {
-	    if (VAL_TYPE(ROW_VALUES(row)) != DB_STRING) {
-		LM_ERR("lcr prefix at row <%u> is not string\n", i);
-		goto lcr_err;
-	    }
-	    prefix = (char *)VAL_STRING(ROW_VALUES(row));
-	    prefix_len = strlen(prefix);
-	}
-	if (prefix_len > MAX_PREFIX_LEN) {
-	    LM_ERR("length <%u> of lcr prefix at row <%u> is too large\n",
-		   prefix_len, i);
-	    goto lcr_err;
-	}
-	if ((prefix_mode_param == 1) && (prefix_len > 0)){
-	    prefix_re = reg_ex_comp(prefix);
-	    if (prefix_re == 0) {
-		LM_ERR("failed to compile lcr prefix <%s> at row <%u>\n",
-		       prefix, i);
-		goto lcr_err;
-	    }
-	}
-	if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
-	    from_uri_len = 0;
-	    from_uri = 0;
-	} else {
-	    if (VAL_TYPE(ROW_VALUES(row) + 1) != DB_STRING) {
-		LM_ERR("lcr from_uri at row <%u> is not string\n", i);
-		goto lcr_err;
-	    }
-	    from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 1);
-	    from_uri_len = strlen(from_uri);
-	}
-	if (from_uri_len > MAX_FROM_URI_LEN) {
-	    LM_ERR("length <%u> of lcr from_uri at row <%u> is too large\n",
-		   from_uri_len, i);
-	    goto lcr_err;
-	}
-	if (from_uri_len > 0) {
-	    from_uri_re = reg_ex_comp(from_uri);
-	    if (from_uri_re == 0) {
-		LM_ERR("failed to compile lcr from_uri <%s> at row <%u>\n",
-		       from_uri, i);
-		goto lcr_err;
-	    }
-	} else {
+    n = 0;
+    from_uri_re = 0;
+    
+    do {
+	LM_DBG("loading, cycle %d with <%d> rows", n++, RES_ROW_N(res));
+	for (i = 0; i < RES_ROW_N(res); i++) {
 	    from_uri_re = 0;
-	}
-	if ((VAL_NULL(ROW_VALUES(row) + 2) == 1) ||
-	    (VAL_TYPE(ROW_VALUES(row) + 2) != DB_INT)) {
-	    LM_ERR("lcr grp_id at row <%u> is null or not int\n", i);
-	    goto lcr_err;
-	}
-	grp_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 2);
-	if ((VAL_NULL(ROW_VALUES(row) + 3) == 1) ||
-	    (VAL_TYPE(ROW_VALUES(row) + 3) != DB_INT)) {
-	    LM_ERR("lcr priority at row <%u> is null or not int\n", i);
-	    goto lcr_err;
-	}
-	priority = (unsigned int)VAL_INT(ROW_VALUES(row) + 3);
+	    row = RES_ROWS(res) + i;
+	    if (VAL_NULL(ROW_VALUES(row)) == 1) {
+		prefix_len = 0;
+		prefix = 0;
+	    } else {
+		if (VAL_TYPE(ROW_VALUES(row)) != DB_STRING) {
+		    LM_ERR("lcr prefix at row <%u> is not string\n", i);
+		    goto lcr_err;
+		}
+		prefix = (char *)VAL_STRING(ROW_VALUES(row));
+		prefix_len = strlen(prefix);
+	    }
+	    if (prefix_len > MAX_PREFIX_LEN) {
+		LM_ERR("length <%u> of lcr prefix at row <%u> is too large\n",
+		       prefix_len, i);
+		goto lcr_err;
+	    }
+	    if (VAL_NULL(ROW_VALUES(row) + 1) == 1) {
+		from_uri_len = 0;
+		from_uri = 0;
+	    } else {
+		if (VAL_TYPE(ROW_VALUES(row) + 1) != DB_STRING) {
+		    LM_ERR("lcr from_uri at row <%u> is not string\n", i);
+		    goto lcr_err;
+		}
+		from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 1);
+		from_uri_len = strlen(from_uri);
+	    }
+	    if (from_uri_len > MAX_FROM_URI_LEN) {
+		LM_ERR("length <%u> of lcr from_uri at row <%u> is too large\n",
+		       from_uri_len, i);
+		goto lcr_err;
+	    }
+	    if (from_uri_len > 0) {
+		from_uri_re = reg_ex_comp(from_uri);
+		if (from_uri_re == 0) {
+		    LM_ERR("failed to compile lcr from_uri <%s> at row <%u>\n",
+			   from_uri, i);
+		    goto lcr_err;
+		}
+	    } else {
+		from_uri_re = 0;
+	    }
+	    if ((VAL_NULL(ROW_VALUES(row) + 2) == 1) ||
+		(VAL_TYPE(ROW_VALUES(row) + 2) != DB_INT)) {
+		LM_ERR("lcr grp_id at row <%u> is null or not int\n", i);
+		goto lcr_err;
+	    }
+	    grp_id = (unsigned int)VAL_INT(ROW_VALUES(row) + 2);
+	    first_gw = find_first_gw(gw_grps, grp_cnt, grp_id);
+	    if (first_gw == 0) {
+		LM_ERR("gw grp_id <%u> of prefix <%.*s> has no gateways\n",
+		       grp_id, prefix_len, prefix);
+		goto lcr_err;
+	    }
+	    if ((VAL_NULL(ROW_VALUES(row) + 3) == 1) ||
+		(VAL_TYPE(ROW_VALUES(row) + 3) != DB_INT)) {
+		LM_ERR("lcr priority at row <%u> is null or not int\n", i);
+		goto lcr_err;
+	    }
+	    priority = (unsigned int)VAL_INT(ROW_VALUES(row) + 3);
 
-	if (*lcrs == lcrs_1) {
-	    lcrs_2[i].prefix_len = prefix_len;
-	    if (prefix_len) {
-		memcpy(&(lcrs_2[i].prefix[0]), prefix, prefix_len);
-		if (lcrs_2[i].prefix_re) {
-		    shm_free(lcrs_2[i].prefix_re);
+	    if (*lcrs == lcrs_1) {
+		if (!lcr_hash_table_insert(lcrs_2, prefix_len, prefix,
+					   from_uri_len, from_uri, from_uri_re,
+					   grp_id, first_gw, priority) ||
+		    !prefix_len_insert(lcrs_2, prefix_len)) {
+		    lcr_hash_table_contents_free(lcrs_2);
+		    goto lcr_err;
 		}
-		lcrs_2[i].prefix_re = prefix_re;
-	    }		
-	    lcrs_2[i].from_uri_len = from_uri_len;
-	    if (from_uri_len) {
-		memcpy(&(lcrs_2[i].from_uri[0]), from_uri, from_uri_len);
-		lcrs_2[i].from_uri[from_uri_len] = '\0';
-		if (lcrs_2[i].from_uri_re) {
-		    shm_free(lcrs_2[i].from_uri_re);
+	    } else {
+		if (!lcr_hash_table_insert(lcrs_1, prefix_len, prefix,
+					   from_uri_len, from_uri, from_uri_re,
+					   grp_id, first_gw, priority) ||
+		    !prefix_len_insert(lcrs_1, prefix_len)) {
+		    lcr_hash_table_contents_free(lcrs_1);
+		    goto lcr_err;
 		}
-		lcrs_2[i].from_uri_re = from_uri_re;
 	    }
-	    lcrs_2[i].grp_id = grp_id;
-	    lcrs_2[i].priority = priority;
-	    lcrs_2[i].end_record = 0;
-	} else {
-	    lcrs_1[i].prefix_len = prefix_len;
-	    if (prefix_len) {
-		memcpy(&(lcrs_1[i].prefix[0]), prefix, prefix_len);
-		if (lcrs_1[i].prefix_re) {
-		    shm_free(lcrs_1[i].prefix_re);
-		}
-		lcrs_1[i].prefix_re = prefix_re;
-	    }
-	    lcrs_1[i].from_uri_len = from_uri_len;
-	    if (from_uri_len) {
-		memcpy(&(lcrs_1[i].from_uri[0]), from_uri, from_uri_len);
-		lcrs_1[i].from_uri[from_uri_len] = '\0';
-		if (lcrs_1[i].from_uri_re) {
-		    shm_free(lcrs_1[i].from_uri_re);
-		}
-		lcrs_1[i].from_uri_re = from_uri_re;
-	    }
-	    lcrs_1[i].grp_id = grp_id;
-	    lcrs_1[i].priority = priority;
-	    lcrs_1[i].end_record = 0;
 	}
-    }
+	if (DB_CAPABILITY(lcr_dbf, DB_CAP_FETCH)) {
+	    if (lcr_dbf.fetch_result(dbh, &res, fetch_rows_param) < 0) {
+		LM_ERR("fetching of rows from lcr table failed\n");
+		goto lcr_err;
+	    }
+	} else {
+	    break;
+	}
+    } while (RES_ROW_N(res) > 0);
 
     lcr_dbf.free_result(dbh, res);
     lcr_dbf.close(dbh);
 
+    /* Switch current gw and lcr tables */
+    if (*gws == gws_1) {
+	*gws = gws_2;
+    } else {
+	*gws = gws_1;
+    }
     if (*lcrs == lcrs_1) {
-	lcrs_2[i].end_record = 1;
 	*lcrs = lcrs_2;
     } else {
-	lcrs_1[i].end_record = 1;
 	*lcrs = lcrs_1;
     }
 
     return 1;
 
  lcr_err:
-    if (prefix_re) shm_free(prefix_re);
     if (from_uri_re) shm_free(from_uri_re);
 
  gw_err:
@@ -1169,6 +1334,7 @@ int reload_gws(void)
 }
 
 
+/* Print gateways from gws table */
 int mi_print_gws(struct mi_node* rpl)
 {
     unsigned int i;
@@ -1182,14 +1348,12 @@ int mi_print_gws(struct mi_node* rpl)
 
     for (i = 1; i <= (*gws)[0].ip_addr; i++) {
 
-	node= add_mi_node_child(rpl,0 ,"GW", 2, 0, 0);
-	if(node == NULL)
-	    return -1;
+	node = add_mi_node_child(rpl,0 ,"GW", 2, 0, 0);
+	if (node == NULL) goto err;
 
 	p = int2str((unsigned long)(*gws)[i].grp_id, &len );
 	attr = add_mi_attr(node, MI_DUP_VALUE, "GRP_ID", 6, p, len );
-	if(attr == NULL)
-	    return -1;
+	if (attr == NULL) goto err;
 
 	transport = (*gws)[i].transport;
 	if (transport == PROTO_UDP)
@@ -1206,85 +1370,210 @@ int mi_print_gws(struct mi_node* rpl)
 	address.af = AF_INET;
 	address.len = 4;
 	address.u.addr32[0] = (*gws)[i].ip_addr;
-	attr= addf_mi_attr(node,0 ,"URI", 3,"%s:%s:%d%s",
-			   ((*gws)[i].scheme == SIP_URI_T)?"sip":"sips",
-			   ip_addr2a(&address),
-			   ((*gws)[i].port == 0)?5060:(*gws)[i].port,transp);
-	if(attr == NULL)
-	    return -1;
+	attr = addf_mi_attr(node,0 ,"URI", 3,"%s:%s:%d%s",
+			    ((*gws)[i].scheme == SIP_URI_T)?"sip":"sips",
+			    ip_addr2a(&address),
+			    ((*gws)[i].port == 0)?5060:(*gws)[i].port,transp);
+	if (attr == NULL) goto err;
 
 	p = int2str((unsigned long)(*gws)[i].strip, &len );
 	attr = add_mi_attr(node, MI_DUP_VALUE, "STRIP", 5, p, len);
-	if(attr == NULL)
-	    return -1;
+	if (attr == NULL) goto err;
 
 	attr = add_mi_attr(node, MI_DUP_VALUE, "TAG", 3,
 			   (*gws)[i].tag, (*gws)[i].tag_len );
-	if(attr == NULL)
-	    return -1;
+	if (attr == NULL) goto err;
 
-	p = int2str((unsigned long)(*gws)[i].flags, &len );
+	p = int2str((unsigned long)(*gws)[i].weight, &len);
+	attr = add_mi_attr(node, MI_DUP_VALUE, "WEIGHT", 6, p, len);
+	if (attr == NULL) goto err;
+
+	p = int2str((unsigned long)(*gws)[i].flags, &len);
 	attr = add_mi_attr(node, MI_DUP_VALUE, "FLAGS", 5, p, len);
-	if(attr == NULL)
-	    return -1;
-    }
-
-    for (i = 0; i < MAX_NO_OF_LCRS; i++) {
-	if ((*lcrs)[i].end_record != 0)
-	    break;
-
-	node= add_mi_node_child(rpl, 0, "RULE", 4, 0, 0);
-	attr = add_mi_attr(node, 0, "PREFIX", 6, (*lcrs)[i].prefix,
-			   (*lcrs)[i].prefix_len );
-	if(attr== 0)
-	    return -1;
-
-	attr = add_mi_attr(node, 0, "FROM_URI", 8, (*lcrs)[i].from_uri,
-			   (*lcrs)[i].from_uri_len );
-	if(attr== 0)
-	    return -1;
-	
-	p = int2str((unsigned long)(*lcrs)[i].grp_id, &len );
-	attr = add_mi_attr(node, MI_DUP_VALUE, "GRP_ID", 6, p, len );
-	if(attr == NULL)
-	    return -1;
-
-	p = int2str((unsigned long)(*lcrs)[i].priority, &len );
-	attr = add_mi_attr(node, MI_DUP_VALUE, "PRIORITY", 8, p, len );
-	if(attr == NULL)
-	    return -1;
-
+	if (attr == NULL) goto err;
     }
 
     return 0;
+
+ err:
+    return -1;
+}
+
+/* Print lcrs from lcrs table */
+int mi_print_lcrs(struct mi_node* rpl)
+{
+    unsigned int i;
+    struct mi_attr* attr;
+    struct mi_node* node;
+    char* p;
+    int len;
+    struct lcr_info *lcr_rec;
+
+    for (i = 0; i < lcr_hash_size_param; i++) {
+
+	lcr_rec = (*lcrs)[i];
+
+	while (lcr_rec) {
+
+	    node = add_mi_node_child(rpl, 0, "RULE", 4, 0, 0);
+	    if (node == NULL) goto err;
+
+	    attr = add_mi_attr(node, 0, "PREFIX", 6, lcr_rec->prefix,
+			       lcr_rec->prefix_len);
+	    if (attr == NULL) goto err;
+
+	    attr = add_mi_attr(node, 0, "FROM_URI", 8, lcr_rec->from_uri,
+			       lcr_rec->from_uri_len);
+	    if (attr == NULL) goto err;
+	
+	    p = int2str((unsigned long)lcr_rec->grp_id, &len );
+	    attr = add_mi_attr(node, MI_DUP_VALUE, "GRP_ID", 6, p, len);
+	    if (attr == NULL) goto err;
+
+	    p = int2str((unsigned long)lcr_rec->priority, &len);
+	    attr = add_mi_attr(node, MI_DUP_VALUE, "PRIORITY", 8, p, len);
+	    if (attr == NULL) goto err;
+
+	    lcr_rec = lcr_rec->next;
+	}
+    }
+
+    lcr_rec = (*lcrs)[lcr_hash_size_param];
+
+    while (lcr_rec) {
+
+	node = add_mi_node_child(rpl, 0, "PREFIX_LENS", 11, 0, 0);
+	if (node == NULL) goto err;
+
+	p = int2str((unsigned long)lcr_rec->prefix_len, &len );
+	attr = add_mi_attr(node, MI_DUP_VALUE, "PREFIX_LEN", 10, p, len);
+	if (attr == NULL) goto err;
+
+	lcr_rec = lcr_rec->next;
+    }
+
+    return 0;
+
+ err:
+    return -1;
+}
+
+
+/* Add gateways in matched_gws array into AVPs */
+void add_gws_into_avps(struct matched_gw_info *matched_gws,
+		       unsigned int gw_cnt, str *ruri_user)
+{
+    unsigned int i, index, addr, port, flags, strip;
+    int flags_len, tag_len, strip_len;
+    uri_type scheme;
+    uri_transport transport;
+    struct ip_addr address;
+    str addr_str, port_str, value;
+    int_str val;
+    char *at, *tag, *strip_string, *flags_string;
+    char ruri[MAX_URI_SIZE];
+
+    for (i = 0; i < gw_cnt; i++) {
+	index = matched_gws[i].gw_index;
+      	addr = (*gws)[index].ip_addr;
+	port = (*gws)[index].port;
+	scheme = (*gws)[index].scheme;
+	transport = (*gws)[index].transport;
+	flags = (*gws)[index].flags;
+	strip = (*gws)[index].strip;
+	if (strip > ruri_user->len) {
+	    LM_ERR("strip count of gw is too large <%u>\n", strip);
+	    goto skip;
+	}
+	tag_len = (*gws)[index].tag_len;
+	tag = (*gws)[index].tag;
+	if (6 + tag_len + 40 /* flags + strip */ + 1 + 15 + 1 + 5 + 1 + 14 >
+	    MAX_URI_SIZE) {
+	    LM_ERR("request URI would be too long\n");
+	    goto skip;
+	}
+	at = (char *)&(ruri[0]);
+	flags_string = int2str(flags, &flags_len);
+	memcpy(at, flags_string, flags_len);
+	at = at + flags_len;
+	if (scheme == SIP_URI_T) {
+	    memcpy(at, "sip:", 4); at = at + 4;
+	} else if (scheme == SIPS_URI_T) {
+	    memcpy(at, "sips:", 5); at = at + 5;
+	} else {
+	    LM_ERR("unknown or unsupported URI scheme <%u>\n",
+		   (unsigned int)scheme);
+	    goto skip;
+	}
+	if (tag_len) {
+	    memcpy(at, tag, tag_len); at = at + tag_len;
+	}
+	/* Add strip in this form |number.
+	 * For example: |3 means strip first 3 characters.
+         */
+	*at = '|'; at = at + 1;
+	strip_string = int2str(strip, &strip_len);
+	memcpy(at, strip_string, strip_len);
+	at = at + strip_len;
+	*at = '@'; at = at + 1;
+	address.af = AF_INET;
+	address.len = 4;
+	address.u.addr32[0] = addr;
+	addr_str.s = ip_addr2a(&address);
+	addr_str.len = strlen(addr_str.s);
+	memcpy(at, addr_str.s, addr_str.len); at = at + addr_str.len;
+	if (port != 0) {
+	    if (port > 65536) {
+		LM_ERR("port of GW is too large <%u>\n", port);
+		goto skip;
+	    }
+	    *at = ':'; at = at + 1;
+	    port_str.s = int2str(port, &port_str.len);
+	    memcpy(at, port_str.s, port_str.len); at = at + port_str.len;
+	}
+	if (transport != PROTO_NONE) {
+	    memcpy(at, ";transport=", 11); at = at + 11;
+	    if (transport == PROTO_UDP) {
+		memcpy(at, "udp", 3); at = at + 3;
+	    } else if (transport == PROTO_TCP) {
+		memcpy(at, "tcp", 3); at = at + 3;
+	    } else if (transport == PROTO_TLS) {
+		memcpy(at, "tls", 3); at = at + 3;
+	    } else if (transport == PROTO_SCTP) {
+		memcpy(at, "sctp", 4); at = at + 4;
+	    } else {
+		LM_ERR("unknown or unsupported transport <%u>\n",
+		       (unsigned int)transport);
+		goto skip;
+	    }
+	}
+	value.s = (char *)&(ruri[0]);
+	value.len = at - value.s;
+	val.s = value;
+	add_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp, val);
+	LM_DBG("added gw_uri_avp <%.*s> with weight <%u>\n",
+		value.len, value.s, matched_gws[i].weight);
+    skip:
+	continue;
+    }
 }
 
 
 /*
- * Load info of matching GWs from database to gw_uri AVPs
+ * Load info of matching GWs to gw_uri AVPs
  */
-static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
+ static int do_load_gws(struct sip_msg* _m, str *_from_uri)
 {
-    str ruri_user, from_uri, value;
-    char ruri[MAX_URI_SIZE];
-    unsigned int i, j, k, index, addr, port, strip, gw_index,
-	duplicated_gw, flags, have_rpid_avp, gw_count;
-    uri_type scheme;
-    uri_transport transport;
-    struct ip_addr address;
-    str addr_str, port_str;
-    char *at, *tag, *strip_string, *flags_string;
+    str ruri_user, from_uri;
+    unsigned int j, k, gw_index, have_rpid_avp, gw_count;
     struct usr_avp *avp;
     int_str val;
-    struct mi matched_gws[MAX_NO_OF_GWS + 1];
-    unsigned short tag_len, prefix_len, priority;
-    int randomizer_start, randomizer_end, randomizer_flag,
-	strip_len, flags_len;
-    struct lcr_info lcr_rec;
+    struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
+    struct lcr_info *lcr_rec, *pl;
 
     /* Find Request-URI user */
     if (parse_sip_msg_uri(_m) < 0) {
-	    LM_ERR("Error while parsing R-URI\n");
+	    LM_ERR("error while parsing R-URI\n");
 	    return -1;
     }
     ruri_user = _m->parsed_uri.user;
@@ -1311,15 +1600,15 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
 	if (!have_rpid_avp) {
 	    /* Get URI from From URI */
 	    if ((!_m->from) && (parse_headers(_m, HDR_FROM_F, 0) == -1)) {
-		LM_ERR("Error while parsing headers\n");
+		LM_ERR("error while parsing headers\n");
 		return -1;
 	    }
 	    if (!_m->from) {
-		LM_ERR("From header field not found\n");
+		LM_ERR("from header field not found\n");
 		return -1;
 	    }
 	    if ((!(_m->from)->parsed) && (parse_from_header(_m) < 0)) {
-		LM_ERR("Error while parsing From header\n");
+		LM_ERR("error while parsing From header\n");
 		return -1;
 	    }
 	    from_uri = get_from(_m)->uri;
@@ -1327,249 +1616,65 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri, int _grp_id)
     }
 
     /*
-     * Let's match the gws:
-     *  1. prefix matching
-     *  2. from_uri matching
-     *  3. _grp_id matching
-     *
-     * Note: A gateway must be in the list _only_ once.
+     * Find lcr entries that match based on prefix and from_uri and collect
+     * gateways of matching entries into matched_gws array so that each
+     * gateway appears in the array only once.
      */
 
+    pl = (*lcrs)[lcr_hash_size_param];
     gw_index = 0;
     gw_count = (*gws)[0].ip_addr;
-    duplicated_gw = 0;
 
-    for (i = 0; i < MAX_NO_OF_LCRS; i++) {
-	lcr_rec = (*lcrs)[i];
-	if (lcr_rec.end_record != 0) {
-	    break;
+    while (pl) {
+	if (ruri_user.len < pl->prefix_len) {
+	    pl = pl->next;
+	    continue;
 	}
-	if (((prefix_mode_param == 0) &&
-	     (lcr_rec.prefix_len <= ruri_user.len) &&
-	     (strncmp(lcr_rec.prefix, ruri_user.s, lcr_rec.prefix_len) == 0)) ||
-	    ((prefix_mode_param != 0) &&
-	     ((lcr_rec.prefix_len == 0) ||
-	      (pcre_exec(lcr_rec.prefix_re, NULL, ruri_user.s, ruri_user.len,
-			 0, 0, NULL, 0) >= 0)))) {
-	    /* 1. Prefix matching is done */
-	    if ((lcr_rec.from_uri_len == 0) ||
-		(pcre_exec(lcr_rec.from_uri_re, NULL, from_uri.s, from_uri.len,
-			   0, 0, NULL, 0) >= 0)) {
-		/* 2. from_uri matching is done */
-		for (j = 1; j <= gw_count; j++) {
-		    if (lcr_rec.grp_id == (*gws)[j].grp_id &&
-			(_grp_id < 0 || (*gws)[j].grp_id == _grp_id)) {
-			/* 3. _grp_id matching is done */
+	lcr_rec = lcr_hash_table_lookup(*lcrs, pl->prefix_len, ruri_user.s);
+	while (lcr_rec) {
+	    /* Match prefix */
+	    if ((lcr_rec->prefix_len == pl->prefix_len) && 
+		(strncmp(lcr_rec->prefix, ruri_user.s, pl->prefix_len) == 0)) {
+		/* Match from uri */
+		if ((lcr_rec->from_uri_len == 0) ||
+		    (pcre_exec(lcr_rec->from_uri_re, NULL, from_uri.s,
+			       from_uri.len, 0, 0, NULL, 0) >= 0)) {
+		    /* Load unique gws of the group of this lcr entry */
+		    j = lcr_rec->first_gw;
+		    while (j) {
 			for (k = 0; k < gw_index; k++) {
 			    if ((*gws)[j].ip_addr ==
-				(*gws)[matched_gws[k].gw_index].ip_addr) {
-				/* Found the same gw in the list  */
-				/* Let's keep the one with higher */
-				/* match on prefix len            */
-				LM_DBG("Duplicate gw for index"
-				       " %d [%d,%d] and current [%d,%d] \n",
-				       k, matched_gws[k].route_index,
-				       matched_gws[k].route_index, i, j);
-				duplicated_gw = 1;
-				if (lcr_rec.prefix_len >
-				    (*lcrs)[matched_gws[k].route_index].prefix_len) {
-				    /* Replace the old entry with the new one */
-				    LM_DBG("Replace [%d,%d]"
-					   " with [%d,%d] on index %d:"
-					   " prefix reason %d>%d\n",
-					   matched_gws[k].route_index,
-					   matched_gws[k].gw_index, i, j, k,
-					   lcr_rec.prefix_len,
-					   (*lcrs)[matched_gws[k].route_index].prefix_len);
-				    matched_gws[k].route_index = i;
-				    matched_gws[k].gw_index = j;
-				    /* Stop searching in the matched_gws list */
-				    break;
-				} else if (lcr_rec.prefix_len ==
-					   (*lcrs)[matched_gws[k].route_index].prefix_len) {
-				    if (lcr_rec.priority >
-					(*lcrs)[matched_gws[k].route_index].priority) {
-					/* Replace the old entry with the new one */
-					LM_DBG("Replace [%d,%d] with"
-					       " [%d,%d] on index %d:"
-					       " priority reason %d>%d\n",
-					       matched_gws[k].route_index,
-					       matched_gws[k].gw_index,
-					       i, j, k, lcr_rec.priority,
-					       (*lcrs)[matched_gws[k].route_index].priority);
-					matched_gws[k].route_index = i;
-					matched_gws[k].gw_index = j;
-					/* Stop searching in the matched_gws list */
-					break;
-				    }
-				}
-			    }
+				(*gws)[matched_gws[k].gw_index].ip_addr)
+				/* Skip already existing gw */
+				goto gw_found;
 			}
-			if (duplicated_gw == 0) {
-			    /* This is a new gw */
-			    matched_gws[gw_index].route_index = i;
-			    matched_gws[gw_index].gw_index = j;
-			    LM_DBG("Added matched_gws[%d]=[%d,%d]\n",
-				   gw_index, i, j);
-			    gw_index++;
-			} else {
-			    duplicated_gw = 0;
-			}
+			/* This is a new gw */
+			matched_gws[gw_index].gw_index = j;
+			matched_gws[gw_index].prefix_len = pl->prefix_len;
+			matched_gws[gw_index].priority = lcr_rec->priority;
+			matched_gws[gw_index].weight = (*gws)[j].weight *
+			    (rand() >> 8);
+			LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
+			       gw_index, j, pl->prefix_len, lcr_rec->priority,
+			       matched_gws[gw_index].weight);
+			gw_index++;
+		    gw_found:
+			j = (*gws)[j].next;
 		    }
 		}
 	    }
+	    lcr_rec = lcr_rec->next;
 	}
+	pl = pl->next;
     }
 
-    /*
-     * Sort the gateways based on:
-     *  1. prefix len
-     *  2. priority
-     */
-    qsort(matched_gws, gw_index, sizeof(struct mi), comp_lcrs);
+    /* Sort gateways based on prefix_len, priority, and randomized weight */
+    qsort(matched_gws, gw_index, sizeof(struct matched_gw_info), comp_matched);
 
-    /* Randomizing the gateways with same prefix_len and same priority */
-    randomizer_start = 0;
-    randomizer_flag = 0;
-    prefix_len = (*lcrs)[matched_gws[0].route_index].prefix_len;
-    priority = (*lcrs)[matched_gws[0].route_index].priority;
-    for (i = 1; i < gw_index; i++) {
- 	if ( prefix_len == (*lcrs)[matched_gws[i].route_index].prefix_len &&
- 	     priority == (*lcrs)[matched_gws[i].route_index].priority) {
-	    /* we have a match */
-	    if (randomizer_flag == 0) {
-		randomizer_flag = 1;
-		randomizer_start = i - 1;
-	    }
-	    matched_gws[i - 1].randomizer = rand();
- 	}
-	else {
-	    if (randomizer_flag == 1) {
-		randomizer_end = i - 1;
-		randomizer_flag = 0;
-		qsort(&matched_gws[randomizer_start],
-		      randomizer_end - randomizer_start + 1,
-		      sizeof(struct mi), rand_lcrs);
-	    }
-	    prefix_len = (*lcrs)[matched_gws[i].route_index].prefix_len;
-	    priority = (*lcrs)[matched_gws[i].route_index].priority;
-	}
-    }
-    if (randomizer_flag == 1) {
-	randomizer_end = gw_index - 1;
-	matched_gws[i - 1].randomizer = rand();
-	qsort(&matched_gws[randomizer_start],
-	      randomizer_end - randomizer_start + 1,
-	      sizeof(struct mi), rand_lcrs);
-    }
-
-    for (i = 0; i < gw_index; i++) {
-	index = matched_gws[i].gw_index;
-      	addr = (*gws)[index].ip_addr;
-	port = (*gws)[index].port;
-	scheme = (*gws)[index].scheme;
-	transport = (*gws)[index].transport;
-	flags = (*gws)[index].flags;
-	strip = (*gws)[index].strip;
-	if (strip > ruri_user.len) {
-	    LM_ERR("Strip count of gw is too large <%u>\n", strip);
-	    goto skip;
-	}
-	tag_len = (*gws)[index].tag_len;
-	tag = (*gws)[index].tag;
-	if (6 + tag_len + 40 /* flags + strip */ + 1 + 15 + 1 + 5 + 1 + 14 >
-	    MAX_URI_SIZE) {
-	    LM_ERR("Request URI would be too long\n");
-	    goto skip;
-	}
-	at = (char *)&(ruri[0]);
-	flags_string = int2str(flags, &flags_len);
-	memcpy(at, flags_string, flags_len);
-	at = at + flags_len;
-	if (scheme == SIP_URI_T) {
-	    memcpy(at, "sip:", 4); at = at + 4;
-	} else if (scheme == SIPS_URI_T) {
-	    memcpy(at, "sips:", 5); at = at + 5;
-	} else {
-	    LM_ERR("Unknown or unsupported URI scheme <%u>\n",
-		   (unsigned int)scheme);
-	    goto skip;
-	}
-	if (tag_len) {
-	    memcpy(at, tag, tag_len); at = at + tag_len;
-	}
-	/* Add strip in this form |number.
-	 * For example: |3 means strip first 3 characters.
-         */
-	*at = '|'; at = at + 1;
-	strip_string = int2str(strip, &strip_len);
-	memcpy(at, strip_string, strip_len);
-	at = at + strip_len;
-	*at = '@'; at = at + 1;
-	address.af = AF_INET;
-	address.len = 4;
-	address.u.addr32[0] = addr;
-	addr_str.s = ip_addr2a(&address);
-	addr_str.len = strlen(addr_str.s);
-	memcpy(at, addr_str.s, addr_str.len); at = at + addr_str.len;
-	if (port != 0) {
-	    if (port > 65536) {
-		LM_ERR("Port of GW is too large <%u>\n", port);
-		goto skip;
-	    }
-	    *at = ':'; at = at + 1;
-	    port_str.s = int2str(port, &port_str.len);
-	    memcpy(at, port_str.s, port_str.len); at = at + port_str.len;
-	}
-	if (transport != PROTO_NONE) {
-	    memcpy(at, ";transport=", 11); at = at + 11;
-	    if (transport == PROTO_UDP) {
-		memcpy(at, "udp", 3); at = at + 3;
-	    } else if (transport == PROTO_TCP) {
-		memcpy(at, "tcp", 3); at = at + 3;
-	    } else if (transport == PROTO_TLS) {
-		memcpy(at, "tls", 3); at = at + 3;
-	    } else if (transport == PROTO_SCTP) {
-		memcpy(at, "sctp", 4); at = at + 4;
-	    } else {
-		LM_ERR("Unknown or unsupported transport <%u>\n",
-		       (unsigned int)transport);
-		goto skip;
-	    }
-	}
-	value.s = (char *)&(ruri[0]);
-	value.len = at - value.s;
-	val.s = value;
-	add_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp, val);
-	LM_DBG("Added gw_uri_avp <%.*s>\n", value.len, value.s);
-    skip:
-	continue;
-    }
+    /* Add gateways into AVPs */
+    add_gws_into_avps(matched_gws, gw_index, &ruri_user);
 
     return 1;
-}
-
-/*
- * Load info of matching GWs from database to gw_uri AVPs
- * taking into account the given group id.  Caller URI is taken
- * from request.
- */
-static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
-{
-	str grp_s;
-	unsigned int grp_id;
-	
-	if(((pv_elem_p)_s1)->spec.getf!=NULL)
-	{
-		if(pv_printf_s(_m, (pv_elem_p)_s1, &grp_s)!=0)
-			return -1;
-		if(str2int(&grp_s, &grp_id)!=0)
-			return -1;
-	} else {
-		grp_id = ((pv_elem_p)_s1)->spec.pvp.pvn.u.isname.name.n;
-	}
-	if (grp_id > 0) return do_load_gws(_m, (str *)0, (int)grp_id);
-	else return -1;
 }
 
 
@@ -1579,7 +1684,7 @@ static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
  */
 static int load_gws_0(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    return do_load_gws(_m, (str *)0, -1);
+    return do_load_gws(_m, (str *)0);
 }
 
 
@@ -1599,7 +1704,7 @@ static int load_gws_1(struct sip_msg* _m, char* _sp, char* _s2)
 		LM_DBG("missing from uri\n");
 		return -1;
 	    }
- 	    return do_load_gws(_m, &(pv_val.rs), -1);
+ 	    return do_load_gws(_m, &(pv_val.rs));
 	} else {
 	   LM_DBG("pseudo variable value is not string\n");
 	   return -1;
@@ -1612,10 +1717,76 @@ static int load_gws_1(struct sip_msg* _m, char* _sp, char* _s2)
 
 
 /*
+ * Load info of matching GWs from database to gw_uri AVPs taking into
+ * account the given group id.
+ */
+static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
+{
+    str grp_s, ruri_user;
+    unsigned int i, grp_id, gw_index, gw_cnt, next_index;
+    struct matched_gw_info matched_gws[MAX_NO_OF_GWS + 1];
+
+    /* Get grp_id from parameter */
+    if(((pv_elem_p)_s1)->spec.getf != NULL) {
+	if (pv_printf_s(_m, (pv_elem_p)_s1, &grp_s) != 0) {
+	    LM_ERR("cannot print grp_id parameter value as string\n");
+	    return -1;
+	}
+	if (str2int(&grp_s, &grp_id) != 0) {
+	    LM_ERR("cannot convert grp_id string <%.*s> to int\n",
+		   grp_s.len, grp_s.s);
+	    return -1;
+	}
+    } else {
+	grp_id = ((pv_elem_p)_s1)->spec.pvp.pvn.u.isname.name.n;
+    }
+
+    /* Find Request-URI user */
+    if (parse_sip_msg_uri(_m) < 0) {
+	LM_ERR("error while parsing R-URI\n");
+	return -1;
+    }
+
+    ruri_user = _m->parsed_uri.user;
+
+    /* Find gws of the given group */
+    LM_DBG("finding gateways of grp_id <%d>\n", grp_id);
+    gw_cnt = (*gws)[0].ip_addr;
+    gw_index = 0;
+    for (i = 1; i <= gw_cnt; i++) {
+	if ((*gws)[i].grp_id == grp_id) {
+	    next_index = i;
+	    while (next_index) {
+		matched_gws[gw_index].gw_index = next_index;
+		matched_gws[gw_index].prefix_len = 0;
+		matched_gws[gw_index].priority = 1;
+		matched_gws[gw_index].weight = rand();
+		LM_DBG("added matched_gws[%d]=[%u, %u, %u, %u]\n",
+			gw_index, next_index, 0, 1, 
+			matched_gws[gw_index].weight);
+		gw_index++;
+		next_index = (*gws)[next_index].next;
+	    }
+	    break;
+	}
+    }
+
+    /* Sort gateways based on random number stored in weight field */
+    qsort(matched_gws, gw_index, sizeof(struct matched_gw_info), comp_matched);
+
+    /* Add gateways into AVPs */
+    add_gws_into_avps(matched_gws, gw_index, &ruri_user);
+
+    return 1;
+}
+
+
+/*
  * If called from request route block, rewrites scheme, host, port, and
  * transport parts of R-URI based on first gw_uri AVP value, which is then
  * destroyed.  Also saves R-URI user to ruri_user AVP for later use in
  * failure route block.
+ *
  * If called from failure route block, appends a new branch to request
  * where scheme, host, port, and transport of URI are taken from the first
  * gw_uri AVP value, which is then destroyed.  URI user is taken from
@@ -1638,7 +1809,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
     /* Set flags_avp from integer at the beginning of of gw_uri */
     val.n = (int)strtoul(gw_uri_val.s.s, &at, 0);
     add_avp(flags_avp_type, flags_avp, val);
-    LM_DBG("Added flags_avp <%u>\n", (unsigned int)val.n);
+    LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
 
     gw_uri_val.s.len = gw_uri_val.s.len - (at - gw_uri_val.s.s);
     gw_uri_val.s.s = at;
@@ -1648,25 +1819,25 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	/* Create new Request-URI taking URI user from current Request-URI
 	   and other parts of from gw_uri AVP. */
 	if (parse_sip_msg_uri(_m) < 0) {
-	    LM_ERR("Parsing of R-URI failed\n");
+	    LM_ERR("parsing of R-URI failed\n");
 	    return -1;
 	}
 	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
 	if (!new_ruri.s) {
-	    LM_ERR("No memory for new R-URI\n");
+	    LM_ERR("no memory for new R-URI\n");
 	    return -1;
 	}
 	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
-	    LM_ERR("No @ in gateway URI <%.*s>\n",
+	    LM_ERR("no @ in gateway URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
 	if (!strip_char || strip_char + 1 >= at_char) {
 	    pkg_free(new_ruri.s);
-	    LM_ERR("No strip character | and at least one "
+	    LM_ERR("no strip character | and at least one "
 		   "character before @ in gateway URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
@@ -1677,7 +1848,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	strip = strtol(strip_char + 1, &endptr, 10);
 	if (endptr != at_char) {
 	    pkg_free(new_ruri.s);
-	    LM_ERR("Non-digit char between | and @ chars in gw URI <%.*s>\n",
+	    LM_ERR("non-digit char between | and @ chars in gw URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
@@ -1707,7 +1878,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	pkg_free(new_ruri.s);
 	destroy_avp(gu_avp);
 	if (rval != 1) {
-	    LM_ERR("Calling do_action failed with return value <%d>\n", rval);
+	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
 	return 1;
@@ -1719,25 +1890,25 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	ru_avp = search_first_avp(ruri_user_avp_type, ruri_user_avp,
 				  &ruri_user_val, 0);
 	if (!ru_avp) {
-	    LM_ERR("No ruri_user AVP\n");
+	    LM_ERR("no ruri_user AVP\n");
 	    return -1;
 	}
 	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
 	if (!new_ruri.s) {
-	    LM_ERR("No memory for new R-URI.\n");
+	    LM_ERR("no memory for new R-URI.\n");
 	    return -1;
 	}
 	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
 	if (!at_char) {
 	    pkg_free(new_ruri.s);
-	    LM_ERR("No @ in gateway URI <%.*s>\n",
+	    LM_ERR("no @ in gateway URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
 	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
 	if (!strip_char || strip_char + 1 >= at_char) {
 	    pkg_free(new_ruri.s);
-	    LM_ERR("No strip char | and at least one "
+	    LM_ERR("no strip char | and at least one "
 		   "char before @ in gateway URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
@@ -1748,7 +1919,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	strip = strtol(strip_char + 1, &endptr, 10);
 	if (endptr != at_char) {
 	    pkg_free(new_ruri.s);
-	    LM_ERR("Non-digit char between | and @ chars in gw URI <%.*s>\n",
+	    LM_ERR("non-digit char between | and @ chars in gw URI <%.*s>\n",
 		   gw_uri_val.s.len, gw_uri_val.s.s);
 	    return -1;
 	}
@@ -1775,14 +1946,14 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	pkg_free(new_ruri.s);
 	destroy_avp(gu_avp);
 	if (rval != 1) {
-	    LM_ERR("Calling do_action failed with return value <%d>\n", rval);
+	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
 	return 1;
     }
 
-    /* unsupported route type */
-    LM_ERR("Unsupported route type\n");
+    /* Unsupported route type */
+    LM_ERR("unsupported route type\n");
     return -1;
 }
 
@@ -1809,7 +1980,7 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
 		src_addr = ip->u.addr32[0];
 	    }
 	} else {
-	    LM_ERR("IP address PV empty value\n");
+	    LM_ERR("IP address pvar has empty value\n");
 	    return -1;
 	}
     } else {
@@ -1829,13 +2000,13 @@ static int do_from_gw(struct sip_msg* _m, pv_spec_t *addr_sp, int grp_id)
     }
 
     if (res == NULL) {
-	LM_DBG("Request did not come from gw\n");
+	LM_DBG("request did not come from gw\n");
 	return -1;
     } else {
-	LM_DBG("Request game from gw\n");
+	LM_DBG("request game from gw\n");
 	val.n = res->flags;
 	add_avp(flags_avp_type, flags_avp, val);
-	LM_DBG("Added flags_avp <%u>\n", (unsigned int)val.n);
+	LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
 	return 1;
     }
 }
@@ -1908,10 +2079,10 @@ static int do_to_gw(struct sip_msg* _m, int grp_id)
     }
 
     if (res == NULL) {
-	LM_DBG("Request does not go to gw\n");
+	LM_DBG("request does not go to gw\n");
 	return -1;
     } else {
-	LM_DBG("Request goes to gw\n");
+	LM_DBG("request goes to gw\n");
 	return 1;
     }
 }
@@ -1962,7 +2133,7 @@ static inline int encode_branch_info(str *info, struct contact *con)
 	con->path.len + MAX_SOCKET_STR + INT2STR_MAX_LEN + 5;
     info->s = pkg_malloc(info->len);
     if (!info->s) {
-	LM_ERR("No memory left for branch info\n");
+	LM_ERR("no memory left for branch info\n");
 	return 0;
     }
     at = info->s;
@@ -1981,7 +2152,7 @@ static inline int encode_branch_info(str *info, struct contact *con)
     if (con->sock) {
 	len = MAX_SOCKET_STR;
 	if (!socket2str(con->sock, at, &len)) {
-	    LM_ERR("Failed to convert socket to str\n");
+	    LM_ERR("failed to convert socket to str\n");
 	    return 0;
 	}
     } else {
@@ -2002,7 +2173,8 @@ static inline int encode_branch_info(str *info, struct contact *con)
 
 /* Encode branch info from str */
 static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
-			      struct socket_info **sock, unsigned int *flags)
+				     struct socket_info **sock,
+				     unsigned int *flags)
 {
     str s, host;
     int port, proto;
@@ -2041,13 +2213,13 @@ static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
 	s.s = at;
 	if (parse_phostport(s.s, s.len, &host.s, &host.len,
 			    &port, &proto) != 0) {
-	    LM_ERR("Parsing of socket info <%.*s> failed\n",  s.len, s.s);
+	    LM_ERR("parsing of socket info <%.*s> failed\n",  s.len, s.s);
 	    return 0;
 	}
 	*sock = grep_sock_info(&host, (unsigned short)port,
 			       (unsigned short)proto);
 	if (*sock == 0) {
-	    LM_ERR("Invalid socket <%.*s>\n", s.len, s.s);
+	    LM_ERR("invalid socket <%.*s>\n", s.len, s.s);
 	    return 0;
 	}
     } else {
@@ -2060,7 +2232,7 @@ static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
     if (s.len) {
 	s.s = at;
 	if (str2int(&s, flags) != 0) {
-	    LM_ERR("Failed to decode flags <%.*s>\n", s.len, s.s);
+	    LM_ERR("failed to decode flags <%.*s>\n", s.len, s.s);
 	    return 0;
 	}
     } else {
@@ -2089,13 +2261,13 @@ static int load_contacts(struct sip_msg* msg, char* key, char* value)
 
     /* Check if anything needs to be done */
     if (nr_branches == 0) {
-	LM_DBG("Nothing to do - no branches!\n");
+	LM_DBG("nothing to do - no branches!\n");
 	return 1;
     }
 
     ruri = GET_RURI(msg);
     if (!ruri) {
-	LM_ERR("No Request-URI found\n");
+	LM_ERR("no Request-URI found\n");
 	return -1;
     }
     ruri_q = get_ruri_q();
@@ -2106,14 +2278,14 @@ static int load_contacts(struct sip_msg* msg, char* key, char* value)
 	    goto rest;
 	}
     }
-    LM_DBG("Nothing to do - all contacts have same q!\n");
+    LM_DBG("nothing to do - all contacts have same q!\n");
     return 1;
 
 rest:
     /* Insert Request-URI branch to contact list */
     contacts = (struct contact *)pkg_malloc(sizeof(struct contact));
     if (!contacts) {
-	LM_ERR("No memory for contact info\n");
+	LM_ERR("no memory for contact info\n");
 	return -1;
     }
     contacts->uri.s = ruri->s;
@@ -2132,7 +2304,7 @@ rest:
 	idx++ ) {
 	next = (struct contact *)pkg_malloc(sizeof(struct contact));
 	if (!next) {
-	    LM_ERR("No memory for contact info\n");
+	    LM_ERR("no memory for contact info\n");
 	    free_contact_list(contacts);
 	    return -1;
 	}
@@ -2178,7 +2350,7 @@ rest:
     curr = contacts;
     while (curr) {
 	if (encode_branch_info(&branch_info, curr) == 0) {
-	    LM_ERR("Encoding of branch info failed\n");
+	    LM_ERR("encoding of branch info failed\n");
 	    free_contact_list(contacts);
 	    if (branch_info.s) pkg_free(branch_info.s);
 	    return -1;
@@ -2187,7 +2359,7 @@ rest:
 	add_avp(contact_avp_type|AVP_VAL_STR|(curr->q_flag),
 		contact_avp, val);
 	pkg_free(branch_info.s);
-	LM_DBG("Loaded contact <%.*s> with q_flag <%d>\n",
+	LM_DBG("loaded contact <%.*s> with q_flag <%d>\n",
 	       val.s.len, val.s.s, curr->q_flag);
 	curr = curr->next;
     }
@@ -2221,15 +2393,15 @@ static int next_contacts(struct sip_msg* msg, char* key, char* value)
 	/* Find first lcr_contact_avp value */
 	avp = search_first_avp(contact_avp_type, contact_avp, &val, 0);
 	if (!avp) {
-	    LM_DBG("No AVPs -- we are done!\n");
+	    LM_DBG("no AVPs - we are done!\n");
 	    return 1;
 	}
 
-	LM_DBG("Next contact is <%s>\n", val.s.s);
+	LM_DBG("next contact is <%s>\n", val.s.s);
 
 	if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
 	    == 0) {
-	    LM_ERR("Decoding of branch info <%.*s> failed\n",
+	    LM_ERR("decoding of branch info <%.*s> failed\n",
 		   val.s.len, val.s.s);
 	    destroy_avp(avp);
 	    return -1;
@@ -2246,7 +2418,7 @@ static int next_contacts(struct sip_msg* msg, char* key, char* value)
 	    /* Set fr_inv_timer */
 	    val.n = fr_inv_timer_next;
 	    if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-		LM_ERR("Setting of fr_inv_timer_avp failed\n");
+		LM_ERR("setting of fr_inv_timer_avp failed\n");
 		return -1;
 	    }
 	    return 1;
@@ -2257,18 +2429,18 @@ static int next_contacts(struct sip_msg* msg, char* key, char* value)
 	while ((avp = search_next_avp(avp, &val))) {
 	    destroy_avp(prev);
 
-	    LM_DBG("Next contact is <%s>\n", val.s.s);
+	    LM_DBG("next contact is <%s>\n", val.s.s);
 
 	    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
 		== 0) {
-		LM_ERR("Decoding of branch info <%.*s> failed\n",
+		LM_ERR("decoding of branch info <%.*s> failed\n",
 		       val.s.len, val.s.s);
 		destroy_avp(avp);
 		return -1;
 	    }
 
 	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
-		LM_ERR("Appending branch failed\n");
+		LM_ERR("appending branch failed\n");
 		destroy_avp(avp);
 		return -1;
 	    }
@@ -2278,7 +2450,7 @@ static int next_contacts(struct sip_msg* msg, char* key, char* value)
 		val.n = fr_inv_timer_next;
 		if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val)
 		    != 0) {
-		    LM_ERR("Setting of fr_inv_timer_avp failed\n");
+		    LM_ERR("setting of fr_inv_timer_avp failed\n");
 		    return -1;
 		}
 		return 1;
@@ -2298,14 +2470,14 @@ static int next_contacts(struct sip_msg* msg, char* key, char* value)
 
 	    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
 		== 0) {
-		LM_ERR("Decoding of branch info <%.*s> failed\n",
+		LM_ERR("decoding of branch info <%.*s> failed\n",
 		       val.s.len, val.s.s);
 		destroy_avp(avp);
 		return -1;
 	    }
 	    
 	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
-		LM_ERR("Appending branch failed\n");
+		LM_ERR("appending branch failed\n");
 		destroy_avp(avp);
 		return -1;
 	    }
@@ -2324,55 +2496,15 @@ static int next_contacts(struct sip_msg* msg, char* key, char* value)
 	/* Restore fr_inv_timer */
 	val.n = fr_inv_timer;
 	if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-	    LM_ERR("Setting of fr_inv_timer_avp failed\n");
+	    LM_ERR("setting of fr_inv_timer_avp failed\n");
 	    return -1;
 	}
 	
     } else {
-	/* unsupported route type */
-	LM_ERR("Unsupported route type\n");
+	/* Unsupported route type */
+	LM_ERR("unsupported route type\n");
 	return -1;
     }
 
     return 1;
-}
-
-
-/* 
- * Convert string parameter to integer for functions that expect an integer.
- * Taken from sl module.
- */
-static int fixstringloadgws(void **param, int param_count)
-{
-    pv_elem_t *model=NULL;
-    str s;
-
-    /* convert to str */
-    s.s = (char*)*param;
-    s.len = strlen(s.s);
-
-    model=NULL;
-    if (param_count==1) {
-	if(s.len==0) {
-	    LM_ERR("No param <%d>!\n", param_count);
-	    return -1;
-	}
-	
-	if(pv_parse_format(&s,&model)<0 || model==NULL) {
-	    LM_ERR("Wrong format <%s> for param <%d>!\n", s.s, param_count);
-	    return -1;
-	}
-	if(model->spec.getf==NULL) {
-	    if(param_count==1) {
-		if(str2int(&s, (unsigned int*)&model->spec.pvp.pvn.u.isname.name.n)!=0) {
-		    LM_ERR("Wrong value <%s> for param <%d>!\n",
-			   s.s, param_count);
-		    return -1;
-		}
-	    }
-	}
-	*param = (void*)model;
-    }
-
-    return 0;
 }

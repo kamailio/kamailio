@@ -38,31 +38,53 @@
  */
 struct mi_root*  mi_lcr_reload(struct mi_root* cmd_tree, void* param)
 {
-	if (reload_gws () == 1) 
-		return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	else
-		return init_mi_tree( 400, "Reload of gateways failed", 25);
+    lock_get(reload_lock);
+    if (reload_gws_and_lcrs() == 1) {
+	lock_release(reload_lock);
+	return init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    } else {
+	lock_release(reload_lock);
+	return init_mi_tree( 400, "Reload of gateways failed", 25);
+    }
 }
 
 
 /*
  * MI function to print gws from current gw table
  */
-struct mi_root* mi_lcr_dump(struct mi_root* cmd_tree, void* param)
+struct mi_root* mi_lcr_gw_dump(struct mi_root* cmd_tree, void* param)
 {
-	struct mi_root* rpl_tree = NULL;
+    struct mi_root* rpl_tree = NULL;
 
-	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
-	if (rpl_tree==0)
-		return 0;
+    rpl_tree = init_mi_tree(200, MI_OK_S, MI_OK_LEN);
+    if (rpl_tree == 0)
+	return 0;
 
-	if(mi_print_gws( &rpl_tree->node )<0)
-	{
-		LM_ERR("failed to add node\n");
-		free_mi_tree(rpl_tree);
-		return 0;
-	}
+    if (mi_print_gws(&rpl_tree->node ) < 0) {
+	LM_ERR("failed to add node\n");
+	free_mi_tree(rpl_tree);
+	return 0;
+    }
 
-	return rpl_tree;
+    return rpl_tree;
 }
 
+/*
+ * MI function to print lcrs from current lcr table
+ */
+struct mi_root* mi_lcr_lcr_dump(struct mi_root* cmd_tree, void* param)
+{
+    struct mi_root* rpl_tree = NULL;
+    
+    rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
+    if (rpl_tree == 0)
+	return 0;
+
+    if (mi_print_lcrs(&rpl_tree->node) < 0) {
+	LM_ERR("failed to add node\n");
+	free_mi_tree(rpl_tree);
+	return 0;
+    }
+
+    return rpl_tree;
+}

@@ -3,7 +3,7 @@
  *
  * Various lcr related functions
  *
- * Copyright (C) 2005 Juha Heinanen
+ * Copyright (C) 2005-2008 Juha Heinanen
  *
  * This file is part of Kamailio, a free SIP server.
  *
@@ -31,9 +31,31 @@
 #define LCR_MOD_H
 
 #include <stdio.h>
+#include <pcre.h>
 #include "../../mi/mi.h"
+#include "../../locking.h"
 
-int  mi_print_gws (struct mi_node* rpl);
-int  reload_gws (void);
+#define MAX_PREFIX_LEN 32
+#define MAX_FROM_URI_LEN 256
+
+struct lcr_info {
+    char prefix[MAX_PREFIX_LEN + 1];
+    unsigned short prefix_len;
+    char from_uri[MAX_FROM_URI_LEN + 1];
+    unsigned short from_uri_len;
+    pcre *from_uri_re;
+    unsigned int grp_id;
+    unsigned short first_gw;  /* gw table index of first gw in gw's group */
+    unsigned short priority;
+    struct lcr_info *next;
+};
+
+extern unsigned int lcr_hash_size_param;
+
+extern gen_lock_t *reload_lock;
+
+int  mi_print_gws(struct mi_node* rpl);
+int  mi_print_lcrs(struct mi_node* rpl);
+int  reload_gws_and_lcrs(void);
 
 #endif /* LCR_MOD_H */
