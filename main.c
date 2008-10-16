@@ -1112,8 +1112,10 @@ int main_loop()
 		/* only one address, we ignore all the others */
 		if (udp_init(udp_listen)==-1) goto error;
 		bind_address=udp_listen;
-		sendipv4=bind_address;
-		sendipv6=bind_address; /*FIXME*/
+		if (bind_address->address.af==AF_INET)
+			sendipv4=bind_address;
+		else
+			sendipv6=bind_address;
 		if (udp_listen->next){
 			LOG(L_WARN, "WARNING: using only the first listen address"
 						" (no fork)\n");
@@ -1209,7 +1211,8 @@ int main_loop()
 					((sendipv4==0)||(sendipv4->flags&(SI_IS_LO|SI_IS_MCAST))))
 				sendipv4=si;
 	#ifdef USE_IPV6
-			if((sendipv6==0)&&(si->address.af==AF_INET6))
+			if ( ((sendipv6==0)||(sendipv6->flags&(SI_IS_LO|SI_IS_MCAST))) &&
+					(si->address.af==AF_INET6))
 				sendipv6=si;
 	#endif
 		}
@@ -1218,12 +1221,14 @@ int main_loop()
 			for(si=sctp_listen; si; si=si->next){
 				if (sctp_init_sock(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
-				if ((si->address.af==AF_INET)&&
-						((sendipv4_sctp==0)||
-						 	(sendipv4_sctp->flags&(SI_IS_LO|SI_IS_MCAST))))
+				if ((si->address.af==AF_INET) &&
+						((sendipv4_sctp==0) ||
+							(sendipv4_sctp->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_sctp=si;
 		#ifdef USE_IPV6
-				if((sendipv6_sctp==0)&&(si->address.af==AF_INET6))
+				if( ((sendipv6_sctp==0) || 
+							(sendipv6_sctp->flags&(SI_IS_LO|SI_IS_MCAST))) &&
+						(si->address.af==AF_INET6))
 					sendipv6_sctp=si;
 		#endif
 			}
@@ -1236,11 +1241,13 @@ int main_loop()
 				if (tcp_init(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
 				if ((si->address.af==AF_INET)&&
-						((sendipv4_tcp==0)||
-						 	(sendipv4_tcp->flags&(SI_IS_LO|SI_IS_MCAST))))
+						((sendipv4_tcp==0) ||
+							(sendipv4_tcp->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_tcp=si;
 		#ifdef USE_IPV6
-				if((sendipv6_tcp==0)&&(si->address.af==AF_INET6))
+				if( ((sendipv6_tcp==0) ||
+							(sendipv6_tcp->flags&(SI_IS_LO|SI_IS_MCAST))) &&
+						(si->address.af==AF_INET6))
 					sendipv6_tcp=si;
 		#endif
 			}
@@ -1252,11 +1259,13 @@ int main_loop()
 				if (tls_init(si)==-1)  goto error;
 				/* get first ipv4/ipv6 socket*/
 				if ((si->address.af==AF_INET)&&
-						((sendipv4_tls==0)||
-						 	(sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST))))
+						((sendipv4_tls==0) ||
+							(sendipv4_tls->flags&(SI_IS_LO|SI_IS_MCAST))))
 					sendipv4_tls=si;
 		#ifdef USE_IPV6
-				if((sendipv6_tls==0)&&(si->address.af==AF_INET6))
+				if( ((sendipv6_tls==0) ||
+							(sendipv6_tls->flags&(SI_IS_LO|SI_IS_MCAST))) &&
+						(si->address.af==AF_INET6))
 					sendipv6_tls=si;
 		#endif
 			}
