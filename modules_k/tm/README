@@ -486,7 +486,7 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
      * element = ( [name '='] pseudo_variable)
 
    The full list of supported pseudo-variables in Kamailio is
-   availabe at:
+   available at:
    http://kamailio.org/docs/pseudo-variables-1.1.x.html
 
    Each element will be appended per line in "name: value" format.

@@ -269,7 +269,7 @@ if (uri=~"sip:+40") /* calls to Romania */ {
      * extra_definition = log_name '=' pseudo_variable
 
    The full list of supported pseudo-variables in Kamailio is
-   availabe at:
+   available at:
    http://kamailio.org/dokuwiki/doku.php/pseudovariables:devel
 
    Via log_name you define how/where the data will be logged. Its

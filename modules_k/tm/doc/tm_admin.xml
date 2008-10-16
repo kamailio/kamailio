@@ -521,7 +521,8 @@ modparam("tm", "fr_inv_timer_avp", "$avp(i:25)")
 		</itemizedlist>
 		</para>
 		<para>
-		The full list of supported pseudo-variables in &kamailio; is availabe at: 
+		The full list of supported pseudo-variables in &kamailio; is
+		available at: 
 		<ulink url="http://kamailio.org/docs/pseudo-variables.html-1.1.x">
 		http://kamailio.org/docs/pseudo-variables-1.1.x.html</ulink>
 		</para>

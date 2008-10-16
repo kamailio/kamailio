@@ -46,7 +46,8 @@
 		</listitem>
 	</itemizedlist>
 	<para>
-	The full list of available pseudo-variables in &kamailio; is availabe at:
+	The full list of available pseudo-variables in &kamailio; is
+	available at:
 	<ulink url="http://kamailio.org/dokuwiki/">
 	http://kamailio.org/dokuwiki/</ulink>
 	</para>
