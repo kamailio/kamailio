@@ -662,7 +662,7 @@ static int w_get_profile_size(struct sip_msg *msg, char *profile,
 			}
 			res.n = size;
 			sc_var = (script_var_t *)sp_dest->pvp.pvn.u.dname;
-			if(!set_var_value(sc_var, &res, VAR_VAL_STR)){
+			if(!set_var_value(sc_var, &res, 0)){
 				LM_ERR("cannot set svar\n");
 				return -1;
 			}
