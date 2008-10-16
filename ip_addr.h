@@ -234,6 +234,21 @@ inline static int ip_addr_any(struct ip_addr* ip)
 
 
 
+/* returns 1 if the given ip address is a loopback address
+ * 0 otherwise */
+inline static int ip_addr_loopback(struct ip_addr* ip)
+{
+	if (ip->af==AF_INET){
+		return ip->u.addr32[0]==htonl(INADDR_LOOPBACK);
+#ifdef USE_IPV6
+	} else if (ip->af==AF_INET6)
+		return IN6_IS_ADDR_LOOPBACK((struct in6_addr *)&ip->u.addr32);
+#endif /* USE_IPV6 */
+	return 0;
+}
+
+
+
 /* creates an ANY ip_addr (filled with 0, af and len properly set) */
 inline static void ip_addr_mk_any(int af, struct ip_addr* ip)
 {
