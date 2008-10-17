@@ -253,12 +253,20 @@ int db_unixodbc_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op
 			db_unixodbc_val2str,  db_unixodbc_submit_query, db_unixodbc_store_result);
 }
 
-/*
- * Gets a partial result set.
- * _h structure representing the database connection
- * _r pointer to a structure representing the result
- * nrows number of fetched rows
- * return zero on success, negative value on failure
+/*!
+ * \brief Gets a partial result set, fetch rows from a result
+ *
+ * Gets a partial result set, fetch a number of rows from a databae result.
+ * This function initialize the given result structure on the first run, and
+ * fetches the nrows number of rows. On subsequenting runs, it uses the
+ * existing result and fetches more rows, until it reaches the end of the
+ * result set. Because of this the result needs to be null in the first
+ * invocation of the function. If the number of wanted rows is zero, the
+ * function returns anything with a result of zero.
+ * \param _h structure representing the database connection
+ * \param _r pointer to a structure representing the result
+ * \param nrows number of fetched rows
+ * \return return zero on success, negative value on failure
  */
 int db_unixodbc_fetch_result(const db_con_t* _h, db_res_t** _r, const int nrows)
 {

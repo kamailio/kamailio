@@ -251,7 +251,15 @@ int db_mysql_query(const db_con_t* _h, const db_key_t* _k, const db_op_t* _op,
 }
 
 /**
- * Gets a partial result set.
+ * \brief Gets a partial result set, fetch rows from a result
+ *
+ * Gets a partial result set, fetch a number of rows from a database result.
+ * This function initialize the given result structure on the first run, and
+ * fetches the nrows number of rows. On subsequenting runs, it uses the
+ * existing result and fetches more rows, until it reaches the end of the
+ * result set. Because of this the result needs to be null in the first
+ * invocation of the function. If the number of wanted rows is zero, the
+ * function returns anything with a result of zero.
  * \param _h structure representing the database connection
  * \param _r pointer to a structure representing the result
  * \param nrows number of fetched rows
