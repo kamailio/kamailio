@@ -42,6 +42,8 @@
  *  2008-02-04  DNS cache options are adapted for the configuration
  *		framework (Miklos)
  *  2008-02-11  dns_cache_init cfg parameter is introduced (Miklos)
+ *  2008-10-17  fixed srv continue with 0 hostname (when falling back to
+                  aaaa) (andrei)
  */
 
 #ifdef USE_DNS_CACHE
@@ -2717,6 +2719,8 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 									int flags)
 {
 	int ret;
+	str host;
+	struct dns_hash_entry* orig;
 
 	ret=-E_DNS_NO_IP;
 	if (*e==0){ /* first call */
@@ -2738,32 +2742,49 @@ inline static int dns_ip_resolve(	struct dns_hash_entry** e,
 #endif /* USE_IPV6 */
 	}else if ((*e)->type==T_A){
 		/* continue A resolving */
-		ret=dns_a_resolve(e, rr_no, name, ip);
+		/* retrieve host name from the hash entry  (ignore name which might
+		  be null when continuing a srv lookup) */
+		host.s=(*e)->name;
+		host.len=(*e)->name_len;
+		ret=dns_a_resolve(e, rr_no, &host, ip);
 #ifdef USE_IPV6
 		if (ret>=0) return ret;
 		if (!(flags&(DNS_IPV6_ONLY|DNS_IPV6_FIRST|DNS_IPV4_ONLY))){
 			/* not found, try with AAAA */
-			dns_hash_put(*e);
+			orig=*e;
 			*e=0;
 			*rr_no=0;
-			ret=dns_aaaa_resolve(e, rr_no, name, ip);
+			ret=dns_aaaa_resolve(e, rr_no, &host, ip);
+			/* delay original record release until we're finished with host*/
+			dns_hash_put(orig);
 		}
 #endif /* USE_IPV6 */
 	}else if ((*e)->type==T_AAAA){
+		/* retrieve host name from the hash entry  (ignore name which might
+		  be null when continuing a srv lookup) */
+		host.s=(*e)->name;
+		host.len=(*e)->name_len;
 #ifdef USE_IPV6
 		/* continue AAAA resolving */
-		ret=dns_aaaa_resolve(e, rr_no, name, ip);
+		ret=dns_aaaa_resolve(e, rr_no, &host, ip);
 		if (ret>=0) return ret;
 		if ((flags&DNS_IPV6_FIRST) && !(flags&DNS_IPV6_ONLY)){
 			/* not found, try with A */
-			dns_hash_put(*e);
+			orig=*e;
 			*e=0;
 			*rr_no=0;
-			ret=dns_a_resolve(e, rr_no, name, ip);
+			ret=dns_a_resolve(e, rr_no, &host, ip);
+			/* delay original record release until we're finished with host*/
+			dns_hash_put(orig);
 		}
 #else /* USE_IPV6 */
 		/* ipv6 disabled, try with A */
-		ret=dns_a_resolve(e, rr_no, name, ip);
+		orig=*e;
+		*e=0;
+		*rr_no=0;
+		ret=dns_a_resolve(e, rr_no, &host, ip);
+		/* delay original record release until we're finished with host*/
+		dns_hash_put(orig);
 #endif /* USE_IPV6 */
 	}else{
 		LOG(L_CRIT, "BUG: dns_ip_resolve: invalid record type %d\n",
