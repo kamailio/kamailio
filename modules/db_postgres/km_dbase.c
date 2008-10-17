@@ -161,7 +161,15 @@ static int db_postgres_submit_query(const db_con_t* _con, const str* _s)
 
 
 /*!
- * \brief Gets a partial result set
+ * \brief Gets a partial result set, fetch rows from a result
+ *
+ * Gets a partial result set, fetch a number of rows from a database result.
+ * This function initialize the given result structure on the first run, and
+ * fetches the nrows number of rows. On subsequenting runs, it uses the
+ * existing result and fetches more rows, until it reaches the end of the
+ * result set. Because of this the result needs to be null in the first
+ * invocation of the function. If the number of wanted rows is zero, the
+ * function returns anything with a result of zero.
  * \param _con database connection
  * \param _res result set
  * \param nrows number of fetches rows
