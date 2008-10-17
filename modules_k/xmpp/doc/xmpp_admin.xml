@@ -234,7 +234,7 @@
 		<title>Set <varname>xmpp_port</varname> parameter</title>
 		<programlisting format="linespecific">
 ...
- modparam("xmpp", "xmpp_port", "5269")
+ modparam("xmpp", "xmpp_port", 5269)
 ...
 </programlisting>
 		</example>

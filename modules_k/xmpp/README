@@ -236,7 +236,7 @@ Chapter 1. Admin Guide
 
    Example 1.6. Set xmpp_port parameter
 ...
- modparam("xmpp", "xmpp_port", "5269")
+ modparam("xmpp", "xmpp_port", 5269)
 ...
 
 1.3.7. xmpp_password (string)
