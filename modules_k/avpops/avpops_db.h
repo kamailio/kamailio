@@ -40,13 +40,13 @@
 /* definition of a DB scheme*/
 struct db_scheme
 {
-	char *name;
-	str *uuid_col;
-	str *username_col;
-	str *domain_col;
-	str *value_col;
-	str *table;
-	int  db_flags;
+	str name;
+	str uuid_col;
+	str username_col;
+	str domain_col;
+	str value_col;
+	str table;
+	int db_flags;
 	struct db_scheme *next;
 };
 
@@ -69,6 +69,6 @@ int db_query_avp(struct sip_msg* msg, char *query, pvname_list_t* dest);
 
 int avp_add_db_scheme( modparam_t type, void* val);
 
-struct db_scheme *avp_get_db_scheme( char *name );
+struct db_scheme *avp_get_db_scheme( str *name );
 
 #endif

@@ -119,22 +119,23 @@ int avp_add_db_scheme( modparam_t type, void* val)
 	}
 
 	/* check for duplicates */
-	if ( avp_get_db_scheme(scheme->name)!=0 )
+	if ( avp_get_db_scheme(&scheme->name)!=0 )
 	{
-		LM_ERR("duplicated scheme name <%s>\n",scheme->name);
+		LM_ERR("duplicated scheme name <%.*s>\n",
+			scheme->name.len,scheme->name.s);
 		goto error;
 	}
 
 	/* print scheme */
-	LM_DBG("new scheme <%s> added\n"
+	LM_DBG("new scheme <%.*s> added\n"
 		"\t\tuuid_col=<%.*s>\n\t\tusername_col=<%.*s>\n"
 		"\t\tdomain_col=<%.*s>\n\t\tvalue_col=<%.*s>\n"
 		"\t\tdb_flags=%d\n\t\ttable=<%.*s>\n",
-		scheme->name,
-		scheme->uuid_col->len, scheme->uuid_col->s, scheme->username_col->len,
-		scheme->username_col->s, scheme->domain_col->len, scheme->domain_col->s,
-		scheme->value_col->len, scheme->value_col->s, scheme->db_flags,
-		scheme->table->len, scheme->table->s);
+		scheme->name.len,scheme->name.s,
+		scheme->uuid_col.len, scheme->uuid_col.s, scheme->username_col.len,
+		scheme->username_col.s, scheme->domain_col.len, scheme->domain_col.s,
+		scheme->value_col.len, scheme->value_col.s, scheme->db_flags,
+		scheme->table.len, scheme->table.s);
 
 	scheme->next = db_scheme_list;
 	db_scheme_list = scheme;
@@ -145,12 +146,13 @@ error:
 }
 
 
-struct db_scheme *avp_get_db_scheme (char *name)
+struct db_scheme *avp_get_db_scheme (str *name)
 {
 	struct db_scheme *scheme;
 
 	for( scheme=db_scheme_list ; scheme ; scheme=scheme->next )
-		if ( !strcasecmp( name, scheme->name) )
+		if ( name->len==scheme->name.len &&
+		!strcasecmp( name->s, scheme->name.s) )
 			return scheme;
 	return 0;
 }
@@ -187,7 +189,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 	{
 		/* uuid column */
 		keys_cmp[ nr_keys_cmp ] =
-			(scheme&&scheme->uuid_col)?scheme->uuid_col:db_columns[0];
+			(scheme&&scheme->uuid_col.s)?&scheme->uuid_col:db_columns[0];
 		vals_cmp[ nr_keys_cmp ].type = DB_STR;
 		vals_cmp[ nr_keys_cmp ].nul  = 0;
 		vals_cmp[ nr_keys_cmp ].val.str_val = *uuid;
@@ -197,7 +199,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 		{
 			/* username column */
 			keys_cmp[ nr_keys_cmp ] =
-			(scheme&&scheme->username_col)?scheme->username_col:db_columns[4];
+			(scheme&&scheme->username_col.s)?&scheme->username_col:db_columns[4];
 			vals_cmp[ nr_keys_cmp ].type = DB_STR;
 			vals_cmp[ nr_keys_cmp ].nul  = 0;
 			vals_cmp[ nr_keys_cmp ].val.str_val = *username;
@@ -207,7 +209,7 @@ static inline int prepare_selection( str *uuid, str *username, str *domain,
 		{
 			/* domain column */
 			keys_cmp[ nr_keys_cmp ] =
-				(scheme&&scheme->domain_col)?scheme->domain_col:db_columns[5];
+			(scheme&&scheme->domain_col.s)?&scheme->domain_col:db_columns[5];
 			vals_cmp[ nr_keys_cmp ].type = DB_STR;
 			vals_cmp[ nr_keys_cmp ].nul  = 0;
 			vals_cmp[ nr_keys_cmp ].val.str_val = *domain;
@@ -239,7 +241,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 	nr_keys_cmp = prepare_selection( uuid, username, domain, attr, scheme);
 
 	/* set table */
-	if (set_table( scheme?scheme->table:table ,"load")!=0)
+	if (set_table( scheme?&scheme->table:table ,"load")!=0)
 		return 0;
 
 	/* return keys */
@@ -251,7 +253,7 @@ db_res_t *db_load_avp( str *uuid, str *username, str *domain,
 		nr_keys_ret = 3;
 	} else {
 		/* value */
-		keys_ret[0] = scheme->value_col?scheme->value_col:db_columns[2];
+		keys_ret[0] = scheme->value_col.s?&scheme->value_col:db_columns[2];
 		nr_keys_ret = 1;
 	}
 

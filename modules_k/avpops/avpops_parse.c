@@ -278,7 +278,7 @@ int parse_avp_db(char *s, struct db_param *dbp, int allow_scheme)
 		}
 		if (have_scheme)
 		{
-			dbp->scheme = avp_get_db_scheme( tmp.s );
+			dbp->scheme = avp_get_db_scheme( &tmp );
 			if (dbp->scheme==0) 
 			{
 				LM_ERR("scheme <%s> not found\n", tmp.s);
@@ -382,14 +382,15 @@ error:
 
 #define  duplicate_str(_p, _str, _error) \
 	do { \
-		_p = (char*)pkg_malloc(_str.len+1); \
-		if (_p==0) \
+		_p.s = (char*)pkg_malloc(_str.len+1); \
+		if (_p.s==0) \
 		{ \
 			LM_ERR("no more pkg memory\n");\
 			goto _error; \
 		} \
-		memcpy( _p, _str.s, _str.len); \
-		_p[_str.len] = 0; \
+		_p.len = _str.len; \
+		memcpy( _p.s, _str.s, _str.len); \
+		_p.s[_str.len] = 0; \
 	}while(0)
 
 int parse_avp_db_scheme( char *s, struct db_scheme *scheme)
@@ -464,27 +465,32 @@ int parse_avp_db_scheme( char *s, struct db_scheme *scheme)
 		if ( foo.len==SCHEME_UUID_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_UUID_COL, foo.len) )
 		{
-			duplicate_str( scheme->uuid_col->s, bar, error);
+			if (scheme->uuid_col.s) goto parse_error;
+			duplicate_str( scheme->uuid_col, bar, error);
 		} else
 		if ( foo.len==SCHEME_USERNAME_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_USERNAME_COL, foo.len) )
 		{
-			duplicate_str( scheme->username_col->s, bar, error);
+			if (scheme->username_col.s) goto parse_error;
+			duplicate_str( scheme->username_col, bar, error);
 		} else
 		if ( foo.len==SCHEME_DOMAIN_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_DOMAIN_COL, foo.len) )
 		{
-			duplicate_str( scheme->domain_col->s, bar, error);
+			if (scheme->domain_col.s) goto parse_error;
+			duplicate_str( scheme->domain_col, bar, error);
 		} else
 		if ( foo.len==SCHEME_VALUE_COL_LEN && 
 		!strncasecmp( foo.s, SCHEME_VALUE_COL, foo.len) )
 		{
-			duplicate_str( scheme->value_col->s, bar, error);
+			if (scheme->value_col.s) goto parse_error;
+			duplicate_str( scheme->value_col, bar, error);
 		} else
 		if ( foo.len==SCHEME_TABLE_LEN && 
 		!strncasecmp( foo.s, SCHEME_TABLE, foo.len) )
 		{
-			duplicate_str( scheme->table->s, bar, error);
+			if (scheme->table.s) goto parse_error;
+			duplicate_str( scheme->table, bar, error);
 		} else
 		if ( foo.len==SCHEME_VAL_TYPE_LEN && 
 		!strncasecmp( foo.s, SCHEME_VAL_TYPE, foo.len) )
