@@ -49,6 +49,13 @@
     </column>
 
     <column>
+        <name>hostname</name>
+        <type>string</type>
+        <size>64</size>
+        <description>IP Address of the gateway</description>
+    </column>
+
+    <column>
         <name>port</name>
         <type>unsigned short</type>
         <null/>
