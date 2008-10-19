@@ -201,6 +201,7 @@ fi
 LCR_GW_GWNAME_COLUMN=gw_name
 LCR_GW_GRPID_COLUMN=grp_id
 LCR_GW_IP_COLUMN=ip_addr
+LCR_GW_HOSTNAME_COLUMN=hostname
 LCR_GW_PORT_COLUMN=port
 LCR_GW_URIS_COLUMN=uri_scheme
 LCR_GW_PROTO_COLUMN=transport
@@ -359,19 +360,16 @@ cat <<EOF
    *   scheme: 1=sip, 2=sips;   transport: 1=udp, 2=tcp, 3=tls, 4=sctp *
    * Examples:  lcr addgw level3 1.2.3.4 5080 sip tcp 1                *
    *            lcr addroute +1 '' 1 1                                 *
- lcr show .....................................................................
-           ............. show routes, gateways and groups
- lcr reload ...................................................................
-           ............. reload lcr gateways
- lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight>
-           ............... add a gateway with flags, tag, strip and weight ....
-           ................(flags, tag, strip, and weight are optional) .......
- lcr rmgw  <gw_name> ..........................................................
-           ............... delete a gateway
- lcr addroute <prefix> <from> <grp_id> <prio> .................................
-           .............. add a route ( use '' to match anything in <from> )
- lcr rmroute  <prefix> <from> <grp_id> <prio> .................................
-           .............. delete a route
+ lcr show .......... show gateways and routes
+ lcr reload ........ reload lcr gateways and routes
+ lcr addgw <gw_name> <ip> <port> <scheme> <transport> <grp_id> <flags> <tag> <strip> <weight> <hostname>
+           ......... add a gateway with flags, tag, strip, weight, and hostname
+           ......... (flags, tag, strip, weight, and hostname are optional)
+ lcr rmgw <gw_name> delete a gateway
+ lcr addroute <prefix> <from> <grp_id> <prio>
+           ......... add a route ( use '' to match anything in <from> )
+ lcr rmroute <prefix> <from> <grp_id> <prio>
+           ......... delete a route
 EOF
 }
 USAGE_FUNCTIONS="$USAGE_FUNCTIONS usage_lcr"
