@@ -36,12 +36,12 @@
 #include "../../locking.h"
 
 #define MAX_PREFIX_LEN 32
-#define MAX_FROM_URI_LEN 256
+#define MAX_URI_LEN 256
 
 struct lcr_info {
     char prefix[MAX_PREFIX_LEN + 1];
     unsigned short prefix_len;
-    char from_uri[MAX_FROM_URI_LEN + 1];
+    char from_uri[MAX_URI_LEN + 1];
     unsigned short from_uri_len;
     pcre *from_uri_re;
     unsigned int grp_id;

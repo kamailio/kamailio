@@ -22,8 +22,8 @@
 			<listitem>
 			<para>
 				sequential forwarding to contacts
-	according to their q value (functions load_contacts and
-	next_contacts).
+	according to their q value (functions load_contacts() and
+	next_contacts()).
 			</para>
 			</listitem>
 		</itemizedlist>
@@ -37,8 +37,9 @@
 	tuple that belongs to the group of the gateway.
 	</para>
 	<para>
-	Matching gateways are then ordered for forwarding
-	purpose (1) according to longest user part match, (2) according to 
+	When function load_gws() is called, matching gateways are ordered
+	for forwarding purpose (1) according to longest user part match,
+	(2) according to  
 	tuple's priority, (3) gateway's randomized weight within its
 	gateway group.  Prefix is a string of
 	characters.  From pattern is a regular expression (see 'man
@@ -47,14 +48,23 @@
 	value being 0).  Weight is an integer value from 1 to 254.
 	</para>
 	<para>
-	When a gateway is selected, Request URI user part is stripped by 
-	the number of characters as specified by the gateways strip
-	count. Subsequently, Request URI is rewritten based on gateway's
-	URI scheme, tag, IP address, port, and transport protocol.  Valid
-	URI scheme values are NULL = sip, 1 = sip and 2 = sips.  Tag is
-	inserted in front of Request URI user part. Currently valid transport
-	protocol values are NULL = none, 1 = udp, 2 = tcp, 3 = tls, and
-	4 = sctp.
+        Function next_gw() can then be used to select one gateway at a
+	time for forwarding.  Upon each call, user part of original
+	Request URI is first stripped by the number of characters as
+	specified by the gateway's strip count and then prefixed by
+	gateway's tag.  Upon first call, if gateway's hostname is null,
+	Request URI is rewritten based on gateway's URI scheme, IP
+	address, port, and transport protocol.  If hostname is not null,
+	Request-URI is rewritten based on gateway's URI scheme and
+	hostname, and destination URI is set based on gateway's URI
+	scheme, IP address, port, and transport protocol.  Upon
+	subsequent calls, the same is done, but instead of rewriting
+	Request URI, a new branch is added.
+	</para>
+        <para>
+        Valid URI scheme values are NULL = sip, 1 = sip and 2
+	= sips.  Currently valid transport protocol values are NULL =
+	none, 1 = udp, 2 = tcp, 3 = tls, and 4 = sctp.
 	</para>
 	<para>
 	As a side effect of gateway selection, gateway's flags (that may
@@ -199,6 +209,30 @@ modparam("lcr","grp_id_column","grp_id")
 		<programlisting format="linespecific">
 ...
 modparam("lcr","ip_addr_column","ip_addr")
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>hostname_column</varname> (string)</title>
+		<para>
+		Name of the column holding gateway's hostname that is
+		used in Request-URI, when request is sent to the
+		gateway.  Note that request is not forwarded based on
+		hostname, but based on gateway's IP address in
+		destination uri.
+		</para>
+		<para>
+		<emphasis>
+			Default value is <quote>hostname</quote>.
+		</emphasis>
+		</para>
+		<example>
+		<title>Setting <varname>hostname_column</varname> module parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("lcr", "hostname_column","host")
 ...
 </programlisting>
 		</example>
@@ -435,7 +469,7 @@ modparam("lcr","priority_column","priority")
 	<section>
 		<title><varname>contact_avp</varname> (AVP string)</title>
 		<para>
-		Internal AVP that load_contacts function uses to store
+		Internal AVP that load_contacts() function uses to store
 		contacts of the destination set.
 		</para>
 		<para>
@@ -566,14 +600,15 @@ modparam("lcr","fr_inv_timer",90)
 	<section>
 		<title><varname>fr_inv_timer_next</varname> (integer)</title>
 		<para>
-		Sets the value of the next INVITE's Final Response timeouts to be used 
-		during sequential forwarding:
+		Sets the value of the next INVITE's Final Response
+		timeouts to be used during sequential forwarding:
 		</para>
 		<para>
-		Function next_contacts() sets tm fr_inv_timer to fr_inv_timer_next
-		value if, after next contacts, there are still lower qvalue
-		contacts available, and to fr_inv_timer value if next contacts are
-		the last ones left.
+		Function next_contacts() sets tm fr_inv_timer to
+		fr_inv_timer_next value if, after next contacts, there
+		are still lower qvalue 
+		contacts available, and to fr_inv_timer value if next
+		contacts are the last ones left.
 		</para>
 		<para>
 		<emphasis>
@@ -673,17 +708,17 @@ modparam("lcr", "fetch_rows", 3000)
 		<function moreinfo="none">load_gws([pvar])</function>
 		</title>
 		<para>
-		Loads URI schemes, addresses, ports, and transports of
-		matching gateways to gw_uri_avp AVPs
+		Loads URI schemes, IP addresses, hostnames, ports, and
+		transports of matching gateways to gw_uri_avp
 		(see Overview section). If optional pseudo variable
 		argument is included, caller's URI is taken from it.
 		If pseudo variable argument is not included, caller's
-		URI is taken from rpid_avp AVP or, if rpid_avp value is
+		URI is taken from rpid_avp or, if rpid_avp value is
 		empty, from From URI. Returns 1 or -1 depending on
 		success.
 		</para>
 		<para>
-		Execution time of load_gws() function is O(N) + O(M),
+		Execution time of load_gws() function is O(N) * O(M),
 		where N is number of different prefix lengths and M
 		is number of collisions for matching prefix(es) in lcr
 		hash table.
@@ -708,9 +743,10 @@ if (!load_gws("$var(caller_uri)")) {
 		<function moreinfo="none">load_gws_from_grp(group-id)</function>
 		</title>
 		<para>
-		Loads URI schemes, addresses, ports, and transports of
-		gateways that belong to a given group to gw_uri_avp
-		AVPs.  group-id	argument is a string that may contain
+		Loads URI schemes, IP addresses, hostnames, ports, and
+		transports of 
+		gateways that belong to a given group to gw_uri_avp.
+		group-id argument is a string that may contain 
 		pseudo-variables.  Its value must be a a string of
 		digits that are converted to an integer group id.
 		Returns 1 or -1 depending on success. 
@@ -745,24 +781,25 @@ if (!load_gws_from_grp("$avp(s:gateway_group)")) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-		If called from a route block, replaces URI scheme, host, port, and
-		transport of Request-URI by the values stored in first gw_uri_avp AVP
-		and destroys that AVP.  Saves user part of Request-URI into
-		ruri_user_avp AVP for use in subsequent next_gw() calls.
+		Upon first call, replaces URI scheme, host,
+		port, and transport of Request-URI by the values stored
+		in first gw_uri_avp and destroys that AVP (see
+		Overview section).  Saves user part of Request-URI into
+		ruri_user_avp for use in subsequent next_gw() calls.
 		</para>
 		<para>
-		If called from a failure route block, appends a new branch to
-		request, where  URI scheme, host, port, and transport of Request-URI
-		is replaced by the values stored in the first gw_uri_avp AVP and
-		destroys that AVP.  Request-URI user is taken from ruri_user_avp
-		AVP.
+		Upon subsequent calls, appends a new branch URI to
+		the request, where URI scheme, host, port, and transport of
+		are taken from values stored in the first gw_uri_avp
+		and destroys that AVP.  URI user is taken from
+		ruri_user_avp.
 		</para>
 		<para>
 		As a side effect, stores gateway's flags to flags_avp.
 		</para>
 		<para>
-		Returns 1 on success and -1 if there were no gateways left or if an
-		error occurred (see syslog).
+		Returns 1 on success and -1 if there were no gateways
+		left or if an error occurred (see syslog).
 		</para>
 		<para>
 		Must be preceded by successful load_gws() call.
@@ -913,7 +950,8 @@ if (to_gw("1")) {
 		</title>
 		<para>
 		Loads contacts in destination set in increasing qvalue order as
-		values of lcr_contact AVP.  If all contacts in the destination set
+		values of contact_avp.  If all contacts in the
+		destination set 
 		have the same qvalue, load_contacts() does not do anything thus
 		minimizing performance impact of sequential forking capability when
 		it is not needed.  Returns 1 if loading of contacts succeeded or
@@ -939,18 +977,22 @@ if (!load_contacts()) {
 		<function moreinfo="none">next_contacts()</function>
 		</title>
 		<para>
-		If called from a route block, replaces Request-URI with the first
-		lcr_contact AVP value, adds the remaining lcr_contact AVP values 
-		with the same qvalue as branches, and destroys those AVPs. It does
-		nothing if there are no lcr_contact AVPs.  Returns 1 if there were 
-		no errors and -1 if an error occurred (see syslog).
+		If called from a route block, replaces Request-URI with
+		the first contact_avp value, adds the remaining
+		contact_avp values with the same qvalue as branches, and
+		destroys those AVPs. It does 
+		nothing if there are no contact_avp values.  Returns
+		1 if there were no errors and -1 if an error occurred
+		(see syslog). 
 		</para>
 		<para>
-		If called from a failure route block, adds the first lcr_contact 
-		AVP value and all following lcr_contact AVP values with the same 
+		If called from a failure route block, adds the first
+		contact_avp value and all following contact_avp
+		values with the same  
 		qvalue as new branches to request and destroys those AVPs. 
-		Returns 1 if new branches were successfully added and -1 on error 
-		(see syslog) or if there were no more lcr_contact AVPs.
+		Returns 1 if new branches were successfully added and -1
+		on error (see syslog) or if there were no more
+		contact_avp values.
 		</para>
 		<para>
 		Must be preceded by successful load_contacts() call.
@@ -959,7 +1001,8 @@ if (!load_contacts()) {
 		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 		</para>
 		<example>
-		<title><function>next_contacts</function> usage from route block
+		<title><function>next_contacts()</function> usage from
+		route block 
 		</title>
 		<programlisting format = "linespecific">
 ...
@@ -973,7 +1016,7 @@ if (!next_contacts()) {
 </programlisting>
 		</example>
 		<example>
-		<title><function>next_contacts</function> usage from 
+		<title><function>next_contacts()</function> usage from 
 			failure route block
 		</title>
 		<programlisting format = "linespecific">

@@ -94,6 +94,8 @@ static int fixstringloadgws(void **param, int param_count);
 
 #define IP_ADDR_COL "ip_addr"
 
+#define HOSTNAME_COL "hostname"
+
 #define PORT_COL "port"
 
 #define URI_SCHEME_COL "uri_scheme"
@@ -118,6 +120,8 @@ static int fixstringloadgws(void **param, int param_count);
 
 #define MAX_NO_OF_GWS 128
 #define MAX_TAG_LEN 16
+#define MAX_HOST_LEN 64
+#define MAX_USER_LEN 64
 
 /* Default module parameter values */
 #define DEF_FR_INV_TIMER 90
@@ -133,6 +137,8 @@ typedef enum sip_protos uri_transport;
 
 struct gw_info {
     unsigned int ip_addr;
+    char hostname[MAX_HOST_LEN];
+    unsigned short hostname_len;
     unsigned int port;
     unsigned int grp_id;
     uri_type scheme;
@@ -178,6 +184,7 @@ static str gw_table         = str_init(GW_TABLE);
 static str gw_name_col      = str_init(GW_NAME_COL);
 static str grp_id_col       = str_init(GRP_ID_COL);
 static str ip_addr_col      = str_init(IP_ADDR_COL);
+static str hostname_col     = str_init(HOSTNAME_COL);
 static str port_col         = str_init(PORT_COL);
 static str uri_scheme_col   = str_init(URI_SCHEME_COL);
 static str transport_col    = str_init(TRANSPORT_COL);
@@ -299,6 +306,7 @@ static param_export_t params[] = {
     {"gw_name_column",           STR_PARAM, &gw_name_col.s  },
     {"grp_id_column",            STR_PARAM, &grp_id_col.s   },
     {"ip_addr_column",           STR_PARAM, &ip_addr_col.s  },
+    {"hostname_column",          STR_PARAM, &hostname_col.s },
     {"port_column",              STR_PARAM, &port_col.s     },
     {"uri_scheme_column",        STR_PARAM, &uri_scheme_col.s },
     {"transport_column",         STR_PARAM, &transport_col.s },
@@ -418,6 +426,7 @@ static int mod_init(void)
     gw_name_col.len = strlen(gw_name_col.s);
     grp_id_col.len = strlen(grp_id_col.s);
     ip_addr_col.len = strlen(ip_addr_col.s);
+    hostname_col.len = strlen(hostname_col.s);
     port_col.len = strlen(port_col.s);
     uri_scheme_col.len = strlen(uri_scheme_col.s);
     transport_col.len = strlen(transport_col.s);
@@ -845,6 +854,7 @@ static int gw_unique(const struct gw_info *gws, const unsigned int count,
 }
 
 static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
+		     char *hostname, unsigned int hostname_len,
 		     unsigned int grp_id, char *ip_string, unsigned int port,
 		     unsigned int scheme, unsigned int transport,
 		     unsigned int flags, unsigned int strip, char *tag,
@@ -855,6 +865,9 @@ static int insert_gw(struct gw_info *gws, unsigned int i, unsigned int ip_addr,
 	       ip_string, grp_id);
 	return 0;
     }
+    gws[i].ip_addr = ip_addr;
+    if (hostname_len) memcpy(&(gws[i].hostname[0]), hostname, hostname_len);
+    gws[i].hostname_len = hostname_len;
     gws[i].ip_addr = ip_addr;
     gws[i].port = port;
     gws[i].grp_id = grp_id;
@@ -967,15 +980,16 @@ static int prefix_len_insert(struct lcr_info **table, unsigned short prefix_len)
 int reload_gws_and_lcrs(void)
 {
     unsigned int i, n, port, strip, tag_len, prefix_len, from_uri_len,
-	grp_id,	grp_cnt, priority, flags, first_gw, weight, gw_cnt;
+	grp_id,	grp_cnt, priority, flags, first_gw, weight, gw_cnt,
+	hostname_len;
     struct in_addr ip_addr;
     uri_type scheme;
     uri_transport transport;
     db_con_t* dbh;
-    char *ip_string, *tag, *prefix, *from_uri;
+    char *ip_string, *hostname, *tag, *prefix, *from_uri;
     db_res_t* res = NULL;
     db_row_t* row;
-    db_key_t gw_cols[9];
+    db_key_t gw_cols[10];
     db_key_t lcr_cols[4];
     pcre *from_uri_re;
     struct gw_grp gw_grps[MAX_NO_OF_GWS];
@@ -989,6 +1003,7 @@ int reload_gws_and_lcrs(void)
     gw_cols[6] = &grp_id_col;
     gw_cols[7] = &flags_col;
     gw_cols[8] = &weight_col;
+    gw_cols[9] = &hostname_col;
 
     lcr_cols[0] = &prefix_col;
     lcr_cols[1] = &from_uri_col;
@@ -1002,7 +1017,7 @@ int reload_gws_and_lcrs(void)
 	return -1;
     }
     dbh = lcr_dbf.init(&db_url);
-    if (dbh == 0){
+    if (dbh == 0) {
 	LM_ERR("unable to open database connection\n");
 	return -1;
     }
@@ -1012,15 +1027,15 @@ int reload_gws_and_lcrs(void)
 	return -1;
     }
 
-    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 9, 0, &res) < 0) {
-	    LM_ERR("failed to query gw data\n");
-	    lcr_dbf.close(dbh);
-	    return -1;
+    if (lcr_dbf.query(dbh, NULL, 0, NULL, gw_cols, 0, 10, 0, &res) < 0) {
+	LM_ERR("failed to query gw data\n");
+	lcr_dbf.close(dbh);
+	return -1;
     }
 
     if (RES_ROW_N(res) + 1 > MAX_NO_OF_GWS) {
-	    LM_ERR("too many gateways\n");
-	    goto gw_err;
+	LM_ERR("too many gateways\n");
+	goto gw_err;
     }
 
     for (i = 0; i < RES_ROW_N(res); i++) {
@@ -1077,9 +1092,15 @@ int reload_gws_and_lcrs(void)
 	    transport = (uri_transport)VAL_INT(ROW_VALUES(row) + 3);	
 	}
 	if ((transport != PROTO_UDP) && (transport != PROTO_TCP) &&
-	    (transport != PROTO_TLS) && (transport != PROTO_SCTP)) {
+	    (transport != PROTO_TLS) && (transport != PROTO_SCTP) &&
+	    (transport != PROTO_NONE)) {
 	    LM_ERR("unknown or unsupported transport <%u> of gw <%s> at "
-		   " row <%u\n", (unsigned int)transport, ip_string, i);
+		   " row <%u>\n", (unsigned int)transport, ip_string, i);
+	    goto gw_err;
+	}
+	if ((scheme == SIPS_URI_T) && (transport == PROTO_UDP)) {
+	    LM_ERR("wrong transport <%u> for SIPS URI scheme of gw <%s> at "
+		   "row <%u>\n", transport, ip_string, i); 
 	    goto gw_err;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 4) == 1) {
@@ -1091,6 +1112,11 @@ int reload_gws_and_lcrs(void)
 		goto gw_err;
 	    }
 	    strip = (unsigned int)VAL_INT(ROW_VALUES(row) + 4);
+	}
+	if (strip > MAX_USER_LEN) {
+	    LM_ERR("strip count <%u> of gw <%s> at row <%u> it too large\n",
+		   strip, ip_string, i);
+	    goto gw_err;
 	}
 	if (VAL_NULL(ROW_VALUES(row) + 5) == 1) {
 	    tag_len = 0;
@@ -1142,15 +1168,34 @@ int reload_gws_and_lcrs(void)
 		   weight, ip_string, i);
 	    goto gw_err;
 	}
+	if (VAL_NULL(ROW_VALUES(row) + 9) == 1) {
+	    hostname_len = 0;
+	    hostname = (char *)0;
+	} else {
+	    if (VAL_TYPE(ROW_VALUES(row) + 9) != DB_STRING) {
+		LM_ERR("hostname of gw <%s> at row <%u> is not string\n",
+		       ip_string, i);
+		goto gw_err;
+	    }
+	    hostname = (char *)VAL_STRING(ROW_VALUES(row) + 9);
+	    hostname_len = strlen(hostname);
+	}
+	if (hostname_len > MAX_HOST_LEN) {
+	    LM_ERR("hostname length <%u> of gw <%s> at row <%u> it too large\n",
+		   hostname_len, ip_string, i);
+	    goto gw_err;
+	}
 	
 	if (*gws == gws_1) {
-	    if (!insert_gw(gws_2, i + 1, (unsigned int)ip_addr.s_addr, grp_id,
+	    if (!insert_gw(gws_2, i + 1, (unsigned int)ip_addr.s_addr, 
+			   hostname, hostname_len, grp_id,
 			   ip_string, port, scheme, transport, flags, strip,
 			   tag, tag_len, weight)) {
 		goto gw_err;
 	    }
 	} else {
-	    if (!insert_gw(gws_1, i + 1, (unsigned int)ip_addr.s_addr, grp_id,
+	    if (!insert_gw(gws_1, i + 1, (unsigned int)ip_addr.s_addr,
+			   hostname, hostname_len, grp_id,
 			   ip_string, port, scheme, transport, flags, strip,
 			   tag, tag_len, weight)) {
 		goto gw_err;
@@ -1245,7 +1290,7 @@ int reload_gws_and_lcrs(void)
 		from_uri = (char *)VAL_STRING(ROW_VALUES(row) + 1);
 		from_uri_len = strlen(from_uri);
 	    }
-	    if (from_uri_len > MAX_FROM_URI_LEN) {
+	    if (from_uri_len > MAX_URI_LEN) {
 		LM_ERR("length <%u> of lcr from_uri at row <%u> is too large\n",
 		       from_uri_len, i);
 		goto lcr_err;
@@ -1355,25 +1400,50 @@ int mi_print_gws(struct mi_node* rpl)
 	attr = add_mi_attr(node, MI_DUP_VALUE, "GRP_ID", 6, p, len );
 	if (attr == NULL) goto err;
 
-	transport = (*gws)[i].transport;
-	if (transport == PROTO_UDP)
-	    transp= ";transport=udp";
-	else  if (transport == PROTO_TCP)
-	    transp= ";transport=tcp";
-	else  if (transport == PROTO_TLS)
-	    transp= ";transport=tls";
-	else  if (transport == PROTO_SCTP)
-	    transp= ";transport=sctp";
-	else
-	    transp= "";
-
 	address.af = AF_INET;
 	address.len = 4;
 	address.u.addr32[0] = (*gws)[i].ip_addr;
-	attr = addf_mi_attr(node,0 ,"URI", 3,"%s:%s:%d%s",
-			    ((*gws)[i].scheme == SIP_URI_T)?"sip":"sips",
-			    ip_addr2a(&address),
-			    ((*gws)[i].port == 0)?5060:(*gws)[i].port,transp);
+	attr = addf_mi_attr(node, 0, "IP_ADDR", 6, "%s", ip_addr2a(&address));
+	if (attr == NULL) goto err;
+
+	attr = add_mi_attr(node, MI_DUP_VALUE, "HOSTNAME", 8,
+			   (*gws)[i].hostname, (*gws)[i].hostname_len );
+	if (attr == NULL) goto err;
+
+	if ((*gws)[i].port > 0) {
+	    p = int2str((unsigned long)(*gws)[i].port, &len );
+	    attr = add_mi_attr(node, MI_DUP_VALUE, "PORT", 4, p, len);
+	} else {
+	    attr = add_mi_attr(node, MI_DUP_VALUE, "PORT", 4, (char *)0, 0);
+	}	    
+	if (attr == NULL) goto err;
+
+	if ((*gws)[i].scheme == SIP_URI_T) {
+	    attr = add_mi_attr(node, MI_DUP_VALUE, "SCHEME", 6, "sip", 3);
+	} else {
+	    attr = add_mi_attr(node, MI_DUP_VALUE, "SCHEME", 6, "sips", 4);
+	}
+	if (attr == NULL) goto err;
+
+	transport = (*gws)[i].transport;
+	switch (transport) {
+	case PROTO_UDP:
+	    transp= "udp";
+	    break;
+	case PROTO_TCP:
+	    transp= "tcp";
+	    break;
+	case PROTO_TLS:
+	    transp= "tls";
+	    break;
+	case PROTO_SCTP:
+	    transp= "sctp";
+	    break;
+	default:
+	    transp = "";
+	}
+	attr = add_mi_attr(node, MI_DUP_VALUE, "TRANSPORT", 9,
+			   transp, strlen(transp));
 	if (attr == NULL) goto err;
 
 	p = int2str((unsigned long)(*gws)[i].strip, &len );
@@ -1458,101 +1528,201 @@ int mi_print_lcrs(struct mi_node* rpl)
     return -1;
 }
 
+inline int encode_avp_value(char *value, uri_type scheme, unsigned int strip,
+			    char *tag, unsigned int tag_len,
+			    unsigned int ip_addr, char *hostname,
+			    unsigned int hostname_len, unsigned int port,
+			    uri_transport transport, unsigned int flags)
+{
+    char *at, *string;
+    int len;
+    
+    /* scheme */
+    at = value;
+    string = int2str(scheme, &len);
+    memcpy(at, string, len);
+    at = at + len;
+    *at = '|'; at = at + 1;
+    /* strip */
+    string = int2str(strip, &len);
+    memcpy(at, string, len);
+    at = at + len;
+    *at = '|'; at = at + 1;
+    /* tag */
+    memcpy(at, tag, tag_len);
+    at = at + tag_len;
+    *at = '|'; at = at + 1;
+    /* ip_addr */
+    string = int2str(ip_addr, &len);
+    memcpy(at, string, len);
+    at = at + len;
+    *at = '|'; at = at + 1;
+    /* hostname */
+    memcpy(at, hostname, hostname_len);
+    at = at + hostname_len;
+    *at = '|'; at = at + 1;
+    /* port */
+    string = int2str(port, &len);
+    memcpy(at, string, len);
+    at = at + len;
+    *at = '|'; at = at + 1;
+    /* transport */
+    string = int2str(transport, &len);
+    memcpy(at, string, len);
+    at = at + len;
+    *at = '|'; at = at + 1;
+    /* flags */
+    string = int2str(flags, &len);
+    memcpy(at, string, len);
+    at = at + len;
+    return at - value;
+}
+
+inline int decode_avp_value(char *value, str *scheme, unsigned int *strip,
+			    str *tag, str *addr, str *hostname,
+			    str *port, str *transport, unsigned int *flags)
+{
+    str s;
+    unsigned int u;
+    char *sep;
+    struct ip_addr a;
+
+    /* scheme */
+    s.s = value;
+    sep = index(s.s, '|');
+    if (sep == NULL) {
+	LM_ERR("scheme was not found in AVP value\n");
+	return 0;
+    }
+    s.len = sep - s.s;
+    str2int(&s, &u);
+    if (u == SIP_URI_T) {
+	scheme->s = "sip:";
+	scheme->len = 4;
+    } else {
+	scheme->s = "sips:";
+	scheme->len = 5;
+    }
+    /* strip */
+    s.s = sep + 1;
+    sep = index(s.s, '|');
+    if (sep == NULL) {
+	LM_ERR("strip was not found in AVP value\n");
+	return 0;
+    }
+    s.len = sep - s.s;
+    str2int(&s, strip);
+    /* tag */
+    tag->s = sep + 1;
+    sep = index(tag->s, '|');
+    if (sep == NULL) {
+	LM_ERR("tag was not found in AVP value\n");
+	return 0;
+    }
+    tag->len = sep - tag->s;
+    /* addr */
+    s.s = sep + 1;
+    sep = index(s.s, '|');
+    if (sep == NULL) {
+	LM_ERR("ip_addr was not found in AVP value\n");
+	return 0;
+    }
+    s.len = sep - s.s;
+    str2int(&s, &u);
+    a.af = AF_INET;
+    a.len = 4;
+    a.u.addr32[0] = u;
+    addr->s = ip_addr2a(&a);
+    addr->len = strlen(addr->s);
+    /* hostname */
+    hostname->s = sep + 1;
+    sep = index(hostname->s, '|');
+    if (sep == NULL) {
+	LM_ERR("hostname was not found in AVP value\n");
+	return 0;
+    }
+    hostname->len = sep - hostname->s;
+    /* port */
+    port->s = sep + 1;
+    sep = index(port->s, '|');
+    if (sep == NULL) {
+	LM_ERR("scheme was not found in AVP value\n");
+	return 0;
+    }
+    port->len = sep - port->s;
+    /* transport */
+    s.s = sep + 1;
+    sep = index(s.s, '|');
+    if (sep == NULL) {
+	LM_ERR("transport was not found in AVP value\n");
+	return 0;
+    }
+    s.len = sep - s.s;
+    str2int(&s, &u);
+    switch (u) {
+    case PROTO_NONE:
+    case PROTO_UDP:
+	transport->s = (char *)0;
+	transport->len = 0;
+	break;
+    case PROTO_TCP:
+	transport->s = ";transport=tcp";
+	transport->len = 14;
+	break;
+    case PROTO_TLS:
+	transport->s = ";transport=tls";
+	transport->len = 14;
+    default:
+	transport->s = ";transport=sctp";
+	transport->len = 15;
+	break;
+    }
+    /* flags */
+    s.s = sep + 1;
+    s.len = strlen(s.s);
+    str2int(&s, flags);
+
+    return 1;
+}
+    
 
 /* Add gateways in matched_gws array into AVPs */
 void add_gws_into_avps(struct matched_gw_info *matched_gws,
 		       unsigned int gw_cnt, str *ruri_user)
 {
-    unsigned int i, index, addr, port, flags, strip;
-    int flags_len, tag_len, strip_len;
-    uri_type scheme;
-    uri_transport transport;
-    struct ip_addr address;
-    str addr_str, port_str, value;
+    unsigned int i, index, strip, hostname_len;
+    int tag_len;
+    str value;
+    char encoded_value[MAX_URI_LEN];
     int_str val;
-    char *at, *tag, *strip_string, *flags_string;
-    char ruri[MAX_URI_SIZE];
 
     for (i = 0; i < gw_cnt; i++) {
 	index = matched_gws[i].gw_index;
-      	addr = (*gws)[index].ip_addr;
-	port = (*gws)[index].port;
-	scheme = (*gws)[index].scheme;
-	transport = (*gws)[index].transport;
-	flags = (*gws)[index].flags;
+      	hostname_len = (*gws)[index].hostname_len;
 	strip = (*gws)[index].strip;
 	if (strip > ruri_user->len) {
 	    LM_ERR("strip count of gw is too large <%u>\n", strip);
 	    goto skip;
 	}
 	tag_len = (*gws)[index].tag_len;
-	tag = (*gws)[index].tag;
-	if (6 + tag_len + 40 /* flags + strip */ + 1 + 15 + 1 + 5 + 1 + 14 >
-	    MAX_URI_SIZE) {
-	    LM_ERR("request URI would be too long\n");
+	if (5 /* scheme */ + 4 /* strip */ + tag_len + 1 /* @ */ +
+	    ((hostname_len > 15)?hostname_len:15) + 6 /* port */ +
+	    15 /* transport */ + 10 /* flags */ + 7 /* separators */
+	    > MAX_URI_LEN) {
+	    LM_ERR("too long AVP value\n");
 	    goto skip;
 	}
-	at = (char *)&(ruri[0]);
-	flags_string = int2str(flags, &flags_len);
-	memcpy(at, flags_string, flags_len);
-	at = at + flags_len;
-	if (scheme == SIP_URI_T) {
-	    memcpy(at, "sip:", 4); at = at + 4;
-	} else if (scheme == SIPS_URI_T) {
-	    memcpy(at, "sips:", 5); at = at + 5;
-	} else {
-	    LM_ERR("unknown or unsupported URI scheme <%u>\n",
-		   (unsigned int)scheme);
-	    goto skip;
-	}
-	if (tag_len) {
-	    memcpy(at, tag, tag_len); at = at + tag_len;
-	}
-	/* Add strip in this form |number.
-	 * For example: |3 means strip first 3 characters.
-         */
-	*at = '|'; at = at + 1;
-	strip_string = int2str(strip, &strip_len);
-	memcpy(at, strip_string, strip_len);
-	at = at + strip_len;
-	*at = '@'; at = at + 1;
-	address.af = AF_INET;
-	address.len = 4;
-	address.u.addr32[0] = addr;
-	addr_str.s = ip_addr2a(&address);
-	addr_str.len = strlen(addr_str.s);
-	memcpy(at, addr_str.s, addr_str.len); at = at + addr_str.len;
-	if (port != 0) {
-	    if (port > 65536) {
-		LM_ERR("port of GW is too large <%u>\n", port);
-		goto skip;
-	    }
-	    *at = ':'; at = at + 1;
-	    port_str.s = int2str(port, &port_str.len);
-	    memcpy(at, port_str.s, port_str.len); at = at + port_str.len;
-	}
-	if (transport != PROTO_NONE) {
-	    memcpy(at, ";transport=", 11); at = at + 11;
-	    if (transport == PROTO_UDP) {
-		memcpy(at, "udp", 3); at = at + 3;
-	    } else if (transport == PROTO_TCP) {
-		memcpy(at, "tcp", 3); at = at + 3;
-	    } else if (transport == PROTO_TLS) {
-		memcpy(at, "tls", 3); at = at + 3;
-	    } else if (transport == PROTO_SCTP) {
-		memcpy(at, "sctp", 4); at = at + 4;
-	    } else {
-		LM_ERR("unknown or unsupported transport <%u>\n",
-		       (unsigned int)transport);
-		goto skip;
-	    }
-	}
-	value.s = (char *)&(ruri[0]);
-	value.len = at - value.s;
+	value.len = 
+	    encode_avp_value(encoded_value, (*gws)[index].scheme, strip,
+			     (*gws)[index].tag, tag_len, (*gws)[index].ip_addr,
+			     (*gws)[index].hostname, hostname_len,
+			     (*gws)[index].port, (*gws)[index].transport,
+			     (*gws)[index].flags);
+	value.s = (char *)&(encoded_value[0]);
 	val.s = value;
 	add_avp(gw_uri_avp_type|AVP_VAL_STR, gw_uri_avp, val);
 	LM_DBG("added gw_uri_avp <%.*s> with weight <%u>\n",
-		value.len, value.s, matched_gws[i].weight);
+	       value.len, value.s, matched_gws[i].weight);
     skip:
 	continue;
     }
@@ -1562,7 +1732,7 @@ void add_gws_into_avps(struct matched_gw_info *matched_gws,
 /*
  * Load info of matching GWs to gw_uri AVPs
  */
- static int do_load_gws(struct sip_msg* _m, str *_from_uri)
+static int do_load_gws(struct sip_msg* _m, str *_from_uri)
 {
     str ruri_user, from_uri;
     unsigned int j, k, gw_index, have_rpid_avp, gw_count;
@@ -1781,180 +1951,199 @@ static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
 }
 
 
+static int generate_uris(char *r_uri, str *r_uri_user, unsigned int *r_uri_len,
+			 char *dst_uri, unsigned int *dst_uri_len,
+			 unsigned int *flags)
+{
+    int_str gw_uri_val;
+    struct usr_avp *gu_avp;
+    str scheme, tag, addr, hostname, port, transport;
+    char *at;
+    unsigned int strip;
+    
+    gu_avp = search_first_avp(gw_uri_avp_type, gw_uri_avp, &gw_uri_val, 0);
+
+    if (!gu_avp) return 0; /* No more gateways left */
+
+    decode_avp_value(gw_uri_val.s.s, &scheme, &strip, &tag, &addr,
+		     &hostname, &port, &transport, flags);
+
+    if (scheme.len + r_uri_user->len - strip + tag.len + addr.len +
+	1 /* @ */ + ((hostname.len > 15)?hostname.len:15) + 1 /* : */ +
+	port.len + transport.len + 1 /* null */ > MAX_URI_LEN) {
+	LM_ERR("too long Request URI or DST URI\n");
+	return 0;
+    }
+
+    at = r_uri;
+    
+    memcpy(at, scheme.s, scheme.len);
+    at = at + scheme.len;
+	
+    memcpy(at, tag.s, tag.len);
+    at = at + tag.len;
+	
+    if (strip > r_uri_user->len) {
+	LM_ERR("strip count <%u> is largen that R-URI user <%.*s>\n",
+	       strip, r_uri_user->len, r_uri_user->s);
+	return 0;
+    }
+    memcpy(at, r_uri_user->s + strip, r_uri_user->len - strip);
+    at = at + r_uri_user->len - strip;
+
+    *at = '@';
+    at = at + 1;
+	
+    if (hostname.len == 0) {
+	memcpy(at, addr.s, addr.len);
+	at = at + addr.len;
+	if (port.len > 0) {
+	    *at = ':';
+	    at = at + 1;
+	    memcpy(at, port.s, port.len);
+	    at = at + port.len;
+	}
+	if (transport.len > 0) {
+	    memcpy(at, transport.s, transport.len);
+	    at = at + transport.len;
+	}
+	*at = '\0';
+	*r_uri_len = at - r_uri;
+	*dst_uri_len = 0;
+    } else {
+	memcpy(at, hostname.s, hostname.len);
+	at = at + hostname.len;
+	*at = '\0';
+	*r_uri_len = at - r_uri;
+	at = dst_uri;
+	memcpy(at, scheme.s, scheme.len);
+	at = at + scheme.len;
+	memcpy(at, addr.s, addr.len);
+	at = at + addr.len;
+	if (port.len > 0) {
+	    *at = ':';
+	    at = at + 1;
+	    memcpy(at, port.s, port.len);
+	    at = at + port.len;
+	}
+	if (transport.len > 0) {
+	    memcpy(at, transport.s, transport.len);
+	    at = at + transport.len;
+	}
+	*at = '\0';
+	*dst_uri_len = at - dst_uri;
+    }
+
+    destroy_avp(gu_avp);
+	
+    LM_DBG("r_uri <%.*s>, dst_uri <%.*s>\n",
+	   *r_uri_len, r_uri, *dst_uri_len, dst_uri);
+
+    return 1;
+}
+
+
 /*
- * If called from request route block, rewrites scheme, host, port, and
- * transport parts of R-URI based on first gw_uri AVP value, which is then
- * destroyed.  Also saves R-URI user to ruri_user AVP for later use in
- * failure route block.
+ * When called first time, rewrites scheme, host, port, and
+ * transport parts of R-URI based on first gw_uri_avp value, which is then
+ * destroyed.  Saves R-URI user to ruri_user_avp for later use.
  *
- * If called from failure route block, appends a new branch to request
- * where scheme, host, port, and transport of URI are taken from the first
- * gw_uri AVP value, which is then destroyed.  URI user is taken from
- * ruri_user AVP value saved earlier.
+ * On subsequence calls (determined by existence of ruri_user_avp value),
+ * appends a new branch to request, where scheme, host, port, and transport
+ * of URI are taken from the first gw_uri_avp value, which is then destroyed.
+ * URI user is taken from ruri_user_avp value saved earlier.
+ *
  * Returns 1 upon success and -1 upon failure.
  */
 static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
-    int_str gw_uri_val, ruri_user_val, val;
+    int_str ruri_user_val, val;
     struct action act;
-    struct usr_avp *gu_avp, *ru_avp;
+    struct usr_avp *ru_avp;
     int rval;
-    str new_ruri;
-    char *at, *at_char, *strip_char, *endptr;
-    unsigned int strip;
+    str uri_str;
+    unsigned int flags, r_uri_len, dst_uri_len;
+    char r_uri[MAX_URI_LEN], dst_uri[MAX_URI_LEN];
 
-    gu_avp = search_first_avp(gw_uri_avp_type, gw_uri_avp, &gw_uri_val, 0);
-    if (!gu_avp) return -1;
+    ru_avp = search_first_avp(ruri_user_avp_type, ruri_user_avp,
+			      &ruri_user_val, 0);
 
-    /* Set flags_avp from integer at the beginning of of gw_uri */
-    val.n = (int)strtoul(gw_uri_val.s.s, &at, 0);
-    add_avp(flags_avp_type, flags_avp, val);
-    LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
+    if (ru_avp == NULL) { /* First invocation */
 
-    gw_uri_val.s.len = gw_uri_val.s.len - (at - gw_uri_val.s.s);
-    gw_uri_val.s.s = at;
+	/* Re-write Request-URI by taking URI user from current Request-URI
+	   and other parts of from gw_uri_avp. */
 
-    if (route_type == REQUEST_ROUTE) {
-
-	/* Create new Request-URI taking URI user from current Request-URI
-	   and other parts of from gw_uri AVP. */
 	if (parse_sip_msg_uri(_m) < 0) {
 	    LM_ERR("parsing of R-URI failed\n");
 	    return -1;
 	}
-	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
-	if (!new_ruri.s) {
-	    LM_ERR("no memory for new R-URI\n");
+
+	if (generate_uris(r_uri, &(_m->parsed_uri.user), &r_uri_len, dst_uri,
+			  &dst_uri_len, &flags) == 0) {
 	    return -1;
 	}
-	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
-	if (!at_char) {
-	    pkg_free(new_ruri.s);
-	    LM_ERR("no @ in gateway URI <%.*s>\n",
-		   gw_uri_val.s.len, gw_uri_val.s.s);
-	    return -1;
-	}
-	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
-	if (!strip_char || strip_char + 1 >= at_char) {
-	    pkg_free(new_ruri.s);
-	    LM_ERR("no strip character | and at least one "
-		   "character before @ in gateway URI <%.*s>\n",
-		   gw_uri_val.s.len, gw_uri_val.s.s);
-	    return -1;
-	}
-	at = new_ruri.s;
-	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
-	at = at + (strip_char - gw_uri_val.s.s);
-	strip = strtol(strip_char + 1, &endptr, 10);
-	if (endptr != at_char) {
-	    pkg_free(new_ruri.s);
-	    LM_ERR("non-digit char between | and @ chars in gw URI <%.*s>\n",
-		   gw_uri_val.s.len, gw_uri_val.s.s);
-	    return -1;
-	}
-	if (_m->parsed_uri.user.len - strip > 0) {
-	    memcpy(at, _m->parsed_uri.user.s + strip,
-		   _m->parsed_uri.user.len - strip);
-	    at = at + _m->parsed_uri.user.len - strip;
-	}
-	if (*(at - 1) != ':') {
-	    memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
-	    at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
-	} else {
-	    memcpy(at, at_char + 1, gw_uri_val.s.len -
-		   (at_char + 1 - gw_uri_val.s.s));
-	    at = at + gw_uri_val.s.len - (at_char + 1 - gw_uri_val.s.s);
-	}
-	*at = '\0';
-	/* Save Request-URI user for use in FAILURE_ROUTE */
+
+	/* Save Request-URI user for use in subsequent invocations */
 	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp, val);
-	LM_DBG("Added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
+	LM_DBG("added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
+
 	/* Rewrite Request URI */
 	act.type = SET_URI_T;
 	act.elem[0].type = STRING_ST;
-	act.elem[0].u.string = new_ruri.s;
+	act.elem[0].u.string = r_uri;
 	rval = do_action(&act, _m);
-	pkg_free(new_ruri.s);
-	destroy_avp(gu_avp);
 	if (rval != 1) {
 	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
-	return 1;
 
-    } else if (route_type == FAILURE_ROUTE) {
+    } else {  /* Subsequent invocation */
 
-	/* Create new Request-URI taking URI user from ruri_user AVP
-	   and other parts of from gateway URI AVP. */
-	ru_avp = search_first_avp(ruri_user_avp_type, ruri_user_avp,
-				  &ruri_user_val, 0);
-	if (!ru_avp) {
-	    LM_ERR("no ruri_user AVP\n");
+	/* Append a new branch to the transaction by taking URI user from
+	   ruri_user_avp and other parts of from gw_uri_avp. */
+
+	if (generate_uris(r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
+			  &dst_uri_len, &flags) == 0) {
 	    return -1;
 	}
-	new_ruri.s = pkg_malloc(gw_uri_val.s.len + _m->parsed_uri.user.len);
-	if (!new_ruri.s) {
-	    LM_ERR("no memory for new R-URI.\n");
-	    return -1;
-	}
-	at_char = memchr(gw_uri_val.s.s, '@', gw_uri_val.s.len);
-	if (!at_char) {
-	    pkg_free(new_ruri.s);
-	    LM_ERR("no @ in gateway URI <%.*s>\n",
-		   gw_uri_val.s.len, gw_uri_val.s.s);
-	    return -1;
-	}
-	strip_char = memchr(gw_uri_val.s.s, '|', gw_uri_val.s.len);
-	if (!strip_char || strip_char + 1 >= at_char) {
-	    pkg_free(new_ruri.s);
-	    LM_ERR("no strip char | and at least one "
-		   "char before @ in gateway URI <%.*s>\n",
-		   gw_uri_val.s.len, gw_uri_val.s.s);
-	    return -1;
-	}
-	at = new_ruri.s;
-	memcpy(at, gw_uri_val.s.s, strip_char - gw_uri_val.s.s);
-	at = at + (strip_char - gw_uri_val.s.s);
-	strip = strtol(strip_char + 1, &endptr, 10);
-	if (endptr != at_char) {
-	    pkg_free(new_ruri.s);
-	    LM_ERR("non-digit char between | and @ chars in gw URI <%.*s>\n",
-		   gw_uri_val.s.len, gw_uri_val.s.s);
-	    return -1;
-	}
-	if (ruri_user_val.s.len - strip > 0) {
-	    memcpy(at, ruri_user_val.s.s + strip,
-		   ruri_user_val.s.len - strip);
-	    at = at + ruri_user_val.s.len - strip;
-	}
-	if (*(at - 1) != ':') {
-	    memcpy(at, at_char, gw_uri_val.s.len - (at_char - gw_uri_val.s.s));
-	    at = at + gw_uri_val.s.len - (at_char - gw_uri_val.s.s);
-	} else {
-	    memcpy(at, at_char + 1, gw_uri_val.s.len -
-		   (at_char + 1 - gw_uri_val.s.s));
-	    at = at + gw_uri_val.s.len - (at_char + 1 - gw_uri_val.s.s);
-	}
-	new_ruri.len = at - new_ruri.s;
+
+	/* Append new branch */
+	uri_str.s = r_uri;
+	uri_str.len = r_uri_len;
 	act.type = APPEND_BRANCH_T;
 	act.elem[0].type = STRING_ST;
-	act.elem[0].u.s = new_ruri;
+	act.elem[0].u.s = uri_str;
 	act.elem[1].type = NUMBER_ST;
 	act.elem[1].u.number = 0;
 	rval = do_action(&act, _m);
-	pkg_free(new_ruri.s);
-	destroy_avp(gu_avp);
 	if (rval != 1) {
 	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
 	    return -1;
 	}
-	return 1;
+    }
+    
+    /* Set DST URI */
+    if (dst_uri_len > 0) {
+	uri_str.s = dst_uri;
+	uri_str.len = dst_uri_len;
+	act.type = SET_DSTURI_T;
+	act.elem[0].type = STRING_ST;
+	act.elem[0].u.s = uri_str;
+	act.next = 0;
+	rval = do_action(&act, _m);
+	if (rval != 1) {
+	    LM_ERR("calling do_action failed with return value <%d>\n", rval);
+	    return -1;
+	}
     }
 
-    /* Unsupported route type */
-    LM_ERR("unsupported route type\n");
-    return -1;
+    /* Set flags_avp */
+    val.n = flags;
+    add_avp(flags_avp_type, flags_avp, val);
+    LM_DBG("added flags_avp <%u>\n", (unsigned int)val.n);
+
+    return 1;
 }
 
 
