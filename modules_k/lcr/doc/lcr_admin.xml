@@ -52,14 +52,15 @@
 	time for forwarding.  Upon each call, user part of original
 	Request URI is first stripped by the number of characters as
 	specified by the gateway's strip count and then prefixed by
-	gateway's tag.  Upon first call, if gateway's hostname is null,
-	Request URI is rewritten based on gateway's URI scheme, IP
-	address, port, and transport protocol.  If hostname is not null,
-	Request-URI is rewritten based on gateway's URI scheme and
-	hostname, and destination URI is set based on gateway's URI
-	scheme, IP address, port, and transport protocol.  Upon
-	subsequent calls, the same is done, but instead of rewriting
-	Request URI, a new branch is added.
+	gateway's tag.  Upon first call in route block, if gateway's
+	hostname is null, Request URI is rewritten based on gateway's
+	URI scheme, IP address, port, and transport protocol.  If
+	hostname is not null, Request-URI is rewritten based on
+	gateway's URI scheme and hostname, and destination URI is set
+	based on gateway's URI scheme, IP address, port, and transport
+	protocol.  Upon subsequent calls in route block or any calls in
+	failure route block, the same is done, but instead
+	of rewriting Request URI, a new branch is added.
 	</para>
         <para>
         Valid URI scheme values are NULL = sip, 1 = sip and 2
@@ -724,7 +725,8 @@ modparam("lcr", "fetch_rows", 3000)
 		hash table.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>load_gws</function> usage</title>
@@ -756,7 +758,8 @@ if (!load_gws("$var(caller_uri)")) {
 		where N is number of gateways.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>load_gws_from_grp</function> usage</title>
@@ -781,19 +784,30 @@ if (!load_gws_from_grp("$avp(s:gateway_group)")) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-		Upon first call, replaces URI scheme, host,
+		Upon first call in REQUEST_ROUTE, replaces URI scheme, host,
 		port, and transport of Request-URI by the values stored
 		in first gw_uri_avp and destroys that AVP (see
-		Overview section).  Saves user part of Request-URI into
-		ruri_user_avp for use in subsequent next_gw() calls.
-		</para>
+		Overview section).
+                </para>
 		<para>
-		Upon subsequent calls, appends a new branch URI to
+		Upon subsequent calls in REQUEST_ROUTE or any call in
+		FAILURE_ROUTE, appends a new branch URI to 
 		the request, where URI scheme, host, port, and transport of
 		are taken from values stored in the first gw_uri_avp
-		and destroys that AVP.  URI user is taken from
-		ruri_user_avp.
+		and destroys that AVP.
+                </para>
+                <para>
+                Upon first call, URI user is taken from Request-URI
+                and saved in ruri_user_avp for use on subsequent calls.
 		</para>
+                <para>
+                If hostname is given for a gateway, it is used as
+                hostpart of the new URI (Request-URI or branch URI)
+                without port and transport.  In addition,
+                Destination URI is set, that includes IP address, port,
+                and transport of the gateway causing the request to be
+                forwarded accordingly.
+                </para>
 		<para>
 		As a side effect, stores gateway's flags to flags_avp.
 		</para>

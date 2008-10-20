@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2005-2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
-                              (Sat, 08 Mar 2008) $
+   Revision $Revision$ $Date: 2008-10-16 19:58:34 +0300
+                              (Thu, 16 Oct 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -150,13 +150,14 @@ Chapter 1. Admin Guide
    time for forwarding. Upon each call, user part of original
    Request URI is first stripped by the number of characters as
    specified by the gateway's strip count and then prefixed by
-   gateway's tag. Upon first call, if gateway's hostname is null,
-   Request URI is rewritten based on gateway's URI scheme, IP
-   address, port, and transport protocol. If hostname is not null,
-   Request-URI is rewritten based on gateway's URI scheme and
-   hostname, and destination URI is set based on gateway's URI
-   scheme, IP address, port, and transport protocol. Upon
-   subsequent calls, the same is done, but instead of rewriting
+   gateway's tag. Upon first call in route block, if gateway's
+   hostname is null, Request URI is rewritten based on gateway's
+   URI scheme, IP address, port, and transport protocol. If
+   hostname is not null, Request-URI is rewritten based on
+   gateway's URI scheme and hostname, and destination URI is set
+   based on gateway's URI scheme, IP address, port, and transport
+   protocol. Upon subsequent calls in route block or any calls in
+   failure route block, the same is done, but instead of rewriting
    Request URI, a new branch is added.
 
    Valid URI scheme values are NULL = sip, 1 = sip and 2 = sips.
@@ -530,7 +531,7 @@ modparam("lcr", "fetch_rows", 3000)
    is number of different prefix lengths and M is number of
    collisions for matching prefix(es) in lcr hash table.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.28. load_gws usage
 ...
@@ -553,7 +554,7 @@ ys");
    Execution time of load_gws_from_grp() function is O(N), where N
    is number of gateways.
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.29. load_gws_from_grp usage
 ...
@@ -573,16 +574,23 @@ ys");
 
 1.4.3.  next_gw()
 
-   Upon first call, replaces URI scheme, host, port, and transport
-   of Request-URI by the values stored in first gw_uri_avp and
-   destroys that AVP (see Overview section). Saves user part of
-   Request-URI into ruri_user_avp for use in subsequent next_gw()
-   calls.
+   Upon first call in REQUEST_ROUTE, replaces URI scheme, host,
+   port, and transport of Request-URI by the values stored in
+   first gw_uri_avp and destroys that AVP (see Overview section).
 
-   Upon subsequent calls, appends a new branch URI to the request,
-   where URI scheme, host, port, and transport of are taken from
-   values stored in the first gw_uri_avp and destroys that AVP.
-   URI user is taken from ruri_user_avp.
+   Upon subsequent calls in REQUEST_ROUTE or any call in
+   FAILURE_ROUTE, appends a new branch URI to the request, where
+   URI scheme, host, port, and transport of are taken from values
+   stored in the first gw_uri_avp and destroys that AVP.
+
+   Upon first call, URI user is taken from Request-URI and saved
+   in ruri_user_avp for use on subsequent calls.
+
+   If hostname is given for a gateway, it is used as hostpart of
+   the new URI (Request-URI or branch URI) without port and
+   transport. In addition, Destination URI is set, that includes
+   IP address, port, and transport of the gateway causing the
+   request to be forwarded accordingly.
 
    As a side effect, stores gateway's flags to flags_avp.
 

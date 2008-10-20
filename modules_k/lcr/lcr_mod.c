@@ -272,11 +272,12 @@ static int next_contacts (struct sip_msg*, char*, char*);
  * Exported functions
  */
 static cmd_export_t cmds[] = {
-    {"load_gws", (cmd_function)load_gws_0, 0, 0, 0, REQUEST_ROUTE},
+    {"load_gws", (cmd_function)load_gws_0, 0, 0, 0, REQUEST_ROUTE |
+     FAILURE_ROUTE},
     {"load_gws", (cmd_function)load_gws_1, 1, fixup_pvar_null,
-     fixup_free_pvar_null, REQUEST_ROUTE},
+     fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE},
     {"load_gws_from_grp", (cmd_function)load_gws_from_grp, 1,
-     fixstringloadgws, fixup_free_pvar_null, REQUEST_ROUTE},
+     fixstringloadgws, fixup_free_pvar_null, REQUEST_ROUTE | FAILURE_ROUTE},
     {"next_gw", (cmd_function)next_gw, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
     {"from_gw", (cmd_function)from_gw_0, 0, 0, 0,
@@ -1686,7 +1687,7 @@ inline int decode_avp_value(char *value, str *scheme, unsigned int *strip,
 }
     
 
-/* Add gateways in matched_gws array into AVPs */
+/* Add gateways in matched_gws array into gw_uri_avps */
 void add_gws_into_avps(struct matched_gw_info *matched_gws,
 		       unsigned int gw_cnt, str *ruri_user)
 {
@@ -1730,7 +1731,7 @@ void add_gws_into_avps(struct matched_gw_info *matched_gws,
 
 
 /*
- * Load info of matching GWs to gw_uri AVPs
+ * Load info of matching GWs into gw_uri_avps
  */
 static int do_load_gws(struct sip_msg* _m, str *_from_uri)
 {
@@ -1841,7 +1842,7 @@ static int do_load_gws(struct sip_msg* _m, str *_from_uri)
     /* Sort gateways based on prefix_len, priority, and randomized weight */
     qsort(matched_gws, gw_index, sizeof(struct matched_gw_info), comp_matched);
 
-    /* Add gateways into AVPs */
+    /* Add gateways into gw_uris_avp */
     add_gws_into_avps(matched_gws, gw_index, &ruri_user);
 
     return 1;
@@ -1951,6 +1952,7 @@ static int load_gws_from_grp(struct sip_msg* _m, char* _s1, char* _s2)
 }
 
 
+/* Generate Request-URI and Destination URI */
 static int generate_uris(char *r_uri, str *r_uri_user, unsigned int *r_uri_len,
 			 char *dst_uri, unsigned int *dst_uri_len,
 			 unsigned int *flags)
@@ -2044,14 +2046,14 @@ static int generate_uris(char *r_uri, str *r_uri_user, unsigned int *r_uri_len,
 
 
 /*
- * When called first time, rewrites scheme, host, port, and
+ * When called first time in route block, rewrites scheme, host, port, and
  * transport parts of R-URI based on first gw_uri_avp value, which is then
  * destroyed.  Saves R-URI user to ruri_user_avp for later use.
  *
- * On subsequence calls (determined by existence of ruri_user_avp value),
- * appends a new branch to request, where scheme, host, port, and transport
- * of URI are taken from the first gw_uri_avp value, which is then destroyed.
- * URI user is taken from ruri_user_avp value saved earlier.
+ * On other calls appends a new branch to request, where scheme, host, port,
+ * and transport of URI are taken from the first gw_uri_avp value, 
+ * which is then destroyed. URI user is taken either from R-URI (first
+ * call in failure route block) or from ruri_user_avp value saved earlier.
  *
  * Returns 1 upon success and -1 upon failure.
  */
@@ -2067,28 +2069,41 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 
     ru_avp = search_first_avp(ruri_user_avp_type, ruri_user_avp,
 			      &ruri_user_val, 0);
-
-    if (ru_avp == NULL) { /* First invocation */
-
-	/* Re-write Request-URI by taking URI user from current Request-URI
-	   and other parts of from gw_uri_avp. */
-
+    
+    if (ru_avp == NULL) {
+	
+	/* First invocation either in route or failure route block.
+	 * Take Request-URI user from Request-URI and generate Request
+         * and Destination URIs. */
 	if (parse_sip_msg_uri(_m) < 0) {
 	    LM_ERR("parsing of R-URI failed\n");
 	    return -1;
 	}
-
 	if (generate_uris(r_uri, &(_m->parsed_uri.user), &r_uri_len, dst_uri,
 			  &dst_uri_len, &flags) == 0) {
 	    return -1;
 	}
 
-	/* Save Request-URI user for use in subsequent invocations */
+	/* Save Request-URI user into uri_user_avp for use in subsequent
+         * invocations. */
 	val.s = _m->parsed_uri.user;
 	add_avp(ruri_user_avp_type|AVP_VAL_STR, ruri_user_avp, val);
 	LM_DBG("added ruri_user_avp <%.*s>\n", val.s.len, val.s.s);
 
-	/* Rewrite Request URI */
+    } else {
+	
+	/* Subsequent invocation either in route or failure route block.
+	 * Take Request-URI user from ruri_user_avp and generate Request
+         * and Destination URIs. */
+	if (generate_uris(r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
+			  &dst_uri_len, &flags) == 0) {
+	    return -1;
+	}
+    }
+
+    if ((route_type == REQUEST_ROUTE) && (ru_avp == NULL)) {
+
+	/* First invocation in route block => Rewrite Request URI. */
 	act.type = SET_URI_T;
 	act.elem[0].type = STRING_ST;
 	act.elem[0].u.string = r_uri;
@@ -2098,17 +2113,10 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	    return -1;
 	}
 
-    } else {  /* Subsequent invocation */
-
-	/* Append a new branch to the transaction by taking URI user from
-	   ruri_user_avp and other parts of from gw_uri_avp. */
-
-	if (generate_uris(r_uri, &(ruri_user_val.s), &r_uri_len, dst_uri,
-			  &dst_uri_len, &flags) == 0) {
-	    return -1;
-	}
-
-	/* Append new branch */
+    } else {
+	
+	/* Subsequent invocation in route block or any invocation in
+         * failure route block => append new branch. */
 	uri_str.s = r_uri;
 	uri_str.len = r_uri_len;
 	act.type = APPEND_BRANCH_T;
@@ -2123,7 +2131,7 @@ static int next_gw(struct sip_msg* _m, char* _s1, char* _s2)
 	}
     }
     
-    /* Set DST URI */
+    /* Set Destination URI if not empty */
     if (dst_uri_len > 0) {
 	uri_str.s = dst_uri;
 	uri_str.len = dst_uri_len;
