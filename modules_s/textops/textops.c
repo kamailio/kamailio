@@ -363,6 +363,9 @@ static int replace_all_f(struct sip_msg* msg, char* key, char* _str)
 	int ret;
 	int eflags;
 
+	/* we need to be sure we have seen all HFs */
+	parse_headers(msg, HDR_EOH_F, 0);
+
 	begin=get_header(msg); /* msg->orig previously .. uri problems */
 	ret=-1; /* pessimist: we will not find any */
 	eflags=0; /* match ^ at the beginning of the string*/
@@ -408,6 +411,9 @@ static int replace_f(struct sip_msg* msg, char* key, char* _str)
 	str str;
 	char* begin;
 	int off;
+
+	/* we need to be sure we have seen all HFs */
+	parse_headers(msg, HDR_EOH_F, 0);
 
 	begin=get_header(msg); /* msg->orig previously .. uri problems */
 
