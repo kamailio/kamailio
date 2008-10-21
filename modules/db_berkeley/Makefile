@@ -8,7 +8,7 @@
 # extra debug messages
 # -DBDB_EXTRA_DEBUG is optional
 DEFS +=-I$(LOCALBASE)/include -I$(LOCALBASE)/BerkeleyDB.4.6/include \
-	-I$(SYSBASE)/include
+	-I$(LOCALBASE)/include/db4 -I$(SYSBASE)/include
 
 
 include ../../Makefile.defs 
