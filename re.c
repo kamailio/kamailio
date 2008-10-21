@@ -248,12 +248,16 @@ found_repl:
 	}
 	memset((void*)se, 0, sizeof(struct subst_expr));
 	se->replacement.len=repl_end-repl;
-	if ((se->replacement.s=pkg_malloc(se->replacement.len))==0){
-		LOG(L_ERR, "ERROR: subst_parser: out of memory (replacement)\n");
-		goto error;
+	if (se->replacement.len > 0) {
+		if ((se->replacement.s=pkg_malloc(se->replacement.len))==0){
+			LOG(L_ERR, "ERROR: subst_parser: out of memory (replacement)\n");
+			goto error;
+		}
+		/* start copying */
+		memcpy(se->replacement.s, repl, se->replacement.len);
+	} else {
+		se->replacement.s = NULL;
 	}
-	/* start copying */
-	memcpy(se->replacement.s, repl, se->replacement.len);
 	se->re=regex;
 	se->replace_all=replace_all;
 	se->n_escapes=rw_no;
