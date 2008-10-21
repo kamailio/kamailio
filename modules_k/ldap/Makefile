@@ -12,7 +12,8 @@ include ../../Makefile.defs
 auto_gen=
 NAME=ldap.so
 
-LIBS=-lldap
+LIBS=-L$(LOCALBASE)/lib -lldap
+DEFS+=-I$(LOCALBASE)/include
 
 ifeq ($(OS),solaris)
        DEFS+=-I$(LOCALBASE)/include -I/usr/sfw/include -I/usr/local/include -I/opt/sfw/include -I/opt/csw/include
