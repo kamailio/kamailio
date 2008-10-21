@@ -78,7 +78,8 @@ void MDStringArray (char *dst, str src[], int size)
 		fprintf(stderr, " [%d]\n", sum );	
 #		endif
 */
-  		MDUpdate (&context, s, len);
+		if (len > 0)
+  			MDUpdate (&context, s, len);
   }
   MDFinal (digest, &context);
 
