@@ -159,6 +159,10 @@ int get_to_uid(str* uid, struct sip_msg* msg)
 			DBG("get_to_uid: Username too long\n");
 			return -1;
 		}
+		if (p == NULL || uid->len == 0) {
+			DBG("get_to_uid: Username is empty\n");
+			return -1;
+		}
 		memcpy(buf, p, uid->len);
 		uid->s = buf;
 		strlower(uid);
