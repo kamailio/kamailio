@@ -118,7 +118,7 @@ int new_ucontact(str* _dom, str* _uid, str* aor, str* _contact, time_t _e, qvalu
 		(*_c)->received.len = 0;
 	}
 
-	if(_inst) {
+	if(_inst && _inst->len > 0) {
 		(*_c)->instance.s = (char*)shm_malloc(_inst->len);
 		if ((*_c)->instance.s == 0) {
 			LOG(L_ERR, "new_ucontact(): No memory left\n");
