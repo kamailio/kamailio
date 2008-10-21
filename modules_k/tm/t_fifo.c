@@ -90,9 +90,6 @@ int tm_unix_tx_timeout = 2; /*!< Default is 2 seconds */
 #define APPEND_BUFFER_MAX      4096
 #define CMD_BUFFER_MAX         128
 
-#define append_chr(_dest,_c) \
-	*((_dest)++) = _c;
-
 #define copy_route(s,len,rs,rlen) \
 	do {\
 		if(rlen+len+3 >= ROUTE_BUFFER_MAX){\
