@@ -10,8 +10,8 @@ Bastian Friedrich
 
    Copyright © 2007 Collax GmbH
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
-                              (Mi, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
+                              (Wed, 06 Aug 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -63,9 +63,7 @@ Bastian Friedrich
               2.2.17. isFlagSet(flag)
               2.2.18. pseudoVar(string)
               2.2.19. append_branch(branch,qval)
-              2.2.20. serialize_branches(clean_before)
-              2.2.21. next_branches()
-              2.2.22. getParsedRURI()
+              2.2.20. getParsedRURI()
 
         2.3. OpenSER::URI
 
@@ -570,6 +568,8 @@ $m->xlog("L_INFO", "foo");
 * t_flush_flags
 * t_check_trans
 * t_was_cancelled
+* t_load_contacts
+* t_next_contacts
 * uac_restore_from
 * uac_auth
 * has_totag
@@ -629,15 +629,7 @@ if ($m->getRURI() =~ m/\@somedomain.net/) {
 
    Append a branch to current message.
 
-2.2.20. serialize_branches(clean_before)
-
-   Serialize branches.
-
-2.2.21. next_branches()
-
-   Next branches.
-
-2.2.22. getParsedRURI()
+2.2.20. getParsedRURI()
 
    Returns the current destination URI as an OpenSER::URI object.
 
@@ -1178,8 +1170,8 @@ Returns or sets the rows of the object.
 Chapter 3. Perl samples
 
    Revision History
-   Revision $Revision$ $Date: 2008-03-07 21:09:16 +0100
-                              (Fr, 07 Mär 2008) $
+   Revision $Revision$ $Date: 2008-03-07 22:09:16 +0200
+                              (Fri, 07 Mar 2008) $
 
 3.1. sample directory
 
