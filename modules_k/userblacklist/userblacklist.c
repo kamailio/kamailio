@@ -207,7 +207,7 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 	str table = { .len = 0, .s = NULL};
 	str number = { .len = 0, .s = NULL};
 
-	void *nodeflags;
+	void **nodeflags;
 	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 
@@ -278,8 +278,9 @@ static int check_user_blacklist(struct sip_msg *msg, char* str1, char* str2, cha
 		ptr = ptr + 1;
 	}
 
-	if (dtrie_longest_match(dtrie_root, ptr, strlen(ptr), &nodeflags) >= 0) {
-		if (nodeflags == (void *)MARK_WHITELIST) {
+	nodeflags = dtrie_longest_match(dtrie_root, ptr, strlen(ptr), NULL);
+	if (nodeflags) {
+		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_ERR("whitelisted"); */
 			return 1; /* found, but is whitelisted */
 		}
@@ -394,7 +395,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 
 static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg1)
 {
-	void *nodeflags;
+	void **nodeflags;
 	char *ptr;
 	char req_number[MAXNUMBERLEN+1];
 	int ret = -1;
@@ -426,8 +427,9 @@ static int check_blacklist(struct sip_msg *msg, struct check_blacklist_fs_t *arg
 
 	/* avoids dirty reads when updating d-tree */
 	lock_get(lock);
-	if (dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), &nodeflags) >= 0) {
-		if (nodeflags == (void *)MARK_WHITELIST) {
+	nodeflags = dtrie_longest_match(arg1->dtrie_root, ptr, strlen(ptr), NULL);
+	if (nodeflags) {
+		if (*nodeflags == (void *)MARK_WHITELIST) {
 			/* LM_DBG("whitelisted"); */
 			ret = 1; /* found, but is whitelisted */
 		}
@@ -496,7 +498,7 @@ static void destroy_source_list(void)
 			sources->head = src->next;
 
 			if (src->table) shm_free(src->table);
-			dtrie_destroy(&(src->dtrie_root));
+			dtrie_destroy(&(src->dtrie_root), NULL);
 			shm_free(src);
 		}
 
@@ -591,5 +593,5 @@ static void mod_destroy(void)
 	destroy_source_list();
 	destroy_shmlock();
 	userblacklist_db_close();
-	dtrie_destroy(&dtrie_root);
+	dtrie_destroy(&dtrie_root, NULL);
 }
