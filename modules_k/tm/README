@@ -30,8 +30,8 @@ Juha Heinanen
 
    Copyright © 2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 13:08:33 +0300
-                              (Wed, 06 Aug 2008) $
+   Revision $Revision$ $Date: 2008-10-22 11:03:56 +0300
+                              (Wed, 22 Oct 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -1036,7 +1036,7 @@ branch_route[1] {
    succeeded or there was nothing to do. Returns -1 on error (see
    syslog).
 
-   This function can be used from REQUEST_ROUTE.
+   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
 
    Example 1.36. t_load_contacts usage
 ...

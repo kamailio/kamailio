@@ -1377,7 +1377,8 @@ branch_route[1] {
                 syslog).
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE.
+		This function can be used from REQUEST_ROUTE and
+		FAILURE_ROUTE.
 		</para>
 		<example>
 		<title><function>t_load_contacts</function> usage</title>
