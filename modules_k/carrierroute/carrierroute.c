@@ -45,13 +45,14 @@
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "../../error.h"
-#include "../../prime_hash.h"
+
 #include "carrierroute.h"
 #include "load_data.h"
 #include "route_fifo.h"
 #include "carrier_tree.h"
 #include "route_func.h"
 #include "db_carrierroute.h"
+#include "prime_hash.h"
 
 MODULE_VERSION
 

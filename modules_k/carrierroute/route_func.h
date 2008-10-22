@@ -33,7 +33,7 @@
 
 #include "../../parser/msg_parser.h"
 #include "../../pvar.h"
-#include "../../prime_hash.h"
+#include "prime_hash.h"
 #include "carrierroute.h"
 
 /**
