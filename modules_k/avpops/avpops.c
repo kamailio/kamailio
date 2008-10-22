@@ -668,19 +668,19 @@ static int fixup_check_avp(void** param, int param_no)
 		ap = avpops_parse_pvar(s);
 		if (ap==0)
 		{
-			LM_ERR(" unable to get pseudo-variable in P1\n");
+			LM_ERR("unable to get pseudo-variable in param 1\n");
 			return E_OUT_OF_MEM;
 		}
 		/* attr name is mandatory */
 		if (ap->u.sval.type==PVT_NULL)
 		{
-			LM_ERR("null pseudo-variable in P1\n");
+			LM_ERR("null pseudo-variable in param 1\n");
 			return E_UNSPEC;
 		}
 	} else if (param_no==2) {
 		if ( (ap=parse_check_value(s))==0 )
 		{
-			LM_ERR(" failed to parse checked value \n");
+			LM_ERR("failed to parse checked value \n");
 			return E_UNSPEC;
 		}
 		/* if REGEXP op -> compile the expresion */
@@ -688,13 +688,13 @@ static int fixup_check_avp(void** param, int param_no)
 		{
 			if ( (ap->opd&AVPOPS_VAL_STR)==0 )
 			{
-				LM_ERR(" regexp operation requires string value\n");
+				LM_ERR("regexp operation requires string value\n");
 				return E_UNSPEC;
 			}
 			re = pkg_malloc(sizeof(regex_t));
 			if (re==0)
 			{
-				LM_ERR(" no more pkg mem\n");
+				LM_ERR("no more pkg mem\n");
 				return E_OUT_OF_MEM;
 			}
 			LM_DBG("compiling regexp <%.*s>\n", ap->u.s.len, ap->u.s.s);
@@ -712,7 +712,7 @@ static int fixup_check_avp(void** param, int param_no)
 			if ( !( ap->opd&AVPOPS_VAL_PVAR ||
 			(!(ap->opd&AVPOPS_VAL_PVAR) && ap->opd&AVPOPS_VAL_STR) ) )
 			{
-				LM_ERR(" fast_match operation requires string value or "
+				LM_ERR("fast_match operation requires string value or "
 						"avp name/alias (%d/%d)\n",	ap->opd, ap->ops);
 				return E_UNSPEC;
 			}
