@@ -194,7 +194,7 @@ static cmd_export_t cmds[]={
 	{"load_tm",         (cmd_function)load_tm,          0, 0,
 			0, 0},
 	{"t_load_contacts", (cmd_function)t_load_contacts, 0, 0,
-	                0, REQUEST_ROUTE},
+	                0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{"t_next_contacts", (cmd_function)t_next_contacts, 0, 0,
 	                0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0,0,0,0,0,0}

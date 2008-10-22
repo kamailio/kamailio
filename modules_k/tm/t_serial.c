@@ -185,13 +185,14 @@ static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
  */
 int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 {
-    str uri, dst_uri, path, branch_info, *ruri;
-    qvalue_t q, ruri_q;
+    str uri, tmp, dst_uri, path, branch_info, *ruri;
+    qvalue_t first_q, q;
     struct contact *contacts, *next, *prev, *curr;
     int_str val;
-    int idx;
+    int first_idx, idx;
     struct socket_info* sock;
     unsigned int flags;
+    struct cell *t;
 
     /* Check if contacts_avp has been defined */
     if (contacts_avp.n == 0) {
@@ -206,40 +207,77 @@ int t_load_contacts(struct sip_msg* msg, char* key, char* value)
 	return 1;
     }
 
-    ruri = GET_RURI(msg);
-    if (!ruri) {
-	LM_ERR("no Request-URI found\n");
-	return -1;
-    }
-    ruri_q = get_ruri_q();
+    t = get_t();
+    ruri = (str *)0;
 
-    for(idx = 0; (uri.s = get_branch(idx, &uri.len, &q, 0, 0, 0, 0)) != 0;
-	idx++) {
-	if (q != ruri_q) {
+    if (!t || (t == T_UNDEFINED)) {
+
+	/* No transaction yet - take first q from Request-URI */
+	ruri = GET_RURI(msg);
+	if (!ruri) {
+	    LM_ERR("no Request-URI found\n");
+	    return -1;
+	}
+	first_q = get_ruri_q();
+	first_idx = 0;
+
+    } else {
+
+	/* Transaction exists - take first q from first branch */
+	
+	uri.s = get_branch(0, &uri.len, &first_q, &dst_uri, &path, &flags,
+			   &sock);
+	first_idx = 1;
+
+    }
+
+    /* Check if all q values are equal */
+    for(idx = first_idx; (tmp.s = get_branch(idx, &tmp.len, &q, 0, 0, 0, 0))
+	    != 0; idx++) {
+	if (q != first_q) {
 	    goto rest;
 	}
     }
+
     LM_DBG("nothing to do - all contacts have same q!\n");
     return 1;
 
 rest:
-    /* Insert Request-URI branch to contact list */
+
+    /* Allocate memory for first contact */
     contacts = (struct contact *)pkg_malloc(sizeof(struct contact));
     if (!contacts) {
 	LM_ERR("no memory for contact info\n");
 	return -1;
     }
-    contacts->uri.s = ruri->s;
-    contacts->uri.len = ruri->len;
-    contacts->q = ruri_q;
-    contacts->dst_uri = msg->dst_uri;
-    contacts->sock = msg->force_send_socket;
-    contacts->flags = getb0flags();
-    contacts->path = msg->path_vec;
+
+    if (!t || (t == T_UNDEFINED)) {
+
+	/* Insert Request-URI branch to first contact */
+	contacts->uri.s = ruri->s;
+	contacts->uri.len = ruri->len;
+	contacts->dst_uri = msg->dst_uri;
+	contacts->sock = msg->force_send_socket;
+	contacts->flags = getb0flags();
+	contacts->path = msg->path_vec;
+
+    } else {
+	
+	/* Insert first branch to first contact */
+	contacts->uri = uri;
+	contacts->q = first_q;
+	contacts->dst_uri = dst_uri;
+	contacts->sock = sock;
+	contacts->flags = flags;
+	contacts->path = path;
+    }
+
+    contacts->q = first_q;
     contacts->next = (struct contact *)0;
 
-    /* Insert branches to contact list in increasing q order */
-    for(idx = 0;
+    /* Insert (remaining) branches to contact list in increasing q order */
+
+    for(idx = first_idx;
 	(uri.s = get_branch(idx,&uri.len,&q,&dst_uri,&path,&flags,&sock))
 	    != 0;
 	idx++ ) {
@@ -272,7 +310,7 @@ rest:
 	    } else {
 		contacts = next;
 	    }
-	}		    
+	}    
     }
 
     /* Assign values for q_flags */
@@ -287,7 +325,7 @@ rest:
 	curr = curr->next;
     }
 
-    /* Add contacts to "contacts" AVP */
+    /* Add contacts to contacts_avp */
     curr = contacts;
     while (curr) {
 	if (encode_branch_info(&branch_info, curr) == 0) {
@@ -322,7 +360,7 @@ rest:
  * contacts as branches.  If called from failure route block, adds all
  * contacts as branches.  Removes added contacts from contacts_avp.
  */
-int next_branches(struct sip_msg* msg, char* key, char* value)
+int t_next_contacts(struct sip_msg* msg, char* key, char* value)
 {
     struct usr_avp *avp, *prev;
     int_str val;
@@ -338,7 +376,7 @@ int next_branches(struct sip_msg* msg, char* key, char* value)
 	return -1;
     }
 
-    t=get_t();
+    t = get_t();
 
     if (!t || (t == T_UNDEFINED)) {
 
