@@ -40,7 +40,6 @@
 
 #include <time.h>
 
-#undef _XOPEN_SOURCE
 #undef _XOPEN_SOURCE_EXTENDED
 
 #include <string.h>

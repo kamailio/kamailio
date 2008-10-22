@@ -39,8 +39,7 @@
 #define _XOPEN_SOURCE_EXTENDED 1   /* solaris */
 
 #include <time.h>
-  
-#undef _XOPEN_SOURCE
+
 #undef _XOPEN_SOURCE_EXTENDED
 
 #include <string.h>
