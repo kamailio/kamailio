@@ -44,7 +44,6 @@
 #include "../../pvar.h"
 #include "../../mem/mem.h"
 #include "../../route_struct.h"
-#include "../../serialize.h"
 #include "../../qvalue.h"
 #include "../../dprint.h"
 
@@ -892,8 +891,6 @@ completeness):
  * next_gw
  * from_gw (without parameters)
  * to_gw (without parameters)
- * load_contacts
- * next_contacts
  * sdp_mangle_ip
  * sdp_mangle_port
  * encode_contact
@@ -950,6 +947,8 @@ completeness):
  * t_flush_flags
  * t_check_trans
  * t_was_cancelled
+ * t_load_contacts
+ * t_next_contacts
  * uac_restore_from
  * uac_auth
  * has_totag
@@ -1234,53 +1233,6 @@ append_branch(self, branch = NULL, qval = NULL)
 	}
   OUTPUT:
 	RETVAL
-
-
-
-=head2 serialize_branches(clean_before)
-
-Serialize branches.
-
-=cut
-
-int serialize_branches(self, clean_before)
-	SV *self;
-	int clean_before;
-  PREINIT:
-	struct sip_msg *msg = sv2msg(self);
-  CODE:
-  	if (!msg) {
-		LM_ERR("Invalid message reference\n");
-		RETVAL = -1;
-	} else {
-		RETVAL = serialize_branches(msg, clean_before);
-	}
-  OUTPUT:
-	RETVAL
-
-
-
-=head2 next_branches()
-
-Next branches.
-
-=cut
-
-int
-next_branches(self)
-	SV *self;
-  PREINIT:
-	struct sip_msg *msg = sv2msg(self);
-  CODE:
-  	if (!msg) {
-		LM_ERR("Invalid message reference\n");
-		RETVAL = -1;
-	} else {
-		RETVAL = next_branches(msg);
-	}
-  OUTPUT:
-	RETVAL
-
 
 
 
