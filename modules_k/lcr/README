@@ -12,8 +12,8 @@ Juha Heinanen
 
    Copyright © 2005-2008 Juha Heinanen
    Revision History
-   Revision $Revision$ $Date: 2008-10-16 19:58:34 +0300
-                              (Thu, 16 Oct 2008) $
+   Revision $Revision$ $Date: 2008-03-08 01:03:56 +0200
+                              (Sat, 08 Mar 2008) $
      __________________________________________________________
 
    Table of Contents
@@ -45,16 +45,14 @@ Juha Heinanen
               1.3.15. prefix_column (string)
               1.3.16. from_uri_column (string)
               1.3.17. priority_column (string)
-              1.3.18. contact_avp (AVP string)
-              1.3.19. fr_inv_timer_avp (AVP string)
-              1.3.20. gw_uri_avp (AVP string)
-              1.3.21. rpid_avp (AVP string)
-              1.3.22. ruri_user_avp (AVP string)
-              1.3.23. fr_inv_timer (integer)
-              1.3.24. fr_inv_timer_next (integer)
-              1.3.25. flags_avp (AVP string)
-              1.3.26. lcr_hash_size (integer)
-              1.3.27. fetch_rows (integer)
+              1.3.18. fr_inv_timer_avp (AVP string)
+              1.3.19. gw_uri_avp (AVP string)
+              1.3.20. rpid_avp (AVP string)
+              1.3.21. ruri_user_avp (AVP string)
+              1.3.22. fr_inv_timer (integer)
+              1.3.23. flags_avp (AVP string)
+              1.3.24. lcr_hash_size (integer)
+              1.3.25. fetch_rows (integer)
 
         1.4. Exported Functions
 
@@ -64,8 +62,6 @@ Juha Heinanen
               1.4.4. from_gw([pvar])
               1.4.5. from_gw_grp(group-id)
               1.4.6. to_gw([group-id])
-              1.4.7. load_contacts()
-              1.4.8. next_contacts()
 
         1.5. Exported MI Commands
 
@@ -94,40 +90,32 @@ Juha Heinanen
    1.15. Setting prefix_column module parameter
    1.16. Setting from_uri_column module parameter
    1.17. Setting priority_column module parameter
-   1.18. Setting contact_avp module parameter
-   1.19. Setting fr_inv_timer_avp module parameter
-   1.20. Setting gw_uri_avp module parameter
-   1.21. Setting rpid_avp module parameter
-   1.22. Setting ruri_user_avp module parameter
-   1.23. Setting fr_inv_timer module parameter
-   1.24. Setting fr_inv_timer_next module parameter
-   1.25. Setting flags_avp module parameter
-   1.26. Setting lcr_hash_size module parameter
-   1.27. Set fetch_rows parameter
-   1.28. load_gws usage
-   1.29. load_gws_from_grp usage
-   1.30. next_gw usage from a route block
-   1.31. next_gw usage from a failure route block
-   1.32. from_gw usage
-   1.33. from_gw usage with pseudo variable argument
-   1.34. from_gw_grp usage
-   1.35. to_gw usage
-   1.36. to_gw usage with group-id
-   1.37. load_contacts usage
-   1.38. next_contacts() usage from route block
-   1.39. next_contacts() usage from failure route block
+   1.18. Setting fr_inv_timer_avp module parameter
+   1.19. Setting gw_uri_avp module parameter
+   1.20. Setting rpid_avp module parameter
+   1.21. Setting ruri_user_avp module parameter
+   1.22. Setting fr_inv_timer module parameter
+   1.23. Setting flags_avp module parameter
+   1.24. Setting lcr_hash_size module parameter
+   1.25. Set fetch_rows parameter
+   1.26. load_gws usage
+   1.27. load_gws_from_grp usage
+   1.28. next_gw usage from a route block
+   1.29. next_gw usage from a failure route block
+   1.30. from_gw usage
+   1.31. from_gw usage with pseudo variable argument
+   1.32. from_gw_grp usage
+   1.33. to_gw usage
+   1.34. to_gw usage with group-id
 
 Chapter 1. Admin Guide
 
 1.1. Overview
 
-   Least cost routing (LCR) module implements two vaguely related
-   capabilities:
-
-     * sequential forwarding of a request to one or more gateways
-       (functions load_gws and next_gw)
-     * sequential forwarding to contacts according to their q
-       value (functions load_contacts() and next_contacts()).
+   Least cost routing (LCR) module implements capability to
+   serially forward a request to one or more gateways so that the
+   order in which the gateways is tried is based on admin defined
+   "least cost".
 
    For the purpose of facilitating least cost routing of requests,
    each gateway belongs to a gateway group and each gateway group
@@ -150,14 +138,13 @@ Chapter 1. Admin Guide
    time for forwarding. Upon each call, user part of original
    Request URI is first stripped by the number of characters as
    specified by the gateway's strip count and then prefixed by
-   gateway's tag. Upon first call in route block, if gateway's
-   hostname is null, Request URI is rewritten based on gateway's
-   URI scheme, IP address, port, and transport protocol. If
-   hostname is not null, Request-URI is rewritten based on
-   gateway's URI scheme and hostname, and destination URI is set
-   based on gateway's URI scheme, IP address, port, and transport
-   protocol. Upon subsequent calls in route block or any calls in
-   failure route block, the same is done, but instead of rewriting
+   gateway's tag. Upon first call, if gateway's hostname is null,
+   Request URI is rewritten based on gateway's URI scheme, IP
+   address, port, and transport protocol. If hostname is not null,
+   Request-URI is rewritten based on gateway's URI scheme and
+   hostname, and destination URI is set based on gateway's URI
+   scheme, IP address, port, and transport protocol. Upon
+   subsequent calls, the same is done, but instead of rewriting
    Request URI, a new branch is added.
 
    Valid URI scheme values are NULL = sip, 1 = sip and 2 = sips.
@@ -379,20 +366,7 @@ modparam("lcr","from_uri_column","from_uri")
 modparam("lcr","priority_column","priority")
 ...
 
-1.3.18. contact_avp (AVP string)
-
-   Internal AVP that load_contacts() function uses to store
-   contacts of the destination set.
-
-   There is NO default value, thus this variable must be defined
-   in kamailio.cfg.
-
-   Example 1.18. Setting contact_avp module parameter
-...
-modparam("lcr", "contact_avp", "$avp(i:711)")
-...
-
-1.3.19. fr_inv_timer_avp (AVP string)
+1.3.18. fr_inv_timer_avp (AVP string)
 
    An AVP that contains a final response timeout for INVITEs. Its
    value must be the same as that of the corresponding tm module
@@ -401,12 +375,12 @@ modparam("lcr", "contact_avp", "$avp(i:711)")
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.19. Setting fr_inv_timer_avp module parameter
+   Example 1.18. Setting fr_inv_timer_avp module parameter
 ...
 modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
 ...
 
-1.3.20. gw_uri_avp (AVP string)
+1.3.19. gw_uri_avp (AVP string)
 
    Internal AVP that load_gws function uses to store information
    of matching gateways.
@@ -414,24 +388,24 @@ modparam("lcr|tm", "fr_inv_timer_avp", "$avp(i:704)")
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.20. Setting gw_uri_avp module parameter
+   Example 1.19. Setting gw_uri_avp module parameter
 ...
 modparam("lcr", "gw_uri_avp", "$avp(i:709)")
 ...
 
-1.3.21. rpid_avp (AVP string)
+1.3.20. rpid_avp (AVP string)
 
    An AVP that contains caller's RPID (if any).
 
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.21. Setting rpid_avp module parameter
+   Example 1.20. Setting rpid_avp module parameter
 ...
 modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
 ...
 
-1.3.22. ruri_user_avp (AVP string)
+1.3.21. ruri_user_avp (AVP string)
 
    Internal AVP that next_gw function uses to store Request-URI
    user for subsequent next_gw calls.
@@ -439,41 +413,24 @@ modparam("^auth$|lcr", "rpid_avp", "$avp(i:302)")
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.22. Setting ruri_user_avp module parameter
+   Example 1.21. Setting ruri_user_avp module parameter
 ...
 modparam("lcr", "ruri_user_avp", "$avp(i:500)")
 ...
 
-1.3.23. fr_inv_timer (integer)
+1.3.22. fr_inv_timer (integer)
 
    Sets the value of the fist INVITE's Final Response timeout to
    be used during sequential forwarding:
 
    Default value is 90.
 
-   Example 1.23. Setting fr_inv_timer module parameter
+   Example 1.22. Setting fr_inv_timer module parameter
 ...
 modparam("lcr","fr_inv_timer",90)
 ...
 
-1.3.24. fr_inv_timer_next (integer)
-
-   Sets the value of the next INVITE's Final Response timeouts to
-   be used during sequential forwarding:
-
-   Function next_contacts() sets tm fr_inv_timer to
-   fr_inv_timer_next value if, after next contacts, there are
-   still lower qvalue contacts available, and to fr_inv_timer
-   value if next contacts are the last ones left.
-
-   Default value is 30.
-
-   Example 1.24. Setting fr_inv_timer_next module parameter
-...
-modparam("lcr","fr_inv_timer_next",30)
-...
-
-1.3.25. flags_avp (AVP string)
+1.3.23. flags_avp (AVP string)
 
    An AVP where successful next_gw and from_gw functions store
    gateway's flags.
@@ -481,12 +438,12 @@ modparam("lcr","fr_inv_timer_next",30)
    There is NO default value, thus this variable must be defined
    in kamailio.cfg.
 
-   Example 1.25. Setting flags_avp module parameter
+   Example 1.23. Setting flags_avp module parameter
 ...
 modparam("lcr", "flags_avp", "$avp(i:712)")
 ...
 
-1.3.26. lcr_hash_size (integer)
+1.3.24. lcr_hash_size (integer)
 
    Defines the size of hash table used to store <prefix,
    from_pattern, priority> tuples. Hashing is done based on
@@ -495,12 +452,12 @@ modparam("lcr", "flags_avp", "$avp(i:712)")
 
    Default value is 128.
 
-   Example 1.26.  Setting lcr_hash_size module parameter
+   Example 1.24.  Setting lcr_hash_size module parameter
 ...
 modparam("lcr", "lcr_hash_size", 1024)
 ...
 
-1.3.27. fetch_rows (integer)
+1.3.25. fetch_rows (integer)
 
    The number of the rows to be fetched at once from database when
    loading data from lcr table. This value can be used to tune the
@@ -510,7 +467,7 @@ modparam("lcr", "lcr_hash_size", 1024)
 
    Default value is "2000".
 
-   Example 1.27. Set fetch_rows parameter
+   Example 1.25. Set fetch_rows parameter
 ...
 modparam("lcr", "fetch_rows", 3000)
 ...
@@ -531,9 +488,9 @@ modparam("lcr", "fetch_rows", 3000)
    is number of different prefix lengths and M is number of
    collisions for matching prefix(es) in lcr hash table.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE.
 
-   Example 1.28. load_gws usage
+   Example 1.26. load_gws usage
 ...
 if (!load_gws("$var(caller_uri)")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatewa
@@ -554,9 +511,9 @@ ys");
    Execution time of load_gws_from_grp() function is O(N), where N
    is number of gateways.
 
-   This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+   This function can be used from REQUEST_ROUTE.
 
-   Example 1.29. load_gws_from_grp usage
+   Example 1.27. load_gws_from_grp usage
 ...
 if (!load_gws_from_grp("1")) {
         sl_send_reply("500", "Server Internal Error - Cannot load gatewa
@@ -574,23 +531,16 @@ ys");
 
 1.4.3.  next_gw()
 
-   Upon first call in REQUEST_ROUTE, replaces URI scheme, host,
-   port, and transport of Request-URI by the values stored in
-   first gw_uri_avp and destroys that AVP (see Overview section).
+   Upon first call, replaces URI scheme, host, port, and transport
+   of Request-URI by the values stored in first gw_uri_avp and
+   destroys that AVP (see Overview section). Saves user part of
+   Request-URI into ruri_user_avp for use in subsequent next_gw()
+   calls.
 
-   Upon subsequent calls in REQUEST_ROUTE or any call in
-   FAILURE_ROUTE, appends a new branch URI to the request, where
-   URI scheme, host, port, and transport of are taken from values
-   stored in the first gw_uri_avp and destroys that AVP.
-
-   Upon first call, URI user is taken from Request-URI and saved
-   in ruri_user_avp for use on subsequent calls.
-
-   If hostname is given for a gateway, it is used as hostpart of
-   the new URI (Request-URI or branch URI) without port and
-   transport. In addition, Destination URI is set, that includes
-   IP address, port, and transport of the gateway causing the
-   request to be forwarded accordingly.
+   Upon subsequent calls, appends a new branch URI to the request,
+   where URI scheme, host, port, and transport of are taken from
+   values stored in the first gw_uri_avp and destroys that AVP.
+   URI user is taken from ruri_user_avp.
 
    As a side effect, stores gateway's flags to flags_avp.
 
@@ -601,7 +551,7 @@ ys");
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.30. next_gw usage from a route block
+   Example 1.28. next_gw usage from a route block
 ...
 if (!next_gw()) {
         sl_send_reply("503", "Service not available - No gateways");
@@ -609,7 +559,7 @@ if (!next_gw()) {
 };
 ...
 
-   Example 1.31. next_gw usage from a failure route block
+   Example 1.29. next_gw usage from a failure route block
 ...
 if (!next_gw()) {
         t_reply("503", "Service not available - No more gateways");
@@ -630,14 +580,14 @@ if (!next_gw()) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.32. from_gw usage
+   Example 1.30. from_gw usage
 ...
 if (from_gw()) {
         ...
 };
 ...
 
-   Example 1.33. from_gw usage with pseudo variable argument
+   Example 1.31. from_gw usage with pseudo variable argument
 ...
 if (from_gw("$si")) {
         ...
@@ -657,7 +607,7 @@ if (from_gw("$si")) {
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE,
    ONREPLY_ROUTE.
 
-   Example 1.34. from_gw_grp usage
+   Example 1.32. from_gw_grp usage
 ...
 if (from_gw_grp("1")) {
         ...
@@ -675,7 +625,7 @@ if (from_gw_grp("1")) {
 
    This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
 
-   Example 1.35. to_gw usage
+   Example 1.33. to_gw usage
 ...
 if (to_gw()) {
         ...
@@ -683,67 +633,13 @@ if (to_gw()) {
 };
 ...
 
-   Example 1.36. to_gw usage with group-id
+   Example 1.34. to_gw usage with group-id
 ...
 if (to_gw("1")) {
         ...
         exit;
 };
 ...
-
-1.4.7.  load_contacts()
-
-   Loads contacts in destination set in increasing qvalue order as
-   values of contact_avp. If all contacts in the destination set
-   have the same qvalue, load_contacts() does not do anything thus
-   minimizing performance impact of sequential forking capability
-   when it is not needed. Returns 1 if loading of contacts
-   succeeded or there was nothing to do. Returns -1 on error (see
-   syslog).
-
-   This function can be used from REQUEST_ROUTE.
-
-   Example 1.37. load_contacts usage
-...
-if (!load_contacts()) {
-        sl_send_reply("500", "Server Internal Error - Cannot load contac
-ts");
-        exit;
-};
-...
-
-1.4.8.  next_contacts()
-
-   If called from a route block, replaces Request-URI with the
-   first contact_avp value, adds the remaining contact_avp values
-   with the same qvalue as branches, and destroys those AVPs. It
-   does nothing if there are no contact_avp values. Returns 1 if
-   there were no errors and -1 if an error occurred (see syslog).
-
-   If called from a failure route block, adds the first
-   contact_avp value and all following contact_avp values with the
-   same qvalue as new branches to request and destroys those AVPs.
-   Returns 1 if new branches were successfully added and -1 on
-   error (see syslog) or if there were no more contact_avp values.
-
-   Must be preceded by successful load_contacts() call.
-
-   This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-
-   Example 1.38. next_contacts() usage from route block
-...
-if (!next_contacts()) {
-        sl_send_reply("500", "Server Internal Error");
-        exit;
-} else {
-        t_relay();
-};
-...
-
-   Example 1.39. next_contacts() usage from failure route block
-if (next_contacts()) {
-        t_relay();
-};
 
 1.5. Exported MI Commands
 

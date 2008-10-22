@@ -208,7 +208,6 @@ int fr_inv_timer_next = DEF_FR_INV_TIMER_NEXT;
 static char *fr_inv_timer_avp_param = NULL;
 static char *gw_uri_avp_param = NULL;
 static char *ruri_user_avp_param = NULL;
-static char *contact_avp_param = NULL;
 static char *rpid_avp_param = NULL;
 static char *flags_avp_param = NULL;
 
@@ -219,25 +218,12 @@ unsigned int lcr_hash_size_param = DEF_LCR_HASH_SIZE;
  * Other module types and variables
  */
 
-struct contact {
-    str uri;
-    qvalue_t q;
-    str dst_uri;
-    str path;
-    unsigned int flags;
-    struct socket_info* sock;
-    unsigned short q_flag;
-    struct contact *next;
-};
-
 static int     fr_inv_timer_avp_type;
 static int_str fr_inv_timer_avp;
 static int     gw_uri_avp_type;
 static int_str gw_uri_avp;
 static int     ruri_user_avp_type;
 static int_str ruri_user_avp;
-static int     contact_avp_type;
-static int_str contact_avp;
 static int     rpid_avp_type;
 static int_str rpid_avp;
 static int     flags_avp_type;
@@ -264,8 +250,6 @@ static int from_gw_1(struct sip_msg* _m, char* _s1, char* _s2);
 static int from_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw(struct sip_msg* _m, char* _s1, char* _s2);
 static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2);
-static int load_contacts (struct sip_msg*, char*, char*);
-static int next_contacts (struct sip_msg*, char*, char*);
 
 
 /*
@@ -289,10 +273,6 @@ static cmd_export_t cmds[] = {
     {"to_gw", (cmd_function)to_gw, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
     {"to_gw", (cmd_function)to_gw_grp, 1, fixup_uint_null, 0,
-     REQUEST_ROUTE | FAILURE_ROUTE},
-    {"load_contacts", (cmd_function)load_contacts, 0, 0, 0,
-     REQUEST_ROUTE},
-    {"next_contacts", (cmd_function)next_contacts, 0, 0, 0,
      REQUEST_ROUTE | FAILURE_ROUTE},
     {0, 0, 0, 0, 0, 0}
 };
@@ -322,7 +302,6 @@ static param_export_t params[] = {
     {"fr_inv_timer_avp",         STR_PARAM, &fr_inv_timer_avp_param },
     {"gw_uri_avp",               STR_PARAM, &gw_uri_avp_param },
     {"ruri_user_avp",            STR_PARAM, &ruri_user_avp_param },
-    {"contact_avp",              STR_PARAM, &contact_avp_param },
     {"rpid_avp",                 STR_PARAM, &rpid_avp_param },
     {"flags_avp",                STR_PARAM, &flags_avp_param },
     {"fr_inv_timer",             INT_PARAM, &fr_inv_timer },
@@ -506,25 +485,6 @@ static int mod_init(void)
 	ruri_user_avp_type = avp_flags;
     } else {
 	LM_ERR("AVP ruri_user_avp has not been defined\n");
-	return -1;
-    }
-
-    if (contact_avp_param && *contact_avp_param) {
-	s.s = contact_avp_param; s.len = strlen(s.s);
-	if (pv_parse_spec(&s, &avp_spec)==0
-	    || avp_spec.type!=PVT_AVP) {
-	    LM_ERR("malformed or non AVP definition <%s>\n",
-		   contact_avp_param);
-	    return -1;
-	}
-	
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &contact_avp, &avp_flags)!=0) {
-	    LM_ERR("invalid AVP definition <%s>\n", contact_avp_param);
-	    return -1;
-	}
-	contact_avp_type = avp_flags;
-    } else {
-	LM_ERR("AVP contact_avp has not been defined\n");
 	return -1;
     }
 
@@ -2305,403 +2265,4 @@ static int to_gw_grp(struct sip_msg* _m, char* _s1, char* _s2)
 static int to_gw(struct sip_msg* _m, char* _s1, char* _s2)
 {
     return do_to_gw(_m, -1);
-}
-
-
-/* 
- * Frees contact list used by load_contacts function
- */
-static inline void free_contact_list(struct contact *curr) {
-    struct contact *prev;
-    while (curr) {
-	prev = curr;
-	curr = curr->next;
-	pkg_free(prev);
-    }
-}
-
-/* Encode branch info from contact struct to str */
-static inline int encode_branch_info(str *info, struct contact *con)
-{
-    char *at, *s;
-    int len;
-
-    info->len = con->uri.len + con->dst_uri.len +
-	con->path.len + MAX_SOCKET_STR + INT2STR_MAX_LEN + 5;
-    info->s = pkg_malloc(info->len);
-    if (!info->s) {
-	LM_ERR("no memory left for branch info\n");
-	return 0;
-    }
-    at = info->s;
-    memcpy(at, con->uri.s, con->uri.len);
-    at = at + con->uri.len;
-    *at = '\n';
-    at++;
-    memcpy(at, con->dst_uri.s, con->dst_uri.len);
-    at = at + con->dst_uri.len;
-    *at = '\n';
-    at++;
-    memcpy(at, con->path.s, con->path.len);
-    at = at + con->path.len;
-    *at = '\n';
-    at++;
-    if (con->sock) {
-	len = MAX_SOCKET_STR;
-	if (!socket2str(con->sock, at, &len)) {
-	    LM_ERR("failed to convert socket to str\n");
-	    return 0;
-	}
-    } else {
-	len = 0;
-    }
-    at = at + len;
-    *at = '\n';
-    at++;
-    s = int2str(con->flags, &len);
-    memcpy(at, s, len);
-    at = at + len;
-    *at = '\n';
-    info->len = at - info->s + 1;
-
-    return 1;
-}
-
-
-/* Encode branch info from str */
-static inline int decode_branch_info(char *info, str *uri, str *dst, str *path,
-				     struct socket_info **sock,
-				     unsigned int *flags)
-{
-    str s, host;
-    int port, proto;
-    char *pos, *at;
-
-    pos = strchr(info, '\n');
-    uri->len = pos - info;
-    if (uri->len) {
-	uri->s = info;
-    } else {
-	uri->s = 0;
-    }
-    at = pos + 1;
-
-    pos = strchr(at, '\n');
-    dst->len = pos - at;
-    if (dst->len) {
-	dst->s = at;
-    } else {
-	dst->s = 0;
-    }
-    at = pos + 1;
-
-    pos = strchr(at, '\n');
-    path->len = pos - at;
-    if (path->len) {
-	path->s = at;
-    } else {
-	path->s = 0;
-    }
-    at = pos + 1;
-
-    pos = strchr(at, '\n');
-    s.len = pos - at;
-    if (s.len) {
-	s.s = at;
-	if (parse_phostport(s.s, s.len, &host.s, &host.len,
-			    &port, &proto) != 0) {
-	    LM_ERR("parsing of socket info <%.*s> failed\n",  s.len, s.s);
-	    return 0;
-	}
-	*sock = grep_sock_info(&host, (unsigned short)port,
-			       (unsigned short)proto);
-	if (*sock == 0) {
-	    LM_ERR("invalid socket <%.*s>\n", s.len, s.s);
-	    return 0;
-	}
-    } else {
-	*sock = 0;
-    }
-    at = pos + 1;
-
-    pos = strchr(at, '\n');
-    s.len = pos - at;
-    if (s.len) {
-	s.s = at;
-	if (str2int(&s, flags) != 0) {
-	    LM_ERR("failed to decode flags <%.*s>\n", s.len, s.s);
-	    return 0;
-	}
-    } else {
-	*flags = 0;
-    }
-
-    return 1;
-}
-
-
-/* 
- * Loads contacts in destination set into "lcr_contact" AVP in reverse
- * priority order and associated each contact with Q_FLAG telling if
- * contact is the last one in its priority class.  Finally, removes
- * all branches from destination set.
- */
-static int load_contacts(struct sip_msg* msg, char* key, char* value)
-{
-    str uri, dst_uri, path, branch_info, *ruri;
-    qvalue_t q, ruri_q;
-    struct contact *contacts, *next, *prev, *curr;
-    int_str val;
-    int idx;
-    struct socket_info* sock;
-    unsigned int flags;
-
-    /* Check if anything needs to be done */
-    if (nr_branches == 0) {
-	LM_DBG("nothing to do - no branches!\n");
-	return 1;
-    }
-
-    ruri = GET_RURI(msg);
-    if (!ruri) {
-	LM_ERR("no Request-URI found\n");
-	return -1;
-    }
-    ruri_q = get_ruri_q();
-
-    for(idx = 0; (uri.s = get_branch(idx, &uri.len, &q, 0, 0, 0, 0)) != 0;
-	idx++) {
-	if (q != ruri_q) {
-	    goto rest;
-	}
-    }
-    LM_DBG("nothing to do - all contacts have same q!\n");
-    return 1;
-
-rest:
-    /* Insert Request-URI branch to contact list */
-    contacts = (struct contact *)pkg_malloc(sizeof(struct contact));
-    if (!contacts) {
-	LM_ERR("no memory for contact info\n");
-	return -1;
-    }
-    contacts->uri.s = ruri->s;
-    contacts->uri.len = ruri->len;
-    contacts->q = ruri_q;
-    contacts->dst_uri = msg->dst_uri;
-    contacts->sock = msg->force_send_socket;
-    contacts->flags = getb0flags();
-    contacts->path = msg->path_vec;
-    contacts->next = (struct contact *)0;
-
-    /* Insert branches to contact list in increasing q order */
-    for(idx = 0;
-	(uri.s = get_branch(idx,&uri.len,&q,&dst_uri,&path,&flags,&sock))
-	    != 0;
-	idx++ ) {
-	next = (struct contact *)pkg_malloc(sizeof(struct contact));
-	if (!next) {
-	    LM_ERR("no memory for contact info\n");
-	    free_contact_list(contacts);
-	    return -1;
-	}
-	next->uri = uri;
-	next->q = q;
-	next->dst_uri = dst_uri;
-	next->path = path;
-	next->flags = flags;
-	next->sock = sock;
-	next->next = (struct contact *)0;
-	prev = (struct contact *)0;
-	curr = contacts;
-	while (curr && (curr->q < q)) {
-	    prev = curr;
-	    curr = curr->next;
-	}
-	if (!curr) {
-	    next->next = (struct contact *)0;
-	    prev->next = next;
-	} else {
-	    next->next = curr;
-	    if (prev) {
-		prev->next = next;
-	    } else {
-		contacts = next;
-	    }
-	}		    
-    }
-
-    /* Assign values for q_flags */
-    curr = contacts;
-    curr->q_flag = 0;
-    while (curr->next) {
-	if (curr->q < curr->next->q) {
-	    curr->next->q_flag = Q_FLAG;
-	} else {
-	    curr->next->q_flag = 0;
-	}
-	curr = curr->next;
-    }
-
-    /* Add contacts to "contacts" AVP */
-    curr = contacts;
-    while (curr) {
-	if (encode_branch_info(&branch_info, curr) == 0) {
-	    LM_ERR("encoding of branch info failed\n");
-	    free_contact_list(contacts);
-	    if (branch_info.s) pkg_free(branch_info.s);
-	    return -1;
-	}
-	val.s = branch_info;
-	add_avp(contact_avp_type|AVP_VAL_STR|(curr->q_flag),
-		contact_avp, val);
-	pkg_free(branch_info.s);
-	LM_DBG("loaded contact <%.*s> with q_flag <%d>\n",
-	       val.s.len, val.s.s, curr->q_flag);
-	curr = curr->next;
-    }
-
-    /* Clear all branches */
-    clear_branches();
-
-    /* Free contact list */
-    free_contact_list(contacts);
-
-    return 1;
-}
-
-
-/*
- * Adds to request a destination set that includes all highest priority
- * class contacts in "lcr_contact" AVP.   If called from a route block,
- * rewrites the request uri with first contact and adds the remaining
- * contacts as branches.  If called from failure route block, adds all
- * contacts as branches.  Removes added contacts from "lcr_contact" AVP.
- */
-static int next_contacts(struct sip_msg* msg, char* key, char* value)
-{
-    struct usr_avp *avp, *prev;
-    int_str val;
-    str uri, dst, path;
-    struct socket_info *sock;
-    unsigned int flags;
-
-    if (route_type == REQUEST_ROUTE) {
-	/* Find first lcr_contact_avp value */
-	avp = search_first_avp(contact_avp_type, contact_avp, &val, 0);
-	if (!avp) {
-	    LM_DBG("no AVPs - we are done!\n");
-	    return 1;
-	}
-
-	LM_DBG("next contact is <%s>\n", val.s.s);
-
-	if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
-	    == 0) {
-	    LM_ERR("decoding of branch info <%.*s> failed\n",
-		   val.s.len, val.s.s);
-	    destroy_avp(avp);
-	    return -1;
-	}
-
-	rewrite_uri(msg, &uri);
-	set_dst_uri(msg, &dst);
-	set_path_vector(msg, &path);
-	msg->force_send_socket = sock;
-	setb0flags(flags);
-
-	if (avp->flags & Q_FLAG) {
-	    destroy_avp(avp);
-	    /* Set fr_inv_timer */
-	    val.n = fr_inv_timer_next;
-	    if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-		LM_ERR("setting of fr_inv_timer_avp failed\n");
-		return -1;
-	    }
-	    return 1;
-	}
-
-	/* Append branches until out of branches or Q_FLAG is set */
-	prev = avp;
-	while ((avp = search_next_avp(avp, &val))) {
-	    destroy_avp(prev);
-
-	    LM_DBG("next contact is <%s>\n", val.s.s);
-
-	    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
-		== 0) {
-		LM_ERR("decoding of branch info <%.*s> failed\n",
-		       val.s.len, val.s.s);
-		destroy_avp(avp);
-		return -1;
-	    }
-
-	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
-		LM_ERR("appending branch failed\n");
-		destroy_avp(avp);
-		return -1;
-	    }
-
-	    if (avp->flags & Q_FLAG) {
-		destroy_avp(avp);
-		val.n = fr_inv_timer_next;
-		if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val)
-		    != 0) {
-		    LM_ERR("setting of fr_inv_timer_avp failed\n");
-		    return -1;
-		}
-		return 1;
-	    }
-	    prev = avp;
-	}
-	
-    } else if ( route_type == FAILURE_ROUTE) {
-
-	avp = search_first_avp(contact_avp_type, contact_avp, &val, 0);
-	if (!avp) return -1;
-
-	prev = avp;
-	do {
-
-	    LM_DBG("next contact is <%s>\n", val.s.s);
-
-	    if (decode_branch_info(val.s.s, &uri, &dst, &path, &sock, &flags)
-		== 0) {
-		LM_ERR("decoding of branch info <%.*s> failed\n",
-		       val.s.len, val.s.s);
-		destroy_avp(avp);
-		return -1;
-	    }
-	    
-	    if (append_branch(msg, &uri, &dst, &path, 0, flags, sock) != 1) {
-		LM_ERR("appending branch failed\n");
-		destroy_avp(avp);
-		return -1;
-	    }
-
-	    if (avp->flags & Q_FLAG) {
-		destroy_avp(avp);
-		return 1;
-	    }
-
-	    prev = avp;
-	    avp = search_next_avp(avp, &val);
-	    destroy_avp(prev);
-
-	} while (avp);
-
-	/* Restore fr_inv_timer */
-	val.n = fr_inv_timer;
-	if (add_avp(fr_inv_timer_avp_type, fr_inv_timer_avp, val) != 0) {
-	    LM_ERR("setting of fr_inv_timer_avp failed\n");
-	    return -1;
-	}
-	
-    } else {
-	/* Unsupported route type */
-	LM_ERR("unsupported route type\n");
-	return -1;
-    }
-
-    return 1;
 }

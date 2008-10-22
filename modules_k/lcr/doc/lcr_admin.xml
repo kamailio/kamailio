@@ -7,26 +7,10 @@
 	<section>
 	<title>Overview</title>
 	<para>
-		Least cost routing (LCR) module implements two vaguely
-	related capabilities: 
-	</para>
-	<para>
-		<itemizedlist>
-			<listitem>
-			<para>
-				sequential forwarding of a request to
-				one or more gateways 
-				(functions load_gws and next_gw)
-			</para>
-			</listitem>
-			<listitem>
-			<para>
-				sequential forwarding to contacts
-	according to their q value (functions load_contacts() and
-	next_contacts()).
-			</para>
-			</listitem>
-		</itemizedlist>
+	Least cost routing (LCR) module implements capability to
+	serially forward a request to one or more gateways so that the
+	order in which the gateways is tried is based on admin defined
+	"least cost".
 	</para>
 	<para>
 	For the purpose of facilitating least cost routing of requests,
@@ -52,15 +36,14 @@
 	time for forwarding.  Upon each call, user part of original
 	Request URI is first stripped by the number of characters as
 	specified by the gateway's strip count and then prefixed by
-	gateway's tag.  Upon first call in route block, if gateway's
-	hostname is null, Request URI is rewritten based on gateway's
-	URI scheme, IP address, port, and transport protocol.  If
-	hostname is not null, Request-URI is rewritten based on
-	gateway's URI scheme and hostname, and destination URI is set
-	based on gateway's URI scheme, IP address, port, and transport
-	protocol.  Upon subsequent calls in route block or any calls in
-	failure route block, the same is done, but instead
-	of rewriting Request URI, a new branch is added.
+	gateway's tag.  Upon first call, if gateway's hostname is null,
+	Request URI is rewritten based on gateway's URI scheme, IP
+	address, port, and transport protocol.  If hostname is not null,
+	Request-URI is rewritten based on gateway's URI scheme and
+	hostname, and destination URI is set based on gateway's URI
+	scheme, IP address, port, and transport protocol.  Upon
+	subsequent calls, the same is done, but instead of rewriting
+	Request URI, a new branch is added.
 	</para>
         <para>
         Valid URI scheme values are NULL = sip, 1 = sip and 2
@@ -468,28 +451,6 @@ modparam("lcr","priority_column","priority")
 	</section>
 
 	<section>
-		<title><varname>contact_avp</varname> (AVP string)</title>
-		<para>
-		Internal AVP that load_contacts() function uses to store
-		contacts of the destination set.
-		</para>
-		<para>
-		<emphasis>
-			There is NO default value, thus this variable must
-			be defined in kamailio.cfg.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>contact_avp</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr", "contact_avp", "$avp(i:711)")
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>fr_inv_timer_avp</varname> (AVP string)</title>
 		<para>
 		An AVP that contains a final response timeout
@@ -599,34 +560,6 @@ modparam("lcr","fr_inv_timer",90)
 	</section>
 
 	<section>
-		<title><varname>fr_inv_timer_next</varname> (integer)</title>
-		<para>
-		Sets the value of the next INVITE's Final Response
-		timeouts to be used during sequential forwarding:
-		</para>
-		<para>
-		Function next_contacts() sets tm fr_inv_timer to
-		fr_inv_timer_next value if, after next contacts, there
-		are still lower qvalue 
-		contacts available, and to fr_inv_timer value if next
-		contacts are the last ones left.
-		</para>
-		<para>
-		<emphasis>
-			Default value is 30.
-		</emphasis>
-		</para>
-		<example>
-		<title>Setting <varname>fr_inv_timer_next</varname> module parameter</title>
-		<programlisting format="linespecific">
-...
-modparam("lcr","fr_inv_timer_next",30)
-...
-</programlisting>
-		</example>
-	</section>
-
-	<section>
 		<title><varname>flags_avp</varname> (AVP string)</title>
 		<para>
 		An AVP where successful next_gw and from_gw functions
@@ -725,8 +658,7 @@ modparam("lcr", "fetch_rows", 3000)
 		hash table.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE and
-		FAILURE_ROUTE.
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>load_gws</function> usage</title>
@@ -758,8 +690,7 @@ if (!load_gws("$var(caller_uri)")) {
 		where N is number of gateways.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE and
-		FAILURE_ROUTE.
+		This function can be used from REQUEST_ROUTE.
 		</para>
 		<example>
 		<title><function>load_gws_from_grp</function> usage</title>
@@ -784,30 +715,19 @@ if (!load_gws_from_grp("$avp(s:gateway_group)")) {
 		<function moreinfo="none">next_gw()</function>
 		</title>	
 		<para>
-		Upon first call in REQUEST_ROUTE, replaces URI scheme, host,
+		Upon first call, replaces URI scheme, host,
 		port, and transport of Request-URI by the values stored
 		in first gw_uri_avp and destroys that AVP (see
-		Overview section).
-                </para>
+		Overview section).  Saves user part of Request-URI into
+		ruri_user_avp for use in subsequent next_gw() calls.
+		</para>
 		<para>
-		Upon subsequent calls in REQUEST_ROUTE or any call in
-		FAILURE_ROUTE, appends a new branch URI to 
+		Upon subsequent calls, appends a new branch URI to
 		the request, where URI scheme, host, port, and transport of
 		are taken from values stored in the first gw_uri_avp
-		and destroys that AVP.
-                </para>
-                <para>
-                Upon first call, URI user is taken from Request-URI
-                and saved in ruri_user_avp for use on subsequent calls.
+		and destroys that AVP.  URI user is taken from
+		ruri_user_avp.
 		</para>
-                <para>
-                If hostname is given for a gateway, it is used as
-                hostpart of the new URI (Request-URI or branch URI)
-                without port and transport.  In addition,
-                Destination URI is set, that includes IP address, port,
-                and transport of the gateway causing the request to be
-                forwarded accordingly.
-                </para>
 		<para>
 		As a side effect, stores gateway's flags to flags_avp.
 		</para>
@@ -958,88 +878,7 @@ if (to_gw("1")) {
 </programlisting>
 		</example>
 	</section>
-	<section>
-		<title>
-		<function moreinfo="none">load_contacts()</function>
-		</title>
-		<para>
-		Loads contacts in destination set in increasing qvalue order as
-		values of contact_avp.  If all contacts in the
-		destination set 
-		have the same qvalue, load_contacts() does not do anything thus
-		minimizing performance impact of sequential forking capability when
-		it is not needed.  Returns 1 if loading of contacts succeeded or
-		there was nothing to do.  Returns -1 on error (see syslog).
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE.
-		</para>
-		<example>
-		<title><function>load_contacts</function> usage</title>
-		<programlisting format = "linespecific">
-...
-if (!load_contacts()) {
-	sl_send_reply("500", "Server Internal Error - Cannot load contacts");
-	exit;
-};
-...
-</programlisting>
-		</example>
-	</section>
-	<section>
-		<title>
-		<function moreinfo="none">next_contacts()</function>
-		</title>
-		<para>
-		If called from a route block, replaces Request-URI with
-		the first contact_avp value, adds the remaining
-		contact_avp values with the same qvalue as branches, and
-		destroys those AVPs. It does 
-		nothing if there are no contact_avp values.  Returns
-		1 if there were no errors and -1 if an error occurred
-		(see syslog). 
-		</para>
-		<para>
-		If called from a failure route block, adds the first
-		contact_avp value and all following contact_avp
-		values with the same  
-		qvalue as new branches to request and destroys those AVPs. 
-		Returns 1 if new branches were successfully added and -1
-		on error (see syslog) or if there were no more
-		contact_avp values.
-		</para>
-		<para>
-		Must be preceded by successful load_contacts() call.
-		</para>
-		<para>
-		This function can be used from REQUEST_ROUTE, FAILURE_ROUTE.
-		</para>
-		<example>
-		<title><function>next_contacts()</function> usage from
-		route block 
-		</title>
-		<programlisting format = "linespecific">
-...
-if (!next_contacts()) {
-	sl_send_reply("500", "Server Internal Error");
-	exit;
-} else {
-	t_relay();
-};
-...
-</programlisting>
-		</example>
-		<example>
-		<title><function>next_contacts()</function> usage from 
-			failure route block
-		</title>
-		<programlisting format = "linespecific">
-if (next_contacts()) {
-	t_relay();
-};
-</programlisting>
-		</example>
-		</section>
+
 	</section>
 
 	<section>
