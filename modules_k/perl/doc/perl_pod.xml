@@ -254,6 +254,8 @@ $m->xlog("L_INFO", "foo");]]></screen>
 * t_flush_flags
 * t_check_trans
 * t_was_cancelled
+* t_load_contacts
+* t_next_contacts
 * uac_restore_from
 * uac_auth
 * has_totag
@@ -320,16 +322,6 @@ $m->xlog("L_INFO", "foo");]]></screen>
     <section id="ID-098e67bc760ef445343eb9e8f93ece8b"><title>append_branch(branch,qval)</title>
       <para>
 	Append a branch to current message.
-      </para>
-    </section>
-    <section id="ID-bff5c83f8c28e72abf1d8a5204310202"><title>serialize_branches(clean_before)</title>
-      <para>
-	Serialize branches.
-      </para>
-    </section>
-    <section id="ID-db3ce723c8e1880caf5fc0cb9ed7aa4d"><title>next_branches()</title>
-      <para>
-	Next branches.
       </para>
     </section>
     <section id="ID-f20c57aaa92a757d7152aa0479ee1fc0"><title>getParsedRURI()</title>
