@@ -680,6 +680,56 @@ modparam("tm", "disable_6xx_block", 1)
 		</example>
 	</section>
 
+	<section>
+		<title><varname>fr_inv_timer_next</varname> (integer)</title>
+		<para>
+                Value of the Final Response timeout for INVITE
+                transactions to be used during serial forwarding:
+		</para>
+		<para>
+                Function t_next_contacts() sets fr_inv_timer to
+                fr_inv_timer_next value if, after t_next_contacts() is
+                called, there are still lower qvalue contacts available,
+                and to fr_inv_timer value if there are not.
+		</para>
+		<para>
+		<emphasis>
+			Default value is 30.
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>fr_inv_timer_next</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "fr_inv_timer_next", 10)
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title><varname>contacts_avp</varname> (string)</title>
+		<para>
+                Internal AVP that t_load_contacts() function uses to store
+                contacts of the destination set and that
+                t_next_contacts() function uses to restore those contacts.
+		</para>
+		<para>
+		<emphasis>
+			Default value is "NULL"
+			(t_load_contacts()/t_next_contacts() functions
+			are disabled).
+		</emphasis>
+		</para>
+		<example>
+		<title>Set <varname>contacts_avp</varname> parameter</title>
+		<programlisting format="linespecific">
+...
+modparam("tm", "contacts_avp", "$avp(i:25)")
+...
+</programlisting>
+		</example>
+	</section>
 
 
 	</section>
@@ -1307,6 +1357,84 @@ branch_route[1] {
 		append_rpid();
 	}
 }
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_load_contacts()</function>
+		</title>
+		<para>
+                Loads contacts in destination set in increasing qvalue order as
+                values of contacts_avp. If all contacts in the destination set
+                have the same qvalue, t_load_contacts() does not do
+                anything thus 
+                minimizing performance impact of serial forking capability
+                when it is not needed. Returns 1 if loading of contacts
+                succeeded or there was nothing to do. Returns -1 on error (see
+                syslog).
+		</para>
+		<para>
+		This function can be used from REQUEST_ROUTE.
+		</para>
+		<example>
+		<title><function>t_load_contacts</function> usage</title>
+		<programlisting format="linespecific">
+...
+if (!t_load_contacts()) {
+        sl_send_reply("500", "Server Internal Error - Cannot load contacts");
+        exit;
+};
+...
+</programlisting>
+		</example>
+	</section>
+
+	<section>
+		<title>
+		<function moreinfo="none">t_next_contacts()</function>
+		</title>
+		<para>
+                If transaction does not exist when t_next_contacts() is
+                called, replaces Request-URI with the
+                first contacts_avp value, adds the remaining contacts_avp values
+                with the same qvalue as branches, and destroys those AVPs. It
+                does nothing if there are no contacts_avp values. Returns 1 if
+                there were no errors and -1 if an error occurred (see syslog).
+		</para>
+                <para>
+                If transaction does exist when t_next_contacts() is
+                called, adds the first contacts_avp value and all
+                following contacts_avp values with the 
+                same qvalue as new branches to request and destroys those AVPs.
+                Returns 1 if new branches were successfully added and -1 on
+                error (see syslog) or if there were no more contacts_avp
+                values.
+                </para>
+		<para>
+		This function can be used from REQUEST_ROUTE and FAILURE_ROUTE.
+		</para>
+		<example>
+		<title><function>t_next_contacts</function> usage</title>
+		<programlisting format="linespecific">
+...
+# First call after t_load_contacts() when transaction does not exist yet
+# and contacts should be available
+if (!t_next_contacts()) {
+        sl_send_reply("500", "Server Internal Error - Cannot get contacts");
+} else {
+        t_relay();
+};
+...
+# Following call, when transaction exists and there may or may not be
+# contacts left
+if (!t_next_contacts()) {
+        t_reply("408", "Request Timeout");
+} else {
+        t_relay();
+};
 ...
 </programlisting>
 		</example>

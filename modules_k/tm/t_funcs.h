@@ -120,15 +120,22 @@ int send_pr_buffer( struct retr_buf *rb, void *buf, int len);
 /*! \brief
  * Parse and fixup the fr_*_timer AVP specs
  */
-int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param);
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
+		    char *contacts_avp_param);
 
+/*! \brief
+ * FR_INV_TIMER AVP and SERIAL AVP variables needed by next_branches() function
+ */
+extern int     fr_inv_timer_avp_type;
+extern int_str fr_inv_timer_avp;
+extern int     contacts_avp_type;
+extern int_str contacts_avp;
 
 /*! \brief
  * Get the FR_{INV}_TIMER from corresponding AVP
  */
 int fr_avp2timer( utime_t* timer);
 int fr_inv_avp2timer( utime_t* timer);
-
 
 
 inline static void _set_fr_retr( struct retr_buf *rb, int retr )

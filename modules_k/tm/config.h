@@ -52,6 +52,10 @@
 #define FR_TIME_OUT       30
 #define INV_FR_TIME_OUT   120
 
+/*! \brief final response timers to be used for serial forwarding */
+#define INV_FR_TIME_OUT_FIRST  90
+#define INV_FR_TIME_OUT_NEXT  30
+
 /*! \brief WAIT timer ... tells how long state should persist in memory after
    a transaction was finalized*/
 #define WT_TIME_OUT       5

@@ -63,11 +63,13 @@
 #include "t_lookup.h"
 #include "config.h"
 
-/* fr_timer AVP specs */
+/* AVP specs */
 static int     fr_timer_avp_type;
 static int_str fr_timer_avp;
-static int     fr_inv_timer_avp_type;
-static int_str fr_inv_timer_avp;
+int     fr_inv_timer_avp_type;
+int_str fr_inv_timer_avp;
+int     contacts_avp_type;
+int_str contacts_avp;
 
 static str relay_reason_100 = str_init("Giving a try");
 
@@ -286,10 +288,10 @@ done:
 
 
 /*! \brief
- * Initialize parameters containing the ID of
- * AVPs with variable timers
+ * Initialize AVP module parameters
  */
-int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
+int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param,
+		    char *contacts_avp_param)
 {
 	pv_spec_t avp_spec;
 	unsigned short avp_flags;
@@ -297,8 +299,8 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 	if (fr_timer_param && *fr_timer_param) {
 		s.s = fr_timer_param; s.len = strlen(s.s);
 		if (pv_parse_spec(&s, &avp_spec)==0
-				|| avp_spec.type!=PVT_AVP) {
-			LM_ERR("malformed or non AVP %s AVP definition\n", fr_timer_param);
+		        || avp_spec.type!=PVT_AVP) {
+		        LM_ERR("malformed or non AVP %s AVP definition\n", fr_timer_param);
 			return -1;
 		}
 
@@ -332,6 +334,27 @@ int init_avp_params(char *fr_timer_param, char *fr_inv_timer_param)
 		fr_inv_timer_avp.n = 0;
 		fr_inv_timer_avp_type = 0;
 	}
+
+	if (contacts_avp_param && *contacts_avp_param) {
+	    s.s = contacts_avp_param; s.len = strlen(s.s);
+	    if ((pv_parse_spec(&s, &avp_spec) == 0) 
+		|| (avp_spec.type != PVT_AVP)) {
+		LM_ERR("malformed or non AVP definition <%s>\n",
+		       contacts_avp_param);
+		return -1;
+	    }
+	
+	    if(pv_get_avp_name(0, &(avp_spec.pvp), &contacts_avp, &avp_flags)
+	       != 0) {
+		LM_ERR("invalid AVP definition <%s>\n", contacts_avp_param);
+		return -1;
+	    }
+	    contacts_avp_type = avp_flags;
+	} else {
+	    contacts_avp.n = 0;
+	    contacts_avp_type = 0;
+	}
+
 	return 0;
 }
 

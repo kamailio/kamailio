@@ -92,6 +92,7 @@
 #include "t_fifo.h"
 #include "mi.h"
 #include "tm_load.h"
+#include "t_serial.h"
 
 MODULE_VERSION
 
@@ -134,6 +135,7 @@ inline static int t_was_cancelled(struct sip_msg* msg, char* , char* );
 /* strings with avp definition */
 static char *fr_timer_param = NULL;
 static char *fr_inv_timer_param = NULL;
+static char *contacts_avp_param = NULL;
 
 /* module parameteres */
 int tm_enable_stats = 1;
@@ -191,6 +193,10 @@ static cmd_export_t cmds[]={
 			0, FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"load_tm",         (cmd_function)load_tm,          0, 0,
 			0, 0},
+	{"t_load_contacts", (cmd_function)t_load_contacts, 0, 0,
+	                0, REQUEST_ROUTE},
+	{"t_next_contacts", (cmd_function)t_next_contacts, 0, 0,
+	                0, REQUEST_ROUTE | FAILURE_ROUTE},
 	{0,0,0,0,0,0}
 };
 
@@ -232,6 +238,10 @@ static param_export_t params[]={
 		&onreply_avp_mode },
 	{ "disable_6xx_block",        INT_PARAM,
 		&disable_6xx_block },
+	{"fr_inv_timer_next",         INT_PARAM,
+	        &fr_inv_timer_next },
+	{"contacts_avp",              STR_PARAM,
+		&contacts_avp_param},
 	{0,0,0}
 };
 
@@ -615,10 +625,13 @@ static int mod_init(void)
 		return -1;
 	}
 
-	if ( init_avp_params( fr_timer_param, fr_inv_timer_param)<0 ){
-		LM_ERR("ERROR:tm:mod_init: failed to process timer AVPs\n");
+	if (init_avp_params(fr_timer_param, fr_inv_timer_param,
+			    contacts_avp_param) < 0) {
+		LM_ERR("ERROR:tm:mod_init: failed to process AVP params\n");
 		return -1;
 	}
+
+	LM_INFO("fr_inv_timer_next value is <%u>\n", fr_inv_timer_next);
 
 	return 0;
 }
