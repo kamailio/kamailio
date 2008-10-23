@@ -2598,6 +2598,7 @@ struct hostent* dns_sip_resolvehost(str* name, unsigned short* port,
  *          On end of records (when used to iterate on all the ips) it
  *          will return E_DNS_EOR (you should not log an error for this
  *          value, is just a signal that the address list end has been reached)
+ * Note: either e or name must be different from 0 (name.s !=0 also)
  * WARNING: dns_hash_put(*e) must be called when you don't need
  *          the entry anymore and *e!=0 (failling to do so => mem. leak)
  * Example:
