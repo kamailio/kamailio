@@ -1319,12 +1319,9 @@ int reload_gws_and_lcrs(void)
     /* Switch current gw and lcr tables */
     if (*gws == gws_1) {
 	*gws = gws_2;
-    } else {
-	*gws = gws_1;
-    }
-    if (*lcrs == lcrs_1) {
 	*lcrs = lcrs_2;
     } else {
+	*gws = gws_1;
 	*lcrs = lcrs_1;
     }
 
@@ -1501,41 +1498,33 @@ inline int encode_avp_value(char *value, uri_type scheme, unsigned int strip,
     /* scheme */
     at = value;
     string = int2str(scheme, &len);
-    memcpy(at, string, len);
-    at = at + len;
-    *at = '|'; at = at + 1;
+    append_str(at, string, len);
+    append_chr(at, '|');
     /* strip */
     string = int2str(strip, &len);
-    memcpy(at, string, len);
-    at = at + len;
-    *at = '|'; at = at + 1;
+    append_str(at, string, len);
+    append_chr(at, '|');
     /* tag */
-    memcpy(at, tag, tag_len);
-    at = at + tag_len;
-    *at = '|'; at = at + 1;
+    append_str(at, tag, tag_len);
+    append_chr(at, '|');
     /* ip_addr */
     string = int2str(ip_addr, &len);
-    memcpy(at, string, len);
-    at = at + len;
-    *at = '|'; at = at + 1;
+    append_str(at, string, len);
+    append_chr(at, '|');
     /* hostname */
-    memcpy(at, hostname, hostname_len);
-    at = at + hostname_len;
-    *at = '|'; at = at + 1;
+    append_str(at, hostname, hostname_len);
+    append_chr(at, '|');
     /* port */
     string = int2str(port, &len);
-    memcpy(at, string, len);
-    at = at + len;
-    *at = '|'; at = at + 1;
+    append_str(at, string, len);
+    append_chr(at, '|');
     /* transport */
     string = int2str(transport, &len);
-    memcpy(at, string, len);
-    at = at + len;
-    *at = '|'; at = at + 1;
+    append_str(at, string, len);
+    append_chr(at, '|');
     /* flags */
     string = int2str(flags, &len);
-    memcpy(at, string, len);
-    at = at + len;
+    append_str(at, string, len);
     return at - value;
 }
 
@@ -1939,58 +1928,43 @@ static int generate_uris(char *r_uri, str *r_uri_user, unsigned int *r_uri_len,
 
     at = r_uri;
     
-    memcpy(at, scheme.s, scheme.len);
-    at = at + scheme.len;
-	
-    memcpy(at, tag.s, tag.len);
-    at = at + tag.len;
+    append_str(at, scheme.s, scheme.len);
+    append_str(at, tag.s, tag.len);
 	
     if (strip > r_uri_user->len) {
 	LM_ERR("strip count <%u> is largen that R-URI user <%.*s>\n",
 	       strip, r_uri_user->len, r_uri_user->s);
 	return 0;
     }
-    memcpy(at, r_uri_user->s + strip, r_uri_user->len - strip);
-    at = at + r_uri_user->len - strip;
+    append_str(at, r_uri_user->s + strip, r_uri_user->len - strip);
 
-    *at = '@';
-    at = at + 1;
+    append_chr(at, '@');
 	
     if (hostname.len == 0) {
-	memcpy(at, addr.s, addr.len);
-	at = at + addr.len;
+	append_str(at, addr.s, addr.len);
 	if (port.len > 0) {
-	    *at = ':';
-	    at = at + 1;
-	    memcpy(at, port.s, port.len);
-	    at = at + port.len;
+	    append_chr(at, ':');
+	    append_str(at, port.s, port.len);
 	}
 	if (transport.len > 0) {
-	    memcpy(at, transport.s, transport.len);
-	    at = at + transport.len;
+	    append_str(at, transport.s, transport.len);
 	}
 	*at = '\0';
 	*r_uri_len = at - r_uri;
 	*dst_uri_len = 0;
     } else {
-	memcpy(at, hostname.s, hostname.len);
-	at = at + hostname.len;
+	append_str(at, hostname.s, hostname.len);
 	*at = '\0';
 	*r_uri_len = at - r_uri;
 	at = dst_uri;
-	memcpy(at, scheme.s, scheme.len);
-	at = at + scheme.len;
-	memcpy(at, addr.s, addr.len);
-	at = at + addr.len;
+	append_str(at, scheme.s, scheme.len);
+	append_str(at, addr.s, addr.len);
 	if (port.len > 0) {
-	    *at = ':';
-	    at = at + 1;
-	    memcpy(at, port.s, port.len);
-	    at = at + port.len;
+	    append_chr(at, ':');
+	    append_str(at, port.s, port.len);
 	}
 	if (transport.len > 0) {
-	    memcpy(at, transport.s, transport.len);
-	    at = at + transport.len;
+	    append_str(at, transport.s, transport.len);
 	}
 	*at = '\0';
 	*dst_uri_len = at - dst_uri;

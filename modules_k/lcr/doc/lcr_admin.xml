@@ -946,10 +946,11 @@ if (to_gw("1")) {
 	<section>
 	<title>Known Limitations</title>
 	<para>
-		There is an unlikely race condition on lcr reload.
-		In-memory gateway table does not match in-memory lcr
-		table for a duration of two machine instructions.
+		In-memory gateway and in-memory lcr table are switched
+		by two consecutive machine instructions. If lcr reload
+		process is interrupted after the first one, in-memory
+		gateway table does not match in-memory lcr table until
+		execution of lcr reload process is resumed.
 	</para>
 	</section>
 </chapter>
-
