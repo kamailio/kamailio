@@ -86,4 +86,7 @@ int t_calc_branch(struct cell *t,
 char* print_callid_mini(char* target, str callid);
 char* print_cseq_mini(char* target, str* cseq, str* method);
 
+/* check if changes affect important hdrs: To/From/CSeq */
+void check_hdrs_changes(struct sip_msg *msg);
+
 #endif

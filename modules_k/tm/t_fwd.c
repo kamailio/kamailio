@@ -160,6 +160,8 @@ static inline int pre_print_uac_request( struct cell *t, int branch,
 			_tm_branch_index = 0;
 			goto error;
 		}
+		check_hdrs_changes(request);
+		t->uas.request->msg_flags |= request->msg_flags;
 		_tm_branch_index = 0;
 
 		set_route_type( backup_route_type );

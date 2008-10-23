@@ -1058,60 +1058,6 @@ static inline int new_t(struct sip_msg *p_msg)
 }
 
 /*!
- * \brief Check if From/To/CSeq were altered and set approriate flags
- */
-static inline void check_hdrs_changes(struct sip_msg *msg)
-{
-	struct lump *t;
-	unsigned int flags;
-	char *pos;
-
-	flags = FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ;
-
-	/* if internal flags already set, then return */
-	if((msg->msg_flags&flags) == flags)
-		return;
-
-	for (t=msg->add_rm;t;t=t->next) {
-		if ((t->op==LUMP_DEL)||(t->op==LUMP_NOP))
-		{
-			pos = msg->buf + t->u.offset;
-			/* From */
-			if( ((msg->msg_flags&FL_USE_UAC_FROM)==0)
-					&& (( pos < msg->from->name.s 
-							&& pos + t->len > msg->from->name.s )
-						|| (pos >= msg->from->name.s
-							&& pos <= msg->from->name.s+msg->from->len)
-						)
-					)
-				msg->msg_flags |= FL_USE_UAC_FROM;
-			/* To */
-			if( ((msg->msg_flags&FL_USE_UAC_TO)==0)
-					&& (( pos < msg->to->name.s 
-							&& pos + t->len > msg->to->name.s )
-						|| (pos >= msg->to->name.s
-							&& pos <= msg->to->name.s+msg->to->len)
-						)
-					)
-				msg->msg_flags |= FL_USE_UAC_TO;
-			/* CSeq */
-			if( ((msg->msg_flags&FL_USE_UAC_CSEQ)==0)
-					&& (( pos < msg->cseq->name.s 
-							&& pos + t->len > msg->cseq->name.s )
-						|| (pos >= msg->cseq->name.s
-							&& pos <= msg->cseq->name.s+msg->cseq->len)
-						)
-					)
-				msg->msg_flags |= FL_USE_UAC_CSEQ;
-
-			/* if done, then return */
-			if((msg->msg_flags&flags) == flags)
-				return;
-		}
-	}
-}
-
-/*!
  * \brief Atomic "new_tran" construct
  * \return negative on error, 1 if a request did not match a transaction
  * - it that was an ack, the calling function shall forward statelessly

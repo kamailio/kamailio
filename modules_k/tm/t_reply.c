@@ -623,6 +623,8 @@ static inline int run_failure_handlers(struct cell *t)
 		t->on_negative=0;
 		/* run a reply_route action if some was marked */
 		run_top_route(failure_rlist[on_failure], &faked_req);
+		check_hdrs_changes(&faked_req);
+		shmem_msg->msg_flags |= faked_req.msg_flags;
 	}
 
 	/* restore original environment and free the fake msg */
