@@ -295,7 +295,6 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 	pres_ev_t* event= NULL;
 	str pres_user;
 	str pres_domain;
-	struct sip_uri pres_uri;
 	int reply_code;
 	str reply_str;
 	int sent_reply= 0;
@@ -400,16 +399,15 @@ int handle_publish(struct sip_msg* msg, char* sender_uri, char* str2)
 		lexpire = max_expires;
 
 	/* get pres_uri from Request-URI*/
-	if( parse_uri(msg->first_line.u.request.uri.s, 
-				msg->first_line.u.request.uri.len, &pres_uri)< 0)
+	if(parse_sip_msg_uri(msg)< 0)
 	{
 		LM_ERR("parsing Request URI\n");
 		reply_code= 400; 
 		reply_str= pu_400a_rpl;
 		goto error;
 	}
-	pres_user= pres_uri.user;
-	pres_domain= pres_uri.host;
+	pres_user= msg->parsed_uri.user;
+	pres_domain= msg->parsed_uri.host;
 
 	if (!msg->content_length) 
 	{

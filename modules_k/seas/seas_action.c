@@ -1344,7 +1344,7 @@ error:
 int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int i)
 {
    char msg[14+MAX_REASON_LEN];
-   int k;
+   int k, ev_len;
    k=4;
    if(i==0)
       i=strlen(err_buf);
@@ -1362,8 +1362,8 @@ int as_action_fail_resp(int uac_id,int sip_error,char *err_buf,int i)
    msg[k++]=(char)(unsigned char)i;
    memcpy(msg+k,err_buf,i);
    k+=i;
-   k=htonl(k);
-   memcpy(msg,&k,4);
+   ev_len=htonl(k);
+   memcpy(msg,&ev_len,4);
    write(my_as->u.as.action_fd,msg,k);
    return 0;
 }

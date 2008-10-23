@@ -92,13 +92,10 @@ void bla_cb(ucontact_t* c, int type, void* param)
 	subs.contact= &server_address;
 	
 	if(bla_outbound_proxy.s && bla_outbound_proxy.len)
-	{
-		LM_DBG("outbound_proxy= %.*s\n", bla_outbound_proxy.len, 
-				bla_outbound_proxy.s);
 		subs.outbound_proxy= &bla_outbound_proxy;
-	}
 	else
-		subs.outbound_proxy= NULL;
+	if(c->received.s && c->received.len)
+		subs.outbound_proxy= &c->received;
 
 	if(type & UL_CONTACT_INSERT)
 		subs.flag|= INSERT_TYPE;

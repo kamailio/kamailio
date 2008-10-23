@@ -28,8 +28,6 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include "../../sr_module.h"
@@ -41,6 +39,7 @@
 #include "../../pvar.h"
 #include "../../error.h"
 #include "../../timer.h"
+#include "../../resolve.h"
 #include "../../data_lump.h"
 #include "../../mod_fix.h"
 #include "../../script_cb.h"
@@ -784,22 +783,15 @@ get_contact_uri(struct sip_msg* msg, struct sip_uri *uri, contact_t **_c)
 static INLINE int
 rfc1918address(str *address)
 {
-    struct in_addr inaddr;
+    struct ip_addr *ip;
     uint32_t netaddr;
-    int i, result;
-    char c;
+    int i;
 
-    c = address->s[address->len];
-    address->s[address->len] = 0;
-
-    result = inet_aton(address->s, &inaddr);
-
-    address->s[address->len] = c;
-
-    if (result==0)
+    ip = str2ip(address);
+    if (ip == NULL)
         return -1; // invalid address to test
 
-    netaddr = ntohl(inaddr.s_addr);
+    netaddr = ntohl(ip->u.addr32[0]);
 
     for (i=0; rfc1918nets[i].name!=NULL; i++) {
         if ((netaddr & rfc1918nets[i].mask)==rfc1918nets[i].address) {
