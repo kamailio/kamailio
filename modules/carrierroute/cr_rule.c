@@ -21,22 +21,15 @@
  */
 
 /**
- * \file route_rule.c
+ * \file cr_rule.c
  * \brief Contains the functions to manage routing rule data.
  * \ingroup carrierroute
  * - Module; \ref carrierroute
  */
 
-#include "../../mem/shm_mem.h"
-#include "../../dprint.h"
 #include "../../ut.h"
+#include "cr_rule.h"
 
-#include "carrierroute.h"
-#include "route_rule.h"
-
-static int rule_fixup_recursor(struct route_tree_item * rt);
-
-static int fixup_rule_backup(struct route_flags * rf, struct route_rule * rr);
 
 /**
  * Adds a route rule to rf. prefix, rewrite_hostpart, rewrite_local_prefix,
@@ -166,51 +159,157 @@ mem_error:
 
 
 /**
+ * Destroys route rule rr by freeing all its memory.
+ *
+ * @param rr route rule to be destroyed
+ */
+void destroy_route_rule(struct route_rule * rr) {
+	struct route_rule_p_list * t_rl;
+	if (rr->host.s) {
+		shm_free(rr->host.s);
+	}
+	if (rr->local_prefix.s) {
+		shm_free(rr->local_prefix.s);
+	}
+	if (rr->local_suffix.s) {
+		shm_free(rr->local_suffix.s);
+	}
+	if (rr->comment.s) {
+		shm_free(rr->comment.s);
+	}
+	if (rr->prefix.s) {
+		shm_free(rr->prefix.s);
+	}
+	if(rr->backup){
+		shm_free(rr->backup);
+	}
+	while(rr->backed_up){
+		t_rl = rr->backed_up->next;
+		shm_free(rr->backed_up);
+		rr->backed_up = t_rl;
+	}
+	shm_free(rr);
+	return;
+}
+
+
+/**
+ * Try to find a matching route_flags struct in rt and return it, add it if not found.
+ *
+ * @param rf_head pointer to the head of the route flags list, might be changed during insert.
+ * @param flags user defined flags
+ * @param mask mask for user defined flags
+ *
+ * @return pointer to the route_flags struct on success, NULL on failure.
+ *
+ */
+struct route_flags * add_route_flags(struct route_flags **rf_head, const flag_t flags, const flag_t mask)
+{
+	struct route_flags *shm_rf;
+	struct route_flags *prev_rf, *tmp_rf;
+	prev_rf = tmp_rf = NULL;
+
+	if (rf_head) {
+		/* search for matching route_flags struct */
+		for (tmp_rf=*rf_head; tmp_rf!=NULL; tmp_rf=tmp_rf->next) {
+			if ((tmp_rf->flags == flags) && (tmp_rf->mask == mask)) return tmp_rf;
+		}
+		
+		/* not found, insert one */
+		for (tmp_rf=*rf_head; tmp_rf!=NULL; tmp_rf=tmp_rf->next) {
+			if (tmp_rf->mask < mask) break;
+			prev_rf=tmp_rf;
+		}
+	}
+
+	if ((shm_rf = shm_malloc(sizeof(struct route_flags))) == NULL) {
+		LM_ERR("out of shared memory\n");
+		return NULL;
+	}
+	memset(shm_rf, 0, sizeof(struct route_flags));
+
+	shm_rf->flags=flags;
+	shm_rf->mask=mask;
+	shm_rf->next=tmp_rf;
+	
+	if (prev_rf) {
+		prev_rf->next = shm_rf;
+	}
+	else {
+		if (rf_head) *rf_head=shm_rf;
+	}
+
+	return shm_rf;
+}
+
+
+/**
+ * Destroys route_flags in shared memory by freing all its memory.
+ *
+ * @param rf route_flags struct to be destroyed
+ */
+void destroy_route_flags(struct route_flags *rf) {
+	struct route_rule *rs, *rs_tmp;
+
+	if (rf->rules) {
+		shm_free(rf->rules);
+	}
+	rs = rf->rule_list;
+	while (rs != NULL) {
+		rs_tmp = rs->next;
+		destroy_route_rule(rs);
+		rs = rs_tmp;
+	}
+	shm_free(rf);
+}
+
+
+/**
  * Compares the priority of two failure route rules.
  *
- * @param rr1 first failure rule
- * @param rr2 second failure rule
+ * @param frr1 first failure rule
+ * @param frr2 second failure rule
  *
- * @return 0 if rr1 and rr2 have the same priority, -1 if rr1 has higher priority than rr2, 1 if rr1 has lower priority than rr2.
+ * @return 0 if frr1 and frr2 have the same priority, -1 if frr1 has higher priority than frr2, 1 if frr1 has lower priority than frr2.
  *
  * @see add_failure_route_to_tree()
  */
-int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2) {
+static int failure_rule_prio_cmp(struct failure_route_rule *frr1, struct failure_route_rule *frr2) {
 	int n1, n2, i;
 	
 	/* host has highest priority */
-	if ((rr1->host.len == 0) && (rr2->host.len > 0)) {
-		/* host1 is wildcard -> rr1 has lower priority */
+	if ((frr1->host.len == 0) && (frr2->host.len > 0)) {
+		/* host1 is wildcard -> frr1 has lower priority */
 		return 1;
 	}
-	else if ((rr1->host.len > 0) && (rr2->host.len == 0)) {
-		/* host2 is wildcard -> rr1 has higher priority */
+	else if ((frr1->host.len > 0) && (frr2->host.len == 0)) {
+		/* host2 is wildcard -> frr1 has higher priority */
 		return -1;
 	}
 	else {
 		/* reply_code has second highest priority */
 		n1=0;
 		n2=0;
-		for (i=0; i < rr1->reply_code.len; i++) {
-			if (rr1->reply_code.s[i]=='.') n1++;
+		for (i=0; i < frr1->reply_code.len; i++) {
+			if (frr1->reply_code.s[i]=='.') n1++;
 		}
-		for (i=0; i < rr2->reply_code.len; i++) {
-			if (rr2->reply_code.s[i]=='.') n2++;
+		for (i=0; i < frr2->reply_code.len; i++) {
+			if (frr2->reply_code.s[i]=='.') n2++;
 		}
 		if (n1 < n2) {
-			/* reply_code1 has fewer wildcards -> rr1 has higher priority */
+			/* reply_code1 has fewer wildcards -> frr1 has higher priority */
 			return -1;
 		}
 		else if (n1 > n2) {
-			/* reply_code1 has more wildcards -> rr1 has lower priority */
+			/* reply_code1 has more wildcards -> frr1 has lower priority */
 			return 1;
 		}
 		else {
 			/* flags have lowest priority */
-			if (rr1->mask > rr2->mask) {
+			if (frr1->mask > frr2->mask) {
 				return -1;
 			}
-			else if (rr1->mask < rr2->mask) {
+			else if (frr1->mask < frr2->mask) {
 				return 1;
 			}
 		}
@@ -221,10 +320,10 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
 
 
 /**
- * Adds a failure route rule to rt. prefix, host, reply_code, and comment
+ * Adds a failure route rule to rule list. prefix, host, reply_code, and comment
  * must not contain NULL pointers.
  *
- * @param failure_tree the current route tree node
+ * @param frr_head pointer to the head of the failure route rule list, might be changed during insert
  * @param prefix the whole scan prefix
  * @param host the hostname last tried
  * @param reply_code the reply code 
@@ -233,202 +332,86 @@ int rule_prio_cmp(struct failure_route_rule *rr1, struct failure_route_rule *rr2
  * @param next_domain continue routing with this domain
  * @param comment a comment for the route rule
  *
- * @return 0 on success, -1 on failure
+ * @return pointer to the failure_route_rul struct on success, NULL on failure.
  *
  * @see add_failure_route_to_tree()
  */
-int add_failure_route_rule(struct failure_route_tree_item * failure_tree, const str * prefix,
-		const str * host, const str * reply_code, flag_t flags, flag_t mask,
-		const int next_domain, const str * comment) {
-	struct failure_route_rule *shm_rr, *rr, *prev;
+struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **frr_head,
+		const str * prefix, const str * host, const str * reply_code,
+		flag_t flags, flag_t mask, const int next_domain, const str * comment) {
+	struct failure_route_rule *shm_frr, *frr, *prev;
+	frr = prev = NULL;
 	
-	if ((shm_rr = shm_malloc(sizeof(struct failure_route_rule))) == NULL) {
+	if ((shm_frr = shm_malloc(sizeof(struct failure_route_rule))) == NULL) {
 		LM_ERR("out of shared memory\n");
-		return -1;
+		return NULL;
 	}
-	memset(shm_rr, 0, sizeof(struct failure_route_rule));
+	memset(shm_frr, 0, sizeof(struct failure_route_rule));
 	
-	if (shm_str_dup(&shm_rr->host, host) != 0) {
+	if (shm_str_dup(&shm_frr->host, host) != 0) {
 		goto mem_error;
 	}
 	
-	if (shm_str_dup(&shm_rr->reply_code, reply_code) != 0) {
+	if (shm_str_dup(&shm_frr->reply_code, reply_code) != 0) {
 		goto mem_error;
 	}
 	
-	shm_rr->flags = flags;
-	shm_rr->mask = mask;
-	shm_rr->next_domain = next_domain;
+	shm_frr->flags = flags;
+	shm_frr->mask = mask;
+	shm_frr->next_domain = next_domain;
 	
-	if (shm_str_dup(&shm_rr->comment, comment) != 0) {
+	if (shm_str_dup(&shm_frr->comment, comment) != 0) {
 		goto mem_error;
 	}
 	
 	/* before inserting into list, check priorities! */
-	rr=failure_tree->rule_list;
-	prev=NULL;
-	while ((rr != NULL) && (rule_prio_cmp(shm_rr, rr) > 0)) {
-		prev=rr;
-		rr=rr->next;
+	if (frr_head) {
+		frr=*frr_head;
+		prev=NULL;
+		while ((frr != NULL) && (failure_rule_prio_cmp(shm_frr, frr) > 0)) {
+			prev=frr;
+			frr=frr->next;
+		}
 	}
-	if(prev){
-		shm_rr->next = prev->next;
-		prev->next = shm_rr;
-	} else {
-		shm_rr->next = failure_tree->rule_list;
-		failure_tree->rule_list = shm_rr;
-	}
-	
-	return 0;
 
+	shm_frr->next = frr;
+
+	if(prev){
+		prev->next = shm_frr;
+	}
+	else {
+		if (frr_head) *frr_head=shm_frr;
+	}
+
+	return shm_frr;
+	
 mem_error:
 	LM_ERR("out of shared memory\n");
-	destroy_failure_route_rule(shm_rr);
-	return -1;
-}
-
-
-
-/**
- * Fixes the route rules by creating an array for accessing
- * route rules by hash index directly
- *
- * @param rd route data to be fixed
- *
- * @return 0 on success, -1 on failure
- */
-int rule_fixup(struct rewrite_data * rd) {
-	int i,j;
-	for (i=0; i<rd->tree_num; i++) {
-		for (j=0; j<rd->carriers[i]->tree_num; j++) {
-			if (rd->carriers[i]->trees[j] && rd->carriers[i]->trees[j]->tree) {
-				LM_INFO("fixing tree %.*s\n", rd->carriers[i]->trees[j]->name.len, rd->carriers[i]->trees[j]->name.s);
-				if (rule_fixup_recursor(rd->carriers[i]->trees[j]->tree) < 0) {
-					return -1;
-				}
-			} else {
-				LM_NOTICE("empty tree at [%i][%i]\n", i, j);
-			}
-		}
-	}
-	return 0;
+	destroy_failure_route_rule(shm_frr);
+	return NULL;
 }
 
 
 /**
- * Does the work for rule_fixup recursively.
- * First, it tries to set a pointer the rules with an existing hash index
- * at the marching array index. Afterward, remaining rules are populated
- * with incrementing hash indices.
+ * Destroys failure route rule frr by freeing all its memory.
  *
- * @param rt the route tree node to be fixed up
- *
- * @return 0 on success, -1 on failure
+ * @param rr route rule to be destroyed
  */
-static int rule_fixup_recursor(struct route_tree_item * rt) {
-	struct route_rule * rr;
-	struct route_flags * rf;
-	int i, p_dice, ret = 0;
-
-	for (rf=rt->flag_list; rf!=NULL; rf=rf->next) {
-		p_dice = 0;
-		if (rf->rule_list) {
-			rr = rf->rule_list;
-			rf->rule_num = 0;
-			while (rr) {
-				rf->rule_num++;
-				rf->dice_max += rr->prob * DICE_MAX;
-				rr = rr->next;
-			}
-			rr = rf->rule_list;
-			while (rr) {
-				rr->dice_to = (rr->prob * DICE_MAX) + p_dice;
-				p_dice = rr->dice_to;
-				rr = rr->next;
-			}
-			
-			if (rf->rule_num != rf->max_targets) {
-				LM_ERR("number of rules(%i) differs from max_targets(%i), maybe your config is wrong?\n", rf->rule_num, rf->max_targets);
-				return -1;
-			}
-			if(rf->rules) {
-				shm_free(rf->rules);
-				rf->rules = NULL;
-			}
-			if ((rf->rules = shm_malloc(sizeof(struct route_rule *) * rf->rule_num)) == NULL) {
-				LM_ERR("out of shared memory\n");
-				return -1;
-			}
-			memset(rf->rules, 0, sizeof(struct route_rule *) * rf->rule_num);
-			for (rr = rf->rule_list; rr; rr = rr->next) {
-				if (rr->hash_index) {
-					if (rr->hash_index > rf->rule_num) {
-						LM_ERR("too large hash index %i, max is %i\n", rr->hash_index, rf->rule_num);
-						shm_free(rf->rules);
-						return -1;
-					}
-					if (rf->rules[rr->hash_index - 1]) {
-						LM_ERR("duplicate hash index %i\n", rr->hash_index);
-						shm_free(rf->rules);
-						return -1;
-					}
-					rf->rules[rr->hash_index - 1] = rr;
-					LM_INFO("rule with host %.*s hash has hashindex %i.\n", rr->host.len, rr->host.s, rr->hash_index);
-				}
-			}
-			
-			rr = rf->rule_list;
-			i=0;
-			while (rr && i < rf->rule_num) {
-				if (!rr->hash_index) {
-					if (rf->rules[i]) {
-						i++;
-					} else {
-						rf->rules[i] = rr;
-						rr->hash_index = i + 1;
-						LM_INFO("hashless rule with host %.*s hash hash_index %i\n", rr->host.len, rr->host.s, i+1);
-						rr = rr->next;
-					}
-				} else {
-					rr = rr->next;
-				}
-			}
-			if (rr) {
-				LM_ERR("Could not populate rules: rr: %p\n", rr);
-				return -1;
-			}
-			for(i=0; i<rf->rule_num; i++){
-				ret += fixup_rule_backup(rf, rf->rules[i]);
-			}
-		}
+void destroy_failure_route_rule(struct failure_route_rule * frr) {
+	if (frr->host.s) {
+		shm_free(frr->host.s);
 	}
-
-	for (i=0; i<10; i++) {
-		if (rt->nodes[i]) {
-			ret += rule_fixup_recursor(rt->nodes[i]);
-		}
+	if (frr->comment.s) {
+		shm_free(frr->comment.s);
 	}
-
-	return ret;
-}
-
-static int fixup_rule_backup(struct route_flags * rf, struct route_rule * rr){
-	struct route_rule_p_list * rl;
-	if(!rr->status && rr->backup){
-		if((rr->backup->rr = find_rule_by_hash(rf, rr->backup->hash_index)) == NULL){
-			LM_ERR("didn't find backup route\n");
-			return -1;
-		}
+	if (frr->prefix.s) {
+		shm_free(frr->prefix.s);
 	}
-	rl = rr->backed_up;
-	while(rl){
-		if((rl->rr = find_rule_by_hash(rf, rl->hash_index)) == NULL){
-			LM_ERR("didn't find backed up route\n");
-			return -1;
-		}
-		rl = rl->next;
+	if (frr->reply_code.s) {
+		shm_free(frr->reply_code.s);
 	}
-	return 0;
+	shm_free(frr);
+	return;
 }
 
 
@@ -457,7 +440,8 @@ struct route_rule * find_rule_by_host(struct route_flags * rf, str * host){
 	return NULL;
 }
 
-int add_backup_route(struct route_rule * rule, struct route_rule * backup){
+
+int add_backup_rule(struct route_rule * rule, struct route_rule * backup){
 	struct route_rule_p_list * tmp = NULL;
 	if(!backup->status){
 		LM_ERR("desired backup route is inactive\n");
@@ -539,61 +523,4 @@ struct route_rule * find_auto_backup(struct route_flags * rf, struct route_rule 
 		rr = rr->next;
 	}
 	return NULL;
-}
-
-/**
- * Destroys route rule rr by freeing all its memory.
- *
- * @param rr route rule to be destroyed
- */
-void destroy_route_rule(struct route_rule * rr) {
-	struct route_rule_p_list * t_rl;
-	if (rr->host.s) {
-		shm_free(rr->host.s);
-	}
-	if (rr->local_prefix.s) {
-		shm_free(rr->local_prefix.s);
-	}
-	if (rr->local_suffix.s) {
-		shm_free(rr->local_suffix.s);
-	}
-	if (rr->comment.s) {
-		shm_free(rr->comment.s);
-	}
-	if (rr->prefix.s) {
-		shm_free(rr->prefix.s);
-	}
-	if(rr->backup){
-		shm_free(rr->backup);
-	}
-	while(rr->backed_up){
-		t_rl = rr->backed_up->next;
-		shm_free(rr->backed_up);
-		rr->backed_up = t_rl;
-	}
-	shm_free(rr);
-	return;
-}
-
-
-/**
- * Destroys failure route rule rr by freeing all its memory.
- *
- * @param rr route rule to be destroyed
- */
-void destroy_failure_route_rule(struct failure_route_rule * rr) {
-	if (rr->host.s) {
-		shm_free(rr->host.s);
-	}
-	if (rr->comment.s) {
-		shm_free(rr->comment.s);
-	}
-	if (rr->prefix.s) {
-		shm_free(rr->prefix.s);
-	}
-	if (rr->reply_code.s) {
-		shm_free(rr->reply_code.s);
-	}
-	shm_free(rr);
-	return;
 }

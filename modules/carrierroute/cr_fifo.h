@@ -21,18 +21,16 @@
  */
 
 /**
- * \file route_fifo.h
+ * \file cr_fifo.h
  * \brief Functions for modifying routing data via fifo commands.
  * \ingroup carrierroute
  * - Module; \ref carrierroute
  */
 
-#ifndef SP_ROUTE_ROUTE_FIFO_H
-#define SP_ROUTE_ROUTE_FIFO_H
+#ifndef CR_FIFO_H
+#define CR_FIFO_H
 
 #include "../../mi/mi.h"
-
-#include "carrier_tree.h"
 
 extern int fifo_err;
 

@@ -31,11 +31,13 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "carrierroute.h"
-#include "route_db.h"
+#include "cr_db.h"
+#include "cr_carrier.h"
 #include <stdio.h>
 
 #define QUERY_LEN 2048
 
+/*! carrier list */
 struct carrier {
 	int id;
 	char * name;
@@ -129,6 +131,7 @@ int load_user_carrier(str * user, str * domain) {
 	return id;
 }
 
+
 /**
  * Loads the routing data from the database given in global
  * variable db_url and stores it in routing tree rd.
@@ -139,7 +142,7 @@ int load_user_carrier(str * user, str * domain) {
  * @return 0 means ok, -1 means an error occured
  *
  */
-int load_route_data(struct rewrite_data * rd) {
+int load_route_data_db(struct route_data_t * rd) {
 	db_res_t * res = NULL;
 	db_row_t * row = NULL;
 	int i, ret, carrier_count = 0;
@@ -160,12 +163,12 @@ int load_route_data(struct rewrite_data * rd) {
 		goto errout;
 	}
 
-	if ((rd->carriers = shm_malloc(sizeof(struct carrier_tree *) * carrier_count)) == NULL) {
+	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *) * carrier_count)) == NULL) {
 		LM_ERR("out of shared memory\n");
 		goto errout;
 	}
-	memset(rd->carriers, 0, sizeof(struct carrier_tree *) * carrier_count);
-	rd->tree_num = carrier_count;
+	memset(rd->carriers, 0, sizeof(struct carrier_data_t *) * carrier_count);
+	rd->carrier_num = carrier_count;
 
 	tmp = carriers;
 	for (i=0; i<carrier_count; i++) {
@@ -187,7 +190,7 @@ int load_route_data(struct rewrite_data * rd) {
 		LM_INFO("name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
 		tmp_carrier.s=tmp->name;
 		tmp_carrier.len=strlen(tmp_carrier.s);
-		if (add_carrier_tree(&tmp_carrier, tmp->id, rd, RES_ROW_N(res)) == NULL) {
+		if (add_carrier_data(rd, &tmp_carrier, tmp->id, RES_ROW_N(res)) == NULL) {
 			LM_ERR("can't add carrier %s\n", tmp->name);
 			goto errout;
 		}
@@ -331,6 +334,7 @@ errout:
 	return -1;
 }
 
+
 static int store_carriers(struct carrier ** start){
 	db_res_t * res = NULL;
 	int i, count;
@@ -372,6 +376,7 @@ if(res){
 }
 	return -1;
 }
+
 
 static void destroy_carriers(struct carrier * start){
 	struct carrier * tmp, * tmp2;
