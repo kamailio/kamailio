@@ -21,23 +21,27 @@
  */
 
 /**
- * \file route_fifo.c
+ * \file cr_fifo.c
  * \brief Functions for modifying routing data via fifo commands.
  * \ingroup carrierroute
  * - Module; \ref carrierroute
  */
 
-#include "route_fifo.h"
-#include "carrierroute.h"
-#include "route_rule.h"
-#include "route_config.h"
+#include <ctype.h>
+#include <stdlib.h>
 
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
-#include <ctype.h>
-#include <stdlib.h>
 #include "../../str.h"
 #include "../../ut.h"
+
+#include "cr_fifo.h"
+#include "carrierroute.h"
+#include "cr_config.h"
+#include "cr_carrier.h"
+#include "cr_domain.h"
+#include "cr_rule.h"
+
 
 /**
  * Defines the option set for the different fifo commands
@@ -51,8 +55,11 @@ static unsigned int opt_settings[5][3] = {{O_PREFIX|O_DOMAIN|O_HOST|O_PROB, O_R_
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB|O_NEW_TARGET, O_R_PREFIX|O_R_SUFFIX|O_H_INDEX},
         {O_HOST|O_DOMAIN|O_PREFIX, O_PROB, O_R_PREFIX|O_R_SUFFIX|O_NEW_TARGET|O_H_INDEX}};
 
+int fifo_err;
 
-static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree, char *prefix);
+static int updated;
+
+static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix);
 
 static struct mi_root* print_replace_help(void);
 
@@ -60,7 +67,7 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]);
 
 static int update_route_data(fifo_opt_t * opts);
 
-static int update_route_data_recursor(struct route_tree_item * rt, str * act_domain, fifo_opt_t * opts);
+static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domain, fifo_opt_t * opts);
 
 static struct mi_root* print_fifo_err(void);
 
@@ -85,6 +92,7 @@ static int str_toklen(str * str, const char * delims)
 	return len;
 }
 
+
 /**
  * reloads the routing data
  *
@@ -96,7 +104,7 @@ static int str_toklen(str * str, const char * delims)
 struct mi_root* reload_fifo (struct mi_root* cmd_tree, void *param) {
 	struct mi_root * tmp = NULL;
 
-	if (prepare_route_tree () == -1) {
+	if (reload_route_data () == -1) {
 		tmp = init_mi_tree(500, "failed to re-built tree, see log", 33);
 	}
 	else {
@@ -105,9 +113,6 @@ struct mi_root* reload_fifo (struct mi_root* cmd_tree, void *param) {
 	return tmp;
 }
 
-int fifo_err;
-
-static int updated;
 
 /**
  * prints the routing data
@@ -118,7 +123,7 @@ static int updated;
  * @return code 200 on success, code 400 or 500 on failure
  */
 struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
-	struct rewrite_data * rd;
+	struct route_data_t * rd;
 	str *tmp_str;
 	str empty_str = str_init("<empty>");
 
@@ -138,19 +143,19 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 
 	LM_DBG("start processing of data\n");
 	int i, j;
- 	for (i = 0; i < rd->tree_num; i++) {
+ 	for (i = 0; i < rd->carrier_num; i++) {
  		if (rd->carriers[i]) {
 			tmp_str = (rd->carriers[i] ? &rd->carriers[i]->name : &empty_str);
 			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for carrier %.*s (%i)\n", tmp_str->len, tmp_str->s, rd->carriers[i] ? rd->carriers[i]->id : 0);
 			if(node == NULL)
 				goto error;
- 			for (j=0; j<rd->carriers[i]->tree_num; j++) {
- 				if (rd->carriers[i]->trees[j] && rd->carriers[i]->trees[j]->tree) {
-					tmp_str = (rd->carriers[i]->trees[j] ? &rd->carriers[i]->trees[j]->name : &empty_str);
+ 			for (j=0; j<rd->carriers[i]->domain_num; j++) {
+ 				if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
+					tmp_str = (rd->carriers[i]->domains[j] ? &rd->carriers[i]->domains[j]->name : &empty_str);
 					node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for domain %.*s\n", tmp_str->len, tmp_str->s);
 					if(node == NULL)
 						goto error;
- 					dump_tree_recursor (&rpl_tree->node, rd->carriers[i]->trees[j]->tree, "");
+ 					dump_tree_recursor (&rpl_tree->node, rd->carriers[i]->domains[j]->tree, "");
 				}
  			}
 		}
@@ -164,6 +169,7 @@ error:
 	free_mi_tree(rpl_tree);
 	return 0;
 }
+
 
 /**
  * replaces the host specified by parameters in the
@@ -181,7 +187,7 @@ struct mi_root* replace_host (struct mi_root* cmd_tree, void *param) {
 	int ret;
 	fifo_opt_t options;
 
-	if(mode != SP_ROUTE_MODE_FILE) {
+	if(mode != CARRIERROUTE_MODE_FILE) {
 		return init_mi_tree(400, "Not running in config file mode, cannot modify route from command line", 70);
 	}
 	
@@ -208,6 +214,7 @@ struct mi_root* replace_host (struct mi_root* cmd_tree, void *param) {
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
+
 /**
  * deactivates the host given in the command line options,
  * can be used only in file mode
@@ -224,7 +231,7 @@ struct mi_root* deactivate_host (struct mi_root* cmd_tree, void *param) {
 	int ret;
 	fifo_opt_t options;
 
-	if(mode != SP_ROUTE_MODE_FILE) {
+	if(mode != CARRIERROUTE_MODE_FILE) {
 		return init_mi_tree(400, "Not running in config file mode, cannot modify route from command line", 70);
 	}
 
@@ -251,6 +258,7 @@ struct mi_root* deactivate_host (struct mi_root* cmd_tree, void *param) {
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
+
 /**
  * activates the host given in the command line options,
  * can be used only in file mode
@@ -267,7 +275,7 @@ struct mi_root* activate_host (struct mi_root* cmd_tree, void *param) {
 	int ret;
 	fifo_opt_t options;
 
-	if(mode != SP_ROUTE_MODE_FILE) {
+	if(mode != CARRIERROUTE_MODE_FILE) {
 		return init_mi_tree(400, "Not running in config file mode, cannot modify route from command line", 70);
 	}
 
@@ -294,6 +302,7 @@ struct mi_root* activate_host (struct mi_root* cmd_tree, void *param) {
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
+
 /**
  * adds the host specified by the command line args,
  * can be used only in file mode
@@ -310,7 +319,7 @@ struct mi_root* add_host (struct mi_root* cmd_tree, void *param) {
 	int ret;
 	fifo_opt_t options;
 
-	if(mode != SP_ROUTE_MODE_FILE) {
+	if(mode != CARRIERROUTE_MODE_FILE) {
 		return init_mi_tree(400, "Not running in config file mode, cannot modify route from command line", 70);
 	}
 
@@ -333,6 +342,7 @@ struct mi_root* add_host (struct mi_root* cmd_tree, void *param) {
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
+
 /**
  * deletes the host specified by the command line args,
  * can be used only in file mode
@@ -349,7 +359,7 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
 	int ret;
 	fifo_opt_t options;
 
-	if(mode != SP_ROUTE_MODE_FILE) {
+	if(mode != CARRIERROUTE_MODE_FILE) {
 		return init_mi_tree(400, "Not running in config file mode, cannot modify route from command line", 70);
 	}
 
@@ -375,6 +385,7 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
 	return init_mi_tree(200, MI_OK_S, MI_OK_LEN);
 }
 
+
 /**
  * does the work for dump_fifo, traverses the routing tree
  * and prints route rules if present.
@@ -385,7 +396,7 @@ struct mi_root* delete_host (struct mi_root* cmd_tree, void * param) {
  *
  * @return mi node containing the route rules
  */
-static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree, char *prefix) {
+static int dump_tree_recursor (struct mi_node* msg, struct dtrie_node_t *node, char *prefix) {
 	char s[256];
 	char *p;
 	int i;
@@ -398,13 +409,13 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 	p = s + strlen (s);
 	p[1] = '\0';
 	for (i = 0; i < 10; ++i) {
-		if (tree->nodes[i] != NULL) {
+		if (node->child[i] != NULL) {
 			*p = i + '0';
-			dump_tree_recursor (msg->next, tree->nodes[i], s);
+			dump_tree_recursor (msg->next, node->child[i], s);
 		}
 	}
 	*p = '\0';
-	for (rf = tree->flag_list; rf != NULL; rf = rf->next) {
+	for (rf = (struct route_flags *)(node->data); rf != NULL; rf = rf->next) {
 		for (rr = rf->rule_list; rr != NULL; rr = rr->next) {
 			if(rf->dice_max){
 				prob = (double)(rr->prob * DICE_MAX)/(double)rf->dice_max;
@@ -435,6 +446,7 @@ static int dump_tree_recursor (struct mi_node* msg, struct route_tree_item *tree
 	}
 	return 0;
 }
+
 
 /**
  * parses the command line argument for options
@@ -520,7 +532,7 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 							op = -1;
 							break;
 							case OPT_PREFIX:
-							if (str_strcasecmp(&opt_argv[i], &SP_EMPTY_PREFIX) == 0) {
+							if (str_strcasecmp(&opt_argv[i], &CR_EMPTY_PREFIX) == 0) {
 								opts->prefix.s = NULL;
 								opts->prefix.len = 0;
 							} else {
@@ -579,6 +591,7 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 	return 0;
 }
 
+
 /**
  * loads the config data into shared memory (but doesn't really
  * share it), updates the routing data and writes it to the config
@@ -590,7 +603,7 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
  * @return 0 on success, -1 on failure
  */
 static int update_route_data(fifo_opt_t * opts) {
-	struct rewrite_data * rd;
+	struct route_data_t * rd;
 	int i,j;
 	str tmp_domain;
 	str tmp_prefix;
@@ -599,11 +612,11 @@ static int update_route_data(fifo_opt_t * opts) {
 	str tmp_rewrite_suffix;
 	str tmp_comment = str_init("");
 
-	if ((rd = shm_malloc(sizeof(struct rewrite_data))) == NULL) {
+	if ((rd = shm_malloc(sizeof(struct route_data_t))) == NULL) {
 		LM_ERR("out of shared memory\n");
 		return -1;
 	}
-	memset(rd, 0, sizeof(struct rewrite_data));
+	memset(rd, 0, sizeof(struct route_data_t));
 	if (load_config(rd) < 0) {
 		LM_ERR("could not load config");
 		FIFO_ERR(E_LOADCONF);
@@ -657,11 +670,11 @@ static int update_route_data(fifo_opt_t * opts) {
 		}
 
 	} else {
-		for (i=0; i<rd->tree_num; i++) {
+		for (i=0; i<rd->carrier_num; i++) {
 			if(rd->carriers[i]){
-			for (j=0; j<rd->carriers[i]->tree_num; j++) {
-				if (rd->carriers[i]->trees[j] && rd->carriers[i]->trees[j]->tree) {
-					if (update_route_data_recursor(rd->carriers[i]->trees[j]->tree, &rd->carriers[i]->trees[j]->name, opts) < 0) {
+			for (j=0; j<rd->carriers[i]->domain_num; j++) {
+				if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
+					if (update_route_data_recursor(rd->carriers[i]->domains[j]->tree, &rd->carriers[i]->domains[j]->name, opts) < 0) {
 						goto errout;
 					}
 				}
@@ -682,18 +695,19 @@ static int update_route_data(fifo_opt_t * opts) {
 		goto errout;
 	}
 
-	if (prepare_route_tree() == -1) {
-		LM_ERR("could not prepare the route tree");
+	if (reload_route_data() == -1) {
+		LM_ERR("could not reload route data");
 		FIFO_ERR(E_LOADCONF);
 		goto errout;
 	}
 
-	destroy_rewrite_data(rd);
+	clear_route_data(rd);
 	return 0;
 errout:
-	destroy_rewrite_data(rd);
+	clear_route_data(rd);
 	return -1;
 }
+
 
 /**
  * Does the work for update_route_data by recursively
@@ -708,13 +722,13 @@ errout:
  *
  * @return 0 on success, -1 on failure
  */
-static int update_route_data_recursor(struct route_tree_item * rt, str * act_domain, fifo_opt_t * opts) {
+static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domain, fifo_opt_t * opts) {
 	int i, hash = 0;
 	struct route_rule * rr, * prev = NULL, * tmp, * backup;
 	struct route_flags *rf;
 
-	if (rt->flag_list && rt->flag_list->rule_list) {
-		rf = rt->flag_list;
+	rf = (struct route_flags *)(node->data);
+	if (rf && rf->rule_list) {
 		rr = rf->rule_list;
 		while (rr) {
 			if ((!opts->domain.len || (strncmp(opts->domain.s, OPT_STAR, strlen(OPT_STAR)) == 0)
@@ -778,7 +792,7 @@ static int update_route_data_recursor(struct route_tree_item * rt, str * act_dom
 									}
 								}
 							}
-							if (add_backup_route(rr, backup) < 0) {
+							if (add_backup_rule(rr, backup) < 0) {
 								LM_ERR("couldn't set backup route\n");
 								FIFO_ERR(E_ADDBACKUP);
 								return -1;
@@ -847,14 +861,15 @@ static int update_route_data_recursor(struct route_tree_item * rt, str * act_dom
 		}
 	}
 	for (i=0; i<10; i++) {
-		if (rt->nodes[i]) {
-			if (update_route_data_recursor(rt->nodes[i], act_domain, opts) < 0) {
+		if (node->child[i]) {
+			if (update_route_data_recursor(node->child[i], act_domain, opts) < 0) {
 				return -1;
 			}
 		}
 	}
 	return 0;
 }
+
 
 /**
  * prints a short help text for fifo command usage
@@ -904,6 +919,7 @@ error:
        free_mi_tree(rpl_tree);
        return 0;
 }
+
 
 /**
  * interpret the fifo errors, creates a mi tree

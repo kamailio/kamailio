@@ -21,18 +21,18 @@
  */
 
 /**
- * @file route_db.h
+ * @file cr_db.h
  * @brief Functions for loading routing data from a database.
  * \ingroup carrierroute
  * - Module; \ref carrierroute
  */
 
-#ifndef SP_ROUTE_ROUTE_DB_H
-#define SP_ROUTE_ROUTE_DB_H
+#ifndef CR_DB_H
+#define CR_DB_H
 
 #include "../../db/db.h"
-#include "carrier_tree.h"
 #include "db_carrierroute.h"
+#include "cr_data.h"
 
 
 #define COLUMN_NUM 12
@@ -80,7 +80,7 @@ extern str * failure_columns[];
  * @return 0 means ok, -1 means an error occured
  *
  */
-int load_route_data (struct rewrite_data * rd);
+int load_route_data_db (struct route_data_t * rd);
 
 int load_user_carrier(str * user, str * domain);
 

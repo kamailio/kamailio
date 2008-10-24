@@ -22,32 +22,33 @@
  */
 
 /**
- * \file route_func.h
+ * \file cr_func.h
  * \brief Routing and balancing functions.
  * \ingroup carrierroute
  * - Module; \ref carrierroute
  */
 
-#ifndef SP_ROUTE_ROUTE_FUNC_H
-#define SP_ROUTE_ROUTE_FUNC_H
+#ifndef CR_FUNC_H
+#define CR_FUNC_H
 
 #include "../../parser/msg_parser.h"
 #include "../../pvar.h"
+#include "../../mod_fix.h"
 #include "prime_hash.h"
-#include "carrierroute.h"
+
 
 /**
  * Loads user carrier from subscriber table and stores it in an AVP.
  *
  * @param _msg the current SIP message
- * @param _user the user to determine the route tree
- * @param _domain the domain to determine the route tree
- * @param _dstavp the name of the AVP where to store the carrier tree id
+ * @param _user the user to determine the carrier data
+ * @param _domain the domain to determine the domain data
+ * @param _dstavp the name of the AVP where to store the carrier id
  *
  * @return 1 on success, -1 on failure
  */
 int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user,
-		pv_elem_t *_domain, struct multiparam_t *_dstavp);
+		pv_elem_t *_domain, gparam_t *_dstavp);
 
 
 /**
@@ -64,10 +65,11 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
-		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, pv_elem_t *_prefix_matching,
 		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
-		struct multiparam_t *_dstavp);
+		gparam_t *_dstavp);
+
 
 /**
  * rewrites the request URI of msg after determining the
@@ -83,10 +85,10 @@ int cr_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_prime_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
-		struct multiparam_t *_domain, pv_elem_t *_prefix_matching,
+int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, pv_elem_t *_prefix_matching,
 		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
-		struct multiparam_t *_dstavp);
+		gparam_t *_dstavp);
 
 
 /**
@@ -102,10 +104,8 @@ int cr_prime_route(struct sip_msg * _msg, struct multiparam_t *_carrier,
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_next_domain(struct sip_msg * _msg, struct multiparam_t *_carrier,
-		struct multiparam_t *_domain, pv_elem_t *_prefix_matching, pv_elem_t *_host,
-		pv_elem_t *_reply_code, struct multiparam_t *_dstavp);
-
-
+int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
+		gparam_t *_domain, pv_elem_t *_prefix_matching, pv_elem_t *_host,
+		pv_elem_t *_reply_code, gparam_t *_dstavp);
 
 #endif

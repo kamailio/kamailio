@@ -21,36 +21,39 @@
  */
 
 /**
- * \file load_data.h
- * \brief API to bind a data loading function.
+ * \file cr_config.h
+ * \brief Functions for load and save routing data from a config file.
  * \ingroup carrierroute
  * - Module; \ref carrierroute
  */
 
-#ifndef SP_ROUTE_LOAD_DATA_H
-#define SP_ROUTE_LOAD_DATA_H
+#ifndef CR_CONFIG_H
+#define CR_CONFIG_H
 
-#include "route_tree.h"
+#include "cr_data.h"
 
-typedef int (*route_data_load_func_t)(struct rewrite_data * rd);
 
 /**
- * Binds the loader function pointer api to the matching loader
- * functionm depending on source
+ * Loads the routing data from the config file given in global
+ * variable config_data and stores it in routing tree rd.
  *
- * @param source the configuration data source, at the moment 
- * it can be db or file
- * @param api pointer to the api where the loader function is
- * bound to
+ * @param rd Pointer to the route data tree where the routing data
+ * shall be loaded into
  *
- * @return 0 means everything is ok, -1 means an error
+ * @return 0 means ok, -1 means an error occured
+ *
  */
-int bind_data_loader(const char * source, route_data_load_func_t * api);
+int load_config(struct route_data_t * rd);
 
-int data_main_finalize(void);
 
-int data_child_init(void);
-
-void data_destroy(void);
+/**
+ * Stores the routing data rd in config_file
+ *
+ * @param rd Pointer to the routing tree which shall be saved to file
+ *
+ * @return 0 means ok, -1 means an error occured
+ *
+ */
+int save_config(struct route_data_t * rd);
 
 #endif
