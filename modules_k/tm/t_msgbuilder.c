@@ -239,11 +239,15 @@ char *build_local(struct cell *Trans,unsigned int branch,
 	to = *uas_to;
 	buf_hdrs = 0;
 
-	if (req && req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_TO|FL_USE_UAC_CSEQ)) {
+	if (req 
+		&& ( req->msg_flags&(FL_USE_UAC_FROM|FL_USE_UAC_CSEQ)
+			|| (method_len!=ACK_LEN && (req->msg_flags&FL_USE_UAC_TO)) )
+	   )
+	{
 		if ( extract_hdrs( Trans->uac[branch].request.buffer.s,
 		Trans->uac[branch].request.buffer.len,
 		(req->msg_flags&FL_USE_UAC_FROM)?&from:0 ,
-		(req->msg_flags&FL_USE_UAC_TO)?&to:0 ,
+		(req->msg_flags&FL_USE_UAC_TO && method_len!=ACK_LEN)?&to:0 ,
 		(req->msg_flags&FL_USE_UAC_CSEQ)?&cseq_n:0 )!=0 ) {
 			LM_ERR("build_local: failed to extract UAC hdrs\n");
 			goto error;
