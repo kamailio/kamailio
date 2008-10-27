@@ -94,9 +94,11 @@ static inline int star(udomain_t* _d, str* _a)
 			}
 			c = c->next;
 		}
+	} else {
+		r = NULL;
 	}
 
-	if (ul.delete_urecord(_d, _a, 0) < 0) {
+	if (ul.delete_urecord(_d, _a, r) < 0) {
 		LM_ERR("failed to remove record from usrloc\n");
 		
 		     /* Delete failed, try to get corresponding
@@ -106,6 +108,7 @@ static inline int star(udomain_t* _d, str* _a)
 		rerrno = R_UL_DEL_R;
 		if (!ul.get_urecord(_d, _a, &r)) {
 			build_contact(r->contacts);
+			ul.release_urecord(r);
 		}
 		ul.unlock_udomain(_d, _a);
 		return -1;
@@ -186,6 +189,7 @@ static inline int no_contacts(udomain_t* _d, str* _a)
 	
 	if (res == 0) {  /* Contacts found */
 		build_contact(r->contacts);
+		ul.release_urecord(r);
 	}
 	ul.unlock_udomain(_d, _a);
 	return 0;
