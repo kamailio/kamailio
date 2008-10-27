@@ -25,7 +25,7 @@ source include/database
 
 CFG=11.cfg
 
-if ! (check_netcat && check_kamailio && check_module "db_mysql" && check_mysql); then
+if ! (check_sipsak && check_kamailio && check_module "db_mysql" && check_mysql); then
 	exit 0
 fi ;
 
@@ -38,38 +38,119 @@ ret=$?
 
 sleep 1
 
-# register a user
-cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
+# register two contacts
+sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+sipsak -U -C sip:foobar1@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+ret=$?
 
 cd ../scripts
 
-if [ "$ret" -eq 0 ] ; then
-	./$CTL ul show | grep "AOR:: 1000" > /dev/null
+if [ "$ret" -eq 0 ]; then
+	./$CTL ul show | grep "AOR:: 49721123456789" &> /dev/null
 	ret=$?
-fi ;
+fi;
 
-TMP=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from location where username="1000";" | tail -n 1`
-if [ "$TMP" -eq 0 ] ; then
-	ret=1
-fi ;
+if [ "$ret" -eq 0 ]; then
+	TMP=`$MYSQL "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
+	if [ "$TMP" -eq 0 ] ; then
+		ret=1
+	fi;
+fi;
 
-# see if the user is registered
-cat ../test/invite.sip | nc -q 1 -u localhost 5060 > /dev/null
-
-# unregister the user
-cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
-
-if [ "$ret" -eq 0 ] ; then
-	./$CTL ul show | grep "AOR:: 1000" > /dev/null
+if [ "$ret" -eq 0 ]; then
+	# check if the contact is registered
+	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
 	ret=$?
-	if [ "$ret" -eq 0 ] ; then
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# update the registration
+	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# check if we get a hint when we try to unregister a non-existent conctact
+	sipsak -U -C "sip:foobar2@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# unregister the contact
+	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# unregister the user again should not fail
+	sipsak -U -C "sip:foobar@localhost" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# check if the other contact is still registered
+	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar1@localhost>" &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# register the other again
+	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# unregister all contacts
+	sipsak -U -C "*" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	./$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
+	ret=$?
+	if [ "$ret" -eq 0 ]; then
 		ret=1
 	else
 		ret=0
-	fi ;
+	fi;
 fi ;
 
-ret=`mysql -B -u openserro --password=openserro openser -e "select COUNT(*) from location where username="1000";" | tail -n 1`
+if [ "$ret" -eq 0 ]; then
+	ret=`$MYSQL "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# test min_expires functionality
+	sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost -x 2 &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	sleep 3
+	# check if the contact is still registered
+	sipsak -U -C empty -s sip:49721123456789@127.0.0.1 -H localhost -q "Contact: <sip:foobar@localhost>" &> /dev/null
+	ret=$?
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# register a few more contacts
+	sipsak -U -e 9 -s sip:49721123456789@localhost -H localhost &> /dev/null
+fi;
+
+if [ "$ret" -eq 0 ]; then
+	# let the timer cleanup the previous registrations
+	sleep 3
+	# and check
+	TMP=`$MYSQL "select COUNT(*) from location where username like '49721123456789%';" | tail -n 1`
+	if [ "$TMP" -eq 10 ] ; then
+		ret=0
+	else
+		ret=1
+	fi;
+fi;
+
+# cleanup
+$MYSQL "delete from location where username like '49721123456789%';"
 
 cd ../test
 

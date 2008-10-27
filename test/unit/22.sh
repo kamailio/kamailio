@@ -23,7 +23,7 @@ source include/common
 source include/require
 source include/database
 
-if ! (check_netcat && check_kamailio && check_module "db_postgres" && check_postgres); then
+if ! (check_sipsak && check_kamailio && check_module "db_postgres" && check_postgres); then
 	exit 0
 fi ;
 
@@ -38,34 +38,41 @@ ret=$?
 
 sleep 1
 # register a user
-cat register.sip | nc -q 1 -u localhost 5060 > /dev/null
+sipsak -U -C sip:foobar@localhost -s sip:49721123456789@localhost -H localhost &> /dev/null
+ret=$?
 
 cd ../scripts
 
-if [ "$ret" -eq 0 ] ; then
-	./$CTL ul show | grep "AOR:: 1000" > /dev/null
+if [ "$ret" -eq 0 ]; then
+	./$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
-fi ;
+fi;
 
-TMP=`${PSQL} "select COUNT(*) from location where username='1000';"`
-if [ "$TMP" -eq 0 ] ; then
-	ret=1
-fi ;
+if [ "$ret" -eq 0 ]; then
+	TMP=`${PSQL} "select COUNT(*) from location where username='49721123456789';"`
+	if [ "$TMP" -eq 0 ] ; then
+		ret=1
+	fi;
+fi;
 
-# unregister the user
-cat ../test/unregister.sip | nc -q 1 -u localhost 5060 > /dev/null
+if [ "$ret" -eq 0 ]; then
+	# unregister the user
+	sipsak -U -C "*" -s sip:49721123456789@127.0.0.1 -H localhost -x 0 &> /dev/null
+fi;
 
-if [ "$ret" -eq 0 ] ; then
-	./$CTL ul show | grep "AOR:: 1000" > /dev/null
+if [ "$ret" -eq 0 ]; then
+	./$CTL ul show | grep "AOR:: 49721123456789" > /dev/null
 	ret=$?
-	if [ "$ret" -eq 0 ] ; then
+	if [ "$ret" -eq 0 ]; then
 		ret=1
 	else
 		ret=0
-	fi ;
-fi ;
+	fi;
+fi;
 
-ret=`$PSQL "select COUNT(*) from location where username='1000';" | tail -n 1`
+if [ "$ret" -eq 0 ]; then
+	ret=`$PSQL "select COUNT(*) from location where username='49721123456789';" | tail -n 1`
+fi;
 
 $KILL
 

@@ -52,3 +52,11 @@ function check_sipp() {
 	fi;
 	return 0
 }
+
+function check_sipsak() {
+	if ! ( which sipsak > /dev/null ); then
+		echo "sipsak not found, not run"
+		return -1
+	fi;
+	return 0
+}
