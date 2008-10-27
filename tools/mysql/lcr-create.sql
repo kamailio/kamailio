@@ -1,14 +1,16 @@
-INSERT INTO version (table_name, table_version) values ('gw','7');
+INSERT INTO version (table_name, table_version) values ('gw','8');
 CREATE TABLE gw (
     id INT(10) UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL,
     gw_name VARCHAR(128) NOT NULL,
     grp_id INT UNSIGNED NOT NULL,
     ip_addr VARCHAR(15) NOT NULL,
+    hostname VARCHAR(64) NOT NULL,
     port SMALLINT UNSIGNED,
     uri_scheme TINYINT UNSIGNED,
     transport TINYINT UNSIGNED,
     strip TINYINT UNSIGNED,
     tag VARCHAR(16) DEFAULT NULL,
+    weight INT UNSIGNED,
     flags INT UNSIGNED DEFAULT 0 NOT NULL,
     CONSTRAINT gw_name_idx UNIQUE (gw_name)
 ) ENGINE=MyISAM;

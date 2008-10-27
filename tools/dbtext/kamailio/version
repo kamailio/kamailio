@@ -14,7 +14,8 @@ domain:1
 domainpolicy:2
 globalblacklist:1
 grp:2
-gw:7
+gw:8
+htable:1
 imc_members:1
 imc_rooms:1
 lcr:2
