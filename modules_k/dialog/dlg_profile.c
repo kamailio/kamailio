@@ -553,6 +553,7 @@ struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param )
 	struct mi_node* node;
 	struct mi_root* rpl_tree= NULL;
 	struct mi_node* rpl = NULL;
+	struct mi_attr* attr;
 	struct dlg_profile_table *profile;
 	str *value;
 	str *profile_name;
@@ -588,14 +589,37 @@ struct mi_root * mi_get_profile(struct mi_root *cmd_tree, void *param )
 		return 0;
 	rpl = &rpl_tree->node;
 
-	p= int2str((unsigned long)size, &len);
-	node = add_mi_node_child(rpl, MI_DUP_VALUE, "Content", 7, p, len);
+	node = add_mi_node_child(rpl, MI_DUP_VALUE, "profile", 7, NULL, 0);
 	if (node==0) {
 		free_mi_tree(rpl_tree);
 		return NULL;
 	}
 
+	attr = add_mi_attr(node, MI_DUP_VALUE, "name", 4, 
+		profile->name.s, profile->name.len);
+	if(attr == NULL) {
+		goto error;
+	}
+
+	if (value) {
+		attr = add_mi_attr(node, MI_DUP_VALUE, "value", 5, value->s, value->len);
+	} else {
+		attr = add_mi_attr(node, MI_DUP_VALUE, "value", 5, NULL, 0);
+	}
+	if(attr == NULL) {
+		goto error;
+	}
+
+	p= int2str((unsigned long)size, &len);
+	attr = add_mi_attr(node, MI_DUP_VALUE, "count", 5, p, len);
+	if(attr == NULL) {
+		goto error;
+	}
+
 	return rpl_tree;
+error:
+	free_mi_tree(rpl_tree);
+	return NULL;
 }
 
 
