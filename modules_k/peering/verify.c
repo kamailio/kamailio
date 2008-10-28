@@ -332,8 +332,8 @@ int verify_source(struct sip_msg* _msg, char* s1, char* s2)
     for (hf = _msg->headers; hf; hf = hf->next) {
 	if (hf->name.len != sizeof("P-Request-Hash") - 1)
 	    continue;
-	if (strncmp(hf->name.s, "P-Request-Hash",
-		    sizeof("P-Request-Hash") - 1) == 0)
+	if (strncasecmp(hf->name.s, "P-Request-Hash",
+			sizeof("P-Request-Hash") - 1) == 0)
 	    break;
     }
     if (!hf) {
