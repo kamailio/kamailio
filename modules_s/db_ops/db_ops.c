@@ -1091,7 +1091,10 @@ static int build_match(db_fld_t** match, struct dbops_action* p)
 				newp[i].op = DB_GT;
 			} else if (!strcmp(p->ops[i].s, ">=")) {
 				newp[i].op = DB_GEQ;
-			/* FIXME: != support */
+			} else if (!strcmp(p->ops[i].s, "<>")) {
+				newp[i].op = DB_NE;
+			} else if (!strcmp(p->ops[i].s, "!=")) {
+				newp[i].op = DB_NE;
 			} else {
 				ERR(MODULE_NAME": Unsupported operator type: %s\n", p->ops[i].s);
 				pkg_free(newp);

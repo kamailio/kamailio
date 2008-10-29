@@ -51,7 +51,7 @@
 	database = type "://" user:psw "@" host "/" database_name
 	field = xltext
 	fields = field [ "," field ... ]
-	op = "=" | "&lt;" | ">" | "&lt;=" | ">="  ; note: non-equal not yet supported by db API
+	op = "=" | "&lt;" | ">" | "&lt;=" | ">=" | "&lt;>" | "!=" 
 	where = fields
 	ops = op [ "," op ... ]
 	order = field
