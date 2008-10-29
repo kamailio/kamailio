@@ -265,6 +265,13 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 			str_pair_print(string, t, print_len);\
 		} while(0)
 
+#define str_su_print(sockaddr)\
+		do{\
+			t=su2a(&sockaddr, sizeof(sockaddr)); \
+			print_len=strlen(t); \
+			str_print(t, print_len); \
+		} while(0)
+
 #define str_ipaddr_print(string, ipaddr_val)\
 		do{\
 			t=ip_addr2a((ipaddr_val)); \
@@ -273,11 +280,8 @@ static char * warning_builder( struct sip_msg *msg, unsigned int *returned_len)
 		} while(0)
 
 	clen=0;
-	str_lenpair_print(WARNING, WARNING_LEN,
-						msg->rcv.bind_address->name.s,
-						msg->rcv.bind_address->name.len);
-	str_lenpair_print(":", 1, msg->rcv.bind_address->port_no_str.s,
-						msg->rcv.bind_address->port_no_str.len);
+	str_print(WARNING, WARNING_LEN);
+	str_su_print(msg->rcv.bind_address->su);
 	str_print(WARNING_PHRASE, WARNING_PHRASE_LEN);
 
 	/*adding out_uri*/
