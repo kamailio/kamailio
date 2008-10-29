@@ -90,6 +90,8 @@ int ld_cmd(db_cmd_t* cmd)
 {
 	struct ld_cmd* lcmd;
 	struct ld_cfg* cfg;
+	struct ld_fld* lfld;
+	int i, j;
 
 	lcmd = (struct ld_cmd*)pkg_malloc(sizeof(struct ld_cmd));
 	if (lcmd == NULL) {
@@ -134,11 +136,37 @@ int ld_cmd(db_cmd_t* cmd)
 	if (cfg->filter.s) {
 		lcmd->filter = cfg->filter;
 	}
+	lcmd->chase_references = cfg->chase_references;
+	lcmd->chase_referrals = cfg->chase_referrals;
 
 	if (ld_resolve_fld(cmd->match, cfg) < 0) goto error;
 	if (ld_resolve_fld(cmd->result, cfg) < 0) goto error;
 
+	/* prepare filter for each result field */
+	for(i = 0; !DB_FLD_EMPTY(cmd->result) && !DB_FLD_LAST(cmd->result[i]); i++) {
+		int n;
+		lfld = DB_GET_PAYLOAD(cmd->result + i);
+		lfld->filter = NULL;
+	
+		for(j = 0, n = 0; !DB_FLD_EMPTY(cmd->match) && !DB_FLD_LAST(cmd->match[j]); j++) {
+			if (strcmp(cmd->result[i].name, cmd->match[j].name) == 0)
+				n++;	
+		}
+		
+		if (n > 0) {
+			lfld->filter = pkg_malloc((n+1)*sizeof(*(lfld->filter)));
+			if (!lfld->filter) return -1 /* E_OUT_OF_MEM*/;
+			for(j = 0, n = 0; !DB_FLD_EMPTY(cmd->match) && !DB_FLD_LAST(cmd->match[j]); j++) {
+				if (strcmp(cmd->result[i].name, cmd->match[j].name) == 0) {
+					lfld->filter[n] = cmd->match+j;
+					n++;
+				}
+			}
+			lfld->filter[n] = NULL;
+		}
+	}
 	if (build_result_array(&lcmd->result, cmd) < 0) goto error;
+
 	DB_SET_PAYLOAD(cmd, lcmd);
 	return 0;
 
@@ -162,12 +190,11 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	char* filter, *err_desc;
 	int ret, err;
 	LDAPMessage *msg, *resmsg;
-	int reconn_cnt = glb_reconn_cnt;
+	int reconn_cnt;
 	int msgid;
 	char *oid;
 	struct berval *data;
 	struct timeval restimeout;
-
 
 	filter = NULL;
 	err_desc = NULL;
@@ -179,14 +206,21 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 	con = cmd->ctx->con[db_payload_idx];
 	lcmd = DB_GET_PAYLOAD(cmd);
 	lcon = DB_GET_PAYLOAD(con);
+	
+	reconn_cnt = ld_reconnect_attempt;
 
-	if (ld_fld2ldap(&filter, cmd->match, &lcmd->filter) < 0) {
+	if (ld_prepare_ldap_filter(&filter, cmd, &lcmd->filter) < 0) {
 		ERR("ldap: Error while building LDAP search filter\n");
 		goto error;
 	}
 
+	DBG("ldap: ldap_search(base:'%s', filter:'%s')\n", lcmd->base, filter);
 	do {
 		if (lcon->flags & LD_CONNECTED) {
+			ldap_set_option(lcon->con, LDAP_OPT_DEREF, ((void *)&lcmd->chase_references));
+			/* there is alternative method using LDAP_CONTROL_REFERRALS per request but is not well documented */
+			ldap_set_option(lcon->con, LDAP_OPT_REFERRALS, lcmd->chase_referrals?LDAP_OPT_ON:LDAP_OPT_OFF);
+		
 			ret = ldap_search_ext(lcon->con, lcmd->base, lcmd->scope, filter,
 								  lcmd->result, 0, NULL, NULL,
 								  lcmd->timelimit.tv_sec ? &lcmd->timelimit : NULL,
@@ -231,7 +265,6 @@ int ld_cmd_exec(db_res_t* res, db_cmd_t* cmd)
 			}
 		}
 	} while (ret <= 0);
-
 
 	/* looking for unsolicited messages */
 	for (msg = ldap_first_message(lcon->con, resmsg);
@@ -302,7 +335,7 @@ static int search_entry(db_res_t* res, int init)
 	db_con_t* con;
 	struct ld_res* lres;
 	struct ld_con* lcon;
-
+	int r;
 	lres = DB_GET_PAYLOAD(res);
 	/* FIXME */
 	con = res->cmd->ctx->con[db_payload_idx];
@@ -314,19 +347,24 @@ static int search_entry(db_res_t* res, int init)
 	    /* there is no more value combination result left */
 	    || ld_incindex(res->cmd->result)) {
 
-		if (init)
-			lres->current = ldap_first_message(lcon->con, lres->msg);
-		else
-			lres->current = ldap_next_message(lcon->con, lres->current);
-
-		while(lres->current) {
-			if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
-				break;
+		do {
+			if (init) {
+				lres->current = ldap_first_message(lcon->con, lres->msg);
+				init = 0;
 			}
-			lres->current = ldap_next_message(lcon->con, lres->current);
-		}
-		if (lres->current == NULL) return 1;
-		if (ld_ldap2fldinit(res->cmd->result, lcon->con, lres->current) < 0) return -1;
+			else
+				lres->current = ldap_next_message(lcon->con, lres->current);
+			
+			while(lres->current) {
+				if (ldap_msgtype(lres->current) == LDAP_RES_SEARCH_ENTRY) {
+					break;
+				}
+				lres->current = ldap_next_message(lcon->con, lres->current);
+			}
+			if (lres->current == NULL) return 1;
+			r = ld_ldap2fldinit(res->cmd->result, lcon->con, lres->current);
+		} while (r > 0);
+		if (r < 0) return -1;
 	} else {
 		if (ld_ldap2fld(res->cmd->result, lcon->con, lres->current) < 0) return -1;
 	}
@@ -347,5 +385,35 @@ int ld_cmd_next(db_res_t* res)
 	return search_entry(res, 0);
 }
 
+#define is_space(c) ((c)==' '||(c)==','||(c)==';'||(c)=='\t'||(c)=='\n'||(c)=='\r'||(c)=='\0')
+
+int ld_cmd_setopt(db_cmd_t* cmd, char* optname, va_list ap)
+{
+	struct ld_fld* lfld;
+	char* val, *c;
+	int i;
+		
+	if (!strcasecmp("client_side_filtering", optname)) {
+		val = va_arg(ap, char*);
+
+		for(i = 0; !DB_FLD_EMPTY(cmd->result) && !DB_FLD_LAST(cmd->result[i]); i++) {
+			c = val;
+			do {
+				c = strstr(c, cmd->result[i].name);
+				if (c) {
+					if ((c == val || is_space(*(c-1))) && is_space(*(c+strlen(cmd->result[i].name)))) {
+						lfld = (struct ld_fld*)DB_GET_PAYLOAD(cmd->result + i);
+						lfld->client_side_filtering = 1;
+						break;
+					}
+					c += strlen(cmd->result[i].name);
+				}
+			} while (c != NULL);
+		}
+	}
+	else
+		return 1;
+        return 0;
+}
 
 /** @} */

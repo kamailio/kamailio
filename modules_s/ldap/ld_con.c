@@ -30,8 +30,6 @@
  * Functions related to connections to LDAP servers.
  */
 
-#define LDAP_DEPRECATED 1
-
 #include "ld_con.h"
 #include "ld_uri.h"
 

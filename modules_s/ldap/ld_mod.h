@@ -30,12 +30,11 @@
  */
 /** @{ */
 
-extern int glb_reconn_cnt;
-
 /** \file
  * LDAP module interface.
  */
 
+extern int ld_reconnect_attempt;
 /** @} */
 
 #endif /* _LD_MOD_H */

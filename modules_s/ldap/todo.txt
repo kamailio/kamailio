@@ -66,11 +66,11 @@ X Escape Values of Parameters Injected Into the Search Filter
   internally as time_t, but the parses should be able to skip fractions of
   seconds gracefully.
 
-* Eliminate Use of All libldap Functions Marked as Deprecated (SER-401)
+X Eliminate Use of All libldap Functions Marked as Deprecated (SER-401)
 
   We should eliminate the use of all functions that are marked as deprecated
   in the header field and remove LDAP_DEPRECATED define from all files.
-
+  
 X Support for Bool Attribute Types
 
   The module should be able to convert boolean attributes from the LDAP result
@@ -83,11 +83,11 @@ X Support for Syntax Specification in the Config File
   attributes in the configuration file so that the module knows how to convert
   DB API fields into attribute values in command parameters.
 
-* Support DB_NEQ Operator in Integer Attributes (SER-402)
+X Support DB_NEQ Operator in Integer Attributes (SER-402)
  
   fld!=10 could be converted to the search filter as: (|(fld<=9)(fld>=11))
 
-* Indicate Underflow/Overflow in Integer Attributes (SER-403)
+X Indicate Underflow/Overflow in Integer Attributes (SER-403)
 
   The operators < and > cannot be used in LDAP search filter, RFC4515 only
   supports <= and >= so we create the search filter like this: fld<10 ->

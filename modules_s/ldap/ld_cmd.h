@@ -55,6 +55,8 @@ struct ld_cmd {
 	char** result; /**< An array with result attribute names for ldap_search */
 	int sizelimit; /**< retrieve at most sizelimit entries for a search */
 	struct timeval timelimit; /**< wait at most timelimit seconds for a search to complete */
+	int chase_references;  /**< dereference option for LDAP library */
+	int chase_referrals;   /**< follow referrals option for LDAP library */
 };
 
 
@@ -85,6 +87,8 @@ int ld_cmd_first(db_res_t* res);
 
 
 int ld_cmd_next(db_res_t* res);
+
+int ld_cmd_setopt(db_cmd_t* cmd, char* optname, va_list ap);
 
 /** @} */
 

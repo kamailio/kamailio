@@ -45,6 +45,8 @@ struct ld_cfg {
 	int n;          /**< Number of fields in the arrays */
 	int sizelimit; /**< retrieve at most sizelimit entries for a search */
 	int timelimit; /**< wait at most timelimit seconds for a search to complete */
+	int chase_references;  /**< dereference option for LDAP library */
+	int chase_referrals;   /**< follow referrals option for LDAP library */
 	struct ld_cfg* next; /**< The next table in the list */
 };
 

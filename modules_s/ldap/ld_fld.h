@@ -40,6 +40,7 @@ struct ld_cfg;
 
 #include "../../db/db_gen.h"
 #include "../../db/db_fld.h"
+#include "../../db/db_cmd.h"
 
 #include <ldap.h>
 
@@ -57,9 +58,11 @@ struct ld_fld {
 	db_drv_t gen;
 	str attr;               /**< Name of corresponding LDAP attribute */
 	enum ld_syntax syntax;  /**< LDAP attribute syntax */
-	struct berval** values; /**< Values retrieved from the LDAP result */
+	struct berval** values; /**< Values retrieved from the LDAP result */    	
 	unsigned int valuesnum;
 	unsigned int index;
+	db_fld_t** filter;	/**< filter applied on the field pointing to db_cmd_t.match[] */
+	int client_side_filtering;  /**< do not pass filter to LDAP server but filter result set */
 };
 
 
@@ -76,9 +79,7 @@ int ld_fld(db_fld_t* fld, char* table);
 
 int ld_resolve_fld(db_fld_t* fld, struct ld_cfg* cfg);
 
-int ld_ldap2fld(db_fld_t* fld, LDAP* ldap, LDAPMessage* msg);
-
-int ld_fld2ldap(char** filter, db_fld_t* fld, str* add);
+int ld_prepare_ldap_filter(char** filter, db_cmd_t* cmd, str* add);
 
 int ld_incindex(db_fld_t* fld);
 

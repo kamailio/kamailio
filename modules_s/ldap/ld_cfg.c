@@ -249,6 +249,14 @@ static cfg_option_t scope_values[] = {
 };
 
 
+static cfg_option_t deref_values[] = {
+	{"never",     .val = LDAP_DEREF_NEVER },   /* default, 0x00 */
+	{"searching", .val = LDAP_DEREF_SEARCHING},
+	{"finding",   .val = LDAP_DEREF_FINDING },
+	{"always",    .val = LDAP_DEREF_ALWAYS },
+	{0}
+};
+
 static cfg_option_t ldap_tab_options[] = {
 	{"scope",     .param = scope_values, .f = cfg_parse_enum_opt},
 	{"field_map", .f = parse_field_map},
@@ -256,6 +264,8 @@ static cfg_option_t ldap_tab_options[] = {
 	{"base",      .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{"timelimit", .f = cfg_parse_int_opt},
 	{"sizelimit", .f = cfg_parse_int_opt},
+	{"chase_references",  .param = deref_values, .f = cfg_parse_enum_opt},
+	{"chase_referrals",   .f = cfg_parse_bool_opt},
 	{0}
 };
 
@@ -275,9 +285,9 @@ static cfg_option_t ldap_con_options[] = {
 	{"username", 		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{"password", 		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{"authtype", 		    .param = auth_values, .f = cfg_parse_enum_opt},
-	{"tls",			        .f = cfg_parse_bool_opt},
+	{"tls",			    .f = cfg_parse_bool_opt},
 	{"ca_list",  		    .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
-	{"require_certificate", .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
+	{"require_certificate",     .f = cfg_parse_str_opt, .flags = CFG_STR_PKGMEM},
 	{0}
 };
 
@@ -332,6 +342,10 @@ static int parse_section(void* param, cfg_parser_t* st, unsigned int flags)
 		}
 		ldap_tab_options[4].param = &cfg->timelimit;
 		ldap_tab_options[5].param = &cfg->sizelimit;
+		for(i = 0; deref_values[i].name; i++) {
+			deref_values[i].param = &cfg->chase_references;
+		}
+		ldap_tab_options[7].param = &cfg->chase_referrals;
 	} else if (type == LDAP_CON_SECTION) {
 		if ((cinfo = pkg_malloc(sizeof(*cinfo))) == NULL) {
 			ERR("ldap:%s:%d: Out of memory\n", st->file, st->line);
