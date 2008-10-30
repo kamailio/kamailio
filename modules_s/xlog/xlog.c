@@ -124,7 +124,16 @@ static int child_init(int rank)
  */
 static int xlog(struct sip_msg* msg, char* lev, char* frm)
 {
-	int log_len;
+	int log_len, level;
+
+	if (get_int_fparam(&level, msg, (fparam_t *)lev)) {
+		LOG(L_ERR, "XLOG:xlog: cannot get log level\n");
+		return -1;
+	}
+	if (level < L_ALERT)
+		level = L_ALERT;
+	else if (level > L_DBG)
+		level = L_DBG;
 
 	log_len = buf_size;
 
@@ -132,7 +141,7 @@ static int xlog(struct sip_msg* msg, char* lev, char* frm)
 		return -1;
 
 	/* log_buf[log_len] = '\0'; */
-	LOG((int)(long)lev, "%.*s", log_len, log_buf);
+	LOG(level, "%.*s", log_len, log_buf);
 
 	return 1;
 }
@@ -166,30 +175,53 @@ void destroy(void)
 
 static int xlog_fixup(void** param, int param_no)
 {
-	long level;
+	int level;
+	fparam_t	*p;
 
 	if(param_no==1)
 	{
-		if(*param==NULL || strlen((char*)(*param))<3)
+		if (*param == NULL) {
+			LOG(L_ERR, "XLOG:xlog_fixup: NULL parameter\n");
+			return -1;
+		}
+
+		if ((((char*)(*param))[0] == '$')
+			|| (((char*)(*param))[0] == '@')
+		) {
+			/* avp or select parameter */
+			return fixup_var_int_1(param, 1);
+		}
+
+		if(strlen((char*)(*param))<3)
 		{
 			LOG(L_ERR, "XLOG:xlog_fixup: wrong log level\n");
 			return E_UNSPEC;
 		}
 		switch(((char*)(*param))[2])
 		{
-			case 'A': level = L_ALERT; break;
-	        case 'C': level = L_CRIT; break;
-    	    case 'E': level = L_ERR; break;
-        	case 'W': level = L_WARN; break;
-        	case 'N': level = L_NOTICE; break;
-        	case 'I': level = L_INFO; break;
-	        case 'D': level = L_DBG; break;
-			default:
-				LOG(L_ERR, "XLOG:xlog_fixup: unknown log level\n");
-				return E_UNSPEC;
+		case 'A': level = L_ALERT; break;
+		case 'C': level = L_CRIT; break;
+		case 'E': level = L_ERR; break;
+		case 'W': level = L_WARN; break;
+		case 'N': level = L_NOTICE; break;
+		case 'I': level = L_INFO; break;
+		case 'D': level = L_DBG; break;
+		default:
+			LOG(L_ERR, "XLOG:xlog_fixup: unknown log level\n");
+			return E_UNSPEC;
 		}
-		pkg_free(*param);
-		*param = (void*)level;
+		/* constant parameter, but the fparam structure
+		 * needs to be created */
+		p = (fparam_t*)pkg_malloc(sizeof(fparam_t));
+		if (!p) {
+			LOG(L_ERR, "XLOG:xlog_fixup: not enough memory\n");
+			return -1;
+		}
+		p->v.i = level;
+		p->type = FPARAM_INT;
+		p->orig = *param;
+
+		*param = p;
 		return 0;
 	}
 
