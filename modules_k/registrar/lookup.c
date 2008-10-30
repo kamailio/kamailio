@@ -212,6 +212,7 @@ int registered(struct sip_msg* _m, char* _t, char* _s)
 			if (match_callid.s.s && /* optionally enforce tighter matching w/ Call-ID */
 				memcmp(match_callid.s.s,ptr->callid.s,match_callid.s.len))
 				continue;
+			ul.release_urecord(r);
 			ul.unlock_udomain((udomain_t*)_t, &aor);
 			LM_DBG("'%.*s' found in usrloc\n", aor.len, ZSW(aor.s));
 			return 1;
