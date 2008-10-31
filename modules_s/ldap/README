@@ -50,6 +50,11 @@ Jan Janak
    i.e.  the  LDAP server returns larger result set because the filtering
    condition is not passed there.
 
+   The syntax of client_side_filtering value is comma delimited of field names
+   which won't be used for server-side filter if such a field appears in a
+   match condition. Instead records will be filtered out in module. It implies
+   such fields MUST exist in result field list.
+
    The necessary condition of successful filtering of particular attribute at
    the LDAP server is correct attribute definition. The "equal"/"non-equal"
    operator requires equality matching rule, the "greater"/"less" operator
