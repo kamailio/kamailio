@@ -80,36 +80,40 @@ int gp2carrier_id(struct sip_msg * _msg, gparam_t *gp) {
 	case GPARAM_TYPE_INT:
 		return gp->v.ival;
 		break;
-	case GPARAM_TYPE_AVP:
-		avp = search_first_avp(gp->v.avp.flags, gp->v.avp.name, &avp_val, 0);
-		if (!avp) {
-			LM_ERR("cannot find AVP '%.*s'\n", gp->v.avp.name.s.len, gp->v.avp.name.s.s);
-			return -1;
-		}
-		if ((avp->flags&AVP_VAL_STR)==0) {
-			return avp_val.n;
-		}
-		else {
-			carrier_id = find_carrier(avp_val.s);
+	case GPARAM_TYPE_PVE:
+		if (gp->v.pve->spec.type==PVT_AVP) {
+			avp = search_first_avp(gp->v.pve->spec.pvp.pvn.u.isname.type,
+						gp->v.pve->spec.pvp.pvn.u.isname.name, &avp_val, 0);
+			if (!avp) {
+				LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
+						gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
+				return -1;
+			}
+			if ((avp->flags&AVP_VAL_STR)==0) {
+				return avp_val.n;
+			} else {
+				carrier_id = find_carrier(avp_val.s);
+				if (carrier_id < 0) {
+					LM_ERR("could not find carrier '%.*s' from AVP\n",
+							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
+							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
+					return -1;
+				}
+				return carrier_id;
+			}
+		} else {
+			/* retrieve carrier name from parameter */
+			if (fixup_get_svalue(_msg, gp, &tmp)<0) {
+				LM_ERR("cannot print the carrier\n");
+				return -1;
+			}
+			carrier_id = find_carrier(tmp);
 			if (carrier_id < 0) {
-				LM_WARN("could not find carrier '%.*s'\n", avp_val.s.len, avp_val.s.s);
+				LM_WARN("could not find carrier '%.*s' from PV\n", tmp.len, tmp.s);
 				/* might be using fallback later... */
 			}
 			return carrier_id;
 		}
-		break;
-	case GPARAM_TYPE_PVE:
-		/* retrieve carrier name from parameter */
-		if (pv_printf_s(_msg, gp->v.pve, &tmp)<0) {
-			LM_ERR("cannot print the carrier\n");
-			return -1;
-		}
-		carrier_id = find_carrier(tmp);
-		if (carrier_id < 0) {
-			LM_WARN("could not find carrier '%.*s'\n", tmp.len, tmp.s);
-			/* might be using fallback later... */
-		}
-		return carrier_id;
 	default:
 		LM_ERR("invalid carrier type\n");
 		return -1;
@@ -136,36 +140,41 @@ int gp2domain_id(struct sip_msg * _msg, gparam_t *gp) {
 	case GPARAM_TYPE_INT:
 		return gp->v.ival;
 		break;
-	case GPARAM_TYPE_AVP:
-		avp = search_first_avp(gp->v.avp.flags, gp->v.avp.name, &avp_val, 0);
-		if (!avp) {
-			LM_ERR("cannot find AVP '%.*s'\n", gp->v.avp.name.s.len, gp->v.avp.name.s.s);
-			return -1;
-		}
-		if ((avp->flags&AVP_VAL_STR)==0) {
-			return avp_val.n;
-		}
-		else {
-			domain_id = add_domain(&avp_val.s);
+	case GPARAM_TYPE_PVE:
+		/* does this PV hold an AVP? */
+		if (gp->v.pve->spec.type==PVT_AVP) {
+			avp = search_first_avp(gp->v.pve->spec.pvp.pvn.u.isname.type,
+						gp->v.pve->spec.pvp.pvn.u.isname.name, &avp_val, 0);
+			if (!avp) {
+				LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
+						gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
+				return -1;
+			}
+			if ((avp->flags&AVP_VAL_STR)==0) {
+				return avp_val.n;
+			} else {
+				domain_id = add_domain(&avp_val.s);
+				if (domain_id < 0) {
+					LM_ERR("could not find domain '%.*s' from AVP\n",
+							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
+							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
+					return -1;
+				}
+				return domain_id;
+			}
+		} else {
+			/* retrieve domain name from parameter */
+			if (fixup_get_svalue(_msg, gp, &tmp)<0) {
+				LM_ERR("cannot print the domain\n");
+				return -1;
+			}
+			domain_id = add_domain(&tmp);
 			if (domain_id < 0) {
-				LM_ERR("could not find domain '%.*s'\n", avp_val.s.len, avp_val.s.s);
+				LM_ERR("could not find domain '%.*s' from PV\n", tmp.len, tmp.s);
 				return -1;
 			}
 			return domain_id;
 		}
-		break;
-	case GPARAM_TYPE_PVE:
-		/* retrieve domain name from parameter */
-		if (pv_printf_s(_msg, gp->v.pve, &tmp)<0) {
-			LM_ERR("cannot print the domain\n");
-			return -1;
-		}
-		domain_id = add_domain(&tmp);
-		if (domain_id < 0) {
-			LM_ERR("could not find domain '%.*s'\n", tmp.len, tmp.s);
-			return -1;
-		}
-		return domain_id;
 	default:
 		LM_ERR("invalid domain type\n");
 		return -1;
@@ -228,7 +237,8 @@ static int set_next_domain_on_rule(struct failure_route_rule *frr_head,
 				((rr->host.len == 0) || (str_strcmp(host, &rr->host)==0)) &&
 				(reply_code_matcher(&(rr->reply_code), reply_code)==0)) {
 			avp_val.n = rr->next_domain;
-			if (add_avp(dstavp->v.avp.flags, dstavp->v.avp.name, avp_val)<0) {
+			if (add_avp(dstavp->v.pve->spec.pvp.pvn.u.isname.type,
+					dstavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
 				LM_ERR("set AVP failed\n");
 				return -1;
 			}
@@ -377,7 +387,8 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 
 	if (dstavp) {
 		avp_val.s = rs->host;
-		if (add_avp(AVP_VAL_STR | dstavp->v.avp.flags, dstavp->v.avp.name, avp_val)<0) {
+		if (add_avp(AVP_VAL_STR | dstavp->v.pve->spec.pvp.pvn.u.isname.type,
+					dstavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
 			LM_ERR("set AVP failed\n");
 			pkg_free(dest->s);
 			return -1;
@@ -529,8 +540,8 @@ static int rewrite_uri_recursor(struct dtrie_node_t * node,
  * @return 1 on success, -1 on failure
  */
 int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc,
 		enum hash_algorithm _halg, gparam_t *_dstavp) {
 
 	int carrier_id, domain_id, ret = -1;
@@ -548,12 +559,12 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 		return -1;
 	}
 
-	if (pv_printf_s(_msg, _rewrite_user, &rewrite_user)<0)	{
+	if (fixup_get_svalue(_msg, _rewrite_user, &rewrite_user)<0) {
 		LM_ERR("cannot print the rewrite_user\n");
 		return -1;
 	}
 
-	if (pv_printf_s(_msg, _prefix_matching, &prefix_matching)<0)	{
+	if (fixup_get_svalue(_msg, _prefix_matching, &prefix_matching)<0) {
 		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
 	}
@@ -629,16 +640,16 @@ unlock_and_out:
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_domain, gparam_t *_dstavp) {
+int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user, gparam_t *_domain, gparam_t *_dstavp) {
 	str user, domain;
 	int_str avp_val;
 	
-	if (pv_printf_s(_msg, _user, &user)<0)	{
+	if (fixup_get_svalue(_msg, _user, &user)<0) {
 		LM_ERR("cannot print the user\n");
 		return -1;
 	}
 
-	if (pv_printf_s(_msg, _domain, &domain)<0)	{
+	if (fixup_get_svalue(_msg, _domain, &domain)<0) {
 		LM_ERR("cannot print the domain\n");
 		return -1;
 	}
@@ -647,10 +658,10 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
 	if ((avp_val.n = load_user_carrier(&user, &domain)) < 0) {
 		LM_ERR("error in load user carrier");
 		return -1;
-	}
-	else {
-		/* set avp ! */
-		if (add_avp(_dstavp->v.avp.flags, _dstavp->v.avp.name, avp_val)<0) {
+	} else {
+		/* set avp */
+		if (add_avp(_dstavp->v.pve->spec.pvp.pvn.u.isname.type,
+					_dstavp->v.pve->spec.pvp.pvn.u.isname.name, avp_val)<0) {
 			LM_ERR("add AVP failed\n");
 			return -1;
 		}
@@ -674,8 +685,8 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user, pv_elem_t *_do
  * @return 1 on success, -1 on failure
  */
 int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc,
 		gparam_t *_dstavp)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
@@ -698,8 +709,8 @@ int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
  * @return 1 on success, -1 on failure
  */
 int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc,
 		gparam_t *_dstavp)
 {
 	return cr_do_route(_msg, _carrier, _domain, _prefix_matching,
@@ -721,8 +732,8 @@ int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
  * @return 1 on success, -1 on failure
  */
 int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_host, pv_elem_t *_reply_code, gparam_t *_dstavp) {
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_host, gparam_t *_reply_code, gparam_t *_dstavp) {
 
 	int carrier_id, domain_id, ret = -1;
 	str prefix_matching, host, reply_code;
@@ -738,17 +749,15 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 		return -1;
 	}
 
-	if (pv_printf_s(_msg, _prefix_matching, &prefix_matching)<0)	{
+	if (fixup_get_svalue(_msg, _prefix_matching, &prefix_matching)<0) {
 		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
 	}
-
-	if (pv_printf_s(_msg, _host, &host)<0)	{
+	if (fixup_get_svalue(_msg, _host, &host)<0) {
 		LM_ERR("cannot print the host\n");
 		return -1;
 	}
-
-	if (pv_printf_s(_msg, _reply_code, &reply_code)<0)	{
+	if (fixup_get_svalue(_msg, _reply_code, &reply_code)<0) {
 		LM_ERR("cannot print the reply_code\n");
 		return -1;
 	}

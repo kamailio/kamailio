@@ -47,8 +47,8 @@
  *
  * @return 1 on success, -1 on failure
  */
-int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user,
-		pv_elem_t *_domain, gparam_t *_dstavp);
+int cr_load_user_carrier(struct sip_msg * _msg, gparam_t *_user,
+		gparam_t *_domain, gparam_t *_dstavp);
 
 
 /**
@@ -66,8 +66,8 @@ int cr_load_user_carrier(struct sip_msg * _msg, pv_elem_t *_user,
  * @return 1 on success, -1 on failure
  */
 int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc,
 		gparam_t *_dstavp);
 
 
@@ -86,8 +86,8 @@ int cr_route(struct sip_msg * _msg, gparam_t *_carrier,
  * @return 1 on success, -1 on failure
  */
 int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching,
-		pv_elem_t *_rewrite_user, enum hash_source _hsrc,
+		gparam_t *_domain, gparam_t *_prefix_matching,
+		gparam_t *_rewrite_user, enum hash_source _hsrc,
 		gparam_t *_dstavp);
 
 
@@ -105,7 +105,7 @@ int cr_prime_route(struct sip_msg * _msg, gparam_t *_carrier,
  * @return 1 on success, -1 on failure
  */
 int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
-		gparam_t *_domain, pv_elem_t *_prefix_matching, pv_elem_t *_host,
-		pv_elem_t *_reply_code, gparam_t *_dstavp);
+		gparam_t *_domain, gparam_t *_prefix_matching, gparam_t *_host,
+		gparam_t *_reply_code, gparam_t *_dstavp);
 
 #endif
