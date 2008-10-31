@@ -717,7 +717,6 @@ inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 		if ((trans == 0) || (trans == T_UNDEFINED))
 			return -1;
 		msg->branch_index = branch+1;
-		LM_DBG("+++++ branch index %d\n", branch);
 		return 1;
 	}
 	
