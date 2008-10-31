@@ -61,160 +61,59 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
 
 
 /**
- * fixes the module functions' parameters with generic pseudo variable support.
- *
- * @param param the parameter
- *
- * @return 0 on success, -1 on failure
- */
-static int pv_fixup(void ** param) {
-	pv_elem_t *model;
-	str s;
-
-	s.s = (char *)(*param);
-	s.len = strlen(s.s);
-	if (s.len <= 0) return -1;
-	/* Check the format */
-	if(pv_parse_format(&s, &model)<0) {
-		LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
-		return -1;
-	}
-	*param = (void*)model;
-
-	return 0;
-}
-
-
-/**
  * fixes the module functions' parameters if it is a carrier.
- * supports name string, pseudo-variables and AVPs.
+ * supports name string and PVs.
  *
  * @param param the parameter
  *
  * @return 0 on success, -1 on failure
  */
 static int carrier_fixup(void ** param) {
-	pv_spec_t avp_spec;
-	gparam_t *gp;
-	str s;
 
-	gp = (gparam_t *)pkg_malloc(sizeof(gparam_t));
-	if (gp == NULL) {
-		LM_ERR("no more memory\n");
+	if (fixup_spve_null(param, 1) !=0) {
+		LM_ERR("could not fixup parameter");
 		return -1;
 	}
-	memset(gp, 0, sizeof(gparam_t));
-	
-	s.s = (char *)(*param);
-	s.len = strlen(s.s);
 
-	if (s.s[0]!='$') {
-		/* This is a name string */
-		gp->type=GPARAM_TYPE_INT;
-		
-		/* get carrier id */
-		if ((gp->v.ival = find_carrier(s)) < 0) {
-			LM_ERR("could not find carrier '%s'\n", (char *)(*param));
-			pkg_free(gp);
+	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
+		/* This is a name string, convert to a int */
+		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
+		/* get domain id */
+		if ((((gparam_p)(*param))->v.ival = find_carrier(((gparam_p)(*param))->v.sval)) < 0) {
+			LM_ERR("could not add carrier\n");
+			pkg_free(*param);
 			return -1;
 		}
-		LM_INFO("carrier %s has id %i\n", (char *)*param, gp->v.ival);
-		
-		pkg_free(*param);
-		*param = (void *)gp;
 	}
-	else {
-		/* This is a pseudo-variable */
-		if (pv_parse_spec(&s, &avp_spec)==0) {
-			LM_ERR("pv_parse_spec failed for '%s'\n", (char *)(*param));
-			pkg_free(gp);
-			return -1;
-		}
-		if (avp_spec.type==PVT_AVP) {
-			/* This is an AVP - could be an id or name */
-			gp->type=GPARAM_TYPE_AVP;
-			if(pv_get_avp_name(0, &(avp_spec.pvp), &(gp->v.avp.name), &(gp->v.avp.flags))!=0) {
-				LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-				pkg_free(gp);
-				return -1;
-			}
-		} else {
-			gp->type=GPARAM_TYPE_PVE;
-			if(pv_parse_format(&s, &(gp->v.pve))<0) {
-				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
-				pkg_free(gp);
-				return -1;
-			}
-		}
-	}
-	*param = (void*)gp;
-
 	return 0;
 }
 
 
 /**
  * fixes the module functions' parameters if it is a domain.
- * supports name string, and AVPs.
+ * supports name string, and PVs.
  *
  * @param param the parameter
  *
  * @return 0 on success, -1 on failure
  */
 static int domain_fixup(void ** param) {
-	pv_spec_t avp_spec;
-	gparam_t *gp;
-	str s;
-
-	gp = (gparam_t *)pkg_malloc(sizeof(gparam_t));
-	if (gp == NULL) {
-		LM_ERR("no more memory\n");
+	
+	if (fixup_spve_null(param, 1) !=0) {
+		LM_ERR("could not fixup parameter");
 		return -1;
 	}
-	memset(gp, 0, sizeof(gparam_t));
-	
-	s.s = (char *)(*param);
-	s.len = strlen(s.s);
-	
-	if (s.s[0]!='$') {
-		/* This is a name string */
-		gp->type=GPARAM_TYPE_INT;
-		
-		/* get domain id */
-		if ((gp->v.ival = add_domain(&s)) < 0) {
-			LM_ERR("could not add domain\n");
-			pkg_free(gp);
-			return -1;
-		}
-		pkg_free(*param);
-		*param = (void *)gp;
-	}
-	else {
-		/* This is a pseudo-variable */
-		if (pv_parse_spec(&s, &avp_spec)==0) {
-			LM_ERR("pv_parse_spec failed for '%s'\n", (char *)(*param));
-			pkg_free(gp);
-			return -1;
-		}
-		if (avp_spec.type==PVT_AVP) {
-			/* This is an AVP - could be an id or name */
-			gp->type=GPARAM_TYPE_AVP;
-			if(pv_get_avp_name(0, &(avp_spec.pvp), &(gp->v.avp.name), &(gp->v.avp.flags))!=0) {
-				LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-				pkg_free(gp);
-				return -1;
-			}
-		} else {
-			gp->type=GPARAM_TYPE_PVE;
-			if(pv_parse_format(&s, &(gp->v.pve))<0) {
-				LM_ERR("pv_parse_format failed for '%s'\n", (char *)(*param));
-				pkg_free(gp);
-				return -1;
-			}
-		}	
-	}
-	*param = (void*)gp;
 
+	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
+		/* This is a name string, convert to a int */
+		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
+		/* get domain id */
+		if ((((gparam_p)(*param))->v.ival = add_domain(&(((gparam_p)(*param))->v.sval))) < 0) {
+			LM_ERR("could not add domain\n");
+			pkg_free(*param);
+			return -1;
+		}
+	}
 	return 0;
 }
 
@@ -227,34 +126,17 @@ static int domain_fixup(void ** param) {
  * @return 0 on success, -1 on failure
  */
 static int avp_name_fixup(void ** param) {
-	pv_spec_t avp_spec;
-	gparam_t *gp;
-	str s;
 
-	s.s = (char *)(*param);
-	s.len = strlen(s.s);
-	if (s.len <= 0) return -1;
-	if (pv_parse_spec(&s, &avp_spec)==0 || avp_spec.type!=PVT_AVP) {
-		LM_ERR("Malformed or non AVP definition <%s>\n", (char *)(*param));
+	if (fixup_spve_null(param, 1) !=0) {
+		LM_ERR("could not fixup parameter");
 		return -1;
 	}
-	
-	gp = (gparam_t *)pkg_malloc(sizeof(gparam_t));
-	if (gp == NULL) {
-		LM_ERR("no more memory\n");
+	if (((gparam_p)(*param))->v.pve->spec.type == PVT_AVP &&
+			((gparam_p)(*param))->v.pve->spec.pvp.pvn.u.isname.name.s.len == 0 &&
+			((gparam_p)(*param))->v.pve->spec.pvp.pvn.u.isname.name.s.s == 0) {
+		LM_ERR("malformed or non AVP type definition\n");
 		return -1;
 	}
-	memset(gp, 0, sizeof(gparam_t));
-	
-	gp->type=GPARAM_TYPE_AVP;
-	if(pv_get_avp_name(0, &(avp_spec.pvp), &(gp->v.avp.name), &(gp->v.avp.flags))!=0) {
-		LM_ERR("Invalid AVP definition <%s>\n", (char *)(*param));
-		pkg_free(gp);
-		return -1;
-	}
-
-	*param = (void*)gp;
-	
 	return 0;
 }
 
@@ -289,7 +171,7 @@ int cr_route_fixup(void ** param, int param_no) {
 	else if ((param_no == 3) || (param_no == 4)){
 		/* prefix matching */
 		/* rewrite user */
-		if (pv_fixup(param) < 0) {
+		if (fixup_spve_null(param, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
 			return -1;
 		}
@@ -344,7 +226,7 @@ int cr_load_next_domain_fixup(void ** param, int param_no) {
 		/* prefix matching */
 		/* host */
 		/* reply code */
-		if (pv_fixup(param) < 0) {
+		if (fixup_spve_null(param, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
 			return -1;
 		}
@@ -370,7 +252,7 @@ int cr_load_user_carrier_fixup(void ** param, int param_no) {
 	if ((param_no == 1) || (param_no == 2)) {
 		/* user */
 		/* domain */
-		if (pv_fixup(param) < 0) {
+		if (fixup_spve_null(param, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
 			return -1;
 		}
