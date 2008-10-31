@@ -854,8 +854,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 
 1.4.11.  t_check_trans()
 
-   Returns true if the current request is associated to a
-   transaction. The relationship between the request and
+   Returns true if the current SIP message is associated to a
+   transaction. The relationship between the SIP request and
    transaction is defined as follow:
      * non-CANCEL/non-ACK requests - if the request belongs to a
        transaction (it's a retransmision), the function will do a
@@ -867,6 +867,12 @@ t_write_unix("logger/append2","/var/run/logger.sock");
      * ACK request - true if the ACK is a local end-to-end ACK
        corresponding to an previous INVITE transaction.
 
+   For SIP reply processing, the function returns:
+     * true (return code 1) - when the SIP reply matches an
+       existing transaction in memory
+     * false (return code -1) - when the SIP reply does not match
+       any existing transaction in memory
+
    Note: To detect retransmissions using this function you have to
    make sure that the initial request has already created a
    transaction, e.g. by using t_relay(). If the processing of
@@ -874,7 +880,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
    retransmission arrives before t_relay() is called, you can use
    the t_newtran() function to manually create a transaction.
 
-   This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
+   This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+   ONREPLY_ROUTE.
 
    Example 1.31. t_check_trans usage
 ...

@@ -188,7 +188,7 @@ static cmd_export_t cmds[]={
 	{"t_local_replied", (cmd_function)t_local_replied,  1, fixup_local_replied,
 			0, REQUEST_ROUTE | FAILURE_ROUTE | ONREPLY_ROUTE | BRANCH_ROUTE },
 	{"t_check_trans",   (cmd_function)t_check_trans,    0, 0,
-			0, REQUEST_ROUTE | BRANCH_ROUTE },
+			0, REQUEST_ROUTE | BRANCH_ROUTE | ONREPLY_ROUTE },
 	{"t_was_cancelled", (cmd_function)t_was_cancelled,  0, 0,
 			0, FAILURE_ROUTE | ONREPLY_ROUTE },
 	{"load_tm",         (cmd_function)load_tm,          0, 0,
@@ -707,7 +707,20 @@ static int t_check_status(struct sip_msg* msg, char *regexp, char *foo)
 inline static int t_check_trans(struct sip_msg* msg, char *foo, char *bar)
 {
 	struct cell *trans;
+	int branch;
 
+	if ( msg->first_line.type==SIP_REPLY ) {
+		if (t_check(msg, &branch ) == -1)
+			return -1;
+
+		trans = get_t();
+		if ((trans == 0) || (trans == T_UNDEFINED))
+			return -1;
+		msg->branch_index = branch+1;
+		LM_DBG("+++++ branch index %d\n", branch);
+		return 1;
+	}
+	
 	if (msg->REQ_METHOD==METHOD_CANCEL) {
 		/* parse needed hdrs*/
 		if (check_transaction_quadruple(msg)==0) {

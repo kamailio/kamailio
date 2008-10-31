@@ -1336,11 +1336,17 @@ int reply_received( struct sip_msg  *p_msg )
 	unsigned int reply_route;
 
 	/* make sure we know the associated transaction ... */
+	branch=-1;
 	if (t_check(p_msg, &branch ) == -1) goto not_found;
 
 	/*... if there is none, tell the core router to fwd statelessly */
 	t = get_t();
 	if ((t == 0) || (t == T_UNDEFINED)) goto not_found;
+
+	if(branch==-1) {
+		if(p_msg->branch_index==0) goto not_found;
+		else branch = p_msg->branch_index-1;
+	}
 
 	cancel_bitmap=0;
 	msg_status=p_msg->REPLY_STATUS;

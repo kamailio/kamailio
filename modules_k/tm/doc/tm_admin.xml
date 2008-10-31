@@ -1115,8 +1115,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		<function moreinfo="none">t_check_trans()</function>
 		</title>
 		<para>
-		Returns true if the current request is associated to a transaction. 
-		The relationship between the request and transaction is defined as
+		Returns true if the current SIP message is associated to a transaction. 
+		The relationship between the SIP request and transaction is defined as
 		follow:
 		</para>
 		<itemizedlist>
@@ -1141,6 +1141,23 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		</listitem>
 		</itemizedlist>
 		<para>
+		For SIP reply processing, the function returns:
+		</para>
+		<itemizedlist>
+		<listitem>
+			<para>
+				<emphasis>true (return code 1)</emphasis> - when the SIP
+				reply matches an existing transaction in memory
+			</para>
+		</listitem>
+		<listitem>
+			<para>
+				<emphasis>false (return code -1)</emphasis> - when the SIP
+				reply does not match any existing transaction in memory
+			</para>
+		</listitem>
+		</itemizedlist>
+		<para>
 		Note: To detect retransmissions using this function you have to make sure
 		that the initial request has already created a transaction, e.g. by using
 		t_relay(). If the processing of requests may take long time (e.g. DB lookups)
@@ -1148,7 +1165,8 @@ t_write_unix("logger/append2","/var/run/logger.sock");
 		t_newtran() function to manually create a transaction.
 		</para>
 		<para>
-		This function can be used from REQUEST_ROUTE and BRANCH_ROUTE.
+			This function can be used from REQUEST_ROUTE, BRANCH_ROUTE and
+			ONREPLY_ROUTE.
 		</para>
 		<example>
 		<title><function>t_check_trans</function> usage</title>
