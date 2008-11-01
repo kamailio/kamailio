@@ -94,10 +94,10 @@ struct carrier_data_t * create_carrier_data(const str *carrier_name, int carrier
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_route(struct route_data_t * rd, int carrier_id,
-              const str * domain, const str * scan_prefix, flag_t flags, flag_t mask, int max_targets,
-              double prob, const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
-              const str * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
-              const str * comment);
+		const str * domain, const str * scan_prefix, flag_t flags, flag_t mask, int max_targets,
+		double prob, const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
+		const str * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
+		const str * comment);
 
 
 /**
@@ -120,8 +120,8 @@ int add_route(struct route_data_t * rd, int carrier_id,
  * @return 0 on success, -1 on error in which case it LOGs a message.
  */
 int add_failure_route(struct route_data_t * rd, int carrier_id, const str * domain,
-											const str * scan_prefix, const str * host, const str * reply_code,
-											flag_t flags, flag_t mask, const str * next_domain, const str * comment);
+		const str * scan_prefix, const str * host, const str * reply_code,
+		flag_t flags, flag_t mask, const str * next_domain, const str * comment);
 
 
 /**
