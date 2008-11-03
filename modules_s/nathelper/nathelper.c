@@ -1983,7 +1983,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
 	int oidx, pf, pf1, force, c1_pf, rep_oidx;
 	unsigned int node_idx, oldport_i;
-	char opts[16];
+	char opts[32];
 	char rep_opts[16];
 	char *cp, *cp1;
 	char  *cpend, *next;
@@ -2293,6 +2293,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 					} else {
 						memcpy((char *)v[1].iov_base + v[1].iov_len,
 						    rep_opts, rep_oidx);
+						v[1].iov_len += rep_oidx;
 					}
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
