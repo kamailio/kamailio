@@ -195,18 +195,18 @@ int add_carrier(const str * tree, int carrier_id) {
  * @return values: on succcess the id for this carrier name,
  * -1 on failure
  */
-int find_carrier(str carrier_name) {
+int find_carrier(const str * carrier_name) {
 	struct carrier_map_t * tmp;
 	if (!carrier_map) {
 		return -1;
 	}
-	if (carrier_name.len <= 0) {
+	if (carrier_name->len <= 0) {
 		return -1;
 	}
 	tmp = *carrier_map;
 
 	while (tmp) {
-		if (str_strcmp(&carrier_name, &tmp->name) == 0) {
+		if (str_strcmp(carrier_name, &tmp->name) == 0) {
 			return tmp->id;
 		}
 		tmp = tmp->next;

@@ -72,7 +72,7 @@ int add_carrier(const str * tree, int carrier_id);
  * @return values: on succcess the id for this carrier name,
  * -1 on failure
  */
-int find_carrier(str carrier_name);
+int find_carrier(const str * carrier_name);
 
 
 /**
