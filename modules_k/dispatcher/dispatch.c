@@ -1536,7 +1536,7 @@ static void ds_options_callback( struct cell *t, int type,
 					uri.s, group);
 		}
 	}
-	if(ds_probing_mode==1 && ps->code == 407)
+	if(ds_probing_mode==1 && ps->code == 408)
 	{
 		if (ds_set_state(group, &uri, DS_PROBING_DST, 1) != 0)
 		{
