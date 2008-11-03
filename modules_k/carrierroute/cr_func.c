@@ -62,80 +62,21 @@ static const str AT_SIGN  = { .s="@",     .len=1 };
 
 
 /**
- * Get the carrier id from gparam_t structure.
+ * Get the id that belongs to a string name from gparam_t structure.
  *
- * @param mp carrier id as integer, pseudo-variable or AVP name of carrier
+ * Get the id that belongs to a string name from gparam_t structure, use the
+ * search_id function for the lookup.
  * @param _msg SIP message
- * @return carrier id on success, -1 otherwise
- *
+ * @param gp id as integer, pseudo-variable or AVP name of carrier
+ * @param search_if lookup function
+ * @return id on success, -1 otherwise
  */
-int gp2carrier_id(struct sip_msg * _msg, gparam_t *gp) {
-	int carrier_id;
+static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, int (*search_id)(const str* name)) {
+	int id;
 	struct usr_avp *avp;
 	int_str avp_val;
 	str tmp;
 
-	/* TODO combine the redundant parts of the logic */
-	switch (gp->type) {
-	case GPARAM_TYPE_INT:
-		return gp->v.ival;
-		break;
-	case GPARAM_TYPE_PVE:
-		if (gp->v.pve->spec.type==PVT_AVP) {
-			avp = search_first_avp(gp->v.pve->spec.pvp.pvn.u.isname.type,
-						gp->v.pve->spec.pvp.pvn.u.isname.name, &avp_val, 0);
-			if (!avp) {
-				LM_ERR("cannot find AVP '%.*s'\n", gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
-						gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
-				return -1;
-			}
-			if ((avp->flags&AVP_VAL_STR)==0) {
-				return avp_val.n;
-			} else {
-				carrier_id = find_carrier(avp_val.s);
-				if (carrier_id < 0) {
-					LM_ERR("could not find carrier '%.*s' from AVP\n",
-							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
-							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
-					return -1;
-				}
-				return carrier_id;
-			}
-		} else {
-			/* retrieve carrier name from parameter */
-			if (fixup_get_svalue(_msg, gp, &tmp)<0) {
-				LM_ERR("cannot print the carrier\n");
-				return -1;
-			}
-			carrier_id = find_carrier(tmp);
-			if (carrier_id < 0) {
-				LM_WARN("could not find carrier '%.*s' from PV\n", tmp.len, tmp.s);
-				/* might be using fallback later... */
-			}
-			return carrier_id;
-		}
-	default:
-		LM_ERR("invalid carrier type\n");
-		return -1;
-	}
-}
-
-
-/**
- * Get the domain id from gparam_t structure.
- *
- * @param _msg SIP message
- * @param mp carrier id as integer, pseudo-variable or AVP name of carrier
- * @return carrier id on success, -1 otherwise
- *
- */
-int gp2domain_id(struct sip_msg * _msg, gparam_t *gp) {
-	int domain_id;
-	struct usr_avp *avp;
-	int_str avp_val;
-	str tmp;
-
-	/* TODO combine the redundant parts of the logic */
 	switch (gp->type) {
 	case GPARAM_TYPE_INT:
 		return gp->v.ival;
@@ -153,30 +94,30 @@ int gp2domain_id(struct sip_msg * _msg, gparam_t *gp) {
 			if ((avp->flags&AVP_VAL_STR)==0) {
 				return avp_val.n;
 			} else {
-				domain_id = add_domain(&avp_val.s);
-				if (domain_id < 0) {
-					LM_ERR("could not find domain '%.*s' from AVP\n",
+				id = search_id(&avp_val.s);
+				if (id < 0) {
+					LM_ERR("could not find id '%.*s' from AVP\n",
 							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
 							gp->v.pve->spec.pvp.pvn.u.isname.name.s.s);
 					return -1;
 				}
-				return domain_id;
+				return id;
 			}
 		} else {
-			/* retrieve domain name from parameter */
+			/* retrieve name from parameter */
 			if (fixup_get_svalue(_msg, gp, &tmp)<0) {
-				LM_ERR("cannot print the domain\n");
+				LM_ERR("cannot print the name from PV\n");
 				return -1;
 			}
-			domain_id = add_domain(&tmp);
-			if (domain_id < 0) {
-				LM_ERR("could not find domain '%.*s' from PV\n", tmp.len, tmp.s);
+			id = search_id(&tmp);
+			if (id < 0) {
+				LM_ERR("could not find id '%.*s' from PV\n", tmp.len, tmp.s);
 				return -1;
 			}
-			return domain_id;
+			return id;
 		}
 	default:
-		LM_ERR("invalid domain type\n");
+		LM_ERR("invalid parameter type\n");
 		return -1;
 	}
 }
@@ -552,8 +493,8 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	struct domain_data_t * domain_data;
 	struct action act;
 
-	carrier_id = gp2carrier_id(_msg, _carrier);
-	domain_id = gp2domain_id(_msg, _domain);
+	carrier_id = cr_gp2id(_msg, _carrier, find_carrier);
+	domain_id = cr_gp2id(_msg, _domain, add_domain);
 	if (domain_id < 0) {
 		LM_ERR("invalid domain id %d\n", domain_id);
 		return -1;
@@ -742,8 +683,8 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 	struct carrier_data_t * carrier_data;
 	struct domain_data_t * domain_data;
 
-	carrier_id = gp2carrier_id(_msg, _carrier);
-	domain_id = gp2domain_id(_msg, _domain);
+	carrier_id = cr_gp2id(_msg, _carrier, find_carrier);
+	domain_id = cr_gp2id(_msg, _domain, add_domain);
 	if (domain_id < 0) {
 		LM_ERR("invalid domain id %d\n", domain_id);
 		return -1;

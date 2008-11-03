@@ -61,7 +61,7 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
 
 
 /**
- * fixes the module functions' parameters if it is a carrier.
+ * Fixes the module functions' parameters if it is a carrier.
  * supports name string and PVs.
  *
  * @param param the parameter
@@ -78,8 +78,8 @@ static int carrier_fixup(void ** param) {
 	if (((gparam_p)(*param))->type == GPARAM_TYPE_STR) {
 		/* This is a name string, convert to a int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
-		/* get domain id */
-		if ((((gparam_p)(*param))->v.ival = find_carrier(((gparam_p)(*param))->v.sval)) < 0) {
+		/* get carrier id */
+		if ((((gparam_p)(*param))->v.ival = find_carrier(&((gparam_p)(*param))->v.sval)) < 0) {
 			LM_ERR("could not add carrier\n");
 			pkg_free(*param);
 			return -1;
@@ -90,7 +90,7 @@ static int carrier_fixup(void ** param) {
 
 
 /**
- * fixes the module functions' parameters if it is a domain.
+ * Fixes the module functions' parameters if it is a domain.
  * supports name string, and PVs.
  *
  * @param param the parameter
@@ -119,7 +119,7 @@ static int domain_fixup(void ** param) {
 
 
 /**
- * fixes the module functions' parameters in case of AVP names.
+ * Fixes the module functions' parameters in case of AVP names.
  *
  * @param param the parameter
  *
@@ -169,8 +169,7 @@ int cr_route_fixup(void ** param, int param_no) {
 		}
 	}
 	else if ((param_no == 3) || (param_no == 4)){
-		/* prefix matching */
-		/* rewrite user */
+		/* prefix matching, rewrite user */
 		if (fixup_spve_null(param, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
 			return -1;
@@ -223,9 +222,7 @@ int cr_load_next_domain_fixup(void ** param, int param_no) {
 		}
 	}
 	else if ((param_no == 3) || (param_no == 4) || (param_no == 5)) {
-		/* prefix matching */
-		/* host */
-		/* reply code */
+		/* prefix matching, host, reply code */
 		if (fixup_spve_null(param, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
 			return -1;
@@ -250,8 +247,7 @@ int cr_load_user_carrier_fixup(void ** param, int param_no) {
 	}
 
 	if ((param_no == 1) || (param_no == 2)) {
-		/* user */
-		/* domain */
+		/* user, domain */
 		if (fixup_spve_null(param, 1) != 0) {
 			LM_ERR("cannot fixup parameter %d\n", param_no);
 			return -1;
