@@ -591,7 +591,7 @@ int synchronize_all_udomains(void)
 			res |= db_timer_udomain(ptr->d);
 	} else {
 		for( ptr=root ; ptr ; ptr=ptr->next)
-			res |= mem_timer_udomain(ptr->d);
+			mem_timer_udomain(ptr->d);
 	}
 
 	return res;

@@ -227,9 +227,8 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
  * Expires timer for NO_DB db_mode, process all contacts from
  * the record, delete the expired ones from memory.
  * \param _r processed record
- * \return 0
  */
-static inline int nodb_timer(urecord_t* _r)
+static inline void nodb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
 
@@ -254,8 +253,6 @@ static inline int nodb_timer(urecord_t* _r)
 			ptr = ptr->next;
 		}
 	}
-
-	return 0;
 }
 
 
@@ -265,9 +262,9 @@ static inline int nodb_timer(urecord_t* _r)
  * Write through timer, used for WRITE_THROUGH db_mode. Process all
  * contacts from the record, delete all expired ones from the DB.
  * \param _r processed record
- * \return 0
+ * \note currently unused, this mode is also handled by the wb_timer
  */
-static inline int wt_timer(urecord_t* _r)
+static inline void wt_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
 
@@ -296,8 +293,6 @@ static inline int wt_timer(urecord_t* _r)
 			ptr = ptr->next;
 		}
 	}
-	
-	return 0;
 }
 
 
@@ -309,9 +304,8 @@ static inline int wt_timer(urecord_t* _r)
  * Furthermore it updates changed contacts, and also insert new
  * ones in the DB.
  * \param _r processed record
- * \return 0
  */
-static inline int wb_timer(urecord_t* _r)
+static inline void wb_timer(urecord_t* _r)
 {
 	ucontact_t* ptr, *t;
 	cstate_t old_state;
@@ -369,8 +363,6 @@ static inline int wb_timer(urecord_t* _r)
 			ptr = ptr->next;
 		}
 	}
-
-	return 0;
 }
 
 
@@ -380,19 +372,19 @@ static inline int wb_timer(urecord_t* _r)
  * Helper function that run the appropriate timer function, depending
  * on the db_mode setting.
  * \param _r processed record
- * \return 0
  */
-int timer_urecord(urecord_t* _r)
+void timer_urecord(urecord_t* _r)
 {
 	switch(db_mode) {
-	case NO_DB:         return nodb_timer(_r);
+	case NO_DB:         nodb_timer(_r);
+						break;
 	/* use also the write_back timer routine to handle the failed
 	 * realtime inserts/updates */
-	case WRITE_THROUGH: return wb_timer(_r); /*wt_timer(_r);*/
-	case WRITE_BACK:    return wb_timer(_r);
+	case WRITE_THROUGH: wb_timer(_r); /*wt_timer(_r);*/
+						break;
+	case WRITE_BACK:    wb_timer(_r);
+						break;
 	}
-
-	return 0; /* Makes gcc happy */
 }
 
 

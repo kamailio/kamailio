@@ -121,9 +121,8 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c);
  * Helper function that run the appropriate timer function, depending
  * on the db_mode setting.
  * \param _r processed record
- * \return 0
  */
-int timer_urecord(urecord_t* _r);
+void timer_urecord(urecord_t* _r);
 
 
 /*!

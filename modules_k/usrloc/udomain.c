@@ -713,9 +713,8 @@ void mem_delete_urecord(udomain_t* _d, struct urecord* _r)
 /*!
  * \brief Run timer handler for given domain
  * \param _d domain
- * \return 0 on success, -1 on failure
  */
-int mem_timer_udomain(udomain_t* _d)
+void mem_timer_udomain(udomain_t* _d)
 {
 	struct urecord* ptr, *t;
 	int i;
@@ -727,12 +726,7 @@ int mem_timer_udomain(udomain_t* _d)
 		ptr = _d->table[i].first;
 
 		while(ptr) {
-			if (timer_urecord(ptr) < 0) {
-				LM_ERR("timer_urecord failed\n");
-				unlock_ulslot(_d, i);
-				return -1;
-			}
-		
+			timer_urecord(ptr);
 			/* Remove the entire record if it is empty */
 			if (ptr->contacts == 0) {
 				t = ptr;
@@ -744,7 +738,6 @@ int mem_timer_udomain(udomain_t* _d)
 		}
 		unlock_ulslot(_d, i);
 	}
-	return 0;
 }
 
 

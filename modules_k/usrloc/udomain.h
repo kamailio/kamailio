@@ -114,10 +114,11 @@ int testdb_udomain(db_con_t* con, udomain_t* d);
 int db_timer_udomain(udomain_t* _d);
 
 
-/*! \brief
- * Timer handler for given domain
+/*!
+ * \brief Run timer handler for given domain
+ * \param _d domain
  */
-int mem_timer_udomain(udomain_t* _d);
+void mem_timer_udomain(udomain_t* _d);
 
 
 /*!
