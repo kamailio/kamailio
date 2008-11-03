@@ -327,7 +327,7 @@ static int add_source(const char *table)
 
 	src = shm_malloc(sizeof(struct source_t));
 	if (!src) {
-		LM_ERR("out of shared memory.\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(src, 0, sizeof(struct source_t));
@@ -337,7 +337,7 @@ static int add_source(const char *table)
 
 	src->table = shm_malloc(strlen(table)+1);
 	if (!src->table) {
-		LM_ERR("out of shared memory.\n");
+		SHM_MEM_ERROR;
 		shm_free(src);
 		return -1;
 	}
@@ -382,7 +382,7 @@ static int check_blacklist_fixup(void **arg, int arg_no)
 
 	struct check_blacklist_fs_t *new_arg = (struct check_blacklist_fs_t*)pkg_malloc(sizeof(struct check_blacklist_fs_t));
 	if (!new_arg) {
-		LM_ERR("out of private memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	memset(new_arg, 0, sizeof(struct check_blacklist_fs_t));
@@ -482,7 +482,7 @@ static int init_source_list(void)
 {
 	sources = shm_malloc(sizeof(struct source_list_t));
 	if (!sources) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	sources->head = NULL;

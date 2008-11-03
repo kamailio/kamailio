@@ -746,7 +746,7 @@ static int update_route_data_recursor(struct dtrie_node_t *node, str * act_domai
 						}
 						if (opts->new_host.len) {
 							if ((rr->host.s = shm_malloc(opts->new_host.len + 1)) == NULL) {
-								LM_ERR("out of shared mem\n");
+								SHM_MEM_ERROR;
 								FIFO_ERR(E_NOMEM);
 								return -1;
 							}

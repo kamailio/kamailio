@@ -112,7 +112,7 @@ static int backup_config(void) {
 	char * backup_file, ch;
 	LM_INFO("start configuration backup\n");
 	if((backup_file = pkg_malloc(strlen(config_file) + strlen (".bak") + 1)) == NULL){
-		LM_ERR("out of private memory\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	if(!strcpy(backup_file, config_file)){
@@ -193,7 +193,7 @@ int load_config(struct route_data_t * rd) {
 	}
 
 	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(rd->carriers, 0, sizeof(struct carrier_data_t *));
@@ -254,7 +254,7 @@ int load_config(struct route_data_t * rd) {
 
 				if ((backed_up_size = cfg_size(t, "backed_up")) > 0) {
 					if ((backed_up = pkg_malloc(sizeof(int) * (backed_up_size + 1))) == NULL) {
-						LM_ERR("out of private memory\n");
+						PKG_MEM_ERROR;
 						return -1;
 					}
 					for (l = 0; l < backed_up_size; l++) {
