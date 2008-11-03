@@ -294,7 +294,7 @@ static int actually_rewrite(const struct route_rule *rs, str *dest,
 	dest->len = 0;
 	dest->s = (char *)pkg_malloc(len + 1);
 	if (dest->s == NULL) {
-		LM_ERR("out of private memory.\n");
+		PKG_MEM_ERROR;
 		return -1;
 	}
 	dest->len = len;

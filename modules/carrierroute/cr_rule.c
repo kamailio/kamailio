@@ -72,7 +72,7 @@ int add_route_rule(struct route_flags *rf, const str * prefix,
 	}
 
 	if ((shm_rr = shm_malloc(sizeof(struct route_rule))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(shm_rr, 0, sizeof(struct route_rule));
@@ -152,7 +152,7 @@ int add_route_rule(struct route_flags *rf, const str * prefix,
 	return 0;
 
 mem_error:
-	LM_ERR("out of shared memory\n");
+	SHM_MEM_ERROR;
 	destroy_route_rule(shm_rr);
 	return -1;
 }
@@ -223,7 +223,7 @@ struct route_flags * add_route_flags(struct route_flags **rf_head, const flag_t 
 	}
 
 	if ((shm_rf = shm_malloc(sizeof(struct route_flags))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(shm_rf, 0, sizeof(struct route_flags));
@@ -343,7 +343,7 @@ struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **fr
 	frr = prev = NULL;
 	
 	if ((shm_frr = shm_malloc(sizeof(struct failure_route_rule))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(shm_frr, 0, sizeof(struct failure_route_rule));
@@ -448,7 +448,7 @@ int add_backup_rule(struct route_rule * rule, struct route_rule * backup){
 		return -1;
 	}
 	if((tmp = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(tmp, 0, sizeof(struct route_rule_p_list));
@@ -459,7 +459,7 @@ int add_backup_rule(struct route_rule * rule, struct route_rule * backup){
 
 	tmp = NULL;
 	if((tmp = shm_malloc(sizeof(struct route_rule_p_list))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(tmp, 0, sizeof(struct route_rule_p_list));

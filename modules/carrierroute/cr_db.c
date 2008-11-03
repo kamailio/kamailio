@@ -164,7 +164,7 @@ int load_route_data_db(struct route_data_t * rd) {
 	}
 
 	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *) * carrier_count)) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		goto errout;
 	}
 	memset(rd->carriers, 0, sizeof(struct carrier_data_t *) * carrier_count);
@@ -355,12 +355,12 @@ static int store_carriers(struct carrier ** start){
 	count = RES_ROW_N(res);
 	for(i=0; i<RES_ROW_N(res); i++){
 		if((nc = pkg_malloc(sizeof(struct carrier))) == NULL){
-			LM_ERR("out of private memory\n");
+			PKG_MEM_ERROR;
 			return -1;
 		}
 		nc->id = res->rows[i].values[0].val.int_val;
 		if((nc->name = pkg_malloc(strlen(res->rows[i].values[1].val.string_val) + 1)) == NULL){
-			LM_ERR("out of private memory\n");
+			PKG_MEM_ERROR;
 			pkg_free(nc);
 			goto errout;
 		}
