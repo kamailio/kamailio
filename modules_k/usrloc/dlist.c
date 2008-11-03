@@ -50,9 +50,7 @@
 #include "ul_mod.h"
 
 
-/*!
- * \brief Global list of all registered domains
- */
+/*! \brief Global list of all registered domains */
 dlist_t* root = 0;
 
 
@@ -362,7 +360,7 @@ static inline int get_all_mem_ucontacts(void *buf, int len, unsigned int flags,
 
 
 /*!
- * \brief Get all contacts from the database, in partitions if wanted
+ * \brief Get all contacts from the usrloc, in partitions if wanted
  *
  * Return list of all contacts for all currently registered
  * users in all domains. The caller must provide buffer of
@@ -453,11 +451,11 @@ static inline int new_dlist(str* _n, dlist_t** _d)
 /*!
  * \brief Registers a new domain with usrloc
  *
- * Function registers a new domain with usrloc.
- * If the domain exists, a pointer to existing structure
- * will be returned, otherwise a new domain will be created
+ * Registers a new domain with usrloc. If the domain exists,
+ * a pointer to existing structure will be returned, otherwise
+ * a new domain will be created
  * \param _n domain name
- * \param _d pointer to domain
+ * \param _d new created domain
  * \return 0 on success, -1 on failure
  */
 int register_udomain(const char* _n, udomain_t** _d)
@@ -536,7 +534,8 @@ void free_all_udomains(void)
 
 
 /*!
- * \brief Just for debugging
+ * \brief Print all domains, just for debugging
+ * \param _f output file
  */
 void print_all_udomains(FILE* _f)
 {

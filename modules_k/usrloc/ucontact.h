@@ -1,7 +1,5 @@
-/* 
+/*
  * $Id$ 
- *
- * Usrloc contact structure
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -44,8 +42,9 @@
 #include "../../str.h"
 
 
-
-/*! \brief States for in-memory contacts in regards to contact storage handler (db, in-memory, ldap etc) */
+/*!
+ * \brief States for in-memory contacts in regards to contact storage handler (db, in-memory, ldap etc)
+ */
 typedef enum cstate {
 	CS_NEW,        /*!< New contact - not flushed yet */
 	CS_SYNC,       /*!< Synchronized contact with the database */
@@ -53,9 +52,7 @@ typedef enum cstate {
 } cstate_t;
 
 
-/*! \brief
- * Flags that can be associated with a Contact
- */
+/*! \brief Flags that can be associated with a Contact */
 typedef enum flags {
 	FL_NONE        = 0,          /*!< No flags set */
 	FL_MEM         = 1 << 0,     /*!< Update memory only */
@@ -63,9 +60,7 @@ typedef enum flags {
 } flags_t;
 
 
-/*! \brief
- * Main structure for handling of registered Contact: data 
- */
+/*! \brief Main structure for handling of registered Contact data */
 typedef struct ucontact {
 	str* domain;            /*!< Pointer to domain name (NULL terminated) */
 	str* aor;               /*!< Pointer to the AOR string in record structure*/
@@ -87,111 +82,120 @@ typedef struct ucontact {
 	struct ucontact* prev;  /*!< Previous contact in the linked list */
 } ucontact_t;
 
+
+/*! \brief Informations related to a contact */
 typedef struct ucontact_info {
-	str received;
-	str* path;
-	time_t expires;
-	qvalue_t q;
-	str* callid;
-	int cseq;
-	unsigned int flags;
-	unsigned int cflags;
-	str *user_agent;
-	struct socket_info *sock;
-	unsigned int methods;
-	time_t last_modified;
+	str received;             /*!< Received interface */
+	str* path;                /*!< Path informations */
+	time_t expires;           /*!< Contact expires */
+	qvalue_t q;               /*!< Q-value */
+	str* callid;              /*!< call-ID */
+	int cseq;                 /*!< CSEQ number */
+	unsigned int flags;       /*!< message flags */
+	unsigned int cflags;      /*!< contact flags */
+	str *user_agent;          /*!< user agent header */
+	struct socket_info *sock; /*!< socket informations */
+	unsigned int methods;     /*!< supported methods */
+	time_t last_modified;     /*!< last modified */
 } ucontact_info_t;
 
-/*! \brief
- * ancient time used for marking the contacts forced to expired
- */
+/*! \brief ancient time used for marking the contacts forced to expired */
 #define UL_EXPIRED_TIME 10
 
-/*
- * Valid contact is a contact that either didn't expire yet or is permanent
- */
+/*! \brief Valid contact is a contact that either didn't expire yet or is permanent */
 #define VALID_CONTACT(c, t)   ((c->expires>t) || (c->expires==0))
 
 
-/*! \brief
- * Create a new contact structure
+/*!
+ * \brief Create a new contact structure
+ * \param _dom domain
+ * \param _aor address of record
+ * \param _ci contact informations
+ * \return new created contact on success, 0 on failure
  */
 ucontact_t* new_ucontact(str* _dom, str* _aor, str* _contact,
 		ucontact_info_t* _ci);
 
 
-/*! \brief
- * Free all memory associated with given contact structure
+/*!
+ * \brief Free all memory associated with given contact structure
+ * \param _c freed contact
  */
 void free_ucontact(ucontact_t* _c);
 
 
-/*! \brief
- * Print contact, for debugging purposes only
+/*!
+ * \brief Print contact, for debugging purposes only
+ * \param _f output file
+ * \param _c printed contact
  */
 void print_ucontact(FILE* _f, ucontact_t* _c);
 
 
-/*! \brief
- * Update existing contact in memory with new values
+/*!
+ * \brief Update existing contact in memory with new values
+ * \param _c contact
+ * \param _ci contact informations
+ * \return 0
  */
 int mem_update_ucontact(ucontact_t* _c, ucontact_info_t *_ci);
 
 
 /* ===== State transition functions - for write back cache scheme ======== */
 
-
-/*! \brief
- * Update state of the contact if we
- * are using write-back scheme
+/*!
+ * \brief Update state of the contact if we are using write-back scheme
+ * \param _c updated contact
  */
 void st_update_ucontact(ucontact_t* _c);
 
 
-/*! \brief
- * Update state of the contact if we
- * are using write-back scheme
- * Returns 1 if the contact should be
- * deleted from memory immediately,
- * 0 otherwise
+/*!
+ * \brief Update state of the contact
+ * \param _c updated contact
+ * \return 1 if the contact should be deleted from memory immediately, 0 otherwise
  */
 int st_delete_ucontact(ucontact_t* _c);
 
 
-/*! \brief
- * Called when the timer is about to delete
- * an expired contact, this routine returns
- * 1 if the contact should be removed from
- * the database and 0 otherwise
+/*!
+ * \brief Called when the timer is about to delete an expired contact
+ * \param _c expired contact
+ * \return 1 if the contact should be removed from the database and 0 otherwise
  */
 int st_expired_ucontact(ucontact_t* _c);
 
 
-/*! \brief
- * Called when the timer is about flushing the contact,
- * updates contact state and returns 1 if the contact
- * should be inserted, 2 if updated and 0 otherwise
+/*!
+ * \brief Called when the timer is about flushing the contact, updates contact state
+ * \param _c flushed contact
+ * \return 1 if the contact should be inserted, 2 if update and 0 otherwise
  */
 int st_flush_ucontact(ucontact_t* _c);
 
 
 /* ==== Database related functions ====== */
 
-
-/*! \brief
- * Insert contact into the database
+/*!
+ * \brief Insert contact into the database
+ * \param _c inserted contact
+ * \return 0 on success, -1 on failure
  */
 int db_insert_ucontact(ucontact_t* _c);
 
 
-/*! \brief
- * Update contact in the database
+/*!
+ * \brief Update contact in the database
+ * \param _c updated contact
+ * \return 0 on success, -1 on failure
  */
 int db_update_ucontact(ucontact_t* _c);
 
 
-/*! \brief
- * Delete contact from the database
+/*!
+ * \brief Delete contact from the database
+ * \param _c deleted contact
+ * \return 0 on success, -1 on failure
  */
 int db_delete_ucontact(ucontact_t* _c);
 
@@ -200,12 +204,15 @@ int db_delete_ucontact(ucontact_t* _c);
 
 struct urecord;
 
-/*! \brief
- * Update ucontact with new values
+/*!
+ * \brief Update ucontact with new values
+ * \param _r record the contact belongs to
+ * \param _c updated contact
+ * \param _ci new contact informations
+ * \return 0 on success, -1 on failure
  */
 typedef int (*update_ucontact_t)(struct urecord* _r, ucontact_t* _c,
 		ucontact_info_t* _ci);
-
 int update_ucontact(struct urecord* _r, ucontact_t* _c, ucontact_info_t* _ci);
 
-#endif /* UCONTACT_H */
+#endif
