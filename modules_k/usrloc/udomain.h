@@ -1,8 +1,6 @@
-/* 
+/*
  * $Id$ 
- *
- * Usrloc domain structure
- *
+
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -64,44 +62,54 @@ typedef struct udomain {
 } udomain_t;
 
 
-/*! \brief
- * Create a new domain structure
- * _n is pointer to str representing
- * name of the domain, the string is
- * not copied, it should point to str
- * structure stored in domain list
- * _s is hash table size
+/*!
+ * \brief Create a new domain structure
+ * \param  _n is pointer to str representing name of the domain, the string is
+ * not copied, it should point to str structure stored in domain list
+ * \param _s is hash table size
+ * \param _d new created domain
+ * \return 0 on success, -1 on failure
  */
 int new_udomain(str* _n, int _s, udomain_t** _d);
 
 
-/*! \brief
- * Free all memory allocated for
- * the domain
+/*!
+ * \brief Free all memory allocated for the domain
+ * \param _f freed domain
  */
 void free_udomain(udomain_t* _d);
 
 
-/*! \brief
- * Just for debugging
+/*!
+ * \brief Print udomain, debugging helper function
  */
 void print_udomain(FILE* _f, udomain_t* _d);
 
 
-/*! \brief
- * Load data from a database
+/*!
+ * \brief Load all records from a udomain
+ *
+ * Load all records from a udomain, useful to populate the
+ * memory cache on startup.
+ * \param _c database connection
+ * \param _d loaded domain
+ * \return 0 on success, -1 on failure
  */
 int preload_udomain(db_con_t* _c, udomain_t* _d);
 
 
-/*! \brief
- * Check the DB validity of a domain
+/*!
+ * \brief performs a dummy query just to see if DB is ok
+ * \param con database connection
+ * \param d domain
  */
 int testdb_udomain(db_con_t* con, udomain_t* d);
 
 
-/*! \brief
- * Timer handler for given domain (db_only)
+/*!
+ * \brief Timer function to cleanup expired contacts, DB_ONLY db_mode
+ * \param _ cleaned domain
+ * \param 0 on success, -1 on failure
  */
 int db_timer_udomain(udomain_t* _d);
 
@@ -112,57 +120,88 @@ int db_timer_udomain(udomain_t* _d);
 int mem_timer_udomain(udomain_t* _d);
 
 
-/*! \brief
- * Insert record into domain
+/*!
+ * \brief Insert a new record into domain in memory
+ * \param _d domain the record belongs to
+ * \param _aor address of record
+ * \param _r new created record
+ * \return 0 on success, -1 on failure
  */
 int mem_insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
-/*! \brief
- * Delete a record
+/*!
+ * \brief Remove a record from domain in memory
+ * \param _d domain the record belongs to
+ * \param _r deleted record
  */
 void mem_delete_urecord(udomain_t* _d, struct urecord* _r);
 
 
 /*! \brief
- * Get lock
+ * Timer handler for given domain
  */
 typedef void (*lock_udomain_t)(udomain_t* _d, str *_aor);
 void lock_udomain(udomain_t* _d, str *_aor);
 
 
-/*! \brief
- * Release lock
+/*!
+ * \brief Release lock for a domain
+ * \param _d domain
+ * \param _aor address of record, uses as hash source for the lock slot
  */
 typedef void (*unlock_udomain_t)(udomain_t* _d, str *_aor);
 void unlock_udomain(udomain_t* _d, str *_aor);
 
 
+/*!
+ * \brief  Get lock for a slot
+ * \param _d domain
+ * \param i slot number
+ */
 void lock_ulslot(udomain_t* _d, int i);
+
+/*!
+ * \brief Release lock for a slot
+ * \param _d domain
+ * \param i slot number
+ */
 void unlock_ulslot(udomain_t* _d, int i);
 
 /* ===== module interface ======= */
 
 
-/*! \brief
- * Create and insert a new record
+/*!
+ * \brief Create and insert a new record
+ * \param _d domain to insert the new record
+ * \param _aor address of the record
+ * \param _r new created record
+ * \param return 0 on success, -1 on failure
  */
 typedef int (*insert_urecord_t)(udomain_t* _d, str* _aor, struct urecord** _r);
 int insert_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
-/*! \brief
- * Obtain a urecord pointer if the urecord exists in domain
+/*!
+ * \brief Obtain a urecord pointer if the urecord exists in domain
+ * \param _d domain to search the record
+ * \param _aor address of record
+ * \param _r new created record
+ * \return 0 if a record was found, 1 if nothing could be found
  */
 typedef int  (*get_urecord_t)(udomain_t* _d, str* _a, struct urecord** _r);
 int get_urecord(udomain_t* _d, str* _aor, struct urecord** _r);
 
 
-/*! \brief
- * Delete a urecord from domain
+/*!
+ * \brief Delete a urecord from domain
+ * \param _d domain where the record should be deleted
+ * \param _aor address of record
+ * \param _r deleted record
+ * \param 0 on success, -1 if the record could not be deleted
  */
 typedef int  (*delete_urecord_t)(udomain_t* _d, str* _a, struct urecord* _r);
 int delete_urecord(udomain_t* _d, str* _aor, struct urecord* _r);
 
 
-#endif /* UDOMAIN_H */
+#endif

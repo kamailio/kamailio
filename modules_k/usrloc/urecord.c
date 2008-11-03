@@ -1,7 +1,5 @@
-/* 
+/*
  * $Id$ 
- *
- * Usrloc record structure
  *
  * Copyright (C) 2001-2003 FhG Fokus
  *
@@ -47,12 +45,17 @@
 #include "ul_callback.h"
 
 
+/*! contact matching mode */
 int matching_mode = CONTACT_ONLY;
-
+/*! retransmission detection interval in seconds */
 int cseq_delay = 20;
 
-/*! \brief
- * Create and initialize new record structure
+/*!
+ * \brief Create and initialize new record structure
+ * \param _dom domain name
+ * \param _aor address of record
+ * \param _r pointer to the new record
+ * \return 0 on success, negative on failure
  */
 int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 {
@@ -78,10 +81,13 @@ int new_urecord(str* _dom, str* _aor, urecord_t** _r)
 }
 
 
-/*! \brief
- * Free all memory used by the given structure
+/*!
+ * \brief Free all memory used by the given structure
+ *
+ * Free all memory used by the given structure.
  * The structure must be removed from all linked
  * lists first
+ * \param _r freed record list
  */
 void free_urecord(urecord_t* _r)
 {
@@ -101,8 +107,10 @@ void free_urecord(urecord_t* _r)
 }
 
 
-/*! \brief
- * Print a record
+/*!
+ * \brief Print a record, useful for debugging
+ * \param _f print output
+ * \param _r printed record
  */
 void print_urecord(FILE* _f, urecord_t* _r)
 {
@@ -126,10 +134,15 @@ void print_urecord(FILE* _f, urecord_t* _r)
 }
 
 
-/*! \brief
- * Add a new contact
- * Contacts are ordered by: 1) q 
- *                          2) descending modification time
+/*!
+ * \brief Add a new contact in memory
+ *
+ * Add a new contact in memory, contacts are ordered by:
+ * 1) q value, 2) descending modification time
+ * \param _r record this contact belongs to
+ * \param _c contact
+ * \param _ci contact information
+ * \return pointer to new created contact on success, 0 on failure
  */
 ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 {
@@ -174,8 +187,10 @@ ucontact_t* mem_insert_ucontact(urecord_t* _r, str* _c, ucontact_info_t* _ci)
 }
 
 
-/*! \brief
- * Remove the contact from lists
+/*!
+ * \brief Remove the contact from lists in memory
+ * \param _r record this contact belongs to
+ * \param _c removed contact
  */
 void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 {
@@ -193,9 +208,10 @@ void mem_remove_ucontact(urecord_t* _r, ucontact_t* _c)
 }	
 
 
-
-/*! \brief
- * Remove contact from the list and delete
+/*!
+ * \brief Remove contact in memory from the list and delete it
+ * \param _r record this contact belongs to
+ * \param _c deleted contact
  */
 void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 {
@@ -205,9 +221,13 @@ void mem_delete_ucontact(urecord_t* _r, ucontact_t* _c)
 }
 
 
-/*! \brief
- * This timer routine is used when
- * db_mode is set to NO_DB
+/*!
+ * \brief Expires timer for NO_DB db_mode
+ *
+ * Expires timer for NO_DB db_mode, process all contacts from
+ * the record, delete the expired ones from memory.
+ * \param _r processed record
+ * \return 0
  */
 static inline int nodb_timer(urecord_t* _r)
 {
@@ -239,10 +259,13 @@ static inline int nodb_timer(urecord_t* _r)
 }
 
 
-
-/*! \brief
- * This routine is used when db_mode is
- * set to WRITE_THROUGH
+/*!
+ * \brief Write through timer, used for WRITE_THROUGH db_mode
+ *
+ * Write through timer, used for WRITE_THROUGH db_mode. Process all
+ * contacts from the record, delete all expired ones from the DB.
+ * \param _r processed record
+ * \return 0
  */
 static inline int wt_timer(urecord_t* _r)
 {
@@ -278,9 +301,15 @@ static inline int wt_timer(urecord_t* _r)
 }
 
 
-
-/*! \brief
- * Write-back timer
+/*!
+ * \brief Write-back timer, used for WRITE_BACK db_mode
+ *
+ * Write-back timer, used for WRITE_BACK db_mode. Process
+ * all contacts from the record, delete expired ones from the DB.
+ * Furthermore it updates changed contacts, and also insert new
+ * ones in the DB.
+ * \param _r processed record
+ * \return 0
  */
 static inline int wb_timer(urecord_t* _r)
 {
@@ -345,7 +374,14 @@ static inline int wb_timer(urecord_t* _r)
 }
 
 
-
+/*!
+ * \brief Run timer functions depending on the db_mode setting.
+ *
+ * Helper function that run the appropriate timer function, depending
+ * on the db_mode setting.
+ * \param _r processed record
+ * \return 0
+ */
 int timer_urecord(urecord_t* _r)
 {
 	switch(db_mode) {
@@ -360,7 +396,11 @@ int timer_urecord(urecord_t* _r)
 }
 
 
-
+/*!
+ * \brief Delete a record from the database
+ * \param _r deleted record
+ * \return 0 on success, -1 on failure
+ */
 int db_delete_urecord(urecord_t* _r)
 {
 	db_key_t keys[2];
@@ -398,9 +438,13 @@ int db_delete_urecord(urecord_t* _r)
 }
 
 
-/*! \brief
- * Release urecord previously obtained
- * through get_urecord
+/*!
+ * \brief Release urecord previously obtained through get_urecord
+ * \warning Failing to calls this function after get_urecord will
+ * result in a memory leak when the DB_ONLY mode is used. When
+ * the records is later deleted, e.g. with delete_urecord, then
+ * its not necessary, as this function already releases the record.
+ * \param _r released record
  */
 void release_urecord(urecord_t* _r)
 {
@@ -412,9 +456,12 @@ void release_urecord(urecord_t* _r)
 }
 
 
-/*! \brief
- * Create and insert new contact
- * into urecord
+/*!
+ * \brief Create and insert new contact into urecord
+ * \param _r record into the new contact should be inserted
+ * \param _ci contact information
+ * \param _c new created contact
+ * \return 0 on success, -1 on failure
  */
 int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 															ucontact_t** _c)
@@ -441,8 +488,11 @@ int insert_ucontact(urecord_t* _r, str* _contact, ucontact_info_t* _ci,
 }
 
 
-/*! \brief
- * Delete ucontact from urecord
+/*!
+ * \brief Delete ucontact from urecord
+ * \param _r record where the contact belongs to
+ * \param _c deleted contact
+ * \return 0 on success, -1 on failure
  */
 int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 {
@@ -467,6 +517,12 @@ int delete_ucontact(urecord_t* _r, struct ucontact* _c)
 }
 
 
+/*!
+ * \brief Match a contact record to a contact string
+ * \param ptr contact record
+ * \param _c contact string
+ * \return ptr on successfull match, 0 when they not match
+ */
 static inline struct ucontact* contact_match( ucontact_t* ptr, str* _c)
 {
 	while(ptr) {
@@ -480,6 +536,13 @@ static inline struct ucontact* contact_match( ucontact_t* ptr, str* _c)
 }
 
 
+/*!
+ * \brief Match a contact record to a contact string and callid
+ * \param ptr contact record
+ * \param _c contact string
+ * \param _callid callid
+ * \return ptr on successfull match, 0 when they not match
+ */
 static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
 														str* _c, str *_callid)
 {
@@ -497,13 +560,15 @@ static inline struct ucontact* contact_callid_match( ucontact_t* ptr,
 }
 
 
-/*! \brief
- * Get pointer to ucontact with given contact
- * Returns:
- *      0 - found
- *      1 - not found
- *     -1 - invalid found
- *     -2 - found, but to be skipped (same cseq)
+/*!
+ * \brief Get pointer to ucontact with given contact
+ * \param _r record where to search the contacts
+ * \param _c contact string
+ * \param _callid callid
+ * \param _cseq CSEQ number
+ * \param _co found contact
+ * \return 0 - found, 1 - not found, -1 - invalid found, 
+ * -2 - found, but to be skipped (same cseq)
  */
 int get_ucontact(urecord_t* _r, str* _c, str* _callid, int _cseq,
 														struct ucontact** _co)
