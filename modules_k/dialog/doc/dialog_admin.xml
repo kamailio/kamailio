@@ -1095,8 +1095,10 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
 			<listitem><para>
 				<emphasis>from_tag</emphasis> (optional, but cannot be present
 				without the callid paramter) - fromtag (as per initial request)
-				of the dialog to be listed.
-				entry
+				of the dialog to be listed.  Note that if the from_tag is not
+				specified, only dialogs created by a request without a from tag
+				are matched, which will only occur with broken clients and is
+				thus a very rare situation.
 			</para></listitem>
 		</itemizedlist>
 		<para>

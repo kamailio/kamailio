@@ -11,7 +11,7 @@ Bogdan-Andrei Iancu
 
    Copyright © 2006 voice-system.ro
    Revision History
-   Revision $Revision$ $Date: 2008-08-06 12:08:33 +0200
+   Revision $Revision$ $Date: 2008-08-06 06:08:33 -0400
    (Wed, 06 Aug 2008) $
      _________________________________________________________
 
@@ -784,7 +784,10 @@ xlog("currently, the user %fu has $avp(size) active outgoing calls\n");
        listed.
      * from_tag (optional, but cannot be present without the
        callid paramter) - fromtag (as per initial request) of the
-       dialog to be listed. entry
+       dialog to be listed. Note that if the from_tag is not
+       specified, only dialogs created by a request without a
+       from tag are matched, which will only occur with broken
+       clients and is thus a very rare situation.
 
    MI FIFO Command Format:
                 :dlg_list:_reply_fifo_file_
