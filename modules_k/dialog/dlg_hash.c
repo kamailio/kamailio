@@ -778,10 +778,10 @@ static inline struct mi_root* process_mi_params(struct mi_root *cmd_tree,
 		from_tag = NULL;
 	} else {
 		from_tag = &node->value;
+		LM_DBG("from_tag='%.*s'\n", from_tag->len, from_tag->s);
 		if ( node->next!=NULL )
 			return init_mi_tree( 400, MI_SSTR(MI_MISSING_PARM));
 	}
-	LM_DBG("from_tag='%.*s'\n", from_tag->len, from_tag->s);
 
 	h_entry = core_hash( callid, from_tag, d_table->size);
 
