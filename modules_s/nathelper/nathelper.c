@@ -1,6 +1,6 @@
 /* $Id$
  *
- * Copyright (C) 2003 Porta Software Ltd
+ * Copyright (C) 2003-2008 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of ser, a free SIP server.
  *
