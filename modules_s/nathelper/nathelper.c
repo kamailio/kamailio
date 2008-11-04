@@ -2149,6 +2149,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 					LOG(L_ERR, "ERROR: force_rtp_proxy2: no available proxies\n");
 					return -1;
 				}
+				len = v[1].iov_len;
 				if (rep_oidx > 0) {
 					if (node->rn_rep_supported == 0) {
 						LOG(L_WARN, "WARNING: force_rtp_proxy2: "
@@ -2161,6 +2162,7 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 					}
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
+				v[1].iov_len = len;
 			} while (cp == NULL);
 			LOG(L_DBG, "force_rtp_proxy2: proxy reply: %s\n", cp);
 			/* Parse proxy reply to <argc,argv> */
