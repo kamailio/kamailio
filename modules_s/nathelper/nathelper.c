@@ -1993,14 +1993,15 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 		LOG(L_ERR, "ERROR: force_rtp_proxy2: can't get From tag\n");
 		return -1;
 	}
-	if (flookup != 0) {
+	if (flookup != 0 || (msg->first_line.type == SIP_REPLY && offer != 0)) {
 		if (to_tag.len == 0)
 			return -1;
-		create = 0;
 		tmp = from_tag;
 		from_tag = to_tag;
 		to_tag = tmp;
 	}
+	if (flookup != 0)
+		create = 0;
 	proxied = 0;
 	for (cp = body.s; (len = body.s + body.len - cp) >= ANORTPPROXY_LEN;) {
 		cp1 = ser_memmem(cp, ANORTPPROXY, len, ANORTPPROXY_LEN);
