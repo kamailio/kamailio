@@ -32,6 +32,19 @@
 #define	STR2IOVEC(sx, ix)	do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
 #define SZ2IOVEC(sx, ix)	do {char *_t_p = (ix).iov_base = (sx); (ix).iov_len = strlen(_t_p);} while(0)
 
+struct rtpp_node {
+    char                    *rn_url;        /* unparsed, deletable */
+    int                     rn_umode;
+    char                    *rn_address;    /* substring of rn_url */
+    int                     rn_fd;          /* control fd */
+    int                     rn_disabled;    /* found unaccessible? */
+    unsigned                rn_weight;      /* for load balancing */
+    int                     rn_recheck_ticks;
+    int                     rn_rep_supported;
+    int                     rn_ptl_supported;
+    struct rtpp_node        *rn_next;
+};
+
 /* Parameters from nathelper.c */
 extern struct socket_info* force_socket;
 

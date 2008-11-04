@@ -250,7 +250,6 @@ MODULE_VERSION
 #define	CPORT		"22222"
 
 struct rtpp_head;
-struct rtpp_node;
 
 static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
@@ -324,19 +323,6 @@ static unsigned int myseqn = 0;
 struct rtpp_head {
 	struct rtpp_node	*rn_first;
 	struct rtpp_node	*rn_last;
-};
-
-struct rtpp_node {
-	char			*rn_url;	/* unparsed, deletable */
-	int			rn_umode;
-	char			*rn_address;	/* substring of rn_url */
-	int			rn_fd;		/* control fd */
-	int			rn_disabled;	/* found unaccessible? */
-	unsigned		rn_weight;	/* for load balancing */
-	int			rn_recheck_ticks;
-	int			rn_rep_supported;
-	int			rn_ptl_supported;
-	struct rtpp_node	*rn_next;
 };
 
 /* RTP proxy balancing list */
