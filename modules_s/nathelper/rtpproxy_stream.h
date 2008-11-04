@@ -1,8 +1,6 @@
-/*
- * $Id$
+/* $Id$
  *
- *
- * Copyright (C) 2005 Porta Software Ltd.
+ * Copyright (C) 2008 Sippy Software, Inc., http://www.sippysoft.com
  *
  * This file is part of ser, a free SIP server.
  *
@@ -24,36 +22,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
-#ifndef _NATHELPER_H
-#define _NATHELPER_H
+#ifndef _RTPPROXY_STREAM_H
+#define  _RTPPROXY_STREAM_H
 
-/* Handy macros */
-#define	STR2IOVEC(sx, ix)	do {(ix).iov_base = (sx).s; (ix).iov_len = (sx).len;} while(0)
-#define SZ2IOVEC(sx, ix)	do {char *_t_p = (ix).iov_base = (sx); (ix).iov_len = strlen(_t_p);} while(0)
-
-/* Parameters from nathelper.c */
-extern struct socket_info* force_socket;
-
-/* Functions from nathelper */
-struct rtpp_node *select_rtpp_node(str, int, int);
-char *send_rtpp_command(struct rtpp_node *, struct iovec *, int);
-
-/* Functions from natping.c */
-int natpinger_init(void);
-int natpinger_child_init(int);
-int natpinger_cleanup(void);
-
-int natping_contact(str, struct dest_info *);
-
-int intercept_ping_reply(struct sip_msg* msg);
-
-/* Variables from natping.c referenced from nathelper.c */
-extern int natping_interval;
-extern int ping_nated_only;
-extern char *natping_method;
-extern int natping_stateful;
-extern int natping_crlf;
+int fixup_var_str_int(void **, int);
+int rtpproxy_stream2uac2_f(struct sip_msg *, char *, char *);
+int rtpproxy_stream2uas2_f(struct sip_msg *, char *, char *);
+int rtpproxy_stop_stream2uac2_f(struct sip_msg *, char *, char *);
+int rtpproxy_stop_stream2uas2_f(struct sip_msg *, char *, char *);
 
 #endif

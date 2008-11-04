@@ -184,6 +184,7 @@
 
 #include "nhelpr_funcs.h"
 #include "nathelper.h"
+#include "rtpproxy_stream.h"
 #include "../../flags.h"
 #include "../../sr_module.h"
 #include "../../dprint.h"
@@ -245,6 +246,7 @@ MODULE_VERSION
 #define	REQ_CPROTOVER	"20050322"
 /* Additional version necessary for re-packetization support */
 #define	REP_CPROTOVER	"20071116"
+#define	PTL_CPROTOVER	"20081102"
 #define	CPORT		"22222"
 
 struct rtpp_head;
@@ -254,12 +256,11 @@ static int nat_uac_test_f(struct sip_msg* msg, char* str1, char* str2);
 static int fix_nated_contact_f(struct sip_msg *, char *, char *);
 static int fix_nated_sdp_f(struct sip_msg *, char *, char *);
 static int extract_mediaip(str *, str *, int *);
-static int extract_mediaport(str *, str *);
+static int extract_mediainfo(str *, str *, str *);
 static int alter_mediaip(struct sip_msg *, str *, str *, int, str *, int, int);
 static int alter_mediaport(struct sip_msg *, str *, str *, str *, int);
 static char *gencookie();
 static int rtpp_test(struct rtpp_node*, int, int);
-static char *send_rtpp_command(struct rtpp_node*, struct iovec *, int);
 static int unforce_rtp_proxy0_f(struct sip_msg *, char *, char *);
 static int unforce_rtp_proxy1_f(struct sip_msg *, char *, char *);
 static int start_recording0_f(struct sip_msg *, char *, char *);
@@ -295,15 +296,19 @@ static struct {
 	{NULL, 0, 0}
 };
 
-static str sup_ptypes[] = {
-	{.s = "udp", .len = 3},
-	{.s = "udptl", .len = 5},
-	{.s = "rtp/avp", .len = 7},
-	{.s = "rtp/avpf", .len = 8},
-	{.s = "rtp/savp", .len = 8},
-	{.s = "rtp/savpf", .len = 9},
-	{.s = "udp/bfcp", .len = 8},
-	{.s = NULL, .len = 0}
+static struct {
+	const char *s;
+	int len;
+	int is_rtp;
+} sup_ptypes[] = {
+	{.s = "udp",       .len = 3, .is_rtp = 0},
+	{.s = "udptl",     .len = 5, .is_rtp = 0},
+	{.s = "rtp/avp",   .len = 7, .is_rtp = 1},
+	{.s = "rtp/avpf",  .len = 8, .is_rtp = 1},
+	{.s = "rtp/savp",  .len = 8, .is_rtp = 1},
+	{.s = "rtp/savpf", .len = 9, .is_rtp = 1},
+	{.s = "udp/bfcp",  .len = 8, .is_rtp = 0},
+	{.s = NULL,        .len = 0, .is_rtp = 0}
 };
 
 static char *rtpproxy_sock = "unix:/var/run/rtpproxy.sock"; /* list */
@@ -330,6 +335,7 @@ struct rtpp_node {
 	unsigned		rn_weight;	/* for load balancing */
 	int			rn_recheck_ticks;
 	int			rn_rep_supported;
+	int			rn_ptl_supported;
 	struct rtpp_node	*rn_next;
 };
 
@@ -356,6 +362,10 @@ static cmd_export_t cmds[] = {
 	{"rtpproxy_answer",    rtpproxy_answer1_f,     0, NULL,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"rtpproxy_answer",    rtpproxy_answer1_f,     1, fixup_var_str_1,             REQUEST_ROUTE | ONREPLY_ROUTE },
 	{"rtpproxy_answer",    rtpproxy_answer2_f,     2, fixup_var_str_12,            REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_stream2uac",rtpproxy_stream2uac2_f, 2, fixup_var_str_int,           REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_stream2uas",rtpproxy_stream2uas2_f, 2, fixup_var_str_int,           REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_stop_stream2uac",rtpproxy_stop_stream2uac2_f, 0, NULL,              REQUEST_ROUTE | ONREPLY_ROUTE },
+	{"rtpproxy_stop_stream2uas",rtpproxy_stop_stream2uas2_f, 0, NULL,              REQUEST_ROUTE | ONREPLY_ROUTE },
 	{0, 0, 0, 0, 0}
 };
 
@@ -1048,7 +1058,7 @@ extract_mediaip(str *body, str *mediaip, int *pf)
 }
 
 static int
-extract_mediaport(str *body, str *mediaport)
+extract_mediainfo(str *body, str *mediaport, str *payload_types)
 {
 	char *cp, *cp1;
 	int len, i;
@@ -1062,7 +1072,7 @@ extract_mediaport(str *body, str *mediaport)
 		cp = cp1 + 2;
 	}
 	if (cp1 == NULL) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no `m=' in SDP\n");
+		LOG(L_ERR, "ERROR: extract_mediainfo: no `m=' in SDP\n");
 		return -1;
 	}
 	mediaport->s = cp1 + 2; /* skip `m=' */
@@ -1074,14 +1084,14 @@ extract_mediaport(str *body, str *mediaport)
 	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
 	mediaport->len -= cp - mediaport->s;
 	if (mediaport->len <= 0 || cp == mediaport->s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		LOG(L_ERR, "ERROR: extract_mediainfo: no port in `m='\n");
 		return -1;
 	}
 	mediaport->s = cp;
 	cp = eat_space_end(mediaport->s, mediaport->s + mediaport->len);
 	mediaport->len -= cp - mediaport->s;
 	if (mediaport->len <= 0 || cp == mediaport->s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		LOG(L_ERR, "ERROR: extract_mediainfo: no port in `m='\n");
 		return -1;
 	}
 	/* Extract port */
@@ -1089,7 +1099,7 @@ extract_mediaport(str *body, str *mediaport)
 	cp = eat_token_end(mediaport->s, mediaport->s + mediaport->len);
 	ptype.len = mediaport->len - (cp - mediaport->s);
 	if (ptype.len <= 0 || cp == mediaport->s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no port in `m='\n");
+		LOG(L_ERR, "ERROR: extract_mediainfo: no port in `m='\n");
 		return -1;
 	}
 	ptype.s = cp;
@@ -1098,22 +1108,38 @@ extract_mediaport(str *body, str *mediaport)
 	cp = eat_space_end(ptype.s, ptype.s + ptype.len);
 	ptype.len -= cp - ptype.s;
 	if (ptype.len <= 0 || cp == ptype.s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
+		LOG(L_ERR, "ERROR: extract_mediainfo: no protocol type in `m='\n");
 		return -1;
 	}
 	/* Extract protocol type */
 	ptype.s = cp;
 	cp = eat_token_end(ptype.s, ptype.s + ptype.len);
 	if (cp == ptype.s) {
-		LOG(L_ERR, "ERROR: extract_mediaport: no protocol type in `m='\n");
+		LOG(L_ERR, "ERROR: extract_mediainfo: no protocol type in `m='\n");
 		return -1;
 	}
+	payload_types->len = ptype.len - (cp - ptype.s);
 	ptype.len = cp - ptype.s;
+	payload_types->s = cp;
 
-	for (i = 0; sup_ptypes[i].s != NULL; i++)
-		if (ptype.len == sup_ptypes[i].len &&
-		    strncasecmp(ptype.s, sup_ptypes[i].s, ptype.len) == 0)
+	for (i = 0; sup_ptypes[i].s != NULL; i++) {
+		if (ptype.len != sup_ptypes[i].len ||
+		    strncasecmp(ptype.s, sup_ptypes[i].s, ptype.len) != 0)
+			continue;
+		if (sup_ptypes[i].is_rtp == 0) {
+			payload_types->len = 0;
 			return 0;
+		}
+		cp = eat_space_end(payload_types->s, payload_types->s +
+		    payload_types->len);
+		if (cp == payload_types->s) {
+			LOG(L_ERR, "ERROR: extract_mediainfo: no payload types in `m='\n");
+			return -1;
+		}
+		payload_types->len -= cp - payload_types->s;
+		payload_types->s = cp;
+		return 0;
+	}
 	/* Unproxyable protocol type. Generally it isn't error. */
 	return -1;
 }
@@ -1385,6 +1411,12 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 		} else {
 			node->rn_rep_supported = 0;
 		}
+		rval = rtpp_checkcap(node, PTL_CPROTOVER, sizeof(PTL_CPROTOVER) - 1);
+		if (rval != -1) {
+			node->rn_ptl_supported = rval;
+		} else {
+			node->rn_ptl_supported = 0;
+		}
 		return 0;
 	} while(0);
 	LOG(L_WARN, "WARNING: rtpp_test: support for RTP proxy <%s>"
@@ -1396,7 +1428,7 @@ rtpp_test(struct rtpp_node *node, int isdisabled, int force)
 	return 1;
 }
 
-static char *
+char *
 send_rtpp_command(struct rtpp_node *node, struct iovec *v, int vcnt)
 {
 	struct sockaddr_un addr;
@@ -1510,7 +1542,7 @@ badproxy:
  * too rare. Otherwise we should implement "mature" HA clustering, which is
  * too expensive here.
  */
-static struct rtpp_node *
+struct rtpp_node *
 select_rtpp_node(str callid, int do_test, int node_idx)
 {
 	unsigned sum, sumcut, weight_sum;
@@ -1843,7 +1875,7 @@ static int
 force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 {
 	str body, body1, oldport, oldip, newport, newip, str1, str2, s;
-	str callid, from_tag, to_tag, tmp, c1_oldip;
+	str callid, from_tag, to_tag, tmp, c1_oldip, payload_types;
 	int create, port, len, asymmetric, flookup, argc, proxied, real, i;
 	int oidx, pf, pf1, force, c1_pf, rep_oidx;
 	unsigned int node_idx, oldport_i;
@@ -2102,7 +2134,8 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 			}
 			tmpstr1.s = m1p;
 			tmpstr1.len = m2p - m1p;
-			if (extract_mediaport(&tmpstr1, &oldport) == -1) {
+			if (extract_mediainfo(&tmpstr1, &oldport,
+			    &payload_types) == -1) {
 				LOG(L_ERR, "ERROR: force_rtp_proxy2: can't"
 				    " extract media port from the message\n");
 				return -1;
@@ -2161,6 +2194,31 @@ force_rtp_proxy(struct sip_msg *msg, char *param1, char *param2, int offer)
 						    rep_opts, rep_oidx);
 						v[1].iov_len += rep_oidx;
 					}
+				}
+				if (payload_types.len > 0 && node->rn_ptl_supported != 0) {
+					cp1 = (char *)v[1].iov_base + v[1].iov_len;
+					*cp1 = 'c';
+					cp1++;
+					/*
+					 * Convert space-separated payload types list into
+					 * a comma-separated list.
+					 */
+					for (cp = payload_types.s;
+					    cp < payload_types.s + payload_types.len; cp++) {
+						if (isdigit(*cp)) {
+							*cp1 = *cp;
+							cp1++;
+							continue;
+						}
+						*cp1 = ',';
+						cp1++;
+						do {
+							cp++;
+						} while (!isdigit(*cp) &&
+						    cp < payload_types.s + payload_types.len);
+						cp--;
+					}
+					v[1].iov_len = cp1 - (char *)v[1].iov_base;
 				}
 				cp = send_rtpp_command(node, v, (to_tag.len > 0) ? 16 : 12);
 				v[1].iov_len = len;
