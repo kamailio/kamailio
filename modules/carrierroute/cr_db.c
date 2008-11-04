@@ -123,6 +123,7 @@ int load_user_carrier(str * user, str * domain) {
 	}
 
 	if (VAL_NULL(ROW_VALUES(RES_ROWS(res)))) {
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
 		return 0;
 	}
 
