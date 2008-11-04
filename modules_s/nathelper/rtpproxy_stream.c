@@ -92,6 +92,12 @@ rtpproxy_stream(struct sip_msg* msg, str *pname, int count, int stream2uac)
         LOG(L_ERR, "ERROR: rtpproxy_stream: no available proxies\n");
         return -1;
     }
+    if (node->rn_ptl_supported == 0) {
+        LOG(L_ERR, "ERROR: rtpproxy_stream: required functionality is not "
+          "supported by the version of the RTPproxy running on the selected "
+          "node.  Please upgrade the RTPproxy and try again.\n");
+        return -1;
+    }
     nitems = 11;
     if (stream2uac == 0) {
         if (to_tag.len == 0)
@@ -170,6 +176,12 @@ rtpproxy_stop_stream(struct sip_msg* msg, int stream2uac)
     node = select_rtpp_node(callid, 1, -1);
     if (!node) {
         LOG(L_ERR, "ERROR: rtpproxy_stop_stream: no available proxies\n");
+        return -1;
+    }
+    if (node->rn_ptl_supported == 0) {
+        LOG(L_ERR, "ERROR: rtpproxy_stream: required functionality is not "
+          "supported by the version of the RTPproxy running on the selected "
+          "node.  Please upgrade the RTPproxy and try again.\n");
         return -1;
     }
     nitems = 9;
