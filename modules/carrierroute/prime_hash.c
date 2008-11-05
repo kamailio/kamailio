@@ -136,15 +136,15 @@ static int determine_source (struct sip_msg *msg, enum hash_source source,
 }
 
 static int validate_msg(struct sip_msg * msg) {
-	if(!msg->callid && ((parse_headers(msg, HDR_CALLID_T, 0) == -1) || !msg->callid)) {
+	if(!msg->callid && ((parse_headers(msg, HDR_CALLID_F, 0) == -1) || !msg->callid)) {
 		LM_ERR("Message has no Call-ID header\n");
 		return -1;
 	}
-	if(!msg->to && ((parse_headers(msg, HDR_TO_T, 0) == -1) || !msg->to)) {
+	if(!msg->to && ((parse_headers(msg, HDR_TO_F, 0) == -1) || !msg->to)) {
 		LM_ERR("Message has no To header\n");
 		return -1;
 	}
-	if(!msg->from && ((parse_headers(msg, HDR_FROM_T, 0) == -1) || !msg->from)) {
+	if(!msg->from && ((parse_headers(msg, HDR_FROM_F, 0) == -1) || !msg->from)) {
 		LM_ERR("Message has no From header\n");
 		return -1;
 	}
