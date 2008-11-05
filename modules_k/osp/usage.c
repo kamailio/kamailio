@@ -56,6 +56,13 @@
 #define OSP_COOKIE_DSTCOUNT     'c'
 #define OSP_COOKIE_DSTCOUNTUP   'C'
 
+/* Flags for OSP cookies */
+#define OSP_COOKIEHAS_TRANSID   (1 << 0)
+#define OSP_COOKIEHAS_SRCIP     (1 << 1)
+#define OSP_COOKIEHAS_AUTHTIME  (1 << 2)
+#define OSP_COOKIEHAS_DSTCOUNT  (1 << 3)
+#define OSP_COOKIEHAS_ALL       (OSP_COOKIEHAS_TRANSID | OSP_COOKIEHAS_SRCIP | OSP_COOKIEHAS_AUTHTIME | OSP_COOKIEHAS_DSTCOUNT) 
+
 extern char* _osp_device_ip;
 extern OSPTPROVHANDLE _osp_provider;
 extern str OSP_ORIGDEST_NAME;
@@ -184,7 +191,7 @@ void ospRecordTermTransaction(
 /*
  * Report OSP usage from OSP cookie
  * param msg SIP message
- * param cookie OSP cookie
+ * param cookie OSP cookie (buffer owned by ospReportUsage, can be modified)
  * param callid Call ID
  * param release Who releases the call first. 0 orig, 1 term
  * param type Usage type
@@ -204,7 +211,10 @@ static int ospReportUsageFromCookie(
     unsigned long long transid = 0;
     time_t authtime = 0;
     unsigned destinationCount = 0;
+    time_t duration = 0;
     time_t endtime = time(NULL);
+    int cookieflags = 0;
+    unsigned releasecode;
     char firstvia[OSP_STRBUF_SIZE];
     char from[OSP_STRBUF_SIZE];
     char to[OSP_STRBUF_SIZE];
@@ -235,24 +245,35 @@ static int ospReportUsageFromCookie(
                 case OSP_COOKIE_TRANSID:
                 case OSP_COOKIE_TRANSIDUP:
                     transid = atoll(value);
+                    cookieflags |= OSP_COOKIEHAS_TRANSID;
                     break;
                 case OSP_COOKIE_AUTHTIME:
                 case OSP_COOKIE_AUTHTIMEUP:
                     authtime = atoi(value);
+                    duration = endtime - authtime;
+                    cookieflags |= OSP_COOKIEHAS_AUTHTIME;
                     break;
                 case OSP_COOKIE_SRCIP:
                 case OSP_COOKIE_SRCIPUP:
                     originator = value;
+                    cookieflags |= OSP_COOKIEHAS_SRCIP;
                     break;
                 case OSP_COOKIE_DSTCOUNT:
                 case OSP_COOKIE_DSTCOUNTUP:
                     destinationCount = (unsigned)atoi(value);
+                    cookieflags |= OSP_COOKIEHAS_DSTCOUNT;
                     break;
                 default:
                     LM_ERR("unexpected tag '%c' / value '%s'\n", tag, value);
                     break;
             }
         }
+    }
+
+    if (cookieflags == OSP_COOKIEHAS_ALL) {
+        releasecode = 10016;
+    } else {
+        releasecode = 9016;
     }
 
     ospGetSourceAddress(msg, firstvia, sizeof(firstvia));
@@ -344,12 +365,14 @@ static int ospReportUsageFromCookie(
 
     ospReportUsageWrapper(
         transaction,
-        cookie == NULL ? 9016 : 10016,
-        cookie == NULL ? 0 : endtime - authtime,
+        releasecode,
+        duration,
         authtime,
         endtime,
-        0,0,
-        0,0,
+        0,
+        0,
+        0,
+        0,
         release);
 
     return errorcode;
