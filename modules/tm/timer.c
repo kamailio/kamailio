@@ -230,6 +230,8 @@ static void delete_cell( struct cell *p_cell, int unlock )
 		DBG("DEBUG: delete_cell %p: can't delete -- still reffed\n",
 			p_cell);
 		/* it's added to del list for future del */
+		p_cell->dele_tl.timer_list=0;/* hack: reset the list so that 
+									   set_timer() will work */
 		set_timer( &(p_cell->dele_tl), DELETE_LIST, 0 );
 	} else {
 		if (unlock) UNLOCK_HASH(p_cell->hash_index);
