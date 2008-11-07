@@ -36,6 +36,7 @@ void init_sctp_options()
 #ifdef USE_SCTP
 	sctp_options.sctp_autoclose=DEFAULT_SCTP_AUTOCLOSE; /* in seconds */
 	sctp_options.sctp_send_ttl=DEFAULT_SCTP_SEND_TTL;   /* in milliseconds */
+	sctp_options.sctp_send_retries=DEFAULT_SCTP_SEND_RETRIES;
 #endif
 }
 
@@ -55,6 +56,12 @@ void sctp_options_check()
 #ifndef USE_SCTP
 	W_OPT_NSCTP(sctp_autoclose);
 	W_OPT_NSCTP(sctp_send_ttl);
+	W_OPT_NSCTP(sctp_send_retries);
+	if (sctp_options.sctp_send_retries>MAX_SCTP_SEND_RETRIES) {
+		WARN("sctp: sctp_send_retries too high (%d), setting it to %d\n",
+				sctp_option.sctp_send_retries, MAX_SCTP_SEND_RETRIES);
+		sctp_options.sctp_send_retries=MAX_SCTP_SEND_RETRIES;
+	}
 #endif
 }
 

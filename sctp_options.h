@@ -29,6 +29,8 @@
 
 #define DEFAULT_SCTP_AUTOCLOSE 180 /* seconds */
 #define DEFAULT_SCTP_SEND_TTL  32000 /* in ms (32s)  */
+#define DEFAULT_SCTP_SEND_RETRIES 0
+#define MAX_SCTP_SEND_RETRIES 9
 
 
 struct sctp_cfg_options{
@@ -36,6 +38,7 @@ struct sctp_cfg_options{
 	int sctp_so_sndbuf;
 	unsigned int sctp_autoclose; /* in seconds */
 	unsigned int sctp_send_ttl; /* in milliseconds */
+	unsigned int sctp_send_retries;
 };
 
 extern struct sctp_cfg_options sctp_options;

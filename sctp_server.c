@@ -508,6 +508,12 @@ error:
 #endif /* USE_SCTP_OO */
 
 
+
+static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
+						struct sctp_sndrcvinfo* sndrcv_info);
+
+
+
 /* debugging: return a string name for SCTP_ASSOC_CHANGE state */
 static char* sctp_assoc_change_state2s(short int state)
 {
@@ -573,6 +579,67 @@ static char* sctp_paddr_change_state2s(unsigned int state)
 
 
 
+/* handle SCTP_SEND_FAILED notifications: if packet marked for retries
+ * retry the send (with 0 associd)
+ * returns 0 on success, -1 on failure
+ */
+static int sctp_handle_send_failed(struct socket_info* si,
+									union sockaddr_union* su,
+									char* buf, unsigned len)
+{
+	union sctp_notification* snp;
+	struct sctp_sndrcvinfo sinfo;
+	struct dest_info dst;
+	char* data;
+	unsigned data_len;
+	int retries;
+	int ret;
+	
+	ret=-1;
+	snp=(union sctp_notification*) buf;
+	retries=snp->sn_send_failed.ssf_info.sinfo_context;
+	
+	/* don't retry on explicit remote error
+	 * (unfortunately we can't be more picky than this, we get no 
+	 * indication in the SEND_FAILED notification for other error
+	 * reasons (e.g. ABORT received, INIT timeout a.s.o)
+	 */
+	if (retries && (snp->sn_send_failed.ssf_error==0)) {
+		DBG("sctp: RETRY-ing (%d)\n", retries);
+		retries--;
+		data=(char*)snp->sn_send_failed.ssf_data;
+		data_len=snp->sn_send_failed.ssf_length - 
+					sizeof(struct sctp_send_failed);
+		
+		memset(&sinfo, 0, sizeof(sinfo));
+		sinfo.sinfo_flags=SCTP_UNORDERED;
+#ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
+		if (sctp_options.sctp_send_ttl){
+			sinfo.sinfo_pr_policy=SCTP_PR_SCTP_TTL;
+			sinfo.sinfo_pr_value=sctp_options.sctp_send_ttl;
+		}else
+			sinfo.info_pr_policy=SCTP_PR_SCTP_NONE;
+#else
+		sinfo.sinfo_timetolive=sctp_options.sctp_send_ttl;
+#endif
+		sinfo.sinfo_context=retries;
+		
+		dst.to=*su;
+		dst.send_sock=si;
+		dst.id=0;
+		dst.proto=PROTO_SCTP;
+#ifdef USE_COMP
+		dst.comp=COMP_NONE;
+#endif
+		
+		ret=sctp_msg_send_raw(&dst, data, data_len, &sinfo);
+	}
+	
+	return (ret>0)?0:ret;
+}
+
+
+
 static int sctp_handle_notification(struct socket_info* si,
 									union sockaddr_union* su,
 									char* buf, unsigned len)
@@ -623,6 +690,7 @@ static int sctp_handle_notification(struct socket_info* si,
 					si->port_no, snp->sn_send_failed.ssf_error,
 					snp->sn_send_failed.ssf_assoc_id,
 					snp->sn_send_failed.ssf_flags);
+			sctp_handle_send_failed(si, su, buf, len);
 			break;
 		case SCTP_PEER_ADDR_CHANGE:
 			ERR_LEN_TOO_SMALL(len, sizeof(struct sctp_paddr_change), si, su,
@@ -817,16 +885,25 @@ error:
 }
 
 
-/* send buf:len over udp to dst (uses only the to and send_sock dst members)
+/* send buf:len over udp to dst using sndrcv_info (uses only the to and 
+ * send_sock members from dst)
  * returns the numbers of bytes sent on success (>=0) and -1 on error
  */
-int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
+static int sctp_msg_send_raw(struct dest_info* dst, char* buf, unsigned len,
+						struct sctp_sndrcvinfo* sndrcv_info)
 {
 	int n;
 	int tolen;
 	struct ip_addr ip; /* used only on error, for debugging */
 	struct msghdr msg;
 	struct iovec iov[1];
+	struct sctp_sndrcvinfo* sinfo;
+	struct cmsghdr* cmsg;
+	/* make sure msg_control will point to properly aligned data */
+	union {
+		struct cmsghdr cm;
+		char cbuf[CMSG_SPACE(sizeof(*sinfo))];
+	}ctrl_un;
 	
 	tolen=sockaddru_len(dst->to);
 	iov[0].iov_base=buf;
@@ -835,9 +912,18 @@ int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
 	msg.msg_iovlen=1;
 	msg.msg_name=&dst->to.s;
 	msg.msg_namelen=tolen;
-	msg.msg_control=0;
-	msg.msg_controllen=0;
-	msg.msg_flags=SCTP_UNORDERED;
+	msg.msg_flags=0; /* not used on send (use instead sinfo_flags) */
+	msg.msg_control=ctrl_un.cbuf;
+	msg.msg_controllen=sizeof(ctrl_un.cbuf);
+	cmsg=CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level=IPPROTO_SCTP;
+	cmsg->cmsg_type=SCTP_SNDRCV;
+	cmsg->cmsg_len=CMSG_LEN(sizeof(*sinfo));
+	sinfo=(struct sctp_sndrcvinfo*)CMSG_DATA(cmsg);
+	*sinfo=*sndrcv_info;
+	/* some systems need msg_controllen set to the actual size and not
+	 * something bigger (e.g. openbsd) */
+	msg.msg_controllen=cmsg->cmsg_len;
 again:
 	n=sendmsg(dst->send_sock->socket, &msg, MSG_DONTWAIT);
 #if 0
@@ -859,10 +945,35 @@ again:
 		}else if (errno==EAGAIN || errno==EWOULDBLOCK){
 			LOG(L_ERR, "ERROR: sctp_msg_send: failed to send, send buffers"
 						" full\n");
-			/* TODO: fix blocking writes */
 		}
 	}
 	return n;
+}
+
+
+
+/* wrapper around sctp_msg_send_raw():
+ * send buf:len over udp to dst (uses only the to and send_sock members
+ * from dst)
+ * returns the numbers of bytes sent on success (>=0) and -1 on error
+ */
+int sctp_msg_send(struct dest_info* dst, char* buf, unsigned len)
+{
+	struct sctp_sndrcvinfo sinfo;
+	
+	memset(&sinfo, 0, sizeof(sinfo));
+	sinfo.sinfo_flags=SCTP_UNORDERED;
+#ifdef HAVE_SCTP_SNDRCVINFO_PR_POLICY
+	if (sctp_options.sctp_send_ttl){
+		sinfo.sinfo_pr_policy=SCTP_PR_SCTP_TTL;
+		sinfo.sinfo_pr_value=sctp_options.sctp_send_ttl;
+	}else
+		sinfo->sinfo_pr_policy=SCTP_PR_SCTP_NONE;
+#else
+		sinfo.sinfo_timetolive=sctp_options.sctp_send_ttl;
+#endif
+	sinfo.sinfo_context=sctp_options.sctp_send_retries;
+	return sctp_msg_send_raw(dst, buf, len, &sinfo);
 }
 
 
