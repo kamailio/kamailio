@@ -363,11 +363,9 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 	urecord_t* r;
 	ucontact_t* c;
 	unsigned int flags;
-	int num;
-	int e;
+	int num, expires;
 #ifdef USE_TCP
-	int e_max;
-	int tcp_check;
+	int e_max, tcp_check;
 	struct sip_uri uri;
 #endif
 
@@ -384,9 +382,9 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 
 	for( num=0,r=0,ci=0 ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
-		calc_contact_expires(_m, _c->expires, &e);
+		calc_contact_expires(_m, _c->expires, &expires);
 		/* Skip contacts with zero expires */
-		if (e == 0)
+		if (expires == 0)
 			continue;
 
 		if (max_contacts && (num >= max_contacts)) {
@@ -406,7 +404,7 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 		}
 
 		/* pack the contact_info */
-		if ( (ci=pack_ci( (ci==0)?_m:0, _c, e, flags))==0 ) {
+		if ( (ci=pack_ci( (ci==0)?_m:0, _c, expires, flags))==0 ) {
 			LM_ERR("failed to extract contact info\n");
 			goto error;
 		}
@@ -434,9 +432,9 @@ static inline int insert_contacts(struct sip_msg* _m, contact_t* _c,
 			} else if (uri.proto==PROTO_TCP || uri.proto==PROTO_TLS) {
 				if (e_max) {
 					LM_WARN("multiple TCP contacts on single REGISTER\n");
-					if (e>e_max) e_max = e;
+					if (expires>e_max) e_max = expires;
 				} else {
-					e_max = e;
+					e_max = expires;
 				}
 			}
 		}
@@ -528,16 +526,11 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 										contact_t* _c, int _mode)
 {
 	ucontact_info_t *ci;
-	ucontact_t* c;
-	ucontact_t* ptr;
-	ucontact_t* ptr0;
-	int e;
+	ucontact_t *c, *ptr, *ptr0;
+	int expires, ret, updated;
 	unsigned int flags;
-	int ret;
-	int updated;
 #ifdef USE_TCP
-	int e_max;
-	int tcp_check;
+	int e_max, tcp_check;
 	struct sip_uri uri;
 #endif
 
@@ -566,7 +559,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 	updated=0;
 	for( ; _c ; _c = get_next_contact(_c) ) {
 		/* calculate expires */
-		calc_contact_expires(_m, _c->expires, &e);
+		calc_contact_expires(_m, _c->expires, &expires);
 
 		/* search for the contact*/
 		ret = ul.get_ucontact( _r, &_c->uri, ci->callid, ci->cseq, &c);
@@ -575,18 +568,18 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 			rerrno = R_INV_CSEQ;
 			goto error;
 		} else if (ret==-2) {
-			if(e!=0 && _mode)
+			if(expires!=0 && _mode)
 				break;
 			continue;
 		}
 
 		if ( ret > 0 ) {
 			/* Contact not found -> expired? */
-			if (e==0)
+			if (expires==0)
 				continue;
 
 			/* pack the contact_info */
-			if ( (ci=pack_ci( 0, _c, e, 0))==0 ) {
+			if ( (ci=pack_ci( 0, _c, expires, 0))==0 ) {
 				LM_ERR("failed to extract contact info\n");
 				goto error;
 			}
@@ -610,7 +603,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 			}
 		} else {
 			/* Contact found */
-			if (e == 0) {
+			if (expires == 0) {
 				/* it's expired */
 				if (mem_only) {
 					c->flags |= FL_MEM;
@@ -626,7 +619,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 			} else {
 				/* do update */
 				/* pack the contact specific info */
-				if ( (ci=pack_ci( 0, _c, e, 0))==0 ) {
+				if ( (ci=pack_ci( 0, _c, expires, 0))==0 ) {
 					LM_ERR("failed to pack contact specific info\n");
 					goto error;
 				}
@@ -660,7 +653,7 @@ static inline int update_contacts(struct sip_msg* _m, urecord_t* _r,
 				if (e_max>0) {
 					LM_WARN("multiple TCP contacts on single REGISTER\n");
 				}
-				if (e>e_max) e_max = e;
+				if (expires>e_max) e_max = expires;
 			}
 		}
 #endif
@@ -721,15 +714,14 @@ static inline int add_contacts(struct sip_msg* _m, contact_t* _c,
 }
 
 
-/*! \brief
+/*!\brief
  * Process REGISTER request and save it's contacts
  */
 #define is_cflag_set(_name) (((unsigned int)(unsigned long)_cflags)&(_name))
 int save(struct sip_msg* _m, char* _d, char* _cflags)
 {
 	contact_t* c;
-	int st;
-	int mode;
+	int st, mode;
 	str aor;
 
 	rerrno = R_FINE;
