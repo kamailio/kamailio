@@ -309,9 +309,9 @@ static int sctp_init_sock_opt_common(int s)
 	es.sctp_association_event=1; /* SCTP_ASSOC_CHANGE */
 	es.sctp_address_event=1;  /* enable address events notifications */
 	es.sctp_send_failure_event=1; /* SCTP_SEND_FAILED */
-	es.sctp_peer_error_event=1;
-	es.sctp_shutdown_event=1;
-	es.sctp_partial_delivery_event=1;
+	es.sctp_peer_error_event=1;   /* SCTP_REMOTE_ERROR */
+	es.sctp_shutdown_event=1;     /* SCTP_SHUTDOWN_EVENT */
+	es.sctp_partial_delivery_event=1; /* SCTP_PARTIAL_DELIVERY_EVENT */
 	/* es.sctp_adaptation_layer_event=1; - not supported by lksctp<=1.0.6*/
 	/* es.sctp_authentication_event=1; -- not supported on linux 2.6.25 */
 	
@@ -530,7 +530,7 @@ static char* sctp_assoc_change_state2s(short int state)
 			s="SCTP_CANT_STR_ASSOC";
 			break;
 		default:
-			s="UNKOWN";
+			s="UNKNOWN";
 			break;
 	};
 	return s;
