@@ -40,11 +40,11 @@
 #include "osptoolkit.h"
 #include "sipheader.h"
 
-#define OSP_ORIG_COOKIE     "osp-o"
-#define OSP_TERM_COOKIE     "osp-t"
+#define OSP_ORIG_COOKIE         "osp-o"
+#define OSP_TERM_COOKIE         "osp-t"
 
-#define OSP_RELEASE_ORIG    0
-#define OSP_RELEASE_TERM    1
+#define OSP_RELEASE_ORIG        0
+#define OSP_RELEASE_TERM        1
 
 /* The up case tags for the destinations may corrupt OSP cookies */
 #define OSP_COOKIE_TRANSID      't'
@@ -61,7 +61,8 @@
 #define OSP_COOKIEHAS_SRCIP     (1 << 1)
 #define OSP_COOKIEHAS_AUTHTIME  (1 << 2)
 #define OSP_COOKIEHAS_DSTCOUNT  (1 << 3)
-#define OSP_COOKIEHAS_ALL       (OSP_COOKIEHAS_TRANSID | OSP_COOKIEHAS_SRCIP | OSP_COOKIEHAS_AUTHTIME | OSP_COOKIEHAS_DSTCOUNT) 
+#define OSP_COOKIEHAS_ORIGALL   (OSP_COOKIEHAS_TRANSID | OSP_COOKIEHAS_SRCIP | OSP_COOKIEHAS_AUTHTIME | OSP_COOKIEHAS_DSTCOUNT) 
+#define OSP_COOKIEHAS_TERMALL   (OSP_COOKIEHAS_TRANSID | OSP_COOKIEHAS_SRCIP | OSP_COOKIEHAS_AUTHTIME) 
 
 extern char* _osp_device_ip;
 extern OSPTPROVHANDLE _osp_provider;
@@ -270,10 +271,32 @@ static int ospReportUsageFromCookie(
         }
     }
 
-    if (cookieflags == OSP_COOKIEHAS_ALL) {
-        releasecode = 10016;
-    } else {
-        releasecode = 9016;
+    switch (type) {
+        case OSPC_DESTINATION:
+            if (cookieflags == OSP_COOKIEHAS_TERMALL) {
+                releasecode = 10016;
+            } else {
+                releasecode = 9016;
+            }
+            break;
+        case OSPC_SOURCE:
+        case OSPC_OTHER:
+        case OSPC_UNDEFINED_ROLE:
+        default:
+            if (cookieflags == OSP_COOKIEHAS_ORIGALL) {
+                releasecode = 10016;
+            } else {
+                releasecode = 9016;
+            }
+            break;
+    }
+
+    if (releasecode == 9016) {
+        transid = 0;
+        originator = NULL;
+        authtime = 0;
+        duration = 0;
+        destinationCount = 0;
     }
 
     ospGetSourceAddress(msg, firstvia, sizeof(firstvia));
