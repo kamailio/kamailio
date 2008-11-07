@@ -627,7 +627,7 @@ static int mod_init(void)
 
 	if (init_avp_params(fr_timer_param, fr_inv_timer_param,
 			    contacts_avp_param) < 0) {
-		LM_ERR("ERROR:tm:mod_init: failed to process AVP params\n");
+		LM_ERR("failed to process AVP params\n");
 		return -1;
 	}
 

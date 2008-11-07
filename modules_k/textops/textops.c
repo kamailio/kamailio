@@ -598,8 +598,7 @@ static int subst_f(struct sip_msg* msg, char*  subst, char* ignored)
 		/* hack to avoid re-copying rpl, possible because both 
 		 * replace_lst & lumps use pkg_malloc */
 		if (insert_new_lump_after(l, rpl->rpl.s, rpl->rpl.len, 0)==0){
-			LM_ERR("ERROR: %s: subst_f: could not insert new lump\n",
-					exports.name);
+			LM_ERR("%s: could not insert new lump\n", exports.name);
 			goto error;
 		}
 		/* hack continued: set rpl.s to 0 so that replace_lst_free will
@@ -612,7 +611,7 @@ error:
 	LM_DBG("lst was %p\n", lst);
 	if (lst) replace_lst_free(lst);
 	if (nmatches<0)
-		LM_ERR("ERROR: %s: subst_run failed\n", exports.name);
+		LM_ERR("%s: subst_run failed\n", exports.name);
 	return ret;
 }
 

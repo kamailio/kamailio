@@ -873,7 +873,7 @@ int forward_sl_request(struct sip_msg *msg,struct proxy_l *proxy,int proto)
 		}
 		LM_DBG("Sending:\n%.*s.\n", (int)msg->len,msg->buf);
 		if (msg_send(send_sock, proto, to, 0, msg->buf,msg->len)<0){
-			LM_ERR("ERROR:seas:forward_msg: Error sending message !!\n");
+			LM_ERR("Error sending message !!\n");
 			continue;
 		}
 		ret = 0;
@@ -935,7 +935,7 @@ int ac_uac_req(as_p the_as,char *action,int len)
       goto error;
    }
    if(parse_headers(my_msg,HDR_EOH_F,0)==-1){
-      LM_ERR("ERROR:seas:ac_uac_req:parsing headers\n");
+      LM_ERR("parsing headers\n");
       goto error;
    }
    if(parse_from_header(my_msg)<0){

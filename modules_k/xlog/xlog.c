@@ -288,14 +288,14 @@ static int xdbg_fixup(void** param, int param_no)
 			{
 				if(pv_parse_format(&s, &model)<0)
 				{
-					LM_ERR("ERROR: wrong format[%s]\n",
+					LM_ERR("wrong format[%s]\n",
 						(char*)(*param));
 					return E_UNSPEC;
 				}
 			} else {
 				if(pv_parse_format(&s, &model)<0)
 				{
-					LM_ERR("ERROR: wrong format[%s]!\n",
+					LM_ERR("wrong format[%s]!\n",
 						(char*)(*param));
 					return E_UNSPEC;
 				}
@@ -306,7 +306,7 @@ static int xdbg_fixup(void** param, int param_no)
 		}
 		else
 		{
-			LM_ERR("ERROR: null format\n");
+			LM_ERR("null format\n");
 			return E_UNSPEC;
 		}
 	}

@@ -516,7 +516,7 @@ int xjab_manage_sipmsg(struct sip_msg *msg, int type)
 			}
 		break;
 		default:
-			LM_DBG("ERROR:strange SIP msg type!\n");
+			LM_DBG("error, strange SIP msg type!\n");
 			goto error;
 	}
 
