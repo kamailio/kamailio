@@ -62,6 +62,7 @@ static char* type_column      = "type";
 static char* val_column       = "value";
 static char* flags_column     = "flags";
 static char* scheme_column    = "scheme";
+int   auto_unlock      = 0;
 
 db_ctx_t* ctx = 0;
 db_cmd_t *load_user_attrs_cmd = NULL;
@@ -111,6 +112,7 @@ static param_export_t params[] = {
     {"scheme_column",    PARAM_STRING, &scheme_column   },
 
 	{"attr_group", PARAM_STR | PARAM_USE_FUNC, (void*)declare_attr_group },
+	{"auto_unlock_extra_attrs", PARAM_INT, &auto_unlock },
     {0, 0, 0}
 };
 

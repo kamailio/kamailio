@@ -214,4 +214,19 @@ route {
 	</para>
     </section>
 
+    <section id="auto_unlock_extra_attrs">
+	<title><varname>auto_unlock_extra_attrs</varname> (string)</title>
+	<para>
+		Determines the action when any of the 'extra attributes' lock is detected when
+		routing script execution was finished.
+
+		When the value of this parameter is zero (default) BUG level message is logged, 
+		but the lock is kept, so another process trying to obtain the lock might get stuck.
+
+		If the value is nonzero, DEBUG level message is sent to the log and all the locks are released.
+	</para>
+	<para>
+		Default value is 0.
+	</para>
+    </section>
 </section>

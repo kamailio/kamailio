@@ -6,6 +6,8 @@
 #include "../../mem/mem.h"
 #include "../../mem/shm_mem.h"
 #include "../../lock_ops.h"
+#include "../../script_cb.h"
+#include "../../hashes.h"
 
 #define set_str_val(f,s)	(f).v.lstr=(s); \
 	(f).flags = 0;
@@ -424,6 +426,24 @@ int extra_attrs_fixup(void** param, int param_no)
 gen_lock_t *locks = NULL; /* set of mutexes allocated in shared memory */
 int lock_counters[LOCK_CNT]; /* set of counters (each proces has its own counters) */
 
+static int avpdb_post_script_cb(struct sip_msg *msg, void *param) {
+	int i;
+
+	for (i=0; i<LOCK_CNT; i++) {
+		if (lock_counters[i] > 0) {
+			if (auto_unlock) {
+				DEBUG("post script auto unlock extra attrs <%d>\n", i);
+				lock_release(&locks[i]);
+				lock_counters[i]=0;
+			} else {
+				BUG("script writer didn't unlock extra attrs !!!\n");
+				return 1;
+			}
+		}
+	}
+	return 1;
+}
+
 int init_extra_avp_locks()
 {
 	int i;
@@ -444,22 +464,19 @@ int init_extra_avp_locks()
 	registered_table_t *t = tables;
 	i = 0;
 	while (t) {
-		t->group_mutex_idx = (i++) % LOCK_CNT;
-		/* TODO: add mutex idx as a hash from table name 
-		 * (more groups can access the same table) */
+		t->group_mutex_idx = get_hash1_raw(t->table_name, strlen(t->table_name)) % LOCK_CNT;
 		t = t->next;
 	}
+
+	register_script_cb(avpdb_post_script_cb, REQ_TYPE_CB | RPL_TYPE_CB| POST_SCRIPT_CB, 0);
+
 	return 0;
 }
 
 static inline int find_mutex(registered_table_t *t, str *id)
 {
-	/* TODO: add locking according table
-	 * TODO: add locking according table+id/id
-	 * the second one will probably avoid many colisions on mutex */
-
-	/* 'group id' locking */
-	return t->group_mutex_idx;
+	/* hash(table_name) + hash(id) */
+	return ((t->group_mutex_idx + get_hash1_raw(id->s, id->len)) % LOCK_CNT);
 }
 
 int lock_extra_attrs(struct sip_msg* msg, char *_table, char* _id)
@@ -509,10 +526,13 @@ int unlock_extra_attrs(struct sip_msg* msg, char *_table, char* _id)
 		/* mutex is locked more times by this process */
 		lock_counters[mutex_idx]--;
 	}
-	else {
+	else if (lock_counters[mutex_idx] == 1) {
 		/* the mutex is locked once => unlock it and reset counter */
 		lock_release(&locks[mutex_idx]);
 		lock_counters[mutex_idx] = 0;
+	}
+	else {
+		BUG("trying to unlock without lock group=\"%s\" id=\"%.*s\"\n", t->id, id.len, id.s);
 	}
 
 	return 1;

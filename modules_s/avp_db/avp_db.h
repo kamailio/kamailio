@@ -28,3 +28,4 @@
 #include "../../db/db.h"
 
 extern db_ctx_t* ctx;
+extern int auto_unlock;
