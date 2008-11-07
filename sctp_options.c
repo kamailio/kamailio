@@ -57,6 +57,7 @@ void sctp_options_check()
 	W_OPT_NSCTP(sctp_autoclose);
 	W_OPT_NSCTP(sctp_send_ttl);
 	W_OPT_NSCTP(sctp_send_retries);
+#else
 	if (sctp_options.sctp_send_retries>MAX_SCTP_SEND_RETRIES) {
 		WARN("sctp: sctp_send_retries too high (%d), setting it to %d\n",
 				sctp_options.sctp_send_retries, MAX_SCTP_SEND_RETRIES);
