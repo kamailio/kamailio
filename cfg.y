@@ -386,6 +386,7 @@ static void free_socket_id_lst(struct socket_id* i);
 %token SCTP_SOCKET_SNDBUF
 %token SCTP_AUTOCLOSE
 %token SCTP_SEND_TTL
+%token SCTP_SEND_RETRIES
 %token ADVERTISED_ADDRESS
 %token ADVERTISED_PORT
 %token DISABLE_CORE
@@ -1142,6 +1143,14 @@ assign_stm:
 		#endif
 	}
 	| SCTP_SEND_TTL EQUAL error { yyerror("number expected"); }
+	| SCTP_SEND_RETRIES EQUAL NUMBER {
+		#ifdef USE_SCTP
+			sctp_options.sctp_send_retries=$3;
+		#else
+			warn("sctp support not compiled in");
+		#endif
+	}
+	| SCTP_SEND_RETRIES EQUAL error { yyerror("number expected"); }
 	| SERVER_SIGNATURE EQUAL NUMBER { server_signature=$3; }
 	| SERVER_SIGNATURE EQUAL error { yyerror("boolean value expected"); }
 	| REPLY_TO_VIA EQUAL NUMBER { reply_to_via=$3; }

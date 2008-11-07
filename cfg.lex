@@ -330,6 +330,7 @@ SCTP_SOCKET_RCVBUF	"sctp_socket_rcvbuf"|"sctp_socket_receive_buffer"
 SCTP_SOCKET_SNDBUF	"sctp_socket_sndbuf"|"sctp_socket_send_buffer"
 SCTP_AUTOCLOSE	"sctp_autoclose"
 SCTP_SEND_TTL	"sctp_send_ttl"
+SCTP_SEND_RETRIES	"sctp_send_retries"
 ADVERTISED_ADDRESS	"advertised_address"
 ADVERTISED_PORT		"advertised_port"
 DISABLE_CORE		"disable_core_dump"
@@ -646,6 +647,8 @@ EAT_ABLE	[\ \t\b\r]
 										return SCTP_AUTOCLOSE; }
 <INITIAL>{SCTP_SEND_TTL}	{ count(); yylval.strval=yytext;
 										return SCTP_SEND_TTL; }
+<INITIAL>{SCTP_SEND_RETRIES}	{ count(); yylval.strval=yytext;
+										return SCTP_SEND_RETRIES; }
 <INITIAL>{SERVER_SIGNATURE}	{ count(); yylval.strval=yytext; return SERVER_SIGNATURE; }
 <INITIAL>{REPLY_TO_VIA}	{ count(); yylval.strval=yytext; return REPLY_TO_VIA; }
 <INITIAL>{ADVERTISED_ADDRESS}	{	count(); yylval.strval=yytext;
