@@ -155,6 +155,7 @@ int ospValidateHeader (
         dest.type = OSPC_DESTINATION;
         dest.authtime = time(NULL);
         strncpy(dest.host, _osp_device_ip, sizeof(dest.host) - 1);
+        strncpy(dest.origcalled, dest.called, sizeof(dest.origcalled) - 1);
 
         ospSaveTermDestination(&dest);
 
