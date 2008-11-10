@@ -400,6 +400,8 @@ static cmd_export_t cmds[]={
 	{"t_get_canceled_ident",   (cmd_function)t_get_canceled_ident,  NO_SCRIPT,
 			0, 0},
 #endif
+	{"t_suspend",          (cmd_function)t_suspend,         NO_SCRIPT,   0, 0},
+	{"t_continue",         (cmd_function)t_continue,        NO_SCRIPT,   0, 0},
 	{0,0,0,0,0}
 };
 

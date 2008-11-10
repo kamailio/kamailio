@@ -103,7 +103,12 @@ int cancel_uacs( struct cell *t, branch_bm_t cancel_bm, int flags)
 	/* cancel pending client transactions, if any */
 	for( i=0 ; i<t->nr_of_outgoings ; i++ ) 
 		if (cancel_bm & (1<<i)){
-			r=cancel_branch(t, i, flags);
+			r=cancel_branch(
+				t,
+				i,
+				flags | ((t->uac[i].request.buffer==NULL)?
+					F_CANCEL_B_FAKE_REPLY:0) /* blind UAC? */
+			);
 			ret|=(r!=0)<<i;
 		}
 	return ret;

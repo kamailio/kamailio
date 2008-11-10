@@ -47,6 +47,7 @@
 #include "t_reply.h"
 #include "dlg.h"
 #include "t_cancel.h"
+#include "t_suspend.h"
 
 /* export not usable from scripts */
 #define NO_SCRIPT	-1
@@ -129,6 +130,8 @@ struct tm_binds {
 	void* reserved3;
 	void* reserved4;
 #endif
+	t_suspend_f	t_suspend;
+	t_continue_f	t_continue;
 };
 
 extern int tm_init;

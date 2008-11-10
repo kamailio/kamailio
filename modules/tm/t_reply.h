@@ -156,4 +156,10 @@ void t_drop_replies(void);
 extern const char* rpc_reply_doc[2];
 void rpc_reply(rpc_t* rpc, void* c);
 
+void faked_env( struct cell *t,struct sip_msg *msg);
+int fake_req(struct sip_msg *faked_req,
+			struct sip_msg *shmem_msg, int extra_flags);
+
+void free_faked_req(struct sip_msg *faked_req, struct cell *t);
+
 #endif
