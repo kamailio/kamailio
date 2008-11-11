@@ -714,7 +714,12 @@ add_rcv_param("1"); # add the paramter to the Contact URI
 		The function creates a URI consisting of the source IP, port, and 
 		protocol and stores the URI in an Attribute-Value-Pair. The URI will 
 		be appended as "received" parameter to Contact in 200 OK and 
-		registrar will store it in the user location database.
+		registrar will store it in the received cloumn in the location table.
+		</para>
+		<para>
+		Note: You have to set the received_avp parameter of the nathelper module
+		and the registrar module (both module parameters must have the same value)
+		to use this function.
 		</para>
 		<para>
 		This function can be used from REQUEST_ROUTE.
