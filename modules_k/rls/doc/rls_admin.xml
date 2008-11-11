@@ -354,7 +354,7 @@ modparam("rls", "rls_event", "dialog;sla")
 		<programlisting format="linespecific">
 ...
 For presence and rls on the same machine:
-	modparam(rls, "to_presence_code", 10)
+	modparam("rls", "to_presence_code", 10)
 
 	if(is_method("SUBSCRIBE"))
 	{	
