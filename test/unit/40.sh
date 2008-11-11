@@ -55,8 +55,8 @@ fi;
 if [ "$ret" -eq 1 ]; then
 	sleep 7
 	killall -9 sipp > /dev/null 2>&1
-	sipp -sn uas -bg -i localhost -m 10 -p $UAS &> /dev/null
-	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 10 -p $UAC &> /dev/null
+	sipp -sn uas -bg -i localhost -m 15 -p $UAS &> /dev/null
+	sipp -sn uac -s foo 127.0.0.1:$SRV -i localhost -m 15 -p $UAC &> /dev/null
 	ret=$?
 fi;
 
