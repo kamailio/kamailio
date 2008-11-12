@@ -25,9 +25,9 @@ source include/database
 
 CFG=13.cfg
 # number of routes, multiplied with 10
-# if you want to increase this above 8500, comment the fifo command below,
+# if you want to increase this above 4500, comment the fifo command below,
 # otherwise this will fails with memory allocation errors (with 1MB PKG mem)
-NR=850
+NR=450
 
 if ! (check_kamailio && check_module "carrierroute" && check_module "db_mysql" && check_mysql); then
 	exit 0
@@ -40,24 +40,25 @@ echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
-$MYSQL "insert into route_tree (id, carrier) values ('1', 'default');"
-$MYSQL "insert into route_tree (id, carrier) values ('2', 'carrier2');"
-$MYSQL "insert into route_tree (id, carrier) values ('3', 'carrier3');"
-$MYSQL "insert into route_tree (id, carrier) values ('4', 'carrier4');"
-$MYSQL "insert into route_tree (id, carrier) values ('5', 'carrier5');"
-$MYSQL "insert into route_tree (id, carrier) values ('6', 'carrier6');"
-$MYSQL "insert into route_tree (id, carrier) values ('7', 'carrier7');"
-$MYSQL "insert into route_tree (id, carrier) values ('8', 'carrier8');"
-$MYSQL "insert into route_tree (id, carrier) values ('9', 'carrier9');"
-$MYSQL "insert into route_tree (id, carrier) values ('10', 'carrier10');"
-$MYSQL "insert into route_tree (id, carrier) values ('11', 'carrier11');"
+$MYSQL "insert into carrier_name (id, carrier) values ('1', 'default');"
+$MYSQL "insert into carrier_name (id, carrier) values ('2', 'carrier2');"
+$MYSQL "insert into carrier_name (id, carrier) values ('3', 'carrier3');"
+$MYSQL "insert into carrier_name (id, carrier) values ('4', 'carrier4');"
+$MYSQL "insert into carrier_name (id, carrier) values ('5', 'carrier5');"
+$MYSQL "insert into carrier_name (id, carrier) values ('6', 'carrier6');"
+$MYSQL "insert into carrier_name (id, carrier) values ('7', 'carrier7');"
+$MYSQL "insert into carrier_name (id, carrier) values ('8', 'carrier8');"
+$MYSQL "insert into carrier_name (id, carrier) values ('9', 'carrier9');"
+$MYSQL "insert into carrier_name (id, carrier) values ('10', 'carrier10');"
+$MYSQL "insert into carrier_name (id, carrier) values ('11', 'carrier11');"
 
 
 COUNTER=0
 while [  $COUNTER -lt $NR ]; do
 	COUNTER=$(($COUNTER+1))
 	domain=`expr $COUNTER % 9`
-	$MYSQL "insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('2','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('3','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('4','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('5','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('6','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('7','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('8','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('9','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('10','$domain','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('11','$domain','$RANDOM','0.5','0','host-$RANDOM');"
+	$MYSQL "insert into domain_name (id, domain) values ('$COUNTER', '$domain');"
+	$MYSQL "insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('2','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('3','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('4','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('5','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('6','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('7','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('8','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('9','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('10','$COUNTER','$RANDOM','0.5','0','host-$RANDOM'); insert into carrierroute (carrier, domain, scan_prefix, prob, strip, rewrite_host) values ('11','$COUNTER','$RANDOM','0.5','0','host-$RANDOM');"
 
 done
 
@@ -65,7 +66,7 @@ done
 ret=$?
 
 # adjust if you have bigger rule sets
-sleep 2
+sleep 20
 
 cd ../scripts
 
@@ -80,17 +81,23 @@ fi ;
 $KILL
 
 # cleanup database
-$MYSQL "delete from route_tree where id = 1;"
-$MYSQL "delete from route_tree where id = 2;"
-$MYSQL "delete from route_tree where id = 3;"
-$MYSQL "delete from route_tree where id = 4;"
-$MYSQL "delete from route_tree where id = 5;"
-$MYSQL "delete from route_tree where id = 6;"
-$MYSQL "delete from route_tree where id = 7;"
-$MYSQL "delete from route_tree where id = 8;"
-$MYSQL "delete from route_tree where id = 9;"
-$MYSQL "delete from route_tree where id = 10;"
-$MYSQL "delete from route_tree where id = 11;"
+$MYSQL "delete from carrier_name where id = 1;"
+$MYSQL "delete from carrier_name where id = 2;"
+$MYSQL "delete from carrier_name where id = 3;"
+$MYSQL "delete from carrier_name where id = 4;"
+$MYSQL "delete from carrier_name where id = 5;"
+$MYSQL "delete from carrier_name where id = 6;"
+$MYSQL "delete from carrier_name where id = 7;"
+$MYSQL "delete from carrier_name where id = 8;"
+$MYSQL "delete from carrier_name where id = 9;"
+$MYSQL "delete from carrier_name where id = 10;"
+$MYSQL "delete from carrier_name where id = 11;"
+
+COUNTER=0
+while [  $COUNTER -lt $NR ]; do
+	COUNTER=$(($COUNTER+1))
+	$MYSQL "delete from domain_name where id = $COUNTER;"
+done
 
 $MYSQL "delete from carrierroute where carrier=1;"
 $MYSQL "delete from carrierroute where carrier=2;"

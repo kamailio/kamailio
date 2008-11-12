@@ -36,33 +36,37 @@ echo "loadmodule \"db_mysql/db_mysql.so\"" >> $CFG
 echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 
 # setup database
-$MYSQL "insert into route_tree (id, carrier) values ('1', 'default');"
-$MYSQL "insert into route_tree (id, carrier) values ('2', 'carrier1');"
-$MYSQL "insert into route_tree (id, carrier) values ('3', 'carrier2');"
+$MYSQL "insert into carrier_name (id, carrier) values ('1', 'default');"
+$MYSQL "insert into carrier_name (id, carrier) values ('2', 'carrier1');"
+$MYSQL "insert into carrier_name (id, carrier) values ('3', 'carrier2');"
+
+$MYSQL "insert into domain_name (id, domain) values ('10', 'domain0');"
+$MYSQL "insert into domain_name (id, domain) values ('1', 'fallback');"
+$MYSQL "insert into domain_name (id, domain) values ('2', 'domain2');"
 
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('1','1','0','49','0','0.5','0','127.0.0.1:7000');"
+values ('1','1','10','49','0','0.5','0','127.0.0.1:7000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('2','1','0','49','0','0.5','0','127.0.0.1:8000');"
+values ('2','1','10','49','0','0.5','0','127.0.0.1:8000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('3','2','0','49','0','1','0','127.0.0.1:9000');"
+values ('3','2','10','49','0','1','0','127.0.0.1:9000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask,prob, strip, rewrite_host)
-values ('4','3','0','49','0', '3', '1','0','127.0.0.1:10001');"
+values ('4','3','10','49','0', '3', '1','0','127.0.0.1:10001');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask,prob, strip, rewrite_host)
-values ('5','3','0','49','1', '3', '1','0','127.0.0.1:10000');"
+values ('5','3','10','49','1', '3', '1','0','127.0.0.1:10000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, mask, prob, strip, rewrite_host)
-values ('6','3','0','49','2', '3', '1','0','127.0.0.1:10002');"
+values ('6','3','10','49','2', '3', '1','0','127.0.0.1:10002');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
-values ('7','3','fallback','49','0','1','0','127.0.0.1:10000');"
+values ('7','3','1','49','0','1','0','127.0.0.1:10000');"
 $MYSQL "insert into carrierroute (id, carrier, domain, scan_prefix, flags, prob, strip, rewrite_host)
 values ('8','3','2','49','0','1','0','127.0.0.1:10000');"
 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('1', '3', '0', '49', '127.0.0.1:10000', '5..', '0', '0', 'fallback');"
+flags, mask, next_domain) values ('1', '3', '10', '49', '127.0.0.1:10000', '5..', '0', '0', '1');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('2', '3', 'fallback', '49', '127.0.0.1:10000', '483', '0', '0', '2');"
+flags, mask, next_domain) values ('2', '3', '1', '49', '127.0.0.1:10000', '483', '0', '0', '2');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('3', '3', 'fallback', '49', '127.0.0.1:9000', '4..', '0', '0', '2');"
+flags, mask, next_domain) values ('3', '3', '1', '49', '127.0.0.1:9000', '4..', '0', '0', '2');"
 
 $MYSQL "alter table subscriber add cr_preferred_carrier int(10) default NULL;"
 
@@ -104,9 +108,9 @@ if [ "$ret" -eq 0 ] ; then
 fi;
 
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('4', '3', 'fallback', '49', '127.0.0.1:10000', '4..', '0', '0', '4');"
+flags, mask, next_domain) values ('4', '3', '1', '49', '127.0.0.1:10000', '4..', '0', '0', '4');"
 $MYSQL "insert into carrierfailureroute(id, carrier, domain, scan_prefix, host_name, reply_code,
-flags, mask, next_domain) values ('5', '3', 'fallback', '49', '127.0.0.1:10000', '486', '0', '0', '2');"
+flags, mask, next_domain) values ('5', '3', '1', '49', '127.0.0.1:10000', '486', '0', '0', '2');"
 
 if [ ! "$ret" -eq 0 ] ; then
 	../scripts/$CTL fifo cr_reload_routes
@@ -121,9 +125,12 @@ $KILL
 killall -9 sipp
 
 # cleanup database
-$MYSQL "delete from route_tree where id = 1;"
-$MYSQL "delete from route_tree where id = 2;"
-$MYSQL "delete from route_tree where id = 3;"
+$MYSQL "delete from carrier_name where id = 1;"
+$MYSQL "delete from carrier_name where id = 2;"
+$MYSQL "delete from carrier_name where id = 3;"
+$MYSQL "delete from domain_name where id = 10;"
+$MYSQL "delete from domain_name where id = 1;"
+$MYSQL "delete from domain_name where id = 2;"
 $MYSQL "delete from carrierroute where carrier=1;"
 $MYSQL "delete from carrierroute where carrier=2;"
 $MYSQL "delete from carrierroute where carrier=3;"

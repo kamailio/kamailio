@@ -37,18 +37,19 @@ echo "modparam(\"carrierroute\", \"config_source\", \"db\")" >> $CFG
 echo "modparam(\"carrierroute\", \"db_url\", \"postgres://openserro:openserro@localhost/openser\")" >> $CFG
 
 # setup database
-$PSQL "insert into route_tree (id, carrier) values ('1', 'carrier1');
-insert into route_tree (id, carrier) values ('2', 'default');
-insert into route_tree (id, carrier) values ('3', 'premium');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('1','1','49','0','0.5','0','host1.local.domain');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('2','1','49','0','0.5','0','host2.local.domain');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('3','1','42','0','0.3','0','host3.local');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('4','1','42','0','0.7','0','host4.local');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('5','1','1','0','0.5','0','host1-ca.local:5060');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('6','1','1','0','0.5','0','host2-ca.local.domain:5060');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('10','1','','0','0.1','0','host5.local');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','0','1','0','host6');
-insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','0','1','0','premium.host.local');"
+$PSQL "insert into carrier_name (id, carrier) values ('1', 'carrier1');
+insert into carrier_name (id, carrier) values ('2', 'default');
+insert into carrier_name (id, carrier) values ('3', 'premium');
+insert into domain_name (id, domain) values ('10', 'domain1');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('1','1','49','10','0.5','0','host1.local.domain');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('2','1','49','10','0.5','0','host2.local.domain');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('3','1','42','10','0.3','0','host3.local');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('4','1','42','10','0.7','0','host4.local');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('5','1','1','10','0.5','0','host1-ca.local:5060');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('6','1','1','10','0.5','0','host2-ca.local.domain:5060');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('10','1','','10','0.1','0','host5.local');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('20','2','','10','1','0','host6');
+insert into carrierroute (id, carrier, scan_prefix, domain, prob, strip, rewrite_host) values ('21','3','','10','1','0','premium.host.local');"
 
 ../$BIN -w . -f $CFG > /dev/null
 ret=$?
@@ -66,21 +67,21 @@ fi ;
 
 if [ "$ret" -eq 0 ] ; then
 	tmp=`grep -v "Printing routing information:
-Printing tree for carrier premium (3)
-Printing tree for domain 0
-      NULL: 100.000 %, 'premium.host.local': ON, '0', '', '', ''
-Printing tree for carrier default (2)
-Printing tree for domain 0
-      NULL: 100.000 %, 'host6': ON, '0', '', '', ''
-Printing tree for carrier carrier1 (1)
-Printing tree for domain 0
+Printing tree for carrier 'carrier1' (1)
+Printing tree for domain 'domain1' (10)
          1: 50.000 %, 'host2-ca.local.domain:5060': ON, '0', '', '', ''
          1: 50.000 %, 'host1-ca.local:5060': ON, '0', '', '', ''
         42: 70.140 %, 'host4.local': ON, '0', '', '', ''
         42: 30.060 %, 'host3.local': ON, '0', '', '', ''
         49: 50.000 %, 'host2.local.domain': ON, '0', '', '', ''
         49: 50.000 %, 'host1.local.domain': ON, '0', '', '', ''
-      NULL: 100.000 %, 'host5.local': ON, '0', '', '', ''" $TMPFILE`
+      NULL: 100.000 %, 'host5.local': ON, '0', '', '', ''
+Printing tree for carrier 'default' (2)
+Printing tree for domain 'domain1' (10)
+      NULL: 100.000 %, 'host6': ON, '0', '', '', ''
+Printing tree for carrier 'premium' (3)
+Printing tree for domain 'domain1' (10)
+      NULL: 100.000 %, 'premium.host.local': ON, '0', '', '', ''" $TMPFILE`
 	if [ "$tmp" = "" ] ; then
 		ret=0
 	else
@@ -91,9 +92,10 @@ fi ;
 $KILL
 
 # cleanup database
-$PSQL "delete from route_tree where id = 1;
-delete from route_tree where id = 2;
-delete from route_tree where id = 3;
+$PSQL "delete from carrier_name where id = 1;
+delete from carrier_name where id = 2;
+delete from carrier_name where id = 3;
+delete from domain_name where id = 10;
 delete from carrierroute where carrier=1;
 delete from carrierroute where carrier=2;
 delete from carrierroute where carrier=3;"
