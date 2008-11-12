@@ -34,50 +34,46 @@
 
 
 /**
- * Tries to add a domain to the domain map. If the given domain doesn't
- * exist, it is added. Otherwise, nothing happens.
- *
- * @param domain the domain to be added
- *
- * @return values: on succcess the numerical index of the given domain,
- * -1 on failure
+ * used to map names to numbers for faster access.
  */
-int add_domain(const str * domain);
+struct name_map_t {
+	str name; /*!< name of the routing domain or carrier */
+	int id; /*!< the corresponding id */
+};
+
+
 
 
 /**
- * Destroy the domain map by freeing its memory.
+ * Searches for the ID of a name
+ *
+ * @param map the mapping list to search in
+ * @param size the size of the list
+ * @param name the name, we are looking for
+ *
+ * @return values: on succcess the id for this name, -1 on failure
  */
-void destroy_domain_map(void);
+int map_name2id(struct name_map_t * map, int size, const str * name);
 
 
 /**
- * Tries to add a carrier name to the carrier map. If the given carrier
- * doesn't exist, it is added. Otherwise, nothing happens.
+ * Searches for the name of an ID
  *
- * @param carrier_name the carrier name to be added
- * @param carrier_id the corresponding id
+ * @param map the mapping list to search in
+ * @param size the size of the list
+ * @param id the id, we are looking for
  *
- * @return values: on succcess the numerical index of the given carrier,
- * -1 on failure
+ * @return values: on succcess the name for this id, NULL on failure
  */
-int add_carrier(const str * tree, int carrier_id);
+str * map_id2name(struct name_map_t * map, int size, int id);
 
 
 /**
- * Searches for the ID for a Carrier-Name
+ * Compares the IDs of two name_map_t structures.
  *
- * @param carrier_name the carrier name, we are looking for
- *
- * @return values: on succcess the id for this carrier name,
- * -1 on failure
+ * @return -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
  */
-int find_carrier(const str * carrier_name);
+int compare_name_map(const void *v1, const void *v2);
 
-
-/**
- * Destroy the carrier map by freeing its memory.
- */
-void destroy_carrier_map(void);
 
 #endif

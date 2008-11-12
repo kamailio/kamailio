@@ -31,7 +31,6 @@
 #include "../../mem/shm_mem.h"
 #include "../../ut.h"
 #include "cr_domain.h"
-#include "cr_map.h"
 #include "cr_rule.h"
 
 
@@ -72,33 +71,27 @@ static void destroy_failure_route_rule_list(void *data) {
 /**
  * Create a new domain in shared memory and set it up.
  *
- * @param domain_name the name of the domain
  * @param domain_id the id of the domain
+ * @param domain_name the name of the domain
  *
  * @return a pointer to the newly allocated domain data or NULL on
  * error, in which case it LOGs an error message.
  */
-struct domain_data_t * create_domain_data(const str * domain_name, int domain_id) {
+struct domain_data_t * create_domain_data(int domain_id, str * domain_name) {
 	struct domain_data_t * tmp;
 	if ((tmp = shm_malloc(sizeof(struct domain_data_t))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return NULL;
 	}
 	memset(tmp, 0, sizeof(struct domain_data_t));
-	if (shm_str_dup(&tmp->name, domain_name)!=0) {
-		LM_ERR("cannot duplicate string\n");
-		shm_free(tmp);
-		return NULL;
-	}
 	tmp->id = domain_id;
+	tmp->name = domain_name;
 	if ((tmp->tree = dtrie_init()) == NULL) {
-		shm_free(tmp->name.s);
 		shm_free(tmp);
 		return NULL;
 	}
 	if ((tmp->failure_tree = dtrie_init()) == NULL) {
 		dtrie_destroy(&tmp->tree, NULL);
-		shm_free(tmp->name.s);
 		shm_free(tmp);
 		return NULL;
 	}
@@ -109,13 +102,14 @@ struct domain_data_t * create_domain_data(const str * domain_name, int domain_id
 /**
  * Destroys the given domain and frees the used memory.
  *
- * @param domain_data the to the structure to be destroyed.
+ * @param domain_data the structure to be destroyed.
  */
 void destroy_domain_data(struct domain_data_t *domain_data) {
-	dtrie_destroy(&domain_data->tree, destroy_route_flags_list);
-	dtrie_destroy(&domain_data->failure_tree, destroy_failure_route_rule_list);
-	shm_free(domain_data->name.s);
-	shm_free(domain_data);
+	if (domain_data) {
+		dtrie_destroy(&domain_data->tree, destroy_route_flags_list);
+		dtrie_destroy(&domain_data->failure_tree, destroy_failure_route_rule_list);
+		shm_free(domain_data);
+	}
 }
 
 
@@ -224,4 +218,28 @@ int add_failure_route_to_tree(struct dtrie_node_t * failure_node, const str * sc
 	}
 
 	return 0;
+}
+
+
+/**
+ * Compares the IDs of two domain data structures.
+ * A NULL pointer is always greater than any ID.
+ *
+ * @return -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+ */
+int compare_domain_data(const void *v1, const void *v2) {
+  struct domain_data_t *d1 = *(struct domain_data_t * const *)v1;
+	struct domain_data_t *d2 = *(struct domain_data_t * const *)v2;
+	if (d1 == NULL) {
+		if (d2 == NULL) return 0;
+		else return 1;
+	}
+	else {
+		if (d2 == NULL) return -1;
+		else {
+			if (d1->id < d2->id) return -1;
+			else if (d1->id > d2->id) return 1;
+			else return 0;
+		}
+	}
 }

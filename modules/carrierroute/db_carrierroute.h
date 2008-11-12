@@ -101,19 +101,33 @@ extern str carrierfailureroute_description_col;
 /* table version */
 extern const unsigned int carrierfailureroute_version;
 
-#define route_tree_DB_TABLE { "route_tree_table", STR_PARAM, &carrierroute_table.s },
+#define carrier_name_DB_TABLE { "carrier_name_table", STR_PARAM, &carrierroute_table.s },
 
-extern str route_tree_table;
+extern str carrier_name_table;
 
 /* column names */
-extern str route_tree_id_col;
-extern str route_tree_carrier_col;
-#define route_tree_DB_COLS \
-{ "route_tree_id_col", STR_PARAM, &route_tree_id_col.s }, \
-{ "route_tree_carrier_col", STR_PARAM, &route_tree_carrier_col.s }, \
+extern str carrier_name_id_col;
+extern str carrier_name_carrier_col;
+#define carrier_name_DB_COLS \
+{ "carrier_name_id_col", STR_PARAM, &carrier_name_id_col.s }, \
+{ "carrier_name_carrier_col", STR_PARAM, &carrier_name_carrier_col.s }, \
 
 /* table version */
-extern const unsigned int route_tree_version;
+extern const unsigned int carrier_name_version;
+
+#define domain_name_DB_TABLE { "domain_name_table", STR_PARAM, &carrierroute_table.s },
+
+extern str domain_name_table;
+
+/* column names */
+extern str domain_name_id_col;
+extern str domain_name_domain_col;
+#define domain_name_DB_COLS \
+{ "domain_name_id_col", STR_PARAM, &domain_name_id_col.s }, \
+{ "domain_name_domain_col", STR_PARAM, &domain_name_domain_col.s }, \
+
+/* table version */
+extern const unsigned int domain_name_version;
 
 
 /*

@@ -98,10 +98,12 @@ static param_export_t params[]= {
 	carrierroute_DB_URL
 	carrierroute_DB_TABLE
 	carrierfailureroute_DB_TABLE
-	route_tree_DB_TABLE
+	carrier_name_DB_TABLE
+	domain_name_DB_TABLE
 	carrierroute_DB_COLS
 	carrierfailureroute_DB_COLS
-	route_tree_DB_COLS
+	carrier_name_DB_COLS
+	domain_name_DB_COLS
 	{"subscriber_table",       STR_PARAM, &subscriber_table.s },
 	{"subscriber_user_col",    STR_PARAM, &subscriber_username_col.s },
 	{"subscriber_domain_col",  STR_PARAM, &subscriber_domain_col.s },
@@ -234,6 +236,4 @@ static void mod_destroy(void) {
 		carrierroute_db_close();
 	}
 	destroy_route_data();
-	destroy_domain_map();
-	destroy_carrier_map();
 }

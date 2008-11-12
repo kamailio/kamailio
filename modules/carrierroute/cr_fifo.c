@@ -131,7 +131,7 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 		LM_ERR("error during retrieve data\n");
 		return init_mi_tree(500, "error during command processing", 31);
 	}
-		
+	
 	struct mi_root* rpl_tree;
 	struct mi_node* node = NULL;
 	rpl_tree = init_mi_tree( 200, MI_OK_S, MI_OK_LEN);
@@ -145,14 +145,14 @@ struct mi_root* dump_fifo (struct mi_root* cmd_tree, void *param) {
 	int i, j;
  	for (i = 0; i < rd->carrier_num; i++) {
  		if (rd->carriers[i]) {
-			tmp_str = (rd->carriers[i] ? &rd->carriers[i]->name : &empty_str);
-			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for carrier %.*s (%i)\n", tmp_str->len, tmp_str->s, rd->carriers[i] ? rd->carriers[i]->id : 0);
+			tmp_str = (rd->carriers[i] ? rd->carriers[i]->name : &empty_str);
+			node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for carrier '%.*s' (%i)\n", tmp_str->len, tmp_str->s, rd->carriers[i] ? rd->carriers[i]->id : 0);
 			if(node == NULL)
 				goto error;
  			for (j=0; j<rd->carriers[i]->domain_num; j++) {
  				if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
-					tmp_str = (rd->carriers[i]->domains[j] ? &rd->carriers[i]->domains[j]->name : &empty_str);
-					node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for domain %.*s\n", tmp_str->len, tmp_str->s);
+					tmp_str = (rd->carriers[i]->domains[j] ? rd->carriers[i]->domains[j]->name : &empty_str);
+					node = addf_mi_node_child( &rpl_tree->node, 0, 0, 0, "Printing tree for domain '%.*s' (%i)\n", tmp_str->len, tmp_str->s, rd->carriers[i]->domains[j]->id);
 					if(node == NULL)
 						goto error;
  					dump_tree_recursor (&rpl_tree->node, rd->carriers[i]->domains[j]->tree, "");
@@ -605,6 +605,7 @@ static int get_fifo_opts(str * buf, fifo_opt_t * opts, unsigned int opt_set[]) {
 static int update_route_data(fifo_opt_t * opts) {
 	struct route_data_t * rd;
 	int i,j;
+	int domain_id;
 	str tmp_domain;
 	str tmp_prefix;
 	str tmp_host;
@@ -613,7 +614,7 @@ static int update_route_data(fifo_opt_t * opts) {
 	str tmp_comment = str_init("");
 
 	if ((rd = shm_malloc(sizeof(struct route_data_t))) == NULL) {
-		LM_ERR("out of shared memory\n");
+		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(rd, 0, sizeof(struct route_data_t));
@@ -657,7 +658,13 @@ static int update_route_data(fifo_opt_t * opts) {
 			tmp_rewrite_suffix.len=0;
 		}
 
-		if (add_route(rd, 1, &tmp_domain, &tmp_prefix, 0, 0, 0, opts->prob,
+		domain_id = map_name2id(rd->domain_map, rd->domain_num, &tmp_domain);
+		if (domain_id < 0) {
+			LM_ERR("cannot find id for domain '%.*s'", tmp_domain.len, tmp_domain.s);
+			goto errout;
+		}
+
+		if (add_route(rd, 1, domain_id, &tmp_prefix, 0, 0, 0, opts->prob,
 		              &tmp_host, opts->strip, &tmp_rewrite_prefix, &tmp_rewrite_suffix,
 		              opts->status, opts->hash_index, -1, NULL, &tmp_comment) < 0) {
 			goto errout;
@@ -666,19 +673,18 @@ static int update_route_data(fifo_opt_t * opts) {
 		if (rule_fixup(rd) < 0) {
 			LM_ERR("could not fixup rules after route appending");
 			FIFO_ERR(E_RULEFIXUP);
-			return -1;
+			goto errout;
 		}
-
 	} else {
 		for (i=0; i<rd->carrier_num; i++) {
 			if(rd->carriers[i]){
-			for (j=0; j<rd->carriers[i]->domain_num; j++) {
-				if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
-					if (update_route_data_recursor(rd->carriers[i]->domains[j]->tree, &rd->carriers[i]->domains[j]->name, opts) < 0) {
-						goto errout;
+				for (j=0; j<rd->carriers[i]->domain_num; j++) {
+					if (rd->carriers[i]->domains[j] && rd->carriers[i]->domains[j]->tree) {
+						if (update_route_data_recursor(rd->carriers[i]->domains[j]->tree, rd->carriers[i]->domains[j]->name, opts) < 0) {
+							goto errout;
+						}
 					}
 				}
-			}
 			}
 		}
 	}

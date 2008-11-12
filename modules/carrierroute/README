@@ -96,9 +96,12 @@ Henning Westerholt
         2.23. carrierfailureroute_mask_col (string)
         2.24. carrierfailureroute_next_domain_col (string)
         2.25. carrierfailureroute_description_col (string)
-        2.26. route_tree_table (String)
-        2.27. route_tree_id_col (string)
-        2.28. route_tree_carrier_col (string)
+        2.26. carrier_name_table (String)
+        2.27. carrier_name_id_col (string)
+        2.28. carrier_name_carrier_col (string)
+        2.29. domain_name_table (String)
+        2.30. domain_name_id_col (string)
+        2.31. domain_name_domain_col (string)
 
    List of Examples
 
@@ -127,7 +130,7 @@ Henning Westerholt
    1.21. Example database content - more complex
           carrierfailureroute table
 
-   1.22. Example database content - route_tree table
+   1.22. Example database content - carrier_name table
    1.23. Necessary extensions for the user table
    2.1. Set db_url parameter
    2.2. Set carrierroute_table parameter
@@ -154,9 +157,12 @@ Henning Westerholt
    2.23. Set carrierfailureroute_mask_col parameter
    2.24. Set carrierfailureroute_next_domain_col parameter
    2.25. Set carrierfailureroute_description_col parameter
-   2.26. Set route_tree_table parameter
-   2.27. Set route_tree_id_col parameter
-   2.28. Set route_tree_carrier_col parameter
+   2.26. Set carrier_name_table parameter
+   2.27. Set carrier_name_id_col parameter
+   2.28. Set carrier_name_carrier_col parameter
+   2.29. Set domain_name_table parameter
+   2.30. Set domain_name_id_col parameter
+   2.31. Set domain_name_domain_col parameter
 
 Chapter 1. Admin Guide
 
@@ -183,10 +189,13 @@ Chapter 1. Admin Guide
 
    This modules scales up to more than a few million users, and is
    able to handle more than several hundred thousand routing table
-   entries. It should be able to handle more, but this is not that
-   much tested at the moment. In load balancing scenarios the
-   usage of the config file mode is recommended, to avoid the
-   additional complexity that the database driven routing creates.
+   entries. We recieved reports of some setups that used more than
+   a million routing table entries. It also supports a large
+   number of carriers and domains which can be efficiently looked
+   up in most of the cases (see below for more informations). In
+   load balancing scenarios the usage of the config file mode is
+   recommended, to avoid the additional complexity that the
+   database driven routing creates.
 
    Routing tables can be reloaded and edited (in config file mode)
    with the MI interface, the config file is updated according the
@@ -200,6 +209,17 @@ Chapter 1. Admin Guide
    Further information about these limitations is given in later
    sections. For user based routing or LCR you should use the
    database mode.
+
+   In database mode, this module supports names and IDs for the
+   carriers and domains. When using IDs for the routing functions,
+   efficient binary search is used to find the needed data
+   structures. If you are using constant strings as parameter,
+   these will be converted to IDs during the fixup procedure.
+   However, if you are using AVPs as parameter and they contain
+   strings, this cannot be converted to IDs during the fixup
+   procedure. In that case linear search is performed to find the
+   needed data structures. So from a performance point of view it
+   is better to pass only IDs in AVPs to the routing functions.
 
    Basically this module could be used as an replacement for the
    lcr and the dispatcher module, if you have certain performance,
@@ -800,8 +820,8 @@ domain register {
 | 9  |       2 |      0 | 49          |     0 |  0.5 | de-2.carrier2 |
 | 10 |       2 |      0 |             |     0 |    1 | gw.carrier2   |
 | 11 |       2 |      1 | 49          |     0 |    1 | gw.carrier2   |
-| 12 |       3 |  start | 49          |     0 |    1 | de-gw.default |
-| 13 |       3 |  start |             |     0 |    1 | gw.default    |
+| 12 |       3 |      8 | 49          |     0 |    1 | de-gw.default |
+| 13 |       3 |      8 |             |     0 |    1 | gw.default    |
 +----+---------+--------+-------------+-------+------+---------------+
 ...
 
@@ -854,7 +874,7 @@ domain register {
 |  1 |      99 |           | 408        |    16 |   16 |             |
 |  2 |      99 | gw1       | 404        |     0 |    0 | 100         |
 |  3 |      99 | gw2       | 50.        |     0 |    0 | 100         |
-|  4 |      99 |           | 404        |  2048 | 2112 | asterisk-1  |
+|  4 |      99 |           | 404        |  2048 | 2112 | 101         |
 +----+---------+-----------+------------+-------+------+-------------+
 ...
 
@@ -872,7 +892,7 @@ domain register {
    holds domain entries for this routing rules. Not all table
    colums are show here for brevity.
 
-   Example 1.22. Example database content - route_tree table
+   Example 1.22. Example database content - carrier_name table
 ...
 +----+----------+
 | id | carrier  |
@@ -926,7 +946,7 @@ modparam("carrierroute", "carrierroute_table", "carrierroute")
 
 2.3. carrierroute_id_col (string)
 
-   unique ID
+   Name of the column contains the unique identifier of a route.
 
    Example 2.3. Set carrierroute_id_col parameter
 ...
@@ -944,8 +964,10 @@ modparam("carrierroute", "carrierroute_carrier_col", "carrier")
 
 2.5. carrierroute_domain_col (string)
 
-   This column contains the route domain. Additional domains could
-   be used for example as fallback.
+   This column contains the routing domain id. You can define
+   several routing domains to have different routing rules. Maybe
+   you use domain 0 for normal routing and domain 1 if domain 0
+   failed.
 
    Example 2.5. Set carrierroute_domain_col parameter
 ...
@@ -954,8 +976,12 @@ modparam("carrierroute", "carrierroute_domain_col", "domain")
 
 2.6. carrierroute_scan_prefix_col (string)
 
-   This column contains the scan prefix, which define the matching
-   portion of a phone number.
+   Name of column contains the scan prefixes. Scan prefixes define
+   the matching portion of a phone number, e.g. when we have the
+   scan prefixes 49721 and 49, the called number is 49721913740,
+   it matches 49721, because the longest match is taken. If no
+   prefix matches, the number is not routed. To prevent this, an
+   empty prefix value of could be added.
 
    Example 2.6. Set carrierroute_scan_prefix_col parameter
 ...
@@ -983,9 +1009,18 @@ modparam("carrierroute", "carrierroute_mask_col", "mask")
 
 2.9. carrierroute_prob_col (string)
 
-   Name of column containing the probability. The probability
-   value is used to distribute the traffic between several
-   gateways.
+   Name of column contains the probability. The probability value
+   is used to distribute the traffic between several gateways.
+   Let's say 70 % of the traffic shall be routed to gateway A, the
+   other 30 % shall be routed to gateway B, we define a rule for
+   gateway A with a prob value of 0.7 and a rule for gateway B
+   with a prob value of 0.3. If all probabilities for a given
+   prefix, tree and domain don't add to 100%, the prefix values
+   will be adjusted according the given prob values. E.g. if three
+   hosts with prob values of 0.5, 0.5 and 0.4 are defined, the
+   resulting probabilities are 35.714, 35.714 and 28.571%. But its
+   better to choose meaningful values in the first place because
+   of clarity.
 
    Example 2.9. Set carrierroute_prob_col parameter
 ...
@@ -994,9 +1029,8 @@ modparam("carrierroute", "carrierroute_prob_col", "prob")
 
 2.10. carrierroute_strip_col (string)
 
-   Name of the column containing the number of digits to be
-   stripped of the userpart of an URI before prepending
-   rewrite_prefix.
+   Name of the column contains the number of digits to be stripped
+   of the userpart of an URI before prepending rewrite_prefix.
 
    Example 2.10. Set carrierroute_strip_col parameter
 ...
@@ -1005,8 +1039,10 @@ modparam("carrierroute", "carrierroute_strip_col", "strip")
 
 2.11. carrierroute_rewrite_host_col (string)
 
-   Name of column containing rewrite prefixes. Here you can define
-   a rewrite prefix for the localpart of the SIP URI.
+   Name of column contains the rewrite prefixes. Here you can
+   define a rewrite prefix for the localpart of the SIP URI. An
+   empty field represents a blacklist entry, anything else is put
+   as domain part into the Request URI of the SIP message.
 
    Example 2.11. Set carrierroute_rewrite_host_col parameter
 ...
@@ -1016,7 +1052,8 @@ modparam("carrierroute", "carrierroute_rewrite_host_col", "rewrite_host"
 
 2.12. carrierroute_rewrite_prefix_col (string)
 
-   Rewrite prefix for the localpart of the SIP URI.
+   Name of column contains the rewrite prefixes. Here you can
+   define a rewrite prefix for the localpart of the SIP URI.
 
    Example 2.12. Set carrierroute_rewrite_prefix_col parameter
 ...
@@ -1026,7 +1063,8 @@ fix")
 
 2.13. carrierroute_rewrite_suffix_col (string)
 
-   Rewrite suffix for the localpart of the SIP URI.
+   Name of column contains the rewrite suffixes. Here you can
+   define a rewrite suffix for the localpart of the SIP URI.
 
    Example 2.13. Set carrierroute_rewrite_suffix_col parameter
 ...
@@ -1037,7 +1075,8 @@ fix")
 2.14. carrierroute_description_col (string)
 
    A comment for the route entry, useful for larger routing
-   tables.
+   tables. The comment is also displayed by the fifo cmd
+   "cr_dump_routes".
 
    Example 2.14. Set carrierroute_description_col parameter
 ...
@@ -1059,7 +1098,7 @@ te")
 
 2.16. carrierfailureroute_id_col (string)
 
-   unique ID
+   This column contains the unique identifier of a failure route.
 
    Example 2.16. Set carrierfailureroute_id_col parameter
 ...
@@ -1077,8 +1116,10 @@ modparam("carrierroute", "carrierfailureroute_carrier_col", "carrier")
 
 2.18. carrierfailureroute_domain_col (string)
 
-   This column contains the route domain. Additional domains could
-   be used for example as fallback.
+   This column contains the routing domain id. You can define
+   several routing domains to have different routing rules. Maybe
+   you use domain 0 for normal routing and domain 1 if domain 0
+   failed.
 
    Example 2.18. Set carrierfailureroute_domain_col parameter
 ...
@@ -1087,8 +1128,12 @@ modparam("carrierroute", "carrierfailureroute_domain_col", "domain")
 
 2.19. carrierfailureroute_scan_prefix_col (string)
 
-   This column contains the scan prefix, which define the matching
-   portion of a phone number.
+   Name of column contains the the scan prefixes. Scan prexies
+   define the matching portion of a phone number, e.g. we have the
+   scan prefixes 49721 and 49, the called number is 49721913740,
+   it matches 49721, because the longest match is taken. If no
+   prefix matches, the number is not failure routed. To prevent
+   this, an empty prefix value of could be added.
 
    Example 2.19. Set carrierfailureroute_scan_prefix_col parameter
 ...
@@ -1098,8 +1143,8 @@ efix")
 
 2.20. carrierfailureroute_host_name_col (string)
 
-   This column contains the routing destination used for rule
-   matching.
+   Name of the column containing the host name of the last routing
+   destination, using for rules matching.
 
    Example 2.20. Set carrierfailureroute_host_name_col parameter
 ...
@@ -1138,8 +1183,8 @@ modparam("carrierroute", "carrierfailureroute_mask_col", "mask")
 
 2.24. carrierfailureroute_next_domain_col (string)
 
-   This column contains the route domain that should be used for
-   the next routing attempt.
+   This column contains the route domain id that should be used
+   for the next routing attempt.
 
    Example 2.24. Set carrierfailureroute_next_domain_col parameter
 ...
@@ -1158,31 +1203,62 @@ modparam("carrierroute", "carrierfailureroute_description_col", "descrip
 tion")
 ...
 
-2.26. route_tree_table (String)
+2.26. carrier_name_table (String)
 
-   Name of the route_tree table for the carrierroute module.
+   Name of the carrier_name table for the carrierroute module.
 
-   Default value is "route_tree".
+   Default value is "carrier_name".
 
-   Example 2.26. Set route_tree_table parameter
+   Example 2.26. Set carrier_name_table parameter
 ...
-modparam("carrierroute", "route_tree_table", "route_tree")
-...
-
-2.27. route_tree_id_col (string)
-
-   unique ID
-
-   Example 2.27. Set route_tree_id_col parameter
-...
-modparam("carrierroute", "route_tree_id_col", "id")
+modparam("carrierroute", "carrier_name_table", "carrier_name")
 ...
 
-2.28. route_tree_carrier_col (string)
+2.27. carrier_name_id_col (string)
+
+   Name of the column containing the unique identifier of a
+   carrier.
+
+   Example 2.27. Set carrier_name_id_col parameter
+...
+modparam("carrierroute", "carrier_name_id_col", "id")
+...
+
+2.28. carrier_name_carrier_col (string)
 
    This column contains the carrier name.
 
-   Example 2.28. Set route_tree_carrier_col parameter
+   Example 2.28. Set carrier_name_carrier_col parameter
 ...
-modparam("carrierroute", "route_tree_carrier_col", "carrier")
+modparam("carrierroute", "carrier_name_carrier_col", "carrier")
+...
+
+2.29. domain_name_table (String)
+
+   Name of the domain_name table for the carrierroute module.
+
+   Default value is "domain_name".
+
+   Example 2.29. Set domain_name_table parameter
+...
+modparam("carrierroute", "domain_name_table", "domain_name")
+...
+
+2.30. domain_name_id_col (string)
+
+   Name of the column containing the unique identifier of a
+   domain.
+
+   Example 2.30. Set domain_name_id_col parameter
+...
+modparam("carrierroute", "domain_name_id_col", "id")
+...
+
+2.31. domain_name_domain_col (string)
+
+   This column contains the domain name.
+
+   Example 2.31. Set domain_name_domain_col parameter
+...
+modparam("carrierroute", "domain_name_domain_col", "domain")
 ...

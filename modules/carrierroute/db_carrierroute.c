@@ -62,14 +62,23 @@ str carrierfailureroute_description_col = str_init("description");
 /* table version */
 const unsigned int carrierfailureroute_version = 1;
 
-str route_tree_table = str_init("route_tree");
+str carrier_name_table = str_init("carrier_name");
 
 /* column names */
-str route_tree_id_col = str_init("id");
-str route_tree_carrier_col = str_init("carrier");
+str carrier_name_id_col = str_init("id");
+str carrier_name_carrier_col = str_init("carrier");
 
 /* table version */
-const unsigned int route_tree_version = 1;
+const unsigned int carrier_name_version = 1;
+
+str domain_name_table = str_init("domain_name");
+
+/* column names */
+str domain_name_id_col = str_init("id");
+str domain_name_domain_col = str_init("domain");
+
+/* table version */
+const unsigned int domain_name_version = 1;
 
 
 /*
@@ -105,7 +114,8 @@ int carrierroute_db_init(void) {
 	if (
 	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &carrierroute_table, carrierroute_version) < 0) ||
 	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &carrierfailureroute_table, carrierfailureroute_version) < 0) ||
-	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &route_tree_table, route_tree_version) < 0)
+	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &carrier_name_table, carrier_name_version) < 0) ||
+	(db_check_table_version(&carrierroute_dbf, carrierroute_dbh, &domain_name_table, domain_name_version) < 0)
 	) {
 		LM_ERR("during table version check.\n");
 		carrierroute_db_close();
@@ -165,8 +175,11 @@ void carrierroute_db_vars(void) {
 	carrierfailureroute_mask_col.len = strlen(carrierfailureroute_mask_col.s);
 	carrierfailureroute_next_domain_col.len = strlen(carrierfailureroute_next_domain_col.s);
 	carrierfailureroute_description_col.len = strlen(carrierfailureroute_description_col.s);
-	route_tree_table.len = strlen(route_tree_table.s);
-	route_tree_id_col.len = strlen(route_tree_id_col.s);
-	route_tree_carrier_col.len = strlen(route_tree_carrier_col.s);
+	carrier_name_table.len = strlen(carrier_name_table.s);
+	carrier_name_id_col.len = strlen(carrier_name_id_col.s);
+	carrier_name_carrier_col.len = strlen(carrier_name_carrier_col.s);
+	domain_name_table.len = strlen(domain_name_table.s);
+	domain_name_id_col.len = strlen(domain_name_id_col.s);
+	domain_name_domain_col.len = strlen(domain_name_domain_col.s);
 }
 

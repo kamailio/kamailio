@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "../../mem/shm_mem.h"
 #include "../../mem/mem.h"
 #include "../../ut.h"
@@ -180,8 +181,10 @@ errout:
  */
 int load_config(struct route_data_t * rd) {
 	cfg_t * cfg = NULL;
-	int n, m, o, i, j, k,l, status, hash_index, max_targets, strip;
+	int m, o, i, j, k,l, status, hash_index, max_targets, strip;
 	cfg_t * d, * p, * t;
+	struct carrier_data_t * tmp_carrier_data;
+	int domain_id;
 	str domain, prefix, rewrite_prefix, rewrite_suffix, rewrite_host, comment;
 	double prob;
 	int * backed_up = NULL;
@@ -192,21 +195,68 @@ int load_config(struct route_data_t * rd) {
 		return -1;
 	}
 
+	rd->carrier_num = 1;
+	rd->first_empty_carrier = 0;
+	rd->domain_num = cfg_size(cfg, "domain");
+
 	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *))) == NULL) {
 		SHM_MEM_ERROR;
 		return -1;
 	}
 	memset(rd->carriers, 0, sizeof(struct carrier_data_t *));
 
-	rd->carrier_num = 1;
-	n = cfg_size(cfg, "domain");
-	if (add_carrier_data(rd, &default_tree, 1, n) == NULL) {
+	/* Create carrier map */
+	if ((rd->carrier_map = shm_malloc(sizeof(struct name_map_t))) == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(rd->carrier_map, 0, sizeof(struct name_map_t));
+	rd->carrier_map[0].id = 1;
+	rd->carrier_map[0].name.len = default_tree.len;
+	rd->carrier_map[0].name.s = shm_malloc(rd->carrier_map[0].name.len);
+	if (rd->carrier_map[0].name.s == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memcpy(rd->carrier_map[0].name.s, default_tree.s, rd->carrier_map[0].name.len);
+
+	/* Create domain map */
+	if ((rd->domain_map = shm_malloc(sizeof(struct name_map_t) * rd->domain_num)) == NULL) {
+		SHM_MEM_ERROR;
+		return -1;
+	}
+	memset(rd->domain_map, 0, sizeof(struct name_map_t) * rd->domain_num);
+	for (i=0; i<rd->domain_num; i++) {
+		d = cfg_getnsec(cfg, "domain", i);
+		domain.s = (char *)cfg_title(d);
+		if (domain.s==NULL) domain.s="";
+		domain.len = strlen(domain.s);
+		rd->domain_map[i].id = i+1;
+		rd->domain_map[i].name.len = domain.len;
+		rd->domain_map[i].name.s = shm_malloc(rd->domain_map[i].name.len);
+		if (rd->domain_map[i].name.s == NULL) {
+			SHM_MEM_ERROR;
+			return -1;
+		}
+		memcpy(rd->domain_map[i].name.s, domain.s, rd->domain_map[i].name.len);
+	}
+	/* sort domain map by id for faster access */
+	qsort(rd->domain_map, rd->domain_num, sizeof(rd->domain_map[0]), compare_name_map);
+
+	/* Create and insert carrier data structure */
+	tmp_carrier_data = create_carrier_data(1, &rd->carrier_map[0].name, rd->domain_num);
+	if (tmp_carrier_data == NULL) {
+		LM_ERR("can't create new carrier\n");
+		return -1;
+	}
+	if (add_carrier_data(rd, tmp_carrier_data) < 0) {
 		LM_ERR("couldn't add carrier data\n");
+		destroy_carrier_data(tmp_carrier_data);
 		return -1;
 	}
 
-	memset(rd->carriers[0]->domains, 0, sizeof(struct domain_data_t *) * n);
-	for (i = 0; i < n; i++) {
+	/* add all routes */
+	for (i = 0; i < rd->domain_num; i++) {
 		d = cfg_getnsec(cfg, "domain", i);
 		domain.s = (char *)cfg_title(d);
 		if (domain.s==NULL) domain.s="";
@@ -264,9 +314,18 @@ int load_config(struct route_data_t * rd) {
 				}
 				backup = cfg_getint(t, "backup");
 
+				domain_id = map_name2id(rd->domain_map, rd->domain_num, &domain);
+				if (domain_id < 0) {
+					LM_ERR("cannot find id for domain '%.*s'", domain.len, domain.s);
+					if (backed_up) {
+						pkg_free(backed_up);
+					}
+					return -1;
+				}
+
 				LM_INFO("adding route for prefix %.*s, to host %.*s, prob %f, backed up: %i, backup: %i\n",
 				    prefix.len, prefix.s, rewrite_host.len, rewrite_host.s, prob, backed_up_size, backup);
-				if (add_route(rd, 1, &domain, &prefix, 0, 0, max_targets, prob, &rewrite_host,
+				if (add_route(rd, 1, domain_id, &prefix, 0, 0, max_targets, prob, &rewrite_host,
 				              strip, &rewrite_prefix, &rewrite_suffix, status,
 				              hash_index, backup, backed_up, &comment) < 0) {
 					LM_INFO("Error while adding route\n");
@@ -386,7 +445,7 @@ int save_config(struct route_data_t * rd) {
 	i = 0;
 	if (rd->carrier_num>=1) {
 		for (j=0; j< rd->carriers[i]->domain_num; j++) {
-			fprintf(outfile, "domain %.*s {\n", rd->carriers[i]->domains[j]->name.len, rd->carriers[i]->domains[j]->name.s);
+			fprintf(outfile, "domain %.*s {\n", rd->carriers[i]->domains[j]->name->len, rd->carriers[i]->domains[j]->name->s);
 			if (save_route_data_recursor(rd->carriers[i]->domains[j]->tree, outfile) < 0) {
 				goto errout;
 			}
