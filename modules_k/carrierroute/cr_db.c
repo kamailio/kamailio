@@ -110,6 +110,7 @@ int load_user_carrier(str * user, str * domain) {
 
 	if (carrierroute_dbf.use_table(carrierroute_dbh, &subscriber_table) < 0) {
 		LM_ERR("can't use table\n");
+		return -1;
 	}
 
 	if (carrierroute_dbf.query(carrierroute_dbh, keys, op, vals, cols, use_domain ? 2 : 1, 1, NULL, &res) < 0) {
