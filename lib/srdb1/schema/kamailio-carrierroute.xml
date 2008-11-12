@@ -11,5 +11,6 @@
     <name>carrierroute</name>
     <xi:include href="carrierroute.xml"/>
     <xi:include href="carrierfailureroute.xml"/>
-    <xi:include href="route_tree.xml"/>
+    <xi:include href="carrier_name.xml"/>
+    <xi:include href="domain_name.xml"/>
 </database>

@@ -9,7 +9,7 @@
 	  
 	  <table id="carrierfailureroute" xmlns:db="http://docbook.org/ns/docbook">
 		  <name>carrierfailureroute</name>
-		  <version>1</version>
+		  <version>2</version>
 		  <type db="mysql">&MYSQL_TABLE_TYPE;</type>
 		  <description>
 			  <db:para>This table is used by the carrierroute module to provide failure routing capabilities. It contains the 
@@ -38,10 +38,11 @@
 		  
 		  <column>
 			  <name>domain</name>
-			  <type>string</type>
-			  <size>&user_len;</size>
-			  <default/>
-			  <description>Name of column contains the rule domain. You can define several routing domains
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the routing domain id. You can define several routing domains
 			  to have different routing rules. Maybe you use domain 0 for normal routing and domain 1 if
 			  domain 0 failed.</description>
 		  </column>
@@ -93,10 +94,11 @@
 		  
 		  <column>
 			  <name>next_domain</name>
-			  <type>string</type>
-			  <size>&user_len;</size>
-			  <default/>
-			  <description>This column contains the route domain that should be used for the next routing attempt.</description>
+			  <type>unsigned int</type>
+			  <size>&table_id_len;</size>
+			  <default>0</default>
+			  <natural/>
+			  <description>This column contains the route domain id that should be used for the next routing attempt.</description>
 		  </column>
 		  
 		  <column>
