@@ -34,6 +34,55 @@
 #include "cr_map.h"
 #include "cr_domain.h"
 #include "prime_hash.h"
+#include "cr_data.h"
+
+
+/**
+ * The fixup funcions will use the initial mapping.
+ * If the mapping changes afterwards (eg. due to cr_reload_routes),
+ * the names used in the routing script will not be mapped
+ * to the correct IDs!
+ * @param name carrier name
+ * @return carrier id
+ */
+static int carrier_name_2_id(const str *name) {
+	int id;
+	struct route_data_t * rd;
+	
+	do {
+		rd = get_data();
+	} while (rd == NULL);
+
+	id = map_name2id(rd->carrier_map, rd->carrier_num, name);
+	
+	release_data(rd);
+
+	return id;
+}
+
+
+/**
+ * The fixup funcions will use the initial mapping.
+ * If the mapping changes afterwards (eg. due to cr_reload_routes),
+ * the names used in the routing script will not be mapped
+ * to the correct IDs!
+ * @param name domain name
+ * @return domain id 
+ */
+static int domain_name_2_id(const str *name) {
+	int id;
+	struct route_data_t * rd;
+
+	do {
+		rd = get_data();
+	} while (rd == NULL);
+	
+	id = map_name2id(rd->domain_map, rd->domain_num, name);
+	
+	release_data(rd);
+
+	return id;
+}
 
 
 /**
@@ -69,6 +118,7 @@ static enum hash_source hash_fixup(const char * my_hash_source) {
  * @return 0 on success, -1 on failure
  */
 static int carrier_fixup(void ** param) {
+	int id;
 
 	if (fixup_spve_null(param, 1) !=0) {
 		LM_ERR("could not fixup parameter");
@@ -79,11 +129,12 @@ static int carrier_fixup(void ** param) {
 		/* This is a name string, convert to a int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get carrier id */
-		if ((((gparam_p)(*param))->v.ival = find_carrier(&((gparam_p)(*param))->v.sval)) < 0) {
-			LM_ERR("could not add carrier\n");
+		if ((id = carrier_name_2_id(&((gparam_p)(*param))->v.sval)) < 0) {
+			LM_ERR("could not find carrier name '%.*s' in map\n", ((gparam_p)(*param))->v.sval.len, ((gparam_p)(*param))->v.sval.s);
 			pkg_free(*param);
 			return -1;
 		}
+		((gparam_p)(*param))->v.ival = id;
 	}
 	return 0;
 }
@@ -98,7 +149,8 @@ static int carrier_fixup(void ** param) {
  * @return 0 on success, -1 on failure
  */
 static int domain_fixup(void ** param) {
-	
+	int id;
+
 	if (fixup_spve_null(param, 1) !=0) {
 		LM_ERR("could not fixup parameter");
 		return -1;
@@ -108,11 +160,12 @@ static int domain_fixup(void ** param) {
 		/* This is a name string, convert to a int */
 		((gparam_p)(*param))->type=GPARAM_TYPE_INT;
 		/* get domain id */
-		if ((((gparam_p)(*param))->v.ival = add_domain(&(((gparam_p)(*param))->v.sval))) < 0) {
-			LM_ERR("could not add domain\n");
+		if ((id = domain_name_2_id(&(((gparam_p)(*param))->v.sval))) < 0) {
+			LM_ERR("could not find domain name '%.*s' in map\n", ((gparam_p)(*param))->v.sval.len, ((gparam_p)(*param))->v.sval.s);
 			pkg_free(*param);
 			return -1;
 		}
+		((gparam_p)(*param))->v.ival = id;
 	}
 	return 0;
 }
@@ -142,7 +195,7 @@ static int avp_name_fixup(void ** param) {
 
 
 /**
- * fixes the module functions' parameters, i.e. it maps
+ * Fixes the module functions' parameters, i.e. it maps
  * the routing domain names to numbers for faster access
  * at runtime
  *
@@ -240,6 +293,14 @@ int cr_load_next_domain_fixup(void ** param, int param_no) {
 }
 
 
+/**
+ * Fixes the module functions' parameters.
+ *
+ * @param param the parameter
+ * @param param_no the number of the parameter
+ *
+ * @return 0 on success, -1 on failure
+ */
 int cr_load_user_carrier_fixup(void ** param, int param_no) {
 	if (mode == CARRIERROUTE_MODE_FILE) {
 		LM_ERR("command cr_user_rewrite_uri can't be used in file mode\n");

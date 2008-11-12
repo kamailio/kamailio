@@ -34,19 +34,9 @@
 #include "cr_db.h"
 #include "cr_carrier.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 #define QUERY_LEN 2048
-
-/*! carrier list */
-struct carrier {
-	int id;
-	char * name;
-	struct carrier * next;
-};
-
-static int store_carriers(struct carrier ** start);
-
-static void destroy_carriers(struct carrier * start);
 
 static char query[QUERY_LEN];
 
@@ -63,9 +53,14 @@ str * columns[COLUMN_NUM] = { &carrierroute_id_col, &carrierroute_carrier_col,
 	&carrierroute_description_col
 };
 
-str * carrier_columns[CARRIER_COLUMN_NUM] = {
-	&route_tree_id_col,
-	&route_tree_carrier_col
+str * carrier_name_columns[CARRIER_NAME_COLUMN_NUM] = {
+	&carrier_name_id_col,
+	&carrier_name_carrier_col
+};
+
+str * domain_name_columns[DOMAIN_NAME_COLUMN_NUM] = {
+	&domain_name_id_col,
+	&domain_name_domain_col
 };
 
 str * failure_columns[FAILURE_COLUMN_NUM] = {
@@ -80,6 +75,108 @@ str * failure_columns[FAILURE_COLUMN_NUM] = {
 	&carrierfailureroute_next_domain_col,
 	&carrierfailureroute_description_col
 };
+
+
+static int load_carrier_map(struct route_data_t *rd) {
+	db_res_t * res = NULL;
+	int i, count;
+	if(!rd){
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	if (carrierroute_dbf.use_table(carrierroute_dbh, &carrier_name_table) < 0) {
+		LM_ERR("couldn't use table\n");
+		return -1;
+	}
+
+	if (carrierroute_dbf.query(carrierroute_dbh, 0, 0, 0, (db_key_t *)carrier_name_columns, 0, CARRIER_NAME_COLUMN_NUM, 0, &res) < 0) {
+		LM_ERR("couldn't query table\n");
+		return -1;
+	}
+
+	count = RES_ROW_N(res);
+
+	rd->carrier_map = shm_malloc(sizeof(struct name_map_t) * count);
+	if (rd->carrier_map == NULL) {
+		SHM_MEM_ERROR;
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
+		return -1;
+	}
+	memset(rd->carrier_map, 0, sizeof(struct name_map_t) * count);
+
+	for (i=0; i<count; i++) {
+		rd->carrier_map[i].id = res->rows[i].values[CARRIER_NAME_ID_COL].val.int_val;
+		rd->carrier_map[i].name.len = strlen(res->rows[i].values[CARRIER_NAME_NAME_COL].val.string_val);
+		rd->carrier_map[i].name.s = shm_malloc(rd->carrier_map[i].name.len);
+		if (rd->carrier_map[i].name.s == NULL) {
+			SHM_MEM_ERROR;
+			carrierroute_dbf.free_result(carrierroute_dbh, res);
+			shm_free(rd->carrier_map);
+			rd->carrier_map = NULL;
+			return -1;
+		}
+		memcpy(rd->carrier_map[i].name.s, res->rows[i].values[CARRIER_NAME_NAME_COL].val.string_val, rd->carrier_map[i].name.len);
+	}
+
+	/* sort carrier map by id for faster access */
+	qsort(rd->carrier_map, count, sizeof(rd->carrier_map[0]), compare_name_map);
+
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
+	return count;
+}
+
+
+
+
+static int load_domain_map(struct route_data_t *rd) {
+	db_res_t * res = NULL;
+	int i, count;
+	if(!rd){
+		LM_ERR("invalid parameter\n");
+		return -1;
+	}
+	if (carrierroute_dbf.use_table(carrierroute_dbh, &domain_name_table) < 0) {
+		LM_ERR("couldn't use table\n");
+		return -1;
+	}
+
+	if (carrierroute_dbf.query(carrierroute_dbh, 0, 0, 0, (db_key_t *)domain_name_columns, 0, DOMAIN_NAME_COLUMN_NUM, 0, &res) < 0) {
+		LM_ERR("couldn't query table\n");
+		return -1;
+	}
+
+	count = RES_ROW_N(res);
+
+	rd->domain_map = shm_malloc(sizeof(struct name_map_t) * count);
+	if (rd->domain_map == NULL) {
+		SHM_MEM_ERROR;
+		carrierroute_dbf.free_result(carrierroute_dbh, res);
+		return -1;
+	}
+	memset(rd->domain_map, 0, sizeof(struct name_map_t) * count);
+
+	for (i=0; i<count; i++) {
+		rd->domain_map[i].id = res->rows[i].values[DOMAIN_NAME_ID_COL].val.int_val;
+		rd->domain_map[i].name.len = strlen(res->rows[i].values[DOMAIN_NAME_NAME_COL].val.string_val);
+		rd->domain_map[i].name.s = shm_malloc(rd->domain_map[i].name.len);
+		if (rd->domain_map[i].name.s == NULL) {
+			SHM_MEM_ERROR;
+			carrierroute_dbf.free_result(carrierroute_dbh, res);
+			shm_free(rd->domain_map);
+			rd->domain_map = NULL;
+			return -1;
+		}
+		memcpy(rd->domain_map[i].name.s, res->rows[i].values[DOMAIN_NAME_NAME_COL].val.string_val, rd->domain_map[i].name.len);
+	}
+
+	/* sort domain map by id for faster access */
+	qsort(rd->domain_map, count, sizeof(rd->domain_map[0]), compare_name_map);
+
+	carrierroute_dbf.free_result(carrierroute_dbh, res);
+	return count;
+}
+
+
 
 
 int load_user_carrier(str * user, str * domain) {
@@ -134,6 +231,8 @@ int load_user_carrier(str * user, str * domain) {
 }
 
 
+
+
 /**
  * Loads the routing data from the database given in global
  * variable db_url and stores it in routing tree rd.
@@ -147,11 +246,11 @@ int load_user_carrier(str * user, str * domain) {
 int load_route_data_db(struct route_data_t * rd) {
 	db_res_t * res = NULL;
 	db_row_t * row = NULL;
-	int i, ret, carrier_count = 0;
-	struct carrier * carriers = NULL, * tmp = NULL;
+	int i, ret;
+	struct carrier_data_t * tmp_carrier_data;
 	static str query_str;
-	str tmp_carrier, tmp_domain, tmp_scan_prefix, tmp_rewrite_host, tmp_rewrite_prefix,
-		tmp_rewrite_suffix, tmp_host_name, tmp_reply_code, tmp_next_domain, tmp_comment;
+	str tmp_scan_prefix, tmp_rewrite_host, tmp_rewrite_prefix,
+		tmp_rewrite_suffix, tmp_host_name, tmp_reply_code, tmp_comment;
 
 	if( (strlen("SELECT DISTINCT  FROM  WHERE = ")
 			+ carrierroute_table.len + columns[COL_DOMAIN]->len
@@ -160,24 +259,27 @@ int load_route_data_db(struct route_data_t * rd) {
 		return -1;
 	}
 
-	if((carrier_count = store_carriers(&carriers)) <= 0){
+	if((rd->carrier_num = load_carrier_map(rd)) <= 0){
 		LM_ERR("error while retrieving carriers\n");
 		goto errout;
 	}
 
-	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *) * carrier_count)) == NULL) {
+	if((rd->domain_num = load_domain_map(rd)) <= 0){
+		LM_ERR("error while retrieving domains\n");
+		goto errout;
+	}
+
+	if ((rd->carriers = shm_malloc(sizeof(struct carrier_data_t *) * rd->carrier_num)) == NULL) {
 		SHM_MEM_ERROR;
 		goto errout;
 	}
-	memset(rd->carriers, 0, sizeof(struct carrier_data_t *) * carrier_count);
-	rd->carrier_num = carrier_count;
+	memset(rd->carriers, 0, sizeof(struct carrier_data_t *) * rd->carrier_num);
 
-	tmp = carriers;
-	for (i=0; i<carrier_count; i++) {
+	for (i=0; i<rd->carrier_num; i++) {
 		memset(query, 0, QUERY_LEN);
 		ret = snprintf(query, QUERY_LEN, "SELECT DISTINCT %.*s FROM %.*s WHERE %.*s=%i",
 		columns[COL_DOMAIN]->len, columns[COL_DOMAIN]->s, carrierroute_table.len,
-		carrierroute_table.s, columns[COL_CARRIER]->len, columns[COL_CARRIER]->s, tmp->id);
+		carrierroute_table.s, columns[COL_CARRIER]->len, columns[COL_CARRIER]->s, rd->carrier_map[i].id);
 		if (ret < 0) {
 			LM_ERR("error in snprintf");
 			goto errout;
@@ -189,16 +291,19 @@ int load_route_data_db(struct route_data_t * rd) {
 			LM_ERR("Failed to query database.\n");
 			goto errout;
 		}
-		LM_INFO("name %s, id %i, trees: %i\n", tmp->name, tmp->id, RES_ROW_N(res));
-		tmp_carrier.s=tmp->name;
-		tmp_carrier.len=strlen(tmp_carrier.s);
-		if (add_carrier_data(rd, &tmp_carrier, tmp->id, RES_ROW_N(res)) == NULL) {
-			LM_ERR("can't add carrier %s\n", tmp->name);
+		LM_INFO("carrier '%.*s' (id %i) has %i domains\n", rd->carrier_map[i].name.len, rd->carrier_map[i].name.s, rd->carrier_map[i].id, RES_ROW_N(res));
+		tmp_carrier_data = create_carrier_data(rd->carrier_map[i].id, &rd->carrier_map[i].name, RES_ROW_N(res));
+		if (tmp_carrier_data == NULL) {
+			LM_ERR("can't create new carrier '%.*s'\n", rd->carrier_map[i].name.len, rd->carrier_map[i].name.s);
+			goto errout;
+		}
+		if (add_carrier_data(rd, tmp_carrier_data) < 0) {
+			LM_ERR("can't add carrier '%.*s'\n", rd->carrier_map[i].name.len, rd->carrier_map[i].name.s);
+			destroy_carrier_data(tmp_carrier_data);
 			goto errout;
 		}
 		carrierroute_dbf.free_result(carrierroute_dbh, res);
 		res = NULL;
-		tmp = tmp->next;
 	}
 
 	if (carrierroute_dbf.use_table(carrierroute_dbh, &carrierroute_table) < 0) {
@@ -218,7 +323,7 @@ int load_route_data_db(struct route_data_t * rd) {
 		}
 	} else {
 		if (carrierroute_dbf.query(carrierroute_dbh, NULL, NULL, NULL, (db_key_t *) columns, 0,
-					COLUMN_NUM, NULL, &res) < 0) {
+				 COLUMN_NUM, NULL, &res) < 0) {
 			LM_ERR("Failed to query database.\n");
 			return -1;
 		}
@@ -228,19 +333,16 @@ int load_route_data_db(struct route_data_t * rd) {
 		LM_DBG("loading, cycle %d", n++);
 		for (i = 0; i < RES_ROW_N(res); ++i) {
 			row = &RES_ROWS(res)[i];
-			tmp_domain.s=(char *)row->values[COL_DOMAIN].val.string_val;
 			tmp_scan_prefix.s=(char *)row->values[COL_SCAN_PREFIX].val.string_val;
 			tmp_rewrite_host.s=(char *)row->values[COL_REWRITE_HOST].val.string_val;
 			tmp_rewrite_prefix.s=(char *)row->values[COL_REWRITE_PREFIX].val.string_val;
 			tmp_rewrite_suffix.s=(char *)row->values[COL_REWRITE_SUFFIX].val.string_val;
 			tmp_comment.s=(char *)row->values[COL_COMMENT].val.string_val;
-			if (tmp_domain.s==NULL) tmp_domain.s="";
 			if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
 			if (tmp_rewrite_host.s==NULL) tmp_rewrite_host.s="";
 			if (tmp_rewrite_prefix.s==NULL) tmp_rewrite_prefix.s="";
 			if (tmp_rewrite_suffix.s==NULL) tmp_rewrite_suffix.s="";
 			if (tmp_comment.s==NULL) tmp_comment.s="";
-			tmp_domain.len=strlen(tmp_domain.s);
 			tmp_scan_prefix.len=strlen(tmp_scan_prefix.s);
 			tmp_rewrite_host.len=strlen(tmp_rewrite_host.s);
 			tmp_rewrite_prefix.len=strlen(tmp_rewrite_prefix.s);
@@ -248,7 +350,7 @@ int load_route_data_db(struct route_data_t * rd) {
 			tmp_comment.len=strlen(tmp_comment.s);
 			if (add_route(rd,
 					row->values[COL_CARRIER].val.int_val,
-					&tmp_domain,
+					row->values[COL_DOMAIN].val.int_val,
 					&tmp_scan_prefix,
 					row->values[COL_FLAGS].val.int_val,
 					row->values[COL_MASK].val.int_val,
@@ -292,103 +394,38 @@ int load_route_data_db(struct route_data_t * rd) {
 	}
 	for (i = 0; i < RES_ROW_N(res); ++i) {
 		row = &RES_ROWS(res)[i];
-		tmp_domain.s=(char *)row->values[FCOL_DOMAIN].val.string_val;
 		tmp_scan_prefix.s=(char *)row->values[FCOL_SCAN_PREFIX].val.string_val;
 		tmp_host_name.s=(char *)row->values[FCOL_HOST_NAME].val.string_val;
 		tmp_reply_code.s=(char *)row->values[FCOL_REPLY_CODE].val.string_val;
-		tmp_next_domain.s=(char *)row->values[FCOL_NEXT_DOMAIN].val.string_val;
 		tmp_comment.s=(char *)row->values[FCOL_COMMENT].val.string_val;
-		if (tmp_domain.s==NULL) tmp_domain.s="";
 		if (tmp_scan_prefix.s==NULL) tmp_scan_prefix.s="";
 		if (tmp_host_name.s==NULL) tmp_host_name.s="";
 		if (tmp_reply_code.s==NULL) tmp_reply_code.s="";
-		if (tmp_next_domain.s==NULL) tmp_next_domain.s="";
 		if (tmp_comment.s==NULL) tmp_comment.s="";
-		tmp_domain.len=strlen(tmp_domain.s);
 		tmp_scan_prefix.len=strlen(tmp_scan_prefix.s);
 		tmp_host_name.len=strlen(tmp_host_name.s);
 		tmp_reply_code.len=strlen(tmp_reply_code.s);
-		tmp_next_domain.len=strlen(tmp_next_domain.s);
 		tmp_comment.len=strlen(tmp_comment.s);
 		if (add_failure_route(rd,
 				row->values[FCOL_CARRIER].val.int_val,
-				&tmp_domain,
+				row->values[COL_DOMAIN].val.int_val,
 				&tmp_scan_prefix,
 				&tmp_host_name,
 				&tmp_reply_code,
 				row->values[FCOL_FLAGS].val.int_val,
 				row->values[FCOL_MASK].val.int_val,
-				&tmp_next_domain,
+				row->values[FCOL_NEXT_DOMAIN].val.int_val,
 				&tmp_comment) == -1) {
 			goto errout;
 		}
 	}
 
-	destroy_carriers(carriers);
 	carrierroute_dbf.free_result(carrierroute_dbh, res);
 	return 0;
 
 errout:
-	destroy_carriers(carriers);
 	if (res) {
 		carrierroute_dbf.free_result(carrierroute_dbh, res);
 	}
 	return -1;
-}
-
-
-static int store_carriers(struct carrier ** start){
-	db_res_t * res = NULL;
-	int i, count;
-	struct carrier * nc;
-	if(!start){
-		LM_ERR("invalid parameter\n");
-		return -1;
-	}
-	if (carrierroute_dbf.use_table(carrierroute_dbh, &route_tree_table) < 0) {
-		LM_ERR("couldn't use table\n");
-		return -1;
-	}
-
-	if (carrierroute_dbf.query(carrierroute_dbh, 0, 0, 0, (db_key_t *)carrier_columns, 0, CARRIER_COLUMN_NUM, 0, &res) < 0) {
-		LM_ERR("couldn't query table\n");
-		return -1;
-	}
-	count = RES_ROW_N(res);
-	for(i=0; i<RES_ROW_N(res); i++){
-		if((nc = pkg_malloc(sizeof(struct carrier))) == NULL){
-			PKG_MEM_ERROR;
-			return -1;
-		}
-		nc->id = res->rows[i].values[0].val.int_val;
-		if((nc->name = pkg_malloc(strlen(res->rows[i].values[1].val.string_val) + 1)) == NULL){
-			PKG_MEM_ERROR;
-			pkg_free(nc);
-			goto errout;
-		}
-		strcpy(nc->name, res->rows[i].values[1].val.string_val);
-		nc->next = *start;
-		*start = nc;
-	}
-	carrierroute_dbf.free_result(carrierroute_dbh, res);
-	return count;
-errout:
-if(res){
-	carrierroute_dbf.free_result(carrierroute_dbh, res);
-}
-	return -1;
-}
-
-
-static void destroy_carriers(struct carrier * start){
-	struct carrier * tmp, * tmp2;
-	tmp = start;
-	
-	while(tmp){
-		tmp2 = tmp;
-		tmp = tmp->next;
-		pkg_free(tmp2->name);
-		pkg_free(tmp2);
-	}
-	return;
 }

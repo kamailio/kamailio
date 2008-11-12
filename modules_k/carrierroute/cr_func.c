@@ -71,7 +71,7 @@ static const str AT_SIGN  = { .s="@",     .len=1 };
  * @param search_if lookup function
  * @return id on success, -1 otherwise
  */
-static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, int (*search_id)(const str* name)) {
+static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, struct name_map_t *map, int size) {
 	int id;
 	struct usr_avp *avp;
 	int_str avp_val;
@@ -94,7 +94,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, int (*search_id)(
 			if ((avp->flags&AVP_VAL_STR)==0) {
 				return avp_val.n;
 			} else {
-				id = search_id(&avp_val.s);
+				id = map_name2id(map, size, &avp_val.s);
 				if (id < 0) {
 					LM_ERR("could not find id '%.*s' from AVP\n",
 							gp->v.pve->spec.pvp.pvn.u.isname.name.s.len,
@@ -109,7 +109,7 @@ static inline int cr_gp2id(struct sip_msg *_msg, gparam_t *gp, int (*search_id)(
 				LM_ERR("cannot print the name from PV\n");
 				return -1;
 			}
-			id = search_id(&tmp);
+			id = map_name2id(map, size, &tmp);
 			if (id < 0) {
 				LM_ERR("could not find id '%.*s' from PV\n", tmp.len, tmp.s);
 				return -1;
@@ -493,13 +493,6 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	struct domain_data_t * domain_data;
 	struct action act;
 
-	carrier_id = cr_gp2id(_msg, _carrier, find_carrier);
-	domain_id = cr_gp2id(_msg, _domain, add_domain);
-	if (domain_id < 0) {
-		LM_ERR("invalid domain id %d\n", domain_id);
-		return -1;
-	}
-
 	if (fixup_get_svalue(_msg, _rewrite_user, &rewrite_user)<0) {
 		LM_ERR("cannot print the rewrite_user\n");
 		return -1;
@@ -515,21 +508,35 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 	do {
 		rd = get_data();
 	} while (rd == NULL);
+
+	carrier_id = cr_gp2id(_msg, _carrier, rd->carrier_map, rd->carrier_num);
+	if (carrier_id < 0) {
+		LM_ERR("invalid carrier id %d\n", carrier_id);
+		release_data(rd);
+		return -1;
+	}
+
+	domain_id = cr_gp2id(_msg, _domain, rd->domain_map, rd->domain_num);
+	if (domain_id < 0) {
+		LM_ERR("invalid domain id %d\n", domain_id);
+		release_data(rd);
+		return -1;
+	}
 	
 	carrier_data=NULL;
 	if (carrier_id < 0) {
 		if (fallback_default) {
 			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
-			carrier_data = rd->carriers[rd->default_carrier_index];
+			carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 		}
 	} else if (carrier_id == 0) {
-		carrier_data = rd->carriers[rd->default_carrier_index];
+		carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 	} else {
 		carrier_data = get_carrier_data(rd, carrier_id);
 		if (carrier_data == NULL) {
 			if (fallback_default) {
 				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
-				carrier_data = rd->carriers[rd->default_carrier_index];
+				carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 			}
 		}
 	}
@@ -538,7 +545,7 @@ int cr_do_route(struct sip_msg * _msg, gparam_t *_carrier,
 		goto unlock_and_out;
 	}
 
-	domain_data = get_domain_data_by_id(carrier_data, domain_id);
+	domain_data = get_domain_data(carrier_data, domain_id);
 	if (domain_data == NULL) {
 		LM_ERR("desired routing domain doesn't exist, prefix %.*s, carrier %d, domain %d\n",
 			prefix_matching.len, prefix_matching.s, carrier_id, domain_id);
@@ -683,13 +690,6 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 	struct carrier_data_t * carrier_data;
 	struct domain_data_t * domain_data;
 
-	carrier_id = cr_gp2id(_msg, _carrier, find_carrier);
-	domain_id = cr_gp2id(_msg, _domain, add_domain);
-	if (domain_id < 0) {
-		LM_ERR("invalid domain id %d\n", domain_id);
-		return -1;
-	}
-
 	if (fixup_get_svalue(_msg, _prefix_matching, &prefix_matching)<0) {
 		LM_ERR("cannot print the prefix_matching\n");
 		return -1;
@@ -709,20 +709,34 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 		rd = get_data();
 	} while (rd == NULL);
 	
+	carrier_id = cr_gp2id(_msg, _carrier, rd->carrier_map, rd->carrier_num);
+	if (carrier_id < 0) {
+		LM_ERR("invalid carrier id %d\n", carrier_id);
+		release_data(rd);
+		return -1;
+	}
+
+	domain_id = cr_gp2id(_msg, _domain, rd->domain_map, rd->domain_num);
+	if (domain_id < 0) {
+		LM_ERR("invalid domain id %d\n", domain_id);
+		release_data(rd);
+		return -1;
+	}
+
 	carrier_data=NULL;
 	if (carrier_id < 0) {
 		if (fallback_default) {
 			LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
-			carrier_data = rd->carriers[rd->default_carrier_index];
+			carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 		}
 	} else if (carrier_id == 0) {
-		carrier_data = rd->carriers[rd->default_carrier_index];
+		carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 	} else {
 		carrier_data = get_carrier_data(rd, carrier_id);
 		if (carrier_data == NULL) {
 			if (fallback_default) {
 				LM_NOTICE("invalid tree id %i specified, using default tree\n", carrier_id);
-				carrier_data = rd->carriers[rd->default_carrier_index];
+				carrier_data = get_carrier_data(rd, rd->default_carrier_id);
 			}
 		}
 	}
@@ -731,7 +745,7 @@ int cr_load_next_domain(struct sip_msg * _msg, gparam_t *_carrier,
 		goto unlock_and_out;
 	}
 
-	domain_data = get_domain_data_by_id(carrier_data, domain_id);
+	domain_data = get_domain_data(carrier_data, domain_id);
 	if (domain_data == NULL) {
 		LM_ERR("desired routing domain doesn't exist, prefix %.*s, carrier %d, domain %d\n",
 			prefix_matching.len, prefix_matching.s, carrier_id, domain_id);

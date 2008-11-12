@@ -61,9 +61,13 @@
 #define FCOL_NEXT_DOMAIN    8
 #define FCOL_COMMENT        9
 
-#define CARRIER_COLUMN_NUM 2
-#define CARRIER_ID_COL 0
-#define CARRIER_NAME_COL 1
+#define CARRIER_NAME_COLUMN_NUM 2
+#define CARRIER_NAME_ID_COL 0
+#define CARRIER_NAME_NAME_COL 1
+
+#define DOMAIN_NAME_COLUMN_NUM 2
+#define DOMAIN_NAME_ID_COL 0
+#define DOMAIN_NAME_NAME_COL 1
 
 extern str * columns[];
 extern str * carrier_columns[];

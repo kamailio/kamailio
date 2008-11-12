@@ -32,10 +32,40 @@
 #define CR_FIXUP_H
 
 
+/**
+ * fixes the module functions' parameters, i.e. it maps
+ * the routing domain names to numbers for faster access
+ * at runtime
+ *
+ * @param param the parameter
+ * @param param_no the number of the parameter
+ *
+ * @return 0 on success, -1 on failure
+ */
 int cr_route_fixup(void ** param, int param_no);
 
+
+/**
+ * Fixes the module functions' parameters.
+ *
+ * @param param the parameter
+ * @param param_no the number of the parameter
+ *
+ * @return 0 on success, -1 on failure
+ */
 int cr_load_user_carrier_fixup(void ** param, int param_no);
 
+
+/**
+ * Fixes the module functions' parameters, i.e. it maps
+ * the routing domain names to numbers for faster access
+ * at runtime
+ *
+ * @param param the parameter
+ * @param param_no the number of the parameter
+ *
+ * @return 0 on success, -1 on failure
+ */
 int cr_load_next_domain_fixup(void ** param, int param_no);
 
 #endif

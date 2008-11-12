@@ -32,160 +32,73 @@
 
 #include <sys/types.h>
 #include "../../str.h"
-#include "../../locking.h"
-#include "../../flags.h"
-#include "cr_data.h"
 
 
 /**
  * The struct for a carrier.
  */
 struct carrier_data_t {
+	int id; /*!< id of the carrier */
+	str * name; /*!< name of the carrier. This points to the name in carrier_map to avoid duplication. */
 	struct domain_data_t ** domains; /*!< array of routing domains */
 	size_t domain_num; /*!< number of routing domains */
-	str name; /*!< name of the carrier */
-	int id; /*!< id of the carrier */
-	int index; /*!< index of the carrier */
+	size_t first_empty_domain; /*!< the index of the first empty entry in domains */
 };
 
 
 /**
  * Create a new carrier_data struct in shared memory and set it up.
  *
- * @param carrier_name the name of the carrier
  * @param carrier_id id of carrier
- * @param index the index for that carrier
+ * @param carrier_name pointer to the name of the carrier
  * @param domains number of domains for that carrier
  *
  * @return a pointer to the newly allocated carrier data or NULL on
  * error, in which case it LOGs an error message.
  */
-struct carrier_data_t * create_carrier_data(const str *carrier_name, int carrier_id, int index, int domains);
+struct carrier_data_t * create_carrier_data(int carrier_id, str *carrier_name, int domains);
 
 
 /**
- * Adds the given route information to the routing domain identified by
- * domain. scan_prefix identifies the number for which the information
- * is and the rewrite_* parameters define what to do in case of a match.
- * prob gives the probability with which this rule applies if there are
- * more than one for a given prefix.
+ * Destroys the given carrier and frees the used memory.
  *
- * @param rd the route data to which the route shall be added
- * @param carrier_id the carrier id of the route to be added
- * @param domain the routing domain of the new route
- * @param scan_prefix the number prefix
- * @param flags user defined flags
- * @param mask mask for user defined flags
- * @param max_targets the number of targets
- * @param prob the weight of the rule
- * @param strip the number of digits to be stripped off userpart before prepending prefix
- * @param rewrite_hostpart the rewrite_host of the rule
- * @param rewrite_local_prefix the rewrite prefix
- * @param rewrite_local_suffix the rewrite suffix
- * @param status the status of the rule
- * @param hash_index the hash index of the rule
- * @param backup indicates if the route is backed up by another. only
-                 useful if status==0, if set, it is the hash value
-                 of another rule
-  * @param backed_up an -1-termintated array of hash indices of the route
-                    for which this route is backup
- * @param comment a comment for the route rule
- *
- * @return 0 on success, -1 on error in which case it LOGs a message.
+ * @param carrier_data the structure to be destroyed.
  */
-int add_route(struct route_data_t * rd, int carrier_id,
-		const str * domain, const str * scan_prefix, flag_t flags, flag_t mask, int max_targets,
-		double prob, const str * rewrite_hostpart, int strip, const str * rewrite_local_prefix,
-		const str * rewrite_local_suffix, int status, int hash_index, int backup, int * backed_up,
-		const str * comment);
+void destroy_carrier_data(struct carrier_data_t *carrier_data);
 
 
 /**
- * Adds the given failure route information to the failure routing domain identified by
- * domain. scan_prefix, host, reply_code and flags identifies the number for which
- * the information is and the next_domain parameter defines where to continue routing
- * in case of a match.
+ * Adds a domain_data struct to the given carrier data structure at the given index.
+ * Other etries are moved one position up to make space for the new one.
  *
- * @param rd the route data to which the route shall be added
- * @param carrier_id the carrier id of the route to be added
- * @param domain the routing domain of the new route
- * @param scan_prefix the number prefix
- * @param host the hostname last tried
- * @param reply_code the reply code 
- * @param flags user defined flags
- * @param mask mask for user defined flags
- * @param next_domain continue routing with this domain
- * @param comment a comment for the failure route rule
- *
- * @return 0 on success, -1 on error in which case it LOGs a message.
- */
-int add_failure_route(struct route_data_t * rd, int carrier_id, const str * domain,
-		const str * scan_prefix, const str * host, const str * reply_code,
-		flag_t flags, flag_t mask, const str * next_domain, const str * comment);
-
-
-/**
- * adds a carrier_data struct for given carrier
- *
- * @param rd route data to be searched
- * @param carrier the name of desired carrier
- * @param carrier_id the id of the carrier
- * @param domains number of domains for that carrier
- *
- * @return a pointer to the root node of the desired routing tree,
- * NULL on failure
- */
-struct carrier_data_t * add_carrier_data(struct route_data_t * rd, const str * carrier, int carrier_id, int domains);
-
-
-/**
- * returns the routing tree for the given domain, if domain's tree
- * doesnt exist, it will be created. If the trees are completely
- * filled and a not existing domain shall be added, an error is
- * returned
- *
- * @param carrier_id the id of the desired carrier
- * @param rd route data to be searched
- *
- * @return a pointer to the root node of the desired routing tree,
- * NULL on failure
- */
-struct carrier_data_t *get_carrier_data(struct route_data_t * rd, int carrier_id);
-
-
-/**
- * Returns the domain data for the given name. If it doesnt exist,
- * it will be created. If the domain list is completely
- * filled and a not existing domain shall be added, an error is
- * returned
- *
- * @param carrier_data carrier data to be searched
- * @param domain the name of desired domain
- *
- * @return a pointer to the desired domain data, NULL on failure.
- */
-struct domain_data_t *get_domain_data_by_name(struct carrier_data_t * carrier_data, const str * domain);
-
-
-/**
- * Returns the domain data for the given id.
- *
- * @param carrier_data carrier data to be searched
- * @param domain the name of desired domain
- *
- * @return a pointer to the desired domain data, NULL if not found.
- */
-struct domain_data_t *get_domain_data_by_id(struct carrier_data_t * carrier_data, int id);
-
-
-/**
- * Fixes the route rules by creating an array for accessing
- * route rules by hash index directly
- *
- * @param rd route data to be fixed
+ * @param carrier_data the carrier data struct where domain_data should be inserted
+ * @param domain_data the domain data struct to be inserted
+ * @param index the index where to insert the domain_data structure in the domain array
  *
  * @return 0 on success, -1 on failure
  */
-int rule_fixup(struct route_data_t * rd);
+int add_domain_data(struct carrier_data_t * carrier_data, struct domain_data_t * domain_data, int index);
+
+
+/**
+ * Returns the domain data for the given id by doing a binary search.
+ * @note The domain array must be sorted!
+ *
+ * @param carrier_data carrier data to be searched
+ * @param domain_id the id of desired domain
+ *
+ * @return a pointer to the desired domain data, NULL if not found.
+ */
+struct domain_data_t *get_domain_data(struct carrier_data_t * carrier_data, int domain_id);
+
+
+/**
+ * Compares the IDs of two carrier data structures.
+ * A NULL pointer is always greater than any ID.
+ *
+ * @return -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+ */
+int compare_carrier_data(const void *v1, const void *v2);
+
 
 #endif

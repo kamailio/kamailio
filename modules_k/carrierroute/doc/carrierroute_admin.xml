@@ -12,7 +12,7 @@
 		startup. It can uses one routing tree (for one carrier), or if needed for every user
 		a different routing tree (unique for each carrier) for number prefix based routing.
 		It supports several route tree domains,	e.g. for failback routes or different routing
-		rules for VoIP and PSTN targets. 
+		rules for VoIP and PSTN targets.
 	</para>
 	<para>
 		Based on the tree, the module decides which number prefixes are forwarded to which
@@ -22,16 +22,18 @@
 	</para>
 	<para>
 		This modules scales up to more than a few million users, and is able to handle
-		more than several hundred thousand routing table entries. It should be able to handle
-		more, but this is not that much tested at the moment. In load balancing scenarios the
-		usage of the config file mode is recommended, to avoid the additional complexity that
-		the database driven routing creates.
+		more than several hundred thousand routing table entries. We recieved reports of
+		some setups that used more than a million routing table entries. It also supports
+		a large number of carriers and domains which can be efficiently looked up in most of
+		the cases (see below for more informations). In load balancing scenarios the usage
+		of the config file mode is recommended, to avoid the additional complexity that the
+		database driven routing creates.
 	</para>
 	<para>
-		Routing tables can be reloaded and edited (in config file mode) with the MI 
-		interface, the config file is updated according the changes. This is not 
-		implemented for the db interface, because its easier to do the changes 
-		directly on the db. But the reload and dump functions works of course here 
+		Routing tables can be reloaded and edited (in config file mode) with the MI
+		interface, the config file is updated according the changes. This is not
+		implemented for the db interface, because its easier to do the changes
+		directly on the db. But the reload and dump functions works of course here
 		too.
 	</para>
 	<para>
@@ -39,6 +41,16 @@
 		it is not possible to specify all information that can be stored in the database
 		tables in the config file. Further information about these limitations is given
 		in later sections. For user based routing or LCR you should use the database mode.
+	</para>
+	<para>
+		In database mode, this module supports names and IDs for the carriers and domains.
+		When using IDs for the routing functions, efficient binary search is used to find the
+		needed data structures. If you are using constant strings as parameter, these will
+		be converted to IDs during the fixup procedure. However, if you are using AVPs as
+		parameter and they contain strings, this cannot be converted to IDs during the
+		fixup procedure. In that case linear search is performed to find the needed data
+		structures. So from a performance point of view it is better to pass only IDs in
+		AVPs to the routing functions.
 	</para>
 	<para>
 		Basically this module could be used as an replacement for the lcr and the 
@@ -943,8 +955,8 @@ domain register {
 | 9  |       2 |      0 | 49          |     0 |  0.5 | de-2.carrier2 |
 | 10 |       2 |      0 |             |     0 |    1 | gw.carrier2   |
 | 11 |       2 |      1 | 49          |     0 |    1 | gw.carrier2   |
-| 12 |       3 |  start | 49          |     0 |    1 | de-gw.default |
-| 13 |       3 |  start |             |     0 |    1 | gw.default    |
+| 12 |       3 |      8 | 49          |     0 |    1 | de-gw.default |
+| 13 |       3 |      8 |             |     0 |    1 | gw.default    |
 +----+---------+--------+-------------+-------+------+---------------+
 ...
 		</programlisting>
@@ -1003,7 +1015,7 @@ domain register {
 |  1 |      99 |           | 408        |    16 |   16 |             |
 |  2 |      99 | gw1       | 404        |     0 |    0 | 100         |
 |  3 |      99 | gw2       | 50.        |     0 |    0 | 100         |
-|  4 |      99 |           | 404        |  2048 | 2112 | asterisk-1  |
+|  4 |      99 |           | 404        |  2048 | 2112 | 101         |
 +----+---------+-----------+------------+-------+------+-------------+
 ...
 </programlisting>
@@ -1023,7 +1035,7 @@ domain register {
 		</para>
 
 	<example>
-		<title>Example database content - route_tree table</title>
+		<title>Example database content - carrier_name table</title>
 		<programlisting format="linespecific">
 ...
 +----+----------+

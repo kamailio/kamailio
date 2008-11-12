@@ -41,7 +41,7 @@
  */
 struct domain_data_t {
 	int id; /*!< the numerical id of the routing tree */
-	str name; /*!< the name of the routing tree */
+	str * name; /*!< the name of the routing tree. This points to the name in domain_map to avoid duplication. */
 	struct dtrie_node_t * tree; /*!< the root node of the routing tree. Payload is of type (struct route_flags *) */
 	struct dtrie_node_t * failure_tree; /*!< the root node of the failure routing tree. Payload is of type (struct failure_route_rule *) */
 };
@@ -50,13 +50,13 @@ struct domain_data_t {
 /**
  * Create a new domain in shared memory and set it up.
  *
- * @param domain_name the name of the domain
  * @param domain_id the id of the domain
+ * @param domain_name the name of the domain
  *
  * @return a pointer to the newly allocated domain data or NULL on
  * error, in which case it LOGs an error message.
  */
-struct domain_data_t * create_domain_data(const str * domain, int id);
+struct domain_data_t * create_domain_data(int id, str * domain);
 
 
 /**
@@ -128,5 +128,15 @@ int add_route_to_tree(struct dtrie_node_t *node, const str * scan_prefix,
 int add_failure_route_to_tree(struct dtrie_node_t * failure_node, const str * scan_prefix,
 		const str * full_prefix, const str * host, const str * reply_code,
 		const flag_t flags, const flag_t mask, const int next_domain, const str * comment);
+
+
+/**
+ * Compares the IDs of two domain data structures.
+ * A NULL pointer is always greater than any ID.
+ *
+ * @return -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
+ */
+int compare_domain_data(const void *v1, const void *v2);
+
 
 #endif

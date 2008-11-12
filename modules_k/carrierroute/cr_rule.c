@@ -386,7 +386,7 @@ struct failure_route_rule *add_failure_route_rule(struct failure_route_rule **fr
 	return shm_frr;
 	
 mem_error:
-	LM_ERR("out of shared memory\n");
+	SHM_MEM_ERROR;
 	destroy_failure_route_rule(shm_frr);
 	return NULL;
 }
