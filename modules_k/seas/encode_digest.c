@@ -152,59 +152,59 @@ int encode_digest(char *hdrstart,int hdrlen,dig_cred_t *digest,unsigned char *wh
 }
 
 
-int print_encoded_digest(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_digest(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i=2;/* flags + flags1 */
    unsigned char flags1,flags2;
 
    flags1=payload[0];
    flags2=payload[1];
-   dprintf(fd,"%s",prefix);
+   fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
-      dprintf(fd,"%s%d%s",i==0?"ENCODED DIGEST=[":":",payload[i],i==paylen-1?"]\n":"");
+      fprintf(fd,"%s%d%s",i==0?"ENCODED DIGEST=[":":",payload[i],i==paylen-1?"]\n":"");
    i=2;
    if(flags1 & HAS_NAME_F){
-      dprintf(fd,"%sDIGEST NAME=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST NAME=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags1& HAS_REALM_F){
-      dprintf(fd,"%sDIGEST REALM=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST REALM=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags1& HAS_NONCE_F){
-      dprintf(fd,"%sDIGEST NONCE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST NONCE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags1& HAS_URI_F){
       if(print_encoded_uri(fd,&payload[i+1],payload[i],hdr,hdrlen,strcat(prefix,"  "))<0){
 	 prefix[strlen(prefix)-2]=0;
-	 dprintf(fd,"Error parsing encoded URI\n");
+	 fprintf(fd,"Error parsing encoded URI\n");
 	 return -1;
       }
       i+=payload[i]+1;
    }
    if(flags1& HAS_RESPONSE_F){
-      dprintf(fd,"%sDIGEST RESPONSE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST RESPONSE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags1& HAS_ALG_F){
-      dprintf(fd,"%sDIGEST ALGORITHM=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST ALGORITHM=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags1& HAS_CNONCE_F){
-      dprintf(fd,"%sDIGEST CNONCE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST CNONCE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags1& HAS_OPAQUE_F){
-      dprintf(fd,"%sDIGEST OPAQUE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST OPAQUE=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags2& HAS_QoP_F){
-      dprintf(fd,"%sDIGEST QualityOfProtection=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST QualityOfProtection=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags2& HAS_NC_F){
-      dprintf(fd,"%sDIGEST NonceCount=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDIGEST NonceCount=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    return 0;
@@ -214,7 +214,7 @@ int print_encoded_digest(int fd,char *hdr,int hdrlen,unsigned char* payload,int 
 /**
  *
  */
-int dump_digest_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,int fd,char segregationLevel)
+int dump_digest_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,FILE* fd,char segregationLevel)
 {
    int i=2;/* 2*flags */
    unsigned char flags1=0,flags2=0;

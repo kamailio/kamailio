@@ -210,12 +210,12 @@ param_t *reverseParameters(param_t *p)
 
 /*prints the encoded parameters
  */
-int print_encoded_parameters(int fd,unsigned char *payload,char *hdr,int paylen,char *prefix)
+int print_encoded_parameters(FILE *fd,unsigned char *payload,char *hdr,int paylen,char *prefix)
 {
    int i;
    for(i=0;i<paylen-1;i+=2){
-      dprintf(fd,"%s[PARAMETER[%.*s]",prefix,payload[i+1]-payload[i]-1,&hdr[payload[i]]);
-      dprintf(fd,"VALUE[%.*s]]\n",(payload[i+2]-payload[i+1])==0?0:(payload[i+2]-payload[i+1]-1),&hdr[payload[i+1]]);
+      fprintf(fd,"%s[PARAMETER[%.*s]",prefix,payload[i+1]-payload[i]-1,&hdr[payload[i]]);
+      fprintf(fd,"VALUE[%.*s]]\n",(payload[i+2]-payload[i+1])==0?0:(payload[i+2]-payload[i+1]-1),&hdr[payload[i+1]]);
    }
    return 0;
 }

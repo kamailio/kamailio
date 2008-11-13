@@ -81,14 +81,14 @@ int encode_cseq(char *hdrstart,int hdrlen,struct cseq_body *body,unsigned char *
    return 9;
 }
 
-int print_encoded_cseq(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_cseq(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    unsigned int cseqnum;
    char *what;
 
    memcpy(&cseqnum,&payload[1],4);
    cseqnum=ntohl(cseqnum);
-   dprintf(fd,"%sCSEQ NUMBER=%d==%.*s\n",prefix,cseqnum,payload[6],&hdr[payload[5]]);
+   fprintf(fd,"%sCSEQ NUMBER=%d==%.*s\n",prefix,cseqnum,payload[6],&hdr[payload[5]]);
    switch(payload[0]){
       case 0:
 	 what="UNDEFINED";
@@ -139,7 +139,7 @@ int print_encoded_cseq(int fd,char *hdr,int hdrlen,unsigned char* payload,int pa
 	 what="UNKNOWN?";
 	 break;
    }
-   dprintf(fd,"%sCSEQ METHOD=%s==%.*s\n",prefix,what,payload[8],&hdr[payload[7]]);
+   fprintf(fd,"%sCSEQ METHOD=%s==%.*s\n",prefix,what,payload[8],&hdr[payload[7]]);
    return 1;
 
 }

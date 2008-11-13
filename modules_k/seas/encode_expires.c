@@ -59,12 +59,12 @@ int encode_expires(char *hdrstart,int hdrlen,exp_body_t *body,unsigned char *whe
    return 6;
 }
 
-int print_encoded_expires(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_expires(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i;
    memcpy(&i,payload,4);
    i=ntohl(i);
-   dprintf(fd,"%sEXPIRES VALUE=%d==%.*s\n",prefix,i,payload[5],&hdr[payload[4]]);
+   fprintf(fd,"%sEXPIRES VALUE=%d==%.*s\n",prefix,i,payload[5],&hdr[payload[4]]);
    return 1;
 }
 

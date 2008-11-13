@@ -327,7 +327,7 @@ error:
    return -1;
 }
 
-int print_encoded_header(int fd,char *msg,int msglen,unsigned char *payload,int len,char type,char *prefix)
+int print_encoded_header(FILE *fd,char *msg,int msglen,unsigned char *payload,int len,char type,char *prefix)
 {
    char *hdr_start_ptr;
    short int start_idx,i;
@@ -339,11 +339,11 @@ int print_encoded_header(int fd,char *msg,int msglen,unsigned char *payload,int 
    memcpy(&i,payload+HEADER_LEN_IDX,2);
    i=ntohs(i);
 
-   dprintf(fd,"%sHEADER NAME:[%.*s]\n",prefix,payload[HEADER_NAME_LEN_IDX],hdr_start_ptr);
-   dprintf(fd,"%sHEADER:[%.*s]\n",prefix,i-2,hdr_start_ptr);
-   dprintf(fd,"%sHEADER CODE=",prefix);
+   fprintf(fd,"%sHEADER NAME:[%.*s]\n",prefix,payload[HEADER_NAME_LEN_IDX],hdr_start_ptr);
+   fprintf(fd,"%sHEADER:[%.*s]\n",prefix,i-2,hdr_start_ptr);
+   fprintf(fd,"%sHEADER CODE=",prefix);
    for(i=0;i<len;i++)
-      dprintf(fd,"%s%d%s",i==0?"[":":",payload[i],i==len-1?"]\n":"");
+      fprintf(fd,"%s%d%s",i==0?"[":":",payload[i],i==len-1?"]\n":"");
    if(len==4)
       return 1;
    switch(type){
@@ -437,7 +437,7 @@ int print_encoded_header(int fd,char *msg,int msglen,unsigned char *payload,int 
    return 1;
 }
 
-int dump_headers_test(char *msg,int msglen,unsigned char *payload,int len,char type,int fd,char segregationLevel)
+int dump_headers_test(char *msg,int msglen,unsigned char *payload,int len,char type,FILE* fd,char segregationLevel)
 {
    char *hdr_start_ptr;
    short int start_idx;
@@ -504,15 +504,15 @@ int dump_headers_test(char *msg,int msglen,unsigned char *payload,int len,char t
    return 1;
 }
 
-int dump_standard_hdr_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,int fd)
+int dump_standard_hdr_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,FILE* fd)
 {
    int i;
    i=htonl(hdrlen);
-   write(fd,&i,4);
-   write(fd,hdr,hdrlen);
+   fwrite(&i,1,4,fd);
+   fwrite(hdr,1,hdrlen,fd);
    i=htonl(paylen);
-   write(fd,&i,4);
-   write(fd,payload,paylen);
-   write(fd,&theSignal,4);
+   fwrite(&i,1,4,fd);
+   fwrite(payload,1,paylen,fd);
+   fwrite(&theSignal,1,4,fd);
    return 0;
 }

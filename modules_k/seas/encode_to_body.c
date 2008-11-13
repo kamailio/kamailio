@@ -103,26 +103,26 @@ int encode_to_body(char *hdrstart,int hdrlen,struct to_body *body,unsigned char 
    return i;
 }
 
-int print_encoded_to_body(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_to_body(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i=2;/* flags + urilength */
    unsigned char flags=0;
 
    flags=payload[0];
-   dprintf(fd,"%s",prefix);
+   fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
-      dprintf(fd,"%s%d%s",i==0?"BODY CODE=[":":",payload[i],i==paylen-1?"]\n":"");
+      fprintf(fd,"%s%d%s",i==0?"BODY CODE=[":":",payload[i],i==paylen-1?"]\n":"");
    i=2;
    if(flags & HAS_DISPLAY_F){
-      dprintf(fd,"%sDISPLAY NAME=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sDISPLAY NAME=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags & HAS_TAG_F){
-      dprintf(fd,"%sTAG=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sTAG=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(print_encoded_uri(fd,&payload[i],payload[1],hdr,hdrlen,strcat(prefix,"  "))<0){
-      dprintf(fd,"Error parsing URI\n");
+      fprintf(fd,"Error parsing URI\n");
       prefix[strlen(prefix)-2]=0;
       return -1;
    }
@@ -144,7 +144,7 @@ int print_encoded_to_body(int fd,char *hdr,int hdrlen,unsigned char* payload,int
  *
  * return 0 on success, <0 on error
  */
-int dump_to_body_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,int fd,char segregationLevel)
+int dump_to_body_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,FILE* fd,char segregationLevel)
 {
    int i=2;/* flags + urilength */
    unsigned char flags=0;

@@ -58,16 +58,16 @@ int encode_content_disposition(char *hdrstart,int hdrlen,struct disposition *bod
    return i;
 }
 
-int print_encoded_content_disposition(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_content_disposition(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i=3;/* flags + urilength */
    unsigned char flags=0;
 
    flags=payload[0];
-   printf("%s",prefix);
+   fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
-      printf("%s%d%s",i==0?"ENCODED CONTENT-DISPOSITION=[":":",payload[i],i==paylen-1?"]\n":"");
-   printf("%sCONTENT DISPOSITION:[%.*s]\n",prefix,payload[2],&hdr[payload[1]]);
+      fprintf(fd,"%s%d%s",i==0?"ENCODED CONTENT-DISPOSITION=[":":",payload[i],i==paylen-1?"]\n":"");
+   fprintf(fd,"%sCONTENT DISPOSITION:[%.*s]\n",prefix,payload[2],&hdr[payload[1]]);
    print_encoded_parameters(fd,&payload[3],hdr,paylen-3,prefix);
    return 0;
 }

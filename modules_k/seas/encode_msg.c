@@ -299,7 +299,7 @@ error:
    return -1;
 }
 
-int print_encoded_msg(int fd,char *code,char *prefix)
+int print_encoded_msg(FILE* fd,char *code,char *prefix)
 {
    unsigned short int i,j,k,l,m,msglen;
    char r,*msg;
@@ -313,12 +313,12 @@ int print_encoded_msg(int fd,char *code,char *prefix)
    j=ntohs(j);
    msglen=ntohs(msglen);
    for(k=0;k<j;k++)
-      dprintf(fd,"%s%d%s",k==0?"ENCODED-MSG:[":":",payload[k],k==j-1?"]\n":"");
+      fprintf(fd,"%s%d%s",k==0?"ENCODED-MSG:[":":",payload[k],k==j-1?"]\n":"");
    msg=(char*)&payload[j];
-   dprintf(fd,"MESSAGE:\n[%.*s]\n",msglen,msg);
+   fprintf(fd,"MESSAGE:\n[%.*s]\n",msglen,msg);
    r=(i<100)?1:0;
    if(r){
-      dprintf(fd,"%sREQUEST CODE=%d==%.*s,URI=%.*s,VERSION=%*.s\n",prefix,i,
+      fprintf(fd,"%sREQUEST CODE=%d==%.*s,URI=%.*s,VERSION=%*.s\n",prefix,i,
 	    payload[METHOD_CODE_IDX+1],&msg[payload[METHOD_CODE_IDX]],
 	    payload[URI_REASON_IDX+1],&msg[payload[URI_REASON_IDX]],
 	    payload[VERSION_IDX+1],&msg[payload[VERSION_IDX]]);
@@ -326,7 +326,7 @@ int print_encoded_msg(int fd,char *code,char *prefix)
       prefix[strlen(prefix)-2]=0;
       i=REQUEST_URI_IDX+1+payload[REQUEST_URI_IDX];
    }else{
-      dprintf(fd,"%sRESPONSE CODE=%d==%.*s,REASON=%.*s,VERSION=%.*s\n",prefix,i,
+      fprintf(fd,"%sRESPONSE CODE=%d==%.*s,REASON=%.*s,VERSION=%.*s\n",prefix,i,
 	    payload[METHOD_CODE_IDX+1],&msg[payload[METHOD_CODE_IDX]],
 	    payload[URI_REASON_IDX+1],&msg[payload[URI_REASON_IDX]],
 	    payload[VERSION_IDX+1],&msg[payload[VERSION_IDX]]);
@@ -334,13 +334,13 @@ int print_encoded_msg(int fd,char *code,char *prefix)
    }
    k=((payload[CONTENT_IDX]<<8)|payload[CONTENT_IDX+1]);
    j=msglen-k;
-   dprintf(fd,"%sMESSAGE CONTENT:%.*s\n",prefix,j,&msg[k]);
+   fprintf(fd,"%sMESSAGE CONTENT:%.*s\n",prefix,j,&msg[k]);
    j=payload[i];
-   dprintf(fd,"%sHEADERS PRESENT(%d):",prefix,j);
+   fprintf(fd,"%sHEADERS PRESENT(%d):",prefix,j);
    i++;
    for(k=i;k<i+(j*3);k+=3)
-      dprintf(fd,"%c%d%c",k==i?'[':',',payload[k],k==(i+3*j-3)?']':' ');
-   dprintf(fd,"\n");
+      fprintf(fd,"%c%d%c",k==i?'[':',',payload[k],k==(i+3*j-3)?']':' ');
+   fprintf(fd,"\n");
    for(k=i;k<i+(j*3);k+=3){
       memcpy(&l,&payload[k+1],2);
       memcpy(&m,&payload[k+4],2);
@@ -358,7 +358,7 @@ int print_encoded_msg(int fd,char *code,char *prefix)
  * must be dumped
  */
 
-int dump_msg_test(char *code,int fd,char header,char segregationLevel)
+int dump_msg_test(char *code,FILE* fd,char header,char segregationLevel)
 {
    unsigned short int i,j,l,m,msglen;
    int k;
@@ -372,8 +372,8 @@ int dump_msg_test(char *code,int fd,char header,char segregationLevel)
    j=ntohs(j);
    msglen=ntohs(msglen);
    if(header==0){
-      write(fd,code,j+msglen);
-      write(fd,&theSignal,4);
+      fwrite(code,1,j+msglen,fd);
+      fwrite(&theSignal,1,4,fd);
       return 0;
    }
    msg=(char*)&payload[j];
@@ -383,12 +383,12 @@ int dump_msg_test(char *code,int fd,char header,char segregationLevel)
 	 if(!(segregationLevel & JUNIT)){ 
 	    
 	    k=htonl(payload[REQUEST_URI_IDX+1]+payload[REQUEST_URI_IDX+2]);
-	    write(fd,&k,4);
-	    write(fd,msg,ntohl(k));
+	    fwrite(&k,1,4,fd);
+	    fwrite(msg,1,ntohl(k),fd);
 	    k=htonl((long)payload[REQUEST_URI_IDX]);
-	    write(fd,&k,4);
-	    write(fd,&payload[REQUEST_URI_IDX+1],payload[REQUEST_URI_IDX]);
-	    write(fd,&theSignal,4);
+	    fwrite(&k,1,4,fd);
+	    fwrite(&payload[REQUEST_URI_IDX+1],1,payload[REQUEST_URI_IDX],fd);
+	    fwrite(&theSignal,1,4,fd);
 	 }else
 	    print_uri_junit_tests(msg,payload[REQUEST_URI_IDX+1]+payload[REQUEST_URI_IDX+2]
 		  ,&payload[REQUEST_URI_IDX+1],payload[REQUEST_URI_IDX],fd,1,"");
@@ -424,7 +424,7 @@ int dump_msg_test(char *code,int fd,char header,char segregationLevel)
  * must be dumped
  */
 
-int print_msg_junit_test(char *code,int fd,char header,char segregationLevel)
+int print_msg_junit_test(char *code,FILE* fd,char header,char segregationLevel)
 {
    unsigned short int i,j,l,m,msglen;
    int k;
@@ -438,8 +438,8 @@ int print_msg_junit_test(char *code,int fd,char header,char segregationLevel)
    j=ntohs(j);
    msglen=ntohs(msglen);
    if(header==0){
-      write(fd,code,j+msglen);
-      write(fd,&theSignal,4);
+      fwrite(code,1,j+msglen,fd);
+      fwrite(&theSignal,1,4,fd);
       return 0;
    }
    msg=(char*)&payload[j];
@@ -447,12 +447,12 @@ int print_msg_junit_test(char *code,int fd,char header,char segregationLevel)
    if(r){
       if(segregationLevel & ALSO_RURI){
 	 k=htonl(50);
-	 write(fd,&k,4);
-	 write(fd,msg,50);
+	 fwrite(&k,1,4,fd);
+	 fwrite(msg,1,50,fd);
 	 k=htonl((long)payload[REQUEST_URI_IDX]);
-	 write(fd,&k,4);
-	 write(fd,&payload[REQUEST_URI_IDX+1],payload[REQUEST_URI_IDX]);
-	 write(fd,&theSignal,4);
+	 fwrite(&k,1,4,fd);
+	 fwrite(&payload[REQUEST_URI_IDX+1],1,payload[REQUEST_URI_IDX],fd);
+	 fwrite(&theSignal,1,4,fd);
       }
       i=REQUEST_URI_IDX+1+payload[REQUEST_URI_IDX];
    }else{

@@ -49,7 +49,7 @@ int encode_content_type(char *hdrstart,int hdrlen,unsigned int bodi,char *where)
    return encode_mime_type(hdrstart,hdrlen,bodi,where);
 }
 
-int print_encoded_content_type(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_content_type(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    unsigned int type;
    memcpy(&type,payload,sizeof(unsigned int));
@@ -68,7 +68,7 @@ int encode_accept(char *hdrstart,int hdrlen,unsigned int *bodi,char *where)
    return 1+i*sizeof(unsigned int);
 }
 
-int print_encoded_accept(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_accept(FILE* fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i;
    unsigned int type;
@@ -90,7 +90,7 @@ int encode_mime_type(char *hdrstart,int hdrlen,unsigned int bodi,char *where)
    return sizeof(int);
 }
 
-int print_encoded_mime_type(int fd,char *hdr,int hdrlen,unsigned int* payload,int paylen,char *prefix)
+int print_encoded_mime_type(FILE *fd,char *hdr,int hdrlen,unsigned int* payload,int paylen,char *prefix)
 {
    unsigned int type;
    char *chtype,*chsubtype;
@@ -168,7 +168,7 @@ int print_encoded_mime_type(int fd,char *hdr,int hdrlen,unsigned int* payload,in
 	 chsubtype="(didnt know this subtype existed)";
    }
 
-   dprintf(fd,"%sTYPE:[%s]\n",prefix,chtype);
-   dprintf(fd,"%sSUBTYPE:[%s]\n",prefix,chsubtype);
+   fprintf(fd,"%sTYPE:[%s]\n",prefix,chtype);
+   fprintf(fd,"%sSUBTYPE:[%s]\n",prefix,chsubtype);
    return 0;
 }

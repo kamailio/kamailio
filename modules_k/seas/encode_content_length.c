@@ -61,7 +61,7 @@ int encode_contentlength(char *hdr,int hdrlen,long int len,char *where)
 
 }
 
-int print_encoded_contentlength(int fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix)
+int print_encoded_contentlength(FILE *fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix)
 {
    long int content_length;
    int i;
@@ -69,10 +69,10 @@ int print_encoded_contentlength(int fd,char *hdr,int hdrlen,unsigned char *paylo
    memcpy(&content_length,&payload[1],payload[0]);
    content_length=ntohl(content_length);
 
-   dprintf(fd,"%s",prefix);
+   fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
-      dprintf(fd,"%s%d%s",i==0?"ENCODED CONTENT LENGTH BODY:[":":",payload[i],i==paylen-1?"]\n":"");
-   dprintf(fd,"%s  CONTENT LENGTH=[%d]\n",prefix,(int)content_length);
+      fprintf(fd,"%s%d%s",i==0?"ENCODED CONTENT LENGTH BODY:[":":",payload[i],i==paylen-1?"]\n":"");
+   fprintf(fd,"%s  CONTENT LENGTH=[%d]\n",prefix,(int)content_length);
    return 1;
 }
 

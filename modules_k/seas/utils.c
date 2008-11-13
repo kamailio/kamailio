@@ -60,7 +60,7 @@
 
 static inline int memstr(char *haystack,int hlen,char *needle,int nlen);
 
-int buffered_printer(int infd)
+int buffered_printer(FILE* infd)
 {
    int i,k=0,retval;
    char *missatge=0,*myerror="";
@@ -68,7 +68,7 @@ int buffered_printer(int infd)
    static char mybuffer[1400];
    static int end=0,last=0;
 
-   while((i=read(infd,&mybuffer[last],1400-last))==1400-last){
+   while((i=fread(&mybuffer[last],1,1400-last,infd))==1400-last){
       if((end=memstr(mybuffer,last+i,"\n\n\n",3))<0){
 	 last+=i;
 	 return 0;
@@ -86,7 +86,7 @@ int buffered_printer(int infd)
 	 msg.buf=missatge;
 	 msg.len=end;
 	 if(!parse_msg(msg.buf,msg.len,&msg))
-	    print_msg_info(1,&msg);
+	    print_msg_info(stdout,&msg);
 	 printf("PARSED:%d,last=%d,end=%d\n",k++,last,end);
 	 free_sip_msg(&msg);
 	 pkg_free(missatge);
@@ -105,7 +105,7 @@ exit:
    return retval;
 }
 
-int coded_buffered_printer(int infd)
+int coded_buffered_printer(FILE* infd)
 {
    int i,lastlast;
    char spaces[50];
@@ -116,7 +116,7 @@ int coded_buffered_printer(int infd)
 
    do{
       lastlast=1500-last;
-      i=read(infd,&mybuffer[last],lastlast);
+      i=fread(&mybuffer[last],1,lastlast,infd);
       printf("read i=%d\n",i);
       if(i==0)
 	 break;
@@ -127,7 +127,7 @@ int coded_buffered_printer(int infd)
       }
       if(last>=size){
 	 printf("should print message: last=%d, size=%d\n",last,size);
-	 if(print_encoded_msg(1,mybuffer,spaces)<0){
+	 if(print_encoded_msg(stdout,mybuffer,spaces)<0){
 	    printf("Unable to print encoded msg\n");
 	    return -1;
 	 }
@@ -146,7 +146,7 @@ int coded_buffered_printer(int infd)
       return 1;
 }
 
-int print_msg_info(int fd,struct sip_msg* msg)
+int print_msg_info(FILE* fd,struct sip_msg* msg)
 {
    char *payload=0;
    char *prefix=0;

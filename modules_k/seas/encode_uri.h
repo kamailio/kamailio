@@ -41,5 +41,5 @@
 #define MAX_XURI_LEN	23
 
 int encode_uri2(char *hdr,int hdrlen,str uri_str, struct sip_uri *uri_parsed,unsigned char *where);
-int print_encoded_uri(int fd,unsigned char *payload,int paylen,char *hdr,int hdrlen,char *prefix);
-int print_uri_junit_tests(char *hdrstart,int hdrlen,unsigned char *payload,int paylen,int fd,char also_hdr,char *prefix);
+int print_encoded_uri(FILE* fd,unsigned char *payload,int paylen,char *hdr,int hdrlen,char *prefix);
+int print_uri_junit_tests(char *hdrstart,int hdrlen,unsigned char *payload,int paylen,FILE* fd,char also_hdr,char *prefix);

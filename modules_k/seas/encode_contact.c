@@ -159,18 +159,18 @@ int encode_contact(char *hdrstart,int hdrlen,contact_t *body,unsigned char *wher
    return i;
 }
 
-int print_encoded_contact_body(int fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix)
+int print_encoded_contact_body(FILE *fd,char *hdr,int hdrlen,unsigned char *payload,int paylen,char *prefix)
 {
    unsigned char flags, numcontacts;
    int i,offset;
 
    flags=payload[0];
-   dprintf(fd,"%s",prefix);
+   fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
-      dprintf(fd,"%s%d%s",i==0?"ENCODED CONTACT BODY:[":":",payload[i],i==paylen-1?"]\n":"");
+      fprintf(fd,"%s%d%s",i==0?"ENCODED CONTACT BODY:[":":",payload[i],i==paylen-1?"]\n":"");
 
    if(flags & STAR_F){
-      dprintf(fd,"%sSTART CONTACT\n",prefix);
+      fprintf(fd,"%sSTART CONTACT\n",prefix);
       return 1;
    }
    numcontacts=payload[1];
@@ -185,39 +185,39 @@ int print_encoded_contact_body(int fd,char *hdr,int hdrlen,unsigned char *payloa
    }
    return 1;
 }
-int print_encoded_contact(int fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
+int print_encoded_contact(FILE *fd,char *hdr,int hdrlen,unsigned char* payload,int paylen,char *prefix)
 {
    int i=2;/* flags + urilength */
    unsigned char flags=0;
 
    flags=payload[0];
-   dprintf(fd,"%s",prefix);
+   fprintf(fd,"%s",prefix);
    for(i=0;i<paylen;i++)
-      dprintf(fd,"%s%d%s",i==0?"ENCODED CONTACT=[":":",payload[i],i==paylen-1?"]\n":"");
+      fprintf(fd,"%s%d%s",i==0?"ENCODED CONTACT=[":":",payload[i],i==paylen-1?"]\n":"");
    i=2;
    if(flags & HAS_NAME_F){
-      dprintf(fd,"%sCONTACT NAME=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sCONTACT NAME=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags & HAS_Q_F){
-      dprintf(fd,"%sCONTACT Q=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sCONTACT Q=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags & HAS_EXPIRES_F){
-      dprintf(fd,"%sCONTACT EXPIRES=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sCONTACT EXPIRES=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags & HAS_RECEIVED_F){
-      dprintf(fd,"%sCONTACT RECEIVED=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sCONTACT RECEIVED=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(flags & HAS_METHOD_F){
-      dprintf(fd,"%sCONTACT METHOD=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
+      fprintf(fd,"%sCONTACT METHOD=[%.*s]\n",prefix,payload[i+1],&hdr[payload[i]]);
       i+=2;
    }
    if(print_encoded_uri(fd,&payload[i],payload[1],hdr,hdrlen,strcat(prefix,"  "))<0){
       prefix[strlen(prefix)-2]=0;
-      dprintf(fd,"Error parsing URI\n");
+      fprintf(fd,"Error parsing URI\n");
       return -1;
    }
    prefix[strlen(prefix)-2]=0;
@@ -230,7 +230,7 @@ int print_encoded_contact(int fd,char *hdr,int hdrlen,unsigned char* payload,int
 /**
  *
  */
-int dump_contact_body_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,int fd,char segregationLevel,char *prefix)
+int dump_contact_body_test(char *hdr,int hdrlen,unsigned char *payload,int paylen,FILE *fd,char segregationLevel,char *prefix)
 {
    unsigned char flags, numcontacts;
    int i,offset;
@@ -257,7 +257,7 @@ int dump_contact_body_test(char *hdr,int hdrlen,unsigned char *payload,int payle
    return 1;
 }
 
-int dump_contact_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,int fd,char segregationLevel,char *prefix)
+int dump_contact_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,FILE *fd,char segregationLevel,char *prefix)
 {
    int i=2;/* flags + urilength */
    unsigned char flags=0;
@@ -282,36 +282,36 @@ int dump_contact_test(char *hdr,int hdrlen,unsigned char* payload,int paylen,int
       return print_uri_junit_tests(hdr,hdrlen,&payload[i],payload[1],fd,1,"");
    if((segregationLevel & JUNIT) && !(segregationLevel & ONLY_URIS)){
       i=2;
-      dprintf(fd,"%sgetAddress.getDisplayName=(S)",prefix);
+      fprintf(fd,"%sgetAddress.getDisplayName=(S)",prefix);
       if(flags & HAS_NAME_F){
-	 dprintf(fd,"%.*s\n",payload[i+1],&hdr[payload[i]]);
+	 fprintf(fd,"%.*s\n",payload[i+1],&hdr[payload[i]]);
 	 i+=2;
       }else
-	 dprintf(fd,"(null)\n");
-      dprintf(fd,"%sgetQValue=(F)",prefix);
+	 fprintf(fd,"(null)\n");
+      fprintf(fd,"%sgetQValue=(F)",prefix);
       if(flags & HAS_Q_F){
-	 dprintf(fd,"%.*s\n",payload[i+1],&hdr[payload[i]]);
+	 fprintf(fd,"%.*s\n",payload[i+1],&hdr[payload[i]]);
 	 i+=2;
       }else
-	 dprintf(fd,"(null)\n");
-      dprintf(fd,"%sgetExpires=(I)",prefix);
+	 fprintf(fd,"(null)\n");
+      fprintf(fd,"%sgetExpires=(I)",prefix);
       if(flags & HAS_EXPIRES_F){
-	 dprintf(fd,"%.*s\n",payload[i+1],&hdr[payload[i]]);
+	 fprintf(fd,"%.*s\n",payload[i+1],&hdr[payload[i]]);
 	 i+=2;
       }else
-	 dprintf(fd,"(null)\n");
+	 fprintf(fd,"(null)\n");
       if(flags & HAS_RECEIVED_F){
 	 i+=2;
       }
       if(flags & HAS_METHOD_F){
 	 i+=2;
       }
-      dprintf(fd,"%sgetParameter=(SAVP)",prefix);
+      fprintf(fd,"%sgetParameter=(SAVP)",prefix);
       for(i+=payload[1];i<paylen-1;i+=2){
 	 printf("%.*s=",payload[i+1]-payload[i]-1,&hdr[payload[i]]);
 	 printf("%.*s;",(payload[i+2]-payload[i+1])==0?0:(payload[i+2]-payload[i+1]-1),&hdr[payload[i+1]]);
       }
-      dprintf(fd,"\n");
+      fprintf(fd,"\n");
    }
    return 0;
 }
