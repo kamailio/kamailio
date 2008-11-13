@@ -262,8 +262,10 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 	int hash;
 	int hashidx;
 
-	if(!_dbt_cachetbl || !_dc || !_s || !_s->s || _s->len<=0)
+	if(!_dbt_cachetbl || !_dc || !_s || !_s->s || _s->len<=0) {
+		LM_ERR("invalid parameter");
 		return NULL;
+	}
 
 	hash = core_hash(&_dc->name, _s, DBT_CACHETBL_SIZE);
 	hashidx = hash % DBT_CACHETBL_SIZE;
@@ -301,6 +303,7 @@ dbt_table_p dbt_db_get_table(dbt_cache_p _dc, const str *_s)
 
 	if(!_tbc)
 	{
+		LM_ERR("could not load database from file [%.*s]", _s->len, _s->s);
 		lock_release(&_dbt_cachetbl[hashidx].sem);
 		return NULL;
 	}

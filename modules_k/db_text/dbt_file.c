@@ -475,7 +475,7 @@ done:
 		fclose(fin);
 	return dtp;
 clean:
-	/// ????? FILL IT IN - incomplete row/column
+	// ????? FILL IT IN - incomplete row/column
 	// memory leak?!?! with last incomplete row
 	LM_DBG("error at row=%d col=%d c=%c\n", crow+1, ccol+1, c);
 	if(dtp)
