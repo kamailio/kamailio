@@ -22,7 +22,7 @@
  */
 
 /*! \file
- *  \brief DB_MYSQL :: Conversions
+ *  \brief DB_MYSQL :: Data conversions
  *  \ref val.c
  *  \ingroup db_mysql
  *  Module: \ref db_mysql
@@ -37,15 +37,29 @@
 #include "../../db/db.h"
 
 
-/**
- * Does not copy strings
+/*!
+ * \brief Convert a str to a db value, does not copy strings
+ *
+ * Convert a str to a db value, does not copy strings.
+ * \param _t destination value type
+ * \param _v destination value
+ * \param _s source string
+ * \param _l string length
+ * \return 0 on success, negative on error
  */
 int db_mysql_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const int _l);
 
 
-/**
- * Used when converting result from a query
+/*!
+ * \brief Converting a value to a string
+ *
+ * Converting a value to a string, used when converting result from a query
+ * \param _c database connection
+ * \param _v source value
+ * \param _s target string
+ * \param _len target string length
+ * \return 0 on success, negative on error
  */
 int db_mysql_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int* _len);
 
-#endif /* VAL_H */
+#endif
