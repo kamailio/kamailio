@@ -29,7 +29,6 @@ pua:6
 re_grp:1
 rls_presentity:0
 rls_watchers:1
-id(int,auto) carrier(string,null) 
 silo:5
 sip_trace:2
 speed_dial:2
