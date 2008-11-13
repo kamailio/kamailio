@@ -235,15 +235,21 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 
 	for(row = RES_LAST_ROW(_r); row < (RES_LAST_ROW(_r) + RES_ROW_N(_r)); row++) {
 		for(col = 0; col < RES_COL_N(_r); col++) {
-				/*
-				 * The row data pointer returned by PQgetvalue points to storage
-				 * that is part of the PGresult structure. One should not modify
-				 * the data it points to, and one must explicitly copy the data
-				 * into other storage if it is to be used past the lifetime of
-				 * the PGresult structure itself.
-				 */
-				s = PQgetvalue(CON_RESULT(_h), row, col);
-				LM_DBG("PQgetvalue(%p,%d,%d)=[%s]\n", _h, row, col, s);
+			/*
+			 * The row data pointer returned by PQgetvalue points to storage
+			 * that is part of the PGresult structure. One should not modify
+			 * the data it points to, and one must explicitly copy the data
+			 * into other storage if it is to be used past the lifetime of
+			 * the PGresult structure itself.
+			 */
+			s = PQgetvalue(CON_RESULT(_h), row, col);
+			LM_DBG("PQgetvalue(%p,%d,%d)=[%s]\n", _h, row, col, s);
+			/*
+			 * A empty string can be a NULL value, or just an empty string.
+			 * This differs from the mysql behaviour, that further processing
+			 * steps expect. So we need to simulate this here unfortunally.
+			 */
+			if (PQgetisnull(CON_RESULT(_h), row, col) == 0) {
 				len = strlen(s);
 				row_buf[col] = pkg_malloc(len+1);
 				if (!row_buf[col]) {
@@ -252,10 +258,12 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 				}
 				memset(row_buf[col], 0, len+1);
 				LM_DBG("allocated %d bytes for row_buf[%d] at %p\n", len, col, row_buf[col]);
-
 				strncpy(row_buf[col], s, len);
 				LM_DBG("[%d][%d] Column[%.*s]=[%s]\n",
 					row, col, RES_NAMES(_r)[col]->len, RES_NAMES(_r)[col]->s, row_buf[col]);
+			} else {
+				s = NULL;
+			}
 		}
 
 		/* ASSERT: row_buf contains an entire row in strings */
@@ -296,7 +304,8 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 					break;
 				default:
 					LM_DBG("freeing row_buf[%d] at %p\n", col, row_buf[col]);
-					pkg_free(row_buf[col]);
+					/* because it can contain NULL */
+					if(row_buf[col]) pkg_free(row_buf[col]); 
 			}
 			/*
 			 * The following housekeeping may not be technically required, but it
@@ -329,7 +338,7 @@ int db_postgres_convert_rows(const db_con_t* _h, db_res_t* _r)
 int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 		char **row_buf)
 {
-	int col, len;
+	int col, len, col_len;
 
 	if (!_h || !_r || !_row)  {
 		LM_ERR("invalid parameter value\n");
@@ -356,9 +365,15 @@ int db_postgres_convert_row(const db_con_t* _h, db_res_t* _r, db_row_t* _row,
 
 	/* For each column in the row */
 	for(col = 0; col < ROW_N(_row); col++) {
+		/* because it can contain NULL */
+		if (!row_buf[col]) {
+			col_len = 0;
+		} else {
+			col_len = strlen(row_buf[col]);
+		}
 		/* Convert the string representation into the value representation */
 		if (db_postgres_str2val(RES_TYPES(_r)[col], &(ROW_VALUES(_row)[col]),
-		row_buf[col], strlen(row_buf[col])) < 0) {
+		row_buf[col], col_len) < 0) {
 			LM_ERR("failed to convert value\n");
 			LM_DBG("free row at %pn", _row);
 			db_free_row(_row);

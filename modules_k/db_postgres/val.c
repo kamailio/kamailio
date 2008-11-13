@@ -66,6 +66,10 @@ int db_postgres_str2val(const db_type_t _t, db_val_t* _v, const char* _s, const 
 		LM_ERR("invalid parameter value\n");
 	}
 
+	/*
+	 * We implemented the mysql behaviour in the db_postgres_convert_rows function,
+	 * so a NULL string is a NULL value, otherwise its an empty value
+	 */
 	if (!_s) {
 		memset(_v, 0, sizeof(db_val_t));
 		/* Initialize the string pointers to a dummy empty
@@ -195,6 +199,10 @@ int db_postgres_val2str(const db_con_t* _con, const db_val_t* _v, char* _s, int*
 	}
 
 	if (VAL_NULL(_v)) {
+		if (*_len < sizeof("NULL")) {
+			LM_ERR("buffer too small\n");
+			return -1;
+		}
 		*_len = snprintf(_s, *_len, "NULL");
 		return 0;
 	}
