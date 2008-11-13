@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Header file for USRLOC MI functions
- *
  * Copyright (C) 2006 Voice Sistem SRL
  *
  * This file is part of Kamailio, a free SIP server.
@@ -56,9 +54,7 @@ static str mi_ul_cid = str_init("dfjrewr12386fd6-343@openser.mi");
 static str mi_ul_ua  = str_init("Kamailio MI Server");
 
 
-
 /************************ helper functions ****************************/
-
 
 /*!
  * \brief Search a domain in the global domain list
@@ -114,9 +110,7 @@ static inline int mi_fix_aor(str *aor)
  */
 static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t, int short_dump)
 {
-	struct mi_node *anode;
-	struct mi_node *cnode;
-	struct mi_node *node;
+	struct mi_node *anode, *cnode, *node;
 	struct mi_attr *attr;
 	ucontact_t* c;
 	char *p;
@@ -238,8 +232,6 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t
 }
 
 
-
-
 /*************************** MI functions *****************************/
 
 /*!
@@ -293,8 +285,7 @@ struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
 	udomain_t *dom;
 	urecord_t *rec;
 	ucontact_t* con;
-	str *aor;
-	str *contact;
+	str *aor, *contact;
 	int ret;
 
 	node = cmd->node.kids;
@@ -351,19 +342,14 @@ struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
 struct mi_root* mi_usrloc_dump(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
-	struct mi_node *rpl;
-	struct mi_node *node;
+	struct mi_node *rpl, *node;
 	struct mi_attr *attr;
 	struct urecord* r;
 	dlist_t* dl;
 	udomain_t* dom;
 	time_t t;
 	char *p;
-	int max;
-	int len;
-	int n;
-	int i;
-	int short_dump;
+	int max, len, n, i, short_dump;
 
 	node = cmd->node.kids;
 	if (node && node->next)
@@ -468,8 +454,7 @@ struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 	ucontact_t* c;
 	struct mi_node *node;
 	udomain_t *dom;
-	str *aor;
-	str *contact;
+	str *aor, *contact;
 	unsigned int ui_val;
 	int n;
 
@@ -579,8 +564,7 @@ lock_error:
 struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
-	struct mi_node *rpl;
-	struct mi_node *node;
+	struct mi_node *rpl, *node;
 	udomain_t *dom;
 	urecord_t *rec;
 	ucontact_t* con;
@@ -658,5 +642,3 @@ error:
 	unlock_udomain( dom, aor);
 	return 0;
 }
-
-
