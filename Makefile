@@ -149,19 +149,14 @@ ifneq ($(group_include)$(cfg_group_include),)
 	exclude_modules?=
 else
 	# Old defaults for backwards compatibility
-	exclude_modules?= 			acc cpl ext extcmd radius_acc radius_auth vm\
-							group mangler auth_diameter \
-							postgres snmp \
-							im \
-							jabber mysql \
-							cpl-c \
-							auth_radius group_radius uri_radius avp_radius \
+	exclude_modules?= 		cpl mangler postgres jabber mysql cpl-c \
+							auth_radius uri_radius avp_radius \
 							acc_radius dialog pa rls presence_b2b xcap xmlrpc\
 							osp tls oracle \
 							unixsock dbg print_lib auth_identity ldap
 	# excluded because they do not compile (remove them only after they are
 	#  fixed) -- andrei
-	exclude_modules+= avpops  bdb dbtext iptrtpproxy
+	exclude_modules+= avpops  bdb dbtext iptrtpproxy pa rls
 endif
 
 # always exclude the CVS dir
@@ -363,7 +358,7 @@ cfg config: cfg-defs modules-cfg
 
 .PHONY: modules-cfg modules-list modules-lst
 modules-cfg modules-list modules-lst: 
-	rm -rf modules.lst
+	rm -f modules.lst
 	$(MAKE) modules.lst
 
 .PHONY: all
