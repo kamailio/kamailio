@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Convenience usrloc header file
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -23,7 +21,7 @@
  */
 
 /*! \file
- *  \brief USRLOC - Convenience usrloc header file
+ *  \brief USRLOC - module API exports interface
  *  \ingroup usrloc
  */
 
@@ -38,10 +36,11 @@
 #include "ul_callback.h"
 
 
+/*! usrloc API export structure */
 typedef struct usrloc_api {
-	int           use_domain;
-	int           db_mode;
-	unsigned int  nat_flag;
+	int           use_domain; /*! use_domain module parameter */
+	int           db_mode;    /*! db_mode module parameter */
+	unsigned int  nat_flag;   /*! nat_flag module parameter */
 
 	register_udomain_t   register_udomain;
 	get_all_ucontacts_t  get_all_ucontacts;
@@ -63,7 +62,8 @@ typedef struct usrloc_api {
 } usrloc_api_t;
 
 
+/*! usrloc API export bind function */
 typedef int (*bind_usrloc_t)(usrloc_api_t* api);
 
 
-#endif /* USRLOC_H */
+#endif

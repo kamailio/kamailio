@@ -48,16 +48,23 @@
 #include "ul_mod.h"
 
 
-
+/*! CSEQ nr used */
 #define MI_UL_CSEQ 1
+/*! call-id used for ul_add and ul_rm_contact */
 static str mi_ul_cid = str_init("dfjrewr12386fd6-343@openser.mi");
+/*! user agent used for ul_add */
 static str mi_ul_ua  = str_init("Kamailio MI Server");
-
 
 
 
 /************************ helper functions ****************************/
 
+
+/*!
+ * \brief Search a domain in the global domain list
+ * \param table domain (table) name
+ * \return pointer to domain if found, 0 if not found
+ */
 static inline udomain_t* mi_find_domain(str* table)
 {
 	dlist_t* dom;
@@ -70,6 +77,15 @@ static inline udomain_t* mi_find_domain(str* table)
 	return 0;
 }
 
+
+/*!
+ * \brief Convert address of record
+ *
+ * Convert an address of record string to lower case, and truncate
+ * it when use_domain is not set.
+ * \param aor address of record
+ * \return 0 on success, -1 on error
+ */
 static inline int mi_fix_aor(str *aor)
 {
 	char *p;
@@ -88,7 +104,14 @@ static inline int mi_fix_aor(str *aor)
 }
 
 
-
+/*!
+ * \brief Add a node for a address of record
+ * \param parent parent node
+ * \param r printed record
+ * \param t actual time
+ * \param short_dump 0 means that all informations will be included, 1 that only the AOR is printed
+ * \return 0 on success, -1 on failure
+ */
 static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t, int short_dump)
 {
 	struct mi_node *anode;
@@ -219,8 +242,12 @@ static inline int mi_add_aor_node(struct mi_node *parent, urecord_t* r, time_t t
 
 /*************************** MI functions *****************************/
 
-/*! \brief
- * Expects 2 nodes: the table name and the AOR
+/*!
+ * \brief Delete a address of record including its contacts
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note expects 2 nodes: the table name and the AOR
+ * \return mi_root with the result
  */
 struct mi_root* mi_usrloc_rm_aor(struct mi_root *cmd, void *param)
 {
@@ -253,8 +280,12 @@ struct mi_root* mi_usrloc_rm_aor(struct mi_root *cmd, void *param)
 }
 
 
-/*! \brief
- * Expects 3 nodes: the table name, the AOR and contact
+/*!
+ * \brief Delete a contact from an AOR record
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note expects 3 nodes: the table name, the AOR and contact
+ * \return mi_root with the result or 0 on failure
  */
 struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
 {
@@ -311,6 +342,12 @@ struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param)
 }
 
 
+/*!
+ * \brief Dump the content of the usrloc
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \return mi_root with the result or 0 on failure
+ */
 struct mi_root* mi_usrloc_dump(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
@@ -397,6 +434,12 @@ error:
 }
 
 
+/*!
+ * \brief Flush the usrloc memory cache to DB
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \return mi_root with the result or 0 on failure
+ */
 struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param)
 {
 	struct mi_root *rpl_tree;
@@ -410,17 +453,13 @@ struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param)
 }
 
 
-/*! \brief
- * Expects 7 nodes: 
- *        table name,
- *        AOR
- *        contact
- *        expires
- *        Q
- *        useless - backward compat.
- *        flags
- *        cflags
- *        methods
+/*!
+ * \brief Add a new contact for an address of record
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note Expects 7 nodes: table name, AOR, contact, expires, Q,
+ * useless - backward compatible, flags, cflags, methods
+ * \return mi_root with the result
  */
 struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param)
 {
@@ -530,8 +569,12 @@ lock_error:
 }
 
 
-/*! \brief
- * Expects 2 nodes: the table name and the AOR
+/*!
+ * \brief Dumps the contacts of an AOR
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note expects 2 nodes: the table name and the AOR
+ * \return mi_root with the result or 0 on failure
  */
 struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param)
 {

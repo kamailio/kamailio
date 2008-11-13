@@ -40,10 +40,15 @@
  * - Module \ref usrloc
  */
 
-/*! \defgroup usrloc Usrloc :: User location module
-	\brief The module keeps a user location table
-   	and provides access to the table to other modules. The module
-   	exports no functions that could be used directly from scripts.
+/*!
+ * \defgroup usrloc Usrloc :: User location module
+ * \brief User location module
+ *
+ * The module keeps a user location table and provides access
+ * to the table to other modules. The module exports no functions
+ * that could be used directly from scripts, all access is done
+ * over a API. A main user of this API is the registrar module.
+ * \see registrar
  */
 
 #include <stdio.h>
@@ -115,7 +120,7 @@ int desc_time_order = 0;				/*!< By default do not enable timestamp ordering */
 int ul_fetch_rows = 2000;				/*!< number of rows to fetch from result */
 int ul_hash_size = 9;
 
-/* flag */
+/* flags */
 unsigned int nat_bflag = (unsigned int)-1;
 unsigned int init_flag = 0;
 

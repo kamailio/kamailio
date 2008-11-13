@@ -1,8 +1,6 @@
 /*
  * $Id$
  *
- * Usrloc interface
- *
  * Copyright (C) 2001-2003 FhG Fokus
  *
  * This file is part of Kamailio, a free SIP server.
@@ -29,7 +27,7 @@
  */
 
 /*! \file
- *  \brief USRLOC - Usrloc interface
+ *  \brief USRLOC - module API exports interfaces
  *  \ingroup usrloc
  *
  * - Module \ref usrloc
@@ -39,10 +37,17 @@
 #include "../../sr_module.h"
 #include "ul_mod.h"
 
+/*! nat branch flag */
 extern unsigned int nat_bflag;
+/*! flag to protect against wrong initialization */
 extern unsigned int init_flag;
 
 
+/*!
+ * \brief usrloc module API export bind function
+ * \param api usrloc API
+ * \return 0 on success, -1 on failure
+ */
 int bind_usrloc(usrloc_api_t* api)
 {
 	if (!api) {

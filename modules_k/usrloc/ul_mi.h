@@ -41,17 +41,62 @@
 #define MI_USRLOC_SHOW_CONTACT "ul_show_contact"
 
 
-
+/*!
+ * \brief Delete a address of record including its contacts
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note expects 2 nodes: the table name and the AOR
+ * \return mi_root with the result
+ */
 struct mi_root* mi_usrloc_rm_aor(struct mi_root *cmd, void *param);
 
+
+/*!
+ * \brief Delete a contact from an AOR record
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note expects 3 nodes: the table name, the AOR and contact
+ * \return mi_root with the result or 0 on failure
+ */
 struct mi_root* mi_usrloc_rm_contact(struct mi_root *cmd, void *param);
 
+
+/*!
+ * \brief Dump the content of the usrloc
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \return mi_root with the result or 0 on failure
+ */
 struct mi_root* mi_usrloc_dump(struct mi_root *cmd, void *param);
 
+
+/*!
+ * \brief Flush the usrloc memory cache to DB
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \return mi_root with the result or 0 on failure
+ */
 struct mi_root* mi_usrloc_flush(struct mi_root *cmd, void *param);
 
+
+/*!
+ * \brief Add a new contact for an address of record
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note Expects 7 nodes: table name, AOR, contact, expires, Q,
+ * useless - backward compatible, flags, cflags, methods
+ * \return mi_root with the result
+ */
 struct mi_root* mi_usrloc_add(struct mi_root *cmd, void *param);
 
+
+/*!
+ * \brief Dumps the contacts of an AOR
+ * \param cmd mi_root containing the parameter
+ * \param param not used
+ * \note expects 2 nodes: the table name and the AOR
+ * \return mi_root with the result or 0 on failure
+ */
 struct mi_root* mi_usrloc_show_contact(struct mi_root *cmd, void *param);
 
 

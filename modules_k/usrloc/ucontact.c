@@ -177,7 +177,7 @@ void print_ucontact(FILE* _f, ucontact_t* _c)
  * \brief Update existing contact in memory with new values
  * \param _c contact
  * \param _ci contact informations
- * \return 0
+ * \return 0 on success, -1 on failure
  */
 int mem_update_ucontact(ucontact_t* _c, ucontact_info_t* _ci)
 {
