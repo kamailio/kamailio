@@ -43,7 +43,7 @@ Klaus Darilion
               1.3.1. include_callid (int)
               1.3.2. include_tags (int)
               1.3.3. include_localremote (int)
-              1.3.4. initial_lifetime (int)
+              1.3.4. override_lifetime (int)
               1.3.5. caller_confirmed (int)
 
         1.4. Exported Functions
@@ -53,7 +53,7 @@ Klaus Darilion
    1.1. Set include_callid parameter
    1.2. Set include_tags parameter
    1.3. Set include_localremote parameter
-   1.4. Set initial_lifetime parameter
+   1.4. Set override_lifetime parameter
    1.5. Set caller_confirmed parameter
 
 Chapter 1. Admin Guide
@@ -262,21 +262,21 @@ modparam("pua_dialoginfo", "include_tags", 0)
 modparam("pua_dialoginfo", "include_localremote", 0)
 ...
 
-1.3.4. initial_lifetime (int)
+1.3.4. override_lifetime (int)
 
    The PUBLISH requests used to send the dialog-info contain an
-   Expires header. If the PUBLISH requests sends a "confirmed"
-   dialog-info it sets the Expires header to the value of the
-   dialog-lifetime (configure option of the dialog module). For
-   "trying" and "early", the Expires header is set to the value
-   of this parameter. Thus, this parameter should be a few
-   seconds more than the fr_inv_timer of the tm module.
+   Expires header. The value of the expires is usually taken from
+   the lifetime of the dialog (see README of dialog module). If
+   the override_lifetime is set, the value specified here is used
+   instead of the lifetime of the dialog module. If used, the
+   value should at least be a few seconds more than the
+   fr_inv_timer of the tm module.
 
-   Default value is "125".
+   Default value is "0".
 
-   Example 1.4. Set initial_lifetime parameter
+   Example 1.4. Set override_lifetime parameter
 ...
-modparam("pua_dialoginfo", "initial_lifetime", 300)
+modparam("pua_dialoginfo", "override_lifetime", 300)
 ...
 
 1.3.5. caller_confirmed (int)

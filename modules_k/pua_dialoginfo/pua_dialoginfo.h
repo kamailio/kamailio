@@ -32,4 +32,18 @@ send_publish_t pua_send_publish;
 void dialog_publish(char *state, str *entity, str *peer, str *callid, 
 	unsigned int initiator, unsigned int lifetime, str *localtag, str *remotetag);
 
+/* store the important data locally to avoid reading the data from the 
+   dlg_cell during the callback (as this could create a race condition 
+   if the dlg_cell gets meanwhile deleted) */
+struct dlginfo_cell {
+	str from_uri;
+	str to_uri;
+	str callid;
+	str from_tag;
+/*	str *to_tag; */
+	unsigned int lifetime;	
+};
+
+void free_dlginfo_cell(void *param);
+
 #endif

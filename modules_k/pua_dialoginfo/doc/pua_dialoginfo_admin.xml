@@ -274,23 +274,23 @@ modparam("pua_dialoginfo", "include_localremote", 0)
 		</section>
 
 		<section>
-		<title><varname>initial_lifetime</varname> (int)</title>
+		<title><varname>override_lifetime</varname> (int)</title>
 		<para>
 			The PUBLISH requests used to send the dialog-info contain an Expires header.
-			If the PUBLISH requests sends a "confirmed" dialog-info it sets the Expires
-			header to the value of the dialog-lifetime (configure option of the dialog module).
-			For "trying" and "early", the Expires header is set to the value of this
-			parameter. Thus, this parameter should be a few seconds more than the 
+			The value of the expires is usually taken from the lifetime of the dialog
+			(see README of dialog module). If the override_lifetime is set, the value
+			specified here is used instead of the lifetime of the dialog module.
+			If used, the value should at least be a few seconds more than the 
 			fr_inv_timer of the tm module.
 		</para>
 		<para>
-			<emphasis>Default value is <quote>125</quote>.</emphasis>
+			<emphasis>Default value is <quote>0</quote>.</emphasis>
 		</para>
 		<example>
-			<title>Set <varname>initial_lifetime</varname> parameter</title>
+			<title>Set <varname>override_lifetime</varname> parameter</title>
 			<programlisting format="linespecific">
 ...
-modparam("pua_dialoginfo", "initial_lifetime", 300)
+modparam("pua_dialoginfo", "override_lifetime", 300)
 ...
 </programlisting>
 		</example>
