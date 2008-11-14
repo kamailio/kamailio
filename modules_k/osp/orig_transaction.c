@@ -193,14 +193,14 @@ static int ospLoadRoutes(
         LM_INFO("get destination '%d': "
             "valid after '%s' "
             "valid until '%s' "
-            "time limit '%i' seconds "
+            "time limit '%d' seconds "
             "call id '%.*s' "
-            "calling number '%s' "
-            "called number '%s' "
+            "calling '%s' "
+            "called '%s' "
             "host '%s' "
             "supported '%d' "
             "network id '%s' "
-            "token size '%i'\n",
+            "token size '%d'\n",
             count, 
             dest->validafter, 
             dest->validuntil, 
@@ -222,7 +222,13 @@ static int ospLoadRoutes(
      */
     if (result == 0) {
         for(count = destcount -1; count >= 0; count--) {
-            ospSaveOrigDestination(&dests[count]);
+            if (ospSaveOrigDestination(&dests[count]) == -1) {
+                LM_ERR("failed to save originate destination\n");
+                /* Report terminate CDR */
+                ospRecordEvent(0, 500);
+                result = -1;
+                break;
+            }
         }
     }
 
@@ -234,7 +240,7 @@ static int ospLoadRoutes(
  * param msg SIP message
  * param ignore1
  * param ignore2
- * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ * return MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure, MODULE_RETURNCODE_ERROR error
  */
 int ospRequestRouting(
     struct sip_msg* msg, 
@@ -243,13 +249,13 @@ int ospRequestRouting(
 {
     int errorcode;
     time_t authtime;
-    char source[OSP_E164BUF_SIZE];
+    char called[OSP_E164BUF_SIZE];
+    char calling[OSP_E164BUF_SIZE];
     char sourcedev[OSP_STRBUF_SIZE];
-    char src[OSP_STRBUF_SIZE];
+    char deviceinfo[OSP_STRBUF_SIZE];
     struct usr_avp* snidavp = NULL;
     int_str snidval;
     char snid[OSP_STRBUF_SIZE];
-    char destination[OSP_E164BUF_SIZE];
     unsigned int callidnumber = 1;
     OSPTCALLID* callids[callidnumber];
     unsigned int logsize = 0;
@@ -265,20 +271,20 @@ int ospRequestRouting(
 
     if ((errorcode = OSPPTransactionNew(_osp_provider, &transaction)) != OSPC_ERR_NO_ERROR) {
         LM_ERR("failed to create new OSP transaction (%d)\n", errorcode);
-    } else if ((ospGetRpidUserpart(msg, source, sizeof(source)) != 0) &&
-        (ospGetFromUserpart(msg, source, sizeof(source)) != 0)) 
+    } else if ((ospGetRpidUserpart(msg, calling, sizeof(calling)) != 0) &&
+        (ospGetFromUserpart(msg, calling, sizeof(calling)) != 0)) 
     {
         LM_ERR("failed to extract calling number\n");
-    } else if ((ospGetUriUserpart(msg, destination, sizeof(destination)) != 0) &&
-        (ospGetToUserpart(msg, destination, sizeof(destination)) != 0)) 
+    } else if ((ospGetUriUserpart(msg, called, sizeof(called)) != 0) &&
+        (ospGetToUserpart(msg, called, sizeof(called)) != 0)) 
     {
         LM_ERR("failed to extract called number\n");
     } else if (ospGetCallId(msg, &(callids[0])) != 0) {
         LM_ERR("failed to extract call id\n");
     } else if (ospGetSourceAddress(msg, sourcedev, sizeof(sourcedev)) != 0) {
-        LM_ERR("failed to extract source address\n");
+        LM_ERR("failed to extract source deivce address\n");
     } else {
-        ospConvertAddress(sourcedev, src, sizeof(src));
+        ospConvertAddress(sourcedev, deviceinfo, sizeof(deviceinfo));
 
         if ((_osp_snid_avpname.n != 0) &&
             ((snidavp = search_first_avp(_osp_snid_avptype, _osp_snid_avpname, &snidval, 0)) != NULL) &&
@@ -291,20 +297,20 @@ int ospRequestRouting(
         }
 
         LM_INFO("request auth and routing for: "
-            "source '%s' "
+            "source_ip '%s' "
             "source_port '%s' "
             "source_dev '%s' "
             "source_networkid '%s' "
-            "e164_source '%s' "
-            "e164_dest '%s' "
+            "calling '%s' "
+            "called '%s' "
             "call_id '%.*s' "
-            "dest_count '%i'\n",
+            "dest_count '%d'\n",
             _osp_device_ip,
             _osp_device_port,
-            src,                        /* sourcedev in "[x.x.x.x]" or host.domain format */
+            deviceinfo,         /* in "[x.x.x.x]" or host.domain format */
             snid,
-            source,
-            destination,
+            calling,
+            called,
             callids[0]->ospmCallIdLen,
             callids[0]->ospmCallIdVal,
             destcount
@@ -314,10 +320,10 @@ int ospRequestRouting(
         errorcode = OSPPTransactionRequestAuthorisation(
             transaction,       /* transaction handle */
             _osp_device_ip,    /* from the configuration file */
-            src,               /* source of call, protocol specific, in OSP format */
-            source,            /* calling number in nodotted e164 notation */
+            deviceinfo,        /* source device of call, protocol specific, in OSP format */
+            calling,           /* calling number in nodotted e164 notation */
             OSPC_E164,         /* calling number format */
-            destination,       /* called number */
+            called,            /* called number */
             OSPC_E164,         /* called number format */
             "",                /* optional username string, used if no number */
             callidnumber,      /* number of call ids, here always 1 */
@@ -328,7 +334,7 @@ int ospRequestRouting(
             detaillog);        /* memory location for detaillog to be stored */
 
         if ((errorcode == OSPC_ERR_NO_ERROR) &&
-            (ospLoadRoutes(transaction, destcount, _osp_device_ip, sourcedev, destination, authtime) == 0))
+            (ospLoadRoutes(transaction, destcount, _osp_device_ip, sourcedev, called, authtime) == 0))
         {
             LM_INFO("there are '%d' OSP routes, call_id '%.*s'\n",
                 destcount,
@@ -336,7 +342,7 @@ int ospRequestRouting(
                 callids[0]->ospmCallIdVal);
             result = MODULE_RETURNCODE_TRUE;
         } else {
-            LM_ERR("failed to request auth and routing (%i), call_id '%.*s\n",
+            LM_ERR("failed to request auth and routing (%d), call_id '%.*s'\n",
                 errorcode,
                 callids[0]->ospmCallIdLen,
                 callids[0]->ospmCallIdVal);
@@ -349,7 +355,7 @@ int ospRequestRouting(
                     break;
                 case OSPC_ERR_NO_ERROR:
                     /* AuthRsp ok but ospLoadRoutes fails */
-                    result = -500;
+                    result = MODULE_RETURNCODE_ERROR;
                     break;
                 default:
                     result = MODULE_RETURNCODE_FALSE;

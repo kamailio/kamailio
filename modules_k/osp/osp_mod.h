@@ -34,6 +34,7 @@
 #define MODULE_RETURNCODE_TRUE          1
 #define MODULE_RETURNCODE_STOPROUTE     0
 #define MODULE_RETURNCODE_FALSE         -1
+#define MODULE_RETURNCODE_ERROR         -2
 
 #define OSP_DEF_SPS                     16
 #define OSP_DEF_WEIGHT                  1000

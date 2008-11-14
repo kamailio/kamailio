@@ -88,8 +88,8 @@ static int ospSaveDestination(
      * which will be released by TM at the end of the transaction
      */
     if (add_avp(AVP_NAME_STR | AVP_VAL_STR, (int_str)*name, (int_str)wrapper) == 0) {
-        result = 0;
         LM_DBG("destination saved\n");
+        result = 0;
     } else {
         LM_ERR("failed to save destination\n");
     }

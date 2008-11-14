@@ -66,7 +66,7 @@ int ospCheckHeader(
  * Validate OSP token
  * param ignore1
  * param ignore2
- * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure
+ * return  MODULE_RETURNCODE_TRUE success, MODULE_RETURNCODE_FALSE failure MODULE_RETURNCODE_ERROR error
  */
 int ospValidateHeader (
     struct sip_msg* msg, 
@@ -107,7 +107,7 @@ int ospValidateHeader (
         LM_ERR("failed to extract OSP authorization token\n");
     } else {
         LM_INFO( "validate token for: "
-            "transaction_handle '%i' "
+            "transaction_handle '%d' "
             "e164_source '%s' "
             "e164_dest '%s' "
             "validate_call_id '%s' "
@@ -144,31 +144,35 @@ int ospValidateHeader (
             detaillog,
             _osp_token_format);
     
-        if (callid->ospmCallIdLen > sizeof(dest.callid) - 1) {
-            dest.callidsize = sizeof(dest.callid) - 1;
-        } else {
-            dest.callidsize = callid->ospmCallIdLen;
-        }
-        memcpy(dest.callid, callid->ospmCallIdVal, dest.callidsize);
-        dest.callid[dest.callidsize] = 0;
-        dest.transid = ospGetTransactionId(transaction);
-        dest.type = OSPC_DESTINATION;
-        dest.authtime = time(NULL);
-        strncpy(dest.host, _osp_device_ip, sizeof(dest.host) - 1);
-        strncpy(dest.origcalled, dest.called, sizeof(dest.origcalled) - 1);
-
-        ospSaveTermDestination(&dest);
-
         if ((errorcode == OSPC_ERR_NO_ERROR) && (authorized == 1)) {
-            LM_DBG("call is authorized for %d seconds, call_id '%.*s' transaction_id '%llu'", 
-                timelimit,
-                dest.callidsize,
-                dest.callid,
-                dest.transid);
-            ospRecordTermTransaction(msg, dest.transid, dest.source, dest.calling, dest.called, dest.authtime);
-            result = MODULE_RETURNCODE_TRUE;
+            if (callid->ospmCallIdLen > sizeof(dest.callid) - 1) {
+                dest.callidsize = sizeof(dest.callid) - 1;
+            } else {
+                dest.callidsize = callid->ospmCallIdLen;
+            }
+            memcpy(dest.callid, callid->ospmCallIdVal, dest.callidsize);
+            dest.callid[dest.callidsize] = 0;
+            dest.transid = ospGetTransactionId(transaction);
+            dest.type = OSPC_DESTINATION;
+            dest.authtime = time(NULL);
+            strncpy(dest.host, _osp_device_ip, sizeof(dest.host) - 1);
+            strncpy(dest.origcalled, dest.called, sizeof(dest.origcalled) - 1);
+
+            if (ospSaveTermDestination(&dest) == -1) {
+                LM_ERR("failed to save terminate destination\n");
+                ospRecordEvent(0, 500);
+                result = MODULE_RETURNCODE_ERROR;
+            } else {
+                LM_DBG("call is authorized for %d seconds, call_id '%.*s' transaction_id '%llu'", 
+                    timelimit,
+                    dest.callidsize,
+                    dest.callid,
+                    dest.transid);
+                ospRecordTermTransaction(msg, dest.transid, dest.source, dest.calling, dest.called, dest.authtime);
+                result = MODULE_RETURNCODE_TRUE;
+            }
         } else {
-            LM_ERR("token is invalid (%i)\n", errorcode);
+            LM_ERR("token is invalid (%d)\n", errorcode);
 
             /* 
              * Update terminating status code to 401 and report terminating setup usage.
@@ -177,6 +181,7 @@ int ospValidateHeader (
              * (after replying with an error code), or maybe use a different tm callback.
              */
             ospRecordEvent(0, 401);
+            result = MODULE_RETURNCODE_FALSE;
         }
     }
 

@@ -501,7 +501,7 @@ int ospRebuildDestionationUri(
     destsize = strlen(dest);
     portsize = strlen(port);
 
-    LM_DBG("'%s'(%i) '%s'(%i) '%s'(%i) '%d'\n",
+    LM_DBG("'%s'(%d) '%s'(%d) '%s'(%d) '%d'\n",
         called, 
         calledsize,
         dest, 

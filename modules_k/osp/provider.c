@@ -62,7 +62,7 @@ int ospSetupProvider(void)
     cacerts[0] = &cacert;
 
     if ((result = OSPPInit(_osp_crypto_hw)) != 0) {
-        LM_ERR("failed to initalize OSP (%i)\n", result);
+        LM_ERR("failed to initalize OSP (%d)\n", result);
     } else if (OSPPUtilLoadPEMPrivateKey(_osp_private_key, &privatekey) != 0) {
         LM_ERR("failed to load private key from '%s'\n", _osp_private_key);
     } else if (OSPPUtilLoadPEMCert(_osp_local_certificate, &localcert) != 0) {
@@ -90,7 +90,7 @@ int ospSetupProvider(void)
             "",
             &_osp_provider);
         if (result != 0) {
-            LM_ERR("failed to create provider (%i)\n", result);
+            LM_ERR("failed to create provider (%d)\n", result);
         } else {
             LM_DBG("created new (per process) provider '%d'\n", _osp_provider);
             result = 0;
